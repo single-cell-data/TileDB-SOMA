@@ -13,7 +13,7 @@ A C++ library with APIs in Python and R for efficient storage and retrieval of s
 
 ## What's Included?
 
-- APIs for C++, Python, and Java
+- APIs for C++, Python
 
 
 # Code of Conduct
