@@ -1,11 +1,13 @@
 message(STATUS "Starting TileDB-SC build.")
 
+set(CMAKE_WARN_DEPRECATED OFF CACHE BOOL "" FORCE)
+
 ############################################################
 # Find required dependencies
 ############################################################
 
 find_package(TileDB_EP REQUIRED)
-find_package(Spdlog_EP REQUIRED)
+# TBD find_package(Spdlog_EP REQUIRED)
 
 ############################################################
 # Get source commit hash
@@ -42,9 +44,27 @@ message(STATUS "Building with commit hash ${BUILD_COMMIT_HASH}")
 # Common object library
 ############################################################
 
+add_library(TILEDB_SC_OBJECTS OBJECT
+  ${CMAKE_CURRENT_SOURCE_DIR}/tiledbsc.cc
+)
 
+message(WARNING "Building without deprecation warnings")
 target_compile_definitions(TILEDB_SC_OBJECTS PRIVATE
   -DBUILD_COMMIT_HASH="${BUILD_COMMIT_HASH}"
+  -DTILEDB_DEPRECATED=
+)
+
+target_compile_options(
+  TILEDB_SC_OBJECTS PRIVATE
+)
+
+set_property(TARGET TILEDB_SC_OBJECTS PROPERTY POSITION_INDEPENDENT_CODE ON)
+
+target_include_directories(TILEDB_SC_OBJECTS
+  PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}
+    ${CMAKE_CURRENT_SOURCE_DIR}/../include
+    $<TARGET_PROPERTY:TileDB::tiledb_shared,INTERFACE_INCLUDE_DIRECTORIES>
 )
 
 ############################################################
@@ -73,13 +93,13 @@ endif()
 ############################################################
 
 add_library(tiledbsc SHARED
+  $<TARGET_OBJECTS:TILEDB_SC_OBJECTS>
 )
 
 target_link_libraries(tiledbsc
   PUBLIC
-    HTSlib::HTSlib
     TileDB::tiledb_shared
-    spdlog::spdlog
+    # TBD spdlog::spdlog
 )
 
 # Sanitizer linker flags
@@ -92,14 +112,8 @@ endif()
 
 # List of API headers (to be installed)
 set(TILEDB_SC_PUBLIC_HEADERS
-  ${CMAKE_CURRENT_SOURCE_DIR}/cpp_api/tiledbsc.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/../include/tiledbsc/tiledbsc.h
 )
-
-if (ENABLE_ARROW_EXPORT)
-  list(APPEND TILEDB_SC_PUBLIC_HEADERS
-    ${CMAKE_CURRENT_SOURCE_DIR}/c_api/arrow.h
-  )
-endif()
 
 ############################################################
 # API symbol exports (and public headers for install)
@@ -110,10 +124,12 @@ include(GenerateExportHeader)
 # Generates the file 'tiledbsc_export.h' suitable for the current compiler.
 generate_export_header(TILEDB_SC_OBJECTS
   BASE_NAME tiledbsc
+  #EXPORT_FILE_NAME "../include/tiledbsc/tiledbsc_export.h"
 )
 
 # Set variables in the parent scope so the tests can reference it.
 set(TILEDB_SC_EXPORT_HEADER_NAME "tiledbsc_export.h" PARENT_SCOPE)
+set(TILEDB_SC_EXPORT_HEADER_DIR "${CMAKE_CURRENT_BINARY_DIR}")
 set(TILEDB_SC_EXPORT_HEADER_DIR "${CMAKE_CURRENT_BINARY_DIR}" PARENT_SCOPE)
 set(TILEDB_SC_EXPORT_HEADER "${CMAKE_CURRENT_BINARY_DIR}/tiledbsc_export.h")
 set(TILEDB_SC_EXPORT_HEADER "${TILEDB_SC_EXPORT_HEADER}" PARENT_SCOPE)
@@ -131,6 +147,43 @@ list(APPEND TILEDB_SC_PUBLIC_HEADERS
 set_target_properties(tiledbsc
   PROPERTIES
     PUBLIC_HEADER "${TILEDB_SC_PUBLIC_HEADERS}"
+)
+
+############################################################
+# CLI executable target
+############################################################
+
+add_executable(tiledbsc-bin
+  $<TARGET_OBJECTS:TILEDB_SC_OBJECTS>
+  ${CMAKE_CURRENT_SOURCE_DIR}/cli/cli.cc
+)
+
+set_target_properties(tiledbsc-bin PROPERTIES OUTPUT_NAME tiledbsc)
+
+target_link_libraries(tiledbsc-bin
+  PUBLIC
+    #CLI11::CLI11
+    # spdlog::spdlog
+    TileDB::tiledb_shared
+)
+
+# Sanitizer linker flags
+if (SANITIZER)
+  target_link_libraries(tiledbsc-bin
+          INTERFACE
+          -fsanitize=${SANITIZER}
+          )
+endif()
+
+if (NOT APPLE AND NOT WIN32)
+  target_link_libraries(tiledbsc-bin PRIVATE pthread)
+endif()
+
+target_include_directories(tiledbsc-bin
+  PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}
+    ${CMAKE_CURRENT_SOURCE_DIR}/../include
+    ${TILEDB_SC_EXPORT_HEADER_DIR}
 )
 
 ############################################################

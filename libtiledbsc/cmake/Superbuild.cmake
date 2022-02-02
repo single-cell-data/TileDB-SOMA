@@ -70,8 +70,7 @@ set(INHERITED_CMAKE_ARGS
 
 # These includes modify the EXTERNAL_PROJECTS variable.
 
-include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/Modules/FindCLI11_EP.cmake)
-include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/Modules/FindHTSlib_EP.cmake)
+#TBD include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/Modules/FindCLI11_EP.cmake)
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/Modules/FindTileDB_EP.cmake)
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/Modules/FindCatch_EP.cmake)
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/Modules/FindSpdlog_EP.cmake)
