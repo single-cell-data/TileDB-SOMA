@@ -1,6 +1,7 @@
 #%%
 import itertools
 import os
+import sys
 from dataclasses import dataclass
 from typing import List
 from unittest import result
@@ -11,7 +12,6 @@ import numpy as np
 import pandas as pd
 import scanpy
 import tiledb
-
 
 #%%
 @dataclass
@@ -62,7 +62,7 @@ class AnnDataExporter:
         self.data = anndata
 
     @classmethod
-    def from_file(cls, path: str):
+    def from_10x(cls, path: str):
         warnings.warn("(tmp) writing subset")
         anndata = scanpy.read_10x_h5(path)[:5000]
 
@@ -70,6 +70,25 @@ class AnnDataExporter:
         anndata.var_names_make_unique()
 
         return cls(anndata)
+
+    @classmethod
+    def from_h5ad(cls, path: str):
+        warnings.warn("(tmp) writing subset")
+        anndata = scanpy.read_h5ad(path)[:5000]
+
+        warnings.warn("Calling .var_names_make_uniqe on AnnData object!")
+        anndata.var_names_make_unique()
+
+        # TMP TODO convert from categorical to series
+        warnings.warn("Converting from categorical to object series!")
+        uncat = lambda x: x.astype("O") if isinstance(x.dtype, pd.CategoricalDtype) else x
+        var = pd.DataFrame.from_dict({k: uncat(v) for k,v in anndata.var.items()})
+
+        # Make a new object with the modified data
+        anndata = ad.AnnData(X=anndata.X, var=var, obs=anndata.obs, raw=anndata.raw)
+
+        return cls(anndata)
+
 
     def _create_arrays(self, base: str):
         obs_schema = AnnSchemaBuilder(self.data.obs).to_schema()
@@ -115,3 +134,14 @@ class AnnDataExporter:
         self._write_ann(self._obs_path, self.data.obs)
         self._write_ann(self._var_path, self.data.var)
         self._write_data()
+
+if __name__ == "__main__":
+    input_path = sys.argv[1]
+    output_path = sys.argv[2]
+
+    if input_path.endswith("h5ad"):
+        exporter = AnnDataExporter.from_h5ad(input_path)
+    else:
+        exporter = AnnDataExporter.from_10x(input_path)
+
+    exporter.write_tiledb(output_path)
