@@ -10,7 +10,6 @@ import warnings
 import anndata as ad
 import numpy as np
 import pandas as pd
-import scanpy
 import tiledb
 
 #%%
@@ -63,28 +62,21 @@ class AnnDataExporter:
 
     @classmethod
     def from_10x(cls, path: str):
-        warnings.warn("(tmp) writing subset")
-        anndata = scanpy.read_10x_h5(path)[:5000]
+        import scanpy
+        anndata = scanpy.read_10x_h5(path)
 
-        warnings.warn("Calling .var_names_make_uniqe on AnnData object!")
         anndata.var_names_make_unique()
 
         return cls(anndata)
 
     @classmethod
     def from_h5ad(cls, path: str):
-        warnings.warn("(tmp) writing subset")
-        anndata = scanpy.read_h5ad(path)[:5000]
+        anndata = ad.read_h5ad(path)
 
-        warnings.warn("Calling .var_names_make_uniqe on AnnData object!")
         anndata.var_names_make_unique()
 
-        # TMP TODO convert from categorical to series
-        warnings.warn("Converting from categorical to object series!")
         uncat = lambda x: x.astype("O") if isinstance(x.dtype, pd.CategoricalDtype) else x
         var = pd.DataFrame.from_dict({k: uncat(v) for k,v in anndata.var.items()})
-
-        # Make a new object with the modified data
         anndata = ad.AnnData(X=anndata.X, var=var, obs=anndata.obs, raw=anndata.raw)
 
         return cls(anndata)
