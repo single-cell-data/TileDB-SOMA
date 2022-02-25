@@ -49,4 +49,6 @@ jobs:
         cmake -B $env:GITHUB_WORKSPACE/build -S $env:GITHUB_WORKSPACE/libtiledbsc
         cmake --build $env:GITHUB_WORKSPACE/build --config Release -j $env:NUMBER_OF_PROCESSORS 2>&1
 
-        #TODO ctest
+    - name: Run libtiledbsc tests
+      run: |
+        make -C libtiledbsc test

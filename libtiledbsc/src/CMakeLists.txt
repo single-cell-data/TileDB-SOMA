@@ -7,7 +7,6 @@ set(CMAKE_WARN_DEPRECATED OFF CACHE BOOL "" FORCE)
 ############################################################
 
 find_package(TileDB_EP REQUIRED)
-# TBD find_package(Spdlog_EP REQUIRED)
 
 ############################################################
 # Get source commit hash
@@ -46,6 +45,8 @@ message(STATUS "Building with commit hash ${BUILD_COMMIT_HASH}")
 
 add_library(TILEDB_SC_OBJECTS OBJECT
   ${CMAKE_CURRENT_SOURCE_DIR}/tiledbsc.cc
+  ${CMAKE_CURRENT_SOURCE_DIR}/util.cc
+  ${CMAKE_CURRENT_SOURCE_DIR}/common.cc
 )
 
 message(WARNING "Building without deprecation warnings")
@@ -89,12 +90,25 @@ if (SANITIZER)
 endif()
 
 ############################################################
+# Helper libraries target
+############################################################
+
+add_subdirectory(lib)
+
+############################################################
 # tiledbsc library target
 ############################################################
 
 add_library(tiledbsc SHARED
   $<TARGET_OBJECTS:TILEDB_SC_OBJECTS>
 )
+
+#target_link_libraries(tiledbsc
+#  PRIVATE
+#  buffer_set
+#  managed_query
+#
+#)
 
 target_link_libraries(tiledbsc
   PUBLIC
@@ -153,17 +167,22 @@ set_target_properties(tiledbsc
 # CLI executable target
 ############################################################
 
+#  $<TARGET_OBJECTS:TILEDB_SC_OBJECTS>
 add_executable(tiledbsc-bin
-  $<TARGET_OBJECTS:TILEDB_SC_OBJECTS>
   ${CMAKE_CURRENT_SOURCE_DIR}/cli/cli.cc
 )
 
 set_target_properties(tiledbsc-bin PROPERTIES OUTPUT_NAME tiledbsc)
 
 target_link_libraries(tiledbsc-bin
+  PRIVATE
+)
+
+target_link_libraries(tiledbsc-bin
   PUBLIC
     #CLI11::CLI11
     # spdlog::spdlog
+    tiledbsc
     TileDB::tiledb_shared
 )
 
