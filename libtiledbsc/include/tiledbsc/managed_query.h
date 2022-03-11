@@ -16,7 +16,7 @@ namespace tiledbsc {
 // TODO config - 4 MB
 constexpr size_t TILEDBSC_DEFAULT_ALLOC = 524288;
 
-struct TILEDBSC_EXPORT BufferGroup {
+struct BufferGroup {
     std::map<std::string, std::shared_ptr<BufferSet>> buffers;
 };
 

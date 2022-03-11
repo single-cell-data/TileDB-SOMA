@@ -2,6 +2,8 @@
 #include <vector>
 #include <optional>
 
+// TODO remove work-around in current libtiledb
+#include <stdexcept>
 #include <tiledb/tiledb>
 
 #include <tiledbsc/buffer_set.h>
