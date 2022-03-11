@@ -21,6 +21,8 @@ target_include_directories(buffer_set
     ${CMAKE_CURRENT_BINARY_DIR}/../
     ../../include)
 
+target_compile_definitions(buffer_set PRIVATE -DTILEDB_SC_OBJECTS_EXPORTS)
+
 # TODO make this conditional
 if (TRUE)
     find_package(Catch_EP REQUIRED)
@@ -67,6 +69,8 @@ target_include_directories(managed_query
     PUBLIC
     ${CMAKE_CURRENT_BINARY_DIR}/../
     ../../include)
+
+target_compile_definitions(managed_query PRIVATE -DTILEDB_SC_OBJECTS_EXPORTS)
 
 # TODO make this conditional
 if (TRUE)

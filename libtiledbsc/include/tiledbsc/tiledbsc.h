@@ -6,7 +6,10 @@
 #include <optional>
 #include <string>
 
+// TODO fixes build error on VS2019 due to "missing" include in <tiledb/type.h>
+#include <stdexcept>
 #include <tiledb/tiledb>
+
 #include <tiledbsc/common.h>
 #include <tiledbsc/managed_query.h>
 

@@ -1,4 +1,6 @@
+#include <stdexcept> // TODO remove
 #include <tiledb/tiledb>
+
 #include <tiledbsc/managed_query.h>
 #include <tiledbsc/buffer_set.h>
 #include <tiledbsc/common.h>

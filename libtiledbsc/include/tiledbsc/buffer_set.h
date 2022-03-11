@@ -22,7 +22,9 @@ using DELEM_T = std::byte;
  * attribute/column. Offsets and validity buffers are optional and
  * may not be initialized depending on the schema.
  */
-struct TILEDBSC_EXPORT BufferSet {
+struct BufferSet {
+
+    BufferSet() = delete;
 
     /**
      * TODO
