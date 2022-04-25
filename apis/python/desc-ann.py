@@ -17,7 +17,7 @@ from util_ann import describe_ann_file
 
 def main():
     if len(sys.argv) < 2:
-        print("Usage: %s {one or more ANN data-file nmes}" % (sys.argv[0]), file=sys.stderr)
+        print(f"Usage: {sys.argv[0]} (one or more ANN data-file names)", file=sys.stderr)
         sys.exit(1)
 
     for input_path in sys.argv[1:]:

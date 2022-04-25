@@ -68,7 +68,7 @@ class SCGroup():
     # ----------------------------------------------------------------
     def from_h5ad(self, input_path):
         if self.verbose:
-            print("START  SCGroup.from_h5ad %s -> %s" % (input_path, self.uri))
+            print(f"START  SCGroup.from_h5ad {input_path} -> {self.uri}")
 
         anndata = self.read_h5ad(input_path)
 
@@ -77,12 +77,12 @@ class SCGroup():
         self.write_tiledb_group(anndata)
 
         if self.verbose:
-            print("FINISH SCGroup.from_h5ad %s -> %s" % (input_path, self.uri))
+            print(f"FINISH SCGroup.from_h5ad {input_path} -> {self.uri}")
 
     # ----------------------------------------------------------------
     def from_10x(self, input_path):
         if self.verbose:
-            print("START  SCGroup.from_10x %s -> %s" % (input_path, self.uri))
+            print(f"START  SCGroup.from_10x {input_path} -> {self.uri}")
 
         anndata = self.read_10x(input_path)
 
@@ -91,26 +91,26 @@ class SCGroup():
         self.write_tiledb_group(anndata)
 
         if self.verbose:
-            print("FINISH SCGroup.from_10x %s -> %s" % (input_path, self.uri))
+            print(f"FINISH SCGroup.from_10x {input_path} -> {self.uri}")
 
     # ----------------------------------------------------------------
     def read_h5ad(self, input_path):
         if self.verbose:
-            print("  START  READING %s" % (input_path))
+            print(f"  START  READING {input_path}")
         anndata = ad.read_h5ad(input_path)
         anndata.var_names_make_unique()
         if self.verbose:
-            print("  FINISH READING %s" % (input_path))
+            print(f"  FINISH READING {input_path}")
         return anndata
 
     # ----------------------------------------------------------------
     def read_10x(self, input_path):
         if self.verbose:
-            print("  START  READING %s" % (input_path))
+            print(f"  START  READING {input_path}")
         anndata = scanpy.read_10x_h5(input_path)
         anndata.var_names_make_unique()
         if self.verbose:
-            print("  FINISH READING %s" % (input_path))
+            print(f"  FINISH READING {input_path}")
         return anndata
 
     # ----------------------------------------------------------------
@@ -122,7 +122,7 @@ class SCGroup():
         """
 
         if self.verbose:
-            print("  START  DECATEGORICALIZING")
+            print(f"  START  DECATEGORICALIZING")
 
         # See also https://docs.scipy.org/doc/numpy-1.10.1/reference/arrays.dtypes.html
         uncat = lambda x: x.astype("O") if isinstance(x.dtype, pd.CategoricalDtype) else x
@@ -150,13 +150,13 @@ class SCGroup():
         )
 
         if self.verbose:
-            print("  FINISH DECATEGORICALIZING")
+            print(f"  FINISH DECATEGORICALIZING")
         return anndata
 
     # ----------------------------------------------------------------
     def write_tiledb_group(self, anndata):
         if self.verbose:
-            print("  START  WRITING %s" % (self.uri))
+            print(f"  START  WRITING {self.uri}")
 
         # ----------------------------------------------------------------
         # Must be done first, to create the parent directory
@@ -193,7 +193,7 @@ class SCGroup():
 
         # ----------------------------------------------------------------
         if self.verbose:
-            print("  FINISH WRITING %s" % (self.uri))
+            print(f"  FINISH WRITING {self.uri}")
 
         base_group.close()
 
@@ -205,7 +205,7 @@ class SCGroup():
 
         X_data_uri = os.path.join(X_uri, "data")
         if self.verbose:
-            print("    START  WRITING %s" % (X_data_uri))
+            print(f"    START  WRITING {X_data_uri}")
 
         # Here we do not use tiledb.from_numpy, so that we can have more control over the schema.
 
@@ -224,7 +224,7 @@ class SCGroup():
 
         X_group.add(uri=X_data_uri, relative=False, name="data")
         if self.verbose:
-            print("    FINISH WRITING %s" % (X_data_uri))
+            print(f"    FINISH WRITING {X_data_uri}")
 
         X_group.close()
 
@@ -247,7 +247,7 @@ class SCGroup():
 
         obs_or_var_uri = os.path.join(self.uri, obs_or_var_name)
         if self.verbose:
-            print("    START  WRITING %s" % (obs_or_var_uri))
+            print(f"    START  WRITING {obs_or_var_uri}")
 
         tiledb.from_pandas(
             uri=obs_or_var_uri,
@@ -262,7 +262,7 @@ class SCGroup():
         )
 
         if self.verbose:
-            print("    FINISH WRITING %s" % (obs_or_var_uri))
+            print(f"    FINISH WRITING {obs_or_var_uri}")
 
         return obs_or_var_uri
 
@@ -281,7 +281,7 @@ class SCGroup():
         for name in annotation_matrices.keys():
             component_array_uri = os.path.join(subgroup_uri, name)
             if self.verbose:
-                print("    START  WRITING %s" % (component_array_uri))
+                print(f"    START  WRITING {component_array_uri}")
 
             # Check for conversion from pandas if necessary.  For the pbmc3k_processed reference
             # dataset, obsm and varm matrices are numpy.ndarray while obsp matrices are
@@ -298,7 +298,7 @@ class SCGroup():
             )
 
             if self.verbose:
-                print("    FINISH WRITING %s" % (component_array_uri))
+                print(f"    FINISH WRITING {component_array_uri}")
 
             subgroup.add(uri=component_array_uri, relative=False, name=name)
         subgroup.close()

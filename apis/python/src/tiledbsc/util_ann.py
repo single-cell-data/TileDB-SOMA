@@ -18,7 +18,7 @@ def describe_ann_file(input_path):
     h5ad_data.var_names_make_unique()
 
     print()
-    print("================================================================ %s" % (input_path))
+    print("================================================================ {input_path}")
     print("ANNDATA SUMMARY:")
     print(h5ad_data)
 

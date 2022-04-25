@@ -12,7 +12,7 @@ from util_tiledb import show_single_cell_group
 
 def main():
     if len(sys.argv) < 2:
-        print("Usage: %s {one or more TileDB group-directory nmes}" % (sys.argv[0]), file=sys.stderr)
+        print(f"Usage: {sys.argv[0]} (one or more TileDB group-directory nmes)", file=sys.stderr)
         sys.exit(1)
 
     for uri in sys.argv[1:]:
