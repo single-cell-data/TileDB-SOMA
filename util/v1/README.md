@@ -1,8 +1,8 @@
 # Status
 
 * This is a prototype version of the ingestor.
-* It's known to work with a particular raw 10X data file.
-* It does not support cellxgene data files.
+* It's known to work with a particular raw 10X data file: `../../data/10x-pbmc-multiome-v1.0/subset_100_100.h5ad`.
+* It is not known support cellxgene data files.
 
 # Running the v1 code
 
@@ -45,6 +45,6 @@ ArraySchema(
 
 Discussion:
 
-* `../data/10x-pbmc-multiome-v1.0/subset_100_100.h5ad subset_100_100` is raw off-the-hardware data
+* `../../data/10x-pbmc-multiome-v1.0/subset_100_100.h5ad subset_100_100` is raw off-the-hardware data
 * In the HD5 file we read, there is `X`, `obs`, `var`
 * In the TileDB group we write, there is `X` as an array, `obs`, and `var`

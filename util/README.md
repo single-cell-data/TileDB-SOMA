@@ -5,9 +5,9 @@ This is test code for reading ANN data and writing into a TileDB nested group st
 ```
 ./desc-ann.py ./anndata/pbmc3k_processed.h5ad
 
-./ingestor.py ./anndata/pbmc3k_processed.h5ad
+./ingestor.py ./anndata/pbmc3k_processed.h5ad ./tiledb-data/pbmc3k_processed
 
-./desc-ann.py ./tiledb-data/pbmc3k_processed
+./desc-tiledb.py ./tiledb-data/pbmc3k_processed
 ```
 
 # Overview
