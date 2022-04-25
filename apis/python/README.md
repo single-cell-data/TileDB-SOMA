@@ -36,6 +36,12 @@ python setup.py install
 * Inspecting TileDB output groups
   * `./desc-tiledb.py ./tiledb-data/pbmc3k_processed`
 
+# Status
+
+* Input files beyond `./anndata/pbmc3k_processed.h5ad` need to be validated
+* Handling of the `raw.X` data as a layer within `X` needs to be implemented
+* The `uns` arrays from HD5 files are currently not processed
+
 # Details
 
 ## Expected input format
