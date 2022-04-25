@@ -4,15 +4,7 @@
 
 # TileDB-SingleCell
 
-A C++ library with APIs in Python and R for efficient storage and retrieval of single cell data using [TileDB Embedded][tiledb].
-
-## Features
-
-
-## What's Included?
-
-- APIs for C++, Python and R
-
+A C++ library with APIs in Python and R for efficient storage and retrieval of single-cell data using [TileDB Embedded][tiledb].
 
 # Code of Conduct
 
@@ -21,3 +13,6 @@ professionalism in all interactions. This repository is governed by the
 specific standards and reporting procedures detailed in depth in the
 [TileDB core repository Code Of Conduct](
 https://github.com/TileDB-Inc/TileDB/blob/dev/CODE_OF_CONDUCT.md).
+
+<!-- links -->
+[tiledb]: https://github.com/TileDB-Inc/TileDB

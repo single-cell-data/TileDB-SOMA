@@ -1,8 +1,6 @@
 .vscode*
 *.swp
 dist/*
-libtiledbvcf/cmake-build-*/*
-libtiledbvcf/build/*
 apis/spark/.gradle/*
 apis/spark/.project
 apis/spark/build/*
