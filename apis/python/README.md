@@ -3,6 +3,8 @@ This is test code for reading ANN data and writing into a TileDB nested group st
 # TL;DR
 
 ```
+python setup.py install
+
 ./desc-ann.py ./anndata/pbmc3k_processed.h5ad
 
 ./ingestor.py ./anndata/pbmc3k_processed.h5ad ./tiledb-data/pbmc3k_processed
@@ -12,6 +14,13 @@ This is test code for reading ANN data and writing into a TileDB nested group st
 
 # Overview
 
+* Install: one of:
+  * Non-dev:
+    * `python setup.py install`
+    * `pip install .`
+  * Dev:
+    * `python setup.py develop`
+    * `pip install --editable .`
 * Sample data:
   * [anndata](./anndata) contains some files from [https://cellxgene.cziscience.com](https://cellxgene.cziscience.com)
   * The most important reference is `anndata/pbmc3k_processed.h5ad`

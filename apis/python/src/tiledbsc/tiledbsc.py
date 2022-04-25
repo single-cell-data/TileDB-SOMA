@@ -124,6 +124,7 @@ class SCGroup():
         if self.verbose:
             print("  START  DECATEGORICALIZING")
 
+        # See also https://docs.scipy.org/doc/numpy-1.10.1/reference/arrays.dtypes.html
         uncat = lambda x: x.astype("O") if isinstance(x.dtype, pd.CategoricalDtype) else x
 
         obs  = pd.DataFrame.from_dict({k: uncat(v) for k,v in anndata.obs.items()})
