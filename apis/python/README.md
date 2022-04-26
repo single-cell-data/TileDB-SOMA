@@ -12,6 +12,9 @@ This is test code for reading ANN data and writing into a TileDB nested group st
 
 # Installation
 
+This requires [`tiledb`](https://github.com/TileDB-Inc/TileDB-Py) 0.14.1 or above, in addition to other dependencies
+in [setup.cfg](./setup.cfg).
+
 After `cd` to `apis/python`:
 
 ```
@@ -25,6 +28,8 @@ python -m venv venv
 . ./venv/bin/activate
 pip install .
 ```
+
+Then:
 
 ```
 python -m pytest tests
