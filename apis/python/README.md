@@ -12,6 +12,8 @@ This is test code for reading ANN data and writing into a TileDB nested group st
 
 # Installation
 
+After `cd` to `apis/python`:
+
 ```
 pip install --editable .
 ```
@@ -22,6 +24,10 @@ Optionally, if you prefer, instead:
 python -m venv venv
 . ./venv/bin/activate
 pip install .
+```
+
+```
+python -m pytest tests
 ```
 
 # Overview

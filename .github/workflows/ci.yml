@@ -36,11 +36,11 @@ jobs:
 
     - name: Install Python packages
       run: |
-        pip install -r util/requirements.txt
+        python -m pip install apis/python[ci]
 
     - name: Run pytests
       run: |
-        pytest
+        python -m pytest apis/python/tests
 
     - name: Build libtiledbsc
       shell: pwsh
