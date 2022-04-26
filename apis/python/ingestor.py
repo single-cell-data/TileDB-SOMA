@@ -19,7 +19,7 @@
 # Note this removes and recreates the destination TileDB group on each invocation.
 # ================================================================
 
-from mSCGroup import SCGroup
+import tiledbsc
 import sys, os, shutil
 
 input_path  = 'anndata/pbmc3k_processed.h5ad'
@@ -37,5 +37,5 @@ if not os.path.exists('tiledb-data'):
 if os.path.exists(output_path):
     shutil.rmtree(output_path) # Overwrite
 
-scdataset = SCGroup(output_path, verbose=True)
+scdataset = tiledbsc.SCGroup(output_path, verbose=True)
 scdataset.from_h5ad(input_path)

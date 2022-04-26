@@ -3,13 +3,5 @@ requires = [
     "setuptools>=42",
     "wheel",
     "setuptools_scm[toml]>=6.2",
-
-    "scipy",
-    "numpy",
-    "pandas",
-    "pyarrow",
-    "anndata",
-    "scanpy",
-    "tiledb",
 ]
 build-backend = "setuptools.build_meta"
