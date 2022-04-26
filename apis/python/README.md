@@ -87,6 +87,14 @@ OBSP KEYS ['distances', 'connectivities']
 VARP KEYS []
 ```
 
+See also:
+
+```
+h5ls     anndata/pbmc3k_processed.h5ad
+h5ls -r  anndata/pbmc3k_processed.h5ad
+h5ls -vr anndata/pbmc3k_processed.h5ad
+```
+
 </details>
 
 ## Expected ingestion progress
@@ -336,6 +344,13 @@ ArraySchema(
 ```
 
 </details>
+
+See also:
+
+```
+import tiledb
+print(tiledb.group.Group('tiledb-data/pbmc3k_processed')._dump(True))
+```
 
 ## Diversity of formats in HDF5 files
 

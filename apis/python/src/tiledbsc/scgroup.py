@@ -137,7 +137,7 @@ class SCGroup():
 
         anndata = ad.AnnData(
     	    X=anndata.X,
-            raw=anndata.raw,
+            raw=anndata.raw, # expect Python 'None' type when there is no raw -- assignment OK
     	    obs=obs,
     	    var=var,
     	    obsm=anndata.obsm,
