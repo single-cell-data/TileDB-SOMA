@@ -3,13 +3,25 @@ This is test code for reading ANN data and writing into a TileDB nested group st
 # TL;DR
 
 ```
-python setup.py install
-
 ./desc-ann.py ./anndata/pbmc3k_processed.h5ad
 
 ./ingestor.py ./anndata/pbmc3k_processed.h5ad ./tiledb-data/pbmc3k_processed
 
 ./desc-tiledb.py ./tiledb-data/pbmc3k_processed
+```
+
+# Installation
+
+```
+pip install --editable .
+```
+
+Optionally, if you prefer, instead:
+
+```
+python -m venv venv
+. ./venv/bin/activate
+pip install .
 ```
 
 # Overview

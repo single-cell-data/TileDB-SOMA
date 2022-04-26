@@ -7,8 +7,7 @@
 # ================================================================
 
 import sys, os
-from util_tiledb import show_tiledb_group_array_schemas
-from util_tiledb import show_single_cell_group
+import tiledbsc
 
 def main():
     if len(sys.argv) < 2:
@@ -16,7 +15,7 @@ def main():
         sys.exit(1)
 
     for uri in sys.argv[1:]:
-        show_single_cell_group(uri)
+        tiledbsc.util_tiledb.show_single_cell_group(uri)
 
 if __name__ == "__main__":
     main()

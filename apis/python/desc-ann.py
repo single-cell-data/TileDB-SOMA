@@ -13,7 +13,8 @@
 # ================================================================
 
 import sys
-from util_ann import describe_ann_file
+import tiledbsc
+#from tiledbsc.util_ann import describe_ann_file
 
 def main():
     if len(sys.argv) < 2:
@@ -21,7 +22,7 @@ def main():
         sys.exit(1)
 
     for input_path in sys.argv[1:]:
-        describe_ann_file(input_path)
+        tiledbsc.util_ann.describe_ann_file(input_path)
 
 if __name__ == "__main__":
     main()
