@@ -44,7 +44,6 @@ pip install .
 # Status
 
 * Input files beyond `./anndata/pbmc3k_processed.h5ad` need to be validated
-* Handling of the `raw.X` data as a layer within `X` needs to be implemented
 * The `uns` arrays from HDF5 files are currently not processed
 
 # Details
@@ -69,6 +68,8 @@ X IS A    <class 'numpy.ndarray'>
   X SHAPE   (2638, 1838)
   OBS  LEN  2638
   VAR  LEN  1838
+RAW X IS A    <class 'scipy.sparse._csr.csr_matrix'>
+  X SHAPE   (2638, 13714)
 OBS IS A <class 'pandas.core.frame.DataFrame'>
   OBS  KEYS ['n_genes', 'percent_mito', 'n_counts', 'louvain']
 VAR IS A <class 'pandas.core.frame.DataFrame'>
@@ -103,6 +104,8 @@ START  SCGroup.from_h5ad ./anndata/pbmc3k_processed.h5ad -> ./tiledb-data/pbmc3k
   START  WRITING ./tiledb-data/pbmc3k_processed
     START  WRITING ./tiledb-data/pbmc3k_processed/X/data
     FINISH WRITING ./tiledb-data/pbmc3k_processed/X/data
+    START  WRITING ./tiledb-data/pbmc3k_processed/X/raw
+    FINISH WRITING ./tiledb-data/pbmc3k_processed/X/raw
     START  WRITING ./tiledb-data/pbmc3k_processed/obs
     FINISH WRITING ./tiledb-data/pbmc3k_processed/obs
     START  WRITING ./tiledb-data/pbmc3k_processed/var
@@ -149,6 +152,28 @@ ArraySchema(
   ]),
   attrs=[
     Attr(name='data', dtype='float64', var=False, nullable=False),
+  ],
+  cell_order='row-major',
+  tile_order='row-major',
+  capacity=10000,
+  sparse=True,
+  allows_duplicates=False,
+)
+
+X/raw:
+keys ['raw', 'obs_id', 'var_id']
+OrderedDict([('raw', array([0.        , 0.        , 1.60943794, ..., 0.        , 0.        ,
+       0.        ])), ('obs_id', array([b'AAACATACAACCAC-1', b'AAACATTGAGCTAC-1', b'AAACATTGATCAGC-1', ...,
+       b'TTTGCATGAGAGGC-1', b'TTTGCATGCCTCAC-1', b'TTTGCATGCCTCAC-1'],
+      dtype=object)), ('var_id', array([b'7SK-2', b'7SK-2', b'7SK-2', ..., b'hsa-mir-8072',
+       b'hsa-mir-1199', b'hsa-mir-8072'], dtype=object))])
+ArraySchema(
+  domain=Domain(*[
+    Dim(name='obs_id', domain=(None, None), tile=None, dtype='|S0', var=True),
+    Dim(name='var_id', domain=(None, None), tile=None, dtype='|S0', var=True),
+  ]),
+  attrs=[
+    Attr(name='raw', dtype='float64', var=False, nullable=False),
   ],
   cell_order='row-major',
   tile_order='row-major',

@@ -2,7 +2,7 @@
 
 # ================================================================
 # This tool goes a bit beyond
-#   print(grp._dump(True))
+#   print(tiledb.group.Group('tiledb-data/pbmc3k_processed')._dump(True))
 # by also revealing array schema.
 # ================================================================
 

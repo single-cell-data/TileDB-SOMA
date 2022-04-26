@@ -12,44 +12,52 @@ def describe_ann_file(input_path):
     while for another HDF5 file we have anndata.X being of type 'scipy.sparse.csr.csr_matrix'.  This is
     crucial information for building I/O logic that accepts a diversity of anndata HDF5 files.
     """
-    h5ad_data = ad.read_h5ad(input_path)
-    h5ad_data.var_names_make_unique()
+    anndata = ad.read_h5ad(input_path)
+    anndata.var_names_make_unique()
 
     print()
     print("================================================================ {input_path}")
     print("ANNDATA SUMMARY:")
-    print(h5ad_data)
+    print(anndata)
 
-    print("X IS A   ", type(h5ad_data.X))
-    print("  X SHAPE  ", h5ad_data.X.shape)
-    print("  OBS  LEN ", len(h5ad_data.obs))
-    print("  VAR  LEN ", len(h5ad_data.var))
+    print("X IS A   ", type(anndata.X))
+    print("  X SHAPE  ", anndata.X.shape)
+    print("  OBS  LEN ", len(anndata.obs))
+    print("  VAR  LEN ", len(anndata.var))
 
-    print('OBS IS A', type(h5ad_data.obs))
-    print("  OBS  KEYS", [k for k in h5ad_data.obs.keys()])
-    print('VAR IS A', type(h5ad_data.var))
-    print("  VAR  KEYS", [k for k in h5ad_data.var.keys()])
+    try: # not all groups have raw X
+        print("RAW X IS A   ", type(anndata.raw.X))
+        print("  X SHAPE  ", anndata.raw.X.shape)
+        print("  OBS  LEN ", len(anndata.raw.X.obs_names))
+        print("  VAR  LEN ", len(anndata.raw.X.var_names))
+    except:
+        pass
 
-    print("OBSM KEYS", [k for k in h5ad_data.obsm.keys()])
-    for k in h5ad_data.obsm.keys():
-        print('  OBSM', k, 'IS A', type(h5ad_data.obsm[k]))
+    print('OBS IS A', type(anndata.obs))
+    print("  OBS  KEYS", [k for k in anndata.obs.keys()])
+    print('VAR IS A', type(anndata.var))
+    print("  VAR  KEYS", [k for k in anndata.var.keys()])
 
-    print("VARM KEYS", [k for k in h5ad_data.varm.keys()])
-    for k in h5ad_data.varm.keys():
-        print('  VARM', k, 'IS A', type(h5ad_data.varm[k]))
+    print("OBSM KEYS", [k for k in anndata.obsm.keys()])
+    for k in anndata.obsm.keys():
+        print('  OBSM', k, 'IS A', type(anndata.obsm[k]))
 
-    print("OBSP KEYS", [k for k in h5ad_data.obsp.keys()])
-    for k in h5ad_data.obsp.keys():
-        print('  OBSP', k, 'IS A', type(h5ad_data.obsp[k]))
+    print("VARM KEYS", [k for k in anndata.varm.keys()])
+    for k in anndata.varm.keys():
+        print('  VARM', k, 'IS A', type(anndata.varm[k]))
 
-    print("VARP KEYS", [k for k in h5ad_data.varp.keys()])
-    for k in h5ad_data.varp.keys():
-        print('  VARP', k, type(h5ad_data.varp[k]))
+    print("OBSP KEYS", [k for k in anndata.obsp.keys()])
+    for k in anndata.obsp.keys():
+        print('  OBSP', k, 'IS A', type(anndata.obsp[k]))
+
+    print("VARP KEYS", [k for k in anndata.varp.keys()])
+    for k in anndata.varp.keys():
+        print('  VARP', k, type(anndata.varp[k]))
 
     # Defer unstructured data for now:
-    # print("UNS  KEYS", [k for k in h5ad_data.uns.keys()])
+    # print("UNS  KEYS", [k for k in anndata.uns.keys()])
     # print()
-    # show_uns_types(h5ad_data.uns)
+    # show_uns_types(anndata.uns)
 
 # ----------------------------------------------------------------
 def show_uns_types(uns, depth=0):

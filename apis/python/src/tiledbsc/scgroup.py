@@ -137,6 +137,7 @@ class SCGroup():
 
         anndata = ad.AnnData(
     	    X=anndata.X,
+            raw=anndata.raw,
     	    obs=obs,
     	    var=var,
     	    obsm=anndata.obsm,
@@ -205,6 +206,7 @@ class SCGroup():
         tiledb.group_create(X_uri)
         X_group = tiledb.Group(X_uri, "w")
 
+        # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         X_data_uri = os.path.join(X_uri, "data")
         if self.verbose:
             print(f"    START  WRITING {X_data_uri}")
@@ -238,6 +240,45 @@ class SCGroup():
         X_group.add(uri=X_data_uri, relative=False, name="data")
         if self.verbose:
             print(f"    FINISH WRITING {X_data_uri}")
+
+        # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+        has_raw = False
+        try:
+            anndata.raw.X.shape
+            has_raw = True
+        except:
+            pass
+
+        if has_raw:
+            X_raw_uri = os.path.join(X_uri, "raw")
+            if self.verbose:
+                print(f"    START  WRITING {X_raw_uri}")
+
+            obs_dim, var_dim = np.meshgrid(anndata.raw.obs_names, anndata.raw.var_names)
+
+            dom = tiledb.Domain(
+                tiledb.Dim(name="obs_id", domain=(None, None), dtype="ascii"),
+                tiledb.Dim(name="var_id", domain=(None, None), dtype="ascii"),
+            )
+            att = tiledb.Attr("raw")
+
+            sch = tiledb.ArraySchema(domain=dom, attrs=(att,), sparse=True)
+            tiledb.Array.create(X_raw_uri, sch)
+
+            input_as_np_array = anndata.raw.X
+            if isinstance(input_as_np_array, scipy.sparse.csr.csr_matrix):
+                input_as_np_array = input_as_np_array.toarray()
+            if isinstance(input_as_np_array, scipy.sparse.csc.csc_matrix):
+                input_as_np_array = input_as_np_array.toarray()
+
+            with tiledb.open(X_raw_uri, "w") as A:
+                A[np.ravel(obs_dim), np.ravel(var_dim)] = input_as_np_array.flatten()
+
+            X_group.add(uri=X_raw_uri, relative=False, name="raw")
+            if self.verbose:
+                print(f"    FINISH WRITING {X_raw_uri}")
+
+        # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
         X_group.close()
 

@@ -6,8 +6,11 @@ import tiledb
 def show_single_cell_group(uri):
     """
     Show some summary information about an ingested TileDB Single-Cell Group.
-    This goes a bit beyond `print(grp._dump(True))` by also revealing array schema,
+    This tool goes a bit beyond
+      `print(tiledb.group.Group('tiledb-data/pbmc3k_processed')._dump(True))`
+    by also revealing array schema.
     """
+
     print('================================================================')
     print('X/data:')
     with tiledb.open(uri+'/X/data') as A:
@@ -15,6 +18,17 @@ def show_single_cell_group(uri):
         print("keys", [k for k in df.keys()])
         print(df)
         print(A.schema)
+
+    # Not all groups have raw X data
+    try:
+        with tiledb.open(uri+'/X/raw') as A:
+            print('X/raw:')
+            df = A[:]
+            print("keys", [k for k in df.keys()])
+            print(df)
+            print(A.schema)
+    except:
+        pass
 
     print('----------------------------------------------------------------')
     print('obs:')
