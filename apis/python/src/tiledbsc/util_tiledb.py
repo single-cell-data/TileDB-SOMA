@@ -3,7 +3,7 @@
 import sys, os
 import tiledb
 
-def show_single_cell_group(uri):
+def show_single_cell_group(uri: str):
     """
     Show some summary information about an ingested TileDB Single-Cell Group.
     This tool goes a bit beyond
@@ -60,7 +60,7 @@ def show_single_cell_group(uri):
             # Not all groups have all four of obsm, obsp, varm, and varp.
             pass
 
-def show_tiledb_group_array_schemas(uri):
+def show_tiledb_group_array_schemas(uri: str):
     """
     Recursively show array schemas within a TileDB Group. This function is not specific to
     single-cell matrix-API data.

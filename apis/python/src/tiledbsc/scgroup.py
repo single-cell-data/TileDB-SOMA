@@ -27,7 +27,7 @@ class SCGroup():
     verbose: bool
 
     # ----------------------------------------------------------------
-    def __init__(self, uri, verbose=True):
+    def __init__(self, uri: str, verbose=True):
         """
         @description Create a new SCGroup object. The existing array group is
           opened at the specified array `uri` if one is present, otherwise a new
@@ -50,7 +50,7 @@ class SCGroup():
         # * data_uri is "tiledb://namespace/s3://bucketname/something/test1/X"
 
     # ----------------------------------------------------------------
-    def from_h5ad(self, input_path):
+    def from_h5ad(self, input_path: str):
         """
         Factory function to instantiate an SCGroup object from an input .h5ad file.
         """
@@ -67,7 +67,7 @@ class SCGroup():
             print(f"FINISH SCGroup.from_h5ad {input_path} -> {self.uri}")
 
     # ----------------------------------------------------------------
-    def from_10x(self, input_path):
+    def from_10x(self, input_path: str):
         """
         Factory function to instantiate an SCGroup object from an input 10X file.
         """
@@ -84,7 +84,7 @@ class SCGroup():
             print(f"FINISH SCGroup.from_10x {input_path} -> {self.uri}")
 
     # ----------------------------------------------------------------
-    def read_h5ad(self, input_path):
+    def read_h5ad(self, input_path: str):
         """
         File-ingestor for .h5ad files
         """
@@ -97,7 +97,7 @@ class SCGroup():
         return anndata
 
     # ----------------------------------------------------------------
-    def read_10x(self, input_path):
+    def read_10x(self, input_path: str):
         """
         File-ingestor for 10X files
         """
@@ -110,7 +110,7 @@ class SCGroup():
         return anndata
 
     # ----------------------------------------------------------------
-    def decategoricalize(self, anndata):
+    def decategoricalize(self, anndata: ad.AnnData):
         """
         Performs a typecast for the categorical datatype that pandas can handle.
         We cast this to Python 'object' which in this case means 'string'.
@@ -151,7 +151,7 @@ class SCGroup():
         return anndata
 
     # ----------------------------------------------------------------
-    def write_tiledb_group(self, anndata):
+    def write_tiledb_group(self, anndata: ad.AnnData):
         """
         Top-level writer method for creating a TileDB group for an SCGroup object.
         """
@@ -198,7 +198,7 @@ class SCGroup():
         base_group.close()
 
     # ----------------------------------------------------------------
-    def write_X(self, anndata):
+    def write_X(self, anndata: ad.AnnData):
         """
         Populates the X/ subgroup for an SCGroup object.
         """
@@ -295,7 +295,7 @@ class SCGroup():
         return X_uri
 
     # ----------------------------------------------------------------
-    def write_obs_or_var(self, obs_or_var_data, obs_or_var_name):
+    def write_obs_or_var(self, obs_or_var_data, obs_or_var_name: str):
         """
         Populates the obs/ or var/ subgroup for an SCGroup object.
         First argument is anndata.obs or anndata.var; second is "obs" or "var".  In the reference
@@ -330,7 +330,7 @@ class SCGroup():
         return obs_or_var_uri
 
     # ----------------------------------------------------------------
-    def write_annotation_matrices(self, annotation_matrices, name):
+    def write_annotation_matrices(self, annotation_matrices, name: str):
         """
         Populates the obsm/, varm/, obsp/, or varp/ subgroup for an SCGroup object.
         Input: anndata.obsm, anndata.varm, anndata.obsp, or anndata.varp, along with the name

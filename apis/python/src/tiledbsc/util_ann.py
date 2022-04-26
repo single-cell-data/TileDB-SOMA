@@ -5,7 +5,7 @@ import numpy as np
 import tiledb
 
 # ----------------------------------------------------------------
-def describe_ann_file(input_path):
+def describe_ann_file(input_path: str):
     """
     This is an anndata-describer that goes a bit beyond what h5ls does for us.
     In particular, it shows us that for one HDF5 file we have anndata.X being of type numpy.ndarray
