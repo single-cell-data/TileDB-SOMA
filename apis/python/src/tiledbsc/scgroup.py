@@ -220,7 +220,12 @@ class SCGroup():
             tiledb.Dim(name="var_id", domain=(None, None), dtype="ascii"),
         )
         att = tiledb.Attr("data")
-        sch = tiledb.ArraySchema(domain=dom, attrs=(att,), sparse=True)
+        sch = tiledb.ArraySchema(
+            domain=dom,
+            attrs=(att,),
+            sparse=True,
+            allows_duplicates=True,
+        )
         tiledb.Array.create(X_data_uri, sch)
 
         # Check for conversion from pandas if necessary.  For the pbmc3k_processed reference
@@ -262,7 +267,12 @@ class SCGroup():
             )
             att = tiledb.Attr("raw")
 
-            sch = tiledb.ArraySchema(domain=dom, attrs=(att,), sparse=True)
+            sch = tiledb.ArraySchema(
+                domain=dom,
+                attrs=(att,),
+                sparse=True,
+                allows_duplicates=True,
+            )
             tiledb.Array.create(X_raw_uri, sch)
 
             input_as_np_array = anndata.raw.X
