@@ -26,18 +26,11 @@ pip install .
 
 # Overview
 
-* Install: one of:
-  * Non-dev:
-    * `python setup.py install`
-    * `pip install .`
-  * Dev:
-    * `python setup.py develop`
-    * `pip install --editable .`
 * Sample data:
   * [anndata](./anndata) contains some files from [https://cellxgene.cziscience.com](https://cellxgene.cziscience.com)
   * The most important reference is `anndata/pbmc3k_processed.h5ad`
 * Code:
-  * [mSCGroup.py](./mSCGroup.py)
+  * [./src/tiledbsc](./src/tiledbsc)
 * Inspecting HD5 input files
   * `./desc-ann.py ./anndata/pbmc3k_processed.h5ad`
 * Ingesting

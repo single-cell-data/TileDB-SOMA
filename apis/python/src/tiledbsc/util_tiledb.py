@@ -1,17 +1,12 @@
 #!/usr/bin/env python
 
-# ================================================================
-# This tool goes a bit beyond
-#   print(grp._dump(True))
-# by also revealing array schema.
-# ================================================================
-
 import sys, os
 import tiledb
 
 def show_single_cell_group(uri):
     """
     Show some summary information about an ingested TileDB Single-Cell Group.
+    This goes a bit beyond `print(grp._dump(True))` by also revealing array schema,
     """
     print('================================================================')
     print('X/data:')

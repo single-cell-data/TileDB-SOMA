@@ -1,20 +1,3 @@
-# ================================================================
-# A simple class for ingestion of anndata to a TileDB group.
-#
-# * The write path (anndata/10X -> TileDB) is exercised here
-#
-# * A read path (TileDB -> anndata/10X) is a WIP.
-#
-# * The class structure in this source file is likely to change but the
-#   TileDB Groups this code creates should remain relatively stable, modulo
-#   updates to the Matrix API itself and/or any errors encountered during testing.
-#
-# * The filename is mSCGroup.py not SCGroup.py since if I have `SCGroup.py` with `class SCGroup`
-#   then I can’t do `from SCGroup import SCGroup`.
-#
-# * See also desc-ann.py in this directory for helpful information to
-#   reveal the diversity/variety of HD5 files we process.
-# ================================================================
 
 import os
 
@@ -29,14 +12,15 @@ import tiledb
 
 class SCGroup():
     """ Single-cell group
+    A simple class for ingestion of anndata to a TileDB group.
 
-    Class for representing a group of TileDB arrays that consitute an `sc_group`,
-    which includes:
-    - `X` ([`AssayMatrixGroup`]): a group of one or more labeled 2D sparse arrays
-      that share the same dimensions.
-    - `obs` ([`AnnotationDataframe`]): 1D labeled array with column labels for
-      `X`
-    - `var` ([`AnnotationDataframe`]): 1D labeled array with row labels for `X`
+    * The write path (anndata/10X -> TileDB) is exercised here
+    * A read path (TileDB -> anndata/10X) is a WIP.
+    * The class structure in this source file is likely to change but the
+      TileDB Groups this code creates should remain relatively stable, modulo
+      updates to the Matrix API itself and/or any errors encountered during testing.
+    * See also desc-ann.py in this directory for helpful information to
+      reveal the diversity/variety of HD5 files we process.
     """
 
     uri: str
@@ -67,6 +51,9 @@ class SCGroup():
 
     # ----------------------------------------------------------------
     def from_h5ad(self, input_path):
+        """
+        Factory function to instantiate an SCGroup object from an input .h5ad file.
+        """
         if self.verbose:
             print(f"START  SCGroup.from_h5ad {input_path} -> {self.uri}")
 
@@ -81,6 +68,9 @@ class SCGroup():
 
     # ----------------------------------------------------------------
     def from_10x(self, input_path):
+        """
+        Factory function to instantiate an SCGroup object from an input 10X file.
+        """
         if self.verbose:
             print(f"START  SCGroup.from_10x {input_path} -> {self.uri}")
 
@@ -95,6 +85,9 @@ class SCGroup():
 
     # ----------------------------------------------------------------
     def read_h5ad(self, input_path):
+        """
+        File-ingestor for .h5ad files
+        """
         if self.verbose:
             print(f"  START  READING {input_path}")
         anndata = ad.read_h5ad(input_path)
@@ -105,6 +98,9 @@ class SCGroup():
 
     # ----------------------------------------------------------------
     def read_10x(self, input_path):
+        """
+        File-ingestor for 10X files
+        """
         if self.verbose:
             print(f"  START  READING {input_path}")
         anndata = scanpy.read_10x_h5(input_path)
@@ -155,6 +151,9 @@ class SCGroup():
 
     # ----------------------------------------------------------------
     def write_tiledb_group(self, anndata):
+        """
+        Top-level writer method for creating a TileDB group for an SCGroup object.
+        """
         if self.verbose:
             print(f"  START  WRITING {self.uri}")
 
@@ -199,6 +198,9 @@ class SCGroup():
 
     # ----------------------------------------------------------------
     def write_X(self, anndata):
+        """
+        Populates the X/ subgroup for an SCGroup object.
+        """
         X_uri = os.path.join(self.uri, "X")
         tiledb.group_create(X_uri)
         X_group = tiledb.Group(X_uri, "w")
@@ -233,6 +235,7 @@ class SCGroup():
     # ----------------------------------------------------------------
     def write_obs_or_var(self, obs_or_var_data, obs_or_var_name):
         """
+        Populates the obs/ or var/ subgroup for an SCGroup object.
         First argument is anndata.obs or anndata.var; second is "obs" or "var".  In the reference
         pbmc3k_processed dataset, these are of type pandas.core.frame.DataFrame. In further
         testing we may need to switch on the datatype.
@@ -269,6 +272,7 @@ class SCGroup():
     # ----------------------------------------------------------------
     def write_annotation_matrices(self, annotation_matrices, name):
         """
+        Populates the obsm/, varm/, obsp/, or varp/ subgroup for an SCGroup object.
         Input: anndata.obsm, anndata.varm, anndata.obsp, or anndata.varp, along with the name
         "obsm", "varm", "obsp", or "varp", respectively. Each component array from the HD5 file
         should be a numpy.ndarray or scipy.sparse.csr.csr_matrix.  Writes the TileDB obsm, varm,
