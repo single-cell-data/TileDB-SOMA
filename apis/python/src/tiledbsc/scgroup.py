@@ -306,7 +306,6 @@ class SCGroup():
         offsets_filters = tiledb.FilterList(
             [tiledb.PositiveDeltaFilter(), tiledb.ZstdFilter(level=-1)]
         )
-        coords_filters = tiledb.FilterList([tiledb.ZstdFilter(level=-1)])
         dim_filters = tiledb.FilterList([tiledb.ZstdFilter(level=-1)])
         attr_filters = tiledb.FilterList([tiledb.ZstdFilter(level=-1)])
 
@@ -320,7 +319,6 @@ class SCGroup():
             name=obs_or_var_name,
             sparse=True,
             allows_duplicates=False,
-            coords_filters=coords_filters,
             offsets_filters=offsets_filters,
             attr_filters=attr_filters,
             dim_filters=dim_filters
