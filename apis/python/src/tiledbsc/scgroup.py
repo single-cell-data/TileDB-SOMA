@@ -1,5 +1,5 @@
-
 import os
+from typing import Optional
 
 import anndata as ad
 import numpy   as np
@@ -25,9 +25,11 @@ class SCGroup():
 
     uri: str
     verbose: bool
+    config: tiledb.Config
+    ctx: tiledb.Ctx
 
     # ----------------------------------------------------------------
-    def __init__(self, uri: str, verbose=True):
+    def __init__(self, uri: str, verbose: bool = True, config: Optional[tiledb.Config] = None, ctx: Optional[tiledb.Ctx] = None):
         """
         @description Create a new SCGroup object. The existing array group is
           opened at the specified array `uri` if one is present, otherwise a new
@@ -38,6 +40,11 @@ class SCGroup():
 
         self.uri = uri
         self.verbose = verbose
+        self.config = config
+        self.ctx = ctx
+
+        if self.ctx is None and self.config is not None:
+            self.ctx = tiledb.Ctx(self.config)
 
         # If URI is "/something/test1" then:
         # * obs_uri  is "/something/test1/obs"
@@ -123,8 +130,8 @@ class SCGroup():
         # See also https://docs.scipy.org/doc/numpy-1.10.1/reference/arrays.dtypes.html
         uncat = lambda x: x.astype("O") if isinstance(x.dtype, pd.CategoricalDtype) else x
 
-        obs  = pd.DataFrame.from_dict({k: uncat(v) for k,v in anndata.obs.items()})
-        var  = pd.DataFrame.from_dict({k: uncat(v) for k,v in anndata.var.items()})
+        obs = pd.DataFrame.from_dict({k: uncat(v) for k, v in anndata.obs.items()})
+        var = pd.DataFrame.from_dict({k: uncat(v) for k, v in anndata.var.items()})
 
         for key in anndata.obsm.keys():
             anndata.obsm[key] = uncat(anndata.obsm[key])
@@ -136,14 +143,14 @@ class SCGroup():
             anndata.varp[key] = uncat(anndata.varp[key])
 
         anndata = ad.AnnData(
-    	    X=anndata.X,
-            raw=anndata.raw, # expect Python 'None' type when there is no raw -- assignment OK
-    	    obs=obs,
-    	    var=var,
-    	    obsm=anndata.obsm,
-    	    obsp=anndata.obsp,
-    	    varm=anndata.varm,
-    	    varp=anndata.varp,
+            X=anndata.X,
+            raw=anndata.raw,  # expect Python 'None' type when there is no raw -- assignment OK
+            obs=obs,
+            var=var,
+            obsm=anndata.obsm,
+            obsp=anndata.obsp,
+            varm=anndata.varm,
+            varp=anndata.varp,
         )
 
         if self.verbose:
@@ -160,8 +167,8 @@ class SCGroup():
 
         # ----------------------------------------------------------------
         # Must be done first, to create the parent directory
-        tiledb.group_create(self.uri)
-        base_group = tiledb.Group(self.uri, "w")
+        tiledb.group_create(self.uri, ctx=self.ctx)
+        base_group = tiledb.Group(self.uri, mode="w", ctx=self.ctx)
 
         # ----------------------------------------------------------------
         X_uri = self.write_X(anndata)
@@ -203,8 +210,8 @@ class SCGroup():
         Populates the X/ subgroup for an SCGroup object.
         """
         X_uri = os.path.join(self.uri, "X")
-        tiledb.group_create(X_uri)
-        X_group = tiledb.Group(X_uri, "w")
+        tiledb.group_create(X_uri, ctx=self.ctx)
+        X_group = tiledb.Group(X_uri, mode="w", ctx=self.ctx)
 
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         X_data_uri = os.path.join(X_uri, "data")
@@ -218,15 +225,17 @@ class SCGroup():
         dom = tiledb.Domain(
             tiledb.Dim(name="obs_id", domain=(None, None), dtype="ascii"),
             tiledb.Dim(name="var_id", domain=(None, None), dtype="ascii"),
+            ctx=self.ctx
         )
-        att = tiledb.Attr("data")
+        att = tiledb.Attr("data", ctx=self.ctx)
         sch = tiledb.ArraySchema(
             domain=dom,
             attrs=(att,),
             sparse=True,
             allows_duplicates=True,
+            ctx=self.ctx
         )
-        tiledb.Array.create(X_data_uri, sch)
+        tiledb.Array.create(X_data_uri, sch, ctx=self.ctx)
 
         # Check for conversion from pandas if necessary.  For the pbmc3k_processed reference
         # dataset, obsm and varm matrices are numpy.ndarray while obsp matrices are
@@ -239,7 +248,7 @@ class SCGroup():
         if isinstance(input_as_np_array, scipy.sparse.csc.csc_matrix):
             input_as_np_array = input_as_np_array.toarray()
 
-        with tiledb.open(X_data_uri, "w") as A:
+        with tiledb.open(X_data_uri, mode="w", ctx=self.ctx) as A:
             A[np.ravel(obs_dim), np.ravel(var_dim)] = input_as_np_array.flatten()
 
         X_group.add(uri=X_data_uri, relative=False, name="data")
@@ -264,16 +273,18 @@ class SCGroup():
             dom = tiledb.Domain(
                 tiledb.Dim(name="obs_id", domain=(None, None), dtype="ascii"),
                 tiledb.Dim(name="var_id", domain=(None, None), dtype="ascii"),
+                ctx=self.ctx
             )
-            att = tiledb.Attr("raw")
+            att = tiledb.Attr("raw", ctx=self.ctx)
 
             sch = tiledb.ArraySchema(
                 domain=dom,
                 attrs=(att,),
                 sparse=True,
                 allows_duplicates=True,
+                ctx=self.ctx
             )
-            tiledb.Array.create(X_raw_uri, sch)
+            tiledb.Array.create(X_raw_uri, sch, ctx=self.ctx)
 
             input_as_np_array = anndata.raw.X
             if isinstance(input_as_np_array, scipy.sparse.csr.csr_matrix):
@@ -281,7 +292,7 @@ class SCGroup():
             if isinstance(input_as_np_array, scipy.sparse.csc.csc_matrix):
                 input_as_np_array = input_as_np_array.toarray()
 
-            with tiledb.open(X_raw_uri, "w") as A:
+            with tiledb.open(X_raw_uri, mode="w", ctx=self.ctx) as A:
                 A[np.ravel(obs_dim), np.ravel(var_dim)] = input_as_np_array.flatten()
 
             X_group.add(uri=X_raw_uri, relative=False, name="raw")
@@ -302,7 +313,7 @@ class SCGroup():
         pbmc3k_processed dataset, these are of type pandas.core.frame.DataFrame. In further
         testing we may need to switch on the datatype.
         """
-    
+
         offsets_filters = tiledb.FilterList(
             [tiledb.PositiveDeltaFilter(), tiledb.ZstdFilter(level=-1)]
         )
@@ -321,7 +332,8 @@ class SCGroup():
             allows_duplicates=False,
             offsets_filters=offsets_filters,
             attr_filters=attr_filters,
-            dim_filters=dim_filters
+            dim_filters=dim_filters,
+            ctx=self.ctx
         )
 
         if self.verbose:
@@ -340,8 +352,8 @@ class SCGroup():
         under that.
         """
         subgroup_uri = os.path.join(self.uri, name)
-        tiledb.group_create(subgroup_uri)
-        subgroup = tiledb.Group(subgroup_uri, "w")
+        tiledb.group_create(subgroup_uri, ctx=self.ctx)
+        subgroup = tiledb.Group(subgroup_uri, mode="w", ctx=self.ctx)
         for name in annotation_matrices.keys():
             component_array_uri = os.path.join(subgroup_uri, name)
             if self.verbose:
@@ -358,7 +370,8 @@ class SCGroup():
 
             tiledb.from_numpy(
                 uri=component_array_uri,
-                array=input_as_np_array
+                array=input_as_np_array,
+                ctx=self.ctx
             )
 
             if self.verbose:
