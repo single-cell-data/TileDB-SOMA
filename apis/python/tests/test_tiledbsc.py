@@ -35,20 +35,20 @@ def test_import_anndata(request):
     # Check X/data
     with tiledb.open(os.path.join(output_path, 'X', 'data')) as A:
         df = A[:]
-        keys = [k for k in df.keys()]
+        keys = list(df.keys())
         assert keys == ['data', 'obs_id', 'var_id']
         assert A.ndim == 2
 
     # Check obs
     with tiledb.open(os.path.join(output_path, 'obs')) as A:
         df = A[:]
-        keys = [k for k in df.keys()]
+        keys = list(df.keys())
         assert keys == ['n_genes', 'percent_mito', 'n_counts', 'louvain', 'index']
 
     # Check var
     with tiledb.open(os.path.join(output_path, 'var')) as A:
         df = A[:]
-        keys = [k for k in df.keys()]
+        keys = list(df.keys())
         assert keys == ['n_cells', 'index']
 
     # Check some annotation matrices

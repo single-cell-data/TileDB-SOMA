@@ -34,29 +34,27 @@ def describe_ann_file(input_path):
         pass
 
     print('OBS IS A', type(anndata.obs))
-    print("  OBS  KEYS", [k for k in anndata.obs.keys()])
+    print("  OBS  KEYS", list(anndata.obs.keys()))
     print('VAR IS A', type(anndata.var))
-    print("  VAR  KEYS", [k for k in anndata.var.keys()])
+    print("  VAR  KEYS", list(anndata.var.keys()))
 
-    print("OBSM KEYS", [k for k in anndata.obsm.keys()])
+    print("OBSM KEYS", list(anndata.obsm.keys()))
     for k in anndata.obsm.keys():
         print('  OBSM', k, 'IS A', type(anndata.obsm[k]))
 
-    print("VARM KEYS", [k for k in anndata.varm.keys()])
+    print("VARM KEYS", list(anndata.varm.keys()))
     for k in anndata.varm.keys():
         print('  VARM', k, 'IS A', type(anndata.varm[k]))
 
-    print("OBSP KEYS", [k for k in anndata.obsp.keys()])
+    print("OBSP KEYS", list(anndata.obsp.keys()))
     for k in anndata.obsp.keys():
         print('  OBSP', k, 'IS A', type(anndata.obsp[k]))
 
-    print("VARP KEYS", [k for k in anndata.varp.keys()])
+    print("VARP KEYS", list(anndata.varp.keys()))
     for k in anndata.varp.keys():
         print('  VARP', k, type(anndata.varp[k]))
 
     # Defer unstructured data for now:
-    # print("UNS  KEYS", [k for k in anndata.uns.keys()])
-    # print()
     # show_uns_types(anndata.uns)
 
 # ----------------------------------------------------------------

@@ -15,7 +15,7 @@ def show_single_cell_group(uri):
     print('X/data:')
     with tiledb.open(os.path.join(uri, 'X', 'data')) as A:
         df = A[:]
-        print("keys", [k for k in df.keys()])
+        print("keys", list(df.keys()))
         print(df)
         print(A.schema)
 
@@ -24,7 +24,7 @@ def show_single_cell_group(uri):
         with tiledb.open(uri+'/X/raw') as A:
             print('X/raw:')
             df = A[:]
-            print("keys", [k for k in df.keys()])
+            print("keys", list(df.keys()))
             print(df)
             print(A.schema)
     except:
@@ -34,14 +34,14 @@ def show_single_cell_group(uri):
     print('obs:')
     with tiledb.open(os.path.join(uri, 'obs')) as A:
         df = A[:]
-        print("keys", [k for k in df.keys()])
+        print("keys", list(df.keys()))
         print(A.schema)
 
     print('----------------------------------------------------------------')
     print('var:')
     with tiledb.open(os.path.join(uri, 'var')) as A:
         df = A[:]
-        print("keys", [k for k in df.keys()])
+        print("keys", list(df.keys()))
         print(A.schema)
 
     for name in ['obsm', 'varm', 'obsp', 'varp']:
