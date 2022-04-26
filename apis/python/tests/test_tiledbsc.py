@@ -33,42 +33,34 @@ def test_import_anndata(request):
     #   obsp/connectivities
 
     # Check X/data
-
-    # Note: intentionally avoiding syntax `with tiledb.open(...) as A:`
-    # to make this easier to interact with in the Python interpreter.
-    A = tiledb.open(os.path.join(output_path, 'X', 'data'))
-    df = A[:]
-    keys = [k for k in df.keys()]
-    assert keys == ['data', 'obs_id', 'var_id']
-    assert A.ndim == 2
-    A.close()
+    with tiledb.open(os.path.join(output_path, 'X', 'data')) as A:
+        df = A[:]
+        keys = [k for k in df.keys()]
+        assert keys == ['data', 'obs_id', 'var_id']
+        assert A.ndim == 2
 
     # Check obs
-    A = tiledb.open(os.path.join(output_path, 'obs'))
-    df = A[:]
-    keys = [k for k in df.keys()]
-    assert keys == ['n_genes', 'percent_mito', 'n_counts', 'louvain', 'index']
+    with tiledb.open(os.path.join(output_path, 'obs')) as A:
+        df = A[:]
+        keys = [k for k in df.keys()]
+        assert keys == ['n_genes', 'percent_mito', 'n_counts', 'louvain', 'index']
 
     # Check var
-    A = tiledb.open(os.path.join(output_path, 'var'))
-    df = A[:]
-    keys = [k for k in df.keys()]
-    assert keys == ['n_cells', 'index']
-    A.close()
+    with tiledb.open(os.path.join(output_path, 'var')) as A:
+        df = A[:]
+        keys = [k for k in df.keys()]
+        assert keys == ['n_cells', 'index']
 
     # Check some annotation matrices
     # Note: pbmc3k_processed doesn't have varp.
 
-    A = tiledb.open(os.path.join(output_path, 'obsm', 'X_pca'))
-    assert A.shape == (2638, 50)
-    A.close()
+    with tiledb.open(os.path.join(output_path, 'obsm', 'X_pca')) as A:
+        assert A.shape == (2638, 50)
 
-    A = tiledb.open(os.path.join(output_path, 'varm', 'PCs'))
-    assert A.shape == (1838, 50)
-    A.close()
+    with tiledb.open(os.path.join(output_path, 'varm', 'PCs')) as A:
+        assert A.shape == (1838, 50)
 
-    A = tiledb.open(os.path.join(output_path, 'obsp', 'connectivities'))
-    assert A.shape == (2638, 2638)
-    A.close()
+    with tiledb.open(os.path.join(output_path, 'obsp', 'connectivities')) as A:
+        assert A.shape == (2638, 2638)
 
     tempdir.cleanup()
