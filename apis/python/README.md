@@ -440,3 +440,9 @@ done
 
 </details>
 
+# Notes
+
+* `os.path.join` is used here but may not be appropriate if this package is run on Windows:
+  * `/` has been accepted in Windows paths for some years now
+  * `\` is not accepted for forming URIs
+  * So, perhaps safer would be to always join on `/` regardless of platform.

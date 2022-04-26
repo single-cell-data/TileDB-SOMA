@@ -13,7 +13,7 @@ def show_single_cell_group(uri):
 
     print('================================================================')
     print('X/data:')
-    with tiledb.open(uri+'/X/data') as A:
+    with tiledb.open(os.path.join(uri, 'X', 'data')) as A:
         df = A[:]
         print("keys", [k for k in df.keys()])
         print(df)
@@ -32,21 +32,21 @@ def show_single_cell_group(uri):
 
     print('----------------------------------------------------------------')
     print('obs:')
-    with tiledb.open(uri+'/obs') as A:
+    with tiledb.open(os.path.join(uri, 'obs')) as A:
         df = A[:]
         print("keys", [k for k in df.keys()])
         print(A.schema)
 
     print('----------------------------------------------------------------')
     print('var:')
-    with tiledb.open(uri+'/var') as A:
+    with tiledb.open(os.path.join(uri, 'var')) as A:
         df = A[:]
         print("keys", [k for k in df.keys()])
         print(A.schema)
 
     for name in ['obsm', 'varm', 'obsp', 'varp']:
         try:
-            grp = tiledb.Group(uri+'/'+name, 'r')
+            grp = tiledb.Group(os.path.join(uri, name), 'r')
             print()
             print('----------------------------------------------------------------')
             print(name, ':', sep='')
