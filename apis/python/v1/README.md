@@ -7,7 +7,7 @@
 # Running the v1 code
 
 Note that `anndata_to_tiledb.py` has an `if __name__ == "__main__":` allowing us to run it from
-the command line, with input HD5 file as `argv[1]` and output TileDB directory name as `argv[2]`.
+the command line, with input HDF5 file as `argv[1]` and output TileDB directory name as `argv[2]`.
 
 ```
 $ pwd
@@ -46,5 +46,5 @@ ArraySchema(
 Discussion:
 
 * `../../data/10x-pbmc-multiome-v1.0/subset_100_100.h5ad subset_100_100` is raw off-the-hardware data
-* In the HD5 file we read, there is `X`, `obs`, `var`
+* In the HDF5 file we read, there is `X`, `obs`, `var`
 * In the TileDB group we write, there is `X` as an array, `obs`, and `var`

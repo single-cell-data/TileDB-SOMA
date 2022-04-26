@@ -10,7 +10,7 @@
 # * Invoke this with one argument /path/to/some/somename.h5ad:
 #   o Output will be ./tiledb-data/somename
 #
-# * Invoke this with two arguments to specify input anndata HD5 file
+# * Invoke this with two arguments to specify input anndata HDF5 file
 #   and output TileDB group.
 #
 # Nominal immediate-term support is to local disk, although output to tiledb:/...

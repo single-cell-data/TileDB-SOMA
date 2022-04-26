@@ -8,9 +8,9 @@ import tiledb
 def describe_ann_file(input_path):
     """
     This is an anndata-describer that goes a bit beyond what h5ls does for us.
-    In particular, it shows us that for one HD5 file we have anndata.X being of type numpy.ndarray
-    while for another HD5 file we have anndata.X being of type 'scipy.sparse.csr.csr_matrix'.  This is
-    crucial information for building I/O logic that accepts a diversity of anndata HD5 files.
+    In particular, it shows us that for one HDF5 file we have anndata.X being of type numpy.ndarray
+    while for another HDF5 file we have anndata.X being of type 'scipy.sparse.csr.csr_matrix'.  This is
+    crucial information for building I/O logic that accepts a diversity of anndata HDF5 files.
     """
     h5ad_data = ad.read_h5ad(input_path)
     h5ad_data.var_names_make_unique()

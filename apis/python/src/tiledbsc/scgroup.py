@@ -20,7 +20,7 @@ class SCGroup():
       TileDB Groups this code creates should remain relatively stable, modulo
       updates to the Matrix API itself and/or any errors encountered during testing.
     * See also desc-ann.py in this directory for helpful information to
-      reveal the diversity/variety of HD5 files we process.
+      reveal the diversity/variety of HDF5 files we process.
     """
 
     uri: str
@@ -221,8 +221,19 @@ class SCGroup():
         sch = tiledb.ArraySchema(domain=dom, attrs=(att,), sparse=True)
         tiledb.Array.create(X_data_uri, sch)
 
+        # Check for conversion from pandas if necessary.  For the pbmc3k_processed reference
+        # dataset, obsm and varm matrices are numpy.ndarray while obsp matrices are
+        # scipy.sparse.csr.csr_matrix. For ongoing work we will likely need more checks
+        # here. See also desc-ann.py in this directory which helps reveal the datatypes
+        # contained within a given HDF5 file.
+        input_as_np_array = anndata.X
+        if isinstance(input_as_np_array, scipy.sparse.csr.csr_matrix):
+            input_as_np_array = input_as_np_array.toarray()
+        if isinstance(input_as_np_array, scipy.sparse.csc.csc_matrix):
+            input_as_np_array = input_as_np_array.toarray()
+
         with tiledb.open(X_data_uri, "w") as A:
-            A[np.ravel(obs_dim), np.ravel(var_dim)] = anndata.X.flatten()
+            A[np.ravel(obs_dim), np.ravel(var_dim)] = input_as_np_array.flatten()
 
         X_group.add(uri=X_data_uri, relative=False, name="data")
         if self.verbose:
@@ -274,7 +285,7 @@ class SCGroup():
         """
         Populates the obsm/, varm/, obsp/, or varp/ subgroup for an SCGroup object.
         Input: anndata.obsm, anndata.varm, anndata.obsp, or anndata.varp, along with the name
-        "obsm", "varm", "obsp", or "varp", respectively. Each component array from the HD5 file
+        "obsm", "varm", "obsp", or "varp", respectively. Each component array from the HDF5 file
         should be a numpy.ndarray or scipy.sparse.csr.csr_matrix.  Writes the TileDB obsm, varm,
         obsp, or varp group under the base scgroup URI, and then writes all the component arrays
         under that.
@@ -291,7 +302,7 @@ class SCGroup():
             # dataset, obsm and varm matrices are numpy.ndarray while obsp matrices are
             # scipy.sparse.csr.csr_matrix. For ongoing work we will likely need more checks
             # here. See also desc-ann.py in this directory which helps reveal the datatypes
-            # contained within a given HD5 file.
+            # contained within a given HDF5 file.
             input_as_np_array = annotation_matrices[name]
             if isinstance(input_as_np_array, scipy.sparse.csr.csr_matrix):
                 input_as_np_array = input_as_np_array.toarray()

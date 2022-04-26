@@ -14,7 +14,6 @@
 
 import sys
 import tiledbsc
-#from tiledbsc.util_ann import describe_ann_file
 
 def main():
     if len(sys.argv) < 2:

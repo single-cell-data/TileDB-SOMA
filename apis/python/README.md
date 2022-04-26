@@ -31,7 +31,7 @@ pip install .
   * The most important reference is `anndata/pbmc3k_processed.h5ad`
 * Code:
   * [./src/tiledbsc](./src/tiledbsc)
-* Inspecting HD5 input files
+* Inspecting HDF5 input files
   * `./desc-ann.py ./anndata/pbmc3k_processed.h5ad`
 * Ingesting
   * `./ingestor.py ./anndata/pbmc3k_processed.h5ad`
@@ -45,7 +45,7 @@ pip install .
 
 * Input files beyond `./anndata/pbmc3k_processed.h5ad` need to be validated
 * Handling of the `raw.X` data as a layer within `X` needs to be implemented
-* The `uns` arrays from HD5 files are currently not processed
+* The `uns` arrays from HDF5 files are currently not processed
 
 # Details
 
@@ -311,3 +311,92 @@ ArraySchema(
 ```
 
 </details>
+
+## Diversity of formats in HDF5 files
+
+Due to file-size restrictions on GitHub, not all the following are cached in this repo.
+Nonetheless this is a selection from
+[https://cellxgene.cziscience.com](https://cellxgene.cziscience.com), as well as some
+raw-sensor data (`subset_100_100`):
+
+<details>
+
+```
+for x in $(ls -Sr ~/ann/*.h5ad); do
+  echo ================================================== $x
+   ./desc-ann.py $x | grep IS.A
+done
+```
+
+```
+================================================== /Users/johnkerl/ann/subset_100_100.h5ad
+X IS A    <class 'scipy.sparse._csr.csr_matrix'>
+OBS IS A <class 'pandas.core.frame.DataFrame'>
+VAR IS A <class 'pandas.core.frame.DataFrame'>
+================================================== /Users/johnkerl/ann/pbmc3k_processed.h5ad
+X IS A    <class 'numpy.ndarray'>
+OBS IS A <class 'pandas.core.frame.DataFrame'>
+VAR IS A <class 'pandas.core.frame.DataFrame'>
+  OBSM X_pca IS A <class 'numpy.ndarray'>
+  OBSM X_tsne IS A <class 'numpy.ndarray'>
+  OBSM X_umap IS A <class 'numpy.ndarray'>
+  OBSM X_draw_graph_fr IS A <class 'numpy.ndarray'>
+  VARM PCs IS A <class 'numpy.ndarray'>
+  OBSP distances IS A <class 'scipy.sparse._csr.csr_matrix'>
+  OBSP connectivities IS A <class 'scipy.sparse._csr.csr_matrix'>
+================================================== /Users/johnkerl/ann/local3.h5ad
+X IS A    <class 'scipy.sparse._csr.csr_matrix'>
+OBS IS A <class 'pandas.core.frame.DataFrame'>
+VAR IS A <class 'pandas.core.frame.DataFrame'>
+  OBSM X_umap IS A <class 'numpy.ndarray'>
+================================================== /Users/johnkerl/ann/human-kidney-tumors-wilms.h5ad
+X IS A    <class 'scipy.sparse._csr.csr_matrix'>
+OBS IS A <class 'pandas.core.frame.DataFrame'>
+VAR IS A <class 'pandas.core.frame.DataFrame'>
+  OBSM X_pca IS A <class 'numpy.ndarray'>
+  OBSM X_umap IS A <class 'numpy.ndarray'>
+================================================== /Users/johnkerl/ann/longitudinal-profiling-49.h5ad
+X IS A    <class 'scipy.sparse._csr.csr_matrix'>
+OBS IS A <class 'pandas.core.frame.DataFrame'>
+VAR IS A <class 'pandas.core.frame.DataFrame'>
+  OBSM X_umap IS A <class 'numpy.ndarray'>
+================================================== /Users/johnkerl/ann/single-cell-transcriptomes.h5ad
+X IS A    <class 'scipy.sparse._csr.csr_matrix'>
+OBS IS A <class 'pandas.core.frame.DataFrame'>
+VAR IS A <class 'pandas.core.frame.DataFrame'>
+  OBSM X_pca IS A <class 'numpy.ndarray'>
+  OBSM X_umap IS A <class 'numpy.ndarray'>
+================================================== /Users/johnkerl/ann/vieira19_Alveoli_and_parenchyma_anonymised.processed.h5ad
+X IS A    <class 'scipy.sparse._csc.csc_matrix'>
+OBS IS A <class 'pandas.core.frame.DataFrame'>
+VAR IS A <class 'pandas.core.frame.DataFrame'>
+  OBSM X_umap_hm IS A <class 'numpy.ndarray'>
+  VARM PCs IS A <class 'numpy.ndarray'>
+================================================== /Users/johnkerl/ann/local2.h5ad
+X IS A    <class 'scipy.sparse._csr.csr_matrix'>
+OBS IS A <class 'pandas.core.frame.DataFrame'>
+VAR IS A <class 'pandas.core.frame.DataFrame'>
+  OBSM X_umap IS A <class 'numpy.ndarray'>
+================================================== /Users/johnkerl/ann/acute-covid19-cohort.h5ad
+X IS A    <class 'scipy.sparse._csr.csr_matrix'>
+OBS IS A <class 'pandas.core.frame.DataFrame'>
+VAR IS A <class 'pandas.core.frame.DataFrame'>
+  OBSM X_umap IS A <class 'numpy.ndarray'>
+================================================== /Users/johnkerl/ann/autoimmunity-pbmcs.h5ad
+X IS A    <class 'scipy.sparse._csr.csr_matrix'>
+OBS IS A <class 'pandas.core.frame.DataFrame'>
+VAR IS A <class 'pandas.core.frame.DataFrame'>
+  OBSM X_umap IS A <class 'numpy.ndarray'>
+```
+
+See also:
+
+```
+for x in ~/ann/*.h5ad; do
+  echo ================================================ $x
+  h5ls $x
+done
+```
+
+</details>
+
