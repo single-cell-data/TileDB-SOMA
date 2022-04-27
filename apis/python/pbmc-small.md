@@ -1,6 +1,6 @@
 # Overview
 
-Compare `pbmc_small` aw written by
+Compare `pbmc_small` as written by
 
 * `tiledbsc-r`: [https://github.com/TileDB-Inc/tiledbsc](https://github.com/TileDB-Inc/tiledbsc)
 * `tiledbsc-py`: [https://github.com/single-cell-data/TileDB-SingleCell/tree/main/apis/python](https://github.com/single-cell-data/TileDB-SingleCell/tree/main/apis/python)

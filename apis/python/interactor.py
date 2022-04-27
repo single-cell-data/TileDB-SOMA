@@ -6,6 +6,7 @@
 #
 # -- then you can inspect the anndata object.
 
+import tiledb
 import tiledbsc
 import sys, os, shutil
 
