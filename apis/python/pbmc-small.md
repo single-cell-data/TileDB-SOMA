@@ -1,3 +1,10 @@
+# Overview
+
+Compare `pbmc_small` aw written by
+
+* `tiledbsc-r`: [https://github.com/TileDB-Inc/tiledbsc](https://github.com/TileDB-Inc/tiledbsc)
+* `tiledbsc-py`: [https://github.com/single-cell-data/TileDB-SingleCell/tree/main/apis/python](https://github.com/single-cell-data/TileDB-SingleCell/tree/main/apis/python)
+
 # Setup
 
 ## R setup
@@ -8,15 +15,11 @@ remotes::install_github("mojaveazure/seurat-disk")
 install.packages('anndata')
 ```
 
-`tiledbsc-r`: [https://github.com/TileDB-Inc/tiledbsc](https://github.com/TileDB-Inc/tiledbsc)
-
 ## Python setup
 
 ```
 pip install anndata
 ```
-
-`tiledbsc-py`: [https://github.com/single-cell-data/TileDB-SingleCell/tree/main/apis/python](https://github.com/single-cell-data/TileDB-SingleCell/tree/main/apis/python)
 
 # Write pbmc_small datasets
 
@@ -52,6 +55,10 @@ scdataset = tiledbsc.SCGroup("pbmc-small-tiledbsc-py", verbose=True)
 scdataset.from_h5ad("pbmc-small.h5ad")
 ```
 
+## Notes
+
+* _Unsure if the R `anndata` package is a route we should be using_
+
 # Compare pbmc_small datasets
 
 ## Group-tree level
@@ -85,8 +92,6 @@ scgroup_RNA GROUP
 |------ graph_snn ARRAY
 |-- misc GROUP
 
->>>
->>>
 >>> print(tiledb.group.Group('pbmc-small-tiledbsc-py')._dump(True))
 pbmc-small-tiledbsc-py GROUP
 |-- X GROUP
@@ -295,6 +300,92 @@ ArraySchema(
 )
 ```
 
-# Notes
+## Matrix-data level
 
-* Unsure if the R `anndata` package is a route we should be using
+### X/data
+
+```
+> arr <- tiledb_array('pbmc-small-tiledbsc-r/scgroup_RNA/X/data', return_as='data.frame')
+> df <- arr[]
+> head(df$value)
+[1] 4.615121 4.208048 3.976987 3.997759 3.485709 4.753095
+> head(df$obs_id)
+[1] "AATGTTGACAGTCA" "ACAGGTACTGGTGT" "AGAGATGATCTCGC" "AGATATACCCGTAA"
+[5] "CATTACACCAACTG" "GAACCTGATGAACC"
+> head(df$var_id)
+[1] "ACAP1" "ACAP1" "ACAP1" "ACAP1" "ACAP1" "ACAP1"
+```
+
+```
+>>> import tiledb
+>>> arr = tiledb.open('pbmc-small-tiledbsc-r/scgroup_RNA/X/data')
+>>> df = arr[]
+>>> df.keys()
+odict_keys(['value', 'var_id', 'obs_id'])
+>>> df['value']
+array([4.61512052, 4.20804766, 3.97698683, ..., 4.2412282 , 4.17596394, 4.37877332])
+>>> df['obs_id']
+array([b'AATGTTGACAGTCA', b'ACAGGTACTGGTGT', b'AGAGATGATCTCGC', ..., b'CTGCCAACAGGAGC', b'TAGGGACTGAACTC', b'TGACTGGATTCTCA'], dtype=object)
+>>> df['var_id']
+array([b'ACAP1', b'ACAP1', b'ACAP1', ..., b'ZNF76', b'ZNF76', b'ZNF76'], dtype=object)
+```
+
+```
+> arr <- tiledb_array('pbmc-small-tiledbsc-py/X/data', return_as='data.frame')
+> df <- arr[]
+> head(df$data)
+[1] -0.3730316  2.5200651 -0.3730316 -0.3730316 -0.3730316  2.6456511
+> head(df$obs_id)
+[1] "AAATTCGAATCACG" "AAATTCGAATCACG" "AAATTCGAATCACG" "AAATTCGAATCACG"
+[5] "AAATTCGAATCACG" "AAATTCGAATCACG"
+> head(df$var_id)
+[1] "AKR1C3"   "CA2"      "CD1C"     "GNLY"     "HLA-DPB1" "HLA-DQA1"
+```
+
+```
+>>> import tiledb
+>>> arr = tiledb.open('pbmc-small-tiledbsc-py/X/data')
+>>> df = arr[:]
+>>> df.keys()
+odict_keys(['data', 'obs_id', 'var_id'])
+>>> df['data']
+array([-0.37303159,  2.52006507, -0.37303159, ...,  0.45850021, -1.039994  , -1.039994  ])
+>>> df['obs_id']
+array([b'AAATTCGAATCACG', b'AAATTCGAATCACG', b'AAATTCGAATCACG', ..., b'TTTAGCTGTACTCT', b'TTTAGCTGTACTCT', b'TTTAGCTGTACTCT'], dtype=object)
+>>> df['var_id']
+array([b'AKR1C3', b'CA2', b'CD1C', ..., b'TREML1', b'TUBB1', b'VDAC3'], dtype=object)
+```
+
+### obs
+
+```
+> arr <- tiledb_array('pbmc-small-tiledbsc-r/scgroup_RNA/obs', return_as='data.frame')
+> df = arr[]
+> df$
+df$RNA_snn_res.0.8  df$groups           df$nCount_RNA       df$obs_id
+df$RNA_snn_res.1    df$letter.idents    df$nFeature_RNA     df$orig.ident
+>
+> head(df$obs_id)
+[1] "AAATTCGAATCACG" "AAGCAAGAGCTTAG" "AAGCGACTTTGACG" "AATGCGTGGACGGA"
+[5] "AATGTTGACAGTCA" "ACAGGTACTGGTGT"
+> head(df$`RNA_snn_res.0.8`)
+[1] "1" "0" "1" "1" "0" "0"
+> head(df$letter.idents)
+[1] "B" "A" "B" "B" "A" "A"
+```
+
+```
+> arr <- tiledb_array('pbmc-small-tiledbsc-py/obs', return_as='data.frame')
+> df = arr[]
+> df$
+df$RNA_snn_res.0.8  df$__tiledb_rows    df$letter.idents    df$nFeature_RNA
+df$RNA_snn_res.1    df$groups           df$nCount_RNA       df$orig.ident
+>
+> head(df$`__tiledb_rows`)
+[1] "AAATTCGAATCACG" "AAGCAAGAGCTTAG" "AAGCGACTTTGACG" "AATGCGTGGACGGA"
+[5] "AATGTTGACAGTCA" "ACAGGTACTGGTGT"
+> head(df$`RNA_snn_res.0.8`)
+[1] 1 0 1 1 0 0
+> head(df$`letter.idents`)
+[1] 1 0 1 1 0 0
+```
