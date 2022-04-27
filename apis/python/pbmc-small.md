@@ -169,6 +169,8 @@ ArraySchema(
 **Note:**
 
 * `obs_id` and `var_id` are reversed between R and Python
+* This is because the rows/columns are transposed in R (seurat/bioconductor) vs. Python (anndata). This is not unexpected but how/whether we should address it is unclear.
+* In R the data matrices are genes by samples (or cells). Whereas in Python/anndata they are samples by genes.
 
 ### obs
 
