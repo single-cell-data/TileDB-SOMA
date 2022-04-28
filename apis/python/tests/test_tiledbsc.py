@@ -11,8 +11,9 @@ HERE = Path(__file__).parent
 
 @pytest.fixture
 def h5ad_file(request):
+    # pbmc-small is faster for automated unit-test / CI runs.
     #input_path = HERE.parent / "anndata/pbmc3k_processed.h5ad"
-    input_path = HERE.parent / "anndata/bruce-spatial.h5ad"
+    input_path = HERE.parent / "anndata/pbmc-small.h5ad"
     return input_path
 
 @pytest.fixture
