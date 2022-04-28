@@ -5,12 +5,15 @@ import tiledbsc
 import pytest
 import tempfile
 import os
+from pathlib import Path
+
+HERE = Path(__file__).parent
 
 @pytest.fixture
 def h5ad_file(request):
     # Make sure this works regardless of from what directory level the `python -m pytest ...` is invoked
     ourdir = request.fspath.dirname
-    input_path = os.path.join(ourdir, '..', 'anndata', 'pbmc3k_processed.h5ad')
+    input_path = HERE.parent / "anndata/pbmc3k_processed.h5ad"
     return input_path
 
 @pytest.fixture
