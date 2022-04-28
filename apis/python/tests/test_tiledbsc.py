@@ -11,7 +11,8 @@ HERE = Path(__file__).parent
 
 @pytest.fixture
 def h5ad_file(request):
-    input_path = HERE.parent / "anndata/pbmc3k_processed.h5ad"
+    #input_path = HERE.parent / "anndata/pbmc3k_processed.h5ad"
+    input_path = HERE.parent / "anndata/bruce-spatial.h5ad"
     return input_path
 
 @pytest.fixture
