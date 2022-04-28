@@ -185,10 +185,10 @@ class SOMA():
         base_group.add(uri=X_uri, relative=False, name="X")
 
         # ----------------------------------------------------------------
-        obs_uri = self.write_obs_or_var(anndata.obs, "obs")
+        obs_uri = self.write_obs_or_var(anndata.obs, "obs", 256)
         base_group.add(uri=obs_uri, relative=False, name="obs")
 
-        var_uri = self.write_obs_or_var(anndata.var, "var")
+        var_uri = self.write_obs_or_var(anndata.var, "var", 2048)
         base_group.add(uri=var_uri, relative=False, name="var")
 
         # ----------------------------------------------------------------
@@ -258,7 +258,7 @@ class SOMA():
 
         dom = tiledb.Domain(
             tiledb.Dim(name="obs_id", domain=(None, None), dtype="ascii", filters=[tiledb.RleFilter()]),
-            tiledb.Dim(name="var_id", domain=(None, None), dtype="ascii", filters=[tiledb.ZstdFilter()]),
+            tiledb.Dim(name="var_id", domain=(None, None), dtype="ascii", filters=[tiledb.ZstdFilter(level=22)]),
             ctx=self.ctx
         )
 
@@ -274,6 +274,9 @@ class SOMA():
             sparse=True,
             allows_duplicates=True,
             offsets_filters=[tiledb.DoubleDeltaFilter(), tiledb.BitWidthReductionFilter(), tiledb.ZstdFilter()],
+            capacity=100000,
+            cell_order='row-major',
+            tile_order='col-major',
             ctx=self.ctx
         )
         tiledb.Array.create(X_array_uri, sch, ctx=self.ctx)
@@ -296,7 +299,7 @@ class SOMA():
         return X_array_uri
 
     # ----------------------------------------------------------------
-    def write_obs_or_var(self, obs_or_var_data, obs_or_var_name: str):
+    def write_obs_or_var(self, obs_or_var_data, obs_or_var_name: str, extent: int):
         """
         Populates the obs/ or var/ subgroup for a SOMA object.
         First argument is anndata.obs or anndata.var; second is "obs" or "var".  In the reference
@@ -323,6 +326,8 @@ class SOMA():
             offsets_filters=offsets_filters,
             attr_filters=attr_filters,
             dim_filters=dim_filters,
+            capacity=100000,
+            tile=extent,
             ctx=self.ctx
         )
 
