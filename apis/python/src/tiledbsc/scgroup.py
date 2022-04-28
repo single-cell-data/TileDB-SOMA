@@ -233,16 +233,17 @@ class SCGroup():
         obs_dim, var_dim = np.meshgrid(anndata.obs.index, anndata.var.index)
 
         dom = tiledb.Domain(
-            tiledb.Dim(name="obs_id", domain=(None, None), dtype="ascii"),
-            tiledb.Dim(name="var_id", domain=(None, None), dtype="ascii"),
+            tiledb.Dim(name="obs_id", domain=(None, None), dtype="ascii", filters=[tiledb.RleFilter()]),
+            tiledb.Dim(name="var_id", domain=(None, None), dtype="ascii", filters=[tiledb.ZstdFilter()]),
             ctx=self.ctx
         )
-        att = tiledb.Attr("data", ctx=self.ctx)
+        att = tiledb.Attr("data", dtype="float32", filters=[tiledb.ZstdFilter()], ctx=self.ctx)
         sch = tiledb.ArraySchema(
             domain=dom,
             attrs=(att,),
             sparse=True,
             allows_duplicates=True,
+            offsets_filters=[tiledb.DoubleDeltaFilter(), tiledb.BitWidthReductionFilter(), tiledb.ZstdFilter()],
             ctx=self.ctx
         )
         tiledb.Array.create(X_data_uri, sch, ctx=self.ctx)
@@ -281,17 +282,18 @@ class SCGroup():
             obs_dim, var_dim = np.meshgrid(anndata.raw.obs_names, anndata.raw.var_names)
 
             dom = tiledb.Domain(
-                tiledb.Dim(name="obs_id", domain=(None, None), dtype="ascii"),
-                tiledb.Dim(name="var_id", domain=(None, None), dtype="ascii"),
+                tiledb.Dim(name="obs_id", domain=(None, None), dtype="ascii", filters=[tiledb.RleFilter()]),
+                tiledb.Dim(name="var_id", domain=(None, None), dtype="ascii", filters=[tiledb.ZstdFilter()]),
                 ctx=self.ctx
             )
-            att = tiledb.Attr("raw", ctx=self.ctx)
+            att = tiledb.Attr("raw", dtype="float32", filters=[tiledb.ZstdFilter()], ctx=self.ctx)
 
             sch = tiledb.ArraySchema(
                 domain=dom,
                 attrs=(att,),
                 sparse=True,
                 allows_duplicates=True,
+                offsets_filters=[tiledb.DoubleDeltaFilter(), tiledb.BitWidthReductionFilter(), tiledb.ZstdFilter()],
                 ctx=self.ctx
             )
             tiledb.Array.create(X_raw_uri, sch, ctx=self.ctx)
