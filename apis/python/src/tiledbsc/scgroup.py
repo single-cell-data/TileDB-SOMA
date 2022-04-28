@@ -57,6 +57,20 @@ class SCGroup():
         # * data_uri is "tiledb://namespace/s3://bucketname/something/test1/X"
 
     # ----------------------------------------------------------------
+    def from_anndata(self, anndata: ad.AnnData):
+        """
+        Factory function to instantiate an SCGroup object from an input anndata.AnnData object.
+        """
+        if self.verbose:
+            print(f"START  SCGroup.from_ann")
+
+        anndata = self.decategoricalize(anndata)
+        self.write_tiledb_group(anndata)
+
+        if self.verbose:
+            print("FINISH  SCGroup.from_ann")
+
+    # ----------------------------------------------------------------
     def from_h5ad(self, input_path: str):
         """
         Factory function to instantiate an SCGroup object from an input .h5ad file.
@@ -65,9 +79,7 @@ class SCGroup():
             print(f"START  SCGroup.from_h5ad {input_path} -> {self.uri}")
 
         anndata = self.read_h5ad(input_path)
-
         anndata = self.decategoricalize(anndata)
-
         self.write_tiledb_group(anndata)
 
         if self.verbose:
@@ -82,9 +94,7 @@ class SCGroup():
             print(f"START  SCGroup.from_10x {input_path} -> {self.uri}")
 
         anndata = self.read_10x(input_path)
-
         anndata = self.decategoricalize(anndata)
-
         self.write_tiledb_group(anndata)
 
         if self.verbose:
