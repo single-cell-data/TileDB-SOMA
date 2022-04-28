@@ -20,15 +20,17 @@ def h5ad_file(request):
 def adata(h5ad_file):
     return anndata.read_h5ad(h5ad_file)
 
-def test_import_anndata(h5ad_file):
+def test_import_anndata(adata):
 
     # Set up anndata input path and tiledb-group output path
     tempdir = tempfile.TemporaryDirectory()
     output_path = tempdir.name
 
+    orig = adata
+
     # Ingest
     scdataset = tiledbsc.SCGroup(output_path, verbose=True)
-    scdataset.from_h5ad(h5ad_file)
+    scdataset.from_anndata(orig)
 
     # Structure:
     #   X/data
@@ -52,26 +54,26 @@ def test_import_anndata(h5ad_file):
 
     # Check obs
     with tiledb.open(os.path.join(output_path, 'obs')) as A:
-        df = A[:]
-        keys = list(df.keys())
-        assert keys == ['n_genes', 'percent_mito', 'n_counts', 'louvain', 'index']
+        df = A.df[:]
+        assert df.columns.to_list() == orig.obs_keys()
 
     # Check var
     with tiledb.open(os.path.join(output_path, 'var')) as A:
-        df = A[:]
-        keys = list(df.keys())
-        assert keys == ['n_cells', 'index']
+        df = A.df[:]
+        assert df.columns.to_list() == orig.var_keys()
 
     # Check some annotation matrices
     # Note: pbmc3k_processed doesn't have varp.
+    for key in orig.obsm_keys():
+        with tiledb.open(os.path.join(output_path, 'obsm', key)) as A:
+            assert A.shape == orig.obsm[key].shape
 
-    with tiledb.open(os.path.join(output_path, 'obsm', 'X_pca')) as A:
-        assert A.shape == (2638, 50)
+    for key in orig.varm_keys():
+        with tiledb.open(os.path.join(output_path, 'varm', key)) as A:
+            assert A.shape == orig.varm[key].shape
 
-    with tiledb.open(os.path.join(output_path, 'varm', 'PCs')) as A:
-        assert A.shape == (1838, 50)
-
-    with tiledb.open(os.path.join(output_path, 'obsp', 'connectivities')) as A:
-        assert A.shape == (2638, 2638)
+    for key in list(orig.obsp.keys()):
+        with tiledb.open(os.path.join(output_path, 'obsp', key)) as A:
+            assert A.shape == orig.obsp[key].shape
 
     tempdir.cleanup()
