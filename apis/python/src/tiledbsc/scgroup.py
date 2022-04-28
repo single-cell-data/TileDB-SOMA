@@ -223,14 +223,38 @@ class SCGroup():
         tiledb.group_create(X_uri, ctx=self.ctx)
         X_group = tiledb.Group(X_uri, mode="w", ctx=self.ctx)
 
-        # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-        X_data_uri = os.path.join(X_uri, "data")
+        X_data_uri = self.write_X_array(anndata.X, X_uri, "data", anndata.obs.index, anndata.var.index)
+        X_group.add(uri=X_data_uri, relative=False, name="data")
+
+        has_raw = False
+        try:
+            anndata.raw.X.shape
+            has_raw = True
+        except:
+            pass
+        if has_raw:
+            X_raw_uri = self.write_X_array(anndata.raw.X, X_uri, "raw", anndata.raw.obs_names, anndata.raw.var_names)
+            X_group.add(uri=X_raw_uri, relative=False, name="raw")
+
+        X_group.close()
+
+        return X_uri
+
+    # ----------------------------------------------------------------
+    def write_X_array(self, x, group_uri:str, arrayname: str, obs_names, var_names):
+        """
+        Populates the X/data or X/raw array.
+        * x is anndata.X or raw
+        * group_uri is the URI of the parent group, e.g. 'foo/X'
+        * arrayname is the name of the array within the parent group, e.g. 'data' for 'foo/X/data'
+        * obs_names and var_names are the names for the axes
+        """
+        X_array_uri = os.path.join(group_uri, arrayname)
         if self.verbose:
-            print(f"    START  WRITING {X_data_uri}")
+            print(f"    START  WRITING {X_array_uri}")
 
         # Here we do not use tiledb.from_numpy, so that we can have more control over the schema.
-
-        obs_dim, var_dim = np.meshgrid(anndata.obs.index, anndata.var.index)
+        obs_dim, var_dim = np.meshgrid(obs_names, var_names)
 
         dom = tiledb.Domain(
             tiledb.Dim(name="obs_id", domain=(None, None), dtype="ascii", filters=[tiledb.RleFilter()]),
@@ -238,11 +262,12 @@ class SCGroup():
             ctx=self.ctx
         )
 
-        # >>> anndata = ad.read_h5ad('anndata/pbmc3k_processed.h5ad')
-        # >>> anndata.X.dtype
+        # Verify:
+        # anndata = ad.read_h5ad('anndata/pbmc3k_processed.h5ad')
+        # anndata.X.dtype
         dtype = 'float32'
 
-        att = tiledb.Attr("data", dtype=dtype, filters=[tiledb.ZstdFilter()], ctx=self.ctx)
+        att = tiledb.Attr("value", dtype=dtype, filters=[tiledb.ZstdFilter()], ctx=self.ctx)
         sch = tiledb.ArraySchema(
             domain=dom,
             attrs=(att,),
@@ -251,81 +276,24 @@ class SCGroup():
             offsets_filters=[tiledb.DoubleDeltaFilter(), tiledb.BitWidthReductionFilter(), tiledb.ZstdFilter()],
             ctx=self.ctx
         )
-        tiledb.Array.create(X_data_uri, sch, ctx=self.ctx)
+        tiledb.Array.create(X_array_uri, sch, ctx=self.ctx)
 
         # Check for conversion from pandas if necessary.  For the pbmc3k_processed reference
         # dataset, obsm and varm matrices are numpy.ndarray while obsp matrices are
         # scipy.sparse.csr.csr_matrix. For ongoing work we will likely need more checks
         # here. See also desc-ann.py in this directory which helps reveal the datatypes
         # contained within a given HDF5 file.
-        input_as_np_array = anndata.X
-        if isinstance(input_as_np_array, scipy.sparse.csr.csr_matrix):
-            input_as_np_array = input_as_np_array.toarray()
-        if isinstance(input_as_np_array, scipy.sparse.csc.csc_matrix):
-            input_as_np_array = input_as_np_array.toarray()
+        if isinstance(x, scipy.sparse.csr.csr_matrix):
+            x = x.toarray()
+        if isinstance(x, scipy.sparse.csc.csc_matrix):
+            x = x.toarray()
 
-        with tiledb.open(X_data_uri, mode="w", ctx=self.ctx) as A:
-            A[np.ravel(obs_dim), np.ravel(var_dim)] = input_as_np_array.flatten()
+        with tiledb.open(X_array_uri, mode="w", ctx=self.ctx) as A:
+            A[np.ravel(obs_dim), np.ravel(var_dim)] = x.flatten()
 
-        X_group.add(uri=X_data_uri, relative=False, name="data")
         if self.verbose:
-            print(f"    FINISH WRITING {X_data_uri}")
-
-        # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-        has_raw = False
-        try:
-            anndata.raw.X.shape
-            has_raw = True
-        except:
-            pass
-
-        if has_raw:
-            X_raw_uri = os.path.join(X_uri, "raw")
-            if self.verbose:
-                print(f"    START  WRITING {X_raw_uri}")
-
-            obs_dim, var_dim = np.meshgrid(anndata.raw.obs_names, anndata.raw.var_names)
-
-            dom = tiledb.Domain(
-                tiledb.Dim(name="obs_id", domain=(None, None), dtype="ascii", filters=[tiledb.RleFilter()]),
-                tiledb.Dim(name="var_id", domain=(None, None), dtype="ascii", filters=[tiledb.ZstdFilter()]),
-                ctx=self.ctx
-            )
-
-            # >>> anndata = ad.read_h5ad('anndata/pbmc3k_processed.h5ad')
-            # >>> anndata.X.dtype
-            dtype = 'float32'
-
-            att = tiledb.Attr("raw", dtype=dtype, filters=[tiledb.ZstdFilter()], ctx=self.ctx)
-
-            sch = tiledb.ArraySchema(
-                domain=dom,
-                attrs=(att,),
-                sparse=True,
-                allows_duplicates=True,
-                offsets_filters=[tiledb.DoubleDeltaFilter(), tiledb.BitWidthReductionFilter(), tiledb.ZstdFilter()],
-                ctx=self.ctx
-            )
-            tiledb.Array.create(X_raw_uri, sch, ctx=self.ctx)
-
-            input_as_np_array = anndata.raw.X
-            if isinstance(input_as_np_array, scipy.sparse.csr.csr_matrix):
-                input_as_np_array = input_as_np_array.toarray()
-            if isinstance(input_as_np_array, scipy.sparse.csc.csc_matrix):
-                input_as_np_array = input_as_np_array.toarray()
-
-            with tiledb.open(X_raw_uri, mode="w", ctx=self.ctx) as A:
-                A[np.ravel(obs_dim), np.ravel(var_dim)] = input_as_np_array.flatten()
-
-            X_group.add(uri=X_raw_uri, relative=False, name="raw")
-            if self.verbose:
-                print(f"    FINISH WRITING {X_raw_uri}")
-
-        # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
-        X_group.close()
-
-        return X_uri
+            print(f"    FINISH WRITING {X_array_uri}")
+        return X_array_uri
 
     # ----------------------------------------------------------------
     def write_obs_or_var(self, obs_or_var_data, obs_or_var_name: str):

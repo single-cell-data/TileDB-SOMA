@@ -47,7 +47,7 @@ def test_import_anndata(adata):
     with tiledb.open(os.path.join(output_path, 'X', 'data')) as A:
         df = A[:]
         keys = list(df.keys())
-        assert keys == ['data', 'obs_id', 'var_id']
+        assert keys == ['value', 'obs_id', 'var_id']
         assert A.ndim == 2
 
     # Check obs
