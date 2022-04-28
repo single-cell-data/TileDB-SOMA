@@ -237,7 +237,12 @@ class SCGroup():
             tiledb.Dim(name="var_id", domain=(None, None), dtype="ascii", filters=[tiledb.ZstdFilter()]),
             ctx=self.ctx
         )
-        att = tiledb.Attr("data", dtype="float32", filters=[tiledb.ZstdFilter()], ctx=self.ctx)
+
+        # >>> anndata = ad.read_h5ad('anndata/pbmc3k_processed.h5ad')
+        # >>> anndata.X.dtype
+        dtype = 'float32'
+
+        att = tiledb.Attr("data", dtype=dtype, filters=[tiledb.ZstdFilter()], ctx=self.ctx)
         sch = tiledb.ArraySchema(
             domain=dom,
             attrs=(att,),
@@ -286,7 +291,12 @@ class SCGroup():
                 tiledb.Dim(name="var_id", domain=(None, None), dtype="ascii", filters=[tiledb.ZstdFilter()]),
                 ctx=self.ctx
             )
-            att = tiledb.Attr("raw", dtype="float32", filters=[tiledb.ZstdFilter()], ctx=self.ctx)
+
+            # >>> anndata = ad.read_h5ad('anndata/pbmc3k_processed.h5ad')
+            # >>> anndata.X.dtype
+            dtype = 'float32'
+
+            att = tiledb.Attr("raw", dtype=dtype, filters=[tiledb.ZstdFilter()], ctx=self.ctx)
 
             sch = tiledb.ArraySchema(
                 domain=dom,
