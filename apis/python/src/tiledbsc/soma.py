@@ -281,18 +281,13 @@ class SOMA():
         )
         tiledb.Array.create(X_array_uri, sch, ctx=self.ctx)
 
-        # Check for conversion from pandas if necessary.  For the pbmc3k_processed reference
-        # dataset, obsm and varm matrices are numpy.ndarray while obsp matrices are
-        # scipy.sparse.csr.csr_matrix. For ongoing work we will likely need more checks
-        # here. See also desc-ann.py in this directory which helps reveal the datatypes
-        # contained within a given HDF5 file.
-        if isinstance(x, scipy.sparse.csr.csr_matrix):
-            x = x.toarray()
-        if isinstance(x, scipy.sparse.csc.csc_matrix):
-            x = x.toarray()
+        # convert ndarray/(csr|csc)matrix to coo_matrix
+        X_coo = scipy.sparse.coo_matrix(x)
+        d0 = obs_names[X_coo.row]
+        d1 = var_names[X_coo.col]
 
         with tiledb.open(X_array_uri, mode="w", ctx=self.ctx) as A:
-            A[np.ravel(obs_dim), np.ravel(var_dim)] = x.flatten()
+            A[d0, d1] = X_coo.data
 
         if self.verbose:
             print(f"    FINISH WRITING {X_array_uri}")
