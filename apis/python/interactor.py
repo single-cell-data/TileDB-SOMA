@@ -27,10 +27,10 @@ if not os.path.exists('tiledb-data'):
 if os.path.exists(output_path):
     shutil.rmtree(output_path) # Overwrite
 
-scgroup = tiledbsc.SCGroup(output_path, verbose=True)
+soma = tiledbsc.SOMA(output_path, verbose=True)
 
-anndata = scgroup.read_h5ad(input_path)
-anndata = scgroup.decategoricalize(anndata)
+anndata = soma.read_h5ad(input_path)
+anndata = soma.decategoricalize(anndata)
 # Interact at the prompt now:
 # * anndata.X
 # * anndata.obs.keys()
