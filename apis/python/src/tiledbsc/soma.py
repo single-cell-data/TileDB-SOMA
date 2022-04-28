@@ -10,7 +10,7 @@ import scipy
 import tiledb
 
 
-class SCGroup():
+class SOMA():
     """ Single-cell group
     A simple class for ingestion of anndata to a TileDB group.
 
@@ -31,7 +31,7 @@ class SCGroup():
     # ----------------------------------------------------------------
     def __init__(self, uri: str, verbose: bool = True, config: Optional[tiledb.Config] = None, ctx: Optional[tiledb.Ctx] = None):
         """
-        @description Create a new SCGroup object. The existing array group is
+        @description Create a new SOMA object. The existing array group is
           opened at the specified array `uri` if one is present, otherwise a new
           array group is created.
         @param uri URI of the TileDB group
@@ -59,46 +59,46 @@ class SCGroup():
     # ----------------------------------------------------------------
     def from_anndata(self, anndata: ad.AnnData):
         """
-        Factory function to instantiate an SCGroup object from an input anndata.AnnData object.
+        Factory function to instantiate a SOMA object from an input anndata.AnnData object.
         """
         if self.verbose:
-            print(f"START  SCGroup.from_ann")
+            print(f"START  SOMA.from_ann")
 
         anndata = self.decategoricalize(anndata)
         self.write_tiledb_group(anndata)
 
         if self.verbose:
-            print("FINISH  SCGroup.from_ann")
+            print("FINISH  SOMA.from_ann")
 
     # ----------------------------------------------------------------
     def from_h5ad(self, input_path: str):
         """
-        Factory function to instantiate an SCGroup object from an input .h5ad file.
+        Factory function to instantiate a SOMA object from an input .h5ad file.
         """
         if self.verbose:
-            print(f"START  SCGroup.from_h5ad {input_path} -> {self.uri}")
+            print(f"START  SOMA.from_h5ad {input_path} -> {self.uri}")
 
         anndata = self.read_h5ad(input_path)
         anndata = self.decategoricalize(anndata)
         self.write_tiledb_group(anndata)
 
         if self.verbose:
-            print(f"FINISH SCGroup.from_h5ad {input_path} -> {self.uri}")
+            print(f"FINISH SOMA.from_h5ad {input_path} -> {self.uri}")
 
     # ----------------------------------------------------------------
     def from_10x(self, input_path: str):
         """
-        Factory function to instantiate an SCGroup object from an input 10X file.
+        Factory function to instantiate a SOMA object from an input 10X file.
         """
         if self.verbose:
-            print(f"START  SCGroup.from_10x {input_path} -> {self.uri}")
+            print(f"START  SOMA.from_10x {input_path} -> {self.uri}")
 
         anndata = self.read_10x(input_path)
         anndata = self.decategoricalize(anndata)
         self.write_tiledb_group(anndata)
 
         if self.verbose:
-            print(f"FINISH SCGroup.from_10x {input_path} -> {self.uri}")
+            print(f"FINISH SOMA.from_10x {input_path} -> {self.uri}")
 
     # ----------------------------------------------------------------
     def read_h5ad(self, input_path: str):
@@ -170,7 +170,7 @@ class SCGroup():
     # ----------------------------------------------------------------
     def write_tiledb_group(self, anndata: ad.AnnData):
         """
-        Top-level writer method for creating a TileDB group for an SCGroup object.
+        Top-level writer method for creating a TileDB group for a SOMA object.
         """
         if self.verbose:
             print(f"  START  WRITING {self.uri}")
@@ -217,7 +217,7 @@ class SCGroup():
     # ----------------------------------------------------------------
     def write_X(self, anndata: ad.AnnData):
         """
-        Populates the X/ subgroup for an SCGroup object.
+        Populates the X/ subgroup for a SOMA object.
         """
         X_uri = os.path.join(self.uri, "X")
         tiledb.group_create(X_uri, ctx=self.ctx)
@@ -298,7 +298,7 @@ class SCGroup():
     # ----------------------------------------------------------------
     def write_obs_or_var(self, obs_or_var_data, obs_or_var_name: str):
         """
-        Populates the obs/ or var/ subgroup for an SCGroup object.
+        Populates the obs/ or var/ subgroup for a SOMA object.
         First argument is anndata.obs or anndata.var; second is "obs" or "var".  In the reference
         pbmc3k_processed dataset, these are of type pandas.core.frame.DataFrame. In further
         testing we may need to switch on the datatype.
@@ -334,11 +334,11 @@ class SCGroup():
     # ----------------------------------------------------------------
     def write_annotation_matrices(self, annotation_matrices, name: str):
         """
-        Populates the obsm/, varm/, obsp/, or varp/ subgroup for an SCGroup object.
+        Populates the obsm/, varm/, obsp/, or varp/ subgroup for a SOMA object.
         Input: anndata.obsm, anndata.varm, anndata.obsp, or anndata.varp, along with the name
         "obsm", "varm", "obsp", or "varp", respectively. Each component array from the HDF5 file
         should be a numpy.ndarray or scipy.sparse.csr.csr_matrix.  Writes the TileDB obsm, varm,
-        obsp, or varp group under the base scgroup URI, and then writes all the component arrays
+        obsp, or varp group under the base soma URI, and then writes all the component arrays
         under that.
         """
         subgroup_uri = os.path.join(self.uri, name)

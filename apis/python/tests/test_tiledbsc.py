@@ -27,8 +27,8 @@ def test_import_anndata(adata):
     orig = adata
 
     # Ingest
-    scdataset = tiledbsc.SCGroup(output_path, verbose=True)
-    scdataset.from_anndata(orig)
+    soma = tiledbsc.SOMA(output_path, verbose=True)
+    soma.from_anndata(orig)
 
     # Structure:
     #   X/data
