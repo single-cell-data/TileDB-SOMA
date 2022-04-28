@@ -193,20 +193,20 @@ class SOMA():
 
         # ----------------------------------------------------------------
         if len(anndata.obsm.keys()) > 0:
-            obsm_uri = self.write_obsm(anndata.obsm)
+            obsm_uri = self.write_annotation_matrices(anndata.obsm, "obsm")
             base_group.add(uri=obsm_uri, relative=False, name="obsm")
 
-#        if len(anndata.varm.keys()) > 0:
-#            varm_uri = self.write_varm(anndata.varm)
-#            base_group.add(uri=varm_uri, relative=False, name="varm")
+        if len(anndata.varm.keys()) > 0:
+            varm_uri = self.write_annotation_matrices(anndata.varm, "varm")
+            base_group.add(uri=varm_uri, relative=False, name="varm")
 
-#        if len(anndata.obsp.keys()) > 0:
-#            obsp_uri = self.write_obsp(anndata.obsp)
-#            base_group.add(uri=obsp_uri, relative=False, name="obsp")
+        if len(anndata.obsp.keys()) > 0:
+            obsp_uri = self.write_annotation_matrices(anndata.obsp, "obsp")
+            base_group.add(uri=obsp_uri, relative=False, name="obsp")
 
-#        if len(anndata.varp.keys()) > 0:
-#            varp_uri = self.write_varp(anndata.varp)
-#            base_group.add(uri=varp_uri, relative=False, name="varp")
+        if len(anndata.varp.keys()) > 0:
+            varp_uri = self.write_annotation_matrices(anndata.varp, "varp")
+            base_group.add(uri=varp_uri, relative=False, name="varp")
 
         # ----------------------------------------------------------------
         if self.verbose:
@@ -402,44 +402,3 @@ class SOMA():
         subgroup.close()
 
         return subgroup_uri
-
-    # ----------------------------------------------------------------
-    def write_obsm(self, obsm):
-        """
-        TODO
-        """
-        subgroup_uri = os.path.join(self.uri, 'obsm')
-        tiledb.group_create(subgroup_uri, ctx=self.ctx)
-        subgroup = tiledb.Group(subgroup_uri, mode="w", ctx=self.ctx)
-
-        keys = list(obsm.keys())
-
-        obsm = obsm.to_df()
-        obsm = obsm.rename_axis('obs_id')
-
-        for key in keys:
-            component_array_uri = os.path.join(subgroup_uri, key)
-            if self.verbose:
-                print(f"    START  WRITING {component_array_uri}")
-
-            series = obsm[key]
-            df1 = series.to_frame()
-            tiledb.from_pandas(component_array_uri, df1)
-
-            if self.verbose:
-                print(f"    FINISH WRITING {component_array_uri}")
-
-            subgroup.add(uri=component_array_uri, relative=False, name=key)
-        subgroup.close()
-
-        return subgroup_uri
-
-    # ----------------------------------------------------------------
-    def write_varm(self, varm):
-        pass
-    # ----------------------------------------------------------------
-    def write_obsp(self, obsp):
-        pass
-    # ----------------------------------------------------------------
-    def write_varp(self, varp):
-        pass
