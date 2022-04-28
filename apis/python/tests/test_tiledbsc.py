@@ -6,18 +6,26 @@ import pytest
 import tempfile
 import os
 
-def test_import_anndata(request):
+@pytest.fixture
+def h5ad_file(request):
     # Make sure this works regardless of from what directory level the `python -m pytest ...` is invoked
     ourdir = request.fspath.dirname
+    input_path = os.path.join(ourdir, '..', 'anndata', 'pbmc3k_processed.h5ad')
+    return input_path
+
+@pytest.fixture
+def adata(h5ad_file):
+    return anndata.read_h5ad(h5ad_file)
+
+def test_import_anndata(h5ad_file):
 
     # Set up anndata input path and tiledb-group output path
-    input_path = os.path.join(ourdir, '..', 'anndata', 'pbmc3k_processed.h5ad')
     tempdir = tempfile.TemporaryDirectory()
     output_path = tempdir.name
 
     # Ingest
     scdataset = tiledbsc.SCGroup(output_path, verbose=True)
-    scdataset.from_h5ad(input_path)
+    scdataset.from_h5ad(h5ad_file)
 
     # Structure:
     #   X/data
