@@ -59,7 +59,7 @@ class SOMA():
     # ----------------------------------------------------------------
     def from_anndata(self, anndata: ad.AnnData):
         """
-        Factory function to instantiate an SOMA object from an input anndata.AnnData object.
+        Factory function to instantiate a SOMA object from an input anndata.AnnData object.
         """
         if self.verbose:
             print(f"START  SOMA.from_ann")
@@ -73,7 +73,7 @@ class SOMA():
     # ----------------------------------------------------------------
     def from_h5ad(self, input_path: str):
         """
-        Factory function to instantiate an SOMA object from an input .h5ad file.
+        Factory function to instantiate a SOMA object from an input .h5ad file.
         """
         if self.verbose:
             print(f"START  SOMA.from_h5ad {input_path} -> {self.uri}")
@@ -88,7 +88,7 @@ class SOMA():
     # ----------------------------------------------------------------
     def from_10x(self, input_path: str):
         """
-        Factory function to instantiate an SOMA object from an input 10X file.
+        Factory function to instantiate a SOMA object from an input 10X file.
         """
         if self.verbose:
             print(f"START  SOMA.from_10x {input_path} -> {self.uri}")
@@ -170,7 +170,7 @@ class SOMA():
     # ----------------------------------------------------------------
     def write_tiledb_group(self, anndata: ad.AnnData):
         """
-        Top-level writer method for creating a TileDB group for an SOMA object.
+        Top-level writer method for creating a TileDB group for a SOMA object.
         """
         if self.verbose:
             print(f"  START  WRITING {self.uri}")
@@ -217,7 +217,7 @@ class SOMA():
     # ----------------------------------------------------------------
     def write_X(self, anndata: ad.AnnData):
         """
-        Populates the X/ subgroup for an SOMA object.
+        Populates the X/ subgroup for a SOMA object.
         """
         X_uri = os.path.join(self.uri, "X")
         tiledb.group_create(X_uri, ctx=self.ctx)
@@ -298,7 +298,7 @@ class SOMA():
     # ----------------------------------------------------------------
     def write_obs_or_var(self, obs_or_var_data, obs_or_var_name: str):
         """
-        Populates the obs/ or var/ subgroup for an SOMA object.
+        Populates the obs/ or var/ subgroup for a SOMA object.
         First argument is anndata.obs or anndata.var; second is "obs" or "var".  In the reference
         pbmc3k_processed dataset, these are of type pandas.core.frame.DataFrame. In further
         testing we may need to switch on the datatype.
@@ -334,7 +334,7 @@ class SOMA():
     # ----------------------------------------------------------------
     def write_annotation_matrices(self, annotation_matrices, name: str):
         """
-        Populates the obsm/, varm/, obsp/, or varp/ subgroup for an SOMA object.
+        Populates the obsm/, varm/, obsp/, or varp/ subgroup for a SOMA object.
         Input: anndata.obsm, anndata.varm, anndata.obsp, or anndata.varp, along with the name
         "obsm", "varm", "obsp", or "varp", respectively. Each component array from the HDF5 file
         should be a numpy.ndarray or scipy.sparse.csr.csr_matrix.  Writes the TileDB obsm, varm,
