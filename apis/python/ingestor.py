@@ -39,5 +39,5 @@ if not os.path.exists('tiledb-data'):
 if os.path.exists(output_path):
     shutil.rmtree(output_path) # Overwrite
 
-scdataset = tiledbsc.SCGroup(output_path, verbose=True)
-scdataset.from_h5ad(input_path)
+soma = tiledbsc.SOMA(output_path, verbose=True)
+soma.from_h5ad(input_path)

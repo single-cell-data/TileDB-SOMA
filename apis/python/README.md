@@ -118,7 +118,7 @@ h5ls -vr anndata/pbmc3k_processed.h5ad
 <details>
 
 ```
-START  SCGroup.from_h5ad ./anndata/pbmc3k_processed.h5ad -> ./tiledb-data/pbmc3k_processed
+START  SOMA.from_h5ad ./anndata/pbmc3k_processed.h5ad -> ./tiledb-data/pbmc3k_processed
   START  READING ./anndata/pbmc3k_processed.h5ad
   FINISH READING ./anndata/pbmc3k_processed.h5ad
   START  DECATEGORICALIZING
@@ -147,7 +147,7 @@ START  SCGroup.from_h5ad ./anndata/pbmc3k_processed.h5ad -> ./tiledb-data/pbmc3k
     START  WRITING ./tiledb-data/pbmc3k_processed/obsp/connectivities
     FINISH WRITING ./tiledb-data/pbmc3k_processed/obsp/connectivities
   FINISH WRITING ./tiledb-data/pbmc3k_processed
-FINISH SCGroup.from_h5ad ./anndata/pbmc3k_processed.h5ad -> ./tiledb-data/pbmc3k_processed
+FINISH SOMA.from_h5ad ./anndata/pbmc3k_processed.h5ad -> ./tiledb-data/pbmc3k_processed
 ```
 
 </details>
