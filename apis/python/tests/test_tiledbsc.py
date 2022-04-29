@@ -81,6 +81,8 @@ def test_import_anndata(adata):
 
     for key in list(orig.obsp.keys()):
         with tiledb.open(os.path.join(output_path, 'obsp', key)) as A:
-            assert A.shape == orig.obsp[key].shape
+            df = A.df[:]
+            assert df.columns.to_list() == ["obs_id_i", "obs_id_j", "value"]
+            assert df.shape[0] == orig.obsp[key].nnz
 
     tempdir.cleanup()
