@@ -280,14 +280,7 @@ class SOMA():
             ctx=self.ctx
         )
         tiledb.Array.create(X_array_uri, sch, ctx=self.ctx)
-
-        # convert ndarray/(csr|csc)matrix to coo_matrix
-        X_coo = scipy.sparse.coo_matrix(x)
-        d0 = obs_names[X_coo.row]
-        d1 = var_names[X_coo.col]
-
-        with tiledb.open(X_array_uri, mode="w", ctx=self.ctx) as A:
-            A[d0, d1] = X_coo.data
+        self.__ingest_coo_data(X_array_uri, x, obs_names, var_names)
 
         if self.verbose:
             print(f"    FINISH WRITING {X_array_uri}")
@@ -397,3 +390,24 @@ class SOMA():
         subgroup.close()
 
         return subgroup_uri
+
+    # ----------------------------------------------------------------
+    def __ingest_coo_data(self, uri, x, row_names, col_names):
+        """
+        Convert ndarray/(csr|csc)matrix to coo_matrix and ingest into TileDB.
+
+        :param uri: TileDB URI of the array to be written.
+        :param x: Matrix-like object coercible to a scipy coo_matrix.
+        :param row_names: List of row names.
+        :param col_names: List of column names.
+        """
+
+        assert len(row_names) == x.shape[0]
+        assert len(col_names) == x.shape[1]
+
+        x_coo = scipy.sparse.coo_matrix(x)
+        d0 = row_names[x_coo.row]
+        d1 = col_names[x_coo.col]
+
+        with tiledb.open(uri, mode="w", ctx=self.ctx) as A:
+            A[d0, d1] = x_coo.data
