@@ -346,8 +346,10 @@ class SOMA():
         # TODO: Refactor so we don't have to jump up a level for the dim names?
         if annotation_matrices.dim == "obs":
             dim_names = annotation_matrices.parent.obs_names
+            dim_labels = [f"obs_id_{x}" for x in ["i", "j"]]
         elif annotation_matrices.dim == "var":
             dim_names = annotation_matrices.parent.var_names
+            dim_labels = [f"var_id_{x}" for x in ["i", "j"]]
 
         for mat_name in annotation_matrices.keys():
             mat = annotation_matrices[mat_name]
@@ -373,7 +375,7 @@ class SOMA():
 
             # Ingest pairwise matrices as 2D sparse arrays
             elif name in ["obsp", "varp"]:
-                self.__create_coo_array(component_array_uri, dim_names=["obs_id", "var_id"], attr_name="value")
+                self.__create_coo_array(component_array_uri, dim_labels, "value")
                 self.__ingest_coo_data(component_array_uri, mat, dim_names, dim_names)
 
             if self.verbose:
