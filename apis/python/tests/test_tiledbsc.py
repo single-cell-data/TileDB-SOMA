@@ -45,12 +45,19 @@ def test_import_anndata(adata):
     #   obsp/distances
     #   obsp/connectivities
 
-    # Check X/data
+    # Check X/data (dense)
     with tiledb.open(os.path.join(output_path, 'X', 'data')) as A:
         df = A[:]
         keys = list(df.keys())
         assert keys == ['value', 'obs_id', 'var_id']
         assert A.ndim == 2
+
+    # Check X/raw (sparse)
+    with tiledb.open(os.path.join(output_path, 'X', 'raw')) as A:
+        df = A.df[:]
+        assert df.columns.to_list() == ['obs_id', 'var_id', 'value']
+        # verify sparsity of raw data
+        assert df.shape[0] == orig.raw.X.nnz
 
     # Check obs
     with tiledb.open(os.path.join(output_path, 'obs')) as A:
@@ -74,6 +81,8 @@ def test_import_anndata(adata):
 
     for key in list(orig.obsp.keys()):
         with tiledb.open(os.path.join(output_path, 'obsp', key)) as A:
-            assert A.shape == orig.obsp[key].shape
+            df = A.df[:]
+            assert df.columns.to_list() == ["obs_id_i", "obs_id_j", "value"]
+            assert df.shape[0] == orig.obsp[key].nnz
 
     tempdir.cleanup()
