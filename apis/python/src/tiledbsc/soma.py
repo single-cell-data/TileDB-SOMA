@@ -256,30 +256,7 @@ class SOMA():
         # Here we do not use tiledb.from_numpy, so that we can have more control over the schema.
         obs_dim, var_dim = np.meshgrid(obs_names, var_names)
 
-        dom = tiledb.Domain(
-            tiledb.Dim(name="obs_id", domain=(None, None), dtype="ascii", filters=[tiledb.RleFilter()]),
-            tiledb.Dim(name="var_id", domain=(None, None), dtype="ascii", filters=[tiledb.ZstdFilter(level=22)]),
-            ctx=self.ctx
-        )
-
-        # Verify:
-        # anndata = ad.read_h5ad('anndata/pbmc3k_processed.h5ad')
-        # anndata.X.dtype
-        dtype = 'float32'
-
-        att = tiledb.Attr("value", dtype=dtype, filters=[tiledb.ZstdFilter()], ctx=self.ctx)
-        sch = tiledb.ArraySchema(
-            domain=dom,
-            attrs=(att,),
-            sparse=True,
-            allows_duplicates=True,
-            offsets_filters=[tiledb.DoubleDeltaFilter(), tiledb.BitWidthReductionFilter(), tiledb.ZstdFilter()],
-            capacity=100000,
-            cell_order='row-major',
-            tile_order='col-major',
-            ctx=self.ctx
-        )
-        tiledb.Array.create(X_array_uri, sch, ctx=self.ctx)
+        self.__create_coo_array(uri=X_array_uri, dim_names=["obs_id", "var_id"], attr_name="value")
         self.__ingest_coo_data(X_array_uri, x, obs_names, var_names)
 
         if self.verbose:
@@ -358,12 +335,24 @@ class SOMA():
         should be a numpy.ndarray or scipy.sparse.csr.csr_matrix.  Writes the TileDB obsm, varm,
         obsp, or varp group under the base soma URI, and then writes all the component arrays
         under that.
+        :param name: "obsm", "varm", "obsp", or "varp"
         """
+        assert name in ["obsm", "varm", "obsp", "varp"]
+
         subgroup_uri = os.path.join(self.uri, name)
         tiledb.group_create(subgroup_uri, ctx=self.ctx)
         subgroup = tiledb.Group(subgroup_uri, mode="w", ctx=self.ctx)
-        for name in annotation_matrices.keys():
-            component_array_uri = os.path.join(subgroup_uri, name)
+
+        # TODO: Refactor so we don't have to jump up a level for the dim names?
+        if annotation_matrices.dim == "obs":
+            dim_names = annotation_matrices.parent.obs_names
+        elif annotation_matrices.dim == "var":
+            dim_names = annotation_matrices.parent.var_names
+
+        for mat_name in annotation_matrices.keys():
+            mat = annotation_matrices[mat_name]
+            print(f"Annotation matrix {mat_name} has shape {mat.shape}")
+            component_array_uri = os.path.join(subgroup_uri, mat_name)
             if self.verbose:
                 print(f"    START  WRITING {component_array_uri}")
 
@@ -372,24 +361,67 @@ class SOMA():
             # scipy.sparse.csr.csr_matrix. For ongoing work we will likely need more checks
             # here. See also desc-ann.py in this directory which helps reveal the datatypes
             # contained within a given HDF5 file.
-            input_as_np_array = annotation_matrices[name]
-            if isinstance(input_as_np_array, scipy.sparse.csr_matrix):
-                input_as_np_array = input_as_np_array.toarray()
+            if name in ["obsm", "varm"]:
+                if isinstance(mat, scipy.sparse.csr_matrix):
+                    mat = mat.toarray()
 
+                tiledb.from_numpy(
+                    uri=component_array_uri,
+                    array=mat,
+                    ctx=self.ctx
+                )
 
-            tiledb.from_numpy(
-                uri=component_array_uri,
-                array=input_as_np_array,
-                ctx=self.ctx
-            )
+            # Ingest pairwise matrices as 2D sparse arrays
+            elif name in ["obsp", "varp"]:
+                self.__create_coo_array(component_array_uri, dim_names=["obs_id", "var_id"], attr_name="value")
+                self.__ingest_coo_data(component_array_uri, mat, dim_names, dim_names)
 
             if self.verbose:
                 print(f"    FINISH WRITING {component_array_uri}")
 
-            subgroup.add(uri=component_array_uri, relative=False, name=name)
+            subgroup.add(uri=component_array_uri, relative=False, name=mat_name)
         subgroup.close()
 
         return subgroup_uri
+
+    # ----------------------------------------------------------------
+    def __create_coo_array(self, uri, dim_names, attr_name):
+        """
+        Create a TileDB 2D sparse array with string dimensions and a single attribute.
+
+        :param uri: URI of the array to be created
+        :param x: scipy.sparse.coo_matrix
+        :param dim_names: names of the TileDB array dimensions
+        :param attr_name: name of the TileDB array attribute
+        """
+        assert isinstance(uri, str)
+        assert len(dim_names) == 2
+        assert isinstance(attr_name, str)
+
+        dom = tiledb.Domain(
+            tiledb.Dim(name=dim_names[0], domain=(None, None), dtype="ascii", filters=[tiledb.RleFilter()]),
+            tiledb.Dim(name=dim_names[1], domain=(None, None), dtype="ascii", filters=[tiledb.ZstdFilter(level=22)]),
+            ctx=self.ctx
+        )
+
+        # Verify:
+        # anndata = ad.read_h5ad('anndata/pbmc3k_processed.h5ad')
+        # anndata.X.dtype
+        dtype = 'float32'
+
+        att = tiledb.Attr(attr_name, dtype=dtype, filters=[tiledb.ZstdFilter()], ctx=self.ctx)
+        sch = tiledb.ArraySchema(
+            domain=dom,
+            attrs=(att,),
+            sparse=True,
+            allows_duplicates=True,
+            offsets_filters=[tiledb.DoubleDeltaFilter(), tiledb.BitWidthReductionFilter(), tiledb.ZstdFilter()],
+            capacity=100000,
+            cell_order='row-major',
+            tile_order='col-major',
+            ctx=self.ctx
+        )
+        tiledb.Array.create(uri, sch, ctx=self.ctx)
 
     # ----------------------------------------------------------------
     def __ingest_coo_data(self, uri, x, row_names, col_names):
