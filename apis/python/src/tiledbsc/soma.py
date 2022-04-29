@@ -373,7 +373,7 @@ class SOMA():
             # here. See also desc-ann.py in this directory which helps reveal the datatypes
             # contained within a given HDF5 file.
             input_as_np_array = annotation_matrices[name]
-            if isinstance(input_as_np_array, scipy.sparse.csr.csr_matrix):
+            if isinstance(input_as_np_array, scipy.sparse.csr_matrix):
                 input_as_np_array = input_as_np_array.toarray()
 
 
