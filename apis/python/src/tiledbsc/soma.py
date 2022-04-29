@@ -193,19 +193,19 @@ class SOMA():
 
         # ----------------------------------------------------------------
         if len(anndata.obsm.keys()) > 0:
-            obsm_uri = self.write_annotation_matrices(anndata.obsm, "obsm", "obs", anndata.obs_names)
+            obsm_uri = self.write_annotation_matrices(anndata.obsm, "obsm", "obs_id", anndata.obs_names)
             base_group.add(uri=obsm_uri, relative=False, name="obsm")
 
         if len(anndata.varm.keys()) > 0:
-            varm_uri = self.write_annotation_matrices(anndata.varm, "varm", "var", anndata.var_names)
+            varm_uri = self.write_annotation_matrices(anndata.varm, "varm", "var_id", anndata.var_names)
             base_group.add(uri=varm_uri, relative=False, name="varm")
 
         if len(anndata.obsp.keys()) > 0:
-            obsp_uri = self.write_annotation_pairwise_matrices(anndata.obsp, "obsp", "obs", anndata.obs_names)
+            obsp_uri = self.write_annotation_pairwise_matrices(anndata.obsp, "obsp", "obs_id", anndata.obs_names)
             base_group.add(uri=obsp_uri, relative=False, name="obsp")
 
         if len(anndata.varp.keys()) > 0:
-            varp_uri = self.write_annotation_pairwise_matrices(anndata.varp, "varp", "var", anndata.var_names)
+            varp_uri = self.write_annotation_pairwise_matrices(anndata.varp, "varp", "var_id", anndata.var_names)
             base_group.add(uri=varp_uri, relative=False, name="varp")
 
         # ----------------------------------------------------------------
@@ -327,22 +327,20 @@ class SOMA():
         return obs_or_var_uri
 
     # ----------------------------------------------------------------
-    def write_annotation_matrices(self, annotation_matrices, name: str, dim_names_name: str, dim_values):
+    def write_annotation_matrices(self, annotation_matrices, name: str, dim_name: str, dim_values):
         """
         Populates the obsm/ or varm/ subgroup for a SOMA object, then writes all the components
         arrays under that group.
         * annotation_matrices: anndata.obsm or anndata.varm
         * name: 'obsm' or 'varm'
-        * VALUES: anndata.obs_names or anndata.var_names
-        * dim_names_name: 'obsp' or 'varp'
+        * dim_name: 'obs_id' or 'var_id'
+        * dim_values: anndata.obs_names or anndata.var_names
         """
         assert name in ["obsm", "varm"]
 
         subgroup_uri = os.path.join(self.uri, name)
         tiledb.group_create(subgroup_uri, ctx=self.ctx)
         subgroup = tiledb.Group(subgroup_uri, mode="w", ctx=self.ctx)
-
-        # dim_labels = [f"{name}_id_{x}" for x in ["i", "j"]]
 
         for mat_name in annotation_matrices.keys():
             mat = annotation_matrices[mat_name]
@@ -358,7 +356,7 @@ class SOMA():
             attr_names = [mat_name + '_' + str(j) for j in range(1, nattr+1)]
 
             # Ingest annotation matrices as 1D/multi-attribute sparse arrays
-            self.__create_annot_matrix(component_array_uri, mat, mat_name, dim_names_name, attr_names)
+            self.__create_annot_matrix(component_array_uri, mat, mat_name, dim_name, attr_names)
             self.__ingest_annot_matrix(component_array_uri, mat, dim_values, attr_names)
 
             if self.verbose:
@@ -370,13 +368,13 @@ class SOMA():
         return subgroup_uri
 
     # ----------------------------------------------------------------
-    def write_annotation_pairwise_matrices(self, annotation_pairwise_matrices, name: str, dim_names_name: str, dim_values):
+    def write_annotation_pairwise_matrices(self, annotation_pairwise_matrices, name: str, dim_name: str, dim_values):
         """
         Populates the obsp/ or varp/ subgroup for a SOMA object, then writes all the components
         arrays under that group.
         * annotation_matrices: anndata.obsp or anndata.varp
         * name: 'obsp' or 'varp'
-        * dim_names_name: 'obs' or 'var'
+        * dim_name: 'obs_id' or 'var_id'
         * dim_values: anndata.obs_names or anndata.var_names
         """
         assert name in ["obsp", "varp"]
@@ -385,7 +383,7 @@ class SOMA():
         tiledb.group_create(subgroup_uri, ctx=self.ctx)
         subgroup = tiledb.Group(subgroup_uri, mode="w", ctx=self.ctx)
 
-        dim_labels = [f"{dim_names_name}_id_{x}" for x in ["i", "j"]]
+        dim_labels = [f"{dim_name}_{x}" for x in ["i", "j"]]
 
         for mat_name in annotation_pairwise_matrices.keys():
             mat = annotation_pairwise_matrices[mat_name]
