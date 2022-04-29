@@ -46,21 +46,23 @@ def show_single_cell_group(uri: str, ctx: Optional[tiledb.Ctx] = None):
         print(A.schema)
 
     for name in ['obsm', 'varm', 'obsp', 'varp']:
+        # Not all groups have all four of obsm, obsp, varm, and varp.
+        grp = None
         try:
             grp = tiledb.Group(os.path.join(uri, name), mode='r', ctx=ctx)
+        except:
+            pass
+
+        if grp != None:
             print()
             print('----------------------------------------------------------------')
             print(name, ':', sep='')
             for element in grp:
                 with tiledb.open(element.uri, ctx=ctx) as A:
-                    #print(A[:])
-                    print("  ", element.uri, A.shape)
+                    print(element.uri)
                     print(A.schema)
             grp.close()
-        except:
-            # Not all groups have all four of obsm, obsp, varm, and varp.
             pass
-
 
 def show_tiledb_group_array_schemas(uri: str, ctx: Optional[tiledb.Ctx] = None):
     """
