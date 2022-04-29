@@ -73,11 +73,13 @@ def test_import_anndata(adata):
     # Note: pbmc3k_processed doesn't have varp.
     for key in orig.obsm_keys():
         with tiledb.open(os.path.join(output_path, 'obsm', key)) as A:
-            assert A.shape == orig.obsm[key].shape
+            df = A.df[:]
+            assert df.shape[0] == orig.obsm[key].shape[0]
 
     for key in orig.varm_keys():
         with tiledb.open(os.path.join(output_path, 'varm', key)) as A:
-            assert A.shape == orig.varm[key].shape
+            df = A.df[:]
+            assert df.shape[0] == orig.varm[key].shape[0]
 
     for key in list(orig.obsp.keys()):
         with tiledb.open(os.path.join(output_path, 'obsp', key)) as A:

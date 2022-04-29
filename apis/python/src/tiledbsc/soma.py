@@ -193,19 +193,19 @@ class SOMA():
 
         # ----------------------------------------------------------------
         if len(anndata.obsm.keys()) > 0:
-            obsm_uri = self.write_annotation_matrices(anndata.obsm, "obsm")
+            obsm_uri = self.write_annotation_matrices(anndata.obsm, "obsm", "obs_id", anndata.obs_names)
             base_group.add(uri=obsm_uri, relative=False, name="obsm")
 
         if len(anndata.varm.keys()) > 0:
-            varm_uri = self.write_annotation_matrices(anndata.varm, "varm")
+            varm_uri = self.write_annotation_matrices(anndata.varm, "varm", "var_id", anndata.var_names)
             base_group.add(uri=varm_uri, relative=False, name="varm")
 
         if len(anndata.obsp.keys()) > 0:
-            obsp_uri = self.write_annotation_matrices(anndata.obsp, "obsp")
+            obsp_uri = self.write_annotation_pairwise_matrices(anndata.obsp, "obsp", "obs_id", anndata.obs_names)
             base_group.add(uri=obsp_uri, relative=False, name="obsp")
 
         if len(anndata.varp.keys()) > 0:
-            varp_uri = self.write_annotation_matrices(anndata.varp, "varp")
+            varp_uri = self.write_annotation_pairwise_matrices(anndata.varp, "varp", "var_id", anndata.var_names)
             base_group.add(uri=varp_uri, relative=False, name="varp")
 
         # ----------------------------------------------------------------
@@ -244,10 +244,10 @@ class SOMA():
     def write_X_array(self, x, group_uri:str, arrayname: str, obs_names, var_names):
         """
         Populates the X/data or X/raw array.
-        * x is anndata.X or raw
-        * group_uri is the URI of the parent group, e.g. 'foo/X'
-        * arrayname is the name of the array within the parent group, e.g. 'data' for 'foo/X/data'
-        * obs_names and var_names are the names for the axes
+        :param x: is anndata.X or raw
+        :param group_uri: is the URI of the parent group, e.g. 'foo/X'
+        :param arrayname: is the name of the array within the parent group, e.g. 'data' for 'foo/X/data'
+        :param obs_names: and var_names are the names for the axes
         """
         X_array_uri = os.path.join(group_uri, arrayname)
         if self.verbose:
@@ -256,7 +256,7 @@ class SOMA():
         # Here we do not use tiledb.from_numpy, so that we can have more control over the schema.
         obs_dim, var_dim = np.meshgrid(obs_names, var_names)
 
-        self.__create_coo_array(uri=X_array_uri, dim_names=["obs_id", "var_id"], attr_name="value")
+        self.__create_coo_array(uri=X_array_uri, dim_labels=["obs_id", "var_id"], attr_name="value")
         self.__ingest_coo_data(X_array_uri, x, obs_names, var_names)
 
         if self.verbose:
@@ -291,7 +291,7 @@ class SOMA():
         #                  orig.ident nCount_RNA nFeature_RNA ...
         #   ATGCCAGAACGACT 0          70.0       47           ...
         #   CATGGCCTGTGCAT 0          85.0       52           ...
-        #   ...            ...        ...        ...          ...             ...           ...    ...
+        #   ...            ...        ...        ...          ...
         #   GGAACACTTCAGAC 0          150.0      30           ...
         #   CTTGATTGATCTTC 0          233.0      76           ...
         #
@@ -302,7 +302,7 @@ class SOMA():
         #   obs_id
         #   ATGCCAGAACGACT 0          70.0       47           ...
         #   CATGGCCTGTGCAT 0          85.0       52           ...
-        #   ...            ...        ...        ...          ...             ...           ...    ...
+        #   ...            ...        ...        ...          ...
         #   GGAACACTTCAGAC 0          150.0      30           ...
         #   CTTGATTGATCTTC 0          233.0      76           ...
         obs_or_var_data = obs_or_var_data.rename_axis(obs_or_var_name+'_id')
@@ -327,56 +327,37 @@ class SOMA():
         return obs_or_var_uri
 
     # ----------------------------------------------------------------
-    def write_annotation_matrices(self, annotation_matrices, name: str):
+    def write_annotation_matrices(self, annotation_matrices, name: str, dim_name: str, dim_values):
         """
-        Populates the obsm/, varm/, obsp/, or varp/ subgroup for a SOMA object.
-        Input: anndata.obsm, anndata.varm, anndata.obsp, or anndata.varp, along with the name
-        "obsm", "varm", "obsp", or "varp", respectively. Each component array from the HDF5 file
-        should be a numpy.ndarray or scipy.sparse.csr.csr_matrix.  Writes the TileDB obsm, varm,
-        obsp, or varp group under the base soma URI, and then writes all the component arrays
-        under that.
-        :param name: "obsm", "varm", "obsp", or "varp"
+        Populates the obsm/ or varm/ subgroup for a SOMA object, then writes all the components
+        arrays under that group.
+        :param annotation_matrices: anndata.obsm or anndata.varm
+        :param name: 'obsm' or 'varm'
+        :param dim_name: 'obs_id' or 'var_id'
+        :param dim_values: anndata.obs_names or anndata.var_names
         """
-        assert name in ["obsm", "varm", "obsp", "varp"]
+        assert name in ["obsm", "varm"]
 
         subgroup_uri = os.path.join(self.uri, name)
         tiledb.group_create(subgroup_uri, ctx=self.ctx)
         subgroup = tiledb.Group(subgroup_uri, mode="w", ctx=self.ctx)
 
-        # TODO: Refactor so we don't have to jump up a level for the dim names?
-        if annotation_matrices.dim == "obs":
-            dim_names = annotation_matrices.parent.obs_names
-            dim_labels = [f"obs_id_{x}" for x in ["i", "j"]]
-        elif annotation_matrices.dim == "var":
-            dim_names = annotation_matrices.parent.var_names
-            dim_labels = [f"var_id_{x}" for x in ["i", "j"]]
-
         for mat_name in annotation_matrices.keys():
             mat = annotation_matrices[mat_name]
-            print(f"Annotation matrix {mat_name} has shape {mat.shape}")
             component_array_uri = os.path.join(subgroup_uri, mat_name)
             if self.verbose:
                 print(f"    START  WRITING {component_array_uri}")
+                print(f"    Annotation matrix {name}/{mat_name} has shape {mat.shape}")
 
-            # Check for conversion from pandas if necessary.  For the pbmc3k_processed reference
-            # dataset, obsm and varm matrices are numpy.ndarray while obsp matrices are
-            # scipy.sparse.csr.csr_matrix. For ongoing work we will likely need more checks
-            # here. See also desc-ann.py in this directory which helps reveal the datatypes
-            # contained within a given HDF5 file.
-            if name in ["obsm", "varm"]:
-                if isinstance(mat, scipy.sparse.csr_matrix):
-                    mat = mat.toarray()
+            # We do not have column names for anndata-provenance annotation matrices.
+            # So, if say we're looking at anndata.obsm['X_pca'], we create column names
+            # 'X_pca_1', 'X_pca_2', etc.
+            (nrow, nattr) = mat.shape
+            attr_names = [mat_name + '_' + str(j) for j in range(1, nattr+1)]
 
-                tiledb.from_numpy(
-                    uri=component_array_uri,
-                    array=mat,
-                    ctx=self.ctx
-                )
-
-            # Ingest pairwise matrices as 2D sparse arrays
-            elif name in ["obsp", "varp"]:
-                self.__create_coo_array(component_array_uri, dim_labels, "value")
-                self.__ingest_coo_data(component_array_uri, mat, dim_names, dim_names)
+            # Ingest annotation matrices as 1D/multi-attribute sparse arrays
+            self.__create_annot_matrix(component_array_uri, mat, mat_name, dim_name, attr_names)
+            self.__ingest_annot_matrix(component_array_uri, mat, dim_values, attr_names)
 
             if self.verbose:
                 print(f"    FINISH WRITING {component_array_uri}")
@@ -387,22 +368,121 @@ class SOMA():
         return subgroup_uri
 
     # ----------------------------------------------------------------
-    def __create_coo_array(self, uri, dim_names, attr_name):
+    def write_annotation_pairwise_matrices(self, annotation_pairwise_matrices, name: str, dim_name: str, dim_values):
+        """
+        Populates the obsp/ or varp/ subgroup for a SOMA object, then writes all the components
+        arrays under that group.
+        :param annotation_matrices: anndata.obsp or anndata.varp
+        :param name: 'obsp' or 'varp'
+        :param dim_name: 'obs_id' or 'var_id'
+        :param dim_values: anndata.obs_names or anndata.var_names
+        """
+        assert name in ["obsp", "varp"]
+
+        subgroup_uri = os.path.join(self.uri, name)
+        tiledb.group_create(subgroup_uri, ctx=self.ctx)
+        subgroup = tiledb.Group(subgroup_uri, mode="w", ctx=self.ctx)
+
+        dim_labels = [f"{dim_name}_{x}" for x in ["i", "j"]]
+
+        for mat_name in annotation_pairwise_matrices.keys():
+            mat = annotation_pairwise_matrices[mat_name]
+            component_array_uri = os.path.join(subgroup_uri, mat_name)
+            if self.verbose:
+                print(f"    START  WRITING {component_array_uri}")
+                print(f"    Annotation-pairwise matrix {name}/{mat_name} has shape {mat.shape}")
+
+            # Ingest annotation pairwise matrices as 2D/single-attribute sparse arrays
+            self.__create_coo_array(component_array_uri, dim_labels, "value")
+            self.__ingest_coo_data(component_array_uri, mat, dim_values, dim_values)
+
+            if self.verbose:
+                print(f"    FINISH WRITING {component_array_uri}")
+
+            subgroup.add(uri=component_array_uri, relative=False, name=mat_name)
+        subgroup.close()
+
+        return subgroup_uri
+
+    # ----------------------------------------------------------------
+    def __create_annot_matrix(self, uri: str, mat, mat_name: str, dim_name: str, attr_names):
+        """
+        Create a TileDB 1D sparse array with string dimension and multiple attributes
+
+        :param uri: URI of the array to be created
+        :param mat: e.g. anndata.obsm['X_pca'] -- nominally a numpy.ndarray
+        :param mat_name: e.g. 'X_pca' in anndata.obsm['X_pca']
+        :param dim_name: name of the TileDB array dimension -- nominally 'obs_id' or 'var_id'
+        :param attr_names: column names for the dataframe
+        """
+        assert isinstance(uri, str)
+        assert isinstance(mat_name, str)
+        assert isinstance(dim_name, str)
+
+        # Nominally 'obs_id' or 'var_id'
+        dom = tiledb.Domain(
+            tiledb.Dim(name=dim_name, domain=(None, None), dtype="ascii", filters=[tiledb.ZstdFilter(level=22)]),
+            ctx=self.ctx
+        )
+
+        # Verify:
+        # anndata = ad.read_h5ad('anndata/pbmc3k_processed.h5ad')
+        # anndata.obsm['X_pca'].dtype
+        dtype = 'float32'
+
+        attrs = [
+            tiledb.Attr(attr_name, dtype=dtype, filters=[tiledb.ZstdFilter()], ctx=self.ctx)
+            for attr_name in attr_names
+        ]
+
+        sch = tiledb.ArraySchema(
+            domain=dom,
+            attrs=attrs,
+            sparse=True,
+            allows_duplicates=True,
+            offsets_filters=[tiledb.DoubleDeltaFilter(), tiledb.BitWidthReductionFilter(), tiledb.ZstdFilter()],
+            capacity=100000,
+            cell_order='row-major',
+            tile_order='col-major',
+            ctx=self.ctx
+        )
+
+        tiledb.Array.create(uri, sch, ctx=self.ctx)
+
+    # ----------------------------------------------------------------
+    def __ingest_annot_matrix(self, uri: str, mat, dim_values, col_names):
+        """
+        Convert ndarray/(csr|csc)matrix to a dataframe and ingest into TileDB.
+        :param uri: TileDB URI of the array to be written.
+        :param mat: Matrix-like object coercible to a pandas dataframe.
+        :param dim_values: barcode/gene IDs from anndata.obs_names or anndata.var_names
+        :param col_names: List of column names.
+        """
+
+        assert len(col_names) == mat.shape[1]
+
+        df = pd.DataFrame(mat, columns = col_names)
+
+        with tiledb.open(uri, mode="w", ctx=self.ctx) as A:
+            A[dim_values] = df.to_dict(orient='list')
+
+    # ----------------------------------------------------------------
+    def __create_coo_array(self, uri: str, dim_labels, attr_name: str):
         """
         Create a TileDB 2D sparse array with string dimensions and a single attribute.
 
         :param uri: URI of the array to be created
-        :param x: scipy.sparse.coo_matrix
-        :param dim_names: names of the TileDB array dimensions
-        :param attr_name: name of the TileDB array attribute
+        :param mat: scipy.sparse.coo_matrix
+        :param dim_labels: names of the TileDB array dimensions
+        :param attr_name: name of the TileDB array-data attribute
         """
         assert isinstance(uri, str)
-        assert len(dim_names) == 2
+        assert len(dim_labels) == 2
         assert isinstance(attr_name, str)
 
         dom = tiledb.Domain(
-            tiledb.Dim(name=dim_names[0], domain=(None, None), dtype="ascii", filters=[tiledb.RleFilter()]),
-            tiledb.Dim(name=dim_names[1], domain=(None, None), dtype="ascii", filters=[tiledb.ZstdFilter(level=22)]),
+            tiledb.Dim(name=dim_labels[0], domain=(None, None), dtype="ascii", filters=[tiledb.RleFilter()]),
+            tiledb.Dim(name=dim_labels[1], domain=(None, None), dtype="ascii", filters=[tiledb.ZstdFilter(level=22)]),
             ctx=self.ctx
         )
 
@@ -426,22 +506,22 @@ class SOMA():
         tiledb.Array.create(uri, sch, ctx=self.ctx)
 
     # ----------------------------------------------------------------
-    def __ingest_coo_data(self, uri, x, row_names, col_names):
+    def __ingest_coo_data(self, uri: str, mat, row_names, col_names):
         """
         Convert ndarray/(csr|csc)matrix to coo_matrix and ingest into TileDB.
 
         :param uri: TileDB URI of the array to be written.
-        :param x: Matrix-like object coercible to a scipy coo_matrix.
+        :param mat: Matrix-like object coercible to a scipy coo_matrix.
         :param row_names: List of row names.
         :param col_names: List of column names.
         """
 
-        assert len(row_names) == x.shape[0]
-        assert len(col_names) == x.shape[1]
+        assert len(row_names) == mat.shape[0]
+        assert len(col_names) == mat.shape[1]
 
-        x_coo = scipy.sparse.coo_matrix(x)
-        d0 = row_names[x_coo.row]
-        d1 = col_names[x_coo.col]
+        mat_coo = scipy.sparse.coo_matrix(mat)
+        d0 = row_names[mat_coo.row]
+        d1 = col_names[mat_coo.col]
 
         with tiledb.open(uri, mode="w", ctx=self.ctx) as A:
-            A[d0, d1] = x_coo.data
+            A[d0, d1] = mat_coo.data
