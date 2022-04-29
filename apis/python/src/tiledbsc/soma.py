@@ -244,10 +244,10 @@ class SOMA():
     def write_X_array(self, x, group_uri:str, arrayname: str, obs_names, var_names):
         """
         Populates the X/data or X/raw array.
-        * x is anndata.X or raw
-        * group_uri is the URI of the parent group, e.g. 'foo/X'
-        * arrayname is the name of the array within the parent group, e.g. 'data' for 'foo/X/data'
-        * obs_names and var_names are the names for the axes
+        :param x: is anndata.X or raw
+        :param group_uri: is the URI of the parent group, e.g. 'foo/X'
+        :param arrayname: is the name of the array within the parent group, e.g. 'data' for 'foo/X/data'
+        :param obs_names: and var_names are the names for the axes
         """
         X_array_uri = os.path.join(group_uri, arrayname)
         if self.verbose:
@@ -331,10 +331,10 @@ class SOMA():
         """
         Populates the obsm/ or varm/ subgroup for a SOMA object, then writes all the components
         arrays under that group.
-        * annotation_matrices: anndata.obsm or anndata.varm
-        * name: 'obsm' or 'varm'
-        * dim_name: 'obs_id' or 'var_id'
-        * dim_values: anndata.obs_names or anndata.var_names
+        :param annotation_matrices: anndata.obsm or anndata.varm
+        :param name: 'obsm' or 'varm'
+        :param dim_name: 'obs_id' or 'var_id'
+        :param dim_values: anndata.obs_names or anndata.var_names
         """
         assert name in ["obsm", "varm"]
 
@@ -372,10 +372,10 @@ class SOMA():
         """
         Populates the obsp/ or varp/ subgroup for a SOMA object, then writes all the components
         arrays under that group.
-        * annotation_matrices: anndata.obsp or anndata.varp
-        * name: 'obsp' or 'varp'
-        * dim_name: 'obs_id' or 'var_id'
-        * dim_values: anndata.obs_names or anndata.var_names
+        :param annotation_matrices: anndata.obsp or anndata.varp
+        :param name: 'obsp' or 'varp'
+        :param dim_name: 'obs_id' or 'var_id'
+        :param dim_values: anndata.obs_names or anndata.var_names
         """
         assert name in ["obsp", "varp"]
 
