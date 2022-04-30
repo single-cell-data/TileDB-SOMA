@@ -253,9 +253,6 @@ class SOMA():
         if self.verbose:
             print(f"    START  WRITING {X_array_uri}")
 
-        # Here we do not use tiledb.from_numpy, so that we can have more control over the schema.
-        obs_dim, var_dim = np.meshgrid(obs_names, var_names)
-
         self.__create_coo_array(uri=X_array_uri, dim_labels=["obs_id", "var_id"], attr_name="value")
         self.__ingest_coo_data(X_array_uri, x, obs_names, var_names)
 
