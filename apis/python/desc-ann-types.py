@@ -2,12 +2,7 @@
 
 # ================================================================
 # This is an anndata-describer that goes a bit beyond what h5ls does for us.
-#
-# See also:
-#
-# * `brew install hdf5`
-# * `h5ls -r anndata/pbmc3k_processed.h5ad`
-# * `h5ls -vr anndata/pbmc3k_processed.h5ad`
+# Similar to desc-ann.py but only shows essential data-type information.
 #
 # Please see comments in util_ann.py.
 # ================================================================
@@ -21,7 +16,7 @@ def main():
         sys.exit(1)
 
     for input_path in sys.argv[1:]:
-        tiledbsc.util_ann.describe_ann_file(input_path, False)
+        tiledbsc.util_ann.describe_ann_file(input_path, True)
 
 if __name__ == "__main__":
     main()
