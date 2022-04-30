@@ -7,6 +7,28 @@ import scipy
 import tiledb
 
 # ----------------------------------------------------------------
+def find_csr_chunk_size(mat: scipy.sparse._csr.csr_matrix, start_row_index: int, capacity: int):
+    """
+    Given a CSR matrix and a start row index, returns the number of rows with cumulative nnz
+    targeted to be around the capacity argument. Context is chunked-COO ingest of larger CSR
+    matrices: if mat is say 8000x9000 but sparse, maybe we'll read rows 0:45 as one chunk and
+    convert that to COO and ingest, then maybe rows 46:78 as a second chunk and convert that to COO
+    and ingest, and so on.
+    :param mat: The input CSR matrix.
+    :param start_row_index: the row index at which to start a chunk.
+    :param capacity: TileDB array-schema capacity parameter.
+    """
+    chunk_size = 1
+    sum_nnz = 0
+    for row_index in range(start_row_index, mat.shape[0]):
+        sum_nnz += mat[row_index].nnz
+        if sum_nnz > capacity:
+            break
+        chunk_size += 1
+
+    return chunk_size
+
+# ----------------------------------------------------------------
 def describe_ann_file(input_path: str, types_only=False):
     """
     This is an anndata-describer that goes a bit beyond what h5ls does for us.
