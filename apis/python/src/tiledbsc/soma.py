@@ -8,6 +8,7 @@ import pyarrow as pa
 import scanpy
 import scipy
 import tiledb
+import tiledbsc.util as util
 
 
 class SOMA():
@@ -62,13 +63,14 @@ class SOMA():
         Factory function to instantiate a SOMA object from an input anndata.AnnData object.
         """
         if self.verbose:
+            s = util.get_start_stamp()
             print(f"START  SOMA.from_ann")
 
         anndata = self.decategoricalize(anndata)
         self.write_tiledb_group(anndata)
 
         if self.verbose:
-            print("FINISH  SOMA.from_ann")
+            print(util.format_elapsed(s,"FINISH  SOMA.from_ann"))
 
     # ----------------------------------------------------------------
     def from_h5ad(self, input_path: str):
@@ -76,6 +78,7 @@ class SOMA():
         Factory function to instantiate a SOMA object from an input .h5ad file.
         """
         if self.verbose:
+            s = util.get_start_stamp()
             print(f"START  SOMA.from_h5ad {input_path} -> {self.uri}")
 
         anndata = self.read_h5ad(input_path)
@@ -83,7 +86,7 @@ class SOMA():
         self.write_tiledb_group(anndata)
 
         if self.verbose:
-            print(f"FINISH SOMA.from_h5ad {input_path} -> {self.uri}")
+            print(util.format_elapsed(s, f"FINISH SOMA.from_h5ad {input_path} -> {self.uri}"))
 
     # ----------------------------------------------------------------
     def from_10x(self, input_path: str):
@@ -91,6 +94,7 @@ class SOMA():
         Factory function to instantiate a SOMA object from an input 10X file.
         """
         if self.verbose:
+            s = util.get_start_stamp()
             print(f"START  SOMA.from_10x {input_path} -> {self.uri}")
 
         anndata = self.read_10x(input_path)
@@ -98,7 +102,7 @@ class SOMA():
         self.write_tiledb_group(anndata)
 
         if self.verbose:
-            print(f"FINISH SOMA.from_10x {input_path} -> {self.uri}")
+            print(util.format_elapsed(s, f"FINISH SOMA.from_10x {input_path} -> {self.uri}"))
 
     # ----------------------------------------------------------------
     def read_h5ad(self, input_path: str):
@@ -106,11 +110,12 @@ class SOMA():
         File-ingestor for .h5ad files
         """
         if self.verbose:
+            s = util.get_start_stamp()
             print(f"  START  READING {input_path}")
         anndata = ad.read_h5ad(input_path)
         anndata.var_names_make_unique()
         if self.verbose:
-            print(f"  FINISH READING {input_path}")
+            print(util.format_elapsed(s, f"  FINISH READING {input_path}"))
         return anndata
 
     # ----------------------------------------------------------------
@@ -119,11 +124,12 @@ class SOMA():
         File-ingestor for 10X files
         """
         if self.verbose:
+            s = util.get_start_stamp()
             print(f"  START  READING {input_path}")
         anndata = scanpy.read_10x_h5(input_path)
         anndata.var_names_make_unique()
         if self.verbose:
-            print(f"  FINISH READING {input_path}")
+            print(util.format_elapsed(s, f"  FINISH READING {input_path}"))
         return anndata
 
     # ----------------------------------------------------------------
@@ -135,6 +141,7 @@ class SOMA():
         """
 
         if self.verbose:
+            s = util.get_start_stamp()
             print(f"  START  DECATEGORICALIZING")
 
         # See also https://docs.scipy.org/doc/numpy-1.10.1/reference/arrays.dtypes.html
@@ -164,7 +171,7 @@ class SOMA():
         )
 
         if self.verbose:
-            print(f"  FINISH DECATEGORICALIZING")
+            print(util.format_elapsed(s, f"  FINISH DECATEGORICALIZING"))
         return anndata
 
     # ----------------------------------------------------------------
@@ -173,6 +180,7 @@ class SOMA():
         Top-level writer method for creating a TileDB group for a SOMA object.
         """
         if self.verbose:
+            s = util.get_start_stamp()
             print(f"  START  WRITING {self.uri}")
 
         # ----------------------------------------------------------------
@@ -210,7 +218,7 @@ class SOMA():
 
         # ----------------------------------------------------------------
         if self.verbose:
-            print(f"  FINISH WRITING {self.uri}")
+            print(util.format_elapsed(s, f"  FINISH WRITING {self.uri}"))
 
         base_group.close()
 
@@ -251,13 +259,14 @@ class SOMA():
         """
         X_array_uri = os.path.join(group_uri, arrayname)
         if self.verbose:
+            s = util.get_start_stamp()
             print(f"    START  WRITING {X_array_uri}")
 
         self.__create_coo_array(uri=X_array_uri, dim_labels=["obs_id", "var_id"], attr_name="value")
         self.__ingest_coo_data(X_array_uri, x, obs_names, var_names)
 
         if self.verbose:
-            print(f"    FINISH WRITING {X_array_uri}")
+            print(util.format_elapsed(s, f"    FINISH WRITING {X_array_uri}"))
         return X_array_uri
 
     # ----------------------------------------------------------------
@@ -277,6 +286,7 @@ class SOMA():
 
         obs_or_var_uri = os.path.join(self.uri, obs_or_var_name)
         if self.verbose:
+            s = util.get_start_stamp()
             print(f"    START  WRITING {obs_or_var_uri}")
 
         # Make the row-names column (barcodes for obs, gene names for var) explicitly named.
@@ -319,7 +329,7 @@ class SOMA():
         )
 
         if self.verbose:
-            print(f"    FINISH WRITING {obs_or_var_uri}")
+            print(util.format_elapsed(s, f"    FINISH WRITING {obs_or_var_uri}"))
 
         return obs_or_var_uri
 
@@ -343,6 +353,7 @@ class SOMA():
             mat = annotation_matrices[mat_name]
             component_array_uri = os.path.join(subgroup_uri, mat_name)
             if self.verbose:
+                s = util.get_start_stamp()
                 print(f"    START  WRITING {component_array_uri}")
                 print(f"    Annotation matrix {name}/{mat_name} has shape {mat.shape}")
 
@@ -357,7 +368,7 @@ class SOMA():
             self.__ingest_annot_matrix(component_array_uri, mat, dim_values, attr_names)
 
             if self.verbose:
-                print(f"    FINISH WRITING {component_array_uri}")
+                print(util.format_elapsed(s, f"    FINISH WRITING {component_array_uri}"))
 
             subgroup.add(uri=component_array_uri, relative=False, name=mat_name)
         subgroup.close()
@@ -386,6 +397,7 @@ class SOMA():
             mat = annotation_pairwise_matrices[mat_name]
             component_array_uri = os.path.join(subgroup_uri, mat_name)
             if self.verbose:
+                s = util.get_start_stamp()
                 print(f"    START  WRITING {component_array_uri}")
                 print(f"    Annotation-pairwise matrix {name}/{mat_name} has shape {mat.shape}")
 
@@ -394,7 +406,7 @@ class SOMA():
             self.__ingest_coo_data(component_array_uri, mat, dim_values, dim_values)
 
             if self.verbose:
-                print(f"    FINISH WRITING {component_array_uri}")
+                print(util.format_elapsed(s, f"    FINISH WRITING {component_array_uri}"))
 
             subgroup.add(uri=component_array_uri, relative=False, name=mat_name)
         subgroup.close()
