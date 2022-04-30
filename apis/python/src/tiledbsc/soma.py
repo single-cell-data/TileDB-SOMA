@@ -8,7 +8,8 @@ import pyarrow as pa
 import scanpy
 import scipy
 import tiledb
-import tiledbsc.util as util
+import tiledbsc.util     as util
+import tiledbsc.util_ann as util_ann
 
 
 class SOMA():
@@ -260,10 +261,15 @@ class SOMA():
         X_array_uri = os.path.join(group_uri, arrayname)
         if self.verbose:
             s = util.get_start_stamp()
-            print(f"    START  WRITING {X_array_uri}")
+            print(f"    START  WRITING {X_array_uri} from {type(x)}")
 
         self.__create_coo_array(uri=X_array_uri, dim_labels=["obs_id", "var_id"], attr_name="value")
-        self.__ingest_coo_data(X_array_uri, x, obs_names, var_names)
+
+        # TODO: add chunked support for CSC
+        if isinstance(x, scipy.sparse._csr.csr_matrix):
+            self.__ingest_coo_data_rows_chunked(X_array_uri, x, obs_names, var_names)
+        else:
+            self.__ingest_coo_data_whole(X_array_uri, x, obs_names, var_names)
 
         if self.verbose:
             print(util.format_elapsed(s, f"    FINISH WRITING {X_array_uri}"))
@@ -403,7 +409,7 @@ class SOMA():
 
             # Ingest annotation pairwise matrices as 2D/single-attribute sparse arrays
             self.__create_coo_array(component_array_uri, dim_labels, "value")
-            self.__ingest_coo_data(component_array_uri, mat, dim_values, dim_values)
+            self.__ingest_coo_data_whole(component_array_uri, mat, dim_values, dim_values)
 
             if self.verbose:
                 print(util.format_elapsed(s, f"    FINISH WRITING {component_array_uri}"))
@@ -515,7 +521,52 @@ class SOMA():
         tiledb.Array.create(uri, sch, ctx=self.ctx)
 
     # ----------------------------------------------------------------
-    def __ingest_coo_data(self, uri: str, mat, row_names, col_names):
+    def __ingest_coo_data_rows_chunked(self, uri: str, mat: scipy.sparse._csr.csr_matrix, row_names, col_names):
+        """
+        Convert csr_matrix to coo_matrix chunkwise and ingest into TileDB.
+
+        :param uri: TileDB URI of the array to be written.
+        :param mat: csr_matrix.
+        :param row_names: List of row names.
+        :param col_names: List of column names.
+        """
+
+        assert len(row_names) == mat.shape[0]
+        assert len(col_names) == mat.shape[1]
+
+        s = util.get_start_stamp()
+        print(f"  START  __ingest_coo_data_rows_chunked")
+
+        with tiledb.open(uri, mode="w") as A:
+            nrow = len(row_names)
+            capacity = 100000 # xxx temp
+
+            i = 0
+            while i < nrow:
+                # Find a number of CSR rows which will roughly match the TileDB capacity parameter.
+                chunk_size = util_ann.find_csr_chunk_size(mat, i, capacity)
+                i2 = i + chunk_size
+
+                # Convert the chunk to a COO matrix.
+                chunk_coo = mat[i:i2].tocoo()
+
+                s2 = util.get_start_stamp()
+                # Python ranges are (lo, hi) with lo inclusive and hi exclusive. But saying that
+                # makes us look buggy if we say we're ingesting chunk 0:18 and then 18:32.
+                # Instead, print inclusive lo..hi like 0..17 and 18..31.
+                print("    START  chunk rows %d..%d of %d with nnz %d %7.3f%%" % (i, i2-1, nrow, chunk_coo.nnz, 100*i2/nrow))
+                # Write the chunk-COO to TileDB.
+                d0 = row_names[chunk_coo.row + i]
+                d1 = col_names[chunk_coo.col]
+                A[d0, d1] = chunk_coo.data
+
+                print(util.format_elapsed(s2,"    FINISH chunk"))
+                i = i2
+
+        print(util.format_elapsed(s,"  FINISH __ingest_coo_data_rows_chunked"))
+
+    # ----------------------------------------------------------------
+    def __ingest_coo_data_whole(self, uri: str, mat, row_names, col_names):
         """
         Convert ndarray/(csr|csc)matrix to coo_matrix and ingest into TileDB.
 
