@@ -9,7 +9,6 @@ import scanpy
 import scipy
 import tiledb
 import tiledbsc.util     as util
-import tiledbsc.util_ann as util_ann
 
 
 class SOMA():
@@ -521,6 +520,34 @@ class SOMA():
         tiledb.Array.create(uri, sch, ctx=self.ctx)
 
     # ----------------------------------------------------------------
+    # Example: suppose this 4x3 is to be written in two chunks of two rows each
+    # but written in sorted order.
+    #
+    # Original     Sorted     Permutation
+    #  data       row names
+    #
+    #   X Y Z
+    # C 0 1 2      A            1
+    # A 4 0 5      B            2
+    # B 7 0 0      C            0
+    # D 0 8 9      D            3
+    #
+    # First chunk:
+    # * Row indices 0,1 map to permutation indices 1,2
+    # * i,i2 are 0,2
+    # * chunk_coo is original matrix rows 1,2
+    # * chunk_coo.row is [0,1]
+    # * chunk_coo.row + i is [0,1]
+    # * sorted_row_names: ['A', 'B']
+    #
+    # Second chunk:
+    # * Row indices 2,3 map to permutation indices 0,3
+    # * i,i2 are 2,4
+    # * chunk_coo is original matrix rows 0,3
+    # * chunk_coo.row is [0,1]
+    # * chunk_coo.row + i is [2,3]
+    # * sorted_row_names: ['C', 'D']
+
     def __ingest_coo_data_rows_chunked(self, uri: str, mat: scipy.sparse._csr.csr_matrix, row_names, col_names):
         """
         Convert csr_matrix to coo_matrix chunkwise and ingest into TileDB.
@@ -534,36 +561,51 @@ class SOMA():
         assert len(row_names) == mat.shape[0]
         assert len(col_names) == mat.shape[1]
 
+        goal_chunk_nnz = 10000000 # TODO: implement as settable config
+
+        # Sort the row names so we can write chunks indexed by sorted string keys.  This will lead
+        # to efficient TileDB fragments in the sparse array indexed by these string keys.
+        sorted_row_names, permutation = util.get_sort_and_permutation(list(row_names))
+        # Using numpy we can index this with a list of indices, which a plain Python list doesn't support.
+        sorted_row_names = np.asarray(sorted_row_names)
+
         s = util.get_start_stamp()
-        print(f"  START  __ingest_coo_data_rows_chunked")
+        print(f"      START  __ingest_coo_data_rows_chunked")
 
         with tiledb.open(uri, mode="w") as A:
-            nrow = len(row_names)
-            capacity = 100000 # xxx temp
+            nrow = len(sorted_row_names)
 
             i = 0
             while i < nrow:
-                # Find a number of CSR rows which will roughly match the TileDB capacity parameter.
-                chunk_size = util_ann.find_csr_chunk_size(mat, i, capacity)
+                # Find a number of CSR rows which will result in a desired nnz for the chunk.
+                chunk_size = util.find_csr_chunk_size(mat, permutation, i, goal_chunk_nnz)
                 i2 = i + chunk_size
 
                 # Convert the chunk to a COO matrix.
-                chunk_coo = mat[i:i2].tocoo()
+                chunk_coo = mat[permutation[i:i2]].tocoo()
 
                 s2 = util.get_start_stamp()
+
+                # Write the chunk-COO to TileDB.
+                d0 = sorted_row_names[chunk_coo.row + i]
+                d1 = col_names[chunk_coo.col]
+
+                if len(d0) == 0:
+                    continue
+
                 # Python ranges are (lo, hi) with lo inclusive and hi exclusive. But saying that
                 # makes us look buggy if we say we're ingesting chunk 0:18 and then 18:32.
                 # Instead, print inclusive lo..hi like 0..17 and 18..31.
-                print("    START  chunk rows %d..%d of %d with nnz %d %7.3f%%" % (i, i2-1, nrow, chunk_coo.nnz, 100*i2/nrow))
-                # Write the chunk-COO to TileDB.
-                d0 = row_names[chunk_coo.row + i]
-                d1 = col_names[chunk_coo.col]
+                print("        START  chunk rows %d..%d of %d, obs_ids %s..%s, nnz=%d, %7.3f%%" %
+                    (i, i2-1, nrow, d0[0], d0[-1], chunk_coo.nnz, 100*(i2-1)/nrow))
+
+                # Write a TileDB fragment
                 A[d0, d1] = chunk_coo.data
 
-                print(util.format_elapsed(s2,"    FINISH chunk"))
+                print(util.format_elapsed(s2,"        FINISH chunk"))
                 i = i2
 
-        print(util.format_elapsed(s,"  FINISH __ingest_coo_data_rows_chunked"))
+        print(util.format_elapsed(s,"      FINISH __ingest_coo_data_rows_chunked"))
 
     # ----------------------------------------------------------------
     def __ingest_coo_data_whole(self, uri: str, mat, row_names, col_names):
