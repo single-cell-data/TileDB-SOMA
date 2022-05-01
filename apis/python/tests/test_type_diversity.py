@@ -15,17 +15,17 @@ Testing `from_anndata` with the wide diversity of types latent in AnnData.
 X_type_sweep = [
     (dtype_name, encoding)
     for dtype_name in [
-        # "float16",    Enable when #39 is fixed
+        # "float16",    TODO: Enable when #39 is fixed
         "float32",
-        # "float64",    Enable when #42 is fixed
-        # "int8",       Enable when #42 is fixed
-        # "int16",      Enable when #42 is fixed
-        # "int32",      Enable when #42 is fixed
-        # "int64",      Enable when #42 is fixed
-        # "uint8",      Enable when #42 is fixed
-        # "uint16",     Enable when #42 is fixed
-        # "uint32",     Enable when #42 is fixed
-        # "uint64",     Enable when #42 is fixed
+        # "float64",    TODO: Enable when #42 is fixed
+        # "int8",       TODO: Enable when #42 is fixed
+        # "int16",      TODO: Enable when #42 is fixed
+        # "int32",      TODO: Enable when #42 is fixed
+        # "int64",      TODO: Enable when #42 is fixed
+        # "uint8",      TODO: Enable when #42 is fixed
+        # "uint16",     TODO: Enable when #42 is fixed
+        # "uint32",     TODO: Enable when #42 is fixed
+        # "uint64",     TODO: Enable when #42 is fixed
     ]
     for encoding in ["dense", "csc", "csr"]
 ]
@@ -97,7 +97,7 @@ def test_from_anndata_DataFrame_type(tmp_path):
         ("bool", lambda a: a.astype(bool)),
         ("str", lambda a: a.astype(str)),
         ("bytes", lambda a: a.astype(str).astype(bytes)),
-        # ("float16", lambda a: a.astype(np.dtype("float16"))),         Enable when #39 is fixed
+        # ("float16", lambda a: a.astype(np.dtype("float16"))),         TODO: Enable when #39 is fixed
         ("float32", lambda a: a.astype("float32")),
         ("float64", lambda a: a.astype("float64")),
         ("int8", lambda a: a.astype("int8")),
@@ -110,7 +110,7 @@ def test_from_anndata_DataFrame_type(tmp_path):
         ("uint64", lambda a: a.astype("uint64")),
         ("object", lambda a: a.astype(str).astype(np.dtype("O"))),
         ("categorical(str)", lambda a: a.astype(str).astype("category")),
-        # The following tests fail due to issue #30 -- re-enable test when resolved.
+        # TODO: The following tests fail due to issue #30 -- re-enable test when resolved.
         # (
         #     "categorical(int32)",
         #     lambda a: a.astype("int32").astype(
@@ -179,6 +179,8 @@ def test_from_anndata_DataFrame_type(tmp_path):
                 assert cmp_dtype(df[k], arr.schema.attr(attr_idx[k]))
 
 
+
+# TODO: re-enable when #45 is resolved
 @pytest.mark.skip(reason="Fails: filed as issue #45")
 def test_from_anndata_annotations_empty(tmp_path):
     """
@@ -213,6 +215,7 @@ def test_from_anndata_annotations_empty(tmp_path):
         )
 
 
+# TODO: re-enable when #33 and #45 are resolved
 @pytest.mark.skip(reason="Fails: filed as issues #33 and #45")
 def test_from_anndata_annotations_none(tmp_path):
     """
