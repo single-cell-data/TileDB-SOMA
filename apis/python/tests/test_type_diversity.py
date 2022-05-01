@@ -143,7 +143,8 @@ def test_from_anndata_DataFrame_type(tmp_path):
             for name, cast in df_col_type_sweep
         },
     )
-    adata = AnnData(X=np.ones((n, n), dtype=np.float32), obs=df, var=df)
+    X = np.ones((n, n), dtype=np.float32)
+    adata = AnnData(X=X, obs=df, var=df, dtype=X.dtype)
     SOMA(tmp_path.as_posix()).from_anndata(adata)
     assert all(
         (tmp_path / sub_array_path).exists()
