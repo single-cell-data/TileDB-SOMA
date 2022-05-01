@@ -1,6 +1,6 @@
 from anndata import AnnData
 import tiledb
-import tiledbsc
+from tiledbsc import SOMA
 import pandas as pd
 import numpy as np
 from scipy import sparse
@@ -8,7 +8,7 @@ from scipy import sparse
 import pytest
 
 """
-Testing from_anndata with the wide diversity of types latent in AnnData 
+Testing `from_anndata` with the wide diversity of types latent in AnnData.
 """
 
 
@@ -58,7 +58,7 @@ def test_from_anndata_X_type(tmp_path, X_dtype_name, X_encoding):
     adata = AnnData(X=X, obs=obs, var=var, dtype=X.dtype)
     assert adata.X.dtype == X_dtype  # sanity
 
-    tiledbsc.SOMA(tmp_path.as_posix()).from_anndata(adata)
+    SOMA(tmp_path.as_posix()).from_anndata(adata)
     assert all(
         (tmp_path / sub_array_path).exists()
         for sub_array_path in ["obs", "var", "X/data"]
@@ -144,7 +144,7 @@ def test_from_anndata_DataFrame_type(tmp_path):
         },
     )
     adata = AnnData(X=np.ones((n, n), dtype=np.float32), obs=df, var=df)
-    tiledbsc.SOMA(tmp_path.as_posix()).from_anndata(adata)
+    SOMA(tmp_path.as_posix()).from_anndata(adata)
     assert all(
         (tmp_path / sub_array_path).exists()
         for sub_array_path in ["obs", "var", "X/data"]
@@ -194,7 +194,7 @@ def test_from_anndata_annotations_empty(tmp_path):
     X = np.ones((n_obs, n_var))
     adata = AnnData(X=X, obs=obs, var=var, dtype=X.dtype)
 
-    tiledbsc.SOMA(tmp_path.as_posix()).from_anndata(adata)
+    SOMA(tmp_path.as_posix()).from_anndata(adata)
 
     assert all(
         (tmp_path / sub_array_path).exists()
@@ -222,7 +222,7 @@ def test_from_anndata_annotations_none(tmp_path):
     """ default constructor """
     path = tmp_path / "empty"
     adata = AnnData()
-    tiledbsc.SOMA(path.as_posix()).from_anndata(adata)
+    SOMA(path.as_posix()).from_anndata(adata)
     assert all(
         (path / sub_array_path).exists() for sub_array_path in ["obs", "var", "X/data"]
     )
@@ -230,7 +230,7 @@ def test_from_anndata_annotations_none(tmp_path):
     """ only X defined """
     path = tmp_path / "X_only"
     adata = AnnData(X=np.eye(100, 10))
-    tiledbsc.SOMA(path.as_posix()).from_anndata(adata)
+    SOMA(path.as_posix()).from_anndata(adata)
     assert all(
         (path / sub_array_path).exists() for sub_array_path in ["obs", "var", "X/data"]
     )
@@ -238,7 +238,7 @@ def test_from_anndata_annotations_none(tmp_path):
     """ missing var """
     path = tmp_path / "no_var"
     adata = AnnData(X=np.eye(100, 10), obs=np.arange(100))
-    tiledbsc.SOMA(path.as_posix()).from_anndata(adata)
+    SOMA(path.as_posix()).from_anndata(adata)
     assert all(
         (path / sub_array_path).exists() for sub_array_path in ["obs", "var", "X/data"]
     )
@@ -246,7 +246,7 @@ def test_from_anndata_annotations_none(tmp_path):
     """ missing obs """
     path = tmp_path / "no_obs"
     adata = AnnData(X=np.eye(100, 10), var=np.arange(10))
-    tiledbsc.SOMA(path.as_posix()).from_anndata(adata)
+    SOMA(path.as_posix()).from_anndata(adata)
     assert all(
         (path / sub_array_path).exists() for sub_array_path in ["obs", "var", "X/data"]
     )
