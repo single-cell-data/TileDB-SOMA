@@ -154,6 +154,7 @@ class SOMA():
 
         anndata = ad.AnnData(
             X=anndata.X,
+            dtype=anndata.X.dtype,
             raw=anndata.raw,  # expect Python 'None' type when there is no raw -- assignment OK
             obs=obs,
             var=var,
@@ -253,7 +254,7 @@ class SOMA():
         if self.verbose:
             print(f"    START  WRITING {X_array_uri}")
 
-        self.__create_coo_array(uri=X_array_uri, dim_labels=["obs_id", "var_id"], attr_name="value")
+        self.__create_coo_array(uri=X_array_uri, dim_labels=["obs_id", "var_id"], attr_name="value", mat_dtype=x.dtype)
         self.__ingest_coo_data(X_array_uri, x, obs_names, var_names)
 
         if self.verbose:
@@ -390,7 +391,7 @@ class SOMA():
                 print(f"    Annotation-pairwise matrix {name}/{mat_name} has shape {mat.shape}")
 
             # Ingest annotation pairwise matrices as 2D/single-attribute sparse arrays
-            self.__create_coo_array(component_array_uri, dim_labels, "value")
+            self.__create_coo_array(component_array_uri, dim_labels, "value", mat_dtype=mat.dtype)
             self.__ingest_coo_data(component_array_uri, mat, dim_values, dim_values)
 
             if self.verbose:
@@ -425,7 +426,8 @@ class SOMA():
         # Verify:
         # anndata = ad.read_h5ad('anndata/pbmc3k_processed.h5ad')
         # anndata.obsm['X_pca'].dtype
-        dtype = 'float32'
+        #dtype = 'float32'
+        dtype = mat.dtype
 
         attrs = [
             tiledb.Attr(attr_name, dtype=dtype, filters=[tiledb.ZstdFilter()], ctx=self.ctx)
@@ -464,7 +466,7 @@ class SOMA():
             A[dim_values] = df.to_dict(orient='list')
 
     # ----------------------------------------------------------------
-    def __create_coo_array(self, uri: str, dim_labels, attr_name: str):
+    def __create_coo_array(self, uri: str, dim_labels, attr_name: str, mat_dtype):
         """
         Create a TileDB 2D sparse array with string dimensions and a single attribute.
 
@@ -483,12 +485,7 @@ class SOMA():
             ctx=self.ctx
         )
 
-        # Verify:
-        # anndata = ad.read_h5ad('anndata/pbmc3k_processed.h5ad')
-        # anndata.X.dtype
-        dtype = 'float32'
-
-        att = tiledb.Attr(attr_name, dtype=dtype, filters=[tiledb.ZstdFilter()], ctx=self.ctx)
+        att = tiledb.Attr(attr_name, dtype=mat_dtype, filters=[tiledb.ZstdFilter()], ctx=self.ctx)
         sch = tiledb.ArraySchema(
             domain=dom,
             attrs=(att,),

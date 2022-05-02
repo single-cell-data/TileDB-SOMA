@@ -20,17 +20,17 @@ Status:
 X_type_sweep = [
     (dtype_name, encoding)
     for dtype_name in [
-        # "float16",    TODO: Enable when #39 is fixed
+        #"float16",    # TODO: Enable when #39 is fixed
         "float32",
-        # "float64",    TODO: Enable when #42 is fixed
-        # "int8",       TODO: Enable when #42 is fixed
-        # "int16",      TODO: Enable when #42 is fixed
-        # "int32",      TODO: Enable when #42 is fixed
-        # "int64",      TODO: Enable when #42 is fixed
-        # "uint8",      TODO: Enable when #42 is fixed
-        # "uint16",     TODO: Enable when #42 is fixed
-        # "uint32",     TODO: Enable when #42 is fixed
-        # "uint64",     TODO: Enable when #42 is fixed
+        "float64",
+        "int8",
+        "int16",
+        "int32",
+        "int64",
+        "uint8",
+        "uint16",
+        "uint32",
+        "uint64",
     ]
     for encoding in ["dense", "csc", "csr"]
 ]
