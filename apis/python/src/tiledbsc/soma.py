@@ -8,6 +8,7 @@ import pyarrow as pa
 import scanpy
 import scipy
 import tiledb
+import tiledbsc.util     as util
 
 def uncat(x):
     if isinstance(x.dtype, pd.CategoricalDtype):
@@ -36,6 +37,7 @@ class SOMA():
     verbose: bool
     config: tiledb.Config
     ctx: tiledb.Ctx
+    write_X_chunked_if_csr: bool
 
     # ----------------------------------------------------------------
     def __init__(self, uri: str, verbose: bool = True, config: Optional[tiledb.Config] = None, ctx: Optional[tiledb.Ctx] = None):
@@ -55,6 +57,8 @@ class SOMA():
         if self.ctx is None and self.config is not None:
             self.ctx = tiledb.Ctx(self.config)
 
+        self.write_X_chunked_if_csr = True
+
         # If URI is "/something/test1" then:
         # * obs_uri  is "/something/test1/obs"
         # * var_uri  is "/something/test1/var"
@@ -65,19 +69,29 @@ class SOMA():
         # * var_uri  is "tiledb://namespace/s3://bucketname/something/test1/var"
         # * data_uri is "tiledb://namespace/s3://bucketname/something/test1/X"
 
+    def set_write_X_chunked_if_csr(self, val: bool):
+        """
+        Allows the user to disable the default setting which is that X matrices in CSR format
+        are written chunked/fragmented as a memory-reduction strategy. If this is set to False,
+        X matrices will be converted to COO and ingested all at one go.
+        """
+        self.write_X_chunked_if_csr = val
+        return self
+
     # ----------------------------------------------------------------
     def from_anndata(self, anndata: ad.AnnData):
         """
         Factory function to instantiate a SOMA object from an input anndata.AnnData object.
         """
         if self.verbose:
+            s = util.get_start_stamp()
             print(f"START  SOMA.from_ann")
 
         anndata = self.decategoricalize(anndata)
         self.write_tiledb_group(anndata)
 
         if self.verbose:
-            print("FINISH  SOMA.from_ann")
+            print(util.format_elapsed(s,"FINISH  SOMA.from_ann"))
 
     # ----------------------------------------------------------------
     def from_h5ad(self, input_path: str):
@@ -85,6 +99,7 @@ class SOMA():
         Factory function to instantiate a SOMA object from an input .h5ad file.
         """
         if self.verbose:
+            s = util.get_start_stamp()
             print(f"START  SOMA.from_h5ad {input_path} -> {self.uri}")
 
         anndata = self.read_h5ad(input_path)
@@ -92,7 +107,7 @@ class SOMA():
         self.write_tiledb_group(anndata)
 
         if self.verbose:
-            print(f"FINISH SOMA.from_h5ad {input_path} -> {self.uri}")
+            print(util.format_elapsed(s, f"FINISH SOMA.from_h5ad {input_path} -> {self.uri}"))
 
     # ----------------------------------------------------------------
     def from_10x(self, input_path: str):
@@ -100,6 +115,7 @@ class SOMA():
         Factory function to instantiate a SOMA object from an input 10X file.
         """
         if self.verbose:
+            s = util.get_start_stamp()
             print(f"START  SOMA.from_10x {input_path} -> {self.uri}")
 
         anndata = self.read_10x(input_path)
@@ -107,7 +123,7 @@ class SOMA():
         self.write_tiledb_group(anndata)
 
         if self.verbose:
-            print(f"FINISH SOMA.from_10x {input_path} -> {self.uri}")
+            print(util.format_elapsed(s, f"FINISH SOMA.from_10x {input_path} -> {self.uri}"))
 
     # ----------------------------------------------------------------
     def read_h5ad(self, input_path: str):
@@ -115,11 +131,12 @@ class SOMA():
         File-ingestor for .h5ad files
         """
         if self.verbose:
+            s = util.get_start_stamp()
             print(f"  START  READING {input_path}")
         anndata = ad.read_h5ad(input_path)
         anndata.var_names_make_unique()
         if self.verbose:
-            print(f"  FINISH READING {input_path}")
+            print(util.format_elapsed(s, f"  FINISH READING {input_path}"))
         return anndata
 
     # ----------------------------------------------------------------
@@ -128,11 +145,12 @@ class SOMA():
         File-ingestor for 10X files
         """
         if self.verbose:
+            s = util.get_start_stamp()
             print(f"  START  READING {input_path}")
         anndata = scanpy.read_10x_h5(input_path)
         anndata.var_names_make_unique()
         if self.verbose:
-            print(f"  FINISH READING {input_path}")
+            print(util.format_elapsed(s, f"  FINISH READING {input_path}"))
         return anndata
 
     # ----------------------------------------------------------------
@@ -144,6 +162,7 @@ class SOMA():
         """
 
         if self.verbose:
+            s = util.get_start_stamp()
             print(f"  START  DECATEGORICALIZING")
 
         # See also https://docs.scipy.org/doc/numpy-1.10.1/reference/arrays.dtypes.html
@@ -174,7 +193,7 @@ class SOMA():
         )
 
         if self.verbose:
-            print(f"  FINISH DECATEGORICALIZING")
+            print(util.format_elapsed(s, f"  FINISH DECATEGORICALIZING"))
         return anndata
 
     # ----------------------------------------------------------------
@@ -183,6 +202,7 @@ class SOMA():
         Top-level writer method for creating a TileDB group for a SOMA object.
         """
         if self.verbose:
+            s = util.get_start_stamp()
             print(f"  START  WRITING {self.uri}")
 
         # ----------------------------------------------------------------
@@ -220,7 +240,7 @@ class SOMA():
 
         # ----------------------------------------------------------------
         if self.verbose:
-            print(f"  FINISH WRITING {self.uri}")
+            print(util.format_elapsed(s, f"  FINISH WRITING {self.uri}"))
 
         base_group.close()
 
@@ -261,13 +281,19 @@ class SOMA():
         """
         X_array_uri = os.path.join(group_uri, arrayname)
         if self.verbose:
-            print(f"    START  WRITING {X_array_uri}")
+            s = util.get_start_stamp()
+            print(f"    START  WRITING {X_array_uri} from {type(x)}")
 
         self.__create_coo_array(uri=X_array_uri, dim_labels=["obs_id", "var_id"], attr_name="value", mat_dtype=x.dtype)
-        self.__ingest_coo_data(X_array_uri, x, obs_names, var_names)
+
+        # TODO: add chunked support for CSC
+        if isinstance(x, scipy.sparse._csr.csr_matrix) and self.write_X_chunked_if_csr:
+            self.__ingest_coo_data_rows_chunked(X_array_uri, x, obs_names, var_names)
+        else:
+            self.__ingest_coo_data_whole(X_array_uri, x, obs_names, var_names)
 
         if self.verbose:
-            print(f"    FINISH WRITING {X_array_uri}")
+            print(util.format_elapsed(s, f"    FINISH WRITING {X_array_uri}"))
         return X_array_uri
 
     # ----------------------------------------------------------------
@@ -287,6 +313,7 @@ class SOMA():
 
         obs_or_var_uri = os.path.join(self.uri, obs_or_var_name)
         if self.verbose:
+            s = util.get_start_stamp()
             print(f"    START  WRITING {obs_or_var_uri}")
 
         # Make the row-names column (barcodes for obs, gene names for var) explicitly named.
@@ -329,7 +356,7 @@ class SOMA():
         )
 
         if self.verbose:
-            print(f"    FINISH WRITING {obs_or_var_uri}")
+            print(util.format_elapsed(s, f"    FINISH WRITING {obs_or_var_uri}"))
 
         return obs_or_var_uri
 
@@ -353,6 +380,7 @@ class SOMA():
             mat = annotation_matrices[mat_name]
             component_array_uri = os.path.join(subgroup_uri, mat_name)
             if self.verbose:
+                s = util.get_start_stamp()
                 print(f"    START  WRITING {component_array_uri}")
                 print(f"    Annotation matrix {name}/{mat_name} has shape {mat.shape}")
 
@@ -367,7 +395,7 @@ class SOMA():
             self.__ingest_annot_matrix(component_array_uri, mat, dim_values, attr_names)
 
             if self.verbose:
-                print(f"    FINISH WRITING {component_array_uri}")
+                print(util.format_elapsed(s, f"    FINISH WRITING {component_array_uri}"))
 
             subgroup.add(uri=component_array_uri, relative=False, name=mat_name)
         subgroup.close()
@@ -396,15 +424,16 @@ class SOMA():
             mat = annotation_pairwise_matrices[mat_name]
             component_array_uri = os.path.join(subgroup_uri, mat_name)
             if self.verbose:
+                s = util.get_start_stamp()
                 print(f"    START  WRITING {component_array_uri}")
                 print(f"    Annotation-pairwise matrix {name}/{mat_name} has shape {mat.shape}")
 
             # Ingest annotation pairwise matrices as 2D/single-attribute sparse arrays
             self.__create_coo_array(component_array_uri, dim_labels, "value", mat_dtype=mat.dtype)
-            self.__ingest_coo_data(component_array_uri, mat, dim_values, dim_values)
+            self.__ingest_coo_data_whole(component_array_uri, mat, dim_values, dim_values)
 
             if self.verbose:
-                print(f"    FINISH WRITING {component_array_uri}")
+                print(util.format_elapsed(s, f"    FINISH WRITING {component_array_uri}"))
 
             subgroup.add(uri=component_array_uri, relative=False, name=mat_name)
         subgroup.close()
@@ -513,7 +542,99 @@ class SOMA():
         tiledb.Array.create(uri, sch, ctx=self.ctx)
 
     # ----------------------------------------------------------------
-    def __ingest_coo_data(self, uri: str, mat, row_names, col_names):
+    # Example: suppose this 4x3 is to be written in two chunks of two rows each
+    # but written in sorted order.
+    #
+    # Original     Sorted     Permutation
+    #  data       row names
+    #
+    #   X Y Z
+    # C 0 1 2      A            1
+    # A 4 0 5      B            2
+    # B 7 0 0      C            0
+    # D 0 8 9      D            3
+    #
+    # First chunk:
+    # * Row indices 0,1 map to permutation indices 1,2
+    # * i,i2 are 0,2
+    # * chunk_coo is original matrix rows 1,2
+    # * chunk_coo.row is [0,1]
+    # * chunk_coo.row + i is [0,1]
+    # * sorted_row_names: ['A', 'B']
+    #
+    # Second chunk:
+    # * Row indices 2,3 map to permutation indices 0,3
+    # * i,i2 are 2,4
+    # * chunk_coo is original matrix rows 0,3
+    # * chunk_coo.row is [0,1]
+    # * chunk_coo.row + i is [2,3]
+    # * sorted_row_names: ['C', 'D']
+
+    def __ingest_coo_data_rows_chunked(self, uri: str, mat: scipy.sparse._csr.csr_matrix, row_names, col_names):
+        """
+        Convert csr_matrix to coo_matrix chunkwise and ingest into TileDB.
+
+        :param uri: TileDB URI of the array to be written.
+        :param mat: csr_matrix.
+        :param row_names: List of row names.
+        :param col_names: List of column names.
+        """
+
+        assert len(row_names) == mat.shape[0]
+        assert len(col_names) == mat.shape[1]
+
+        goal_chunk_nnz = 10000000 # TODO: implement as settable config
+
+        # Sort the row names so we can write chunks indexed by sorted string keys.  This will lead
+        # to efficient TileDB fragments in the sparse array indexed by these string keys.
+        #
+        # Key note: only the _obs labels_ are being sorted, and along with them come permutation
+        # indices for accessing the CSR matrix via cursor-indirection -- e.g. csr[28] is accessed as
+        # with csr[permuation[28]] -- the CSR matrix itself isn't sorted in bulk.
+        sorted_row_names, permutation = util.get_sort_and_permutation(list(row_names))
+        # Using numpy we can index this with a list of indices, which a plain Python list doesn't support.
+        sorted_row_names = np.asarray(sorted_row_names)
+
+        s = util.get_start_stamp()
+        print(f"      START  __ingest_coo_data_rows_chunked")
+
+        with tiledb.open(uri, mode="w") as A:
+            nrow = len(sorted_row_names)
+
+            i = 0
+            while i < nrow:
+                # Find a number of CSR rows which will result in a desired nnz for the chunk.
+                chunk_size = util.find_csr_chunk_size(mat, permutation, i, goal_chunk_nnz)
+                i2 = i + chunk_size
+
+                # Convert the chunk to a COO matrix.
+                chunk_coo = mat[permutation[i:i2]].tocoo()
+
+                s2 = util.get_start_stamp()
+
+                # Write the chunk-COO to TileDB.
+                d0 = sorted_row_names[chunk_coo.row + i]
+                d1 = col_names[chunk_coo.col]
+
+                if len(d0) == 0:
+                    continue
+
+                # Python ranges are (lo, hi) with lo inclusive and hi exclusive. But saying that
+                # makes us look buggy if we say we're ingesting chunk 0:18 and then 18:32.
+                # Instead, print inclusive lo..hi like 0..17 and 18..31.
+                print("        START  chunk rows %d..%d of %d, obs_ids %s..%s, nnz=%d, %7.3f%%" %
+                    (i, i2-1, nrow, d0[0], d0[-1], chunk_coo.nnz, 100*(i2-1)/nrow))
+
+                # Write a TileDB fragment
+                A[d0, d1] = chunk_coo.data
+
+                print(util.format_elapsed(s2,"        FINISH chunk"))
+                i = i2
+
+        print(util.format_elapsed(s,"      FINISH __ingest_coo_data_rows_chunked"))
+
+    # ----------------------------------------------------------------
+    def __ingest_coo_data_whole(self, uri: str, mat, row_names, col_names):
         """
         Convert ndarray/(csr|csc)matrix to coo_matrix and ingest into TileDB.
 

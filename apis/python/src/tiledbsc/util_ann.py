@@ -1,11 +1,9 @@
-import sys, os
 import anndata as ad
-import pandas as pd
 import numpy as np
-import tiledb
+import scipy
 
 # ----------------------------------------------------------------
-def describe_ann_file(input_path: str):
+def describe_ann_file(input_path: str, types_only=False):
     """
     This is an anndata-describer that goes a bit beyond what h5ls does for us.
     In particular, it shows us that for one HDF5 file we have anndata.X being of type numpy.ndarray
@@ -16,24 +14,62 @@ def describe_ann_file(input_path: str):
     anndata.var_names_make_unique()
 
     print()
-    print("================================================================ {input_path}")
+    print(f"================================================================ {input_path}")
+    print("ANNDATA FILE TYPES:")
+
+    namewidth = 30
+
+    X = anndata.X
+    print("%-*s %s" % (namewidth, "X/data", type(X)))
+    m,n = X.shape
+    print("%-*s (%d, %d)" % (namewidth, "X/data shape", m, n))
+    print("%-*s (%d, %d)" % (namewidth, "X/data dtype", X.dtype)
+    if isinstance(X, scipy.sparse._csr.csr_matrix) or isinstance(X, scipy.sparse._csc.csc_matrix):
+        density = X.nnz / (m*n)
+        print("%-*s %.4f" % (namewidth, "X/data density", density))
+
+    has_raw = False
+    try: # not all groups have raw X
+        X = anndata.raw.X
+        has_raw = True
+    except:
+        pass
+
+    if has_raw:
+        X = anndata.raw.X
+        print("%-*s %s" % (namewidth, "X/raw", type(X)))
+        m,n = X.shape
+        print("%-*s (%d, %d)" % (namewidth, "X/raw shape", m, n))
+        print("%-*s (%d, %d)" % (namewidth, "X/raw dtype", X.dtype)
+        if isinstance(X, scipy.sparse._csr.csr_matrix) or isinstance(X, scipy.sparse._csc.csc_matrix):
+            density = X.nnz / (m*n)
+            print("%-*s %.4f" % (namewidth, "X/raw density", density))
+
+    print("%-*s %s" % (namewidth, "obs", type(anndata.obs)))
+    print("%-*s %s" % (namewidth, "var", type(anndata.var)))
+
+    for k in anndata.obsm.keys():
+        print("%-*s %s" % (namewidth, "obsm/"+k, type(anndata.obsm[k])))
+
+    for k in anndata.varm.keys():
+        print("%-*s %s" % (namewidth, "varm/"+k, type(anndata.varm[k])))
+
+    for k in anndata.obsp.keys():
+        print("%-*s %s" % (namewidth, "obsp/"+k, type(anndata.obsp[k])))
+
+    for k in anndata.varp.keys():
+        print("%-*s %s" % (namewidth, "varp/"+k, type(anndata.varp[k])))
+
+    if types_only:
+        return
+
+    print()
     print("ANNDATA SUMMARY:")
     print(anndata)
 
-    print("X IS A   ", type(anndata.X))
-    print("  X SHAPE  ", anndata.X.shape)
-    print("  X DTYPE  ", anndata.X.dtype)
-    print("  OBS  LEN ", len(anndata.obs))
-    print("  VAR  LEN ", len(anndata.var))
-
-    try: # not all groups have raw X
-        print("RAW X IS A   ", type(anndata.raw.X))
-        print("  X SHAPE  ", anndata.raw.X.shape)
-        print("  X DTYPE  ", anndata.raw.X.dtype)
-        print("  OBS  LEN ", len(anndata.raw.X.obs_names))
-        print("  VAR  LEN ", len(anndata.raw.X.var_names))
-    except:
-        pass
+    print("X SHAPE  ", anndata.X.shape)
+    print("OBS  LEN ", len(anndata.obs))
+    print("VAR  LEN ", len(anndata.var))
 
     print('OBS IS A', type(anndata.obs))
     for name in anndata.obs.keys():
@@ -42,21 +78,20 @@ def describe_ann_file(input_path: str):
     for name in anndata.var.keys():
         print("  ", name, anndata.var[name].dtype)
 
+    try: # not all groups have raw X
+        print("RAW X SHAPE  ", anndata.raw.X.shape)
+        print(" RAW OBS  LEN ", len(anndata.raw.X.obs_names))
+        print("RAW VAR  LEN ", len(anndata.raw.X.var_names))
+    except:
+        pass
+
+    print("OBS  KEYS", list(anndata.obs.keys()))
+    print("VAR  KEYS", list(anndata.var.keys()))
+
     print("OBSM KEYS", list(anndata.obsm.keys()))
-    for k in anndata.obsm.keys():
-        print('  OBSM', k, 'IS A', type(anndata.obsm[k]))
-
     print("VARM KEYS", list(anndata.varm.keys()))
-    for k in anndata.varm.keys():
-        print('  VARM', k, 'IS A', type(anndata.varm[k]))
-
     print("OBSP KEYS", list(anndata.obsp.keys()))
-    for k in anndata.obsp.keys():
-        print('  OBSP', k, 'IS A', type(anndata.obsp[k]))
-
     print("VARP KEYS", list(anndata.varp.keys()))
-    for k in anndata.varp.keys():
-        print('  VARP', k, type(anndata.varp[k]))
 
     # Defer unstructured data for now:
     # show_uns_types(anndata.uns)

@@ -40,4 +40,5 @@ if os.path.exists(output_path):
     shutil.rmtree(output_path) # Overwrite
 
 soma = tiledbsc.SOMA(output_path, verbose=True)
+# soma.set_write_X_chunked_if_csr(False)
 soma.from_h5ad(input_path)
