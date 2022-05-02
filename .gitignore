@@ -38,11 +38,11 @@ examples/cmake_project/build
 **/site-packages/*
 **/bin/*
 **/share/*
-*.egg-info
+**/build/*
 **/__pycache__
 *.so
 *.dylib
 
-### Gradle ###
-.gradle
-/build/
+# Python distribution / packaging
+.eggs
+*.egg-info
