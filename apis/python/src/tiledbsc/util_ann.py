@@ -34,9 +34,11 @@ def describe_ann_file(input_path: str):
         pass
 
     print('OBS IS A', type(anndata.obs))
-    print("  OBS  KEYS", list(anndata.obs.keys()))
+    for name in anndata.obs.keys():
+        print("  ", name, anndata.obs[name].dtype)
     print('VAR IS A', type(anndata.var))
-    print("  VAR  KEYS", list(anndata.var.keys()))
+    for name in anndata.var.keys():
+        print("  ", name, anndata.var[name].dtype)
 
     print("OBSM KEYS", list(anndata.obsm.keys()))
     for k in anndata.obsm.keys():
