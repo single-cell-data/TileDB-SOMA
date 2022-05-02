@@ -20,7 +20,7 @@ Status:
 X_type_sweep = [
     (dtype_name, encoding)
     for dtype_name in [
-        #"float16",    # TODO: Enable when #39 is fixed
+        "float16",    # TODO: Enable when #39 is fixed
         "float32",
         "float64",
         "int8",
@@ -61,6 +61,12 @@ def test_from_anndata_X_type(tmp_path, X_dtype_name, X_encoding):
         assert False  # sanity - test misconfiguration
 
     adata = AnnData(X=X, obs=obs, var=var, dtype=X.dtype)
+    print(" =============================================================>==", adata.X.dtype, X_dtype)
+    #if X_dtype == np.float16:
+        #print(" ????=========================================================>==", adata.X.dtype, X_dtype)
+        #assert adata.X.dtype == np.float32
+    #else:
+        #assert adata.X.dtype == X_dtype  # sanity
     assert adata.X.dtype == X_dtype  # sanity
 
     SOMA(tmp_path.as_posix()).from_anndata(adata)
@@ -159,6 +165,7 @@ def test_from_anndata_DataFrame_type(tmp_path):
     def cmp_dtype(series, tdb: tiledb.Attr) -> bool:
         """Encapsulate expected conversions moving into TileDB ecosystem"""
         ad_dtype = series.dtype
+        print("================================================================ CMP", ad_dtype, tdb.dtype)
         # TileDB has no categorical, so assume it will convert to the type underlying the categorical
         if isinstance(ad_dtype, pd.CategoricalDtype):
             ad_dtype = series.cat.categories.dtype
@@ -168,7 +175,11 @@ def test_from_anndata_DataFrame_type(tmp_path):
         # TileDB has no bool, and automatically converts to uint8
         if ad_dtype == bool:
             ad_dtype = np.uint8
+        # xxxx foo
+        if ad_dtype == np.float16:
+            ad_dtype = np.float32
 
+        print("---------------------------------------------------------------- NMP", ad_dtype, tdb.dtype)
         return ad_dtype == tdb.dtype
 
     for df_name in ["var", "obs"]:

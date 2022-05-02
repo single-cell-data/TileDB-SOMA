@@ -9,6 +9,15 @@ import scanpy
 import scipy
 import tiledb
 
+def uncat(x):
+    if isinstance(x.dtype, pd.CategoricalDtype):
+        return x.astype('O')
+    elif x.dtype == 'bool':
+        return x.astype('uint8')
+    elif x.dtype == np.float16:
+        return x.astype(np.float16)
+    else:
+        return x
 
 class SOMA():
     """ Single-cell group
@@ -138,7 +147,7 @@ class SOMA():
             print(f"  START  DECATEGORICALIZING")
 
         # See also https://docs.scipy.org/doc/numpy-1.10.1/reference/arrays.dtypes.html
-        uncat = lambda x: x.astype("O") if isinstance(x.dtype, pd.CategoricalDtype) else x
+        #uncat = lambda x: x.astype("O") if isinstance(x.dtype, pd.CategoricalDtype) else x
 
         obs = pd.DataFrame.from_dict({k: uncat(v) for k, v in anndata.obs.items()})
         var = pd.DataFrame.from_dict({k: uncat(v) for k, v in anndata.var.items()})
@@ -484,6 +493,10 @@ class SOMA():
             tiledb.Dim(name=dim_labels[1], domain=(None, None), dtype="ascii", filters=[tiledb.ZstdFilter(level=22)]),
             ctx=self.ctx
         )
+
+        # xxx foo
+        if mat_dtype == np.float16:
+            mat_dtype = np.float32
 
         att = tiledb.Attr(attr_name, dtype=mat_dtype, filters=[tiledb.ZstdFilter()], ctx=self.ctx)
         sch = tiledb.ArraySchema(
