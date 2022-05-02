@@ -28,6 +28,7 @@ class SOMA():
     verbose: bool
     config: tiledb.Config
     ctx: tiledb.Ctx
+    write_X_chunked_if_csr: bool
 
     # ----------------------------------------------------------------
     def __init__(self, uri: str, verbose: bool = True, config: Optional[tiledb.Config] = None, ctx: Optional[tiledb.Ctx] = None):
@@ -47,6 +48,8 @@ class SOMA():
         if self.ctx is None and self.config is not None:
             self.ctx = tiledb.Ctx(self.config)
 
+        self.write_X_chunked_if_csr = True
+
         # If URI is "/something/test1" then:
         # * obs_uri  is "/something/test1/obs"
         # * var_uri  is "/something/test1/var"
@@ -56,6 +59,15 @@ class SOMA():
         # * obs_uri  is "tiledb://namespace/s3://bucketname/something/test1/obs"
         # * var_uri  is "tiledb://namespace/s3://bucketname/something/test1/var"
         # * data_uri is "tiledb://namespace/s3://bucketname/something/test1/X"
+
+    def set_write_X_chunked_if_csr(self, val: bool):
+        """
+        Allows the user to disable the default setting which is that X matrices in CSR format
+        are written chunked/fragmented as a memory-reduction strategy. If this is set to False,
+        X matrices will be converted to COO and ingested all at one go.
+        """
+        self.write_X_chunked_if_csr = val
+        return self
 
     # ----------------------------------------------------------------
     def from_anndata(self, anndata: ad.AnnData):
@@ -265,7 +277,7 @@ class SOMA():
         self.__create_coo_array(uri=X_array_uri, dim_labels=["obs_id", "var_id"], attr_name="value")
 
         # TODO: add chunked support for CSC
-        if isinstance(x, scipy.sparse._csr.csr_matrix):
+        if isinstance(x, scipy.sparse._csr.csr_matrix) and self.write_X_chunked_if_csr:
             self.__ingest_coo_data_rows_chunked(X_array_uri, x, obs_names, var_names)
         else:
             self.__ingest_coo_data_whole(X_array_uri, x, obs_names, var_names)
