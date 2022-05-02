@@ -9,6 +9,11 @@ import pytest
 
 """
 Testing `from_anndata` with the wide diversity of types latent in AnnData.
+
+Status:
+* Currently focuses on X, obs and var
+* TODO: obsm, varm, uns, et al.
+* TODO: re-enable tests that are disabled due to known issues
 """
 
 
@@ -152,15 +157,18 @@ def test_from_anndata_DataFrame_type(tmp_path):
     )
 
     def cmp_dtype(series, tdb: tiledb.Attr) -> bool:
-        """Encapsulate expected conversions"""
+        """Encapsulate expected conversions moving into TileDB ecosystem"""
         ad_dtype = series.dtype
+        # TileDB has no categorical, so assume it will convert to the type underlying the categorical
         if isinstance(ad_dtype, pd.CategoricalDtype):
             ad_dtype = series.cat.categories.dtype
+        # TileDB has no object, so assume it will convert to the type underlying the object
         if ad_dtype == np.dtype("O"):
             ad_dtype = np.dtype(type(series[0]))
+        # TileDB has no bool, and automatically converts to uint8
         if ad_dtype == bool:
-            # TileDB lacks a native bool
             ad_dtype = np.uint8
+
         return ad_dtype == tdb.dtype
 
     for df_name in ["var", "obs"]:
@@ -178,7 +186,6 @@ def test_from_anndata_DataFrame_type(tmp_path):
             }
             for k in df.keys():
                 assert cmp_dtype(df[k], arr.schema.attr(attr_idx[k]))
-
 
 
 # TODO: re-enable when #45 is resolved
@@ -220,7 +227,7 @@ def test_from_anndata_annotations_empty(tmp_path):
 @pytest.mark.skip(reason="Fails: filed as issues #33 and #45")
 def test_from_anndata_annotations_none(tmp_path):
     """
-    Validate ability to handle None in obs/var/etc.
+    Validate ability to handle None in obs/var/X.
     """
 
     """ default constructor """
