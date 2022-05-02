@@ -577,6 +577,10 @@ class SOMA():
 
         # Sort the row names so we can write chunks indexed by sorted string keys.  This will lead
         # to efficient TileDB fragments in the sparse array indexed by these string keys.
+        #
+        # Key note: only the _obs labels_ are being sorted, and along with them come permutation
+        # indices for accessing the CSR matrix via cursor-indirection -- e.g. csr[28] is accessed as
+        # with csr[permuation[28]] -- the CSR matrix itself isn't sorted in bulk.
         sorted_row_names, permutation = util.get_sort_and_permutation(list(row_names))
         # Using numpy we can index this with a list of indices, which a plain Python list doesn't support.
         sorted_row_names = np.asarray(sorted_row_names)
