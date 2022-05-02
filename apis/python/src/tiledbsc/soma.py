@@ -57,7 +57,7 @@ class SOMA():
         if self.ctx is None and self.config is not None:
             self.ctx = tiledb.Ctx(self.config)
 
-        self.write_X_chunked_if_csr = True
+        self.write_X_chunked_if_csr = False
 
         # If URI is "/something/test1" then:
         # * obs_uri  is "/something/test1/obs"
