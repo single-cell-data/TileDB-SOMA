@@ -22,12 +22,14 @@ def describe_ann_file(input_path: str):
 
     print("X IS A   ", type(anndata.X))
     print("  X SHAPE  ", anndata.X.shape)
+    print("  X DTYPE  ", anndata.X.dtype)
     print("  OBS  LEN ", len(anndata.obs))
     print("  VAR  LEN ", len(anndata.var))
 
     try: # not all groups have raw X
         print("RAW X IS A   ", type(anndata.raw.X))
         print("  X SHAPE  ", anndata.raw.X.shape)
+        print("  X DTYPE  ", anndata.raw.X.dtype)
         print("  OBS  LEN ", len(anndata.raw.X.obs_names))
         print("  VAR  LEN ", len(anndata.raw.X.var_names))
     except:
