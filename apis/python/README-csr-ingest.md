@@ -192,6 +192,31 @@ Another option is to cursor-sort by both dimensions and then checkerboard:
   to have a 'block diagional matrix' _even when the row & column labels are sorted_ which is not
   reasonable to expect.
 
+## Global-order writes
+
+See also [Python API docs](https://tiledb-inc-tiledb.readthedocs-hosted.com/en/1.6.3/tutorials/writing-sparse.html#writing-in-global-layout).
+
+Idea:
+
+* Write in global order (sorted by `obs_id` then `var_id`)
+* Given the above example, we'd write
+  * Fragment 1 gets these COOs:
+    * `A,S,4`
+    * `A,V,3`
+    * `B,S,5`
+    * `B,U,6`
+  * Fragment 2 gets these COOs:
+    * `C,V,2`
+    * `C,T,1`
+    * `D,S,8`
+    * `D,T,7`
+* Easy to do in Python at the row-chunk level
+* Then:
+  * Fragment writes will be faster.
+  * Fragments will be auto-concatenated so they won't need consolidation at all.
+  * Feature exists and is well-supported in C++.
+  * Not yet present in the Python API.
+
 # Suggested approach
 
 * Use row-based chunking (checkerboard is not implemented as of 2022-05-03).
