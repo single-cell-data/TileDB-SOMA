@@ -485,7 +485,9 @@ class SOMA():
             offsets_filters=[tiledb.DoubleDeltaFilter(), tiledb.BitWidthReductionFilter(), tiledb.ZstdFilter()],
             capacity=100000,
             cell_order='row-major',
-            tile_order='col-major',
+            # As of TileDB core 2.8.2, we cannot consolidate string-indexed sparse arrays with
+            # col-major tile order: so we write `X` with row-major tile order.
+            tile_order='row-major',
             ctx=self.ctx
         )
 

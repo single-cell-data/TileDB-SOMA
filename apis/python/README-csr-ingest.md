@@ -23,8 +23,9 @@ Given CSR `X` data, we find that an all-at-once `x.tocoo()` involves about a 2x 
 RSS as revealed by `htop` -- CSR data from disk (and in RAM) is a list of contiguous row
 sub-sequences with row-subsequence values all spelled out per array cell, but only bounding column
 dimensions written out; COO data is a list of `(i,j,v)` tuples with the `i,j` written out
-individually. In summary, all-at-once `.tocoo()` has a memory increase from on-disk size to
-in-memory COO-ified, but with a lower multiplication factor.
+individually -- which of course takes more memory. In summary, all-at-once `.tocoo()` has a memory
+increase from on-disk size to in-memory COO-ified, but with a lower (and more predictable)
+multiplication factor.
 
 The alternative discussed here applies for `.h5ad` data files which are small enough to read into
 RAM, but for which the 2.5x-or-so inflation from CSR to COO results in a COO matrix which is too big
@@ -40,7 +41,7 @@ into TileDB.
 Some facts about this:
 
 * In the `.h5ad` we have `obs`/`var` names mapping from string to int, and integer-indexed sparse/dense `X` matrices.
-* In TileDB, by contrast, we have the `obs`/`var` names being _themselves_ indices into sparse `X` matrices.
+* In TileDB, by contrast, we have the `obs`/`var` names being _themselves_ string indices into sparse `X` matrices.
 * TileDB storage orders its dims. That means that if you have an input matrix as on the left, with `obs_id=A,B,C,D` and `var_id=S,T,U,V`, then it will be stored as on the right:
 
 ```
@@ -53,8 +54,8 @@ Some facts about this:
   D 7 . 8 .    D 8 7 . .
 ```
 
-* TileDB storage is 3-level: _fragments_ (corresponding to different timestamped writes); `tiles`; and `cells`.
-* Fragments and cells both have MBRs. For this example (suppose for the moment that is it's written all at once in a single fragment) the fragment MBR is `A..D` in the `obs_id` dimension and `S..V` in the `var_id` dimension.
+* TileDB storage is 3-level: _fragments_ (corresponding to different timestamped writes); _tiles_; and _cells_.
+* Fragments and tiles both have MBRs. For this example (suppose for the moment that is it's written all at once in a single fragment) the fragment MBR is `A..D` in the `obs_id` dimension and `S..V` in the `var_id` dimension.
 * Query modes: we expect queries by `obs_id,var_id` pairs, or by `obs_id`, or by `var_id`. Given the above representation, since tiles within the fragment are using ordered `obs_id` and `var_id`, then all three query modes will be efficient:
   * there's one fragment
   * Queries on `obs_id,var_id` will locate only one tile within the fragment
@@ -113,8 +114,8 @@ This is necessary, since otherwise every fragment would have the same MBRs in bo
   * `C,V,2`
   * `D,T,7`
   * `D,S,8`
-* Fragment 1 MBR is `[A..B, S..U]`
-* Fragment 2 MBR is `[C..D, S..U]`
+* Fragment 1 MBR is `[A..B, S..V]`
+* Fragment 2 MBR is `[C..D, S..V]`
 * TileDB guarantees sorting on both dims within the fragment
 
 Here's the performance concern:
@@ -146,13 +147,13 @@ Suppose we were to column-sort the CSR too -- it would look like this:
   * `C,V,2`
   * `D,S,8`
   * `D,T,7`
-* Fragment 1 MBR is `[A..B, S..U]` same as before
-* Fragment 2 MBR is `[C..D, S..U]` same as before
+* Fragment 1 MBR is `[A..B, S..V]` same as before
+* Fragment 2 MBR is `[C..D, S..V]` same as before
 * TileDB guarantees sorting on both dims within the fragment
 
-But the performance conceern is _identical_ to the situation without cursor-sort of columns: in fact,
-cursor-sorting the columns provied no benefit since TileDB is already sorting by both dimensions
-within fragments, and the `var_id` slot of the fragment MBRs are `S..U` in both cases.
+But the performance concern is _identical_ to the situation without cursor-sort of columns: in fact,
+cursor-sorting the columns provides no benefit since TileDB is already sorting by both dimensions
+within fragments, and the `var_id` slot of the fragment MBRs are `S..V` in both cases.
 
 ## Checkerboarding
 
@@ -162,7 +163,7 @@ Another option is to cursor-sort by both dimensions and then checkerboard:
     S T | U V
   A 4 . | . 3
   B: 5 .|  6 .
-  ------|----- chunk boundary
+  ------+----- chunk boundary
   C . 1 | . 2
   D 8 7 | . .
 ```
