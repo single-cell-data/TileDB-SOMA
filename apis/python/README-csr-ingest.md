@@ -198,3 +198,4 @@ Another option is to cursor-sort by both dimensions and then checkerboard:
 * Given that queries on `obs_id,var_id` or on `obs_id` will be efficient, but that queries on `var_id` will require consulting multiple fragments, ingest larger arrays as row-chunked CSR but consolidate them afterward.
 * As of TileDB core 2.8.2, we cannot consolidate arrays with col-major tile order: so we write `X` with row-major tile order.
 * Read-performance impact should be measured explicitly.
+* Global-order writes need to be looked into.
