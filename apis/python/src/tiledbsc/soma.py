@@ -569,6 +569,9 @@ class SOMA():
     # * chunk_coo.row is [0,1]
     # * chunk_coo.row + i is [2,3]
     # * sorted_row_names: ['C', 'D']
+    #
+    # See README-csr-ingest.md for important information of using this ingestor.
+    # ----------------------------------------------------------------
 
     def __ingest_coo_data_rows_chunked(self, uri: str, mat: scipy.sparse._csr.csr_matrix, row_names, col_names):
         """
