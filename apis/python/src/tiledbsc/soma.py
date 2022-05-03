@@ -37,7 +37,9 @@ class SOMA():
     verbose: bool
     config: tiledb.Config
     ctx: tiledb.Ctx
+
     write_X_chunked_if_csr: bool
+    goal_chunk_nnz: int
 
     # ----------------------------------------------------------------
     def __init__(self, uri: str, verbose: bool = True, config: Optional[tiledb.Config] = None, ctx: Optional[tiledb.Ctx] = None):
@@ -57,7 +59,10 @@ class SOMA():
         if self.ctx is None and self.config is not None:
             self.ctx = tiledb.Ctx(self.config)
 
-        self.write_X_chunked_if_csr = False
+        # TODO: make a user-accessible default/override setup
+        # See also https://github.com/single-cell-data/TileDB-SingleCell/issues/27
+        self.write_X_chunked_if_csr = True
+        self.goal_chunk_nnz = 10000000
 
         # If URI is "/something/test1" then:
         # * obs_uri  is "/something/test1/obs"
@@ -480,7 +485,9 @@ class SOMA():
             offsets_filters=[tiledb.DoubleDeltaFilter(), tiledb.BitWidthReductionFilter(), tiledb.ZstdFilter()],
             capacity=100000,
             cell_order='row-major',
-            tile_order='col-major',
+            # As of TileDB core 2.8.2, we cannot consolidate string-indexed sparse arrays with
+            # col-major tile order: so we write `X` with row-major tile order.
+            tile_order='row-major',
             ctx=self.ctx
         )
 
@@ -565,6 +572,9 @@ class SOMA():
     # * chunk_coo.row is [0,1]
     # * chunk_coo.row + i is [2,3]
     # * sorted_row_names: ['C', 'D']
+    #
+    # See README-csr-ingest.md for important information of using this ingestor.
+    # ----------------------------------------------------------------
 
     def __ingest_coo_data_rows_chunked(self, uri: str, mat: scipy.sparse._csr.csr_matrix, row_names, col_names):
         """
@@ -578,8 +588,6 @@ class SOMA():
 
         assert len(row_names) == mat.shape[0]
         assert len(col_names) == mat.shape[1]
-
-        goal_chunk_nnz = 10000000 # TODO: implement as settable config
 
         # Sort the row names so we can write chunks indexed by sorted string keys.  This will lead
         # to efficient TileDB fragments in the sparse array indexed by these string keys.
@@ -600,7 +608,7 @@ class SOMA():
             i = 0
             while i < nrow:
                 # Find a number of CSR rows which will result in a desired nnz for the chunk.
-                chunk_size = util.find_csr_chunk_size(mat, permutation, i, goal_chunk_nnz)
+                chunk_size = util.find_csr_chunk_size(mat, permutation, i, self.goal_chunk_nnz)
                 i2 = i + chunk_size
 
                 # Convert the chunk to a COO matrix.
