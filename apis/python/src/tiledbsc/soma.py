@@ -523,10 +523,6 @@ class SOMA():
             ctx=self.ctx
         )
 
-        # xxx foo
-        if mat_dtype == np.float16:
-            mat_dtype = np.float32
-
         att = tiledb.Attr(attr_name, dtype=mat_dtype, filters=[tiledb.ZstdFilter()], ctx=self.ctx)
         sch = tiledb.ArraySchema(
             domain=dom,
