@@ -10,6 +10,8 @@ import tiledb
 import tiledbsc
 import sys, os, shutil
 
+import pandas
+
 input_path  = 'anndata/pbmc3k_processed.h5ad'
 output_path = 'tiledb-data/pbmc3k_processed'
 if len(sys.argv) == 3:
