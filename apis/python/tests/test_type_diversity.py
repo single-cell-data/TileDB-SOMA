@@ -306,3 +306,86 @@ def test_from_anndata_zero_length_str(tmp_path):
             adata.obs.keys()
         )
         assert adata.n_obs == len(obs.query(dims=[]).df[:])
+
+
+# TODO: re-enable when #60 is resolved
+@pytest.mark.skip(reason="Fails: filed as issue #60")
+def test_from_anndata_category_nans(tmp_path):
+    """
+    Categoricals can contain 'nan', ie, a series value which is not
+    in the type's categories. While it conceptually represents "not a category",
+    it is represented by a floating point NaN value.
+
+    Test conversion of various categorical series containing nans to ensure
+    they are correctly handled.
+
+    Presumed correct behavior depends on the underlying type of the categories
+    and follows standard Pandas `to_numpy()` coercion rules:
+    * string: encode as 'nan'
+    * float: encode as IEEE NaN
+    * int: encode as min value (np.iinfo(type).min)
+
+    Example to_numpy behavior:
+
+    In [32]: pd.Series(pd.Categorical([0,1,2,3], categories=np.array([1,2,3], dtype=np.float32))).to_numpy(dtype=np.float32)
+    Out[32]: array([nan,  1.,  2.,  3.], dtype=float32)
+
+    In [33]: pd.Series(pd.Categorical([0,1,2,3], categories=np.array([1,2,3], dtype=np.int32))).to_numpy(dtype=np.int32)
+    Out[33]: array([-2147483648,           1,           2,           3], dtype=int32)
+
+    In [34]: pd.Series(pd.Categorical(['0','1','2','3'], categories=np.array(['1','2','3'], dtype=str))).to_numpy(dtype=str)
+    Out[34]: array(['nan', '1', '2', '3'], dtype='<U3')
+    """
+    n_obs = 8
+    n_var = 4
+
+    test_dtypes = [
+        # (column_name, column_dtype)
+        ('str', str),
+        # ('float32', np.float32),        # TODO: enable when #30 resolved
+        # ('float64', np.float64),        # TODO: enable when #30 resolved
+        # ('int32', np.int32),            # TODO: enable when #30 resolved
+        # ('int64', np.int64),            # TODO: enable when #30 resolved
+        # ('uint32', np.uint32),          # TODO: enable when #30 resolved
+        # ('uint64', np.uint64),          # TODO: enable when #30 resolved
+        # ('bool', bool),                 # TODO: enable when #30 resolved
+    ]
+
+    obs_idx=np.arange(n_obs).astype(str)
+    obs = pd.DataFrame(
+        index=obs_idx,
+        data={
+            col_name: pd.Series(
+                data=pd.Categorical(
+                    np.arange(n_obs).astype(cat_dtype),
+                    categories=np.unique(np.arange(1, n_obs).astype(cat_dtype))
+                ),
+                index=obs_idx
+            ) for col_name, cat_dtype in test_dtypes}
+    )
+    print(obs)
+
+    var = pd.DataFrame(
+        index=np.arange(n_var).astype(str),
+        data={"A": list(str(i) for i in range(n_var))},
+    )
+    X = np.ones((n_obs, n_var))
+    adata = AnnData(X=X, obs=obs, var=var, dtype=X.dtype)
+
+    SOMA(tmp_path.as_posix()).from_anndata(adata)
+
+    with tiledb.open((tmp_path / "obs").as_posix()) as obs:
+        assert set(obs.schema.attr(i).name for i in range(obs.schema.nattr)) == set(
+            adata.obs.keys()
+        )
+
+        obs_df = obs.df[:].sort_index()
+        assert adata.n_obs == len(obs_df)
+        for col_name, cat_dtype in test_dtypes:
+            assert np.array_equal(
+                obs_df[col_name].to_numpy(),
+                pd.Categorical(
+                    np.arange(n_obs).astype(cat_dtype),
+                    categories=np.unique(np.arange(1, n_obs).astype(cat_dtype))
+                ).to_numpy(dtype=cat_dtype)
+            )
