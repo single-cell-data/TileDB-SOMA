@@ -62,11 +62,11 @@ def test_from_anndata_X_type(tmp_path, X_dtype_name, X_encoding):
 
     adata = AnnData(X=X, obs=obs, var=var, dtype=X.dtype)
     print(" =============================================================>==", adata.X.dtype, X_dtype)
-    #if X_dtype == np.float16:
-        #print(" ????=========================================================>==", adata.X.dtype, X_dtype)
-        #assert adata.X.dtype == np.float32
-    #else:
-        #assert adata.X.dtype == X_dtype  # sanity
+    # if X_dtype == np.float16:
+    # print(" ????=========================================================>==", adata.X.dtype, X_dtype)
+    # assert adata.X.dtype == np.float32
+    # else:
+    # assert adata.X.dtype == X_dtype  # sanity
     assert adata.X.dtype == X_dtype  # sanity
 
     SOMA(tmp_path.as_posix()).from_anndata(adata)
@@ -272,3 +272,37 @@ def test_from_anndata_annotations_none(tmp_path):
     assert all(
         (path / sub_array_path).exists() for sub_array_path in ["obs", "var", "X/data"]
     )
+
+
+# TODO: re-enable when #58 is resolved
+@pytest.mark.skip(reason="Fails: filed as issue #58")
+def test_from_anndata_zero_length_str(tmp_path):
+    """
+    Test case for issue #58: obs/var columns containing only zero length strings throw ArrowInvalid
+    """
+    n_obs = 100
+    n_var = 10
+
+    obs = pd.DataFrame(
+        index=np.arange(n_obs).astype(str),
+        data={
+            "A": list(str(i) for i in range(n_obs)),
+            "B": list("" for i in range(n_obs)),
+        },
+    )
+    obs["A_cat"] = obs["A"].astype("category")
+    obs["B_cat"] = obs["B"].astype("category")
+    var = pd.DataFrame(
+        index=np.arange(n_var).astype(str),
+        data={"A": list(str(i) for i in range(n_var))},
+    )
+    X = np.ones((n_obs, n_var))
+    adata = AnnData(X=X, obs=obs, var=var, dtype=X.dtype)
+
+    SOMA(tmp_path.as_posix()).from_anndata(adata)
+
+    with tiledb.open((tmp_path / "obs").as_posix()) as obs:
+        assert set(obs.schema.attr(i).name for i in range(obs.schema.nattr)) == set(
+            adata.obs.keys()
+        )
+        assert adata.n_obs == len(obs.query(dims=[]).df[:])
