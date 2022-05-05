@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python -i
 
 # Invoke this with, for example,
 #
