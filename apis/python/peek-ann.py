@@ -11,6 +11,7 @@ import tiledbsc
 import sys, os
 
 import anndata
+import anndata as ad # so we can type it either way
 
 import pandas
 import numpy
