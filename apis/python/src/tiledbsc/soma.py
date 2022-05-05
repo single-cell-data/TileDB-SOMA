@@ -210,8 +210,10 @@ class SOMA():
 
         return anndata
 
-    # ----------------------------------------------------------------
-    # Intended structure:
+    # ================================================================
+    # WRITE PATH INTO TILEDB
+
+    # Intended soma tiledb-group structure:
     #
     # soma: group
     # |
@@ -264,101 +266,95 @@ class SOMA():
         # ----------------------------------------------------------------
         # Must be done first, to create the parent directory
         tiledb.group_create(self.uri, ctx=self.ctx)
-        base_group = tiledb.Group(self.uri, mode="w", ctx=self.ctx)
+        soma_group = tiledb.Group(self.uri, mode="w", ctx=self.ctx)
 
         # ----------------------------------------------------------------
-        X_uri = self.write_X(anndata)
-        base_group.add(uri=X_uri, relative=False, name="X")
+        X_uri = os.path.join(self.uri, "X")
+        self.write_X_group(X_uri, anndata)
+        soma_group.add(uri=X_uri, relative=False, name="X")
 
         # ----------------------------------------------------------------
-        obs_uri = self.write_obs_or_var(anndata.obs, "obs", 256)
-        base_group.add(uri=obs_uri, relative=False, name="obs")
+        obs_uri = os.path.join(self.uri, 'obs')
+        self.write_obs_or_var(obs_uri, anndata.obs, "obs", 256)
+        soma_group.add(uri=obs_uri, relative=False, name="obs")
 
-        var_uri = self.write_obs_or_var(anndata.var, "var", 2048)
-        base_group.add(uri=var_uri, relative=False, name="var")
+        var_uri = os.path.join(self.uri, 'var')
+        self.write_obs_or_var(var_uri, anndata.var, "var", 2048)
+        soma_group.add(uri=var_uri, relative=False, name="var")
 
         # ----------------------------------------------------------------
         if len(anndata.obsm.keys()) > 0:
-            obsm_uri = self.write_annotation_matrices(anndata.obsm, "obsm", "obs_id", anndata.obs_names)
-            base_group.add(uri=obsm_uri, relative=False, name="obsm")
+            obsm_uri = os.path.join(self.uri, 'obsm')
+            self.__write_annotation_matrices(obsm_uri, anndata.obsm, "obsm", "obs_id", anndata.obs_names)
+            soma_group.add(uri=obsm_uri, relative=False, name="obsm")
 
         if len(anndata.varm.keys()) > 0:
-            varm_uri = self.write_annotation_matrices(anndata.varm, "varm", "var_id", anndata.var_names)
-            base_group.add(uri=varm_uri, relative=False, name="varm")
+            varm_uri = os.path.join(self.uri, 'varm')
+            self.__write_annotation_matrices(varm_uri, anndata.varm, "varm", "var_id", anndata.var_names)
+            soma_group.add(uri=varm_uri, relative=False, name="varm")
 
         if len(anndata.obsp.keys()) > 0:
-            obsp_uri = self.write_annotation_pairwise_matrices(anndata.obsp, "obsp", "obs_id", anndata.obs_names)
-            base_group.add(uri=obsp_uri, relative=False, name="obsp")
+            obsp_uri = os.path.join(self.uri, 'obsp')
+            self.__write_annotation_pairwise_matrices(obsp_uri, anndata.obsp, "obsp", "obs_id", anndata.obs_names)
+            soma_group.add(uri=obsp_uri, relative=False, name="obsp")
 
         if len(anndata.varp.keys()) > 0:
-            varp_uri = self.write_annotation_pairwise_matrices(anndata.varp, "varp", "var_id", anndata.var_names)
-            base_group.add(uri=varp_uri, relative=False, name="varp")
+            varp_uri = os.path.join(self.uri, 'varp')
+            self.__write_annotation_pairwise_matrices(varp_uri, anndata.varp, "varp", "var_id", anndata.var_names)
+            soma_group.add(uri=varp_uri, relative=False, name="varp")
+
+        # ----------------------------------------------------------------
+        if anndata.raw != None:
+            raw_group_uri = self.uri + '/raw'
+            self.write_raw_group(raw_group_uri, anndata.raw)
 
         # ----------------------------------------------------------------
         if self.verbose:
             print(util.format_elapsed(s, f"  FINISH WRITING {self.uri}"))
 
-        base_group.close()
+        soma_group.close()
 
     # ----------------------------------------------------------------
-    def write_X(self, anndata: ad.AnnData):
+    def write_X_group(self, X_group_uri: str, anndata: ad.AnnData):
         """
         Populates the X/ subgroup for a SOMA object.
         """
-        X_uri = os.path.join(self.uri, "X")
-        tiledb.group_create(X_uri, ctx=self.ctx)
-        X_group = tiledb.Group(X_uri, mode="w", ctx=self.ctx)
+        tiledb.group_create(X_group_uri, ctx=self.ctx)
+        X_group = tiledb.Group(X_group_uri, mode="w", ctx=self.ctx)
 
-        X_data_uri = self.write_X_array(anndata.X, X_uri, "data", anndata.obs.index, anndata.var.index)
+        X_data_uri = X_group_uri + "/data"
+        self.write_X_array(X_data_uri, anndata.X, anndata.obs.index, anndata.var.index)
         X_group.add(uri=X_data_uri, relative=False, name="data")
-
-        has_raw = False
-        try:
-            anndata.raw.X.shape
-            has_raw = True
-        except:
-            pass
-        if has_raw:
-            X_raw_uri = self.write_X_array(anndata.raw.X, X_uri, "raw", anndata.raw.obs_names, anndata.raw.var_names)
-            X_group.add(uri=X_raw_uri, relative=False, name="raw")
 
         X_group.close()
 
-        return X_uri
-
     # ----------------------------------------------------------------
-    def write_X_array(self, x, group_uri:str, arrayname: str, obs_names, var_names):
+    def write_X_array(self, X_array_uri, X, obs_names, var_names):
         """
         Populates the X/data or X/raw array.
-        :param x: is anndata.X or raw
-        :param group_uri: is the URI of the parent group, e.g. 'foo/X'
-        :param arrayname: is the name of the array within the parent group, e.g. 'data' for 'foo/X/data'
+        :param X_array_uri: URI where the array is to be written
+        :param X: is anndata.X or anndata.raw.X
         :param obs_names: and var_names are the names for the axes
         """
-        X_array_uri = os.path.join(group_uri, arrayname)
         if self.verbose:
             s = util.get_start_stamp()
-            print(f"    START  WRITING {X_array_uri} from {type(x)}")
+            print(f"    START  WRITING {X_array_uri} from {type(X)}")
 
-        self.__create_coo_array(uri=X_array_uri, dim_labels=["obs_id", "var_id"], attr_name="value", mat_dtype=x.dtype)
+        self.__create_coo_array(uri=X_array_uri, dim_labels=["obs_id", "var_id"], attr_name="value", mat_dtype=X.dtype)
 
         # TODO: add chunked support for CSC
-        if isinstance(x, scipy.sparse._csr.csr_matrix) and self.write_X_chunked_if_csr:
-            self.__ingest_coo_data_rows_chunked(X_array_uri, x, obs_names, var_names)
+        if isinstance(X, scipy.sparse._csr.csr_matrix) and self.write_X_chunked_if_csr:
+            self.__ingest_coo_data_rows_chunked(X_array_uri, X, obs_names, var_names)
         else:
-            self.__ingest_coo_data_whole(X_array_uri, x, obs_names, var_names)
+            self.__ingest_coo_data_whole(X_array_uri, X, obs_names, var_names)
 
         if self.verbose:
             print(util.format_elapsed(s, f"    FINISH WRITING {X_array_uri}"))
-        return X_array_uri
 
     # ----------------------------------------------------------------
-    def write_obs_or_var(self, obs_or_var_data, obs_or_var_name: str, extent: int):
+    def write_obs_or_var(self, obs_or_var_uri: str, obs_or_var_data, obs_or_var_name: str, extent: int):
         """
         Populates the obs/ or var/ subgroup for a SOMA object.
-        First argument is anndata.obs or anndata.var; second is "obs" or "var".  In the reference
-        pbmc3k_processed dataset, these are of type pandas.core.frame.DataFrame. In further
-        testing we may need to switch on the datatype.
         """
 
         offsets_filters = tiledb.FilterList(
@@ -367,7 +363,6 @@ class SOMA():
         dim_filters = tiledb.FilterList([tiledb.ZstdFilter(level=-1)])
         attr_filters = tiledb.FilterList([tiledb.ZstdFilter(level=-1)])
 
-        obs_or_var_uri = os.path.join(self.uri, obs_or_var_name)
         if self.verbose:
             s = util.get_start_stamp()
             print(f"    START  WRITING {obs_or_var_uri}")
@@ -414,10 +409,25 @@ class SOMA():
         if self.verbose:
             print(util.format_elapsed(s, f"    FINISH WRITING {obs_or_var_uri}"))
 
-        return obs_or_var_uri
+    # ----------------------------------------------------------------
+    def write_raw_group(self, raw_group_uri: str, raw: ad.Raw):
+
+        if self.verbose:
+            s = util.get_start_stamp()
+            print(f"    START  WRITING {raw_group_uri}")
+
+        print(f"    RAW STUB")
+
+#        soma_group = tiledb.Group(self.uri, mode="w", ctx=self.ctx)
+#        X_uri = self.write_X_group(anndata)
+#        soma_group.add(uri=X_uri, relative=False, name="X")
+#        soma_group.close()
+
+        if self.verbose:
+            print(util.format_elapsed(s, f"    FINISH WRITING {raw_group_uri}"))
 
     # ----------------------------------------------------------------
-    def write_annotation_matrices(self, annotation_matrices, name: str, dim_name: str, dim_values):
+    def __write_annotation_matrices(self, subgroup_uri: str, annotation_matrices, name: str, dim_name: str, dim_values):
         """
         Populates the obsm/ or varm/ subgroup for a SOMA object, then writes all the components
         arrays under that group.
@@ -428,7 +438,6 @@ class SOMA():
         """
         assert name in ["obsm", "varm"]
 
-        subgroup_uri = os.path.join(self.uri, name)
         tiledb.group_create(subgroup_uri, ctx=self.ctx)
         subgroup = tiledb.Group(subgroup_uri, mode="w", ctx=self.ctx)
 
@@ -456,10 +465,8 @@ class SOMA():
             subgroup.add(uri=component_array_uri, relative=False, name=mat_name)
         subgroup.close()
 
-        return subgroup_uri
-
     # ----------------------------------------------------------------
-    def write_annotation_pairwise_matrices(self, annotation_pairwise_matrices, name: str, dim_name: str, dim_values):
+    def __write_annotation_pairwise_matrices(self, subgroup_uri, annotation_pairwise_matrices, name: str, dim_name: str, dim_values):
         """
         Populates the obsp/ or varp/ subgroup for a SOMA object, then writes all the components
         arrays under that group.
@@ -470,7 +477,6 @@ class SOMA():
         """
         assert name in ["obsp", "varp"]
 
-        subgroup_uri = os.path.join(self.uri, name)
         tiledb.group_create(subgroup_uri, ctx=self.ctx)
         subgroup = tiledb.Group(subgroup_uri, mode="w", ctx=self.ctx)
 
@@ -493,8 +499,6 @@ class SOMA():
 
             subgroup.add(uri=component_array_uri, relative=False, name=mat_name)
         subgroup.close()
-
-        return subgroup_uri
 
     # ----------------------------------------------------------------
     def __create_annot_matrix(self, uri: str, mat, mat_name: str, dim_name: str, attr_names):
@@ -714,6 +718,9 @@ class SOMA():
             A[d0, d1] = mat_coo.data
 
 
+
+    # ================================================================
+    # READ PATH OUT OF TILEDB
 
     # ----------------------------------------------------------------
     def to_h5ad(self, h5ad_path: str):
