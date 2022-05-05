@@ -317,7 +317,9 @@ class SOMA():
     # ----------------------------------------------------------------
     def write_X_group(self, X_group_uri: str, anndata: ad.AnnData):
         """
-        Populates the X/ subgroup for a SOMA object.
+        Populates the X/ or raw/X subgroup for a SOMA object.
+
+        :param X_group_uri: URI where the group is to be written.
         """
         tiledb.group_create(X_group_uri, ctx=self.ctx)
         X_group = tiledb.Group(X_group_uri, mode="w", ctx=self.ctx)
@@ -332,9 +334,11 @@ class SOMA():
     def write_X_array(self, X_array_uri, X, obs_names, var_names):
         """
         Populates the X/data or X/raw array.
-        :param X_array_uri: URI where the array is to be written
-        :param X: is anndata.X or anndata.raw.X
-        :param obs_names: and var_names are the names for the axes
+
+        :param X_array_uri: URI where the array is to be written.
+        :param X: is anndata.X or anndata.raw.X.
+        :param obs_names: names for the first/row dimension.
+        :param var_names: names for the second/column dimension.
         """
         if self.verbose:
             s = util.get_start_stamp()
@@ -355,6 +359,11 @@ class SOMA():
     def write_obs_or_var(self, obs_or_var_uri: str, obs_or_var_data, obs_or_var_name: str, extent: int):
         """
         Populates the obs/ or var/ subgroup for a SOMA object.
+
+        :param obs_or_var_uri: URI where the array is to be written.
+        :param obs_or_var_data: anndata.obs, anndata.var, anndata.raw.var.
+        :param obs_or_var_name: 'obs' or 'var'.
+        :param extent: TileDB extent parameter for the array schema.
         """
 
         offsets_filters = tiledb.FilterList(
@@ -411,6 +420,12 @@ class SOMA():
 
     # ----------------------------------------------------------------
     def write_raw_group(self, raw_group_uri: str, raw: ad.Raw):
+        """
+        Populates the raw group for the soma object.
+
+        :param raw_group_uri: URI where the group is to be written.
+        :param raw: anndata.raw.
+        """
 
         if self.verbose:
             s = util.get_start_stamp()
@@ -431,10 +446,12 @@ class SOMA():
         """
         Populates the obsm/ or varm/ subgroup for a SOMA object, then writes all the components
         arrays under that group.
-        :param annotation_matrices: anndata.obsm or anndata.varm
+
+        :param subgroup_uri: URI where the subgroup is to be written.
+        :param annotation_matrices: anndata.obsm, anndata.varm, or anndata.raw.varm.
         :param name: 'obsm' or 'varm'
         :param dim_name: 'obs_id' or 'var_id'
-        :param dim_values: anndata.obs_names or anndata.var_names
+        :param dim_values: anndata.obs_names, anndata.var_names, or anndata.raw.var_names.
         """
         assert name in ["obsm", "varm"]
 
@@ -470,10 +487,12 @@ class SOMA():
         """
         Populates the obsp/ or varp/ subgroup for a SOMA object, then writes all the components
         arrays under that group.
-        :param annotation_matrices: anndata.obsp or anndata.varp
-        :param name: 'obsp' or 'varp'
-        :param dim_name: 'obs_id' or 'var_id'
-        :param dim_values: anndata.obs_names or anndata.var_names
+
+        :param subgroup_uri: URI where the array is to be written.
+        :param annotation_matrices: anndata.obsp or anndata.varp.
+        :param name: 'obsp' or 'varp'.
+        :param dim_name: 'obs_id' or 'var_id'.
+        :param dim_values: anndata.obs_names or anndata.var_names.
         """
         assert name in ["obsp", "varp"]
 
@@ -503,7 +522,7 @@ class SOMA():
     # ----------------------------------------------------------------
     def __create_annot_matrix(self, uri: str, mat, mat_name: str, dim_name: str, attr_names):
         """
-        Create a TileDB 1D sparse array with string dimension and multiple attributes
+        Create a TileDB 1D sparse array with string dimension and multiple attributes.
 
         :param uri: URI of the array to be created
         :param mat: e.g. anndata.obsm['X_pca'] -- nominally a numpy.ndarray
@@ -552,6 +571,7 @@ class SOMA():
     def __ingest_annot_matrix(self, uri: str, mat, dim_values, col_names):
         """
         Convert ndarray/(csr|csc)matrix to a dataframe and ingest into TileDB.
+
         :param uri: TileDB URI of the array to be written.
         :param mat: Matrix-like object coercible to a pandas dataframe.
         :param dim_values: barcode/gene IDs from anndata.obs_names or anndata.var_names
@@ -801,6 +821,7 @@ class SOMA():
         """
         Reads the TileDB obs or var array and returns a type of pandas dataframe
         and dimension values.
+
         :param array_name: 'obs' or 'var'
         :param index_name: 'obs_id' or 'var_id'
         """
@@ -825,6 +846,7 @@ class SOMA():
     def outgest_X(self, obs_labels, var_labels):
         """
         Given a TileDB soma group, returns a scipy.sparse.csr_matrix with the X data.
+
         :param obs_labels: from the obs array. Note that TileDB will have sorted these.
         :param var_labels: from the var array. Note that TileDB will have sorted these.
         """
@@ -883,6 +905,7 @@ class SOMA():
         """
         Reads the TileDB obsm or varm group and returns a dict from array name to array.
         These arrays are in numpy.ndarray format.
+
         :param soma_path: Path to the soma group.
         :param group_name: "obsm" or "varm".
         :param index_name: "obs_id" or "var_id".
@@ -931,6 +954,7 @@ class SOMA():
         """
         Reads the TileDB obsp or varp group and returns a dict from array name to array.
         These arrays are in scipy.csr format.
+
         :param soma_path: Path to the soma group.
         :param group_name: "obsp" or "varp".
         """
