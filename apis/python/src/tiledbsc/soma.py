@@ -600,7 +600,8 @@ class SOMA():
         sorted_row_names = np.asarray(sorted_row_names)
 
         s = util.get_start_stamp()
-        print(f"      START  __ingest_coo_data_rows_chunked")
+        if self.verbose:
+            print(f"      START  __ingest_coo_data_rows_chunked")
 
         with tiledb.open(uri, mode="w") as A:
             nrow = len(sorted_row_names)
@@ -626,16 +627,19 @@ class SOMA():
                 # Python ranges are (lo, hi) with lo inclusive and hi exclusive. But saying that
                 # makes us look buggy if we say we're ingesting chunk 0:18 and then 18:32.
                 # Instead, print inclusive lo..hi like 0..17 and 18..31.
-                print("        START  chunk rows %d..%d of %d, obs_ids %s..%s, nnz=%d, %7.3f%%" %
-                    (i, i2-1, nrow, d0[0], d0[-1], chunk_coo.nnz, 100*(i2-1)/nrow))
+                if self.verbose:
+                    print("        START  chunk rows %d..%d of %d, obs_ids %s..%s, nnz=%d, %7.3f%%" %
+                        (i, i2-1, nrow, d0[0], d0[-1], chunk_coo.nnz, 100*(i2-1)/nrow))
 
                 # Write a TileDB fragment
                 A[d0, d1] = chunk_coo.data
 
-                print(util.format_elapsed(s2,"        FINISH chunk"))
+                if self.verbose:
+                    print(util.format_elapsed(s2,"        FINISH chunk"))
                 i = i2
 
-        print(util.format_elapsed(s,"      FINISH __ingest_coo_data_rows_chunked"))
+        if self.verbose:
+            print(util.format_elapsed(s,"      FINISH __ingest_coo_data_rows_chunked"))
 
     # ----------------------------------------------------------------
     def __ingest_coo_data_whole(self, uri: str, mat, row_names, col_names):
@@ -657,3 +661,256 @@ class SOMA():
 
         with tiledb.open(uri, mode="w", ctx=self.ctx) as A:
             A[d0, d1] = mat_coo.data
+
+
+
+    # ----------------------------------------------------------------
+    def to_h5ad(self, h5ad_path: str):
+        """
+        Converts the soma group to anndata format and writes it to the specified .h5ad file.
+        As of 2022-05-05 this is an incomplete prototype.
+        """
+
+        if self.verbose:
+            s = util.get_start_stamp()
+            print(f"START  SOMA.to_h5ad {self.uri} -> {h5ad_path}")
+
+        anndata = self._to_anndata()
+
+        if self.verbose:
+            s2 = util.get_start_stamp()
+            print(f"  START  write {h5ad_path}")
+        anndata.write_h5ad(h5ad_path)
+        if self.verbose:
+            print(util.format_elapsed(s2, f"  FINISH write {h5ad_path}"))
+
+        if self.verbose:
+            print(util.format_elapsed(s, f"FINISH SOMA.to_h5ad {self.uri} -> {h5ad_path}"))
+
+    # ----------------------------------------------------------------
+    def to_anndata(self):
+        """
+        Converts the soma group to anndata. Choice of matrix formats is following
+        what we often see in input .h5ad files:
+        * X as scipy.sparse.csr_matrix
+        * obs,var as pandas.dataframe
+        * obsm,varm arrays as numpy.ndarray
+        * obsp,varp arrays as scipy.sparse.csr_matrix
+        As of 2022-05-05 this is an incomplete prototype.
+        """
+
+        if self.verbose:
+            s = util.get_start_stamp()
+            print(f"START  SOMA.to_anndata {self.uri}")
+
+        retval = self._to_anndata()
+
+        if self.verbose:
+            print(util.format_elapsed(s, f"FINISH SOMA.to_anndata {self.uri}"))
+
+        return retval
+
+    # ----------------------------------------------------------------
+    # Split from to_anndata solely to get the outermost verbosity prints done
+    # exactly once, whether the user does soma.to_anndata or soma.to_h5ad.
+    def _to_anndata(self):
+        """
+        Internal helper function for to_anndata; same arguments.
+        """
+
+        obs_df, obs_labels = self.outgest_obs_or_var('obs', 'obs_id')
+        var_df, var_labels = self.outgest_obs_or_var('var', 'var_id')
+
+        X_mat = self.outgest_X(obs_labels, var_labels)
+        # TODO
+        print("  X/RAW OUTGEST NOT IMPLMENTED YET")
+
+        obsm = self.outgest_obsm_or_varm('obsm', 'obs_id')
+        varm = self.outgest_obsm_or_varm('varm', 'var_id')
+
+        # TODO
+        print("  OBSP OUTGEST NOT WORKING YET")
+        #obsp = self.outgest_obsp_or_varp('obsp')
+        print("  VARP OUTGEST NOT WORKING YET")
+        #varp = self.outgest_obsp_or_varp('varp')
+
+        return ad.AnnData(
+            X=X_mat, obs=obs_df, var=var_df, obsm=obsm, varm=varm,
+        )
+
+    # ----------------------------------------------------------------
+    def outgest_obs_or_var(self, array_name: str, index_name: str):
+        """
+        Reads the TileDB obs or var array and returns a type of pandas dataframe
+        and dimension values.
+        :param array_name: 'obs' or 'var'
+        :param index_name: 'obs_id' or 'var_id'
+        """
+
+        uri = f"{self.uri}/{array_name}"
+        if self.verbose:
+            s = util.get_start_stamp()
+            print(f"  START  read {uri}")
+
+        with tiledb.open(uri) as A:
+            df = pd.DataFrame(A[:])
+            labels = df[index_name] # strings, sorted
+            df = df.set_index(index_name)
+            retval = (df, labels)
+
+        if self.verbose:
+            print(util.format_elapsed(s, f"  FINISH read {uri}"))
+
+        return retval
+
+    # ----------------------------------------------------------------
+    def outgest_X(self, obs_labels, var_labels):
+        """
+        Given a TileDB soma group, returns a scipy.sparse.csr_matrix with the X data.
+        :param obs_labels: from the obs array. Note that TileDB will have sorted these.
+        :param var_labels: from the var array. Note that TileDB will have sorted these.
+        """
+
+        uri = f"{self.uri}/X/data"
+        if self.verbose:
+            s = util.get_start_stamp()
+            print(f"  START  read {uri}")
+
+        # Since X is sparse, with two string dimensions, we get back a dict:
+        # * 'obs_id' key is a sequence of dim0 coordinates for X data.
+        # * 'var_id' key is a sequence of dim1 coordinates for X data.
+        # * 'values' key is a sequence of X data values.
+        with tiledb.open(uri) as X:
+            X_data = X[:]
+
+        # Now we need to convert from TileDB's string indices to CSR integer indices.
+        # Make a dict from string dimension values to integer indices.
+        #
+        # Example: suppose the sparse matrix looks like:
+        #
+        #     S T U V
+        #   A 4 . . 3
+        #   B: 5 . 6 .
+        #   C . 1 . 2
+        #   D 8 7 . .
+        #
+        # The return value from the X[:] query is (obs_id,var_id,value) triples like
+        #
+        #   A,S,4 A,V,3 B,S,5 B,U,6 C,V,2 C,T,1 D,S,8 D,T,7
+        #
+        # whereas scipy csr is going to want
+        #
+        #   0,0,4 0,3,3 1,0,5 1,2,6 2,3,2 2,1,1 3,0,8 3,1,7
+        #
+        # In order to accomplish this, we need to map ['A','B','C','D'] to [0,1,2,3] via {'A':0,
+        # 'B':1, 'C':2, 'D':3} and similarly for the other dimension.
+        obs_labels_to_indices = dict(zip(obs_labels, [i for i,e in enumerate(obs_labels)]))
+        var_labels_to_indices = dict(zip(var_labels, [i for i,e in enumerate(var_labels)]))
+
+        # Apply the map.
+        X_obs_indices = [obs_labels_to_indices[X_obs_label] for X_obs_label in X_data['obs_id']]
+        X_var_indices = [var_labels_to_indices[X_var_label] for X_var_label in X_data['var_id']]
+
+        retval = scipy.sparse.csr_matrix(
+            (list(X_data['value']), (list(X_obs_indices), list(X_var_indices)))
+        )
+
+        if self.verbose:
+            print(util.format_elapsed(s, f"  FINISH read {uri}"))
+
+        return retval
+
+    # ----------------------------------------------------------------
+    def outgest_obsm_or_varm(self, group_name: str, index_name: str):
+        """
+        Reads the TileDB obsm or varm group and returns a dict from array name to array.
+        These arrays are in numpy.ndarray format.
+        :param soma_path: Path to the soma group.
+        :param group_name: "obsm" or "varm".
+        :param index_name: "obs_id" or "var_id".
+        """
+        group_uri = os.path.join(self.uri, group_name)
+
+        grp = None
+        try: # Not all groups have all four of obsm, obsp, varm, and varp.
+            grp = tiledb.Group(group_uri, mode='r')
+        except:
+            pass
+        if grp == None:
+            if self.verbose:
+                print(f"  {group_uri} not found")
+            return {}
+
+        if self.verbose:
+            s = util.get_start_stamp()
+            print(f"  START  read {group_uri}")
+
+        matrices_in_group = {}
+        for element in grp:
+            with tiledb.open(element.uri) as A:
+                with tiledb.open(element.uri) as A:
+                    if self.verbose:
+                        s2 = util.get_start_stamp()
+                        print(f"    START  read {element.uri}")
+
+                    df = pd.DataFrame(A[:])
+                    df.set_index(index_name, inplace=True)
+                    matrix_name = os.path.basename(element.uri) # e.g. 'X_pca'
+                    matrices_in_group[matrix_name] = df.to_numpy()
+
+                    if self.verbose:
+                        print(util.format_elapsed(s2, f"    FINISH read {element.uri}"))
+
+        grp.close()
+
+        if self.verbose:
+            print(util.format_elapsed(s, f"  FINISH read {group_uri}"))
+
+        return matrices_in_group
+
+    # ----------------------------------------------------------------
+    def outgest_obsp_or_varp(self, group_name: str):
+        """
+        Reads the TileDB obsp or varp group and returns a dict from array name to array.
+        These arrays are in scipy.csr format.
+        :param soma_path: Path to the soma group.
+        :param group_name: "obsp" or "varp".
+        """
+        group_uri = os.path.join(self.uri, group_name)
+
+        grp = None
+        try: # Not all groups have all four of obsm, obsp, varm, and varp.
+            grp = tiledb.Group(group_uri, mode='r')
+        except:
+            pass
+        if grp == None:
+            if self.verbose:
+                print(f"  {group_uri} not found")
+            return {}
+
+        if self.verbose:
+            s = util.get_start_stamp()
+            print(f"  START  read {group_uri}")
+
+        matrices_in_group = {}
+        for element in grp:
+            with tiledb.open(element.uri) as A:
+                with tiledb.open(element.uri) as A:
+                    if self.verbose:
+                        s2 = util.get_start_stamp()
+                        print(f"    START  read {element.uri}")
+
+                    df = pd.DataFrame(A[:])
+                    matrix_name = os.path.basename(element.uri)
+                    matrices_in_group[matrix_name] = scipy.sparse.coo_matrix(df).tocsr()
+                    # TODO: not working yet:
+                    # TypeError: no supported conversion for types: (dtype('O'),)
+
+                    if self.verbose:
+                        print(util.format_elapsed(s2, f"    FINISH read {element.uri}"))
+        grp.close()
+
+        if self.verbose:
+            print(util.format_elapsed(s, f"  FINISH read {group_uri}"))
+
+        return matrices_in_group
