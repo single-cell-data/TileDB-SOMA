@@ -34,7 +34,6 @@ def test_import_anndata(adata):
 
     # Structure:
     #   X/data
-    #   X/raw
     #   obs
     #   var
     #   obsm/X_pca
@@ -44,6 +43,9 @@ def test_import_anndata(adata):
     #   varm/PCs
     #   obsp/distances
     #   obsp/connectivities
+    #   raw/X/data
+    #   raw/var
+    #   raw/varm/PCs
 
     # Check X/data (dense)
     with tiledb.open(os.path.join(output_path, 'X', 'data')) as A:
@@ -53,7 +55,7 @@ def test_import_anndata(adata):
         assert A.ndim == 2
 
     # Check X/raw (sparse)
-    with tiledb.open(os.path.join(output_path, 'X', 'raw')) as A:
+    with tiledb.open(os.path.join(output_path, 'raw', 'X', 'data')) as A:
         df = A.df[:]
         assert df.columns.to_list() == ['obs_id', 'var_id', 'value']
         # verify sparsity of raw data

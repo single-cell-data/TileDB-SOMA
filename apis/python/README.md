@@ -58,6 +58,50 @@ Please see [https://github.com/single-cell-data/TileDB-SingleCell/issues](https:
 
 # Details
 
+## TileDB group structure
+
+```
+soma: group
+|
++-- X: group
+|   +-- data: array
+|
++-- obs: array
+|
++-- var: array
+|
++-- obsm: group
+|   +-- omfoo: array
+|   +-- ombar: array
+|
++-- varm: group
+|   +-- vmfoo: array
+|   +-- vmbar: array
+|
++-- obsp: group
+|   +-- opfoo: array
+|   +-- opbar: array
+|
++-- varp: group
+|   +-- vpfoo: array
+|   +-- vpbar: array
+|
++-- raw: group
+    |
+    +-- X: group
+    |   +-- data: array
+    |
+    +-- var: array
+    |
+    +-- varm: group
+    |   +-- vmfoo: array
+    |   +-- vmbar: array
+    |
+    +-- varp: group
+        +-- vpfoo: array
+        +-- vpbar: array
+```
+
 ## Expected input format
 
 `./desc-ann.py ./anndata/pbmc3k_processed.h5ad`
