@@ -1,28 +1,34 @@
 #!/usr/bin/env python
 
 # ================================================================
-# A simple driver for ingestion of anndata to a TileDB group.
+# A simple driver for outgestion of a TileDB soma group to anndata.
 #
-# * Invoke this with one argument /path/to/some/somename.h5ad:
-#   o Output will be ./tiledb-data/somename
+# * Invoke this with one argument /path/to/some/somagroup:
+#   o Output will be ./anndata-readback/somagroup.h5ad
 #
-# * Invoke this with two arguments to specify input anndata HDF5 file
-#   and output TileDB group.
+# * Invoke this with two arguments to specify input TileDB group and
+#   output anndata HDF5 file.
 #
-# Nominal immediate-term support is to local disk, although output to tiledb:/...
+# Nominal immediate-term support is to local disk, although input from tiledb:/...
 # URIs will be supported.
-#
-# Note this removes and recreates the destination TileDB group on each invocation.
 # ================================================================
 
+import tiledb
 import tiledbsc
+
+import anndata as ad
+
+import pandas as pd
+import scipy
+import numpy as np
+
 import sys, os, shutil
 import argparse
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Ingest soma data from anndata/h5ad into TileDB group structure"
-    )
+        description="Outgest soma data from TileDB group structure to anndata/h5ad"
+   )
     parser.add_argument("-q", "--quiet", help="decrease output verbosity", action="store_true")
     parser.add_argument(
         "paths",
@@ -33,15 +39,19 @@ def main():
     args = parser.parse_args()
 
     if len(args.paths) == 1:
-        input_path  = args.paths[0]
-        # Example 'anndata/pbmc3k_processed.h5ad' -> 'tiledb-data/pbmc3k_processed'
-        output_path = 'tiledb-data/' + os.path.splitext(os.path.basename(input_path))[0]
+        # Strip trailing slashes so basename will behave correctly
+        input_path  = args.paths[0].rstrip('/')
+        # Example 'tiledb-data/pbmc3k_processed' -> 'anndata-readcbak/pbmc3k_processed.h5ad'
+        output_path = 'anndata-readback/' + os.path.basename(input_path) + '.h5ad'
     elif len(args.paths) == 2:
         input_path  = args.paths[0]
         output_path = args.paths[1]
     else:
         parser.print_help(file=sys.stderr)
         sys.exit(1)
+
+    if not os.path.exists('anndata-readback'):
+        os.mkdir('anndata-readback')
 
     if not os.path.exists(input_path):
         # Print this neatly and exit neatly, to avoid a multi-line stack trace otherwise.
@@ -50,15 +60,12 @@ def main():
 
     # This is for local-disk use only -- for S3-backed tiledb://... URIs we should
     # use tiledb.vfs to remove any priors, and/or make use of a tiledb `overwrite` flag.
-    if not os.path.exists('tiledb-data'):
-        os.mkdir('tiledb-data')
-    if os.path.exists(output_path):
-        shutil.rmtree(output_path) # Overwrite
+    if not os.path.exists('anndata-readback'):
+        os.mkdir('anndata-readback')
 
     verbose = not args.quiet
-
-    soma = tiledbsc.SOMA(output_path, verbose=verbose)
-    soma.from_h5ad(input_path)
+    soma = tiledbsc.SOMA(input_path, verbose=verbose)
+    soma.to_h5ad(output_path)
 
     if not verbose:
         print(f"Wrote {output_path}")
