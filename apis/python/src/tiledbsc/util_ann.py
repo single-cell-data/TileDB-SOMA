@@ -3,7 +3,7 @@ import numpy as np
 import scipy
 
 # ----------------------------------------------------------------
-def describe_ann_file(input_path: str, types_only=False):
+def describe_ann_file(input_path: str, show_types=True, show_summary=False, show_data=False):
     """
     This is an anndata-describer that goes a bit beyond what h5ls does for us.
     In particular, it shows us that for one HDF5 file we have anndata.X being of type numpy.ndarray
@@ -15,6 +15,18 @@ def describe_ann_file(input_path: str, types_only=False):
 
     print()
     print(f"================================================================ {input_path}")
+
+    if show_types:
+        _describe_ann_file_show_types(anndata, input_path)
+    if show_summary:
+        _describe_ann_file_show_summary(anndata, input_path)
+    if show_data:
+        _describe_ann_file_show_data(anndata, input_path)
+
+
+# ----------------------------------------------------------------
+def _describe_ann_file_show_types(anndata: ad.AnnData, input_path: str):
+
     print("ANNDATA FILE TYPES:")
 
     namewidth = 30
@@ -60,8 +72,8 @@ def describe_ann_file(input_path: str, types_only=False):
     for k in anndata.varp.keys():
         print("%-*s %s" % (namewidth, "varp/"+k, type(anndata.varp[k])))
 
-    if types_only:
-        return
+# ----------------------------------------------------------------
+def _describe_ann_file_show_summary(anndata: ad.AnnData, input_path: str):
 
     print()
     print("ANNDATA SUMMARY:")
@@ -94,10 +106,61 @@ def describe_ann_file(input_path: str, types_only=False):
     print("VARP KEYS", list(anndata.varp.keys()))
 
     # Defer unstructured data for now:
-    # show_uns_types(anndata.uns)
+    # _describe_ann_file_show_uns_types(anndata.uns)
+
 
 # ----------------------------------------------------------------
-def show_uns_types(uns, depth=0):
+def _describe_ann_file_show_data(anndata: ad.AnnData, input_path: str):
+    print()
+    print("----------------------------------------------------------------")
+    print("X DATA", type(anndata.X), anndata.X.shape)
+    print(anndata.X)
+
+    print()
+    print("----------------------------------------------------------------")
+    print("OBS DATA")
+    print(anndata.obs)
+
+    print()
+    print("----------------------------------------------------------------")
+    print("VAR DATA")
+    print(anndata.var)
+
+    print()
+    print("----------------------------------------------------------------")
+    for k in anndata.obsm.keys():
+        print()
+        d = anndata.obsm[k]
+        print(f"OBSM/{k} DATA", type(d), d.shape)
+        print(d)
+
+    print()
+    print("----------------------------------------------------------------")
+    for k in anndata.varm.keys():
+        print()
+        d = anndata.varm[k]
+        print(f"varm/{k} DATA", type(d), d.shape)
+        print(d)
+
+    print()
+    print("----------------------------------------------------------------")
+    for k in anndata.obsp.keys():
+        print()
+        d = anndata.obsp[k]
+        print(f"obsp/{k} DATA", type(d), d.shape)
+        print(d)
+
+    print()
+    print("----------------------------------------------------------------")
+    for k in anndata.varp.keys():
+        print()
+        d = anndata.varp[k]
+        print(f"varp/{k} DATA", type(d), d.shape)
+        print(d)
+
+
+# ----------------------------------------------------------------
+def _describe_ann_file_show_uns_types(uns, depth=0):
     """
     Recursive helper function for describe_ann_file, given that `uns` data
     can be arbitrarily nested.
@@ -109,6 +172,6 @@ def show_uns_types(uns, depth=0):
             print(leader, 'UNS', k, "IS A", type(uns[k]))
         elif isinstance(v, dict) or isinstance(v, ad.compat._overloaded_dict.OverloadedDict):
             print(leader, 'UNS', k, "IS A", type(uns[k]))
-            show_uns_types(v, depth+1)
+            _describe_ann_file_show_uns_types(v, depth+1)
         else:
             print(leader, 'UNS', k, "IS A", type(uns[k]), "which is unrecognized")
