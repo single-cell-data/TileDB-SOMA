@@ -270,7 +270,7 @@ class SOMA():
 
         # ----------------------------------------------------------------
         X_uri = os.path.join(self.uri, "X")
-        self.write_X_group(X_uri, anndata)
+        self.write_X_group(X_uri, anndata.X, anndata.obs.index, anndata.var.index)
         soma_group.add(uri=X_uri, relative=False, name="X")
 
         # ----------------------------------------------------------------
@@ -307,6 +307,7 @@ class SOMA():
         if anndata.raw != None:
             raw_group_uri = self.uri + '/raw'
             self.write_raw_group(raw_group_uri, anndata.raw)
+            soma_group.add(uri=raw_group_uri, relative=False, name="raw")
 
         # ----------------------------------------------------------------
         if self.verbose:
@@ -315,7 +316,7 @@ class SOMA():
         soma_group.close()
 
     # ----------------------------------------------------------------
-    def write_X_group(self, X_group_uri: str, anndata: ad.AnnData):
+    def write_X_group(self, X_group_uri: str, X, obs_index, var_index):
         """
         Populates the X/ or raw/X subgroup for a SOMA object.
 
@@ -325,7 +326,7 @@ class SOMA():
         X_group = tiledb.Group(X_group_uri, mode="w", ctx=self.ctx)
 
         X_data_uri = X_group_uri + "/data"
-        self.write_X_array(X_data_uri, anndata.X, anndata.obs.index, anndata.var.index)
+        self.write_X_array(X_data_uri, X, obs_index, var_index)
         X_group.add(uri=X_data_uri, relative=False, name="data")
 
         X_group.close()
@@ -431,12 +432,23 @@ class SOMA():
             s = util.get_start_stamp()
             print(f"    START  WRITING {raw_group_uri}")
 
-        print(f"    RAW STUB")
+        tiledb.group_create(raw_group_uri, ctx=self.ctx)
+        raw_group = tiledb.Group(raw_group_uri, mode="w", ctx=self.ctx)
 
-#        soma_group = tiledb.Group(self.uri, mode="w", ctx=self.ctx)
-#        X_uri = self.write_X_group(anndata)
-#        soma_group.add(uri=X_uri, relative=False, name="X")
-#        soma_group.close()
+        X_uri = os.path.join(raw_group_uri, "X")
+        self.write_X_group(X_uri, raw.X, raw.obs_names, raw.var_names)
+        raw_group.add(uri=X_uri, relative=False, name="X")
+
+        var_uri = os.path.join(raw_group_uri, 'var')
+        self.write_obs_or_var(var_uri, raw.var, "var", 2048)
+        raw_group.add(uri=var_uri, relative=False, name="var")
+
+        if len(raw.varm.keys()) > 0:
+            varm_uri = os.path.join(raw_group_uri, 'varm')
+            self.__write_annotation_matrices(varm_uri, raw.varm, "varm", "var_id", raw.var_names)
+            raw_group.add(uri=varm_uri, relative=False, name="varm")
+
+        raw_group.close()
 
         if self.verbose:
             print(util.format_elapsed(s, f"    FINISH WRITING {raw_group_uri}"))
