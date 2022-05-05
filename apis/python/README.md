@@ -54,11 +54,7 @@ python -m pytest tests
 
 # Status
 
-* Most important: input files beyond `./anndata/pbmc3k_processed.h5ad` need to be validated
-  * Processing of this datafile is validated in this README, unit-tests for this package, and the CI job for this repo
-* The `uns` arrays from HDF5 files are currently not processed
-* Dimensioning of `X/data` and `X/raw` is non-homogeneous in cellxgene datasets looked at so far (in contrast to Seurat data) -- this needs discussion with CZI
-* Labeling in `obs`, `var`, etc needs to be more aligned with that used by the [tiledbsc R package](https://github.com/TileDB-Inc/tiledbsc).
+Please see [https://github.com/single-cell-data/TileDB-SingleCell/issues](https://github.com/single-cell-data/TileDB-SingleCell/issues).
 
 # Details
 
