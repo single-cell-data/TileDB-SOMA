@@ -1,5 +1,6 @@
 import numpy as np
 import scipy
+import pandas as pd
 import time
 
 # ----------------------------------------------------------------
@@ -60,3 +61,19 @@ def get_sort_and_permutation(lst: list):
     lst_sorted  = [e for e,i in lst_and_indices]
     permutation = [i for e,i in lst_and_indices]
     return (lst_sorted, permutation)
+
+# ----------------------------------------------------------------
+def decategoricalize_array(x):
+    """
+    Converts datatypes unrepresentable by TileDB into datatypes it can represent.
+    Categorical strings -> string; bool -> uint8.
+    See also https://docs.scipy.org/doc/numpy-1.10.1/reference/arrays.dtypes.html
+    """
+    if isinstance(x.dtype, pd.CategoricalDtype):
+        return x.astype('O')
+    elif x.dtype == 'bool':
+        return x.astype('uint8')
+    elif x.dtype == np.float16:
+        return x.astype(np.float16)
+    else:
+        return x

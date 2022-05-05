@@ -1,5 +1,5 @@
 import os
-from typing import Optional
+from typing import Optional, Union
 
 import anndata as ad
 import numpy   as np
@@ -9,16 +9,6 @@ import scanpy
 import scipy
 import tiledb
 import tiledbsc.util     as util
-
-def uncat(x):
-    if isinstance(x.dtype, pd.CategoricalDtype):
-        return x.astype('O')
-    elif x.dtype == 'bool':
-        return x.astype('uint8')
-    elif x.dtype == np.float16:
-        return x.astype(np.float16)
-    else:
-        return x
 
 class SOMA():
     """ Single-cell group
@@ -124,6 +114,7 @@ class SOMA():
             print(f"START  SOMA.from_10x {input_path} -> {self.uri}")
 
         anndata = self.read_10x(input_path)
+
         anndata = self.decategoricalize(anndata)
         self.write_tiledb_group(anndata)
 
@@ -139,6 +130,7 @@ class SOMA():
             s = util.get_start_stamp()
             print(f"  START  READING {input_path}")
         anndata = ad.read_h5ad(input_path)
+        anndata.obs_names_make_unique()
         anndata.var_names_make_unique()
         if self.verbose:
             print(util.format_elapsed(s, f"  FINISH READING {input_path}"))
@@ -153,6 +145,7 @@ class SOMA():
             s = util.get_start_stamp()
             print(f"  START  READING {input_path}")
         anndata = scanpy.read_10x_h5(input_path)
+        anndata.obs_names_make_unique()
         anndata.var_names_make_unique()
         if self.verbose:
             print(util.format_elapsed(s, f"  FINISH READING {input_path}"))
@@ -161,47 +154,105 @@ class SOMA():
     # ----------------------------------------------------------------
     def decategoricalize(self, anndata: ad.AnnData):
         """
-        Performs a typecast for the categorical datatype that pandas can handle.
-        We cast this to Python 'object' which in this case means 'string'.
-        The uns and raw datasets are deferred.
+        Performs an in-place typecast for the categorical datatype that pandas can handle.
+        Categorical strings -> string; bool -> uint8.
+        The uns dataset is deferred.
         """
 
         if self.verbose:
             s = util.get_start_stamp()
             print(f"  START  DECATEGORICALIZING")
 
-        # See also https://docs.scipy.org/doc/numpy-1.10.1/reference/arrays.dtypes.html
-        #uncat = lambda x: x.astype("O") if isinstance(x.dtype, pd.CategoricalDtype) else x
-
-        obs = pd.DataFrame.from_dict({k: uncat(v) for k, v in anndata.obs.items()})
-        var = pd.DataFrame.from_dict({k: uncat(v) for k, v in anndata.var.items()})
-
+        new_obs = pd.DataFrame.from_dict({k: util.decategoricalize_array(v) for k, v in anndata.obs.items()})
+        new_var = pd.DataFrame.from_dict({k: util.decategoricalize_array(v) for k, v in anndata.var.items()})
         for key in anndata.obsm.keys():
-            anndata.obsm[key] = uncat(anndata.obsm[key])
+            anndata.obsm[key] = util.decategoricalize_array(anndata.obsm[key])
         for key in anndata.varm.keys():
-            anndata.varm[key] = uncat(anndata.varm[key])
+            anndata.varm[key] = util.decategoricalize_array(anndata.varm[key])
         for key in anndata.obsp.keys():
-            anndata.obsp[key] = uncat(anndata.obsp[key])
+            anndata.obsp[key] = util.decategoricalize_array(anndata.obsp[key])
         for key in anndata.varp.keys():
-            anndata.varp[key] = uncat(anndata.varp[key])
+            anndata.varp[key] = util.decategoricalize_array(anndata.varp[key])
+
+        if anndata.raw == None: # Some datasets have no raw.
+            newraw = None
+        else:
+            # Note there is some code-duplication here between cooked & raw.  However anndata.raw
+            # has var not directly assignable ('AttributeError: can't set attribute'), and
+            # anndata.AnnData and anndata.Raw have different constructor syntaxes, and raw doesn't
+            # have obs or obsm or obsp -- so, it turns out to be simpler to just repeat ourselves a
+            # little.
+
+            newvar = pd.DataFrame.from_dict({k: util.decategoricalize_array(v) for k, v in anndata.raw.var.items()})
+            for key in anndata.raw.varm.keys():
+                anndata.raw.varm[key] = util.decategoricalize_array(anndata.raw.varm[key])
+            newraw = ad.Raw(
+                anndata,
+                X=anndata.raw.X,
+                var=newvar,
+                varm=anndata.raw.varm,
+            )
 
         anndata = ad.AnnData(
             X=anndata.X,
             dtype=anndata.X.dtype,
-            raw=anndata.raw,  # expect Python 'None' type when there is no raw -- assignment OK
-            obs=obs,
-            var=var,
+            obs=new_obs,
+            var=new_var,
             obsm=anndata.obsm,
             obsp=anndata.obsp,
             varm=anndata.varm,
             varp=anndata.varp,
+            raw=newraw,
         )
 
         if self.verbose:
             print(util.format_elapsed(s, f"  FINISH DECATEGORICALIZING"))
+
         return anndata
 
     # ----------------------------------------------------------------
+    # Intended structure:
+    #
+    # soma: group
+    # |
+    # +-- X: group
+    # |   +-- data: array
+    # |
+    # +-- obs: array
+    # |
+    # +-- var: array
+    # |
+    # +-- obsm: group
+    # |   +-- omfoo: array
+    # |   +-- ombar: array
+    # |
+    # +-- varm: group
+    # |   +-- vmfoo: array
+    # |   +-- vmbar: array
+    # |
+    # +-- obsp: group
+    # |   +-- opfoo: array
+    # |   +-- opbar: array
+    # |
+    # +-- varp: group
+    # |   +-- vpfoo: array
+    # |   +-- vpbar: array
+    # |
+    # +-- raw: group
+    #     |
+    #     +-- X: group
+    #     |   +-- data: array
+    #     |
+    #     +-- var: array
+    #     |
+    #     +-- varm: group
+    #     |   +-- vmfoo: array
+    #     |   +-- vmbar: array
+    #     |
+    #     +-- varp: group
+    #         +-- vpfoo: array
+    #         +-- vpbar: array
+
     def write_tiledb_group(self, anndata: ad.AnnData):
         """
         Top-level writer method for creating a TileDB group for a SOMA object.
