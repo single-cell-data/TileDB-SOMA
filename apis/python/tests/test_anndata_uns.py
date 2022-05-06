@@ -4,6 +4,7 @@ from tiledbsc import SOMA
 import pandas as pd
 import numpy as np
 from scipy import sparse
+import os
 
 from collections import OrderedDict
 import os
