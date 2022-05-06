@@ -25,10 +25,10 @@ def test_from_anndata_raw_X(tmp_path, adata):
     SOMA(tmp_path.as_posix()).from_anndata(adata)
 
     assert all(
-        (tmp_path / sub_array_path).exists() for sub_array_path in ["X/data", "X/raw"]
+        (tmp_path / sub_array_path).exists() for sub_array_path in ["X/data", "raw/X/data"]
     )
 
-    with tiledb.open((tmp_path / "X" / "raw").as_posix()) as raw_X:
+    with tiledb.open((tmp_path / "raw" / "X" / "data").as_posix()) as raw_X:
         orig_raw_X_df = pd.DataFrame(
             adata.raw.X.flatten(),
             index=pd.MultiIndex.from_product(
@@ -51,8 +51,6 @@ def test_from_anndata_raw_X(tmp_path, adata):
         assert X.df[:].equals(orig_X_df)
 
 
-# TODO: re-enable when #50 is resolved
-@pytest.mark.skip(reason="Fails: filed as issue #50")
 def test_from_anndata_raw_var(tmp_path, adata):
     """
     Verify that anndata.raw.var is correctly saved.
