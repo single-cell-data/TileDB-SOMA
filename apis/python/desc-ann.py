@@ -20,13 +20,14 @@ import tiledbsc
 parser = argparse.ArgumentParser(
     description="Show some tiledbsc-relevant information about specified anndata .h5ad files"
 )
-parser.add_argument('--types',   action=argparse.BooleanOptionalAction, help="Show datatypes of matrices, default true", default=True)
 parser.add_argument('--summary', action=argparse.BooleanOptionalAction, help="Show summary of matrices, default true", default=True)
+parser.add_argument('--types',   action=argparse.BooleanOptionalAction, help="Show datatypes of matrices, default true", default=True)
 parser.add_argument('--data',    action=argparse.BooleanOptionalAction, help="Show data in matrices,default false", default=False)
 parser.add_argument("filenames", type=str, help="Filenames to describe", nargs='+')
 args = parser.parse_args()
 
 for input_path in args.filenames:
     tiledbsc.util_ann.describe_ann_file(
-        input_path, show_types=args.types, show_summary=args.summary, show_data=args.data)
+        input_path, show_summary=args.summary, show_types=args.types, show_data=args.data,
+    )
 

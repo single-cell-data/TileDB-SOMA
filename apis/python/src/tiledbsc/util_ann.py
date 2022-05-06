@@ -3,7 +3,7 @@ import numpy as np
 import scipy
 
 # ----------------------------------------------------------------
-def describe_ann_file(input_path: str, show_types=True, show_summary=False, show_data=False):
+def describe_ann_file(input_path: str, show_summary=True, show_types=False, show_data=False):
     """
     This is an anndata-describer that goes a bit beyond what h5ls does for us.
     In particular, it shows us that for one HDF5 file we have anndata.X being of type numpy.ndarray
@@ -16,12 +16,49 @@ def describe_ann_file(input_path: str, show_types=True, show_summary=False, show
     print()
     print(f"================================================================ {input_path}")
 
-    if show_types:
-        _describe_ann_file_show_types(anndata, input_path)
     if show_summary:
         _describe_ann_file_show_summary(anndata, input_path)
+    if show_types:
+        _describe_ann_file_show_types(anndata, input_path)
     if show_data:
         _describe_ann_file_show_data(anndata, input_path)
+
+
+# ----------------------------------------------------------------
+def _describe_ann_file_show_summary(anndata: ad.AnnData, input_path: str):
+
+    print()
+    print("ANNDATA SUMMARY:")
+    print(anndata)
+
+    print("X SHAPE  ", anndata.X.shape)
+    print("OBS  LEN ", len(anndata.obs))
+    print("VAR  LEN ", len(anndata.var))
+
+    print('OBS IS A', type(anndata.obs))
+    for name in anndata.obs.keys():
+        print("  ", name, anndata.obs[name].dtype)
+    print('VAR IS A', type(anndata.var))
+    for name in anndata.var.keys():
+        print("  ", name, anndata.var[name].dtype)
+
+    try: # not all groups have raw X
+        print("RAW X SHAPE  ", anndata.raw.X.shape)
+        print(" RAW OBS  LEN ", len(anndata.raw.X.obs_names))
+        print("RAW VAR  LEN ", len(anndata.raw.X.var_names))
+    except:
+        pass
+
+    print("OBS  KEYS", list(anndata.obs.keys()))
+    print("VAR  KEYS", list(anndata.var.keys()))
+
+    print("OBSM KEYS", list(anndata.obsm.keys()))
+    print("VARM KEYS", list(anndata.varm.keys()))
+    print("OBSP KEYS", list(anndata.obsp.keys()))
+    print("VARP KEYS", list(anndata.varp.keys()))
+
+    # Defer unstructured data for now:
+    # _describe_ann_file_show_uns_types(anndata.uns)
 
 
 # ----------------------------------------------------------------
@@ -71,42 +108,6 @@ def _describe_ann_file_show_types(anndata: ad.AnnData, input_path: str):
 
     for k in anndata.varp.keys():
         print("%-*s %s" % (namewidth, "varp/"+k, type(anndata.varp[k])))
-
-# ----------------------------------------------------------------
-def _describe_ann_file_show_summary(anndata: ad.AnnData, input_path: str):
-
-    print()
-    print("ANNDATA SUMMARY:")
-    print(anndata)
-
-    print("X SHAPE  ", anndata.X.shape)
-    print("OBS  LEN ", len(anndata.obs))
-    print("VAR  LEN ", len(anndata.var))
-
-    print('OBS IS A', type(anndata.obs))
-    for name in anndata.obs.keys():
-        print("  ", name, anndata.obs[name].dtype)
-    print('VAR IS A', type(anndata.var))
-    for name in anndata.var.keys():
-        print("  ", name, anndata.var[name].dtype)
-
-    try: # not all groups have raw X
-        print("RAW X SHAPE  ", anndata.raw.X.shape)
-        print(" RAW OBS  LEN ", len(anndata.raw.X.obs_names))
-        print("RAW VAR  LEN ", len(anndata.raw.X.var_names))
-    except:
-        pass
-
-    print("OBS  KEYS", list(anndata.obs.keys()))
-    print("VAR  KEYS", list(anndata.var.keys()))
-
-    print("OBSM KEYS", list(anndata.obsm.keys()))
-    print("VARM KEYS", list(anndata.varm.keys()))
-    print("OBSP KEYS", list(anndata.obsp.keys()))
-    print("VARP KEYS", list(anndata.varp.keys()))
-
-    # Defer unstructured data for now:
-    # _describe_ann_file_show_uns_types(anndata.uns)
 
 
 # ----------------------------------------------------------------
