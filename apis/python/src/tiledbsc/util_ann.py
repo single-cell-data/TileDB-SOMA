@@ -71,7 +71,7 @@ def _describe_ann_file_show_types(anndata: ad.AnnData, input_path: str):
     print("----------------------------------------------------------------")
     print("ANNDATA FILE TYPES:")
 
-    namewidth = 30
+    namewidth = 40
 
     X = anndata.X
     print("%-*s %s" % (namewidth, "X/data", type(X)))
@@ -190,6 +190,7 @@ def _describe_ann_file_show_uns_types(uns, parent_path_components=['uns']):
     """
     Recursively shows data-type information about the anndata.uns structure.
     """
+    namewidth = 40
     for key in uns.keys():
         current_path_components = parent_path_components + [key]
         value = uns[key]
@@ -197,33 +198,27 @@ def _describe_ann_file_show_uns_types(uns, parent_path_components=['uns']):
         if isinstance(value, dict) or isinstance(value, ad.compat.OverloadedDict):
             _describe_ann_file_show_uns_types(value, current_path_components)
         elif isinstance(value, np.ndarray) or isinstance(value, scipy.sparse.csr_matrix) or isinstance(value, pd.DataFrame):
-            print()
-            print(display_name+":", type(value), value.shape)
-        elif isinstance(value, str):
-            print()
-            print(display_name+":", type(value))
+            print("%-*s" % (namewidth, display_name), type(value), value.shape)
         else:
-            print(display_name+":", type(value), "which is unrecognized")
+            print("%-*s" % (namewidth, display_name), type(value))
 
 # ----------------------------------------------------------------
 def _describe_ann_file_show_uns_data(uns, parent_path_components=['uns']):
     """
     Recursively shows data contained within the anndata.uns structure.
     """
+    namewidth = 40
     for key in uns.keys():
         current_path_components = parent_path_components + [key]
         value = uns[key]
         display_name = os.path.sep.join(current_path_components)
         if isinstance(value, dict) or isinstance(value, ad.compat.OverloadedDict):
             _describe_ann_file_show_uns_data(value, current_path_components)
-        elif isinstance(value, np.ndarray):
+        elif isinstance(value, np.ndarray) or isinstance(value, scipy.sparse.csr_matrix) or isinstance(value, pd.DataFrame):
             print()
-            print(display_name+":", type(value), value.shape)
-            print(value)
-        elif isinstance(value, str):
-            print()
-            print(display_name+":")
+            print("%-*s" % (namewidth, display_name), type(value), value.shape)
             print(value)
         else:
             print()
-            print(display_name+":", type(value), "which is unrecognized")
+            print("%-*s" % (namewidth, display_name), type(value))
+            print(value)
