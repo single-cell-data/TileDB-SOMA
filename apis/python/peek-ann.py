@@ -2,7 +2,7 @@
 
 # Invoke this with, for example,
 #
-#   python -i interactor.py ~/scdata/anndata/pbmc-small.h5ad
+#   python -i peek-ann.py anndata/pbmc3k_processed.h5ad
 #
 # -- then you can inspect the anndata object.
 

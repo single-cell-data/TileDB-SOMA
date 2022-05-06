@@ -2,7 +2,7 @@
 
 # Invoke this with, for example,
 #
-#   python -i interactor.py ~/scdata/anndata/pbmc-small.h5ad tempdir
+#   python -i interactor.py anndata/pbmc3k_processed.h5ad
 #
 # -- then you can inspect the anndata object.
 
@@ -33,6 +33,7 @@ soma = tiledbsc.SOMA(output_path, verbose=True)
 
 anndata = soma.read_h5ad(input_path)
 anndata = soma.decategoricalize(anndata)
+
 # Interact at the prompt now:
 # * anndata.X
 # * anndata.obs.keys()
