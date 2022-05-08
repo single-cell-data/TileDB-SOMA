@@ -66,14 +66,58 @@ def get_sort_and_permutation(lst: list):
 def decategoricalize_array(x):
     """
     Converts datatypes unrepresentable by TileDB into datatypes it can represent.
-    Categorical strings -> string; bool -> uint8.
+    Eg, categorical strings -> string; bool -> uint8, etc.
+
     See also https://docs.scipy.org/doc/numpy-1.10.1/reference/arrays.dtypes.html
+
+    Preferentially converts to the underlying primitive type, as TileDB does not
+    support most complex types. NOTE: this does not support `datetime64` conversion.
+
+    Categoricals are a special case. If the underlying categorical type is a
+    primitive, convert to that. If the array contains NA/nan (ie, not in the
+    category, code == -1), raise error unless it is a float or string.
     """
-    if isinstance(x.dtype, pd.CategoricalDtype):
+
+    def _to_tiledb_supported_dtype(dtype):
+        """A handful of types are cast into the TileDB type system."""
+        # TileDB has no bool type - instead cast to uint8
+        if dtype == np.dtype('bool'):
+            return np.dtype('uint8')
+
+        # TileDB has no float16 - cast up to float32
+        if dtype == np.dtype('float16'):
+            return np.dtype('float32')
+
+        return dtype
+
+    # if a Pandas categorical, use the type of the underlying category.
+    # If the array contains nan/NA, and the primitive is unable to represent
+    # a reasonable facscilime, ie, not string or float, raise.
+    if pd.api.types.is_categorical_dtype(x.dtype):
+        categories = x.cat.categories
+        cat_dtype = categories.dtype
+        if cat_dtype.kind in ['f', 'u', 'i']:
+            if x.hasnans and cat_dtype.kind == 'i':
+                raise ValueError("Categorical array contains nan - unable to convert to TileDB array.")
+
+            return x.astype(_to_tiledb_supported_dtype(cat_dtype))
+
+        # Into the weirdness. See if Pandas can help with edge cases
+        inferred = pd.api.types.infer_dtype(categories)
+        if inferred == "boolean":
+            if x.hasnans:
+                raise ValueError("Categorical array contains nan - unable to convert to TileDB array.")
+            return x.astype('uint8')
+
+        if inferred == "string":
+            return x.astype(str)
+
+        if inferred == "bytes":
+            if x.hasnans:
+                raise ValueError("Categorical array contains nan - unable to convert to TileDB array.")
+            return x.astype(bytes)
+
         return x.astype('O')
-    elif x.dtype == 'bool':
-        return x.astype('uint8')
-    elif x.dtype == np.float16:
-        return x.astype(np.float16)
-    else:
-        return x
+
+    target_dtype = _to_tiledb_supported_dtype(x.dtype)
+    return x if target_dtype == x.dtype else x.astype(target_dtype)
