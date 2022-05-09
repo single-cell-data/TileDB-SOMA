@@ -63,7 +63,7 @@ def get_sort_and_permutation(lst: list):
     return (lst_sorted, permutation)
 
 # ----------------------------------------------------------------
-def decategoricalize_array(x):
+def _to_tiledb_supported_array_type(x):
     """
     Converts datatypes unrepresentable by TileDB into datatypes it can represent.
     Eg, categorical strings -> string; bool -> uint8, etc.
@@ -92,7 +92,7 @@ def decategoricalize_array(x):
 
     # if a Pandas categorical, use the type of the underlying category.
     # If the array contains nan/NA, and the primitive is unable to represent
-    # a reasonable facscilime, ie, not string or float, raise.
+    # a reasonable facsimile, ie, not string or float, raise.
     if pd.api.types.is_categorical_dtype(x.dtype):
         categories = x.cat.categories
         cat_dtype = categories.dtype
