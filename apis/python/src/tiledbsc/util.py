@@ -1,4 +1,4 @@
-import numpy as np
+import numpy
 import scipy
 import pandas as pd
 import time
@@ -74,39 +74,39 @@ def _to_tiledb_supported_array_type(x):
     support most complex types. NOTE: this does not support `datetime64` conversion.
 
     Categoricals are a special case. If the underlying categorical type is a
-    primitive, convert to that. If the array contains NA/nan (ie, not in the
+    primitive, convert to that. If the array contains NA/NaN (i.e. not in the
     category, code == -1), raise error unless it is a float or string.
     """
 
     def _to_tiledb_supported_dtype(dtype):
         """A handful of types are cast into the TileDB type system."""
-        # TileDB has no bool type - instead cast to uint8
-        if dtype == np.dtype('bool'):
-            return np.dtype('uint8')
+        # TileDB has no bool type -- instead cast to uint8
+        if dtype == numpy.dtype('bool'):
+            return numpy.dtype('uint8')
 
-        # TileDB has no float16 - cast up to float32
-        if dtype == np.dtype('float16'):
-            return np.dtype('float32')
+        # TileDB has no float16 -- cast up to float32
+        if dtype == numpy.dtype('float16'):
+            return numpy.dtype('float32')
 
         return dtype
 
-    # if a Pandas categorical, use the type of the underlying category.
-    # If the array contains nan/NA, and the primitive is unable to represent
-    # a reasonable facsimile, ie, not string or float, raise.
+    # If a Pandas categorical, use the type of the underlying category.
+    # If the array contains NaN/NA, and the primitive is unable to represent
+    # a reasonable facsimile, i.e. not string or float, raise.
     if pd.api.types.is_categorical_dtype(x.dtype):
         categories = x.cat.categories
         cat_dtype = categories.dtype
         if cat_dtype.kind in ['f', 'u', 'i']:
             if x.hasnans and cat_dtype.kind == 'i':
-                raise ValueError("Categorical array contains nan - unable to convert to TileDB array.")
+                raise ValueError("Categorical array contains NaN -- unable to convert to TileDB array.")
 
             return x.astype(_to_tiledb_supported_dtype(cat_dtype))
 
-        # Into the weirdness. See if Pandas can help with edge cases
+        # Into the weirdness. See if Pandas can help with edge cases.
         inferred = pd.api.types.infer_dtype(categories)
         if inferred == "boolean":
             if x.hasnans:
-                raise ValueError("Categorical array contains nan - unable to convert to TileDB array.")
+                raise ValueError("Categorical array contains NaN -- unable to convert to TileDB array.")
             return x.astype('uint8')
 
         if inferred == "string":
@@ -114,7 +114,7 @@ def _to_tiledb_supported_array_type(x):
 
         if inferred == "bytes":
             if x.hasnans:
-                raise ValueError("Categorical array contains nan - unable to convert to TileDB array.")
+                raise ValueError("Categorical array contains NaN -- unable to convert to TileDB array.")
             return x.astype(bytes)
 
         return x.astype('O')
