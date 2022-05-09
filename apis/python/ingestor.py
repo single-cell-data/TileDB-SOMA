@@ -27,39 +27,57 @@ def main():
     parser.add_argument(
         "paths",
         type=str,
-        help="One for specified input with default output path, or two to specify input and output paths",
+        help="One for specified input with default output path, or two to specify input and output paths, or multiple input paths if -n is specified",
         nargs='+'
     )
+    parser.add_argument("-n", help="All arguments after flags are treated as input paths", action="store_true")
     args = parser.parse_args()
 
-    if len(args.paths) == 1:
-        input_path  = args.paths[0]
-        # Example 'anndata/pbmc3k_processed.h5ad' -> 'tiledb-data/pbmc3k_processed'
-        output_path = 'tiledb-data/' + os.path.splitext(os.path.basename(input_path))[0]
-    elif len(args.paths) == 2:
-        input_path  = args.paths[0]
-        output_path = args.paths[1]
-    else:
-        parser.print_help(file=sys.stderr)
-        sys.exit(1)
+    verbose = not args.quiet
 
+    if args.n:
+        if len(args.paths) < 1:
+            parser.print_help(file=sys.stderr)
+            sys.exit(1)
+        for input_path in args.paths:
+            # Example 'anndata/pbmc3k_processed.h5ad' -> 'tiledb-data/pbmc3k_processed'
+            output_path = 'tiledb-data/' + os.path.splitext(os.path.basename(input_path))[0]
+            ingest_one(input_path, output_path, verbose)
+    else:
+        if len(args.paths) == 1:
+            input_path  = args.paths[0]
+            # Example 'anndata/pbmc3k_processed.h5ad' -> 'tiledb-data/pbmc3k_processed'
+            output_path = 'tiledb-data/' + os.path.splitext(os.path.basename(input_path))[0]
+            ingest_one(input_path, output_path, verbose)
+        elif len(args.paths) == 2:
+            input_path  = args.paths[0]
+            output_path = args.paths[1]
+            ingest_one(input_path, output_path, verbose)
+        else:
+            parser.print_help(file=sys.stderr)
+            sys.exit(1)
+
+
+def ingest_one(input_path: str, output_path: str, verbose: bool):
+    # Check that the input exists.
     if not os.path.exists(input_path):
         # Print this neatly and exit neatly, to avoid a multi-line stack trace otherwise.
         print(f"Input path not found: {input_path}", file=sys.stderr)
         sys.exit(1)
 
+    # Prepare to write the output.
     # This is for local-disk use only -- for S3-backed tiledb://... URIs we should
     # use tiledb.vfs to remove any priors, and/or make use of a tiledb `overwrite` flag.
-    if not os.path.exists('tiledb-data'):
-        os.mkdir('tiledb-data')
+    parent = os.path.dirname(output_path.rstrip('/'))
+    if not os.path.exists(parent):
+        os.mkdir(parent)
     if os.path.exists(output_path):
         shutil.rmtree(output_path) # Overwrite
 
-    verbose = not args.quiet
-
     soma = tiledbsc.SOMA(output_path, verbose=verbose)
-    soma.from_h5ad(input_path)
 
+    # Do the ingest into TileDB.
+    soma.from_h5ad(input_path)
     if not verbose:
         print(f"Wrote {output_path}")
 
