@@ -47,8 +47,10 @@ def test_from_anndata_X_type(tmp_path, X_dtype_name, X_encoding):
     """
     n_obs = 100
     n_var = 1
-    obs = pd.DataFrame(data={"A": np.arange(n_obs, dtype=np.int32)})
-    var = pd.DataFrame(data={"A": np.arange(n_var, dtype=np.int32)})
+
+    # AnnData requires string indices for obs/var
+    obs = pd.DataFrame(data={"A": np.arange(n_obs, dtype=np.int32)}, index=np.arange(n_obs).astype(str))
+    var = pd.DataFrame(data={"A": np.arange(n_var, dtype=np.int32)}, index=np.arange(n_var).astype(str))
 
     X_dtype = np.dtype(X_dtype_name)
     if X_encoding == "dense":
@@ -62,11 +64,6 @@ def test_from_anndata_X_type(tmp_path, X_dtype_name, X_encoding):
 
     adata = AnnData(X=X, obs=obs, var=var, dtype=X.dtype)
     print(" =============================================================>==", adata.X.dtype, X_dtype)
-    # if X_dtype == np.float16:
-    # print(" ????=========================================================>==", adata.X.dtype, X_dtype)
-    # assert adata.X.dtype == np.float32
-    # else:
-    # assert adata.X.dtype == X_dtype  # sanity
     assert adata.X.dtype == X_dtype  # sanity
 
     SOMA(tmp_path.as_posix()).from_anndata(adata)
@@ -121,33 +118,32 @@ def test_from_anndata_DataFrame_type(tmp_path):
         ("uint64", lambda a: a.astype("uint64")),
         ("object", lambda a: a.astype(str).astype(np.dtype("O"))),
         ("categorical(str)", lambda a: a.astype(str).astype("category")),
-        # TODO: The following tests fail due to issue #30 -- re-enable test when resolved.
-        # (
-        #     "categorical(int32)",
-        #     lambda a: a.astype("int32").astype(
-        #         pd.CategoricalDtype(categories=a.astype("int32"))
-        #     ),
-        # ),
-        # (
-        #     "categorical(uint32)",
-        #     lambda a: a.astype("uint32").astype(
-        #         pd.CategoricalDtype(categories=a.astype("uint32"))
-        #     ),
-        # ),
-        # (
-        #     "categorical(float32)",
-        #     lambda a: a.astype("float32").astype(
-        #         pd.CategoricalDtype(categories=a.astype("float32"))
-        #     ),
-        # ),
-        # (
-        #     "categorical(bool)",
-        #     lambda a: a.astype("bool").astype(
-        #         pd.CategoricalDtype(categories=a.astype("bool").unique())
-        #     ),
-        # ),
+        (
+            "categorical(int32)",
+            lambda a: a.astype("int32").astype(
+                pd.CategoricalDtype(categories=a.astype("int32"))
+            ),
+        ),
+        (
+            "categorical(uint32)",
+            lambda a: a.astype("uint32").astype(
+                pd.CategoricalDtype(categories=a.astype("uint32"))
+            ),
+        ),
+        (
+            "categorical(float32)",
+            lambda a: a.astype("float32").astype(
+                pd.CategoricalDtype(categories=a.astype("float32"))
+            ),
+        ),
+        (
+            "categorical(bool)",
+            lambda a: a.astype("bool").astype(
+                pd.CategoricalDtype(categories=a.astype("bool").unique())
+            ),
+        ),
     ]
-    index = np.arange(n).astype(str)  # AnnData requires string indices
+    index = np.arange(1, n+1).astype(str).astype(bytes)  # AnnData requires string indices, TileDB wants bytes. Use LCD
     df = pd.DataFrame(
         data={
             f"col_{name}": cast(pd.Series(index=index, data=np.arange(n)))
@@ -185,12 +181,18 @@ def test_from_anndata_DataFrame_type(tmp_path):
     for df_name in ["var", "obs"]:
         with tiledb.open((tmp_path / df_name).as_posix()) as arr:
             df = getattr(adata, df_name)
+
             # verify names match
             assert set(arr.schema.attr(i).name for i in range(arr.schema.nattr)) == set(
                 getattr(adata, df_name).keys()
             )
+
             # verify length
             assert n == len(arr.query(dims=[]).df[:])
+
+            # verify index
+            assert np.array_equal(np.sort(df.index.to_numpy()), np.sort(arr[:][df_name+'_id']))
+
             # verify individual column types
             attr_idx = {
                 arr.schema.attr(idx).name: idx for idx in range(arr.schema.nattr)
@@ -199,8 +201,6 @@ def test_from_anndata_DataFrame_type(tmp_path):
                 assert cmp_dtype(df[k], arr.schema.attr(attr_idx[k]))
 
 
-# TODO: re-enable when #45 is resolved
-@pytest.mark.skip(reason="Fails: filed as issue #45")
 def test_from_anndata_annotations_empty(tmp_path):
     """
     Validate correct conversion with an empty (index-only) obs/var
@@ -208,7 +208,7 @@ def test_from_anndata_annotations_empty(tmp_path):
     n_obs = 100
     n_var = 10
 
-    # AnnData requires a string index. TileDB does not support UTF8, so indices must be ASCII.
+    # AnnData requires a string index. TileDB does not support UTF8, so use ASCII.
     obs = pd.DataFrame(index=np.arange(n_obs).astype(bytes))
     var = pd.DataFrame(index=np.arange(n_var).astype(bytes))
 
@@ -234,24 +234,23 @@ def test_from_anndata_annotations_empty(tmp_path):
         )
 
 
-# TODO: re-enable when #33 and #45 are resolved
-@pytest.mark.skip(reason="Fails: filed as issues #33 and #45")
 def test_from_anndata_annotations_none(tmp_path):
     """
-    Validate ability to handle None in obs/var/X.
+    Validate correct handling of None in obs/var/X.
     """
 
     """ default constructor """
     path = tmp_path / "empty"
     adata = AnnData()
-    SOMA(path.as_posix()).from_anndata(adata)
-    assert all(
+    with pytest.raises(NotImplementedError, match='Empty AnnData.obs or AnnData.var unsupported.'):
+        SOMA(path.as_posix()).from_anndata(adata)
+    assert not any(
         (path / sub_array_path).exists() for sub_array_path in ["obs", "var", "X/data"]
     )
 
     """ only X defined """
     path = tmp_path / "X_only"
-    adata = AnnData(X=np.eye(100, 10))
+    adata = AnnData(X=np.eye(100, 10, dtype=np.float32))
     SOMA(path.as_posix()).from_anndata(adata)
     assert all(
         (path / sub_array_path).exists() for sub_array_path in ["obs", "var", "X/data"]
@@ -259,7 +258,7 @@ def test_from_anndata_annotations_none(tmp_path):
 
     """ missing var """
     path = tmp_path / "no_var"
-    adata = AnnData(X=np.eye(100, 10), obs=np.arange(100))
+    adata = AnnData(X=np.eye(100, 10, dtype=np.float32), obs=np.arange(100).astype(str))
     SOMA(path.as_posix()).from_anndata(adata)
     assert all(
         (path / sub_array_path).exists() for sub_array_path in ["obs", "var", "X/data"]
@@ -267,11 +266,22 @@ def test_from_anndata_annotations_none(tmp_path):
 
     """ missing obs """
     path = tmp_path / "no_obs"
-    adata = AnnData(X=np.eye(100, 10), var=np.arange(10))
+    adata = AnnData(X=np.eye(100, 10, dtype=np.float32), var=np.arange(10).astype(str))
     SOMA(path.as_posix()).from_anndata(adata)
     assert all(
         (path / sub_array_path).exists() for sub_array_path in ["obs", "var", "X/data"]
     )
+
+
+def test_from_anndata_error_handling(tmp_path):
+    """ Ensure exception on a complex type we that should be unsupported. """
+    n_obs = 10
+    obs = pd.DataFrame(index=np.arange(n_obs).astype(str), data={
+        'A': [{} for i in range(n_obs)]
+    })
+    adata = AnnData(obs=obs, X=np.ones((n_obs, 2), dtype=np.float32))
+    with pytest.raises(NotImplementedError):
+        SOMA(tmp_path.as_posix()).from_anndata(adata)
 
 
 # TODO: re-enable when #58 is resolved
@@ -306,3 +316,70 @@ def test_from_anndata_zero_length_str(tmp_path):
             adata.obs.keys()
         )
         assert adata.n_obs == len(obs.query(dims=[]).df[:])
+
+
+test_nan_dtypes = [
+    # (column_name, column_dtype, expect_raise)
+    ('str', np.dtype(str), False),
+    ('bytes', np.dtype(bytes), True),
+    ('float64', np.float64, False),
+    ('bool', np.dtype(bool), True),
+    ('bool_', np.bool_, True),
+    ('int64', np.int64, True),
+    ('uint64', np.uint64, True),
+]
+
+@pytest.mark.parametrize("col_name,cat_dtype,expect_raise", test_nan_dtypes)
+def test_from_anndata_category_nans(tmp_path, col_name, cat_dtype, expect_raise):
+    """
+    Categoricals can contain 'nan', ie, a series value which is a value not
+    in the type's categories. While it conceptually represents "not a category",
+    it is loosely referred to as a nan.
+
+    Test conversion of various categorical series containing nans to ensure
+    they are correctly handled.
+
+    Presumed correct behavior depends on the underlying type of the category type,
+    and follows the standard Pandas `astype()` coercion rules:
+    * string: encode as 'nan'
+    * float: encode as IEEE NaN
+    * others: raise
+    """
+    n_obs = 8
+    n_var = 4
+
+    obs_idx = np.arange(n_obs).astype(str)
+    obs = pd.DataFrame(
+        index=obs_idx,
+        data=pd.Categorical(
+            np.arange(n_obs).astype(cat_dtype),
+            categories=np.unique(np.arange(1, n_obs).astype(cat_dtype))
+        ),
+        columns=[col_name]
+    )
+    var = pd.DataFrame(
+        index=np.arange(n_var).astype(str),
+        data=list(str(i) for i in range(n_var)),
+        columns=['A']
+    )
+    X = np.ones((n_obs, n_var), dtype=np.float32)
+    adata = AnnData(X=X, obs=obs, var=var)
+
+    if expect_raise:
+        with pytest.raises(ValueError):
+            SOMA(tmp_path.as_posix()).from_anndata(adata)
+
+    else:
+        SOMA(tmp_path.as_posix()).from_anndata(adata)
+
+        with tiledb.open((tmp_path / "obs").as_posix()) as arr:
+            assert set(arr.schema.attr(i).name for i in range(arr.schema.nattr)) == set(
+                adata.obs.keys()
+            )
+            obs_df = arr.df[:].sort_index()
+            assert adata.n_obs == len(obs_df)
+            assert np.array_equal(
+                obs_df[col_name].astype(cat_dtype),
+                adata.obs[col_name].astype(cat_dtype),
+                equal_nan=True if np.dtype(cat_dtype).kind == 'f' else False
+            )

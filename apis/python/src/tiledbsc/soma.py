@@ -154,25 +154,31 @@ class SOMA():
     # ----------------------------------------------------------------
     def decategoricalize(self, anndata: ad.AnnData):
         """
-        Performs an in-place typecast for the categorical datatype that pandas can handle.
-        Categorical strings -> string; bool -> uint8.
-        The uns dataset is deferred.
+        Performs an in-place typecast into types that TileDB can persist.
         """
 
         if self.verbose:
             s = util.get_start_stamp()
             print(f"  START  DECATEGORICALIZING")
 
-        new_obs = pd.DataFrame.from_dict({k: util.decategoricalize_array(v) for k, v in anndata.obs.items()})
-        new_var = pd.DataFrame.from_dict({k: util.decategoricalize_array(v) for k, v in anndata.var.items()})
+        # If the DataFrame contains only an index, just use it as is.
+        if len(anndata.obs.columns) > 0:
+            new_obs = pd.DataFrame.from_dict({k: util._to_tiledb_supported_array_type(v) for k, v in anndata.obs.items()})
+        else:
+            new_obs = anndata.obs
+        if len(anndata.var.columns) > 0:
+            new_var = pd.DataFrame.from_dict({k: util._to_tiledb_supported_array_type(v) for k, v in anndata.var.items()})
+        else:
+            new_var = anndata.var
+
         for key in anndata.obsm.keys():
-            anndata.obsm[key] = util.decategoricalize_array(anndata.obsm[key])
+            anndata.obsm[key] = util._to_tiledb_supported_array_type(anndata.obsm[key])
         for key in anndata.varm.keys():
-            anndata.varm[key] = util.decategoricalize_array(anndata.varm[key])
+            anndata.varm[key] = util._to_tiledb_supported_array_type(anndata.varm[key])
         for key in anndata.obsp.keys():
-            anndata.obsp[key] = util.decategoricalize_array(anndata.obsp[key])
+            anndata.obsp[key] = util._to_tiledb_supported_array_type(anndata.obsp[key])
         for key in anndata.varp.keys():
-            anndata.varp[key] = util.decategoricalize_array(anndata.varp[key])
+            anndata.varp[key] = util._to_tiledb_supported_array_type(anndata.varp[key])
 
         if anndata.raw == None: # Some datasets have no raw.
             newraw = None
@@ -183,9 +189,9 @@ class SOMA():
             # have obs or obsm or obsp -- so, it turns out to be simpler to just repeat ourselves a
             # little.
 
-            newvar = pd.DataFrame.from_dict({k: util.decategoricalize_array(v) for k, v in anndata.raw.var.items()})
+            newvar = pd.DataFrame.from_dict({k: util._to_tiledb_supported_array_type(v) for k, v in anndata.raw.var.items()})
             for key in anndata.raw.varm.keys():
-                anndata.raw.varm[key] = util.decategoricalize_array(anndata.raw.varm[key])
+                anndata.raw.varm[key] = util._to_tiledb_supported_array_type(anndata.raw.varm[key])
             newraw = ad.Raw(
                 anndata,
                 X=anndata.raw.X,
@@ -195,7 +201,7 @@ class SOMA():
 
         anndata = ad.AnnData(
             X=anndata.X,
-            dtype=anndata.X.dtype,
+            dtype=None if anndata.X is None else anndata.X.dtype,  # some datasets have no X
             obs=new_obs,
             var=new_var,
             obsm=anndata.obsm,
@@ -263,6 +269,10 @@ class SOMA():
             s = util.get_start_stamp()
             print(f"  START  WRITING {self.uri}")
 
+        # Without _at least_ an index, there is nothing to indicate the dimension indices.
+        if anndata.obs.index.empty or anndata.var.index.empty:
+            raise NotImplementedError("Empty AnnData.obs or AnnData.var unsupported.")
+
         # ----------------------------------------------------------------
         # Must be done first, to create the parent directory
         tiledb.group_create(self.uri, ctx=self.ctx)
@@ -325,9 +335,10 @@ class SOMA():
         tiledb.group_create(X_group_uri, ctx=self.ctx)
         X_group = tiledb.Group(X_group_uri, mode="w", ctx=self.ctx)
 
-        X_data_uri = X_group_uri + "/data"
-        self.write_X_array(X_data_uri, X, obs_index, var_index)
-        X_group.add(uri=X_data_uri, relative=False, name="data")
+        if X is not None:
+            X_data_uri = X_group_uri + "/data"
+            self.write_X_array(X_data_uri, X, obs_index, var_index)
+            X_group.add(uri=X_data_uri, relative=False, name="data")
 
         X_group.close()
 
