@@ -530,7 +530,7 @@ class SOMA():
 
         try:
             # TODO: does not yet handle numpy.ndarrays objects having string or bool dtype
-            tiledb.from_numpy(uri=array_uri, array=array, ctx=self.ctx)
+            tiledb.from_numpy(uri=array_uri, array=array, ctx=self.ctx, dtype='O')
             if self.verbose:
                 print(util.format_elapsed(s, f"      FINISH WRITING NUMPY.NDARRAY {array_uri} dtype {array.dtype}"))
             return True
