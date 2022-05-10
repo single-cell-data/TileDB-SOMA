@@ -161,7 +161,6 @@ def test_from_anndata_DataFrame_type(tmp_path):
     def cmp_dtype(series, tdb: tiledb.Attr) -> bool:
         """Encapsulate expected conversions moving into TileDB ecosystem"""
         ad_dtype = series.dtype
-        print("================================================================ CMP", ad_dtype, tdb.dtype)
         # TileDB has no categorical, so assume it will convert to the type underlying the categorical
         if isinstance(ad_dtype, pd.CategoricalDtype):
             ad_dtype = series.cat.categories.dtype
@@ -171,11 +170,7 @@ def test_from_anndata_DataFrame_type(tmp_path):
         # TileDB has no bool, and automatically converts to uint8
         if ad_dtype == bool:
             ad_dtype = np.uint8
-        # xxxx foo
-        if ad_dtype == np.float16:
-            ad_dtype = np.float32
 
-        print("---------------------------------------------------------------- NMP", ad_dtype, tdb.dtype)
         return ad_dtype == tdb.dtype
 
     for df_name in ["var", "obs"]:
