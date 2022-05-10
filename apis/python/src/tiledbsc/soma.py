@@ -491,11 +491,22 @@ class SOMA():
             component_uri = os.path.join(uns_group_uri, key)
             value = uns[key]
 
-            # TODO:
-            # This is of type numpy structured array / record array with dtype being
-            # a list of UTF-8 types -- needs special handling, not coded up yet.
             if key == 'rank_genes_groups':
-                print("      Skipping compound dtype:", component_uri)
+                # TODO:
+                # This is of type 'structured array':
+                # https://numpy.org/doc/stable/user/basics.rec.html
+                #
+                # >>> a.uns['rank_genes_groups']['names'].dtype
+                # dtype([('0', 'O'), ('1', 'O'), ('2', 'O'), ('3', 'O'), ('4', 'O'), ('5', 'O'), ('6', 'O'), ('7', 'O')])
+                # >>> type(a.uns['rank_genes_groups']['names'])
+                # <class 'numpy.ndarray'>
+                #
+                # We don’t have a way to model this directly in TileDB schema right now. We support
+                # multiplicities of a single scalar type, e.g. a record array with cell_val_num==3
+                # and float32 slots (which would correspond to numpy record array
+                # np.dtype([("field1", "f4"), ("field2", "f4"), ("field3", "f4",)])). We don’t
+                # support nested cells, AKA "list" type.
+                print("      Skipping structured array:", component_uri)
                 continue
 
             if isinstance(value, dict) or isinstance(value, ad.compat.OverloadedDict):

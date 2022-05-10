@@ -49,9 +49,10 @@ def test_from_anndata_uns(tmp_path):
     adata = AnnData(X=X, obs=obs, var=var, uns=uns)
 
     somadir = tmp_path.as_posix()
-    # tmp_path is a PosixPath which supports wonderfully expressive things like
-    # tmp_path / "uns". However, we see CI failures with this on Windows. Using
-    # os.path.join is more portable.
+    # tmp_path is a PosixPath which supports wonderfully expressive things like tmp_path / "uns".
+    # However, we see CI failures with this on Windows. Using os.path.join is more portable.
+    #
+    # Update: that didn't help either; still iterating on a way to make Windows CI succeed.
     SOMA(somadir).from_anndata(adata)
 
     unspath = os.path.join(somadir, "uns")
