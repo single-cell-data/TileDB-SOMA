@@ -1,7 +1,11 @@
+import tiledb
+
 import numpy
 import scipy
 import pandas as pd
+
 import time
+from typing import Optional
 
 # ----------------------------------------------------------------
 def get_start_stamp():
@@ -121,3 +125,55 @@ def _to_tiledb_supported_array_type(x):
 
     target_dtype = _to_tiledb_supported_dtype(x.dtype)
     return x if target_dtype == x.dtype else x.astype(target_dtype)
+
+# ----------------------------------------------------------------
+# TODO: rename to is_numpyable_object or somesuch
+def is_numpy_object(obj):
+    """
+    Checks if the argumeht is of numpy type, nominally as a gate before a call to
+    numpy_object_to_tiledb_array.
+    """
+    if isinstance(obj, int):
+        return True
+    if isinstance(obj, float):
+        return True
+    if isinstance(obj, str):
+        return True
+    if isinstance(obj, list):
+        return True
+    return 'numpy' in str(type(obj))
+
+# ----------------------------------------------------------------
+def numpy_object_to_tiledb_array(obj, uri: str, ctx: Optional[tiledb.Ctx] = None):
+    """
+    Nominally for ingest of `uns` nested data from anndata objects. Handles scalar or array values
+    -- the former, by wrapping in a 1D array. Maps to TileDB / tiledb.from_numpy storage semantics,
+    including UTF-8 handling.
+    """
+
+    if isinstance(obj, numpy.ndarray):
+        obj = _to_tiledb_supported_array_type(obj)
+        _write_numpy_ndarray_to_tiledb_array(arr=obj, uri=uri, ctx=ctx)
+
+    elif isinstance(obj, numpy.str_):
+        # Needs explicit cast from numpy.str_ to str for tiledb.from_numpy
+        arr = numpy.asarray([obj]).astype(str)
+        _write_numpy_ndarray_to_tiledb_array(arr, uri, ctx)
+
+    else:
+        arr = numpy.asarray([obj])
+        arr = _to_tiledb_supported_array_type(arr)
+        _write_numpy_ndarray_to_tiledb_array(arr, uri, ctx)
+
+# ----------------------------------------------------------------
+def _write_numpy_ndarray_to_tiledb_array(arr: numpy.ndarray, uri: str, ctx: Optional[tiledb.Ctx] = None):
+    """
+    Writes a numpy.ndarray to a TileDB array, nominally for ingest of `uns` nested data from anndata
+    objecs. Mostly tiledb.from_numpy, but with some necessary handling for data with UTF-8 values.
+    """
+
+    if is_numpy_object(arr) and str(arr.dtype).startswith('<U'):
+        # Note arr.astype('str') does not lead to a successfuly tiledb.from_numpy.
+        arr = numpy.array(arr, dtype='O')
+
+    tiledb.from_numpy(uri=uri, array=arr, ctx=ctx)

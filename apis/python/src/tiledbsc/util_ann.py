@@ -197,8 +197,10 @@ def _describe_ann_file_show_uns_types(uns, parent_path_components=['uns']):
         display_name = os.path.sep.join(current_path_components)
         if isinstance(value, dict) or isinstance(value, ad.compat.OverloadedDict):
             _describe_ann_file_show_uns_types(value, current_path_components)
-        elif isinstance(value, np.ndarray) or isinstance(value, scipy.sparse.csr_matrix) or isinstance(value, pd.DataFrame):
-            print("%-*s" % (namewidth, display_name), type(value), value.shape)
+        elif isinstance(value, np.ndarray):
+            print("%-*s" % (namewidth, display_name), value.shape, type(value), value.dtype)
+        elif isinstance(value, scipy.sparse.csr_matrix) or isinstance(value, pd.DataFrame):
+            print("%-*s" % (namewidth, display_name), value.shape, type(value))
         else:
             print("%-*s" % (namewidth, display_name), type(value))
 

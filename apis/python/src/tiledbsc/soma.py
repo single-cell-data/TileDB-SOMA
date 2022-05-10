@@ -2,7 +2,7 @@ import os
 from typing import Optional, Union
 
 import anndata as ad
-import numpy   as np
+import numpy
 import pandas  as pd
 import pyarrow as pa
 import scanpy
@@ -491,14 +491,16 @@ class SOMA():
         for key in uns.keys():
             component_uri = os.path.join(uns_group_uri, key)
             value = uns[key]
-            ok = True
+
+            # TODO:
+            # This is of type numpy structured array / record array with dtype being
+            # a list of UTF-8 types -- needs special handling, not coded up yet.
+            if key == 'rank_genes_groups':
+                print("      Skipping compound dtype:", component_uri)
+                continue
 
             if isinstance(value, dict) or isinstance(value, ad.compat.OverloadedDict):
                 self.write_uns_group(component_uri, value)
-
-            elif isinstance(value, np.ndarray):
-                # TODO: does not yet handle numpy.ndarrays objects having string or bool dtype
-                ok = self.write_uns_numpy_ndarray(component_uri, value)
 
             elif isinstance(value, pd.DataFrame):
                 self.write_uns_pandas_dataframe(component_uri, value)
@@ -506,38 +508,34 @@ class SOMA():
             elif isinstance(value, scipy.sparse.csr_matrix):
                 self.write_uns_scipy_sparse_csr_matrix(component_uri, value)
 
-            elif isinstance(value, str) or isinstance(value, np.int64):
-                # TODO: does not yet handle numpy.ndarrays objects having string or bool dtype
-                ok = self.write_uns_numpy_ndarray(component_uri, np.asarray([value]))
+            elif util.is_numpy_object(value):
+                if self.verbose:
+                    s2 = util.get_start_stamp()
+                    print(f"      START  WRITING NUMPY {component_uri}")
+                util.numpy_object_to_tiledb_array(value, component_uri, self.ctx)
+                if self.verbose:
+                    print(util.format_elapsed(s2, f"      FINISH WRITING NUMPY {component_uri}"))
+
+            elif isinstance(value, str):
+                if self.verbose:
+                    s2 = util.get_start_stamp()
+                    print(f"      START  WRITING NUMPY {component_uri}")
+                arr = numpy.asarray([value]).astype(numpy.str_)
+                util._write_numpy_ndarray_to_tiledb_array(arr, component_uri, self.ctx)
+                if self.verbose:
+                    print(util.format_elapsed(s2, f"      FINISH WRITING NUMPY {component_uri}"))
 
             else:
                 print("      Skipping unrecognized type:", component_uri, type(value))
-                ok = False
+                continue
 
-            if ok:
-                uns_group.add(uri=component_uri, relative=False, name=key)
+            uns_group.add(uri=component_uri, relative=False, name=key)
 
         uns_group.close()
 
         if self.verbose:
             print(util.format_elapsed(s, f"    FINISH WRITING {uns_group_uri}"))
 
-    # ----------------------------------------------------------------
-    def write_uns_numpy_ndarray(self, array_uri, array: np.ndarray):
-        if self.verbose:
-            s = util.get_start_stamp()
-            print(f"      START  WRITING NUMPY.NDARRAY {array_uri} dtype {array.dtype}")
-
-        try:
-            # TODO: does not yet handle numpy.ndarrays objects having string or bool dtype
-            tiledb.from_numpy(uri=array_uri, array=array, ctx=self.ctx, dtype='O')
-            if self.verbose:
-                print(util.format_elapsed(s, f"      FINISH WRITING NUMPY.NDARRAY {array_uri} dtype {array.dtype}"))
-            return True
-        except:
-            if self.verbose:
-                print(util.format_elapsed(s, f"      FAILED WRITING NUMPY.NDARRAY {array_uri} dtype {array.dtype}"))
-            return False
 
     # ----------------------------------------------------------------
     def write_uns_pandas_dataframe(self, array_uri, array: pd.DataFrame):
@@ -562,7 +560,8 @@ class SOMA():
             s = util.get_start_stamp()
             print(f"      START  WRITING SCIPY.SPARSE.CSR {array_uri}")
 
-        self.__create_coo_array_int_dims(array_uri, "data", array.dtype)
+        nrows, ncols = array.shape
+        self.__create_coo_array_int_dims(array_uri, "data", array.dtype, nrows, ncols)
         self.__ingest_coo_data_int_dims(array_uri, array)
 
         if self.verbose:
@@ -799,7 +798,7 @@ class SOMA():
         # with csr[permuation[28]] -- the CSR matrix itself isn't sorted in bulk.
         sorted_row_names, permutation = util.get_sort_and_permutation(list(row_names))
         # Using numpy we can index this with a list of indices, which a plain Python list doesn't support.
-        sorted_row_names = np.asarray(sorted_row_names)
+        sorted_row_names = numpy.asarray(sorted_row_names)
 
         s = util.get_start_stamp()
         if self.verbose:
@@ -866,7 +865,7 @@ class SOMA():
 
 
     # ----------------------------------------------------------------
-    def __create_coo_array_int_dims(self, uri: str, attr_name: str, mat_dtype):
+    def __create_coo_array_int_dims(self, uri: str, attr_name: str, mat_dtype, nrows: int, ncols: int):
         """
         Create a TileDB 2D sparse array with int dimensions and a single attribute.
 
@@ -878,8 +877,8 @@ class SOMA():
         assert isinstance(attr_name, str)
 
         dom = tiledb.Domain(
-            tiledb.Dim(name=dim_labels[0], domain=(None, None), dtype="int32", filters=[tiledb.RleFilter()]),
-            tiledb.Dim(name=dim_labels[1], domain=(None, None), dtype="int32", filters=[tiledb.ZstdFilter(level=22)]),
+            tiledb.Dim(name="dim0", domain=(0, nrows-1), dtype="int32", filters=[tiledb.RleFilter()]),
+            tiledb.Dim(name="dim1", domain=(0, ncols-1), dtype="int32", filters=[tiledb.ZstdFilter(level=22)]),
             ctx=self.ctx
         )
 
