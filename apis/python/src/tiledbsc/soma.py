@@ -2,7 +2,7 @@ import os
 from typing import Optional, Union
 
 import anndata as ad
-import numpy
+import numpy   as np
 import pandas  as pd
 import pyarrow as pa
 import scanpy
@@ -801,7 +801,7 @@ class SOMA():
         # with csr[permuation[28]] -- the CSR matrix itself isn't sorted in bulk.
         sorted_row_names, permutation = util.get_sort_and_permutation(list(row_names))
         # Using numpy we can index this with a list of indices, which a plain Python list doesn't support.
-        sorted_row_names = numpy.asarray(sorted_row_names)
+        sorted_row_names = np.asarray(sorted_row_names)
 
         s = util.get_start_stamp()
         if self.verbose:
