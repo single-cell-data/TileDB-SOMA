@@ -14,7 +14,9 @@ import anndata
 import anndata as ad # so we can type it either way
 
 import pandas
+import pandas as pd # so we can type it either way
 import numpy
+import numpy  as np # so we can type it either way
 import scipy
 
 input_path = 'anndata/pbmc3k_processed.h5ad'
