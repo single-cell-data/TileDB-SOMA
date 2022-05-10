@@ -1,6 +1,9 @@
 import anndata as ad
 import numpy as np
 import scipy
+import pandas as pd
+
+import os
 
 # ----------------------------------------------------------------
 def describe_ann_file(input_path: str, show_summary=True, show_types=False, show_data=False):
@@ -28,6 +31,7 @@ def describe_ann_file(input_path: str, show_summary=True, show_types=False, show
 def _describe_ann_file_show_summary(anndata: ad.AnnData, input_path: str):
 
     print()
+    print("----------------------------------------------------------------")
     print("ANNDATA SUMMARY:")
     print(anndata)
 
@@ -57,16 +61,17 @@ def _describe_ann_file_show_summary(anndata: ad.AnnData, input_path: str):
     print("OBSP KEYS", list(anndata.obsp.keys()))
     print("VARP KEYS", list(anndata.varp.keys()))
 
-    # Defer unstructured data for now:
-    # _describe_ann_file_show_uns_types(anndata.uns)
+    _describe_ann_file_show_uns_summary(anndata.uns)
 
 
 # ----------------------------------------------------------------
 def _describe_ann_file_show_types(anndata: ad.AnnData, input_path: str):
 
+    print()
+    print("----------------------------------------------------------------")
     print("ANNDATA FILE TYPES:")
 
-    namewidth = 30
+    namewidth = 40
 
     X = anndata.X
     print("%-*s %s" % (namewidth, "X/data", type(X)))
@@ -109,11 +114,16 @@ def _describe_ann_file_show_types(anndata: ad.AnnData, input_path: str):
     for k in anndata.varp.keys():
         print("%-*s %s" % (namewidth, "varp/"+k, type(anndata.varp[k])))
 
+    _describe_ann_file_show_uns_types(anndata.uns)
+
 
 # ----------------------------------------------------------------
 def _describe_ann_file_show_data(anndata: ad.AnnData, input_path: str):
+
     print()
     print("----------------------------------------------------------------")
+    print("ANNDATA FILE DATA:")
+
     print("X DATA", type(anndata.X), anndata.X.shape)
     print(anndata.X)
 
@@ -159,20 +169,58 @@ def _describe_ann_file_show_data(anndata: ad.AnnData, input_path: str):
         print(f"varp/{k} DATA", type(d), d.shape)
         print(d)
 
+    _describe_ann_file_show_uns_data(anndata.uns)
 
 # ----------------------------------------------------------------
-def _describe_ann_file_show_uns_types(uns, depth=0):
+def _describe_ann_file_show_uns_summary(uns: ad.compat.OverloadedDict, parent_path_components=['uns']):
     """
-    Recursive helper function for describe_ann_file, given that `uns` data
-    can be arbitrarily nested.
+    Recursively shows summary information about the anndata.uns structure.
     """
-    leader = "  " * depth
-    for k in uns.keys():
-        v = uns[k]
-        if isinstance(v, np.ndarray):
-            print(leader, 'UNS', k, "IS A", type(uns[k]))
-        elif isinstance(v, dict) or isinstance(v, ad.compat._overloaded_dict.OverloadedDict):
-            print(leader, 'UNS', k, "IS A", type(uns[k]))
-            _describe_ann_file_show_uns_types(v, depth+1)
+    for key in uns.keys():
+        current_path_components = parent_path_components + [key]
+        value = uns[key]
+        display_name = os.path.sep.join(current_path_components)
+        if isinstance(value, dict) or isinstance(value, ad.compat.OverloadedDict):
+            _describe_ann_file_show_uns_summary(value, current_path_components)
         else:
-            print(leader, 'UNS', k, "IS A", type(uns[k]), "which is unrecognized")
+            print(display_name)
+
+# ----------------------------------------------------------------
+def _describe_ann_file_show_uns_types(uns, parent_path_components=['uns']):
+    """
+    Recursively shows data-type information about the anndata.uns structure.
+    """
+    namewidth = 40
+    for key in uns.keys():
+        current_path_components = parent_path_components + [key]
+        value = uns[key]
+        display_name = os.path.sep.join(current_path_components)
+        if isinstance(value, dict) or isinstance(value, ad.compat.OverloadedDict):
+            _describe_ann_file_show_uns_types(value, current_path_components)
+        elif isinstance(value, np.ndarray):
+            print("%-*s" % (namewidth, display_name), value.shape, type(value), value.dtype)
+        elif isinstance(value, scipy.sparse.csr_matrix) or isinstance(value, pd.DataFrame):
+            print("%-*s" % (namewidth, display_name), value.shape, type(value))
+        else:
+            print("%-*s" % (namewidth, display_name), type(value))
+
+# ----------------------------------------------------------------
+def _describe_ann_file_show_uns_data(uns, parent_path_components=['uns']):
+    """
+    Recursively shows data contained within the anndata.uns structure.
+    """
+    namewidth = 40
+    for key in uns.keys():
+        current_path_components = parent_path_components + [key]
+        value = uns[key]
+        display_name = os.path.sep.join(current_path_components)
+        if isinstance(value, dict) or isinstance(value, ad.compat.OverloadedDict):
+            _describe_ann_file_show_uns_data(value, current_path_components)
+        elif isinstance(value, np.ndarray) or isinstance(value, scipy.sparse.csr_matrix) or isinstance(value, pd.DataFrame):
+            print()
+            print("%-*s" % (namewidth, display_name), type(value), value.shape)
+            print(value)
+        else:
+            print()
+            print("%-*s" % (namewidth, display_name), type(value))
+            print(value)

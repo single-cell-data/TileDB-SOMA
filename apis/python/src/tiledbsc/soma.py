@@ -209,6 +209,7 @@ class SOMA():
             varm=anndata.varm,
             varp=anndata.varp,
             raw=newraw,
+            uns=anndata.uns,
         )
 
         if self.verbose:
@@ -320,6 +321,12 @@ class SOMA():
             soma_group.add(uri=raw_group_uri, relative=False, name="raw")
 
         # ----------------------------------------------------------------
+        if anndata.uns != None:
+            uns_group_uri = self.uri + '/uns'
+            self.write_uns_group(uns_group_uri, anndata.uns)
+            soma_group.add(uri=uns_group_uri, relative=False, name="uns")
+
+        # ----------------------------------------------------------------
         if self.verbose:
             print(util.format_elapsed(s, f"  FINISH WRITING {self.uri}"))
 
@@ -356,13 +363,13 @@ class SOMA():
             s = util.get_start_stamp()
             print(f"    START  WRITING {X_array_uri} from {type(X)}")
 
-        self.__create_coo_array(uri=X_array_uri, dim_labels=["obs_id", "var_id"], attr_name="value", mat_dtype=X.dtype)
+        self.__create_coo_array_string_dims(uri=X_array_uri, dim_labels=["obs_id", "var_id"], attr_name="value", mat_dtype=X.dtype)
 
         # TODO: add chunked support for CSC
         if isinstance(X, scipy.sparse._csr.csr_matrix) and self.write_X_chunked_if_csr:
-            self.__ingest_coo_data_rows_chunked(X_array_uri, X, obs_names, var_names)
+            self.__ingest_coo_data_string_dims_rows_chunked(X_array_uri, X, obs_names, var_names)
         else:
-            self.__ingest_coo_data_whole(X_array_uri, X, obs_names, var_names)
+            self.__ingest_coo_data_string_dims_whole(X_array_uri, X, obs_names, var_names)
 
         if self.verbose:
             print(util.format_elapsed(s, f"    FINISH WRITING {X_array_uri}"))
@@ -465,6 +472,104 @@ class SOMA():
             print(util.format_elapsed(s, f"    FINISH WRITING {raw_group_uri}"))
 
     # ----------------------------------------------------------------
+    def write_uns_group(self, uns_group_uri: str, uns: ad.compat.OverloadedDict):
+        """
+        Populates the uns group for the soma object.
+
+        :param uns_group_uri: URI where the group is to be written.
+        :param uns: anndata.uns.
+        """
+
+        if self.verbose:
+            s = util.get_start_stamp()
+            print(f"    START  WRITING {uns_group_uri}")
+
+        tiledb.group_create(uns_group_uri, ctx=self.ctx)
+        uns_group = tiledb.Group(uns_group_uri, mode="w", ctx=self.ctx)
+
+        for key in uns.keys():
+            component_uri = os.path.join(uns_group_uri, key)
+            value = uns[key]
+
+            if key == 'rank_genes_groups':
+                # TODO:
+                # This is of type 'structured array':
+                # https://numpy.org/doc/stable/user/basics.rec.html
+                #
+                # >>> a.uns['rank_genes_groups']['names'].dtype
+                # dtype([('0', 'O'), ('1', 'O'), ('2', 'O'), ('3', 'O'), ('4', 'O'), ('5', 'O'), ('6', 'O'), ('7', 'O')])
+                # >>> type(a.uns['rank_genes_groups']['names'])
+                # <class 'numpy.ndarray'>
+                #
+                # We don’t have a way to model this directly in TileDB schema right now. We support
+                # multiplicities of a single scalar type, e.g. a record array with cell_val_num==3
+                # and float32 slots (which would correspond to numpy record array
+                # np.dtype([("field1", "f4"), ("field2", "f4"), ("field3", "f4",)])). We don’t
+                # support nested cells, AKA "list" type.
+                print("      Skipping structured array:", component_uri)
+                continue
+
+            if isinstance(value, dict) or isinstance(value, ad.compat.OverloadedDict):
+                # Nested data, e.g. a.uns['draw-graph']['params']['layout']
+                self.write_uns_group(component_uri, value)
+
+            elif isinstance(value, pd.DataFrame):
+                self.write_uns_pandas_dataframe(component_uri, value)
+
+            elif isinstance(value, scipy.sparse.csr_matrix):
+                self.write_uns_scipy_sparse_csr_matrix(component_uri, value)
+
+            elif util.is_numpyable_object(value):
+                if self.verbose:
+                    s2 = util.get_start_stamp()
+                    print(f"      START  WRITING NUMPY {component_uri}")
+                util.numpyable_object_to_tiledb_array(value, component_uri, self.ctx)
+                if self.verbose:
+                    print(util.format_elapsed(s2, f"      FINISH WRITING NUMPY {component_uri}"))
+
+            else:
+                print("      Skipping unrecognized type:", component_uri, type(value))
+                continue
+
+            uns_group.add(uri=component_uri, relative=False, name=key)
+
+        uns_group.close()
+
+        if self.verbose:
+            print(util.format_elapsed(s, f"    FINISH WRITING {uns_group_uri}"))
+
+
+    # ----------------------------------------------------------------
+    def write_uns_pandas_dataframe(self, array_uri, df: pd.DataFrame):
+        if self.verbose:
+            s = util.get_start_stamp()
+            print(f"      START  WRITING PANDAS.DATAFRAME {array_uri}")
+
+        tiledb.from_pandas(
+            uri=array_uri,
+            dataframe=df,
+            sparse=True,
+            allows_duplicates=False,
+            ctx=self.ctx
+        )
+
+        if self.verbose:
+            print(util.format_elapsed(s, f"      FINISH WRITING PANDAS.DATAFRAME {array_uri}"))
+
+    # ----------------------------------------------------------------
+    def write_uns_scipy_sparse_csr_matrix(self, array_uri, csr: scipy.sparse.csr_matrix):
+        if self.verbose:
+            s = util.get_start_stamp()
+            print(f"      START  WRITING SCIPY.SPARSE.CSR {array_uri}")
+
+        nrows, ncols = csr.shape
+        self.__create_coo_array_int_dims(array_uri, "data", csr.dtype, nrows, ncols)
+        self.__ingest_coo_data_int_dims(array_uri, csr)
+
+        if self.verbose:
+            print(util.format_elapsed(s, f"      FINISH WRITING SCIPY.SPARSE.CSR {array_uri}"))
+
+    # ----------------------------------------------------------------
     def __write_annotation_matrices(self, subgroup_uri: str, annotation_matrices, name: str, dim_name: str, dim_values):
         """
         Populates the obsm/ or varm/ subgroup for a SOMA object, then writes all the components
@@ -533,8 +638,8 @@ class SOMA():
                 print(f"    Annotation-pairwise matrix {name}/{mat_name} has shape {mat.shape}")
 
             # Ingest annotation pairwise matrices as 2D/single-attribute sparse arrays
-            self.__create_coo_array(component_array_uri, dim_labels, "value", mat_dtype=mat.dtype)
-            self.__ingest_coo_data_whole(component_array_uri, mat, dim_values, dim_values)
+            self.__create_coo_array_string_dims(component_array_uri, dim_labels, "value", mat_dtype=mat.dtype)
+            self.__ingest_coo_data_string_dims_whole(component_array_uri, mat, dim_values, dim_values)
 
             if self.verbose:
                 print(util.format_elapsed(s, f"    FINISH WRITING {component_array_uri}"))
@@ -609,9 +714,10 @@ class SOMA():
             A[dim_values] = df.to_dict(orient='list')
 
     # ----------------------------------------------------------------
-    def __create_coo_array(self, uri: str, dim_labels, attr_name: str, mat_dtype):
+    def __create_coo_array_string_dims(self, uri: str, dim_labels, attr_name: str, mat_dtype):
         """
         Create a TileDB 2D sparse array with string dimensions and a single attribute.
+        Nominally for X, obsp, and varp which have string dimensions obs_id and var_id.
 
         :param uri: URI of the array to be created
         :param mat: scipy.sparse.coo_matrix
@@ -674,7 +780,7 @@ class SOMA():
     # See README-csr-ingest.md for important information of using this ingestor.
     # ----------------------------------------------------------------
 
-    def __ingest_coo_data_rows_chunked(self, uri: str, mat: scipy.sparse._csr.csr_matrix, row_names, col_names):
+    def __ingest_coo_data_string_dims_rows_chunked(self, uri: str, mat: scipy.sparse._csr.csr_matrix, row_names, col_names):
         """
         Convert csr_matrix to coo_matrix chunkwise and ingest into TileDB.
 
@@ -699,7 +805,7 @@ class SOMA():
 
         s = util.get_start_stamp()
         if self.verbose:
-            print(f"      START  __ingest_coo_data_rows_chunked")
+            print(f"      START  __ingest_coo_data_string_dims_rows_chunked")
 
         with tiledb.open(uri, mode="w") as A:
             nrow = len(sorted_row_names)
@@ -737,10 +843,10 @@ class SOMA():
                 i = i2
 
         if self.verbose:
-            print(util.format_elapsed(s,"      FINISH __ingest_coo_data_rows_chunked"))
+            print(util.format_elapsed(s,"      FINISH __ingest_coo_data_string_dims_rows_chunked"))
 
     # ----------------------------------------------------------------
-    def __ingest_coo_data_whole(self, uri: str, mat, row_names, col_names):
+    def __ingest_coo_data_string_dims_whole(self, uri: str, mat, row_names, col_names):
         """
         Convert ndarray/(csr|csc)matrix to coo_matrix and ingest into TileDB.
 
@@ -760,6 +866,56 @@ class SOMA():
         with tiledb.open(uri, mode="w", ctx=self.ctx) as A:
             A[d0, d1] = mat_coo.data
 
+
+    # ----------------------------------------------------------------
+    def __create_coo_array_int_dims(self, uri: str, attr_name: str, mat_dtype, nrows: int, ncols: int):
+        """
+        Create a TileDB 2D sparse array with int dimensions and a single attribute.
+        Nominally used for uns data.
+
+        :param uri: URI of the array to be created
+        :param mat: scipy.sparse.coo_matrix
+        :param attr_name: name of the TileDB array-data attribute
+        """
+        assert isinstance(uri, str)
+        assert isinstance(attr_name, str)
+
+        dom = tiledb.Domain(
+            tiledb.Dim(name="dim0", domain=(0, nrows-1), dtype="int32", filters=[tiledb.RleFilter()]),
+            tiledb.Dim(name="dim1", domain=(0, ncols-1), dtype="int32", filters=[tiledb.ZstdFilter(level=22)]),
+            ctx=self.ctx
+        )
+
+        att = tiledb.Attr(attr_name, dtype=mat_dtype, filters=[tiledb.ZstdFilter()], ctx=self.ctx)
+        sch = tiledb.ArraySchema(
+            domain=dom,
+            attrs=(att,),
+            sparse=True,
+            allows_duplicates=True,
+            offsets_filters=[tiledb.DoubleDeltaFilter(), tiledb.BitWidthReductionFilter(), tiledb.ZstdFilter()],
+            capacity=100000,
+            cell_order='row-major',
+            tile_order='col-major',
+            ctx=self.ctx
+        )
+        tiledb.Array.create(uri, sch, ctx=self.ctx)
+
+
+    # ----------------------------------------------------------------
+    def __ingest_coo_data_int_dims(self, uri: str, mat):
+        """
+        Convert ndarray/(csr|csc)matrix to coo_matrix and ingest into TileDB.
+
+        :param uri: TileDB URI of the array to be written.
+        :param mat: Matrix-like object coercible to a scipy coo_matrix.
+        """
+
+        mat_coo = scipy.sparse.coo_matrix(mat)
+        d0 = mat_coo.row
+        d1 = mat_coo.col
+
+        with tiledb.open(uri, mode="w", ctx=self.ctx) as A:
+            A[d0, d1] = mat_coo.data
 
 
     # ================================================================
@@ -831,9 +987,9 @@ class SOMA():
 
         # TODO
         print("  OBSP OUTGEST NOT WORKING YET")
-        #obsp = self.outgest_obsp_or_varp('obsp')
+        obsp = self.outgest_obsp_or_varp('obsp')
         print("  VARP OUTGEST NOT WORKING YET")
-        #varp = self.outgest_obsp_or_varp('varp')
+        varp = self.outgest_obsp_or_varp('varp')
 
         return ad.AnnData(
             X=X_mat, obs=obs_df, var=var_df, obsm=obsm, varm=varm,
