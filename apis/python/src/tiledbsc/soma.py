@@ -2,7 +2,7 @@ import os
 from typing import Optional, Union
 
 import anndata as ad
-import numpy
+import numpy   as np
 import pandas  as pd
 import pyarrow as pa
 import scanpy
@@ -475,7 +475,6 @@ class SOMA():
     def write_uns_group(self, uns_group_uri: str, uns: ad.compat.OverloadedDict):
         """
         Populates the uns group for the soma object.
-        Does not yet handle numpy.ndarrays objects having string or bool dtype.
 
         :param uns_group_uri: URI where the group is to be written.
         :param uns: anndata.uns.
@@ -500,6 +499,7 @@ class SOMA():
                 continue
 
             if isinstance(value, dict) or isinstance(value, ad.compat.OverloadedDict):
+                # Nested data, e.g. a.uns['draw-graph']['params']['layout']
                 self.write_uns_group(component_uri, value)
 
             elif isinstance(value, pd.DataFrame):
@@ -508,20 +508,11 @@ class SOMA():
             elif isinstance(value, scipy.sparse.csr_matrix):
                 self.write_uns_scipy_sparse_csr_matrix(component_uri, value)
 
-            elif util.is_numpy_object(value):
+            elif util.is_numpyable_object(value):
                 if self.verbose:
                     s2 = util.get_start_stamp()
                     print(f"      START  WRITING NUMPY {component_uri}")
-                util.numpy_object_to_tiledb_array(value, component_uri, self.ctx)
-                if self.verbose:
-                    print(util.format_elapsed(s2, f"      FINISH WRITING NUMPY {component_uri}"))
-
-            elif isinstance(value, str):
-                if self.verbose:
-                    s2 = util.get_start_stamp()
-                    print(f"      START  WRITING NUMPY {component_uri}")
-                arr = numpy.asarray([value]).astype(numpy.str_)
-                util._write_numpy_ndarray_to_tiledb_array(arr, component_uri, self.ctx)
+                util.numpyable_object_to_tiledb_array(value, component_uri, self.ctx)
                 if self.verbose:
                     print(util.format_elapsed(s2, f"      FINISH WRITING NUMPY {component_uri}"))
 
@@ -715,6 +706,7 @@ class SOMA():
     def __create_coo_array_string_dims(self, uri: str, dim_labels, attr_name: str, mat_dtype):
         """
         Create a TileDB 2D sparse array with string dimensions and a single attribute.
+        Nominally for X, obsp, and varp which have string dimensions obs_id and var_id.
 
         :param uri: URI of the array to be created
         :param mat: scipy.sparse.coo_matrix
@@ -798,7 +790,7 @@ class SOMA():
         # with csr[permuation[28]] -- the CSR matrix itself isn't sorted in bulk.
         sorted_row_names, permutation = util.get_sort_and_permutation(list(row_names))
         # Using numpy we can index this with a list of indices, which a plain Python list doesn't support.
-        sorted_row_names = numpy.asarray(sorted_row_names)
+        sorted_row_names = np.asarray(sorted_row_names)
 
         s = util.get_start_stamp()
         if self.verbose:
@@ -868,6 +860,7 @@ class SOMA():
     def __create_coo_array_int_dims(self, uri: str, attr_name: str, mat_dtype, nrows: int, ncols: int):
         """
         Create a TileDB 2D sparse array with int dimensions and a single attribute.
+        Nominally used for uns data.
 
         :param uri: URI of the array to be created
         :param mat: scipy.sparse.coo_matrix

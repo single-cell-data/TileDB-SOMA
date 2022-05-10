@@ -127,11 +127,27 @@ def _to_tiledb_supported_array_type(x):
     return x if target_dtype == x.dtype else x.astype(target_dtype)
 
 # ----------------------------------------------------------------
-# TODO: rename to is_numpyable_object or somesuch
-def is_numpy_object(obj):
+def is_numpyable_object(obj):
     """
-    Checks if the argumeht is of numpy type, nominally as a gate before a call to
-    numpy_object_to_tiledb_array.
+    Checks if the argument is of numpy type, nominally as a gate before a call to
+    numpyable_object_to_tiledb_array. Additionally, for the benefit of unit test, supports
+    native Python types.
+    """
+
+    # Unit test
+    if _is_numpyable_scalar(obj):
+        return True
+    if isinstance(obj, list):
+        return True
+
+    # anndata .h5ad contents
+    return 'numpy' in str(type(obj))
+
+# ----------------------------------------------------------------
+def _is_numpyable_scalar(obj):
+    """
+    Check if the object is a scalar we'll be able to wrap in a list and then
+    turn that into a 1D array for tiledb.numpy. Nominally for unit-test data.
     """
     if isinstance(obj, int):
         return True
@@ -139,21 +155,23 @@ def is_numpy_object(obj):
         return True
     if isinstance(obj, str):
         return True
-    if isinstance(obj, list):
-        return True
-    return 'numpy' in str(type(obj))
+    return False
 
 # ----------------------------------------------------------------
-def numpy_object_to_tiledb_array(obj, uri: str, ctx: Optional[tiledb.Ctx] = None):
+def numpyable_object_to_tiledb_array(obj, uri: str, ctx: Optional[tiledb.Ctx] = None):
     """
     Nominally for ingest of `uns` nested data from anndata objects. Handles scalar or array values
     -- the former, by wrapping in a 1D array. Maps to TileDB / tiledb.from_numpy storage semantics,
-    including UTF-8 handling.
+    including UTF-8 handling. Supports dtypes like
     """
 
     if isinstance(obj, numpy.ndarray):
         obj = _to_tiledb_supported_array_type(obj)
         _write_numpy_ndarray_to_tiledb_array(arr=obj, uri=uri, ctx=ctx)
+
+    elif isinstance(obj, list):
+        arr = numpy.asarray(obj)
+        _write_numpy_ndarray_to_tiledb_array(arr, uri, ctx)
 
     elif isinstance(obj, numpy.str_):
         # Needs explicit cast from numpy.str_ to str for tiledb.from_numpy
@@ -169,10 +187,10 @@ def numpy_object_to_tiledb_array(obj, uri: str, ctx: Optional[tiledb.Ctx] = None
 def _write_numpy_ndarray_to_tiledb_array(arr: numpy.ndarray, uri: str, ctx: Optional[tiledb.Ctx] = None):
     """
     Writes a numpy.ndarray to a TileDB array, nominally for ingest of `uns` nested data from anndata
-    objecs. Mostly tiledb.from_numpy, but with some necessary handling for data with UTF-8 values.
+    objects. Mostly tiledb.from_numpy, but with some necessary handling for data with UTF-8 values.
     """
 
-    if is_numpy_object(arr) and str(arr.dtype).startswith('<U'):
+    if 'numpy' in str(type(arr)) and str(arr.dtype).startswith('<U'):
         # Note arr.astype('str') does not lead to a successfuly tiledb.from_numpy.
         arr = numpy.array(arr, dtype='O')
 
