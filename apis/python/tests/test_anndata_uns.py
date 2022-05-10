@@ -50,94 +50,94 @@ def test_from_anndata_uns(tmp_path):
 
     somadir = tmp_path.as_posix()
     # tmp_path is a PosixPath which supports wonderfully expressive things like tmp_path / "uns".
-    # However, we see CI failures with this on Windows. Using os.path.join is more portable.
-    #
-    # Update: that didn't help either; still iterating on a way to make Windows CI succeed.
+    # os.path.join is a bit more cumbersome, but, supposed to be portable.  However, we see CI
+    # failures with either of these on Windows. Using "/".join([...]) is surprisingly more portable.
+    # Update: that doesn't seem to be it either ...
     SOMA(somadir).from_anndata(adata)
 
-    unspath = os.path.join(somadir, "uns")
+    unspath = "/".join([somadir, "uns"])
     assert os.path.exists(unspath)
     for key in uns.keys():
-        assert os.path.exists(os.path.join(unspath, key))
+        assert os.path.exists("/".join([unspath, key]))
 
-    with tiledb.open(os.path.join(unspath, "int")) as A:
+    with tiledb.open("/".join([unspath, "int"])) as A:
         df = A[:]
         assert isinstance(df, np.ndarray)
         assert(df.shape == (1,))
         assert(df.dtype == np.int64)
         assert df[0] == 1
 
-    with tiledb.open(os.path.join(unspath, "float")) as A:
+    with tiledb.open("/".join([unspath, "float"])) as A:
         df = A[:]
         assert isinstance(df, np.ndarray)
         assert(df.shape == (1,))
         assert(df.dtype == np.float64)
         assert df[0] == 3.25
 
-    with tiledb.open(os.path.join(unspath, "string")) as A:
+    with tiledb.open("/".join([unspath, "string"])) as A:
         df = A[:]
         assert isinstance(df, np.ndarray)
         assert(df.shape == (1,))
         assert(df.dtype == np.dtype('O'))
         assert df[0] == "a string"
 
-    with tiledb.open(os.path.join(unspath, "list_of_int")) as A:
+    with tiledb.open("/".join([unspath, "list_of_int"])) as A:
         df = A[:]
         assert isinstance(df, np.ndarray)
         assert(df.shape == (10,))
         assert(df.dtype == np.int64)
         assert df[9] == 90
 
-    with tiledb.open(os.path.join(unspath, "list_of_float")) as A:
+    with tiledb.open("/".join([unspath, "list_of_float"])) as A:
         df = A[:]
         assert isinstance(df, np.ndarray)
         assert(df.shape == (10,))
         assert(df.dtype == np.float64)
         assert df[9] == 11.25
 
-    with tiledb.open(os.path.join(unspath, "list_of_string")) as A:
+    with tiledb.open("/".join([unspath, "list_of_string"])) as A:
         df = A[:]
         assert isinstance(df, np.ndarray)
         assert(df.shape == (10,))
         assert(df.dtype == np.dtype('O'))
         assert df[9] == "900"
 
-    with tiledb.open(os.path.join(unspath, "simple_dict", "A")) as A:
+    with tiledb.open("/".join([unspath, "simple_dict", "A"])) as A:
         df = A[:]
         assert isinstance(df, np.ndarray)
         assert(df.shape == (1,))
         assert(df.dtype == np.int64)
         assert df[0] == 0
 
-    with tiledb.open(os.path.join(unspath, "simple_dict", "B")) as A:
+    with tiledb.open("/".join([unspath, "simple_dict", "B"])) as A:
         df = A[:]
         assert isinstance(df, np.ndarray)
         assert(df.shape == (1,))
         assert(df.dtype == np.dtype('O'))
         assert df[0] == "one"
 
-    with tiledb.open(os.path.join(unspath, "numpy_ndarray_1d_int")) as A:
+    with tiledb.open("/".join([unspath, "numpy_ndarray_1d_int"])) as A:
         df = A[:]
         assert isinstance(df, np.ndarray)
         assert(df.shape == (3,))
         assert(df.dtype == np.int64)
         assert df[2] == 3
 
-    with tiledb.open(os.path.join(unspath, "numpy_ndarray_2d_float")) as A:
+    with tiledb.open("/".join([unspath, "numpy_ndarray_2d_float"])) as A:
         df = A[:]
         assert isinstance(df, np.ndarray)
         assert(df.shape == (2,3))
         assert(df.dtype == np.float64)
         assert df[1][2] == 6.0
 
-    with tiledb.open(os.path.join(unspath, "numpy_ndarray_1d_string")) as A:
+    with tiledb.open("/".join([unspath, "numpy_ndarray_1d_string"])) as A:
         df = A[:]
         assert isinstance(df, np.ndarray)
         assert(df.shape == (3,))
         assert(df.dtype == np.dtype('O'))
         assert df[2] == 'c'
 
-    with tiledb.open(os.path.join(unspath, "pandas_dataframe")) as A:
+    with tiledb.open("/".join([unspath, "pandas_dataframe"])) as A:
         df = A[:]
         assert isinstance(df, OrderedDict)
         dfa = df['A']
