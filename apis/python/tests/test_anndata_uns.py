@@ -47,6 +47,18 @@ def test_from_anndata_uns(tmp_path):
         ),
     }
 
+# int
+# float
+# list_of_float
+# list_of_int
+# list_of_string
+# numpy_ndarray_1d_int
+# numpy_ndarray_1d_string
+# numpy_ndarray_2d_float
+# pandas_dataframe
+# simple_dict
+# string
+
     adata = AnnData(X=X, obs=obs, var=var, uns=uns)
 
     SOMA(tmp_path.as_posix()).from_anndata(adata)
