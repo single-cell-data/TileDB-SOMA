@@ -53,9 +53,9 @@ def test_from_anndata_uns(tmp_path):
     unspath = tmp_path / "uns"
     assert os.path.exists(unspath)
     for key in uns.keys():
-        assert os.path.exists("/".join([unspath, key]))
+        assert (unspath / key).exists()
 
-    with tiledb.open("/".join([unspath, "int"])) as A:
+    with tiledb.open((unspath / "int").as_posix()) as A:
         df = A[:]
         assert isinstance(df, np.ndarray)
         assert(df.shape == (1,))
@@ -63,77 +63,77 @@ def test_from_anndata_uns(tmp_path):
         assert(df.dtype == np.int64 or df.dtype == np.int32)
         assert df[0] == 1
 
-    with tiledb.open("/".join([unspath, "float"])) as A:
+    with tiledb.open((unspath / "float").as_posix()) as A:
         df = A[:]
         assert isinstance(df, np.ndarray)
         assert(df.shape == (1,))
         assert(df.dtype == np.float64)
         assert df[0] == 3.25
 
-    with tiledb.open("/".join([unspath, "string"])) as A:
+    with tiledb.open((unspath / "string").as_posix()) as A:
         df = A[:]
         assert isinstance(df, np.ndarray)
         assert(df.shape == (1,))
         assert(df.dtype == np.dtype('O'))
         assert df[0] == "a string"
 
-    with tiledb.open("/".join([unspath, "list_of_int"])) as A:
+    with tiledb.open((unspath / "list_of_int").as_posix()) as A:
         df = A[:]
         assert isinstance(df, np.ndarray)
         assert(df.shape == (10,))
         assert(df.dtype == np.int64 or df.dtype == np.int32)
         assert df[9] == 90
 
-    with tiledb.open("/".join([unspath, "list_of_float"])) as A:
+    with tiledb.open((unspath / "list_of_float").as_posix()) as A:
         df = A[:]
         assert isinstance(df, np.ndarray)
         assert(df.shape == (10,))
         assert(df.dtype == np.float64)
         assert df[9] == 11.25
 
-    with tiledb.open("/".join([unspath, "list_of_string"])) as A:
+    with tiledb.open((unspath / "list_of_string").as_posix()) as A:
         df = A[:]
         assert isinstance(df, np.ndarray)
         assert(df.shape == (10,))
         assert(df.dtype == np.dtype('O'))
         assert df[9] == "900"
 
-    with tiledb.open("/".join([unspath, "simple_dict", "A"])) as A:
+    with tiledb.open((unspath / "simple_dict" / "A").as_posix()) as A:
         df = A[:]
         assert isinstance(df, np.ndarray)
         assert(df.shape == (1,))
         assert(df.dtype == np.int64 or df.dtype == np.int32)
         assert df[0] == 0
 
-    with tiledb.open("/".join([unspath, "simple_dict", "B"])) as A:
+    with tiledb.open((unspath / "simple_dict" / "B").as_posix()) as A:
         df = A[:]
         assert isinstance(df, np.ndarray)
         assert(df.shape == (1,))
         assert(df.dtype == np.dtype('O'))
         assert df[0] == "one"
 
-    with tiledb.open("/".join([unspath, "numpy_ndarray_1d_int"])) as A:
+    with tiledb.open((unspath / "numpy_ndarray_1d_int").as_posix()) as A:
         df = A[:]
         assert isinstance(df, np.ndarray)
         assert(df.shape == (3,))
         assert(df.dtype == np.int64 or df.dtype == np.int32)
         assert df[2] == 3
 
-    with tiledb.open("/".join([unspath, "numpy_ndarray_2d_float"])) as A:
+    with tiledb.open((unspath / "numpy_ndarray_2d_float").as_posix()) as A:
         df = A[:]
         assert isinstance(df, np.ndarray)
         assert(df.shape == (2,3))
         assert(df.dtype == np.float64)
         assert df[1][2] == 6.0
 
-    with tiledb.open("/".join([unspath, "numpy_ndarray_1d_string"])) as A:
+    with tiledb.open((unspath / "numpy_ndarray_1d_string").as_posix()) as A:
         df = A[:]
         assert isinstance(df, np.ndarray)
         assert(df.shape == (3,))
         assert(df.dtype == np.dtype('O'))
         assert df[2] == 'c'
 
-    with tiledb.open("/".join([unspath, "pandas_dataframe"])) as A:
+    with tiledb.open((unspath / "pandas_dataframe").as_posix()) as A:
         df = A[:]
         assert isinstance(df, OrderedDict)
         dfa = df['A']
