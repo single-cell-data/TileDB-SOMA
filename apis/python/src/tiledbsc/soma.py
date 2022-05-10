@@ -540,14 +540,14 @@ class SOMA():
 
 
     # ----------------------------------------------------------------
-    def write_uns_pandas_dataframe(self, array_uri, array: pd.DataFrame):
+    def write_uns_pandas_dataframe(self, array_uri, df: pd.DataFrame):
         if self.verbose:
             s = util.get_start_stamp()
             print(f"      START  WRITING PANDAS.DATAFRAME {array_uri}")
 
         tiledb.from_pandas(
             uri=array_uri,
-            dataframe=array,
+            dataframe=df,
             sparse=True,
             allows_duplicates=False,
             ctx=self.ctx
@@ -557,14 +557,14 @@ class SOMA():
             print(util.format_elapsed(s, f"      FINISH WRITING PANDAS.DATAFRAME {array_uri}"))
 
     # ----------------------------------------------------------------
-    def write_uns_scipy_sparse_csr_matrix(self, array_uri, array: scipy.sparse.csr_matrix):
+    def write_uns_scipy_sparse_csr_matrix(self, array_uri, csr: scipy.sparse.csr_matrix):
         if self.verbose:
             s = util.get_start_stamp()
             print(f"      START  WRITING SCIPY.SPARSE.CSR {array_uri}")
 
-        nrows, ncols = array.shape
-        self.__create_coo_array_int_dims(array_uri, "data", array.dtype, nrows, ncols)
-        self.__ingest_coo_data_int_dims(array_uri, array)
+        nrows, ncols = csr.shape
+        self.__create_coo_array_int_dims(array_uri, "data", csr.dtype, nrows, ncols)
+        self.__ingest_coo_data_int_dims(array_uri, csr)
 
         if self.verbose:
             print(util.format_elapsed(s, f"      FINISH WRITING SCIPY.SPARSE.CSR {array_uri}"))
@@ -987,9 +987,9 @@ class SOMA():
 
         # TODO
         print("  OBSP OUTGEST NOT WORKING YET")
-        #obsp = self.outgest_obsp_or_varp('obsp')
+        obsp = self.outgest_obsp_or_varp('obsp')
         print("  VARP OUTGEST NOT WORKING YET")
-        #varp = self.outgest_obsp_or_varp('varp')
+        varp = self.outgest_obsp_or_varp('varp')
 
         return ad.AnnData(
             X=X_mat, obs=obs_df, var=var_df, obsm=obsm, varm=varm,
