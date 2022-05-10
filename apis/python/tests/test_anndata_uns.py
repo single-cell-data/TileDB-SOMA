@@ -64,7 +64,8 @@ def test_from_anndata_uns(tmp_path):
         df = A[:]
         assert isinstance(df, np.ndarray)
         assert(df.shape == (1,))
-        assert(df.dtype == np.int64)
+        # Python int goes to int32 by default on Windows
+        assert(df.dtype == np.int64 or df.dtype == np.int32)
         assert df[0] == 1
 
     with tiledb.open("/".join([unspath, "float"])) as A:
