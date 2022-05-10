@@ -4,7 +4,6 @@ from tiledbsc import SOMA
 import pandas as pd
 import numpy as np
 from scipy import sparse
-import os
 
 from collections import OrderedDict
 import os
@@ -46,18 +45,6 @@ def test_from_anndata_uns(tmp_path):
             index=np.arange(10).astype(str), data={"A": np.arange(10, dtype=np.int32)}
         ),
     }
-
-# int
-# float
-# list_of_float
-# list_of_int
-# list_of_string
-# numpy_ndarray_1d_int
-# numpy_ndarray_1d_string
-# numpy_ndarray_2d_float
-# pandas_dataframe
-# simple_dict
-# string
 
     adata = AnnData(X=X, obs=obs, var=var, uns=uns)
 
