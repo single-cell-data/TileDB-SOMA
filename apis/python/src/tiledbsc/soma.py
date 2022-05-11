@@ -181,7 +181,7 @@ class SOMA():
             anndata.varp[key] = util._to_tiledb_supported_array_type(anndata.varp[key])
 
         if anndata.raw == None: # Some datasets have no raw.
-            newraw = None
+            new_raw = None
         else:
             # Note there is some code-duplication here between cooked & raw.  However anndata.raw
             # has var not directly assignable ('AttributeError: can't set attribute'), and
@@ -189,19 +189,18 @@ class SOMA():
             # have obs or obsm or obsp -- so, it turns out to be simpler to just repeat ourselves a
             # little.
 
-            newvar = anndata.raw.var
-            # https://github.com/single-cell-data/TileDB-SingleCell/issues/69
-            # This will cause a misshape if anndata.raw.var.items() is zero-length.
-            if len(list(anndata.raw.var.items())) > 0:
-                newvar = pd.DataFrame.from_dict({k: util._to_tiledb_supported_array_type(v) for k, v in anndata.raw.var.items()})
+            new_raw_var = anndata.raw.var
+            # If the DataFrame contains only an index, just use it as is.
+            if len(anndata.raw.var.columns) > 0:
+                new_raw_var = pd.DataFrame.from_dict({k: util._to_tiledb_supported_array_type(v) for k, v in anndata.raw.var.items()})
 
             for key in anndata.raw.varm.keys():
                 anndata.raw.varm[key] = util._to_tiledb_supported_array_type(anndata.raw.varm[key])
 
-            newraw = ad.Raw(
+            new_raw = ad.Raw(
                 anndata,
                 X=anndata.raw.X,
-                var=newvar,
+                var=new_raw_var,
                 varm=anndata.raw.varm,
             )
 
@@ -214,7 +213,7 @@ class SOMA():
             obsp=anndata.obsp,
             varm=anndata.varm,
             varp=anndata.varp,
-            raw=newraw,
+            raw=new_raw,
             uns=anndata.uns,
         )
 
