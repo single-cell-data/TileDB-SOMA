@@ -978,7 +978,8 @@ class SOMA():
         obs_df, obs_labels = self.outgest_obs_or_var('obs', 'obs_id')
         var_df, var_labels = self.outgest_obs_or_var('var', 'var_id')
 
-        X_mat = self.outgest_X(obs_labels, var_labels)
+        X_uri = f"{self.uri}/X/data"
+        X_mat = self.outgest_X(X_uri, obs_labels, var_labels)
         # TODO
         print("  X/RAW OUTGEST NOT IMPLMENTED YET")
 
@@ -987,12 +988,29 @@ class SOMA():
 
         # TODO
         print("  OBSP OUTGEST NOT WORKING YET")
-        obsp = self.outgest_obsp_or_varp('obsp')
+        #obsp = self.outgest_obsp_or_varp('obsp')
         print("  VARP OUTGEST NOT WORKING YET")
-        varp = self.outgest_obsp_or_varp('varp')
+        #varp = self.outgest_obsp_or_varp('varp')
 
         return ad.AnnData(
             X=X_mat, obs=obs_df, var=var_df, obsm=obsm, varm=varm,
+        )
+
+    # ----------------------------------------------------------------
+    def to_anndata_from_raw(self):
+        """
+        Temp-method for raw outgest. Code will move pending
+        https://github.com/single-cell-data/TileDB-SingleCell/issues/72.
+        """
+
+        obs_df, obs_labels = self.outgest_obs_or_var('obs', 'obs_id')
+        var_df, var_labels = self.outgest_obs_or_var('raw/var', 'var_id')
+
+        X_uri = f"{self.uri}/raw/X/data"
+        X_raw_mat = self.outgest_X(X_uri, obs_labels, var_labels)
+
+        return ad.AnnData(
+            X=X_raw_mat, obs=obs_df, var=var_df,
         )
 
     # ----------------------------------------------------------------
@@ -1022,7 +1040,7 @@ class SOMA():
         return retval
 
     # ----------------------------------------------------------------
-    def outgest_X(self, obs_labels, var_labels):
+    def outgest_X(self, X_uri, obs_labels, var_labels):
         """
         Given a TileDB soma group, returns a scipy.sparse.csr_matrix with the X data.
 
@@ -1030,16 +1048,15 @@ class SOMA():
         :param var_labels: from the var array. Note that TileDB will have sorted these.
         """
 
-        uri = f"{self.uri}/X/data"
         if self.verbose:
             s = util.get_start_stamp()
-            print(f"  START  read {uri}")
+            print(f"  START  read {X_uri}")
 
         # Since X is sparse, with two string dimensions, we get back a dict:
         # * 'obs_id' key is a sequence of dim0 coordinates for X data.
         # * 'var_id' key is a sequence of dim1 coordinates for X data.
         # * 'values' key is a sequence of X data values.
-        with tiledb.open(uri) as X:
+        with tiledb.open(X_uri) as X:
             X_data = X[:]
 
         # Now we need to convert from TileDB's string indices to CSR integer indices.
@@ -1075,7 +1092,7 @@ class SOMA():
         )
 
         if self.verbose:
-            print(util.format_elapsed(s, f"  FINISH read {uri}"))
+            print(util.format_elapsed(s, f"  FINISH read {X_uri}"))
 
         return retval
 
