@@ -189,9 +189,15 @@ class SOMA():
             # have obs or obsm or obsp -- so, it turns out to be simpler to just repeat ourselves a
             # little.
 
-            newvar = pd.DataFrame.from_dict({k: util._to_tiledb_supported_array_type(v) for k, v in anndata.raw.var.items()})
+            newvar = anndata.raw.var
+            # https://github.com/single-cell-data/TileDB-SingleCell/issues/69
+            # This will cause a misshape if anndata.raw.var.items() is zero-length.
+            if len(list(anndata.raw.var.items())) > 0:
+                newvar = pd.DataFrame.from_dict({k: util._to_tiledb_supported_array_type(v) for k, v in anndata.raw.var.items()})
+
             for key in anndata.raw.varm.keys():
                 anndata.raw.varm[key] = util._to_tiledb_supported_array_type(anndata.raw.varm[key])
+
             newraw = ad.Raw(
                 anndata,
                 X=anndata.raw.X,
