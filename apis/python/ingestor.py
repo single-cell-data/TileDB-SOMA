@@ -28,7 +28,7 @@ def main():
         "paths",
         type=str,
         help="One for specified input with default output path, or two to specify input and output paths, or multiple input paths if -n is specified",
-        nargs='+'
+        nargs='*'
     )
     parser.add_argument("-n", help="All arguments after flags are treated as input paths", action="store_true")
     args = parser.parse_args()
@@ -44,7 +44,11 @@ def main():
             output_path = 'tiledb-data/' + os.path.splitext(os.path.basename(input_path))[0]
             ingest_one(input_path, output_path, verbose)
     else:
-        if len(args.paths) == 1:
+        if len(args.paths) == 0:
+            input_path  = 'anndata/pbmc-small.h5ad'
+            output_path = 'tiledb-data/pbmc-small'
+            ingest_one(input_path, output_path, verbose)
+        elif len(args.paths) == 1:
             input_path  = args.paths[0]
             # Example 'anndata/pbmc3k_processed.h5ad' -> 'tiledb-data/pbmc3k_processed'
             output_path = 'tiledb-data/' + os.path.splitext(os.path.basename(input_path))[0]
