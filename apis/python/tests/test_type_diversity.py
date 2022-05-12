@@ -378,3 +378,56 @@ def test_from_anndata_category_nans(tmp_path, col_name, cat_dtype, expect_raise)
                 adata.obs[col_name].astype(cat_dtype),
                 equal_nan=True if np.dtype(cat_dtype).kind == 'f' else False
             )
+
+# https://github.com/single-cell-data/TileDB-SingleCell/issues/74
+def test_from_anndata_obsm_key_pandas_dataframe(tmp_path):
+    """
+    Normal case is:
+    * X is scipy.sparse.csr_matrix or numpy.ndarray
+    * obs,var are pandas.DataFrame (note _columns_ are numpy.ndarray)
+    * obsm,varm elements are numpy.ndarray
+    * obsp,varp elements are scipy.sparse.csr_matrix or numpy.ndarray
+    Here we test the case where obsm has an element which is pandas.DataFrame
+    """
+    n_obs = 10
+    n_var = 5
+
+    # AnnData requires string indices for obs/var
+    obs = pd.DataFrame(data={"A": np.arange(n_obs, dtype=np.int32)}, index=np.arange(n_obs).astype(str))
+    var = pd.DataFrame(data={"A": np.arange(n_var, dtype=np.int32)}, index=np.arange(n_var).astype(str))
+    obsm = {
+        # TODO: dims
+        "is_a_numpy_ndarray": np.eye(n_obs, 6),
+        "is_a_pandas_dataframe": pd.DataFrame(
+            np.eye(n_obs, 1),
+            index=obs.index,
+            columns=['value'],
+        ).reset_index,
+    }
+
+    X_dtype = np.dtype('float32')
+    X = np.eye(n_obs, n_var, dtype=X_dtype)
+
+    # I am unable to even _construct_ an anndata object with pandas.DataFrame in an obsm slot :(
+    adata = AnnData(X=X, obs=obs, var=var, obsm=obsm, dtype=X.dtype)
+
+    SOMA(tmp_path.as_posix()).from_anndata(adata)
+    assert all(
+        (tmp_path / sub_array_path).exists()
+        for sub_array_path in ["obs", "var", "X/data", "obsm"]
+    )
+
+    # Check types & shapes.
+    adata_obsm = adata.obsm['is_a_numpy_ndarray']
+    with tiledb.open((tmp_path / "obsm" / "is_a_numpy_ndarray").as_posix()) as tiledb_obsm:
+        assert adata_obsm.dtype.kind == tiledb_obsm.schema.attr(0).dtype.kind
+        assert adata_obsm.dtype == tiledb_obsm.schema.attr(0).dtype
+        tiledb_obsm_df = tiledb_obsm[:]
+        key_1 = list(tiledb_obsm_df.keys())[0]
+        assert tiledb_obsm_df[key_1].shape == (n_obs,)
+
+    # Check types & shapes.
+    adata_obsm = adata.obsm['is_a_pandas_dataframe']
+    with tiledb.open((tmp_path / "obsm" / "is_a_pandas_dataframe").as_posix()) as tiledb_obsm:
+        pass
+        # TODO
