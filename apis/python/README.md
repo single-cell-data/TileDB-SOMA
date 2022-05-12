@@ -60,46 +60,58 @@ Please see [https://github.com/single-cell-data/TileDB-SingleCell/issues](https:
 
 ## TileDB group structure
 
+Also shown: mental map for class names
+
 ```
+TileDB group structure         SOMA classes                      AnnData types
+
 soma: group
 |
-+-- X: group
-|   +-- data: array
++-- X: group                   AssayMatrixGroup
+|   +-- data: array              AssayMatrix                     scipy.sparse.csr_matrix, numpy.ndarray
 |
-+-- obs: array
++-- obs: array                 AnnotationDataFrame               pandas.DataFrame
 |
-+-- var: array
++-- var: array                 AnnotationDataFrame               pandas.DataFrame
 |
-+-- obsm: group
-|   +-- omfoo: array
-|   +-- ombar: array
++-- obsm: group                AnnotationMatrixGroup             dict of:
+|   +-- omfoo: array             AnnotationMatrix                numpy.ndarray, scipy.sparse.csr_matrix
+|   +-- ombar: array             AnnotationMatrix
 |
-+-- varm: group
-|   +-- vmfoo: array
-|   +-- vmbar: array
++-- varm: group                AnnotationMatrixGroup             dict of:
+|   +-- vmfoo: array             AnnotationMatrix                numpy.ndarray, scipy.sparse.csr_matrix
+|   +-- vmbar: array             AnnotationMatrix
 |
-+-- obsp: group
-|   +-- opfoo: array
-|   +-- opbar: array
++-- obsp: group                AnnotationPairwiseMatrixGroup     dict of:
+|   +-- opfoo: array             AnnotationPairwiseMatrix        scipy.sparse.csr_matrix, numpy.ndarray
+|   +-- opbar: array             AnnotationPairwiseMatrix
 |
-+-- varp: group
-|   +-- vpfoo: array
-|   +-- vpbar: array
++-- varp: group                AnnotationPairwiseMatrixGroup     dict of:
+|   +-- vpfoo: array             AnnotationPairwiseMatrix        scipy.sparse.csr_matrix, numpy.ndarray
+|   +-- vpbar: array             AnnotationPairwiseMatrix
 |
-+-- raw: group
++-- raw: group                 RawGroup
+|   |
+|   +-- X: group                 AssayMatrixGroup
+|   |   +-- data: array            AssayMatrix                   scipy.sparse.csr_matrix
+|   |
+|   +-- var: array               AnnotationDataFrame             pandas.DataFrame
+|   |
+|   +-- varm: group              AnnotationMatrixGroup
+|   |   +-- vmfoo: array           AnnotationMatrix              numpy.ndarray, scipy.sparse.csr_matrix
+|   |   +-- vmbar: array           AnnotationMatrix
+|
++-- raw: group                 UnsGroup
+    +-- ...: group
+    |   +--: array                                               pandas.DataFrame, or
+    |   +--: array                                               numpy.ndarray, or
+    |   +--: array                                               numpy scalars,
+    |   +--: array                                               etc.
+    |   +--: group
+    |   +--: group
+    |        +... etc (nestable)
     |
-    +-- X: group
-    |   +-- data: array
-    |
-    +-- var: array
-    |
-    +-- varm: group
-    |   +-- vmfoo: array
-    |   +-- vmbar: array
-    |
-    +-- varp: group
-        +-- vpfoo: array
-        +-- vpbar: array
+    +-- ...: group
 ```
 
 ## Expected input format
@@ -403,7 +415,7 @@ See also:
 
 ```
 import tiledb
-print(tiledb.group.Group('tiledb-data/pbmc3k_processed')._dump(True))
+print(tiledb.group.Group('tiledb-data/pbmc3k_processed'))
 ```
 
 ## Diversity of formats in HDF5 files

@@ -9,7 +9,7 @@ def show_single_cell_group(soma_uri: str, ctx: Optional[tiledb.Ctx] = None):
     """
     Show some summary information about an ingested TileDB Single-Cell Group.
     This tool goes a bit beyond
-      `print(tiledb.group.Group('tiledb-data/pbmc3k_processed')._dump(True))`
+      `print(tiledb.group.Group('tiledb-data/pbmc3k_processed'))`
     by also revealing array schema. Additionally, by employing encoded domain-specific knowleldge,
     it traverses items in the familiar order X, obs, var, etc. rather than using
     the general-purpose tiledb-group-display function.
