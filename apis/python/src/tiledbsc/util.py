@@ -1,5 +1,7 @@
 import tiledb
 
+import anndata as ad
+
 import numpy
 import scipy
 import pandas as pd

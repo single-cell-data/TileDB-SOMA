@@ -2,6 +2,7 @@ import anndata as ad
 import numpy as np
 import scipy
 import pandas as pd
+import tiledbsc.util as util
 
 import os
 
@@ -224,3 +225,67 @@ def _describe_ann_file_show_uns_data(uns, parent_path_components=['uns']):
             print()
             print("%-*s" % (namewidth, display_name), type(value))
             print(value)
+
+# ----------------------------------------------------------------
+def decategoricalize(anndata: ad.AnnData):
+    """
+    Performs an in-place typecast into types that TileDB can persist.
+    """
+
+    # If the DataFrame contains only an index, just use it as is.
+    if len(anndata.obs.columns) > 0:
+        new_obs = pd.DataFrame.from_dict({k: util._to_tiledb_supported_array_type(v) for k, v in anndata.obs.items()})
+    else:
+        new_obs = anndata.obs
+    if len(anndata.var.columns) > 0:
+        new_var = pd.DataFrame.from_dict({k: util._to_tiledb_supported_array_type(v) for k, v in anndata.var.items()})
+    else:
+        new_var = anndata.var
+
+    for key in anndata.obsm.keys():
+        anndata.obsm[key] = util._to_tiledb_supported_array_type(anndata.obsm[key])
+    for key in anndata.varm.keys():
+        anndata.varm[key] = util._to_tiledb_supported_array_type(anndata.varm[key])
+    for key in anndata.obsp.keys():
+        anndata.obsp[key] = util._to_tiledb_supported_array_type(anndata.obsp[key])
+    for key in anndata.varp.keys():
+        anndata.varp[key] = util._to_tiledb_supported_array_type(anndata.varp[key])
+
+    if anndata.raw == None: # Some datasets have no raw.
+        new_raw = None
+    else:
+        # Note there is some code-duplication here between cooked & raw.  However anndata.raw
+        # has var not directly assignable ('AttributeError: can't set attribute'), and
+        # anndata.AnnData and anndata.Raw have different constructor syntaxes, and raw doesn't
+        # have obs or obsm or obsp -- so, it turns out to be simpler to just repeat ourselves a
+        # little.
+
+        new_raw_var = anndata.raw.var
+        # If the DataFrame contains only an index, just use it as is.
+        if len(anndata.raw.var.columns) > 0:
+            new_raw_var = pd.DataFrame.from_dict({k: util._to_tiledb_supported_array_type(v) for k, v in anndata.raw.var.items()})
+
+        for key in anndata.raw.varm.keys():
+            anndata.raw.varm[key] = util._to_tiledb_supported_array_type(anndata.raw.varm[key])
+
+        new_raw = ad.Raw(
+            anndata,
+            X=anndata.raw.X,
+            var=new_raw_var,
+            varm=anndata.raw.varm,
+        )
+
+    anndata = ad.AnnData(
+        X=anndata.X,
+        dtype=None if anndata.X is None else anndata.X.dtype,  # some datasets have no X
+        obs=new_obs,
+        var=new_var,
+        obsm=anndata.obsm,
+        obsp=anndata.obsp,
+        varm=anndata.varm,
+        varp=anndata.varp,
+        raw=new_raw,
+        uns=anndata.uns,
+    )
+
+    return anndata
