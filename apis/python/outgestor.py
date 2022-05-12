@@ -34,11 +34,14 @@ def main():
         "paths",
         type=str,
         help="One for specified input with default output path, or two to specify input and output paths",
-        nargs='+'
+        nargs='*'
     )
     args = parser.parse_args()
 
-    if len(args.paths) == 1:
+    if len(args.paths) == 0:
+        input_path  = 'tiledb-data/pbmc-small'
+        output_path = 'anndata-readback/pbmc-small.h5ad'
+    elif len(args.paths) == 1:
         # Strip trailing slashes so basename will behave correctly
         input_path  = args.paths[0].rstrip('/')
         # Example 'tiledb-data/pbmc3k_processed' -> 'anndata-readcbak/pbmc3k_processed.h5ad'
