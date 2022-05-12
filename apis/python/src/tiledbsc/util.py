@@ -1,6 +1,6 @@
 import tiledb
 
-import numpy
+import numpy as np
 import scipy
 import pandas as pd
 
@@ -85,14 +85,19 @@ def _to_tiledb_supported_array_type(x):
     def _to_tiledb_supported_dtype(dtype):
         """A handful of types are cast into the TileDB type system."""
         # TileDB has no bool type -- instead cast to uint8
-        if dtype == numpy.dtype('bool'):
-            return numpy.dtype('uint8')
+        if dtype == np.dtype('bool'):
+            return np.dtype('uint8')
 
         # TileDB has no float16 -- cast up to float32
-        if dtype == numpy.dtype('float16'):
-            return numpy.dtype('float32')
+        if dtype == np.dtype('float16'):
+            return np.dtype('float32')
 
         return dtype
+
+    #print(" TTYYPPEE ================================================================", type(x))
+    # A pandas dataframe doesn't have a dtype -- but its columns (numpy.ndarray) will. Recurse.
+    if isinstance(x, pd.DataFrame):
+        return pd.DataFrame.from_dict({k: _to_tiledb_supported_array_type(v) for k, v in x.items()})
 
     # If a Pandas categorical, use the type of the underlying category.
     # If the array contains NaN/NA, and the primitive is unable to represent
@@ -165,26 +170,26 @@ def numpyable_object_to_tiledb_array(obj, uri: str, ctx: Optional[tiledb.Ctx] = 
     including UTF-8 handling. Supports dtypes like
     """
 
-    if isinstance(obj, numpy.ndarray):
+    if isinstance(obj, np.ndarray):
         obj = _to_tiledb_supported_array_type(obj)
         _write_numpy_ndarray_to_tiledb_array(arr=obj, uri=uri, ctx=ctx)
 
     elif isinstance(obj, list):
-        arr = numpy.asarray(obj)
+        arr = np.asarray(obj)
         _write_numpy_ndarray_to_tiledb_array(arr, uri, ctx)
 
-    elif isinstance(obj, numpy.str_):
+    elif isinstance(obj, np.str_):
         # Needs explicit cast from numpy.str_ to str for tiledb.from_numpy
-        arr = numpy.asarray([obj]).astype(str)
+        arr = np.asarray([obj]).astype(str)
         _write_numpy_ndarray_to_tiledb_array(arr, uri, ctx)
 
     else:
-        arr = numpy.asarray([obj])
+        arr = np.asarray([obj])
         arr = _to_tiledb_supported_array_type(arr)
         _write_numpy_ndarray_to_tiledb_array(arr, uri, ctx)
 
 # ----------------------------------------------------------------
-def _write_numpy_ndarray_to_tiledb_array(arr: numpy.ndarray, uri: str, ctx: Optional[tiledb.Ctx] = None):
+def _write_numpy_ndarray_to_tiledb_array(arr: np.ndarray, uri: str, ctx: Optional[tiledb.Ctx] = None):
     """
     Writes a numpy.ndarray to a TileDB array, nominally for ingest of `uns` nested data from anndata
     objects. Mostly tiledb.from_numpy, but with some necessary handling for data with UTF-8 values.
@@ -192,6 +197,6 @@ def _write_numpy_ndarray_to_tiledb_array(arr: numpy.ndarray, uri: str, ctx: Opti
 
     if 'numpy' in str(type(arr)) and str(arr.dtype).startswith('<U'):
         # Note arr.astype('str') does not lead to a successfuly tiledb.from_numpy.
-        arr = numpy.array(arr, dtype='O')
+        arr = np.array(arr, dtype='O')
 
     tiledb.from_numpy(uri=uri, array=arr, ctx=ctx)
