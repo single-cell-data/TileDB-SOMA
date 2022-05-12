@@ -72,8 +72,4 @@ class TileDBGroup(TileDBObject):
     def add(self, obj: TileDBObject):
         if self.tiledb_group == None:
             raise Exception("Attempt to write to a non-open group")
-        if tiledb.object_type(obj.uri) is None:
-            self.tiledb_group.add(uri=obj.uri, relative=False, name=obj.name)
-        else:
-            if self.verbose:
-                print(f"{self.indent}Re-using existing group {obj.uri}")
+        self.tiledb_group.add(uri=obj.uri, relative=False, name=obj.name)
