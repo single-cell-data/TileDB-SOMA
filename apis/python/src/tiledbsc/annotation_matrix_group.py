@@ -105,15 +105,15 @@ class AnnotationMatrixGroup(TileDBGroup):
 
     # At the tiledb-py API level, *all* groups are name-indexable.  But here at the tiledbsc-py
     # level, we implement name-indexing only for some groups:
-	#
-	# * Most soma member references are done using Python's dot syntax. For example, rather than
-	#   soma['X'], we have simply soma.X, and likewise, soma.raw.X.  Likewise soma.obs and soma.var.
-	#
-	# * Index references are supported for obsm, varm, obsp, varp, and uns. E.g.
-	#   soma.obsm['X_pca'] or soma.uns['neighbors']['params']['method']
-	#
-	# * Overloading the `[]` operator at the TileDBGroup level isn't necessary -- e.g. we don't need
-	#   soma['X'] when we have soma.X -- but also it causes circular-import issues in Python.
+    #
+    # * Most soma member references are done using Python's dot syntax. For example, rather than
+    #   soma['X'], we have simply soma.X, and likewise, soma.raw.X.  Likewise soma.obs and soma.var.
+    #
+    # * Index references are supported for obsm, varm, obsp, varp, and uns. E.g.
+    #   soma.obsm['X_pca'] or soma.uns['neighbors']['params']['method']
+    #
+    # * Overloading the `[]` operator at the TileDBGroup level isn't necessary -- e.g. we don't need
+    #   soma['X'] when we have soma.X -- but also it causes circular-import issues in Python.
     #
     # * Rather than doing a TileDBIndexableGroup which overloads the `[]` operator, we overload
     #   the `[]` operator separately in the various classes which need indexing. This is again to
