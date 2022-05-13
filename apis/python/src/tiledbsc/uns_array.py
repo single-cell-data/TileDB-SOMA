@@ -134,9 +134,9 @@ class UnsArray(TileDBArray):
             if self.verbose:
                 print(f"{self.indent}Re-using existing array {self.uri}")
         else:
-            self.create_empty_array_for_csr(self.uri, "data", csr.dtype, nrows, ncols)
+            self.create_empty_array_for_csr("data", csr.dtype, nrows, ncols)
 
-        self.ingest_data_from_csr(self.uri, csr)
+        self.ingest_data_from_csr(csr)
 
         if self.verbose:
             print(util.format_elapsed(s, f"{self.indent}FINISH WRITING FROM SCIPY.SPARSE.CSR {self.uri}"))
@@ -152,7 +152,6 @@ class UnsArray(TileDBArray):
         :param nrows: number of rows in the matrix
         :param ncols: number of columns in the matrix
         """
-        assert isinstance(uri, str)
         assert isinstance(attr_name, str)
 
         dom = tiledb.Domain(
@@ -173,7 +172,7 @@ class UnsArray(TileDBArray):
             tile_order='col-major',
             ctx=self.ctx
         )
-        tiledb.Array.create(uri, sch, ctx=self.ctx)
+        tiledb.Array.create(self.uri, sch, ctx=self.ctx)
 
 
     # ----------------------------------------------------------------
@@ -184,11 +183,11 @@ class UnsArray(TileDBArray):
         :param csr: Matrix-like object coercible to a scipy coo_matrix.
         """
 
-        mat_coo = scipy.sparse.coo_matrix(mat)
+        mat_coo = scipy.sparse.coo_matrix(csr)
         d0 = mat_coo.row
         d1 = mat_coo.col
 
-        with tiledb.open(uri, mode="w", ctx=self.ctx) as A:
+        with tiledb.open(self.uri, mode="w", ctx=self.ctx) as A:
             A[d0, d1] = mat_coo.data
 
 
