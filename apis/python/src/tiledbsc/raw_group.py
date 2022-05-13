@@ -82,4 +82,3 @@ class RawGroup(TileDBGroup):
         varm   = self.varm.to_dict_of_csr()
 
         return (X_mat, var_df, varm)
-
