@@ -75,10 +75,12 @@ def ingest_one(input_path: str, output_path: str, verbose: bool):
     parent = os.path.dirname(output_path.rstrip('/'))
     if not os.path.exists(parent):
         os.mkdir(parent)
+    # TODO: make this an option, with default off. Currently we need an overwrite-flag for
+    # tiledb.from-numpy in UnsArray in order to allow users to do update-in-place.
     if os.path.exists(output_path):
         shutil.rmtree(output_path) # Overwrite
 
-    soma = tiledbsc.SOMA(output_path, verbose=verbose)
+    soma = tiledbsc.SOMA(uri=output_path, verbose=verbose)
 
     # Do the ingest into TileDB.
     soma.from_h5ad(input_path)
