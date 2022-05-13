@@ -58,12 +58,6 @@ class TileDBObject:
             self.soma_options = SOMAOptions()
         # Null ctx is OK if that's what they wanted (e.g. not doing any TileDB-Cloud ops).
 
-        if self.verbose:
-            if self.exists():
-                print(f"{self.indent}Existing found at {self.uri}: {self.__class__.__name__}")
-            else:
-                print(f"{self.indent}Not existing at   {self.uri}: {self.__class__.__name__}")
-
     def object_type(self):
         """
         This should be implemented by child classes and should return what tiledb.object_type(uri)
