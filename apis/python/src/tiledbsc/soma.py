@@ -51,9 +51,6 @@ class SOMA(TileDBGroup):
     raw:   RawGroup
     uns:   UnsGroup
 
-    write_X_chunked_if_csr: bool
-    goal_chunk_nnz: int
-
     # ----------------------------------------------------------------
     def __init__(
         self,
@@ -302,8 +299,6 @@ class SOMA(TileDBGroup):
         var_df, var_labels = self.var.to_dataframe_and_labels()
 
         X_mat = self.X.data.to_csr_matrix(obs_labels, var_labels)
-        # TODO
-        print("  X/RAW OUTGEST NOT IMPLMENTED YET")
 
         obsm = self.obsm.to_dict_of_csr()
         varm = self.varm.to_dict_of_csr()
@@ -341,3 +336,17 @@ class SOMA(TileDBGroup):
         )
 
         return anndata
+
+    # ----------------------------------------------------------------
+    def to_anndata_from_raw(self):
+        """
+        Extract only the raw parts as a new AnnData object.
+        """
+
+        obs_df, obs_labels = self.obs.to_dataframe_and_labels()
+        var_df, var_labels = self.raw.var.to_dataframe_and_labels()
+        X_mat = self.raw.X.data.to_csr_matrix(obs_labels, var_labels)
+
+        return ad.AnnData(
+            X=X_mat, obs=obs_df, var=var_df,
+        )
