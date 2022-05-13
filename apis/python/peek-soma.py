@@ -2,7 +2,7 @@
 
 # Invoke this with, for example,
 #
-#   python -i peek-some.py tiledb-data/pbmc3k_processed
+#   python -i peek-soma.py tiledb-data/pbmc3k_processed
 #
 # -- then you can inspect the soma object.
 

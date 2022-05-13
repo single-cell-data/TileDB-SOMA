@@ -57,13 +57,13 @@ class RawGroup(TileDBGroup):
         self.open("w")
 
         self.X.from_matrix(anndata.raw.X, anndata.obs.index, anndata.raw.var.index)
-        self.add(self.X)
+        self.add_object(self.X)
 
         self.var.from_dataframe(dataframe=anndata.raw.var, extent=2048)
-        self.add(self.var)
+        self.add_object(self.var)
 
         self.varm.from_anndata(anndata.raw.varm, anndata.raw.var_names)
-        self.add(self.varm)
+        self.add_object(self.varm)
 
         if self.verbose:
             print(util.format_elapsed(s, f"{self.indent}FINISH WRITING {self.uri}"))

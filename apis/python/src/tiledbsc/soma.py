@@ -193,37 +193,37 @@ class SOMA(TileDBGroup):
 
         # ----------------------------------------------------------------
         self.X.from_matrix(anndata.X, anndata.obs.index, anndata.var.index)
-        self.add(self.X)
+        self.add_object(self.X)
 
         # ----------------------------------------------------------------
         self.obs.from_dataframe(dataframe=anndata.obs, extent=256)
-        self.add(self.obs)
+        self.add_object(self.obs)
 
         self.var.from_dataframe(dataframe=anndata.var, extent=2048)
-        self.add(self.var)
+        self.add_object(self.var)
 
         # ----------------------------------------------------------------
         self.obsm.from_anndata(anndata.obsm, anndata.obs_names)
-        self.add(self.obsm)
+        self.add_object(self.obsm)
 
         self.varm.from_anndata(anndata.varm, anndata.var_names)
-        self.add(self.varm)
+        self.add_object(self.varm)
 
         self.obsp.from_anndata(anndata.obsp, anndata.obs_names)
-        self.add(self.obsp)
+        self.add_object(self.obsp)
 
         self.varp.from_anndata(anndata.varp, anndata.var_names)
-        self.add(self.varp)
+        self.add_object(self.varp)
 
         # ----------------------------------------------------------------
         if anndata.raw != None:
             self.raw.from_anndata(anndata)
-            self.add(self.raw)
+            self.add_object(self.raw)
 
         # ----------------------------------------------------------------
         if anndata.uns != None:
             self.uns.from_anndata_uns(anndata.uns)
-            self.add(self.uns)
+            self.add_object(self.uns)
 
         # ----------------------------------------------------------------
         if self.verbose:
