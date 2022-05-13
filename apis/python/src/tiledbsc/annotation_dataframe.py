@@ -109,6 +109,9 @@ class AnnotationDataFrame(TileDBArray):
 
         index_name = self.name + '_id'
         with tiledb.open(self.uri) as A:
+            # We could use A.df[:] to set the index_name to 'obs_id' or 'var_id'.
+            # However, the resulting dataframe has obs_id/var_id as strings, not
+            # bytes, resulting in `KeyError` elsewhere in the code.
             df = pandas.DataFrame(A[:])
             df = df.set_index(index_name)
 
