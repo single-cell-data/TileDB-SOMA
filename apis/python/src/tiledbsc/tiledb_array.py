@@ -1,7 +1,7 @@
 import tiledb
 from .soma_options  import SOMAOptions
 from .tiledb_object import TileDBObject
-from .tiledb_group import TileDBGroup
+from .tiledb_group  import TileDBGroup
 
 from typing import Optional
 

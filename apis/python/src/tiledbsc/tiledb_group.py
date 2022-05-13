@@ -3,6 +3,7 @@ from .soma_options  import SOMAOptions
 from .tiledb_object import TileDBObject
 
 from typing import Optional, Union
+import os
 
 class TileDBGroup(TileDBObject):
     """
@@ -73,3 +74,18 @@ class TileDBGroup(TileDBObject):
         if self.tiledb_group == None:
             raise Exception("Attempt to write to a non-open group")
         self.tiledb_group.add(uri=obj.uri, relative=False, name=obj.name)
+
+    def get_member_uris(self):
+        """
+        TODO
+        """
+        self.open('r')
+        retval = [e.uri for e in self.tiledb_group]
+        self.close()
+        return retval
+
+    def get_member_names(self):
+        """
+        TODO
+        """
+        return [os.path.basename(e) for e in self.get_member_uris()]

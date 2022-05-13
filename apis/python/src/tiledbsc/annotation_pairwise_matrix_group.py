@@ -111,3 +111,46 @@ class AnnotationPairwiseMatrixGroup(TileDBGroup):
             print(util.format_elapsed(s, f"{self.indent}FINISH read {self.uri}"))
 
         return matrices_in_group
+
+    # At the tiledb-py API level, *all* groups are name-indexable.  But here at the tiledbsc-py
+    # level, we implement name-indexing only for some groups:
+	#
+	# * Most soma member references are done using Python's dot syntax. For example, rather than
+	#   soma['X'], we have simply soma.X, and likewise, soma.raw.X.  Likewise soma.obs and soma.var.
+	#
+	# * Index references are supported for obsm, varm, obsp, varp, and uns. E.g.
+	#   soma.obsm['X_pca'] or soma.uns['neighbors']['params']['method']
+	#
+	# * Overloading the `[]` operator at the TileDBGroup level isn't necessary -- e.g. we don't need
+	#   soma['X'] when we have soma.X -- but also it causes circular-import issues in Python.
+    #
+    # * Rather than doing a TileDBIndexableGroup which overloads the `[]` operator, we overload
+    #   the `[]` operator separately in the various classes which need indexing. This is again to
+    #   avoid circular-import issues, and means that [] on `AnnotationMatrixGroup` will return an
+    #   `AnnotationMatrix, [] on `UnsGroup` will return `UnsArray` or `UnsGroup`, etc.
+    def __getitem__(self, name):
+        """
+        Returns an `AnnotationPairwiseMatrix` element at the given name within the group, or None if no such
+        member exists.  Overloads the [...] operator.
+        """
+
+        self.open('r')
+        obj = None
+        try:
+            # This returns a tiledb.object.Object.
+            obj = self.tiledb_group[name]
+        except:
+            pass
+        self.close()
+
+        if obj is None:
+            return None
+        elif obj.type == tiledb.tiledb.Group:
+            raise Exception("Internal error: found group element where array element was expected.")
+        elif obj.type == tiledb.libtiledb.Array:
+            return AnnotationPairwiseMatrix(uri=obj.uri, name=name,
+                row_dim_name=self.row_dim_name, col_dim_name=self.col_dim_name,
+                parent=self
+            )
+        else:
+            raise Exception("Internal error: found group element neither subgroup nor array: type is", str(obj.type))
