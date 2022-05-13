@@ -195,6 +195,9 @@ $ ingestor.py anndata/pbmc-small.h5ad tiledb-data/pbmc-small
 ```
 
 Look at various fields:
+
+<details>
+
 ```
 $ python
 
