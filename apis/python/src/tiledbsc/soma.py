@@ -35,12 +35,6 @@ class SOMA(TileDBGroup):
     reveal the diversity/variety of HDF5 files we process.
     """
 
-    uri: str
-    verbose: bool
-    ctx: tiledb.Ctx
-
-    soma_options: SOMAOptions
-
     X:     AssayMatrixGroup
     obs:   AnnotationDataFrame
     var:   AnnotationDataFrame
