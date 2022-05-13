@@ -13,7 +13,7 @@ from typing import Optional
 class AssayMatrix(TileDBArray):
     """
     Wraps a TileDB sparse array with two string dimensions.
-    Used for X, obsp memers, and varp members.
+    Used for X, obsp members, and varp members.
     """
 
     row_dim_name: str # obs_id for X, obs_id_i for obsp; var_id_i for varp

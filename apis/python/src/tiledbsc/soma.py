@@ -23,8 +23,8 @@ from .uns_group                        import UnsGroup
 
 class SOMA(TileDBGroup):
     """ Single-cell group
-    Class for representing a group of TileDB arrays that consitute an SOMA ('stack of matrices,
-    annotated') which includes:
+    Class for representing a group of TileDB groups/arrays that constitute an SOMA ('stack of matrices, annotated')
+    which includes:
     * `X` (`AssayMatrixGroup`): a group of one or more labeled 2D sparse arrays
       that share the same dimensions.
     * `obs` (`AnnotationDataframe`): 1D labeled array with column labels for
