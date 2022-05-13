@@ -114,51 +114,172 @@ soma: group
     +-- ...: group
 ```
 
-## Expected input format
+## Example data
 
-`./desc-ann.py ./anndata/pbmc3k_processed.h5ad`
+This serves both as a concrete example of what the data looks like, as well as some of the soma methods.
 
-<details>
+Look at information about a sample `.h5ad` file:
 
 ```
-================================================================ ./anndata/pbmc3k_processed.h5ad
+$ ./desc-ann.py anndata/pbmc-small.h5ad
+
+================================================================ anndata/pbmc-small.h5ad
+
+----------------------------------------------------------------
 ANNDATA SUMMARY:
-AnnData object with n_obs × n_vars = 2638 × 1838
-    obs: 'n_genes', 'percent_mito', 'n_counts', 'louvain'
-    var: 'n_cells'
-    uns: 'draw_graph', 'louvain', 'louvain_colors', 'neighbors', 'pca', 'rank_genes_groups'
-    obsm: 'X_pca', 'X_tsne', 'X_umap', 'X_draw_graph_fr'
+AnnData object with n_obs × n_vars = 80 × 20
+    obs: 'orig.ident', 'nCount_RNA', 'nFeature_RNA', 'RNA_snn_res.0.8', 'letter.idents', 'groups', 'RNA_snn_res.1'
+    var: 'vst.mean', 'vst.variance', 'vst.variance.expected', 'vst.variance.standardized', 'vst.variable'
+    uns: 'neighbors'
+    obsm: 'X_pca', 'X_tsne'
     varm: 'PCs'
-    obsp: 'distances', 'connectivities'
-X IS A    <class 'numpy.ndarray'>
-  X SHAPE   (2638, 1838)
-  OBS  LEN  2638
-  VAR  LEN  1838
-RAW X IS A    <class 'scipy.sparse._csr.csr_matrix'>
-  X SHAPE   (2638, 13714)
+    obsp: 'distances'
+X SHAPE   (80, 20)
+OBS  LEN  80
+VAR  LEN  20
 OBS IS A <class 'pandas.core.frame.DataFrame'>
-  OBS  KEYS ['n_genes', 'percent_mito', 'n_counts', 'louvain']
+   orig.ident int32
+   nCount_RNA float64
+   nFeature_RNA int32
+   RNA_snn_res.0.8 int32
+   letter.idents int32
+   groups category
+   RNA_snn_res.1 int32
 VAR IS A <class 'pandas.core.frame.DataFrame'>
-  VAR  KEYS ['n_cells']
-OBSM KEYS ['X_pca', 'X_tsne', 'X_umap', 'X_draw_graph_fr']
-  OBSM X_pca IS A <class 'numpy.ndarray'>
-  OBSM X_tsne IS A <class 'numpy.ndarray'>
-  OBSM X_umap IS A <class 'numpy.ndarray'>
-  OBSM X_draw_graph_fr IS A <class 'numpy.ndarray'>
+   vst.mean float64
+   vst.variance float64
+   vst.variance.expected float64
+   vst.variance.standardized float64
+   vst.variable int32
+RAW X SHAPE   (80, 230)
+OBS  KEYS ['orig.ident', 'nCount_RNA', 'nFeature_RNA', 'RNA_snn_res.0.8', 'letter.idents', 'groups', 'RNA_snn_res.1']
+VAR  KEYS ['vst.mean', 'vst.variance', 'vst.variance.expected', 'vst.variance.standardized', 'vst.variable']
+OBSM KEYS ['X_pca', 'X_tsne']
 VARM KEYS ['PCs']
-  VARM PCs IS A <class 'numpy.ndarray'>
-OBSP KEYS ['distances', 'connectivities']
-  OBSP distances IS A <class 'scipy.sparse.csr.csr_matrix'>
-  OBSP connectivities IS A <class 'scipy.sparse.csr.csr_matrix'>
+OBSP KEYS ['distances']
 VARP KEYS []
+uns/neighbors/params/method
+
+----------------------------------------------------------------
+ANNDATA FILE TYPES:
+X/data                                   <class 'numpy.ndarray'>
+X/data shape                             (80, 20)
+X/data dtype                             float64
+X/raw                                    <class 'scipy.sparse._csr.csr_matrix'>
+X/raw shape                              (80, 230)
+X/data dtype                             float64
+X/raw density                            0.2422
+obs                                      <class 'pandas.core.frame.DataFrame'>
+var                                      <class 'pandas.core.frame.DataFrame'>
+obsm/X_pca                               <class 'numpy.ndarray'>
+obsm/X_tsne                              <class 'numpy.ndarray'>
+varm/PCs                                 <class 'numpy.ndarray'>
+obsp/distances                           <class 'scipy.sparse._csr.csr_matrix'>
+uns/neighbors/params/method              (1,) <class 'numpy.ndarray'> object
 ```
 
 See also:
 
 ```
+h5ls     anndata/pmbc-small.h5ad
 h5ls     anndata/pbmc3k_processed.h5ad
 h5ls -r  anndata/pbmc3k_processed.h5ad
 h5ls -vr anndata/pbmc3k_processed.h5ad
+# etc.
+```
+
+Read a sample `.h5ad` file and write into a TileDB SOMA object:
+
+```
+$ ingestor.py anndata/pbmc-small.h5ad tiledb-data/pbmc-small
+```
+
+Look at various fields:
+```
+$ python
+
+>>> import tiledbsc
+
+>>> soma = tiledbsc.SOMA('tiledb-data/pbmc-small')
+>>> arr = soma.X.data.open_array()
+>>> arr.df[:]
+              obs_id    var_id     value
+0     AAATTCGAATCACG    AKR1C3 -0.325888
+1     AAATTCGAATCACG       CA2 -0.346938
+...              ...       ...       ...
+1598  TTTAGCTGTACTCT     TUBB1 -0.350375
+1599  TTTAGCTGTACTCT     VDAC3 -0.524551
+
+[1600 rows x 3 columns]
+-- Note this is a sparse matrix in IJV/COO format
+```
+
+```
+>>> arr = soma.obs.open_array()
+>>> arr.df[:]
+                orig.ident  nCount_RNA  nFeature_RNA  RNA_snn_res.0.8  letter.idents groups  RNA_snn_res.1
+obs_id
+AAATTCGAATCACG           0       327.0            62                1              1     g2              1
+AAGCAAGAGCTTAG           0       126.0            48                0              0     g1              0
+...                    ...         ...           ...              ...            ...    ...            ...
+TTGGTACTGAATCC           0       135.0            45                0              0     g1              2
+TTTAGCTGTACTCT           0       462.0            86                1              1     g1              1
+
+[80 rows x 7 columns]
+
+>>> arr = soma.var.open_array()
+>>> arr.df[:]
+               vst.mean  vst.variance  vst.variance.expected  vst.variance.standardized  vst.variable
+var_id
+AKR1C3           0.2625      1.132753               0.553424                   2.021191             1
+CA2              0.4500      3.263291               1.685451                   1.765922             1
+CD1C             0.1750      0.576582               0.271217                   2.052014             1
+...
+TREML1           0.3375      1.365665               0.761869                   1.792519             1
+TUBB1            0.8875     16.202373               6.352400                   1.634371             1
+VDAC3            1.1250     30.971519               8.986513                   2.137607             1
+```
+
+```
+>>> soma.obsm.get_member_names()
+['X_tsne', 'X_pca']
+>>> arr = soma.obsm['X_pca'].open_array()
+>>> arr.df[:]
+            obs_id   X_pca_1   X_pca_2 ...  X_pca_18  X_pca_19
+0   AAATTCGAATCACG -0.599730  0.970809 ... -0.127195  0.026804
+1   AAGCAAGAGCTTAG -0.919219 -2.043828 ...  0.009386 -0.019896
+2   AAGCGACTTTGACG -1.380380  1.284101 ... -0.041855  0.027550
+..             ...       ...       ... ...       ...       ...
+78  TTGGTACTGAATCC -1.418764  0.764986 ... -0.064450  0.099118
+79  TTTAGCTGTACTCT -1.447483  1.583223 ... -0.014984  0.033992
+
+[80 rows x 20 columns]
+```
+
+```
+>>> arr = soma.raw.X.data.open_array()
+>>> arr.df[:]
+              obs_id   var_id     value
+0     AAATTCGAATCACG     ADAR  3.452557
+1     AAATTCGAATCACG     AIF1  3.452557
+...              ...      ...       ...
+4454  TTTAGCTGTACTCT     XBP1  3.119940
+4455  TTTAGCTGTACTCT  ZFP36L1  3.119940
+
+[4456 rows x 3 columns]
+```
+
+```
+>>> soma.uns.get_member_names()
+['neighbors']
+>>> soma.uns['neighbors'].get_member_names()
+['params']
+>>> soma.uns['neighbors']['params'].get_member_names()
+['method']
+>>> arr = soma.uns['neighbors']['params']['method'].open_array()
+>>> arr.df[:]
+   __dim_0
+0        0  snn
 ```
 
 </details>
@@ -171,35 +292,103 @@ h5ls -vr anndata/pbmc3k_processed.h5ad
 
 ```
 START  SOMA.from_h5ad ./anndata/pbmc3k_processed.h5ad -> ./tiledb-data/pbmc3k_processed
-  START  READING ./anndata/pbmc3k_processed.h5ad
-  FINISH READING ./anndata/pbmc3k_processed.h5ad
-  START  DECATEGORICALIZING
-  FINISH DECATEGORICALIZING
-  START  WRITING ./tiledb-data/pbmc3k_processed
+START  READING ./anndata/pbmc3k_processed.h5ad
+FINISH READING ./anndata/pbmc3k_processed.h5ad TIME 0.227
+START  DECATEGORICALIZING
+FINISH DECATEGORICALIZING TIME 0.006
+START  WRITING ./tiledb-data/pbmc3k_processed
+Creating TileDB group ./tiledb-data/pbmc3k_processed
+  Creating TileDB group ./tiledb-data/pbmc3k_processed/X
     START  WRITING ./tiledb-data/pbmc3k_processed/X/data
-    FINISH WRITING ./tiledb-data/pbmc3k_processed/X/data
-    START  WRITING ./tiledb-data/pbmc3k_processed/X/raw
-    FINISH WRITING ./tiledb-data/pbmc3k_processed/X/raw
-    START  WRITING ./tiledb-data/pbmc3k_processed/obs
-    FINISH WRITING ./tiledb-data/pbmc3k_processed/obs
-    START  WRITING ./tiledb-data/pbmc3k_processed/var
-    FINISH WRITING ./tiledb-data/pbmc3k_processed/var
-    START  WRITING ./tiledb-data/pbmc3k_processed/obsm/X_pca
-    FINISH WRITING ./tiledb-data/pbmc3k_processed/obsm/X_pca
-    START  WRITING ./tiledb-data/pbmc3k_processed/obsm/X_tsne
-    FINISH WRITING ./tiledb-data/pbmc3k_processed/obsm/X_tsne
-    START  WRITING ./tiledb-data/pbmc3k_processed/obsm/X_umap
-    FINISH WRITING ./tiledb-data/pbmc3k_processed/obsm/X_umap
+    FINISH WRITING ./tiledb-data/pbmc3k_processed/X/data TIME 9.262
+  START  WRITING ./tiledb-data/pbmc3k_processed/obs
+  FINISH WRITING ./tiledb-data/pbmc3k_processed/obs TIME 0.085
+  START  WRITING ./tiledb-data/pbmc3k_processed/var
+  FINISH WRITING ./tiledb-data/pbmc3k_processed/var TIME 0.024
+  Creating TileDB group ./tiledb-data/pbmc3k_processed/obsm
     START  WRITING ./tiledb-data/pbmc3k_processed/obsm/X_draw_graph_fr
-    FINISH WRITING ./tiledb-data/pbmc3k_processed/obsm/X_draw_graph_fr
+    FINISH WRITING ./tiledb-data/pbmc3k_processed/obsm/X_draw_graph_fr TIME 0.053
+    START  WRITING ./tiledb-data/pbmc3k_processed/obsm/X_pca
+    FINISH WRITING ./tiledb-data/pbmc3k_processed/obsm/X_pca TIME 0.247
+    START  WRITING ./tiledb-data/pbmc3k_processed/obsm/X_tsne
+    FINISH WRITING ./tiledb-data/pbmc3k_processed/obsm/X_tsne TIME 0.059
+    START  WRITING ./tiledb-data/pbmc3k_processed/obsm/X_umap
+    FINISH WRITING ./tiledb-data/pbmc3k_processed/obsm/X_umap TIME 0.058
+  Creating TileDB group ./tiledb-data/pbmc3k_processed/varm
     START  WRITING ./tiledb-data/pbmc3k_processed/varm/PCs
-    FINISH WRITING ./tiledb-data/pbmc3k_processed/varm/PCs
-    START  WRITING ./tiledb-data/pbmc3k_processed/obsp/distances
-    FINISH WRITING ./tiledb-data/pbmc3k_processed/obsp/distances
+    FINISH WRITING ./tiledb-data/pbmc3k_processed/varm/PCs TIME 0.175
+  Creating TileDB group ./tiledb-data/pbmc3k_processed/obsp
     START  WRITING ./tiledb-data/pbmc3k_processed/obsp/connectivities
-    FINISH WRITING ./tiledb-data/pbmc3k_processed/obsp/connectivities
-  FINISH WRITING ./tiledb-data/pbmc3k_processed
-FINISH SOMA.from_h5ad ./anndata/pbmc3k_processed.h5ad -> ./tiledb-data/pbmc3k_processed
+    START  __ingest_coo_data_string_dims_rows_chunked
+    START  chunk rows 0..2638 of 2638, obs_ids AAACATACAACCAC-1..TTTGCATGCCTCAC-1, nnz=42406, 100.000%
+    FINISH chunk TIME 0.318
+    FINISH __ingest_coo_data_string_dims_rows_chunked TIME 0.825
+    FINISH WRITING ./tiledb-data/pbmc3k_processed/obsp/connectivities TIME 0.831
+    START  WRITING ./tiledb-data/pbmc3k_processed/obsp/distances
+    START  __ingest_coo_data_string_dims_rows_chunked
+    START  chunk rows 0..2638 of 2638, obs_ids AAACATACAACCAC-1..TTTGCATGCCTCAC-1, nnz=23742, 100.000%
+    FINISH chunk TIME 0.149
+    FINISH __ingest_coo_data_string_dims_rows_chunked TIME 0.637
+    FINISH WRITING ./tiledb-data/pbmc3k_processed/obsp/distances TIME 0.647
+  Creating TileDB group ./tiledb-data/pbmc3k_processed/varp
+  START  WRITING ./tiledb-data/pbmc3k_processed/raw
+  Creating TileDB group ./tiledb-data/pbmc3k_processed/raw
+    Creating TileDB group ./tiledb-data/pbmc3k_processed/raw/X
+      START  WRITING ./tiledb-data/pbmc3k_processed/raw/X/data
+      START  __ingest_coo_data_string_dims_rows_chunked
+      START  chunk rows 0..2638 of 2638, obs_ids AAACATACAACCAC-1..TTTGCATGCCTCAC-1, nnz=2238732, 100.000%
+      FINISH chunk TIME 5.736
+      FINISH __ingest_coo_data_string_dims_rows_chunked TIME 6.301
+      FINISH WRITING ./tiledb-data/pbmc3k_processed/raw/X/data TIME 6.338
+    START  WRITING ./tiledb-data/pbmc3k_processed/raw/var
+    FINISH WRITING ./tiledb-data/pbmc3k_processed/raw/var TIME 0.056
+    Creating TileDB group ./tiledb-data/pbmc3k_processed/raw/varm
+  FINISH WRITING ./tiledb-data/pbmc3k_processed/raw TIME 6.400
+  START  WRITING ./tiledb-data/pbmc3k_processed/uns
+  Creating TileDB group ./tiledb-data/pbmc3k_processed/uns
+    START  WRITING ./tiledb-data/pbmc3k_processed/uns/draw_graph
+    Creating TileDB group ./tiledb-data/pbmc3k_processed/uns/draw_graph
+      START  WRITING ./tiledb-data/pbmc3k_processed/uns/draw_graph/params
+      Creating TileDB group ./tiledb-data/pbmc3k_processed/uns/draw_graph/params
+        START  WRITING FROM NUMPY.NDARRAY ./tiledb-data/pbmc3k_processed/uns/draw_graph/params/layout
+        FINISH WRITING FROM NUMPY.NDARRAY ./tiledb-data/pbmc3k_processed/uns/draw_graph/params/layout TIME 0.018
+        START  WRITING FROM NUMPY.NDARRAY ./tiledb-data/pbmc3k_processed/uns/draw_graph/params/random_state
+        FINISH WRITING FROM NUMPY.NDARRAY ./tiledb-data/pbmc3k_processed/uns/draw_graph/params/random_state TIME 0.016
+      FINISH WRITING ./tiledb-data/pbmc3k_processed/uns/draw_graph/params TIME 0.036
+    FINISH WRITING ./tiledb-data/pbmc3k_processed/uns/draw_graph TIME 0.038
+    START  WRITING ./tiledb-data/pbmc3k_processed/uns/louvain
+    Creating TileDB group ./tiledb-data/pbmc3k_processed/uns/louvain
+      START  WRITING ./tiledb-data/pbmc3k_processed/uns/louvain/params
+      Creating TileDB group ./tiledb-data/pbmc3k_processed/uns/louvain/params
+        START  WRITING FROM NUMPY.NDARRAY ./tiledb-data/pbmc3k_processed/uns/louvain/params/random_state
+        FINISH WRITING FROM NUMPY.NDARRAY ./tiledb-data/pbmc3k_processed/uns/louvain/params/random_state TIME 0.017
+        START  WRITING FROM NUMPY.NDARRAY ./tiledb-data/pbmc3k_processed/uns/louvain/params/resolution
+        FINISH WRITING FROM NUMPY.NDARRAY ./tiledb-data/pbmc3k_processed/uns/louvain/params/resolution TIME 0.017
+      FINISH WRITING ./tiledb-data/pbmc3k_processed/uns/louvain/params TIME 0.036
+    FINISH WRITING ./tiledb-data/pbmc3k_processed/uns/louvain TIME 0.039
+    START  WRITING FROM NUMPY.NDARRAY ./tiledb-data/pbmc3k_processed/uns/louvain_colors
+    FINISH WRITING FROM NUMPY.NDARRAY ./tiledb-data/pbmc3k_processed/uns/louvain_colors TIME 0.018
+    START  WRITING ./tiledb-data/pbmc3k_processed/uns/neighbors
+    Creating TileDB group ./tiledb-data/pbmc3k_processed/uns/neighbors
+      START  WRITING ./tiledb-data/pbmc3k_processed/uns/neighbors/params
+      Creating TileDB group ./tiledb-data/pbmc3k_processed/uns/neighbors/params
+        START  WRITING FROM NUMPY.NDARRAY ./tiledb-data/pbmc3k_processed/uns/neighbors/params/method
+        FINISH WRITING FROM NUMPY.NDARRAY ./tiledb-data/pbmc3k_processed/uns/neighbors/params/method TIME 0.017
+        START  WRITING FROM NUMPY.NDARRAY ./tiledb-data/pbmc3k_processed/uns/neighbors/params/n_neighbors
+        FINISH WRITING FROM NUMPY.NDARRAY ./tiledb-data/pbmc3k_processed/uns/neighbors/params/n_neighbors TIME 0.017
+      FINISH WRITING ./tiledb-data/pbmc3k_processed/uns/neighbors/params TIME 0.036
+    FINISH WRITING ./tiledb-data/pbmc3k_processed/uns/neighbors TIME 0.038
+    START  WRITING ./tiledb-data/pbmc3k_processed/uns/pca
+    Creating TileDB group ./tiledb-data/pbmc3k_processed/uns/pca
+      START  WRITING FROM NUMPY.NDARRAY ./tiledb-data/pbmc3k_processed/uns/pca/variance
+      FINISH WRITING FROM NUMPY.NDARRAY ./tiledb-data/pbmc3k_processed/uns/pca/variance TIME 0.016
+      START  WRITING FROM NUMPY.NDARRAY ./tiledb-data/pbmc3k_processed/uns/pca/variance_ratio
+      FINISH WRITING FROM NUMPY.NDARRAY ./tiledb-data/pbmc3k_processed/uns/pca/variance_ratio TIME 0.016
+    FINISH WRITING ./tiledb-data/pbmc3k_processed/uns/pca TIME 0.034
+      Skipping structured array: ./tiledb-data/pbmc3k_processed/uns/rank_genes_groups
+  FINISH WRITING ./tiledb-data/pbmc3k_processed/uns TIME 0.171
+FINISH WRITING ./tiledb-data/pbmc3k_processed TIME 18.037
+FINISH SOMA.from_h5ad ./anndata/pbmc3k_processed.h5ad -> ./tiledb-data/pbmc3k_processed TIME 18.271
 ```
 
 </details>
@@ -211,57 +400,28 @@ FINISH SOMA.from_h5ad ./anndata/pbmc3k_processed.h5ad -> ./tiledb-data/pbmc3k_pr
 <details>
 
 ```
-================================================================
-X/data:
-keys ['data', 'obs_id', 'var_id']
-OrderedDict([('data', array([-0.13904382, -0.0708308 , -0.54010755, ..., -0.30667225,
-       -0.15601887,  3.3442626 ])), ('obs_id', array([b'AAACATACAACCAC-1', b'AAACATACAACCAC-1', b'AAACATACAACCAC-1', ...,
-       b'TTTGCATGCCTCAC-1', b'TTTGCATGCCTCAC-1', b'TTTGCATGCCTCAC-1'],
-      dtype=object)), ('var_id', array([b'AAGAB', b'AAR2', b'AATF', ..., b'ZUFSP', b'ZWINT', b'ZYX'],
-      dtype=object))])
+----------------------------------------------------------------
+Array: ./tiledb-data/pbmc3k_processed/X/data
 ArraySchema(
   domain=Domain(*[
-    Dim(name='obs_id', domain=(None, None), tile=None, dtype='|S0', var=True),
-    Dim(name='var_id', domain=(None, None), tile=None, dtype='|S0', var=True),
+    Dim(name='obs_id', domain=(None, None), tile=None, dtype='|S0', var=True, filters=FilterList([RleFilter(), ])),
+    Dim(name='var_id', domain=(None, None), tile=None, dtype='|S0', var=True, filters=FilterList([ZstdFilter(level=22), ])),
   ]),
   attrs=[
-    Attr(name='data', dtype='float64', var=False, nullable=False),
+    Attr(name='value', dtype='float32', var=False, nullable=False, filters=FilterList([ZstdFilter(level=-1), ])),
   ],
   cell_order='row-major',
   tile_order='row-major',
-  capacity=10000,
+  capacity=100000,
   sparse=True,
-  allows_duplicates=False,
-)
-
-X/raw:
-keys ['raw', 'obs_id', 'var_id']
-OrderedDict([('raw', array([0.        , 0.        , 1.60943794, ..., 0.        , 0.        ,
-       0.        ])), ('obs_id', array([b'AAACATACAACCAC-1', b'AAACATTGAGCTAC-1', b'AAACATTGATCAGC-1', ...,
-       b'TTTGCATGAGAGGC-1', b'TTTGCATGCCTCAC-1', b'TTTGCATGCCTCAC-1'],
-      dtype=object)), ('var_id', array([b'7SK-2', b'7SK-2', b'7SK-2', ..., b'hsa-mir-8072',
-       b'hsa-mir-1199', b'hsa-mir-8072'], dtype=object))])
-ArraySchema(
-  domain=Domain(*[
-    Dim(name='obs_id', domain=(None, None), tile=None, dtype='|S0', var=True),
-    Dim(name='var_id', domain=(None, None), tile=None, dtype='|S0', var=True),
-  ]),
-  attrs=[
-    Attr(name='raw', dtype='float64', var=False, nullable=False),
-  ],
-  cell_order='row-major',
-  tile_order='row-major',
-  capacity=10000,
-  sparse=True,
-  allows_duplicates=False,
+  allows_duplicates=True,
 )
 
 ----------------------------------------------------------------
-obs:
-keys ['n_genes', 'percent_mito', 'n_counts', 'louvain', 'index']
+Array: ./tiledb-data/pbmc3k_processed/obs
 ArraySchema(
   domain=Domain(*[
-    Dim(name='index', domain=(None, None), tile=None, dtype='|S0', var=True, filters=FilterList([ZstdFilter(level=-1), ])),
+    Dim(name='obs_id', domain=(None, None), tile=None, dtype='|S0', var=True, filters=FilterList([ZstdFilter(level=-1), ])),
   ]),
   attrs=[
     Attr(name='n_genes', dtype='int64', var=False, nullable=False, filters=FilterList([ZstdFilter(level=-1), ])),
@@ -271,140 +431,273 @@ ArraySchema(
   ],
   cell_order='row-major',
   tile_order='row-major',
-  capacity=10000,
+  capacity=100000,
   sparse=True,
   allows_duplicates=False,
 )
 
 ----------------------------------------------------------------
-var:
-keys ['n_cells', 'index']
+Array: ./tiledb-data/pbmc3k_processed/var
 ArraySchema(
   domain=Domain(*[
-    Dim(name='index', domain=(None, None), tile=None, dtype='|S0', var=True, filters=FilterList([ZstdFilter(level=-1), ])),
+    Dim(name='var_id', domain=(None, None), tile=None, dtype='|S0', var=True, filters=FilterList([ZstdFilter(level=-1), ])),
   ]),
   attrs=[
     Attr(name='n_cells', dtype='int64', var=False, nullable=False, filters=FilterList([ZstdFilter(level=-1), ])),
   ],
   cell_order='row-major',
   tile_order='row-major',
-  capacity=10000,
+  capacity=100000,
   sparse=True,
   allows_duplicates=False,
 )
 
+----------------------------------------------------------------
+Array: file:///Users/johnkerl/git/single-cell-data/TileDB-SingleCell/apis/python/tiledb-data/pbmc3k_processed/obsm/X_umap
+ArraySchema(
+  domain=Domain(*[
+    Dim(name='obs_id', domain=(None, None), tile=None, dtype='|S0', var=True, filters=FilterList([ZstdFilter(level=22), ])),
+  ]),
+  attrs=[
+    Attr(name='X_umap_1', dtype='float64', var=False, nullable=False, filters=FilterList([ZstdFilter(level=-1), ])),
+    Attr(name='X_umap_2', dtype='float64', var=False, nullable=False, filters=FilterList([ZstdFilter(level=-1), ])),
+  ],
+  cell_order='row-major',
+  tile_order='row-major',
+  capacity=100000,
+  sparse=True,
+  allows_duplicates=True,
+)
 
 ----------------------------------------------------------------
-obsm:
-   file:///Users/johnkerl/git/johnkerl/TileDB-SingleCell/util/tiledb-data/pbmc3k_processed/obsm/X_umap (2638, 2)
+Array: file:///Users/johnkerl/git/single-cell-data/TileDB-SingleCell/apis/python/tiledb-data/pbmc3k_processed/obsm/X_tsne
 ArraySchema(
   domain=Domain(*[
-    Dim(name='__dim_0', domain=(0, 2637), tile=2638, dtype='uint64'),
-    Dim(name='__dim_1', domain=(0, 1), tile=2, dtype='uint64'),
+    Dim(name='obs_id', domain=(None, None), tile=None, dtype='|S0', var=True, filters=FilterList([ZstdFilter(level=22), ])),
   ]),
   attrs=[
-    Attr(name='', dtype='float64', var=False, nullable=False),
+    Attr(name='X_tsne_1', dtype='float64', var=False, nullable=False, filters=FilterList([ZstdFilter(level=-1), ])),
+    Attr(name='X_tsne_2', dtype='float64', var=False, nullable=False, filters=FilterList([ZstdFilter(level=-1), ])),
   ],
   cell_order='row-major',
   tile_order='row-major',
-  capacity=10000,
-  sparse=False,
+  capacity=100000,
+  sparse=True,
+  allows_duplicates=True,
 )
-
-   file:///Users/johnkerl/git/johnkerl/TileDB-SingleCell/util/tiledb-data/pbmc3k_processed/obsm/X_tsne (2638, 2)
-ArraySchema(
-  domain=Domain(*[
-    Dim(name='__dim_0', domain=(0, 2637), tile=2638, dtype='uint64'),
-    Dim(name='__dim_1', domain=(0, 1), tile=2, dtype='uint64'),
-  ]),
-  attrs=[
-    Attr(name='', dtype='float64', var=False, nullable=False),
-  ],
-  cell_order='row-major',
-  tile_order='row-major',
-  capacity=10000,
-  sparse=False,
-)
-
-   file:///Users/johnkerl/git/johnkerl/TileDB-SingleCell/util/tiledb-data/pbmc3k_processed/obsm/X_draw_graph_fr (2638, 2)
-ArraySchema(
-  domain=Domain(*[
-    Dim(name='__dim_0', domain=(0, 2637), tile=2638, dtype='uint64'),
-    Dim(name='__dim_1', domain=(0, 1), tile=2, dtype='uint64'),
-  ]),
-  attrs=[
-    Attr(name='', dtype='float64', var=False, nullable=False),
-  ],
-  cell_order='row-major',
-  tile_order='row-major',
-  capacity=10000,
-  sparse=False,
-)
-
-   file:///Users/johnkerl/git/johnkerl/TileDB-SingleCell/util/tiledb-data/pbmc3k_processed/obsm/X_pca (2638, 50)
-ArraySchema(
-  domain=Domain(*[
-    Dim(name='__dim_0', domain=(0, 2637), tile=2638, dtype='uint64'),
-    Dim(name='__dim_1', domain=(0, 49), tile=50, dtype='uint64'),
-  ]),
-  attrs=[
-    Attr(name='', dtype='float32', var=False, nullable=False),
-  ],
-  cell_order='row-major',
-  tile_order='row-major',
-  capacity=10000,
-  sparse=False,
-)
-
 
 ----------------------------------------------------------------
-varm:
-   file:///Users/johnkerl/git/johnkerl/TileDB-SingleCell/util/tiledb-data/pbmc3k_processed/varm/PCs (1838, 50)
+Array: file:///Users/johnkerl/git/single-cell-data/TileDB-SingleCell/apis/python/tiledb-data/pbmc3k_processed/obsm/X_pca
 ArraySchema(
   domain=Domain(*[
-    Dim(name='__dim_0', domain=(0, 1837), tile=1838, dtype='uint64'),
-    Dim(name='__dim_1', domain=(0, 49), tile=50, dtype='uint64'),
+    Dim(name='obs_id', domain=(None, None), tile=None, dtype='|S0', var=True, filters=FilterList([ZstdFilter(level=22), ])),
   ]),
   attrs=[
-    Attr(name='', dtype='float32', var=False, nullable=False),
+    Attr(name='X_pca_1', dtype='float32', var=False, nullable=False, filters=FilterList([ZstdFilter(level=-1), ])),
+    Attr(name='X_pca_2', dtype='float32', var=False, nullable=False, filters=FilterList([ZstdFilter(level=-1), ])),
+    Attr(name='X_pca_3', dtype='float32', var=False, nullable=False, filters=FilterList([ZstdFilter(level=-1), ])),
+    Attr(name='X_pca_4', dtype='float32', var=False, nullable=False, filters=FilterList([ZstdFilter(level=-1), ])),
+    Attr(name='X_pca_5', dtype='float32', var=False, nullable=False, filters=FilterList([ZstdFilter(level=-1), ])),
+    Attr(name='X_pca_6', dtype='float32', var=False, nullable=False, filters=FilterList([ZstdFilter(level=-1), ])),
+    Attr(name='X_pca_7', dtype='float32', var=False, nullable=False, filters=FilterList([ZstdFilter(level=-1), ])),
+    Attr(name='X_pca_8', dtype='float32', var=False, nullable=False, filters=FilterList([ZstdFilter(level=-1), ])),
+    Attr(name='X_pca_9', dtype='float32', var=False, nullable=False, filters=FilterList([ZstdFilter(level=-1), ])),
+    Attr(name='X_pca_10', dtype='float32', var=False, nullable=False, filters=FilterList([ZstdFilter(level=-1), ])),
+    Attr(name='X_pca_11', dtype='float32', var=False, nullable=False, filters=FilterList([ZstdFilter(level=-1), ])),
+    Attr(name='X_pca_12', dtype='float32', var=False, nullable=False, filters=FilterList([ZstdFilter(level=-1), ])),
+    Attr(name='X_pca_13', dtype='float32', var=False, nullable=False, filters=FilterList([ZstdFilter(level=-1), ])),
+    Attr(name='X_pca_14', dtype='float32', var=False, nullable=False, filters=FilterList([ZstdFilter(level=-1), ])),
+    Attr(name='X_pca_15', dtype='float32', var=False, nullable=False, filters=FilterList([ZstdFilter(level=-1), ])),
+    Attr(name='X_pca_16', dtype='float32', var=False, nullable=False, filters=FilterList([ZstdFilter(level=-1), ])),
+    Attr(name='X_pca_17', dtype='float32', var=False, nullable=False, filters=FilterList([ZstdFilter(level=-1), ])),
+    Attr(name='X_pca_18', dtype='float32', var=False, nullable=False, filters=FilterList([ZstdFilter(level=-1), ])),
+    Attr(name='X_pca_19', dtype='float32', var=False, nullable=False, filters=FilterList([ZstdFilter(level=-1), ])),
+    Attr(name='X_pca_20', dtype='float32', var=False, nullable=False, filters=FilterList([ZstdFilter(level=-1), ])),
+    Attr(name='X_pca_21', dtype='float32', var=False, nullable=False, filters=FilterList([ZstdFilter(level=-1), ])),
+    Attr(name='X_pca_22', dtype='float32', var=False, nullable=False, filters=FilterList([ZstdFilter(level=-1), ])),
+    Attr(name='X_pca_23', dtype='float32', var=False, nullable=False, filters=FilterList([ZstdFilter(level=-1), ])),
+    Attr(name='X_pca_24', dtype='float32', var=False, nullable=False, filters=FilterList([ZstdFilter(level=-1), ])),
+    Attr(name='X_pca_25', dtype='float32', var=False, nullable=False, filters=FilterList([ZstdFilter(level=-1), ])),
+    Attr(name='X_pca_26', dtype='float32', var=False, nullable=False, filters=FilterList([ZstdFilter(level=-1), ])),
+    Attr(name='X_pca_27', dtype='float32', var=False, nullable=False, filters=FilterList([ZstdFilter(level=-1), ])),
+    Attr(name='X_pca_28', dtype='float32', var=False, nullable=False, filters=FilterList([ZstdFilter(level=-1), ])),
+    Attr(name='X_pca_29', dtype='float32', var=False, nullable=False, filters=FilterList([ZstdFilter(level=-1), ])),
+    Attr(name='X_pca_30', dtype='float32', var=False, nullable=False, filters=FilterList([ZstdFilter(level=-1), ])),
+    Attr(name='X_pca_31', dtype='float32', var=False, nullable=False, filters=FilterList([ZstdFilter(level=-1), ])),
+    Attr(name='X_pca_32', dtype='float32', var=False, nullable=False, filters=FilterList([ZstdFilter(level=-1), ])),
+    Attr(name='X_pca_33', dtype='float32', var=False, nullable=False, filters=FilterList([ZstdFilter(level=-1), ])),
+    Attr(name='X_pca_34', dtype='float32', var=False, nullable=False, filters=FilterList([ZstdFilter(level=-1), ])),
+    Attr(name='X_pca_35', dtype='float32', var=False, nullable=False, filters=FilterList([ZstdFilter(level=-1), ])),
+    Attr(name='X_pca_36', dtype='float32', var=False, nullable=False, filters=FilterList([ZstdFilter(level=-1), ])),
+    Attr(name='X_pca_37', dtype='float32', var=False, nullable=False, filters=FilterList([ZstdFilter(level=-1), ])),
+    Attr(name='X_pca_38', dtype='float32', var=False, nullable=False, filters=FilterList([ZstdFilter(level=-1), ])),
+    Attr(name='X_pca_39', dtype='float32', var=False, nullable=False, filters=FilterList([ZstdFilter(level=-1), ])),
+    Attr(name='X_pca_40', dtype='float32', var=False, nullable=False, filters=FilterList([ZstdFilter(level=-1), ])),
+    Attr(name='X_pca_41', dtype='float32', var=False, nullable=False, filters=FilterList([ZstdFilter(level=-1), ])),
+    Attr(name='X_pca_42', dtype='float32', var=False, nullable=False, filters=FilterList([ZstdFilter(level=-1), ])),
+    Attr(name='X_pca_43', dtype='float32', var=False, nullable=False, filters=FilterList([ZstdFilter(level=-1), ])),
+    Attr(name='X_pca_44', dtype='float32', var=False, nullable=False, filters=FilterList([ZstdFilter(level=-1), ])),
+    Attr(name='X_pca_45', dtype='float32', var=False, nullable=False, filters=FilterList([ZstdFilter(level=-1), ])),
+    Attr(name='X_pca_46', dtype='float32', var=False, nullable=False, filters=FilterList([ZstdFilter(level=-1), ])),
+    Attr(name='X_pca_47', dtype='float32', var=False, nullable=False, filters=FilterList([ZstdFilter(level=-1), ])),
+    Attr(name='X_pca_48', dtype='float32', var=False, nullable=False, filters=FilterList([ZstdFilter(level=-1), ])),
+    Attr(name='X_pca_49', dtype='float32', var=False, nullable=False, filters=FilterList([ZstdFilter(level=-1), ])),
+    Attr(name='X_pca_50', dtype='float32', var=False, nullable=False, filters=FilterList([ZstdFilter(level=-1), ])),
   ],
   cell_order='row-major',
   tile_order='row-major',
-  capacity=10000,
-  sparse=False,
+  capacity=100000,
+  sparse=True,
+  allows_duplicates=True,
 )
-
 
 ----------------------------------------------------------------
-obsp:
-   file:///Users/johnkerl/git/johnkerl/TileDB-SingleCell/util/tiledb-data/pbmc3k_processed/obsp/connectivities (2638, 2638)
+Array: file:///Users/johnkerl/git/single-cell-data/TileDB-SingleCell/apis/python/tiledb-data/pbmc3k_processed/obsm/X_draw_graph_fr
 ArraySchema(
   domain=Domain(*[
-    Dim(name='__dim_0', domain=(0, 2637), tile=2638, dtype='uint64'),
-    Dim(name='__dim_1', domain=(0, 2637), tile=2638, dtype='uint64'),
+    Dim(name='obs_id', domain=(None, None), tile=None, dtype='|S0', var=True, filters=FilterList([ZstdFilter(level=22), ])),
   ]),
   attrs=[
-    Attr(name='', dtype='float64', var=False, nullable=False),
+    Attr(name='X_draw_graph_fr_1', dtype='float64', var=False, nullable=False, filters=FilterList([ZstdFilter(level=-1), ])),
+    Attr(name='X_draw_graph_fr_2', dtype='float64', var=False, nullable=False, filters=FilterList([ZstdFilter(level=-1), ])),
   ],
   cell_order='row-major',
   tile_order='row-major',
-  capacity=10000,
-  sparse=False,
+  capacity=100000,
+  sparse=True,
+  allows_duplicates=True,
 )
 
-   file:///Users/johnkerl/git/johnkerl/TileDB-SingleCell/util/tiledb-data/pbmc3k_processed/obsp/distances (2638, 2638)
+----------------------------------------------------------------
+Array: file:///Users/johnkerl/git/single-cell-data/TileDB-SingleCell/apis/python/tiledb-data/pbmc3k_processed/varm/PCs
 ArraySchema(
   domain=Domain(*[
-    Dim(name='__dim_0', domain=(0, 2637), tile=2638, dtype='uint64'),
-    Dim(name='__dim_1', domain=(0, 2637), tile=2638, dtype='uint64'),
+    Dim(name='var_id', domain=(None, None), tile=None, dtype='|S0', var=True, filters=FilterList([ZstdFilter(level=22), ])),
   ]),
   attrs=[
-    Attr(name='', dtype='float64', var=False, nullable=False),
+    Attr(name='PCs_1', dtype='float32', var=False, nullable=False, filters=FilterList([ZstdFilter(level=-1), ])),
+    Attr(name='PCs_2', dtype='float32', var=False, nullable=False, filters=FilterList([ZstdFilter(level=-1), ])),
+    Attr(name='PCs_3', dtype='float32', var=False, nullable=False, filters=FilterList([ZstdFilter(level=-1), ])),
+    Attr(name='PCs_4', dtype='float32', var=False, nullable=False, filters=FilterList([ZstdFilter(level=-1), ])),
+    Attr(name='PCs_5', dtype='float32', var=False, nullable=False, filters=FilterList([ZstdFilter(level=-1), ])),
+    Attr(name='PCs_6', dtype='float32', var=False, nullable=False, filters=FilterList([ZstdFilter(level=-1), ])),
+    Attr(name='PCs_7', dtype='float32', var=False, nullable=False, filters=FilterList([ZstdFilter(level=-1), ])),
+    Attr(name='PCs_8', dtype='float32', var=False, nullable=False, filters=FilterList([ZstdFilter(level=-1), ])),
+    Attr(name='PCs_9', dtype='float32', var=False, nullable=False, filters=FilterList([ZstdFilter(level=-1), ])),
+    Attr(name='PCs_10', dtype='float32', var=False, nullable=False, filters=FilterList([ZstdFilter(level=-1), ])),
+    Attr(name='PCs_11', dtype='float32', var=False, nullable=False, filters=FilterList([ZstdFilter(level=-1), ])),
+    Attr(name='PCs_12', dtype='float32', var=False, nullable=False, filters=FilterList([ZstdFilter(level=-1), ])),
+    Attr(name='PCs_13', dtype='float32', var=False, nullable=False, filters=FilterList([ZstdFilter(level=-1), ])),
+    Attr(name='PCs_14', dtype='float32', var=False, nullable=False, filters=FilterList([ZstdFilter(level=-1), ])),
+    Attr(name='PCs_15', dtype='float32', var=False, nullable=False, filters=FilterList([ZstdFilter(level=-1), ])),
+    Attr(name='PCs_16', dtype='float32', var=False, nullable=False, filters=FilterList([ZstdFilter(level=-1), ])),
+    Attr(name='PCs_17', dtype='float32', var=False, nullable=False, filters=FilterList([ZstdFilter(level=-1), ])),
+    Attr(name='PCs_18', dtype='float32', var=False, nullable=False, filters=FilterList([ZstdFilter(level=-1), ])),
+    Attr(name='PCs_19', dtype='float32', var=False, nullable=False, filters=FilterList([ZstdFilter(level=-1), ])),
+    Attr(name='PCs_20', dtype='float32', var=False, nullable=False, filters=FilterList([ZstdFilter(level=-1), ])),
+    Attr(name='PCs_21', dtype='float32', var=False, nullable=False, filters=FilterList([ZstdFilter(level=-1), ])),
+    Attr(name='PCs_22', dtype='float32', var=False, nullable=False, filters=FilterList([ZstdFilter(level=-1), ])),
+    Attr(name='PCs_23', dtype='float32', var=False, nullable=False, filters=FilterList([ZstdFilter(level=-1), ])),
+    Attr(name='PCs_24', dtype='float32', var=False, nullable=False, filters=FilterList([ZstdFilter(level=-1), ])),
+    Attr(name='PCs_25', dtype='float32', var=False, nullable=False, filters=FilterList([ZstdFilter(level=-1), ])),
+    Attr(name='PCs_26', dtype='float32', var=False, nullable=False, filters=FilterList([ZstdFilter(level=-1), ])),
+    Attr(name='PCs_27', dtype='float32', var=False, nullable=False, filters=FilterList([ZstdFilter(level=-1), ])),
+    Attr(name='PCs_28', dtype='float32', var=False, nullable=False, filters=FilterList([ZstdFilter(level=-1), ])),
+    Attr(name='PCs_29', dtype='float32', var=False, nullable=False, filters=FilterList([ZstdFilter(level=-1), ])),
+    Attr(name='PCs_30', dtype='float32', var=False, nullable=False, filters=FilterList([ZstdFilter(level=-1), ])),
+    Attr(name='PCs_31', dtype='float32', var=False, nullable=False, filters=FilterList([ZstdFilter(level=-1), ])),
+    Attr(name='PCs_32', dtype='float32', var=False, nullable=False, filters=FilterList([ZstdFilter(level=-1), ])),
+    Attr(name='PCs_33', dtype='float32', var=False, nullable=False, filters=FilterList([ZstdFilter(level=-1), ])),
+    Attr(name='PCs_34', dtype='float32', var=False, nullable=False, filters=FilterList([ZstdFilter(level=-1), ])),
+    Attr(name='PCs_35', dtype='float32', var=False, nullable=False, filters=FilterList([ZstdFilter(level=-1), ])),
+    Attr(name='PCs_36', dtype='float32', var=False, nullable=False, filters=FilterList([ZstdFilter(level=-1), ])),
+    Attr(name='PCs_37', dtype='float32', var=False, nullable=False, filters=FilterList([ZstdFilter(level=-1), ])),
+    Attr(name='PCs_38', dtype='float32', var=False, nullable=False, filters=FilterList([ZstdFilter(level=-1), ])),
+    Attr(name='PCs_39', dtype='float32', var=False, nullable=False, filters=FilterList([ZstdFilter(level=-1), ])),
+    Attr(name='PCs_40', dtype='float32', var=False, nullable=False, filters=FilterList([ZstdFilter(level=-1), ])),
+    Attr(name='PCs_41', dtype='float32', var=False, nullable=False, filters=FilterList([ZstdFilter(level=-1), ])),
+    Attr(name='PCs_42', dtype='float32', var=False, nullable=False, filters=FilterList([ZstdFilter(level=-1), ])),
+    Attr(name='PCs_43', dtype='float32', var=False, nullable=False, filters=FilterList([ZstdFilter(level=-1), ])),
+    Attr(name='PCs_44', dtype='float32', var=False, nullable=False, filters=FilterList([ZstdFilter(level=-1), ])),
+    Attr(name='PCs_45', dtype='float32', var=False, nullable=False, filters=FilterList([ZstdFilter(level=-1), ])),
+    Attr(name='PCs_46', dtype='float32', var=False, nullable=False, filters=FilterList([ZstdFilter(level=-1), ])),
+    Attr(name='PCs_47', dtype='float32', var=False, nullable=False, filters=FilterList([ZstdFilter(level=-1), ])),
+    Attr(name='PCs_48', dtype='float32', var=False, nullable=False, filters=FilterList([ZstdFilter(level=-1), ])),
+    Attr(name='PCs_49', dtype='float32', var=False, nullable=False, filters=FilterList([ZstdFilter(level=-1), ])),
+    Attr(name='PCs_50', dtype='float32', var=False, nullable=False, filters=FilterList([ZstdFilter(level=-1), ])),
   ],
   cell_order='row-major',
   tile_order='row-major',
-  capacity=10000,
-  sparse=False,
+  capacity=100000,
+  sparse=True,
+  allows_duplicates=True,
+)
+
+----------------------------------------------------------------
+Array: file:///Users/johnkerl/git/single-cell-data/TileDB-SingleCell/apis/python/tiledb-data/pbmc3k_processed/obsp/connectivities
+ArraySchema(
+  domain=Domain(*[
+    Dim(name='obs_id_i', domain=(None, None), tile=None, dtype='|S0', var=True, filters=FilterList([RleFilter(), ])),
+    Dim(name='obs_id_j', domain=(None, None), tile=None, dtype='|S0', var=True, filters=FilterList([ZstdFilter(level=22), ])),
+  ]),
+  attrs=[
+    Attr(name='value', dtype='float64', var=False, nullable=False, filters=FilterList([ZstdFilter(level=-1), ])),
+  ],
+  cell_order='row-major',
+  tile_order='row-major',
+  capacity=100000,
+  sparse=True,
+  allows_duplicates=True,
+)
+
+----------------------------------------------------------------
+Array: file:///Users/johnkerl/git/single-cell-data/TileDB-SingleCell/apis/python/tiledb-data/pbmc3k_processed/obsp/distances
+ArraySchema(
+  domain=Domain(*[
+    Dim(name='obs_id_i', domain=(None, None), tile=None, dtype='|S0', var=True, filters=FilterList([RleFilter(), ])),
+    Dim(name='obs_id_j', domain=(None, None), tile=None, dtype='|S0', var=True, filters=FilterList([ZstdFilter(level=22), ])),
+  ]),
+  attrs=[
+    Attr(name='value', dtype='float64', var=False, nullable=False, filters=FilterList([ZstdFilter(level=-1), ])),
+  ],
+  cell_order='row-major',
+  tile_order='row-major',
+  capacity=100000,
+  sparse=True,
+  allows_duplicates=True,
+)
+
+----------------------------------------------------------------
+Array: ./tiledb-data/pbmc3k_processed/raw/X/data
+ArraySchema(
+  domain=Domain(*[
+    Dim(name='obs_id', domain=(None, None), tile=None, dtype='|S0', var=True, filters=FilterList([RleFilter(), ])),
+    Dim(name='var_id', domain=(None, None), tile=None, dtype='|S0', var=True, filters=FilterList([ZstdFilter(level=22), ])),
+  ]),
+  attrs=[
+    Attr(name='value', dtype='float32', var=False, nullable=False, filters=FilterList([ZstdFilter(level=-1), ])),
+  ],
+  cell_order='row-major',
+  tile_order='row-major',
+  capacity=100000,
+  sparse=True,
+  allows_duplicates=True,
+)
+
+----------------------------------------------------------------
+Array: ./tiledb-data/pbmc3k_processed/raw/var
+ArraySchema(
+  domain=Domain(*[
+    Dim(name='var_id', domain=(None, None), tile=None, dtype='|S0', var=True, filters=FilterList([ZstdFilter(level=-1), ])),
+  ]),
+  attrs=[
+    Attr(name='n_cells', dtype='int64', var=False, nullable=False, filters=FilterList([ZstdFilter(level=-1), ])),
+  ],
+  cell_order='row-major',
+  tile_order='row-major',
+  capacity=100000,
+  sparse=True,
+  allows_duplicates=False,
 )
 
 ```
@@ -425,86 +718,7 @@ Nonetheless this is a selection from
 [https://cellxgene.cziscience.com](https://cellxgene.cziscience.com), as well as some
 raw-sensor data (`subset_100_100`):
 
-<details>
-
-```
-for x in $(ls -Sr ~/ann/*.h5ad); do
-  echo ================================================== $x
-   ./desc-ann.py $x | grep IS.A
-done
-```
-
-```
-================================================== /Users/johnkerl/ann/subset_100_100.h5ad
-X IS A    <class 'scipy.sparse._csr.csr_matrix'>
-OBS IS A <class 'pandas.core.frame.DataFrame'>
-VAR IS A <class 'pandas.core.frame.DataFrame'>
-================================================== /Users/johnkerl/ann/pbmc3k_processed.h5ad
-X IS A    <class 'numpy.ndarray'>
-OBS IS A <class 'pandas.core.frame.DataFrame'>
-VAR IS A <class 'pandas.core.frame.DataFrame'>
-  OBSM X_pca IS A <class 'numpy.ndarray'>
-  OBSM X_tsne IS A <class 'numpy.ndarray'>
-  OBSM X_umap IS A <class 'numpy.ndarray'>
-  OBSM X_draw_graph_fr IS A <class 'numpy.ndarray'>
-  VARM PCs IS A <class 'numpy.ndarray'>
-  OBSP distances IS A <class 'scipy.sparse._csr.csr_matrix'>
-  OBSP connectivities IS A <class 'scipy.sparse._csr.csr_matrix'>
-================================================== /Users/johnkerl/ann/local3.h5ad
-X IS A    <class 'scipy.sparse._csr.csr_matrix'>
-OBS IS A <class 'pandas.core.frame.DataFrame'>
-VAR IS A <class 'pandas.core.frame.DataFrame'>
-  OBSM X_umap IS A <class 'numpy.ndarray'>
-================================================== /Users/johnkerl/ann/human-kidney-tumors-wilms.h5ad
-X IS A    <class 'scipy.sparse._csr.csr_matrix'>
-OBS IS A <class 'pandas.core.frame.DataFrame'>
-VAR IS A <class 'pandas.core.frame.DataFrame'>
-  OBSM X_pca IS A <class 'numpy.ndarray'>
-  OBSM X_umap IS A <class 'numpy.ndarray'>
-================================================== /Users/johnkerl/ann/longitudinal-profiling-49.h5ad
-X IS A    <class 'scipy.sparse._csr.csr_matrix'>
-OBS IS A <class 'pandas.core.frame.DataFrame'>
-VAR IS A <class 'pandas.core.frame.DataFrame'>
-  OBSM X_umap IS A <class 'numpy.ndarray'>
-================================================== /Users/johnkerl/ann/single-cell-transcriptomes.h5ad
-X IS A    <class 'scipy.sparse._csr.csr_matrix'>
-OBS IS A <class 'pandas.core.frame.DataFrame'>
-VAR IS A <class 'pandas.core.frame.DataFrame'>
-  OBSM X_pca IS A <class 'numpy.ndarray'>
-  OBSM X_umap IS A <class 'numpy.ndarray'>
-================================================== /Users/johnkerl/ann/vieira19_Alveoli_and_parenchyma_anonymised.processed.h5ad
-X IS A    <class 'scipy.sparse._csc.csc_matrix'>
-OBS IS A <class 'pandas.core.frame.DataFrame'>
-VAR IS A <class 'pandas.core.frame.DataFrame'>
-  OBSM X_umap_hm IS A <class 'numpy.ndarray'>
-  VARM PCs IS A <class 'numpy.ndarray'>
-================================================== /Users/johnkerl/ann/local2.h5ad
-X IS A    <class 'scipy.sparse._csr.csr_matrix'>
-OBS IS A <class 'pandas.core.frame.DataFrame'>
-VAR IS A <class 'pandas.core.frame.DataFrame'>
-  OBSM X_umap IS A <class 'numpy.ndarray'>
-================================================== /Users/johnkerl/ann/acute-covid19-cohort.h5ad
-X IS A    <class 'scipy.sparse._csr.csr_matrix'>
-OBS IS A <class 'pandas.core.frame.DataFrame'>
-VAR IS A <class 'pandas.core.frame.DataFrame'>
-  OBSM X_umap IS A <class 'numpy.ndarray'>
-================================================== /Users/johnkerl/ann/autoimmunity-pbmcs.h5ad
-X IS A    <class 'scipy.sparse._csr.csr_matrix'>
-OBS IS A <class 'pandas.core.frame.DataFrame'>
-VAR IS A <class 'pandas.core.frame.DataFrame'>
-  OBSM X_umap IS A <class 'numpy.ndarray'>
-```
-
-See also:
-
-```
-for x in ~/ann/*.h5ad; do
-  echo ================================================ $x
-  h5ls $x
-done
-```
-
-</details>
+![anndata-filetypes](./images/isa.png)
 
 # Notes
 
