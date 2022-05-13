@@ -97,7 +97,7 @@ class AnnotationDataFrame(TileDBArray):
 
 
     # ----------------------------------------------------------------
-    def to_dataframe_and_labels(self) -> Tuple[pandas.DataFrame, List[str]]:
+    def to_dataframe(self) -> pandas.DataFrame:
         """
         Reads the TileDB obs or var array and returns a type of pandas dataframe
         and dimension values.
@@ -110,11 +110,9 @@ class AnnotationDataFrame(TileDBArray):
         index_name = self.name + '_id'
         with tiledb.open(self.uri) as A:
             df = pandas.DataFrame(A[:])
-            labels = df[index_name] # strings, sorted
             df = df.set_index(index_name)
-            retval = (df, labels)
 
         if self.verbose:
             print(util.format_elapsed(s, f"{self.indent}FINISH read {self.uri}"))
 
-        return retval
+        return df

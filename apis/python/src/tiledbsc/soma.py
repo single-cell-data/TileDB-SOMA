@@ -284,15 +284,15 @@ class SOMA(TileDBGroup):
     # ----------------------------------------------------------------
     # Split from to_anndata solely to get the outermost verbosity prints done
     # exactly once, whether the user does soma.to_anndata or soma.to_h5ad.
-    def _to_anndata(self):
+    def _to_anndata(self) -> ad.AnnData:
         """
         Internal helper function for to_anndata; same arguments.
         """
 
-        obs_df, obs_labels = self.obs.to_dataframe_and_labels()
-        var_df, var_labels = self.var.to_dataframe_and_labels()
+        obs_df = self.obs.to_dataframe()
+        var_df = self.var.to_dataframe()
 
-        X_mat = self.X.data.to_csr_matrix(obs_labels, var_labels)
+        X_mat = self.X.data.to_csr_matrix(obs_df.index, var_df.index)
 
         obsm = self.obsm.to_dict_of_csr()
         varm = self.varm.to_dict_of_csr()
@@ -303,7 +303,7 @@ class SOMA(TileDBGroup):
         print("  VARP OUTGEST NOT WORKING YET")
         #varp = self.varp.to_dict_of_csr()
 
-        (raw_X, raw_var_df, raw_var_labels, raw_varm) = self.raw.to_anndata_raw(obs_labels)
+        (raw_X, raw_var_df, raw_varm) = self.raw.to_anndata_raw(obs_df.index)
 
         anndata = ad.AnnData(X=X_mat, obs=obs_df, var=var_df, obsm=obsm, varm=varm)
 
@@ -337,9 +337,9 @@ class SOMA(TileDBGroup):
         Extract only the raw parts as a new AnnData object.
         """
 
-        obs_df, obs_labels = self.obs.to_dataframe_and_labels()
-        var_df, var_labels = self.raw.var.to_dataframe_and_labels()
-        X_mat = self.raw.X.data.to_csr_matrix(obs_labels, var_labels)
+        obs_df = self.obs.to_dataframe()
+        var_df = self.raw.var.to_dataframe()
+        X_mat = self.raw.X.data.to_csr_matrix(obs.index, var.index)
 
         return ad.AnnData(
             X=X_mat, obs=obs_df, var=var_df,

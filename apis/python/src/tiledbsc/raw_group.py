@@ -73,19 +73,13 @@ class RawGroup(TileDBGroup):
     # ----------------------------------------------------------------
     def to_anndata_raw(self, obs_labels):
         """
-        Reads TileDB storage and returns an anndata.Raw object.
+        Reads TileDB storage and returns the material for an anndata.Raw object.
         obs_labels must be from the parent object.
         """
 
-        var_df, var_labels = self.var.to_dataframe_and_labels()
-        X_mat = self.X.data.to_csr_matrix(obs_labels, var_labels)
-        varm = self.varm.to_dict_of_csr()
+        var_df = self.var.to_dataframe()
+        X_mat  = self.X.data.to_csr_matrix(obs_labels, var_df.index)
+        varm   = self.varm.to_dict_of_csr()
 
-        # TODO
-        print("  OBSP OUTGEST NOT WORKING YET")
-        #obsp = self.obsp.to_dict_of_csr()
-        print("  VARP OUTGEST NOT WORKING YET")
-        #varp = self.varp.to_dict_of_csr()
-
-        return (X_mat, var_df, var_labels, varm)
+        return (X_mat, var_df, varm)
 
