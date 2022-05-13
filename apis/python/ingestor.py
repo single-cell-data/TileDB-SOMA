@@ -31,7 +31,10 @@ def main():
         nargs='*'
     )
     parser.add_argument("-n", help="All arguments after flags are treated as input paths", action="store_true")
+    parser.add_argument("-o", help="Specify output directory to contain the somas", type=str, default='./tiledb-data')
     args = parser.parse_args()
+
+    outdir = args.o.rstrip('/')
 
     verbose = not args.quiet
 
@@ -41,17 +44,17 @@ def main():
             sys.exit(1)
         for input_path in args.paths:
             # Example 'anndata/pbmc3k_processed.h5ad' -> 'tiledb-data/pbmc3k_processed'
-            output_path = 'tiledb-data/' + os.path.splitext(os.path.basename(input_path))[0]
+            output_path = os.path.join(outdir, os.path.splitext(os.path.basename(input_path))[0])
             ingest_one(input_path, output_path, verbose)
     else:
         if len(args.paths) == 0:
             input_path  = 'anndata/pbmc-small.h5ad'
-            output_path = 'tiledb-data/pbmc-small'
+            output_path = os.path.join(outdir, 'pbmc-small')
             ingest_one(input_path, output_path, verbose)
         elif len(args.paths) == 1:
             input_path  = args.paths[0]
             # Example 'anndata/pbmc3k_processed.h5ad' -> 'tiledb-data/pbmc3k_processed'
-            output_path = 'tiledb-data/' + os.path.splitext(os.path.basename(input_path))[0]
+            output_path = os.path.join(outdir, os.path.splitext(os.path.basename(input_path))[0])
             ingest_one(input_path, output_path, verbose)
         elif len(args.paths) == 2:
             input_path  = args.paths[0]

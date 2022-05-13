@@ -30,6 +30,7 @@ def main():
         description="Outgest soma data from TileDB group structure to anndata/h5ad"
    )
     parser.add_argument("-q", "--quiet", help="decrease output verbosity", action="store_true")
+    parser.add_argument("-o", help="Specify output directory to contain the somas: default ./anndata-readback", type=str, default='./anndata-readback')
     parser.add_argument(
         "paths",
         type=str,
@@ -38,23 +39,22 @@ def main():
     )
     args = parser.parse_args()
 
+    outdir = args.o.rstrip('/')
+
     if len(args.paths) == 0:
         input_path  = 'tiledb-data/pbmc-small'
-        output_path = 'anndata-readback/pbmc-small.h5ad'
+        output_path = os.path.join(outdir, 'pbmc-small.h5ad')
     elif len(args.paths) == 1:
         # Strip trailing slashes so basename will behave correctly
         input_path  = args.paths[0].rstrip('/')
         # Example 'tiledb-data/pbmc3k_processed' -> 'anndata-readcbak/pbmc3k_processed.h5ad'
-        output_path = 'anndata-readback/' + os.path.basename(input_path) + '.h5ad'
+        output_path = os.path.join(outdir, os.path.basename(input_path) + '.h5ad')
     elif len(args.paths) == 2:
         input_path  = args.paths[0]
         output_path = args.paths[1]
     else:
         parser.print_help(file=sys.stderr)
         sys.exit(1)
-
-    if not os.path.exists('anndata-readback'):
-        os.mkdir('anndata-readback')
 
     if not os.path.exists(input_path):
         # Print this neatly and exit neatly, to avoid a multi-line stack trace otherwise.
@@ -63,8 +63,8 @@ def main():
 
     # This is for local-disk use only -- for S3-backed tiledb://... URIs we should
     # use tiledb.vfs to remove any priors, and/or make use of a tiledb `overwrite` flag.
-    if not os.path.exists('anndata-readback'):
-        os.mkdir('anndata-readback')
+    if not os.path.exists(outdir):
+        os.mkdir(outdir)
 
     verbose = not args.quiet
     soma = tiledbsc.SOMA(input_path, verbose=verbose)
