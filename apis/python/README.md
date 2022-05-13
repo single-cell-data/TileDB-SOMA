@@ -120,6 +120,8 @@ This serves both as a concrete example of what the data looks like, as well as s
 
 Look at information about a sample `.h5ad` file:
 
+<details>
+
 ```
 $ ./desc-ann.py anndata/pbmc-small.h5ad
 
@@ -187,6 +189,8 @@ h5ls -r  anndata/pbmc3k_processed.h5ad
 h5ls -vr anndata/pbmc3k_processed.h5ad
 # etc.
 ```
+
+</details>
 
 Read a sample `.h5ad` file and write into a TileDB SOMA object:
 
