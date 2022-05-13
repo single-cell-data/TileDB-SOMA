@@ -70,10 +70,15 @@ class TileDBGroup(TileDBObject):
         self.tiledb_group.close()
         self.tiledb_group = None
 
-    def add(self, obj: TileDBObject):
+    def add_object(self, obj: TileDBObject):
         if self.tiledb_group == None:
             raise Exception("Attempt to write to a non-open group")
         self.tiledb_group.add(uri=obj.uri, relative=False, name=obj.name)
+
+    def add_uri(self, uri: str, name: str):
+        if self.tiledb_group == None:
+            raise Exception("Attempt to write to a non-open group")
+        self.tiledb_group.add(uri=uri, relative=False, name=name)
 
     def get_member_uris(self):
         """

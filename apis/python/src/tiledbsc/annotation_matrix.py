@@ -6,7 +6,7 @@ import tiledbsc.util as util
 
 import pandas as pd
 
-from typing import Optional
+from typing import Optional, List
 
 class AnnotationMatrix(TileDBArray):
     """
@@ -121,4 +121,3 @@ class AnnotationMatrix(TileDBArray):
 
         with tiledb.open(self.uri, mode="w", ctx=self.ctx) as A:
             A[dim_values] = df.to_dict(orient='list')
-

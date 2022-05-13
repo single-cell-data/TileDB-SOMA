@@ -75,21 +75,21 @@ class UnsGroup(TileDBGroup):
                 # Nested data, e.g. a.uns['draw-graph']['params']['layout']
                 subgroup = UnsGroup(uri=component_uri, name=key, parent=self)
                 subgroup.from_anndata_uns(value)
-                self.add(subgroup)
+                self.add_object(subgroup)
                 continue
 
             array = UnsArray(uri=component_uri, name=key, parent=self)
 
             if isinstance(value, pd.DataFrame):
                 array.from_pandas_dataframe(value)
-                self.add(array)
+                self.add_object(array)
 
             elif isinstance(value, scipy.sparse.csr_matrix):
                 array.from_scipy_csr(value)
-                self.add(array)
+                self.add_object(array)
 
             elif array.maybe_from_numpyable_object(value):
-                self.add(array)
+                self.add_object(array)
 
             else:
                 print("      Skipping unrecognized type:", component_uri, type(value))

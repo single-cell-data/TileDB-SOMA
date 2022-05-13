@@ -54,7 +54,7 @@ class AnnotationMatrixGroup(TileDBGroup):
                 parent=self,
             )
             annotation_matrix.from_anndata(anndata_matrix, dim_values)
-            self.add(annotation_matrix)
+            self.add_object(annotation_matrix)
         self.close()
 
     # ----------------------------------------------------------------

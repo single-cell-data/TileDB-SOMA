@@ -49,6 +49,6 @@ class AssayMatrixGroup(TileDBGroup):
 
         if matrix is not None:
             self.data.from_matrix(matrix, row_names, col_names)
-            self.add(self.data)
+            self.add_object(self.data)
 
         self.close()

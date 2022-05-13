@@ -62,7 +62,7 @@ class AnnotationPairwiseMatrixGroup(TileDBGroup):
                 parent=self,
             )
             annotation_pairwise_matrix.from_matrix(anndata_matrix, dim_values, dim_values)
-            self.add(annotation_pairwise_matrix)
+            self.add_object(annotation_pairwise_matrix)
         self.close()
 
     # ----------------------------------------------------------------

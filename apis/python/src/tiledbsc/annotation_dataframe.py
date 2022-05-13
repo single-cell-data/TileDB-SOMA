@@ -13,6 +13,8 @@ class AnnotationDataFrame(TileDBArray):
     Nominally for obs and var data within a soma. These have one string dimension, and multiple attributes.
     """
 
+    dim_name: str
+
     # ----------------------------------------------------------------
     def __init__(
         self,
@@ -25,6 +27,7 @@ class AnnotationDataFrame(TileDBArray):
         """
         assert(name in ['obs', 'var'])
         super().__init__(uri=uri, name=name, parent=parent)
+        self.dim_name = name + '_id'
 
 
     # ----------------------------------------------------------------
@@ -69,7 +72,7 @@ class AnnotationDataFrame(TileDBArray):
         #   ...            ...        ...        ...          ...
         #   GGAACACTTCAGAC 0          150.0      30           ...
         #   CTTGATTGATCTTC 0          233.0      76           ...
-        dataframe = dataframe.rename_axis(self.name+'_id')
+        dataframe = dataframe.rename_axis(self.dim_name)
 
         mode = 'ingest'
         if self.exists():
@@ -107,15 +110,23 @@ class AnnotationDataFrame(TileDBArray):
             s = util.get_start_stamp()
             print(f"{self.indent}START  read {self.uri}")
 
-        index_name = self.name + '_id'
         with tiledb.open(self.uri) as A:
             # We could use A.df[:] to set the index_name to 'obs_id' or 'var_id'.
             # However, the resulting dataframe has obs_id/var_id as strings, not
             # bytes, resulting in `KeyError` elsewhere in the code.
             df = pandas.DataFrame(A[:])
-            df = df.set_index(index_name)
+            df = df.set_index(self.dim_name)
 
         if self.verbose:
             print(util.format_elapsed(s, f"{self.indent}FINISH read {self.uri}"))
 
         return df
+
+    # ----------------------------------------------------------------
+    def get_dim_values(self) -> List[str]:
+        """
+        TODO
+        """
+        with tiledb.open(self.uri) as A:
+            df = A[:]
+            return df[self.dim_name].tolist()
