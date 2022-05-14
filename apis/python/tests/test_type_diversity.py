@@ -1,9 +1,11 @@
-from anndata import AnnData
+import anndata as ad
 import tiledb
 from tiledbsc import SOMA
 import pandas as pd
 import numpy as np
 from scipy import sparse
+
+from pathlib import Path
 
 import pytest
 
@@ -62,7 +64,7 @@ def test_from_anndata_X_type(tmp_path, X_dtype_name, X_encoding):
     else:
         assert False  # sanity - test misconfiguration
 
-    adata = AnnData(X=X, obs=obs, var=var, dtype=X.dtype)
+    adata = ad.AnnData(X=X, obs=obs, var=var, dtype=X.dtype)
     print(" =============================================================>==", adata.X.dtype, X_dtype)
     assert adata.X.dtype == X_dtype  # sanity
 
@@ -151,7 +153,7 @@ def test_from_anndata_DataFrame_type(tmp_path):
         },
     )
     X = np.ones((n, n), dtype=np.float32)
-    adata = AnnData(X=X, obs=df, var=df, dtype=X.dtype)
+    adata = ad.AnnData(X=X, obs=df, var=df, dtype=X.dtype)
     SOMA(tmp_path.as_posix()).from_anndata(adata)
     assert all(
         (tmp_path / sub_array_path).exists()
@@ -208,7 +210,7 @@ def test_from_anndata_annotations_empty(tmp_path):
     var = pd.DataFrame(index=np.arange(n_var).astype(bytes))
 
     X = np.ones((n_obs, n_var))
-    adata = AnnData(X=X, obs=obs, var=var, dtype=X.dtype)
+    adata = ad.AnnData(X=X, obs=obs, var=var, dtype=X.dtype)
 
     SOMA(tmp_path.as_posix()).from_anndata(adata)
 
@@ -236,7 +238,7 @@ def test_from_anndata_annotations_none(tmp_path):
 
     """ default constructor """
     path = tmp_path / "empty"
-    adata = AnnData()
+    adata = ad.AnnData()
     with pytest.raises(NotImplementedError, match='Empty AnnData.obs or AnnData.var unsupported.'):
         SOMA(path.as_posix()).from_anndata(adata)
     assert not any(
@@ -245,7 +247,7 @@ def test_from_anndata_annotations_none(tmp_path):
 
     """ only X defined """
     path = tmp_path / "X_only"
-    adata = AnnData(X=np.eye(100, 10, dtype=np.float32))
+    adata = ad.AnnData(X=np.eye(100, 10, dtype=np.float32))
     SOMA(path.as_posix()).from_anndata(adata)
     assert all(
         (path / sub_array_path).exists() for sub_array_path in ["obs", "var", "X/data"]
@@ -253,7 +255,7 @@ def test_from_anndata_annotations_none(tmp_path):
 
     """ missing var """
     path = tmp_path / "no_var"
-    adata = AnnData(X=np.eye(100, 10, dtype=np.float32), obs=np.arange(100).astype(str))
+    adata = ad.AnnData(X=np.eye(100, 10, dtype=np.float32), obs=np.arange(100).astype(str))
     SOMA(path.as_posix()).from_anndata(adata)
     assert all(
         (path / sub_array_path).exists() for sub_array_path in ["obs", "var", "X/data"]
@@ -261,7 +263,7 @@ def test_from_anndata_annotations_none(tmp_path):
 
     """ missing obs """
     path = tmp_path / "no_obs"
-    adata = AnnData(X=np.eye(100, 10, dtype=np.float32), var=np.arange(10).astype(str))
+    adata = ad.AnnData(X=np.eye(100, 10, dtype=np.float32), var=np.arange(10).astype(str))
     SOMA(path.as_posix()).from_anndata(adata)
     assert all(
         (path / sub_array_path).exists() for sub_array_path in ["obs", "var", "X/data"]
@@ -274,7 +276,7 @@ def test_from_anndata_error_handling(tmp_path):
     obs = pd.DataFrame(index=np.arange(n_obs).astype(str), data={
         'A': [{} for i in range(n_obs)]
     })
-    adata = AnnData(obs=obs, X=np.ones((n_obs, 2), dtype=np.float32))
+    adata = ad.AnnData(obs=obs, X=np.ones((n_obs, 2), dtype=np.float32))
     with pytest.raises(NotImplementedError):
         SOMA(tmp_path.as_posix()).from_anndata(adata)
 
@@ -302,7 +304,7 @@ def test_from_anndata_zero_length_str(tmp_path):
         data={"A": list(str(i) for i in range(n_var))},
     )
     X = np.ones((n_obs, n_var))
-    adata = AnnData(X=X, obs=obs, var=var, dtype=X.dtype)
+    adata = ad.AnnData(X=X, obs=obs, var=var, dtype=X.dtype)
 
     SOMA(tmp_path.as_posix()).from_anndata(adata)
 
@@ -358,7 +360,7 @@ def test_from_anndata_category_nans(tmp_path, col_name, cat_dtype, expect_raise)
         columns=['A']
     )
     X = np.ones((n_obs, n_var), dtype=np.float32)
-    adata = AnnData(X=X, obs=obs, var=var)
+    adata = ad.AnnData(X=X, obs=obs, var=var)
 
     if expect_raise:
         with pytest.raises(ValueError):
@@ -378,3 +380,37 @@ def test_from_anndata_category_nans(tmp_path, col_name, cat_dtype, expect_raise)
                 adata.obs[col_name].astype(cat_dtype),
                 equal_nan=True if np.dtype(cat_dtype).kind == 'f' else False
             )
+
+HERE = Path(__file__).parent
+# https://github.com/single-cell-data/TileDB-SingleCell/issues/74
+def test_from_anndata_obsm_key_pandas_dataframe(tmp_path):
+    """
+    Normal case is:
+    * X is scipy.sparse.csr_matrix or numpy.ndarray
+    * obs,var are pandas.DataFrame (note _columns_ are numpy.ndarray)
+    * obsm,varm elements are numpy.ndarray
+    * obsp,varp elements are scipy.sparse.csr_matrix or numpy.ndarray
+    Here we test the case where obsm has an element which is pandas.DataFrame
+    """
+
+    input_path = HERE.parent / "anndata/pbmc-small.h5ad"
+    adata = ad.read_h5ad(input_path)
+
+    key = 'is_a_pandas_dataframe'
+    adata.obsm[key] = pd.DataFrame(data = np.zeros(adata.n_obs), index=adata.obs.index)
+    adata.obsm[key].rename(columns={0:'column_name'}, inplace=True)
+
+    SOMA(tmp_path.as_posix()).from_anndata(adata)
+    assert all(
+        (tmp_path / sub_array_path).exists()
+        for sub_array_path in ["obs", "var", "X/data", "obsm", "obsm/"+key]
+    )
+
+    # Check types & shapes.
+    adata_obsm = adata.obsm[key]
+    with tiledb.open((tmp_path / "obsm" / key).as_posix()) as tiledb_obsm:
+        assert adata_obsm.dtypes[0].kind == tiledb_obsm.schema.attr(0).dtype.kind
+        assert adata_obsm.dtypes[0] == tiledb_obsm.schema.attr(0).dtype
+        tiledb_obsm_df = tiledb_obsm[:]
+        key_1 = list(tiledb_obsm_df.keys())[0]
+        assert tiledb_obsm_df[key_1].shape == (adata.n_obs,)
