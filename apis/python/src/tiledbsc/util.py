@@ -96,6 +96,9 @@ def _to_tiledb_supported_array_type(x):
 
         return dtype
 
+    if isinstance(x, pd.DataFrame):
+        return pd.DataFrame.from_dict({k: _to_tiledb_supported_array_type(v) for k, v in x.items()})
+
     # If a Pandas categorical, use the type of the underlying category.
     # If the array contains NaN/NA, and the primitive is unable to represent
     # a reasonable facsimile, i.e. not string or float, raise.
