@@ -44,6 +44,16 @@ class AnnotationMatrix(TileDBArray):
             s = util.get_start_stamp()
             print(f"{self.indent}START  WRITING {self.uri}")
 
+        if isinstance(matrix, pd.DataFrame):
+            self._from_pandas_dataframe(matrix, dim_values)
+        else:
+            self._numpy_ndarray_or_scipy_sparse_csr_matrix(matrix, dim_values)
+
+        if self.verbose:
+            print(util.format_elapsed(s, f"{self.indent}FINISH WRITING {self.uri}"))
+
+    # ----------------------------------------------------------------
+    def _numpy_ndarray_or_scipy_sparse_csr_matrix(self, matrix, dim_values):
         # We do not have column names for anndata-provenance annotation matrices.
         # So, if say we're looking at anndata.obsm['X_pca'], we create column names
         # 'X_pca_1', 'X_pca_2', etc.
@@ -55,20 +65,32 @@ class AnnotationMatrix(TileDBArray):
             if self.verbose:
                 print(f"{self.indent}Re-using existing array {self.uri}")
         else:
-            self.create_empty_array(matrix.dtype, attr_names)
+            self.create_empty_array([matrix.dtype] * nattr, attr_names)
 
         self.ingest_data(matrix, dim_values, attr_names)
 
-        if self.verbose:
-            print(util.format_elapsed(s, f"{self.indent}FINISH WRITING {self.uri}"))
+    # ----------------------------------------------------------------
+    def _from_pandas_dataframe(self, df, dim_values):
+        (nrow, nattr) = df.shape
+        attr_names = df.columns.values.tolist()
 
+        # Ingest annotation matrices as 1D/multi-attribute sparse arrays
+        if self.exists():
+            if self.verbose:
+                print(f"{self.indent}Re-using existing array {self.uri}")
+        else:
+            self.create_empty_array(list(df.dtypes), attr_names)
+
+        with tiledb.open(self.uri, mode="w", ctx=self.ctx) as A:
+            A[dim_values] = df.to_dict(orient='list')
 
     # ----------------------------------------------------------------
-    def create_empty_array(self, matrix_dtype, attr_names):
+    def create_empty_array(self, matrix_dtypes, attr_names):
         """
         Create a TileDB 1D sparse array with string dimension and multiple attributes.
 
-        :param matrix_dtype: e.g. anndata.obsm['X_pca'].dtype
+        :param matrix_dtypes: For numpy.ndarray, there is a single dtype and this must be
+        repeated once per column. For pandas.DataFrame, there is a dtype per column.
         :param attr_names: column names for the dataframe
         """
 
@@ -85,8 +107,8 @@ class AnnotationMatrix(TileDBArray):
         )
 
         attrs = [
-            tiledb.Attr(attr_name, dtype=matrix_dtype, filters=[tiledb.ZstdFilter()], ctx=self.ctx)
-            for attr_name in attr_names
+            tiledb.Attr(attr_name, dtype=matrix_dtypes[j], filters=[tiledb.ZstdFilter()], ctx=self.ctx)
+            for j, attr_name in enumerate(attr_names)
         ]
 
         sch = tiledb.ArraySchema(
