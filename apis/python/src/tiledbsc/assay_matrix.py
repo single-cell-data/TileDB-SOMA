@@ -9,6 +9,7 @@ import scipy
 import numpy as np
 
 from typing import Optional
+import time
 
 class AssayMatrix(TileDBArray):
     """
@@ -178,19 +179,19 @@ class AssayMatrix(TileDBArray):
         if self.verbose:
             print(f"{self.indent}START  __ingest_coo_data_string_dims_rows_chunked")
 
+        eta_tracker = util.ETATracker()
         with tiledb.open(self.uri, mode="w") as A:
             nrow = len(sorted_row_names)
 
             i = 0
             while i < nrow:
+                t1 = time.time()
                 # Find a number of CSR rows which will result in a desired nnz for the chunk.
                 chunk_size = util.find_csr_chunk_size(matrix, permutation, i, self.soma_options.goal_chunk_nnz)
                 i2 = i + chunk_size
 
                 # Convert the chunk to a COO matrix.
                 chunk_coo = matrix[permutation[i:i2]].tocoo()
-
-                s2 = util.get_start_stamp()
 
                 # Write the chunk-COO to TileDB.
                 d0 = sorted_row_names[chunk_coo.row + i]
@@ -203,14 +204,21 @@ class AssayMatrix(TileDBArray):
                 # makes us look buggy if we say we're ingesting chunk 0:18 and then 18:32.
                 # Instead, print doubly-inclusive lo..hi like 0..17 and 18..31.
                 if self.verbose:
-                    print("%sSTART  chunk rows %d..%d of %d, obs_ids %s..%s, nnz=%d, %7.3f%%" %
-                        (self.indent, i, i2-1, nrow, d0[0], d0[-1], chunk_coo.nnz, 100*(i2-1)/nrow))
+                    chunk_percent = 100*(i2-1)/nrow
+                    print("%sSTART  chunk rows %d..%d of %d (%.3f%%), obs_ids %s..%s, nnz=%d" %
+                        (self.indent, i, i2-1, nrow, chunk_percent, d0[0], d0[-1], chunk_coo.nnz))
 
                 # Write a TileDB fragment
                 A[d0, d1] = chunk_coo.data
 
                 if self.verbose:
-                    print(util.format_elapsed(s2,f"{self.indent}FINISH chunk"))
+                    t2 = time.time()
+                    chunk_seconds = t2 - t1
+                    eta = eta_tracker.ingest_and_predict(chunk_percent, chunk_seconds)
+
+                    print("%sFINISH chunk in %.3f seconds, %7.3f%% done, ETA %s" %
+                        (self.indent, chunk_seconds, chunk_percent, eta))
+
                 i = i2
 
         if self.verbose:
