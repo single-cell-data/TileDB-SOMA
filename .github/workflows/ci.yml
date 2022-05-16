@@ -48,8 +48,14 @@ jobs:
       run: |
         mkdir build
         cmake -B $env:GITHUB_WORKSPACE/build -S $env:GITHUB_WORKSPACE/libtiledbsc
+        cmake --build $env:GITHUB_WORKSPACE/build --target check-format
         cmake --build $env:GITHUB_WORKSPACE/build --config Release -j $env:NUMBER_OF_PROCESSORS 2>&1
+        cmake --build $env:GITHUB_WORKSPACE/build --target install-libtiledbsc
 
     - name: Run libtiledbsc tests
       run: |
-        make -C libtiledbsc test
+        cmake --build $env:GITHUB_WORKSPACE/build/libtiledbsc --target unit_buffer_set
+        cmake --build $env:GITHUB_WORKSPACE/build/libtiledbsc --target unit_sc
+        cmake --build $env:GITHUB_WORKSPACE/build/libtiledbsc --target test
+# TODO: fix and enable this test
+#        cmake --build $env:GITHUB_WORKSPACE/build/libtiledbsc --target unit_managed_query

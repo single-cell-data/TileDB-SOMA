@@ -1,8 +1,8 @@
-#include <tiledb/tiledb>
 #include <tiledbsc/buffer_set.h>
+#include <tiledb/tiledb>
 
-#include <vector>
 #include <memory>
+#include <vector>
 
 #include <catch2/catch_test_macros.hpp>
 
@@ -10,13 +10,7 @@ using namespace tiledb;
 using namespace tiledbsc;
 
 TEST_CASE("Basic BufferSet functionality") {
-    auto b1 = tiledbsc::BufferSet(
-        "foo",
-        1023,
-        4,
-        false,
-        false
-    );
+    auto b1 = tiledbsc::BufferSet("foo", 1023, 4, false, false);
 
     REQUIRE(b1.name() == "foo");
     REQUIRE(b1.isvar() == false);
@@ -45,7 +39,8 @@ TEST_CASE("BufferSet::from_attribute") {
 
 TEST_CASE("BufferSet::from_dimension") {
     auto ctx = tiledb::Context();
-    auto dim = Dimension::create(ctx, "d1", TILEDB_STRING_ASCII, nullptr, nullptr);
+    auto dim = Dimension::create(
+        ctx, "d1", TILEDB_STRING_ASCII, nullptr, nullptr);
     dim.set_cell_val_num(TILEDB_VAR_NUM);
 
     auto buffers = BufferSet::from_dimension(dim, 9);

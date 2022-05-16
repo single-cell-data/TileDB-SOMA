@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+
+set -eux pipefail
+
+# cd to the top level directory of the repo
+pushd $(git rev-parse --show-toplevel)
+
+rm -rf build dist
+cmake -B build -S libtiledbsc
+
+cmake --build build --target check-format || echo "Check format failed."
+cmake --build build --config Release -j $(nproc) || echo "Build failed."
+cmake --build build --target install-libtiledbsc || echo "Install failed."
+
+popd

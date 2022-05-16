@@ -1,6 +1,6 @@
 #include <memory>
-#include <vector>
 #include <optional>
+#include <vector>
 
 // TODO remove work-around in current libtiledb
 #include <stdexcept>
@@ -9,15 +9,15 @@
 #include <tiledbsc/buffer_set.h>
 
 namespace {
-    bool isvar(const tiledb::Attribute& attr) {
-        return attr.cell_val_num() == TILEDB_VAR_NUM;
-    }
-    bool isvar(const tiledb::Dimension& dim) {
-        return (dim.cell_val_num() == TILEDB_VAR_NUM ||
-                dim.type() == TILEDB_STRING_ASCII ||
-                dim.type() == TILEDB_STRING_UTF8);
-    }
+bool isvar(const tiledb::Attribute& attr) {
+    return attr.cell_val_num() == TILEDB_VAR_NUM;
 }
+bool isvar(const tiledb::Dimension& dim) {
+    return (
+        dim.cell_val_num() == TILEDB_VAR_NUM ||
+        dim.type() == TILEDB_STRING_ASCII || dim.type() == TILEDB_STRING_UTF8);
+}
+}  // namespace
 
 namespace tiledbsc {
 
@@ -27,11 +27,14 @@ namespace tiledbsc {
 
 BufferSet::BufferSet(
     std::string name,
-    size_t nelem, size_t elem_nbytes,
-    bool isvar, bool isnullable)
-    :
-    name_(name), elem_nbytes_(elem_nbytes), offsets(std::nullopt), validity(std::nullopt)
-{
+    size_t nelem,
+    size_t elem_nbytes,
+    bool isvar,
+    bool isnullable)
+    : name_(name)
+    , elem_nbytes_(elem_nbytes)
+    , offsets(std::nullopt)
+    , validity(std::nullopt) {
     data = std::vector<DELEM_T>(nelem * elem_nbytes);
 
     if (isvar) {
@@ -83,33 +86,19 @@ void BufferSet::resize(size_t nelem) {
 }
 
 std::shared_ptr<BufferSet> BufferSet::from_attribute(
-    const tiledb::Attribute& attr, size_t nelem
-)
-{
+    const tiledb::Attribute& attr, size_t nelem) {
     size_t elem_nbytes = tiledb::impl::type_size(attr.type());
 
     return std::make_shared<BufferSet>(
-        attr.name(),
-        nelem,
-        elem_nbytes,
-        ::isvar(attr),
-        attr.nullable()
-    );
+        attr.name(), nelem, elem_nbytes, ::isvar(attr), attr.nullable());
 }
 
 std::shared_ptr<BufferSet> BufferSet::from_dimension(
-    const tiledb::Dimension& dim, size_t nelem
-)
-{
+    const tiledb::Dimension& dim, size_t nelem) {
     size_t elem_nbytes = tiledb::impl::type_size(dim.type());
 
     return std::make_unique<BufferSet>(
-        dim.name(),
-        nelem,
-        elem_nbytes,
-        ::isvar(dim),
-        false
-    );
+        dim.name(), nelem, elem_nbytes, ::isvar(dim), false);
 }
 
-}; // namespace tiledb
+};  // namespace tiledbsc

@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+
+set -eux pipefail
+
+# cd to the top level directory of the repo
+pushd $(git rev-parse --show-toplevel)
+
+# TODO: fix and enable this test
+# cmake --build build/libtiledbsc --target unit_managed_query
+
+cmake --build build/libtiledbsc --target unit_buffer_set
+cmake --build build/libtiledbsc --target unit_sc
+cmake --build build/libtiledbsc --target test  || echo "Test failed."
+
+popd

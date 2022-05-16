@@ -1,8 +1,8 @@
-#include <tiledb/tiledb>
 #include <tiledbsc/managed_query.h>
+#include <tiledb/tiledb>
 
-#include <memory>
 #include <filesystem>
+#include <memory>
 #include <vector>
 
 #include <catch2/catch_test_macros.hpp>
@@ -26,7 +26,7 @@ TEST_CASE("Basic test of ManagedQuery execution and results") {
 
     auto data = result->get("");
     REQUIRE(data != std::nullopt);
-    REQUIRE(data.value()->data.size() == 8); // bytes
+    REQUIRE(data.value()->data.size() == 8);  // bytes
     auto dim = result->get("__dim_0");
     REQUIRE(dim != std::nullopt);
     REQUIRE(dim.value()->data.size() == 8);
@@ -41,17 +41,18 @@ TEST_CASE("ManagedQuery string attribute test") {
     auto array = std::make_shared<tiledb::Array>(ctx, array_path, TILEDB_READ);
 
     auto mq = tiledbsc::ManagedQuery(array);
-    mq.select_points(0, std::vector<uint64_t>{1,3,6});
+    mq.select_points(0, std::vector<uint64_t>{1, 3, 6});
     auto result = mq.execute();
 
     auto data = result->get("");
     REQUIRE(data != std::nullopt);
-    REQUIRE(data.value()->data.size() == 13); // char
+    REQUIRE(data.value()->data.size() == 13);  // char
     auto dim = result->get("__dim_0");
     REQUIRE(dim != std::nullopt);
-    REQUIRE(dim.value()->data.size() == 24); // uint64
+    REQUIRE(dim.value()->data.size() == 24);  // uint64
 
-    REQUIRE(std::string((char*)data.value()->data.data(), 13) == "bbddddggggggg");
+    REQUIRE(
+        std::string((char*)data.value()->data.data(), 13) == "bbddddggggggg");
 
     REQUIRE(result->names() == std::vector<std::string>({"", "__dim_0"}));
     REQUIRE(result->nbuffers() == 2);

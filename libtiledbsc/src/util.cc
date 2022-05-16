@@ -8,9 +8,10 @@ using namespace tiledbsc::util;
 
 namespace tiledbsc::util {
 
-void TILEDBSC_EXPORT check_paths_exist(vector<string>, optional<SCConfig> config) {
+void TILEDBSC_EXPORT
+check_paths_exist(vector<string>, optional<SCConfig> config) {
     // TODO
     (void)config;
 };
 
-}; // end namespace tiledb::util
+};  // namespace tiledbsc::util

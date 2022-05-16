@@ -35,8 +35,10 @@ if (TRUE)
 
     target_include_directories(unit_sc
        PRIVATE
-        ${CMAKE_CURRENT_BINARY_DIR}/../include/tiledbsc
-        ../include)
+       ${CMAKE_CURRENT_SOURCE_DIR}
+       ${CMAKE_CURRENT_SOURCE_DIR}/../include
+       ${TILEDB_SC_EXPORT_HEADER_DIR}
+    )       
 
     # Sources for tests
     target_sources(unit_sc PUBLIC

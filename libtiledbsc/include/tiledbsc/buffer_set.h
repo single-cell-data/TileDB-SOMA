@@ -1,11 +1,12 @@
 #ifndef TILEDBSC_BUFFER_SET_H
 #define TILEDBSC_BUFFER_SET_H
 
-#include <vector>
-#include <string>
 #include <memory>
 #include <optional>
+#include <string>
+#include <vector>
 
+#include <tiledb/tiledb>
 #include "tiledbsc_export.h"
 
 namespace tiledbsc {
@@ -23,7 +24,6 @@ using DELEM_T = std::byte;
  * may not be initialized depending on the schema.
  */
 struct BufferSet {
-
     BufferSet() = delete;
 
     /**
@@ -37,12 +37,10 @@ struct BufferSet {
         bool isnullable);
 
     static std::shared_ptr<BufferSet> from_attribute(
-        const tiledb::Attribute& attr, size_t nelem
-    );
+        const tiledb::Attribute& attr, size_t nelem);
 
     static std::shared_ptr<BufferSet> from_dimension(
-        const tiledb::Dimension& attr, size_t nelem
-    );
+        const tiledb::Dimension& attr, size_t nelem);
 
     /**
      * Resize the buffer set hold `new_size` data *elements*
@@ -84,6 +82,6 @@ struct BufferSet {
     std::optional<std::vector<DELEM_T>> validity;
 };
 
-}; // namespace tiledb
+};  // namespace tiledbsc
 
 #endif

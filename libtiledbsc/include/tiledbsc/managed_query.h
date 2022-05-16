@@ -4,11 +4,10 @@
 #include <memory>
 #include <vector>
 
-#include <tiledb/tiledb>
 #include <tiledbsc/buffer_set.h>
+#include <tiledb/tiledb>
 
 #include "tiledbsc_export.h"
-
 
 namespace tiledbsc {
 
@@ -21,8 +20,9 @@ struct BufferGroup {
 };
 
 class TILEDBSC_EXPORT QueryResult {
-public:
-    QueryResult(std::shared_ptr<BufferGroup> buffers) : buffers_(buffers) {};
+   public:
+    QueryResult(std::shared_ptr<BufferGroup> buffers)
+        : buffers_(buffers){};
     std::shared_ptr<BufferGroup> buffers();
     void to_arrow(void* schema, void* array);
 
@@ -32,9 +32,8 @@ public:
 
     std::vector<std::string> names();
 
-private:
+   private:
     std::shared_ptr<BufferGroup> buffers_;
-
 };
 
 // Forward declaration
@@ -47,8 +46,7 @@ class MQAux;
  *
  */
 class TILEDBSC_EXPORT ManagedQuery {
-
-public:
+   public:
     ManagedQuery(
         const std::shared_ptr<tiledb::Array> array,
         size_t initial_alloc = TILEDBSC_DEFAULT_ALLOC);
@@ -85,9 +83,10 @@ public:
 
     std::unique_ptr<tiledb::Query> query_;
 
-private:
+   private:
     /* methods */
-    static std::shared_ptr<tiledb::Array> check_array(std::shared_ptr<tiledb::Array>);
+    static std::shared_ptr<tiledb::Array> check_array(
+        std::shared_ptr<tiledb::Array>);
 
     void allocate_buffers();
     void set_buffers();
@@ -111,6 +110,6 @@ private:
     std::unique_ptr<MQAux> impl_;
 };
 
-};
+};  // namespace tiledbsc
 
 #endif

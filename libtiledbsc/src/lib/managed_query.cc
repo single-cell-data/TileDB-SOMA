@@ -1,9 +1,9 @@
-#include <stdexcept> // TODO remove
+#include <stdexcept>  // TODO remove
 #include <tiledb/tiledb>
 
-#include <tiledbsc/managed_query.h>
 #include <tiledbsc/buffer_set.h>
 #include <tiledbsc/common.h>
+#include <tiledbsc/managed_query.h>
 
 using namespace std;
 
@@ -13,7 +13,7 @@ namespace tiledbsc {
 /*           QueryResult             */
 /* ********************************* */
 
-//QueryResult::to_arrow
+// QueryResult::to_arrow
 
 std::shared_ptr<BufferGroup> QueryResult::buffers() {
     return buffers_;
@@ -49,16 +49,19 @@ class MQAux {
 
     std::reference_wrapper<ManagedQuery> q;
 
-    public:
-    MQAux(ManagedQuery& q) : q(q) {}
+   public:
+    MQAux(ManagedQuery& q)
+        : q(q) {
+    }
     ~MQAux() = default;
 
     /* return true if this attribute or dimension should be skipped
        based on result restriction */
     bool skip_attrs_dims(const std::string& name) {
-        return q.get().use_attrs_dims_.value_or(std::set<std::string>()).count(name);
+        return q.get()
+            .use_attrs_dims_.value_or(std::set<std::string>())
+            .count(name);
     }
-
 };
 
 /* ********************************* */
@@ -66,10 +69,8 @@ class MQAux {
 /* ********************************* */
 
 ManagedQuery::ManagedQuery(
-    const std::shared_ptr<tiledb::Array> array,
-    size_t initial_alloc
-) : array_(check_array(array))
-{
+    const std::shared_ptr<tiledb::Array> array, size_t initial_alloc)
+    : array_(check_array(array)) {
     initial_alloc_ = initial_alloc;
     query_ = std::make_unique<tiledb::Query>(array->schema().context(), *array);
 
@@ -80,9 +81,11 @@ ManagedQuery::ManagedQuery(
 
 ManagedQuery::~ManagedQuery() = default;
 
-shared_ptr<tiledb::Array> ManagedQuery::check_array(std::shared_ptr<tiledb::Array> array) {
+shared_ptr<tiledb::Array> ManagedQuery::check_array(
+    std::shared_ptr<tiledb::Array> array) {
     if (array->query_type() != TILEDB_READ) {
-        throw tiledb::TileDBError("[ManagedQuery] Array not opened in read mode!");
+        throw tiledb::TileDBError(
+            "[ManagedQuery] Array not opened in read mode!");
     }
 
     return array;
@@ -116,38 +119,29 @@ void ManagedQuery::allocate_buffers() {
 void ManagedQuery::set_buffers() {
     for (auto&& [name, bg] : buffers_->buffers) {
         query_->set_data_buffer(
-            name,
-            (void*)bg->data.data(),
-            bg->data.size() / bg->elem_nbytes()
-        );
+            name, (void*)bg->data.data(), bg->data.size() / bg->elem_nbytes());
 
         if (bg->isvar()) {
             auto buf = bg->offsets.value();
-            query_->set_offsets_buffer(
-                name,
-                (uint64_t*)buf.data(),
-                buf.size()
-            );
+            query_->set_offsets_buffer(name, (uint64_t*)buf.data(), buf.size());
         }
 
         if (bg->isnullable()) {
             auto validity = bg->validity.value();
             query_->set_validity_buffer(
-                name,
-                (uint8_t*)validity.data(),
-                validity.size()
-            );
+                name, (uint8_t*)validity.data(), validity.size());
         }
     }
 }
 
 void ManagedQuery::validate_query() {
-
 }
 
 void ManagedQuery::resize_result_buffers() {
     if (query_->query_status() != tiledb::Query::Status::COMPLETE) {
-        throw tiledb::TileDBError("internal error: attempted to resize result buffers but query not complete");
+        throw tiledb::TileDBError(
+            "internal error: attempted to resize result buffers but query not "
+            "complete");
     }
 
     for (auto&& [name, sizes] : query_->result_buffer_elements_nullable()) {
@@ -167,8 +161,7 @@ void ManagedQuery::resize_result_buffers() {
     }
 }
 
-void
-ManagedQuery::complete_query() {
+void ManagedQuery::complete_query() {
     query_->submit();
 
     // TODO run to completion with realloc
@@ -176,8 +169,7 @@ ManagedQuery::complete_query() {
     resize_result_buffers();
 }
 
-std::unique_ptr<QueryResult>
-ManagedQuery::execute() {
+std::unique_ptr<QueryResult> ManagedQuery::execute() {
     validate_query();
 
     allocate_buffers();
@@ -189,4 +181,4 @@ ManagedQuery::execute() {
     return make_unique<QueryResult>(std::move(buffers_));
 }
 
-}; // namespace tiledb
+};  // namespace tiledbsc
