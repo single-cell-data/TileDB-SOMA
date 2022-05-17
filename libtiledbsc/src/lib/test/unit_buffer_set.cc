@@ -2,6 +2,7 @@
 #include <tiledb/tiledb>
 
 #include <memory>
+#include <stdexcept>  // for windows
 #include <vector>
 
 #include <catch2/catch_test_macros.hpp>
