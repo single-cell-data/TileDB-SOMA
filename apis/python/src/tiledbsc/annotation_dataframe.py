@@ -41,8 +41,7 @@ class AnnotationDataFrame(TileDBArray):
         # https://github.com/single-cell-data/TileDB-SingleCell/pull/93
         with tiledb.open(self.uri) as A:
             # These TileDB arrays are string-dimensioned sparse arrays so there is no '.shape'.
-            # Instead we compute it ourselves.
-            # See also:
+            # Instead we compute it ourselves.  See also:
             # * https://github.com/single-cell-data/TileDB-SingleCell/issues/10
             # * https://github.com/TileDB-Inc/TileDB-Py/pull/1055
             num_rows = len(A[:][self.dim_name].tolist())
@@ -51,12 +50,20 @@ class AnnotationDataFrame(TileDBArray):
 
 
     # ----------------------------------------------------------------
-    def get_dim_values(self) -> List[str]:
+    def ids(self) -> List[str]:
         """
         Returns the `obs_ids` in the matrix (for `obs`) or the `var_ids` (for `var`).
         """
         with tiledb.open(self.uri) as A:
             return A[:][self.dim_name].tolist()
+
+    # ----------------------------------------------------------------
+    def keys(self) -> List[str]:
+        """
+        Returns the column names for the `obs` or `var` dataframe.  For obs and varp, `.keys()` is a
+        keystroke-saver for the more general array-schema accessor `get_attr_names`.
+        """
+        return self.get_attr_names()
 
 
     # ----------------------------------------------------------------
@@ -149,12 +156,3 @@ class AnnotationDataFrame(TileDBArray):
             print(util.format_elapsed(s, f"{self.indent}FINISH read {self.uri}"))
 
         return df
-
-    # ----------------------------------------------------------------
-    def get_dim_values(self) -> List[str]:
-        """
-        TODO
-        """
-        with tiledb.open(self.uri) as A:
-            df = A[:]
-            return df[self.dim_name].tolist()

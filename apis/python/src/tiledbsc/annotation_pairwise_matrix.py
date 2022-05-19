@@ -42,8 +42,7 @@ class AnnotationPairwiseMatrix(TileDBArray):
         """
         with tiledb.open(self.uri) as A:  # TODO: with self.open
             # These TileDB arrays are string-dimensioned sparse arrays so there is no '.shape'.
-            # Instead we compute it ourselves.
-            # See also:
+            # Instead we compute it ourselves.  See also:
             # * https://github.com/single-cell-data/TileDB-SingleCell/issues/10
             # * https://github.com/TileDB-Inc/TileDB-Py/pull/1055
             return A.df[:].shape # nnz x 3 -- id_i, id_j, and value

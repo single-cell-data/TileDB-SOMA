@@ -125,31 +125,6 @@ class SOMA(TileDBGroup):
         return f"name={self.name},uri={self.uri}"
 
     # ----------------------------------------------------------------
-    def obs_ids(self):
-        """
-        Returns the list of obs_ids in the obs slot.
-        """
-        return self.obs.get_dim_values()
-
-    def var_ids(self):
-        """
-        Returns the list of var_ids in the var slot.
-        """
-        return self.var.get_dim_values()
-
-    def obs_attr_names(self):
-        """
-        Returns the list of attribute names in the obs slot.
-        """
-        return self.obs.get_attr_names()
-
-    def var_attr_names(self):
-        """
-        Returns the list of attribute names in the var slot.
-        """
-        return self.var.get_attr_names()
-
-    # ----------------------------------------------------------------
     def from_h5ad(self, input_path: str):
         """
         Reads an .h5ad file and writes to a TileDB group structure.

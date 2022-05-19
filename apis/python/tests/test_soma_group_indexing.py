@@ -51,7 +51,7 @@ def test_soma_group_indexing(h5ad_file):
     assert soma.X.data.get_dim_names() == ["obs_id", "var_id"]
 
     assert soma.obs.get_dim_names() == ["obs_id"]
-    assert set(soma.obs.get_dim_values()) == set(
+    assert set(soma.obs.ids()) == set(
         [
             b"AAATTCGAATCACG",
             b"AAGCAAGAGCTTAG",
@@ -137,7 +137,7 @@ def test_soma_group_indexing(h5ad_file):
     )
 
     assert soma.var.get_dim_names() == ["var_id"]
-    assert set(soma.var.get_dim_values()) == set(
+    assert set(soma.var.ids()) == set(
         [
             b"AKR1C3",
             b"CA2",
