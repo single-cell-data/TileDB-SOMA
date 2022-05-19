@@ -3,11 +3,11 @@ This is test code for reading ANN data and writing into a TileDB nested group st
 # TL;DR
 
 ```
-./desc-ann.py ./anndata/pbmc3k_processed.h5ad
+./tools/desc-ann ./anndata/pbmc3k_processed.h5ad
 
-./ingestor.py ./anndata/pbmc3k_processed.h5ad ./tiledb-data/pbmc3k_processed
+./tools/ingestor ./anndata/pbmc3k_processed.h5ad ./tiledb-data/pbmc3k_processed
 
-./desc-soma.py ./tiledb-data/pbmc3k_processed
+./tools/desc-soma ./tiledb-data/pbmc3k_processed
 ```
 
 # Installation
@@ -43,14 +43,14 @@ python -m pytest tests
 * Code:
   * [./src/tiledbsc](./src/tiledbsc)
 * Inspecting HDF5 input files
-  * `./desc-ann.py ./anndata/pbmc3k_processed.h5ad`
+  * `./tools/desc-ann ./anndata/pbmc3k_processed.h5ad`
 * Ingesting
-  * `./ingestor.py ./anndata/pbmc3k_processed.h5ad`
+  * `./tools/ingestor ./anndata/pbmc3k_processed.h5ad`
   * Output is in `tiledb-data/pbmc3k_processed`
   * Cloud-upload test:
-    * `ingestor.py ./anndata/pbmc3k_processed.h5ad tiledb://johnkerl-tiledb/s3://tiledb-johnkerl/wpv2-test-001`
+    * `tools/ingestor ./anndata/pbmc3k_processed.h5ad tiledb://johnkerl-tiledb/s3://tiledb-johnkerl/wpv2-test-001`
 * Inspecting TileDB output groups
-  * `./desc-soma.py ./tiledb-data/pbmc3k_processed`
+  * `./tools/desc-soma ./tiledb-data/pbmc3k_processed`
 
 # Status
 
@@ -123,7 +123,7 @@ Look at information about a sample `.h5ad` file:
 <details>
 
 ```
-$ ./desc-ann.py anndata/pbmc-small.h5ad
+$ ./tools/desc-ann anndata/pbmc-small.h5ad
 
 ================================================================ anndata/pbmc-small.h5ad
 
@@ -195,7 +195,7 @@ h5ls -vr anndata/pbmc3k_processed.h5ad
 Read a sample `.h5ad` file and write into a TileDB SOMA object:
 
 ```
-$ ingestor.py anndata/pbmc-small.h5ad tiledb-data/pbmc-small
+$ tools/ingestor anndata/pbmc-small.h5ad tiledb-data/pbmc-small
 ```
 
 Look at various fields:
@@ -293,7 +293,7 @@ VDAC3            1.1250     30.971519               8.986513                   2
 
 ## Expected ingestion progress
 
-`./ingestor.py ./anndata/pbmc3k_processed.h5ad ./tiledb-data/pbmc3k_processed`
+`./tools/ingestor ./anndata/pbmc3k_processed.h5ad ./tiledb-data/pbmc3k_processed`
 
 <details>
 
@@ -402,7 +402,7 @@ FINISH SOMA.from_h5ad ./anndata/pbmc3k_processed.h5ad -> ./tiledb-data/pbmc3k_pr
 
 ## Expected output format
 
-`./desc-soma.py ./tiledb-data/pbmc3k_processed`
+`./tools/desc-soma ./tiledb-data/pbmc3k_processed`
 
 <details>
 
