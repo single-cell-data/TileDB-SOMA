@@ -7,7 +7,7 @@ This is test code for reading ANN data and writing into a TileDB nested group st
 
 ./ingestor.py ./anndata/pbmc3k_processed.h5ad ./tiledb-data/pbmc3k_processed
 
-./desc-tiledb.py ./tiledb-data/pbmc3k_processed
+./desc-soma.py ./tiledb-data/pbmc3k_processed
 ```
 
 # Installation
@@ -50,7 +50,7 @@ python -m pytest tests
   * Cloud-upload test:
     * `ingestor.py ./anndata/pbmc3k_processed.h5ad tiledb://johnkerl-tiledb/s3://tiledb-johnkerl/wpv2-test-001`
 * Inspecting TileDB output groups
-  * `./desc-tiledb.py ./tiledb-data/pbmc3k_processed`
+  * `./desc-soma.py ./tiledb-data/pbmc3k_processed`
 
 # Status
 
@@ -402,7 +402,7 @@ FINISH SOMA.from_h5ad ./anndata/pbmc3k_processed.h5ad -> ./tiledb-data/pbmc3k_pr
 
 ## Expected output format
 
-`./desc-tiledb.py ./tiledb-data/pbmc3k_processed`
+`./desc-soma.py ./tiledb-data/pbmc3k_processed`
 
 <details>
 
