@@ -1,9 +1,9 @@
 import tiledb
-from .soma_options                     import SOMAOptions
-from .tiledb_group                     import TileDBGroup
-from .assay_matrix_group               import AssayMatrixGroup
-from .annotation_dataframe             import AnnotationDataFrame
-from .annotation_matrix_group          import AnnotationMatrixGroup
+from .soma_options import SOMAOptions
+from .tiledb_group import TileDBGroup
+from .assay_matrix_group import AssayMatrixGroup
+from .annotation_dataframe import AnnotationDataFrame
+from .annotation_matrix_group import AnnotationMatrixGroup
 from .annotation_pairwise_matrix_group import AnnotationPairwiseMatrixGroup
 import tiledbsc.util as util
 
@@ -12,15 +12,16 @@ import anndata as ad
 from typing import Optional
 import os
 
+
 class RawGroup(TileDBGroup):
     """
     Nominally for soma raw.
     """
 
-    X:     AssayMatrixGroup
-    var:   AnnotationDataFrame
-    varm:  AnnotationMatrixGroup
-    varp:  AnnotationPairwiseMatrixGroup
+    X: AssayMatrixGroup
+    var: AnnotationDataFrame
+    varm: AnnotationMatrixGroup
+    varp: AnnotationPairwiseMatrixGroup
 
     def __init__(
         self,
@@ -33,16 +34,23 @@ class RawGroup(TileDBGroup):
         """
         super().__init__(uri=uri, name=name, parent=parent)
 
-        X_uri    = os.path.join(self.uri, "X")
-        var_uri  = os.path.join(self.uri, "var")
+        X_uri = os.path.join(self.uri, "X")
+        var_uri = os.path.join(self.uri, "var")
         varm_uri = os.path.join(self.uri, "varm")
         varp_uri = os.path.join(self.uri, "varp")
 
-        self.X    = AssayMatrixGroup(uri=X_uri, name="X", row_dim_name='obs_id', col_dim_name='var_id', parent=self)
-        self.var  = AnnotationDataFrame(uri=var_uri, name="var", parent=self)
+        self.X = AssayMatrixGroup(
+            uri=X_uri,
+            name="X",
+            row_dim_name="obs_id",
+            col_dim_name="var_id",
+            parent=self,
+        )
+        self.var = AnnotationDataFrame(uri=var_uri, name="var", parent=self)
         self.varm = AnnotationMatrixGroup(uri=varm_uri, name="varm", parent=self)
-        self.varp = AnnotationPairwiseMatrixGroup(uri=varp_uri, name="varp", parent=self)
-
+        self.varp = AnnotationPairwiseMatrixGroup(
+            uri=varp_uri, name="varp", parent=self
+        )
 
     # ----------------------------------------------------------------
     def from_anndata(self, anndata: ad.AnnData):
@@ -78,7 +86,7 @@ class RawGroup(TileDBGroup):
         """
 
         var_df = self.var.to_dataframe()
-        X_mat  = self.X.data.to_csr_matrix(obs_labels, var_df.index)
-        varm   = self.varm.to_dict_of_csr()
+        X_mat = self.X.data.to_csr_matrix(obs_labels, var_df.index)
+        varm = self.varm.to_dict_of_csr()
 
         return (X_mat, var_df, varm)

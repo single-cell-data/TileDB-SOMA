@@ -9,16 +9,19 @@ from pathlib import Path
 
 HERE = Path(__file__).parent
 
+
 @pytest.fixture
 def h5ad_file(request):
     # pbmc-small is faster for automated unit-test / CI runs.
-    #input_path = HERE.parent / "anndata/pbmc3k_processed.h5ad"
+    # input_path = HERE.parent / "anndata/pbmc3k_processed.h5ad"
     input_path = HERE.parent / "anndata/pbmc-small.h5ad"
     return input_path
+
 
 @pytest.fixture
 def adata(h5ad_file):
     return anndata.read_h5ad(h5ad_file)
+
 
 def test_import_anndata(adata):
 
@@ -48,43 +51,43 @@ def test_import_anndata(adata):
     #   raw/varm/PCs
 
     # Check X/data (dense)
-    with tiledb.open(os.path.join(output_path, 'X', 'data')) as A:
+    with tiledb.open(os.path.join(output_path, "X", "data")) as A:
         df = A[:]
         keys = list(df.keys())
-        assert keys == ['value', 'obs_id', 'var_id']
+        assert keys == ["value", "obs_id", "var_id"]
         assert A.ndim == 2
 
     # Check X/raw (sparse)
-    with tiledb.open(os.path.join(output_path, 'raw', 'X', 'data')) as A:
+    with tiledb.open(os.path.join(output_path, "raw", "X", "data")) as A:
         df = A.df[:]
-        assert df.columns.to_list() == ['obs_id', 'var_id', 'value']
+        assert df.columns.to_list() == ["obs_id", "var_id", "value"]
         # verify sparsity of raw data
         assert df.shape[0] == orig.raw.X.nnz
 
     # Check obs
-    with tiledb.open(os.path.join(output_path, 'obs')) as A:
+    with tiledb.open(os.path.join(output_path, "obs")) as A:
         df = A.df[:]
         assert df.columns.to_list() == orig.obs_keys()
 
     # Check var
-    with tiledb.open(os.path.join(output_path, 'var')) as A:
+    with tiledb.open(os.path.join(output_path, "var")) as A:
         df = A.df[:]
         assert df.columns.to_list() == orig.var_keys()
 
     # Check some annotation matrices
     # Note: pbmc3k_processed doesn't have varp.
     for key in orig.obsm_keys():
-        with tiledb.open(os.path.join(output_path, 'obsm', key)) as A:
+        with tiledb.open(os.path.join(output_path, "obsm", key)) as A:
             df = A.df[:]
             assert df.shape[0] == orig.obsm[key].shape[0]
 
     for key in orig.varm_keys():
-        with tiledb.open(os.path.join(output_path, 'varm', key)) as A:
+        with tiledb.open(os.path.join(output_path, "varm", key)) as A:
             df = A.df[:]
             assert df.shape[0] == orig.varm[key].shape[0]
 
     for key in list(orig.obsp.keys()):
-        with tiledb.open(os.path.join(output_path, 'obsp', key)) as A:
+        with tiledb.open(os.path.join(output_path, "obsp", key)) as A:
             df = A.df[:]
             assert df.columns.to_list() == ["obs_id_i", "obs_id_j", "value"]
             assert df.shape[0] == orig.obsp[key].nnz

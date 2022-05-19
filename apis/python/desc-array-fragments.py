@@ -8,6 +8,7 @@ import argparse
 import tiledb
 import pandas
 
+
 def list_fragments(array_uri: str):
     print(f"Listing fragments for array: '{array_uri}'")
     vfs = tiledb.VFS()
@@ -20,7 +21,7 @@ def list_fragments(array_uri: str):
             "array_schema_name": f.array_schema_name,
             "num": f.num,
             "cell_num": f.cell_num,
-            "size": vfs.dir_size(f.uri)
+            "size": vfs.dir_size(f.uri),
         }
 
         # parse nonempty domains into separate columns

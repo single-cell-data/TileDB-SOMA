@@ -11,16 +11,16 @@ import numpy as np
 from typing import Optional
 import time
 
+
 class AssayMatrix(TileDBArray):
     """
     Wraps a TileDB sparse array with two string dimensions.
     Used for X, obsp members, and varp members.
     """
 
-    row_dim_name: str # obs_id for X, obs_id_i for obsp; var_id_i for varp
-    col_dim_name: str # var_id for X, obs_id_j for obsp; var_id_j for varp
+    row_dim_name: str  # obs_id for X, obs_id_i for obsp; var_id_i for varp
+    col_dim_name: str  # var_id for X, obs_id_j for obsp; var_id_j for varp
     attr_name: str
-
 
     # ----------------------------------------------------------------
     def __init__(
@@ -38,7 +38,7 @@ class AssayMatrix(TileDBArray):
 
         self.row_dim_name = row_dim_name
         self.col_dim_name = col_dim_name
-        self.attr_name     = 'value'
+        self.attr_name = "value"
 
     # ----------------------------------------------------------------
     def from_matrix(self, matrix, row_names, col_names) -> None:
@@ -61,7 +61,6 @@ class AssayMatrix(TileDBArray):
         if self.verbose:
             print(util.format_elapsed(s, f"{self.indent}FINISH WRITING {self.uri}"))
 
-
     # ----------------------------------------------------------------
     def create_empty_array(self, matrix_dtype: np.dtype) -> None:
         """
@@ -70,32 +69,53 @@ class AssayMatrix(TileDBArray):
 
         level = self.soma_options.string_dim_zstd_level
         dom = tiledb.Domain(
-            tiledb.Dim(name=self.row_dim_name, domain=(None, None), dtype="ascii", filters=[tiledb.RleFilter()]),
-            tiledb.Dim(name=self.col_dim_name, domain=(None, None), dtype="ascii", filters=[tiledb.ZstdFilter(level=level)]),
-            ctx=self.ctx
+            tiledb.Dim(
+                name=self.row_dim_name,
+                domain=(None, None),
+                dtype="ascii",
+                filters=[tiledb.RleFilter()],
+            ),
+            tiledb.Dim(
+                name=self.col_dim_name,
+                domain=(None, None),
+                dtype="ascii",
+                filters=[tiledb.ZstdFilter(level=level)],
+            ),
+            ctx=self.ctx,
         )
 
-        att = tiledb.Attr(self.attr_name, dtype=matrix_dtype, filters=[tiledb.ZstdFilter()], ctx=self.ctx)
+        att = tiledb.Attr(
+            self.attr_name,
+            dtype=matrix_dtype,
+            filters=[tiledb.ZstdFilter()],
+            ctx=self.ctx,
+        )
 
         sch = tiledb.ArraySchema(
             domain=dom,
             attrs=(att,),
             sparse=True,
             allows_duplicates=True,
-            offsets_filters=[tiledb.DoubleDeltaFilter(), tiledb.BitWidthReductionFilter(), tiledb.ZstdFilter()],
+            offsets_filters=[
+                tiledb.DoubleDeltaFilter(),
+                tiledb.BitWidthReductionFilter(),
+                tiledb.ZstdFilter(),
+            ],
             capacity=self.soma_options.X_capacity,
             cell_order=self.soma_options.X_cell_order,
             tile_order=self.soma_options.X_tile_order,
-            ctx=self.ctx
+            ctx=self.ctx,
         )
 
         tiledb.Array.create(self.uri, sch, ctx=self.ctx)
 
-
     # ----------------------------------------------------------------
     def ingest_data(self, matrix, row_names, col_names) -> None:
         # TODO: add chunked support for CSC
-        if isinstance(matrix, scipy.sparse._csr.csr_matrix) and self.soma_options.write_X_chunked_if_csr:
+        if (
+            isinstance(matrix, scipy.sparse._csr.csr_matrix)
+            and self.soma_options.write_X_chunked_if_csr
+        ):
             self.ingest_data_rows_chunked(matrix, row_names, col_names)
         else:
             self.ingest_data_whole(matrix, row_names, col_names)
@@ -187,7 +207,9 @@ class AssayMatrix(TileDBArray):
             while i < nrow:
                 t1 = time.time()
                 # Find a number of CSR rows which will result in a desired nnz for the chunk.
-                chunk_size = util.find_csr_chunk_size(matrix, permutation, i, self.soma_options.goal_chunk_nnz)
+                chunk_size = util.find_csr_chunk_size(
+                    matrix, permutation, i, self.soma_options.goal_chunk_nnz
+                )
                 i2 = i + chunk_size
 
                 # Convert the chunk to a COO matrix.
@@ -204,9 +226,20 @@ class AssayMatrix(TileDBArray):
                 # makes us look buggy if we say we're ingesting chunk 0:18 and then 18:32.
                 # Instead, print doubly-inclusive lo..hi like 0..17 and 18..31.
                 if self.verbose:
-                    chunk_percent = 100*(i2-1)/nrow
-                    print("%sSTART  chunk rows %d..%d of %d (%.3f%%), obs_ids %s..%s, nnz=%d" %
-                        (self.indent, i, i2-1, nrow, chunk_percent, d0[0], d0[-1], chunk_coo.nnz))
+                    chunk_percent = 100 * (i2 - 1) / nrow
+                    print(
+                        "%sSTART  chunk rows %d..%d of %d (%.3f%%), obs_ids %s..%s, nnz=%d"
+                        % (
+                            self.indent,
+                            i,
+                            i2 - 1,
+                            nrow,
+                            chunk_percent,
+                            d0[0],
+                            d0[-1],
+                            chunk_coo.nnz,
+                        )
+                    )
 
                 # Write a TileDB fragment
                 A[d0, d1] = chunk_coo.data
@@ -216,13 +249,19 @@ class AssayMatrix(TileDBArray):
                     chunk_seconds = t2 - t1
                     eta = eta_tracker.ingest_and_predict(chunk_percent, chunk_seconds)
 
-                    print("%sFINISH chunk in %.3f seconds, %7.3f%% done, ETA %s" %
-                        (self.indent, chunk_seconds, chunk_percent, eta))
+                    print(
+                        "%sFINISH chunk in %.3f seconds, %7.3f%% done, ETA %s"
+                        % (self.indent, chunk_seconds, chunk_percent, eta)
+                    )
 
                 i = i2
 
         if self.verbose:
-            print(util.format_elapsed(s,f"{self.indent}FINISH __ingest_coo_data_string_dims_rows_chunked"))
+            print(
+                util.format_elapsed(
+                    s, f"{self.indent}FINISH __ingest_coo_data_string_dims_rows_chunked"
+                )
+            )
 
     # ----------------------------------------------------------------
     def to_csr_matrix(self, row_labels, col_labels):
@@ -267,12 +306,20 @@ class AssayMatrix(TileDBArray):
         #
         # In order to accomplish this, we need to map ['A','B','C','D'] to [0,1,2,3] via {'A':0,
         # 'B':1, 'C':2, 'D':3} and similarly for the other dimension.
-        row_labels_to_indices = dict(zip(row_labels, [i for i,e in enumerate(row_labels)]))
-        col_labels_to_indices = dict(zip(col_labels, [i for i,e in enumerate(col_labels)]))
+        row_labels_to_indices = dict(
+            zip(row_labels, [i for i, e in enumerate(row_labels)])
+        )
+        col_labels_to_indices = dict(
+            zip(col_labels, [i for i, e in enumerate(col_labels)])
+        )
 
         # Apply the map.
-        obs_indices = [row_labels_to_indices[row_label] for row_label in df[self.row_dim_name]]
-        var_indices = [col_labels_to_indices[col_label] for col_label in df[self.col_dim_name]]
+        obs_indices = [
+            row_labels_to_indices[row_label] for row_label in df[self.row_dim_name]
+        ]
+        var_indices = [
+            col_labels_to_indices[col_label] for col_label in df[self.col_dim_name]
+        ]
 
         retval = scipy.sparse.csr_matrix(
             (list(df[self.attr_name]), (list(obs_indices), list(var_indices)))

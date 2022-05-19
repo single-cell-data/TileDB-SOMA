@@ -8,6 +8,7 @@ import pandas
 
 from typing import Optional, Tuple, List
 
+
 class AnnotationDataFrame(TileDBArray):
     """
     Nominally for obs and var data within a soma. These have one string dimension, and multiple attributes.
@@ -25,10 +26,9 @@ class AnnotationDataFrame(TileDBArray):
         """
         See the TileDBObject constructor.
         """
-        assert(name in ['obs', 'var'])
+        assert name in ["obs", "var"]
         super().__init__(uri=uri, name=name, parent=parent)
-        self.dim_name = name + '_id'
-
+        self.dim_name = name + "_id"
 
     # ----------------------------------------------------------------
     def from_dataframe(self, dataframe: pandas.DataFrame, extent: int) -> None:
@@ -74,9 +74,9 @@ class AnnotationDataFrame(TileDBArray):
         #   CTTGATTGATCTTC 0          233.0      76           ...
         dataframe = dataframe.rename_axis(self.dim_name)
 
-        mode = 'ingest'
+        mode = "ingest"
         if self.exists():
-            mode = 'append'
+            mode = "append"
             if self.verbose:
                 print(f"{self.indent}Re-using existing array {self.uri}")
 
@@ -97,7 +97,6 @@ class AnnotationDataFrame(TileDBArray):
 
         if self.verbose:
             print(util.format_elapsed(s, f"{self.indent}FINISH WRITING {self.uri}"))
-
 
     # ----------------------------------------------------------------
     def to_dataframe(self) -> pandas.DataFrame:

@@ -17,6 +17,7 @@ def get_start_stamp():
     """
     return time.time()
 
+
 # ----------------------------------------------------------------
 def format_elapsed(start_stamp, message: str):
     """
@@ -25,8 +26,14 @@ def format_elapsed(start_stamp, message: str):
     """
     return "%s TIME %.3f seconds" % (message, time.time() - start_stamp)
 
+
 # ----------------------------------------------------------------
-def find_csr_chunk_size(mat: scipy.sparse._csr.csr_matrix, permutation: list, start_row_index: int, goal_chunk_nnz: int):
+def find_csr_chunk_size(
+    mat: scipy.sparse._csr.csr_matrix,
+    permutation: list,
+    start_row_index: int,
+    goal_chunk_nnz: int,
+):
     """
     Given a CSR matrix and a start row index, returns the number of rows with cumulative nnz as
     desired. Context is chunked-COO ingest of larger CSR matrices: if mat is say 8000x9000 but
@@ -35,7 +42,7 @@ def find_csr_chunk_size(mat: scipy.sparse._csr.csr_matrix, permutation: list, st
     :param mat: The input CSR matrix.
     :param permutation: Cursor-indices to access the CSR matrix, so it will be traversed in sort order.
     :param start_row_index: the row index at which to start a chunk.
-    :param goal_chunk_nnz: Desired number of non-zero array entries for the chunk. 
+    :param goal_chunk_nnz: Desired number of non-zero array entries for the chunk.
     """
     chunk_size = 1
     sum_nnz = 0
@@ -47,6 +54,7 @@ def find_csr_chunk_size(mat: scipy.sparse._csr.csr_matrix, permutation: list, st
 
     return chunk_size
 
+
 # ----------------------------------------------------------------
 def get_sort_and_permutation(lst: list):
     """
@@ -57,16 +65,17 @@ def get_sort_and_permutation(lst: list):
     # Example input: x=['E','A','C','D','B']
 
     # e.g. [('E', 0), ('A', 1), ('C', 2), ('D', 3), ('B', 4)]
-    lst_and_indices = [(e, i) for i,e in enumerate(lst)]
+    lst_and_indices = [(e, i) for i, e in enumerate(lst)]
 
     # e.g. [('A', 1), ('B', 4), ('C', 2), ('D', 3), ('E', 0)]
     lst_and_indices.sort(key=lambda pair: pair[0])
 
     # e.g. ['A' 'B' 'C' 'D' 'E']
     # and  [1, 4, 2, 3, 0]
-    lst_sorted  = [e for e,i in lst_and_indices]
-    permutation = [i for e,i in lst_and_indices]
+    lst_sorted = [e for e, i in lst_and_indices]
+    permutation = [i for e, i in lst_and_indices]
     return (lst_sorted, permutation)
+
 
 # ----------------------------------------------------------------
 def _to_tiledb_supported_array_type(x):
@@ -87,17 +96,19 @@ def _to_tiledb_supported_array_type(x):
     def _to_tiledb_supported_dtype(dtype):
         """A handful of types are cast into the TileDB type system."""
         # TileDB has no bool type -- instead cast to uint8
-        if dtype == numpy.dtype('bool'):
-            return numpy.dtype('uint8')
+        if dtype == numpy.dtype("bool"):
+            return numpy.dtype("uint8")
 
         # TileDB has no float16 -- cast up to float32
-        if dtype == numpy.dtype('float16'):
-            return numpy.dtype('float32')
+        if dtype == numpy.dtype("float16"):
+            return numpy.dtype("float32")
 
         return dtype
 
     if isinstance(x, pd.DataFrame):
-        return pd.DataFrame.from_dict({k: _to_tiledb_supported_array_type(v) for k, v in x.items()})
+        return pd.DataFrame.from_dict(
+            {k: _to_tiledb_supported_array_type(v) for k, v in x.items()}
+        )
 
     # If a Pandas categorical, use the type of the underlying category.
     # If the array contains NaN/NA, and the primitive is unable to represent
@@ -105,9 +116,11 @@ def _to_tiledb_supported_array_type(x):
     if pd.api.types.is_categorical_dtype(x.dtype):
         categories = x.cat.categories
         cat_dtype = categories.dtype
-        if cat_dtype.kind in ['f', 'u', 'i']:
-            if x.hasnans and cat_dtype.kind == 'i':
-                raise ValueError("Categorical array contains NaN -- unable to convert to TileDB array.")
+        if cat_dtype.kind in ["f", "u", "i"]:
+            if x.hasnans and cat_dtype.kind == "i":
+                raise ValueError(
+                    "Categorical array contains NaN -- unable to convert to TileDB array."
+                )
 
             return x.astype(_to_tiledb_supported_dtype(cat_dtype))
 
@@ -115,27 +128,33 @@ def _to_tiledb_supported_array_type(x):
         inferred = pd.api.types.infer_dtype(categories)
         if inferred == "boolean":
             if x.hasnans:
-                raise ValueError("Categorical array contains NaN -- unable to convert to TileDB array.")
-            return x.astype('uint8')
+                raise ValueError(
+                    "Categorical array contains NaN -- unable to convert to TileDB array."
+                )
+            return x.astype("uint8")
 
         if inferred == "string":
             return x.astype(str)
 
         if inferred == "bytes":
             if x.hasnans:
-                raise ValueError("Categorical array contains NaN -- unable to convert to TileDB array.")
+                raise ValueError(
+                    "Categorical array contains NaN -- unable to convert to TileDB array."
+                )
             return x.astype(bytes)
 
-        return x.astype('O')
+        return x.astype("O")
 
     target_dtype = _to_tiledb_supported_dtype(x.dtype)
     return x if target_dtype == x.dtype else x.astype(target_dtype)
+
 
 # ================================================================
 class ETATracker:
     """
     Computes estimated time to completion for chunked writes.
     """
+
     percents: List[float]
     cumulative_seconds: List[float]
 
@@ -189,11 +208,11 @@ class ETATracker:
         Formats the ETA seconds as a compact, human-readable string.
         """
         if seconds >= 86400:
-            return "%.2f days" % (seconds/86400)
+            return "%.2f days" % (seconds / 86400)
         elif seconds >= 3600:
-            return "%.2f hours" % (seconds/3600)
+            return "%.2f hours" % (seconds / 3600)
         elif seconds >= 60:
-            return "%.2f minutes" % (seconds/60)
+            return "%.2f minutes" % (seconds / 60)
         else:
             return "%.2f seconds" % (seconds)
 

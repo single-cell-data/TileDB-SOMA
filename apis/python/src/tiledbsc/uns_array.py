@@ -10,11 +10,11 @@ import pandas as pd
 
 from typing import Optional
 
+
 class UnsArray(TileDBArray):
     """
     Holds TileDB storage for an array obtained from the nested `anndata.uns` field.
     """
-
 
     # ----------------------------------------------------------------
     def __init__(
@@ -27,7 +27,6 @@ class UnsArray(TileDBArray):
         See the TileDBObject constructor.
         """
         super().__init__(uri=uri, name=name, parent=parent)
-
 
     # ----------------------------------------------------------------
     def from_pandas_dataframe(self, df: pd.DataFrame):
@@ -44,11 +43,15 @@ class UnsArray(TileDBArray):
             dataframe=df,
             sparse=True,
             allows_duplicates=False,
-            ctx=self.ctx
+            ctx=self.ctx,
         )
 
         if self.verbose:
-            print(util.format_elapsed(s, f"{self.indent}FINISH WRITING PANDAS.DATAFRAME {self.uri}"))
+            print(
+                util.format_elapsed(
+                    s, f"{self.indent}FINISH WRITING PANDAS.DATAFRAME {self.uri}"
+                )
+            )
 
     # ----------------------------------------------------------------
     def maybe_from_numpyable_object(self, obj) -> bool:
@@ -80,7 +83,7 @@ class UnsArray(TileDBArray):
             self.from_numpy_ndarray(arr)
             return True
 
-        elif 'numpy' in str(type(obj)):
+        elif "numpy" in str(type(obj)):
             arr = np.asarray([obj])
             arr = util._to_tiledb_supported_array_type(arr)
             self.from_numpy_ndarray(arr)
@@ -100,10 +103,9 @@ class UnsArray(TileDBArray):
             s = util.get_start_stamp()
             print(f"{self.indent}START  WRITING FROM NUMPY.NDARRAY {self.uri}")
 
-
-        if 'numpy' in str(type(arr)) and str(arr.dtype).startswith('<U'):
+        if "numpy" in str(type(arr)) and str(arr.dtype).startswith("<U"):
             # Note arr.astype('str') does not lead to a successfuly tiledb.from_numpy.
-            arr = np.array(arr, dtype='O')
+            arr = np.array(arr, dtype="O")
 
         # overwrite = False
         # if self.exists:
@@ -115,7 +117,11 @@ class UnsArray(TileDBArray):
         tiledb.from_numpy(uri=self.uri, array=arr, ctx=self.ctx)
 
         if self.verbose:
-            print(util.format_elapsed(s, f"{self.indent}FINISH WRITING FROM NUMPY.NDARRAY {self.uri}"))
+            print(
+                util.format_elapsed(
+                    s, f"{self.indent}FINISH WRITING FROM NUMPY.NDARRAY {self.uri}"
+                )
+            )
 
     # ----------------------------------------------------------------
     def from_scipy_csr(self, csr: scipy.sparse.csr_matrix) -> None:
@@ -139,11 +145,16 @@ class UnsArray(TileDBArray):
         self.ingest_data_from_csr(csr)
 
         if self.verbose:
-            print(util.format_elapsed(s, f"{self.indent}FINISH WRITING FROM SCIPY.SPARSE.CSR {self.uri}"))
-
+            print(
+                util.format_elapsed(
+                    s, f"{self.indent}FINISH WRITING FROM SCIPY.SPARSE.CSR {self.uri}"
+                )
+            )
 
     # ----------------------------------------------------------------
-    def create_empty_array_for_csr(self, attr_name: str, matrix_dtype: np.dtype, nrows: int, ncols: int):
+    def create_empty_array_for_csr(
+        self, attr_name: str, matrix_dtype: np.dtype, nrows: int, ncols: int
+    ):
         """
         Create a TileDB 2D sparse array with int dimensions and a single attribute.
         Nominally used for uns data.
@@ -155,25 +166,40 @@ class UnsArray(TileDBArray):
         assert isinstance(attr_name, str)
 
         dom = tiledb.Domain(
-            tiledb.Dim(name="dim0", domain=(0, nrows-1), dtype="int32", filters=[tiledb.RleFilter()]),
-            tiledb.Dim(name="dim1", domain=(0, ncols-1), dtype="int32", filters=[tiledb.ZstdFilter()]),
-            ctx=self.ctx
+            tiledb.Dim(
+                name="dim0",
+                domain=(0, nrows - 1),
+                dtype="int32",
+                filters=[tiledb.RleFilter()],
+            ),
+            tiledb.Dim(
+                name="dim1",
+                domain=(0, ncols - 1),
+                dtype="int32",
+                filters=[tiledb.ZstdFilter()],
+            ),
+            ctx=self.ctx,
         )
 
-        att = tiledb.Attr(attr_name, dtype=matrix_dtype, filters=[tiledb.ZstdFilter()], ctx=self.ctx)
+        att = tiledb.Attr(
+            attr_name, dtype=matrix_dtype, filters=[tiledb.ZstdFilter()], ctx=self.ctx
+        )
         sch = tiledb.ArraySchema(
             domain=dom,
             attrs=(att,),
             sparse=True,
             allows_duplicates=True,
-            offsets_filters=[tiledb.DoubleDeltaFilter(), tiledb.BitWidthReductionFilter(), tiledb.ZstdFilter()],
+            offsets_filters=[
+                tiledb.DoubleDeltaFilter(),
+                tiledb.BitWidthReductionFilter(),
+                tiledb.ZstdFilter(),
+            ],
             capacity=100000,
-            cell_order='row-major',
-            tile_order='col-major',
-            ctx=self.ctx
+            cell_order="row-major",
+            tile_order="col-major",
+            ctx=self.ctx,
         )
         tiledb.Array.create(self.uri, sch, ctx=self.ctx)
-
 
     # ----------------------------------------------------------------
     def ingest_data_from_csr(self, csr: scipy.sparse.csr_matrix):
@@ -189,7 +215,6 @@ class UnsArray(TileDBArray):
 
         with tiledb.open(self.uri, mode="w", ctx=self.ctx) as A:
             A[d0, d1] = mat_coo.data
-
 
     # ----------------------------------------------------------------
     # TODO: regardless of which matrix type (numpy.ndarray, scipy.sparse.csr_matrix, etc) was

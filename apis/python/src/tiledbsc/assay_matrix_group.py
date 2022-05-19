@@ -7,6 +7,7 @@ from typing import Optional
 
 import os
 
+
 class AssayMatrixGroup(TileDBGroup):
     """
     Nominally for soma X and raw/X.
@@ -19,8 +20,8 @@ class AssayMatrixGroup(TileDBGroup):
         self,
         uri: str,
         name: str,
-        row_dim_name: str, # obs_id for X, obs_id_i for obsp; var_id_i for varp
-        col_dim_name: str, # var_id for X, obs_id_j for obsp; var_id_j for varp
+        row_dim_name: str,  # obs_id for X, obs_id_i for obsp; var_id_i for varp
+        col_dim_name: str,  # var_id for X, obs_id_j for obsp; var_id_j for varp
         parent: Optional[TileDBGroup] = None,
     ):
         """
@@ -28,15 +29,14 @@ class AssayMatrixGroup(TileDBGroup):
         """
         super().__init__(uri=uri, name=name, parent=parent)
 
-        assay_matrix_uri = os.path.join(self.uri, 'data')
+        assay_matrix_uri = os.path.join(self.uri, "data")
         self.data = AssayMatrix(
             uri=assay_matrix_uri,
-            name='data',
+            name="data",
             row_dim_name=row_dim_name,
             col_dim_name=col_dim_name,
             parent=self,
         )
-
 
     # ----------------------------------------------------------------
     def from_matrix(self, matrix, row_names, col_names) -> None:
@@ -45,7 +45,7 @@ class AssayMatrixGroup(TileDBGroup):
         anndata.obs_names and col_names will be anndata.var_names or anndata.raw.var_names.
         """
 
-        self.open('w')
+        self.open("w")
 
         if matrix is not None:
             self.data.from_matrix(matrix, row_names, col_names)

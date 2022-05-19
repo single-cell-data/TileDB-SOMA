@@ -12,22 +12,22 @@ import sys, os, shutil
 
 import pandas
 
-input_path  = 'anndata/pbmc3k_processed.h5ad'
-output_path = 'tiledb-data/pbmc3k_processed'
+input_path = "anndata/pbmc3k_processed.h5ad"
+output_path = "tiledb-data/pbmc3k_processed"
 if len(sys.argv) == 3:
-    input_path  = sys.argv[1]
+    input_path = sys.argv[1]
     output_path = sys.argv[2]
 if len(sys.argv) == 2:
-    input_path  = sys.argv[1]
+    input_path = sys.argv[1]
     # Example 'anndata/pbmc3k_processed.h5ad' -> 'tiledb-data/pbmc3k_processed'
-    output_path = 'tiledb-data/' + os.path.splitext(os.path.basename(input_path))[0]
+    output_path = "tiledb-data/" + os.path.splitext(os.path.basename(input_path))[0]
 
 # This is for local-disk use only -- for S3-backed tiledb://... URIs we should
 # use tiledb.vfs to remove any priors, and/or make use of a tiledb `overwrite` flag.
-if not os.path.exists('tiledb-data'):
-    os.mkdir('tiledb-data')
+if not os.path.exists("tiledb-data"):
+    os.mkdir("tiledb-data")
 if os.path.exists(output_path):
-    shutil.rmtree(output_path) # Overwrite
+    shutil.rmtree(output_path)  # Overwrite
 
 soma = tiledbsc.SOMA(output_path, verbose=True)
 

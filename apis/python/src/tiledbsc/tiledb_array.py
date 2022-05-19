@@ -1,15 +1,15 @@
 import tiledb
-from .soma_options  import SOMAOptions
+from .soma_options import SOMAOptions
 from .tiledb_object import TileDBObject
-from .tiledb_group  import TileDBGroup
+from .tiledb_group import TileDBGroup
 
 from typing import Optional, List
+
 
 class TileDBArray(TileDBObject):
     """
     Wraps arrays from TileDB-Py by retaining a URI, verbose flag, etc.
     """
-
 
     def __init__(
         self,
@@ -27,7 +27,7 @@ class TileDBArray(TileDBObject):
         This should be implemented by child classes and should return what tiledb.object_type(uri)
         returns for objects of a given type -- nominally 'group' or 'array'.
         """
-        return 'array'
+        return "array"
 
     def open_array(self):
         """
@@ -49,11 +49,11 @@ class TileDBArray(TileDBObject):
         TODO
         """
         with tiledb.open(self.uri) as A:
-           return [A.schema.domain.dim(i).name for i in range(A.schema.domain.ndim)]
+            return [A.schema.domain.dim(i).name for i in range(A.schema.domain.ndim)]
 
     def get_attr_names(self) -> List[str]:
         """
         TODO
         """
         with tiledb.open(self.uri) as A:
-           return [A.schema.attr(i).name for i in range(A.schema.nattr)]
+            return [A.schema.attr(i).name for i in range(A.schema.nattr)]

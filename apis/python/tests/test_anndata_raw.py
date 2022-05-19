@@ -25,7 +25,8 @@ def test_from_anndata_raw_X(tmp_path, adata):
     SOMA(tmp_path.as_posix()).from_anndata(adata)
 
     assert all(
-        (tmp_path / sub_array_path).exists() for sub_array_path in ["X/data", "raw/X/data"]
+        (tmp_path / sub_array_path).exists()
+        for sub_array_path in ["X/data", "raw/X/data"]
     )
 
     with tiledb.open((tmp_path / "raw" / "X" / "data").as_posix()) as raw_X:

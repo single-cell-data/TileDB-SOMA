@@ -2,8 +2,8 @@ import os
 from typing import Optional, Union
 
 import anndata as ad
-import numpy   as np
-import pandas  as pd
+import numpy as np
+import pandas as pd
 import pyarrow as pa
 import scanpy
 import scipy
@@ -12,17 +12,18 @@ import tiledb
 from tiledbsc import util
 from tiledbsc import util_ann
 
-from .soma_options                     import SOMAOptions
-from .tiledb_group                     import TileDBGroup
-from .assay_matrix_group               import AssayMatrixGroup
-from .annotation_dataframe             import AnnotationDataFrame
-from .annotation_matrix_group          import AnnotationMatrixGroup
+from .soma_options import SOMAOptions
+from .tiledb_group import TileDBGroup
+from .assay_matrix_group import AssayMatrixGroup
+from .annotation_dataframe import AnnotationDataFrame
+from .annotation_matrix_group import AnnotationMatrixGroup
 from .annotation_pairwise_matrix_group import AnnotationPairwiseMatrixGroup
-from .raw_group                        import RawGroup
-from .uns_group                        import UnsGroup
+from .raw_group import RawGroup
+from .uns_group import UnsGroup
+
 
 class SOMA(TileDBGroup):
-    """ Single-cell group
+    """Single-cell group
     Class for representing a group of TileDB groups/arrays that constitute an SOMA ('stack of matrices, annotated')
     which includes:
     * `X` (`AssayMatrixGroup`): a group of one or more labeled 2D sparse arrays
@@ -35,26 +36,26 @@ class SOMA(TileDBGroup):
     reveal the diversity/variety of HDF5 files we process.
     """
 
-    X:     AssayMatrixGroup
-    obs:   AnnotationDataFrame
-    var:   AnnotationDataFrame
-    obsm:  AnnotationMatrixGroup
-    varm:  AnnotationMatrixGroup
-    obsp:  AnnotationPairwiseMatrixGroup
-    varp:  AnnotationPairwiseMatrixGroup
-    raw:   RawGroup
-    uns:   UnsGroup
+    X: AssayMatrixGroup
+    obs: AnnotationDataFrame
+    var: AnnotationDataFrame
+    obsm: AnnotationMatrixGroup
+    varm: AnnotationMatrixGroup
+    obsp: AnnotationPairwiseMatrixGroup
+    varp: AnnotationPairwiseMatrixGroup
+    raw: RawGroup
+    uns: UnsGroup
 
     # ----------------------------------------------------------------
     def __init__(
         self,
         uri: str,
-        name = 'soma',
+        name="soma",
         soma_options: Optional[SOMAOptions] = None,
         verbose: Optional[bool] = True,
         config: Optional[tiledb.Config] = None,
         ctx: Optional[tiledb.Ctx] = None,
-        parent: Optional[TileDBGroup] = None, # E.g. a SOMA collection
+        parent: Optional[TileDBGroup] = None,  # E.g. a SOMA collection
     ):
         """
         @description Create a new SOMA object. The existing array group is
@@ -67,28 +68,44 @@ class SOMA(TileDBGroup):
         if ctx is None and config is not None:
             ctx = tiledb.Ctx(config)
         if soma_options is None:
-            soma_options = SOMAOptions() # Use default values from the constructor
-        super().__init__(uri=uri, name=name, parent=parent, verbose=verbose, soma_options=soma_options)
+            soma_options = SOMAOptions()  # Use default values from the constructor
+        super().__init__(
+            uri=uri,
+            name=name,
+            parent=parent,
+            verbose=verbose,
+            soma_options=soma_options,
+        )
 
-        X_uri    = os.path.join(self.uri, "X")
-        obs_uri  = os.path.join(self.uri, "obs")
-        var_uri  = os.path.join(self.uri, "var")
+        X_uri = os.path.join(self.uri, "X")
+        obs_uri = os.path.join(self.uri, "obs")
+        var_uri = os.path.join(self.uri, "var")
         obsm_uri = os.path.join(self.uri, "obsm")
         varm_uri = os.path.join(self.uri, "varm")
         obsp_uri = os.path.join(self.uri, "obsp")
         varp_uri = os.path.join(self.uri, "varp")
-        raw_uri  = os.path.join(self.uri, "raw")
-        uns_uri  = os.path.join(self.uri, "uns")
+        raw_uri = os.path.join(self.uri, "raw")
+        uns_uri = os.path.join(self.uri, "uns")
 
-        self.X    = AssayMatrixGroup(uri=X_uri, name='X', row_dim_name='obs_id', col_dim_name='var_id', parent=self)
-        self.obs  = AnnotationDataFrame(uri=obs_uri, name="obs", parent=self)
-        self.var  = AnnotationDataFrame(uri=var_uri, name="var", parent=self)
+        self.X = AssayMatrixGroup(
+            uri=X_uri,
+            name="X",
+            row_dim_name="obs_id",
+            col_dim_name="var_id",
+            parent=self,
+        )
+        self.obs = AnnotationDataFrame(uri=obs_uri, name="obs", parent=self)
+        self.var = AnnotationDataFrame(uri=var_uri, name="var", parent=self)
         self.obsm = AnnotationMatrixGroup(uri=obsm_uri, name="obsm", parent=self)
         self.varm = AnnotationMatrixGroup(uri=varm_uri, name="varm", parent=self)
-        self.obsp = AnnotationPairwiseMatrixGroup(uri=obsp_uri, name="obsp", parent=self)
-        self.varp = AnnotationPairwiseMatrixGroup(uri=varp_uri, name="varp", parent=self)
-        self.raw  = RawGroup(uri=raw_uri, name='raw', parent=self)
-        self.uns  = UnsGroup(uri=uns_uri, name='uns', parent=self)
+        self.obsp = AnnotationPairwiseMatrixGroup(
+            uri=obsp_uri, name="obsp", parent=self
+        )
+        self.varp = AnnotationPairwiseMatrixGroup(
+            uri=varp_uri, name="varp", parent=self
+        )
+        self.raw = RawGroup(uri=raw_uri, name="raw", parent=self)
+        self.uns = UnsGroup(uri=uns_uri, name="uns", parent=self)
 
         # If URI is "/something/test1" then:
         # * obs_uri  is "/something/test1/obs"
@@ -99,7 +116,6 @@ class SOMA(TileDBGroup):
         # * obs_uri  is "tiledb://namespace/s3://bucketname/something/test1/obs"
         # * var_uri  is "tiledb://namespace/s3://bucketname/something/test1/var"
         # * data_uri is "tiledb://namespace/s3://bucketname/something/test1/X"
-
 
     # ----------------------------------------------------------------
     def from_h5ad(self, input_path: str):
@@ -114,7 +130,11 @@ class SOMA(TileDBGroup):
         self.from_anndata(anndata)
 
         if self.verbose:
-            print(util.format_elapsed(s, f"FINISH SOMA.from_h5ad {input_path} -> {self.uri}"))
+            print(
+                util.format_elapsed(
+                    s, f"FINISH SOMA.from_h5ad {input_path} -> {self.uri}"
+                )
+            )
 
     # ----------------------------------------------------------------
     def from_10x(self, input_path: str):
@@ -130,7 +150,11 @@ class SOMA(TileDBGroup):
         self.from_anndata(anndata)
 
         if self.verbose:
-            print(util.format_elapsed(s, f"FINISH SOMA.from_10x {input_path} -> {self.uri}"))
+            print(
+                util.format_elapsed(
+                    s, f"FINISH SOMA.from_10x {input_path} -> {self.uri}"
+                )
+            )
 
     # ----------------------------------------------------------------
     def read_h5ad(self, input_path: str):
@@ -231,7 +255,6 @@ class SOMA(TileDBGroup):
 
         self.close()
 
-
     # ================================================================
     # READ PATH OUT OF TILEDB
 
@@ -256,7 +279,9 @@ class SOMA(TileDBGroup):
             print(util.format_elapsed(s2, f"{self.indent}FINISH write {h5ad_path}"))
 
         if self.verbose:
-            print(util.format_elapsed(s, f"FINISH SOMA.to_h5ad {self.uri} -> {h5ad_path}"))
+            print(
+                util.format_elapsed(s, f"FINISH SOMA.to_h5ad {self.uri} -> {h5ad_path}")
+            )
 
     # ----------------------------------------------------------------
     def to_anndata(self):
@@ -299,9 +324,9 @@ class SOMA(TileDBGroup):
 
         # TODO
         print("  OBSP OUTGEST NOT WORKING YET")
-        #obsp = self.obsp.to_dict_of_csr()
+        # obsp = self.obsp.to_dict_of_csr()
         print("  VARP OUTGEST NOT WORKING YET")
-        #varp = self.varp.to_dict_of_csr()
+        # varp = self.varp.to_dict_of_csr()
 
         (raw_X, raw_var_df, raw_varm) = self.raw.to_anndata_raw(obs_df.index)
 
@@ -318,7 +343,9 @@ class SOMA(TileDBGroup):
 
         anndata = ad.AnnData(
             X=anndata.X,
-            dtype=None if anndata.X is None else anndata.X.dtype,  # some datasets have no X
+            dtype=None
+            if anndata.X is None
+            else anndata.X.dtype,  # some datasets have no X
             obs=anndata.obs,
             var=anndata.var,
             obsm=anndata.obsm,
@@ -342,5 +369,7 @@ class SOMA(TileDBGroup):
         X_mat = self.raw.X.data.to_csr_matrix(obs.index, var.index)
 
         return ad.AnnData(
-            X=X_mat, obs=obs_df, var=var_df,
+            X=X_mat,
+            obs=obs_df,
+            var=var_df,
         )
