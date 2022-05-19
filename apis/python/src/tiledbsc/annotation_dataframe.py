@@ -31,6 +31,35 @@ class AnnotationDataFrame(TileDBArray):
         self.dim_name = name + "_id"
 
     # ----------------------------------------------------------------
+    def shape(self):
+        """
+        Returns a tuple with the number of rows and number of columns of the `AnnotationDataFrame`.
+        The row-count is the number of obs_ids (for `obs`) or the number of var_ids (for `var`).
+        The column-count is the number of columns/attributes in the dataframe.
+        """
+        # TODO: with self.open: see
+        # https://github.com/single-cell-data/TileDB-SingleCell/pull/93
+        with tiledb.open(self.uri) as A:
+            # These TileDB arrays are string-dimensioned sparse arrays so there is no '.shape'.
+            # Instead we compute it ourselves.
+            # See also:
+            # * https://github.com/single-cell-data/TileDB-SingleCell/issues/10
+            # * https://github.com/TileDB-Inc/TileDB-Py/pull/1055
+            num_rows = len(A[:][self.dim_name].tolist())
+            num_cols = A.schema.nattr
+            return (num_rows, num_cols)
+
+
+    # ----------------------------------------------------------------
+    def get_dim_values(self) -> List[str]:
+        """
+        Returns the `obs_ids` in the matrix (for `obs`) or the `var_ids` (for `var`).
+        """
+        with tiledb.open(self.uri) as A:
+            return A[:][self.dim_name].tolist()
+
+
+    # ----------------------------------------------------------------
     def from_dataframe(self, dataframe: pandas.DataFrame, extent: int) -> None:
         """
         Populates the obs/ or var/ subgroup for a SOMA object.

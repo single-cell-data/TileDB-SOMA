@@ -1,5 +1,5 @@
 import os
-from typing import Optional, Union
+from typing import Optional, Union, Dict
 
 import anndata as ad
 import numpy as np
@@ -116,6 +116,43 @@ class SOMA(TileDBGroup):
         # * obs_uri  is "tiledb://namespace/s3://bucketname/something/test1/obs"
         # * var_uri  is "tiledb://namespace/s3://bucketname/something/test1/var"
         # * data_uri is "tiledb://namespace/s3://bucketname/something/test1/X"
+
+    # ----------------------------------------------------------------
+    def __str__(self):
+        """
+        Implements 'print(soma)'.
+        """
+        return f"name={self.name},uri={self.uri}"
+
+    # ----------------------------------------------------------------
+    def shape(self):
+        # obs and var are dataframes: rows are obs_id/var_id; column names vary from
+        # one soma to another.
+        return (self.obs.shape()[0], self.var.shape()[0])
+
+    def obs_ids(self):
+        """
+        Returns the list of obs_ids in the obs slot.
+        """
+        return self.obs.get_dim_values()
+
+    def var_ids(self):
+        """
+        Returns the list of var_ids in the var slot.
+        """
+        return self.var.get_dim_values()
+
+    def obs_attr_names(self):
+        """
+        Returns the list of attribute names in the obs slot.
+        """
+        return self.obs.get_attr_names()
+
+    def var_attr_names(self):
+        """
+        Returns the list of attribute names in the var slot.
+        """
+        return self.var.get_attr_names()
 
     # ----------------------------------------------------------------
     def from_h5ad(self, input_path: str):

@@ -34,6 +34,23 @@ class AnnotationPairwiseMatrix(TileDBArray):
         self.col_dim_name = col_dim_name
 
     # ----------------------------------------------------------------
+    def shape(self):
+        """
+        Returns a tuple with the number of rows and number of columns of the `AnnotationPairwiseMatrix`.
+        The row-count and column-counts should be the same: dimensions are `obs_id_i,obs_id_j` for
+        `obsm` elements, and `var_id_i,var_id_j` for `varm` elements.
+        """
+        with tiledb.open(self.uri) as A:  # TODO: with self.open
+            # These TileDB arrays are string-dimensioned sparse arrays so there is no '.shape'.
+            # Instead we compute it ourselves.
+            # See also:
+            # * https://github.com/single-cell-data/TileDB-SingleCell/issues/10
+            # * https://github.com/TileDB-Inc/TileDB-Py/pull/1055
+            num_rows = len(A[:, :][self.row_dim_name].tolist())
+            num_cols = len(A[:, :][self.col_dim_name].tolist())
+            return (num_rows, num_cols)
+
+    # ----------------------------------------------------------------
     def from_anndata(self, matrix, dim_values):
         """
         Populates an array in the obsp/ or varp/ subgroup for a SOMA object.
