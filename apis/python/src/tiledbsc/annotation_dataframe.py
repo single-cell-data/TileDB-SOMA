@@ -4,7 +4,8 @@ from .tiledb_group import TileDBGroup
 from .soma_options import SOMAOptions
 import tiledbsc.util as util
 
-import pandas
+import pandas as pd
+import numpy as np
 
 from typing import Optional, Tuple, List
 
@@ -65,7 +66,7 @@ class AnnotationDataFrame(TileDBArray):
         return self.get_attr_names()
 
     # ----------------------------------------------------------------
-    def from_dataframe(self, dataframe: pandas.DataFrame, extent: int) -> None:
+    def from_dataframe(self, dataframe: pd.DataFrame, extent: int) -> None:
         """
         Populates the obs/ or var/ subgroup for a SOMA object.
 
@@ -114,6 +115,16 @@ class AnnotationDataFrame(TileDBArray):
             if self.verbose:
                 print(f"{self.indent}Re-using existing array {self.uri}")
 
+        # Context: https://github.com/single-cell-data/TileDB-SingleCell/issues/99.
+        # TODO: when UTF-8 attributes are queryable using TileDB-Py's QueryCondition API we can remove this.
+        column_types = {}  # XXX None OR {} ?
+        if self.name in self.soma_options.col_names_to_store_as_ascii:
+            col_names_to_store_as_ascii = self.soma_options.col_names_to_store_as_ascii[
+                self.name
+            ]
+            for col_name in col_names_to_store_as_ascii:
+                column_types[col_name] = np.dtype("S")
+
         tiledb.from_pandas(
             uri=self.uri,
             dataframe=dataframe,
@@ -125,6 +136,7 @@ class AnnotationDataFrame(TileDBArray):
             dim_filters=dim_filters,
             capacity=100000,
             tile=extent,
+            column_types=column_types,
             ctx=self.ctx,
             mode=mode,
         )
@@ -133,7 +145,7 @@ class AnnotationDataFrame(TileDBArray):
             print(util.format_elapsed(s, f"{self.indent}FINISH WRITING {self.uri}"))
 
     # ----------------------------------------------------------------
-    def to_dataframe(self) -> pandas.DataFrame:
+    def to_dataframe(self) -> pd.DataFrame:
         """
         Reads the TileDB obs or var array and returns a type of pandas dataframe
         and dimension values.
@@ -147,7 +159,7 @@ class AnnotationDataFrame(TileDBArray):
             # We could use A.df[:] to set the index_name to 'obs_id' or 'var_id'.
             # However, the resulting dataframe has obs_id/var_id as strings, not
             # bytes, resulting in `KeyError` elsewhere in the code.
-            df = pandas.DataFrame(A[:])
+            df = pd.DataFrame(A[:])
             df = df.set_index(self.dim_name)
 
         if self.verbose:
