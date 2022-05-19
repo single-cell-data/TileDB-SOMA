@@ -1,0 +1,22 @@
+name: TileDB Python Linting
+
+on: [push, pull_request]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
+
+      - name: Check Python Black Format
+        uses: psf/black@stable
+        with:
+          options: "apis/python --check"
+
+# TODO
+#      - name: Check Clang-Format
+#        uses: DoozyX/clang-format-lint-action@v0.13
+#        with:
+#          clangFormatVersion: '10'
+#          source: 'tiledb'
