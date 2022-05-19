@@ -70,7 +70,9 @@ def test_import_anndata(adata):
         assert df.columns.to_list() == orig.obs_keys()
     # TODO: the left-hand side is a list of b'...' and the right-hand side is a list of '...'.
     # assert sorted(soma.obs.ids()) == sorted(list(orig.obs_names))
-    assert sorted([e.decode('utf-8') for e in soma.obs.ids()]) == sorted(list(orig.obs_names))
+    assert sorted([e.decode("utf-8") for e in soma.obs.ids()]) == sorted(
+        list(orig.obs_names)
+    )
 
     # Check var
     with tiledb.open(os.path.join(output_path, "var")) as A:
@@ -78,7 +80,9 @@ def test_import_anndata(adata):
         assert df.columns.to_list() == orig.var_keys()
     # TODO: the left-hand side is a list of b'...' and the right-hand side is a list of '...'.
     # assert sorted(soma.var.ids()) == sorted(list(orig.var_names))
-    assert sorted([e.decode('utf-8') for e in soma.var.ids()]) == sorted(list(orig.var_names))
+    assert sorted([e.decode("utf-8") for e in soma.var.ids()]) == sorted(
+        list(orig.var_names)
+    )
 
     # Check some annotation matrices
     # Note: pbmc3k_processed doesn't have varp.

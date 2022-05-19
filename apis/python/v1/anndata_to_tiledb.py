@@ -65,6 +65,7 @@ class AnnDataExporter:
     @classmethod
     def from_10x(cls, path: str):
         import scanpy
+
         anndata = scanpy.read_10x_h5(path)
 
         anndata.var_names_make_unique()
@@ -77,14 +78,15 @@ class AnnDataExporter:
 
         anndata.var_names_make_unique()
 
-        uncat = lambda x: x.astype("O") if isinstance(x.dtype, pd.CategoricalDtype) else x
-        var = pd.DataFrame.from_dict({k: uncat(v) for k,v in anndata.var.items()})
-        #obs = pd.DataFrame.from_dict({k: uncat(v) for k,v in anndata.obs.items()})
-        #anndata = ad.AnnData(X=anndata.X, var=var, obs=obs, raw=anndata.raw)
+        uncat = (
+            lambda x: x.astype("O") if isinstance(x.dtype, pd.CategoricalDtype) else x
+        )
+        var = pd.DataFrame.from_dict({k: uncat(v) for k, v in anndata.var.items()})
+        # obs = pd.DataFrame.from_dict({k: uncat(v) for k,v in anndata.obs.items()})
+        # anndata = ad.AnnData(X=anndata.X, var=var, obs=obs, raw=anndata.raw)
         anndata = ad.AnnData(X=anndata.X, var=var, obs=anndata.obs, raw=anndata.raw)
 
         return cls(anndata)
-
 
     def _create_arrays(self, base: str):
         obs_schema = AnnSchemaBuilder(self.data.obs).to_schema()
@@ -130,6 +132,7 @@ class AnnDataExporter:
         self._write_ann(self._obs_path, self.data.obs)
         self._write_ann(self._var_path, self.data.var)
         self._write_data()
+
 
 if __name__ == "__main__":
     input_path = sys.argv[1]

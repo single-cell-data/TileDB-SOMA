@@ -48,7 +48,6 @@ class AnnotationDataFrame(TileDBArray):
             num_cols = A.schema.nattr
             return (num_rows, num_cols)
 
-
     # ----------------------------------------------------------------
     def ids(self) -> List[str]:
         """
@@ -64,7 +63,6 @@ class AnnotationDataFrame(TileDBArray):
         keystroke-saver for the more general array-schema accessor `get_attr_names`.
         """
         return self.get_attr_names()
-
 
     # ----------------------------------------------------------------
     def from_dataframe(self, dataframe: pandas.DataFrame, extent: int) -> None:

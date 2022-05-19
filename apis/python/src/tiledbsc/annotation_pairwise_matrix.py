@@ -45,7 +45,7 @@ class AnnotationPairwiseMatrix(TileDBArray):
             # Instead we compute it ourselves.  See also:
             # * https://github.com/single-cell-data/TileDB-SingleCell/issues/10
             # * https://github.com/TileDB-Inc/TileDB-Py/pull/1055
-            return A.df[:].shape # nnz x 3 -- id_i, id_j, and value
+            return A.df[:].shape  # nnz x 3 -- id_i, id_j, and value
 
     # ----------------------------------------------------------------
     def from_anndata(self, matrix, dim_values):
