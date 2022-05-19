@@ -149,6 +149,55 @@ def _to_tiledb_supported_array_type(x):
     return x if target_dtype == x.dtype else x.astype(target_dtype)
 
 
+# ----------------------------------------------------------------
+def X_and_ids_to_coo(
+    Xdf: pd.DataFrame,
+    row_dim_name: str,
+    col_dim_name: str,
+    attr_name: str,
+    row_labels,
+    col_labels,
+) -> scipy.sparse.csr_matrix:
+    """
+    This is needed when we read a TileDB X.df[:]. Since TileDB X is sparse 2D string-dimensioned,
+    the return value of which is a dict with three columns -- obs_id, var_id, and value. For
+    conversion to anndata, we need make a sparse COO/IJV-format array where the indices are
+    not strings but ints, matching the obs and var labels.
+    """
+
+    # Now we need to convert from TileDB's string indices to CSR integer indices.
+    # Make a dict from string dimension values to integer indices.
+    #
+    # Example: suppose the sparse matrix looks like:
+    #
+    #     S T U V
+    #   A 4 . . 3
+    #   B: 5 . 6 .
+    #   C . 1 . 2
+    #   D 8 7 . .
+    #
+    # The return value from the X[:] query is (obs_id,var_id,value) triples like
+    #
+    #   A,S,4 A,V,3 B,S,5 B,U,6 C,V,2 C,T,1 D,S,8 D,T,7
+    #
+    # whereas scipy csr is going to want
+    #
+    #   0,0,4 0,3,3 1,0,5 1,2,6 2,3,2 2,1,1 3,0,8 3,1,7
+    #
+    # In order to accomplish this, we need to map ['A','B','C','D'] to [0,1,2,3] via {'A':0,
+    # 'B':1, 'C':2, 'D':3} and similarly for the other dimension.
+    row_labels_to_indices = dict(zip(row_labels, [i for i, e in enumerate(row_labels)]))
+    col_labels_to_indices = dict(zip(col_labels, [i for i, e in enumerate(col_labels)]))
+
+    # Apply the map.
+    obs_indices = [row_labels_to_indices[row_label] for row_label in Xdf[row_dim_name]]
+    var_indices = [col_labels_to_indices[col_label] for col_label in Xdf[col_dim_name]]
+
+    return scipy.sparse.csr_matrix(
+        (list(Xdf[attr_name]), (list(obs_indices), list(var_indices)))
+    )
+
+
 # ================================================================
 class ETATracker:
     """
