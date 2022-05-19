@@ -41,6 +41,10 @@ class AssayMatrix(TileDBArray):
         self.attr_name = "value"
 
     # ----------------------------------------------------------------
+    # We don't have a .shape() method since X is sparse. One should
+    # instead use the row-counts for the soma's obs and var.
+
+    # ----------------------------------------------------------------
     def from_matrix(self, matrix, row_names, col_names) -> None:
         """
         Imports a matrix -- nominally scipy.sparse.csr_matrix or numpy.ndarray -- into a TileDB

@@ -2,7 +2,7 @@ import tiledb
 from .soma_options import SOMAOptions
 from .tiledb_object import TileDBObject
 
-from typing import Optional, Union
+from typing import Optional, Union, List, Dict
 import os
 
 
@@ -80,17 +80,32 @@ class TileDBGroup(TileDBObject):
             raise Exception("Attempt to write to a non-open group")
         self.tiledb_group.add(uri=uri, relative=False, name=name)
 
-    def get_member_uris(self):
+    def get_member_names(self):
         """
-        TODO
+        Returns the names of the group elements. For a SOMACollection, these will SOMA names;
+        for a SOMA, these will be matrix/group names; etc.
+        """
+        return [os.path.basename(e) for e in self.get_member_uris()]
+
+    def get_member_uris(self) -> List[str]:
+        """
+        Returns the URIs of the group elements. For a SOMACollection, these will SOMA URIs;
+        for a SOMA, these will be matrix/group URIs; etc.
         """
         self.open("r")
         retval = [e.uri for e in self.tiledb_group]
         self.close()
         return retval
 
-    def get_member_names(self):
+    def get_member_names_to_uris(self) -> Dict[str, str]:
         """
-        TODO
+        Like `get_member_names()` and `get_member_uris`, but returns a dict mapping from
+        member name to member URI.
         """
-        return [os.path.basename(e) for e in self.get_member_uris()]
+        retval = {}
+        self.open("r")
+        for e in self.tiledb_group:
+            name = os.path.basename(e.uri)
+            retval[name] = e.uri
+        self.close()
+        return retval

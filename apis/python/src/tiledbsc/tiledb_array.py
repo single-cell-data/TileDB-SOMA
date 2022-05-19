@@ -29,7 +29,7 @@ class TileDBArray(TileDBObject):
         """
         return "array"
 
-    def open_array(self):
+    def open(self):
         """
         Returns the TileDB array. The caller should do A.close() on the return value after finishing
         with it.
@@ -46,14 +46,20 @@ class TileDBArray(TileDBObject):
 
     def get_dim_names(self) -> List[str]:
         """
-        TODO
+        Reads the dimension names from the schema: for example, ['obs_id', 'var_id'].
         """
         with tiledb.open(self.uri) as A:
             return [A.schema.domain.dim(i).name for i in range(A.schema.domain.ndim)]
 
     def get_attr_names(self) -> List[str]:
         """
-        TODO
+        Reads the attribute names from the schema: for example, the list of column names in a dataframe.
         """
         with tiledb.open(self.uri) as A:
             return [A.schema.attr(i).name for i in range(A.schema.nattr)]
+
+    def has_attr_name(self, attr_name: str) -> bool:
+        """
+        Returns true if the array has the specified attribute name, false otherwise.
+        """
+        return attr_name in self.get_attr_names()

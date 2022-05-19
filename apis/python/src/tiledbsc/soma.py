@@ -1,5 +1,5 @@
 import os
-from typing import Optional, Union
+from typing import Optional, Union, Dict
 
 import anndata as ad
 import numpy as np
@@ -116,6 +116,13 @@ class SOMA(TileDBGroup):
         # * obs_uri  is "tiledb://namespace/s3://bucketname/something/test1/obs"
         # * var_uri  is "tiledb://namespace/s3://bucketname/something/test1/var"
         # * data_uri is "tiledb://namespace/s3://bucketname/something/test1/X"
+
+    # ----------------------------------------------------------------
+    def __str__(self):
+        """
+        Implements 'print(soma)'.
+        """
+        return f"name={self.name},uri={self.uri}"
 
     # ----------------------------------------------------------------
     def from_h5ad(self, input_path: str):
