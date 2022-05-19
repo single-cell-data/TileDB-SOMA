@@ -2,6 +2,7 @@ import tiledb
 from .soma_options import SOMAOptions
 from .tiledb_object import TileDBObject
 from .tiledb_group import TileDBGroup
+from contextlib import contextmanager
 
 from typing import Optional, List, Dict
 
@@ -31,13 +32,36 @@ class TileDBArray(TileDBObject):
         """
         return "array"
 
+    # HMM ... how to get this to work both ways, like TileDB-Py does:
+    # bar = foo._open()
+    # bar._close()
+    # --OR--
+    # with foo._open() as bar:
+    #   ...
+
+    # >>> a=soma.obs._open()
+    # >>> print(type(a))
+    # <class 'contextlib._GeneratorContextManager'>
+    # >>>
+    # >>> with soma.obs._open() as b:
+    # ...     print(type(b))
+    # ...
+    # <class 'tiledb.array.SparseArray'>
+
+    #    def _open(self):
+    #        """
+    #        Returns the TileDB array. The caller should do A._close() on the return value after finishing
+    #        with it. Using 'with soma.obs._open() as arr:' does the close for you.
+    #        """
+    #        return tiledb.open(self.uri)
+
+    @contextmanager
     def _open(self):
-        """
-        Returns the TileDB array. The caller should do A.close() on the return value after finishing
-        with it.
-        """
-        A = tiledb.open(self.uri)
-        return A
+        try:
+            arr = tiledb.open(self.uri)
+            yield arr
+        finally:
+            arr.close()
 
     def exists(self) -> bool:
         """
