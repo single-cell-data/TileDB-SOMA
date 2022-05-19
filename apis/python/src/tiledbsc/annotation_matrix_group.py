@@ -36,7 +36,7 @@ class AnnotationMatrixGroup(TileDBGroup):
     def keys(self):
         """
         For obsm and varm, `.keys()` is a keystroke-saver for the more general group-member
-        accessor `.get_member_names().
+        accessor `.get_member_names()`.
         """
         return self.get_member_names()
 

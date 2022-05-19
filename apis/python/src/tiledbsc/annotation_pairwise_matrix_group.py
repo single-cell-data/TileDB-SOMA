@@ -42,7 +42,7 @@ class AnnotationPairwiseMatrixGroup(TileDBGroup):
     def keys(self):
         """
         For obsp and varp, `.keys()` is a keystroke-saver for the more general group-member
-        accessor `.get_member_names().
+        accessor `.get_member_names()`.
         """
         return self.get_member_names()
 
