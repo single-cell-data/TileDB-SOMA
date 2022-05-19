@@ -19,18 +19,20 @@ import numpy
 import numpy as np  # so we can type it either way
 import scipy
 
-input_path = "anndata/pbmc3k_processed.h5ad"
-if len(sys.argv) != 2:
+if len(sys.argv) == 1:
+    input_path = "anndata/pbmc-small.h5ad"
+elif len(sys.argv) == 2:
+    input_path = sys.argv[1]
+else:
     print(f"{sys.argv[0]}: need just one .h5ad file name.", file=sys.stderr)
     sys.exit(1)
 
-input_path = sys.argv[1]
-a = anndata.read_h5ad(input_path)
+ann = anndata.read_h5ad(input_path)
 
 # Interact at the prompt now:
-# * a.X
-# * a.obs.keys()
-# * a.obs.head()
-# * a.obs.index
-# * a.obs.values
+# * ann.X
+# * ann.obs.keys()
+# * ann.obs.head()
+# * ann.obs.index
+# * ann.obs.values
 # * etc
