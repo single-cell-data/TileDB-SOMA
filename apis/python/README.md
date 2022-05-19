@@ -733,3 +733,4 @@ raw-sensor data (`subset_100_100`):
   * `/` has been accepted in Windows paths for some years now
   * `\` is not accepted for forming URIs
   * So, perhaps safer would be to always join on `/` regardless of platform.
+* For PRs: from within `apis/python`, run `black .` (or `black . --check to preview if you prefer) as this format-checker is run in CI.
