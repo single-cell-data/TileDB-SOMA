@@ -285,44 +285,13 @@ class AssayMatrix(TileDBArray):
         with tiledb.open(self.uri) as A:
             df = A[:]
 
-        # Now we need to convert from TileDB's string indices to CSR integer indices.
-        # Make a dict from string dimension values to integer indices.
-        #
-        # Example: suppose the sparse matrix looks like:
-        #
-        #     S T U V
-        #   A 4 . . 3
-        #   B: 5 . 6 .
-        #   C . 1 . 2
-        #   D 8 7 . .
-        #
-        # The return value from the X[:] query is (obs_id,var_id,value) triples like
-        #
-        #   A,S,4 A,V,3 B,S,5 B,U,6 C,V,2 C,T,1 D,S,8 D,T,7
-        #
-        # whereas scipy csr is going to want
-        #
-        #   0,0,4 0,3,3 1,0,5 1,2,6 2,3,2 2,1,1 3,0,8 3,1,7
-        #
-        # In order to accomplish this, we need to map ['A','B','C','D'] to [0,1,2,3] via {'A':0,
-        # 'B':1, 'C':2, 'D':3} and similarly for the other dimension.
-        row_labels_to_indices = dict(
-            zip(row_labels, [i for i, e in enumerate(row_labels)])
-        )
-        col_labels_to_indices = dict(
-            zip(col_labels, [i for i, e in enumerate(col_labels)])
-        )
-
-        # Apply the map.
-        obs_indices = [
-            row_labels_to_indices[row_label] for row_label in df[self.row_dim_name]
-        ]
-        var_indices = [
-            col_labels_to_indices[col_label] for col_label in df[self.col_dim_name]
-        ]
-
-        retval = scipy.sparse.csr_matrix(
-            (list(df[self.attr_name]), (list(obs_indices), list(var_indices)))
+        retval = util.X_and_ids_to_coo(
+            df,
+            self.row_dim_name,
+            self.col_dim_name,
+            self.attr_name,
+            row_labels,
+            col_labels,
         )
 
         if self.verbose:
