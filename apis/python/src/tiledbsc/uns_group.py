@@ -2,11 +2,11 @@ import tiledb
 
 from .soma_options import SOMAOptions
 from .tiledb_group import TileDBGroup
-from .uns_array    import UnsArray
+from .uns_array import UnsArray
 import tiledbsc.util as util
 
 import anndata as ad
-import pandas  as pd
+import pandas as pd
 import scipy
 import numpy
 
@@ -14,11 +14,11 @@ from typing import Optional, Dict
 
 import os
 
+
 class UnsGroup(TileDBGroup):
     """
     Nominally for soma uns.
     """
-
 
     # ----------------------------------------------------------------
     def __init__(
@@ -31,7 +31,6 @@ class UnsGroup(TileDBGroup):
         See the TileDBObject constructor.
         """
         super().__init__(uri=uri, name=name, parent=parent)
-
 
     # ----------------------------------------------------------------
     def from_anndata_uns(self, uns: ad.compat.OverloadedDict):
@@ -51,7 +50,7 @@ class UnsGroup(TileDBGroup):
             component_uri = os.path.join(self.uri, key)
             value = uns[key]
 
-            if key == 'rank_genes_groups':
+            if key == "rank_genes_groups":
                 # TODO:
                 # This is of type 'structured array':
                 # https://numpy.org/doc/stable/user/basics.rec.html
@@ -105,8 +104,8 @@ class UnsGroup(TileDBGroup):
         Reads the recursive group/array uns data from TileDB storage and returns them as a recursive dict of matrices.
         """
         grp = None
-        try: # Not all groups have uns
-            grp = tiledb.Group(self.uri, mode='r')
+        try:  # Not all groups have uns
+            grp = tiledb.Group(self.uri, mode="r")
         except:
             pass
         if grp == None:
@@ -122,7 +121,7 @@ class UnsGroup(TileDBGroup):
         # where we support somagroup['name'] with overloading of the [] operator.
         retval = {}
         for element in grp:
-            name = os.path.basename(element.uri) # TODO: update for tiledb cloud
+            name = os.path.basename(element.uri)  # TODO: update for tiledb cloud
 
             if element.type == tiledb.tiledb.Group:
                 child_group = UnsGroup(uri=element.uri, name=name, parent=self)
@@ -147,15 +146,15 @@ class UnsGroup(TileDBGroup):
 
     # At the tiledb-py API level, *all* groups are name-indexable.  But here at the tiledbsc-py
     # level, we implement name-indexing only for some groups:
-	#
-	# * Most soma member references are done using Python's dot syntax. For example, rather than
-	#   soma['X'], we have simply soma.X, and likewise, soma.raw.X.  Likewise soma.obs and soma.var.
-	#
-	# * Index references are supported for obsm, varm, obsp, varp, and uns. E.g.
-	#   soma.obsm['X_pca'] or soma.uns['neighbors']['params']['method']
-	#
-	# * Overloading the `[]` operator at the TileDBGroup level isn't necessary -- e.g. we don't need
-	#   soma['X'] when we have soma.X -- but also it causes circular-import issues in Python.
+    #
+    # * Most soma member references are done using Python's dot syntax. For example, rather than
+    #   soma['X'], we have simply soma.X, and likewise, soma.raw.X.  Likewise soma.obs and soma.var.
+    #
+    # * Index references are supported for obsm, varm, obsp, varp, and uns. E.g.
+    #   soma.obsm['X_pca'] or soma.uns['neighbors']['params']['method']
+    #
+    # * Overloading the `[]` operator at the TileDBGroup level isn't necessary -- e.g. we don't need
+    #   soma['X'] when we have soma.X -- but also it causes circular-import issues in Python.
     #
     # * Rather than doing a TileDBIndexableGroup which overloads the `[]` operator, we overload
     #   the `[]` operator separately in the various classes which need indexing. This is again to
@@ -167,7 +166,7 @@ class UnsGroup(TileDBGroup):
         no such member exists.  Overloads the [...] operator.
         """
 
-        self.open('r')
+        self.open("r")
         obj = None
         try:
             # This returns a tiledb.object.Object.
@@ -183,4 +182,7 @@ class UnsGroup(TileDBGroup):
         elif obj.type == tiledb.libtiledb.Array:
             return UnsArray(uri=obj.uri, name=name, parent=self)
         else:
-            raise Exception("Internal error: found group element neither subgroup nor array: type is", str(obj.type))
+            raise Exception(
+                "Internal error: found group element neither subgroup nor array: type is",
+                str(obj.type),
+            )

@@ -8,14 +8,14 @@ import pandas as pd
 
 from typing import Optional
 
+
 class AnnotationPairwiseMatrix(TileDBArray):
     """
     Nominally for obsp and varp group elements within a soma.
     """
 
-    row_dim_name: str # e.g. 'obs_id_i' or 'var_id_i'
-    col_dim_name: str # e.g. 'obs_id_j' or 'var_id_j'
-
+    row_dim_name: str  # e.g. 'obs_id_i' or 'var_id_i'
+    col_dim_name: str  # e.g. 'obs_id_j' or 'var_id_j'
 
     # ----------------------------------------------------------------
     def __init__(
@@ -32,7 +32,6 @@ class AnnotationPairwiseMatrix(TileDBArray):
         super().__init__(uri=uri, name=name, parent=parent)
         self.row_dim_name = row_dim_name
         self.col_dim_name = col_dim_name
-
 
     # ----------------------------------------------------------------
     def from_anndata(self, matrix, dim_values):
@@ -51,7 +50,7 @@ class AnnotationPairwiseMatrix(TileDBArray):
         # So, if say we're looking at anndata.obsm['X_pca'], we create column names
         # 'X_pca_1', 'X_pca_2', etc.
         (nrow, nattr) = matrix.shape
-        attr_names = [self.name + '_' + str(j) for j in range(1, nattr+1)]
+        attr_names = [self.name + "_" + str(j) for j in range(1, nattr + 1)]
 
         # Ingest annotation matrices as 1D/multi-attribute sparse arrays
         if self.exists():
@@ -64,7 +63,6 @@ class AnnotationPairwiseMatrix(TileDBArray):
 
         if self.verbose:
             print(util.format_elapsed(s, f"{self.indent}FINISH WRITING {self.uri}"))
-
 
     # ----------------------------------------------------------------
     def create_empty_array(self, matrix_dtype, attr_names):
@@ -84,11 +82,16 @@ class AnnotationPairwiseMatrix(TileDBArray):
                 dtype="ascii",
                 filters=[tiledb.ZstdFilter(level=level)],
             ),
-            ctx=self.ctx
+            ctx=self.ctx,
         )
 
         attrs = [
-            tiledb.Attr(attr_name, dtype=matrix_dtype, filters=[tiledb.ZstdFilter()], ctx=self.ctx)
+            tiledb.Attr(
+                attr_name,
+                dtype=matrix_dtype,
+                filters=[tiledb.ZstdFilter()],
+                ctx=self.ctx,
+            )
             for attr_name in attr_names
         ]
 
@@ -97,13 +100,17 @@ class AnnotationPairwiseMatrix(TileDBArray):
             attrs=attrs,
             sparse=True,
             allows_duplicates=True,
-            offsets_filters=[tiledb.DoubleDeltaFilter(), tiledb.BitWidthReductionFilter(), tiledb.ZstdFilter()],
+            offsets_filters=[
+                tiledb.DoubleDeltaFilter(),
+                tiledb.BitWidthReductionFilter(),
+                tiledb.ZstdFilter(),
+            ],
             capacity=100000,
-            cell_order='row-major',
+            cell_order="row-major",
             # As of TileDB core 2.8.2, we cannot consolidate string-indexed sparse arrays with
             # col-major tile order: so we write `X` with row-major tile order.
-            tile_order='row-major',
-            ctx=self.ctx
+            tile_order="row-major",
+            ctx=self.ctx,
         )
 
         tiledb.Array.create(self.uri, sch, ctx=self.ctx)
@@ -120,8 +127,7 @@ class AnnotationPairwiseMatrix(TileDBArray):
 
         assert len(col_names) == matrix.shape[1]
 
-        df = pd.DataFrame(matrix, columns = col_names)
+        df = pd.DataFrame(matrix, columns=col_names)
 
         with tiledb.open(self.uri, mode="w", ctx=self.ctx) as A:
-            A[dim_values] = df.to_dict(orient='list')
-
+            A[dim_values] = df.to_dict(orient="list")

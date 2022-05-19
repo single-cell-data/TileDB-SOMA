@@ -11,19 +11,19 @@ import tiledbsc
 import sys, os
 
 import anndata
-import anndata as ad # so we can type it either way
+import anndata as ad  # so we can type it either way
 
 import pandas
-import pandas as pd # so we can type it either way
+import pandas as pd  # so we can type it either way
 import numpy
-import numpy  as np # so we can type it either way
+import numpy as np  # so we can type it either way
 import scipy
 
 if len(sys.argv) == 1:
-    input_path = 'tiledb-data/pbmc-small'
-    #input_path = 'tiledb-data/pbmc3k_processed'
+    input_path = "tiledb-data/pbmc-small"
+    # input_path = 'tiledb-data/pbmc3k_processed'
 elif len(sys.argv) == 2:
-    input_path  = sys.argv[1]
+    input_path = sys.argv[1]
 else:
     print(f"{sys.argv[0]}: need just one soma path.", file=sys.stderr)
     sys.exit(1)

@@ -25,32 +25,40 @@ import numpy as np
 import sys, os, shutil
 import argparse
 
+
 def main():
     parser = argparse.ArgumentParser(
         description="Outgest soma data from TileDB group structure to anndata/h5ad"
-   )
-    parser.add_argument("-q", "--quiet", help="decrease output verbosity", action="store_true")
-    parser.add_argument("-o", help="Specify output directory to contain the somas: default ./anndata-readback", type=str, default='./anndata-readback')
+    )
+    parser.add_argument(
+        "-q", "--quiet", help="decrease output verbosity", action="store_true"
+    )
+    parser.add_argument(
+        "-o",
+        help="Specify output directory to contain the somas: default ./anndata-readback",
+        type=str,
+        default="./anndata-readback",
+    )
     parser.add_argument(
         "paths",
         type=str,
         help="One for specified input with default output path, or two to specify input and output paths",
-        nargs='*'
+        nargs="*",
     )
     args = parser.parse_args()
 
-    outdir = args.o.rstrip('/')
+    outdir = args.o.rstrip("/")
 
     if len(args.paths) == 0:
-        input_path  = 'tiledb-data/pbmc-small'
-        output_path = os.path.join(outdir, 'pbmc-small.h5ad')
+        input_path = "tiledb-data/pbmc-small"
+        output_path = os.path.join(outdir, "pbmc-small.h5ad")
     elif len(args.paths) == 1:
         # Strip trailing slashes so basename will behave correctly
-        input_path  = args.paths[0].rstrip('/')
+        input_path = args.paths[0].rstrip("/")
         # Example 'tiledb-data/pbmc3k_processed' -> 'anndata-readcbak/pbmc3k_processed.h5ad'
-        output_path = os.path.join(outdir, os.path.basename(input_path) + '.h5ad')
+        output_path = os.path.join(outdir, os.path.basename(input_path) + ".h5ad")
     elif len(args.paths) == 2:
-        input_path  = args.paths[0]
+        input_path = args.paths[0]
         output_path = args.paths[1]
     else:
         parser.print_help(file=sys.stderr)

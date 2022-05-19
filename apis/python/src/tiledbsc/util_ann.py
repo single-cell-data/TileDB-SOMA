@@ -7,7 +7,9 @@ import tiledbsc.util as util
 import os
 
 # ----------------------------------------------------------------
-def describe_ann_file(input_path: str, show_summary=True, show_types=False, show_data=False):
+def describe_ann_file(
+    input_path: str, show_summary=True, show_types=False, show_data=False
+):
     """
     This is an anndata-describer that goes a bit beyond what h5ls does for us.
     In particular, it shows us that for one HDF5 file we have anndata.X being of type numpy.ndarray
@@ -18,7 +20,9 @@ def describe_ann_file(input_path: str, show_summary=True, show_types=False, show
     anndata.var_names_make_unique()
 
     print()
-    print(f"================================================================ {input_path}")
+    print(
+        f"================================================================ {input_path}"
+    )
 
     if show_summary:
         _describe_ann_file_show_summary(anndata, input_path)
@@ -40,14 +44,14 @@ def _describe_ann_file_show_summary(anndata: ad.AnnData, input_path: str):
     print("OBS  LEN ", len(anndata.obs))
     print("VAR  LEN ", len(anndata.var))
 
-    print('OBS IS A', type(anndata.obs))
+    print("OBS IS A", type(anndata.obs))
     for name in anndata.obs.keys():
         print("  ", name, anndata.obs[name].dtype)
-    print('VAR IS A', type(anndata.var))
+    print("VAR IS A", type(anndata.var))
     for name in anndata.var.keys():
         print("  ", name, anndata.var[name].dtype)
 
-    try: # not all groups have raw X
+    try:  # not all groups have raw X
         print("RAW X SHAPE  ", anndata.raw.X.shape)
         print(" RAW OBS  LEN ", len(anndata.raw.X.obs_names))
         print("RAW VAR  LEN ", len(anndata.raw.X.var_names))
@@ -76,15 +80,17 @@ def _describe_ann_file_show_types(anndata: ad.AnnData, input_path: str):
 
     X = anndata.X
     print("%-*s %s" % (namewidth, "X/data", type(X)))
-    m,n = X.shape
+    m, n = X.shape
     print("%-*s (%d, %d)" % (namewidth, "X/data shape", m, n))
     print("%-*s %s" % (namewidth, "X/data dtype", X.dtype))
-    if isinstance(X, scipy.sparse._csr.csr_matrix) or isinstance(X, scipy.sparse._csc.csc_matrix):
-        density = X.nnz / (m*n)
+    if isinstance(X, scipy.sparse._csr.csr_matrix) or isinstance(
+        X, scipy.sparse._csc.csc_matrix
+    ):
+        density = X.nnz / (m * n)
         print("%-*s %.4f" % (namewidth, "X/data density", density))
 
     has_raw = False
-    try: # not all groups have raw X
+    try:  # not all groups have raw X
         X = anndata.raw.X
         has_raw = True
     except:
@@ -93,27 +99,29 @@ def _describe_ann_file_show_types(anndata: ad.AnnData, input_path: str):
     if has_raw:
         X = anndata.raw.X
         print("%-*s %s" % (namewidth, "X/raw", type(X)))
-        m,n = X.shape
+        m, n = X.shape
         print("%-*s (%d, %d)" % (namewidth, "X/raw shape", m, n))
         print("%-*s %s" % (namewidth, "X/data dtype", X.dtype))
-        if isinstance(X, scipy.sparse._csr.csr_matrix) or isinstance(X, scipy.sparse._csc.csc_matrix):
-            density = X.nnz / (m*n)
+        if isinstance(X, scipy.sparse._csr.csr_matrix) or isinstance(
+            X, scipy.sparse._csc.csc_matrix
+        ):
+            density = X.nnz / (m * n)
             print("%-*s %.4f" % (namewidth, "X/raw density", density))
 
     print("%-*s %s" % (namewidth, "obs", type(anndata.obs)))
     print("%-*s %s" % (namewidth, "var", type(anndata.var)))
 
     for k in anndata.obsm.keys():
-        print("%-*s %s" % (namewidth, "obsm/"+k, type(anndata.obsm[k])))
+        print("%-*s %s" % (namewidth, "obsm/" + k, type(anndata.obsm[k])))
 
     for k in anndata.varm.keys():
-        print("%-*s %s" % (namewidth, "varm/"+k, type(anndata.varm[k])))
+        print("%-*s %s" % (namewidth, "varm/" + k, type(anndata.varm[k])))
 
     for k in anndata.obsp.keys():
-        print("%-*s %s" % (namewidth, "obsp/"+k, type(anndata.obsp[k])))
+        print("%-*s %s" % (namewidth, "obsp/" + k, type(anndata.obsp[k])))
 
     for k in anndata.varp.keys():
-        print("%-*s %s" % (namewidth, "varp/"+k, type(anndata.varp[k])))
+        print("%-*s %s" % (namewidth, "varp/" + k, type(anndata.varp[k])))
 
     _describe_ann_file_show_uns_types(anndata.uns)
 
@@ -172,8 +180,11 @@ def _describe_ann_file_show_data(anndata: ad.AnnData, input_path: str):
 
     _describe_ann_file_show_uns_data(anndata.uns)
 
+
 # ----------------------------------------------------------------
-def _describe_ann_file_show_uns_summary(uns: ad.compat.OverloadedDict, parent_path_components=['uns']):
+def _describe_ann_file_show_uns_summary(
+    uns: ad.compat.OverloadedDict, parent_path_components=["uns"]
+):
     """
     Recursively shows summary information about the anndata.uns structure.
     """
@@ -186,8 +197,9 @@ def _describe_ann_file_show_uns_summary(uns: ad.compat.OverloadedDict, parent_pa
         else:
             print(display_name)
 
+
 # ----------------------------------------------------------------
-def _describe_ann_file_show_uns_types(uns, parent_path_components=['uns']):
+def _describe_ann_file_show_uns_types(uns, parent_path_components=["uns"]):
     """
     Recursively shows data-type information about the anndata.uns structure.
     """
@@ -199,14 +211,22 @@ def _describe_ann_file_show_uns_types(uns, parent_path_components=['uns']):
         if isinstance(value, dict) or isinstance(value, ad.compat.OverloadedDict):
             _describe_ann_file_show_uns_types(value, current_path_components)
         elif isinstance(value, np.ndarray):
-            print("%-*s" % (namewidth, display_name), value.shape, type(value), value.dtype)
-        elif isinstance(value, scipy.sparse.csr_matrix) or isinstance(value, pd.DataFrame):
+            print(
+                "%-*s" % (namewidth, display_name),
+                value.shape,
+                type(value),
+                value.dtype,
+            )
+        elif isinstance(value, scipy.sparse.csr_matrix) or isinstance(
+            value, pd.DataFrame
+        ):
             print("%-*s" % (namewidth, display_name), value.shape, type(value))
         else:
             print("%-*s" % (namewidth, display_name), type(value))
 
+
 # ----------------------------------------------------------------
-def _describe_ann_file_show_uns_data(uns, parent_path_components=['uns']):
+def _describe_ann_file_show_uns_data(uns, parent_path_components=["uns"]):
     """
     Recursively shows data contained within the anndata.uns structure.
     """
@@ -217,7 +237,11 @@ def _describe_ann_file_show_uns_data(uns, parent_path_components=['uns']):
         display_name = os.path.sep.join(current_path_components)
         if isinstance(value, dict) or isinstance(value, ad.compat.OverloadedDict):
             _describe_ann_file_show_uns_data(value, current_path_components)
-        elif isinstance(value, np.ndarray) or isinstance(value, scipy.sparse.csr_matrix) or isinstance(value, pd.DataFrame):
+        elif (
+            isinstance(value, np.ndarray)
+            or isinstance(value, scipy.sparse.csr_matrix)
+            or isinstance(value, pd.DataFrame)
+        ):
             print()
             print("%-*s" % (namewidth, display_name), type(value), value.shape)
             print(value)
@@ -225,6 +249,7 @@ def _describe_ann_file_show_uns_data(uns, parent_path_components=['uns']):
             print()
             print("%-*s" % (namewidth, display_name), type(value))
             print(value)
+
 
 # ----------------------------------------------------------------
 def decategoricalize(anndata: ad.AnnData):
@@ -234,11 +259,15 @@ def decategoricalize(anndata: ad.AnnData):
 
     # If the DataFrame contains only an index, just use it as is.
     if len(anndata.obs.columns) > 0:
-        new_obs = pd.DataFrame.from_dict({k: util._to_tiledb_supported_array_type(v) for k, v in anndata.obs.items()})
+        new_obs = pd.DataFrame.from_dict(
+            {k: util._to_tiledb_supported_array_type(v) for k, v in anndata.obs.items()}
+        )
     else:
         new_obs = anndata.obs
     if len(anndata.var.columns) > 0:
-        new_var = pd.DataFrame.from_dict({k: util._to_tiledb_supported_array_type(v) for k, v in anndata.var.items()})
+        new_var = pd.DataFrame.from_dict(
+            {k: util._to_tiledb_supported_array_type(v) for k, v in anndata.var.items()}
+        )
     else:
         new_var = anndata.var
 
@@ -251,7 +280,7 @@ def decategoricalize(anndata: ad.AnnData):
     for key in anndata.varp.keys():
         anndata.varp[key] = util._to_tiledb_supported_array_type(anndata.varp[key])
 
-    if anndata.raw == None: # Some datasets have no raw.
+    if anndata.raw == None:  # Some datasets have no raw.
         new_raw = None
     else:
         # Note there is some code-duplication here between cooked & raw.  However anndata.raw
@@ -263,10 +292,17 @@ def decategoricalize(anndata: ad.AnnData):
         new_raw_var = anndata.raw.var
         # If the DataFrame contains only an index, just use it as is.
         if len(anndata.raw.var.columns) > 0:
-            new_raw_var = pd.DataFrame.from_dict({k: util._to_tiledb_supported_array_type(v) for k, v in anndata.raw.var.items()})
+            new_raw_var = pd.DataFrame.from_dict(
+                {
+                    k: util._to_tiledb_supported_array_type(v)
+                    for k, v in anndata.raw.var.items()
+                }
+            )
 
         for key in anndata.raw.varm.keys():
-            anndata.raw.varm[key] = util._to_tiledb_supported_array_type(anndata.raw.varm[key])
+            anndata.raw.varm[key] = util._to_tiledb_supported_array_type(
+                anndata.raw.varm[key]
+            )
 
         new_raw = ad.Raw(
             anndata,

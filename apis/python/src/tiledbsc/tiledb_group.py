@@ -1,9 +1,10 @@
 import tiledb
-from .soma_options  import SOMAOptions
+from .soma_options import SOMAOptions
 from .tiledb_object import TileDBObject
 
 from typing import Optional, Union
 import os
+
 
 class TileDBGroup(TileDBObject):
     """
@@ -12,7 +13,6 @@ class TileDBGroup(TileDBObject):
 
     tiledb_group: Union[tiledb.Group, None]
 
-
     def __init__(
         self,
         uri: str,
@@ -20,7 +20,7 @@ class TileDBGroup(TileDBObject):
         # Non-top-level objects can have a parent to propgate context, depth, etc.
         # What we really want to say is:
         # parent: Optional[TileDBGroup] = None,
-        parent = None,
+        parent=None,
         # Top-level objects should specify these:
         soma_options: Optional[SOMAOptions] = None,
         verbose: Optional[bool] = True,
@@ -38,7 +38,7 @@ class TileDBGroup(TileDBObject):
         This should be implemented by child classes and should return what tiledb.object_type(uri)
         returns for objects of a given type -- nominally 'group' or 'array'.
         """
-        return 'group'
+        return "group"
 
     def create(self):
         """
@@ -54,7 +54,7 @@ class TileDBGroup(TileDBObject):
         """
         Mode must be "w" for write or "r" for read.
         """
-        assert(mode in ['w', 'r'])
+        assert mode in ["w", "r"]
         if self.tiledb_group != None:
             raise Exception("Attempt to open an already-open group")
         if not self.exists():
@@ -84,7 +84,7 @@ class TileDBGroup(TileDBObject):
         """
         TODO
         """
-        self.open('r')
+        self.open("r")
         retval = [e.uri for e in self.tiledb_group]
         self.close()
         return retval

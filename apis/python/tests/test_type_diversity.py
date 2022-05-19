@@ -51,8 +51,12 @@ def test_from_anndata_X_type(tmp_path, X_dtype_name, X_encoding):
     n_var = 1
 
     # AnnData requires string indices for obs/var
-    obs = pd.DataFrame(data={"A": np.arange(n_obs, dtype=np.int32)}, index=np.arange(n_obs).astype(str))
-    var = pd.DataFrame(data={"A": np.arange(n_var, dtype=np.int32)}, index=np.arange(n_var).astype(str))
+    obs = pd.DataFrame(
+        data={"A": np.arange(n_obs, dtype=np.int32)}, index=np.arange(n_obs).astype(str)
+    )
+    var = pd.DataFrame(
+        data={"A": np.arange(n_var, dtype=np.int32)}, index=np.arange(n_var).astype(str)
+    )
 
     X_dtype = np.dtype(X_dtype_name)
     if X_encoding == "dense":
@@ -65,7 +69,11 @@ def test_from_anndata_X_type(tmp_path, X_dtype_name, X_encoding):
         assert False  # sanity - test misconfiguration
 
     adata = ad.AnnData(X=X, obs=obs, var=var, dtype=X.dtype)
-    print(" =============================================================>==", adata.X.dtype, X_dtype)
+    print(
+        " =============================================================>==",
+        adata.X.dtype,
+        X_dtype,
+    )
     assert adata.X.dtype == X_dtype  # sanity
 
     SOMA(tmp_path.as_posix()).from_anndata(adata)
@@ -145,7 +153,9 @@ def test_from_anndata_DataFrame_type(tmp_path):
             ),
         ),
     ]
-    index = np.arange(1, n+1).astype(str).astype(bytes)  # AnnData requires string indices, TileDB wants bytes. Use LCD
+    index = (
+        np.arange(1, n + 1).astype(str).astype(bytes)
+    )  # AnnData requires string indices, TileDB wants bytes. Use LCD
     df = pd.DataFrame(
         data={
             f"col_{name}": cast(pd.Series(index=index, data=np.arange(n)))
@@ -188,7 +198,9 @@ def test_from_anndata_DataFrame_type(tmp_path):
             assert n == len(arr.query(dims=[]).df[:])
 
             # verify index
-            assert np.array_equal(np.sort(df.index.to_numpy()), np.sort(arr[:][df_name+'_id']))
+            assert np.array_equal(
+                np.sort(df.index.to_numpy()), np.sort(arr[:][df_name + "_id"])
+            )
 
             # verify individual column types
             attr_idx = {
@@ -239,7 +251,9 @@ def test_from_anndata_annotations_none(tmp_path):
     """ default constructor """
     path = tmp_path / "empty"
     adata = ad.AnnData()
-    with pytest.raises(NotImplementedError, match='Empty AnnData.obs or AnnData.var unsupported.'):
+    with pytest.raises(
+        NotImplementedError, match="Empty AnnData.obs or AnnData.var unsupported."
+    ):
         SOMA(path.as_posix()).from_anndata(adata)
     assert not any(
         (path / sub_array_path).exists() for sub_array_path in ["obs", "var", "X/data"]
@@ -255,7 +269,9 @@ def test_from_anndata_annotations_none(tmp_path):
 
     """ missing var """
     path = tmp_path / "no_var"
-    adata = ad.AnnData(X=np.eye(100, 10, dtype=np.float32), obs=np.arange(100).astype(str))
+    adata = ad.AnnData(
+        X=np.eye(100, 10, dtype=np.float32), obs=np.arange(100).astype(str)
+    )
     SOMA(path.as_posix()).from_anndata(adata)
     assert all(
         (path / sub_array_path).exists() for sub_array_path in ["obs", "var", "X/data"]
@@ -263,7 +279,9 @@ def test_from_anndata_annotations_none(tmp_path):
 
     """ missing obs """
     path = tmp_path / "no_obs"
-    adata = ad.AnnData(X=np.eye(100, 10, dtype=np.float32), var=np.arange(10).astype(str))
+    adata = ad.AnnData(
+        X=np.eye(100, 10, dtype=np.float32), var=np.arange(10).astype(str)
+    )
     SOMA(path.as_posix()).from_anndata(adata)
     assert all(
         (path / sub_array_path).exists() for sub_array_path in ["obs", "var", "X/data"]
@@ -271,11 +289,11 @@ def test_from_anndata_annotations_none(tmp_path):
 
 
 def test_from_anndata_error_handling(tmp_path):
-    """ Ensure exception on a complex type we that should be unsupported. """
+    """Ensure exception on a complex type we that should be unsupported."""
     n_obs = 10
-    obs = pd.DataFrame(index=np.arange(n_obs).astype(str), data={
-        'A': [{} for i in range(n_obs)]
-    })
+    obs = pd.DataFrame(
+        index=np.arange(n_obs).astype(str), data={"A": [{} for i in range(n_obs)]}
+    )
     adata = ad.AnnData(obs=obs, X=np.ones((n_obs, 2), dtype=np.float32))
     with pytest.raises(NotImplementedError):
         SOMA(tmp_path.as_posix()).from_anndata(adata)
@@ -317,14 +335,15 @@ def test_from_anndata_zero_length_str(tmp_path):
 
 test_nan_dtypes = [
     # (column_name, column_dtype, expect_raise)
-    ('str', np.dtype(str), False),
-    ('bytes', np.dtype(bytes), True),
-    ('float64', np.float64, False),
-    ('bool', np.dtype(bool), True),
-    ('bool_', np.bool_, True),
-    ('int64', np.int64, True),
-    ('uint64', np.uint64, True),
+    ("str", np.dtype(str), False),
+    ("bytes", np.dtype(bytes), True),
+    ("float64", np.float64, False),
+    ("bool", np.dtype(bool), True),
+    ("bool_", np.bool_, True),
+    ("int64", np.int64, True),
+    ("uint64", np.uint64, True),
 ]
+
 
 @pytest.mark.parametrize("col_name,cat_dtype,expect_raise", test_nan_dtypes)
 def test_from_anndata_category_nans(tmp_path, col_name, cat_dtype, expect_raise):
@@ -350,14 +369,14 @@ def test_from_anndata_category_nans(tmp_path, col_name, cat_dtype, expect_raise)
         index=obs_idx,
         data=pd.Categorical(
             np.arange(n_obs).astype(cat_dtype),
-            categories=np.unique(np.arange(1, n_obs).astype(cat_dtype))
+            categories=np.unique(np.arange(1, n_obs).astype(cat_dtype)),
         ),
-        columns=[col_name]
+        columns=[col_name],
     )
     var = pd.DataFrame(
         index=np.arange(n_var).astype(str),
         data=list(str(i) for i in range(n_var)),
-        columns=['A']
+        columns=["A"],
     )
     X = np.ones((n_obs, n_var), dtype=np.float32)
     adata = ad.AnnData(X=X, obs=obs, var=var)
@@ -378,8 +397,9 @@ def test_from_anndata_category_nans(tmp_path, col_name, cat_dtype, expect_raise)
             assert np.array_equal(
                 obs_df[col_name].astype(cat_dtype),
                 adata.obs[col_name].astype(cat_dtype),
-                equal_nan=True if np.dtype(cat_dtype).kind == 'f' else False
+                equal_nan=True if np.dtype(cat_dtype).kind == "f" else False,
             )
+
 
 HERE = Path(__file__).parent
 # https://github.com/single-cell-data/TileDB-SingleCell/issues/74
@@ -396,14 +416,14 @@ def test_from_anndata_obsm_key_pandas_dataframe(tmp_path):
     input_path = HERE.parent / "anndata/pbmc-small.h5ad"
     adata = ad.read_h5ad(input_path)
 
-    key = 'is_a_pandas_dataframe'
-    adata.obsm[key] = pd.DataFrame(data = np.zeros(adata.n_obs), index=adata.obs.index)
-    adata.obsm[key].rename(columns={0:'column_name'}, inplace=True)
+    key = "is_a_pandas_dataframe"
+    adata.obsm[key] = pd.DataFrame(data=np.zeros(adata.n_obs), index=adata.obs.index)
+    adata.obsm[key].rename(columns={0: "column_name"}, inplace=True)
 
     SOMA(tmp_path.as_posix()).from_anndata(adata)
     assert all(
         (tmp_path / sub_array_path).exists()
-        for sub_array_path in ["obs", "var", "X/data", "obsm", "obsm/"+key]
+        for sub_array_path in ["obs", "var", "X/data", "obsm", "obsm/" + key]
     )
 
     # Check types & shapes.
