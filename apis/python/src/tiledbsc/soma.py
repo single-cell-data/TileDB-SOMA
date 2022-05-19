@@ -125,11 +125,6 @@ class SOMA(TileDBGroup):
         return f"name={self.name},uri={self.uri}"
 
     # ----------------------------------------------------------------
-    def shape(self):
-        # obs and var are dataframes: rows are obs_id/var_id; column names vary from
-        # one soma to another.
-        return (self.obs.shape()[0], self.var.shape()[0])
-
     def obs_ids(self):
         """
         Returns the list of obs_ids in the obs slot.

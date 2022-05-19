@@ -39,6 +39,14 @@ class AnnotationPairwiseMatrixGroup(TileDBGroup):
             self.col_dim_name = "var_id_j"
 
     # ----------------------------------------------------------------
+    def keys(self):
+        """
+        For obsp and varp, `.keys()` is a keystroke-saver for the more general group-member
+        accessor `.get_member_names().
+        """
+        return self.get_member_names()
+
+    # ----------------------------------------------------------------
     def from_anndata(self, annotation_pairwise_matrices, dim_values):
         """
         Populates the obsp/ or varp/ subgroup for a SOMA object, then writes all the components

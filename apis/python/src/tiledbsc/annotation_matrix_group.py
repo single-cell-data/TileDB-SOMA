@@ -33,6 +33,14 @@ class AnnotationMatrixGroup(TileDBGroup):
         self.dim_name = "obs_id" if name == "obsm" else "var_id"
 
     # ----------------------------------------------------------------
+    def keys(self):
+        """
+        For obsm and varm, `.keys()` is a keystroke-saver for the more general group-member
+        accessor `.get_member_names().
+        """
+        return self.get_member_names()
+
+    # ----------------------------------------------------------------
     def from_anndata(self, annotation_matrices, dim_values):
         """
         Populates the obsm/ or varm/ subgroup for a SOMA object, then writes all the components
