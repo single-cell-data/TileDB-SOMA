@@ -7,7 +7,7 @@ import tiledbsc.util as util
 import pandas as pd
 import scipy
 
-from typing import Optional, Dict
+from typing import Optional, Dict, List
 import os
 
 
@@ -39,6 +39,19 @@ class AnnotationMatrixGroup(TileDBGroup):
         accessor `.get_member_names()`.
         """
         return self.get_member_names()
+
+    # ----------------------------------------------------------------
+    def __iter__(self) -> List[AnnotationMatrix]:
+        """
+        Implements 'for matrix in soma.obsm: ...' and 'for matrix in soma.varm: ...'
+        """
+        retval = []
+        for name, uri in self.get_member_names_to_uris().items():
+            matrix = AnnotationMatrix(
+                uri=uri, name=name, dim_name=self.dim_name, parent=self
+            )
+            retval.append(matrix)
+        return iter(retval)
 
     # ----------------------------------------------------------------
     def from_anndata(self, annotation_matrices, dim_values):
