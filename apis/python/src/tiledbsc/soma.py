@@ -125,50 +125,6 @@ class SOMA(TileDBGroup):
         return f"name={self.name},uri={self.uri}"
 
     # ----------------------------------------------------------------
-    def dim_select(
-        self,
-        slice_obs_ids,  # TODO: None means all ...
-        slice_var_ids,  # TODO: None means all ...
-    ) -> Dict:  # XXX TEMP
-        """
-        TODO
-        """
-
-        assert slice_obs_ids != None or slice_var_ids != None
-
-        if slice_obs_ids is None:
-            # Try the var slice first to see if that produces zero results -- if so we don't need to
-            # load the obs.
-            slice_var_df = self.var.dim_select(slice_var_ids)
-            if slice_var_df.shape[0] == 0:  # TODO: comment
-                return None
-            slice_obs_df = self.obs.dim_select(slice_obs_ids)
-            if slice_obs_df.shape[0] == 0:  # TODO: comment
-                return None
-
-        elif slice_var_ids is None:
-            # Try the obs slice first to see if that produces zero results -- if so we don't need to
-            # load the var.
-            slice_obs_df = self.obs.dim_select(slice_obs_ids)
-            if slice_obs_df.shape[0] == 0:  # TODO: comment
-                return None
-            slice_var_df = self.var.dim_select(slice_var_ids)
-            if slice_var_df.shape[0] == 0:  # TODO: comment
-                return None
-
-        else:
-            slice_obs_df = self.obs.dim_select(slice_obs_ids)
-            if slice_obs_df.shape[0] == 0:  # TODO: comment
-                return None
-            slice_var_df = self.var.dim_select(slice_var_ids)
-            if slice_var_df.shape[0] == 0:  # TODO: comment
-                return None
-
-        return self._assemble_soma_slice(
-            slice_obs_ids, slice_var_ids, slice_obs_df, slice_var_df
-        )
-
-    # ----------------------------------------------------------------
     def from_h5ad(self, input_path: str):
         """
         Reads an .h5ad file and writes to a TileDB group structure.

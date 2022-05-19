@@ -66,9 +66,10 @@ class AnnotationDataFrame(TileDBArray):
         return self.get_attr_names()
 
     # ----------------------------------------------------------------
-    def dim_select(self, ids):  # TODO: re None
+    def dim_select(self, ids):
         """
-        TODO
+        Selects a slice out of the dataframe with specified `obs_ids` (for `obs`) or `var_ids` (for `var`).
+        If `ids` is `None`, the entire dataframe is returned.
         """
         if ids is None:
             with tiledb.open(self.uri) as A:  # TODO: with self.open

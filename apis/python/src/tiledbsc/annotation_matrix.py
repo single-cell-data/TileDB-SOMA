@@ -31,9 +31,10 @@ class AnnotationMatrix(TileDBArray):
         self.dim_name = dim_name
 
     # ----------------------------------------------------------------
-    def dim_select(self, ids):  # TODO: re None
+    def dim_select(self, ids):
         """
-        TODO
+        Selects a slice out of the array with specified `obs_ids` (for `obsm` elements) or
+        `var_ids` (for `varm` elements).  If `ids` is `None`, the entire array is returned.
         """
         if ids is None:
             with tiledb.open(self.uri) as A:  # TODO: with self.open
