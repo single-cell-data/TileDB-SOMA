@@ -45,6 +45,22 @@ class AssayMatrix(TileDBArray):
     # instead use the row-counts for the soma's obs and var.
 
     # ----------------------------------------------------------------
+    def dim_select(self, obs_ids, var_ids):  # TODO: maybe one is None
+        """
+        TODO
+        """
+        assert obs_ids != None or var_ids != None  # TODO: elaborate
+        if var_ids == None:
+            with tiledb.open(self.uri) as A:  # TODO: with self.open
+                return A.df[obs_ids, :]
+        elif obs_ids == None:
+            with tiledb.open(self.uri) as A:  # TODO: with self.open
+                return A.df[:, var_ids]
+        else:
+            with tiledb.open(self.uri) as A:  # TODO: with self.open
+                return A.df[obs_ids, var_ids]
+
+    # ----------------------------------------------------------------
     def from_matrix(self, matrix, row_names, col_names) -> None:
         """
         Imports a matrix -- nominally scipy.sparse.csr_matrix or numpy.ndarray -- into a TileDB

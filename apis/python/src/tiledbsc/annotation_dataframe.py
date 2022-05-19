@@ -66,6 +66,18 @@ class AnnotationDataFrame(TileDBArray):
         return self.get_attr_names()
 
     # ----------------------------------------------------------------
+    def dim_select(self, ids):  # TODO: re None
+        """
+        TODO
+        """
+        if ids is None:
+            with tiledb.open(self.uri) as A:  # TODO: with self.open
+                return A.df[:]
+        else:
+            with tiledb.open(self.uri) as A:  # TODO: with self.open
+                return A.df[ids]
+
+    # ----------------------------------------------------------------
     def from_dataframe(self, dataframe: pd.DataFrame, extent: int) -> None:
         """
         Populates the obs/ or var/ subgroup for a SOMA object.
