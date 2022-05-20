@@ -2,6 +2,8 @@ import anndata
 import tiledb
 import tiledbsc
 
+import numpy as np
+
 import pytest
 import tempfile
 import os
@@ -51,6 +53,16 @@ def test_soma_group_indexing(h5ad_file):
     assert soma.X.data.get_dim_names() == ["obs_id", "var_id"]
 
     assert soma.obs.get_dim_names() == ["obs_id"]
+    assert soma.obs.dim_name == "obs_id"
+    assert soma.obs.keys() == [
+        "orig.ident",
+        "nCount_RNA",
+        "nFeature_RNA",
+        "RNA_snn_res.0.8",
+        "letter.idents",
+        "groups",
+        "RNA_snn_res.1",
+    ]
     assert set(soma.obs.ids()) == set(
         [
             b"AAATTCGAATCACG",
@@ -135,8 +147,27 @@ def test_soma_group_indexing(h5ad_file):
             b"TTTAGCTGTACTCT",
         ]
     )
+    assert soma.obs.df().shape == (80, 7)
+    assert soma.obs.df(["AAGCAAGAGCTTAG", "TTGGTACTGAATCC"]).shape == (2, 7)
+    assert list(soma.obs.df().dtypes) == [
+        np.dtype("int32"),
+        np.dtype("float64"),
+        np.dtype("int32"),
+        np.dtype("int32"),
+        np.dtype("int32"),
+        np.dtype("O"),
+        np.dtype("int32"),
+    ]
 
     assert soma.var.get_dim_names() == ["var_id"]
+    assert soma.obs.dim_name == "obs_id"
+    assert soma.var.keys() == [
+        "vst.mean",
+        "vst.variance",
+        "vst.variance.expected",
+        "vst.variance.standardized",
+        "vst.variable",
+    ]
     assert set(soma.var.ids()) == set(
         [
             b"AKR1C3",
@@ -161,11 +192,44 @@ def test_soma_group_indexing(h5ad_file):
             b"VDAC3",
         ]
     )
+    assert soma.var.shape() == (20, 5)
+    assert soma.var.df(["RUFY1", "AKR1C3"]).shape == (2, 5)
+    assert list(soma.var.df().dtypes) == [
+        np.dtype("float64"),
+        np.dtype("float64"),
+        np.dtype("float64"),
+        np.dtype("float64"),
+        np.dtype("int32"),
+    ]
 
     assert set(soma.obsm.get_member_names()) == set(["X_pca", "X_tsne"])
+    assert set(soma.obsm.keys()) == set(["X_pca", "X_tsne"])
     assert isinstance(soma.obsm["X_pca"], tiledbsc.AnnotationMatrix)
     assert soma.obsm["nonesuch"] is None
     assert soma.obsm["X_pca"].get_dim_names() == ["obs_id"]
+    assert soma.obsm["X_pca"].df().shape == (80, 20)
+    assert list(soma.obsm["X_pca"].df().dtypes) == [
+        np.dtype("O"),
+        np.dtype("float64"),
+        np.dtype("float64"),
+        np.dtype("float64"),
+        np.dtype("float64"),
+        np.dtype("float64"),
+        np.dtype("float64"),
+        np.dtype("float64"),
+        np.dtype("float64"),
+        np.dtype("float64"),
+        np.dtype("float64"),
+        np.dtype("float64"),
+        np.dtype("float64"),
+        np.dtype("float64"),
+        np.dtype("float64"),
+        np.dtype("float64"),
+        np.dtype("float64"),
+        np.dtype("float64"),
+        np.dtype("float64"),
+        np.dtype("float64"),
+    ]
 
     assert set(soma.varm.get_member_names()) == set(["PCs"])
     assert isinstance(soma.varm["PCs"], tiledbsc.AnnotationMatrix)
