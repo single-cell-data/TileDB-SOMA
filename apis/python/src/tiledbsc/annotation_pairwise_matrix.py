@@ -48,6 +48,19 @@ class AnnotationPairwiseMatrix(TileDBArray):
             return A.df[:].shape  # nnz x 3 -- id_i, id_j, and value
 
     # ----------------------------------------------------------------
+    def dim_select(self, ids):
+        """
+        Selects a slice out of the array with specified `obs_ids` (for `obsp` elements) or
+        `var_ids` (for `varp` elements).  If `ids` is `None`, the entire array is returned.
+        """
+        if ids is None:
+            with tiledb.open(self.uri) as A:  # TODO: with self.open
+                return A.df[:, :]
+        else:
+            with tiledb.open(self.uri) as A:  # TODO: with self.open
+                return A.df[ids, ids]
+
+    # ----------------------------------------------------------------
     def from_anndata(self, matrix, dim_values):
         """
         Populates an array in the obsp/ or varp/ subgroup for a SOMA object.

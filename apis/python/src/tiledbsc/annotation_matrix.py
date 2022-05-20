@@ -31,6 +31,35 @@ class AnnotationMatrix(TileDBArray):
         self.dim_name = dim_name
 
     # ----------------------------------------------------------------
+    def dim_select(self, ids):
+        """
+        Selects a slice out of the array with specified `obs_ids` (for `obsm` elements) or
+        `var_ids` (for `varm` elements).  If `ids` is `None`, the entire array is returned.
+        """
+        if ids is None:
+            with tiledb.open(self.uri) as A:  # TODO: with self.open
+                return A.df[:]
+        else:
+            with tiledb.open(self.uri) as A:  # TODO: with self.open
+                return A.df[ids]
+
+    # ----------------------------------------------------------------
+    def shape(self):
+        """
+        Returns a tuple with the number of rows and number of columns of the `AnnotationMatrix`.
+        The row-count is the number of obs_ids (for `obsm` elements) or the number of var_ids (for
+        `varm` elements).  The column-count is the number of columns/attributes in the dataframe.
+        """
+        with tiledb.open(self.uri) as A:  # TODO: with self.open
+            # These TileDB arrays are string-dimensioned sparse arrays so there is no '.shape'.
+            # Instead we compute it ourselves.  See also:
+            # * https://github.com/single-cell-data/TileDB-SingleCell/issues/10
+            # * https://github.com/TileDB-Inc/TileDB-Py/pull/1055
+            num_rows = len(A[:][self.dim_name].tolist())
+            num_cols = A.schema.nattr
+            return (num_rows, num_cols)
+
+    # ----------------------------------------------------------------
     def from_anndata(self, matrix, dim_values):
         """
         Populates an array in the obsm/ or varm/ subgroup for a SOMA object.
@@ -50,22 +79,6 @@ class AnnotationMatrix(TileDBArray):
 
         if self.verbose:
             print(util.format_elapsed(s, f"{self.indent}FINISH WRITING {self.uri}"))
-
-    # ----------------------------------------------------------------
-    def shape(self):
-        """
-        Returns a tuple with the number of rows and number of columns of the `AnnotationMatrix`.
-        The row-count is the number of obs_ids (for `obsm` elements) or the number of var_ids (for
-        `varm` elements).  The column-count is the number of columns/attributes in the dataframe.
-        """
-        with tiledb.open(self.uri) as A:  # TODO: with self.open
-            # These TileDB arrays are string-dimensioned sparse arrays so there is no '.shape'.
-            # Instead we compute it ourselves.  See also:
-            # * https://github.com/single-cell-data/TileDB-SingleCell/issues/10
-            # * https://github.com/TileDB-Inc/TileDB-Py/pull/1055
-            num_rows = len(A[:][self.dim_name].tolist())
-            num_cols = A.schema.nattr
-            return (num_rows, num_cols)
 
     # ----------------------------------------------------------------
     def _numpy_ndarray_or_scipy_sparse_csr_matrix(self, matrix, dim_values):
