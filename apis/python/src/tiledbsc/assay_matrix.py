@@ -46,13 +46,6 @@ class AssayMatrix(TileDBArray):
     # instead use the row-counts for the soma's obs and var.
 
     # ----------------------------------------------------------------
-    def dim_names(self):
-        """
-        Keystroke-saving accessor for `row_dim_name` and `col_dim_name`.
-        """
-        return (self.row_dim_name, self.col_dim_name)
-
-    # ----------------------------------------------------------------
     def dim_select(self, obs_ids, var_ids):
         """
         Selects a slice out of the matrix with specified `obs_ids` and/or `var_ids`.

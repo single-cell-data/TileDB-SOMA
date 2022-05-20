@@ -50,9 +50,9 @@ def test_soma_group_indexing(h5ad_file):
         ["uns", "varm", "X", "raw", "obsp", "varp", "var", "obsm", "obs"]
     )
     assert set(soma.X.get_member_names()) == set(["data"])
-    assert soma.X.data.get_dim_names() == ["obs_id", "var_id"]
+    assert soma.X.data.dim_names() == ["obs_id", "var_id"]
 
-    assert soma.obs.get_dim_names() == ["obs_id"]
+    assert soma.obs.dim_names() == ["obs_id"]
     assert soma.obs.dim_name == "obs_id"
     assert soma.obs.keys() == [
         "orig.ident",
@@ -159,7 +159,7 @@ def test_soma_group_indexing(h5ad_file):
         np.dtype("int32"),
     ]
 
-    assert soma.var.get_dim_names() == ["var_id"]
+    assert soma.var.dim_names() == ["var_id"]
     assert soma.obs.dim_name == "obs_id"
     assert soma.var.keys() == [
         "vst.mean",
@@ -206,7 +206,7 @@ def test_soma_group_indexing(h5ad_file):
     assert set(soma.obsm.keys()) == set(["X_pca", "X_tsne"])
     assert isinstance(soma.obsm["X_pca"], tiledbsc.AnnotationMatrix)
     assert soma.obsm["nonesuch"] is None
-    assert soma.obsm["X_pca"].get_dim_names() == ["obs_id"]
+    assert soma.obsm["X_pca"].dim_names() == ["obs_id"]
     assert soma.obsm["X_pca"].df().shape == (80, 20)
     assert list(soma.obsm["X_pca"].df().dtypes) == [
         np.dtype("O"),
@@ -235,12 +235,12 @@ def test_soma_group_indexing(h5ad_file):
     assert isinstance(soma.varm["PCs"], tiledbsc.AnnotationMatrix)
     assert soma.varm["nonesuch"] is None
     assert soma.varm.get_member_names() == ["PCs"]
-    assert soma.varm["PCs"].get_dim_names() == ["var_id"]
+    assert soma.varm["PCs"].dim_names() == ["var_id"]
 
     assert set(soma.obsp.get_member_names()) == set(["distances"])
     assert isinstance(soma.obsp["distances"], tiledbsc.AnnotationPairwiseMatrix)
     assert soma.varp["nonesuch"] is None
-    assert soma.obsp["distances"].get_dim_names() == ["obs_id_i", "obs_id_j"]
+    assert soma.obsp["distances"].dim_names() == ["obs_id_i", "obs_id_j"]
 
     assert set(soma.uns.get_member_names()) == set(["neighbors"])
     assert isinstance(soma.uns["neighbors"], tiledbsc.UnsGroup)
