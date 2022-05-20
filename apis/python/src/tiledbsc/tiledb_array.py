@@ -39,6 +39,14 @@ class TileDBArray(TileDBObject):
         A = tiledb.open(self.uri)
         return A
 
+    def exists(self) -> bool:
+        """
+        Tells whether or not there is storage for the array. This might be in case a SOMA
+        object has not yet been populated, e.g. before calling `from_anndata` -- or, if the
+        SOMA has been populated but doesn't have this member (e.g. not all SOMAs have a `varp`).
+        """
+        return tiledb.array_exists(self.uri)
+
     def tiledb_array_schema(self):
         """
         Returns the TileDB array schema.

@@ -30,6 +30,7 @@ def test_soma_group_indexing(h5ad_file):
     # Ingest
     soma = tiledbsc.SOMA(output_path, verbose=False)
     soma.from_h5ad(h5ad_file)
+    assert soma.exists()
 
     # Structure:
     #   X/data
@@ -52,6 +53,7 @@ def test_soma_group_indexing(h5ad_file):
     assert set(soma.X.get_member_names()) == set(["data"])
     assert soma.X.data.dim_names() == ["obs_id", "var_id"]
 
+    assert soma.obs.exists()
     assert soma.obs.dim_names() == ["obs_id"]
     assert soma.obs.dim_name == "obs_id"
     assert soma.obs.keys() == [
@@ -159,6 +161,7 @@ def test_soma_group_indexing(h5ad_file):
         np.dtype("int32"),
     ]
 
+    assert soma.var.exists()
     assert soma.var.dim_names() == ["var_id"]
     assert soma.obs.dim_name == "obs_id"
     assert soma.var.keys() == [
@@ -202,8 +205,10 @@ def test_soma_group_indexing(h5ad_file):
         np.dtype("int32"),
     ]
 
+    assert soma.obsm.exists()
     assert set(soma.obsm.get_member_names()) == set(["X_pca", "X_tsne"])
     assert set(soma.obsm.keys()) == set(["X_pca", "X_tsne"])
+    assert soma.obsm["X_pca"].exists()
     assert isinstance(soma.obsm["X_pca"], tiledbsc.AnnotationMatrix)
     assert soma.obsm["nonesuch"] is None
     assert soma.obsm["X_pca"].dim_names() == ["obs_id"]
@@ -232,17 +237,23 @@ def test_soma_group_indexing(h5ad_file):
     ]
 
     assert set(soma.varm.get_member_names()) == set(["PCs"])
+    assert soma.varm["PCs"].exists()
     assert isinstance(soma.varm["PCs"], tiledbsc.AnnotationMatrix)
     assert soma.varm["nonesuch"] is None
     assert soma.varm.get_member_names() == ["PCs"]
     assert soma.varm["PCs"].dim_names() == ["var_id"]
 
     assert set(soma.obsp.get_member_names()) == set(["distances"])
-    assert isinstance(soma.obsp["distances"], tiledbsc.AnnotationPairwiseMatrix)
-    assert soma.varp["nonesuch"] is None
+    assert soma.obsp["distances"].exists()
     assert soma.obsp["distances"].dim_names() == ["obs_id_i", "obs_id_j"]
+    assert isinstance(soma.obsp["distances"], tiledbsc.AnnotationPairwiseMatrix)
 
+    assert soma.varp["nonesuch"] is None
+
+    assert soma.uns.exists()
     assert set(soma.uns.get_member_names()) == set(["neighbors"])
+    assert soma.uns["neighbors"].exists()
+    assert soma.uns.exists()
     assert isinstance(soma.uns["neighbors"], tiledbsc.UnsGroup)
     assert set(soma.uns["neighbors"].get_member_names()) == set(["params"])
     assert isinstance(soma.uns["neighbors"]["params"], tiledbsc.UnsGroup)
@@ -260,3 +271,9 @@ def test_soma_group_indexing(h5ad_file):
         print(e.name, e.shape(), e.uri)
     for e in soma.varp:
         print(e.name, e.shape(), e.uri)
+
+
+def test_not_exists():
+    soma = tiledbsc.SOMA("/nonesuch/nowhere/never", verbose=False)
+    assert not soma.exists()
+    assert not soma.obs.exists()
