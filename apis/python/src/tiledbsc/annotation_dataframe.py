@@ -79,6 +79,14 @@ class AnnotationDataFrame(TileDBArray):
                 return A.df[ids]
 
     # ----------------------------------------------------------------
+    def df(self, ids=None) -> pd.DataFrame:
+        """
+        Keystroke-saving alias for `.dim_select()`. If `ids` are provided, they're used
+        to subselect; if not, the entire dataframe is returned.
+        """
+        return self.dim_select(ids)
+
+    # ----------------------------------------------------------------
     # TODO: this is a v1 for prototype/demo timeframe -- needs expanding.
     def attribute_filter(self, query_string, col_names_to_keep):
         """

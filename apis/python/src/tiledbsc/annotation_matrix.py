@@ -44,6 +44,14 @@ class AnnotationMatrix(TileDBArray):
                 return A.df[ids]
 
     # ----------------------------------------------------------------
+    def df(self, ids=None) -> pd.DataFrame:
+        """
+        Keystroke-saving alias for `.dim_select()`. If `ids` are provided, they're used
+        to subselect; if not, the entire dataframe is returned.
+        """
+        return self.dim_select(ids)
+
+    # ----------------------------------------------------------------
     def shape(self):
         """
         Returns a tuple with the number of rows and number of columns of the `AnnotationMatrix`.

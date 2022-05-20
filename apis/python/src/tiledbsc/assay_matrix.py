@@ -7,6 +7,7 @@ import tiledbsc.util as util
 
 import scipy
 import numpy as np
+import pandas as pd
 
 from typing import Optional
 import time
@@ -62,6 +63,14 @@ class AssayMatrix(TileDBArray):
                     return A.df[obs_ids, :]
                 else:
                     return A.df[obs_ids, var_ids]
+
+    # ----------------------------------------------------------------
+    def df(self, obs_ids=None, var_ids=None) -> pd.DataFrame:
+        """
+        Keystroke-saving alias for `.dim_select()`. If either of `obs_ids` or `var_ids`
+        are provided, they're used to subselect; if not, the entire dataframe is returned.
+        """
+        return self.dim_select(obs_ids, var_ids)
 
     # ----------------------------------------------------------------
     def from_matrix(self, matrix, row_names, col_names) -> None:
