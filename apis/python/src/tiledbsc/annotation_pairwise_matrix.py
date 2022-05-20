@@ -61,6 +61,14 @@ class AnnotationPairwiseMatrix(TileDBArray):
                 return A.df[ids, ids]
 
     # ----------------------------------------------------------------
+    def df(self, ids=None) -> pd.DataFrame:
+        """
+        Keystroke-saving alias for `.dim_select()`. If `ids` are provided, they're used
+        to subselect; if not, the entire dataframe is returned.
+        """
+        return self.dim_select(ids)
+
+    # ----------------------------------------------------------------
     def from_anndata(self, matrix, dim_values):
         """
         Populates an array in the obsp/ or varp/ subgroup for a SOMA object.

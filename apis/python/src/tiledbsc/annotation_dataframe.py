@@ -61,9 +61,9 @@ class AnnotationDataFrame(TileDBArray):
     def keys(self) -> List[str]:
         """
         Returns the column names for the `obs` or `var` dataframe.  For obs and varp, `.keys()` is a
-        keystroke-saver for the more general array-schema accessor `get_attr_names`.
+        keystroke-saver for the more general array-schema accessor `attr_names`.
         """
-        return self.get_attr_names()
+        return self.attr_names()
 
     # ----------------------------------------------------------------
     def dim_select(self, ids):
@@ -77,6 +77,14 @@ class AnnotationDataFrame(TileDBArray):
         else:
             with tiledb.open(self.uri) as A:  # TODO: with self.open
                 return A.df[ids]
+
+    # ----------------------------------------------------------------
+    def df(self, ids=None) -> pd.DataFrame:
+        """
+        Keystroke-saving alias for `.dim_select()`. If `ids` are provided, they're used
+        to subselect; if not, the entire dataframe is returned.
+        """
+        return self.dim_select(ids)
 
     # ----------------------------------------------------------------
     # TODO: this is a v1 for prototype/demo timeframe -- needs expanding.
