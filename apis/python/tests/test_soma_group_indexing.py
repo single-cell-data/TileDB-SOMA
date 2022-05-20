@@ -185,3 +185,14 @@ def test_soma_group_indexing(h5ad_file):
     assert set(soma.uns["neighbors"]["params"].get_member_names()) == set(["method"])
     assert isinstance(soma.uns["neighbors"]["params"]["method"], tiledbsc.UnsArray)
     assert soma.uns["nonesuch"] is None
+
+    # These print to stdout -- here we exercise just them to make sure they're not throwing
+    # exceptions.
+    for e in soma.obsm:
+        print(e.name, e.shape(), e.uri)
+    for e in soma.varm:
+        print(e.name, e.shape(), e.uri)
+    for e in soma.obsp:
+        print(e.name, e.shape(), e.uri)
+    for e in soma.varp:
+        print(e.name, e.shape(), e.uri)

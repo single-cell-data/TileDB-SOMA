@@ -8,7 +8,7 @@ import tiledbsc.util as util
 import pandas as pd
 import scipy
 
-from typing import Optional, Dict
+from typing import Optional, Dict, List
 import os
 
 
@@ -45,6 +45,23 @@ class AnnotationPairwiseMatrixGroup(TileDBGroup):
         accessor `.get_member_names()`.
         """
         return self.get_member_names()
+
+    # ----------------------------------------------------------------
+    def __iter__(self) -> List[AnnotationPairwiseMatrix]:
+        """
+        Implements 'for matrix in soma.obsp: ...' and 'for matrix in soma.varp: ...'
+        """
+        retval = []
+        for name, uri in self.get_member_names_to_uris().items():
+            matrix = AnnotationPairwiseMatrix(
+                uri=uri,
+                name=name,
+                row_dim_name=self.row_dim_name,
+                col_dim_name=self.col_dim_name,
+                parent=self,
+            )
+            retval.append(matrix)
+        return iter(retval)
 
     # ----------------------------------------------------------------
     def from_anndata(self, annotation_pairwise_matrices, dim_values):
