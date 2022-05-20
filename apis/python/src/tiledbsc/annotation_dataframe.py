@@ -79,10 +79,12 @@ class AnnotationDataFrame(TileDBArray):
                 return A.df[ids]
 
     # ----------------------------------------------------------------
+    # TODO: this is a v1 for prototype/demo timeframe -- needs expanding.
     def attribute_filter(self, query_string, col_names_to_keep):
         """
         Selects from obs/var using a TileDB-Py `QueryCondition` string such as
         'cell_type == "blood"'. Returns None if the slice is empty.
+        This is a v1 implementation for the prototype/demo timeframe.
         """
         with tiledb.open(self.uri) as A:
             qc = tiledb.QueryCondition(query_string)

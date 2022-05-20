@@ -319,6 +319,7 @@ class SOMA(TileDBGroup):
     def _to_anndata(self) -> ad.AnnData:
         """
         Internal helper function for to_anndata; same arguments.
+        Note: obsp/varp outgest is omitted at present, pending some issues.
         """
 
         obs_df = self.obs.to_dataframe()
