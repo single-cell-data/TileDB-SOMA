@@ -79,6 +79,24 @@ class AnnotationDataFrame(TileDBArray):
                 return A.df[ids]
 
     # ----------------------------------------------------------------
+    # TODO: this is a v1 for prototype/demo timeframe -- needs expanding.
+    def attribute_filter(self, query_string, col_names_to_keep):
+        """
+        Selects from obs/var using a TileDB-Py `QueryCondition` string such as
+        'cell_type == "blood"'. Returns None if the slice is empty.
+        This is a v1 implementation for the prototype/demo timeframe.
+        """
+        with tiledb.open(self.uri) as A:
+            qc = tiledb.QueryCondition(query_string)
+            slice_query = A.query(attr_cond=qc)
+            slice_df = slice_query.df[:][col_names_to_keep]
+            nobs = len(slice_df)
+            if nobs == 0:
+                return None
+            else:
+                return slice_df
+
+    # ----------------------------------------------------------------
     def from_dataframe(self, dataframe: pd.DataFrame, extent: int) -> None:
         """
         Populates the obs/ or var/ subgroup for a SOMA object.
