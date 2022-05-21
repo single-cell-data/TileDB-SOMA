@@ -11,6 +11,14 @@ jobs:
       matrix:
         os: [ubuntu-latest, macos-10.15, windows-2019]
         python-version: ['3.8']
+        include:
+          - runs-on: ubuntu-latest
+            cc: gcc-10
+            cxx: g++-10
+          - runs-on: macos-10.15
+            env:
+              CFLAGS: -Wno-c++11-narrowing
+              CXXFLAGS: -Wno-c++11-narrowing
     env:
       MACOSX_DEPLOYMENT_TARGET: 10.14
 
@@ -46,10 +54,19 @@ jobs:
     - name: Build libtiledbsc
       shell: pwsh
       run: |
+        $env:pybind11_DIR = python -m pybind11 --cmakedir
+        echo "pybind11_DIR is: ${env:pybind11_DIR}"
         mkdir build
-        cmake -B $env:GITHUB_WORKSPACE/build -S $env:GITHUB_WORKSPACE/libtiledbsc
+        cmake -B $env:GITHUB_WORKSPACE/build -S $env:GITHUB_WORKSPACE/libtiledbsc -Dpybind11_DIR=$env:pybind11_DIR
         cmake --build $env:GITHUB_WORKSPACE/build --config Release -j $env:NUMBER_OF_PROCESSORS 2>&1
+        cmake --build $env:GITHUB_WORKSPACE/build --config Release -j $env:NUMBER_OF_PROCESSORS 2>&1
+        cmake --build $env:GITHUB_WORKSPACE/build/libtiledbsc --config Release -j $env:NUMBER_OF_PROCESSORS -t build_tests 2>&1
+      env:
+        CC: ${{ matrix.cc }}
+        CXX: ${{ matrix.cxx }}
 
     - name: Run libtiledbsc tests
+      shell: pwsh
       run: |
-        make -C libtiledbsc test
+        pushd $env:GITHUB_WORKSPACE/build
+        ctest --verbose
