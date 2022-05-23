@@ -34,27 +34,27 @@ class UnsArray(TileDBArray):
         Ingests an `UnsArray` into TileDB storage, given a pandas.DataFrame.
         """
 
-        if self.verbose:
+        if self._verbose:
             s = util.get_start_stamp()
-            print(f"{self.indent}START  WRITING PANDAS.DATAFRAME {self.uri}")
+            print(f"{self._indent}START  WRITING PANDAS.DATAFRAME {self.uri}")
 
         tiledb.from_pandas(
             uri=self.uri,
             dataframe=df,
             sparse=True,
             allows_duplicates=False,
-            ctx=self.ctx,
+            ctx=self._ctx,
         )
 
-        if self.verbose:
+        if self._verbose:
             print(
                 util.format_elapsed(
-                    s, f"{self.indent}FINISH WRITING PANDAS.DATAFRAME {self.uri}"
+                    s, f"{self._indent}FINISH WRITING PANDAS.DATAFRAME {self.uri}"
                 )
             )
 
     # ----------------------------------------------------------------
-    def maybe_from_numpyable_object(self, obj) -> bool:
+    def _maybe_from_numpyable_object(self, obj) -> bool:
         """
         Nominally for ingest of `uns` nested data from anndata objects. Handles scalar or array values
         -- the former, by wrapping in a 1D array. Maps to TileDB / tiledb.from_numpy storage semantics,
@@ -99,9 +99,9 @@ class UnsArray(TileDBArray):
         objects. Mostly tiledb.from_numpy, but with some necessary handling for data with UTF-8 values.
         """
 
-        if self.verbose:
+        if self._verbose:
             s = util.get_start_stamp()
-            print(f"{self.indent}START  WRITING FROM NUMPY.NDARRAY {self.uri}")
+            print(f"{self._indent}START  WRITING FROM NUMPY.NDARRAY {self.uri}")
 
         if "numpy" in str(type(arr)) and str(arr.dtype).startswith("<U"):
             # Note arr.astype('str') does not lead to a successfuly tiledb.from_numpy.
@@ -110,16 +110,16 @@ class UnsArray(TileDBArray):
         # overwrite = False
         # if self.exists:
         #     overwrite = True
-        #     if self.verbose:
-        #         print(f"{self.indent}Re-using existing array {self.uri}")
-        # tiledb.from_numpy(uri=self.uri, array=arr, ctx=self.ctx, overwrite=overwrite)
+        #     if self._verbose:
+        #         print(f"{self._indent}Re-using existing array {self.uri}")
+        # tiledb.from_numpy(uri=self.uri, array=arr, ctx=self._ctx, overwrite=overwrite)
         # TODO: find the right syntax for update-in-place (tiledb.from_pandas uses `mode`)
-        tiledb.from_numpy(uri=self.uri, array=arr, ctx=self.ctx)
+        tiledb.from_numpy(uri=self.uri, array=arr, ctx=self._ctx)
 
-        if self.verbose:
+        if self._verbose:
             print(
                 util.format_elapsed(
-                    s, f"{self.indent}FINISH WRITING FROM NUMPY.NDARRAY {self.uri}"
+                    s, f"{self._indent}FINISH WRITING FROM NUMPY.NDARRAY {self.uri}"
                 )
             )
 
@@ -131,23 +131,23 @@ class UnsArray(TileDBArray):
         :param csr: Matrix-like object coercible to a scipy coo_matrix.
         """
 
-        if self.verbose:
+        if self._verbose:
             s = util.get_start_stamp()
-            print(f"{self.indent}START  WRITING FROM SCIPY.SPARSE.CSR {self.uri}")
+            print(f"{self._indent}START  WRITING FROM SCIPY.SPARSE.CSR {self.uri}")
 
         nrows, ncols = csr.shape
         if self.exists():
-            if self.verbose:
-                print(f"{self.indent}Re-using existing array {self.uri}")
+            if self._verbose:
+                print(f"{self._indent}Re-using existing array {self.uri}")
         else:
             self.create_empty_array_for_csr("data", csr.dtype, nrows, ncols)
 
         self.ingest_data_from_csr(csr)
 
-        if self.verbose:
+        if self._verbose:
             print(
                 util.format_elapsed(
-                    s, f"{self.indent}FINISH WRITING FROM SCIPY.SPARSE.CSR {self.uri}"
+                    s, f"{self._indent}FINISH WRITING FROM SCIPY.SPARSE.CSR {self.uri}"
                 )
             )
 
@@ -178,11 +178,11 @@ class UnsArray(TileDBArray):
                 dtype="int32",
                 filters=[tiledb.ZstdFilter()],
             ),
-            ctx=self.ctx,
+            ctx=self._ctx,
         )
 
         att = tiledb.Attr(
-            attr_name, dtype=matrix_dtype, filters=[tiledb.ZstdFilter()], ctx=self.ctx
+            attr_name, dtype=matrix_dtype, filters=[tiledb.ZstdFilter()], ctx=self._ctx
         )
         sch = tiledb.ArraySchema(
             domain=dom,
@@ -197,9 +197,9 @@ class UnsArray(TileDBArray):
             capacity=100000,
             cell_order="row-major",
             tile_order="col-major",
-            ctx=self.ctx,
+            ctx=self._ctx,
         )
-        tiledb.Array.create(self.uri, sch, ctx=self.ctx)
+        tiledb.Array.create(self.uri, sch, ctx=self._ctx)
 
     # ----------------------------------------------------------------
     def ingest_data_from_csr(self, csr: scipy.sparse.csr_matrix):
@@ -213,7 +213,7 @@ class UnsArray(TileDBArray):
         d0 = mat_coo.row
         d1 = mat_coo.col
 
-        with tiledb.open(self.uri, mode="w", ctx=self.ctx) as A:
+        with tiledb.open(self.uri, mode="w", ctx=self._ctx) as A:
             A[d0, d1] = mat_coo.data
 
     # ----------------------------------------------------------------
@@ -225,15 +225,15 @@ class UnsArray(TileDBArray):
         """
         Reads an uns array from TileDB storage and returns a matrix -- currently, always as numpy.ndarray.
         """
-        if self.verbose:
+        if self._verbose:
             s2 = util.get_start_stamp()
-            print(f"{self.indent}START  read {self.uri}")
+            print(f"{self._indent}START  read {self.uri}")
 
         with tiledb.open(self.uri) as A:
             df = pd.DataFrame(A[:])
             retval = df.to_numpy()
 
-        if self.verbose:
-            print(util.format_elapsed(s2, f"{self.indent}FINISH read {self.uri}"))
+        if self._verbose:
+            print(util.format_elapsed(s2, f"{self._indent}FINISH read {self.uri}"))
 
         return retval

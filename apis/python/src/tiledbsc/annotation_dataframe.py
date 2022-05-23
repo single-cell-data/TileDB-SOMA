@@ -38,7 +38,7 @@ class AnnotationDataFrame(TileDBArray):
         The row-count is the number of obs_ids (for `obs`) or the number of var_ids (for `var`).
         The column-count is the number of columns/attributes in the dataframe.
         """
-        # TODO: with self.open: see
+        # TODO: with self._open: see
         # https://github.com/single-cell-data/TileDB-SingleCell/pull/93
         with tiledb.open(self.uri) as A:
             # These TileDB arrays are string-dimensioned sparse arrays so there is no '.shape'.
@@ -72,10 +72,10 @@ class AnnotationDataFrame(TileDBArray):
         If `ids` is `None`, the entire dataframe is returned.
         """
         if ids is None:
-            with tiledb.open(self.uri) as A:  # TODO: with self.open
+            with tiledb.open(self.uri) as A:  # TODO: with self._open
                 return A.df[:]
         else:
-            with tiledb.open(self.uri) as A:  # TODO: with self.open
+            with tiledb.open(self.uri) as A:  # TODO: with self._open
                 return A.df[ids]
 
     # ----------------------------------------------------------------
@@ -119,9 +119,9 @@ class AnnotationDataFrame(TileDBArray):
         dim_filters = tiledb.FilterList([tiledb.ZstdFilter(level=-1)])
         attr_filters = tiledb.FilterList([tiledb.ZstdFilter(level=-1)])
 
-        if self.verbose:
+        if self._verbose:
             s = util.get_start_stamp()
-            print(f"{self.indent}START  WRITING {self.uri}")
+            print(f"{self._indent}START  WRITING {self.uri}")
 
         # Make the row-names column (barcodes for obs, gene names for var) explicitly named.
         # Otherwise it'll be called '__tiledb_rows'.
@@ -151,16 +151,16 @@ class AnnotationDataFrame(TileDBArray):
         mode = "ingest"
         if self.exists():
             mode = "append"
-            if self.verbose:
-                print(f"{self.indent}Re-using existing array {self.uri}")
+            if self._verbose:
+                print(f"{self._indent}Re-using existing array {self.uri}")
 
         # Context: https://github.com/single-cell-data/TileDB-SingleCell/issues/99.
         # TODO: when UTF-8 attributes are queryable using TileDB-Py's QueryCondition API we can remove this.
         column_types = {}  # XXX None OR {} ?
-        if self.name in self.soma_options.col_names_to_store_as_ascii:
-            col_names_to_store_as_ascii = self.soma_options.col_names_to_store_as_ascii[
-                self.name
-            ]
+        if self.name in self._soma_options.col_names_to_store_as_ascii:
+            col_names_to_store_as_ascii = (
+                self._soma_options.col_names_to_store_as_ascii[self.name]
+            )
             for col_name in col_names_to_store_as_ascii:
                 column_types[col_name] = np.dtype("S")
 
@@ -176,12 +176,12 @@ class AnnotationDataFrame(TileDBArray):
             capacity=100000,
             tile=extent,
             column_types=column_types,
-            ctx=self.ctx,
+            ctx=self._ctx,
             mode=mode,
         )
 
-        if self.verbose:
-            print(util.format_elapsed(s, f"{self.indent}FINISH WRITING {self.uri}"))
+        if self._verbose:
+            print(util.format_elapsed(s, f"{self._indent}FINISH WRITING {self.uri}"))
 
     # ----------------------------------------------------------------
     def to_dataframe(self) -> pd.DataFrame:
@@ -190,9 +190,9 @@ class AnnotationDataFrame(TileDBArray):
         and dimension values.
         """
 
-        if self.verbose:
+        if self._verbose:
             s = util.get_start_stamp()
-            print(f"{self.indent}START  read {self.uri}")
+            print(f"{self._indent}START  read {self.uri}")
 
         with tiledb.open(self.uri) as A:
             # We could use A.df[:] to set the index_name to 'obs_id' or 'var_id'.
@@ -201,7 +201,7 @@ class AnnotationDataFrame(TileDBArray):
             df = pd.DataFrame(A[:])
             df = df.set_index(self.dim_name)
 
-        if self.verbose:
-            print(util.format_elapsed(s, f"{self.indent}FINISH read {self.uri}"))
+        if self._verbose:
+            print(util.format_elapsed(s, f"{self._indent}FINISH read {self.uri}"))
 
         return df

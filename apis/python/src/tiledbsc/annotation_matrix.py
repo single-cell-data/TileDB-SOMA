@@ -37,10 +37,10 @@ class AnnotationMatrix(TileDBArray):
         `var_ids` (for `varm` elements).  If `ids` is `None`, the entire array is returned.
         """
         if ids is None:
-            with tiledb.open(self.uri) as A:  # TODO: with self.open
+            with tiledb.open(self.uri) as A:  # TODO: with self._open
                 return A.df[:]
         else:
-            with tiledb.open(self.uri) as A:  # TODO: with self.open
+            with tiledb.open(self.uri) as A:  # TODO: with self._open
                 return A.df[ids]
 
     # ----------------------------------------------------------------
@@ -58,7 +58,7 @@ class AnnotationMatrix(TileDBArray):
         The row-count is the number of obs_ids (for `obsm` elements) or the number of var_ids (for
         `varm` elements).  The column-count is the number of columns/attributes in the dataframe.
         """
-        with tiledb.open(self.uri) as A:  # TODO: with self.open
+        with tiledb.open(self.uri) as A:  # TODO: with self._open
             # These TileDB arrays are string-dimensioned sparse arrays so there is no '.shape'.
             # Instead we compute it ourselves.  See also:
             # * https://github.com/single-cell-data/TileDB-SingleCell/issues/10
@@ -76,17 +76,17 @@ class AnnotationMatrix(TileDBArray):
         :param dim_values: anndata.obs_names, anndata.var_names, or anndata.raw.var_names.
         """
 
-        if self.verbose:
+        if self._verbose:
             s = util.get_start_stamp()
-            print(f"{self.indent}START  WRITING {self.uri}")
+            print(f"{self._indent}START  WRITING {self.uri}")
 
         if isinstance(matrix, pd.DataFrame):
             self._from_pandas_dataframe(matrix, dim_values)
         else:
             self._numpy_ndarray_or_scipy_sparse_csr_matrix(matrix, dim_values)
 
-        if self.verbose:
-            print(util.format_elapsed(s, f"{self.indent}FINISH WRITING {self.uri}"))
+        if self._verbose:
+            print(util.format_elapsed(s, f"{self._indent}FINISH WRITING {self.uri}"))
 
     # ----------------------------------------------------------------
     def _numpy_ndarray_or_scipy_sparse_csr_matrix(self, matrix, dim_values):
@@ -98,12 +98,12 @@ class AnnotationMatrix(TileDBArray):
 
         # Ingest annotation matrices as 1D/multi-attribute sparse arrays
         if self.exists():
-            if self.verbose:
-                print(f"{self.indent}Re-using existing array {self.uri}")
+            if self._verbose:
+                print(f"{self._indent}Re-using existing array {self.uri}")
         else:
-            self.create_empty_array([matrix.dtype] * nattr, attr_names)
+            self._create_empty_array([matrix.dtype] * nattr, attr_names)
 
-        self.ingest_data(matrix, dim_values, attr_names)
+        self._ingest_data(matrix, dim_values, attr_names)
 
     # ----------------------------------------------------------------
     def _from_pandas_dataframe(self, df, dim_values):
@@ -112,16 +112,16 @@ class AnnotationMatrix(TileDBArray):
 
         # Ingest annotation matrices as 1D/multi-attribute sparse arrays
         if self.exists():
-            if self.verbose:
-                print(f"{self.indent}Re-using existing array {self.uri}")
+            if self._verbose:
+                print(f"{self._indent}Re-using existing array {self.uri}")
         else:
-            self.create_empty_array(list(df.dtypes), attr_names)
+            self._create_empty_array(list(df.dtypes), attr_names)
 
-        with tiledb.open(self.uri, mode="w", ctx=self.ctx) as A:
+        with tiledb.open(self.uri, mode="w", ctx=self._ctx) as A:
             A[dim_values] = df.to_dict(orient="list")
 
     # ----------------------------------------------------------------
-    def create_empty_array(self, matrix_dtypes, attr_names):
+    def _create_empty_array(self, matrix_dtypes, attr_names):
         """
         Create a TileDB 1D sparse array with string dimension and multiple attributes.
 
@@ -131,7 +131,7 @@ class AnnotationMatrix(TileDBArray):
         """
 
         # Nominally 'obs_id' or 'var_id'
-        level = self.soma_options.string_dim_zstd_level
+        level = self._soma_options.string_dim_zstd_level
         dom = tiledb.Domain(
             tiledb.Dim(
                 name=self.dim_name,
@@ -139,7 +139,7 @@ class AnnotationMatrix(TileDBArray):
                 dtype="ascii",
                 filters=[tiledb.ZstdFilter(level=level)],
             ),
-            ctx=self.ctx,
+            ctx=self._ctx,
         )
 
         attrs = [
@@ -147,7 +147,7 @@ class AnnotationMatrix(TileDBArray):
                 attr_name,
                 dtype=matrix_dtypes[j],
                 filters=[tiledb.ZstdFilter()],
-                ctx=self.ctx,
+                ctx=self._ctx,
             )
             for j, attr_name in enumerate(attr_names)
         ]
@@ -167,13 +167,13 @@ class AnnotationMatrix(TileDBArray):
             # As of TileDB core 2.8.2, we cannot consolidate string-indexed sparse arrays with
             # col-major tile order: so we write `X` with row-major tile order.
             tile_order="row-major",
-            ctx=self.ctx,
+            ctx=self._ctx,
         )
 
-        tiledb.Array.create(self.uri, sch, ctx=self.ctx)
+        tiledb.Array.create(self.uri, sch, ctx=self._ctx)
 
     # ----------------------------------------------------------------
-    def ingest_data(self, matrix, dim_values, col_names):
+    def _ingest_data(self, matrix, dim_values, col_names):
         """
         Convert ndarray/(csr|csc)matrix to a dataframe and ingest into TileDB.
 
@@ -186,5 +186,5 @@ class AnnotationMatrix(TileDBArray):
 
         df = pd.DataFrame(matrix, columns=col_names)
 
-        with tiledb.open(self.uri, mode="w", ctx=self.ctx) as A:
+        with tiledb.open(self.uri, mode="w", ctx=self._ctx) as A:
             A[dim_values] = df.to_dict(orient="list")

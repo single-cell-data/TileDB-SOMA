@@ -28,7 +28,7 @@ def format_elapsed(start_stamp, message: str):
 
 
 # ----------------------------------------------------------------
-def find_csr_chunk_size(
+def _find_csr_chunk_size(
     mat: scipy.sparse._csr.csr_matrix,
     permutation: list,
     start_row_index: int,
@@ -56,7 +56,7 @@ def find_csr_chunk_size(
 
 
 # ----------------------------------------------------------------
-def get_sort_and_permutation(lst: list):
+def _get_sort_and_permutation(lst: list):
     """
     Sorts a list, returned the sorted list along with a permutation-index list which can be used for
     cursored access to data which was indexed by the unsorted list. Nominally for chunking of CSR
@@ -150,7 +150,7 @@ def _to_tiledb_supported_array_type(x):
 
 
 # ----------------------------------------------------------------
-def X_and_ids_to_coo(
+def _X_and_ids_to_coo(
     Xdf: pd.DataFrame,
     row_dim_name: str,
     col_dim_name: str,

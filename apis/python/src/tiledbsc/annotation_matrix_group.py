@@ -36,9 +36,9 @@ class AnnotationMatrixGroup(TileDBGroup):
     def keys(self):
         """
         For obsm and varm, `.keys()` is a keystroke-saver for the more general group-member
-        accessor `.get_member_names()`.
+        accessor `._get_member_names()`.
         """
-        return self.get_member_names()
+        return self._get_member_names()
 
     # ----------------------------------------------------------------
     def __iter__(self) -> List[AnnotationMatrix]:
@@ -46,7 +46,7 @@ class AnnotationMatrixGroup(TileDBGroup):
         Implements 'for matrix in soma.obsm: ...' and 'for matrix in soma.varm: ...'
         """
         retval = []
-        for name, uri in self.get_member_names_to_uris().items():
+        for name, uri in self._get_member_names_to_uris().items():
             matrix = AnnotationMatrix(
                 uri=uri, name=name, dim_name=self.dim_name, parent=self
             )
@@ -63,7 +63,7 @@ class AnnotationMatrixGroup(TileDBGroup):
         :param dim_values: anndata.obs_names, anndata.var_names, or anndata.raw.var_names.
         """
 
-        self.open("w")
+        self._open("w")
 
         for matrix_name in annotation_matrices.keys():
             anndata_matrix = annotation_matrices[matrix_name]
@@ -75,8 +75,8 @@ class AnnotationMatrixGroup(TileDBGroup):
                 parent=self,
             )
             annotation_matrix.from_anndata(anndata_matrix, dim_values)
-            self.add_object(annotation_matrix)
-        self.close()
+            self._add_object(annotation_matrix)
+        self._close()
 
     # ----------------------------------------------------------------
     def to_dict_of_csr(self) -> Dict[str, scipy.sparse.csr_matrix]:
@@ -91,13 +91,13 @@ class AnnotationMatrixGroup(TileDBGroup):
         except:
             pass
         if grp == None:
-            if self.verbose:
-                print(f"{self.indent}{self.uri} not found")
+            if self._verbose:
+                print(f"{self._indent}{self.uri} not found")
             return {}
 
-        if self.verbose:
+        if self._verbose:
             s = util.get_start_stamp()
-            print(f"{self.indent}START  read {self.uri}")
+            print(f"{self._indent}START  read {self.uri}")
 
         # TODO: fold this element-enumeration into the TileDB group class.  Maybe on the same PR
         # where we support somagroup['name'] with overloading of the [] operator.
@@ -105,26 +105,26 @@ class AnnotationMatrixGroup(TileDBGroup):
         for element in grp:
             with tiledb.open(element.uri) as A:
                 with tiledb.open(element.uri) as A:
-                    if self.verbose:
+                    if self._verbose:
                         s2 = util.get_start_stamp()
-                        print(f"{self.indent}START  read {element.uri}")
+                        print(f"{self._indent}START  read {element.uri}")
 
                     df = pd.DataFrame(A[:])
                     df.set_index(self.dim_name, inplace=True)
                     matrix_name = os.path.basename(element.uri)  # e.g. 'X_pca'
                     matrices_in_group[matrix_name] = df.to_numpy()
 
-                    if self.verbose:
+                    if self._verbose:
                         print(
                             util.format_elapsed(
-                                s2, f"{self.indent}FINISH read {element.uri}"
+                                s2, f"{self._indent}FINISH read {element.uri}"
                             )
                         )
 
         grp.close()
 
-        if self.verbose:
-            print(util.format_elapsed(s, f"{self.indent}FINISH read {self.uri}"))
+        if self._verbose:
+            print(util.format_elapsed(s, f"{self._indent}FINISH read {self.uri}"))
 
         return matrices_in_group
 
@@ -150,14 +150,14 @@ class AnnotationMatrixGroup(TileDBGroup):
         member exists.  Overloads the [...] operator.
         """
 
-        self.open("r")
+        self._open("r")
         obj = None
         try:
             # This returns a tiledb.object.Object.
-            obj = self.tiledb_group[name]
+            obj = self._tiledb_group[name]
         except:
             pass
-        self.close()
+        self._close()
 
         if obj is None:
             return None

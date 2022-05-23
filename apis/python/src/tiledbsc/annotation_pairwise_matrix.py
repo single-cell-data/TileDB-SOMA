@@ -40,7 +40,7 @@ class AnnotationPairwiseMatrix(TileDBArray):
         The row-count and column-counts should be the same: dimensions are `obs_id_i,obs_id_j` for
         `obsm` elements, and `var_id_i,var_id_j` for `varm` elements.
         """
-        with tiledb.open(self.uri) as A:  # TODO: with self.open
+        with tiledb.open(self.uri) as A:  # TODO: with self._open
             # These TileDB arrays are string-dimensioned sparse arrays so there is no '.shape'.
             # Instead we compute it ourselves.  See also:
             # * https://github.com/single-cell-data/TileDB-SingleCell/issues/10
@@ -54,10 +54,10 @@ class AnnotationPairwiseMatrix(TileDBArray):
         `var_ids` (for `varp` elements).  If `ids` is `None`, the entire array is returned.
         """
         if ids is None:
-            with tiledb.open(self.uri) as A:  # TODO: with self.open
+            with tiledb.open(self.uri) as A:  # TODO: with self._open
                 return A.df[:, :]
         else:
-            with tiledb.open(self.uri) as A:  # TODO: with self.open
+            with tiledb.open(self.uri) as A:  # TODO: with self._open
                 return A.df[ids, ids]
 
     # ----------------------------------------------------------------
@@ -77,9 +77,9 @@ class AnnotationPairwiseMatrix(TileDBArray):
         :param dim_values: anndata.obs_names, anndata.var_names, or anndata.raw.var_names.
         """
 
-        if self.verbose:
+        if self._verbose:
             s = util.get_start_stamp()
-            print(f"{self.indent}START  WRITING {self.uri}")
+            print(f"{self._indent}START  WRITING {self.uri}")
 
         # We do not have column names for anndata-provenance annotation matrices.
         # So, if say we're looking at anndata.obsm['X_pca'], we create column names
@@ -89,18 +89,18 @@ class AnnotationPairwiseMatrix(TileDBArray):
 
         # Ingest annotation matrices as 1D/multi-attribute sparse arrays
         if self.exists():
-            if self.verbose:
-                print(f"{self.indent}Re-using existing array {self.uri}")
+            if self._verbose:
+                print(f"{self._indent}Re-using existing array {self.uri}")
         else:
-            self.create_empty_array(matrix.dtype, attr_names)
+            self._create_empty_array(matrix.dtype, attr_names)
 
-        self.ingest_data(matrix, dim_values, attr_names)
+        self._ingest_data(matrix, dim_values, attr_names)
 
-        if self.verbose:
-            print(util.format_elapsed(s, f"{self.indent}FINISH WRITING {self.uri}"))
+        if self._verbose:
+            print(util.format_elapsed(s, f"{self._indent}FINISH WRITING {self.uri}"))
 
     # ----------------------------------------------------------------
-    def create_empty_array(self, matrix_dtype, attr_names):
+    def _create_empty_array(self, matrix_dtype, attr_names):
         """
         Create a TileDB 1D sparse array with string dimension and multiple attributes.
 
@@ -109,7 +109,7 @@ class AnnotationPairwiseMatrix(TileDBArray):
         """
 
         # Nominally 'obs_id' or 'var_id'
-        level = self.soma_options.string_dim_zstd_level
+        level = self._soma_options.string_dim_zstd_level
         dom = tiledb.Domain(
             tiledb.Dim(
                 name=self.dim_name,
@@ -117,7 +117,7 @@ class AnnotationPairwiseMatrix(TileDBArray):
                 dtype="ascii",
                 filters=[tiledb.ZstdFilter(level=level)],
             ),
-            ctx=self.ctx,
+            ctx=self._ctx,
         )
 
         attrs = [
@@ -125,7 +125,7 @@ class AnnotationPairwiseMatrix(TileDBArray):
                 attr_name,
                 dtype=matrix_dtype,
                 filters=[tiledb.ZstdFilter()],
-                ctx=self.ctx,
+                ctx=self._ctx,
             )
             for attr_name in attr_names
         ]
@@ -145,13 +145,13 @@ class AnnotationPairwiseMatrix(TileDBArray):
             # As of TileDB core 2.8.2, we cannot consolidate string-indexed sparse arrays with
             # col-major tile order: so we write `X` with row-major tile order.
             tile_order="row-major",
-            ctx=self.ctx,
+            ctx=self._ctx,
         )
 
-        tiledb.Array.create(self.uri, sch, ctx=self.ctx)
+        tiledb.Array.create(self.uri, sch, ctx=self._ctx)
 
     # ----------------------------------------------------------------
-    def ingest_data(self, matrix, dim_values, col_names):
+    def _ingest_data(self, matrix, dim_values, col_names):
         """
         Convert ndarray/(csr|csc)matrix to a dataframe and ingest into TileDB.
 
@@ -164,5 +164,5 @@ class AnnotationPairwiseMatrix(TileDBArray):
 
         df = pd.DataFrame(matrix, columns=col_names)
 
-        with tiledb.open(self.uri, mode="w", ctx=self.ctx) as A:
+        with tiledb.open(self.uri, mode="w", ctx=self._ctx) as A:
             A[dim_values] = df.to_dict(orient="list")

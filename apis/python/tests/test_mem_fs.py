@@ -27,4 +27,4 @@ def test_from_anndata_memfs():
     assert f"{path}/obs" in members
     assert f"{path}/var" in members
 
-    soma_group.close()
+    soma_group._close()

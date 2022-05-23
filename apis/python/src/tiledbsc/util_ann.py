@@ -252,7 +252,7 @@ def _describe_ann_file_show_uns_data(uns, parent_path_components=["uns"]):
 
 
 # ----------------------------------------------------------------
-def decategoricalize(anndata: ad.AnnData):
+def _decategoricalize(anndata: ad.AnnData):
     """
     Performs an in-place typecast into types that TileDB can persist.
     """

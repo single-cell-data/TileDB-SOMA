@@ -79,27 +79,27 @@ class AssayMatrix(TileDBArray):
         array which is used for X, obsp members, and varp members.
         """
 
-        if self.verbose:
+        if self._verbose:
             s = util.get_start_stamp()
-            print(f"{self.indent}START  WRITING {self.uri}")
+            print(f"{self._indent}START  WRITING {self.uri}")
 
         if self.exists():
-            if self.verbose:
-                print(f"{self.indent}Re-using existing array {self.uri}")
+            if self._verbose:
+                print(f"{self._indent}Re-using existing array {self.uri}")
         else:
-            self.create_empty_array(matrix_dtype=matrix.dtype)
+            self._create_empty_array(matrix_dtype=matrix.dtype)
 
-        self.ingest_data(matrix, row_names, col_names)
-        if self.verbose:
-            print(util.format_elapsed(s, f"{self.indent}FINISH WRITING {self.uri}"))
+        self._ingest_data(matrix, row_names, col_names)
+        if self._verbose:
+            print(util.format_elapsed(s, f"{self._indent}FINISH WRITING {self.uri}"))
 
     # ----------------------------------------------------------------
-    def create_empty_array(self, matrix_dtype: np.dtype) -> None:
+    def _create_empty_array(self, matrix_dtype: np.dtype) -> None:
         """
         Create a TileDB 2D sparse array with string dimensions and a single attribute.
         """
 
-        level = self.soma_options.string_dim_zstd_level
+        level = self._soma_options.string_dim_zstd_level
         dom = tiledb.Domain(
             tiledb.Dim(
                 name=self.row_dim_name,
@@ -113,14 +113,14 @@ class AssayMatrix(TileDBArray):
                 dtype="ascii",
                 filters=[tiledb.ZstdFilter(level=level)],
             ),
-            ctx=self.ctx,
+            ctx=self._ctx,
         )
 
         att = tiledb.Attr(
             self.attr_name,
             dtype=matrix_dtype,
             filters=[tiledb.ZstdFilter()],
-            ctx=self.ctx,
+            ctx=self._ctx,
         )
 
         sch = tiledb.ArraySchema(
@@ -133,20 +133,20 @@ class AssayMatrix(TileDBArray):
                 tiledb.BitWidthReductionFilter(),
                 tiledb.ZstdFilter(),
             ],
-            capacity=self.soma_options.X_capacity,
-            cell_order=self.soma_options.X_cell_order,
-            tile_order=self.soma_options.X_tile_order,
-            ctx=self.ctx,
+            capacity=self._soma_options.X_capacity,
+            cell_order=self._soma_options.X_cell_order,
+            tile_order=self._soma_options.X_tile_order,
+            ctx=self._ctx,
         )
 
-        tiledb.Array.create(self.uri, sch, ctx=self.ctx)
+        tiledb.Array.create(self.uri, sch, ctx=self._ctx)
 
     # ----------------------------------------------------------------
-    def ingest_data(self, matrix, row_names, col_names) -> None:
+    def _ingest_data(self, matrix, row_names, col_names) -> None:
         # TODO: add chunked support for CSC
         if (
             isinstance(matrix, scipy.sparse._csr.csr_matrix)
-            and self.soma_options.write_X_chunked_if_csr
+            and self._soma_options.write_X_chunked_if_csr
         ):
             self.ingest_data_rows_chunked(matrix, row_names, col_names)
         else:
@@ -169,7 +169,7 @@ class AssayMatrix(TileDBArray):
         d0 = row_names[mat_coo.row]
         d1 = col_names[mat_coo.col]
 
-        with tiledb.open(self.uri, mode="w", ctx=self.ctx) as A:
+        with tiledb.open(self.uri, mode="w", ctx=self._ctx) as A:
             A[d0, d1] = mat_coo.data
 
     # ----------------------------------------------------------------
@@ -223,13 +223,13 @@ class AssayMatrix(TileDBArray):
         # Key note: only the _obs labels_ are being sorted, and along with them come permutation
         # indices for accessing the CSR matrix via cursor-indirection -- e.g. csr[28] is accessed as
         # with csr[permuation[28]] -- the CSR matrix itself isn't sorted in bulk.
-        sorted_row_names, permutation = util.get_sort_and_permutation(list(row_names))
+        sorted_row_names, permutation = util._get_sort_and_permutation(list(row_names))
         # Using numpy we can index this with a list of indices, which a plain Python list doesn't support.
         sorted_row_names = np.asarray(sorted_row_names)
 
         s = util.get_start_stamp()
-        if self.verbose:
-            print(f"{self.indent}START  __ingest_coo_data_string_dims_rows_chunked")
+        if self._verbose:
+            print(f"{self._indent}START  __ingest_coo_data_string_dims_rows_chunked")
 
         eta_tracker = util.ETATracker()
         with tiledb.open(self.uri, mode="w") as A:
@@ -239,8 +239,8 @@ class AssayMatrix(TileDBArray):
             while i < nrow:
                 t1 = time.time()
                 # Find a number of CSR rows which will result in a desired nnz for the chunk.
-                chunk_size = util.find_csr_chunk_size(
-                    matrix, permutation, i, self.soma_options.goal_chunk_nnz
+                chunk_size = util._find_csr_chunk_size(
+                    matrix, permutation, i, self._soma_options.goal_chunk_nnz
                 )
                 i2 = i + chunk_size
 
@@ -257,12 +257,12 @@ class AssayMatrix(TileDBArray):
                 # Python ranges are (lo, hi) with lo inclusive and hi exclusive. But saying that
                 # makes us look buggy if we say we're ingesting chunk 0:18 and then 18:32.
                 # Instead, print doubly-inclusive lo..hi like 0..17 and 18..31.
-                if self.verbose:
+                if self._verbose:
                     chunk_percent = 100 * (i2 - 1) / nrow
                     print(
                         "%sSTART  chunk rows %d..%d of %d (%.3f%%), obs_ids %s..%s, nnz=%d"
                         % (
-                            self.indent,
+                            self._indent,
                             i,
                             i2 - 1,
                             nrow,
@@ -276,22 +276,23 @@ class AssayMatrix(TileDBArray):
                 # Write a TileDB fragment
                 A[d0, d1] = chunk_coo.data
 
-                if self.verbose:
+                if self._verbose:
                     t2 = time.time()
                     chunk_seconds = t2 - t1
                     eta = eta_tracker.ingest_and_predict(chunk_percent, chunk_seconds)
 
                     print(
                         "%sFINISH chunk in %.3f seconds, %7.3f%% done, ETA %s"
-                        % (self.indent, chunk_seconds, chunk_percent, eta)
+                        % (self._indent, chunk_seconds, chunk_percent, eta)
                     )
 
                 i = i2
 
-        if self.verbose:
+        if self._verbose:
             print(
                 util.format_elapsed(
-                    s, f"{self.indent}FINISH __ingest_coo_data_string_dims_rows_chunked"
+                    s,
+                    f"{self._indent}FINISH __ingest_coo_data_string_dims_rows_chunked",
                 )
             )
 
@@ -306,9 +307,9 @@ class AssayMatrix(TileDBArray):
         TileDB storage.
         """
 
-        if self.verbose:
+        if self._verbose:
             s = util.get_start_stamp()
-            print(f"{self.indent}START  read {self.uri}")
+            print(f"{self._indent}START  read {self.uri}")
 
         # Since the TileDB array is sparse, with two string dimensions, we get back a dict:
         # * 'obs_id' key is a sequence of dim0 coordinates for X data.
@@ -317,7 +318,7 @@ class AssayMatrix(TileDBArray):
         with tiledb.open(self.uri) as A:
             df = A[:]
 
-        retval = util.X_and_ids_to_coo(
+        retval = util._X_and_ids_to_coo(
             df,
             self.row_dim_name,
             self.col_dim_name,
@@ -326,7 +327,7 @@ class AssayMatrix(TileDBArray):
             col_labels,
         )
 
-        if self.verbose:
-            print(util.format_elapsed(s, f"{self.indent}FINISH read {self.uri}"))
+        if self._verbose:
+            print(util.format_elapsed(s, f"{self._indent}FINISH read {self.uri}"))
 
         return retval
