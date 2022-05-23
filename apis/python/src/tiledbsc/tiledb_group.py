@@ -40,6 +40,14 @@ class TileDBGroup(TileDBObject):
         """
         return "group"
 
+    def exists(self) -> bool:
+        """
+        Tells whether or not there is storage for the group. This might be in case a SOMA
+        object has not yet been populated, e.g. before calling `from_anndata` -- or, if the
+        SOMA has been populated but doesn't have this member (e.g. not all SOMAs have a `varp`).
+        """
+        return tiledb.object_type(self.uri) == "group"
+
     def create(self):
         """
         Creates the TileDB group data structure on disk/S3/cloud.
