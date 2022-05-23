@@ -261,6 +261,11 @@ def test_soma_group_indexing(h5ad_file):
     assert isinstance(soma.uns["neighbors"]["params"]["method"], tiledbsc.UnsArray)
     assert soma.uns["nonesuch"] is None
 
+    assert list(soma.uns.keys()) == ["neighbors"]
+    assert list(soma.uns["neighbors"].keys()) == ["params"]
+    assert "neighbors" in soma.uns
+    assert "nonesuch" not in soma.uns
+
     # These print to stdout -- here we exercise just them to make sure they're not throwing
     # exceptions.
     for e in soma.obsm:
