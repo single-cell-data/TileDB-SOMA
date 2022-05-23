@@ -33,6 +33,14 @@ class UnsGroup(TileDBGroup):
         super().__init__(uri=uri, name=name, parent=parent)
 
     # ----------------------------------------------------------------
+    def keys(self):
+        """
+        For uns, `.keys()` is a keystroke-saver for the more general group-member
+        accessor `._get_member_names()`.
+        """
+        return self._get_member_names()
+
+    # ----------------------------------------------------------------
     def from_anndata_uns(self, uns: ad.compat.OverloadedDict):
         """
         Populates the uns group for the soma object.
@@ -186,3 +194,20 @@ class UnsGroup(TileDBGroup):
                 "Internal error: found group element neither subgroup nor array: type is",
                 str(obj.type),
             )
+
+    def __contains__(self, name):
+        """
+        Implements '"namegoeshere" in soma.uns'.
+        """
+
+        self._open("r")
+        answer = False
+        try:
+            # This returns a tiledb.object.Object.
+            self._tiledb_group[name]
+            answer = True
+        except:
+            pass
+        self._close()
+
+        return answer
