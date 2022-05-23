@@ -45,10 +45,10 @@ class AssayMatrixGroup(TileDBGroup):
         anndata.obs_names and col_names will be anndata.var_names or anndata.raw.var_names.
         """
 
-        self.open("w")
+        self._open("w")
 
         if matrix is not None:
             self.data.from_matrix(matrix, row_names, col_names)
-            self.add_object(self.data)
+            self._add_object(self.data)
 
-        self.close()
+        self._close()

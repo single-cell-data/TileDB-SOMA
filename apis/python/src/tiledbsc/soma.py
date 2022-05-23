@@ -75,6 +75,7 @@ class SOMA(TileDBGroup):
             parent=parent,
             verbose=verbose,
             soma_options=soma_options,
+            ctx=ctx,
         )
 
         X_uri = os.path.join(self.uri, "X")
@@ -129,14 +130,14 @@ class SOMA(TileDBGroup):
         """
         Reads an .h5ad file and writes to a TileDB group structure.
         """
-        if self.verbose:
+        if self._verbose:
             s = util.get_start_stamp()
             print(f"START  SOMA.from_h5ad {input_path} -> {self.uri}")
 
         anndata = self.read_h5ad(input_path)
         self.from_anndata(anndata)
 
-        if self.verbose:
+        if self._verbose:
             print(
                 util.format_elapsed(
                     s, f"FINISH SOMA.from_h5ad {input_path} -> {self.uri}"
@@ -148,7 +149,7 @@ class SOMA(TileDBGroup):
         """
         Reads a 10X file and writes to a TileDB group structure.
         """
-        if self.verbose:
+        if self._verbose:
             s = util.get_start_stamp()
             print(f"START  SOMA.from_10x {input_path} -> {self.uri}")
 
@@ -156,7 +157,7 @@ class SOMA(TileDBGroup):
 
         self.from_anndata(anndata)
 
-        if self.verbose:
+        if self._verbose:
             print(
                 util.format_elapsed(
                     s, f"FINISH SOMA.from_10x {input_path} -> {self.uri}"
@@ -168,14 +169,14 @@ class SOMA(TileDBGroup):
         """
         File-ingestor for .h5ad files
         """
-        if self.verbose:
+        if self._verbose:
             s = util.get_start_stamp()
-            print(f"{self.indent}START  READING {input_path}")
+            print(f"{self._indent}START  READING {input_path}")
 
         anndata = ad.read_h5ad(input_path)
 
-        if self.verbose:
-            print(util.format_elapsed(s, f"{self.indent}FINISH READING {input_path}"))
+        if self._verbose:
+            print(util.format_elapsed(s, f"{self._indent}FINISH READING {input_path}"))
         return anndata
 
     # ----------------------------------------------------------------
@@ -183,14 +184,14 @@ class SOMA(TileDBGroup):
         """
         File-ingestor for 10X files
         """
-        if self.verbose:
+        if self._verbose:
             s = util.get_start_stamp()
-            print(f"{self.indent}START  READING {input_path}")
+            print(f"{self._indent}START  READING {input_path}")
 
         anndata = scanpy.read_10x_h5(input_path)
 
-        if self.verbose:
-            print(util.format_elapsed(s, f"{self.indent}FINISH READING {input_path}"))
+        if self._verbose:
+            print(util.format_elapsed(s, f"{self._indent}FINISH READING {input_path}"))
         return anndata
 
     # ================================================================
@@ -205,62 +206,62 @@ class SOMA(TileDBGroup):
         if anndata.obs.index.empty or anndata.var.index.empty:
             raise NotImplementedError("Empty AnnData.obs or AnnData.var unsupported.")
 
-        if self.verbose:
+        if self._verbose:
             s = util.get_start_stamp()
-            print(f"{self.indent}START  DECATEGORICALIZING")
+            print(f"{self._indent}START  DECATEGORICALIZING")
         anndata.obs_names_make_unique()
         anndata.var_names_make_unique()
-        anndata = util_ann.decategoricalize(anndata)
-        if self.verbose:
-            print(util.format_elapsed(s, f"{self.indent}FINISH DECATEGORICALIZING"))
+        anndata = util_ann._decategoricalize(anndata)
+        if self._verbose:
+            print(util.format_elapsed(s, f"{self._indent}FINISH DECATEGORICALIZING"))
 
-        if self.verbose:
+        if self._verbose:
             s = util.get_start_stamp()
-            print(f"{self.indent}START  WRITING {self.uri}")
+            print(f"{self._indent}START  WRITING {self.uri}")
 
         # ----------------------------------------------------------------
         # Must be done first, to create the parent directory
-        self.open("w")
+        self._open("w")
 
         # ----------------------------------------------------------------
         self.X.from_matrix(anndata.X, anndata.obs.index, anndata.var.index)
-        self.add_object(self.X)
+        self._add_object(self.X)
 
         # ----------------------------------------------------------------
         self.obs.from_dataframe(dataframe=anndata.obs, extent=256)
-        self.add_object(self.obs)
+        self._add_object(self.obs)
 
         self.var.from_dataframe(dataframe=anndata.var, extent=2048)
-        self.add_object(self.var)
+        self._add_object(self.var)
 
         # ----------------------------------------------------------------
         self.obsm.from_anndata(anndata.obsm, anndata.obs_names)
-        self.add_object(self.obsm)
+        self._add_object(self.obsm)
 
         self.varm.from_anndata(anndata.varm, anndata.var_names)
-        self.add_object(self.varm)
+        self._add_object(self.varm)
 
         self.obsp.from_anndata(anndata.obsp, anndata.obs_names)
-        self.add_object(self.obsp)
+        self._add_object(self.obsp)
 
         self.varp.from_anndata(anndata.varp, anndata.var_names)
-        self.add_object(self.varp)
+        self._add_object(self.varp)
 
         # ----------------------------------------------------------------
         if anndata.raw != None:
             self.raw.from_anndata(anndata)
-            self.add_object(self.raw)
+            self._add_object(self.raw)
 
         # ----------------------------------------------------------------
         if anndata.uns != None:
             self.uns.from_anndata_uns(anndata.uns)
-            self.add_object(self.uns)
+            self._add_object(self.uns)
 
         # ----------------------------------------------------------------
-        if self.verbose:
-            print(util.format_elapsed(s, f"{self.indent}FINISH WRITING {self.uri}"))
+        if self._verbose:
+            print(util.format_elapsed(s, f"{self._indent}FINISH WRITING {self.uri}"))
 
-        self.close()
+        self._close()
 
     # ================================================================
     # READ PATH OUT OF TILEDB
@@ -272,20 +273,20 @@ class SOMA(TileDBGroup):
         As of 2022-05-05 this is an incomplete prototype.
         """
 
-        if self.verbose:
+        if self._verbose:
             s = util.get_start_stamp()
             print(f"START  SOMA.to_h5ad {self.uri} -> {h5ad_path}")
 
         anndata = self._to_anndata()
 
-        if self.verbose:
+        if self._verbose:
             s2 = util.get_start_stamp()
-            print(f"{self.indent}START  write {h5ad_path}")
+            print(f"{self._indent}START  write {h5ad_path}")
         anndata.write_h5ad(h5ad_path)
-        if self.verbose:
-            print(util.format_elapsed(s2, f"{self.indent}FINISH write {h5ad_path}"))
+        if self._verbose:
+            print(util.format_elapsed(s2, f"{self._indent}FINISH write {h5ad_path}"))
 
-        if self.verbose:
+        if self._verbose:
             print(
                 util.format_elapsed(s, f"FINISH SOMA.to_h5ad {self.uri} -> {h5ad_path}")
             )
@@ -302,13 +303,13 @@ class SOMA(TileDBGroup):
         As of 2022-05-05 this is an incomplete prototype.
         """
 
-        if self.verbose:
+        if self._verbose:
             s = util.get_start_stamp()
             print(f"START  SOMA.to_anndata {self.uri}")
 
         retval = self._to_anndata()
 
-        if self.verbose:
+        if self._verbose:
             print(util.format_elapsed(s, f"FINISH SOMA.to_anndata {self.uri}"))
 
         return retval

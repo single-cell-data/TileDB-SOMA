@@ -13,11 +13,11 @@ class TileDBObject:
     uri: str
     name: str
 
-    soma_options: SOMAOptions
-    verbose: bool
-    ctx: Optional[tiledb.Ctx]
+    _soma_options: SOMAOptions
+    _verbose: bool
+    _ctx: Optional[tiledb.Ctx]
 
-    indent: str  # for display strings
+    _indent: str  # for display strings
 
     def __init__(
         self,
@@ -44,21 +44,21 @@ class TileDBObject:
         self.name = name
 
         if parent is None:
-            self.soma_options = soma_options
-            self.verbose = verbose
-            self.ctx = ctx
-            self.indent = ""
+            self._soma_options = soma_options
+            self._verbose = verbose
+            self._ctx = ctx
+            self._indent = ""
         else:
-            self.soma_options = parent.soma_options
-            self.verbose = parent.verbose
-            self.ctx = parent.ctx
-            self.indent = parent.indent + "  "
+            self._soma_options = parent._soma_options
+            self._verbose = parent._verbose
+            self._ctx = parent._ctx
+            self._indent = parent._indent + "  "
 
-        if self.soma_options is None:
-            self.soma_options = SOMAOptions()
+        if self._soma_options is None:
+            self._soma_options = SOMAOptions()
         # Null ctx is OK if that's what they wanted (e.g. not doing any TileDB-Cloud ops).
 
-    def object_type(self):
+    def _object_type(self):
         """
         This should be implemented by child classes and should return what tiledb.object_type(uri)
         returns for objects of a given type -- nominally 'group' or 'array'.
@@ -69,9 +69,9 @@ class TileDBObject:
         found = tiledb.object_type(self.uri)
         if found == None:
             return False
-        elif found == self.object_type():
+        elif found == self._object_type():
             return True
         else:
             raise Exception(
-                f"Internal error: expected object_type {self.object_type()} but found {found} at {self.uri}."
+                f"Internal error: expected _object_type {self._object_type()} but found {found} at {self.uri}."
             )

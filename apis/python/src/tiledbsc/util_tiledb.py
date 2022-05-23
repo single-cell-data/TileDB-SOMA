@@ -40,7 +40,7 @@ def show_single_cell_group(soma_uri: str, ctx: Optional[tiledb.Ctx] = None):
 
 
 # ----------------------------------------------------------------
-def fminus(long_path: str, short_path: str):
+def _fminus(long_path: str, short_path: str):
     return long_path.replace(short_path, "")
 
 

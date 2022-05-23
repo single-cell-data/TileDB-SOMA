@@ -40,11 +40,11 @@ class UnsGroup(TileDBGroup):
         :param uns: anndata.uns.
         """
 
-        if self.verbose:
+        if self._verbose:
             s = util.get_start_stamp()
-            print(f"{self.indent}START  WRITING {self.uri}")
+            print(f"{self._indent}START  WRITING {self.uri}")
 
-        self.open("w")
+        self._open("w")
 
         for key in uns.keys():
             component_uri = os.path.join(self.uri, key)
@@ -74,29 +74,29 @@ class UnsGroup(TileDBGroup):
                 # Nested data, e.g. a.uns['draw-graph']['params']['layout']
                 subgroup = UnsGroup(uri=component_uri, name=key, parent=self)
                 subgroup.from_anndata_uns(value)
-                self.add_object(subgroup)
+                self._add_object(subgroup)
                 continue
 
             array = UnsArray(uri=component_uri, name=key, parent=self)
 
             if isinstance(value, pd.DataFrame):
                 array.from_pandas_dataframe(value)
-                self.add_object(array)
+                self._add_object(array)
 
             elif isinstance(value, scipy.sparse.csr_matrix):
                 array.from_scipy_csr(value)
-                self.add_object(array)
+                self._add_object(array)
 
-            elif array.maybe_from_numpyable_object(value):
-                self.add_object(array)
+            elif array._maybe_from_numpyable_object(value):
+                self._add_object(array)
 
             else:
                 print("      Skipping unrecognized type:", component_uri, type(value))
 
-        self.close()
+        self._close()
 
-        if self.verbose:
-            print(util.format_elapsed(s, f"{self.indent}FINISH WRITING {self.uri}"))
+        if self._verbose:
+            print(util.format_elapsed(s, f"{self._indent}FINISH WRITING {self.uri}"))
 
     # ----------------------------------------------------------------
     def to_dict_of_matrices(self) -> Dict:
@@ -109,13 +109,13 @@ class UnsGroup(TileDBGroup):
         except:
             pass
         if grp == None:
-            if self.verbose:
-                print(f"{self.indent}{self.uri} not found")
+            if self._verbose:
+                print(f"{self._indent}{self.uri} not found")
             return {}
 
-        if self.verbose:
+        if self._verbose:
             s = util.get_start_stamp()
-            print(f"{self.indent}START  read {self.uri}")
+            print(f"{self._indent}START  read {self.uri}")
 
         # TODO: fold this element-enumeration into the TileDB group class.  Maybe on the same PR
         # where we support somagroup['name'] with overloading of the [] operator.
@@ -139,8 +139,8 @@ class UnsGroup(TileDBGroup):
 
         grp.close()
 
-        if self.verbose:
-            print(util.format_elapsed(s, f"{self.indent}FINISH read {self.uri}"))
+        if self._verbose:
+            print(util.format_elapsed(s, f"{self._indent}FINISH read {self.uri}"))
 
         return retval
 
@@ -166,14 +166,14 @@ class UnsGroup(TileDBGroup):
         no such member exists.  Overloads the [...] operator.
         """
 
-        self.open("r")
+        self._open("r")
         obj = None
         try:
             # This returns a tiledb.object.Object.
-            obj = self.tiledb_group[name]
+            obj = self._tiledb_group[name]
         except:
             pass
-        self.close()
+        self._close()
 
         if obj is None:
             return None

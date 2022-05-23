@@ -24,14 +24,14 @@ class TileDBArray(TileDBObject):
         """
         super().__init__(uri=uri, name=name, parent=parent)
 
-    def object_type(self):
+    def _object_type(self):
         """
         This should be implemented by child classes and should return what tiledb.object_type(uri)
         returns for objects of a given type -- nominally 'group' or 'array'.
         """
         return "array"
 
-    def open(self):
+    def _open(self):
         """
         Returns the TileDB array. The caller should do A.close() on the return value after finishing
         with it.

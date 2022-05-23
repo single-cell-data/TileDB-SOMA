@@ -248,7 +248,7 @@ VDAC3            1.1250     30.971519               8.986513                   2
 ```
 
 ```
->>> soma.obsm.get_member_names()
+>>> soma.obsm._get_member_names()
 ['X_tsne', 'X_pca']
 >>> arr = soma.obsm['X_pca'].open_array()
 >>> arr.df[:]
@@ -277,11 +277,11 @@ VDAC3            1.1250     30.971519               8.986513                   2
 ```
 
 ```
->>> soma.uns.get_member_names()
+>>> soma.uns._get_member_names()
 ['neighbors']
->>> soma.uns['neighbors'].get_member_names()
+>>> soma.uns['neighbors']._get_member_names()
 ['params']
->>> soma.uns['neighbors']['params'].get_member_names()
+>>> soma.uns['neighbors']['params']._get_member_names()
 ['method']
 >>> arr = soma.uns['neighbors']['params']['method'].open_array()
 >>> arr.df[:]

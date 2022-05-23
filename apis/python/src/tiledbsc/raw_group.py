@@ -57,26 +57,26 @@ class RawGroup(TileDBGroup):
         """
         Writes anndata.raw to a TileDB group structure.
         """
-        if self.verbose:
+        if self._verbose:
             s = util.get_start_stamp()
-            print(f"{self.indent}START  WRITING {self.uri}")
+            print(f"{self._indent}START  WRITING {self.uri}")
 
         # Must be done first, to create the parent directory
-        self.open("w")
+        self._open("w")
 
         self.X.from_matrix(anndata.raw.X, anndata.obs.index, anndata.raw.var.index)
-        self.add_object(self.X)
+        self._add_object(self.X)
 
         self.var.from_dataframe(dataframe=anndata.raw.var, extent=2048)
-        self.add_object(self.var)
+        self._add_object(self.var)
 
         self.varm.from_anndata(anndata.raw.varm, anndata.raw.var_names)
-        self.add_object(self.varm)
+        self._add_object(self.varm)
 
-        if self.verbose:
-            print(util.format_elapsed(s, f"{self.indent}FINISH WRITING {self.uri}"))
+        if self._verbose:
+            print(util.format_elapsed(s, f"{self._indent}FINISH WRITING {self.uri}"))
 
-        self.close()
+        self._close()
 
     # ----------------------------------------------------------------
     def to_anndata_raw(self, obs_labels):
