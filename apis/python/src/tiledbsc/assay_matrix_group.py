@@ -46,6 +46,7 @@ class AssayMatrixGroup(TileDBGroup):
         """
 
         if matrix is not None:
-            with self._open("w") as G:
-                self.data.from_matrix(matrix, row_names, col_names)
-                self._add_object(G, self.data)
+            # Must be done first, to create the parent directory
+            self._create()
+            self.data.from_matrix(matrix, row_names, col_names)
+            self._add_object(self.data)
