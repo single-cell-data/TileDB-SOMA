@@ -165,10 +165,8 @@ class AnnotationPairwiseMatrixGroup(TileDBGroup):
         """
 
         with self._open("r") as G:
-            # This returns a tiledb.object.Object.
-            obj = None
             try:
-                obj = G[name]
+                obj = G[name]  # This returns a tiledb.object.Object.
             except:
                 return None
 
@@ -189,3 +187,18 @@ class AnnotationPairwiseMatrixGroup(TileDBGroup):
                 col_dim_name=self.col_dim_name,
                 parent=self,
             )
+
+    def __contains__(self, name):
+        """
+        Implements '"namegoeshere" in soma.obsp/soma.varp'.
+        """
+        # TODO: this will get easier once TileDB.group.Group supports `name` in `__contains__`.
+        # See SC-18057 and https://github.com/single-cell-data/TileDB-SingleCell/issues/113.
+        with self._open("r") as G:
+            answer = False
+            try:
+                # This returns a tiledb.object.Object.
+                G[name]
+                return True
+            except:
+                return False

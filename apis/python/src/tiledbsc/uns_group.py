@@ -175,10 +175,8 @@ class UnsGroup(TileDBGroup):
         """
 
         with self._open("r") as G:
-            obj = None
             try:
-                # This returns a tiledb.object.Object.
-                obj = G[name]
+                obj = G[name]  # This returns a tiledb.object.Object.
             except:
                 return None
 

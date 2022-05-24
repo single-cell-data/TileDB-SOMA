@@ -150,10 +150,8 @@ class AnnotationMatrixGroup(TileDBGroup):
 
         # TODO: If TileDB-Py were to support `name in G` the line-count could reduce here.
         with self._open("r") as G:
-            # This returns a tiledb.object.Object.
-            obj = None
             try:
-                obj = G[name]
+                obj = G[name]  # This returns a tiledb.object.Object.
             except:
                 return None
 
@@ -170,3 +168,18 @@ class AnnotationMatrixGroup(TileDBGroup):
                     "Internal error: found group element neither subgroup nor array: type is",
                     str(obj.type),
                 )
+
+    def __contains__(self, name):
+        """
+        Implements '"namegoeshere" in soma.obsm/soma.varm'.
+        """
+        # TODO: this will get easier once TileDB.group.Group supports `name` in `__contains__`.
+        # See SC-18057 and https://github.com/single-cell-data/TileDB-SingleCell/issues/113.
+        with self._open("r") as G:
+            answer = False
+            try:
+                # This returns a tiledb.object.Object.
+                G[name]
+                return True
+            except:
+                return False
