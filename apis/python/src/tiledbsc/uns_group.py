@@ -78,9 +78,7 @@ class UnsGroup(TileDBGroup):
                     print("      Skipping structured array:", component_uri)
                     continue
 
-                if isinstance(value, dict) or isinstance(
-                    value, ad.compat.OverloadedDict
-                ):
+                if isinstance(value, (dict, ad.compat.OverloadedDict)):
                     # Nested data, e.g. a.uns['draw-graph']['params']['layout']
                     subgroup = UnsGroup(uri=component_uri, name=key, parent=self)
                     subgroup.from_anndata_uns(value)

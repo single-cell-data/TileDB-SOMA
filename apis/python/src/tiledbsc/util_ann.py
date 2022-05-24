@@ -83,9 +83,7 @@ def _describe_ann_file_show_types(anndata: ad.AnnData, input_path: str):
     m, n = X.shape
     print("%-*s (%d, %d)" % (namewidth, "X/data shape", m, n))
     print("%-*s %s" % (namewidth, "X/data dtype", X.dtype))
-    if isinstance(X, scipy.sparse._csr.csr_matrix) or isinstance(
-        X, scipy.sparse._csc.csc_matrix
-    ):
+    if isinstance(X, (scipy.sparse._csr.csr_matrix, X, scipy.sparse._csc.csc_matrix)):
         density = X.nnz / (m * n)
         print("%-*s %.4f" % (namewidth, "X/data density", density))
 
@@ -102,8 +100,8 @@ def _describe_ann_file_show_types(anndata: ad.AnnData, input_path: str):
         m, n = X.shape
         print("%-*s (%d, %d)" % (namewidth, "X/raw shape", m, n))
         print("%-*s %s" % (namewidth, "X/data dtype", X.dtype))
-        if isinstance(X, scipy.sparse._csr.csr_matrix) or isinstance(
-            X, scipy.sparse._csc.csc_matrix
+        if isinstance(
+            X, (scipy.sparse._csr.csr_matrix, X, scipy.sparse._csc.csc_matrix)
         ):
             density = X.nnz / (m * n)
             print("%-*s %.4f" % (namewidth, "X/raw density", density))
@@ -192,7 +190,7 @@ def _describe_ann_file_show_uns_summary(
         current_path_components = parent_path_components + [key]
         value = uns[key]
         display_name = os.path.sep.join(current_path_components)
-        if isinstance(value, dict) or isinstance(value, ad.compat.OverloadedDict):
+        if isinstance(value, (dict, ad.compat.OverloadedDict)):
             _describe_ann_file_show_uns_summary(value, current_path_components)
         else:
             print(display_name)
@@ -208,7 +206,7 @@ def _describe_ann_file_show_uns_types(uns, parent_path_components=["uns"]):
         current_path_components = parent_path_components + [key]
         value = uns[key]
         display_name = os.path.sep.join(current_path_components)
-        if isinstance(value, dict) or isinstance(value, ad.compat.OverloadedDict):
+        if isinstance(value, (dict, ad.compat.OverloadedDict)):
             _describe_ann_file_show_uns_types(value, current_path_components)
         elif isinstance(value, np.ndarray):
             print(
@@ -217,9 +215,7 @@ def _describe_ann_file_show_uns_types(uns, parent_path_components=["uns"]):
                 type(value),
                 value.dtype,
             )
-        elif isinstance(value, scipy.sparse.csr_matrix) or isinstance(
-            value, pd.DataFrame
-        ):
+        elif isinstance(value, (scipy.sparse.csr_matrix, pd.DataFrame)):
             print("%-*s" % (namewidth, display_name), value.shape, type(value))
         else:
             print("%-*s" % (namewidth, display_name), type(value))
@@ -235,7 +231,7 @@ def _describe_ann_file_show_uns_data(uns, parent_path_components=["uns"]):
         current_path_components = parent_path_components + [key]
         value = uns[key]
         display_name = os.path.sep.join(current_path_components)
-        if isinstance(value, dict) or isinstance(value, ad.compat.OverloadedDict):
+        if isinstance(value, (dict, ad.compat.OverloadedDict)):
             _describe_ann_file_show_uns_data(value, current_path_components)
         elif (
             isinstance(value, np.ndarray)

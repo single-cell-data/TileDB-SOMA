@@ -77,7 +77,7 @@ class UnsArray(TileDBArray):
             self.from_numpy_ndarray(arr)
             return True
 
-        elif isinstance(obj, int) or isinstance(obj, float) or isinstance(obj, str):
+        elif isinstance(obj, (int, float, str)):
             # Nominally this is unit-test data
             arr = np.asarray([obj])
             self.from_numpy_ndarray(arr)
