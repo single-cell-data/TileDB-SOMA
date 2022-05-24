@@ -176,8 +176,7 @@ class AnnotationPairwiseMatrixGroup(TileDBGroup):
                 )
             if obj.type != tiledb.libtiledb.Array:
                 raise Exception(
-                    "Internal error: found group element neither subgroup nor array: type is",
-                    str(obj.type),
+                    f"Internal error: found group element neither subgroup nor array: type is {str(obj.type)}"
                 )
 
             return AnnotationPairwiseMatrix(

@@ -165,8 +165,7 @@ class AnnotationMatrixGroup(TileDBGroup):
                 )
             else:
                 raise Exception(
-                    "Internal error: found group element neither subgroup nor array: type is",
-                    str(obj.type),
+                    f"Internal error: found group element neither subgroup nor array: type is {str(obj.type)}"
                 )
 
     def __contains__(self, name):

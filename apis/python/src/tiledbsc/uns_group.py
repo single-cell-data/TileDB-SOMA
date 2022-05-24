@@ -141,8 +141,7 @@ class UnsGroup(TileDBGroup):
 
             else:
                 raise Exception(
-                    "Internal error: found uns group element neither group nor array: type is",
-                    str(element.type),
+                    f"Internal error: found uns group element neither group nor array: type is {str(element.type)}"
                 )
 
         grp.close()
@@ -186,8 +185,7 @@ class UnsGroup(TileDBGroup):
                 return UnsArray(uri=obj.uri, name=name, parent=self)
             else:
                 raise Exception(
-                    "Internal error: found group element neither subgroup nor array: type is",
-                    str(obj.type),
+                    f"Internal error: found uns group element neither subgroup nor array: type is {str(obj.type)}"
                 )
 
     def __contains__(self, name):
