@@ -78,15 +78,9 @@ class TileDBGroup(TileDBObject):
         finally:
             G.close()
 
-    def _add_object(self, G, obj: TileDBObject):
-        if G is None:
-            raise Exception("Attempt to write to a non-open group")
-        G.add(uri=obj.uri, relative=False, name=obj.name)
-
-    def _add_uri(self, uri: str, name: str):
-        if G is None:
-            raise Exception("Attempt to write to a non-open group")
-        G.add(uri=uri, relative=False, name=name)
+    def _add_object(self, obj: TileDBObject):
+        with self._open("w") as G:
+            G.add(uri=obj.uri, relative=False, name=obj.name)
 
     def _get_member_names(self):
         """

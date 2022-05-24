@@ -63,18 +63,20 @@ class AnnotationMatrixGroup(TileDBGroup):
         :param dim_values: anndata.obs_names, anndata.var_names, or anndata.raw.var_names.
         """
 
-        with self._open("w") as G:
-            for matrix_name in annotation_matrices.keys():
-                anndata_matrix = annotation_matrices[matrix_name]
-                matrix_uri = os.path.join(self.uri, matrix_name)
-                annotation_matrix = AnnotationMatrix(
-                    uri=matrix_uri,
-                    name=matrix_name,
-                    dim_name=self.dim_name,
-                    parent=self,
-                )
-                annotation_matrix.from_anndata(anndata_matrix, dim_values)
-                self._add_object(G, annotation_matrix)
+        # Must be done first, to create the parent directory
+        self._create()
+
+        for matrix_name in annotation_matrices.keys():
+            anndata_matrix = annotation_matrices[matrix_name]
+            matrix_uri = os.path.join(self.uri, matrix_name)
+            annotation_matrix = AnnotationMatrix(
+                uri=matrix_uri,
+                name=matrix_name,
+                dim_name=self.dim_name,
+                parent=self,
+            )
+            annotation_matrix.from_anndata(anndata_matrix, dim_values)
+            self._add_object(annotation_matrix)
 
     # ----------------------------------------------------------------
     def to_dict_of_csr(self) -> Dict[str, scipy.sparse.csr_matrix]:
