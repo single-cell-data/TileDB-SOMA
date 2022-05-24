@@ -37,10 +37,10 @@ class AnnotationMatrix(TileDBArray):
         `var_ids` (for `varm` elements).  If `ids` is `None`, the entire array is returned.
         """
         if ids is None:
-            with tiledb.open(self.uri) as A:  # TODO: with self._open
+            with self._open() as A:
                 return A.df[:]
         else:
-            with tiledb.open(self.uri) as A:  # TODO: with self._open
+            with self._open() as A:
                 return A.df[ids]
 
     # ----------------------------------------------------------------
@@ -58,7 +58,7 @@ class AnnotationMatrix(TileDBArray):
         The row-count is the number of obs_ids (for `obsm` elements) or the number of var_ids (for
         `varm` elements).  The column-count is the number of columns/attributes in the dataframe.
         """
-        with tiledb.open(self.uri) as A:  # TODO: with self._open
+        with self._open() as A:
             # These TileDB arrays are string-dimensioned sparse arrays so there is no '.shape'.
             # Instead we compute it ourselves.  See also:
             # * https://github.com/single-cell-data/TileDB-SingleCell/issues/10

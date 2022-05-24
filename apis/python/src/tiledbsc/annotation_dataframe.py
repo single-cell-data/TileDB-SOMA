@@ -38,9 +38,7 @@ class AnnotationDataFrame(TileDBArray):
         The row-count is the number of obs_ids (for `obs`) or the number of var_ids (for `var`).
         The column-count is the number of columns/attributes in the dataframe.
         """
-        # TODO: with self._open: see
-        # https://github.com/single-cell-data/TileDB-SingleCell/pull/93
-        with tiledb.open(self.uri) as A:
+        with self._open("r") as A:
             # These TileDB arrays are string-dimensioned sparse arrays so there is no '.shape'.
             # Instead we compute it ourselves.  See also:
             # * https://github.com/single-cell-data/TileDB-SingleCell/issues/10
@@ -54,7 +52,7 @@ class AnnotationDataFrame(TileDBArray):
         """
         Returns the `obs_ids` in the matrix (for `obs`) or the `var_ids` (for `var`).
         """
-        with tiledb.open(self.uri) as A:
+        with self._open("r") as A:
             return A[:][self.dim_name].tolist()
 
     # ----------------------------------------------------------------
@@ -72,10 +70,10 @@ class AnnotationDataFrame(TileDBArray):
         If `ids` is `None`, the entire dataframe is returned.
         """
         if ids is None:
-            with tiledb.open(self.uri) as A:  # TODO: with self._open
+            with self._open("r") as A:
                 return A.df[:]
         else:
-            with tiledb.open(self.uri) as A:  # TODO: with self._open
+            with self._open("r") as A:
                 return A.df[ids]
 
     # ----------------------------------------------------------------

@@ -63,20 +63,18 @@ class AnnotationMatrixGroup(TileDBGroup):
         :param dim_values: anndata.obs_names, anndata.var_names, or anndata.raw.var_names.
         """
 
-        self._open("w")
-
-        for matrix_name in annotation_matrices.keys():
-            anndata_matrix = annotation_matrices[matrix_name]
-            matrix_uri = os.path.join(self.uri, matrix_name)
-            annotation_matrix = AnnotationMatrix(
-                uri=matrix_uri,
-                name=matrix_name,
-                dim_name=self.dim_name,
-                parent=self,
-            )
-            annotation_matrix.from_anndata(anndata_matrix, dim_values)
-            self._add_object(annotation_matrix)
-        self._close()
+        with self._open("w") as G:
+            for matrix_name in annotation_matrices.keys():
+                anndata_matrix = annotation_matrices[matrix_name]
+                matrix_uri = os.path.join(self.uri, matrix_name)
+                annotation_matrix = AnnotationMatrix(
+                    uri=matrix_uri,
+                    name=matrix_name,
+                    dim_name=self.dim_name,
+                    parent=self,
+                )
+                annotation_matrix.from_anndata(anndata_matrix, dim_values)
+                self._add_object(G, annotation_matrix)
 
     # ----------------------------------------------------------------
     def to_dict_of_csr(self) -> Dict[str, scipy.sparse.csr_matrix]:
@@ -150,27 +148,25 @@ class AnnotationMatrixGroup(TileDBGroup):
         member exists.  Overloads the [...] operator.
         """
 
-        self._open("r")
-        obj = None
-        try:
+        # TODO: If TileDB-Py were to support `name in G` the line-count could reduce here.
+        with self._open("r") as G:
             # This returns a tiledb.object.Object.
-            obj = self._tiledb_group[name]
-        except:
-            pass
-        self._close()
+            obj = None
+            try:
+                obj = G[name]
+            except:
+                return None
 
-        if obj is None:
-            return None
-        elif obj.type == tiledb.tiledb.Group:
-            raise Exception(
-                "Internal error: found group element where array element was expected."
-            )
-        elif obj.type == tiledb.libtiledb.Array:
-            return AnnotationMatrix(
-                uri=obj.uri, name=name, dim_name=self.dim_name, parent=self
-            )
-        else:
-            raise Exception(
-                "Internal error: found group element neither subgroup nor array: type is",
-                str(obj.type),
-            )
+            if obj.type == tiledb.tiledb.Group:
+                raise Exception(
+                    "Internal error: found group element where array element was expected."
+                )
+            elif obj.type == tiledb.libtiledb.Array:
+                return AnnotationMatrix(
+                    uri=obj.uri, name=name, dim_name=self.dim_name, parent=self
+                )
+            else:
+                raise Exception(
+                    "Internal error: found group element neither subgroup nor array: type is",
+                    str(obj.type),
+                )

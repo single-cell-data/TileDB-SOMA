@@ -73,23 +73,21 @@ class AnnotationPairwiseMatrixGroup(TileDBGroup):
         :param dim_values: anndata.obs_names, anndata.var_names, or anndata.raw.var_names.
         """
 
-        self._open("w")
-
-        for matrix_name in annotation_pairwise_matrices.keys():
-            anndata_matrix = annotation_pairwise_matrices[matrix_name]
-            matrix_uri = os.path.join(self.uri, matrix_name)
-            annotation_pairwise_matrix = AssayMatrix(
-                uri=matrix_uri,
-                name=matrix_name,
-                row_dim_name=self.row_dim_name,
-                col_dim_name=self.col_dim_name,
-                parent=self,
-            )
-            annotation_pairwise_matrix.from_matrix(
-                anndata_matrix, dim_values, dim_values
-            )
-            self._add_object(annotation_pairwise_matrix)
-        self._close()
+        with self._open("w") as G:
+            for matrix_name in annotation_pairwise_matrices.keys():
+                anndata_matrix = annotation_pairwise_matrices[matrix_name]
+                matrix_uri = os.path.join(self.uri, matrix_name)
+                annotation_pairwise_matrix = AssayMatrix(
+                    uri=matrix_uri,
+                    name=matrix_name,
+                    row_dim_name=self.row_dim_name,
+                    col_dim_name=self.col_dim_name,
+                    parent=self,
+                )
+                annotation_pairwise_matrix.from_matrix(
+                    anndata_matrix, dim_values, dim_values
+                )
+                self._add_object(G, annotation_pairwise_matrix)
 
     # ----------------------------------------------------------------
     def to_dict_of_csr(self) -> Dict[str, scipy.sparse.csr_matrix]:
@@ -166,31 +164,28 @@ class AnnotationPairwiseMatrixGroup(TileDBGroup):
         member exists.  Overloads the [...] operator.
         """
 
-        self._open("r")
-        obj = None
-        try:
+        with self._open("r") as G:
             # This returns a tiledb.object.Object.
-            obj = self._tiledb_group[name]
-        except:
-            pass
-        self._close()
+            obj = None
+            try:
+                obj = G[name]
+            except:
+                return None
 
-        if obj is None:
-            return None
-        elif obj.type == tiledb.tiledb.Group:
-            raise Exception(
-                "Internal error: found group element where array element was expected."
-            )
-        elif obj.type == tiledb.libtiledb.Array:
-            return AnnotationPairwiseMatrix(
-                uri=obj.uri,
-                name=name,
-                row_dim_name=self.row_dim_name,
-                col_dim_name=self.col_dim_name,
-                parent=self,
-            )
-        else:
-            raise Exception(
-                "Internal error: found group element neither subgroup nor array: type is",
-                str(obj.type),
-            )
+            if obj.type == tiledb.tiledb.Group:
+                raise Exception(
+                    "Internal error: found group element where array element was expected."
+                )
+            elif obj.type != tiledb.libtiledb.Array:
+                raise Exception(
+                    "Internal error: found group element neither subgroup nor array: type is",
+                    str(obj.type),
+                )
+            else:
+                return AnnotationPairwiseMatrix(
+                    uri=obj.uri,
+                    name=name,
+                    row_dim_name=self.row_dim_name,
+                    col_dim_name=self.col_dim_name,
+                    parent=self,
+                )

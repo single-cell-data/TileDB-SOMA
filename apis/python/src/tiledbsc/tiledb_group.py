@@ -2,6 +2,8 @@ import tiledb
 from .soma_options import SOMAOptions
 from .tiledb_object import TileDBObject
 
+from contextlib import contextmanager
+
 from typing import Optional, Union, List, Dict
 import os
 
@@ -10,8 +12,6 @@ class TileDBGroup(TileDBObject):
     """
     Wraps groups from TileDB-Py by retaining a URI, verbose flag, etc.
     """
-
-    _tiledb_group: Union[tiledb.Group, None]
 
     def __init__(
         self,
@@ -30,8 +30,6 @@ class TileDBGroup(TileDBObject):
         See the TileDBObject constructor.
         """
         super().__init__(uri=uri, name=name, parent=parent)
-
-        self._tiledb_group = None
 
     def _object_type(self):
         """
@@ -52,68 +50,62 @@ class TileDBGroup(TileDBObject):
         """
         Creates the TileDB group data structure on disk/S3/cloud.
         """
-        if self._tiledb_group != None:
-            raise Exception("Attempt to create an already-open group")
         if self._verbose:
             print(f"{self._indent}Creating TileDB group {self.uri}")
         tiledb.group_create(uri=self.uri, ctx=self._ctx)
 
-    def _open(self, mode: str):
+    def _open_withlessly(self, mode="r"):
         """
-        Mode must be "w" for write or "r" for read.
+        This is just a convenience wrapper around tiledb.open of the tiledb group
+        associated with this SOMA element.
         """
         assert mode in ["w", "r"]
-        if self._tiledb_group != None:
-            raise Exception("Attempt to open an already-open group")
-        if not self.exists():
+        if mode == "w" and not self.exists():
             self._create()
-        self._tiledb_group = tiledb.Group(self.uri, mode=mode, ctx=self._ctx)
+        return tiledb.Group(self.uri, mode=mode, ctx=self._ctx)
 
-    def _close(self):
+    @contextmanager
+    def _open(self, mode="r"):
         """
-        Should be done after open-with-write and add, or, open-with-read and read.
+        This is just a convenience wrapper around tiledb.open of the tiledb group
+        associated with this SOMA element, supporting Python with-as syntax.
+        TODO: One TileDB.Py's Group objects have `__enter__` and `__exit__`
+        method, fold this and _open_withlessly together.
         """
-        if self._tiledb_group == None:
-            raise Exception("Attempt to close a non-open group")
-        self._tiledb_group.close()
-        self._tiledb_group = None
+        try:
+            G = self._open_withlessly(mode)
+            yield G
+        finally:
+            G.close()
 
-    def _add_object(self, obj: TileDBObject):
-        if self._tiledb_group == None:
+    def _add_object(self, G, obj: TileDBObject):
+        if G is None:
             raise Exception("Attempt to write to a non-open group")
-        self._tiledb_group.add(uri=obj.uri, relative=False, name=obj.name)
+        G.add(uri=obj.uri, relative=False, name=obj.name)
 
     def _add_uri(self, uri: str, name: str):
-        if self._tiledb_group == None:
+        if G is None:
             raise Exception("Attempt to write to a non-open group")
-        self._tiledb_group.add(uri=uri, relative=False, name=name)
+        G.add(uri=uri, relative=False, name=name)
 
     def _get_member_names(self):
         """
         Returns the names of the group elements. For a SOMACollection, these will SOMA names;
         for a SOMA, these will be matrix/group names; etc.
         """
-        return [os.path.basename(e) for e in self._get_member_uris()]
+        return list(self._get_member_names_to_uris().keys())
 
     def _get_member_uris(self) -> List[str]:
         """
         Returns the URIs of the group elements. For a SOMACollection, these will SOMA URIs;
         for a SOMA, these will be matrix/group URIs; etc.
         """
-        self._open("r")
-        retval = [e.uri for e in self._tiledb_group]
-        self._close()
-        return retval
+        return list(self._get_member_names_to_uris().values())
 
     def _get_member_names_to_uris(self) -> Dict[str, str]:
         """
         Like `_get_member_names()` and `_get_member_uris`, but returns a dict mapping from
         member name to member URI.
         """
-        retval = {}
-        self._open("r")
-        for e in self._tiledb_group:
-            name = os.path.basename(e.uri)
-            retval[name] = e.uri
-        self._close()
-        return retval
+        with self._open("r") as G:
+            return {os.path.basename(e.uri): e.uri for e in G}
