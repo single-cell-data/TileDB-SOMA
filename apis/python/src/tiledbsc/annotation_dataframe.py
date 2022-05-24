@@ -53,7 +53,10 @@ class AnnotationDataFrame(TileDBArray):
         Returns the `obs_ids` in the matrix (for `obs`) or the `var_ids` (for `var`).
         """
         with self._open("r") as A:
-            return A[:][self.dim_name].tolist()
+            # TileDB string dims are ASCII not UTF-8. Decode them so they readback
+            # not like `b"AKR1C3"` but rather like `"AKR1C3"`.
+            retval = A[:][self.dim_name].tolist()
+            return [e.decode() for e in retval]
 
     # ----------------------------------------------------------------
     def keys(self) -> List[str]:
