@@ -299,8 +299,6 @@ def test_from_anndata_error_handling(tmp_path):
         SOMA(tmp_path.as_posix()).from_anndata(adata)
 
 
-# TODO: re-enable when #58 is resolved
-@pytest.mark.skip(reason="Fails: filed as issue #58")
 def test_from_anndata_zero_length_str(tmp_path):
     """
     Test case for issue #58: obs/var columns containing only zero length strings throw ArrowInvalid
