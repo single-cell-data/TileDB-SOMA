@@ -52,56 +52,56 @@ class UnsGroup(TileDBGroup):
             s = util.get_start_stamp()
             print(f"{self._indent}START  WRITING {self.uri}")
 
-        self._open("w")
+        with self._open("w") as G:
 
-        for key in uns.keys():
-            component_uri = os.path.join(self.uri, key)
-            value = uns[key]
+            for key in uns.keys():
+                component_uri = os.path.join(self.uri, key)
+                value = uns[key]
 
-            if key == "rank_genes_groups":
-                # TODO:
-                # This is of type 'structured array':
-                # https://numpy.org/doc/stable/user/basics.rec.html
-                #
-                # >>> a.uns['rank_genes_groups']['names'].dtype
-                # dtype([('0', 'O'), ('1', 'O'), ('2', 'O'), ('3', 'O'), ('4', 'O'), ('5', 'O'), ('6', 'O'), ('7', 'O')])
-                # >>> type(a.uns['rank_genes_groups']['names'])
-                # <class 'numpy.ndarray'>
-                #
-                # We don’t have a way to model this directly in TileDB schema right now. We support
-                # multiplicities of a single scalar type, e.g. a record array with cell_val_num==3
-                # and float32 slots (which would correspond to numpy record array
-                # np.dtype([("field1", "f4"), ("field2", "f4"), ("field3", "f4",)])). We don’t
-                # support nested cells, AKA "list" type.
-                #
-                # This could, however, be converted to a dataframe and ingested that way.
-                print("      Skipping structured array:", component_uri)
-                continue
+                if key == "rank_genes_groups":
+                    # TODO:
+                    # This is of type 'structured array':
+                    # https://numpy.org/doc/stable/user/basics.rec.html
+                    #
+                    # >>> a.uns['rank_genes_groups']['names'].dtype
+                    # dtype([('0', 'O'), ('1', 'O'), ('2', 'O'), ('3', 'O'), ('4', 'O'), ('5', 'O'), ('6', 'O'), ('7', 'O')])
+                    # >>> type(a.uns['rank_genes_groups']['names'])
+                    # <class 'numpy.ndarray'>
+                    #
+                    # We don’t have a way to model this directly in TileDB schema right now. We support
+                    # multiplicities of a single scalar type, e.g. a record array with cell_val_num==3
+                    # and float32 slots (which would correspond to numpy record array
+                    # np.dtype([("field1", "f4"), ("field2", "f4"), ("field3", "f4",)])). We don’t
+                    # support nested cells, AKA "list" type.
+                    #
+                    # This could, however, be converted to a dataframe and ingested that way.
+                    print("      Skipping structured array:", component_uri)
+                    continue
 
-            if isinstance(value, dict) or isinstance(value, ad.compat.OverloadedDict):
-                # Nested data, e.g. a.uns['draw-graph']['params']['layout']
-                subgroup = UnsGroup(uri=component_uri, name=key, parent=self)
-                subgroup.from_anndata_uns(value)
-                self._add_object(subgroup)
-                continue
+                if isinstance(value, (dict, ad.compat.OverloadedDict)):
+                    # Nested data, e.g. a.uns['draw-graph']['params']['layout']
+                    subgroup = UnsGroup(uri=component_uri, name=key, parent=self)
+                    subgroup.from_anndata_uns(value)
+                    self._add_object(G, subgroup)
+                    continue
 
-            array = UnsArray(uri=component_uri, name=key, parent=self)
+                array = UnsArray(uri=component_uri, name=key, parent=self)
 
-            if isinstance(value, pd.DataFrame):
-                array.from_pandas_dataframe(value)
-                self._add_object(array)
+                if isinstance(value, pd.DataFrame):
+                    array.from_pandas_dataframe(value)
+                    self._add_object(G, array)
 
-            elif isinstance(value, scipy.sparse.csr_matrix):
-                array.from_scipy_csr(value)
-                self._add_object(array)
+                elif isinstance(value, scipy.sparse.csr_matrix):
+                    array.from_scipy_csr(value)
+                    self._add_object(G, array)
 
-            elif array._maybe_from_numpyable_object(value):
-                self._add_object(array)
+                elif array._maybe_from_numpyable_object(value):
+                    self._add_object(G, array)
 
-            else:
-                print("      Skipping unrecognized type:", component_uri, type(value))
-
-        self._close()
+                else:
+                    print(
+                        "      Skipping unrecognized type:", component_uri, type(value)
+                    )
 
         if self._verbose:
             print(util.format_elapsed(s, f"{self._indent}FINISH WRITING {self.uri}"))
@@ -141,8 +141,7 @@ class UnsGroup(TileDBGroup):
 
             else:
                 raise Exception(
-                    "Internal error: found uns group element neither group nor array: type is",
-                    str(element.type),
+                    f"Internal error: found uns group element neither group nor array: type is {str(element.type)}"
                 )
 
         grp.close()
@@ -174,40 +173,33 @@ class UnsGroup(TileDBGroup):
         no such member exists.  Overloads the [...] operator.
         """
 
-        self._open("r")
-        obj = None
-        try:
-            # This returns a tiledb.object.Object.
-            obj = self._tiledb_group[name]
-        except:
-            pass
-        self._close()
+        with self._open("r") as G:
+            try:
+                obj = G[name]  # This returns a tiledb.object.Object.
+            except:
+                return None
 
-        if obj is None:
-            return None
-        elif obj.type == tiledb.tiledb.Group:
-            return UnsGroup(uri=obj.uri, name=name, parent=self)
-        elif obj.type == tiledb.libtiledb.Array:
-            return UnsArray(uri=obj.uri, name=name, parent=self)
-        else:
-            raise Exception(
-                "Internal error: found group element neither subgroup nor array: type is",
-                str(obj.type),
-            )
+            if obj.type == tiledb.tiledb.Group:
+                return UnsGroup(uri=obj.uri, name=name, parent=self)
+            elif obj.type == tiledb.libtiledb.Array:
+                return UnsArray(uri=obj.uri, name=name, parent=self)
+            else:
+                raise Exception(
+                    f"Internal error: found uns group element neither subgroup nor array: type is {str(obj.type)}"
+                )
 
     def __contains__(self, name):
         """
         Implements '"namegoeshere" in soma.uns'.
         """
 
-        self._open("r")
-        answer = False
-        try:
-            # This returns a tiledb.object.Object.
-            self._tiledb_group[name]
-            answer = True
-        except:
-            pass
-        self._close()
-
-        return answer
+        # TODO: this will get easier once TileDB.group.Group supports `name` in `__contains__`.
+        # See SC-18057 and https://github.com/single-cell-data/TileDB-SingleCell/issues/113.
+        with self._open("r") as G:
+            answer = False
+            try:
+                # This returns a tiledb.object.Object.
+                G[name]
+                return True
+            except:
+                return False

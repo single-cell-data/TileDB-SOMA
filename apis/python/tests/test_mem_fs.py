@@ -20,11 +20,9 @@ def test_from_anndata_memfs():
     sg = SOMA(path)
     sg.from_anndata(adata)
 
-    soma_group = tiledb.Group(sg.uri)
-    assert soma_group is not None
-    members = [mbr.uri for mbr in soma_group]
-    assert f"{path}/X" in members
-    assert f"{path}/obs" in members
-    assert f"{path}/var" in members
-
-    soma_group._close()
+    with tiledb.Group(sg.uri) as G:
+        assert G is not None
+        members = [mbr.uri for mbr in G]
+        assert f"{path}/X" in members
+        assert f"{path}/obs" in members
+        assert f"{path}/var" in members

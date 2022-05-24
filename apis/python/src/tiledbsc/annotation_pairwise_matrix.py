@@ -40,7 +40,7 @@ class AnnotationPairwiseMatrix(TileDBArray):
         The row-count and column-counts should be the same: dimensions are `obs_id_i,obs_id_j` for
         `obsm` elements, and `var_id_i,var_id_j` for `varm` elements.
         """
-        with tiledb.open(self.uri) as A:  # TODO: with self._open
+        with self._open() as A:
             # These TileDB arrays are string-dimensioned sparse arrays so there is no '.shape'.
             # Instead we compute it ourselves.  See also:
             # * https://github.com/single-cell-data/TileDB-SingleCell/issues/10
@@ -53,11 +53,10 @@ class AnnotationPairwiseMatrix(TileDBArray):
         Selects a slice out of the array with specified `obs_ids` (for `obsp` elements) or
         `var_ids` (for `varp` elements).  If `ids` is `None`, the entire array is returned.
         """
-        if ids is None:
-            with tiledb.open(self.uri) as A:  # TODO: with self._open
+        with self._open() as A:
+            if ids is None:
                 return A.df[:, :]
-        else:
-            with tiledb.open(self.uri) as A:  # TODO: with self._open
+            else:
                 return A.df[ids, ids]
 
     # ----------------------------------------------------------------
@@ -164,5 +163,5 @@ class AnnotationPairwiseMatrix(TileDBArray):
 
         df = pd.DataFrame(matrix, columns=col_names)
 
-        with tiledb.open(self.uri, mode="w", ctx=self._ctx) as A:
+        with self._open("w") as A:
             A[dim_values] = df.to_dict(orient="list")

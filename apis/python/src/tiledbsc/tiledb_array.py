@@ -31,13 +31,18 @@ class TileDBArray(TileDBObject):
         """
         return "array"
 
-    def _open(self):
+    def _open(self, mode="r"):
         """
-        Returns the TileDB array. The caller should do A.close() on the return value after finishing
-        with it.
+        This is just a convenience wrapper allowing 'with self._open() as A: ...' rather than
+        'with tiledb.open(self.uri) as A: ...'.
         """
-        A = tiledb.open(self.uri)
-        return A
+        assert mode in ["w", "r"]
+        # This works in either 'with self._open() as A:' or 'A = self._open(); ...; A.close().  The
+        # reason is that with-as invokes our return value's __enter__ on return from this method,
+        # and our return value's __exit__ on exit from the body of the with-block. The tiledb
+        # array object does both of those things. (And if it didn't, we'd get a runtime AttributeError
+        # on with-as, flagging the non-existence of the __enter__ or __exit__.)
+        return tiledb.open(self.uri, mode=mode)
 
     def exists(self) -> bool:
         """
@@ -51,21 +56,21 @@ class TileDBArray(TileDBObject):
         """
         Returns the TileDB array schema.
         """
-        with tiledb.open(self.uri) as A:
+        with self._open() as A:
             return A.schema
 
     def dim_names(self) -> List[str]:
         """
         Reads the dimension names from the schema: for example, ['obs_id', 'var_id'].
         """
-        with tiledb.open(self.uri) as A:
+        with self._open() as A:
             return [A.schema.domain.dim(i).name for i in range(A.schema.domain.ndim)]
 
     def dim_names_to_types(self) -> Dict[str, str]:
         """
         Returns a dict mapping from dimension name to dimension type.
         """
-        with tiledb.open(self.uri) as A:
+        with self._open() as A:
             dom = A.schema.domain
             return {dom.dim(i).name: dom.dim(i).dtype for i in range(dom.ndim)}
 
@@ -73,14 +78,14 @@ class TileDBArray(TileDBObject):
         """
         Reads the attribute names from the schema: for example, the list of column names in a dataframe.
         """
-        with tiledb.open(self.uri) as A:
+        with self._open() as A:
             return [A.schema.attr(i).name for i in range(A.schema.nattr)]
 
     def attr_names_to_types(self) -> Dict[str, str]:
         """
         Returns a dict mapping from attribute name to attribute type.
         """
-        with tiledb.open(self.uri) as A:
+        with self._open() as A:
             schema = A.schema
             return {
                 schema.attr(i).name: schema.attr(i).dtype for i in range(schema.nattr)

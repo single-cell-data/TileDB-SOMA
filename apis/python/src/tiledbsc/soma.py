@@ -219,49 +219,45 @@ class SOMA(TileDBGroup):
             s = util.get_start_stamp()
             print(f"{self._indent}START  WRITING {self.uri}")
 
-        # ----------------------------------------------------------------
         # Must be done first, to create the parent directory
-        self._open("w")
+        with self._open("w") as G:
 
-        # ----------------------------------------------------------------
-        self.X.from_matrix(anndata.X, anndata.obs.index, anndata.var.index)
-        self._add_object(self.X)
+            # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+            self.X.from_matrix(anndata.X, anndata.obs.index, anndata.var.index)
+            self._add_object(G, self.X)
 
-        # ----------------------------------------------------------------
-        self.obs.from_dataframe(dataframe=anndata.obs, extent=256)
-        self._add_object(self.obs)
+            # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+            self.obs.from_dataframe(dataframe=anndata.obs, extent=256)
+            self._add_object(G, self.obs)
 
-        self.var.from_dataframe(dataframe=anndata.var, extent=2048)
-        self._add_object(self.var)
+            self.var.from_dataframe(dataframe=anndata.var, extent=2048)
+            self._add_object(G, self.var)
 
-        # ----------------------------------------------------------------
-        self.obsm.from_anndata(anndata.obsm, anndata.obs_names)
-        self._add_object(self.obsm)
+            # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+            self.obsm.from_anndata(anndata.obsm, anndata.obs_names)
+            self._add_object(G, self.obsm)
 
-        self.varm.from_anndata(anndata.varm, anndata.var_names)
-        self._add_object(self.varm)
+            self.varm.from_anndata(anndata.varm, anndata.var_names)
+            self._add_object(G, self.varm)
 
-        self.obsp.from_anndata(anndata.obsp, anndata.obs_names)
-        self._add_object(self.obsp)
+            self.obsp.from_anndata(anndata.obsp, anndata.obs_names)
+            self._add_object(G, self.obsp)
 
-        self.varp.from_anndata(anndata.varp, anndata.var_names)
-        self._add_object(self.varp)
+            self.varp.from_anndata(anndata.varp, anndata.var_names)
+            self._add_object(G, self.varp)
 
-        # ----------------------------------------------------------------
-        if anndata.raw != None:
-            self.raw.from_anndata(anndata)
-            self._add_object(self.raw)
+            # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+            if anndata.raw != None:
+                self.raw.from_anndata(anndata)
+                self._add_object(G, self.raw)
 
-        # ----------------------------------------------------------------
-        if anndata.uns != None:
-            self.uns.from_anndata_uns(anndata.uns)
-            self._add_object(self.uns)
+            # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+            if anndata.uns != None:
+                self.uns.from_anndata_uns(anndata.uns)
+                self._add_object(G, self.uns)
 
-        # ----------------------------------------------------------------
         if self._verbose:
             print(util.format_elapsed(s, f"{self._indent}FINISH WRITING {self.uri}"))
-
-        self._close()
 
     # ================================================================
     # READ PATH OUT OF TILEDB

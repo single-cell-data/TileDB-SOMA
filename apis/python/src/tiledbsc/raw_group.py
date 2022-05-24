@@ -62,21 +62,19 @@ class RawGroup(TileDBGroup):
             print(f"{self._indent}START  WRITING {self.uri}")
 
         # Must be done first, to create the parent directory
-        self._open("w")
+        with self._open("w") as G:
 
-        self.X.from_matrix(anndata.raw.X, anndata.obs.index, anndata.raw.var.index)
-        self._add_object(self.X)
+            self.X.from_matrix(anndata.raw.X, anndata.obs.index, anndata.raw.var.index)
+            self._add_object(G, self.X)
 
-        self.var.from_dataframe(dataframe=anndata.raw.var, extent=2048)
-        self._add_object(self.var)
+            self.var.from_dataframe(dataframe=anndata.raw.var, extent=2048)
+            self._add_object(G, self.var)
 
-        self.varm.from_anndata(anndata.raw.varm, anndata.raw.var_names)
-        self._add_object(self.varm)
+            self.varm.from_anndata(anndata.raw.varm, anndata.raw.var_names)
+            self._add_object(G, self.varm)
 
         if self._verbose:
             print(util.format_elapsed(s, f"{self._indent}FINISH WRITING {self.uri}"))
-
-        self._close()
 
     # ----------------------------------------------------------------
     def to_anndata_raw(self, obs_labels):
