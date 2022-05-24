@@ -50,7 +50,7 @@ class SOMA(TileDBGroup):
     def __init__(
         self,
         uri: str,
-        name="soma",
+        name=None,
         soma_options: Optional[SOMAOptions] = None,
         verbose: Optional[bool] = True,
         config: Optional[tiledb.Config] = None,
@@ -69,6 +69,10 @@ class SOMA(TileDBGroup):
             ctx = tiledb.Ctx(config)
         if soma_options is None:
             soma_options = SOMAOptions()  # Use default values from the constructor
+        if name is None:
+            name = os.path.basename(uri.rstrip("/"))
+            if name == "":
+                name = "soma"
         super().__init__(
             uri=uri,
             name=name,

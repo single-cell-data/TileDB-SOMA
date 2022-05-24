@@ -2,32 +2,32 @@
 
 # Invoke this with, for example,
 #
-#   peek-soma tiledb-data/pbmc3k_processed
+#   peek-soco ./soma-collection
 #
-# -- then you can inspect the soma object.
+# -- then you can inspect the SOMACollection object
 
 import tiledb
-import tiledbsc
+import tiledbsc as t
 import sys, os
 
 import anndata
 import anndata as ad  # so we can type it either way
-
 import pandas
 import pandas as pd  # so we can type it either way
 import numpy
 import numpy as np  # so we can type it either way
 import scipy
 
+from typing import List, Dict
+
 if len(sys.argv) == 1:
-    input_path = "tiledb-data/pbmc-small"
-    # input_path = 'tiledb-data/pbmc3k_processed'
+    soco_path = "soma-collection"
 elif len(sys.argv) == 2:
-    input_path = sys.argv[1]
+    soco_path = sys.argv[1]
 else:
-    print(f"{sys.argv[0]}: need just one soma path.", file=sys.stderr)
+    print(f"{sys.argv[0]}: need just one soma-collection path.", file=sys.stderr)
     sys.exit(1)
 
-soma = tiledbsc.SOMA(input_path)
+soco = t.SOMACollection(soco_path)
 
 # Interact at the Python prompt now
