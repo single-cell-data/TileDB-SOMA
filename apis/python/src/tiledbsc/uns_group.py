@@ -197,6 +197,8 @@ class UnsGroup(TileDBGroup):
         Implements '"namegoeshere" in soma.uns'.
         """
 
+        # TODO: this will get easier once TileDB.group.Group supports `name` in `__contains__`.
+        # See SC-18057 and https://github.com/single-cell-data/TileDB-SingleCell/issues/113.
         with self._open("r") as G:
             answer = False
             try:
