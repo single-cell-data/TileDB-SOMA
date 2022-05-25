@@ -11,12 +11,15 @@ import math
 HERE = Path(__file__).parent
 
 
-def relerr(actual, expect):
-    return math.fabs(actual - expect) / expect
+def relerr(a, b):
+    m = max(math.fabs(a), math.fabs(b))
+    if m == 0.0:
+        return 0
+    return math.fabs(a - b) / m
 
 
-def relerr_ok(actual, expect):
-    return relerr(actual, expect) < 1e-6
+def relerr_ok(a, b):
+    return relerr(a, b) < 1e-6
 
 
 def test_chunked_writes(tmp_path):
@@ -25,126 +28,75 @@ def test_chunked_writes(tmp_path):
     verifies the chunked-ingest logic is the same.
     """
 
-    # We have three copies of pbmc3k_processed.h5ad checked into source control.
+    # We have three extra copies of pbmc-small.h5ad checked into source control.
     # See the README.md file there for how they were prepared -- essentially
-    #   ann = anndata.read_h5ad('pbmc3k_processed.h5ad')
+    #   ann = anndata.read_h5ad('pbmc-small.h5ad')
     #   ann.X = scipy.sparse.csc_matrix(ann.X)
-    #   ann.write_h5ad('pbmc3k-x-csc.h5ad')
+    #   ann.write_h5ad('pbmc-small-x-csc.h5ad')
     # along with nulling out obsm/uns/etc which are not used in this test (to make the files a
     # little smaller).
-    ann_dense_path = HERE.parent / "anndata/pbmc3k-x-dense.h5ad"
-    ann_csr_path = HERE.parent / "anndata/pbmc3k-x-csr.h5ad"
-    ann_csc_path = HERE.parent / "anndata/pbmc3k-x-csc.h5ad"
+    ann_dense_path = HERE.parent / "anndata/pbmc-small-x-dense.h5ad"
+    ann_csr_path = HERE.parent / "anndata/pbmc-small-x-csr.h5ad"
+    ann_csc_path = HERE.parent / "anndata/pbmc-small-x-csc.h5ad"
 
+    soma_unchunked_path = (tmp_path / "soma_unchunked").as_posix()
     soma_dense_path = (tmp_path / "soma_dense").as_posix()
     soma_csr_path = (tmp_path / "soma_csr").as_posix()
     soma_csc_path = (tmp_path / "soma_csc").as_posix()
 
-    # This value is specifically chosen to ensure that the curated datafiles
-    # on this test will get their X ingested in multiple chunks -- this is
-    # important in order to test the chunked-ingest logic for all three variants:
-    # dense, CSR, and CSC.
-    sopt = tiledbsc.SOMAOptions(goal_chunk_nnz=1000000)
+    # This chunk-size value is specifically chosen to ensure that the curated datafiles on this test
+    # will get their X ingested in multiple chunks -- this is important in order to test the
+    # chunked-ingest logic for all three variants: dense, CSR, and CSC.
+    unchunked_sopt = tiledbsc.SOMAOptions(write_X_chunked=False)
+    chunked_sopt = tiledbsc.SOMAOptions(goal_chunk_nnz=800)
 
     # Do the ingests from anndata .h5ad files to TileDB SOMAs.
-    soma_dense = tiledbsc.SOMA(soma_dense_path, soma_options=sopt)
-    soma_csr = tiledbsc.SOMA(soma_csr_path, soma_options=sopt)
-    soma_csc = tiledbsc.SOMA(soma_csc_path, soma_options=sopt)
+    soma_unchunked = tiledbsc.SOMA(soma_unchunked_path, soma_options=unchunked_sopt)
+    soma_dense = tiledbsc.SOMA(soma_dense_path, soma_options=chunked_sopt)
+    soma_csr = tiledbsc.SOMA(soma_csr_path, soma_options=chunked_sopt)
+    soma_csc = tiledbsc.SOMA(soma_csc_path, soma_options=chunked_sopt)
 
+    soma_unchunked.from_h5ad(ann_dense_path)
     soma_dense.from_h5ad(ann_dense_path)
     soma_csr.from_h5ad(ann_csr_path)
     soma_csc.from_h5ad(ann_csc_path)
 
     # Read the X arrays into memory as pandas dataframe objects.
+    xdf_unchunked = soma_unchunked.X.data.df()
     xdf_dense = soma_dense.X.data.df()
     xdf_csr = soma_csr.X.data.df()
     xdf_csc = soma_csc.X.data.df()
 
-    # We want to verify that the X data that made it through the chunking algorithms
-    # is the same.
+    # Set obs_id,var_id as pandas dataframe indices.
+    xdf_unchunked.set_index(['obs_id','var_id'], inplace=True)
+    xdf_dense.set_index(['obs_id','var_id'], inplace=True)
+    xdf_csr.set_index(['obs_id','var_id'], inplace=True)
+    xdf_csc.set_index(['obs_id','var_id'], inplace=True)
+
+    # IJV/COO triples are correct, but are not necessarily in the same order for CSC.
+    # Sort them to facilitate integer-indexed value comparisons below.
+    xdf_unchunked.sort_index(inplace=True)
+    xdf_dense.sort_index(inplace=True)
+    xdf_csr.sort_index(inplace=True)
+    xdf_csc.sort_index(inplace=True)
+
+    # Verify that the X data that made it through the chunking algorithms is the same.
 
     # A first check is the shape of the dataframes. Note that once densified
     # these are (2638, 1838) but as dataframes they're (2638*1838, 3): there
     # is an 'obs_id' column, a 'var_id' column, and a 'value' column.
-    assert xdf_dense.shape == (4848644, 3)
-    assert xdf_csr.shape == (4848644, 3)
-    assert xdf_csc.shape == (4848644, 3)
+    assert xdf_unchunked.shape == xdf_dense.shape
+    assert xdf_unchunked.shape == xdf_csr.shape
+    assert xdf_unchunked.shape == xdf_csc.shape
 
-    # Compare indices
-    assert list(xdf_dense["obs_id"]) == list(xdf_csr["obs_id"])
-    assert list(xdf_dense["obs_id"]) == list(xdf_csc["obs_id"])
-    assert list(xdf_dense["var_id"]) == list(xdf_csr["var_id"])
-    assert list(xdf_dense["var_id"]) == list(xdf_csc["var_id"])
+    # A second chekc is that the indices are the same.
+    assert list(xdf_unchunked.index) == list(xdf_dense.index)
+    assert list(xdf_unchunked.index) == list(xdf_csr.index)
+    assert list(xdf_unchunked.index) == list(xdf_csc.index)
 
-    # This takes shockingly long -- for this reason, we instead compare
-    # sum-of-abs, and sums over group-bys, which are quicker.
-    # for i in range(4848644):
-    #    assert(relerr_ok(xdf_dense['value'][i], xdf_csr['value'][i]))
-    #    assert(relerr_ok(xdf_dense['value'][i], xdf_csc['value'][i]))
-
-    # Next compute the sum of absolute values over the X arrays. These
-    # won't be 100% identical since floating-point arithmetic isn't perfectly
-    # commutative, but we can compare them within a tolerance.
-    xdf_dense_abs_sum = xdf_dense["value"].abs().sum()
-    xdf_csr_abs_sum = xdf_csr["value"].abs().sum()
-    xdf_csc_abs_sum = xdf_csc["value"].abs().sum()
-
-    assert relerr_ok(xdf_dense_abs_sum, 2042387.8)
-    assert relerr_ok(xdf_csr_abs_sum, 2042387.8)
-    assert relerr_ok(xdf_csc_abs_sum, 2042387.8)
-
-    # Next we can compute sums grouped by obs_id, check shapes, and do some point-checks.
-    #
-    #                       value                        value                        value
-    # obs_id                       obs_id                       obs_id
-    # AAACATACAACCAC-1 -54.403599  AAACATACAACCAC-1 -54.403599  AAACATACAACCAC-1 -54.403599
-    # AAACATTGAGCTAC-1 -74.252998  AAACATTGAGCTAC-1 -74.252998  AAACATTGAGCTAC-1 -74.252998
-    # AAACATTGATCAGC-1  14.642952  AAACATTGATCAGC-1  14.642952  AAACATTGATCAGC-1  14.642952
-    # AAACCGTGCTTCCG-1  25.272526  AAACCGTGCTTCCG-1  25.272526  AAACCGTGCTTCCG-1  25.272526
-    # AAACCGTGTATGCG-1   6.548214  AAACCGTGTATGCG-1   6.548214  AAACCGTGTATGCG-1   6.548214
-    # ...                     ...  ...                     ...  ...                     ...
-    # TTTCGAACTCTCAT-1  90.523659  TTTCGAACTCTCAT-1  90.523659  TTTCGAACTCTCAT-1  90.523659
-    # TTTCTACTGAGGCA-1 -11.782106  TTTCTACTGAGGCA-1 -11.782106  TTTCTACTGAGGCA-1 -11.782106
-    # TTTCTACTTCCTCG-1 -64.215446  TTTCTACTTCCTCG-1 -64.215446  TTTCTACTTCCTCG-1 -64.215446
-    # TTTGCATGAGAGGC-1  39.785194  TTTGCATGAGAGGC-1  39.785194  TTTGCATGAGAGGC-1  39.785194
-    # TTTGCATGCCTCAC-1 -83.011658  TTTGCATGCCTCAC-1 -83.011658  TTTGCATGCCTCAC-1 -83.011658
-    # [2638 rows x 1 columns]      [2638 rows x 1 columns]      [2638 rows x 1 columns]
-    xdf_dense_obs_sums = xdf_dense.groupby("obs_id").sum()
-    xdf_csr_obs_sums = xdf_csr.groupby("obs_id").sum()
-    xdf_csc_obs_sums = xdf_csc.groupby("obs_id").sum()
-
-    assert xdf_dense_obs_sums.shape == (2638, 1)
-    assert xdf_csr_obs_sums.shape == (2638, 1)
-    assert xdf_csc_obs_sums.shape == (2638, 1)
-
-    assert relerr_ok(xdf_dense_obs_sums["value"]["TTTCGAACTCTCAT-1"], 90.523659)
-    assert relerr_ok(xdf_csr_obs_sums["value"]["TTTCGAACTCTCAT-1"], 90.523659)
-    assert relerr_ok(xdf_csc_obs_sums["value"]["TTTCGAACTCTCAT-1"], 90.523659)
-
-    # Similarly, we can compute sums grouped by var_id, check shapes, and do some point-checks.
-    #
-    #                value                    value                    value
-    # var_id                   var_id                   var_id
-    # AAGAB  -6.655109e+00     AAGAB  -6.655109e+00     AAGAB  -6.655109e+00
-    # AAR2   -3.985365e+00     AAR2   -3.985365e+00     AAR2   -3.985365e+00
-    # AATF    8.046627e-07     AATF    8.046627e-07     AATF    8.046627e-07
-    # ABCB1  -1.818954e+01     ABCB1  -1.818954e+01     ABCB1  -1.818954e+01
-    # ABCC10 -1.747384e+01     ABCC10 -1.747384e+01     ABCC10 -1.747384e+01
-    # ...              ...     ...              ...     ...              ...
-    # ZRANB3 -4.315807e+01     ZRANB3 -4.315807e+01     ZRANB3 -4.315807e+01
-    # ZSWIM6 -3.478199e+01     ZSWIM6 -3.478199e+01     ZSWIM6 -3.478199e+01
-    # ZUFSP  -7.315041e+00     ZUFSP  -7.315041e+00     ZUFSP  -7.315041e+00
-    # ZWINT  -4.822803e+01     ZWINT  -4.822803e+01     ZWINT  -4.822803e+01
-    # ZYX    -6.118789e-07     ZYX    -6.118789e-07     ZYX    -6.118789e-07
-    # [1838 rows x 1 columns]  [1838 rows x 1 columns]  [1838 rows x 1 columns]
-    xdf_dense_var_sums = xdf_dense.groupby("var_id").sum()
-    xdf_csr_var_sums = xdf_csr.groupby("var_id").sum()
-    xdf_csc_var_sums = xdf_csc.groupby("var_id").sum()
-
-    assert xdf_dense_var_sums.shape == (1838, 1)
-    assert xdf_csr_var_sums.shape == (1838, 1)
-    assert xdf_csc_var_sums.shape == (1838, 1)
-
-    assert relerr_ok(xdf_dense_var_sums["value"]["ZRANB3"], -4.315807e01)
-    assert relerr_ok(xdf_csr_var_sums["value"]["ZRANB3"], -4.315807e01)
-    assert relerr_ok(xdf_csc_var_sums["value"]["ZRANB3"], -4.315807e01)
+    # A third check is that the values are the same.
+    # Check X values pointwise for all ('obs_id', 'var_id') pairs.
+    for i in range(xdf_unchunked.shape[0]):
+        assert relerr_ok(xdf_unchunked.iloc[i].value, xdf_dense.iloc[i].value)
+        assert relerr_ok(xdf_unchunked.iloc[i].value, xdf_csr.iloc[i].value)
+        assert relerr_ok(xdf_unchunked.iloc[i].value, xdf_csc.iloc[i].value)
