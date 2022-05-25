@@ -13,7 +13,7 @@ HERE = Path(__file__).parent
 def test_import_anndata(tmp_path):
 
     ann1 = HERE.parent / "anndata/pbmc-small.h5ad"
-    ann2 = HERE.parent / "anndata/pbmc3k_processed.h5ad"
+    ann2 = HERE.parent / "anndata/pbmc-small-x-csr.h5ad"
 
     soco_dir = tmp_path.as_posix()
     soma1_dir = (tmp_path / "soma1").as_posix()

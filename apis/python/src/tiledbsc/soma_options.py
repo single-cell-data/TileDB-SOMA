@@ -46,6 +46,7 @@ class SOMAOptions:
     write_X_chunked: bool
     goal_chunk_nnz: int
     col_names_to_store_as_ascii: Dict[str, List[str]]
+    member_uris_are_relative: bool
 
     def __init__(
         self,
@@ -58,6 +59,7 @@ class SOMAOptions:
         write_X_chunked=True,
         goal_chunk_nnz=10000000,
         col_names_to_store_as_ascii=default_col_names_to_store_as_ascii,
+        member_uris_are_relative=None,  # Allows relocatability for local disk / S3, and correct behavior for TileDB Cloud
     ):
         self.obs_extent = obs_extent
         self.var_extent = var_extent
@@ -68,3 +70,4 @@ class SOMAOptions:
         self.write_X_chunked = write_X_chunked
         self.goal_chunk_nnz = goal_chunk_nnz
         self.col_names_to_store_as_ascii = col_names_to_store_as_ascii
+        self.member_uris_are_relative = member_uris_are_relative
