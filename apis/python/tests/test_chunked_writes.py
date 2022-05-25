@@ -68,10 +68,10 @@ def test_chunked_writes(tmp_path):
     xdf_csc = soma_csc.X.data.df()
 
     # Set obs_id,var_id as pandas dataframe indices.
-    xdf_unchunked.set_index(['obs_id','var_id'], inplace=True)
-    xdf_dense.set_index(['obs_id','var_id'], inplace=True)
-    xdf_csr.set_index(['obs_id','var_id'], inplace=True)
-    xdf_csc.set_index(['obs_id','var_id'], inplace=True)
+    xdf_unchunked.set_index(["obs_id", "var_id"], inplace=True)
+    xdf_dense.set_index(["obs_id", "var_id"], inplace=True)
+    xdf_csr.set_index(["obs_id", "var_id"], inplace=True)
+    xdf_csc.set_index(["obs_id", "var_id"], inplace=True)
 
     # IJV/COO triples are correct, but are not necessarily in the same order for CSC.
     # Sort them to facilitate integer-indexed value comparisons below.
