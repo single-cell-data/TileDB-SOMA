@@ -48,7 +48,7 @@ def test_chunked_writes(tmp_path):
     # will get their X ingested in multiple chunks -- this is important in order to test the
     # chunked-ingest logic for all three variants: dense, CSR, and CSC.
     unchunked_sopt = tiledbsc.SOMAOptions(write_X_chunked=False)
-    chunked_sopt = tiledbsc.SOMAOptions(goal_chunk_nnz=800)
+    chunked_sopt = tiledbsc.SOMAOptions(goal_chunk_nnz=250)
 
     # Do the ingests from anndata .h5ad files to TileDB SOMAs.
     soma_unchunked = tiledbsc.SOMA(soma_unchunked_path, soma_options=unchunked_sopt)
@@ -89,7 +89,7 @@ def test_chunked_writes(tmp_path):
     assert xdf_unchunked.shape == xdf_csr.shape
     assert xdf_unchunked.shape == xdf_csc.shape
 
-    # A second chekc is that the indices are the same.
+    # A second check is that the indices are the same.
     assert list(xdf_unchunked.index) == list(xdf_dense.index)
     assert list(xdf_unchunked.index) == list(xdf_csr.index)
     assert list(xdf_unchunked.index) == list(xdf_csc.index)
