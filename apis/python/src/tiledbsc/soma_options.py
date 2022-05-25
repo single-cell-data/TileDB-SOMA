@@ -43,7 +43,7 @@ class SOMAOptions:
     X_tile_order: str
     X_cell_order: str
     string_dim_zstd_level: int
-    write_X_chunked_if_csr: bool
+    write_X_chunked: bool
     goal_chunk_nnz: int
     col_names_to_store_as_ascii: Dict[str, List[str]]
 
@@ -55,7 +55,7 @@ class SOMAOptions:
         X_tile_order="row-major",
         X_cell_order="row-major",
         string_dim_zstd_level=22,  # https://github.com/single-cell-data/TileDB-SingleCell/issues/27
-        write_X_chunked_if_csr=True,
+        write_X_chunked=True,
         goal_chunk_nnz=10000000,
         col_names_to_store_as_ascii=default_col_names_to_store_as_ascii,
     ):
@@ -65,6 +65,6 @@ class SOMAOptions:
         self.X_tile_order = X_tile_order
         self.X_cell_order = X_cell_order
         self.string_dim_zstd_level = string_dim_zstd_level
-        self.write_X_chunked_if_csr = write_X_chunked_if_csr
+        self.write_X_chunked = write_X_chunked
         self.goal_chunk_nnz = goal_chunk_nnz
         self.col_names_to_store_as_ascii = col_names_to_store_as_ascii

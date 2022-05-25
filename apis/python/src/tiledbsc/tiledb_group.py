@@ -29,7 +29,14 @@ class TileDBGroup(TileDBObject):
         """
         See the TileDBObject constructor.
         """
-        super().__init__(uri=uri, name=name, parent=parent)
+        super().__init__(
+            uri=uri,
+            name=name,
+            parent=parent,
+            soma_options=soma_options,
+            verbose=verbose,
+            ctx=ctx,
+        )
 
     def _object_type(self):
         """
