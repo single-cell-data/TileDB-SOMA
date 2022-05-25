@@ -116,7 +116,7 @@ class TileDBGroup(TileDBObject):
 
     def _remove_object(self, obj: TileDBObject):
         with self._open("w") as G:
-            G.remove(obj.uri)
+            G.remove(obj.name)
 
     def _get_member_names(self):
         """
