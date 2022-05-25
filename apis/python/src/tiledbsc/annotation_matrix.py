@@ -38,10 +38,12 @@ class AnnotationMatrix(TileDBArray):
         """
         if ids is None:
             with self._open() as A:
-                return A.df[:]
+                df = A.df[:]
         else:
             with self._open() as A:
-                return A.df[ids]
+                df = A.df[ids]
+        df.set_index(self.dim_name, inplace=True)
+        return df
 
     # ----------------------------------------------------------------
     def df(self, ids=None) -> pd.DataFrame:

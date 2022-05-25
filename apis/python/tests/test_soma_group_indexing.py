@@ -212,9 +212,8 @@ def test_soma_group_indexing(h5ad_file):
     assert isinstance(soma.obsm["X_pca"], tiledbsc.AnnotationMatrix)
     assert soma.obsm["nonesuch"] is None
     assert soma.obsm["X_pca"].dim_names() == ["obs_id"]
-    assert soma.obsm["X_pca"].df().shape == (80, 20)
+    assert soma.obsm["X_pca"].df().shape == (80, 19)
     assert list(soma.obsm["X_pca"].df().dtypes) == [
-        np.dtype("O"),
         np.dtype("float64"),
         np.dtype("float64"),
         np.dtype("float64"),

@@ -56,14 +56,16 @@ class AssayMatrix(TileDBArray):
         with tiledb.open(self.uri) as A:
             if obs_ids is None:
                 if var_ids is None:
-                    return A.df[:, :]
+                    df = A.df[:, :]
                 else:
-                    return A.df[:, var_ids]
+                    df = A.df[:, var_ids]
             else:
                 if var_ids is None:
-                    return A.df[obs_ids, :]
+                    df = A.df[obs_ids, :]
                 else:
-                    return A.df[obs_ids, var_ids]
+                    df = A.df[obs_ids, var_ids]
+        df.set_index([self.row_dim_name, self.col_dim_name], inplace=True)
+        return df
 
     # ----------------------------------------------------------------
     def df(self, obs_ids=None, var_ids=None) -> pd.DataFrame:
