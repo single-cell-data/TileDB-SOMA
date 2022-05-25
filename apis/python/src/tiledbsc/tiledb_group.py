@@ -79,12 +79,10 @@ class TileDBGroup(TileDBObject):
             G.close()
 
     def _add_object(self, obj: TileDBObject):
-        print("ADD ------", obj.name, obj.uri)
         with self._open("w") as G:
             G.add(uri=obj.uri, relative=False, name=obj.name)
 
     def _remove_object(self, obj: TileDBObject):
-        print("RMV ------", obj.name, obj.uri)
         with self._open("w") as G:
             G.remove(obj.uri)
 
