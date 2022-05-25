@@ -11,6 +11,7 @@ import pandas as pd
 
 from typing import Optional
 import time
+import math
 
 
 class AssayMatrix(TileDBArray):
@@ -143,12 +144,13 @@ class AssayMatrix(TileDBArray):
 
     # ----------------------------------------------------------------
     def _ingest_data(self, matrix, row_names, col_names) -> None:
-        # TODO: add chunked support for CSC
-        if (
-            isinstance(matrix, scipy.sparse._csr.csr_matrix)
-            and self._soma_options.write_X_chunked_if_csr
-        ):
-            self.ingest_data_rows_chunked(matrix, row_names, col_names)
+        if self._soma_options.write_X_chunked:
+            if isinstance(matrix, scipy.sparse._csr.csr_matrix):
+                self.ingest_data_rows_chunked(matrix, row_names, col_names)
+            elif isinstance(matrix, scipy.sparse._csc.csc_matrix):
+                self.ingest_data_cols_chunked(matrix, row_names, col_names)
+            else:
+                self.ingest_data_dense_rows_chunked(matrix, row_names, col_names)
         else:
             self.ingest_data_whole(matrix, row_names, col_names)
 
@@ -221,8 +223,8 @@ class AssayMatrix(TileDBArray):
         # to efficient TileDB fragments in the sparse array indexed by these string keys.
         #
         # Key note: only the _obs labels_ are being sorted, and along with them come permutation
-        # indices for accessing the CSR matrix via cursor-indirection -- e.g. csr[28] is accessed as
-        # with csr[permuation[28]] -- the CSR matrix itself isn't sorted in bulk.
+        # indices for accessing the CSR matrix via cursor-indirection -- e.g. csr row 28 is accessed as
+        # csr row permuation[28] -- the CSR matrix itself isn't sorted in bulk.
         sorted_row_names, permutation = util._get_sort_and_permutation(list(row_names))
         # Using numpy we can index this with a list of indices, which a plain Python list doesn't support.
         sorted_row_names = np.asarray(sorted_row_names)
@@ -293,6 +295,202 @@ class AssayMatrix(TileDBArray):
                 util.format_elapsed(
                     s,
                     f"{self._indent}FINISH __ingest_coo_data_string_dims_rows_chunked",
+                )
+            )
+
+    # This method is very similar to ingest_data_rows_chunked. The code is largely repeated,
+    # and this is intentional. The algorithm here is non-trivial (among the most non-trivial
+    # in this package), and adding an abstraction layer would overconfuse it. Here we err
+    # on the side of increased readability, at the expense of line-count.
+    def ingest_data_cols_chunked(self, matrix, row_names, col_names) -> None:
+        """
+        Convert csc_matrix to coo_matrix chunkwise and ingest into TileDB.
+
+        :param uri: TileDB URI of the array to be written.
+        :param matrix: csc_matrix.
+        :param row_names: List of row names.
+        :param col_names: List of column names.
+        """
+
+        assert len(row_names) == matrix.shape[0]
+        assert len(col_names) == matrix.shape[1]
+
+        # Sort the column names so we can write chunks indexed by sorted string keys.  This will lead
+        # to efficient TileDB fragments in the sparse array indexed by these string keys.
+        #
+        # Key note: only the _var labels_ are being sorted, and along with them come permutation
+        # indices for accessing the CSC matrix via cursor-indirection -- e.g. csc column 28 is
+        # accessed as csc column permuation[28] -- the CSC matrix itself isn't sorted in bulk.
+        sorted_col_names, permutation = util._get_sort_and_permutation(list(col_names))
+        # Using numpy we can index this with a list of indices, which a plain Python list doesn't support.
+        sorted_col_names = np.asarray(sorted_col_names)
+
+        s = util.get_start_stamp()
+        if self._verbose:
+            print(f"{self._indent}START  __ingest_coo_data_string_dims_cols_chunked")
+
+        eta_tracker = util.ETATracker()
+        with tiledb.open(self.uri, mode="w") as A:
+            ncol = len(sorted_col_names)
+
+            j = 0
+            while j < ncol:
+                t1 = time.time()
+                # Find a number of CSC columns which will result in a desired nnz for the chunk.
+                chunk_size = util._find_csc_chunk_size(
+                    matrix, permutation, j, self._soma_options.goal_chunk_nnz
+                )
+                j2 = j + chunk_size
+
+                # Convert the chunk to a COO matrix.
+                chunk_coo = matrix[:, permutation[j:j2]].tocoo()
+
+                # Write the chunk-COO to TileDB.
+                d0 = row_names[chunk_coo.row]
+                d1 = sorted_col_names[chunk_coo.col + j]
+
+                if len(d1) == 0:
+                    continue
+
+                # Python ranges are (lo, hi) with lo inclusive and hi exclusive. But saying that
+                # makes us look buggy if we say we're ingesting chunk 0:18 and then 18:32.
+                # Instead, print doubly-inclusive lo..hi like 0..17 and 18..31.
+                if self._verbose:
+                    chunk_percent = 100 * (j2 - 1) / ncol
+                    print(
+                        "%sSTART  chunk rows %d..%d of %d (%.3f%%), var_ids %s..%s, nnz=%d"
+                        % (
+                            self._indent,
+                            j,
+                            j2 - 1,
+                            ncol,
+                            chunk_percent,
+                            d1[0],
+                            d1[-1],
+                            chunk_coo.nnz,
+                        )
+                    )
+
+                # Write a TileDB fragment
+                A[d0, d1] = chunk_coo.data
+
+                if self._verbose:
+                    t2 = time.time()
+                    chunk_seconds = t2 - t1
+                    eta = eta_tracker.ingest_and_predict(chunk_percent, chunk_seconds)
+
+                    print(
+                        "%sFINISH chunk in %.3f seconds, %7.3f%% done, ETA %s"
+                        % (self._indent, chunk_seconds, chunk_percent, eta)
+                    )
+
+                j = j2
+
+        if self._verbose:
+            print(
+                util.format_elapsed(
+                    s,
+                    f"{self._indent}FINISH __ingest_coo_data_string_dims_rows_chunked",
+                )
+            )
+
+    # This method is very similar to ingest_data_rows_chunked. The code is largely repeated,
+    # and this is intentional. The algorithm here is non-trivial (among the most non-trivial
+    # in this package), and adding an abstraction layer would overconfuse it. Here we err
+    # on the side of increased readability, at the expense of line-count.
+    def ingest_data_dense_rows_chunked(self, matrix, row_names, col_names) -> None:
+        """
+        Convert dense matrix to coo_matrix chunkwise and ingest into TileDB.
+
+        :param uri: TileDB URI of the array to be written.
+        :param matrix: dense matrix.
+        :param row_names: List of row names.
+        :param col_names: List of column names.
+        """
+
+        assert len(row_names) == matrix.shape[0]
+        assert len(col_names) == matrix.shape[1]
+
+        # Sort the row names so we can write chunks indexed by sorted string keys.  This will lead
+        # to efficient TileDB fragments in the sparse array indexed by these string keys.
+        #
+        # Key note: only the _obs labels_ are being sorted, and along with them come permutation
+        # indices for accessing the dense matrix via cursor-indirection -- e.g. dense row 28 is accessed as
+        # dense row permuation[28] -- the dense matrix itself isn't sorted in bulk.
+        sorted_row_names, permutation = util._get_sort_and_permutation(list(row_names))
+        # Using numpy we can index this with a list of indices, which a plain Python list doesn't support.
+        sorted_row_names = np.asarray(sorted_row_names)
+
+        s = util.get_start_stamp()
+        if self._verbose:
+            print(
+                f"{self._indent}START  __ingest_coo_data_string_dims_dense_rows_chunked"
+            )
+
+        eta_tracker = util.ETATracker()
+        with tiledb.open(self.uri, mode="w") as A:
+            nrow = len(sorted_row_names)
+            ncol = len(col_names)
+
+            i = 0
+            while i < nrow:
+                t1 = time.time()
+                # Find a number of dense rows which will result in a desired nnz for the chunk,
+                # rounding up to the nearest integer. Example: goal_chunk_nnz is 120. ncol is 50;
+                # 120/50 rounds up to 3; take 3 rows per chunk.
+                chunk_size = int(math.ceil(self._soma_options.goal_chunk_nnz / ncol))
+                i2 = i + chunk_size
+
+                # Convert the chunk to a COO matrix.
+                chunk = matrix[permutation[i:i2]]
+                chunk_coo = scipy.sparse.csr_matrix(chunk).tocoo()
+
+                # Write the chunk-COO to TileDB.
+                d0 = sorted_row_names[chunk_coo.row + i]
+                d1 = col_names[chunk_coo.col]
+
+                if len(d0) == 0:
+                    continue
+
+                # Python ranges are (lo, hi) with lo inclusive and hi exclusive. But saying that
+                # makes us look buggy if we say we're ingesting chunk 0:18 and then 18:32.
+                # Instead, print doubly-inclusive lo..hi like 0..17 and 18..31.
+                if self._verbose:
+                    chunk_percent = 100 * (i2 - 1) / nrow
+                    print(
+                        "%sSTART  chunk rows %d..%d of %d (%.3f%%), obs_ids %s..%s, nnz=%d"
+                        % (
+                            self._indent,
+                            i,
+                            i2 - 1,
+                            nrow,
+                            chunk_percent,
+                            d0[0],
+                            d0[-1],
+                            chunk_coo.nnz,
+                        )
+                    )
+
+                # Write a TileDB fragment
+                A[d0, d1] = chunk_coo.data
+
+                if self._verbose:
+                    t2 = time.time()
+                    chunk_seconds = t2 - t1
+                    eta = eta_tracker.ingest_and_predict(chunk_percent, chunk_seconds)
+
+                    print(
+                        "%sFINISH chunk in %.3f seconds, %7.3f%% done, ETA %s"
+                        % (self._indent, chunk_seconds, chunk_percent, eta)
+                    )
+
+                i = i2
+
+        if self._verbose:
+            print(
+                util.format_elapsed(
+                    s,
+                    f"{self._indent}FINISH __ingest_coo_data_string_dims_dense_rows_chunked",
                 )
             )
 
