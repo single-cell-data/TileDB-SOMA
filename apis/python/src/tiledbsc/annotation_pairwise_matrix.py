@@ -55,9 +55,11 @@ class AnnotationPairwiseMatrix(TileDBArray):
         """
         with self._open() as A:
             if ids is None:
-                return A.df[:, :]
+                df = A.df[:, :]
             else:
-                return A.df[ids, ids]
+                df = A.df[ids, ids]
+        df.set_index([self.row_dim_name, self.col_dim_name], inplace=True)
+        return df
 
     # ----------------------------------------------------------------
     def df(self, ids=None) -> pd.DataFrame:

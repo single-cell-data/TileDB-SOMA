@@ -74,10 +74,18 @@ class AnnotationDataFrame(TileDBArray):
         """
         if ids is None:
             with self._open("r") as A:
-                return A.df[:]
+                df = A.df[:]
         else:
             with self._open("r") as A:
-                return A.df[ids]
+                df = A.df[ids]
+        # We do not need this:
+        #   df.set_index(self.dim_name, inplace=True)
+        # as long as these arrays (for this class) are written using tiledb.from_pandas which
+        # sets this metadata:
+        #   >>> A.meta.items()
+        #   (('__pandas_index_dims', '{"obs_id": "<U0"}'),)
+        # so the set_index is already done for us.
+        return df
 
     # ----------------------------------------------------------------
     def df(self, ids=None) -> pd.DataFrame:

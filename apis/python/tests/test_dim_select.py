@@ -157,14 +157,14 @@ def test_dim_select(adata):
     assert sorted(soma.obsm.keys()) == sorted(["X_tsne", "X_pca"])
 
     df = soma.obsm["X_tsne"].dim_select([b"AAGCGACTTTGACG", b"AATGCGTGGACGGA"])
-    assert df.shape == (2, 3)
+    assert df.shape == (2, 2)
 
     df = soma.obsm["X_pca"].dim_select([b"AAGCGACTTTGACG", b"AATGCGTGGACGGA"])
-    assert df.shape == (2, 20)
+    assert df.shape == (2, 19)
 
-    assert soma.X.data.dim_select([b"AAGCGACTTTGACG"], [b"AKR1C3"]).shape == (1, 3)
-    assert soma.X.data.dim_select(None, [b"AKR1C3"]).shape == (80, 3)
-    assert soma.X.data.dim_select([b"AAGCGACTTTGACG"], None).shape == (20, 3)
-    assert soma.X.data.dim_select(None, None).shape == (1600, 3)
+    assert soma.X.data.dim_select([b"AAGCGACTTTGACG"], [b"AKR1C3"]).shape == (1, 1)
+    assert soma.X.data.dim_select(None, [b"AKR1C3"]).shape == (80, 1)
+    assert soma.X.data.dim_select([b"AAGCGACTTTGACG"], None).shape == (20, 1)
+    assert soma.X.data.dim_select(None, None).shape == (1600, 1)
 
     tempdir.cleanup()
