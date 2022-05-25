@@ -1,0 +1,41 @@
+import anndata
+import tiledb
+import tiledbsc
+
+import pytest
+import tempfile
+import os
+from pathlib import Path
+
+HERE = Path(__file__).parent
+
+
+def test_import_anndata(tmp_path):
+
+    ann1 = HERE.parent / "anndata/pbmc-small.h5ad"
+    ann2 = HERE.parent / "anndata/pbmc3k_processed.h5ad"
+
+    soco_dir = tmp_path.as_posix()
+    soma1_dir = (tmp_path / "soma1").as_posix()
+    soma2_dir = (tmp_path / "soma2").as_posix()
+
+    soma1 = tiledbsc.SOMA(soma1_dir, name="soma1")
+    soma1.from_h5ad(ann1)
+
+    soma2 = tiledbsc.SOMA(soma2_dir, name="soma2")
+    soma2.from_h5ad(ann2)
+
+    soco = tiledbsc.SOMACollection(soco_dir)
+
+    soco._create()
+    assert len(soco._get_member_names()) == 0
+
+    soco.add(soma1)
+    assert len(soco._get_member_names()) == 1
+    soco.add(soma2)
+    assert len(soco._get_member_names()) == 2
+
+    soco.remove(soma1)
+    assert len(soco._get_member_names()) == 1
+    soco.remove(soma2)
+    assert len(soco._get_member_names()) == 0

@@ -89,6 +89,10 @@ class TileDBGroup(TileDBObject):
         with self._open("w") as G:
             G.add(uri=obj.uri, relative=False, name=obj.name)
 
+    def _remove_object(self, obj: TileDBObject):
+        with self._open("w") as G:
+            G.remove(obj.uri)
+
     def _get_member_names(self):
         """
         Returns the names of the group elements. For a SOMACollection, these will SOMA names;

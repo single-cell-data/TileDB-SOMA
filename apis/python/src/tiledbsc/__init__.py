@@ -1,3 +1,4 @@
+from .soma_collection import SOMACollection
 from .soma import SOMA
 from .soma_options import SOMAOptions
 
