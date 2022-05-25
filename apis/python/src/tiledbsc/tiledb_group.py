@@ -79,6 +79,7 @@ class TileDBGroup(TileDBObject):
         TODO: One TileDB.Py's Group objects have `__enter__` and `__exit__`
         method, fold this and _open_withlessly together.
         """
+        assert mode in ("r", "w")
         try:
             G = self._open_withlessly(mode)
             yield G
@@ -86,8 +87,32 @@ class TileDBGroup(TileDBObject):
             G.close()
 
     def _add_object(self, obj: TileDBObject):
+        """
+        Adds a SOMA group/array to the current SOMA group -- e.g. base SOMA adding
+        X, X adding a layer, obsm adding an element, etc.
+
+        Semantics of `relative` from `self._soma_options.member_uris_are_relative`:
+
+        * If `False` then the group will have the absolute path of the member. For populating matrix
+        elements within a SOMA in TileDB cloud, this is necessary. For populating SOMA elements within
+        a SOMACollection on local disk, this can be useful if you want to be able to move the SOMACollection
+        storage around and have it remember the (unmoved) locations of SOMA objects elsewhere.
+
+        * If `True` then the group will have the relative path of the member. For TileDB Cloud, this
+        is never the right thing to do. For local-disk storage, this is essential if you want to move
+        a SOMA to another directory and have it remember the locations of the members within it.
+
+        * If `None`, then we select `relative=False` if the URI starts with `tiledb://`, else we
+        select `relative=True`. This is the default.
+        """
+        relative = self._soma_options.member_uris_are_relative
+        child_uri = obj.uri
+        if relative is None:
+            relative = not child_uri.startswith("tiledb://")
+        if relative:
+            child_uri = obj.name
         with self._open("w") as G:
-            G.add(uri=obj.uri, relative=False, name=obj.name)
+            G.add(uri=child_uri, relative=relative, name=obj.name)
 
     def _remove_object(self, obj: TileDBObject):
         with self._open("w") as G:
