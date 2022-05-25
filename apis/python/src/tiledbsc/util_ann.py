@@ -83,7 +83,7 @@ def _describe_ann_file_show_types(anndata: ad.AnnData, input_path: str):
     m, n = X.shape
     print("%-*s (%d, %d)" % (namewidth, "X/data shape", m, n))
     print("%-*s %s" % (namewidth, "X/data dtype", X.dtype))
-    if isinstance(X, (scipy.sparse._csr.csr_matrix, X, scipy.sparse._csc.csc_matrix)):
+    if isinstance(X, (scipy.sparse._csr.csr_matrix, scipy.sparse._csc.csc_matrix)):
         density = X.nnz / (m * n)
         print("%-*s %.4f" % (namewidth, "X/data density", density))
 
@@ -101,7 +101,7 @@ def _describe_ann_file_show_types(anndata: ad.AnnData, input_path: str):
         print("%-*s (%d, %d)" % (namewidth, "X/raw shape", m, n))
         print("%-*s %s" % (namewidth, "X/data dtype", X.dtype))
         if isinstance(
-            X, (scipy.sparse._csr.csr_matrix, X, scipy.sparse._csc.csc_matrix)
+            X, (scipy.sparse._csr.csr_matrix, scipy.sparse._csc.csc_matrix)
         ):
             density = X.nnz / (m * n)
             print("%-*s %.4f" % (namewidth, "X/raw density", density))
