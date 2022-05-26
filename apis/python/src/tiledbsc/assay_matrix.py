@@ -65,6 +65,8 @@ class AssayMatrix(TileDBArray):
         Returns a tuple with the number of rows and number of columns of the `AssayMatrix`.
         In TileDB storage, these are string-indexed sparse arrays for which no `.shape()` exists,
         but, we draw from the appropriate `obs`, `var`, `raw/var`, etc. as appropriate for a given matrix.
+
+        Note: currently implemented via data scan -- will be optimized for TileDB core 2.10.
         """
         with self._open() as A:
             # These TileDB arrays are string-dimensioned sparse arrays so there is no '.shape'.

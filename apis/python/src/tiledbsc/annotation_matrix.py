@@ -36,6 +36,8 @@ class AnnotationMatrix(TileDBArray):
         Returns a tuple with the number of rows and number of columns of the `AnnotationMatrix`.
         The row-count is the number of obs_ids (for `obsm` elements) or the number of var_ids (for
         `varm` elements).  The column-count is the number of columns/attributes in the dataframe.
+
+        Note: currently implemented via data scan -- will be optimized for TileDB core 2.10.
         """
         with self._open() as A:
             # These TileDB arrays are string-dimensioned sparse arrays so there is no '.shape'.
