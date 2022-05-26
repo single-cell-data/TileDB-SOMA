@@ -1,6 +1,7 @@
 import anndata as ad
 import tiledb
 from tiledbsc import SOMA
+import tiledbsc.io as io
 import pandas as pd
 import numpy as np
 from scipy import sparse
@@ -76,7 +77,7 @@ def test_from_anndata_X_type(tmp_path, X_dtype_name, X_encoding):
     )
     assert adata.X.dtype == X_dtype  # sanity
 
-    SOMA(tmp_path.as_posix()).from_anndata(adata)
+    io.from_anndata(SOMA(tmp_path.as_posix()), adata)
     assert all(
         (tmp_path / sub_array_path).exists()
         for sub_array_path in ["obs", "var", "X/data"]
@@ -164,7 +165,7 @@ def test_from_anndata_DataFrame_type(tmp_path):
     )
     X = np.ones((n, n), dtype=np.float32)
     adata = ad.AnnData(X=X, obs=df, var=df, dtype=X.dtype)
-    SOMA(tmp_path.as_posix()).from_anndata(adata)
+    io.from_anndata(SOMA(tmp_path.as_posix()), adata)
     assert all(
         (tmp_path / sub_array_path).exists()
         for sub_array_path in ["obs", "var", "X/data"]
@@ -224,7 +225,7 @@ def test_from_anndata_annotations_empty(tmp_path):
     X = np.ones((n_obs, n_var))
     adata = ad.AnnData(X=X, obs=obs, var=var, dtype=X.dtype)
 
-    SOMA(tmp_path.as_posix()).from_anndata(adata)
+    io.from_anndata(SOMA(tmp_path.as_posix()), adata)
 
     assert all(
         (tmp_path / sub_array_path).exists()
@@ -254,7 +255,7 @@ def test_from_anndata_annotations_none(tmp_path):
     with pytest.raises(
         NotImplementedError, match="Empty AnnData.obs or AnnData.var unsupported."
     ):
-        SOMA(path.as_posix()).from_anndata(adata)
+        io.from_anndata(SOMA(path.as_posix()), adata)
     assert not any(
         (path / sub_array_path).exists() for sub_array_path in ["obs", "var", "X/data"]
     )
@@ -262,7 +263,7 @@ def test_from_anndata_annotations_none(tmp_path):
     """ only X defined """
     path = tmp_path / "X_only"
     adata = ad.AnnData(X=np.eye(100, 10, dtype=np.float32))
-    SOMA(path.as_posix()).from_anndata(adata)
+    io.from_anndata(SOMA(path.as_posix()), adata)
     assert all(
         (path / sub_array_path).exists() for sub_array_path in ["obs", "var", "X/data"]
     )
@@ -272,7 +273,7 @@ def test_from_anndata_annotations_none(tmp_path):
     adata = ad.AnnData(
         X=np.eye(100, 10, dtype=np.float32), obs=np.arange(100).astype(str)
     )
-    SOMA(path.as_posix()).from_anndata(adata)
+    io.from_anndata(SOMA(path.as_posix()), adata)
     assert all(
         (path / sub_array_path).exists() for sub_array_path in ["obs", "var", "X/data"]
     )
@@ -282,7 +283,7 @@ def test_from_anndata_annotations_none(tmp_path):
     adata = ad.AnnData(
         X=np.eye(100, 10, dtype=np.float32), var=np.arange(10).astype(str)
     )
-    SOMA(path.as_posix()).from_anndata(adata)
+    io.from_anndata(SOMA(path.as_posix()), adata)
     assert all(
         (path / sub_array_path).exists() for sub_array_path in ["obs", "var", "X/data"]
     )
@@ -296,7 +297,7 @@ def test_from_anndata_error_handling(tmp_path):
     )
     adata = ad.AnnData(obs=obs, X=np.ones((n_obs, 2), dtype=np.float32))
     with pytest.raises(NotImplementedError):
-        SOMA(tmp_path.as_posix()).from_anndata(adata)
+        io.from_anndata(SOMA(tmp_path.as_posix()), adata)
 
 
 def test_from_anndata_zero_length_str(tmp_path):
@@ -322,7 +323,7 @@ def test_from_anndata_zero_length_str(tmp_path):
     X = np.ones((n_obs, n_var))
     adata = ad.AnnData(X=X, obs=obs, var=var, dtype=X.dtype)
 
-    SOMA(tmp_path.as_posix()).from_anndata(adata)
+    io.from_anndata(SOMA(tmp_path.as_posix()), adata)
 
     with tiledb.open((tmp_path / "obs").as_posix()) as obs:
         assert set(obs.schema.attr(i).name for i in range(obs.schema.nattr)) == set(
@@ -381,10 +382,10 @@ def test_from_anndata_category_nans(tmp_path, col_name, cat_dtype, expect_raise)
 
     if expect_raise:
         with pytest.raises(ValueError):
-            SOMA(tmp_path.as_posix()).from_anndata(adata)
+            io.from_anndata(SOMA(tmp_path.as_posix()), adata)
 
     else:
-        SOMA(tmp_path.as_posix()).from_anndata(adata)
+        io.from_anndata(SOMA(tmp_path.as_posix()), adata)
 
         with tiledb.open((tmp_path / "obs").as_posix()) as arr:
             assert set(arr.schema.attr(i).name for i in range(arr.schema.nattr)) == set(
@@ -418,7 +419,7 @@ def test_from_anndata_obsm_key_pandas_dataframe(tmp_path):
     adata.obsm[key] = pd.DataFrame(data=np.zeros(adata.n_obs), index=adata.obs.index)
     adata.obsm[key].rename(columns={0: "column_name"}, inplace=True)
 
-    SOMA(tmp_path.as_posix()).from_anndata(adata)
+    io.from_anndata(SOMA(tmp_path.as_posix()), adata)
     assert all(
         (tmp_path / sub_array_path).exists()
         for sub_array_path in ["obs", "var", "X/data", "obsm", "obsm/" + key]

@@ -1,5 +1,6 @@
 from anndata import AnnData
 from tiledbsc import SOMA
+import tiledbsc.io as io
 import tiledb
 import pandas as pd
 import numpy as np
@@ -22,7 +23,7 @@ def test_from_anndata_raw_X(tmp_path, adata):
     """
     Verify that anndata.raw.X is correctly saved.
     """
-    SOMA(tmp_path.as_posix()).from_anndata(adata)
+    io.from_anndata(SOMA(tmp_path.as_posix()), adata)
 
     assert all(
         (tmp_path / sub_array_path).exists()
@@ -56,7 +57,7 @@ def test_from_anndata_raw_var(tmp_path, adata):
     """
     Verify that anndata.raw.var is correctly saved.
     """
-    SOMA(tmp_path.as_posix()).from_anndata(adata)
+    io.from_anndata(SOMA(tmp_path.as_posix()), adata)
 
     # TODO: no idea where `.raw.var` will be saved. Update when issue #50 is resolved
     assert all(

@@ -1,6 +1,7 @@
 from anndata import AnnData
 import tiledb
 from tiledbsc import SOMA
+import tiledbsc.io as io
 import pandas as pd
 import numpy as np
 
@@ -17,10 +18,10 @@ def test_from_anndata_memfs():
     adata = AnnData(X=X, obs=obs, var=var, dtype=X.dtype)
 
     path = "mem://foo"
-    sg = SOMA(path)
-    sg.from_anndata(adata)
+    soma = SOMA(path)
+    io.from_anndata(soma, adata)
 
-    with tiledb.Group(sg.uri) as G:
+    with tiledb.Group(soma.uri) as G:
         assert G is not None
         members = [mbr.uri for mbr in G]
         assert f"{path}/X" in members

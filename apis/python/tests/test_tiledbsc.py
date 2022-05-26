@@ -1,6 +1,7 @@
 import anndata
 import tiledb
 import tiledbsc
+import tiledbsc.io
 
 import pytest
 import tempfile
@@ -33,7 +34,7 @@ def test_import_anndata(adata):
 
     # Ingest
     soma = tiledbsc.SOMA(output_path, verbose=True)
-    soma.from_anndata(orig)
+    tiledbsc.io.from_anndata(soma, orig)
 
     # Structure:
     #   X/data

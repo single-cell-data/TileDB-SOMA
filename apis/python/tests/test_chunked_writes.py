@@ -1,6 +1,7 @@
 import anndata
 import tiledb
 import tiledbsc
+import tiledbsc.io
 
 import pytest
 import tempfile
@@ -56,10 +57,10 @@ def test_chunked_writes(tmp_path):
     soma_csr = tiledbsc.SOMA(soma_csr_path, soma_options=chunked_sopt)
     soma_csc = tiledbsc.SOMA(soma_csc_path, soma_options=chunked_sopt)
 
-    soma_unchunked.from_h5ad(ann_dense_path)
-    soma_dense.from_h5ad(ann_dense_path)
-    soma_csr.from_h5ad(ann_csr_path)
-    soma_csc.from_h5ad(ann_csc_path)
+    tiledbsc.io.from_h5ad(soma_unchunked, ann_dense_path)
+    tiledbsc.io.from_h5ad(soma_dense, ann_dense_path)
+    tiledbsc.io.from_h5ad(soma_csr, ann_csr_path)
+    tiledbsc.io.from_h5ad(soma_csc, ann_csc_path)
 
     # Read the X arrays into memory as pandas dataframe objects.
     xdf_unchunked = soma_unchunked.X.data.df()
