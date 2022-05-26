@@ -69,6 +69,8 @@ class TileDBGroup(TileDBObject):
         assert mode in ["w", "r"]
         if mode == "w" and not self.exists():
             self._create()
+        if mode == "r" and not self.exists():
+            raise Exception(f"Does not exist: {self.uri}")
         return tiledb.Group(self.uri, mode=mode, ctx=self._ctx)
 
     @contextmanager
@@ -80,6 +82,13 @@ class TileDBGroup(TileDBObject):
         method, fold this and _open_withlessly together.
         """
         assert mode in ("r", "w")
+
+        # Do this check here, not just in _open_withlessly -- otherwise we get
+        #   UnboundLocalError: local variable 'G' referenced before assignment
+        # which is super-confusing for the user.
+        if mode == "r" and not self.exists():
+            raise Exception(f"Does not exist: {self.uri}")
+
         try:
             G = self._open_withlessly(mode)
             yield G
