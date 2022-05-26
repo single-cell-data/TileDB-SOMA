@@ -52,12 +52,12 @@ soma: group
 |   +-- vmbar: array             AnnotationMatrix
 |
 +-- obsp: group                AnnotationPairwiseMatrixGroup     dict of:
-|   +-- opfoo: array             AnnotationPairwiseMatrix        scipy.sparse.csr_matrix, numpy.ndarray
-|   +-- opbar: array             AnnotationPairwiseMatrix
+|   +-- opfoo: array             AssayMatrix                     scipy.sparse.csr_matrix, numpy.ndarray
+|   +-- opbar: array             AssayMatrix
 |
 +-- varp: group                AnnotationPairwiseMatrixGroup     dict of:
-|   +-- vpfoo: array             AnnotationPairwiseMatrix        scipy.sparse.csr_matrix, numpy.ndarray
-|   +-- vpbar: array             AnnotationPairwiseMatrix
+|   +-- vpfoo: array             AssayMatrix                     scipy.sparse.csr_matrix, numpy.ndarray
+|   +-- vpbar: array             AssayMatrix
 |
 +-- raw: group                 RawGroup
 |   |

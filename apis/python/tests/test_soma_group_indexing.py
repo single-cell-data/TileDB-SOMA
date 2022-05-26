@@ -245,7 +245,7 @@ def test_soma_group_indexing(h5ad_file):
     assert set(soma.obsp._get_member_names()) == set(["distances"])
     assert soma.obsp["distances"].exists()
     assert soma.obsp["distances"].dim_names() == ["obs_id_i", "obs_id_j"]
-    assert isinstance(soma.obsp["distances"], tiledbsc.AnnotationPairwiseMatrix)
+    assert isinstance(soma.obsp["distances"], tiledbsc.AssayMatrix)
 
     assert soma.varp["nonesuch"] is None
 
@@ -268,13 +268,13 @@ def test_soma_group_indexing(h5ad_file):
     # These print to stdout -- here we exercise just them to make sure they're not throwing
     # exceptions.
     for e in soma.obsm:
-        print(e.name, e.shape(), e.uri)
+        print(e.name, e.df().shape, e.uri)
     for e in soma.varm:
-        print(e.name, e.shape(), e.uri)
+        print(e.name, e.df().shape, e.uri)
     for e in soma.obsp:
-        print(e.name, e.shape(), e.uri)
+        print(e.name, e.df().shape, e.uri)
     for e in soma.varp:
-        print(e.name, e.shape(), e.uri)
+        print(e.name, e.df().shape, e.uri)
 
 
 def test_not_exists():

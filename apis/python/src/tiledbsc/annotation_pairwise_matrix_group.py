@@ -1,7 +1,6 @@
 import tiledb
 from .soma_options import SOMAOptions
 from .tiledb_group import TileDBGroup
-from .annotation_pairwise_matrix import AnnotationPairwiseMatrix
 from .assay_matrix import AssayMatrix
 import tiledbsc.util as util
 
@@ -47,13 +46,13 @@ class AnnotationPairwiseMatrixGroup(TileDBGroup):
         return self._get_member_names()
 
     # ----------------------------------------------------------------
-    def __iter__(self) -> List[AnnotationPairwiseMatrix]:
+    def __iter__(self) -> List[AssayMatrix]:
         """
         Implements 'for matrix in soma.obsp: ...' and 'for matrix in soma.varp: ...'
         """
         retval = []
         for name, uri in self._get_member_names_to_uris().items():
-            matrix = AnnotationPairwiseMatrix(
+            matrix = AssayMatrix(
                 uri=uri,
                 name=name,
                 row_dim_name=self.row_dim_name,
@@ -161,7 +160,7 @@ class AnnotationPairwiseMatrixGroup(TileDBGroup):
     #   `AnnotationMatrix, [] on `UnsGroup` will return `UnsArray` or `UnsGroup`, etc.
     def __getitem__(self, name):
         """
-        Returns an `AnnotationPairwiseMatrix` element at the given name within the group, or None if no such
+        Returns an `AssayMatrix` element at the given name within the group, or None if no such
         member exists.  Overloads the [...] operator.
         """
 
@@ -180,7 +179,7 @@ class AnnotationPairwiseMatrixGroup(TileDBGroup):
                     f"Internal error: found group element neither subgroup nor array: type is {str(obj.type)}"
                 )
 
-            return AnnotationPairwiseMatrix(
+            return AssayMatrix(
                 uri=obj.uri,
                 name=name,
                 row_dim_name=self.row_dim_name,
