@@ -7,7 +7,6 @@ from .tiledb_array import TileDBArray
 from .tiledb_group import TileDBGroup
 from .assay_matrix import AssayMatrix
 from .annotation_matrix import AnnotationMatrix
-from .annotation_pairwise_matrix import AnnotationPairwiseMatrix
 
 from .annotation_matrix_group import AnnotationMatrixGroup
 from .annotation_pairwise_matrix_group import AnnotationPairwiseMatrixGroup
