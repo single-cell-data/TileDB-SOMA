@@ -31,6 +31,22 @@ class AnnotationMatrix(TileDBArray):
         self.dim_name = dim_name
 
     # ----------------------------------------------------------------
+    def shape(self):
+        """
+        Returns a tuple with the number of rows and number of columns of the `AnnotationMatrix`.
+        The row-count is the number of obs_ids (for `obsm` elements) or the number of var_ids (for
+        `varm` elements).  The column-count is the number of columns/attributes in the dataframe.
+        """
+        with self._open() as A:
+            # These TileDB arrays are string-dimensioned sparse arrays so there is no '.shape'.
+            # Instead we compute it ourselves.  See also:
+            # * https://github.com/single-cell-data/TileDB-SingleCell/issues/10
+            # * https://github.com/TileDB-Inc/TileDB-Py/pull/1055
+            num_rows = len(A[:][self.dim_name].tolist())
+            num_cols = A.schema.nattr
+            return (num_rows, num_cols)
+
+    # ----------------------------------------------------------------
     def dim_select(self, ids):
         """
         Selects a slice out of the array with specified `obs_ids` (for `obsm` elements) or

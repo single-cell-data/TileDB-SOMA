@@ -92,24 +92,34 @@ class SOMA(TileDBGroup):
         raw_uri = os.path.join(self.uri, "raw")
         uns_uri = os.path.join(self.uri, "uns")
 
+        self.obs = AnnotationDataFrame(uri=obs_uri, name="obs", parent=self)
+        self.var = AnnotationDataFrame(uri=var_uri, name="var", parent=self)
         self.X = AssayMatrixGroup(
             uri=X_uri,
             name="X",
             row_dim_name="obs_id",
             col_dim_name="var_id",
+            row_dataframe=self.obs,
+            col_dataframe=self.var,
             parent=self,
         )
-        self.obs = AnnotationDataFrame(uri=obs_uri, name="obs", parent=self)
-        self.var = AnnotationDataFrame(uri=var_uri, name="var", parent=self)
         self.obsm = AnnotationMatrixGroup(uri=obsm_uri, name="obsm", parent=self)
         self.varm = AnnotationMatrixGroup(uri=varm_uri, name="varm", parent=self)
         self.obsp = AnnotationPairwiseMatrixGroup(
-            uri=obsp_uri, name="obsp", parent=self
+            uri=obsp_uri,
+            name="obsp",
+            row_dataframe=self.obs,
+            col_dataframe=self.obs,
+            parent=self,
         )
         self.varp = AnnotationPairwiseMatrixGroup(
-            uri=varp_uri, name="varp", parent=self
+            uri=varp_uri,
+            name="varp",
+            row_dataframe=self.var,
+            col_dataframe=self.var,
+            parent=self,
         )
-        self.raw = RawGroup(uri=raw_uri, name="raw", parent=self)
+        self.raw = RawGroup(uri=raw_uri, name="raw", obs=self.obs, parent=self)
         self.uns = UnsGroup(uri=uns_uri, name="uns", parent=self)
 
         # If URI is "/something/test1" then:

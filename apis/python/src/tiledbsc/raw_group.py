@@ -22,34 +22,44 @@ class RawGroup(TileDBGroup):
     var: AnnotationDataFrame
     varm: AnnotationMatrixGroup
     varp: AnnotationPairwiseMatrixGroup
+    parent_obs: AnnotationDataFrame
 
     def __init__(
         self,
         uri: str,
         name: str,
+        obs: AnnotationDataFrame,  # Nominally a reference to soma.obs
         parent: Optional[TileDBGroup] = None,
     ):
         """
         See the TileDBObject constructor.
+        See `AssayMatrix` for the rationale behind retaining a reference to the `parent_obs` object.
         """
         super().__init__(uri=uri, name=name, parent=parent)
+        self.parent_obs = obs
 
         X_uri = os.path.join(self.uri, "X")
         var_uri = os.path.join(self.uri, "var")
         varm_uri = os.path.join(self.uri, "varm")
         varp_uri = os.path.join(self.uri, "varp")
 
+        self.var = AnnotationDataFrame(uri=var_uri, name="var", parent=self)
         self.X = AssayMatrixGroup(
             uri=X_uri,
             name="X",
             row_dim_name="obs_id",
             col_dim_name="var_id",
-            parent=self,
+            row_dataframe=self.parent_obs,
+            col_dataframe=self.var,
+            parent=self.var,
         )
-        self.var = AnnotationDataFrame(uri=var_uri, name="var", parent=self)
         self.varm = AnnotationMatrixGroup(uri=varm_uri, name="varm", parent=self)
         self.varp = AnnotationPairwiseMatrixGroup(
-            uri=varp_uri, name="varp", parent=self
+            uri=varp_uri,
+            name="varp",
+            row_dataframe=self.var,
+            col_dataframe=self.var,
+            parent=self,
         )
 
     # ----------------------------------------------------------------

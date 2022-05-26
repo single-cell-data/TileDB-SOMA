@@ -2,6 +2,7 @@ import tiledb
 from .soma_options import SOMAOptions
 from .tiledb_group import TileDBGroup
 from .assay_matrix import AssayMatrix
+from .annotation_dataframe import AnnotationDataFrame
 import tiledbsc.util as util
 
 import pandas as pd
@@ -18,15 +19,21 @@ class AnnotationPairwiseMatrixGroup(TileDBGroup):
 
     row_dim_name: str
     col_dim_name: str
+    row_dataframe: AnnotationDataFrame
+    col_dataframe: AnnotationDataFrame
 
     def __init__(
         self,
         uri: str,
         name: str,
+        row_dataframe: AnnotationDataFrame,  # Nominally a reference to soma.obs
+        col_dataframe: AnnotationDataFrame,  # Nominally a reference to soma.var
         parent: Optional[TileDBGroup] = None,
     ):
         """
         See the TileDBObject constructor.
+        See `AssayMatrix` for the rationale behind retaining references to the `row_dataframe` and
+        `col_dataframe` objects.
         """
         assert name in ["obsp", "varp"]
         super().__init__(uri=uri, name=name, parent=parent)
@@ -36,6 +43,8 @@ class AnnotationPairwiseMatrixGroup(TileDBGroup):
         else:
             self.row_dim_name = "var_id_i"
             self.col_dim_name = "var_id_j"
+        self.row_dataframe = row_dataframe
+        self.col_dataframe = col_dataframe
 
     # ----------------------------------------------------------------
     def keys(self):
@@ -57,6 +66,8 @@ class AnnotationPairwiseMatrixGroup(TileDBGroup):
                 name=name,
                 row_dim_name=self.row_dim_name,
                 col_dim_name=self.col_dim_name,
+                row_dataframe=self.row_dataframe,
+                col_dataframe=self.col_dataframe,
                 parent=self,
             )
             retval.append(matrix)
@@ -82,6 +93,8 @@ class AnnotationPairwiseMatrixGroup(TileDBGroup):
                 name=matrix_name,
                 row_dim_name=self.row_dim_name,
                 col_dim_name=self.col_dim_name,
+                row_dataframe=self.row_dataframe,
+                col_dataframe=self.col_dataframe,
                 parent=self,
             )
             annotation_pairwise_matrix.from_matrix_and_dim_values(
@@ -186,6 +199,8 @@ class AnnotationPairwiseMatrixGroup(TileDBGroup):
                 name=name,
                 row_dim_name=self.row_dim_name,
                 col_dim_name=self.col_dim_name,
+                row_dataframe=self.row_dataframe,
+                col_dataframe=self.col_dataframe,
                 parent=self,
             )
 
