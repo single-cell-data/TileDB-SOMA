@@ -53,6 +53,7 @@ def test_soma_group_indexing(h5ad_file):
     )
     assert set(soma.X._get_member_names()) == set(["data"])
     assert soma.X.data.dim_names() == ["obs_id", "var_id"]
+    assert soma.X.data.shape() == (80, 20)
 
     assert soma.obs.exists()
     assert soma.obs.dim_names() == ["obs_id"]
@@ -66,6 +67,7 @@ def test_soma_group_indexing(h5ad_file):
         "groups",
         "RNA_snn_res.1",
     ]
+    assert soma.obs.shape() == (80, 7)
     assert set(soma.obs.ids()) == set(
         [
             "AAATTCGAATCACG",
@@ -172,6 +174,7 @@ def test_soma_group_indexing(h5ad_file):
         "vst.variance.standardized",
         "vst.variable",
     ]
+    assert soma.var.shape() == (20, 5)
     assert set(soma.var.ids()) == set(
         [
             "AKR1C3",
@@ -213,6 +216,7 @@ def test_soma_group_indexing(h5ad_file):
     assert isinstance(soma.obsm["X_pca"], tiledbsc.AnnotationMatrix)
     assert soma.obsm["nonesuch"] is None
     assert soma.obsm["X_pca"].dim_names() == ["obs_id"]
+    assert soma.obsm["X_pca"].shape() == (80, 19)
     assert soma.obsm["X_pca"].df().shape == (80, 19)
     assert list(soma.obsm["X_pca"].df().dtypes) == [
         np.dtype("float64"),
@@ -242,10 +246,13 @@ def test_soma_group_indexing(h5ad_file):
     assert soma.varm["nonesuch"] is None
     assert soma.varm._get_member_names() == ["PCs"]
     assert soma.varm["PCs"].dim_names() == ["var_id"]
+    assert soma.varm["PCs"].shape() == (20, 19)
+    assert soma.varm["PCs"].df().shape == (20, 19)
 
     assert set(soma.obsp._get_member_names()) == set(["distances"])
     assert soma.obsp["distances"].exists()
     assert soma.obsp["distances"].dim_names() == ["obs_id_i", "obs_id_j"]
+    assert soma.obsp["distances"].shape() == (80, 80)
     assert isinstance(soma.obsp["distances"], tiledbsc.AssayMatrix)
 
     assert soma.varp["nonesuch"] is None

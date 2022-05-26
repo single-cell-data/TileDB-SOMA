@@ -3,6 +3,7 @@ from .soma_options import SOMAOptions
 from .tiledb_array import TileDBArray
 from .tiledb_group import TileDBGroup
 from .tiledb_object import TileDBObject
+from .annotation_dataframe import AnnotationDataFrame
 import tiledbsc.util as util
 
 import scipy
@@ -23,6 +24,8 @@ class AssayMatrix(TileDBArray):
     row_dim_name: str  # obs_id for X, obs_id_i for obsp; var_id_i for varp
     col_dim_name: str  # var_id for X, obs_id_j for obsp; var_id_j for varp
     attr_name: str
+    row_dataframe: AnnotationDataFrame
+    col_dataframe: AnnotationDataFrame
 
     # ----------------------------------------------------------------
     def __init__(
@@ -31,20 +34,46 @@ class AssayMatrix(TileDBArray):
         name: str,
         row_dim_name: str,
         col_dim_name: str,
+        row_dataframe: AnnotationDataFrame,  # Nominally a reference to soma.obs
+        col_dataframe: AnnotationDataFrame,  # Nominally a reference to soma.var
         parent: Optional[TileDBGroup] = None,
     ):
         """
         See the TileDBObject constructor.
+        The `row_dataframe` and `col_dataframe` are nominally:
+        * `soma.obs` and `soma.var`, for `soma.X.data`
+        * `soma.obs` and `soma.raw.var`, for `soma.raw.X.data`
+        * `soma.obs` and `soma.obs`, for `soma.obsp` elements
+        * `soma.var` and `soma.var`, for `soma.obsp` elements
+        References to these objects are kept solely for obtaining dim labels for metadata
+        acquisition at runtime (e.g. shape). We retain references to these objects, rather
+        than taking in actualized ID-lists here in the constructor, for two reasons:
+        * We need to be able to set up a SOMA to write to, before it's been populated.
+        * For reading from an already-populated SOMA, we wish to avoid cache-coherency issues.
         """
         super().__init__(uri=uri, name=name, parent=parent)
 
         self.row_dim_name = row_dim_name
         self.col_dim_name = col_dim_name
         self.attr_name = "value"
+        self.row_dataframe = row_dataframe
+        self.col_dataframe = col_dataframe
 
     # ----------------------------------------------------------------
-    # We don't have a .shape() method since X is sparse. One should
-    # instead use the row-counts for the soma's obs and var.
+    def shape(self):
+        """
+        Returns a tuple with the number of rows and number of columns of the `AssayMatrix`.
+        In TileDB storage, these are string-indexed sparse arrays for which no `.shape()` exists,
+        but, we draw from the appropriate `obs`, `var`, `raw/var`, etc. as appropriate for a given matrix.
+
+        Note: currently implemented via data scan -- will be optimized for TileDB core 2.10.
+        """
+        with self._open() as A:
+            # These TileDB arrays are string-dimensioned sparse arrays so there is no '.shape'.
+            # Instead we compute it ourselves.  See also:
+            num_rows = self.row_dataframe.shape()[0]
+            num_cols = self.col_dataframe.shape()[0]
+            return (num_rows, num_cols)
 
     # ----------------------------------------------------------------
     def dim_select(self, obs_ids, var_ids):
