@@ -64,13 +64,15 @@ class RawGroup(TileDBGroup):
         # Must be done first, to create the parent directory
         self._create()
 
-        self.X.from_matrix(anndata.raw.X, anndata.obs.index, anndata.raw.var.index)
+        self.X.from_matrix_and_dim_values(
+            anndata.raw.X, anndata.obs.index, anndata.raw.var.index
+        )
         self._add_object(self.X)
 
         self.var.from_dataframe(dataframe=anndata.raw.var, extent=2048)
         self._add_object(self.var)
 
-        self.varm.from_anndata(anndata.raw.varm, anndata.raw.var_names)
+        self.varm.from_matrices_and_dim_values(anndata.raw.varm, anndata.raw.var_names)
         self._add_object(self.varm)
 
         if self._verbose:

@@ -39,7 +39,7 @@ class AssayMatrixGroup(TileDBGroup):
         )
 
     # ----------------------------------------------------------------
-    def from_matrix(self, matrix, row_names, col_names) -> None:
+    def from_matrix_and_dim_values(self, matrix, row_names, col_names) -> None:
         """
         Populates the X/ or raw/X subgroup for a SOMA object.  Nominally row_names will be
         anndata.obs_names and col_names will be anndata.var_names or anndata.raw.var_names.
@@ -48,5 +48,5 @@ class AssayMatrixGroup(TileDBGroup):
         if matrix is not None:
             # Must be done first, to create the parent directory
             self._create()
-            self.data.from_matrix(matrix, row_names, col_names)
+            self.data.from_matrix_and_dim_values(matrix, row_names, col_names)
             self._add_object(self.data)

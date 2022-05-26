@@ -15,6 +15,7 @@
 
 import tiledb
 import tiledbsc
+import tiledbsc.io
 
 import anndata as ad
 
@@ -76,7 +77,7 @@ def main():
 
     verbose = not args.quiet
     soma = tiledbsc.SOMA(input_path, verbose=verbose)
-    soma.to_h5ad(output_path)
+    tiledbsc.io.to_h5ad(soma, output_path)
 
     if not verbose:
         print(f"Wrote {output_path}")

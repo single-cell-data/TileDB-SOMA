@@ -1,6 +1,7 @@
 from anndata import AnnData
 import tiledb
 from tiledbsc import SOMA
+import tiledbsc.io as io
 import pandas as pd
 import numpy as np
 from scipy import sparse
@@ -49,7 +50,7 @@ def test_from_anndata_uns(tmp_path):
 
     adata = AnnData(X=X, obs=obs, var=var, uns=uns)
 
-    SOMA(tmp_path.as_posix()).from_anndata(adata)
+    io.from_anndata(SOMA(tmp_path.as_posix()), adata)
 
     unspath = tmp_path / "uns"
     assert os.path.exists(unspath)

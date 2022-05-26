@@ -1,6 +1,7 @@
 import anndata
 import tiledb
 import tiledbsc
+import tiledbsc.io
 
 import pytest
 import tempfile
@@ -30,7 +31,7 @@ def test_attribute_filter(adata):
 
     # Ingest
     soma = tiledbsc.SOMA(output_path, verbose=True)
-    soma.from_anndata(adata)
+    tiledbsc.io.from_anndata(soma, adata)
 
     output = soma.obs.attribute_filter(
         "nCount_RNA > 10", ["orig.ident", "nFeature_RNA"]

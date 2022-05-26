@@ -1,6 +1,7 @@
 import anndata
 import tiledb
 import tiledbsc
+import tiledbsc.io
 
 import numpy as np
 
@@ -29,7 +30,7 @@ def test_soma_group_indexing(h5ad_file):
 
     # Ingest
     soma = tiledbsc.SOMA(output_path, verbose=False)
-    soma.from_h5ad(h5ad_file)
+    tiledbsc.io.from_h5ad(soma, h5ad_file)
     assert soma.exists()
 
     # Structure:

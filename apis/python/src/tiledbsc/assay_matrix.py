@@ -76,7 +76,7 @@ class AssayMatrix(TileDBArray):
         return self.dim_select(obs_ids, var_ids)
 
     # ----------------------------------------------------------------
-    def from_matrix(self, matrix, row_names, col_names) -> None:
+    def from_matrix_and_dim_values(self, matrix, row_names, col_names) -> None:
         """
         Imports a matrix -- nominally scipy.sparse.csr_matrix or numpy.ndarray -- into a TileDB
         array which is used for X, obsp members, and varp members.

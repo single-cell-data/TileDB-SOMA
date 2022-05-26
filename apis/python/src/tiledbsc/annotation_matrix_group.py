@@ -54,7 +54,7 @@ class AnnotationMatrixGroup(TileDBGroup):
         return iter(retval)
 
     # ----------------------------------------------------------------
-    def from_anndata(self, annotation_matrices, dim_values):
+    def from_matrices_and_dim_values(self, annotation_matrices, dim_values):
         """
         Populates the obsm/ or varm/ subgroup for a SOMA object, then writes all the components
         arrays under that group.
@@ -75,7 +75,7 @@ class AnnotationMatrixGroup(TileDBGroup):
                 dim_name=self.dim_name,
                 parent=self,
             )
-            annotation_matrix.from_anndata(anndata_matrix, dim_values)
+            annotation_matrix.from_matrix_and_dim_values(anndata_matrix, dim_values)
             self._add_object(annotation_matrix)
 
     # ----------------------------------------------------------------

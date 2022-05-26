@@ -63,7 +63,7 @@ class AnnotationPairwiseMatrixGroup(TileDBGroup):
         return iter(retval)
 
     # ----------------------------------------------------------------
-    def from_anndata(self, annotation_pairwise_matrices, dim_values):
+    def from_matrices_and_dim_values(self, annotation_pairwise_matrices, dim_values):
         """
         Populates the obsp/ or varp/ subgroup for a SOMA object, then writes all the components
         arrays under that group.
@@ -84,8 +84,10 @@ class AnnotationPairwiseMatrixGroup(TileDBGroup):
                 col_dim_name=self.col_dim_name,
                 parent=self,
             )
-            annotation_pairwise_matrix.from_matrix(
-                anndata_matrix, dim_values, dim_values
+            annotation_pairwise_matrix.from_matrix_and_dim_values(
+                anndata_matrix,
+                dim_values,
+                dim_values,
             )
             self._add_object(annotation_pairwise_matrix)
 

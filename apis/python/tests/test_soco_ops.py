@@ -1,6 +1,7 @@
 import anndata
 import tiledb
 import tiledbsc
+import tiledbsc.io
 
 import pytest
 import tempfile
@@ -20,10 +21,10 @@ def test_import_anndata(tmp_path):
     soma2_dir = (tmp_path / "soma2").as_posix()
 
     soma1 = tiledbsc.SOMA(soma1_dir, name="soma1")
-    soma1.from_h5ad(ann1)
+    tiledbsc.io.from_h5ad(soma1, ann1)
 
     soma2 = tiledbsc.SOMA(soma2_dir, name="soma2")
-    soma2.from_h5ad(ann2)
+    tiledbsc.io.from_h5ad(soma2, ann2)
 
     soco = tiledbsc.SOMACollection(soco_dir)
 

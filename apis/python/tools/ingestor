@@ -16,6 +16,7 @@
 # ================================================================
 
 import tiledbsc
+import tiledbsc.io
 import sys, os, shutil
 import argparse
 
@@ -152,7 +153,7 @@ def ingest_one(input_path: str, output_path: str, ifexists: str, soma_options: t
     soma = tiledbsc.SOMA(uri=output_path, soma_options=soma_options)
 
     # Do the ingest into TileDB.
-    soma.from_h5ad(input_path)
+    tiledbsc.io.from_h5ad(soma, input_path)
     if not verbose:
         print(f"Wrote {output_path}")
 

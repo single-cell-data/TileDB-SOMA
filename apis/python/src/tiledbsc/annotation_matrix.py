@@ -70,7 +70,7 @@ class AnnotationMatrix(TileDBArray):
             return (num_rows, num_cols)
 
     # ----------------------------------------------------------------
-    def from_anndata(self, matrix, dim_values):
+    def from_matrix_and_dim_values(self, matrix, dim_values):
         """
         Populates an array in the obsm/ or varm/ subgroup for a SOMA object.
 
