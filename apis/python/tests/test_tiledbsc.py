@@ -51,12 +51,22 @@ def test_import_anndata(adata):
     #   raw/var
     #   raw/varm/PCs
 
+    # TODO: change this to with-open-as syntax once
+    # https://github.com/TileDB-Inc/TileDB-Py/pull/1124
+    # is in a TileDB-Py release which we articulate a dependency on.
+    G = tiledb.Group(output_path)
+    assert G.meta[tiledbsc.util_tiledb.SOMA_OBJECT_TYPE_METADATA_KEY] == "SOMA"
+    G.close()
+
     # Check X/data (dense)
     with tiledb.open(os.path.join(output_path, "X", "data")) as A:
         df = A[:]
         keys = list(df.keys())
         assert keys == ["value", "obs_id", "var_id"]
         assert A.ndim == 2
+        assert (
+            A.meta[tiledbsc.util_tiledb.SOMA_OBJECT_TYPE_METADATA_KEY] == "AssayMatrix"
+        )
 
     # Check X/raw (sparse)
     with tiledb.open(os.path.join(output_path, "raw", "X", "data")) as A:
@@ -64,17 +74,28 @@ def test_import_anndata(adata):
         assert df.columns.to_list() == ["obs_id", "var_id", "value"]
         # verify sparsity of raw data
         assert df.shape[0] == orig.raw.X.nnz
+        assert (
+            A.meta[tiledbsc.util_tiledb.SOMA_OBJECT_TYPE_METADATA_KEY] == "AssayMatrix"
+        )
 
     # Check obs
     with tiledb.open(os.path.join(output_path, "obs")) as A:
         df = A.df[:]
         assert df.columns.to_list() == orig.obs_keys()
+        assert (
+            A.meta[tiledbsc.util_tiledb.SOMA_OBJECT_TYPE_METADATA_KEY]
+            == "AnnotationDataFrame"
+        )
     assert sorted(soma.obs.ids()) == sorted(list(orig.obs_names))
 
     # Check var
     with tiledb.open(os.path.join(output_path, "var")) as A:
         df = A.df[:]
         assert df.columns.to_list() == orig.var_keys()
+        assert (
+            A.meta[tiledbsc.util_tiledb.SOMA_OBJECT_TYPE_METADATA_KEY]
+            == "AnnotationDataFrame"
+        )
     assert sorted(soma.var.ids()) == sorted(list(orig.var_names))
 
     # Check some annotation matrices
@@ -85,6 +106,10 @@ def test_import_anndata(adata):
             df = A.df[:]
             assert df.shape[0] == orig.obsm[key].shape[0]
             assert soma.obsm[key].shape() == orig.obsm[key].shape
+            assert (
+                A.meta[tiledbsc.util_tiledb.SOMA_OBJECT_TYPE_METADATA_KEY]
+                == "AnnotationMatrix"
+            )
 
     assert sorted(soma.varm.keys()) == sorted(orig.varm.keys())
     for key in orig.varm_keys():
@@ -92,6 +117,10 @@ def test_import_anndata(adata):
             df = A.df[:]
             assert df.shape[0] == orig.varm[key].shape[0]
             assert soma.varm[key].shape() == orig.varm[key].shape
+            assert (
+                A.meta[tiledbsc.util_tiledb.SOMA_OBJECT_TYPE_METADATA_KEY]
+                == "AnnotationMatrix"
+            )
 
     assert sorted(soma.obsp.keys()) == sorted(orig.obsp.keys())
     for key in list(orig.obsp.keys()):
@@ -106,5 +135,9 @@ def test_import_anndata(adata):
             shape = soma.obsp[key].df().shape
             assert shape[0] == orig.obsp[key].nnz
             assert shape[1] == 1
+            assert (
+                A.meta[tiledbsc.util_tiledb.SOMA_OBJECT_TYPE_METADATA_KEY]
+                == "AssayMatrix"
+            )
 
     tempdir.cleanup()

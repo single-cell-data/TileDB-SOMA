@@ -189,6 +189,8 @@ class AnnotationDataFrame(TileDBArray):
             mode=mode,
         )
 
+        self.set_soma_object_type_metadata()
+
         if self._verbose:
             print(util.format_elapsed(s, f"{self._indent}FINISH WRITING {self.uri}"))
 
