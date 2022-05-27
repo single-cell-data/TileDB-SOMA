@@ -17,7 +17,7 @@ find_package(TileDB_EP REQUIRED)
 ############################################################
 
 # TODO make this conditional
-if (TRUE)
+if (FALSE)
     find_package(Catch_EP REQUIRED)
 
     add_executable(unit_sc EXCLUDE_FROM_ALL)
