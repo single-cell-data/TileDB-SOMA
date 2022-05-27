@@ -16,6 +16,7 @@ import sys
 import argparse
 
 import tiledbsc
+import tiledbsc.io
 
 parser = argparse.ArgumentParser(
     description="Show some tiledbsc-relevant information about specified anndata .h5ad files"

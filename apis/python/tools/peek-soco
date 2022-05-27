@@ -8,6 +8,7 @@
 
 import tiledb
 import tiledbsc as t
+import tiledbsc.io as io
 import sys, os
 
 import anndata

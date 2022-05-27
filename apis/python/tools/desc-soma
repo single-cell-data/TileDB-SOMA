@@ -8,6 +8,7 @@
 
 import sys, os
 import tiledbsc
+import tiledbsc.io
 
 
 def main():
