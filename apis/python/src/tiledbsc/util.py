@@ -29,7 +29,7 @@ def format_elapsed(start_stamp, message: str):
 
 # ----------------------------------------------------------------
 def _find_csr_chunk_size(
-    mat: scipy.sparse._csr.csr_matrix,
+    mat: scipy.sparse.csr_matrix,
     permutation: list,
     start_row_index: int,
     goal_chunk_nnz: int,
