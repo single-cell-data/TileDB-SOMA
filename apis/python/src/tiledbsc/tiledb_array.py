@@ -1,4 +1,5 @@
 import tiledb
+import tiledbsc.util_tiledb
 from .soma_options import SOMAOptions
 from .tiledb_object import TileDBObject
 from .tiledb_group import TileDBGroup
@@ -96,3 +97,13 @@ class TileDBArray(TileDBObject):
         Returns true if the array has the specified attribute name, false otherwise.
         """
         return attr_name in self.attr_names()
+
+    def set_soma_object_type_metadata(self) -> None:
+        """
+        This helps nested-structured traversals (especially those that start at the SOMACollection
+        level) confidently navigate with a minimum of introspection on group contents.
+        """
+        with self._open("w") as A:
+            A.meta[
+                tiledbsc.util_tiledb.SOMA_OBJECT_TYPE_METADATA_KEY
+            ] = self.__class__.__name__

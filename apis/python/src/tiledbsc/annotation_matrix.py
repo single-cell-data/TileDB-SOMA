@@ -105,6 +105,8 @@ class AnnotationMatrix(TileDBArray):
         else:
             self._numpy_ndarray_or_scipy_sparse_csr_matrix(matrix, dim_values)
 
+        self.set_soma_object_type_metadata()
+
         if self._verbose:
             print(util.format_elapsed(s, f"{self._indent}FINISH WRITING {self.uri}"))
 

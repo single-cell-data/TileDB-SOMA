@@ -28,6 +28,13 @@ def test_import_anndata(tmp_path):
 
     soco = tiledbsc.SOMACollection(soco_dir)
 
+    # TODO: change this to with-open-as syntax once
+    # https://github.com/TileDB-Inc/TileDB-Py/pull/1124
+    # is in a TileDB-Py release which we articulate a dependency on.
+    G = tiledb.Group(soma1_dir)
+    assert G.meta[tiledbsc.util_tiledb.SOMA_OBJECT_TYPE_METADATA_KEY] == "SOMA"
+    G.close()
+
     soco._create()
     assert len(soco._get_member_names()) == 0
 

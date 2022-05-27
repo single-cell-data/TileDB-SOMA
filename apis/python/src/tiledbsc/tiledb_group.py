@@ -1,4 +1,5 @@
 import tiledb
+import tiledbsc.util_tiledb
 from .soma_options import SOMAOptions
 from .tiledb_object import TileDBObject
 
@@ -60,6 +61,10 @@ class TileDBGroup(TileDBObject):
         if self._verbose:
             print(f"{self._indent}Creating TileDB group {self.uri}")
         tiledb.group_create(uri=self.uri, ctx=self._ctx)
+        with self._open("w") as G:
+            G.meta[
+                tiledbsc.util_tiledb.SOMA_OBJECT_TYPE_METADATA_KEY
+            ] = self.__class__.__name__
 
     def _open_withlessly(self, mode="r"):
         """
