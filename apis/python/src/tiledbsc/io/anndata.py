@@ -249,15 +249,14 @@ def to_anndata(soma: tiledbsc.SOMA) -> ad.AnnData:
     obsm = soma.obsm.to_dict_of_csr()
     varm = soma.varm.to_dict_of_csr()
 
-    # TODO
-    print("  OBSP OUTGEST NOT WORKING YET")
-    # obsp = soma.obsp.to_dict_of_csr()
-    print("  VARP OUTGEST NOT WORKING YET")
-    # varp = soma.varp.to_dict_of_csr()
+    obsp = soma.obsp.to_dict_of_csr(obs_df.index, obs_df.index)
+    varp = soma.varp.to_dict_of_csr(var_df.index, var_df.index)
 
     (raw_X, raw_var_df, raw_varm) = soma.raw.to_anndata_raw(obs_df.index)
 
-    anndata = ad.AnnData(X=X_mat, obs=obs_df, var=var_df, obsm=obsm, varm=varm)
+    anndata = ad.AnnData(
+        X=X_mat, obs=obs_df, var=var_df, obsm=obsm, varm=varm, obsp=obsp, varp=varp
+    )
 
     raw = ad.Raw(
         anndata,
