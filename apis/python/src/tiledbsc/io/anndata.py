@@ -1,5 +1,6 @@
 import tiledbsc
 import tiledbsc.util
+import tiledb
 import tiledbsc.util_ann
 import anndata as ad
 
@@ -7,6 +8,23 @@ import anndata as ad
 def from_h5ad(soma: tiledbsc.SOMA, input_path: str) -> None:
     """
     Reads an .h5ad file and writes to a TileDB group structure.
+    """
+    _from_h5ad_common(soma, input_path, from_anndata)
+
+
+# ----------------------------------------------------------------
+def from_h5ad_update_obs_and_var(soma: tiledbsc.SOMA, input_path: str) -> None:
+    """
+    Rewrites obs and var from the specified .h5ad file, leaving all other data in place. Useful for
+    updating schema/compression/etc. within an existing dataset.
+    """
+    _from_h5ad_common(soma, input_path, from_anndata_update_obs_and_var)
+
+
+# ----------------------------------------------------------------
+def _from_h5ad_common(soma: tiledbsc.SOMA, input_path: str, handler_func) -> None:
+    """
+    Common code for things we do when processing a .h5ad file for ingest/update.
     """
     if soma._verbose:
         s = tiledbsc.util.get_start_stamp()
@@ -23,7 +41,7 @@ def from_h5ad(soma: tiledbsc.SOMA, input_path: str) -> None:
             )
         )
 
-    from_anndata(soma, anndata)
+    handler_func(soma, anndata)
 
     if soma._verbose:
         print(
@@ -93,15 +111,15 @@ def from_anndata(soma: tiledbsc.SOMA, anndata: ad.AnnData) -> None:
     soma._create()
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-    soma.X.from_matrix_and_dim_values(anndata.X, anndata.obs.index, anndata.var.index)
-    soma._add_object(soma.X)
-
-    # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     soma.obs.from_dataframe(dataframe=anndata.obs, extent=256)
     soma._add_object(soma.obs)
 
     soma.var.from_dataframe(dataframe=anndata.var, extent=2048)
     soma._add_object(soma.var)
+
+    # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    soma.X.from_matrix_and_dim_values(anndata.X, anndata.obs.index, anndata.var.index)
+    soma._add_object(soma.X)
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     soma.obsm.from_matrices_and_dim_values(anndata.obsm, anndata.obs_names)
@@ -125,6 +143,51 @@ def from_anndata(soma: tiledbsc.SOMA, anndata: ad.AnnData) -> None:
     if anndata.uns != None:
         soma.uns.from_anndata_uns(anndata.uns)
         soma._add_object(soma.uns)
+
+    if soma._verbose:
+        print(
+            tiledbsc.util.format_elapsed(s, f"{soma._indent}FINISH WRITING {soma.uri}")
+        )
+
+
+# ----------------------------------------------------------------
+def from_anndata_update_obs_and_var(soma: tiledbsc.SOMA, anndata: ad.AnnData) -> None:
+    """
+    Rewrites obs and var from anndata, leaving all other data in place. Useful
+    for updating schema/compression/etc. within an existing dataset.
+    """
+
+    # Without _at least_ an index, there is nothing to indicate the dimension indices.
+    if anndata.obs.index.empty or anndata.var.index.empty:
+        raise NotImplementedError("Empty AnnData.obs or AnnData.var unsupported.")
+
+    if soma._verbose:
+        s = tiledbsc.util.get_start_stamp()
+        print(f"{soma._indent}START  DECATEGORICALIZING")
+    anndata.obs_names_make_unique()
+    anndata.var_names_make_unique()
+    anndata = tiledbsc.util_ann._decategoricalize(anndata)
+    if soma._verbose:
+        print(
+            tiledbsc.util.format_elapsed(s, f"{soma._indent}FINISH DECATEGORICALIZING")
+        )
+
+    if soma._verbose:
+        s = tiledbsc.util.get_start_stamp()
+        print(f"{soma._indent}START  WRITING {soma.uri}")
+
+    # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    soma._remove_object(soma.obs)
+    soma.obs.from_dataframe(dataframe=anndata.obs, extent=256)
+    soma._add_object(soma.obs)
+    tiledb.consolidate(soma.obs.uri)
+    tiledb.vacuum(soma.obs.uri)
+
+    soma._remove_object(soma.var)
+    soma.var.from_dataframe(dataframe=anndata.var, extent=2048)
+    soma._add_object(soma.var)
+    tiledb.consolidate(soma.var.uri)
+    tiledb.vacuum(soma.var.uri)
 
     if soma._verbose:
         print(

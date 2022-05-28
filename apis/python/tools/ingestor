@@ -60,7 +60,7 @@ select `relative=True`. (This is the default.)
     parser.add_argument(
         "--ifexists",
         help="What to do if soma storage already exists. Default: continue.",
-        choices=["replace", "abort", "continue"],
+        choices=["replace", "abort", "continue", "update_obs_and_var"],
         type=str,
         nargs=1,
     )
@@ -135,25 +135,34 @@ def ingest_one(input_path: str, output_path: str, ifexists: str, soma_options: t
         if not os.path.exists(parent):
             os.mkdir(parent)
 
-    if os.path.exists(output_path):
-        if ifexists == "continue":
-            print(f"Already exists; continuing: {output_path}")
-            return
-        elif ifexists == "abort":
-            print(f"Already exists; aborting: {output_path}")
-            sys.exit(1)
-        elif ifexists == "replace":
-            print(f"Already exists; replacing: {output_path}")
-            shutil.rmtree(output_path)  # Overwrite
-        else:
-            raise Exception(
-                "Internal coding error in --ifexists handling.", ifexists, "<"
-            )
-
     soma = tiledbsc.SOMA(uri=output_path, soma_options=soma_options)
 
-    # Do the ingest into TileDB.
-    tiledbsc.io.from_h5ad(soma, input_path)
+    if ifexists == "update_obs_and_var":
+        if not os.path.exists(output_path):
+            raise Exception("Cannot update; doesn't exist yet:", output_path)
+        # Do the ingest into TileDB.
+        tiledbsc.io.from_h5ad_update_obs_and_var(soma, input_path)
+
+    else:
+        if os.path.exists(output_path):
+            if ifexists == "continue":
+                print(f"Already exists; continuing: {output_path}")
+                return
+            elif ifexists == "abort":
+                print(f"Already exists; aborting: {output_path}")
+                sys.exit(1)
+            elif ifexists == "replace":
+                if output_path.startswith('s3://') or output_path.startswith('tiledb://'):
+                    raise("--ifexists replace currently only is compatible with local-disk paths")
+                print(f"Already exists; replacing: {output_path}")
+                shutil.rmtree(output_path)  # Overwrite
+            else:
+                raise Exception(
+                    "Internal coding error in --ifexists handling.", ifexists, "<"
+                )
+        # Do the ingest into TileDB.
+        tiledbsc.io.from_h5ad(soma, input_path)
+
     if not verbose:
         print(f"Wrote {output_path}")
 
