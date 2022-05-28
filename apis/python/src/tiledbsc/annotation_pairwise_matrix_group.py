@@ -105,9 +105,7 @@ class AnnotationPairwiseMatrixGroup(TileDBGroup):
             self._add_object(annotation_pairwise_matrix)
 
     # ----------------------------------------------------------------
-    def to_dict_of_csr(
-        self, obs_df_index, var_df_index
-    ) -> Dict[str, scipy.sparse.csr_matrix]:
+    def to_dict_of_csr(self) -> Dict[str, scipy.sparse.csr_matrix]:
         """
         Reads the obsm/varm group-member arrays into a dict from name to member array.
         Member arrays are returned in sparse CSR format.
@@ -127,21 +125,30 @@ class AnnotationPairwiseMatrixGroup(TileDBGroup):
             s = util.get_start_stamp()
             print(f"{self._indent}START  read {self.uri}")
 
+        # TODO: fold this element-enumeration into the TileDB group class.  Maybe on the same PR
+        # where we support somagroup['name'] with overloading of the [] operator.
         matrices_in_group = {}
-        for element in self:
-            if self._verbose:
-                s2 = util.get_start_stamp()
-                print(f"{self._indent}START  read {element.uri}")
+        for element in grp:
+            with tiledb.open(element.uri) as A:
+                with tiledb.open(element.uri) as A:
+                    if self._verbose:
+                        s2 = util.get_start_stamp()
+                        print(f"{self._indent}START  read {element.uri}")
 
-            matrix_name = os.path.basename(element.uri)  # TODO: fix for tiledb cloud
-            matrices_in_group[matrix_name] = element.to_csr_matrix(
-                obs_df_index, var_df_index
-            )
+                    df = pd.DataFrame(A[:])
+                    matrix_name = os.path.basename(
+                        element.uri
+                    )  # TODO: fix for tiledb cloud
+                    matrices_in_group[matrix_name] = scipy.sparse.coo_matrix(df).tocsr()
+                    # TODO: not working yet:
+                    # TypeError: no supported conversion for types: (dtype('O'),)
 
-            if self._verbose:
-                print(
-                    util.format_elapsed(s2, f"{self._indent}FINISH read {element.uri}")
-                )
+                    if self._verbose:
+                        print(
+                            util.format_elapsed(
+                                s2, f"{self._indent}FINISH read {element.uri}"
+                            )
+                        )
 
         grp.close()
 
