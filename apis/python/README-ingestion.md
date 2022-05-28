@@ -136,7 +136,7 @@ ANNDATA FILE TYPES:
 X/data                                   <class 'numpy.ndarray'>
 X/data shape                             (80, 20)
 X/data dtype                             float64
-X/raw                                    <class 'scipy.sparse._csr.csr_matrix'>
+X/raw                                    <class 'scipy.sparse.csr_matrix'>
 X/raw shape                              (80, 230)
 X/data dtype                             float64
 X/raw density                            0.2422
@@ -145,7 +145,7 @@ var                                      <class 'pandas.core.frame.DataFrame'>
 obsm/X_pca                               <class 'numpy.ndarray'>
 obsm/X_tsne                              <class 'numpy.ndarray'>
 varm/PCs                                 <class 'numpy.ndarray'>
-obsp/distances                           <class 'scipy.sparse._csr.csr_matrix'>
+obsp/distances                           <class 'scipy.sparse.csr_matrix'>
 uns/neighbors/params/method              (1,) <class 'numpy.ndarray'> object
 ```
 
