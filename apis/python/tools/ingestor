@@ -152,6 +152,8 @@ def ingest_one(input_path: str, output_path: str, ifexists: str, soma_options: t
                 print(f"Already exists; aborting: {output_path}")
                 sys.exit(1)
             elif ifexists == "replace":
+                if output_path.startswith('s3://') or output_path.startswith('tiledb://'):
+                    raise("--ifexists replace currently only is compatible with local-disk paths")
                 print(f"Already exists; replacing: {output_path}")
                 shutil.rmtree(output_path)  # Overwrite
             else:
