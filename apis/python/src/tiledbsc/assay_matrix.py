@@ -18,7 +18,7 @@ import math
 class AssayMatrix(TileDBArray):
     """
     Wraps a TileDB sparse array with two string dimensions.
-    Used for X, obsp members, and varp members.
+    Used for `X`, `raw.X`, `obsp` elements, and `varp` elements.
     """
 
     row_dim_name: str  # obs_id for X, obs_id_i for obsp; var_id_i for varp
@@ -40,14 +40,18 @@ class AssayMatrix(TileDBArray):
     ):
         """
         See the TileDBObject constructor.
+
         The `row_dataframe` and `col_dataframe` are nominally:
+
         * `soma.obs` and `soma.var`, for `soma.X.data`
         * `soma.obs` and `soma.raw.var`, for `soma.raw.X.data`
         * `soma.obs` and `soma.obs`, for `soma.obsp` elements
         * `soma.var` and `soma.var`, for `soma.obsp` elements
+
         References to these objects are kept solely for obtaining dim labels for metadata
         acquisition at runtime (e.g. shape). We retain references to these objects, rather
         than taking in actualized ID-lists here in the constructor, for two reasons:
+
         * We need to be able to set up a SOMA to write to, before it's been populated.
         * For reading from an already-populated SOMA, we wish to avoid cache-coherency issues.
         """
@@ -107,8 +111,8 @@ class AssayMatrix(TileDBArray):
     # ----------------------------------------------------------------
     def from_matrix_and_dim_values(self, matrix, row_names, col_names) -> None:
         """
-        Imports a matrix -- nominally scipy.sparse.csr_matrix or numpy.ndarray -- into a TileDB
-        array which is used for X, obsp members, and varp members.
+        Imports a matrix -- nominally `scipy.sparse.csr_matrix` or `numpy.ndarray` -- into a TileDB
+        array which is used for `X`, `raw.X`, `obsp` members, and `varp` members.
         """
 
         if self._verbose:
@@ -190,9 +194,9 @@ class AssayMatrix(TileDBArray):
     # ----------------------------------------------------------------
     def ingest_data_whole(self, matrix, row_names, col_names) -> None:
         """
-        Convert ndarray/(csr|csc)matrix to coo_matrix and ingest into TileDB.
+        Convert `numpy.ndarray`, `scipy.sparse.csr_matrix`, or `scipy.sparse.csc_matrix` to COO matrix and ingest into TileDB.
 
-        :param matrix: Matrix-like object coercible to a scipy coo_matrix.
+        :param matrix: Matrix-like object coercible to a scipy COO matrix.
         :param row_names: List of row names.
         :param col_names: List of column names.
         """
@@ -531,8 +535,8 @@ class AssayMatrix(TileDBArray):
     def to_csr_matrix(self, row_labels, col_labels):
         """
         Reads the TileDB array storage for the storage and returns a sparse CSR matrix.  The
-        row/columns labels should be obs,var labels if the AssayMatrix is X, or obs,obs labels if
-        the AssayMatrix is obsp, or var,var labels if the AssayMatrix is varp.
+        row/columns labels should be `obs,var` labels if the `AssayMatrix` is `X`, or `obs,obs` labels if
+        the `AssayMatrix` is `obsp`, or `var,var` labels if the `AssayMatrix` is `varp`.
         Note in all cases that TileDB will have sorted the row and column labels; they won't
         be in the same order as they were in any anndata object which was used to create the
         TileDB storage.

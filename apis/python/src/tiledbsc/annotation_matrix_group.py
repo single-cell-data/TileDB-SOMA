@@ -35,7 +35,7 @@ class AnnotationMatrixGroup(TileDBGroup):
     # ----------------------------------------------------------------
     def keys(self):
         """
-        For obsm and varm, `.keys()` is a keystroke-saver for the more general group-member
+        For `obsm` and `varm`, `.keys()` is a keystroke-saver for the more general group-member
         accessor `._get_member_names()`.
         """
         return self._get_member_names()
@@ -43,7 +43,7 @@ class AnnotationMatrixGroup(TileDBGroup):
     # ----------------------------------------------------------------
     def __iter__(self) -> List[AnnotationMatrix]:
         """
-        Implements 'for matrix in soma.obsm: ...' and 'for matrix in soma.varm: ...'
+        Implements `for matrix in soma.obsm: ...` and `for matrix in soma.varm: ...`
         """
         retval = []
         for name, uri in self._get_member_names_to_uris().items():
@@ -56,7 +56,7 @@ class AnnotationMatrixGroup(TileDBGroup):
     # ----------------------------------------------------------------
     def from_matrices_and_dim_values(self, annotation_matrices, dim_values):
         """
-        Populates the obsm/ or varm/ subgroup for a SOMA object, then writes all the components
+        Populates the `obsm` or `varm` subgroup for a SOMA object, then writes all the components
         arrays under that group.
 
         :param annotation_matrices: anndata.obsm, anndata.varm, or anndata.raw.varm.
@@ -147,7 +147,7 @@ class AnnotationMatrixGroup(TileDBGroup):
     def __getitem__(self, name):
         """
         Returns an `AnnotationMatrix` element at the given name within the group, or None if no such
-        member exists.  Overloads the [...] operator.
+        member exists.  Overloads the `[...]` operator.
         """
 
         # TODO: If TileDB-Py were to support `name in G` the line-count could reduce here.
@@ -172,7 +172,7 @@ class AnnotationMatrixGroup(TileDBGroup):
 
     def __contains__(self, name):
         """
-        Implements '"namegoeshere" in soma.obsm/soma.varm'.
+        Implements the `in` operator, e.g. `"namegoeshere" in soma.obsm/soma.varm`.
         """
         # TODO: this will get easier once TileDB.group.Group supports `name` in `__contains__`.
         # See SC-18057 and https://github.com/single-cell-data/TileDB-SingleCell/issues/113.

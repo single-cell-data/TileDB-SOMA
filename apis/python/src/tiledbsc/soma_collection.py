@@ -9,7 +9,7 @@ from .tiledb_group import TileDBGroup
 
 class SOMACollection(TileDBGroup):
     """
-    Implements a collection of SOMA objects.
+    Implements a collection of `SOMA` objects.
     """
 
     # ----------------------------------------------------------------
@@ -24,11 +24,10 @@ class SOMACollection(TileDBGroup):
         parent: Optional[TileDBGroup] = None,  # E.g. a SOMA collection
     ):
         """
-        @description Create a new SOMACollection object. The existing group is
-          opened at the specified `uri` if one is present, otherwise a new
-          group is created.
-        @param uri URI of the TileDB group
-        @param verbose Print status messages
+        Create a new `SOMACollection` object. The existing group is opened at the specified `uri` if one is present, otherwise a new group will be created upon ingest.
+
+        :param uri: URI of the TileDB group
+        :param verbose: Print status messages
         """
 
         if ctx is None and config is not None:
@@ -48,21 +47,21 @@ class SOMACollection(TileDBGroup):
     # ----------------------------------------------------------------
     def add(self, soma: SOMA) -> None:
         """
-        Adds a SOMA to the SOMACollection.
+        Adds a `SOMA` to the `SOMACollection`.
         """
         self._add_object(soma)
 
     # ----------------------------------------------------------------
     def remove(self, soma: SOMA) -> None:
         """
-        Removes a SOMA from the SOMACollection.
+        Removes a `SOMA` from the `SOMACollection`.
         """
         self._remove_object(soma)
 
     # ----------------------------------------------------------------
     def __iter__(self) -> List[SOMA]:
         """
-        Implements 'for soma in soco: ...'
+        Implements `for soma in soco: ...`
         """
         retval = []
         for name, uri in self._get_member_names_to_uris().items():
@@ -73,7 +72,7 @@ class SOMACollection(TileDBGroup):
     # ----------------------------------------------------------------
     def __contains__(self, name: str) -> bool:
         """
-        Implements 'name in soco'
+        Implements `name in soco`
         """
         # TODO: this will get easier once TileDB.group.Group supports `name` in `__contains__`.
         # See SC-18057 and https://github.com/single-cell-data/TileDB-SingleCell/issues/113.
@@ -103,8 +102,8 @@ class SOMACollection(TileDBGroup):
     #   `AnnotationMatrix, [] on `UnsGroup` will return `UnsArray` or `UnsGroup`, etc.
     def __getitem__(self, name):
         """
-        Returns a `SOMA` element at the given name within the group, or None if no such
-        member exists.  Overloads the [...] operator.
+        Returns a `SOMA` element at the given name within the group, or `None` if no such
+        member exists.  Overloads the `[...]` operator.
         """
 
         with self._open("r") as G:
