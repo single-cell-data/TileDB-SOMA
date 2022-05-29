@@ -31,7 +31,7 @@ class AnnotationPairwiseMatrixGroup(TileDBGroup):
         parent: Optional[TileDBGroup] = None,
     ):
         """
-        See the TileDBObject constructor.
+        See the `TileDBObject` constructor.
         See `AssayMatrix` for the rationale behind retaining references to the `row_dataframe` and
         `col_dataframe` objects.
         """
@@ -57,7 +57,7 @@ class AnnotationPairwiseMatrixGroup(TileDBGroup):
     # ----------------------------------------------------------------
     def __iter__(self) -> List[AssayMatrix]:
         """
-        Implements 'for matrix in soma.obsp: ...' and 'for matrix in soma.varp: ...'
+        Implements `for matrix in soma.obsp: ...` and `for matrix in soma.varp: ...`
         """
         retval = []
         for name, uri in self._get_member_names_to_uris().items():
@@ -76,7 +76,7 @@ class AnnotationPairwiseMatrixGroup(TileDBGroup):
     # ----------------------------------------------------------------
     def from_matrices_and_dim_values(self, annotation_pairwise_matrices, dim_values):
         """
-        Populates the obsp/ or varp/ subgroup for a SOMA object, then writes all the components
+        Populates the `obsp` or `varp` subgroup for a SOMA object, then writes all the components
         arrays under that group.
 
         :param annotation_pairwise_matrices: anndata.obsp, anndata.varp, or anndata.raw.varp.
@@ -107,7 +107,7 @@ class AnnotationPairwiseMatrixGroup(TileDBGroup):
     # ----------------------------------------------------------------
     def to_dict_of_csr(self) -> Dict[str, scipy.sparse.csr_matrix]:
         """
-        Reads the obsm/varm group-member arrays into a dict from name to member array.
+        Reads the `obsm` or `varm` group-member arrays into a dict from name to member array.
         Member arrays are returned in sparse CSR format.
         """
 
@@ -175,8 +175,8 @@ class AnnotationPairwiseMatrixGroup(TileDBGroup):
     #   `AnnotationMatrix, [] on `UnsGroup` will return `UnsArray` or `UnsGroup`, etc.
     def __getitem__(self, name):
         """
-        Returns an `AssayMatrix` element at the given name within the group, or None if no such
-        member exists.  Overloads the [...] operator.
+        Returns an `AssayMatrix` element at the given name within the group, or `None` if no such
+        member exists.  Overloads the `[...]` operator.
         """
 
         with self._open("r") as G:
@@ -206,7 +206,7 @@ class AnnotationPairwiseMatrixGroup(TileDBGroup):
 
     def __contains__(self, name):
         """
-        Implements '"namegoeshere" in soma.obsp/soma.varp'.
+        Implements `"namegoeshere" in soma.obsp/soma.varp`.
         """
         # TODO: this will get easier once TileDB.group.Group supports `name` in `__contains__`.
         # See SC-18057 and https://github.com/single-cell-data/TileDB-SingleCell/issues/113.

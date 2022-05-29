@@ -6,7 +6,7 @@ from typing import Optional
 
 class TileDBObject:
     """
-    Base class for TileDBArray and TileDBGroup. Manages soma_options, context, etc. which are common
+    Base class for `TileDBArray` and `TileDBGroup`. Manages soma_options, context, etc. which are common
     to both.
     """
 
@@ -34,7 +34,7 @@ class TileDBObject:
         ctx: Optional[tiledb.Ctx] = None,
     ):
         """
-        Initialization-handling shared between TileDBArray and TileDBGroup.  Specify soma_options,
+        Initialization-handling shared between `TileDBArray` and `TileDBGroup`.  Specify soma_options,
         verbose, and ctx for the top-level object; omit them and specify parent for non-top-level
         objects. Note that the parent reference is solely for propagating options, ctx, display
         depth, etc.
@@ -60,8 +60,8 @@ class TileDBObject:
 
     def _object_type(self):
         """
-        This should be implemented by child classes and should return what tiledb.object_type(uri)
-        returns for objects of a given type -- nominally 'group' or 'array'.
+        This should be implemented by child classes and should return what `tiledb.object_type(uri)`
+        returns for objects of a given type -- nominally `"group"` or `"array"`.
         """
         raise Exception("This virtual method must be overridden by a child class.")
 

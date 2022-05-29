@@ -12,12 +12,7 @@ SOMA_OBJECT_TYPE_METADATA_KEY = "__soma_object_type__"
 # ================================================================
 def show_single_cell_group(soma_uri: str, ctx: Optional[tiledb.Ctx] = None):
     """
-    Show some summary information about an ingested TileDB Single-Cell Group.
-    This tool goes a bit beyond
-      `print(tiledb.group.Group('tiledb-data/pbmc3k_processed'))`
-    by also revealing array schema. Additionally, by employing encoded domain-specific knowleldge,
-    it traverses items in the familiar order X, obs, var, etc. rather than using
-    the general-purpose tiledb-group-display function.
+    Show some summary information about an ingested TileDB Single-Cell Group.  This tool goes a bit beyond `print(tiledb.group.Group(soma_uri))` by also revealing array schema. Additionally, by employing encoded domain-specific knowleldge, it traverses items in the familiar order `X`, `obs`, `var`, etc. rather than using the general-purpose tiledb-group-display function.
     """
 
     # Tab-completion at the shell can insert a trailing slash; leave it off

@@ -22,7 +22,7 @@ def get_start_stamp():
 def format_elapsed(start_stamp, message: str):
     """
     Returns the message along with an elapsed-time indicator, with end time relative to start
-    start from get_start_stamp. Used for annotating elapsed time of a task.
+    start from `get_start_stamp`. Used for annotating elapsed time of a task.
     """
     return "%s TIME %.3f seconds" % (message, time.time() - start_stamp)
 
@@ -35,7 +35,7 @@ def _find_csr_chunk_size(
     goal_chunk_nnz: int,
 ):
     """
-    Given a CSR matrix and a start row index, returns the number of rows with cumulative nnz as
+    Given a CSR matrix and a start row index, returns the number of rows with cumulative NNZ as
     desired. Context is chunked-COO ingest of larger CSR matrices: if mat is say 8000x9000 but
     sparse, maybe we'll read rows 0:45 as one chunk and convert that to COO and ingest, then maybe
     rows 46:78 as a second chunk and convert that to COO and ingest, and so on.
@@ -243,8 +243,7 @@ class ETATracker:
 
     def ingest_and_predict(self, chunk_percent: float, chunk_seconds: float) -> str:
         """
-        Updates from most recent chunk percent-done and chunk completion-seconds, then does a linear
-        regression on all chunks done so far and estimates time to completion.
+        Updates from most recent chunk percent-done and chunk completion-seconds, then does a linear regression on all chunks done so far and estimates time to completion.
         :param chunk_percent: a percent done like 6.1 or 10.3.
         :param chunk_seconds: number of seconds it took to do the current chunk operation.
         """

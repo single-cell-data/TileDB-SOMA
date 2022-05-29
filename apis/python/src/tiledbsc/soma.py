@@ -26,11 +26,10 @@ class SOMA(TileDBGroup):
     """Single-cell group
     Class for representing a group of TileDB groups/arrays that constitute an SOMA ('stack of matrices, annotated')
     which includes:
-    * `X` (`AssayMatrixGroup`): a group of one or more labeled 2D sparse arrays
-      that share the same dimensions.
-    * `obs` (`AnnotationDataframe`): 1D labeled array with column labels for
-      `X`
-    * `var` ([`AnnotationDataframe`]): 1D labeled array with row labels for `X`
+
+    * `X` (`AssayMatrixGroup`): a group of one or more labeled 2D sparse arrays that share the same dimensions.
+    * `obs` (`AnnotationDataframe`): 1D labeled array with column labels for `X`
+    * `var` (`AnnotationDataframe`): 1D labeled array with row labels for `X`
 
     See also desc-ann.py in this directory for helpful information to
     reveal the diversity/variety of HDF5 files we process.
@@ -58,11 +57,10 @@ class SOMA(TileDBGroup):
         parent: Optional[TileDBGroup] = None,  # E.g. a SOMA collection
     ):
         """
-        @description Create a new SOMA object. The existing array group is
-          opened at the specified array `uri` if one is present, otherwise a new
-          array group is created.
-        @param uri URI of the TileDB group
-        @param verbose Print status messages
+        Create a new SOMA object. The existing array group is opened at the specified array `uri` if one is present, otherwise a new array group is created.
+
+        :param uri: URI of the TileDB group
+        :param verbose: Print status messages
         """
 
         if ctx is None and config is not None:
@@ -135,6 +133,6 @@ class SOMA(TileDBGroup):
     # ----------------------------------------------------------------
     def __str__(self):
         """
-        Implements 'print(soma)'.
+        Implements `print(soma)`.
         """
         return f"name={self.name},uri={self.uri}"

@@ -11,7 +11,7 @@ import os
 
 class AssayMatrixGroup(TileDBGroup):
     """
-    Nominally for soma X and raw/X.
+    Nominally for `X`, `raw/X`, `obsp` elements, and `varp` elements.
     """
 
     data: AssayMatrix
@@ -28,7 +28,8 @@ class AssayMatrixGroup(TileDBGroup):
         parent: Optional[TileDBGroup] = None,
     ):
         """
-        See the TileDBObject constructor.
+        See the `TileDBObject` constructor.
+
         See `AssayMatrix` for the rationale behind retaining references to the `row_dataframe` and
         `col_dataframe` objects.
         """
@@ -48,8 +49,7 @@ class AssayMatrixGroup(TileDBGroup):
     # ----------------------------------------------------------------
     def from_matrix_and_dim_values(self, matrix, row_names, col_names) -> None:
         """
-        Populates the X/ or raw/X subgroup for a SOMA object.  Nominally row_names will be
-        anndata.obs_names and col_names will be anndata.var_names or anndata.raw.var_names.
+        Populates the `X` or `raw.X` subgroup for a `SOMA` object.  For `X` and `raw.X`, nominally `row_names` will be `anndata.obs_names` and `col_names` will be `anndata.var_names` or `anndata.raw.var_names`.  For `obsp` elements, both will be `anndata.obs_names`; for `varp elements, both will be `anndata.var_names`.
         """
 
         if matrix is not None:

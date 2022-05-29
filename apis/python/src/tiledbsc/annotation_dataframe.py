@@ -12,7 +12,7 @@ from typing import Optional, Tuple, List
 
 class AnnotationDataFrame(TileDBArray):
     """
-    Nominally for obs and var data within a soma. These have one string dimension, and multiple attributes.
+    Nominally for `obs` and `var` data within a soma. These have one string dimension, and multiple attributes.
     """
 
     dim_name: str
@@ -100,7 +100,7 @@ class AnnotationDataFrame(TileDBArray):
     def attribute_filter(self, query_string, col_names_to_keep):
         """
         Selects from obs/var using a TileDB-Py `QueryCondition` string such as
-        'cell_type == "blood"'. Returns None if the slice is empty.
+        `cell_type == "blood"`. Returns None if the slice is empty.
         This is a v1 implementation for the prototype/demo timeframe.
         """
         with tiledb.open(self.uri) as A:
@@ -116,10 +116,10 @@ class AnnotationDataFrame(TileDBArray):
     # ----------------------------------------------------------------
     def from_dataframe(self, dataframe: pd.DataFrame, extent: int) -> None:
         """
-        Populates the obs/ or var/ subgroup for a SOMA object.
+        Populates the `obs` or `var` subgroup for a SOMA object.
 
-        :param dataframe: anndata.obs, anndata.var, anndata.raw.var.
-        :param extent: TileDB extent parameter for the array schema.
+        :param dataframe: `anndata.obs`, `anndata.var`, `anndata.raw.var`.
+        :param extent: TileDB `extent` parameter for the array schema.
         """
 
         offsets_filters = tiledb.FilterList(
@@ -197,7 +197,7 @@ class AnnotationDataFrame(TileDBArray):
     # ----------------------------------------------------------------
     def to_dataframe(self) -> pd.DataFrame:
         """
-        Reads the TileDB obs or var array and returns a type of pandas dataframe
+        Reads the TileDB `obs` or `var` array and returns a type of pandas dataframe
         and dimension values.
         """
 
