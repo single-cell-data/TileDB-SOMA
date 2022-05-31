@@ -50,7 +50,6 @@ set(INHERITED_CMAKE_ARGS
   -DCMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}
   -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
   -DEP_BASE=${EP_BASE}
-  -DFORCE_EXTERNAL_HTSLIB=${FORCE_EXTERNAL_HTSLIB}
   -DFORCE_EXTERNAL_TILEDB=${FORCE_EXTERNAL_TILEDB}
   -DTILEDB_S3=${TILEDB_S3}
   -DTILEDB_AZURE=${TILEDB_AZURe}
@@ -72,8 +71,8 @@ set(INHERITED_CMAKE_ARGS
 
 #TBD include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/Modules/FindCLI11_EP.cmake)
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/Modules/FindTileDB_EP.cmake)
-include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/Modules/FindCatch_EP.cmake)
-include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/Modules/FindSpdlog_EP.cmake)
+# include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/Modules/FindCatch_EP.cmake)
+# include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/Modules/FindSpdlog_EP.cmake)
 
 ############################################################
 # 'make format' target

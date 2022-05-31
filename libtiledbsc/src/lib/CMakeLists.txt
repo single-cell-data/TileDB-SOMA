@@ -24,7 +24,7 @@ target_include_directories(buffer_set
 target_compile_definitions(buffer_set PRIVATE -DTILEDB_SC_OBJECTS_EXPORTS)
 
 # TODO make this conditional
-if (TRUE)
+if (FALSE)
     find_package(Catch_EP REQUIRED)
 
     add_executable(unit_buffer_set EXCLUDE_FROM_ALL)
@@ -73,7 +73,7 @@ target_include_directories(managed_query
 target_compile_definitions(managed_query PRIVATE -DTILEDB_SC_OBJECTS_EXPORTS)
 
 # TODO make this conditional
-if (TRUE)
+if (FALSE)
     find_package(Catch_EP REQUIRED)
 
     add_executable(unit_managed_query EXCLUDE_FROM_ALL)
