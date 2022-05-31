@@ -43,7 +43,16 @@ class AnnotationDataFrame(TileDBArray):
             # Instead we compute it ourselves.  See also:
             # * https://github.com/single-cell-data/TileDB-SingleCell/issues/10
             # * https://github.com/TileDB-Inc/TileDB-Py/pull/1055
-            num_rows = len(A[:][self.dim_name].tolist())
+            #
+            # Also note that this row-count for obs/var is used by the .shape() methods
+            # for X, raw.X, obsp, and varp -- see the AssayMatrix.shape method.
+
+            if self.uri.startswith("tiledb://"):
+                num_rows = len(A[:][self.dim_name].tolist())
+            else:
+                fragment_info = tiledb.array_fragments(self.uri)
+                num_rows = sum(fragment_info.cell_num)
+
             num_cols = A.schema.nattr
             return (num_rows, num_cols)
 
