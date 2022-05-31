@@ -14,8 +14,8 @@ HERE = Path(__file__).parent
 @pytest.fixture
 def h5ad_file(request):
     # pbmc-small is faster for automated unit-test / CI runs.
-    input_path = HERE.parent / "anndata/pbmc3k_processed.h5ad"
-    # input_path = HERE.parent / "anndata/pbmc-small.h5ad"
+    # input_path = HERE.parent / "anndata/pbmc3k_processed.h5ad"
+    input_path = HERE.parent / "anndata/pbmc-small.h5ad"
     return input_path
 
 
@@ -141,3 +141,31 @@ def test_import_anndata(adata):
             )
 
     tempdir.cleanup()
+
+
+def test_export_anndata(adata):
+
+    # Set up anndata input path and tiledb-group output path
+    tempdir = tempfile.TemporaryDirectory()
+    output_path = tempdir.name
+
+    orig = adata
+
+    # Ingest
+    soma = tiledbsc.SOMA(output_path, verbose=True)
+    tiledbsc.io.from_anndata(soma, orig)
+
+    readback = tiledbsc.io.to_anndata(soma)
+
+    assert readback.obs.shape == orig.obs.shape
+    assert readback.var.shape == orig.var.shape
+    assert readback.X.shape == orig.X.shape
+
+    for key in orig.obsm.keys():
+        assert readback.obsm[key].shape == orig.obsm[key].shape
+    for key in orig.varm.keys():
+        assert readback.varm[key].shape == orig.varm[key].shape
+    for key in orig.obsp.keys():
+        assert readback.obsp[key].shape == orig.obsp[key].shape
+    for key in orig.varp.keys():
+        assert readback.varp[key].shape == orig.varp[key].shape
