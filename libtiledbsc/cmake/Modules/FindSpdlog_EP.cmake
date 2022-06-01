@@ -46,11 +46,17 @@ else()
   SET(SPDLOG_NO_DEFAULT_PATH)
 endif()
 
-find_package(spdlog
+# Fix issue on windows where spdlog::spdlog is already defined
+if (NOT TARGET spdlog::spdlog)
+  find_package(spdlog
         PATHS ${EP_INSTALL_PREFIX}
         ${SPDLOG_NO_DEFAULT_PATH}
         )
-set(SPDLOG_FOUND ${spdlog_FOUND})
+  set(SPDLOG_FOUND ${spdlog_FOUND})
+else()
+  message(STATUS "TARGET spdlog::spdlog already defined. (Windows?)")
+  set(SPDLOG_FOUND TRUE)
+endif()
 
 if (NOT SPDLOG_FOUND)
   if(SUPERBUILD)
@@ -73,8 +79,11 @@ if (NOT SPDLOG_FOUND)
       PREFIX "externals"
       # Set download name to avoid collisions with only the version number in the filename
       DOWNLOAD_NAME ep_spdlog.zip
-      URL "https://github.com/gabime/spdlog/archive/v1.10.0.zip"
-      URL_HASH SHA1=aa2d4ff13b5393dea83d46caf545c6a303c889cd
+      URL "https://github.com/gabime/spdlog/archive/v1.9.0.zip"
+      URL_HASH SHA1=6259d1b6c5b9b565aa3ba5a6315d49f76d90ec0a
+# TODO: upgrade requires logger changes
+#      URL "https://github.com/gabime/spdlog/archive/v1.10.0.zip"
+#      URL_HASH SHA1=aa2d4ff13b5393dea83d46caf545c6a303c889cd
       PATCH_COMMAND
         ${CONDITIONAL_PATCH}
       CMAKE_ARGS
