@@ -70,11 +70,6 @@ def test_from_anndata_X_type(tmp_path, X_dtype_name, X_encoding):
         assert False  # sanity - test misconfiguration
 
     adata = ad.AnnData(X=X, obs=obs, var=var, dtype=X.dtype)
-    print(
-        " =============================================================>==",
-        adata.X.dtype,
-        X_dtype,
-    )
     assert adata.X.dtype == X_dtype  # sanity
 
     io.from_anndata(SOMA(tmp_path.as_posix()), adata)
@@ -180,6 +175,10 @@ def test_from_anndata_DataFrame_type(tmp_path):
         # TileDB has no object, so assume it will convert to the type underlying the object
         if ad_dtype == np.dtype("O"):
             ad_dtype = np.dtype(type(series[0]))
+            # TODO: see annotation_dataframe.py. Once Unicode attributes are queryable, we'll need
+            # to remove this check which is verifying the current force-to-ASCII workaround.
+            if ad_dtype.name == "str":
+                ad_dtype = np.dtype("S")
         # TileDB has no bool, and automatically converts to uint8
         if ad_dtype == bool:
             ad_dtype = np.uint8

@@ -30,6 +30,9 @@ else:
 
 ann = anndata.read_h5ad(input_path)
 
+def decat(ann):
+    return tiledbsc.util_ann._decategoricalize(ann)
+
 # Interact at the prompt now:
 # * ann.X
 # * ann.obs.keys()

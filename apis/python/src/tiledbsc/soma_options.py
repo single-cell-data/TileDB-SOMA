@@ -1,33 +1,5 @@
 from typing import List, Dict
 
-# TODO: when UTF-8 attributes are queryable using TileDB-Py's QueryCondition API we can remove this.
-# Context: https://github.com/single-cell-data/TileDB-SingleCell/issues/99.
-default_col_names_to_store_as_ascii = {
-    "obs": [
-        "assay_ontology_term_id",
-        "sex_ontology_term_id",
-        "organism_ontology_term_id",
-        "disease_ontology_term_id",
-        "ethnicity_ontology_term_id",
-        "development_stage_ontology_term_id",
-        "cell_type_ontology_term_id",
-        "tissue_ontology_term_id",
-        "cell_type",
-        "assay",
-        "disease",
-        "organism",
-        "sex",
-        "tissue",
-        "ethnicity",
-        "development_stage",
-    ],
-    "var": [
-        "feature_biotype",
-        "feature_name",
-        "feature_reference",
-    ],
-}
-
 
 class SOMAOptions:
     """
@@ -45,7 +17,6 @@ class SOMAOptions:
     string_dim_zstd_level: int
     write_X_chunked: bool
     goal_chunk_nnz: int
-    col_names_to_store_as_ascii: Dict[str, List[str]]
     member_uris_are_relative: bool
 
     def __init__(
@@ -58,7 +29,6 @@ class SOMAOptions:
         string_dim_zstd_level=22,  # https://github.com/single-cell-data/TileDB-SingleCell/issues/27
         write_X_chunked=True,
         goal_chunk_nnz=10000000,
-        col_names_to_store_as_ascii=default_col_names_to_store_as_ascii,
         member_uris_are_relative=None,  # Allows relocatability for local disk / S3, and correct behavior for TileDB Cloud
     ):
         self.obs_extent = obs_extent
@@ -69,5 +39,4 @@ class SOMAOptions:
         self.string_dim_zstd_level = string_dim_zstd_level
         self.write_X_chunked = write_X_chunked
         self.goal_chunk_nnz = goal_chunk_nnz
-        self.col_names_to_store_as_ascii = col_names_to_store_as_ascii
         self.member_uris_are_relative = member_uris_are_relative
