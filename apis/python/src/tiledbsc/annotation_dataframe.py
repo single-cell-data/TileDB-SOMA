@@ -85,6 +85,15 @@ class AnnotationDataFrame(TileDBArray):
         #   >>> A.meta.items()
         #   (('__pandas_index_dims', '{"obs_id": "<U0"}'),)
         # so the set_index is already done for us.
+
+        # TODO: when UTF-8 attributes are queryable using TileDB-Py's QueryCondition API we can remove this.
+        # This is the 'decode on read' part of our logic; in dim_select we have the 'encode on write' part.
+        # Context: https://github.com/single-cell-data/TileDB-SingleCell/issues/99.
+        for k in df:
+            dfk = df[k]
+            if len(dfk) > 0 and type(dfk[0]) == bytes:
+                df[k] = dfk.map(lambda e: e.decode())
+
         return df
 
     # ----------------------------------------------------------------
@@ -163,15 +172,38 @@ class AnnotationDataFrame(TileDBArray):
             if self._verbose:
                 print(f"{self._indent}Re-using existing array {self.uri}")
 
-        # Context: https://github.com/single-cell-data/TileDB-SingleCell/issues/99.
+        # ISSUE:
+        # TileDB attributes can be stored as Unicode but they are not yet queryable via the TileDB
+        # QueryCondition API. While this needs to be addressed -- global collaborators will want to
+        # write annotation-dataframe values in Unicode -- until then, to make obs/var data possible
+        # to query, we need to store these as ASCII.
+        #
+        # This is (besides collation) a storage-level issue not a presentation-level issue: At write
+        # time, this works — "α,β,γ" stores as "\xce\xb1,\xce\xb2,\xce\xb3"; at read time: since
+        # SOMA is an API: utf8-decode those strings when a query is done & give the user back
+        # "α,β,γ".
+        #
+        # CONTEXT:
+        # https://github.com/single-cell-data/TileDB-SingleCell/issues/99
+        # https://github.com/single-cell-data/TileDB-SingleCell/pull/101
+        # https://github.com/single-cell-data/TileDB-SingleCell/issues/106
+        # https://github.com/single-cell-data/TileDB-SingleCell/pull/117
+        #
+        # IMPLEMENTATION:
+        # Python types -- float, string, what have you -- appear as dtype('O') which is not useful.
+        # Also, `tiledb.from_pandas` has `column_types` but that _forces_ things to string to a
+        # particular if they shouldn't be.
+        #
+        # Instead, we use `dataframe.convert_dtypes` to get a little jump on what `tiledb.from_pandas`
+        # is going to be doing anyway, namely, type-inferring to see what is going to be a string.
+        #
         # TODO: when UTF-8 attributes are queryable using TileDB-Py's QueryCondition API we can remove this.
-        column_types = {}  # XXX None OR {} ?
-        if self.name in self._soma_options.col_names_to_store_as_ascii:
-            col_names_to_store_as_ascii = (
-                self._soma_options.col_names_to_store_as_ascii[self.name]
-            )
-            for col_name in col_names_to_store_as_ascii:
-                column_types[col_name] = np.dtype("S")
+        column_types = {}
+        for column_name in dataframe.keys():
+            dfc = dataframe[column_name]
+            if len(dfc) > 0 and type(dfc[0]) == str:
+                # Force ASCII storage if string, in order to make obs/var columns queryable.
+                column_types[column_name] = np.dtype("S")
 
         tiledb.from_pandas(
             uri=self.uri,
