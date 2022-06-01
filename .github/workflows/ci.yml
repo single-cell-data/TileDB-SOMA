@@ -17,8 +17,8 @@ jobs:
             cxx: g++-10
           - runs-on: macos-10.15
             env:
-              CFLAGS: -Wno-c++11-narrowing
-              CXXFLAGS: -Wno-c++11-narrowing
+              #CFLAGS: -Wno-c++11-narrowing
+              #CXXFLAGS: -Wno-c++11-narrowing
     env:
       MACOSX_DEPLOYMENT_TARGET: 10.14
 
@@ -68,5 +68,5 @@ jobs:
     - name: Run libtiledbsc tests
       shell: pwsh
       run: |
-        pushd $env:GITHUB_WORKSPACE/build
+        pushd $env:GITHUB_WORKSPACE/build/libtiledbsc
         ctest --verbose
