@@ -177,40 +177,52 @@ $ python
 >>> import tiledbsc
 
 >>> soma = tiledbsc.SOMA('tiledb-data/pbmc-small')
->>> arr = soma.X.data.open_array()
->>> arr.df[:]
-              obs_id    var_id     value
-0     AAATTCGAATCACG    AKR1C3 -0.325888
-1     AAATTCGAATCACG       CA2 -0.346938
-...              ...       ...       ...
-1598  TTTAGCTGTACTCT     TUBB1 -0.350375
-1599  TTTAGCTGTACTCT     VDAC3 -0.524551
+>>> soma.X["data"].df()
+                            value
+obs_id         var_id
+AAATTCGAATCACG AKR1C3   -0.325888
+               CA2      -0.346938
+               CD1C     -0.253005
+               GNLY     -0.528670
+               HLA-DPB1 -1.039994
+...                           ...
+TTTAGCTGTACTCT S100A9    1.112879
+               SDPR     -0.388176
+               TREML1   -0.328625
+               TUBB1    -0.350375
+               VDAC3    -0.524551
 
-[1600 rows x 3 columns]
+[1600 rows x 1 columns]
 -- Note this is a sparse matrix in IJV/COO format
 ```
 
 ```
->>> arr = soma.obs.open_array()
->>> arr.df[:]
+>>> soma.obs.df()
                 orig.ident  nCount_RNA  nFeature_RNA  RNA_snn_res.0.8  letter.idents groups  RNA_snn_res.1
 obs_id
 AAATTCGAATCACG           0       327.0            62                1              1     g2              1
 AAGCAAGAGCTTAG           0       126.0            48                0              0     g1              0
+AAGCGACTTTGACG           0       443.0            77                1              1     g1              1
+AATGCGTGGACGGA           0       389.0            73                1              1     g1              1
+AATGTTGACAGTCA           0       100.0            41                0              0     g1              0
 ...                    ...         ...           ...              ...            ...    ...            ...
+TTACGTACGTTCAG           0       228.0            39                0              0     g1              0
+TTGAGGACTACGCA           0       787.0            88                0              0     g1              2
+TTGCATTGAGCTAC           0       104.0            40                0              0     g2              2
 TTGGTACTGAATCC           0       135.0            45                0              0     g1              2
 TTTAGCTGTACTCT           0       462.0            86                1              1     g1              1
 
 [80 rows x 7 columns]
 
->>> arr = soma.var.open_array()
->>> arr.df[:]
+>>> soma.var.df()
                vst.mean  vst.variance  vst.variance.expected  vst.variance.standardized  vst.variable
 var_id
 AKR1C3           0.2625      1.132753               0.553424                   2.021191             1
 CA2              0.4500      3.263291               1.685451                   1.765922             1
 CD1C             0.1750      0.576582               0.271217                   2.052014             1
+GNLY             2.4000     43.762025              24.078566                   1.817468             1
 ...
+SDPR             1.1125     15.746677               8.835280                   1.680686             1
 TREML1           0.3375      1.365665               0.761869                   1.792519             1
 TUBB1            0.8875     16.202373               6.352400                   1.634371             1
 VDAC3            1.1250     30.971519               8.986513                   2.137607             1
@@ -219,30 +231,41 @@ VDAC3            1.1250     30.971519               8.986513                   2
 ```
 >>> soma.obsm._get_member_names()
 ['X_tsne', 'X_pca']
->>> arr = soma.obsm['X_pca'].open_array()
->>> arr.df[:]
-            obs_id   X_pca_1   X_pca_2 ...  X_pca_18  X_pca_19
-0   AAATTCGAATCACG -0.599730  0.970809 ... -0.127195  0.026804
-1   AAGCAAGAGCTTAG -0.919219 -2.043828 ...  0.009386 -0.019896
-2   AAGCGACTTTGACG -1.380380  1.284101 ... -0.041855  0.027550
-..             ...       ...       ... ...       ...       ...
-78  TTGGTACTGAATCC -1.418764  0.764986 ... -0.064450  0.099118
-79  TTTAGCTGTACTCT -1.447483  1.583223 ... -0.014984  0.033992
+>>> soma.obsm['X_pca'].df()
+                 X_pca_1   X_pca_2  ...  X_pca_18  X_pca_19
+obs_id                              ...
+AAATTCGAATCACG -0.599730  0.970809  ... -0.127195  0.026804
+AAGCAAGAGCTTAG -0.919219 -2.043828  ...  0.009386 -0.019896
+AAGCGACTTTGACG -1.380380  1.284101  ... -0.041855  0.027550
+AATGCGTGGACGGA -1.494413  1.783583  ... -0.045108  0.055206
+AATGTTGACAGTCA -0.487798 -1.162107  ... -0.167920  0.026950
+...                  ...       ...  ...       ...       ...
+TTACGTACGTTCAG  8.858789 -0.195728  ... -0.428616 -0.294552
+TTGAGGACTACGCA -0.917909  1.610199  ... -0.113981 -0.110469
+TTGCATTGAGCTAC -0.997103 -0.155518  ...  0.056784 -0.027052
+TTGGTACTGAATCC -1.418764  0.764986  ... -0.064450  0.099118
+TTTAGCTGTACTCT -1.447483  1.583223  ... -0.014984  0.033992
 
-[80 rows x 20 columns]
+[80 rows x 19 columns]
 ```
 
 ```
->>> arr = soma.raw.X.data.open_array()
->>> arr.df[:]
-              obs_id   var_id     value
-0     AAATTCGAATCACG     ADAR  3.452557
-1     AAATTCGAATCACG     AIF1  3.452557
-...              ...      ...       ...
-4454  TTTAGCTGTACTCT     XBP1  3.119940
-4455  TTTAGCTGTACTCT  ZFP36L1  3.119940
+>>> soma.raw.X["data"].df()
+                           value
+obs_id         var_id
+AAATTCGAATCACG ADAR     3.452557
+               AIF1     3.452557
+               ANXA2    3.452557
+               ARHGDIA  3.452557
+               ASGR1    3.452557
+...                          ...
+TTTAGCTGTACTCT TYMP     4.693411
+               TYROBP   5.277120
+               VPS28    3.119940
+               XBP1     3.119940
+               ZFP36L1  3.119940
 
-[4456 rows x 3 columns]
+[4456 rows x 1 columns]
 ```
 
 ```

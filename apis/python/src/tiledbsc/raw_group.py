@@ -96,7 +96,7 @@ class RawGroup(TileDBGroup):
         """
 
         var_df = self.var.to_dataframe()
-        X_mat = self.X.data.to_csr_matrix(obs_labels, var_df.index)
+        X_mat = self.X["data"].to_csr_matrix(obs_labels, var_df.index)
         varm = self.varm.to_dict_of_csr()
 
         return (X_mat, var_df, varm)

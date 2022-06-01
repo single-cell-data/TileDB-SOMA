@@ -244,7 +244,7 @@ def to_anndata(soma: tiledbsc.SOMA) -> ad.AnnData:
     obs_df = soma.obs.to_dataframe()
     var_df = soma.var.to_dataframe()
 
-    X_mat = soma.X.data.to_csr_matrix(obs_df.index, var_df.index)
+    X_mat = soma.X["data"].to_csr_matrix(obs_df.index, var_df.index)
 
     obsm = soma.obsm.to_dict_of_csr()
     varm = soma.varm.to_dict_of_csr()
@@ -294,7 +294,7 @@ def to_anndata_from_raw(soma: tiledbsc.SOMA) -> ad.AnnData:
 
     obs_df = soma.obs.to_dataframe()
     var_df = soma.raw.var.to_dataframe()
-    X_mat = soma.raw.X.data.to_csr_matrix(obs.index, var.index)
+    X_mat = soma.raw.X["data"].to_csr_matrix(obs.index, var.index)
 
     return ad.AnnData(
         X=X_mat,

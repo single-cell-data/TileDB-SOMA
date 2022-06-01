@@ -114,7 +114,7 @@ ZYX         403
 
 [1838 rows x 1 columns]
 
->>> soma.X.data.df()
+>>> soma.X["data"].df()
                             value
 obs_id           var_id
 AAACATACAACCAC-1 AAGAB  -0.186726
