@@ -163,9 +163,9 @@ def test_dim_select(adata):
     df = soma.obsm["X_pca"].dim_select([b"AAGCGACTTTGACG", b"AATGCGTGGACGGA"])
     assert df.shape == (2, 19)
 
-    assert soma.X.data.dim_select([b"AAGCGACTTTGACG"], [b"AKR1C3"]).shape == (1, 1)
-    assert soma.X.data.dim_select(None, [b"AKR1C3"]).shape == (80, 1)
-    assert soma.X.data.dim_select([b"AAGCGACTTTGACG"], None).shape == (20, 1)
-    assert soma.X.data.dim_select(None, None).shape == (1600, 1)
+    assert soma.X["data"].dim_select([b"AAGCGACTTTGACG"], [b"AKR1C3"]).shape == (1, 1)
+    assert soma.X["data"].dim_select(None, [b"AKR1C3"]).shape == (80, 1)
+    assert soma.X["data"].dim_select([b"AAGCGACTTTGACG"], None).shape == (20, 1)
+    assert soma.X["data"].dim_select(None, None).shape == (1600, 1)
 
     tempdir.cleanup()

@@ -43,8 +43,8 @@ class AssayMatrix(TileDBArray):
 
         The `row_dataframe` and `col_dataframe` are nominally:
 
-        * `soma.obs` and `soma.var`, for `soma.X.data`
-        * `soma.obs` and `soma.raw.var`, for `soma.raw.X.data`
+        * `soma.obs` and `soma.var`, for `soma.X["data"]`
+        * `soma.obs` and `soma.raw.var`, for `soma.raw.X["data"]`
         * `soma.obs` and `soma.obs`, for `soma.obsp` elements
         * `soma.var` and `soma.var`, for `soma.obsp` elements
 

@@ -63,10 +63,10 @@ def test_chunked_writes(tmp_path):
     tiledbsc.io.from_h5ad(soma_csc, ann_csc_path)
 
     # Read the X arrays into memory as pandas dataframe objects.
-    xdf_unchunked = soma_unchunked.X.data.df()
-    xdf_dense = soma_dense.X.data.df()
-    xdf_csr = soma_csr.X.data.df()
-    xdf_csc = soma_csc.X.data.df()
+    xdf_unchunked = soma_unchunked.X["data"].df()
+    xdf_dense = soma_dense.X["data"].df()
+    xdf_csr = soma_csr.X["data"].df()
+    xdf_csc = soma_csc.X["data"].df()
 
     # IJV/COO triples are correct, but are not necessarily in the same order for CSC.
     # Sort them to facilitate integer-indexed value comparisons below.

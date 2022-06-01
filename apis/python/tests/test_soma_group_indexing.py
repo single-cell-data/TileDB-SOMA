@@ -52,8 +52,8 @@ def test_soma_group_indexing(h5ad_file):
         ["uns", "varm", "X", "raw", "obsp", "varp", "var", "obsm", "obs"]
     )
     assert set(soma.X._get_member_names()) == set(["data"])
-    assert soma.X.data.dim_names() == ["obs_id", "var_id"]
-    assert soma.X.data.shape() == (80, 20)
+    assert soma.X["data"].dim_names() == ["obs_id", "var_id"]
+    assert soma.X["data"].shape() == (80, 20)
 
     assert soma.obs.exists()
     assert soma.obs.dim_names() == ["obs_id"]
