@@ -89,12 +89,7 @@ class AnnotationDataFrame(TileDBArray):
         # TODO: when UTF-8 attributes are queryable using TileDB-Py's QueryCondition API we can remove this.
         # This is the 'decode on read' part of our logic; in dim_select we have the 'encode on write' part.
         # Context: https://github.com/single-cell-data/TileDB-SingleCell/issues/99.
-        for k in df:
-            dfk = df[k]
-            if len(dfk) > 0 and type(dfk[0]) == bytes:
-                df[k] = dfk.map(lambda e: e.decode())
-
-        return df
+        return self._ascii_to_unicode_dataframe_readback(df)
 
     # ----------------------------------------------------------------
     def df(self, ids=None) -> pd.DataFrame:
@@ -120,7 +115,20 @@ class AnnotationDataFrame(TileDBArray):
             if nobs == 0:
                 return None
             else:
-                return slice_df
+                # This is the 'decode on read' part of our logic; in dim_select we have the 'encode on write' part.
+                # Context: https://github.com/single-cell-data/TileDB-SingleCell/issues/99.
+                return self._ascii_to_unicode_dataframe_readback(slice_df)
+
+    # ----------------------------------------------------------------
+    def _ascii_to_unicode_dataframe_readback(self, df):
+        """
+        Implements the 'decode on read' partof our logic as noted in `dim_select()`.
+        """
+        for k in df:
+            dfk = df[k]
+            if len(dfk) > 0 and type(dfk[0]) == bytes:
+                df[k] = dfk.map(lambda e: e.decode())
+        return df
 
     # ----------------------------------------------------------------
     def from_dataframe(self, dataframe: pd.DataFrame, extent: int) -> None:
