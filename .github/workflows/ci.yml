@@ -68,5 +68,6 @@ jobs:
     - name: Run libtiledbsc tests
       shell: pwsh
       run: |
+        $env:PATH += "$([IO.Path]::PathSeparator)${env:GITHUB_WORKSPACE}/build/externals/install/bin"
         pushd $env:GITHUB_WORKSPACE/build/libtiledbsc
-        ctest --verbose
+        ctest -C Release --verbose
