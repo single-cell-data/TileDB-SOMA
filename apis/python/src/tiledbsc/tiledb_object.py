@@ -56,7 +56,7 @@ class TileDBObject:
             self._ctx = parent._ctx
             self._indent = parent._indent + "  "
 
-        if os.getenv('TILEDBSC_PY_SUPPRESS_VERBOSE') != None:
+        if os.getenv("TILEDBSC_PY_SUPPRESS_VERBOSE") != None:
             self._verbose = False
 
         if self._soma_options is None:
