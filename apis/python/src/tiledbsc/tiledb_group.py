@@ -152,4 +152,10 @@ class TileDBGroup(TileDBObject):
         member name to member URI.
         """
         with self._open("r") as G:
-            return {os.path.basename(e.uri): e.uri for e in G}
+
+            # We aren't able to get a listing of group keys, so as a workaround we parse the group printer.
+            names = [
+                e.split()[1] for e in G.__repr__().split("\n") if e.startswith("|-- ")
+            ]
+
+            return {name: G[name].uri for name in names}
