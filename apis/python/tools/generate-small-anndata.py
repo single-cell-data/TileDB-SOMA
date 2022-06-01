@@ -74,6 +74,6 @@ for i in range(n_obs):
 
 ann = ad.AnnData(X=X, obs=obs, var=var, dtype=X.dtype)
 
-output_file_name = "small.h5ad"
+output_file_name = "fake-small.h5ad"
 ann.write_h5ad(output_file_name)
 print("Wrote", output_file_name)
