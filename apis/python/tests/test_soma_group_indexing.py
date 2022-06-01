@@ -273,16 +273,15 @@ def test_soma_group_indexing(h5ad_file):
     assert "neighbors" in soma.uns
     assert "nonesuch" not in soma.uns
 
-    # These print to stdout -- here we exercise just them to make sure they're not throwing
-    # exceptions.
+    # We exercise these to make sure they're not throwing exceptions.
     for e in soma.obsm:
-        print(e.name, e.df().shape, e.uri)
+        foo = (e.name, e.df().shape, e.uri)
     for e in soma.varm:
-        print(e.name, e.df().shape, e.uri)
+        foo = (e.name, e.df().shape, e.uri)
     for e in soma.obsp:
-        print(e.name, e.df().shape, e.uri)
+        foo = (e.name, e.df().shape, e.uri)
     for e in soma.varp:
-        print(e.name, e.df().shape, e.uri)
+        foo = (e.name, e.df().shape, e.uri)
 
 
 def test_not_exists():
