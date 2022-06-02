@@ -125,7 +125,7 @@ class AssayMatrix(TileDBArray):
         else:
             self._create_empty_array(matrix_dtype=matrix.dtype)
 
-        self.set_soma_object_type_metadata()
+        self._set_soma_object_type_metadata()
 
         self._ingest_data(matrix, row_names, col_names)
         if self._verbose:

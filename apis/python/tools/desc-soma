@@ -21,6 +21,10 @@ def main():
 
     for uri in sys.argv[1:]:
         tiledbsc.util_tiledb.show_single_cell_group(uri)
+        print()
+        print("METADATA:")
+        soma = tiledbsc.SOMA(uri)
+        soma.show_metadata(recursively=True)
 
 
 if __name__ == "__main__":
