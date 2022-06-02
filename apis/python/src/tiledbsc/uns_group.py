@@ -7,8 +7,8 @@ import tiledbsc.util as util
 
 import anndata as ad
 import pandas as pd
+import numpy as np
 import scipy
-import numpy
 
 from typing import Optional, Dict
 

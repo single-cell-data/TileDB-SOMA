@@ -40,11 +40,6 @@ def show_single_cell_group(soma_uri: str, ctx: Optional[tiledb.Ctx] = None):
 
 
 # ----------------------------------------------------------------
-def _fminus(long_path: str, short_path: str):
-    return long_path.replace(short_path, "")
-
-
-# ----------------------------------------------------------------
 def __show_array_schema(uri: str, ctx: Optional[tiledb.Ctx] = None):
     print("----------------------------------------------------------------")
     print("Array:", uri)

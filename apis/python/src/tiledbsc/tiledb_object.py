@@ -1,7 +1,7 @@
 import tiledb
 from .soma_options import SOMAOptions
 
-from typing import Optional
+from typing import Optional, List, Dict
 
 import os
 
@@ -80,3 +80,44 @@ class TileDBObject:
             raise Exception(
                 f"Internal error: expected _object_type {self._object_type()} but found {found} at {self.uri}."
             )
+
+    def metadata(self) -> Dict:
+        """
+        Returns metadata from the group/array as a dict.
+        """
+        with self._open("r") as O:
+            # The _open method is implemented by TileDBArray and TileDBGroup
+            return dict(O.meta)
+
+    def has_metadata(self, key):
+        """
+        Returns whether metadata is associated with the group/array.
+        """
+        with self._open("r") as O:
+            # The _open method is implemented by TileDBArray and TileDBGroup
+            return key in O.meta
+
+    def metadata_keys(self) -> List[str]:
+        """
+        Returns metadata keys associated with the group/array.
+        """
+        with self._open("r") as O:
+            # The _open method is implemented by TileDBArray and TileDBGroup
+            return list(O.meta.keys())
+
+    def get_metadata(self, key):
+        """
+        Returns metadata associated with the group/array.
+        Raises `KeyError` if there is no such key in the metadata.
+        """
+        with self._open("r") as O:
+            # The _open method is implemented by TileDBArray and TileDBGroup
+            return O.meta[key]
+
+    def set_metadata(self, key: str, value) -> None:
+        """
+        Returns metadata associated with the group/array.
+        """
+        with self._open("w") as O:
+            # The _open method is implemented by TileDBArray and TileDBGroup
+            O.meta[key] = value
