@@ -44,7 +44,22 @@ class AnnotationMatrix(TileDBArray):
             # Instead we compute it ourselves.  See also:
             # * https://github.com/single-cell-data/TileDB-SingleCell/issues/10
             # * https://github.com/TileDB-Inc/TileDB-Py/pull/1055
-            num_rows = len(A[:][self.dim_name].tolist())
+            if self.uri.startswith("tiledb://"):
+                num_rows = len(
+                    A.query(attrs=[], dims=[self.dim_name])[:][self.dim_name].tolist()
+                )
+            else:
+                # This is quicker than the query -- we can use it safely off TileDB Cloud,
+                # and if there's just one fragment written.
+                fragment_info = tiledb.array_fragments(self.uri)
+                if len(fragment_info) == 1:
+                    num_rows = sum(fragment_info.cell_num)
+                else:
+                    num_rows = len(
+                        A.query(attrs=[], dims=[self.dim_name])[:][
+                            self.dim_name
+                        ].tolist()
+                    )
             num_cols = A.schema.nattr
             return (num_rows, num_cols)
 
