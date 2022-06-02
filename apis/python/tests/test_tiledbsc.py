@@ -51,12 +51,8 @@ def test_import_anndata(adata):
     #   raw/var
     #   raw/varm/PCs
 
-    # TODO: change this to with-open-as syntax once
-    # https://github.com/TileDB-Inc/TileDB-Py/pull/1124
-    # is in a TileDB-Py release which we articulate a dependency on.
-    G = tiledb.Group(output_path)
-    assert G.meta[tiledbsc.util_tiledb.SOMA_OBJECT_TYPE_METADATA_KEY] == "SOMA"
-    G.close()
+    with tiledb.Group(output_path) as G:
+        assert G.meta[tiledbsc.util_tiledb.SOMA_OBJECT_TYPE_METADATA_KEY] == "SOMA"
 
     # Check X/data (dense)
     with tiledb.open(os.path.join(output_path, "X", "data")) as A:
