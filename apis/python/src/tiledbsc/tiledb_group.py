@@ -96,6 +96,8 @@ class TileDBGroup(TileDBObject):
         * If `None`, then we select `relative=False` if the URI starts with `tiledb://`, else we
         select `relative=True`. This is the default.
         """
+        if not self.exists():
+            self._create()
         relative = self._soma_options.member_uris_are_relative
         child_uri = obj.uri
         if relative is None:
