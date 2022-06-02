@@ -128,8 +128,6 @@ class UnsGroup(TileDBGroup):
             s = util.get_start_stamp()
             print(f"{self._indent}START  read {self.uri}")
 
-        # TODO: fold this element-enumeration into the TileDB group class.  Maybe on the same PR
-        # where we support somagroup['name'] with overloading of the [] operator.
         retval = {}
         for element in grp:
             name = os.path.basename(element.uri)  # TODO: update for tiledb cloud
