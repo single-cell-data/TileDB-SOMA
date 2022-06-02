@@ -47,7 +47,7 @@ message(STATUS "Building with commit hash ${BUILD_COMMIT_HASH}")
 add_library(TILEDB_SC_OBJECTS OBJECT
   ${CMAKE_CURRENT_SOURCE_DIR}/soma.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/soma_collection.cc
-  ${CMAKE_CURRENT_SOURCE_DIR}/logger.cc
+# TODO:  ${CMAKE_CURRENT_SOURCE_DIR}/logger.cc
 )
 
 message(WARNING "Building without deprecation warnings")
@@ -182,6 +182,7 @@ endif()
 
 add_executable(tiledbsc-bin
   ${CMAKE_CURRENT_SOURCE_DIR}/cli/cli.cc
+  ${CMAKE_CURRENT_SOURCE_DIR}/logger.cc
   $<TARGET_OBJECTS:TILEDB_SC_OBJECTS>
 )
 
