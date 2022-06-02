@@ -66,39 +66,16 @@ class TileDBGroup(TileDBObject):
                 tiledbsc.util_tiledb.SOMA_OBJECT_TYPE_METADATA_KEY
             ] = self.__class__.__name__
 
-    def _open_withlessly(self, mode="r"):
-        """
-        This is just a convenience wrapper around tiledb.open of the tiledb group
-        associated with this SOMA element.
-        """
-        assert mode in ["w", "r"]
-        if mode == "w" and not self.exists():
-            self._create()
-        if mode == "r" and not self.exists():
-            raise Exception(f"Does not exist: {self.uri}")
-        return tiledb.Group(self.uri, mode=mode, ctx=self._ctx)
-
-    @contextmanager
     def _open(self, mode="r"):
         """
-        This is just a convenience wrapper around tiledb.open of the tiledb group
-        associated with this SOMA element, supporting Python with-as syntax.
-        TODO: One TileDB.Py's Group objects have `__enter__` and `__exit__`
-        method, fold this and _open_withlessly together.
+        This is just a convenience wrapper around tiledb group-open.
+        It works asa `with self._open() as G:` as well as `G = self._open(); ...; G.close()`.
         """
         assert mode in ("r", "w")
-
-        # Do this check here, not just in _open_withlessly -- otherwise we get
-        #   UnboundLocalError: local variable 'G' referenced before assignment
-        # which is super-confusing for the user.
         if mode == "r" and not self.exists():
             raise Exception(f"Does not exist: {self.uri}")
-
-        try:
-            G = self._open_withlessly(mode)
-            yield G
-        finally:
-            G.close()
+        # This works in with-open-as contexts because tiledb.Group has __enter__ and __exit__ methods.
+        return tiledb.Group(self.uri, mode=mode, ctx=self._ctx)
 
     def _add_object(self, obj: TileDBObject):
         """
