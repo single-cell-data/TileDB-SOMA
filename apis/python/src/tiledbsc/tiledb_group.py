@@ -131,4 +131,4 @@ class TileDBGroup(TileDBObject):
         member name to member URI.
         """
         with self._open("r") as G:
-            return {E.name: E.uri for E in G}
+            return {O.name: O.uri for O in G}
