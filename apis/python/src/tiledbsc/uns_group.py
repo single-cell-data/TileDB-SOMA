@@ -128,8 +128,6 @@ class UnsGroup(TileDBGroup):
             s = util.get_start_stamp()
             print(f"{self._indent}START  read {self.uri}")
 
-        # TODO: fold this element-enumeration into the TileDB group class.  Maybe on the same PR
-        # where we support somagroup['name'] with overloading of the [] operator.
         retval = {}
         for element in grp:
             name = os.path.basename(element.uri)  # TODO: update for tiledb cloud
@@ -195,14 +193,5 @@ class UnsGroup(TileDBGroup):
         """
         Implements '"namegoeshere" in soma.uns'.
         """
-
-        # TODO: this will get easier once TileDB.group.Group supports `name` in `__contains__`.
-        # See SC-18057 and https://github.com/single-cell-data/TileDB-SingleCell/issues/113.
         with self._open("r") as G:
-            answer = False
-            try:
-                # This returns a tiledb.object.Object.
-                G[name]
-                return True
-            except:
-                return False
+            return name in G

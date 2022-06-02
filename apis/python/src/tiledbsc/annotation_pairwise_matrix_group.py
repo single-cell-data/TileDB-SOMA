@@ -201,13 +201,5 @@ class AnnotationPairwiseMatrixGroup(TileDBGroup):
         """
         Implements `"namegoeshere" in soma.obsp/soma.varp`.
         """
-        # TODO: this will get easier once TileDB.group.Group supports `name` in `__contains__`.
-        # See SC-18057 and https://github.com/single-cell-data/TileDB-SingleCell/issues/113.
         with self._open("r") as G:
-            answer = False
-            try:
-                # This returns a tiledb.object.Object.
-                G[name]
-                return True
-            except:
-                return False
+            return name in G

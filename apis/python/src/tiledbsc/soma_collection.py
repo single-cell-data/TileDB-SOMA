@@ -74,15 +74,8 @@ class SOMACollection(TileDBGroup):
         """
         Implements `name in soco`
         """
-        # TODO: this will get easier once TileDB.group.Group supports `name` in `__contains__`.
-        # See SC-18057 and https://github.com/single-cell-data/TileDB-SingleCell/issues/113.
         with self._open("r") as G:
-            answer = False
-            try:
-                G[name]  # This returns a tiledb.object.Object.
-                return True
-            except:
-                return False
+            return name in G
 
     # At the tiledb-py API level, *all* groups are name-indexable.  But here at the tiledbsc-py
     # level, we implement name-indexing only for some groups:
