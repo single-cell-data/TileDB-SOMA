@@ -92,47 +92,35 @@ class AssayMatrixGroup(TileDBGroup):
         member exists.  Overloads the `[...]` operator.
         """
 
-        # TODO: If TileDB-Py were to support `name in G` the line-count could reduce here.
         with self._open("r") as G:
-            try:
-                obj = G[name]  # This returns a tiledb.object.Object.
-            except:
+            if not name in G:
                 return None
 
+            obj = G[name]  # This returns a tiledb.object.Object.
             if obj.type == tiledb.tiledb.Group:
                 raise Exception(
                     "Internal error: found group element where array element was expected."
                 )
-            elif obj.type == tiledb.libtiledb.Array:
-                return AssayMatrix(
-                    uri=obj.uri,
-                    name=name,
-                    row_dim_name=self.row_dim_name,
-                    col_dim_name=self.col_dim_name,
-                    row_dataframe=self.row_dataframe,
-                    col_dataframe=self.col_dataframe,
-                    parent=self,
-                )
-
-            else:
+            if obj.type != tiledb.libtiledb.Array:
                 raise Exception(
                     f"Internal error: found group element neither subgroup nor array: type is {str(obj.type)}"
                 )
+            return AssayMatrix(
+                uri=obj.uri,
+                name=name,
+                row_dim_name=self.row_dim_name,
+                col_dim_name=self.col_dim_name,
+                row_dataframe=self.row_dataframe,
+                col_dataframe=self.col_dataframe,
+                parent=self,
+            )
 
     def __contains__(self, name):
         """
         Implements the `in` operator, e.g. `"data" in soma.X`.
         """
-        # TODO: this will get easier once TileDB.group.Group supports `name` in `__contains__`.
-        # See SC-18057 and https://github.com/single-cell-data/TileDB-SingleCell/issues/113.
         with self._open("r") as G:
-            answer = False
-            try:
-                # This returns a tiledb.object.Object.
-                G[name]
-                return True
-            except:
-                return False
+            return name in G
 
     # ----------------------------------------------------------------
     def from_matrix_and_dim_values(self, matrix, row_names, col_names) -> None:
