@@ -34,6 +34,11 @@ def main():
         action="store_true",
     )
     parser.add_argument(
+        "-x",
+        help="Shorthand for `--ifexists replace`",
+        action="store_true",
+    )
+    parser.add_argument(
         "-o",
         help="Specify output directory to contain the somas",
         type=str,
@@ -73,7 +78,10 @@ select `relative=True`. (This is the default.)
     args = parser.parse_args()
 
     if args.ifexists is None:
-        args.ifexists = ["continue"]
+        if args.x:
+            args.ifexists = ["replace"]
+        else:
+            args.ifexists = ["continue"]
 
     soma_options = tiledbsc.SOMAOptions()
 
