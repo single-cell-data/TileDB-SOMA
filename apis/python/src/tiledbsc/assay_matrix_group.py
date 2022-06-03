@@ -52,6 +52,19 @@ class AssayMatrixGroup(TileDBGroup):
         return self._get_member_names()
 
     # ----------------------------------------------------------------
+    def __getattr__(self, name):
+        """
+        This is called on `soma.X.name` when `name` is not already an attribute.
+        This way you can do `soma.X.data` as an alias for `soma.X['data']`.
+        """
+        with self._open() as G:
+            if not name in G:
+                raise AttributeError(
+                    f"'{self.__class__.__name__}' object has no attribute '{name}'"
+                )
+        return self[name]
+
+    # ----------------------------------------------------------------
     def __iter__(self) -> List[AssayMatrix]:
         """
         Implements `for matrix in soma.obsm: ...` and `for matrix in soma.varm: ...`

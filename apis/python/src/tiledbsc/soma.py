@@ -136,3 +136,37 @@ class SOMA(TileDBGroup):
         Implements `print(soma)`.
         """
         return f"name={self.name},uri={self.uri}"
+
+    # ----------------------------------------------------------------
+    def __getattr__(self, name):
+        """
+        This is called on `soma.name` when `name` is not already an attribute.
+        This is used for `soma.n_obs`, etc.
+        """
+        if name == "n_obs":
+            return self.obs.shape()[0]
+        if name == "n_var":
+            return self.var.shape()[0]
+
+        if name == "obs_names":
+            return soma.obs.ids()
+        if name == "var_names":
+            return soma.var.ids()
+
+        raise AttributeError(
+            f"'{self.__class__.__name__}' object has no attribute '{name}'"
+        )
+
+    # ----------------------------------------------------------------
+    def obs_keys(self):
+        """
+        An alias for `soma.obs.ids()`.
+        """
+        return self.obs.ids()
+
+    # ----------------------------------------------------------------
+    def var_keys(self):
+        """
+        An alias for `soma.var.ids()`.
+        """
+        return self.var.ids()

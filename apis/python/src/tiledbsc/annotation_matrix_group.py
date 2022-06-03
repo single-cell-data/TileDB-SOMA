@@ -54,6 +54,19 @@ class AnnotationMatrixGroup(TileDBGroup):
         return iter(retval)
 
     # ----------------------------------------------------------------
+    def __getattr__(self, name):
+        """
+        This is called on `soma.obsm.name` when `name` is not already an attribute.
+        This way you can do `soma.obsm.X_tsne` as an alias for `soma.obsm['X_tsne']`.
+        """
+        with self._open() as G:
+            if not name in G:
+                raise AttributeError(
+                    f"'{self.__class__.__name__}' object has no attribute '{name}'"
+                )
+        return self[name]
+
+    # ----------------------------------------------------------------
     def from_matrices_and_dim_values(self, annotation_matrices, dim_values):
         """
         Populates the `obsm` or `varm` subgroup for a SOMA object, then writes all the components

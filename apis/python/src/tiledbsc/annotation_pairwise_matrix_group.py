@@ -55,6 +55,19 @@ class AnnotationPairwiseMatrixGroup(TileDBGroup):
         return self._get_member_names()
 
     # ----------------------------------------------------------------
+    def __getattr__(self, name):
+        """
+        This is called on `soma.obsp.name` when `name` is not already an attribute.
+        This way you can do `soma.obsp.distances` as an alias for `soma.obsp['distances']`.
+        """
+        with self._open() as G:
+            if not name in G:
+                raise AttributeError(
+                    f"'{self.__class__.__name__}' object has no attribute '{name}'"
+                )
+        return self[name]
+
+    # ----------------------------------------------------------------
     def __iter__(self) -> List[AssayMatrix]:
         """
         Implements `for matrix in soma.obsp: ...` and `for matrix in soma.varp: ...`
