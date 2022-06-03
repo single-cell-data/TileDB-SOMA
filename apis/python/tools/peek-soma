@@ -30,5 +30,7 @@ else:
     sys.exit(1)
 
 soma = tiledbsc.SOMA(input_path)
+if not soma.exists():
+    print("Does not exist yet:", input_path)
 
 # Interact at the Python prompt now
