@@ -33,9 +33,9 @@ def test_from_anndata_uns(tmp_path):
     )
 
     uns = {
-        "int": 1,
-        "float": 3.25,
-        "string": "a string",
+        "scalar_int": 1,
+        "scalar_float": 3.25,
+        "scalar_string": "a string",
         "list_of_int": list(i * 10 for i in range(10)),
         "list_of_float": list(i * 1.25 for i in range(10)),
         "list_of_string": list(str(i * 100) for i in range(10)),
@@ -50,34 +50,52 @@ def test_from_anndata_uns(tmp_path):
 
     adata = AnnData(X=X, obs=obs, var=var, uns=uns)
 
+    adata.write_h5ad("foo.h5ad")
+
     io.from_anndata(SOMA(tmp_path.as_posix()), adata)
+
+    # Example of what we're verifying:
+
+    # >>> soma.uns.show()
+    #
+    # uns:
+    # scalar_float: 3.25
+    # scalar_string: a string
+    # uns/scalar_int/
+    # [1]
+    # uns/list_of_float/
+    # [ 0.    1.25  2.5   3.75  5.    6.25  7.5   8.75 10.   11.25]
+    # uns/list_of_int/
+    # [ 0 10 20 30 40 50 60 70 80 90]
+    # uns/numpy_ndarray_1d_int/
+    # [1 2 3]
+    # uns/numpy_ndarray_2d_float/
+    # [[1. 2. 3.]
+    #  [4. 5. 6.]]
+    #
+    # uns/simple_dict:
+    # B: one
+    # uns/simple_dict/A/
+    # [0]
+    # uns/numpy_ndarray_1d_string/
+    # ['a' 'b' 'c']
+    # uns/pandas_dataframe/
+    # OrderedDict([('A', array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9], dtype=int32)), ('__tiledb_rows', array([b'0', b'1', b'2', b'3', b'4', b'5', b'6', b'7', b'8', b'9'],
+    #       dtype=object))])
+    # uns/list_of_string/
+    # ['0' '100' '200' '300' '400' '500' '600' '700' '800' '900']
 
     unspath = tmp_path / "uns"
     assert os.path.exists(unspath)
     for key in uns.keys():
-        assert (unspath / key).exists()
+        if not key.startswith("scalar_"):
+            # Scalars are written as group metadata
+            assert (unspath / key).exists()
 
-    with tiledb.open((unspath / "int").as_posix()) as A:
-        df = A[:]
-        assert isinstance(df, np.ndarray)
-        assert df.shape == (1,)
-        # Python int goes to int32 by default on Windows
-        assert df.dtype == np.int64 or df.dtype == np.int32
-        assert df[0] == 1
-
-    with tiledb.open((unspath / "float").as_posix()) as A:
-        df = A[:]
-        assert isinstance(df, np.ndarray)
-        assert df.shape == (1,)
-        assert df.dtype == np.float64
-        assert df[0] == 3.25
-
-    with tiledb.open((unspath / "string").as_posix()) as A:
-        df = A[:]
-        assert isinstance(df, np.ndarray)
-        assert df.shape == (1,)
-        assert df.dtype == np.dtype("O")
-        assert df[0] == "a string"
+        with tiledb.group.Group(unspath.as_posix()) as G:
+            assert G.meta["scalar_int"] == 1
+            assert G.meta["scalar_float"] == 3.25
+            assert G.meta["scalar_string"] == "a string"
 
     with tiledb.open((unspath / "list_of_int").as_posix()) as A:
         df = A[:]
@@ -100,19 +118,10 @@ def test_from_anndata_uns(tmp_path):
         assert df.dtype == np.dtype("O")
         assert df[9] == "900"
 
-    with tiledb.open((unspath / "simple_dict" / "A").as_posix()) as A:
-        df = A[:]
-        assert isinstance(df, np.ndarray)
-        assert df.shape == (1,)
-        assert df.dtype == np.int64 or df.dtype == np.int32
-        assert df[0] == 0
-
-    with tiledb.open((unspath / "simple_dict" / "B").as_posix()) as A:
-        df = A[:]
-        assert isinstance(df, np.ndarray)
-        assert df.shape == (1,)
-        assert df.dtype == np.dtype("O")
-        assert df[0] == "one"
+    with tiledb.group.Group((unspath / "simple_dict").as_posix()) as G:
+        # Scalars are written as group metadata
+        assert G.meta["A"] == 0
+        assert G.meta["B"] == "one"
 
     with tiledb.open((unspath / "numpy_ndarray_1d_int").as_posix()) as A:
         df = A[:]
