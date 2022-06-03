@@ -53,7 +53,7 @@ class TileDBGroup(TileDBObject):
         object has not yet been populated, e.g. before calling `from_anndata` -- or, if the
         SOMA has been populated but doesn't have this member (e.g. not all SOMAs have a `varp`).
         """
-        return tiledb.object_type(self.uri) == "group"
+        return tiledb.object_type(self.uri, ctx=self._ctx) == "group"
 
     def _create(self):
         """
@@ -89,7 +89,7 @@ class TileDBGroup(TileDBObject):
                 # rather than (with a little duplication) in TileDBGroup and TileDBArray.
                 # However, getting it to work with a recursive data structure and finding the
                 # required methods, it was simpler to split the logic this way.
-                object_type = tiledb.object_type(O.uri)
+                object_type = tiledb.object_type(O.uri, ctx=self._ctx)
                 if object_type == "group":
                     group = TileDBGroup(uri=O.uri, name=O.name, parent=self)
                     group._set_soma_object_type_metadata_recursively()
@@ -183,7 +183,7 @@ class TileDBGroup(TileDBObject):
                     # rather than (with a little duplication) in TileDBGroup and TileDBArray.
                     # However, getting it to work with a recursive data structure and finding the
                     # required methods, it was simpler to split the logic this way.
-                    object_type = tiledb.object_type(O.uri)
+                    object_type = tiledb.object_type(O.uri, ctx=self._ctx)
                     if object_type == "group":
                         group = TileDBGroup(uri=O.uri, name=O.name, parent=self)
                         group.show_metadata(recursively, indent=child_indent)

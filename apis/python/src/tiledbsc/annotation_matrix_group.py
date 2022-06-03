@@ -118,7 +118,7 @@ class AnnotationMatrixGroup(TileDBGroup):
                     s2 = util.get_start_stamp()
                     print(f"{self._indent}START  read {element.uri}")
 
-                with tiledb.open(element.uri) as A:
+                with tiledb.open(element.uri, ctx=self._ctx) as A:
                     df = pd.DataFrame(A[:])
                     df.set_index(self.dim_name, inplace=True)
                     matrix_name = os.path.basename(element.uri)  # e.g. 'X_pca'

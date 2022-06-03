@@ -44,7 +44,7 @@ class TileDBArray(TileDBObject):
         # and our return value's __exit__ on exit from the body of the with-block. The tiledb
         # array object does both of those things. (And if it didn't, we'd get a runtime AttributeError
         # on with-as, flagging the non-existence of the __enter__ or __exit__.)
-        return tiledb.open(self.uri, mode=mode)
+        return tiledb.open(self.uri, mode=mode, ctx=self._ctx)
 
     def exists(self) -> bool:
         """

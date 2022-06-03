@@ -71,7 +71,7 @@ class TileDBObject:
         raise Exception("This virtual method must be overridden by a child class.")
 
     def exists(self):
-        found = tiledb.object_type(self.uri)
+        found = tiledb.object_type(self.uri, ctx=self._ctx)
         if found == None:
             return False
         elif found == self._object_type():

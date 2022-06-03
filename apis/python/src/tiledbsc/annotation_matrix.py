@@ -51,7 +51,7 @@ class AnnotationMatrix(TileDBArray):
             else:
                 # This is quicker than the query -- we can use it safely off TileDB Cloud,
                 # and if there's just one fragment written.
-                fragment_info = tiledb.array_fragments(self.uri)
+                fragment_info = tiledb.array_fragments(self.uri, ctx=self._ctx)
                 if len(fragment_info) == 1:
                     num_rows = sum(fragment_info.cell_num)
                 else:

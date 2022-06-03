@@ -130,7 +130,7 @@ class AnnotationPairwiseMatrixGroup(TileDBGroup):
 
         grp = None
         try:  # Not all groups have all four of obsm, obsp, varm, and varp.
-            grp = tiledb.Group(self.uri, mode="r")
+            grp = tiledb.Group(self.uri, mode="r", ctx=self._ctx)
         except:
             pass
         if grp == None:
