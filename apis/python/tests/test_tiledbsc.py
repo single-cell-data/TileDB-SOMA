@@ -63,6 +63,8 @@ def test_import_anndata(adata):
         assert (
             A.meta[tiledbsc.util_tiledb.SOMA_OBJECT_TYPE_METADATA_KEY] == "AssayMatrix"
         )
+    # Convenience accessors
+    assert soma.X["data"].shape() == soma.X.data.shape()
 
     # Check X/raw (sparse)
     with tiledb.open(os.path.join(output_path, "raw", "X", "data")) as A:
@@ -83,6 +85,10 @@ def test_import_anndata(adata):
             == "AnnotationDataFrame"
         )
     assert sorted(soma.obs.ids()) == sorted(list(orig.obs_names))
+    # Convenience accessors
+    assert soma.obs_keys() == soma.obs_names
+    assert soma.obs_names == soma.obs.ids()
+    assert soma.n_obs == len(soma.obs.ids())
 
     # Check var
     with tiledb.open(os.path.join(output_path, "var")) as A:
@@ -93,6 +99,10 @@ def test_import_anndata(adata):
             == "AnnotationDataFrame"
         )
     assert sorted(soma.var.ids()) == sorted(list(orig.var_names))
+    # Convenience accessors
+    assert soma.var_keys() == soma.var_names
+    assert soma.var_names == soma.var.ids()
+    assert soma.n_var == len(soma.var.ids())
 
     # Check some annotation matrices
     # Note: pbmc3k_processed doesn't have varp.
@@ -106,6 +116,9 @@ def test_import_anndata(adata):
                 A.meta[tiledbsc.util_tiledb.SOMA_OBJECT_TYPE_METADATA_KEY]
                 == "AnnotationMatrix"
             )
+    # Convenience accessors: soma.obsm.X_pca <-> soma.obsm['X_pca']
+    for key in soma.obsm.keys():
+        assert getattr(soma.obsm, key).shape() == soma.obsm[key].shape()
 
     assert sorted(soma.varm.keys()) == sorted(orig.varm.keys())
     for key in orig.varm_keys():
@@ -117,6 +130,9 @@ def test_import_anndata(adata):
                 A.meta[tiledbsc.util_tiledb.SOMA_OBJECT_TYPE_METADATA_KEY]
                 == "AnnotationMatrix"
             )
+    # Convenience accessors:
+    for key in soma.varm.keys():
+        assert getattr(soma.varm, key).shape() == soma.varm[key].shape()
 
     assert sorted(soma.obsp.keys()) == sorted(orig.obsp.keys())
     for key in list(orig.obsp.keys()):
@@ -135,6 +151,9 @@ def test_import_anndata(adata):
                 A.meta[tiledbsc.util_tiledb.SOMA_OBJECT_TYPE_METADATA_KEY]
                 == "AssayMatrix"
             )
+    # Convenience accessors:
+    for key in soma.obsp.keys():
+        assert getattr(soma.obsp, key).shape() == soma.obsp[key].shape()
 
     tempdir.cleanup()
 
