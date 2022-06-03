@@ -71,18 +71,6 @@ class UnsArray(TileDBArray):
             self.from_numpy_ndarray(arr)
             return True
 
-        elif isinstance(obj, np.str_):
-            # Needs explicit cast from numpy.str_ to str for tiledb.from_numpy
-            arr = np.asarray([obj]).astype(str)
-            self.from_numpy_ndarray(arr)
-            return True
-
-        elif isinstance(obj, (int, float, str)):
-            # Nominally this is unit-test data
-            arr = np.asarray([obj])
-            self.from_numpy_ndarray(arr)
-            return True
-
         elif "numpy" in str(type(obj)):
             arr = np.asarray([obj])
             arr = util._to_tiledb_supported_array_type(arr)
