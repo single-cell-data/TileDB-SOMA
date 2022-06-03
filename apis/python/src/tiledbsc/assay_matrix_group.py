@@ -11,7 +11,9 @@ import os
 
 class AssayMatrixGroup(TileDBGroup):
     """
-    Nominally for `X`, `raw/X`, `obsp` elements, and `varp` elements.
+    Nominally for `X` and `raw/X` elements.  You can find element names using soma.X.keys(); you
+    access elements using soma.X['data'] etc., or soma.X.data if you prefer.  (The latter syntax is
+    possible when the element name doesn't have dashes, dots, etc. in it.)
     """
 
     row_dim_name: str

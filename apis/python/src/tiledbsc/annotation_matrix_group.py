@@ -13,7 +13,9 @@ import os
 
 class AnnotationMatrixGroup(TileDBGroup):
     """
-    Nominally for soma obsm and varm.
+    Nominally for soma obsm and varm. You can find element names using soma.obsm.keys(); you access
+    elements using soma.obsm['X_pca'] etc., or soma.obsm.X_pca if you prefer.  (The latter syntax is
+    possible when the element name doesn't have dashes, dots, etc. in it.)
     """
 
     dim_name: str
