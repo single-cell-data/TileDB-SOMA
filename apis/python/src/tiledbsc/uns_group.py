@@ -114,12 +114,7 @@ class UnsGroup(TileDBGroup):
         """
         Reads the recursive group/array uns data from TileDB storage and returns them as a recursive dict of matrices.
         """
-        grp = None
-        try:  # Not all groups have uns
-            grp = tiledb.Group(self.uri, mode="r")
-        except:
-            pass
-        if grp == None:
+        if not self.exists():
             if self._verbose:
                 print(f"{self._indent}{self.uri} not found")
             return {}
@@ -128,24 +123,23 @@ class UnsGroup(TileDBGroup):
             s = util.get_start_stamp()
             print(f"{self._indent}START  read {self.uri}")
 
-        retval = {}
-        for element in grp:
-            name = os.path.basename(element.uri)  # TODO: update for tiledb cloud
+        with self._open() as G:
+            retval = {}
+            for element in G:
+                name = os.path.basename(element.uri)  # TODO: update for tiledb cloud
 
-            if element.type == tiledb.tiledb.Group:
-                child_group = UnsGroup(uri=element.uri, name=name, parent=self)
-                retval[name] = child_group.to_dict_of_matrices()
+                if element.type == tiledb.tiledb.Group:
+                    child_group = UnsGroup(uri=element.uri, name=name, parent=self)
+                    retval[name] = child_group.to_dict_of_matrices()
 
-            elif element.type == tiledb.libtiledb.Array:
-                child_array = UnsArray(uri=element.uri, name=name, parent=self)
-                retval[name] = child_array.to_matrix()
+                elif element.type == tiledb.libtiledb.Array:
+                    child_array = UnsArray(uri=element.uri, name=name, parent=self)
+                    retval[name] = child_array.to_matrix()
 
-            else:
-                raise Exception(
-                    f"Internal error: found uns group element neither group nor array: type is {str(element.type)}"
-                )
-
-        grp.close()
+                else:
+                    raise Exception(
+                        f"Internal error: found uns group element neither group nor array: type is {str(element.type)}"
+                    )
 
         if self._verbose:
             print(util.format_elapsed(s, f"{self._indent}FINISH read {self.uri}"))

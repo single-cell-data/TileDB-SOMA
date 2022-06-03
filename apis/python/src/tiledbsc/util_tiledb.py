@@ -49,16 +49,10 @@ def __show_array_schema(uri: str, ctx: Optional[tiledb.Ctx] = None):
 
 # ----------------------------------------------------------------
 def __show_array_schemas_for_group(group_uri: str, ctx: Optional[tiledb.Ctx] = None):
-    group = None
-    try:
-        group = tiledb.Group(group_uri, mode="r", ctx=ctx)
-    except:
-        return
-
-    for element in group:
-        if element.type == tiledb.libtiledb.Array:
-            __show_array_schema(element.uri, ctx)
-    group.close()
+    with tiledb.Group(group_uri, mode="r", ctx=ctx) as G:
+        for element in G:
+            if element.type == tiledb.libtiledb.Array:
+                __show_array_schema(element.uri, ctx)
 
 
 # ================================================================
@@ -68,22 +62,23 @@ def show_tiledb_group_array_schemas(uri: str, ctx: Optional[tiledb.Ctx] = None):
     single-cell matrix-API data, and won't necessarily traverse items in a familiar
     application-specific order.
     """
-    group = tiledb.Group(uri, mode="r", ctx=ctx)
-    print()
-    print("================================================================")
-    print(uri)
+    with tiledb.Group(uri, mode="r", ctx=ctx) as G:
+        print()
+        print("================================================================")
+        print(uri)
 
-    for element in group:
-        # Note: use `element.type` rather than `isinstance(element, tiledb.group.Group)`
-        # since type(element) is `tiledb.object.Object` in all cases.
-        if element.type == tiledb.group.Group:
-            show_tiledb_group_array_schemas(element.uri)
-        elif element.type == tiledb.libtiledb.Array:
-            print()
-            print("----------------------------------------------------------------")
-            print(element.uri)
-            with tiledb.open(element.uri, ctx=ctx) as A:
-                print(A.schema)
-        else:
-            print("Skipping element type", element.type)
-    group.close()
+        for element in G:
+            # Note: use `element.type` rather than `isinstance(element, tiledb.group.Group)`
+            # since type(element) is `tiledb.object.Object` in all cases.
+            if element.type == tiledb.group.Group:
+                show_tiledb_group_array_schemas(element.uri)
+            elif element.type == tiledb.libtiledb.Array:
+                print()
+                print(
+                    "----------------------------------------------------------------"
+                )
+                print(element.uri)
+                with tiledb.open(element.uri, ctx=ctx) as A:
+                    print(A.schema)
+            else:
+                print("Skipping element type", element.type)

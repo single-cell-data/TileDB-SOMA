@@ -2,6 +2,7 @@ import tiledb
 import tiledbsc.util_tiledb
 from .soma_options import SOMAOptions
 from .tiledb_object import TileDBObject
+from .tiledb_array import TileDBArray
 
 from contextlib import contextmanager
 
@@ -61,10 +62,44 @@ class TileDBGroup(TileDBObject):
         if self._verbose:
             print(f"{self._indent}Creating TileDB group {self.uri}")
         tiledb.group_create(uri=self.uri, ctx=self._ctx)
+
+        self._set_soma_object_type_metadata()
+
+    def _set_soma_object_type_metadata(self):
+        """
+        This helps nested-structured traversals (especially those that start at the SOMACollection
+        level) confidently navigate with a minimum of introspection on group contents.
+        """
         with self._open("w") as G:
             G.meta[
                 tiledbsc.util_tiledb.SOMA_OBJECT_TYPE_METADATA_KEY
             ] = self.__class__.__name__
+
+    def _set_soma_object_type_metadata_recursively(self):
+        """
+        SOMAs/SOCOs written very early on in the development of this project may not have these set.
+        Using this method we can after-populate these, without needig to re-ingest entire datasets.
+        Any SOMAs/SOCOs ingested from June 2022 onward won't need this -- this metadata will be
+        written at ingestion time.
+        """
+        self._set_soma_object_type_metadata()
+        with self._open() as G:
+            for O in G:  # This returns a tiledb.object.Object
+                # It might appear simpler to have all this code within TileDBObject class,
+                # rather than (with a little duplication) in TileDBGroup and TileDBArray.
+                # However, getting it to work with a recursive data structure and finding the
+                # required methods, it was simpler to split the logic this way.
+                object_type = tiledb.object_type(O.uri)
+                if object_type == "group":
+                    group = TileDBGroup(uri=O.uri, name=O.name, parent=self)
+                    group._set_soma_object_type_metadata_recursively()
+                elif object_type == "array":
+                    array = TileDBArray(uri=O.uri, name=O.name, parent=self)
+                    array._set_soma_object_type_metadata()
+                else:
+                    raise Exception(
+                        f"Unexpected object_type found: {object_type} at {O.uri}"
+                    )
 
     def _open(self, mode="r"):
         """
@@ -132,3 +167,30 @@ class TileDBGroup(TileDBObject):
         """
         with self._open("r") as G:
             return {O.name: O.uri for O in G}
+
+    def show_metadata(self, recursively=True, indent=""):
+        """
+        Shows metadata for the group, recursively by default.
+        """
+        print(f"{indent}[{self.name}]")
+        for key, value in self.metadata().items():
+            print(f"{indent}- {key}: {value}")
+        if recursively:
+            child_indent = indent + "  "
+            with self._open() as G:
+                for O in G:  # This returns a tiledb.object.Object
+                    # It might appear simpler to have all this code within TileDBObject class,
+                    # rather than (with a little duplication) in TileDBGroup and TileDBArray.
+                    # However, getting it to work with a recursive data structure and finding the
+                    # required methods, it was simpler to split the logic this way.
+                    object_type = tiledb.object_type(O.uri)
+                    if object_type == "group":
+                        group = TileDBGroup(uri=O.uri, name=O.name, parent=self)
+                        group.show_metadata(recursively, indent=child_indent)
+                    elif object_type == "array":
+                        array = TileDBArray(uri=O.uri, name=O.name, parent=self)
+                        array.show_metadata(recursively, indent=child_indent)
+                    else:
+                        raise Exception(
+                            f"Unexpected object_type found: {object_type} at {O.uri}"
+                        )

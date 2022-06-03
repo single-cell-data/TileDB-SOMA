@@ -2,7 +2,6 @@ import tiledb
 import tiledbsc.util_tiledb
 from .soma_options import SOMAOptions
 from .tiledb_object import TileDBObject
-from .tiledb_group import TileDBGroup
 
 from typing import Optional, List, Dict
 
@@ -18,7 +17,9 @@ class TileDBArray(TileDBObject):
         self,
         uri: str,
         name: str,
-        parent: Optional[TileDBGroup] = None,
+        # It's a circular import if we say this, but this is really:
+        # parent: Optional[TileDBGroup] = None,
+        parent=None,
     ):
         """
         See the TileDBObject constructor.
@@ -98,7 +99,7 @@ class TileDBArray(TileDBObject):
         """
         return attr_name in self.attr_names()
 
-    def set_soma_object_type_metadata(self) -> None:
+    def _set_soma_object_type_metadata(self) -> None:
         """
         This helps nested-structured traversals (especially those that start at the SOMACollection
         level) confidently navigate with a minimum of introspection on group contents.
@@ -107,3 +108,11 @@ class TileDBArray(TileDBObject):
             A.meta[
                 tiledbsc.util_tiledb.SOMA_OBJECT_TYPE_METADATA_KEY
             ] = self.__class__.__name__
+
+    def show_metadata(self, recursively=True, indent=""):
+        """
+        Shows metadata for the array.
+        """
+        print(f"{indent}[{self.name}]")
+        for key, value in self.metadata().items():
+            print(f"{indent}- {key}: {value}")
