@@ -18,8 +18,12 @@ which includes:
 * `obs` (`AnnotationDataframe`): 1D labeled array with column labels for `X`
 * `var` (`AnnotationDataframe`): 1D labeled array with row labels for `X`
 
-See also desc-ann.py in this directory for helpful information to
-reveal the diversity/variety of HDF5 files we process.
+Convenience accessors include:
+
+* `soma.obs_keys()` for `soma.obs_names` for `soma.obs.ids()`
+* `soma.var_keys()` for `soma.var_names` for `soma.var.ids()`
+* `soma.n_obs` for `soma.obs.shape()[0]`
+* `soma.n_var` for `soma.var.shape()[0]`
 
 <a id="tiledbsc.soma.SOMA.__init__"></a>
 
@@ -51,4 +55,35 @@ def __str__()
 ```
 
 Implements `print(soma)`.
+
+<a id="tiledbsc.soma.SOMA.__getattr__"></a>
+
+#### \_\_getattr\_\_
+
+```python
+def __getattr__(name)
+```
+
+This is called on `soma.name` when `name` is not already an attribute.
+This is used for `soma.n_obs`, etc.
+
+<a id="tiledbsc.soma.SOMA.obs_keys"></a>
+
+#### obs\_keys
+
+```python
+def obs_keys()
+```
+
+An alias for `soma.obs.ids()`.
+
+<a id="tiledbsc.soma.SOMA.var_keys"></a>
+
+#### var\_keys
+
+```python
+def var_keys()
+```
+
+An alias for `soma.var.ids()`.
 

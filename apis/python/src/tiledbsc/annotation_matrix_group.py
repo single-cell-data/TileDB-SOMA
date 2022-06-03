@@ -13,7 +13,9 @@ import os
 
 class AnnotationMatrixGroup(TileDBGroup):
     """
-    Nominally for soma obsm and varm.
+    Nominally for soma obsm and varm. You can find element names using soma.obsm.keys(); you access
+    elements using soma.obsm['X_pca'] etc., or soma.obsm.X_pca if you prefer.  (The latter syntax is
+    possible when the element name doesn't have dashes, dots, etc. in it.)
     """
 
     dim_name: str
@@ -52,6 +54,19 @@ class AnnotationMatrixGroup(TileDBGroup):
             )
             retval.append(matrix)
         return iter(retval)
+
+    # ----------------------------------------------------------------
+    def __getattr__(self, name):
+        """
+        This is called on `soma.obsm.name` when `name` is not already an attribute.
+        This way you can do `soma.obsm.X_tsne` as an alias for `soma.obsm['X_tsne']`.
+        """
+        with self._open() as G:
+            if not name in G:
+                raise AttributeError(
+                    f"'{self.__class__.__name__}' object has no attribute '{name}'"
+                )
+        return self[name]
 
     # ----------------------------------------------------------------
     def from_matrices_and_dim_values(self, annotation_matrices, dim_values):

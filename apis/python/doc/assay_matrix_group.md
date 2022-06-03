@@ -10,7 +10,9 @@
 class AssayMatrixGroup(TileDBGroup)
 ```
 
-Nominally for `X`, `raw/X`, `obsp` elements, and `varp` elements.
+Nominally for `X` and `raw/X` elements.  You can find element names using soma.X.keys(); you
+access elements using soma.X['data'] etc., or soma.X.data if you prefer.  (The latter syntax is
+possible when the element name doesn't have dashes, dots, etc. in it.)
 
 <a id="tiledbsc.assay_matrix_group.AssayMatrixGroup.__init__"></a>
 
@@ -30,6 +32,59 @@ See the `TileDBObject` constructor.
 
 See `AssayMatrix` for the rationale behind retaining references to the `row_dataframe` and
 `col_dataframe` objects.
+
+<a id="tiledbsc.assay_matrix_group.AssayMatrixGroup.keys"></a>
+
+#### keys
+
+```python
+def keys()
+```
+
+For `obsm` and `varm`, `.keys()` is a keystroke-saver for the more general group-member
+accessor `._get_member_names()`.
+
+<a id="tiledbsc.assay_matrix_group.AssayMatrixGroup.__getattr__"></a>
+
+#### \_\_getattr\_\_
+
+```python
+def __getattr__(name)
+```
+
+This is called on `soma.X.name` when `name` is not already an attribute.
+This way you can do `soma.X.data` as an alias for `soma.X['data']`.
+
+<a id="tiledbsc.assay_matrix_group.AssayMatrixGroup.__iter__"></a>
+
+#### \_\_iter\_\_
+
+```python
+def __iter__() -> List[AssayMatrix]
+```
+
+Implements `for matrix in soma.obsm: ...` and `for matrix in soma.varm: ...`
+
+<a id="tiledbsc.assay_matrix_group.AssayMatrixGroup.__getitem__"></a>
+
+#### \_\_getitem\_\_
+
+```python
+def __getitem__(name)
+```
+
+Returns an `AnnotationMatrix` element at the given name within the group, or None if no such
+member exists.  Overloads the `[...]` operator.
+
+<a id="tiledbsc.assay_matrix_group.AssayMatrixGroup.__contains__"></a>
+
+#### \_\_contains\_\_
+
+```python
+def __contains__(name)
+```
+
+Implements the `in` operator, e.g. `"data" in soma.X`.
 
 <a id="tiledbsc.assay_matrix_group.AssayMatrixGroup.from_matrix_and_dim_values"></a>
 

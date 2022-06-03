@@ -14,7 +14,9 @@ import os
 
 class AnnotationPairwiseMatrixGroup(TileDBGroup):
     """
-    Nominally for soma obsp and varp.
+    Nominally for soma obsp and varp. You can find element names using soma.obsp.keys(); you access
+    elements using soma.obsp['distances'] etc., or soma.obsp.distances if you prefer.  (The latter
+    syntax is possible when the element name doesn't have dashes, dots, etc. in it.)
     """
 
     row_dim_name: str
@@ -53,6 +55,19 @@ class AnnotationPairwiseMatrixGroup(TileDBGroup):
         accessor `._get_member_names()`.
         """
         return self._get_member_names()
+
+    # ----------------------------------------------------------------
+    def __getattr__(self, name):
+        """
+        This is called on `soma.obsp.name` when `name` is not already an attribute.
+        This way you can do `soma.obsp.distances` as an alias for `soma.obsp['distances']`.
+        """
+        with self._open() as G:
+            if not name in G:
+                raise AttributeError(
+                    f"'{self.__class__.__name__}' object has no attribute '{name}'"
+                )
+        return self[name]
 
     # ----------------------------------------------------------------
     def __iter__(self) -> List[AssayMatrix]:
@@ -109,7 +124,7 @@ class AnnotationPairwiseMatrixGroup(TileDBGroup):
         self, obs_df_index, var_df_index
     ) -> Dict[str, scipy.sparse.csr_matrix]:
         """
-        Reads the `obsm` or `varm` group-member arrays into a dict from name to member array.
+        Reads the `obsp` or `varp` group-member arrays into a dict from name to member array.
         Member arrays are returned in sparse CSR format.
         """
 

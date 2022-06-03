@@ -11,7 +11,9 @@ import os
 
 class AssayMatrixGroup(TileDBGroup):
     """
-    Nominally for `X`, `raw/X`, `obsp` elements, and `varp` elements.
+    Nominally for `X` and `raw/X` elements.  You can find element names using soma.X.keys(); you
+    access elements using soma.X['data'] etc., or soma.X.data if you prefer.  (The latter syntax is
+    possible when the element name doesn't have dashes, dots, etc. in it.)
     """
 
     row_dim_name: str
@@ -50,6 +52,19 @@ class AssayMatrixGroup(TileDBGroup):
         accessor `._get_member_names()`.
         """
         return self._get_member_names()
+
+    # ----------------------------------------------------------------
+    def __getattr__(self, name):
+        """
+        This is called on `soma.X.name` when `name` is not already an attribute.
+        This way you can do `soma.X.data` as an alias for `soma.X['data']`.
+        """
+        with self._open() as G:
+            if not name in G:
+                raise AttributeError(
+                    f"'{self.__class__.__name__}' object has no attribute '{name}'"
+                )
+        return self[name]
 
     # ----------------------------------------------------------------
     def __iter__(self) -> List[AssayMatrix]:

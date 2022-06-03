@@ -31,8 +31,12 @@ class SOMA(TileDBGroup):
     * `obs` (`AnnotationDataframe`): 1D labeled array with column labels for `X`
     * `var` (`AnnotationDataframe`): 1D labeled array with row labels for `X`
 
-    See also desc-ann.py in this directory for helpful information to
-    reveal the diversity/variety of HDF5 files we process.
+    Convenience accessors include:
+
+    * `soma.obs_keys()` for `soma.obs_names` for `soma.obs.ids()`
+    * `soma.var_keys()` for `soma.var_names` for `soma.var.ids()`
+    * `soma.n_obs` for `soma.obs.shape()[0]`
+    * `soma.n_var` for `soma.var.shape()[0]`
     """
 
     X: AssayMatrixGroup
@@ -136,3 +140,37 @@ class SOMA(TileDBGroup):
         Implements `print(soma)`.
         """
         return f"name={self.name},uri={self.uri}"
+
+    # ----------------------------------------------------------------
+    def __getattr__(self, name):
+        """
+        This is called on `soma.name` when `name` is not already an attribute.
+        This is used for `soma.n_obs`, etc.
+        """
+        if name == "n_obs":
+            return self.obs.shape()[0]
+        if name == "n_var":
+            return self.var.shape()[0]
+
+        if name == "obs_names":
+            return self.obs.ids()
+        if name == "var_names":
+            return self.var.ids()
+
+        raise AttributeError(
+            f"'{self.__class__.__name__}' object has no attribute '{name}'"
+        )
+
+    # ----------------------------------------------------------------
+    def obs_keys(self):
+        """
+        An alias for `soma.obs.ids()`.
+        """
+        return self.obs.ids()
+
+    # ----------------------------------------------------------------
+    def var_keys(self):
+        """
+        An alias for `soma.var.ids()`.
+        """
+        return self.var.ids()

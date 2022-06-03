@@ -33,6 +33,47 @@ def keys()
 For uns, `.keys()` is a keystroke-saver for the more general group-member
 accessor `._get_member_names()`.
 
+<a id="tiledbsc.uns_group.UnsGroup.__getitem__"></a>
+
+#### \_\_getitem\_\_
+
+```python
+def __getitem__(name)
+```
+
+Returns an `UnsArray` or `UnsGroup` element at the given name within the group, or None if
+no such member exists.  Overloads the [...] operator.
+
+<a id="tiledbsc.uns_group.UnsGroup.__contains__"></a>
+
+#### \_\_contains\_\_
+
+```python
+def __contains__(name)
+```
+
+Implements '"namegoeshere" in soma.uns'.
+
+<a id="tiledbsc.uns_group.UnsGroup.__iter__"></a>
+
+#### \_\_iter\_\_
+
+```python
+def __iter__() -> List
+```
+
+Implements `for element in soma.uns: ...`
+
+<a id="tiledbsc.uns_group.UnsGroup.show"></a>
+
+#### show
+
+```python
+def show(display_name="uns")
+```
+
+Recursively displays the uns data.
+
 <a id="tiledbsc.uns_group.UnsGroup.from_anndata_uns"></a>
 
 #### from\_anndata\_uns
@@ -56,25 +97,4 @@ def to_dict_of_matrices() -> Dict
 ```
 
 Reads the recursive group/array uns data from TileDB storage and returns them as a recursive dict of matrices.
-
-<a id="tiledbsc.uns_group.UnsGroup.__getitem__"></a>
-
-#### \_\_getitem\_\_
-
-```python
-def __getitem__(name)
-```
-
-Returns an `UnsArray` or `UnsGroup` element at the given name within the group, or None if
-no such member exists.  Overloads the [...] operator.
-
-<a id="tiledbsc.uns_group.UnsGroup.__contains__"></a>
-
-#### \_\_contains\_\_
-
-```python
-def __contains__(name)
-```
-
-Implements '"namegoeshere" in soma.uns'.
 
