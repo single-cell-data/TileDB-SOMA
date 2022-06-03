@@ -45,8 +45,12 @@ website:
         - href: "overview.md"
           text: "Overview"
 
-        - text: "R examples and API"
-          href: "https://tiledb-inc.github.io/tiledbsc"
+        - section: "R"
+          contents:
+            - href: "https://tiledb-inc.github.io/tiledbsc/reference/index.html"
+              text: "R API"
+            - href: "https://tiledb-inc.github.io/tiledbsc/articles/introduction.html"
+              text: "R examples"
 
         - section: "Python"
           contents:
