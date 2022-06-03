@@ -214,7 +214,6 @@ TTTAGCTGTACTCT           0       462.0            86                1           
 
 [80 rows x 7 columns]
 
->>> soma.var.df()
                vst.mean  vst.variance  vst.variance.expected  vst.variance.standardized  vst.variable
 var_id
 AKR1C3           0.2625      1.132753               0.553424                   2.021191             1

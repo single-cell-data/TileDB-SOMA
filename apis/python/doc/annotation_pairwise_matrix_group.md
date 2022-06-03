@@ -10,7 +10,9 @@
 class AnnotationPairwiseMatrixGroup(TileDBGroup)
 ```
 
-Nominally for soma obsp and varp.
+Nominally for soma obsp and varp. You can find element names using soma.obsp.keys(); you access
+elements using soma.obsp['distances'] etc., or soma.obsp.distances if you prefer.  (The latter
+syntax is possible when the element name doesn't have dashes, dots, etc. in it.)
 
 <a id="tiledbsc.annotation_pairwise_matrix_group.AnnotationPairwiseMatrixGroup.__init__"></a>
 
@@ -38,6 +40,17 @@ def keys()
 
 For obsp and varp, `.keys()` is a keystroke-saver for the more general group-member
 accessor `._get_member_names()`.
+
+<a id="tiledbsc.annotation_pairwise_matrix_group.AnnotationPairwiseMatrixGroup.__getattr__"></a>
+
+#### \_\_getattr\_\_
+
+```python
+def __getattr__(name)
+```
+
+This is called on `soma.obsp.name` when `name` is not already an attribute.
+This way you can do `soma.obsp.distances` as an alias for `soma.obsp['distances']`.
 
 <a id="tiledbsc.annotation_pairwise_matrix_group.AnnotationPairwiseMatrixGroup.__iter__"></a>
 
@@ -71,10 +84,11 @@ arrays under that group.
 #### to\_dict\_of\_csr
 
 ```python
-def to_dict_of_csr() -> Dict[str, scipy.sparse.csr_matrix]
+def to_dict_of_csr(obs_df_index,
+                   var_df_index) -> Dict[str, scipy.sparse.csr_matrix]
 ```
 
-Reads the `obsm` or `varm` group-member arrays into a dict from name to member array.
+Reads the `obsp` or `varp` group-member arrays into a dict from name to member array.
 Member arrays are returned in sparse CSR format.
 
 <a id="tiledbsc.annotation_pairwise_matrix_group.AnnotationPairwiseMatrixGroup.__getitem__"></a>

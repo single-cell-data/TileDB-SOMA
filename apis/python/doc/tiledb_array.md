@@ -19,7 +19,7 @@ requested.
 #### \_\_init\_\_
 
 ```python
-def __init__(uri: str, name: str, parent: Optional[TileDBGroup] = None)
+def __init__(uri: str, name: str, parent=None)
 ```
 
 See the TileDBObject constructor.
@@ -96,14 +96,13 @@ def has_attr_name(attr_name: str) -> bool
 
 Returns true if the array has the specified attribute name, false otherwise.
 
-<a id="tiledbsc.tiledb_array.TileDBArray.set_soma_object_type_metadata"></a>
+<a id="tiledbsc.tiledb_array.TileDBArray.show_metadata"></a>
 
-#### set\_soma\_object\_type\_metadata
+#### show\_metadata
 
 ```python
-def set_soma_object_type_metadata() -> None
+def show_metadata(recursively=True, indent="")
 ```
 
-This helps nested-structured traversals (especially those that start at the SOMACollection
-level) confidently navigate with a minimum of introspection on group contents.
+Shows metadata for the array.
 

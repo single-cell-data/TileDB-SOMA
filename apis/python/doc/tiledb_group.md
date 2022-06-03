@@ -39,3 +39,13 @@ Tells whether or not there is storage for the group. This might be in case a SOM
 object has not yet been populated, e.g. before calling `from_anndata` -- or, if the
 SOMA has been populated but doesn't have this member (e.g. not all SOMAs have a `varp`).
 
+<a id="tiledbsc.tiledb_group.TileDBGroup.show_metadata"></a>
+
+#### show\_metadata
+
+```python
+def show_metadata(recursively=True, indent="")
+```
+
+Shows metadata for the group, recursively by default.
+

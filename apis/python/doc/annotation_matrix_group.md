@@ -10,7 +10,9 @@
 class AnnotationMatrixGroup(TileDBGroup)
 ```
 
-Nominally for soma obsm and varm.
+Nominally for soma obsm and varm. You can find element names using soma.obsm.keys(); you access
+elements using soma.obsm['X_pca'] etc., or soma.obsm.X_pca if you prefer.  (The latter syntax is
+possible when the element name doesn't have dashes, dots, etc. in it.)
 
 <a id="tiledbsc.annotation_matrix_group.AnnotationMatrixGroup.__init__"></a>
 
@@ -42,6 +44,17 @@ def __iter__() -> List[AnnotationMatrix]
 ```
 
 Implements `for matrix in soma.obsm: ...` and `for matrix in soma.varm: ...`
+
+<a id="tiledbsc.annotation_matrix_group.AnnotationMatrixGroup.__getattr__"></a>
+
+#### \_\_getattr\_\_
+
+```python
+def __getattr__(name)
+```
+
+This is called on `soma.obsm.name` when `name` is not already an attribute.
+This way you can do `soma.obsm.X_tsne` as an alias for `soma.obsm['X_tsne']`.
 
 <a id="tiledbsc.annotation_matrix_group.AnnotationMatrixGroup.from_matrices_and_dim_values"></a>
 
