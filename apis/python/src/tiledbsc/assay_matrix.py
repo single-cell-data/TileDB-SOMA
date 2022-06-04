@@ -86,7 +86,7 @@ class AssayMatrix(TileDBArray):
         Either or both of the ID lists may be `None`, meaning, do not subselect along
         that dimension. If both ID lists are `None`, the entire matrix is returned.
         """
-        with tiledb.open(self.uri) as A:
+        with tiledb.open(self.uri, ctx=self._ctx) as A:
             if obs_ids is None:
                 if var_ids is None:
                     df = A.df[:, :]
@@ -271,7 +271,7 @@ class AssayMatrix(TileDBArray):
             print(f"{self._indent}START  __ingest_coo_data_string_dims_rows_chunked")
 
         eta_tracker = util.ETATracker()
-        with tiledb.open(self.uri, mode="w") as A:
+        with tiledb.open(self.uri, mode="w", ctx=self._ctx) as A:
             nrow = len(sorted_row_names)
 
             i = 0
@@ -367,7 +367,7 @@ class AssayMatrix(TileDBArray):
             print(f"{self._indent}START  __ingest_coo_data_string_dims_cols_chunked")
 
         eta_tracker = util.ETATracker()
-        with tiledb.open(self.uri, mode="w") as A:
+        with tiledb.open(self.uri, mode="w", ctx=self._ctx) as A:
             ncol = len(sorted_col_names)
 
             j = 0
@@ -465,7 +465,7 @@ class AssayMatrix(TileDBArray):
             )
 
         eta_tracker = util.ETATracker()
-        with tiledb.open(self.uri, mode="w") as A:
+        with tiledb.open(self.uri, mode="w", ctx=self._ctx) as A:
             nrow = len(sorted_row_names)
             ncol = len(col_names)
 
@@ -550,7 +550,7 @@ class AssayMatrix(TileDBArray):
         # * 'obs_id' key is a sequence of dim0 coordinates for X data.
         # * 'var_id' key is a sequence of dim1 coordinates for X data.
         # * 'values' key is a sequence of X data values.
-        with tiledb.open(self.uri) as A:
+        with tiledb.open(self.uri, ctx=self._ctx) as A:
             df = A[:]
 
         retval = util._X_and_ids_to_coo(

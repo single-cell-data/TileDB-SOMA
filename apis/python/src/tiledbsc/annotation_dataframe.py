@@ -53,7 +53,7 @@ class AnnotationDataFrame(TileDBArray):
             else:
                 # This is quicker than the query -- we can use it safely off TileDB Cloud,
                 # and if there's just one fragment written.
-                fragment_info = tiledb.array_fragments(self.uri)
+                fragment_info = tiledb.array_fragments(self.uri, ctx=self._ctx)
                 if len(fragment_info) == 1:
                     num_rows = sum(fragment_info.cell_num)
                 else:
@@ -125,7 +125,7 @@ class AnnotationDataFrame(TileDBArray):
         `cell_type == "blood"`. Returns None if the slice is empty.
         This is a v1 implementation for the prototype/demo timeframe.
         """
-        with tiledb.open(self.uri) as A:
+        with tiledb.open(self.uri, ctx=self._ctx) as A:
             qc = tiledb.QueryCondition(query_string)
             slice_query = A.query(attr_cond=qc)
             slice_df = slice_query.df[:][col_names_to_keep]
@@ -263,7 +263,7 @@ class AnnotationDataFrame(TileDBArray):
             s = util.get_start_stamp()
             print(f"{self._indent}START  read {self.uri}")
 
-        with tiledb.open(self.uri) as A:
+        with tiledb.open(self.uri, ctx=self._ctx) as A:
             # We could use A.df[:] to set the index_name to 'obs_id' or 'var_id'.
             # However, the resulting dataframe has obs_id/var_id as strings, not
             # bytes, resulting in `KeyError` elsewhere in the code.

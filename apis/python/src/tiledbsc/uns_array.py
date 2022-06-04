@@ -217,7 +217,7 @@ class UnsArray(TileDBArray):
             s2 = util.get_start_stamp()
             print(f"{self._indent}START  read {self.uri}")
 
-        with tiledb.open(self.uri) as A:
+        with tiledb.open(self.uri, ctx=self._ctx) as A:
             df = pd.DataFrame(A[:])
             retval = df.to_numpy()
 
