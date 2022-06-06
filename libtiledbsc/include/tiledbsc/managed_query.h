@@ -5,37 +5,19 @@
 #include <vector>
 
 #include <tiledb/tiledb>
-#include <tiledbsc/buffer_set.h>
+#include <tiledbsc/query_result.h>
 
 #include "tiledbsc_export.h"
 
 
 namespace tiledbsc {
 
+using namespace std;
+
 // TODO use allocator which does not zero initialize
 // TODO config - 4 MB
 constexpr size_t TILEDBSC_DEFAULT_ALLOC = 524288;
 
-struct BufferGroup {
-    std::map<std::string, std::shared_ptr<BufferSet>> buffers;
-};
-
-class TILEDBSC_EXPORT QueryResult {
-public:
-    QueryResult(std::shared_ptr<BufferGroup> buffers) : buffers_(buffers) {};
-    std::shared_ptr<BufferGroup> buffers();
-    void to_arrow(void* schema, void* array);
-
-    std::optional<std::shared_ptr<BufferSet>> get(std::string name);
-
-    size_t nbuffers();
-
-    std::vector<std::string> names();
-
-private:
-    std::shared_ptr<BufferGroup> buffers_;
-
-};
 
 // Forward declaration
 class MQAux;
@@ -83,7 +65,11 @@ public:
         }
     }
 
-    std::unique_ptr<tiledb::Query> query_;
+    /**
+     * Calculate initial cell count for var-length or nullable bufferset
+     * Defaults to min(10, initial_alloc/5)
+     */
+    size_t initial_ncells();
 
 private:
     /* methods */
@@ -96,15 +82,18 @@ private:
     void complete_query();
 
     /* fields */
-    std::shared_ptr<BufferGroup> buffers_;
+    ResultBuffers buffers_;
 
     std::shared_ptr<tiledb::Array> array_;
 
+    /* initial allocation target for data buffer *in bytes* */
     size_t initial_alloc_;
 
     /***/
     // if set, use only attribute or dim with these names
     std::optional<std::set<std::string>> use_attrs_dims_ = std::nullopt;
+
+    std::unique_ptr<tiledb::Query> query_;
 
     /* private implementation for helpers */
     friend class MQAux;

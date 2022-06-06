@@ -32,6 +32,9 @@
 cmake_minimum_required(VERSION 3.21)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmake/Modules/")
 
+# TileDBSC Options
+option(TILEDBSC_ENABLE_PYTHON "Enables Python API bindings" ON)
+
 # Superbuild option must be on by default.
 option(SUPERBUILD "If true, perform a superbuild (builds all missing dependencies)." ON)
 option(CMAKE_IDE "(Used for CLion builds). Disables superbuild and sets the EP install dir." OFF)
@@ -44,16 +47,20 @@ option(TILEDB_S3 "Enables S3/minio support using aws-cpp-sdk" ON)
 option(TILEDB_AZURE "Enables Azure Storage support using azure-storage-cpp" ON)
 option(TILEDB_GCS "Enables GCS Storage support using google-cloud-cpp" OFF)
 option(TILEDB_HDFS "Enables HDFS support using the official Hadoop JNI bindings" OFF)
-option(TILEDB_WERROR "Enables the -Werror flag during compilation." ON)
+option(TILEDB_WERROR "Enables the -Werror flag during compilation." OFF)
 option(TILEDB_SERIALIZATION "If true, enables building with support for query serialization" OFF)
 option(OVERRIDE_INSTALL_PREFIX "Ignores the setting of CMAKE_INSTALL_PREFIX and sets a default prefix" ON)
 option(ENABLE_ARROW_EXPORT "Installs an extra header for exporting in-memory results with Apache Arrow" ON)
 option(TILEDB_LOG_OUTPUT_ON_FAILURE "If true, print error logs if dependency sub-project build fails" ON)
+option(TILEDBSC_TESTING "Enable tests" ON)
 
 # Set C++20 as required standard for all C++ targets (C++17 minimum is required to use the TileDB C++ API).
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF) # Don't use GNU extensions
+
+# Build with fPIC
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 # Release builds by default.
 if (NOT CMAKE_BUILD_TYPE)
