@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 
-set -eux pipefail
+# A script to build and run the C++ library tests
+
+set -eu -o pipefail
 
 # cd to the top level directory of the repo
 cd $(git rev-parse --show-toplevel)
