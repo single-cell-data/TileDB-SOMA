@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+
+set -eux pipefail
+
+# cd to the top level directory of the repo
+cd $(git rev-parse --show-toplevel)
+
+cmake --build build/libtiledbsc --target unit_managed_query
+cmake --build build/libtiledbsc --target unit_buffer_set
+cmake --build build/libtiledbsc --target unit_sc
+cmake --build build/libtiledbsc --target test

@@ -78,7 +78,7 @@ include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/Modules/FindSpdlog_EP.cmake)
 # 'make format' target
 ############################################################
 
-set(SCRIPTS_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../ci")
+set(SCRIPTS_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../scripts")
 
 find_package(ClangTools)
 if (${CLANG_FORMAT_FOUND})
