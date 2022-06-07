@@ -9,7 +9,7 @@
 import tiledb
 import tiledbsc
 import tiledbsc.io
-import sys, os
+import sys, os, time
 
 import anndata
 import anndata as ad  # so we can type it either way
