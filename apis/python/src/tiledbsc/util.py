@@ -59,7 +59,7 @@ def _find_csr_chunk_size(
 # This function is very similar to _find_csr_chunk_size. The code is largely repeated, and this is
 # intentional.  Here we err on the side of increased readability, at the expense of line-count.
 def _find_csc_chunk_size(
-    mat: scipy.sparse._csc.csc_matrix,
+    mat: scipy.sparse.csc_matrix,
     permutation: list,
     start_col_index: int,
     goal_chunk_nnz: int,

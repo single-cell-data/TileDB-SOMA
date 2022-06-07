@@ -184,7 +184,7 @@ class AssayMatrix(TileDBArray):
         if self._soma_options.write_X_chunked:
             if isinstance(matrix, scipy.sparse.csr_matrix):
                 self.ingest_data_rows_chunked(matrix, row_names, col_names)
-            elif isinstance(matrix, scipy.sparse._csc.csc_matrix):
+            elif isinstance(matrix, scipy.sparse.csc_matrix):
                 self.ingest_data_cols_chunked(matrix, row_names, col_names)
             else:
                 self.ingest_data_dense_rows_chunked(matrix, row_names, col_names)
