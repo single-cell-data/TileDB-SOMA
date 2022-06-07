@@ -80,7 +80,7 @@ class AssayMatrix(TileDBArray):
             return (num_rows, num_cols)
 
     # ----------------------------------------------------------------
-    def dim_select(self, obs_ids, var_ids):
+    def dim_select(self, obs_ids, var_ids) -> pd.DataFrame:
         """
         Selects a slice out of the matrix with specified `obs_ids` and/or `var_ids`.
         Either or both of the ID lists may be `None`, meaning, do not subselect along
@@ -548,13 +548,14 @@ class AssayMatrix(TileDBArray):
 
         df = self.df()
 
-        retval = util._X_and_ids_to_coo(
+        retval = util.X_and_ids_to_sparse_matrix(
             df,
             self.row_dim_name,
             self.col_dim_name,
             self.attr_name,
             row_labels,
             col_labels,
+            return_as="csr",
         )
 
         if self._verbose:
