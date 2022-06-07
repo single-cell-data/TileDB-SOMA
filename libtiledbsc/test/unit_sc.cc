@@ -11,4 +11,5 @@ using namespace tiledb;
 
 const std::string src_path = TILEDBSC_SOURCE_ROOT;
 
-TEST_CASE("placeholder") {}
+TEST_CASE("placeholder") {
+}

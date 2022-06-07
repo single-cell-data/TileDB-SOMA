@@ -75,17 +75,18 @@ TEST_CASE("Util: Arrow bytemap to bitmap conversion", "[util][arrow][bitmap]") {
     }
 
     {
-        std::vector<uint8_t> validity{1,
-                                      0,
-                                      1,
-                                      0,
-                                      1,
-                                      0,
-                                      0,
-                                      1,  // break
-                                      0,
-                                      1,
-                                      1};
+        std::vector<uint8_t> validity{
+            1,
+            0,
+            1,
+            0,
+            1,
+            0,
+            0,
+            1,  // break
+            0,
+            1,
+            1};
 
         REQUIRE(util::bytemap_to_bitmap_inplace(validity) == 5);
 
@@ -94,23 +95,24 @@ TEST_CASE("Util: Arrow bytemap to bitmap conversion", "[util][arrow][bitmap]") {
     }
 
     {
-        std::vector<uint8_t> validity{0,
-                                      0,
-                                      0,
-                                      1,
-                                      0,
-                                      1,
-                                      1,
-                                      1,  // break
-                                      0,
-                                      1,
-                                      1,
-                                      0,
-                                      0,
-                                      0,
-                                      1,
-                                      0,  // break
-                                      1};
+        std::vector<uint8_t> validity{
+            0,
+            0,
+            0,
+            1,
+            0,
+            1,
+            1,
+            1,  // break
+            0,
+            1,
+            1,
+            0,
+            0,
+            0,
+            1,
+            0,  // break
+            1};
 
         REQUIRE(util::bytemap_to_bitmap_inplace(validity) == 9);
 

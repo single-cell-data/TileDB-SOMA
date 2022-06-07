@@ -55,6 +55,7 @@ jobs:
         echo "pybind11_DIR is: ${env:pybind11_DIR}"
         mkdir build
         cmake -B $env:GITHUB_WORKSPACE/build -S $env:GITHUB_WORKSPACE/libtiledbsc -Dpybind11_DIR=$env:pybind11_DIR
+        cmake --build $env:GITHUB_WORKSPACE/build --target check-format
         cmake --build $env:GITHUB_WORKSPACE/build --config Release -j $env:NUMBER_OF_PROCESSORS 2>&1
         cmake --build $env:GITHUB_WORKSPACE/build --config Release -j $env:NUMBER_OF_PROCESSORS 2>&1
         cmake --build $env:GITHUB_WORKSPACE/build/libtiledbsc --config Release -j $env:NUMBER_OF_PROCESSORS -t build_tests 2>&1

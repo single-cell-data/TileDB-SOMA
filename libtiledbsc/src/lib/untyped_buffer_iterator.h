@@ -1,5 +1,5 @@
-#include <span>
 #include <optional>
+#include <span>
 
 using namespace std;
 
@@ -10,29 +10,25 @@ struct BufferSetCell {
 
 class BufferSetIteratorBase {
     BufferCell next() {
-
     }
 }
 
 class VarlenBufferSetIterator : BufferSetIteratorBase {
-
 }
 
 class FixedlenBufferSetIterator : BufferSetIteratorBase {
-
 }
 
 class UntypedBufferSetIterator {
     using iterator_category = std::forward_iterator_tag;
-    using difference_type   = int;
-    using value_type        = BufferSetCell;
-    using pointer           = BufferSetCell;
-    using reference         = BufferSetCell;
+    using difference_type = int;
+    using value_type = BufferSetCell;
+    using pointer = BufferSetCell;
+    using reference = BufferSetCell;
 
-public:
-    UntypedBufferSetIterator& operator++() {};
+   public:
+    UntypedBufferSetIterator& operator++(){};
 
-
-private:
+   private:
     unique_ptr<BufferSetIteratorBase> impl_;
 }
