@@ -95,7 +95,7 @@ class RawGroup(TileDBGroup):
         The `obs_labels` must be from the parent object.
         """
 
-        var_df = self.var.to_dataframe()
+        var_df = self.var.df()
         X_mat = self.X["data"].to_csr_matrix(obs_labels, var_df.index)
         varm = self.varm.to_dict_of_csr()
 

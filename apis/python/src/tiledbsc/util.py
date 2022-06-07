@@ -7,7 +7,7 @@ import scipy
 import pandas as pd
 
 import time
-from typing import Optional, List
+from typing import Optional, List, Union
 
 # ----------------------------------------------------------------
 def is_local_path(path: str) -> bool:
@@ -194,20 +194,27 @@ def _to_tiledb_supported_array_type(x):
 
 
 # ----------------------------------------------------------------
-def _X_and_ids_to_coo(
+def X_and_ids_to_sparse_matrix(
     Xdf: pd.DataFrame,
     row_dim_name: str,
     col_dim_name: str,
     attr_name: str,
-    row_labels,
-    col_labels,
-) -> scipy.sparse.csr_matrix:
+    row_labels: List[str],
+    col_labels: List[str],
+    return_as: str = "csr",
+) -> Union[scipy.sparse.csr_matrix, scipy.sparse.csc_matrix]:
     """
     This is needed when we read a TileDB X.df[:]. Since TileDB X is sparse 2D string-dimensioned,
     the return value of which is a dict with three columns -- obs_id, var_id, and value. For
     conversion to anndata, we need make a sparse COO/IJV-format array where the indices are
     not strings but ints, matching the obs and var labels.
+    The `return_as` parameter must be one of `"csr"` or `"csc"`.
     """
+
+    assert isinstance(Xdf, pd.DataFrame)
+    assert len(row_labels) > 0 and isinstance(row_labels[0], str)
+    assert len(col_labels) > 0 and isinstance(col_labels[0], str)
+    assert return_as in ["csr", "csc"]
 
     # Now we need to convert from TileDB's string indices to CSR integer indices.
     # Make a dict from string dimension values to integer indices.
@@ -233,13 +240,19 @@ def _X_and_ids_to_coo(
     row_labels_to_indices = dict(zip(row_labels, [i for i, e in enumerate(row_labels)]))
     col_labels_to_indices = dict(zip(col_labels, [i for i, e in enumerate(col_labels)]))
 
-    # Apply the map.
+    # Make the obs_id/var_id indices addressable as columns.
+    Xdf.reset_index(inplace=True)
+
     obs_indices = [row_labels_to_indices[row_label] for row_label in Xdf[row_dim_name]]
     var_indices = [col_labels_to_indices[col_label] for col_label in Xdf[col_dim_name]]
 
-    return scipy.sparse.csr_matrix(
-        (list(Xdf[attr_name]), (list(obs_indices), list(var_indices)))
-    )
+    xcol = list(Xdf[attr_name])
+    ocol = list(obs_indices)
+    vcol = list(var_indices)
+    if return_as == "csr":
+        return scipy.sparse.csr_matrix((xcol, (ocol, vcol)))
+    else:
+        return scipy.sparse.csc_matrix((xcol, (ocol, vcol)))
 
 
 # ================================================================
