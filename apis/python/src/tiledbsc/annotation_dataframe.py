@@ -251,26 +251,3 @@ class AnnotationDataFrame(TileDBArray):
 
         if self._verbose:
             print(util.format_elapsed(s, f"{self._indent}FINISH WRITING {self.uri}"))
-
-    # ----------------------------------------------------------------
-    def to_dataframe(self) -> pd.DataFrame:
-        """
-        Reads the TileDB `obs` or `var` array and returns a type of pandas dataframe
-        and dimension values.
-        """
-
-        if self._verbose:
-            s = util.get_start_stamp()
-            print(f"{self._indent}START  read {self.uri}")
-
-        with tiledb.open(self.uri, ctx=self._ctx) as A:
-            # We could use A.df[:] to set the index_name to 'obs_id' or 'var_id'.
-            # However, the resulting dataframe has obs_id/var_id as strings, not
-            # bytes, resulting in `KeyError` elsewhere in the code.
-            df = pd.DataFrame(A[:])
-            df = df.set_index(self.dim_name)
-
-        if self._verbose:
-            print(util.format_elapsed(s, f"{self._indent}FINISH read {self.uri}"))
-
-        return df

@@ -241,8 +241,8 @@ def to_anndata(soma: tiledbsc.SOMA) -> ad.AnnData:
         s = tiledbsc.util.get_start_stamp()
         print(f"START  SOMA.to_anndata {soma.uri}")
 
-    obs_df = soma.obs.to_dataframe()
-    var_df = soma.var.to_dataframe()
+    obs_df = soma.obs.df()
+    var_df = soma.var.df()
 
     X_mat = soma.X["data"].to_csr_matrix(obs_df.index, var_df.index)
 
@@ -292,8 +292,8 @@ def to_anndata_from_raw(soma: tiledbsc.SOMA) -> ad.AnnData:
     Extract only the raw parts as a new AnnData object.
     """
 
-    obs_df = soma.obs.to_dataframe()
-    var_df = soma.raw.var.to_dataframe()
+    obs_df = soma.obs.df()
+    var_df = soma.raw.var.df()
     X_mat = soma.raw.X["data"].to_csr_matrix(obs.index, var.index)
 
     return ad.AnnData(

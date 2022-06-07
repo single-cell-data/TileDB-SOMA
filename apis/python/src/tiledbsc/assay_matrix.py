@@ -546,12 +546,7 @@ class AssayMatrix(TileDBArray):
             s = util.get_start_stamp()
             print(f"{self._indent}START  read {self.uri}")
 
-        # Since the TileDB array is sparse, with two string dimensions, we get back a dict:
-        # * 'obs_id' key is a sequence of dim0 coordinates for X data.
-        # * 'var_id' key is a sequence of dim1 coordinates for X data.
-        # * 'values' key is a sequence of X data values.
-        with tiledb.open(self.uri, ctx=self._ctx) as A:
-            df = A[:]
+        df = self.df()
 
         retval = util._X_and_ids_to_coo(
             df,
