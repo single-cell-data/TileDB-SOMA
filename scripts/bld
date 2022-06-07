@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+
+# A script to build and install the C++ library
+
+BUILD_TYPE=${1:-Release} # default to Release build
+echo "Building ${BUILD_TYPE} build"
+
+set -eu -o pipefail
+
+# cd to the top level directory of the repo
+cd $(git rev-parse --show-toplevel)
+
+# set env for pybind11 cmake
+export pybind11_DIR=$(python -m pybind11 --cmakedir)
+
+# remove existing build and install directories
+rm -rf build dist
+
+cmake -B build -S libtiledbsc -DCMAKE_BUILD_TYPE=${BUILD_TYPE}
+cmake --build build --target check-format
+cmake --build build -j $(nproc)
+cmake --build build --target install-libtiledbsc
