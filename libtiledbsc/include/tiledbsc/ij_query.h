@@ -8,10 +8,9 @@
 
 #include <tiledb/tiledb>
 
-#include <tiledbsc/managed_query.h>
 #include <tiledbsc/buffer_set.h>
 #include <tiledbsc/generic_typed_vector.h>
-
+#include <tiledbsc/managed_query.h>
 
 using namespace tiledbsc;
 using namespace tiledb;
@@ -33,22 +32,21 @@ namespace tiledbsc {
  */
 
 class TILEDBSC_EXPORT IJQuery {
-public:
+   public:
     IJQuery(
         const shared_ptr<tiledb::Array> reference,
-        pair<string,string> ref_pair,
+        pair<string, string> ref_pair,
         const shared_ptr<tiledb::Array> target,
-        string dest_name
-    );
+        string dest_name);
 
     ~IJQuery();
 
     unique_ptr<QueryResult> select_from_points(generic_typed_vector v);
 
-private:
+   private:
     void check_compatible();
 
-private:
+   private:
     const shared_ptr<tiledb::Array> array_ref_;
     const string ref_dim_;
     const string ref_attr_;
@@ -56,6 +54,6 @@ private:
     std::string tgt_dim_;
 };
 
-}; // namespace tiledbsc
+};  // namespace tiledbsc
 
-#endif // TILEDBSC_IJQUERY_H
+#endif  // TILEDBSC_IJQUERY_H

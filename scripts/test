@@ -7,7 +7,7 @@ set -eu -o pipefail
 # cd to the top level directory of the repo
 cd $(git rev-parse --show-toplevel)
 
-cmake --build build/libtiledbsc --target unit_managed_query
-cmake --build build/libtiledbsc --target unit_buffer_set
-cmake --build build/libtiledbsc --target unit_sc
-cmake --build build/libtiledbsc --target test
+cmake --build build/libtiledbsc --target build_tests -j $(nproc)
+
+cd build/libtiledbsc
+ctest -C Release --verbose

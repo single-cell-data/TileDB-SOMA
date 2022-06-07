@@ -4,7 +4,7 @@
 #include <memory>
 #include <vector>
 
-#include <stdexcept> // required for TileDB, bug
+#include <stdexcept>  // required for TileDB, bug
 
 #include <tiledb/tiledb>
 
@@ -13,21 +13,21 @@
 
 #include "tiledbsc_export.h"
 
-
 namespace tiledbsc {
 
-//namespace arrow {
-//    struct ArrowPair;
-//}
+// namespace arrow {
+//     struct ArrowPair;
+// }
 
 using namespace std;
 
-using ResultBuffers = map<string,BufferSet>;
+using ResultBuffers = map<string, BufferSet>;
 
 class TILEDBSC_EXPORT QueryResult {
-public:
+   public:
     QueryResult() = delete;
-    QueryResult(ResultBuffers&& buffers) : buffers_(std::move(buffers)) {};
+    QueryResult(ResultBuffers&& buffers)
+        : buffers_(std::move(buffers)){};
     ResultBuffers& buffers();
 
     tiledbsc::arrow::ArrowPair to_arrow(std::optional<std::string>);
@@ -40,10 +40,10 @@ public:
 
     std::vector<std::string> names();
 
-private:
+   private:
     ResultBuffers buffers_;
 };
 
-}; // namespace tiledbsc
+};  // namespace tiledbsc
 
-#endif // TILEDBSC_QUERY_RESULT_H
+#endif  // TILEDBSC_QUERY_RESULT_H

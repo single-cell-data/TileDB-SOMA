@@ -16,7 +16,6 @@
 #include <tiledbsc/common.h>
 #include <tiledbsc/managed_query.h>
 
-
 namespace tiledbsc {
 
 using namespace tiledb;
@@ -40,10 +39,10 @@ struct SCResult {
      *        results to a BufferSet (buffer composition depends on
      *        attribute type).
      *
-     * @throws TileDBSCError if the array is already open or other error occurred.
+     * @throws TileDBSCError if the array is already open or other error
+     * occurred.
      */
     std::shared_ptr<QueryResult> query_result();
-
 
     /*** Arrow API ***/
     /**
@@ -51,22 +50,22 @@ struct SCResult {
      *        results to a BufferSet (buffer composition depends on
      *        attribute type).
      *
-     * @throws TileDBSCError if the array is already open or other error occurred.
+     * @throws TileDBSCError if the array is already open or other error
+     * occurred.
      */
     void to_arrow(void* schema, void* array);
-
 
     /**
      * @brief Returns the BufferGroup mapping dimension and attribute
      *        results to a BufferSet (buffer composition depends on
      *        attribute type).
      *
-     * @throws TileDBSCError if the array is already open or other error occurred.
+     * @throws TileDBSCError if the array is already open or other error
+     * occurred.
      */
     void release_callback(void* user_data);
 
-
-    private:
+   private:
     /* ********************************* */
     /*         PRIVATE ATTRIBUTES        */
     /* ********************************* */
@@ -74,7 +73,6 @@ struct SCResult {
     ResultBuffers buffers_;
 };
 
+};  // end namespace tiledbsc
 
-}; // end namespace tiledbsc
-
-#endif // TILEDBSC_H
+#endif  // TILEDBSC_H

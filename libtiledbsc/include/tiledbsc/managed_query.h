@@ -4,11 +4,10 @@
 #include <memory>
 #include <vector>
 
-#include <tiledb/tiledb>
 #include <tiledbsc/query_result.h>
+#include <tiledb/tiledb>
 
 #include "tiledbsc_export.h"
-
 
 namespace tiledbsc {
 
@@ -17,7 +16,6 @@ using namespace std;
 // TODO use allocator which does not zero initialize
 // TODO config - 4 MB
 constexpr size_t TILEDBSC_DEFAULT_ALLOC = 524288;
-
 
 // Forward declaration
 class MQAux;
@@ -29,8 +27,7 @@ class MQAux;
  *
  */
 class TILEDBSC_EXPORT ManagedQuery {
-
-public:
+   public:
     ManagedQuery(
         const std::shared_ptr<tiledb::Array> array,
         size_t initial_alloc = TILEDBSC_DEFAULT_ALLOC);
@@ -71,9 +68,10 @@ public:
      */
     size_t initial_ncells();
 
-private:
+   private:
     /* methods */
-    static std::shared_ptr<tiledb::Array> check_array(std::shared_ptr<tiledb::Array>);
+    static std::shared_ptr<tiledb::Array> check_array(
+        std::shared_ptr<tiledb::Array>);
 
     void allocate_buffers();
     void set_buffers();
@@ -100,6 +98,6 @@ private:
     std::unique_ptr<MQAux> impl_;
 };
 
-};
+};  // namespace tiledbsc
 
 #endif
