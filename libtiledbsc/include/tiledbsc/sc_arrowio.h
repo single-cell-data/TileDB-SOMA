@@ -1,7 +1,6 @@
 #ifndef TILEDBSC_ARROW_H
 #define TILEDBSC_ARROW_H
 
-
 /**      -*-C++-*-
  * vim: set ft=cpp:
  * @file   arrowio
@@ -37,9 +36,8 @@
 
 #include <memory>
 
-#include <tiledbsc/query_result.h>
 #include <tiledbsc/carrow.h>
-
+#include <tiledbsc/query_result.h>
 
 namespace tiledbsc {
 
@@ -56,23 +54,25 @@ struct TILEDBSC_EXPORT ArrowPair {
     ArrowArray* array;
     bool own_;
 
-    ArrowPair() : own_(true) {
-      schema = (ArrowSchema*)malloc(sizeof(ArrowSchema));
-      array = (ArrowArray*)malloc(sizeof(ArrowArray));
+    ArrowPair()
+        : own_(true) {
+        schema = (ArrowSchema*)malloc(sizeof(ArrowSchema));
+        array = (ArrowArray*)malloc(sizeof(ArrowArray));
 
-      if (!schema || !array)
-        throw std::runtime_error("Failed to allocate ArrowSchema and ArrowArray structs");
+        if (!schema || !array)
+            throw std::runtime_error(
+                "Failed to allocate ArrowSchema and ArrowArray structs");
     }
 
     ~ArrowPair() {
-      if (own_) {
-        free(schema);
-        free(array);
-      }
+        if (own_) {
+            free(schema);
+            free(array);
+        }
     }
 
     void disown() {
-      own_ = false;
+        own_ = false;
     }
 };
 
@@ -87,62 +87,66 @@ struct TILEDBSC_EXPORT ArrowPair {
  *
  */
 class TILEDBSC_EXPORT ArrowAdapter {
-public:
-  /* Constructs an ArrowAdapter wrapping the given QueryResult */
-  ArrowAdapter(tiledbsc::QueryResult& qr);
-  ~ArrowAdapter();
+   public:
+    /* Constructs an ArrowAdapter wrapping the given QueryResult */
+    ArrowAdapter(tiledbsc::QueryResult& qr);
+    ~ArrowAdapter();
 
-  /**
-   * Exports named Query buffer to ArrowArray/ArrowSchema struct pair,
-   * as defined in the Arrow C Data Interface.
-   *
-   * @param name The name of the buffer to export.
-   * @param arrow_array Pointer to pre-allocated ArrowArray struct
-   * @param arrow_schema Pointer to pre-allocated ArrowSchema struct
-   * @throws tiledb::TileDBError with error-specific message.
-   */
-  void export_array(const char* name, void* arrow_array, void* arrow_schema);
+    /**
+     * Exports named Query buffer to ArrowArray/ArrowSchema struct pair,
+     * as defined in the Arrow C Data Interface.
+     *
+     * @param name The name of the buffer to export.
+     * @param arrow_array Pointer to pre-allocated ArrowArray struct
+     * @param arrow_schema Pointer to pre-allocated ArrowSchema struct
+     * @throws tiledb::TileDBError with error-specific message.
+     */
+    void export_array(const char* name, void* arrow_array, void* arrow_schema);
 
-   /**
-   * Exports given BufferSet to ArrowArray/ArrowSchema struct pair,
-   * as defined in the Arrow C Data Interface.
-   *
-   * @param BufferSet The BufferSet to export.
-   * @param arrow_array Pointer to pre-allocated ArrowArray struct
-   * @param arrow_schema Pointer to pre-allocated ArrowSchema struct
-   * @throws tiledb::TileDBError with error-specific message.
-   */
-  static void export_buffer(BufferSet& buffer_set, ArrowArray* arrow_array, ArrowSchema* arrow_schema);
+    /**
+     * Exports given BufferSet to ArrowArray/ArrowSchema struct pair,
+     * as defined in the Arrow C Data Interface.
+     *
+     * @param BufferSet The BufferSet to export.
+     * @param arrow_array Pointer to pre-allocated ArrowArray struct
+     * @param arrow_schema Pointer to pre-allocated ArrowSchema struct
+     * @throws tiledb::TileDBError with error-specific message.
+     */
+    static void export_buffer(
+        BufferSet& buffer_set,
+        ArrowArray* arrow_array,
+        ArrowSchema* arrow_schema);
 
-  /**
-   * Exports *all* results in QueryResults to ArrowArray/ArrowSchema
-   *
-   * @param arrow_array Pointer to pre-allocated ArrowArray struct
-   * @param arrow_schema Pointer to pre-allocated ArrowSchema struct
-   * @throws tiledb::TileDBError with error-specific message.
-   */
-  void export_table(void* arrow_array, void* arrow_schema);
+    /**
+     * Exports *all* results in QueryResults to ArrowArray/ArrowSchema
+     *
+     * @param arrow_array Pointer to pre-allocated ArrowArray struct
+     * @param arrow_schema Pointer to pre-allocated ArrowSchema struct
+     * @throws tiledb::TileDBError with error-specific message.
+     */
+    void export_table(void* arrow_array, void* arrow_schema);
 
-  /**
-   * Set named Query buffer from ArrowArray/ArrowSchema struct pair
-   * representing external data buffers conforming to the
-   * Arrow C Data Interface.
-   *
-   * @param name The name of the buffer to export.
-   * @param arrow_array Pointer to pre-allocated ArrowArray struct
-   * @param arrow_schema Pointer to pre-allocated ArrowSchema struct
-   * @throws tiledb::TileDBError with error-specific message.
-   */
-  //void import_buffer(const char* name, void* arrow_array, void* arrow_schema);
+    /**
+     * Set named Query buffer from ArrowArray/ArrowSchema struct pair
+     * representing external data buffers conforming to the
+     * Arrow C Data Interface.
+     *
+     * @param name The name of the buffer to export.
+     * @param arrow_array Pointer to pre-allocated ArrowArray struct
+     * @param arrow_schema Pointer to pre-allocated ArrowSchema struct
+     * @throws tiledb::TileDBError with error-specific message.
+     */
+    // void import_buffer(const char* name, void* arrow_array, void*
+    // arrow_schema);
 
-private:
-  //ArrowImporter* importer_;
-  ArrowExporter* exporter_;
+   private:
+    // ArrowImporter* importer_;
+    ArrowExporter* exporter_;
 };
 
 }  // end namespace arrow
-}  // end namespace tiledb
+}  // namespace tiledbsc
 
 //#include "arrow_io_impl.h"
 
-#endif // TILEDBSC_ARROW_H
+#endif  // TILEDBSC_ARROW_H

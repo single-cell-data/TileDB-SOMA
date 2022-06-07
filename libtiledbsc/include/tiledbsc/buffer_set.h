@@ -3,12 +3,12 @@
 
 #include "tiledbsc_export.h"
 
-#include <vector>
-#include <string>
 #include <memory>
 #include <optional>
 #include <span>
 #include <stdexcept>
+#include <string>
+#include <vector>
 
 #include <tiledb/tiledb>
 
@@ -27,7 +27,7 @@ using DELEM_T = std::byte;
  * may not be initialized depending on the schema.
  */
 class TILEDBSC_EXPORT BufferSet {
-public:
+   public:
     BufferSet(
         const std::string& name,
         tiledb_datatype_t datatype,
@@ -35,18 +35,15 @@ public:
         std::vector<DELEM_T> data,
         std::optional<std::vector<uint64_t>> offsets,
         std::optional<std::vector<DELEM_T>> validity,
-        bool convert_bitmap = false
-    );
+        bool convert_bitmap = false);
 
     ~BufferSet();
 
     static BufferSet from_attribute(
-        const tiledb::Attribute& attr, size_t data_nelem
-    );
+        const tiledb::Attribute& attr, size_t data_nelem);
 
     static BufferSet from_dimension(
-        const tiledb::Dimension& attr, size_t data_nelem
-    );
+        const tiledb::Dimension& attr, size_t data_nelem);
 
     /**
      * Construct a BufferSet from data.
@@ -59,8 +56,7 @@ public:
         size_t elem_nbytes,
         std::span<std::byte> data,
         std::optional<std::span<uint64_t>> offsets = std::nullopt,
-        std::optional<std::span<std::byte>> validity = std::nullopt
-    );
+        std::optional<std::span<std::byte>> validity = std::nullopt);
 
     /**
      * Construct desired BufferSet with initial element count.
@@ -95,7 +91,8 @@ public:
      * Resize the buffer set hold `new_size` data *elements*
      * and optionally `new_ncells` *cells* (offsets, validity)
      */
-    void resize(size_t new_data_nelem, std::optional<size_t> new_ncells = std::nullopt);
+    void resize(
+        size_t new_data_nelem, std::optional<size_t> new_ncells = std::nullopt);
 
     /**
      * Returns true if the buffer set represents a variable-length field
@@ -155,6 +152,6 @@ public:
     std::optional<std::vector<DELEM_T>> validity_;
 };
 
-}; // namespace tiledb
+};  // namespace tiledbsc
 
 #endif

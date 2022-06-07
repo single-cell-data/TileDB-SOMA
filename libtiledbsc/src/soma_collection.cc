@@ -57,7 +57,8 @@ void SOMACollection::build_uri_map(Group& group, std::string_view parent) {
             bool subgroup_is_soma;
             if (value) {
                 // Found metadata, check if object_type is "SOMA"
-                std::string object_type(static_cast<const char*>(value));
+                std::string_view object_type(
+                    static_cast<const char*>(value), value_num);
                 subgroup_is_soma = object_type == "SOMA";
             } else {
                 // Metadata not found, infer the group is a SOMA if it contains
