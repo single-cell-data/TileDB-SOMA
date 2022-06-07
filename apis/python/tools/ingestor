@@ -17,6 +17,8 @@
 
 import tiledbsc
 import tiledbsc.io
+import tiledbsc.util
+import tiledb
 import sys, os, shutil
 import argparse
 
@@ -130,7 +132,8 @@ select `relative=True`. (This is the default.)
 
 def ingest_one(input_path: str, output_path: str, ifexists: str, soma_options: tiledbsc.SOMAOptions, verbose: bool):
     # Check that the input exists.
-    if not os.path.exists(input_path):
+    vfs = tiledb.VFS()
+    if not vfs.is_file(input_path):
         # Print this neatly and exit neatly, to avoid a multi-line stack trace otherwise.
         print(f"Input path not found: {input_path}", file=sys.stderr)
         sys.exit(1)
@@ -140,8 +143,9 @@ def ingest_one(input_path: str, output_path: str, ifexists: str, soma_options: t
     # use tiledb.vfs to remove any priors, and/or make use of a tiledb `overwrite` flag.
     parent = os.path.dirname(output_path.rstrip("/"))
     if parent != "":
-        if not os.path.exists(parent):
-            os.mkdir(parent)
+        if tiledbsc.util.is_local_path(parent):
+            if not os.path.exists(parent):
+                os.mkdir(parent)
 
     soma = tiledbsc.SOMA(uri=output_path, soma_options=soma_options)
 

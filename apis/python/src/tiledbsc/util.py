@@ -10,6 +10,20 @@ import time
 from typing import Optional, List
 
 # ----------------------------------------------------------------
+def is_local_path(path: str) -> bool:
+    """
+
+    Returns information about start time of an event. Nominally float seconds since the epoch,
+    but articulated here as being compatible with the format_elapsed function.
+    """
+    if path.startswith("file://"):
+        return True
+    if "://" in path:
+        return False
+    return True
+
+
+# ----------------------------------------------------------------
 def get_start_stamp():
     """
     Returns information about start time of an event. Nominally float seconds since the epoch,
