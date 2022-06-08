@@ -1,6 +1,8 @@
 #ifndef SOMA_COLLECTION_H
 #define SOMA_COLLECTION_H
 
+#include <stdexcept>  // for windows: error C2039: 'runtime_error': is not a member of 'std'
+
 #include <tiledb/tiledb>
 #include <tiledb/tiledb_experimental>
 

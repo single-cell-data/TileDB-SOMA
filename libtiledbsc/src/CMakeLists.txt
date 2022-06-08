@@ -45,10 +45,10 @@ message(STATUS "Building with commit hash ${BUILD_COMMIT_HASH}")
 ############################################################
 
 add_library(TILEDB_SC_OBJECTS OBJECT
-  ${CMAKE_CURRENT_SOURCE_DIR}/soma.cc
-  ${CMAKE_CURRENT_SOURCE_DIR}/soma_collection.cc
-  ${CMAKE_CURRENT_SOURCE_DIR}/soma_query.cc
+  ${CMAKE_CURRENT_SOURCE_DIR}/column_buffer.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/logger.cc
+  ${CMAKE_CURRENT_SOURCE_DIR}/soma_collection.cc
+  ${CMAKE_CURRENT_SOURCE_DIR}/soma.cc
 )
 
 message(WARNING "Building without deprecation warnings")
@@ -93,12 +93,6 @@ if (SANITIZER)
 endif()
 
 ############################################################
-# Helper libraries target
-############################################################
-
-add_subdirectory(lib)
-
-############################################################
 # tiledbsc library target
 ############################################################
 
@@ -107,17 +101,8 @@ add_library(tiledbsc SHARED
 )
 
 target_link_libraries(tiledbsc
-  PRIVATE
-  buffer_set
-  sc_arrow
-  query_result
-  managed_query
-)
-
-target_link_libraries(tiledbsc
   PUBLIC
     TileDB::tiledb_shared
-    util
     spdlog::spdlog
 )
 
@@ -131,7 +116,12 @@ endif()
 
 # List of API headers (to be installed)
 set(TILEDB_SC_PUBLIC_HEADERS
-  ${CMAKE_CURRENT_SOURCE_DIR}/../include/tiledbsc/tiledbsc.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/../include/tiledbsc/tiledbsc
+  ${CMAKE_CURRENT_SOURCE_DIR}/../include/tiledbsc/column_buffer.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/../include/tiledbsc/common.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/../include/tiledbsc/logger_public.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/../include/tiledbsc/soma_collection.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/../include/tiledbsc/soma.h
 )
 
 ############################################################
@@ -143,7 +133,6 @@ include(GenerateExportHeader)
 # Generates the file 'tiledbsc_export.h' suitable for the current compiler.
 generate_export_header(TILEDB_SC_OBJECTS
   BASE_NAME tiledbsc
-  #EXPORT_FILE_NAME "../include/tiledbsc/tiledbsc_export.h"
 )
 
 # Set variables in the parent scope so the tests can reference it.
@@ -169,20 +158,11 @@ set_target_properties(tiledbsc
 )
 
 ############################################################
-# Python API bindings
-############################################################
-
-if (TILEDBSC_ENABLE_PYTHON)
-  add_subdirectory(pyapi)
-endif()
-
-
-############################################################
 # CLI executable target
 ############################################################
 
 add_executable(tiledbsc-bin
-  ${CMAKE_CURRENT_SOURCE_DIR}/cli/cli.cc
+  ${CMAKE_CURRENT_SOURCE_DIR}/cli.cc
   $<TARGET_OBJECTS:TILEDB_SC_OBJECTS>
 )
 

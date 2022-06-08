@@ -36,7 +36,11 @@
 #ifndef TILEDB_LOGGER_PUBLIC_H
 #define TILEDB_LOGGER_PUBLIC_H
 
-#include "logger.h"
+#include <stdexcept>  // for windows: error C2039: 'runtime_error': is not a member of 'std'
+
+#define FMT_HEADER_ONLY
+#include <spdlog/fmt/bundled/format.h>
+#include <spdlog/fmt/bundled/ostream.h>
 
 namespace tiledbsc {
 

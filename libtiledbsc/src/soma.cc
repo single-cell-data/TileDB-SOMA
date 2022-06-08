@@ -1,6 +1,6 @@
 #include <regex>
 
-#include "tiledbsc/logger_private.h"
+#include "tiledbsc/logger_public.h"
 #include "tiledbsc/soma.h"
 
 namespace tiledbsc {
@@ -10,15 +10,19 @@ using namespace tiledb;
 //= public static
 //===================================================================
 
-SOMA SOMA::open(std::string_view uri, Context ctx) {
+SOMA SOMA::open(std::string_view uri, std::shared_ptr<Context> ctx) {
     return SOMA(uri, ctx);
+}
+
+SOMA SOMA::open(std::string_view uri, const Config& config) {
+    return SOMA(uri, std::make_shared<Context>(config));
 }
 
 //===================================================================
 //= public non-static
 //===================================================================
 
-SOMA::SOMA(std::string_view uri, Context ctx)
+SOMA::SOMA(std::string_view uri, std::shared_ptr<Context> ctx)
     : ctx_(ctx) {
     // Remove all trailing /
     // TODO: move this to utils
@@ -27,19 +31,19 @@ SOMA::SOMA(std::string_view uri, Context ctx)
 
 std::unordered_map<std::string, std::string> SOMA::list_arrays() {
     if (array_uri_map_.empty()) {
-        Group group(ctx_, uri_, TILEDB_READ);
+        Group group(*ctx_, uri_, TILEDB_READ);
         build_uri_map(group);
     }
     return array_uri_map_;
 }
 
-std::shared_ptr<Array> SOMA::open_array(const std::string& name) {
+Array SOMA::open_array(const std::string& name) {
     if (array_uri_map_.empty()) {
         list_arrays();
     }
     auto uri = array_uri_map_[name];
-    LOG_DEBUG("Opening array '{}' from SOMA '{}'", name, uri_);
-    return std::make_shared<Array>(ctx_, uri, TILEDB_READ);
+    LOG_DEBUG(fmt::format("Opening array '{}' from SOMA '{}'", name, uri_));
+    return Array(*ctx_, uri, TILEDB_READ);
 }
 
 //===================================================================
@@ -56,7 +60,7 @@ void SOMA::build_uri_map(Group& group, std::string_view parent) {
 
         if (member.type() == Object::Type::Group) {
             // Member is a group, call recursively
-            auto subgroup = Group(ctx_, member.uri(), TILEDB_READ);
+            auto subgroup = Group(*ctx_, member.uri(), TILEDB_READ);
             build_uri_map(subgroup, path);
         } else {
             auto uri = member.uri();

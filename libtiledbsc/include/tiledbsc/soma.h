@@ -1,6 +1,8 @@
 #ifndef SOMA_H
 #define SOMA_H
 
+#include <stdexcept>  // for windows: error C2039: 'runtime_error': is not a member of 'std'
+
 #include <tiledb/tiledb>
 #include <tiledb/tiledb_experimental>
 
@@ -20,7 +22,18 @@ class SOMA {
      * @param ctx TileDB context
      * @return SOMA object
      */
-    static SOMA open(std::string_view uri, Context ctx = Context());
+    static SOMA open(
+        std::string_view uri,
+        std::shared_ptr<Context> ctx = std::make_shared<Context>());
+
+    /**
+     * @brief Open a SOMA at the specified URI and return a SOMA object.
+     *
+     * @param uri URI of SOMA
+     * @param config TileDB config
+     * @return SOMA object
+     */
+    static SOMA open(std::string_view uri, const Config& config);
 
     //===================================================================
     //= public non-static
@@ -31,7 +44,7 @@ class SOMA {
      *
      * @param uri URI of SOMA
      */
-    SOMA(std::string_view uri, Context ctx);
+    SOMA(std::string_view uri, std::shared_ptr<Context> ctx);
 
     /**
      * @brief Return a map of hierarchical array names to array URIs for all
@@ -50,9 +63,13 @@ class SOMA {
      * relative path. For example, for the "X array", name = "X/data".
      *
      * @param name Name of the array to open
-     * @return std::shared_ptr<Array> TileDB array
+     * @return Array TileDB array
      */
-    std::shared_ptr<Array> open_array(const std::string& name);
+    Array open_array(const std::string& name);
+
+    auto context() {
+        return ctx_;
+    }
 
    private:
     //===================================================================
@@ -60,7 +77,7 @@ class SOMA {
     //===================================================================
 
     // TileDB context
-    Context ctx_;
+    std::shared_ptr<Context> ctx_;
 
     // SOMA URI
     std::string uri_;
