@@ -118,7 +118,12 @@ def from_anndata(soma: tiledbsc.SOMA, anndata: ad.AnnData) -> None:
     soma._add_object(soma.var)
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-    soma.X.from_matrix_and_dim_values(anndata.X, anndata.obs.index, anndata.var.index)
+    soma.X.add_layer_from_matrix_and_dim_values(
+        matrix=anndata.X,
+        row_names=anndata.obs.index,
+        col_names=anndata.var.index,
+        layer_name="data",
+    )
     soma._add_object(soma.X)
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

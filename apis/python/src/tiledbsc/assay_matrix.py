@@ -146,6 +146,10 @@ class AssayMatrix(TileDBArray):
         """
         Imports a matrix -- nominally `scipy.sparse.csr_matrix` or `numpy.ndarray` -- into a TileDB
         array which is used for `X`, `raw.X`, `obsp` members, and `varp` members.
+
+        The `row_names` and `col_names` are row and column labels for the matrix; the matrix may be
+        `scipy.sparse.csr_matrix`, `scipy.sparse.csc_matrix`, `numpy.ndarray`, etc.
+        For ingest from `AnnData`, these should be `ann.obs_names` and `ann.var_names`.
         """
 
         if self._verbose:
@@ -154,6 +158,14 @@ class AssayMatrix(TileDBArray):
 
         assert len(row_names) == matrix.shape[0]
         assert len(col_names) == matrix.shape[1]
+
+        # Following Pythonic practice, the row_names and col_names can be all manner of things:
+        # pandas.core.indexes.base.Index, numpy.ndarray, list of string, etc. However, we do have
+        # one requirement: that they be addressable via multi-index like `row_names[[0,1,2]]`.
+        if isinstance(row_names, list):
+            row_names = np.asarray(row_names)
+        if isinstance(col_names, list):
+            col_names = np.asarray(col_names)
 
         if self.exists():
             if self._verbose:
