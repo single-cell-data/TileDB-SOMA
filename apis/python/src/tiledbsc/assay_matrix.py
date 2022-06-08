@@ -113,26 +113,19 @@ class AssayMatrix(TileDBArray):
         """
         Like `.df()` but returns results in `scipy.sparse.csr_matrix` format.
         """
-        df = self.dim_select(obs_ids, var_ids)
-        if obs_ids is None:
-            obs_ids = self.row_dataframe.ids()
-        if var_ids is None:
-            var_ids = self.col_dataframe.ids()
-        return util.X_and_ids_to_sparse_matrix(
-            df,
-            self.row_dim_name,
-            self.col_dim_name,
-            self.attr_name,
-            obs_ids,
-            var_ids,
-            "csr",
-        )
+        return self._csr_or_csc("csr", obs_ids, var_ids)
 
-    # ----------------------------------------------------------------
     def csc(self, obs_ids=None, var_ids=None) -> scipy.sparse.csc_matrix:
         """
         Like `.df()` but returns results in `scipy.sparse.csc_matrix` format.
         """
+        return self._csr_or_csc("csc", obs_ids, var_ids)
+
+    def _csr_or_csc(self, which: str, obs_ids=None, var_ids=None):
+        """
+        Helper method for `csr` and `csc`.
+        """
+        assert which in ("csr", "csc")
         df = self.dim_select(obs_ids, var_ids)
         if obs_ids is None:
             obs_ids = self.row_dataframe.ids()
@@ -145,7 +138,7 @@ class AssayMatrix(TileDBArray):
             self.attr_name,
             obs_ids,
             var_ids,
-            "csc",
+            which,
         )
 
     # ----------------------------------------------------------------
