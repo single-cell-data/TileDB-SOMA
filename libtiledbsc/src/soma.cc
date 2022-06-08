@@ -1,5 +1,6 @@
 #include <regex>
 
+#include "tiledbsc/logger_private.h"
 #include "tiledbsc/soma.h"
 
 namespace tiledbsc {
@@ -9,15 +10,16 @@ using namespace tiledb;
 //= public static
 //===================================================================
 
-SOMA SOMA::open(std::string_view uri) {
-    return SOMA(uri);
+SOMA SOMA::open(std::string_view uri, Context ctx) {
+    return SOMA(uri, ctx);
 }
 
 //===================================================================
 //= public non-static
 //===================================================================
 
-SOMA::SOMA(std::string_view uri) {
+SOMA::SOMA(std::string_view uri, Context ctx)
+    : ctx_(ctx) {
     // Remove all trailing /
     // TODO: move this to utils
     uri_ = std::regex_replace(std::string(uri), std::regex("/+$"), "");
@@ -29,6 +31,15 @@ std::unordered_map<std::string, std::string> SOMA::list_arrays() {
         build_uri_map(group);
     }
     return array_uri_map_;
+}
+
+std::shared_ptr<Array> SOMA::open_array(const std::string& name) {
+    if (array_uri_map_.empty()) {
+        list_arrays();
+    }
+    auto uri = array_uri_map_[name];
+    LOG_DEBUG("Opening array '{}' from SOMA '{}'", name, uri_);
+    return std::make_shared<Array>(ctx_, uri, TILEDB_READ);
 }
 
 //===================================================================

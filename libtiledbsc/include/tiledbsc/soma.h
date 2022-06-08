@@ -17,9 +17,10 @@ class SOMA {
      * @brief Open a SOMA at the specified URI and return a SOMA object.
      *
      * @param uri URI of SOMA
+     * @param ctx TileDB context
      * @return SOMA object
      */
-    static SOMA open(std::string_view uri);
+    static SOMA open(std::string_view uri, Context ctx = Context());
 
     //===================================================================
     //= public non-static
@@ -30,7 +31,7 @@ class SOMA {
      *
      * @param uri URI of SOMA
      */
-    SOMA(std::string_view uri);
+    SOMA(std::string_view uri, Context ctx);
 
     /**
      * @brief Return a map of hierarchical array names to array URIs for all
@@ -43,6 +44,15 @@ class SOMA {
      * array URI
      */
     std::unordered_map<std::string, std::string> list_arrays();
+
+    /**
+     * @brief Open an array in the SOMA with the provided name, which is a
+     * relative path. For example, for the "X array", name = "X/data".
+     *
+     * @param name Name of the array to open
+     * @return std::shared_ptr<Array> TileDB array
+     */
+    std::shared_ptr<Array> open_array(const std::string& name);
 
    private:
     //===================================================================

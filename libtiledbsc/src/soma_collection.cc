@@ -9,15 +9,16 @@ using namespace tiledb;
 //= public static
 //===================================================================
 
-SOMACollection SOMACollection::open(std::string_view uri) {
-    return SOMACollection(uri);
+SOMACollection SOMACollection::open(std::string_view uri, Context ctx) {
+    return SOMACollection(uri, ctx);
 }
 
 //===================================================================
 //= public non-static
 //===================================================================
 
-SOMACollection::SOMACollection(std::string_view uri) {
+SOMACollection::SOMACollection(std::string_view uri, Context ctx)
+    : ctx_(ctx) {
     // Remove all trailing /
     // TODO: move this to utils
     uri_ = std::regex_replace(std::string(uri), std::regex("/+$"), "");

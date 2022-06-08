@@ -18,9 +18,10 @@ class SOMACollection {
      * SOMACollection object.
      *
      * @param uri URI of SOMACollection
+     * @param uri TileDB context
      * @return SOMACollection object
      */
-    static SOMACollection open(std::string_view uri);
+    static SOMACollection open(std::string_view uri, Context ctx = Context());
 
     //===================================================================
     //= public non-static
@@ -31,7 +32,7 @@ class SOMACollection {
      *
      * @param uri URI of SOMACollection
      */
-    SOMACollection(std::string_view uri);
+    SOMACollection(std::string_view uri, Context ctx);
 
     /**
      * @brief Return a map of hierarchical SOMA names to SOMA URIs for all
