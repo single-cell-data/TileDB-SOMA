@@ -249,10 +249,16 @@ def X_and_ids_to_sparse_matrix(
     xcol = list(Xdf[attr_name])
     ocol = list(obs_indices)
     vcol = list(var_indices)
+    # Explicitly write the shape to avoid trimming in case of all-zeroes rows/columns when
+    # people do dim-selects.
     if return_as == "csr":
-        return scipy.sparse.csr_matrix((xcol, (ocol, vcol)))
+        return scipy.sparse.csr_matrix(
+            (xcol, (ocol, vcol)), shape=(len(row_labels), len(col_labels))
+        )
     else:
-        return scipy.sparse.csc_matrix((xcol, (ocol, vcol)))
+        return scipy.sparse.csc_matrix(
+            (xcol, (ocol, vcol)), shape=(len(row_labels), len(col_labels))
+        )
 
 
 # ================================================================
