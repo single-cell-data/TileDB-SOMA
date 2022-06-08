@@ -125,7 +125,7 @@ class AnnotationDataFrame(TileDBArray):
         `cell_type == "blood"`. Returns None if the slice is empty.
         This is a v1 implementation for the prototype/demo timeframe.
         """
-        with tiledb.open(self.uri, ctx=self._ctx) as A:
+        with self._open() as A:
             qc = tiledb.QueryCondition(query_string)
             slice_query = A.query(attr_cond=qc)
             slice_df = slice_query.df[:][col_names_to_keep]

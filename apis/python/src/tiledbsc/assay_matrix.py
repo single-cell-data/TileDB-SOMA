@@ -109,6 +109,39 @@ class AssayMatrix(TileDBArray):
         return self.dim_select(obs_ids, var_ids)
 
     # ----------------------------------------------------------------
+    def csr(self, obs_ids=None, var_ids=None) -> scipy.sparse.csr_matrix:
+        """
+        Like `.df()` but returns results in `scipy.sparse.csr_matrix` format.
+        """
+        return self._csr_or_csc("csr", obs_ids, var_ids)
+
+    def csc(self, obs_ids=None, var_ids=None) -> scipy.sparse.csc_matrix:
+        """
+        Like `.df()` but returns results in `scipy.sparse.csc_matrix` format.
+        """
+        return self._csr_or_csc("csc", obs_ids, var_ids)
+
+    def _csr_or_csc(self, which: str, obs_ids=None, var_ids=None):
+        """
+        Helper method for `csr` and `csc`.
+        """
+        assert which in ("csr", "csc")
+        df = self.dim_select(obs_ids, var_ids)
+        if obs_ids is None:
+            obs_ids = self.row_dataframe.ids()
+        if var_ids is None:
+            var_ids = self.col_dataframe.ids()
+        return util.X_and_ids_to_sparse_matrix(
+            df,
+            self.row_dim_name,
+            self.col_dim_name,
+            self.attr_name,
+            obs_ids,
+            var_ids,
+            which,
+        )
+
+    # ----------------------------------------------------------------
     def from_matrix_and_dim_values(self, matrix, row_names, col_names) -> None:
         """
         Imports a matrix -- nominally `scipy.sparse.csr_matrix` or `numpy.ndarray` -- into a TileDB
@@ -118,6 +151,9 @@ class AssayMatrix(TileDBArray):
         if self._verbose:
             s = util.get_start_stamp()
             print(f"{self._indent}START  WRITING {self.uri}")
+
+        assert len(row_names) == matrix.shape[0]
+        assert len(col_names) == matrix.shape[1]
 
         if self.exists():
             if self._verbose:
@@ -291,6 +327,7 @@ class AssayMatrix(TileDBArray):
                 d1 = col_names[chunk_coo.col]
 
                 if len(d0) == 0:
+                    i = i2
                     continue
 
                 # Python ranges are (lo, hi) with lo inclusive and hi exclusive. But saying that
@@ -387,6 +424,7 @@ class AssayMatrix(TileDBArray):
                 d1 = sorted_col_names[chunk_coo.col + j]
 
                 if len(d1) == 0:
+                    j = j2
                     continue
 
                 # Python ranges are (lo, hi) with lo inclusive and hi exclusive. But saying that
@@ -487,6 +525,7 @@ class AssayMatrix(TileDBArray):
                 d1 = col_names[chunk_coo.col]
 
                 if len(d0) == 0:
+                    i = i2
                     continue
 
                 # Python ranges are (lo, hi) with lo inclusive and hi exclusive. But saying that
