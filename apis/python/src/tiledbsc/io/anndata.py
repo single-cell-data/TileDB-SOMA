@@ -263,12 +263,15 @@ def to_anndata(soma: tiledbsc.SOMA) -> ad.AnnData:
         X=X_mat, obs=obs_df, var=var_df, obsm=obsm, varm=varm, obsp=obsp, varp=varp
     )
 
-    raw = ad.Raw(
-        anndata,
-        X=raw_X,
-        var=raw_var_df,
-        varm=raw_varm,
-    )
+    raw = None
+    if soma.raw.exists():
+        (raw_X, raw_var_df, raw_varm) = soma.raw.to_anndata_raw(obs_df.index)
+        raw = ad.Raw(
+            anndata,
+            X=raw_X,
+            var=raw_var_df,
+            varm=raw_varm,
+        )
 
     uns = soma.uns.to_dict_of_matrices()
 
