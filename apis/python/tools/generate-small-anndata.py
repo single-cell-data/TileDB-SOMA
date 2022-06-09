@@ -53,6 +53,7 @@ obs = pd.DataFrame(
     data={
         "obs_id": np.asarray(obs_ids),
         "cell_type": np.asarray(cell_types),
+        "is_primary_data": np.asarray([True] * n_obs),
     },
     index=np.arange(n_obs).astype(str),
 )
@@ -70,6 +71,7 @@ X = np.zeros((n_obs, n_var))
 for i in range(n_obs):
     for j in range(n_var):
         if random.uniform(0, 1) < 0.3:
+            # if i == j and i != 1:
             X[i, j] = i * j
 
 ann = ad.AnnData(X=X, obs=obs, var=var, dtype=X.dtype)
