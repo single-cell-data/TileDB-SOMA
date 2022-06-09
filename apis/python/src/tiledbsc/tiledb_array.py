@@ -3,7 +3,7 @@ import tiledbsc.util_tiledb
 from .soma_options import SOMAOptions
 from .tiledb_object import TileDBObject
 
-from typing import Optional, List, Dict
+from typing import Optional, List, Set, Dict
 
 
 class TileDBArray(TileDBObject):
