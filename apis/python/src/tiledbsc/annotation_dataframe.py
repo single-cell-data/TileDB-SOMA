@@ -7,7 +7,7 @@ import tiledbsc.util as util
 import pandas as pd
 import numpy as np
 
-from typing import Optional, Tuple, List
+from typing import Optional, Tuple, List, Set
 
 
 class AnnotationDataFrame(TileDBArray):
@@ -85,6 +85,13 @@ class AnnotationDataFrame(TileDBArray):
         return self.attr_names()
 
     # ----------------------------------------------------------------
+    def keyset(self) -> Set[str]:
+        """
+        Same as `.keys` but returns as set.
+        """
+        return set(self.keys())
+
+    # ----------------------------------------------------------------
     def dim_select(self, ids):
         """
         Selects a slice out of the dataframe with specified `obs_ids` (for `obs`) or `var_ids` (for `var`).
@@ -118,17 +125,21 @@ class AnnotationDataFrame(TileDBArray):
         return self.dim_select(ids)
 
     # ----------------------------------------------------------------
-    # TODO: this is a v1 for prototype/demo timeframe -- needs expanding.
-    def attribute_filter(self, query_string, col_names_to_keep):
+    def attribute_filter(self, query_string, col_names_to_keep=None):
         """
         Selects from obs/var using a TileDB-Py `QueryCondition` string such as
-        `cell_type == "blood"`. Returns None if the slice is empty.
+        `cell_type == "blood"`.
+        If `col_names_to_keep` is `None`, returns all column names in the dataframe.
+        Returns None if the slice is empty.
         This is a v1 implementation for the prototype/demo timeframe.
         """
         with self._open() as A:
             qc = tiledb.QueryCondition(query_string)
             slice_query = A.query(attr_cond=qc)
-            slice_df = slice_query.df[:][col_names_to_keep]
+            if col_names_to_keep is None:
+                slice_df = slice_query.df[:][:]
+            else:
+                slice_df = slice_query.df[:][col_names_to_keep]
             nobs = len(slice_df)
             if nobs == 0:
                 return None
@@ -149,7 +160,7 @@ class AnnotationDataFrame(TileDBArray):
         return df
 
     # ----------------------------------------------------------------
-    def from_dataframe(self, dataframe: pd.DataFrame, extent: int) -> None:
+    def from_dataframe(self, dataframe: pd.DataFrame, extent: int = 2048) -> None:
         """
         Populates the `obs` or `var` subgroup for a SOMA object.
 

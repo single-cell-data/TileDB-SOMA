@@ -597,19 +597,9 @@ class AssayMatrix(TileDBArray):
             s = util.get_start_stamp()
             print(f"{self._indent}START  read {self.uri}")
 
-        df = self.df()
-
-        retval = util.X_and_ids_to_sparse_matrix(
-            df,
-            self.row_dim_name,
-            self.col_dim_name,
-            self.attr_name,
-            row_labels,
-            col_labels,
-            return_as="csr",
-        )
+        csr = self.csr()
 
         if self._verbose:
             print(util.format_elapsed(s, f"{self._indent}FINISH read {self.uri}"))
 
-        return retval
+        return csr
