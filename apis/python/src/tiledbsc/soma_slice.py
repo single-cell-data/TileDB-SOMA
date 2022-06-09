@@ -18,10 +18,11 @@ class SOMASlice(TileDBGroup):
     X: pd.DataFrame
     obs: pd.DataFrame
     var: pd.DataFrame
-    obsm: Dict[str, pd.DataFrame]
-    varm: Dict[str, pd.DataFrame]
-    obsp: Dict[str, pd.DataFrame]
-    varp: Dict[str, pd.DataFrame]
+    # TODO
+    # obsm: Dict[str, pd.DataFrame]
+    # varm: Dict[str, pd.DataFrame]
+    # obsp: Dict[str, pd.DataFrame]
+    # varp: Dict[str, pd.DataFrame]
 
     # ----------------------------------------------------------------
     def __init__(
@@ -29,12 +30,13 @@ class SOMASlice(TileDBGroup):
         X: Dict[str, pd.DataFrame],
         obs: pd.DataFrame,
         var: pd.DataFrame,
-        obsm: Dict[str, pd.DataFrame],
-        varm: Dict[str, pd.DataFrame],
-        obsp: Dict[str, pd.DataFrame],
-        varp: Dict[str, pd.DataFrame],
-        raw_X: Dict[str, pd.DataFrame],
-        raw_var: pd.DataFrame,
+        # TODO
+        # obsm: Dict[str, pd.DataFrame],
+        # varm: Dict[str, pd.DataFrame],
+        # obsp: Dict[str, pd.DataFrame],
+        # varp: Dict[str, pd.DataFrame],
+        # raw_X: Dict[str, pd.DataFrame],
+        # raw_var: pd.DataFrame,
     ):
         """
         Constructs an in-memory `SOMASlice` object. This is a simple collection of obs, var, and X dataframes.
