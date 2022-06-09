@@ -133,6 +133,7 @@ class AnnotationDataFrame(TileDBArray):
         return self.dim_select(ids, attrs)
 
     # ----------------------------------------------------------------
+<<<<<<< HEAD
     def attribute_filter(self, query_string, attrs=None):
         """
         Selects from obs/var using a TileDB-Py `QueryCondition` string such as `cell_type ==
@@ -148,6 +149,23 @@ class AnnotationDataFrame(TileDBArray):
             else:
                 slice_query = A.query(attr_cond=qc, attrs=attrs)
                 slice_df = slice_query.df[:]
+=======
+    def attribute_filter(self, query_string, col_names_to_keep=None):
+        """
+        Selects from obs/var using a TileDB-Py `QueryCondition` string such as
+        `cell_type == "blood"`.
+        If `col_names_to_keep` is `None`, returns all column names in the dataframe.
+        Returns None if the slice is empty.
+        This is a v1 implementation for the prototype/demo timeframe.
+        """
+        with self._open() as A:
+            qc = tiledb.QueryCondition(query_string)
+            slice_query = A.query(attr_cond=qc)
+            if col_names_to_keep is None:
+                slice_df = slice_query.df[:][:]
+            else:
+                slice_df = slice_query.df[:][col_names_to_keep]
+>>>>>>> 4b96977 (SOMA-collection-level slice/batch queries)
             nobs = len(slice_df)
             if nobs == 0:
                 return None
