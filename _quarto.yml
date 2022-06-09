@@ -67,6 +67,8 @@ website:
                   text: "Inspecting SOMA schemas"
                 - href: "apis/python/examples/soco-reconnaissance.md"
                   text: "SOMA-collection reconnaissance"
+                - href: "apis/python/examples/soma-slice-query.md"
+                  text: "SOMA slice query"
 
             - section: "Python API"
               contents:
