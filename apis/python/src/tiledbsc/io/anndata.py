@@ -257,8 +257,6 @@ def to_anndata(soma: tiledbsc.SOMA) -> ad.AnnData:
     obsp = soma.obsp.to_dict_of_csr(obs_df.index, obs_df.index)
     varp = soma.varp.to_dict_of_csr(var_df.index, var_df.index)
 
-    (raw_X, raw_var_df, raw_varm) = soma.raw.to_anndata_raw(obs_df.index)
-
     anndata = ad.AnnData(
         X=X_mat, obs=obs_df, var=var_df, obsm=obsm, varm=varm, obsp=obsp, varp=varp
     )
