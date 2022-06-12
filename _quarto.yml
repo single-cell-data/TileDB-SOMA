@@ -71,8 +71,6 @@ website:
                   text: "Normalizing a collection"
                 - href: "apis/python/examples/soco-reconnaissance.md"
                   text: "SOMA-collection reconnaissance"
-                - href: "apis/python/examples/soma-slice-query.md"
-                  text: "SOMA slice query"
                 - href: "apis/python/examples/soco-slice-query.md"
                   text: "SOMA-collection slice query"
                 - href: "apis/python/examples/soco-batch-query.md"
