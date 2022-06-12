@@ -106,382 +106,191 @@ tabula-sapiens-stromal
 
 ## Show counts of obs_ids and var_ids across the collection
 
-```
-def show_obs_id_counts(soco: t.SOMACollection) -> None:
-    counts = {}
-    for soma in soco:
-        for oid in soma.obs.ids():
-            if oid in counts:
-                counts[oid] += 1
-            else:
-                counts[oid] = 1
-    df = pandas.DataFrame.from_dict(
-        {"obs_id": counts.keys(), "counts": counts.values()}
-    )
-    # print(df.head())
-    print(df)
-
-
-def show_var_id_counts(soco: t.SOMACollection) -> None:
-    counts = {}
-    for soma in soco:
-        for oid in soma.var.ids():
-            if oid in counts:
-                counts[oid] += 1
-            else:
-                counts[oid] = 1
-    df = pandas.DataFrame.from_dict(
-        {"var_id": counts.keys(), "counts": counts.values()}
-    )
-    # print(df.head())
-    print(df)
-
-print("OBS_ID COUNTS")
-show_obs_id_counts(soco)
-
-print("VAR_ID COUNTS")
-show_var_id_counts(soco)
-```
+Using [./collection-counts.py](collection-counts.py) we can answer questions such as _How many cells will
+be involved if I do a query?_ Since these pre-counts operate on the smaller `obs` arrays, they run
+faster than going ahead and doing full queries (as shown below) on the larger `X` arrays.
 
 ```
-OBS_ID COUNTS
-                                                    obs_id  counts
-0        AAACCCAAGAAACTGT_TSP7_LymphNodes_Inguinal_10X_1_1       1
-1                   AAACCCAAGAAGGTAG_TSP10_Skin_NA_10X_1_1       1
-2                 AAACCCAAGAAGGTAG_TSP14_SI_Distal_10X_1_1       1
-3               AAACCCAAGAAGTCAT_TSP2_LymphNode_NA_10X_2_1       1
-4              AAACCCAAGAATAACC_TSP14_Skin_Abdomen_10X_1_1       1
-...                                                    ...     ...
-2374963                                          Z11041427       1
-2374964                                          Z11041428       1
-2374965                                          Z11041429       1
-2374966                                          Z11041430       1
-2374967                                          Z11041431       1
+----------------------------------------------------------------
+Per-SOMA values for cell_type
 
-[2374968 rows x 2 columns]
-
-VAR_ID COUNTS
-                    var_id  counts
-0          ENSG00000000003      17
-1          ENSG00000000005      15
-2          ENSG00000000419      17
-3          ENSG00000000457      17
-4          ENSG00000000460      17
-...                    ...     ...
-172538  ENSMUSG00000119805       1
-172539  ENSMUSG00000119882       1
-172540  ENSMUSG00000119887       1
-172541  ENSMUSG00000119908       1
-172542  ENSMUSG00000119931       1
-
-[172543 rows x 2 columns]
-```
-
-## Show unique values for obs.cell_type and var.feature_name
-
-```
-def show_obs_column_unique_values(soco: t.SOMACollection, col_name: str) -> None:
-    for soma in soco:
-        print()
-        print(soma.uri)
-        if col_name in soma.obs.keys():
-            print(soma.obs.df()[col_name].unique())
-
-def show_var_column_unique_values(soco: t.SOMACollection, col_name: str) -> None:
-    for soma in soco:
-        print()
-        print(soma.uri)
-        if col_name in soma.var.keys():
-            print(soma.var.df()[col_name].unique())
-
-print("UNIQUE VALUES FOR OBS.CELL_TYPE")
-show_obs_column_unique_values(soco, "cell_type")
-
-print("UNIQUE VALUES FOR VAR.FEATURE_NAME")
-show_var_column_unique_values(soco, "feature_name")
-```
-
-```
-OBS UNIQUE VALUES FOR CELL_TYPE
-
-file:///Users/testuser/mini-corpus/tiledb-data/tabula-sapiens-immune
-[b'B cell' b'macrophage' b'CD4-positive, alpha-beta T cell'
- b'naive thymus-derived CD4-positive, alpha-beta T cell'
- b'mature NK T cell' b'erythrocyte' b'plasma cell' b'DN3 thymocyte'
- b'effector CD8-positive, alpha-beta T cell' b'granulocyte'
- b'effector CD4-positive, alpha-beta T cell' b'neutrophil' b'monocyte'
- b'T cell' b'DN1 thymic pro-T cell' b'intermediate monocyte'
- b'CD8-positive, alpha-beta T cell' b'naive B cell' b'leukocyte'
- b'CD8-positive, alpha-beta memory T cell' b'CD4-positive helper T cell'
- b'mesenchymal stem cell' b'classical monocyte' b'memory B cell'
- b'regulatory T cell' b'basophil' b'innate lymphoid cell'
- b'CD4-positive, alpha-beta memory T cell' b'dendritic cell'
- b'CD8-positive, alpha-beta cytokine secreting effector T cell'
- b'microglial cell' b'CD141-positive myeloid dendritic cell'
- b'type I NK T cell' b'naive regulatory T cell' b'hematopoietic stem cell'
- b'T follicular helper cell' b'thymocyte' b'erythroid progenitor cell'
- b'myeloid cell' b'non-classical monocyte'
- b'naive thymus-derived CD8-positive, alpha-beta T cell' b'mast cell'
- b'liver dendritic cell' b'CD8-positive, alpha-beta cytotoxic T cell'
- b'common myeloid progenitor' b'CD1c-positive myeloid dendritic cell'
- b'Langerhans cell' b'platelet' b'plasmacytoid dendritic cell'
- b'DN4 thymocyte' b'plasmablast' b'immature natural killer cell'
- b'mature conventional dendritic cell' b'erythroid lineage cell'
- b'double-positive, alpha-beta thymocyte' b'myeloid dendritic cell']
-
-file:///Users/testuser/mini-corpus/tiledb-data/integrated-human-lung-cell-atlas
-[b'capillary endothelial cell' b'plasmacytoid dendritic cell'
- b'alveolar macrophage' b'natural killer cell' b'type II pneumocyte'
- b'non-classical monocyte' b'elicited macrophage' b'plasma cell'
- b'CD8-positive, alpha-beta T cell' b'vein endothelial cell'
- b'lung macrophage' b'CD4-positive, alpha-beta T cell'
- b'CD1c-positive myeloid dendritic cell'
- b'pulmonary artery endothelial cell'
- b'tracheobronchial smooth muscle cell' b'bronchial goblet cell'
- b'classical monocyte' b'fibroblast of lung' b'B cell' b'pericyte cell'
- b'conventional dendritic cell' b'mast cell'
- b'ciliated columnar cell of tracheobronchial tree' b'dendritic cell'
- b'epithelial cell of lung' b'type I pneumocyte'
- b'nasal mucosa goblet cell' b'club cell' b'respiratory basal cell'
- b'endothelial cell of lymphatic vessel' b'mesothelial cell'
- b'bronchus fibroblast of lung' b'T cell'
- b'multi-ciliated epithelial cell' b'fibroblast' b'myofibroblast cell'
- b'stromal cell' b'acinar cell' b'mucus secreting cell'
- b'tracheobronchial serous cell' b'ionocyte' b'smooth muscle cell'
- b'brush cell of trachebronchial tree' b'tracheobronchial goblet cell'
- b'lung neuroendocrine cell' b'serous secreting cell']
-
-...
-
-OBS UNIQUE VALUES FOR FEATURE_NAME
-
-file:///Users/testuser/mini-corpus/tiledb-data/tabula-sapiens-immune
-[b'TSPAN6' b'TNMD' b'DPM1' ... b'XXyac-YX60D10.3' b'CTD-2201E18.6'
- b'RP11-444B5.1']
-
-file:///Users/testuser/mini-corpus/tiledb-data/integrated-human-lung-cell-atlas
-[b'TSPAN6' b'TNMD' b'DPM1' ... b'MGC4859' b'RP11-107E5.4' b'RP11-299P2.2']
+SOMA acute-covid19-cohort
+                                 count
+name                                  
+monocyte                         29878
+CD8-positive, alpha-beta T cell   8658
+CD4-positive, alpha-beta T cell   6726
+B cell                            6131
+natural killer cell               3248
+alpha-beta T cell                 1659
+dendritic cell                    1038
+platelet                          1007
+plasmablast                        586
+plasmacytoid dendritic cell        575
 
 ...
 ```
 
-## Show value counts for obs.cell_type and obs.tissue
+```
+----------------------------------------------------------------
+Counts of SOMAs having cell_type
+
+obs_label cell_type
+                                                    count
+name                                                     
+B cell                                                  5
+platelet                                                5
+dendritic cell                                          4
+mature NK T cell                                        4
+neutrophil                                              4
+plasma cell                                             4
+animal cell                                             3
+myeloid cell                                            3
+natural killer cell                                     2
+plasmablast                                             2
+plasmacytoid dendritic cell                             2
+erythrocyte                                             2
+CD4-positive, alpha-beta T cell                         1
+CD8-positive, alpha-beta T cell                         1
+alpha-beta T cell                                       1
+monocyte                                                1
+eukaryotic cell                                         1
+epithelial cell of nephron                              1
+leukocyte                                               1
+mesenchymal stem cell                                   1
+native cell                                             1
+CD14-low, CD16-positive monocyte                        1
+CD14-positive monocyte                                  1
+CD16-negative, CD56-bright natural killer cell,...      1
+CD16-positive, CD56-dim natural killer cell, human      1
+CD4-positive, alpha-beta memory T cell                  1
+CD8-positive, alpha-beta memory T cell                  1
+T cell                                                  1
+conventional dendritic cell                             1
+gamma-delta T cell                                      1
+hematopoietic stem cell                                 1
+immature B cell                                         1
+memory B cell                                           1
+mucosal invariant T cell                                1
+naive B cell                                            1
+naive thymus-derived CD4-positive, alpha-beta T...      1
+naive thymus-derived CD8-positive, alpha-beta T...      1
+regulatory T cell                                       1
+
+Counts of SOMAs having tissue
+
+obs_label tissue
+        count
+name         
+blood       5
+kidney      1
+```
 
 ```
-def show_obs_value_counts(soco: t.SOMACollection, obs_labels: List[str]) -> None:
+----------------------------------------------------------------
+Collection-wide counts of values of cell_type
 
-    for obs_label in obs_labels:
-        counts = {}
+obs_label cell_type
+                                                    count
+name
+monocyte                                            29878
+naive thymus-derived CD4-positive, alpha-beta T...  26887
+CD14-positive monocyte                              23648
+myeloid cell                                        10261
+naive B cell                                         8679
+CD8-positive, alpha-beta T cell                      8658
+B cell                                               8524
+mature NK T cell                                     7755
+CD16-positive, CD56-dim natural killer cell, human   6948
+CD4-positive, alpha-beta T cell                      6726
+CD8-positive, alpha-beta memory T cell               6224
+erythrocyte                                          3918
+CD16-negative, CD56-bright natural killer cell,...   3638
+natural killer cell                                  3474
+CD4-positive, alpha-beta memory T cell               3276
+platelet                                             2926
+mesenchymal stem cell                                2811
+naive thymus-derived CD8-positive, alpha-beta T...   2387
+CD14-low, CD16-positive monocyte                     1923
+plasmablast                                          1825
+T cell                                               1697
+alpha-beta T cell                                    1659
+epithelial cell of nephron                           1216
+dendritic cell                                       1061
+plasma cell                                          1025
+animal cell                                           661
+plasmacytoid dendritic cell                           650
+conventional dendritic cell                           543
+native cell                                           465
+memory B cell                                         457
+regulatory T cell                                     306
+neutrophil                                            302
+hematopoietic stem cell                               270
+immature B cell                                       255
+mucosal invariant T cell                              223
+gamma-delta T cell                                    216
+leukocyte                                             144
+eukaryotic cell                                        28
 
-        for soma in soco:
-            print("...", soma.name)
-            # print("\n".join(sorted(soma.obs.attr_names())))
-            obs = soma.obs.df()
+TOTAL count    181544
+dtype: int64
+Collection-wide counts of values of tissue
 
-            if not obs_label in obs:
-                continue
+obs_label tissue
+         count
+name
+blood   176908
+kidney    4636
 
-            obs_label_values = sorted(list(set(obs[obs_label])))
-            for obs_label_value in obs_label_values:
-                if obs_label_value in counts:
-                    counts[obs_label_value] += 1
-                else:
-                    counts[obs_label_value] = 1
+TOTAL count    181544
+dtype: int64
+Collection-wide counts of values of cell_type_ontology_term_id
 
-        print(
-            "----------------------------------------------------------------",
-            obs_label,
-        )
-        for k, v in dict(sorted(counts.items(), key=lambda item: item[1])).items():
-            print(k, v)
+obs_label cell_type_ontology_term_id
+            count
+name
+CL:0000576  29878
+CL:0000895  26887
+CL:0001054  23648
+CL:0000763  10261
+CL:0000788   8679
+CL:0000625   8658
+CL:0000236   8524
+CL:0000814   7755
+CL:0000939   6948
+CL:0000624   6726
+CL:0000909   6224
+CL:0000232   3918
+CL:0000938   3638
+CL:0000623   3474
+CL:0000897   3276
+CL:0000233   2926
+CL:0000134   2811
+CL:0000900   2387
+CL:0002396   1923
+CL:0000980   1825
+CL:0000084   1697
+CL:0000789   1659
+CL:1000449   1216
+CL:0000451   1061
+CL:0000786   1025
+CL:0000548    661
+CL:0000784    650
+CL:0000990    543
+CL:0000003    465
+CL:0000787    457
+CL:0000815    306
+CL:0000775    302
+CL:0000037    270
+CL:0000816    255
+CL:0000940    223
+CL:0000798    216
+CL:0000738    144
+CL:0000255     28
 
-print("OBS VALUE COUNTS FOR CELL_TYPE AND TISSUE")
-show_obs_value_counts(soco, ["cell_type", "tissue"])
-```
-
-```
-OBS VALUE COUNTS FOR CELL_TYPE AND TISSUE
----------------------------------------------------------------- cell_type
-b'CD141-positive myeloid dendritic cell' 1
-b'CD4-positive helper T cell' 1
-b'CD8-positive, alpha-beta cytokine secreting effector T cell' 1
-b'CD8-positive, alpha-beta cytotoxic T cell' 1
-b'DN1 thymic pro-T cell' 1
-b'DN3 thymocyte' 1
-b'DN4 thymocyte' 1
-b'Langerhans cell' 1
-b'T follicular helper cell' 1
-b'common myeloid progenitor' 1
-b'double-positive, alpha-beta thymocyte' 1
-b'effector CD4-positive, alpha-beta T cell' 1
+TOTAL count    181544
+dtype: int64
 ...
-b'astrocyte' 4
-b'CD8-positive, alpha-beta T cell' 5
-b'T cell' 5
-b'endothelial cell' 5
-b'CD4-positive, alpha-beta T cell' 6
-b'mature NK T cell' 6
-b'native cell' 6
-b'dendritic cell' 7
-b'plasmacytoid dendritic cell' 7
-b'natural killer cell' 7
-b'myeloid cell' 8
-b'neutrophil' 8
-b'plasma cell' 8
-b'platelet' 8
-b'B cell' 12
-
----------------------------------------------------------------- tissue
-b'bone marrow' 1
-b'inguinal lymph node' 1
-b'spleen' 1
-b'conjunctiva' 1
-b'lung parenchyma' 1
-b'nose' 1
-b'respiratory airway' 1
-b'fovea centralis' 1
-b'macula lutea proper' 1
-b'peripheral region of retina' 1
-...
-b'large intestine' 3
-b'liver' 3
-b'mammary gland' 3
-b'myometrium' 3
-b'parotid gland' 3
-b'posterior part of tongue' 3
-b'prostate gland' 3
-b'retinal neural layer' 3
-b'sclera' 3
-b'skin of abdomen' 3
-b'skin of body' 3
-b'skin of chest' 3
-b'small intestine' 3
-b'submandibular gland' 3
-b'thymus' 3
-b'tongue' 3
-b'trachea' 3
-b'uterus' 3
-b'kidney' 4
-b'lung' 5
-b'blood' 9
-```
-
-## Find datasets having specified values
-
-```
-def show_somas_having(
-    soco: tiledbsc.SOMACollection,
-    obs_labels_to_values: Dict[str, List],
-    var_labels_to_values: Dict[str, List],
-) -> None:
-
-    for soma in soco:
-        print("...", soma.uri)
-
-        obs = soma.obs.df()
-        for obs_label in obs_labels_to_values:
-            if not obs_label in obs:
-                continue
-            soma_obs_label_values = sorted(list(set(obs[obs_label])))
-            soma_obs_label_values = [e.decode() for e in soma_obs_label_values]
-            for sought_obs_label_value in obs_labels_to_values[obs_label]:
-                if sought_obs_label_value in soma_obs_label_values:
-                    print("  found obs", sought_obs_label_value)
-
-        var = soma.var.df()
-        for var_label in var_labels_to_values:
-            if not var_label in var:
-                continue
-            soma_var_label_values = sorted(list(set(var[var_label])))
-            soma_var_label_values = [e.decode() for e in soma_var_label_values]
-            for sought_var_label_value in var_labels_to_values[var_label]:
-                if sought_var_label_value in soma_var_label_values:
-                    print("  found var", sought_var_label_value)
-
-show_somas_having(
-    soco,
-    {"cell_type": ["B cell", "T cell"], "tissue": ["blood", "lung"]},
-    {"feature_name": ["MT-CO3"]},
-)
-```
-
-```
-... file:///mini-corpus/tiledb-data/tabula-sapiens-stromal
-  found obs lung
-  found var MT-CO3
-... file:///mini-corpus/tiledb-data/Puck_200903_10
-  found var MT-CO3
-... file:///mini-corpus/tiledb-data/autoimmunity-pbmcs
-  found obs B cell
-  found obs T cell
-  found obs blood
-  found var MT-CO3
-... file:///mini-corpus/tiledb-data/pbmc-small
-... file:///mini-corpus/tiledb-data/vieira19_Alveoli_and_parenchyma_anonymised.processed
-... file:///mini-corpus/tiledb-data/af9d8c03-696c-4997-bde8-8ef00844881b
-  found obs B cell
-  found obs blood
-  found var MT-CO3
-... file:///mini-corpus/tiledb-data/d4db74ad-a129-4b1a-b9da-1b30db86bbe4-issue-74
-... file:///mini-corpus/tiledb-data/single-cell-transcriptomes
-  found obs B cell
-  found var MT-CO3
-... file:///mini-corpus/tiledb-data/local2
-  found var MT-CO3
-... file:///mini-corpus/tiledb-data/human-kidney-tumors-wilms
-  found var MT-CO3
-... file:///mini-corpus/tiledb-data/0cfab2d4-1b79-444e-8cbe-2ca9671ca85e
-  found obs B cell
-  found obs blood
-  found var MT-CO3
-... file:///mini-corpus/tiledb-data/issue-74
-... file:///mini-corpus/tiledb-data/10x_pbmc68k_reduced
-... file:///mini-corpus/tiledb-data/integrated-human-lung-cell-atlas
-  found obs B cell
-  found obs T cell
-  found var MT-CO3
-... file:///mini-corpus/tiledb-data/4056cbab-2a32-4c9e-a55f-c930bc793fb6
-  found obs B cell
-  found obs blood
-  found var MT-CO3
-... file:///mini-corpus/tiledb-data/adult-mouse-cortical-cell-taxonomy
-... file:///mini-corpus/tiledb-data/tabula-sapiens-epithelial
-  found obs lung
-  found var MT-CO3
-... file:///mini-corpus/tiledb-data/Single_cell_atlas_of_peripheral_immune_response_to_SARS_CoV_2_infection
-  found obs B cell
-  found obs blood
-... file:///mini-corpus/tiledb-data/longitudinal-profiling-49
-  found obs B cell
-  found obs blood
-  found var MT-CO3
-... file:///mini-corpus/tiledb-data/azimuth-meta-analysis
-  found obs B cell
-  found obs T cell
-  found obs blood
-  found obs lung
-... file:///mini-corpus/tiledb-data/developmental-single-cell-atlas-of-the-murine-lung
-  found obs lung
-... file:///mini-corpus/tiledb-data/local3
-  found var MT-CO3
-... file:///mini-corpus/tiledb-data/pbmc3k-krilow
-... file:///mini-corpus/tiledb-data/pbmc3k_processed
-... file:///mini-corpus/tiledb-data/subset_100_100
-... file:///mini-corpus/tiledb-data/tabula-sapiens-immune
-  found obs B cell
-  found obs T cell
-  found obs blood
-  found obs lung
-  found var MT-CO3
-... file:///mini-corpus/tiledb-data/brown-adipose-tissue-mouse
-  found obs B cell
-  found obs T cell
-... file:///mini-corpus/tiledb-data/acute-covid19-cohort
-  found obs B cell
-  found obs blood
-  found var MT-CO3
-... file:///mini-corpus/tiledb-data/issue-69
->>>
 ```
 
 ## Conclusion

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 """
-Given one of the outputs from cartorapher.py, splits it into a few little pieces for demo purposes.
+Given one of the outputs from cartorapher.py, splits it into a few little pieces for quick-iteration purposes.
 """
 
 import tiledbsc
@@ -15,7 +15,7 @@ def write_subset(soma, obs_indices, output_path):
     if os.path.exists(output_path):
         shutil.rmtree(output_path)
     subset_soma = tiledbsc.SOMA(output_path)
-    subset_soma._create()
+    subset_soma.create_unless_exists()
 
     obs_ids = list(soma.obs.df().index[obs_indices])
     var_ids = list(soma.var.df().index)
