@@ -152,3 +152,27 @@ def find_unique_var_values(var_label: str)
 Given an `var` label such as `feature_name`, returns a list of unique values for
 that label among all SOMAs in the collection.
 
+<a id="tiledbsc.soma_collection.SOMACollection.get_obs_value_counts"></a>
+
+#### get\_obs\_value\_counts
+
+```python
+def get_obs_value_counts(obs_label: str, do_sum: bool)
+```
+
+For a given obs label, e.g. "cell_type", count the number of occurrences of different values in
+SOMAs in the collection. If `do_sum` is false, count the number of SOMAs having that value. If
+`do_sum` is true, count the total number of instances of that value across the collection.
+
+<a id="tiledbsc.soma_collection.SOMACollection.get_var_value_counts"></a>
+
+#### get\_var\_value\_counts
+
+```python
+def get_var_value_counts(var_label: str, do_sum: bool)
+```
+
+For a given var label, e.g. "feature_name", count the number of occurrences of different values in
+SOMAs in the collection. If `do_sum` is false, count the number of SOMAs having that value. If
+`do_sum` is true, count the total number of instances of that value across the collection.
+
