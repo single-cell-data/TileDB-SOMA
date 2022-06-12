@@ -62,7 +62,7 @@ Note: currently implemented via data scan -- will be optimized for TileDB core 2
 #### dim\_select
 
 ```python
-def dim_select(obs_ids, var_ids)
+def dim_select(obs_ids, var_ids) -> pd.DataFrame
 ```
 
 Selects a slice out of the matrix with specified `obs_ids` and/or `var_ids`.
@@ -80,6 +80,26 @@ def df(obs_ids=None, var_ids=None) -> pd.DataFrame
 Keystroke-saving alias for `.dim_select()`. If either of `obs_ids` or `var_ids`
 are provided, they're used to subselect; if not, the entire dataframe is returned.
 
+<a id="tiledbsc.assay_matrix.AssayMatrix.csr"></a>
+
+#### csr
+
+```python
+def csr(obs_ids=None, var_ids=None) -> scipy.sparse.csr_matrix
+```
+
+Like `.df()` but returns results in `scipy.sparse.csr_matrix` format.
+
+<a id="tiledbsc.assay_matrix.AssayMatrix.csc"></a>
+
+#### csc
+
+```python
+def csc(obs_ids=None, var_ids=None) -> scipy.sparse.csc_matrix
+```
+
+Like `.df()` but returns results in `scipy.sparse.csc_matrix` format.
+
 <a id="tiledbsc.assay_matrix.AssayMatrix.from_matrix_and_dim_values"></a>
 
 #### from\_matrix\_and\_dim\_values
@@ -90,6 +110,10 @@ def from_matrix_and_dim_values(matrix, row_names, col_names) -> None
 
 Imports a matrix -- nominally `scipy.sparse.csr_matrix` or `numpy.ndarray` -- into a TileDB
 array which is used for `X`, `raw.X`, `obsp` members, and `varp` members.
+
+The `row_names` and `col_names` are row and column labels for the matrix; the matrix may be
+`scipy.sparse.csr_matrix`, `scipy.sparse.csc_matrix`, `numpy.ndarray`, etc.
+For ingest from `AnnData`, these should be `ann.obs_names` and `ann.var_names`.
 
 <a id="tiledbsc.assay_matrix.AssayMatrix.ingest_data_whole"></a>
 

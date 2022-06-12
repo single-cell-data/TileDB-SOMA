@@ -1,10 +1,12 @@
 from typing import Optional, List
 
-import tiledb
-
 from .soma_options import SOMAOptions
 from .soma import SOMA
+from .soma_slice import SOMASlice
 from .tiledb_group import TileDBGroup
+
+import tiledb
+import pandas as pd
 
 
 class SOMACollection(TileDBGroup):
@@ -125,3 +127,122 @@ class SOMACollection(TileDBGroup):
         Returns sum of `soma.cell_count()` over SOMAs in the collection.
         """
         return sum(soma.cell_count() for soma in self)
+
+    # ----------------------------------------------------------------
+    def attribute_filter(
+        self,
+        obs_attr_names: List[str] = [],
+        obs_query_string: str = None,
+        var_attr_names: List[str] = [],
+        var_query_string: str = None,
+    ) -> Optional[SOMASlice]:
+        """
+        Subselects the obs, var, and X/data using the specified queries on obs and var,
+        concatenating across SOMAs in the collection.  Queries use the TileDB-Py `QueryCondition`
+        API. If `obs_query_string` is `None`, the `obs` dimension is not filtered and all of `obs`
+        is used; similiarly for `var`. Return value of `None` indicates an empty slice.
+        """
+
+        soma_slices = []
+        for soma in self:
+            # E.g. querying for 'cell_type == "blood"' but this SOMA doesn'tiledbsc have a cell_type column in
+            # its obs at all.
+            if not soma.obs.has_attr_names(obs_attr_names):
+                continue
+            # E.g. querying for 'feature_name == "MT-CO3"' but this SOMA doesn'tiledbsc have a feature_name
+            # column in its var at all.
+            if not soma.var.has_attr_names(var_attr_names):
+                continue
+
+            soma_slice = soma.attribute_filter(obs_query_string, var_query_string)
+            if soma_slice != None:
+                # print("Slice SOMA from", soma.name, soma.X.data.shape(), "to", soma_slice.ann.X.shape)
+                soma_slices.append(soma_slice)
+
+        return SOMASlice.concat(soma_slices)
+
+    # ----------------------------------------------------------------
+    def find_unique_obs_values(self, obs_label: str):
+        """
+        Given an `obs` label such as `cell_type` or `tissue`, returns a list of unique values for
+        that label among all SOMAs in the collection.
+        """
+        return self._find_unique_obs_or_var_values(obs_label, True)
+
+    def find_unique_var_values(self, var_label: str):
+        """
+        Given an `var` label such as `feature_name`, returns a list of unique values for
+        that label among all SOMAs in the collection.
+        """
+        return self._find_unique_obs_or_var_values(var_label, False)
+
+    def _find_unique_obs_or_var_values(self, obs_or_var_label: str, use_obs: bool):
+        """
+        Helper method for `find_unique_obs_values` and `find_unique_var_values`.
+        """
+        unique_values_in_soco = set()
+
+        for soma in self:
+            annotation_matrix = soma.obs if use_obs else soma.var
+            if not obs_or_var_label in annotation_matrix.keys():
+                continue
+
+            unique_values_in_soma = list(set(annotation_matrix.df()[obs_or_var_label]))
+
+            unique_values_in_soco = unique_values_in_soco.union(unique_values_in_soma)
+
+        return unique_values_in_soco
+
+    # ----------------------------------------------------------------
+    def get_obs_value_counts(self, obs_label: str, do_sum: bool):
+        """
+        For a given obs label, e.g. "cell_type", count the number of occurrences of different values in
+        SOMAs in the collection. If `do_sum` is false, count the number of SOMAs having that value. If
+        `do_sum` is true, count the total number of instances of that value across the collection.
+        """
+        return self._get_obs_or_var_value_counts(obs_label, do_sum, True)
+
+    def get_var_value_counts(self, var_label: str, do_sum: bool):
+        """
+        For a given var label, e.g. "feature_name", count the number of occurrences of different values in
+        SOMAs in the collection. If `do_sum` is false, count the number of SOMAs having that value. If
+        `do_sum` is true, count the total number of instances of that value across the collection.
+        """
+        return self._get_obs_or_var_value_counts(var_label, do_sum, False)
+
+    def _get_obs_or_var_value_counts(
+        self, obs_or_var_label: str, do_sum: bool, do_obs: bool
+    ):
+        """
+        Supporting method for `get_obs_value_counts` and `get_var_value_counts`.
+        """
+
+        counts = {}
+        for soma in self:
+            # TODO: query more conservatively
+            obs_or_var = soma.obs.df() if do_obs else soma.var.df()
+
+            if not obs_or_var_label in obs_or_var:
+                continue
+
+            if do_sum:
+                obs_label_values = list(obs_or_var[obs_or_var_label])
+            else:
+                obs_label_values = sorted(list(set(obs_or_var[obs_or_var_label])))
+            for obs_label_value in obs_label_values:
+                if obs_label_value in counts:
+                    counts[obs_label_value] += 1
+                else:
+                    counts[obs_label_value] = 1
+
+        name_column = []
+        counts_column = []
+        for k, v in dict(
+            sorted(counts.items(), reverse=True, key=lambda item: item[1])
+        ).items():
+            name_column.append(k)
+            counts_column.append(v)
+
+        df = pd.DataFrame.from_dict({"name": name_column, "count": counts_column})
+        df.set_index("name", inplace=True)
+        return df
