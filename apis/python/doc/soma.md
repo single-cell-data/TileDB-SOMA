@@ -87,6 +87,16 @@ def var_keys()
 
 An alias for `soma.var.ids()`.
 
+<a id="tiledbsc.soma.SOMA.cell_count"></a>
+
+#### cell\_count
+
+```python
+def cell_count() -> int
+```
+
+Returns the `obs_id` in `soma.obs`.
+
 <a id="tiledbsc.soma.SOMA.dim_slice"></a>
 
 #### dim\_slice
