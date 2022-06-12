@@ -17,8 +17,7 @@ def test_soco_slice_query(tmp_path):
     soco_dir = tmp_path.as_posix()
 
     soco = tiledbsc.SOMACollection(soco_dir)
-    if not soco.exists():
-        soco._create()
+    soco.create_unless_exists()
 
     for name, h5ad_path in [
         ("subset-soma-01", HERE.parent / "anndata/subset-soma-01.h5ad"),

@@ -2,6 +2,7 @@ from typing import Optional, List
 
 from .soma_options import SOMAOptions
 from .soma import SOMA
+from .soma_slice import SOMASlice
 from .tiledb_group import TileDBGroup
 
 import tiledb
@@ -132,6 +133,39 @@ class SOMACollection(TileDBGroup):
         Returns sum of `soma.cell_count()` over SOMAs in the collection.
         """
         return sum(soma.cell_count() for soma in self)
+
+    # ----------------------------------------------------------------
+    def attribute_filter(
+        self,
+        obs_attr_names: List[str] = [],
+        obs_query_string: str = None,
+        var_attr_names: List[str] = [],
+        var_query_string: str = None,
+    ) -> Optional[SOMASlice]:
+        """
+        Subselects the obs, var, and X/data using the specified queries on obs and var,
+        concatenating across SOMAs in the collection.  Queries use the TileDB-Py `QueryCondition`
+        API. If `obs_query_string` is `None`, the `obs` dimension is not filtered and all of `obs`
+        is used; similiarly for `var`. Return value of `None` indicates an empty slice.
+        """
+
+        soma_slices = []
+        for soma in self:
+            # E.g. querying for 'cell_type == "blood"' but this SOMA doesn'tiledbsc have a cell_type column in
+            # its obs at all.
+            if not soma.obs.has_attr_names(obs_attr_names):
+                continue
+            # E.g. querying for 'feature_name == "MT-CO3"' but this SOMA doesn'tiledbsc have a feature_name
+            # column in its var at all.
+            if not soma.var.has_attr_names(var_attr_names):
+                continue
+
+            soma_slice = soma.attribute_filter(obs_query_string, var_query_string)
+            if soma_slice != None:
+                # print("Slice SOMA from", soma.name, soma.X.data.shape(), "to", soma_slice.ann.X.shape)
+                soma_slices.append(soma_slice)
+
+        return SOMASlice.concat(soma_slices)
 
     # ----------------------------------------------------------------
     def find_unique_obs_values(self, obs_label: str):

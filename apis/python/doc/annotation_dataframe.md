@@ -55,6 +55,16 @@ def keys() -> List[str]
 Returns the column names for the `obs` or `var` dataframe.  For obs and varp, `.keys()` is a
 keystroke-saver for the more general array-schema accessor `attr_names`.
 
+<a id="tiledbsc.annotation_dataframe.AnnotationDataFrame.keyset"></a>
+
+#### keyset
+
+```python
+def keyset() -> Set[str]
+```
+
+Same as `.keys` but returns as set.
+
 <a id="tiledbsc.annotation_dataframe.AnnotationDataFrame.dim_select"></a>
 
 #### dim\_select
@@ -82,11 +92,13 @@ to subselect; if not, the entire dataframe is returned.
 #### attribute\_filter
 
 ```python
-def attribute_filter(query_string, col_names_to_keep)
+def attribute_filter(query_string, col_names_to_keep=None)
 ```
 
 Selects from obs/var using a TileDB-Py `QueryCondition` string such as
-`cell_type == "blood"`. Returns None if the slice is empty.
+`cell_type == "blood"`.
+If `col_names_to_keep` is `None`, returns all column names in the dataframe.
+Returns None if the slice is empty.
 This is a v1 implementation for the prototype/demo timeframe.
 
 <a id="tiledbsc.annotation_dataframe.AnnotationDataFrame.from_dataframe"></a>
@@ -94,7 +106,7 @@ This is a v1 implementation for the prototype/demo timeframe.
 #### from\_dataframe
 
 ```python
-def from_dataframe(dataframe: pd.DataFrame, extent: int) -> None
+def from_dataframe(dataframe: pd.DataFrame, extent: int = 2048) -> None
 ```
 
 Populates the `obs` or `var` subgroup for a SOMA object.
@@ -103,15 +115,4 @@ Populates the `obs` or `var` subgroup for a SOMA object.
 
 - `dataframe`: `anndata.obs`, `anndata.var`, `anndata.raw.var`.
 - `extent`: TileDB `extent` parameter for the array schema.
-
-<a id="tiledbsc.annotation_dataframe.AnnotationDataFrame.to_dataframe"></a>
-
-#### to\_dataframe
-
-```python
-def to_dataframe() -> pd.DataFrame
-```
-
-Reads the TileDB `obs` or `var` array and returns a type of pandas dataframe
-and dimension values.
 
