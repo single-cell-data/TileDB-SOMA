@@ -124,7 +124,7 @@ values for that label in the SOMA.
 #### dim\_slice
 
 ```python
-def dim_slice(obs_ids, var_ids) -> SOMASlice
+def dim_slice(obs_ids, var_ids) -> Dict
 ```
 
 Subselects the SOMA's obs, var, and X/data using the specified obs_ids and var_ids.
@@ -162,4 +162,26 @@ def from_soma_slice(cls,
 ```
 
 Constructs `SOMA` storage from a given in-memory `SOMASlice` object.
+
+<a id="tiledbsc.soma.SOMA.get_obs_value_counts"></a>
+
+#### get\_obs\_value\_counts
+
+```python
+def get_obs_value_counts(obs_label: str) -> pd.DataFrame
+```
+
+Given an obs label, e.g. `cell_type`, returns a dataframe count the number of different
+values for that label in the SOMA.
+
+<a id="tiledbsc.soma.SOMA.get_var_value_counts"></a>
+
+#### get\_var\_value\_counts
+
+```python
+def get_var_value_counts(var_label: str) -> pd.DataFrame
+```
+
+Given an var label, e.g. `feature_name`, returns a dataframe count the number of different
+values for that label in the SOMA.
 

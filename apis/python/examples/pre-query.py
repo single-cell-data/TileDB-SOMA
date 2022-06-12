@@ -1,30 +1,19 @@
 #!/usr/bin/env python
 
-# Invoke this with, for example,
-#
-#   peek-soco ./soma-collection
-#
-# -- then you can inspect the SOMACollection object
-
-import tiledb
 import tiledbsc as t
-
-import pandas
-
-import sys, os
+import pandas as pd
+import sys
 from typing import List, Dict
 
 # ================================================================
 def main():
-    if len(sys.argv) == 1:
-        soco_path = "soma-collection"
-    elif len(sys.argv) == 2:
+    if len(sys.argv) == 2:
         soco_path = sys.argv[1]
     else:
         print(f"{sys.argv[0]}: need just one soma-collection path.", file=sys.stderr)
         sys.exit(1)
 
-    soco = t.SOMACollection(soco_path)
+    soco = tiledbsc.SOMACollection(soco_path)
 
     #    print()
     #    print("================================================================")
@@ -87,13 +76,13 @@ def main():
 
 
 # ----------------------------------------------------------------
-def print_names_and_uris(soco: t.SOMACollection) -> None:
+def print_names_and_uris(soco: tiledbsc.SOMACollection) -> None:
     for soma in soco:
         print("%-40s %s" % (soma.name, soma.uri))
 
 
 # ----------------------------------------------------------------
-def show_obs_names(soco: t.SOMACollection) -> None:
+def show_obs_names(soco: tiledbsc.SOMACollection) -> None:
     for soma in soco:
         print(soma.uri)
         for attr_name in soma.obs.keys():
@@ -101,7 +90,7 @@ def show_obs_names(soco: t.SOMACollection) -> None:
 
 
 # ----------------------------------------------------------------
-def show_var_names(soco: t.SOMACollection) -> None:
+def show_var_names(soco: tiledbsc.SOMACollection) -> None:
     for soma in soco:
         print(soma.uri)
         for attr_name in soma.var.keys():
@@ -109,7 +98,7 @@ def show_var_names(soco: t.SOMACollection) -> None:
 
 
 # ----------------------------------------------------------------
-def show_somas_with_all_three(soco: t.SOMACollection) -> None:
+def show_somas_with_all_three(soco: tiledbsc.SOMACollection) -> None:
     for soma in soco:
         if "cell_type" in soma.obs.attr_names():
             if "tissue" in soma.obs.attr_names():
@@ -118,7 +107,7 @@ def show_somas_with_all_three(soco: t.SOMACollection) -> None:
 
 
 # ----------------------------------------------------------------
-def show_obs_id_counts(soco: t.SOMACollection) -> None:
+def show_obs_id_counts(soco: tiledbsc.SOMACollection) -> None:
     counts = {}
     for soma in soco:
         for oid in soma.obs.ids():
@@ -126,15 +115,13 @@ def show_obs_id_counts(soco: t.SOMACollection) -> None:
                 counts[oid] += 1
             else:
                 counts[oid] = 1
-    df = pandas.DataFrame.from_dict(
-        {"obs_id": counts.keys(), "counts": counts.values()}
-    )
+    df = pd.DataFrame.from_dict({"obs_id": counts.keys(), "counts": counts.values()})
     # print(df.head())
     print(df)
 
 
 # ----------------------------------------------------------------
-def show_var_id_counts(soco: t.SOMACollection) -> None:
+def show_var_id_counts(soco: tiledbsc.SOMACollection) -> None:
     counts = {}
     for soma in soco:
         for oid in soma.var.ids():
@@ -142,15 +129,13 @@ def show_var_id_counts(soco: t.SOMACollection) -> None:
                 counts[oid] += 1
             else:
                 counts[oid] = 1
-    df = pandas.DataFrame.from_dict(
-        {"var_id": counts.keys(), "counts": counts.values()}
-    )
+    df = pd.DataFrame.from_dict({"var_id": counts.keys(), "counts": counts.values()})
     # print(df.head())
     print(df)
 
 
 # ----------------------------------------------------------------
-def show_obs_column_unique_values(soco: t.SOMACollection, col_name: str) -> None:
+def show_obs_column_unique_values(soco: tiledbsc.SOMACollection, col_name: str) -> None:
     for soma in soco:
         print()
         print(soma.uri)
@@ -159,7 +144,7 @@ def show_obs_column_unique_values(soco: t.SOMACollection, col_name: str) -> None
 
 
 # ----------------------------------------------------------------
-def show_var_column_unique_values(soco: t.SOMACollection, col_name: str) -> None:
+def show_var_column_unique_values(soco: tiledbsc.SOMACollection, col_name: str) -> None:
     for soma in soco:
         print()
         print(soma.uri)
@@ -168,7 +153,7 @@ def show_var_column_unique_values(soco: t.SOMACollection, col_name: str) -> None
 
 
 # ----------------------------------------------------------------
-def show_obs_value_counts(soco: t.SOMACollection, obs_labels: List[str]) -> None:
+def show_obs_value_counts(soco: tiledbsc.SOMACollection, obs_labels: List[str]) -> None:
 
     for obs_label in obs_labels:
         counts = {}
@@ -197,7 +182,7 @@ def show_obs_value_counts(soco: t.SOMACollection, obs_labels: List[str]) -> None
 
 
 # ----------------------------------------------------------------
-def show_var_value_counts(soco: t.SOMACollection, var_labels: List[str]) -> None:
+def show_var_value_counts(soco: tiledbsc.SOMACollection, var_labels: List[str]) -> None:
 
     for var_label in var_labels:
         counts = {}
@@ -227,7 +212,7 @@ def show_var_value_counts(soco: t.SOMACollection, var_labels: List[str]) -> None
 
 # ----------------------------------------------------------------
 def show_somas_having(
-    soco: t.SOMACollection,
+    soco: tiledbsc.SOMACollection,
     obs_labels_to_values: Dict[str, List],
     var_labels_to_values: Dict[str, List],
 ) -> None:
