@@ -230,6 +230,7 @@ class SOMA(TileDBGroup):
         df.set_index("name", inplace=True)
         return df
 
+    # ----------------------------------------------------------------
     def dim_slice(self, slice_obs_ids, slice_var_ids) -> Dict:
         """
         Subselects the SOMA's obs, var, and X/data using the specified obs_ids and var_ids.
@@ -237,38 +238,38 @@ class SOMA(TileDBGroup):
         Returns `None` for empty slice.
         """
 
-        assert slice_obs_ids != None or slice_var_ids != None
+        assert obs_ids != None or var_ids != None
 
-        if slice_obs_ids is None:
+        if obs_ids is None:
             # Try the var slice first to see if that produces zero results -- if so we don't need to
             # load the obs.
-            slice_var_df = self.var.dim_select(slice_var_ids)
+            slice_var_df = self.var.dim_select(var_ids)
             if slice_var_df.shape[0] == 0:
                 return None
-            slice_obs_df = self.obs.dim_select(slice_obs_ids)
+            slice_obs_df = self.obs.dim_select(obs_ids)
             if slice_obs_df.shape[0] == 0:
                 return None
 
-        elif slice_var_ids is None:
+        elif var_ids is None:
             # Try the obs slice first to see if that produces zero results -- if so we don't need to
             # load the var.
-            slice_obs_df = self.obs.dim_select(slice_obs_ids)
+            slice_obs_df = self.obs.dim_select(obs_ids)
             if slice_obs_df.shape[0] == 0:
                 return None
-            slice_var_df = self.var.dim_select(slice_var_ids)
+            slice_var_df = self.var.dim_select(var_ids)
             if slice_var_df.shape[0] == 0:
                 return None
 
         else:
-            slice_obs_df = self.obs.dim_select(slice_obs_ids)
+            slice_obs_df = self.obs.dim_select(obs_ids)
             if slice_obs_df.shape[0] == 0:
                 return None
-            slice_var_df = self.var.dim_select(slice_var_ids)
+            slice_var_df = self.var.dim_select(var_ids)
             if slice_var_df.shape[0] == 0:
                 return None
 
         return self._assemble_soma_slice(
-            slice_obs_ids, slice_var_ids, slice_obs_df, slice_var_df
+            obs_ids, var_ids, slice_obs_df, slice_var_df
         )
 
     # ----------------------------------------------------------------
@@ -286,34 +287,34 @@ class SOMA(TileDBGroup):
         # E.g. querying for 'cell_type == "blood"' and this SOMA does have a cell_type column in its
         # obs, but no rows with cell_type == "blood".
         if obs_query_string is None:
-            slice_obs_ids = None
+            obs_ids = None
             slice_obs_df = self.obs.df()
         else:
             slice_obs_df = self.obs.attribute_filter(obs_query_string)
             if slice_obs_df is None:
                 return None
-            slice_obs_ids = list(slice_obs_df.index)
+            obs_ids = list(slice_obs_df.index)
 
         # E.g. querying for 'feature_name == "MT-CO3"' and this SOMA does have a feature_name column
         # in its var, but no rows with feature_name == "MT-CO3".
         if var_query_string is None:
-            slice_var_ids = None
+            var_ids = None
             slice_var_df = self.var.df()
         else:
             slice_var_df = self.var.attribute_filter(var_query_string)
             if slice_var_df is None:
                 return None
-            slice_var_ids = list(slice_var_df.index)
+            var_ids = list(slice_var_df.index)
 
         return self._assemble_soma_slice(
-            slice_obs_ids, slice_var_ids, slice_obs_df, slice_var_df
+            obs_ids, var_ids, slice_obs_df, slice_var_df
         )
 
     # ----------------------------------------------------------------
     def _assemble_soma_slice(
         self,
-        slice_obs_ids,
-        slice_var_ids,
+        obs_ids,
+        var_ids,
         slice_obs_df,
         slice_var_df,
     ) -> SOMASlice:
@@ -321,7 +322,7 @@ class SOMA(TileDBGroup):
         An internal method for constructing a `SOMASlice` object given query results.
         """
 
-        slice_X_data = self.X.data.dim_select(slice_obs_ids, slice_var_ids)
+        slice_X_data = self.X.data.dim_select(obs_ids, var_ids)
 
         return SOMASlice(
             X=slice_X_data,

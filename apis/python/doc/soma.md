@@ -92,7 +92,7 @@ An alias for `soma.var.ids()`.
 #### dim\_slice
 
 ```python
-def dim_slice(slice_obs_ids, slice_var_ids) -> Dict
+def dim_slice(obs_ids, var_ids) -> Dict
 ```
 
 Subselects the SOMA's obs, var, and X/data using the specified obs_ids and var_ids.
