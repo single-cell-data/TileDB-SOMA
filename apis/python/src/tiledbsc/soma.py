@@ -318,10 +318,12 @@ class SOMA(TileDBGroup):
         An internal method for constructing a `SOMASlice` object given query results.
         """
 
-        slice_X_data = self.X.data.dim_select(obs_ids, var_ids)
+        X_layer_data = {
+            key: self.X[key].dim_select(obs_ids, var_ids) for key in self.X.keys()
+        }
 
         return SOMASlice(
-            X=slice_X_data,
+            X_layer_data=X_layer_data,
             obs=slice_obs_df,
             var=slice_var_df,
         )
