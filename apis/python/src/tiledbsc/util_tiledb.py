@@ -7,7 +7,7 @@ from typing import Optional
 # This is for group/array metadata we write, to help nested-structured traversals (especially those
 # that start at the SOMACollection level) confidently navigate with a minimum of introspection on
 # group contents.
-SOMA_OBJECT_TYPE_METADATA_KEY = "__soma_object_type__"
+SOMA_OBJECT_TYPE_METADATA_KEY = "soma_object_type"
 
 # ================================================================
 def show_single_cell_group(soma_uri: str, ctx: Optional[tiledb.Ctx] = None):
