@@ -92,14 +92,12 @@ to subselect; if not, the entire dataframe is returned.
 #### attribute\_filter
 
 ```python
-def attribute_filter(query_string, col_names_to_keep=None)
+def attribute_filter(query_string, attrs=None)
 ```
 
-Selects from obs/var using a TileDB-Py `QueryCondition` string such as
-`cell_type == "blood"`.
-If `col_names_to_keep` is `None`, returns all column names in the dataframe.
-Returns None if the slice is empty.
-This is a v1 implementation for the prototype/demo timeframe.
+Selects from obs/var using a TileDB-Py `QueryCondition` string such as `cell_type ==
+"blood"`.  If `attrs` is `None`, returns all column names in the dataframe; use `[]` for
+`attrs` to select none of them.  Returns `None` if the slice is empty.
 
 <a id="tiledbsc.annotation_dataframe.AnnotationDataFrame.from_dataframe"></a>
 
