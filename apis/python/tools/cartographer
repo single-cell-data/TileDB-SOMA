@@ -270,6 +270,8 @@ class Cartographer:
         # This one line -- right here -- is the primary reason for using AnnData as an in-memory
         # container even for data read from a SOMA. This is MARVELOUSLY expressive. :)
         ann = original_ann[original_ann.obs.is_primary_data == True]
+        if ann.obs.index.empty:
+            raise Exception("The is_primary_data == True filter left no data remaining for this dataset.")
 
         # Clean up obs by dropping extraneous columns.
         obs = ann.obs[self.OBS_COLUMNS].copy()
