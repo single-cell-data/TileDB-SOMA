@@ -23,18 +23,21 @@ import tiledbsc
 soco = tiledbsc.SOMACollection('/mini-corpus/soco')
 
 print("TOTAL CELL COUNT:")
-print(sum(len(soma.obs.ids()) for soma in soco))
+print(soco.cell_count())
 ```
 
 ```
 TOTAL CELL COUNT:
-2439683
+2464363
 ```
 
 ```
 print()
-for soma in soco:
-  print("%-60s %d" % (soma.name, len(soma.obs.ids())))
+print([soma.cell_count() for soma in soco])
+```
+
+```
+[264824, 4636, 6288, 2223, 59506, 100, 2638, 982538, 385, 67794, 2638, 104148, 44721, 3799, 11574, 1679, 3589, 700, 584884, 16245, 4603, 3726, 4636, 7348, 3589, 40268, 12971, 4232, 80, 82478, 97499, 38024]
 ```
 
 ```

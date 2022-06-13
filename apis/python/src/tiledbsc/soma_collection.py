@@ -45,6 +45,13 @@ class SOMACollection(TileDBGroup):
         )
 
     # ----------------------------------------------------------------
+    def __len__(self) -> int:
+        """
+        Implements `len(soco)`. Returns the number of elements in the collection.
+        """
+        return len(self._get_member_names())
+
+    # ----------------------------------------------------------------
     def add(self, soma: SOMA) -> None:
         """
         Adds a `SOMA` to the `SOMACollection`.
@@ -111,3 +118,10 @@ class SOMACollection(TileDBGroup):
                 )
 
             return SOMA(uri=obj.uri, name=name, parent=self)
+
+    # ----------------------------------------------------------------
+    def cell_count(self) -> int:
+        """
+        Returns sum of `soma.cell_count()` over SOMAs in the collection.
+        """
+        return sum(soma.cell_count() for soma in self)
