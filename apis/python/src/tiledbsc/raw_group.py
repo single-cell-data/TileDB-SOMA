@@ -72,7 +72,7 @@ class RawGroup(TileDBGroup):
             print(f"{self._indent}START  WRITING {self.uri}")
 
         # Must be done first, to create the parent directory
-        self._create()
+        self.create_unless_exists()
 
         self.var.from_dataframe(dataframe=anndata.raw.var, extent=2048)
         self._add_object(self.var)

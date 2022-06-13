@@ -108,7 +108,7 @@ def from_anndata(soma: tiledbsc.SOMA, anndata: ad.AnnData) -> None:
         print(f"{soma._indent}START  WRITING {soma.uri}")
 
     # Must be done first, to create the parent directory
-    soma._create()
+    soma.create_unless_exists()
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     soma.obs.from_dataframe(dataframe=anndata.obs, extent=256)

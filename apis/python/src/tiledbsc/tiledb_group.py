@@ -65,6 +65,13 @@ class TileDBGroup(TileDBObject):
 
         self._set_soma_object_type_metadata()
 
+    def create_unless_exists(self):
+        """
+        Creates the TileDB group data structure on disk/S3/cloud, unless it already exists.
+        """
+        if not self.exists():
+            self._create()
+
     def _set_soma_object_type_metadata(self):
         """
         This helps nested-structured traversals (especially those that start at the SOMACollection
@@ -131,8 +138,7 @@ class TileDBGroup(TileDBObject):
         * If `None`, then we select `relative=False` if the URI starts with `tiledb://`, else we
         select `relative=True`. This is the default.
         """
-        if not self.exists():
-            self._create()
+        self.create_unless_exists()
         relative = self._soma_options.member_uris_are_relative
         child_uri = obj.uri
         if relative is None:

@@ -154,7 +154,7 @@ class UnsGroup(TileDBGroup):
             print(f"{self._indent}START  WRITING {self.uri}")
 
         # Must be done first, to create the parent directory
-        self._create()
+        self.create_unless_exists()
 
         for key in uns.keys():
             component_uri = os.path.join(self.uri, key)

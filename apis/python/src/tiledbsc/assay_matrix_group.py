@@ -153,8 +153,7 @@ class AssayMatrixGroup(TileDBGroup):
 
         if matrix is not None:
             # Must be done first, to create the parent directory
-            if not self.exists():
-                self._create()
+            self.create_unless_exists()
 
             assay_matrix_uri = os.path.join(self.uri, layer_name)
             assay_matrix = AssayMatrix(

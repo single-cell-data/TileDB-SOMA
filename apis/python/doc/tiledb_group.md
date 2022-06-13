@@ -39,6 +39,16 @@ Tells whether or not there is storage for the group. This might be in case a SOM
 object has not yet been populated, e.g. before calling `from_anndata` -- or, if the
 SOMA has been populated but doesn't have this member (e.g. not all SOMAs have a `varp`).
 
+<a id="tiledbsc.tiledb_group.TileDBGroup.create_unless_exists"></a>
+
+#### create\_unless\_exists
+
+```python
+def create_unless_exists()
+```
+
+Creates the TileDB group data structure on disk/S3/cloud, unless it already exists.
+
 <a id="tiledbsc.tiledb_group.TileDBGroup.show_metadata"></a>
 
 #### show\_metadata

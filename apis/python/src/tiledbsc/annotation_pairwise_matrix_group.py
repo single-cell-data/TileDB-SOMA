@@ -99,7 +99,7 @@ class AnnotationPairwiseMatrixGroup(TileDBGroup):
         """
 
         # Must be done first, to create the parent directory
-        self._create()
+        self.create_unless_exists()
         for matrix_name in annotation_pairwise_matrices.keys():
             anndata_matrix = annotation_pairwise_matrices[matrix_name]
             matrix_uri = os.path.join(self.uri, matrix_name)

@@ -31,7 +31,7 @@ def test_import_anndata(tmp_path):
     with tiledb.Group(soma1_dir) as G:
         assert G.meta[tiledbsc.util_tiledb.SOMA_OBJECT_TYPE_METADATA_KEY] == "SOMA"
 
-    soco._create()
+    soco.create_unless_exists()
     assert len(soco._get_member_names()) == 0
 
     soco.add(soma1)
