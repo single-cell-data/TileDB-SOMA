@@ -35,7 +35,7 @@ class SOMASlice(TileDBGroup):
     # ----------------------------------------------------------------
     def __init__(
         self,
-        X: pd.DataFrame,
+        X_layer_data: Dict[str, pd.DataFrame],
         obs: pd.DataFrame,
         var: pd.DataFrame,
     ):
@@ -44,23 +44,38 @@ class SOMASlice(TileDBGroup):
         """
         assert isinstance(obs, pd.DataFrame)
         assert isinstance(var, pd.DataFrame)
+        assert "data" in X_layer_data
 
-        # X comes in as a 3-column dataframe with "obs_id", "var_id", and "value".
-        # For AnnData we need to make it a sparse matrix.
+        # Find the dtype.
+        X_data = X_layer_data["data"]
+        if isinstance(X_data, pd.DataFrame):
+            X_dtype = X_data.dtypes["value"]
+        else:
+            X_dtype = X_data.dtype
 
-        # Make obs_id and var_id accessible as columns.
-        if isinstance(X, pd.DataFrame):
-            X = X.reset_index()
-            X = util.X_and_ids_to_sparse_matrix(
-                X,
-                "obs_id",  # row_dim_name
-                "var_id",  # col_dim_name
-                "value",  # attr_name
-                obs.index,
-                var.index,
-            )
+        self.ann = ad.AnnData(obs=obs, var=var, dtype=X_dtype)
 
-        self.ann = ad.AnnData(X=X, obs=obs, var=var, dtype=X.dtype)
+        for name, data in X_layer_data.items():
+            # X comes in as a 3-column dataframe with "obs_id", "var_id", and "value".
+            # For AnnData we need to make it a sparse matrix.
+            if isinstance(data, pd.DataFrame):
+                # Make obs_id and var_id accessible as columns.
+                data = data.reset_index()
+                data = util.X_and_ids_to_sparse_matrix(
+                    data,
+                    "obs_id",  # row_dim_name
+                    "var_id",  # col_dim_name
+                    "value",  # attr_name
+                    obs.index,
+                    var.index,
+                )
+            # We use AnnData as our in-memory storage. For SOMAs, all X layers are arrays within the
+            # soma.X group; for AnnData, the 'data' layer is ann.X and all the others are in
+            # ann.layers.
+            if name == "data":
+                self.ann.X = data
+            else:
+                self.ann.layers[name] = data
 
     # ----------------------------------------------------------------
     def __getattr__(self, name):
@@ -98,4 +113,12 @@ class SOMASlice(TileDBGroup):
         annc = ad.concat(anns)
         annc.obs_names_make_unique()
         annc.var_names_make_unique()
-        return SOMASlice(X=annc.X, obs=annc.obs, var=annc.var)
+
+        # We use AnnData as our in-memory storage. For SOMAs, all X layers are arrays within the
+        # soma.X group; for AnnData, the 'data' layer is ann.X and all the others are in
+        # ann.layers.
+        X_layer_data = {"data": annc.X}
+        for key in annc.layers:
+            X_layer_data[key] = annc.layers[key]
+
+        return SOMASlice(X_layer_data=X_layer_data, obs=annc.obs, var=annc.var)
