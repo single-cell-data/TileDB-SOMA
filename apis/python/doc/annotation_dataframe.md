@@ -97,7 +97,8 @@ def attribute_filter(query_string, attrs=None)
 
 Selects from obs/var using a TileDB-Py `QueryCondition` string such as `cell_type ==
 "blood"`.  If `attrs` is `None`, returns all column names in the dataframe; use `[]` for
-`attrs` to select none of them.  Returns `None` if the slice is empty.
+`attrs` to select none of them.  Any column names specified in the `query_string` must be
+included in `attrs` if `attrs` is not `None`.  Returns `None` if the slice is empty.
 
 <a id="tiledbsc.annotation_dataframe.AnnotationDataFrame.from_dataframe"></a>
 
