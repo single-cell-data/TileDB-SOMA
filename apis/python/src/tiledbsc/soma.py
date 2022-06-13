@@ -231,7 +231,7 @@ class SOMA(TileDBGroup):
         return df
 
     # ----------------------------------------------------------------
-    def dim_slice(self, slice_obs_ids, slice_var_ids) -> Dict:
+    def dim_slice(self, obs_ids, var_ids) -> Dict:
         """
         Subselects the SOMA's obs, var, and X/data using the specified obs_ids and var_ids.
         Using a value of `None` for obs_ids means use all obs_ids, and likewise for var_ids.

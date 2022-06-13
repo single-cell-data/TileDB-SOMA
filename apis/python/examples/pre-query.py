@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import tiledbsc as t
+import tiledbsc
 import pandas as pd
 import sys
 from typing import List, Dict
