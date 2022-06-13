@@ -314,7 +314,6 @@ class SOMA(TileDBGroup):
                 return None
             var_ids = list(slice_var_df.index)
 
-<<<<<<< HEAD
         # TODO:
         # do this here:
         # * raw_var
@@ -325,8 +324,6 @@ class SOMA(TileDBGroup):
         # * obsp
         # * varp
 
-=======
->>>>>>> 1f1e9fc (code-review feedback)
         return self._assemble_soma_slice(obs_ids, var_ids, slice_obs_df, slice_var_df)
 
     # ----------------------------------------------------------------
