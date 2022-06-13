@@ -151,11 +151,11 @@ class SOMACollection(TileDBGroup):
 
         soma_slices = []
         for soma in self:
-            # E.g. querying for 'cell_type == "blood"' but this SOMA doesn'tiledbsc have a cell_type column in
+            # E.g. querying for 'cell_type == "blood"' but this SOMA doesn't have a cell_type column in
             # its obs at all.
             if not soma.obs.has_attr_names(obs_attr_names):
                 continue
-            # E.g. querying for 'feature_name == "MT-CO3"' but this SOMA doesn'tiledbsc have a feature_name
+            # E.g. querying for 'feature_name == "MT-CO3"' but this SOMA doesn't have a feature_name
             # column in its var at all.
             if not soma.var.has_attr_names(var_attr_names):
                 continue
