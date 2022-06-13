@@ -221,9 +221,7 @@ class SOMA(TileDBGroup):
             if slice_var_df.shape[0] == 0:
                 return None
 
-        return self._assemble_soma_slice(
-            obs_ids, var_ids, slice_obs_df, slice_var_df
-        )
+        return self._assemble_soma_slice(obs_ids, var_ids, slice_obs_df, slice_var_df)
 
     # ----------------------------------------------------------------
     def attribute_filter(
@@ -259,9 +257,7 @@ class SOMA(TileDBGroup):
                 return None
             var_ids = list(slice_var_df.index)
 
-        return self._assemble_soma_slice(
-            obs_ids, var_ids, slice_obs_df, slice_var_df
-        )
+        return self._assemble_soma_slice(obs_ids, var_ids, slice_obs_df, slice_var_df)
 
     # ----------------------------------------------------------------
     def _assemble_soma_slice(
