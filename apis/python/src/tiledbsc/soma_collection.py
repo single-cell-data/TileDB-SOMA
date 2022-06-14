@@ -68,6 +68,13 @@ class SOMACollection(TileDBGroup):
         self._remove_object(soma)
 
     # ----------------------------------------------------------------
+    def keys(self) -> None:
+        """
+        Returns the names of the SOMAs in the collection.
+        """
+        return self._get_member_names()
+
+    # ----------------------------------------------------------------
     def __iter__(self) -> List[SOMA]:
         """
         Implements `for soma in soco: ...`
