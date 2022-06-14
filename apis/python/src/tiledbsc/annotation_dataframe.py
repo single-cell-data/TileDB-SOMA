@@ -92,17 +92,24 @@ class AnnotationDataFrame(TileDBArray):
         return set(self.keys())
 
     # ----------------------------------------------------------------
-    def dim_select(self, ids):
+    def dim_select(self, ids, attrs=None):
         """
-        Selects a slice out of the dataframe with specified `obs_ids` (for `obs`) or `var_ids` (for `var`).
-        If `ids` is `None`, the entire dataframe is returned.
+        Selects a slice out of the dataframe with specified `obs_ids` (for `obs`) or `var_ids` (for
+        `var`).  If `ids` is `None`, the entire dataframe is returned.  Similarly, if `attrs` are
+        provided, they're used for the query; else, all attributes are returned.
         """
-        if ids is None:
-            with self._open("r") as A:
-                df = A.df[:]
-        else:
-            with self._open("r") as A:
-                df = A.df[ids]
+        with self._open("r") as A:
+            if ids is None:
+                if attrs is None:
+                    df = A.df[:]
+                else:
+                    df = A.df[:][attrs]
+            else:
+                if attrs is None:
+                    df = A.df[ids]
+                else:
+                    df = A.df[ids][attrs]
+
         # We do not need this:
         #   df.set_index(self.dim_name, inplace=True)
         # as long as these arrays (for this class) are written using tiledb.from_pandas which
@@ -117,12 +124,13 @@ class AnnotationDataFrame(TileDBArray):
         return self._ascii_to_unicode_dataframe_readback(df)
 
     # ----------------------------------------------------------------
-    def df(self, ids=None) -> pd.DataFrame:
+    def df(self, ids=None, attrs=None) -> pd.DataFrame:
         """
         Keystroke-saving alias for `.dim_select()`. If `ids` are provided, they're used
-        to subselect; if not, the entire dataframe is returned.
+        to subselect; if not, the entire dataframe is returned. If `attrs` are provided,
+        they're used for the query; else, all attributes are returned.
         """
-        return self.dim_select(ids)
+        return self.dim_select(ids, attrs)
 
     # ----------------------------------------------------------------
     def attribute_filter(self, query_string, attrs=None):

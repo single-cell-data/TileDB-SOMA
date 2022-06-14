@@ -219,8 +219,10 @@ class SOMACollection(TileDBGroup):
 
         counts = {}
         for soma in self:
-            # TODO: query more conservatively
-            obs_or_var = soma.obs.df() if do_obs else soma.var.df()
+            attrs = [obs_or_var_label]
+            obs_or_var = (
+                soma.obs.df(attrs=attrs) if do_obs else soma.var.df(attrs=attrs)
+            )
 
             if not obs_or_var_label in obs_or_var:
                 continue
