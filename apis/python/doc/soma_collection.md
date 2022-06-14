@@ -53,6 +53,16 @@ def remove(soma: SOMA) -> None
 
 Removes a `SOMA` from the `SOMACollection`.
 
+<a id="tiledbsc.soma_collection.SOMACollection.keys"></a>
+
+#### keys
+
+```python
+def keys() -> None
+```
+
+Returns the names of the SOMAs in the collection.
+
 <a id="tiledbsc.soma_collection.SOMACollection.__iter__"></a>
 
 #### \_\_iter\_\_
