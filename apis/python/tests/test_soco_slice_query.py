@@ -51,7 +51,6 @@ def test_soco_slice_query(tmp_path):
 
         soma_slice = soma.attribute_filter(obs_query_string, var_query_string)
         if soma_slice != None:
-            print("...", soma.name, soma_slice.ann.X.shape)
             soma_slices.append(soma_slice)
 
     result_soma_slice = tiledbsc.SOMASlice.concat(soma_slices)
