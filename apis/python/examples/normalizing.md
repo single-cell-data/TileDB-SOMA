@@ -1,17 +1,17 @@
 ## Normalizing a SOMA collection
 
-The [cartographer script](../tools/cartographer) shows an example of how to take a collection
+The [cartographer script](../examples/cartographer.py) shows an example of how to take a collection
 of H5AD files -- and/or already-ingested SOMAs -- and _normalize_ them into a uniform collection.
 
 ```
-cartographer -v /Users/testuser/mini-corpus/atlas add-h5ad file-01.h5ad
-cartographer -v /Users/testuser/mini-corpus/atlas add-h5ad file-02.h5ad
+examples/cartographer.py -v /Users/testuser/mini-corpus/atlas add-h5ad file-01.h5ad
+examples/cartographer.py -v /Users/testuser/mini-corpus/atlas add-h5ad file-02.h5ad
 ...
 ```
 
 ```
-cartographer -v /Users/testuser/mini-corpus/atlas add-soma soma-01
-cartographer -v /Users/testuser/mini-corpus/atlas add-soma soma-02
+examples/cartographer.py -v /Users/testuser/mini-corpus/atlas add-soma soma-01
+examples/cartographer.py -v /Users/testuser/mini-corpus/atlas add-soma soma-02
 ...
 ```
 
