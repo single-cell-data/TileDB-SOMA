@@ -1,41 +1,32 @@
-import os
-from typing import Optional, Union, Dict
+from typing import Dict
 
 import anndata as ad
-import numpy as np
 import pandas as pd
-import pyarrow as pa
-import scanpy
-import scipy
-import tiledb
 
 from tiledbsc import util
-from tiledbsc import util_ann
 
-from .soma_options import SOMAOptions
 from .tiledb_group import TileDBGroup
-from .assay_matrix_group import AssayMatrixGroup
-from .annotation_dataframe import AnnotationDataFrame
-from .annotation_matrix_group import AnnotationMatrixGroup
-from .annotation_pairwise_matrix_group import AnnotationPairwiseMatrixGroup
-from .raw_group import RawGroup
-from .uns_group import UnsGroup
 
 
 class SOMASlice(TileDBGroup):
     """
-    In-memory-only object for ephemeral extraction out of a SOMA. Can be used to _construct_ a SOMA
+    In-memory-only object for ephemeral extracting out of a SOMA. Can be used to _construct_ a SOMA
     but is not a SOMA (which would entail out-of-memory storage).  Nothing more than a collection of
-    pandas.DataFrame objects. Currently implemented as an `AnnData` object, in order to reuse the
-    non-trivial `concat` logic.
+    pandas.DataFrame objects. No raw or uns.
     """
 
-    ann: ad.AnnData
+    X: pd.DataFrame
+    obs: pd.DataFrame
+    var: pd.DataFrame
+    obsm: Dict[str, pd.DataFrame]
+    varm: Dict[str, pd.DataFrame]
+    obsp: Dict[str, pd.DataFrame]
+    varp: Dict[str, pd.DataFrame]
 
     # ----------------------------------------------------------------
     def __init__(
         self,
-        X_layer_data: Dict[str, pd.DataFrame],
+        X: Dict[str, pd.DataFrame],
         obs: pd.DataFrame,
         var: pd.DataFrame,
     ):
@@ -44,20 +35,30 @@ class SOMASlice(TileDBGroup):
         """
         assert isinstance(obs, pd.DataFrame)
         assert isinstance(var, pd.DataFrame)
-        assert "data" in X_layer_data
+        assert "data" in X
+
+        self.obs = obs
+        self.var = var
+        self.X = X
+
+    # ----------------------------------------------------------------
+    def to_anndata(self) -> ad.AnnData:
+        """
+        Constructs an `AnnData` object from the current `SOMASlice` object.
+        """
 
         # Find the dtype.
-        X_data = X_layer_data["data"]
+        X_data = self.X["data"]
         if isinstance(X_data, pd.DataFrame):
             X_dtype = X_data.dtypes["value"]
         else:
             X_dtype = X_data.dtype
 
-        self.ann = ad.AnnData(obs=obs, var=var, dtype=X_dtype)
+        ann = ad.AnnData(obs=self.obs, var=self.var, dtype=X_dtype)
 
-        for name, data in X_layer_data.items():
-            # X comes in as a 3-column dataframe with "obs_id", "var_id", and "value".
-            # For AnnData we need to make it a sparse matrix.
+        for name, data in self.X.items():
+            # X comes in from TileDB queries as a 3-column dataframe with "obs_id", "var_id", and
+            # "value".  For AnnData we need to make it a sparse matrix.
             if isinstance(data, pd.DataFrame):
                 # Make obs_id and var_id accessible as columns.
                 data = data.reset_index()
@@ -66,59 +67,58 @@ class SOMASlice(TileDBGroup):
                     "obs_id",  # row_dim_name
                     "var_id",  # col_dim_name
                     "value",  # attr_name
-                    obs.index,
-                    var.index,
+                    self.obs.index,
+                    self.var.index,
                 )
             # We use AnnData as our in-memory storage. For SOMAs, all X layers are arrays within the
             # soma.X group; for AnnData, the 'data' layer is ann.X and all the others are in
             # ann.layers.
             if name == "data":
-                self.ann.X = data
+                ann.X = data
             else:
-                self.ann.layers[name] = data
+                ann.layers[name] = data
 
-    # ----------------------------------------------------------------
-    def __getattr__(self, name):
-        """
-        Accessors for `obs`, `var`, and `X` attributes of `SOMASlice`.
-        """
-        if name == "obs":
-            return self.ann.obs
-        if name == "var":
-            return self.ann.var
-        if name == "X":
-            return self.ann.X
-        raise AttributeError(
-            f"'{self.__class__.__name__}' object has no attribute '{name}'"
-        )
-
-    # ----------------------------------------------------------------
-    def to_anndata(self) -> ad.AnnData:
-        """
-        Returns an `AnnData` object from the current `SOMASlice` object.
-        """
-        return self.ann
+        return ann
 
     # ----------------------------------------------------------------
     @classmethod
     def concat(cls, soma_slices):
         """
         Concatenates multiple `SOMASlice` objects into a single one. Implemented using `AnnData`'s
-        `concat`, and in fact maybe `SOMASlice` should itself be simply an `AnnData` object.
+        `concat`.
         """
 
         if len(soma_slices) == 0:
             return None
-        anns = [soma_slice.ann for soma_slice in soma_slices]
+
+        # Check column names for each dataframe-type are the same
+        slice0 = soma_slices[0]
+        for i, slicei in enumerate(soma_slices):
+            if i == 0:
+                continue
+            # This works in Python -- not just a reference/pointer compare but a contents-compare :)
+            assert list(slicei.X.keys()) == list(slice0.X.keys())
+            assert list(slicei.obs.keys()) == list(slice0.obs.keys())
+            assert list(slicei.var.keys()) == list(slice0.var.keys())
+
+        # Use AnnData.concat.
+        # TODO: try to remove this dependency.
+        anns = [soma_slice.to_anndata() for soma_slice in soma_slices]
         annc = ad.concat(anns)
         annc.obs_names_make_unique()
         annc.var_names_make_unique()
 
-        # We use AnnData as our in-memory storage. For SOMAs, all X layers are arrays within the
-        # soma.X group; for AnnData, the 'data' layer is ann.X and all the others are in
-        # ann.layers.
-        X_layer_data = {"data": annc.X}
-        for key in annc.layers:
-            X_layer_data[key] = annc.layers[key]
+        # Having leveraged AnnData solely for the concat method, pull out concatenated dataframes
+        # into a SOMASlice object.
+        X = {}
+        # TODO: SHAPE THIS
+        X["data"] = annc.X
+        print("OTYPE IS", type(annc.X))
+        for name in annc.layers:
+            X[name] = annc.layers[name]
 
-        return SOMASlice(X_layer_data=X_layer_data, obs=annc.obs, var=annc.var)
+        return cls(
+            X=X,
+            obs=annc.obs,
+            var=annc.var,
+        )
