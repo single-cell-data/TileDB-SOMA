@@ -2,9 +2,12 @@ Next we show an example of doing a _batch query_ across a `SOMACollection`.  Her
 statistics from across the entire SOMA collection: specifically, we batch-process the mean of
 `X/data`, grouping by `obs['cell_type_ontology_term_id']`.
 
+A key point is that the _out-of-core processing_ showing here allows you to do multi-pass queries on
+data from a collection which is far larger than fits in RAM.
+
 ## Do the batch query
 
-Using [soco-batch-query.py](examples/soco-batch-query.py) (this takes a few minutes on a 2.2GB atlas and
+Using [soco-batch-query.py](soco-batch-query.py) (this takes a few minutes on a 2.2GB atlas and
 is amenable to paralleization) looping over the distinct values of `cell_type_ontology_term_id` in the collection:
 
 ```
