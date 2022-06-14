@@ -70,22 +70,24 @@ Same as `.keys` but returns as set.
 #### dim\_select
 
 ```python
-def dim_select(ids)
+def dim_select(ids, attrs=None)
 ```
 
-Selects a slice out of the dataframe with specified `obs_ids` (for `obs`) or `var_ids` (for `var`).
-If `ids` is `None`, the entire dataframe is returned.
+Selects a slice out of the dataframe with specified `obs_ids` (for `obs`) or `var_ids` (for
+`var`).  If `ids` is `None`, the entire dataframe is returned.  Similarly, if `attrs` are
+provided, they're used for the query; else, all attributes are returned.
 
 <a id="tiledbsc.annotation_dataframe.AnnotationDataFrame.df"></a>
 
 #### df
 
 ```python
-def df(ids=None) -> pd.DataFrame
+def df(ids=None, attrs=None) -> pd.DataFrame
 ```
 
 Keystroke-saving alias for `.dim_select()`. If `ids` are provided, they're used
-to subselect; if not, the entire dataframe is returned.
+to subselect; if not, the entire dataframe is returned. If `attrs` are provided,
+they're used for the query; else, all attributes are returned.
 
 <a id="tiledbsc.annotation_dataframe.AnnotationDataFrame.attribute_filter"></a>
 
