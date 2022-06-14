@@ -92,7 +92,7 @@ An alias for `soma.var.ids()`.
 #### dim\_slice
 
 ```python
-def dim_slice(obs_ids, var_ids) -> Dict
+def dim_slice(obs_ids, var_ids) -> SOMASlice
 ```
 
 Subselects the SOMA's obs, var, and X/data using the specified obs_ids and var_ids.
@@ -105,7 +105,7 @@ Returns `None` for empty slice.
 
 ```python
 def attribute_filter(obs_query_string: Optional[str],
-                     var_query_string: Optional[str]) -> Dict
+                     var_query_string: Optional[str]) -> SOMASlice
 ```
 
 Subselects the SOMA's obs, var, and X/data using the specified queries on obs and var.
