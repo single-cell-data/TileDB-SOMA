@@ -174,3 +174,10 @@ class SOMA(TileDBGroup):
         An alias for `soma.var.ids()`.
         """
         return self.var.ids()
+
+    # ----------------------------------------------------------------
+    def cell_count(self) -> int:
+        """
+        Returns the `obs_id` in `soma.obs`.
+        """
+        return len(self.obs.ids())
