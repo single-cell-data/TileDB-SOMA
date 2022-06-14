@@ -99,3 +99,14 @@ if __name__ == "__main__":
             obs_attr_names=["tissue"],
             obs_query_string='tissue == "kidney"',
         )
+
+    if sys.argv[1] == "6":
+        print()
+        print("OBS-ONLY QUERY")
+        soco_attribute_filter_and_store(
+            soco=tiledbsc.SOMACollection("/Users/johnkerl/mini-corpus/atlas"),
+            output_h5ad_path="platelet.h5ad",
+            output_soma_path="platelet",
+            obs_attr_names=["cell_type"],
+            obs_query_string='cell_type == "platelet"',
+        )
