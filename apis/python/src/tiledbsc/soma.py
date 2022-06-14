@@ -184,7 +184,7 @@ class SOMA(TileDBGroup):
         return len(self.obs.ids())
 
     # ----------------------------------------------------------------
-    def dim_slice(self, obs_ids, var_ids) -> Dict:
+    def dim_slice(self, obs_ids, var_ids) -> SOMASlice:
         """
         Subselects the SOMA's obs, var, and X/data using the specified obs_ids and var_ids.
         Using a value of `None` for obs_ids means use all obs_ids, and likewise for var_ids.
@@ -228,7 +228,7 @@ class SOMA(TileDBGroup):
         self,
         obs_query_string: Optional[str],
         var_query_string: Optional[str],
-    ) -> Dict:
+    ) -> SOMASlice:
         """
         Subselects the SOMA's obs, var, and X/data using the specified queries on obs and var.
         Queries use the TileDB-Py `QueryCondition` API. If `obs_query_string` is `None`,
@@ -271,12 +271,10 @@ class SOMA(TileDBGroup):
         An internal method for constructing a `SOMASlice` object given query results.
         """
 
-        X_layer_data = {
-            key: self.X[key].dim_select(obs_ids, var_ids) for key in self.X.keys()
-        }
+        X = {key: self.X[key].dim_select(obs_ids, var_ids) for key in self.X.keys()}
 
         return SOMASlice(
-            X_layer_data=X_layer_data,
+            X=X,
             obs=slice_obs_df,
             var=slice_var_df,
         )
@@ -311,11 +309,13 @@ class SOMA(TileDBGroup):
         soma.create_unless_exists()
         soma.obs.from_dataframe(soma_slice.obs)
         soma.var.from_dataframe(soma_slice.var)
-        soma.X.add_layer_from_matrix_and_dim_values(
-            soma_slice.X,
-            soma.obs.ids(),
-            soma.var.ids(),
-        )
+        for name in soma_slice.X.keys():
+            soma.X.add_layer_from_matrix_and_dim_values(
+                soma_slice.X[name],
+                soma.obs.ids(),
+                soma.var.ids(),
+                layer_name=name,
+            )
 
         return soma
 
