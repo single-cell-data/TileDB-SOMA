@@ -58,17 +58,17 @@ class SOMASlice(TileDBGroup):
         assert "data" in X_layer_data
 
         # Find the dtype.
-        X_data = X_layer_data["data"]
+        X_data = self.X["data"]
         if isinstance(X_data, pd.DataFrame):
             X_dtype = X_data.dtypes["value"]
         else:
             X_dtype = X_data.dtype
 
-        self.ann = ad.AnnData(obs=obs, var=var, dtype=X_dtype)
+        ann = ad.AnnData(obs=self.obs, var=self.var, dtype=X_dtype)
 
-        for name, data in X_layer_data.items():
-            # X comes in as a 3-column dataframe with "obs_id", "var_id", and "value".
-            # For AnnData we need to make it a sparse matrix.
+        for name, data in self.X.items():
+            # X comes in from TileDB queries as a 3-column dataframe with "obs_id", "var_id", and
+            # "value".  For AnnData we need to make it a sparse matrix.
             if isinstance(data, pd.DataFrame):
                 # Make obs_id and var_id accessible as columns.
                 data = data.reset_index()
@@ -77,31 +77,16 @@ class SOMASlice(TileDBGroup):
                     "obs_id",  # row_dim_name
                     "var_id",  # col_dim_name
                     "value",  # attr_name
-                    obs.index,
-                    var.index,
+                    self.obs.index,
+                    self.var.index,
                 )
             # We use AnnData as our in-memory storage. For SOMAs, all X layers are arrays within the
             # soma.X group; for AnnData, the 'data' layer is ann.X and all the others are in
             # ann.layers.
             if name == "data":
-                self.ann.X = data
+                ann.X = data
             else:
-                self.ann.layers[name] = data
-
-    # ----------------------------------------------------------------
-    def __getattr__(self, name):
-        """
-        Accessors for `obs`, `var`, and `X` attributes of `SOMASlice`.
-        """
-        if name == "obs":
-            return self.ann.obs
-        if name == "var":
-            return self.ann.var
-        if name == "X":
-            return self.ann.X
-        raise AttributeError(
-            f"'{self.__class__.__name__}' object has no attribute '{name}'"
-        )
+                ann.layers[name] = data
 
     # ----------------------------------------------------------------
     def to_anndata(self) -> ad.AnnData:
