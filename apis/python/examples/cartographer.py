@@ -217,8 +217,7 @@ class Cartographer:
         soco = SOMACollection(
             self.atlas_uri, name="atlas", ctx=self.ctx, verbose=self.verbose
         )
-        if not soco.exists():  # Must be done first, to create the parent directory
-            soco.create_unless_exists()
+        soco.create_unless_exists()  # Must be done first, to create the parent directory
         if not soco.exists():
             raise Exception(f"Could not create SOCO at {soco.uri}")
         return soco
