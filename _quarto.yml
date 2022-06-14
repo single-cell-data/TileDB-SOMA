@@ -70,7 +70,6 @@ website:
                 - href: "apis/python/examples/normalizing.md"
                   text: "Normalizing a collection"
                 - href: "apis/python/examples/soco-reconnaissance.md"
-                - href: "apis/python/examples/soma-collection-reconnaissance.md"
                   text: "SOMA-collection reconnaissance"
                 - href: "apis/python/examples/soco-slice-query.md"
                   text: "SOMA-collection slice query"
