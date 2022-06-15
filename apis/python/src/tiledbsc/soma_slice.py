@@ -104,7 +104,7 @@ class SOMASlice(TileDBGroup):
         # Use AnnData.concat.
         # TODO: try to remove this dependency.
         anns = [soma_slice.to_anndata() for soma_slice in soma_slices]
-        annc = ad.concat(anns, join="outer")
+        annc = ad.concat(anns, join="outer", merge="first")
         annc.obs_names_make_unique()
         annc.var_names_make_unique()
 
