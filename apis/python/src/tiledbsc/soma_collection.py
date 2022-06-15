@@ -44,6 +44,7 @@ class SOMACollection(TileDBGroup):
             parent=parent,
             verbose=verbose,
             soma_options=soma_options,
+            ctx=ctx,
         )
 
     # ----------------------------------------------------------------
@@ -81,7 +82,7 @@ class SOMACollection(TileDBGroup):
         """
         retval = []
         for name, uri in self._get_member_names_to_uris().items():
-            soma = SOMA(uri=uri, name=name, parent=self)
+            soma = SOMA(uri=uri, name=name, parent=self, ctx=self._ctx)
             retval.append(soma)
         return iter(retval)
 
