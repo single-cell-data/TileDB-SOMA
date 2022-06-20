@@ -9,10 +9,84 @@ import pandas as pd
 import time
 from typing import Optional, List, Union
 
+# This is for group/array metadata we write, to help nested-structured traversals (especially those
+# that start at the SOMACollection level) confidently navigate with a minimum of introspection on
+# group contents.
+SOMA_OBJECT_TYPE_METADATA_KEY = "soma_object_type"
+
+# ----------------------------------------------------------------
+def is_soma(uri: str, ctx: Optional[tiledb.Ctx] = None) -> bool:
+    """
+    Tells whether the URI points to a SOMA or not.
+    """
+    # A SOMA is a TileDB group, but TileDB uses groups for many things including SOMACollections and
+    # SOMA elements such as obs and var. If this is not a group, we say it is not a SOMA; if it is,
+    # we ask more questions.
+    if tiledb.object_type(uri, ctx=ctx) != "group":
+        return False
+
+    # We can check object-type metadata, but it's possible the URI was created using an
+    # early-access/beta-level version of our code that wasn't yet writing object-type metadata.  If
+    # we find object-type metadata saying this TileDB group is a SOMA, we say so; if not, we ask
+    # more questions.
+    with tiledb.Group(uri, mode="r", ctx=ctx) as G:
+        if SOMA_OBJECT_TYPE_METADATA_KEY in G.meta:
+            # Really `tiledbsc.SOMA.__name__`, but prevent a circular package import, so `"SOMA"`
+            return G.meta[SOMA_OBJECT_TYPE_METADATA_KEY] == "SOMA"
+
+        # At this point this path could be a SOMACollection, SOMA, or maybe SOMA element
+        # (or some manually created TileDB group).
+        if "obs" in G and "var" in G:
+            return True
+
+    # There is a chance that:
+    # o this is a TileDB group;
+    # o it's intended to hold a SOMA but it hasn't been populated yet;
+    # o it was created before object-type metadata was put in place;
+    # o it's remained unpopulated this whole time.
+    # Here we say this is not a SOMA, and accept the small risk of false negative.
+    return False
+
+
+# ----------------------------------------------------------------
+def is_soma_collection(uri: str, ctx: Optional[tiledb.Ctx] = None) -> bool:
+    """
+    Tells whether the URI points to a SOMACollection or not.
+    """
+    # A SOMACollection is a TileDB group, but TileDB uses groups for many things including SOMAs and
+    # SOMA elements such as obs and var. If this is not a group, we say it is not a SOMACollection;
+    # if it is, we ask more questions.
+    if tiledb.object_type(uri, ctx=ctx) != "group":
+        return False
+
+    # We can check object-type metadata, but it's possible the URI was created using an
+    # early-access/beta-level version of our code that wasn't yet writing object-type metadata.  If
+    # we find object-type metadata saying this TileDB group is a SOMA, we say so; if not, we ask
+    # more questions.
+    with tiledb.Group(uri, mode="r", ctx=ctx) as G:
+        if SOMA_OBJECT_TYPE_METADATA_KEY in G.meta:
+            # Really `tiledbsc.SOMA.__name__`, but prevent a circular package import, so `"SOMA"`
+            return G.meta[SOMA_OBJECT_TYPE_METADATA_KEY] == "SOMACollection"
+
+        # At this point this path could be a SOMACollection, SOMA, or maybe SOMA element
+        # (or some manually created TileDB group).
+        if "obs" in G and "var" in G:
+            # Very slight chance of false negative if someone created and populated a SOMACollection
+            # using beta-level code, and added a SOMA named 'obs' and another SOMA named 'var'.
+            return False
+
+    # There is a chance that:
+    # o this is a TileDB group;
+    # o it's intended to hold a SOMACollection but it hasn't been populated yet;
+    # o it was created before object-type metadata was put in place;
+    # o it's remained unpopulated this whole time.
+    # Here we say this is a SOMACollection, and accept the small risk of false positive.
+    return True
+
+
 # ----------------------------------------------------------------
 def is_local_path(path: str) -> bool:
     """
-
     Returns information about start time of an event. Nominally float seconds since the epoch,
     but articulated here as being compatible with the format_elapsed function.
     """

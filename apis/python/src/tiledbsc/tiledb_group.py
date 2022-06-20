@@ -79,7 +79,7 @@ class TileDBGroup(TileDBObject):
         """
         with self._open("w") as G:
             G.meta[
-                tiledbsc.util_tiledb.SOMA_OBJECT_TYPE_METADATA_KEY
+                tiledbsc.util.SOMA_OBJECT_TYPE_METADATA_KEY
             ] = self.__class__.__name__
 
     def _set_soma_object_type_metadata_recursively(self):
