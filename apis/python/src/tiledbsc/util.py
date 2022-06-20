@@ -261,30 +261,6 @@ def X_and_ids_to_sparse_matrix(
         )
 
 
-# ----------------------------------------------------------------
-def triples_to_dense_df(sparse_df: pd.DataFrame, fillna=0.0) -> pd.DataFrame:
-    """
-    Output from X dataframe reads is in "triples" format, e.g. two index columns `obs_id` and `var_id`,
-    and data column `value`. This is the default format, and is appropriate for large, possibly sparse matrices.
-    However, sometimes we want a dense matrix with `obs_id` row labels, `var_id` column labels, and `value` data.
-    This function produces that.
-    """
-    assert isinstance(sparse_df, pd.DataFrame)
-    attr_name = sparse_df.keys()[0]
-
-    index_names = sparse_df.index.names
-    assert len(index_names) == 2
-    row_index_name = index_names[0]
-    col_index_name = index_names[1]
-
-    # Make the index columns accessible as data columns.
-    sparse_df = sparse_df.reset_index()
-
-    return sparse_df.pivot(
-        index=row_index_name, columns=col_index_name, values=attr_name
-    ).fillna(fillna)
-
-
 # ================================================================
 class ETATracker:
     """
