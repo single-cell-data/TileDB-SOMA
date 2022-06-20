@@ -1,7 +1,8 @@
 import os
 from typing import Dict, List, Optional
 
-import tiledb
+from typing import Optional, List, Dict
+from typing import Optional
 
 from .soma_options import SOMAOptions
 

@@ -177,15 +177,18 @@ def test_from_anndata_DataFrame_type(tmp_path):
             # to remove this check which is verifying the current force-to-ASCII workaround.
             if ad_dtype.name == "str":
                 ad_dtype = np.dtype("S")
-        # TileDB has no bool, and automatically converts to uint8
-        if ad_dtype == bool:
-            ad_dtype = np.uint8
 
         return ad_dtype == tdb.dtype
 
     for df_name in ["var", "obs"]:
         with tiledb.open((tmp_path / df_name).as_posix()) as arr:
+            print(
+                "================================================================",
+                df_name,
+            )
             df = getattr(adata, df_name)
+            print("DF")
+            print(df)
 
             # verify names match
             assert set(arr.schema.attr(i).name for i in range(arr.schema.nattr)) == set(
@@ -205,7 +208,56 @@ def test_from_anndata_DataFrame_type(tmp_path):
                 arr.schema.attr(idx).name: idx for idx in range(arr.schema.nattr)
             }
             for k in df.keys():
+                print(
+                    ">---------------------------------------------------------------",
+                    k,
+                )
+                print(df[k])
+                print(
+                    "->--------------------------------------------------------------",
+                    k,
+                )
+                print(arr.schema.attr(attr_idx[k]))
+                print(
+                    "-->-------------------------------------------------------------",
+                    k,
+                )
                 assert cmp_dtype(df[k], arr.schema.attr(attr_idx[k]))
+
+
+# ================================================================ var
+# DF
+#       col_bool col_str col_bytes  col_float32  col_float64  col_int8  ...  col_object  col_categorical(str)  col_categorical(int32)  col_categorical(uint32)  col_categorical(float32)  col_categorical(bool)
+# b'1'      False       0      b'0'          0.0          0.0         0  ...           0                     0                       0                        0                       0.0                  False
+# b'2'       True       1      b'1'          1.0          1.0         1  ...           1                     1                       1                        1                       1.0                   True
+# b'3'       True       2      b'2'          2.0          2.0         2  ...           2                     2                       2                        2                       2.0                   True
+# b'4'       True       3      b'3'          3.0          3.0         3  ...           3                     3                       3                        3                       3.0                   True
+# b'5'       True       4      b'4'          4.0          4.0         4  ...           4                     4                       4                        4                       4.0                   True
+# b'6'       True       5      b'5'          5.0          5.0         5  ...           5                     5                       5                        5                       5.0                   True
+# b'7'       True       6      b'6'          6.0          6.0         6  ...           6                     6                       6                        6                       6.0                   True
+# b'8'       True       7      b'7'          7.0          7.0         7  ...           7                     7                       7                        7                       7.0                   True
+# b'9'       True       8      b'8'          8.0          8.0         8  ...           8                     8                       8                        8                       8.0                   True
+# b'10'      True       9      b'9'          9.0          9.0         9  ...           9                     9                       9                        9                       9.0                   True
+#
+# [10 rows x 19 columns]
+# >--------------------------------------------------------------- col_bool
+# b'1'     False
+# b'2'      True
+# b'3'      True
+# b'4'      True
+# b'5'      True
+# b'6'      True
+# b'7'      True
+# b'8'      True
+# b'9'      True
+# b'10'     True
+# Name: col_bool, dtype: bool
+# ->-------------------------------------------------------------- col_bool
+# Attr(name='col_bool', dtype='uint8', var=False, nullable=False, filters=FilterList([ZstdFilter(level=-1), ]))
+# -->------------------------------------------------------------- col_bool
+# ======================================================================================== short test summary info ========================================================================================
+# FAILED tests/test_type_diversity.py::test_from_anndata_DataFrame_type - AssertionError: assert False
+# ===================================================================================== 1 failed, 42 passed in 5.68s ======================================================================================
 
 
 def test_from_anndata_annotations_empty(tmp_path):
