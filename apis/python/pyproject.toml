@@ -6,6 +6,3 @@ requires = [
     "pybind11>=2.6.2"
 ]
 build-backend = "setuptools.build_meta"
-
-# See also src/tiledbsc/__init__.py
-version = "0.1.0"
