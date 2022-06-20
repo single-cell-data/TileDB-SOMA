@@ -1,9 +1,9 @@
 import os
 from typing import Dict, List, Optional
 
-from .soma_options import SOMAOptions
-
 import tiledb
+
+from .soma_options import SOMAOptions
 
 
 class TileDBObject:
