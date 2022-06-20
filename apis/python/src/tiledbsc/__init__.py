@@ -1,3 +1,8 @@
+# This reads ../../pyproject.toml
+import importlib.metadata
+
+__version__ = importlib.metadata.version("tiledbsc")
+
 from .soma_collection import SOMACollection
 from .soma import SOMA
 from .soma_options import SOMAOptions
