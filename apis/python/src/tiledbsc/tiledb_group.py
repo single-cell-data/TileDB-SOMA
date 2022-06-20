@@ -63,7 +63,7 @@ class TileDBGroup(TileDBObject):
             print(f"{self._indent}Creating TileDB group {self.uri}")
         tiledb.group_create(uri=self.uri, ctx=self._ctx)
 
-        self._set_soma_object_type_metadata()
+        self._set_object_type_metadata()
 
     def create_unless_exists(self):
         """
@@ -72,7 +72,7 @@ class TileDBGroup(TileDBObject):
         if not self.exists():
             self._create()
 
-    def _set_soma_object_type_metadata(self):
+    def _set_object_type_metadata(self):
         """
         This helps nested-structured traversals (especially those that start at the SOMACollection
         level) confidently navigate with a minimum of introspection on group contents.
@@ -85,14 +85,21 @@ class TileDBGroup(TileDBObject):
                 tiledbsc.util.SOMA_ENCODING_VERSION_METADATA_KEY
             ] = tiledbsc.util.SOMA_ENCODING_VERSION
 
-    def _set_soma_object_type_metadata_recursively(self):
+    def get_object_type(self) -> str:
+        """
+        Returns the class name associated with the group.
+        """
+        with self._open("r") as G:
+            return G.meta[tiledbsc.util_tiledb.SOMA_OBJECT_TYPE_METADATA_KEY]
+
+    def _set_object_type_metadata_recursively(self):
         """
         SOMAs/SOCOs written very early on in the development of this project may not have these set.
         Using this method we can after-populate these, without needig to re-ingest entire datasets.
         Any SOMAs/SOCOs ingested from June 2022 onward won't need this -- this metadata will be
         written at ingestion time.
         """
-        self._set_soma_object_type_metadata()
+        self._set_object_type_metadata()
         with self._open() as G:
             for O in G:  # This returns a tiledb.object.Object
                 # It might appear simpler to have all this code within TileDBObject class,
@@ -102,10 +109,10 @@ class TileDBGroup(TileDBObject):
                 object_type = tiledb.object_type(O.uri, ctx=self._ctx)
                 if object_type == "group":
                     group = TileDBGroup(uri=O.uri, name=O.name, parent=self)
-                    group._set_soma_object_type_metadata_recursively()
+                    group._set_object_type_metadata_recursively()
                 elif object_type == "array":
                     array = TileDBArray(uri=O.uri, name=O.name, parent=self)
-                    array._set_soma_object_type_metadata()
+                    array._set_object_type_metadata()
                 else:
                     raise Exception(
                         f"Unexpected object_type found: {object_type} at {O.uri}"
