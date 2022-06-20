@@ -1,8 +1,22 @@
-# TODO: probably remove
-# # This reads ../../pyproject.toml
-# import importlib.metadata
-#
-# __version__ = importlib.metadata.version("tiledbsc")
+import setuptools_scm
+
+# __version__ = setuptools_scm.get_version(root='../../../..')
+# Nope:
+# >>> import tiledbsc
+# >>> tiledbsc.__version__
+# LookupError: setuptools-scm was unable to detect version for /Users/johnkerl/git.
+
+# __version__ = setuptools_scm.get_version(root='../../..')
+# >>> import tiledbsc
+# >>> tiledbsc.__version__
+# Nope:
+# LookupError: setuptools-scm was unable to detect version for /Users/johnkerl/git/single-cell-data.
+
+__version__ = setuptools_scm.get_version(root='../..')
+# >>> import tiledbsc
+# >>> tiledbsc.__version__
+# '0.0.2.dev0+g1e1e691.d20220620'
+# BUT this only works when I'm cd'ed into /Users/johnkerl/git/single-cell-data/TileDB-SingleCell/apis/python
 
 from .soma_collection import SOMACollection
 from .soma import SOMA
