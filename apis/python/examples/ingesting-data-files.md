@@ -8,15 +8,9 @@ tools/ingestor -o /mini-corpus/tiledb-data -n /mini-corpus/anndata/10x_pbmc68k_r
 ...
 ```
 
-Note this can take several hours total. The benefit of using an optimized storage solution (with
-admittedly non-negligible ingest time) is that all subsequent queries benefit from that optimized
-storage. In particular, various cross-corpus data queries shown in these examples take just seconds
-or minutes.
-
-A key point is **write once, read from multiple tools** -- in particular, using `tiledbsc-py` (this
-package) or [`tiledbsc-r`](https://github.com/TileDB-Inc/tiledbsc) you can read SOMAs in either
-language, regardless of which language was used to store them. This lets you use
-best-in-class/state-of-the-art analysis algorithms, whichever language they're implemented in.
+Note this takes many hours. The benefit of using an optimized storage solution (with admittedly
+non-negligible ingest time) is that all subsequent queries benefit from that optimized storage. In
+particular, various cross-corpus data queries shown in these examples take just seconds or minutes.
 
 ## Populate a SOMA collection
 
@@ -35,14 +29,6 @@ populate-soco -o /mini-corpus/soco -a /mini-corpus/tiledb-data/*
 ```
 
 Note this is quite quick.
-
-As a keystroke-saver, use the `tools/ingestor` script's `--soco` option which will populate the SOMA
-collection at ingest time, so you don't even have to run `populate-soco` as an afterstep.
-
-```
-tools/ingestor -o /mini-corpus/tiledb-data --soco -n /mini-corpus/anndata/0cfab2d4-1b79-444e-8cbe-2ca9671ca85e.h5ad
-tools/ingestor -o /mini-corpus/tiledb-data --soco -n /mini-corpus/anndata/10x_pbmc68k_reduced.h5ad
-```
 
 ## Names and URIs
 
