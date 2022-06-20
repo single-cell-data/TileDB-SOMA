@@ -221,6 +221,16 @@ class SOMA(TileDBGroup):
             if slice_var_df.shape[0] == 0:
                 return None
 
+        # TODO:
+        # do this here:
+        # * raw_var
+        # do these in _assemble_soma_slice:
+        # * raw_X
+        # * obsm
+        # * varm
+        # * obsp
+        # * varp
+
         return self._assemble_soma_slice(obs_ids, var_ids, slice_obs_df, slice_var_df)
 
     # ----------------------------------------------------------------
@@ -256,6 +266,16 @@ class SOMA(TileDBGroup):
             if slice_var_df is None:
                 return None
             var_ids = list(slice_var_df.index)
+
+        # TODO:
+        # do this here:
+        # * raw_var
+        # do these in _assemble_soma_slice:
+        # * raw_X
+        # * obsm
+        # * varm
+        # * obsp
+        # * varp
 
         return self._assemble_soma_slice(obs_ids, var_ids, slice_obs_df, slice_var_df)
 

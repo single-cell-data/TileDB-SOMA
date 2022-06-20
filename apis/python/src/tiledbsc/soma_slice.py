@@ -29,6 +29,12 @@ class SOMASlice(TileDBGroup):
         X: Dict[str, pd.DataFrame],
         obs: pd.DataFrame,
         var: pd.DataFrame,
+        obsm: Dict[str, pd.DataFrame],
+        varm: Dict[str, pd.DataFrame],
+        obsp: Dict[str, pd.DataFrame],
+        varp: Dict[str, pd.DataFrame],
+        raw_X: Dict[str, pd.DataFrame],
+        raw_var: pd.DataFrame,
     ):
         """
         Constructs an in-memory `SOMASlice` object. This is a simple collection of obs, var, and X dataframes.
@@ -40,6 +46,12 @@ class SOMASlice(TileDBGroup):
         self.obs = obs
         self.var = var
         self.X = X
+        self.obsm = obsm
+        self.varm = varm
+        self.obsp = obsp
+        self.varp = varp
+        self.raw_X = raw_X
+        self.raw_var = raw_var
 
     # ----------------------------------------------------------------
     def to_anndata(self) -> ad.AnnData:
@@ -55,6 +67,14 @@ class SOMASlice(TileDBGroup):
             X_dtype = X_data.dtype
 
         ann = ad.AnnData(obs=self.obs, var=self.var, dtype=X_dtype)
+
+        # TODO:
+        # self.obsm = obsm
+        # self.varm = varm
+        # self.obsp = obsp
+        # self.varp = varp
+        # self.raw_X = raw_X
+        # self.raw_var = raw_var
 
         for name, data in self.X.items():
             # X comes in from TileDB queries as a 3-column dataframe with "obs_id", "var_id", and
