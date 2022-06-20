@@ -20,5 +20,6 @@ for x in \
     util_tiledb
 do
     echo $x
-    pydoc-markdown -I src -m tiledbsc.$x > doc/$x.md
+    pydoc-markdown -I src -m tiledbsc.$x > $x.md
 done
+mv *.md doc
