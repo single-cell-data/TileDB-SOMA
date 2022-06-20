@@ -59,5 +59,5 @@ def test_soco_slice_query(tmp_path):
     ann = result_soma_slice.to_anndata()
 
     assert ann.obs.shape == (400, 17)
-    assert ann.var.shape == (1, 0)
+    assert ann.var.shape == (1, 3)
     assert ann.X.shape == (400, 1)
