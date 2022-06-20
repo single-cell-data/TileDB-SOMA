@@ -13,13 +13,21 @@ import setuptools_scm
 # Nope:
 # LookupError: setuptools-scm was unable to detect version for /Users/johnkerl/git/single-cell-data.
 
-__version__ = setuptools_scm.get_version(root='../..')
+# __version__ = setuptools_scm.get_version(root='../..')
 # >>> import tiledbsc
 # >>> tiledbsc.__version__
 # '0.0.2.dev0+g1e1e691.d20220620'
 # BUT this only works when I'm cd'ed into /Users/johnkerl/git/single-cell-data/TileDB-SingleCell/apis/python
 
-# ----------------------------------------------------------------
+# __version__ = setuptools_scm.get_version(root="../..", relative_to=__file__)
+# >>> import tiledbsc
+# >>> tiledbsc.__version__
+# Nope:
+# LookupError: setuptools-scm was unable to detect version for /Users/johnkerl/git/single-cell-data/TileDB-SingleCell/apis/python.
+
+__version__ = setuptools_scm.get_version(root="../../../..", relative_to=__file__)
+
+# ================================================================
 from .soma_collection import SOMACollection
 from .soma import SOMA
 from .soma_options import SOMAOptions
