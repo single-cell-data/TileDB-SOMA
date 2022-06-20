@@ -1,19 +1,17 @@
 #!/usr/bin/env python
 
-# ================================================================
-# A simple driver for ingestion of anndata to a TileDB group.
-#
-# * Invoke this with one argument /path/to/some/somename.h5ad:
-#   o Output will be ./tiledb-data/somename
-#
-# * Invoke this with two arguments to specify input anndata HDF5 file
-#   and output TileDB group.
-#
-# Nominal immediate-term support is to local disk, although output to tiledb:/...
-# URIs will be supported.
-#
-# Note this removes and recreates the destination TileDB group on each invocation.
-# ================================================================
+"""
+A simple driver for ingestion of anndata to a TileDB SOMA.
+
+* Invoke this with one argument /path/to/some/somename.h5ad:
+  o Output will be ./tiledb-data/somename
+
+* Invoke this with two arguments to specify input anndata HDF5 file
+  and output TileDB group.
+
+Nominal immediate-term support is to local disk and S3, although output to tiledb:/...
+URIs will be supported.
+"""
 
 import tiledbsc
 import tiledbsc.io
@@ -23,6 +21,7 @@ import sys, os, shutil
 import argparse
 
 
+# ================================================================
 def main():
     parser = argparse.ArgumentParser(
         description="Ingest soma data from anndata/h5ad into TileDB group structure"
@@ -45,6 +44,9 @@ def main():
         help="Specify output directory to contain the somas",
         type=str,
         default="./tiledb-data",
+    )
+    parser.add_argument(
+        "--soco", help="Write the SOMA and also append to a SOMACollection there", action="store_true"
     )
     parser.add_argument(
         "-r", "--relative",
@@ -87,6 +89,7 @@ select `relative=True`. (This is the default.)
 
     soma_options = tiledbsc.SOMAOptions()
 
+    write_soco = args.soco
     verbose = not args.quiet
 
     if args.relative == 'true':
@@ -108,29 +111,38 @@ select `relative=True`. (This is the default.)
             output_path = os.path.join(
                 outdir, os.path.splitext(os.path.basename(input_path))[0]
             )
-            ingest_one(input_path, output_path, args.ifexists[0], soma_options, verbose)
+            ingest_one(input_path, output_path, args.ifexists[0], soma_options, write_soco, outdir, verbose)
     else:
         if len(args.paths) == 0:
             input_path = "anndata/pbmc-small.h5ad"
             output_path = os.path.join(outdir, "pbmc-small")
-            ingest_one(input_path, output_path, args.ifexists[0], soma_options, verbose)
+            ingest_one(input_path, output_path, args.ifexists[0], soma_options, write_soco, outdir, verbose)
         elif len(args.paths) == 1:
             input_path = args.paths[0]
             # Example 'anndata/pbmc3k_processed.h5ad' -> 'tiledb-data/pbmc3k_processed'
             output_path = os.path.join(
                 outdir, os.path.splitext(os.path.basename(input_path))[0]
             )
-            ingest_one(input_path, output_path, args.ifexists[0], soma_options, verbose)
+            ingest_one(input_path, output_path, args.ifexists[0], soma_options, write_soco, outdir, verbose)
         elif len(args.paths) == 2:
             input_path = args.paths[0]
             output_path = args.paths[1]
-            ingest_one(input_path, output_path, args.ifexists[0], soma_options, verbose)
+            ingest_one(input_path, output_path, args.ifexists[0], soma_options, write_soco, outdir, verbose)
         else:
             parser.print_help(file=sys.stderr)
             sys.exit(1)
 
 
-def ingest_one(input_path: str, output_path: str, ifexists: str, soma_options: tiledbsc.SOMAOptions, verbose: bool):
+# ================================================================
+def ingest_one(
+    input_path: str,
+    output_path: str,
+    ifexists: str,
+    soma_options: tiledbsc.SOMAOptions,
+    write_soco: bool,
+    soco_dir: str,
+    verbose: bool,
+):
     # Check that the input exists.
     vfs = tiledb.VFS()
     if not vfs.is_file(input_path):
@@ -178,6 +190,17 @@ def ingest_one(input_path: str, output_path: str, ifexists: str, soma_options: t
     if not verbose:
         print(f"Wrote {output_path}")
 
+    if write_soco:
+        soco = tiledbsc.SOMACollection(soco_dir, soma_options=soma_options, verbose=verbose)
+        soco.create_unless_exists()
+        if not soco.exists():
+            raise Exception(f"Could not create SOCO at {soco.uri}")
+        soco.add(soma)
+        if verbose:
+            print()
+            print(f"Added SOMA {soma.name} to SOMACollection {soco_dir}")
 
+
+# ================================================================
 if __name__ == "__main__":
     main()
