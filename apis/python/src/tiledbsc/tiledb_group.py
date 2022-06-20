@@ -129,7 +129,9 @@ class TileDBGroup(TileDBObject):
         * If `False` then the group will have the absolute path of the member. For populating matrix
         elements within a SOMA in TileDB cloud, this is necessary. For populating SOMA elements within
         a SOMACollection on local disk, this can be useful if you want to be able to move the SOMACollection
-        storage around and have it remember the (unmoved) locations of SOMA objects elsewhere.
+        storage around and have it remember the (unmoved) locations of SOMA objects elsewhere, i.e.
+        if the SOMACollectio is in one place while its members are in other places. If the SOMAs
+        in the collection are contained within the SOMACollection directory, you probably want `relative=True`.
 
         * If `True` then the group will have the relative path of the member. For TileDB Cloud, this
         is never the right thing to do. For local-disk storage, this is essential if you want to move

@@ -33,9 +33,7 @@ class SOMACollection(TileDBGroup):
         if ctx is None and config is not None:
             ctx = tiledb.Ctx(config)
         if soma_options is None:
-            soma_options = SOMAOptions(
-                member_uris_are_relative=False,
-            )  # Use default values from the constructor
+            soma_options = SOMAOptions()  # Use default values from the constructor
         super().__init__(
             uri=uri,
             name=name,
