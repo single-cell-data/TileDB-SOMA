@@ -1,7 +1,8 @@
-# This reads ../../pyproject.toml
-import importlib.metadata
-
-__version__ = importlib.metadata.version("tiledbsc")
+# TODO: probably remove
+# # This reads ../../pyproject.toml
+# import importlib.metadata
+#
+# __version__ = importlib.metadata.version("tiledbsc")
 
 from .soma_collection import SOMACollection
 from .soma import SOMA
