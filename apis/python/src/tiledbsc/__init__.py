@@ -1,3 +1,12 @@
+try:
+    from ._version import version as __version__
+except ImportError:
+    from pkg_resources import DistributionNotFound, get_distribution
+    try:
+        __version__ = get_distribution("tiledbsc").version
+    except DistributionNotFound:
+        __version__ = "unknown"
+
 from .soma_collection import SOMACollection
 from .soma import SOMA
 from .soma_options import SOMAOptions
