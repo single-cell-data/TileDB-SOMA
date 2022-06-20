@@ -99,6 +99,13 @@ class TileDBArray(TileDBObject):
         """
         return attr_name in self.attr_names()
 
+    def has_attr_names(self, attr_names: List[str]) -> bool:
+        """
+        Returns true if the array has all of the specified attribute names, false otherwise.
+        """
+        attr_names_set = set(self.attr_names())
+        return all([attr_name in attr_names_set for attr_name in attr_names])
+
     def _set_soma_object_type_metadata(self) -> None:
         """
         This helps nested-structured traversals (especially those that start at the SOMACollection
