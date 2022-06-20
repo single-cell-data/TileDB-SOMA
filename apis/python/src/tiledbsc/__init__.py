@@ -1,4 +1,10 @@
 # ----------------------------------------------------------------
+# How this works:
+# o Have tagged a version in Git
+# o If we are checked out on a tagged version we should get soemthing like '1.2.3'
+# o If we aren't we should get something like '1.2.3.dev9+g73388a'
+# o If the user hasn't obtained this code using Git -- e.g. if they did `pip install` -- I don't
+#   know how this will work.
 import setuptools_scm
 
 # __version__ = setuptools_scm.get_version(root='../../../..')
