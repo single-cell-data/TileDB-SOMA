@@ -34,9 +34,9 @@ def test_attribute_filter(adata):
     tiledbsc.io.from_anndata(soma, adata)
 
     output = soma.obs.attribute_filter(
-        "nCount_RNA > 10", ["orig.ident", "nFeature_RNA"]
+        "nCount_RNA > 10", ["nCount_RNA", "orig.ident", "nFeature_RNA"]
     )
-    assert output.shape == (80, 2)
+    assert output.shape == (80, 3)
     assert output.at["TTACGTACGTTCAG", "nFeature_RNA"] == 39
     #                 orig.ident  nFeature_RNA
     # obs_id

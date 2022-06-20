@@ -1,5 +1,5 @@
 import os
-from typing import Optional, Union, Dict
+from typing import Optional, Union, List, Dict
 
 import anndata as ad
 import numpy as np
@@ -84,9 +84,9 @@ class SOMA(TileDBGroup):
             ctx=ctx,
         )
 
-        X_uri = os.path.join(self.uri, "X")
         obs_uri = os.path.join(self.uri, "obs")
         var_uri = os.path.join(self.uri, "var")
+        X_uri = os.path.join(self.uri, "X")
         obsm_uri = os.path.join(self.uri, "obsm")
         varm_uri = os.path.join(self.uri, "varm")
         obsp_uri = os.path.join(self.uri, "obsp")
@@ -181,3 +181,50 @@ class SOMA(TileDBGroup):
         Returns the `obs_id` in `soma.obs`.
         """
         return len(self.obs.ids())
+
+    # ----------------------------------------------------------------
+    def get_obs_value_counts(self, obs_label: str) -> pd.DataFrame:
+        """
+        Given an obs label, e.g. `cell_type`, returns a dataframe count the number of different
+        values for that label in the SOMA.
+        """
+        return self._get_obs_or_var_value_counts(obs_label, True)
+
+    def get_var_value_counts(self, var_label: str) -> pd.DataFrame:
+        """
+        Given an var label, e.g. `feature_name`, returns a dataframe count the number of different
+        values for that label in the SOMA.
+        """
+        return self._get_obs_or_var_value_counts(var_label, False)
+
+    def _get_obs_or_var_value_counts(
+        self, obs_or_var_label: str, use_obs: True
+    ) -> pd.DataFrame:
+        """
+        Supporting method for `get_obs_value_counts` and `get_var_value_counts`.
+        """
+
+        attrs = [obs_or_var_label]
+        obs_or_var = self.obs.df(attrs=attrs) if use_obs else self.var.df(attrs=attrs)
+        if not obs_or_var_label in obs_or_var:
+            return
+
+        counts = {}
+        obs_label_values = list(obs_or_var[obs_or_var_label])
+        for obs_label_value in obs_label_values:
+            if obs_label_value in counts:
+                counts[obs_label_value] += 1
+            else:
+                counts[obs_label_value] = 1
+
+        name_column = []
+        counts_column = []
+        for k, v in dict(
+            sorted(counts.items(), reverse=True, key=lambda item: item[1])
+        ).items():
+            name_column.append(k)
+            counts_column.append(v)
+
+        df = pd.DataFrame.from_dict({"name": name_column, "count": counts_column})
+        df.set_index("name", inplace=True)
+        return df

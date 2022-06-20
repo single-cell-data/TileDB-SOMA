@@ -3,7 +3,7 @@ import tiledbsc.util_tiledb
 from .soma_options import SOMAOptions
 from .tiledb_object import TileDBObject
 
-from typing import Optional, List, Dict
+from typing import Optional, List, Set, Dict
 
 
 class TileDBArray(TileDBObject):
@@ -98,6 +98,13 @@ class TileDBArray(TileDBObject):
         Returns true if the array has the specified attribute name, false otherwise.
         """
         return attr_name in self.attr_names()
+
+    def has_attr_names(self, attr_names: List[str]) -> bool:
+        """
+        Returns true if the array has all of the specified attribute names, false otherwise.
+        """
+        attr_names_set = set(self.attr_names())
+        return all([attr_name in attr_names_set for attr_name in attr_names])
 
     def _set_soma_object_type_metadata(self) -> None:
         """
