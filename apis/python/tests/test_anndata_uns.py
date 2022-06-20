@@ -50,8 +50,6 @@ def test_from_anndata_uns(tmp_path):
 
     adata = AnnData(X=X, obs=obs, var=var, uns=uns)
 
-    adata.write_h5ad("foo.h5ad")
-
     io.from_anndata(SOMA(tmp_path.as_posix()), adata)
 
     # Example of what we're verifying:
