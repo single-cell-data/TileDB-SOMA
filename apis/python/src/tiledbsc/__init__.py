@@ -1,3 +1,4 @@
+# ----------------------------------------------------------------
 import setuptools_scm
 
 # __version__ = setuptools_scm.get_version(root='../../../..')
@@ -18,6 +19,7 @@ __version__ = setuptools_scm.get_version(root='../..')
 # '0.0.2.dev0+g1e1e691.d20220620'
 # BUT this only works when I'm cd'ed into /Users/johnkerl/git/single-cell-data/TileDB-SingleCell/apis/python
 
+# ----------------------------------------------------------------
 from .soma_collection import SOMACollection
 from .soma import SOMA
 from .soma_options import SOMAOptions
