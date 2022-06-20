@@ -57,19 +57,6 @@ conversion to anndata, we need make a sparse COO/IJV-format array where the indi
 not strings but ints, matching the obs and var labels.
 The `return_as` parameter must be one of `"csr"` or `"csc"`.
 
-<a id="tiledbsc.util.triples_to_dense_df"></a>
-
-#### triples\_to\_dense\_df
-
-```python
-def triples_to_dense_df(sparse_df: pd.DataFrame, fillna=0.0) -> pd.DataFrame
-```
-
-Output from X dataframe reads is in "triples" format, e.g. two index columns `obs_id` and `var_id`,
-and data column `value`. This is the default format, and is appropriate for large, possibly sparse matrices.
-However, sometimes we want a dense matrix with `obs_id` row labels, `var_id` column labels, and `value` data.
-This function produces that.
-
 <a id="tiledbsc.util.ETATracker"></a>
 
 ## ETATracker Objects
