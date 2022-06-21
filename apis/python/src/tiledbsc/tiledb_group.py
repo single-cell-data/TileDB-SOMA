@@ -81,6 +81,9 @@ class TileDBGroup(TileDBObject):
             G.meta[
                 tiledbsc.util.SOMA_OBJECT_TYPE_METADATA_KEY
             ] = self.__class__.__name__
+            G.meta[
+                tiledbsc.util.SOMA_ENCODING_VERSION_METADATA_KEY
+            ] = tiledbsc.util.SOMA_ENCODING_VERSION
 
     def _set_soma_object_type_metadata_recursively(self):
         """
