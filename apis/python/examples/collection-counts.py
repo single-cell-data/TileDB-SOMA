@@ -11,6 +11,7 @@ else:
 soco = tiledbsc.SOMACollection(soco_path)
 
 obs_labels = ["cell_type", "tissue", "cell_type_ontology_term_id"]
+var_labels = ["feature_name"]
 
 print("================================================================")
 for obs_label in obs_labels:
@@ -21,6 +22,16 @@ for obs_label in obs_labels:
         print()
         print("SOMA", soma.name)
         print(soma.get_obs_value_counts(obs_label))
+
+print("================================================================")
+for var_label in var_labels:
+    print()
+    print("----------------------------------------------------------------")
+    print("Per-SOMA values for", var_label)
+    for soma in soco:
+        print()
+        print("SOMA", soma.name)
+        print(soma.get_var_value_counts(var_label))
 
 print()
 print("================================================================")
