@@ -121,14 +121,19 @@ Returns sum of `soma.cell_count()` over SOMAs in the collection.
 ```python
 def attribute_filter(obs_attr_names: List[str] = [],
                      obs_query_string: str = None,
+                     obs_ids: List[str] = None,
                      var_attr_names: List[str] = [],
-                     var_query_string: str = None) -> Optional[SOMASlice]
+                     var_query_string: str = None,
+                     var_ids: List[str] = None) -> Optional[SOMASlice]
 ```
 
 Subselects the obs, var, and X/data using the specified queries on obs and var,
 concatenating across SOMAs in the collection.  Queries use the TileDB-Py `QueryCondition`
 API. If `obs_query_string` is `None`, the `obs` dimension is not filtered and all of `obs`
 is used; similiarly for `var`. Return value of `None` indicates an empty slice.
+If `obs_ids` or `var_ids` are not `None`, they are effectively ANDed into the query.
+For example, you can pass in a known list of `obs_ids`, then use `obs_query_string`
+to further restrict the query.
 
 <a id="tiledbsc.soma_collection.SOMACollection.find_unique_obs_values"></a>
 

@@ -136,8 +136,10 @@ Returns `None` for empty slice.
 #### attribute\_filter
 
 ```python
-def attribute_filter(obs_query_string: Optional[str],
-                     var_query_string: Optional[str]) -> SOMASlice
+def attribute_filter(obs_query_string: Optional[str] = None,
+                     var_query_string: Optional[str] = None,
+                     obs_ids: Optional[List[str]] = None,
+                     var_ids: Optional[List[str]] = None) -> SOMASlice
 ```
 
 Subselects the SOMA's obs, var, and X/data using the specified queries on obs and var.

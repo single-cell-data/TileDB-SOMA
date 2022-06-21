@@ -2,6 +2,26 @@
 
 # tiledbsc.util
 
+<a id="tiledbsc.util.is_soma"></a>
+
+#### is\_soma
+
+```python
+def is_soma(uri: str, ctx: Optional[tiledb.Ctx] = None) -> bool
+```
+
+Tells whether the URI points to a SOMA or not.
+
+<a id="tiledbsc.util.is_soma_collection"></a>
+
+#### is\_soma\_collection
+
+```python
+def is_soma_collection(uri: str, ctx: Optional[tiledb.Ctx] = None) -> bool
+```
+
+Tells whether the URI points to a SOMACollection or not.
+
 <a id="tiledbsc.util.is_local_path"></a>
 
 #### is\_local\_path

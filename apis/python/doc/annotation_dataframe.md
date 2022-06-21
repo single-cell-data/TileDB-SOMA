@@ -94,7 +94,7 @@ they're used for the query; else, all attributes are returned.
 #### attribute\_filter
 
 ```python
-def attribute_filter(query_string, attrs=None)
+def attribute_filter(query_string, ids=None, attrs=None)
 ```
 
 Selects from obs/var using a TileDB-Py `QueryCondition` string such as `cell_type ==
