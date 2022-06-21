@@ -115,6 +115,9 @@ class TileDBArray(TileDBObject):
             A.meta[
                 tiledbsc.util.SOMA_OBJECT_TYPE_METADATA_KEY
             ] = self.__class__.__name__
+            A.meta[
+                tiledbsc.util.SOMA_ENCODING_VERSION_METADATA_KEY
+            ] = tiledbsc.util.SOMA_ENCODING_VERSION
 
     def show_metadata(self, recursively=True, indent=""):
         """
