@@ -119,3 +119,47 @@ def get_var_value_counts(var_label: str) -> pd.DataFrame
 Given an var label, e.g. `feature_name`, returns a dataframe count the number of different
 values for that label in the SOMA.
 
+<a id="tiledbsc.soma.SOMA.dim_slice"></a>
+
+#### dim\_slice
+
+```python
+def dim_slice(obs_ids, var_ids) -> Dict
+```
+
+Subselects the SOMA's obs, var, and X/data using the specified obs_ids and var_ids.
+Using a value of `None` for obs_ids means use all obs_ids, and likewise for var_ids.
+Returns `None` for empty slice.
+
+<a id="tiledbsc.soma.SOMA.attribute_filter"></a>
+
+#### attribute\_filter
+
+```python
+def attribute_filter(obs_query_string: Optional[str],
+                     var_query_string: Optional[str]) -> SOMASlice
+```
+
+Subselects the SOMA's obs, var, and X/data using the specified queries on obs and var.
+Queries use the TileDB-Py `QueryCondition` API. If `obs_query_string` is `None`,
+the `obs` dimension is not filtered and all of `obs` is used; similiarly for `var`.
+
+<a id="tiledbsc.soma.SOMA.from_soma_slice"></a>
+
+#### from\_soma\_slice
+
+```python
+@classmethod
+def from_soma_slice(cls,
+                    soma_slice: SOMASlice,
+                    uri: str,
+                    name=None,
+                    soma_options: Optional[SOMAOptions] = None,
+                    verbose: Optional[bool] = True,
+                    config: Optional[tiledb.Config] = None,
+                    ctx: Optional[tiledb.Ctx] = None,
+                    parent: Optional[TileDBGroup] = None)
+```
+
+Constructs `SOMA` storage from a given in-memory `SOMASlice` object.
+
