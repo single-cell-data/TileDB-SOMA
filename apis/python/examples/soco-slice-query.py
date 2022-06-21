@@ -18,7 +18,10 @@ def soco_attribute_filter_and_store(
 ) -> None:
 
     result_soma_slice = soco.attribute_filter(
-        obs_attr_names, obs_query_string, var_attr_names, var_query_string
+        obs_attr_names=obs_attr_names,
+        obs_query_string=obs_query_string,
+        var_attr_names=var_attr_names,
+        var_query_string=var_query_string,
     )
 
     if result_soma_slice is None:

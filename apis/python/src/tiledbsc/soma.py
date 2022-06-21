@@ -283,8 +283,10 @@ class SOMA(TileDBGroup):
     # ----------------------------------------------------------------
     def attribute_filter(
         self,
-        obs_query_string: Optional[str],
-        var_query_string: Optional[str],
+        obs_query_string: Optional[str] = None,
+        var_query_string: Optional[str] = None,
+        obs_ids: Optional[List[str]] = None,
+        var_ids: Optional[List[str]] = None,
     ) -> SOMASlice:
         """
         Subselects the SOMA's obs, var, and X/data using the specified queries on obs and var.
@@ -292,27 +294,23 @@ class SOMA(TileDBGroup):
         the `obs` dimension is not filtered and all of `obs` is used; similiarly for `var`.
         """
 
+        slice_obs_df = self.obs.attribute_filter(
+            query_string=obs_query_string, ids=obs_ids
+        )
         # E.g. querying for 'cell_type == "blood"' and this SOMA does have a cell_type column in its
         # obs, but no rows with cell_type == "blood".
-        if obs_query_string is None:
-            obs_ids = None
-            slice_obs_df = self.obs.df()
-        else:
-            slice_obs_df = self.obs.attribute_filter(obs_query_string)
-            if slice_obs_df is None:
-                return None
-            obs_ids = list(slice_obs_df.index)
+        if slice_obs_df is None:
+            return None
+        obs_ids = list(slice_obs_df.index)
 
+        slice_var_df = self.var.attribute_filter(
+            query_string=var_query_string, ids=var_ids
+        )
         # E.g. querying for 'feature_name == "MT-CO3"' and this SOMA does have a feature_name column
         # in its var, but no rows with feature_name == "MT-CO3".
-        if var_query_string is None:
-            var_ids = None
-            slice_var_df = self.var.df()
-        else:
-            slice_var_df = self.var.attribute_filter(var_query_string)
-            if slice_var_df is None:
-                return None
-            var_ids = list(slice_var_df.index)
+        if slice_var_df is None:
+            return None
+        var_ids = list(slice_var_df.index)
 
         # TODO:
         # do this here:

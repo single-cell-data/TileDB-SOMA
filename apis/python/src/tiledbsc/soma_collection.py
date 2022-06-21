@@ -139,28 +139,42 @@ class SOMACollection(TileDBGroup):
         self,
         obs_attr_names: List[str] = [],
         obs_query_string: str = None,
+        obs_ids: List[str] = None,
         var_attr_names: List[str] = [],
         var_query_string: str = None,
+        var_ids: List[str] = None,
     ) -> Optional[SOMASlice]:
         """
         Subselects the obs, var, and X/data using the specified queries on obs and var,
         concatenating across SOMAs in the collection.  Queries use the TileDB-Py `QueryCondition`
         API. If `obs_query_string` is `None`, the `obs` dimension is not filtered and all of `obs`
         is used; similiarly for `var`. Return value of `None` indicates an empty slice.
+        If `obs_ids` or `var_ids` are not `None`, they are effectively ANDed into the query.
+        For example, you can pass in a known list of `obs_ids`, then use `obs_query_string`
+        to further restrict the query.
         """
 
         soma_slices = []
         for soma in self:
             # E.g. querying for 'cell_type == "blood"' but this SOMA doesn't have a cell_type column in
             # its obs at all.
-            if not soma.obs.has_attr_names(obs_attr_names):
+            if obs_query_string is not None and not soma.obs.has_attr_names(
+                obs_attr_names
+            ):
                 continue
             # E.g. querying for 'feature_name == "MT-CO3"' but this SOMA doesn't have a feature_name
             # column in its var at all.
-            if not soma.var.has_attr_names(var_attr_names):
+            if var_query_string is not None and not soma.var.has_attr_names(
+                var_attr_names
+            ):
                 continue
 
-            soma_slice = soma.attribute_filter(obs_query_string, var_query_string)
+            soma_slice = soma.attribute_filter(
+                obs_query_string=obs_query_string,
+                var_query_string=var_query_string,
+                obs_ids=obs_ids,
+                var_ids=var_ids,
+            )
             if soma_slice != None:
                 # print("Slice SOMA from", soma.name, soma.X.data.shape(), "to", soma_slice.ann.X.shape)
                 soma_slices.append(soma_slice)
