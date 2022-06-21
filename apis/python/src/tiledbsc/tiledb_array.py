@@ -113,7 +113,7 @@ class TileDBArray(TileDBObject):
         """
         with self._open("w") as A:
             A.meta[
-                tiledbsc.util_tiledb.SOMA_OBJECT_TYPE_METADATA_KEY
+                tiledbsc.util.SOMA_OBJECT_TYPE_METADATA_KEY
             ] = self.__class__.__name__
 
     def show_metadata(self, recursively=True, indent=""):
