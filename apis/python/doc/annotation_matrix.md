@@ -30,7 +30,7 @@ See the TileDBObject constructor.
 #### shape
 
 ```python
-def shape()
+def shape() -> Tuple[int, int]
 ```
 
 Returns a tuple with the number of rows and number of columns of the `AnnotationMatrix`.
@@ -44,7 +44,7 @@ Note: currently implemented via data scan -- will be optimized for TileDB core 2
 #### dim\_select
 
 ```python
-def dim_select(ids)
+def dim_select(ids) -> pd.DataFrame
 ```
 
 Selects a slice out of the array with specified `obs_ids` (for `obsm` elements) or
@@ -66,7 +66,7 @@ to subselect; if not, the entire dataframe is returned.
 #### shape
 
 ```python
-def shape()
+def shape() -> Tuple[int, int]
 ```
 
 Returns a tuple with the number of rows and number of columns of the `AnnotationMatrix`.
@@ -78,7 +78,7 @@ The row-count is the number of obs_ids (for `obsm` elements) or the number of va
 #### from\_matrix\_and\_dim\_values
 
 ```python
-def from_matrix_and_dim_values(matrix, dim_values)
+def from_matrix_and_dim_values(matrix, dim_values) -> None
 ```
 
 Populates an array in the obsm/ or varm/ subgroup for a SOMA object.

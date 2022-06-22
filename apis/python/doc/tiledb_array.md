@@ -121,7 +121,7 @@ Returns the class name associated with the array.
 #### show\_metadata
 
 ```python
-def show_metadata(recursively=True, indent="")
+def show_metadata(recursively=True, indent="") -> None
 ```
 
 Shows metadata for the array.

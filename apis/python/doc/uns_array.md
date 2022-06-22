@@ -27,7 +27,7 @@ See the TileDBObject constructor.
 #### from\_pandas\_dataframe
 
 ```python
-def from_pandas_dataframe(df: pd.DataFrame)
+def from_pandas_dataframe(df: pd.DataFrame) -> None
 ```
 
 Ingests an `UnsArray` into TileDB storage, given a pandas.DataFrame.
@@ -63,7 +63,7 @@ Convert ndarray/(csr|csc)matrix to coo_matrix and ingest into TileDB.
 
 ```python
 def create_empty_array_for_csr(attr_name: str, matrix_dtype: np.dtype,
-                               nrows: int, ncols: int)
+                               nrows: int, ncols: int) -> None
 ```
 
 Create a TileDB 2D sparse array with int dimensions and a single attribute.
@@ -81,7 +81,7 @@ Nominally used for uns data.
 #### ingest\_data\_from\_csr
 
 ```python
-def ingest_data_from_csr(csr: scipy.sparse.csr_matrix)
+def ingest_data_from_csr(csr: scipy.sparse.csr_matrix) -> None
 ```
 
 Convert ndarray/(csr|csc)matrix to coo_matrix and ingest into TileDB.

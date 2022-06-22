@@ -98,7 +98,7 @@ Implements `name in soco`
 #### \_\_getitem\_\_
 
 ```python
-def __getitem__(name)
+def __getitem__(name) -> SOMA
 ```
 
 Returns a `SOMA` element at the given name within the group, or `None` if no such
@@ -140,7 +140,7 @@ to further restrict the query.
 #### find\_unique\_obs\_values
 
 ```python
-def find_unique_obs_values(obs_label: str)
+def find_unique_obs_values(obs_label: str) -> List
 ```
 
 Given an `obs` label such as `cell_type` or `tissue`, returns a list of unique values for
@@ -151,7 +151,7 @@ that label among all SOMAs in the collection.
 #### find\_unique\_var\_values
 
 ```python
-def find_unique_var_values(var_label: str)
+def find_unique_var_values(var_label: str) -> List
 ```
 
 Given an `var` label such as `feature_name`, returns a list of unique values for

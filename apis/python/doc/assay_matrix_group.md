@@ -38,7 +38,7 @@ See `AssayMatrix` for the rationale behind retaining references to the `row_data
 #### keys
 
 ```python
-def keys()
+def keys() -> List[str]
 ```
 
 For `obsm` and `varm`, `.keys()` is a keystroke-saver for the more general group-member
@@ -49,7 +49,7 @@ accessor `._get_member_names()`.
 #### \_\_getattr\_\_
 
 ```python
-def __getattr__(name)
+def __getattr__(name) -> AssayMatrix
 ```
 
 This is called on `soma.X.name` when `name` is not already an attribute.
@@ -70,7 +70,7 @@ Implements `for matrix in soma.obsm: ...` and `for matrix in soma.varm: ...`
 #### \_\_getitem\_\_
 
 ```python
-def __getitem__(name)
+def __getitem__(name) -> AssayMatrix
 ```
 
 Returns an `AnnotationMatrix` element at the given name within the group, or None if no such
@@ -81,7 +81,7 @@ member exists.  Overloads the `[...]` operator.
 #### \_\_contains\_\_
 
 ```python
-def __contains__(name)
+def __contains__(name) -> bool
 ```
 
 Implements the `in` operator, e.g. `"data" in soma.X`.
