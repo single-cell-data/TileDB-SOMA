@@ -28,10 +28,18 @@ TTTGCATGCCTCAC-1      724      0.008065    1984.0      CD4 T cells
 
 [2638 rows x 4 columns]
 
-ann.obs['louvain'].unique()
-['CD4 T cells', 'B cells', 'CD14+ Monocytes', 'NK cells', 'CD8 T cells', 'FCGR3A+ Monocytes', 'Dendritic cells', 'Megakaryocytes']
-Categories (8, object): ['CD4 T cells', 'CD14+ Monocytes', 'B cells', 'CD8 T cells', 'NK cells',
-                         'FCGR3A+ Monocytes', 'Dendritic cells', 'Megakaryocytes']
+>>> ann.obs.groupby(["louvain"]).size()
+louvain
+CD4 T cells          1144
+CD14+ Monocytes       480
+B cells               342
+CD8 T cells           316
+NK cells              154
+FCGR3A+ Monocytes     150
+Dendritic cells        37
+Megakaryocytes         15
+dtype: int64
+
 >>> ann.var
          n_cells
 index
@@ -97,6 +105,18 @@ TTTGCATGCCTCAC-1      724      0.008065    1984.0      CD4 T cells
 
 [2638 rows x 4 columns]
 
+>>> soma.obs.df().groupby(["louvain"]).size()
+louvain
+B cells               342
+CD14+ Monocytes       480
+CD4 T cells          1144
+CD8 T cells           316
+Dendritic cells        37
+FCGR3A+ Monocytes     150
+Megakaryocytes         15
+NK cells              154
+dtype: int64  
+
 >>> soma.var.df()
         n_cells
 var_id
@@ -130,11 +150,6 @@ TTTGCATGCCTCAC-1 ZRANB3 -0.019673
                  ZYX    -0.264577
 
 [4848644 rows x 1 columns]
-
->>> soma.obs.df()['louvain'].unique()
-array(['CD4 T cells', 'B cells', 'CD14+ Monocytes', 'NK cells',
-       'CD8 T cells', 'FCGR3A+ Monocytes', 'Dendritic cells',
-       'Megakaryocytes'], dtype=object)
 ```
 
 ## See also

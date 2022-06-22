@@ -1,6 +1,8 @@
 ## Ingesting into SOMAs
 
-Use the [ingestor script](../tools/ingestor) to ingest these into SOMAs:
+A **SOMA** (Stack of Matrices, Annotated) is a [unified single-cell data model and API](https://github.com/single-cell-data/SOMA). A SOMA contains the kinds of data that belong in a single-cell dataset: `obs` and `var` matrices, `X` layers, and so on, offering **write-once, read-many semantics** via Python and R toolchains, with I/O to AnnData and Seurat formats, and interoperability with Scanpy and Seurat toolchains.
+
+Use the [ingestor script](../tools/ingestor) to ingest [files you've downloaded](obtaining-data-files.md) into SOMAs:
 
 ```
 tools/ingestor -o /mini-corpus/tiledb-data -n /mini-corpus/anndata/0cfab2d4-1b79-444e-8cbe-2ca9671ca85e.h5ad
@@ -8,10 +10,10 @@ tools/ingestor -o /mini-corpus/tiledb-data -n /mini-corpus/anndata/10x_pbmc68k_r
 ...
 ```
 
-Note this can take several hours total. The benefit of using an optimized storage solution (with
-admittedly non-negligible ingest time) is that all subsequent queries benefit from that optimized
-storage. In particular, various cross-corpus data queries shown in these examples take just seconds
-or minutes.
+Note this can take several hours total for multi-gigabyte datasets. The benefit of using an
+optimized storage solution (with admittedly non-negligible ingest time) is that all subsequent
+queries benefit from that optimized storage. In particular, various cross-corpus data queries shown
+in these examples take just seconds or minutes.
 
 A key point is **write once, read from multiple tools** -- in particular, using `tiledbsc-py` (this
 package) or [`tiledbsc-r`](https://github.com/TileDB-Inc/tiledbsc) you can read SOMAs in either
