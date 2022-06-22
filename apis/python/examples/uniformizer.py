@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 
 """
-The following is an example of uniformizing multiple datasets into a SOMA collection. This is a
-simple example that assumes all source H5ADs comply with the [cellxgene 2.0
-schema](https://pypi.org/project/cellxgene-schema/), although you can modify this to conform
-with your own organization's schema.
+The following shows an example of how to take multiple H5AD files and add them to a single SOMA
+Collection.  This is a simple example that assumes all source H5ADs comply with the [cellxgene 2.0
+schema](https://pypi.org/project/cellxgene-schema/), although you can modify this to conform with
+your own organization's schema.
 
 To keep the example simple, any data outside that schema are discarded.  The example peforms three
 steps:
@@ -15,8 +15,9 @@ steps:
 
 Examples:
 
-    python uniformizer.py -v atlas2 add-h5ad data1.h5ad
-    python uniformizer.py -v atlas2 add-soma soma2
+    python uniformizer.py -v atlas add-h5ad data1.h5ad
+    python uniformizer.py -v atlas add-h5ad data2.h5ad
+    python uniformizer.py -v atlas add-soma soma3 # If you've already ingested into a separate SOMA
 
 Note: This code for populating an atlas is independent of querying an atlas.  See also
 [https://github.com/single-cell-data/TileDB-SingleCell](https://github.com/single-cell-data/TileDB-SingleCell)
