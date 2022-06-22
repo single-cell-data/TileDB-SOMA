@@ -96,6 +96,26 @@ def has_attr_name(attr_name: str) -> bool
 
 Returns true if the array has the specified attribute name, false otherwise.
 
+<a id="tiledbsc.tiledb_array.TileDBArray.has_attr_names"></a>
+
+#### has\_attr\_names
+
+```python
+def has_attr_names(attr_names: List[str]) -> bool
+```
+
+Returns true if the array has all of the specified attribute names, false otherwise.
+
+<a id="tiledbsc.tiledb_array.TileDBArray.get_object_type"></a>
+
+#### get\_object\_type
+
+```python
+def get_object_type() -> str
+```
+
+Returns the class name associated with the array.
+
 <a id="tiledbsc.tiledb_array.TileDBArray.show_metadata"></a>
 
 #### show\_metadata

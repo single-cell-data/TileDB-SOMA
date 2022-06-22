@@ -7,12 +7,88 @@ import scipy
 import pandas as pd
 
 import time
-from typing import Optional, List
+from typing import Optional, List, Union
+
+# This is for group/array metadata we write, to help nested-structured traversals (especially those
+# that start at the SOMACollection level) confidently navigate with a minimum of introspection on
+# group contents.
+SOMA_OBJECT_TYPE_METADATA_KEY = "soma_object_type"
+SOMA_ENCODING_VERSION_METADATA_KEY = "soma_encoding_version"
+SOMA_ENCODING_VERSION = "0"
+
+# ----------------------------------------------------------------
+def is_soma(uri: str, ctx: Optional[tiledb.Ctx] = None) -> bool:
+    """
+    Tells whether the URI points to a SOMA or not.
+    """
+    # A SOMA is a TileDB group, but TileDB uses groups for many things including SOMACollections and
+    # SOMA elements such as obs and var. If this is not a group, we say it is not a SOMA; if it is,
+    # we ask more questions.
+    if tiledb.object_type(uri, ctx=ctx) != "group":
+        return False
+
+    # We can check object-type metadata, but it's possible the URI was created using an
+    # early-access/beta-level version of our code that wasn't yet writing object-type metadata.  If
+    # we find object-type metadata saying this TileDB group is a SOMA, we say so; if not, we ask
+    # more questions.
+    with tiledb.Group(uri, mode="r", ctx=ctx) as G:
+        if SOMA_OBJECT_TYPE_METADATA_KEY in G.meta:
+            # Really `tiledbsc.SOMA.__name__`, but prevent a circular package import, so `"SOMA"`
+            return G.meta[SOMA_OBJECT_TYPE_METADATA_KEY] == "SOMA"
+
+        # At this point this path could be a SOMACollection, SOMA, or maybe SOMA element
+        # (or some manually created TileDB group).
+        if "obs" in G and "var" in G:
+            return True
+
+    # There is a chance that:
+    # o this is a TileDB group;
+    # o it's intended to hold a SOMA but it hasn't been populated yet;
+    # o it was created before object-type metadata was put in place;
+    # o it's remained unpopulated this whole time.
+    # Here we say this is not a SOMA, and accept the small risk of false negative.
+    return False
+
+
+# ----------------------------------------------------------------
+def is_soma_collection(uri: str, ctx: Optional[tiledb.Ctx] = None) -> bool:
+    """
+    Tells whether the URI points to a SOMACollection or not.
+    """
+    # A SOMACollection is a TileDB group, but TileDB uses groups for many things including SOMAs and
+    # SOMA elements such as obs and var. If this is not a group, we say it is not a SOMACollection;
+    # if it is, we ask more questions.
+    if tiledb.object_type(uri, ctx=ctx) != "group":
+        return False
+
+    # We can check object-type metadata, but it's possible the URI was created using an
+    # early-access/beta-level version of our code that wasn't yet writing object-type metadata.  If
+    # we find object-type metadata saying this TileDB group is a SOMA, we say so; if not, we ask
+    # more questions.
+    with tiledb.Group(uri, mode="r", ctx=ctx) as G:
+        if SOMA_OBJECT_TYPE_METADATA_KEY in G.meta:
+            # Really `tiledbsc.SOMA.__name__`, but prevent a circular package import, so `"SOMA"`
+            return G.meta[SOMA_OBJECT_TYPE_METADATA_KEY] == "SOMACollection"
+
+        # At this point this path could be a SOMACollection, SOMA, or maybe SOMA element
+        # (or some manually created TileDB group).
+        if "obs" in G and "var" in G:
+            # Very slight chance of false negative if someone created and populated a SOMACollection
+            # using beta-level code, and added a SOMA named 'obs' and another SOMA named 'var'.
+            return False
+
+    # There is a chance that:
+    # o this is a TileDB group;
+    # o it's intended to hold a SOMACollection but it hasn't been populated yet;
+    # o it was created before object-type metadata was put in place;
+    # o it's remained unpopulated this whole time.
+    # Here we say this is a SOMACollection, and accept the small risk of false positive.
+    return True
+
 
 # ----------------------------------------------------------------
 def is_local_path(path: str) -> bool:
     """
-
     Returns information about start time of an event. Nominally float seconds since the epoch,
     but articulated here as being compatible with the format_elapsed function.
     """
@@ -194,20 +270,27 @@ def _to_tiledb_supported_array_type(x):
 
 
 # ----------------------------------------------------------------
-def _X_and_ids_to_coo(
+def X_and_ids_to_sparse_matrix(
     Xdf: pd.DataFrame,
     row_dim_name: str,
     col_dim_name: str,
     attr_name: str,
-    row_labels,
-    col_labels,
-) -> scipy.sparse.csr_matrix:
+    row_labels: List[str],
+    col_labels: List[str],
+    return_as: str = "csr",
+) -> Union[scipy.sparse.csr_matrix, scipy.sparse.csc_matrix]:
     """
     This is needed when we read a TileDB X.df[:]. Since TileDB X is sparse 2D string-dimensioned,
     the return value of which is a dict with three columns -- obs_id, var_id, and value. For
     conversion to anndata, we need make a sparse COO/IJV-format array where the indices are
     not strings but ints, matching the obs and var labels.
+    The `return_as` parameter must be one of `"csr"` or `"csc"`.
     """
+
+    assert isinstance(Xdf, pd.DataFrame)
+    assert len(row_labels) > 0 and isinstance(row_labels[0], str)
+    assert len(col_labels) > 0 and isinstance(col_labels[0], str)
+    assert return_as in ["csr", "csc"]
 
     # Now we need to convert from TileDB's string indices to CSR integer indices.
     # Make a dict from string dimension values to integer indices.
@@ -233,13 +316,49 @@ def _X_and_ids_to_coo(
     row_labels_to_indices = dict(zip(row_labels, [i for i, e in enumerate(row_labels)]))
     col_labels_to_indices = dict(zip(col_labels, [i for i, e in enumerate(col_labels)]))
 
-    # Apply the map.
+    # Make the obs_id/var_id indices addressable as columns.
+    Xdf.reset_index(inplace=True)
+
     obs_indices = [row_labels_to_indices[row_label] for row_label in Xdf[row_dim_name]]
     var_indices = [col_labels_to_indices[col_label] for col_label in Xdf[col_dim_name]]
 
-    return scipy.sparse.csr_matrix(
-        (list(Xdf[attr_name]), (list(obs_indices), list(var_indices)))
-    )
+    xcol = list(Xdf[attr_name])
+    ocol = list(obs_indices)
+    vcol = list(var_indices)
+    # Explicitly write the shape to avoid trimming in case of all-zeroes rows/columns when
+    # people do dim-selects.
+    if return_as == "csr":
+        return scipy.sparse.csr_matrix(
+            (xcol, (ocol, vcol)), shape=(len(row_labels), len(col_labels))
+        )
+    else:
+        return scipy.sparse.csc_matrix(
+            (xcol, (ocol, vcol)), shape=(len(row_labels), len(col_labels))
+        )
+
+
+# ----------------------------------------------------------------
+def triples_to_dense_df(sparse_df: pd.DataFrame, fillna=0.0) -> pd.DataFrame:
+    """
+    Output from X dataframe reads is in "triples" format, e.g. two index columns `obs_id` and `var_id`,
+    and data column `value`. This is the default format, and is appropriate for large, possibly sparse matrices.
+    However, sometimes we want a dense matrix with `obs_id` row labels, `var_id` column labels, and `value` data.
+    This function produces that.
+    """
+    assert isinstance(sparse_df, pd.DataFrame)
+    attr_name = sparse_df.keys()[0]
+
+    index_names = sparse_df.index.names
+    assert len(index_names) == 2
+    row_index_name = index_names[0]
+    col_index_name = index_names[1]
+
+    # Make the index columns accessible as data columns.
+    sparse_df = sparse_df.reset_index()
+
+    return sparse_df.pivot(
+        index=row_index_name, columns=col_index_name, values=attr_name
+    ).fillna(fillna)
 
 
 # ================================================================

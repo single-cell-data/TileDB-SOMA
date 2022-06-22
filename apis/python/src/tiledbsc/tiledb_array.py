@@ -3,7 +3,7 @@ import tiledbsc.util_tiledb
 from .soma_options import SOMAOptions
 from .tiledb_object import TileDBObject
 
-from typing import Optional, List, Dict
+from typing import Optional, List, Set, Dict
 
 
 class TileDBArray(TileDBObject):
@@ -99,15 +99,32 @@ class TileDBArray(TileDBObject):
         """
         return attr_name in self.attr_names()
 
-    def _set_soma_object_type_metadata(self) -> None:
+    def has_attr_names(self, attr_names: List[str]) -> bool:
+        """
+        Returns true if the array has all of the specified attribute names, false otherwise.
+        """
+        attr_names_set = set(self.attr_names())
+        return all([attr_name in attr_names_set for attr_name in attr_names])
+
+    def _set_object_type_metadata(self) -> None:
         """
         This helps nested-structured traversals (especially those that start at the SOMACollection
         level) confidently navigate with a minimum of introspection on group contents.
         """
         with self._open("w") as A:
             A.meta[
-                tiledbsc.util_tiledb.SOMA_OBJECT_TYPE_METADATA_KEY
+                tiledbsc.util.SOMA_OBJECT_TYPE_METADATA_KEY
             ] = self.__class__.__name__
+            A.meta[
+                tiledbsc.util.SOMA_ENCODING_VERSION_METADATA_KEY
+            ] = tiledbsc.util.SOMA_ENCODING_VERSION
+
+    def get_object_type(self) -> str:
+        """
+        Returns the class name associated with the array.
+        """
+        with self._open("r") as A:
+            return A.meta[tiledbsc.util_tiledb.SOMA_OBJECT_TYPE_METADATA_KEY]
 
     def show_metadata(self, recursively=True, indent=""):
         """

@@ -1,22 +1,30 @@
+# Overview
+
+This is a POC Python implementation of the proposed [Unified Single-cell Data Model](https://github.com/single-cell-data/SOMA).
+
 # Installation
 
-This requires [`tiledb`](https://github.com/TileDB-Inc/TileDB-Py) (see [./setup.cfg](setup.cfg) for version), in addition to other dependencies in [setup.cfg](./setup.cfg).
+## Using pip
 
-After `cd` to `apis/python`:
+This code is hosted at [PyPI](https://pypi.org/project/tiledbsc/), so you can do
 
 ```
-pip install --editable .
+pip install tiledbsc
 ```
 
-Optionally, if you prefer, instead:
+## From source
 
+* This requires [`tiledb`](https://github.com/TileDB-Inc/TileDB-Py) (see [./setup.cfg](setup.cfg) for version), in addition to other dependencies in [setup.cfg](./setup.cfg).
+* Clone [this repo](https://github.com/single-cell-data/TileDB-SingleCell)
+* `cd` into your checkout and then `cd apis/python`
+* `pip install .` -- or, if you wish to modify the code and run it, `pip install --editable .`
+* Optionally, if you prefer, instead:
 ```
 python -m venv venv
 . ./venv/bin/activate
 pip install .
 ```
-
-Then:
+* In either case:
 
 ```
 python -m pytest tests

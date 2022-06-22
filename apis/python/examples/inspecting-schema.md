@@ -73,20 +73,20 @@ dtype('uint8'), 'feature_name': dtype('S'), 'feature_reference': dtype('<U')}
 ```
 print("OBS NAMES")
 for soma in soco:
-    print(soma.uri)
+    print(soma.name)
     for attr_name in soma.obs.keys():
         print("  obs", attr_name)
 
 print("VAR NAMES")
 for soma in soco:
-    print(soma.uri)
+    print(soma.name)
     for attr_name in soma.var.keys():
         print("  var", attr_name)
 ```
 
 ```
 OBS NAMES
-file:///mini-corpus/tiledb-data/tabula-sapiens-immune
+tabula-sapiens-immune
   obs tissue_in_publication
   obs assay_ontology_term_id
   obs donor
@@ -113,7 +113,7 @@ file:///mini-corpus/tiledb-data/tabula-sapiens-immune
   obs tissue
   obs ethnicity
   obs development_stage
-file:///mini-corpus/tiledb-data/integrated-human-lung-cell-atlas
+integrated-human-lung-cell-atlas
   obs is_primary_data
   obs assay_ontology_term_id
   obs cell_type_ontology_term_id
@@ -186,7 +186,7 @@ file:///mini-corpus/tiledb-data/integrated-human-lung-cell-atlas
 ...
 
 VAR NAMES
-file:///mini-corpus/tiledb-data/tabula-sapiens-immune
+tabula-sapiens-immune
   var feature_type
   var ensemblid
   var highly_variable
@@ -199,7 +199,7 @@ file:///mini-corpus/tiledb-data/tabula-sapiens-immune
   var feature_is_filtered
   var feature_name
   var feature_reference
-file:///mini-corpus/tiledb-data/integrated-human-lung-cell-atlas
+integrated-human-lung-cell-atlas
   var n_cells
   var highly_variable
   var means

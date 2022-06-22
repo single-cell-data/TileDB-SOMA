@@ -2,6 +2,7 @@ import anndata
 import tiledb
 import tiledbsc
 import tiledbsc.io
+import tiledbsc.util
 
 import pytest
 import tempfile
@@ -29,9 +30,9 @@ def test_import_anndata(tmp_path):
     soco = tiledbsc.SOMACollection(soco_dir)
 
     with tiledb.Group(soma1_dir) as G:
-        assert G.meta[tiledbsc.util_tiledb.SOMA_OBJECT_TYPE_METADATA_KEY] == "SOMA"
+        assert G.meta[tiledbsc.util.SOMA_OBJECT_TYPE_METADATA_KEY] == "SOMA"
 
-    soco._create()
+    soco.create_unless_exists()
     assert len(soco._get_member_names()) == 0
 
     soco.add(soma1)
@@ -43,3 +44,12 @@ def test_import_anndata(tmp_path):
     assert len(soco._get_member_names()) == 1
     soco.remove(soma2)
     assert len(soco._get_member_names()) == 0
+
+    assert tiledbsc.util.is_soma(soma1.uri)
+    assert tiledbsc.util.is_soma(soma2.uri)
+    assert not tiledbsc.util.is_soma(soma1.obs.uri)
+    assert not tiledbsc.util.is_soma(soma2.var.uri)
+
+    assert not tiledbsc.util.is_soma_collection(soma2.var.uri)
+    assert not tiledbsc.util.is_soma_collection(soma2.uri)
+    assert tiledbsc.util.is_soma_collection(soco.uri)

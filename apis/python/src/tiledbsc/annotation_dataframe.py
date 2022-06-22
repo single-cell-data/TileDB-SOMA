@@ -7,7 +7,7 @@ import tiledbsc.util as util
 import pandas as pd
 import numpy as np
 
-from typing import Optional, Tuple, List
+from typing import Optional, Tuple, List, Set
 
 
 class AnnotationDataFrame(TileDBArray):
@@ -85,17 +85,31 @@ class AnnotationDataFrame(TileDBArray):
         return self.attr_names()
 
     # ----------------------------------------------------------------
-    def dim_select(self, ids):
+    def keyset(self) -> Set[str]:
         """
-        Selects a slice out of the dataframe with specified `obs_ids` (for `obs`) or `var_ids` (for `var`).
-        If `ids` is `None`, the entire dataframe is returned.
+        Same as `.keys` but returns as set.
         """
-        if ids is None:
-            with self._open("r") as A:
-                df = A.df[:]
-        else:
-            with self._open("r") as A:
-                df = A.df[ids]
+        return set(self.keys())
+
+    # ----------------------------------------------------------------
+    def dim_select(self, ids, attrs=None):
+        """
+        Selects a slice out of the dataframe with specified `obs_ids` (for `obs`) or `var_ids` (for
+        `var`).  If `ids` is `None`, the entire dataframe is returned.  Similarly, if `attrs` are
+        provided, they're used for the query; else, all attributes are returned.
+        """
+        with self._open("r") as A:
+            if ids is None:
+                if attrs is None:
+                    df = A.df[:]
+                else:
+                    df = A.df[:][attrs]
+            else:
+                if attrs is None:
+                    df = A.df[ids]
+                else:
+                    df = A.df[ids][attrs]
+
         # We do not need this:
         #   df.set_index(self.dim_name, inplace=True)
         # as long as these arrays (for this class) are written using tiledb.from_pandas which
@@ -110,25 +124,39 @@ class AnnotationDataFrame(TileDBArray):
         return self._ascii_to_unicode_dataframe_readback(df)
 
     # ----------------------------------------------------------------
-    def df(self, ids=None) -> pd.DataFrame:
+    def df(self, ids=None, attrs=None) -> pd.DataFrame:
         """
         Keystroke-saving alias for `.dim_select()`. If `ids` are provided, they're used
-        to subselect; if not, the entire dataframe is returned.
+        to subselect; if not, the entire dataframe is returned. If `attrs` are provided,
+        they're used for the query; else, all attributes are returned.
         """
-        return self.dim_select(ids)
+        return self.dim_select(ids, attrs)
 
     # ----------------------------------------------------------------
-    # TODO: this is a v1 for prototype/demo timeframe -- needs expanding.
-    def attribute_filter(self, query_string, col_names_to_keep):
+    def query(self, query_string, ids=None, attrs=None):
         """
-        Selects from obs/var using a TileDB-Py `QueryCondition` string such as
-        `cell_type == "blood"`. Returns None if the slice is empty.
-        This is a v1 implementation for the prototype/demo timeframe.
+        Selects from obs/var using a TileDB-Py `QueryCondition` string such as `cell_type ==
+        "blood"`.  If `attrs` is `None`, returns all column names in the dataframe; use `[]` for
+        `attrs` to select none of them.  Any column names specified in the `query_string` must be
+        included in `attrs` if `attrs` is not `None`.  Returns `None` if the slice is empty.
         """
-        with tiledb.open(self.uri, ctx=self._ctx) as A:
+        if query_string is None:
+            return self.dim_select(ids)
+
+        with self._open() as A:
             qc = tiledb.QueryCondition(query_string)
-            slice_query = A.query(attr_cond=qc)
-            slice_df = slice_query.df[:][col_names_to_keep]
+            if attrs is None:
+                slice_query = A.query(attr_cond=qc)
+                if ids is None:
+                    slice_df = slice_query.df[:][:]
+                else:
+                    slice_df = slice_query.df[ids][:]
+            else:
+                slice_query = A.query(attr_cond=qc, attrs=attrs)
+                if ids is None:
+                    slice_df = slice_query.df[:]
+                else:
+                    slice_df = slice_query.df[ids]
             nobs = len(slice_df)
             if nobs == 0:
                 return None
@@ -149,7 +177,7 @@ class AnnotationDataFrame(TileDBArray):
         return df
 
     # ----------------------------------------------------------------
-    def from_dataframe(self, dataframe: pd.DataFrame, extent: int) -> None:
+    def from_dataframe(self, dataframe: pd.DataFrame, extent: int = 2048) -> None:
         """
         Populates the `obs` or `var` subgroup for a SOMA object.
 
@@ -247,30 +275,7 @@ class AnnotationDataFrame(TileDBArray):
             mode=mode,
         )
 
-        self._set_soma_object_type_metadata()
+        self._set_object_type_metadata()
 
         if self._verbose:
             print(util.format_elapsed(s, f"{self._indent}FINISH WRITING {self.uri}"))
-
-    # ----------------------------------------------------------------
-    def to_dataframe(self) -> pd.DataFrame:
-        """
-        Reads the TileDB `obs` or `var` array and returns a type of pandas dataframe
-        and dimension values.
-        """
-
-        if self._verbose:
-            s = util.get_start_stamp()
-            print(f"{self._indent}START  read {self.uri}")
-
-        with tiledb.open(self.uri, ctx=self._ctx) as A:
-            # We could use A.df[:] to set the index_name to 'obs_id' or 'var_id'.
-            # However, the resulting dataframe has obs_id/var_id as strings, not
-            # bytes, resulting in `KeyError` elsewhere in the code.
-            df = pd.DataFrame(A[:])
-            df = df.set_index(self.dim_name)
-
-        if self._verbose:
-            print(util.format_elapsed(s, f"{self._indent}FINISH read {self.uri}"))
-
-        return df

@@ -1,10 +1,12 @@
 from typing import Optional, List
 
-import tiledb
-
 from .soma_options import SOMAOptions
 from .soma import SOMA
+from .soma_slice import SOMASlice
 from .tiledb_group import TileDBGroup
+
+import tiledb
+import pandas as pd
 
 
 class SOMACollection(TileDBGroup):
@@ -33,16 +35,22 @@ class SOMACollection(TileDBGroup):
         if ctx is None and config is not None:
             ctx = tiledb.Ctx(config)
         if soma_options is None:
-            soma_options = SOMAOptions(
-                member_uris_are_relative=False,
-            )  # Use default values from the constructor
+            soma_options = SOMAOptions()  # Use default values from the constructor
         super().__init__(
             uri=uri,
             name=name,
             parent=parent,
             verbose=verbose,
             soma_options=soma_options,
+            ctx=ctx,
         )
+
+    # ----------------------------------------------------------------
+    def __len__(self) -> int:
+        """
+        Implements `len(soco)`. Returns the number of elements in the collection.
+        """
+        return len(self._get_member_names())
 
     # ----------------------------------------------------------------
     def add(self, soma: SOMA) -> None:
@@ -59,13 +67,20 @@ class SOMACollection(TileDBGroup):
         self._remove_object(soma)
 
     # ----------------------------------------------------------------
+    def keys(self) -> None:
+        """
+        Returns the names of the SOMAs in the collection.
+        """
+        return self._get_member_names()
+
+    # ----------------------------------------------------------------
     def __iter__(self) -> List[SOMA]:
         """
         Implements `for soma in soco: ...`
         """
         retval = []
         for name, uri in self._get_member_names_to_uris().items():
-            soma = SOMA(uri=uri, name=name, parent=self)
+            soma = SOMA(uri=uri, name=name, parent=self, ctx=self._ctx)
             retval.append(soma)
         return iter(retval)
 
@@ -111,3 +126,89 @@ class SOMACollection(TileDBGroup):
                 )
 
             return SOMA(uri=obj.uri, name=name, parent=self)
+
+    # ----------------------------------------------------------------
+    def cell_count(self) -> int:
+        """
+        Returns sum of `soma.cell_count()` over SOMAs in the collection.
+        """
+        return sum(soma.cell_count() for soma in self)
+
+    # ----------------------------------------------------------------
+    def query(
+        self,
+        obs_attr_names: List[str] = [],
+        obs_query_string: str = None,
+        obs_ids: List[str] = None,
+        var_attr_names: List[str] = [],
+        var_query_string: str = None,
+        var_ids: List[str] = None,
+    ) -> Optional[SOMASlice]:
+        """
+        Subselects the obs, var, and X/data using the specified queries on obs and var,
+        concatenating across SOMAs in the collection.  Queries use the TileDB-Py `QueryCondition`
+        API. If `obs_query_string` is `None`, the `obs` dimension is not filtered and all of `obs`
+        is used; similiarly for `var`. Return value of `None` indicates an empty slice.
+        If `obs_ids` or `var_ids` are not `None`, they are effectively ANDed into the query.
+        For example, you can pass in a known list of `obs_ids`, then use `obs_query_string`
+        to further restrict the query.
+        """
+
+        soma_slices = []
+        for soma in self:
+            # E.g. querying for 'cell_type == "blood"' but this SOMA doesn't have a cell_type column in
+            # its obs at all.
+            if obs_query_string is not None and not soma.obs.has_attr_names(
+                obs_attr_names
+            ):
+                continue
+            # E.g. querying for 'feature_name == "MT-CO3"' but this SOMA doesn't have a feature_name
+            # column in its var at all.
+            if var_query_string is not None and not soma.var.has_attr_names(
+                var_attr_names
+            ):
+                continue
+
+            soma_slice = soma.query(
+                obs_query_string=obs_query_string,
+                var_query_string=var_query_string,
+                obs_ids=obs_ids,
+                var_ids=var_ids,
+            )
+            if soma_slice != None:
+                # print("Slice SOMA from", soma.name, soma.X.data.shape(), "to", soma_slice.ann.X.shape)
+                soma_slices.append(soma_slice)
+
+        return SOMASlice.concat(soma_slices)
+
+    # ----------------------------------------------------------------
+    def find_unique_obs_values(self, obs_label: str):
+        """
+        Given an `obs` label such as `cell_type` or `tissue`, returns a list of unique values for
+        that label among all SOMAs in the collection.
+        """
+        return self._find_unique_obs_or_var_values(obs_label, True)
+
+    def find_unique_var_values(self, var_label: str):
+        """
+        Given an `var` label such as `feature_name`, returns a list of unique values for
+        that label among all SOMAs in the collection.
+        """
+        return self._find_unique_obs_or_var_values(var_label, False)
+
+    def _find_unique_obs_or_var_values(self, obs_or_var_label: str, use_obs: bool):
+        """
+        Helper method for `find_unique_obs_values` and `find_unique_var_values`.
+        """
+        unique_values_in_soco = set()
+
+        for soma in self:
+            annotation_matrix = soma.obs if use_obs else soma.var
+            if not obs_or_var_label in annotation_matrix.keys():
+                continue
+
+            unique_values_in_soma = list(set(annotation_matrix.df()[obs_or_var_label]))
+
+            unique_values_in_soco = unique_values_in_soco.union(unique_values_in_soma)
+
+        return unique_values_in_soco

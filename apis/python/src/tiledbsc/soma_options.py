@@ -28,7 +28,7 @@ class SOMAOptions:
         X_cell_order="row-major",
         string_dim_zstd_level=22,  # https://github.com/single-cell-data/TileDB-SingleCell/issues/27
         write_X_chunked=True,
-        goal_chunk_nnz=100000000,
+        goal_chunk_nnz=20_000_000,
         member_uris_are_relative=None,  # Allows relocatability for local disk / S3, and correct behavior for TileDB Cloud
     ):
         self.obs_extent = obs_extent

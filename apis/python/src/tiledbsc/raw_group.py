@@ -72,13 +72,16 @@ class RawGroup(TileDBGroup):
             print(f"{self._indent}START  WRITING {self.uri}")
 
         # Must be done first, to create the parent directory
-        self._create()
+        self.create_unless_exists()
 
         self.var.from_dataframe(dataframe=anndata.raw.var, extent=2048)
         self._add_object(self.var)
 
-        self.X.from_matrix_and_dim_values(
-            anndata.raw.X, anndata.obs.index, anndata.raw.var.index
+        self.X.add_layer_from_matrix_and_dim_values(
+            matrix=anndata.raw.X,
+            row_names=anndata.obs.index,
+            col_names=anndata.raw.var.index,
+            layer_name="data",
         )
         self._add_object(self.X)
 
@@ -95,7 +98,7 @@ class RawGroup(TileDBGroup):
         The `obs_labels` must be from the parent object.
         """
 
-        var_df = self.var.to_dataframe()
+        var_df = self.var.df()
         X_mat = self.X["data"].to_csr_matrix(obs_labels, var_df.index)
         varm = self.varm.to_dict_of_csr()
 

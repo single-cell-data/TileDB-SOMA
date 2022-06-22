@@ -46,5 +46,6 @@ examples/cmake_project/build
 # Python distribution / packaging
 .eggs
 *.egg-info
+apis/python/src/tiledbsc/_version.py
 
 /.quarto/

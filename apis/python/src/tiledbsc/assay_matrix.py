@@ -80,7 +80,7 @@ class AssayMatrix(TileDBArray):
             return (num_rows, num_cols)
 
     # ----------------------------------------------------------------
-    def dim_select(self, obs_ids, var_ids):
+    def dim_select(self, obs_ids, var_ids) -> pd.DataFrame:
         """
         Selects a slice out of the matrix with specified `obs_ids` and/or `var_ids`.
         Either or both of the ID lists may be `None`, meaning, do not subselect along
@@ -109,15 +109,63 @@ class AssayMatrix(TileDBArray):
         return self.dim_select(obs_ids, var_ids)
 
     # ----------------------------------------------------------------
+    def csr(self, obs_ids=None, var_ids=None) -> scipy.sparse.csr_matrix:
+        """
+        Like `.df()` but returns results in `scipy.sparse.csr_matrix` format.
+        """
+        return self._csr_or_csc("csr", obs_ids, var_ids)
+
+    def csc(self, obs_ids=None, var_ids=None) -> scipy.sparse.csc_matrix:
+        """
+        Like `.df()` but returns results in `scipy.sparse.csc_matrix` format.
+        """
+        return self._csr_or_csc("csc", obs_ids, var_ids)
+
+    def _csr_or_csc(self, which: str, obs_ids=None, var_ids=None):
+        """
+        Helper method for `csr` and `csc`.
+        """
+        assert which in ("csr", "csc")
+        df = self.dim_select(obs_ids, var_ids)
+        if obs_ids is None:
+            obs_ids = self.row_dataframe.ids()
+        if var_ids is None:
+            var_ids = self.col_dataframe.ids()
+        return util.X_and_ids_to_sparse_matrix(
+            df,
+            self.row_dim_name,
+            self.col_dim_name,
+            self.attr_name,
+            obs_ids,
+            var_ids,
+            which,
+        )
+
+    # ----------------------------------------------------------------
     def from_matrix_and_dim_values(self, matrix, row_names, col_names) -> None:
         """
         Imports a matrix -- nominally `scipy.sparse.csr_matrix` or `numpy.ndarray` -- into a TileDB
         array which is used for `X`, `raw.X`, `obsp` members, and `varp` members.
+
+        The `row_names` and `col_names` are row and column labels for the matrix; the matrix may be
+        `scipy.sparse.csr_matrix`, `scipy.sparse.csc_matrix`, `numpy.ndarray`, etc.
+        For ingest from `AnnData`, these should be `ann.obs_names` and `ann.var_names`.
         """
 
         if self._verbose:
             s = util.get_start_stamp()
             print(f"{self._indent}START  WRITING {self.uri}")
+
+        assert len(row_names) == matrix.shape[0]
+        assert len(col_names) == matrix.shape[1]
+
+        # Following Pythonic practice, the row_names and col_names can be all manner of things:
+        # pandas.core.indexes.base.Index, numpy.ndarray, list of string, etc. However, we do have
+        # one requirement: that they be addressable via multi-index like `row_names[[0,1,2]]`.
+        if isinstance(row_names, list):
+            row_names = np.asarray(row_names)
+        if isinstance(col_names, list):
+            col_names = np.asarray(col_names)
 
         if self.exists():
             if self._verbose:
@@ -125,7 +173,7 @@ class AssayMatrix(TileDBArray):
         else:
             self._create_empty_array(matrix_dtype=matrix.dtype)
 
-        self._set_soma_object_type_metadata()
+        self._set_object_type_metadata()
 
         self._ingest_data(matrix, row_names, col_names)
         if self._verbose:
@@ -291,6 +339,7 @@ class AssayMatrix(TileDBArray):
                 d1 = col_names[chunk_coo.col]
 
                 if len(d0) == 0:
+                    i = i2
                     continue
 
                 # Python ranges are (lo, hi) with lo inclusive and hi exclusive. But saying that
@@ -387,6 +436,7 @@ class AssayMatrix(TileDBArray):
                 d1 = sorted_col_names[chunk_coo.col + j]
 
                 if len(d1) == 0:
+                    j = j2
                     continue
 
                 # Python ranges are (lo, hi) with lo inclusive and hi exclusive. But saying that
@@ -487,6 +537,7 @@ class AssayMatrix(TileDBArray):
                 d1 = col_names[chunk_coo.col]
 
                 if len(d0) == 0:
+                    i = i2
                     continue
 
                 # Python ranges are (lo, hi) with lo inclusive and hi exclusive. But saying that
@@ -546,23 +597,9 @@ class AssayMatrix(TileDBArray):
             s = util.get_start_stamp()
             print(f"{self._indent}START  read {self.uri}")
 
-        # Since the TileDB array is sparse, with two string dimensions, we get back a dict:
-        # * 'obs_id' key is a sequence of dim0 coordinates for X data.
-        # * 'var_id' key is a sequence of dim1 coordinates for X data.
-        # * 'values' key is a sequence of X data values.
-        with tiledb.open(self.uri, ctx=self._ctx) as A:
-            df = A[:]
-
-        retval = util._X_and_ids_to_coo(
-            df,
-            self.row_dim_name,
-            self.col_dim_name,
-            self.attr_name,
-            row_labels,
-            col_labels,
-        )
+        csr = self.csr()
 
         if self._verbose:
             print(util.format_elapsed(s, f"{self._indent}FINISH read {self.uri}"))
 
-        return retval
+        return csr

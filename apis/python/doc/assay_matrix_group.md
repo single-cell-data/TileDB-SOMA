@@ -86,12 +86,15 @@ def __contains__(name)
 
 Implements the `in` operator, e.g. `"data" in soma.X`.
 
-<a id="tiledbsc.assay_matrix_group.AssayMatrixGroup.from_matrix_and_dim_values"></a>
+<a id="tiledbsc.assay_matrix_group.AssayMatrixGroup.add_layer_from_matrix_and_dim_values"></a>
 
-#### from\_matrix\_and\_dim\_values
+#### add\_layer\_from\_matrix\_and\_dim\_values
 
 ```python
-def from_matrix_and_dim_values(matrix, row_names, col_names) -> None
+def add_layer_from_matrix_and_dim_values(matrix,
+                                         row_names: str,
+                                         col_names: str,
+                                         layer_name="data") -> None
 ```
 
 Populates the `X` or `raw.X` subgroup for a `SOMA` object.  For `X` and `raw.X`, nominally `row_names` will be `anndata.obs_names` and `col_names` will be `anndata.var_names` or `anndata.raw.var_names`.  For `obsp` elements, both will be `anndata.obs_names`; for `varp elements, both will be `anndata.var_names`.

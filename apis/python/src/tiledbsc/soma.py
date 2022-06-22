@@ -1,5 +1,5 @@
 import os
-from typing import Optional, Union, Dict
+from typing import Optional, Union, List, Dict
 
 import anndata as ad
 import numpy as np
@@ -13,6 +13,7 @@ from tiledbsc import util
 from tiledbsc import util_ann
 
 from .soma_options import SOMAOptions
+from .soma_slice import SOMASlice
 from .tiledb_group import TileDBGroup
 from .assay_matrix_group import AssayMatrixGroup
 from .annotation_dataframe import AnnotationDataFrame
@@ -84,9 +85,9 @@ class SOMA(TileDBGroup):
             ctx=ctx,
         )
 
-        X_uri = os.path.join(self.uri, "X")
         obs_uri = os.path.join(self.uri, "obs")
         var_uri = os.path.join(self.uri, "var")
+        X_uri = os.path.join(self.uri, "X")
         obsm_uri = os.path.join(self.uri, "obsm")
         varm_uri = os.path.join(self.uri, "varm")
         obsp_uri = os.path.join(self.uri, "obsp")
@@ -174,3 +175,207 @@ class SOMA(TileDBGroup):
         An alias for `soma.var.ids()`.
         """
         return self.var.ids()
+
+    # ----------------------------------------------------------------
+    def cell_count(self) -> int:
+        """
+        Returns the `obs_id` in `soma.obs`.
+        """
+        return len(self.obs.ids())
+
+    # ----------------------------------------------------------------
+    def get_obs_value_counts(self, obs_label: str) -> pd.DataFrame:
+        """
+        Given an obs label, e.g. `cell_type`, returns a dataframe count the number of different
+        values for that label in the SOMA.
+        """
+        return self._get_obs_or_var_value_counts(obs_label, True)
+
+    def get_var_value_counts(self, var_label: str) -> pd.DataFrame:
+        """
+        Given an var label, e.g. `feature_name`, returns a dataframe count the number of different
+        values for that label in the SOMA.
+        """
+        return self._get_obs_or_var_value_counts(var_label, False)
+
+    def _get_obs_or_var_value_counts(
+        self, obs_or_var_label: str, use_obs: True
+    ) -> pd.DataFrame:
+        """
+        Supporting method for `get_obs_value_counts` and `get_var_value_counts`.
+        """
+
+        attrs = [obs_or_var_label]
+        obs_or_var = self.obs.df(attrs=attrs) if use_obs else self.var.df(attrs=attrs)
+        if not obs_or_var_label in obs_or_var:
+            return
+
+        counts = {}
+        obs_label_values = list(obs_or_var[obs_or_var_label])
+        for obs_label_value in obs_label_values:
+            if obs_label_value in counts:
+                counts[obs_label_value] += 1
+            else:
+                counts[obs_label_value] = 1
+
+        name_column = []
+        counts_column = []
+        for k, v in dict(
+            sorted(counts.items(), reverse=True, key=lambda item: item[1])
+        ).items():
+            name_column.append(k)
+            counts_column.append(v)
+
+        df = pd.DataFrame.from_dict({"name": name_column, "count": counts_column})
+        df.set_index("name", inplace=True)
+        return df
+
+    # ----------------------------------------------------------------
+    def dim_slice(self, obs_ids, var_ids) -> Dict:
+        """
+        Subselects the SOMA's obs, var, and X/data using the specified obs_ids and var_ids.
+        Using a value of `None` for obs_ids means use all obs_ids, and likewise for var_ids.
+        Returns `None` for empty slice.
+        """
+
+        assert obs_ids != None or var_ids != None
+
+        if obs_ids is None:
+            # Try the var slice first to see if that produces zero results -- if so we don't need to
+            # load the obs.
+            slice_var_df = self.var.dim_select(var_ids)
+            if slice_var_df.shape[0] == 0:
+                return None
+            slice_obs_df = self.obs.dim_select(obs_ids)
+            if slice_obs_df.shape[0] == 0:
+                return None
+
+        elif var_ids is None:
+            # Try the obs slice first to see if that produces zero results -- if so we don't need to
+            # load the var.
+            slice_obs_df = self.obs.dim_select(obs_ids)
+            if slice_obs_df.shape[0] == 0:
+                return None
+            slice_var_df = self.var.dim_select(var_ids)
+            if slice_var_df.shape[0] == 0:
+                return None
+
+        else:
+            slice_obs_df = self.obs.dim_select(obs_ids)
+            if slice_obs_df.shape[0] == 0:
+                return None
+            slice_var_df = self.var.dim_select(var_ids)
+            if slice_var_df.shape[0] == 0:
+                return None
+
+        # TODO:
+        # do this here:
+        # * raw_var
+        # do these in _assemble_soma_slice:
+        # * raw_X
+        # * obsm
+        # * varm
+        # * obsp
+        # * varp
+
+        return self._assemble_soma_slice(obs_ids, var_ids, slice_obs_df, slice_var_df)
+
+    # ----------------------------------------------------------------
+    def query(
+        self,
+        obs_query_string: Optional[str] = None,
+        var_query_string: Optional[str] = None,
+        obs_ids: Optional[List[str]] = None,
+        var_ids: Optional[List[str]] = None,
+    ) -> SOMASlice:
+        """
+        Subselects the SOMA's obs, var, and X/data using the specified queries on obs and var.
+        Queries use the TileDB-Py `QueryCondition` API. If `obs_query_string` is `None`,
+        the `obs` dimension is not filtered and all of `obs` is used; similiarly for `var`.
+        """
+
+        slice_obs_df = self.obs.query(query_string=obs_query_string, ids=obs_ids)
+        # E.g. querying for 'cell_type == "blood"' and this SOMA does have a cell_type column in its
+        # obs, but no rows with cell_type == "blood".
+        if slice_obs_df is None:
+            return None
+        obs_ids = list(slice_obs_df.index)
+
+        slice_var_df = self.var.query(query_string=var_query_string, ids=var_ids)
+        # E.g. querying for 'feature_name == "MT-CO3"' and this SOMA does have a feature_name column
+        # in its var, but no rows with feature_name == "MT-CO3".
+        if slice_var_df is None:
+            return None
+        var_ids = list(slice_var_df.index)
+
+        # TODO:
+        # do this here:
+        # * raw_var
+        # do these in _assemble_soma_slice:
+        # * raw_X
+        # * obsm
+        # * varm
+        # * obsp
+        # * varp
+
+        return self._assemble_soma_slice(obs_ids, var_ids, slice_obs_df, slice_var_df)
+
+    # ----------------------------------------------------------------
+    def _assemble_soma_slice(
+        self,
+        obs_ids,
+        var_ids,
+        slice_obs_df,
+        slice_var_df,
+    ) -> SOMASlice:
+        """
+        An internal method for constructing a `SOMASlice` object given query results.
+        """
+
+        X = {key: self.X[key].dim_select(obs_ids, var_ids) for key in self.X.keys()}
+
+        return SOMASlice(
+            X=X,
+            obs=slice_obs_df,
+            var=slice_var_df,
+        )
+
+    # ----------------------------------------------------------------
+    @classmethod
+    def from_soma_slice(
+        cls,
+        soma_slice: SOMASlice,
+        uri: str,
+        name=None,
+        soma_options: Optional[SOMAOptions] = None,
+        verbose: Optional[bool] = True,
+        config: Optional[tiledb.Config] = None,
+        ctx: Optional[tiledb.Ctx] = None,
+        parent: Optional[TileDBGroup] = None,  # E.g. a SOMA collection
+    ):
+        """
+        Constructs `SOMA` storage from a given in-memory `SOMASlice` object.
+        """
+
+        soma = cls(
+            uri=uri,
+            name=name,
+            soma_options=soma_options,
+            verbose=verbose,
+            config=config,
+            ctx=ctx,
+            parent=parent,
+        )
+
+        soma.create_unless_exists()
+        soma.obs.from_dataframe(soma_slice.obs)
+        soma.var.from_dataframe(soma_slice.var)
+        for name in soma_slice.X.keys():
+            soma.X.add_layer_from_matrix_and_dim_values(
+                soma_slice.X[name],
+                soma.obs.ids(),
+                soma.var.ids(),
+                layer_name=name,
+            )
+
+        return soma

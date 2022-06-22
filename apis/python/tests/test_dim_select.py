@@ -1,7 +1,9 @@
-import anndata
-import tiledb
 import tiledbsc
 import tiledbsc.io
+import tiledb
+import anndata
+import pandas as pd
+import numpy as np
 
 import pytest
 import tempfile
@@ -167,5 +169,87 @@ def test_dim_select(adata):
     assert soma.X["data"].dim_select(None, [b"AKR1C3"]).shape == (80, 1)
     assert soma.X["data"].dim_select([b"AAGCGACTTTGACG"], None).shape == (20, 1)
     assert soma.X["data"].dim_select(None, None).shape == (1600, 1)
+
+    tempdir.cleanup()
+
+
+def test_zeroes_handling():
+
+    # Populate data
+
+    obs_ids = [
+        "AAATTCGAATCACG",
+        "AATGTTGACAGTCA",
+        "AGAGATGATCTCGC",
+        "CATGGCCTGTGCAT",
+        "CCCAACTGCAATCG",
+        "CTAACGGAACCGAT",
+        "GAACCTGATGAACC",
+        "GCGTAAACACGGTT",
+        "TTACCATGAATCGC",
+        "TTACGTACGTTCAG",
+    ]
+
+    var_ids = [
+        "AKR1C3",
+        "CA2",
+        "CD1C",
+        "GNLY",
+        "HLA-DPB1",
+        "HLA-DQA1",
+        "IGLL5",
+        "MYL9",
+        "PARVB",
+        "PF4",
+        "PGRMC1",
+        "PPBP",
+        "RP11-290F20.3",
+        "S100A9",
+        "SDPR",
+        "TREML1",
+    ]
+
+    n_obs = len(obs_ids)
+    n_var = len(var_ids)
+
+    cell_types = ["blööd" if obs_id[1] == "A" else "lung" for obs_id in obs_ids]
+    feature_names = [
+        "ENSG00000999999" if var_id[1] < "M" else "ENSG00000123456"
+        for var_id in var_ids
+    ]
+
+    # AnnData requires string indices for obs/var
+    obs = pd.DataFrame(
+        data={
+            "obs_id": np.asarray(obs_ids),
+            "cell_type": np.asarray(cell_types),
+        },
+        index=np.arange(n_obs).astype(str),
+    )
+    obs.set_index("obs_id", inplace=True)
+    var = pd.DataFrame(
+        data={
+            "var_id": np.asarray(var_ids),
+            "feature_name": np.asarray(feature_names),
+        },
+        index=np.arange(n_var).astype(str),
+    )
+    var.set_index("var_id", inplace=True)
+
+    X = np.zeros((n_obs, n_var))
+    X[0, 0] = 1
+
+    ann = anndata.AnnData(X=X, obs=obs, var=var, dtype=X.dtype)
+
+    # Write SOMA
+    tempdir = tempfile.TemporaryDirectory()
+    soma_path = tempdir.name
+    soma = tiledbsc.SOMA(soma_path)
+    tiledbsc.io.from_anndata(soma, ann)
+
+    assert soma.obs.df().shape == (10, 1)
+    assert soma.var.df().shape == (16, 1)
+    assert soma.X.data.df().shape == (1, 1)  # sparse representation -- IJV triples
+    assert soma.X.data.csr().shape == (10, 16)
 
     tempdir.cleanup()

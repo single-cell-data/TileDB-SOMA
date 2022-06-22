@@ -63,26 +63,43 @@ class TileDBGroup(TileDBObject):
             print(f"{self._indent}Creating TileDB group {self.uri}")
         tiledb.group_create(uri=self.uri, ctx=self._ctx)
 
-        self._set_soma_object_type_metadata()
+        self._set_object_type_metadata()
 
-    def _set_soma_object_type_metadata(self):
+    def create_unless_exists(self):
+        """
+        Creates the TileDB group data structure on disk/S3/cloud, unless it already exists.
+        """
+        if not self.exists():
+            self._create()
+
+    def _set_object_type_metadata(self):
         """
         This helps nested-structured traversals (especially those that start at the SOMACollection
         level) confidently navigate with a minimum of introspection on group contents.
         """
         with self._open("w") as G:
             G.meta[
-                tiledbsc.util_tiledb.SOMA_OBJECT_TYPE_METADATA_KEY
+                tiledbsc.util.SOMA_OBJECT_TYPE_METADATA_KEY
             ] = self.__class__.__name__
+            G.meta[
+                tiledbsc.util.SOMA_ENCODING_VERSION_METADATA_KEY
+            ] = tiledbsc.util.SOMA_ENCODING_VERSION
 
-    def _set_soma_object_type_metadata_recursively(self):
+    def get_object_type(self) -> str:
+        """
+        Returns the class name associated with the group.
+        """
+        with self._open("r") as G:
+            return G.meta[tiledbsc.util_tiledb.SOMA_OBJECT_TYPE_METADATA_KEY]
+
+    def _set_object_type_metadata_recursively(self):
         """
         SOMAs/SOCOs written very early on in the development of this project may not have these set.
         Using this method we can after-populate these, without needig to re-ingest entire datasets.
         Any SOMAs/SOCOs ingested from June 2022 onward won't need this -- this metadata will be
         written at ingestion time.
         """
-        self._set_soma_object_type_metadata()
+        self._set_object_type_metadata()
         with self._open() as G:
             for O in G:  # This returns a tiledb.object.Object
                 # It might appear simpler to have all this code within TileDBObject class,
@@ -92,10 +109,10 @@ class TileDBGroup(TileDBObject):
                 object_type = tiledb.object_type(O.uri, ctx=self._ctx)
                 if object_type == "group":
                     group = TileDBGroup(uri=O.uri, name=O.name, parent=self)
-                    group._set_soma_object_type_metadata_recursively()
+                    group._set_object_type_metadata_recursively()
                 elif object_type == "array":
                     array = TileDBArray(uri=O.uri, name=O.name, parent=self)
-                    array._set_soma_object_type_metadata()
+                    array._set_object_type_metadata()
                 else:
                     raise Exception(
                         f"Unexpected object_type found: {object_type} at {O.uri}"
@@ -122,7 +139,9 @@ class TileDBGroup(TileDBObject):
         * If `False` then the group will have the absolute path of the member. For populating matrix
         elements within a SOMA in TileDB cloud, this is necessary. For populating SOMA elements within
         a SOMACollection on local disk, this can be useful if you want to be able to move the SOMACollection
-        storage around and have it remember the (unmoved) locations of SOMA objects elsewhere.
+        storage around and have it remember the (unmoved) locations of SOMA objects elsewhere, i.e.
+        if the SOMACollectio is in one place while its members are in other places. If the SOMAs
+        in the collection are contained within the SOMACollection directory, you probably want `relative=True`.
 
         * If `True` then the group will have the relative path of the member. For TileDB Cloud, this
         is never the right thing to do. For local-disk storage, this is essential if you want to move
@@ -131,8 +150,7 @@ class TileDBGroup(TileDBObject):
         * If `None`, then we select `relative=False` if the URI starts with `tiledb://`, else we
         select `relative=True`. This is the default.
         """
-        if not self.exists():
-            self._create()
+        self.create_unless_exists()
         relative = self._soma_options.member_uris_are_relative
         child_uri = obj.uri
         if relative is None:

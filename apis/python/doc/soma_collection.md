@@ -33,6 +33,16 @@ Create a new `SOMACollection` object. The existing group is opened at the specif
 - `uri`: URI of the TileDB group
 - `verbose`: Print status messages
 
+<a id="tiledbsc.soma_collection.SOMACollection.__len__"></a>
+
+#### \_\_len\_\_
+
+```python
+def __len__() -> int
+```
+
+Implements `len(soco)`. Returns the number of elements in the collection.
+
 <a id="tiledbsc.soma_collection.SOMACollection.add"></a>
 
 #### add
@@ -52,6 +62,16 @@ def remove(soma: SOMA) -> None
 ```
 
 Removes a `SOMA` from the `SOMACollection`.
+
+<a id="tiledbsc.soma_collection.SOMACollection.keys"></a>
+
+#### keys
+
+```python
+def keys() -> None
+```
+
+Returns the names of the SOMAs in the collection.
 
 <a id="tiledbsc.soma_collection.SOMACollection.__iter__"></a>
 
@@ -83,4 +103,57 @@ def __getitem__(name)
 
 Returns a `SOMA` element at the given name within the group, or `None` if no such
 member exists.  Overloads the `[...]` operator.
+
+<a id="tiledbsc.soma_collection.SOMACollection.cell_count"></a>
+
+#### cell\_count
+
+```python
+def cell_count() -> int
+```
+
+Returns sum of `soma.cell_count()` over SOMAs in the collection.
+
+<a id="tiledbsc.soma_collection.SOMACollection.query"></a>
+
+#### query
+
+```python
+def query(obs_attr_names: List[str] = [],
+          obs_query_string: str = None,
+          obs_ids: List[str] = None,
+          var_attr_names: List[str] = [],
+          var_query_string: str = None,
+          var_ids: List[str] = None) -> Optional[SOMASlice]
+```
+
+Subselects the obs, var, and X/data using the specified queries on obs and var,
+concatenating across SOMAs in the collection.  Queries use the TileDB-Py `QueryCondition`
+API. If `obs_query_string` is `None`, the `obs` dimension is not filtered and all of `obs`
+is used; similiarly for `var`. Return value of `None` indicates an empty slice.
+If `obs_ids` or `var_ids` are not `None`, they are effectively ANDed into the query.
+For example, you can pass in a known list of `obs_ids`, then use `obs_query_string`
+to further restrict the query.
+
+<a id="tiledbsc.soma_collection.SOMACollection.find_unique_obs_values"></a>
+
+#### find\_unique\_obs\_values
+
+```python
+def find_unique_obs_values(obs_label: str)
+```
+
+Given an `obs` label such as `cell_type` or `tissue`, returns a list of unique values for
+that label among all SOMAs in the collection.
+
+<a id="tiledbsc.soma_collection.SOMACollection.find_unique_var_values"></a>
+
+#### find\_unique\_var\_values
+
+```python
+def find_unique_var_values(var_label: str)
+```
+
+Given an `var` label such as `feature_name`, returns a list of unique values for
+that label among all SOMAs in the collection.
 

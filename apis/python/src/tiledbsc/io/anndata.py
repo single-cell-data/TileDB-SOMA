@@ -108,7 +108,7 @@ def from_anndata(soma: tiledbsc.SOMA, anndata: ad.AnnData) -> None:
         print(f"{soma._indent}START  WRITING {soma.uri}")
 
     # Must be done first, to create the parent directory
-    soma._create()
+    soma.create_unless_exists()
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     soma.obs.from_dataframe(dataframe=anndata.obs, extent=256)
@@ -118,7 +118,12 @@ def from_anndata(soma: tiledbsc.SOMA, anndata: ad.AnnData) -> None:
     soma._add_object(soma.var)
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-    soma.X.from_matrix_and_dim_values(anndata.X, anndata.obs.index, anndata.var.index)
+    soma.X.add_layer_from_matrix_and_dim_values(
+        matrix=anndata.X,
+        row_names=anndata.obs.index,
+        col_names=anndata.var.index,
+        layer_name="data",
+    )
     soma._add_object(soma.X)
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -241,8 +246,8 @@ def to_anndata(soma: tiledbsc.SOMA) -> ad.AnnData:
         s = tiledbsc.util.get_start_stamp()
         print(f"START  SOMA.to_anndata {soma.uri}")
 
-    obs_df = soma.obs.to_dataframe()
-    var_df = soma.var.to_dataframe()
+    obs_df = soma.obs.df()
+    var_df = soma.var.df()
 
     X_mat = soma.X["data"].to_csr_matrix(obs_df.index, var_df.index)
 
@@ -252,18 +257,19 @@ def to_anndata(soma: tiledbsc.SOMA) -> ad.AnnData:
     obsp = soma.obsp.to_dict_of_csr(obs_df.index, obs_df.index)
     varp = soma.varp.to_dict_of_csr(var_df.index, var_df.index)
 
-    (raw_X, raw_var_df, raw_varm) = soma.raw.to_anndata_raw(obs_df.index)
-
     anndata = ad.AnnData(
         X=X_mat, obs=obs_df, var=var_df, obsm=obsm, varm=varm, obsp=obsp, varp=varp
     )
 
-    raw = ad.Raw(
-        anndata,
-        X=raw_X,
-        var=raw_var_df,
-        varm=raw_varm,
-    )
+    raw = None
+    if soma.raw.exists():
+        (raw_X, raw_var_df, raw_varm) = soma.raw.to_anndata_raw(obs_df.index)
+        raw = ad.Raw(
+            anndata,
+            X=raw_X,
+            var=raw_var_df,
+            varm=raw_varm,
+        )
 
     uns = soma.uns.to_dict_of_matrices()
 
@@ -292,8 +298,8 @@ def to_anndata_from_raw(soma: tiledbsc.SOMA) -> ad.AnnData:
     Extract only the raw parts as a new AnnData object.
     """
 
-    obs_df = soma.obs.to_dataframe()
-    var_df = soma.raw.var.to_dataframe()
+    obs_df = soma.obs.df()
+    var_df = soma.raw.var.df()
     X_mat = soma.raw.X["data"].to_csr_matrix(obs.index, var.index)
 
     return ad.AnnData(

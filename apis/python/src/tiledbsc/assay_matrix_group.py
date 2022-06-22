@@ -85,6 +85,7 @@ class AssayMatrixGroup(TileDBGroup):
             retval.append(matrix)
         return iter(retval)
 
+    # ----------------------------------------------------------------
     # At the tiledb-py API level, *all* groups are name-indexable.  But here at the tiledbsc-py
     # level, we implement name-indexing only for some groups:
     #
@@ -130,6 +131,7 @@ class AssayMatrixGroup(TileDBGroup):
                 parent=self,
             )
 
+    # ----------------------------------------------------------------
     def __contains__(self, name):
         """
         Implements the `in` operator, e.g. `"data" in soma.X`.
@@ -138,25 +140,31 @@ class AssayMatrixGroup(TileDBGroup):
             return name in G
 
     # ----------------------------------------------------------------
-    def from_matrix_and_dim_values(self, matrix, row_names, col_names) -> None:
+    def add_layer_from_matrix_and_dim_values(
+        self,
+        matrix,
+        row_names: str,
+        col_names: str,
+        layer_name="data",
+    ) -> None:
         """
         Populates the `X` or `raw.X` subgroup for a `SOMA` object.  For `X` and `raw.X`, nominally `row_names` will be `anndata.obs_names` and `col_names` will be `anndata.var_names` or `anndata.raw.var_names`.  For `obsp` elements, both will be `anndata.obs_names`; for `varp elements, both will be `anndata.var_names`.
         """
 
         if matrix is not None:
             # Must be done first, to create the parent directory
-            self._create()
+            self.create_unless_exists()
 
-            assay_matrix_uri = os.path.join(self.uri, "data")
-            X_data = AssayMatrix(
+            assay_matrix_uri = os.path.join(self.uri, layer_name)
+            assay_matrix = AssayMatrix(
                 uri=assay_matrix_uri,
-                name="data",
+                name=layer_name,
                 row_dim_name=self.row_dim_name,
                 col_dim_name=self.col_dim_name,
                 row_dataframe=self.row_dataframe,
                 col_dataframe=self.col_dataframe,
                 parent=self,
             )
-            X_data.from_matrix_and_dim_values(matrix, row_names, col_names)
+            assay_matrix.from_matrix_and_dim_values(matrix, row_names, col_names)
 
-            self._add_object(X_data)
+            self._add_object(assay_matrix)
