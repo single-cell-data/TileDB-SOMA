@@ -1,18 +1,26 @@
 #!/usr/bin/env python
 
 """
+The following is an example of normalizaing multiple datasets into a SOMA collection. This is a
+simple example that assumes all source H5ADs comply with the [cellxgene 2.0
+schema](https://pypi.org/project/cellxgene-schema/), although you can modify this to conform
+with your own organization's schema.
+
+To keep the example simple, any data outside that schema are discarded.  The example peforms three
+steps:
+
+* Retains `obs` and `var` annotations specifically defined in the cellxgene 2.0 schema;
+* Discards transformed `X` values, and retains raw `X` counts.
+# Also creates a trivial `rankit` normalization of `X` values to demonstrate an additional `X` layer.
+
 Examples:
 
     python cartographer.py -v atlas2 add-h5ad data1.h5ad
     python cartographer.py -v atlas2 add-soma soma2
 
 Note: This code for populating an atlas is independent of querying an atlas.  See also
-
-* https://github.com/single-cell-data/TileDB-SingleCell/issues/113
-* https://github.com/single-cell-data/TileDB-SingleCell/issues
-* https://github.com/single-cell-data/TileDB-SingleCell/pulls
-
-Credit: @bkmartinjr
+[https://github.com/single-cell-data/TileDB-SingleCell](https://github.com/single-cell-data/TileDB-SingleCell)
+for query examples.
 """
 
 import sys
@@ -66,7 +74,9 @@ def main() -> int:
 
 # ----------------------------------------------------------------
 def _create_args_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description="Create a uni-modal SC atlas.")
+    parser = argparse.ArgumentParser(
+        description="Create a uni-modal single-cell atlas."
+    )
     parser.add_argument("atlas_uri", type=str, help="atlas (SOCO) URI (required)")
     parser.add_argument(
         "-v",
@@ -138,6 +148,7 @@ class Cartographer:
     atlas_uri: str
     verbose: bool
 
+    # You can adapt these to match your organization's schema
     OBS_COLUMNS = [
         "assay_ontology_term_id",
         "cell_type_ontology_term_id",
