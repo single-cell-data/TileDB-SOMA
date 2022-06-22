@@ -106,7 +106,7 @@ class TileDBArray(TileDBObject):
         attr_names_set = set(self.attr_names())
         return all([attr_name in attr_names_set for attr_name in attr_names])
 
-    def _set_soma_object_type_metadata(self) -> None:
+    def _set_object_type_metadata(self) -> None:
         """
         This helps nested-structured traversals (especially those that start at the SOMACollection
         level) confidently navigate with a minimum of introspection on group contents.
@@ -118,6 +118,13 @@ class TileDBArray(TileDBObject):
             A.meta[
                 tiledbsc.util.SOMA_ENCODING_VERSION_METADATA_KEY
             ] = tiledbsc.util.SOMA_ENCODING_VERSION
+
+    def get_object_type(self) -> str:
+        """
+        Returns the class name associated with the array.
+        """
+        with self._open("r") as A:
+            return A.meta[tiledbsc.util_tiledb.SOMA_OBJECT_TYPE_METADATA_KEY]
 
     def show_metadata(self, recursively=True, indent=""):
         """

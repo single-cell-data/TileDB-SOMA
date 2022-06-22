@@ -275,7 +275,7 @@ class AnnotationDataFrame(TileDBArray):
             mode=mode,
         )
 
-        self._set_soma_object_type_metadata()
+        self._set_object_type_metadata()
 
         if self._verbose:
             print(util.format_elapsed(s, f"{self._indent}FINISH WRITING {self.uri}"))
