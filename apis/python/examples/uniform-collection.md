@@ -1,21 +1,21 @@
-## Normalizing a SOMA collection
+## Creating a SOMA collection
 
-The [cartographer script](../examples/cartographer.py) shows an example of how to take a collection
-of H5AD files -- and/or already-ingested SOMAs -- and _normalize_ them into a uniform collection.
+The [uniformizer script](../examples/uniformizer.py) shows an example of how to take a collection
+of H5AD files -- and/or already-ingested SOMAs -- and make them into a uniform collection.
 
 This is an alternative to using the [ingestor](../tools/ingestor) script -- the ingestor script pulls in data as-is, while this
-cartographer does a strongly opinionated normalization. You might thinkof the cartographer script as a template for your own
-organization-specific opinionated normalization.
+uniformizer does a strongly opinionated normalization. You might thinkof the uniformizer script as a template for your own
+organization-specific opinionated uniformization.
 
 ```
-examples/cartographer.py -v /Users/testuser/mini-corpus/atlas add-h5ad file-01.h5ad
-examples/cartographer.py -v /Users/testuser/mini-corpus/atlas add-h5ad file-02.h5ad
+examples/uniformizer.py -v /Users/testuser/mini-corpus/atlas add-h5ad file-01.h5ad
+examples/uniformizer.py -v /Users/testuser/mini-corpus/atlas add-h5ad file-02.h5ad
 ...
 ```
 
 ```
-examples/cartographer.py -v /Users/testuser/mini-corpus/atlas add-soma soma-01
-examples/cartographer.py -v /Users/testuser/mini-corpus/atlas add-soma soma-02
+examples/uniformizer.py -v /Users/testuser/mini-corpus/atlas add-soma soma-01
+examples/uniformizer.py -v /Users/testuser/mini-corpus/atlas add-soma soma-02
 ...
 ```
 

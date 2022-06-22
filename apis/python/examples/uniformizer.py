@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 """
-The following is an example of normalizaing multiple datasets into a SOMA collection. This is a
+The following is an example of uniformizing multiple datasets into a SOMA collection. This is a
 simple example that assumes all source H5ADs comply with the [cellxgene 2.0
 schema](https://pypi.org/project/cellxgene-schema/), although you can modify this to conform
 with your own organization's schema.
@@ -15,8 +15,8 @@ steps:
 
 Examples:
 
-    python cartographer.py -v atlas2 add-h5ad data1.h5ad
-    python cartographer.py -v atlas2 add-soma soma2
+    python uniformizer.py -v atlas2 add-h5ad data1.h5ad
+    python uniformizer.py -v atlas2 add-soma soma2
 
 Note: This code for populating an atlas is independent of querying an atlas.  See also
 [https://github.com/single-cell-data/TileDB-SingleCell](https://github.com/single-cell-data/TileDB-SingleCell)
@@ -50,12 +50,12 @@ def main() -> int:
     if args.verbose:
         logging.basicConfig(level=logging.INFO)
 
-    cartographer = Cartographer(
+    uniformizer = Uniformizer(
         atlas_uri=args.atlas_uri,
         verbose=args.verbose,
     )
     if args.allow_non_primary_data:
-        cartographer._allow_non_primary_data = True
+        uniformizer._allow_non_primary_data = True
 
     if "func_name" not in args:
         logging.error("Error: unknown subcommand.")
@@ -63,9 +63,9 @@ def main() -> int:
         return 1
 
     if args.func_name == "add-h5ad":
-        return cartographer.add_h5ad(args.dataset_id, args.h5ad)
+        return uniformizer.add_h5ad(args.dataset_id, args.h5ad)
     elif args.func_name == "add-soma":
-        return cartographer.add_soma(args.dataset_id, args.soma)
+        return uniformizer.add_soma(args.dataset_id, args.soma)
     else:
         raise Exception(
             f'Internal coding error: handler for "{args.func_name}" not found.'
@@ -119,7 +119,7 @@ def _create_args_parser() -> argparse.ArgumentParser:
 
 
 # ================================================================
-class Cartographer:
+class Uniformizer:
     """
     Makes an atlas.
 
@@ -127,7 +127,7 @@ class Cartographer:
     H5AD files or SOMAs having certain required columns.
 
     * Use a SOMACollection for the top-level container (a.k.a. "atlas")
-    * Each SOMA in the container contains normalized data (i.e. they have a common schema)
+    * Each SOMA in the container contains uniformized data (i.e. they have a common schema)
 
     IMPORTANT CAVEAT: this implements a simplified (uni-modal) atlas -- both the schema and code
     lack multi-modal support. When added, there will be additional schema complexity, such as nested
@@ -249,11 +249,11 @@ class Cartographer:
         soco: SOMACollection,
     ):
         """
-        Cleans and normalizes the data (whether obtained from H5AD or SOMA), writes a new SOMA, adds an
+        Cleans and uniformizes the data (whether obtained from H5AD or SOMA), writes a new SOMA, adds an
         X/rankit layer, and adds the new SOMA to the SOMACollection.
         """
         logging.info("Cleaning data")
-        ann = self._clean_and_normalize(ann)
+        ann = self._clean_and_uniformize(ann)
 
         logging.info("Creating rankit")
         X_rankit = _rankit(ann.X)
@@ -279,7 +279,7 @@ class Cartographer:
         )
 
     # ----------------------------------------------------------------
-    def _clean_and_normalize(
+    def _clean_and_uniformize(
         self,
         original_ann: anndata.AnnData,
     ) -> anndata.AnnData:
