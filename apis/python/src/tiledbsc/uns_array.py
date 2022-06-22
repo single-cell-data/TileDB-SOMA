@@ -29,7 +29,7 @@ class UnsArray(TileDBArray):
         super().__init__(uri=uri, name=name, parent=parent)
 
     # ----------------------------------------------------------------
-    def from_pandas_dataframe(self, df: pd.DataFrame):
+    def from_pandas_dataframe(self, df: pd.DataFrame) -> None:
         """
         Ingests an `UnsArray` into TileDB storage, given a pandas.DataFrame.
         """
@@ -142,7 +142,7 @@ class UnsArray(TileDBArray):
     # ----------------------------------------------------------------
     def create_empty_array_for_csr(
         self, attr_name: str, matrix_dtype: np.dtype, nrows: int, ncols: int
-    ):
+    ) -> None:
         """
         Create a TileDB 2D sparse array with int dimensions and a single attribute.
         Nominally used for uns data.
@@ -190,7 +190,7 @@ class UnsArray(TileDBArray):
         tiledb.Array.create(self.uri, sch, ctx=self._ctx)
 
     # ----------------------------------------------------------------
-    def ingest_data_from_csr(self, csr: scipy.sparse.csr_matrix):
+    def ingest_data_from_csr(self, csr: scipy.sparse.csr_matrix) -> None:
         """
         Convert ndarray/(csr|csc)matrix to coo_matrix and ingest into TileDB.
 

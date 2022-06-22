@@ -26,7 +26,7 @@ class TileDBArray(TileDBObject):
         """
         super().__init__(uri=uri, name=name, parent=parent)
 
-    def _object_type(self):
+    def _object_type(self) -> str:
         """
         This should be implemented by child classes and should return what tiledb.object_type(uri)
         returns for objects of a given type -- nominally 'group' or 'array'.
@@ -126,7 +126,7 @@ class TileDBArray(TileDBObject):
         with self._open("r") as A:
             return A.meta[tiledbsc.util_tiledb.SOMA_OBJECT_TYPE_METADATA_KEY]
 
-    def show_metadata(self, recursively=True, indent=""):
+    def show_metadata(self, recursively=True, indent="") -> None:
         """
         Shows metadata for the array.
         """

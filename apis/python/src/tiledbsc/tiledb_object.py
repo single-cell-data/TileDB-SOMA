@@ -63,14 +63,14 @@ class TileDBObject:
             self._soma_options = SOMAOptions()
         # Null ctx is OK if that's what they wanted (e.g. not doing any TileDB-Cloud ops).
 
-    def _object_type(self):
+    def _object_type(self) -> str:
         """
         This should be implemented by child classes and should return what `tiledb.object_type(uri)`
         returns for objects of a given type -- nominally `"group"` or `"array"`.
         """
         raise Exception("This virtual method must be overridden by a child class.")
 
-    def exists(self):
+    def exists(self) -> bool:
         found = tiledb.object_type(self.uri, ctx=self._ctx)
         if found == None:
             return False

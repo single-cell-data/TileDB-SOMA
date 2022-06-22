@@ -33,7 +33,7 @@ class UnsGroup(TileDBGroup):
         super().__init__(uri=uri, name=name, parent=parent)
 
     # ----------------------------------------------------------------
-    def keys(self):
+    def keys(self) -> List[str]:
         """
         For uns, `.keys()` is a keystroke-saver for the more general group-member
         accessor `._get_member_names()`.
@@ -56,7 +56,7 @@ class UnsGroup(TileDBGroup):
     #   the `[]` operator separately in the various classes which need indexing. This is again to
     #   avoid circular-import issues, and means that [] on `AnnotationMatrixGroup` will return an
     #   `AnnotationMatrix, [] on `UnsGroup` will return `UnsArray` or `UnsGroup`, etc.
-    def __getitem__(self, name):
+    def __getitem__(self, name):  # Union[UnsGroup, UnsArray]
         """
         Returns an `UnsArray` or `UnsGroup` element at the given name within the group, or None if
         no such member exists.  Overloads the [...] operator.
@@ -79,7 +79,7 @@ class UnsGroup(TileDBGroup):
                 )
 
     # ----------------------------------------------------------------
-    def __contains__(self, name):
+    def __contains__(self, name) -> bool:
         """
         Implements '"namegoeshere" in soma.uns'.
         """
@@ -105,7 +105,7 @@ class UnsGroup(TileDBGroup):
         return iter(retval)
 
     # ----------------------------------------------------------------
-    def show(self, display_name="uns"):
+    def show(self, display_name="uns") -> None:
         """
         Recursively displays the uns data.
         """
@@ -142,7 +142,7 @@ class UnsGroup(TileDBGroup):
         # ['0' '100' '200' '300' '400' '500' '600' '700' '800' '900']
 
     # ----------------------------------------------------------------
-    def from_anndata_uns(self, uns: ad.compat.OverloadedDict):
+    def from_anndata_uns(self, uns: ad.compat.OverloadedDict) -> None:
         """
         Populates the uns group for the soma object.
 
