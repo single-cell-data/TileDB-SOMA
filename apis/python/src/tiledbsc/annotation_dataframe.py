@@ -133,7 +133,7 @@ class AnnotationDataFrame(TileDBArray):
         return self.dim_select(ids, attrs)
 
     # ----------------------------------------------------------------
-    def attribute_filter(self, query_string, ids=None, attrs=None):
+    def query(self, query_string, ids=None, attrs=None):
         """
         Selects from obs/var using a TileDB-Py `QueryCondition` string such as `cell_type ==
         "blood"`.  If `attrs` is `None`, returns all column names in the dataframe; use `[]` for

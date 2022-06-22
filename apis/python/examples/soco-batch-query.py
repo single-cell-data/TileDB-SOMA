@@ -25,7 +25,7 @@ means_column = []
 ctot_ids = soco.find_unique_obs_values("cell_type_ontology_term_id")
 n = len(ctot_ids)
 for i, ctot_id in enumerate(ctot_ids):
-    soma_slice = soco.attribute_filter(
+    soma_slice = soco.query(
         obs_attr_names=["cell_type_ontology_term_id"],
         obs_query_string=f'cell_type_ontology_term_id == "{ctot_id}"',
     )

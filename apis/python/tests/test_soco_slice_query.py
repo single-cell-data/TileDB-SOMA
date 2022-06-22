@@ -49,7 +49,7 @@ def test_soco_slice_query(tmp_path):
         if not soma.var.has_attr_names(var_attr_names):
             continue
 
-        soma_slice = soma.attribute_filter(
+        soma_slice = soma.query(
             obs_query_string=obs_query_string, var_query_string=var_query_string
         )
         if soma_slice != None:

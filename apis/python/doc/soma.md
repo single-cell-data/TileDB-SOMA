@@ -131,12 +131,12 @@ Subselects the SOMA's obs, var, and X/data using the specified obs_ids and var_i
 Using a value of `None` for obs_ids means use all obs_ids, and likewise for var_ids.
 Returns `None` for empty slice.
 
-<a id="tiledbsc.soma.SOMA.attribute_filter"></a>
+<a id="tiledbsc.soma.SOMA.query"></a>
 
 #### attribute\_filter
 
 ```python
-def attribute_filter(obs_query_string: Optional[str] = None,
+def query(obs_query_string: Optional[str] = None,
                      var_query_string: Optional[str] = None,
                      obs_ids: Optional[List[str]] = None,
                      var_ids: Optional[List[str]] = None) -> SOMASlice

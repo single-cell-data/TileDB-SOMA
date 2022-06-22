@@ -114,12 +114,12 @@ def cell_count() -> int
 
 Returns sum of `soma.cell_count()` over SOMAs in the collection.
 
-<a id="tiledbsc.soma_collection.SOMACollection.attribute_filter"></a>
+<a id="tiledbsc.soma_collection.SOMACollection.query"></a>
 
 #### attribute\_filter
 
 ```python
-def attribute_filter(obs_attr_names: List[str] = [],
+def query(obs_attr_names: List[str] = [],
                      obs_query_string: str = None,
                      obs_ids: List[str] = None,
                      var_attr_names: List[str] = [],

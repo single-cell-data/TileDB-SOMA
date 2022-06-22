@@ -135,7 +135,7 @@ class SOMACollection(TileDBGroup):
         return sum(soma.cell_count() for soma in self)
 
     # ----------------------------------------------------------------
-    def attribute_filter(
+    def query(
         self,
         obs_attr_names: List[str] = [],
         obs_query_string: str = None,
@@ -169,7 +169,7 @@ class SOMACollection(TileDBGroup):
             ):
                 continue
 
-            soma_slice = soma.attribute_filter(
+            soma_slice = soma.query(
                 obs_query_string=obs_query_string,
                 var_query_string=var_query_string,
                 obs_ids=obs_ids,

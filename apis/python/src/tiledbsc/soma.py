@@ -281,7 +281,7 @@ class SOMA(TileDBGroup):
         return self._assemble_soma_slice(obs_ids, var_ids, slice_obs_df, slice_var_df)
 
     # ----------------------------------------------------------------
-    def attribute_filter(
+    def query(
         self,
         obs_query_string: Optional[str] = None,
         var_query_string: Optional[str] = None,
@@ -294,18 +294,14 @@ class SOMA(TileDBGroup):
         the `obs` dimension is not filtered and all of `obs` is used; similiarly for `var`.
         """
 
-        slice_obs_df = self.obs.attribute_filter(
-            query_string=obs_query_string, ids=obs_ids
-        )
+        slice_obs_df = self.obs.query(query_string=obs_query_string, ids=obs_ids)
         # E.g. querying for 'cell_type == "blood"' and this SOMA does have a cell_type column in its
         # obs, but no rows with cell_type == "blood".
         if slice_obs_df is None:
             return None
         obs_ids = list(slice_obs_df.index)
 
-        slice_var_df = self.var.attribute_filter(
-            query_string=var_query_string, ids=var_ids
-        )
+        slice_var_df = self.var.query(query_string=var_query_string, ids=var_ids)
         # E.g. querying for 'feature_name == "MT-CO3"' and this SOMA does have a feature_name column
         # in its var, but no rows with feature_name == "MT-CO3".
         if slice_var_df is None:

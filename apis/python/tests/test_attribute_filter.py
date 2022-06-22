@@ -23,7 +23,7 @@ def adata(h5ad_file):
     return anndata.read_h5ad(h5ad_file)
 
 
-def test_attribute_filter(adata):
+def test_query(adata):
 
     # Set up anndata input path and tiledb-group output path
     tempdir = tempfile.TemporaryDirectory()
@@ -33,7 +33,7 @@ def test_attribute_filter(adata):
     soma = tiledbsc.SOMA(output_path, verbose=True)
     tiledbsc.io.from_anndata(soma, adata)
 
-    output = soma.obs.attribute_filter(
+    output = soma.obs.query(
         query_string="nCount_RNA > 10",
         attrs=["nCount_RNA", "orig.ident", "nFeature_RNA"],
     )
@@ -55,7 +55,7 @@ def test_attribute_filter(adata):
 
     # Note: attribute names with "." in them need to be written like 'attr("this.has.dots")' within
     # query-condition expressions.
-    output = soma.var.attribute_filter(
+    output = soma.var.query(
         query_string='attr("vst.mean") > 1',
         attrs=["vst.mean", "vst.variance", "vst.variable"],
     )
