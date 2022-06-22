@@ -32,7 +32,7 @@ for i, ctot_id in enumerate(ctot_ids):
     if soma_slice is None:
         continue
 
-    slice_means = soma_slice.X.mean(axis=0)
+    slice_means = soma_slice.X["data"].mean(axis=0)
     j = 0
     for var_id in soma_slice.var.index:
         value = slice_means[0, j]

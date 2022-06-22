@@ -116,15 +116,15 @@ Returns sum of `soma.cell_count()` over SOMAs in the collection.
 
 <a id="tiledbsc.soma_collection.SOMACollection.query"></a>
 
-#### attribute\_filter
+#### query
 
 ```python
 def query(obs_attr_names: List[str] = [],
-                     obs_query_string: str = None,
-                     obs_ids: List[str] = None,
-                     var_attr_names: List[str] = [],
-                     var_query_string: str = None,
-                     var_ids: List[str] = None) -> Optional[SOMASlice]
+          obs_query_string: str = None,
+          obs_ids: List[str] = None,
+          var_attr_names: List[str] = [],
+          var_query_string: str = None,
+          var_ids: List[str] = None) -> Optional[SOMASlice]
 ```
 
 Subselects the obs, var, and X/data using the specified queries on obs and var,

@@ -133,13 +133,13 @@ Returns `None` for empty slice.
 
 <a id="tiledbsc.soma.SOMA.query"></a>
 
-#### attribute\_filter
+#### query
 
 ```python
 def query(obs_query_string: Optional[str] = None,
-                     var_query_string: Optional[str] = None,
-                     obs_ids: Optional[List[str]] = None,
-                     var_ids: Optional[List[str]] = None) -> SOMASlice
+          var_query_string: Optional[str] = None,
+          obs_ids: Optional[List[str]] = None,
+          var_ids: Optional[List[str]] = None) -> SOMASlice
 ```
 
 Subselects the SOMA's obs, var, and X/data using the specified queries on obs and var.

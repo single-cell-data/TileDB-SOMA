@@ -91,7 +91,7 @@ they're used for the query; else, all attributes are returned.
 
 <a id="tiledbsc.annotation_dataframe.AnnotationDataFrame.query"></a>
 
-#### attribute\_filter
+#### query
 
 ```python
 def query(query_string, ids=None, attrs=None)
