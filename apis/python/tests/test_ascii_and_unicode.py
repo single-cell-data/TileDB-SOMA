@@ -75,10 +75,18 @@ def test_readback(tmp_path):
     io.from_anndata(soma, adata)
 
     assert (
-        len(soma.obs.attribute_filter('cell_type=="lung"', ["cell_type"])["cell_type"])
+        len(
+            soma.obs.query(query_string='cell_type=="lung"', attrs=["cell_type"])[
+                "cell_type"
+            ]
+        )
         == 6
     )
     assert (
-        len(soma.obs.attribute_filter('cell_type=="blööd"', ["cell_type"])["cell_type"])
+        len(
+            soma.obs.query(query_string='cell_type=="blööd"', attrs=["cell_type"])[
+                "cell_type"
+            ]
+        )
         == 4
     )

@@ -89,12 +89,12 @@ Keystroke-saving alias for `.dim_select()`. If `ids` are provided, they're used
 to subselect; if not, the entire dataframe is returned. If `attrs` are provided,
 they're used for the query; else, all attributes are returned.
 
-<a id="tiledbsc.annotation_dataframe.AnnotationDataFrame.attribute_filter"></a>
+<a id="tiledbsc.annotation_dataframe.AnnotationDataFrame.query"></a>
 
-#### attribute\_filter
+#### query
 
 ```python
-def attribute_filter(query_string, attrs=None)
+def query(query_string, ids=None, attrs=None)
 ```
 
 Selects from obs/var using a TileDB-Py `QueryCondition` string such as `cell_type ==
