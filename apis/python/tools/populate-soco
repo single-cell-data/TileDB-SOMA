@@ -26,13 +26,22 @@ def main():
         default="./soma-collection",
     )
     parser.add_argument(
-        "-a", "--add", help="Add specified SOMA URI(s) to the collection", action="store_true"
+        "-a",
+        "--add",
+        help="Add specified SOMA URI(s) to the collection",
+        action="store_true",
     )
     parser.add_argument(
-        "-r", "--remove", help="Remove specified SOMA URI(s) from the collection", action="store_true"
+        "-r",
+        "--remove",
+        help="Remove specified SOMA URI(s) from the collection",
+        action="store_true",
     )
     parser.add_argument(
-        "-l", "--list", help="List the SOMA URI(s) in the collection", action="store_true"
+        "-l",
+        "--list",
+        help="List the SOMA URI(s) in the collection",
+        action="store_true",
     )
     parser.add_argument(
         "paths", type=str, help="Paths to one or more SOMA directories.", nargs="*"
@@ -44,9 +53,12 @@ def main():
     soco = tiledbsc.SOMACollection(collection_path)
 
     count = 0
-    if args.add: count += 1
-    if args.remove: count += 1
-    if args.list: count += 1
+    if args.add:
+        count += 1
+    if args.remove:
+        count += 1
+    if args.list:
+        count += 1
     if count != 1:
         print(f"{os.path.basename(sys.argv[0])}: need just one of -a, -r, or -l.")
         sys.exit(1)
@@ -62,7 +74,7 @@ def main():
 
     if args.add:
         for soma_uri in args.paths:
-            soma_uri = soma_uri.rstrip('/')
+            soma_uri = soma_uri.rstrip("/")
             name = os.path.basename(soma_uri)
             soma = tiledbsc.SOMA(uri=soma_uri, name=name, parent=soco)
             print(f"Adding {name} to {soma_uri}")
@@ -70,7 +82,7 @@ def main():
 
     if args.remove:
         for soma_uri in args.paths:
-            soma_uri = soma_uri.rstrip('/')
+            soma_uri = soma_uri.rstrip("/")
             name = os.path.basename(soma_uri)
             soma = tiledbsc.SOMA(uri=soma_uri, name=name, parent=soco)
             print(f"Removing {name} from {soma_uri}")

@@ -6,7 +6,6 @@
 #
 # -- then you can inspect the soma object.
 
-import os
 import sys
 import time
 

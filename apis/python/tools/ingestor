@@ -50,12 +50,14 @@ def main():
         default="./tiledb-data",
     )
     parser.add_argument(
-        "--soco", help="Write the SOMA and also append to a SOMACollection there", action="store_true"
+        "--soco",
+        help="Write the SOMA and also append to a SOMACollection there",
+        action="store_true",
     )
     parser.add_argument(
-        "-r", "--relative",
-        help=
-"""
+        "-r",
+        "--relative",
+        help="""
 * If `false` then the group will remember the absolute paths of each member array/subgroup. For
 ingesting to TileDB Cloud, this is necessary.
 
@@ -96,11 +98,11 @@ select `relative=True`. (This is the default.)
     write_soco = args.soco
     verbose = not args.quiet
 
-    if args.relative == 'true':
+    if args.relative == "true":
         soma_options.relative_membership = True
-    elif args.relative == 'false':
+    elif args.relative == "false":
         soma_options.relative_membership = False
-    elif args.relative == 'auto':
+    elif args.relative == "auto":
         soma_options.relative_membership = None
     # No else -- we only allowed those three choices in the argument-parser.
 
@@ -115,23 +117,55 @@ select `relative=True`. (This is the default.)
             output_path = os.path.join(
                 outdir, os.path.splitext(os.path.basename(input_path))[0]
             )
-            ingest_one(input_path, output_path, args.ifexists[0], soma_options, write_soco, outdir, verbose)
+            ingest_one(
+                input_path,
+                output_path,
+                args.ifexists[0],
+                soma_options,
+                write_soco,
+                outdir,
+                verbose,
+            )
     else:
         if len(args.paths) == 0:
             input_path = "anndata/pbmc-small.h5ad"
             output_path = os.path.join(outdir, "pbmc-small")
-            ingest_one(input_path, output_path, args.ifexists[0], soma_options, write_soco, outdir, verbose)
+            ingest_one(
+                input_path,
+                output_path,
+                args.ifexists[0],
+                soma_options,
+                write_soco,
+                outdir,
+                verbose,
+            )
         elif len(args.paths) == 1:
             input_path = args.paths[0]
             # Example 'anndata/pbmc3k_processed.h5ad' -> 'tiledb-data/pbmc3k_processed'
             output_path = os.path.join(
                 outdir, os.path.splitext(os.path.basename(input_path))[0]
             )
-            ingest_one(input_path, output_path, args.ifexists[0], soma_options, write_soco, outdir, verbose)
+            ingest_one(
+                input_path,
+                output_path,
+                args.ifexists[0],
+                soma_options,
+                write_soco,
+                outdir,
+                verbose,
+            )
         elif len(args.paths) == 2:
             input_path = args.paths[0]
             output_path = args.paths[1]
-            ingest_one(input_path, output_path, args.ifexists[0], soma_options, write_soco, outdir, verbose)
+            ingest_one(
+                input_path,
+                output_path,
+                args.ifexists[0],
+                soma_options,
+                write_soco,
+                outdir,
+                verbose,
+            )
         else:
             parser.print_help(file=sys.stderr)
             sys.exit(1)
@@ -180,8 +214,12 @@ def ingest_one(
                 print(f"Already exists; aborting: {output_path}")
                 sys.exit(1)
             elif ifexists == "replace":
-                if output_path.startswith('s3://') or output_path.startswith('tiledb://'):
-                    raise("--ifexists replace currently only is compatible with local-disk paths")
+                if output_path.startswith("s3://") or output_path.startswith(
+                    "tiledb://"
+                ):
+                    raise (
+                        "--ifexists replace currently only is compatible with local-disk paths"
+                    )
                 print(f"Already exists; replacing: {output_path}")
                 shutil.rmtree(output_path)  # Overwrite
             else:
@@ -195,7 +233,9 @@ def ingest_one(
         print(f"Wrote {output_path}")
 
     if write_soco:
-        soco = tiledbsc.SOMACollection(soco_dir, soma_options=soma_options, verbose=verbose)
+        soco = tiledbsc.SOMACollection(
+            soco_dir, soma_options=soma_options, verbose=verbose
+        )
         soco.create_unless_exists()
         if not soco.exists():
             raise Exception(f"Could not create SOCO at {soco.uri}")
