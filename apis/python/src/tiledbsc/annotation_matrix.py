@@ -6,7 +6,7 @@ import tiledbsc.util as util
 
 import pandas as pd
 
-from typing import Optional, List
+from typing import Optional, List, Tuple
 
 
 class AnnotationMatrix(TileDBArray):
@@ -31,7 +31,7 @@ class AnnotationMatrix(TileDBArray):
         self.dim_name = dim_name
 
     # ----------------------------------------------------------------
-    def shape(self):
+    def shape(self) -> Tuple[int, int]:
         """
         Returns a tuple with the number of rows and number of columns of the `AnnotationMatrix`.
         The row-count is the number of obs_ids (for `obsm` elements) or the number of var_ids (for
@@ -64,7 +64,7 @@ class AnnotationMatrix(TileDBArray):
             return (num_rows, num_cols)
 
     # ----------------------------------------------------------------
-    def dim_select(self, ids):
+    def dim_select(self, ids) -> pd.DataFrame:
         """
         Selects a slice out of the array with specified `obs_ids` (for `obsm` elements) or
         `var_ids` (for `varm` elements).  If `ids` is `None`, the entire array is returned.
@@ -87,7 +87,7 @@ class AnnotationMatrix(TileDBArray):
         return self.dim_select(ids)
 
     # ----------------------------------------------------------------
-    def shape(self):
+    def shape(self) -> Tuple[int, int]:
         """
         Returns a tuple with the number of rows and number of columns of the `AnnotationMatrix`.
         The row-count is the number of obs_ids (for `obsm` elements) or the number of var_ids (for
@@ -103,7 +103,7 @@ class AnnotationMatrix(TileDBArray):
             return (num_rows, num_cols)
 
     # ----------------------------------------------------------------
-    def from_matrix_and_dim_values(self, matrix, dim_values):
+    def from_matrix_and_dim_values(self, matrix, dim_values) -> None:
         """
         Populates an array in the obsm/ or varm/ subgroup for a SOMA object.
 
@@ -126,7 +126,7 @@ class AnnotationMatrix(TileDBArray):
             print(util.format_elapsed(s, f"{self._indent}FINISH WRITING {self.uri}"))
 
     # ----------------------------------------------------------------
-    def _numpy_ndarray_or_scipy_sparse_csr_matrix(self, matrix, dim_values):
+    def _numpy_ndarray_or_scipy_sparse_csr_matrix(self, matrix, dim_values) -> None:
         # We do not have column names for anndata-provenance annotation matrices.
         # So, if say we're looking at anndata.obsm['X_pca'], we create column names
         # 'X_pca_1', 'X_pca_2', etc.
@@ -143,7 +143,7 @@ class AnnotationMatrix(TileDBArray):
         self._ingest_data(matrix, dim_values, attr_names)
 
     # ----------------------------------------------------------------
-    def _from_pandas_dataframe(self, df, dim_values):
+    def _from_pandas_dataframe(self, df, dim_values) -> None:
         (nrow, nattr) = df.shape
         attr_names = df.columns.values.tolist()
 
@@ -158,7 +158,7 @@ class AnnotationMatrix(TileDBArray):
             A[dim_values] = df.to_dict(orient="list")
 
     # ----------------------------------------------------------------
-    def _create_empty_array(self, matrix_dtypes, attr_names):
+    def _create_empty_array(self, matrix_dtypes, attr_names) -> None:
         """
         Create a TileDB 1D sparse array with string dimension and multiple attributes.
 
@@ -210,7 +210,7 @@ class AnnotationMatrix(TileDBArray):
         tiledb.Array.create(self.uri, sch, ctx=self._ctx)
 
     # ----------------------------------------------------------------
-    def _ingest_data(self, matrix, dim_values, col_names):
+    def _ingest_data(self, matrix, dim_values, col_names) -> None:
         """
         Convert ndarray/(csr|csc)matrix to a dataframe and ingest into TileDB.
 

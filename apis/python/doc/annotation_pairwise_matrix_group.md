@@ -35,7 +35,7 @@ See `AssayMatrix` for the rationale behind retaining references to the `row_data
 #### keys
 
 ```python
-def keys()
+def keys() -> List[str]
 ```
 
 For obsp and varp, `.keys()` is a keystroke-saver for the more general group-member
@@ -46,7 +46,7 @@ accessor `._get_member_names()`.
 #### \_\_getattr\_\_
 
 ```python
-def __getattr__(name)
+def __getattr__(name) -> AssayMatrix
 ```
 
 This is called on `soma.obsp.name` when `name` is not already an attribute.
@@ -67,7 +67,8 @@ Implements `for matrix in soma.obsp: ...` and `for matrix in soma.varp: ...`
 #### from\_matrices\_and\_dim\_values
 
 ```python
-def from_matrices_and_dim_values(annotation_pairwise_matrices, dim_values)
+def from_matrices_and_dim_values(annotation_pairwise_matrices,
+                                 dim_values) -> None
 ```
 
 Populates the `obsp` or `varp` subgroup for a SOMA object, then writes all the components
@@ -96,7 +97,7 @@ Member arrays are returned in sparse CSR format.
 #### \_\_getitem\_\_
 
 ```python
-def __getitem__(name)
+def __getitem__(name) -> AssayMatrix
 ```
 
 Returns an `AssayMatrix` element at the given name within the group, or `None` if no such
@@ -107,7 +108,7 @@ member exists.  Overloads the `[...]` operator.
 #### \_\_contains\_\_
 
 ```python
-def __contains__(name)
+def __contains__(name) -> bool
 ```
 
 Implements `"namegoeshere" in soma.obsp/soma.varp`.

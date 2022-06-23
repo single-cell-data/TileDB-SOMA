@@ -44,7 +44,7 @@ SOMA has been populated but doesn't have this member (e.g. not all SOMAs have a 
 #### create\_unless\_exists
 
 ```python
-def create_unless_exists()
+def create_unless_exists() -> None
 ```
 
 Creates the TileDB group data structure on disk/S3/cloud, unless it already exists.
@@ -64,7 +64,7 @@ Returns the class name associated with the group.
 #### show\_metadata
 
 ```python
-def show_metadata(recursively=True, indent="")
+def show_metadata(recursively=True, indent="") -> None
 ```
 
 Shows metadata for the group, recursively by default.

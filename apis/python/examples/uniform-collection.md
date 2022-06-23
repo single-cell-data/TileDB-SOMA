@@ -3,9 +3,9 @@
 The [uniformizer script](../examples/uniformizer.py) shows an example of how to take a collection
 of H5AD files -- and/or already-ingested SOMAs -- and make them into a uniform collection.
 
-This is an alternative to using the [ingestor](../tools/ingestor) script -- the ingestor script pulls in data as-is, while this
-uniformizer does a strongly opinionated normalization. You might thinkof the uniformizer script as a template for your own
-organization-specific opinionated uniformization.
+This is an alternative to using the [ingestor](../tools/ingestor) script -- the ingestor script
+pulls in data as-is, while this uniformizer is more strongly opinionated. You might think of this
+script as a template for your own organization-specific opinionated uniformization.
 
 ```
 examples/uniformizer.py -v /Users/testuser/mini-corpus/atlas add-h5ad file-01.h5ad

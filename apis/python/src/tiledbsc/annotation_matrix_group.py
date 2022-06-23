@@ -35,7 +35,7 @@ class AnnotationMatrixGroup(TileDBGroup):
         self.dim_name = "obs_id" if name == "obsm" else "var_id"
 
     # ----------------------------------------------------------------
-    def keys(self):
+    def keys(self) -> List[str]:
         """
         For `obsm` and `varm`, `.keys()` is a keystroke-saver for the more general group-member
         accessor `._get_member_names()`.
@@ -56,7 +56,7 @@ class AnnotationMatrixGroup(TileDBGroup):
         return iter(retval)
 
     # ----------------------------------------------------------------
-    def __getattr__(self, name):
+    def __getattr__(self, name) -> AnnotationMatrix:
         """
         This is called on `soma.obsm.name` when `name` is not already an attribute.
         This way you can do `soma.obsm.X_tsne` as an alias for `soma.obsm['X_tsne']`.
@@ -69,7 +69,7 @@ class AnnotationMatrixGroup(TileDBGroup):
         return self[name]
 
     # ----------------------------------------------------------------
-    def from_matrices_and_dim_values(self, annotation_matrices, dim_values):
+    def from_matrices_and_dim_values(self, annotation_matrices, dim_values) -> None:
         """
         Populates the `obsm` or `varm` subgroup for a SOMA object, then writes all the components
         arrays under that group.
@@ -152,7 +152,7 @@ class AnnotationMatrixGroup(TileDBGroup):
     #   the `[]` operator separately in the various classes which need indexing. This is again to
     #   avoid circular-import issues, and means that [] on `AnnotationMatrixGroup` will return an
     #   `AnnotationMatrix, [] on `UnsGroup` will return `UnsArray` or `UnsGroup`, etc.
-    def __getitem__(self, name):
+    def __getitem__(self, name) -> AnnotationMatrix:
         """
         Returns an `AnnotationMatrix` element at the given name within the group, or None if no such
         member exists.  Overloads the `[...]` operator.
@@ -174,7 +174,7 @@ class AnnotationMatrixGroup(TileDBGroup):
                 uri=obj.uri, name=name, dim_name=self.dim_name, parent=self
             )
 
-    def __contains__(self, name):
+    def __contains__(self, name) -> bool:
         """
         Implements the `in` operator, e.g. `"namegoeshere" in soma.obsm/soma.varm`.
         """

@@ -8,7 +8,7 @@ data from a collection which is far larger than fits in RAM.
 ## Do the batch query
 
 Using [soco-batch-query.py](soco-batch-query.py) (this takes a few minutes on a 2.2GB atlas and
-is amenable to paralleization) looping over the distinct values of `cell_type_ontology_term_id` in the collection:
+is amenable to parallelization) looping over the distinct values of `cell_type_ontology_term_id` in the collection:
 
 ```
 ...   0.00% done CL:1000449

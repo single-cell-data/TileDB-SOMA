@@ -28,9 +28,15 @@ class SOMA(TileDBGroup):
     Class for representing a group of TileDB groups/arrays that constitute an SOMA ('stack of matrices, annotated')
     which includes:
 
-    * `X` (`AssayMatrixGroup`): a group of one or more labeled 2D sparse arrays that share the same dimensions.
+    * `X` (group of `AssayMatrixGroup`): a group of one or more labeled 2D sparse arrays that share the same dimensions.
     * `obs` (`AnnotationDataframe`): 1D labeled array with column labels for `X`
     * `var` (`AnnotationDataframe`): 1D labeled array with row labels for `X`
+    * `obsm` (group of `AnnotationMatrix`): multi-attribute arrays keyed by IDs of `obs`
+    * `varm` (group of `AnnotationMatrix`): multi-attribute arrays keyed by IDs of `var`
+    * `obsp` (group of `AnnotationMatrix`): 2D arrays keyed by IDs of `obs`
+    * `varp` (group of `AnnotationMatrix`): 2D arrays keyed by IDs of `var`
+    * `raw`: contains raw versions of `X` and `varm`
+    * `uns`: nested, unstructured data
 
     Convenience accessors include:
 
@@ -163,14 +169,14 @@ class SOMA(TileDBGroup):
         )
 
     # ----------------------------------------------------------------
-    def obs_keys(self):
+    def obs_keys(self) -> List[str]:
         """
         An alias for `soma.obs.ids()`.
         """
         return self.obs.ids()
 
     # ----------------------------------------------------------------
-    def var_keys(self):
+    def var_keys(self) -> List[str]:
         """
         An alias for `soma.var.ids()`.
         """
@@ -352,7 +358,7 @@ class SOMA(TileDBGroup):
         config: Optional[tiledb.Config] = None,
         ctx: Optional[tiledb.Ctx] = None,
         parent: Optional[TileDBGroup] = None,  # E.g. a SOMA collection
-    ):
+    ) -> None:
         """
         Constructs `SOMA` storage from a given in-memory `SOMASlice` object.
         """

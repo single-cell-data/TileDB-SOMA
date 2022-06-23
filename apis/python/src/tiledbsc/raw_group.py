@@ -63,7 +63,7 @@ class RawGroup(TileDBGroup):
         )
 
     # ----------------------------------------------------------------
-    def from_anndata(self, anndata: ad.AnnData):
+    def from_anndata(self, anndata: ad.AnnData) -> None:
         """
         Writes `anndata.raw` to a TileDB group structure.
         """

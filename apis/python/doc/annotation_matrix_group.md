@@ -29,7 +29,7 @@ See the TileDBObject constructor.
 #### keys
 
 ```python
-def keys()
+def keys() -> List[str]
 ```
 
 For `obsm` and `varm`, `.keys()` is a keystroke-saver for the more general group-member
@@ -50,7 +50,7 @@ Implements `for matrix in soma.obsm: ...` and `for matrix in soma.varm: ...`
 #### \_\_getattr\_\_
 
 ```python
-def __getattr__(name)
+def __getattr__(name) -> AnnotationMatrix
 ```
 
 This is called on `soma.obsm.name` when `name` is not already an attribute.
@@ -61,7 +61,7 @@ This way you can do `soma.obsm.X_tsne` as an alias for `soma.obsm['X_tsne']`.
 #### from\_matrices\_and\_dim\_values
 
 ```python
-def from_matrices_and_dim_values(annotation_matrices, dim_values)
+def from_matrices_and_dim_values(annotation_matrices, dim_values) -> None
 ```
 
 Populates the `obsm` or `varm` subgroup for a SOMA object, then writes all the components
@@ -89,7 +89,7 @@ Member arrays are returned in sparse CSR format.
 #### \_\_getitem\_\_
 
 ```python
-def __getitem__(name)
+def __getitem__(name) -> AnnotationMatrix
 ```
 
 Returns an `AnnotationMatrix` element at the given name within the group, or None if no such
@@ -100,7 +100,7 @@ member exists.  Overloads the `[...]` operator.
 #### \_\_contains\_\_
 
 ```python
-def __contains__(name)
+def __contains__(name) -> bool
 ```
 
 Implements the `in` operator, e.g. `"namegoeshere" in soma.obsm/soma.varm`.

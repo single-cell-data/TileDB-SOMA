@@ -32,7 +32,7 @@ class AnnotationDataFrame(TileDBArray):
         self.dim_name = name + "_id"
 
     # ----------------------------------------------------------------
-    def shape(self):
+    def shape(self) -> Tuple[int, int]:
         """
         Returns a tuple with the number of rows and number of columns of the `AnnotationDataFrame`.
         The row-count is the number of obs_ids (for `obs`) or the number of var_ids (for `var`).
@@ -92,7 +92,7 @@ class AnnotationDataFrame(TileDBArray):
         return set(self.keys())
 
     # ----------------------------------------------------------------
-    def dim_select(self, ids, attrs=None):
+    def dim_select(self, ids, attrs=None) -> pd.DataFrame:
         """
         Selects a slice out of the dataframe with specified `obs_ids` (for `obs`) or `var_ids` (for
         `var`).  If `ids` is `None`, the entire dataframe is returned.  Similarly, if `attrs` are
@@ -133,7 +133,7 @@ class AnnotationDataFrame(TileDBArray):
         return self.dim_select(ids, attrs)
 
     # ----------------------------------------------------------------
-    def query(self, query_string, ids=None, attrs=None):
+    def query(self, query_string, ids=None, attrs=None) -> pd.DataFrame:
         """
         Selects from obs/var using a TileDB-Py `QueryCondition` string such as `cell_type ==
         "blood"`.  If `attrs` is `None`, returns all column names in the dataframe; use `[]` for
@@ -166,7 +166,7 @@ class AnnotationDataFrame(TileDBArray):
                 return self._ascii_to_unicode_dataframe_readback(slice_df)
 
     # ----------------------------------------------------------------
-    def _ascii_to_unicode_dataframe_readback(self, df):
+    def _ascii_to_unicode_dataframe_readback(self, df) -> pd.DataFrame:
         """
         Implements the 'decode on read' partof our logic as noted in `dim_select()`.
         """

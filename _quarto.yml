@@ -78,10 +78,10 @@ website:
               contents:
                 - href: "apis/python/doc/overview.md"
 
-                - href: "apis/python/doc/soma_collection.md"
-                  text: "SOMACollection"
                 - href: "apis/python/doc/soma.md"
                   text: "SOMA"
+                - href: "apis/python/doc/soma_collection.md"
+                  text: "SOMACollection"
 
                 - href: "apis/python/doc/soma_options.md"
                   text: "SOMAOptions"

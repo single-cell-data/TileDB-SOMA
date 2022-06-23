@@ -10,7 +10,7 @@ import scipy
 import numpy as np
 import pandas as pd
 
-from typing import Optional
+from typing import Optional, Tuple, Union
 import time
 import math
 
@@ -64,7 +64,7 @@ class AssayMatrix(TileDBArray):
         self.col_dataframe = col_dataframe
 
     # ----------------------------------------------------------------
-    def shape(self):
+    def shape(self) -> Tuple[int, int]:
         """
         Returns a tuple with the number of rows and number of columns of the `AssayMatrix`.
         In TileDB storage, these are string-indexed sparse arrays for which no `.shape()` exists,
@@ -121,7 +121,9 @@ class AssayMatrix(TileDBArray):
         """
         return self._csr_or_csc("csc", obs_ids, var_ids)
 
-    def _csr_or_csc(self, which: str, obs_ids=None, var_ids=None):
+    def _csr_or_csc(
+        self, which: str, obs_ids=None, var_ids=None
+    ) -> Union[scipy.sparse.csr_matrix, scipy.sparse.csc_matrix]:
         """
         Helper method for `csr` and `csc`.
         """
@@ -583,7 +585,7 @@ class AssayMatrix(TileDBArray):
             )
 
     # ----------------------------------------------------------------
-    def to_csr_matrix(self, row_labels, col_labels):
+    def to_csr_matrix(self, row_labels, col_labels) -> scipy.sparse.csr_matrix:
         """
         Reads the TileDB array storage for the storage and returns a sparse CSR matrix.  The
         row/columns labels should be `obs,var` labels if the `AssayMatrix` is `X`, or `obs,obs` labels if

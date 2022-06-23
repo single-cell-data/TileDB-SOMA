@@ -27,7 +27,7 @@ See the TileDBObject constructor.
 #### keys
 
 ```python
-def keys()
+def keys() -> List[str]
 ```
 
 For uns, `.keys()` is a keystroke-saver for the more general group-member
@@ -49,7 +49,7 @@ no such member exists.  Overloads the [...] operator.
 #### \_\_contains\_\_
 
 ```python
-def __contains__(name)
+def __contains__(name) -> bool
 ```
 
 Implements '"namegoeshere" in soma.uns'.
@@ -69,7 +69,7 @@ Implements `for element in soma.uns: ...`
 #### show
 
 ```python
-def show(display_name="uns")
+def show(display_name="uns") -> None
 ```
 
 Recursively displays the uns data.
@@ -79,7 +79,7 @@ Recursively displays the uns data.
 #### from\_anndata\_uns
 
 ```python
-def from_anndata_uns(uns: ad.compat.OverloadedDict)
+def from_anndata_uns(uns: ad.compat.OverloadedDict) -> None
 ```
 
 Populates the uns group for the soma object.

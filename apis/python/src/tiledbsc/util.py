@@ -123,7 +123,7 @@ def _find_csr_chunk_size(
     permutation: list,
     start_row_index: int,
     goal_chunk_nnz: int,
-):
+) -> int:
     """
     Given a CSR matrix and a start row index, returns the number of rows with cumulative NNZ as
     desired. Context is chunked-COO ingest of larger CSR matrices: if mat is say 8000x9000 but
@@ -153,7 +153,7 @@ def _find_csc_chunk_size(
     permutation: list,
     start_col_index: int,
     goal_chunk_nnz: int,
-):
+) -> int:
     """
     Given a CSC matrix and a start column index, returns the number of columns with cumulative nnz as
     desired. Context is chunked-COO ingest of larger CSC matrices: if mat is say 8000x9000 but

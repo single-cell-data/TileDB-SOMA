@@ -40,7 +40,7 @@ class TileDBGroup(TileDBObject):
             ctx=ctx,
         )
 
-    def _object_type(self):
+    def _object_type(self) -> str:
         """
         This should be implemented by child classes and should return what tiledb.object_type(uri)
         returns for objects of a given type -- nominally 'group' or 'array'.
@@ -55,7 +55,7 @@ class TileDBGroup(TileDBObject):
         """
         return tiledb.object_type(self.uri, ctx=self._ctx) == "group"
 
-    def _create(self):
+    def _create(self) -> None:
         """
         Creates the TileDB group data structure on disk/S3/cloud.
         """
@@ -65,14 +65,14 @@ class TileDBGroup(TileDBObject):
 
         self._set_object_type_metadata()
 
-    def create_unless_exists(self):
+    def create_unless_exists(self) -> None:
         """
         Creates the TileDB group data structure on disk/S3/cloud, unless it already exists.
         """
         if not self.exists():
             self._create()
 
-    def _set_object_type_metadata(self):
+    def _set_object_type_metadata(self) -> None:
         """
         This helps nested-structured traversals (especially those that start at the SOMACollection
         level) confidently navigate with a minimum of introspection on group contents.
@@ -92,7 +92,7 @@ class TileDBGroup(TileDBObject):
         with self._open("r") as G:
             return G.meta[tiledbsc.util_tiledb.SOMA_OBJECT_TYPE_METADATA_KEY]
 
-    def _set_object_type_metadata_recursively(self):
+    def _set_object_type_metadata_recursively(self) -> None:
         """
         SOMAs/SOCOs written very early on in the development of this project may not have these set.
         Using this method we can after-populate these, without needig to re-ingest entire datasets.
@@ -160,11 +160,11 @@ class TileDBGroup(TileDBObject):
         with self._open("w") as G:
             G.add(uri=child_uri, relative=relative, name=obj.name)
 
-    def _remove_object(self, obj: TileDBObject):
+    def _remove_object(self, obj: TileDBObject) -> None:
         with self._open("w") as G:
             G.remove(obj.name)
 
-    def _get_member_names(self):
+    def _get_member_names(self) -> List[str]:
         """
         Returns the names of the group elements. For a SOMACollection, these will SOMA names;
         for a SOMA, these will be matrix/group names; etc.
@@ -186,7 +186,7 @@ class TileDBGroup(TileDBObject):
         with self._open("r") as G:
             return {O.name: O.uri for O in G}
 
-    def show_metadata(self, recursively=True, indent=""):
+    def show_metadata(self, recursively=True, indent="") -> None:
         """
         Shows metadata for the group, recursively by default.
         """

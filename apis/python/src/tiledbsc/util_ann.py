@@ -9,7 +9,7 @@ import os
 # ----------------------------------------------------------------
 def describe_ann_file(
     input_path: str, show_summary=True, show_types=False, show_data=False
-):
+) -> None:
     """
     This is an anndata-describer that goes a bit beyond what `h5ls` does for us.
     In particular, it shows us that for one HDF5 file we have `anndata.X` being of type `numpy.ndarray`
@@ -33,7 +33,7 @@ def describe_ann_file(
 
 
 # ----------------------------------------------------------------
-def _describe_ann_file_show_summary(anndata: ad.AnnData, input_path: str):
+def _describe_ann_file_show_summary(anndata: ad.AnnData, input_path: str) -> None:
 
     print()
     print("----------------------------------------------------------------")
@@ -70,7 +70,7 @@ def _describe_ann_file_show_summary(anndata: ad.AnnData, input_path: str):
 
 
 # ----------------------------------------------------------------
-def _describe_ann_file_show_types(anndata: ad.AnnData, input_path: str):
+def _describe_ann_file_show_types(anndata: ad.AnnData, input_path: str) -> None:
 
     print()
     print("----------------------------------------------------------------")
@@ -123,7 +123,7 @@ def _describe_ann_file_show_types(anndata: ad.AnnData, input_path: str):
 
 
 # ----------------------------------------------------------------
-def _describe_ann_file_show_data(anndata: ad.AnnData, input_path: str):
+def _describe_ann_file_show_data(anndata: ad.AnnData, input_path: str) -> None:
 
     print()
     print("----------------------------------------------------------------")
@@ -180,7 +180,7 @@ def _describe_ann_file_show_data(anndata: ad.AnnData, input_path: str):
 # ----------------------------------------------------------------
 def _describe_ann_file_show_uns_summary(
     uns: ad.compat.OverloadedDict, parent_path_components=["uns"]
-):
+) -> None:
     """
     Recursively shows summary information about the anndata.uns structure.
     """
@@ -195,7 +195,7 @@ def _describe_ann_file_show_uns_summary(
 
 
 # ----------------------------------------------------------------
-def _describe_ann_file_show_uns_types(uns, parent_path_components=["uns"]):
+def _describe_ann_file_show_uns_types(uns, parent_path_components=["uns"]) -> None:
     """
     Recursively shows data-type information about the anndata.uns structure.
     """
@@ -220,7 +220,7 @@ def _describe_ann_file_show_uns_types(uns, parent_path_components=["uns"]):
 
 
 # ----------------------------------------------------------------
-def _describe_ann_file_show_uns_data(uns, parent_path_components=["uns"]):
+def _describe_ann_file_show_uns_data(uns, parent_path_components=["uns"]) -> None:
     """
     Recursively shows data contained within the anndata.uns structure.
     """
@@ -246,7 +246,7 @@ def _describe_ann_file_show_uns_data(uns, parent_path_components=["uns"]):
 
 
 # ----------------------------------------------------------------
-def _decategoricalize(anndata: ad.AnnData):
+def _decategoricalize(anndata: ad.AnnData) -> None:
     """
     Performs an in-place typecast into types that TileDB can persist.
     """

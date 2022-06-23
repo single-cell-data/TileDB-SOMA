@@ -1,6 +1,9 @@
 # Obtaining AnnData files
 
-Visit [https://cellxgene.cziscience.com](https://cellxgene.cziscience.com) and select from among various choices there and download.
+This Python package supports import of H5AD and 10X data files.
+
+For example, you can visit [https://cellxgene.cziscience.com](https://cellxgene.cziscience.com) and
+select from among various choices there and download.
 
 Files used for this example:
 

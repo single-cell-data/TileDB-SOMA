@@ -27,7 +27,7 @@ See the TileDBObject constructor.
 #### shape
 
 ```python
-def shape()
+def shape() -> Tuple[int, int]
 ```
 
 Returns a tuple with the number of rows and number of columns of the `AnnotationDataFrame`.
@@ -70,7 +70,7 @@ Same as `.keys` but returns as set.
 #### dim\_select
 
 ```python
-def dim_select(ids, attrs=None)
+def dim_select(ids, attrs=None) -> pd.DataFrame
 ```
 
 Selects a slice out of the dataframe with specified `obs_ids` (for `obs`) or `var_ids` (for
@@ -94,7 +94,7 @@ they're used for the query; else, all attributes are returned.
 #### query
 
 ```python
-def query(query_string, ids=None, attrs=None)
+def query(query_string, ids=None, attrs=None) -> pd.DataFrame
 ```
 
 Selects from obs/var using a TileDB-Py `QueryCondition` string such as `cell_type ==

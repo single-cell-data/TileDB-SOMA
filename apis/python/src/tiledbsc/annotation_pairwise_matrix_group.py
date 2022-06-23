@@ -49,7 +49,7 @@ class AnnotationPairwiseMatrixGroup(TileDBGroup):
         self.col_dataframe = col_dataframe
 
     # ----------------------------------------------------------------
-    def keys(self):
+    def keys(self) -> List[str]:
         """
         For obsp and varp, `.keys()` is a keystroke-saver for the more general group-member
         accessor `._get_member_names()`.
@@ -57,7 +57,7 @@ class AnnotationPairwiseMatrixGroup(TileDBGroup):
         return self._get_member_names()
 
     # ----------------------------------------------------------------
-    def __getattr__(self, name):
+    def __getattr__(self, name) -> AssayMatrix:
         """
         This is called on `soma.obsp.name` when `name` is not already an attribute.
         This way you can do `soma.obsp.distances` as an alias for `soma.obsp['distances']`.
@@ -89,7 +89,9 @@ class AnnotationPairwiseMatrixGroup(TileDBGroup):
         return iter(retval)
 
     # ----------------------------------------------------------------
-    def from_matrices_and_dim_values(self, annotation_pairwise_matrices, dim_values):
+    def from_matrices_and_dim_values(
+        self, annotation_pairwise_matrices, dim_values
+    ) -> None:
         """
         Populates the `obsp` or `varp` subgroup for a SOMA object, then writes all the components
         arrays under that group.
@@ -181,7 +183,7 @@ class AnnotationPairwiseMatrixGroup(TileDBGroup):
     #   the `[]` operator separately in the various classes which need indexing. This is again to
     #   avoid circular-import issues, and means that [] on `AnnotationMatrixGroup` will return an
     #   `AnnotationMatrix, [] on `UnsGroup` will return `UnsArray` or `UnsGroup`, etc.
-    def __getitem__(self, name):
+    def __getitem__(self, name) -> AssayMatrix:
         """
         Returns an `AssayMatrix` element at the given name within the group, or `None` if no such
         member exists.  Overloads the `[...]` operator.
@@ -212,7 +214,7 @@ class AnnotationPairwiseMatrixGroup(TileDBGroup):
                 parent=self,
             )
 
-    def __contains__(self, name):
+    def __contains__(self, name) -> bool:
         """
         Implements `"namegoeshere" in soma.obsp/soma.varp`.
         """

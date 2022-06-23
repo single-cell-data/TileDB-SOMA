@@ -9,7 +9,13 @@ This is a POC Python implementation of the proposed [Unified Single-cell Data Mo
 This code is hosted at [PyPI](https://pypi.org/project/tiledbsc/), so you can do
 
 ```
-pip install tiledbsc
+python -m pip install tiledbsc
+```
+
+To install a specific version:
+
+```
+python -m pip install git+https://github.com/django/django.git@0.0.4
 ```
 
 ## From source
@@ -17,12 +23,12 @@ pip install tiledbsc
 * This requires [`tiledb`](https://github.com/TileDB-Inc/TileDB-Py) (see [./setup.cfg](setup.cfg) for version), in addition to other dependencies in [setup.cfg](./setup.cfg).
 * Clone [this repo](https://github.com/single-cell-data/TileDB-SingleCell)
 * `cd` into your checkout and then `cd apis/python`
-* `pip install .` -- or, if you wish to modify the code and run it, `pip install --editable .`
+* `python -m pip install .` -- or, if you wish to modify the code and run it, `python -m pip install --editable .`
 * Optionally, if you prefer, instead:
 ```
 python -m venv venv
 . ./venv/bin/activate
-pip install .
+python -m pip install .
 ```
 * In either case:
 

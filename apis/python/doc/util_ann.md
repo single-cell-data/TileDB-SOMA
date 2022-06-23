@@ -10,7 +10,7 @@
 def describe_ann_file(input_path: str,
                       show_summary=True,
                       show_types=False,
-                      show_data=False)
+                      show_data=False) -> None
 ```
 
 This is an anndata-describer that goes a bit beyond what `h5ls` does for us.

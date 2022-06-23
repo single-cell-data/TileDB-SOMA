@@ -108,7 +108,7 @@ class SOMACollection(TileDBGroup):
     #   the `[]` operator separately in the various classes which need indexing. This is again to
     #   avoid circular-import issues, and means that [] on `AnnotationMatrixGroup` will return an
     #   `AnnotationMatrix, [] on `UnsGroup` will return `UnsArray` or `UnsGroup`, etc.
-    def __getitem__(self, name):
+    def __getitem__(self, name) -> SOMA:
         """
         Returns a `SOMA` element at the given name within the group, or `None` if no such
         member exists.  Overloads the `[...]` operator.
@@ -182,21 +182,23 @@ class SOMACollection(TileDBGroup):
         return SOMASlice.concat(soma_slices)
 
     # ----------------------------------------------------------------
-    def find_unique_obs_values(self, obs_label: str):
+    def find_unique_obs_values(self, obs_label: str) -> List:
         """
         Given an `obs` label such as `cell_type` or `tissue`, returns a list of unique values for
         that label among all SOMAs in the collection.
         """
         return self._find_unique_obs_or_var_values(obs_label, True)
 
-    def find_unique_var_values(self, var_label: str):
+    def find_unique_var_values(self, var_label: str) -> List:
         """
         Given an `var` label such as `feature_name`, returns a list of unique values for
         that label among all SOMAs in the collection.
         """
         return self._find_unique_obs_or_var_values(var_label, False)
 
-    def _find_unique_obs_or_var_values(self, obs_or_var_label: str, use_obs: bool):
+    def _find_unique_obs_or_var_values(
+        self, obs_or_var_label: str, use_obs: bool
+    ) -> List:
         """
         Helper method for `find_unique_obs_values` and `find_unique_var_values`.
         """

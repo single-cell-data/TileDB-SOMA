@@ -46,7 +46,7 @@ class AssayMatrixGroup(TileDBGroup):
         self.col_dataframe = col_dataframe
 
     # ----------------------------------------------------------------
-    def keys(self):
+    def keys(self) -> List[str]:
         """
         For `obsm` and `varm`, `.keys()` is a keystroke-saver for the more general group-member
         accessor `._get_member_names()`.
@@ -54,7 +54,7 @@ class AssayMatrixGroup(TileDBGroup):
         return self._get_member_names()
 
     # ----------------------------------------------------------------
-    def __getattr__(self, name):
+    def __getattr__(self, name) -> AssayMatrix:
         """
         This is called on `soma.X.name` when `name` is not already an attribute.
         This way you can do `soma.X.data` as an alias for `soma.X['data']`.
@@ -102,7 +102,7 @@ class AssayMatrixGroup(TileDBGroup):
     #   the `[]` operator separately in the various classes which need indexing. This is again to
     #   avoid circular-import issues, and means that [] on `AnnotationMatrixGroup` will return an
     #   `AnnotationMatrix, [] on `UnsGroup` will return `UnsArray` or `UnsGroup`, etc.
-    def __getitem__(self, name):
+    def __getitem__(self, name) -> AssayMatrix:
         """
         Returns an `AnnotationMatrix` element at the given name within the group, or None if no such
         member exists.  Overloads the `[...]` operator.
@@ -132,7 +132,7 @@ class AssayMatrixGroup(TileDBGroup):
             )
 
     # ----------------------------------------------------------------
-    def __contains__(self, name):
+    def __contains__(self, name) -> bool:
         """
         Implements the `in` operator, e.g. `"data" in soma.X`.
         """
