@@ -168,7 +168,6 @@ class SOMASlice(TileDBGroup):
         X = {}
         # TODO: SHAPE THIS
         X["data"] = annc.X
-        print("OTYPE IS", type(annc.X))
         for name in annc.layers:
             X[name] = annc.layers[name]
 
