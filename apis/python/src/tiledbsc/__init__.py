@@ -47,4 +47,4 @@ from .tiledb_object import TileDBObject
 from .uns_array import UnsArray
 from .uns_group import UnsGroup
 from .util_ann import describe_ann_file
-from .util_tiledb import show_single_cell_group
+from .util_tiledb import show_soma_schemas

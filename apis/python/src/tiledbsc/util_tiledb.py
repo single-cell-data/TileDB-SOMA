@@ -3,12 +3,12 @@
 import os
 from typing import Optional
 
+import tiledbsc
 import tiledb
 
 
 # ================================================================
-# XXX FIX ME
-def show_single_cell_group(soma_uri: str, ctx: Optional[tiledb.Ctx] = None) -> None:
+def show_soma_schemas(soma_uri: str, ctx: Optional[tiledb.Ctx] = None) -> None:
     """
     Show some summary information about an ingested TileDB Single-Cell Group.  This tool goes a bit beyond `print(tiledb.group.Group(soma_uri))` by also revealing array schema. Additionally, by employing encoded domain-specific knowleldge, it traverses items in the familiar order `X`, `obs`, `var`, etc. rather than using the general-purpose tiledb-group-display function.
     """
@@ -16,24 +16,23 @@ def show_single_cell_group(soma_uri: str, ctx: Optional[tiledb.Ctx] = None) -> N
     # Tab-completion at the shell can insert a trailing slash; leave it off
     # so we don't show undesired '...//...' in component URIs.
     soma_uri = soma_uri.rstrip("/")
+    soma = tiledbsc.SOMA(soma_uri)
 
-    _show_array_schema(os.path.join(soma_uri, "X", "data"), ctx)
-    _show_array_schema(os.path.join(soma_uri, "obs"), ctx)
-    _show_array_schema(os.path.join(soma_uri, "var"), ctx)
+    for key in soma.X.keys():
+        _show_array_schema(soma.X[key].uri, ctx)
+    _show_array_schema(soma.obs.uri, ctx)
+    _show_array_schema(soma.var.uri, ctx)
 
-    for name in ["obsm", "varm", "obsp", "varp"]:
-        _show_array_schemas_for_group(os.path.join(soma_uri, name), ctx)
+    _show_array_schemas_for_group(soma.obsm.uri, ctx)
+    _show_array_schemas_for_group(soma.varm.uri, ctx)
+    _show_array_schemas_for_group(soma.obsp.uri, ctx)
+    _show_array_schemas_for_group(soma.varp.uri, ctx)
 
     # Not all groups have raw X data
-    raw_group_uri = os.path.join(soma_uri, "raw")
-    try:
-        tiledb.Group(raw_group_uri, mode="r", ctx=ctx)
-    except tiledb.TileDBError:
-        return
-
-    _show_array_schema(os.path.join(raw_group_uri, "X", "data"), ctx)
-    _show_array_schema(os.path.join(raw_group_uri, "var"), ctx)
-    _show_array_schemas_for_group(os.path.join(raw_group_uri, "varm"), ctx)
+    if soma.raw.exists():
+        for key in soma.raw.X.keys():
+            _show_array_schema(soma.raw.X[key].uri, ctx)
+            _show_array_schema(soma.raw.var.uri, ctx)
 
 
 # ----------------------------------------------------------------

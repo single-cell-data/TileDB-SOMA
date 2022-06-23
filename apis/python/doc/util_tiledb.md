@@ -2,12 +2,12 @@
 
 # tiledbsc.util\_tiledb
 
-<a id="tiledbsc.util_tiledb.show_single_cell_group"></a>
+<a id="tiledbsc.util_tiledb.show_soma_schemas"></a>
 
 #### show\_single\_cell\_group
 
 ```python
-def show_single_cell_group(soma_uri: str,
+def show_soma_schemas(soma_uri: str,
                            ctx: Optional[tiledb.Ctx] = None) -> None
 ```
 
