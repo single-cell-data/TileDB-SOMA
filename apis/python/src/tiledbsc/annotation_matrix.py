@@ -1,11 +1,10 @@
-from typing import List, Optional, Tuple
+from typing import Optional, Tuple
 
 import pandas as pd
 import tiledb
 
 import tiledbsc.util as util
 
-from .soma_options import SOMAOptions
 from .tiledb_array import TileDBArray
 from .tiledb_group import TileDBGroup
 

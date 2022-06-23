@@ -8,7 +8,6 @@ import tiledb
 import tiledbsc.util as util
 
 from .annotation_matrix import AnnotationMatrix
-from .soma_options import SOMAOptions
 from .tiledb_group import TileDBGroup
 
 

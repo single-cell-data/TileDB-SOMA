@@ -1,7 +1,6 @@
 import os
 from typing import Dict, List, Optional
 
-import pandas as pd
 import scipy
 import tiledb
 
@@ -9,7 +8,6 @@ import tiledbsc.util as util
 
 from .annotation_dataframe import AnnotationDataFrame
 from .assay_matrix import AssayMatrix
-from .soma_options import SOMAOptions
 from .tiledb_group import TileDBGroup
 
 

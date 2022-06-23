@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 
 import os
-import sys
 from typing import Optional
 
 import tiledb

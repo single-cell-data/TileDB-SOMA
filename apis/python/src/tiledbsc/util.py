@@ -1,7 +1,6 @@
 import time
 from typing import List, Optional, Union
 
-import anndata as ad
 import numpy
 import pandas as pd
 import scipy

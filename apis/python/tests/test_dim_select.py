@@ -1,4 +1,3 @@
-import os
 import tempfile
 from pathlib import Path
 
@@ -6,7 +5,6 @@ import anndata
 import numpy as np
 import pandas as pd
 import pytest
-import tiledb
 
 import tiledbsc
 import tiledbsc.io

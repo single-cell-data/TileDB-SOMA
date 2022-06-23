@@ -5,7 +5,6 @@ import tiledb
 
 from .annotation_dataframe import AnnotationDataFrame
 from .assay_matrix import AssayMatrix
-from .soma_options import SOMAOptions
 from .tiledb_group import TileDBGroup
 
 

@@ -28,17 +28,15 @@ import argparse
 import logging
 import os.path
 import sys
-from typing import List, Optional, Union
+from typing import Optional
 
 import anndata
 import numba as nb
 import numpy as np
-import pandas as pd
 import scipy.sparse
 import scipy.stats
 import tiledb
 
-import tiledbsc
 from tiledbsc import SOMA, SOMACollection
 from tiledbsc import io as SOMAio
 

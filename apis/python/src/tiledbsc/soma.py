@@ -1,15 +1,8 @@
 import os
-from typing import Dict, List, Optional, Union
+from typing import Dict, List, Optional
 
-import anndata as ad
-import numpy as np
 import pandas as pd
-import pyarrow as pa
-import scanpy
-import scipy
 import tiledb
-
-from tiledbsc import util, util_ann
 
 from .annotation_dataframe import AnnotationDataFrame
 from .annotation_matrix_group import AnnotationMatrixGroup

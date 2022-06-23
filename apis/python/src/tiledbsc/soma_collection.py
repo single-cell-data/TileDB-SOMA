@@ -1,6 +1,5 @@
 from typing import List, Optional
 
-import pandas as pd
 import tiledb
 
 from .soma import SOMA

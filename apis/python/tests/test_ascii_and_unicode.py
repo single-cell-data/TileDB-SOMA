@@ -1,11 +1,6 @@
-from pathlib import Path
-
 import anndata as ad
 import numpy as np
 import pandas as pd
-import pytest
-import tiledb
-from scipy import sparse
 
 import tiledbsc.io as io
 from tiledbsc import SOMA

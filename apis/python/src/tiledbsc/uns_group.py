@@ -1,5 +1,5 @@
 import os
-from typing import Dict, List, Optional, Union
+from typing import Dict, List, Optional
 
 import anndata as ad
 import numpy as np
@@ -9,7 +9,6 @@ import tiledb
 
 import tiledbsc.util as util
 
-from .soma_options import SOMAOptions
 from .tiledb_group import TileDBGroup
 from .uns_array import UnsArray
 

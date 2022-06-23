@@ -1,6 +1,3 @@
-from typing import Dict, List
-
-
 class SOMAOptions:
     """
     A place to put configuration options various users may wish to change.

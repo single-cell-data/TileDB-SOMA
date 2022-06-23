@@ -2,7 +2,6 @@ import os
 from typing import Optional
 
 import anndata as ad
-import tiledb
 
 import tiledbsc.util as util
 
@@ -10,7 +9,6 @@ from .annotation_dataframe import AnnotationDataFrame
 from .annotation_matrix_group import AnnotationMatrixGroup
 from .annotation_pairwise_matrix_group import AnnotationPairwiseMatrixGroup
 from .assay_matrix_group import AssayMatrixGroup
-from .soma_options import SOMAOptions
 from .tiledb_group import TileDBGroup
 
 

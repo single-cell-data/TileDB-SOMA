@@ -3,10 +3,8 @@ from collections import OrderedDict
 
 import numpy as np
 import pandas as pd
-import pytest
 import tiledb
 from anndata import AnnData
-from scipy import sparse
 
 import tiledbsc.io as io
 from tiledbsc import SOMA

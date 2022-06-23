@@ -10,10 +10,8 @@ import tiledb
 import tiledbsc.util as util
 
 from .annotation_dataframe import AnnotationDataFrame
-from .soma_options import SOMAOptions
 from .tiledb_array import TileDBArray
 from .tiledb_group import TileDBGroup
-from .tiledb_object import TileDBObject
 
 
 class AssayMatrix(TileDBArray):

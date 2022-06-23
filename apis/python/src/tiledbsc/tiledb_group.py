@@ -1,6 +1,4 @@
-import os
-from contextlib import contextmanager
-from typing import Dict, List, Optional, Union
+from typing import Dict, List, Optional
 
 import tiledb
 
