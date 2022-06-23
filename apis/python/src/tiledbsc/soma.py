@@ -83,15 +83,15 @@ class SOMA(TileDBGroup):
             ctx=ctx,
         )
 
-        obs_uri = os.path.join(self.uri, "obs")
-        var_uri = os.path.join(self.uri, "var")
-        X_uri = os.path.join(self.uri, "X")
-        obsm_uri = os.path.join(self.uri, "obsm")
-        varm_uri = os.path.join(self.uri, "varm")
-        obsp_uri = os.path.join(self.uri, "obsp")
-        varp_uri = os.path.join(self.uri, "varp")
-        raw_uri = os.path.join(self.uri, "raw")
-        uns_uri = os.path.join(self.uri, "uns")
+        obs_uri = self._get_child_uri("obs")  # See comments in that function
+        var_uri = self._get_child_uri("var")
+        X_uri = self._get_child_uri("X")
+        obsm_uri = self._get_child_uri("obsm")
+        varm_uri = self._get_child_uri("varm")
+        obsp_uri = self._get_child_uri("obsp")
+        varp_uri = self._get_child_uri("varp")
+        raw_uri = self._get_child_uri("raw")
+        uns_uri = self._get_child_uri("uns")
 
         self.obs = AnnotationDataFrame(uri=obs_uri, name="obs", parent=self)
         self.var = AnnotationDataFrame(uri=var_uri, name="var", parent=self)
