@@ -98,13 +98,16 @@ select `relative=True`. (This is the default.)
     write_soco = args.soco
     verbose = not args.quiet
 
-    if args.relative == "true":
-        soma_options.relative_membership = True
-    elif args.relative == "false":
-        soma_options.relative_membership = False
-    elif args.relative == "auto":
-        soma_options.relative_membership = None
-    # No else -- we only allowed those three choices in the argument-parser.
+    if args.relative is not None:
+        relative = args.relative[0]
+        if relative == 'true':
+            soma_options.member_uris_are_relative = True
+        elif relative == 'false':
+            soma_options.member_uris_are_relative = False
+        elif relative == 'auto':
+            soma_options.member_uris_are_relative = None
+        else:
+            raise Exception(f"Internal coding error in {__file__}")
 
     outdir = args.o.rstrip("/")
 
