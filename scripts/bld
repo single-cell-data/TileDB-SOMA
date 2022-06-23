@@ -16,7 +16,14 @@ export pybind11_DIR=$(python -m pybind11 --cmakedir)
 # remove existing build and install directories
 rm -rf build dist
 
-cmake -B build -S libtiledbsc -DCMAKE_BUILD_TYPE=${BUILD_TYPE}
+# add options for TileDB debug build
+if [ $BUILD_TYPE == "Debug" ]; then
+  EXTRA_OPTS="-DFORCE_EXTERNAL_TILEDB=ON -DDOWNLOAD_TILEDB_PREBUILT=OFF -DTILEDB_S3=OFF"
+else
+  EXTRA_OPTS=""
+fi
+
+cmake -B build -S libtiledbsc -DCMAKE_BUILD_TYPE=${BUILD_TYPE} ${EXTRA_OPTS}
 cmake --build build --target check-format
 cmake --build build -j $(nproc)
 cmake --build build --target install-libtiledbsc

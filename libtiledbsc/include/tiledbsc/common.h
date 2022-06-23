@@ -1,17 +1,11 @@
 #ifndef TILEDBSC_COMMON_H
 #define TILEDBSC_COMMON_H
 
-#include <map>
-#include <stdexcept>
+#include <stdexcept>  // for windows: error C2039: 'runtime_error': is not a member of 'std'
+
 #include <string>
 
-#include "tiledbsc_export.h"
-
 namespace tiledbsc {
-
-using SCConfig = std::map<std::string, std::string>;
-
-using DELEM_T = std::byte;
 
 class TileDBSCError : public std::runtime_error {
    public:

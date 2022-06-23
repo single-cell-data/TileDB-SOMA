@@ -92,6 +92,8 @@ if (FORCE_BUILD_TILEDB)
   message(STATUS "Skipping search for TileDB, building it as an external project. To use system TileDB, set FORCE_BUILD_TILEDB=OFF")
 endif()
 
+# Export symbols without decorating the code
+set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
 
 ############################################################
 # Superbuild setup

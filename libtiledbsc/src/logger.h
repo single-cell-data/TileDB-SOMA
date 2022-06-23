@@ -243,7 +243,7 @@ Logger& global_logger();
 /** Convert TileDB timestamp (in ms) to human readable timestamp. */
 std::string asc_timestamp(uint64_t timestamp_ms);
 
-// Also include the private logger functions here.
-#include "tiledbsc/logger_private.h"
+// Also include the public logger functions here.
+#include "tiledbsc/logger_public.h"
 
 #endif  // TILEDB_LOGGER_H
