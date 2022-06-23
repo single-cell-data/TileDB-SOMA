@@ -9,9 +9,9 @@ your own organization's schema.
 To keep the example simple, any data outside that schema are discarded.  The example peforms three
 steps:
 
-* Retains `obs` and `var` annotations specifically defined in the cellxgene 2.0 schema;
-* Discards transformed `X` values, and retains raw `X` counts.
-# Also creates a trivial `rankit` normalization of `X` values to demonstrate an additional `X` layer.
+* retains `obs` and `var` annotations specifically defined in the cellxgene 2.0 schema;
+* discards transformed `X` values, and retains raw `X` counts;
+* creates a trivial `rankit` normalization of `X` values to demonstrate an additional `X` layer.
 
 Examples:
 
