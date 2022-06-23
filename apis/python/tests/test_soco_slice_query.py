@@ -22,11 +22,9 @@ def test_soco_slice_query(tmp_path):
         ("subset-soma-04", HERE.parent / "anndata/subset-soma-04.h5ad"),
     ]:
         soma_path = os.path.join(soco_dir, name)
-        print("Writing", soma_path, "...")
         soma = tiledbsc.SOMA(soma_path, verbose=False)
         tiledbsc.io.from_h5ad(soma, h5ad_path)
         soco.add(soma)
-    print("Done.")
 
     # Do the slice query
     obs_attr_names = ["tissue"]
@@ -48,7 +46,7 @@ def test_soco_slice_query(tmp_path):
         soma_slice = soma.query(
             obs_query_string=obs_query_string, var_query_string=var_query_string
         )
-        if soma_slice != None:
+        if soma_slice is not None:
             soma_slices.append(soma_slice)
 
     result_soma_slice = tiledbsc.SOMASlice.concat(soma_slices)

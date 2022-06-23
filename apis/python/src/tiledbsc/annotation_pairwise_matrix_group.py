@@ -62,7 +62,7 @@ class AnnotationPairwiseMatrixGroup(TileDBGroup):
         This way you can do `soma.obsp.distances` as an alias for `soma.obsp['distances']`.
         """
         with self._open() as G:
-            if not name in G:
+            if name not in G:
                 raise AttributeError(
                     f"'{self.__class__.__name__}' object has no attribute '{name}'"
                 )
@@ -132,9 +132,9 @@ class AnnotationPairwiseMatrixGroup(TileDBGroup):
         grp = None
         try:  # Not all groups have all four of obsm, obsp, varm, and varp.
             grp = tiledb.Group(self.uri, mode="r", ctx=self._ctx)
-        except:
+        except tiledb.TileDBError:
             pass
-        if grp == None:
+        if grp is None:
             if self._verbose:
                 print(f"{self._indent}{self.uri} not found")
             return {}
@@ -191,7 +191,7 @@ class AnnotationPairwiseMatrixGroup(TileDBGroup):
         with self._open("r") as G:
             try:
                 obj = G[name]  # This returns a tiledb.object.Object.
-            except:
+            except tiledb.TileDBError:
                 return None
 
             if obj.type == tiledb.tiledb.Group:

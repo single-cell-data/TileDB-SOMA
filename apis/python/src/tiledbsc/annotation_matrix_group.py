@@ -62,7 +62,7 @@ class AnnotationMatrixGroup(TileDBGroup):
         This way you can do `soma.obsm.X_tsne` as an alias for `soma.obsm['X_tsne']`.
         """
         with self._open() as G:
-            if not name in G:
+            if name not in G:
                 raise AttributeError(
                     f"'{self.__class__.__name__}' object has no attribute '{name}'"
                 )
@@ -159,7 +159,7 @@ class AnnotationMatrixGroup(TileDBGroup):
         """
 
         with self._open("r") as G:
-            if not name in G:
+            if name not in G:
                 return None
             obj = G[name]  # This returns a tiledb.object.Object.
             if obj.type == tiledb.tiledb.Group:

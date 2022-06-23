@@ -272,13 +272,13 @@ def test_soma_group_indexing(h5ad_file):
 
     # We exercise these to make sure they're not throwing exceptions.
     for e in soma.obsm:
-        foo = (e.name, e.df().shape, e.uri)
+        _ = (e.name, e.df().shape, e.uri)
     for e in soma.varm:
-        foo = (e.name, e.df().shape, e.uri)
+        _ = (e.name, e.df().shape, e.uri)
     for e in soma.obsp:
-        foo = (e.name, e.df().shape, e.uri)
+        _ = (e.name, e.df().shape, e.uri)
     for e in soma.varp:
-        foo = (e.name, e.df().shape, e.uri)
+        _ = (e.name, e.df().shape, e.uri)
 
 
 def test_not_exists():

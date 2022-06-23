@@ -43,6 +43,7 @@ from tiledbsc import io as SOMAio
 # ================================================================
 # MAIN ENTRYPOINT
 
+
 # ----------------------------------------------------------------
 def main() -> int:
     parser = _create_args_parser()
@@ -296,7 +297,7 @@ class Uniformizer:
         else:
             # This one line -- right here -- is the primary reason for using AnnData as an in-memory
             # container even for data read from a SOMA. This is MARVELOUSLY expressive. :)
-            ann = original_ann[original_ann.obs.is_primary_data == True]
+            ann = original_ann[original_ann.obs.is_primary_data]
             if ann.obs.index.empty:
                 raise Exception(
                     "The is_primary_data == True filter left no data remaining for this dataset."

@@ -24,11 +24,10 @@ def show_single_cell_group(soma_uri: str, ctx: Optional[tiledb.Ctx] = None) -> N
         _show_array_schemas_for_group(os.path.join(soma_uri, name), ctx)
 
     # Not all groups have raw X data
-    raw_group = None
     raw_group_uri = os.path.join(soma_uri, "raw")
     try:
-        raw_group = tiledb.Group(raw_group_uri, mode="r", ctx=ctx)
-    except:
+        tiledb.Group(raw_group_uri, mode="r", ctx=ctx)
+    except tiledb.TileDBError:
         return
 
     _show_array_schema(os.path.join(raw_group_uri, "X", "data"), ctx)

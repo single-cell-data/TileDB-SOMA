@@ -202,10 +202,9 @@ class SOMA(TileDBGroup):
         """
         Supporting method for `get_obs_value_counts` and `get_var_value_counts`.
         """
-
         attrs = [obs_or_var_label]
         obs_or_var = self.obs.df(attrs=attrs) if use_obs else self.var.df(attrs=attrs)
-        if not obs_or_var_label in obs_or_var:
+        if obs_or_var_label not in obs_or_var:
             return
 
         counts = {}
@@ -235,9 +234,7 @@ class SOMA(TileDBGroup):
         Using a value of `None` for obs_ids means use all obs_ids, and likewise for var_ids.
         Returns `None` for empty slice.
         """
-
-        assert obs_ids != None or var_ids != None
-
+        assert obs_ids is not None or var_ids is not None
         if obs_ids is None:
             # Try the var slice first to see if that produces zero results -- if so we don't need to
             # load the obs.

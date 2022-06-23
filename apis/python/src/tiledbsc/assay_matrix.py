@@ -71,7 +71,7 @@ class AssayMatrix(TileDBArray):
 
         Note: currently implemented via data scan -- will be optimized for TileDB core 2.10.
         """
-        with self._open() as A:
+        with self._open():
             # These TileDB arrays are string-dimensioned sparse arrays so there is no '.shape'.
             # Instead we compute it ourselves.  See also:
             num_rows = self.row_dataframe.shape()[0]

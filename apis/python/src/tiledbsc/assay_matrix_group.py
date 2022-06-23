@@ -59,7 +59,7 @@ class AssayMatrixGroup(TileDBGroup):
         This way you can do `soma.X.data` as an alias for `soma.X['data']`.
         """
         with self._open() as G:
-            if not name in G:
+            if name not in G:
                 raise AttributeError(
                     f"'{self.__class__.__name__}' object has no attribute '{name}'"
                 )
@@ -108,7 +108,7 @@ class AssayMatrixGroup(TileDBGroup):
         """
 
         with self._open("r") as G:
-            if not name in G:
+            if name not in G:
                 return None
 
             obj = G[name]  # This returns a tiledb.object.Object.
