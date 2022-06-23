@@ -1,4 +1,3 @@
-import os
 from typing import Optional
 
 import anndata as ad
@@ -37,10 +36,10 @@ class RawGroup(TileDBGroup):
         super().__init__(uri=uri, name=name, parent=parent)
         self.parent_obs = obs
 
-        X_uri = os.path.join(self.uri, "X")
-        var_uri = os.path.join(self.uri, "var")
-        varm_uri = os.path.join(self.uri, "varm")
-        varp_uri = os.path.join(self.uri, "varp")
+        X_uri = self._get_child_uri("X")  # See comments in that function
+        var_uri = self._get_child_uri("var")
+        varm_uri = self._get_child_uri("varm")
+        varp_uri = self._get_child_uri("varp")
 
         self.var = AnnotationDataFrame(uri=var_uri, name="var", parent=self)
         self.X = AssayMatrixGroup(

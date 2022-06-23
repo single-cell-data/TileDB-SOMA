@@ -155,7 +155,7 @@ class UnsGroup(TileDBGroup):
         self.create_unless_exists()
 
         for key in uns.keys():
-            component_uri = os.path.join(self.uri, key)
+            component_uri = self._get_child_uri(key)  # See comments in that function
             value = uns[key]
 
             if key == "rank_genes_groups":

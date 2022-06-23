@@ -103,7 +103,9 @@ class AnnotationPairwiseMatrixGroup(TileDBGroup):
         self.create_unless_exists()
         for matrix_name in annotation_pairwise_matrices.keys():
             anndata_matrix = annotation_pairwise_matrices[matrix_name]
-            matrix_uri = os.path.join(self.uri, matrix_name)
+            matrix_uri = self._get_child_uri(
+                matrix_name
+            )  # See comments in that function
             annotation_pairwise_matrix = AssayMatrix(
                 uri=matrix_uri,
                 name=matrix_name,

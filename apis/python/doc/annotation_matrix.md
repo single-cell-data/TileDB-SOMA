@@ -61,18 +61,6 @@ def df(ids=None) -> pd.DataFrame
 Keystroke-saving alias for `.dim_select()`. If `ids` are provided, they're used
 to subselect; if not, the entire dataframe is returned.
 
-<a id="tiledbsc.annotation_matrix.AnnotationMatrix.shape"></a>
-
-#### shape
-
-```python
-def shape() -> Tuple[int, int]
-```
-
-Returns a tuple with the number of rows and number of columns of the `AnnotationMatrix`.
-The row-count is the number of obs_ids (for `obsm` elements) or the number of var_ids (for
-`varm` elements).  The column-count is the number of columns/attributes in the dataframe.
-
 <a id="tiledbsc.annotation_matrix.AnnotationMatrix.from_matrix_and_dim_values"></a>
 
 #### from\_matrix\_and\_dim\_values

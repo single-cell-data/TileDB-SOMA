@@ -26,7 +26,9 @@ def __init__(uri: str,
              parent: Optional[TileDBGroup] = None)
 ```
 
-Create a new `SOMACollection` object. The existing group is opened at the specified `uri` if one is present, otherwise a new group will be created upon ingest.
+Create a new `SOMACollection` object. The existing group is opened at the
+
+specified `uri` if one is present, otherwise a new group will be created upon ingest.
 
 **Arguments**:
 
@@ -119,10 +121,10 @@ Returns sum of `soma.cell_count()` over SOMAs in the collection.
 #### query
 
 ```python
-def query(obs_attr_names: List[str] = [],
+def query(obs_attr_names: Optional[List[str]] = None,
           obs_query_string: str = None,
           obs_ids: List[str] = None,
-          var_attr_names: List[str] = [],
+          var_attr_names: Optional[List[str]] = None,
           var_query_string: str = None,
           var_ids: List[str] = None) -> Optional[SOMASlice]
 ```

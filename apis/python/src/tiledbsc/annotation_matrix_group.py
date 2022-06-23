@@ -83,7 +83,9 @@ class AnnotationMatrixGroup(TileDBGroup):
 
         for matrix_name in annotation_matrices.keys():
             anndata_matrix = annotation_matrices[matrix_name]
-            matrix_uri = os.path.join(self.uri, matrix_name)
+            matrix_uri = self._get_child_uri(
+                matrix_name
+            )  # See comments in that function
             annotation_matrix = AnnotationMatrix(
                 uri=matrix_uri,
                 name=matrix_name,

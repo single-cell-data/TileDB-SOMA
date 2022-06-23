@@ -1,4 +1,3 @@
-import os
 from typing import List, Optional
 
 import tiledb
@@ -154,7 +153,9 @@ class AssayMatrixGroup(TileDBGroup):
             # Must be done first, to create the parent directory
             self.create_unless_exists()
 
-            assay_matrix_uri = os.path.join(self.uri, layer_name)
+            assay_matrix_uri = self._get_child_uri(
+                layer_name
+            )  # See comments in that function
             assay_matrix = AssayMatrix(
                 uri=assay_matrix_uri,
                 name=layer_name,
