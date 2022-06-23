@@ -41,7 +41,6 @@ class TileDBObject:
         objects. Note that the parent reference is solely for propagating options, ctx, display
         depth, etc.
         """
-
         self.uri = uri
         self.name = name
 

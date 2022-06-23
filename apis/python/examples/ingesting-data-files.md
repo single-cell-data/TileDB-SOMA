@@ -25,15 +25,15 @@ best-in-class/state-of-the-art analysis algorithms, whichever language they're i
 Use the [populator script](../tools/populate-soco) to mark these as members of a SOMA collection:
 
 ```
-populate-soco -o /mini-corpus/soco -a /mini-corpus/tiledb-data/0cfab2d4-1b79-444e-8cbe-2ca9671ca85e
-populate-soco -o /mini-corpus/soco -a /mini-corpus/tiledb-data/10x_pbmc68k_reduced
+populate-soco -o /mini-corpus/soco --relative false -a /mini-corpus/tiledb-data/0cfab2d4-1b79-444e-8cbe-2ca9671ca85e
+populate-soco -o /mini-corpus/soco --relative false -a /mini-corpus/tiledb-data/10x_pbmc68k_reduced
 ...
 ```
 
 or simply
 
 ```
-populate-soco -o /mini-corpus/soco -a /mini-corpus/tiledb-data/*
+populate-soco -o /mini-corpus/soco --relative false -a /mini-corpus/tiledb-data/*
 ```
 
 Note this is quite quick.

@@ -46,11 +46,42 @@ def main():
     parser.add_argument(
         "paths", type=str, help="Paths to one or more SOMA directories.", nargs="*"
     )
+    parser.add_argument(
+        "--relative",
+        help=
+"""
+* If `false` then the group will remember the absolute paths of each member array/subgroup. For
+ingesting to TileDB Cloud, this is necessary.
+
+* If `true` then the group will have the relative pth of the member. For TileDB Cloud, this
+is never the right thing to do. For local-disk storage, this is essential if you want to move
+a SOMA to another directory and have it be able access its members.
+
+* If `auto`, then we select `relative=False` if the URI starts with `tiledb://`, else we
+select `relative=True`. (This is the default.)
+""",
+        choices=["true", "false", "auto"],
+        nargs=1,
+    )
     args = parser.parse_args()
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     collection_path = args.o.rstrip("/")
-    soco = tiledbsc.SOMACollection(collection_path)
+
+    soma_options = tiledbsc.SOMAOptions()
+
+    if args.relative is not None:
+        relative = args.relative[0]
+        if relative == 'true':
+            soma_options.member_uris_are_relative = True
+        elif relative == 'false':
+            soma_options.member_uris_are_relative = False
+        elif relative == 'auto':
+            soma_options.member_uris_are_relative = None
+        else:
+            raise Exception(f"Internal coding error in {__file__}")
+
+    soco = tiledbsc.SOMACollection(collection_path, soma_options=soma_options)
 
     count = 0
     if args.add:
