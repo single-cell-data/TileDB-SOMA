@@ -6,11 +6,9 @@
 # by also revealing array schema.
 # ================================================================
 
-import os
 import sys
 
 import tiledbsc
-import tiledbsc.io
 
 
 def main():

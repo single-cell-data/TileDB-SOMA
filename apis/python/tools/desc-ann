@@ -13,7 +13,6 @@
 # ================================================================
 
 import argparse
-import sys
 
 import tiledbsc
 import tiledbsc.io
