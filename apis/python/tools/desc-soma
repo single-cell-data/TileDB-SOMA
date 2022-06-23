@@ -6,7 +6,9 @@
 # by also revealing array schema.
 # ================================================================
 
-import sys, os
+import os
+import sys
+
 import tiledbsc
 import tiledbsc.io
 

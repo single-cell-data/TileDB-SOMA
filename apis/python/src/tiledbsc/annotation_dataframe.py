@@ -1,13 +1,14 @@
+from typing import List, Optional, Set, Tuple
+
+import numpy as np
+import pandas as pd
 import tiledb
-from .tiledb_array import TileDBArray
-from .tiledb_group import TileDBGroup
-from .soma_options import SOMAOptions
+
 import tiledbsc.util as util
 
-import pandas as pd
-import numpy as np
-
-from typing import Optional, Tuple, List, Set
+from .soma_options import SOMAOptions
+from .tiledb_array import TileDBArray
+from .tiledb_group import TileDBGroup
 
 
 class AnnotationDataFrame(TileDBArray):

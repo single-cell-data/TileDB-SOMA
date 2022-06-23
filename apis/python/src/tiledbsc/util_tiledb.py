@@ -1,8 +1,11 @@
 #!/usr/bin/env python
 
-import sys, os
-import tiledb
+import os
+import sys
 from typing import Optional
+
+import tiledb
+
 
 # ================================================================
 def show_single_cell_group(soma_uri: str, ctx: Optional[tiledb.Ctx] = None) -> None:

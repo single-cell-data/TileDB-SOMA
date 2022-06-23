@@ -1,9 +1,11 @@
+from typing import Dict, List, Optional, Set
+
 import tiledb
+
 import tiledbsc.util_tiledb
+
 from .soma_options import SOMAOptions
 from .tiledb_object import TileDBObject
-
-from typing import Optional, List, Set, Dict
 
 
 class TileDBArray(TileDBObject):

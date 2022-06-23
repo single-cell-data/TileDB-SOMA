@@ -1,15 +1,16 @@
-import tiledb
-from .soma_options import SOMAOptions
-from .tiledb_group import TileDBGroup
-from .assay_matrix import AssayMatrix
-from .annotation_dataframe import AnnotationDataFrame
-import tiledbsc.util as util
+import os
+from typing import Dict, List, Optional
 
 import pandas as pd
 import scipy
+import tiledb
 
-from typing import Optional, Dict, List
-import os
+import tiledbsc.util as util
+
+from .annotation_dataframe import AnnotationDataFrame
+from .assay_matrix import AssayMatrix
+from .soma_options import SOMAOptions
+from .tiledb_group import TileDBGroup
 
 
 class AnnotationPairwiseMatrixGroup(TileDBGroup):

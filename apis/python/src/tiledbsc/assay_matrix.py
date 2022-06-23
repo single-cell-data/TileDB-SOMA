@@ -1,18 +1,19 @@
+import math
+import time
+from typing import Optional, Tuple, Union
+
+import numpy as np
+import pandas as pd
+import scipy
 import tiledb
+
+import tiledbsc.util as util
+
+from .annotation_dataframe import AnnotationDataFrame
 from .soma_options import SOMAOptions
 from .tiledb_array import TileDBArray
 from .tiledb_group import TileDBGroup
 from .tiledb_object import TileDBObject
-from .annotation_dataframe import AnnotationDataFrame
-import tiledbsc.util as util
-
-import scipy
-import numpy as np
-import pandas as pd
-
-from typing import Optional, Tuple, Union
-import time
-import math
 
 
 class AssayMatrix(TileDBArray):

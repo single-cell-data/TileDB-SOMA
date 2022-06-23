@@ -6,21 +6,23 @@
 #
 # -- then you can inspect the SOMACollection object
 
-import tiledb
-import tiledbsc
-import tiledbsc as t
-import tiledbsc.io as io
-import sys, os,time
+import os
+import sys
+import time
+from typing import Dict, List
 
 import anndata
 import anndata as ad  # so we can type it either way
-import pandas
-import pandas as pd  # so we can type it either way
 import numpy
 import numpy as np  # so we can type it either way
+import pandas
+import pandas as pd  # so we can type it either way
 import scipy
+import tiledb
 
-from typing import List, Dict
+import tiledbsc
+import tiledbsc as t
+import tiledbsc.io as io
 
 if len(sys.argv) == 1:
     soco_path = "soma-collection"

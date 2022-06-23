@@ -1,8 +1,10 @@
 #!/usr/bin/env python
 
-import tiledbsc
-import pandas as pd
 import sys
+
+import pandas as pd
+
+import tiledbsc
 
 if len(sys.argv) == 2:
     soco_path = sys.argv[1]

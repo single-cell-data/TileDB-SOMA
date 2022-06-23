@@ -2,11 +2,11 @@
 
 # This is a little script to demonstrate how to write arbitrary test data into an AnnData .h5ad file.
 
+import random
+
 import anndata as ad
 import numpy as np
 import pandas as pd
-
-import random
 
 obs_ids = [
     "AAATTCGAATCACG",

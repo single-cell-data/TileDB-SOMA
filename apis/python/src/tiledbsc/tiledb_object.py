@@ -1,9 +1,9 @@
-import tiledb
-from .soma_options import SOMAOptions
-
-from typing import Optional, List, Dict
-
 import os
+from typing import Dict, List, Optional
+
+import tiledb
+
+from .soma_options import SOMAOptions
 
 
 class TileDBObject:

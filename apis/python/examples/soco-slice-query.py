@@ -1,9 +1,11 @@
 #!/usr/bin/env python
 
-import tiledbsc
-import os, sys
+import os
 import shutil
+import sys
 from typing import List
+
+import tiledbsc
 
 
 # ----------------------------------------------------------------

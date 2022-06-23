@@ -1,12 +1,12 @@
-import tiledb
-from .assay_matrix import AssayMatrix
-from .annotation_dataframe import AnnotationDataFrame
-from .tiledb_group import TileDBGroup
-from .soma_options import SOMAOptions
-
-from typing import Optional, List
-
 import os
+from typing import List, Optional
+
+import tiledb
+
+from .annotation_dataframe import AnnotationDataFrame
+from .assay_matrix import AssayMatrix
+from .soma_options import SOMAOptions
+from .tiledb_group import TileDBGroup
 
 
 class AssayMatrixGroup(TileDBGroup):

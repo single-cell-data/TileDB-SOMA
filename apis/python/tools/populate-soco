@@ -6,9 +6,12 @@
 # populate-soco -o my-collection -a ~/scdata/corpus/*
 # ================================================================
 
-import tiledbsc
-import sys, os
 import argparse
+import os
+import sys
+
+import tiledbsc
+
 
 # ================================================================
 def main():

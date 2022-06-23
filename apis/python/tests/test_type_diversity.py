@@ -1,14 +1,14 @@
-import anndata as ad
-import tiledb
-from tiledbsc import SOMA
-import tiledbsc.io as io
-import pandas as pd
-import numpy as np
-from scipy import sparse
-
 from pathlib import Path
 
+import anndata as ad
+import numpy as np
+import pandas as pd
 import pytest
+import tiledb
+from scipy import sparse
+
+import tiledbsc.io as io
+from tiledbsc import SOMA
 
 """
 Testing `from_anndata` with the wide diversity of types latent in AnnData.

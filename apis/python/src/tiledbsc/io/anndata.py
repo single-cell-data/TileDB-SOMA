@@ -1,9 +1,11 @@
-import tiledbsc
-import tiledbsc.util
-import tiledb
-import tiledbsc.util_ann
 import anndata as ad
 import scanpy
+import tiledb
+
+import tiledbsc
+import tiledbsc.util
+import tiledbsc.util_ann
+
 
 # ----------------------------------------------------------------
 def from_h5ad(soma: tiledbsc.SOMA, input_path: str) -> None:

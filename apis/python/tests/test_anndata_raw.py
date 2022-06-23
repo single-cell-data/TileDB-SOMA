@@ -1,12 +1,11 @@
-from anndata import AnnData
-from tiledbsc import SOMA
-import tiledbsc.io as io
-import tiledb
-import pandas as pd
 import numpy as np
-
+import pandas as pd
 import pytest
+import tiledb
+from anndata import AnnData
 
+import tiledbsc.io as io
+from tiledbsc import SOMA
 
 """
 Tests which verify from_anndata behavior with `.raw`.

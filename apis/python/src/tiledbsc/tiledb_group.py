@@ -1,13 +1,14 @@
-import tiledb
-import tiledbsc.util_tiledb
-from .soma_options import SOMAOptions
-from .tiledb_object import TileDBObject
-from .tiledb_array import TileDBArray
-
-from contextlib import contextmanager
-
-from typing import Optional, Union, List, Dict
 import os
+from contextlib import contextmanager
+from typing import Dict, List, Optional, Union
+
+import tiledb
+
+import tiledbsc.util_tiledb
+
+from .soma_options import SOMAOptions
+from .tiledb_array import TileDBArray
+from .tiledb_object import TileDBObject
 
 
 class TileDBGroup(TileDBObject):

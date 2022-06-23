@@ -1,5 +1,5 @@
 import os
-from typing import Optional, Union, List, Dict
+from typing import Dict, List, Optional, Union
 
 import anndata as ad
 import numpy as np
@@ -9,17 +9,16 @@ import scanpy
 import scipy
 import tiledb
 
-from tiledbsc import util
-from tiledbsc import util_ann
+from tiledbsc import util, util_ann
 
-from .soma_options import SOMAOptions
-from .soma_slice import SOMASlice
-from .tiledb_group import TileDBGroup
-from .assay_matrix_group import AssayMatrixGroup
 from .annotation_dataframe import AnnotationDataFrame
 from .annotation_matrix_group import AnnotationMatrixGroup
 from .annotation_pairwise_matrix_group import AnnotationPairwiseMatrixGroup
+from .assay_matrix_group import AssayMatrixGroup
 from .raw_group import RawGroup
+from .soma_options import SOMAOptions
+from .soma_slice import SOMASlice
+from .tiledb_group import TileDBGroup
 from .uns_group import UnsGroup
 
 

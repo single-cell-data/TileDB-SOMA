@@ -24,21 +24,23 @@ Note: This code for populating an atlas is independent of querying an atlas.  Se
 for query examples.
 """
 
-import sys
 import argparse
-from typing import Optional, Union, List
-import os.path
 import logging
+import os.path
+import sys
+from typing import List, Optional, Union
 
-from tiledbsc import SOMACollection, SOMA, io as SOMAio
-import tiledbsc
-import tiledb
 import anndata
-import numpy as np
-import scipy.stats
-import scipy.sparse
 import numba as nb
+import numpy as np
 import pandas as pd
+import scipy.sparse
+import scipy.stats
+import tiledb
+
+import tiledbsc
+from tiledbsc import SOMA, SOMACollection
+from tiledbsc import io as SOMAio
 
 # ================================================================
 # MAIN ENTRYPOINT

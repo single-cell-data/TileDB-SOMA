@@ -1,13 +1,11 @@
-import tiledb
+import time
+from typing import List, Optional, Union
 
 import anndata as ad
-
 import numpy
-import scipy
 import pandas as pd
-
-import time
-from typing import Optional, List, Union
+import scipy
+import tiledb
 
 # This is for group/array metadata we write, to help nested-structured traversals (especially those
 # that start at the SOMACollection level) confidently navigate with a minimum of introspection on

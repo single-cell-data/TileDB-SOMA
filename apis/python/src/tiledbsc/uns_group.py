@@ -1,18 +1,17 @@
+import os
+from typing import Dict, List, Optional, Union
+
+import anndata as ad
+import numpy as np
+import pandas as pd
+import scipy
 import tiledb
+
+import tiledbsc.util as util
 
 from .soma_options import SOMAOptions
 from .tiledb_group import TileDBGroup
 from .uns_array import UnsArray
-import tiledbsc.util as util
-
-import anndata as ad
-import pandas as pd
-import numpy as np
-import scipy
-
-from typing import Optional, List, Dict, Union
-
-import os
 
 
 class UnsGroup(TileDBGroup):

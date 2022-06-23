@@ -1,12 +1,13 @@
-import tiledb
-from .tiledb_array import TileDBArray
-from .tiledb_group import TileDBGroup
-from .soma_options import SOMAOptions
-import tiledbsc.util as util
+from typing import List, Optional, Tuple
 
 import pandas as pd
+import tiledb
 
-from typing import Optional, List, Tuple
+import tiledbsc.util as util
+
+from .soma_options import SOMAOptions
+from .tiledb_array import TileDBArray
+from .tiledb_group import TileDBGroup
 
 
 class AnnotationMatrix(TileDBArray):

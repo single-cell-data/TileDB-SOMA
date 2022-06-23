@@ -1,14 +1,15 @@
-from anndata import AnnData
-import tiledb
-from tiledbsc import SOMA
-import tiledbsc.io as io
-import pandas as pd
+import os
+from collections import OrderedDict
+
 import numpy as np
+import pandas as pd
+import pytest
+import tiledb
+from anndata import AnnData
 from scipy import sparse
 
-from collections import OrderedDict
-import os
-import pytest
+import tiledbsc.io as io
+from tiledbsc import SOMA
 
 """
 Verify that the AnnData.uns persists correctly. Currently focused on a simple

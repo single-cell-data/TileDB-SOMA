@@ -1,10 +1,12 @@
+import os
+
 import anndata as ad
 import numpy as np
-import scipy
 import pandas as pd
+import scipy
+
 import tiledbsc.util as util
 
-import os
 
 # ----------------------------------------------------------------
 def describe_ann_file(

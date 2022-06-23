@@ -1,12 +1,12 @@
-from typing import Optional, List
+from typing import List, Optional
 
-from .soma_options import SOMAOptions
+import pandas as pd
+import tiledb
+
 from .soma import SOMA
+from .soma_options import SOMAOptions
 from .soma_slice import SOMASlice
 from .tiledb_group import TileDBGroup
-
-import tiledb
-import pandas as pd
 
 
 class SOMACollection(TileDBGroup):
