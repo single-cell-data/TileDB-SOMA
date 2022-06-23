@@ -3,6 +3,7 @@ import tiledbsc.util
 import tiledb
 import tiledbsc.util_ann
 import anndata as ad
+import scanpy
 
 # ----------------------------------------------------------------
 def from_h5ad(soma: tiledbsc.SOMA, input_path: str) -> None:
@@ -300,7 +301,7 @@ def to_anndata_from_raw(soma: tiledbsc.SOMA) -> ad.AnnData:
 
     obs_df = soma.obs.df()
     var_df = soma.raw.var.df()
-    X_mat = soma.raw.X["data"].to_csr_matrix(obs.index, var.index)
+    X_mat = soma.raw.X["data"].to_csr_matrix(obs_df.index, var_df.index)
 
     return ad.AnnData(
         X=X_mat,
