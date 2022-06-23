@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 
-import os
 from typing import Optional
 
-import tiledbsc
 import tiledb
+
+import tiledbsc
 
 
 # ================================================================
