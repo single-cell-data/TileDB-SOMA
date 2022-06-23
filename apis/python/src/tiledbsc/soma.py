@@ -3,6 +3,7 @@ from typing import Dict, List, Optional
 
 import pandas as pd
 import tiledb
+import logging
 
 from .annotation_dataframe import AnnotationDataFrame
 from .annotation_matrix_group import AnnotationMatrixGroup
@@ -74,11 +75,14 @@ class SOMA(TileDBGroup):
             name = os.path.basename(uri.rstrip("/"))
             if name == "":
                 name = "soma"
+        if verbose:
+            logging.basicConfig(level=logging.INFO)
+        else:
+            logging.basicConfig(level=logging.WARNING)
         super().__init__(
             uri=uri,
             name=name,
             parent=parent,
-            verbose=verbose,
             soma_options=soma_options,
             ctx=ctx,
         )
@@ -343,7 +347,6 @@ class SOMA(TileDBGroup):
         uri: str,
         name=None,
         soma_options: Optional[SOMAOptions] = None,
-        verbose: Optional[bool] = True,
         config: Optional[tiledb.Config] = None,
         ctx: Optional[tiledb.Ctx] = None,
         parent: Optional[TileDBGroup] = None,  # E.g. a SOMA collection
@@ -356,7 +359,6 @@ class SOMA(TileDBGroup):
             uri=uri,
             name=name,
             soma_options=soma_options,
-            verbose=verbose,
             config=config,
             ctx=ctx,
             parent=parent,

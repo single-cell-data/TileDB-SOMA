@@ -16,7 +16,6 @@ class TileDBObject:
     name: str
 
     _soma_options: SOMAOptions
-    _verbose: bool
     _ctx: Optional[tiledb.Ctx]
 
     _indent: str  # for display strings
@@ -32,12 +31,11 @@ class TileDBObject:
         parent=None,
         # Top-level objects should specify these:
         soma_options: Optional[SOMAOptions] = None,
-        verbose: Optional[bool] = True,
         ctx: Optional[tiledb.Ctx] = None,
     ):
         """
-        Initialization-handling shared between `TileDBArray` and `TileDBGroup`.  Specify soma_options,
-        verbose, and ctx for the top-level object; omit them and specify parent for non-top-level
+        Initialization-handling shared between `TileDBArray` and `TileDBGroup`.  Specify soma_options
+        and ctx for the top-level object; omit them and specify parent for non-top-level
         objects. Note that the parent reference is solely for propagating options, ctx, display
         depth, etc.
         """
@@ -46,17 +44,12 @@ class TileDBObject:
 
         if parent is None:
             self._soma_options = soma_options
-            self._verbose = verbose
             self._ctx = ctx
             self._indent = ""
         else:
             self._soma_options = parent._soma_options
-            self._verbose = parent._verbose
             self._ctx = parent._ctx
             self._indent = parent._indent + "  "
-
-        if os.getenv("TILEDBSC_PY_SUPPRESS_VERBOSE") is not None:
-            self._verbose = False
 
         if self._soma_options is None:
             self._soma_options = SOMAOptions()

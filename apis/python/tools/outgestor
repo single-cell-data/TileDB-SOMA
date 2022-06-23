@@ -65,7 +65,7 @@ def main():
     vfs = tiledb.VFS()
     if not vfs.is_dir(input_path):
         # Print this neatly and exit neatly, to avoid a multi-line stack trace otherwise.
-        print(f"Input path not found: {input_path}", file=sys.stderr)
+        logging.error(f"Input path not found: {input_path}", file=sys.stderr)
         sys.exit(1)
 
     # This is for local-disk use only -- for S3-backed tiledb://... URIs we should
@@ -79,7 +79,7 @@ def main():
     tiledbsc.io.to_h5ad(soma, output_path)
 
     if not verbose:
-        print(f"Wrote {output_path}")
+        logging.info(f"Wrote {output_path}")
 
 
 if __name__ == "__main__":

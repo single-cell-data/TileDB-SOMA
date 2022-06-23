@@ -11,7 +11,7 @@ from .tiledb_object import TileDBObject
 
 class TileDBGroup(TileDBObject):
     """
-    Wraps groups from TileDB-Py by retaining a URI, verbose flag, etc.
+    Wraps groups from TileDB-Py by retaining a URI, options, etc.
     """
 
     def __init__(
@@ -24,7 +24,6 @@ class TileDBGroup(TileDBObject):
         parent=None,
         # Top-level objects should specify these:
         soma_options: Optional[SOMAOptions] = None,
-        verbose: Optional[bool] = True,
         ctx: Optional[tiledb.Ctx] = None,
     ):
         """
@@ -35,7 +34,6 @@ class TileDBGroup(TileDBObject):
             name=name,
             parent=parent,
             soma_options=soma_options,
-            verbose=verbose,
             ctx=ctx,
         )
 
@@ -58,8 +56,7 @@ class TileDBGroup(TileDBObject):
         """
         Creates the TileDB group data structure on disk/S3/cloud.
         """
-        if self._verbose:
-            print(f"{self._indent}Creating TileDB group {self.uri}")
+        logging.info(f"{self._indent}Creating TileDB group {self.uri}")
         tiledb.group_create(uri=self.uri, ctx=self._ctx)
 
         self._set_object_type_metadata()
@@ -220,9 +217,9 @@ class TileDBGroup(TileDBObject):
         """
         Shows metadata for the group, recursively by default.
         """
-        print(f"{indent}[{self.name}]")
+        logging.info(f"{indent}[{self.name}]")
         for key, value in self.metadata().items():
-            print(f"{indent}- {key}: {value}")
+            logging.info(f"{indent}- {key}: {value}")
         if recursively:
             child_indent = indent + "  "
             with self._open() as G:

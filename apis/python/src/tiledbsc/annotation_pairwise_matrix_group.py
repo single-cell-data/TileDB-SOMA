@@ -136,35 +136,30 @@ class AnnotationPairwiseMatrixGroup(TileDBGroup):
             grp = tiledb.Group(self.uri, mode="r", ctx=self._ctx)
         except tiledb.TileDBError:
             pass
-        if grp is None:
-            if self._verbose:
-                print(f"{self._indent}{self.uri} not found")
+        if grp == None:
+            logging.info(f"{self._indent}{self.uri} not found")
             return {}
 
-        if self._verbose:
-            s = util.get_start_stamp()
-            print(f"{self._indent}START  read {self.uri}")
+        s = util.get_start_stamp()
+        logging.info(f"{self._indent}START  read {self.uri}")
 
         matrices_in_group = {}
         for element in self:
-            if self._verbose:
-                s2 = util.get_start_stamp()
-                print(f"{self._indent}START  read {element.uri}")
+            s2 = util.get_start_stamp()
+            logging.info(f"{self._indent}START  read {element.uri}")
 
             matrix_name = os.path.basename(element.uri)  # TODO: fix for tiledb cloud
             matrices_in_group[matrix_name] = element.to_csr_matrix(
                 obs_df_index, var_df_index
             )
 
-            if self._verbose:
-                print(
-                    util.format_elapsed(s2, f"{self._indent}FINISH read {element.uri}")
-                )
+            logging.info(
+                util.format_elapsed(s2, f"{self._indent}FINISH read {element.uri}")
+            )
 
         grp.close()
 
-        if self._verbose:
-            print(util.format_elapsed(s, f"{self._indent}FINISH read {self.uri}"))
+        logging.info(util.format_elapsed(s, f"{self._indent}FINISH read {self.uri}"))
 
         return matrices_in_group
 

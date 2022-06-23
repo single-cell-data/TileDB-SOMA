@@ -90,7 +90,7 @@ select `relative=True`. (This is the default.)
     if args.list:
         count += 1
     if count != 1:
-        print(f"{os.path.basename(sys.argv[0])}: need just one of -a, -r, or -l.")
+        logging.error(f"{os.path.basename(sys.argv[0])}: need just one of -a, -r, or -l.")
         sys.exit(1)
 
     if args.add or args.remove:
@@ -107,7 +107,7 @@ select `relative=True`. (This is the default.)
             soma_uri = soma_uri.rstrip("/")
             name = os.path.basename(soma_uri)
             soma = tiledbsc.SOMA(uri=soma_uri, name=name, parent=soco)
-            print(f"Adding {name} to {soma_uri}")
+            logging.info(f"Adding {name} to {soma_uri}")
             soco.add(soma)
 
     if args.remove:
@@ -115,7 +115,7 @@ select `relative=True`. (This is the default.)
             soma_uri = soma_uri.rstrip("/")
             name = os.path.basename(soma_uri)
             soma = tiledbsc.SOMA(uri=soma_uri, name=name, parent=soco)
-            print(f"Removing {name} from {soma_uri}")
+            logging.info(f"Removing {name} from {soma_uri}")
             soco.remove(soma)
 
     if args.list:

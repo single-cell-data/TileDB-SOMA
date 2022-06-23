@@ -24,6 +24,8 @@ import tiledbsc
 import tiledbsc.io
 import tiledbsc.util
 
+import logging
+
 
 # ================================================================
 def main():
@@ -188,7 +190,7 @@ def ingest_one(
     vfs = tiledb.VFS()
     if not vfs.is_file(input_path):
         # Print this neatly and exit neatly, to avoid a multi-line stack trace otherwise.
-        print(f"Input path not found: {input_path}", file=sys.stderr)
+        logging.error(f"Input path not found: {input_path}", file=sys.stderr)
         sys.exit(1)
 
     # Prepare to write the output.
@@ -200,7 +202,7 @@ def ingest_one(
             if not os.path.exists(parent):
                 os.mkdir(parent)
 
-    soma = tiledbsc.SOMA(uri=output_path, soma_options=soma_options)
+    soma = tiledbsc.SOMA(uri=output_path, soma_options=soma_options, verbose=verbose)
 
     if ifexists == "update_obs_and_var":
         if not os.path.exists(output_path):
@@ -211,10 +213,10 @@ def ingest_one(
     else:
         if os.path.exists(output_path):
             if ifexists == "continue":
-                print(f"Already exists; continuing: {output_path}")
+                logging.info(f"Already exists; continuing: {output_path}")
                 return
             elif ifexists == "abort":
-                print(f"Already exists; aborting: {output_path}")
+                logging.error(f"Already exists; aborting: {output_path}")
                 sys.exit(1)
             elif ifexists == "replace":
                 if output_path.startswith("s3://") or output_path.startswith(
@@ -232,8 +234,7 @@ def ingest_one(
         # Do the ingest into TileDB.
         tiledbsc.io.from_h5ad(soma, input_path)
 
-    if not verbose:
-        print(f"Wrote {output_path}")
+    logging.info(f"Wrote {output_path}")
 
     if write_soco:
         soco = tiledbsc.SOMACollection(
@@ -243,9 +244,9 @@ def ingest_one(
         if not soco.exists():
             raise Exception(f"Could not create SOCO at {soco.uri}")
         soco.add(soma)
-        if verbose:
-            print()
-            print(f"Added SOMA {soma.name} to SOMACollection {soco_dir}")
+
+        logging.info("")
+        logging.info(f"Added SOMA {soma.name} to SOMACollection {soco_dir}")
 
 
 # ================================================================

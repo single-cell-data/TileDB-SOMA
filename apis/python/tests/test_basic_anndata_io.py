@@ -34,7 +34,7 @@ def test_import_anndata(adata):
     orig = adata
 
     # Ingest
-    soma = tiledbsc.SOMA(output_path, verbose=True)
+    soma = tiledbsc.SOMA(output_path, verbose=False)
     tiledbsc.io.from_anndata(soma, orig)
 
     # Structure:

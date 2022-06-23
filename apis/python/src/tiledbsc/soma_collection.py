@@ -36,11 +36,14 @@ class SOMACollection(TileDBGroup):
             ctx = tiledb.Ctx(config)
         if soma_options is None:
             soma_options = SOMAOptions()  # Use default values from the constructor
+        if verbose:
+            logging.basicConfig(level=logging.INFO)
+        else:
+            logging.basicConfig(level=logging.WARNING)
         super().__init__(
             uri=uri,
             name=name,
             parent=parent,
-            verbose=verbose,
             soma_options=soma_options,
             ctx=ctx,
         )

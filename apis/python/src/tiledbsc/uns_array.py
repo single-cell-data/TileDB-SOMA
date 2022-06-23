@@ -34,9 +34,8 @@ class UnsArray(TileDBArray):
         Ingests an `UnsArray` into TileDB storage, given a pandas.DataFrame.
         """
 
-        if self._verbose:
-            s = util.get_start_stamp()
-            print(f"{self._indent}START  WRITING PANDAS.DATAFRAME {self.uri}")
+        s = util.get_start_stamp()
+        logging.info(f"{self._indent}START  WRITING PANDAS.DATAFRAME {self.uri}")
 
         tiledb.from_pandas(
             uri=self.uri,
@@ -46,12 +45,11 @@ class UnsArray(TileDBArray):
             ctx=self._ctx,
         )
 
-        if self._verbose:
-            print(
-                util.format_elapsed(
-                    s, f"{self._indent}FINISH WRITING PANDAS.DATAFRAME {self.uri}"
-                )
+        logging.info(
+            util.format_elapsed(
+                s, f"{self._indent}FINISH WRITING PANDAS.DATAFRAME {self.uri}"
             )
+        )
 
     # ----------------------------------------------------------------
     def _maybe_from_numpyable_object(self, obj) -> bool:
@@ -87,9 +85,8 @@ class UnsArray(TileDBArray):
         objects. Mostly tiledb.from_numpy, but with some necessary handling for data with UTF-8 values.
         """
 
-        if self._verbose:
-            s = util.get_start_stamp()
-            print(f"{self._indent}START  WRITING FROM NUMPY.NDARRAY {self.uri}")
+        s = util.get_start_stamp()
+        logging.info(f"{self._indent}START  WRITING FROM NUMPY.NDARRAY {self.uri}")
 
         if "numpy" in str(type(arr)) and str(arr.dtype).startswith("<U"):
             # Note arr.astype('str') does not lead to a successfuly tiledb.from_numpy.
@@ -98,18 +95,16 @@ class UnsArray(TileDBArray):
         # overwrite = False
         # if self.exists:
         #     overwrite = True
-        #     if self._verbose:
-        #         print(f"{self._indent}Re-using existing array {self.uri}")
+        #     logging.info(f"{self._indent}Re-using existing array {self.uri}")
         # tiledb.from_numpy(uri=self.uri, array=arr, ctx=self._ctx, overwrite=overwrite)
         # TODO: find the right syntax for update-in-place (tiledb.from_pandas uses `mode`)
         tiledb.from_numpy(uri=self.uri, array=arr, ctx=self._ctx)
 
-        if self._verbose:
-            print(
-                util.format_elapsed(
-                    s, f"{self._indent}FINISH WRITING FROM NUMPY.NDARRAY {self.uri}"
-                )
+        logging.info(
+            util.format_elapsed(
+                s, f"{self._indent}FINISH WRITING FROM NUMPY.NDARRAY {self.uri}"
             )
+        )
 
     # ----------------------------------------------------------------
     def from_scipy_csr(self, csr: scipy.sparse.csr_matrix) -> None:
@@ -119,25 +114,22 @@ class UnsArray(TileDBArray):
         :param csr: Matrix-like object coercible to a scipy coo_matrix.
         """
 
-        if self._verbose:
-            s = util.get_start_stamp()
-            print(f"{self._indent}START  WRITING FROM SCIPY.SPARSE.CSR {self.uri}")
+        s = util.get_start_stamp()
+        logging.info(f"{self._indent}START  WRITING FROM SCIPY.SPARSE.CSR {self.uri}")
 
         nrows, ncols = csr.shape
         if self.exists():
-            if self._verbose:
-                print(f"{self._indent}Re-using existing array {self.uri}")
+            logging.info(f"{self._indent}Re-using existing array {self.uri}")
         else:
             self.create_empty_array_for_csr("data", csr.dtype, nrows, ncols)
 
         self.ingest_data_from_csr(csr)
 
-        if self._verbose:
-            print(
-                util.format_elapsed(
-                    s, f"{self._indent}FINISH WRITING FROM SCIPY.SPARSE.CSR {self.uri}"
-                )
+        logging.info(
+            util.format_elapsed(
+                s, f"{self._indent}FINISH WRITING FROM SCIPY.SPARSE.CSR {self.uri}"
             )
+        )
 
     # ----------------------------------------------------------------
     def create_empty_array_for_csr(
@@ -213,15 +205,13 @@ class UnsArray(TileDBArray):
         """
         Reads an uns array from TileDB storage and returns a matrix -- currently, always as numpy.ndarray.
         """
-        if self._verbose:
-            s2 = util.get_start_stamp()
-            print(f"{self._indent}START  read {self.uri}")
+        s2 = util.get_start_stamp()
+        logging.info(f"{self._indent}START  read {self.uri}")
 
         with tiledb.open(self.uri, ctx=self._ctx) as A:
             df = pd.DataFrame(A[:])
             retval = df.to_numpy()
 
-        if self._verbose:
-            print(util.format_elapsed(s2, f"{self._indent}FINISH read {self.uri}"))
+        logging.info(util.format_elapsed(s2, f"{self._indent}FINISH read {self.uri}"))
 
         return retval
