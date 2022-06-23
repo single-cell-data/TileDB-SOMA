@@ -4,6 +4,7 @@ from typing import List, Optional, Union
 import numpy
 import pandas as pd
 import scipy
+import scipy.sparse
 import tiledb
 
 # This is for group/array metadata we write, to help nested-structured traversals (especially those
