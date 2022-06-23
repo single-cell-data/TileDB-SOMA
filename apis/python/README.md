@@ -18,6 +18,12 @@ To install a specific version:
 python -m pip install git+https://github.com/django/django.git@0.0.4
 ```
 
+To update to the latest version:
+
+```
+python -m pip install --upgrade tiledbsc
+```
+
 ## From source
 
 * This requires [`tiledb`](https://github.com/TileDB-Inc/TileDB-Py) (see [./setup.cfg](setup.cfg) for version), in addition to other dependencies in [setup.cfg](./setup.cfg).
