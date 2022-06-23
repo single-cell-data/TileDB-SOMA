@@ -1,9 +1,11 @@
 #!/usr/bin/env python
 
-import tiledbsc
-import os, sys
+import os
 import shutil
-from typing import List
+import sys
+from typing import List, Optional
+
+import tiledbsc
 
 
 # ----------------------------------------------------------------
@@ -11,9 +13,9 @@ def soco_query_and_store(
     soco: tiledbsc.SOMACollection,
     output_h5ad_path: str,
     output_soma_path: str,
-    obs_attr_names: List[str] = [],
+    obs_attr_names: Optional[List[str]] = None,
     obs_query_string: str = None,
-    var_attr_names: List[str] = [],
+    var_attr_names: Optional[List[str]] = None,
     var_query_string: str = None,
 ) -> None:
 

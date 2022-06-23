@@ -16,26 +16,8 @@ jobs:
       matrix:
         os: [ubuntu-latest, macos-10.15, windows-2019]
         python-version: ['3.8']
-        include:
-          - runs-on: ubuntu-latest
-            cc: gcc-10
-            cxx: g++-10
-    env:
-      MACOSX_DEPLOYMENT_TARGET: 10.14
 
     steps:
-    - name: 'Print env'
-      run: |
-        echo "'uname -s' is:"
-        echo "uname: " $(uname)
-        echo "uname -m: " $(uname -m)
-        echo "uname -r:" $(uname -r)
-        echo "uname -s: " $(uname -s)
-        echo "uname -v: " $(uname -v)
-        printenv
-      shell: bash
-      if: ${{ runner.os != 'Windows' }}
-
     - name: Checkout TileDB-SingleCell
       uses: actions/checkout@v2
 
@@ -45,7 +27,7 @@ jobs:
         python-version: ${{ matrix.python-version }}
 
     - name: Install Python packages
-      run: python -m pip install apis/python[ci]
+      run: python -m pip install pytest apis/python
 
     - name: Run pytests
       run: python -m pytest apis/python/tests

@@ -1,18 +1,17 @@
-import tiledb
-from .soma_options import SOMAOptions
-from .tiledb_array import TileDBArray
-from .tiledb_group import TileDBGroup
-from .tiledb_object import TileDBObject
-from .annotation_dataframe import AnnotationDataFrame
-import tiledbsc.util as util
+import math
+import time
+from typing import Optional, Tuple, Union
 
-import scipy
 import numpy as np
 import pandas as pd
+import scipy
+import tiledb
 
-from typing import Optional, Tuple, Union
-import time
-import math
+import tiledbsc.util as util
+
+from .annotation_dataframe import AnnotationDataFrame
+from .tiledb_array import TileDBArray
+from .tiledb_group import TileDBGroup
 
 
 class AssayMatrix(TileDBArray):
@@ -72,7 +71,7 @@ class AssayMatrix(TileDBArray):
 
         Note: currently implemented via data scan -- will be optimized for TileDB core 2.10.
         """
-        with self._open() as A:
+        with self._open():
             # These TileDB arrays are string-dimensioned sparse arrays so there is no '.shape'.
             # Instead we compute it ourselves.  See also:
             num_rows = self.row_dataframe.shape()[0]

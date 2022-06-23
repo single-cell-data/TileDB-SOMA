@@ -1,14 +1,10 @@
-import anndata
-import tiledb
-import tiledbsc
-import tiledbsc.io
-
-import numpy as np
+import tempfile
+from pathlib import Path
 
 import pytest
-import tempfile
-import os
-from pathlib import Path
+
+import tiledbsc
+import tiledbsc.io
 
 HERE = Path(__file__).parent
 
@@ -34,19 +30,19 @@ def test_soma_metadata(h5ad_file):
     assert soma.exists()
 
     # Group-level metadata
-    assert soma.has_metadata("nonesuch") == False
+    assert soma.has_metadata("nonesuch") is False
 
     soma.set_metadata("foo", "bar")
-    assert soma.has_metadata("nonesuch") == False
-    assert soma.has_metadata("foo") == True
+    assert soma.has_metadata("nonesuch") is False
+    assert soma.has_metadata("foo") is True
     assert soma.get_metadata("foo") == "bar"
 
     # Array-level metadata
-    assert soma.obs.has_metadata("nonesuch") == False
+    assert soma.obs.has_metadata("nonesuch") is False
 
     soma.obs.set_metadata("foo", "bar")
-    assert soma.obs.has_metadata("nonesuch") == False
-    assert soma.obs.has_metadata("foo") == True
+    assert soma.obs.has_metadata("nonesuch") is False
+    assert soma.obs.has_metadata("foo") is True
     assert "foo" in soma.obs.metadata_keys()
     assert soma.obs.get_metadata("foo") == "bar"
 

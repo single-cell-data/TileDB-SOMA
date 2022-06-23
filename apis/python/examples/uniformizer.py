@@ -24,24 +24,25 @@ Note: This code for populating an atlas is independent of querying an atlas.  Se
 for query examples.
 """
 
-import sys
 import argparse
-from typing import Optional, Union, List
-import os.path
 import logging
+import os.path
+import sys
+from typing import Optional
 
-from tiledbsc import SOMACollection, SOMA, io as SOMAio
-import tiledbsc
-import tiledb
 import anndata
-import numpy as np
-import scipy.stats
-import scipy.sparse
 import numba as nb
-import pandas as pd
+import numpy as np
+import scipy.sparse
+import scipy.stats
+import tiledb
+
+from tiledbsc import SOMA, SOMACollection
+from tiledbsc import io as SOMAio
 
 # ================================================================
 # MAIN ENTRYPOINT
+
 
 # ----------------------------------------------------------------
 def main() -> int:
@@ -296,7 +297,7 @@ class Uniformizer:
         else:
             # This one line -- right here -- is the primary reason for using AnnData as an in-memory
             # container even for data read from a SOMA. This is MARVELOUSLY expressive. :)
-            ann = original_ann[original_ann.obs.is_primary_data == True]
+            ann = original_ann[original_ann.obs.is_primary_data]
             if ann.obs.index.empty:
                 raise Exception(
                     "The is_primary_data == True filter left no data remaining for this dataset."

@@ -1,12 +1,11 @@
-from typing import Optional, List
-
-from .soma_options import SOMAOptions
-from .soma import SOMA
-from .soma_slice import SOMASlice
-from .tiledb_group import TileDBGroup
+from typing import List, Optional
 
 import tiledb
-import pandas as pd
+
+from .soma import SOMA
+from .soma_options import SOMAOptions
+from .soma_slice import SOMASlice
+from .tiledb_group import TileDBGroup
 
 
 class SOMACollection(TileDBGroup):
@@ -26,7 +25,8 @@ class SOMACollection(TileDBGroup):
         parent: Optional[TileDBGroup] = None,  # E.g. a SOMA collection
     ):
         """
-        Create a new `SOMACollection` object. The existing group is opened at the specified `uri` if one is present, otherwise a new group will be created upon ingest.
+        Create a new `SOMACollection` object. The existing group is opened at the
+        specified `uri` if one is present, otherwise a new group will be created upon ingest.
 
         :param uri: URI of the TileDB group
         :param verbose: Print status messages
@@ -117,7 +117,7 @@ class SOMACollection(TileDBGroup):
         with self._open("r") as G:
             try:
                 obj = G[name]  # This returns a tiledb.object.Object.
-            except:
+            except tiledb.TileDBError:
                 return None
 
             if obj.type != tiledb.group.Group:
@@ -137,10 +137,10 @@ class SOMACollection(TileDBGroup):
     # ----------------------------------------------------------------
     def query(
         self,
-        obs_attr_names: List[str] = [],
+        obs_attr_names: Optional[List[str]] = None,
         obs_query_string: str = None,
         obs_ids: List[str] = None,
-        var_attr_names: List[str] = [],
+        var_attr_names: Optional[List[str]] = None,
         var_query_string: str = None,
         var_ids: List[str] = None,
     ) -> Optional[SOMASlice]:
@@ -159,13 +159,13 @@ class SOMACollection(TileDBGroup):
             # E.g. querying for 'cell_type == "blood"' but this SOMA doesn't have a cell_type column in
             # its obs at all.
             if obs_query_string is not None and not soma.obs.has_attr_names(
-                obs_attr_names
+                obs_attr_names or []
             ):
                 continue
             # E.g. querying for 'feature_name == "MT-CO3"' but this SOMA doesn't have a feature_name
             # column in its var at all.
             if var_query_string is not None and not soma.var.has_attr_names(
-                var_attr_names
+                var_attr_names or []
             ):
                 continue
 
@@ -175,7 +175,7 @@ class SOMACollection(TileDBGroup):
                 obs_ids=obs_ids,
                 var_ids=var_ids,
             )
-            if soma_slice != None:
+            if soma_slice is not None:
                 # print("Slice SOMA from", soma.name, soma.X.data.shape(), "to", soma_slice.ann.X.shape)
                 soma_slices.append(soma_slice)
 
@@ -206,7 +206,7 @@ class SOMACollection(TileDBGroup):
 
         for soma in self:
             annotation_matrix = soma.obs if use_obs else soma.var
-            if not obs_or_var_label in annotation_matrix.keys():
+            if obs_or_var_label not in annotation_matrix.keys():
                 continue
 
             unique_values_in_soma = list(set(annotation_matrix.df()[obs_or_var_label]))

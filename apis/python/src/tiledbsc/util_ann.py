@@ -1,10 +1,12 @@
+import os
+
 import anndata as ad
 import numpy as np
-import scipy
 import pandas as pd
+import scipy
+
 import tiledbsc.util as util
 
-import os
 
 # ----------------------------------------------------------------
 def describe_ann_file(
@@ -55,7 +57,7 @@ def _describe_ann_file_show_summary(anndata: ad.AnnData, input_path: str) -> Non
         print("RAW X SHAPE  ", anndata.raw.X.shape)
         print(" RAW OBS  LEN ", len(anndata.raw.X.obs_names))
         print("RAW VAR  LEN ", len(anndata.raw.X.var_names))
-    except:
+    except AttributeError:
         pass
 
     print("OBS  KEYS", list(anndata.obs.keys()))
@@ -66,7 +68,7 @@ def _describe_ann_file_show_summary(anndata: ad.AnnData, input_path: str) -> Non
     print("OBSP KEYS", list(anndata.obsp.keys()))
     print("VARP KEYS", list(anndata.varp.keys()))
 
-    _describe_ann_file_show_uns_summary(anndata.uns)
+    _describe_ann_file_show_uns_summary(anndata.uns, ["uns"])
 
 
 # ----------------------------------------------------------------
@@ -91,7 +93,7 @@ def _describe_ann_file_show_types(anndata: ad.AnnData, input_path: str) -> None:
     try:  # not all groups have raw X
         X = anndata.raw.X
         has_raw = True
-    except:
+    except AttributeError:
         pass
 
     if has_raw:
@@ -119,7 +121,7 @@ def _describe_ann_file_show_types(anndata: ad.AnnData, input_path: str) -> None:
     for k in anndata.varp.keys():
         print("%-*s %s" % (namewidth, "varp/" + k, type(anndata.varp[k])))
 
-    _describe_ann_file_show_uns_types(anndata.uns)
+    _describe_ann_file_show_uns_types(anndata.uns, ["uns"])
 
 
 # ----------------------------------------------------------------
@@ -174,12 +176,12 @@ def _describe_ann_file_show_data(anndata: ad.AnnData, input_path: str) -> None:
         print(f"varp/{k} DATA", type(d), d.shape)
         print(d)
 
-    _describe_ann_file_show_uns_data(anndata.uns)
+    _describe_ann_file_show_uns_data(anndata.uns, ["uns"])
 
 
 # ----------------------------------------------------------------
 def _describe_ann_file_show_uns_summary(
-    uns: ad.compat.OverloadedDict, parent_path_components=["uns"]
+    uns: ad.compat.OverloadedDict, parent_path_components
 ) -> None:
     """
     Recursively shows summary information about the anndata.uns structure.
@@ -195,7 +197,7 @@ def _describe_ann_file_show_uns_summary(
 
 
 # ----------------------------------------------------------------
-def _describe_ann_file_show_uns_types(uns, parent_path_components=["uns"]) -> None:
+def _describe_ann_file_show_uns_types(uns, parent_path_components) -> None:
     """
     Recursively shows data-type information about the anndata.uns structure.
     """
@@ -220,7 +222,7 @@ def _describe_ann_file_show_uns_types(uns, parent_path_components=["uns"]) -> No
 
 
 # ----------------------------------------------------------------
-def _describe_ann_file_show_uns_data(uns, parent_path_components=["uns"]) -> None:
+def _describe_ann_file_show_uns_data(uns, parent_path_components) -> None:
     """
     Recursively shows data contained within the anndata.uns structure.
     """
@@ -274,7 +276,7 @@ def _decategoricalize(anndata: ad.AnnData) -> None:
     for key in anndata.varp.keys():
         anndata.varp[key] = util._to_tiledb_supported_array_type(anndata.varp[key])
 
-    if anndata.raw == None:  # Some datasets have no raw.
+    if anndata.raw is None:  # Some datasets have no raw.
         new_raw = None
     else:
         # Note there is some code-duplication here between cooked & raw.  However anndata.raw

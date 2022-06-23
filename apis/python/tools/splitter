@@ -4,11 +4,14 @@
 Given one of the outputs from cartorapher.py, splits it into a few little pieces for quick-iteration purposes.
 """
 
+import os
+import shutil
+
+import numpy as np
+
 import tiledbsc
 import tiledbsc.io
 
-import numpy as np
-import os, shutil
 
 # ----------------------------------------------------------------
 def write_subset(soma, obs_indices, output_path):

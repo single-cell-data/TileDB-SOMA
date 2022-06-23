@@ -1,22 +1,21 @@
-from anndata import AnnData
-from tiledbsc import SOMA
-import tiledbsc.io as io
-import tiledb
-import pandas as pd
-import numpy as np
-
-import pytest
-
-
 """
 Tests which verify from_anndata behavior with `.raw`.
 
 https://anndata.readthedocs.io/en/latest/generated/anndata.AnnData.raw.html#anndata.AnnData.raw
 https://scanpy-tutorials.readthedocs.io/en/latest/pbmc3k.html
 
-Conventionally, `.raw` is a subset of var and X. In practice, this does not appear to be enforced 
-by AnnData/ScanPy.
+Conventionally, `.raw` is a subset of var and X. In practice, this does not appear to be
+enforced by AnnData/ScanPy.
 """
+
+import numpy as np
+import pandas as pd
+import pytest
+import tiledb
+from anndata import AnnData
+
+import tiledbsc.io as io
+from tiledbsc import SOMA
 
 
 def test_from_anndata_raw_X(tmp_path, adata):

@@ -13,19 +13,20 @@
 # URIs will be supported.
 # ================================================================
 
+import argparse
+import os
+import shutil
+import sys
+
+import anndata as ad
+import numpy as np
+import pandas as pd
+import scipy
+import tiledb
+
 import tiledbsc
 import tiledbsc.io
 import tiledbsc.util
-import tiledb
-
-import anndata as ad
-
-import pandas as pd
-import scipy
-import numpy as np
-
-import sys, os, shutil
-import argparse
 
 
 def main():

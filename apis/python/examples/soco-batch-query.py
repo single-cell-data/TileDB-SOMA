@@ -4,11 +4,12 @@
 Batch-process the mean of X/data grouping by obs['cell_type_ontology_term_id']
 """
 
-import tiledbsc
-import tiledbsc.util
 import sys
 
 import pandas as pd  # so we can type it either way
+
+import tiledbsc
+import tiledbsc.util
 
 if len(sys.argv) == 2:
     soco_path = sys.argv[1]

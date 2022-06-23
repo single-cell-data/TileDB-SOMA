@@ -1,16 +1,15 @@
-import tiledb
-from .soma_options import SOMAOptions
-from .tiledb_group import TileDBGroup
-from .assay_matrix_group import AssayMatrixGroup
-from .annotation_dataframe import AnnotationDataFrame
-from .annotation_matrix_group import AnnotationMatrixGroup
-from .annotation_pairwise_matrix_group import AnnotationPairwiseMatrixGroup
-import tiledbsc.util as util
+import os
+from typing import Optional
 
 import anndata as ad
 
-from typing import Optional
-import os
+import tiledbsc.util as util
+
+from .annotation_dataframe import AnnotationDataFrame
+from .annotation_matrix_group import AnnotationMatrixGroup
+from .annotation_pairwise_matrix_group import AnnotationPairwiseMatrixGroup
+from .assay_matrix_group import AssayMatrixGroup
+from .tiledb_group import TileDBGroup
 
 
 class RawGroup(TileDBGroup):

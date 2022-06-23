@@ -1,18 +1,16 @@
-import tiledb
-
-from .soma_options import SOMAOptions
-from .tiledb_group import TileDBGroup
-from .uns_array import UnsArray
-import tiledbsc.util as util
+import os
+from typing import Dict, List, Optional
 
 import anndata as ad
-import pandas as pd
 import numpy as np
+import pandas as pd
 import scipy
+import tiledb
 
-from typing import Optional, List, Dict, Union
+import tiledbsc.util as util
 
-import os
+from .tiledb_group import TileDBGroup
+from .uns_array import UnsArray
 
 
 class UnsGroup(TileDBGroup):
@@ -63,7 +61,7 @@ class UnsGroup(TileDBGroup):
         """
 
         with self._open("r") as G:
-            if not name in G:
+            if name not in G:
                 return None
 
             print("<<", self.uri, ">>", "NAME", name, "TYPE", type(name))
@@ -93,14 +91,14 @@ class UnsGroup(TileDBGroup):
         """
         retval = []
         with self._open("r") as G:
-            for O in G:  # tiledb.object.Object
-                if O.type == tiledb.tiledb.Group:
-                    retval.append(UnsGroup(uri=O.uri, name=O.name, parent=self))
-                elif O.type == tiledb.libtiledb.Array:
-                    retval.append(UnsArray(uri=O.uri, name=O.name, parent=self))
+            for obj in G:  # tiledb.object.Object
+                if obj.type == tiledb.tiledb.Group:
+                    retval.append(UnsGroup(uri=obj.uri, name=obj.name, parent=self))
+                elif obj.type == tiledb.libtiledb.Array:
+                    retval.append(UnsArray(uri=obj.uri, name=obj.name, parent=self))
                 else:
                     raise Exception(
-                        f"Internal error: found uns group element neither subgroup nor array: type is {str(O.type)}"
+                        f"Internal error: found uns group element neither subgroup nor array: type is {obj.type}"
                     )
         return iter(retval)
 

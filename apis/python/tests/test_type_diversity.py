@@ -1,14 +1,14 @@
-import anndata as ad
-import tiledb
-from tiledbsc import SOMA
-import tiledbsc.io as io
-import pandas as pd
-import numpy as np
-from scipy import sparse
-
 from pathlib import Path
 
+import anndata as ad
+import numpy as np
+import pandas as pd
 import pytest
+import tiledb
+from scipy import sparse
+
+import tiledbsc.io as io
+from tiledbsc import SOMA
 
 """
 Testing `from_anndata` with the wide diversity of types latent in AnnData.
@@ -66,8 +66,6 @@ def test_from_anndata_X_type(tmp_path, X_dtype_name, X_encoding):
         X = sparse.eye(n_obs, n_var, dtype=X_dtype).tocsc()
     elif X_encoding == "csr":
         X = sparse.eye(n_obs, n_var, dtype=X_dtype).tocsr()
-    else:
-        assert False  # sanity - test misconfiguration
 
     adata = ad.AnnData(X=X, obs=obs, var=var, dtype=X.dtype)
     assert adata.X.dtype == X_dtype  # sanity
@@ -399,8 +397,6 @@ def test_from_anndata_category_nans(tmp_path, col_name, cat_dtype, expect_raise)
             )
 
 
-HERE = Path(__file__).parent
-# https://github.com/single-cell-data/TileDB-SingleCell/issues/74
 def test_from_anndata_obsm_key_pandas_dataframe(tmp_path):
     """
     Normal case is:
@@ -409,9 +405,10 @@ def test_from_anndata_obsm_key_pandas_dataframe(tmp_path):
     * obsm,varm elements are numpy.ndarray
     * obsp,varp elements are scipy.sparse.csr_matrix or numpy.ndarray
     Here we test the case where obsm has an element which is pandas.DataFrame
-    """
 
-    input_path = HERE.parent / "anndata/pbmc-small.h5ad"
+    See https://github.com/single-cell-data/TileDB-SingleCell/issues/74
+    """
+    input_path = Path(__file__).parent.parent / "anndata/pbmc-small.h5ad"
     adata = ad.read_h5ad(input_path)
 
     key = "is_a_pandas_dataframe"

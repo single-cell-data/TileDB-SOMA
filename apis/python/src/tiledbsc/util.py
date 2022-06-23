@@ -1,13 +1,10 @@
-import tiledb
-
-import anndata as ad
+import time
+from typing import List, Optional, Union
 
 import numpy
-import scipy
 import pandas as pd
-
-import time
-from typing import Optional, List, Union
+import scipy
+import tiledb
 
 # This is for group/array metadata we write, to help nested-structured traversals (especially those
 # that start at the SOMACollection level) confidently navigate with a minimum of introspection on
@@ -15,6 +12,7 @@ from typing import Optional, List, Union
 SOMA_OBJECT_TYPE_METADATA_KEY = "soma_object_type"
 SOMA_ENCODING_VERSION_METADATA_KEY = "soma_encoding_version"
 SOMA_ENCODING_VERSION = "0"
+
 
 # ----------------------------------------------------------------
 def is_soma(uri: str, ctx: Optional[tiledb.Ctx] = None) -> bool:

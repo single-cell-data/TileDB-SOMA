@@ -1,14 +1,14 @@
-import tiledb
-from .soma_options import SOMAOptions
-from .tiledb_array import TileDBArray
-from .tiledb_group import TileDBGroup
-import tiledbsc.util as util
+from typing import Optional
 
 import numpy as np
-import scipy
 import pandas as pd
+import scipy
+import tiledb
 
-from typing import Optional
+import tiledbsc.util as util
+
+from .tiledb_array import TileDBArray
+from .tiledb_group import TileDBGroup
 
 
 class UnsArray(TileDBArray):

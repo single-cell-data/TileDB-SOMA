@@ -1,9 +1,9 @@
-import tiledb
-from .soma_options import SOMAOptions
-
-from typing import Optional, List, Dict
-
 import os
+from typing import Dict, List, Optional
+
+import tiledb
+
+from .soma_options import SOMAOptions
 
 
 class TileDBObject:
@@ -56,7 +56,7 @@ class TileDBObject:
             self._ctx = parent._ctx
             self._indent = parent._indent + "  "
 
-        if os.getenv("TILEDBSC_PY_SUPPRESS_VERBOSE") != None:
+        if os.getenv("TILEDBSC_PY_SUPPRESS_VERBOSE") is not None:
             self._verbose = False
 
         if self._soma_options is None:
@@ -72,7 +72,7 @@ class TileDBObject:
 
     def exists(self) -> bool:
         found = tiledb.object_type(self.uri, ctx=self._ctx)
-        if found == None:
+        if found is None:
             return False
         elif found == self._object_type():
             return True
@@ -85,39 +85,39 @@ class TileDBObject:
         """
         Returns metadata from the group/array as a dict.
         """
-        with self._open("r") as O:
+        with self._open("r") as obj:
             # The _open method is implemented by TileDBArray and TileDBGroup
-            return dict(O.meta)
+            return dict(obj.meta)
 
     def has_metadata(self, key):
         """
         Returns whether metadata is associated with the group/array.
         """
-        with self._open("r") as O:
+        with self._open("r") as obj:
             # The _open method is implemented by TileDBArray and TileDBGroup
-            return key in O.meta
+            return key in obj.meta
 
     def metadata_keys(self) -> List[str]:
         """
         Returns metadata keys associated with the group/array.
         """
-        with self._open("r") as O:
+        with self._open("r") as obj:
             # The _open method is implemented by TileDBArray and TileDBGroup
-            return list(O.meta.keys())
+            return list(obj.meta.keys())
 
     def get_metadata(self, key):
         """
         Returns metadata associated with the group/array.
         Raises `KeyError` if there is no such key in the metadata.
         """
-        with self._open("r") as O:
+        with self._open("r") as obj:
             # The _open method is implemented by TileDBArray and TileDBGroup
-            return O.meta[key]
+            return obj.meta[key]
 
     def set_metadata(self, key: str, value) -> None:
         """
         Returns metadata associated with the group/array.
         """
-        with self._open("w") as O:
+        with self._open("w") as obj:
             # The _open method is implemented by TileDBArray and TileDBGroup
-            O.meta[key] = value
+            obj.meta[key] = value

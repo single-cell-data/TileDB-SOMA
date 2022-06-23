@@ -1,12 +1,11 @@
+import tempfile
+from pathlib import Path
+
 import anndata
-import tiledb
+import pytest
+
 import tiledbsc
 import tiledbsc.io
-
-import pytest
-import tempfile
-import os
-from pathlib import Path
 
 HERE = Path(__file__).parent
 

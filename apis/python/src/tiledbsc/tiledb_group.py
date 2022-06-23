@@ -1,13 +1,12 @@
+from typing import Dict, List, Optional
+
 import tiledb
+
 import tiledbsc.util_tiledb
+
 from .soma_options import SOMAOptions
-from .tiledb_object import TileDBObject
 from .tiledb_array import TileDBArray
-
-from contextlib import contextmanager
-
-from typing import Optional, Union, List, Dict
-import os
+from .tiledb_object import TileDBObject
 
 
 class TileDBGroup(TileDBObject):
@@ -101,21 +100,21 @@ class TileDBGroup(TileDBObject):
         """
         self._set_object_type_metadata()
         with self._open() as G:
-            for O in G:  # This returns a tiledb.object.Object
+            for obj in G:  # This returns a tiledb.object.Object
                 # It might appear simpler to have all this code within TileDBObject class,
                 # rather than (with a little duplication) in TileDBGroup and TileDBArray.
                 # However, getting it to work with a recursive data structure and finding the
                 # required methods, it was simpler to split the logic this way.
-                object_type = tiledb.object_type(O.uri, ctx=self._ctx)
+                object_type = tiledb.object_type(obj.uri, ctx=self._ctx)
                 if object_type == "group":
-                    group = TileDBGroup(uri=O.uri, name=O.name, parent=self)
+                    group = TileDBGroup(uri=obj.uri, name=obj.name, parent=self)
                     group._set_object_type_metadata_recursively()
                 elif object_type == "array":
-                    array = TileDBArray(uri=O.uri, name=O.name, parent=self)
+                    array = TileDBArray(uri=obj.uri, name=obj.name, parent=self)
                     array._set_object_type_metadata()
                 else:
                     raise Exception(
-                        f"Unexpected object_type found: {object_type} at {O.uri}"
+                        f"Unexpected object_type found: {object_type} at {obj.uri}"
                     )
 
     def _open(self, mode="r"):
@@ -184,7 +183,7 @@ class TileDBGroup(TileDBObject):
         member name to member URI.
         """
         with self._open("r") as G:
-            return {O.name: O.uri for O in G}
+            return {obj.name: obj.uri for obj in G}
 
     def show_metadata(self, recursively=True, indent="") -> None:
         """
@@ -196,19 +195,19 @@ class TileDBGroup(TileDBObject):
         if recursively:
             child_indent = indent + "  "
             with self._open() as G:
-                for O in G:  # This returns a tiledb.object.Object
+                for obj in G:  # This returns a tiledb.object.Object
                     # It might appear simpler to have all this code within TileDBObject class,
                     # rather than (with a little duplication) in TileDBGroup and TileDBArray.
                     # However, getting it to work with a recursive data structure and finding the
                     # required methods, it was simpler to split the logic this way.
-                    object_type = tiledb.object_type(O.uri, ctx=self._ctx)
+                    object_type = tiledb.object_type(obj.uri, ctx=self._ctx)
                     if object_type == "group":
-                        group = TileDBGroup(uri=O.uri, name=O.name, parent=self)
+                        group = TileDBGroup(uri=obj.uri, name=obj.name, parent=self)
                         group.show_metadata(recursively, indent=child_indent)
                     elif object_type == "array":
-                        array = TileDBArray(uri=O.uri, name=O.name, parent=self)
+                        array = TileDBArray(uri=obj.uri, name=obj.name, parent=self)
                         array.show_metadata(recursively, indent=child_indent)
                     else:
                         raise Exception(
-                            f"Unexpected object_type found: {object_type} at {O.uri}"
+                            f"Unexpected object_type found: {object_type} at {obj.uri}"
                         )

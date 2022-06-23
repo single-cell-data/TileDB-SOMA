@@ -5,8 +5,9 @@
 # ================================================================
 
 import argparse
-import tiledb
+
 import pandas
+import tiledb
 
 
 def list_fragments(array_uri: str):

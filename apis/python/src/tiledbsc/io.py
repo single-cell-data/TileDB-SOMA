@@ -1,9 +1,11 @@
-import tiledbsc
-import tiledbsc.util
-import tiledb
-import tiledbsc.util_ann
 import anndata as ad
 import scanpy
+import tiledb
+
+import tiledbsc
+import tiledbsc.util
+import tiledbsc.util_ann
+
 
 # ----------------------------------------------------------------
 def from_h5ad(soma: tiledbsc.SOMA, input_path: str) -> None:
@@ -141,12 +143,12 @@ def from_anndata(soma: tiledbsc.SOMA, anndata: ad.AnnData) -> None:
     soma._add_object(soma.varp)
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-    if anndata.raw != None:
+    if anndata.raw is not None:
         soma.raw.from_anndata(anndata)
         soma._add_object(soma.raw)
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-    if anndata.uns != None:
+    if anndata.uns is not None:
         soma.uns.from_anndata_uns(anndata.uns)
         soma._add_object(soma.uns)
 

@@ -1,14 +1,14 @@
-import tiledb
-from .soma_options import SOMAOptions
-from .tiledb_group import TileDBGroup
-from .annotation_matrix import AnnotationMatrix
-import tiledbsc.util as util
+import os
+from typing import Dict, List, Optional
 
 import pandas as pd
 import scipy
+import tiledb
 
-from typing import Optional, Dict, List
-import os
+import tiledbsc.util as util
+
+from .annotation_matrix import AnnotationMatrix
+from .tiledb_group import TileDBGroup
 
 
 class AnnotationMatrixGroup(TileDBGroup):
@@ -62,7 +62,7 @@ class AnnotationMatrixGroup(TileDBGroup):
         This way you can do `soma.obsm.X_tsne` as an alias for `soma.obsm['X_tsne']`.
         """
         with self._open() as G:
-            if not name in G:
+            if name not in G:
                 raise AttributeError(
                     f"'{self.__class__.__name__}' object has no attribute '{name}'"
                 )
@@ -159,7 +159,7 @@ class AnnotationMatrixGroup(TileDBGroup):
         """
 
         with self._open("r") as G:
-            if not name in G:
+            if name not in G:
                 return None
             obj = G[name]  # This returns a tiledb.object.Object.
             if obj.type == tiledb.tiledb.Group:
