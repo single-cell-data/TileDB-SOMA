@@ -158,13 +158,9 @@ class AnnotationDataFrame(TileDBArray):
                     slice_df = slice_query.df[:]
                 else:
                     slice_df = slice_query.df[ids]
-            nobs = len(slice_df)
-            if nobs == 0:
-                return None
-            else:
-                # This is the 'decode on read' part of our logic; in dim_select we have the 'encode on write' part.
-                # Context: https://github.com/single-cell-data/TileDB-SingleCell/issues/99.
-                return self._ascii_to_unicode_dataframe_readback(slice_df)
+            # This is the 'decode on read' part of our logic; in dim_select we have the 'encode on write' part.
+            # Context: https://github.com/single-cell-data/TileDB-SingleCell/issues/99.
+            return self._ascii_to_unicode_dataframe_readback(slice_df)
 
     # ----------------------------------------------------------------
     def _ascii_to_unicode_dataframe_readback(self, df) -> pd.DataFrame:
