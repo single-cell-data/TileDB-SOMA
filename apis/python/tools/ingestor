@@ -14,6 +14,7 @@ URIs will be supported.
 """
 
 import argparse
+import logging
 import os
 import shutil
 import sys
@@ -23,8 +24,6 @@ import tiledb
 import tiledbsc
 import tiledbsc.io
 import tiledbsc.util
-
-import logging
 
 
 # ================================================================

@@ -1,3 +1,4 @@
+import logging
 import os
 from typing import Dict, List, Optional
 
@@ -136,7 +137,7 @@ class AnnotationPairwiseMatrixGroup(TileDBGroup):
             grp = tiledb.Group(self.uri, mode="r", ctx=self._ctx)
         except tiledb.TileDBError:
             pass
-        if grp == None:
+        if grp is None:
             logging.info(f"{self._indent}{self.uri} not found")
             return {}
 

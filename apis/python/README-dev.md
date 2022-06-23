@@ -1,6 +1,8 @@
 * Most things are configured using GitHub Actions at `../../.github/workflows`
 * Pre-push suggestions:
   * `black .`
+  * `isort .`
+  * `flake8`
   * `python -m pytest tests`
 * PyPI:
   * https://pypi.org/project/tiledbsc/

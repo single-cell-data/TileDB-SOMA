@@ -1,9 +1,9 @@
+import logging
 import os
 from typing import Dict, List, Optional
 
 import pandas as pd
 import tiledb
-import logging
 
 from .annotation_dataframe import AnnotationDataFrame
 from .annotation_matrix_group import AnnotationMatrixGroup
