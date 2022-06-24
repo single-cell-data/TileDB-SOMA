@@ -48,8 +48,7 @@ def main():
     )
     parser.add_argument(
         "--relative",
-        help=
-"""
+        help="""
 * If `false` then the group will remember the absolute paths of each member array/subgroup. For
 ingesting to TileDB Cloud, this is necessary.
 
@@ -72,11 +71,11 @@ select `relative=True`. (This is the default.)
 
     if args.relative is not None:
         relative = args.relative[0]
-        if relative == 'true':
+        if relative == "true":
             soma_options.member_uris_are_relative = True
-        elif relative == 'false':
+        elif relative == "false":
             soma_options.member_uris_are_relative = False
-        elif relative == 'auto':
+        elif relative == "auto":
             soma_options.member_uris_are_relative = None
         else:
             raise Exception(f"Internal coding error in {__file__}")
