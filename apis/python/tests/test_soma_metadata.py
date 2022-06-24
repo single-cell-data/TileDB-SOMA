@@ -25,7 +25,7 @@ def test_soma_metadata(h5ad_file):
     output_path = tempdir.name
 
     # Ingest
-    soma = tiledbsc.SOMA(output_path, verbose=False)
+    soma = tiledbsc.SOMA(output_path)
     tiledbsc.io.from_h5ad(soma, h5ad_file)
     assert soma.exists()
 

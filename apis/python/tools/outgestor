@@ -14,6 +14,7 @@
 # ================================================================
 
 import argparse
+import logging
 import os
 import sys
 
@@ -21,6 +22,7 @@ import tiledb
 
 import tiledbsc
 import tiledbsc.io
+import tiledbsc.logging
 import tiledbsc.util
 
 
@@ -65,7 +67,7 @@ def main():
     vfs = tiledb.VFS()
     if not vfs.is_dir(input_path):
         # Print this neatly and exit neatly, to avoid a multi-line stack trace otherwise.
-        print(f"Input path not found: {input_path}", file=sys.stderr)
+        logging.error(f"Input path not found: {input_path}", file=sys.stderr)
         sys.exit(1)
 
     # This is for local-disk use only -- for S3-backed tiledb://... URIs we should
@@ -75,11 +77,20 @@ def main():
             os.mkdir(outdir)
 
     verbose = not args.quiet
-    soma = tiledbsc.SOMA(input_path, verbose=verbose)
+    if verbose:
+        # tiledbsc.logging.logger.setLevel(logging.INFO)
+        # logger = logging.getLogger('tiledbsc')
+        # logger.setLevel(logging.INFO)
+        # logging.getLogger("tiledbsc").setLevel(logging.INFO)
+        # Not able to get any of the above to 'stick'. The following sets level for the whole app,
+        # not just the tiledbsc library, but that's an acceptable workaround since this CLI does
+        # nothing except invoke the tiledbsc library.
+        logging.basicConfig(level=logging.INFO)
+
+    soma = tiledbsc.SOMA(input_path)
     tiledbsc.io.to_h5ad(soma, output_path)
 
-    if not verbose:
-        print(f"Wrote {output_path}")
+    tiledbsc.logging.logger.info(f"Wrote {output_path}")
 
 
 if __name__ == "__main__":

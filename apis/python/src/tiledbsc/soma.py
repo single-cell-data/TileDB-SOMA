@@ -54,7 +54,6 @@ class SOMA(TileDBGroup):
         uri: str,
         name=None,
         soma_options: Optional[SOMAOptions] = None,
-        verbose: Optional[bool] = True,
         config: Optional[tiledb.Config] = None,
         ctx: Optional[tiledb.Ctx] = None,
         parent: Optional[TileDBGroup] = None,  # E.g. a SOMA collection
@@ -63,7 +62,6 @@ class SOMA(TileDBGroup):
         Create a new SOMA object. The existing array group is opened at the specified array `uri` if one is present, otherwise a new array group is created.
 
         :param uri: URI of the TileDB group
-        :param verbose: Print status messages
         """
 
         if ctx is None and config is not None:
@@ -78,7 +76,6 @@ class SOMA(TileDBGroup):
             uri=uri,
             name=name,
             parent=parent,
-            verbose=verbose,
             soma_options=soma_options,
             ctx=ctx,
         )
@@ -343,7 +340,6 @@ class SOMA(TileDBGroup):
         uri: str,
         name=None,
         soma_options: Optional[SOMAOptions] = None,
-        verbose: Optional[bool] = True,
         config: Optional[tiledb.Config] = None,
         ctx: Optional[tiledb.Ctx] = None,
         parent: Optional[TileDBGroup] = None,  # E.g. a SOMA collection
@@ -356,7 +352,6 @@ class SOMA(TileDBGroup):
             uri=uri,
             name=name,
             soma_options=soma_options,
-            verbose=verbose,
             config=config,
             ctx=ctx,
             parent=parent,

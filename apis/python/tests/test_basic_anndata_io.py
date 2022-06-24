@@ -34,7 +34,7 @@ def test_import_anndata(adata):
     orig = adata
 
     # Ingest
-    soma = tiledbsc.SOMA(output_path, verbose=True)
+    soma = tiledbsc.SOMA(output_path)
     tiledbsc.io.from_anndata(soma, orig)
 
     # Structure:
@@ -159,7 +159,7 @@ def test_export_anndata(adata):
     orig = adata
 
     # Ingest
-    soma = tiledbsc.SOMA(output_path, verbose=True)
+    soma = tiledbsc.SOMA(output_path)
     tiledbsc.io.from_anndata(soma, orig)
 
     readback = tiledbsc.io.to_anndata(soma)

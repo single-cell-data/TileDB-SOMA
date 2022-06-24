@@ -22,7 +22,6 @@ def __init__(uri: str,
              name: str,
              parent=None,
              soma_options: Optional[SOMAOptions] = None,
-             verbose: Optional[bool] = True,
              ctx: Optional[tiledb.Ctx] = None)
 ```
 

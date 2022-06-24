@@ -5,6 +5,7 @@ import tiledb
 
 import tiledbsc.util as util
 
+from .logging import logger
 from .tiledb_array import TileDBArray
 from .tiledb_group import TileDBGroup
 
@@ -95,9 +96,8 @@ class AnnotationMatrix(TileDBArray):
         :param dim_values: anndata.obs_names, anndata.var_names, or anndata.raw.var_names.
         """
 
-        if self._verbose:
-            s = util.get_start_stamp()
-            print(f"{self._indent}START  WRITING {self.uri}")
+        s = util.get_start_stamp()
+        logger.info(f"{self._indent}START  WRITING {self.uri}")
 
         if isinstance(matrix, pd.DataFrame):
             self._from_pandas_dataframe(matrix, dim_values)
@@ -106,8 +106,7 @@ class AnnotationMatrix(TileDBArray):
 
         self._set_object_type_metadata()
 
-        if self._verbose:
-            print(util.format_elapsed(s, f"{self._indent}FINISH WRITING {self.uri}"))
+        logger.info(util.format_elapsed(s, f"{self._indent}FINISH WRITING {self.uri}"))
 
     # ----------------------------------------------------------------
     def _numpy_ndarray_or_scipy_sparse_csr_matrix(self, matrix, dim_values) -> None:
@@ -119,8 +118,7 @@ class AnnotationMatrix(TileDBArray):
 
         # Ingest annotation matrices as 1D/multi-attribute sparse arrays
         if self.exists():
-            if self._verbose:
-                print(f"{self._indent}Re-using existing array {self.uri}")
+            logger.info(f"{self._indent}Re-using existing array {self.uri}")
         else:
             self._create_empty_array([matrix.dtype] * nattr, attr_names)
 
@@ -133,8 +131,7 @@ class AnnotationMatrix(TileDBArray):
 
         # Ingest annotation matrices as 1D/multi-attribute sparse arrays
         if self.exists():
-            if self._verbose:
-                print(f"{self._indent}Re-using existing array {self.uri}")
+            logger.info(f"{self._indent}Re-using existing array {self.uri}")
         else:
             self._create_empty_array(list(df.dtypes), attr_names)
 

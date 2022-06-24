@@ -37,6 +37,7 @@ import scipy.sparse
 import scipy.stats
 import tiledb
 
+import tiledbsc.logging
 from tiledbsc import SOMA, SOMACollection
 from tiledbsc import io as SOMAio
 
@@ -50,11 +51,17 @@ def main() -> int:
     args = parser.parse_args()
 
     if args.verbose:
+        # tiledbsc.logging.logger.setLevel(logging.INFO)
+        # logger = logging.getLogger('tiledbsc')
+        # logger.setLevel(logging.INFO)
+        # logging.getLogger("tiledbsc").setLevel(logging.INFO)
+        # Not able to get any of the above to 'stick'. The following sets level for the whole app,
+        # not just the tiledbsc library, but that's an acceptable workaround since this CLI does
+        # nothing except invoke the tiledbsc library.
         logging.basicConfig(level=logging.INFO)
 
     uniformizer = Uniformizer(
         atlas_uri=args.atlas_uri,
-        verbose=args.verbose,
     )
     if args.allow_non_primary_data:
         uniformizer._allow_non_primary_data = True
@@ -148,7 +155,6 @@ class Uniformizer:
 
     ctx: tiledb.Ctx
     atlas_uri: str
-    verbose: bool
 
     # You can adapt these to match your organization's schema
     OBS_COLUMNS = [
@@ -175,11 +181,9 @@ class Uniformizer:
     def __init__(
         self,
         atlas_uri: str,
-        verbose: bool = False,
     ):
         self.ctx = self._create_tiledb_ctx()
         self.atlas_uri = atlas_uri
-        self.verbose = verbose
         self._allow_non_primary_data = False
 
     # ----------------------------------------------------------------
@@ -200,7 +204,7 @@ class Uniformizer:
         if soma_name in soco:
             raise Exception(f"SOMA {soma_name} is already in SOMACollection {soco.uri}")
 
-        logging.info("Loading H5AD")
+        tiledbsc.logging.logger.info("Loading H5AD")
         ann = anndata.read_h5ad(input_h5ad_path)
 
         self._clean_and_add(ann, soma_name, soco)
@@ -215,7 +219,7 @@ class Uniformizer:
         if soma_name in soco:
             raise Exception(f"SOMA {soma_name} is already in SOMACollection {soco.uri}")
 
-        logging.info("Loading SOMA")
+        tiledbsc.logging.logger.info("Loading SOMA")
         input_soma = SOMA(input_soma_uri)
         ann = SOMAio.to_anndata(input_soma)
 
@@ -227,9 +231,7 @@ class Uniformizer:
         """
         Makes sure the destination SOMACollection exists for first write.
         """
-        soco = SOMACollection(
-            self.atlas_uri, name="atlas", ctx=self.ctx, verbose=self.verbose
-        )
+        soco = SOMACollection(self.atlas_uri, name="atlas", ctx=self.ctx)
         soco.create_unless_exists()  # Must be done first, to create the parent directory
         if not soco.exists():
             raise Exception(f"Could not create SOCO at {soco.uri}")
@@ -254,24 +256,24 @@ class Uniformizer:
         Cleans and uniformizes the data (whether obtained from H5AD or SOMA), writes a new SOMA, adds an
         X/rankit layer, and adds the new SOMA to the SOMACollection.
         """
-        logging.info("Cleaning data")
+        tiledbsc.logging.logger.info("Cleaning data")
         ann = self._clean_and_uniformize(ann)
 
-        logging.info("Creating rankit")
+        tiledbsc.logging.logger.info("Creating rankit")
         X_rankit = _rankit(ann.X)
 
-        logging.info("Saving SOMA")
+        tiledbsc.logging.logger.info("Saving SOMA")
         soma_uri = f"{self.atlas_uri}/{soma_name}"
-        atlas_soma = SOMA(
-            uri=soma_uri, name=soma_name, verbose=self.verbose, ctx=self.ctx
-        )
+        atlas_soma = SOMA(uri=soma_uri, name=soma_name, ctx=self.ctx)
         SOMAio.from_anndata(atlas_soma, ann)
 
-        logging.info(f"Adding SOMA name {atlas_soma.name} at SOMA URI {atlas_soma.uri}")
+        tiledbsc.logging.logger.info(
+            f"Adding SOMA name {atlas_soma.name} at SOMA URI {atlas_soma.uri}"
+        )
         soco.add(atlas_soma)
 
         # Create rankit X layer and save
-        logging.info("Saving rankit layer")
+        tiledbsc.logging.logger.info("Saving rankit layer")
         if "rankit" in atlas_soma.X.keys():
             raise Exception(
                 f"rankit layer already exists in the SOMA {atlas_soma.name} {atlas_soma.uri}"

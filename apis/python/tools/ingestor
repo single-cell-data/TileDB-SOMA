@@ -14,6 +14,7 @@ URIs will be supported.
 """
 
 import argparse
+import logging
 import os
 import shutil
 import sys
@@ -22,6 +23,7 @@ import tiledb
 
 import tiledbsc
 import tiledbsc.io
+import tiledbsc.logging
 import tiledbsc.util
 
 
@@ -97,6 +99,15 @@ select `relative=True`. (This is the default.)
 
     write_soco = args.soco
     verbose = not args.quiet
+    if verbose:
+        # tiledbsc.logging.logger.setLevel(logging.INFO)
+        # logger = logging.getLogger('tiledbsc')
+        # logger.setLevel(logging.INFO)
+        # logging.getLogger("tiledbsc").setLevel(logging.INFO)
+        # Not able to get any of the above to 'stick'. The following sets level for the whole app,
+        # not just the tiledbsc library, but that's an acceptable workaround since this CLI does
+        # nothing except invoke the tiledbsc library.
+        logging.basicConfig(level=logging.INFO)
 
     if args.relative is not None:
         relative = args.relative[0]
@@ -127,7 +138,6 @@ select `relative=True`. (This is the default.)
                 soma_options,
                 write_soco,
                 outdir,
-                verbose,
             )
     else:
         if len(args.paths) == 0:
@@ -140,7 +150,6 @@ select `relative=True`. (This is the default.)
                 soma_options,
                 write_soco,
                 outdir,
-                verbose,
             )
         elif len(args.paths) == 1:
             input_path = args.paths[0]
@@ -155,7 +164,6 @@ select `relative=True`. (This is the default.)
                 soma_options,
                 write_soco,
                 outdir,
-                verbose,
             )
         elif len(args.paths) == 2:
             input_path = args.paths[0]
@@ -167,7 +175,6 @@ select `relative=True`. (This is the default.)
                 soma_options,
                 write_soco,
                 outdir,
-                verbose,
             )
         else:
             parser.print_help(file=sys.stderr)
@@ -182,13 +189,12 @@ def ingest_one(
     soma_options: tiledbsc.SOMAOptions,
     write_soco: bool,
     soco_dir: str,
-    verbose: bool,
 ):
     # Check that the input exists.
     vfs = tiledb.VFS()
     if not vfs.is_file(input_path):
         # Print this neatly and exit neatly, to avoid a multi-line stack trace otherwise.
-        print(f"Input path not found: {input_path}", file=sys.stderr)
+        logging.error(f"Input path not found: {input_path}", file=sys.stderr)
         sys.exit(1)
 
     # Prepare to write the output.
@@ -211,10 +217,12 @@ def ingest_one(
     else:
         if os.path.exists(output_path):
             if ifexists == "continue":
-                print(f"Already exists; continuing: {output_path}")
+                tiledbsc.logging.logger.info(
+                    f"Already exists; continuing: {output_path}"
+                )
                 return
             elif ifexists == "abort":
-                print(f"Already exists; aborting: {output_path}")
+                logging.error(f"Already exists; aborting: {output_path}")
                 sys.exit(1)
             elif ifexists == "replace":
                 if output_path.startswith("s3://") or output_path.startswith(
@@ -232,20 +240,19 @@ def ingest_one(
         # Do the ingest into TileDB.
         tiledbsc.io.from_h5ad(soma, input_path)
 
-    if not verbose:
-        print(f"Wrote {output_path}")
+    tiledbsc.logging.logger.info(f"Wrote {output_path}")
 
     if write_soco:
-        soco = tiledbsc.SOMACollection(
-            soco_dir, soma_options=soma_options, verbose=verbose
-        )
+        soco = tiledbsc.SOMACollection(soco_dir, soma_options=soma_options)
         soco.create_unless_exists()
         if not soco.exists():
             raise Exception(f"Could not create SOCO at {soco.uri}")
         soco.add(soma)
-        if verbose:
-            print()
-            print(f"Added SOMA {soma.name} to SOMACollection {soco_dir}")
+
+        tiledbsc.logging.logger.info("")
+        tiledbsc.logging.logger.info(
+            f"Added SOMA {soma.name} to SOMACollection {soco_dir}"
+        )
 
 
 # ================================================================

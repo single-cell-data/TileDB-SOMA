@@ -9,6 +9,7 @@ import tiledb
 
 import tiledbsc.util as util
 
+from .logging import logger
 from .tiledb_group import TileDBGroup
 from .uns_array import UnsArray
 
@@ -63,8 +64,6 @@ class UnsGroup(TileDBGroup):
         with self._open("r") as G:
             if name not in G:
                 return None
-
-            print("<<", self.uri, ">>", "NAME", name, "TYPE", type(name))
 
             obj = G[name]  # This returns a tiledb.object.Object.
             if obj.type == tiledb.tiledb.Group:
@@ -147,9 +146,8 @@ class UnsGroup(TileDBGroup):
         :param uns: anndata.uns.
         """
 
-        if self._verbose:
-            s = util.get_start_stamp()
-            print(f"{self._indent}START  WRITING {self.uri}")
+        s = util.get_start_stamp()
+        logger.info(f"{self._indent}START  WRITING {self.uri}")
 
         # Must be done first, to create the parent directory
         self.create_unless_exists()
@@ -175,7 +173,7 @@ class UnsGroup(TileDBGroup):
                 # support nested cells, AKA "list" type.
                 #
                 # This could, however, be converted to a dataframe and ingested that way.
-                print(f"{self._indent}Skipping structured array:", component_uri)
+                logger.info(f"{self._indent}Skipping structured array:", component_uri)
                 continue
 
             if isinstance(value, (dict, ad.compat.OverloadedDict)):
@@ -214,14 +212,13 @@ class UnsGroup(TileDBGroup):
                 self._add_object(array)
 
             else:
-                print(
+                logger.info(
                     f"{self._indent}Skipping unrecognized type:",
                     component_uri,
                     type(value),
                 )
 
-        if self._verbose:
-            print(util.format_elapsed(s, f"{self._indent}FINISH WRITING {self.uri}"))
+        logger.info(util.format_elapsed(s, f"{self._indent}FINISH WRITING {self.uri}"))
 
     # ----------------------------------------------------------------
     def to_dict_of_matrices(self) -> Dict:
@@ -229,13 +226,11 @@ class UnsGroup(TileDBGroup):
         Reads the recursive group/array uns data from TileDB storage and returns them as a recursive dict of matrices.
         """
         if not self.exists():
-            if self._verbose:
-                print(f"{self._indent}{self.uri} not found")
+            logger.info(f"{self._indent}{self.uri} not found")
             return {}
 
-        if self._verbose:
-            s = util.get_start_stamp()
-            print(f"{self._indent}START  read {self.uri}")
+        s = util.get_start_stamp()
+        logger.info(f"{self._indent}START  read {self.uri}")
 
         with self._open() as G:
             retval = {}
@@ -255,7 +250,6 @@ class UnsGroup(TileDBGroup):
                         f"Internal error: found uns group element neither group nor array: type is {str(element.type)}"
                     )
 
-        if self._verbose:
-            print(util.format_elapsed(s, f"{self._indent}FINISH read {self.uri}"))
+        logger.info(util.format_elapsed(s, f"{self._indent}FINISH read {self.uri}"))
 
         return retval

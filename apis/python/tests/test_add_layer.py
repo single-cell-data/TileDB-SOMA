@@ -32,7 +32,7 @@ def test_add_layer(adata):
     orig = adata
 
     # Ingest
-    soma = tiledbsc.SOMA(output_path, verbose=True)
+    soma = tiledbsc.SOMA(output_path)
     tiledbsc.io.from_anndata(soma, orig)
 
     csr = soma.X.data.csr()

@@ -26,7 +26,7 @@ def test_soma_group_indexing(h5ad_file):
     output_path = tempdir.name
 
     # Ingest
-    soma = tiledbsc.SOMA(output_path, verbose=False)
+    soma = tiledbsc.SOMA(output_path)
     tiledbsc.io.from_h5ad(soma, h5ad_file)
     assert soma.exists()
 
@@ -282,6 +282,6 @@ def test_soma_group_indexing(h5ad_file):
 
 
 def test_not_exists():
-    soma = tiledbsc.SOMA("/nonesuch/nowhere/never", verbose=False)
+    soma = tiledbsc.SOMA("/nonesuch/nowhere/never")
     assert not soma.exists()
     assert not soma.obs.exists()

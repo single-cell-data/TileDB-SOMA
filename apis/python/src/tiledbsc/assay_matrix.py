@@ -10,6 +10,7 @@ import tiledb
 import tiledbsc.util as util
 
 from .annotation_dataframe import AnnotationDataFrame
+from .logging import logger
 from .tiledb_array import TileDBArray
 from .tiledb_group import TileDBGroup
 
@@ -153,9 +154,8 @@ class AssayMatrix(TileDBArray):
         For ingest from `AnnData`, these should be `ann.obs_names` and `ann.var_names`.
         """
 
-        if self._verbose:
-            s = util.get_start_stamp()
-            print(f"{self._indent}START  WRITING {self.uri}")
+        s = util.get_start_stamp()
+        logger.info(f"{self._indent}START  WRITING {self.uri}")
 
         assert len(row_names) == matrix.shape[0]
         assert len(col_names) == matrix.shape[1]
@@ -169,16 +169,14 @@ class AssayMatrix(TileDBArray):
             col_names = np.asarray(col_names)
 
         if self.exists():
-            if self._verbose:
-                print(f"{self._indent}Re-using existing array {self.uri}")
+            logger.info(f"{self._indent}Re-using existing array {self.uri}")
         else:
             self._create_empty_array(matrix_dtype=matrix.dtype)
 
         self._set_object_type_metadata()
 
         self._ingest_data(matrix, row_names, col_names)
-        if self._verbose:
-            print(util.format_elapsed(s, f"{self._indent}FINISH WRITING {self.uri}"))
+        logger.info(util.format_elapsed(s, f"{self._indent}FINISH WRITING {self.uri}"))
 
     # ----------------------------------------------------------------
     def _create_empty_array(self, matrix_dtype: np.dtype) -> None:
@@ -316,8 +314,7 @@ class AssayMatrix(TileDBArray):
         sorted_row_names = np.asarray(sorted_row_names)
 
         s = util.get_start_stamp()
-        if self._verbose:
-            print(f"{self._indent}START  __ingest_coo_data_string_dims_rows_chunked")
+        logger.info(f"{self._indent}START  __ingest_coo_data_string_dims_rows_chunked")
 
         eta_tracker = util.ETATracker()
         with tiledb.open(self.uri, mode="w", ctx=self._ctx) as A:
@@ -346,44 +343,41 @@ class AssayMatrix(TileDBArray):
                 # Python ranges are (lo, hi) with lo inclusive and hi exclusive. But saying that
                 # makes us look buggy if we say we're ingesting chunk 0:18 and then 18:32.
                 # Instead, print doubly-inclusive lo..hi like 0..17 and 18..31.
-                if self._verbose:
-                    chunk_percent = 100 * (i2 - 1) / nrow
-                    print(
-                        "%sSTART  chunk rows %d..%d of %d (%.3f%%), obs_ids %s..%s, nnz=%d"
-                        % (
-                            self._indent,
-                            i,
-                            i2 - 1,
-                            nrow,
-                            chunk_percent,
-                            d0[0],
-                            d0[-1],
-                            chunk_coo.nnz,
-                        )
+                chunk_percent = 100 * (i2 - 1) / nrow
+                logger.info(
+                    "%sSTART  chunk rows %d..%d of %d (%.3f%%), obs_ids %s..%s, nnz=%d"
+                    % (
+                        self._indent,
+                        i,
+                        i2 - 1,
+                        nrow,
+                        chunk_percent,
+                        d0[0],
+                        d0[-1],
+                        chunk_coo.nnz,
                     )
+                )
 
                 # Write a TileDB fragment
                 A[d0, d1] = chunk_coo.data
 
-                if self._verbose:
-                    t2 = time.time()
-                    chunk_seconds = t2 - t1
-                    eta = eta_tracker.ingest_and_predict(chunk_percent, chunk_seconds)
+                t2 = time.time()
+                chunk_seconds = t2 - t1
+                eta = eta_tracker.ingest_and_predict(chunk_percent, chunk_seconds)
 
-                    print(
-                        "%sFINISH chunk in %.3f seconds, %7.3f%% done, ETA %s"
-                        % (self._indent, chunk_seconds, chunk_percent, eta)
-                    )
+                logger.info(
+                    "%sFINISH chunk in %.3f seconds, %7.3f%% done, ETA %s"
+                    % (self._indent, chunk_seconds, chunk_percent, eta)
+                )
 
                 i = i2
 
-        if self._verbose:
-            print(
-                util.format_elapsed(
-                    s,
-                    f"{self._indent}FINISH __ingest_coo_data_string_dims_rows_chunked",
-                )
+        logger.info(
+            util.format_elapsed(
+                s,
+                f"{self._indent}FINISH __ingest_coo_data_string_dims_rows_chunked",
             )
+        )
 
     # This method is very similar to ingest_data_rows_chunked. The code is largely repeated,
     # and this is intentional. The algorithm here is non-trivial (among the most non-trivial
@@ -413,8 +407,7 @@ class AssayMatrix(TileDBArray):
         sorted_col_names = np.asarray(sorted_col_names)
 
         s = util.get_start_stamp()
-        if self._verbose:
-            print(f"{self._indent}START  __ingest_coo_data_string_dims_cols_chunked")
+        logger.info(f"{self._indent}START  __ingest_coo_data_string_dims_cols_chunked")
 
         eta_tracker = util.ETATracker()
         with tiledb.open(self.uri, mode="w", ctx=self._ctx) as A:
@@ -443,44 +436,41 @@ class AssayMatrix(TileDBArray):
                 # Python ranges are (lo, hi) with lo inclusive and hi exclusive. But saying that
                 # makes us look buggy if we say we're ingesting chunk 0:18 and then 18:32.
                 # Instead, print doubly-inclusive lo..hi like 0..17 and 18..31.
-                if self._verbose:
-                    chunk_percent = 100 * (j2 - 1) / ncol
-                    print(
-                        "%sSTART  chunk rows %d..%d of %d (%.3f%%), var_ids %s..%s, nnz=%d"
-                        % (
-                            self._indent,
-                            j,
-                            j2 - 1,
-                            ncol,
-                            chunk_percent,
-                            d1[0],
-                            d1[-1],
-                            chunk_coo.nnz,
-                        )
+                chunk_percent = 100 * (j2 - 1) / ncol
+                logger.info(
+                    "%sSTART  chunk rows %d..%d of %d (%.3f%%), var_ids %s..%s, nnz=%d"
+                    % (
+                        self._indent,
+                        j,
+                        j2 - 1,
+                        ncol,
+                        chunk_percent,
+                        d1[0],
+                        d1[-1],
+                        chunk_coo.nnz,
                     )
+                )
 
                 # Write a TileDB fragment
                 A[d0, d1] = chunk_coo.data
 
-                if self._verbose:
-                    t2 = time.time()
-                    chunk_seconds = t2 - t1
-                    eta = eta_tracker.ingest_and_predict(chunk_percent, chunk_seconds)
+                t2 = time.time()
+                chunk_seconds = t2 - t1
+                eta = eta_tracker.ingest_and_predict(chunk_percent, chunk_seconds)
 
-                    print(
-                        "%sFINISH chunk in %.3f seconds, %7.3f%% done, ETA %s"
-                        % (self._indent, chunk_seconds, chunk_percent, eta)
-                    )
+                logger.info(
+                    "%sFINISH chunk in %.3f seconds, %7.3f%% done, ETA %s"
+                    % (self._indent, chunk_seconds, chunk_percent, eta)
+                )
 
                 j = j2
 
-        if self._verbose:
-            print(
-                util.format_elapsed(
-                    s,
-                    f"{self._indent}FINISH __ingest_coo_data_string_dims_rows_chunked",
-                )
+        logger.info(
+            util.format_elapsed(
+                s,
+                f"{self._indent}FINISH __ingest_coo_data_string_dims_rows_chunked",
             )
+        )
 
     # This method is very similar to ingest_data_rows_chunked. The code is largely repeated,
     # and this is intentional. The algorithm here is non-trivial (among the most non-trivial
@@ -510,10 +500,9 @@ class AssayMatrix(TileDBArray):
         sorted_row_names = np.asarray(sorted_row_names)
 
         s = util.get_start_stamp()
-        if self._verbose:
-            print(
-                f"{self._indent}START  __ingest_coo_data_string_dims_dense_rows_chunked"
-            )
+        logger.info(
+            f"{self._indent}START  __ingest_coo_data_string_dims_dense_rows_chunked"
+        )
 
         eta_tracker = util.ETATracker()
         with tiledb.open(self.uri, mode="w", ctx=self._ctx) as A:
@@ -544,44 +533,41 @@ class AssayMatrix(TileDBArray):
                 # Python ranges are (lo, hi) with lo inclusive and hi exclusive. But saying that
                 # makes us look buggy if we say we're ingesting chunk 0:18 and then 18:32.
                 # Instead, print doubly-inclusive lo..hi like 0..17 and 18..31.
-                if self._verbose:
-                    chunk_percent = 100 * (i2 - 1) / nrow
-                    print(
-                        "%sSTART  chunk rows %d..%d of %d (%.3f%%), obs_ids %s..%s, nnz=%d"
-                        % (
-                            self._indent,
-                            i,
-                            i2 - 1,
-                            nrow,
-                            chunk_percent,
-                            d0[0],
-                            d0[-1],
-                            chunk_coo.nnz,
-                        )
+                chunk_percent = 100 * (i2 - 1) / nrow
+                logger.info(
+                    "%sSTART  chunk rows %d..%d of %d (%.3f%%), obs_ids %s..%s, nnz=%d"
+                    % (
+                        self._indent,
+                        i,
+                        i2 - 1,
+                        nrow,
+                        chunk_percent,
+                        d0[0],
+                        d0[-1],
+                        chunk_coo.nnz,
                     )
+                )
 
                 # Write a TileDB fragment
                 A[d0, d1] = chunk_coo.data
 
-                if self._verbose:
-                    t2 = time.time()
-                    chunk_seconds = t2 - t1
-                    eta = eta_tracker.ingest_and_predict(chunk_percent, chunk_seconds)
+                t2 = time.time()
+                chunk_seconds = t2 - t1
+                eta = eta_tracker.ingest_and_predict(chunk_percent, chunk_seconds)
 
-                    print(
-                        "%sFINISH chunk in %.3f seconds, %7.3f%% done, ETA %s"
-                        % (self._indent, chunk_seconds, chunk_percent, eta)
-                    )
+                logger.info(
+                    "%sFINISH chunk in %.3f seconds, %7.3f%% done, ETA %s"
+                    % (self._indent, chunk_seconds, chunk_percent, eta)
+                )
 
                 i = i2
 
-        if self._verbose:
-            print(
-                util.format_elapsed(
-                    s,
-                    f"{self._indent}FINISH __ingest_coo_data_string_dims_dense_rows_chunked",
-                )
+        logger.info(
+            util.format_elapsed(
+                s,
+                f"{self._indent}FINISH __ingest_coo_data_string_dims_dense_rows_chunked",
             )
+        )
 
     # ----------------------------------------------------------------
     def to_csr_matrix(self, row_labels, col_labels) -> scipy.sparse.csr_matrix:
@@ -594,13 +580,11 @@ class AssayMatrix(TileDBArray):
         TileDB storage.
         """
 
-        if self._verbose:
-            s = util.get_start_stamp()
-            print(f"{self._indent}START  read {self.uri}")
+        s = util.get_start_stamp()
+        logger.info(f"{self._indent}START  read {self.uri}")
 
         csr = self.csr()
 
-        if self._verbose:
-            print(util.format_elapsed(s, f"{self._indent}FINISH read {self.uri}"))
+        logger.info(util.format_elapsed(s, f"{self._indent}FINISH read {self.uri}"))
 
         return csr

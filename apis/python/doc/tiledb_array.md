@@ -10,7 +10,7 @@
 class TileDBArray(TileDBObject)
 ```
 
-Wraps arrays from TileDB-Py by retaining a URI, verbose flag, etc.
+Wraps arrays from TileDB-Py by retaining a URI and convenience methods.
 Also serves as an abstraction layer to hide TileDB-specific details from the API, unless
 requested.
 

@@ -19,7 +19,6 @@ class SOMACollection(TileDBGroup):
         uri: str,
         name="soco",
         soma_options: Optional[SOMAOptions] = None,
-        verbose: Optional[bool] = True,
         config: Optional[tiledb.Config] = None,
         ctx: Optional[tiledb.Ctx] = None,
         parent: Optional[TileDBGroup] = None,  # E.g. a SOMA collection
@@ -29,7 +28,6 @@ class SOMACollection(TileDBGroup):
         specified `uri` if one is present, otherwise a new group will be created upon ingest.
 
         :param uri: URI of the TileDB group
-        :param verbose: Print status messages
         """
 
         if ctx is None and config is not None:
@@ -40,7 +38,6 @@ class SOMACollection(TileDBGroup):
             uri=uri,
             name=name,
             parent=parent,
-            verbose=verbose,
             soma_options=soma_options,
             ctx=ctx,
         )
