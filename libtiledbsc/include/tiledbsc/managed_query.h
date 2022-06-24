@@ -1,6 +1,8 @@
 #ifndef MANAGED_QUERY_H
 #define MANAGED_QUERY_H
 
+#include <stdexcept>  // for windows: error C2039: 'runtime_error': is not a member of 'std'
+
 #include <tiledb/tiledb>
 
 #include "tiledbsc/column_buffer.h"
