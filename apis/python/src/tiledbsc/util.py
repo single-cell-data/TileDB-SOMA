@@ -246,7 +246,7 @@ def _to_tiledb_supported_array_type(x):
                 raise ValueError(
                     "Categorical array contains NaN -- unable to convert to TileDB array."
                 )
-            return x
+            return x.astype(bool)
 
         if inferred == "string":
             return x.astype(str)
