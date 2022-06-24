@@ -48,3 +48,23 @@ from .uns_array import UnsArray
 from .uns_group import UnsGroup
 from .util_ann import describe_ann_file
 from .util_tiledb import show_soma_schemas
+
+__all__ = [
+    "AnnotationMatrix",
+    "AnnotationMatrixGroup",
+    "AnnotationPairwiseMatrixGroup",
+    "AssayMatrix",
+    "AssayMatrixGroup",
+    "RawGroup",
+    "SOMA",
+    "SOMACollection",
+    "SOMAOptions",
+    "SOMASlice",
+    "TileDBArray",
+    "TileDBGroup",
+    "TileDBObject",
+    "UnsArray",
+    "UnsGroup",
+    "describe_ann_file",
+    "show_soma_schemas",
+]
