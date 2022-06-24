@@ -3,7 +3,6 @@ from typing import List, Optional, Union
 
 import numpy
 import pandas as pd
-import scipy
 import scipy.sparse
 import tiledb
 

@@ -4,7 +4,7 @@ from typing import Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
-import scipy
+import scipy.sparse
 import tiledb
 
 import tiledbsc.util as util

@@ -6,20 +6,21 @@
 #
 # -- then you can inspect the anndata object.
 
-import os
 import sys
 
 import anndata
-import anndata as ad  # so we can type it either way
 import numpy
-import numpy as np  # so we can type it either way
 import pandas
-import pandas as pd  # so we can type it either way
-import scipy
-import tiledb
+import scipy  # noqa: F401
+import tiledb  # noqa: F401
 
 import tiledbsc
 import tiledbsc.io
+
+# module aliases
+ad = anndata
+np = numpy
+pd = pandas
 
 if len(sys.argv) == 1:
     input_path = "anndata/pbmc-small.h5ad"
@@ -30,10 +31,7 @@ else:
     sys.exit(1)
 
 ann = anndata.read_h5ad(input_path)
-
-
-def decat(ann):
-    return tiledbsc.util_ann._decategoricalize(ann)
+decat = tiledbsc.util_ann._decategoricalize
 
 
 # Interact at the prompt now:

@@ -100,11 +100,11 @@ select `relative=True`. (This is the default.)
 
     if args.relative is not None:
         relative = args.relative[0]
-        if relative == 'true':
+        if relative == "true":
             soma_options.member_uris_are_relative = True
-        elif relative == 'false':
+        elif relative == "false":
             soma_options.member_uris_are_relative = False
-        elif relative == 'auto':
+        elif relative == "auto":
             soma_options.member_uris_are_relative = None
         else:
             raise Exception(f"Internal coding error in {__file__}")
@@ -220,7 +220,7 @@ def ingest_one(
                 if output_path.startswith("s3://") or output_path.startswith(
                     "tiledb://"
                 ):
-                    raise (
+                    raise Exception(
                         "--ifexists replace currently only is compatible with local-disk paths"
                     )
                 print(f"Already exists; replacing: {output_path}")

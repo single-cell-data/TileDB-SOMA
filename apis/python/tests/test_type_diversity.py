@@ -4,8 +4,8 @@ import anndata as ad
 import numpy as np
 import pandas as pd
 import pytest
+import scipy.sparse
 import tiledb
-from scipy import sparse
 
 import tiledbsc.io as io
 from tiledbsc import SOMA
@@ -63,9 +63,9 @@ def test_from_anndata_X_type(tmp_path, X_dtype_name, X_encoding):
     if X_encoding == "dense":
         X = np.eye(n_obs, n_var, dtype=X_dtype)
     elif X_encoding == "csc":
-        X = sparse.eye(n_obs, n_var, dtype=X_dtype).tocsc()
+        X = scipy.sparse.eye(n_obs, n_var, dtype=X_dtype).tocsc()
     elif X_encoding == "csr":
-        X = sparse.eye(n_obs, n_var, dtype=X_dtype).tocsr()
+        X = scipy.sparse.eye(n_obs, n_var, dtype=X_dtype).tocsr()
 
     adata = ad.AnnData(X=X, obs=obs, var=var, dtype=X.dtype)
     assert adata.X.dtype == X_dtype  # sanity

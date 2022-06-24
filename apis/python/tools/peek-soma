@@ -7,19 +7,20 @@
 # -- then you can inspect the soma object.
 
 import sys
-import time
 
 import anndata
-import anndata as ad  # so we can type it either way
 import numpy
-import numpy as np  # so we can type it either way
 import pandas
-import pandas as pd  # so we can type it either way
-import scipy
-import tiledb
+import scipy  # noqa: F401
+import tiledb  # noqa: F401
 
 import tiledbsc
 import tiledbsc.io
+
+# module aliases
+ad = anndata
+np = numpy
+pd = pandas
 
 if len(sys.argv) == 1:
     input_path = "tiledb-data/pbmc-small"
