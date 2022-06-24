@@ -177,9 +177,6 @@ def test_from_anndata_DataFrame_type(tmp_path):
             # to remove this check which is verifying the current force-to-ASCII workaround.
             if ad_dtype.name == "str":
                 ad_dtype = np.dtype("S")
-        # TileDB has no bool, and automatically converts to uint8
-        if ad_dtype == bool:
-            ad_dtype = np.uint8
 
         return ad_dtype == tdb.dtype
 

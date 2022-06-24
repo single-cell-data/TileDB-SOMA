@@ -199,7 +199,7 @@ def _get_sort_and_permutation(lst: list):
 def _to_tiledb_supported_array_type(x):
     """
     Converts datatypes unrepresentable by TileDB into datatypes it can represent.
-    Eg, categorical strings -> string; bool -> uint8, etc.
+    E.g., categorical strings -> string.
 
     See also https://docs.scipy.org/doc/numpy-1.10.1/reference/arrays.dtypes.html
 
@@ -213,9 +213,6 @@ def _to_tiledb_supported_array_type(x):
 
     def _to_tiledb_supported_dtype(dtype):
         """A handful of types are cast into the TileDB type system."""
-        # TileDB has no bool type -- instead cast to uint8
-        if dtype == numpy.dtype("bool"):
-            return numpy.dtype("uint8")
 
         # TileDB has no float16 -- cast up to float32
         if dtype == numpy.dtype("float16"):
@@ -249,7 +246,7 @@ def _to_tiledb_supported_array_type(x):
                 raise ValueError(
                     "Categorical array contains NaN -- unable to convert to TileDB array."
                 )
-            return x.astype("uint8")
+            return x.astype(bool)
 
         if inferred == "string":
             return x.astype(str)
