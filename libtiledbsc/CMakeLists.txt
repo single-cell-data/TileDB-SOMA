@@ -181,6 +181,10 @@ endif()
 # Definitions for all targets
 add_definitions(-D_FILE_OFFSET_BITS=64)
 
+# Disable deprecation warnings
+message(WARNING "Building without deprecation warnings")
+add_compile_options(-Wno-deprecated-declarations)
+
 # AVX2 flag
 include(CheckAVX2Support)
 CheckAVX2Support()

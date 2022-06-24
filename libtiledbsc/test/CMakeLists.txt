@@ -22,6 +22,7 @@ if (TILEDBSC_TESTING)
     add_executable(unit_sc EXCLUDE_FROM_ALL
         $<TARGET_OBJECTS:TILEDB_SC_OBJECTS>
         unit_column_buffer.cc
+        unit_managed_query.cc
     )
 
     target_link_libraries(unit_sc

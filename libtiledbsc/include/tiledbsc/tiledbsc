@@ -3,6 +3,8 @@
 
 #include <tiledbsc/column_buffer.h>
 #include <tiledbsc/common.h>
+#include <tiledbsc/logger_public.h>
+#include <tiledbsc/managed_query.h>
 #include <tiledbsc/soma.h>
 #include <tiledbsc/soma_collection.h>
 // TODO: #include <tiledbsc/soma_query.h>

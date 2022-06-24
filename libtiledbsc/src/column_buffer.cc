@@ -1,17 +1,18 @@
 #include "tiledbsc/column_buffer.h"
+#include "tiledbsc/common.h"
 #include "tiledbsc/logger_public.h"
 
 namespace tiledbsc {
 
 using namespace tiledb;
 
-ColumnBuffer ColumnBuffer::create(
-    const Array& array,
+std::shared_ptr<ColumnBuffer> ColumnBuffer::create(
+    std::shared_ptr<Array> array,
     std::string_view name,
     size_t num_cells,
     std::optional<size_t> bytes_per_cell) {
     auto name_str = std::string(name);  // string for TileDB API
-    auto schema = array.schema();
+    auto schema = array->schema();
 
     if (schema.has_attribute(name_str)) {
         return create(schema.attribute(name_str), num_cells, bytes_per_cell);
@@ -23,7 +24,7 @@ ColumnBuffer ColumnBuffer::create(
     throw TileDBSCError("[ColumnBuffer] Column name not found: " + name_str);
 }
 
-ColumnBuffer ColumnBuffer::create(
+std::shared_ptr<ColumnBuffer> ColumnBuffer::create(
     const tiledb::Dimension& dim,
     size_t num_cells,
     std::optional<size_t> bytes_per_cell) {
@@ -35,7 +36,7 @@ ColumnBuffer ColumnBuffer::create(
         dim.name(), dim.type(), num_cells, is_var, false, bytes_per_cell);
 }
 
-ColumnBuffer ColumnBuffer::create(
+std::shared_ptr<ColumnBuffer> ColumnBuffer::create(
     const tiledb::Attribute& attr,
     size_t num_cells,
     std::optional<size_t> bytes_per_cell) {
@@ -50,9 +51,10 @@ ColumnBuffer ColumnBuffer::create(
         bytes_per_cell);
 }
 
-ColumnBuffer ColumnBuffer::create(
+std::shared_ptr<ColumnBuffer> ColumnBuffer::create(
     std::string_view name,
     tiledb_datatype_t type,
+    size_t num_cells,
     std::span<std::byte> data,
     std::span<uint64_t> offsets,
     std::span<uint8_t> validity) {
@@ -67,10 +69,10 @@ ColumnBuffer ColumnBuffer::create(
     std::vector<uint64_t> o{offsets.begin(), offsets.end()};
     std::vector<uint8_t> v{validity.begin(), validity.end()};
 
-    return ColumnBuffer(name, type, d, o, v);
+    return std::make_shared<ColumnBuffer>(name, type, num_cells, d, o, v);
 }
 
-ColumnBuffer ColumnBuffer::alloc(
+std::shared_ptr<ColumnBuffer> ColumnBuffer::alloc(
     std::string_view name,
     tiledb_datatype_t type,
     size_t num_cells,
@@ -93,18 +95,21 @@ ColumnBuffer ColumnBuffer::alloc(
     auto validity = is_nullable ? std::vector<uint8_t>(num_cells) :
                                   std::vector<uint8_t>{};
 
-    return ColumnBuffer(name, type, data, offsets, validity);
+    return std::make_shared<ColumnBuffer>(
+        name, type, num_cells, data, offsets, validity);
 }
 
 ColumnBuffer::ColumnBuffer(
     std::string_view name,
     tiledb_datatype_t type,
+    size_t num_cells,
     std::vector<std::byte> data,
     std::vector<uint64_t> offsets,
     std::vector<uint8_t> validity)
     : name_(name)
     , type_(type)
     , type_size_(tiledb::impl::type_size(type))
+    , num_cells_(num_cells)
     , data_(data)
     , offsets_(offsets)
     , validity_(validity) {

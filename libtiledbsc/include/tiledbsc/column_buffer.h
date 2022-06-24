@@ -5,7 +5,8 @@
 
 #include <span>
 #include <tiledb/tiledb>
-#include <tiledbsc/tiledbsc>
+
+#include "tiledbsc/logger_public.h"
 
 namespace tiledbsc {
 
@@ -26,8 +27,8 @@ class ColumnBuffer {
      * @param bytes_per_cell Bytes per cell for variable length data (optional)
      * @return ColumnBuffer
      */
-    static ColumnBuffer create(
-        const Array& array,
+    static std::shared_ptr<ColumnBuffer> create(
+        std::shared_ptr<Array> array,
         std::string_view name,
         size_t num_cells,
         std::optional<size_t> bytes_per_cell = std::nullopt);
@@ -40,7 +41,7 @@ class ColumnBuffer {
      * @param bytes_per_cell Bytes per cell for variable length data (optional)
      * @return ColumnBuffer
      */
-    static ColumnBuffer create(
+    static std::shared_ptr<ColumnBuffer> create(
         const Dimension& dim,
         size_t num_cells,
         std::optional<size_t> bytes_per_cell = std::nullopt);
@@ -53,7 +54,7 @@ class ColumnBuffer {
      * @param bytes_per_cell Bytes per cell for variable length data (optional)
      * @return ColumnBuffer
      */
-    static ColumnBuffer create(
+    static std::shared_ptr<ColumnBuffer> create(
         const Attribute& attr,
         size_t num_cells,
         std::optional<size_t> bytes_per_cell = std::nullopt);
@@ -63,17 +64,37 @@ class ColumnBuffer {
      *
      * @param name Column name
      * @param type TileDB datatype
+     * @param num_cells Number of cells
      * @param data View of data
      * @param offsets View of offsets (optional)
      * @param validity View of validity (optional)
      * @return ColumnBuffer
      */
-    static ColumnBuffer create(
+    static std::shared_ptr<ColumnBuffer> create(
         std::string_view name,
         tiledb_datatype_t type,
+        size_t num_cells,
         std::span<std::byte> data,
         std::span<uint64_t> offsets = {},
         std::span<uint8_t> validity = {});
+
+    /**
+     * @brief Construct a new ColumnBuffer object
+     *
+     * @param name Column name
+     * @param type TileDB datatype
+     * @param num_cells Number of cells
+     * @param data View of data
+     * @param offsets View of offsets (optional)
+     * @param validity View of validity (optional)
+     */
+    ColumnBuffer(
+        std::string_view name,
+        tiledb_datatype_t type,
+        size_t num_cells,
+        std::vector<std::byte> data,
+        std::vector<uint64_t> offsets,
+        std::vector<uint8_t> validity);
 
     /**
      * @brief Attach this ColumnBuffer to a TileDB query.
@@ -81,6 +102,7 @@ class ColumnBuffer {
      * @param query TileDB query
      */
     void attach(Query& query) {
+        LOG_DEBUG(fmt::format("Attaching buffer {} to query", name_));
         query.set_data_buffer(name_, data_);
         if (!offsets_.empty()) {
             query.set_offsets_buffer(name_, offsets_);
@@ -91,27 +113,26 @@ class ColumnBuffer {
     }
 
     /**
-     * @brief Resize the buffers to match the read query results.
+     * @brief Size num_cells_ to match the read query results.
      *
      * @param query TileDB query
      */
-    void resize(const Query& query) {
+    auto update_size(const Query& query) {
         auto [num_offsets, num_elements] = query
                                                .result_buffer_elements()[name_];
 
-        // Resize data buffer (bytes) to match query result size (elements)
-        data_.resize(num_elements * type_size_);
-
-        if (num_offsets) {
-            // Variable length data
-            offsets_.resize(num_offsets);
-            // Extra offset value for arrow
-            offsets_.push_back(data_.size());
-            validity_.resize(num_offsets);
+        if (is_var()) {
+            num_cells_ = num_offsets;
+            // Add extra offset for arrow. Resize the offsets buffer if needed.
+            if (offsets_.size() < num_offsets + 1) {
+                offsets_.resize(num_offsets + 1);
+            }
+            offsets_[num_offsets] = num_elements;
         } else {
-            // Fixed length data
-            validity_.resize(num_elements);
+            num_cells_ = num_elements / type_size_;
         }
+
+        return num_cells_;
     }
 
     /**
@@ -122,7 +143,17 @@ class ColumnBuffer {
      */
     template <typename T>
     std::span<T> data() {
-        return std::span<T>((T*)data_.data(), data_.size() / type_size_);
+        return std::span<T>((T*)data_.data(), num_cells_);
+    }
+
+    std::vector<std::string> strings() {
+        std::vector<std::string> result;
+
+        for (size_t i = 0; i < num_cells_; i++) {
+            result.push_back(std::string(string_view(i)));
+        }
+
+        return result;
     }
 
     /**
@@ -190,8 +221,6 @@ class ColumnBuffer {
      */
     ~ColumnBuffer();
 
-    ColumnBuffer() = delete;
-
    private:
     /**
      * @brief
@@ -203,7 +232,7 @@ class ColumnBuffer {
      * @param is_nullable True if nullable data
      * @return ColumnBuffer
      */
-    static ColumnBuffer alloc(
+    static std::shared_ptr<ColumnBuffer> alloc(
         std::string_view name,
         tiledb_datatype_t type,
         size_t num_cells,
@@ -211,30 +240,17 @@ class ColumnBuffer {
         bool is_nullable,
         std::optional<size_t> bytes_per_cell = std::nullopt);
 
-    /**
-     * @brief Construct a new ColumnBuffer object
-     *
-     * @param name Column name
-     * @param type TileDB datatype
-     * @param num_cells Number of cells
-     * @param data View of data
-     * @param offsets View of offsets (optional)
-     * @param validity View of validity (optional)
-     */
-    ColumnBuffer(
-        std::string_view name,
-        tiledb_datatype_t type,
-        std::vector<std::byte> data,
-        std::vector<uint64_t> offsets,
-        std::vector<uint8_t> validity);
-
     // Name of the column from the schema.
     std::string name_;
 
     // Data type of the column from the schema.
     tiledb_datatype_t type_;
 
+    // Bytes per element
     uint64_t type_size_;
+
+    // Number of cells
+    uint64_t num_cells_;
 
     // Data buffer.
     std::vector<std::byte> data_;

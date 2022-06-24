@@ -37,13 +37,13 @@ std::unordered_map<std::string, std::string> SOMA::list_arrays() {
     return array_uri_map_;
 }
 
-Array SOMA::open_array(const std::string& name) {
+std::shared_ptr<Array> SOMA::open_array(const std::string& name) {
     if (array_uri_map_.empty()) {
         list_arrays();
     }
     auto uri = array_uri_map_[name];
     LOG_DEBUG(fmt::format("Opening array '{}' from SOMA '{}'", name, uri_));
-    return Array(*ctx_, uri, TILEDB_READ);
+    return std::make_shared<Array>(*ctx_, uri, TILEDB_READ);
 }
 
 //===================================================================
