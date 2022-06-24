@@ -1,7 +1,7 @@
 import os
 from typing import Dict, List, Optional
 
-import scipy
+import scipy.sparse
 import tiledb
 
 import tiledbsc.util as util

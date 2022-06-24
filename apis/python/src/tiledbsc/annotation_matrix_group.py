@@ -2,7 +2,7 @@ import os
 from typing import Dict, List, Optional
 
 import pandas as pd
-import scipy
+import scipy.sparse
 import tiledb
 
 import tiledbsc.util as util
