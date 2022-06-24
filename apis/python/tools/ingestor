@@ -23,6 +23,7 @@ import tiledb
 
 import tiledbsc
 import tiledbsc.io
+import tiledbsc.logger
 import tiledbsc.util
 
 
@@ -97,7 +98,7 @@ select `relative=True`. (This is the default.)
     soma_options = tiledbsc.SOMAOptions()
 
     write_soco = args.soco
-    verbose = not args.quiet
+    # XXX verbose = not args.quiet
 
     if args.relative is not None:
         relative = args.relative[0]
@@ -128,7 +129,6 @@ select `relative=True`. (This is the default.)
                 soma_options,
                 write_soco,
                 outdir,
-                verbose,
             )
     else:
         if len(args.paths) == 0:
@@ -141,7 +141,6 @@ select `relative=True`. (This is the default.)
                 soma_options,
                 write_soco,
                 outdir,
-                verbose,
             )
         elif len(args.paths) == 1:
             input_path = args.paths[0]
@@ -156,7 +155,6 @@ select `relative=True`. (This is the default.)
                 soma_options,
                 write_soco,
                 outdir,
-                verbose,
             )
         elif len(args.paths) == 2:
             input_path = args.paths[0]
@@ -168,7 +166,6 @@ select `relative=True`. (This is the default.)
                 soma_options,
                 write_soco,
                 outdir,
-                verbose,
             )
         else:
             parser.print_help(file=sys.stderr)
@@ -183,7 +180,6 @@ def ingest_one(
     soma_options: tiledbsc.SOMAOptions,
     write_soco: bool,
     soco_dir: str,
-    verbose: bool,
 ):
     # Check that the input exists.
     vfs = tiledb.VFS()
@@ -201,7 +197,7 @@ def ingest_one(
             if not os.path.exists(parent):
                 os.mkdir(parent)
 
-    soma = tiledbsc.SOMA(uri=output_path, soma_options=soma_options, verbose=verbose)
+    soma = tiledbsc.SOMA(uri=output_path, soma_options=soma_options)
 
     if ifexists == "update_obs_and_var":
         if not os.path.exists(output_path):
@@ -212,7 +208,7 @@ def ingest_one(
     else:
         if os.path.exists(output_path):
             if ifexists == "continue":
-                logging.info(f"Already exists; continuing: {output_path}")
+                tiledbsc.logger.info(f"Already exists; continuing: {output_path}")
                 return
             elif ifexists == "abort":
                 logging.error(f"Already exists; aborting: {output_path}")
@@ -233,19 +229,17 @@ def ingest_one(
         # Do the ingest into TileDB.
         tiledbsc.io.from_h5ad(soma, input_path)
 
-    logging.info(f"Wrote {output_path}")
+    tiledbsc.logger.info(f"Wrote {output_path}")
 
     if write_soco:
-        soco = tiledbsc.SOMACollection(
-            soco_dir, soma_options=soma_options, verbose=verbose
-        )
+        soco = tiledbsc.SOMACollection(soco_dir, soma_options=soma_options)
         soco.create_unless_exists()
         if not soco.exists():
             raise Exception(f"Could not create SOCO at {soco.uri}")
         soco.add(soma)
 
-        logging.info("")
-        logging.info(f"Added SOMA {soma.name} to SOMACollection {soco_dir}")
+        tiledbsc.logger.info("")
+        tiledbsc.logger.info(f"Added SOMA {soma.name} to SOMACollection {soco_dir}")
 
 
 # ================================================================

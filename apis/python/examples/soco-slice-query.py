@@ -36,9 +36,7 @@ def soco_query_and_store(
 
     if os.path.exists(output_soma_path):
         shutil.rmtree(output_soma_path)
-    soma = tiledbsc.SOMA.from_soma_slice(
-        result_soma_slice, output_soma_path, verbose=False
-    )
+    soma = tiledbsc.SOMA.from_soma_slice(result_soma_slice, output_soma_path)
     print("Wrote", output_soma_path, soma.X.data.shape())
 
 

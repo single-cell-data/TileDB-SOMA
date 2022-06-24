@@ -1,10 +1,10 @@
-import logging
 from typing import Dict, List, Optional
 
 import tiledb
 
 import tiledbsc.util_tiledb
 
+from .logging import logger
 from .soma_options import SOMAOptions
 from .tiledb_array import TileDBArray
 from .tiledb_object import TileDBObject
@@ -57,7 +57,7 @@ class TileDBGroup(TileDBObject):
         """
         Creates the TileDB group data structure on disk/S3/cloud.
         """
-        logging.info(f"{self._indent}Creating TileDB group {self.uri}")
+        logger.info(f"{self._indent}Creating TileDB group {self.uri}")
         tiledb.group_create(uri=self.uri, ctx=self._ctx)
 
         self._set_object_type_metadata()
@@ -218,9 +218,9 @@ class TileDBGroup(TileDBObject):
         """
         Shows metadata for the group, recursively by default.
         """
-        logging.info(f"{indent}[{self.name}]")
+        logger.info(f"{indent}[{self.name}]")
         for key, value in self.metadata().items():
-            logging.info(f"{indent}- {key}: {value}")
+            logger.info(f"{indent}- {key}: {value}")
         if recursively:
             child_indent = indent + "  "
             with self._open() as G:

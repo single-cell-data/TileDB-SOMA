@@ -1,5 +1,3 @@
-import logging
-
 import anndata as ad
 import scanpy
 import tiledb
@@ -7,6 +5,8 @@ import tiledb
 import tiledbsc
 import tiledbsc.util
 import tiledbsc.util_ann
+
+from .logging import logger
 
 
 # ----------------------------------------------------------------
@@ -32,20 +32,20 @@ def _from_h5ad_common(soma: tiledbsc.SOMA, input_path: str, handler_func) -> Non
     Common code for things we do when processing a .h5ad file for ingest/update.
     """
     s = tiledbsc.util.get_start_stamp()
-    logging.info(f"START  SOMA.from_h5ad {input_path} -> {soma.uri}")
+    logger.info(f"START  SOMA.from_h5ad {input_path} -> {soma.uri}")
 
     s = tiledbsc.util.get_start_stamp()
-    logging.info(f"{soma._indent}START  READING {input_path}")
+    logger.info(f"{soma._indent}START  READING {input_path}")
 
     anndata = ad.read_h5ad(input_path)
 
-    logging.info(
+    logger.info(
         tiledbsc.util.format_elapsed(s, f"{soma._indent}FINISH READING {input_path}")
     )
 
     handler_func(soma, anndata)
 
-    logging.info(
+    logger.info(
         tiledbsc.util.format_elapsed(
             s, f"FINISH SOMA.from_h5ad {input_path} -> {soma.uri}"
         )
@@ -58,19 +58,19 @@ def from_10x(soma: tiledbsc.SOMA, input_path: str) -> None:
     Reads a 10X file and writes to a TileDB group structure.
     """
     s = tiledbsc.util.get_start_stamp()
-    logging.info(f"START  SOMA.from_10x {input_path} -> {soma.uri}")
+    logger.info(f"START  SOMA.from_10x {input_path} -> {soma.uri}")
 
-    logging.info(f"{soma._indent}START  READING {input_path}")
+    logger.info(f"{soma._indent}START  READING {input_path}")
 
     anndata = scanpy.read_10x_h5(input_path)
 
-    logging.info(
+    logger.info(
         tiledbsc.util.format_elapsed(s, f"{soma._indent}FINISH READING {input_path}")
     )
 
     from_anndata(soma, anndata)
 
-    logging.info(
+    logger.info(
         tiledbsc.util.format_elapsed(
             s, f"FINISH SOMA.from_10x {input_path} -> {soma.uri}"
         )
@@ -90,18 +90,18 @@ def from_anndata(soma: tiledbsc.SOMA, anndata: ad.AnnData) -> None:
         raise NotImplementedError("Empty AnnData.obs or AnnData.var unsupported.")
 
     s = tiledbsc.util.get_start_stamp()
-    logging.info(f"{soma._indent}START  DECATEGORICALIZING")
+    logger.info(f"{soma._indent}START  DECATEGORICALIZING")
 
     anndata.obs_names_make_unique()
     anndata.var_names_make_unique()
     anndata = tiledbsc.util_ann._decategoricalize(anndata)
 
-    logging.info(
+    logger.info(
         tiledbsc.util.format_elapsed(s, f"{soma._indent}FINISH DECATEGORICALIZING")
     )
 
     s = tiledbsc.util.get_start_stamp()
-    logging.info(f"{soma._indent}START  WRITING {soma.uri}")
+    logger.info(f"{soma._indent}START  WRITING {soma.uri}")
 
     # Must be done first, to create the parent directory
     soma.create_unless_exists()
@@ -145,7 +145,7 @@ def from_anndata(soma: tiledbsc.SOMA, anndata: ad.AnnData) -> None:
         soma.uns.from_anndata_uns(anndata.uns)
         soma._add_object(soma.uns)
 
-    logging.info(
+    logger.info(
         tiledbsc.util.format_elapsed(s, f"{soma._indent}FINISH WRITING {soma.uri}")
     )
 
@@ -162,18 +162,18 @@ def from_anndata_update_obs_and_var(soma: tiledbsc.SOMA, anndata: ad.AnnData) ->
         raise NotImplementedError("Empty AnnData.obs or AnnData.var unsupported.")
 
     s = tiledbsc.util.get_start_stamp()
-    logging.info(f"{soma._indent}START  DECATEGORICALIZING")
+    logger.info(f"{soma._indent}START  DECATEGORICALIZING")
 
     anndata.obs_names_make_unique()
     anndata.var_names_make_unique()
     anndata = tiledbsc.util_ann._decategoricalize(anndata)
 
-    logging.info(
+    logger.info(
         tiledbsc.util.format_elapsed(s, f"{soma._indent}FINISH DECATEGORICALIZING")
     )
 
     s = tiledbsc.util.get_start_stamp()
-    logging.info(f"{soma._indent}START  WRITING {soma.uri}")
+    logger.info(f"{soma._indent}START  WRITING {soma.uri}")
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     soma._remove_object(soma.obs)
@@ -188,7 +188,7 @@ def from_anndata_update_obs_and_var(soma: tiledbsc.SOMA, anndata: ad.AnnData) ->
     tiledb.consolidate(soma.var.uri)
     tiledb.vacuum(soma.var.uri)
 
-    logging.info(
+    logger.info(
         tiledbsc.util.format_elapsed(s, f"{soma._indent}FINISH WRITING {soma.uri}")
     )
 
@@ -201,20 +201,20 @@ def to_h5ad(soma: tiledbsc.SOMA, h5ad_path: str) -> None:
     """
 
     s = tiledbsc.util.get_start_stamp()
-    logging.info(f"START  SOMA.to_h5ad {soma.uri} -> {h5ad_path}")
+    logger.info(f"START  SOMA.to_h5ad {soma.uri} -> {h5ad_path}")
 
     anndata = to_anndata(soma)
 
     s2 = tiledbsc.util.get_start_stamp()
-    logging.info(f"{soma._indent}START  write {h5ad_path}")
+    logger.info(f"{soma._indent}START  write {h5ad_path}")
 
     anndata.write_h5ad(h5ad_path)
 
-    logging.info(
+    logger.info(
         tiledbsc.util.format_elapsed(s2, f"{soma._indent}FINISH write {h5ad_path}")
     )
 
-    logging.info(
+    logger.info(
         tiledbsc.util.format_elapsed(
             s, f"FINISH SOMA.to_h5ad {soma.uri} -> {h5ad_path}"
         )
@@ -234,7 +234,7 @@ def to_anndata(soma: tiledbsc.SOMA) -> ad.AnnData:
     """
 
     s = tiledbsc.util.get_start_stamp()
-    logging.info(f"START  SOMA.to_anndata {soma.uri}")
+    logger.info(f"START  SOMA.to_anndata {soma.uri}")
 
     obs_df = soma.obs.df()
     var_df = soma.var.df()
@@ -276,7 +276,7 @@ def to_anndata(soma: tiledbsc.SOMA) -> ad.AnnData:
         uns=uns,
     )
 
-    logging.info(tiledbsc.util.format_elapsed(s, f"FINISH SOMA.to_anndata {soma.uri}"))
+    logger.info(tiledbsc.util.format_elapsed(s, f"FINISH SOMA.to_anndata {soma.uri}"))
 
     return anndata
 

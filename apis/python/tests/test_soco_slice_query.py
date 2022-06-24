@@ -22,7 +22,7 @@ def test_soco_slice_query(tmp_path):
         ("subset-soma-04", HERE.parent / "anndata/subset-soma-04.h5ad"),
     ]:
         soma_path = os.path.join(soco_dir, name)
-        soma = tiledbsc.SOMA(soma_path, verbose=False)
+        soma = tiledbsc.SOMA(soma_path)
         tiledbsc.io.from_h5ad(soma, h5ad_path)
         soco.add(soma)
 

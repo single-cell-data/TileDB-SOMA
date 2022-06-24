@@ -29,7 +29,7 @@ def test_query(adata):
     output_path = tempdir.name
 
     # Ingest
-    soma = tiledbsc.SOMA(output_path, verbose=False)
+    soma = tiledbsc.SOMA(output_path)
     tiledbsc.io.from_anndata(soma, adata)
 
     output = soma.obs.query(

@@ -1,4 +1,3 @@
-import logging
 import os
 from typing import Dict, List, Optional
 
@@ -55,7 +54,6 @@ class SOMA(TileDBGroup):
         uri: str,
         name=None,
         soma_options: Optional[SOMAOptions] = None,
-        verbose: Optional[bool] = True,
         config: Optional[tiledb.Config] = None,
         ctx: Optional[tiledb.Ctx] = None,
         parent: Optional[TileDBGroup] = None,  # E.g. a SOMA collection
@@ -64,7 +62,6 @@ class SOMA(TileDBGroup):
         Create a new SOMA object. The existing array group is opened at the specified array `uri` if one is present, otherwise a new array group is created.
 
         :param uri: URI of the TileDB group
-        :param verbose: Print status messages
         """
 
         if ctx is None and config is not None:
@@ -75,10 +72,6 @@ class SOMA(TileDBGroup):
             name = os.path.basename(uri.rstrip("/"))
             if name == "":
                 name = "soma"
-        if verbose:
-            logging.basicConfig(level=logging.INFO)
-        else:
-            logging.basicConfig(level=logging.WARNING)
         super().__init__(
             uri=uri,
             name=name,

@@ -12,6 +12,7 @@ import os
 import sys
 
 import tiledbsc
+import tiledbsc.logger
 
 
 # ================================================================
@@ -110,7 +111,7 @@ select `relative=True`. (This is the default.)
             soma_uri = soma_uri.rstrip("/")
             name = os.path.basename(soma_uri)
             soma = tiledbsc.SOMA(uri=soma_uri, name=name, parent=soco)
-            logging.info(f"Adding {name} to {soma_uri}")
+            tiledbsc.logger.info(f"Adding {name} to {soma_uri}")
             soco.add(soma)
 
     if args.remove:
@@ -118,7 +119,7 @@ select `relative=True`. (This is the default.)
             soma_uri = soma_uri.rstrip("/")
             name = os.path.basename(soma_uri)
             soma = tiledbsc.SOMA(uri=soma_uri, name=name, parent=soco)
-            logging.info(f"Removing {name} from {soma_uri}")
+            tiledbsc.logger.info(f"Removing {name} from {soma_uri}")
             soco.remove(soma)
 
     if args.list:

@@ -1,4 +1,3 @@
-import logging
 import os
 from typing import Dict, List, Optional
 
@@ -10,6 +9,7 @@ import tiledb
 
 import tiledbsc.util as util
 
+from .logging import logger
 from .tiledb_group import TileDBGroup
 from .uns_array import UnsArray
 
@@ -147,7 +147,7 @@ class UnsGroup(TileDBGroup):
         """
 
         s = util.get_start_stamp()
-        logging.info(f"{self._indent}START  WRITING {self.uri}")
+        logger.info(f"{self._indent}START  WRITING {self.uri}")
 
         # Must be done first, to create the parent directory
         self.create_unless_exists()
@@ -173,7 +173,7 @@ class UnsGroup(TileDBGroup):
                 # support nested cells, AKA "list" type.
                 #
                 # This could, however, be converted to a dataframe and ingested that way.
-                logging.info(f"{self._indent}Skipping structured array:", component_uri)
+                logger.info(f"{self._indent}Skipping structured array:", component_uri)
                 continue
 
             if isinstance(value, (dict, ad.compat.OverloadedDict)):
@@ -212,13 +212,13 @@ class UnsGroup(TileDBGroup):
                 self._add_object(array)
 
             else:
-                logging.info(
+                logger.info(
                     f"{self._indent}Skipping unrecognized type:",
                     component_uri,
                     type(value),
                 )
 
-        logging.info(util.format_elapsed(s, f"{self._indent}FINISH WRITING {self.uri}"))
+        logger.info(util.format_elapsed(s, f"{self._indent}FINISH WRITING {self.uri}"))
 
     # ----------------------------------------------------------------
     def to_dict_of_matrices(self) -> Dict:
@@ -226,11 +226,11 @@ class UnsGroup(TileDBGroup):
         Reads the recursive group/array uns data from TileDB storage and returns them as a recursive dict of matrices.
         """
         if not self.exists():
-            logging.info(f"{self._indent}{self.uri} not found")
+            logger.info(f"{self._indent}{self.uri} not found")
             return {}
 
         s = util.get_start_stamp()
-        logging.info(f"{self._indent}START  read {self.uri}")
+        logger.info(f"{self._indent}START  read {self.uri}")
 
         with self._open() as G:
             retval = {}
@@ -250,6 +250,6 @@ class UnsGroup(TileDBGroup):
                         f"Internal error: found uns group element neither group nor array: type is {str(element.type)}"
                     )
 
-        logging.info(util.format_elapsed(s, f"{self._indent}FINISH read {self.uri}"))
+        logger.info(util.format_elapsed(s, f"{self._indent}FINISH read {self.uri}"))
 
         return retval

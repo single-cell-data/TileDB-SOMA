@@ -1,4 +1,3 @@
-import logging
 import math
 import time
 from typing import Optional, Tuple, Union
@@ -11,6 +10,7 @@ import tiledb
 import tiledbsc.util as util
 
 from .annotation_dataframe import AnnotationDataFrame
+from .logging import logger
 from .tiledb_array import TileDBArray
 from .tiledb_group import TileDBGroup
 
@@ -155,7 +155,7 @@ class AssayMatrix(TileDBArray):
         """
 
         s = util.get_start_stamp()
-        logging.info(f"{self._indent}START  WRITING {self.uri}")
+        logger.info(f"{self._indent}START  WRITING {self.uri}")
 
         assert len(row_names) == matrix.shape[0]
         assert len(col_names) == matrix.shape[1]
@@ -169,14 +169,14 @@ class AssayMatrix(TileDBArray):
             col_names = np.asarray(col_names)
 
         if self.exists():
-            logging.info(f"{self._indent}Re-using existing array {self.uri}")
+            logger.info(f"{self._indent}Re-using existing array {self.uri}")
         else:
             self._create_empty_array(matrix_dtype=matrix.dtype)
 
         self._set_object_type_metadata()
 
         self._ingest_data(matrix, row_names, col_names)
-        logging.info(util.format_elapsed(s, f"{self._indent}FINISH WRITING {self.uri}"))
+        logger.info(util.format_elapsed(s, f"{self._indent}FINISH WRITING {self.uri}"))
 
     # ----------------------------------------------------------------
     def _create_empty_array(self, matrix_dtype: np.dtype) -> None:
@@ -314,7 +314,7 @@ class AssayMatrix(TileDBArray):
         sorted_row_names = np.asarray(sorted_row_names)
 
         s = util.get_start_stamp()
-        logging.info(f"{self._indent}START  __ingest_coo_data_string_dims_rows_chunked")
+        logger.info(f"{self._indent}START  __ingest_coo_data_string_dims_rows_chunked")
 
         eta_tracker = util.ETATracker()
         with tiledb.open(self.uri, mode="w", ctx=self._ctx) as A:
@@ -344,7 +344,7 @@ class AssayMatrix(TileDBArray):
                 # makes us look buggy if we say we're ingesting chunk 0:18 and then 18:32.
                 # Instead, print doubly-inclusive lo..hi like 0..17 and 18..31.
                 chunk_percent = 100 * (i2 - 1) / nrow
-                logging.info(
+                logger.info(
                     "%sSTART  chunk rows %d..%d of %d (%.3f%%), obs_ids %s..%s, nnz=%d"
                     % (
                         self._indent,
@@ -365,14 +365,14 @@ class AssayMatrix(TileDBArray):
                 chunk_seconds = t2 - t1
                 eta = eta_tracker.ingest_and_predict(chunk_percent, chunk_seconds)
 
-                logging.info(
+                logger.info(
                     "%sFINISH chunk in %.3f seconds, %7.3f%% done, ETA %s"
                     % (self._indent, chunk_seconds, chunk_percent, eta)
                 )
 
                 i = i2
 
-        logging.info(
+        logger.info(
             util.format_elapsed(
                 s,
                 f"{self._indent}FINISH __ingest_coo_data_string_dims_rows_chunked",
@@ -407,7 +407,7 @@ class AssayMatrix(TileDBArray):
         sorted_col_names = np.asarray(sorted_col_names)
 
         s = util.get_start_stamp()
-        logging.info(f"{self._indent}START  __ingest_coo_data_string_dims_cols_chunked")
+        logger.info(f"{self._indent}START  __ingest_coo_data_string_dims_cols_chunked")
 
         eta_tracker = util.ETATracker()
         with tiledb.open(self.uri, mode="w", ctx=self._ctx) as A:
@@ -437,7 +437,7 @@ class AssayMatrix(TileDBArray):
                 # makes us look buggy if we say we're ingesting chunk 0:18 and then 18:32.
                 # Instead, print doubly-inclusive lo..hi like 0..17 and 18..31.
                 chunk_percent = 100 * (j2 - 1) / ncol
-                logging.info(
+                logger.info(
                     "%sSTART  chunk rows %d..%d of %d (%.3f%%), var_ids %s..%s, nnz=%d"
                     % (
                         self._indent,
@@ -458,14 +458,14 @@ class AssayMatrix(TileDBArray):
                 chunk_seconds = t2 - t1
                 eta = eta_tracker.ingest_and_predict(chunk_percent, chunk_seconds)
 
-                logging.info(
+                logger.info(
                     "%sFINISH chunk in %.3f seconds, %7.3f%% done, ETA %s"
                     % (self._indent, chunk_seconds, chunk_percent, eta)
                 )
 
                 j = j2
 
-        logging.info(
+        logger.info(
             util.format_elapsed(
                 s,
                 f"{self._indent}FINISH __ingest_coo_data_string_dims_rows_chunked",
@@ -500,7 +500,7 @@ class AssayMatrix(TileDBArray):
         sorted_row_names = np.asarray(sorted_row_names)
 
         s = util.get_start_stamp()
-        logging.info(
+        logger.info(
             f"{self._indent}START  __ingest_coo_data_string_dims_dense_rows_chunked"
         )
 
@@ -534,7 +534,7 @@ class AssayMatrix(TileDBArray):
                 # makes us look buggy if we say we're ingesting chunk 0:18 and then 18:32.
                 # Instead, print doubly-inclusive lo..hi like 0..17 and 18..31.
                 chunk_percent = 100 * (i2 - 1) / nrow
-                logging.info(
+                logger.info(
                     "%sSTART  chunk rows %d..%d of %d (%.3f%%), obs_ids %s..%s, nnz=%d"
                     % (
                         self._indent,
@@ -555,14 +555,14 @@ class AssayMatrix(TileDBArray):
                 chunk_seconds = t2 - t1
                 eta = eta_tracker.ingest_and_predict(chunk_percent, chunk_seconds)
 
-                logging.info(
+                logger.info(
                     "%sFINISH chunk in %.3f seconds, %7.3f%% done, ETA %s"
                     % (self._indent, chunk_seconds, chunk_percent, eta)
                 )
 
                 i = i2
 
-        logging.info(
+        logger.info(
             util.format_elapsed(
                 s,
                 f"{self._indent}FINISH __ingest_coo_data_string_dims_dense_rows_chunked",
@@ -581,10 +581,10 @@ class AssayMatrix(TileDBArray):
         """
 
         s = util.get_start_stamp()
-        logging.info(f"{self._indent}START  read {self.uri}")
+        logger.info(f"{self._indent}START  read {self.uri}")
 
         csr = self.csr()
 
-        logging.info(util.format_elapsed(s, f"{self._indent}FINISH read {self.uri}"))
+        logger.info(util.format_elapsed(s, f"{self._indent}FINISH read {self.uri}"))
 
         return csr

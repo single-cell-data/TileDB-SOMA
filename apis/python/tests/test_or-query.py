@@ -29,7 +29,7 @@ def test_or_query(adata):
     output_path = tempdir.name
 
     # Ingest
-    soma = tiledbsc.SOMA(output_path, verbose=True)
+    soma = tiledbsc.SOMA(output_path)
     tiledbsc.io.from_anndata(soma, adata)
 
     assert soma.obs.df(attrs=["groups"]).size == 80
