@@ -182,8 +182,10 @@ endif()
 add_definitions(-D_FILE_OFFSET_BITS=64)
 
 # Disable deprecation warnings
-message(WARNING "Building without deprecation warnings")
-add_compile_options(-Wno-deprecated-declarations)
+if (NOT MSVC)
+  message(WARNING "Building without deprecation warnings")
+  add_compile_options(-Wno-deprecated-declarations)
+endif()
 
 # AVX2 flag
 include(CheckAVX2Support)
