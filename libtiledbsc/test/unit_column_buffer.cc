@@ -11,6 +11,8 @@ using namespace tiledbsc;
 
 const std::string src_path = TILEDBSC_SOURCE_ROOT;
 
+namespace {
+
 /**
  * @brief Create an array and return array opened in read mode.
  *
@@ -43,6 +45,8 @@ static std::shared_ptr<Array> create_array(
     Array::create(uri, schema);
     return std::make_shared<Array>(ctx, uri, TILEDB_READ);
 }
+
+};  // namespace
 
 TEST_CASE("ColumnBuffer: Create from attribute") {
     auto ctx = Context();

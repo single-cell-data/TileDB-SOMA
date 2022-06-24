@@ -23,7 +23,8 @@ using namespace Catch::Matchers;
 const std::string src_path = TILEDBSC_SOURCE_ROOT;
 
 namespace {
-static auto create_array(const std::string& uri, Context& ctx) {
+
+auto create_array(const std::string& uri, Context& ctx) {
     // Delete array if it exists
     auto vfs = VFS(ctx);
     if (vfs.is_dir(uri)) {
@@ -76,11 +77,29 @@ TEST_CASE("ManagedQuery: Basic execution test") {
     auto [array, d0, a0] = create_array(uri, ctx);
 
     auto mq = ManagedQuery(array);
-    mq.select_columns({"d0", "a0"});
-
     auto num_cells = mq.execute();
 
     REQUIRE(num_cells == d0.size());
     REQUIRE_THAT(d0, Equals(mq.strings("d0")));
     REQUIRE_THAT(a0, Equals(util::to_vector(mq.data<int>("a0"))));
+}
+
+TEST_CASE("ManagedQuery: Select test") {
+    std::string uri = "mem://unit-test-array";
+    auto ctx = Context();
+    auto [array, d0, a0] = create_array(uri, ctx);
+
+    auto mq = ManagedQuery(array);
+    mq.select_columns({"a0"});
+    mq.select_points<std::string>("d0", {"a"});
+    auto num_cells = mq.execute();
+
+    REQUIRE_THROWS(mq.data<int>("a1"));
+    REQUIRE_THROWS(mq.strings("d0"));
+    REQUIRE_THROWS(mq.string_view("d1", 0));
+
+    REQUIRE(num_cells == 1);
+
+    std::vector<int> a0_cmp{a0[0]};
+    REQUIRE_THAT(a0_cmp, Equals(util::to_vector(mq.data<int>("a0"))));
 }

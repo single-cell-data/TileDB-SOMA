@@ -41,7 +41,7 @@ if (TILEDBSC_TESTING)
 
     add_test(
         NAME "unit_sc"
-        COMMAND $<TARGET_FILE:unit_sc>
+        COMMAND $<TARGET_FILE:unit_sc> "--durations=yes"
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
     )
 

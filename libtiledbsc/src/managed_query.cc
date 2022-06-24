@@ -4,6 +4,12 @@
 
 namespace tiledbsc {
 
+using namespace tiledb;
+
+//===================================================================
+//= public non-static
+//===================================================================
+
 ManagedQuery::ManagedQuery(std::shared_ptr<Array> array, size_t initial_cells)
     : array_(array)
     , initial_cells_(initial_cells) {
@@ -13,6 +19,12 @@ ManagedQuery::ManagedQuery(std::shared_ptr<Array> array, size_t initial_cells)
         query_->set_layout(TILEDB_UNORDERED);
     } else {
         query_->set_layout(TILEDB_ROW_MAJOR);
+    }
+}
+
+void ManagedQuery::select_columns(std::vector<std::string> names) {
+    for (auto& name : names) {
+        columns_.insert(name);
     }
 }
 
