@@ -23,7 +23,7 @@ import tiledb
 
 import tiledbsc
 import tiledbsc.io
-import tiledbsc.logger
+import tiledbsc.logging
 import tiledbsc.util
 
 
@@ -98,7 +98,16 @@ select `relative=True`. (This is the default.)
     soma_options = tiledbsc.SOMAOptions()
 
     write_soco = args.soco
-    # XXX verbose = not args.quiet
+    verbose = not args.quiet
+    if verbose:
+        # tiledbsc.logging.logger.setLevel(logging.INFO)
+        # logger = logging.getLogger('tiledbsc')
+        # logger.setLevel(logging.INFO)
+        # logging.getLogger("tiledbsc").setLevel(logging.INFO)
+        # Not able to get any of the above to 'stick'. The following sets level for the whole app,
+        # not just the tiledbsc library, but that's an acceptable workaround since this CLI does
+        # nothing except invoke the tiledbsc library.
+        logging.basicConfig(level=logging.INFO)
 
     if args.relative is not None:
         relative = args.relative[0]
@@ -208,7 +217,9 @@ def ingest_one(
     else:
         if os.path.exists(output_path):
             if ifexists == "continue":
-                tiledbsc.logger.info(f"Already exists; continuing: {output_path}")
+                tiledbsc.logging.logger.info(
+                    f"Already exists; continuing: {output_path}"
+                )
                 return
             elif ifexists == "abort":
                 logging.error(f"Already exists; aborting: {output_path}")
@@ -229,7 +240,7 @@ def ingest_one(
         # Do the ingest into TileDB.
         tiledbsc.io.from_h5ad(soma, input_path)
 
-    tiledbsc.logger.info(f"Wrote {output_path}")
+    tiledbsc.logging.logger.info(f"Wrote {output_path}")
 
     if write_soco:
         soco = tiledbsc.SOMACollection(soco_dir, soma_options=soma_options)
@@ -238,8 +249,10 @@ def ingest_one(
             raise Exception(f"Could not create SOCO at {soco.uri}")
         soco.add(soma)
 
-        tiledbsc.logger.info("")
-        tiledbsc.logger.info(f"Added SOMA {soma.name} to SOMACollection {soco_dir}")
+        tiledbsc.logging.logger.info("")
+        tiledbsc.logging.logger.info(
+            f"Added SOMA {soma.name} to SOMACollection {soco_dir}"
+        )
 
 
 # ================================================================
