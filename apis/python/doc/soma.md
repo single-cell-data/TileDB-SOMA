@@ -91,16 +91,6 @@ def var_keys() -> List[str]
 
 An alias for `soma.var.ids()`.
 
-<a id="tiledbsc.soma.SOMA.cell_count"></a>
-
-#### cell\_count
-
-```python
-def cell_count() -> int
-```
-
-Returns the `obs_id` in `soma.obs`.
-
 <a id="tiledbsc.soma.SOMA.get_obs_value_counts"></a>
 
 #### get\_obs\_value\_counts

@@ -19,57 +19,51 @@ This collection includes data on about 2.4 million cells:
 
 ```
 import tiledbsc
-
 soco = tiledbsc.SOMACollection('/mini-corpus/soco')
 
-print("TOTAL CELL COUNT:")
-print(soco.cell_count())
-```
-
-```
-TOTAL CELL COUNT:
+>>> sum(len(soma.obs) for soma in soco)
 2464363
-```
 
-```
-print()
-print([soma.cell_count() for soma in soco])
-```
-
-```
+>>> [len(soma.obs) for soma in soco]
 [264824, 4636, 6288, 2223, 59506, 100, 2638, 982538, 385, 67794, 2638, 104148, 44721, 3799, 11574, 1679, 3589, 700, 584884, 16245, 4603, 3726, 4636, 7348, 3589, 40268, 12971, 4232, 80, 82478, 97499, 38024]
 ```
 
 ```
-tabula-sapiens-stromal                                       82478
-Puck_200903_10                                               38024
-autoimmunity-pbmcs                                           97499
-pbmc-small                                                   80
-vieira19_Alveoli_and_parenchyma_anonymised.processed         12971
-af9d8c03-696c-4997-bde8-8ef00844881b                         4232
-d4db74ad-a129-4b1a-b9da-1b30db86bbe4-issue-74                3589
-single-cell-transcriptomes                                   40268
-local2                                                       7348
-human-kidney-tumors-wilms                                    4636
-0cfab2d4-1b79-444e-8cbe-2ca9671ca85e                         3726
-issue-74                                                     3589
-10x_pbmc68k_reduced                                          700
-integrated-human-lung-cell-atlas                             584884
-4056cbab-2a32-4c9e-a55f-c930bc793fb6                         4603
-adult-mouse-cortical-cell-taxonomy                           1679
-tabula-sapiens-epithelial                                    104148
-Single_cell_atlas_of_peripheral_immune_response_to_SARS_CoV_2_infection 44721
-longitudinal-profiling-49                                    11574
-azimuth-meta-analysis                                        982538
-developmental-single-cell-atlas-of-the-murine-lung           67794
-local3                                                       385
-pbmc3k-krilow                                                2638
-pbmc3k_processed                                             2638
-subset_100_100                                               100
-tabula-sapiens-immune                                        264824
-brown-adipose-tissue-mouse                                   2223
-acute-covid19-cohort                                         59506
-issue-69                                                     6288
+>>> for soma in soco:
+...     print(len(soma.obs), soma.name)
+...
+264824 tabula-sapiens-immune
+4636 wilms-tumors-seurat
+6288 issue-69
+2223 brown-adipose-tissue-mouse
+59506 acute-covid19-cohort
+100 subset_100_100
+2638 pbmc3k_processed
+982538 azimuth-meta-analysis
+385 local3
+67794 developmental-single-cell-atlas-of-the-murine-lung
+2638 pbmc3k-krilow
+104148 tabula-sapiens-epithelial
+44721 Single_cell_atlas_of_peripheral_immune_response_to_SARS_CoV_2_infection
+3799 adipocytes-seurat
+11574 longitudinal-profiling-49
+1679 adult-mouse-cortical-cell-taxonomy
+3589 issue-74
+700 10x_pbmc68k_reduced
+584884 integrated-human-lung-cell-atlas
+16245 issue-71
+4603 4056cbab-2a32-4c9e-a55f-c930bc793fb6
+3726 0cfab2d4-1b79-444e-8cbe-2ca9671ca85e
+4636 human-kidney-tumors-wilms
+7348 local2
+3589 d4db74ad-a129-4b1a-b9da-1b30db86bbe4-issue-74
+40268 single-cell-transcriptomes
+12971 vieira19_Alveoli_and_parenchyma_anonymised.processed
+4232 af9d8c03-696c-4997-bde8-8ef00844881b
+80 pbmc-small
+82478 tabula-sapiens-stromal
+97499 autoimmunity-pbmcs
+38024 Puck_200903_10
 ```
 
 ## Cell-counts before running a query

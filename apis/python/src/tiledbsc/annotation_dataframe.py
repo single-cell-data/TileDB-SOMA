@@ -78,6 +78,13 @@ class AnnotationDataFrame(TileDBArray):
             return [e.decode() for e in retval]
 
     # ----------------------------------------------------------------
+    def __len__(self) -> int:
+        """
+        Implements `len(soma.obs)` and `len(soma.var)`.
+        """
+        return len(self.ids())
+
+    # ----------------------------------------------------------------
     def keys(self) -> List[str]:
         """
         Returns the column names for the `obs` or `var` dataframe.  For obs and varp, `.keys()` is a
