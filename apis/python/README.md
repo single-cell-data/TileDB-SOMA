@@ -15,7 +15,7 @@ python -m pip install tiledbsc
 To install a specific version:
 
 ```
-python -m pip install git+https://github.com/django/django.git@0.0.4
+python -m pip install git+https://github.com/single-cell-data/TileDB-SingleCell.git@0.0.6
 ```
 
 To update to the latest version:
