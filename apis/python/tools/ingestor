@@ -190,7 +190,7 @@ def ingest_one(
     vfs = tiledb.VFS()
     if not vfs.is_file(input_path):
         # Print this neatly and exit neatly, to avoid a multi-line stack trace otherwise.
-        logging.error(f"Input path not found: {input_path}", file=sys.stderr)
+        logging.error(f"Input path not found: {input_path}")
         sys.exit(1)
 
     # Prepare to write the output.
