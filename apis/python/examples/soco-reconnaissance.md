@@ -3,7 +3,7 @@ Next, let's do some cross-cutting queries over schemas of all SOMAs in the colle
 in those columns, are most likely to be promising in terms of yielding results given our
 mini-corpus.
 
-## Cell-counts
+## Total cell-counts
 
 The mini-corpus we prepared is 29 SOMAs, 26GB total:
 
@@ -70,6 +70,26 @@ tabula-sapiens-immune                                        264824
 brown-adipose-tissue-mouse                                   2223
 acute-covid19-cohort                                         59506
 issue-69                                                     6288
+```
+
+## Cell-counts before running a query
+
+Before running a query, we may wish to know how many cells will be involved in the result:
+
+```
+>>> [soma.obs.query('cell_type == "B cell"').size for soma in soco if 'cell_type' in soma.obs.keys()]
+[514982, 0, 0, 14283, 245240, 391446, 0, 0, 0, 125154, 0, 29060, 0, 0, 311259, 176, 6120, 2480, 0, 0, 0, 26325, 5220, 0, 12750, 0]
+
+>>> sum([soma.obs.query('cell_type == "B cell"').size for soma in soco if 'cell_type' in soma.obs.keys()])
+1684495
+```
+
+```
+>>> [soma.obs.query('cell_type == "leukocyte"').size for soma in soco if 'cell_type' in soma.obs.keys()]
+[59436, 5616, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5472, 0, 0, 0, 0, 0, 0, 3753]
+
+>>> sum([soma.obs.query('cell_type == "leukocyte"').size for soma in soco if 'cell_type' in soma.obs.keys()])
+74277
 ```
 
 ## Datasets having all three of obs.cell_type, obs.tissue, and obs.feature_name
