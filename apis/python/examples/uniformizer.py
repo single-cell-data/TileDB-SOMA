@@ -51,14 +51,10 @@ def main() -> int:
     args = parser.parse_args()
 
     if args.verbose:
-        # tiledbsc.logging.logger.setLevel(logging.INFO)
-        # logger = logging.getLogger('tiledbsc')
-        # logger.setLevel(logging.INFO)
-        # logging.getLogger("tiledbsc").setLevel(logging.INFO)
-        # Not able to get any of the above to 'stick'. The following sets level for the whole app,
-        # not just the tiledbsc library, but that's an acceptable workaround since this CLI does
-        # nothing except invoke the tiledbsc library.
-        logging.basicConfig(level=logging.INFO)
+        tiledbsc.logging.logger.setLevel(logging.INFO)
+        logger = logging.getLogger("tiledbsc")
+        logger.setLevel(logging.INFO)
+        logger.addHandler(logging.StreamHandler())
 
     uniformizer = Uniformizer(
         atlas_uri=args.atlas_uri,
