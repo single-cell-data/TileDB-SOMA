@@ -20,7 +20,6 @@ Implements a collection of `SOMA` objects.
 def __init__(uri: str,
              name="soco",
              soma_options: Optional[SOMAOptions] = None,
-             verbose: Optional[bool] = True,
              config: Optional[tiledb.Config] = None,
              ctx: Optional[tiledb.Ctx] = None,
              parent: Optional[TileDBGroup] = None)
@@ -33,7 +32,6 @@ specified `uri` if one is present, otherwise a new group will be created upon in
 **Arguments**:
 
 - `uri`: URI of the TileDB group
-- `verbose`: Print status messages
 
 <a id="tiledbsc.soma_collection.SOMACollection.__len__"></a>
 

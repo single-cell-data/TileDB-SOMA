@@ -25,8 +25,8 @@ def __init__(uri: str,
              ctx: Optional[tiledb.Ctx] = None)
 ```
 
-Initialization-handling shared between `TileDBArray` and `TileDBGroup`.  Specify soma_options,
-verbose, and ctx for the top-level object; omit them and specify parent for non-top-level
+Initialization-handling shared between `TileDBArray` and `TileDBGroup`.  Specify soma_options
+and ctx for the top-level object; omit them and specify parent for non-top-level
 objects. Note that the parent reference is solely for propagating options, ctx, display
 depth, etc.
 

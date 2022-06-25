@@ -10,7 +10,7 @@
 class TileDBGroup(TileDBObject)
 ```
 
-Wraps groups from TileDB-Py by retaining a URI, verbose flag, etc.
+Wraps groups from TileDB-Py by retaining a URI, options, etc.
 
 <a id="tiledbsc.tiledb_group.TileDBGroup.__init__"></a>
 
@@ -21,7 +21,6 @@ def __init__(uri: str,
              name: str,
              parent=None,
              soma_options: Optional[SOMAOptions] = None,
-             verbose: Optional[bool] = True,
              ctx: Optional[tiledb.Ctx] = None)
 ```
 

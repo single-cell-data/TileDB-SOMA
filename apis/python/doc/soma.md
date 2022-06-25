@@ -39,7 +39,6 @@ Convenience accessors include:
 def __init__(uri: str,
              name=None,
              soma_options: Optional[SOMAOptions] = None,
-             verbose: Optional[bool] = True,
              config: Optional[tiledb.Config] = None,
              ctx: Optional[tiledb.Ctx] = None,
              parent: Optional[TileDBGroup] = None)
@@ -50,7 +49,6 @@ Create a new SOMA object. The existing array group is opened at the specified ar
 **Arguments**:
 
 - `uri`: URI of the TileDB group
-- `verbose`: Print status messages
 
 <a id="tiledbsc.soma.SOMA.__str__"></a>
 
@@ -163,7 +161,6 @@ def from_soma_slice(cls,
                     uri: str,
                     name=None,
                     soma_options: Optional[SOMAOptions] = None,
-                    verbose: Optional[bool] = True,
                     config: Optional[tiledb.Config] = None,
                     ctx: Optional[tiledb.Ctx] = None,
                     parent: Optional[TileDBGroup] = None) -> None
