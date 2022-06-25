@@ -1,3 +1,6 @@
+from typing import Optional
+
+
 class SOMAOptions:
     """
     A place to put configuration options various users may wish to change.
@@ -14,7 +17,7 @@ class SOMAOptions:
     string_dim_zstd_level: int
     write_X_chunked: bool
     goal_chunk_nnz: int
-    member_uris_are_relative: bool
+    member_uris_are_relative: Optional[bool]
     allows_duplicates: bool
 
     def __init__(

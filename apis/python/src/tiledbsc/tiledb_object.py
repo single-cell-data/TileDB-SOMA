@@ -1,3 +1,4 @@
+from abc import ABC, abstractmethod
 from typing import Dict, List, Optional
 
 import tiledb
@@ -5,10 +6,11 @@ import tiledb
 from .soma_options import SOMAOptions
 
 
-class TileDBObject:
+class TileDBObject(ABC):
     """
-    Base class for `TileDBArray` and `TileDBGroup`. Manages soma_options, context, etc. which are common
-    to both.
+    Base class for `TileDBArray` and `TileDBGroup`.
+
+    Manages soma_options, context, etc. which are common to both.
     """
 
     uri: str
@@ -42,16 +44,14 @@ class TileDBObject:
         self.name = name
 
         if parent is None:
-            self._soma_options = soma_options
             self._ctx = ctx
             self._indent = ""
         else:
-            self._soma_options = parent._soma_options
+            soma_options = parent._soma_options
             self._ctx = parent._ctx
             self._indent = parent._indent + "  "
 
-        if self._soma_options is None:
-            self._soma_options = SOMAOptions()
+        self._soma_options = soma_options or SOMAOptions()
         # Null ctx is OK if that's what they wanted (e.g. not doing any TileDB-Cloud ops).
 
     def _object_type(self) -> str:
@@ -77,7 +77,6 @@ class TileDBObject:
         Returns metadata from the group/array as a dict.
         """
         with self._open("r") as obj:
-            # The _open method is implemented by TileDBArray and TileDBGroup
             return dict(obj.meta)
 
     def has_metadata(self, key):
@@ -85,7 +84,6 @@ class TileDBObject:
         Returns whether metadata is associated with the group/array.
         """
         with self._open("r") as obj:
-            # The _open method is implemented by TileDBArray and TileDBGroup
             return key in obj.meta
 
     def metadata_keys(self) -> List[str]:
@@ -93,7 +91,6 @@ class TileDBObject:
         Returns metadata keys associated with the group/array.
         """
         with self._open("r") as obj:
-            # The _open method is implemented by TileDBArray and TileDBGroup
             return list(obj.meta.keys())
 
     def get_metadata(self, key):
@@ -102,7 +99,6 @@ class TileDBObject:
         Raises `KeyError` if there is no such key in the metadata.
         """
         with self._open("r") as obj:
-            # The _open method is implemented by TileDBArray and TileDBGroup
             return obj.meta[key]
 
     def set_metadata(self, key: str, value) -> None:
@@ -110,5 +106,8 @@ class TileDBObject:
         Returns metadata associated with the group/array.
         """
         with self._open("w") as obj:
-            # The _open method is implemented by TileDBArray and TileDBGroup
             obj.meta[key] = value
+
+    @abstractmethod
+    def _open(self, mode="r"):
+        """Open the underlying TileDB array or Group"""

@@ -1,5 +1,5 @@
 import os
-from typing import Dict, List, Optional
+from typing import Dict, Iterator, List, Optional
 
 import scipy.sparse
 import tiledb
@@ -64,7 +64,7 @@ class AnnotationPairwiseMatrixGroup(TileDBGroup):
         return ", ".join(f"'{key}'" for key in self.keys())
 
     # ----------------------------------------------------------------
-    def __getattr__(self, name) -> AssayMatrix:
+    def __getattr__(self, name) -> Optional[AssayMatrix]:
         """
         This is called on `soma.obsp.name` when `name` is not already an attribute.
         This way you can do `soma.obsp.distances` as an alias for `soma.obsp['distances']`.
@@ -77,13 +77,12 @@ class AnnotationPairwiseMatrixGroup(TileDBGroup):
         return self[name]
 
     # ----------------------------------------------------------------
-    def __iter__(self) -> List[AssayMatrix]:
+    def __iter__(self) -> Iterator[AssayMatrix]:
         """
         Implements `for matrix in soma.obsp: ...` and `for matrix in soma.varp: ...`
         """
-        retval = []
         for name, uri in self._get_member_names_to_uris().items():
-            matrix = AssayMatrix(
+            yield AssayMatrix(
                 uri=uri,
                 name=name,
                 row_dim_name=self.row_dim_name,
@@ -92,8 +91,6 @@ class AnnotationPairwiseMatrixGroup(TileDBGroup):
                 col_dataframe=self.col_dataframe,
                 parent=self,
             )
-            retval.append(matrix)
-        return iter(retval)
 
     # ----------------------------------------------------------------
     def add_matrix_from_matrix_and_dim_values(
@@ -189,7 +186,7 @@ class AnnotationPairwiseMatrixGroup(TileDBGroup):
     #   the `[]` operator separately in the various classes which need indexing. This is again to
     #   avoid circular-import issues, and means that [] on `AnnotationMatrixGroup` will return an
     #   `AnnotationMatrix, [] on `UnsGroup` will return `UnsArray` or `UnsGroup`, etc.
-    def __getitem__(self, name) -> AssayMatrix:
+    def __getitem__(self, name) -> Optional[AssayMatrix]:
         """
         Returns an `AssayMatrix` element at the given name within the group, or `None` if no such
         member exists.  Overloads the `[...]` operator.

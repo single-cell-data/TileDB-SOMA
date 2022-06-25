@@ -1,4 +1,5 @@
 import os
+from typing import Mapping
 
 import anndata as ad
 import numpy as np
@@ -180,9 +181,7 @@ def _describe_ann_file_show_data(anndata: ad.AnnData, input_path: str) -> None:
 
 
 # ----------------------------------------------------------------
-def _describe_ann_file_show_uns_summary(
-    uns: ad.compat.OverloadedDict, parent_path_components
-) -> None:
+def _describe_ann_file_show_uns_summary(uns: Mapping, parent_path_components) -> None:
     """
     Recursively shows summary information about the anndata.uns structure.
     """
@@ -190,14 +189,14 @@ def _describe_ann_file_show_uns_summary(
         current_path_components = parent_path_components + [key]
         value = uns[key]
         display_name = os.path.sep.join(current_path_components)
-        if isinstance(value, (dict, ad.compat.OverloadedDict)):
+        if isinstance(value, Mapping):
             _describe_ann_file_show_uns_summary(value, current_path_components)
         else:
             print(display_name)
 
 
 # ----------------------------------------------------------------
-def _describe_ann_file_show_uns_types(uns, parent_path_components) -> None:
+def _describe_ann_file_show_uns_types(uns: Mapping, parent_path_components) -> None:
     """
     Recursively shows data-type information about the anndata.uns structure.
     """
@@ -206,7 +205,7 @@ def _describe_ann_file_show_uns_types(uns, parent_path_components) -> None:
         current_path_components = parent_path_components + [key]
         value = uns[key]
         display_name = os.path.sep.join(current_path_components)
-        if isinstance(value, (dict, ad.compat.OverloadedDict)):
+        if isinstance(value, Mapping):
             _describe_ann_file_show_uns_types(value, current_path_components)
         elif isinstance(value, np.ndarray):
             print(
@@ -222,7 +221,7 @@ def _describe_ann_file_show_uns_types(uns, parent_path_components) -> None:
 
 
 # ----------------------------------------------------------------
-def _describe_ann_file_show_uns_data(uns, parent_path_components) -> None:
+def _describe_ann_file_show_uns_data(uns: Mapping, parent_path_components) -> None:
     """
     Recursively shows data contained within the anndata.uns structure.
     """
@@ -231,7 +230,7 @@ def _describe_ann_file_show_uns_data(uns, parent_path_components) -> None:
         current_path_components = parent_path_components + [key]
         value = uns[key]
         display_name = os.path.sep.join(current_path_components)
-        if isinstance(value, (dict, ad.compat.OverloadedDict)):
+        if isinstance(value, Mapping):
             _describe_ann_file_show_uns_data(value, current_path_components)
         elif (
             isinstance(value, np.ndarray)
@@ -248,7 +247,7 @@ def _describe_ann_file_show_uns_data(uns, parent_path_components) -> None:
 
 
 # ----------------------------------------------------------------
-def _decategoricalize(anndata: ad.AnnData) -> None:
+def _decategoricalize(anndata: ad.AnnData) -> ad.AnnData:
     """
     Performs an in-place typecast into types that TileDB can persist.
     """
@@ -307,7 +306,7 @@ def _decategoricalize(anndata: ad.AnnData) -> None:
             varm=anndata.raw.varm,
         )
 
-    anndata = ad.AnnData(
+    return ad.AnnData(
         X=anndata.X,
         dtype=None if anndata.X is None else anndata.X.dtype,  # some datasets have no X
         obs=new_obs,
@@ -319,5 +318,3 @@ def _decategoricalize(anndata: ad.AnnData) -> None:
         raw=new_raw,
         uns=anndata.uns,
     )
-
-    return anndata

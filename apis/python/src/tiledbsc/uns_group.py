@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 import os
-from typing import Dict, List, Optional
+from typing import Dict, Iterator, List, Mapping, Optional, Union
 
 import anndata as ad
 import numpy as np
@@ -84,22 +86,20 @@ class UnsGroup(TileDBGroup):
             return name in G
 
     # ----------------------------------------------------------------
-    def __iter__(self) -> List:  # List[Union[UnsGroup, UnsArray]]
+    def __iter__(self) -> Iterator[Union[UnsGroup, UnsArray]]:
         """
         Implements `for element in soma.uns: ...`
         """
-        retval = []
         with self._open("r") as G:
             for obj in G:  # tiledb.object.Object
                 if obj.type == tiledb.tiledb.Group:
-                    retval.append(UnsGroup(uri=obj.uri, name=obj.name, parent=self))
+                    yield UnsGroup(uri=obj.uri, name=obj.name, parent=self)
                 elif obj.type == tiledb.libtiledb.Array:
-                    retval.append(UnsArray(uri=obj.uri, name=obj.name, parent=self))
+                    yield UnsArray(uri=obj.uri, name=obj.name, parent=self)
                 else:
                     raise Exception(
                         f"Internal error: found uns group element neither subgroup nor array: type is {obj.type}"
                     )
-        return iter(retval)
 
     # ----------------------------------------------------------------
     def __repr__(self) -> str:
@@ -173,7 +173,7 @@ class UnsGroup(TileDBGroup):
                 logger.info(f"{self._indent}Skipping structured array: {component_uri}")
                 continue
 
-            if isinstance(value, (dict, ad.compat.OverloadedDict)):
+            if isinstance(value, Mapping):
                 # Nested data, e.g. a.uns['draw-graph']['params']['layout']
                 subgroup = UnsGroup(uri=component_uri, name=key, parent=self)
                 subgroup.from_anndata_uns(value)

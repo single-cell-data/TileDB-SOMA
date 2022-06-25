@@ -125,7 +125,7 @@ class TileDBArray(TileDBObject):
         Returns the class name associated with the array.
         """
         with self._open("r") as A:
-            return A.meta[tiledbsc.util_tiledb.SOMA_OBJECT_TYPE_METADATA_KEY]
+            return A.meta[tiledbsc.util.SOMA_OBJECT_TYPE_METADATA_KEY]
 
     def show_metadata(self, recursively=True, indent="") -> None:
         """

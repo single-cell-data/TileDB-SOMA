@@ -255,7 +255,9 @@ def to_anndata(soma: tiledbsc.SOMA) -> ad.AnnData:
     obs_df = soma.obs.df()
     var_df = soma.var.df()
 
-    X_mat = soma.X["data"].to_csr_matrix(obs_df.index, var_df.index)
+    data = soma.X["data"]
+    assert data is not None
+    X_mat = data.to_csr_matrix(obs_df.index, var_df.index)
 
     obsm = soma.obsm.to_dict_of_csr()
     varm = soma.varm.to_dict_of_csr()
@@ -305,10 +307,8 @@ def to_anndata_from_raw(soma: tiledbsc.SOMA) -> ad.AnnData:
 
     obs_df = soma.obs.df()
     var_df = soma.raw.var.df()
-    X_mat = soma.raw.X["data"].to_csr_matrix(obs_df.index, var_df.index)
+    data = soma.raw.X["data"]
+    assert data is not None
+    X_mat = data.to_csr_matrix(obs_df.index, var_df.index)
 
-    return ad.AnnData(
-        X=X_mat,
-        obs=obs_df,
-        var=var_df,
-    )
+    return ad.AnnData(X=X_mat, obs=obs_df, var=var_df)

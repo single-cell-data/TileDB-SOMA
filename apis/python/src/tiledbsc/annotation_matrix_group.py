@@ -1,5 +1,5 @@
 import os
-from typing import Dict, List, Optional
+from typing import Dict, Iterator, List, Optional
 
 import pandas as pd
 import scipy.sparse
@@ -51,20 +51,17 @@ class AnnotationMatrixGroup(TileDBGroup):
         return ", ".join(f"'{key}'" for key in self.keys())
 
     # ----------------------------------------------------------------
-    def __iter__(self) -> List[AnnotationMatrix]:
+    def __iter__(self) -> Iterator[AnnotationMatrix]:
         """
         Implements `for matrix in soma.obsm: ...` and `for matrix in soma.varm: ...`
         """
-        retval = []
         for name, uri in self._get_member_names_to_uris().items():
-            matrix = AnnotationMatrix(
+            yield AnnotationMatrix(
                 uri=uri, name=name, dim_name=self.dim_name, parent=self
             )
-            retval.append(matrix)
-        return iter(retval)
 
     # ----------------------------------------------------------------
-    def __getattr__(self, name) -> AnnotationMatrix:
+    def __getattr__(self, name) -> Optional[AnnotationMatrix]:
         """
         This is called on `soma.obsm.name` when `name` is not already an attribute.
         This way you can do `soma.obsm.X_tsne` as an alias for `soma.obsm['X_tsne']`.
@@ -158,7 +155,7 @@ class AnnotationMatrixGroup(TileDBGroup):
     #   the `[]` operator separately in the various classes which need indexing. This is again to
     #   avoid circular-import issues, and means that [] on `AnnotationMatrixGroup` will return an
     #   `AnnotationMatrix, [] on `UnsGroup` will return `UnsArray` or `UnsGroup`, etc.
-    def __getitem__(self, name) -> AnnotationMatrix:
+    def __getitem__(self, name) -> Optional[AnnotationMatrix]:
         """
         Returns an `AnnotationMatrix` element at the given name within the group, or None if no such
         member exists.  Overloads the `[...]` operator.

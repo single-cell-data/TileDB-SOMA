@@ -87,7 +87,7 @@ class TileDBGroup(TileDBObject):
         Returns the class name associated with the group.
         """
         with self._open("r") as G:
-            return G.meta[tiledbsc.util_tiledb.SOMA_OBJECT_TYPE_METADATA_KEY]
+            return G.meta[tiledbsc.util.SOMA_OBJECT_TYPE_METADATA_KEY]
 
     def _set_object_type_metadata_recursively(self) -> None:
         """
