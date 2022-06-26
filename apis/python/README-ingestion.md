@@ -70,7 +70,7 @@ soma: group
 |   |   +-- vmfoo: array           AnnotationMatrix              numpy.ndarray, scipy.sparse.csr_matrix
 |   |   +-- vmbar: array           AnnotationMatrix
 |
-+-- raw: group                 UnsGroup
++-- uns: group                 UnsGroup
     +-- ...: group
     |   +--: array                                               pandas.DataFrame, or
     |   +--: array                                               numpy.ndarray, or
