@@ -173,7 +173,7 @@ class UnsGroup(TileDBGroup):
                 # support nested cells, AKA "list" type.
                 #
                 # This could, however, be converted to a dataframe and ingested that way.
-                logger.info(f"{self._indent}Skipping structured array:", component_uri)
+                logger.info(f"{self._indent}Skipping structured array: {component_uri}")
                 continue
 
             if isinstance(value, (dict, ad.compat.OverloadedDict)):
