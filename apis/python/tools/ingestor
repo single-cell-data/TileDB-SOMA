@@ -96,24 +96,25 @@ select `relative=True`. (This is the default.)
         else:
             args.ifexists = ["continue"]
 
-    soma_options = tiledbsc.SOMAOptions()
-
     write_soco = args.soco
     verbose = not args.quiet
     if verbose:
         tiledbsc.logging.info()
 
-    if args.relative is not None:
+    if args.relative is None:
+        rel_member_uris = None
+    else:
         relative = args.relative[0]
         if relative == "true":
-            soma_options.member_uris_are_relative = True
+            rel_member_uris = True
         elif relative == "false":
-            soma_options.member_uris_are_relative = False
+            rel_member_uris = False
         elif relative == "auto":
-            soma_options.member_uris_are_relative = None
+            rel_member_uris = None
         else:
             raise Exception(f"Internal coding error in {__file__}")
 
+    soma_options = tiledbsc.SOMAOptions(member_uris_are_relative=rel_member_uris)
     outdir = args.o.rstrip("/")
 
     if args.n:
