@@ -23,8 +23,9 @@ import tiledb
 
 import tiledbsc
 import tiledbsc.io
-import tiledbsc.logging
 import tiledbsc.util
+
+logger = logging.getLogger("tiledbsc")
 
 
 # ================================================================
@@ -210,9 +211,7 @@ def ingest_one(
     else:
         if os.path.exists(output_path):
             if ifexists == "continue":
-                tiledbsc.logging.logger.info(
-                    f"Already exists; continuing: {output_path}"
-                )
+                logger.info(f"Already exists; continuing: {output_path}")
                 return
             elif ifexists == "abort":
                 logging.error(f"Already exists; aborting: {output_path}")
@@ -233,7 +232,7 @@ def ingest_one(
         # Do the ingest into TileDB.
         tiledbsc.io.from_h5ad(soma, input_path)
 
-    tiledbsc.logging.logger.info(f"Wrote {output_path}")
+    logger.info(f"Wrote {output_path}")
 
     if write_soco:
         soco = tiledbsc.SOMACollection(soco_dir, soma_options=soma_options)
@@ -242,10 +241,8 @@ def ingest_one(
             raise Exception(f"Could not create SOCO at {soco.uri}")
         soco.add(soma)
 
-        tiledbsc.logging.logger.info("")
-        tiledbsc.logging.logger.info(
-            f"Added SOMA {soma.name} to SOMACollection {soco_dir}"
-        )
+        logger.info("")
+        logger.info(f"Added SOMA {soma.name} to SOMACollection {soco_dir}")
 
 
 # ================================================================
