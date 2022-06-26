@@ -47,6 +47,11 @@ def main():
         action="store_true",
     )
     parser.add_argument(
+        "-u",
+        help="Shorthand for `--ifexists update`",
+        action="store_true",
+    )
+    parser.add_argument(
         "-o",
         help="Specify output directory to contain the somas",
         type=str,
@@ -78,7 +83,7 @@ select `relative=True`. (This is the default.)
     parser.add_argument(
         "--ifexists",
         help="What to do if soma storage already exists. Default: continue.",
-        choices=["replace", "abort", "continue", "update_obs_and_var"],
+        choices=["replace", "abort", "continue", "update", "update_obs_and_var"],
         type=str,
         nargs=1,
     )
@@ -93,6 +98,8 @@ select `relative=True`. (This is the default.)
     if args.ifexists is None:
         if args.x:
             args.ifexists = ["replace"]
+        elif args.u:
+            args.ifexists = ["update"]
         else:
             args.ifexists = ["continue"]
 
@@ -217,9 +224,11 @@ def ingest_one(
                     f"Already exists; continuing: {output_path}"
                 )
                 return
+
             elif ifexists == "abort":
                 tiledbsc.logging.error(f"Already exists; aborting: {output_path}")
                 sys.exit(1)
+
             elif ifexists == "replace":
                 if output_path.startswith("s3://") or output_path.startswith(
                     "tiledb://"
@@ -231,6 +240,10 @@ def ingest_one(
                     f"Already exists; replacing: {output_path}"
                 )
                 shutil.rmtree(output_path)  # Overwrite
+
+            elif ifexists == "update":
+                tiledbsc.logging.logger.info(f"Already exists; updating: {output_path}")
+
             else:
                 raise Exception(
                     "Internal coding error in --ifexists handling.", ifexists, "<"

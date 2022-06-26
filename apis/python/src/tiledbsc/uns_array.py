@@ -5,6 +5,7 @@ import pandas as pd
 import scipy.sparse as sp
 import tiledb
 
+import tiledbsc.logging
 import tiledbsc.util as util
 
 from .logging import log_io
@@ -89,13 +90,15 @@ class UnsArray(TileDBArray):
             # Note arr.astype('str') does not lead to a successfuly tiledb.from_numpy.
             arr = np.array(arr, dtype="O")
 
-        # overwrite = False
-        # if self.exists:
-        #     overwrite = True
-        #     log_io(None, f"{self._indent}Re-using existing array {self.uri}")
-        # tiledb.from_numpy(uri=self.uri, array=arr, ctx=self._ctx, overwrite=overwrite)
-        # TODO: find the right syntax for update-in-place (tiledb.from_pandas uses `mode`)
-        tiledb.from_numpy(uri=self.uri, array=arr, ctx=self._ctx)
+        if self.exists():
+            tiledbsc.logging.logger.info(
+                f"{self._indent}Re-using existing array {self.uri}"
+            )
+            tiledb.from_numpy(
+                uri=self.uri, array=arr, mode="append", start_idx=0, ctx=self._ctx
+            )
+        else:
+            tiledb.from_numpy(uri=self.uri, array=arr, ctx=self._ctx)
 
         log_io(
             None,

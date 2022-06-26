@@ -198,8 +198,11 @@ class TileDBGroup(TileDBObject):
         if relative:
             child_uri = obj.name
         self._cached_member_names_to_uris = None  # invalidate on add-member
+        with self._open("r") as G:
+            exists = obj.name in G
         with self._open("w") as G:
-            G.add(uri=child_uri, relative=relative, name=obj.name)
+            if not exists:
+                G.add(uri=child_uri, relative=relative, name=obj.name)
         # See _get_child_uri. Key point is that, on TileDB Cloud, URIs change from pre-creation to
         # post-creation. Example:
         # * Upload to pre-creation URI tiledb://namespace/s3://bucket/something/something/somaname
