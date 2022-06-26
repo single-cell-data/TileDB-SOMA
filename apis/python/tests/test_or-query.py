@@ -38,6 +38,8 @@ def test_or_query(adata):
     assert (
         soma.obs.query('groups == "g1" or groups == "g2"', attrs=["groups"]).size == 80
     )
-    assert soma.obs.query('groups == "g1" and groups == "g2"', attrs=["groups"]) is None
+    assert (
+        soma.obs.query('groups == "g1" and groups == "g2"', attrs=["groups"]).size == 0
+    )
 
     tempdir.cleanup()

@@ -125,13 +125,6 @@ class SOMACollection(TileDBGroup):
             return SOMA(uri=obj.uri, name=name, parent=self)
 
     # ----------------------------------------------------------------
-    def cell_count(self) -> int:
-        """
-        Returns sum of `soma.cell_count()` over SOMAs in the collection.
-        """
-        return sum(soma.cell_count() for soma in self)
-
-    # ----------------------------------------------------------------
     def query(
         self,
         obs_attr_names: Optional[List[str]] = None,

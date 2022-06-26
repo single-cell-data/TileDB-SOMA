@@ -172,13 +172,6 @@ class SOMA(TileDBGroup):
         return self.var.ids()
 
     # ----------------------------------------------------------------
-    def cell_count(self) -> int:
-        """
-        Returns the `obs_id` in `soma.obs`.
-        """
-        return len(self.obs.ids())
-
-    # ----------------------------------------------------------------
     def get_obs_value_counts(self, obs_label: str) -> pd.DataFrame:
         """
         Given an obs label, e.g. `cell_type`, returns a dataframe count the number of different

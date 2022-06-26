@@ -104,16 +104,6 @@ def __getitem__(name) -> SOMA
 Returns a `SOMA` element at the given name within the group, or `None` if no such
 member exists.  Overloads the `[...]` operator.
 
-<a id="tiledbsc.soma_collection.SOMACollection.cell_count"></a>
-
-#### cell\_count
-
-```python
-def cell_count() -> int
-```
-
-Returns sum of `soma.cell_count()` over SOMAs in the collection.
-
 <a id="tiledbsc.soma_collection.SOMACollection.query"></a>
 
 #### query
