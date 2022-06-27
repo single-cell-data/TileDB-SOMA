@@ -2,12 +2,13 @@
 
 from typing import Optional
 
+import pandas as pd
 import tiledb
 
 import tiledbsc
 
 
-# ================================================================
+# ----------------------------------------------------------------
 def show_soma_schemas(soma_uri: str, ctx: Optional[tiledb.Ctx] = None) -> None:
     """
     Show some summary information about an ingested TileDB Single-Cell Group.  This tool goes a bit beyond `print(tiledb.group.Group(soma_uri))` by also revealing array schema. Additionally, by employing encoded domain-specific knowleldge, it traverses items in the familiar order `X`, `obs`, `var`, etc. rather than using the general-purpose tiledb-group-display function.
@@ -53,7 +54,7 @@ def _show_array_schemas_for_group(
                 _show_array_schema(element.uri, ctx)
 
 
-# ================================================================
+# ----------------------------------------------------------------
 def show_tiledb_group_array_schemas(uri: str, ctx: Optional[tiledb.Ctx] = None) -> None:
     """
     Recursively show array schemas within a TileDB Group. This function is not specific to
@@ -80,3 +81,29 @@ def show_tiledb_group_array_schemas(uri: str, ctx: Optional[tiledb.Ctx] = None) 
                     print(A.schema)
             else:
                 print("Skipping element type", element.type)
+
+
+# ----------------------------------------------------------------
+def list_fragments(array_uri: str) -> None:
+    print(f"Listing fragments for array: '{array_uri}'")
+    vfs = tiledb.VFS()
+
+    fragments = []
+    fi = tiledb.fragment.FragmentInfoList(array_uri=array_uri)
+
+    for f in fi:
+        f_dict = {
+            "array_schema_name": f.array_schema_name,
+            "num": f.num,
+            "cell_num": f.cell_num,
+            "size": vfs.dir_size(f.uri),
+        }
+
+        # parse nonempty domains into separate columns
+        for d in range(len(f.nonempty_domain)):
+            f_dict[f"d{d}"] = f.nonempty_domain[d]
+
+        fragments.append(f_dict)
+
+    frags_df = pd.DataFrame(fragments)
+    print(frags_df)
