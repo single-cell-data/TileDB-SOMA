@@ -102,41 +102,38 @@ class UnsGroup(TileDBGroup):
         return iter(retval)
 
     # ----------------------------------------------------------------
-    def show(self, display_name="uns") -> None:
+    def __repr__(self) -> str:
+        """
+        Default display for uns groups.
+        """
+        return self._repr_aux()
+
+    # ----------------------------------------------------------------
+    def _repr_aux(self, display_name="uns", indent="") -> str:
         """
         Recursively displays the uns data.
         """
-        print()
-        print(display_name + ":")
+        strings = []
+        strings.append(indent + display_name + ":")
+        # Scalars are stored as metadata, not 1D arrays
         for k, v in self.metadata().items():
             if not k.startswith("__"):
-                print(k + ":", v)
+                strings.append(indent + k + ": " + repr(v))
+        # Now do subgroups, and non-scalar values
         for e in self:
             element_display_name = display_name + "/" + e.name
             if isinstance(e, UnsGroup):
-                e.show(display_name=element_display_name)
+                strings.append(
+                    indent
+                    + e._repr_aux(
+                        display_name=element_display_name, indent=indent + "  "
+                    )
+                )
             else:
-                print(element_display_name + "/")
+                strings.append(indent + element_display_name + "/")
                 with e._open() as A:
-                    print(A[:])
-
-        # uns:
-        # scalar_float: 3.25
-        # scalar_string: a string
-        # [1]
-        # [ 0.    1.25  2.5   3.75  5.    6.25  7.5   8.75 10.   11.25]
-        # [ 0 10 20 30 40 50 60 70 80 90]
-        # [1 2 3]
-        # [[1. 2. 3.]
-        #  [4. 5. 6.]]
-        #
-        # uns/simple_dict:
-        # B: one
-        # [0]
-        # ['a' 'b' 'c']
-        # OrderedDict([('A', array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9], dtype=int32)), ('__tiledb_rows', array([b'0', b'1', b'2', b'3', b'4', b'5', b'6', b'7', b'8', b'9'],
-        #       dtype=object))])
-        # ['0' '100' '200' '300' '400' '500' '600' '700' '800' '900']
+                    strings.append(indent + str(A[:]))
+        return "\n".join(strings)
 
     # ----------------------------------------------------------------
     def from_anndata_uns(self, uns: ad.compat.OverloadedDict) -> None:

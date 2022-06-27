@@ -53,7 +53,7 @@ def test_from_anndata_uns(tmp_path):
 
     # Example of what we're verifying:
 
-    # >>> soma.uns.show()
+    # >>> soma.uns
     #
     # uns:
     # scalar_float: 3.25
