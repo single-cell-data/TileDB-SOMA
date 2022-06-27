@@ -12,13 +12,11 @@ This code is hosted at [PyPI](https://pypi.org/project/tiledbsc/), so you can do
 python -m pip install tiledbsc
 ```
 
-<!--
 To install a specific version:
 
 ```
-python -m pip install git+https://github.com/single-cell-data/TileDB-SingleCell.git@0.0.6
+python -m pip install git+https://github.com/single-cell-data/TileDB-SingleCell.git@0.0.6#subdirectory=apis/python
 ```
--->
 
 To update to the latest version:
 
