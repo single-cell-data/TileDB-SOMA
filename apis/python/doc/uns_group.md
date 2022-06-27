@@ -64,15 +64,15 @@ def __iter__() -> List
 
 Implements `for element in soma.uns: ...`
 
-<a id="tiledbsc.uns_group.UnsGroup.show"></a>
+<a id="tiledbsc.uns_group.UnsGroup.__repr__"></a>
 
-#### show
+#### \_\_repr\_\_
 
 ```python
-def show(display_name="uns") -> None
+def __repr__() -> str
 ```
 
-Recursively displays the uns data.
+Default display for uns groups.
 
 <a id="tiledbsc.uns_group.UnsGroup.from_anndata_uns"></a>
 
