@@ -93,12 +93,19 @@ class UnsArray(TileDBArray):
             # Note arr.astype('str') does not lead to a successfuly tiledb.from_numpy.
             arr = np.array(arr, dtype="O")
 
+        # Work around Shortcut story 19039 where upload of 1D numpy.ndarray to tiledb://...
+        # URIs raises an exception.
+        if self.uri.startswith("tiledb://") and len(arr.shape) == 1:
+            arr = np.asarray([arr])
+
+        # TODO: find the right syntax for update-in-place (tiledb.from_pandas uses `mode`)
+        # See also https://github.com/TileDB-Inc/TileDB-Py/pull/1185
+        #
         # overwrite = False
         # if self.exists:
         #     overwrite = True
         #     logger.info(f"{self._indent}Re-using existing array {self.uri}")
         # tiledb.from_numpy(uri=self.uri, array=arr, ctx=self._ctx, overwrite=overwrite)
-        # TODO: find the right syntax for update-in-place (tiledb.from_pandas uses `mode`)
         tiledb.from_numpy(uri=self.uri, array=arr, ctx=self._ctx)
 
         logger.info(
