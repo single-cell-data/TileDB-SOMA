@@ -125,28 +125,28 @@ def from_anndata(soma: tiledbsc.SOMA, anndata: ad.AnnData) -> None:
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     soma.obsm.create_unless_exists()
     for key in anndata.obsm.keys():
-        soma.obsm.add_layer_from_matrix_and_dim_values(
+        soma.obsm.add_matrix_from_matrix_and_dim_values(
             anndata.obsm[key], anndata.obs_names, key
         )
     soma._add_object(soma.obsm)
 
     soma.varm.create_unless_exists()
     for key in anndata.varm.keys():
-        soma.varm.add_layer_from_matrix_and_dim_values(
+        soma.varm.add_matrix_from_matrix_and_dim_values(
             anndata.varm[key], anndata.var_names, key
         )
     soma._add_object(soma.varm)
 
     soma.obsp.create_unless_exists()
     for key in anndata.obsp.keys():
-        soma.obsp.add_layer_from_matrix_and_dim_values(
+        soma.obsp.add_matrix_from_matrix_and_dim_values(
             anndata.obsp[key], anndata.obs_names, key
         )
     soma._add_object(soma.obsp)
 
     soma.varp.create_unless_exists()
     for key in anndata.varp.keys():
-        soma.varp.add_layer_from_matrix_and_dim_values(
+        soma.varp.add_matrix_from_matrix_and_dim_values(
             anndata.varp[key], anndata.var_names, key
         )
     soma._add_object(soma.varp)

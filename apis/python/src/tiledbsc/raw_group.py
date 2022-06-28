@@ -85,7 +85,7 @@ class RawGroup(TileDBGroup):
 
         self.varm.create_unless_exists()
         for key in anndata.raw.varm.keys():
-            self.varm.add_layer_from_matrix_and_dim_values(
+            self.varm.add_matrix_from_matrix_and_dim_values(
                 anndata.raw.varm[key], anndata.raw.var_names, key
             )
         self._add_object(self.varm)

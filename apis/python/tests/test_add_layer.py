@@ -52,14 +52,14 @@ def test_add_layer(adata):
     assert csr2.shape == orig_shape
 
     # Add obsm matrix
-    soma.obsm.add_layer_from_matrix_and_dim_values(
+    soma.obsm.add_matrix_from_matrix_and_dim_values(
         soma.obsm.X_tsne.df(), soma.obs_keys(), "voila"
     )
     assert sorted(soma.obsm.keys()) == ["X_pca", "X_tsne", "voila"]
     assert soma.obsm.voila.shape() == soma.obsm.X_tsne.shape()
 
     # Add obsp matrix
-    soma.obsp.add_layer_from_matrix_and_dim_values(
+    soma.obsp.add_matrix_from_matrix_and_dim_values(
         soma.obsp.distances.csr(),
         soma.obs_keys(),
         "voici",

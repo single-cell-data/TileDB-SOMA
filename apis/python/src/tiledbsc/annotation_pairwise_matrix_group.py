@@ -89,7 +89,7 @@ class AnnotationPairwiseMatrixGroup(TileDBGroup):
         return iter(retval)
 
     # ----------------------------------------------------------------
-    def add_layer_from_matrix_and_dim_values(
+    def add_matrix_from_matrix_and_dim_values(
         self,
         matrix,
         dim_values,

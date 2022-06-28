@@ -70,7 +70,7 @@ class AnnotationMatrixGroup(TileDBGroup):
         return self[name]
 
     # ----------------------------------------------------------------
-    def add_layer_from_matrix_and_dim_values(
+    def add_matrix_from_matrix_and_dim_values(
         self,
         matrix,
         dim_values,
