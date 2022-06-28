@@ -78,6 +78,13 @@ class AnnotationDataFrame(TileDBArray):
             return [e.decode() for e in retval]
 
     # ----------------------------------------------------------------
+    def __repr__(self) -> str:
+        """
+        Default display of soma.obs and soma.var.
+        """
+        return ", ".join(f"'{key}'" for key in self.keys())
+
+    # ----------------------------------------------------------------
     def __len__(self) -> int:
         """
         Implements `len(soma.obs)` and `len(soma.var)`.

@@ -43,6 +43,16 @@ class SOMACollection(TileDBGroup):
         )
 
     # ----------------------------------------------------------------
+    def __repr__(self) -> str:
+        """
+        Default display of SOMACollection.
+        """
+        lines = ["URI:        " + self.uri, ]
+        if self.exists():
+            lines.append(f"SOMA count: {len(self)}")
+        return "\n".join(lines)
+
+    # ----------------------------------------------------------------
     def __len__(self) -> int:
         """
         Implements `len(soco)`. Returns the number of elements in the collection.
