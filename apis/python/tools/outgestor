@@ -78,10 +78,7 @@ def main():
 
     verbose = not args.quiet
     if verbose:
-        tiledbsc.logging.logger.setLevel(logging.INFO)
-        logger = logging.getLogger("tiledbsc")
-        logger.setLevel(logging.INFO)
-        logger.addHandler(logging.StreamHandler())
+        tiledbsc.logging.info()
 
     soma = tiledbsc.SOMA(input_path)
     tiledbsc.io.to_h5ad(soma, output_path)

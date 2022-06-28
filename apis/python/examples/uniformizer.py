@@ -51,10 +51,7 @@ def main() -> int:
     args = parser.parse_args()
 
     if args.verbose:
-        tiledbsc.logging.logger.setLevel(logging.INFO)
-        logger = logging.getLogger("tiledbsc")
-        logger.setLevel(logging.INFO)
-        logger.addHandler(logging.StreamHandler())
+        tiledbsc.logging.info()
 
     uniformizer = Uniformizer(
         atlas_uri=args.atlas_uri,
