@@ -100,10 +100,7 @@ select `relative=True`. (This is the default.)
     write_soco = args.soco
     verbose = not args.quiet
     if verbose:
-        tiledbsc.logging.logger.setLevel(logging.INFO)
-        logger = logging.getLogger("tiledbsc")
-        logger.setLevel(logging.INFO)
-        logger.addHandler(logging.StreamHandler())
+        tiledbsc.logging.info()
 
     if args.relative is not None:
         relative = args.relative[0]
