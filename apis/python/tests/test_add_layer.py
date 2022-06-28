@@ -43,11 +43,28 @@ def test_add_layer(adata):
         for j in range(0, num_cols):
             csr[i, j] = i + j
 
+    # Add X layer
     soma.X.add_layer_from_matrix_and_dim_values(
         csr, soma.obs.ids(), soma.var.ids(), "data2"
     )
 
     csr2 = soma.X.data2.csr()
     assert csr2.shape == orig_shape
+
+    # Add obsm matrix
+    soma.obsm.add_layer_from_matrix_and_dim_values(
+        soma.obsm.X_tsne.df(), soma.obs_keys(), "voila"
+    )
+    assert sorted(soma.obsm.keys()) == ["X_pca", "X_tsne", "voila"]
+    assert soma.obsm.voila.shape() == soma.obsm.X_tsne.shape()
+
+    # Add obsp matrix
+    soma.obsp.add_layer_from_matrix_and_dim_values(
+        soma.obsp.distances.csr(),
+        soma.obs_keys(),
+        "voici",
+    )
+    assert sorted(soma.obsp.keys()) == ["distances", "voici"]
+    assert soma.obsp.voici.shape() == soma.obsp.distances.shape()
 
     tempdir.cleanup()
