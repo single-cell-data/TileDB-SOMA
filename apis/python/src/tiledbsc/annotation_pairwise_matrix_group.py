@@ -89,39 +89,41 @@ class AnnotationPairwiseMatrixGroup(TileDBGroup):
         return iter(retval)
 
     # ----------------------------------------------------------------
-    def from_matrices_and_dim_values(
-        self, annotation_pairwise_matrices, dim_values
+    def add_matrix_from_matrix_and_dim_values(
+        self,
+        matrix,
+        dim_values,
+        matrix_name: str,
     ) -> None:
         """
-        Populates the `obsp` or `varp` subgroup for a SOMA object, then writes all the components
-        arrays under that group.
+        Populates a component of the `obsp` or `varp` subgroup for a SOMA object.
 
-        :param annotation_pairwise_matrices: anndata.obsp, anndata.varp, or anndata.raw.varp.
-        :param dim_values: anndata.obs_names, anndata.var_names, or anndata.raw.var_names.
+        :param matrix: element of anndata.obsp or anndata.varp.
+        :param dim_values: anndata.obs_names or anndata.var_names.
+        :param matrix_name_name: name of the matrix, like `"distances"`.
         """
 
         # Must be done first, to create the parent directory
         self.create_unless_exists()
-        for matrix_name in annotation_pairwise_matrices.keys():
-            anndata_matrix = annotation_pairwise_matrices[matrix_name]
-            matrix_uri = self._get_child_uri(
-                matrix_name
-            )  # See comments in that function
-            annotation_pairwise_matrix = AssayMatrix(
-                uri=matrix_uri,
-                name=matrix_name,
-                row_dim_name=self.row_dim_name,
-                col_dim_name=self.col_dim_name,
-                row_dataframe=self.row_dataframe,
-                col_dataframe=self.col_dataframe,
-                parent=self,
-            )
-            annotation_pairwise_matrix.from_matrix_and_dim_values(
-                anndata_matrix,
-                dim_values,
-                dim_values,
-            )
-            self._add_object(annotation_pairwise_matrix)
+
+        # See comments in that function
+        matrix_uri = self._get_child_uri(matrix_name)
+
+        annotation_pairwise_matrix = AssayMatrix(
+            uri=matrix_uri,
+            name=matrix_name,
+            row_dim_name=self.row_dim_name,
+            col_dim_name=self.col_dim_name,
+            row_dataframe=self.row_dataframe,
+            col_dataframe=self.col_dataframe,
+            parent=self,
+        )
+        annotation_pairwise_matrix.from_matrix_and_dim_values(
+            matrix,
+            dim_values,
+            dim_values,
+        )
+        self._add_object(annotation_pairwise_matrix)
 
     # ----------------------------------------------------------------
     def to_dict_of_csr(

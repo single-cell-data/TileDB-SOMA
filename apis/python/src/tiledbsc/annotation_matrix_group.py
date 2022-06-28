@@ -70,31 +70,34 @@ class AnnotationMatrixGroup(TileDBGroup):
         return self[name]
 
     # ----------------------------------------------------------------
-    def from_matrices_and_dim_values(self, annotation_matrices, dim_values) -> None:
+    def add_matrix_from_matrix_and_dim_values(
+        self,
+        matrix,
+        dim_values,
+        matrix_name: str,
+    ) -> None:
         """
-        Populates the `obsm` or `varm` subgroup for a SOMA object, then writes all the components
-        arrays under that group.
+        Populates a component of the `obsm` or `varm` subgroup for a SOMA object.
 
-        :param annotation_matrices: anndata.obsm, anndata.varm, or anndata.raw.varm.
+        :param matrix: element of anndata.obsm, anndata.varm, or anndata.raw.varm.
         :param dim_values: anndata.obs_names, anndata.var_names, or anndata.raw.var_names.
+        :param matrix_name_name: name of the matrix, like `"X_tsne"` or `"PCs"`.
         """
 
         # Must be done first, to create the parent directory
         self.create_unless_exists()
 
-        for matrix_name in annotation_matrices.keys():
-            anndata_matrix = annotation_matrices[matrix_name]
-            matrix_uri = self._get_child_uri(
-                matrix_name
-            )  # See comments in that function
-            annotation_matrix = AnnotationMatrix(
-                uri=matrix_uri,
-                name=matrix_name,
-                dim_name=self.dim_name,
-                parent=self,
-            )
-            annotation_matrix.from_matrix_and_dim_values(anndata_matrix, dim_values)
-            self._add_object(annotation_matrix)
+        # See comments in that function
+        matrix_uri = self._get_child_uri(matrix_name)
+
+        annotation_matrix = AnnotationMatrix(
+            uri=matrix_uri,
+            name=matrix_name,
+            dim_name=self.dim_name,
+            parent=self,
+        )
+        annotation_matrix.from_matrix_and_dim_values(matrix, dim_values)
+        self._add_object(annotation_matrix)
 
     # ----------------------------------------------------------------
     def to_dict_of_csr(self) -> Dict[str, scipy.sparse.csr_matrix]:

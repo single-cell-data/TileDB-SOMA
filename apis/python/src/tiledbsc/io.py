@@ -123,16 +123,32 @@ def from_anndata(soma: tiledbsc.SOMA, anndata: ad.AnnData) -> None:
     soma._add_object(soma.X)
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-    soma.obsm.from_matrices_and_dim_values(anndata.obsm, anndata.obs_names)
+    soma.obsm.create_unless_exists()
+    for key in anndata.obsm.keys():
+        soma.obsm.add_matrix_from_matrix_and_dim_values(
+            anndata.obsm[key], anndata.obs_names, key
+        )
     soma._add_object(soma.obsm)
 
-    soma.varm.from_matrices_and_dim_values(anndata.varm, anndata.var_names)
+    soma.varm.create_unless_exists()
+    for key in anndata.varm.keys():
+        soma.varm.add_matrix_from_matrix_and_dim_values(
+            anndata.varm[key], anndata.var_names, key
+        )
     soma._add_object(soma.varm)
 
-    soma.obsp.from_matrices_and_dim_values(anndata.obsp, anndata.obs_names)
+    soma.obsp.create_unless_exists()
+    for key in anndata.obsp.keys():
+        soma.obsp.add_matrix_from_matrix_and_dim_values(
+            anndata.obsp[key], anndata.obs_names, key
+        )
     soma._add_object(soma.obsp)
 
-    soma.varp.from_matrices_and_dim_values(anndata.varp, anndata.var_names)
+    soma.varp.create_unless_exists()
+    for key in anndata.varp.keys():
+        soma.varp.add_matrix_from_matrix_and_dim_values(
+            anndata.varp[key], anndata.var_names, key
+        )
     soma._add_object(soma.varp)
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
