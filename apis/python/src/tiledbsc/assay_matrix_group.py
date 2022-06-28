@@ -52,6 +52,13 @@ class AssayMatrixGroup(TileDBGroup):
         return self._get_member_names()
 
     # ----------------------------------------------------------------
+    def __repr__(self) -> str:
+        """
+        Default display of soma.X.
+        """
+        return ", ".join(f"'{key}'" for key in self.keys())
+
+    # ----------------------------------------------------------------
     def __getattr__(self, name) -> AssayMatrix:
         """
         This is called on `soma.X.name` when `name` is not already an attribute.

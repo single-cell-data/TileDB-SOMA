@@ -44,6 +44,13 @@ class AnnotationMatrixGroup(TileDBGroup):
         return self._get_member_names()
 
     # ----------------------------------------------------------------
+    def __repr__(self) -> str:
+        """
+        Default display of soma.obsm and soma.varm.
+        """
+        return ", ".join(f"'{key}'" for key in self.keys())
+
+    # ----------------------------------------------------------------
     def __iter__(self) -> List[AnnotationMatrix]:
         """
         Implements `for matrix in soma.obsm: ...` and `for matrix in soma.varm: ...`

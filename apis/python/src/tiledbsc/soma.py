@@ -131,11 +131,33 @@ class SOMA(TileDBGroup):
         # * data_uri is "tiledb://namespace/s3://bucketname/something/test1/X"
 
     # ----------------------------------------------------------------
-    def __str__(self):
+    def __repr__(self) -> str:
         """
-        Implements `print(soma)`.
+        Default display of SOMA.
         """
-        return f"name={self.name},uri={self.uri}"
+
+        lines = [
+            "Name:    " + self.name,
+            "URI:     " + self.uri,
+        ]
+        if self.exists():
+            lines.append(f"(n_obs, n_var): ({len(self.obs)}, {len(self.var)})")
+            lines.append("X:       " + repr(self.X))
+            lines.append("obs:     " + repr(self.obs))
+            lines.append("var:     " + repr(self.var))
+            lines.append("obsm:    " + repr(self.obsm))
+            lines.append("varm:    " + repr(self.varm))
+            lines.append("obsp:    " + repr(self.obsp))
+            lines.append("varp:    " + repr(self.varp))
+            if self.raw.exists():
+                lines.append("raw/X:   " + repr(self.raw.X))
+                lines.append("raw/var: " + repr(self.raw.var))
+            # repr(self.uns) is very chatty (too chatty) for some datasets:
+            lines.append("uns:     " + ", ".join(self.uns.keys()))
+        else:
+            lines.append("Unpopulated")
+
+        return "\n".join(lines)
 
     # ----------------------------------------------------------------
     def __getattr__(self, name):

@@ -57,6 +57,13 @@ class AnnotationPairwiseMatrixGroup(TileDBGroup):
         return self._get_member_names()
 
     # ----------------------------------------------------------------
+    def __repr__(self) -> str:
+        """
+        Default display of soma.obsp and soma.varp.
+        """
+        return ", ".join(f"'{key}'" for key in self.keys())
+
+    # ----------------------------------------------------------------
     def __getattr__(self, name) -> AssayMatrix:
         """
         This is called on `soma.obsp.name` when `name` is not already an attribute.
