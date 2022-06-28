@@ -89,6 +89,20 @@ class SOMASlice(TileDBGroup):
                 ann.layers[name] = data
 
     # ----------------------------------------------------------------
+    def __repr__(self) -> str:
+        """
+        Default display of SOMASlice.
+        """
+
+        lines = []
+        for key in self.X.keys():
+            lines.append(f"X/{key}: {self.X[key].shape}")
+        lines.append(f"obs: {self.obs.shape}")
+        lines.append(f"var: {self.var.shape}")
+
+        return "\n".join(lines)
+
+    # ----------------------------------------------------------------
     def to_anndata(self) -> ad.AnnData:
         """
         Constructs an `AnnData` object from the current `SOMASlice` object.
