@@ -212,7 +212,7 @@ class AssayMatrix(TileDBArray):
             domain=dom,
             attrs=(att,),
             sparse=True,
-            allows_duplicates=False,
+            allows_duplicates=self._soma_options.allows_duplicates,
             offsets_filters=[
                 tiledb.DoubleDeltaFilter(),
                 tiledb.BitWidthReductionFilter(),

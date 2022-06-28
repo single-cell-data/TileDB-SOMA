@@ -15,6 +15,7 @@ class SOMAOptions:
     write_X_chunked: bool
     goal_chunk_nnz: int
     member_uris_are_relative: bool
+    allows_duplicates: bool
 
     def __init__(
         self,
@@ -27,6 +28,7 @@ class SOMAOptions:
         write_X_chunked=True,
         goal_chunk_nnz=20_000_000,
         member_uris_are_relative=None,  # Allows relocatability for local disk / S3, and correct behavior for TileDB Cloud
+        allows_duplicates=False,
     ):
         self.obs_extent = obs_extent
         self.var_extent = var_extent
@@ -37,3 +39,4 @@ class SOMAOptions:
         self.write_X_chunked = write_X_chunked
         self.goal_chunk_nnz = goal_chunk_nnz
         self.member_uris_are_relative = member_uris_are_relative
+        self.allows_duplicates = allows_duplicates

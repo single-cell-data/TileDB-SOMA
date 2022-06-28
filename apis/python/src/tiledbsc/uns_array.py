@@ -42,7 +42,7 @@ class UnsArray(TileDBArray):
             uri=self.uri,
             dataframe=df,
             sparse=True,
-            allows_duplicates=False,
+            allows_duplicates=self._soma_options.allows_duplicates,
             ctx=self._ctx,
         )
 
@@ -169,7 +169,7 @@ class UnsArray(TileDBArray):
             domain=dom,
             attrs=(att,),
             sparse=True,
-            allows_duplicates=False,
+            allows_duplicates=self._soma_options.allows_duplicates,
             offsets_filters=[
                 tiledb.DoubleDeltaFilter(),
                 tiledb.BitWidthReductionFilter(),

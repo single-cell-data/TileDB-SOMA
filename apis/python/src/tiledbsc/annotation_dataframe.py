@@ -273,7 +273,7 @@ class AnnotationDataFrame(TileDBArray):
             dataframe=dataframe,
             name=self.name,
             sparse=True,
-            allows_duplicates=False,
+            allows_duplicates=self._soma_options.allows_duplicates,
             offsets_filters=offsets_filters,
             attr_filters=attr_filters,
             dim_filters=dim_filters,
