@@ -3,10 +3,16 @@
 
 #include <stdexcept>  // for windows: error C2039: 'runtime_error': is not a member of 'std'
 
+#include <pybind11/numpy.h>
+#include <pybind11/pybind11.h>
+
 #include <span>
 #include <tiledb/tiledb>
 
+#include "tiledbsc/common.h"
 #include "tiledbsc/logger_public.h"
+
+namespace py = pybind11;
 
 namespace tiledbsc {
 
@@ -123,6 +129,43 @@ class ColumnBuffer {
      * @param query TileDB query
      */
     size_t update_size(const Query& query);
+
+    /**
+     * @brief Return the number of cells in the buffer.
+     *
+     * @return size_t
+     */
+    size_t size() {
+        return num_cells_;
+    }
+
+    /**
+     * @brief Return a copy of the data as a numpy array for pybind11.
+     *
+     * ** FOR TESTING ONLY **
+     *
+     * @return py::array
+     */
+    py::array py_array() {
+        if (type_ == TILEDB_INT32) {
+            return py::array_t<int32_t>(
+                data<int32_t>().size(), data<int32_t>().data());
+        }
+        if (type_ == TILEDB_INT64) {
+            return py::array_t<int64_t>(
+                data<int64_t>().size(), data<int64_t>().data());
+        }
+        if (type_ == TILEDB_FLOAT32) {
+            return py::array_t<float>(
+                data<float>().size(), data<float>().data());
+        }
+        if (type_ == TILEDB_FLOAT64) {
+            return py::array_t<double>(
+                data<double>().size(), data<double>().data());
+        }
+
+        throw TileDBSCError("[ColumnBuffer] Unsupported type: " + type_);
+    }
 
     /**
      * @brief Return a view of the ColumnBuffer data.

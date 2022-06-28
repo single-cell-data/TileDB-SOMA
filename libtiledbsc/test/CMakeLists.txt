@@ -35,7 +35,8 @@ if (TILEDBSC_TESTING)
       PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/../src
         ${CMAKE_CURRENT_SOURCE_DIR}/../include
-    )
+        ${pybind11_INCLUDE_DIRS}
+)
 
     target_compile_definitions(unit_sc PRIVATE CATCH_CONFIG_MAIN)
 

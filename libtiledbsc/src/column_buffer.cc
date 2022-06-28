@@ -96,7 +96,7 @@ ColumnBuffer::ColumnBuffer(
     , validity_(validity) {
 }
 
-ColumnBuffer::~ColumnBuffer() = default;
+ColumnBuffer::~ColumnBuffer(){};
 
 void ColumnBuffer::attach(Query& query) {
     LOG_DEBUG(fmt::format("Attaching buffer {} to query", name_));

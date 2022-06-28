@@ -11,3 +11,9 @@ cmake --build build/libtiledbsc --target build_tests -j $(nproc)
 
 cd build/libtiledbsc
 ctest -C Release --verbose
+
+# Run python API tests without installing
+cd -
+export PYTHONPATH=$PWD/dist/lib
+export LD_LIBRARY_PATH=$PWD/dist/lib
+pytest -rA libtiledbsc

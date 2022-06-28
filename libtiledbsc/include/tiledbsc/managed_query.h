@@ -118,6 +118,10 @@ class ManagedQuery {
         return buffers_.at(name)->string_view(index);
     }
 
+    std::unordered_map<std::string, std::shared_ptr<ColumnBuffer>> results() {
+        return buffers_;
+    }
+
    private:
     //===================================================================
     //= private non-static
