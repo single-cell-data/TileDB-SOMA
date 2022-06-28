@@ -154,6 +154,8 @@ class SOMA(TileDBGroup):
                 lines.append("raw/var: " + repr(self.raw.var))
             # repr(self.uns) is very chatty (too chatty) for some datasets:
             lines.append("uns:     " + ", ".join(self.uns.keys()))
+        else:
+            lines.append("Unpopulated")
 
         return "\n".join(lines)
 

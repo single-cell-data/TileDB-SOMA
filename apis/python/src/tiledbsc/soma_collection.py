@@ -47,9 +47,13 @@ class SOMACollection(TileDBGroup):
         """
         Default display of SOMACollection.
         """
-        lines = ["URI:        " + self.uri, ]
+        lines = [
+            "URI:        " + self.uri,
+        ]
         if self.exists():
             lines.append(f"SOMA count: {len(self)}")
+        else:
+            lines.append("Unpopulated")
         return "\n".join(lines)
 
     # ----------------------------------------------------------------
