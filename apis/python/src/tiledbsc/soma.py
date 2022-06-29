@@ -290,18 +290,27 @@ class SOMA(TileDBGroup):
     # ----------------------------------------------------------------
     def query(
         self,
+        obs_attrs: Optional[List[str]] = None,
         obs_query_string: Optional[str] = None,
-        var_query_string: Optional[str] = None,
         obs_ids: Optional[List[str]] = None,
+        var_attrs: Optional[List[str]] = None,
+        var_query_string: Optional[str] = None,
         var_ids: Optional[List[str]] = None,
     ) -> SOMASlice:
         """
         Subselects the SOMA's obs, var, and X/data using the specified queries on obs and var.
-        Queries use the TileDB-Py `QueryCondition` API. If `obs_query_string` is `None`,
-        the `obs` dimension is not filtered and all of `obs` is used; similiarly for `var`.
+        Queries use the TileDB-Py `QueryCondition` API.
+
+        If `obs_query_string` is `None`, the `obs` dimension is not filtered and all of `obs` is
+        used; similiarly for `var`.
+
+        If `obs_attrs` or `var_attrs` are unspecified, the slice will take all `obs`/`var` attributes
+        from the source SOMAs; if they are specified, the slice will take the specified `obs`/`var`
         """
 
-        slice_obs_df = self.obs.query(query_string=obs_query_string, ids=obs_ids)
+        slice_obs_df = self.obs.query(
+            query_string=obs_query_string, ids=obs_ids, attrs=obs_attrs
+        )
         # E.g. querying for 'cell_type == "blood"' and this SOMA does have a cell_type column in its
         # obs, but no rows with cell_type == "blood".
         if slice_obs_df is None:
@@ -310,7 +319,9 @@ class SOMA(TileDBGroup):
         if len(obs_ids) == 0:
             return None
 
-        slice_var_df = self.var.query(query_string=var_query_string, ids=var_ids)
+        slice_var_df = self.var.query(
+            query_string=var_query_string, ids=var_ids, attrs=var_attrs
+        )
         # E.g. querying for 'feature_name == "MT-CO3"' and this SOMA does have a feature_name column
         # in its var, but no rows with feature_name == "MT-CO3".
         if slice_var_df is None:

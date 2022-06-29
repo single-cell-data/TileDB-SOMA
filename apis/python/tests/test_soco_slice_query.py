@@ -27,20 +27,20 @@ def test_soco_slice_query(tmp_path):
         soco.add(soma)
 
     # Do the slice query
-    obs_attr_names = ["tissue"]
+    obs_attrs = ["tissue"]
     obs_query_string = 'tissue == "blood"'
-    var_attr_names = ["feature_name"]
+    var_attrs = ["feature_name"]
     var_query_string = 'feature_name == "MT-CO3"'
 
     soma_slices = []
     for soma in soco:
         # E.g. querying for 'cell_type == "blood"' but this SOMA doesn't have a cell_type column in
         # its obs at all.
-        if not soma.obs.has_attr_names(obs_attr_names):
+        if not soma.obs.has_attr_names(obs_attrs):
             continue
         # E.g. querying for 'feature_name == "MT-CO3"' but this SOMA doesn't have a feature_name
         # column in its var at all.
-        if not soma.var.has_attr_names(var_attr_names):
+        if not soma.var.has_attr_names(var_attrs):
             continue
 
         soma_slice = soma.query(

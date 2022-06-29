@@ -141,21 +141,28 @@ class SOMACollection(TileDBGroup):
     # ----------------------------------------------------------------
     def query(
         self,
-        obs_attr_names: Optional[List[str]] = None,
+        obs_attrs: Optional[List[str]] = None,
         obs_query_string: str = None,
         obs_ids: List[str] = None,
-        var_attr_names: Optional[List[str]] = None,
+        var_attrs: Optional[List[str]] = None,
         var_query_string: str = None,
         var_ids: List[str] = None,
     ) -> Optional[SOMASlice]:
         """
         Subselects the obs, var, and X/data using the specified queries on obs and var,
         concatenating across SOMAs in the collection.  Queries use the TileDB-Py `QueryCondition`
-        API. If `obs_query_string` is `None`, the `obs` dimension is not filtered and all of `obs`
-        is used; similiarly for `var`. Return value of `None` indicates an empty slice.
-        If `obs_ids` or `var_ids` are not `None`, they are effectively ANDed into the query.
-        For example, you can pass in a known list of `obs_ids`, then use `obs_query_string`
-        to further restrict the query.
+        API.
+
+        If `obs_query_string` is `None`, the `obs` dimension is not filtered and all of `obs` is
+        used; similiarly for `var`. Return value of `None` indicates an empty slice.  If `obs_ids`
+        or `var_ids` are not `None`, they are effectively ANDed into the query.  For example, you
+        can pass in a known list of `obs_ids`, then use `obs_query_string` to further restrict the
+        query.
+
+        If `obs_attrs` or `var_attrs` are unspecified, slices will take all `obs`/`var` attributes
+        from their source SOMAs; if they are specified, slices will take the specified `obs`/`var`
+        attributes.  If all SOMAs in the collection have the same `obs`/`var` attributes, then you
+        needn't specify these; if they don't, you must.
         """
 
         soma_slices = []
@@ -163,17 +170,19 @@ class SOMACollection(TileDBGroup):
             # E.g. querying for 'cell_type == "blood"' but this SOMA doesn't have a cell_type column in
             # its obs at all.
             if obs_query_string is not None and not soma.obs.has_attr_names(
-                obs_attr_names or []
+                obs_attrs or []
             ):
                 continue
             # E.g. querying for 'feature_name == "MT-CO3"' but this SOMA doesn't have a feature_name
             # column in its var at all.
             if var_query_string is not None and not soma.var.has_attr_names(
-                var_attr_names or []
+                var_attrs or []
             ):
                 continue
 
             soma_slice = soma.query(
+                obs_attrs=obs_attrs,
+                var_attrs=var_attrs,
                 obs_query_string=obs_query_string,
                 var_query_string=var_query_string,
                 obs_ids=obs_ids,

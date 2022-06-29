@@ -34,7 +34,7 @@ n = len(ctot_ids)
 print("cell_type_ontology_term_id count =", n)
 for i, ctot_id in enumerate(ctot_ids):
     soma_slice = soco.query(
-        obs_attr_names=["cell_type_ontology_term_id"],
+        obs_attrs=["cell_type_ontology_term_id"],
         obs_query_string=f'cell_type_ontology_term_id == "{ctot_id}"',
     )
     if soma_slice is None:
