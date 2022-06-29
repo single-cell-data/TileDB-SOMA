@@ -4,7 +4,7 @@ SOMA -- for _stack of matrices, annotated_ -- is a unified data model and API fo
 
 If you know about `obs`, `var`, and `X`, you'll recognize what you're seeing.
 
-The data model and API -- here as implemented using the TileDB storage engine -- allow you do persist and share single-cell data
+The data model and API -- here as implemented using the TileDB storage engine -- allow you to persist and share single-cell data
 
 * at scale
 * with auditable data-sharing
