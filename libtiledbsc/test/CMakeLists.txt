@@ -36,9 +36,13 @@ if (TILEDBSC_TESTING)
         ${CMAKE_CURRENT_SOURCE_DIR}/../src
         ${CMAKE_CURRENT_SOURCE_DIR}/../include
         ${pybind11_INCLUDE_DIRS}
-)
+    )
 
     target_compile_definitions(unit_sc PRIVATE CATCH_CONFIG_MAIN)
+
+    if (NOT APPLE AND NOT WIN32)
+        target_link_libraries(unit_sc PRIVATE pthread)
+    endif()
 
     add_test(
         NAME "unit_sc"
