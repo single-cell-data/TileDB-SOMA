@@ -2,8 +2,13 @@ Here we show an example of doing a _slice query_ across a `SOMACollection` -- we
 relatively small subset out of the full collection for analysis.
 
 A key point is that these data (shown here on local disk) can likewise be stored on object stores
-like S3. (Best performance is obtained by querying from an in-region EC2 instances.) This means you
-can _query_ large datasets without having to first _download_ large datasets.
+like S3.  This means you can _query_ large datasets without having to first _download_ large
+datasets.
+
+:::{.callout-tip}
+Best S3 read performance is obtained by querying from an in-region EC2 instance, or a TileDB Cloud
+notebook -- this is preferred to laptop-to-S3 performance.
+:::
 
 Another key point is that the _out-of-core processing_ showing here allows you to slice data out of
 a collection which is far larger than fits in RAM.

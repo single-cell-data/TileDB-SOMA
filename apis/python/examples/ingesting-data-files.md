@@ -46,10 +46,13 @@ local_soma.uns['louvain_colors'].to_matrix()
 
 ## S3 ingestion
 
-To ingest into S3, simply provide an S3 URI as the destination. The simplest way to get S3
-credentials set up is to export the `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, and
-`AWS_DEFAULT_REGION` environment variables -- please see the
+To ingest into S3, simply provide an S3 URI as the destination.
+
+:::{.callout-tip}
+The simplest way to get S3 credentials set up is to export the `AWS_ACCESS_KEY_ID`,
+`AWS_SECRET_ACCESS_KEY`, and `AWS_DEFAULT_REGION` environment variables -- please see the
 [public TileDB Cloud notebook](https://cloud.tiledb.com/notebooks/details/johnkerl-tiledb/d3d7ff44-dc65-4cd9-b574-98312c4cbdbd/preview) for examples.
+:::
 
 ```
 s3_soma = tiledbsc.SOMA('s3://mybucket/scratch/puck-001', ctx=ctx)
@@ -60,11 +63,13 @@ tiledbsc.io.from_h5ad(s3_soma, './Puck_200903_10.h5ad')
 
 ## TiledB Cloud ingestion
 
-Again we simply vary the destination URI, this time to `tiledb://...`. The simplest way to configure
-TileDB Cloud access is to export the `TILEDB_REST_TOKEN` environment variable (which is done already for you
-within TileDB Cloud notebooks).  See
-[here](https://docs.tiledb.com/cloud/how-to/account/create-api-tokens) for how to create an API
-token.
+Again we simply vary the destination URI, this time to `tiledb://...`.
+
+:::{.callout-tip}
+The simplest way to configure TileDB Cloud access is to export the `TILEDB_REST_TOKEN` environment
+variable (which is done already for you within TileDB Cloud notebooks).  See
+[here](https://docs.tiledb.com/cloud/how-to/account/create-api-tokens) for how to create an API token.
+:::
 
 For upload to TileDB Cloud, we use _creation URIs_. Here you indicate your target namespace along with S3 storage. The SOMA name will be taken from the last component of the creation URI
 
