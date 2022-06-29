@@ -32,11 +32,16 @@ class ManagedQuery {
         size_t initial_cells = TILEDBSC_DEFAULT_ALLOC);
 
     /**
-     * @brief Select columns names to query (dim and attr).
+     * @brief Select columns names to query (dim and attr). If the
+     * `if_not_empty` parameter is `true`, the column will be selected iff the
+     * list of selected columns is empty. This prevents a `select_columns` call
+     * from changing an empty list (all columns) to a subset of columns.
      *
      * @param names Vector of column names
+     * @param if_not_empty Prevent changing an "empty" selection of all columns
      */
-    void select_columns(std::vector<std::string> names);
+    void select_columns(
+        std::vector<std::string> names, bool if_not_empty = false);
 
     /**
      * @brief Select dimension ranges to query.
@@ -68,18 +73,46 @@ class ManagedQuery {
     }
 
     /**
-     * @brief Execute the query and return the number of cells read.
-     * To handle possible incomplete queries, `execute()` must be called until
-     * it returns 0, which indicated the query is complete.
+     * @brief Set a query condition.
+     *
+     * @param qc A TileDB QueryCondition
+     */
+    void set_condition(const QueryCondition& qc) {
+        query_->set_condition(qc);
+    }
+
+    /**
+     * @brief Submit the query and return the number of cells read.
+     * To handle incomplete queries, `submit()` must be called until
+     * `is_complete()` is true.
      *
      * For example:
-     *   while (auto num_cells = mq.execute()) {
-     *     // process the results
+     *   while (!mq.is_complete()) {
+     *     auto num_cells = mq.execute();
+     *     // process results
      *   }
      *
      * @return size_t Number of cells read. Returns 0 when the read is complete.
      */
-    size_t execute();
+    size_t submit();
+
+    /**
+     * @brief Return the query status.
+     *
+     * @return Query::Status Query status
+     */
+    Query::Status status() {
+        return query_->query_status();
+    }
+
+    /**
+     * @brief Check if the query is complete.
+     *
+     * @return true Query status is COMPLETE
+     */
+    bool is_complete() {
+        return query_->query_status() == Query::Status::COMPLETE;
+    }
 
     /**
      * @brief Return a view of data in column `name`.
@@ -118,6 +151,14 @@ class ManagedQuery {
         return buffers_.at(name)->string_view(index);
     }
 
+    /**
+     * @brief Return results from the query.
+     *
+     * ** WIP FOR TESTING ONLY **
+     *
+     * @return std::unordered_map<std::string, std::shared_ptr<ColumnBuffer>>
+     * Results
+     */
     std::unordered_map<std::string, std::shared_ptr<ColumnBuffer>> results() {
         return buffers_;
     }

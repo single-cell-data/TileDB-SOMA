@@ -33,7 +33,8 @@ void slice_soma(std::string_view soma_uri) {
     mq.select_ranges<std::string>(
         "obs_id", {{"TTTCGAACTCTCAT-1", "TTTGCATGCCTCAC-1"}});
 
-    while (auto num_cells = mq.execute()) {
+    while (!mq.is_complete()) {
+        auto num_cells = mq.submit();
         auto mito = mq.data<float>("percent_mito");
         for (size_t i = 0; i < num_cells; i++) {
             auto obs = mq.string_view("obs_id", i);
@@ -48,32 +49,45 @@ void soma_query(std::string_view soma_uri) {
     // conf["config.logging_level"] = "5";
 
     auto soma = SOMA::open(soma_uri, conf);
+    auto sq = soma->query();
+    auto ctx = soma->context();
 
-    SOMAQuery sq(soma);
+    std::string obs_val = "B cells";
+    auto obs_qc = QueryCondition::create(*ctx, "louvain", obs_val, TILEDB_EQ);
+    std::vector<std::string> obs_cols = {"louvain"};
 
-    std::vector<std::string> empty;
+    uint64_t var_val = 50;
+    auto var_qc = QueryCondition::create<uint64_t>(
+        *ctx, "n_cells", var_val, TILEDB_LT);
+    std::vector<std::string> var_cols = {"n_cells"};
+
+    sq->set_obs_condition(obs_qc);
+    sq->set_var_condition(var_qc);
+    sq->select_obs_attrs(obs_cols);
+    sq->select_var_attrs(var_cols);
+
     std::vector<std::string> obs_ids = {
         "AAACATACAACCAC-1", "AAACATTGATCAGC-1", "TTTGCATGCCTCAC-1"};
     std::vector<std::string> var_ids = {"AAGAB", "AAR2", "ZRANB3"};
+    // sq->select_obs_ids(obs_ids);
+    // sq->select_var_ids(var_ids);
 
-    sq.query(empty, "", obs_ids, empty, "", var_ids);
-    // sq.query(empty, "", empty, empty, "", var_ids);
-
-    // TODO: change API to use array name instead
-    auto obs_res = sq.obs_results();
-    auto var_res = sq.var_results();
-    auto x_res = sq.x_results();
-
-    // TODO: add API to check if name exists
-    auto num_cells = x_res["obs_id"]->size();
-    LOG_DEBUG(fmt::format("num_cells = {}", num_cells));
-    for (size_t i = 0; i < num_cells; i++) {
-        LOG_DEBUG(fmt::format(
-            "{} {} {}",
-            x_res["obs_id"]->string_view(i),
-            x_res["var_id"]->string_view(i),
-            x_res["value"]->data<float>()[i]));
+    size_t total_cells = 0;
+    while (auto results = sq->next_results()) {
+        auto num_cells = results->at("obs_id")->size();
+        total_cells += num_cells;
+        LOG_DEBUG(fmt::format("num_cells = {}", num_cells));
+        if (num_cells < 20) {
+            for (size_t i = 0; i < num_cells; i++) {
+                LOG_DEBUG(fmt::format(
+                    "{} {} {}",
+                    results->at("obs_id")->string_view(i),
+                    results->at("var_id")->string_view(i),
+                    results->at("value")->data<float>()[i]));
+            }
+        }
     }
+    LOG_DEBUG(fmt::format("total_cells = {}", total_cells));
 }
 
 int main(int argc, char** argv) {
@@ -92,7 +106,7 @@ int main(int argc, char** argv) {
     }
 
     try {
-        //        slice_soma(argv[2]);
+        // slice_soma(argv[2]);
     } catch (const std::exception& e) {
         LOG_FATAL(e.what());
     }

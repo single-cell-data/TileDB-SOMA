@@ -11,7 +11,10 @@
 namespace tiledbsc {
 using namespace tiledb;
 
-class SOMA;
+constexpr size_t DEFAULT_INDEX_ALLOC = 1 << 20;  // 1 MiB
+constexpr size_t DEFAULT_X_ALLOC = 1 << 24;      // 16 MiB
+
+class SOMA;  // forward declaration
 
 // clang-format off
 /*
@@ -131,39 +134,104 @@ class SOMAQuery {
      *
      * @param soma
      */
-    SOMAQuery(std::shared_ptr<SOMA> soma);
+    SOMAQuery(
+        SOMA* soma,
+        size_t index_alloc = DEFAULT_INDEX_ALLOC,
+        size_t x_alloc = DEFAULT_X_ALLOC);
 
-    bool query(
-        std::vector<std::string>& obs_attr_names,
-        std::string_view obs_query_string,
-        std::vector<std::string>& obs_ids,
-        std::vector<std::string>& var_attr_names,
-        std::string_view var_query_string,
-        std::vector<std::string>& var_ids);
-
-    bool next_results();
-
-    std::unordered_map<std::string, std::shared_ptr<ColumnBuffer>>
-    obs_results() {
-        return mq_obs_->results();
+    /**
+     * @brief Select obs attributes to materialize.
+     *
+     * @param attr_names Vector of attribute names.
+     */
+    void select_obs_attrs(std::vector<std::string>& attr_names) {
+        mq_obs_->select_columns(attr_names);
     }
 
-    std::unordered_map<std::string, std::shared_ptr<ColumnBuffer>>
-    var_results() {
-        return mq_var_->results();
+    /**
+     * @brief Select var attributes to materialize.
+     *
+     * @param attr_names Vector of attribute names.
+     */
+    void select_var_attrs(std::vector<std::string>& attr_names) {
+        mq_var_->select_columns(attr_names);
     }
 
-    std::unordered_map<std::string, std::shared_ptr<ColumnBuffer>> x_results() {
-        return mq_x_->results();
+    /**
+     * @brief Select obs_ids to include in the query.
+     *
+     * @param ids Vector of obs_id values.
+     */
+    void select_obs_ids(std::vector<std::string>& ids) {
+        mq_obs_->select_points<std::string>("obs_id", ids);
     }
+
+    /**
+     * @brief Select var_ids to include in the query.
+     *
+     * @param ids Vector of var_id values.
+     */
+    void select_var_ids(std::vector<std::string>& ids) {
+        mq_var_->select_points<std::string>("var_id", ids);
+    }
+
+    /**
+     * @brief Set a query condition for the obs array query.
+     *
+     * @param qc TIleDB QueryCondition.
+     */
+    void set_obs_condition(QueryCondition& qc) {
+        mq_obs_->set_condition(qc);
+    }
+
+    /**
+     * @brief Set a query condition for the var array query.
+     *
+     * @param qc TIleDB QueryCondition.
+     */
+    void set_var_condition(QueryCondition& qc) {
+        mq_var_->set_condition(qc);
+    }
+
+    /**
+     * @brief Submit the query and return the first batch of results. To handle
+     * incomplete queries, continue to call `next_results` until std::nullopt is
+     * returned.
+     *
+     * @return std::optional<
+     * std::unordered_map<std::string, std::shared_ptr<ColumnBuffer>>> Results
+     * or std::nullopt if the query is complete.
+     */
+    std::optional<
+        std::unordered_map<std::string, std::shared_ptr<ColumnBuffer>>>
+    next_results();
 
    private:
-    // SOMA object
-    std::shared_ptr<SOMA> soma_;
-
+    // Managed query for the obs array
     std::unique_ptr<ManagedQuery> mq_obs_;
+
+    // Managed query for the var array
     std::unique_ptr<ManagedQuery> mq_var_;
+
+    // Managed query for the X array
     std::unique_ptr<ManagedQuery> mq_x_;
+
+    // Mutex to control access to mq_x_
+    std::mutex mtx_;
+
+    /**
+     * @brief Submit a query (obs or var) and use the results to select
+     * dimension points for the X query.
+     *
+     * NOTE: Currently, the obs/var query is required to complete without
+     * incomplete results.
+     *
+     * @param mq Managed query for obs or var
+     * @param dim_name "obs_id" or "var_id"
+     * @return size_t Number of cells returned by the query
+     */
+    size_t query_and_select(
+        std::unique_ptr<ManagedQuery>& mq, const std::string& dim_name);
 };
 
 }  // namespace tiledbsc

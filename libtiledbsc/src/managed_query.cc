@@ -22,13 +22,20 @@ ManagedQuery::ManagedQuery(std::shared_ptr<Array> array, size_t initial_cells)
     }
 }
 
-void ManagedQuery::select_columns(std::vector<std::string> names) {
+void ManagedQuery::select_columns(
+    std::vector<std::string> names, bool if_not_empty) {
+    // Return if we are selecting all columns (columns_ is empty) and we want to
+    // continue selecting all columns (if_not_empty == true).
+    if (if_not_empty && columns_.empty()) {
+        return;
+    }
+
     for (auto& name : names) {
         columns_.insert(name);
     }
 }
 
-size_t ManagedQuery::execute() {
+size_t ManagedQuery::submit() {
     auto status = query_->query_status();
 
     // Query is complete, return 0 cells read
@@ -59,6 +66,7 @@ size_t ManagedQuery::execute() {
     }
 
     // Submit query
+    LOG_DEBUG(fmt::format("Submit query"));
     query_->submit();
     status = query_->query_status();
     LOG_DEBUG(fmt::format("Query status = {}", (int)status));

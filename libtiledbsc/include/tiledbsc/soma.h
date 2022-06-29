@@ -11,6 +11,8 @@
 namespace tiledbsc {
 using namespace tiledb;
 
+class SOMAQuery;  // forward declaration
+
 class SOMA {
    public:
     //===================================================================
@@ -69,6 +71,24 @@ class SOMA {
      * @return Array TileDB array
      */
     std::shared_ptr<Array> open_array(const std::string& name);
+
+    /**
+     * @brief Create a SOMAQuery for this SOMA.
+     *
+     * @return std::unique_ptr<SOMAQuery> A SOMA query
+     */
+    std::unique_ptr<SOMAQuery> query() {
+        return std::make_unique<SOMAQuery>(this);
+    }
+
+    /**
+     * @brief Return TileDB context of SOMA.
+     *
+     * @return std::shared_ptr<Context> Context.
+     */
+    std::shared_ptr<Context> context() {
+        return ctx_;
+    }
 
    private:
     //===================================================================

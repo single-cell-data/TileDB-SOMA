@@ -77,7 +77,7 @@ TEST_CASE("ManagedQuery: Basic execution test") {
     auto [array, d0, a0] = create_array(uri, ctx);
 
     auto mq = ManagedQuery(array);
-    auto num_cells = mq.execute();
+    auto num_cells = mq.submit();
 
     REQUIRE(num_cells == d0.size());
     REQUIRE_THAT(d0, Equals(mq.strings("d0")));
@@ -92,7 +92,7 @@ TEST_CASE("ManagedQuery: Select test") {
     auto mq = ManagedQuery(array);
     mq.select_columns({"a0"});
     mq.select_points<std::string>("d0", {"a"});
-    auto num_cells = mq.execute();
+    auto num_cells = mq.submit();
 
     REQUIRE_THROWS(mq.data<int>("a1"));
     REQUIRE_THROWS(mq.strings("d0"));
