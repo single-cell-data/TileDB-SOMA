@@ -1,9 +1,11 @@
+If you're familiar with AnnData, you'll recognize much about the SOMA data model.
+
 ## Single AnnData file
 
 ```
 >>> import anndata
 
->>> ann = anndata.read_h5ad('anndata/pbmc3k_processed.h5ad')
+>>> ann = anndata.read_h5ad('pbmc3k_processed.h5ad')
 
 >>> ann.obs.keys()
 Index(['n_genes', 'percent_mito', 'n_counts', 'louvain'], dtype='object')
@@ -75,12 +77,25 @@ array([[-0.17146951, -0.28081203, -0.04667679, ..., -0.09826884,
 
 ## Single TileDB SOMA
 
-After `./tools/ingestor ./anndata/pbmc3k_processed.h5ad ./tiledb-data/pbmc3k_processed`:
-
 ```
 >>> import tiledbsc
 
->>> soma = tiledbsc.SOMA('tiledb-data/pbmc3k_processed')
+>>> soma = tiledbsc.SOMA('tiledb://johnkerl-tiledb/pbmc3k_processed')
+
+>>> soma
+Name:    pbmc3k_processed
+URI:     tiledb://johnkerl-tiledb/pbmc3k_processed
+(n_obs, n_var): (2638, 1838)
+X:       'data'
+obs:     'n_genes', 'percent_mito', 'n_counts', 'louvain'
+var:     'n_cells'
+obsm:    'X_pca', 'X_tsne', 'X_umap', 'X_draw_graph_fr'
+varm:    'PCs'
+obsp:    'distances', 'connectivities'
+varp:    
+raw/X:   'data'
+raw/var: 'n_cells'
+uns:     draw_graph, louvain, louvain_colors, neighbors, pca
 
 >>> soma.obs.keys()
 ['n_genes', 'percent_mito', 'n_counts', 'louvain']
