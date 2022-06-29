@@ -67,7 +67,7 @@ size_t SOMAQuery::query_and_select(
     }
 
     // Add dimension range points to the X query.
-    std::lock_guard<std::mutex> lck(mtx_);
+    std::lock_guard<std::mutex> lock(mtx_);
     mq_x_->select_points(dim_name, points);
 
     return num_cells;

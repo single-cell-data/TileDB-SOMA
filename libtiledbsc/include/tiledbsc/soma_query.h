@@ -3,6 +3,8 @@
 
 #include <stdexcept>  // for windows: error C2039: 'runtime_error': is not a member of 'std'
 
+#include <mutex>
+
 #include <tiledb/tiledb>
 
 #include "tiledbsc/managed_query.h"
