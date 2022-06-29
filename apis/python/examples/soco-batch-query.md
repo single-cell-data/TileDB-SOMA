@@ -5,14 +5,14 @@ statistics from across the entire SOMA collection: specifically, we batch-proces
 A key point is that the _out-of-core processing_ showing here allows you to do multi-pass queries on
 data from a collection which is far larger than fits in RAM.
 
+:::{.callout-note}
+This example is more suitable to batch-mode processing than notebook processing.
+:::
+
 ## Do the batch query
 
 Using [soco-batch-query.py](soco-batch-query.py) (this takes a while on a 2.2GB atlas and
 is amenable to parallelization) looping over the distinct values of `cell_type_ontology_term_id` in the collection.
-
-:::{.callout-note}
-This example is more suitable to batch-mode processing than notebook processing.
-:::
 
 ```
 import tiledbsc

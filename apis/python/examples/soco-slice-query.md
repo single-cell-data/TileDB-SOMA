@@ -10,7 +10,7 @@ a collection which is far larger than fits in RAM.
 
 :::{.callout-tip}
 Best S3 read performance is obtained by querying from an in-region EC2 instance, or a TileDB Cloud
-notebook -- this is preferred to laptop-to-S3 performance.
+notebook -- this is preferred to laptop-to-S3 reads.
 :::
 
 ## Do the slice query

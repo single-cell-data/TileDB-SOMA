@@ -12,6 +12,11 @@ Notebook-level storage is great for quick kick-the-tires exploration.
 
 Cloud-level storage is crucial for at-scale, beyond-core analysis.
 
+:::{.callout-tip}
+See also the
+[public TileDB Cloud notebook](https://cloud.tiledb.com/notebooks/details/johnkerl-tiledb/d3d7ff44-dc65-4cd9-b574-98312c4cbdbd/preview).
+:::
+
 ## Local ingestion
 
 If you have an in-memory `AnnData` object, you can ingest it into a SOMA using `tiledbsc.io.from_anndata()`:
