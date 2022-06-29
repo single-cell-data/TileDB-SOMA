@@ -5,13 +5,13 @@ A key point is that these data (shown here on local disk) can likewise be stored
 like S3.  This means you can _query_ large datasets without having to first _download_ large
 datasets.
 
+Another key point is that the _out-of-core processing_ showing here allows you to slice data out of
+a collection which is far larger than fits in RAM.
+
 :::{.callout-tip}
 Best S3 read performance is obtained by querying from an in-region EC2 instance, or a TileDB Cloud
 notebook -- this is preferred to laptop-to-S3 performance.
 :::
-
-Another key point is that the _out-of-core processing_ showing here allows you to slice data out of
-a collection which is far larger than fits in RAM.
 
 ## Do the slice query
 
