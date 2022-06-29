@@ -1,4 +1,5 @@
 #include "tiledbsc/soma_query.h"
+#include "tiledbsc/common.h"
 #include "tiledbsc/logger_public.h"
 
 namespace tiledbsc {
@@ -19,8 +20,18 @@ SOMAQuery::next_results() {
     }
 
     if (mq_x_->status() == Query::Status::UNINITIALIZED) {
-        auto num_obs = query_and_select(mq_obs_, "obs_id");
-        auto num_var = query_and_select(mq_var_, "var_id");
+        // Submit obs and var querie tasks in parallel
+        auto obs_task = std::async(std::launch::async, [&]() {
+            return query_and_select(mq_obs_, "obs_id");
+        });
+
+        auto var_task = std::async(std::launch::async, [&]() {
+            return query_and_select(mq_var_, "var_id");
+        });
+
+        // Block until obs and var tasks complete
+        auto num_obs = obs_task.get();
+        auto num_var = var_task.get();
 
         // Return empty results if obs or var query was empty
         if (!num_obs || !num_var) {
@@ -28,11 +39,11 @@ SOMAQuery::next_results() {
         }
     }
 
+    // Submit X query
     auto num_cells = mq_x_->submit();
     LOG_DEBUG(fmt::format("*** X cells read = {}", num_cells));
 
-    std::unordered_map<std::string, std::shared_ptr<ColumnBuffer>> results;
-
+    // TODO: Build and return ArrowTable
     return mq_x_->results();
 }
 

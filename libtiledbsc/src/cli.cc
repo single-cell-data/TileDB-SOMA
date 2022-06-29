@@ -46,7 +46,7 @@ void slice_soma(std::string_view soma_uri) {
 
 void soma_query(std::string_view soma_uri) {
     Config conf;
-    // conf["config.logging_level"] = "5";
+    conf["config.logging_level"] = "5";
 
     auto soma = SOMA::open(soma_uri, conf);
     auto sq = soma->query();
