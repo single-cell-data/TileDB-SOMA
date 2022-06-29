@@ -109,10 +109,10 @@ member exists.  Overloads the `[...]` operator.
 #### query
 
 ```python
-def query(obs_attr_names: Optional[List[str]] = None,
+def query(obs_attrs: Optional[List[str]] = None,
           obs_query_string: str = None,
           obs_ids: List[str] = None,
-          var_attr_names: Optional[List[str]] = None,
+          var_attrs: Optional[List[str]] = None,
           var_query_string: str = None,
           var_ids: List[str] = None) -> Optional[SOMASlice]
 ```

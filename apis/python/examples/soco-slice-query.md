@@ -1,68 +1,66 @@
 Here we show an example of doing a _slice query_ across a `SOMACollection` -- we extract a
 relatively small subset out of the full collection for analysis.
 
+:::{.callout-tip}
 A key point is that these data (shown here on local disk) can likewise be stored on object stores
 like S3.  This means you can _query_ large datasets without having to first _download_ large
 datasets.
+:::
 
+:::{.callout-tip}
 Another key point is that the _out-of-core processing_ showing here allows you to slice data out of
 a collection which is far larger than fits in RAM.
+:::
 
 :::{.callout-tip}
 Best S3 read performance is obtained by querying from an in-region EC2 instance, or a TileDB Cloud
 notebook -- this is preferred to laptop-to-S3 reads.
 :::
 
-## Do the slice query
+## Prepare the inputs
 
-Using [soco-slice-query.py](soco-slice-query.py)
+As shown in the [public TileDB Cloud notebook](https://cloud.tiledb.com/notebooks/details/johnkerl-tiledb/d3d7ff44-dc65-4cd9-b574-98312c4cbdbd/preview):
 
 ```
-TWO-SIDED QUERY
-Wrote mini-atlas-two-sided.h5ad (8524, 1)
-Wrote mini-atlas-two-sided (8524, 1)
+ctx = tiledb.Ctx({"py.init_buffer_bytes": 4 * 1024**3})
+soco = tiledbsc.SOMACollection("s3://tiledb-singlecell-data/soco/soco3", ctx)
+```
 
-OBS-ONLY QUERY
-Wrote mini-atlas-obs-sided.h5ad (8524, 21648)
-Wrote mini-atlas-obs-sided (8524, 21648)
+Slices to be concatenated must all have the same attributes for their `obs` and `var`. If the input SOMAs were all normalized (see also [Uniformizing a Collection](uniform-collection.md)), we wouldn't need to specify `obs_attrs` and `var_attrs`. Since the input data here is heterogeneous, though, we find which `obs`/`var` attributes they all have in common.
 
-VAR-ONLY QUERY
-Wrote mini-atlas-var-sided.h5ad (181544, 1)
-Wrote mini-atlas-var-sided (181544, 1)
+```
+obs_attrs_set = None
+var_attrs_set = None
+for soma in soco:
+    if obs_attrs_set is None:
+        obs_attrs_set = set(soma.obs.keys())
+        var_attrs_set = set(soma.var.keys())
+    else:
+        obs_attrs_set = set(soma.obs.keys()).intersection(obs_attrs_set)
+        var_attrs_set = set(soma.var.keys()).intersection(var_attrs_set)
+obs_attrs = sorted(list(obs_attrs_set))
+var_attrs = sorted(list(var_attrs_set))
+```
 
-OBS-ONLY QUERY
-Wrote cell-ontology-236.h5ad (8524, 21648)
-Wrote cell-ontology-236 (8524, 21648)
+## Do the query
+
+```
+slice = soco.query(
+    obs_query_string='cell_type == "pericyte cell"',
+    var_query_string='feature_name == "DPM1"',
+    obs_attrs=obs_attrs,
+    var_attrs=var_attrs,
+)
+ann = slice.to_anndata()
+```
+
+## Persist the output
+
+```
+slice_soma = tiledbsc.SOMA('slice-query-output')
+tiledbsc.io.from_anndata(slice_soma, ann)
 ```
 
 ## Examine the results
 
-```
-$ peek-soma mini-atlas-two-sided
-
-johnkerl@Kerl-MBP[prod][python]$ peek-soma mini-atlas-obs-sided
->>> soma.obs.df()
-                                 assay_ontology_term_id cell_type_ontology_term_id  ...      sex tissue
-obs_id                                                                              ...
-AAACCCACACCCAATA                            EFO:0009922                 CL:0000236  ...     male  blood
-AAACCCAGTTCCACAA                            EFO:0009922                 CL:0000236  ...     male  blood
-AAACCCATCCCTCATG                            EFO:0009922                 CL:0000236  ...     male  blood
-AAACCCATCGAAGAAT                            EFO:0009922                 CL:0000236  ...     male  blood
-AAACGAAAGAATTTGG                            EFO:0009922                 CL:0000236  ...     male  blood
-...                                                 ...                        ...  ...      ...    ...
-batch4_5p_rna|TTTGTCAAGACTGTAA-1            EFO:0011025                 CL:0000236  ...  unknown  blood
-batch4_5p_rna|TTTGTCAAGGATGGTC-1            EFO:0011025                 CL:0000236  ...  unknown  blood
-batch4_5p_rna|TTTGTCACATCGATTG-1            EFO:0011025                 CL:0000236  ...  unknown  blood
-batch4_5p_rna|TTTGTCAGTATGAAAC-1            EFO:0011025                 CL:0000236  ...  unknown  blood
-batch4_5p_rna|TTTGTCAGTCGCATAT-1            EFO:0011025                 CL:0000236  ...  unknown  blood
-
-[8524 rows x 16 columns]
-
->>> soma.var.df()
-Empty DataFrame
-Columns: []
-Index: [ENSG00000000003, ENSG00000000419, ENSG00000000457, ...]
-
-[21648 rows x 0 columns]
-
-```
+![](images/slice-query-output.png)

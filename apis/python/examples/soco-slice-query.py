@@ -13,16 +13,16 @@ def soco_query_and_store(
     soco: tiledbsc.SOMACollection,
     output_h5ad_path: str,
     output_soma_path: str,
-    obs_attr_names: Optional[List[str]] = None,
+    obs_attrs: Optional[List[str]] = None,
     obs_query_string: str = None,
-    var_attr_names: Optional[List[str]] = None,
+    var_attrs: Optional[List[str]] = None,
     var_query_string: str = None,
 ) -> None:
 
     result_soma_slice = soco.query(
-        obs_attr_names=obs_attr_names,
+        obs_attrs=obs_attrs,
         obs_query_string=obs_query_string,
-        var_attr_names=var_attr_names,
+        var_attrs=var_attrs,
         var_query_string=var_query_string,
     )
 
@@ -53,9 +53,9 @@ if __name__ == "__main__":
             soco=tiledbsc.SOMACollection("/Users/johnkerl/mini-corpus/atlas"),
             output_h5ad_path="mini-atlas-two-sided.h5ad",
             output_soma_path="mini-atlas-two-sided",
-            obs_attr_names=["cell_type"],
+            obs_attrs=["cell_type"],
             obs_query_string='cell_type == "B cell"',
-            var_attr_names=["feature_name"],
+            var_attrs=["feature_name"],
             var_query_string='feature_name == "MT-CO3"',
         )
 
@@ -66,7 +66,7 @@ if __name__ == "__main__":
             soco=tiledbsc.SOMACollection("/Users/johnkerl/mini-corpus/atlas"),
             output_h5ad_path="mini-atlas-obs-sided.h5ad",
             output_soma_path="mini-atlas-obs-sided",
-            obs_attr_names=["cell_type"],
+            obs_attrs=["cell_type"],
             obs_query_string='cell_type == "B cell"',
         )
 
@@ -77,7 +77,7 @@ if __name__ == "__main__":
             soco=tiledbsc.SOMACollection("/Users/johnkerl/mini-corpus/atlas"),
             output_h5ad_path="mini-atlas-var-sided.h5ad",
             output_soma_path="mini-atlas-var-sided",
-            var_attr_names=["feature_name"],
+            var_attrs=["feature_name"],
             var_query_string='feature_name == "MT-CO3"',
         )
 
@@ -88,7 +88,7 @@ if __name__ == "__main__":
             soco=tiledbsc.SOMACollection("/Users/johnkerl/mini-corpus/atlas"),
             output_h5ad_path="cell-ontology-236.h5ad",
             output_soma_path="cell-ontology-236",
-            obs_attr_names=["cell_type_ontology_term_id"],
+            obs_attrs=["cell_type_ontology_term_id"],
             obs_query_string='cell_type_ontology_term_id == "CL:0000236"',
         )
 
@@ -99,7 +99,7 @@ if __name__ == "__main__":
             soco=tiledbsc.SOMACollection("/Users/johnkerl/mini-corpus/atlas"),
             output_h5ad_path="kidney.h5ad",
             output_soma_path="kidney",
-            obs_attr_names=["tissue"],
+            obs_attrs=["tissue"],
             obs_query_string='tissue == "kidney"',
         )
 
@@ -110,7 +110,7 @@ if __name__ == "__main__":
             soco=tiledbsc.SOMACollection("/Users/johnkerl/mini-corpus/atlas"),
             output_h5ad_path="platelet.h5ad",
             output_soma_path="platelet",
-            obs_attr_names=["cell_type"],
+            obs_attrs=["cell_type"],
             obs_query_string='cell_type == "platelet"',
         )
 
@@ -121,7 +121,7 @@ if __name__ == "__main__":
             soco=tiledbsc.SOMACollection("/Users/johnkerl/mini-corpus/atlas"),
             output_h5ad_path="platelet.h5ad",
             output_soma_path="platelet",
-            obs_attr_names=["cell_type", "tissue"],
+            obs_attrs=["cell_type", "tissue"],
             obs_query_string='cell_type == "B cell" and tissue == "blood"',
         )
 
@@ -132,6 +132,6 @@ if __name__ == "__main__":
             soco=tiledbsc.SOMACollection("/Users/johnkerl/mini-corpus/atlas"),
             output_h5ad_path="platelet.h5ad",
             output_soma_path="platelet",
-            obs_attr_names=["cell_type", "tissue"],
+            obs_attrs=["cell_type", "tissue"],
             obs_query_string='cell_type == "B cell" or cell_type == "T cell"',
         )

@@ -165,10 +165,19 @@ class SOMASlice(TileDBGroup):
         for i, slicei in enumerate(soma_slices):
             if i == 0:
                 continue
-            # This works in Python -- not just a reference/pointer compare but a contents-compare :)
-            assert list(slicei.X.keys()) == list(slice0.X.keys())
-            assert list(slicei.obs.keys()) == list(slice0.obs.keys())
-            assert list(slicei.var.keys()) == list(slice0.var.keys())
+            # This list-equals works in Python -- not just a reference/pointer compare but a contents-compare :)
+            if sorted(list(slicei.X.keys())) != sorted(list(slice0.X.keys())):
+                raise Exception(
+                    "SOMA slices to be concatenated must have all the same X attributes"
+                )
+            if sorted(list(slicei.obs.keys())) != sorted(list(slice0.obs.keys())):
+                raise Exception(
+                    "SOMA slices to be concatenated must have all the same obs attributes"
+                )
+            if sorted(list(slicei.var.keys())) != sorted(list(slice0.var.keys())):
+                raise Exception(
+                    "SOMA slices to be concatenated must have all the same var attributes"
+                )
 
         # Use AnnData.concat.
         # TODO: try to remove this dependency.
