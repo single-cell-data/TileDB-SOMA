@@ -307,6 +307,8 @@ class SOMA(TileDBGroup):
         if slice_obs_df is None:
             return None
         obs_ids = list(slice_obs_df.index)
+        if len(obs_ids) == 0:
+            return None
 
         slice_var_df = self.var.query(query_string=var_query_string, ids=var_ids)
         # E.g. querying for 'feature_name == "MT-CO3"' and this SOMA does have a feature_name column
@@ -314,6 +316,8 @@ class SOMA(TileDBGroup):
         if slice_var_df is None:
             return None
         var_ids = list(slice_var_df.index)
+        if len(var_ids) == 0:
+            return None
 
         # TODO:
         # do this here:

@@ -8,36 +8,6 @@ can _query_ large datasets without having to first _download_ large datasets.
 Another key point is that the _out-of-core processing_ showing here allows you to slice data out of
 a collection which is far larger than fits in RAM.
 
-## Populate the collection
-
-Here we use a few small sample files included in this repository.
-
-```
-import tiledbsc
-import tiledbsc.io
-import os
-import shutil
-
-soco_path = './soco-attribute-filter'
-if os.path.exists(soco_path):
-    shutil.rmtree(soco_path)
-
-soco = tiledbsc.SOMACollection(soco_path)
-if not soco.exists():
-    soco._create()
-
-for name, h5ad in [
-    ('subset-soma-01', './anndata/subset-soma-01.h5ad'),
-    ('subset-soma-02', './anndata/subset-soma-02.h5ad'),
-    ('subset-soma-03', './anndata/subset-soma-03.h5ad'),
-    ('subset-soma-04', './anndata/subset-soma-04.h5ad'),
-]:
-    soma_path = os.path.join(soco_path, name)
-    soma = tiledbsc.SOMA(soma_path)
-    tiledbsc.io.from_h5ad(soma, h5ad)
-    soco.add(soma)
-```
-
 ## Do the slice query
 
 Using [soco-slice-query.py](soco-slice-query.py)

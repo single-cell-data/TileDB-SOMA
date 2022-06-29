@@ -183,6 +183,12 @@ class SOMACollection(TileDBGroup):
                 # print("Slice SOMA from", soma.name, soma.X.data.shape(), "to", soma_slice.ann.X.shape)
                 soma_slices.append(soma_slice)
 
+        print("SLICES", len(soma_slices))
+        for soma_slice in soma_slices:
+            print(soma_slice)
+        print()
+        for soma_slice in soma_slices:
+            print(soma_slice.obs)
         return SOMASlice.concat(soma_slices)
 
     # ----------------------------------------------------------------
