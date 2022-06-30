@@ -50,7 +50,7 @@ class RawGroup(TileDBGroup):
             col_dim_name="var_id",
             row_dataframe=self.parent_obs,
             col_dataframe=self.var,
-            parent=self.var,
+            parent=self,
         )
         self.varm = AnnotationMatrixGroup(uri=varm_uri, name="varm", parent=self)
         self.varp = AnnotationPairwiseMatrixGroup(
