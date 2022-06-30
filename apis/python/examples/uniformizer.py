@@ -37,8 +37,8 @@ import scipy.sparse
 import scipy.stats
 import tiledb
 
-from tiledbsc import SOMA, SOMACollection
-from tiledbsc import io as SOMAio
+import tiledbsc
+import tiledbsc.io
 
 # ================================================================
 # MAIN ENTRYPOINT
@@ -207,18 +207,18 @@ class Uniformizer:
             raise Exception(f"SOMA {soma_name} is already in SOMACollection {soco.uri}")
 
         logger.info("Loading SOMA")
-        input_soma = SOMA(input_soma_uri)
-        ann = SOMAio.to_anndata(input_soma)
+        input_soma = tiledbsc.SOMA(input_soma_uri)
+        ann = tiledbsc.io.to_anndata(input_soma)
 
         self._clean_and_add(ann, soma_name, soco)
         return 0
 
     # ----------------------------------------------------------------
-    def _init_soco(self) -> SOMACollection:
+    def _init_soco(self) -> tiledbsc.SOMACollection:
         """
         Makes sure the destination SOMACollection exists for first write.
         """
-        soco = SOMACollection(self.atlas_uri, name="atlas", ctx=self.ctx)
+        soco = tiledbsc.SOMACollection(self.atlas_uri, name="atlas", ctx=self.ctx)
         soco.create_unless_exists()  # Must be done first, to create the parent directory
         if not soco.exists():
             raise Exception(f"Could not create SOCO at {soco.uri}")
@@ -237,7 +237,7 @@ class Uniformizer:
         self,
         ann: anndata.AnnData,
         soma_name: str,
-        soco: SOMACollection,
+        soco: tiledbsc.SOMACollection,
     ):
         """
         Cleans and uniformizes the data (whether obtained from H5AD or SOMA), writes a new SOMA, adds an
@@ -251,8 +251,8 @@ class Uniformizer:
 
         logger.info("Saving SOMA")
         soma_uri = f"{self.atlas_uri}/{soma_name}"
-        atlas_soma = SOMA(uri=soma_uri, name=soma_name, ctx=self.ctx)
-        SOMAio.from_anndata(atlas_soma, ann)
+        atlas_soma = tiledbsc.SOMA(uri=soma_uri, name=soma_name, ctx=self.ctx)
+        tiledbsc.io.from_anndata(atlas_soma, ann)
 
         logger.info(f"Adding SOMA name {atlas_soma.name} at SOMA URI {atlas_soma.uri}")
         soco.add(atlas_soma)
