@@ -15,6 +15,7 @@ SOMAQuery::SOMAQuery(SOMA* soma, size_t index_alloc, size_t x_alloc) {
 
 std::optional<std::unordered_map<std::string, std::shared_ptr<ColumnBuffer>>>
 SOMAQuery::next_results() {
+    // Query is complete, return empty results
     if (mq_x_->status() == Query::Status::COMPLETE) {
         return std::nullopt;
     }
@@ -75,17 +76,19 @@ size_t SOMAQuery::query_and_select(
         return num_cells;
     }
 
-    auto points = mq->strings(dim_name);
-    if (points.size() != num_cells) {
-        throw TileDBSCError(fmt::format(
-            "[SOMAQuery] {} query failed sanity check: {} != {}",
-            dim_name,
-            points.size(),
-            num_cells));
-    }
+    // If the query contains a subset of the dimensions, apply the results to
+    // the X query.
+    // TODO: [optimize] If sliced query returns all results, skip this if block
+    if (mq->is_sliced()) {
+        auto points = mq->strings(dim_name);
+        if (points.size() != num_cells) {
+            throw TileDBSCError(fmt::format(
+                "[SOMAQuery] {} query failed sanity check: {} != {}",
+                dim_name,
+                points.size(),
+                num_cells));
+        }
 
-    // TODO: If the query returns all cells, no need to select points on X
-    if (true || num_cells) {
         // Add dimension range points to the X query.
         std::lock_guard<std::mutex> lock(mtx_);
         mq_x_->select_points(dim_name, points);

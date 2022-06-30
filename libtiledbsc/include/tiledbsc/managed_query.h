@@ -56,6 +56,7 @@ class ManagedQuery {
         for (auto& [start, stop] : ranges) {
             query_->add_range(dim, start, stop);
         }
+        sliced_ = true;
     }
 
     /**
@@ -70,6 +71,7 @@ class ManagedQuery {
         for (auto& point : points) {
             query_->add_range(dim, point, point);
         }
+        sliced_ = true;
     }
 
     /**
@@ -79,6 +81,7 @@ class ManagedQuery {
      */
     void set_condition(const QueryCondition& qc) {
         query_->set_condition(qc);
+        sliced_ = true;
     }
 
     /**
@@ -121,6 +124,16 @@ class ManagedQuery {
      */
     bool is_invalid() {
         return invalid_columns_selected_;
+    }
+
+    /**
+     * @brief Return true if the query has dimension ranges selected or a query
+     * condition applied.
+     *
+     * @return true The query will be sliced
+     */
+    bool is_sliced() {
+        return sliced_;
     }
 
     /**
@@ -208,6 +221,9 @@ class ManagedQuery {
 
     // Invalid columns have been selected.
     bool invalid_columns_selected_ = false;
+
+    // Query is sliced with dimension range slices or query conditions.
+    bool sliced_ = false;
 
     // Map of column name to ColumnBuffer.
     std::unordered_map<std::string, std::shared_ptr<ColumnBuffer>> buffers_;
