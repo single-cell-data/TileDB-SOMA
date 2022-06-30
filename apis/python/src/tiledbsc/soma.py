@@ -64,6 +64,20 @@ class SOMA(TileDBGroup):
         :param uri: URI of the TileDB group
         """
 
+        # People can (and should) call by name. However, it's easy to forget. For example,
+        # if someone does 'tiledbsc.SOMA("myuri", ctx)' instead of 'tiledbsc.SOMA("myury", ctx)',
+        # behavior will not be what they expect, and we should let them know sooner than later.
+        if name is not None:
+            assert isinstance(name, str)
+        if soma_options is not None:
+            assert isinstance(soma_options, SOMAOptions)
+        if config is not None:
+            assert isinstance(config, tiledb.Config)
+        if ctx is not None:
+            assert isinstance(ctx, tiledb.Ctx)
+        if parent is not None:
+            assert isinstance(parent, TileDBGroup)
+
         if ctx is None and config is not None:
             ctx = tiledb.Ctx(config)
         if soma_options is None:
@@ -315,9 +329,18 @@ class SOMA(TileDBGroup):
         # obs, but no rows with cell_type == "blood".
         if slice_obs_df is None:
             return None
-        obs_ids = list(slice_obs_df.index)
-        if len(obs_ids) == 0:
+        if len(slice_obs_df.index) == 0:
             return None
+        # At the tiledb multi-index level, if we're say slicing on obs_ids but not var_ids,
+        # we'll do `A.df[obs_ids, :]`. We can't pass a `:` down the callstack to get there,
+        # but we pass `None` instead.
+        #
+        # It's important to do this. Say for example the X matrix is nobs=1000 by nvar=2000,
+        # and we have a query that has 158 obs_ids. At the tiledb multi-index level, doing
+        # `A.df[{158 obs ids}, {all 2000 var ids}]` is non-performant while
+        # `A.df[{158 obs ids}, :]` is performant.
+        if obs_ids is not None or obs_query_string is not None:
+            obs_ids = list(slice_obs_df.index)
 
         slice_var_df = self.var.query(
             query_string=var_query_string, ids=var_ids, attrs=var_attrs
@@ -326,9 +349,11 @@ class SOMA(TileDBGroup):
         # in its var, but no rows with feature_name == "MT-CO3".
         if slice_var_df is None:
             return None
-        var_ids = list(slice_var_df.index)
-        if len(var_ids) == 0:
+        if len(slice_var_df.index) == 0:
             return None
+        # See above comment re keeping obs_ids == None if that's what it came in as.
+        if var_ids is not None or var_query_string is not None:
+            var_ids = list(slice_var_df.index)
 
         # TODO:
         # do this here:
