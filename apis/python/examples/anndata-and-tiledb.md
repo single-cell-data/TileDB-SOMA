@@ -125,7 +125,7 @@ TTTGCATGCCTCAC-1      724      0.008065    1984.0      CD4 T cells
 
 [2638 rows x 4 columns]
 
->>> soma.obs.df().groupby(["louvain"]).size()
+>>> soma.obs.df(attrs=["louvain"]).groupby(["louvain"]).size()
 louvain
 B cells               342
 CD14+ Monocytes       480

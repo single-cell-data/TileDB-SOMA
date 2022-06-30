@@ -41,8 +41,8 @@ Now we can examine the data, using things like the following:
 local_soma
 local_soma.obs.keys()
 local_soma.obs.df()
-local_soma.obs.df().groupby['cell_type'].size()
-local_soma.obs.df().groupby['louvain'].size()
+local_soma.obs.df(attrs=['cell_type']).groupby['cell_type'].size()
+local_soma.obs.df(attrs=['louvain']).groupby['louvain'].size()
 local_soma.uns['louvain_colors'].to_matrix()
 ```
 

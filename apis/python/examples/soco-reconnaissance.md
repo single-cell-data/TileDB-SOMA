@@ -61,7 +61,7 @@ for soma in soco:
 for soma in soco:
     print()
     print(f"--- {soma.name}")
-    print(soma.obs.df().groupby('cell_type').size())
+    print(soma.obs.df(attrs=['cell_type']).groupby('cell_type').size())
 ```
 
 ![](images/soco-reconnaissance.png)
