@@ -47,7 +47,9 @@ for obs_label in obs_labels:
     unique_values_to_counts = {}
     for soma in soco:
         if obs_label in soma.obs.keys():
-            unique_values = soma.obs.df(attrs=[obs_label]).groupby(obs_label).size().index
+            unique_values = (
+                soma.obs.df(attrs=[obs_label]).groupby(obs_label).size().index
+            )
             for unique_value in unique_values:
                 if unique_value in unique_values_to_counts:
                     unique_values_to_counts[unique_value] += 1
