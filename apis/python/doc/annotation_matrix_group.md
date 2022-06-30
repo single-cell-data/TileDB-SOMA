@@ -35,6 +35,16 @@ def keys() -> List[str]
 For `obsm` and `varm`, `.keys()` is a keystroke-saver for the more general group-member
 accessor `._get_member_names()`.
 
+<a id="tiledbsc.annotation_matrix_group.AnnotationMatrixGroup.__repr__"></a>
+
+#### \_\_repr\_\_
+
+```python
+def __repr__() -> str
+```
+
+Default display of soma.obsm and soma.varm.
+
 <a id="tiledbsc.annotation_matrix_group.AnnotationMatrixGroup.__iter__"></a>
 
 #### \_\_iter\_\_
@@ -56,22 +66,22 @@ def __getattr__(name) -> AnnotationMatrix
 This is called on `soma.obsm.name` when `name` is not already an attribute.
 This way you can do `soma.obsm.X_tsne` as an alias for `soma.obsm['X_tsne']`.
 
-<a id="tiledbsc.annotation_matrix_group.AnnotationMatrixGroup.from_matrices_and_dim_values"></a>
+<a id="tiledbsc.annotation_matrix_group.AnnotationMatrixGroup.add_matrix_from_matrix_and_dim_values"></a>
 
-#### from\_matrices\_and\_dim\_values
+#### add\_matrix\_from\_matrix\_and\_dim\_values
 
 ```python
-def from_matrices_and_dim_values(annotation_matrices, dim_values) -> None
+def add_matrix_from_matrix_and_dim_values(matrix, dim_values,
+                                          matrix_name: str) -> None
 ```
 
-Populates the `obsm` or `varm` subgroup for a SOMA object, then writes all the components
-
-arrays under that group.
+Populates a component of the `obsm` or `varm` subgroup for a SOMA object.
 
 **Arguments**:
 
-- `annotation_matrices`: anndata.obsm, anndata.varm, or anndata.raw.varm.
+- `matrix`: element of anndata.obsm, anndata.varm, or anndata.raw.varm.
 - `dim_values`: anndata.obs_names, anndata.var_names, or anndata.raw.var_names.
+- `matrix_name_name`: name of the matrix, like `"X_tsne"` or `"PCs"`.
 
 <a id="tiledbsc.annotation_matrix_group.AnnotationMatrixGroup.to_dict_of_csr"></a>
 

@@ -44,6 +44,16 @@ def keys() -> List[str]
 For `obsm` and `varm`, `.keys()` is a keystroke-saver for the more general group-member
 accessor `._get_member_names()`.
 
+<a id="tiledbsc.assay_matrix_group.AssayMatrixGroup.__repr__"></a>
+
+#### \_\_repr\_\_
+
+```python
+def __repr__() -> str
+```
+
+Default display of soma.X.
+
 <a id="tiledbsc.assay_matrix_group.AssayMatrixGroup.__getattr__"></a>
 
 #### \_\_getattr\_\_

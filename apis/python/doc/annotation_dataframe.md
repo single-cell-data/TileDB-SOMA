@@ -44,6 +44,16 @@ def ids() -> List[str]
 
 Returns the `obs_ids` in the matrix (for `obs`) or the `var_ids` (for `var`).
 
+<a id="tiledbsc.annotation_dataframe.AnnotationDataFrame.__repr__"></a>
+
+#### \_\_repr\_\_
+
+```python
+def __repr__() -> str
+```
+
+Default display of soma.obs and soma.var.
+
 <a id="tiledbsc.annotation_dataframe.AnnotationDataFrame.__len__"></a>
 
 #### \_\_len\_\_

@@ -41,6 +41,16 @@ def keys() -> List[str]
 For obsp and varp, `.keys()` is a keystroke-saver for the more general group-member
 accessor `._get_member_names()`.
 
+<a id="tiledbsc.annotation_pairwise_matrix_group.AnnotationPairwiseMatrixGroup.__repr__"></a>
+
+#### \_\_repr\_\_
+
+```python
+def __repr__() -> str
+```
+
+Default display of soma.obsp and soma.varp.
+
 <a id="tiledbsc.annotation_pairwise_matrix_group.AnnotationPairwiseMatrixGroup.__getattr__"></a>
 
 #### \_\_getattr\_\_
@@ -62,23 +72,22 @@ def __iter__() -> List[AssayMatrix]
 
 Implements `for matrix in soma.obsp: ...` and `for matrix in soma.varp: ...`
 
-<a id="tiledbsc.annotation_pairwise_matrix_group.AnnotationPairwiseMatrixGroup.from_matrices_and_dim_values"></a>
+<a id="tiledbsc.annotation_pairwise_matrix_group.AnnotationPairwiseMatrixGroup.add_matrix_from_matrix_and_dim_values"></a>
 
-#### from\_matrices\_and\_dim\_values
+#### add\_matrix\_from\_matrix\_and\_dim\_values
 
 ```python
-def from_matrices_and_dim_values(annotation_pairwise_matrices,
-                                 dim_values) -> None
+def add_matrix_from_matrix_and_dim_values(matrix, dim_values,
+                                          matrix_name: str) -> None
 ```
 
-Populates the `obsp` or `varp` subgroup for a SOMA object, then writes all the components
-
-arrays under that group.
+Populates a component of the `obsp` or `varp` subgroup for a SOMA object.
 
 **Arguments**:
 
-- `annotation_pairwise_matrices`: anndata.obsp, anndata.varp, or anndata.raw.varp.
-- `dim_values`: anndata.obs_names, anndata.var_names, or anndata.raw.var_names.
+- `matrix`: element of anndata.obsp or anndata.varp.
+- `dim_values`: anndata.obs_names or anndata.var_names.
+- `matrix_name_name`: name of the matrix, like `"distances"`.
 
 <a id="tiledbsc.annotation_pairwise_matrix_group.AnnotationPairwiseMatrixGroup.to_dict_of_csr"></a>
 

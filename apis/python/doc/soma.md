@@ -50,15 +50,15 @@ Create a new SOMA object. The existing array group is opened at the specified ar
 
 - `uri`: URI of the TileDB group
 
-<a id="tiledbsc.soma.SOMA.__str__"></a>
+<a id="tiledbsc.soma.SOMA.__repr__"></a>
 
-#### \_\_str\_\_
+#### \_\_repr\_\_
 
 ```python
-def __str__()
+def __repr__() -> str
 ```
 
-Implements `print(soma)`.
+Default display of SOMA.
 
 <a id="tiledbsc.soma.SOMA.__getattr__"></a>
 
@@ -130,15 +130,22 @@ Returns `None` for empty slice.
 #### query
 
 ```python
-def query(obs_query_string: Optional[str] = None,
-          var_query_string: Optional[str] = None,
+def query(obs_attrs: Optional[List[str]] = None,
+          obs_query_string: Optional[str] = None,
           obs_ids: Optional[List[str]] = None,
+          var_attrs: Optional[List[str]] = None,
+          var_query_string: Optional[str] = None,
           var_ids: Optional[List[str]] = None) -> SOMASlice
 ```
 
 Subselects the SOMA's obs, var, and X/data using the specified queries on obs and var.
-Queries use the TileDB-Py `QueryCondition` API. If `obs_query_string` is `None`,
-the `obs` dimension is not filtered and all of `obs` is used; similiarly for `var`.
+Queries use the TileDB-Py `QueryCondition` API.
+
+If `obs_query_string` is `None`, the `obs` dimension is not filtered and all of `obs` is
+used; similiarly for `var`.
+
+If `obs_attrs` or `var_attrs` are unspecified, the slice will take all `obs`/`var` attributes
+from the source SOMAs; if they are specified, the slice will take the specified `obs`/`var`
 
 <a id="tiledbsc.soma.SOMA.from_soma_slice"></a>
 

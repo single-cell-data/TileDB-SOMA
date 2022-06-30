@@ -33,6 +33,16 @@ specified `uri` if one is present, otherwise a new group will be created upon in
 
 - `uri`: URI of the TileDB group
 
+<a id="tiledbsc.soma_collection.SOMACollection.__repr__"></a>
+
+#### \_\_repr\_\_
+
+```python
+def __repr__() -> str
+```
+
+Default display of SOMACollection.
+
 <a id="tiledbsc.soma_collection.SOMACollection.__len__"></a>
 
 #### \_\_len\_\_
@@ -119,11 +129,18 @@ def query(obs_attrs: Optional[List[str]] = None,
 
 Subselects the obs, var, and X/data using the specified queries on obs and var,
 concatenating across SOMAs in the collection.  Queries use the TileDB-Py `QueryCondition`
-API. If `obs_query_string` is `None`, the `obs` dimension is not filtered and all of `obs`
-is used; similiarly for `var`. Return value of `None` indicates an empty slice.
-If `obs_ids` or `var_ids` are not `None`, they are effectively ANDed into the query.
-For example, you can pass in a known list of `obs_ids`, then use `obs_query_string`
-to further restrict the query.
+API.
+
+If `obs_query_string` is `None`, the `obs` dimension is not filtered and all of `obs` is
+used; similiarly for `var`. Return value of `None` indicates an empty slice.  If `obs_ids`
+or `var_ids` are not `None`, they are effectively ANDed into the query.  For example, you
+can pass in a known list of `obs_ids`, then use `obs_query_string` to further restrict the
+query.
+
+If `obs_attrs` or `var_attrs` are unspecified, slices will take all `obs`/`var` attributes
+from their source SOMAs; if they are specified, slices will take the specified `obs`/`var`
+attributes.  If all SOMAs in the collection have the same `obs`/`var` attributes, then you
+needn't specify these; if they don't, you must.
 
 <a id="tiledbsc.soma_collection.SOMACollection.find_unique_obs_values"></a>
 
