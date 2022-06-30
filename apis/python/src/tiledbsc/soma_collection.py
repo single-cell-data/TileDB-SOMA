@@ -30,6 +30,20 @@ class SOMACollection(TileDBGroup):
         :param uri: URI of the TileDB group
         """
 
+        # People can (and should) call by name. However, it's easy to forget. For example,
+        # if someone does 'tiledbsc.SOMACollection("myuri", ctx)' instead of 'tiledbsc.SOMA("myury", ctx)',
+        # behavior will not be what they expect, and we should let them know sooner than later.
+        if name is not None:
+            assert isinstance(name, str)
+        if soma_options is not None:
+            assert isinstance(soma_options, SOMAOptions)
+        if config is not None:
+            assert isinstance(config, tiledb.Config)
+        if ctx is not None:
+            assert isinstance(ctx, tiledb.Ctx)
+        if parent is not None:
+            assert isinstance(parent, TileDBGroup)
+
         if ctx is None and config is not None:
             ctx = tiledb.Ctx(config)
         if soma_options is None:

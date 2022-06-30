@@ -57,37 +57,6 @@ class SOMASlice(TileDBGroup):
         # self.raw_var = raw_var
         assert "data" in X
 
-        # Find the dtype.
-        X_data = self.X["data"]
-        if isinstance(X_data, pd.DataFrame):
-            X_dtype = X_data.dtypes["value"]
-        else:
-            X_dtype = X_data.dtype
-
-        ann = ad.AnnData(obs=self.obs, var=self.var, dtype=X_dtype)
-
-        for name, data in self.X.items():
-            # X comes in from TileDB queries as a 3-column dataframe with "obs_id", "var_id", and
-            # "value".  For AnnData we need to make it a sparse matrix.
-            if isinstance(data, pd.DataFrame):
-                # Make obs_id and var_id accessible as columns.
-                data = data.reset_index()
-                data = util.X_and_ids_to_sparse_matrix(
-                    data,
-                    "obs_id",  # row_dim_name
-                    "var_id",  # col_dim_name
-                    "value",  # attr_name
-                    self.obs.index,
-                    self.var.index,
-                )
-            # We use AnnData as our in-memory storage. For SOMAs, all X layers are arrays within the
-            # soma.X group; for AnnData, the 'data' layer is ann.X and all the others are in
-            # ann.layers.
-            if name == "data":
-                ann.X = data
-            else:
-                ann.layers[name] = data
-
     # ----------------------------------------------------------------
     def __repr__(self) -> str:
         """
