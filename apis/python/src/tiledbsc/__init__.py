@@ -31,8 +31,6 @@ except ImportError:
     except DistributionNotFound:
         __version__ = "unknown"
 
-import logging
-
 from .annotation_matrix import AnnotationMatrix
 from .annotation_matrix_group import AnnotationMatrixGroup
 from .annotation_pairwise_matrix_group import AnnotationPairwiseMatrixGroup

@@ -22,10 +22,14 @@ ad = anndata
 np = numpy
 pd = pandas
 
+
 def count_obs(soma: tiledbsc.SOMA, attr_name: str) -> None:
     print(soma.obs.df(attrs=[attr_name]).groupby(attr_name).size())
+
+
 def count_var(soma: tiledbsc.SOMA, attr_name: str) -> None:
     print(soma.var.df(attrs=[attr_name]).groupby(attr_name).size())
+
 
 if len(sys.argv) == 1:
     input_path = "tiledb-data/pbmc-small"
