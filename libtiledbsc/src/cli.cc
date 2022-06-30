@@ -23,18 +23,29 @@ void walk_soco(std::string_view uri) {
 
 void slice_soma(std::string_view soma_uri) {
     Config conf;
-    // conf["config.logging_level"] = "5";
+    conf["config.logging_level"] = "5";
 
     auto soma = SOMA::open(soma_uri, conf);
-    auto mq = ManagedQuery(soma->open_array("obs"));
+    auto array = soma->open_array("obs");
+    auto mq = ManagedQuery(array);
+
+    auto q = std::make_unique<Query>(array->schema().context(), *array);
+    auto est_bytes = q->est_result_size_var("obs_id");
+    LOG_DEBUG(fmt::format("est_num_cells = {}", est_bytes[0] / 8));
+    LOG_DEBUG(fmt::format("est_bytes = {}", est_bytes[1]));
 
     mq.select_columns({"obs_id", "percent_mito"});
     mq.select_points<std::string>("obs_id", {"AAACATACAACCAC-1"});
     mq.select_ranges<std::string>(
         "obs_id", {{"TTTCGAACTCTCAT-1", "TTTGCATGCCTCAC-1"}});
 
+    size_t total_cells = 0;
     while (!mq.is_complete()) {
         auto num_cells = mq.submit();
+        LOG_DEBUG(fmt::format("num_cells = {}", num_cells));
+        total_cells += num_cells;
+        continue;
+
         auto mito = mq.data<float>("percent_mito");
         for (size_t i = 0; i < num_cells; i++) {
             auto obs = mq.string_view("obs_id", i);
@@ -42,6 +53,7 @@ void slice_soma(std::string_view soma_uri) {
                 fmt::format("obs_id = {} percent_mito = {}", obs, mito[i]));
         }
     }
+    LOG_DEBUG(fmt::format("total_cells = {}", total_cells));
 }
 
 void soma_query(std::string_view soma_uri) {
@@ -52,18 +64,18 @@ void soma_query(std::string_view soma_uri) {
     auto sq = soma->query();
     auto ctx = soma->context();
 
-    std::string obs_val = "B cells";
-    auto obs_qc = QueryCondition::create(*ctx, "louvain", obs_val, TILEDB_EQ);
-    std::vector<std::string> obs_cols = {"louvain"};
+    std::string obs_val = "human middle aged stage";
+    auto obs_qc = QueryCondition::create(
+        *ctx, "development_stage", obs_val, TILEDB_EQ);
+    std::vector<std::string> obs_cols = {"development_stage"};
+    sq->set_obs_condition(obs_qc);
+    sq->select_obs_attrs(obs_cols);
 
     uint64_t var_val = 50;
     auto var_qc = QueryCondition::create<uint64_t>(
         *ctx, "n_cells", var_val, TILEDB_LT);
-    std::vector<std::string> var_cols = {"n_cells"};
-
-    sq->set_obs_condition(obs_qc);
-    sq->set_var_condition(var_qc);
-    sq->select_obs_attrs(obs_cols);
+    std::vector<std::string> var_cols = {"var_id"};
+    //    sq->set_var_condition(var_qc);
     sq->select_var_attrs(var_cols);
 
     std::vector<std::string> obs_ids = {

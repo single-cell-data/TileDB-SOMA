@@ -115,6 +115,15 @@ class ManagedQuery {
     }
 
     /**
+     * @brief Return true if an invalid column has been selected.
+     *
+     * @return true An invalid column was selected
+     */
+    bool is_invalid() {
+        return invalid_columns_selected_;
+    }
+
+    /**
      * @brief Return a view of data in column `name`.
      *
      * @tparam T Data type
@@ -185,6 +194,9 @@ class ManagedQuery {
     // TileDB array being queried.
     std::shared_ptr<Array> array_;
 
+    // Array schema
+    ArraySchema schema_;
+
     // Initial number of cells to allocate for each ColumnBuffer.
     size_t initial_cells_;
 
@@ -193,6 +205,9 @@ class ManagedQuery {
 
     // Set of column names to read (dim and attr). If empty, query all columns.
     std::unordered_set<std::string> columns_;
+
+    // Invalid columns have been selected.
+    bool invalid_columns_selected_ = false;
 
     // Map of column name to ColumnBuffer.
     std::unordered_map<std::string, std::shared_ptr<ColumnBuffer>> buffers_;

@@ -15,7 +15,7 @@ namespace tiledbsc {
 using namespace tiledb;
 
 constexpr size_t DEFAULT_INDEX_ALLOC = 1 << 20;  // 1 MiB
-constexpr size_t DEFAULT_X_ALLOC = 1 << 24;      // 16 MiB
+constexpr size_t DEFAULT_X_ALLOC = 1 << 26;      // 64 MiB
 
 class SOMA;  // forward declaration
 

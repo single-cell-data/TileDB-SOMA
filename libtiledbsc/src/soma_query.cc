@@ -19,8 +19,15 @@ SOMAQuery::next_results() {
         return std::nullopt;
     }
 
+    // Abort if an invalid column was selected for the obs or var query.
+    if (mq_obs_->is_invalid() || mq_var_->is_invalid()) {
+        LOG_DEBUG(
+            fmt::format("[SOMAQuery] Abort due to invalid selected column."));
+        return std::nullopt;
+    }
+
     if (mq_x_->status() == Query::Status::UNINITIALIZED) {
-        // Submit obs and var querie tasks in parallel
+        // Submit obs and var query tasks in parallel
         auto obs_task = std::async(std::launch::async, [&]() {
             return query_and_select(mq_obs_, "obs_id");
         });
@@ -77,9 +84,12 @@ size_t SOMAQuery::query_and_select(
             num_cells));
     }
 
-    // Add dimension range points to the X query.
-    std::lock_guard<std::mutex> lock(mtx_);
-    mq_x_->select_points(dim_name, points);
+    // TODO: If the query returns all cells, no need to select points on X
+    if (true || num_cells) {
+        // Add dimension range points to the X query.
+        std::lock_guard<std::mutex> lock(mtx_);
+        mq_x_->select_points(dim_name, points);
+    }
 
     return num_cells;
 }

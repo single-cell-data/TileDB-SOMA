@@ -12,8 +12,9 @@ using namespace tiledb;
 
 ManagedQuery::ManagedQuery(std::shared_ptr<Array> array, size_t initial_cells)
     : array_(array)
+    , schema_(array->schema())
     , initial_cells_(initial_cells) {
-    query_ = std::make_unique<Query>(array->schema().context(), *array);
+    query_ = std::make_unique<Query>(schema_.context(), *array);
 
     if (array->schema().array_type() == TILEDB_SPARSE) {
         query_->set_layout(TILEDB_UNORDERED);
@@ -31,7 +32,15 @@ void ManagedQuery::select_columns(
     }
 
     for (auto& name : names) {
-        columns_.insert(name);
+        // Name is not an attribute or dimension.
+        if (!schema_.has_attribute(name) &&
+            !schema_.domain().has_dimension(name)) {
+            LOG_DEBUG(fmt::format(
+                "[ManagedQuery] Invalid column selected: {}", name));
+            invalid_columns_selected_ = true;
+        } else {
+            columns_.insert(name);
+        }
     }
 }
 
