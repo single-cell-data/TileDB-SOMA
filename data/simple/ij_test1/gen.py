@@ -1,23 +1,21 @@
-import tiledb, numpy as np
-from tiledb import *
+import numpy as np
+import tiledb
 
 # Reference/label array
 
-s1 = ArraySchema(
-    domain=Domain(
-        *[
-            Dim(name="z_name", tile=None, dtype="ascii"),
-        ]
+s1 = tiledb.ArraySchema(
+    domain=tiledb.Domain(
+        tiledb.Dim(name="z_name", tile=None, dtype="ascii"),
     ),
     attrs=[
-        Attr(name="z_idx", dtype="uint32", var=False, nullable=False),
+        tiledb.Attr(name="z_idx", dtype="uint32", var=False, nullable=False),
     ],
     cell_order="row-major",
     tile_order="row-major",
     capacity=10000,
     sparse=True,
     allows_duplicates=True,
-    coords_filters=FilterList([ZstdFilter(level=-1)]),
+    coords_filters=tiledb.FilterList([tiledb.ZstdFilter(level=-1)]),
 )
 
 tiledb.Array.create("ref", s1)
@@ -39,21 +37,19 @@ with tiledb.open("ref", "w") as A:
 
 # Target array
 
-s2 = ArraySchema(
-    domain=Domain(
-        *[
-            Dim(name="z_idx", domain=(0, 99), tile=10, dtype="uint32"),
-        ]
+s2 = tiledb.ArraySchema(
+    domain=tiledb.Domain(
+        tiledb.Dim(name="z_idx", domain=(0, 99), tile=10, dtype="uint32"),
     ),
     attrs=[
-        Attr(name="data", dtype="int32", var=False, nullable=False),
+        tiledb.Attr(name="data", dtype="int32", var=False, nullable=False),
     ],
     cell_order="row-major",
     tile_order="row-major",
     capacity=10000,
     sparse=True,
     allows_duplicates=False,
-    coords_filters=FilterList([ZstdFilter(level=-1)]),
+    coords_filters=tiledb.FilterList([tiledb.ZstdFilter(level=-1)]),
 )
 
 tiledb.Array.create("tgt", s2)
