@@ -48,7 +48,7 @@ def main(args):
     filepath = os.path.realpath(filepath)
     print(f"Updating {filepath}")
     print(f"  new version = {args.version}-{new_hash}")
-    print(f"  computing SHA1 hashes...")
+    print("  computing SHA1 hashes...")
 
     # all "print" statements in this "with" block go to the "fp" file
     with FileInput(filepath, inplace=True) as fp:
