@@ -1,3 +1,4 @@
+import os
 from typing import List, Optional, Set, Tuple
 
 import numpy as np
@@ -6,7 +7,7 @@ import tiledb
 
 import tiledbsc.util as util
 
-from .logging import logger
+from .logging import log_io
 from .tiledb_array import TileDBArray
 from .tiledb_group import TileDBGroup
 
@@ -204,7 +205,7 @@ class AnnotationDataFrame(TileDBArray):
         attr_filters = tiledb.FilterList([tiledb.ZstdFilter(level=-1)])
 
         s = util.get_start_stamp()
-        logger.info(f"{self._indent}START  WRITING {self.uri}")
+        log_io(None, f"{self._indent}START  WRITING {self.uri}")
 
         # Make the row-names column (barcodes for obs, gene names for var) explicitly named.
         # Otherwise it'll be called '__tiledb_rows'.
@@ -234,7 +235,7 @@ class AnnotationDataFrame(TileDBArray):
         mode = "ingest"
         if self.exists():
             mode = "append"
-            logger.info(f"{self._indent}Re-using existing array {self.uri}")
+            log_io(None, f"{self._indent}Re-using existing array {self.uri}")
 
         # ISSUE:
         # TileDB attributes can be stored as Unicode but they are not yet queryable via the TileDB
@@ -287,4 +288,7 @@ class AnnotationDataFrame(TileDBArray):
 
         self._set_object_type_metadata()
 
-        logger.info(util.format_elapsed(s, f"{self._indent}FINISH WRITING {self.uri}"))
+        log_io(
+            os.path.basename(self.uri),
+            util.format_elapsed(s, f"{self._indent}FINISH WRITING {self.uri}"),
+        )
