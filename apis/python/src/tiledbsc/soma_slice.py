@@ -1,4 +1,6 @@
-from typing import Dict
+from __future__ import annotations
+
+from typing import Dict, Optional, Sequence, Union
 
 import anndata as ad
 import pandas as pd
@@ -6,6 +8,7 @@ import pandas as pd
 from tiledbsc import util
 
 from .tiledb_group import TileDBGroup
+from .types import Matrix
 
 
 class SOMASlice(TileDBGroup):
@@ -15,19 +18,10 @@ class SOMASlice(TileDBGroup):
     pandas.DataFrame objects. No raw or uns.
     """
 
-    X: pd.DataFrame
-    obs: pd.DataFrame
-    var: pd.DataFrame
-    # TODO
-    # obsm: Dict[str, pd.DataFrame]
-    # varm: Dict[str, pd.DataFrame]
-    # obsp: Dict[str, pd.DataFrame]
-    # varp: Dict[str, pd.DataFrame]
-
     # ----------------------------------------------------------------
     def __init__(
         self,
-        X: Dict[str, pd.DataFrame],
+        X: Dict[str, Union[pd.DataFrame, Matrix]],
         obs: pd.DataFrame,
         var: pd.DataFrame,
         # TODO
@@ -120,7 +114,7 @@ class SOMASlice(TileDBGroup):
 
     # ----------------------------------------------------------------
     @classmethod
-    def concat(cls, soma_slices):
+    def concat(cls, soma_slices: Sequence[SOMASlice]) -> Optional[SOMASlice]:
         """
         Concatenates multiple `SOMASlice` objects into a single one. Implemented using `AnnData`'s
         `concat`.
@@ -163,8 +157,4 @@ class SOMASlice(TileDBGroup):
         for name in annc.layers:
             X[name] = annc.layers[name]
 
-        return cls(
-            X=X,
-            obs=annc.obs,
-            var=annc.var,
-        )
+        return cls(X=X, obs=annc.obs, var=annc.var)

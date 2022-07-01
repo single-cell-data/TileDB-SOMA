@@ -1,7 +1,9 @@
 from abc import ABC, abstractmethod
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional, Union
 
 import tiledb
+
+import tiledbsc
 
 from .soma_options import SOMAOptions
 
@@ -13,13 +15,7 @@ class TileDBObject(ABC):
     Manages soma_options, context, etc. which are common to both.
     """
 
-    uri: str
-    name: str
-
     _soma_options: SOMAOptions
-    _ctx: Optional[tiledb.Ctx]
-
-    _indent: str  # for display strings
 
     def __init__(
         self,
@@ -28,9 +24,7 @@ class TileDBObject(ABC):
         name: str,
         *,
         # Non-top-level objects can have a parent to propgate context, depth, etc.
-        # Circular import if we say this, but it must be a TileDBGroup:
-        # parent: Optional[TileDBGroup] = None,
-        parent=None,
+        parent: Optional["tiledbsc.TileDBGroup"] = None,
         # Top-level objects should specify these:
         soma_options: Optional[SOMAOptions] = None,
         ctx: Optional[tiledb.Ctx] = None,
@@ -80,7 +74,7 @@ class TileDBObject(ABC):
         with self._open("r") as obj:
             return dict(obj.meta)
 
-    def has_metadata(self, key):
+    def has_metadata(self, key: str) -> bool:
         """
         Returns whether metadata is associated with the group/array.
         """
@@ -94,7 +88,7 @@ class TileDBObject(ABC):
         with self._open("r") as obj:
             return list(obj.meta.keys())
 
-    def get_metadata(self, key):
+    def get_metadata(self, key: str) -> Any:
         """
         Returns metadata associated with the group/array.
         Raises `KeyError` if there is no such key in the metadata.
@@ -102,7 +96,7 @@ class TileDBObject(ABC):
         with self._open("r") as obj:
             return obj.meta[key]
 
-    def set_metadata(self, key: str, value) -> None:
+    def set_metadata(self, key: str, value: Any) -> None:
         """
         Returns metadata associated with the group/array.
         """
@@ -110,5 +104,5 @@ class TileDBObject(ABC):
             obj.meta[key] = value
 
     @abstractmethod
-    def _open(self, mode="r"):
+    def _open(self, mode: str = "r") -> Union[tiledb.Array, tiledb.Group]:
         """Open the underlying TileDB array or Group"""

@@ -1,8 +1,8 @@
 import os
-from typing import Dict, Iterator, List, Optional
+from typing import Dict, Iterator, List, Optional, Union
 
+import numpy as np
 import pandas as pd
-import scipy.sparse
 import tiledb
 
 import tiledbsc.util as util
@@ -10,6 +10,7 @@ import tiledbsc.util as util
 from .annotation_matrix import AnnotationMatrix
 from .logging import log_io
 from .tiledb_group import TileDBGroup
+from .types import Labels, Matrix
 
 
 class AnnotationMatrixGroup(TileDBGroup):
@@ -18,8 +19,6 @@ class AnnotationMatrixGroup(TileDBGroup):
     elements using soma.obsm['X_pca'] etc., or soma.obsm.X_pca if you prefer.  (The latter syntax is
     possible when the element name doesn't have dashes, dots, etc. in it.)
     """
-
-    dim_name: str
 
     # ----------------------------------------------------------------
     def __init__(
@@ -62,7 +61,7 @@ class AnnotationMatrixGroup(TileDBGroup):
             )
 
     # ----------------------------------------------------------------
-    def __getattr__(self, name) -> Optional[AnnotationMatrix]:
+    def __getattr__(self, name: str) -> Optional[AnnotationMatrix]:
         """
         This is called on `soma.obsm.name` when `name` is not already an attribute.
         This way you can do `soma.obsm.X_tsne` as an alias for `soma.obsm['X_tsne']`.
@@ -77,8 +76,8 @@ class AnnotationMatrixGroup(TileDBGroup):
     # ----------------------------------------------------------------
     def add_matrix_from_matrix_and_dim_values(
         self,
-        matrix,
-        dim_values,
+        matrix: Union[pd.DataFrame, Matrix],
+        dim_values: Labels,
         matrix_name: str,
     ) -> None:
         """
@@ -86,7 +85,7 @@ class AnnotationMatrixGroup(TileDBGroup):
 
         :param matrix: element of anndata.obsm, anndata.varm, or anndata.raw.varm.
         :param dim_values: anndata.obs_names, anndata.var_names, or anndata.raw.var_names.
-        :param matrix_name_name: name of the matrix, like `"X_tsne"` or `"PCs"`.
+        :param matrix_name: name of the matrix, like `"X_tsne"` or `"PCs"`.
         """
 
         # Must be done first, to create the parent directory
@@ -119,15 +118,13 @@ class AnnotationMatrixGroup(TileDBGroup):
         self.remove(matrix_name)
 
     # ----------------------------------------------------------------
-    def to_dict_of_csr(self) -> Dict[str, scipy.sparse.csr_matrix]:
+    def to_dict_of_csr(self) -> Dict[str, np.ndarray]:
         """
         Reads the obsm/varm group-member arrays into a dict from name to member array.
         Member arrays are returned in sparse CSR format.
         """
-
-        if (
-            not self.exists()
-        ):  # Not all groups have all four of obsm, obsp, varm, and varp.
+        if not self.exists():
+            # Not all groups have all four of obsm, obsp, varm, and varp.
             log_io(None, f"{self._indent}{self.uri} not found")
             return {}
 
@@ -174,7 +171,7 @@ class AnnotationMatrixGroup(TileDBGroup):
     #   the `[]` operator separately in the various classes which need indexing. This is again to
     #   avoid circular-import issues, and means that [] on `AnnotationMatrixGroup` will return an
     #   `AnnotationMatrix, [] on `UnsGroup` will return `UnsArray` or `UnsGroup`, etc.
-    def __getitem__(self, name) -> Optional[AnnotationMatrix]:
+    def __getitem__(self, name: str) -> Optional[AnnotationMatrix]:
         """
         Returns an `AnnotationMatrix` element at the given name within the group, or None if no such
         member exists.  Overloads the `[...]` operator.
@@ -196,7 +193,7 @@ class AnnotationMatrixGroup(TileDBGroup):
                 uri=obj.uri, name=name, dim_name=self.dim_name, parent=self
             )
 
-    def __contains__(self, name) -> bool:
+    def __contains__(self, name: str) -> bool:
         """
         Implements the `in` operator, e.g. `"namegoeshere" in soma.obsm/soma.varm`.
         """
