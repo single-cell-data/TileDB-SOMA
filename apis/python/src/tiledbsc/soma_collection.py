@@ -17,6 +17,7 @@ class SOMACollection(TileDBGroup):
     def __init__(
         self,
         uri: str,
+        *,
         name="soco",
         soma_options: Optional[SOMAOptions] = None,
         config: Optional[tiledb.Config] = None,

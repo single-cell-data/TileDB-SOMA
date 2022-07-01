@@ -55,6 +55,7 @@ class SOMA(TileDBGroup):
     def __init__(
         self,
         uri: str,
+        *,
         name=None,
         soma_options: Optional[SOMAOptions] = None,
         config: Optional[tiledb.Config] = None,

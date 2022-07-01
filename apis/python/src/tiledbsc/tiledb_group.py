@@ -19,6 +19,7 @@ class TileDBGroup(TileDBObject):
         self,
         uri: str,
         name: str,
+        *,
         # Non-top-level objects can have a parent to propgate context, depth, etc.
         # What we really want to say is:
         # parent: Optional[TileDBGroup] = None,

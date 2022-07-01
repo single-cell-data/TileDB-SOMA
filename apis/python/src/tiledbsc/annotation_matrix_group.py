@@ -26,6 +26,7 @@ class AnnotationMatrixGroup(TileDBGroup):
         self,
         uri: str,
         name: str,  # 'obsm' or 'varm'
+        *,
         parent: Optional[TileDBGroup] = None,
     ):
         """

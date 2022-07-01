@@ -28,6 +28,7 @@ class AssayMatrixGroup(TileDBGroup):
         col_dim_name: str,  # var_id for X, obs_id_j for obsp; var_id_j for varp
         row_dataframe: AnnotationDataFrame,  # Nominally a reference to soma.obs
         col_dataframe: AnnotationDataFrame,  # Nominally a reference to soma.var
+        *,
         parent: Optional[TileDBGroup] = None,
     ):
         """

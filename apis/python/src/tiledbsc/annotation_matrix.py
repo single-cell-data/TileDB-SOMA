@@ -23,6 +23,7 @@ class AnnotationMatrix(TileDBArray):
         uri: str,
         name: str,
         dim_name: str,
+        *,
         parent: Optional[TileDBGroup] = None,
     ):
         """

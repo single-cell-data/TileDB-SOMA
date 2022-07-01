@@ -23,6 +23,7 @@ class AnnotationDataFrame(TileDBArray):
         self,
         uri: str,
         name: str,
+        *,
         parent: Optional[TileDBGroup] = None,
     ):
         """
