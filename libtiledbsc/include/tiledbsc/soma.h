@@ -65,7 +65,7 @@ class SOMA {
      * @param name Name of the array to open
      * @return Array TileDB array
      */
-    Array open_array(const std::string& name);
+    std::shared_ptr<Array> open_array(const std::string& name);
 
     auto context() {
         return ctx_;

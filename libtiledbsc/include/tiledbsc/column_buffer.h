@@ -5,18 +5,23 @@
 
 #include <span>
 #include <tiledb/tiledb>
-#include <tiledbsc/tiledbsc>
+
+#include "tiledbsc/logger_public.h"
 
 namespace tiledbsc {
 
 using namespace tiledb;
 
 /**
- * @brief Buffer to store data from a TileDB dimension or attribute.
+ * @brief Class to store data for a TileDB dimension or attribute.
  *
  */
 class ColumnBuffer {
    public:
+    //===================================================================
+    //= public static
+    //===================================================================
+
     /**
      * @brief Create a ColumnBuffer from an array and column name.
      *
@@ -26,8 +31,8 @@ class ColumnBuffer {
      * @param bytes_per_cell Bytes per cell for variable length data (optional)
      * @return ColumnBuffer
      */
-    static ColumnBuffer create(
-        const Array& array,
+    static std::shared_ptr<ColumnBuffer> create(
+        std::shared_ptr<Array> array,
         std::string_view name,
         size_t num_cells,
         std::optional<size_t> bytes_per_cell = std::nullopt);
@@ -40,7 +45,7 @@ class ColumnBuffer {
      * @param bytes_per_cell Bytes per cell for variable length data (optional)
      * @return ColumnBuffer
      */
-    static ColumnBuffer create(
+    static std::shared_ptr<ColumnBuffer> create(
         const Dimension& dim,
         size_t num_cells,
         std::optional<size_t> bytes_per_cell = std::nullopt);
@@ -53,7 +58,7 @@ class ColumnBuffer {
      * @param bytes_per_cell Bytes per cell for variable length data (optional)
      * @return ColumnBuffer
      */
-    static ColumnBuffer create(
+    static std::shared_ptr<ColumnBuffer> create(
         const Attribute& attr,
         size_t num_cells,
         std::optional<size_t> bytes_per_cell = std::nullopt);
@@ -63,56 +68,61 @@ class ColumnBuffer {
      *
      * @param name Column name
      * @param type TileDB datatype
+     * @param num_cells Number of cells
      * @param data View of data
      * @param offsets View of offsets (optional)
      * @param validity View of validity (optional)
      * @return ColumnBuffer
      */
-    static ColumnBuffer create(
+    static std::shared_ptr<ColumnBuffer> create(
         std::string_view name,
         tiledb_datatype_t type,
+        size_t num_cells,
         std::span<std::byte> data,
         std::span<uint64_t> offsets = {},
         std::span<uint8_t> validity = {});
+
+    //===================================================================
+    //= public non-static
+    //===================================================================
+
+    /**
+     * @brief Construct a new ColumnBuffer object
+     *
+     * @param name Column name
+     * @param type TileDB datatype
+     * @param num_cells Number of cells
+     * @param data View of data
+     * @param offsets View of offsets (optional)
+     * @param validity View of validity (optional)
+     */
+    ColumnBuffer(
+        std::string_view name,
+        tiledb_datatype_t type,
+        size_t num_cells,
+        std::vector<std::byte> data,
+        std::vector<uint64_t> offsets,
+        std::vector<uint8_t> validity);
+
+    /**
+     * @brief Destroy the ColumnBuffer object
+     *
+     */
+    ~ColumnBuffer();
 
     /**
      * @brief Attach this ColumnBuffer to a TileDB query.
      *
      * @param query TileDB query
      */
-    void attach(Query& query) {
-        query.set_data_buffer(name_, data_);
-        if (!offsets_.empty()) {
-            query.set_offsets_buffer(name_, offsets_);
-        }
-        if (!validity_.empty()) {
-            query.set_validity_buffer(name_, validity_);
-        }
-    }
+    void attach(Query& query);
 
     /**
-     * @brief Resize the buffers to match the read query results.
+     * @brief Size num_cells_ to match the read query results.
      *
      * @param query TileDB query
      */
-    void resize(const Query& query) {
-        auto [num_offsets, num_elements] = query
-                                               .result_buffer_elements()[name_];
-
-        // Resize data buffer (bytes) to match query result size (elements)
-        data_.resize(num_elements * type_size_);
-
-        if (num_offsets) {
-            // Variable length data
-            offsets_.resize(num_offsets);
-            // Extra offset value for arrow
-            offsets_.push_back(data_.size());
-            validity_.resize(num_offsets);
-        } else {
-            // Fixed length data
-            validity_.resize(num_elements);
-        }
-    }
+    size_t update_size(const Query& query);
 
     /**
      * @brief Return a view of the ColumnBuffer data.
@@ -122,8 +132,15 @@ class ColumnBuffer {
      */
     template <typename T>
     std::span<T> data() {
-        return std::span<T>((T*)data_.data(), data_.size() / type_size_);
+        return std::span<T>((T*)data_.data(), num_cells_);
     }
+
+    /**
+     * @brief Return data in a vector of strings.
+     *
+     * @return std::vector<std::string>
+     */
+    std::vector<std::string> strings();
 
     /**
      * @brief Return a string_view of the string at the provided cell index.
@@ -131,11 +148,7 @@ class ColumnBuffer {
      * @param index Cell index
      * @return std::string_view string view
      */
-    std::string_view string_view(uint64_t index) {
-        auto start = offsets_[index];
-        auto len = offsets_[index + 1] - offsets_[index];
-        return std::string_view((char*)(data_.data() + start), len);
-    }
+    std::string_view string_view(uint64_t index);
 
     /**
      * @brief Return a view of the ColumnBuffer offsets.
@@ -166,9 +179,6 @@ class ColumnBuffer {
 
     /**
      * @brief Return true if the buffer contains variable length data.
-     *
-     * @return true
-     * @return false
      */
     bool is_var() {
         return !offsets_.empty();
@@ -176,25 +186,18 @@ class ColumnBuffer {
 
     /**
      * @brief Return true if the buffer contains nullable data.
-     *
-     * @return true
-     * @return false
      */
     bool is_nullable() {
         return !validity_.empty();
     }
 
-    /**
-     * @brief Destroy the ColumnBuffer object
-     *
-     */
-    ~ColumnBuffer();
-
-    ColumnBuffer() = delete;
-
    private:
+    //===================================================================
+    //= private static
+    //===================================================================
+
     /**
-     * @brief
+     * @brief Allocate and return a ColumnBuffer.
      *
      * @param name Column name
      * @param type TileDB datatype
@@ -203,7 +206,7 @@ class ColumnBuffer {
      * @param is_nullable True if nullable data
      * @return ColumnBuffer
      */
-    static ColumnBuffer alloc(
+    static std::shared_ptr<ColumnBuffer> alloc(
         std::string_view name,
         tiledb_datatype_t type,
         size_t num_cells,
@@ -211,22 +214,9 @@ class ColumnBuffer {
         bool is_nullable,
         std::optional<size_t> bytes_per_cell = std::nullopt);
 
-    /**
-     * @brief Construct a new ColumnBuffer object
-     *
-     * @param name Column name
-     * @param type TileDB datatype
-     * @param num_cells Number of cells
-     * @param data View of data
-     * @param offsets View of offsets (optional)
-     * @param validity View of validity (optional)
-     */
-    ColumnBuffer(
-        std::string_view name,
-        tiledb_datatype_t type,
-        std::vector<std::byte> data,
-        std::vector<uint64_t> offsets,
-        std::vector<uint8_t> validity);
+    //===================================================================
+    //= private non-static
+    //===================================================================
 
     // Name of the column from the schema.
     std::string name_;
@@ -234,7 +224,11 @@ class ColumnBuffer {
     // Data type of the column from the schema.
     tiledb_datatype_t type_;
 
+    // Bytes per element.
     uint64_t type_size_;
+
+    // Number of cells.
+    uint64_t num_cells_;
 
     // Data buffer.
     std::vector<std::byte> data_;

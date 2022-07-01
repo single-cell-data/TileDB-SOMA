@@ -22,6 +22,7 @@ if (TILEDBSC_TESTING)
     add_executable(unit_sc EXCLUDE_FROM_ALL
         $<TARGET_OBJECTS:TILEDB_SC_OBJECTS>
         unit_column_buffer.cc
+        unit_managed_query.cc
     )
 
     target_link_libraries(unit_sc
@@ -40,7 +41,7 @@ if (TILEDBSC_TESTING)
 
     add_test(
         NAME "unit_sc"
-        COMMAND $<TARGET_FILE:unit_sc>
+        COMMAND $<TARGET_FILE:unit_sc> "--durations=yes"
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
     )
 
