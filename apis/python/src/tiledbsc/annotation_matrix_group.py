@@ -105,6 +105,20 @@ class AnnotationMatrixGroup(TileDBGroup):
         self._add_object(annotation_matrix)
 
     # ----------------------------------------------------------------
+    def remove(self, matrix_name: str) -> None:
+        """
+        Removes a component of the `obsm` or `varm` subgroup for a SOMA object.
+        Implements `del soma.obsm['X_pca']` etc.
+        """
+        self._remove_object_by_name(matrix_name)
+
+    def __delete__(self, matrix_name: str) -> None:
+        """
+        Removes a component of the `obsm` or `varm` subgroup for a SOMA object.
+        """
+        self.remove(matrix_name)
+
+    # ----------------------------------------------------------------
     def to_dict_of_csr(self) -> Dict[str, scipy.sparse.csr_matrix]:
         """
         Reads the obsm/varm group-member arrays into a dict from name to member array.
