@@ -3,10 +3,24 @@ import scanpy
 import tiledb
 
 import tiledbsc
+import tiledbsc.logging
 import tiledbsc.util
 import tiledbsc.util_ann
 
 from .logging import log_io
+
+
+# ----------------------------------------------------------------
+def from_h5ad_unless_exists(soma: tiledbsc.SOMA, input_path: str) -> None:
+    """
+    Skips the ingest if the SOMA is already there. A convenient keystroke-saver
+    so users don't need to replicate the if-test.
+    """
+    if tiledbsc.util.is_soma(soma.uri):
+        tiledbsc.logging.logger.info(f"Already exists, skipping ingest: {soma.uri}")
+        return
+    else:
+        from_h5ad(soma, input_path)
 
 
 # ----------------------------------------------------------------
@@ -55,6 +69,18 @@ def _from_h5ad_common(soma: tiledbsc.SOMA, input_path: str, handler_func) -> Non
 
 
 # ----------------------------------------------------------------
+def from_10x_unless_exists(soma: tiledbsc.SOMA, input_path: str) -> None:
+    """
+    Skips the ingest if the SOMA is already there. A convenient keystroke-saver
+    so users don't need to replicate the if-test.
+    """
+    if tiledbsc.util.is_soma(soma.uri):
+        tiledbsc.logging.logger.info(f"Already exists, skipping ingest: {soma.uri}")
+        return
+    else:
+        from_10x(soma, input_path)
+
+
 def from_10x(soma: tiledbsc.SOMA, input_path: str) -> None:
     """
     Reads a 10X file and writes to a TileDB group structure.
@@ -81,6 +107,19 @@ def from_10x(soma: tiledbsc.SOMA, input_path: str) -> None:
     )
 
     return anndata
+
+
+# ----------------------------------------------------------------
+def from_anndata_unless_exists(soma: tiledbsc.SOMA, anndata: ad.AnnData) -> None:
+    """
+    Skips the ingest if the SOMA is already there. A convenient keystroke-saver
+    so users don't need to replicate the if-test.
+    """
+    if tiledbsc.util.is_soma(soma.uri):
+        tiledbsc.logging.logger.info(f"Already exists, skipping ingest: {soma.uri}")
+        return
+    else:
+        from_anndata(soma, anndata)
 
 
 # ----------------------------------------------------------------
