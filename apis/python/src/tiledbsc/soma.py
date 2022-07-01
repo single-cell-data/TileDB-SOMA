@@ -301,6 +301,7 @@ class SOMA(TileDBGroup):
     # ----------------------------------------------------------------
     def query(
         self,
+        *,
         obs_attrs: Optional[List[str]] = None,
         obs_query_string: Optional[str] = None,
         obs_ids: Optional[List[str]] = None,

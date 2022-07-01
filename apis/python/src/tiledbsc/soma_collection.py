@@ -153,6 +153,7 @@ class SOMACollection(TileDBGroup):
     # ----------------------------------------------------------------
     def query(
         self,
+        *,
         obs_attrs: Optional[List[str]] = None,
         obs_query_string: str = None,
         obs_ids: List[str] = None,
