@@ -24,11 +24,11 @@ pd = pandas
 
 
 def count_obs(soma: tiledbsc.SOMA, attr_name: str) -> None:
-    print(soma.obs.df(attrs=[attr_name]).groupby(attr_name).size())
+    print(soma.obs.df(attrs=[attr_name]).groupby(attr_name).size().sort_values())
 
 
 def count_var(soma: tiledbsc.SOMA, attr_name: str) -> None:
-    print(soma.var.df(attrs=[attr_name]).groupby(attr_name).size())
+    print(soma.var.df(attrs=[attr_name]).groupby(attr_name).size().sort_values())
 
 
 if len(sys.argv) == 1:
