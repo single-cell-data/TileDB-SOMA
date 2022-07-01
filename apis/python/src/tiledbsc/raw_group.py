@@ -8,7 +8,7 @@ from .annotation_dataframe import AnnotationDataFrame
 from .annotation_matrix_group import AnnotationMatrixGroup
 from .annotation_pairwise_matrix_group import AnnotationPairwiseMatrixGroup
 from .assay_matrix_group import AssayMatrixGroup
-from .logging import logger
+from .logging import log_io
 from .tiledb_group import TileDBGroup
 
 
@@ -68,7 +68,7 @@ class RawGroup(TileDBGroup):
         Writes `anndata.raw` to a TileDB group structure.
         """
         s = util.get_start_stamp()
-        logger.info(f"{self._indent}START  WRITING {self.uri}")
+        log_io(None, f"{self._indent}START  WRITING {self.uri}")
 
         # Must be done first, to create the parent directory
         self.create_unless_exists()
@@ -91,7 +91,7 @@ class RawGroup(TileDBGroup):
             )
         self._add_object(self.varm)
 
-        logger.info(util.format_elapsed(s, f"{self._indent}FINISH WRITING {self.uri}"))
+        log_io(None, util.format_elapsed(s, f"{self._indent}FINISH WRITING {self.uri}"))
 
     # ----------------------------------------------------------------
     def to_anndata_raw(self, obs_labels):

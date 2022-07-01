@@ -58,7 +58,7 @@ class TileDBGroup(TileDBObject):
         """
         Creates the TileDB group data structure on disk/S3/cloud.
         """
-        logger.info(f"{self._indent}Creating TileDB group {self.uri}")
+        logger.debug(f"{self._indent}Creating TileDB group {self.uri}")
         tiledb.group_create(uri=self.uri, ctx=self._ctx)
 
         self._set_object_type_metadata()

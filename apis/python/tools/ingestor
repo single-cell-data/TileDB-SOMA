@@ -14,7 +14,6 @@ URIs will be supported.
 """
 
 import argparse
-import logging
 import os
 import shutil
 import sys
@@ -25,8 +24,6 @@ import tiledbsc
 import tiledbsc.io
 import tiledbsc.util
 
-logger = logging.getLogger("tiledbsc")
-
 
 # ================================================================
 def main():
@@ -35,6 +32,9 @@ def main():
     )
     parser.add_argument(
         "-q", "--quiet", help="decrease output verbosity", action="store_true"
+    )
+    parser.add_argument(
+        "--debug", help="increase output verbosity", action="store_true"
     )
     parser.add_argument(
         "-n",
@@ -97,8 +97,9 @@ select `relative=True`. (This is the default.)
             args.ifexists = ["continue"]
 
     write_soco = args.soco
-    verbose = not args.quiet
-    if verbose:
+    if args.debug:
+        tiledbsc.logging.debug()
+    elif not args.quiet:
         tiledbsc.logging.info()
 
     if args.relative is None:
@@ -189,7 +190,7 @@ def ingest_one(
     vfs = tiledb.VFS()
     if not vfs.is_file(input_path):
         # Print this neatly and exit neatly, to avoid a multi-line stack trace otherwise.
-        logging.error(f"Input path not found: {input_path}")
+        tiledbsc.logging.logger.error(f"Input path not found: {input_path}")
         sys.exit(1)
 
     # Prepare to write the output.
@@ -212,10 +213,12 @@ def ingest_one(
     else:
         if os.path.exists(output_path):
             if ifexists == "continue":
-                logger.info(f"Already exists; continuing: {output_path}")
+                tiledbsc.logging.logger.info(
+                    f"Already exists; continuing: {output_path}"
+                )
                 return
             elif ifexists == "abort":
-                logging.error(f"Already exists; aborting: {output_path}")
+                tiledbsc.logging.error(f"Already exists; aborting: {output_path}")
                 sys.exit(1)
             elif ifexists == "replace":
                 if output_path.startswith("s3://") or output_path.startswith(
@@ -224,7 +227,9 @@ def ingest_one(
                     raise Exception(
                         "--ifexists replace currently only is compatible with local-disk paths"
                     )
-                print(f"Already exists; replacing: {output_path}")
+                tiledbsc.logging.logger.info(
+                    f"Already exists; replacing: {output_path}"
+                )
                 shutil.rmtree(output_path)  # Overwrite
             else:
                 raise Exception(
@@ -233,7 +238,7 @@ def ingest_one(
         # Do the ingest into TileDB.
         tiledbsc.io.from_h5ad(soma, input_path)
 
-    logger.info(f"Wrote {output_path}")
+    tiledbsc.logging.logger.info(f"Wrote {output_path}")
 
     if write_soco:
         soco = tiledbsc.SOMACollection(soco_dir, soma_options=soma_options)
@@ -242,8 +247,10 @@ def ingest_one(
             raise Exception(f"Could not create SOCO at {soco.uri}")
         soco.add(soma)
 
-        logger.info("")
-        logger.info(f"Added SOMA {soma.name} to SOMACollection {soco_dir}")
+        tiledbsc.logging.logger.info("")
+        tiledbsc.logging.logger.info(
+            f"Added SOMA {soma.name} to SOMACollection {soco_dir}"
+        )
 
 
 # ================================================================

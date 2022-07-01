@@ -8,7 +8,7 @@ import tiledb
 import tiledbsc.util as util
 
 from .annotation_matrix import AnnotationMatrix
-from .logging import logger
+from .logging import log_io
 from .tiledb_group import TileDBGroup
 
 
@@ -128,17 +128,17 @@ class AnnotationMatrixGroup(TileDBGroup):
         if (
             not self.exists()
         ):  # Not all groups have all four of obsm, obsp, varm, and varp.
-            logger.info(f"{self._indent}{self.uri} not found")
+            log_io(None, f"{self._indent}{self.uri} not found")
             return {}
 
         s = util.get_start_stamp()
-        logger.info(f"{self._indent}START  read {self.uri}")
+        log_io(None, f"{self._indent}START  read {self.uri}")
 
         with self._open() as G:
             matrices_in_group = {}
             for element in G:
                 s2 = util.get_start_stamp()
-                logger.info(f"{self._indent}START  read {element.uri}")
+                log_io(None, f"{self._indent}START  read {element.uri}")
 
                 with tiledb.open(element.uri, ctx=self._ctx) as A:
                     df = pd.DataFrame(A[:])
@@ -146,11 +146,15 @@ class AnnotationMatrixGroup(TileDBGroup):
                     matrix_name = os.path.basename(element.uri)  # e.g. 'X_pca'
                     matrices_in_group[matrix_name] = df.to_numpy()
 
-                logger.info(
-                    util.format_elapsed(s2, f"{self._indent}FINISH read {element.uri}")
+                log_io(
+                    "",
+                    util.format_elapsed(s2, f"{self._indent}FINISH read {element.uri}"),
                 )
 
-        logger.info(util.format_elapsed(s, f"{self._indent}FINISH read {self.uri}"))
+        log_io(
+            os.path.basename(self.uri),
+            util.format_elapsed(s, f"{self._indent}FINISH read {self.uri}"),
+        )
 
         return matrices_in_group
 

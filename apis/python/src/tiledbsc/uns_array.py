@@ -7,7 +7,7 @@ import tiledb
 
 import tiledbsc.util as util
 
-from .logging import logger
+from .logging import log_io
 from .tiledb_array import TileDBArray
 from .tiledb_group import TileDBGroup
 
@@ -37,7 +37,7 @@ class UnsArray(TileDBArray):
         """
 
         s = util.get_start_stamp()
-        logger.info(f"{self._indent}START  WRITING PANDAS.DATAFRAME {self.uri}")
+        log_io(None, f"{self._indent}START  WRITING PANDAS.DATAFRAME {self.uri}")
 
         tiledb.from_pandas(
             uri=self.uri,
@@ -47,10 +47,11 @@ class UnsArray(TileDBArray):
             ctx=self._ctx,
         )
 
-        logger.info(
+        log_io(
+            None,
             util.format_elapsed(
                 s, f"{self._indent}FINISH WRITING PANDAS.DATAFRAME {self.uri}"
-            )
+            ),
         )
 
     # ----------------------------------------------------------------
@@ -88,7 +89,7 @@ class UnsArray(TileDBArray):
         """
 
         s = util.get_start_stamp()
-        logger.info(f"{self._indent}START  WRITING FROM NUMPY.NDARRAY {self.uri}")
+        log_io(None, f"{self._indent}START  WRITING FROM NUMPY.NDARRAY {self.uri}")
 
         if "numpy" in str(type(arr)) and str(arr.dtype).startswith("<U"):
             # Note arr.astype('str') does not lead to a successfuly tiledb.from_numpy.
@@ -97,15 +98,16 @@ class UnsArray(TileDBArray):
         # overwrite = False
         # if self.exists:
         #     overwrite = True
-        #     logger.info(f"{self._indent}Re-using existing array {self.uri}")
+        #     log_io(None, f"{self._indent}Re-using existing array {self.uri}")
         # tiledb.from_numpy(uri=self.uri, array=arr, ctx=self._ctx, overwrite=overwrite)
         # TODO: find the right syntax for update-in-place (tiledb.from_pandas uses `mode`)
         tiledb.from_numpy(uri=self.uri, array=arr, ctx=self._ctx)
 
-        logger.info(
+        log_io(
+            None,
             util.format_elapsed(
                 s, f"{self._indent}FINISH WRITING FROM NUMPY.NDARRAY {self.uri}"
-            )
+            ),
         )
 
     # ----------------------------------------------------------------
@@ -117,20 +119,21 @@ class UnsArray(TileDBArray):
         """
 
         s = util.get_start_stamp()
-        logger.info(f"{self._indent}START  WRITING FROM SCIPY.SPARSE.CSR {self.uri}")
+        log_io(None, f"{self._indent}START  WRITING FROM SCIPY.SPARSE.CSR {self.uri}")
 
         nrows, ncols = csr.shape
         if self.exists():
-            logger.info(f"{self._indent}Re-using existing array {self.uri}")
+            log_io(None, f"{self._indent}Re-using existing array {self.uri}")
         else:
             self.create_empty_array_for_csr("data", csr.dtype, nrows, ncols)
 
         self.ingest_data_from_csr(csr)
 
-        logger.info(
+        log_io(
+            None,
             util.format_elapsed(
                 s, f"{self._indent}FINISH WRITING FROM SCIPY.SPARSE.CSR {self.uri}"
-            )
+            ),
         )
 
     # ----------------------------------------------------------------

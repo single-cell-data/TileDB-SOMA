@@ -8,7 +8,7 @@ import tiledbsc.util as util
 
 from .annotation_dataframe import AnnotationDataFrame
 from .assay_matrix import AssayMatrix
-from .logging import logger
+from .logging import log_io
 from .tiledb_group import TileDBGroup
 
 
@@ -159,29 +159,33 @@ class AnnotationPairwiseMatrixGroup(TileDBGroup):
         except tiledb.TileDBError:
             pass
         if grp is None:
-            logger.info(f"{self._indent}{self.uri} not found")
+            log_io(None, f"{self._indent}{self.uri} not found")
             return {}
 
         s = util.get_start_stamp()
-        logger.info(f"{self._indent}START  read {self.uri}")
+        log_io(None, f"{self._indent}START  read {self.uri}")
 
         matrices_in_group = {}
         for element in self:
             s2 = util.get_start_stamp()
-            logger.info(f"{self._indent}START  read {element.uri}")
+            log_io(None, f"{self._indent}START  read {element.uri}")
 
             matrix_name = os.path.basename(element.uri)  # TODO: fix for tiledb cloud
             matrices_in_group[matrix_name] = element.to_csr_matrix(
                 obs_df_index, var_df_index
             )
 
-            logger.info(
-                util.format_elapsed(s2, f"{self._indent}FINISH read {element.uri}")
+            log_io(
+                None,
+                util.format_elapsed(s2, f"{self._indent}FINISH read {element.uri}"),
             )
 
         grp.close()
 
-        logger.info(util.format_elapsed(s, f"{self._indent}FINISH read {self.uri}"))
+        log_io(
+            os.path.basename(self.uri),
+            util.format_elapsed(s, f"{self._indent}FINISH WRITING {self.uri}"),
+        )
 
         return matrices_in_group
 
