@@ -20,7 +20,9 @@ def show_soma_schemas(soma_uri: str, ctx: Optional[tiledb.Ctx] = None) -> None:
     soma = tiledbsc.SOMA(soma_uri)
 
     for key in soma.X.keys():
-        _show_array_schema(soma.X[key].uri, ctx)
+        value = soma.X[key]
+        assert value is not None
+        _show_array_schema(value.uri, ctx)
     _show_array_schema(soma.obs.uri, ctx)
     _show_array_schema(soma.var.uri, ctx)
 
@@ -32,7 +34,9 @@ def show_soma_schemas(soma_uri: str, ctx: Optional[tiledb.Ctx] = None) -> None:
     # Not all groups have raw X data
     if soma.raw.exists():
         for key in soma.raw.X.keys():
-            _show_array_schema(soma.raw.X[key].uri, ctx)
+            value = soma.raw.X[key]
+            assert value is not None
+            _show_array_schema(value.uri, ctx)
             _show_array_schema(soma.raw.var.uri, ctx)
 
 

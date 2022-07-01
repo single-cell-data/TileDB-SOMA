@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import Iterator, List, Optional, Set
 
 import tiledb
 
@@ -92,22 +92,19 @@ class SOMACollection(TileDBGroup):
         self._remove_object(soma)
 
     # ----------------------------------------------------------------
-    def keys(self) -> None:
+    def keys(self) -> List[str]:
         """
         Returns the names of the SOMAs in the collection.
         """
         return self._get_member_names()
 
     # ----------------------------------------------------------------
-    def __iter__(self) -> List[SOMA]:
+    def __iter__(self) -> Iterator[SOMA]:
         """
         Implements `for soma in soco: ...`
         """
-        retval = []
         for name, uri in self._get_member_names_to_uris().items():
-            soma = SOMA(uri=uri, name=name, parent=self, ctx=self._ctx)
-            retval.append(soma)
-        return iter(retval)
+            yield SOMA(uri=uri, name=name, parent=self, ctx=self._ctx)
 
     # ----------------------------------------------------------------
     def __contains__(self, name: str) -> bool:
@@ -133,7 +130,7 @@ class SOMACollection(TileDBGroup):
     #   the `[]` operator separately in the various classes which need indexing. This is again to
     #   avoid circular-import issues, and means that [] on `AnnotationMatrixGroup` will return an
     #   `AnnotationMatrix, [] on `UnsGroup` will return `UnsArray` or `UnsGroup`, etc.
-    def __getitem__(self, name) -> SOMA:
+    def __getitem__(self, name) -> Optional[SOMA]:
         """
         Returns a `SOMA` element at the given name within the group, or `None` if no such
         member exists.  Overloads the `[...]` operator.
@@ -209,23 +206,23 @@ class SOMACollection(TileDBGroup):
         return SOMASlice.concat(soma_slices)
 
     # ----------------------------------------------------------------
-    def find_unique_obs_values(self, obs_label: str) -> List:
+    def find_unique_obs_values(self, obs_label: str) -> Set:
         """
-        Given an `obs` label such as `cell_type` or `tissue`, returns a list of unique values for
-        that label among all SOMAs in the collection.
+        Given an `obs` label such as `cell_type` or `tissue`, returns a set of unique
+        values for that label among all SOMAs in the collection.
         """
         return self._find_unique_obs_or_var_values(obs_label, True)
 
-    def find_unique_var_values(self, var_label: str) -> List:
+    def find_unique_var_values(self, var_label: str) -> Set:
         """
-        Given an `var` label such as `feature_name`, returns a list of unique values for
+        Given an `var` label such as `feature_name`, returns a set of unique values for
         that label among all SOMAs in the collection.
         """
         return self._find_unique_obs_or_var_values(var_label, False)
 
     def _find_unique_obs_or_var_values(
         self, obs_or_var_label: str, use_obs: bool
-    ) -> List:
+    ) -> Set:
         """
         Helper method for `find_unique_obs_values` and `find_unique_var_values`.
         """
@@ -235,9 +232,6 @@ class SOMACollection(TileDBGroup):
             annotation_matrix = soma.obs if use_obs else soma.var
             if obs_or_var_label not in annotation_matrix.keys():
                 continue
-
-            unique_values_in_soma = list(set(annotation_matrix.df()[obs_or_var_label]))
-
-            unique_values_in_soco = unique_values_in_soco.union(unique_values_in_soma)
+            unique_values_in_soco.update(annotation_matrix.df()[obs_or_var_label])
 
         return unique_values_in_soco

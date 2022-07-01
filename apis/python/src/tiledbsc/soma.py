@@ -1,5 +1,8 @@
+from __future__ import annotations
+
 import os
-from typing import Dict, List, Optional
+from collections import Counter
+from typing import List, Optional
 
 import pandas as pd
 import tiledb
@@ -223,7 +226,7 @@ class SOMA(TileDBGroup):
         return self._get_obs_or_var_value_counts(var_label, False)
 
     def _get_obs_or_var_value_counts(
-        self, obs_or_var_label: str, use_obs: True
+        self, obs_or_var_label: str, use_obs: bool
     ) -> pd.DataFrame:
         """
         Supporting method for `get_obs_value_counts` and `get_var_value_counts`.
@@ -233,14 +236,7 @@ class SOMA(TileDBGroup):
         if obs_or_var_label not in obs_or_var:
             return
 
-        counts = {}
-        obs_label_values = list(obs_or_var[obs_or_var_label])
-        for obs_label_value in obs_label_values:
-            if obs_label_value in counts:
-                counts[obs_label_value] += 1
-            else:
-                counts[obs_label_value] = 1
-
+        counts = Counter(obs_or_var[obs_or_var_label])
         name_column = []
         counts_column = []
         for k, v in dict(
@@ -254,7 +250,7 @@ class SOMA(TileDBGroup):
         return df
 
     # ----------------------------------------------------------------
-    def dim_slice(self, obs_ids, var_ids) -> Dict:
+    def dim_slice(self, obs_ids, var_ids) -> Optional[SOMASlice]:
         """
         Subselects the SOMA's obs, var, and X/data using the specified obs_ids and var_ids.
         Using a value of `None` for obs_ids means use all obs_ids, and likewise for var_ids.
@@ -310,7 +306,7 @@ class SOMA(TileDBGroup):
         var_attrs: Optional[List[str]] = None,
         var_query_string: Optional[str] = None,
         var_ids: Optional[List[str]] = None,
-    ) -> SOMASlice:
+    ) -> Optional[SOMASlice]:
         """
         Subselects the SOMA's obs, var, and X/data using the specified queries on obs and var.
         Queries use the TileDB-Py `QueryCondition` API.
@@ -378,14 +374,13 @@ class SOMA(TileDBGroup):
         """
         An internal method for constructing a `SOMASlice` object given query results.
         """
+        X = {}
+        for key in self.X.keys():
+            value = self.X[key]
+            assert value is not None
+            X[key] = value.dim_select(obs_ids, var_ids)
 
-        X = {key: self.X[key].dim_select(obs_ids, var_ids) for key in self.X.keys()}
-
-        return SOMASlice(
-            X=X,
-            obs=slice_obs_df,
-            var=slice_var_df,
-        )
+        return SOMASlice(X=X, obs=slice_obs_df, var=slice_var_df)
 
     # ----------------------------------------------------------------
     @classmethod
@@ -398,7 +393,7 @@ class SOMA(TileDBGroup):
         config: Optional[tiledb.Config] = None,
         ctx: Optional[tiledb.Ctx] = None,
         parent: Optional[TileDBGroup] = None,  # E.g. a SOMA collection
-    ) -> None:
+    ) -> SOMA:
         """
         Constructs `SOMA` storage from a given in-memory `SOMASlice` object.
         """

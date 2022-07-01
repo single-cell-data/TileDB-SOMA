@@ -12,7 +12,8 @@ import os
 import sys
 
 import tiledbsc
-import tiledbsc.logging
+
+logger = logging.getLogger("tiledbsc")
 
 
 # ================================================================
@@ -69,20 +70,23 @@ select `relative=True`. (This is the default.)
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     collection_path = args.o.rstrip("/")
 
-    soma_options = tiledbsc.SOMAOptions()
-
-    if args.relative is not None:
+    if args.relative is None:
+        rel_member_uris = None
+    else:
         relative = args.relative[0]
         if relative == "true":
-            soma_options.member_uris_are_relative = True
+            rel_member_uris = True
         elif relative == "false":
-            soma_options.member_uris_are_relative = False
+            rel_member_uris = False
         elif relative == "auto":
-            soma_options.member_uris_are_relative = None
+            rel_member_uris = None
         else:
             raise Exception(f"Internal coding error in {__file__}")
 
-    soco = tiledbsc.SOMACollection(collection_path, soma_options=soma_options)
+    soco = tiledbsc.SOMACollection(
+        collection_path,
+        soma_options=tiledbsc.SOMAOptions(member_uris_are_relative=rel_member_uris),
+    )
 
     count = 0
     if args.add:
@@ -111,7 +115,7 @@ select `relative=True`. (This is the default.)
             soma_uri = soma_uri.rstrip("/")
             name = os.path.basename(soma_uri)
             soma = tiledbsc.SOMA(uri=soma_uri, name=name, parent=soco)
-            tiledbsc.logging.logger.info(f"Adding {name} to {soma_uri}")
+            logger.info(f"Adding {name} to {soma_uri}")
             soco.add(soma)
 
     if args.remove:
@@ -119,7 +123,7 @@ select `relative=True`. (This is the default.)
             soma_uri = soma_uri.rstrip("/")
             name = os.path.basename(soma_uri)
             soma = tiledbsc.SOMA(uri=soma_uri, name=name, parent=soco)
-            tiledbsc.logging.logger.info(f"Removing {name} from {soma_uri}")
+            logger.info(f"Removing {name} from {soma_uri}")
             soco.remove(soma)
 
     if args.list:

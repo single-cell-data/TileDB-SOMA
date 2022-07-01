@@ -1,6 +1,6 @@
 import logging
 
-logger = logging.getLogger(__name__)  # Nominally __name__ is 'tiledbsc'
+logger = logging.getLogger("tiledbsc")
 
 
 def info():

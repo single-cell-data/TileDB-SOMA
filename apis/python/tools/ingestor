@@ -23,8 +23,9 @@ import tiledb
 
 import tiledbsc
 import tiledbsc.io
-import tiledbsc.logging
 import tiledbsc.util
+
+logger = logging.getLogger("tiledbsc")
 
 
 # ================================================================
@@ -95,24 +96,25 @@ select `relative=True`. (This is the default.)
         else:
             args.ifexists = ["continue"]
 
-    soma_options = tiledbsc.SOMAOptions()
-
     write_soco = args.soco
     verbose = not args.quiet
     if verbose:
         tiledbsc.logging.info()
 
-    if args.relative is not None:
+    if args.relative is None:
+        rel_member_uris = None
+    else:
         relative = args.relative[0]
         if relative == "true":
-            soma_options.member_uris_are_relative = True
+            rel_member_uris = True
         elif relative == "false":
-            soma_options.member_uris_are_relative = False
+            rel_member_uris = False
         elif relative == "auto":
-            soma_options.member_uris_are_relative = None
+            rel_member_uris = None
         else:
             raise Exception(f"Internal coding error in {__file__}")
 
+    soma_options = tiledbsc.SOMAOptions(member_uris_are_relative=rel_member_uris)
     outdir = args.o.rstrip("/")
 
     if args.n:
@@ -210,9 +212,7 @@ def ingest_one(
     else:
         if os.path.exists(output_path):
             if ifexists == "continue":
-                tiledbsc.logging.logger.info(
-                    f"Already exists; continuing: {output_path}"
-                )
+                logger.info(f"Already exists; continuing: {output_path}")
                 return
             elif ifexists == "abort":
                 logging.error(f"Already exists; aborting: {output_path}")
@@ -233,7 +233,7 @@ def ingest_one(
         # Do the ingest into TileDB.
         tiledbsc.io.from_h5ad(soma, input_path)
 
-    tiledbsc.logging.logger.info(f"Wrote {output_path}")
+    logger.info(f"Wrote {output_path}")
 
     if write_soco:
         soco = tiledbsc.SOMACollection(soco_dir, soma_options=soma_options)
@@ -242,10 +242,8 @@ def ingest_one(
             raise Exception(f"Could not create SOCO at {soco.uri}")
         soco.add(soma)
 
-        tiledbsc.logging.logger.info("")
-        tiledbsc.logging.logger.info(
-            f"Added SOMA {soma.name} to SOMACollection {soco_dir}"
-        )
+        logger.info("")
+        logger.info(f"Added SOMA {soma.name} to SOMACollection {soco_dir}")
 
 
 # ================================================================

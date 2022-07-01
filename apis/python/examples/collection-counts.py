@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import sys
+from typing import Dict
 
 import pandas as pd
 
@@ -44,7 +45,7 @@ for obs_label in obs_labels:
     print("Counts of SOMAs having", obs_label)
     print()
     print("obs_label", obs_label)
-    unique_values_to_counts = {}
+    unique_values_to_counts: Dict[str, int] = {}
     for soma in soco:
         if obs_label in soma.obs.keys():
             unique_values = (
