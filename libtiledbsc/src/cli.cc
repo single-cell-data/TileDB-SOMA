@@ -64,10 +64,10 @@ void soma_query(std::string_view soma_uri) {
     auto sq = soma->query();
     auto ctx = soma->context();
 
-    std::string obs_val = "human middle aged stage";
-    auto obs_qc = QueryCondition::create(
-        *ctx, "development_stage", obs_val, TILEDB_EQ);
-    std::vector<std::string> obs_cols = {"development_stage"};
+    std::string obs_attr = "cell_type";
+    std::string obs_val = "B cell";
+    auto obs_qc = QueryCondition::create(*ctx, obs_attr, obs_val, TILEDB_EQ);
+    std::vector<std::string> obs_cols = {obs_attr};
     sq->set_obs_condition(obs_qc);
     sq->select_obs_attrs(obs_cols);
 

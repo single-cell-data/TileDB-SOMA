@@ -137,6 +137,26 @@ class ManagedQuery {
     }
 
     /**
+     * @brief Return true if the query result buffers hold all results from the
+     * query. The return value is false if the query was incomplete.
+     *
+     * @return true The buffers hold all results from the query.
+     */
+    bool results_complete() {
+        return is_complete() && results_complete_;
+    }
+
+    /**
+     * @brief Returns the total number of cells read so far, including any
+     * previous incomplete queries.
+     *
+     * @return size_t Total number of cells read
+     */
+    size_t total_num_cells() {
+        return total_num_cells_;
+    }
+
+    /**
      * @brief Return a view of data in column `name`.
      *
      * @tparam T Data type
@@ -224,6 +244,12 @@ class ManagedQuery {
 
     // Query is sliced with dimension range slices or query conditions.
     bool sliced_ = false;
+
+    // Results in the buffers are complete (the query was never incomplete)
+    bool results_complete_ = true;
+
+    // Total number of cells read by the query
+    size_t total_num_cells_ = 0;
 
     // Map of column name to ColumnBuffer.
     std::unordered_map<std::string, std::shared_ptr<ColumnBuffer>> buffers_;

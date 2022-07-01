@@ -2,6 +2,8 @@
 #include "tiledbsc/common.h"
 #include "tiledbsc/logger_public.h"
 
+#include "thread_pool/thread_pool.h"
+
 namespace tiledbsc {
 using namespace tiledb;
 
@@ -28,21 +30,29 @@ SOMAQuery::next_results() {
     }
 
     if (mq_x_->status() == Query::Status::UNINITIALIZED) {
-        // Submit obs and var query tasks in parallel
-        auto obs_task = std::async(std::launch::async, [&]() {
-            return query_and_select(mq_obs_, "obs_id");
-        });
+        std::vector<ThreadPool::Task> tasks;
+        ThreadPool pool{2};
 
-        auto var_task = std::async(std::launch::async, [&]() {
-            return query_and_select(mq_var_, "var_id");
-        });
+        // Submit obs and var query tasks in parallel
+        tasks.emplace_back(pool.execute([&]() {
+            query_and_select(mq_obs_, "obs_id");
+            return Status::Ok();
+        }));
+
+        tasks.emplace_back(pool.execute([&]() {
+            query_and_select(mq_var_, "var_id");
+            return Status::Ok();
+        }));
 
         // Block until obs and var tasks complete
-        auto num_obs = obs_task.get();
-        auto num_var = var_task.get();
+        pool.wait_all(tasks).ok();
 
         // Return empty results if obs or var query was empty
-        if (!num_obs || !num_var) {
+        if (!mq_obs_->total_num_cells() || !mq_var_->total_num_cells()) {
+            LOG_DEBUG(fmt::format(
+                "Obs or var query was empty: obs num cells={} var num cells={}",
+                mq_obs_->total_num_cells(),
+                mq_var_->total_num_cells()));
             return std::nullopt;
         }
     }
@@ -55,46 +65,37 @@ SOMAQuery::next_results() {
     return mq_x_->results();
 }
 
-size_t SOMAQuery::query_and_select(
+void SOMAQuery::query_and_select(
     std::unique_ptr<ManagedQuery>& mq, const std::string& dim_name) {
     // Select the dimension column, if all columns are not selected already.
     mq->select_columns({dim_name}, true);
 
-    // Submit the query.
-    auto num_cells = mq->submit();
-    LOG_DEBUG(fmt::format("*** {} cells read = {}", dim_name, num_cells));
+    while (!mq->is_complete()) {
+        // Submit the query.
+        auto num_cells = mq->submit();
+        LOG_DEBUG(fmt::format("*** {} cells read = {}", dim_name, num_cells));
 
-    // Throw an error if the query is incomplete.
-    if (!mq->is_complete()) {
-        throw TileDBSCError(fmt::format(
-            "[SOMAQuery] {} query is incomplete. Increase buffer size.",
-            dim_name));
-    }
+        // If the mq query was sliced and the read returned results, apply the
+        // results to the X query.
+        // TODO: [optimize] Skip if sliced query returns all results
+        if (num_cells && mq->is_sliced()) {
+            auto points = mq->strings(dim_name);
+            if (points.size() != num_cells) {
+                throw TileDBSCError(fmt::format(
+                    "[SOMAQuery] {} query failed sanity check: {} != {}",
+                    dim_name,
+                    points.size(),
+                    num_cells));
+            }
 
-    // Return early if the query result is empty.
-    if (num_cells == 0) {
-        return num_cells;
-    }
-
-    // If the query contains a subset of the dimensions, apply the results to
-    // the X query.
-    // TODO: [optimize] If sliced query returns all results, skip this if block
-    if (mq->is_sliced()) {
-        auto points = mq->strings(dim_name);
-        if (points.size() != num_cells) {
-            throw TileDBSCError(fmt::format(
-                "[SOMAQuery] {} query failed sanity check: {} != {}",
-                dim_name,
-                points.size(),
-                num_cells));
+            // Add dimension range points to the X query.
+            std::lock_guard<std::mutex> lock(mtx_);
+            mq_x_->select_points(dim_name, points);
         }
-
-        // Add dimension range points to the X query.
-        std::lock_guard<std::mutex> lock(mtx_);
-        mq_x_->select_points(dim_name, points);
     }
 
-    return num_cells;
+    LOG_DEBUG(fmt::format(
+        "*** {} total cells read = {}", dim_name, mq->total_num_cells()));
 }
 
 }  // namespace tiledbsc

@@ -223,17 +223,13 @@ class SOMAQuery {
     std::mutex mtx_;
 
     /**
-     * @brief Submit a query (obs or var) and use the results to select
-     * dimension points for the X query.
-     *
-     * NOTE: Currently, the obs/var query is required to complete without
-     * incomplete results.
+     * @brief Submit a query (obs or var) and use the results to slice
+     * the X query.
      *
      * @param mq Managed query for obs or var
      * @param dim_name "obs_id" or "var_id"
-     * @return size_t Number of cells returned by the query
      */
-    size_t query_and_select(
+    void query_and_select(
         std::unique_ptr<ManagedQuery>& mq, const std::string& dim_name);
 };
 

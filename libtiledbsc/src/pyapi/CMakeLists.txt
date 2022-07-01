@@ -15,5 +15,6 @@ target_include_directories(pytiledbsc
   PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${CMAKE_CURRENT_SOURCE_DIR}/../../include
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../src
     ${TILEDB_SC_EXPORT_HEADER_DIR}
 )

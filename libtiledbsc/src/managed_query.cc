@@ -80,12 +80,19 @@ size_t ManagedQuery::submit() {
     status = query_->query_status();
     LOG_DEBUG(fmt::format("Query status = {}", (int)status));
 
+    // If the query was ever incomplete, the result buffers contents are not
+    // complete.
+    if (status == Query::Status::INCOMPLETE) {
+        results_complete_ = false;
+    }
+
     // Update ColumnBuffer size to match query results
     size_t num_cells = 0;
     for (auto& [name, buffer] : buffers_) {
         num_cells = buffer->update_size(*query_);
         LOG_DEBUG(fmt::format("Buffer {} cells={}", name, num_cells));
     }
+    total_num_cells_ += num_cells;
 
     // TODO: retry the query with larger buffers
     if (status == Query::Status::INCOMPLETE && !num_cells) {
