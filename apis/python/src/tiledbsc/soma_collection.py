@@ -1,4 +1,4 @@
-from typing import Iterator, List, Optional, Set
+from typing import Iterator, List, Optional, Set, Union
 
 import tiledb
 
@@ -86,11 +86,14 @@ class SOMACollection(TileDBGroup):
         self._add_object(soma)
 
     # ----------------------------------------------------------------
-    def remove(self, soma: SOMA) -> None:
+    def remove(self, soma: Union[SOMA, str]) -> None:
         """
         Removes a `SOMA` from the `SOMACollection`.
         """
-        self._remove_object(soma)
+        if isinstance(soma, str):
+            self._remove_object_by_name(soma)
+        else:
+            self._remove_object(soma)
 
     # ----------------------------------------------------------------
     def keys(self) -> List[str]:

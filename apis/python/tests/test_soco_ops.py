@@ -39,7 +39,7 @@ def test_import_anndata(tmp_path):
 
     soco.remove(soma1)
     assert len(soco._get_member_names()) == 1
-    soco.remove(soma2)
+    soco.remove(soma2.name)
     assert len(soco._get_member_names()) == 0
 
     assert tiledbsc.util.is_soma(soma1.uri)

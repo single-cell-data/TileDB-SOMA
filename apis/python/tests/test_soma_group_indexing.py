@@ -280,6 +280,18 @@ def test_soma_group_indexing(h5ad_file):
     for e in soma.varp:
         _ = (e.name, e.df().shape, e.uri)
 
+    assert sorted(soma.obsm.keys()) == ["X_pca", "X_tsne"]
+    soma.obsm.remove("X_pca")
+    assert sorted(soma.obsm.keys()) == ["X_tsne"]
+
+    assert sorted(soma.varm.keys()) == ["PCs"]
+    soma.varm.remove("PCs")
+    assert sorted(soma.varm.keys()) == []
+
+    assert sorted(soma.obsp.keys()) == ["distances"]
+    soma.obsp.remove("distances")
+    assert sorted(soma.obsp.keys()) == []
+
 
 def test_not_exists():
     soma = tiledbsc.SOMA("/nonesuch/nowhere/never")
