@@ -26,6 +26,7 @@ class UnsGroup(TileDBGroup):
         self,
         uri: str,
         name: str,
+        *,
         parent: Optional[TileDBGroup] = None,
     ):
         """

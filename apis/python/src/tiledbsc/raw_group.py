@@ -28,6 +28,7 @@ class RawGroup(TileDBGroup):
         uri: str,
         name: str,
         obs: AnnotationDataFrame,  # Nominally a reference to soma.obs
+        *,
         parent: Optional[TileDBGroup] = None,
     ):
         """

@@ -36,6 +36,7 @@ class AssayMatrix(TileDBArray):
         col_dim_name: str,
         row_dataframe: AnnotationDataFrame,  # Nominally a reference to soma.obs
         col_dataframe: AnnotationDataFrame,  # Nominally a reference to soma.var
+        *,
         parent: Optional[TileDBGroup] = None,
     ):
         """

@@ -26,6 +26,7 @@ class TileDBObject(ABC):
         # All objects:
         uri: str,
         name: str,
+        *,
         # Non-top-level objects can have a parent to propgate context, depth, etc.
         # Circular import if we say this, but it must be a TileDBGroup:
         # parent: Optional[TileDBGroup] = None,
