@@ -169,24 +169,21 @@ class SOMA(TileDBGroup):
         return "\n".join(lines)
 
     # ----------------------------------------------------------------
-    def __getattr__(self, name):
-        """
-        This is called on `soma.name` when `name` is not already an attribute.
-        This is used for `soma.n_obs`, etc.
-        """
-        if name == "n_obs":
-            return self.obs.shape()[0]
-        if name == "n_var":
-            return self.var.shape()[0]
+    @property
+    def n_obs(self) -> int:
+        return self.obs.shape()[0]
 
-        if name == "obs_names":
-            return self.obs.ids()
-        if name == "var_names":
-            return self.var.ids()
+    @property
+    def n_var(self) -> int:
+        return self.var.shape()[0]
 
-        raise AttributeError(
-            f"'{self.__class__.__name__}' object has no attribute '{name}'"
-        )
+    @property
+    def obs_names(self) -> List[str]:
+        return self.obs.ids()
+
+    @property
+    def var_names(self) -> List[str]:
+        return self.var.ids()
 
     # ----------------------------------------------------------------
     def obs_keys(self) -> List[str]:
