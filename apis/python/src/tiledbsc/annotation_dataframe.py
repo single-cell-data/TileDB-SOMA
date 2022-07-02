@@ -1,5 +1,5 @@
 import os
-from typing import List, Optional, Sequence, Set, Tuple
+from typing import Optional, Sequence, Set, Tuple
 
 import numpy as np
 import pandas as pd
@@ -68,7 +68,7 @@ class AnnotationDataFrame(TileDBArray):
             return (num_rows, num_cols)
 
     # ----------------------------------------------------------------
-    def ids(self) -> List[str]:
+    def ids(self) -> Sequence[str]:
         """
         Returns the `obs_ids` in the matrix (for `obs`) or the `var_ids` (for `var`).
         """
@@ -93,7 +93,7 @@ class AnnotationDataFrame(TileDBArray):
         return len(self.ids())
 
     # ----------------------------------------------------------------
-    def keys(self) -> List[str]:
+    def keys(self) -> Sequence[str]:
         """
         Returns the column names for the `obs` or `var` dataframe.  For obs and varp, `.keys()` is a
         keystroke-saver for the more general array-schema accessor `attr_names`.

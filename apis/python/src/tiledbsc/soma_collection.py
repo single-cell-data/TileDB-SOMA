@@ -1,4 +1,4 @@
-from typing import Iterator, List, Optional, Set, Union
+from typing import Iterator, Optional, Sequence, Set, Union
 
 import tiledb
 
@@ -97,7 +97,7 @@ class SOMACollection(TileDBGroup):
             self._remove_object(soma)
 
     # ----------------------------------------------------------------
-    def keys(self) -> List[str]:
+    def keys(self) -> Sequence[str]:
         """
         Returns the names of the SOMAs in the collection.
         """
@@ -157,10 +157,10 @@ class SOMACollection(TileDBGroup):
     def query(
         self,
         *,
-        obs_attrs: Optional[List[str]] = None,
+        obs_attrs: Optional[Sequence[str]] = None,
         obs_query_string: str = None,
         obs_ids: Optional[Ids] = None,
-        var_attrs: Optional[List[str]] = None,
+        var_attrs: Optional[Sequence[str]] = None,
         var_query_string: str = None,
         var_ids: Optional[Ids] = None,
     ) -> Optional[SOMASlice]:

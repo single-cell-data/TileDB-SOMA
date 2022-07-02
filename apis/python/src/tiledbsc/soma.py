@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import os
 from collections import Counter
-from typing import List, Optional
+from typing import Optional, Sequence
 
 import pandas as pd
 import tiledb
@@ -178,22 +178,22 @@ class SOMA(TileDBGroup):
         return self.var.shape()[0]
 
     @property
-    def obs_names(self) -> List[str]:
+    def obs_names(self) -> Sequence[str]:
         return self.obs.ids()
 
     @property
-    def var_names(self) -> List[str]:
+    def var_names(self) -> Sequence[str]:
         return self.var.ids()
 
     # ----------------------------------------------------------------
-    def obs_keys(self) -> List[str]:
+    def obs_keys(self) -> Sequence[str]:
         """
         An alias for `soma.obs.ids()`.
         """
         return self.obs.ids()
 
     # ----------------------------------------------------------------
-    def var_keys(self) -> List[str]:
+    def var_keys(self) -> Sequence[str]:
         """
         An alias for `soma.var.ids()`.
         """
@@ -292,10 +292,10 @@ class SOMA(TileDBGroup):
     def query(
         self,
         *,
-        obs_attrs: Optional[List[str]] = None,
+        obs_attrs: Optional[Sequence[str]] = None,
         obs_query_string: Optional[str] = None,
         obs_ids: Optional[Ids] = None,
-        var_attrs: Optional[List[str]] = None,
+        var_attrs: Optional[Sequence[str]] = None,
         var_query_string: Optional[str] = None,
         var_ids: Optional[Ids] = None,
     ) -> Optional[SOMASlice]:

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Dict, List, Optional
+from typing import Dict, Optional, Sequence
 
 import tiledb
 
@@ -188,14 +188,14 @@ class TileDBGroup(TileDBObject):
         with self._open("w") as G:
             G.remove(member_name)
 
-    def _get_member_names(self) -> List[str]:
+    def _get_member_names(self) -> Sequence[str]:
         """
         Returns the names of the group elements. For a SOMACollection, these will SOMA names;
         for a SOMA, these will be matrix/group names; etc.
         """
         return list(self._get_member_names_to_uris().keys())
 
-    def _get_member_uris(self) -> List[str]:
+    def _get_member_uris(self) -> Sequence[str]:
         """
         Returns the URIs of the group elements. For a SOMACollection, these will SOMA URIs;
         for a SOMA, these will be matrix/group URIs; etc.

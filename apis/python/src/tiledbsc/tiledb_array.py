@@ -1,4 +1,4 @@
-from typing import Dict, List, Optional
+from typing import Dict, Optional, Sequence
 
 import tiledb
 
@@ -58,7 +58,7 @@ class TileDBArray(TileDBObject):
         with self._open() as A:
             return A.schema
 
-    def dim_names(self) -> List[str]:
+    def dim_names(self) -> Sequence[str]:
         """
         Reads the dimension names from the schema: for example, ['obs_id', 'var_id'].
         """
@@ -73,7 +73,7 @@ class TileDBArray(TileDBObject):
             dom = A.schema.domain
             return {dom.dim(i).name: dom.dim(i).dtype for i in range(dom.ndim)}
 
-    def attr_names(self) -> List[str]:
+    def attr_names(self) -> Sequence[str]:
         """
         Reads the attribute names from the schema: for example, the list of column names in a dataframe.
         """
@@ -96,7 +96,7 @@ class TileDBArray(TileDBObject):
         """
         return attr_name in self.attr_names()
 
-    def has_attr_names(self, attr_names: List[str]) -> bool:
+    def has_attr_names(self, attr_names: Sequence[str]) -> bool:
         """
         Returns true if the array has all of the specified attribute names, false otherwise.
         """

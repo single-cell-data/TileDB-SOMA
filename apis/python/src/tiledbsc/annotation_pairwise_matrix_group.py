@@ -1,5 +1,5 @@
 import os
-from typing import Dict, Iterator, List, Optional
+from typing import Dict, Iterator, Optional, Sequence
 
 import scipy.sparse as sp
 import tiledb
@@ -46,7 +46,7 @@ class AnnotationPairwiseMatrixGroup(TileDBGroup):
         self.col_dataframe = col_dataframe
 
     # ----------------------------------------------------------------
-    def keys(self) -> List[str]:
+    def keys(self) -> Sequence[str]:
         """
         For obsp and varp, `.keys()` is a keystroke-saver for the more general group-member
         accessor `._get_member_names()`.

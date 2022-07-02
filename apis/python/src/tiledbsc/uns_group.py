@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import os
-from typing import Dict, Iterator, List, Mapping, Optional, Union
+from typing import Dict, Iterator, Mapping, Optional, Sequence, Union
 
 import numpy as np
 import pandas as pd
@@ -28,7 +28,7 @@ class UnsGroup(TileDBGroup):
         super().__init__(uri=uri, name=name, parent=parent)
 
     # ----------------------------------------------------------------
-    def keys(self) -> List[str]:
+    def keys(self) -> Sequence[str]:
         """
         For uns, `.keys()` is a keystroke-saver for the more general group-member
         accessor `._get_member_names()`.

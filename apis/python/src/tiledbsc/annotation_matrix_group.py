@@ -1,5 +1,5 @@
 import os
-from typing import Dict, Iterator, List, Optional, Union
+from typing import Dict, Iterator, Optional, Sequence, Union
 
 import numpy as np
 import pandas as pd
@@ -36,7 +36,7 @@ class AnnotationMatrixGroup(TileDBGroup):
         self.dim_name = "obs_id" if name == "obsm" else "var_id"
 
     # ----------------------------------------------------------------
-    def keys(self) -> List[str]:
+    def keys(self) -> Sequence[str]:
         """
         For `obsm` and `varm`, `.keys()` is a keystroke-saver for the more general group-member
         accessor `._get_member_names()`.

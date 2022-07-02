@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, Optional, Sequence, Union
 
 import tiledb
 
@@ -81,7 +81,7 @@ class TileDBObject(ABC):
         with self._open("r") as obj:
             return key in obj.meta
 
-    def metadata_keys(self) -> List[str]:
+    def metadata_keys(self) -> Sequence[str]:
         """
         Returns metadata keys associated with the group/array.
         """

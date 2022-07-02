@@ -127,27 +127,22 @@ class AssayMatrix(TileDBArray):
 
     def _csr_or_csc(
         self,
-        which: str,
+        return_as: str,
         obs_ids: Optional[Ids] = None,
         var_ids: Optional[Ids] = None,
     ) -> Union[sp.csr_matrix, sp.csc_matrix]:
         """
         Helper method for `csr` and `csc`.
         """
-        assert which in ("csr", "csc")
-        df = self.dim_select(obs_ids, var_ids)
-        if obs_ids is None:
-            obs_ids = self.row_dataframe.ids()
-        if var_ids is None:
-            var_ids = self.col_dataframe.ids()
+        assert return_as in ("csr", "csc")
         return util.X_and_ids_to_sparse_matrix(
-            df,
+            self.dim_select(obs_ids, var_ids),
             self.row_dim_name,
             self.col_dim_name,
             self.attr_name,
-            obs_ids,
-            var_ids,
-            which,
+            row_labels=obs_ids or self.row_dataframe.ids(),
+            col_labels=var_ids or self.col_dataframe.ids(),
+            return_as=return_as,
         )
 
     # ----------------------------------------------------------------

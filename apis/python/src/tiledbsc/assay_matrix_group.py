@@ -1,4 +1,4 @@
-from typing import Iterator, List, Optional
+from typing import Iterator, Optional, Sequence
 
 import tiledb
 
@@ -41,7 +41,7 @@ class AssayMatrixGroup(TileDBGroup):
         self.col_dataframe = col_dataframe
 
     # ----------------------------------------------------------------
-    def keys(self) -> List[str]:
+    def keys(self) -> Sequence[str]:
         """
         For `obsm` and `varm`, `.keys()` is a keystroke-saver for the more general group-member
         accessor `._get_member_names()`.
