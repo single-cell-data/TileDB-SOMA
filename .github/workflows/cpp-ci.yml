@@ -1,6 +1,9 @@
 name: TileDB-SingleCell C++ CI
 
-on: [push, pull_request]
+on:
+  pull_request:
+  push:
+    branches: [main]
 
 jobs:
   build:
@@ -65,3 +68,7 @@ jobs:
         export PATH=${PATH}:${GITHUB_WORKSPACE}/build/externals/install/bin
         pushd ${GITHUB_WORKSPACE}/build/libtiledbsc
         ctest -C Release --verbose
+        cd -
+        export PYTHONPATH=$PWD/dist/lib
+        export LD_LIBRARY_PATH=$PWD/dist/lib
+        pytest -rA libtiledbsc

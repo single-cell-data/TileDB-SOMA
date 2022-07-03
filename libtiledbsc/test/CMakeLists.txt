@@ -23,6 +23,7 @@ if (TILEDBSC_TESTING)
         $<TARGET_OBJECTS:TILEDB_SC_OBJECTS>
         unit_column_buffer.cc
         unit_managed_query.cc
+        unit_thread_pool.cc
     )
 
     target_link_libraries(unit_sc
