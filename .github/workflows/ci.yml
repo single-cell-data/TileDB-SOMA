@@ -27,10 +27,32 @@ jobs:
         python-version: ${{ matrix.python-version }}
 
     - name: Install Python packages
-      run: python -m pip install pytest apis/python
+      run: python -m pip install pytest-cov apis/python
 
-    - name: Run pytests
-      run: python -m pytest apis/python/tests
+    - name: Run pytest
+      if: matrix.os != 'ubuntu-latest'
+      run: python -m pytest
+
+    - name: Run pytest with coverage
+      if: matrix.os == 'ubuntu-latest'
+      id: pytest
+      run: |
+        python -m pytest --cov=tiledbsc --cov-report=term-missing > coverage.txt
+        cat coverage.txt
+        COVERAGE="$(grep '^TOTAL' coverage.txt | awk -v N=4 '{print $N}')"
+        echo "::set-output name=COVERAGE::$COVERAGE"
+
+    - name: Create Test Coverage Badge
+      if: matrix.os == 'ubuntu-latest'
+      uses: schneegans/dynamic-badges-action@v1.1.0
+      with:
+        auth: ${{ secrets.GIST_SECRET }}
+        gistID: 1c6cd065142bbb77359f210cce9bcc43
+        filename: TileDB-SingleCell-coverage-badge.json
+        label: Test Coverage
+        message: ${{ steps.pytest.outputs.COVERAGE }}
+        color: green
+        namedLogo: pytest
 
     - name: Build wheel distribution
       run: python -m pip wheel --no-deps --wheel-dir=dist apis/python

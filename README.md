@@ -1,6 +1,7 @@
 <a href="https://tiledb.com"><img src="https://github.com/TileDB-Inc/TileDB/raw/dev/doc/source/_static/tiledb-logo_color_no_margin_@4x.png" alt="TileDB logo" width="400"></a>
 
 [![TileDB-SingleCell CI](https://github.com/single-cell-data/TileDB-SingleCell/actions/workflows/ci.yml/badge.svg)](https://github.com/single-cell-data/TileDB-SingleCell/actions/workflows/ci.yml)
+![Coverage Badge](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/gsakkis/1c6cd065142bbb77359f210cce9bcc43/raw/TileDB-SingleCell-coverage-badge.json)
 
 # TileDB-SingleCell
 
