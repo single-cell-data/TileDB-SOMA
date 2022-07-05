@@ -1,4 +1,3 @@
-import os
 from typing import Optional, Tuple
 
 import pandas as pd
@@ -109,7 +108,7 @@ class AnnotationMatrix(TileDBArray):
         self._set_object_type_metadata()
 
         log_io(
-            os.path.basename(self.uri),
+            f"Wrote {self.nested_name}",
             util.format_elapsed(s, f"{self._indent}FINISH WRITING {self.uri}"),
         )
 

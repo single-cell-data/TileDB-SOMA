@@ -247,7 +247,7 @@ class AnnotationPairwiseMatrixGroup(TileDBGroup):
         grp.close()
 
         log_io(
-            os.path.basename(self.uri),
+            f"Wrote {self.nested_name}",
             util.format_elapsed(s, f"{self._indent}FINISH WRITING {self.uri}"),
         )
 

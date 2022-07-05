@@ -179,7 +179,7 @@ class AssayMatrix(TileDBArray):
 
         self._ingest_data(matrix, row_names, col_names)
         log_io(
-            os.path.basename(self.uri),
+            f"Wrote {self.nested_name}",
             util.format_elapsed(s, f"{self._indent}FINISH WRITING {self.uri}"),
         )
 
@@ -375,7 +375,7 @@ class AssayMatrix(TileDBArray):
                 eta = eta_tracker.ingest_and_predict(chunk_percent, chunk_seconds)
 
                 log_io(
-                    "%s %7.3f%% done, ETA %s"
+                    "... %s %7.3f%% done, ETA %s"
                     % (os.path.basename(self.uri), chunk_percent, eta),
                     "%sFINISH chunk in %.3f seconds, %7.3f%% done, ETA %s"
                     % (self._indent, chunk_seconds, chunk_percent, eta),
@@ -475,7 +475,7 @@ class AssayMatrix(TileDBArray):
                 eta = eta_tracker.ingest_and_predict(chunk_percent, chunk_seconds)
 
                 log_io(
-                    "%s %7.3f%% done, ETA %s"
+                    "... %s %7.3f%% done, ETA %s"
                     % (os.path.basename(self.uri), chunk_percent, eta),
                     "%sFINISH chunk in %.3f seconds, %7.3f%% done, ETA %s"
                     % (self._indent, chunk_seconds, chunk_percent, eta),
@@ -577,7 +577,7 @@ class AssayMatrix(TileDBArray):
                 eta = eta_tracker.ingest_and_predict(chunk_percent, chunk_seconds)
 
                 log_io(
-                    "%s %7.3f%% done, ETA %s"
+                    "... %s %7.3f%% done, ETA %s"
                     % (os.path.basename(self.uri), chunk_percent, eta),
                     "%sFINISH chunk in %.3f seconds, %7.3f%% done, ETA %s"
                     % (self._indent, chunk_seconds, chunk_percent, eta),

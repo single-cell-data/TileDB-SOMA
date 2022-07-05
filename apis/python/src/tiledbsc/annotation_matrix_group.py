@@ -202,12 +202,12 @@ class AnnotationMatrixGroup(TileDBGroup):
                     matrices_in_group[matrix_name] = df.to_numpy()
 
                 log_io(
-                    "",
+                    None,
                     util.format_elapsed(s2, f"{self._indent}FINISH read {element.uri}"),
                 )
 
         log_io(
-            os.path.basename(self.uri),
+            f"Wrote {self.nested_name}",
             util.format_elapsed(s, f"{self._indent}FINISH read {self.uri}"),
         )
 
