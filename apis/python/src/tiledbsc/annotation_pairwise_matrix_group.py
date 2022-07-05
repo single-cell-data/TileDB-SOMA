@@ -157,9 +157,17 @@ class AnnotationPairwiseMatrixGroup(TileDBGroup):
         """
         self._remove_object_by_name(matrix_name)
 
-    def __delete__(self, matrix_name: str) -> None:
+    def __delattr__(self, matrix_name: str) -> None:
         """
-        Removes a component of the `obsp` or `varp` subgroup for a SOMA object.
+        Removes a component of the `obsp` or `varp` subgroup for a SOMA object,
+        when invoked as `del soma.obsp.namegoeshere`.
+        """
+        self.remove(matrix_name)
+
+    def __delitem__(self, matrix_name: str) -> None:
+        """
+        Removes a component of the `obsp` or `varp` subgroup for a SOMA object,
+        when invoked as `del soma.obsp["namegoeshere"]`.
         """
         self.remove(matrix_name)
 

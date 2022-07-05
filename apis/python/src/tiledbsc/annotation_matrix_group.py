@@ -154,14 +154,22 @@ class AnnotationMatrixGroup(TileDBGroup):
     # ----------------------------------------------------------------
     def remove(self, matrix_name: str) -> None:
         """
-        Removes a component of the `obsm` or `varm` subgroup for a SOMA object.
-        Implements `del soma.obsm['X_pca']` etc.
+        Removes a component of the `obsm` or `varm` subgroup for a SOMA object,
+        when invoked as `soma.obsm.remove("namegoeshere").
         """
         self._remove_object_by_name(matrix_name)
 
-    def __delete__(self, matrix_name: str) -> None:
+    def __delattr__(self, matrix_name: str) -> None:
         """
-        Removes a component of the `obsm` or `varm` subgroup for a SOMA object.
+        Removes a component of the `obsm` or `varm` subgroup for a SOMA object,
+        when invoked as `del soma.obsm.namegoeshere`.
+        """
+        self.remove(matrix_name)
+
+    def __delitem__(self, matrix_name: str) -> None:
+        """
+        Removes a component of the `obsm` or `varm` subgroup for a SOMA object,
+        when invoked as `del soma.obsm["namegoeshere"]`.
         """
         self.remove(matrix_name)
 
