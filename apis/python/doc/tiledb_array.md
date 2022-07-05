@@ -19,7 +19,7 @@ requested.
 #### \_\_init\_\_
 
 ```python
-def __init__(uri: str, name: str, parent=None)
+def __init__(uri: str, name: str, *, parent=None)
 ```
 
 See the TileDBObject constructor.

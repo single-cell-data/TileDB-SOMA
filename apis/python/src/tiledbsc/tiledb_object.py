@@ -15,6 +15,9 @@ class TileDBObject(ABC):
     Manages soma_options, context, etc. which are common to both.
     """
 
+    uri: str
+    name: str
+    nested_name: str
     _soma_options: SOMAOptions
 
     def __init__(
@@ -41,10 +44,12 @@ class TileDBObject(ABC):
         if parent is None:
             self._ctx = ctx
             self._indent = ""
+            self.nested_name = name
         else:
             soma_options = parent._soma_options
             self._ctx = parent._ctx
             self._indent = parent._indent + "  "
+            self.nested_name = parent.nested_name + "/" + name
 
         self._soma_options = soma_options or SOMAOptions()
         # Null ctx is OK if that's what they wanted (e.g. not doing any TileDB-Cloud ops).

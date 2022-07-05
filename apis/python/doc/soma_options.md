@@ -7,6 +7,7 @@
 ## SOMAOptions Objects
 
 ```python
+@dataclass(frozen=True)
 class SOMAOptions()
 ```
 

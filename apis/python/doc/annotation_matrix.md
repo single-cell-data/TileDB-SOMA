@@ -20,6 +20,7 @@ Nominally for obsm and varm group elements within a soma.
 def __init__(uri: str,
              name: str,
              dim_name: str,
+             *,
              parent: Optional[TileDBGroup] = None)
 ```
 

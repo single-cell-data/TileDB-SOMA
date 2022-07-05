@@ -20,6 +20,7 @@ Nominally for soma raw.
 def __init__(uri: str,
              name: str,
              obs: AnnotationDataFrame,
+             *,
              parent: Optional[TileDBGroup] = None)
 ```
 

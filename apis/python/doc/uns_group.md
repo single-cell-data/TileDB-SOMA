@@ -17,7 +17,7 @@ Nominally for soma uns.
 #### \_\_init\_\_
 
 ```python
-def __init__(uri: str, name: str, parent: Optional[TileDBGroup] = None)
+def __init__(uri: str, name: str, *, parent: Optional[TileDBGroup] = None)
 ```
 
 See the TileDBObject constructor.
@@ -59,7 +59,7 @@ Implements '"namegoeshere" in soma.uns'.
 #### \_\_iter\_\_
 
 ```python
-def __iter__() -> List
+def __iter__() -> Iterator[Union[UnsGroup, UnsArray]]
 ```
 
 Implements `for element in soma.uns: ...`

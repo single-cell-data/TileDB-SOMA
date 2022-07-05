@@ -285,11 +285,11 @@ def test_soma_group_indexing(h5ad_file):
     assert sorted(soma.obsm.keys()) == ["X_tsne"]
 
     assert sorted(soma.varm.keys()) == ["PCs"]
-    soma.varm.remove("PCs")
+    del soma.varm.PCs
     assert sorted(soma.varm.keys()) == []
 
     assert sorted(soma.obsp.keys()) == ["distances"]
-    soma.obsp.remove("distances")
+    del soma.obsp["distances"]
     assert sorted(soma.obsp.keys()) == []
 
 

@@ -69,22 +69,6 @@ class AssayMatrixGroup(TileDBGroup):
         return self[name]
 
     # ----------------------------------------------------------------
-    def __iter__(self) -> Iterator[AssayMatrix]:
-        """
-        Implements `for matrix in soma.obsm: ...` and `for matrix in soma.varm: ...`
-        """
-        for name, uri in self._get_member_names_to_uris().items():
-            yield AssayMatrix(
-                uri=uri,
-                name=name,
-                row_dim_name=self.row_dim_name,
-                col_dim_name=self.col_dim_name,
-                row_dataframe=self.row_dataframe,
-                col_dataframe=self.col_dataframe,
-                parent=self,
-            )
-
-    # ----------------------------------------------------------------
     # At the tiledb-py API level, *all* groups are name-indexable.  But here at the tiledbsc-py
     # level, we implement name-indexing only for some groups:
     #
@@ -136,6 +120,22 @@ class AssayMatrixGroup(TileDBGroup):
         """
         with self._open("r") as G:
             return name in G
+
+    # ----------------------------------------------------------------
+    def __iter__(self) -> Iterator[AssayMatrix]:
+        """
+        Implements `for matrix in soma.obsm: ...` and `for matrix in soma.varm: ...`
+        """
+        for name, uri in self._get_member_names_to_uris().items():
+            yield AssayMatrix(
+                uri=uri,
+                name=name,
+                row_dim_name=self.row_dim_name,
+                col_dim_name=self.col_dim_name,
+                row_dataframe=self.row_dataframe,
+                col_dataframe=self.col_dataframe,
+                parent=self,
+            )
 
     # ----------------------------------------------------------------
     def add_layer_from_matrix_and_dim_values(

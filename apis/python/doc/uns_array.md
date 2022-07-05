@@ -17,7 +17,7 @@ Holds TileDB storage for an array obtained from the nested `anndata.uns` field.
 #### \_\_init\_\_
 
 ```python
-def __init__(uri: str, name: str, parent: Optional[TileDBGroup] = None)
+def __init__(uri: str, name: str, *, parent: Optional[TileDBGroup] = None)
 ```
 
 See the TileDBObject constructor.

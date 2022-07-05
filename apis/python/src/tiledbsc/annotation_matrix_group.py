@@ -74,87 +74,6 @@ class AnnotationMatrixGroup(TileDBGroup):
         return self[name]
 
     # ----------------------------------------------------------------
-    def add_matrix_from_matrix_and_dim_values(
-        self,
-        matrix: Union[pd.DataFrame, Matrix],
-        dim_values: Labels,
-        matrix_name: str,
-    ) -> None:
-        """
-        Populates a component of the `obsm` or `varm` subgroup for a SOMA object.
-
-        :param matrix: element of anndata.obsm, anndata.varm, or anndata.raw.varm.
-        :param dim_values: anndata.obs_names, anndata.var_names, or anndata.raw.var_names.
-        :param matrix_name: name of the matrix, like `"X_tsne"` or `"PCs"`.
-        """
-
-        # Must be done first, to create the parent directory
-        self.create_unless_exists()
-
-        # See comments in that function
-        matrix_uri = self._get_child_uri(matrix_name)
-
-        annotation_matrix = AnnotationMatrix(
-            uri=matrix_uri,
-            name=matrix_name,
-            dim_name=self.dim_name,
-            parent=self,
-        )
-        annotation_matrix.from_matrix_and_dim_values(matrix, dim_values)
-        self._add_object(annotation_matrix)
-
-    # ----------------------------------------------------------------
-    def remove(self, matrix_name: str) -> None:
-        """
-        Removes a component of the `obsm` or `varm` subgroup for a SOMA object.
-        Implements `del soma.obsm['X_pca']` etc.
-        """
-        self._remove_object_by_name(matrix_name)
-
-    def __delete__(self, matrix_name: str) -> None:
-        """
-        Removes a component of the `obsm` or `varm` subgroup for a SOMA object.
-        """
-        self.remove(matrix_name)
-
-    # ----------------------------------------------------------------
-    def to_dict_of_csr(self) -> Dict[str, np.ndarray]:
-        """
-        Reads the obsm/varm group-member arrays into a dict from name to member array.
-        Member arrays are returned in sparse CSR format.
-        """
-        if not self.exists():
-            # Not all groups have all four of obsm, obsp, varm, and varp.
-            log_io(None, f"{self._indent}{self.uri} not found")
-            return {}
-
-        s = util.get_start_stamp()
-        log_io(None, f"{self._indent}START  read {self.uri}")
-
-        with self._open() as G:
-            matrices_in_group = {}
-            for element in G:
-                s2 = util.get_start_stamp()
-                log_io(None, f"{self._indent}START  read {element.uri}")
-
-                with tiledb.open(element.uri, ctx=self._ctx) as A:
-                    df = pd.DataFrame(A[:])
-                    df.set_index(self.dim_name, inplace=True)
-                    matrix_name = os.path.basename(element.uri)  # e.g. 'X_pca'
-                    matrices_in_group[matrix_name] = df.to_numpy()
-
-                log_io(
-                    "",
-                    util.format_elapsed(s2, f"{self._indent}FINISH read {element.uri}"),
-                )
-
-        log_io(
-            os.path.basename(self.uri),
-            util.format_elapsed(s, f"{self._indent}FINISH read {self.uri}"),
-        )
-
-        return matrices_in_group
-
     # At the tiledb-py API level, *all* groups are name-indexable.  But here at the tiledbsc-py
     # level, we implement name-indexing only for some groups:
     #
@@ -193,9 +112,100 @@ class AnnotationMatrixGroup(TileDBGroup):
                 uri=obj.uri, name=name, dim_name=self.dim_name, parent=self
             )
 
+    # ----------------------------------------------------------------
     def __contains__(self, name: str) -> bool:
         """
         Implements the `in` operator, e.g. `"namegoeshere" in soma.obsm/soma.varm`.
         """
         with self._open("r") as G:
             return name in G
+
+    # ----------------------------------------------------------------
+    def add_matrix_from_matrix_and_dim_values(
+        self,
+        matrix: Union[pd.DataFrame, Matrix],
+        dim_values: Labels,
+        matrix_name: str,
+    ) -> None:
+        """
+        Populates a component of the `obsm` or `varm` subgroup for a SOMA object.
+
+        :param matrix: element of anndata.obsm, anndata.varm, or anndata.raw.varm.
+        :param dim_values: anndata.obs_names, anndata.var_names, or anndata.raw.var_names.
+        :param matrix_name: name of the matrix, like `"X_tsne"` or `"PCs"`.
+        """
+
+        # Must be done first, to create the parent directory
+        self.create_unless_exists()
+
+        # See comments in that function
+        matrix_uri = self._get_child_uri(matrix_name)
+
+        annotation_matrix = AnnotationMatrix(
+            uri=matrix_uri,
+            name=matrix_name,
+            dim_name=self.dim_name,
+            parent=self,
+        )
+        annotation_matrix.from_matrix_and_dim_values(matrix, dim_values)
+        self._add_object(annotation_matrix)
+
+    # ----------------------------------------------------------------
+    def remove(self, matrix_name: str) -> None:
+        """
+        Removes a component of the `obsm` or `varm` subgroup for a SOMA object,
+        when invoked as `soma.obsm.remove("namegoeshere").
+        """
+        self._remove_object_by_name(matrix_name)
+
+    def __delattr__(self, matrix_name: str) -> None:
+        """
+        Removes a component of the `obsm` or `varm` subgroup for a SOMA object,
+        when invoked as `del soma.obsm.namegoeshere`.
+        """
+        self.remove(matrix_name)
+
+    def __delitem__(self, matrix_name: str) -> None:
+        """
+        Removes a component of the `obsm` or `varm` subgroup for a SOMA object,
+        when invoked as `del soma.obsm["namegoeshere"]`.
+        """
+        self.remove(matrix_name)
+
+    # ----------------------------------------------------------------
+    def to_dict_of_csr(self) -> Dict[str, np.ndarray]:
+        """
+        Reads the obsm/varm group-member arrays into a dict from name to member array.
+        Member arrays are returned in sparse CSR format.
+        """
+        if not self.exists():
+            # Not all groups have all four of obsm, obsp, varm, and varp.
+            log_io(None, f"{self._indent}{self.uri} not found")
+            return {}
+
+        s = util.get_start_stamp()
+        log_io(None, f"{self._indent}START  read {self.uri}")
+
+        with self._open() as G:
+            matrices_in_group = {}
+            for element in G:
+                s2 = util.get_start_stamp()
+                log_io(None, f"{self._indent}START  read {element.uri}")
+
+                with tiledb.open(element.uri, ctx=self._ctx) as A:
+                    df = pd.DataFrame(A[:])
+                    df.set_index(self.dim_name, inplace=True)
+                    matrix_name = os.path.basename(element.uri)  # e.g. 'X_pca'
+                    matrices_in_group[matrix_name] = df.to_numpy()
+
+                log_io(
+                    None,
+                    util.format_elapsed(s2, f"{self._indent}FINISH read {element.uri}"),
+                )
+
+        log_io(
+            f"Wrote {self.nested_name}",
+            util.format_elapsed(s, f"{self._indent}FINISH read {self.uri}"),
+        )
+
+        return matrices_in_group
