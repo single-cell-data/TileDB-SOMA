@@ -105,15 +105,27 @@ def remove(matrix_name: str) -> None
 Removes a component of the `obsp` or `varp` subgroup for a SOMA object.
 Implements `del soma.obsp['distances']` etc.
 
-<a id="tiledbsc.annotation_pairwise_matrix_group.AnnotationPairwiseMatrixGroup.__delete__"></a>
+<a id="tiledbsc.annotation_pairwise_matrix_group.AnnotationPairwiseMatrixGroup.__delattr__"></a>
 
-#### \_\_delete\_\_
+#### \_\_delattr\_\_
 
 ```python
-def __delete__(matrix_name: str) -> None
+def __delattr__(matrix_name: str) -> None
 ```
 
-Removes a component of the `obsp` or `varp` subgroup for a SOMA object.
+Removes a component of the `obsp` or `varp` subgroup for a SOMA object,
+when invoked as `del soma.obsp.namegoeshere`.
+
+<a id="tiledbsc.annotation_pairwise_matrix_group.AnnotationPairwiseMatrixGroup.__delitem__"></a>
+
+#### \_\_delitem\_\_
+
+```python
+def __delitem__(matrix_name: str) -> None
+```
+
+Removes a component of the `obsp` or `varp` subgroup for a SOMA object,
+when invoked as `del soma.obsp["namegoeshere"]`.
 
 <a id="tiledbsc.annotation_pairwise_matrix_group.AnnotationPairwiseMatrixGroup.add_matrix_from_matrix_and_dim_values"></a>
 

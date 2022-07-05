@@ -72,7 +72,27 @@ Adds a `SOMA` to the `SOMACollection`.
 def remove(soma: Union[SOMA, str]) -> None
 ```
 
-Removes a `SOMA` from the `SOMACollection`.
+Removes a `SOMA` from the `SOMACollection`, when invoked as `soco.remove("namegoeshere")`.
+
+<a id="tiledbsc.soma_collection.SOMACollection.__delattr__"></a>
+
+#### \_\_delattr\_\_
+
+```python
+def __delattr__(matrix_name: str) -> None
+```
+
+Removes a `SOMA` from the `SOMACollection`, when invoked as `del soco.namegoeshere`.
+
+<a id="tiledbsc.soma_collection.SOMACollection.__delitem__"></a>
+
+#### \_\_delitem\_\_
+
+```python
+def __delitem__(matrix_name: str) -> None
+```
+
+Removes a `SOMA` from the `SOMACollection`, when invoked as `del soco["namegoeshere"]`.
 
 <a id="tiledbsc.soma_collection.SOMACollection.keys"></a>
 

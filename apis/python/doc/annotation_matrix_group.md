@@ -112,18 +112,30 @@ Populates a component of the `obsm` or `varm` subgroup for a SOMA object.
 def remove(matrix_name: str) -> None
 ```
 
-Removes a component of the `obsm` or `varm` subgroup for a SOMA object.
-Implements `del soma.obsm['X_pca']` etc.
+Removes a component of the `obsm` or `varm` subgroup for a SOMA object,
+when invoked as `soma.obsm.remove("namegoeshere").
 
-<a id="tiledbsc.annotation_matrix_group.AnnotationMatrixGroup.__delete__"></a>
+<a id="tiledbsc.annotation_matrix_group.AnnotationMatrixGroup.__delattr__"></a>
 
-#### \_\_delete\_\_
+#### \_\_delattr\_\_
 
 ```python
-def __delete__(matrix_name: str) -> None
+def __delattr__(matrix_name: str) -> None
 ```
 
-Removes a component of the `obsm` or `varm` subgroup for a SOMA object.
+Removes a component of the `obsm` or `varm` subgroup for a SOMA object,
+when invoked as `del soma.obsm.namegoeshere`.
+
+<a id="tiledbsc.annotation_matrix_group.AnnotationMatrixGroup.__delitem__"></a>
+
+#### \_\_delitem\_\_
+
+```python
+def __delitem__(matrix_name: str) -> None
+```
+
+Removes a component of the `obsm` or `varm` subgroup for a SOMA object,
+when invoked as `del soma.obsm["namegoeshere"]`.
 
 <a id="tiledbsc.annotation_matrix_group.AnnotationMatrixGroup.to_dict_of_csr"></a>
 
