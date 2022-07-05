@@ -88,12 +88,24 @@ class SOMACollection(TileDBGroup):
     # ----------------------------------------------------------------
     def remove(self, soma: Union[SOMA, str]) -> None:
         """
-        Removes a `SOMA` from the `SOMACollection`.
+        Removes a `SOMA` from the `SOMACollection`, when invoked as `soco.remove("namegoeshere")`.
         """
         if isinstance(soma, str):
             self._remove_object_by_name(soma)
         else:
             self._remove_object(soma)
+
+    def __delattr__(self, matrix_name: str) -> None:
+        """
+        Removes a `SOMA` from the `SOMACollection`, when invoked as `del soco.namegoeshere`.
+        """
+        self.remove(matrix_name)
+
+    def __delitem__(self, matrix_name: str) -> None:
+        """
+        Removes a `SOMA` from the `SOMACollection`, when invoked as `del soco["namegoeshere"]`.
+        """
+        self.remove(matrix_name)
 
     # ----------------------------------------------------------------
     def keys(self) -> List[str]:
