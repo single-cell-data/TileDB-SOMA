@@ -1,4 +1,4 @@
-from typing import List, Optional, Set, Tuple
+from typing import Optional, Sequence, Set, Tuple
 
 import numpy as np
 import pandas as pd
@@ -9,14 +9,13 @@ import tiledbsc.util as util
 from .logging import log_io
 from .tiledb_array import TileDBArray
 from .tiledb_group import TileDBGroup
+from .types import Ids
 
 
 class AnnotationDataFrame(TileDBArray):
     """
     Nominally for `obs` and `var` data within a soma. These have one string dimension, and multiple attributes.
     """
-
-    dim_name: str
 
     # ----------------------------------------------------------------
     def __init__(
@@ -68,7 +67,7 @@ class AnnotationDataFrame(TileDBArray):
             return (num_rows, num_cols)
 
     # ----------------------------------------------------------------
-    def ids(self) -> List[str]:
+    def ids(self) -> Sequence[str]:
         """
         Returns the `obs_ids` in the matrix (for `obs`) or the `var_ids` (for `var`).
         """
@@ -93,7 +92,7 @@ class AnnotationDataFrame(TileDBArray):
         return len(self.ids())
 
     # ----------------------------------------------------------------
-    def keys(self) -> List[str]:
+    def keys(self) -> Sequence[str]:
         """
         Returns the column names for the `obs` or `var` dataframe.  For obs and varp, `.keys()` is a
         keystroke-saver for the more general array-schema accessor `attr_names`.
@@ -108,7 +107,9 @@ class AnnotationDataFrame(TileDBArray):
         return set(self.keys())
 
     # ----------------------------------------------------------------
-    def dim_select(self, ids, attrs=None) -> pd.DataFrame:
+    def dim_select(
+        self, ids: Optional[Ids], attrs: Optional[Sequence[str]] = None
+    ) -> pd.DataFrame:
         """
         Selects a slice out of the dataframe with specified `obs_ids` (for `obs`) or `var_ids` (for
         `var`).  If `ids` is `None`, the entire dataframe is returned.  Similarly, if `attrs` are
@@ -140,7 +141,9 @@ class AnnotationDataFrame(TileDBArray):
         return self._ascii_to_unicode_dataframe_readback(df)
 
     # ----------------------------------------------------------------
-    def df(self, ids=None, attrs=None) -> pd.DataFrame:
+    def df(
+        self, ids: Optional[Ids] = None, attrs: Optional[Sequence[str]] = None
+    ) -> pd.DataFrame:
         """
         Keystroke-saving alias for `.dim_select()`. If `ids` are provided, they're used
         to subselect; if not, the entire dataframe is returned. If `attrs` are provided,
@@ -149,7 +152,12 @@ class AnnotationDataFrame(TileDBArray):
         return self.dim_select(ids, attrs)
 
     # ----------------------------------------------------------------
-    def query(self, query_string, ids=None, attrs=None) -> pd.DataFrame:
+    def query(
+        self,
+        query_string: Optional[str],
+        ids: Optional[Ids] = None,
+        attrs: Optional[Sequence[str]] = None,
+    ) -> pd.DataFrame:
         """
         Selects from obs/var using a TileDB-Py `QueryCondition` string such as `cell_type ==
         "blood"`.  If `attrs` is `None`, returns all column names in the dataframe; use `[]` for
@@ -178,7 +186,7 @@ class AnnotationDataFrame(TileDBArray):
             return self._ascii_to_unicode_dataframe_readback(slice_df)
 
     # ----------------------------------------------------------------
-    def _ascii_to_unicode_dataframe_readback(self, df) -> pd.DataFrame:
+    def _ascii_to_unicode_dataframe_readback(self, df: pd.DataFrame) -> pd.DataFrame:
         """
         Implements the 'decode on read' partof our logic as noted in `dim_select()`.
         """

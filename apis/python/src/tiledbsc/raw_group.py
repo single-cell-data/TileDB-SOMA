@@ -1,27 +1,24 @@
-from typing import Optional
+from typing import Dict, Optional, Tuple
 
 import anndata as ad
+import numpy as np
+import pandas as pd
+import scipy.sparse as sp
 
-import tiledbsc.util as util
-
+from . import util
 from .annotation_dataframe import AnnotationDataFrame
 from .annotation_matrix_group import AnnotationMatrixGroup
 from .annotation_pairwise_matrix_group import AnnotationPairwiseMatrixGroup
 from .assay_matrix_group import AssayMatrixGroup
 from .logging import log_io
 from .tiledb_group import TileDBGroup
+from .types import Labels
 
 
 class RawGroup(TileDBGroup):
     """
     Nominally for soma raw.
     """
-
-    X: AssayMatrixGroup
-    var: AnnotationDataFrame
-    varm: AnnotationMatrixGroup
-    varp: AnnotationPairwiseMatrixGroup
-    parent_obs: AnnotationDataFrame
 
     def __init__(
         self,
@@ -94,14 +91,16 @@ class RawGroup(TileDBGroup):
         log_io(None, util.format_elapsed(s, f"{self._indent}FINISH WRITING {self.uri}"))
 
     # ----------------------------------------------------------------
-    def to_anndata_raw(self, obs_labels):
+    def to_anndata_raw(
+        self, obs_labels: Labels
+    ) -> Tuple[sp.csr_matrix, pd.DataFrame, Dict[str, np.ndarray]]:
         """
         Reads TileDB storage and returns the material for an `anndata.Raw` object.
         The `obs_labels` must be from the parent object.
         """
-
         var_df = self.var.df()
-        X_mat = self.X["data"].to_csr_matrix(obs_labels, var_df.index)
+        data = self.X["data"]
+        assert data is not None
+        X_mat = data.to_csr_matrix(obs_labels, var_df.index)
         varm = self.varm.to_dict_of_csr()
-
-        return (X_mat, var_df, varm)
+        return X_mat, var_df, varm

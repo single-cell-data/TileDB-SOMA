@@ -1,8 +1,8 @@
-from typing import Optional
+from typing import Any, Optional
 
 import numpy as np
 import pandas as pd
-import scipy.sparse
+import scipy.sparse as sp
 import tiledb
 
 import tiledbsc.util as util
@@ -18,13 +18,7 @@ class UnsArray(TileDBArray):
     """
 
     # ----------------------------------------------------------------
-    def __init__(
-        self,
-        uri: str,
-        name: str,
-        *,
-        parent: Optional[TileDBGroup] = None,
-    ):
+    def __init__(self, uri: str, name: str, *, parent: Optional[TileDBGroup] = None):
         """
         See the TileDBObject constructor.
         """
@@ -55,7 +49,7 @@ class UnsArray(TileDBArray):
         )
 
     # ----------------------------------------------------------------
-    def _maybe_from_numpyable_object(self, obj) -> bool:
+    def _maybe_from_numpyable_object(self, obj: Any) -> bool:
         """
         Nominally for ingest of `uns` nested data from anndata objects. Handles scalar or array values
         -- the former, by wrapping in a 1D array. Maps to TileDB / tiledb.from_numpy storage semantics,
@@ -111,7 +105,7 @@ class UnsArray(TileDBArray):
         )
 
     # ----------------------------------------------------------------
-    def from_scipy_csr(self, csr: scipy.sparse.csr_matrix) -> None:
+    def from_scipy_csr(self, csr: sp.csr_matrix) -> None:
         """
         Convert ndarray/(csr|csc)matrix to coo_matrix and ingest into TileDB.
 
@@ -187,17 +181,15 @@ class UnsArray(TileDBArray):
         tiledb.Array.create(self.uri, sch, ctx=self._ctx)
 
     # ----------------------------------------------------------------
-    def ingest_data_from_csr(self, csr: scipy.sparse.csr_matrix) -> None:
+    def ingest_data_from_csr(self, csr: sp.csr_matrix) -> None:
         """
         Convert ndarray/(csr|csc)matrix to coo_matrix and ingest into TileDB.
 
         :param csr: Matrix-like object coercible to a scipy coo_matrix.
         """
-
-        mat_coo = scipy.sparse.coo_matrix(csr)
+        mat_coo = sp.coo_matrix(csr)
         d0 = mat_coo.row
         d1 = mat_coo.col
-
         with tiledb.open(self.uri, mode="w", ctx=self._ctx) as A:
             A[d0, d1] = mat_coo.data
 
@@ -206,7 +198,7 @@ class UnsArray(TileDBArray):
     # written in, this returns always the same type on readback. Perhaps at write time we can save a
     # metadata tag with the provenance-type of the array, and on readback, try to return the same
     # type.
-    def to_matrix(self):
+    def to_matrix(self) -> np.ndarray:
         """
         Reads an uns array from TileDB storage and returns a matrix -- currently, always as numpy.ndarray.
         """

@@ -1,4 +1,4 @@
-from typing import Iterator, List, Optional, Set, Union
+from typing import Iterator, Optional, Sequence, Set, Union
 
 import tiledb
 
@@ -6,6 +6,7 @@ from .soma import SOMA
 from .soma_options import SOMAOptions
 from .soma_slice import SOMASlice
 from .tiledb_group import TileDBGroup
+from .types import Ids
 
 
 class SOMACollection(TileDBGroup):
@@ -18,7 +19,7 @@ class SOMACollection(TileDBGroup):
         self,
         uri: str,
         *,
-        name="soco",
+        name: str = "soco",
         soma_options: Optional[SOMAOptions] = None,
         config: Optional[tiledb.Config] = None,
         ctx: Optional[tiledb.Ctx] = None,
@@ -108,7 +109,7 @@ class SOMACollection(TileDBGroup):
         self.remove(matrix_name)
 
     # ----------------------------------------------------------------
-    def keys(self) -> List[str]:
+    def keys(self) -> Sequence[str]:
         """
         Returns the names of the SOMAs in the collection.
         """
@@ -146,12 +147,11 @@ class SOMACollection(TileDBGroup):
     #   the `[]` operator separately in the various classes which need indexing. This is again to
     #   avoid circular-import issues, and means that [] on `AnnotationMatrixGroup` will return an
     #   `AnnotationMatrix, [] on `UnsGroup` will return `UnsArray` or `UnsGroup`, etc.
-    def __getitem__(self, name) -> Optional[SOMA]:
+    def __getitem__(self, name: str) -> Optional[SOMA]:
         """
         Returns a `SOMA` element at the given name within the group, or `None` if no such
         member exists.  Overloads the `[...]` operator.
         """
-
         with self._open("r") as G:
             try:
                 obj = G[name]  # This returns a tiledb.object.Object.
@@ -160,7 +160,7 @@ class SOMACollection(TileDBGroup):
 
             if obj.type != tiledb.group.Group:
                 raise Exception(
-                    f"Internal error: found element which is not a subgroup: type is {str(obj.type)}"
+                    f"Internal error: found element which is not a subgroup: type is {obj.type}"
                 )
 
             return SOMA(uri=obj.uri, name=name, parent=self)
@@ -169,12 +169,12 @@ class SOMACollection(TileDBGroup):
     def query(
         self,
         *,
-        obs_attrs: Optional[List[str]] = None,
+        obs_attrs: Optional[Sequence[str]] = None,
         obs_query_string: str = None,
-        obs_ids: List[str] = None,
-        var_attrs: Optional[List[str]] = None,
+        obs_ids: Optional[Ids] = None,
+        var_attrs: Optional[Sequence[str]] = None,
         var_query_string: str = None,
-        var_ids: List[str] = None,
+        var_ids: Optional[Ids] = None,
     ) -> Optional[SOMASlice]:
         """
         Subselects the obs, var, and X/data using the specified queries on obs and var,

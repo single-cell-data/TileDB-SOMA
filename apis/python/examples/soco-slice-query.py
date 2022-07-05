@@ -3,7 +3,7 @@
 import os
 import shutil
 import sys
-from typing import List, Optional
+from typing import Optional, Sequence
 
 import tiledbsc
 
@@ -13,9 +13,9 @@ def soco_query_and_store(
     soco: tiledbsc.SOMACollection,
     output_h5ad_path: str,
     output_soma_path: str,
-    obs_attrs: Optional[List[str]] = None,
+    obs_attrs: Optional[Sequence[str]] = None,
     obs_query_string: str = None,
-    var_attrs: Optional[List[str]] = None,
+    var_attrs: Optional[Sequence[str]] = None,
     var_query_string: str = None,
 ) -> None:
 

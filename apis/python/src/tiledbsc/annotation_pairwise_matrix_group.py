@@ -1,7 +1,7 @@
 import os
-from typing import Dict, Iterator, List, Optional
+from typing import Dict, Iterator, Optional, Sequence
 
-import scipy.sparse
+import scipy.sparse as sp
 import tiledb
 
 import tiledbsc.util as util
@@ -10,6 +10,7 @@ from .annotation_dataframe import AnnotationDataFrame
 from .assay_matrix import AssayMatrix
 from .logging import log_io
 from .tiledb_group import TileDBGroup
+from .types import Labels, Matrix
 
 
 class AnnotationPairwiseMatrixGroup(TileDBGroup):
@@ -18,11 +19,6 @@ class AnnotationPairwiseMatrixGroup(TileDBGroup):
     elements using soma.obsp['distances'] etc., or soma.obsp.distances if you prefer.  (The latter
     syntax is possible when the element name doesn't have dashes, dots, etc. in it.)
     """
-
-    row_dim_name: str
-    col_dim_name: str
-    row_dataframe: AnnotationDataFrame
-    col_dataframe: AnnotationDataFrame
 
     def __init__(
         self,
@@ -50,7 +46,7 @@ class AnnotationPairwiseMatrixGroup(TileDBGroup):
         self.col_dataframe = col_dataframe
 
     # ----------------------------------------------------------------
-    def keys(self) -> List[str]:
+    def keys(self) -> Sequence[str]:
         """
         For obsp and varp, `.keys()` is a keystroke-saver for the more general group-member
         accessor `._get_member_names()`.
@@ -65,7 +61,7 @@ class AnnotationPairwiseMatrixGroup(TileDBGroup):
         return ", ".join(f"'{key}'" for key in self.keys())
 
     # ----------------------------------------------------------------
-    def __getattr__(self, name) -> Optional[AssayMatrix]:
+    def __getattr__(self, name: str) -> Optional[AssayMatrix]:
         """
         This is called on `soma.obsp.name` when `name` is not already an attribute.
         This way you can do `soma.obsp.distances` as an alias for `soma.obsp['distances']`.
@@ -94,7 +90,7 @@ class AnnotationPairwiseMatrixGroup(TileDBGroup):
     #   the `[]` operator separately in the various classes which need indexing. This is again to
     #   avoid circular-import issues, and means that [] on `AnnotationMatrixGroup` will return an
     #   `AnnotationMatrix, [] on `UnsGroup` will return `UnsArray` or `UnsGroup`, etc.
-    def __getitem__(self, name) -> Optional[AssayMatrix]:
+    def __getitem__(self, name: str) -> Optional[AssayMatrix]:
         """
         Returns an `AssayMatrix` element at the given name within the group, or `None` if no such
         member exists.  Overloads the `[...]` operator.
@@ -126,7 +122,7 @@ class AnnotationPairwiseMatrixGroup(TileDBGroup):
             )
 
     # ----------------------------------------------------------------
-    def __contains__(self, name) -> bool:
+    def __contains__(self, name: str) -> bool:
         """
         Implements `"namegoeshere" in soma.obsp/soma.varp`.
         """
@@ -174,8 +170,8 @@ class AnnotationPairwiseMatrixGroup(TileDBGroup):
     # ----------------------------------------------------------------
     def add_matrix_from_matrix_and_dim_values(
         self,
-        matrix,
-        dim_values,
+        matrix: Matrix,
+        dim_values: Labels,
         matrix_name: str,
     ) -> None:
         """
@@ -202,16 +198,14 @@ class AnnotationPairwiseMatrixGroup(TileDBGroup):
             parent=self,
         )
         annotation_pairwise_matrix.from_matrix_and_dim_values(
-            matrix,
-            dim_values,
-            dim_values,
+            matrix, dim_values, dim_values
         )
         self._add_object(annotation_pairwise_matrix)
 
     # ----------------------------------------------------------------
     def to_dict_of_csr(
-        self, obs_df_index, var_df_index
-    ) -> Dict[str, scipy.sparse.csr_matrix]:
+        self, obs_df_index: Labels, var_df_index: Labels
+    ) -> Dict[str, sp.csr_matrix]:
         """
         Reads the `obsp` or `varp` group-member arrays into a dict from name to member array.
         Member arrays are returned in sparse CSR format.

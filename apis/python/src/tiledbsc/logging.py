@@ -1,10 +1,10 @@
 import logging
-from typing import Union
+from typing import Optional
 
 logger = logging.getLogger("tiledbsc")
 
 
-def warning():
+def warning() -> None:
     """
     Sets tiledbsc logging to a WARNING level. Use `tiledbsc.logging.info()` in notebooks to suppress
     progress indicators for data ingestion.
@@ -12,7 +12,7 @@ def warning():
     _set_level(logging.WARNING)
 
 
-def info():
+def info() -> None:
     """
     Sets tiledbsc logging to an INFO level. Use `tiledbsc.logging.info()` in notebooks to see
     progress indicators for data ingestion.
@@ -20,7 +20,7 @@ def info():
     _set_level(logging.INFO)
 
 
-def debug():
+def debug() -> None:
     """
     Sets tiledbsc logging to an DEBUG level. Use `tiledbsc.logging.debug()` in notebooks to see more
     detailed progress indicators for data ingestion.
@@ -37,7 +37,7 @@ def _set_level(level: int) -> None:
         logger.addHandler(logging.StreamHandler())
 
 
-def log_io(info_message: Union[str, None], debug_message: str) -> None:
+def log_io(info_message: Optional[str], debug_message: str) -> None:
     """
     Data-ingesti timeframes range widely, from seconds to the better part of an hour.  Some folks
     won't want details in the former; some will want details in the latter.  For I/O and for I/O

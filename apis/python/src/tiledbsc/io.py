@@ -1,3 +1,5 @@
+from typing import Callable
+
 import anndata as ad
 import scanpy
 import tiledb
@@ -8,6 +10,7 @@ import tiledbsc.util
 import tiledbsc.util_ann
 
 from .logging import log_io
+from .types import Path
 
 
 # ----------------------------------------------------------------
@@ -18,13 +21,12 @@ def from_h5ad_unless_exists(soma: tiledbsc.SOMA, input_path: str) -> None:
     """
     if tiledbsc.util.is_soma(soma.uri):
         tiledbsc.logging.logger.info(f"Already exists, skipping ingest: {soma.uri}")
-        return
     else:
         from_h5ad(soma, input_path)
 
 
 # ----------------------------------------------------------------
-def from_h5ad(soma: tiledbsc.SOMA, input_path: str) -> None:
+def from_h5ad(soma: tiledbsc.SOMA, input_path: Path) -> None:
     """
     Reads an .h5ad file and writes to a TileDB group structure.
     """
@@ -32,7 +34,7 @@ def from_h5ad(soma: tiledbsc.SOMA, input_path: str) -> None:
 
 
 # ----------------------------------------------------------------
-def from_h5ad_update_obs_and_var(soma: tiledbsc.SOMA, input_path: str) -> None:
+def from_h5ad_update_obs_and_var(soma: tiledbsc.SOMA, input_path: Path) -> None:
     """
     Rewrites obs and var from the specified .h5ad file, leaving all other data in place. Useful for
     updating schema/compression/etc. within an existing dataset.
@@ -41,7 +43,11 @@ def from_h5ad_update_obs_and_var(soma: tiledbsc.SOMA, input_path: str) -> None:
 
 
 # ----------------------------------------------------------------
-def _from_h5ad_common(soma: tiledbsc.SOMA, input_path: str, handler_func) -> None:
+def _from_h5ad_common(
+    soma: tiledbsc.SOMA,
+    input_path: Path,
+    handler_func: Callable[[tiledbsc.SOMA, ad.AnnData], None],
+) -> None:
     """
     Common code for things we do when processing a .h5ad file for ingest/update.
     """
@@ -69,19 +75,18 @@ def _from_h5ad_common(soma: tiledbsc.SOMA, input_path: str, handler_func) -> Non
 
 
 # ----------------------------------------------------------------
-def from_10x_unless_exists(soma: tiledbsc.SOMA, input_path: str) -> None:
+def from_10x_unless_exists(soma: tiledbsc.SOMA, input_path: Path) -> None:
     """
     Skips the ingest if the SOMA is already there. A convenient keystroke-saver
     so users don't need to replicate the if-test.
     """
     if tiledbsc.util.is_soma(soma.uri):
         tiledbsc.logging.logger.info(f"Already exists, skipping ingest: {soma.uri}")
-        return
     else:
         from_10x(soma, input_path)
 
 
-def from_10x(soma: tiledbsc.SOMA, input_path: str) -> None:
+def from_10x(soma: tiledbsc.SOMA, input_path: Path) -> None:
     """
     Reads a 10X file and writes to a TileDB group structure.
     """
@@ -117,7 +122,6 @@ def from_anndata_unless_exists(soma: tiledbsc.SOMA, anndata: ad.AnnData) -> None
     """
     if tiledbsc.util.is_soma(soma.uri):
         tiledbsc.logging.logger.info(f"Already exists, skipping ingest: {soma.uri}")
-        return
     else:
         from_anndata(soma, anndata)
 
@@ -257,7 +261,7 @@ def from_anndata_update_obs_and_var(soma: tiledbsc.SOMA, anndata: ad.AnnData) ->
 
 
 # ----------------------------------------------------------------
-def to_h5ad(soma: tiledbsc.SOMA, h5ad_path: str) -> None:
+def to_h5ad(soma: tiledbsc.SOMA, h5ad_path: Path) -> None:
     """
     Converts the soma group to anndata format and writes it to the specified .h5ad file.
     As of 2022-05-05 this is an incomplete prototype.

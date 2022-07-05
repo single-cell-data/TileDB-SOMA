@@ -1,10 +1,11 @@
-from typing import Iterator, List, Optional
+from typing import Iterator, Optional, Sequence
 
 import tiledb
 
 from .annotation_dataframe import AnnotationDataFrame
 from .assay_matrix import AssayMatrix
 from .tiledb_group import TileDBGroup
+from .types import Labels, Matrix
 
 
 class AssayMatrixGroup(TileDBGroup):
@@ -13,11 +14,6 @@ class AssayMatrixGroup(TileDBGroup):
     access elements using soma.X['data'] etc., or soma.X.data if you prefer.  (The latter syntax is
     possible when the element name doesn't have dashes, dots, etc. in it.)
     """
-
-    row_dim_name: str
-    col_dim_name: str
-    row_dataframe: AnnotationDataFrame
-    col_dataframe: AnnotationDataFrame
 
     # ----------------------------------------------------------------
     def __init__(
@@ -45,7 +41,7 @@ class AssayMatrixGroup(TileDBGroup):
         self.col_dataframe = col_dataframe
 
     # ----------------------------------------------------------------
-    def keys(self) -> List[str]:
+    def keys(self) -> Sequence[str]:
         """
         For `obsm` and `varm`, `.keys()` is a keystroke-saver for the more general group-member
         accessor `._get_member_names()`.
@@ -60,7 +56,7 @@ class AssayMatrixGroup(TileDBGroup):
         return ", ".join(f"'{key}'" for key in self.keys())
 
     # ----------------------------------------------------------------
-    def __getattr__(self, name) -> Optional[AssayMatrix]:
+    def __getattr__(self, name: str) -> Optional[AssayMatrix]:
         """
         This is called on `soma.X.name` when `name` is not already an attribute.
         This way you can do `soma.X.data` as an alias for `soma.X['data']`.
@@ -89,7 +85,7 @@ class AssayMatrixGroup(TileDBGroup):
     #   the `[]` operator separately in the various classes which need indexing. This is again to
     #   avoid circular-import issues, and means that [] on `AnnotationMatrixGroup` will return an
     #   `AnnotationMatrix, [] on `UnsGroup` will return `UnsArray` or `UnsGroup`, etc.
-    def __getitem__(self, name) -> Optional[AssayMatrix]:
+    def __getitem__(self, name: str) -> Optional[AssayMatrix]:
         """
         Returns an `AnnotationMatrix` element at the given name within the group, or None if no such
         member exists.  Overloads the `[...]` operator.
@@ -118,7 +114,7 @@ class AssayMatrixGroup(TileDBGroup):
             )
 
     # ----------------------------------------------------------------
-    def __contains__(self, name) -> bool:
+    def __contains__(self, name: str) -> bool:
         """
         Implements the `in` operator, e.g. `"data" in soma.X`.
         """
@@ -144,10 +140,10 @@ class AssayMatrixGroup(TileDBGroup):
     # ----------------------------------------------------------------
     def add_layer_from_matrix_and_dim_values(
         self,
-        matrix,
-        row_names: List[str],
-        col_names: List[str],
-        layer_name="data",
+        matrix: Matrix,
+        row_names: Labels,
+        col_names: Labels,
+        layer_name: str = "data",
     ) -> None:
         """
         Populates the `X` or `raw.X` subgroup for a `SOMA` object.  For `X` and `raw.X`,

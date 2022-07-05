@@ -1,12 +1,11 @@
 from __future__ import annotations
 
 import os
-from typing import Dict, Iterator, List, Mapping, Optional, Union
+from typing import Dict, Iterator, Mapping, Optional, Sequence, Union
 
-import anndata as ad
 import numpy as np
 import pandas as pd
-import scipy.sparse
+import scipy.sparse as sp
 import tiledb
 
 import tiledbsc.util as util
@@ -22,20 +21,14 @@ class UnsGroup(TileDBGroup):
     """
 
     # ----------------------------------------------------------------
-    def __init__(
-        self,
-        uri: str,
-        name: str,
-        *,
-        parent: Optional[TileDBGroup] = None,
-    ):
+    def __init__(self, uri: str, name: str, *, parent: Optional[TileDBGroup] = None):
         """
         See the TileDBObject constructor.
         """
         super().__init__(uri=uri, name=name, parent=parent)
 
     # ----------------------------------------------------------------
-    def keys(self) -> List[str]:
+    def keys(self) -> Sequence[str]:
         """
         For uns, `.keys()` is a keystroke-saver for the more general group-member
         accessor `._get_member_names()`.
@@ -58,7 +51,7 @@ class UnsGroup(TileDBGroup):
     #   the `[]` operator separately in the various classes which need indexing. This is again to
     #   avoid circular-import issues, and means that [] on `AnnotationMatrixGroup` will return an
     #   `AnnotationMatrix, [] on `UnsGroup` will return `UnsArray` or `UnsGroup`, etc.
-    def __getitem__(self, name):  # Union[UnsGroup, UnsArray]
+    def __getitem__(self, name: str) -> Union[UnsGroup, UnsArray, None]:
         """
         Returns an `UnsArray` or `UnsGroup` element at the given name within the group, or None if
         no such member exists.  Overloads the [...] operator.
@@ -79,7 +72,7 @@ class UnsGroup(TileDBGroup):
                 )
 
     # ----------------------------------------------------------------
-    def __contains__(self, name) -> bool:
+    def __contains__(self, name: str) -> bool:
         """
         Implements '"namegoeshere" in soma.uns'.
         """
@@ -110,7 +103,7 @@ class UnsGroup(TileDBGroup):
         return self._repr_aux()
 
     # ----------------------------------------------------------------
-    def _repr_aux(self, display_name="uns", indent="") -> str:
+    def _repr_aux(self, display_name: str = "uns", indent: str = "") -> str:
         """
         Recursively displays the uns data.
         """
@@ -137,7 +130,7 @@ class UnsGroup(TileDBGroup):
         return "\n".join(strings)
 
     # ----------------------------------------------------------------
-    def from_anndata_uns(self, uns: ad.compat.OverloadedDict) -> None:
+    def from_anndata_uns(self, uns: Mapping) -> None:
         """
         Populates the uns group for the soma object.
 
@@ -204,7 +197,7 @@ class UnsGroup(TileDBGroup):
                 array.from_pandas_dataframe(value)
                 self._add_object(array)
 
-            elif isinstance(value, scipy.sparse.csr_matrix):
+            elif isinstance(value, sp.csr_matrix):
                 array.from_scipy_csr(value)
                 self._add_object(array)
 

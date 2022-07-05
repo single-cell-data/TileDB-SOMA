@@ -1,17 +1,21 @@
 import os
-from typing import Mapping
+from typing import Any, List, Mapping
 
 import anndata as ad
 import numpy as np
 import pandas as pd
-import scipy.sparse
+import scipy.sparse as sp
 
-import tiledbsc.util as util
+from . import util
+from .types import Path
 
 
 # ----------------------------------------------------------------
 def describe_ann_file(
-    input_path: str, show_summary=True, show_types=False, show_data=False
+    input_path: Path,
+    show_summary: bool = True,
+    show_types: bool = False,
+    show_data: bool = False,
 ) -> None:
     """
     This is an anndata-describer that goes a bit beyond what `h5ls` does for us.
@@ -28,16 +32,15 @@ def describe_ann_file(
     )
 
     if show_summary:
-        _describe_ann_file_show_summary(anndata, input_path)
+        _describe_ann_file_show_summary(anndata)
     if show_types:
-        _describe_ann_file_show_types(anndata, input_path)
+        _describe_ann_file_show_types(anndata)
     if show_data:
-        _describe_ann_file_show_data(anndata, input_path)
+        _describe_ann_file_show_data(anndata)
 
 
 # ----------------------------------------------------------------
-def _describe_ann_file_show_summary(anndata: ad.AnnData, input_path: str) -> None:
-
+def _describe_ann_file_show_summary(anndata: ad.AnnData) -> None:
     print()
     print("----------------------------------------------------------------")
     print("ANNDATA SUMMARY:")
@@ -73,8 +76,7 @@ def _describe_ann_file_show_summary(anndata: ad.AnnData, input_path: str) -> Non
 
 
 # ----------------------------------------------------------------
-def _describe_ann_file_show_types(anndata: ad.AnnData, input_path: str) -> None:
-
+def _describe_ann_file_show_types(anndata: ad.AnnData) -> None:
     print()
     print("----------------------------------------------------------------")
     print("ANNDATA FILE TYPES:")
@@ -86,7 +88,7 @@ def _describe_ann_file_show_types(anndata: ad.AnnData, input_path: str) -> None:
     m, n = X.shape
     print("%-*s (%d, %d)" % (namewidth, "X/data shape", m, n))
     print("%-*s %s" % (namewidth, "X/data dtype", X.dtype))
-    if isinstance(X, (scipy.sparse.csr_matrix, scipy.sparse.csc_matrix)):
+    if isinstance(X, (sp.csr_matrix, sp.csc_matrix)):
         density = X.nnz / (m * n)
         print("%-*s %.4f" % (namewidth, "X/data density", density))
 
@@ -103,7 +105,7 @@ def _describe_ann_file_show_types(anndata: ad.AnnData, input_path: str) -> None:
         m, n = X.shape
         print("%-*s (%d, %d)" % (namewidth, "X/raw shape", m, n))
         print("%-*s %s" % (namewidth, "X/data dtype", X.dtype))
-        if isinstance(X, (scipy.sparse.csr_matrix, scipy.sparse.csc_matrix)):
+        if isinstance(X, (sp.csr_matrix, sp.csc_matrix)):
             density = X.nnz / (m * n)
             print("%-*s %.4f" % (namewidth, "X/raw density", density))
 
@@ -126,8 +128,7 @@ def _describe_ann_file_show_types(anndata: ad.AnnData, input_path: str) -> None:
 
 
 # ----------------------------------------------------------------
-def _describe_ann_file_show_data(anndata: ad.AnnData, input_path: str) -> None:
-
+def _describe_ann_file_show_data(anndata: ad.AnnData) -> None:
     print()
     print("----------------------------------------------------------------")
     print("ANNDATA FILE DATA:")
@@ -181,22 +182,25 @@ def _describe_ann_file_show_data(anndata: ad.AnnData, input_path: str) -> None:
 
 
 # ----------------------------------------------------------------
-def _describe_ann_file_show_uns_summary(uns: Mapping, parent_path_components) -> None:
+def _describe_ann_file_show_uns_summary(
+    uns: Mapping[str, Any], parent_path_components: List[str]
+) -> None:
     """
     Recursively shows summary information about the anndata.uns structure.
     """
     for key in uns.keys():
         current_path_components = parent_path_components + [key]
         value = uns[key]
-        display_name = os.path.sep.join(current_path_components)
         if isinstance(value, Mapping):
             _describe_ann_file_show_uns_summary(value, current_path_components)
         else:
-            print(display_name)
+            print(os.path.sep.join(current_path_components))
 
 
 # ----------------------------------------------------------------
-def _describe_ann_file_show_uns_types(uns: Mapping, parent_path_components) -> None:
+def _describe_ann_file_show_uns_types(
+    uns: Mapping[str, Any], parent_path_components: List[str]
+) -> None:
     """
     Recursively shows data-type information about the anndata.uns structure.
     """
@@ -214,14 +218,16 @@ def _describe_ann_file_show_uns_types(uns: Mapping, parent_path_components) -> N
                 type(value),
                 value.dtype,
             )
-        elif isinstance(value, (scipy.sparse.csr_matrix, pd.DataFrame)):
+        elif isinstance(value, (sp.csr_matrix, pd.DataFrame)):
             print("%-*s" % (namewidth, display_name), value.shape, type(value))
         else:
             print("%-*s" % (namewidth, display_name), type(value))
 
 
 # ----------------------------------------------------------------
-def _describe_ann_file_show_uns_data(uns: Mapping, parent_path_components) -> None:
+def _describe_ann_file_show_uns_data(
+    uns: Mapping[str, Any], parent_path_components: List[str]
+) -> None:
     """
     Recursively shows data contained within the anndata.uns structure.
     """
@@ -234,7 +240,7 @@ def _describe_ann_file_show_uns_data(uns: Mapping, parent_path_components) -> No
             _describe_ann_file_show_uns_data(value, current_path_components)
         elif (
             isinstance(value, np.ndarray)
-            or isinstance(value, scipy.sparse.csr_matrix)
+            or isinstance(value, sp.csr_matrix)
             or isinstance(value, pd.DataFrame)
         ):
             print()

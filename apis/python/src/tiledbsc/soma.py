@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import os
 from collections import Counter
-from typing import List, Optional
+from typing import Optional, Sequence
 
 import pandas as pd
 import tiledb
@@ -15,6 +15,7 @@ from .raw_group import RawGroup
 from .soma_options import SOMAOptions
 from .soma_slice import SOMASlice
 from .tiledb_group import TileDBGroup
+from .types import Ids
 from .uns_group import UnsGroup
 
 
@@ -41,22 +42,12 @@ class SOMA(TileDBGroup):
     * `soma.n_var` for `soma.var.shape()[0]`
     """
 
-    X: AssayMatrixGroup
-    obs: AnnotationDataFrame
-    var: AnnotationDataFrame
-    obsm: AnnotationMatrixGroup
-    varm: AnnotationMatrixGroup
-    obsp: AnnotationPairwiseMatrixGroup
-    varp: AnnotationPairwiseMatrixGroup
-    raw: RawGroup
-    uns: UnsGroup
-
     # ----------------------------------------------------------------
     def __init__(
         self,
         uri: str,
         *,
-        name=None,
+        name: Optional[str] = None,
         soma_options: Optional[SOMAOptions] = None,
         config: Optional[tiledb.Config] = None,
         ctx: Optional[tiledb.Ctx] = None,
@@ -178,34 +169,31 @@ class SOMA(TileDBGroup):
         return "\n".join(lines)
 
     # ----------------------------------------------------------------
-    def __getattr__(self, name):
-        """
-        This is called on `soma.name` when `name` is not already an attribute.
-        This is used for `soma.n_obs`, etc.
-        """
-        if name == "n_obs":
-            return self.obs.shape()[0]
-        if name == "n_var":
-            return self.var.shape()[0]
+    @property
+    def n_obs(self) -> int:
+        return self.obs.shape()[0]
 
-        if name == "obs_names":
-            return self.obs.ids()
-        if name == "var_names":
-            return self.var.ids()
+    @property
+    def n_var(self) -> int:
+        return self.var.shape()[0]
 
-        raise AttributeError(
-            f"'{self.__class__.__name__}' object has no attribute '{name}'"
-        )
+    @property
+    def obs_names(self) -> Sequence[str]:
+        return self.obs.ids()
+
+    @property
+    def var_names(self) -> Sequence[str]:
+        return self.var.ids()
 
     # ----------------------------------------------------------------
-    def obs_keys(self) -> List[str]:
+    def obs_keys(self) -> Sequence[str]:
         """
         An alias for `soma.obs.ids()`.
         """
         return self.obs.ids()
 
     # ----------------------------------------------------------------
-    def var_keys(self) -> List[str]:
+    def var_keys(self) -> Sequence[str]:
         """
         An alias for `soma.var.ids()`.
         """
@@ -251,7 +239,9 @@ class SOMA(TileDBGroup):
         return df
 
     # ----------------------------------------------------------------
-    def dim_slice(self, obs_ids, var_ids) -> Optional[SOMASlice]:
+    def dim_slice(
+        self, obs_ids: Optional[Ids], var_ids: Optional[Ids]
+    ) -> Optional[SOMASlice]:
         """
         Subselects the SOMA's obs, var, and X/data using the specified obs_ids and var_ids.
         Using a value of `None` for obs_ids means use all obs_ids, and likewise for var_ids.
@@ -302,12 +292,12 @@ class SOMA(TileDBGroup):
     def query(
         self,
         *,
-        obs_attrs: Optional[List[str]] = None,
+        obs_attrs: Optional[Sequence[str]] = None,
         obs_query_string: Optional[str] = None,
-        obs_ids: Optional[List[str]] = None,
-        var_attrs: Optional[List[str]] = None,
+        obs_ids: Optional[Ids] = None,
+        var_attrs: Optional[Sequence[str]] = None,
         var_query_string: Optional[str] = None,
-        var_ids: Optional[List[str]] = None,
+        var_ids: Optional[Ids] = None,
     ) -> Optional[SOMASlice]:
         """
         Subselects the SOMA's obs, var, and X/data using the specified queries on obs and var.
@@ -340,9 +330,7 @@ class SOMA(TileDBGroup):
         if obs_ids is not None or obs_query_string is not None:
             obs_ids = list(slice_obs_df.index)
 
-        slice_var_df = self.var.query(
-            query_string=var_query_string, ids=var_ids, attrs=var_attrs
-        )
+        slice_var_df = self.var.query(var_query_string, ids=var_ids, attrs=var_attrs)
         # E.g. querying for 'feature_name == "MT-CO3"' and this SOMA does have a feature_name column
         # in its var, but no rows with feature_name == "MT-CO3".
         if slice_var_df is None:
@@ -368,10 +356,10 @@ class SOMA(TileDBGroup):
     # ----------------------------------------------------------------
     def _assemble_soma_slice(
         self,
-        obs_ids,
-        var_ids,
-        slice_obs_df,
-        slice_var_df,
+        obs_ids: Optional[Ids],
+        var_ids: Optional[Ids],
+        slice_obs_df: pd.DataFrame,
+        slice_var_df: pd.DataFrame,
     ) -> SOMASlice:
         """
         An internal method for constructing a `SOMASlice` object given query results.
@@ -390,7 +378,7 @@ class SOMA(TileDBGroup):
         cls,
         soma_slice: SOMASlice,
         uri: str,
-        name=None,
+        name: Optional[str] = None,
         soma_options: Optional[SOMAOptions] = None,
         config: Optional[tiledb.Config] = None,
         ctx: Optional[tiledb.Ctx] = None,
@@ -412,12 +400,12 @@ class SOMA(TileDBGroup):
         soma.create_unless_exists()
         soma.obs.from_dataframe(soma_slice.obs)
         soma.var.from_dataframe(soma_slice.var)
-        for name in soma_slice.X.keys():
+        for layer_name in soma_slice.X.keys():
             soma.X.add_layer_from_matrix_and_dim_values(
-                soma_slice.X[name],
-                soma.obs.ids(),
-                soma.var.ids(),
-                layer_name=name,
+                matrix=soma_slice.X[layer_name],
+                row_names=soma.obs.ids(),
+                col_names=soma.var.ids(),
+                layer_name=layer_name,
             )
 
         return soma

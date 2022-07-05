@@ -1,9 +1,10 @@
-from typing import Dict, List, Optional
+from __future__ import annotations
+
+from typing import Dict, Optional, Sequence
 
 import tiledb
 
-import tiledbsc.util_tiledb
-
+from . import util
 from .logging import logger
 from .soma_options import SOMAOptions
 from .tiledb_array import TileDBArray
@@ -20,10 +21,8 @@ class TileDBGroup(TileDBObject):
         uri: str,
         name: str,
         *,
-        # Non-top-level objects can have a parent to propgate context, depth, etc.
-        # What we really want to say is:
-        # parent: Optional[TileDBGroup] = None,
-        parent=None,
+        # Non-top-level objects can have a parent to propagate context, depth, etc.
+        parent: Optional[TileDBGroup] = None,
         # Top-level objects should specify these:
         soma_options: Optional[SOMAOptions] = None,
         ctx: Optional[tiledb.Ctx] = None,
@@ -32,11 +31,7 @@ class TileDBGroup(TileDBObject):
         See the TileDBObject constructor.
         """
         super().__init__(
-            uri=uri,
-            name=name,
-            parent=parent,
-            soma_options=soma_options,
-            ctx=ctx,
+            uri=uri, name=name, parent=parent, soma_options=soma_options, ctx=ctx
         )
 
     def _object_type(self) -> str:
@@ -76,19 +71,15 @@ class TileDBGroup(TileDBObject):
         level) confidently navigate with a minimum of introspection on group contents.
         """
         with self._open("w") as G:
-            G.meta[
-                tiledbsc.util.SOMA_OBJECT_TYPE_METADATA_KEY
-            ] = self.__class__.__name__
-            G.meta[
-                tiledbsc.util.SOMA_ENCODING_VERSION_METADATA_KEY
-            ] = tiledbsc.util.SOMA_ENCODING_VERSION
+            G.meta[util.SOMA_OBJECT_TYPE_METADATA_KEY] = self.__class__.__name__
+            G.meta[util.SOMA_ENCODING_VERSION_METADATA_KEY] = util.SOMA_ENCODING_VERSION
 
     def get_object_type(self) -> str:
         """
         Returns the class name associated with the group.
         """
         with self._open("r") as G:
-            return G.meta[tiledbsc.util.SOMA_OBJECT_TYPE_METADATA_KEY]
+            return G.meta[util.SOMA_OBJECT_TYPE_METADATA_KEY]
 
     def _set_object_type_metadata_recursively(self) -> None:
         """
@@ -116,7 +107,7 @@ class TileDBGroup(TileDBObject):
                         f"Unexpected object_type found: {object_type} at {obj.uri}"
                     )
 
-    def _open(self, mode="r"):
+    def _open(self, mode: str = "r") -> tiledb.Group:
         """
         This is just a convenience wrapper around tiledb group-open.
         It works asa `with self._open() as G:` as well as `G = self._open(); ...; G.close()`.
@@ -150,7 +141,7 @@ class TileDBGroup(TileDBObject):
             # This means forward slash is acceptable in all cases.
             return self.uri + "/" + member_name
 
-    def _add_object(self, obj: TileDBObject):
+    def _add_object(self, obj: TileDBObject) -> None:
         """
         Adds a SOMA group/array to the current SOMA group -- e.g. base SOMA adding
         X, X adding a layer, obsm adding an element, etc.
@@ -197,14 +188,14 @@ class TileDBGroup(TileDBObject):
         with self._open("w") as G:
             G.remove(member_name)
 
-    def _get_member_names(self) -> List[str]:
+    def _get_member_names(self) -> Sequence[str]:
         """
         Returns the names of the group elements. For a SOMACollection, these will SOMA names;
         for a SOMA, these will be matrix/group names; etc.
         """
         return list(self._get_member_names_to_uris().keys())
 
-    def _get_member_uris(self) -> List[str]:
+    def _get_member_uris(self) -> Sequence[str]:
         """
         Returns the URIs of the group elements. For a SOMACollection, these will SOMA URIs;
         for a SOMA, these will be matrix/group URIs; etc.
@@ -219,7 +210,7 @@ class TileDBGroup(TileDBObject):
         with self._open("r") as G:
             return {obj.name: obj.uri for obj in G}
 
-    def show_metadata(self, recursively=True, indent="") -> None:
+    def show_metadata(self, recursively: bool = True, indent: str = "") -> None:
         """
         Shows metadata for the group, recursively by default.
         """

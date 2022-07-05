@@ -183,7 +183,7 @@ class Uniformizer:
         )
 
     # ----------------------------------------------------------------
-    def add_h5ad(self, input_dataset_id: Optional[str], input_h5ad_path) -> int:
+    def add_h5ad(self, input_dataset_id: Optional[str], input_h5ad_path: str) -> int:
         """Add an H5AD to the atlas"""
 
         soco = self._init_soco()
@@ -238,7 +238,7 @@ class Uniformizer:
         ann: anndata.AnnData,
         soma_name: str,
         soco: tiledbsc.SOMACollection,
-    ):
+    ) -> None:
         """
         Cleans and uniformizes the data (whether obtained from H5AD or SOMA), writes a new SOMA, adds an
         X/rankit layer, and adds the new SOMA to the SOMACollection.

@@ -1,9 +1,10 @@
-from typing import Dict, List
+from typing import Dict, Optional, Sequence
 
 import tiledb
 
-import tiledbsc.util_tiledb
+import tiledbsc
 
+from . import util
 from .tiledb_object import TileDBObject
 
 
@@ -15,13 +16,7 @@ class TileDBArray(TileDBObject):
     """
 
     def __init__(
-        self,
-        uri: str,
-        name: str,
-        # It's a circular import if we say this, but this is really:
-        # parent: Optional[TileDBGroup] = None,
-        *,
-        parent=None,
+        self, uri: str, name: str, *, parent: Optional["tiledbsc.TileDBGroup"] = None
     ):
         """
         See the TileDBObject constructor.
@@ -35,7 +30,7 @@ class TileDBArray(TileDBObject):
         """
         return "array"
 
-    def _open(self, mode="r"):
+    def _open(self, mode: str = "r") -> tiledb.Array:
         """
         This is just a convenience wrapper allowing 'with self._open() as A: ...' rather than
         'with tiledb.open(self.uri) as A: ...'.
@@ -56,14 +51,14 @@ class TileDBArray(TileDBObject):
         """
         return tiledb.array_exists(self.uri)
 
-    def tiledb_array_schema(self):
+    def tiledb_array_schema(self) -> tiledb.ArraySchema:
         """
         Returns the TileDB array schema.
         """
         with self._open() as A:
             return A.schema
 
-    def dim_names(self) -> List[str]:
+    def dim_names(self) -> Sequence[str]:
         """
         Reads the dimension names from the schema: for example, ['obs_id', 'var_id'].
         """
@@ -78,7 +73,7 @@ class TileDBArray(TileDBObject):
             dom = A.schema.domain
             return {dom.dim(i).name: dom.dim(i).dtype for i in range(dom.ndim)}
 
-    def attr_names(self) -> List[str]:
+    def attr_names(self) -> Sequence[str]:
         """
         Reads the attribute names from the schema: for example, the list of column names in a dataframe.
         """
@@ -101,7 +96,7 @@ class TileDBArray(TileDBObject):
         """
         return attr_name in self.attr_names()
 
-    def has_attr_names(self, attr_names: List[str]) -> bool:
+    def has_attr_names(self, attr_names: Sequence[str]) -> bool:
         """
         Returns true if the array has all of the specified attribute names, false otherwise.
         """
@@ -114,21 +109,17 @@ class TileDBArray(TileDBObject):
         level) confidently navigate with a minimum of introspection on group contents.
         """
         with self._open("w") as A:
-            A.meta[
-                tiledbsc.util.SOMA_OBJECT_TYPE_METADATA_KEY
-            ] = self.__class__.__name__
-            A.meta[
-                tiledbsc.util.SOMA_ENCODING_VERSION_METADATA_KEY
-            ] = tiledbsc.util.SOMA_ENCODING_VERSION
+            A.meta[util.SOMA_OBJECT_TYPE_METADATA_KEY] = self.__class__.__name__
+            A.meta[util.SOMA_ENCODING_VERSION_METADATA_KEY] = util.SOMA_ENCODING_VERSION
 
     def get_object_type(self) -> str:
         """
         Returns the class name associated with the array.
         """
         with self._open("r") as A:
-            return A.meta[tiledbsc.util.SOMA_OBJECT_TYPE_METADATA_KEY]
+            return A.meta[util.SOMA_OBJECT_TYPE_METADATA_KEY]
 
-    def show_metadata(self, recursively=True, indent="") -> None:
+    def show_metadata(self, recursively: bool = True, indent: str = "") -> None:
         """
         Shows metadata for the array.
         """
