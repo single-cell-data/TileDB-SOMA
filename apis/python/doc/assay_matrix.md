@@ -24,6 +24,7 @@ def __init__(uri: str,
              col_dim_name: str,
              row_dataframe: AnnotationDataFrame,
              col_dataframe: AnnotationDataFrame,
+             *,
              parent: Optional[TileDBGroup] = None)
 ```
 

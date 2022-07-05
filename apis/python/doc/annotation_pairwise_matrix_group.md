@@ -23,6 +23,7 @@ def __init__(uri: str,
              name: str,
              row_dataframe: AnnotationDataFrame,
              col_dataframe: AnnotationDataFrame,
+             *,
              parent: Optional[TileDBGroup] = None)
 ```
 
@@ -56,21 +57,63 @@ Default display of soma.obsp and soma.varp.
 #### \_\_getattr\_\_
 
 ```python
-def __getattr__(name) -> AssayMatrix
+def __getattr__(name) -> Optional[AssayMatrix]
 ```
 
 This is called on `soma.obsp.name` when `name` is not already an attribute.
 This way you can do `soma.obsp.distances` as an alias for `soma.obsp['distances']`.
+
+<a id="tiledbsc.annotation_pairwise_matrix_group.AnnotationPairwiseMatrixGroup.__getitem__"></a>
+
+#### \_\_getitem\_\_
+
+```python
+def __getitem__(name) -> Optional[AssayMatrix]
+```
+
+Returns an `AssayMatrix` element at the given name within the group, or `None` if no such
+member exists.  Overloads the `[...]` operator.
+
+<a id="tiledbsc.annotation_pairwise_matrix_group.AnnotationPairwiseMatrixGroup.__contains__"></a>
+
+#### \_\_contains\_\_
+
+```python
+def __contains__(name) -> bool
+```
+
+Implements `"namegoeshere" in soma.obsp/soma.varp`.
 
 <a id="tiledbsc.annotation_pairwise_matrix_group.AnnotationPairwiseMatrixGroup.__iter__"></a>
 
 #### \_\_iter\_\_
 
 ```python
-def __iter__() -> List[AssayMatrix]
+def __iter__() -> Iterator[AssayMatrix]
 ```
 
 Implements `for matrix in soma.obsp: ...` and `for matrix in soma.varp: ...`
+
+<a id="tiledbsc.annotation_pairwise_matrix_group.AnnotationPairwiseMatrixGroup.remove"></a>
+
+#### remove
+
+```python
+def remove(matrix_name: str) -> None
+```
+
+Removes a component of the `obsp` or `varp` subgroup for a SOMA object.
+Implements `del soma.obsp['distances']` etc.
+
+<a id="tiledbsc.annotation_pairwise_matrix_group.AnnotationPairwiseMatrixGroup.__delete__"></a>
+
+#### \_\_delete\_\_
+
+```python
+def __delete__(matrix_name: str) -> None
+```
+
+Removes a component of the `obsp` or `varp` subgroup for a SOMA object.
 
 <a id="tiledbsc.annotation_pairwise_matrix_group.AnnotationPairwiseMatrixGroup.add_matrix_from_matrix_and_dim_values"></a>
 
@@ -100,25 +143,4 @@ def to_dict_of_csr(obs_df_index,
 
 Reads the `obsp` or `varp` group-member arrays into a dict from name to member array.
 Member arrays are returned in sparse CSR format.
-
-<a id="tiledbsc.annotation_pairwise_matrix_group.AnnotationPairwiseMatrixGroup.__getitem__"></a>
-
-#### \_\_getitem\_\_
-
-```python
-def __getitem__(name) -> AssayMatrix
-```
-
-Returns an `AssayMatrix` element at the given name within the group, or `None` if no such
-member exists.  Overloads the `[...]` operator.
-
-<a id="tiledbsc.annotation_pairwise_matrix_group.AnnotationPairwiseMatrixGroup.__contains__"></a>
-
-#### \_\_contains\_\_
-
-```python
-def __contains__(name) -> bool
-```
-
-Implements `"namegoeshere" in soma.obsp/soma.varp`.
 

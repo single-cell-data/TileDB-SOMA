@@ -19,6 +19,7 @@ Wraps groups from TileDB-Py by retaining a URI, options, etc.
 ```python
 def __init__(uri: str,
              name: str,
+             *,
              parent=None,
              soma_options: Optional[SOMAOptions] = None,
              ctx: Optional[tiledb.Ctx] = None)

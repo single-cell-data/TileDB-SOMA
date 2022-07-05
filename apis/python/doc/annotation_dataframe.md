@@ -17,7 +17,7 @@ Nominally for `obs` and `var` data within a soma. These have one string dimensio
 #### \_\_init\_\_
 
 ```python
-def __init__(uri: str, name: str, parent: Optional[TileDBGroup] = None)
+def __init__(uri: str, name: str, *, parent: Optional[TileDBGroup] = None)
 ```
 
 See the TileDBObject constructor.

@@ -18,6 +18,7 @@ Implements a collection of `SOMA` objects.
 
 ```python
 def __init__(uri: str,
+             *,
              name="soco",
              soma_options: Optional[SOMAOptions] = None,
              config: Optional[tiledb.Config] = None,
@@ -68,7 +69,7 @@ Adds a `SOMA` to the `SOMACollection`.
 #### remove
 
 ```python
-def remove(soma: SOMA) -> None
+def remove(soma: Union[SOMA, str]) -> None
 ```
 
 Removes a `SOMA` from the `SOMACollection`.
@@ -78,7 +79,7 @@ Removes a `SOMA` from the `SOMACollection`.
 #### keys
 
 ```python
-def keys() -> None
+def keys() -> List[str]
 ```
 
 Returns the names of the SOMAs in the collection.
@@ -88,7 +89,7 @@ Returns the names of the SOMAs in the collection.
 #### \_\_iter\_\_
 
 ```python
-def __iter__() -> List[SOMA]
+def __iter__() -> Iterator[SOMA]
 ```
 
 Implements `for soma in soco: ...`
@@ -108,7 +109,7 @@ Implements `name in soco`
 #### \_\_getitem\_\_
 
 ```python
-def __getitem__(name) -> SOMA
+def __getitem__(name) -> Optional[SOMA]
 ```
 
 Returns a `SOMA` element at the given name within the group, or `None` if no such
@@ -119,7 +120,8 @@ member exists.  Overloads the `[...]` operator.
 #### query
 
 ```python
-def query(obs_attrs: Optional[List[str]] = None,
+def query(*,
+          obs_attrs: Optional[List[str]] = None,
           obs_query_string: str = None,
           obs_ids: List[str] = None,
           var_attrs: Optional[List[str]] = None,
@@ -147,20 +149,20 @@ needn't specify these; if they don't, you must.
 #### find\_unique\_obs\_values
 
 ```python
-def find_unique_obs_values(obs_label: str) -> List
+def find_unique_obs_values(obs_label: str) -> Set
 ```
 
-Given an `obs` label such as `cell_type` or `tissue`, returns a list of unique values for
-that label among all SOMAs in the collection.
+Given an `obs` label such as `cell_type` or `tissue`, returns a set of unique
+values for that label among all SOMAs in the collection.
 
 <a id="tiledbsc.soma_collection.SOMACollection.find_unique_var_values"></a>
 
 #### find\_unique\_var\_values
 
 ```python
-def find_unique_var_values(var_label: str) -> List
+def find_unique_var_values(var_label: str) -> Set
 ```
 
-Given an `var` label such as `feature_name`, returns a list of unique values for
+Given an `var` label such as `feature_name`, returns a set of unique values for
 that label among all SOMAs in the collection.
 

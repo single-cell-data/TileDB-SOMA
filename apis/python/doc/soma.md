@@ -37,6 +37,7 @@ Convenience accessors include:
 
 ```python
 def __init__(uri: str,
+             *,
              name=None,
              soma_options: Optional[SOMAOptions] = None,
              config: Optional[tiledb.Config] = None,
@@ -118,7 +119,7 @@ values for that label in the SOMA.
 #### dim\_slice
 
 ```python
-def dim_slice(obs_ids, var_ids) -> Dict
+def dim_slice(obs_ids, var_ids) -> Optional[SOMASlice]
 ```
 
 Subselects the SOMA's obs, var, and X/data using the specified obs_ids and var_ids.
@@ -130,12 +131,13 @@ Returns `None` for empty slice.
 #### query
 
 ```python
-def query(obs_attrs: Optional[List[str]] = None,
+def query(*,
+          obs_attrs: Optional[List[str]] = None,
           obs_query_string: Optional[str] = None,
           obs_ids: Optional[List[str]] = None,
           var_attrs: Optional[List[str]] = None,
           var_query_string: Optional[str] = None,
-          var_ids: Optional[List[str]] = None) -> SOMASlice
+          var_ids: Optional[List[str]] = None) -> Optional[SOMASlice]
 ```
 
 Subselects the SOMA's obs, var, and X/data using the specified queries on obs and var.
@@ -160,7 +162,7 @@ def from_soma_slice(cls,
                     soma_options: Optional[SOMAOptions] = None,
                     config: Optional[tiledb.Config] = None,
                     ctx: Optional[tiledb.Ctx] = None,
-                    parent: Optional[TileDBGroup] = None) -> None
+                    parent: Optional[TileDBGroup] = None) -> SOMA
 ```
 
 Constructs `SOMA` storage from a given in-memory `SOMASlice` object.

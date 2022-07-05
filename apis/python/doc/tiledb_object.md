@@ -7,11 +7,12 @@
 ## TileDBObject Objects
 
 ```python
-class TileDBObject()
+class TileDBObject(ABC)
 ```
 
-Base class for `TileDBArray` and `TileDBGroup`. Manages soma_options, context, etc. which are common
-to both.
+Base class for `TileDBArray` and `TileDBGroup`.
+
+Manages soma_options, context, etc. which are common to both.
 
 <a id="tiledbsc.tiledb_object.TileDBObject.__init__"></a>
 
@@ -20,6 +21,7 @@ to both.
 ```python
 def __init__(uri: str,
              name: str,
+             *,
              parent=None,
              soma_options: Optional[SOMAOptions] = None,
              ctx: Optional[tiledb.Ctx] = None)
