@@ -206,7 +206,7 @@ def from_anndata(soma: tiledbsc.SOMA, anndata: ad.AnnData) -> None:
         soma._add_object(soma.uns)
 
     log_io(
-        None,
+        f"Wrote {soma.nested_name}",
         tiledbsc.util.format_elapsed(s, f"{soma._indent}FINISH WRITING {soma.uri}"),
     )
 
