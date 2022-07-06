@@ -91,7 +91,7 @@ class ManagedQuery {
      *
      * For example:
      *   while (!mq.is_complete()) {
-     *     auto num_cells = mq.execute();
+     *     auto num_cells = mq.submit();
      *     // process results
      *   }
      *

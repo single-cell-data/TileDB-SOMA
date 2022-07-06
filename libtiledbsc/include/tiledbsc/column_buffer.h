@@ -3,16 +3,16 @@
 
 #include <stdexcept>  // for windows: error C2039: 'runtime_error': is not a member of 'std'
 
+// TODO: pybind11 used for intermediate testing, remove after adding arrow
 #include <pybind11/numpy.h>
 #include <pybind11/pybind11.h>
+namespace py = pybind11;
 
 #include <span>
 #include <tiledb/tiledb>
 
 #include "tiledbsc/common.h"
 #include "tiledbsc/logger_public.h"
-
-namespace py = pybind11;
 
 namespace tiledbsc {
 
