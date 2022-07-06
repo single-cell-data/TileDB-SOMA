@@ -39,7 +39,7 @@ The column-count is the number of columns/attributes in the dataframe.
 #### ids
 
 ```python
-def ids() -> List[str]
+def ids() -> Sequence[str]
 ```
 
 Returns the `obs_ids` in the matrix (for `obs`) or the `var_ids` (for `var`).
@@ -69,7 +69,7 @@ Implements `len(soma.obs)` and `len(soma.var)`.
 #### keys
 
 ```python
-def keys() -> List[str]
+def keys() -> Sequence[str]
 ```
 
 Returns the column names for the `obs` or `var` dataframe.  For obs and varp, `.keys()` is a
@@ -90,7 +90,8 @@ Same as `.keys` but returns as set.
 #### dim\_select
 
 ```python
-def dim_select(ids, attrs=None) -> pd.DataFrame
+def dim_select(ids: Optional[Ids],
+               attrs: Optional[Sequence[str]] = None) -> pd.DataFrame
 ```
 
 Selects a slice out of the dataframe with specified `obs_ids` (for `obs`) or `var_ids` (for
@@ -102,7 +103,8 @@ provided, they're used for the query; else, all attributes are returned.
 #### df
 
 ```python
-def df(ids=None, attrs=None) -> pd.DataFrame
+def df(ids: Optional[Ids] = None,
+       attrs: Optional[Sequence[str]] = None) -> pd.DataFrame
 ```
 
 Keystroke-saving alias for `.dim_select()`. If `ids` are provided, they're used
@@ -114,7 +116,9 @@ they're used for the query; else, all attributes are returned.
 #### query
 
 ```python
-def query(query_string, ids=None, attrs=None) -> pd.DataFrame
+def query(query_string: Optional[str],
+          ids: Optional[Ids] = None,
+          attrs: Optional[Sequence[str]] = None) -> pd.DataFrame
 ```
 
 Selects from obs/var using a TileDB-Py `QueryCondition` string such as `cell_type ==

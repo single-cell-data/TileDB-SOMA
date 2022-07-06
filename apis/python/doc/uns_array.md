@@ -48,7 +48,7 @@ objects. Mostly tiledb.from_numpy, but with some necessary handling for data wit
 #### from\_scipy\_csr
 
 ```python
-def from_scipy_csr(csr: scipy.sparse.csr_matrix) -> None
+def from_scipy_csr(csr: sp.csr_matrix) -> None
 ```
 
 Convert ndarray/(csr|csc)matrix to coo_matrix and ingest into TileDB.
@@ -81,7 +81,7 @@ Nominally used for uns data.
 #### ingest\_data\_from\_csr
 
 ```python
-def ingest_data_from_csr(csr: scipy.sparse.csr_matrix) -> None
+def ingest_data_from_csr(csr: sp.csr_matrix) -> None
 ```
 
 Convert ndarray/(csr|csc)matrix to coo_matrix and ingest into TileDB.
@@ -95,7 +95,7 @@ Convert ndarray/(csr|csc)matrix to coo_matrix and ingest into TileDB.
 #### to\_matrix
 
 ```python
-def to_matrix()
+def to_matrix() -> np.ndarray
 ```
 
 Reads an uns array from TileDB storage and returns a matrix -- currently, always as numpy.ndarray.

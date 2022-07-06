@@ -29,7 +29,7 @@ See the TileDBObject constructor.
 #### keys
 
 ```python
-def keys() -> List[str]
+def keys() -> Sequence[str]
 ```
 
 For `obsm` and `varm`, `.keys()` is a keystroke-saver for the more general group-member
@@ -60,7 +60,7 @@ Implements `for matrix in soma.obsm: ...` and `for matrix in soma.varm: ...`
 #### \_\_getattr\_\_
 
 ```python
-def __getattr__(name) -> Optional[AnnotationMatrix]
+def __getattr__(name: str) -> Optional[AnnotationMatrix]
 ```
 
 This is called on `soma.obsm.name` when `name` is not already an attribute.
@@ -71,7 +71,7 @@ This way you can do `soma.obsm.X_tsne` as an alias for `soma.obsm['X_tsne']`.
 #### \_\_getitem\_\_
 
 ```python
-def __getitem__(name) -> Optional[AnnotationMatrix]
+def __getitem__(name: str) -> Optional[AnnotationMatrix]
 ```
 
 Returns an `AnnotationMatrix` element at the given name within the group, or None if no such
@@ -82,7 +82,7 @@ member exists.  Overloads the `[...]` operator.
 #### \_\_contains\_\_
 
 ```python
-def __contains__(name) -> bool
+def __contains__(name: str) -> bool
 ```
 
 Implements the `in` operator, e.g. `"namegoeshere" in soma.obsm/soma.varm`.
@@ -92,7 +92,8 @@ Implements the `in` operator, e.g. `"namegoeshere" in soma.obsm/soma.varm`.
 #### add\_matrix\_from\_matrix\_and\_dim\_values
 
 ```python
-def add_matrix_from_matrix_and_dim_values(matrix, dim_values,
+def add_matrix_from_matrix_and_dim_values(matrix: Union[pd.DataFrame, Matrix],
+                                          dim_values: Labels,
                                           matrix_name: str) -> None
 ```
 
@@ -102,7 +103,7 @@ Populates a component of the `obsm` or `varm` subgroup for a SOMA object.
 
 - `matrix`: element of anndata.obsm, anndata.varm, or anndata.raw.varm.
 - `dim_values`: anndata.obs_names, anndata.var_names, or anndata.raw.var_names.
-- `matrix_name_name`: name of the matrix, like `"X_tsne"` or `"PCs"`.
+- `matrix_name`: name of the matrix, like `"X_tsne"` or `"PCs"`.
 
 <a id="tiledbsc.annotation_matrix_group.AnnotationMatrixGroup.remove"></a>
 
@@ -142,7 +143,7 @@ when invoked as `del soma.obsm["namegoeshere"]`.
 #### to\_dict\_of\_csr
 
 ```python
-def to_dict_of_csr() -> Dict[str, scipy.sparse.csr_matrix]
+def to_dict_of_csr() -> Dict[str, np.ndarray]
 ```
 
 Reads the obsm/varm group-member arrays into a dict from name to member array.

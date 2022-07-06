@@ -36,7 +36,7 @@ See `AssayMatrix` for the rationale behind retaining references to the `row_data
 #### keys
 
 ```python
-def keys() -> List[str]
+def keys() -> Sequence[str]
 ```
 
 For obsp and varp, `.keys()` is a keystroke-saver for the more general group-member
@@ -57,7 +57,7 @@ Default display of soma.obsp and soma.varp.
 #### \_\_getattr\_\_
 
 ```python
-def __getattr__(name) -> Optional[AssayMatrix]
+def __getattr__(name: str) -> Optional[AssayMatrix]
 ```
 
 This is called on `soma.obsp.name` when `name` is not already an attribute.
@@ -68,7 +68,7 @@ This way you can do `soma.obsp.distances` as an alias for `soma.obsp['distances'
 #### \_\_getitem\_\_
 
 ```python
-def __getitem__(name) -> Optional[AssayMatrix]
+def __getitem__(name: str) -> Optional[AssayMatrix]
 ```
 
 Returns an `AssayMatrix` element at the given name within the group, or `None` if no such
@@ -79,7 +79,7 @@ member exists.  Overloads the `[...]` operator.
 #### \_\_contains\_\_
 
 ```python
-def __contains__(name) -> bool
+def __contains__(name: str) -> bool
 ```
 
 Implements `"namegoeshere" in soma.obsp/soma.varp`.
@@ -132,7 +132,7 @@ when invoked as `del soma.obsp["namegoeshere"]`.
 #### add\_matrix\_from\_matrix\_and\_dim\_values
 
 ```python
-def add_matrix_from_matrix_and_dim_values(matrix, dim_values,
+def add_matrix_from_matrix_and_dim_values(matrix: Matrix, dim_values: Labels,
                                           matrix_name: str) -> None
 ```
 
@@ -149,8 +149,8 @@ Populates a component of the `obsp` or `varp` subgroup for a SOMA object.
 #### to\_dict\_of\_csr
 
 ```python
-def to_dict_of_csr(obs_df_index,
-                   var_df_index) -> Dict[str, scipy.sparse.csr_matrix]
+def to_dict_of_csr(obs_df_index: Labels,
+                   var_df_index: Labels) -> Dict[str, sp.csr_matrix]
 ```
 
 Reads the `obsp` or `varp` group-member arrays into a dict from name to member array.

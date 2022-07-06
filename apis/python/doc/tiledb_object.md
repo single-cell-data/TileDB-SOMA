@@ -22,7 +22,7 @@ Manages soma_options, context, etc. which are common to both.
 def __init__(uri: str,
              name: str,
              *,
-             parent=None,
+             parent: Optional["tiledbsc.TileDBGroup"] = None,
              soma_options: Optional[SOMAOptions] = None,
              ctx: Optional[tiledb.Ctx] = None)
 ```
@@ -37,7 +37,7 @@ depth, etc.
 #### metadata
 
 ```python
-def metadata() -> Dict
+def metadata() -> Mapping[str, Any]
 ```
 
 Returns metadata from the group/array as a dict.
@@ -47,7 +47,7 @@ Returns metadata from the group/array as a dict.
 #### has\_metadata
 
 ```python
-def has_metadata(key)
+def has_metadata(key: str) -> bool
 ```
 
 Returns whether metadata is associated with the group/array.
@@ -57,7 +57,7 @@ Returns whether metadata is associated with the group/array.
 #### metadata\_keys
 
 ```python
-def metadata_keys() -> List[str]
+def metadata_keys() -> Sequence[str]
 ```
 
 Returns metadata keys associated with the group/array.
@@ -67,7 +67,7 @@ Returns metadata keys associated with the group/array.
 #### get\_metadata
 
 ```python
-def get_metadata(key)
+def get_metadata(key: str) -> Any
 ```
 
 Returns metadata associated with the group/array.
@@ -78,8 +78,18 @@ Raises `KeyError` if there is no such key in the metadata.
 #### set\_metadata
 
 ```python
-def set_metadata(key: str, value) -> None
+def set_metadata(key: str, value: Any) -> None
 ```
 
 Returns metadata associated with the group/array.
+
+<a id="tiledbsc.tiledb_object.TileDBObject.get_object_type"></a>
+
+#### get\_object\_type
+
+```python
+def get_object_type() -> str
+```
+
+Returns the class name associated with the group/array.
 

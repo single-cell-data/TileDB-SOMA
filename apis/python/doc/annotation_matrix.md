@@ -45,7 +45,7 @@ Note: currently implemented via data scan -- will be optimized for TileDB core 2
 #### dim\_select
 
 ```python
-def dim_select(ids) -> pd.DataFrame
+def dim_select(ids: Optional[Ids]) -> pd.DataFrame
 ```
 
 Selects a slice out of the array with specified `obs_ids` (for `obsm` elements) or
@@ -56,7 +56,7 @@ Selects a slice out of the array with specified `obs_ids` (for `obsm` elements) 
 #### df
 
 ```python
-def df(ids=None) -> pd.DataFrame
+def df(ids: Optional[Ids] = None) -> pd.DataFrame
 ```
 
 Keystroke-saving alias for `.dim_select()`. If `ids` are provided, they're used
@@ -67,7 +67,8 @@ to subselect; if not, the entire dataframe is returned.
 #### from\_matrix\_and\_dim\_values
 
 ```python
-def from_matrix_and_dim_values(matrix, dim_values) -> None
+def from_matrix_and_dim_values(matrix: Union[pd.DataFrame, Matrix],
+                               dim_values: Labels) -> None
 ```
 
 Populates an array in the obsm/ or varm/ subgroup for a SOMA object.

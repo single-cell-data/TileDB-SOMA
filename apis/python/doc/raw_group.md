@@ -42,7 +42,9 @@ Writes `anndata.raw` to a TileDB group structure.
 #### to\_anndata\_raw
 
 ```python
-def to_anndata_raw(obs_labels)
+def to_anndata_raw(
+    obs_labels: Labels
+) -> Tuple[sp.csr_matrix, pd.DataFrame, Dict[str, np.ndarray]]
 ```
 
 Reads TileDB storage and returns the material for an `anndata.Raw` object.

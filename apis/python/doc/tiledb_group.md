@@ -20,7 +20,7 @@ Wraps groups from TileDB-Py by retaining a URI, options, etc.
 def __init__(uri: str,
              name: str,
              *,
-             parent=None,
+             parent: Optional[TileDBGroup] = None,
              soma_options: Optional[SOMAOptions] = None,
              ctx: Optional[tiledb.Ctx] = None)
 ```
@@ -49,22 +49,12 @@ def create_unless_exists() -> None
 
 Creates the TileDB group data structure on disk/S3/cloud, unless it already exists.
 
-<a id="tiledbsc.tiledb_group.TileDBGroup.get_object_type"></a>
-
-#### get\_object\_type
-
-```python
-def get_object_type() -> str
-```
-
-Returns the class name associated with the group.
-
 <a id="tiledbsc.tiledb_group.TileDBGroup.show_metadata"></a>
 
 #### show\_metadata
 
 ```python
-def show_metadata(recursively=True, indent="") -> None
+def show_metadata(recursively: bool = True, indent: str = "") -> None
 ```
 
 Shows metadata for the group, recursively by default.
