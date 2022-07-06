@@ -29,13 +29,21 @@ python -m pip install --upgrade tiledbsc
 * This requires [`tiledb`](https://github.com/TileDB-Inc/TileDB-Py) (see [./setup.cfg](setup.cfg) for version), in addition to other dependencies in [setup.cfg](./setup.cfg).
 * Clone [this repo](https://github.com/single-cell-data/TileDB-SingleCell)
 * `cd` into your checkout and then `cd apis/python`
-* `python -m pip install .` -- or, if you wish to modify the code and run it, `python -m pip install --editable .`
-* Optionally, if you prefer, instead:
+* `python -m pip install .`
+* Optionally, if you prefer `venv`:
 ```
 python -m venv venv
 . ./venv/bin/activate
 python -m pip install .
 ```
+* If you wish to modify the code and run it in place without reinstalls (this has been done successfully using Python 3.9 and Pip 22.1):
+```
+python -m venv venv
+. ./venv/bin/activate
+python -m pip install --upgrade pip
+python -m pip install -e .
+```
+
 * In either case:
 
 ```
