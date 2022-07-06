@@ -20,6 +20,7 @@ Nominally for soma raw.
 def __init__(uri: str,
              name: str,
              obs: AnnotationDataFrame,
+             *,
              parent: Optional[TileDBGroup] = None)
 ```
 
@@ -31,7 +32,7 @@ See `AssayMatrix` for the rationale behind retaining a reference to the `parent_
 #### from\_anndata
 
 ```python
-def from_anndata(anndata: ad.AnnData)
+def from_anndata(anndata: ad.AnnData) -> None
 ```
 
 Writes `anndata.raw` to a TileDB group structure.

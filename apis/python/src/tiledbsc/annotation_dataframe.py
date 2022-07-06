@@ -1,13 +1,15 @@
+from typing import Optional, Sequence, Set, Tuple
+
+import numpy as np
+import pandas as pd
 import tiledb
-from .tiledb_array import TileDBArray
-from .tiledb_group import TileDBGroup
-from .soma_options import SOMAOptions
+
 import tiledbsc.util as util
 
-import pandas as pd
-import numpy as np
-
-from typing import Optional, Tuple, List, Set
+from .logging import log_io
+from .tiledb_array import TileDBArray
+from .tiledb_group import TileDBGroup
+from .types import Ids
 
 
 class AnnotationDataFrame(TileDBArray):
@@ -15,13 +17,12 @@ class AnnotationDataFrame(TileDBArray):
     Nominally for `obs` and `var` data within a soma. These have one string dimension, and multiple attributes.
     """
 
-    dim_name: str
-
     # ----------------------------------------------------------------
     def __init__(
         self,
         uri: str,
         name: str,
+        *,
         parent: Optional[TileDBGroup] = None,
     ):
         """
@@ -32,7 +33,7 @@ class AnnotationDataFrame(TileDBArray):
         self.dim_name = name + "_id"
 
     # ----------------------------------------------------------------
-    def shape(self):
+    def shape(self) -> Tuple[int, int]:
         """
         Returns a tuple with the number of rows and number of columns of the `AnnotationDataFrame`.
         The row-count is the number of obs_ids (for `obs`) or the number of var_ids (for `var`).
@@ -66,7 +67,7 @@ class AnnotationDataFrame(TileDBArray):
             return (num_rows, num_cols)
 
     # ----------------------------------------------------------------
-    def ids(self) -> List[str]:
+    def ids(self) -> Sequence[str]:
         """
         Returns the `obs_ids` in the matrix (for `obs`) or the `var_ids` (for `var`).
         """
@@ -77,7 +78,21 @@ class AnnotationDataFrame(TileDBArray):
             return [e.decode() for e in retval]
 
     # ----------------------------------------------------------------
-    def keys(self) -> List[str]:
+    def __repr__(self) -> str:
+        """
+        Default display of soma.obs and soma.var.
+        """
+        return ", ".join(f"'{key}'" for key in self.keys())
+
+    # ----------------------------------------------------------------
+    def __len__(self) -> int:
+        """
+        Implements `len(soma.obs)` and `len(soma.var)`.
+        """
+        return len(self.ids())
+
+    # ----------------------------------------------------------------
+    def keys(self) -> Sequence[str]:
         """
         Returns the column names for the `obs` or `var` dataframe.  For obs and varp, `.keys()` is a
         keystroke-saver for the more general array-schema accessor `attr_names`.
@@ -92,7 +107,9 @@ class AnnotationDataFrame(TileDBArray):
         return set(self.keys())
 
     # ----------------------------------------------------------------
-    def dim_select(self, ids, attrs=None):
+    def dim_select(
+        self, ids: Optional[Ids], attrs: Optional[Sequence[str]] = None
+    ) -> pd.DataFrame:
         """
         Selects a slice out of the dataframe with specified `obs_ids` (for `obs`) or `var_ids` (for
         `var`).  If `ids` is `None`, the entire dataframe is returned.  Similarly, if `attrs` are
@@ -124,7 +141,9 @@ class AnnotationDataFrame(TileDBArray):
         return self._ascii_to_unicode_dataframe_readback(df)
 
     # ----------------------------------------------------------------
-    def df(self, ids=None, attrs=None) -> pd.DataFrame:
+    def df(
+        self, ids: Optional[Ids] = None, attrs: Optional[Sequence[str]] = None
+    ) -> pd.DataFrame:
         """
         Keystroke-saving alias for `.dim_select()`. If `ids` are provided, they're used
         to subselect; if not, the entire dataframe is returned. If `attrs` are provided,
@@ -133,7 +152,12 @@ class AnnotationDataFrame(TileDBArray):
         return self.dim_select(ids, attrs)
 
     # ----------------------------------------------------------------
-    def query(self, query_string, ids=None, attrs=None):
+    def query(
+        self,
+        query_string: Optional[str],
+        ids: Optional[Ids] = None,
+        attrs: Optional[Sequence[str]] = None,
+    ) -> pd.DataFrame:
         """
         Selects from obs/var using a TileDB-Py `QueryCondition` string such as `cell_type ==
         "blood"`.  If `attrs` is `None`, returns all column names in the dataframe; use `[]` for
@@ -157,16 +181,12 @@ class AnnotationDataFrame(TileDBArray):
                     slice_df = slice_query.df[:]
                 else:
                     slice_df = slice_query.df[ids]
-            nobs = len(slice_df)
-            if nobs == 0:
-                return None
-            else:
-                # This is the 'decode on read' part of our logic; in dim_select we have the 'encode on write' part.
-                # Context: https://github.com/single-cell-data/TileDB-SingleCell/issues/99.
-                return self._ascii_to_unicode_dataframe_readback(slice_df)
+            # This is the 'decode on read' part of our logic; in dim_select we have the 'encode on write' part.
+            # Context: https://github.com/single-cell-data/TileDB-SingleCell/issues/99.
+            return self._ascii_to_unicode_dataframe_readback(slice_df)
 
     # ----------------------------------------------------------------
-    def _ascii_to_unicode_dataframe_readback(self, df):
+    def _ascii_to_unicode_dataframe_readback(self, df: pd.DataFrame) -> pd.DataFrame:
         """
         Implements the 'decode on read' partof our logic as noted in `dim_select()`.
         """
@@ -191,9 +211,8 @@ class AnnotationDataFrame(TileDBArray):
         dim_filters = tiledb.FilterList([tiledb.ZstdFilter(level=-1)])
         attr_filters = tiledb.FilterList([tiledb.ZstdFilter(level=-1)])
 
-        if self._verbose:
-            s = util.get_start_stamp()
-            print(f"{self._indent}START  WRITING {self.uri}")
+        s = util.get_start_stamp()
+        log_io(None, f"{self._indent}START  WRITING {self.uri}")
 
         # Make the row-names column (barcodes for obs, gene names for var) explicitly named.
         # Otherwise it'll be called '__tiledb_rows'.
@@ -223,8 +242,7 @@ class AnnotationDataFrame(TileDBArray):
         mode = "ingest"
         if self.exists():
             mode = "append"
-            if self._verbose:
-                print(f"{self._indent}Re-using existing array {self.uri}")
+            log_io(None, f"{self._indent}Re-using existing array {self.uri}")
 
         # ISSUE:
         # TileDB attributes can be stored as Unicode but they are not yet queryable via the TileDB
@@ -264,7 +282,7 @@ class AnnotationDataFrame(TileDBArray):
             dataframe=dataframe,
             name=self.name,
             sparse=True,
-            allows_duplicates=False,
+            allows_duplicates=self._soma_options.allows_duplicates,
             offsets_filters=offsets_filters,
             attr_filters=attr_filters,
             dim_filters=dim_filters,
@@ -277,5 +295,7 @@ class AnnotationDataFrame(TileDBArray):
 
         self._set_object_type_metadata()
 
-        if self._verbose:
-            print(util.format_elapsed(s, f"{self._indent}FINISH WRITING {self.uri}"))
+        log_io(
+            f"Wrote {self.nested_name}",
+            util.format_elapsed(s, f"{self._indent}FINISH WRITING {self.uri}"),
+        )

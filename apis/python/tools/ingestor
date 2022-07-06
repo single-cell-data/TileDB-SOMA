@@ -13,12 +13,16 @@ Nominal immediate-term support is to local disk and S3, although output to tiled
 URIs will be supported.
 """
 
+import argparse
+import os
+import shutil
+import sys
+
+import tiledb
+
 import tiledbsc
 import tiledbsc.io
 import tiledbsc.util
-import tiledb
-import sys, os, shutil
-import argparse
 
 
 # ================================================================
@@ -28,6 +32,9 @@ def main():
     )
     parser.add_argument(
         "-q", "--quiet", help="decrease output verbosity", action="store_true"
+    )
+    parser.add_argument(
+        "--debug", help="increase output verbosity", action="store_true"
     )
     parser.add_argument(
         "-n",
@@ -46,12 +53,14 @@ def main():
         default="./tiledb-data",
     )
     parser.add_argument(
-        "--soco", help="Write the SOMA and also append to a SOMACollection there", action="store_true"
+        "--soco",
+        help="Write the SOMA and also append to a SOMACollection there",
+        action="store_true",
     )
     parser.add_argument(
-        "-r", "--relative",
-        help=
-"""
+        "-r",
+        "--relative",
+        help="""
 * If `false` then the group will remember the absolute paths of each member array/subgroup. For
 ingesting to TileDB Cloud, this is necessary.
 
@@ -87,19 +96,26 @@ select `relative=True`. (This is the default.)
         else:
             args.ifexists = ["continue"]
 
-    soma_options = tiledbsc.SOMAOptions()
-
     write_soco = args.soco
-    verbose = not args.quiet
+    if args.debug:
+        tiledbsc.logging.debug()
+    elif not args.quiet:
+        tiledbsc.logging.info()
 
-    if args.relative == 'true':
-        soma_options.relative_membership = True
-    elif args.relative == 'false':
-        soma_options.relative_membership = False
-    elif args.relative == 'auto':
-        soma_options.relative_membership = None
-    # No else -- we only allowed those three choices in the argument-parser.
+    if args.relative is None:
+        rel_member_uris = None
+    else:
+        relative = args.relative[0]
+        if relative == "true":
+            rel_member_uris = True
+        elif relative == "false":
+            rel_member_uris = False
+        elif relative == "auto":
+            rel_member_uris = None
+        else:
+            raise Exception(f"Internal coding error in {__file__}")
 
+    soma_options = tiledbsc.SOMAOptions(member_uris_are_relative=rel_member_uris)
     outdir = args.o.rstrip("/")
 
     if args.n:
@@ -111,23 +127,51 @@ select `relative=True`. (This is the default.)
             output_path = os.path.join(
                 outdir, os.path.splitext(os.path.basename(input_path))[0]
             )
-            ingest_one(input_path, output_path, args.ifexists[0], soma_options, write_soco, outdir, verbose)
+            ingest_one(
+                input_path,
+                output_path,
+                args.ifexists[0],
+                soma_options,
+                write_soco,
+                outdir,
+            )
     else:
         if len(args.paths) == 0:
             input_path = "anndata/pbmc-small.h5ad"
             output_path = os.path.join(outdir, "pbmc-small")
-            ingest_one(input_path, output_path, args.ifexists[0], soma_options, write_soco, outdir, verbose)
+            ingest_one(
+                input_path,
+                output_path,
+                args.ifexists[0],
+                soma_options,
+                write_soco,
+                outdir,
+            )
         elif len(args.paths) == 1:
             input_path = args.paths[0]
             # Example 'anndata/pbmc3k_processed.h5ad' -> 'tiledb-data/pbmc3k_processed'
             output_path = os.path.join(
                 outdir, os.path.splitext(os.path.basename(input_path))[0]
             )
-            ingest_one(input_path, output_path, args.ifexists[0], soma_options, write_soco, outdir, verbose)
+            ingest_one(
+                input_path,
+                output_path,
+                args.ifexists[0],
+                soma_options,
+                write_soco,
+                outdir,
+            )
         elif len(args.paths) == 2:
             input_path = args.paths[0]
             output_path = args.paths[1]
-            ingest_one(input_path, output_path, args.ifexists[0], soma_options, write_soco, outdir, verbose)
+            ingest_one(
+                input_path,
+                output_path,
+                args.ifexists[0],
+                soma_options,
+                write_soco,
+                outdir,
+            )
         else:
             parser.print_help(file=sys.stderr)
             sys.exit(1)
@@ -141,13 +185,12 @@ def ingest_one(
     soma_options: tiledbsc.SOMAOptions,
     write_soco: bool,
     soco_dir: str,
-    verbose: bool,
 ):
     # Check that the input exists.
     vfs = tiledb.VFS()
     if not vfs.is_file(input_path):
         # Print this neatly and exit neatly, to avoid a multi-line stack trace otherwise.
-        print(f"Input path not found: {input_path}", file=sys.stderr)
+        tiledbsc.logging.logger.error(f"Input path not found: {input_path}")
         sys.exit(1)
 
     # Prepare to write the output.
@@ -170,15 +213,23 @@ def ingest_one(
     else:
         if os.path.exists(output_path):
             if ifexists == "continue":
-                print(f"Already exists; continuing: {output_path}")
+                tiledbsc.logging.logger.info(
+                    f"Already exists; continuing: {output_path}"
+                )
                 return
             elif ifexists == "abort":
-                print(f"Already exists; aborting: {output_path}")
+                tiledbsc.logging.error(f"Already exists; aborting: {output_path}")
                 sys.exit(1)
             elif ifexists == "replace":
-                if output_path.startswith('s3://') or output_path.startswith('tiledb://'):
-                    raise("--ifexists replace currently only is compatible with local-disk paths")
-                print(f"Already exists; replacing: {output_path}")
+                if output_path.startswith("s3://") or output_path.startswith(
+                    "tiledb://"
+                ):
+                    raise Exception(
+                        "--ifexists replace currently only is compatible with local-disk paths"
+                    )
+                tiledbsc.logging.logger.info(
+                    f"Already exists; replacing: {output_path}"
+                )
                 shutil.rmtree(output_path)  # Overwrite
             else:
                 raise Exception(
@@ -187,18 +238,19 @@ def ingest_one(
         # Do the ingest into TileDB.
         tiledbsc.io.from_h5ad(soma, input_path)
 
-    if not verbose:
-        print(f"Wrote {output_path}")
+    tiledbsc.logging.logger.info(f"Wrote {output_path}")
 
     if write_soco:
-        soco = tiledbsc.SOMACollection(soco_dir, soma_options=soma_options, verbose=verbose)
+        soco = tiledbsc.SOMACollection(soco_dir, soma_options=soma_options)
         soco.create_unless_exists()
         if not soco.exists():
             raise Exception(f"Could not create SOCO at {soco.uri}")
         soco.add(soma)
-        if verbose:
-            print()
-            print(f"Added SOMA {soma.name} to SOMACollection {soco_dir}")
+
+        tiledbsc.logging.logger.info("")
+        tiledbsc.logging.logger.info(
+            f"Added SOMA {soma.name} to SOMACollection {soco_dir}"
+        )
 
 
 # ================================================================

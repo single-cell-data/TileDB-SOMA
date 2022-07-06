@@ -20,6 +20,7 @@ Nominally for obsm and varm group elements within a soma.
 def __init__(uri: str,
              name: str,
              dim_name: str,
+             *,
              parent: Optional[TileDBGroup] = None)
 ```
 
@@ -30,7 +31,7 @@ See the TileDBObject constructor.
 #### shape
 
 ```python
-def shape()
+def shape() -> Tuple[int, int]
 ```
 
 Returns a tuple with the number of rows and number of columns of the `AnnotationMatrix`.
@@ -44,7 +45,7 @@ Note: currently implemented via data scan -- will be optimized for TileDB core 2
 #### dim\_select
 
 ```python
-def dim_select(ids)
+def dim_select(ids) -> pd.DataFrame
 ```
 
 Selects a slice out of the array with specified `obs_ids` (for `obsm` elements) or
@@ -61,24 +62,12 @@ def df(ids=None) -> pd.DataFrame
 Keystroke-saving alias for `.dim_select()`. If `ids` are provided, they're used
 to subselect; if not, the entire dataframe is returned.
 
-<a id="tiledbsc.annotation_matrix.AnnotationMatrix.shape"></a>
-
-#### shape
-
-```python
-def shape()
-```
-
-Returns a tuple with the number of rows and number of columns of the `AnnotationMatrix`.
-The row-count is the number of obs_ids (for `obsm` elements) or the number of var_ids (for
-`varm` elements).  The column-count is the number of columns/attributes in the dataframe.
-
 <a id="tiledbsc.annotation_matrix.AnnotationMatrix.from_matrix_and_dim_values"></a>
 
 #### from\_matrix\_and\_dim\_values
 
 ```python
-def from_matrix_and_dim_values(matrix, dim_values)
+def from_matrix_and_dim_values(matrix, dim_values) -> None
 ```
 
 Populates an array in the obsm/ or varm/ subgroup for a SOMA object.

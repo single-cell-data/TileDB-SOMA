@@ -1,12 +1,11 @@
+import tempfile
+from pathlib import Path
+
 import anndata
-import tiledb
+import pytest
+
 import tiledbsc
 import tiledbsc.io
-
-import pytest
-import tempfile
-import os
-from pathlib import Path
 
 HERE = Path(__file__).parent
 
@@ -30,7 +29,7 @@ def test_query(adata):
     output_path = tempdir.name
 
     # Ingest
-    soma = tiledbsc.SOMA(output_path, verbose=True)
+    soma = tiledbsc.SOMA(output_path)
     tiledbsc.io.from_anndata(soma, adata)
 
     output = soma.obs.query(

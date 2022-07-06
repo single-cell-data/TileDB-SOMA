@@ -13,19 +13,18 @@
 # URIs will be supported.
 # ================================================================
 
+import argparse
+import logging
+import os
+import sys
+
+import tiledb
+
 import tiledbsc
 import tiledbsc.io
 import tiledbsc.util
-import tiledb
 
-import anndata as ad
-
-import pandas as pd
-import scipy
-import numpy as np
-
-import sys, os, shutil
-import argparse
+logger = logging.getLogger("tiledbsc")
 
 
 def main():
@@ -69,7 +68,7 @@ def main():
     vfs = tiledb.VFS()
     if not vfs.is_dir(input_path):
         # Print this neatly and exit neatly, to avoid a multi-line stack trace otherwise.
-        print(f"Input path not found: {input_path}", file=sys.stderr)
+        logging.error(f"Input path not found: {input_path}")
         sys.exit(1)
 
     # This is for local-disk use only -- for S3-backed tiledb://... URIs we should
@@ -79,11 +78,13 @@ def main():
             os.mkdir(outdir)
 
     verbose = not args.quiet
-    soma = tiledbsc.SOMA(input_path, verbose=verbose)
+    if verbose:
+        tiledbsc.logging.info()
+
+    soma = tiledbsc.SOMA(input_path)
     tiledbsc.io.to_h5ad(soma, output_path)
 
-    if not verbose:
-        print(f"Wrote {output_path}")
+    logger.info(f"Wrote {output_path}")
 
 
 if __name__ == "__main__":

@@ -1,18 +1,18 @@
-import tiledb
-
-from .soma_options import SOMAOptions
-from .tiledb_group import TileDBGroup
-from .uns_array import UnsArray
-import tiledbsc.util as util
-
-import anndata as ad
-import pandas as pd
-import numpy as np
-import scipy
-
-from typing import Optional, List, Dict, Union
+from __future__ import annotations
 
 import os
+from typing import Any, Iterator, Mapping, Optional, Sequence, Union
+
+import numpy as np
+import pandas as pd
+import scipy.sparse as sp
+import tiledb
+
+import tiledbsc.util as util
+
+from .logging import log_io, logger
+from .tiledb_group import TileDBGroup
+from .uns_array import UnsArray
 
 
 class UnsGroup(TileDBGroup):
@@ -21,19 +21,14 @@ class UnsGroup(TileDBGroup):
     """
 
     # ----------------------------------------------------------------
-    def __init__(
-        self,
-        uri: str,
-        name: str,
-        parent: Optional[TileDBGroup] = None,
-    ):
+    def __init__(self, uri: str, name: str, *, parent: Optional[TileDBGroup] = None):
         """
         See the TileDBObject constructor.
         """
         super().__init__(uri=uri, name=name, parent=parent)
 
     # ----------------------------------------------------------------
-    def keys(self):
+    def keys(self) -> Sequence[str]:
         """
         For uns, `.keys()` is a keystroke-saver for the more general group-member
         accessor `._get_member_names()`.
@@ -56,17 +51,15 @@ class UnsGroup(TileDBGroup):
     #   the `[]` operator separately in the various classes which need indexing. This is again to
     #   avoid circular-import issues, and means that [] on `AnnotationMatrixGroup` will return an
     #   `AnnotationMatrix, [] on `UnsGroup` will return `UnsArray` or `UnsGroup`, etc.
-    def __getitem__(self, name):
+    def __getitem__(self, name: str) -> Union[UnsGroup, UnsArray, None]:
         """
         Returns an `UnsArray` or `UnsGroup` element at the given name within the group, or None if
         no such member exists.  Overloads the [...] operator.
         """
 
         with self._open("r") as G:
-            if not name in G:
+            if name not in G:
                 return None
-
-            print("<<", self.uri, ">>", "NAME", name, "TYPE", type(name))
 
             obj = G[name]  # This returns a tiledb.object.Object.
             if obj.type == tiledb.tiledb.Group:
@@ -79,7 +72,7 @@ class UnsGroup(TileDBGroup):
                 )
 
     # ----------------------------------------------------------------
-    def __contains__(self, name):
+    def __contains__(self, name: str) -> bool:
         """
         Implements '"namegoeshere" in soma.uns'.
         """
@@ -87,77 +80,71 @@ class UnsGroup(TileDBGroup):
             return name in G
 
     # ----------------------------------------------------------------
-    def __iter__(self) -> List:  # List[Union[UnsGroup, UnsArray]]
+    def __iter__(self) -> Iterator[Union[UnsGroup, UnsArray]]:
         """
         Implements `for element in soma.uns: ...`
         """
-        retval = []
         with self._open("r") as G:
-            for O in G:  # tiledb.object.Object
-                if O.type == tiledb.tiledb.Group:
-                    retval.append(UnsGroup(uri=O.uri, name=O.name, parent=self))
-                elif O.type == tiledb.libtiledb.Array:
-                    retval.append(UnsArray(uri=O.uri, name=O.name, parent=self))
+            for obj in G:  # tiledb.object.Object
+                if obj.type == tiledb.tiledb.Group:
+                    yield UnsGroup(uri=obj.uri, name=obj.name, parent=self)
+                elif obj.type == tiledb.libtiledb.Array:
+                    yield UnsArray(uri=obj.uri, name=obj.name, parent=self)
                 else:
                     raise Exception(
-                        f"Internal error: found uns group element neither subgroup nor array: type is {str(O.type)}"
+                        f"Internal error: found uns group element neither subgroup nor array: type is {obj.type}"
                     )
-        return iter(retval)
 
     # ----------------------------------------------------------------
-    def show(self, display_name="uns"):
+    def __repr__(self) -> str:
+        """
+        Default display for uns groups.
+        """
+        return self._repr_aux()
+
+    # ----------------------------------------------------------------
+    def _repr_aux(self, display_name: str = "uns", indent: str = "") -> str:
         """
         Recursively displays the uns data.
         """
-        print()
-        print(display_name + ":")
+        strings = []
+        strings.append(indent + display_name + ":")
+        # Scalars are stored as metadata, not 1D arrays
         for k, v in self.metadata().items():
             if not k.startswith("__"):
-                print(k + ":", v)
+                strings.append(indent + k + ": " + repr(v))
+        # Now do subgroups, and non-scalar values
         for e in self:
             element_display_name = display_name + "/" + e.name
             if isinstance(e, UnsGroup):
-                e.show(display_name=element_display_name)
+                strings.append(
+                    indent
+                    + e._repr_aux(
+                        display_name=element_display_name, indent=indent + "  "
+                    )
+                )
             else:
-                print(element_display_name + "/")
+                strings.append(indent + element_display_name + "/")
                 with e._open() as A:
-                    print(A[:])
-
-        # uns:
-        # scalar_float: 3.25
-        # scalar_string: a string
-        # [1]
-        # [ 0.    1.25  2.5   3.75  5.    6.25  7.5   8.75 10.   11.25]
-        # [ 0 10 20 30 40 50 60 70 80 90]
-        # [1 2 3]
-        # [[1. 2. 3.]
-        #  [4. 5. 6.]]
-        #
-        # uns/simple_dict:
-        # B: one
-        # [0]
-        # ['a' 'b' 'c']
-        # OrderedDict([('A', array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9], dtype=int32)), ('__tiledb_rows', array([b'0', b'1', b'2', b'3', b'4', b'5', b'6', b'7', b'8', b'9'],
-        #       dtype=object))])
-        # ['0' '100' '200' '300' '400' '500' '600' '700' '800' '900']
+                    strings.append(indent + str(A[:]))
+        return "\n".join(strings)
 
     # ----------------------------------------------------------------
-    def from_anndata_uns(self, uns: ad.compat.OverloadedDict):
+    def from_anndata_uns(self, uns: Mapping[str, Any]) -> None:
         """
         Populates the uns group for the soma object.
 
         :param uns: anndata.uns.
         """
 
-        if self._verbose:
-            s = util.get_start_stamp()
-            print(f"{self._indent}START  WRITING {self.uri}")
+        s = util.get_start_stamp()
+        log_io(None, f"{self._indent}START  WRITING {self.uri}")
 
         # Must be done first, to create the parent directory
         self.create_unless_exists()
 
         for key in uns.keys():
-            component_uri = os.path.join(self.uri, key)
+            component_uri = self._get_child_uri(key)  # See comments in that function
             value = uns[key]
 
             if key == "rank_genes_groups":
@@ -177,10 +164,12 @@ class UnsGroup(TileDBGroup):
                 # support nested cells, AKA "list" type.
                 #
                 # This could, however, be converted to a dataframe and ingested that way.
-                print(f"{self._indent}Skipping structured array:", component_uri)
+                log_io(
+                    None, f"{self._indent}Skipping structured array: {component_uri}"
+                )
                 continue
 
-            if isinstance(value, (dict, ad.compat.OverloadedDict)):
+            if isinstance(value, Mapping):
                 # Nested data, e.g. a.uns['draw-graph']['params']['layout']
                 subgroup = UnsGroup(uri=component_uri, name=key, parent=self)
                 subgroup.from_anndata_uns(value)
@@ -208,7 +197,7 @@ class UnsGroup(TileDBGroup):
                 array.from_pandas_dataframe(value)
                 self._add_object(array)
 
-            elif isinstance(value, scipy.sparse.csr_matrix):
+            elif isinstance(value, sp.csr_matrix):
                 array.from_scipy_csr(value)
                 self._add_object(array)
 
@@ -216,28 +205,30 @@ class UnsGroup(TileDBGroup):
                 self._add_object(array)
 
             else:
-                print(
-                    f"{self._indent}Skipping unrecognized type:",
-                    component_uri,
-                    type(value),
+                logger.error(
+                    f"{self._indent}Skipping unrecognized type: {component_uri} {type(value)}",
                 )
 
-        if self._verbose:
-            print(util.format_elapsed(s, f"{self._indent}FINISH WRITING {self.uri}"))
+        log_io(
+            f"Wrote {self.nested_name}",
+            util.format_elapsed(s, f"{self._indent}FINISH WRITING {self.uri}"),
+        )
 
     # ----------------------------------------------------------------
-    def to_dict_of_matrices(self) -> Dict:
+    def to_dict_of_matrices(self) -> Mapping[str, Any]:
         """
-        Reads the recursive group/array uns data from TileDB storage and returns them as a recursive dict of matrices.
+        Reads the recursive group/array uns data from TileDB storage
+        and returns them as a recursive dict of matrices.
         """
         if not self.exists():
-            if self._verbose:
-                print(f"{self._indent}{self.uri} not found")
+            log_io(
+                f"{self._indent}{self.uri} not found",
+                f"{self._indent}{self.uri} not found",
+            )
             return {}
 
-        if self._verbose:
-            s = util.get_start_stamp()
-            print(f"{self._indent}START  read {self.uri}")
+        s = util.get_start_stamp()
+        log_io(None, f"{self._indent}START  read {self.uri}")
 
         with self._open() as G:
             retval = {}
@@ -257,7 +248,9 @@ class UnsGroup(TileDBGroup):
                         f"Internal error: found uns group element neither group nor array: type is {str(element.type)}"
                     )
 
-        if self._verbose:
-            print(util.format_elapsed(s, f"{self._indent}FINISH read {self.uri}"))
+        log_io(
+            f"Wrote {self.nested_name}",
+            util.format_elapsed(s, f"{self._indent}FINISH WRITING {self.uri}"),
+        )
 
         return retval

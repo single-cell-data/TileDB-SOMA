@@ -24,6 +24,7 @@ def __init__(uri: str,
              col_dim_name: str,
              row_dataframe: AnnotationDataFrame,
              col_dataframe: AnnotationDataFrame,
+             *,
              parent: Optional[TileDBGroup] = None)
 ```
 
@@ -48,7 +49,7 @@ than taking in actualized ID-lists here in the constructor, for two reasons:
 #### shape
 
 ```python
-def shape()
+def shape() -> Tuple[int, int]
 ```
 
 Returns a tuple with the number of rows and number of columns of the `AssayMatrix`.
@@ -187,7 +188,7 @@ Convert dense matrix to coo_matrix chunkwise and ingest into TileDB.
 #### to\_csr\_matrix
 
 ```python
-def to_csr_matrix(row_labels, col_labels)
+def to_csr_matrix(row_labels, col_labels) -> scipy.sparse.csr_matrix
 ```
 
 Reads the TileDB array storage for the storage and returns a sparse CSR matrix.  The

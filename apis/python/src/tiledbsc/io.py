@@ -1,11 +1,32 @@
-import tiledbsc
-import tiledbsc.util
-import tiledb
-import tiledbsc.util_ann
+from typing import Callable
+
 import anndata as ad
+import scanpy
+import tiledb
+
+import tiledbsc
+import tiledbsc.logging
+import tiledbsc.util
+import tiledbsc.util_ann
+
+from .logging import log_io
+from .types import Path
+
 
 # ----------------------------------------------------------------
-def from_h5ad(soma: tiledbsc.SOMA, input_path: str) -> None:
+def from_h5ad_unless_exists(soma: tiledbsc.SOMA, input_path: str) -> None:
+    """
+    Skips the ingest if the SOMA is already there. A convenient keystroke-saver
+    so users don't need to replicate the if-test.
+    """
+    if tiledbsc.util.is_soma(soma.uri):
+        tiledbsc.logging.logger.info(f"Already exists, skipping ingest: {soma.uri}")
+    else:
+        from_h5ad(soma, input_path)
+
+
+# ----------------------------------------------------------------
+def from_h5ad(soma: tiledbsc.SOMA, input_path: Path) -> None:
     """
     Reads an .h5ad file and writes to a TileDB group structure.
     """
@@ -13,7 +34,7 @@ def from_h5ad(soma: tiledbsc.SOMA, input_path: str) -> None:
 
 
 # ----------------------------------------------------------------
-def from_h5ad_update_obs_and_var(soma: tiledbsc.SOMA, input_path: str) -> None:
+def from_h5ad_update_obs_and_var(soma: tiledbsc.SOMA, input_path: Path) -> None:
     """
     Rewrites obs and var from the specified .h5ad file, leaving all other data in place. Useful for
     updating schema/compression/etc. within an existing dataset.
@@ -22,64 +43,85 @@ def from_h5ad_update_obs_and_var(soma: tiledbsc.SOMA, input_path: str) -> None:
 
 
 # ----------------------------------------------------------------
-def _from_h5ad_common(soma: tiledbsc.SOMA, input_path: str, handler_func) -> None:
+def _from_h5ad_common(
+    soma: tiledbsc.SOMA,
+    input_path: Path,
+    handler_func: Callable[[tiledbsc.SOMA, ad.AnnData], None],
+) -> None:
     """
     Common code for things we do when processing a .h5ad file for ingest/update.
     """
-    if soma._verbose:
-        s = tiledbsc.util.get_start_stamp()
-        print(f"START  SOMA.from_h5ad {input_path} -> {soma.uri}")
+    s = tiledbsc.util.get_start_stamp()
+    log_io(None, f"START  SOMA.from_h5ad {input_path} -> {soma.uri}")
 
-    if soma._verbose:
-        s = tiledbsc.util.get_start_stamp()
-        print(f"{soma._indent}START  READING {input_path}")
+    s = tiledbsc.util.get_start_stamp()
+    log_io(None, f"{soma._indent}START  READING {input_path}")
+
     anndata = ad.read_h5ad(input_path)
-    if soma._verbose:
-        print(
-            tiledbsc.util.format_elapsed(
-                s, f"{soma._indent}FINISH READING {input_path}"
-            )
-        )
+
+    log_io(
+        None,
+        tiledbsc.util.format_elapsed(s, f"{soma._indent}FINISH READING {input_path}"),
+    )
 
     handler_func(soma, anndata)
 
-    if soma._verbose:
-        print(
-            tiledbsc.util.format_elapsed(
-                s, f"FINISH SOMA.from_h5ad {input_path} -> {soma.uri}"
-            )
-        )
+    log_io(
+        None,
+        tiledbsc.util.format_elapsed(
+            s, f"FINISH SOMA.from_h5ad {input_path} -> {soma.uri}"
+        ),
+    )
 
 
 # ----------------------------------------------------------------
-def from_10x(soma: tiledbsc.SOMA, input_path: str) -> None:
+def from_10x_unless_exists(soma: tiledbsc.SOMA, input_path: Path) -> None:
+    """
+    Skips the ingest if the SOMA is already there. A convenient keystroke-saver
+    so users don't need to replicate the if-test.
+    """
+    if tiledbsc.util.is_soma(soma.uri):
+        tiledbsc.logging.logger.info(f"Already exists, skipping ingest: {soma.uri}")
+    else:
+        from_10x(soma, input_path)
+
+
+def from_10x(soma: tiledbsc.SOMA, input_path: Path) -> None:
     """
     Reads a 10X file and writes to a TileDB group structure.
     """
-    if soma._verbose:
-        s = tiledbsc.util.get_start_stamp()
-        print(f"START  SOMA.from_10x {input_path} -> {soma.uri}")
+    s = tiledbsc.util.get_start_stamp()
+    log_io(None, f"START  SOMA.from_10x {input_path} -> {soma.uri}")
 
-    if soma._verbose:
-        s = tiledbsc.util.get_start_stamp()
-        print(f"{soma._indent}START  READING {input_path}")
+    log_io(None, f"{soma._indent}START  READING {input_path}")
+
     anndata = scanpy.read_10x_h5(input_path)
-    if soma._verbose:
-        print(
-            tiledbsc.util.format_elapsed(
-                s, f"{soma._indent}FINISH READING {input_path}"
-            )
-        )
+
+    log_io(
+        None,
+        tiledbsc.util.format_elapsed(s, f"{soma._indent}FINISH READING {input_path}"),
+    )
 
     from_anndata(soma, anndata)
 
-    if soma._verbose:
-        print(
-            tiledbsc.util.format_elapsed(
-                s, f"FINISH SOMA.from_10x {input_path} -> {soma.uri}"
-            )
-        )
-    return anndata
+    log_io(
+        None,
+        tiledbsc.util.format_elapsed(
+            s, f"FINISH SOMA.from_10x {input_path} -> {soma.uri}"
+        ),
+    )
+
+
+# ----------------------------------------------------------------
+def from_anndata_unless_exists(soma: tiledbsc.SOMA, anndata: ad.AnnData) -> None:
+    """
+    Skips the ingest if the SOMA is already there. A convenient keystroke-saver
+    so users don't need to replicate the if-test.
+    """
+    if tiledbsc.util.is_soma(soma.uri):
+        tiledbsc.logging.logger.info(f"Already exists, skipping ingest: {soma.uri}")
+    else:
+        from_anndata(soma, anndata)
 
 
 # ----------------------------------------------------------------
@@ -92,20 +134,20 @@ def from_anndata(soma: tiledbsc.SOMA, anndata: ad.AnnData) -> None:
     if anndata.obs.index.empty or anndata.var.index.empty:
         raise NotImplementedError("Empty AnnData.obs or AnnData.var unsupported.")
 
-    if soma._verbose:
-        s = tiledbsc.util.get_start_stamp()
-        print(f"{soma._indent}START  DECATEGORICALIZING")
+    s = tiledbsc.util.get_start_stamp()
+    log_io(None, f"{soma._indent}START  DECATEGORICALIZING")
+
     anndata.obs_names_make_unique()
     anndata.var_names_make_unique()
     anndata = tiledbsc.util_ann._decategoricalize(anndata)
-    if soma._verbose:
-        print(
-            tiledbsc.util.format_elapsed(s, f"{soma._indent}FINISH DECATEGORICALIZING")
-        )
 
-    if soma._verbose:
-        s = tiledbsc.util.get_start_stamp()
-        print(f"{soma._indent}START  WRITING {soma.uri}")
+    log_io(
+        None,
+        tiledbsc.util.format_elapsed(s, f"{soma._indent}FINISH DECATEGORICALIZING"),
+    )
+
+    s = tiledbsc.util.get_start_stamp()
+    log_io(None, f"{soma._indent}START  WRITING {soma.uri}")
 
     # Must be done first, to create the parent directory
     soma.create_unless_exists()
@@ -127,32 +169,48 @@ def from_anndata(soma: tiledbsc.SOMA, anndata: ad.AnnData) -> None:
     soma._add_object(soma.X)
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-    soma.obsm.from_matrices_and_dim_values(anndata.obsm, anndata.obs_names)
+    soma.obsm.create_unless_exists()
+    for key in anndata.obsm.keys():
+        soma.obsm.add_matrix_from_matrix_and_dim_values(
+            anndata.obsm[key], anndata.obs_names, key
+        )
     soma._add_object(soma.obsm)
 
-    soma.varm.from_matrices_and_dim_values(anndata.varm, anndata.var_names)
+    soma.varm.create_unless_exists()
+    for key in anndata.varm.keys():
+        soma.varm.add_matrix_from_matrix_and_dim_values(
+            anndata.varm[key], anndata.var_names, key
+        )
     soma._add_object(soma.varm)
 
-    soma.obsp.from_matrices_and_dim_values(anndata.obsp, anndata.obs_names)
+    soma.obsp.create_unless_exists()
+    for key in anndata.obsp.keys():
+        soma.obsp.add_matrix_from_matrix_and_dim_values(
+            anndata.obsp[key], anndata.obs_names, key
+        )
     soma._add_object(soma.obsp)
 
-    soma.varp.from_matrices_and_dim_values(anndata.varp, anndata.var_names)
+    soma.varp.create_unless_exists()
+    for key in anndata.varp.keys():
+        soma.varp.add_matrix_from_matrix_and_dim_values(
+            anndata.varp[key], anndata.var_names, key
+        )
     soma._add_object(soma.varp)
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-    if anndata.raw != None:
+    if anndata.raw is not None:
         soma.raw.from_anndata(anndata)
         soma._add_object(soma.raw)
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-    if anndata.uns != None:
+    if anndata.uns is not None:
         soma.uns.from_anndata_uns(anndata.uns)
         soma._add_object(soma.uns)
 
-    if soma._verbose:
-        print(
-            tiledbsc.util.format_elapsed(s, f"{soma._indent}FINISH WRITING {soma.uri}")
-        )
+    log_io(
+        f"Wrote {soma.nested_name}",
+        tiledbsc.util.format_elapsed(s, f"{soma._indent}FINISH WRITING {soma.uri}"),
+    )
 
 
 # ----------------------------------------------------------------
@@ -166,20 +224,20 @@ def from_anndata_update_obs_and_var(soma: tiledbsc.SOMA, anndata: ad.AnnData) ->
     if anndata.obs.index.empty or anndata.var.index.empty:
         raise NotImplementedError("Empty AnnData.obs or AnnData.var unsupported.")
 
-    if soma._verbose:
-        s = tiledbsc.util.get_start_stamp()
-        print(f"{soma._indent}START  DECATEGORICALIZING")
+    s = tiledbsc.util.get_start_stamp()
+    log_io(None, f"{soma._indent}START  DECATEGORICALIZING")
+
     anndata.obs_names_make_unique()
     anndata.var_names_make_unique()
     anndata = tiledbsc.util_ann._decategoricalize(anndata)
-    if soma._verbose:
-        print(
-            tiledbsc.util.format_elapsed(s, f"{soma._indent}FINISH DECATEGORICALIZING")
-        )
 
-    if soma._verbose:
-        s = tiledbsc.util.get_start_stamp()
-        print(f"{soma._indent}START  WRITING {soma.uri}")
+    log_io(
+        None,
+        tiledbsc.util.format_elapsed(s, f"{soma._indent}FINISH DECATEGORICALIZING"),
+    )
+
+    s = tiledbsc.util.get_start_stamp()
+    log_io(None, f"{soma._indent}START  WRITING {soma.uri}")
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     soma._remove_object(soma.obs)
@@ -194,40 +252,40 @@ def from_anndata_update_obs_and_var(soma: tiledbsc.SOMA, anndata: ad.AnnData) ->
     tiledb.consolidate(soma.var.uri)
     tiledb.vacuum(soma.var.uri)
 
-    if soma._verbose:
-        print(
-            tiledbsc.util.format_elapsed(s, f"{soma._indent}FINISH WRITING {soma.uri}")
-        )
+    log_io(
+        None,
+        tiledbsc.util.format_elapsed(s, f"{soma._indent}FINISH WRITING {soma.uri}"),
+    )
 
 
 # ----------------------------------------------------------------
-def to_h5ad(soma: tiledbsc.SOMA, h5ad_path: str) -> None:
+def to_h5ad(soma: tiledbsc.SOMA, h5ad_path: Path) -> None:
     """
     Converts the soma group to anndata format and writes it to the specified .h5ad file.
     As of 2022-05-05 this is an incomplete prototype.
     """
 
-    if soma._verbose:
-        s = tiledbsc.util.get_start_stamp()
-        print(f"START  SOMA.to_h5ad {soma.uri} -> {h5ad_path}")
+    s = tiledbsc.util.get_start_stamp()
+    log_io(None, f"START  SOMA.to_h5ad {soma.uri} -> {h5ad_path}")
 
     anndata = to_anndata(soma)
 
-    if soma._verbose:
-        s2 = tiledbsc.util.get_start_stamp()
-        print(f"{soma._indent}START  write {h5ad_path}")
-    anndata.write_h5ad(h5ad_path)
-    if soma._verbose:
-        print(
-            tiledbsc.util.format_elapsed(s2, f"{soma._indent}FINISH write {h5ad_path}")
-        )
+    s2 = tiledbsc.util.get_start_stamp()
+    log_io(None, f"{soma._indent}START  write {h5ad_path}")
 
-    if soma._verbose:
-        print(
-            tiledbsc.util.format_elapsed(
-                s, f"FINISH SOMA.to_h5ad {soma.uri} -> {h5ad_path}"
-            )
-        )
+    anndata.write_h5ad(h5ad_path)
+
+    log_io(
+        None,
+        tiledbsc.util.format_elapsed(s2, f"{soma._indent}FINISH write {h5ad_path}"),
+    )
+
+    log_io(
+        None,
+        tiledbsc.util.format_elapsed(
+            s, f"FINISH SOMA.to_h5ad {soma.uri} -> {h5ad_path}"
+        ),
+    )
 
 
 # ----------------------------------------------------------------
@@ -242,14 +300,15 @@ def to_anndata(soma: tiledbsc.SOMA) -> ad.AnnData:
     As of 2022-05-05 this is an incomplete prototype.
     """
 
-    if soma._verbose:
-        s = tiledbsc.util.get_start_stamp()
-        print(f"START  SOMA.to_anndata {soma.uri}")
+    s = tiledbsc.util.get_start_stamp()
+    log_io(None, f"START  SOMA.to_anndata {soma.uri}")
 
     obs_df = soma.obs.df()
     var_df = soma.var.df()
 
-    X_mat = soma.X["data"].to_csr_matrix(obs_df.index, var_df.index)
+    data = soma.X["data"]
+    assert data is not None
+    X_mat = data.to_csr_matrix(obs_df.index, var_df.index)
 
     obsm = soma.obsm.to_dict_of_csr()
     varm = soma.varm.to_dict_of_csr()
@@ -286,8 +345,7 @@ def to_anndata(soma: tiledbsc.SOMA) -> ad.AnnData:
         uns=uns,
     )
 
-    if soma._verbose:
-        print(tiledbsc.util.format_elapsed(s, f"FINISH SOMA.to_anndata {soma.uri}"))
+    log_io(None, tiledbsc.util.format_elapsed(s, f"FINISH SOMA.to_anndata {soma.uri}"))
 
     return anndata
 
@@ -300,10 +358,8 @@ def to_anndata_from_raw(soma: tiledbsc.SOMA) -> ad.AnnData:
 
     obs_df = soma.obs.df()
     var_df = soma.raw.var.df()
-    X_mat = soma.raw.X["data"].to_csr_matrix(obs.index, var.index)
+    data = soma.raw.X["data"]
+    assert data is not None
+    X_mat = data.to_csr_matrix(obs_df.index, var_df.index)
 
-    return ad.AnnData(
-        X=X_mat,
-        obs=obs_df,
-        var=var_df,
-    )
+    return ad.AnnData(X=X_mat, obs=obs_df, var=var_df)

@@ -1,114 +1,76 @@
-Next, let's do some cross-cutting queries over schemas of all SOMAs in the collection. The goal is
--- in preparation for a collection-level query -- to find out which `obs` columns, and which values
-in those columns, are most likely to be promising in terms of yielding results given our
-mini-corpus.
+Next, let's do some cross-cutting queries over schemas of all SOMAs in the collection, querying
+annotation data (`obs` and/or `var`) to see what we have, in preparaton for slice and batch queries
+afterward.
 
-## Cell-counts
+## Total cell-counts
 
-The mini-corpus we prepared is 29 SOMAs, 26GB total:
-
-```
-$ du -hs /mini-corpus/tiledb-data
- 26G  /mini-corpus/tiledb-data
-
-$ ls /mini-corpus/tiledb-data | wc -l
-      29
-```
-
-This collection includes data on about 2.4 million cells:
+As noted in the [public TileDB Cloud notebook](https://cloud.tiledb.com/notebooks/details/johnkerl-tiledb/d3d7ff44-dc65-4cd9-b574-98312c4cbdbd/preview), we prepared an example SOMA collection in the S3 public bucket:
 
 ```
-import tiledbsc
-
-soco = tiledbsc.SOMACollection('/mini-corpus/soco')
-
-print("TOTAL CELL COUNT:")
-print(soco.cell_count())
+soco = tiledbsc.SOMACollection('s3://tiledb-singlecell-data/soco/soco6')
+for soma in soco:
+  print("%-20s %s" % (soma.name, soma.uri))
 ```
 
 ```
-TOTAL CELL COUNT:
-2464363
+acute-covid19-cohort s3://tiledb-singlecell-data/soco/soco6/acute-covid19-cohort
+human-kidney-tumors-wilms s3://tiledb-singlecell-data/soco/soco6/human-kidney-tumors-wilms
+autoimmunity-pbmcs   s3://tiledb-singlecell-data/soco/soco6/autoimmunity-pbmcs
+ileum                s3://tiledb-singlecell-data/soco/soco6/ileum
+brown-adipose-tissue-mouse s3://tiledb-singlecell-data/soco/soco6/brown-adipose-tissue-mouse
+Puck_200903_10       s3://tiledb-singlecell-data/soco/soco6/Puck_200903_10
 ```
 
-```
-print()
-print([soma.cell_count() for soma in soco])
-```
+This collection includes data on about 230K cells:
 
 ```
-[264824, 4636, 6288, 2223, 59506, 100, 2638, 982538, 385, 67794, 2638, 104148, 44721, 3799, 11574, 1679, 3589, 700, 584884, 16245, 4603, 3726, 4636, 7348, 3589, 40268, 12971, 4232, 80, 82478, 97499, 38024]
+>>> cell_counts = [len(soma.obs) for soma in soco]
+
+>>> cell_counts
+[59506, 4636, 97499, 32458, 2223, 38024]
+
+>>> sum(cell_counts)
+234346
 ```
 
-```
-tabula-sapiens-stromal                                       82478
-Puck_200903_10                                               38024
-autoimmunity-pbmcs                                           97499
-pbmc-small                                                   80
-vieira19_Alveoli_and_parenchyma_anonymised.processed         12971
-af9d8c03-696c-4997-bde8-8ef00844881b                         4232
-d4db74ad-a129-4b1a-b9da-1b30db86bbe4-issue-74                3589
-single-cell-transcriptomes                                   40268
-local2                                                       7348
-human-kidney-tumors-wilms                                    4636
-0cfab2d4-1b79-444e-8cbe-2ca9671ca85e                         3726
-issue-74                                                     3589
-10x_pbmc68k_reduced                                          700
-integrated-human-lung-cell-atlas                             584884
-4056cbab-2a32-4c9e-a55f-c930bc793fb6                         4603
-adult-mouse-cortical-cell-taxonomy                           1679
-tabula-sapiens-epithelial                                    104148
-Single_cell_atlas_of_peripheral_immune_response_to_SARS_CoV_2_infection 44721
-longitudinal-profiling-49                                    11574
-azimuth-meta-analysis                                        982538
-developmental-single-cell-atlas-of-the-murine-lung           67794
-local3                                                       385
-pbmc3k-krilow                                                2638
-pbmc3k_processed                                             2638
-subset_100_100                                               100
-tabula-sapiens-immune                                        264824
-brown-adipose-tissue-mouse                                   2223
-acute-covid19-cohort                                         59506
-issue-69                                                     6288
-```
+## Query cell counts
 
-## Datasets having all three of obs.cell_type, obs.tissue, and obs.feature_name
+Let's find out -- before running a query involving full `X` data -- solely by looking at the smaller `obs` data, how many cells would be involved if we were to query for, say, `"B cell"`:
 
 ```
-names = sorted([
-  soma.name for soma in soco
-    if 'cell_type' in soma.obs.keys() and 'tissue' in soma.obs.keys() and 'feature_name' in soma.var.keys()
-])
-for name in names: print(name)
+>>> query_cell_counts = [len(soma.obs.query('cell_type == "B cell"').index) for soma in soco if 'cell_type' in soma.obs.keys()]
+
+>>> query_cell_counts
+[6131, 0, 510, 3183, 529, 0]
+
+>>> sum(query_cell_counts)
+10353
 ```
 
+## Counts by metadata values
+
 ```
-0cfab2d4-1b79-444e-8cbe-2ca9671ca85e
-4056cbab-2a32-4c9e-a55f-c930bc793fb6
-Puck_200903_10
-acute-covid19-cohort
-adult-mouse-cortical-cell-taxonomy
-af9d8c03-696c-4997-bde8-8ef00844881b
-autoimmunity-pbmcs
-azimuth-meta-analysis
-brown-adipose-tissue-mouse
-developmental-single-cell-atlas-of-the-murine-lung
-human-kidney-tumors-wilms
-integrated-human-lung-cell-atlas
-local2
-local3
-longitudinal-profiling-49
-single-cell-transcriptomes
-tabula-sapiens-epithelial
-tabula-sapiens-immune
-tabula-sapiens-stromal
+soco = tiledbsc.SOMACollection('s3://tiledb-singlecell-data/soco/soco3a')
+soco
+
+soco.keys()
+
+for soma in soco:
+    print("%6d %-20s %s" % (len(soma.obs), soma.name, soma.uri))
+
+for soma in soco:
+    print()
+    print(f"--- {soma.name}")
+    print(soma.obs.df(attrs=['cell_type']).groupby('cell_type').size())
 ```
 
-## Show counts of obs_ids and var_ids across the collection
+![](images/soco-reconnaissance.png)
 
-Using [./collection-counts.py](collection-counts.py) we can answer questions such as _How many cells will
-be involved if I do a query?_ Since these pre-counts operate on the smaller `obs` arrays, they run
-faster than going ahead and doing full queries (as shown below) on the larger `X` arrays.
+## More reconnaissance
+
+See also [collection-counts.py](collection-counts.py) for some additional material.
+
+For example:
 
 ```
 ----------------------------------------------------------------
@@ -234,67 +196,5 @@ eukaryotic cell                                        28
 
 TOTAL count    181544
 dtype: int64
-Collection-wide counts of values of tissue
-
-obs_label tissue
-         count
-name
-blood   176908
-kidney    4636
-
-TOTAL count    181544
-dtype: int64
-Collection-wide counts of values of cell_type_ontology_term_id
-
-obs_label cell_type_ontology_term_id
-            count
-name
-CL:0000576  29878
-CL:0000895  26887
-CL:0001054  23648
-CL:0000763  10261
-CL:0000788   8679
-CL:0000625   8658
-CL:0000236   8524
-CL:0000814   7755
-CL:0000939   6948
-CL:0000624   6726
-CL:0000909   6224
-CL:0000232   3918
-CL:0000938   3638
-CL:0000623   3474
-CL:0000897   3276
-CL:0000233   2926
-CL:0000134   2811
-CL:0000900   2387
-CL:0002396   1923
-CL:0000980   1825
-CL:0000084   1697
-CL:0000789   1659
-CL:1000449   1216
-CL:0000451   1061
-CL:0000786   1025
-CL:0000548    661
-CL:0000784    650
-CL:0000990    543
-CL:0000003    465
-CL:0000787    457
-CL:0000815    306
-CL:0000775    302
-CL:0000037    270
-CL:0000816    255
-CL:0000940    223
-CL:0000798    216
-CL:0000738    144
-CL:0000255     28
-
-TOTAL count    181544
-dtype: int64
 ...
 ```
-
-## Conclusion
-
-From these we conclude that `obs.cell_type == "B cell"` and `obs.tissue == "blood"`, and
-`var.feature_name == "MT-CO3"` (acquired similarly but not shown here) are likeliest to produce the
-largest result set, given our local-disk mini-corpus.

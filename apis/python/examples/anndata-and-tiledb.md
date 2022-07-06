@@ -1,9 +1,16 @@
+If you're familiar with AnnData, you'll recognize much about the SOMA data model.
+
+:::{.callout-tip}
+See also the
+[public TileDB Cloud notebook](https://cloud.tiledb.com/notebooks/details/johnkerl-tiledb/d3d7ff44-dc65-4cd9-b574-98312c4cbdbd/preview).
+:::
+
 ## Single AnnData file
 
 ```
 >>> import anndata
 
->>> ann = anndata.read_h5ad('anndata/pbmc3k_processed.h5ad')
+>>> ann = anndata.read_h5ad('pbmc3k_processed.h5ad')
 
 >>> ann.obs.keys()
 Index(['n_genes', 'percent_mito', 'n_counts', 'louvain'], dtype='object')
@@ -28,10 +35,18 @@ TTTGCATGCCTCAC-1      724      0.008065    1984.0      CD4 T cells
 
 [2638 rows x 4 columns]
 
-ann.obs['louvain'].unique()
-['CD4 T cells', 'B cells', 'CD14+ Monocytes', 'NK cells', 'CD8 T cells', 'FCGR3A+ Monocytes', 'Dendritic cells', 'Megakaryocytes']
-Categories (8, object): ['CD4 T cells', 'CD14+ Monocytes', 'B cells', 'CD8 T cells', 'NK cells',
-                         'FCGR3A+ Monocytes', 'Dendritic cells', 'Megakaryocytes']
+>>> ann.obs.groupby(["louvain"]).size()
+louvain
+CD4 T cells          1144
+CD14+ Monocytes       480
+B cells               342
+CD8 T cells           316
+NK cells              154
+FCGR3A+ Monocytes     150
+Dendritic cells        37
+Megakaryocytes         15
+dtype: int64
+
 >>> ann.var
          n_cells
 index
@@ -67,12 +82,25 @@ array([[-0.17146951, -0.28081203, -0.04667679, ..., -0.09826884,
 
 ## Single TileDB SOMA
 
-After `./tools/ingestor ./anndata/pbmc3k_processed.h5ad ./tiledb-data/pbmc3k_processed`:
-
 ```
 >>> import tiledbsc
 
->>> soma = tiledbsc.SOMA('tiledb-data/pbmc3k_processed')
+>>> soma = tiledbsc.SOMA('tiledb://johnkerl-tiledb/pbmc3k_processed')
+
+>>> soma
+Name:    pbmc3k_processed
+URI:     tiledb://johnkerl-tiledb/pbmc3k_processed
+(n_obs, n_var): (2638, 1838)
+X:       'data'
+obs:     'n_genes', 'percent_mito', 'n_counts', 'louvain'
+var:     'n_cells'
+obsm:    'X_pca', 'X_tsne', 'X_umap', 'X_draw_graph_fr'
+varm:    'PCs'
+obsp:    'distances', 'connectivities'
+varp:    
+raw/X:   'data'
+raw/var: 'n_cells'
+uns:     draw_graph, louvain, louvain_colors, neighbors, pca
 
 >>> soma.obs.keys()
 ['n_genes', 'percent_mito', 'n_counts', 'louvain']
@@ -96,6 +124,18 @@ TTTGCATGAGAGGC-1      454      0.020548    1022.0          B cells
 TTTGCATGCCTCAC-1      724      0.008065    1984.0      CD4 T cells
 
 [2638 rows x 4 columns]
+
+>>> soma.obs.df(attrs=["louvain"]).groupby(["louvain"]).size()
+louvain
+B cells               342
+CD14+ Monocytes       480
+CD4 T cells          1144
+CD8 T cells           316
+Dendritic cells        37
+FCGR3A+ Monocytes     150
+Megakaryocytes         15
+NK cells              154
+dtype: int64  
 
 >>> soma.var.df()
         n_cells
@@ -130,11 +170,6 @@ TTTGCATGCCTCAC-1 ZRANB3 -0.019673
                  ZYX    -0.264577
 
 [4848644 rows x 1 columns]
-
->>> soma.obs.df()['louvain'].unique()
-array(['CD4 T cells', 'B cells', 'CD14+ Monocytes', 'NK cells',
-       'CD8 T cells', 'FCGR3A+ Monocytes', 'Dendritic cells',
-       'Megakaryocytes'], dtype=object)
 ```
 
 ## See also

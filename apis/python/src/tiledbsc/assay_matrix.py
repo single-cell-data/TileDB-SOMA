@@ -1,18 +1,19 @@
-import tiledb
-from .soma_options import SOMAOptions
-from .tiledb_array import TileDBArray
-from .tiledb_group import TileDBGroup
-from .tiledb_object import TileDBObject
-from .annotation_dataframe import AnnotationDataFrame
-import tiledbsc.util as util
+import math
+import os
+import time
+from typing import Optional, Tuple, Union
 
-import scipy
 import numpy as np
 import pandas as pd
+import scipy.sparse as sp
+import tiledb
 
-from typing import Optional
-import time
-import math
+from . import util
+from .annotation_dataframe import AnnotationDataFrame
+from .logging import log_io
+from .tiledb_array import TileDBArray
+from .tiledb_group import TileDBGroup
+from .types import Ids, Labels, Matrix
 
 
 class AssayMatrix(TileDBArray):
@@ -20,12 +21,6 @@ class AssayMatrix(TileDBArray):
     Wraps a TileDB sparse array with two string dimensions.
     Used for `X`, `raw.X`, `obsp` elements, and `varp` elements.
     """
-
-    row_dim_name: str  # obs_id for X, obs_id_i for obsp; var_id_i for varp
-    col_dim_name: str  # var_id for X, obs_id_j for obsp; var_id_j for varp
-    attr_name: str
-    row_dataframe: AnnotationDataFrame
-    col_dataframe: AnnotationDataFrame
 
     # ----------------------------------------------------------------
     def __init__(
@@ -36,6 +31,7 @@ class AssayMatrix(TileDBArray):
         col_dim_name: str,
         row_dataframe: AnnotationDataFrame,  # Nominally a reference to soma.obs
         col_dataframe: AnnotationDataFrame,  # Nominally a reference to soma.var
+        *,
         parent: Optional[TileDBGroup] = None,
     ):
         """
@@ -64,7 +60,7 @@ class AssayMatrix(TileDBArray):
         self.col_dataframe = col_dataframe
 
     # ----------------------------------------------------------------
-    def shape(self):
+    def shape(self) -> Tuple[int, int]:
         """
         Returns a tuple with the number of rows and number of columns of the `AssayMatrix`.
         In TileDB storage, these are string-indexed sparse arrays for which no `.shape()` exists,
@@ -72,7 +68,7 @@ class AssayMatrix(TileDBArray):
 
         Note: currently implemented via data scan -- will be optimized for TileDB core 2.10.
         """
-        with self._open() as A:
+        with self._open():
             # These TileDB arrays are string-dimensioned sparse arrays so there is no '.shape'.
             # Instead we compute it ourselves.  See also:
             num_rows = self.row_dataframe.shape()[0]
@@ -80,7 +76,9 @@ class AssayMatrix(TileDBArray):
             return (num_rows, num_cols)
 
     # ----------------------------------------------------------------
-    def dim_select(self, obs_ids, var_ids) -> pd.DataFrame:
+    def dim_select(
+        self, obs_ids: Optional[Ids], var_ids: Optional[Ids]
+    ) -> pd.DataFrame:
         """
         Selects a slice out of the matrix with specified `obs_ids` and/or `var_ids`.
         Either or both of the ID lists may be `None`, meaning, do not subselect along
@@ -101,7 +99,9 @@ class AssayMatrix(TileDBArray):
         return df
 
     # ----------------------------------------------------------------
-    def df(self, obs_ids=None, var_ids=None) -> pd.DataFrame:
+    def df(
+        self, obs_ids: Optional[Ids] = None, var_ids: Optional[Ids] = None
+    ) -> pd.DataFrame:
         """
         Keystroke-saving alias for `.dim_select()`. If either of `obs_ids` or `var_ids`
         are provided, they're used to subselect; if not, the entire dataframe is returned.
@@ -109,40 +109,46 @@ class AssayMatrix(TileDBArray):
         return self.dim_select(obs_ids, var_ids)
 
     # ----------------------------------------------------------------
-    def csr(self, obs_ids=None, var_ids=None) -> scipy.sparse.csr_matrix:
+    def csr(
+        self, obs_ids: Optional[Ids] = None, var_ids: Optional[Ids] = None
+    ) -> sp.csr_matrix:
         """
         Like `.df()` but returns results in `scipy.sparse.csr_matrix` format.
         """
         return self._csr_or_csc("csr", obs_ids, var_ids)
 
-    def csc(self, obs_ids=None, var_ids=None) -> scipy.sparse.csc_matrix:
+    def csc(
+        self, obs_ids: Optional[Ids] = None, var_ids: Optional[Ids] = None
+    ) -> sp.csc_matrix:
         """
         Like `.df()` but returns results in `scipy.sparse.csc_matrix` format.
         """
         return self._csr_or_csc("csc", obs_ids, var_ids)
 
-    def _csr_or_csc(self, which: str, obs_ids=None, var_ids=None):
+    def _csr_or_csc(
+        self,
+        return_as: str,
+        obs_ids: Optional[Ids] = None,
+        var_ids: Optional[Ids] = None,
+    ) -> Union[sp.csr_matrix, sp.csc_matrix]:
         """
         Helper method for `csr` and `csc`.
         """
-        assert which in ("csr", "csc")
-        df = self.dim_select(obs_ids, var_ids)
-        if obs_ids is None:
-            obs_ids = self.row_dataframe.ids()
-        if var_ids is None:
-            var_ids = self.col_dataframe.ids()
+        assert return_as in ("csr", "csc")
         return util.X_and_ids_to_sparse_matrix(
-            df,
+            self.dim_select(obs_ids, var_ids),
             self.row_dim_name,
             self.col_dim_name,
             self.attr_name,
-            obs_ids,
-            var_ids,
-            which,
+            row_labels=obs_ids or self.row_dataframe.ids(),
+            col_labels=var_ids or self.col_dataframe.ids(),
+            return_as=return_as,
         )
 
     # ----------------------------------------------------------------
-    def from_matrix_and_dim_values(self, matrix, row_names, col_names) -> None:
+    def from_matrix_and_dim_values(
+        self, matrix: Matrix, row_names: Labels, col_names: Labels
+    ) -> None:
         """
         Imports a matrix -- nominally `scipy.sparse.csr_matrix` or `numpy.ndarray` -- into a TileDB
         array which is used for `X`, `raw.X`, `obsp` members, and `varp` members.
@@ -152,9 +158,8 @@ class AssayMatrix(TileDBArray):
         For ingest from `AnnData`, these should be `ann.obs_names` and `ann.var_names`.
         """
 
-        if self._verbose:
-            s = util.get_start_stamp()
-            print(f"{self._indent}START  WRITING {self.uri}")
+        s = util.get_start_stamp()
+        log_io(None, f"{self._indent}START  WRITING {self.uri}")
 
         assert len(row_names) == matrix.shape[0]
         assert len(col_names) == matrix.shape[1]
@@ -168,16 +173,24 @@ class AssayMatrix(TileDBArray):
             col_names = np.asarray(col_names)
 
         if self.exists():
-            if self._verbose:
-                print(f"{self._indent}Re-using existing array {self.uri}")
+            log_io(None, f"{self._indent}Re-using existing array {self.uri}")
         else:
             self._create_empty_array(matrix_dtype=matrix.dtype)
 
         self._set_object_type_metadata()
 
-        self._ingest_data(matrix, row_names, col_names)
-        if self._verbose:
-            print(util.format_elapsed(s, f"{self._indent}FINISH WRITING {self.uri}"))
+        if not self._soma_options.write_X_chunked:
+            self.ingest_data_whole(matrix, row_names, col_names)
+        elif isinstance(matrix, sp.csr_matrix):
+            self.ingest_data_rows_chunked(matrix, row_names, col_names)
+        elif isinstance(matrix, sp.csc_matrix):
+            self.ingest_data_cols_chunked(matrix, row_names, col_names)
+        else:
+            self.ingest_data_dense_rows_chunked(matrix, row_names, col_names)
+        log_io(
+            f"Wrote {self.nested_name}",
+            util.format_elapsed(s, f"{self._indent}FINISH WRITING {self.uri}"),
+        )
 
     # ----------------------------------------------------------------
     def _create_empty_array(self, matrix_dtype: np.dtype) -> None:
@@ -213,7 +226,7 @@ class AssayMatrix(TileDBArray):
             domain=dom,
             attrs=(att,),
             sparse=True,
-            allows_duplicates=True,
+            allows_duplicates=self._soma_options.allows_duplicates,
             offsets_filters=[
                 tiledb.DoubleDeltaFilter(),
                 tiledb.BitWidthReductionFilter(),
@@ -228,21 +241,15 @@ class AssayMatrix(TileDBArray):
         tiledb.Array.create(self.uri, sch, ctx=self._ctx)
 
     # ----------------------------------------------------------------
-    def _ingest_data(self, matrix, row_names, col_names) -> None:
-        if self._soma_options.write_X_chunked:
-            if isinstance(matrix, scipy.sparse.csr_matrix):
-                self.ingest_data_rows_chunked(matrix, row_names, col_names)
-            elif isinstance(matrix, scipy.sparse.csc_matrix):
-                self.ingest_data_cols_chunked(matrix, row_names, col_names)
-            else:
-                self.ingest_data_dense_rows_chunked(matrix, row_names, col_names)
-        else:
-            self.ingest_data_whole(matrix, row_names, col_names)
-
-    # ----------------------------------------------------------------
-    def ingest_data_whole(self, matrix, row_names, col_names) -> None:
+    def ingest_data_whole(
+        self,
+        matrix: Matrix,
+        row_names: Union[np.ndarray, pd.Index],
+        col_names: Union[np.ndarray, pd.Index],
+    ) -> None:
         """
-        Convert `numpy.ndarray`, `scipy.sparse.csr_matrix`, or `scipy.sparse.csc_matrix` to COO matrix and ingest into TileDB.
+        Convert `numpy.ndarray`, `scipy.sparse.csr_matrix`, or `scipy.sparse.csc_matrix`
+        to COO matrix and ingest into TileDB.
 
         :param matrix: Matrix-like object coercible to a scipy COO matrix.
         :param row_names: List of row names.
@@ -252,7 +259,7 @@ class AssayMatrix(TileDBArray):
         assert len(row_names) == matrix.shape[0]
         assert len(col_names) == matrix.shape[1]
 
-        mat_coo = scipy.sparse.coo_matrix(matrix)
+        mat_coo = sp.coo_matrix(matrix)
         d0 = row_names[mat_coo.row]
         d1 = col_names[mat_coo.col]
 
@@ -291,7 +298,12 @@ class AssayMatrix(TileDBArray):
     # See README-csr-ingest.md for important information of using this ingestor.
     # ----------------------------------------------------------------
 
-    def ingest_data_rows_chunked(self, matrix, row_names, col_names) -> None:
+    def ingest_data_rows_chunked(
+        self,
+        matrix: sp.csr_matrix,
+        row_names: Union[np.ndarray, pd.Index],
+        col_names: Union[np.ndarray, pd.Index],
+    ) -> None:
         """
         Convert csr_matrix to coo_matrix chunkwise and ingest into TileDB.
 
@@ -315,8 +327,10 @@ class AssayMatrix(TileDBArray):
         sorted_row_names = np.asarray(sorted_row_names)
 
         s = util.get_start_stamp()
-        if self._verbose:
-            print(f"{self._indent}START  __ingest_coo_data_string_dims_rows_chunked")
+        log_io(
+            None,
+            f"{self._indent}START  ingest_data_rows_chunked",
+        )
 
         eta_tracker = util.ETATracker()
         with tiledb.open(self.uri, mode="w", ctx=self._ctx) as A:
@@ -345,50 +359,56 @@ class AssayMatrix(TileDBArray):
                 # Python ranges are (lo, hi) with lo inclusive and hi exclusive. But saying that
                 # makes us look buggy if we say we're ingesting chunk 0:18 and then 18:32.
                 # Instead, print doubly-inclusive lo..hi like 0..17 and 18..31.
-                if self._verbose:
-                    chunk_percent = 100 * (i2 - 1) / nrow
-                    print(
-                        "%sSTART  chunk rows %d..%d of %d (%.3f%%), obs_ids %s..%s, nnz=%d"
-                        % (
-                            self._indent,
-                            i,
-                            i2 - 1,
-                            nrow,
-                            chunk_percent,
-                            d0[0],
-                            d0[-1],
-                            chunk_coo.nnz,
-                        )
-                    )
+                chunk_percent = min(100, 100 * (i2 - 1) / nrow)
+                log_io(
+                    None,
+                    "%sSTART  chunk rows %d..%d of %d (%.3f%%), obs_ids %s..%s, nnz=%d"
+                    % (
+                        self._indent,
+                        i,
+                        i2 - 1,
+                        nrow,
+                        chunk_percent,
+                        d0[0],
+                        d0[-1],
+                        chunk_coo.nnz,
+                    ),
+                )
 
                 # Write a TileDB fragment
                 A[d0, d1] = chunk_coo.data
 
-                if self._verbose:
-                    t2 = time.time()
-                    chunk_seconds = t2 - t1
-                    eta = eta_tracker.ingest_and_predict(chunk_percent, chunk_seconds)
+                t2 = time.time()
+                chunk_seconds = t2 - t1
+                eta = eta_tracker.ingest_and_predict(chunk_percent, chunk_seconds)
 
-                    print(
-                        "%sFINISH chunk in %.3f seconds, %7.3f%% done, ETA %s"
-                        % (self._indent, chunk_seconds, chunk_percent, eta)
-                    )
+                log_io(
+                    "... %s %7.3f%% done, ETA %s"
+                    % (os.path.basename(self.uri), chunk_percent, eta),
+                    "%sFINISH chunk in %.3f seconds, %7.3f%% done, ETA %s"
+                    % (self._indent, chunk_seconds, chunk_percent, eta),
+                )
 
                 i = i2
 
-        if self._verbose:
-            print(
-                util.format_elapsed(
-                    s,
-                    f"{self._indent}FINISH __ingest_coo_data_string_dims_rows_chunked",
-                )
-            )
+        log_io(
+            None,
+            util.format_elapsed(
+                s,
+                f"{self._indent}FINISH __ingest_coo_data_string_dims_rows_chunked",
+            ),
+        )
 
     # This method is very similar to ingest_data_rows_chunked. The code is largely repeated,
     # and this is intentional. The algorithm here is non-trivial (among the most non-trivial
     # in this package), and adding an abstraction layer would overconfuse it. Here we err
     # on the side of increased readability, at the expense of line-count.
-    def ingest_data_cols_chunked(self, matrix, row_names, col_names) -> None:
+    def ingest_data_cols_chunked(
+        self,
+        matrix: sp.csc_matrix,
+        row_names: Union[np.ndarray, pd.Index],
+        col_names: Union[np.ndarray, pd.Index],
+    ) -> None:
         """
         Convert csc_matrix to coo_matrix chunkwise and ingest into TileDB.
 
@@ -412,8 +432,10 @@ class AssayMatrix(TileDBArray):
         sorted_col_names = np.asarray(sorted_col_names)
 
         s = util.get_start_stamp()
-        if self._verbose:
-            print(f"{self._indent}START  __ingest_coo_data_string_dims_cols_chunked")
+        log_io(
+            None,
+            f"{self._indent}START  ingest_data_cols_chunked",
+        )
 
         eta_tracker = util.ETATracker()
         with tiledb.open(self.uri, mode="w", ctx=self._ctx) as A:
@@ -442,50 +464,56 @@ class AssayMatrix(TileDBArray):
                 # Python ranges are (lo, hi) with lo inclusive and hi exclusive. But saying that
                 # makes us look buggy if we say we're ingesting chunk 0:18 and then 18:32.
                 # Instead, print doubly-inclusive lo..hi like 0..17 and 18..31.
-                if self._verbose:
-                    chunk_percent = 100 * (j2 - 1) / ncol
-                    print(
-                        "%sSTART  chunk rows %d..%d of %d (%.3f%%), var_ids %s..%s, nnz=%d"
-                        % (
-                            self._indent,
-                            j,
-                            j2 - 1,
-                            ncol,
-                            chunk_percent,
-                            d1[0],
-                            d1[-1],
-                            chunk_coo.nnz,
-                        )
-                    )
+                chunk_percent = min(100, 100 * (j2 - 1) / ncol)
+                log_io(
+                    None,
+                    "%sSTART  chunk rows %d..%d of %d (%.3f%%), var_ids %s..%s, nnz=%d"
+                    % (
+                        self._indent,
+                        j,
+                        j2 - 1,
+                        ncol,
+                        chunk_percent,
+                        d1[0],
+                        d1[-1],
+                        chunk_coo.nnz,
+                    ),
+                )
 
                 # Write a TileDB fragment
                 A[d0, d1] = chunk_coo.data
 
-                if self._verbose:
-                    t2 = time.time()
-                    chunk_seconds = t2 - t1
-                    eta = eta_tracker.ingest_and_predict(chunk_percent, chunk_seconds)
+                t2 = time.time()
+                chunk_seconds = t2 - t1
+                eta = eta_tracker.ingest_and_predict(chunk_percent, chunk_seconds)
 
-                    print(
-                        "%sFINISH chunk in %.3f seconds, %7.3f%% done, ETA %s"
-                        % (self._indent, chunk_seconds, chunk_percent, eta)
-                    )
+                log_io(
+                    "... %s %7.3f%% done, ETA %s"
+                    % (os.path.basename(self.uri), chunk_percent, eta),
+                    "%sFINISH chunk in %.3f seconds, %7.3f%% done, ETA %s"
+                    % (self._indent, chunk_seconds, chunk_percent, eta),
+                )
 
                 j = j2
 
-        if self._verbose:
-            print(
-                util.format_elapsed(
-                    s,
-                    f"{self._indent}FINISH __ingest_coo_data_string_dims_rows_chunked",
-                )
-            )
+        log_io(
+            None,
+            util.format_elapsed(
+                s,
+                f"{self._indent}FINISH __ingest_coo_data_string_dims_rows_chunked",
+            ),
+        )
 
     # This method is very similar to ingest_data_rows_chunked. The code is largely repeated,
     # and this is intentional. The algorithm here is non-trivial (among the most non-trivial
     # in this package), and adding an abstraction layer would overconfuse it. Here we err
     # on the side of increased readability, at the expense of line-count.
-    def ingest_data_dense_rows_chunked(self, matrix, row_names, col_names) -> None:
+    def ingest_data_dense_rows_chunked(
+        self,
+        matrix: np.ndarray,
+        row_names: Union[np.ndarray, pd.Index],
+        col_names: Union[np.ndarray, pd.Index],
+    ) -> None:
         """
         Convert dense matrix to coo_matrix chunkwise and ingest into TileDB.
 
@@ -509,10 +537,10 @@ class AssayMatrix(TileDBArray):
         sorted_row_names = np.asarray(sorted_row_names)
 
         s = util.get_start_stamp()
-        if self._verbose:
-            print(
-                f"{self._indent}START  __ingest_coo_data_string_dims_dense_rows_chunked"
-            )
+        log_io(
+            None,
+            f"{self._indent}START  ingest_data_dense_rows_chunked",
+        )
 
         eta_tracker = util.ETATracker()
         with tiledb.open(self.uri, mode="w", ctx=self._ctx) as A:
@@ -530,7 +558,7 @@ class AssayMatrix(TileDBArray):
 
                 # Convert the chunk to a COO matrix.
                 chunk = matrix[permutation[i:i2]]
-                chunk_coo = scipy.sparse.csr_matrix(chunk).tocoo()
+                chunk_coo = sp.csr_matrix(chunk).tocoo()
 
                 # Write the chunk-COO to TileDB.
                 d0 = sorted_row_names[chunk_coo.row + i]
@@ -543,47 +571,48 @@ class AssayMatrix(TileDBArray):
                 # Python ranges are (lo, hi) with lo inclusive and hi exclusive. But saying that
                 # makes us look buggy if we say we're ingesting chunk 0:18 and then 18:32.
                 # Instead, print doubly-inclusive lo..hi like 0..17 and 18..31.
-                if self._verbose:
-                    chunk_percent = 100 * (i2 - 1) / nrow
-                    print(
-                        "%sSTART  chunk rows %d..%d of %d (%.3f%%), obs_ids %s..%s, nnz=%d"
-                        % (
-                            self._indent,
-                            i,
-                            i2 - 1,
-                            nrow,
-                            chunk_percent,
-                            d0[0],
-                            d0[-1],
-                            chunk_coo.nnz,
-                        )
-                    )
+                chunk_percent = min(100, 100 * (i2 - 1) / nrow)
+                log_io(
+                    None,
+                    "%sSTART  chunk rows %d..%d of %d (%.3f%%), obs_ids %s..%s, nnz=%d"
+                    % (
+                        self._indent,
+                        i,
+                        i2 - 1,
+                        nrow,
+                        chunk_percent,
+                        d0[0],
+                        d0[-1],
+                        chunk_coo.nnz,
+                    ),
+                )
 
                 # Write a TileDB fragment
                 A[d0, d1] = chunk_coo.data
 
-                if self._verbose:
-                    t2 = time.time()
-                    chunk_seconds = t2 - t1
-                    eta = eta_tracker.ingest_and_predict(chunk_percent, chunk_seconds)
+                t2 = time.time()
+                chunk_seconds = t2 - t1
+                eta = eta_tracker.ingest_and_predict(chunk_percent, chunk_seconds)
 
-                    print(
-                        "%sFINISH chunk in %.3f seconds, %7.3f%% done, ETA %s"
-                        % (self._indent, chunk_seconds, chunk_percent, eta)
-                    )
+                log_io(
+                    "... %s %7.3f%% done, ETA %s"
+                    % (os.path.basename(self.uri), chunk_percent, eta),
+                    "%sFINISH chunk in %.3f seconds, %7.3f%% done, ETA %s"
+                    % (self._indent, chunk_seconds, chunk_percent, eta),
+                )
 
                 i = i2
 
-        if self._verbose:
-            print(
-                util.format_elapsed(
-                    s,
-                    f"{self._indent}FINISH __ingest_coo_data_string_dims_dense_rows_chunked",
-                )
-            )
+        log_io(
+            None,
+            util.format_elapsed(
+                s,
+                f"{self._indent}FINISH __ingest_coo_data_string_dims_dense_rows_chunked",
+            ),
+        )
 
     # ----------------------------------------------------------------
-    def to_csr_matrix(self, row_labels, col_labels):
+    def to_csr_matrix(self, row_labels: Labels, col_labels: Labels) -> sp.csr_matrix:
         """
         Reads the TileDB array storage for the storage and returns a sparse CSR matrix.  The
         row/columns labels should be `obs,var` labels if the `AssayMatrix` is `X`, or `obs,obs` labels if
@@ -593,13 +622,14 @@ class AssayMatrix(TileDBArray):
         TileDB storage.
         """
 
-        if self._verbose:
-            s = util.get_start_stamp()
-            print(f"{self._indent}START  read {self.uri}")
+        s = util.get_start_stamp()
+        log_io(None, f"{self._indent}START  read {self.uri}")
 
         csr = self.csr()
 
-        if self._verbose:
-            print(util.format_elapsed(s, f"{self._indent}FINISH read {self.uri}"))
+        log_io(
+            os.path.basename(self.uri),
+            util.format_elapsed(s, f"{self._indent}FINISH read {self.uri}"),
+        )
 
         return csr

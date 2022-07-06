@@ -4,11 +4,13 @@
 Batch-process the mean of X/data grouping by obs['cell_type_ontology_term_id']
 """
 
-import tiledbsc
-import tiledbsc.util
 import sys
 
-import pandas as pd  # so we can type it either way
+import pandas as pd
+import tiledb
+
+import tiledbsc
+import tiledbsc.util
 
 if len(sys.argv) == 2:
     soco_path = sys.argv[1]
@@ -18,15 +20,19 @@ else:
 
 soco = tiledbsc.SOMACollection(soco_path)
 
+# per-column buffer size
+ctx = tiledb.Ctx({"py.init_buffer_bytes": 4 * 1024**3})
+
 var_ids_column = []
 ctot_ids_column = []
 means_column = []
 
 ctot_ids = soco.find_unique_obs_values("cell_type_ontology_term_id")
 n = len(ctot_ids)
+print("cell_type_ontology_term_id count =", n)
 for i, ctot_id in enumerate(ctot_ids):
     soma_slice = soco.query(
-        obs_attr_names=["cell_type_ontology_term_id"],
+        obs_attrs=["cell_type_ontology_term_id"],
         obs_query_string=f'cell_type_ontology_term_id == "{ctot_id}"',
     )
     if soma_slice is None:

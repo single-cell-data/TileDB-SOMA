@@ -1,39 +1,28 @@
-import tiledb
-import tiledbsc.util_tiledb
-from .soma_options import SOMAOptions
-from .tiledb_object import TileDBObject
+from typing import Dict, Optional, Sequence
 
-from typing import Optional, List, Set, Dict
+import tiledb
+
+import tiledbsc
+
+from .tiledb_object import TileDBObject
 
 
 class TileDBArray(TileDBObject):
     """
-    Wraps arrays from TileDB-Py by retaining a URI, verbose flag, etc.
+    Wraps arrays from TileDB-Py by retaining a URI, options, etc.
     Also serves as an abstraction layer to hide TileDB-specific details from the API, unless
     requested.
     """
 
     def __init__(
-        self,
-        uri: str,
-        name: str,
-        # It's a circular import if we say this, but this is really:
-        # parent: Optional[TileDBGroup] = None,
-        parent=None,
+        self, uri: str, name: str, *, parent: Optional["tiledbsc.TileDBGroup"] = None
     ):
         """
         See the TileDBObject constructor.
         """
-        super().__init__(uri=uri, name=name, parent=parent)
+        super().__init__(uri, name, parent=parent)
 
-    def _object_type(self):
-        """
-        This should be implemented by child classes and should return what tiledb.object_type(uri)
-        returns for objects of a given type -- nominally 'group' or 'array'.
-        """
-        return "array"
-
-    def _open(self, mode="r"):
+    def _open(self, mode: str = "r") -> tiledb.Array:
         """
         This is just a convenience wrapper allowing 'with self._open() as A: ...' rather than
         'with tiledb.open(self.uri) as A: ...'.
@@ -52,16 +41,16 @@ class TileDBArray(TileDBObject):
         object has not yet been populated, e.g. before calling `from_anndata` -- or, if the
         SOMA has been populated but doesn't have this member (e.g. not all SOMAs have a `varp`).
         """
-        return tiledb.array_exists(self.uri)
+        return bool(tiledb.array_exists(self.uri))
 
-    def tiledb_array_schema(self):
+    def tiledb_array_schema(self) -> tiledb.ArraySchema:
         """
         Returns the TileDB array schema.
         """
         with self._open() as A:
             return A.schema
 
-    def dim_names(self) -> List[str]:
+    def dim_names(self) -> Sequence[str]:
         """
         Reads the dimension names from the schema: for example, ['obs_id', 'var_id'].
         """
@@ -76,7 +65,7 @@ class TileDBArray(TileDBObject):
             dom = A.schema.domain
             return {dom.dim(i).name: dom.dim(i).dtype for i in range(dom.ndim)}
 
-    def attr_names(self) -> List[str]:
+    def attr_names(self) -> Sequence[str]:
         """
         Reads the attribute names from the schema: for example, the list of column names in a dataframe.
         """
@@ -99,34 +88,14 @@ class TileDBArray(TileDBObject):
         """
         return attr_name in self.attr_names()
 
-    def has_attr_names(self, attr_names: List[str]) -> bool:
+    def has_attr_names(self, attr_names: Sequence[str]) -> bool:
         """
         Returns true if the array has all of the specified attribute names, false otherwise.
         """
         attr_names_set = set(self.attr_names())
         return all([attr_name in attr_names_set for attr_name in attr_names])
 
-    def _set_object_type_metadata(self) -> None:
-        """
-        This helps nested-structured traversals (especially those that start at the SOMACollection
-        level) confidently navigate with a minimum of introspection on group contents.
-        """
-        with self._open("w") as A:
-            A.meta[
-                tiledbsc.util.SOMA_OBJECT_TYPE_METADATA_KEY
-            ] = self.__class__.__name__
-            A.meta[
-                tiledbsc.util.SOMA_ENCODING_VERSION_METADATA_KEY
-            ] = tiledbsc.util.SOMA_ENCODING_VERSION
-
-    def get_object_type(self) -> str:
-        """
-        Returns the class name associated with the array.
-        """
-        with self._open("r") as A:
-            return A.meta[tiledbsc.util_tiledb.SOMA_OBJECT_TYPE_METADATA_KEY]
-
-    def show_metadata(self, recursively=True, indent=""):
+    def show_metadata(self, recursively: bool = True, indent: str = "") -> None:
         """
         Shows metadata for the array.
         """

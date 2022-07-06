@@ -1,14 +1,13 @@
-from anndata import AnnData
-import tiledb
-from tiledbsc import SOMA
-import tiledbsc.io as io
-import pandas as pd
-import numpy as np
-from scipy import sparse
-
-from collections import OrderedDict
 import os
-import pytest
+from collections import OrderedDict
+
+import numpy as np
+import pandas as pd
+import tiledb
+from anndata import AnnData
+
+import tiledbsc.io as io
+from tiledbsc import SOMA
 
 """
 Verify that the AnnData.uns persists correctly. Currently focused on a simple
@@ -54,7 +53,7 @@ def test_from_anndata_uns(tmp_path):
 
     # Example of what we're verifying:
 
-    # >>> soma.uns.show()
+    # >>> soma.uns
     #
     # uns:
     # scalar_float: 3.25

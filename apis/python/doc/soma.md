@@ -14,9 +14,15 @@ Single-cell group
 Class for representing a group of TileDB groups/arrays that constitute an SOMA ('stack of matrices, annotated')
 which includes:
 
-* `X` (`AssayMatrixGroup`): a group of one or more labeled 2D sparse arrays that share the same dimensions.
+* `X` (group of `AssayMatrixGroup`): a group of one or more labeled 2D sparse arrays that share the same dimensions.
 * `obs` (`AnnotationDataframe`): 1D labeled array with column labels for `X`
 * `var` (`AnnotationDataframe`): 1D labeled array with row labels for `X`
+* `obsm` (group of `AnnotationMatrix`): multi-attribute arrays keyed by IDs of `obs`
+* `varm` (group of `AnnotationMatrix`): multi-attribute arrays keyed by IDs of `var`
+* `obsp` (group of `AnnotationMatrix`): 2D arrays keyed by IDs of `obs`
+* `varp` (group of `AnnotationMatrix`): 2D arrays keyed by IDs of `var`
+* `raw`: contains raw versions of `X` and `varm`
+* `uns`: nested, unstructured data
 
 Convenience accessors include:
 
@@ -31,9 +37,9 @@ Convenience accessors include:
 
 ```python
 def __init__(uri: str,
+             *,
              name=None,
              soma_options: Optional[SOMAOptions] = None,
-             verbose: Optional[bool] = True,
              config: Optional[tiledb.Config] = None,
              ctx: Optional[tiledb.Ctx] = None,
              parent: Optional[TileDBGroup] = None)
@@ -44,17 +50,16 @@ Create a new SOMA object. The existing array group is opened at the specified ar
 **Arguments**:
 
 - `uri`: URI of the TileDB group
-- `verbose`: Print status messages
 
-<a id="tiledbsc.soma.SOMA.__str__"></a>
+<a id="tiledbsc.soma.SOMA.__repr__"></a>
 
-#### \_\_str\_\_
+#### \_\_repr\_\_
 
 ```python
-def __str__()
+def __repr__() -> str
 ```
 
-Implements `print(soma)`.
+Default display of SOMA.
 
 <a id="tiledbsc.soma.SOMA.__getattr__"></a>
 
@@ -72,7 +77,7 @@ This is used for `soma.n_obs`, etc.
 #### obs\_keys
 
 ```python
-def obs_keys()
+def obs_keys() -> List[str]
 ```
 
 An alias for `soma.obs.ids()`.
@@ -82,20 +87,10 @@ An alias for `soma.obs.ids()`.
 #### var\_keys
 
 ```python
-def var_keys()
+def var_keys() -> List[str]
 ```
 
 An alias for `soma.var.ids()`.
-
-<a id="tiledbsc.soma.SOMA.cell_count"></a>
-
-#### cell\_count
-
-```python
-def cell_count() -> int
-```
-
-Returns the `obs_id` in `soma.obs`.
 
 <a id="tiledbsc.soma.SOMA.get_obs_value_counts"></a>
 
@@ -124,7 +119,7 @@ values for that label in the SOMA.
 #### dim\_slice
 
 ```python
-def dim_slice(obs_ids, var_ids) -> Dict
+def dim_slice(obs_ids, var_ids) -> Optional[SOMASlice]
 ```
 
 Subselects the SOMA's obs, var, and X/data using the specified obs_ids and var_ids.
@@ -136,15 +131,23 @@ Returns `None` for empty slice.
 #### query
 
 ```python
-def query(obs_query_string: Optional[str] = None,
-          var_query_string: Optional[str] = None,
+def query(*,
+          obs_attrs: Optional[List[str]] = None,
+          obs_query_string: Optional[str] = None,
           obs_ids: Optional[List[str]] = None,
-          var_ids: Optional[List[str]] = None) -> SOMASlice
+          var_attrs: Optional[List[str]] = None,
+          var_query_string: Optional[str] = None,
+          var_ids: Optional[List[str]] = None) -> Optional[SOMASlice]
 ```
 
 Subselects the SOMA's obs, var, and X/data using the specified queries on obs and var.
-Queries use the TileDB-Py `QueryCondition` API. If `obs_query_string` is `None`,
-the `obs` dimension is not filtered and all of `obs` is used; similiarly for `var`.
+Queries use the TileDB-Py `QueryCondition` API.
+
+If `obs_query_string` is `None`, the `obs` dimension is not filtered and all of `obs` is
+used; similiarly for `var`.
+
+If `obs_attrs` or `var_attrs` are unspecified, the slice will take all `obs`/`var` attributes
+from the source SOMAs; if they are specified, the slice will take the specified `obs`/`var`
 
 <a id="tiledbsc.soma.SOMA.from_soma_slice"></a>
 
@@ -157,10 +160,9 @@ def from_soma_slice(cls,
                     uri: str,
                     name=None,
                     soma_options: Optional[SOMAOptions] = None,
-                    verbose: Optional[bool] = True,
                     config: Optional[tiledb.Config] = None,
                     ctx: Optional[tiledb.Ctx] = None,
-                    parent: Optional[TileDBGroup] = None)
+                    parent: Optional[TileDBGroup] = None) -> SOMA
 ```
 
 Constructs `SOMA` storage from a given in-memory `SOMASlice` object.

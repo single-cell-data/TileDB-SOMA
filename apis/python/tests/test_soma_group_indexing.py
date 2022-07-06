@@ -1,14 +1,11 @@
-import anndata
-import tiledb
-import tiledbsc
-import tiledbsc.io
+import tempfile
+from pathlib import Path
 
 import numpy as np
-
 import pytest
-import tempfile
-import os
-from pathlib import Path
+
+import tiledbsc
+import tiledbsc.io
 
 HERE = Path(__file__).parent
 
@@ -29,7 +26,7 @@ def test_soma_group_indexing(h5ad_file):
     output_path = tempdir.name
 
     # Ingest
-    soma = tiledbsc.SOMA(output_path, verbose=False)
+    soma = tiledbsc.SOMA(output_path)
     tiledbsc.io.from_h5ad(soma, h5ad_file)
     assert soma.exists()
 
@@ -275,16 +272,28 @@ def test_soma_group_indexing(h5ad_file):
 
     # We exercise these to make sure they're not throwing exceptions.
     for e in soma.obsm:
-        foo = (e.name, e.df().shape, e.uri)
+        _ = (e.name, e.df().shape, e.uri)
     for e in soma.varm:
-        foo = (e.name, e.df().shape, e.uri)
+        _ = (e.name, e.df().shape, e.uri)
     for e in soma.obsp:
-        foo = (e.name, e.df().shape, e.uri)
+        _ = (e.name, e.df().shape, e.uri)
     for e in soma.varp:
-        foo = (e.name, e.df().shape, e.uri)
+        _ = (e.name, e.df().shape, e.uri)
+
+    assert sorted(soma.obsm.keys()) == ["X_pca", "X_tsne"]
+    soma.obsm.remove("X_pca")
+    assert sorted(soma.obsm.keys()) == ["X_tsne"]
+
+    assert sorted(soma.varm.keys()) == ["PCs"]
+    del soma.varm.PCs
+    assert sorted(soma.varm.keys()) == []
+
+    assert sorted(soma.obsp.keys()) == ["distances"]
+    del soma.obsp["distances"]
+    assert sorted(soma.obsp.keys()) == []
 
 
 def test_not_exists():
-    soma = tiledbsc.SOMA("/nonesuch/nowhere/never", verbose=False)
+    soma = tiledbsc.SOMA("/nonesuch/nowhere/never")
     assert not soma.exists()
     assert not soma.obs.exists()

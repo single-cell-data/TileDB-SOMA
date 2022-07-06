@@ -1,12 +1,11 @@
+from typing import Iterator, Optional, Sequence
+
 import tiledb
-from .assay_matrix import AssayMatrix
+
 from .annotation_dataframe import AnnotationDataFrame
+from .assay_matrix import AssayMatrix
 from .tiledb_group import TileDBGroup
-from .soma_options import SOMAOptions
-
-from typing import Optional, List
-
-import os
+from .types import Labels, Matrix
 
 
 class AssayMatrixGroup(TileDBGroup):
@@ -15,11 +14,6 @@ class AssayMatrixGroup(TileDBGroup):
     access elements using soma.X['data'] etc., or soma.X.data if you prefer.  (The latter syntax is
     possible when the element name doesn't have dashes, dots, etc. in it.)
     """
-
-    row_dim_name: str
-    col_dim_name: str
-    row_dataframe: AnnotationDataFrame
-    col_dataframe: AnnotationDataFrame
 
     # ----------------------------------------------------------------
     def __init__(
@@ -30,6 +24,7 @@ class AssayMatrixGroup(TileDBGroup):
         col_dim_name: str,  # var_id for X, obs_id_j for obsp; var_id_j for varp
         row_dataframe: AnnotationDataFrame,  # Nominally a reference to soma.obs
         col_dataframe: AnnotationDataFrame,  # Nominally a reference to soma.var
+        *,
         parent: Optional[TileDBGroup] = None,
     ):
         """
@@ -46,7 +41,7 @@ class AssayMatrixGroup(TileDBGroup):
         self.col_dataframe = col_dataframe
 
     # ----------------------------------------------------------------
-    def keys(self):
+    def keys(self) -> Sequence[str]:
         """
         For `obsm` and `varm`, `.keys()` is a keystroke-saver for the more general group-member
         accessor `._get_member_names()`.
@@ -54,36 +49,24 @@ class AssayMatrixGroup(TileDBGroup):
         return self._get_member_names()
 
     # ----------------------------------------------------------------
-    def __getattr__(self, name):
+    def __repr__(self) -> str:
+        """
+        Default display of soma.X.
+        """
+        return ", ".join(f"'{key}'" for key in self.keys())
+
+    # ----------------------------------------------------------------
+    def __getattr__(self, name: str) -> Optional[AssayMatrix]:
         """
         This is called on `soma.X.name` when `name` is not already an attribute.
         This way you can do `soma.X.data` as an alias for `soma.X['data']`.
         """
         with self._open() as G:
-            if not name in G:
+            if name not in G:
                 raise AttributeError(
                     f"'{self.__class__.__name__}' object has no attribute '{name}'"
                 )
         return self[name]
-
-    # ----------------------------------------------------------------
-    def __iter__(self) -> List[AssayMatrix]:
-        """
-        Implements `for matrix in soma.obsm: ...` and `for matrix in soma.varm: ...`
-        """
-        retval = []
-        for name, uri in self._get_member_names_to_uris().items():
-            matrix = AssayMatrix(
-                uri=uri,
-                name=name,
-                row_dim_name=self.row_dim_name,
-                col_dim_name=self.col_dim_name,
-                row_dataframe=self.row_dataframe,
-                col_dataframe=self.col_dataframe,
-                parent=self,
-            )
-            retval.append(matrix)
-        return iter(retval)
 
     # ----------------------------------------------------------------
     # At the tiledb-py API level, *all* groups are name-indexable.  But here at the tiledbsc-py
@@ -102,14 +85,13 @@ class AssayMatrixGroup(TileDBGroup):
     #   the `[]` operator separately in the various classes which need indexing. This is again to
     #   avoid circular-import issues, and means that [] on `AnnotationMatrixGroup` will return an
     #   `AnnotationMatrix, [] on `UnsGroup` will return `UnsArray` or `UnsGroup`, etc.
-    def __getitem__(self, name):
+    def __getitem__(self, name: str) -> Optional[AssayMatrix]:
         """
         Returns an `AnnotationMatrix` element at the given name within the group, or None if no such
         member exists.  Overloads the `[...]` operator.
         """
-
         with self._open("r") as G:
-            if not name in G:
+            if name not in G:
                 return None
 
             obj = G[name]  # This returns a tiledb.object.Object.
@@ -132,7 +114,7 @@ class AssayMatrixGroup(TileDBGroup):
             )
 
     # ----------------------------------------------------------------
-    def __contains__(self, name):
+    def __contains__(self, name: str) -> bool:
         """
         Implements the `in` operator, e.g. `"data" in soma.X`.
         """
@@ -140,22 +122,43 @@ class AssayMatrixGroup(TileDBGroup):
             return name in G
 
     # ----------------------------------------------------------------
+    def __iter__(self) -> Iterator[AssayMatrix]:
+        """
+        Implements `for matrix in soma.obsm: ...` and `for matrix in soma.varm: ...`
+        """
+        for name, uri in self._get_member_names_to_uris().items():
+            yield AssayMatrix(
+                uri=uri,
+                name=name,
+                row_dim_name=self.row_dim_name,
+                col_dim_name=self.col_dim_name,
+                row_dataframe=self.row_dataframe,
+                col_dataframe=self.col_dataframe,
+                parent=self,
+            )
+
+    # ----------------------------------------------------------------
     def add_layer_from_matrix_and_dim_values(
         self,
-        matrix,
-        row_names: str,
-        col_names: str,
-        layer_name="data",
+        matrix: Matrix,
+        row_names: Labels,
+        col_names: Labels,
+        layer_name: str = "data",
     ) -> None:
         """
-        Populates the `X` or `raw.X` subgroup for a `SOMA` object.  For `X` and `raw.X`, nominally `row_names` will be `anndata.obs_names` and `col_names` will be `anndata.var_names` or `anndata.raw.var_names`.  For `obsp` elements, both will be `anndata.obs_names`; for `varp elements, both will be `anndata.var_names`.
+        Populates the `X` or `raw.X` subgroup for a `SOMA` object.  For `X` and `raw.X`,
+        nominally `row_names` will be `anndata.obs_names` and `col_names` will be
+        `anndata.var_names` or `anndata.raw.var_names`.  For `obsp` elements, both will
+        be `anndata.obs_names`; for `varp elements, both will be `anndata.var_names`.
         """
 
         if matrix is not None:
             # Must be done first, to create the parent directory
             self.create_unless_exists()
 
-            assay_matrix_uri = os.path.join(self.uri, layer_name)
+            assay_matrix_uri = self._get_child_uri(
+                layer_name
+            )  # See comments in that function
             assay_matrix = AssayMatrix(
                 uri=assay_matrix_uri,
                 name=layer_name,

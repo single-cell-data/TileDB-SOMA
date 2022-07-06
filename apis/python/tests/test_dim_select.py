@@ -1,14 +1,13 @@
+import tempfile
+from pathlib import Path
+
+import anndata
+import numpy as np
+import pandas as pd
+import pytest
+
 import tiledbsc
 import tiledbsc.io
-import tiledb
-import anndata
-import pandas as pd
-import numpy as np
-
-import pytest
-import tempfile
-import os
-from pathlib import Path
 
 HERE = Path(__file__).parent
 
@@ -32,7 +31,7 @@ def test_dim_select(adata):
     output_path = tempdir.name
 
     # Ingest
-    soma = tiledbsc.SOMA(output_path, verbose=True)
+    soma = tiledbsc.SOMA(output_path)
     tiledbsc.io.from_anndata(soma, adata)
 
     assert soma.obs.ids() == [

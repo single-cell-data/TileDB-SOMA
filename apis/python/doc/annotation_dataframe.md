@@ -17,7 +17,7 @@ Nominally for `obs` and `var` data within a soma. These have one string dimensio
 #### \_\_init\_\_
 
 ```python
-def __init__(uri: str, name: str, parent: Optional[TileDBGroup] = None)
+def __init__(uri: str, name: str, *, parent: Optional[TileDBGroup] = None)
 ```
 
 See the TileDBObject constructor.
@@ -27,7 +27,7 @@ See the TileDBObject constructor.
 #### shape
 
 ```python
-def shape()
+def shape() -> Tuple[int, int]
 ```
 
 Returns a tuple with the number of rows and number of columns of the `AnnotationDataFrame`.
@@ -43,6 +43,26 @@ def ids() -> List[str]
 ```
 
 Returns the `obs_ids` in the matrix (for `obs`) or the `var_ids` (for `var`).
+
+<a id="tiledbsc.annotation_dataframe.AnnotationDataFrame.__repr__"></a>
+
+#### \_\_repr\_\_
+
+```python
+def __repr__() -> str
+```
+
+Default display of soma.obs and soma.var.
+
+<a id="tiledbsc.annotation_dataframe.AnnotationDataFrame.__len__"></a>
+
+#### \_\_len\_\_
+
+```python
+def __len__() -> int
+```
+
+Implements `len(soma.obs)` and `len(soma.var)`.
 
 <a id="tiledbsc.annotation_dataframe.AnnotationDataFrame.keys"></a>
 
@@ -70,7 +90,7 @@ Same as `.keys` but returns as set.
 #### dim\_select
 
 ```python
-def dim_select(ids, attrs=None)
+def dim_select(ids, attrs=None) -> pd.DataFrame
 ```
 
 Selects a slice out of the dataframe with specified `obs_ids` (for `obs`) or `var_ids` (for
@@ -94,7 +114,7 @@ they're used for the query; else, all attributes are returned.
 #### query
 
 ```python
-def query(query_string, ids=None, attrs=None)
+def query(query_string, ids=None, attrs=None) -> pd.DataFrame
 ```
 
 Selects from obs/var using a TileDB-Py `QueryCondition` string such as `cell_type ==

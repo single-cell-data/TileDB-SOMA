@@ -1,20 +1,25 @@
-import tiledb
-
-import anndata as ad
-
-import numpy
-import scipy
-import pandas as pd
-
 import time
-from typing import Optional, List, Union
+from typing import TYPE_CHECKING, Any, List, Optional, Sequence, Tuple, TypeVar, Union
+
+if TYPE_CHECKING:
+    from _typeshed import SupportsRichComparisonT
+else:
+    SupportsRichComparisonT = Any
+
+import numpy as np
+import pandas as pd
+import scipy.sparse as sp
+import tiledb
 
 # This is for group/array metadata we write, to help nested-structured traversals (especially those
 # that start at the SOMACollection level) confidently navigate with a minimum of introspection on
 # group contents.
+from tiledbsc.types import Labels
+
 SOMA_OBJECT_TYPE_METADATA_KEY = "soma_object_type"
 SOMA_ENCODING_VERSION_METADATA_KEY = "soma_encoding_version"
 SOMA_ENCODING_VERSION = "0"
+
 
 # ----------------------------------------------------------------
 def is_soma(uri: str, ctx: Optional[tiledb.Ctx] = None) -> bool:
@@ -34,7 +39,7 @@ def is_soma(uri: str, ctx: Optional[tiledb.Ctx] = None) -> bool:
     with tiledb.Group(uri, mode="r", ctx=ctx) as G:
         if SOMA_OBJECT_TYPE_METADATA_KEY in G.meta:
             # Really `tiledbsc.SOMA.__name__`, but prevent a circular package import, so `"SOMA"`
-            return G.meta[SOMA_OBJECT_TYPE_METADATA_KEY] == "SOMA"
+            return bool(G.meta[SOMA_OBJECT_TYPE_METADATA_KEY] == "SOMA")
 
         # At this point this path could be a SOMACollection, SOMA, or maybe SOMA element
         # (or some manually created TileDB group).
@@ -68,7 +73,7 @@ def is_soma_collection(uri: str, ctx: Optional[tiledb.Ctx] = None) -> bool:
     with tiledb.Group(uri, mode="r", ctx=ctx) as G:
         if SOMA_OBJECT_TYPE_METADATA_KEY in G.meta:
             # Really `tiledbsc.SOMA.__name__`, but prevent a circular package import, so `"SOMA"`
-            return G.meta[SOMA_OBJECT_TYPE_METADATA_KEY] == "SOMACollection"
+            return bool(G.meta[SOMA_OBJECT_TYPE_METADATA_KEY] == "SOMACollection")
 
         # At this point this path could be a SOMACollection, SOMA, or maybe SOMA element
         # (or some manually created TileDB group).
@@ -100,7 +105,7 @@ def is_local_path(path: str) -> bool:
 
 
 # ----------------------------------------------------------------
-def get_start_stamp():
+def get_start_stamp() -> float:
     """
     Returns information about start time of an event. Nominally float seconds since the epoch,
     but articulated here as being compatible with the format_elapsed function.
@@ -109,7 +114,7 @@ def get_start_stamp():
 
 
 # ----------------------------------------------------------------
-def format_elapsed(start_stamp, message: str):
+def format_elapsed(start_stamp: float, message: str) -> str:
     """
     Returns the message along with an elapsed-time indicator, with end time relative to start
     start from `get_start_stamp`. Used for annotating elapsed time of a task.
@@ -119,11 +124,11 @@ def format_elapsed(start_stamp, message: str):
 
 # ----------------------------------------------------------------
 def _find_csr_chunk_size(
-    mat: scipy.sparse.csr_matrix,
-    permutation: list,
+    mat: sp.csr_matrix,
+    permutation: Sequence[int],
     start_row_index: int,
     goal_chunk_nnz: int,
-):
+) -> int:
     """
     Given a CSR matrix and a start row index, returns the number of rows with cumulative NNZ as
     desired. Context is chunked-COO ingest of larger CSR matrices: if mat is say 8000x9000 but
@@ -149,11 +154,11 @@ def _find_csr_chunk_size(
 # This function is very similar to _find_csr_chunk_size. The code is largely repeated, and this is
 # intentional.  Here we err on the side of increased readability, at the expense of line-count.
 def _find_csc_chunk_size(
-    mat: scipy.sparse.csc_matrix,
-    permutation: list,
+    mat: sp.csc_matrix,
+    permutation: Sequence[int],
     start_col_index: int,
     goal_chunk_nnz: int,
-):
+) -> int:
     """
     Given a CSC matrix and a start column index, returns the number of columns with cumulative nnz as
     desired. Context is chunked-COO ingest of larger CSC matrices: if mat is say 8000x9000 but
@@ -176,7 +181,9 @@ def _find_csc_chunk_size(
 
 
 # ----------------------------------------------------------------
-def _get_sort_and_permutation(lst: list):
+def _get_sort_and_permutation(
+    s: Sequence[SupportsRichComparisonT],
+) -> Tuple[Sequence[SupportsRichComparisonT], Sequence[int]]:
     """
     Sorts a list, returned the sorted list along with a permutation-index list which can be used for
     cursored access to data which was indexed by the unsorted list. Nominally for chunking of CSR
@@ -185,7 +192,7 @@ def _get_sort_and_permutation(lst: list):
     # Example input: x=['E','A','C','D','B']
 
     # e.g. [('E', 0), ('A', 1), ('C', 2), ('D', 3), ('B', 4)]
-    lst_and_indices = [(e, i) for i, e in enumerate(lst)]
+    lst_and_indices = [(e, i) for i, e in enumerate(s)]
 
     # e.g. [('A', 1), ('B', 4), ('C', 2), ('D', 3), ('E', 0)]
     lst_and_indices.sort(key=lambda pair: pair[0])
@@ -194,14 +201,27 @@ def _get_sort_and_permutation(lst: list):
     # and  [1, 4, 2, 3, 0]
     lst_sorted = [e for e, i in lst_and_indices]
     permutation = [i for e, i in lst_and_indices]
-    return (lst_sorted, permutation)
+    return lst_sorted, permutation
 
 
 # ----------------------------------------------------------------
-def _to_tiledb_supported_array_type(x):
+def _to_tiledb_supported_dtype(dtype: np.dtype) -> np.dtype:
+    """A handful of types are cast into the TileDB type system."""
+    # TileDB has no float16 -- cast up to float32
+    if dtype == np.dtype("float16"):
+        return np.dtype("float32")
+    return dtype
+
+
+# ----------------------------------------------------------------
+
+T = TypeVar("T", np.ndarray, pd.Series, pd.DataFrame, sp.spmatrix)
+
+
+def _to_tiledb_supported_array_type(x: T) -> T:
     """
     Converts datatypes unrepresentable by TileDB into datatypes it can represent.
-    Eg, categorical strings -> string; bool -> uint8, etc.
+    E.g., categorical strings -> string.
 
     See also https://docs.scipy.org/doc/numpy-1.10.1/reference/arrays.dtypes.html
 
@@ -212,19 +232,6 @@ def _to_tiledb_supported_array_type(x):
     primitive, convert to that. If the array contains NA/NaN (i.e. not in the
     category, code == -1), raise error unless it is a float or string.
     """
-
-    def _to_tiledb_supported_dtype(dtype):
-        """A handful of types are cast into the TileDB type system."""
-        # TileDB has no bool type -- instead cast to uint8
-        if dtype == numpy.dtype("bool"):
-            return numpy.dtype("uint8")
-
-        # TileDB has no float16 -- cast up to float32
-        if dtype == numpy.dtype("float16"):
-            return numpy.dtype("float32")
-
-        return dtype
-
     if isinstance(x, pd.DataFrame):
         return pd.DataFrame.from_dict(
             {k: _to_tiledb_supported_array_type(v) for k, v in x.items()}
@@ -251,7 +258,7 @@ def _to_tiledb_supported_array_type(x):
                 raise ValueError(
                     "Categorical array contains NaN -- unable to convert to TileDB array."
                 )
-            return x.astype("uint8")
+            return x.astype(bool)
 
         if inferred == "string":
             return x.astype(str)
@@ -275,10 +282,10 @@ def X_and_ids_to_sparse_matrix(
     row_dim_name: str,
     col_dim_name: str,
     attr_name: str,
-    row_labels: List[str],
-    col_labels: List[str],
+    row_labels: Labels,
+    col_labels: Labels,
     return_as: str = "csr",
-) -> Union[scipy.sparse.csr_matrix, scipy.sparse.csc_matrix]:
+) -> Union[sp.csr_matrix, sp.csc_matrix]:
     """
     This is needed when we read a TileDB X.df[:]. Since TileDB X is sparse 2D string-dimensioned,
     the return value of which is a dict with three columns -- obs_id, var_id, and value. For
@@ -328,17 +335,17 @@ def X_and_ids_to_sparse_matrix(
     # Explicitly write the shape to avoid trimming in case of all-zeroes rows/columns when
     # people do dim-selects.
     if return_as == "csr":
-        return scipy.sparse.csr_matrix(
+        return sp.csr_matrix(
             (xcol, (ocol, vcol)), shape=(len(row_labels), len(col_labels))
         )
     else:
-        return scipy.sparse.csc_matrix(
+        return sp.csc_matrix(
             (xcol, (ocol, vcol)), shape=(len(row_labels), len(col_labels))
         )
 
 
 # ----------------------------------------------------------------
-def triples_to_dense_df(sparse_df: pd.DataFrame, fillna=0.0) -> pd.DataFrame:
+def triples_to_dense_df(sparse_df: pd.DataFrame, fillna: float = 0.0) -> pd.DataFrame:
     """
     Output from X dataframe reads is in "triples" format, e.g. two index columns `obs_id` and `var_id`,
     and data column `value`. This is the default format, and is appropriate for large, possibly sparse matrices.
@@ -367,10 +374,10 @@ class ETATracker:
     Computes estimated time to completion for chunked writes.
     """
 
-    percents: List[float]
+    chunk_percents: List[float]
     cumulative_seconds: List[float]
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.chunk_percents = []
         self.cumulative_seconds = []
 
@@ -405,14 +412,14 @@ class ETATracker:
         Returns ETA seconds as a number.
         """
         # Linear regression where x is cumulative seconds and y is percent done.
-        x = numpy.array(self.cumulative_seconds)
-        y = numpy.array(self.chunk_percents)
-        A = numpy.vstack([x, numpy.ones(len(x))]).T
-        m, b = numpy.linalg.lstsq(A, y, rcond=None)[0]
+        x = np.array(self.cumulative_seconds)
+        y = np.array(self.chunk_percents)
+        A = np.vstack([x, np.ones(len(x))]).T
+        m, b = np.linalg.lstsq(A, y, rcond=None)[0]
         # Solve for x where y == 100
         done_cumu_seconds = (100.0 - b) / m
 
-        return done_cumu_seconds - self.cumulative_seconds[-1]
+        return float(done_cumu_seconds) - self.cumulative_seconds[-1]
 
     def _format_seconds(self, seconds: float) -> str:
         """
@@ -427,8 +434,8 @@ class ETATracker:
         else:
             return "%.2f seconds" % (seconds)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return str(self.chunk_percents) + " " + str(self.cumulative_seconds)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return self.__str__()

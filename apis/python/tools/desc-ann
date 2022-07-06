@@ -12,7 +12,6 @@
 # Please see comments in util_ann.py.
 # ================================================================
 
-import sys
 import argparse
 
 import tiledbsc

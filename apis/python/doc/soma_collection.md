@@ -18,20 +18,31 @@ Implements a collection of `SOMA` objects.
 
 ```python
 def __init__(uri: str,
+             *,
              name="soco",
              soma_options: Optional[SOMAOptions] = None,
-             verbose: Optional[bool] = True,
              config: Optional[tiledb.Config] = None,
              ctx: Optional[tiledb.Ctx] = None,
              parent: Optional[TileDBGroup] = None)
 ```
 
-Create a new `SOMACollection` object. The existing group is opened at the specified `uri` if one is present, otherwise a new group will be created upon ingest.
+Create a new `SOMACollection` object. The existing group is opened at the
+
+specified `uri` if one is present, otherwise a new group will be created upon ingest.
 
 **Arguments**:
 
 - `uri`: URI of the TileDB group
-- `verbose`: Print status messages
+
+<a id="tiledbsc.soma_collection.SOMACollection.__repr__"></a>
+
+#### \_\_repr\_\_
+
+```python
+def __repr__() -> str
+```
+
+Default display of SOMACollection.
 
 <a id="tiledbsc.soma_collection.SOMACollection.__len__"></a>
 
@@ -58,17 +69,37 @@ Adds a `SOMA` to the `SOMACollection`.
 #### remove
 
 ```python
-def remove(soma: SOMA) -> None
+def remove(soma: Union[SOMA, str]) -> None
 ```
 
-Removes a `SOMA` from the `SOMACollection`.
+Removes a `SOMA` from the `SOMACollection`, when invoked as `soco.remove("namegoeshere")`.
+
+<a id="tiledbsc.soma_collection.SOMACollection.__delattr__"></a>
+
+#### \_\_delattr\_\_
+
+```python
+def __delattr__(matrix_name: str) -> None
+```
+
+Removes a `SOMA` from the `SOMACollection`, when invoked as `del soco.namegoeshere`.
+
+<a id="tiledbsc.soma_collection.SOMACollection.__delitem__"></a>
+
+#### \_\_delitem\_\_
+
+```python
+def __delitem__(matrix_name: str) -> None
+```
+
+Removes a `SOMA` from the `SOMACollection`, when invoked as `del soco["namegoeshere"]`.
 
 <a id="tiledbsc.soma_collection.SOMACollection.keys"></a>
 
 #### keys
 
 ```python
-def keys() -> None
+def keys() -> List[str]
 ```
 
 Returns the names of the SOMAs in the collection.
@@ -78,7 +109,7 @@ Returns the names of the SOMAs in the collection.
 #### \_\_iter\_\_
 
 ```python
-def __iter__() -> List[SOMA]
+def __iter__() -> Iterator[SOMA]
 ```
 
 Implements `for soma in soco: ...`
@@ -98,62 +129,60 @@ Implements `name in soco`
 #### \_\_getitem\_\_
 
 ```python
-def __getitem__(name)
+def __getitem__(name) -> Optional[SOMA]
 ```
 
 Returns a `SOMA` element at the given name within the group, or `None` if no such
 member exists.  Overloads the `[...]` operator.
-
-<a id="tiledbsc.soma_collection.SOMACollection.cell_count"></a>
-
-#### cell\_count
-
-```python
-def cell_count() -> int
-```
-
-Returns sum of `soma.cell_count()` over SOMAs in the collection.
 
 <a id="tiledbsc.soma_collection.SOMACollection.query"></a>
 
 #### query
 
 ```python
-def query(obs_attr_names: List[str] = [],
+def query(*,
+          obs_attrs: Optional[List[str]] = None,
           obs_query_string: str = None,
           obs_ids: List[str] = None,
-          var_attr_names: List[str] = [],
+          var_attrs: Optional[List[str]] = None,
           var_query_string: str = None,
           var_ids: List[str] = None) -> Optional[SOMASlice]
 ```
 
 Subselects the obs, var, and X/data using the specified queries on obs and var,
 concatenating across SOMAs in the collection.  Queries use the TileDB-Py `QueryCondition`
-API. If `obs_query_string` is `None`, the `obs` dimension is not filtered and all of `obs`
-is used; similiarly for `var`. Return value of `None` indicates an empty slice.
-If `obs_ids` or `var_ids` are not `None`, they are effectively ANDed into the query.
-For example, you can pass in a known list of `obs_ids`, then use `obs_query_string`
-to further restrict the query.
+API.
+
+If `obs_query_string` is `None`, the `obs` dimension is not filtered and all of `obs` is
+used; similiarly for `var`. Return value of `None` indicates an empty slice.  If `obs_ids`
+or `var_ids` are not `None`, they are effectively ANDed into the query.  For example, you
+can pass in a known list of `obs_ids`, then use `obs_query_string` to further restrict the
+query.
+
+If `obs_attrs` or `var_attrs` are unspecified, slices will take all `obs`/`var` attributes
+from their source SOMAs; if they are specified, slices will take the specified `obs`/`var`
+attributes.  If all SOMAs in the collection have the same `obs`/`var` attributes, then you
+needn't specify these; if they don't, you must.
 
 <a id="tiledbsc.soma_collection.SOMACollection.find_unique_obs_values"></a>
 
 #### find\_unique\_obs\_values
 
 ```python
-def find_unique_obs_values(obs_label: str)
+def find_unique_obs_values(obs_label: str) -> Set
 ```
 
-Given an `obs` label such as `cell_type` or `tissue`, returns a list of unique values for
-that label among all SOMAs in the collection.
+Given an `obs` label such as `cell_type` or `tissue`, returns a set of unique
+values for that label among all SOMAs in the collection.
 
 <a id="tiledbsc.soma_collection.SOMACollection.find_unique_var_values"></a>
 
 #### find\_unique\_var\_values
 
 ```python
-def find_unique_var_values(var_label: str)
+def find_unique_var_values(var_label: str) -> Set
 ```
 
-Given an `var` label such as `feature_name`, returns a list of unique values for
+Given an `var` label such as `feature_name`, returns a set of unique values for
 that label among all SOMAs in the collection.
 

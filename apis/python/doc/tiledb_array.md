@@ -10,7 +10,7 @@
 class TileDBArray(TileDBObject)
 ```
 
-Wraps arrays from TileDB-Py by retaining a URI, verbose flag, etc.
+Wraps arrays from TileDB-Py by retaining a URI, options, etc.
 Also serves as an abstraction layer to hide TileDB-specific details from the API, unless
 requested.
 
@@ -19,7 +19,7 @@ requested.
 #### \_\_init\_\_
 
 ```python
-def __init__(uri: str, name: str, parent=None)
+def __init__(uri: str, name: str, *, parent=None)
 ```
 
 See the TileDBObject constructor.
@@ -121,7 +121,7 @@ Returns the class name associated with the array.
 #### show\_metadata
 
 ```python
-def show_metadata(recursively=True, indent="")
+def show_metadata(recursively=True, indent="") -> None
 ```
 
 Shows metadata for the array.

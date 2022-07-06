@@ -9,9 +9,9 @@ your own organization's schema.
 To keep the example simple, any data outside that schema are discarded.  The example peforms three
 steps:
 
-* Retains `obs` and `var` annotations specifically defined in the cellxgene 2.0 schema;
-* Discards transformed `X` values, and retains raw `X` counts.
-# Also creates a trivial `rankit` normalization of `X` values to demonstrate an additional `X` layer.
+* retains `obs` and `var` annotations specifically defined in the cellxgene 2.0 schema;
+* discards transformed `X` values, and retains raw `X` counts;
+* creates a trivial `rankit` normalization of `X` values to demonstrate an additional `X` layer.
 
 Examples:
 
@@ -24,24 +24,27 @@ Note: This code for populating an atlas is independent of querying an atlas.  Se
 for query examples.
 """
 
-import sys
 import argparse
-from typing import Optional, Union, List
-import os.path
 import logging
+import os.path
+import sys
+from typing import Optional
 
-from tiledbsc import SOMACollection, SOMA, io as SOMAio
-import tiledbsc
-import tiledb
 import anndata
-import numpy as np
-import scipy.stats
-import scipy.sparse
 import numba as nb
-import pandas as pd
+import numpy as np
+import scipy.sparse
+import scipy.stats
+import tiledb
+
+import tiledbsc
+import tiledbsc.io
 
 # ================================================================
 # MAIN ENTRYPOINT
+
+logger = logging.getLogger("tiledbsc")
+
 
 # ----------------------------------------------------------------
 def main() -> int:
@@ -49,14 +52,9 @@ def main() -> int:
     args = parser.parse_args()
 
     if args.verbose:
-        logging.basicConfig(level=logging.INFO)
+        tiledbsc.logging.info()
 
-    uniformizer = Uniformizer(
-        atlas_uri=args.atlas_uri,
-        verbose=args.verbose,
-    )
-    if args.allow_non_primary_data:
-        uniformizer._allow_non_primary_data = True
+    uniformizer = Uniformizer(args.atlas_uri, args.allow_non_primary_data)
 
     if "func_name" not in args:
         logging.error("Error: unknown subcommand.")
@@ -82,7 +80,7 @@ def _create_args_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "-v",
         "--verbose",
-        action=argparse.BooleanOptionalAction,
+        action="store_true",
         default=False,
         help="verbose logging",
     )
@@ -91,7 +89,7 @@ def _create_args_parser() -> argparse.ArgumentParser:
     # flag lets the user bypass the is-primary-data check -- only for testing/debug purposes.
     parser.add_argument(
         "--allow-non-primary-data",
-        action=argparse.BooleanOptionalAction,
+        action="store_true",
         default=False,
         help=argparse.SUPPRESS,
     )
@@ -147,7 +145,6 @@ class Uniformizer:
 
     ctx: tiledb.Ctx
     atlas_uri: str
-    verbose: bool
 
     # You can adapt these to match your organization's schema
     OBS_COLUMNS = [
@@ -171,15 +168,10 @@ class Uniformizer:
     VAR_COLUMNS = ["feature_biotype", "feature_name", "feature_reference"]
 
     # ----------------------------------------------------------------
-    def __init__(
-        self,
-        atlas_uri: str,
-        verbose: bool = False,
-    ):
+    def __init__(self, atlas_uri: str, allow_non_primary_data: bool = False):
         self.ctx = self._create_tiledb_ctx()
         self.atlas_uri = atlas_uri
-        self.verbose = verbose
-        self._allow_non_primary_data = False
+        self.allow_non_primary_data = allow_non_primary_data
 
     # ----------------------------------------------------------------
     def _create_tiledb_ctx(self) -> tiledb.Ctx:
@@ -191,7 +183,7 @@ class Uniformizer:
         )
 
     # ----------------------------------------------------------------
-    def add_h5ad(self, input_dataset_id: Optional[str], input_h5ad_path) -> int:
+    def add_h5ad(self, input_dataset_id: Optional[str], input_h5ad_path: str) -> int:
         """Add an H5AD to the atlas"""
 
         soco = self._init_soco()
@@ -199,7 +191,7 @@ class Uniformizer:
         if soma_name in soco:
             raise Exception(f"SOMA {soma_name} is already in SOMACollection {soco.uri}")
 
-        logging.info("Loading H5AD")
+        logger.info("Loading H5AD")
         ann = anndata.read_h5ad(input_h5ad_path)
 
         self._clean_and_add(ann, soma_name, soco)
@@ -214,21 +206,19 @@ class Uniformizer:
         if soma_name in soco:
             raise Exception(f"SOMA {soma_name} is already in SOMACollection {soco.uri}")
 
-        logging.info("Loading SOMA")
-        input_soma = SOMA(input_soma_uri)
-        ann = SOMAio.to_anndata(input_soma)
+        logger.info("Loading SOMA")
+        input_soma = tiledbsc.SOMA(input_soma_uri)
+        ann = tiledbsc.io.to_anndata(input_soma)
 
         self._clean_and_add(ann, soma_name, soco)
         return 0
 
     # ----------------------------------------------------------------
-    def _init_soco(self) -> SOMACollection:
+    def _init_soco(self) -> tiledbsc.SOMACollection:
         """
         Makes sure the destination SOMACollection exists for first write.
         """
-        soco = SOMACollection(
-            self.atlas_uri, name="atlas", ctx=self.ctx, verbose=self.verbose
-        )
+        soco = tiledbsc.SOMACollection(self.atlas_uri, name="atlas", ctx=self.ctx)
         soco.create_unless_exists()  # Must be done first, to create the parent directory
         if not soco.exists():
             raise Exception(f"Could not create SOCO at {soco.uri}")
@@ -247,30 +237,28 @@ class Uniformizer:
         self,
         ann: anndata.AnnData,
         soma_name: str,
-        soco: SOMACollection,
-    ):
+        soco: tiledbsc.SOMACollection,
+    ) -> None:
         """
         Cleans and uniformizes the data (whether obtained from H5AD or SOMA), writes a new SOMA, adds an
         X/rankit layer, and adds the new SOMA to the SOMACollection.
         """
-        logging.info("Cleaning data")
+        logger.info("Cleaning data")
         ann = self._clean_and_uniformize(ann)
 
-        logging.info("Creating rankit")
+        logger.info("Creating rankit")
         X_rankit = _rankit(ann.X)
 
-        logging.info("Saving SOMA")
+        logger.info("Saving SOMA")
         soma_uri = f"{self.atlas_uri}/{soma_name}"
-        atlas_soma = SOMA(
-            uri=soma_uri, name=soma_name, verbose=self.verbose, ctx=self.ctx
-        )
-        SOMAio.from_anndata(atlas_soma, ann)
+        atlas_soma = tiledbsc.SOMA(uri=soma_uri, name=soma_name, ctx=self.ctx)
+        tiledbsc.io.from_anndata(atlas_soma, ann)
 
-        logging.info(f"Adding SOMA name {atlas_soma.name} at SOMA URI {atlas_soma.uri}")
+        logger.info(f"Adding SOMA name {atlas_soma.name} at SOMA URI {atlas_soma.uri}")
         soco.add(atlas_soma)
 
         # Create rankit X layer and save
-        logging.info("Saving rankit layer")
+        logger.info("Saving rankit layer")
         if "rankit" in atlas_soma.X.keys():
             raise Exception(
                 f"rankit layer already exists in the SOMA {atlas_soma.name} {atlas_soma.uri}"
@@ -291,12 +279,12 @@ class Uniformizer:
         """
 
         # Remove non-primary data.
-        if self._allow_non_primary_data:
+        if self.allow_non_primary_data:
             ann = original_ann
         else:
             # This one line -- right here -- is the primary reason for using AnnData as an in-memory
             # container even for data read from a SOMA. This is MARVELOUSLY expressive. :)
-            ann = original_ann[original_ann.obs.is_primary_data == True]
+            ann = original_ann[original_ann.obs.is_primary_data]
             if ann.obs.index.empty:
                 raise Exception(
                     "The is_primary_data == True filter left no data remaining for this dataset."
@@ -326,7 +314,7 @@ class Uniformizer:
 # UTILITIES
 
 # ----------------------------------------------------------------
-@nb.jit
+@nb.jit  # type: ignore
 def _quantiles(n: int) -> np.ndarray:
     """
     Computes quantiles, accelerated using @nb.jit.

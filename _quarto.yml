@@ -39,7 +39,7 @@ website:
 
   sidebar:
     - style: "floating"
-      collapse-level: 2
+      collapse-level: 3
       align: left
       contents:
         - href: "overview.md"
@@ -56,6 +56,7 @@ website:
           contents:
 
             - section: "Python examples"
+              href: "apis/python/examples/examples-overview.md"
               contents:
                 - href: "apis/python/examples/obtaining-data-files.md"
                   text: "Obtaining data files"
@@ -63,8 +64,6 @@ website:
                   text: "Ingesting data files"
                 - href: "apis/python/examples/anndata-and-tiledb.md"
                   text: "Comparing AnnData and TileDB files"
-                - href: "apis/python/examples/inspecting-schema.md"
-                  text: "Inspecting SOMA schemas"
                 - href: "apis/python/examples/uniform-collection.md"
                   text: "Uniformizing a collection"
                 - href: "apis/python/examples/soco-reconnaissance.md"
@@ -75,13 +74,14 @@ website:
                   text: "SOMA-collection batch query"
 
             - section: "Python API"
+              href: "apis/python/doc/api-overview.md"
               contents:
                 - href: "apis/python/doc/overview.md"
 
-                - href: "apis/python/doc/soma_collection.md"
-                  text: "SOMACollection"
                 - href: "apis/python/doc/soma.md"
                   text: "SOMA"
+                - href: "apis/python/doc/soma_collection.md"
+                  text: "SOMACollection"
 
                 - href: "apis/python/doc/soma_options.md"
                   text: "SOMAOptions"

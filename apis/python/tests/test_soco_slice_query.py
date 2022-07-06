@@ -1,12 +1,8 @@
-import anndata
-import tiledb
-import tiledbsc
-import tiledbsc.io
-
-import pytest
-import tempfile
 import os
 from pathlib import Path
+
+import tiledbsc
+import tiledbsc.io
 
 HERE = Path(__file__).parent
 
@@ -26,33 +22,31 @@ def test_soco_slice_query(tmp_path):
         ("subset-soma-04", HERE.parent / "anndata/subset-soma-04.h5ad"),
     ]:
         soma_path = os.path.join(soco_dir, name)
-        print("Writing", soma_path, "...")
-        soma = tiledbsc.SOMA(soma_path, verbose=False)
+        soma = tiledbsc.SOMA(soma_path)
         tiledbsc.io.from_h5ad(soma, h5ad_path)
         soco.add(soma)
-    print("Done.")
 
     # Do the slice query
-    obs_attr_names = ["tissue"]
+    obs_attrs = ["tissue"]
     obs_query_string = 'tissue == "blood"'
-    var_attr_names = ["feature_name"]
+    var_attrs = ["feature_name"]
     var_query_string = 'feature_name == "MT-CO3"'
 
     soma_slices = []
     for soma in soco:
         # E.g. querying for 'cell_type == "blood"' but this SOMA doesn't have a cell_type column in
         # its obs at all.
-        if not soma.obs.has_attr_names(obs_attr_names):
+        if not soma.obs.has_attr_names(obs_attrs):
             continue
         # E.g. querying for 'feature_name == "MT-CO3"' but this SOMA doesn't have a feature_name
         # column in its var at all.
-        if not soma.var.has_attr_names(var_attr_names):
+        if not soma.var.has_attr_names(var_attrs):
             continue
 
         soma_slice = soma.query(
             obs_query_string=obs_query_string, var_query_string=var_query_string
         )
-        if soma_slice != None:
+        if soma_slice is not None:
             soma_slices.append(soma_slice)
 
     result_soma_slice = tiledbsc.SOMASlice.concat(soma_slices)

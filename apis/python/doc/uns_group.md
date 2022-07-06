@@ -17,7 +17,7 @@ Nominally for soma uns.
 #### \_\_init\_\_
 
 ```python
-def __init__(uri: str, name: str, parent: Optional[TileDBGroup] = None)
+def __init__(uri: str, name: str, *, parent: Optional[TileDBGroup] = None)
 ```
 
 See the TileDBObject constructor.
@@ -27,7 +27,7 @@ See the TileDBObject constructor.
 #### keys
 
 ```python
-def keys()
+def keys() -> List[str]
 ```
 
 For uns, `.keys()` is a keystroke-saver for the more general group-member
@@ -49,7 +49,7 @@ no such member exists.  Overloads the [...] operator.
 #### \_\_contains\_\_
 
 ```python
-def __contains__(name)
+def __contains__(name) -> bool
 ```
 
 Implements '"namegoeshere" in soma.uns'.
@@ -59,27 +59,27 @@ Implements '"namegoeshere" in soma.uns'.
 #### \_\_iter\_\_
 
 ```python
-def __iter__() -> List
+def __iter__() -> Iterator[Union[UnsGroup, UnsArray]]
 ```
 
 Implements `for element in soma.uns: ...`
 
-<a id="tiledbsc.uns_group.UnsGroup.show"></a>
+<a id="tiledbsc.uns_group.UnsGroup.__repr__"></a>
 
-#### show
+#### \_\_repr\_\_
 
 ```python
-def show(display_name="uns")
+def __repr__() -> str
 ```
 
-Recursively displays the uns data.
+Default display for uns groups.
 
 <a id="tiledbsc.uns_group.UnsGroup.from_anndata_uns"></a>
 
 #### from\_anndata\_uns
 
 ```python
-def from_anndata_uns(uns: ad.compat.OverloadedDict)
+def from_anndata_uns(uns: ad.compat.OverloadedDict) -> None
 ```
 
 Populates the uns group for the soma object.

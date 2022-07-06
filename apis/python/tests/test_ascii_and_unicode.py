@@ -1,14 +1,9 @@
 import anndata as ad
-import tiledb
-from tiledbsc import SOMA
-import tiledbsc.io as io
-import pandas as pd
 import numpy as np
-from scipy import sparse
+import pandas as pd
 
-from pathlib import Path
-
-import pytest
+import tiledbsc.io as io
+from tiledbsc import SOMA
 
 
 def test_readback(tmp_path):

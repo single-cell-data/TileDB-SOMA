@@ -1,14 +1,16 @@
+import os
+from typing import Dict, Iterator, Optional, Sequence, Union
+
+import numpy as np
+import pandas as pd
 import tiledb
-from .soma_options import SOMAOptions
-from .tiledb_group import TileDBGroup
-from .annotation_matrix import AnnotationMatrix
+
 import tiledbsc.util as util
 
-import pandas as pd
-import scipy
-
-from typing import Optional, Dict, List
-import os
+from .annotation_matrix import AnnotationMatrix
+from .logging import log_io
+from .tiledb_group import TileDBGroup
+from .types import Labels, Matrix
 
 
 class AnnotationMatrixGroup(TileDBGroup):
@@ -18,13 +20,12 @@ class AnnotationMatrixGroup(TileDBGroup):
     possible when the element name doesn't have dashes, dots, etc. in it.)
     """
 
-    dim_name: str
-
     # ----------------------------------------------------------------
     def __init__(
         self,
         uri: str,
         name: str,  # 'obsm' or 'varm'
+        *,
         parent: Optional[TileDBGroup] = None,
     ):
         """
@@ -35,7 +36,7 @@ class AnnotationMatrixGroup(TileDBGroup):
         self.dim_name = "obs_id" if name == "obsm" else "var_id"
 
     # ----------------------------------------------------------------
-    def keys(self):
+    def keys(self) -> Sequence[str]:
         """
         For `obsm` and `varm`, `.keys()` is a keystroke-saver for the more general group-member
         accessor `._get_member_names()`.
@@ -43,99 +44,36 @@ class AnnotationMatrixGroup(TileDBGroup):
         return self._get_member_names()
 
     # ----------------------------------------------------------------
-    def __iter__(self) -> List[AnnotationMatrix]:
+    def __repr__(self) -> str:
+        """
+        Default display of soma.obsm and soma.varm.
+        """
+        return ", ".join(f"'{key}'" for key in self.keys())
+
+    # ----------------------------------------------------------------
+    def __iter__(self) -> Iterator[AnnotationMatrix]:
         """
         Implements `for matrix in soma.obsm: ...` and `for matrix in soma.varm: ...`
         """
-        retval = []
         for name, uri in self._get_member_names_to_uris().items():
-            matrix = AnnotationMatrix(
+            yield AnnotationMatrix(
                 uri=uri, name=name, dim_name=self.dim_name, parent=self
             )
-            retval.append(matrix)
-        return iter(retval)
 
     # ----------------------------------------------------------------
-    def __getattr__(self, name):
+    def __getattr__(self, name: str) -> Optional[AnnotationMatrix]:
         """
         This is called on `soma.obsm.name` when `name` is not already an attribute.
         This way you can do `soma.obsm.X_tsne` as an alias for `soma.obsm['X_tsne']`.
         """
         with self._open() as G:
-            if not name in G:
+            if name not in G:
                 raise AttributeError(
                     f"'{self.__class__.__name__}' object has no attribute '{name}'"
                 )
         return self[name]
 
     # ----------------------------------------------------------------
-    def from_matrices_and_dim_values(self, annotation_matrices, dim_values):
-        """
-        Populates the `obsm` or `varm` subgroup for a SOMA object, then writes all the components
-        arrays under that group.
-
-        :param annotation_matrices: anndata.obsm, anndata.varm, or anndata.raw.varm.
-        :param dim_values: anndata.obs_names, anndata.var_names, or anndata.raw.var_names.
-        """
-
-        # Must be done first, to create the parent directory
-        self.create_unless_exists()
-
-        for matrix_name in annotation_matrices.keys():
-            anndata_matrix = annotation_matrices[matrix_name]
-            matrix_uri = os.path.join(self.uri, matrix_name)
-            annotation_matrix = AnnotationMatrix(
-                uri=matrix_uri,
-                name=matrix_name,
-                dim_name=self.dim_name,
-                parent=self,
-            )
-            annotation_matrix.from_matrix_and_dim_values(anndata_matrix, dim_values)
-            self._add_object(annotation_matrix)
-
-    # ----------------------------------------------------------------
-    def to_dict_of_csr(self) -> Dict[str, scipy.sparse.csr_matrix]:
-        """
-        Reads the obsm/varm group-member arrays into a dict from name to member array.
-        Member arrays are returned in sparse CSR format.
-        """
-
-        if (
-            not self.exists()
-        ):  # Not all groups have all four of obsm, obsp, varm, and varp.
-            if self._verbose:
-                print(f"{self._indent}{self.uri} not found")
-            return {}
-
-        if self._verbose:
-            s = util.get_start_stamp()
-            print(f"{self._indent}START  read {self.uri}")
-
-        with self._open() as G:
-            matrices_in_group = {}
-            for element in G:
-                if self._verbose:
-                    s2 = util.get_start_stamp()
-                    print(f"{self._indent}START  read {element.uri}")
-
-                with tiledb.open(element.uri, ctx=self._ctx) as A:
-                    df = pd.DataFrame(A[:])
-                    df.set_index(self.dim_name, inplace=True)
-                    matrix_name = os.path.basename(element.uri)  # e.g. 'X_pca'
-                    matrices_in_group[matrix_name] = df.to_numpy()
-
-                if self._verbose:
-                    print(
-                        util.format_elapsed(
-                            s2, f"{self._indent}FINISH read {element.uri}"
-                        )
-                    )
-
-        if self._verbose:
-            print(util.format_elapsed(s, f"{self._indent}FINISH read {self.uri}"))
-
-        return matrices_in_group
-
     # At the tiledb-py API level, *all* groups are name-indexable.  But here at the tiledbsc-py
     # level, we implement name-indexing only for some groups:
     #
@@ -152,14 +90,14 @@ class AnnotationMatrixGroup(TileDBGroup):
     #   the `[]` operator separately in the various classes which need indexing. This is again to
     #   avoid circular-import issues, and means that [] on `AnnotationMatrixGroup` will return an
     #   `AnnotationMatrix, [] on `UnsGroup` will return `UnsArray` or `UnsGroup`, etc.
-    def __getitem__(self, name):
+    def __getitem__(self, name: str) -> Optional[AnnotationMatrix]:
         """
         Returns an `AnnotationMatrix` element at the given name within the group, or None if no such
         member exists.  Overloads the `[...]` operator.
         """
 
         with self._open("r") as G:
-            if not name in G:
+            if name not in G:
                 return None
             obj = G[name]  # This returns a tiledb.object.Object.
             if obj.type == tiledb.tiledb.Group:
@@ -174,9 +112,100 @@ class AnnotationMatrixGroup(TileDBGroup):
                 uri=obj.uri, name=name, dim_name=self.dim_name, parent=self
             )
 
-    def __contains__(self, name):
+    # ----------------------------------------------------------------
+    def __contains__(self, name: str) -> bool:
         """
         Implements the `in` operator, e.g. `"namegoeshere" in soma.obsm/soma.varm`.
         """
         with self._open("r") as G:
             return name in G
+
+    # ----------------------------------------------------------------
+    def add_matrix_from_matrix_and_dim_values(
+        self,
+        matrix: Union[pd.DataFrame, Matrix],
+        dim_values: Labels,
+        matrix_name: str,
+    ) -> None:
+        """
+        Populates a component of the `obsm` or `varm` subgroup for a SOMA object.
+
+        :param matrix: element of anndata.obsm, anndata.varm, or anndata.raw.varm.
+        :param dim_values: anndata.obs_names, anndata.var_names, or anndata.raw.var_names.
+        :param matrix_name: name of the matrix, like `"X_tsne"` or `"PCs"`.
+        """
+
+        # Must be done first, to create the parent directory
+        self.create_unless_exists()
+
+        # See comments in that function
+        matrix_uri = self._get_child_uri(matrix_name)
+
+        annotation_matrix = AnnotationMatrix(
+            uri=matrix_uri,
+            name=matrix_name,
+            dim_name=self.dim_name,
+            parent=self,
+        )
+        annotation_matrix.from_matrix_and_dim_values(matrix, dim_values)
+        self._add_object(annotation_matrix)
+
+    # ----------------------------------------------------------------
+    def remove(self, matrix_name: str) -> None:
+        """
+        Removes a component of the `obsm` or `varm` subgroup for a SOMA object,
+        when invoked as `soma.obsm.remove("namegoeshere").
+        """
+        self._remove_object_by_name(matrix_name)
+
+    def __delattr__(self, matrix_name: str) -> None:
+        """
+        Removes a component of the `obsm` or `varm` subgroup for a SOMA object,
+        when invoked as `del soma.obsm.namegoeshere`.
+        """
+        self.remove(matrix_name)
+
+    def __delitem__(self, matrix_name: str) -> None:
+        """
+        Removes a component of the `obsm` or `varm` subgroup for a SOMA object,
+        when invoked as `del soma.obsm["namegoeshere"]`.
+        """
+        self.remove(matrix_name)
+
+    # ----------------------------------------------------------------
+    def to_dict_of_csr(self) -> Dict[str, np.ndarray]:
+        """
+        Reads the obsm/varm group-member arrays into a dict from name to member array.
+        Member arrays are returned in sparse CSR format.
+        """
+        if not self.exists():
+            # Not all groups have all four of obsm, obsp, varm, and varp.
+            log_io(None, f"{self._indent}{self.uri} not found")
+            return {}
+
+        s = util.get_start_stamp()
+        log_io(None, f"{self._indent}START  read {self.uri}")
+
+        with self._open() as G:
+            matrices_in_group = {}
+            for element in G:
+                s2 = util.get_start_stamp()
+                log_io(None, f"{self._indent}START  read {element.uri}")
+
+                with tiledb.open(element.uri, ctx=self._ctx) as A:
+                    df = pd.DataFrame(A[:])
+                    df.set_index(self.dim_name, inplace=True)
+                    matrix_name = os.path.basename(element.uri)  # e.g. 'X_pca'
+                    matrices_in_group[matrix_name] = df.to_numpy()
+
+                log_io(
+                    None,
+                    util.format_elapsed(s2, f"{self._indent}FINISH read {element.uri}"),
+                )
+
+        log_io(
+            f"Wrote {self.nested_name}",
+            util.format_elapsed(s, f"{self._indent}FINISH read {self.uri}"),
+        )
+
+        return matrices_in_group
