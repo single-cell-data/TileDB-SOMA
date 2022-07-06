@@ -47,7 +47,7 @@ jobs:
       shell: bash
       run: |
         python -m pip install apis/python[ci]
-        python -m pip install pybind11
+        python -m pip install pybind11 pytest
 
     - name: Build libtiledbsc
       shell: bash
