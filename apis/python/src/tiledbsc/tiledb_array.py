@@ -49,7 +49,7 @@ class TileDBArray(TileDBObject):
         object has not yet been populated, e.g. before calling `from_anndata` -- or, if the
         SOMA has been populated but doesn't have this member (e.g. not all SOMAs have a `varp`).
         """
-        return tiledb.array_exists(self.uri)
+        return bool(tiledb.array_exists(self.uri))
 
     def tiledb_array_schema(self) -> tiledb.ArraySchema:
         """
@@ -117,7 +117,7 @@ class TileDBArray(TileDBObject):
         Returns the class name associated with the array.
         """
         with self._open("r") as A:
-            return A.meta[util.SOMA_OBJECT_TYPE_METADATA_KEY]
+            return str(A.meta[util.SOMA_OBJECT_TYPE_METADATA_KEY])
 
     def show_metadata(self, recursively: bool = True, indent: str = "") -> None:
         """

@@ -111,8 +111,6 @@ def from_10x(soma: tiledbsc.SOMA, input_path: Path) -> None:
         ),
     )
 
-    return anndata
-
 
 # ----------------------------------------------------------------
 def from_anndata_unless_exists(soma: tiledbsc.SOMA, anndata: ad.AnnData) -> None:

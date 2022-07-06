@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import os
-from typing import Dict, Iterator, Mapping, Optional, Sequence, Union
+from typing import Any, Iterator, Mapping, Optional, Sequence, Union
 
 import numpy as np
 import pandas as pd
@@ -130,7 +130,7 @@ class UnsGroup(TileDBGroup):
         return "\n".join(strings)
 
     # ----------------------------------------------------------------
-    def from_anndata_uns(self, uns: Mapping) -> None:
+    def from_anndata_uns(self, uns: Mapping[str, Any]) -> None:
         """
         Populates the uns group for the soma object.
 
@@ -215,9 +215,10 @@ class UnsGroup(TileDBGroup):
         )
 
     # ----------------------------------------------------------------
-    def to_dict_of_matrices(self) -> Dict:
+    def to_dict_of_matrices(self) -> Mapping[str, Any]:
         """
-        Reads the recursive group/array uns data from TileDB storage and returns them as a recursive dict of matrices.
+        Reads the recursive group/array uns data from TileDB storage
+        and returns them as a recursive dict of matrices.
         """
         if not self.exists():
             log_io(

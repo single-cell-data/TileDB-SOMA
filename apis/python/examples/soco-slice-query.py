@@ -14,9 +14,9 @@ def soco_query_and_store(
     output_h5ad_path: str,
     output_soma_path: str,
     obs_attrs: Optional[Sequence[str]] = None,
-    obs_query_string: str = None,
+    obs_query_string: Optional[str] = None,
     var_attrs: Optional[Sequence[str]] = None,
-    var_query_string: str = None,
+    var_query_string: Optional[str] = None,
 ) -> None:
 
     result_soma_slice = soco.query(

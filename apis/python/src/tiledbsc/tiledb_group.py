@@ -47,7 +47,7 @@ class TileDBGroup(TileDBObject):
         object has not yet been populated, e.g. before calling `from_anndata` -- or, if the
         SOMA has been populated but doesn't have this member (e.g. not all SOMAs have a `varp`).
         """
-        return tiledb.object_type(self.uri, ctx=self._ctx) == "group"
+        return bool(tiledb.object_type(self.uri, ctx=self._ctx) == "group")
 
     def _create(self) -> None:
         """
@@ -79,7 +79,7 @@ class TileDBGroup(TileDBObject):
         Returns the class name associated with the group.
         """
         with self._open("r") as G:
-            return G.meta[util.SOMA_OBJECT_TYPE_METADATA_KEY]
+            return str(G.meta[util.SOMA_OBJECT_TYPE_METADATA_KEY])
 
     def _set_object_type_metadata_recursively(self) -> None:
         """

@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Any, Dict, Optional, Sequence, Union
+from typing import Any, Mapping, Optional, Sequence, Union
 
 import tiledb
 
@@ -72,7 +72,7 @@ class TileDBObject(ABC):
                 f"Internal error: expected _object_type {self._object_type()} but found {found} at {self.uri}."
             )
 
-    def metadata(self) -> Dict:
+    def metadata(self) -> Mapping[str, Any]:
         """
         Returns metadata from the group/array as a dict.
         """
