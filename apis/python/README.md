@@ -30,20 +30,13 @@ python -m pip install --upgrade tiledbsc
 * Clone [this repo](https://github.com/single-cell-data/TileDB-SingleCell)
 * `cd` into your checkout and then `cd apis/python`
 * `python -m pip install .`
-* Optionally, if you prefer `venv`:
+* Or, if you wish to modify the code and run it, `python setup.py develop`
+* Optionally, if you prefer, you can run that inside `venv`:
 ```
 python -m venv venv
 . ./venv/bin/activate
 python -m pip install .
 ```
-* If you wish to modify the code and run it in place without reinstalls (this has been done successfully using Python 3.9 and Pip 22.1):
-```
-python -m venv venv
-. ./venv/bin/activate
-python -m pip install --upgrade pip
-python -m pip install -e .
-```
-
 * In either case:
 
 ```
