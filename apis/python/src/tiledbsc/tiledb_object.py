@@ -1,10 +1,11 @@
 from abc import ABC, abstractmethod
-from typing import Any, Dict, Optional, Sequence, Union
+from typing import Any, Mapping, Optional, Sequence, Union
 
 import tiledb
 
 import tiledbsc
 
+from . import util
 from .soma_options import SOMAOptions
 
 
@@ -54,25 +55,7 @@ class TileDBObject(ABC):
         self._soma_options = soma_options or SOMAOptions()
         # Null ctx is OK if that's what they wanted (e.g. not doing any TileDB-Cloud ops).
 
-    def _object_type(self) -> str:
-        """
-        This should be implemented by child classes and should return what `tiledb.object_type(uri)`
-        returns for objects of a given type -- nominally `"group"` or `"array"`.
-        """
-        raise Exception("This virtual method must be overridden by a child class.")
-
-    def exists(self) -> bool:
-        found = tiledb.object_type(self.uri, ctx=self._ctx)
-        if found is None:
-            return False
-        elif found == self._object_type():
-            return True
-        else:
-            raise Exception(
-                f"Internal error: expected _object_type {self._object_type()} but found {found} at {self.uri}."
-            )
-
-    def metadata(self) -> Dict:
+    def metadata(self) -> Mapping[str, Any]:
         """
         Returns metadata from the group/array as a dict.
         """
@@ -107,6 +90,26 @@ class TileDBObject(ABC):
         """
         with self._open("w") as obj:
             obj.meta[key] = value
+
+    def get_object_type(self) -> str:
+        """
+        Returns the class name associated with the group/array.
+        """
+        with self._open("r") as obj:
+            return str(obj.meta[util.SOMA_OBJECT_TYPE_METADATA_KEY])
+
+    def _set_object_type_metadata(self) -> None:
+        """
+        This helps nested-structured traversals (especially those that start at the SOMACollection
+        level) confidently navigate with a minimum of introspection on group contents.
+        """
+        with self._open("w") as obj:
+            obj.meta.update(
+                {
+                    util.SOMA_OBJECT_TYPE_METADATA_KEY: self.__class__.__name__,
+                    util.SOMA_ENCODING_VERSION_METADATA_KEY: util.SOMA_ENCODING_VERSION,
+                }
+            )
 
     @abstractmethod
     def _open(self, mode: str = "r") -> Union[tiledb.Array, tiledb.Group]:

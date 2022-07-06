@@ -170,10 +170,10 @@ class SOMACollection(TileDBGroup):
         self,
         *,
         obs_attrs: Optional[Sequence[str]] = None,
-        obs_query_string: str = None,
+        obs_query_string: Optional[str] = None,
         obs_ids: Optional[Ids] = None,
         var_attrs: Optional[Sequence[str]] = None,
-        var_query_string: str = None,
+        var_query_string: Optional[str] = None,
         var_ids: Optional[Ids] = None,
     ) -> Optional[SOMASlice]:
         """
@@ -223,14 +223,14 @@ class SOMACollection(TileDBGroup):
         return SOMASlice.concat(soma_slices)
 
     # ----------------------------------------------------------------
-    def find_unique_obs_values(self, obs_label: str) -> Set:
+    def find_unique_obs_values(self, obs_label: str) -> Set[str]:
         """
         Given an `obs` label such as `cell_type` or `tissue`, returns a set of unique
         values for that label among all SOMAs in the collection.
         """
         return self._find_unique_obs_or_var_values(obs_label, True)
 
-    def find_unique_var_values(self, var_label: str) -> Set:
+    def find_unique_var_values(self, var_label: str) -> Set[str]:
         """
         Given an `var` label such as `feature_name`, returns a set of unique values for
         that label among all SOMAs in the collection.
@@ -239,7 +239,7 @@ class SOMACollection(TileDBGroup):
 
     def _find_unique_obs_or_var_values(
         self, obs_or_var_label: str, use_obs: bool
-    ) -> Set:
+    ) -> Set[str]:
         """
         Helper method for `find_unique_obs_values` and `find_unique_var_values`.
         """

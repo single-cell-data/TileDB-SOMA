@@ -314,7 +314,7 @@ class Uniformizer:
 # UTILITIES
 
 # ----------------------------------------------------------------
-@nb.jit
+@nb.jit  # type: ignore
 def _quantiles(n: int) -> np.ndarray:
     """
     Computes quantiles, accelerated using @nb.jit.

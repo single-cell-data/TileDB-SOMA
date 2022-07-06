@@ -1,5 +1,10 @@
 import time
-from typing import List, Optional, Sequence, Tuple, TypeVar, Union
+from typing import TYPE_CHECKING, Any, List, Optional, Sequence, Tuple, TypeVar, Union
+
+if TYPE_CHECKING:
+    from _typeshed import SupportsRichComparisonT
+else:
+    SupportsRichComparisonT = Any
 
 import numpy as np
 import pandas as pd
@@ -34,7 +39,7 @@ def is_soma(uri: str, ctx: Optional[tiledb.Ctx] = None) -> bool:
     with tiledb.Group(uri, mode="r", ctx=ctx) as G:
         if SOMA_OBJECT_TYPE_METADATA_KEY in G.meta:
             # Really `tiledbsc.SOMA.__name__`, but prevent a circular package import, so `"SOMA"`
-            return G.meta[SOMA_OBJECT_TYPE_METADATA_KEY] == "SOMA"
+            return bool(G.meta[SOMA_OBJECT_TYPE_METADATA_KEY] == "SOMA")
 
         # At this point this path could be a SOMACollection, SOMA, or maybe SOMA element
         # (or some manually created TileDB group).
@@ -68,7 +73,7 @@ def is_soma_collection(uri: str, ctx: Optional[tiledb.Ctx] = None) -> bool:
     with tiledb.Group(uri, mode="r", ctx=ctx) as G:
         if SOMA_OBJECT_TYPE_METADATA_KEY in G.meta:
             # Really `tiledbsc.SOMA.__name__`, but prevent a circular package import, so `"SOMA"`
-            return G.meta[SOMA_OBJECT_TYPE_METADATA_KEY] == "SOMACollection"
+            return bool(G.meta[SOMA_OBJECT_TYPE_METADATA_KEY] == "SOMACollection")
 
         # At this point this path could be a SOMACollection, SOMA, or maybe SOMA element
         # (or some manually created TileDB group).
@@ -176,7 +181,9 @@ def _find_csc_chunk_size(
 
 
 # ----------------------------------------------------------------
-def _get_sort_and_permutation(s: Sequence) -> Tuple[Sequence, Sequence[int]]:
+def _get_sort_and_permutation(
+    s: Sequence[SupportsRichComparisonT],
+) -> Tuple[Sequence[SupportsRichComparisonT], Sequence[int]]:
     """
     Sorts a list, returned the sorted list along with a permutation-index list which can be used for
     cursored access to data which was indexed by the unsorted list. Nominally for chunking of CSR
@@ -412,7 +419,7 @@ class ETATracker:
         # Solve for x where y == 100
         done_cumu_seconds = (100.0 - b) / m
 
-        return done_cumu_seconds - self.cumulative_seconds[-1]
+        return float(done_cumu_seconds) - self.cumulative_seconds[-1]
 
     def _format_seconds(self, seconds: float) -> str:
         """
