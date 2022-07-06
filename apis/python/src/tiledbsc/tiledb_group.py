@@ -4,7 +4,6 @@ from typing import Dict, Optional, Sequence
 
 import tiledb
 
-from . import util
 from .logging import logger
 from .soma_options import SOMAOptions
 from .tiledb_array import TileDBArray
@@ -30,16 +29,7 @@ class TileDBGroup(TileDBObject):
         """
         See the TileDBObject constructor.
         """
-        super().__init__(
-            uri=uri, name=name, parent=parent, soma_options=soma_options, ctx=ctx
-        )
-
-    def _object_type(self) -> str:
-        """
-        This should be implemented by child classes and should return what tiledb.object_type(uri)
-        returns for objects of a given type -- nominally 'group' or 'array'.
-        """
-        return "group"
+        super().__init__(uri, name, parent=parent, soma_options=soma_options, ctx=ctx)
 
     def exists(self) -> bool:
         """
@@ -49,37 +39,14 @@ class TileDBGroup(TileDBObject):
         """
         return bool(tiledb.object_type(self.uri, ctx=self._ctx) == "group")
 
-    def _create(self) -> None:
-        """
-        Creates the TileDB group data structure on disk/S3/cloud.
-        """
-        logger.debug(f"{self._indent}Creating TileDB group {self.uri}")
-        tiledb.group_create(uri=self.uri, ctx=self._ctx)
-
-        self._set_object_type_metadata()
-
     def create_unless_exists(self) -> None:
         """
         Creates the TileDB group data structure on disk/S3/cloud, unless it already exists.
         """
         if not self.exists():
-            self._create()
-
-    def _set_object_type_metadata(self) -> None:
-        """
-        This helps nested-structured traversals (especially those that start at the SOMACollection
-        level) confidently navigate with a minimum of introspection on group contents.
-        """
-        with self._open("w") as G:
-            G.meta[util.SOMA_OBJECT_TYPE_METADATA_KEY] = self.__class__.__name__
-            G.meta[util.SOMA_ENCODING_VERSION_METADATA_KEY] = util.SOMA_ENCODING_VERSION
-
-    def get_object_type(self) -> str:
-        """
-        Returns the class name associated with the group.
-        """
-        with self._open("r") as G:
-            return str(G.meta[util.SOMA_OBJECT_TYPE_METADATA_KEY])
+            logger.debug(f"{self._indent}Creating TileDB group {self.uri}")
+            tiledb.group_create(uri=self.uri, ctx=self._ctx)
+            self._set_object_type_metadata()
 
     def _set_object_type_metadata_recursively(self) -> None:
         """

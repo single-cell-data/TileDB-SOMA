@@ -4,7 +4,6 @@ import tiledb
 
 import tiledbsc
 
-from . import util
 from .tiledb_object import TileDBObject
 
 
@@ -21,14 +20,7 @@ class TileDBArray(TileDBObject):
         """
         See the TileDBObject constructor.
         """
-        super().__init__(uri=uri, name=name, parent=parent)
-
-    def _object_type(self) -> str:
-        """
-        This should be implemented by child classes and should return what tiledb.object_type(uri)
-        returns for objects of a given type -- nominally 'group' or 'array'.
-        """
-        return "array"
+        super().__init__(uri, name, parent=parent)
 
     def _open(self, mode: str = "r") -> tiledb.Array:
         """
@@ -102,22 +94,6 @@ class TileDBArray(TileDBObject):
         """
         attr_names_set = set(self.attr_names())
         return all([attr_name in attr_names_set for attr_name in attr_names])
-
-    def _set_object_type_metadata(self) -> None:
-        """
-        This helps nested-structured traversals (especially those that start at the SOMACollection
-        level) confidently navigate with a minimum of introspection on group contents.
-        """
-        with self._open("w") as A:
-            A.meta[util.SOMA_OBJECT_TYPE_METADATA_KEY] = self.__class__.__name__
-            A.meta[util.SOMA_ENCODING_VERSION_METADATA_KEY] = util.SOMA_ENCODING_VERSION
-
-    def get_object_type(self) -> str:
-        """
-        Returns the class name associated with the array.
-        """
-        with self._open("r") as A:
-            return str(A.meta[util.SOMA_OBJECT_TYPE_METADATA_KEY])
 
     def show_metadata(self, recursively: bool = True, indent: str = "") -> None:
         """
