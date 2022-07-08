@@ -6,7 +6,7 @@ using namespace tiledbsc;
 
 void walk_soco(std::string_view uri) {
     auto soco = SOMACollection::open(uri);
-    auto somas = soco.list_somas();
+    auto somas = soco->list_somas();
 
     LOG_INFO(fmt::format("walking soco URI = {}", uri));
 
