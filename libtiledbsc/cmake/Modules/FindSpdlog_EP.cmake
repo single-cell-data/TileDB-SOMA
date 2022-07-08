@@ -130,7 +130,8 @@ elseif(TARGET spdlog::spdlog)
 endif()
 
 # If we built a static EP, install it if required.
-if (TILEDB_SPDLOG_EP_BUILT AND TARGET spdlog::spdlog)
-  include(TileDBCommon)
-  install_target_libs(spdlog::spdlog)
-endif()
+# TODO: Fix this block if needed, it breaks CMAKE_BUILD_TYPE=Coverage
+#if (TILEDB_SPDLOG_EP_BUILT AND TARGET spdlog::spdlog)
+#  include(TileDBCommon)
+#  install_target_libs(spdlog::spdlog)
+#endif()
