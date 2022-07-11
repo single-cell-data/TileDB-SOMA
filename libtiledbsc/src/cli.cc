@@ -112,18 +112,7 @@ int main(int argc, char** argv) {
 
     try {
         // walk_soco(argv[1]);
-    } catch (const std::exception& e) {
-        LOG_FATAL(fmt::format(
-            "URI '{}' is not a SOMACollection. {}", argv[1], e.what()));
-    }
-
-    try {
         // slice_soma(argv[2]);
-    } catch (const std::exception& e) {
-        LOG_FATAL(e.what());
-    }
-
-    try {
         soma_query(argv[2]);
     } catch (const std::exception& e) {
         LOG_FATAL(e.what());

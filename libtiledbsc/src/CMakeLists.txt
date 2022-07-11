@@ -57,7 +57,7 @@ add_library(TILEDB_SC_OBJECTS OBJECT
   ${CMAKE_CURRENT_SOURCE_DIR}/thread_pool/status.cc
 )
 
-message(WARNING "Building without deprecation warnings")
+message(WARNING "Building TileDB without deprecation warnings")
 target_compile_definitions(TILEDB_SC_OBJECTS PRIVATE
   -DBUILD_COMMIT_HASH="${BUILD_COMMIT_HASH}"
   -DTILEDB_DEPRECATED=
