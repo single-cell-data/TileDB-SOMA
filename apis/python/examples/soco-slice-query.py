@@ -30,108 +30,118 @@ def soco_query_and_store(
         print("Empty slice")
         return
 
-    a = result_soma_slice.to_anndata()
-    a.write_h5ad(output_h5ad_path)
-    print("Wrote", output_h5ad_path, a.X.shape)
+    if output_h5ad_path is not None:
+        a = result_soma_slice.to_anndata()
+        a.write_h5ad(output_h5ad_path)
+        print("Wrote", output_h5ad_path, a.X.shape)
 
-    if os.path.exists(output_soma_path):
-        shutil.rmtree(output_soma_path)
-    soma = tiledbsc.SOMA.from_soma_slice(result_soma_slice, output_soma_path)
-    data = soma.X.data
-    assert data is not None
-    print("Wrote", output_soma_path, data.shape())
+    if output_soma_path is not None:
+        if os.path.exists(output_soma_path):
+            shutil.rmtree(output_soma_path)
+        soma = tiledbsc.SOMA.from_soma_slice(result_soma_slice, output_soma_path)
+        data = soma.X.data
+        assert data is not None
+        print("Wrote", output_soma_path, data.shape())
 
 
 # ----------------------------------------------------------------
 if __name__ == "__main__":
-    if len(sys.argv) != 2:
+    soco_uri = "/Users/johnkerl/mini-corpus/atlas"
+    if len(sys.argv) == 2:
+        option = sys.argv[1]
+    elif len(sys.argv) == 3:
+        soco_uri = sys.argv[1]
+        option = sys.argv[2]
+    else:
         sys.stderr.write("Need option")
         sys.exit(1)
 
-    if sys.argv[1] == "1":
+    soco = tiledbsc.SOMACollection(soco_uri)
+
+    if option == "1":
         print()
         print("TWO-SIDED QUERY")
         soco_query_and_store(
-            soco=tiledbsc.SOMACollection("/Users/johnkerl/mini-corpus/atlas"),
+            soco=soco,
             output_h5ad_path="mini-atlas-two-sided.h5ad",
             output_soma_path="mini-atlas-two-sided",
-            obs_attrs=["cell_type"],
+            # obs_attrs=["cell_type"],
             obs_query_string='cell_type == "B cell"',
-            var_attrs=["feature_name"],
+            # var_attrs=["feature_name"],
             var_query_string='feature_name == "MT-CO3"',
         )
 
-    if sys.argv[1] == "2":
+    if option == "2":
         print()
         print("OBS-ONLY QUERY")
         soco_query_and_store(
-            soco=tiledbsc.SOMACollection("/Users/johnkerl/mini-corpus/atlas"),
+            soco=soco,
             output_h5ad_path="mini-atlas-obs-sided.h5ad",
             output_soma_path="mini-atlas-obs-sided",
-            obs_attrs=["cell_type"],
+            # obs_attrs=["cell_type"],
             obs_query_string='cell_type == "B cell"',
         )
 
-    if sys.argv[1] == "3":
+    if option == "3":
         print()
         print("VAR-ONLY QUERY")
         soco_query_and_store(
-            soco=tiledbsc.SOMACollection("/Users/johnkerl/mini-corpus/atlas"),
+            soco=soco,
             output_h5ad_path="mini-atlas-var-sided.h5ad",
             output_soma_path="mini-atlas-var-sided",
             var_attrs=["feature_name"],
             var_query_string='feature_name == "MT-CO3"',
         )
 
-    if sys.argv[1] == "4":
+    if option == "4":
         print()
         print("OBS-ONLY QUERY")
         soco_query_and_store(
-            soco=tiledbsc.SOMACollection("/Users/johnkerl/mini-corpus/atlas"),
+            soco=soco,
             output_h5ad_path="cell-ontology-236.h5ad",
             output_soma_path="cell-ontology-236",
             obs_attrs=["cell_type_ontology_term_id"],
             obs_query_string='cell_type_ontology_term_id == "CL:0000236"',
         )
 
-    if sys.argv[1] == "5":
+    if option == "5":
         print()
         print("OBS-ONLY QUERY")
         soco_query_and_store(
-            soco=tiledbsc.SOMACollection("/Users/johnkerl/mini-corpus/atlas"),
+            soco=soco,
             output_h5ad_path="kidney.h5ad",
             output_soma_path="kidney",
             obs_attrs=["tissue"],
             obs_query_string='tissue == "kidney"',
         )
 
-    if sys.argv[1] == "6":
+    if option == "6":
         print()
         print("OBS-ONLY QUERY")
         soco_query_and_store(
-            soco=tiledbsc.SOMACollection("/Users/johnkerl/mini-corpus/atlas"),
+            soco=soco,
             output_h5ad_path="platelet.h5ad",
             output_soma_path="platelet",
             obs_attrs=["cell_type"],
             obs_query_string='cell_type == "platelet"',
         )
 
-    if sys.argv[1] == "7":
+    if option == "7":
         print()
         print("OBS-ONLY QUERY")
         soco_query_and_store(
-            soco=tiledbsc.SOMACollection("/Users/johnkerl/mini-corpus/atlas"),
+            soco=soco,
             output_h5ad_path="platelet.h5ad",
             output_soma_path="platelet",
             obs_attrs=["cell_type", "tissue"],
             obs_query_string='cell_type == "B cell" and tissue == "blood"',
         )
 
-    if sys.argv[1] == "8":
+    if option == "8":
         print()
         print("OBS-ONLY QUERY")
         soco_query_and_store(
-            soco=tiledbsc.SOMACollection("/Users/johnkerl/mini-corpus/atlas"),
+            soco=soco,
             output_h5ad_path="platelet.h5ad",
             output_soma_path="platelet",
             obs_attrs=["cell_type", "tissue"],
