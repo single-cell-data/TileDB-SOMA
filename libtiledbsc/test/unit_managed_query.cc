@@ -59,9 +59,9 @@ auto create_array(const std::string& uri, Context& ctx) {
     // Write data to array and close the array
     Query query(ctx, array);
     query.set_layout(TILEDB_UNORDERED)
-        .set_buffer("d0", d0_data)
+        .set_data_buffer("d0", d0_data)
         .set_offsets_buffer("d0", d0_offsets)
-        .set_buffer("a0", a0);
+        .set_data_buffer("a0", a0);
     query.submit();
     array.close();
 

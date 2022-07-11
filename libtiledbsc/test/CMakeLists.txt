@@ -24,8 +24,7 @@ if (TILEDBSC_TESTING)
         unit_column_buffer.cc
         unit_managed_query.cc
         unit_soma.cc
-        unit_soco.cc
-        # unit_thread_pool.cc
+        unit_thread_pool.cc
     )
 
     target_link_libraries(unit_sc

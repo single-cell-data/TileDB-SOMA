@@ -15,6 +15,7 @@ ManagedQuery::ManagedQuery(std::shared_ptr<Array> array, size_t initial_cells)
     , schema_(array->schema())
     , initial_cells_(initial_cells) {
     query_ = std::make_unique<Query>(schema_.context(), *array);
+    subarray_ = std::make_unique<Subarray>(schema_.context(), *array);
 
     if (array->schema().array_type() == TILEDB_SPARSE) {
         query_->set_layout(TILEDB_UNORDERED);
@@ -54,6 +55,9 @@ size_t ManagedQuery::submit() {
 
     // Query is uninitialized, allocate and attach buffers
     if (status == Query::Status::UNINITIALIZED) {
+        // Set the subarray for range slicing
+        query_->set_subarray(*subarray_);
+
         // If no columns were selected, select all columns
         if (!columns_.size()) {
             for (const auto& dim : array_->schema().domain().dimensions()) {
