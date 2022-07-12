@@ -104,17 +104,53 @@ void soma_query(std::string_view soma_uri) {
 
 void soco_query(std::string_view soco_uri) {
     Config conf;
-    conf["config.logging_level"] = "5";
+    // conf["config.logging_level"] = "5";
 
     auto soco = SOMACollection::open(soco_uri, conf);
     SOMACollectionQuery sqs(soco.get());
+    auto ctx = soco->context();
 
-    LOG_DEBUG("Submit");
-    sqs.next_results();
-    LOG_DEBUG("Submit again");
-    sqs.next_results();
-    LOG_DEBUG("Submit again");
-    sqs.next_results();
+    std::vector<std::string> obs_attrs = {
+        "assay",
+        "assay_ontology_term_id",
+        "cell_type",
+        "cell_type_ontology_term_id",
+        "development_stage",
+        "development_stage_ontology_term_id",
+        "disease",
+        "disease_ontology_term_id",
+        "ethnicity",
+        "ethnicity_ontology_term_id",
+        "is_primary_data",
+        "organism",
+        "organism_ontology_term_id",
+        "sex",
+        "sex_ontology_term_id",
+        "tissue",
+        "tissue_ontology_term_id"};
+
+    std::vector<std::string> var_attrs = {
+        "feature_biotype",
+        "feature_is_filtered",
+        "feature_name",
+        "feature_reference"};
+
+    std::string obs_attr = "cell_type";
+    std::string obs_val = "pericyte cell";
+    auto obs_qc = QueryCondition::create(*ctx, obs_attr, obs_val, TILEDB_EQ);
+    sqs.set_obs_condition(obs_qc);
+    sqs.select_obs_attrs(obs_attrs);
+
+    std::string var_attr = "feature_name";
+    std::string var_val = "DPM1";
+    auto var_qc = QueryCondition::create(*ctx, var_attr, var_val, TILEDB_EQ);
+    sqs.set_var_condition(var_qc);
+    sqs.select_var_attrs(var_attrs);
+
+    for (int i = 0; i < 20; i++) {
+        LOG_DEBUG(fmt::format("Submit #{}", i + 1));
+        sqs.next_results();
+    }
     LOG_DEBUG("Done");
 }
 
@@ -127,8 +163,8 @@ int main(int argc, char** argv) {
     LOG_CONFIG("debug");
 
     try {
-        walk_soco(argv[1]);
-        // slice_soma(argv[2]);
+        // walk_soco(argv[1]);
+        //  slice_soma(argv[2]);
         soco_query(argv[1]);
     } catch (const std::exception& e) {
         LOG_FATAL(e.what());

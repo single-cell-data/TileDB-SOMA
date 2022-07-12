@@ -61,6 +61,15 @@ class SOMACollection {
 
     std::unordered_map<std::string, std::shared_ptr<SOMA>> get_somas();
 
+    /**
+     * @brief Return TileDB context.
+     *
+     * @return std::shared_ptr<Context> Context.
+     */
+    std::shared_ptr<Context> context() {
+        return ctx_;
+    }
+
    private:
     //===================================================================
     //= private non-static
