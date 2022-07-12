@@ -153,12 +153,19 @@ class TileDBGroup(TileDBObject):
         obj.uri = self._get_child_uri(obj.name)
 
     def _remove_object(self, obj: TileDBObject) -> None:
-        with self._open("w") as G:
-            G.remove(obj.name)
+        self._remove_object_by_name(obj.name)
 
     def _remove_object_by_name(self, member_name: str) -> None:
-        with self._open("w") as G:
-            G.remove(member_name)
+        if self.uri.startswith("tiledb://"):
+            mapping = self._get_member_names_to_uris()
+            if member_name not in mapping:
+                raise Exception(f"name {member_name} not present in group {self.uri}")
+            member_uri = mapping[member_name]
+            with self._open("w") as G:
+                G.remove(member_uri)
+        else:
+            with self._open("w") as G:
+                G.remove(member_name)
 
     def _get_member_names(self) -> Sequence[str]:
         """
