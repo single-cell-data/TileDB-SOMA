@@ -108,7 +108,7 @@ class TileDBGroup(TileDBObject):
             # This means forward slash is acceptable in all cases.
             return self.uri + "/" + member_name
 
-    def _add_object(self, obj: TileDBObject) -> None:
+    def _add_object(self, obj: TileDBObject, relative: Optional[bool] = None) -> None:
         """
         Adds a SOMA group/array to the current SOMA group -- e.g. base SOMA adding
         X, X adding a layer, obsm adding an element, etc.
@@ -128,10 +128,15 @@ class TileDBGroup(TileDBObject):
 
         * If `None`, then we select `relative=False` if the URI starts with `tiledb://`, else we
         select `relative=True`. This is the default.
+
+        If the relative argument is supplied and is not None, it is used; secondly
+        `self._soma_options.member_uris_are_relative` is consulted; thirdly the URI prefix
+        is consulted as described above.
         """
         self.create_unless_exists()
-        relative = self._soma_options.member_uris_are_relative
         child_uri = obj.uri
+        if relative is None:
+            relative = self._soma_options.member_uris_are_relative
         if relative is None:
             relative = not child_uri.startswith("tiledb://")
         if relative:

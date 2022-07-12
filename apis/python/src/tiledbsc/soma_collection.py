@@ -80,11 +80,11 @@ class SOMACollection(TileDBGroup):
         return len(self._get_member_names())
 
     # ----------------------------------------------------------------
-    def add(self, soma: SOMA) -> None:
+    def add(self, soma: SOMA, relative: Optional[bool] = None) -> None:
         """
         Adds a `SOMA` to the `SOMACollection`.
         """
-        self._add_object(soma)
+        self._add_object(soma, relative)
 
     # ----------------------------------------------------------------
     def remove(self, soma: Union[SOMA, str]) -> None:
