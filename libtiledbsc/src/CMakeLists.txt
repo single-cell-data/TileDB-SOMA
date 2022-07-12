@@ -50,6 +50,7 @@ add_library(TILEDB_SC_OBJECTS OBJECT
   ${CMAKE_CURRENT_SOURCE_DIR}/logger.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/managed_query.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/soma_collection.cc
+  ${CMAKE_CURRENT_SOURCE_DIR}/soma_collection_query.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/soma_query.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/soma.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/util.cc
@@ -128,6 +129,7 @@ set(TILEDB_SC_PUBLIC_HEADERS
   ${CMAKE_CURRENT_SOURCE_DIR}/../include/tiledbsc/common.h
   ${CMAKE_CURRENT_SOURCE_DIR}/../include/tiledbsc/logger_public.h
   ${CMAKE_CURRENT_SOURCE_DIR}/../include/tiledbsc/soma_collection.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/../include/tiledbsc/soma_collection_query.h
   ${CMAKE_CURRENT_SOURCE_DIR}/../include/tiledbsc/soma.h
 )
 

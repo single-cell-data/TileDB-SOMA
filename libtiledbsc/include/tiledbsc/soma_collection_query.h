@@ -1,5 +1,5 @@
-#ifndef SOMA_QUERY_H
-#define SOMA_QUERY_H
+#ifndef SOMA_COLLECTION_QUERY_H
+#define SOMA_COLLECTION_QUERY_H
 
 #include <stdexcept>  // for windows: error C2039: 'runtime_error': is not a member of 'std'
 
@@ -14,22 +14,33 @@
 namespace tiledbsc {
 using namespace tiledb;
 
-class SOMA;  // forward declaration
+class SOMA;            // forward declaration
+class SOMAQuery;       // forward declaration
+class SOMACollection;  // forward declaration
 
-class SOMAQuery {
+// 1. Add all SOMAs in the SOCO to a map: SOMA name -> SOMAQuery
+// 2. Apply attrs, ids, and query conditions to each SOMAQuery
+// 3. next_results(): Run all SOMAQuery.next_results() in parallel, return
+// results.
+
+// TODO: Pass alloc sizes to SOMAQuery
+
+class SOMACollectionQuery {
+   private:
     static const size_t DEFAULT_INDEX_ALLOC = 1 << 20;  // 1M cells
     static const size_t DEFAULT_X_ALLOC = 1 << 26;      // 64M cells
 
    public:
     /**
-     * @brief Construct a new SOMAQuery object
+     * @brief Construct a new SOMACollectionQuery object with all SOMAs in the
+     * provided SOMACollection.
      *
-     * @param soma SOMA
+     * @param soco SOMACollection
      * @param index_alloc Number of cells allocated for obs and var
      * @param x_alloc Number of cells allocated for X/data
      */
-    SOMAQuery(
-        SOMA* soma,
+    SOMACollectionQuery(
+        SOMACollection* soco,
         size_t index_alloc = DEFAULT_INDEX_ALLOC,
         size_t x_alloc = DEFAULT_X_ALLOC);
 
@@ -39,7 +50,9 @@ class SOMAQuery {
      * @param attr_names Vector of attribute names.
      */
     void select_obs_attrs(std::vector<std::string>& attr_names) {
-        mq_obs_->select_columns(attr_names);
+        for (auto& [name, sq] : soma_queries_) {
+            sq->select_obs_attrs(attr_names);
+        }
     }
 
     /**
@@ -48,7 +61,9 @@ class SOMAQuery {
      * @param attr_names Vector of attribute names.
      */
     void select_var_attrs(std::vector<std::string>& attr_names) {
-        mq_var_->select_columns(attr_names);
+        for (auto& [name, sq] : soma_queries_) {
+            sq->select_var_attrs(attr_names);
+        }
     }
 
     /**
@@ -57,7 +72,9 @@ class SOMAQuery {
      * @param ids Vector of obs_id values.
      */
     void select_obs_ids(std::vector<std::string>& ids) {
-        mq_obs_->select_points<std::string>("obs_id", ids);
+        for (auto& [name, sq] : soma_queries_) {
+            sq->select_obs_ids(ids);
+        }
     }
 
     /**
@@ -66,7 +83,9 @@ class SOMAQuery {
      * @param ids Vector of var_id values.
      */
     void select_var_ids(std::vector<std::string>& ids) {
-        mq_var_->select_points<std::string>("var_id", ids);
+        for (auto& [name, sq] : soma_queries_) {
+            sq->select_var_ids(ids);
+        }
     }
 
     /**
@@ -75,7 +94,9 @@ class SOMAQuery {
      * @param qc TIleDB QueryCondition.
      */
     void set_obs_condition(QueryCondition& qc) {
-        mq_obs_->set_condition(qc);
+        for (auto& [name, sq] : soma_queries_) {
+            sq->set_obs_condition(qc);
+        }
     }
 
     /**
@@ -84,7 +105,9 @@ class SOMAQuery {
      * @param qc TIleDB QueryCondition.
      */
     void set_var_condition(QueryCondition& qc) {
-        mq_var_->set_condition(qc);
+        for (auto& [name, sq] : soma_queries_) {
+            sq->set_var_condition(qc);
+        }
     }
 
     /**
@@ -101,27 +124,14 @@ class SOMAQuery {
     next_results();
 
    private:
-    // Managed query for the obs array
-    std::unique_ptr<ManagedQuery> mq_obs_;
+    // Map of SOMA name -> SOMAQuery
+    std::unordered_map<std::string, std::unique_ptr<SOMAQuery>> soma_queries_;
 
-    // Managed query for the var array
-    std::unique_ptr<ManagedQuery> mq_var_;
+    // If true, the query has been submitted
+    bool submitted_ = false;
 
-    // Managed query for the X array
-    std::unique_ptr<ManagedQuery> mq_x_;
-
-    // Mutex to control access to mq_x_
-    std::mutex mtx_;
-
-    /**
-     * @brief Submit a query (obs or var) and use the results to slice
-     * the X query.
-     *
-     * @param mq Managed query for obs or var
-     * @param dim_name "obs_id" or "var_id"
-     */
-    void query_and_select(
-        std::unique_ptr<ManagedQuery>& mq, const std::string& dim_name);
+    // Number of threads in the thread pool
+    size_t threads_ = 16;
 };
 
 }  // namespace tiledbsc

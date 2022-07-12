@@ -40,6 +40,17 @@ std::unordered_map<std::string, std::string> SOMACollection::list_somas() {
     return soma_uri_map_;
 }
 
+std::unordered_map<std::string, std::shared_ptr<SOMA>>
+SOMACollection::get_somas() {
+    if (soma_map_.empty()) {
+        for (auto& [name, uri] : list_somas()) {
+            soma_map_[name] = SOMA::open(uri, ctx_);
+        }
+    }
+
+    return soma_map_;
+}
+
 //===================================================================
 //= private non-static
 //===================================================================

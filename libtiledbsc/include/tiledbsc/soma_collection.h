@@ -5,6 +5,7 @@
 
 #include <tiledb/tiledb>
 #include <tiledb/tiledb_experimental>
+#include <tiledbsc/tiledbsc>
 
 namespace tiledbsc {
 using namespace tiledb;
@@ -58,6 +59,8 @@ class SOMACollection {
      */
     std::unordered_map<std::string, std::string> list_somas();
 
+    std::unordered_map<std::string, std::shared_ptr<SOMA>> get_somas();
+
    private:
     //===================================================================
     //= private non-static
@@ -71,6 +74,9 @@ class SOMACollection {
 
     // Map of hierarchical SOMA name to SOMA URI
     std::unordered_map<std::string, std::string> soma_uri_map_;
+
+    // Map of hierarchical SOMA name to SOMA
+    std::unordered_map<std::string, std::shared_ptr<SOMA>> soma_map_;
 
     /**
      * @brief Walk the TileDB group tree to discover SOMAs and populate the

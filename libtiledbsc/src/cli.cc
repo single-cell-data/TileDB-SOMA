@@ -102,6 +102,22 @@ void soma_query(std::string_view soma_uri) {
     LOG_DEBUG(fmt::format("total_cells = {}", total_cells));
 }
 
+void soco_query(std::string_view soco_uri) {
+    Config conf;
+    conf["config.logging_level"] = "5";
+
+    auto soco = SOMACollection::open(soco_uri, conf);
+    SOMACollectionQuery sqs(soco.get());
+
+    LOG_DEBUG("Submit");
+    sqs.next_results();
+    LOG_DEBUG("Submit again");
+    sqs.next_results();
+    LOG_DEBUG("Submit again");
+    sqs.next_results();
+    LOG_DEBUG("Done");
+}
+
 int main(int argc, char** argv) {
     if (argc != 3) {
         printf("Usage: %s soco_uri soma_uri\n", argv[0]);
@@ -111,9 +127,9 @@ int main(int argc, char** argv) {
     LOG_CONFIG("debug");
 
     try {
-        // walk_soco(argv[1]);
+        walk_soco(argv[1]);
         // slice_soma(argv[2]);
-        soma_query(argv[2]);
+        soco_query(argv[1]);
     } catch (const std::exception& e) {
         LOG_FATAL(e.what());
     }
