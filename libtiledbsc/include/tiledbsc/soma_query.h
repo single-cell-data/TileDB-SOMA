@@ -113,6 +113,9 @@ class SOMAQuery {
     // Mutex to control access to mq_x_
     std::mutex mtx_;
 
+    // If true, the query is empty because the obs or var query was empty
+    bool empty_ = false;
+
     /**
      * @brief Submit a query (obs or var) and use the results to slice
      * the X query.

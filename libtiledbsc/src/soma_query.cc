@@ -18,7 +18,7 @@ SOMAQuery::SOMAQuery(SOMA* soma, size_t index_alloc, size_t x_alloc) {
 std::optional<std::unordered_map<std::string, std::shared_ptr<ColumnBuffer>>>
 SOMAQuery::next_results() {
     // Query is complete, return empty results
-    if (mq_x_->status() == Query::Status::COMPLETE) {
+    if (empty_ || mq_x_->status() == Query::Status::COMPLETE) {
         return std::nullopt;
     }
 
@@ -53,6 +53,7 @@ SOMAQuery::next_results() {
                 "Obs or var query was empty: obs num cells={} var num cells={}",
                 mq_obs_->total_num_cells(),
                 mq_var_->total_num_cells()));
+            empty_ = true;
             return std::nullopt;
         }
     }
