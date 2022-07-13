@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Dict, Optional, Sequence
+from typing import Dict, Optional, Sequence, List
 import time
 
 import tiledb
@@ -15,6 +15,8 @@ class TileDBGroup(TileDBObject):
     """
     Wraps groups from TileDB-Py by retaining a URI, options, etc.
     """
+
+    _cached_member_names_to_uris: Dict[str, str]
 
     def __init__(
         self,
@@ -31,6 +33,7 @@ class TileDBGroup(TileDBObject):
         See the TileDBObject constructor.
         """
         super().__init__(uri, name, parent=parent, soma_options=soma_options, ctx=ctx)
+        self._cached_member_names_to_uris = None
 
     def exists(self) -> bool:
         """
@@ -97,7 +100,10 @@ class TileDBGroup(TileDBObject):
         """
         if not self.exists():
             # TODO: comment
-            return {member_name : self.uri + "/" + member_name for member_name in member_names}
+            return {
+                member_name: self.uri + "/" + member_name
+                for member_name in member_names
+            }
 
         answer = {}
 
@@ -125,30 +131,20 @@ class TileDBGroup(TileDBObject):
         information.  (This is because in TileDB Cloud, members have URIs like
         tiledb://namespace/df584345-28b7-45e5-abeb-043d409b1a97.)
         """
-        t1 = time.time()
-        print("--XXXENTER")
         if not self.exists():
             # TODO: comment
-            print("--XXXEXIT1 %.3f" % (time.time() - t1))
             return self.uri + "/" + member_name
-        with self._open() as G:
-            if member_name in G:
-                return G[member_name].uri
-            else:
-                return self.uri + "/" + member_name
-#        mapping = self._get_member_names_to_uris()
-#        if member_name in mapping:
-#            print("--XXXEXIT2 %.3f" % (time.time() - t1))
-#            return mapping[member_name]
-#        else:
-#            # Truly a slash, not os.path.join:
-#            # * If the client is Linux/Un*x/Mac, it's the same of course
-#            # * On Windows, os.path.sep is a backslash but backslashes are _not_ accepted for S3 or
-#            #   tiledb-cloud URIs, whereas in Windows versions for years now forward slashes _are_
-#            #   accepted for local-disk paths.
-#            # This means forward slash is acceptable in all cases.
-#            print("--XXXEXIT3 %.3f" % (time.time() - t1))
-#            return self.uri + "/" + member_name
+        mapping = self._get_member_names_to_uris()
+        if member_name in mapping:
+            return mapping[member_name]
+        else:
+            # Truly a slash, not os.path.join:
+            # * If the client is Linux/Un*x/Mac, it's the same of course
+            # * On Windows, os.path.sep is a backslash but backslashes are _not_ accepted for S3 or
+            #   tiledb-cloud URIs, whereas in Windows versions for years now forward slashes _are_
+            #   accepted for local-disk paths.
+            # This means forward slash is acceptable in all cases.
+            return self.uri + "/" + member_name
 
     def _add_object(self, obj: TileDBObject, relative: Optional[bool] = None) -> None:
         """
@@ -183,9 +179,10 @@ class TileDBGroup(TileDBObject):
             relative = not child_uri.startswith("tiledb://")
         if relative:
             child_uri = obj.name
+        self._cached_member_names_to_uris = None  # invalidate
         with self._open("w") as G:
             retval = G.add(uri=child_uri, relative=relative, name=obj.name)
-            print("RETVAL ", retval)
+            #####print("RETVAL ", retval)
         # See _get_child_uri. Key point is that, on TileDB Cloud, URIs change from pre-creation to
         # post-creation. Example:
         # * Upload to pre-creation URI tiledb://namespace/s3://bucket/something/something/somaname
@@ -194,12 +191,13 @@ class TileDBGroup(TileDBObject):
         # * Member pre-creation URI tiledb://namespace/s3://bucket/something/something/somaname/obs
         # * Member post-creation URI tiledb://somaname/e4de581a-1353-4150-b1f4-6ed12548e497
         obj.uri = self._get_child_uri(obj.name)
-        print("REMAP", child_uri, "TO", obj.uri)
+        ####print("REMAP", child_uri, "TO", obj.uri)
 
     def _remove_object(self, obj: TileDBObject) -> None:
         self._remove_object_by_name(obj.name)
 
     def _remove_object_by_name(self, member_name: str) -> None:
+        self._cached_member_names_to_uris = None  # invalidate
         if self.uri.startswith("tiledb://"):
             mapping = self._get_member_names_to_uris()
             if member_name not in mapping:
@@ -230,8 +228,10 @@ class TileDBGroup(TileDBObject):
         Like `_get_member_names()` and `_get_member_uris`, but returns a dict mapping from
         member name to member URI.
         """
-        with self._open("r") as G:
-            return {obj.name: obj.uri for obj in G}
+        if self._cached_member_names_to_uris is None:
+            with self._open("r") as G:
+                self._cached_member_names_to_uris = {obj.name: obj.uri for obj in G}
+        return self._cached_member_names_to_uris
 
     def show_metadata(self, recursively: bool = True, indent: str = "") -> None:
         """
