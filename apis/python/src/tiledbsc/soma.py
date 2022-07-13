@@ -3,6 +3,7 @@ from __future__ import annotations
 import os
 from collections import Counter
 from typing import Optional, Sequence
+import time
 
 import pandas as pd
 import tiledb
@@ -59,6 +60,9 @@ class SOMA(TileDBGroup):
         :param uri: URI of the TileDB group
         """
 
+        t1 = time.time()
+
+        print(time.time(), "AAA001")
         # People can (and should) call by name. However, it's easy to forget. For example,
         # if someone does 'tiledbsc.SOMA("myuri", ctx)' instead of 'tiledbsc.SOMA("myury", ctx)',
         # behavior will not be what they expect, and we should let them know sooner than later.
@@ -72,6 +76,7 @@ class SOMA(TileDBGroup):
             assert isinstance(ctx, tiledb.Ctx)
         if parent is not None:
             assert isinstance(parent, TileDBGroup)
+        print(time.time(), "AAA002")
 
         if ctx is None and config is not None:
             ctx = tiledb.Ctx(config)
@@ -81,6 +86,7 @@ class SOMA(TileDBGroup):
             name = os.path.basename(uri.rstrip("/"))
             if name == "":
                 name = "soma"
+        print(time.time(), "AAA003")
         super().__init__(
             uri=uri,
             name=name,
@@ -89,18 +95,44 @@ class SOMA(TileDBGroup):
             ctx=ctx,
         )
 
-        obs_uri = self._get_child_uri("obs")  # See comments in that function
-        var_uri = self._get_child_uri("var")
-        X_uri = self._get_child_uri("X")
-        obsm_uri = self._get_child_uri("obsm")
-        varm_uri = self._get_child_uri("varm")
-        obsp_uri = self._get_child_uri("obsp")
-        varp_uri = self._get_child_uri("varp")
-        raw_uri = self._get_child_uri("raw")
-        uns_uri = self._get_child_uri("uns")
+        # t01 = time.time()
+        # print(time.time(), "AAA004")
+        # obs_uri = self._get_child_uri("obs")  # See comments in that function
+        # var_uri = self._get_child_uri("var")
+        # X_uri = self._get_child_uri("X")
+        # obsm_uri = self._get_child_uri("obsm")
+        # varm_uri = self._get_child_uri("varm")
+        # obsp_uri = self._get_child_uri("obsp")
+        # varp_uri = self._get_child_uri("varp")
+        # raw_uri = self._get_child_uri("raw")
+        # uns_uri = self._get_child_uri("uns")
+        # t02 = time.time()
+        # print("BBB001 %.3f" % (t02-t01))
 
+        t01 = time.time()
+        print(time.time(), "AAA104")
+
+        member_names = ["obs", "var", "X", "obsm", "varm", "obsp", "varp", "raw", "uns"]
+        child_uris = self._get_child_uris(member_names)  # See comments in that function
+
+        obs_uri = child_uris["obs"]
+        var_uri = child_uris["var"]
+        X_uri = child_uris["X"]
+        obsm_uri = child_uris["obsm"]
+        varm_uri = child_uris["varm"]
+        obsp_uri = child_uris["obsp"]
+        varp_uri = child_uris["varp"]
+        raw_uri = child_uris["raw"]
+        uns_uri = child_uris["uns"]
+
+        t02 = time.time()
+        print("BBB001 %.3f" % (t02-t01))
+
+        print(time.time(), "AAA005")
         self.obs = AnnotationDataFrame(uri=obs_uri, name="obs", parent=self)
+        print(time.time(), "AAA006")
         self.var = AnnotationDataFrame(uri=var_uri, name="var", parent=self)
+        print(time.time(), "AAA007")
         self.X = AssayMatrixGroup(
             uri=X_uri,
             name="X",
@@ -110,8 +142,11 @@ class SOMA(TileDBGroup):
             col_dataframe=self.var,
             parent=self,
         )
+        print(time.time(), "AAA008")
         self.obsm = AnnotationMatrixGroup(uri=obsm_uri, name="obsm", parent=self)
+        print(time.time(), "AAA009")
         self.varm = AnnotationMatrixGroup(uri=varm_uri, name="varm", parent=self)
+        print(time.time(), "AAA010")
         self.obsp = AnnotationPairwiseMatrixGroup(
             uri=obsp_uri,
             name="obsp",
@@ -119,6 +154,7 @@ class SOMA(TileDBGroup):
             col_dataframe=self.obs,
             parent=self,
         )
+        print(time.time(), "AAA011")
         self.varp = AnnotationPairwiseMatrixGroup(
             uri=varp_uri,
             name="varp",
@@ -126,7 +162,9 @@ class SOMA(TileDBGroup):
             col_dataframe=self.var,
             parent=self,
         )
+        print(time.time(), "AAA012")
         self.raw = RawGroup(uri=raw_uri, name="raw", obs=self.obs, parent=self)
+        print(time.time(), "AAA013")
         self.uns = UnsGroup(uri=uns_uri, name="uns", parent=self)
 
         # If URI is "/something/test1" then:
@@ -138,6 +176,9 @@ class SOMA(TileDBGroup):
         # * obs_uri  is "tiledb://namespace/s3://bucketname/something/test1/obs"
         # * var_uri  is "tiledb://namespace/s3://bucketname/something/test1/var"
         # * data_uri is "tiledb://namespace/s3://bucketname/something/test1/X"
+
+        t2 = time.time()
+        print("SOMA CTOR SECONDS %.3f" % (t2-t1))
 
     # ----------------------------------------------------------------
     def __repr__(self) -> str:
