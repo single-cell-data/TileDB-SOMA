@@ -1,4 +1,4 @@
-from typing import Iterator, Optional, Sequence, Set, Union
+from typing import Dict, Iterator, Optional, Sequence, Set, Union
 
 import tiledb
 
@@ -13,6 +13,9 @@ class SOMACollection(TileDBGroup):
     """
     Implements a collection of `SOMA` objects.
     """
+
+    # XXX COMMENT
+    _somas: Dict[str, SOMA]
 
     # ----------------------------------------------------------------
     def __init__(
@@ -57,6 +60,8 @@ class SOMACollection(TileDBGroup):
             soma_options=soma_options,
             ctx=ctx,
         )
+
+        self._somas = None
 
     # ----------------------------------------------------------------
     def __repr__(self) -> str:
@@ -120,8 +125,13 @@ class SOMACollection(TileDBGroup):
         """
         Implements `for soma in soco: ...`
         """
+        if self._somas is None:
+            self._somas = {}
         for name, uri in self._get_member_names_to_uris().items():
-            yield SOMA(uri=uri, name=name, parent=self, ctx=self._ctx)
+            if name not in self._somas:
+                self._somas[name] = SOMA(uri=uri, name=name, parent=self, ctx=self._ctx)
+            yield self._somas[name]
+
 
     # ----------------------------------------------------------------
     def __contains__(self, name: str) -> bool:
