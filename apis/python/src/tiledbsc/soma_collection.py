@@ -162,6 +162,9 @@ class SOMACollection(TileDBGroup):
         Returns a `SOMA` element at the given name within the group, or `None` if no such
         member exists.  Overloads the `[...]` operator.
         """
+        if name in self._somas:
+            return self._somas[name]
+
         with self._open("r") as G:
             try:
                 obj = G[name]  # This returns a tiledb.object.Object.

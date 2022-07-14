@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Dict, Optional, Sequence, List
+from typing import Dict, Optional, Sequence
 import time
 
 import tiledb
@@ -90,7 +90,7 @@ class TileDBGroup(TileDBObject):
         return tiledb.Group(self.uri, mode=mode, ctx=self._ctx)
 
     # XXX COMMENT
-    def _get_child_uris(self, member_names: List[str]) -> Dict[str, str]:
+    def _get_child_uris(self, member_names: Sequence[str]) -> Dict[str, str]:
         """
         Computes the URI for a child of the given object. For local disk, S3, and
         tiledb://.../s3://...  pre-creation URIs, this is simply the parent's URI, a slash, and the
