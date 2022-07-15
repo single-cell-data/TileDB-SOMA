@@ -89,15 +89,20 @@ class SOMA(TileDBGroup):
             ctx=ctx,
         )
 
-        obs_uri = self._get_child_uri("obs")  # See comments in that function
-        var_uri = self._get_child_uri("var")
-        X_uri = self._get_child_uri("X")
-        obsm_uri = self._get_child_uri("obsm")
-        varm_uri = self._get_child_uri("varm")
-        obsp_uri = self._get_child_uri("obsp")
-        varp_uri = self._get_child_uri("varp")
-        raw_uri = self._get_child_uri("raw")
-        uns_uri = self._get_child_uri("uns")
+        # See comments in _get_child_uris
+        child_uris = self._get_child_uris(
+            ["obs", "var", "X", "obsm", "varm", "obsp", "varp", "raw", "uns"]
+        )
+
+        obs_uri = child_uris["obs"]
+        var_uri = child_uris["var"]
+        X_uri = child_uris["X"]
+        obsm_uri = child_uris["obsm"]
+        varm_uri = child_uris["varm"]
+        obsp_uri = child_uris["obsp"]
+        varp_uri = child_uris["varp"]
+        raw_uri = child_uris["raw"]
+        uns_uri = child_uris["uns"]
 
         self.obs = AnnotationDataFrame(uri=obs_uri, name="obs", parent=self)
         self.var = AnnotationDataFrame(uri=var_uri, name="var", parent=self)
@@ -129,15 +134,12 @@ class SOMA(TileDBGroup):
         self.raw = RawGroup(uri=raw_uri, name="raw", obs=self.obs, parent=self)
         self.uns = UnsGroup(uri=uns_uri, name="uns", parent=self)
 
-        # If URI is "/something/test1" then:
-        # * obs_uri  is "/something/test1/obs"
-        # * var_uri  is "/something/test1/var"
-        # * data_uri is "/something/test1/X"
-
-        # If URI is "tiledb://namespace/s3://bucketname/something/test1" then:
-        # * obs_uri  is "tiledb://namespace/s3://bucketname/something/test1/obs"
-        # * var_uri  is "tiledb://namespace/s3://bucketname/something/test1/var"
-        # * data_uri is "tiledb://namespace/s3://bucketname/something/test1/X"
+        # Sample SOMA/member URIs:
+        #
+        # SOMA                             member
+        # "/foo/test1"                     "/foo/test1/obs"
+        # "tiledb://ns/s3://bkt/foo/test1" "tiledb://ns/s3://bkt/foo/test1/obs"
+        # "tiledb://ns/test1"              "tiledb://ns/95cb11b5-2052-461b-9b99-cfa94e51e23f"
 
     # ----------------------------------------------------------------
     def __repr__(self) -> str:
