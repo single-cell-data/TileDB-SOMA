@@ -143,12 +143,11 @@ class UnsGroup(TileDBGroup):
         # Must be done first, to create the parent directory
         self.create_unless_exists()
 
-        child_uris = self._get_child_uris(
-            list(uns.keys())
-        )  # See comments in that function
+        # See comments in _get_child_uris
+        child_uris = self._get_child_uris(list(uns.keys()))
 
         for key in uns.keys():
-            component_uri = child_uris[key]  # See comments in that function
+            component_uri = child_uris[key]
             value = uns[key]
 
             if key == "rank_genes_groups":

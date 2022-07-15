@@ -14,7 +14,10 @@ class SOMACollection(TileDBGroup):
     Implements a collection of `SOMA` objects.
     """
 
-    # XXX COMMENT
+    # This is a cache to avoid the overhead of calling the SOMA constructor repeatedly.  That
+    # constructor isn't particuarly expensive, except that for tiledb-cloud URIs it needs to
+    # interrogate the server repeatedly for recursive group-member URIs, which has web-request
+    # latency.
     _somas: Dict[str, SOMA]
 
     # ----------------------------------------------------------------
@@ -127,6 +130,7 @@ class SOMACollection(TileDBGroup):
         """
         for name, uri in self._get_member_names_to_uris().items():
             if name not in self._somas:
+                # SOMA-constructor cache
                 self._somas[name] = SOMA(uri=uri, name=name, parent=self, ctx=self._ctx)
             yield self._somas[name]
 
@@ -160,6 +164,7 @@ class SOMACollection(TileDBGroup):
         member exists.  Overloads the `[...]` operator.
         """
         if name in self._somas:
+            # SOMA-constructor cache
             return self._somas[name]
 
         with self._open("r") as G:

@@ -35,18 +35,12 @@ class RawGroup(TileDBGroup):
         super().__init__(uri=uri, name=name, parent=parent)
         self.parent_obs = obs
 
-        # TODO: COMMENT
-        member_names = ["X", "var", "varm", "varp"]
-        child_uris = self._get_child_uris(member_names)  # See comments in that function
+        # See comments in _get_child_uris
+        child_uris = self._get_child_uris(["X", "var", "varm", "varp"])
 
-        X_uri = child_uris["X"]  # See comments in that function
-        var_uri = child_uris["var"]
-        varm_uri = child_uris["varm"]
-        varp_uri = child_uris["varp"]
-
-        self.var = AnnotationDataFrame(uri=var_uri, name="var", parent=self)
+        self.var = AnnotationDataFrame(uri=child_uris["var"], name="var", parent=self)
         self.X = AssayMatrixGroup(
-            uri=X_uri,
+            uri=child_uris["X"],
             name="X",
             row_dim_name="obs_id",
             col_dim_name="var_id",
@@ -54,9 +48,11 @@ class RawGroup(TileDBGroup):
             col_dataframe=self.var,
             parent=self,
         )
-        self.varm = AnnotationMatrixGroup(uri=varm_uri, name="varm", parent=self)
+        self.varm = AnnotationMatrixGroup(
+            uri=child_uris["varm"], name="varm", parent=self
+        )
         self.varp = AnnotationPairwiseMatrixGroup(
-            uri=varp_uri,
+            uri=child_uris["varp"],
             name="varp",
             row_dataframe=self.var,
             col_dataframe=self.var,

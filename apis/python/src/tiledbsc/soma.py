@@ -89,9 +89,10 @@ class SOMA(TileDBGroup):
             ctx=ctx,
         )
 
-        # TODO: COMMENT
-        member_names = ["obs", "var", "X", "obsm", "varm", "obsp", "varp", "raw", "uns"]
-        child_uris = self._get_child_uris(member_names)  # See comments in that function
+        # See comments in _get_child_uris
+        child_uris = self._get_child_uris(
+            ["obs", "var", "X", "obsm", "varm", "obsp", "varp", "raw", "uns"]
+        )
 
         obs_uri = child_uris["obs"]
         var_uri = child_uris["var"]
@@ -133,15 +134,12 @@ class SOMA(TileDBGroup):
         self.raw = RawGroup(uri=raw_uri, name="raw", obs=self.obs, parent=self)
         self.uns = UnsGroup(uri=uns_uri, name="uns", parent=self)
 
-        # If URI is "/something/test1" then:
-        # * obs_uri  is "/something/test1/obs"
-        # * var_uri  is "/something/test1/var"
-        # * data_uri is "/something/test1/X"
-
-        # If URI is "tiledb://namespace/s3://bucketname/something/test1" then:
-        # * obs_uri  is "tiledb://namespace/s3://bucketname/something/test1/obs"
-        # * var_uri  is "tiledb://namespace/s3://bucketname/something/test1/var"
-        # * data_uri is "tiledb://namespace/s3://bucketname/something/test1/X"
+        # Sample SOMA/member URIs:
+        #
+        # SOMA                             member
+        # "/foo/test1"                     "/foo/test1/obs"
+        # "tiledb://ns/s3://bkt/foo/test1" "tiledb://ns/s3://bkt/foo/test1/obs"
+        # "tiledb://ns/test1"              "tiledb://ns/95cb11b5-2052-461b-9b99-cfa94e51e23f"
 
     # ----------------------------------------------------------------
     def __repr__(self) -> str:

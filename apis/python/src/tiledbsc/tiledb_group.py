@@ -15,6 +15,8 @@ class TileDBGroup(TileDBObject):
     Wraps groups from TileDB-Py by retaining a URI, options, etc.
     """
 
+    # Cache to avoid repeated calls to the REST server for resolving group-member URIs
+    # in the tiledb-cloud case. We invalidate this on add-member or remove-member.
     _cached_member_names_to_uris: Optional[Dict[str, str]]
 
     def __init__(
@@ -40,9 +42,10 @@ class TileDBGroup(TileDBObject):
         object has not yet been populated, e.g. before calling `from_anndata` -- or, if the
         SOMA has been populated but doesn't have this member (e.g. not all SOMAs have a `varp`).
         """
-        # TODO: NOTE WHAT IF VFS.DELETE AFTER INSTANTIATION
-        # TODO: NON-CACHEABLE AND WHY
-        return tiledb.object_type(self.uri, ctx=self._ctx) == "group"
+        # For tiledb:// URIs this is a REST-server request which we'd like to cache.
+        # However, remove-and-replace use-cases are possible and common in notebooks
+        # and it turns out caching the existence-check isn't a robust approach.
+        return bool(tiledb.object_type(self.uri, ctx=self._ctx) == "group")
 
     def create_unless_exists(self) -> None:
         """
@@ -90,17 +93,17 @@ class TileDBGroup(TileDBObject):
         # This works in with-open-as contexts because tiledb.Group has __enter__ and __exit__ methods.
         return tiledb.Group(self.uri, mode=mode, ctx=self._ctx)
 
-    # XXX COMMENT
     def _get_child_uris(self, member_names: Sequence[str]) -> Dict[str, str]:
         """
-        Computes the URI for a child of the given object. For local disk, S3, and
-        tiledb://.../s3://...  pre-creation URIs, this is simply the parent's URI, a slash, and the
-        member name.  For post-creation TileDB-Cloud URIs, this is computed from the parent's
-        information.  (This is because in TileDB Cloud, members have URIs like
-        tiledb://namespace/df584345-28b7-45e5-abeb-043d409b1a97.)
+        Batched version of `get_child_uri`. Since there's REST-server latency for getting
+        name-to-URI mapping for group-member URIs, in the tiledb://... case, total latency
+        is reduced when we ask for all group-element name-to-URI mappings in a single
+        request to the REST server.
         """
         if not self.exists():
-            # TODO: comment
+            # Group not constructed yet. Here, appending "/" and name is appropriate in all
+            # cases: even for tiledb://... URIs, pre-construction URIs are of the form
+            # tiledb://namespace/s3://something/something/soma/membername.
             return {
                 member_name: self.uri + "/" + member_name
                 for member_name in member_names
@@ -123,7 +126,6 @@ class TileDBGroup(TileDBObject):
 
         return answer
 
-    # XXX COMMENT
     def _get_child_uri(self, member_name: str) -> str:
         """
         Computes the URI for a child of the given object. For local disk, S3, and
@@ -131,6 +133,9 @@ class TileDBGroup(TileDBObject):
         member name.  For post-creation TileDB-Cloud URIs, this is computed from the parent's
         information.  (This is because in TileDB Cloud, members have URIs like
         tiledb://namespace/df584345-28b7-45e5-abeb-043d409b1a97.)
+
+        Please use _get_child_uris whenever possible, to reduce the number of REST-server requests
+        in the tiledb//... URIs.
         """
         if not self.exists():
             # TODO: comment
@@ -180,7 +185,7 @@ class TileDBGroup(TileDBObject):
             relative = not child_uri.startswith("tiledb://")
         if relative:
             child_uri = obj.name
-        self._cached_member_names_to_uris = None  # invalidate
+        self._cached_member_names_to_uris = None  # invalidate on add-member
         with self._open("w") as G:
             G.add(uri=child_uri, relative=relative, name=obj.name)
         # See _get_child_uri. Key point is that, on TileDB Cloud, URIs change from pre-creation to
@@ -196,7 +201,7 @@ class TileDBGroup(TileDBObject):
         self._remove_object_by_name(obj.name)
 
     def _remove_object_by_name(self, member_name: str) -> None:
-        self._cached_member_names_to_uris = None  # invalidate
+        self._cached_member_names_to_uris = None  # invalidate on remove-member
         if self.uri.startswith("tiledb://"):
             mapping = self._get_member_names_to_uris()
             if member_name not in mapping:
