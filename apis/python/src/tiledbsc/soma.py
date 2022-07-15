@@ -89,16 +89,7 @@ class SOMA(TileDBGroup):
             ctx=ctx,
         )
 
-        # obs_uri = self._get_child_uri("obs")  # See comments in that function
-        # var_uri = self._get_child_uri("var")
-        # X_uri = self._get_child_uri("X")
-        # obsm_uri = self._get_child_uri("obsm")
-        # varm_uri = self._get_child_uri("varm")
-        # obsp_uri = self._get_child_uri("obsp")
-        # varp_uri = self._get_child_uri("varp")
-        # raw_uri = self._get_child_uri("raw")
-        # uns_uri = self._get_child_uri("uns")
-
+        # TODO: COMMENT
         member_names = ["obs", "var", "X", "obsm", "varm", "obsp", "varp", "raw", "uns"]
         child_uris = self._get_child_uris(member_names)  # See comments in that function
 

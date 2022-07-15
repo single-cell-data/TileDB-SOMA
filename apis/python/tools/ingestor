@@ -231,8 +231,6 @@ def ingest_one(
                     f"Already exists; replacing: {output_path}"
                 )
                 shutil.rmtree(output_path)  # Overwrite
-                # TODO: COMMENT
-                soma = tiledbsc.SOMA(uri=output_path, soma_options=soma_options)
             else:
                 raise Exception(
                     "Internal coding error in --ifexists handling.", ifexists, "<"
