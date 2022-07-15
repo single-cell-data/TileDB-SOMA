@@ -382,12 +382,13 @@ class AssayMatrix(TileDBArray):
                 chunk_seconds = t2 - t1
                 eta = eta_tracker.ingest_and_predict(chunk_percent, chunk_seconds)
 
-                log_io(
-                    "... %s %7.3f%% done, ETA %s"
-                    % (os.path.basename(self.uri), chunk_percent, eta),
-                    "%sFINISH chunk in %.3f seconds, %7.3f%% done, ETA %s"
-                    % (self._indent, chunk_seconds, chunk_percent, eta),
-                )
+                if chunk_percent < 100:
+                    log_io(
+                        "... %s %7.3f%% done, ETA %s"
+                        % (self.nested_name, chunk_percent, eta),
+                        "%sFINISH chunk in %.3f seconds, %7.3f%% done, ETA %s"
+                        % (self._indent, chunk_seconds, chunk_percent, eta),
+                    )
 
                 i = i2
 
@@ -487,12 +488,13 @@ class AssayMatrix(TileDBArray):
                 chunk_seconds = t2 - t1
                 eta = eta_tracker.ingest_and_predict(chunk_percent, chunk_seconds)
 
-                log_io(
-                    "... %s %7.3f%% done, ETA %s"
-                    % (os.path.basename(self.uri), chunk_percent, eta),
-                    "%sFINISH chunk in %.3f seconds, %7.3f%% done, ETA %s"
-                    % (self._indent, chunk_seconds, chunk_percent, eta),
-                )
+                if chunk_percent < 100:
+                    log_io(
+                        "... %s %7.3f%% done, ETA %s"
+                        % (self.nested_name, chunk_percent, eta),
+                        "%sFINISH chunk in %.3f seconds, %7.3f%% done, ETA %s"
+                        % (self._indent, chunk_seconds, chunk_percent, eta),
+                    )
 
                 j = j2
 
@@ -594,12 +596,13 @@ class AssayMatrix(TileDBArray):
                 chunk_seconds = t2 - t1
                 eta = eta_tracker.ingest_and_predict(chunk_percent, chunk_seconds)
 
-                log_io(
-                    "... %s %7.3f%% done, ETA %s"
-                    % (os.path.basename(self.uri), chunk_percent, eta),
-                    "%sFINISH chunk in %.3f seconds, %7.3f%% done, ETA %s"
-                    % (self._indent, chunk_seconds, chunk_percent, eta),
-                )
+                if chunk_percent < 100:
+                    log_io(
+                        "... %s %7.3f%% done, ETA %s"
+                        % (self.nested_name, chunk_percent, eta),
+                        "%sFINISH chunk in %.3f seconds, %7.3f%% done, ETA %s"
+                        % (self._indent, chunk_seconds, chunk_percent, eta),
+                    )
 
                 i = i2
 
