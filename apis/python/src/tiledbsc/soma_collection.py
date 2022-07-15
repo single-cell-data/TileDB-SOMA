@@ -132,7 +132,6 @@ class SOMACollection(TileDBGroup):
                 self._somas[name] = SOMA(uri=uri, name=name, parent=self, ctx=self._ctx)
             yield self._somas[name]
 
-
     # ----------------------------------------------------------------
     def __contains__(self, name: str) -> bool:
         """

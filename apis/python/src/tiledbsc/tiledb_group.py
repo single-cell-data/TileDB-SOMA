@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from typing import Dict, Optional, Sequence
-import time
 
 import tiledb
 
@@ -16,7 +15,8 @@ class TileDBGroup(TileDBObject):
     Wraps groups from TileDB-Py by retaining a URI, options, etc.
     """
 
-    _cached_member_names_to_uris: Dict[str, str]
+    _cached_exists: Optional[bool]
+    _cached_member_names_to_uris: Optional[Dict[str, str]]
 
     def __init__(
         self,
@@ -33,6 +33,7 @@ class TileDBGroup(TileDBObject):
         See the TileDBObject constructor.
         """
         super().__init__(uri, name, parent=parent, soma_options=soma_options, ctx=ctx)
+        self._cached_exists = None
         self._cached_member_names_to_uris = None
 
     def exists(self) -> bool:
@@ -41,7 +42,12 @@ class TileDBGroup(TileDBObject):
         object has not yet been populated, e.g. before calling `from_anndata` -- or, if the
         SOMA has been populated but doesn't have this member (e.g. not all SOMAs have a `varp`).
         """
-        return bool(tiledb.object_type(self.uri, ctx=self._ctx) == "group")
+        # TODO: NOTE WHAT IF VFS.DELETE AFTER INSTANTIATION
+        if self._cached_exists is None:
+            self._cached_exists = bool(
+                tiledb.object_type(self.uri, ctx=self._ctx) == "group"
+            )
+        return self._cached_exists
 
     def create_unless_exists(self) -> None:
         """
@@ -83,6 +89,7 @@ class TileDBGroup(TileDBObject):
         This is just a convenience wrapper around tiledb group-open.
         It works asa `with self._open() as G:` as well as `G = self._open(); ...; G.close()`.
         """
+        print("OPEN", self.uri)
         assert mode in ("r", "w")
         if mode == "r" and not self.exists():
             raise Exception(f"Does not exist: {self.uri}")
@@ -181,8 +188,7 @@ class TileDBGroup(TileDBObject):
             child_uri = obj.name
         self._cached_member_names_to_uris = None  # invalidate
         with self._open("w") as G:
-            retval = G.add(uri=child_uri, relative=relative, name=obj.name)
-            #####print("RETVAL ", retval)
+            G.add(uri=child_uri, relative=relative, name=obj.name)
         # See _get_child_uri. Key point is that, on TileDB Cloud, URIs change from pre-creation to
         # post-creation. Example:
         # * Upload to pre-creation URI tiledb://namespace/s3://bucket/something/something/somaname
@@ -191,7 +197,6 @@ class TileDBGroup(TileDBObject):
         # * Member pre-creation URI tiledb://namespace/s3://bucket/something/something/somaname/obs
         # * Member post-creation URI tiledb://somaname/e4de581a-1353-4150-b1f4-6ed12548e497
         obj.uri = self._get_child_uri(obj.name)
-        ####print("REMAP", child_uri, "TO", obj.uri)
 
     def _remove_object(self, obj: TileDBObject) -> None:
         self._remove_object_by_name(obj.name)
@@ -231,6 +236,7 @@ class TileDBGroup(TileDBObject):
         if self._cached_member_names_to_uris is None:
             with self._open("r") as G:
                 self._cached_member_names_to_uris = {obj.name: obj.uri for obj in G}
+                print("GMN2U", self.uri)
         return self._cached_member_names_to_uris
 
     def show_metadata(self, recursively: bool = True, indent: str = "") -> None:
