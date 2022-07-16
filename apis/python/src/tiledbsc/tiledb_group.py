@@ -88,8 +88,9 @@ class TileDBGroup(TileDBObject):
         It works asa `with self._open() as G:` as well as `G = self._open(); ...; G.close()`.
         """
         assert mode in ("r", "w")
-        if mode == "r" and not self.exists():
-            raise Exception(f"Does not exist: {self.uri}")
+        # #126 no longer needed :D
+        # if mode == "r" and not self.exists():
+        #    raise Exception(f"Does not exist: {self.uri}")
         # This works in with-open-as contexts because tiledb.Group has __enter__ and __exit__ methods.
         return tiledb.Group(self.uri, mode=mode, ctx=self._ctx)
 
@@ -100,7 +101,26 @@ class TileDBGroup(TileDBObject):
         is reduced when we ask for all group-element name-to-URI mappings in a single
         request to the REST server.
         """
-        if not self.exists():
+
+        # XXX COMMENT
+        try:
+            answer = {}
+
+            mapping = self._get_member_names_to_uris()
+            for member_name in member_names:
+                if member_name in mapping:
+                    answer[member_name] = mapping[member_name]
+                else:
+                    # Truly a slash, not os.path.join:
+                    # * If the client is Linux/Un*x/Mac, it's the same of course
+                    # * On Windows, os.path.sep is a backslash but backslashes are _not_ accepted for S3 or
+                    #   tiledb-cloud URIs, whereas in Windows versions for years now forward slashes _are_
+                    #   accepted for local-disk paths.
+                    # This means forward slash is acceptable in all cases.
+                    answer[member_name] = self.uri + "/" + member_name
+
+            return answer
+        except:  # XXX ONLY FOR THE RIGHT EXCEPTION
             # Group not constructed yet. Here, appending "/" and name is appropriate in all
             # cases: even for tiledb://... URIs, pre-construction URIs are of the form
             # tiledb://namespace/s3://something/something/soma/membername.
@@ -108,23 +128,6 @@ class TileDBGroup(TileDBObject):
                 member_name: self.uri + "/" + member_name
                 for member_name in member_names
             }
-
-        answer = {}
-
-        mapping = self._get_member_names_to_uris()
-        for member_name in member_names:
-            if member_name in mapping:
-                answer[member_name] = mapping[member_name]
-            else:
-                # Truly a slash, not os.path.join:
-                # * If the client is Linux/Un*x/Mac, it's the same of course
-                # * On Windows, os.path.sep is a backslash but backslashes are _not_ accepted for S3 or
-                #   tiledb-cloud URIs, whereas in Windows versions for years now forward slashes _are_
-                #   accepted for local-disk paths.
-                # This means forward slash is acceptable in all cases.
-                answer[member_name] = self.uri + "/" + member_name
-
-        return answer
 
     def _get_child_uri(self, member_name: str) -> str:
         """
