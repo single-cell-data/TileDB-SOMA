@@ -88,10 +88,8 @@ class TileDBGroup(TileDBObject):
         It works asa `with self._open() as G:` as well as `G = self._open(); ...; G.close()`.
         """
         assert mode in ("r", "w")
-        # #126 no longer needed :D
-        # if mode == "r" and not self.exists():
-        #    raise Exception(f"Does not exist: {self.uri}")
         # This works in with-open-as contexts because tiledb.Group has __enter__ and __exit__ methods.
+        # Raises an exception, as desired, if the group does not exist (or, doesn't exist _yet_).
         return tiledb.Group(self.uri, mode=mode, ctx=self._ctx)
 
     def _get_child_uris(self, member_names: Sequence[str]) -> Dict[str, str]:
@@ -102,8 +100,10 @@ class TileDBGroup(TileDBObject):
         request to the REST server.
         """
 
-        # XXX COMMENT
         try:
+            # If the group exists, get URIs for elements. In local disk, S3, etc this is just
+            # concatenating a slash and the member name to the self URI; for TileDB Cloud,
+            # the member URIs involve UUIDs which are known to the server.
             answer = {}
 
             mapping = self._get_member_names_to_uris()
@@ -120,14 +120,22 @@ class TileDBGroup(TileDBObject):
                     answer[member_name] = self.uri + "/" + member_name
 
             return answer
-        except:  # XXX ONLY FOR THE RIGHT EXCEPTION
-            # Group not constructed yet. Here, appending "/" and name is appropriate in all
-            # cases: even for tiledb://... URIs, pre-construction URIs are of the form
-            # tiledb://namespace/s3://something/something/soma/membername.
-            return {
-                member_name: self.uri + "/" + member_name
-                for member_name in member_names
-            }
+
+        except tiledb.cc.TileDBError as e:
+            stre = str(e)
+            # Local-disk/S3 does-not-exist exceptions say 'Group does not exist'; TileDB Cloud
+            # does-not-exist exceptions are worded less clearly.
+            if "Group does not exist" in stre or "HTTP code 401" in stre:
+                # Group not constructed yet, but we must return pre-creation URIs. Here, appending
+                # "/" and name is appropriate in all cases: even for tiledb://... URIs,
+                # pre-construction URIs are of the form
+                # tiledb://namespace/s3://something/something/soma/membername.
+                return {
+                    member_name: self.uri + "/" + member_name
+                    for member_name in member_names
+                }
+            else:
+                raise e
 
     def _get_child_uri(self, member_name: str) -> str:
         """
