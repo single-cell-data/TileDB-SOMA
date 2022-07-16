@@ -7,12 +7,13 @@
 namespace tiledbsc {
 using namespace tiledb;
 
-SOMAQuery::SOMAQuery(SOMA* soma, size_t index_alloc, size_t x_alloc) {
+SOMAQuery::SOMAQuery(SOMA* soma) {
     mq_obs_ = std::make_unique<ManagedQuery>(
-        soma->open_array("obs"), index_alloc);
+        soma->open_array("obs"), DEFAULT_ALLOC);
     mq_var_ = std::make_unique<ManagedQuery>(
-        soma->open_array("var"), index_alloc);
-    mq_x_ = std::make_unique<ManagedQuery>(soma->open_array("X/data"), x_alloc);
+        soma->open_array("var"), DEFAULT_ALLOC);
+    mq_x_ = std::make_unique<ManagedQuery>(
+        soma->open_array("X/data"), DEFAULT_ALLOC);
 }
 
 std::optional<std::unordered_map<std::string, std::shared_ptr<ColumnBuffer>>>

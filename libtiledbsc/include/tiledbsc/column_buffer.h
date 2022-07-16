@@ -3,11 +3,6 @@
 
 #include <stdexcept>  // for windows: error C2039: 'runtime_error': is not a member of 'std'
 
-// TODO: pybind11 used for intermediate testing, remove after adding arrow
-#include <pybind11/numpy.h>
-#include <pybind11/pybind11.h>
-namespace py = pybind11;
-
 #include <span>
 #include <tiledb/tiledb>
 
@@ -34,40 +29,30 @@ class ColumnBuffer {
      * @param array TileDB array
      * @param name TileDB dimension or attribute name
      * @param num_cells Number of cells to allocate
-     * @param bytes_per_cell Bytes per cell for variable length data (optional)
      * @return ColumnBuffer
      */
     static std::shared_ptr<ColumnBuffer> create(
-        std::shared_ptr<Array> array,
-        std::string_view name,
-        size_t num_cells,
-        std::optional<size_t> bytes_per_cell = std::nullopt);
+        std::shared_ptr<Array> array, std::string_view name, size_t num_cells);
 
     /**
      * @brief Create a ColumnBuffer from a dimension.
      *
      * @param dim TileDB dimension
      * @param num_cells Number of cells to allocate
-     * @param bytes_per_cell Bytes per cell for variable length data (optional)
      * @return ColumnBuffer
      */
     static std::shared_ptr<ColumnBuffer> create(
-        const Dimension& dim,
-        size_t num_cells,
-        std::optional<size_t> bytes_per_cell = std::nullopt);
+        const Dimension& dim, size_t num_cells);
 
     /**
      * @brief Create a ColumnBuffer from an attribute.
      *
      * @param attr TileDB attribute
      * @param num_cells Number of cells to allocate
-     * @param bytes_per_cell Bytes per cell for variable length data (optional)
      * @return ColumnBuffer
      */
     static std::shared_ptr<ColumnBuffer> create(
-        const Attribute& attr,
-        size_t num_cells,
-        std::optional<size_t> bytes_per_cell = std::nullopt);
+        const Attribute& attr, size_t num_cells);
 
     /**
      * @brief Create a ColumnBuffer from data.
@@ -107,8 +92,8 @@ class ColumnBuffer {
         tiledb_datatype_t type,
         size_t num_cells,
         std::vector<std::byte> data,
-        std::vector<uint64_t> offsets,
-        std::vector<uint8_t> validity);
+        std::vector<uint64_t> offsets = {},
+        std::vector<uint8_t> validity = {});
 
     /**
      * @brief Destroy the ColumnBuffer object
@@ -137,34 +122,6 @@ class ColumnBuffer {
      */
     size_t size() {
         return num_cells_;
-    }
-
-    /**
-     * @brief Return a copy of the data as a numpy array for pybind11.
-     *
-     * ** FOR TESTING ONLY **
-     *
-     * @return py::array
-     */
-    py::array py_array() {
-        if (type_ == TILEDB_INT32) {
-            return py::array_t<int32_t>(
-                data<int32_t>().size(), data<int32_t>().data());
-        }
-        if (type_ == TILEDB_INT64) {
-            return py::array_t<int64_t>(
-                data<int64_t>().size(), data<int64_t>().data());
-        }
-        if (type_ == TILEDB_FLOAT32) {
-            return py::array_t<float>(
-                data<float>().size(), data<float>().data());
-        }
-        if (type_ == TILEDB_FLOAT64) {
-            return py::array_t<double>(
-                data<double>().size(), data<double>().data());
-        }
-
-        throw TileDBSCError("[ColumnBuffer] Unsupported type: " + type_);
     }
 
     /**
@@ -199,6 +156,11 @@ class ColumnBuffer {
      * @return std::span<uint64_t> offsets view
      */
     std::span<uint64_t> offsets() {
+        if (offsets_.empty()) {
+            throw TileDBSCError(
+                "[ColumnBuffer] Offsets buffer not defined for " + name_);
+        }
+
         return std::span<uint64_t>(offsets_);
     }
 
@@ -208,6 +170,10 @@ class ColumnBuffer {
      * @return std::span<uint8_t> validity view
      */
     std::span<uint8_t> validity() {
+        if (validity_.empty()) {
+            throw TileDBSCError(
+                "[ColumnBuffer] Validity buffer not defined for " + name_);
+        }
         return std::span<uint8_t>(validity_);
     }
 
@@ -218,6 +184,15 @@ class ColumnBuffer {
      */
     std::string name() {
         return name_;
+    }
+
+    /**
+     * @brief Return the type of the buffer.
+     *
+     * @return tiledb_datatype_t type
+     */
+    tiledb_datatype_t type() {
+        return type_;
     }
 
     /**
@@ -254,8 +229,7 @@ class ColumnBuffer {
         tiledb_datatype_t type,
         size_t num_cells,
         bool is_var,
-        bool is_nullable,
-        std::optional<size_t> bytes_per_cell = std::nullopt);
+        bool is_nullable);
 
     //===================================================================
     //= private non-static

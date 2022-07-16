@@ -7,8 +7,7 @@
 namespace tiledbsc {
 using namespace tiledb;
 
-SOMACollectionQuery::SOMACollectionQuery(
-    SOMACollection* soco, size_t index_alloc, size_t x_alloc) {
+SOMACollectionQuery::SOMACollectionQuery(SOMACollection* soco) {
     std::vector<ThreadPool::Task> tasks;
     ThreadPool pool{threads_};
 

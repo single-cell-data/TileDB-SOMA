@@ -26,10 +26,6 @@ class SOMACollection;  // forward declaration
 // TODO: Pass alloc sizes to SOMAQuery
 
 class SOMACollectionQuery {
-   private:
-    static const size_t DEFAULT_INDEX_ALLOC = 1 << 20;  // 1M cells
-    static const size_t DEFAULT_X_ALLOC = 1 << 26;      // 64M cells
-
    public:
     /**
      * @brief Construct a new SOMACollectionQuery object with all SOMAs in the
@@ -39,10 +35,7 @@ class SOMACollectionQuery {
      * @param index_alloc Number of cells allocated for obs and var
      * @param x_alloc Number of cells allocated for X/data
      */
-    SOMACollectionQuery(
-        SOMACollection* soco,
-        size_t index_alloc = DEFAULT_INDEX_ALLOC,
-        size_t x_alloc = DEFAULT_X_ALLOC);
+    SOMACollectionQuery(SOMACollection* soco);
 
     /**
      * @brief Select obs attributes to materialize.

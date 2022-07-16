@@ -14,7 +14,7 @@ using namespace tiledbsc;
 
 TEST_CASE("SOMA: Open arrays") {
     Config config;
-    config["config.logging_level"] = "5";
+    // config.logging_level"] = "5";
 
     auto soma = SOMA::open(soma_uri, config);
     auto array_uris = soma->list_arrays();

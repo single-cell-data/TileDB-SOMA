@@ -13,10 +13,10 @@ namespace tiledbsc {
 
 using namespace tiledb;
 
-constexpr size_t TILEDBSC_DEFAULT_ALLOC = 524288;
-
 class ManagedQuery {
    public:
+    inline static const size_t DEFAULT_ALLOC = 1 << 26;
+
     //===================================================================
     //= public non-static
     //===================================================================
@@ -28,8 +28,7 @@ class ManagedQuery {
      * @param initial_cells Initial number of cells to allocate
      */
     ManagedQuery(
-        std::shared_ptr<Array> array,
-        size_t initial_cells = TILEDBSC_DEFAULT_ALLOC);
+        std::shared_ptr<Array> array, size_t initial_cells = DEFAULT_ALLOC);
 
     /**
      * @brief Select columns names to query (dim and attr). If the

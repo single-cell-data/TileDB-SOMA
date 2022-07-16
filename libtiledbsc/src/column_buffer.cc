@@ -11,48 +11,35 @@ using namespace tiledb;
 //===================================================================
 
 std::shared_ptr<ColumnBuffer> ColumnBuffer::create(
-    std::shared_ptr<Array> array,
-    std::string_view name,
-    size_t num_cells,
-    std::optional<size_t> bytes_per_cell) {
+    std::shared_ptr<Array> array, std::string_view name, size_t num_cells) {
     auto name_str = std::string(name);  // string for TileDB API
     auto schema = array->schema();
 
     if (schema.has_attribute(name_str)) {
-        return create(schema.attribute(name_str), num_cells, bytes_per_cell);
+        return create(schema.attribute(name_str), num_cells);
     } else if (schema.domain().has_dimension(name_str)) {
-        return create(
-            schema.domain().dimension(name_str), num_cells, bytes_per_cell);
+        return create(schema.domain().dimension(name_str), num_cells);
     }
 
     throw TileDBSCError("[ColumnBuffer] Column name not found: " + name_str);
 }
 
 std::shared_ptr<ColumnBuffer> ColumnBuffer::create(
-    const tiledb::Dimension& dim,
-    size_t num_cells,
-    std::optional<size_t> bytes_per_cell) {
+    const tiledb::Dimension& dim, size_t num_cells) {
     bool is_var = dim.cell_val_num() == TILEDB_VAR_NUM ||
                   dim.type() == TILEDB_STRING_ASCII ||
                   dim.type() == TILEDB_STRING_UTF8;
 
     return ColumnBuffer::alloc(
-        dim.name(), dim.type(), num_cells, is_var, false, bytes_per_cell);
+        dim.name(), dim.type(), num_cells, is_var, false);
 }
 
 std::shared_ptr<ColumnBuffer> ColumnBuffer::create(
-    const tiledb::Attribute& attr,
-    size_t num_cells,
-    std::optional<size_t> bytes_per_cell) {
+    const tiledb::Attribute& attr, size_t num_cells) {
     bool is_var = attr.cell_val_num() == TILEDB_VAR_NUM;
 
     return ColumnBuffer::alloc(
-        attr.name(),
-        attr.type(),
-        num_cells,
-        is_var,
-        attr.nullable(),
-        bytes_per_cell);
+        attr.name(), attr.type(), num_cells, is_var, attr.nullable());
 }
 
 std::shared_ptr<ColumnBuffer> ColumnBuffer::create(
@@ -130,7 +117,8 @@ std::vector<std::string> ColumnBuffer::strings() {
     std::vector<std::string> result;
 
     for (size_t i = 0; i < num_cells_; i++) {
-        result.push_back(std::string(string_view(i)));
+        std::string str = std::string(string_view(i));
+        result.push_back(str);
     }
 
     return result;
@@ -138,7 +126,7 @@ std::vector<std::string> ColumnBuffer::strings() {
 
 std::string_view ColumnBuffer::string_view(uint64_t index) {
     auto start = offsets_[index];
-    auto len = offsets_[index + 1] - offsets_[index];
+    auto len = offsets_[index + 1] - start;
     return std::string_view((char*)(data_.data() + start), len);
 }
 
@@ -151,12 +139,10 @@ std::shared_ptr<ColumnBuffer> ColumnBuffer::alloc(
     tiledb_datatype_t type,
     size_t num_cells,
     bool is_var,
-    bool is_nullable,
-    std::optional<size_t> bytes_per_cell) {
-    // Compute the number of bytes for the data buffer using `bytes_per_cell` if
-    // provided, otherwise use the type_size.
+    bool is_nullable) {
+    // TODO: set buffer sizes like tiledb python api
     auto type_size = tiledb::impl::type_size(type);
-    auto num_bytes = num_cells * (bytes_per_cell ? *bytes_per_cell : type_size);
+    auto num_bytes = num_cells * type_size;
     auto data = std::vector<std::byte>(num_bytes);
 
     // TileDB requires num_cells offset values. We allocate num_cells + 1 to

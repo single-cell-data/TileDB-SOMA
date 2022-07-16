@@ -21,21 +21,77 @@ PYBIND11_MODULE(pytiledbsc, m) {
             py::init([](std::string& name,
                         tiledb_datatype_t type,
                         py::int_ num_cells,
-                        py::array data) {
+                        py::array data,
+                        std::optional<py::array_t<uint64_t>> offsets,
+                        std::optional<py::array_t<uint8_t>> validity) {
+                auto o = offsets ?
+                             std::span<uint64_t>(
+                                 (uint64_t*)offsets->data(), offsets->size()) :
+                             std::span<uint64_t>{};
+                auto v = validity ?
+                             std::span<uint8_t>(
+                                 (uint8_t*)validity->data(), validity->size()) :
+                             std::span<uint8_t>{};
+
                 return ColumnBuffer::create(
                     name,
                     type,
                     num_cells,
                     std::span<std::byte>(
-                        (std::byte*)data.data(), data.nbytes()));
+                        (std::byte*)data.data(), data.nbytes()),
+                    o,
+                    v);
             }),
             py::arg("name"),
             py::arg("type"),
             py::arg("num_cells"),
-            py::arg("data"))
+            py::arg("data"),
+            py::arg("offsets") = std::nullopt,
+            py::arg("validity") = std::nullopt)
 
         // WARNING: these functions copy!
-        .def("data", &ColumnBuffer::py_array);
+        .def(
+            "data",
+            [](ColumnBuffer& buf) -> py::array {
+                switch (buf.type()) {
+                    case TILEDB_INT32:
+                        return py::array_t<int32_t>(
+                            buf.data<int32_t>().size(),
+                            buf.data<int32_t>().data());
+                    case TILEDB_INT64:
+                        return py::array_t<int64_t>(
+                            buf.data<int64_t>().size(),
+                            buf.data<int64_t>().data());
+                    case TILEDB_FLOAT32:
+                        return py::array_t<float>(
+                            buf.data<float>().size(), buf.data<float>().data());
+                    case TILEDB_FLOAT64:
+                        return py::array_t<double>(
+                            buf.data<double>().size(),
+                            buf.data<double>().data());
+                    default:
+                        throw TileDBSCError(
+                            "[ColumnBuffer] Unsupported type: " + buf.type());
+                }
+            })
+        .def(
+            "offsets",
+            [](ColumnBuffer& buf) -> std::optional<py::array> {
+                if (!buf.is_var()) {
+                    return std::nullopt;
+                }
+
+                auto o = buf.offsets();
+                return py::array_t<uint64_t>(o.size(), o.data());
+            })
+        .def("validity", [](ColumnBuffer& buf) -> std::optional<py::array> {
+            if (!buf.is_nullable()) {
+                return std::nullopt;
+            }
+
+            auto v = buf.validity();
+            return py::array_t<uint8_t>(v.size(), v.data());
+        });
 
     py::class_<SOMA, std::shared_ptr<SOMA>>(m, "SOMA")
         .def(py::init([](std::string_view uri) { return SOMA::open(uri); }))

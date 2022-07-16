@@ -78,7 +78,7 @@ TEST_CASE("ColumnBuffer: Create from dimension") {
     REQUIRE(buffers->is_nullable() == false);
     REQUIRE(buffers->data<char>().size() == 9);
     REQUIRE(buffers->offsets().size() == 10);
-    REQUIRE(buffers->validity().size() == 0);
+    REQUIRE_THROWS(buffers->validity().size() == 0);
 }
 
 TEST_CASE("ColumnBuffer: Create from array") {
@@ -93,7 +93,7 @@ TEST_CASE("ColumnBuffer: Create from array") {
         REQUIRE(buffers->is_nullable() == false);
         REQUIRE(buffers->data<char>().size() == 9);
         REQUIRE(buffers->offsets().size() == 10);
-        REQUIRE(buffers->validity().size() == 0);
+        REQUIRE_THROWS(buffers->validity().size() == 0);
     }
 
     {

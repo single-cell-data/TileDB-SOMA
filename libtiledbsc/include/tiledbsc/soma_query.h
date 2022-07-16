@@ -17,21 +17,15 @@ using namespace tiledb;
 class SOMA;  // forward declaration
 
 class SOMAQuery {
-    static const size_t DEFAULT_INDEX_ALLOC = 1 << 20;  // 1M cells
-    static const size_t DEFAULT_X_ALLOC = 1 << 26;      // 64M cells
+    inline static const size_t DEFAULT_ALLOC = 1 << 26;  // 64M
 
    public:
     /**
      * @brief Construct a new SOMAQuery object
      *
      * @param soma SOMA
-     * @param index_alloc Number of cells allocated for obs and var
-     * @param x_alloc Number of cells allocated for X/data
      */
-    SOMAQuery(
-        SOMA* soma,
-        size_t index_alloc = DEFAULT_INDEX_ALLOC,
-        size_t x_alloc = DEFAULT_X_ALLOC);
+    SOMAQuery(SOMA* soma);
 
     /**
      * @brief Select obs attributes to materialize.

@@ -14,7 +14,7 @@ using namespace tiledbsc;
 
 TEST_CASE("SOCO: Open arrays") {
     Config config;
-    config["config.logging_level"] = "5";
+    // config.logging_level"] = "5";
 
     auto soco = SOMACollection::open(soco_uri, config);
     auto soma_uris = soco->list_somas();
