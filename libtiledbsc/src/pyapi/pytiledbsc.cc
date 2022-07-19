@@ -6,8 +6,8 @@
 
 #include <tiledbsc/tiledbsc>
 
+#include "tiledb_arrow.h"
 #include "tiledbsc/table_buffer.h"
-#include "tiledbsc/tiledb_arrow.h"
 
 #define DENUM(x) .value(#x, TILEDB_##x)
 

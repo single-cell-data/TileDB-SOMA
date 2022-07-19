@@ -1,7 +1,7 @@
 #ifndef TILEDB_ARROW_H
 #define TILEDB_ARROW_H
 
-#include "tiledbsc/carrow.h"
+#include "carrow.h"
 #include "tiledbsc/tiledbsc"
 
 // https://arrow.apache.org/docs/format/CDataInterface.html
