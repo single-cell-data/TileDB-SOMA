@@ -1,0 +1,155 @@
+#ifndef TILEDB_ARROW_H
+#define TILEDB_ARROW_H
+
+#include "tiledbsc/carrow.h"
+#include "tiledbsc/tiledbsc"
+
+// https://arrow.apache.org/docs/format/CDataInterface.html
+// https://arrow.apache.org/docs/format/Columnar.html#buffer-listing-for-each-layout
+// https://arrow.apache.org/docs/format/CDataInterface.html#exporting-a-simple-int32-array
+
+namespace tiledbsc {
+
+class ArrowAdapter {
+   public:
+    static void release_schema(struct ArrowSchema* schema) {
+        schema->release = nullptr;
+    }
+
+    static void release_array(struct ArrowArray* array) {
+        // free((void*)array->buffers[1];
+        free(array->buffers);
+        array->release = nullptr;
+    }
+
+    /**
+     * @brief Convert ColumnBuffer to an Arrow array.
+     *
+     * @return auto
+     */
+    static auto to_arrow(ColumnBuffer& column) {
+        std::shared_ptr<ArrowSchema> schema = std::make_shared<ArrowSchema>();
+        std::shared_ptr<ArrowArray> array = std::make_shared<ArrowArray>();
+
+        schema->format = to_arrow_format(column.type()).data();  // mandatory
+        schema->name = nullptr;                                  // optional
+        schema->metadata = nullptr;                              // optional
+        schema->flags = 0;                                       // optional
+        schema->n_children = 0;                                  // mandatory
+        schema->children = nullptr;                              // optional
+        schema->dictionary = nullptr;                            // optional
+        schema->release = &release_schema;                       // mandatory
+        schema->private_data = nullptr;                          // optional
+
+        int n_buffers = num_buffers(column);
+
+        array->length = column.size();    // mandatory
+        array->null_count = 0;            // mandatory
+        array->offset = 0;                // mandatory
+        array->n_buffers = n_buffers;     // mandatory
+        array->n_children = 0;            // mandatory
+        array->buffers = nullptr;         // mandatory
+        array->children = nullptr;        // optional
+        array->dictionary = nullptr;      // optional
+        array->release = &release_array;  // mandatory
+        array->private_data = nullptr;    // mandatory
+
+        array->buffers = (const void**)malloc(sizeof(void*) * array->n_buffers);
+        assert(array->buffers != nullptr);
+        array->buffers[0] = nullptr;  // validity
+        if (n_buffers == 2) {
+            array->buffers[1] = column.data<void*>().data();
+        } else if (n_buffers == 3) {
+            array->buffers[1] = column.offsets().data();
+            array->buffers[2] = column.data<void*>().data();
+        }
+
+        return std::tuple(std::move(array), std::move(schema));
+    }
+
+    /**
+     * @brief Convert TableBuffer to an Arrow table.
+     *
+     * @return auto
+     */
+    static auto to_arrow(TableBuffer& table) {
+        std::shared_ptr<ArrowSchema> schema = std::make_shared<ArrowSchema>();
+        std::shared_ptr<ArrowArray> array = std::make_shared<ArrowArray>();
+
+        // Build vector of schemas to populate the children
+        std::vector<ArrowSchema*> child_schemas;
+        std::vector<ArrowArray*> child_arrays;
+        for (auto& [name, column] : table) {
+            auto [child_array, child_schema] = to_arrow(column);
+            child_schemas.push_back(child_schema.get());
+            child_arrays.push_back(child_array.get());
+        }
+
+        return std::tuple(std::move(array), std::move(schema));
+    }
+
+    static int num_buffers(const ColumnBuffer& cb) {
+        int result = 2;
+        result += cb.is_var();
+        return result;
+    }
+
+    // Get Arrow format from TileDB datatype
+    static std::string_view to_arrow_format(tiledb_datatype_t datatype) {
+        switch (datatype) {
+            case TILEDB_STRING_ASCII:
+            case TILEDB_STRING_UTF8:
+                return "U";  // large because TileDB uses 64bit offsets
+            case TILEDB_CHAR:
+            case TILEDB_BLOB:
+                return "Z";  // large because TileDB uses 64bit offsets
+            case TILEDB_BOOL:
+                return "C";  // TILEDB_BOOL is 8bit but arrow BOOL is 1bit
+            case TILEDB_INT32:
+                return "i";
+            case TILEDB_INT64:
+                return "l";
+            case TILEDB_FLOAT32:
+                return "f";
+            case TILEDB_FLOAT64:
+                return "g";
+            case TILEDB_INT8:
+                return "c";
+            case TILEDB_UINT8:
+                return "C";
+            case TILEDB_INT16:
+                return "s";
+            case TILEDB_UINT16:
+                return "S";
+            case TILEDB_UINT32:
+                return "I";
+            case TILEDB_UINT64:
+                return "L";
+            case TILEDB_TIME_SEC:
+                return "tts";
+            case TILEDB_TIME_MS:
+                return "ttm";
+            case TILEDB_TIME_US:
+                return "ttu";
+            case TILEDB_TIME_NS:
+                return "ttn";
+            case TILEDB_DATETIME_SEC:
+                return "tss:";
+            case TILEDB_DATETIME_MS:
+                return "tsm:";
+            case TILEDB_DATETIME_US:
+                return "tsu:";
+            case TILEDB_DATETIME_NS:
+                return "tsn:";
+            default:
+                break;
+        }
+        throw TileDBSCError(
+            "TileDB-Arrow: tiledb datatype not understood ('" +
+            tiledb::impl::type_to_str(datatype) + "')");
+    }
+};
+
+};  // namespace tiledbsc
+
+#endif

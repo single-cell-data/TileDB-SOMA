@@ -50,6 +50,17 @@ def test_init():
         assert np.array_equal(buf.validity(), validity)
 
 
+def test_new():
+    data = np.random.randint(-1 << 31, 1 << 31, size=DATA_SIZE, dtype=np.int32)
+    cb = pytiledbsc.ColumnBuffer("buf", pytiledbsc.DataType.INT32, len(data), data)
+
+    arrow = cb.to_arrow_new()
+
+    if VERBOSE:
+        print(f"Arrow: {type(arrow)} = {arrow}")
+    assert np.array_equal(data, arrow)
+
+
 def test_int32():
     data = np.random.randint(-1 << 31, 1 << 31, size=DATA_SIZE, dtype=np.int32)
     cb = pytiledbsc.ColumnBuffer("buf", pytiledbsc.DataType.INT32, len(data), data)
@@ -81,7 +92,7 @@ def test_float64():
 def test_string():
     # Generate list of random length strings (omit 0 to avoid string comparison failure)
     max_len = 64
-    chars = "".join(chr(i) for i in range(0, 256))
+    chars = "".join(chr(i) for i in range(1, 256))
     strings = [
         "".join(random.choices(chars, k=np.random.randint(max_len)))
         for i in range(DATA_SIZE)
@@ -108,4 +119,4 @@ def test_string():
 
 
 if __name__ == "__main__":
-    test_string()
+    test_new()

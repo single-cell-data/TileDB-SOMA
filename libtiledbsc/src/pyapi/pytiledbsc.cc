@@ -15,6 +15,28 @@ using namespace tiledbsc;
 
 namespace py = pybind11;
 
+py::object to_array(ColumnBuffer& cb) {
+    auto pa = py::module::import("pyarrow");
+    auto pa_array_import = pa.attr("Array").attr("_import_from_c");
+
+    auto [array, schema] = ArrowAdapter::to_arrow(cb);
+
+    return pa_array_import(py::capsule(array.get()), py::capsule(schema.get()));
+    //        py::int_((ptrdiff_t)array.get()),
+    //        py::int_((ptrdiff_t)schema.get()));
+}
+
+/*
+py::object to_table(TableBuffer& tb) {
+    auto pa = py::module::import("pyarrow");
+    auto pa_array_import = pa.attr("Array").attr("_import_from_c");
+
+    auto pa_table = pa.attr("Table").attr("from_arrays")(
+        results, "names"_a = names);
+    return pa_table;
+}
+*/
+
 PYBIND11_MODULE(pytiledbsc, m) {
     // arrow::py::import_pyarrow();
     m.doc() = "TileDB-SingleCell python library";
@@ -60,6 +82,7 @@ PYBIND11_MODULE(pytiledbsc, m) {
                 return py::make_tuple(
                     py::capsule(array.get()), py::capsule(schema.get()));
             })
+        .def("to_arrow_new", [](ColumnBuffer& cb) { return to_array(cb); })
 
         // WARNING: these functions copy!
         .def(
