@@ -1,3 +1,4 @@
+import pyarrow as pa
 import pytiledbsc
 import pytest
 import numpy as np
@@ -68,3 +69,23 @@ def test_init():
         assert np.array_equal(buf.data(), data)
         assert np.array_equal(buf.offsets(), offsets)
         assert np.array_equal(buf.validity(), validity)
+
+
+def cb_to_arrow(cb):
+    return pa.Array._import_from_c(*cb.to_arrow())
+
+
+def test_arrow():
+    data = np.random.randint(-1 << 31, 1 << 31, size=DATA_SIZE, dtype=np.int32)
+    cb = pytiledbsc.ColumnBuffer("buf", pytiledbsc.DataType.INT32, len(data), data)
+
+    if VERBOSE:
+        print(f"Checking: {data} == {cb.data()}")
+    assert np.array_equal(data, cb.data())
+
+    arrow = cb_to_arrow(cb)
+    assert np.array_equal(data, arrow)
+
+
+if __name__ == "__main__":
+    test_arrow()

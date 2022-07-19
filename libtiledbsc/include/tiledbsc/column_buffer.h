@@ -13,6 +13,9 @@ namespace tiledbsc {
 
 using namespace tiledb;
 
+class ColumnBuffer;
+using TableBuffer = std::unordered_map<std::string, ColumnBuffer>;
+
 /**
  * @brief Class to store data for a TileDB dimension or attribute.
  *

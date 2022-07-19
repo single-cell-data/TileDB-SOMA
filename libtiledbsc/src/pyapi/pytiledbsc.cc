@@ -6,6 +6,8 @@
 
 #include <tiledbsc/tiledbsc>
 
+#include "tiledbsc/tiledb_arrow.h"
+
 #define DENUM(x) .value(#x, TILEDB_##x)
 
 using namespace tiledbsc;
@@ -48,6 +50,14 @@ PYBIND11_MODULE(pytiledbsc, m) {
             py::arg("data"),
             py::arg("offsets") = std::nullopt,
             py::arg("validity") = std::nullopt)
+
+        .def(
+            "to_arrow",
+            [](ColumnBuffer& buf) {
+                auto [array, schema] = ArrowAdapter::to_arrow(buf);
+                return py::make_tuple(
+                    py::capsule(array.get()), py::capsule(schema.get()));
+            })
 
         // WARNING: these functions copy!
         .def(

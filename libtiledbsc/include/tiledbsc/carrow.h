@@ -7,6 +7,8 @@
  * source: https://arrow.apache.org/docs/format/CDataInterface.html
  */
 
+#include <cinttypes>
+
 #define ARROW_FLAG_DICTIONARY_ORDERED 1
 #define ARROW_FLAG_NULLABLE 2
 #define ARROW_FLAG_MAP_KEYS_SORTED 4
