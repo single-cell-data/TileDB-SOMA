@@ -10,11 +10,6 @@ VERBOSE = True
 rng = np.random.default_rng()
 
 
-def cb_to_arrow(cb):
-    """Convert ColumnBuffer to arrow."""
-    return pa.Array._import_from_c(*cb.to_arrow())
-
-
 def check_array(data, cb):
     cb_data = cb.data()
 
@@ -23,7 +18,7 @@ def check_array(data, cb):
         print(f"ColumnBuffer {type(cb_data)} = {cb_data}")
     assert np.array_equal(data, cb.data())
 
-    arrow = pa.Array._import_from_c(*cb.to_arrow())
+    arrow = cb.to_arrow()
     if VERBOSE:
         print(f"Arrow: {type(arrow)} = {arrow}")
     assert np.array_equal(data, arrow)
@@ -48,17 +43,6 @@ def test_init():
         assert np.array_equal(buf.data(), data)
         assert np.array_equal(buf.offsets(), offsets)
         assert np.array_equal(buf.validity(), validity)
-
-
-def test_new():
-    data = np.random.randint(-1 << 31, 1 << 31, size=DATA_SIZE, dtype=np.int32)
-    cb = pytiledbsc.ColumnBuffer("buf", pytiledbsc.DataType.INT32, len(data), data)
-
-    arrow = cb.to_arrow_new()
-
-    if VERBOSE:
-        print(f"Arrow: {type(arrow)} = {arrow}")
-    assert np.array_equal(data, arrow)
 
 
 def test_int32():
@@ -112,7 +96,7 @@ def test_string():
         print(f"ColumnBuffer {type(data)} = {data}")
         print(f"ColumnBuffer {type(offsets)} = {offsets}")
 
-    arrow = cb_to_arrow(cb)
+    arrow = cb.to_arrow()
     if VERBOSE:
         print(f"Arrow: {type(arrow)} = {arrow}")
     assert np.array_equal(strings, arrow)

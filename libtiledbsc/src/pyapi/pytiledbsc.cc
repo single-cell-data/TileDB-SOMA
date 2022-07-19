@@ -75,14 +75,7 @@ PYBIND11_MODULE(pytiledbsc, m) {
             py::arg("offsets") = std::nullopt,
             py::arg("validity") = std::nullopt)
 
-        .def(
-            "to_arrow",
-            [](ColumnBuffer& buf) {
-                auto [array, schema] = ArrowAdapter::to_arrow(buf);
-                return py::make_tuple(
-                    py::capsule(array.get()), py::capsule(schema.get()));
-            })
-        .def("to_arrow_new", [](ColumnBuffer& cb) { return to_array(cb); })
+        .def("to_arrow", [](ColumnBuffer& cb) { return to_array(cb); })
 
         // WARNING: these functions copy!
         .def(
