@@ -6,8 +6,12 @@
 #include <tiledb/tiledb>
 #include <tiledb/tiledb_experimental>
 
+#include "tiledbsc/soma_query.h"
+
 namespace tiledbsc {
 using namespace tiledb;
+
+class SOMAQuery;  // forward declaration
 
 class SOMA {
    public:
@@ -22,7 +26,7 @@ class SOMA {
      * @param ctx TileDB context
      * @return SOMA object
      */
-    static SOMA open(
+    static std::shared_ptr<SOMA> open(
         std::string_view uri,
         std::shared_ptr<Context> ctx = std::make_shared<Context>());
 
@@ -33,7 +37,8 @@ class SOMA {
      * @param config TileDB config
      * @return SOMA object
      */
-    static SOMA open(std::string_view uri, const Config& config);
+    static std::shared_ptr<SOMA> open(
+        std::string_view uri, const Config& config);
 
     //===================================================================
     //= public non-static
@@ -67,7 +72,21 @@ class SOMA {
      */
     std::shared_ptr<Array> open_array(const std::string& name);
 
-    auto context() {
+    /**
+     * @brief Create a SOMAQuery for this SOMA.
+     *
+     * @return std::unique_ptr<SOMAQuery> A SOMA query
+     */
+    std::unique_ptr<SOMAQuery> query() {
+        return std::make_unique<SOMAQuery>(this);
+    }
+
+    /**
+     * @brief Return TileDB context of SOMA.
+     *
+     * @return std::shared_ptr<Context> Context.
+     */
+    std::shared_ptr<Context> context() {
         return ctx_;
     }
 

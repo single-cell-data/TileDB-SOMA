@@ -8,6 +8,7 @@ set(CMAKE_WARN_DEPRECATED OFF CACHE BOOL "" FORCE)
 
 find_package(TileDB_EP REQUIRED)
 find_package(Spdlog_EP REQUIRED)
+find_package(pybind11 REQUIRED)
 
 ############################################################
 # Get source commit hash
@@ -49,11 +50,14 @@ add_library(TILEDB_SC_OBJECTS OBJECT
   ${CMAKE_CURRENT_SOURCE_DIR}/logger.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/managed_query.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/soma_collection.cc
+  ${CMAKE_CURRENT_SOURCE_DIR}/soma_query.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/soma.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/util.cc
+  ${CMAKE_CURRENT_SOURCE_DIR}/thread_pool/thread_pool.cc
+  ${CMAKE_CURRENT_SOURCE_DIR}/thread_pool/status.cc
 )
 
-message(WARNING "Building without deprecation warnings")
+message(WARNING "Building TileDB without deprecation warnings")
 target_compile_definitions(TILEDB_SC_OBJECTS PRIVATE
   -DBUILD_COMMIT_HASH="${BUILD_COMMIT_HASH}"
   -DTILEDB_DEPRECATED=
@@ -71,6 +75,7 @@ target_include_directories(TILEDB_SC_OBJECTS
     ${CMAKE_CURRENT_SOURCE_DIR}/../include
     $<TARGET_PROPERTY:TileDB::tiledb_shared,INTERFACE_INCLUDE_DIRECTORIES>
     $<TARGET_PROPERTY:spdlog::spdlog,INTERFACE_INCLUDE_DIRECTORIES>
+    ${pybind11_INCLUDE_DIRS}
 )
 
 ############################################################
@@ -160,6 +165,14 @@ set_target_properties(tiledbsc
 )
 
 ############################################################
+# Python API bindings
+############################################################
+
+if (TILEDBSC_ENABLE_PYTHON)
+  add_subdirectory(pyapi)
+endif()
+
+############################################################
 # CLI executable target
 ############################################################
 
@@ -199,6 +212,7 @@ target_include_directories(tiledbsc-bin
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${CMAKE_CURRENT_SOURCE_DIR}/../include
     ${TILEDB_SC_EXPORT_HEADER_DIR}
+    ${pybind11_INCLUDE_DIRS}
 )
 
 ############################################################
@@ -222,7 +236,7 @@ set_property(
 )
 
 install(
-  TARGETS tiledbsc tiledbsc-bin
+  TARGETS tiledbsc tiledbsc-bin pytiledbsc
   RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
   LIBRARY DESTINATION lib
   ARCHIVE DESTINATION lib

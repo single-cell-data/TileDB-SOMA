@@ -7,6 +7,6 @@
 #include <tiledbsc/managed_query.h>
 #include <tiledbsc/soma.h>
 #include <tiledbsc/soma_collection.h>
-// TODO: #include <tiledbsc/soma_query.h>
+#include <tiledbsc/soma_query.h>
 
 #endif

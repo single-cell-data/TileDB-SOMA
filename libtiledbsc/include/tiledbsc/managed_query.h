@@ -32,11 +32,16 @@ class ManagedQuery {
         size_t initial_cells = TILEDBSC_DEFAULT_ALLOC);
 
     /**
-     * @brief Select columns names to query (dim and attr).
+     * @brief Select columns names to query (dim and attr). If the
+     * `if_not_empty` parameter is `true`, the column will be selected iff the
+     * list of selected columns is empty. This prevents a `select_columns` call
+     * from changing an empty list (all columns) to a subset of columns.
      *
      * @param names Vector of column names
+     * @param if_not_empty Prevent changing an "empty" selection of all columns
      */
-    void select_columns(std::vector<std::string> names);
+    void select_columns(
+        std::vector<std::string> names, bool if_not_empty = false);
 
     /**
      * @brief Select dimension ranges to query.
@@ -49,8 +54,9 @@ class ManagedQuery {
     void select_ranges(
         const std::string& dim, std::vector<std::pair<T, T>> ranges) {
         for (auto& [start, stop] : ranges) {
-            query_->add_range(dim, start, stop);
+            subarray_->add_range(dim, start, stop);
         }
+        sliced_ = true;
     }
 
     /**
@@ -63,23 +69,92 @@ class ManagedQuery {
     template <typename T>
     void select_points(const std::string& dim, std::vector<T> points) {
         for (auto& point : points) {
-            query_->add_range(dim, point, point);
+            subarray_->add_range(dim, point, point);
         }
+        sliced_ = true;
     }
 
     /**
-     * @brief Execute the query and return the number of cells read.
-     * To handle possible incomplete queries, `execute()` must be called until
-     * it returns 0, which indicated the query is complete.
+     * @brief Set a query condition.
+     *
+     * @param qc A TileDB QueryCondition
+     */
+    void set_condition(const QueryCondition& qc) {
+        query_->set_condition(qc);
+        sliced_ = true;
+    }
+
+    /**
+     * @brief Submit the query and return the number of cells read.
+     * To handle incomplete queries, `submit()` must be called until
+     * `is_complete()` is true.
      *
      * For example:
-     *   while (auto num_cells = mq.execute()) {
-     *     // process the results
+     *   while (!mq.is_complete()) {
+     *     auto num_cells = mq.submit();
+     *     // process results
      *   }
      *
      * @return size_t Number of cells read. Returns 0 when the read is complete.
      */
-    size_t execute();
+    size_t submit();
+
+    /**
+     * @brief Return the query status.
+     *
+     * @return Query::Status Query status
+     */
+    Query::Status status() {
+        return query_->query_status();
+    }
+
+    /**
+     * @brief Check if the query is complete.
+     *
+     * @return true Query status is COMPLETE
+     */
+    bool is_complete() {
+        return query_->query_status() == Query::Status::COMPLETE;
+    }
+
+    /**
+     * @brief Return true if an invalid column has been selected.
+     *
+     * @return true An invalid column was selected
+     */
+    bool is_invalid() {
+        return invalid_columns_selected_;
+    }
+
+    /**
+     * @brief Return true if the query has dimension ranges selected or a query
+     * condition applied.
+     *
+     * @return true The query will be sliced
+     */
+    bool is_sliced() {
+        return sliced_;
+    }
+
+    /**
+     * @brief Return true if the query result buffers hold all results from the
+     * query. The return value is false if the query was incomplete.
+     *
+     * @return true The buffers hold all results from the query.
+     */
+    bool results_complete() {
+        return is_complete() && results_complete_;
+    }
+
+    /**
+     * @brief Returns the total number of cells read so far, including any
+     * previous incomplete queries.
+     *
+     * @return size_t Total number of cells read
+     */
+    size_t total_num_cells() {
+        return total_num_cells_;
+    }
 
     /**
      * @brief Return a view of data in column `name`.
@@ -118,6 +193,18 @@ class ManagedQuery {
         return buffers_.at(name)->string_view(index);
     }
 
+    /**
+     * @brief Return results from the query.
+     *
+     * ** WIP FOR TESTING ONLY **
+     *
+     * @return std::unordered_map<std::string, std::shared_ptr<ColumnBuffer>>
+     * Results
+     */
+    std::unordered_map<std::string, std::shared_ptr<ColumnBuffer>> results() {
+        return buffers_;
+    }
+
    private:
     //===================================================================
     //= private non-static
@@ -140,14 +227,32 @@ class ManagedQuery {
     // TileDB array being queried.
     std::shared_ptr<Array> array_;
 
+    // Array schema
+    ArraySchema schema_;
+
     // Initial number of cells to allocate for each ColumnBuffer.
     size_t initial_cells_;
 
     // TileDB query being managed.
     std::unique_ptr<Query> query_;
 
+    // TileDB subarray containing the ranges for slicing.
+    std::unique_ptr<Subarray> subarray_;
+
     // Set of column names to read (dim and attr). If empty, query all columns.
     std::unordered_set<std::string> columns_;
+
+    // Invalid columns have been selected.
+    bool invalid_columns_selected_ = false;
+
+    // Query is sliced with dimension range slices or query conditions.
+    bool sliced_ = false;
+
+    // Results in the buffers are complete (the query was never incomplete)
+    bool results_complete_ = true;
+
+    // Total number of cells read by the query
+    size_t total_num_cells_ = 0;
 
     // Map of column name to ColumnBuffer.
     std::unordered_map<std::string, std::shared_ptr<ColumnBuffer>> buffers_;

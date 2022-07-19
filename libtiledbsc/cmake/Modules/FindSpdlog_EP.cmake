@@ -39,7 +39,7 @@ include(TileDBCommon)
 set(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} "${EP_INSTALL_PREFIX}")
 
 # First try the CMake find module.
-if (TILEDB_SPDLOG_EP_BUILT)
+if (TILEDBSC_SPDLOG_EP_BUILT)
   # If we built it from the source always force no default path
   SET(SPDLOG_NO_DEFAULT_PATH NO_DEFAULT_PATH)
 else()
@@ -101,7 +101,7 @@ if (NOT SPDLOG_FOUND)
       DEPENDS ${SPDLOG_DEPENDS})
     list(APPEND EXTERNAL_PROJECTS ep_spdlog)
     list(APPEND FORWARD_EP_CMAKE_ARGS
-            -DTILEDB_SPDLOG_EP_BUILT=TRUE
+            -DTILEDBSC_SPDLOG_EP_BUILT=TRUE
             )
   else()
     message(FATAL_ERROR "Unable to find spdlog")
@@ -127,10 +127,4 @@ elseif(TARGET spdlog::spdlog)
       target_link_libraries(spdlog::spdlog INTERFACE fmt::fmt)
     endif()
   endif()
-endif()
-
-# If we built a static EP, install it if required.
-if (TILEDB_SPDLOG_EP_BUILT AND TARGET spdlog::spdlog)
-  include(TileDBCommon)
-  install_target_libs(spdlog::spdlog)
 endif()

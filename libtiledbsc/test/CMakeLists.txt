@@ -23,6 +23,8 @@ if (TILEDBSC_TESTING)
         $<TARGET_OBJECTS:TILEDB_SC_OBJECTS>
         unit_column_buffer.cc
         unit_managed_query.cc
+        unit_soma.cc
+        unit_thread_pool.cc
     )
 
     target_link_libraries(unit_sc
@@ -35,9 +37,14 @@ if (TILEDBSC_TESTING)
       PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/../src
         ${CMAKE_CURRENT_SOURCE_DIR}/../include
+        ${pybind11_INCLUDE_DIRS}
     )
 
     target_compile_definitions(unit_sc PRIVATE CATCH_CONFIG_MAIN)
+
+    if (NOT APPLE AND NOT WIN32)
+        target_link_libraries(unit_sc PRIVATE pthread)
+    endif()
 
     add_test(
         NAME "unit_sc"
