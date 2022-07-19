@@ -3,11 +3,6 @@
 
 #include <stdexcept>  // for windows: error C2039: 'runtime_error': is not a member of 'std'
 
-// TODO: pybind11 used for intermediate testing, remove after adding arrow
-#include <pybind11/numpy.h>
-#include <pybind11/pybind11.h>
-namespace py = pybind11;
-
 #include <span>
 #include <tiledb/tiledb>
 
@@ -140,34 +135,6 @@ class ColumnBuffer {
     }
 
     /**
-     * @brief Return a copy of the data as a numpy array for pybind11.
-     *
-     * ** FOR TESTING ONLY **
-     *
-     * @return py::array
-     */
-    py::array py_array() {
-        if (type_ == TILEDB_INT32) {
-            return py::array_t<int32_t>(
-                data<int32_t>().size(), data<int32_t>().data());
-        }
-        if (type_ == TILEDB_INT64) {
-            return py::array_t<int64_t>(
-                data<int64_t>().size(), data<int64_t>().data());
-        }
-        if (type_ == TILEDB_FLOAT32) {
-            return py::array_t<float>(
-                data<float>().size(), data<float>().data());
-        }
-        if (type_ == TILEDB_FLOAT64) {
-            return py::array_t<double>(
-                data<double>().size(), data<double>().data());
-        }
-
-        throw TileDBSCError("[ColumnBuffer] Unsupported type: " + type_);
-    }
-
-    /**
      * @brief Return a view of the ColumnBuffer data.
      *
      * @tparam T Data type
@@ -218,6 +185,15 @@ class ColumnBuffer {
      */
     std::string name() {
         return name_;
+    }
+
+    /**
+     * @brief Return the type of the buffer.
+     *
+     * @return tiledb_datatype_t type
+     */
+    tiledb_datatype_t type() const {
+        return type_;
     }
 
     /**
