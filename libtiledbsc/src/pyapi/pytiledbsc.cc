@@ -1,3 +1,4 @@
+// #include <arrow/python/pyarrow.h>
 #include <pybind11/numpy.h>
 #include <pybind11/pybind11.h>
 #include <pybind11/pytypes.h>
@@ -15,6 +16,7 @@ using namespace tiledbsc;
 namespace py = pybind11;
 
 PYBIND11_MODULE(pytiledbsc, m) {
+    // arrow::py::import_pyarrow();
     m.doc() = "TileDB-SingleCell python library";
 
     // TODO: ColumnBuffer is useful for testing, but may be removed later
@@ -22,7 +24,7 @@ PYBIND11_MODULE(pytiledbsc, m) {
         .def(
             py::init([](std::string& name,
                         tiledb_datatype_t type,
-                        py::int_ num_cells,
+                        int num_cells,
                         py::array data,
                         std::optional<py::array_t<uint64_t>> offsets,
                         std::optional<py::array_t<uint8_t>> validity) {
@@ -79,6 +81,9 @@ PYBIND11_MODULE(pytiledbsc, m) {
                         return py::array_t<double>(
                             buf.data<double>().size(),
                             buf.data<double>().data());
+                    case TILEDB_STRING_ASCII:
+                        return py::array_t<char>(
+                            buf.data<char>().size(), buf.data<char>().data());
                     default:
                         throw TileDBSCError(
                             "[ColumnBuffer] Unsupported type: " + buf.type());

@@ -2,47 +2,31 @@ import pyarrow as pa
 import pytiledbsc
 import pytest
 import numpy as np
+import random
 
 DATA_SIZE = 8
-VERBOSE = False
+VERBOSE = True
 
 rng = np.random.default_rng()
 
 
-def test_int32():
-    data = np.random.randint(-1 << 31, 1 << 31, size=DATA_SIZE, dtype=np.int32)
-    cb = pytiledbsc.ColumnBuffer("buf", pytiledbsc.DataType.INT32, len(data), data)
+def cb_to_arrow(cb):
+    """Convert ColumnBuffer to arrow."""
+    return pa.Array._import_from_c(*cb.to_arrow())
+
+
+def check_array(data, cb):
+    cb_data = cb.data()
 
     if VERBOSE:
-        print(f"Checking: {data} == {cb.data()}")
+        print(f"Expected {type(data)} = {data}")
+        print(f"ColumnBuffer {type(cb_data)} = {cb_data}")
     assert np.array_equal(data, cb.data())
 
-
-def test_int64():
-    data = np.random.randint(-1 << 63, 1 << 63, size=DATA_SIZE, dtype=np.int64)
-    cb = pytiledbsc.ColumnBuffer("buf", pytiledbsc.DataType.INT64, len(data), data)
-
+    arrow = pa.Array._import_from_c(*cb.to_arrow())
     if VERBOSE:
-        print(f"Checking: {data} == {cb.data()}")
-    assert np.array_equal(data, cb.data())
-
-
-def test_float32():
-    data = rng.random(size=DATA_SIZE, dtype=np.float32)
-    cb = pytiledbsc.ColumnBuffer("buf", pytiledbsc.DataType.FLOAT32, len(data), data)
-
-    if VERBOSE:
-        print(f"Checking: {data} == {cb.data()}")
-    assert np.array_equal(data, cb.data())
-
-
-def test_float64():
-    data = rng.random(size=DATA_SIZE, dtype=np.float64)
-    cb = pytiledbsc.ColumnBuffer("buf", pytiledbsc.DataType.FLOAT64, len(data), data)
-
-    if VERBOSE:
-        print(f"Checking: {data} == {cb.data()}")
-    assert np.array_equal(data, cb.data())
+        print(f"Arrow: {type(arrow)} = {arrow}")
+    assert np.array_equal(data, arrow)
 
 
 def test_init():
@@ -61,31 +45,67 @@ def test_init():
             "buf", pytiledbsc.DataType.INT32, len(data), data, offsets, validity
         )
 
-        if VERBOSE:
-            print(f"Checking: {buf.data()} == {data}")
-            print(f"Checking: {buf.offsets()} == {offsets}")
-            print(f"Checking: {buf.validity()} == {validity}")
-
         assert np.array_equal(buf.data(), data)
         assert np.array_equal(buf.offsets(), offsets)
         assert np.array_equal(buf.validity(), validity)
 
 
-def cb_to_arrow(cb):
-    return pa.Array._import_from_c(*cb.to_arrow())
-
-
-def test_arrow():
+def test_int32():
     data = np.random.randint(-1 << 31, 1 << 31, size=DATA_SIZE, dtype=np.int32)
     cb = pytiledbsc.ColumnBuffer("buf", pytiledbsc.DataType.INT32, len(data), data)
 
+    check_array(data, cb)
+
+
+def test_int64():
+    data = np.random.randint(-1 << 63, 1 << 63, size=DATA_SIZE, dtype=np.int64)
+    cb = pytiledbsc.ColumnBuffer("buf", pytiledbsc.DataType.INT64, len(data), data)
+
+    check_array(data, cb)
+
+
+def test_float32():
+    data = rng.random(size=DATA_SIZE, dtype=np.float32)
+    cb = pytiledbsc.ColumnBuffer("buf", pytiledbsc.DataType.FLOAT32, len(data), data)
+
+    check_array(data, cb)
+
+
+def test_float64():
+    data = rng.random(size=DATA_SIZE, dtype=np.float64)
+    cb = pytiledbsc.ColumnBuffer("buf", pytiledbsc.DataType.FLOAT64, len(data), data)
+
+    check_array(data, cb)
+
+
+def test_string():
+    # Generate list of random length strings (omit 0 to avoid string comparison failure)
+    max_len = 64
+    chars = "".join(chr(i) for i in range(0, 256))
+    strings = [
+        "".join(random.choices(chars, k=np.random.randint(max_len)))
+        for i in range(DATA_SIZE)
+    ]
+
+    # Convert to data and offsets
+    pa_data = pa.array(strings)
+    offsets, data = map(np.array, pa_data.buffers()[1:])
+    offsets = offsets.view(np.uint32).astype(np.uint64)
+
+    cb = pytiledbsc.ColumnBuffer(
+        "buf", pytiledbsc.DataType.STRING_ASCII, len(strings), data, offsets
+    )
+
     if VERBOSE:
-        print(f"Checking: {data} == {cb.data()}")
-    assert np.array_equal(data, cb.data())
+        print(f"Expected {type(strings)} = {strings}")
+        print(f"ColumnBuffer {type(data)} = {data}")
+        print(f"ColumnBuffer {type(offsets)} = {offsets}")
 
     arrow = cb_to_arrow(cb)
-    assert np.array_equal(data, arrow)
+    if VERBOSE:
+        print(f"Arrow: {type(arrow)} = {arrow}")
+    assert np.array_equal(strings, arrow)
 
 
 if __name__ == "__main__":
-    test_arrow()
+    test_string()

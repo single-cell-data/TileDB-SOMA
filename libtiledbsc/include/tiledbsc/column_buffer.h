@@ -123,7 +123,7 @@ class ColumnBuffer {
      *
      * @return size_t
      */
-    size_t size() {
+    size_t size() const {
         return num_cells_;
     }
 
@@ -185,7 +185,7 @@ class ColumnBuffer {
      *
      * @return std::string name
      */
-    std::string name() {
+    std::string name() const {
         return name_;
     }
 
@@ -194,21 +194,21 @@ class ColumnBuffer {
      *
      * @return tiledb_datatype_t type
      */
-    tiledb_datatype_t type() {
+    tiledb_datatype_t type() const {
         return type_;
     }
 
     /**
      * @brief Return true if the buffer contains variable length data.
      */
-    bool is_var() {
+    bool is_var() const {
         return !offsets_.empty();
     }
 
     /**
      * @brief Return true if the buffer contains nullable data.
      */
-    bool is_nullable() {
+    bool is_nullable() const {
         return !validity_.empty();
     }
 
