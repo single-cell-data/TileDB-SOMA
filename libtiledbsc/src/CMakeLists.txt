@@ -8,7 +8,6 @@ set(CMAKE_WARN_DEPRECATED OFF CACHE BOOL "" FORCE)
 
 find_package(TileDB_EP REQUIRED)
 find_package(Spdlog_EP REQUIRED)
-find_package(pybind11 REQUIRED)
 
 ############################################################
 # Get source commit hash
@@ -75,7 +74,6 @@ target_include_directories(TILEDB_SC_OBJECTS
     ${CMAKE_CURRENT_SOURCE_DIR}/../include
     $<TARGET_PROPERTY:TileDB::tiledb_shared,INTERFACE_INCLUDE_DIRECTORIES>
     $<TARGET_PROPERTY:spdlog::spdlog,INTERFACE_INCLUDE_DIRECTORIES>
-    ${pybind11_INCLUDE_DIRS}
 )
 
 ############################################################
@@ -212,7 +210,6 @@ target_include_directories(tiledbsc-bin
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${CMAKE_CURRENT_SOURCE_DIR}/../include
     ${TILEDB_SC_EXPORT_HEADER_DIR}
-    ${pybind11_INCLUDE_DIRS}
 )
 
 ############################################################

@@ -35,7 +35,28 @@ PYBIND11_MODULE(pytiledbsc, m) {
             py::arg("data"))
 
         // WARNING: these functions copy!
-        .def("data", &ColumnBuffer::py_array);
+        .def("data", [](ColumnBuffer& buf) -> py::array {
+            switch (buf.type()) {
+                case TILEDB_INT32:
+                    return py::array_t<int32_t>(
+                        buf.data<int32_t>().size(), buf.data<int32_t>().data());
+                case TILEDB_INT64:
+                    return py::array_t<int64_t>(
+                        buf.data<int64_t>().size(), buf.data<int64_t>().data());
+                case TILEDB_FLOAT32:
+                    return py::array_t<float>(
+                        buf.data<float>().size(), buf.data<float>().data());
+                case TILEDB_FLOAT64:
+                    return py::array_t<double>(
+                        buf.data<double>().size(), buf.data<double>().data());
+                case TILEDB_STRING_ASCII:
+                    return py::array_t<char>(
+                        buf.data<char>().size(), buf.data<char>().data());
+                default:
+                    throw TileDBSCError(
+                        "[ColumnBuffer] Unsupported type: " + buf.type());
+            }
+        });
 
     py::class_<SOMA, std::shared_ptr<SOMA>>(m, "SOMA")
         .def(py::init([](std::string_view uri) { return SOMA::open(uri); }))
