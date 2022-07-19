@@ -1,13 +1,34 @@
+import pandas as pd
 import pyarrow as pa
 import pytiledbsc
 import pytest
 import numpy as np
 import random
 
-DATA_SIZE = 8
-VERBOSE = True
+DATA_SIZE = 1 << 14
+VERBOSE = False
 
 rng = np.random.default_rng()
+
+
+def random_strings(max_length=32):
+    # Generate list of random length strings (omit 0 to avoid string comparison failure)
+    chars = "".join(chr(i) for i in range(64, 128))
+    strings = [
+        "".join(random.choices(chars, k=np.random.randint(max_length)))
+        for i in range(DATA_SIZE)
+    ]
+
+    # Convert to data and offsets
+    pa_data = pa.array(strings)
+    offsets, data = map(np.array, pa_data.buffers()[1:])
+    offsets = offsets.view(np.uint32).astype(np.uint64)
+
+    cb = pytiledbsc.ColumnBuffer(
+        "buf", pytiledbsc.DataType.STRING_ASCII, len(strings), data, offsets
+    )
+
+    return strings, cb
 
 
 def check_array(data, cb):
@@ -74,32 +95,45 @@ def test_float64():
 
 
 def test_string():
-    # Generate list of random length strings (omit 0 to avoid string comparison failure)
-    max_len = 64
-    chars = "".join(chr(i) for i in range(1, 256))
-    strings = [
-        "".join(random.choices(chars, k=np.random.randint(max_len)))
-        for i in range(DATA_SIZE)
-    ]
-
-    # Convert to data and offsets
-    pa_data = pa.array(strings)
-    offsets, data = map(np.array, pa_data.buffers()[1:])
-    offsets = offsets.view(np.uint32).astype(np.uint64)
-
-    cb = pytiledbsc.ColumnBuffer(
-        "buf", pytiledbsc.DataType.STRING_ASCII, len(strings), data, offsets
-    )
+    strings, cb = random_strings()
 
     if VERBOSE:
         print(f"Expected {type(strings)} = {strings}")
-        print(f"ColumnBuffer {type(data)} = {data}")
-        print(f"ColumnBuffer {type(offsets)} = {offsets}")
 
     arrow = cb.to_arrow()
     if VERBOSE:
         print(f"Arrow: {type(arrow)} = {arrow}")
     assert np.array_equal(strings, arrow)
+
+
+def test_table():
+    a = np.random.randint(-1 << 31, 1 << 31, size=DATA_SIZE, dtype=np.int32)
+    a_cb = pytiledbsc.ColumnBuffer("a", pytiledbsc.DataType.INT32, len(a), a)
+    b = np.random.randint(-1 << 63, 1 << 63, size=DATA_SIZE, dtype=np.int64)
+    b_cb = pytiledbsc.ColumnBuffer("b", pytiledbsc.DataType.INT64, len(b), b)
+    c = rng.random(size=DATA_SIZE, dtype=np.float32)
+    c_cb = pytiledbsc.ColumnBuffer("c", pytiledbsc.DataType.FLOAT32, len(c), c)
+    d = rng.random(size=DATA_SIZE, dtype=np.float64)
+    d_cb = pytiledbsc.ColumnBuffer("d", pytiledbsc.DataType.FLOAT64, len(d), d)
+    e, e_cb = random_strings(8)
+
+    tb = pytiledbsc.TableBuffer({"a": a_cb, "b": b_cb, "c": c_cb, "d": d_cb, "e": e_cb})
+    arrow = tb.to_arrow()
+    df = arrow.to_pandas()
+    df_expected = pd.DataFrame({"a": a, "b": b, "c": c, "d": d, "e": e})
+
+    if VERBOSE:
+        print("Arrow")
+        print(type(arrow))
+        print(arrow)
+        print("Expected")
+        print(type(df_expected))
+        print(df_expected)
+        print("Actual")
+        print(type(df))
+        print(df)
+
+    assert df_expected.equals(df)
 
 
 if __name__ == "__main__":

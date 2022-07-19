@@ -7,6 +7,7 @@
 
 #include <tiledbsc/tiledbsc>
 
+#include "tiledbsc/table_buffer.h"
 #include "tiledbsc/tiledb_arrow.h"
 
 #define DENUM(x) .value(#x, TILEDB_##x)
@@ -20,22 +21,24 @@ py::object to_array(ColumnBuffer& cb) {
     auto pa_array_import = pa.attr("Array").attr("_import_from_c");
 
     auto [array, schema] = ArrowAdapter::to_arrow(cb);
-
     return pa_array_import(py::capsule(array.get()), py::capsule(schema.get()));
-    //        py::int_((ptrdiff_t)array.get()),
-    //        py::int_((ptrdiff_t)schema.get()));
 }
 
-/*
 py::object to_table(TableBuffer& tb) {
     auto pa = py::module::import("pyarrow");
-    auto pa_array_import = pa.attr("Array").attr("_import_from_c");
+    auto pa_table_from_arrays = pa.attr("Table").attr("from_arrays");
 
-    auto pa_table = pa.attr("Table").attr("from_arrays")(
-        results, "names"_a = names);
-    return pa_table;
+    py::list names;
+    py::list arrays;
+
+    for (auto& [name, column] : tb.get_columns()) {
+        names.append(name);
+        arrays.append(to_array(*column));
+    }
+
+    auto table = pa_table_from_arrays(arrays, names);
+    return table;
 }
-*/
 
 PYBIND11_MODULE(pytiledbsc, m) {
     // arrow::py::import_pyarrow();
@@ -123,6 +126,10 @@ PYBIND11_MODULE(pytiledbsc, m) {
             auto v = buf.validity();
             return py::array_t<uint8_t>(v.size(), v.data());
         });
+
+    py::class_<TableBuffer>(m, "TableBuffer")
+        .def(py::init<std::map<std::string, std::shared_ptr<ColumnBuffer>>>())
+        .def("to_arrow", [](TableBuffer& tb) { return to_table(tb); });
 
     py::class_<SOMA, std::shared_ptr<SOMA>>(m, "SOMA")
         .def(py::init([](std::string_view uri) { return SOMA::open(uri); }))

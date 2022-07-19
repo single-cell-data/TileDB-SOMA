@@ -67,27 +67,6 @@ class ArrowAdapter {
         return std::tuple(std::move(array), std::move(schema));
     }
 
-    /**
-     * @brief Convert TableBuffer to an Arrow table.
-     *
-     * @return auto
-     */
-    static auto to_arrow(TableBuffer& table) {
-        std::shared_ptr<ArrowSchema> schema = std::make_shared<ArrowSchema>();
-        std::shared_ptr<ArrowArray> array = std::make_shared<ArrowArray>();
-
-        // Build vector of schemas to populate the children
-        std::vector<ArrowSchema*> child_schemas;
-        std::vector<ArrowArray*> child_arrays;
-        for (auto& [name, column] : table) {
-            auto [child_array, child_schema] = to_arrow(column);
-            child_schemas.push_back(child_schema.get());
-            child_arrays.push_back(child_array.get());
-        }
-
-        return std::tuple(std::move(array), std::move(schema));
-    }
-
     static int num_buffers(const ColumnBuffer& cb) {
         int result = 2;
         result += cb.is_var();
