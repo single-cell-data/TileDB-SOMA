@@ -7,10 +7,10 @@
 #### describe\_ann\_file
 
 ```python
-def describe_ann_file(input_path: str,
-                      show_summary=True,
-                      show_types=False,
-                      show_data=False) -> None
+def describe_ann_file(input_path: Path,
+                      show_summary: bool = True,
+                      show_types: bool = False,
+                      show_data: bool = False) -> None
 ```
 
 This is an anndata-describer that goes a bit beyond what `h5ls` does for us.

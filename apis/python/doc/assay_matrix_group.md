@@ -39,7 +39,7 @@ See `AssayMatrix` for the rationale behind retaining references to the `row_data
 #### keys
 
 ```python
-def keys() -> List[str]
+def keys() -> Sequence[str]
 ```
 
 For `obsm` and `varm`, `.keys()` is a keystroke-saver for the more general group-member
@@ -60,7 +60,7 @@ Default display of soma.X.
 #### \_\_getattr\_\_
 
 ```python
-def __getattr__(name) -> Optional[AssayMatrix]
+def __getattr__(name: str) -> Optional[AssayMatrix]
 ```
 
 This is called on `soma.X.name` when `name` is not already an attribute.
@@ -71,7 +71,7 @@ This way you can do `soma.X.data` as an alias for `soma.X['data']`.
 #### \_\_getitem\_\_
 
 ```python
-def __getitem__(name) -> Optional[AssayMatrix]
+def __getitem__(name: str) -> Optional[AssayMatrix]
 ```
 
 Returns an `AnnotationMatrix` element at the given name within the group, or None if no such
@@ -82,7 +82,7 @@ member exists.  Overloads the `[...]` operator.
 #### \_\_contains\_\_
 
 ```python
-def __contains__(name) -> bool
+def __contains__(name: str) -> bool
 ```
 
 Implements the `in` operator, e.g. `"data" in soma.X`.
@@ -102,10 +102,10 @@ Implements `for matrix in soma.obsm: ...` and `for matrix in soma.varm: ...`
 #### add\_layer\_from\_matrix\_and\_dim\_values
 
 ```python
-def add_layer_from_matrix_and_dim_values(matrix,
-                                         row_names: List[str],
-                                         col_names: List[str],
-                                         layer_name="data") -> None
+def add_layer_from_matrix_and_dim_values(matrix: Matrix,
+                                         row_names: Labels,
+                                         col_names: Labels,
+                                         layer_name: str = "data") -> None
 ```
 
 Populates the `X` or `raw.X` subgroup for a `SOMA` object.  For `X` and `raw.X`,

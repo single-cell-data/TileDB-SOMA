@@ -38,7 +38,7 @@ Convenience accessors include:
 ```python
 def __init__(uri: str,
              *,
-             name=None,
+             name: Optional[str] = None,
              soma_options: Optional[SOMAOptions] = None,
              config: Optional[tiledb.Config] = None,
              ctx: Optional[tiledb.Ctx] = None,
@@ -61,23 +61,12 @@ def __repr__() -> str
 
 Default display of SOMA.
 
-<a id="tiledbsc.soma.SOMA.__getattr__"></a>
-
-#### \_\_getattr\_\_
-
-```python
-def __getattr__(name)
-```
-
-This is called on `soma.name` when `name` is not already an attribute.
-This is used for `soma.n_obs`, etc.
-
 <a id="tiledbsc.soma.SOMA.obs_keys"></a>
 
 #### obs\_keys
 
 ```python
-def obs_keys() -> List[str]
+def obs_keys() -> Sequence[str]
 ```
 
 An alias for `soma.obs.ids()`.
@@ -87,7 +76,7 @@ An alias for `soma.obs.ids()`.
 #### var\_keys
 
 ```python
-def var_keys() -> List[str]
+def var_keys() -> Sequence[str]
 ```
 
 An alias for `soma.var.ids()`.
@@ -119,7 +108,8 @@ values for that label in the SOMA.
 #### dim\_slice
 
 ```python
-def dim_slice(obs_ids, var_ids) -> Optional[SOMASlice]
+def dim_slice(obs_ids: Optional[Ids],
+              var_ids: Optional[Ids]) -> Optional[SOMASlice]
 ```
 
 Subselects the SOMA's obs, var, and X/data using the specified obs_ids and var_ids.
@@ -132,12 +122,12 @@ Returns `None` for empty slice.
 
 ```python
 def query(*,
-          obs_attrs: Optional[List[str]] = None,
+          obs_attrs: Optional[Sequence[str]] = None,
           obs_query_string: Optional[str] = None,
-          obs_ids: Optional[List[str]] = None,
-          var_attrs: Optional[List[str]] = None,
+          obs_ids: Optional[Ids] = None,
+          var_attrs: Optional[Sequence[str]] = None,
           var_query_string: Optional[str] = None,
-          var_ids: Optional[List[str]] = None) -> Optional[SOMASlice]
+          var_ids: Optional[Ids] = None) -> Optional[SOMASlice]
 ```
 
 Subselects the SOMA's obs, var, and X/data using the specified queries on obs and var.
@@ -158,7 +148,7 @@ from the source SOMAs; if they are specified, the slice will take the specified 
 def from_soma_slice(cls,
                     soma_slice: SOMASlice,
                     uri: str,
-                    name=None,
+                    name: Optional[str] = None,
                     soma_options: Optional[SOMAOptions] = None,
                     config: Optional[tiledb.Config] = None,
                     ctx: Optional[tiledb.Ctx] = None,

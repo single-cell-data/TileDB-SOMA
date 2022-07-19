@@ -19,7 +19,10 @@ requested.
 #### \_\_init\_\_
 
 ```python
-def __init__(uri: str, name: str, *, parent=None)
+def __init__(uri: str,
+             name: str,
+             *,
+             parent: Optional["tiledbsc.TileDBGroup"] = None)
 ```
 
 See the TileDBObject constructor.
@@ -41,7 +44,7 @@ SOMA has been populated but doesn't have this member (e.g. not all SOMAs have a 
 #### tiledb\_array\_schema
 
 ```python
-def tiledb_array_schema()
+def tiledb_array_schema() -> tiledb.ArraySchema
 ```
 
 Returns the TileDB array schema.
@@ -51,7 +54,7 @@ Returns the TileDB array schema.
 #### dim\_names
 
 ```python
-def dim_names() -> List[str]
+def dim_names() -> Sequence[str]
 ```
 
 Reads the dimension names from the schema: for example, ['obs_id', 'var_id'].
@@ -71,7 +74,7 @@ Returns a dict mapping from dimension name to dimension type.
 #### attr\_names
 
 ```python
-def attr_names() -> List[str]
+def attr_names() -> Sequence[str]
 ```
 
 Reads the attribute names from the schema: for example, the list of column names in a dataframe.
@@ -101,27 +104,17 @@ Returns true if the array has the specified attribute name, false otherwise.
 #### has\_attr\_names
 
 ```python
-def has_attr_names(attr_names: List[str]) -> bool
+def has_attr_names(attr_names: Sequence[str]) -> bool
 ```
 
 Returns true if the array has all of the specified attribute names, false otherwise.
-
-<a id="tiledbsc.tiledb_array.TileDBArray.get_object_type"></a>
-
-#### get\_object\_type
-
-```python
-def get_object_type() -> str
-```
-
-Returns the class name associated with the array.
 
 <a id="tiledbsc.tiledb_array.TileDBArray.show_metadata"></a>
 
 #### show\_metadata
 
 ```python
-def show_metadata(recursively=True, indent="") -> None
+def show_metadata(recursively: bool = True, indent: str = "") -> None
 ```
 
 Shows metadata for the array.

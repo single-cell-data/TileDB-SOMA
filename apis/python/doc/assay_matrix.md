@@ -63,7 +63,7 @@ Note: currently implemented via data scan -- will be optimized for TileDB core 2
 #### dim\_select
 
 ```python
-def dim_select(obs_ids, var_ids) -> pd.DataFrame
+def dim_select(obs_ids: Optional[Ids], var_ids: Optional[Ids]) -> pd.DataFrame
 ```
 
 Selects a slice out of the matrix with specified `obs_ids` and/or `var_ids`.
@@ -75,7 +75,8 @@ that dimension. If both ID lists are `None`, the entire matrix is returned.
 #### df
 
 ```python
-def df(obs_ids=None, var_ids=None) -> pd.DataFrame
+def df(obs_ids: Optional[Ids] = None,
+       var_ids: Optional[Ids] = None) -> pd.DataFrame
 ```
 
 Keystroke-saving alias for `.dim_select()`. If either of `obs_ids` or `var_ids`
@@ -86,7 +87,8 @@ are provided, they're used to subselect; if not, the entire dataframe is returne
 #### csr
 
 ```python
-def csr(obs_ids=None, var_ids=None) -> scipy.sparse.csr_matrix
+def csr(obs_ids: Optional[Ids] = None,
+        var_ids: Optional[Ids] = None) -> sp.csr_matrix
 ```
 
 Like `.df()` but returns results in `scipy.sparse.csr_matrix` format.
@@ -96,7 +98,8 @@ Like `.df()` but returns results in `scipy.sparse.csr_matrix` format.
 #### csc
 
 ```python
-def csc(obs_ids=None, var_ids=None) -> scipy.sparse.csc_matrix
+def csc(obs_ids: Optional[Ids] = None,
+        var_ids: Optional[Ids] = None) -> sp.csc_matrix
 ```
 
 Like `.df()` but returns results in `scipy.sparse.csc_matrix` format.
@@ -106,7 +109,8 @@ Like `.df()` but returns results in `scipy.sparse.csc_matrix` format.
 #### from\_matrix\_and\_dim\_values
 
 ```python
-def from_matrix_and_dim_values(matrix, row_names, col_names) -> None
+def from_matrix_and_dim_values(matrix: Matrix, row_names: Labels,
+                               col_names: Labels) -> None
 ```
 
 Imports a matrix -- nominally `scipy.sparse.csr_matrix` or `numpy.ndarray` -- into a TileDB
@@ -121,10 +125,13 @@ For ingest from `AnnData`, these should be `ann.obs_names` and `ann.var_names`.
 #### ingest\_data\_whole
 
 ```python
-def ingest_data_whole(matrix, row_names, col_names) -> None
+def ingest_data_whole(matrix: Matrix, row_names: Union[np.ndarray, pd.Index],
+                      col_names: Union[np.ndarray, pd.Index]) -> None
 ```
 
-Convert `numpy.ndarray`, `scipy.sparse.csr_matrix`, or `scipy.sparse.csc_matrix` to COO matrix and ingest into TileDB.
+Convert `numpy.ndarray`, `scipy.sparse.csr_matrix`, or `scipy.sparse.csc_matrix`
+
+to COO matrix and ingest into TileDB.
 
 **Arguments**:
 
@@ -137,7 +144,9 @@ Convert `numpy.ndarray`, `scipy.sparse.csr_matrix`, or `scipy.sparse.csc_matrix`
 #### ingest\_data\_rows\_chunked
 
 ```python
-def ingest_data_rows_chunked(matrix, row_names, col_names) -> None
+def ingest_data_rows_chunked(matrix: sp.csr_matrix,
+                             row_names: Union[np.ndarray, pd.Index],
+                             col_names: Union[np.ndarray, pd.Index]) -> None
 ```
 
 Convert csr_matrix to coo_matrix chunkwise and ingest into TileDB.
@@ -154,7 +163,9 @@ Convert csr_matrix to coo_matrix chunkwise and ingest into TileDB.
 #### ingest\_data\_cols\_chunked
 
 ```python
-def ingest_data_cols_chunked(matrix, row_names, col_names) -> None
+def ingest_data_cols_chunked(matrix: sp.csc_matrix,
+                             row_names: Union[np.ndarray, pd.Index],
+                             col_names: Union[np.ndarray, pd.Index]) -> None
 ```
 
 Convert csc_matrix to coo_matrix chunkwise and ingest into TileDB.
@@ -171,7 +182,9 @@ Convert csc_matrix to coo_matrix chunkwise and ingest into TileDB.
 #### ingest\_data\_dense\_rows\_chunked
 
 ```python
-def ingest_data_dense_rows_chunked(matrix, row_names, col_names) -> None
+def ingest_data_dense_rows_chunked(
+        matrix: np.ndarray, row_names: Union[np.ndarray, pd.Index],
+        col_names: Union[np.ndarray, pd.Index]) -> None
 ```
 
 Convert dense matrix to coo_matrix chunkwise and ingest into TileDB.
@@ -188,7 +201,7 @@ Convert dense matrix to coo_matrix chunkwise and ingest into TileDB.
 #### to\_csr\_matrix
 
 ```python
-def to_csr_matrix(row_labels, col_labels) -> scipy.sparse.csr_matrix
+def to_csr_matrix(row_labels: Labels, col_labels: Labels) -> sp.csr_matrix
 ```
 
 Reads the TileDB array storage for the storage and returns a sparse CSR matrix.  The

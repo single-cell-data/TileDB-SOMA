@@ -56,6 +56,8 @@ add_library(TILEDB_SC_OBJECTS OBJECT
   ${CMAKE_CURRENT_SOURCE_DIR}/util.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/thread_pool/thread_pool.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/thread_pool/status.cc
+  ${CMAKE_CURRENT_SOURCE_DIR}/thread_pool/thread_pool.cc
+  ${CMAKE_CURRENT_SOURCE_DIR}/thread_pool/status.cc
 )
 
 message(WARNING "Building TileDB without deprecation warnings")

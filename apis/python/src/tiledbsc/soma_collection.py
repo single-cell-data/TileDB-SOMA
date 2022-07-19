@@ -1,4 +1,4 @@
-from typing import Iterator, Optional, Sequence, Set, Union
+from typing import Dict, Iterator, Optional, Sequence, Set, Union
 
 import tiledb
 
@@ -13,6 +13,12 @@ class SOMACollection(TileDBGroup):
     """
     Implements a collection of `SOMA` objects.
     """
+
+    # This is a cache to avoid the overhead of calling the SOMA constructor repeatedly.  That
+    # constructor isn't particuarly expensive, except that for tiledb-cloud URIs it needs to
+    # interrogate the server repeatedly for recursive group-member URIs, which has web-request
+    # latency.
+    _somas: Dict[str, SOMA]
 
     # ----------------------------------------------------------------
     def __init__(
@@ -58,6 +64,8 @@ class SOMACollection(TileDBGroup):
             ctx=ctx,
         )
 
+        self._somas = {}
+
     # ----------------------------------------------------------------
     def __repr__(self) -> str:
         """
@@ -80,11 +88,11 @@ class SOMACollection(TileDBGroup):
         return len(self._get_member_names())
 
     # ----------------------------------------------------------------
-    def add(self, soma: SOMA) -> None:
+    def add(self, soma: SOMA, relative: Optional[bool] = None) -> None:
         """
         Adds a `SOMA` to the `SOMACollection`.
         """
-        self._add_object(soma)
+        self._add_object(soma, relative)
 
     # ----------------------------------------------------------------
     def remove(self, soma: Union[SOMA, str]) -> None:
@@ -121,7 +129,10 @@ class SOMACollection(TileDBGroup):
         Implements `for soma in soco: ...`
         """
         for name, uri in self._get_member_names_to_uris().items():
-            yield SOMA(uri=uri, name=name, parent=self, ctx=self._ctx)
+            if name not in self._somas:
+                # SOMA-constructor cache
+                self._somas[name] = SOMA(uri=uri, name=name, parent=self, ctx=self._ctx)
+            yield self._somas[name]
 
     # ----------------------------------------------------------------
     def __contains__(self, name: str) -> bool:
@@ -152,6 +163,10 @@ class SOMACollection(TileDBGroup):
         Returns a `SOMA` element at the given name within the group, or `None` if no such
         member exists.  Overloads the `[...]` operator.
         """
+        if name in self._somas:
+            # SOMA-constructor cache
+            return self._somas[name]
+
         with self._open("r") as G:
             try:
                 obj = G[name]  # This returns a tiledb.object.Object.

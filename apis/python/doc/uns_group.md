@@ -27,7 +27,7 @@ See the TileDBObject constructor.
 #### keys
 
 ```python
-def keys() -> List[str]
+def keys() -> Sequence[str]
 ```
 
 For uns, `.keys()` is a keystroke-saver for the more general group-member
@@ -38,7 +38,7 @@ accessor `._get_member_names()`.
 #### \_\_getitem\_\_
 
 ```python
-def __getitem__(name)
+def __getitem__(name: str) -> Union[UnsGroup, UnsArray, None]
 ```
 
 Returns an `UnsArray` or `UnsGroup` element at the given name within the group, or None if
@@ -49,7 +49,7 @@ no such member exists.  Overloads the [...] operator.
 #### \_\_contains\_\_
 
 ```python
-def __contains__(name) -> bool
+def __contains__(name: str) -> bool
 ```
 
 Implements '"namegoeshere" in soma.uns'.
@@ -79,7 +79,7 @@ Default display for uns groups.
 #### from\_anndata\_uns
 
 ```python
-def from_anndata_uns(uns: ad.compat.OverloadedDict) -> None
+def from_anndata_uns(uns: Mapping[str, Any]) -> None
 ```
 
 Populates the uns group for the soma object.
@@ -93,8 +93,9 @@ Populates the uns group for the soma object.
 #### to\_dict\_of\_matrices
 
 ```python
-def to_dict_of_matrices() -> Dict
+def to_dict_of_matrices() -> Mapping[str, Any]
 ```
 
-Reads the recursive group/array uns data from TileDB storage and returns them as a recursive dict of matrices.
+Reads the recursive group/array uns data from TileDB storage
+and returns them as a recursive dict of matrices.
 

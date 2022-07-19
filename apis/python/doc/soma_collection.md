@@ -19,7 +19,7 @@ Implements a collection of `SOMA` objects.
 ```python
 def __init__(uri: str,
              *,
-             name="soco",
+             name: str = "soco",
              soma_options: Optional[SOMAOptions] = None,
              config: Optional[tiledb.Config] = None,
              ctx: Optional[tiledb.Ctx] = None,
@@ -99,7 +99,7 @@ Removes a `SOMA` from the `SOMACollection`, when invoked as `del soco["namegoesh
 #### keys
 
 ```python
-def keys() -> List[str]
+def keys() -> Sequence[str]
 ```
 
 Returns the names of the SOMAs in the collection.
@@ -129,7 +129,7 @@ Implements `name in soco`
 #### \_\_getitem\_\_
 
 ```python
-def __getitem__(name) -> Optional[SOMA]
+def __getitem__(name: str) -> Optional[SOMA]
 ```
 
 Returns a `SOMA` element at the given name within the group, or `None` if no such
@@ -141,12 +141,12 @@ member exists.  Overloads the `[...]` operator.
 
 ```python
 def query(*,
-          obs_attrs: Optional[List[str]] = None,
-          obs_query_string: str = None,
-          obs_ids: List[str] = None,
-          var_attrs: Optional[List[str]] = None,
-          var_query_string: str = None,
-          var_ids: List[str] = None) -> Optional[SOMASlice]
+          obs_attrs: Optional[Sequence[str]] = None,
+          obs_query_string: Optional[str] = None,
+          obs_ids: Optional[Ids] = None,
+          var_attrs: Optional[Sequence[str]] = None,
+          var_query_string: Optional[str] = None,
+          var_ids: Optional[Ids] = None) -> Optional[SOMASlice]
 ```
 
 Subselects the obs, var, and X/data using the specified queries on obs and var,
@@ -169,7 +169,7 @@ needn't specify these; if they don't, you must.
 #### find\_unique\_obs\_values
 
 ```python
-def find_unique_obs_values(obs_label: str) -> Set
+def find_unique_obs_values(obs_label: str) -> Set[str]
 ```
 
 Given an `obs` label such as `cell_type` or `tissue`, returns a set of unique
@@ -180,7 +180,7 @@ values for that label among all SOMAs in the collection.
 #### find\_unique\_var\_values
 
 ```python
-def find_unique_var_values(var_label: str) -> Set
+def find_unique_var_values(var_label: str) -> Set[str]
 ```
 
 Given an `var` label such as `feature_name`, returns a set of unique values for
