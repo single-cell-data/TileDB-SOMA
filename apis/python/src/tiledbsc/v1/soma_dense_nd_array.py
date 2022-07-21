@@ -4,7 +4,6 @@ import numpy as np
 import pyarrow as pa
 import tiledb
 
-# from .logging import log_io
 from .tiledb_array import TileDBArray
 from .tiledb_group import TileDBGroup
 from .util import tiledb_type_from_arrow_type

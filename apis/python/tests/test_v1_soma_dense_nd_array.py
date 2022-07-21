@@ -1,11 +1,14 @@
-import tiledbsc.v1
-import pyarrow as pa
 import numpy as np
+import pyarrow as pa
+
+import tiledbsc.v1
+
 
 def test_soma_dense_nd_array_ok_no_storage():
     arr = tiledbsc.v1.SOMASparseNdArray(uri="/foo/bar")
     assert arr.get_uri() == "/foo/bar"
     assert arr.get_name() == "bar"
+
 
 def test_soma_dense_nd_array(tmp_path):
     nr = 10
