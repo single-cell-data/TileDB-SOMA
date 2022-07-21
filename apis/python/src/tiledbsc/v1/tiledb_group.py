@@ -50,14 +50,12 @@ class TileDBGroup(TileDBObject):
     #        # and it turns out caching the existence-check isn't a robust approach.
     #        return bool(tiledb.object_type(self._uri, ctx=self._ctx) == "group")
 
-    #    def create_unless_exists(self) -> None:
-    #        """
-    #        Creates the TileDB group data structure on disk/S3/cloud, unless it already exists.
-    #        """
-    #        if not self.exists():
-    #            logger.debug(f"{self._indent}Creating TileDB group {self._uri}")
-    #            tiledb.group_create(uri=self._uri, ctx=self._ctx)
-    #            self._set_object_type_metadata()
+    def create(self) -> None:
+        """
+        Creates the TileDB group data structure on disk/S3/cloud.
+        """
+        tiledb.group_create(uri=self._uri, ctx=self._ctx)
+        self._set_object_type_metadata()
 
     def _open(self, mode: str = "r") -> tiledb.Group:
         """
@@ -65,8 +63,6 @@ class TileDBGroup(TileDBObject):
         It works asa `with self._open() as G:` as well as `G = self._open(); ...; G.close()`.
         """
         assert mode in ("r", "w")
-        if mode == "r" and not self.exists():
-            raise Exception(f"Does not exist: {self._uri}")
         # This works in with-open-as contexts because tiledb.Group has __enter__ and __exit__ methods.
         return tiledb.Group(self._uri, mode=mode, ctx=self._ctx)
 

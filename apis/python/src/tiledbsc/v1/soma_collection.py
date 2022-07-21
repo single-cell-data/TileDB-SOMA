@@ -1,21 +1,7 @@
-# from typing import List, Optional
-from typing import Optional
+from typing import Dict, Optional
 
-#
-# from .logging import log_io
-# from .tiledb_array import TileDBArray
 from .tiledb_group import TileDBGroup
-
-# from typing import Optional, Sequence, Set, Tuple
-
-# import numpy as np
-# import pandas as pd
-# import tiledb
-
-# import tiledbsc.v1.util as util
-
-
-# from .types import Ids
+from .tiledb_object import TileDBObject
 
 
 class SOMACollection(TileDBGroup):
@@ -25,8 +11,8 @@ class SOMACollection(TileDBGroup):
     SOMASparseNdArray or SOMAExperiment.
     """
 
-    # create(uri)
-    # Create a SOMACollection named with the URI.
+    # TODO: comment re the performance impact of this cache.
+    _members: Dict[str, TileDBObject]
 
     def __init__(
         self,
@@ -40,47 +26,87 @@ class SOMACollection(TileDBGroup):
         """
 
         super().__init__(uri=uri, name=name, parent=parent)
+        self._members = {}
+
+    # create is inherited from TileDBGroup
+    # Create a SOMACollection named with the URI.
+
+    # delete(uri)
+    # Delete the SOMACollection specified with the URI.
+
+    #    # TODO: static/class method?
+    #    #    def delete(uri: str) -> None
+    #    #        """
+    #    #        Delete the SOMADataFrame specified with the URI.
+    #    #        """
+
+    # exists(uri) -> bool
+    # Return true if object exists and is a SOMACollection.
+
+    #    # TODO: static/class method?
+    #    #    def exists(uri: str) -> bool
+    #    #        """
+    #    #        Return true if object exists and is a SOMADataFrame.
+    #    #        """
+
+    # get metadata
+    # Access the metadata as a mutable [`SOMAMetadataMapping`](#SOMAMetadataMapping)
+
+    #    #    def get_metadata():
+    #    #        """
+    #    #        Access the metadata as a mutable [`SOMAMetadataMapping`](#SOMAMetadataMapping)
+    #    #        """
+
+    #    # get_type() is inherited from TileDBObject
+
+    # get(string key)
+    # Get the object associated with the key
+
+    # has(string key)
+    # Test for the existence of key in collection.
+
+    # set(string key, ValueType value)
+    # Set the key/value in the collection.
+
+    # ----------------------------------------------------------------
+    def set(self, member: TileDBObject, relative: Optional[bool] = None) -> None:
+        """
+        Adds a member to the colleciton.
+        """
+        self._add_object(member, relative)
+
+    # TODO: note for the SOMA v1 spec: it says `del` not `delete` but `del` is a reserved word in Python.
+    def delete(self, member_name: str) -> None:
+        """
+        Removes a member from the collection, when invoked as `collection.remove("namegoeshere")`.
+        """
+        self._remove_object_by_name(member_name)
+
+    def __delattr__(self, member_name: str) -> None:
+        """
+        Removes a member from the collection, when invoked as `del collection.namegoeshere`.
+        """
+        self.delete(member_name)
+
+    def __delitem__(self, member_name: str) -> None:
+        """
+        Removes a member from the collection, when invoked as `del collection["namegoeshere"]`.
+        """
+        self.delete(member_name)
 
 
-# delete(uri)
-# Delete the SOMACollection specified with the URI.
-
-#    # TODO: static/class method?
-#    #    def delete(uri: str) -> None
-#    #        """
-#    #        Delete the SOMADataFrame specified with the URI.
-#    #        """
-
-# exists(uri) -> bool
-# Return true if object exists and is a SOMACollection.
-
-#    # TODO: static/class method?
-#    #    def exists(uri: str) -> bool
-#    #        """
-#    #        Return true if object exists and is a SOMADataFrame.
-#    #        """
-
-# get metadata
-# Access the metadata as a mutable [`SOMAMetadataMapping`](#SOMAMetadataMapping)
-
-#    #    def get_metadata():
-#    #        """
-#    #        Access the metadata as a mutable [`SOMAMetadataMapping`](#SOMAMetadataMapping)
-#    #        """
-
-#    # get_type() is inherited from TileDBObject
-
-# get(string key)
-# Get the object associated with the key
-
-# has(string key)
-# Test for the existence of key in collection.
-
-# set(string key, ValueType value)
-# Set the key/value in the collection.
-
-# del(string key)
-# Remove the key/value from the collection.
-
-# iterator
-# Iterate over the collection.
+#    # ----------------------------------------------------------------
+#    def __iter__(self) -> Iterator[TileDBObject]:
+#        """
+#        Iterates over the collection.  Implements Python `for member in collection: ...` syntax.
+#        """
+#        for name, uri in self._get_member_names_to_uris().items():
+#            if name not in self._members:
+#                # member-constructor cache -- this is an important optimization for
+#                # cloud storage, as URI-resolvers require HTTP requests
+#                #
+#                # TODO: need to read object metadata, including the classname, so we
+#                # can invoke the right constructor here -- not just TileDBObject --
+#                # so we can get a polymorphic return value.
+#                self._members[name] = TileDBObject(uri=uri, name=name, parent=self, ctx=self._ctx)
+#            yield self._members[name]
