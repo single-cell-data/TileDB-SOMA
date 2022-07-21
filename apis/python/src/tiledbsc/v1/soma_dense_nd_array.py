@@ -1,17 +1,13 @@
-from typing import Optional, Tuple
+from typing import Any, List, Optional, Tuple, Union
+
+import numpy as np
+import pyarrow as pa
+import tiledb
 
 # from .logging import log_io
 from .tiledb_array import TileDBArray
 from .tiledb_group import TileDBGroup
-
-# from typing import Optional, Sequence, Set, Tuple
-
-# import tiledb
-
-# import tiledbsc.v1.util as util
-
-
-# from .types import Ids
+from .util import tiledb_type_from_arrow_type
 
 
 # TODO: rethink parenting -- add a middle layer
@@ -32,31 +28,68 @@ class SOMADenseNdArray(TileDBArray):
         """
         Also see the :class:`TileDBObject` constructor.
         """
-        # TODO: more options
-        # assert name in ["obs", "var"]
-
         super().__init__(uri=uri, name=name, parent=parent)
 
-    # ----------------------------------------------------------------
-    # create(uri, ...)
-    # Create a SOMADenseNdArray named with the URI.
+    def create(
+        self,
+        type: pa.DataType,
+        shape: Union[Tuple, List[int]],
+    ) -> None:
+        """
+        Create a SOMADenseNdArray named with the URI.
 
-    # ### Operation: create()
-    #
-    # Create a new SOMADenseNdArray with user-specified URI and schema.
-    #
-    # ```
-    # create(string uri, type, shape) -> void
-    # ```
-    #
-    # Parameters:
-    #
-    # - uri - location at which to create the object
-    # - type - an Arrow type defining the type of each element in the array. If the type is unsupported, an error will be raised.
-    # - shape - the length of each domain as a list, e.g., [100, 10]. All lengths must be in the uint64 range.
+        :param type: an Arrow type defining the type of each element in the array. If the type is
+        unsupported, an error will be raised.
 
-    #        # TODO: type,
-    #        shape: Tuple[int],
+        :param shape: the length of each domain as a list, e.g., [100, 10]. All lengths must be in
+        the uint64 range.
+        """
+
+        # checks on shape
+        assert len(shape) > 0
+        for e in shape:
+            assert e > 0
+
+        level = self._soma_options.string_dim_zstd_level
+
+        dims = []
+        for e in shape:
+            dim = tiledb.Dim(
+                # Use tiledb default names like `__dim_0`
+                domain=(0, e - 1),
+                tile=min(e, 2048),  # TODO: PARAMETERIZE
+                dtype=np.uint64,
+                filters=[tiledb.ZstdFilter(level=level)],
+            )
+            dims.append(dim)
+        dom = tiledb.Domain(dims, ctx=self._ctx)
+
+        attrs = [
+            tiledb.Attr(
+                name="data",
+                dtype=tiledb_type_from_arrow_type(type),
+                filters=[tiledb.ZstdFilter()],
+                ctx=self._ctx,
+            )
+        ]
+
+        sch = tiledb.ArraySchema(
+            domain=dom,
+            attrs=attrs,
+            sparse=False,
+            allows_duplicates=self._soma_options.allows_duplicates,
+            offsets_filters=[
+                tiledb.DoubleDeltaFilter(),
+                tiledb.BitWidthReductionFilter(),
+                tiledb.ZstdFilter(),
+            ],
+            capacity=100000,
+            cell_order="row-major",
+            tile_order="row-major",
+            ctx=self._ctx,
+        )
+
+        tiledb.Array.create(self._uri, sch, ctx=self._ctx)
 
     # TODO: static/class method?
     #    def delete(uri: str) -> None
@@ -81,13 +114,16 @@ class SOMADenseNdArray(TileDBArray):
         """
         Return length of each dimension, always a list of length ``ndims``
         """
-        return self._shape
+        # TODO: cache read
+        # return self._shape
+        raise Exception("TBD")
 
     def get_ndims(self) -> int:
         """
         Return number of index columns
         """
-        return len(self._index_column_names)
+        # TODO: cache read
+        raise Exception("TBD")
 
     #    def get_schema(self) -> Arrow.Schema:
     #        """
@@ -100,56 +136,45 @@ class SOMADenseNdArray(TileDBArray):
         """
         return False
 
+    def read(
+        slice: Any,  # TODO: scalar, slice/range, or list of any of the above
+        # TODO: partitions: Optional[SOMAReadPartitions] = None,,
+        # TODO: result_order: one of 'row-major' or 'column-major'
+    ) -> Any:  # TODO: Iterator[DenseReadResult]
+        """
+        Read a user-specified subset of the object, and return as one or more Arrow.Tensor.
 
-# ----------------------------------------------------------------
-#    def read():
-#        """
-#        Read a slice of data from the SOMADenseNdArray
-#        """
+        :param slice: per-dimension slice, expressed as a scalar, a range, or a list of both.
 
-# ### Operation: read()
-#
-# Read a user-specified subset of the object, and return as one or more Arrow.Tensor.
-#
-# Summary:
-#
-# ```
-# read(
-#     [slice, ...],
-#     partitions,
-#     result_order
-# ) -> delayed iterator over DenseReadResult
-# ```
-#
-# - slice - per-dimension slice, expressed as a scalar, a range, or a list of both.
-# - partitions - an optional [`SOMAReadPartitions`](#SOMAReadPartitions) hint to indicate how results should be organized.
-# - result_order - order of read results. Can be one of row-major or column-major.
-#
-# The `read` operation will return a language-specific iterator over one or more Arrow Tensor
-# objects and information describing them, allowing the incremental processing of results larger
-# than available memory. The actual iterator used is delegated to language-specific SOMA specs. The
-# `DenseReadResult` should include:
-#
-# - The coordinates of the slice (e.g., origin, shape)
-# - an Arrow.Tensor with the slice values
+        :param partitions: an optional [`SOMAReadPartitions`](#SOMAReadPartitions) hint to indicate
+        how results should be organized.
 
-# ----------------------------------------------------------------
-#    def write():
-#        """
-#        Write a slice of data to the SOMADenseNdArray
-#        """
+        :param result_order: order of read results. Can be one of row-major or column-major.
 
-# ### Operation: write()
-#
-# Write an Arrow.Tensor to the persistent object. As duplicate index values are not allowed, index
-# values already present in the object are overwritten and new index values are added.
-#
-# ```
-# write(coords, Arrow.Tensor values)
-# ```
-#
-# Parameters:
-#
-# - coords[] - location at which to write the tensor
-# - values - an Arrow.Tensor containing values to be written. The type of elements in `values` must
-#   match the type of the SOMADenseNdArray.
+        The `read` operation will return a language-specific iterator over one or more Arrow Tensor
+        objects and information describing them, allowing the incremental processing of results larger
+        than available memory. The actual iterator used is delegated to language-specific SOMA specs. The
+        `DenseReadResult` should include:
+
+        * The coordinates of the slice (e.g., origin, shape)
+        * an Arrow.Tensor with the slice values
+        """
+        raise Exception("TBD")
+
+    def write(
+        self,
+        coords: Union[Tuple, List[int]],
+        values: pa.Tensor,
+    ) -> None:
+        """
+        Write an Arrow.Tensor to the persistent object. As duplicate index values are not allowed, index
+        values already present in the object are overwritten and new index values are added.
+
+        :param coords: location at which to write the tensor
+
+        :param values: an Arrow.Tensor containing values to be written. The type of elements in `values` must
+        match the type of the SOMADenseNdArray.
+        """
+
+        with self._open("w") as A:
+            A[coords] = values.to_numpy()
