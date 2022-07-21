@@ -19,7 +19,7 @@ notebook -- this is preferred to laptop-to-S3 reads.
 
 ## Prepare the inputs
 
-As shown in the [public TileDB Cloud notebook](https://cloud.tiledb.com/notebooks/details/johnkerl-tiledb/d3d7ff44-dc65-4cd9-b574-98312c4cbdbd/preview):
+As shown in the [public TileDB Cloud notebook](https://cloud.tiledb.com/notebooks/details/johnkerl-tiledb/33c4fe81-d15f-43cd-a588-5c277cf70cb6/preview):
 
 ```
 ctx = tiledb.Ctx({"py.init_buffer_bytes": 4 * 1024**3})

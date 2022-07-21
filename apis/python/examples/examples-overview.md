@@ -30,4 +30,4 @@ See also for the R package:
 # Notebook
 
 Examples with screenshots and copy/pasteable reusable samples are shown here. As well, you can use
-the [public TileDB Cloud notebook](https://cloud.tiledb.com/notebooks/details/johnkerl-tiledb/d3d7ff44-dc65-4cd9-b574-98312c4cbdbd/preview) from which most of these screenshots are taken.
+the [public TileDB Cloud notebook](https://cloud.tiledb.com/notebooks/details/johnkerl-tiledb/33c4fe81-d15f-43cd-a588-5c277cf70cb6/preview) from which most of these screenshots are taken.

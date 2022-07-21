@@ -59,7 +59,7 @@ Implements `len(soco)`. Returns the number of elements in the collection.
 #### add
 
 ```python
-def add(soma: SOMA) -> None
+def add(soma: SOMA, relative: Optional[bool] = None) -> None
 ```
 
 Adds a `SOMA` to the `SOMACollection`.

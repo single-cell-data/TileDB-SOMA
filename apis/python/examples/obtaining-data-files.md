@@ -7,7 +7,7 @@ select from among various choices there and download.
 
 :::{.callout-tip}
 See also the
-[public TileDB Cloud notebook](https://cloud.tiledb.com/notebooks/details/johnkerl-tiledb/d3d7ff44-dc65-4cd9-b574-98312c4cbdbd/preview).
+[public TileDB Cloud notebook](https://cloud.tiledb.com/notebooks/details/johnkerl-tiledb/33c4fe81-d15f-43cd-a588-5c277cf70cb6/preview).
 :::
 
 ## Public bucket

@@ -14,7 +14,7 @@ Cloud-level storage is crucial for at-scale, beyond-core analysis.
 
 :::{.callout-tip}
 See also the
-[public TileDB Cloud notebook](https://cloud.tiledb.com/notebooks/details/johnkerl-tiledb/d3d7ff44-dc65-4cd9-b574-98312c4cbdbd/preview).
+[public TileDB Cloud notebook](https://cloud.tiledb.com/notebooks/details/johnkerl-tiledb/33c4fe81-d15f-43cd-a588-5c277cf70cb6/preview).
 :::
 
 ## Local ingestion
@@ -56,7 +56,7 @@ To ingest into S3, simply provide an S3 URI as the destination.
 :::{.callout-tip}
 The simplest way to get S3 credentials set up is to export the `AWS_ACCESS_KEY_ID`,
 `AWS_SECRET_ACCESS_KEY`, and `AWS_DEFAULT_REGION` environment variables -- please see the
-[public TileDB Cloud notebook](https://cloud.tiledb.com/notebooks/details/johnkerl-tiledb/d3d7ff44-dc65-4cd9-b574-98312c4cbdbd/preview) for examples.
+[public TileDB Cloud notebook](https://cloud.tiledb.com/notebooks/details/johnkerl-tiledb/33c4fe81-d15f-43cd-a588-5c277cf70cb6/preview) for examples.
 :::
 
 ```

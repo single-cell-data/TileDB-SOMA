@@ -4,7 +4,7 @@ afterward.
 
 ## Total cell-counts
 
-As noted in the [public TileDB Cloud notebook](https://cloud.tiledb.com/notebooks/details/johnkerl-tiledb/d3d7ff44-dc65-4cd9-b574-98312c4cbdbd/preview), we prepared an example SOMA collection in the S3 public bucket:
+As noted in the [public TileDB Cloud notebook](https://cloud.tiledb.com/notebooks/details/johnkerl-tiledb/33c4fe81-d15f-43cd-a588-5c277cf70cb6/preview), we prepared an example SOMA collection in the S3 public bucket:
 
 ```
 soco = tiledbsc.SOMACollection('s3://tiledb-singlecell-data/soco/soco6')
