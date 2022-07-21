@@ -23,8 +23,8 @@ class TileDBGroup(TileDBObject):
     def __init__(
         self,
         uri: str,
-        name: str,
         *,
+        name: Optional[str] = None,
         # Non-top-level objects can have a parent to propagate context, depth, etc.
         parent: Optional[TileDBGroup] = None,
         # Top-level objects should specify these:
@@ -34,7 +34,9 @@ class TileDBGroup(TileDBObject):
         """
         See the TileDBObject constructor.
         """
-        super().__init__(uri, name, parent=parent, soma_options=soma_options, ctx=ctx)
+        super().__init__(
+            uri, name=name, parent=parent, soma_options=soma_options, ctx=ctx
+        )
         self._cached_member_names_to_uris = None
 
     #    def exists(self) -> bool:
@@ -46,15 +48,15 @@ class TileDBGroup(TileDBObject):
     #        # For tiledb:// URIs this is a REST-server request which we'd like to cache.
     #        # However, remove-and-replace use-cases are possible and common in notebooks
     #        # and it turns out caching the existence-check isn't a robust approach.
-    #        return bool(tiledb.object_type(self.uri, ctx=self._ctx) == "group")
+    #        return bool(tiledb.object_type(self._uri, ctx=self._ctx) == "group")
 
     #    def create_unless_exists(self) -> None:
     #        """
     #        Creates the TileDB group data structure on disk/S3/cloud, unless it already exists.
     #        """
     #        if not self.exists():
-    #            logger.debug(f"{self._indent}Creating TileDB group {self.uri}")
-    #            tiledb.group_create(uri=self.uri, ctx=self._ctx)
+    #            logger.debug(f"{self._indent}Creating TileDB group {self._uri}")
+    #            tiledb.group_create(uri=self._uri, ctx=self._ctx)
     #            self._set_object_type_metadata()
 
     def _open(self, mode: str = "r") -> tiledb.Group:
@@ -64,9 +66,9 @@ class TileDBGroup(TileDBObject):
         """
         assert mode in ("r", "w")
         if mode == "r" and not self.exists():
-            raise Exception(f"Does not exist: {self.uri}")
+            raise Exception(f"Does not exist: {self._uri}")
         # This works in with-open-as contexts because tiledb.Group has __enter__ and __exit__ methods.
-        return tiledb.Group(self.uri, mode=mode, ctx=self._ctx)
+        return tiledb.Group(self._uri, mode=mode, ctx=self._ctx)
 
     def _get_child_uris(self, member_names: Sequence[str]) -> Dict[str, str]:
         """
@@ -80,7 +82,7 @@ class TileDBGroup(TileDBObject):
             # cases: even for tiledb://... URIs, pre-construction URIs are of the form
             # tiledb://namespace/s3://something/something/soma/membername.
             return {
-                member_name: self.uri + "/" + member_name
+                member_name: self._uri + "/" + member_name
                 for member_name in member_names
             }
 
@@ -97,7 +99,7 @@ class TileDBGroup(TileDBObject):
                 #   tiledb-cloud URIs, whereas in Windows versions for years now forward slashes _are_
                 #   accepted for local-disk paths.
                 # This means forward slash is acceptable in all cases.
-                answer[member_name] = self.uri + "/" + member_name
+                answer[member_name] = self._uri + "/" + member_name
 
         return answer
 
@@ -114,7 +116,7 @@ class TileDBGroup(TileDBObject):
         """
         if not self.exists():
             # TODO: comment
-            return self.uri + "/" + member_name
+            return self._uri + "/" + member_name
         mapping = self._get_member_names_to_uris()
         if member_name in mapping:
             return mapping[member_name]
@@ -125,7 +127,7 @@ class TileDBGroup(TileDBObject):
             #   tiledb-cloud URIs, whereas in Windows versions for years now forward slashes _are_
             #   accepted for local-disk paths.
             # This means forward slash is acceptable in all cases.
-            return self.uri + "/" + member_name
+            return self._uri + "/" + member_name
 
     def _add_object(self, obj: TileDBObject, relative: Optional[bool] = None) -> None:
         """
@@ -177,10 +179,10 @@ class TileDBGroup(TileDBObject):
 
     def _remove_object_by_name(self, member_name: str) -> None:
         self._cached_member_names_to_uris = None  # invalidate on remove-member
-        if self.uri.startswith("tiledb://"):
+        if self._uri.startswith("tiledb://"):
             mapping = self._get_member_names_to_uris()
             if member_name not in mapping:
-                raise Exception(f"name {member_name} not present in group {self.uri}")
+                raise Exception(f"name {member_name} not present in group {self._uri}")
             member_uri = mapping[member_name]
             with self._open("w") as G:
                 G.remove(member_uri)
@@ -243,7 +245,7 @@ class TileDBGroup(TileDBObject):
 #        """
 #        Shows metadata for the group, recursively by default.
 #        """
-#        logger.info(f"{indent}[{self.name}]")
+#        logger.info(f"{indent}[{self._name}]")
 #        for key, value in self.metadata().items():
 #            logger.info(f"{indent}- {key}: {value}")
 #        if recursively:

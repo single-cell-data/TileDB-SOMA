@@ -20,6 +20,23 @@ class SOMADenseNdArray(TileDBArray):
     Represents ``X`` and others.
     """
 
+    _shape: Tuple[int]
+
+    def __init__(
+        self,
+        uri: str,
+        *,
+        name: Optional[str] = None,
+        parent: Optional[TileDBGroup] = None,
+    ):
+        """
+        Also see the :class:`TileDBObject` constructor.
+        """
+        # TODO: more options
+        # assert name in ["obs", "var"]
+
+        super().__init__(uri=uri, name=name, parent=parent)
+
     # ----------------------------------------------------------------
     # create(uri, ...)
     # Create a SOMADenseNdArray named with the URI.
@@ -38,27 +55,8 @@ class SOMADenseNdArray(TileDBArray):
     # - type - an Arrow type defining the type of each element in the array. If the type is unsupported, an error will be raised.
     # - shape - the length of each domain as a list, e.g., [100, 10]. All lengths must be in the uint64 range.
 
-    _shape: Tuple[int]
-
-    def __init__(
-        self,
-        uri: str,
-        # TODO: incorporate
-        name: str,
-        # TODO: type,
-        shape: Tuple[int],
-        *,
-        parent: Optional[TileDBGroup] = None,
-    ):
-        """
-        Also see the :class:`TileDBObject` constructor.
-        """
-        # TODO: more options
-        # assert name in ["obs", "var"]
-
-        super().__init__(uri=uri, name=name, parent=parent)
-
-        self._shape = shape
+    #        # TODO: type,
+    #        shape: Tuple[int],
 
     # TODO: static/class method?
     #    def delete(uri: str) -> None

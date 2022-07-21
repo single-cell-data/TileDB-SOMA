@@ -15,17 +15,21 @@ class TileDBArray(TileDBObject):
     """
 
     def __init__(
-        self, uri: str, name: str, *, parent: Optional["tiledbsc.TileDBGroup"] = None
+        self,
+        uri: str,
+        *,
+        name: Optional[str] = None,
+        parent: Optional["tiledbsc.TileDBGroup"] = None
     ):
         """
         See the TileDBObject constructor.
         """
-        super().__init__(uri, name, parent=parent)
+        super().__init__(uri, name=name, parent=parent)
 
     def _open(self, mode: str = "r") -> tiledb.Array:
         """
         This is just a convenience wrapper allowing 'with self._open() as A: ...' rather than
-        'with tiledb.open(self.uri) as A: ...'.
+        'with tiledb.open(self._uri) as A: ...'.
         """
         assert mode in ["w", "r"]
         # This works in either 'with self._open() as A:' or 'A = self._open(); ...; A.close().  The
@@ -33,7 +37,7 @@ class TileDBArray(TileDBObject):
         # and our return value's __exit__ on exit from the body of the with-block. The tiledb
         # array object does both of those things. (And if it didn't, we'd get a runtime AttributeError
         # on with-as, flagging the non-existence of the __enter__ or __exit__.)
-        return tiledb.open(self.uri, mode=mode, ctx=self._ctx)
+        return tiledb.open(self._uri, mode=mode, ctx=self._ctx)
 
 
 #    def exists(self) -> bool:
@@ -42,7 +46,7 @@ class TileDBArray(TileDBObject):
 #        object has not yet been populated, e.g. before calling `from_anndata` -- or, if the
 #        SOMA has been populated but doesn't have this member (e.g. not all SOMAs have a `varp`).
 #        """
-#        return bool(tiledb.array_exists(self.uri))
+#        return bool(tiledb.array_exists(self._uri))
 
 #    def tiledb_array_schema(self) -> tiledb.ArraySchema:
 #        """
@@ -100,6 +104,6 @@ class TileDBArray(TileDBObject):
 #        """
 #        Shows metadata for the array.
 #        """
-#        print(f"{indent}[{self.name}]")
+#        print(f"{indent}[{self._name}]")
 #        for key, value in self.metadata().items():
 #            print(f"{indent}- {key}: {value}")

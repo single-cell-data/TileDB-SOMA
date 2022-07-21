@@ -31,8 +31,8 @@ class SOMACollection(TileDBGroup):
     def __init__(
         self,
         uri: str,
-        name: str,
         *,
+        name: Optional[str] = None,
         parent: Optional[TileDBGroup] = None,
     ):
         """

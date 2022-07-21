@@ -1,3 +1,4 @@
+import os
 from abc import ABC, abstractmethod
 from typing import Optional, Union
 
@@ -25,7 +26,7 @@ class TileDBObject(ABC):
         self,
         # All objects:
         uri: str,
-        name: str,
+        name: Optional[str] = None,
         *,
         # Non-top-level objects can have a parent to propgate context, depth, etc.
         parent: Optional["tiledbsc.TileDBGroup"] = None,
@@ -40,7 +41,10 @@ class TileDBObject(ABC):
         depth, etc.
         """
         self._uri = uri
-        self._name = name
+        if name is None:
+            self._name = os.path.basename(uri)
+        else:
+            self._name = name
 
         if parent is None:
             self._ctx = ctx
@@ -54,6 +58,12 @@ class TileDBObject(ABC):
 
         self._soma_options = soma_options or SOMAOptions()
         # Null ctx is OK if that's what they wanted (e.g. not doing any TileDB-Cloud ops).
+
+    def __repr__(self):
+        """
+        XXX TEMP
+        """
+        return f"name={self._name},uri={self._uri}"
 
     @abstractmethod
     def _open(self, mode: str = "r") -> Union[tiledb.Array, tiledb.Group]:

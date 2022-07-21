@@ -10,11 +10,27 @@ from .tiledb_group import TileDBGroup
 
 # import tiledbsc.v1.util as util
 
+# TODO: deconflate the CREATE method and the CONSTRUCTOR.
+# These are not the same.
+
 
 class SOMASparseNdArray(TileDBArray):
     """
     Represents ``X`` and others.
     """
+
+    def __init__(
+        self,
+        uri: str,
+        *,
+        name: Optional[str] = None,
+        parent: Optional[TileDBGroup] = None,
+    ):
+        """
+        Also see the :class:`TileDBObject` constructor.
+        """
+
+        super().__init__(uri=uri, name=name, parent=parent)
 
     # ```
     # create(string uri, type, shape) -> void
@@ -29,33 +45,16 @@ class SOMASparseNdArray(TileDBArray):
     #
     # - shape - the length of each domain as a list, e.g., [100, 10]. All lengths must be in the
     #   uint64 range.
+    #        Create a new SOMASparseNdArray with user-specified URI and schema.
 
-    _shape: Tuple
-
-    def __init__(
-        self,
-        uri: str,
-        # TODO: incorporate
-        name: str,
-        # TODO: type,
-        shape: Tuple,
-        *,
-        parent: Optional[TileDBGroup] = None,
-    ):
-        """
-        Create a new SOMASparseNdArray with user-specified URI and schema.
-
-        Also see the :class:`TileDBObject` constructor.
-        """
-
-        # Check that ndims, and each dimension, are positive
-        assert len(shape) > 0
-        for e in shape:
-            assert e > 0
-
-        super().__init__(uri=uri, name=name, parent=parent)
-
-        self._shape = shape
+    #        # ----------------------------------------------------------------
+    #        # TODO: type,
+    #        shape: Tuple,
+    #
+    #        # Check that ndims, and each dimension, are positive
+    #        assert len(shape) > 0
+    #        for e in shape:
+    #            assert e > 0
 
     # TODO: static/class method?
     #    def delete(uri: str) -> None
