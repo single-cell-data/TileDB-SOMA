@@ -8,16 +8,27 @@ namespace tiledbsc {
 using namespace tiledb;
 
 SOMAQuery::SOMAQuery(SOMA* soma) {
-    mq_obs_ = std::make_unique<ManagedQuery>(
-        soma->open_array("obs"), DEFAULT_ALLOC);
-    mq_var_ = std::make_unique<ManagedQuery>(
-        soma->open_array("var"), DEFAULT_ALLOC);
-    mq_x_ = std::make_unique<ManagedQuery>(
-        soma->open_array("X/data"), DEFAULT_ALLOC);
+    std::vector<ThreadPool::Task> tasks;
+    ThreadPool pool{3};
+
+    tasks.emplace_back(pool.execute([&]() {
+        mq_obs_ = std::make_unique<ManagedQuery>(soma->open_array("obs"));
+        return Status::Ok();
+    }));
+
+    tasks.emplace_back(pool.execute([&]() {
+        mq_var_ = std::make_unique<ManagedQuery>(soma->open_array("var"));
+        return Status::Ok();
+    }));
+    tasks.emplace_back(pool.execute([&]() {
+        mq_x_ = std::make_unique<ManagedQuery>(soma->open_array("X/data"));
+        return Status::Ok();
+    }));
+
+    pool.wait_all(tasks).ok();
 }
 
-std::optional<std::unordered_map<std::string, std::shared_ptr<ColumnBuffer>>>
-SOMAQuery::next_results() {
+std::optional<ColumnBuffers> SOMAQuery::next_results() {
     // Query is complete, return empty results
     if (empty_ || mq_x_->status() == Query::Status::COMPLETE) {
         return std::nullopt;
@@ -63,7 +74,6 @@ SOMAQuery::next_results() {
     auto num_cells = mq_x_->submit();
     LOG_DEBUG(fmt::format("*** X cells read = {}", num_cells));
 
-    // TODO: Build and return ArrowTable
     return mq_x_->results();
 }
 

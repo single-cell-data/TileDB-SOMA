@@ -6,8 +6,8 @@
 
 #include <tiledbsc/tiledbsc>
 
+#include "table_buffer.h"
 #include "tiledb_arrow.h"
-#include "tiledbsc/table_buffer.h"
 
 #define DENUM(x) .value(#x, TILEDB_##x)
 
@@ -35,12 +35,10 @@ py::object to_table(TableBuffer& tb) {
         arrays.append(to_array(*column));
     }
 
-    auto table = pa_table_from_arrays(arrays, names);
-    return table;
+    return pa_table_from_arrays(arrays, names);
 }
 
 PYBIND11_MODULE(pytiledbsc, m) {
-    // arrow::py::import_pyarrow();
     m.doc() = "TileDB-SingleCell python library";
 
     // TODO: ColumnBuffer is useful for testing, but may be removed later
@@ -78,6 +76,27 @@ PYBIND11_MODULE(pytiledbsc, m) {
             py::arg("validity") = std::nullopt)
 
         .def("to_arrow", [](ColumnBuffer& cb) { return to_array(cb); })
+
+        /*
+    _export_to_c(...) method of pyarrow.lib.StringArray instance
+    Array._export_to_c(self, out_ptr, out_schema_ptr=0)
+
+    Export to a C ArrowArray struct, given its pointer.
+
+    If a C ArrowSchema struct pointer is also given, the array type
+    is exported to it at the same time.
+
+    Parameters
+    ----------
+    out_ptr: int
+        The raw pointer to a C ArrowArray struct.
+    out_schema_ptr: int (optional)
+        The raw pointer to a C ArrowSchema struct.
+
+    Be careful: if you don't pass the ArrowArray struct to a consumer,
+    array memory will leak.  This is a low-level function intended for
+    expert users.
+*/
 
         // WARNING: these functions copy!
         .def(

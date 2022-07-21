@@ -23,8 +23,6 @@ class SOMACollection;  // forward declaration
 // 3. next_results(): Run all SOMAQuery.next_results() in parallel, return
 // results.
 
-// TODO: Pass alloc sizes to SOMAQuery
-
 class SOMACollectionQuery {
    public:
     /**

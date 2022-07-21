@@ -10,10 +10,9 @@ using namespace tiledb;
 //= public non-static
 //===================================================================
 
-ManagedQuery::ManagedQuery(std::shared_ptr<Array> array, size_t initial_cells)
+ManagedQuery::ManagedQuery(std::shared_ptr<Array> array)
     : array_(array)
-    , schema_(array->schema())
-    , initial_cells_(initial_cells) {
+    , schema_(array->schema()) {
     query_ = std::make_unique<Query>(schema_.context(), *array);
     subarray_ = std::make_unique<Subarray>(schema_.context(), *array);
 
@@ -72,8 +71,7 @@ size_t ManagedQuery::submit() {
         // Allocate and attach buffers
         for (auto& name : columns_) {
             LOG_DEBUG(fmt::format("Adding buffer for column '{}'", name));
-            buffers_.emplace(
-                name, ColumnBuffer::create(array_, name, initial_cells_));
+            buffers_.emplace(name, ColumnBuffer::create(array_, name));
             buffers_[name]->attach(*query_);
         }
     }
@@ -100,8 +98,8 @@ size_t ManagedQuery::submit() {
 
     // TODO: retry the query with larger buffers
     if (status == Query::Status::INCOMPLETE && !num_cells) {
-        throw TileDBSCError(fmt::format(
-            "[ManagedQuery] Buffers are too small: {} cells", initial_cells_));
+        throw TileDBSCError(
+            fmt::format("[ManagedQuery] Buffers are too small."));
     }
 
     return num_cells;

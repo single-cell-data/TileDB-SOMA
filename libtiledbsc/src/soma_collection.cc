@@ -1,6 +1,7 @@
 #include <regex>
 
 #include "tiledbsc/soma_collection.h"
+#include "tiledbsc/util.h"
 
 namespace tiledbsc {
 using namespace tiledb;
@@ -26,10 +27,8 @@ std::shared_ptr<SOMACollection> SOMACollection::open(
 
 SOMACollection::SOMACollection(
     std::string_view uri, std::shared_ptr<Context> ctx)
-    : ctx_(ctx) {
-    // Remove all trailing /
-    // TODO: move this to utils
-    uri_ = std::regex_replace(std::string(uri), std::regex("/+$"), "");
+    : ctx_(ctx)
+    , uri_(util::rstrip_uri(uri)) {
 }
 
 std::unordered_map<std::string, std::string> SOMACollection::list_somas() {

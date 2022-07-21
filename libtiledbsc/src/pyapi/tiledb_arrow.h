@@ -17,7 +17,6 @@ class ArrowAdapter {
     }
 
     static void release_array(struct ArrowArray* array) {
-        // free((void*)array->buffers[1];
         free(array->buffers);
         array->release = nullptr;
     }
@@ -41,7 +40,7 @@ class ArrowAdapter {
         schema->release = &release_schema;                       // mandatory
         schema->private_data = nullptr;                          // optional
 
-        int n_buffers = num_buffers(column);
+        int n_buffers = column.is_var() ? 3 : 2;
 
         array->length = column.size();    // mandatory
         array->null_count = 0;            // mandatory
@@ -54,7 +53,7 @@ class ArrowAdapter {
         array->release = &release_array;  // mandatory
         array->private_data = nullptr;    // mandatory
 
-        array->buffers = (const void**)malloc(sizeof(void*) * array->n_buffers);
+        array->buffers = (const void**)malloc(sizeof(void*) * n_buffers);
         assert(array->buffers != nullptr);
         array->buffers[0] = nullptr;  // validity
         if (n_buffers == 2) {
@@ -65,12 +64,6 @@ class ArrowAdapter {
         }
 
         return std::tuple(std::move(array), std::move(schema));
-    }
-
-    static int num_buffers(const ColumnBuffer& cb) {
-        int result = 2;
-        result += cb.is_var();
-        return result;
     }
 
     // Get Arrow format from TileDB datatype

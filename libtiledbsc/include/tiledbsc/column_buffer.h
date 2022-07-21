@@ -13,11 +13,19 @@ namespace tiledbsc {
 
 using namespace tiledb;
 
+class ColumnBuffer;  // forward declaration
+
+// Map of column name to ColumnBuffer.
+using ColumnBuffers = std::map<std::string, std::shared_ptr<ColumnBuffer>>;
+
 /**
  * @brief Class to store data for a TileDB dimension or attribute.
  *
  */
 class ColumnBuffer {
+    // TODO: set buffer sizes like tiledb python api (remove this)
+    inline static const size_t DEFAULT_ALLOC = 1 << 26;
+
    public:
     //===================================================================
     //= public static
@@ -32,7 +40,9 @@ class ColumnBuffer {
      * @return ColumnBuffer
      */
     static std::shared_ptr<ColumnBuffer> create(
-        std::shared_ptr<Array> array, std::string_view name, size_t num_cells);
+        std::shared_ptr<Array> array,
+        std::string_view name,
+        size_t num_cells = DEFAULT_ALLOC);
 
     /**
      * @brief Create a ColumnBuffer from a dimension.
@@ -42,7 +52,7 @@ class ColumnBuffer {
      * @return ColumnBuffer
      */
     static std::shared_ptr<ColumnBuffer> create(
-        const Dimension& dim, size_t num_cells);
+        const Dimension& dim, size_t num_cells = DEFAULT_ALLOC);
 
     /**
      * @brief Create a ColumnBuffer from an attribute.
@@ -52,7 +62,7 @@ class ColumnBuffer {
      * @return ColumnBuffer
      */
     static std::shared_ptr<ColumnBuffer> create(
-        const Attribute& attr, size_t num_cells);
+        const Attribute& attr, size_t num_cells = DEFAULT_ALLOC);
 
     /**
      * @brief Create a ColumnBuffer from data.

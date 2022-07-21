@@ -17,8 +17,6 @@ using namespace tiledb;
 class SOMA;  // forward declaration
 
 class SOMAQuery {
-    inline static const size_t DEFAULT_ALLOC = 1 << 26;  // 64M
-
    public:
     /**
      * @brief Construct a new SOMAQuery object
@@ -86,13 +84,9 @@ class SOMAQuery {
      * incomplete queries, continue to call `next_results` until std::nullopt is
      * returned.
      *
-     * @return std::optional<
-     * std::unordered_map<std::string, std::shared_ptr<ColumnBuffer>>> Results
-     * or std::nullopt if the query is complete.
+     * @return std::optional<ColumnBuffers> Results or std::nullopt
      */
-    std::optional<
-        std::unordered_map<std::string, std::shared_ptr<ColumnBuffer>>>
-    next_results();
+    std::optional<ColumnBuffers> next_results();
 
    private:
     // Managed query for the obs array

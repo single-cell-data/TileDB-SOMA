@@ -96,18 +96,6 @@ class SOMACollection {
      * @param parent Hierarchical group name of the group's parent.
      */
     void build_uri_map(Group& group, std::string_view parent = "");
-
-    /**
-     * @brief Check if the provided URI is a TileDB Cloud URI.
-     *
-     * @param uri URI to check
-     * @return true URI is a TileBD Cloud URI
-     * @return false URI is not a TileBD Cloud URI
-     */
-    // TODO: move this to utils
-    bool is_tiledb_uri(std::string_view uri) {
-        return uri.find("tiledb://") == 0;
-    }
 };
 
 };  // namespace tiledbsc

@@ -33,4 +33,12 @@ VarlenBufferPair to_varlen_buffers(std::vector<T> data, bool arrow) {
 template VarlenBufferPair to_varlen_buffers(
     std::vector<std::string>, bool arrow);
 
+bool is_tiledb_uri(std::string_view uri) {
+    return uri.find("tiledb://") == 0;
+}
+
+std::string rstrip_uri(std::string_view uri) {
+    return std::regex_replace(std::string(uri), std::regex("/+$"), "");
+}
+
 };  // namespace tiledbsc::util

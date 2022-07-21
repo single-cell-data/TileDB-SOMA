@@ -1,7 +1,6 @@
-#include <regex>
-
-#include "tiledbsc/logger_public.h"
 #include "tiledbsc/soma.h"
+#include "tiledbsc/logger_public.h"
+#include "tiledbsc/util.h"
 
 namespace tiledbsc {
 using namespace tiledb;
@@ -24,10 +23,8 @@ std::shared_ptr<SOMA> SOMA::open(std::string_view uri, const Config& config) {
 //===================================================================
 
 SOMA::SOMA(std::string_view uri, std::shared_ptr<Context> ctx)
-    : ctx_(ctx) {
-    // Remove all trailing /
-    // TODO: move this to utils
-    uri_ = std::regex_replace(std::string(uri), std::regex("/+$"), "");
+    : ctx_(ctx)
+    , uri_(util::rstrip_uri(uri)) {
 }
 
 std::unordered_map<std::string, std::string> SOMA::list_arrays() {
@@ -65,7 +62,7 @@ void SOMA::build_uri_map(Group& group, std::string_view parent) {
             build_uri_map(subgroup, path);
         } else {
             auto uri = member.uri();
-            if (is_tiledb_uri(uri) && !is_tiledb_uri(uri_)) {
+            if (util::is_tiledb_uri(uri) && !util::is_tiledb_uri(uri_)) {
                 // "Group member URI" is a TileDB Cloud URI, but the "SOMA
                 // root URI" is *not* a TileDB Cloud URI. Build a "relative
                 // group member URI"
