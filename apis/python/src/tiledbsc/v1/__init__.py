@@ -6,7 +6,6 @@ from .soma_experiment import SOMAExperiment
 from .soma_measurement import SOMAMeasurement
 from .soma_sparse_nd_array import SOMASparseNdArray
 from .tiledb_array import TileDBArray
-from .tiledb_group import TileDBGroup
 from .tiledb_object import TileDBObject
 from .util import tiledb_type_from_arrow_type
 
@@ -17,7 +16,6 @@ __all__ = [
     "tiledb_type_from_arrow_type",
     "TileDBObject",
     "TileDBArray",
-    "TileDBGroup",
     "SOMADataFrame",
     "SOMASparseNdArray",
     "SOMADenseNdArray",

@@ -13,7 +13,6 @@ from .soma_dense_nd_array import SOMADenseNdArray as SOMADenseNdArray
 from .soma_experiment import SOMAExperiment as SOMAExperiment
 from .soma_measurement import SOMAMeasurement as SOMAMeasurement
 from .soma_sparse_nd_array import SOMASparseNdArray as SOMASparseNdArray
-from .tiledb_group import TileDBGroup
 from .util import SOMA_OBJECT_TYPE_METADATA_KEY
 
 MemberType = Union[
@@ -26,7 +25,7 @@ MemberType = Union[
 ]
 
 
-def _construct_member(member_uri: str, parent: TileDBGroup) -> MemberType:
+def _construct_member(member_uri: str, parent: SOMACollection) -> MemberType:
     """
     Solely for the use of `SOMACollection`. In fact this would/should be a method of the
     `SOMACollection` class, but there are cyclic-package-import issues.  This allows us to examine

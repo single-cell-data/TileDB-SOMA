@@ -1,7 +1,6 @@
 from typing import Optional
 
 from .soma_collection import SOMACollection
-from .tiledb_group import TileDBGroup
 
 
 class SOMAExperiment(SOMACollection):
@@ -26,7 +25,7 @@ class SOMAExperiment(SOMACollection):
         uri: str,
         *,
         name: Optional[str] = None,
-        parent: Optional[TileDBGroup] = None,
+        parent: Optional[SOMACollection] = None,
     ):
         """
         See also the :class:`TileDBOject` constructor.

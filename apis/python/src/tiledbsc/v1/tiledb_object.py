@@ -12,7 +12,7 @@ from .tiledb_platform_config import TileDBPlatformConfig
 
 class TileDBObject(ABC):
     """
-    Base class for `TileDBArray` and `TileDBGroup`.
+    Base class for `TileDBArray` and `SOMACollection`.
 
     Manages tiledb_platform_config, context, etc. which are common to both.
     """
@@ -29,13 +29,13 @@ class TileDBObject(ABC):
         name: Optional[str] = None,
         *,
         # Non-top-level objects can have a parent to propgate context, depth, etc.
-        parent: Optional["tiledbsc.v1.TileDBGroup"] = None,
+        parent: Optional["tiledbsc.v1.SOMACollection"] = None,
         # Top-level objects should specify these:
         tiledb_platform_config: Optional[TileDBPlatformConfig] = None,
         ctx: Optional[tiledb.Ctx] = None,
     ):
         """
-        Initialization-handling shared between `TileDBArray` and `TileDBGroup`.  Specify tiledb_platform_config
+        Initialization-handling shared between `TileDBArray` and `SOMACollection`.  Specify tiledb_platform_config
         and ctx for the top-level object; omit them and specify parent for non-top-level
         objects. Note that the parent reference is solely for propagating options, ctx, display
         depth, etc.
@@ -68,6 +68,13 @@ class TileDBObject(ABC):
     @abstractmethod
     def _tiledb_open(self, mode: str = "r") -> Union[tiledb.Array, tiledb.Group]:
         """Open the underlying TileDB array or Group"""
+
+    def _tiledb_metadata(self) -> Mapping[str, Any]:
+        """
+        XXX TEMP TEMP TEMP
+        """
+        with self._tiledb_open("r") as obj:
+            return dict(obj.meta)
 
     #    def metadata(self) -> Mapping[str, Any]:
     #        """

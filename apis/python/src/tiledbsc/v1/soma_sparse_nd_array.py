@@ -4,8 +4,8 @@ import numpy as np
 import pyarrow as pa
 import tiledb
 
+from .soma_collection import SOMACollection
 from .tiledb_array import TileDBArray
-from .tiledb_group import TileDBGroup
 from .util import tiledb_type_from_arrow_type
 
 
@@ -22,7 +22,7 @@ class SOMASparseNdArray(TileDBArray):
         uri: str,
         *,
         name: Optional[str] = None,
-        parent: Optional[TileDBGroup] = None,
+        parent: Optional[SOMACollection] = None,
     ):
         """
         Also see the :class:`TileDBObject` constructor.
