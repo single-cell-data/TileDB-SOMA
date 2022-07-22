@@ -59,7 +59,14 @@ class TileDBGroup(TileDBObject):
         Creates the TileDB group data structure on disk/S3/cloud.
         """
         tiledb.group_create(uri=self._uri, ctx=self._ctx)
-        self._set_object_type_metadata()
+        self._common_create()  # object-type metadata etc
+
+    # TODO: TEMP NAME
+    def _tiledb_exists(self) -> bool:
+        """
+        TODO: COMMENT
+        """
+        return tiledb.object_type(self.get_uri(), ctx=self._ctx) == "group"
 
     def _open(self, mode: str = "r") -> tiledb.Group:
         """
@@ -114,7 +121,7 @@ class TileDBGroup(TileDBObject):
         Please use _get_child_uris whenever possible, to reduce the number of REST-server requests
         in the tiledb//... URIs.
         """
-        if not self.exists():
+        if not self._tiledb_exists():  # TODO: TEMP
             # TODO: comment
             return self._uri + "/" + member_name
         mapping = self._get_member_names_to_uris()
@@ -154,17 +161,19 @@ class TileDBGroup(TileDBObject):
         `self._tiledb_platform_config.member_uris_are_relative` is consulted; thirdly the URI prefix
         is consulted as described above.
         """
-        self.create_unless_exists()
-        child_uri = obj.uri
+        if not self._tiledb_exists():  # TODO: TEMP NAME
+            self.create()
+        child_uri = obj.get_uri()
+        child_name = obj.get_name()
         if relative is None:
             relative = self._tiledb_platform_config.member_uris_are_relative
         if relative is None:
             relative = not child_uri.startswith("tiledb://")
         if relative:
-            child_uri = obj.name
+            child_uri = child_name
         self._cached_member_names_to_uris = None  # invalidate on add-member
         with self._open("w") as G:
-            G.add(uri=child_uri, relative=relative, name=obj.name)
+            G.add(uri=child_uri, relative=relative, name=child_name)
         # See _get_child_uri. Key point is that, on TileDB Cloud, URIs change from pre-creation to
         # post-creation. Example:
         # * Upload to pre-creation URI tiledb://namespace/s3://bucket/something/something/somaname
@@ -172,7 +181,7 @@ class TileDBGroup(TileDBObject):
         # * Note people can still use the pre-creation URI to read the data if they like.
         # * Member pre-creation URI tiledb://namespace/s3://bucket/something/something/somaname/obs
         # * Member post-creation URI tiledb://somaname/e4de581a-1353-4150-b1f4-6ed12548e497
-        obj.uri = self._get_child_uri(obj.name)
+        obj._uri = self._get_child_uri(child_name)
 
     def _remove_object(self, obj: TileDBObject) -> None:
         self._remove_object_by_name(obj.name)

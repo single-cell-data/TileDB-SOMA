@@ -1,6 +1,5 @@
 from typing import Dict, Optional
 
-from .factory import _construct_member
 from .tiledb_group import TileDBGroup
 from .tiledb_object import TileDBObject
 
@@ -30,7 +29,6 @@ class SOMACollection(TileDBGroup):
         self._members = {}
 
     # create is inherited from TileDBGroup
-    # Create a SOMACollection named with the URI.
 
     # TODO: FOR create():
     #    self._common_create() # object-type metadata etc
@@ -63,19 +61,25 @@ class SOMACollection(TileDBGroup):
 
     #    # get_type() is inherited from TileDBObject
 
-    # get(string key)
-    # Get the object associated with the key
+    # TODO: polymorphic return-type annotation
+    def get(self, member_name: str):
+        """
+        Get the member object associated with the key
+        """
+        # TODO: MEMBER-CACHE ON ADD
+        # TODO: UPDATE MEMBER-CACHE ON REMOVE
+        from .factory import _construct_member
+
+        member_uri = self._get_child_uri(member_name)
+        return _construct_member(member_uri, self)
 
     # has(string key)
     # Test for the existence of key in collection.
 
-    # set(string key, ValueType value)
-    # Set the key/value in the collection.
-
     # ----------------------------------------------------------------
     def set(self, member: TileDBObject, relative: Optional[bool] = None) -> None:
         """
-        Adds a member to the colleciton.
+        Adds a member to the collection.
         """
         self._add_object(member, relative)
 

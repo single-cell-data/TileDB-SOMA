@@ -22,9 +22,7 @@ MemberType = Union[
 
 
 # TODO: temp class name
-def _construct_member(
-    member_uri: str, temp_class_name: str, parent: TileDBGroup
-) -> MemberType:
+def _construct_member(member_uri: str, parent: TileDBGroup) -> MemberType:
     """
     TODO: COMMENT
     """

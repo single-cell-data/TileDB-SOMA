@@ -39,6 +39,13 @@ class TileDBArray(TileDBObject):
         # on with-as, flagging the non-existence of the __enter__ or __exit__.)
         return tiledb.open(self._uri, mode=mode, ctx=self._ctx)
 
+    # TODO: TEMP NAME
+    def _tiledb_exists(self) -> bool:
+        """
+        TODO: COMMENT
+        """
+        return tiledb.object_type(self.uri, ctx=self._ctx) == "array"
+
 
 #    def exists(self) -> bool:
 #        """
