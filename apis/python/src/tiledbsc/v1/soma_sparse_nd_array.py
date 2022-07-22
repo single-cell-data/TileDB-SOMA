@@ -14,6 +14,9 @@ class SOMASparseNdArray(TileDBArray):
     Represents ``X`` and others.
     """
 
+    # TODO
+    # _shape
+
     def __init__(
         self,
         uri: str,

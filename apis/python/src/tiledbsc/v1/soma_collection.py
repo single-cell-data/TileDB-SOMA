@@ -62,7 +62,7 @@ class SOMACollection(TileDBGroup):
     #    # get_type() is inherited from TileDBObject
 
     # TODO: polymorphic return-type annotation
-    def get(self, member_name: str):
+    def get(self, member_name: str) -> TileDBObject:
         """
         Get the member object associated with the key
         """

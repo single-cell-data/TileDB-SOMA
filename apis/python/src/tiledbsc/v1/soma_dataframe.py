@@ -10,7 +10,7 @@ from .util import tiledb_type_from_arrow_type
 
 ROWID = "soma_rowid"
 
-Slice = TypeVar("Slice", bound=Sequence)
+Slice = TypeVar("Slice", bound=Sequence[int])
 
 
 class SOMADataFrame(TileDBArray):
@@ -90,7 +90,7 @@ class SOMADataFrame(TileDBArray):
     def _create_empty_user_indexed(
         self,
         schema: pa.Schema,
-        index_column_names: Optional[List[str]],
+        index_column_names: List[str],
     ) -> None:
         """
         Create a TileDB 1D sparse array with string dimension and multiple attributes.

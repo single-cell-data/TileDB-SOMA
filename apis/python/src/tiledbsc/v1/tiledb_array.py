@@ -44,7 +44,7 @@ class TileDBArray(TileDBObject):
         """
         TODO: COMMENT
         """
-        return tiledb.object_type(self.uri, ctx=self._ctx) == "array"
+        return bool(tiledb.object_type(self.get_uri(), ctx=self._ctx) == "array")
 
 
 #    def exists(self) -> bool:

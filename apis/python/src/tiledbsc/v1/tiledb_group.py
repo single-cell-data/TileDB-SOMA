@@ -66,7 +66,7 @@ class TileDBGroup(TileDBObject):
         """
         TODO: COMMENT
         """
-        return tiledb.object_type(self.get_uri(), ctx=self._ctx) == "group"
+        return bool(tiledb.object_type(self.get_uri(), ctx=self._ctx) == "group")
 
     def _tiledb_open(self, mode: str = "r") -> tiledb.Group:
         """
@@ -84,7 +84,7 @@ class TileDBGroup(TileDBObject):
         is reduced when we ask for all group-element name-to-URI mappings in a single
         request to the REST server.
         """
-        if not self.exists():
+        if not self._tiledb_exists():  # XXX TEMP NAME
             # Group not constructed yet. Here, appending "/" and name is appropriate in all
             # cases: even for tiledb://... URIs, pre-construction URIs are of the form
             # tiledb://namespace/s3://something/something/soma/membername.
@@ -184,7 +184,7 @@ class TileDBGroup(TileDBObject):
         obj._uri = self._get_child_uri(child_name)
 
     def _remove_object(self, obj: TileDBObject) -> None:
-        self._remove_object_by_name(obj.name)
+        self._remove_object_by_name(obj.get_name())
 
     def _remove_object_by_name(self, member_name: str) -> None:
         self._cached_member_names_to_uris = None  # invalidate on remove-member

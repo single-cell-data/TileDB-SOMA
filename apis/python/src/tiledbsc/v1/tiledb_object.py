@@ -59,7 +59,7 @@ class TileDBObject(ABC):
         self._tiledb_platform_config = tiledb_platform_config or TileDBPlatformConfig()
         # Null ctx is OK if that's what they wanted (e.g. not doing any TileDB-Cloud ops).
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """
         XXX TEMP
         """
