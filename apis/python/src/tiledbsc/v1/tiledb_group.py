@@ -68,10 +68,10 @@ class TileDBGroup(TileDBObject):
         """
         return tiledb.object_type(self.get_uri(), ctx=self._ctx) == "group"
 
-    def _open(self, mode: str = "r") -> tiledb.Group:
+    def _tiledb_open(self, mode: str = "r") -> tiledb.Group:
         """
         This is just a convenience wrapper around tiledb group-open.
-        It works asa `with self._open() as G:` as well as `G = self._open(); ...; G.close()`.
+        It works asa `with self._tiledb_open() as G:` as well as `G = self._tiledb_open(); ...; G.close()`.
         """
         assert mode in ("r", "w")
         # This works in with-open-as contexts because tiledb.Group has __enter__ and __exit__ methods.
@@ -172,7 +172,7 @@ class TileDBGroup(TileDBObject):
         if relative:
             child_uri = child_name
         self._cached_member_names_to_uris = None  # invalidate on add-member
-        with self._open("w") as G:
+        with self._tiledb_open("w") as G:
             G.add(uri=child_uri, relative=relative, name=child_name)
         # See _get_child_uri. Key point is that, on TileDB Cloud, URIs change from pre-creation to
         # post-creation. Example:
@@ -193,10 +193,10 @@ class TileDBGroup(TileDBObject):
             if member_name not in mapping:
                 raise Exception(f"name {member_name} not present in group {self._uri}")
             member_uri = mapping[member_name]
-            with self._open("w") as G:
+            with self._tiledb_open("w") as G:
                 G.remove(member_uri)
         else:
-            with self._open("w") as G:
+            with self._tiledb_open("w") as G:
                 G.remove(member_name)
 
     def _get_member_names(self) -> Sequence[str]:
@@ -219,7 +219,7 @@ class TileDBGroup(TileDBObject):
         member name to member URI.
         """
         if self._cached_member_names_to_uris is None:
-            with self._open("r") as G:
+            with self._tiledb_open("r") as G:
                 self._cached_member_names_to_uris = {obj.name: obj.uri for obj in G}
         return self._cached_member_names_to_uris
 
@@ -232,7 +232,7 @@ class TileDBGroup(TileDBObject):
 #        written at ingestion time.
 #        """
 #        self._set_object_type_metadata()
-#        with self._open() as G:
+#        with self._tiledb_open() as G:
 #            for obj in G:  # This returns a tiledb.object.Object
 #                # It might appear simpler to have all this code within TileDBObject class,
 #                # rather than (with a little duplication) in TileDBGroup and TileDBArray.
@@ -259,7 +259,7 @@ class TileDBGroup(TileDBObject):
 #            logger.info(f"{indent}- {key}: {value}")
 #        if recursively:
 #            child_indent = indent + "  "
-#            with self._open() as G:
+#            with self._tiledb_open() as G:
 #                for obj in G:  # This returns a tiledb.object.Object
 #                    # It might appear simpler to have all this code within TileDBObject class,
 #                    # rather than (with a little duplication) in TileDBGroup and TileDBArray.

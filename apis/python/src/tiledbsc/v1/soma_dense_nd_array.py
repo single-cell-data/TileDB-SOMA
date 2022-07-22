@@ -177,5 +177,5 @@ class SOMADenseNdArray(TileDBArray):
         match the type of the SOMADenseNdArray.
         """
 
-        with self._open("w") as A:
+        with self._tiledb_open("w") as A:
             A[coords] = values.to_numpy()

@@ -264,7 +264,7 @@ class SOMADataFrame(TileDBArray):
             #
             # If the array hasn't had its schema created then this will throw (as it should)
             # -- we have no way to answer the question with a true or a false.
-            with self._open() as A:
+            with self._tiledb_open() as A:
                 self._is_user_indexed = A.schema.sparse
         return self._is_user_indexed
 
@@ -277,7 +277,7 @@ class SOMADataFrame(TileDBArray):
         if self._index_column_names is None:
             if self.get_is_user_indexed():
                 names = []
-                with self._open() as A:
+                with self._tiledb_open() as A:
                     dom = A.domain
                     for i in range(dom.ndim):
                         names.append(dom.dim(i).name)
@@ -330,7 +330,7 @@ class SOMADataFrame(TileDBArray):
             assert column_names == "all"  # Enforce runtime type check
             use_all_column_names = True
 
-        with self._open("r") as A:
+        with self._tiledb_open("r") as A:
             q = A.query(return_arrow=True, return_incomplete=True)
 
             if use_all_ids:
@@ -378,7 +378,7 @@ class SOMADataFrame(TileDBArray):
             attr_cols_map[ROWID] = np.asarray(range(n))
 
             dim_cols_list = [list(dim_col) for dim_col in dim_cols_list]
-            with self._open("w") as A:
+            with self._tiledb_open("w") as A:
                 # TODO: find the right syntax for vardims ... it's not the `*` operator ...
                 # A[*dim_cols_list] = attr_cols_map
                 if len(dim_cols_list) == 1:
@@ -412,5 +412,5 @@ class SOMADataFrame(TileDBArray):
                         )
                     )
 
-            with self._open("w") as A:
+            with self._tiledb_open("w") as A:
                 A[lo : (hi + 1)] = attr_cols_map

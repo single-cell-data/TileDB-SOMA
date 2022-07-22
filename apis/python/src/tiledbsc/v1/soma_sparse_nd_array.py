@@ -222,5 +222,5 @@ class SOMASparseNdArray(TileDBArray):
         icoords = coords[:, 0]
         jcoords = coords[:, 1]
 
-        with self._open("w") as A:
+        with self._tiledb_open("w") as A:
             A[icoords, jcoords] = data

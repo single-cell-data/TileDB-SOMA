@@ -73,6 +73,11 @@ class SOMACollection(TileDBGroup):
         member_uri = self._get_child_uri(member_name)
         return _construct_member(member_uri, self)
 
+    def __len__(self) -> int:
+        """
+        Returns the number of members in the collection.  Implements Python's `len(collection)`.
+        """
+        return len(self._get_member_names_to_uris())
     # has(string key)
     # Test for the existence of key in collection.
 

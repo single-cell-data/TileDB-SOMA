@@ -25,3 +25,19 @@ def get_storage_engine() -> str:
     Return underlying storage engine name, e.g., "tiledb"
     """
     return "tiledb"
+
+# ================================================================
+
+class A:
+    def name(self) -> str:
+        return "waldo"
+
+
+class B(A):
+    def some_other_function(self) -> int:
+        return 999
+
+
+def f(x: A):
+    return x.name()
+
