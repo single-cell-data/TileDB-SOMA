@@ -8,9 +8,7 @@ from .tiledb_array import TileDBArray
 from .tiledb_group import TileDBGroup
 from .util import tiledb_type_from_arrow_type
 
-# ROWID = "__rowid"
-# tiledb.cc.TileDBError: [TileDB::ArraySchema] Error: Cannot add attribute; Attribute names starting with '__' are reserved
-ROWID = "rowid__"
+ROWID = "soma_rowid"
 
 Slice = TypeVar("Slice", bound=Sequence)
 

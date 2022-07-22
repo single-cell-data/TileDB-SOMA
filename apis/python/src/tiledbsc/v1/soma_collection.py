@@ -1,5 +1,6 @@
 from typing import Dict, Optional
 
+from .factory import _construct_member
 from .tiledb_group import TileDBGroup
 from .tiledb_object import TileDBObject
 

@@ -49,12 +49,12 @@ class TileDBObject(ABC):
         if parent is None:
             self._ctx = ctx
             self._indent = ""
-            self._nested_name = name
+            self._nested_name = self._name
         else:
             tiledb_platform_config = parent._tiledb_platform_config
             self._ctx = parent._ctx
             self._indent = parent._indent + "  "
-            self._nested_name = parent.nested_name + "/" + name
+            self._nested_name = parent._nested_name + "/" + self._name
 
         self._tiledb_platform_config = tiledb_platform_config or TileDBPlatformConfig()
         # Null ctx is OK if that's what they wanted (e.g. not doing any TileDB-Cloud ops).
