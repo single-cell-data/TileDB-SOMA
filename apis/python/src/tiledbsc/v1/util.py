@@ -1,5 +1,9 @@
 import pyarrow as pa
 
+SOMA_OBJECT_TYPE_METADATA_KEY = "soma_object_type"
+SOMA_ENCODING_VERSION_METADATA_KEY = "soma_encoding_version"
+SOMA_ENCODING_VERSION = "1"
+
 
 def tiledb_type_from_arrow_type(t: pa.DataType) -> type:
     """

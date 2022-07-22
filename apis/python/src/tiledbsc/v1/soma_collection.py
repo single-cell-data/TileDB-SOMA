@@ -31,6 +31,9 @@ class SOMACollection(TileDBGroup):
     # create is inherited from TileDBGroup
     # Create a SOMACollection named with the URI.
 
+    # TODO: FOR create():
+    #    self._common_create() # object-type metadata etc
+
     # delete(uri)
     # Delete the SOMACollection specified with the URI.
 
@@ -94,19 +97,58 @@ class SOMACollection(TileDBGroup):
         """
         self.delete(member_name)
 
+    #    # ----------------------------------------------------------------
+    #    def __iter__(self) -> Iterator[TileDBObject]:
+    #        """
+    #        Iterates over the collection.  Implements Python `for member in collection: ...` syntax.
+    #        """
+    #        for name, uri in self._get_member_names_to_uris().items():
+    #            if name not in self._members:
+    #                # member-constructor cache -- this is an important optimization for
+    #                # cloud storage, as URI-resolvers require HTTP requests
+    #                #
+    #                # TODO: need to read object metadata, including the classname, so we
+    #                # can invoke the right constructor here -- not just TileDBObject --
+    #                # so we can get a polymorphic return value.
+    #                self._members[name] = TileDBObject(uri=uri, name=name, parent=self, ctx=self._ctx)
+    #            yield self._members[name]
 
-#    # ----------------------------------------------------------------
-#    def __iter__(self) -> Iterator[TileDBObject]:
+
+#    # TODO: UNION RETURN TYPE
+#    # TODO: FIGURE OUT HOW TO DO THIS WITHOUT CIRCULAR IMPORTS
+#    def _construct_member(self, member_uri: str):
 #        """
-#        Iterates over the collection.  Implements Python `for member in collection: ...` syntax.
+#        TODO: COMMENT
 #        """
-#        for name, uri in self._get_member_names_to_uris().items():
-#            if name not in self._members:
-#                # member-constructor cache -- this is an important optimization for
-#                # cloud storage, as URI-resolvers require HTTP requests
-#                #
-#                # TODO: need to read object metadata, including the classname, so we
-#                # can invoke the right constructor here -- not just TileDBObject --
-#                # so we can get a polymorphic return value.
-#                self._members[name] = TileDBObject(uri=uri, name=name, parent=self, ctx=self._ctx)
-#            yield self._members[name]
+#        # TODO: xref to TileDBObject _set_object_type_metadata/_get_object_type_metadata.
+#        # and/or, put some of this there as a class/static method.
+#        pass
+#        # sketch:
+#        # get class name from meta -- with due respect for:
+#        # * is-array vs is-group
+#
+#        # TODO:
+#        # * reduce cloud ops necessary to answer that question
+#        # need get-object-type ...
+#
+#        # object_type = tiledb.object_type
+#        # if object_type == 'array':
+#        # elif object_type == 'array':
+#        # else:
+#        #     raise Exception(f"object type {object_type} unrecognized")
+#
+#
+#        # if class_name == "SOMAExperiment":
+#        #     return SOMAExperiment(uri=member_uri, parent=self)
+#        # elif class_name == "SOMAMeasurement":
+#        #     return SOMAMeasurement(uri=member_uri, parent=self)
+#        # elif class_name == "SOMACollection":
+#        #     return SOMACollection(uri=member_uri, parent=self)
+#        # elif class_name == "SOMADataFrame":
+#        #     return SOMADataFrame(uri=member_uri, parent=self)
+#        # elif class_name == "SOMADenseNdArray":
+#        #     return SOMADenseNdArray(uri=member_uri, parent=self)
+#        # elif class_name == "SOMASparseNdArray":
+#        #     return SOMASparseNdArray(uri=member_uri, parent=self)
+#        # else:
+#        #    raise Exception(f"class name \"{class_name}\" unrecognized")

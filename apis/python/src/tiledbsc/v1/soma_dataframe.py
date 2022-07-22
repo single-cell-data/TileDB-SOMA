@@ -87,6 +87,8 @@ class SOMADataFrame(TileDBArray):
             self._is_user_indexed = False
             self._index_column_names = []
 
+        self._common_create()  # object-type metadata etc
+
     def _create_empty_user_indexed(
         self,
         schema: pa.Schema,
@@ -96,7 +98,7 @@ class SOMADataFrame(TileDBArray):
         Create a TileDB 1D sparse array with string dimension and multiple attributes.
         """
 
-        level = self._soma_options.string_dim_zstd_level
+        level = self._tiledb_platform_config.string_dim_zstd_level
 
         dims = []
         for index_column_name in index_column_names:
@@ -143,7 +145,7 @@ class SOMADataFrame(TileDBArray):
             domain=dom,
             attrs=attrs,
             sparse=True,
-            allows_duplicates=self._soma_options.allows_duplicates,
+            allows_duplicates=self._tiledb_platform_config.allows_duplicates,
             offsets_filters=[
                 tiledb.DoubleDeltaFilter(),
                 tiledb.BitWidthReductionFilter(),
@@ -167,7 +169,7 @@ class SOMADataFrame(TileDBArray):
         Create a TileDB 1D dense array with uint64 __rowid dimension and multiple attributes.
         """
 
-        level = self._soma_options.string_dim_zstd_level
+        level = self._tiledb_platform_config.string_dim_zstd_level
 
         dom = tiledb.Domain(
             tiledb.Dim(
@@ -194,7 +196,7 @@ class SOMADataFrame(TileDBArray):
             domain=dom,
             attrs=attrs,
             sparse=False,
-            allows_duplicates=self._soma_options.allows_duplicates,
+            allows_duplicates=self._tiledb_platform_config.allows_duplicates,
             offsets_filters=[
                 tiledb.DoubleDeltaFilter(),
                 tiledb.BitWidthReductionFilter(),

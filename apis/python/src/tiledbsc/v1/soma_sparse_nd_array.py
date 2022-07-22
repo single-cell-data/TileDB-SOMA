@@ -47,7 +47,7 @@ class SOMASparseNdArray(TileDBArray):
         for e in shape:
             assert e > 0
 
-        level = self._soma_options.string_dim_zstd_level
+        level = self._tiledb_platform_config.string_dim_zstd_level
 
         dims = []
         for e in shape:
@@ -76,7 +76,7 @@ class SOMASparseNdArray(TileDBArray):
             domain=dom,
             attrs=attrs,
             sparse=True,
-            allows_duplicates=self._soma_options.allows_duplicates,
+            allows_duplicates=self._tiledb_platform_config.allows_duplicates,
             offsets_filters=[
                 tiledb.DoubleDeltaFilter(),
                 tiledb.BitWidthReductionFilter(),
@@ -89,6 +89,8 @@ class SOMASparseNdArray(TileDBArray):
         )
 
         tiledb.Array.create(self._uri, sch, ctx=self._ctx)
+
+        self._common_create()  # object-type metadata etc
 
     #        # ----------------------------------------------------------------
     #        # TODO: type,

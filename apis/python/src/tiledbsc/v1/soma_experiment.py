@@ -1,7 +1,7 @@
 from typing import Optional
 
-from .tiledb_group import TileDBGroup
 from .soma_collection import SOMACollection
+from .tiledb_group import TileDBGroup
 
 
 class SOMAExperiment(SOMACollection):

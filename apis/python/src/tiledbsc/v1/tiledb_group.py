@@ -4,11 +4,11 @@ from typing import Dict, Optional, Sequence
 
 import tiledb
 
-# from .logging import logger
-from .soma_options import SOMAOptions
-
 # from .tiledb_array import TileDBArray
 from .tiledb_object import TileDBObject
+
+# from .logging import logger
+from .tiledb_platform_config import TileDBPlatformConfig
 
 
 class TileDBGroup(TileDBObject):
@@ -28,14 +28,18 @@ class TileDBGroup(TileDBObject):
         # Non-top-level objects can have a parent to propagate context, depth, etc.
         parent: Optional[TileDBGroup] = None,
         # Top-level objects should specify these:
-        soma_options: Optional[SOMAOptions] = None,
+        tiledb_platform_config: Optional[TileDBPlatformConfig] = None,
         ctx: Optional[tiledb.Ctx] = None,
     ):
         """
         See the TileDBObject constructor.
         """
         super().__init__(
-            uri, name=name, parent=parent, soma_options=soma_options, ctx=ctx
+            uri,
+            name=name,
+            parent=parent,
+            tiledb_platform_config=tiledb_platform_config,
+            ctx=ctx,
         )
         self._cached_member_names_to_uris = None
 
@@ -130,7 +134,7 @@ class TileDBGroup(TileDBObject):
         Adds a SOMA group/array to the current SOMA group -- e.g. base SOMA adding
         X, X adding a layer, obsm adding an element, etc.
 
-        Semantics of `relative` from `self._soma_options.member_uris_are_relative`:
+        Semantics of `relative` from `self._tiledb_platform_config.member_uris_are_relative`:
 
         * If `False` then the group will have the absolute path of the member. For populating matrix
         elements within a SOMA in TileDB cloud, this is necessary. For populating SOMA elements within
@@ -147,13 +151,13 @@ class TileDBGroup(TileDBObject):
         select `relative=True`. This is the default.
 
         If the relative argument is supplied and is not None, it is used; secondly
-        `self._soma_options.member_uris_are_relative` is consulted; thirdly the URI prefix
+        `self._tiledb_platform_config.member_uris_are_relative` is consulted; thirdly the URI prefix
         is consulted as described above.
         """
         self.create_unless_exists()
         child_uri = obj.uri
         if relative is None:
-            relative = self._soma_options.member_uris_are_relative
+            relative = self._tiledb_platform_config.member_uris_are_relative
         if relative is None:
             relative = not child_uri.startswith("tiledb://")
         if relative:
