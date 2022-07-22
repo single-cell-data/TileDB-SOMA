@@ -37,13 +37,19 @@ class SOMACollection(TileDBObject):
         """
         Also see the :class:`TileDBObject` constructor.
         """
-        super().__init__(uri=uri, name=name, parent=parent)
+        super().__init__(
+            uri=uri,
+            name=name,
+            parent=parent,
+            tiledb_platform_config=tiledb_platform_config,
+            ctx=ctx,
+        )
         self._cached_members = {}
         self._cached_member_names_to_uris = None
 
     def create(self) -> None:
         """
-        Creates the TileDB group data structure on disk/S3/cloud.
+        Creates the data structure on disk/S3/cloud.
         """
         tiledb.group_create(uri=self._uri, ctx=self._ctx)
         self._common_create()  # object-type metadata etc
@@ -116,7 +122,7 @@ class SOMACollection(TileDBObject):
 
         return self._cached_members[member_name]
 
-    def set(self, member: TileDBObject, relative: Optional[bool] = None) -> None:
+    def set(self, member: TileDBObject, *, relative: Optional[bool] = None) -> None:
         """
         Adds a member to the collection.
         """
