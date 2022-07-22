@@ -1,3 +1,8 @@
+"""
+This module exists to avoid what would otherwise be cyclic-package-import issues within
+SOMACollection.
+"""
+
 from typing import Union
 
 import tiledb
@@ -21,19 +26,17 @@ MemberType = Union[
 ]
 
 
-# TODO: temp class name
 def _construct_member(member_uri: str, parent: TileDBGroup) -> MemberType:
     """
-    TODO: COMMENT
+    Solely for the use of `SOMACollection`. In fact this would/should be a method of the
+    `SOMACollection` class, but there are cyclic-package-import issues.  This allows us to examine
+    storage metadata and invoke the appropriate per-type constructor when reading SOMA groups/arrays
+    from storage.
+    See also `_set_object_type_metadata` and `_get_object_type_metadata` within `TileDBObject`.
     """
-    # TODO: xref to TileDBObject _set_object_type_metadata/_get_object_type_metadata.
-    # and/or, put some of this there as a class/static method.
 
-    # sketch:
-    # get class name from meta -- with due respect for:
-    # * is-array vs is-group
-    # * cloud-ops-count minimization
-
+    # Get the class name from TileDB storage. At the TileDB level there are just "arrays" and
+    # "groups", with separate metadata-getters.
     class_name = None
     object_type = tiledb.object_type(member_uri)
     if object_type is None:
@@ -48,6 +51,7 @@ def _construct_member(member_uri: str, parent: TileDBGroup) -> MemberType:
         raise Exception(f"object type {object_type} unrecognized")
     assert class_name is not None
 
+    # Now invoke the appropriate per-class constructor.
     if class_name == "SOMAExperiment":
         return SOMAExperiment(uri=member_uri, parent=parent)
     elif class_name == "SOMAMeasurement":

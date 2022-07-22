@@ -1,4 +1,4 @@
-from typing import Dict, Optional
+from typing import Dict, Iterator, Optional
 
 from .tiledb_group import TileDBGroup
 from .tiledb_object import TileDBObject
@@ -30,9 +30,6 @@ class SOMACollection(TileDBGroup):
 
     # create is inherited from TileDBGroup
 
-    # TODO: FOR create():
-    #    self._common_create() # object-type metadata etc
-
     # delete(uri)
     # Delete the SOMACollection specified with the URI.
 
@@ -61,17 +58,21 @@ class SOMACollection(TileDBGroup):
 
     #    # get_type() is inherited from TileDBObject
 
-    # TODO: polymorphic return-type annotation
     def get(self, member_name: str) -> TileDBObject:
         """
         Get the member object associated with the key
         """
-        # TODO: MEMBER-CACHE ON ADD
+        # TODO: KEEP A MEMBER-CACHE ON ADD
         # TODO: UPDATE MEMBER-CACHE ON REMOVE
-        from .factory import _construct_member
 
-        member_uri = self._get_child_uri(member_name)
-        return _construct_member(member_uri, self)
+        if member_name not in self._members:
+            # Do this here to avoid a cyclic package dependency:
+            from .factory import _construct_member
+
+            member_uri = self._get_child_uri(member_name)
+            self._members[member_name] = _construct_member(member_uri, self)
+
+        return self._members[member_name]
 
     def __len__(self) -> int:
         """
@@ -79,20 +80,24 @@ class SOMACollection(TileDBGroup):
         """
         return len(self._get_member_names_to_uris())
 
-    # has(string key)
-    # Test for the existence of key in collection.
+    def __contains__(self, member_name: str) -> bool:
+        """
+        Tests for the existence of key in collection.
+        Implements the `in` operator.
+        """
+        return member_name in self._get_child_uris()
 
-    # ----------------------------------------------------------------
     def set(self, member: TileDBObject, relative: Optional[bool] = None) -> None:
         """
         Adds a member to the collection.
         """
         self._add_object(member, relative)
+        self._members[member.get_name()] = member
 
     # TODO: note for the SOMA v1 spec: it says `del` not `delete` but `del` is a reserved word in Python.
     def delete(self, member_name: str) -> None:
         """
-        Removes a member from the collection, when invoked as `collection.remove("namegoeshere")`.
+        Removes a member from the collection, when invoked as `collection.delete("namegoeshere")`.
         """
         self._remove_object_by_name(member_name)
 
@@ -108,58 +113,19 @@ class SOMACollection(TileDBGroup):
         """
         self.delete(member_name)
 
-    #    # ----------------------------------------------------------------
-    #    def __iter__(self) -> Iterator[TileDBObject]:
-    #        """
-    #        Iterates over the collection.  Implements Python `for member in collection: ...` syntax.
-    #        """
-    #        for name, uri in self._get_member_names_to_uris().items():
-    #            if name not in self._members:
-    #                # member-constructor cache -- this is an important optimization for
-    #                # cloud storage, as URI-resolvers require HTTP requests
-    #                #
-    #                # TODO: need to read object metadata, including the classname, so we
-    #                # can invoke the right constructor here -- not just TileDBObject --
-    #                # so we can get a polymorphic return value.
-    #                self._members[name] = TileDBObject(uri=uri, name=name, parent=self, ctx=self._ctx)
-    #            yield self._members[name]
-
-
-#    # TODO: UNION RETURN TYPE
-#    # TODO: FIGURE OUT HOW TO DO THIS WITHOUT CIRCULAR IMPORTS
-#    def _construct_member(self, member_uri: str):
-#        """
-#        TODO: COMMENT
-#        """
-#        # TODO: xref to TileDBObject _set_object_type_metadata/_get_object_type_metadata.
-#        # and/or, put some of this there as a class/static method.
-#        pass
-#        # sketch:
-#        # get class name from meta -- with due respect for:
-#        # * is-array vs is-group
-#
-#        # TODO:
-#        # * reduce cloud ops necessary to answer that question
-#        # need get-object-type ...
-#
-#        # object_type = tiledb.object_type
-#        # if object_type == 'array':
-#        # elif object_type == 'array':
-#        # else:
-#        #     raise Exception(f"object type {object_type} unrecognized")
-#
-#
-#        # if class_name == "SOMAExperiment":
-#        #     return SOMAExperiment(uri=member_uri, parent=self)
-#        # elif class_name == "SOMAMeasurement":
-#        #     return SOMAMeasurement(uri=member_uri, parent=self)
-#        # elif class_name == "SOMACollection":
-#        #     return SOMACollection(uri=member_uri, parent=self)
-#        # elif class_name == "SOMADataFrame":
-#        #     return SOMADataFrame(uri=member_uri, parent=self)
-#        # elif class_name == "SOMADenseNdArray":
-#        #     return SOMADenseNdArray(uri=member_uri, parent=self)
-#        # elif class_name == "SOMASparseNdArray":
-#        #     return SOMASparseNdArray(uri=member_uri, parent=self)
-#        # else:
-#        #    raise Exception(f"class name \"{class_name}\" unrecognized")
+    def __iter__(self) -> Iterator[TileDBObject]:
+        """
+        Iterates over the collection.  Implements Python `for member in collection: ...` syntax.
+        """
+        for name, uri in self._get_member_names_to_uris().items():
+            if name not in self._members:
+                # member-constructor cache -- this is an important optimization for
+                # cloud storage, as URI-resolvers require HTTP requests
+                #
+                # TODO: need to read object metadata, including the classname, so we
+                # can invoke the right constructor here -- not just TileDBObject --
+                # so we can get a polymorphic return value.
+                self._members[name] = TileDBObject(
+                    uri=uri, name=name, parent=self, ctx=self._ctx
+                )
+            yield self._members[name]
