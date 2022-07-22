@@ -19,7 +19,7 @@ class TileDBArray(TileDBObject):
         uri: str,
         *,
         name: Optional[str] = None,
-        parent: Optional["tiledbsc.TileDBGroup"] = None
+        parent: Optional["tiledbsc.v1.TileDBGroup"] = None
     ):
         """
         See the TileDBObject constructor.

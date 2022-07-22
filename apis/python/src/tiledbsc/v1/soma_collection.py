@@ -78,6 +78,7 @@ class SOMACollection(TileDBGroup):
         Returns the number of members in the collection.  Implements Python's `len(collection)`.
         """
         return len(self._get_member_names_to_uris())
+
     # has(string key)
     # Test for the existence of key in collection.
 

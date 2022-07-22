@@ -29,7 +29,7 @@ class TileDBObject(ABC):
         name: Optional[str] = None,
         *,
         # Non-top-level objects can have a parent to propgate context, depth, etc.
-        parent: Optional["tiledbsc.TileDBGroup"] = None,
+        parent: Optional["tiledbsc.v1.TileDBGroup"] = None,
         # Top-level objects should specify these:
         tiledb_platform_config: Optional[TileDBPlatformConfig] = None,
         ctx: Optional[tiledb.Ctx] = None,
