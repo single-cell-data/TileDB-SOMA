@@ -24,7 +24,8 @@ using ColumnBuffers = std::map<std::string, std::shared_ptr<ColumnBuffer>>;
  */
 class ColumnBuffer {
     // TODO: set buffer sizes like tiledb python api (remove this)
-    inline static const size_t DEFAULT_ALLOC = 1 << 26;
+    // TODO: workaround segfault in TileDB 2.10.2, DEFAULT_ALLOC > (1 << 21)
+    inline static const size_t DEFAULT_ALLOC = 1 << 24;
 
    public:
     //===================================================================

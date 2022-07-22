@@ -4,6 +4,27 @@
 
 using namespace tiledbsc;
 
+void debug(std::string_view soma_uri) {
+    auto soma = SOMA::open(soma_uri);
+    auto sq = soma->query();
+    auto ctx = soma->context();
+
+    // Set var query condition
+    std::string var_attr = "n_cells";
+    uint64_t var_val = 50;
+    auto var_qc = QueryCondition::create<uint64_t>(
+        *ctx, var_attr, var_val, TILEDB_LT);
+    std::vector<std::string> var_cols = {var_attr};
+    // sq->set_var_condition(var_qc);
+    // sq->select_var_attrs(var_cols);
+
+    size_t total_cells = 0;
+    while (auto results = sq->next_results()) {
+        auto num_cells = results->begin()->second->size();
+        total_cells += num_cells;
+    }
+}
+
 void walk_soco(std::string_view uri) {
     auto soco = SOMACollection::open(uri);
     auto somas = soco->list_somas();
@@ -164,8 +185,9 @@ int main(int argc, char** argv) {
 
     try {
         // walk_soco(argv[1]);
-        //  slice_soma(argv[2]);
-        soco_query(argv[1]);
+        // slice_soma(argv[2]);
+        debug(argv[2]);
+        // soco_query(argv[1]);
     } catch (const std::exception& e) {
         LOG_FATAL(e.what());
     }

@@ -33,7 +33,7 @@ TEST_CASE("SOMA: Full query") {
 
     size_t total_cells = 0;
     while (auto results = sq->next_results()) {
-        auto num_cells = results->at("obs_id")->size();
+        auto num_cells = results->begin()->second->size();
         total_cells += num_cells;
     }
     REQUIRE(total_cells == 4848644);
@@ -54,7 +54,7 @@ TEST_CASE("SOMA: Sliced query (obs)") {
 
     size_t total_cells = 0;
     while (auto results = sq->next_results()) {
-        auto num_cells = results->at("obs_id")->size();
+        auto num_cells = results->begin()->second->size();
         total_cells += num_cells;
     }
     REQUIRE(total_cells == 628596);
@@ -76,7 +76,7 @@ TEST_CASE("SOMA: Sliced query (var)") {
 
     size_t total_cells = 0;
     while (auto results = sq->next_results()) {
-        auto num_cells = results->at("obs_id")->size();
+        auto num_cells = results->begin()->second->size();
         total_cells += num_cells;
     }
     REQUIRE(total_cells == 1308448);
@@ -94,7 +94,7 @@ TEST_CASE("SOMA: Sliced query (select ids)") {
 
     size_t total_cells = 0;
     while (auto results = sq->next_results()) {
-        auto num_cells = results->at("obs_id")->size();
+        auto num_cells = results->begin()->second->size();
         total_cells += num_cells;
     }
     REQUIRE(total_cells == 9);
