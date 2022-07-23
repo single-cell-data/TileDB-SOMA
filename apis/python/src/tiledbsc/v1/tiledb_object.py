@@ -82,42 +82,11 @@ class TileDBObject(ABC):
     def get_type(self) -> str:
         return type(self).__name__
 
-    #    def get_object_type(self) -> str:
-    #        """
-    #        Returns the class name associated with the group/array.
-    #        """
-    #        with self._tiledb_open("r") as obj:
-    #            return str(obj.meta[util.SOMA_OBJECT_TYPE_METADATA_KEY])
-
-    #    def _set_object_type_metadata(self) -> None:
-    #        """
-    #        This helps nested-structured traversals (especially those that start at the SOMACollection
-    #        level) confidently navigate with a minimum of introspection on group contents.
-    #        """
-    #        with self._tiledb_open("w") as obj:
-    #            obj.meta.update(
-    #                {
-    #                    util.SOMA_OBJECT_TYPE_METADATA_KEY: self.__class__.__name__,
-    #                    util.SOMA_ENCODING_VERSION_METADATA_KEY: util.SOMA_ENCODING_VERSION,
-    #                }
-    #            )
-
-    # ================================================================
-    # ================================================================
-    # ================================================================
-    # XXX TEMP WIP COPY/FACTOR FROM V0
-
     def _common_create(self) -> None:
         """
-        TODO: COMMENT
+        Utility method for various constructors.
         """
         self._set_object_type_metadata()
-
-    def _get_object_type_from_metadata(self) -> str:
-        """
-        Returns the class name associated with the group/array.
-        """
-        return self.metadata.get(util.SOMA_OBJECT_TYPE_METADATA_KEY)
 
     def _set_object_type_metadata(self) -> None:
         """
@@ -132,3 +101,9 @@ class TileDBObject(ABC):
                     util.SOMA_ENCODING_VERSION_METADATA_KEY: util.SOMA_ENCODING_VERSION,
                 }
             )
+
+    def _get_object_type_from_metadata(self) -> str:
+        """
+        Returns the class name associated with the group/array.
+        """
+        return self.metadata.get(util.SOMA_OBJECT_TYPE_METADATA_KEY)

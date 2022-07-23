@@ -95,27 +95,6 @@ class SOMASparseNdArray(TileDBArray):
 
         self._common_create()  # object-type metadata etc
 
-    #        # ----------------------------------------------------------------
-    #        # TODO: type,
-    #        shape: Tuple,
-    #
-    #        # Check that ndims, and each dimension, are positive
-    #        assert len(shape) > 0
-    #        for e in shape:
-    #            assert e > 0
-
-    # TODO: static/class method?
-    #    def delete(uri: str) -> None
-    #        """
-    #        Delete the SOMASparseNdArray specified with the URI.
-    #        """
-
-    # TODO: static/class method?
-    #    def exists(uri: str) -> bool
-    #        """
-    #        Return true if object exists and is a SOMASparseNdArray.
-    #        """
-
     def get_shape(self) -> Tuple:
         """
         Return length of each dimension, always a list of length ``ndims``
@@ -128,6 +107,7 @@ class SOMASparseNdArray(TileDBArray):
         """
         return len(self._shape)
 
+    # TODO
     #    def get_schema(self) -> Arrow.Schema:
     #        """
     #        Return data schema, in the form of an Arrow Schema
@@ -139,13 +119,14 @@ class SOMASparseNdArray(TileDBArray):
         """
         return True
 
+    # TODO
     #    def get_nnz(self) -> wint:
     #        """
     #        Return the number of non-zero values in the array
     #        """
     #        return 999
 
-    # ----------------------------------------------------------------
+    # TODO
     #    def read():
     #        """
     #        Read a slice of data from the SOMASparseNdArray

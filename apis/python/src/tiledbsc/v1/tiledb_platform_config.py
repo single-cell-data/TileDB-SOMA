@@ -3,7 +3,6 @@ from typing import Optional
 
 
 @dataclass(frozen=True)
-# TODO: rename to include TileDB in the name -- these are all specific to TileDB
 class TileDBPlatformConfig:
     """
     A place to put configuration options various users may wish to change.

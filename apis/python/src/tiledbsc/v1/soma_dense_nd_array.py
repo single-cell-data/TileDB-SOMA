@@ -92,18 +92,6 @@ class SOMADenseNdArray(TileDBArray):
 
         self._common_create()  # object-type metadata etc
 
-    # TODO: static/class method?
-    #    def delete(uri: str) -> None
-    #        """
-    #        Delete the SOMADenseNdArray specified with the URI.
-    #        """
-
-    # TODO: static/class method?
-    #    def exists(uri: str) -> bool
-    #        """
-    #        Return true if object exists and is a SOMADenseNdArray.
-    #        """
-
     def get_shape(self) -> Tuple[int]:
         """
         Return length of each dimension, always a list of length ``ndims``
@@ -120,6 +108,7 @@ class SOMADenseNdArray(TileDBArray):
         with self._tiledb_open() as A:
             return A.schema.domain.ndim
 
+    # TODO
     #    def get_schema(self) -> Arrow.Schema:
     #        """
     #        Return data schema, in the form of an Arrow Schema

@@ -215,19 +215,7 @@ class SOMADataFrame(TileDBArray):
         self._is_sparse = sch.sparse
         tiledb.Array.create(self._uri, sch, ctx=self._ctx)
 
-    # ----------------------------------------------------------------
-    # TODO: static/class method?
-    #    def delete(uri: str) -> None
-    #        """
-    #        Delete the SOMADataFrame specified with the URI.
-    #        """
-
-    # TODO: static/class method?
-    #    def exists(uri: str) -> bool
-    #        """
-    #        Return true if object exists and is a SOMADataFrame.
-    #        """
-
+    # TODO
     #    def get_shape() -> Tuple[int]:
     #        """
     #        Return length of each dimension, always a list of length ``ndims``

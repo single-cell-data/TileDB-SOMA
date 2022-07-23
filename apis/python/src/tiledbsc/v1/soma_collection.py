@@ -74,14 +74,9 @@ class SOMACollection(TileDBObject):
             else:
                 raise e
 
+    # TODO
     # delete(uri)
     # Delete the SOMACollection specified with the URI.
-
-    #    # TODO: static/class method?
-    #    #    def delete(uri: str) -> None
-    #    #        """
-    #    #        Delete the SOMADataFrame specified with the URI.
-    #    #        """
 
     # exists(uri) -> bool
     # Return true if object exists and is a SOMACollection.
@@ -148,7 +143,6 @@ class SOMACollection(TileDBObject):
         self._add_object(member, relative)
         self._cached_members[member.get_name()] = member
 
-    # TODO: note for the SOMA v1 spec: it says `del` not `delete` but `del` is a reserved word in Python.
     def delete(self, member_name: str) -> None:
         """
         Removes a member from the collection, when invoked as `collection.delete("namegoeshere")`.
