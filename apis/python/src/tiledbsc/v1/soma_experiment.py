@@ -17,12 +17,12 @@ class SOMAExperiment(SOMACollection):
     the _observation_ index domain, aka `obsid`. All observations for the SOMAExperiment _must_ be
     defined in this dataframe.
     """
-    obs: SOMADataFrame
+    _cached_obs: Optional[SOMADataFrame]
 
     """
     A collection of named measurements.
     """
-    ms: SOMACollection  # of SOMAMeasurement
+    _cached_ms: Optional[SOMACollection]  # of SOMAMeasurement
 
     def __init__(
         self,
@@ -45,6 +45,8 @@ class SOMAExperiment(SOMACollection):
             tiledb_platform_config=tiledb_platform_config,
             ctx=ctx,
         )
+        self._cached_obs = None
+        self._cached_ms = None
 
     def create(self) -> None:
         """
@@ -57,11 +59,15 @@ class SOMAExperiment(SOMACollection):
         TODO: COMMENT
         """
         if name == "obs":
-            child_uri = self._get_child_uri("obs")
-            return SOMADataFrame(uri=child_uri, name="obs", parent=self)
+            if self._cached_obs is None:
+                child_uri = self._get_child_uri("obs")
+                self._cached_obs = SOMADataFrame(uri=child_uri, name="obs", parent=self)
+            return self._cached_obs
         elif name == "ms":
-            child_uri = self._get_child_uri("ms")
-            return SOMACollection(uri=child_uri, name="ms", parent=self)
+            if self._cached_ms is None:
+                child_uri = self._get_child_uri("ms")
+                self._cached_ms = SOMACollection(uri=child_uri, name="ms", parent=self)
+            return self._cached_ms
         else:
             # Unlike __getattribute__ this is _only_ called when the member isn't otherwise
             # resolvable. So raising here is the right thing to do.

@@ -206,7 +206,7 @@ class SOMACollection(TileDBObject):
         request to the REST server.
         """
         # TODO: TEMP
-        if not self._tiledb_exists() or is_tiledb_creation_uri(self._uri):
+        if is_tiledb_creation_uri(self._uri) or not self._tiledb_exists():
             # Group not constructed yet, or being constructed. Here, appending "/" and name is
             # appropriate in all cases: even for tiledb://... URIs, pre-construction URIs are of the
             # form tiledb://namespace/s3://something/something/soma/membername.
@@ -244,7 +244,7 @@ class SOMACollection(TileDBObject):
         in the tiledb//... URIs.
         """
         # TODO: TEMP
-        if not self._tiledb_exists() or is_tiledb_creation_uri(self._uri):
+        if is_tiledb_creation_uri(self._uri) or not self._tiledb_exists():
             # TODO: comment
             return self._uri + "/" + member_name
 
@@ -285,8 +285,14 @@ class SOMACollection(TileDBObject):
         `self._tiledb_platform_config.member_uris_are_relative` is consulted; thirdly the URI prefix
         is consulted as described above.
         """
-        if not self._tiledb_exists():  # TODO: TEMP NAME
-            self.create()
+
+        # XXX TEMP
+        # if not self._tiledb_exists():  # TODO: TEMP NAME
+        #    self.create()
+        if self._cached_member_names_to_uris is None:
+            if not self._tiledb_exists():  # TODO: TEMP NAME
+                self.create()
+
         child_uri = obj.get_uri()
         child_name = obj.get_name()
         if relative is None:

@@ -44,12 +44,12 @@ class SOMAMeasurement(SOMACollection):
     [varid_1, varid_2]
     """
 
-    var: SOMADataFrame
-    X: SOMACollection  # of SOMASparseNdArray
-    obsm: SOMACollection  # of SOMADenseNdArray
-    obsp: SOMACollection  # of SOMASparseNdArray
-    varm: SOMACollection  # of SOMADenseNdArray
-    varp: SOMACollection  # of SOMASparseNdArray
+    _cached_var: Optional[SOMADataFrame]
+    _cached_X: Optional[SOMACollection]  # of SOMASparseNdArray
+    _cached_obsm: Optional[SOMACollection]  # of SOMADenseNdArray
+    _cached_obsp: Optional[SOMACollection]  # of SOMASparseNdArray
+    _cached_varm: Optional[SOMACollection]  # of SOMADenseNdArray
+    _cached_varp: Optional[SOMACollection]  # of SOMASparseNdArray
 
     # TODO: check more constraints at runtime:
     # `obs`, `var`
@@ -107,6 +107,13 @@ class SOMAMeasurement(SOMACollection):
             ctx=ctx,
         )
 
+        self._cached_var = None
+        self._cached_X = None
+        self._cached_obsm = None
+        self._cached_obsp = None
+        self._cached_varm = None
+        self._cached_varp = None
+
     def create(self) -> None:
         """
         Creates the data structure on disk/S3/cloud.
@@ -118,23 +125,49 @@ class SOMAMeasurement(SOMACollection):
         TODO: COMMENT
         """
         if name == "var":
-            child_uri = self._get_child_uri("var")
-            return SOMADataFrame(uri=child_uri, name="var", parent=self)
+            if self._cached_var is None:
+                child_uri = self._get_child_uri("var")
+                self._cached_var = SOMADataFrame(uri=child_uri, name="var", parent=self)
+            return self._cached_var
+
         elif name == "X":
-            child_uri = self._get_child_uri("X")
-            return SOMACollection(uri=child_uri, name="X", parent=self)
+            if self._cached_X is None:
+                child_uri = self._get_child_uri("X")
+                self._cached_X = SOMACollection(uri=child_uri, name="X", parent=self)
+            return self._cached_X
+
         elif name == "obsm":
-            child_uri = self._get_child_uri("obsm")
-            return SOMACollection(uri=child_uri, name="obsm", parent=self)
+            if self._cached_obsm is None:
+                child_uri = self._get_child_uri("obsm")
+                self._cached_obsm = SOMACollection(
+                    uri=child_uri, name="obsm", parent=self
+                )
+            return self._cached_obsm
+
         elif name == "obsp":
-            child_uri = self._get_child_uri("obsp")
-            return SOMACollection(uri=child_uri, name="obsp", parent=self)
+            if self._cached_obsp is None:
+                child_uri = self._get_child_uri("obsp")
+                self._cached_obsp = SOMACollection(
+                    uri=child_uri, name="obsp", parent=self
+                )
+            return self._cached_obsp
+
         elif name == "varm":
-            child_uri = self._get_child_uri("varm")
-            return SOMACollection(uri=child_uri, name="varm", parent=self)
+            if self._cached_varm is None:
+                child_uri = self._get_child_uri("varm")
+                self._cached_varm = SOMACollection(
+                    uri=child_uri, name="varm", parent=self
+                )
+            return self._cached_varm
+
         elif name == "varp":
-            child_uri = self._get_child_uri("varp")
-            return SOMACollection(uri=child_uri, name="varp", parent=self)
+            if self._cached_varp is None:
+                child_uri = self._get_child_uri("varp")
+                self._cached_varp = SOMACollection(
+                    uri=child_uri, name="varp", parent=self
+                )
+            return self._cached_varp
+
         else:
             # Unlike __getattribute__ this is _only_ called when the member isn't otherwise
             # resolvable. So raising here is the right thing to do.
