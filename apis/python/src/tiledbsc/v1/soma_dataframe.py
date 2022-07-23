@@ -296,6 +296,7 @@ class SOMADataFrame(TileDBArray):
         # TODO: partitions,
         # TODO: result_order,
         # TODO: value_filter
+        _return_incomplete: Optional[bool] = True, # XXX TEMP
     ) -> Iterator[pa.RecordBatch]:
         """
         Read a user-defined subset of data, addressed by the dataframe indexing columns, optionally
@@ -331,7 +332,7 @@ class SOMADataFrame(TileDBArray):
             use_all_column_names = True
 
         with self._tiledb_open("r") as A:
-            q = A.query(return_arrow=True, return_incomplete=True)
+            q = A.query(return_arrow=True, return_incomplete=_return_incomplete)
 
             if use_all_ids:
                 if use_all_column_names:
@@ -344,10 +345,13 @@ class SOMADataFrame(TileDBArray):
                 else:
                     iterator = q.df[ids][column_names]
 
-            for df in iterator:
-                batches = df.to_batches()
-                for batch in batches:
-                    yield batch
+            if _return_incomplete:
+                for df in iterator:
+                    batches = df.to_batches()
+                    for batch in batches:
+                        yield batch
+            else:
+                yield iterator
 
     def write(self, values: pa.RecordBatch) -> None:
         """
