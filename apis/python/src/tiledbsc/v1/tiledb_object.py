@@ -1,12 +1,13 @@
 import os
 from abc import ABC, abstractmethod
-from typing import Any, Mapping, Optional, Sequence, Union
+from typing import Optional, Union
 
 import tiledb
 
 import tiledbsc
 
 from . import util
+from .soma_metadata_mapping import SOMAMetadataMapping
 from .tiledb_platform_config import TileDBPlatformConfig
 
 
@@ -21,6 +22,7 @@ class TileDBObject(ABC):
     _name: str
     _nested_name: str
     _tiledb_platform_config: TileDBPlatformConfig
+    metadata: SOMAMetadataMapping
 
     def __init__(
         self,
@@ -59,6 +61,8 @@ class TileDBObject(ABC):
         self._tiledb_platform_config = tiledb_platform_config or TileDBPlatformConfig()
         # Null ctx is OK if that's what they wanted (e.g. not doing any TileDB-Cloud ops).
 
+        self.metadata = SOMAMetadataMapping(self)
+
     def __repr__(self) -> str:
         """
         XXX TEMP
@@ -68,49 +72,6 @@ class TileDBObject(ABC):
     @abstractmethod
     def _tiledb_open(self, mode: str = "r") -> Union[tiledb.Array, tiledb.Group]:
         """Open the underlying TileDB array or Group"""
-
-    def _tiledb_metadata(self) -> Mapping[str, Any]:
-        """
-        XXX TEMP TEMP TEMP
-        """
-        with self._tiledb_open("r") as obj:
-            return dict(obj.meta)
-
-    #    def metadata(self) -> Mapping[str, Any]:
-    #        """
-    #        Returns metadata from the group/array as a dict.
-    #        """
-    #        with self._tiledb_open("r") as obj:
-    #            return dict(obj.meta)
-
-    #    def has_metadata(self, key: str) -> bool:
-    #        """
-    #        Returns whether metadata is associated with the group/array.
-    #        """
-    #        with self._tiledb_open("r") as obj:
-    #            return key in obj.meta
-
-    #    def metadata_keys(self) -> Sequence[str]:
-    #        """
-    #        Returns metadata keys associated with the group/array.
-    #        """
-    #        with self._tiledb_open("r") as obj:
-    #            return list(obj.meta.keys())
-
-    #    def get_metadata(self, key: str) -> Any:
-    #        """
-    #        Returns metadata associated with the group/array.
-    #        Raises `KeyError` if there is no such key in the metadata.
-    #        """
-    #        with self._tiledb_open("r") as obj:
-    #            return obj.meta[key]
-
-    #    def set_metadata(self, key: str, value: Any) -> None:
-    #        """
-    #        Returns metadata associated with the group/array.
-    #        """
-    #        with self._tiledb_open("w") as obj:
-    #            obj.meta[key] = value
 
     def get_name(self) -> str:
         return self._name
@@ -152,54 +113,18 @@ class TileDBObject(ABC):
         """
         self._set_object_type_metadata()
 
-    def _metadata(self) -> Mapping[str, Any]:
-        """
-        Returns metadata from the group/array as a dict.
-        """
-        with self._tiledb_open("r") as obj:
-            return dict(obj.meta)
-
-    def _has_metadata(self, key: str) -> bool:
-        """
-        Returns whether metadata is associated with the group/array.
-        """
-        with self._tiledb_open("r") as obj:
-            return key in obj.meta
-
-    def _metadata_keys(self) -> Sequence[str]:
-        """
-        Returns metadata keys associated with the group/array.
-        """
-        with self._tiledb_open("r") as obj:
-            return list(obj.meta.keys())
-
-    def _get_metadata(self, key: str) -> Any:
-        """
-        Returns metadata associated with the group/array.
-        Raises `KeyError` if there is no such key in the metadata.
-        """
-        with self._tiledb_open("r") as obj:
-            return obj.meta[key]
-
-    def _set_metadata(self, key: str, value: Any) -> None:
-        """
-        Returns metadata associated with the group/array.
-        """
-        with self._tiledb_open("w") as obj:
-            obj.meta[key] = value
-
     def _get_object_type_from_metadata(self) -> str:
         """
         Returns the class name associated with the group/array.
         """
-        with self._tiledb_open("r") as obj:
-            return str(obj.meta[util.SOMA_OBJECT_TYPE_METADATA_KEY])
+        return self.metadata.get(util.SOMA_OBJECT_TYPE_METADATA_KEY)
 
     def _set_object_type_metadata(self) -> None:
         """
         This helps nested-structured traversals (especially those that start at the SOMACollection
         level) confidently navigate with a minimum of introspection on group contents.
         """
+        # TODO: make a multi-set in SOMAMetadataMapping that would above a double-open there.
         with self._tiledb_open("w") as obj:
             obj.meta.update(
                 {

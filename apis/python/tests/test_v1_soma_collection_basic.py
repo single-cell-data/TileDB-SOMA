@@ -5,6 +5,7 @@ import pyarrow as pa
 
 import tiledbsc.v1 as t
 
+
 # ----------------------------------------------------------------
 def create_and_populate_dataframe(dataframe: t.SOMADataFrame) -> None:
 
@@ -27,6 +28,7 @@ def create_and_populate_dataframe(dataframe: t.SOMADataFrame) -> None:
     rb = pa.RecordBatch.from_pydict(pydict)
     dataframe.write(rb)
 
+
 # ----------------------------------------------------------------
 def create_and_populate_sparse_nd_array(sparse_nd_array: t.SOMASparseNdArray) -> None:
     nr = 10
@@ -39,6 +41,7 @@ def create_and_populate_sparse_nd_array(sparse_nd_array: t.SOMASparseNdArray) ->
         shape=(nr, nc),
     )
     sparse_nd_array.write(tensor)
+
 
 # ----------------------------------------------------------------
 def test_soma_collection_basic(tmp_path):

@@ -116,13 +116,6 @@ class SOMASparseNdArray(TileDBArray):
     #        Return true if object exists and is a SOMASparseNdArray.
     #        """
 
-    #    def get_metadata():
-    #        """
-    #        Access the metadata as a mutable [`SOMAMetadataMapping`](#SOMAMetadataMapping)
-    #        """
-
-    # get_type() is inherited from TileDBObject
-
     def get_shape(self) -> Tuple:
         """
         Return length of each dimension, always a list of length ``ndims``

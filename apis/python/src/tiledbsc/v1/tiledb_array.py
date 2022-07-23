@@ -112,5 +112,5 @@ class TileDBArray(TileDBObject):
         XXX TEMP TEMP TEMP
         """
         print(f"{indent}[{self._name}]")
-        for key, value in self._metadata().items():
+        for key, value in self.metadata.items():
             print(f"{indent}- {key}: {value}")

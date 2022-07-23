@@ -1,6 +1,8 @@
-import tiledbsc.v1 as t
-import pyarrow as pa
 import numpy as np
+import pyarrow as pa
+
+import tiledbsc.v1 as t
+
 
 # ----------------------------------------------------------------
 def create_and_populate_obs(obs: t.SOMADataFrame) -> None:
@@ -24,6 +26,7 @@ def create_and_populate_obs(obs: t.SOMADataFrame) -> None:
     rb = pa.RecordBatch.from_pydict(pydict)
     obs.write(rb)
 
+
 # ----------------------------------------------------------------
 def create_and_populate_var(var: t.SOMADataFrame) -> None:
 
@@ -43,6 +46,7 @@ def create_and_populate_var(var: t.SOMADataFrame) -> None:
     pydict["xyzzy"] = [12.3, 23.4, 34.5, 45.6]
     rb = pa.RecordBatch.from_pydict(pydict)
     var.write(rb)
+
 
 # ----------------------------------------------------------------
 def create_and_populate_sparse_nd_array(sparse_nd_array: t.SOMASparseNdArray) -> None:
@@ -64,6 +68,7 @@ def create_and_populate_sparse_nd_array(sparse_nd_array: t.SOMASparseNdArray) ->
         shape=(nr, nc),
     )
     sparse_nd_array.write(tensor)
+
 
 # ----------------------------------------------------------------
 def test_soma_experiment_basic(tmp_path):
@@ -99,14 +104,14 @@ def test_soma_experiment_basic(tmp_path):
     assert isinstance(experiment.ms, t.SOMACollection)
 
     assert len(experiment.ms) == 1
-    assert isinstance(experiment.ms['meas1'], t.SOMAMeasurement)
+    assert isinstance(experiment.ms["meas1"], t.SOMAMeasurement)
 
-    assert len(experiment.ms['meas1']) == 2
-    assert isinstance(experiment.ms['meas1'].var, t.SOMADataFrame)
-    assert isinstance(experiment.ms['meas1'].X, t.SOMACollection)
+    assert len(experiment.ms["meas1"]) == 2
+    assert isinstance(experiment.ms["meas1"].var, t.SOMADataFrame)
+    assert isinstance(experiment.ms["meas1"].X, t.SOMACollection)
 
-    assert len(experiment.ms['meas1'].X) == 1
-    assert isinstance(experiment.ms['meas1'].X['data'], t.SOMASparseNdArray)
+    assert len(experiment.ms["meas1"].X) == 1
+    assert isinstance(experiment.ms["meas1"].X["data"], t.SOMASparseNdArray)
 
     # >>> experiment.ms.meas1.X.data._tiledb_open().df[:]
     #    __dim_0  __dim_1  data

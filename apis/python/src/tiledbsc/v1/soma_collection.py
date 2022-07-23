@@ -84,16 +84,6 @@ class SOMACollection(TileDBObject):
     #        # and it turns out caching the existence-check isn't a robust approach.
     #        return bool(tiledb.object_type(self._uri, ctx=self._ctx) == "group")
 
-    # get metadata
-    # Access the metadata as a mutable [`SOMAMetadataMapping`](#SOMAMetadataMapping)
-
-    #    #    def get_metadata():
-    #    #        """
-    #    #        Access the metadata as a mutable [`SOMAMetadataMapping`](#SOMAMetadataMapping)
-    #    #        """
-
-    #    # get_type() is inherited from TileDBObject
-
     def __len__(self) -> int:
         """
         Returns the number of members in the collection.  Implements Python's `len(collection)`.
@@ -358,7 +348,7 @@ class SOMACollection(TileDBObject):
         Shows metadata for the group, recursively by default.
         """
         print(f"{indent}[{self._name}]")
-        for key, value in self._tiledb_metadata().items():  # XXX TEMP
+        for key, value in self.metadata.items():  # XXX TEMP
             print(f"{indent}- {key}: {value}")
         if recursively:
             child_indent = indent + "  "
