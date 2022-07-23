@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Dict, Iterator, Optional, Sequence
+from typing import Any, Dict, Iterator, Optional, Sequence
 
 import tiledb
 
@@ -55,6 +55,25 @@ class SOMACollection(TileDBObject):
         tiledb.group_create(uri=self._uri, ctx=self._ctx)
         self._common_create()  # object-type metadata etc
 
+    def _create_unless_exists(self) -> None:
+        """
+        Auxiliary method for `_add_object`.
+        """
+        # Pre-checking if the group exists by calling tiledb.object_type is simple, however, for
+        # tiledb-cloud URIs that occurs a penalty of two HTTP requests to the REST server, even
+        # before a third, successful HTTP request for group-open.  Instead, we directly attempt the
+        # group-create request, checking for an exception.
+
+        try:
+            self.create()
+        except tiledb.cc.TileDBError as e:
+            stre = str(e)
+            # Local-disk/S3/tiledb-cloud exceptions all three say 'already exists'
+            if "already exists" in stre:
+                pass
+            else:
+                raise e
+
     # delete(uri)
     # Delete the SOMACollection specified with the URI.
 
@@ -101,9 +120,6 @@ class SOMACollection(TileDBObject):
         """
         Get the member object associated with the key
         """
-        # TODO: KEEP A MEMBER-CACHE ON ADD
-        # TODO: UPDATE MEMBER-CACHE ON REMOVE
-
         if member_name not in self._cached_members:
             # Do this here to avoid a cyclic package dependency:
             from .factory import _construct_member
@@ -151,33 +167,21 @@ class SOMACollection(TileDBObject):
         """
         self.delete(member_name)
 
-    def __iter__(self) -> Iterator[TileDBObject]:
+    def __iter__(self) -> Iterator[Any]:  # TODO: union type
         """
         Iterates over the collection.  Implements Python `for member in collection: ...` syntax.
         """
-        for name, uri in self._get_member_names_to_uris().items():
-            if name not in self._cached_members:
-                # member-constructor cache -- this is an important optimization for
-                # cloud storage, as URI-resolvers require HTTP requests
-                #
-                # TODO: need to read object metadata, including the classname, so we
-                # can invoke the right constructor here -- not just TileDBObject --
-                # so we can get a polymorphic return value.
-                self._cached_members[name] = TileDBObject(
-                    uri=uri, name=name, parent=self, ctx=self._ctx
-                )
-            yield self._cached_members[name]
+        for member_name, member_uri in self._get_member_names_to_uris().items():
+            if member_name not in self._cached_members:
+                # Do this here to avoid a cyclic package dependency:
+                from .factory import _construct_member
+
+                self._cached_members[member_name] = _construct_member(member_uri, self)
+            yield self._cached_members[member_name]
 
     # ================================================================
     # PRIVATE METHODS FROM HERE ON DOWN
     # ================================================================
-
-    # TODO: TEMP NAME
-    def _tiledb_exists(self) -> bool:
-        """
-        TODO: COMMENT
-        """
-        return bool(tiledb.object_type(self.get_uri(), ctx=self._ctx) == "group")
 
     def _tiledb_open(self, mode: str = "r") -> tiledb.Group:
         """
@@ -190,65 +194,72 @@ class SOMACollection(TileDBObject):
 
     def _get_child_uris(self, member_names: Sequence[str]) -> Dict[str, str]:
         """
-        Batched version of `get_child_uri`. Since there's REST-server latency for getting
-        name-to-URI mapping for group-member URIs, in the tiledb://... case, total latency
-        is reduced when we ask for all group-element name-to-URI mappings in a single
-        request to the REST server.
-        """
-        # TODO: TEMP
-        if is_tiledb_creation_uri(self._uri) or not self._tiledb_exists():
-            # Group not constructed yet, or being constructed. Here, appending "/" and name is
-            # appropriate in all cases: even for tiledb://... URIs, pre-construction URIs are of the
-            # form tiledb://namespace/s3://something/something/soma/membername.
-            return {
-                member_name: self._uri + "/" + member_name
-                for member_name in member_names
-            }
-
-        answer = {}
-
-        mapping = self._get_member_names_to_uris()
-        for member_name in member_names:
-            if member_name in mapping:
-                answer[member_name] = mapping[member_name]
-            else:
-                # Truly a slash, not os.path.join:
-                # * If the client is Linux/Un*x/Mac, it's the same of course
-                # * On Windows, os.path.sep is a backslash but backslashes are _not_ accepted for S3 or
-                #   tiledb-cloud URIs, whereas in Windows versions for years now forward slashes _are_
-                #   accepted for local-disk paths.
-                # This means forward slash is acceptable in all cases.
-                answer[member_name] = self._uri + "/" + member_name
-
-        return answer
-
-    def _get_child_uri(self, member_name: str) -> str:
-        """
-        Computes the URI for a child of the given object. For local disk, S3, and
+        Computes the URIs for one or more children of the given object. For local disk, S3, and
         tiledb://.../s3://...  pre-creation URIs, this is simply the parent's URI, a slash, and the
         member name.  For post-creation TileDB-Cloud URIs, this is computed from the parent's
         information.  (This is because in TileDB Cloud, members have URIs like
         tiledb://namespace/df584345-28b7-45e5-abeb-043d409b1a97.)
 
-        Please use _get_child_uris whenever possible, to reduce the number of REST-server requests
-        in the tiledb//... URIs.
+        Since there's REST-server latency for getting name-to-URI mapping for group-member URIs, in
+        the tiledb://... case, total latency is reduced when we ask for all group-element
+        name-to-URI mappings in a single request to the REST server.
         """
-        # TODO: TEMP
-        if is_tiledb_creation_uri(self._uri) or not self._tiledb_exists():
-            # TODO: comment
-            return self._uri + "/" + member_name
 
-        mapping = self._get_member_names_to_uris()
-        if member_name in mapping:
-            return mapping[member_name]
-        else:
-            # Truly a slash, not os.path.join:
-            # * If the client is Linux/Un*x/Mac, it's the same of course
-            # * On Windows, os.path.sep is a backslash but backslashes are _not_ accepted for S3 or
-            #   tiledb-cloud URIs, whereas in Windows versions for years now forward slashes _are_
-            #   accepted for local-disk paths.
-            # This means forward slash is acceptable in all cases.
-            return self._uri + "/" + member_name
+        # TODO: TEMP
+        if is_tiledb_creation_uri(self._uri):
+            return self._get_child_creation_uris(member_names)
+
+        # Pre-checking if the group exists by calling tiledb.object_type is simple, however, for
+        # tiledb-cloud URIs that occurs a penalty of two HTTP requests to the REST server, even
+        # before a third, successful HTTP request for group-open.  Instead, we directly attempt the
+        # group-open request, checking for an exception.
+
+        try:
+            # If the group exists, get URIs for elements. In local disk, S3, etc this is just
+            # concatenating a slash and the member name to the self URI; for TileDB Cloud,
+            # the member URIs involve UUIDs which are known to the server.
+            answer = {}
+
+            mapping = self._get_member_names_to_uris()
+            for member_name in member_names:
+                if member_name in mapping:
+                    answer[member_name] = mapping[member_name]
+                else:
+                    # Truly a slash, not os.path.join:
+                    # * If the client is Linux/Un*x/Mac, it's the same of course
+                    # * On Windows, os.path.sep is a backslash but backslashes are _not_ accepted for S3 or
+                    #   tiledb-cloud URIs, whereas in Windows versions for years now forward slashes _are_
+                    #   accepted for local-disk paths.
+                    # This means forward slash is acceptable in all cases.
+                    answer[member_name] = self._uri + "/" + member_name
+
+            return answer
+
+        except tiledb.cc.TileDBError as e:
+            stre = str(e)
+            # Local-disk/S3 does-not-exist exceptions say 'Group does not exist'; TileDB Cloud
+            # does-not-exist exceptions are worded less clearly.
+            if "Group does not exist" in stre or "HTTP code 401" in stre:
+                return self._get_child_creation_uris(member_names)
+            else:
+                raise e
+
+    def _get_child_creation_uris(self, member_names: Sequence[str]) -> Dict[str, str]:
+        """
+        Auxiliary method for `_get_child_uris`.
+        """
+        # Group being constructed. Here, appending "/" and name is appropriate in all cases:
+        # even for tiledb://... URIs, pre-construction URIs are of the form
+        # tiledb://namespace/s3://something/something/soma/membername.
+        return {
+            member_name: self._uri + "/" + member_name for member_name in member_names
+        }
+
+    def _get_child_uri(self, member_name: str) -> str:
+        """
+        Convenience wrapper around `_get_child_uris`.
+        """
+        return self._get_child_uris([member_name])[member_name]
 
     def _add_object(self, obj: TileDBObject, relative: Optional[bool] = None) -> None:
         """
@@ -276,12 +287,8 @@ class SOMACollection(TileDBObject):
         is consulted as described above.
         """
 
-        # XXX TEMP
-        # if not self._tiledb_exists():  # TODO: TEMP NAME
-        #    self.create()
         if self._cached_member_names_to_uris is None:
-            if not self._tiledb_exists():  # TODO: TEMP NAME
-                self.create()
+            self._create_unless_exists()
 
         child_uri = obj.get_uri()
         child_name = obj.get_name()
@@ -348,7 +355,7 @@ class SOMACollection(TileDBObject):
         Shows metadata for the group, recursively by default.
         """
         print(f"{indent}[{self._name}]")
-        for key, value in self.metadata.items():  # XXX TEMP
+        for key, value in self.metadata:  # XXX TEMP
             print(f"{indent}- {key}: {value}")
         if recursively:
             child_indent = indent + "  "

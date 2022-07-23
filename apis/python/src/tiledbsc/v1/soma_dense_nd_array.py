@@ -110,14 +110,15 @@ class SOMADenseNdArray(TileDBArray):
         """
         # TODO: cache read
         # return self._shape
-        raise Exception("TBD")
+        with self._tiledb_open() as A:
+            return A.schema.domain.shape
 
     def get_ndims(self) -> int:
         """
         Return number of index columns
         """
-        # TODO: cache read
-        raise Exception("TBD")
+        with self._tiledb_open() as A:
+            return A.schema.domain.ndim
 
     #    def get_schema(self) -> Arrow.Schema:
     #        """

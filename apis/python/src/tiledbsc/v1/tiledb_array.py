@@ -39,13 +39,6 @@ class TileDBArray(TileDBObject):
         # on with-as, flagging the non-existence of the __enter__ or __exit__.)
         return tiledb.open(self._uri, mode=mode, ctx=self._ctx)
 
-    # TODO: TEMP NAME
-    def _tiledb_exists(self) -> bool:
-        """
-        TODO: COMMENT
-        """
-        return bool(tiledb.object_type(self.get_uri(), ctx=self._ctx) == "array")
-
     #    def exists(self) -> bool:
     #        """
     #        Tells whether or not there is storage for the array. This might be in case a SOMA
@@ -54,7 +47,7 @@ class TileDBArray(TileDBObject):
     #        """
     #        return bool(tiledb.array_exists(self._uri))
 
-    #    def tiledb_array_schema(self) -> tiledb.ArraySchema:
+    #    def _tiledb_array_schema(self) -> tiledb.ArraySchema:
     #        """
     #        Returns the TileDB array schema.
     #        """
@@ -112,5 +105,5 @@ class TileDBArray(TileDBObject):
         XXX TEMP TEMP TEMP
         """
         print(f"{indent}[{self._name}]")
-        for key, value in self.metadata.items():
+        for key, value in self.metadata:
             print(f"{indent}- {key}: {value}")

@@ -43,7 +43,8 @@ class SOMAMetadataMapping:
         Iterate over the collection.
         """
         for k, v in self._get_all().items():
-            yield {k: v}
+            # yield {k: v}
+            yield (k, v)
 
     def __len__(self) -> int:
         """
