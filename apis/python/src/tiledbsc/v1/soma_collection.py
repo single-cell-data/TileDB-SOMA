@@ -7,6 +7,7 @@ import tiledb
 from .tiledb_array import TileDBArray
 from .tiledb_object import TileDBObject
 from .tiledb_platform_config import TileDBPlatformConfig
+from .util import is_tiledb_creation_uri
 
 
 class SOMACollection(TileDBObject):
@@ -122,6 +123,18 @@ class SOMACollection(TileDBObject):
 
         return self._cached_members[member_name]
 
+    def __getitem__(self, member_name: str) -> TileDBObject:
+        """
+        Get the member object associated with the key, when invoked as `collection["namegoeshere"]`.
+        """
+        return self.get(member_name)
+
+    def __getattr__(self, member_name: str) -> TileDBObject:
+        """
+        Get the member object associated with the key, when invoked as `collection.namegoeshere`.
+        """
+        return self.get(member_name)
+
     def set(self, member: TileDBObject, *, relative: Optional[bool] = None) -> None:
         """
         Adds a member to the collection.
@@ -192,10 +205,11 @@ class SOMACollection(TileDBObject):
         is reduced when we ask for all group-element name-to-URI mappings in a single
         request to the REST server.
         """
-        if not self._tiledb_exists():  # XXX TEMP NAME
-            # Group not constructed yet. Here, appending "/" and name is appropriate in all
-            # cases: even for tiledb://... URIs, pre-construction URIs are of the form
-            # tiledb://namespace/s3://something/something/soma/membername.
+        # TODO: TEMP
+        if not self._tiledb_exists() or is_tiledb_creation_uri(self._uri):
+            # Group not constructed yet, or being constructed. Here, appending "/" and name is
+            # appropriate in all cases: even for tiledb://... URIs, pre-construction URIs are of the
+            # form tiledb://namespace/s3://something/something/soma/membername.
             return {
                 member_name: self._uri + "/" + member_name
                 for member_name in member_names
@@ -229,9 +243,11 @@ class SOMACollection(TileDBObject):
         Please use _get_child_uris whenever possible, to reduce the number of REST-server requests
         in the tiledb//... URIs.
         """
-        if not self._tiledb_exists():  # TODO: TEMP
+        # TODO: TEMP
+        if not self._tiledb_exists() or is_tiledb_creation_uri(self._uri):
             # TODO: comment
             return self._uri + "/" + member_name
+
         mapping = self._get_member_names_to_uris()
         if member_name in mapping:
             return mapping[member_name]

@@ -5,15 +5,9 @@ import pyarrow as pa
 
 import tiledbsc.v1 as t
 
+# ----------------------------------------------------------------
+def create_and_populate_dataframe(dataframe: t.SOMADataFrame) -> None:
 
-def test_soma_dataframe_row_indexed(tmp_path):
-    # ----------------------------------------------------------------
-    basedir = tmp_path.as_posix()
-    collection = t.SOMACollection(basedir)
-    collection.create()
-
-    # ----------------------------------------------------------------
-    dataframe = t.SOMADataFrame(os.path.join(basedir, "sdf"), parent=collection)
     arrow_schema = pa.schema(
         [
             ("foo", pa.int32()),
@@ -21,20 +15,20 @@ def test_soma_dataframe_row_indexed(tmp_path):
             ("baz", pa.string()),
         ]
     )
+
     dataframe.create(schema=arrow_schema, user_indexed=False)
 
     pydict = {}
-    pydict["soma_rowid"] = [0, 1, 2, 3, 4]
+    if dataframe.get_is_row_indexed():
+        pydict["soma_rowid"] = [0, 1, 2, 3, 4]
     pydict["foo"] = [10, 20, 30, 40, 50]
     pydict["bar"] = [4.1, 5.2, 6.3, 7.4, 8.5]
     pydict["baz"] = ["apple", "ball", "cat", "dog", "egg"]
-    record_batch = pa.RecordBatch.from_pydict(pydict)
-    dataframe.write(record_batch)
+    rb = pa.RecordBatch.from_pydict(pydict)
+    dataframe.write(rb)
 
-    # ----------------------------------------------------------------
-    sparse_nd_array = t.SOMASparseNdArray(
-        os.path.join(basedir, "snda"), parent=collection
-    )
+# ----------------------------------------------------------------
+def create_and_populate_sparse_nd_array(sparse_nd_array: t.SOMASparseNdArray) -> None:
     nr = 10
     nc = 20
     sparse_nd_array.create(pa.int64(), [nr, nc])
@@ -46,7 +40,22 @@ def test_soma_dataframe_row_indexed(tmp_path):
     )
     sparse_nd_array.write(tensor)
 
+# ----------------------------------------------------------------
+def test_soma_collection_basic(tmp_path):
+    basedir = tmp_path.as_posix()
+    collection = t.SOMACollection(basedir)
+
     # ----------------------------------------------------------------
+    collection.create()
+
+    dataframe = t.SOMADataFrame(os.path.join(basedir, "sdf"), parent=collection)
+    create_and_populate_dataframe(dataframe)
+
+    sparse_nd_array = t.SOMASparseNdArray(
+        os.path.join(basedir, "snda"), parent=collection
+    )
+    create_and_populate_sparse_nd_array(sparse_nd_array)
+
     collection.set(dataframe)
     collection.set(sparse_nd_array)
 
@@ -56,8 +65,6 @@ def test_soma_dataframe_row_indexed(tmp_path):
 
     readback_dataframe = readback_collection.get("sdf")
     with readback_dataframe._tiledb_open() as A:
-        # so confused: i do len checks all the time -- why this, why now??
-        # OverflowError: Python int too large to convert to C ssize_t
         assert len(A.df[:]) == 5
 
     readback_sparse_nd_array = readback_collection.get("snda")
