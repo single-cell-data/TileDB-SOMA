@@ -3,7 +3,7 @@ import pyarrow as pa
 import tiledbsc.v1 as t
 
 
-def test_soma_dataframe_row_indexed(tmp_path):
+def test_soma_dataframe_non_indexed(tmp_path):
     sdf = t.SOMADataFrame(uri=tmp_path.as_posix())
 
     asch = pa.schema(
@@ -15,7 +15,7 @@ def test_soma_dataframe_row_indexed(tmp_path):
     )
 
     # Create
-    sdf.create(schema=asch, user_indexed=False)
+    sdf.create(schema=asch, indexed=False)
 
     # Write
     for i in range(3):
@@ -39,9 +39,13 @@ def test_soma_dataframe_row_indexed(tmp_path):
     assert len(batches) == 1
     batch = batches[0]
     assert batch.num_rows == 5
+
     # We should be getting back the soma_rowid column as well
-    # TODO assert batch.num_columns == 4
-    assert batch.num_columns == 3
+    # If sparse dataframe:
+    assert batch.num_columns == 4
+    # If dense dataframe:
+    # assert batch.num_columns == 3
+
     # TODO assert [e.as_py() for e in list(batch['soma_rowid'])] == [0,1,2,3,4]
     assert [e.as_py() for e in list(batch["foo"])] == pydict["foo"]
     assert [e.as_py() for e in list(batch["bar"])] == pydict["bar"]
@@ -59,9 +63,13 @@ def test_soma_dataframe_row_indexed(tmp_path):
     assert len(batches) == 1
     batch = batches[0]
     assert batch.num_rows == 2
+
     # We should be getting back the soma_rowid column as well
-    # TODO assert batch.num_columns == 4
-    assert batch.num_columns == 3
+    # If sparse dataframe:
+    assert batch.num_columns == 4
+    # If dense dataframe:
+    # assert batch.num_columns == 3
+
     # TODO assert [e.as_py() for e in list(batch['soma_rowid'])] == [0,1,2,3,4]
     assert [e.as_py() for e in list(batch["foo"])] == [20, 30]
     assert [e.as_py() for e in list(batch["bar"])] == [5.2, 6.3]
@@ -79,16 +87,20 @@ def test_soma_dataframe_row_indexed(tmp_path):
     assert len(batches) == 1
     batch = batches[0]
     assert batch.num_rows == 2
+
     # We should be getting back the soma_rowid column as well
-    # TODO assert batch.num_columns == 4
-    assert batch.num_columns == 3
+    # If sparse dataframe:
+    assert batch.num_columns == 4
+    # If dense dataframe:
+    # assert batch.num_columns == 3
+
     # TODO assert [e.as_py() for e in list(batch['soma_rowid'])] == [0,1,2,3,4]
     assert [e.as_py() for e in list(batch["foo"])] == [20, 30]
     assert [e.as_py() for e in list(batch["bar"])] == [5.2, 6.3]
     assert [e.as_py() for e in list(batch["baz"])] == ["ball", "cat"]
 
 
-def test_soma_dataframe_user_indexed(tmp_path):
+def test_soma_dataframe_indexed(tmp_path):
     sdf = t.SOMADataFrame(uri=tmp_path.as_posix())
 
     asch = pa.schema(
@@ -100,7 +112,7 @@ def test_soma_dataframe_user_indexed(tmp_path):
     )
 
     # Create
-    sdf.create(schema=asch, user_indexed=True, index_column_names=["foo"])
+    sdf.create(schema=asch, indexed=True, index_column_names=["foo"])
 
     # Write
     for i in range(3):

@@ -22,10 +22,13 @@ class SOMADataFrame(TileDBArray):
     SOMADataFrame, and is intended to act as a join key for other objects, such as a SOMANdArray.
     """
 
-    # When we write to storage, we know if it's user-indexed or not. But when we are invoked
+    # When we write to storage, we know if it's indexed or not. But when we are invoked
     # to read from storage, we don't know until we look at the storage.
-    _is_user_indexed: Optional[bool]
+    _is_indexed: Optional[bool]
     _index_column_names: Optional[List[str]]
+
+    # XXX TEMP -- pending discussion on value-filtering with dense arrays
+    _is_sparse: Optional[bool]
 
     def __init__(
         self,
@@ -38,13 +41,14 @@ class SOMADataFrame(TileDBArray):
         See also the :class:`TileDBOject` constructor.
         """
         super().__init__(uri=uri, name=name, parent=parent)
-        self._is_user_indexed = None
+        self._is_indexed = None
         self._index_column_names = None
+        self._is_sparse = None
 
     def create(
         self,
         schema: pa.Schema,
-        user_indexed: bool,
+        indexed: bool,
         index_column_names: Optional[List[str]] = None,
     ) -> None:
         """
@@ -53,15 +57,14 @@ class SOMADataFrame(TileDBArray):
         reserved for the pseudo-column of the same name. If the schema includes types unsupported by
         the SOMA implementation, an error will be raised.
 
-        :param user_indexed: If ``true``, creates a ``user-indexed`` dataframe, else a
-        ``row-indexed`` dataframe.
+        :param _indexed: If ``True``, creates an indexed dataframe, else a non-indexed dataframe.
 
         :param index_column_names: A list of column names to use as user-defined index columns
         (e.g., ``['cell_type', 'tissue_type']``). All named columns must exist in the schema, and at
-        least one index column name is required. This parameter must be ``None`` if ``user_indexed``
+        least one index column name is required. This parameter must be ``None`` if ``indexed``
         is ``False``.
         """
-        if user_indexed:
+        if indexed:
             assert index_column_names is not None
             assert len(index_column_names) >= 1
 
@@ -73,21 +76,21 @@ class SOMADataFrame(TileDBArray):
             assert ROWID not in index_column_names
             assert ROWID not in schema_names_set
 
-            self._create_empty_user_indexed(schema, index_column_names)
-            self._is_user_indexed = True
+            self._create_empty_indexed(schema, index_column_names)
+            self._is_indexed = True
             self._index_column_names = index_column_names
         else:
             assert index_column_names is None
 
             assert ROWID not in schema.names
 
-            self._create_empty_row_indexed(schema)
-            self._is_user_indexed = False
+            self._create_empty_non_indexed(schema)
+            self._is_indexed = False
             self._index_column_names = []
 
         self._common_create()  # object-type metadata etc
 
-    def _create_empty_user_indexed(
+    def _create_empty_indexed(
         self,
         schema: pa.Schema,
         index_column_names: List[str],
@@ -156,10 +159,11 @@ class SOMADataFrame(TileDBArray):
             tile_order="row-major",
             ctx=self._ctx,
         )
+        self._is_sparse = sch.sparse
 
         tiledb.Array.create(self._uri, sch, ctx=self._ctx)
 
-    def _create_empty_row_indexed(
+    def _create_empty_non_indexed(
         self,
         schema: pa.Schema,
     ) -> None:
@@ -193,7 +197,9 @@ class SOMADataFrame(TileDBArray):
         sch = tiledb.ArraySchema(
             domain=dom,
             attrs=attrs,
-            sparse=False,
+            # XXX TEMP
+            # sparse=False,
+            sparse=True,
             allows_duplicates=self._tiledb_platform_config.allows_duplicates,
             offsets_filters=[
                 tiledb.DoubleDeltaFilter(),
@@ -206,6 +212,7 @@ class SOMADataFrame(TileDBArray):
             ctx=self._ctx,
         )
 
+        self._is_sparse = sch.sparse
         tiledb.Array.create(self._uri, sch, ctx=self._ctx)
 
     # ----------------------------------------------------------------
@@ -245,37 +252,31 @@ class SOMADataFrame(TileDBArray):
     #        Return data schema, in the form of an Arrow Schema
     #        """
 
-    def get_is_row_indexed(self) -> bool:
+    def get_is_indexed(self) -> bool:
         """
-        Return true if row-indexed, false if user-indexed.
-        """
-        return not self.get_is_user_indexed()
-
-    def get_is_user_indexed(self) -> bool:
-        """
-        Return true if user-indexed, false if row-indexed.
+        Return true if indexed, false if non-indexed.
         """
         # If we've cached the answer, skip the storage read. Especially if the storage is on the
         # cloud, where we'll avoid an HTTP request.
-        if self._is_user_indexed is None:
+        if self._is_indexed is None:
             # TODO have written, and then read back, object-type metadata?
-            # For now: we use sparse for user-indexed and dense for row-indexed,
+            # For now: we use sparse for indexed and dense for non-indexed,
             # so this check is a litmus test.
             #
             # If the array hasn't had its schema created then this will throw (as it should)
             # -- we have no way to answer the question with a true or a false.
             with self._tiledb_open() as A:
-                self._is_user_indexed = A.schema.sparse
-        return self._is_user_indexed
+                self._is_indexed = A.schema.sparse
+        return self._is_indexed
 
     def get_index_column_names(self) -> List[str]:
         """
-        Return index (dimension) column names if user-indexed, or an empty list if row-indexed.
+        Return index (dimension) column names if indexed, or an empty list if non-indexed.
         """
         # If we've cached the answer, skip the storage read. Especially if the storage is on the
         # cloud, where we'll avoid an HTTP request.
         if self._index_column_names is None:
-            if self.get_is_user_indexed():
+            if self.get_is_indexed():
                 names = []
                 with self._tiledb_open() as A:
                     dom = A.domain
@@ -296,7 +297,7 @@ class SOMADataFrame(TileDBArray):
         # TODO: partitions,
         # TODO: result_order,
         # TODO: value_filter
-        _return_incomplete: Optional[bool] = True, # XXX TEMP
+        _return_incomplete: Optional[bool] = True,  # XXX TEMP
     ) -> Iterator[pa.RecordBatch]:
         """
         Read a user-defined subset of data, addressed by the dataframe indexing columns, optionally
@@ -309,8 +310,8 @@ class SOMADataFrame(TileDBArray):
         :param partitions: an optional ``SOMAReadPartitions`` hint to indicate how results should be
         organized.
 
-        :param result_order: order of read results. If the dataframe is `user-indexed`, this can be one of
-        'row-major', 'col-major', or 'unordered'. If the dataframe is 'row-indexed', this can be one of
+        :param result_order: order of read results. If the dataframe is indexed, this can be one of
+        'row-major', 'col-major', or 'unordered'. If the dataframe is 'non-indexed', this can be one of
         'rowid-ordered' or 'unordered'.
 
         :param value_filter: an optional [value filter] to apply to the results. Defaults to no
@@ -318,8 +319,8 @@ class SOMADataFrame(TileDBArray):
 
         **Indexing**: the `ids` parameter will support, per dimension:
 
-        * For `row-indexed` dataframes, a row offset (uint), a row-offset range (slice), or a list of both.
-        * For `user-indexed` dataframes, a list of values of the type of the indexed column.
+        * For non-indexed dataframes, a row offset (uint), a row-offset range (slice), or a list of both.
+        * For indexed dataframes, a list of values of the type of the indexed column.
         """
 
         use_all_ids = False
@@ -361,10 +362,10 @@ class SOMADataFrame(TileDBArray):
         :param values: An Arrow.RecordBatch containing all columns, including the index columns. The
         schema for the values must match the schema for the :class:`SOMADataFrame`.
 
-        If the dataframe is row-indexed, the ``values`` Arrow RecordBatch must contain a ``__rowid``
+        If the dataframe is non-indexed, the ``values`` Arrow RecordBatch must contain a ``__rowid``
         (uint64) column, indicating which rows are being written.
         """
-        if self.get_is_user_indexed():
+        if self.get_is_indexed():
             dim_cols_list = []
             attr_cols_map = {}
             dim_names_set = self.get_index_column_names()
@@ -392,7 +393,7 @@ class SOMADataFrame(TileDBArray):
                 else:
                     raise Exception("ndims >= 2 not currently supported")
 
-        else:  # row-indexed
+        else:  # non-indexed
 
             assert ROWID in values.schema.names
 
@@ -416,5 +417,11 @@ class SOMADataFrame(TileDBArray):
                         )
                     )
 
-            with self._tiledb_open("w") as A:
-                A[lo : (hi + 1)] = attr_cols_map
+            if self._is_sparse:
+                # sparse write
+                with self._tiledb_open("w") as A:
+                    A[rowids] = attr_cols_map
+            else:
+                # dense write
+                with self._tiledb_open("w") as A:
+                    A[lo : (hi + 1)] = attr_cols_map
