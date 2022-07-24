@@ -17,8 +17,8 @@ class SOMADataFrame(TileDBArray):
     """
     Represents ``obs``, ``var``, and others.
 
-    A SOMADataFrame contains a "pseudo-column" called __rowid, of type uint64 and domain
-    [0,num_rows).  The __rowid pseudo-column contains a unique value for each row in the
+    A SOMADataFrame contains a "pseudo-column" called soma_rowid, of type uint64 and domain
+    [0,num_rows).  The soma_rowid pseudo-column contains a unique value for each row in the
     SOMADataFrame, and is intended to act as a join key for other objects, such as a SOMANdArray.
     """
 
@@ -53,7 +53,7 @@ class SOMADataFrame(TileDBArray):
     ) -> None:
         """
         :param schema: Arrow Schema defining the per-column schema. This schema must define all
-        columns, including columns to be named as index columns. The column name ``__rowid`` is
+        columns, including columns to be named as index columns. The column name ``soma_rowid`` is
         reserved for the pseudo-column of the same name. If the schema includes types unsupported by
         the SOMA implementation, an error will be raised.
 
@@ -168,7 +168,7 @@ class SOMADataFrame(TileDBArray):
         schema: pa.Schema,
     ) -> None:
         """
-        Create a TileDB 1D dense array with uint64 __rowid dimension and multiple attributes.
+        Create a TileDB 1D dense array with uint64 soma_rowid dimension and multiple attributes.
         """
 
         level = self._tiledb_platform_config.string_dim_zstd_level
@@ -216,7 +216,7 @@ class SOMADataFrame(TileDBArray):
         tiledb.Array.create(self._uri, sch, ctx=self._ctx)
 
     # TODO
-    #    def get_shape() -> Tuple[int]:
+    #    def get_shape() -> NTuple:
     #        """
     #        Return length of each dimension, always a list of length ``ndims``
     #        """
@@ -343,7 +343,7 @@ class SOMADataFrame(TileDBArray):
         :param values: An Arrow.RecordBatch containing all columns, including the index columns. The
         schema for the values must match the schema for the :class:`SOMADataFrame`.
 
-        If the dataframe is non-indexed, the ``values`` Arrow RecordBatch must contain a ``__rowid``
+        If the dataframe is non-indexed, the ``values`` Arrow RecordBatch must contain a ``soma_rowid``
         (uint64) column, indicating which rows are being written.
         """
         if self.get_is_indexed():

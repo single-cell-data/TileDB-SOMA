@@ -55,48 +55,9 @@ class SOMACollection(TileDBObject):
         tiledb.group_create(uri=self._uri, ctx=self._ctx)
         self._common_create()  # object-type metadata etc
 
-    def _create_unless_exists(self) -> None:
-        """
-        Auxiliary method for `_add_object`.
-        """
-        # Pre-checking if the group exists by calling tiledb.object_type is simple, however, for
-        # tiledb-cloud URIs that occurs a penalty of two HTTP requests to the REST server, even
-        # before a third, successful HTTP request for group-open.  Instead, we directly attempt the
-        # group-create request, checking for an exception.
-
-        try:
-            self.create()
-        except tiledb.cc.TileDBError as e:
-            stre = str(e)
-            # Local-disk/S3/tiledb-cloud exceptions all three say 'already exists'
-            if "already exists" in stre:
-                pass
-            else:
-                raise e
-
     # TODO
     # delete(uri)
     # Delete the SOMACollection specified with the URI.
-
-    # exists(uri) -> bool
-    # Return true if object exists and is a SOMACollection.
-
-    #    # TODO: static/class method?
-    #    #    def exists(uri: str) -> bool
-    #    #        """
-    #    #        Return true if object exists and is a SOMADataFrame.
-    #    #        """
-
-    #    def exists(self) -> bool:
-    #        """
-    #        Tells whether or not there is storage for the group. This might be in case a SOMA
-    #        object has not yet been populated, e.g. before calling `from_anndata` -- or, if the
-    #        SOMA has been populated but doesn't have this member (e.g. not all SOMAs have a `varp`).
-    #        """
-    #        # For tiledb:// URIs this is a REST-server request which we'd like to cache.
-    #        # However, remove-and-replace use-cases are possible and common in notebooks
-    #        # and it turns out caching the existence-check isn't a robust approach.
-    #        return bool(tiledb.object_type(self._uri, ctx=self._ctx) == "group")
 
     def __len__(self) -> int:
         """
@@ -109,14 +70,14 @@ class SOMACollection(TileDBObject):
         Tests for the existence of key in collection.
         Implements the `in` operator.
         """
-        return member_name in self._get_child_uris()
+        return member_name in self._get_member_names_to_uris()
 
     def get(self, member_name: str) -> TileDBObject:
         """
         Get the member object associated with the key
         """
         if member_name not in self._cached_members:
-            # Do this here to avoid a cyclic package dependency:
+            # Do this here to avoid a cyclic module dependency:
             from .factory import _construct_member
 
             member_uri = self._get_child_uri(member_name)
@@ -167,7 +128,7 @@ class SOMACollection(TileDBObject):
         """
         for member_name, member_uri in self._get_member_names_to_uris().items():
             if member_name not in self._cached_members:
-                # Do this here to avoid a cyclic package dependency:
+                # Do this here to avoid a cyclic module dependency:
                 from .factory import _construct_member
 
                 self._cached_members[member_name] = _construct_member(member_uri, self)
@@ -185,6 +146,24 @@ class SOMACollection(TileDBObject):
         assert mode in ("r", "w")
         # This works in with-open-as contexts because tiledb.Group has __enter__ and __exit__ methods.
         return tiledb.Group(self._uri, mode=mode, ctx=self._ctx)
+
+    def _create_unless_exists(self) -> None:
+        """
+        Auxiliary method for `_add_object`.
+        """
+        # Pre-checking if the group exists by calling tiledb.object_type is simple, however, for
+        # tiledb-cloud URIs that occurs a penalty of two HTTP requests to the REST server, even
+        # before a third, successful HTTP request for group-open.  Instead, we directly attempt the
+        # group-create request, checking for an exception.
+        try:
+            self.create()
+        except tiledb.cc.TileDBError as e:
+            stre = str(e)
+            # Local-disk/S3/tiledb-cloud exceptions all three say 'already exists'
+            if "already exists" in stre:
+                pass
+            else:
+                raise e
 
     def _get_child_uris(self, member_names: Sequence[str]) -> Dict[str, str]:
         """

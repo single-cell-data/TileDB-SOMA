@@ -27,15 +27,6 @@ class TileDBArray(TileDBObject):
         super().__init__(uri, name=name, parent=parent)
 
     # TODO
-    #    def exists(self) -> bool:
-    #        """
-    #        Tells whether or not there is storage for the array. This might be in case a SOMA
-    #        object has not yet been populated, e.g. before calling `from_anndata` -- or, if the
-    #        SOMA has been populated but doesn't have this member (e.g. not all SOMAs have a `varp`).
-    #        """
-    #        return bool(tiledb.array_exists(self._uri))
-
-    # TODO
     #    def delete(uri: str) -> None
     #        """
     #        Delete the SOMADataFrame specified with the URI.

@@ -102,15 +102,22 @@ def test_soma_experiment_basic(tmp_path):
     assert len(experiment) == 2
     assert isinstance(experiment.obs, t.SOMADataFrame)
     assert isinstance(experiment.ms, t.SOMACollection)
+    assert "obs" in experiment
+    assert "ms" in experiment
+    assert "nonesuch" not in experiment
 
     assert len(experiment.ms) == 1
     assert isinstance(experiment.ms["meas1"], t.SOMAMeasurement)
 
     assert len(experiment.ms["meas1"]) == 2
+    assert "meas1" in experiment.ms
+    assert "meas2" not in experiment.ms
     assert isinstance(experiment.ms["meas1"].var, t.SOMADataFrame)
     assert isinstance(experiment.ms["meas1"].X, t.SOMACollection)
 
     assert len(experiment.ms["meas1"].X) == 1
+    assert "data" in experiment.ms["meas1"].X
+    assert "nonesuch" not in experiment.ms["meas1"].X
     assert isinstance(experiment.ms["meas1"].X["data"], t.SOMASparseNdArray)
 
     # >>> experiment.ms.meas1.X.data._tiledb_open().df[:]
@@ -119,4 +126,22 @@ def test_soma_experiment_basic(tmp_path):
     # 1        3        1     8
     # 2        4        2     9
 
+    # ----------------------------------------------------------------
+    # Paths exist and are of the right type
+    assert experiment.exists()
+    assert experiment.obs.exists()
+    assert experiment.ms.exists()
+    assert experiment.ms["meas1"].exists()
+    assert experiment.ms["meas1"].X.exists()
+    assert experiment.ms["meas1"].X["data"].exists()
+
+    # Paths exist but are not of the right type
+    assert not t.SOMADataFrame(experiment.get_uri()).exists()
+    assert not t.SOMACollection(experiment.obs.get_uri()).exists()
+
+    # Paths do not exist
+    assert not t.SOMAExperiment("/nonesuch/no/nope/nope/never").exists()
+    assert not t.SOMADataFrame("/nonesuch/no/nope/nope/never").exists()
+
+    # ----------------------------------------------------------------
     # TODO: check more things

@@ -15,7 +15,7 @@ class SOMAMeasurement(SOMACollection):
     var: SOMADataFrame
 
     Primary annotations on the _variable_ axis, for variables in this measurement (i.e., annotates
-    columns of X). The contents of the __rowid pseudo-column define the _variable_ index domain,
+    columns of X). The contents of the soma_rowid pseudo-column define the _variable_ index domain,
     aka varid. All variables for this measurement _must_ be defined in this dataframe.
 
     X: SOMACollection # of SOMASparseNdArray
@@ -66,24 +66,24 @@ class SOMAMeasurement(SOMACollection):
 
     # `X` collection values
     # All matrices must have the shape `(#obs, #var)`. The domain of the first dimension is the values
-    # of `obs.__rowid`, and the index domain of the second dimension is the values of `var.__rowid` in
+    # of `obs.soma_rowid`, and the index domain of the second dimension is the values of `var.soma_rowid` in
     # the containing `SOMAMeasurement`.
 
     # `obsm` collection values
     # All matrices must have the shape `(#obs, M)`, where `M` is user-defined. The domain of the first
-    # dimension is the values of `obs.__rowid`.
+    # dimension is the values of `obs.soma_rowid`.
 
     # `obsp` collection values
     # All matrices must have the shape `(#obs, #obs)`. The domain of both dimensions is the values of
-    # `obs.__rowid`.
+    # `obs.soma_rowid`.
 
     # `varm` collection values
     # All matrices must have the shape `(#var, M)`, where `M` is user-defined. The domain of the first
-    # dimension is the values of `var.__rowid`.
+    # dimension is the values of `var.soma_rowid`.
 
     # `varp` collection values
     # All matrices must have the shape `(#var, #var)`. The domain of both dimensions is the values of
-    # `var.__rowid`.
+    # `var.soma_rowid`.
 
     def __init__(
         self,

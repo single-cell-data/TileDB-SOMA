@@ -16,7 +16,9 @@ def tiledb_type_from_arrow_type(t: pa.DataType) -> type:
         # isn't acceptable to tiledb -- we must say str.
         return str
     else:
-        return t.to_pandas_dtype()
+        # mypy says:
+        # Returning Any from function declared to return "type"  [no-any-return]
+        return t.to_pandas_dtype()  # type: ignore
 
 
 def is_tiledb_creation_uri(uri: str) -> bool:

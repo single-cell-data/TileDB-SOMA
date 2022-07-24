@@ -18,7 +18,7 @@ def test_soma_dataframe_non_indexed(tmp_path):
     sdf.create(schema=asch, indexed=False)
 
     # Write
-    for i in range(3):
+    for _i in range(3):
         pydict = {}
         pydict["soma_rowid"] = [0, 1, 2, 3, 4]
         pydict["foo"] = [10, 20, 30, 40, 50]
@@ -115,7 +115,7 @@ def test_soma_dataframe_indexed(tmp_path):
     sdf.create(schema=asch, indexed=True, index_column_names=["foo"])
 
     # Write
-    for i in range(3):
+    for _ in range(3):
         pydict = {}
         pydict["foo"] = [10, 20, 30, 40, 50]
         pydict["bar"] = [4.1, 5.2, 6.3, 7.4, 8.5]

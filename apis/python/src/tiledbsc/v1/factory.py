@@ -1,5 +1,5 @@
 """
-This module exists to avoid what would otherwise be cyclic-package-import issues within
+This module exists to avoid what would otherwise be cyclic-module-import issues within
 SOMACollection.
 """
 
@@ -28,7 +28,7 @@ MemberType = Union[
 def _construct_member(member_uri: str, parent: SOMACollection) -> MemberType:
     """
     Solely for the use of `SOMACollection`. In fact this would/should be a method of the
-    `SOMACollection` class, but there are cyclic-package-import issues.  This allows us to examine
+    `SOMACollection` class, but there are cyclic-module-import issues.  This allows us to examine
     storage metadata and invoke the appropriate per-type constructor when reading SOMA groups/arrays
     from storage.
     See also `_set_object_type_metadata` and `_get_object_type_metadata` within `TileDBObject`.

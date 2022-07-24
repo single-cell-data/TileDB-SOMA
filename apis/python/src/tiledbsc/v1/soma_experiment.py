@@ -13,7 +13,7 @@ class SOMAExperiment(SOMACollection):
     """
 
     """
-    Primary annotations on the _observation_ axis. The contents of the `__rowid` pseudo-column define
+    Primary annotations on the _observation_ axis. The contents of the `soma_rowid` pseudo-column define
     the _observation_ index domain, aka `obsid`. All observations for the SOMAExperiment _must_ be
     defined in this dataframe.
     """

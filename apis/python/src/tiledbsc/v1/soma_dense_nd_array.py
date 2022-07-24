@@ -6,10 +6,10 @@ import tiledb
 
 from .soma_collection import SOMACollection
 from .tiledb_array import TileDBArray
+from .types import NTuple
 from .util import tiledb_type_from_arrow_type
 
 
-# TODO: rethink parenting -- add a middle layer
 class SOMADenseNdArray(TileDBArray):
     """
     Represents ``X`` and others.
@@ -32,7 +32,7 @@ class SOMADenseNdArray(TileDBArray):
     def create(
         self,
         type: pa.DataType,
-        shape: Union[Tuple, List[int]],
+        shape: Union[NTuple, List[int]],
     ) -> None:
         """
         Create a SOMADenseNdArray named with the URI.
@@ -92,21 +92,25 @@ class SOMADenseNdArray(TileDBArray):
 
         self._common_create()  # object-type metadata etc
 
-    def get_shape(self) -> Tuple[int]:
+    def get_shape(self) -> NTuple:
         """
         Return length of each dimension, always a list of length ``ndims``
         """
         # TODO: cache read
         # return self._shape
         with self._tiledb_open() as A:
-            return A.schema.domain.shape
+            # mypy says:
+            # error: Returning Any from function declared to return "Tuple[int]"  [no-any-return]
+            return A.schema.domain.shape  # type: ignore
 
     def get_ndims(self) -> int:
         """
         Return number of index columns
         """
         with self._tiledb_open() as A:
-            return A.schema.domain.ndim
+            # mypy says:
+            # Returning Any from function declared to return "int"  [no-any-return]
+            return A.schema.domain.ndim  # type: ignore
 
     # TODO
     #    def get_schema(self) -> Arrow.Schema:
@@ -121,6 +125,7 @@ class SOMADenseNdArray(TileDBArray):
         return False
 
     def read(
+        self,
         slice: Any,  # TODO: scalar, slice/range, or list of any of the above
         # TODO: partitions: Optional[SOMAReadPartitions] = None,,
         # TODO: result_order: one of 'row-major' or 'column-major'
@@ -147,7 +152,9 @@ class SOMADenseNdArray(TileDBArray):
 
     def write(
         self,
-        coords: Union[Tuple, List[int]],
+        # TODO: rework callsites with regard to the very latest spec rev
+        # coords: Union[tuple, tuple[slice], NTuple, List[int]],
+        coords: Any,
         values: pa.Tensor,
     ) -> None:
         """

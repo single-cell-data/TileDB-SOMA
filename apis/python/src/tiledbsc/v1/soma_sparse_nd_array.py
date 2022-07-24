@@ -1,4 +1,4 @@
-from typing import List, Optional, Tuple, Union
+from typing import List, Optional, Union
 
 import numpy as np
 import pyarrow as pa
@@ -6,6 +6,7 @@ import tiledb
 
 from .soma_collection import SOMACollection
 from .tiledb_array import TileDBArray
+from .types import NTuple
 from .util import tiledb_type_from_arrow_type
 
 
@@ -33,7 +34,7 @@ class SOMASparseNdArray(TileDBArray):
     def create(
         self,
         type: pa.DataType,
-        shape: Union[Tuple, List[int]],
+        shape: Union[NTuple, List[int]],
     ) -> None:
         """
         Create a SOMASparseNdArray named with the URI.
@@ -95,17 +96,19 @@ class SOMASparseNdArray(TileDBArray):
 
         self._common_create()  # object-type metadata etc
 
-    def get_shape(self) -> Tuple:
-        """
-        Return length of each dimension, always a list of length ``ndims``
-        """
-        return self._shape
+    # TODO
+    #    def get_shape(self) -> NTuple:
+    #        """
+    #        Return length of each dimension, always a list of length ``ndims``
+    #        """
+    #        return self._shape
 
-    def get_ndims(self) -> int:
-        """
-        Return number of index columns
-        """
-        return len(self._shape)
+    # TODO
+    #    def get_ndims(self) -> int:
+    #        """
+    #        Return number of index columns
+    #        """
+    #        return len(self._shape)
 
     # TODO
     #    def get_schema(self) -> Arrow.Schema:
