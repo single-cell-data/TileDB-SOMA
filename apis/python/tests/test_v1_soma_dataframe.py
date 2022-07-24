@@ -156,7 +156,7 @@ def test_soma_dataframe_indexed(tmp_path):
     assert batch.num_rows == 2
     # We should be getting back the soma_rowid column as well
     assert batch.num_columns == 4
-    assert [e.as_py() for e in list(batch["soma_rowid"])] == [2, 0]
-    assert [e.as_py() for e in list(batch["foo"])] == [30, 10]
-    assert [e.as_py() for e in list(batch["bar"])] == [6.3, 4.1]
-    assert [e.as_py() for e in list(batch["baz"])] == ["cat", "apple"]
+    assert [e.as_py() for e in list(batch["soma_rowid"])] == [0, 2]
+    assert [e.as_py() for e in list(batch["foo"])] == [10, 30]
+    assert [e.as_py() for e in list(batch["bar"])] == [4.1, 6.3]
+    assert [e.as_py() for e in list(batch["baz"])] == ["apple", "cat"]
