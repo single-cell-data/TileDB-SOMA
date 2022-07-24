@@ -240,14 +240,10 @@ class SOMADataFrame(TileDBArray):
         # If we've cached the answer, skip the storage read. Especially if the storage is on the
         # cloud, where we'll avoid an HTTP request.
         if self._is_indexed is None:
-            # TODO have written, and then read back, object-type metadata?
-            # For now: we use sparse for indexed and dense for non-indexed,
-            # so this check is a litmus test.
-            #
             # If the array hasn't had its schema created then this will throw (as it should)
             # -- we have no way to answer the question with a true or a false.
             with self._tiledb_open() as A:
-                self._is_indexed = A.schema.sparse
+                return bool(A.schema.domain.dim(0).name != ROWID)
         return self._is_indexed
 
     def get_index_column_names(self) -> List[str]:
