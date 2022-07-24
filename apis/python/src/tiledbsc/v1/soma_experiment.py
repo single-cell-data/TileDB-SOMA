@@ -1,28 +1,24 @@
-from typing import Any, Optional
+from typing import Any, Dict, Optional
 
 import tiledb
 
 from .soma_collection import SOMACollection
 from .soma_dataframe import SOMADataFrame
+from .tiledb_object import TileDBObject
 from .tiledb_platform_config import TileDBPlatformConfig
 
 
 class SOMAExperiment(SOMACollection):
     """
-    TBD
-    """
-
-    """
-    Primary annotations on the _observation_ axis. The contents of the `soma_rowid` pseudo-column define
+    `obs`: Primary annotations on the _observation_ axis. The contents of the `soma_rowid` pseudo-column define
     the _observation_ index domain, aka `obsid`. All observations for the SOMAExperiment _must_ be
     defined in this dataframe.
-    """
-    _cached_obs: Optional[SOMADataFrame]
 
+    `ms`: A collection of named measurements.
     """
-    A collection of named measurements.
-    """
-    _cached_ms: Optional[SOMACollection]  # of SOMAMeasurement
+
+    _constructors: Dict[str, Any]
+    _cached_members: Dict[str, TileDBObject]
 
     def __init__(
         self,
@@ -45,8 +41,11 @@ class SOMAExperiment(SOMACollection):
             tiledb_platform_config=tiledb_platform_config,
             ctx=ctx,
         )
-        self._cached_obs = None
-        self._cached_ms = None
+        self._constructors = {
+            "obs": SOMADataFrame,
+            "ms": SOMACollection,
+        }
+        self._cached_members = {}
 
     def create(self) -> None:
         """
@@ -56,18 +55,16 @@ class SOMAExperiment(SOMACollection):
 
     def __getattr__(self, name: str) -> Any:  # TODO: union type
         """
-        TODO: COMMENT
+        Implements `experiment.obs` and `experiment.ms`.
         """
-        if name == "obs":
-            if self._cached_obs is None:
-                child_uri = self._get_child_uri("obs")
-                self._cached_obs = SOMADataFrame(uri=child_uri, name="obs", parent=self)
-            return self._cached_obs
-        elif name == "ms":
-            if self._cached_ms is None:
-                child_uri = self._get_child_uri("ms")
-                self._cached_ms = SOMACollection(uri=child_uri, name="ms", parent=self)
-            return self._cached_ms
+        if name in self._constructors:
+            if name not in self._cached_members:
+                child_uri = self._get_child_uri(name)
+                self._cached_members[name] = self._constructors[name](
+                    uri=child_uri, name=name, parent=self
+                )
+            return self._cached_members[name]
+
         else:
             # Unlike __getattribute__ this is _only_ called when the member isn't otherwise
             # resolvable. So raising here is the right thing to do.

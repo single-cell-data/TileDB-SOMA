@@ -1,9 +1,10 @@
-from typing import Any, Optional
+from typing import Any, Dict, Optional
 
 import tiledb
 
 from .soma_collection import SOMACollection
 from .soma_dataframe import SOMADataFrame
+from .tiledb_object import TileDBObject
 from .tiledb_platform_config import TileDBPlatformConfig
 
 
@@ -44,12 +45,8 @@ class SOMAMeasurement(SOMACollection):
     [varid_1, varid_2]
     """
 
-    _cached_var: Optional[SOMADataFrame]
-    _cached_X: Optional[SOMACollection]  # of SOMASparseNdArray
-    _cached_obsm: Optional[SOMACollection]  # of SOMADenseNdArray
-    _cached_obsp: Optional[SOMACollection]  # of SOMASparseNdArray
-    _cached_varm: Optional[SOMACollection]  # of SOMADenseNdArray
-    _cached_varp: Optional[SOMACollection]  # of SOMASparseNdArray
+    _constructors: Dict[str, Any]
+    _cached_members: Dict[str, TileDBObject]
 
     # TODO: check more constraints at runtime:
     # `obs`, `var`
@@ -106,13 +103,15 @@ class SOMAMeasurement(SOMACollection):
             tiledb_platform_config=tiledb_platform_config,
             ctx=ctx,
         )
-
-        self._cached_var = None
-        self._cached_X = None
-        self._cached_obsm = None
-        self._cached_obsp = None
-        self._cached_varm = None
-        self._cached_varp = None
+        self._constructors = {
+            "var": SOMADataFrame,
+            "X": SOMACollection,
+            "obsm": SOMACollection,
+            "obsp": SOMACollection,
+            "varm": SOMACollection,
+            "varp": SOMACollection,
+        }
+        self._cached_members = {}
 
     def create(self) -> None:
         """
@@ -122,51 +121,15 @@ class SOMAMeasurement(SOMACollection):
 
     def __getattr__(self, name: str) -> Any:
         """
-        TODO: COMMENT
+        Implements `experiment.var`, `experiment.X`, etc.
         """
-        if name == "var":
-            if self._cached_var is None:
-                child_uri = self._get_child_uri("var")
-                self._cached_var = SOMADataFrame(uri=child_uri, name="var", parent=self)
-            return self._cached_var
-
-        elif name == "X":
-            if self._cached_X is None:
-                child_uri = self._get_child_uri("X")
-                self._cached_X = SOMACollection(uri=child_uri, name="X", parent=self)
-            return self._cached_X
-
-        elif name == "obsm":
-            if self._cached_obsm is None:
-                child_uri = self._get_child_uri("obsm")
-                self._cached_obsm = SOMACollection(
-                    uri=child_uri, name="obsm", parent=self
+        if name in self._constructors:
+            if name not in self._cached_members:
+                child_uri = self._get_child_uri(name)
+                self._cached_members[name] = self._constructors[name](
+                    uri=child_uri, name=name, parent=self
                 )
-            return self._cached_obsm
-
-        elif name == "obsp":
-            if self._cached_obsp is None:
-                child_uri = self._get_child_uri("obsp")
-                self._cached_obsp = SOMACollection(
-                    uri=child_uri, name="obsp", parent=self
-                )
-            return self._cached_obsp
-
-        elif name == "varm":
-            if self._cached_varm is None:
-                child_uri = self._get_child_uri("varm")
-                self._cached_varm = SOMACollection(
-                    uri=child_uri, name="varm", parent=self
-                )
-            return self._cached_varm
-
-        elif name == "varp":
-            if self._cached_varp is None:
-                child_uri = self._get_child_uri("varp")
-                self._cached_varp = SOMACollection(
-                    uri=child_uri, name="varp", parent=self
-                )
-            return self._cached_varp
+            return self._cached_members[name]
 
         else:
             # Unlike __getattribute__ this is _only_ called when the member isn't otherwise
