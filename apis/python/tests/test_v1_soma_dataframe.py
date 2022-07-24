@@ -71,9 +71,9 @@ def test_soma_dataframe_non_indexed(tmp_path):
     # assert batch.num_columns == 3
 
     # TODO assert [e.as_py() for e in list(batch['soma_rowid'])] == [0,1,2,3,4]
-    assert [e.as_py() for e in list(batch["foo"])] == [20, 30]
-    assert [e.as_py() for e in list(batch["bar"])] == [5.2, 6.3]
-    assert [e.as_py() for e in list(batch["baz"])] == ["ball", "cat"]
+    assert sorted([e.as_py() for e in list(batch["foo"])]) == [20, 30]
+    assert sorted([e.as_py() for e in list(batch["bar"])]) == [5.2, 6.3]
+    assert sorted([e.as_py() for e in list(batch["baz"])]) == ["ball", "cat"]
 
     # Read ids
     batches = []
@@ -95,9 +95,9 @@ def test_soma_dataframe_non_indexed(tmp_path):
     # assert batch.num_columns == 3
 
     # TODO assert [e.as_py() for e in list(batch['soma_rowid'])] == [0,1,2,3,4]
-    assert [e.as_py() for e in list(batch["foo"])] == [20, 30]
-    assert [e.as_py() for e in list(batch["bar"])] == [5.2, 6.3]
-    assert [e.as_py() for e in list(batch["baz"])] == ["ball", "cat"]
+    assert sorted([e.as_py() for e in list(batch["foo"])]) == [20, 30]
+    assert sorted([e.as_py() for e in list(batch["bar"])]) == [5.2, 6.3]
+    assert sorted([e.as_py() for e in list(batch["baz"])]) == ["ball", "cat"]
 
 
 def test_soma_dataframe_indexed(tmp_path):
@@ -156,7 +156,7 @@ def test_soma_dataframe_indexed(tmp_path):
     assert batch.num_rows == 2
     # We should be getting back the soma_rowid column as well
     assert batch.num_columns == 4
-    assert [e.as_py() for e in list(batch["soma_rowid"])] == [0, 2]
-    assert [e.as_py() for e in list(batch["foo"])] == [10, 30]
-    assert [e.as_py() for e in list(batch["bar"])] == [4.1, 6.3]
-    assert [e.as_py() for e in list(batch["baz"])] == ["apple", "cat"]
+    assert sorted([e.as_py() for e in list(batch["soma_rowid"])]) == [0, 2]
+    assert sorted([e.as_py() for e in list(batch["foo"])]) == [10, 30]
+    assert sorted([e.as_py() for e in list(batch["bar"])]) == [4.1, 6.3]
+    assert sorted([e.as_py() for e in list(batch["baz"])]) == ["apple", "cat"]

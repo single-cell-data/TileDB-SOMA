@@ -4,6 +4,7 @@ import tiledb
 
 from .soma_collection import SOMACollection
 from .soma_dataframe import SOMADataFrame
+from .soma_measurement import SOMAMeasurement
 from .tiledb_object import TileDBObject
 from .tiledb_platform_config import TileDBPlatformConfig
 
@@ -69,3 +70,16 @@ class SOMAExperiment(SOMACollection):
             # Unlike __getattribute__ this is _only_ called when the member isn't otherwise
             # resolvable. So raising here is the right thing to do.
             raise AttributeError(f"unrecognized attribute: {name}")
+
+    def constrain(self) -> None:
+        """
+        Checks constraints on the `SOMAExperiment`. Raises an exception if any is violated.
+        """
+        # TODO: find a good spot to call this from.
+
+        for element in self.ms:
+            if not isinstance(element, SOMAMeasurement):
+                raise Exception(
+                    f"element {element.name} of {self.get_type()}.ms should be SOMAMeasurement; got {element.__class__.__name__}"
+                )
+            element.constrain()
