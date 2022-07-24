@@ -10,47 +10,45 @@ from .tiledb_platform_config import TileDBPlatformConfig
 
 class SOMAMeasurement(SOMACollection):
     """
-    The `SOMAMeasurement` is a sub-element of a SOMAExperiment, and is otherwise a specialized
-    SOMACollection with pre-defined fields:
+    A `SOMAMeasurement` is a sub-element of a `SOMAExperiment`, and is otherwise a specialized
+    `SOMACollection` with pre-defined fields:
 
-    var: SOMADataFrame
+    `var`: `SOMADataFrame`
 
     Primary annotations on the _variable_ axis, for variables in this measurement (i.e., annotates
-    columns of X). The contents of the soma_rowid pseudo-column define the _variable_ index domain,
-    aka varid. All variables for this measurement _must_ be defined in this dataframe.
+    columns of `X`). The contents of the `soma_rowid` pseudo-column define the _variable_ index domain,
+    AKA varid. All variables for this measurement _must_ be defined in this dataframe.
 
-    X: SOMACollection # of SOMASparseNdArray
+    `X`: `SOMACollection` of `SOMASparseNdArray`
 
     A collection of sparse matrices, each containing measured feature values. Each matrix is indexed
-    by [obsid, varid]
+    by `[obsid, varid]`.
 
-    obsm: SOMACollection # of SOMADenseNdArray
+    `obsm`: `SOMACollection` of `SOMADenseNdArray`
 
-    A collection of dense matrices containing annotations of each _obs_ row. Has the same shape as
-    obs, and is indexed with obsid.
+    A collection of dense matrices containing annotations of each `obs` row. Has the same shape as
+    `obs`, and is indexed with `obsid`.
 
-    obsp: SOMACollection # of SOMASparseNdArray
+    `obsp`: `SOMACollection` of `SOMASparseNdArray`
 
-    A collection of sparse matrices containing pairwise annotations of each _obs_ row. Indexed with
-    [obsid_1, obsid_2].
+    A collection of sparse matrices containing pairwise annotations of each `obs` row. Indexed with
+    `[obsid_1, obsid_2]`.
 
-    varm: SOMACollection # of SOMADenseNdArray
+    `varm`: `SOMACollection` of `SOMADenseNdArray`
 
-    A collection of dense matrices containing annotations of each _var_ row. Has the same shape as
-    var, and is indexed with varid
+    A collection of dense matrices containing annotations of each `var` row. Has the same shape as
+    `var`, and is indexed with `varid`.
 
-    varp: SOMACollection # of SOMASparseNdArray
+    `varp`: `SOMACollection` of `SOMASparseNdArray`
 
-    A collection of sparse matrices containing pairwise annotations of each _var_ row. Indexed with
-    [varid_1, varid_2]
+    A collection of sparse matrices containing pairwise annotations of each `var` row. Indexed with
+    `[varid_1, varid_2]`
     """
 
     _constructors: Dict[str, Any]
     _cached_members: Dict[str, TileDBObject]
 
     # TODO: check more constraints at runtime:
-    # `obs`, `var`
-    # Field type is a `SOMADataFrame`
 
     # `obsp`, `varp`, `X`
     # Field type is a `SOMACollection`, and each element in the collection has a value of type `SOMASparseNdArray`
