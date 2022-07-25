@@ -23,9 +23,10 @@ using ColumnBuffers = std::map<std::string, std::shared_ptr<ColumnBuffer>>;
  *
  */
 class ColumnBuffer {
-    // TODO: set buffer sizes like tiledb python api (remove this)
-    // TODO: workaround segfault in TileDB 2.10.2, DEFAULT_ALLOC > (1 << 21)
-    inline static const size_t DEFAULT_ALLOC = 1 << 24;
+    inline static const size_t DEFAULT_ALLOC_BYTES = 1 << 24;  // 16 MiB
+    inline static const size_t MAX_ALLOC_BYTES = 5 << 30;      // 5 GiB
+    inline static const std::string
+        CONFIG_KEY_INIT_BYTES = "soma.init_buffer_bytes";
 
    public:
     //===================================================================
@@ -37,33 +38,10 @@ class ColumnBuffer {
      *
      * @param array TileDB array
      * @param name TileDB dimension or attribute name
-     * @param num_cells Number of cells to allocate
      * @return ColumnBuffer
      */
     static std::shared_ptr<ColumnBuffer> create(
-        std::shared_ptr<Array> array,
-        std::string_view name,
-        size_t num_cells = DEFAULT_ALLOC);
-
-    /**
-     * @brief Create a ColumnBuffer from a dimension.
-     *
-     * @param dim TileDB dimension
-     * @param num_cells Number of cells to allocate
-     * @return ColumnBuffer
-     */
-    static std::shared_ptr<ColumnBuffer> create(
-        const Dimension& dim, size_t num_cells = DEFAULT_ALLOC);
-
-    /**
-     * @brief Create a ColumnBuffer from an attribute.
-     *
-     * @param attr TileDB attribute
-     * @param num_cells Number of cells to allocate
-     * @return ColumnBuffer
-     */
-    static std::shared_ptr<ColumnBuffer> create(
-        const Attribute& attr, size_t num_cells = DEFAULT_ALLOC);
+        std::shared_ptr<Array> array, std::string_view name);
 
     /**
      * @brief Create a ColumnBuffer from data.
@@ -228,17 +206,17 @@ class ColumnBuffer {
     /**
      * @brief Allocate and return a ColumnBuffer.
      *
+     * @param array TileDB array
      * @param name Column name
      * @param type TileDB datatype
-     * @param num_cells Number of cells
      * @param is_var True if variable length data
      * @param is_nullable True if nullable data
      * @return ColumnBuffer
      */
     static std::shared_ptr<ColumnBuffer> alloc(
+        std::shared_ptr<Array> array,
         std::string_view name,
         tiledb_datatype_t type,
-        size_t num_cells,
         bool is_var,
         bool is_nullable);
 

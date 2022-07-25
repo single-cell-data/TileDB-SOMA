@@ -48,61 +48,28 @@ static std::shared_ptr<Array> create_array(
 
 };  // namespace
 
-TEST_CASE("ColumnBuffer: Create from attribute") {
-    auto ctx = Context();
-
-    auto attr = Attribute::create<int32_t>(ctx, "a1");
-    attr.set_nullable(true);
-    attr.set_cell_val_num(TILEDB_VAR_NUM);
-
-    auto buffers = ColumnBuffer::create(attr, 21);
-
-    REQUIRE(buffers->name() == "a1");
-    REQUIRE(buffers->is_var() == true);
-    REQUIRE(buffers->is_nullable() == true);
-    REQUIRE(buffers->data<int32_t>().size() == 21);
-    REQUIRE(buffers->offsets().size() == 22);
-    REQUIRE(buffers->validity().size() == 21);
-}
-
-TEST_CASE("ColumnBuffer: Create from dimension") {
-    auto ctx = Context();
-    auto dim = Dimension::create(
-        ctx, "d1", TILEDB_STRING_ASCII, nullptr, nullptr);
-    dim.set_cell_val_num(TILEDB_VAR_NUM);
-
-    auto buffers = ColumnBuffer::create(dim, 9);
-
-    REQUIRE(buffers->name() == "d1");
-    REQUIRE(buffers->is_var() == true);
-    REQUIRE(buffers->is_nullable() == false);
-    REQUIRE(buffers->data<char>().size() == 9);
-    REQUIRE(buffers->offsets().size() == 10);
-    REQUIRE_THROWS(buffers->validity().size() == 0);
-}
-
 TEST_CASE("ColumnBuffer: Create from array") {
     std::string uri = "mem://unit-test-array";
     auto ctx = Context();
     auto array = create_array(uri, ctx);
 
     {
-        auto buffers = ColumnBuffer::create(array, "d1", 9);
+        auto buffers = ColumnBuffer::create(array, "d1");
         REQUIRE(buffers->name() == "d1");
         REQUIRE(buffers->is_var() == true);
         REQUIRE(buffers->is_nullable() == false);
-        REQUIRE(buffers->data<char>().size() == 9);
-        REQUIRE(buffers->offsets().size() == 10);
+        REQUIRE(buffers->data<char>().size() >= 9);
+        REQUIRE(buffers->offsets().size() >= 10);
         REQUIRE_THROWS(buffers->validity().size() == 0);
     }
 
     {
-        auto buffers = ColumnBuffer::create(array, "a1", 21);
+        auto buffers = ColumnBuffer::create(array, "a1");
         REQUIRE(buffers->name() == "a1");
         REQUIRE(buffers->is_var() == true);
         REQUIRE(buffers->is_nullable() == true);
-        REQUIRE(buffers->data<int32_t>().size() == 21);
-        REQUIRE(buffers->offsets().size() == 22);
-        REQUIRE(buffers->validity().size() == 21);
+        REQUIRE(buffers->data<int32_t>().size() >= 21);
+        REQUIRE(buffers->offsets().size() >= 22);
+        REQUIRE(buffers->validity().size() >= 21);
     }
 }

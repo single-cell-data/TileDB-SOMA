@@ -15,8 +15,8 @@ void debug(std::string_view soma_uri) {
     auto var_qc = QueryCondition::create<uint64_t>(
         *ctx, var_attr, var_val, TILEDB_LT);
     std::vector<std::string> var_cols = {var_attr};
-    // sq->set_var_condition(var_qc);
-    // sq->select_var_attrs(var_cols);
+    sq->set_var_condition(var_qc);
+    sq->select_var_attrs(var_cols);
 
     size_t total_cells = 0;
     while (auto results = sq->next_results()) {
