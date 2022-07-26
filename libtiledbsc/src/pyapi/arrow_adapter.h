@@ -1,5 +1,5 @@
-#ifndef TILEDB_ARROW_H
-#define TILEDB_ARROW_H
+#ifndef ARROW_ADAPTER_H
+#define ARROW_ADAPTER_H
 
 #include "carrow.h"
 #include "tiledbsc/tiledbsc"
@@ -24,7 +24,7 @@ class ArrowAdapter {
     /**
      * @brief Convert ColumnBuffer to an Arrow array.
      *
-     * @return auto
+     * @return auto [Arrow array, Arrow schema]
      */
     static auto to_arrow(ColumnBuffer& column) {
         std::shared_ptr<ArrowSchema> schema = std::make_shared<ArrowSchema>();
@@ -63,10 +63,15 @@ class ArrowAdapter {
             array->buffers[2] = column.data<void*>().data();
         }
 
-        return std::tuple(std::move(array), std::move(schema));
+        return std::pair(std::move(array), std::move(schema));
     }
 
-    // Get Arrow format from TileDB datatype
+    /**
+     * @brief Get Arrow format string from TileDB datatype.
+     *
+     * @param datatype TileDB datatype.
+     * @return std::string_view Arrow format string.
+     */
     static std::string_view to_arrow_format(tiledb_datatype_t datatype) {
         switch (datatype) {
             case TILEDB_STRING_ASCII:
@@ -116,9 +121,9 @@ class ArrowAdapter {
             default:
                 break;
         }
-        throw TileDBSCError(
-            "TileDB-Arrow: tiledb datatype not understood ('" +
-            tiledb::impl::type_to_str(datatype) + "')");
+        throw TileDBSCError(fmt::format(
+            "ArrowAdapter: Unsupported TileDB datatype: {} ",
+            tiledb::impl::type_to_str(datatype)));
     }
 };
 

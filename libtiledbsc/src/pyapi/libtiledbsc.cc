@@ -6,15 +6,21 @@
 
 #include <tiledbsc/tiledbsc>
 
-#include "table_buffer.h"
-#include "tiledb_arrow.h"
+#include "arrow_adapter.h"
 
 #define DENUM(x) .value(#x, TILEDB_##x)
 
 using namespace tiledbsc;
 
 namespace py = pybind11;
+using namespace py::literals;
 
+/**
+ * @brief Convert ColumnBuffer to Arrow array.
+ *
+ * @param cb ColumnBuffer
+ * @return py::object Arrow array
+ */
 py::object to_array(ColumnBuffer& cb) {
     auto pa = py::module::import("pyarrow");
     auto pa_array_import = pa.attr("Array").attr("_import_from_c");
@@ -23,14 +29,20 @@ py::object to_array(ColumnBuffer& cb) {
     return pa_array_import(py::capsule(array.get()), py::capsule(schema.get()));
 }
 
-py::object to_table(TableBuffer& tb) {
+/**
+ * @brief Convert ColumnBuffers to Arrow table.
+ *
+ * @param cbs ColumnBuffers
+ * @return py::object
+ */
+py::object to_table(ColumnBuffers& cbs) {
     auto pa = py::module::import("pyarrow");
     auto pa_table_from_arrays = pa.attr("Table").attr("from_arrays");
 
     py::list names;
     py::list arrays;
 
-    for (auto& [name, column] : tb.get_columns()) {
+    for (auto& [name, column] : cbs) {
         names.append(name);
         arrays.append(to_array(*column));
     }
@@ -38,10 +50,71 @@ py::object to_table(TableBuffer& tb) {
     return pa_table_from_arrays(arrays, names);
 }
 
-PYBIND11_MODULE(pytiledbsc, m) {
-    m.doc() = "TileDB-SingleCell python library";
+// TODO: Convert Arrow array to ColumnBuffer
+/*
+    _export_to_c(...) method of pyarrow.lib.StringArray instance
+    Array._export_to_c(self, out_ptr, out_schema_ptr=0)
 
-    // TODO: ColumnBuffer is useful for testing, but may be removed later
+    Export to a C ArrowArray struct, given its pointer.
+
+    If a C ArrowSchema struct pointer is also given, the array type
+    is exported to it at the same time.
+
+    Parameters
+    ----------
+    out_ptr: int
+        The raw pointer to a C ArrowArray struct.
+    out_schema_ptr: int (optional)
+        The raw pointer to a C ArrowSchema struct.
+
+    Be careful: if you don't pass the ArrowArray struct to a consumer,
+    array memory will leak.  This is a low-level function intended for
+    expert users.
+*/
+
+/**
+ * @brief pybind11 bindings
+ *
+ */
+PYBIND11_MODULE(libtiledbsc, m) {
+    m.doc() = "TileDB-SOMA acceleration library";
+
+    py::class_<SOMA>(m, "SOMA")
+        .def(
+            py::init(
+                [](std::string_view uri,
+                   std::optional<std::map<std::string, std::string>> config) {
+                    if (config.has_value()) {
+                        auto cfg = Config(*config);
+                        return SOMA::open(uri, cfg);
+                    } else {
+                        return SOMA::open(uri);
+                    }
+                }),
+            "uri"_a,
+            "config"_a = py::none())
+        .def("list_arrays", &SOMA::list_arrays)
+        // SOMAQuery (0 = return value) will keep SOMA alive (1 = this)
+        .def("query", &SOMA::query, py::keep_alive<0, 1>());
+
+    py::class_<SOMAQuery>(m, "SOMAQuery")
+        .def("next_results", [](SOMAQuery& sq) -> std::optional<py::object> {
+            auto buffers = sq.next_results();
+            if (buffers.has_value()) {
+                return to_table(*buffers);
+            }
+            return std::nullopt;
+        });
+
+    //===============================================================
+    // Code below is provided for testing
+    //===============================================================
+    m.def(
+        "to_arrow",
+        [](std::map<std::string, std::shared_ptr<ColumnBuffer>> tb) {
+            return to_table(tb);
+        });
+
     py::class_<ColumnBuffer, std::shared_ptr<ColumnBuffer>>(m, "ColumnBuffer")
         .def(
             py::init([](std::string& name,
@@ -76,27 +149,6 @@ PYBIND11_MODULE(pytiledbsc, m) {
             py::arg("validity") = std::nullopt)
 
         .def("to_arrow", [](ColumnBuffer& cb) { return to_array(cb); })
-
-        /*
-    _export_to_c(...) method of pyarrow.lib.StringArray instance
-    Array._export_to_c(self, out_ptr, out_schema_ptr=0)
-
-    Export to a C ArrowArray struct, given its pointer.
-
-    If a C ArrowSchema struct pointer is also given, the array type
-    is exported to it at the same time.
-
-    Parameters
-    ----------
-    out_ptr: int
-        The raw pointer to a C ArrowArray struct.
-    out_schema_ptr: int (optional)
-        The raw pointer to a C ArrowSchema struct.
-
-    Be careful: if you don't pass the ArrowArray struct to a consumer,
-    array memory will leak.  This is a low-level function intended for
-    expert users.
-*/
 
         // WARNING: these functions copy!
         .def(
@@ -144,14 +196,6 @@ PYBIND11_MODULE(pytiledbsc, m) {
             auto v = buf.validity();
             return py::array_t<uint8_t>(v.size(), v.data());
         });
-
-    py::class_<TableBuffer>(m, "TableBuffer")
-        .def(py::init<std::map<std::string, std::shared_ptr<ColumnBuffer>>>())
-        .def("to_arrow", [](TableBuffer& tb) { return to_table(tb); });
-
-    py::class_<SOMA, std::shared_ptr<SOMA>>(m, "SOMA")
-        .def(py::init([](std::string_view uri) { return SOMA::open(uri); }))
-        .def("list_arrays", &SOMA::list_arrays);
 
     // clang-format off
     py::enum_<tiledb_datatype_t>(m, "DataType", py::module_local())

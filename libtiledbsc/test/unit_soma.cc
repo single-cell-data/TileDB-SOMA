@@ -29,7 +29,6 @@ TEST_CASE("SOMA: Open arrays") {
 TEST_CASE("SOMA: Full query") {
     auto soma = SOMA::open(soma_uri);
     auto sq = soma->query();
-    auto ctx = soma->context();
 
     size_t total_cells = 0;
     while (auto results = sq->next_results()) {

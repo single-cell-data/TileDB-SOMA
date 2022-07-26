@@ -9,13 +9,13 @@ using namespace tiledb;
 //= public static
 //===================================================================
 
-std::shared_ptr<SOMA> SOMA::open(
+std::unique_ptr<SOMA> SOMA::open(
     std::string_view uri, std::shared_ptr<Context> ctx) {
-    return std::make_shared<SOMA>(uri, ctx);
+    return std::make_unique<SOMA>(uri, ctx);
 }
 
-std::shared_ptr<SOMA> SOMA::open(std::string_view uri, const Config& config) {
-    return std::make_shared<SOMA>(uri, std::make_shared<Context>(config));
+std::unique_ptr<SOMA> SOMA::open(std::string_view uri, const Config& config) {
+    return std::make_unique<SOMA>(uri, std::make_shared<Context>(config));
 }
 
 //===================================================================

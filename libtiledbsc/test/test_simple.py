@@ -1,6 +1,6 @@
 import pandas as pd
 import pyarrow as pa
-import pytiledbsc
+import libtiledbsc as sc
 import pytest
 import numpy as np
 import random
@@ -24,9 +24,7 @@ def random_strings(max_length=32):
     offsets, data = map(np.array, pa_data.buffers()[1:])
     offsets = offsets.view(np.uint32).astype(np.uint64)
 
-    cb = pytiledbsc.ColumnBuffer(
-        "buf", pytiledbsc.DataType.STRING_ASCII, len(strings), data, offsets
-    )
+    cb = sc.ColumnBuffer("buf", sc.DataType.STRING_ASCII, len(strings), data, offsets)
 
     return strings, cb
 
@@ -57,8 +55,8 @@ def test_init():
 
     for ov in ovs:
         data, offsets, validity = ov
-        buf = pytiledbsc.ColumnBuffer(
-            "buf", pytiledbsc.DataType.INT32, len(data), data, offsets, validity
+        buf = sc.ColumnBuffer(
+            "buf", sc.DataType.INT32, len(data), data, offsets, validity
         )
 
         assert np.array_equal(buf.data(), data)
@@ -68,28 +66,28 @@ def test_init():
 
 def test_int32():
     data = np.random.randint(-1 << 31, 1 << 31, size=DATA_SIZE, dtype=np.int32)
-    cb = pytiledbsc.ColumnBuffer("buf", pytiledbsc.DataType.INT32, len(data), data)
+    cb = sc.ColumnBuffer("buf", sc.DataType.INT32, len(data), data)
 
     check_array(data, cb)
 
 
 def test_int64():
     data = np.random.randint(-1 << 63, 1 << 63, size=DATA_SIZE, dtype=np.int64)
-    cb = pytiledbsc.ColumnBuffer("buf", pytiledbsc.DataType.INT64, len(data), data)
+    cb = sc.ColumnBuffer("buf", sc.DataType.INT64, len(data), data)
 
     check_array(data, cb)
 
 
 def test_float32():
     data = rng.random(size=DATA_SIZE, dtype=np.float32)
-    cb = pytiledbsc.ColumnBuffer("buf", pytiledbsc.DataType.FLOAT32, len(data), data)
+    cb = sc.ColumnBuffer("buf", sc.DataType.FLOAT32, len(data), data)
 
     check_array(data, cb)
 
 
 def test_float64():
     data = rng.random(size=DATA_SIZE, dtype=np.float64)
-    cb = pytiledbsc.ColumnBuffer("buf", pytiledbsc.DataType.FLOAT64, len(data), data)
+    cb = sc.ColumnBuffer("buf", sc.DataType.FLOAT64, len(data), data)
 
     check_array(data, cb)
 
@@ -108,17 +106,16 @@ def test_string():
 
 def test_table():
     a = np.random.randint(-1 << 31, 1 << 31, size=DATA_SIZE, dtype=np.int32)
-    a_cb = pytiledbsc.ColumnBuffer("a", pytiledbsc.DataType.INT32, len(a), a)
+    a_cb = sc.ColumnBuffer("a", sc.DataType.INT32, len(a), a)
     b = np.random.randint(-1 << 63, 1 << 63, size=DATA_SIZE, dtype=np.int64)
-    b_cb = pytiledbsc.ColumnBuffer("b", pytiledbsc.DataType.INT64, len(b), b)
+    b_cb = sc.ColumnBuffer("b", sc.DataType.INT64, len(b), b)
     c = rng.random(size=DATA_SIZE, dtype=np.float32)
-    c_cb = pytiledbsc.ColumnBuffer("c", pytiledbsc.DataType.FLOAT32, len(c), c)
+    c_cb = sc.ColumnBuffer("c", sc.DataType.FLOAT32, len(c), c)
     d = rng.random(size=DATA_SIZE, dtype=np.float64)
-    d_cb = pytiledbsc.ColumnBuffer("d", pytiledbsc.DataType.FLOAT64, len(d), d)
+    d_cb = sc.ColumnBuffer("d", sc.DataType.FLOAT64, len(d), d)
     e, e_cb = random_strings(8)
 
-    tb = pytiledbsc.TableBuffer({"a": a_cb, "b": b_cb, "c": c_cb, "d": d_cb, "e": e_cb})
-    arrow = tb.to_arrow()
+    arrow = sc.to_arrow({"a": a_cb, "b": b_cb, "c": c_cb, "d": d_cb, "e": e_cb})
     df = arrow.to_pandas()
     df_expected = pd.DataFrame({"a": a, "b": b, "c": c, "d": d, "e": e})
 

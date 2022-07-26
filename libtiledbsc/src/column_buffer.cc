@@ -66,7 +66,7 @@ std::shared_ptr<ColumnBuffer> ColumnBuffer::create(
     std::vector<uint64_t> o{offsets.begin(), offsets.end()};
     std::vector<uint8_t> v{validity.begin(), validity.end()};
 
-    return std::make_shared<ColumnBuffer>(name, type, num_cells, d, o, v);
+    return std::make_unique<ColumnBuffer>(name, type, num_cells, d, o, v);
 }
 
 //===================================================================

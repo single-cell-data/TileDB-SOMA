@@ -240,7 +240,7 @@ set_property(
 )
 
 install(
-  TARGETS tiledbsc tiledbsc-bin pytiledbsc
+  TARGETS tiledbsc tiledbsc-bin libtiledbsc
   RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
   LIBRARY DESTINATION lib
   ARCHIVE DESTINATION lib

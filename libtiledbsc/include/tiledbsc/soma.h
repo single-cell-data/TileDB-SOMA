@@ -26,7 +26,7 @@ class SOMA {
      * @param ctx TileDB context
      * @return SOMA object
      */
-    static std::shared_ptr<SOMA> open(
+    static std::unique_ptr<SOMA> open(
         std::string_view uri,
         std::shared_ptr<Context> ctx = std::make_shared<Context>());
 
@@ -37,7 +37,7 @@ class SOMA {
      * @param config TileDB config
      * @return SOMA object
      */
-    static std::shared_ptr<SOMA> open(
+    static std::unique_ptr<SOMA> open(
         std::string_view uri, const Config& config);
 
     //===================================================================
