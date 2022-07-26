@@ -8,7 +8,7 @@
 
 #include <tiledb/tiledb>
 
-#include "tiledbsc/managed_query.h"
+#include "tiledbsc/column_buffer.h"
 #include "tiledbsc/soma.h"
 
 namespace tiledbsc {

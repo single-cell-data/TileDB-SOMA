@@ -10,14 +10,14 @@ using namespace tiledb;
 //= public static
 //===================================================================
 
-std::shared_ptr<SOMACollection> SOMACollection::open(
+std::unique_ptr<SOMACollection> SOMACollection::open(
     std::string_view uri, std::shared_ptr<Context> ctx) {
-    return std::make_shared<SOMACollection>(uri, ctx);
+    return std::make_unique<SOMACollection>(uri, ctx);
 }
 
-std::shared_ptr<SOMACollection> SOMACollection::open(
+std::unique_ptr<SOMACollection> SOMACollection::open(
     std::string_view uri, const Config& config) {
-    return std::make_shared<SOMACollection>(
+    return std::make_unique<SOMACollection>(
         uri, std::make_shared<Context>(config));
 }
 

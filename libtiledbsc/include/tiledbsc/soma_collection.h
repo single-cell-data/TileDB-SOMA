@@ -7,6 +7,8 @@
 #include <tiledb/tiledb_experimental>
 #include <tiledbsc/tiledbsc>
 
+#include "tiledbsc/soma_collection_query.h"
+
 namespace tiledbsc {
 using namespace tiledb;
 
@@ -24,7 +26,7 @@ class SOMACollection {
      * @param uri TileDB context
      * @return SOMACollection object
      */
-    static std::shared_ptr<SOMACollection> open(
+    static std::unique_ptr<SOMACollection> open(
         std::string_view uri,
         std::shared_ptr<Context> ctx = std::make_shared<Context>());
 
@@ -36,7 +38,7 @@ class SOMACollection {
      * @param config TileDB config
      * @return SOMACollection object
      */
-    static std::shared_ptr<SOMACollection> open(
+    static std::unique_ptr<SOMACollection> open(
         std::string_view uri, const Config& config);
 
     //===================================================================
@@ -58,6 +60,10 @@ class SOMACollection {
      * SOMA URI
      */
     std::unordered_map<std::string, std::string> list_somas();
+
+    std::unique_ptr<SOMACollectionQuery> query() {
+        return std::make_unique<SOMACollectionQuery>(this);
+    }
 
     std::unordered_map<std::string, std::shared_ptr<SOMA>> get_somas();
 

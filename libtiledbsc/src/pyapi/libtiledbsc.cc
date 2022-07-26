@@ -124,7 +124,24 @@ PYBIND11_MODULE(libtiledbsc, m) {
             return std::nullopt;
         });
 
-    py::class_<SOMACollection>(m, "SOMACollection");
+    py::class_<SOMACollection>(m, "SOMACollection")
+        .def(
+            py::init(
+                [](std::string_view uri,
+                   std::optional<std::map<std::string, std::string>> config) {
+                    if (config.has_value()) {
+                        auto cfg = Config(*config);
+                        return SOMACollection::open(uri, cfg);
+                    } else {
+                        return SOMACollection::open(uri);
+                    }
+                }),
+            "uri"_a,
+            "config"_a = py::none())
+        .def("list_somas", &SOMACollection::list_somas)
+        // SOMACollection Query (0 = return value) will keep SOMACollection
+        // alive (1 = this)
+        .def("query", &SOMACollection::query, py::keep_alive<0, 1>());
 
     //===============================================================
     // Code below is provided for testing
