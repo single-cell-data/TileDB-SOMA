@@ -79,6 +79,16 @@ py::object to_table(ColumnBuffers& cbs) {
 PYBIND11_MODULE(libtiledbsc, m) {
     m.doc() = "TileDB-SOMA acceleration library";
 
+    m.def(
+        "config_logging",
+        [](const std::string& level, const std::string& logfile) {
+            LOG_CONFIG(level, logfile);
+        },
+        "level"_a,
+        "logfile"_a = "");
+
+    m.def("debug", &LOG_DEBUG, "message"_a = "");
+
     py::class_<SOMA>(m, "SOMA")
         .def(
             py::init(

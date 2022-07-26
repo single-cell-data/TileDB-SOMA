@@ -12,8 +12,13 @@ def test_soma_list():
 
 
 def test_soma_query():
+    sc.config_logging("debug", "soma.log")
+
     for i in range(22, 26):
         config = {"soma.init_buffer_bytes": f"{1 << i}"}
+        sc.debug()
+        sc.debug(f"SOMA query: {config}")
+        sc.debug()
         soma = sc.SOMA(SOMA_URI, config)
         sq = soma.query()
 
@@ -25,4 +30,4 @@ def test_soma_query():
 
 
 if __name__ == "__main__":
-    test_soma()
+    test_soma_query()
