@@ -7,7 +7,8 @@
 namespace tiledbsc {
 using namespace tiledb;
 
-SOMAQuery::SOMAQuery(SOMA* soma) {
+SOMAQuery::SOMAQuery(SOMA* soma)
+    : ctx_(soma->context()) {
     std::vector<ThreadPool::Task> tasks;
     ThreadPool pool{3};
 

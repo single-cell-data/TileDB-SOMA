@@ -18,7 +18,7 @@ ctest -C Release --verbose
 cd -
 export PYTHONPATH=$PWD/dist/lib
 export LD_LIBRARY_PATH=$PWD/dist/lib
-pytest -rA libtiledbsc
+pytest -svvv libtiledbsc
 
 # Generate coverage report
 if [[ -n $COVERAGE ]]; then

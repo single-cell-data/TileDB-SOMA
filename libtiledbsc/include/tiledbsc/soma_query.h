@@ -79,6 +79,20 @@ class SOMAQuery {
         mq_var_->set_condition(qc);
     }
 
+    template <class T>
+    void set_obs_condition(const std::string& attr, T value, int op) {
+        auto qc = QueryCondition::create(
+            *ctx_, attr, value, (tiledb_query_condition_op_t)op);
+        set_obs_condition(qc);
+    }
+
+    template <class T>
+    void set_var_condition(const std::string& attr, T value, int op) {
+        auto qc = QueryCondition::create(
+            *ctx_, attr, value, (tiledb_query_condition_op_t)op);
+        set_var_condition(qc);
+    }
+
     /**
      * @brief Submit the query and return the first batch of results. To handle
      * incomplete queries, continue to call `next_results` until std::nullopt is
@@ -89,6 +103,9 @@ class SOMAQuery {
     std::optional<ColumnBuffers> next_results();
 
    private:
+    // TileDB context
+    std::shared_ptr<Context> ctx_;
+
     // Managed query for the obs array
     std::unique_ptr<ManagedQuery> mq_obs_;
 

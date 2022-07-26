@@ -108,6 +108,14 @@ PYBIND11_MODULE(libtiledbsc, m) {
         .def("query", &SOMA::query, py::keep_alive<0, 1>());
 
     py::class_<SOMAQuery>(m, "SOMAQuery")
+        .def("select_obs_attrs", &SOMAQuery::select_obs_attrs)
+        .def("select_var_attrs", &SOMAQuery::select_var_attrs)
+        .def("select_obs_ids", &SOMAQuery::select_obs_ids)
+        .def("select_var_ids", &SOMAQuery::select_var_ids)
+        .def("set_obs_condition", &SOMAQuery::set_obs_condition<uint64_t>)
+        .def("set_obs_condition", &SOMAQuery::set_obs_condition<std::string>)
+        .def("set_var_condition", &SOMAQuery::set_var_condition<uint64_t>)
+        .def("set_var_condition", &SOMAQuery::set_var_condition<std::string>)
         .def("next_results", [](SOMAQuery& sq) -> std::optional<py::object> {
             auto buffers = sq.next_results();
             if (buffers.has_value()) {
@@ -115,6 +123,8 @@ PYBIND11_MODULE(libtiledbsc, m) {
             }
             return std::nullopt;
         });
+
+    py::class_<SOMACollection>(m, "SOMACollection");
 
     //===============================================================
     // Code below is provided for testing
