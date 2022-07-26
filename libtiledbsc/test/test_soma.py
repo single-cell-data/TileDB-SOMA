@@ -1,8 +1,10 @@
+import os
 import pandas as pd
 import pyarrow as pa
 import libtiledbsc as sc
 
-SOMA_URI = "/home/gspowley/work/TileDB-SingleCell/test/soco/pbmc3k_processed"
+TEST_DIR = os.path.dirname(__file__)
+SOMA_URI = f"{TEST_DIR}/../../test/soco/pbmc3k_processed"
 
 
 def test_soma_list():

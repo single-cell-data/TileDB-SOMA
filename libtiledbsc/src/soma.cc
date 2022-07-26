@@ -28,7 +28,10 @@ SOMA::SOMA(std::string_view uri, std::shared_ptr<Context> ctx)
 }
 
 std::unordered_map<std::string, std::string> SOMA::list_arrays() {
+    LOG_DEBUG(fmt::format("Listing arrays in SOMA '{}'", uri_));
+
     if (array_uri_map_.empty()) {
+        // TODO: handle bad uri_
         Group group(*ctx_, uri_, TILEDB_READ);
         build_uri_map(group);
     }
