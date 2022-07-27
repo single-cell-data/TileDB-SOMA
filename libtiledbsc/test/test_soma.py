@@ -3,7 +3,7 @@ import pandas as pd
 import pyarrow as pa
 import libtiledbsc as sc
 
-VERBOSE = False
+VERBOSE = True
 
 TEST_DIR = os.path.dirname(__file__)
 SOMA_URI = f"{TEST_DIR}/../../test/soco/pbmc3k_processed"
