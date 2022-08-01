@@ -19,7 +19,7 @@ def from_h5ad_unless_exists(soma: tiledbsc.SOMA, input_path: str) -> None:
     Skips the ingest if the SOMA is already there. A convenient keystroke-saver
     so users don't need to replicate the if-test.
     """
-    if tiledbsc.util.is_soma(soma.uri):
+    if tiledbsc.util.is_soma(soma.uri, ctx=soma._ctx):
         tiledbsc.logging.logger.info(f"Already exists, skipping ingest: {soma.uri}")
     else:
         from_h5ad(soma, input_path)
