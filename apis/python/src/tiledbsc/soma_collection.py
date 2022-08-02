@@ -139,6 +139,8 @@ class SOMACollection(TileDBGroup):
         """
         Implements `name in soco`
         """
+        if not self.exists():
+            return False
         with self._open("r") as G:
             return name in G
 
