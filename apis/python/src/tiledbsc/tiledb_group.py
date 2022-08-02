@@ -125,7 +125,8 @@ class TileDBGroup(TileDBObject):
             stre = str(e)
             # Local-disk/S3 does-not-exist exceptions say 'Group does not exist'; TileDB Cloud
             # does-not-exist exceptions are worded less clearly.
-            if "Group does not exist" in stre or "HTTP code 401" in stre:
+            # 'Group' or 'group'
+            if "roup does not exist" in stre or "HTTP code 401" in stre:
                 # Group not constructed yet, but we must return pre-creation URIs. Here, appending
                 # "/" and name is appropriate in all cases: even for tiledb://... URIs,
                 # pre-construction URIs are of the form
