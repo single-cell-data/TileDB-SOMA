@@ -34,7 +34,11 @@ else:
     print(f"{sys.argv[0]}: need just one soma path.", file=sys.stderr)
     sys.exit(1)
 
-soma = tiledbsc.SOMA(input_path)
+cfg = tiledb.Config()
+cfg["py.init_buffer_bytes"] = 4 * 1024**3
+ctx = tiledb.Ctx(cfg)
+
+soma = tiledbsc.SOMA(input_path, ctx=ctx)
 if not soma.exists():
     print("Does not exist yet:", input_path)
 

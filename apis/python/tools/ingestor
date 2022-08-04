@@ -8,9 +8,6 @@ A simple driver for ingestion of anndata to a TileDB SOMA.
 
 * Invoke this with two arguments to specify input anndata HDF5 file
   and output TileDB group.
-
-Nominal immediate-term support is to local disk and S3, although output to tiledb:/...
-URIs will be supported.
 """
 
 import argparse

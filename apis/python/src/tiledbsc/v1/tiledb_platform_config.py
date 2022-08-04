@@ -19,7 +19,7 @@ class TileDBPlatformConfig:
     # https://github.com/single-cell-data/TileDB-SingleCell/issues/27
     string_dim_zstd_level: int = 22
     write_X_chunked: bool = True
-    goal_chunk_nnz: int = 20_000_000
+    goal_chunk_nnz: int = 200_000_000
     # Allows relocatability for local disk / S3, and correct behavior for TileDB Cloud
     member_uris_are_relative: Optional[bool] = None
     allows_duplicates: bool = False

@@ -1,9 +1,13 @@
 from typing import Any, Iterator, List, Optional, Sequence, TypeVar, Union
 
 import numpy as np
+import pandas as pd
 import pyarrow as pa
 import tiledb
 
+import tiledbsc.v1.util as util
+
+from .logging import log_io
 from .soma_collection import SOMACollection
 from .tiledb_array import TileDBArray
 from .util import tiledb_type_from_arrow_type
@@ -402,3 +406,144 @@ class SOMADataFrame(TileDBArray):
                 # dense write
                 with self._tiledb_open("w") as A:
                     A[lo : (hi + 1)] = attr_cols_map
+
+    # ================================================================
+    # ================================================================
+    # ================================================================
+    def keys(self) -> List[str]:
+        """
+        TODO
+        """
+        return self._tiledb_attr_names()
+
+    # TODO: TEMP
+    def to_dataframe(self, attrs: Optional[Sequence[str]] = None) -> pd.DataFrame:
+        """
+        TODO: comment
+        """
+        with self._tiledb_open() as A:
+            df = A.df[:]
+            if attrs is not None:
+                df = df[attrs]
+            return self._ascii_to_unicode_dataframe_readback(df)
+
+    def _ascii_to_unicode_dataframe_readback(self, df: pd.DataFrame) -> pd.DataFrame:
+        """
+        Implements the 'decode on read' partof our logic
+        """
+        for k in df:
+            dfk = df[k]
+            if len(dfk) > 0 and type(dfk[0]) == bytes:
+                df[k] = dfk.map(lambda e: e.decode())
+        return df
+
+    # TODO: TEMP
+    # TODO: add user-indexed optioning
+    def from_dataframe(
+        self,
+        dataframe: pd.DataFrame,
+        *,
+        indexed: Optional[bool] = False,
+        index_column_names: Optional[List[str]] = None,
+        extent: int = 2048,
+        id_column_name: Optional[
+            str
+        ] = None,  # to rename index to 'obs_id' or 'var_id', if desired, from anndata
+    ) -> None:
+        """
+        Populates the `obs` element of a SOMAExperiment object.
+
+        :param dataframe: `anndata.obs`
+        :param extent: TileDB `extent` parameter for the array schema.
+        """
+        if indexed:
+            raise Exception("indexed from_dataframe not implemented yet")
+        if index_column_names is not None:
+            raise Exception("indexed from_dataframe not implemented yet")
+
+        offsets_filters = tiledb.FilterList(
+            [tiledb.PositiveDeltaFilter(), tiledb.ZstdFilter(level=-1)]
+        )
+        dim_filters = tiledb.FilterList([tiledb.ZstdFilter(level=-1)])
+        attr_filters = tiledb.FilterList([tiledb.ZstdFilter(level=-1)])
+
+        s = util.get_start_stamp()
+        log_io(None, f"{self._indent}START  WRITING {self.get_uri()}")
+
+        # This is the non-indexed bit
+        assert ROWID not in dataframe.keys()
+        assert len(dataframe.shape) == 2
+        # E.g. (80, 7) is 80 rows x 7 columns
+        num_rows = dataframe.shape[0]
+        dataframe[ROWID] = np.asarray(range(num_rows))
+
+        mode = "ingest"
+        if self.exists():
+            mode = "append"
+            log_io(None, f"{self._indent}Re-using existing array {self.get_uri()}")
+
+        # Make obs_id a data column
+        # TODO: rename it from 'index' to 'obs_id' or 'var_id' etc as appropriate
+        dataframe.reset_index(inplace=True)
+        if id_column_name is not None:
+            dataframe.rename(columns={"index": id_column_name}, inplace=True)
+
+        dataframe.set_index(ROWID, inplace=True)
+
+        # ISSUE:
+        #
+        # TileDB attributes can be stored as Unicode but they are not yet queryable via the TileDB
+        # QueryCondition API. While this needs to be addressed -- global collaborators will want to
+        # write annotation-dataframe values in Unicode -- until then, to make obs/var data possible
+        # to query, we need to store these as ASCII.
+        #
+        # This is (besides collation) a storage-level issue not a presentation-level issue: At write
+        # time, this works — "α,β,γ" stores as "\xce\xb1,\xce\xb2,\xce\xb3"; at read time: since
+        # SOMA is an API: utf8-decode those strings when a query is done & give the user back
+        # "α,β,γ".
+        #
+        # CONTEXT:
+        # https://github.com/single-cell-data/TileDB-SingleCell/issues/99
+        # https://github.com/single-cell-data/TileDB-SingleCell/pull/101
+        # https://github.com/single-cell-data/TileDB-SingleCell/issues/106
+        # https://github.com/single-cell-data/TileDB-SingleCell/pull/117
+        #
+        # IMPLEMENTATION:
+        # Python types -- float, string, what have you -- appear as dtype('O') which is not useful.
+        # Also, `tiledb.from_pandas` has `column_types` but that _forces_ things to string to a
+        # particular if they shouldn't be.
+        #
+        # Instead, we use `dataframe.convert_dtypes` to get a little jump on what `tiledb.from_pandas`
+        # is going to be doing anyway, namely, type-inferring to see what is going to be a string.
+        #
+        # TODO: when UTF-8 attributes are queryable using TileDB-Py's QueryCondition API we can remove this.
+
+        column_types = {}
+        for column_name in dataframe.keys():
+            dfc = dataframe[column_name]
+            if len(dfc) > 0 and type(dfc[0]) == str:
+                # Force ASCII storage if string, in order to make obs/var columns queryable.
+                column_types[column_name] = np.dtype("S")
+
+        tiledb.from_pandas(
+            uri=self.get_uri(),
+            dataframe=dataframe,
+            name=self.get_name(),
+            sparse=True,  # TODO
+            allows_duplicates=self._tiledb_platform_config.allows_duplicates,
+            offsets_filters=offsets_filters,
+            attr_filters=attr_filters,
+            dim_filters=dim_filters,
+            capacity=100000,
+            tile=extent,
+            column_types=column_types,
+            ctx=self._ctx,
+            mode=mode,
+        )
+
+        self._common_create()  # object-type metadata etc
+
+        log_io(
+            f"Wrote {self._nested_name}",
+            util.format_elapsed(s, f"{self._indent}FINISH WRITING {self.get_uri()}"),
+        )

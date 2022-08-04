@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, Sequence
 
 import tiledb
 
@@ -51,6 +51,20 @@ class TileDBArray(TileDBObject):
         """
         with self._tiledb_open() as A:
             return A.schema
+
+    def _tiledb_dim_names(self) -> Sequence[str]:
+        """
+        Reads the dimension names from the schema: for example, ['obs_id', 'var_id'].
+        """
+        with self._tiledb_open() as A:
+            return [A.schema.domain.dim(i).name for i in range(A.schema.domain.ndim)]
+
+    def _tiledb_attr_names(self) -> Sequence[str]:
+        """
+        Reads the attribute names from the schema: for example, the list of column names in a dataframe.
+        """
+        with self._tiledb_open() as A:
+            return [A.schema.attr(i).name for i in range(A.schema.nattr)]
 
     def _show_metadata(self, recursively: bool = True, indent: str = "") -> None:
         """

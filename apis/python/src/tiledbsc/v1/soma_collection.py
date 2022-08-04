@@ -85,6 +85,12 @@ class SOMACollection(TileDBObject):
 
         return self._cached_members[member_name]
 
+    def keys(self) -> Sequence[str]:
+        """
+        Gets the names of the members of the collection.
+        """
+        return self._get_member_names()
+
     def __getitem__(self, member_name: str) -> TileDBObject:
         """
         Get the member object associated with the key, when invoked as `collection["namegoeshere"]`.
