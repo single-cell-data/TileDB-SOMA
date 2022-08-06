@@ -10,6 +10,7 @@ import tiledbsc.v1.util as util
 from .logging import log_io
 from .soma_collection import SOMACollection
 from .tiledb_array import TileDBArray
+from .types import NTuple
 from .util import tiledb_type_from_arrow_type
 
 ROWID = "soma_rowid"
@@ -30,6 +31,7 @@ class SOMADataFrame(TileDBArray):
     # to read from storage, we don't know until we look at the storage.
     _is_indexed: Optional[bool]
     _index_column_names: Optional[List[str]]
+    _shape: Optional[NTuple] = None
 
     # XXX TEMP -- pending discussion on value-filtering with dense arrays
     _is_sparse: Optional[bool]
@@ -219,11 +221,14 @@ class SOMADataFrame(TileDBArray):
         self._is_sparse = sch.sparse
         tiledb.Array.create(self._uri, sch, ctx=self._ctx)
 
-    # TODO
-    #    def get_shape() -> NTuple:
-    #        """
-    #        Return length of each dimension, always a list of length ``ndims``
-    #        """
+    def get_shape(self) -> NTuple:
+        """
+        Return length of each dimension, always a list of length ``ndims``
+        """
+        if self._shape is None:
+            with self._tiledb_open() as A:
+                self._shape = A.shape
+        return self._shape
 
     def get_ndims(self) -> int:
         """
@@ -346,6 +351,8 @@ class SOMADataFrame(TileDBArray):
         If the dataframe is non-indexed, the ``values`` Arrow RecordBatch must contain a ``soma_rowid``
         (uint64) column, indicating which rows are being written.
         """
+        self._shape = None  # cache-invalidate
+
         if self.get_is_indexed():
             dim_cols_list = []
             attr_cols_map = {}
@@ -416,6 +423,22 @@ class SOMADataFrame(TileDBArray):
         """
         return self._tiledb_attr_names()
 
+    def __repr__(self) -> str:
+        """
+        Default display of `SOMADataFrame`.
+        """
+        return "\n".join(self._repr_aux())
+
+    def _repr_aux(self, *, indent: Optional[str] = "") -> List[str]:
+        lines = [
+            self.get_name()
+            + " "
+            + self.__class__.__name__
+            + " "
+            + str(self.get_shape())
+        ]
+        return lines
+
     # TODO: TEMP
     def to_dataframe(self, attrs: Optional[Sequence[str]] = None) -> pd.DataFrame:
         """
@@ -460,6 +483,8 @@ class SOMADataFrame(TileDBArray):
             raise Exception("indexed from_dataframe not implemented yet")
         if index_column_names is not None:
             raise Exception("indexed from_dataframe not implemented yet")
+
+        self._shape = None  # cache-invalidate
 
         offsets_filters = tiledb.FilterList(
             [tiledb.PositiveDeltaFilter(), tiledb.ZstdFilter(level=-1)]

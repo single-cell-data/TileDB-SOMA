@@ -92,6 +92,16 @@ class SOMADenseNdArray(TileDBArray):
 
         self._common_create()  # object-type metadata etc
 
+    def __repr__(self) -> str:
+        """
+        Default display of `SOMADenseNdArray`.
+        """
+        return "\n".join(self._repr_aux())
+
+    def _repr_aux(self, *, indent: Optional[str] = "") -> List[str]:
+        lines = [self.get_name() + " " + self.__class__.__name__]
+        return lines
+
     def get_shape(self) -> NTuple:
         """
         Return length of each dimension, always a list of length ``ndims``

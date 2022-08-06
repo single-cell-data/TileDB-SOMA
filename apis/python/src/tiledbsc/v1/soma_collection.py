@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any, Dict, Iterator, Optional, Sequence
+from typing import Any, Dict, Iterator, List, Optional, Sequence
 
 import tiledb
 
@@ -355,3 +355,21 @@ class SOMACollection(TileDBObject):
                         raise Exception(
                             f"Unexpected object_type found: {object_type} at {obj.uri}"
                         )
+
+    def __repr__(self) -> str:
+        """
+        Default display for `SOMACollection`.
+        """
+        return "\n".join(self._repr_aux())
+
+    def _repr_aux(self, *, indent: Optional[str] = "") -> List[str]:
+        """
+        Internal helper function for `__repr__` which is nesting-aware.
+        """
+        lines = [self.get_name() + " " + self.__class__.__name__]
+        for key in self.keys():
+            # child_lines = self.get(key)._repr_aux(indent=indent + "> ")
+            child_lines = self.get(key)._repr_aux()
+            for line in child_lines:
+                lines.append("  " + line)
+        return lines

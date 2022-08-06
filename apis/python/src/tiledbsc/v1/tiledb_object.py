@@ -67,7 +67,9 @@ class TileDBObject(ABC):
         """
         XXX TEMP
         """
-        return f"name={self._name},uri={self._uri}"
+        # TEMP return f"name={self._name},uri={self._uri}"
+        # return self.get_name()
+        return "B04KB04KB04k"
 
     def get_name(self) -> str:
         return self._name

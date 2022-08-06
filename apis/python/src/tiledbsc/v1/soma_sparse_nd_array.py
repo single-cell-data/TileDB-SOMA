@@ -22,8 +22,7 @@ class SOMASparseNdArray(TileDBArray):
     Represents ``X`` and others.
     """
 
-    # TODO
-    # _shape
+    _shape: Optional[NTuple] = None
 
     def __init__(
         self,
@@ -103,19 +102,36 @@ class SOMASparseNdArray(TileDBArray):
 
         self._common_create()  # object-type metadata etc
 
-    # TODO
-    #    def get_shape(self) -> NTuple:
-    #        """
-    #        Return length of each dimension, always a list of length ``ndims``
-    #        """
-    #        return self._shape
+    def __repr__(self) -> str:
+        """
+        Default display of `SOMASparseNdArray`.
+        """
+        return "\n".join(self._repr_aux())
 
-    # TODO
-    #    def get_ndims(self) -> int:
-    #        """
-    #        Return number of index columns
-    #        """
-    #        return len(self._shape)
+    def _repr_aux(self, *, indent: Optional[str] = "") -> List[str]:
+        lines = [
+            self.get_name()
+            + " "
+            + self.__class__.__name__
+            + " "
+            + str(self.get_shape())
+        ]
+        return lines
+
+    def get_shape(self) -> NTuple:
+        """
+        Return length of each dimension, always a list of length ``ndims``
+        """
+        if self._shape is None:
+            with self._tiledb_open() as A:
+                self._shape = A.shape
+        return self._shape
+
+    def get_ndims(self) -> int:
+        """
+        Return number of index columns
+        """
+        return len(self.get_shape())
 
     # TODO
     #    def get_schema(self) -> Arrow.Schema:

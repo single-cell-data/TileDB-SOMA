@@ -165,43 +165,47 @@ def from_anndata(experiment: SOMAExperiment, anndata: ad.AnnData) -> None:
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     # TODO: port from v0
-    #    experiment.obsm.create_unless_exists()
+    # measurement.obsm.create()
+    #    SOMADenseNdArray
     #    for key in anndata.obsm.keys():
-    #        experiment.obsm.add_matrix_from_matrix_and_dim_values(
+    #        measurement.obsm.add_matrix_from_matrix_and_dim_values(
     #            anndata.obsm[key], anndata.obs_names, key
     #        )
-    #    experiment._add_object(experiment.obsm)
-    #
-    #    experiment.varm.create_unless_exists()
+    # measurement.set(measurement.obsm)
+
+    # measurement.varm.create()
+    #    SOMADenseNdArray
     #    for key in anndata.varm.keys():
-    #        experiment.varm.add_matrix_from_matrix_and_dim_values(
+    #        measurement.varm.add_matrix_from_matrix_and_dim_values(
     #            anndata.varm[key], anndata.var_names, key
     #        )
-    #    experiment._add_object(experiment.varm)
-    #
-    #    experiment.obsp.create_unless_exists()
+    # measurement.set(measurement.varm)
+
+    # measurement.obsp.create()
     #    for key in anndata.obsp.keys():
-    #        experiment.obsp.add_matrix_from_matrix_and_dim_values(
+    #        measurement.obsp.add_matrix_from_matrix_and_dim_values(
     #            anndata.obsp[key], anndata.obs_names, key
     #        )
-    #    experiment._add_object(experiment.obsp)
-    #
-    #    experiment.varp.create_unless_exists()
+    # measurement.set(measurement.obsp)
+
+    # measurement.varp.create()
     #    for key in anndata.varp.keys():
-    #        experiment.varp.add_matrix_from_matrix_and_dim_values(
+    #        measurement.varp.add_matrix_from_matrix_and_dim_values(
     #            anndata.varp[key], anndata.var_names, key
     #        )
-    #    experiment._add_object(experiment.varp)
-    #
+    # measurement.set(measurement.varp)
+
+    # TODO: port raw from v0 to v1 -- separate measurement
     #    # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     #    if anndata.raw is not None:
     #        experiment.raw.from_anndata(anndata)
-    #        experiment._add_object(experiment.raw)
-    #
+    #        experiment.set(experiment.raw)
+
+    # TODO: port uns from v0 to v1
     #    # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     #    if anndata.uns is not None:
     #        experiment.uns.from_anndata_uns(anndata.uns)
-    #        experiment._add_object(experiment.uns)
+    #        experiment.set(experiment.uns)
 
     logging.log_io(
         f"Wrote {experiment._nested_name}",
@@ -241,13 +245,13 @@ def from_anndata(experiment: SOMAExperiment, anndata: ad.AnnData) -> None:
 #    # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 #    experiment._remove_object(experiment.obs)
 #    experiment.obs.from_dataframe(dataframe=anndata.obs, extent=256)
-#    experiment._add_object(experiment.obs)
+#    experiment.set(experiment.obs)
 #    tiledb.consolidate(experiment.obs.get_uri())
 #    tiledb.vacuum(experiment.obs.get_uri())
 #
 #    experiment._remove_object(experiment.var)
 #    experiment.var.from_dataframe(dataframe=anndata.var, extent=2048)
-#    experiment._add_object(experiment.var)
+#    experiment.set(experiment.var)
 #    tiledb.consolidate(experiment.var.get_uri())
 #    tiledb.vacuum(experiment.var.get_uri())
 #
