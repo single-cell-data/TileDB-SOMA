@@ -108,7 +108,7 @@ class SOMASparseNdArray(TileDBArray):
         """
         return "\n".join(self._repr_aux())
 
-    def _repr_aux(self, *, indent: Optional[str] = "") -> List[str]:
+    def _repr_aux(self) -> List[str]:
         lines = [
             self.get_name()
             + " "
@@ -243,7 +243,7 @@ class SOMASparseNdArray(TileDBArray):
     def from_matrix(self, matrix: Matrix) -> None:
         """
         Imports a matrix -- nominally `scipy.sparse.csr_matrix` or `numpy.ndarray` -- into a TileDB
-        array which is used for `X` matrices
+        array which is used for `X`, `obsm`, and `varm` matrices
         """
 
         s = util.get_start_stamp()

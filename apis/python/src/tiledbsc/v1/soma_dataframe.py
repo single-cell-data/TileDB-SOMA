@@ -429,7 +429,7 @@ class SOMADataFrame(TileDBArray):
         """
         return "\n".join(self._repr_aux())
 
-    def _repr_aux(self, *, indent: Optional[str] = "") -> List[str]:
+    def _repr_aux(self) -> List[str]:
         lines = [
             self.get_name()
             + " "
@@ -440,7 +440,13 @@ class SOMADataFrame(TileDBArray):
         return lines
 
     # TODO: TEMP
-    def to_dataframe(self, attrs: Optional[Sequence[str]] = None) -> pd.DataFrame:
+    def to_dataframe(
+        self,
+        attrs: Optional[Sequence[str]] = None,
+        id_column_name: Optional[
+            str
+        ] = None,  # to rename index to 'obs_id' or 'var_id', if desired, for anndata
+    ) -> pd.DataFrame:
         """
         TODO: comment
         """
@@ -448,7 +454,12 @@ class SOMADataFrame(TileDBArray):
             df = A.df[:]
             if attrs is not None:
                 df = df[attrs]
-            return self._ascii_to_unicode_dataframe_readback(df)
+            df = self._ascii_to_unicode_dataframe_readback(df)
+            df.reset_index(inplace=True)
+            if id_column_name is not None:
+                df.set_index(id_column_name, inplace=True)
+
+            return df
 
     def _ascii_to_unicode_dataframe_readback(self, df: pd.DataFrame) -> pd.DataFrame:
         """
@@ -471,7 +482,7 @@ class SOMADataFrame(TileDBArray):
         extent: int = 2048,
         id_column_name: Optional[
             str
-        ] = None,  # to rename index to 'obs_id' or 'var_id', if desired, from anndata
+        ] = None,  # to rename index to 'obs_id' or 'var_id', if desired, for anndata
     ) -> None:
         """
         Populates the `obs` element of a SOMAExperiment object.

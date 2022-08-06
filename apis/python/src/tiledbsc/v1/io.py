@@ -1,9 +1,10 @@
-from typing import Callable
+from typing import Callable, Optional
 
 import anndata as ad
 
 import tiledbsc.v1.util_ann as util_ann
 from tiledbsc.v1 import (
+    SOMADenseNdArray,
     SOMAExperiment,
     SOMAMeasurement,
     SOMASparseNdArray,
@@ -165,41 +166,57 @@ def from_anndata(experiment: SOMAExperiment, anndata: ad.AnnData) -> None:
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     # TODO: port from v0
-    # measurement.obsm.create()
-    #    SOMADenseNdArray
-    #    for key in anndata.obsm.keys():
-    #        measurement.obsm.add_matrix_from_matrix_and_dim_values(
-    #            anndata.obsm[key], anndata.obs_names, key
-    #        )
-    # measurement.set(measurement.obsm)
 
-    # measurement.varm.create()
-    #    SOMADenseNdArray
-    #    for key in anndata.varm.keys():
-    #        measurement.varm.add_matrix_from_matrix_and_dim_values(
-    #            anndata.varm[key], anndata.var_names, key
-    #        )
-    # measurement.set(measurement.varm)
+    if len(anndata.obsm.keys()) > 0:  # do not create an empty collection
+        measurement.obsm.create()
+        for key in anndata.obsm.keys():
+            arr = SOMADenseNdArray(uri=f"{measurement.obsm.get_uri()}/{key}")
+            arr.from_matrix(anndata.obsm[key])
+            measurement.obsm.set(arr)
+        measurement.set(measurement.obsm)
 
-    # measurement.obsp.create()
-    #    for key in anndata.obsp.keys():
-    #        measurement.obsp.add_matrix_from_matrix_and_dim_values(
-    #            anndata.obsp[key], anndata.obs_names, key
-    #        )
-    # measurement.set(measurement.obsp)
+    if len(anndata.varm.keys()) > 0:  # do not create an empty collection
+        measurement.varm.create()
+        for key in anndata.varm.keys():
+            arr = SOMADenseNdArray(uri=f"{measurement.varm.get_uri()}/{key}")
+            arr.from_matrix(anndata.varm[key])
+            measurement.varm.set(arr)
+        measurement.set(measurement.varm)
 
-    # measurement.varp.create()
-    #    for key in anndata.varp.keys():
-    #        measurement.varp.add_matrix_from_matrix_and_dim_values(
-    #            anndata.varp[key], anndata.var_names, key
-    #        )
-    # measurement.set(measurement.varp)
+    if len(anndata.obsp.keys()) > 0:  # do not create an empty collection
+        measurement.obsp.create()
+        for key in anndata.obsp.keys():
+            arr = SOMASparseNdArray(uri=f"{measurement.obsp.get_uri()}/{key}")
+            arr.from_matrix(anndata.obsp[key])
+            measurement.obsp.set(arr)
+        measurement.set(measurement.obsp)
 
-    # TODO: port raw from v0 to v1 -- separate measurement
-    #    # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-    #    if anndata.raw is not None:
-    #        experiment.raw.from_anndata(anndata)
-    #        experiment.set(experiment.raw)
+    if len(anndata.varp.keys()) > 0:  # do not create an empty collection
+        measurement.varp.create()
+        for key in anndata.varp.keys():
+            arr = SOMASparseNdArray(uri=f"{measurement.varp.get_uri()}/{key}")
+            arr.from_matrix(anndata.varp[key])
+            measurement.varp.set(arr)
+        measurement.set(measurement.varp)
+
+    # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    # RAW
+    if anndata.raw is not None:
+        raw_measurement = SOMAMeasurement(uri=f"{experiment.ms.get_uri()}/raw")
+        raw_measurement.create()
+        experiment.ms.set(raw_measurement)
+
+        raw_measurement.var.from_dataframe(
+            dataframe=anndata.raw.var, extent=2048, id_column_name="var_id"
+        )
+        raw_measurement.set(raw_measurement.var)
+
+        raw_measurement.X.create()
+        raw_measurement.set(raw_measurement.X)
+
+        rawXdata = SOMASparseNdArray(uri=f"{raw_measurement.X.get_uri()}/data")
+        rawXdata.from_matrix(anndata.raw.X)
+        raw_measurement.X.set(rawXdata)
 
     # TODO: port uns from v0 to v1
     #    # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -262,93 +279,120 @@ def from_anndata(experiment: SOMAExperiment, anndata: ad.AnnData) -> None:
 
 
 # ----------------------------------------------------------------
-# def to_h5ad(experiment: SOMAExperiment, h5ad_path: Path) -> None:
-#    """
-#    Converts the experiment group to anndata format and writes it to the specified .h5ad file.
-#    As of 2022-05-05 this is an incomplete prototype.
-#    """
-#
+def to_h5ad(experiment: SOMAExperiment, h5ad_path: Path) -> None:
+    """
+    Converts the experiment group to anndata format and writes it to the specified .h5ad file.
+    As of 2022-05-05 this is an incomplete prototype.
+    """
+
+    s = util.get_start_stamp()
+    logging.log_io(
+        None, f"START  v1.SOMAExperiment.to_h5ad {experiment.get_uri()} -> {h5ad_path}"
+    )
+
+    anndata = to_anndata(experiment)
+
+    s2 = util.get_start_stamp()
+    logging.log_io(None, f"{experiment._indent}START  write {h5ad_path}")
+
+    anndata.write_h5ad(h5ad_path)
+
+    logging.log_io(
+        None,
+        util.format_elapsed(s2, f"{experiment._indent}FINISH write {h5ad_path}"),
+    )
+
+    logging.log_io(
+        None,
+        util.format_elapsed(
+            s, f"FINISH v1.SOMAExperiment.to_h5ad {experiment.get_uri()} -> {h5ad_path}"
+        ),
+    )
+
+
+# ----------------------------------------------------------------
+def to_anndata(
+    experiment: SOMAExperiment,
+    *,
+    # TODO: set a better name as capitalized-const
+    # TODO: maybe if there are multiple measurements, default to the first one not named 'raw'
+    measurement_name: Optional[str] = "meas1",
+) -> ad.AnnData:
+    """
+    Converts the experiment group to anndata. Choice of matrix formats is following
+    what we often see in input .h5ad files:
+    * X as scipy.sparse.csr_matrix
+    * obs,var as pandas.dataframe
+    * obsm,varm arrays as numpy.ndarray
+    * obsp,varp arrays as scipy.sparse.csr_matrix
+    """
+
+    raise Exception("to_anndata not implemented yet")
+
+
 #    s = util.get_start_stamp()
-#    logging.log_io(None, f"START  v1.SOMAExperiment.to_h5ad {experiment.get_uri()} -> {h5ad_path}")
+#    logging.log_io(None, f"START  v1.SOMAExperiment.to_anndata {experiment.get_uri()}")
 #
-#    anndata = to_anndata(experiment)
+#    # TODO: FINISH PORTING
 #
-#    s2 = util.get_start_stamp()
-#    logging.log_io(None, f"{experiment._indent}START  write {h5ad_path}")
+#    # TODO: need an index-converter ... inside the class maybe?
+#    # sdf.from_dataframe takes an optional id_column_name; so should sdf.to_dataframe
 #
-#    anndata.write_h5ad(h5ad_path)
+#    obs_df = experiment.obs.to_dataframe("obs_id")
+#    var_df = experiment.ms["meas1"].var.to_dataframe("var_id")
 #
-#    logging.log_io(
-#        None,
-#        util.format_elapsed(s2, f"{experiment._indent}FINISH write {h5ad_path}"),
+#    #   data = experiment.ms["meas1"].X["data"]
+#    #   assert data is not None
+#    #   X_mat = data.to_csr_matrix(obs_df.index, var_df.index)
+#
+#    #   obsm = experiment.ms['meas1'].obsm.to_dict_of_npnda()
+#    #   varm = experiment.ms['meas1'].varm.to_dict_of_npndacsr()
+#
+#    #   obsp = experiment.ms['meas1'].obsp.to_dict_of_csr(obs_df.index, obs_df.index)
+#    #   varp = experiment.ms['meas1'].varp.to_dict_of_csr(var_df.index, var_df.index)
+#
+#    anndata = ad.AnnData(
+#        # X=X_mat,
+#        obs=obs_df,
+#        var=var_df,
+#        # obsm=obsm,
+#        # varm=varm,
+#        # obsp=obsp,
+#        # varp=varp
+#    )
+#
+#    #   raw = None
+#    #   if experiment.raw.exists():
+#    #       (raw_X, raw_var_df, raw_varm) = experiment.ms['raw'].to_anndata_raw(obs_df.index)
+#    #       raw = ad.Raw(
+#    #           anndata,
+#    #           X=raw_X,
+#    #           var=raw_var_df,
+#    #           varm=raw_varm,
+#    #       )
+#
+#    # TODO: PORT FROM V0 TO V1
+#    # uns = experiment.uns.to_dict_of_matrices()
+#
+#    anndata = ad.AnnData(
+#        #       X=anndata.X,
+#        #       dtype=None if anndata.X is None else anndata.X.dtype,  # some datasets have no X
+#        #       obs=anndata.obs,
+#        #       var=anndata.var,
+#        #       obsm=anndata.obsm,
+#        #       obsp=anndata.obsp,
+#        #       varm=anndata.varm,
+#        #       varp=anndata.varp,
+#        #       raw=raw,
+#        #       uns=uns,
 #    )
 #
 #    logging.log_io(
 #        None,
 #        util.format_elapsed(
-#            s, f"FINISH v1.SOMAExperiment.to_h5ad {experiment.get_uri()} -> {h5ad_path}"
+#            s, f"FINISH v1.SOMAExperiment.to_anndata {experiment.get_uri()}"
 #        ),
 #    )
-
-
-# ----------------------------------------------------------------
-# def to_anndata(experiment: SOMAExperiment) -> ad.AnnData:
-#    """
-#    Converts the experiment group to anndata. Choice of matrix formats is following
-#    what we often see in input .h5ad files:
-#    * X as scipy.sparse.csr_matrix
-#    * obs,var as pandas.dataframe
-#    * obsm,varm arrays as numpy.ndarray
-#    * obsp,varp arrays as scipy.sparse.csr_matrix
-#    As of 2022-05-05 this is an incomplete prototype.
-#    """
-#
-#    s = util.get_start_stamp()
-#    logging.log_io(None, f"START  v1.SOMAExperiment.to_anndata {experiment.get_uri()}")
-#
-#    obs_df = experiment.obs.df()
-#    var_df = experiment.var.df()
-#
-#    data = experiment.X["data"]
-#    assert data is not None
-#    X_mat = data.to_csr_matrix(obs_df.index, var_df.index)
-#
-#    obsm = experiment.obsm.to_dict_of_csr()
-#    varm = experiment.varm.to_dict_of_csr()
-#
-#    obsp = experiment.obsp.to_dict_of_csr(obs_df.index, obs_df.index)
-#    varp = experiment.varp.to_dict_of_csr(var_df.index, var_df.index)
-#
-#    anndata = ad.AnnData(
-#        X=X_mat, obs=obs_df, var=var_df, obsm=obsm, varm=varm, obsp=obsp, varp=varp
-#    )
-#
-#    raw = None
-#    if experiment.raw.exists():
-#        (raw_X, raw_var_df, raw_varm) = experiment.raw.to_anndata_raw(obs_df.index)
-#        raw = ad.Raw(
-#            anndata,
-#            X=raw_X,
-#            var=raw_var_df,
-#            varm=raw_varm,
-#        )
-#
-#    uns = experiment.uns.to_dict_of_matrices()
-#
-#    anndata = ad.AnnData(
-#        X=anndata.X,
-#        dtype=None if anndata.X is None else anndata.X.dtype,  # some datasets have no X
-#        obs=anndata.obs,
-#        var=anndata.var,
-#        obsm=anndata.obsm,
-#        obsp=anndata.obsp,
-#        varm=anndata.varm,
-#        varp=anndata.varp,
-#        raw=raw,
-#        uns=uns,
-#    )
-#
-#    logging.log_io(None, util.format_elapsed(s, f"FINISH v1.SOMAExperiment.to_anndata {experiment.get_uri()}"))
 #
 #    return anndata
 
