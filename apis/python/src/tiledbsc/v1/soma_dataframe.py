@@ -136,6 +136,12 @@ class SOMADataFrame(TileDBArray):
     #        Return data schema, in the form of an Arrow Schema
     #        """
 
+    def get_indexed(self) -> bool:
+        return False
+
+    def get_index_column_names(self) -> List[str]:
+        return []
+
     def read(
         self,
         *,

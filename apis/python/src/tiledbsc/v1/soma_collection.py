@@ -81,7 +81,7 @@ class SOMACollection(TileDBObject):
             from .factory import _construct_member
 
             member_uri = self._get_child_uri(member_name)
-            self._cached_members[member_name] = _construct_member(member_uri, self)
+            self._cached_members[member_name] = _construct_member(member_name, member_uri, self)
 
         return self._cached_members[member_name]
 
@@ -137,7 +137,7 @@ class SOMACollection(TileDBObject):
                 # Do this here to avoid a cyclic module dependency:
                 from .factory import _construct_member
 
-                self._cached_members[member_name] = _construct_member(member_uri, self)
+                self._cached_members[member_name] = _construct_member(member_name, member_uri, self)
             yield self._cached_members[member_name]
 
     # ================================================================

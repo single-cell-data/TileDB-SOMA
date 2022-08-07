@@ -25,7 +25,7 @@ MemberType = Union[
 ]
 
 
-def _construct_member(member_uri: str, parent: SOMACollection) -> MemberType:
+def _construct_member(member_name: str, member_uri: str, parent: SOMACollection) -> MemberType:
     """
     Solely for the use of `SOMACollection`. In fact this would/should be a method of the
     `SOMACollection` class, but there are cyclic-module-import issues.  This allows us to examine
@@ -52,16 +52,16 @@ def _construct_member(member_uri: str, parent: SOMACollection) -> MemberType:
 
     # Now invoke the appropriate per-class constructor.
     if class_name == "SOMAExperiment":
-        return SOMAExperiment(uri=member_uri, parent=parent)
+        return SOMAExperiment(uri=member_uri, name=member_name, parent=parent)
     elif class_name == "SOMAMeasurement":
-        return SOMAMeasurement(uri=member_uri, parent=parent)
+        return SOMAMeasurement(uri=member_uri, name=member_name, parent=parent)
     elif class_name == "SOMACollection":
-        return SOMACollection(uri=member_uri, parent=parent)
+        return SOMACollection(uri=member_uri, name=member_name, parent=parent)
     elif class_name == "SOMADataFrame":
-        return SOMADataFrame(uri=member_uri, parent=parent)
+        return SOMADataFrame(uri=member_uri, name=member_name, parent=parent)
     elif class_name == "SOMADenseNdArray":
-        return SOMADenseNdArray(uri=member_uri, parent=parent)
+        return SOMADenseNdArray(uri=member_uri, name=member_name, parent=parent)
     elif class_name == "SOMASparseNdArray":
-        return SOMASparseNdArray(uri=member_uri, parent=parent)
+        return SOMASparseNdArray(uri=member_uri, name=member_name, parent=parent)
     else:
         raise Exception(f'class name "{class_name}" unrecognized')
