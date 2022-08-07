@@ -7,7 +7,7 @@ import scipy.sparse as sp
 
 Path = Union[str, pathlib.Path]
 
-Ids = Union[List[str], List[bytes]]
+Ids = Union[List[str], List[bytes], List[int]]
 
 Labels = Union[Sequence[str], pd.Index]
 

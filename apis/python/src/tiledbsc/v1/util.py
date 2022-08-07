@@ -135,6 +135,18 @@ def _to_tiledb_supported_array_type(x: T) -> T:
 # ================================================================
 # ================================================================
 
+
+def _ascii_to_unicode_dataframe_readback(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Implements the 'decode on read' part of our ASCII/Unicode logic
+    """
+    for k in df:
+        dfk = df[k]
+        if len(dfk) > 0 and type(dfk.iat[0]) == bytes:
+            df[k] = dfk.map(lambda e: e.decode())
+    return df
+
+
 # ----------------------------------------------------------------
 def _find_csr_chunk_size(
     mat: sp.csr_matrix,

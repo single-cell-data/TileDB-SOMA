@@ -338,8 +338,8 @@ def to_anndata(
 #    # TODO: need an index-converter ... inside the class maybe?
 #    # sdf.from_dataframe takes an optional id_column_name; so should sdf.to_dataframe
 #
-#    obs_df = experiment.obs.to_dataframe("obs_id")
-#    var_df = experiment.ms["mRNA"].var.to_dataframe("var_id")
+#    obs_df = experiment.obs.to_dataframe(id_column_name="obs_id")
+#    var_df = experiment.ms["mRNA"].var.to_dataframe(id_column_name="var_id")
 #
 #    #   data = experiment.ms["mRNA"].X["data"]
 #    #   assert data is not None

@@ -25,7 +25,9 @@ MemberType = Union[
 ]
 
 
-def _construct_member(member_name: str, member_uri: str, parent: SOMACollection) -> MemberType:
+def _construct_member(
+    member_name: str, member_uri: str, parent: SOMACollection
+) -> MemberType:
     """
     Solely for the use of `SOMACollection`. In fact this would/should be a method of the
     `SOMACollection` class, but there are cyclic-module-import issues.  This allows us to examine

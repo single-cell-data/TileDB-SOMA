@@ -1,6 +1,6 @@
 import math
 import time
-from typing import List, Optional, Union
+from typing import List, Optional, Sequence, Union
 
 import numpy as np
 import pandas as pd
@@ -231,13 +231,33 @@ class SOMASparseNdArray(TileDBArray):
     # ================================================================
     # ================================================================
     # ================================================================
-
-    def to_dataframe(self) -> pd.DataFrame:
+    def to_dataframe(
+        self,
+        *,
+        row_ids: Optional[Sequence[int]] = None,
+        col_ids: Optional[Sequence[int]] = None,
+        set_index: Optional[bool] = False,
+    ) -> pd.DataFrame:
         """
         TODO: comment
         """
         with self._tiledb_open() as A:
-            return A.df[:]
+            if row_ids is None:
+                if col_ids is None:
+                    df = A.df[:, :]
+                else:
+                    df = A.df[:, col_ids]
+            else:
+                if col_ids is None:
+                    df = A.df[row_ids, :]
+                else:
+                    df = A.df[row_ids, col_ids]
+        # Make this opt-in only.  For large arrays, this df.set_index is time-consuming
+        # so we should not do it without direction.
+        if set_index:
+            # TODO: get these from the schema while self._tiledb_open.
+            df.set_index(['__dim_0', '__dim_1'], inplace=True)
+        return df
 
     # ----------------------------------------------------------------
     def from_matrix(self, matrix: Matrix) -> None:

@@ -81,7 +81,9 @@ class SOMACollection(TileDBObject):
             from .factory import _construct_member
 
             member_uri = self._get_child_uri(member_name)
-            self._cached_members[member_name] = _construct_member(member_name, member_uri, self)
+            self._cached_members[member_name] = _construct_member(
+                member_name, member_uri, self
+            )
 
         return self._cached_members[member_name]
 
@@ -137,8 +139,27 @@ class SOMACollection(TileDBObject):
                 # Do this here to avoid a cyclic module dependency:
                 from .factory import _construct_member
 
-                self._cached_members[member_name] = _construct_member(member_name, member_uri, self)
+                self._cached_members[member_name] = _construct_member(
+                    member_name, member_uri, self
+                )
             yield self._cached_members[member_name]
+
+    def __repr__(self) -> str:
+        """
+        Default display for `SOMACollection`.
+        """
+        return "\n".join(self._repr_aux())
+
+    def _repr_aux(self) -> List[str]:
+        """
+        Internal helper function for `__repr__` which is nesting-aware.
+        """
+        lines = [f"{self.get_name()} {self.__class__.__name__}:"]
+        for key in self.keys():
+            child_lines = self.get(key)._repr_aux()
+            for line in child_lines:
+                lines.append("  " + line)
+        return lines
 
     # ================================================================
     # PRIVATE METHODS FROM HERE ON DOWN
@@ -355,20 +376,3 @@ class SOMACollection(TileDBObject):
                         raise Exception(
                             f"Unexpected object_type found: {object_type} at {obj.uri}"
                         )
-
-    def __repr__(self) -> str:
-        """
-        Default display for `SOMACollection`.
-        """
-        return "\n".join(self._repr_aux())
-
-    def _repr_aux(self) -> List[str]:
-        """
-        Internal helper function for `__repr__` which is nesting-aware.
-        """
-        lines = [f"{self.get_name()} {self.__class__.__name__}:"]
-        for key in self.keys():
-            child_lines = self.get(key)._repr_aux()
-            for line in child_lines:
-                lines.append("  " + line)
-        return lines

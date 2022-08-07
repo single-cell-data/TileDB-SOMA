@@ -64,17 +64,13 @@ def test_import_anndata(adata):
 
     # Check obs
     df = exp.obs.to_dataframe()
-    # TODO: have stripped out soma_rowid within to_dataframe?
-    assert sorted(df.columns.to_list()) == sorted(
-        orig.obs_keys() + ["obs_id", "soma_rowid"]
-    )
+    assert sorted(df.columns.to_list()) == sorted(orig.obs_keys() + ["obs_id"])
     assert (
         exp.obs.metadata.get(tiledbsc.v1.util.SOMA_OBJECT_TYPE_METADATA_KEY)
         == "SOMADataFrame"
     )
     assert sorted(df["obs_id"]) == sorted(list(orig.obs_names))
     # Convenience accessor
-    # TODO: rid of obs_id on the left?
     assert sorted(exp.obs.keys()) == sorted(list(orig.obs.keys()) + ["obs_id"])
 
     # Check X/data (dense)

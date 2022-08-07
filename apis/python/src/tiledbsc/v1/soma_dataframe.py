@@ -10,7 +10,7 @@ import tiledbsc.v1.util as util
 from .logging import log_io
 from .soma_collection import SOMACollection
 from .tiledb_array import TileDBArray
-from .types import NTuple
+from .types import Ids, NTuple
 from .util import tiledb_type_from_arrow_type
 
 ROWID = "soma_rowid"
@@ -145,13 +145,16 @@ class SOMADataFrame(TileDBArray):
     def read(
         self,
         *,
+        # TODO: call this 'slices'
         # TODO: find out how to spell this in a way the type-checker will accept :(
         # ids: Optional[Union[Sequence[int], str, Slice]] = "all",
         ids: Optional[Any] = "all",
         column_names: Optional[Union[Sequence[str], str]] = "all",
-        # TODO: partitions,
+        # TODO: batch_size
+        # TODO: partition,
         # TODO: result_order,
-        # TODO: value_filter
+        # TODO: value_filter, <--------
+        # TODO: platform_config,
         _return_incomplete: Optional[bool] = True,  # XXX TEMP
     ) -> Iterator[pa.RecordBatch]:
         """
@@ -248,15 +251,6 @@ class SOMADataFrame(TileDBArray):
             with self._tiledb_open("w") as A:
                 A[lo : (hi + 1)] = attr_cols_map
 
-    # ================================================================
-    # ================================================================
-    # ================================================================
-    def keys(self) -> List[str]:
-        """
-        TODO
-        """
-        return self._tiledb_attr_names()
-
     def __repr__(self) -> str:
         """
         Default display of `SOMADataFrame`.
@@ -273,37 +267,14 @@ class SOMADataFrame(TileDBArray):
         ]
         return lines
 
-    # TODO: TEMP
-    def to_dataframe(
-        self,
-        attrs: Optional[Sequence[str]] = None,
-        id_column_name: Optional[
-            str
-        ] = None,  # to rename index to 'obs_id' or 'var_id', if desired, for anndata
-    ) -> pd.DataFrame:
+    # ================================================================
+    # ================================================================
+    # ================================================================
+    def keys(self) -> List[str]:
         """
-        TODO: comment
+        TODO
         """
-        with self._tiledb_open() as A:
-            df = A.df[:]
-            if attrs is not None:
-                df = df[attrs]
-            df = self._ascii_to_unicode_dataframe_readback(df)
-            df.reset_index(inplace=True)
-            if id_column_name is not None:
-                df.set_index(id_column_name, inplace=True)
-
-            return df
-
-    def _ascii_to_unicode_dataframe_readback(self, df: pd.DataFrame) -> pd.DataFrame:
-        """
-        Implements the 'decode on read' partof our logic
-        """
-        for k in df:
-            dfk = df[k]
-            if len(dfk) > 0 and type(dfk[0]) == bytes:
-                df[k] = dfk.map(lambda e: e.decode())
-        return df
+        return self._tiledb_attr_names()
 
     # TODO: TEMP
     def from_dataframe(
@@ -408,3 +379,83 @@ class SOMADataFrame(TileDBArray):
             f"Wrote {self._nested_name}",
             util.format_elapsed(s, f"{self._indent}FINISH WRITING {self.get_uri()}"),
         )
+
+    # TODO: TEMP
+    def to_dataframe(
+        self,
+        *,
+        ids: Optional[Ids] = None,
+        value_filter: Optional[str] = None,
+        column_names: Optional[Sequence[str]] = None,
+        # to rename index to 'obs_id' or 'var_id', if desired, for anndata
+        id_column_name: Optional[str] = None,
+    ) -> pd.DataFrame:
+        """
+        TODO: comment
+        """
+        if value_filter is None:
+            return self._to_dataframe_no_value_filter(
+                ids=ids,
+                column_names=column_names,
+                id_column_name=id_column_name,
+            )
+        else:
+            return self._to_dataframe_by_value_filter(
+                value_filter=value_filter,
+                ids=ids,
+                column_names=column_names,
+                id_column_name=id_column_name,
+            )
+
+    def _to_dataframe_no_value_filter(
+        self,
+        *,
+        ids: Optional[Ids] = None,
+        column_names: Optional[Sequence[str]] = None,
+        id_column_name: Optional[str] = None,  # for to_anndata
+    ) -> pd.DataFrame:
+        """
+        TODO: comment
+        """
+        with self._tiledb_open() as A:
+            if ids is None:
+                df = A.df[:]
+            else:
+                df = A.df[ids]
+            if column_names is not None:
+                df = df[column_names]
+            # This is the 'decode on read' part of our logic; in dim_select we have the 'encode on
+            # write' part.
+            # Context: # https://github.com/single-cell-data/TileDB-SingleCell/issues/99.
+            df = util._ascii_to_unicode_dataframe_readback(df)
+            if id_column_name is not None:
+                df.reset_index(inplace=True)
+                df.set_index(id_column_name, inplace=True)
+            return df
+
+    def _to_dataframe_by_value_filter(
+        self,
+        *,
+        value_filter: str,
+        ids: Optional[Ids] = None,
+        column_names: Optional[Sequence[str]] = None,
+        id_column_name: Optional[str] = None,  # for to_anndata
+    ) -> pd.DataFrame:
+        """
+        TODO: comment
+        """
+        with self._tiledb_open() as A:
+            qc = tiledb.QueryCondition(value_filter)
+            query = A.query(attr_cond=qc)
+            if ids is None:
+                slice_df = query.df[:]
+            else:
+                slice_df = query.df[ids]
+            if column_names is None:
+                slice_df = slice_df[:]
+            else:
+                slice_df = slice_df[column_names]
+            # This is the 'decode on read' part of our logic; in dim_select we have the 'encode on
+            # write' part.
+            # Context: # https://github.com/single-cell-data/TileDB-SingleCell/issues/99.
+            return util._ascii_to_unicode_dataframe_readback(slice_df)

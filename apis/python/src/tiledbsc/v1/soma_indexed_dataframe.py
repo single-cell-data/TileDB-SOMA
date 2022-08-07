@@ -201,9 +201,7 @@ class SOMAIndexedDataFrame(TileDBArray):
         # ids: Optional[Union[Sequence[int], str, Slice]] = "all",
         ids: Optional[Any] = "all",
         column_names: Optional[Union[Sequence[str], str]] = "all",
-        # TODO: partitions,
-        # TODO: result_order,
-        # TODO: value_filter
+        # TODO: more arguments
         _return_incomplete: Optional[bool] = True,  # XXX TEMP
     ) -> Iterator[pa.RecordBatch]:
         """
@@ -295,15 +293,6 @@ class SOMAIndexedDataFrame(TileDBArray):
             else:
                 raise Exception("ndims >= 2 not currently supported")
 
-    # ================================================================
-    # ================================================================
-    # ================================================================
-    def keys(self) -> List[str]:
-        """
-        TODO
-        """
-        return self._tiledb_attr_names()
-
     def __repr__(self) -> str:
         """
         Default display of `SOMAIndexedDataFrame`.
@@ -320,37 +309,14 @@ class SOMAIndexedDataFrame(TileDBArray):
         ]
         return lines
 
-    # TODO: TEMP
-    def to_dataframe(
-        self,
-        attrs: Optional[Sequence[str]] = None,
-        id_column_name: Optional[
-            str
-        ] = None,  # to rename index to 'obs_id' or 'var_id', if desired, for anndata
-    ) -> pd.DataFrame:
+    # ================================================================
+    # ================================================================
+    # ================================================================
+    def keys(self) -> List[str]:
         """
-        TODO: comment
+        TODO
         """
-        with self._tiledb_open() as A:
-            df = A.df[:]
-            if attrs is not None:
-                df = df[attrs]
-            df = self._ascii_to_unicode_dataframe_readback(df)
-            df.reset_index(inplace=True)
-            if id_column_name is not None:
-                df.set_index(id_column_name, inplace=True)
-
-            return df
-
-    def _ascii_to_unicode_dataframe_readback(self, df: pd.DataFrame) -> pd.DataFrame:
-        """
-        Implements the 'decode on read' partof our logic
-        """
-        for k in df:
-            dfk = df[k]
-            if len(dfk) > 0 and type(dfk[0]) == bytes:
-                df[k] = dfk.map(lambda e: e.decode())
-        return df
+        return self._tiledb_attr_names()
 
     # TODO: TEMP
     def from_dataframe(
@@ -458,3 +424,25 @@ class SOMAIndexedDataFrame(TileDBArray):
             f"Wrote {self._nested_name}",
             util.format_elapsed(s, f"{self._indent}FINISH WRITING {self.get_uri()}"),
         )
+
+    # TODO: TEMP
+    def to_dataframe(
+        self,
+        attrs: Optional[Sequence[str]] = None,
+        id_column_name: Optional[
+            str
+        ] = None,  # to rename index to 'obs_id' or 'var_id', if desired, for anndata
+    ) -> pd.DataFrame:
+        """
+        TODO: comment
+        """
+        with self._tiledb_open() as A:
+            df = A.df[:]
+            if attrs is not None:
+                df = df[attrs]
+            df = util._ascii_to_unicode_dataframe_readback(df)
+            df.reset_index(inplace=True)
+            if id_column_name is not None:
+                df.set_index(id_column_name, inplace=True)
+
+            return df
