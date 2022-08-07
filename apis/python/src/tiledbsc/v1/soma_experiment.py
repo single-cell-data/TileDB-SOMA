@@ -43,6 +43,7 @@ class SOMAExperiment(SOMACollection):
             ctx=ctx,
         )
         self._constructors = {
+            # TODO: union-type of SOMADataFrame and SOMAIndexedDataFrame
             "obs": SOMADataFrame,
             "ms": SOMACollection,
         }

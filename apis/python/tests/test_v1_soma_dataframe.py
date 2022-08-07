@@ -2,7 +2,7 @@ import pyarrow as pa
 
 import tiledbsc.v1 as t
 
-
+# TODO: set SOMAIndexedDataFrame as well
 def test_soma_dataframe_non_indexed(tmp_path):
     sdf = t.SOMADataFrame(uri=tmp_path.as_posix())
 
@@ -15,7 +15,7 @@ def test_soma_dataframe_non_indexed(tmp_path):
     )
 
     # Create
-    sdf.create(schema=asch, indexed=False)
+    sdf.create(schema=asch)
 
     # Write
     for _i in range(3):
@@ -101,7 +101,7 @@ def test_soma_dataframe_non_indexed(tmp_path):
 
 
 def test_soma_dataframe_indexed(tmp_path):
-    sdf = t.SOMADataFrame(uri=tmp_path.as_posix())
+    sdf = t.SOMAIndexedDataFrame(uri=tmp_path.as_posix())
 
     asch = pa.schema(
         [
@@ -112,7 +112,7 @@ def test_soma_dataframe_indexed(tmp_path):
     )
 
     # Create
-    sdf.create(schema=asch, indexed=True, index_column_names=["foo"])
+    sdf.create(schema=asch, index_column_names=["foo"])
 
     # Write
     for _ in range(3):

@@ -3,6 +3,7 @@ from .soma_collection import SOMACollection
 from .soma_dataframe import SOMADataFrame
 from .soma_dense_nd_array import SOMADenseNdArray
 from .soma_experiment import SOMAExperiment
+from .soma_indexed_dataframe import SOMAIndexedDataFrame
 from .soma_measurement import SOMAMeasurement
 from .soma_sparse_nd_array import SOMASparseNdArray
 from .tiledb_array import TileDBArray
@@ -19,6 +20,7 @@ __all__ = [
     "TileDBObject",
     "TileDBArray",
     "SOMADataFrame",
+    "SOMAIndexedDataFrame",
     "SOMASparseNdArray",
     "SOMADenseNdArray",
     "SOMACollection",

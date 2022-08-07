@@ -15,11 +15,11 @@ def create_and_populate_obs(obs: t.SOMADataFrame) -> None:
         ]
     )
 
-    obs.create(schema=obs_arrow_schema, indexed=False)
+    # TODO: indexing option ...
+    obs.create(schema=obs_arrow_schema)
 
     pydict = {}
-    if not obs.get_is_indexed():
-        pydict["soma_rowid"] = [0, 1, 2, 3, 4]
+    pydict["soma_rowid"] = [0, 1, 2, 3, 4]
     pydict["foo"] = [10, 20, 30, 40, 50]
     pydict["bar"] = [4.1, 5.2, 6.3, 7.4, 8.5]
     pydict["baz"] = ["apple", "ball", "cat", "dog", "egg"]
@@ -37,11 +37,10 @@ def create_and_populate_var(var: t.SOMADataFrame) -> None:
         ]
     )
 
-    var.create(schema=var_arrow_schema, indexed=False)
+    var.create(schema=var_arrow_schema)
 
     pydict = {}
-    if not var.get_is_indexed():
-        pydict["soma_rowid"] = [0, 1, 2, 3]
+    pydict["soma_rowid"] = [0, 1, 2, 3]
     pydict["quux"] = ["zebra", "yak", "xylophone", "wapiti"]
     pydict["xyzzy"] = [12.3, 23.4, 34.5, 45.6]
     rb = pa.RecordBatch.from_pydict(pydict)

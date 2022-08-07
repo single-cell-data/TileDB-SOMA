@@ -6,6 +6,8 @@ import pyarrow as pa
 import tiledbsc.v1 as t
 
 
+# TODO: test SOMAIndexedDataFrame as well
+
 # ----------------------------------------------------------------
 def create_and_populate_dataframe(dataframe: t.SOMADataFrame) -> None:
 
@@ -17,11 +19,10 @@ def create_and_populate_dataframe(dataframe: t.SOMADataFrame) -> None:
         ]
     )
 
-    dataframe.create(schema=arrow_schema, indexed=False)
+    dataframe.create(schema=arrow_schema)
 
     pydict = {}
-    if not dataframe.get_is_indexed():
-        pydict["soma_rowid"] = [0, 1, 2, 3, 4]
+    pydict["soma_rowid"] = [0, 1, 2, 3, 4]
     pydict["foo"] = [10, 20, 30, 40, 50]
     pydict["bar"] = [4.1, 5.2, 6.3, 7.4, 8.5]
     pydict["baz"] = ["apple", "ball", "cat", "dog", "egg"]

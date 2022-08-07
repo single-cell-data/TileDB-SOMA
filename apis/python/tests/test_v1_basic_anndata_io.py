@@ -72,7 +72,6 @@ def test_import_anndata(adata):
         exp.obs.metadata.get(tiledbsc.v1.util.SOMA_OBJECT_TYPE_METADATA_KEY)
         == "SOMADataFrame"
     )
-    # TODO: ascii/unicode here:
     assert sorted(df["obs_id"]) == sorted(list(orig.obs_names))
     # Convenience accessor
     # TODO: rid of obs_id on the left?
