@@ -84,7 +84,7 @@ def test_soma_experiment_basic(tmp_path):
     experiment.ms.create()
     experiment.set(experiment.ms)
 
-    measurement = t.SOMAMeasurement(uri=f"{experiment.ms.get_uri()}/meas1")
+    measurement = t.SOMAMeasurement(uri=f"{experiment.ms.get_uri()}/mRNA")
     measurement.create()
     experiment.ms.set(measurement)
 
@@ -107,20 +107,20 @@ def test_soma_experiment_basic(tmp_path):
     assert "nonesuch" not in experiment
 
     assert len(experiment.ms) == 1
-    assert isinstance(experiment.ms["meas1"], t.SOMAMeasurement)
+    assert isinstance(experiment.ms["mRNA"], t.SOMAMeasurement)
 
-    assert len(experiment.ms["meas1"]) == 2
-    assert "meas1" in experiment.ms
+    assert len(experiment.ms["mRNA"]) == 2
+    assert "mRNA" in experiment.ms
     assert "meas2" not in experiment.ms
-    assert isinstance(experiment.ms["meas1"].var, t.SOMADataFrame)
-    assert isinstance(experiment.ms["meas1"].X, t.SOMACollection)
+    assert isinstance(experiment.ms["mRNA"].var, t.SOMADataFrame)
+    assert isinstance(experiment.ms["mRNA"].X, t.SOMACollection)
 
-    assert len(experiment.ms["meas1"].X) == 1
-    assert "data" in experiment.ms["meas1"].X
-    assert "nonesuch" not in experiment.ms["meas1"].X
-    assert isinstance(experiment.ms["meas1"].X["data"], t.SOMASparseNdArray)
+    assert len(experiment.ms["mRNA"].X) == 1
+    assert "data" in experiment.ms["mRNA"].X
+    assert "nonesuch" not in experiment.ms["mRNA"].X
+    assert isinstance(experiment.ms["mRNA"].X["data"], t.SOMASparseNdArray)
 
-    # >>> experiment.ms.meas1.X.data._tiledb_open().df[:]
+    # >>> experiment.ms.mRNA.X.data._tiledb_open().df[:]
     #    __dim_0  __dim_1  data
     # 0        0        2     7
     # 1        3        1     8
@@ -131,9 +131,9 @@ def test_soma_experiment_basic(tmp_path):
     assert experiment.exists()
     assert experiment.obs.exists()
     assert experiment.ms.exists()
-    assert experiment.ms["meas1"].exists()
-    assert experiment.ms["meas1"].X.exists()
-    assert experiment.ms["meas1"].X["data"].exists()
+    assert experiment.ms["mRNA"].exists()
+    assert experiment.ms["mRNA"].X.exists()
+    assert experiment.ms["mRNA"].X["data"].exists()
 
     # Paths exist but are not of the right type
     assert not t.SOMADataFrame(experiment.get_uri()).exists()

@@ -144,7 +144,7 @@ def from_anndata(experiment: SOMAExperiment, anndata: ad.AnnData) -> None:
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     # MS
-    measurement = SOMAMeasurement(uri=f"{experiment.ms.get_uri()}/meas1")
+    measurement = SOMAMeasurement(uri=f"{experiment.ms.get_uri()}/mRNA")
     measurement.create()
     experiment.ms.set(measurement)
 
@@ -316,7 +316,7 @@ def to_anndata(
     *,
     # TODO: set a better name as capitalized-const
     # TODO: maybe if there are multiple measurements, default to the first one not named 'raw'
-    measurement_name: Optional[str] = "meas1",
+    measurement_name: Optional[str] = "mRNA",
 ) -> ad.AnnData:
     """
     Converts the experiment group to anndata. Choice of matrix formats is following
@@ -339,17 +339,17 @@ def to_anndata(
 #    # sdf.from_dataframe takes an optional id_column_name; so should sdf.to_dataframe
 #
 #    obs_df = experiment.obs.to_dataframe("obs_id")
-#    var_df = experiment.ms["meas1"].var.to_dataframe("var_id")
+#    var_df = experiment.ms["mRNA"].var.to_dataframe("var_id")
 #
-#    #   data = experiment.ms["meas1"].X["data"]
+#    #   data = experiment.ms["mRNA"].X["data"]
 #    #   assert data is not None
 #    #   X_mat = data.to_csr_matrix(obs_df.index, var_df.index)
 #
-#    #   obsm = experiment.ms['meas1'].obsm.to_dict_of_npnda()
-#    #   varm = experiment.ms['meas1'].varm.to_dict_of_npndacsr()
+#    #   obsm = experiment.ms['mRNA'].obsm.to_dict_of_npnda()
+#    #   varm = experiment.ms['mRNA'].varm.to_dict_of_npndacsr()
 #
-#    #   obsp = experiment.ms['meas1'].obsp.to_dict_of_csr(obs_df.index, obs_df.index)
-#    #   varp = experiment.ms['meas1'].varp.to_dict_of_csr(var_df.index, var_df.index)
+#    #   obsp = experiment.ms['mRNA'].obsp.to_dict_of_csr(obs_df.index, obs_df.index)
+#    #   varp = experiment.ms['mRNA'].varp.to_dict_of_csr(var_df.index, var_df.index)
 #
 #    anndata = ad.AnnData(
 #        # X=X_mat,

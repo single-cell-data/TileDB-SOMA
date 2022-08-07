@@ -553,7 +553,6 @@ class SOMADataFrame(TileDBArray):
         # is going to be doing anyway, namely, type-inferring to see what is going to be a string.
         #
         # TODO: when UTF-8 attributes are queryable using TileDB-Py's QueryCondition API we can remove this.
-
         column_types = {}
         for column_name in dataframe.keys():
             dfc = dataframe[column_name]
