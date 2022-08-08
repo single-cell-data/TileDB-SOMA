@@ -193,7 +193,7 @@ class SOMADenseNdArray(TileDBArray):
         with self._tiledb_open("w") as A:
             A[coords] = values.to_numpy()
 
-    def to_dataframe(self) -> pd.DataFrame:
+    def to_pandas(self) -> pd.DataFrame:
         """
         TODO: comment
         """

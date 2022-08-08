@@ -134,7 +134,7 @@ def from_anndata(experiment: SOMAExperiment, anndata: ad.AnnData) -> None:
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     # OBS
-    experiment.obs.from_dataframe(
+    experiment.obs.from_pandas(
         dataframe=anndata.obs, extent=256, id_column_name="obs_id"
     )
     experiment.set(experiment.obs)
@@ -150,7 +150,7 @@ def from_anndata(experiment: SOMAExperiment, anndata: ad.AnnData) -> None:
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     # MS/meas/VAR
-    measurement.var.from_dataframe(
+    measurement.var.from_pandas(
         dataframe=anndata.var, extent=2048, id_column_name="var_id"
     )
     measurement.set(measurement.var)
@@ -206,7 +206,7 @@ def from_anndata(experiment: SOMAExperiment, anndata: ad.AnnData) -> None:
         raw_measurement.create()
         experiment.ms.set(raw_measurement)
 
-        raw_measurement.var.from_dataframe(
+        raw_measurement.var.from_pandas(
             dataframe=anndata.raw.var, extent=2048, id_column_name="var_id"
         )
         raw_measurement.set(raw_measurement.var)
@@ -261,13 +261,13 @@ def from_anndata(experiment: SOMAExperiment, anndata: ad.AnnData) -> None:
 #
 #    # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 #    experiment._remove_object(experiment.obs)
-#    experiment.obs.from_dataframe(dataframe=anndata.obs, extent=256)
+#    experiment.obs.from_pandas(dataframe=anndata.obs, extent=256)
 #    experiment.set(experiment.obs)
 #    tiledb.consolidate(experiment.obs.get_uri())
 #    tiledb.vacuum(experiment.obs.get_uri())
 #
 #    experiment._remove_object(experiment.var)
-#    experiment.var.from_dataframe(dataframe=anndata.var, extent=2048)
+#    experiment.var.from_pandas(dataframe=anndata.var, extent=2048)
 #    experiment.set(experiment.var)
 #    tiledb.consolidate(experiment.var.get_uri())
 #    tiledb.vacuum(experiment.var.get_uri())
@@ -336,10 +336,10 @@ def to_anndata(
 #    # TODO: FINISH PORTING
 #
 #    # TODO: need an index-converter ... inside the class maybe?
-#    # sdf.from_dataframe takes an optional id_column_name; so should sdf.to_dataframe
+#    # sdf.from_pandas takes an optional id_column_name; so should sdf.to_pandas
 #
-#    obs_df = experiment.obs.to_dataframe(id_column_name="obs_id")
-#    var_df = experiment.ms["mRNA"].var.to_dataframe(id_column_name="var_id")
+#    obs_df = experiment.obs.to_pandas(id_column_name="obs_id")
+#    var_df = experiment.ms["mRNA"].var.to_pandas(id_column_name="var_id")
 #
 #    #   data = experiment.ms["mRNA"].X["data"]
 #    #   assert data is not None

@@ -231,7 +231,7 @@ class SOMASparseNdArray(TileDBArray):
     # ================================================================
     # ================================================================
     # ================================================================
-    def to_dataframe(
+    def to_pandas(
         self,
         *,
         row_ids: Optional[Sequence[int]] = None,
@@ -256,7 +256,7 @@ class SOMASparseNdArray(TileDBArray):
         # so we should not do it without direction.
         if set_index:
             # TODO: get these from the schema while self._tiledb_open.
-            df.set_index(['__dim_0', '__dim_1'], inplace=True)
+            df.set_index(["__dim_0", "__dim_1"], inplace=True)
         return df
 
     # ----------------------------------------------------------------

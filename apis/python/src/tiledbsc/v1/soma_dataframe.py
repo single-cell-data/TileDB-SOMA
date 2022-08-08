@@ -277,7 +277,7 @@ class SOMADataFrame(TileDBArray):
         return self._tiledb_attr_names()
 
     # TODO: TEMP
-    def from_dataframe(
+    def from_pandas(
         self,
         dataframe: pd.DataFrame,
         *,
@@ -381,7 +381,7 @@ class SOMADataFrame(TileDBArray):
         )
 
     # TODO: TEMP
-    def to_dataframe(
+    def to_pandas(
         self,
         *,
         ids: Optional[Ids] = None,
@@ -394,20 +394,20 @@ class SOMADataFrame(TileDBArray):
         TODO: comment
         """
         if value_filter is None:
-            return self._to_dataframe_no_value_filter(
+            return self._to_pandas_no_value_filter(
                 ids=ids,
                 column_names=column_names,
                 id_column_name=id_column_name,
             )
         else:
-            return self._to_dataframe_by_value_filter(
+            return self._to_pandas_by_value_filter(
                 value_filter=value_filter,
                 ids=ids,
                 column_names=column_names,
                 id_column_name=id_column_name,
             )
 
-    def _to_dataframe_no_value_filter(
+    def _to_pandas_no_value_filter(
         self,
         *,
         ids: Optional[Ids] = None,
@@ -433,7 +433,7 @@ class SOMADataFrame(TileDBArray):
                 df.set_index(id_column_name, inplace=True)
             return df
 
-    def _to_dataframe_by_value_filter(
+    def _to_pandas_by_value_filter(
         self,
         *,
         value_filter: str,

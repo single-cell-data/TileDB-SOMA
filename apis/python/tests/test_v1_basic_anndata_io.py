@@ -63,7 +63,7 @@ def test_import_anndata(adata):
         )
 
     # Check obs
-    df = exp.obs.to_dataframe()
+    df = exp.obs.to_pandas()
     assert sorted(df.columns.to_list()) == sorted(orig.obs_keys() + ["obs_id"])
     assert (
         exp.obs.metadata.get(tiledbsc.v1.util.SOMA_OBJECT_TYPE_METADATA_KEY)

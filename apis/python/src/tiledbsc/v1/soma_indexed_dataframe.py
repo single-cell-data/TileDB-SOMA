@@ -319,7 +319,7 @@ class SOMAIndexedDataFrame(TileDBArray):
         return self._tiledb_attr_names()
 
     # TODO: TEMP
-    def from_dataframe(
+    def from_pandas(
         self,
         dataframe: pd.DataFrame,
         index_column_names: List[str],
@@ -335,7 +335,7 @@ class SOMAIndexedDataFrame(TileDBArray):
         :param dataframe: `anndata.obs`
         :param extent: TileDB `extent` parameter for the array schema.
         """
-        raise Exception("indexed from_dataframe not implemented yet")
+        raise Exception("indexed from_pandas not implemented yet")
 
         self._shape = None  # cache-invalidate
 
@@ -426,7 +426,7 @@ class SOMAIndexedDataFrame(TileDBArray):
         )
 
     # TODO: TEMP
-    def to_dataframe(
+    def to_pandas(
         self,
         attrs: Optional[Sequence[str]] = None,
         id_column_name: Optional[
