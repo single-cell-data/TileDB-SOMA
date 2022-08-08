@@ -190,14 +190,12 @@ class SOMADataFrame(TileDBArray):
             q = A.query(return_arrow=True, return_incomplete=_return_incomplete)
 
             if use_all_ids:
-                if use_all_column_names:
-                    iterator = q.df[:]
-                else:
+                iterator = q.df[:]
+                if not use_all_column_names:
                     iterator = q.df[:][column_names]
             else:
-                if use_all_column_names:
-                    iterator = q.df[ids]
-                else:
+                iterator = q.df[ids]
+                if not use_all_column_names:
                     iterator = q.df[ids][column_names]
 
             if _return_incomplete:
@@ -207,6 +205,30 @@ class SOMADataFrame(TileDBArray):
                         yield batch
             else:
                 yield iterator
+
+#    # TODO: TEMP
+#    def to_pandas(
+#        self,
+#        *,
+#        ids: Optional[Ids] = None,
+#        value_filter: Optional[str] = None,
+#        column_names: Optional[Sequence[str]] = None,
+#        # to rename index to 'obs_id' or 'var_id', if desired, for anndata
+#        id_column_name: Optional[str] = None,
+#    ) -> pd.DataFrame:
+#        if value_filter is None:
+#            return self._to_pandas_no_value_filter(
+#                ids=ids,
+#                column_names=column_names,
+#                id_column_name=id_column_name,
+#            )
+#        else:
+#            return self._to_pandas_by_value_filter(
+#                value_filter=value_filter,
+#                ids=ids,
+#                column_names=column_names,
+#                id_column_name=id_column_name,
+#            )
 
     def write(self, values: pa.RecordBatch) -> None:
         """
@@ -230,9 +252,6 @@ class SOMADataFrame(TileDBArray):
         rowids = sorted(rowids)
         assert rowids[0] == 0
 
-        lo = rowids[0]
-        hi = rowids[-1]
-
         attr_cols_map = {}
         for name in values.schema.names:
             if name != ROWID:
@@ -248,6 +267,8 @@ class SOMADataFrame(TileDBArray):
                 A[rowids] = attr_cols_map
         else:
             # dense write
+            lo = rowids[0]
+            hi = rowids[-1]
             with self._tiledb_open("w") as A:
                 A[lo : (hi + 1)] = attr_cols_map
 
