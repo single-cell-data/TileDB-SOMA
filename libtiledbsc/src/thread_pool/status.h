@@ -57,7 +57,10 @@
 #include <string>
 #include <tuple>
 
-#define tdb_delete_array(p) delete[] p
+#define tdb_delete_array(p) \
+  if (p) {                  \
+    delete[] p;             \
+  }
 #define tdb_new_array(T, size) (T*)malloc(size * sizeof(T))
 
 namespace tiledbsc {

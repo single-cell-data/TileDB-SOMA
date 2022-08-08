@@ -5,6 +5,9 @@
 
 #include <tiledb/tiledb>
 #include <tiledb/tiledb_experimental>
+#include <tiledbsc/tiledbsc>
+
+#include "tiledbsc/soma_collection_query.h"
 
 namespace tiledbsc {
 using namespace tiledb;
@@ -23,7 +26,20 @@ class SOMACollection {
      * @param uri TileDB context
      * @return SOMACollection object
      */
-    static SOMACollection open(std::string_view uri, Context ctx = Context());
+    static std::unique_ptr<SOMACollection> open(
+        std::string_view uri,
+        std::shared_ptr<Context> ctx = std::make_shared<Context>());
+
+    /**
+     * @brief Open a SOMACollection at the specified URI and return a
+     * SOMACollection object.
+     *
+     * @param uri URI of SOMACollection
+     * @param config TileDB config
+     * @return SOMACollection object
+     */
+    static std::unique_ptr<SOMACollection> open(
+        std::string_view uri, const Config& config);
 
     //===================================================================
     //= public non-static
@@ -34,7 +50,7 @@ class SOMACollection {
      *
      * @param uri URI of SOMACollection
      */
-    SOMACollection(std::string_view uri, Context ctx);
+    SOMACollection(std::string_view uri, std::shared_ptr<Context> ctx);
 
     /**
      * @brief Return a map of hierarchical SOMA names to SOMA URIs for all
@@ -45,19 +61,37 @@ class SOMACollection {
      */
     std::unordered_map<std::string, std::string> list_somas();
 
+    std::unique_ptr<SOMACollectionQuery> query() {
+        return std::make_unique<SOMACollectionQuery>(this);
+    }
+
+    std::unordered_map<std::string, std::shared_ptr<SOMA>> get_somas();
+
+    /**
+     * @brief Return TileDB context.
+     *
+     * @return std::shared_ptr<Context> Context.
+     */
+    std::shared_ptr<Context> context() {
+        return ctx_;
+    }
+
    private:
     //===================================================================
     //= private non-static
     //===================================================================
 
     // TileDB context
-    Context ctx_;
+    std::shared_ptr<Context> ctx_;
 
     // SOMACollection URI
     std::string uri_;
 
     // Map of hierarchical SOMA name to SOMA URI
     std::unordered_map<std::string, std::string> soma_uri_map_;
+
+    // Map of hierarchical SOMA name to SOMA
+    std::unordered_map<std::string, std::shared_ptr<SOMA>> soma_map_;
 
     /**
      * @brief Walk the TileDB group tree to discover SOMAs and populate the
@@ -68,18 +102,6 @@ class SOMACollection {
      * @param parent Hierarchical group name of the group's parent.
      */
     void build_uri_map(Group& group, std::string_view parent = "");
-
-    /**
-     * @brief Check if the provided URI is a TileDB Cloud URI.
-     *
-     * @param uri URI to check
-     * @return true URI is a TileBD Cloud URI
-     * @return false URI is not a TileBD Cloud URI
-     */
-    // TODO: move this to utils
-    bool is_tiledb_uri(std::string_view uri) {
-        return uri.find("tiledb://") == 0;
-    }
 };
 
 };  // namespace tiledbsc

@@ -3,9 +3,10 @@
 
 #include <stdexcept>  // for windows: error C2039: 'runtime_error': is not a member of 'std'
 
+#include <mutex>
+
 #include <tiledb/tiledb>
 #include <tiledb/tiledb_experimental>
-
 #include "tiledbsc/soma_query.h"
 
 namespace tiledbsc {
@@ -26,7 +27,7 @@ class SOMA {
      * @param ctx TileDB context
      * @return SOMA object
      */
-    static std::shared_ptr<SOMA> open(
+    static std::unique_ptr<SOMA> open(
         std::string_view uri,
         std::shared_ptr<Context> ctx = std::make_shared<Context>());
 
@@ -37,7 +38,7 @@ class SOMA {
      * @param config TileDB config
      * @return SOMA object
      */
-    static std::shared_ptr<SOMA> open(
+    static std::unique_ptr<SOMA> open(
         std::string_view uri, const Config& config);
 
     //===================================================================
@@ -75,10 +76,11 @@ class SOMA {
     /**
      * @brief Create a SOMAQuery for this SOMA.
      *
+     * @param name SOMA name
      * @return std::unique_ptr<SOMAQuery> A SOMA query
      */
-    std::unique_ptr<SOMAQuery> query() {
-        return std::make_unique<SOMAQuery>(this);
+    std::unique_ptr<SOMAQuery> query(std::string name = "") {
+        return std::make_unique<SOMAQuery>(this, name);
     }
 
     /**
@@ -107,6 +109,9 @@ class SOMA {
     // Flag that is true if TileDB Cloud URIs were converted to relative URIs
     bool group_uri_override_ = false;
 
+    // Mutex to control parallel access
+    std::mutex mtx_;
+
     /**
      * @brief Walk the TileDB group tree to discover arrays and populate the
      * array URI map. This function is called recursively in order to discover
@@ -116,18 +121,6 @@ class SOMA {
      * @param parent Hierarchical group name of the group's parent.
      */
     void build_uri_map(Group& group, std::string_view parent = "");
-
-    /**
-     * @brief Check if the provided URI is a TileDB Cloud URI.
-     *
-     * @param uri URI to check
-     * @return true URI is a TileBD Cloud URI
-     * @return false URI is not a TileBD Cloud URI
-     */
-    // TODO: move this to utils
-    bool is_tiledb_uri(std::string_view uri) {
-        return uri.find("tiledb://") == 0;
-    }
 };
 
 };  // namespace tiledbsc

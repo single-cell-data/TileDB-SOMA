@@ -49,3 +49,5 @@ examples/cmake_project/build
 apis/python/src/tiledbsc/_version.py
 
 /.quarto/
+
+/NOTES/
