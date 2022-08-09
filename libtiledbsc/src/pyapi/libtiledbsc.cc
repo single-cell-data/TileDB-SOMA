@@ -149,4 +149,14 @@ PYBIND11_MODULE(libtiledbsc, m) {
         // SOMACollection Query (0 = return value) will keep SOMACollection
         // alive (1 = this)
         .def("query", &SOMACollection::query, py::keep_alive<0, 1>());
+
+    // clang-format off
+    py::enum_<tiledb_query_condition_op_t>(m, "Condition", py::module_local()) 
+        DENUM(LT)
+        DENUM(LE)
+        DENUM(GT)
+        DENUM(GE)
+        DENUM(EQ)
+        DENUM(NE);
+    // clang-format on
 }

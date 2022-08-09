@@ -68,7 +68,7 @@ def test_soma_slice_obs():
     sq = soma.query()
 
     sq.select_obs_attrs(["louvain"])
-    sq.set_obs_condition("louvain", "B cells", 4)  # EQ = 4
+    sq.set_obs_condition("louvain", "B cells", sc.Condition.EQ)
 
     dfs = []
     while chunk := sq.next_results():
@@ -91,7 +91,7 @@ def test_soma_slice_var():
     sq = soma.query()
 
     sq.select_var_attrs(["n_cells"])
-    sq.set_var_condition("n_cells", 50, 0)  # LT = 0
+    sq.set_var_condition("n_cells", 50, sc.Condition.LT)
 
     dfs = []
     while chunk := sq.next_results():
