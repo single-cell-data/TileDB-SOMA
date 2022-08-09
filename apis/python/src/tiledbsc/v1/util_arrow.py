@@ -38,11 +38,14 @@ def ascii_to_unicode_pyarrow_readback(record_batch: pa.RecordBatch) -> pa.Record
     return pa.RecordBatch.from_arrays(new_fields, names=names)
 
 
-def concat_batches(batches: Generator) -> pa.RecordBatch:
+def concat_batches(batch_generator: Generator) -> pa.RecordBatch:
     """
     Iterates a generator of `pyarrow.RecordBatch` (e.g. `SOMADataFrame.read`) and returns a
     concatenation of all the record batches found. The nominal use is to simply unit-test cases.
     """
+    batches = []
+    for batch in batch_generator:
+        batches.append(batch)
     assert len(batches) > 0
     names = [field.name for field in batches[0].schema]
     arrays = []

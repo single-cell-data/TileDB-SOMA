@@ -273,6 +273,28 @@ class SOMAIndexedDataFrame(TileDBArray):
                     # Context: # https://github.com/single-cell-data/TileDB-SingleCell/issues/99.
                     yield util_arrow.ascii_to_unicode_pyarrow_readback(batch)
 
+    def read_all(
+        self,
+        *,
+        # TODO: find the right syntax to get the typechecker to accept args like `ids=slice(0,10)`
+        # ids: Optional[Union[Sequence[int], Slice]] = None,
+        ids: Optional[Any] = None,
+        value_filter: Optional[str] = None,
+        column_names: Optional[Sequence[str]] = None,
+        # TODO: batch_size
+        # TODO: partition,
+        # TODO: result_order,
+        # TODO: platform_config,
+    ) -> pa.RecordBatch:
+        """
+        This is a convenience method around `read`. It iterates the return value from `read`
+        and returns a concatenation of all the record batches found. Its nominal use is to
+        simply unit-test cases.
+        """
+        return util_arrow.concat_batches(
+            self.read(ids=ids, value_filter=value_filter, column_names=column_names)
+        )
+
     def write(self, values: pa.RecordBatch) -> None:
         """
         Write an Arrow.RecordBatch to the persistent object. As duplicate index values are not allowed,

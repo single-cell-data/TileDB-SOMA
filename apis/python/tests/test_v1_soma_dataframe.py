@@ -29,17 +29,13 @@ def test_soma_dataframe_non_indexed(tmp_path):
 
     # ----------------------------------------------------------------
     # Read all
-    batches = []
-    for batch in sdf.read():
-        batches.append(batch)
+    batch = sdf.read_all()
     # Weird thing about pyarrow RecordBatch:
     # * We should have 5 "rows" with 3 "columns"
     # * Indeed batch.num_rows is 5 and batch.num_columns is 3
     # * But len(batch) is 3
     # * If you thought `for record in record_batch` would print records ... you would be wrong -- it
     #   loops over columns
-    assert len(batches) == 1
-    batch = batches[0]
     assert batch.num_rows == 5
 
     # We should be getting back the soma_rowid column as well
@@ -55,17 +51,13 @@ def test_soma_dataframe_non_indexed(tmp_path):
 
     # ----------------------------------------------------------------
     # Read by ids
-    batches = []
-    for batch in sdf.read(ids=[1, 2]):
-        batches.append(batch)
+    batch = sdf.read_all(ids=[1, 2])
     # Weird thing about pyarrow RecordBatch:
     # * We should have 5 "rows" with 3 "columns"
     # * Indeed batch.num_rows is 5 and batch.num_columns is 3
     # * But len(batch) is 3
     # * If you thought `for record in record_batch` would print records ... you would be wrong -- it
     #   loops over columns
-    assert len(batches) == 1
-    batch = batches[0]
     assert batch.num_rows == 2
 
     # We should be getting back the soma_rowid column as well
@@ -81,17 +73,13 @@ def test_soma_dataframe_non_indexed(tmp_path):
 
     # ----------------------------------------------------------------
     # Read by ids
-    batches = []
-    for batch in sdf.read(ids=slice(1, 2)):
-        batches.append(batch)
+    batch = sdf.read_all(ids=slice(1, 2))
     # Weird thing about pyarrow RecordBatch:
     # * We should have 5 "rows" with 3 "columns"
     # * Indeed batch.num_rows is 5 and batch.num_columns is 3
     # * But len(batch) is 3
     # * If you thought `for record in record_batch` would print records ... you would be wrong -- it
     #   loops over columns
-    assert len(batches) == 1
-    batch = batches[0]
     assert batch.num_rows == 2
 
     # We should be getting back the soma_rowid column as well
@@ -107,17 +95,13 @@ def test_soma_dataframe_non_indexed(tmp_path):
 
     # ----------------------------------------------------------------
     # Read by value_filter
-    batches = []
-    for batch in sdf.read(value_filter='foo == 40 or foo == 20'):
-        batches.append(batch)
+    batch = sdf.read_all(value_filter='foo == 40 or foo == 20')
     # Weird thing about pyarrow RecordBatch:
     # * We should have 5 "rows" with 3 "columns"
     # * Indeed batch.num_rows is 5 and batch.num_columns is 3
     # * But len(batch) is 3
     # * If you thought `for record in record_batch` would print records ... you would be wrong -- it
     #   loops over columns
-    assert len(batches) == 1
-    batch = batches[0]
     assert batch.num_rows == 2
 
     # We should be getting back the soma_rowid column as well
@@ -133,17 +117,13 @@ def test_soma_dataframe_non_indexed(tmp_path):
 
     # ----------------------------------------------------------------
     # Read by value_filter
-    batches = []
-    for batch in sdf.read(value_filter='baz == "ball" or baz == "dog"'):
-        batches.append(batch)
+    batch = sdf.read_all(value_filter='baz == "ball" or baz == "dog"')
     # Weird thing about pyarrow RecordBatch:
     # * We should have 5 "rows" with 3 "columns"
     # * Indeed batch.num_rows is 5 and batch.num_columns is 3
     # * But len(batch) is 3
     # * If you thought `for record in record_batch` would print records ... you would be wrong -- it
     #   loops over columns
-    assert len(batches) == 1
-    batch = batches[0]
     assert batch.num_rows == 2
 
     # We should be getting back the soma_rowid column as well
