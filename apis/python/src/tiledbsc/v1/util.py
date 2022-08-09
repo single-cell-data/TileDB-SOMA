@@ -4,7 +4,6 @@ from typing import TypeVar
 
 import numpy as np
 import pandas as pd
-import pyarrow as pa
 import scipy.sparse as sp
 
 T = TypeVar("T", np.ndarray, pd.Series, pd.DataFrame, sp.spmatrix)
@@ -40,20 +39,6 @@ def is_local_path(path: str) -> bool:
 
 def is_tiledb_creation_uri(uri: str) -> bool:
     return bool(re.match("^tiledb://.*s3://.*$", uri))
-
-
-def tiledb_type_from_arrow_type(t: pa.DataType) -> type:
-    """
-    Building block for Arrow-to-TileDB schema translation.
-    """
-    if t == pa.string():
-        # pyarrow's to_pandas_dtype maps pa.string() to dtype object which
-        # isn't acceptable to tiledb -- we must say str.
-        return str
-    else:
-        # mypy says:
-        # Returning Any from function declared to return "type"  [no-any-return]
-        return t.to_pandas_dtype()  # type: ignore
 
 
 def _to_tiledb_supported_dtype(dtype: np.dtype) -> np.dtype:
@@ -122,10 +107,11 @@ def _to_tiledb_supported_array_type(x: T) -> T:
     return x if target_dtype == x.dtype else x.astype(target_dtype)
 
 
-def _ascii_to_unicode_dataframe_readback(df: pd.DataFrame) -> pd.DataFrame:
+def _ascii_to_unicode_pandas_readback(df: pd.DataFrame) -> pd.DataFrame:
     """
     Implements the 'decode on read' part of our ASCII/Unicode logic
     """
+    # TODO: COMMENT/LINK HEAVILY
     for k in df:
         dfk = df[k]
         if len(dfk) > 0 and type(dfk.iat[0]) == bytes:

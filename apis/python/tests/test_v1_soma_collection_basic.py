@@ -5,7 +5,6 @@ import pyarrow as pa
 
 import tiledbsc.v1 as t
 
-
 # TODO: test SOMAIndexedDataFrame as well
 
 # ----------------------------------------------------------------

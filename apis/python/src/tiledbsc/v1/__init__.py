@@ -9,13 +9,11 @@ from .soma_sparse_nd_array import SOMASparseNdArray
 from .tiledb_array import TileDBArray
 from .tiledb_object import TileDBObject
 from .tiledb_platform_config import TileDBPlatformConfig
-from .util import tiledb_type_from_arrow_type
 
 __all__ = [
     "get_implementation",
     "get_version",
     "get_storage_engine",
-    "tiledb_type_from_arrow_type",
     "TileDBPlatformConfig",
     "TileDBObject",
     "TileDBArray",

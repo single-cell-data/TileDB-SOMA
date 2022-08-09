@@ -6,12 +6,12 @@ import pyarrow as pa
 import tiledb
 
 import tiledbsc.v1.util as util
+import tiledbsc.v1.util_arrow as util_arrow
 
 from .logging import log_io
 from .soma_collection import SOMACollection
 from .tiledb_array import TileDBArray
 from .types import Ids, NTuple
-from .util import tiledb_type_from_arrow_type
 
 ROWID = "soma_rowid"
 
@@ -85,7 +85,9 @@ class SOMADataFrame(TileDBArray):
         attrs = [
             tiledb.Attr(
                 name=attr_name,
-                dtype=tiledb_type_from_arrow_type(schema.field(attr_name).type),
+                dtype=util_arrow.tiledb_type_from_arrow_type(
+                    schema.field(attr_name).type
+                ),
                 filters=[tiledb.ZstdFilter()],
                 ctx=self._ctx,
             )
@@ -214,7 +216,33 @@ class SOMADataFrame(TileDBArray):
             for df in iterator:
                 batches = df.to_batches()
                 for batch in batches:
-                    yield batch
+                    # XXX COMMENT MORE
+                    # This is the 'decode on read' part of our logic; in dim_select we have the
+                    # 'encode on write' part.
+                    # Context: # https://github.com/single-cell-data/TileDB-SingleCell/issues/99.
+                    yield util_arrow.ascii_to_unicode_pyarrow_readback(batch)
+
+    def read_all(
+        self,
+        *,
+        # TODO: find the right syntax to get the typechecker to accept args like `ids=slice(0,10)`
+        # ids: Optional[Union[Sequence[int], Slice]] = None,
+        ids: Optional[Any] = None,
+        value_filter: Optional[str] = None,
+        column_names: Optional[Sequence[str]] = None,
+        # TODO: batch_size
+        # TODO: partition,
+        # TODO: result_order,
+        # TODO: platform_config,
+    ) -> pa.RecordBatch:
+        """
+        This is a convenience method around `read`. It iterates the return value from `read`
+        and returns a concatenation of all the record batches found. Its nominal use is to
+        simply unit-test cases.
+        """
+        return util_arrow.concat_batches(
+            self.read(ids=ids, value_filter=value_filter, column_names=column_names)
+        )
 
     def write(self, values: pa.RecordBatch) -> None:
         """
@@ -243,7 +271,7 @@ class SOMADataFrame(TileDBArray):
             if name != ROWID:
                 attr_cols_map[name] = np.asarray(
                     values.column(name).to_pandas(
-                        types_mapper=tiledb_type_from_arrow_type,
+                        types_mapper=util_arrow.tiledb_type_from_arrow_type,
                     )
                 )
 
@@ -390,7 +418,7 @@ class SOMADataFrame(TileDBArray):
             # This is the 'decode on read' part of our logic; in dim_select we have the 'encode on
             # write' part.
             # Context: # https://github.com/single-cell-data/TileDB-SingleCell/issues/99.
-            df = util._ascii_to_unicode_dataframe_readback(df)
+            df = util._ascii_to_unicode_pandas_readback(df)
 
             if id_column_name is not None:
                 df.reset_index(inplace=True)

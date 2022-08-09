@@ -5,10 +5,11 @@ import pandas as pd
 import pyarrow as pa
 import tiledb
 
+import tiledbsc.v1.util_arrow as util_arrow
+
 from .soma_collection import SOMACollection
 from .tiledb_array import TileDBArray
 from .types import NTuple
-from .util import tiledb_type_from_arrow_type
 
 ROWID = "soma_rowid"
 
@@ -87,7 +88,9 @@ class SOMAIndexedDataFrame(TileDBArray):
 
         dims = []
         for index_column_name in index_column_names:
-            dtype = tiledb_type_from_arrow_type(schema.field(index_column_name).type)
+            dtype = util_arrow.tiledb_type_from_arrow_type(
+                schema.field(index_column_name).type
+            )
             # We need domain=(None,None) for string dims
             lo = None
             hi = None
@@ -120,7 +123,9 @@ class SOMAIndexedDataFrame(TileDBArray):
                 continue
             attr = tiledb.Attr(
                 name=attr_name,
-                dtype=tiledb_type_from_arrow_type(schema.field(attr_name).type),
+                dtype=util_arrow.tiledb_type_from_arrow_type(
+                    schema.field(attr_name).type
+                ),
                 filters=[tiledb.ZstdFilter()],
                 ctx=self._ctx,
             )
@@ -262,7 +267,11 @@ class SOMAIndexedDataFrame(TileDBArray):
             for df in iterator:
                 batches = df.to_batches()
                 for batch in batches:
-                    yield batch
+                    # XXX COMMENT MORE
+                    # This is the 'decode on read' part of our logic; in dim_select we have the
+                    # 'encode on write' part.
+                    # Context: # https://github.com/single-cell-data/TileDB-SingleCell/issues/99.
+                    yield util_arrow.ascii_to_unicode_pyarrow_readback(batch)
 
     def write(self, values: pa.RecordBatch) -> None:
         """

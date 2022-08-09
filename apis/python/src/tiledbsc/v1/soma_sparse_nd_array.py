@@ -11,6 +11,7 @@ import tiledb
 import tiledbsc.v1.eta as eta
 import tiledbsc.v1.logging as logging
 import tiledbsc.v1.util as util
+import tiledbsc.v1.util_arrow as util_arrow
 
 from .soma_collection import SOMACollection
 from .tiledb_array import TileDBArray
@@ -74,7 +75,7 @@ class SOMASparseNdArray(TileDBArray):
         attrs = [
             tiledb.Attr(
                 name="data",
-                dtype=util.tiledb_type_from_arrow_type(type),
+                dtype=util_arrow.tiledb_type_from_arrow_type(type),
                 filters=[tiledb.ZstdFilter()],
                 ctx=self._ctx,
             )
