@@ -65,11 +65,9 @@ class TileDBObject(ABC):
 
     def __repr__(self) -> str:
         """
-        XXX TEMP
+        Fallback string display. Will be overridden by any interesting subclasses.
         """
-        # TEMP return f"name={self._name},uri={self._uri}"
-        # return self.get_name()
-        return "B04KB04KB04k"
+        return f"name={self._name},uri={self._uri}"
 
     def get_name(self) -> str:
         return self._name

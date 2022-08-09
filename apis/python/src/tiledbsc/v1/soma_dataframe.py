@@ -1,4 +1,4 @@
-from typing import Any, Iterator, List, Optional, Sequence, TypeVar, Union
+from typing import Any, Iterator, List, Optional, Sequence, TypeVar
 
 import numpy as np
 import pandas as pd
@@ -28,8 +28,6 @@ class SOMADataFrame(TileDBArray):
     """
 
     _shape: Optional[NTuple] = None
-
-    # XXX TEMP -- pending discussion on value-filtering with dense arrays
     _is_sparse: Optional[bool]
 
     def __init__(
@@ -97,7 +95,7 @@ class SOMADataFrame(TileDBArray):
         sch = tiledb.ArraySchema(
             domain=dom,
             attrs=attrs,
-            # XXX TEMP
+            # TODO: pending tiledb issue involving dense dataframes
             # sparse=False,
             sparse=True,
             allows_duplicates=self._tiledb_platform_config.allows_duplicates,
@@ -114,6 +112,29 @@ class SOMADataFrame(TileDBArray):
 
         self._is_sparse = sch.sparse
         tiledb.Array.create(self._uri, sch, ctx=self._ctx)
+
+    def __repr__(self) -> str:
+        """
+        Default display of `SOMADataFrame`.
+        """
+        return "\n".join(self._repr_aux())
+
+    def _repr_aux(self) -> List[str]:
+        lines = [
+            self.get_name()
+            + " "
+            + self.__class__.__name__
+            + " "
+            + str(self.get_shape())
+        ]
+        return lines
+
+    def keys(self) -> List[str]:
+        """
+        Returns the names of the columns when read back as a dataframe.
+        TODO: make it clear whether or not this will read back soma_rowid / soma_joinid.
+        """
+        return self._tiledb_attr_names()
 
     def get_shape(self) -> NTuple:
         """
@@ -145,17 +166,15 @@ class SOMADataFrame(TileDBArray):
     def read(
         self,
         *,
-        # TODO: call this 'slices'
-        # TODO: find out how to spell this in a way the type-checker will accept :(
-        # ids: Optional[Union[Sequence[int], str, Slice]] = "all",
-        ids: Optional[Any] = "all",
-        column_names: Optional[Union[Sequence[str], str]] = "all",
+        # TODO: find the right syntax to get the typechecker to accept args like `ids=slice(0,10)`
+        # ids: Optional[Union[Sequence[int], Slice]] = None,
+        ids: Optional[Any] = None,
+        value_filter: Optional[str] = None,
+        column_names: Optional[Sequence[str]] = None,
         # TODO: batch_size
         # TODO: partition,
         # TODO: result_order,
-        # TODO: value_filter, <--------
         # TODO: platform_config,
-        _return_incomplete: Optional[bool] = True,  # XXX TEMP
     ) -> Iterator[pa.RecordBatch]:
         """
         Read a user-defined subset of data, addressed by the dataframe indexing column, optionally
@@ -176,59 +195,26 @@ class SOMADataFrame(TileDBArray):
         **Indexing**: the `ids` parameter will support, per dimension: a row offset (uint), a
         row-offset range (slice), or a list of both.
         """
-
-        use_all_ids = False
-        use_all_column_names = False
-        if isinstance(ids, str):
-            assert ids == "all"  # Enforce runtime type check
-            use_all_ids = True
-        if isinstance(column_names, str):
-            assert column_names == "all"  # Enforce runtime type check
-            use_all_column_names = True
-
         with self._tiledb_open("r") as A:
-            q = A.query(return_arrow=True, return_incomplete=_return_incomplete)
-
-            if use_all_ids:
-                iterator = q.df[:]
-                if not use_all_column_names:
-                    iterator = q.df[:][column_names]
+            if value_filter is None:
+                query = A.query(return_arrow=True, return_incomplete=True)
             else:
-                iterator = q.df[ids]
-                if not use_all_column_names:
-                    iterator = q.df[ids][column_names]
+                qc = tiledb.QueryCondition(value_filter)
+                query = A.query(return_arrow=True, return_incomplete=True, attr_cond=qc)
 
-            if _return_incomplete:
-                for df in iterator:
-                    batches = df.to_batches()
-                    for batch in batches:
-                        yield batch
+            if ids is None:
+                iterator = query.df[:]
+                if column_names is not None:
+                    iterator = query.df[:][column_names]
             else:
-                yield iterator
+                iterator = query.df[ids]
+                if column_names is not None:
+                    iterator = query.df[ids][column_names]
 
-#    # TODO: TEMP
-#    def to_pandas(
-#        self,
-#        *,
-#        ids: Optional[Ids] = None,
-#        value_filter: Optional[str] = None,
-#        column_names: Optional[Sequence[str]] = None,
-#        # to rename index to 'obs_id' or 'var_id', if desired, for anndata
-#        id_column_name: Optional[str] = None,
-#    ) -> pd.DataFrame:
-#        if value_filter is None:
-#            return self._to_pandas_no_value_filter(
-#                ids=ids,
-#                column_names=column_names,
-#                id_column_name=id_column_name,
-#            )
-#        else:
-#            return self._to_pandas_by_value_filter(
-#                value_filter=value_filter,
-#                ids=ids,
-#                column_names=column_names,
-#                id_column_name=id_column_name,
-#            )
+            for df in iterator:
+                batches = df.to_batches()
+                for batch in batches:
+                    yield batch
 
     def write(self, values: pa.RecordBatch) -> None:
         """
@@ -272,40 +258,13 @@ class SOMADataFrame(TileDBArray):
             with self._tiledb_open("w") as A:
                 A[lo : (hi + 1)] = attr_cols_map
 
-    def __repr__(self) -> str:
-        """
-        Default display of `SOMADataFrame`.
-        """
-        return "\n".join(self._repr_aux())
-
-    def _repr_aux(self) -> List[str]:
-        lines = [
-            self.get_name()
-            + " "
-            + self.__class__.__name__
-            + " "
-            + str(self.get_shape())
-        ]
-        return lines
-
-    # ================================================================
-    # ================================================================
-    # ================================================================
-    def keys(self) -> List[str]:
-        """
-        TODO
-        """
-        return self._tiledb_attr_names()
-
-    # TODO: TEMP
     def from_pandas(
         self,
         dataframe: pd.DataFrame,
         *,
         extent: int = 2048,
-        id_column_name: Optional[
-            str
-        ] = None,  # to rename index to 'obs_id' or 'var_id', if desired, for anndata
+        # to rename index to 'obs_id' or 'var_id', if desired, for anndata
+        id_column_name: Optional[str] = None,
     ) -> None:
         """
         Populates the `obs` element of a SOMAExperiment object.
@@ -337,7 +296,6 @@ class SOMADataFrame(TileDBArray):
             log_io(None, f"{self._indent}Re-using existing array {self.get_uri()}")
 
         # Make obs_id a data column
-        # TODO: rename it from 'index' to 'obs_id' or 'var_id' etc as appropriate
         dataframe.reset_index(inplace=True)
         if id_column_name is not None:
             dataframe.rename(columns={"index": id_column_name}, inplace=True)
@@ -401,7 +359,6 @@ class SOMADataFrame(TileDBArray):
             util.format_elapsed(s, f"{self._indent}FINISH WRITING {self.get_uri()}"),
         )
 
-    # TODO: TEMP
     def to_pandas(
         self,
         *,
@@ -412,71 +369,30 @@ class SOMADataFrame(TileDBArray):
         id_column_name: Optional[str] = None,
     ) -> pd.DataFrame:
         """
-        TODO: comment
+        For `to_anndata`, as well as for any interactive use where the user wants a Pandas dataframe.
         """
-        if value_filter is None:
-            return self._to_pandas_no_value_filter(
-                ids=ids,
-                column_names=column_names,
-                id_column_name=id_column_name,
-            )
-        else:
-            return self._to_pandas_by_value_filter(
-                value_filter=value_filter,
-                ids=ids,
-                column_names=column_names,
-                id_column_name=id_column_name,
-            )
 
-    def _to_pandas_no_value_filter(
-        self,
-        *,
-        ids: Optional[Ids] = None,
-        column_names: Optional[Sequence[str]] = None,
-        id_column_name: Optional[str] = None,  # for to_anndata
-    ) -> pd.DataFrame:
-        """
-        TODO: comment
-        """
         with self._tiledb_open() as A:
-            if ids is None:
-                df = A.df[:]
+            if value_filter is None:
+                query = A.query()
             else:
-                df = A.df[ids]
+                qc = tiledb.QueryCondition(value_filter)
+                query = A.query(attr_cond=qc)
+
+            if ids is None:
+                df = query.df[:]
+            else:
+                df = query.df[ids]
+
             if column_names is not None:
                 df = df[column_names]
+
             # This is the 'decode on read' part of our logic; in dim_select we have the 'encode on
             # write' part.
             # Context: # https://github.com/single-cell-data/TileDB-SingleCell/issues/99.
             df = util._ascii_to_unicode_dataframe_readback(df)
+
             if id_column_name is not None:
                 df.reset_index(inplace=True)
                 df.set_index(id_column_name, inplace=True)
             return df
-
-    def _to_pandas_by_value_filter(
-        self,
-        *,
-        value_filter: str,
-        ids: Optional[Ids] = None,
-        column_names: Optional[Sequence[str]] = None,
-        id_column_name: Optional[str] = None,  # for to_anndata
-    ) -> pd.DataFrame:
-        """
-        TODO: comment
-        """
-        with self._tiledb_open() as A:
-            qc = tiledb.QueryCondition(value_filter)
-            query = A.query(attr_cond=qc)
-            if ids is None:
-                slice_df = query.df[:]
-            else:
-                slice_df = query.df[ids]
-            if column_names is None:
-                slice_df = slice_df[:]
-            else:
-                slice_df = slice_df[column_names]
-            # This is the 'decode on read' part of our logic; in dim_select we have the 'encode on
-            # write' part.
-            # Context: # https://github.com/single-cell-data/TileDB-SingleCell/issues/99.
-            return util._ascii_to_unicode_dataframe_readback(slice_df)

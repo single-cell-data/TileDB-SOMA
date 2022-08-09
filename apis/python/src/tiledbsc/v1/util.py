@@ -7,27 +7,11 @@ import pandas as pd
 import pyarrow as pa
 import scipy.sparse as sp
 
+T = TypeVar("T", np.ndarray, pd.Series, pd.DataFrame, sp.spmatrix)
+
 SOMA_OBJECT_TYPE_METADATA_KEY = "soma_object_type"
 SOMA_ENCODING_VERSION_METADATA_KEY = "soma_encoding_version"
 SOMA_ENCODING_VERSION = "1"
-
-
-def tiledb_type_from_arrow_type(t: pa.DataType) -> type:
-    """
-    TODO
-    """
-    if t == pa.string():
-        # pyarrow's to_pandas_dtype maps pa.string() to dtype object which
-        # isn't acceptable to tiledb -- we must say str.
-        return str
-    else:
-        # mypy says:
-        # Returning Any from function declared to return "type"  [no-any-return]
-        return t.to_pandas_dtype()  # type: ignore
-
-
-def is_tiledb_creation_uri(uri: str) -> bool:
-    return bool(re.match("^tiledb://.*s3://.*$", uri))
 
 
 def get_start_stamp() -> float:
@@ -46,12 +30,7 @@ def format_elapsed(start_stamp: float, message: str) -> str:
     return "%s TIME %.3f seconds" % (message, time.time() - start_stamp)
 
 
-# ----------------------------------------------------------------
 def is_local_path(path: str) -> bool:
-    """
-    Returns information about start time of an event. Nominally float seconds since the epoch,
-    but articulated here as being compatible with the format_elapsed function.
-    """
     if path.startswith("file://"):
         return True
     if "://" in path:
@@ -59,18 +38,30 @@ def is_local_path(path: str) -> bool:
     return True
 
 
-# ----------------------------------------------------------------
+def is_tiledb_creation_uri(uri: str) -> bool:
+    return bool(re.match("^tiledb://.*s3://.*$", uri))
+
+
+def tiledb_type_from_arrow_type(t: pa.DataType) -> type:
+    """
+    Building block for Arrow-to-TileDB schema translation.
+    """
+    if t == pa.string():
+        # pyarrow's to_pandas_dtype maps pa.string() to dtype object which
+        # isn't acceptable to tiledb -- we must say str.
+        return str
+    else:
+        # mypy says:
+        # Returning Any from function declared to return "type"  [no-any-return]
+        return t.to_pandas_dtype()  # type: ignore
+
+
 def _to_tiledb_supported_dtype(dtype: np.dtype) -> np.dtype:
     """A handful of types are cast into the TileDB type system."""
     # TileDB has no float16 -- cast up to float32
     if dtype == np.dtype("float16"):
         return np.dtype("float32")
     return dtype
-
-
-# ----------------------------------------------------------------
-
-T = TypeVar("T", np.ndarray, pd.Series, pd.DataFrame, sp.spmatrix)
 
 
 def _to_tiledb_supported_array_type(x: T) -> T:
@@ -131,11 +122,6 @@ def _to_tiledb_supported_array_type(x: T) -> T:
     return x if target_dtype == x.dtype else x.astype(target_dtype)
 
 
-# ================================================================
-# ================================================================
-# ================================================================
-
-
 def _ascii_to_unicode_dataframe_readback(df: pd.DataFrame) -> pd.DataFrame:
     """
     Implements the 'decode on read' part of our ASCII/Unicode logic
@@ -147,7 +133,6 @@ def _ascii_to_unicode_dataframe_readback(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-# ----------------------------------------------------------------
 def _find_csr_chunk_size(
     mat: sp.csr_matrix,
     start_row_index: int,
@@ -173,7 +158,6 @@ def _find_csr_chunk_size(
     return chunk_size
 
 
-# ----------------------------------------------------------------
 # This function is very similar to _find_csr_chunk_size. The code is largely repeated, and this is
 # intentional.  Here we err on the side of increased readability, at the expense of line-count.
 def _find_csc_chunk_size(

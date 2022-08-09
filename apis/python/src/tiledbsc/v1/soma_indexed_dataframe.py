@@ -5,9 +5,6 @@ import pandas as pd
 import pyarrow as pa
 import tiledb
 
-import tiledbsc.v1.util as util
-
-from .logging import log_io
 from .soma_collection import SOMACollection
 from .tiledb_array import TileDBArray
 from .types import NTuple
@@ -29,8 +26,6 @@ class SOMAIndexedDataFrame(TileDBArray):
 
     _index_column_names: Optional[List[str]]
     _shape: Optional[NTuple] = None
-
-    # XXX TEMP -- pending discussion on value-filtering with dense arrays
     _is_sparse: Optional[bool]
 
     def __init__(
@@ -152,6 +147,29 @@ class SOMAIndexedDataFrame(TileDBArray):
 
         tiledb.Array.create(self._uri, sch, ctx=self._ctx)
 
+    def __repr__(self) -> str:
+        """
+        Default display of `SOMAIndexedDataFrame`.
+        """
+        return "\n".join(self._repr_aux())
+
+    def _repr_aux(self) -> List[str]:
+        lines = [
+            self.get_name()
+            + " "
+            + self.__class__.__name__
+            + " "
+            + str(self.get_shape())
+        ]
+        return lines
+
+    def keys(self) -> List[str]:
+        """
+        Returns the names of the columns when read back as a dataframe.
+        TODO: make it clear whether or not this will read back soma_rowid / soma_joinid.
+        """
+        return self._tiledb_attr_names()
+
     def get_shape(self) -> NTuple:
         """
         Return length of each dimension, always a list of length ``ndims``
@@ -198,11 +216,11 @@ class SOMAIndexedDataFrame(TileDBArray):
         self,
         *,
         # TODO: find out how to spell this in a way the type-checker will accept :(
-        # ids: Optional[Union[Sequence[int], str, Slice]] = "all",
-        ids: Optional[Any] = "all",
-        column_names: Optional[Union[Sequence[str], str]] = "all",
+        # ids: Optional[Union[Sequence[int], str, Slice]] = None,
+        ids: Optional[Any] = None,
+        value_filter: Optional[str] = None,
+        column_names: Optional[Union[Sequence[str], str]] = None,
         # TODO: more arguments
-        _return_incomplete: Optional[bool] = True,  # XXX TEMP
     ) -> Iterator[pa.RecordBatch]:
         """
         Read a user-defined subset of data, addressed by the dataframe indexing columns, optionally
@@ -224,37 +242,27 @@ class SOMAIndexedDataFrame(TileDBArray):
         **Indexing**: the `ids` parameter will support, per dimension: a list of values of the type
         of the indexed column.
         """
-
-        use_all_ids = False
-        use_all_column_names = False
-        if isinstance(ids, str):
-            assert ids == "all"  # Enforce runtime type check
-            use_all_ids = True
-        if isinstance(column_names, str):
-            assert column_names == "all"  # Enforce runtime type check
-            use_all_column_names = True
-
+        # TODO: more about index_column_names
         with self._tiledb_open("r") as A:
-            q = A.query(return_arrow=True, return_incomplete=_return_incomplete)
-
-            if use_all_ids:
-                if use_all_column_names:
-                    iterator = q.df[:]
-                else:
-                    iterator = q.df[:][column_names]
+            if value_filter is None:
+                query = A.query(return_arrow=True, return_incomplete=True)
             else:
-                if use_all_column_names:
-                    iterator = q.df[ids]
-                else:
-                    iterator = q.df[ids][column_names]
+                qc = tiledb.QueryCondition(value_filter)
+                query = A.query(return_arrow=True, return_incomplete=True, attr_cond=qc)
 
-            if _return_incomplete:
-                for df in iterator:
-                    batches = df.to_batches()
-                    for batch in batches:
-                        yield batch
+            if ids is None:
+                iterator = query.df[:]
+                if column_names is not None:
+                    iterator = query.df[:][column_names]
             else:
-                yield iterator
+                iterator = query.df[ids]
+                if column_names is not None:
+                    iterator = query.df[ids][column_names]
+
+            for df in iterator:
+                batches = df.to_batches()
+                for batch in batches:
+                    yield batch
 
     def write(self, values: pa.RecordBatch) -> None:
         """
@@ -279,7 +287,7 @@ class SOMAIndexedDataFrame(TileDBArray):
                 attr_cols_map[name] = values.column(name).to_pandas()
         assert n is not None
 
-        # XXX TEMP STUB
+        # TODO: temporary
         attr_cols_map[ROWID] = np.asarray(range(n))
 
         dim_cols_list = [list(dim_col) for dim_col in dim_cols_list]
@@ -293,32 +301,6 @@ class SOMAIndexedDataFrame(TileDBArray):
             else:
                 raise Exception("ndims >= 2 not currently supported")
 
-    def __repr__(self) -> str:
-        """
-        Default display of `SOMAIndexedDataFrame`.
-        """
-        return "\n".join(self._repr_aux())
-
-    def _repr_aux(self) -> List[str]:
-        lines = [
-            self.get_name()
-            + " "
-            + self.__class__.__name__
-            + " "
-            + str(self.get_shape())
-        ]
-        return lines
-
-    # ================================================================
-    # ================================================================
-    # ================================================================
-    def keys(self) -> List[str]:
-        """
-        TODO
-        """
-        return self._tiledb_attr_names()
-
-    # TODO: TEMP
     def from_pandas(
         self,
         dataframe: pd.DataFrame,
@@ -337,95 +319,6 @@ class SOMAIndexedDataFrame(TileDBArray):
         """
         raise Exception("indexed from_pandas not implemented yet")
 
-        self._shape = None  # cache-invalidate
-
-        offsets_filters = tiledb.FilterList(
-            [tiledb.PositiveDeltaFilter(), tiledb.ZstdFilter(level=-1)]
-        )
-        dim_filters = tiledb.FilterList([tiledb.ZstdFilter(level=-1)])
-        attr_filters = tiledb.FilterList([tiledb.ZstdFilter(level=-1)])
-
-        s = util.get_start_stamp()
-        log_io(None, f"{self._indent}START  WRITING {self.get_uri()}")
-
-        # This is the non-indexed bit
-        assert ROWID not in dataframe.keys()
-        assert len(dataframe.shape) == 2
-        # E.g. (80, 7) is 80 rows x 7 columns
-        num_rows = dataframe.shape[0]
-        dataframe[ROWID] = np.asarray(range(num_rows))
-
-        mode = "ingest"
-        if self.exists():
-            mode = "append"
-            log_io(None, f"{self._indent}Re-using existing array {self.get_uri()}")
-
-        # Make obs_id a data column
-        # TODO: rename it from 'index' to 'obs_id' or 'var_id' etc as appropriate
-        dataframe.reset_index(inplace=True)
-        if id_column_name is not None:
-            dataframe.rename(columns={"index": id_column_name}, inplace=True)
-
-        dataframe.set_index(ROWID, inplace=True)
-
-        # ISSUE:
-        #
-        # TileDB attributes can be stored as Unicode but they are not yet queryable via the TileDB
-        # QueryCondition API. While this needs to be addressed -- global collaborators will want to
-        # write annotation-dataframe values in Unicode -- until then, to make obs/var data possible
-        # to query, we need to store these as ASCII.
-        #
-        # This is (besides collation) a storage-level issue not a presentation-level issue: At write
-        # time, this works — "α,β,γ" stores as "\xce\xb1,\xce\xb2,\xce\xb3"; at read time: since
-        # SOMA is an API: utf8-decode those strings when a query is done & give the user back
-        # "α,β,γ".
-        #
-        # CONTEXT:
-        # https://github.com/single-cell-data/TileDB-SingleCell/issues/99
-        # https://github.com/single-cell-data/TileDB-SingleCell/pull/101
-        # https://github.com/single-cell-data/TileDB-SingleCell/issues/106
-        # https://github.com/single-cell-data/TileDB-SingleCell/pull/117
-        #
-        # IMPLEMENTATION:
-        # Python types -- float, string, what have you -- appear as dtype('O') which is not useful.
-        # Also, `tiledb.from_pandas` has `column_types` but that _forces_ things to string to a
-        # particular if they shouldn't be.
-        #
-        # Instead, we use `dataframe.convert_dtypes` to get a little jump on what `tiledb.from_pandas`
-        # is going to be doing anyway, namely, type-inferring to see what is going to be a string.
-        #
-        # TODO: when UTF-8 attributes are queryable using TileDB-Py's QueryCondition API we can remove this.
-        column_types = {}
-        for column_name in dataframe.keys():
-            dfc = dataframe[column_name]
-            if len(dfc) > 0 and type(dfc[0]) == str:
-                # Force ASCII storage if string, in order to make obs/var columns queryable.
-                column_types[column_name] = np.dtype("S")
-
-        tiledb.from_pandas(
-            uri=self.get_uri(),
-            dataframe=dataframe,
-            name=self.get_name(),
-            sparse=True,  # TODO
-            allows_duplicates=self._tiledb_platform_config.allows_duplicates,
-            offsets_filters=offsets_filters,
-            attr_filters=attr_filters,
-            dim_filters=dim_filters,
-            capacity=100000,
-            tile=extent,
-            column_types=column_types,
-            ctx=self._ctx,
-            mode=mode,
-        )
-
-        self._common_create()  # object-type metadata etc
-
-        log_io(
-            f"Wrote {self._nested_name}",
-            util.format_elapsed(s, f"{self._indent}FINISH WRITING {self.get_uri()}"),
-        )
-
-    # TODO: TEMP
     def to_pandas(
         self,
         attrs: Optional[Sequence[str]] = None,
@@ -434,15 +327,6 @@ class SOMAIndexedDataFrame(TileDBArray):
         ] = None,  # to rename index to 'obs_id' or 'var_id', if desired, for anndata
     ) -> pd.DataFrame:
         """
-        TODO: comment
+        For `to_anndata`, as well as for any interactive use where the user wants a Pandas dataframe.
         """
-        with self._tiledb_open() as A:
-            df = A.df[:]
-            if attrs is not None:
-                df = df[attrs]
-            df = util._ascii_to_unicode_dataframe_readback(df)
-            df.reset_index(inplace=True)
-            if id_column_name is not None:
-                df.set_index(id_column_name, inplace=True)
-
-            return df
+        raise Exception("indexed to_pandas not implemented yet")

@@ -68,8 +68,7 @@ class TileDBArray(TileDBObject):
 
     def _show_metadata(self, recursively: bool = True, indent: str = "") -> None:
         """
-        Shows metadata for the array.
-        XXX TEMP TEMP TEMP
+        Prints metadata for the array, for interactive use.
         """
         print(f"{indent}[{self._name}]")
         for key, value in self.metadata:

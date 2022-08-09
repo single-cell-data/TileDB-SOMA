@@ -2,10 +2,10 @@ import pyarrow as pa
 
 import tiledbsc.v1 as t
 
-# TODO: set SOMAIndexedDataFrame as well
 def test_soma_dataframe_non_indexed(tmp_path):
     sdf = t.SOMADataFrame(uri=tmp_path.as_posix())
 
+    # Create
     asch = pa.schema(
         [
             ("foo", pa.int32()),
@@ -13,10 +13,9 @@ def test_soma_dataframe_non_indexed(tmp_path):
             ("baz", pa.string()),
         ]
     )
-
-    # Create
     sdf.create(schema=asch)
 
+    # ----------------------------------------------------------------
     # Write
     for _i in range(3):
         pydict = {}
@@ -27,15 +26,17 @@ def test_soma_dataframe_non_indexed(tmp_path):
         rb = pa.RecordBatch.from_pydict(pydict)
         sdf.write(rb)
 
+    # ----------------------------------------------------------------
     # Read all
     batches = []
-    for batch in sdf.read(ids="all"):
+    for batch in sdf.read():
         batches.append(batch)
     # Weird thing about pyarrow RecordBatch:
     # * We should have 5 "rows" with 3 "columns"
     # * Indeed batch.num_rows is 5 and batch.num_columns is 3
     # * But len(batch) is 3
-    # * If you thought `for record in record_batch` would print records ... you would be wrong -- it loops over columns
+    # * If you thought `for record in record_batch` would print records ... you would be wrong -- it
+    #   loops over columns
     assert len(batches) == 1
     batch = batches[0]
     assert batch.num_rows == 5
@@ -51,7 +52,8 @@ def test_soma_dataframe_non_indexed(tmp_path):
     assert [e.as_py() for e in list(batch["bar"])] == pydict["bar"]
     assert [e.as_py() for e in list(batch["baz"])] == pydict["baz"]
 
-    # Read ids
+    # ----------------------------------------------------------------
+    # Read by ids
     batches = []
     for batch in sdf.read(ids=[1, 2]):
         batches.append(batch)
@@ -59,7 +61,8 @@ def test_soma_dataframe_non_indexed(tmp_path):
     # * We should have 5 "rows" with 3 "columns"
     # * Indeed batch.num_rows is 5 and batch.num_columns is 3
     # * But len(batch) is 3
-    # * If you thought `for record in record_batch` would print records ... you would be wrong -- it loops over columns
+    # * If you thought `for record in record_batch` would print records ... you would be wrong -- it
+    #   loops over columns
     assert len(batches) == 1
     batch = batches[0]
     assert batch.num_rows == 2
@@ -75,7 +78,8 @@ def test_soma_dataframe_non_indexed(tmp_path):
     assert sorted([e.as_py() for e in list(batch["bar"])]) == [5.2, 6.3]
     assert sorted([e.as_py() for e in list(batch["baz"])]) == ["ball", "cat"]
 
-    # Read ids
+    # ----------------------------------------------------------------
+    # Read by ids
     batches = []
     for batch in sdf.read(ids=slice(1, 2)):
         batches.append(batch)
@@ -83,7 +87,8 @@ def test_soma_dataframe_non_indexed(tmp_path):
     # * We should have 5 "rows" with 3 "columns"
     # * Indeed batch.num_rows is 5 and batch.num_columns is 3
     # * But len(batch) is 3
-    # * If you thought `for record in record_batch` would print records ... you would be wrong -- it loops over columns
+    # * If you thought `for record in record_batch` would print records ... you would be wrong -- it
+    #   loops over columns
     assert len(batches) == 1
     batch = batches[0]
     assert batch.num_rows == 2
@@ -99,64 +104,28 @@ def test_soma_dataframe_non_indexed(tmp_path):
     assert sorted([e.as_py() for e in list(batch["bar"])]) == [5.2, 6.3]
     assert sorted([e.as_py() for e in list(batch["baz"])]) == ["ball", "cat"]
 
-
-def test_soma_dataframe_indexed(tmp_path):
-    sdf = t.SOMAIndexedDataFrame(uri=tmp_path.as_posix())
-
-    asch = pa.schema(
-        [
-            ("foo", pa.int32()),
-            ("bar", pa.float64()),
-            ("baz", pa.string()),
-        ]
-    )
-
-    # Create
-    sdf.create(schema=asch, index_column_names=["foo"])
-
-    # Write
-    for _ in range(3):
-        pydict = {}
-        pydict["foo"] = [10, 20, 30, 40, 50]
-        pydict["bar"] = [4.1, 5.2, 6.3, 7.4, 8.5]
-        pydict["baz"] = ["apple", "ball", "cat", "dog", "egg"]
-        rb = pa.RecordBatch.from_pydict(pydict)
-        sdf.write(rb)
-
-    # Read all
+    # ----------------------------------------------------------------
+    # Read by value_filter
     batches = []
-    for batch in sdf.read(ids="all"):
+    for batch in sdf.read(value_filter='foo == 40 or foo == 20'):
         batches.append(batch)
     # Weird thing about pyarrow RecordBatch:
     # * We should have 5 "rows" with 3 "columns"
     # * Indeed batch.num_rows is 5 and batch.num_columns is 3
     # * But len(batch) is 3
-    # * If you thought `for record in record_batch` would print records ... you would be wrong -- it loops over columns
-    assert len(batches) == 1
-    batch = batches[0]
-    assert batch.num_rows == 5
-    # We should be getting back the soma_rowid column as well
-    assert batch.num_columns == 4
-    assert [e.as_py() for e in list(batch["soma_rowid"])] == [0, 1, 2, 3, 4]
-    assert [e.as_py() for e in list(batch["foo"])] == pydict["foo"]
-    assert [e.as_py() for e in list(batch["bar"])] == pydict["bar"]
-    assert [e.as_py() for e in list(batch["baz"])] == pydict["baz"]
-
-    # Read ids
-    batches = []
-    for batch in sdf.read(ids=[30, 10]):
-        batches.append(batch)
-    # Weird thing about pyarrow RecordBatch:
-    # * We should have 5 "rows" with 3 "columns"
-    # * Indeed batch.num_rows is 5 and batch.num_columns is 3
-    # * But len(batch) is 3
-    # * If you thought `for record in record_batch` would print records ... you would be wrong -- it loops over columns
+    # * If you thought `for record in record_batch` would print records ... you would be wrong -- it
+    #   loops over columns
     assert len(batches) == 1
     batch = batches[0]
     assert batch.num_rows == 2
+
     # We should be getting back the soma_rowid column as well
+    # If sparse dataframe:
     assert batch.num_columns == 4
-    assert sorted([e.as_py() for e in list(batch["soma_rowid"])]) == [0, 2]
-    assert sorted([e.as_py() for e in list(batch["foo"])]) == [10, 30]
-    assert sorted([e.as_py() for e in list(batch["bar"])]) == [4.1, 6.3]
-    assert sorted([e.as_py() for e in list(batch["baz"])]) == ["apple", "cat"]
+    # If dense dataframe:
+    # assert batch.num_columns == 3
+
+    # TODO assert [e.as_py() for e in list(batch['soma_rowid'])] == [0,1,2,3,4]
+    assert sorted([e.as_py() for e in list(batch["foo"])]) == [20, 40]
+    assert sorted([e.as_py() for e in list(batch["bar"])]) == [5.2, 7.4]
+    assert sorted([e.as_py() for e in list(batch["baz"])]) == ["ball", "dog"]
