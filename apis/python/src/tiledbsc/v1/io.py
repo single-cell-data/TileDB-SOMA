@@ -102,7 +102,7 @@ def from_anndata(
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     # OBS
-    experiment.obs.from_pandas(
+    experiment.obs.write_from_pandas(
         dataframe=anndata.obs, extent=256, id_column_name="obs_id"
     )
     experiment.set(experiment.obs)
@@ -118,7 +118,7 @@ def from_anndata(
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     # MS/meas/VAR
-    measurement.var.from_pandas(
+    measurement.var.write_from_pandas(
         dataframe=anndata.var, extent=2048, id_column_name="var_id"
     )
     measurement.set(measurement.var)
@@ -174,7 +174,7 @@ def from_anndata(
         raw_measurement.create()
         experiment.ms.set(raw_measurement)
 
-        raw_measurement.var.from_pandas(
+        raw_measurement.var.write_from_pandas(
             dataframe=anndata.raw.var, extent=2048, id_column_name="var_id"
         )
         raw_measurement.set(raw_measurement.var)
@@ -258,10 +258,10 @@ def to_anndata(
 #    # TODO: FINISH PORTING
 #
 #    # TODO: need an index-converter ... inside the class maybe?
-#    # sdf.from_pandas takes an optional id_column_name; so should sdf.to_pandas
+#    # sdf.write_from_pandas takes an optional id_column_name; so should sdf.read_as_pandas
 #
-#    obs_df = experiment.obs.to_pandas(id_column_name="obs_id")
-#    var_df = experiment.ms[measurement_name].var.to_pandas(id_column_name="var_id")
+#    obs_df = experiment.obs.read_as_pandas(id_column_name="obs_id")
+#    var_df = experiment.ms[measurement_name].var.read_as_pandas(id_column_name="var_id")
 #
 #    #   data = experiment.ms[measurement_name].X["data"]
 #    #   assert data is not None

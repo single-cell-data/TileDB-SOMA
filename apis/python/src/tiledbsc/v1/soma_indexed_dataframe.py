@@ -332,7 +332,7 @@ class SOMAIndexedDataFrame(TileDBArray):
             else:
                 raise Exception("ndims >= 2 not currently supported")
 
-    def to_pandas(
+    def read_as_pandas(
         self,
         attrs: Optional[Sequence[str]] = None,
         # to rename index to 'obs_id' or 'var_id', if desired, for anndata
@@ -341,9 +341,9 @@ class SOMAIndexedDataFrame(TileDBArray):
         """
         For `to_anndata`, as well as for any interactive use where the user wants a Pandas dataframe.
         """
-        raise Exception("indexed to_pandas not implemented yet")
+        raise Exception("indexed read_as_pandas not implemented yet")
 
-    def from_pandas(
+    def write_from_pandas(
         self,
         dataframe: pd.DataFrame,
         index_column_names: List[str],
@@ -358,4 +358,4 @@ class SOMAIndexedDataFrame(TileDBArray):
         :param dataframe: `anndata.obs`
         :param extent: TileDB `extent` parameter for the array schema.
         """
-        raise Exception("indexed from_pandas not implemented yet")
+        raise Exception("indexed write_from_pandas not implemented yet")

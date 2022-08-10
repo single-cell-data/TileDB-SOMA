@@ -280,7 +280,7 @@ class SOMADataFrame(TileDBArray):
             with self._tiledb_open("w") as A:
                 A[lo : (hi + 1)] = attr_cols_map
 
-    def to_pandas(
+    def read_as_pandas(
         self,
         *,
         ids: Optional[Ids] = None,
@@ -292,7 +292,7 @@ class SOMADataFrame(TileDBArray):
         """
         Reads from SOMA storage into memory.  For `to_anndata`, as well as for any interactive use
         where the user wants a Pandas dataframe.  Returns a generator over dataframes for batched
-        read. See also `to_pandas_all` for a convenience wrapper.
+        read. See also `read_as_pandas_all` for a convenience wrapper.
         """
 
         with self._tiledb_open() as A:
@@ -323,7 +323,7 @@ class SOMADataFrame(TileDBArray):
 
                 yield df
 
-    def to_pandas_all(
+    def read_as_pandas_all(
         self,
         *,
         ids: Optional[Ids] = None,
@@ -333,12 +333,12 @@ class SOMADataFrame(TileDBArray):
         id_column_name: Optional[str] = None,
     ) -> pd.DataFrame:
         """
-        Reads from SOMA storage into memory.  Iterates over batches from `to_pandas`, concatenating
+        Reads from SOMA storage into memory.  Iterates over batches from `read_as_pandas`, concatenating
         the output into a single dataframe.  Convenient for unit-test use; also, handy whenever
         you're certain that the data being queried can be read entirely into memory.
         """
         dataframes = []
-        generator = self.to_pandas(
+        generator = self.read_as_pandas(
             ids=ids,
             value_filter=value_filter,
             column_names=column_names,
@@ -348,7 +348,7 @@ class SOMADataFrame(TileDBArray):
             dataframes.append(dataframe)
         return pd.concat(dataframes)
 
-    def from_pandas(
+    def write_from_pandas(
         self,
         dataframe: pd.DataFrame,
         *,
