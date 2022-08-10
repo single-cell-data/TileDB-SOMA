@@ -95,7 +95,7 @@ def test_soma_dataframe_non_indexed(tmp_path):
 
     # ----------------------------------------------------------------
     # Read by value_filter
-    batch = sdf.read_all(value_filter='foo == 40 or foo == 20')
+    batch = sdf.read_all(value_filter="foo == 40 or foo == 20")
     # Weird thing about pyarrow RecordBatch:
     # * We should have 5 "rows" with 3 "columns"
     # * Indeed batch.num_rows is 5 and batch.num_columns is 3

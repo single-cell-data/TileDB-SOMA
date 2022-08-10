@@ -1,4 +1,3 @@
-import os
 import tempfile
 from pathlib import Path
 
@@ -35,7 +34,7 @@ def test_import_anndata(adata):
 
     # Ingest
     exp = tiledbsc.v1.SOMAExperiment(output_path)
-    tiledbsc.v1.io.from_anndata(exp, orig)
+    tiledbsc.v1.io.from_anndata(exp, orig, "mRNA")
 
     # Structure:
     # pbmc-small SOMAExperiment:

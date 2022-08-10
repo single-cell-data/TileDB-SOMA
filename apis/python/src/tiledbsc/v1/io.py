@@ -1,4 +1,4 @@
-from typing import Callable, Optional
+from typing import Callable
 
 import anndata as ad
 
@@ -23,27 +23,21 @@ from .types import Path
 
 
 # ----------------------------------------------------------------
-def from_h5ad(experiment: SOMAExperiment, input_path: Path) -> None:
+def from_h5ad(
+    experiment: SOMAExperiment, input_path: Path, measurement_name: str
+) -> None:
     """
     Reads an .h5ad file and writes to a TileDB group structure.
     """
-    _from_h5ad_common(experiment, input_path, from_anndata)
+    _from_h5ad_common(experiment, input_path, from_anndata, measurement_name)
 
-
-# ----------------------------------------------------------------
-# def from_h5ad_update_obs_and_var(experiment: SOMAExperiment, input_path: Path) -> None:
-#    """
-#    Rewrites obs and var from the specified .h5ad file, leaving all other data in place. Useful for
-#    updating schema/compression/etc. within an existing dataset.
-#    """
-#    _from_h5ad_common(experiment, input_path, from_anndata_update_obs_and_var)
-#
 
 # ----------------------------------------------------------------
 # TODO TEMP WIP
 def _from_h5ad_common(
     experiment: SOMAExperiment,
     input_path: Path,
+    measurement_name: str,
     handler_func: Callable[[SOMAExperiment, ad.AnnData], None],
 ) -> None:
     """
@@ -64,7 +58,7 @@ def _from_h5ad_common(
         util.format_elapsed(s, f"{experiment._indent}FINISH READING {input_path}"),
     )
 
-    handler_func(experiment, anndata)
+    handler_func(experiment, anndata, measurement_name)
 
     logging.log_io(
         None,
@@ -76,35 +70,9 @@ def _from_h5ad_common(
 
 
 # ----------------------------------------------------------------
-# def from_10x(experiment: SOMAExperiment, input_path: Path) -> None:
-#    """
-#    Reads a 10X file and writes to a TileDB group structure.
-#    """
-#    s = util.get_start_stamp()
-#    logging.log_io(None, f"START  v1.SOMAExperiment.from_10x {input_path} -> {experiment.get_uri()}")
-#
-#    logging.log_io(None, f"{experiment._indent}START  READING {input_path}")
-#
-#    anndata = scanpy.read_10x_h5(input_path)
-#
-#    logging.log_io(
-#        None,
-#        util.format_elapsed(s, f"{experiment._indent}FINISH READING {input_path}"),
-#    )
-#
-#    from_anndata(experiment, anndata)
-#
-#    logging.log_io(
-#        None,
-#        util.format_elapsed(
-#            s, f"FINISH v1.SOMAExperiment.from_10x {input_path} -> {experiment.get_uri()}"
-#        ),
-#    )
-
-
-# ----------------------------------------------------------------
-# TODO TEMP WIP
-def from_anndata(experiment: SOMAExperiment, anndata: ad.AnnData) -> None:
+def from_anndata(
+    experiment: SOMAExperiment, anndata: ad.AnnData, measurement_name: str
+) -> None:
     """
     Top-level writer method for creating a TileDB group for a v1.SOMAExperiment object.
     """
@@ -144,7 +112,7 @@ def from_anndata(experiment: SOMAExperiment, anndata: ad.AnnData) -> None:
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     # MS
-    measurement = SOMAMeasurement(uri=f"{experiment.ms.get_uri()}/mRNA")
+    measurement = SOMAMeasurement(uri=f"{experiment.ms.get_uri()}/{measurement_name}")
     measurement.create()
     experiment.ms.set(measurement)
 
@@ -233,53 +201,7 @@ def from_anndata(experiment: SOMAExperiment, anndata: ad.AnnData) -> None:
 
 
 # ----------------------------------------------------------------
-
-# def from_anndata_update_obs_and_var(experiment: SOMAExperiment, anndata: ad.AnnData) -> None:
-#    """
-#    Rewrites obs and var from anndata, leaving all other data in place. Useful
-#    for updating schema/compression/etc. within an existing dataset.
-#    """
-#
-#    # Without _at least_ an index, there is nothing to indicate the dimension indices.
-#    if anndata.obs.index.empty or anndata.var.index.empty:
-#        raise NotImplementedError("Empty AnnData.obs or AnnData.var unsupported.")
-#
-#    s = util.get_start_stamp()
-#    logging.log_io(None, f"{experiment._indent}START  DECATEGORICALIZING")
-#
-#    anndata.obs_names_make_unique()
-#    anndata.var_names_make_unique()
-#    anndata = util_ann._decategoricalize(anndata)
-#
-#    logging.log_io(
-#        None,
-#        util.format_elapsed(s, f"{experiment._indent}FINISH DECATEGORICALIZING"),
-#    )
-#
-#    s = util.get_start_stamp()
-#    logging.log_io(None, f"{experiment._indent}START  WRITING {experiment.get_uri()}")
-#
-#    # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-#    experiment._remove_object(experiment.obs)
-#    experiment.obs.from_pandas(dataframe=anndata.obs, extent=256)
-#    experiment.set(experiment.obs)
-#    tiledb.consolidate(experiment.obs.get_uri())
-#    tiledb.vacuum(experiment.obs.get_uri())
-#
-#    experiment._remove_object(experiment.var)
-#    experiment.var.from_pandas(dataframe=anndata.var, extent=2048)
-#    experiment.set(experiment.var)
-#    tiledb.consolidate(experiment.var.get_uri())
-#    tiledb.vacuum(experiment.var.get_uri())
-#
-#    logging.log_io(
-#        None,
-#        util.format_elapsed(s, f"{experiment._indent}FINISH WRITING {experiment.get_uri()}"),
-#    )
-
-
-# ----------------------------------------------------------------
-def to_h5ad(experiment: SOMAExperiment, h5ad_path: Path) -> None:
+def to_h5ad(experiment: SOMAExperiment, h5ad_path: Path, measurement_name: str) -> None:
     """
     Converts the experiment group to anndata format and writes it to the specified .h5ad file.
     As of 2022-05-05 this is an incomplete prototype.
@@ -316,7 +238,7 @@ def to_anndata(
     *,
     # TODO: set a better name as capitalized-const
     # TODO: maybe if there are multiple measurements, default to the first one not named 'raw'
-    measurement_name: Optional[str] = "mRNA",
+    measurement_name: str,
 ) -> ad.AnnData:
     """
     Converts the experiment group to anndata. Choice of matrix formats is following
@@ -339,17 +261,17 @@ def to_anndata(
 #    # sdf.from_pandas takes an optional id_column_name; so should sdf.to_pandas
 #
 #    obs_df = experiment.obs.to_pandas(id_column_name="obs_id")
-#    var_df = experiment.ms["mRNA"].var.to_pandas(id_column_name="var_id")
+#    var_df = experiment.ms[measurement_name].var.to_pandas(id_column_name="var_id")
 #
-#    #   data = experiment.ms["mRNA"].X["data"]
+#    #   data = experiment.ms[measurement_name].X["data"]
 #    #   assert data is not None
 #    #   X_mat = data.to_csr_matrix(obs_df.index, var_df.index)
 #
-#    #   obsm = experiment.ms['mRNA'].obsm.to_dict_of_npnda()
-#    #   varm = experiment.ms['mRNA'].varm.to_dict_of_npndacsr()
+#    #   obsm = experiment.ms[measurement_name].obsm.to_dict_of_npnda()
+#    #   varm = experiment.ms[measurement_name].varm.to_dict_of_npndacsr()
 #
-#    #   obsp = experiment.ms['mRNA'].obsp.to_dict_of_csr(obs_df.index, obs_df.index)
-#    #   varp = experiment.ms['mRNA'].varp.to_dict_of_csr(var_df.index, var_df.index)
+#    #   obsp = experiment.ms[measurement_name].obsp.to_dict_of_csr(obs_df.index, obs_df.index)
+#    #   varp = experiment.ms[measurement_name].varp.to_dict_of_csr(var_df.index, var_df.index)
 #
 #    anndata = ad.AnnData(
 #        # X=X_mat,
