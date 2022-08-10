@@ -4,7 +4,7 @@ SOMA -- for _stack of matrices, annotated_ -- is a unified data model and API fo
 
 If you know about `obs`, `var`, and `X`, you'll recognize what you're seeing.
 
-The [data model and API](https://github.com/single-cell-data) -- here as implemented using the [TileDB storage engine](https://tiledb.com) -- allow you to persist, investigate, and share annotated 2D-matrix single-cell data.
+The [data model and API](https://github.com/single-cell-data) -- here as implemented using the [TileDB storage engine](https://tiledb.com) -- allow you to persist, investigate, and share annotated 2D matrices, commonly used in single-cell biology.
 
 Features:
 
