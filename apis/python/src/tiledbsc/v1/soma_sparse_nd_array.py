@@ -134,12 +134,6 @@ class SOMASparseNdArray(TileDBArray):
         """
         return len(self.get_shape())
 
-    # TODO
-    #    def get_schema(self) -> Arrow.Schema:
-    #        """
-    #        Return data schema, in the form of an Arrow Schema
-    #        """
-
     def get_is_sparse(self) -> bool:
         """
         Returns ``True``.

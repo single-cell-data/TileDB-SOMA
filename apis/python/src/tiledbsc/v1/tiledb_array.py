@@ -1,8 +1,10 @@
 from typing import Optional, Sequence
 
+import pyarrow as pa
 import tiledb
 
 import tiledbsc
+import tiledbsc.v1.util_arrow as util_arrow
 
 from .tiledb_object import TileDBObject
 
@@ -25,6 +27,12 @@ class TileDBArray(TileDBObject):
         See the TileDBObject constructor.
         """
         super().__init__(uri, name=name, parent=parent)
+
+    def get_schema(self) -> pa.Schema:
+        """
+        Return data schema, in the form of an Arrow Schema
+        """
+        return util_arrow.get_arrow_schema_from_tiledb_uri(self.get_uri(), self._ctx)
 
     # TODO
     #    def delete(uri: str) -> None

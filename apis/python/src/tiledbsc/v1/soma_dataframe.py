@@ -1,4 +1,4 @@
-from typing import Any, Generator, Iterator, List, Optional, Sequence, TypeVar
+from typing import Any, Iterator, List, Optional, Sequence, TypeVar
 
 import numpy as np
 import pandas as pd
@@ -153,12 +153,6 @@ class SOMADataFrame(TileDBArray):
         """
         return len(self.get_index_column_names())
 
-    # TODO
-    #    def get_schema(self) -> Arrow.Schema:
-    #        """
-    #        Return data schema, in the form of an Arrow Schema
-    #        """
-
     def get_indexed(self) -> bool:
         return False
 
@@ -294,7 +288,7 @@ class SOMADataFrame(TileDBArray):
         column_names: Optional[Sequence[str]] = None,
         # to rename index to 'obs_id' or 'var_id', if desired, for anndata
         id_column_name: Optional[str] = None,
-    ) -> Generator:
+    ) -> Iterator[pd.DataFrame]:
         """
         Reads from SOMA storage into memory.  For `to_anndata`, as well as for any interactive use
         where the user wants a Pandas dataframe.  Returns a generator over dataframes for batched
