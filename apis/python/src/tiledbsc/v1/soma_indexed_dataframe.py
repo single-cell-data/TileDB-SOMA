@@ -1,4 +1,4 @@
-from typing import Any, Iterator, List, Optional, Sequence, TypeVar, Union
+from typing import Any, Generator, Iterator, List, Optional, Sequence, TypeVar, Union
 
 import numpy as np
 import pandas as pd
@@ -332,15 +332,25 @@ class SOMAIndexedDataFrame(TileDBArray):
             else:
                 raise Exception("ndims >= 2 not currently supported")
 
+    def to_pandas(
+        self,
+        attrs: Optional[Sequence[str]] = None,
+        # to rename index to 'obs_id' or 'var_id', if desired, for anndata
+        id_column_name: Optional[str] = None,
+    ) -> Generator:
+        """
+        For `to_anndata`, as well as for any interactive use where the user wants a Pandas dataframe.
+        """
+        raise Exception("indexed to_pandas not implemented yet")
+
     def from_pandas(
         self,
         dataframe: pd.DataFrame,
         index_column_names: List[str],
         *,
         extent: int = 2048,
-        id_column_name: Optional[
-            str
-        ] = None,  # to rename index to 'obs_id' or 'var_id', if desired, for anndata
+        # to rename index to 'obs_id' or 'var_id', if desired, for anndata
+        id_column_name: Optional[str] = None,
     ) -> None:
         """
         Populates the `obs` element of a SOMAExperiment object.
@@ -349,15 +359,3 @@ class SOMAIndexedDataFrame(TileDBArray):
         :param extent: TileDB `extent` parameter for the array schema.
         """
         raise Exception("indexed from_pandas not implemented yet")
-
-    def to_pandas(
-        self,
-        attrs: Optional[Sequence[str]] = None,
-        id_column_name: Optional[
-            str
-        ] = None,  # to rename index to 'obs_id' or 'var_id', if desired, for anndata
-    ) -> pd.DataFrame:
-        """
-        For `to_anndata`, as well as for any interactive use where the user wants a Pandas dataframe.
-        """
-        raise Exception("indexed to_pandas not implemented yet")

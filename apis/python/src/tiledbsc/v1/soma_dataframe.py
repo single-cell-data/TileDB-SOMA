@@ -1,4 +1,4 @@
-from typing import Any, Iterator, List, Optional, Sequence, TypeVar
+from typing import Any, Generator, Iterator, List, Optional, Sequence, TypeVar
 
 import numpy as np
 import pandas as pd
@@ -219,7 +219,7 @@ class SOMADataFrame(TileDBArray):
                     # XXX COMMENT MORE
                     # This is the 'decode on read' part of our logic; in dim_select we have the
                     # 'encode on write' part.
-                    # Context: # https://github.com/single-cell-data/TileDB-SingleCell/issues/99.
+                    # Context: https://github.com/single-cell-data/TileDB-SingleCell/issues/99.
                     yield util_arrow.ascii_to_unicode_pyarrow_readback(batch)
 
     def read_all(
@@ -286,6 +286,74 @@ class SOMADataFrame(TileDBArray):
             with self._tiledb_open("w") as A:
                 A[lo : (hi + 1)] = attr_cols_map
 
+    def to_pandas(
+        self,
+        *,
+        ids: Optional[Ids] = None,
+        value_filter: Optional[str] = None,
+        column_names: Optional[Sequence[str]] = None,
+        # to rename index to 'obs_id' or 'var_id', if desired, for anndata
+        id_column_name: Optional[str] = None,
+    ) -> Generator:
+        """
+        Reads from SOMA storage into memory.  For `to_anndata`, as well as for any interactive use
+        where the user wants a Pandas dataframe.  Returns a generator over dataframes for batched
+        read. See also `to_pandas_all` for a convenience wrapper.
+        """
+
+        with self._tiledb_open() as A:
+            if value_filter is None:
+                query = A.query(return_incomplete=True)
+            else:
+                qc = tiledb.QueryCondition(value_filter)
+                query = A.query(return_incomplete=True, attr_cond=qc)
+
+            if ids is None:
+                iterator = query.df[:]
+            else:
+                iterator = query.df[ids]
+
+            if column_names is not None:
+                iterator = iterator[column_names]
+
+            for df in iterator:
+
+                # This is the 'decode on read' part of our logic; in dim_select we have the 'encode on
+                # write' part.
+                # Context: https://github.com/single-cell-data/TileDB-SingleCell/issues/99.
+                df = util._ascii_to_unicode_pandas_readback(df)
+
+                if id_column_name is not None:
+                    df.reset_index(inplace=True)
+                    df.set_index(id_column_name, inplace=True)
+
+                yield df
+
+    def to_pandas_all(
+        self,
+        *,
+        ids: Optional[Ids] = None,
+        value_filter: Optional[str] = None,
+        column_names: Optional[Sequence[str]] = None,
+        # to rename index to 'obs_id' or 'var_id', if desired, for anndata
+        id_column_name: Optional[str] = None,
+    ) -> pd.DataFrame:
+        """
+        Reads from SOMA storage into memory.  Iterates over batches from `to_pandas`, concatenating
+        the output into a single dataframe.  Convenient for unit-test use; also, handy whenever
+        you're certain that the data being queried can be read entirely into memory.
+        """
+        dataframes = []
+        generator = self.to_pandas(
+            ids=ids,
+            value_filter=value_filter,
+            column_names=column_names,
+            id_column_name=id_column_name,
+        )
+        for dataframe in generator:
+            dataframes.append(dataframe)
+        return pd.concat(dataframes)
+
     def from_pandas(
         self,
         dataframe: pd.DataFrame,
@@ -295,9 +363,9 @@ class SOMADataFrame(TileDBArray):
         id_column_name: Optional[str] = None,
     ) -> None:
         """
-        Populates the `obs` element of a SOMAExperiment object.
+        Writes from memory to SOMA storage.
 
-        :param dataframe: `anndata.obs`
+        :param dataframe: `anndata.obs` for example.
         :param extent: TileDB `extent` parameter for the array schema.
         """
         self._shape = None  # cache-invalidate
@@ -386,41 +454,3 @@ class SOMADataFrame(TileDBArray):
             f"Wrote {self._nested_name}",
             util.format_elapsed(s, f"{self._indent}FINISH WRITING {self.get_uri()}"),
         )
-
-    def to_pandas(
-        self,
-        *,
-        ids: Optional[Ids] = None,
-        value_filter: Optional[str] = None,
-        column_names: Optional[Sequence[str]] = None,
-        # to rename index to 'obs_id' or 'var_id', if desired, for anndata
-        id_column_name: Optional[str] = None,
-    ) -> pd.DataFrame:
-        """
-        For `to_anndata`, as well as for any interactive use where the user wants a Pandas dataframe.
-        """
-
-        with self._tiledb_open() as A:
-            if value_filter is None:
-                query = A.query()
-            else:
-                qc = tiledb.QueryCondition(value_filter)
-                query = A.query(attr_cond=qc)
-
-            if ids is None:
-                df = query.df[:]
-            else:
-                df = query.df[ids]
-
-            if column_names is not None:
-                df = df[column_names]
-
-            # This is the 'decode on read' part of our logic; in dim_select we have the 'encode on
-            # write' part.
-            # Context: # https://github.com/single-cell-data/TileDB-SingleCell/issues/99.
-            df = util._ascii_to_unicode_pandas_readback(df)
-
-            if id_column_name is not None:
-                df.reset_index(inplace=True)
-                df.set_index(id_column_name, inplace=True)
-            return df
