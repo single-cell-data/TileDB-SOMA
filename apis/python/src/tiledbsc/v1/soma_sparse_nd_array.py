@@ -1,6 +1,6 @@
 import math
 import time
-from typing import List, Optional, Sequence, Union
+from typing import Any, Iterator, List, Optional, Sequence, Union
 
 import numpy as np
 import pandas as pd
@@ -8,7 +8,7 @@ import pyarrow as pa
 import scipy.sparse as sp
 import tiledb
 
-from . import eta, logging, util, util_arrow
+from . import eta, logging, util, util_arrow, util_tiledb
 from .soma_collection import SOMACollection
 from .tiledb_array import TileDBArray
 from .types import Matrix, NTuple
@@ -136,6 +136,70 @@ class SOMASparseNdArray(TileDBArray):
         """
         return True
 
+    def read(
+        self,
+        *,
+        # TODO: find the right syntax to get the typechecker to accept args like `ids=slice(0,10)`
+        # ids: Optional[Union[Sequence[int], Slice]] = None,
+        ids: Optional[Any] = None,
+        result_order: Optional[str] = None,
+        # TODO: batch_size
+        # TODO: partition,
+        # TODO: batch_format,
+        # TODO: platform_config,
+    ) -> Iterator[pa.RecordBatch]:
+        """
+        TODO: comment
+        """
+        tiledb_result_order = (
+            util_tiledb.tiledb_result_order_from_soma_result_order_indexed(result_order)
+        )
+
+        with self._tiledb_open("r") as A:
+            query = A.query(
+                return_arrow=True,
+                return_incomplete=True,
+                order=tiledb_result_order,
+            )
+
+            if ids is None:
+                iterator = query.df[:]
+            else:
+                iterator = query.df[ids]
+
+            for df in iterator:
+                batches = df.to_batches()
+                for batch in batches:
+                    # XXX COMMENT MORE
+                    # This is the 'decode on read' part of our logic; in dim_select we have the
+                    # 'encode on write' part.
+                    # Context: https://github.com/single-cell-data/TileDB-SingleCell/issues/99.
+                    yield util_arrow.ascii_to_unicode_pyarrow_readback(batch)
+
+    def read_all(
+        self,
+        *,
+        # TODO: find the right syntax to get the typechecker to accept args like `ids=slice(0,10)`
+        # ids: Optional[Union[Sequence[int], Slice]] = None,
+        ids: Optional[Any] = None,
+        result_order: Optional[str] = None,
+        # TODO: batch_size
+        # TODO: partition,
+        # TODO: batch_format,
+        # TODO: platform_config,
+    ) -> pa.RecordBatch:
+        """
+        This is a convenience method around `read`. It iterates the return value from `read`
+        and returns a concatenation of all the record batches found. Its nominal use is to
+        simply unit-test cases.
+        """
+        return util_arrow.concat_batches(
+            self.read(
+                ids=ids,
+                result_order=result_order,
+            )
+        )
+
     # TODO
     #    def get_nnz(self) -> wint:
     #        """
@@ -222,7 +286,7 @@ class SOMASparseNdArray(TileDBArray):
     # ================================================================
     # ================================================================
     # ================================================================
-    def to_pandas(
+    def read_as_pandas(
         self,
         *,
         row_ids: Optional[Sequence[int]] = None,
