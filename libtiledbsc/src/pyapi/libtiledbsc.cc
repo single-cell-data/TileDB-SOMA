@@ -8,6 +8,12 @@
 
 #include "arrow_adapter.h"
 
+#ifdef BUILD_COMMIT_HASH
+#define VERSION BUILD_COMMIT_HASH
+#else
+#define VERSION "dev"
+#endif
+
 #define DENUM(x) .value(#x, TILEDB_##x)
 
 using namespace tiledbsc;
@@ -78,6 +84,13 @@ py::object to_table(ArrayBuffers& cbs) {
  */
 PYBIND11_MODULE(libtiledbsc, m) {
     m.doc() = "SOMA acceleration library";
+
+    m.def("version", []() {
+        int major, minor, patch;
+        tiledb_version(&major, &minor, &patch);
+        return fmt::format(
+            "libtiledbsc={} libtiledb={}.{}.{}", VERSION, major, minor, patch);
+    });
 
     m.def(
         "config_logging",

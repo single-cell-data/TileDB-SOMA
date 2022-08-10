@@ -5,6 +5,10 @@ $<TARGET_OBJECTS:TILEDB_SC_OBJECTS>
 libtiledbsc.cc
 )
 
+target_compile_definitions(libtiledbsc PRIVATE
+  -DBUILD_COMMIT_HASH="${BUILD_COMMIT_HASH}"
+)
+
 target_link_libraries(libtiledbsc
     PUBLIC
     tiledbsc
