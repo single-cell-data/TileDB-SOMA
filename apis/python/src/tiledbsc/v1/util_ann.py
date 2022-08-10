@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 import scipy.sparse as sp
 
-from . import util
+from . import util_tiledb
 from .types import Path
 
 
@@ -261,25 +261,39 @@ def _decategoricalize(anndata: ad.AnnData) -> ad.AnnData:
     # If the DataFrame contains only an index, just use it as is.
     if len(anndata.obs.columns) > 0:
         new_obs = pd.DataFrame.from_dict(
-            {k: util._to_tiledb_supported_array_type(v) for k, v in anndata.obs.items()}
+            {
+                k: util_tiledb.to_tiledb_supported_array_type(v)
+                for k, v in anndata.obs.items()
+            }
         )
     else:
         new_obs = anndata.obs
     if len(anndata.var.columns) > 0:
         new_var = pd.DataFrame.from_dict(
-            {k: util._to_tiledb_supported_array_type(v) for k, v in anndata.var.items()}
+            {
+                k: util_tiledb.to_tiledb_supported_array_type(v)
+                for k, v in anndata.var.items()
+            }
         )
     else:
         new_var = anndata.var
 
     for key in anndata.obsm.keys():
-        anndata.obsm[key] = util._to_tiledb_supported_array_type(anndata.obsm[key])
+        anndata.obsm[key] = util_tiledb.to_tiledb_supported_array_type(
+            anndata.obsm[key]
+        )
     for key in anndata.varm.keys():
-        anndata.varm[key] = util._to_tiledb_supported_array_type(anndata.varm[key])
+        anndata.varm[key] = util_tiledb.to_tiledb_supported_array_type(
+            anndata.varm[key]
+        )
     for key in anndata.obsp.keys():
-        anndata.obsp[key] = util._to_tiledb_supported_array_type(anndata.obsp[key])
+        anndata.obsp[key] = util_tiledb.to_tiledb_supported_array_type(
+            anndata.obsp[key]
+        )
     for key in anndata.varp.keys():
-        anndata.varp[key] = util._to_tiledb_supported_array_type(anndata.varp[key])
+        anndata.varp[key] = util_tiledb.to_tiledb_supported_array_type(
+            anndata.varp[key]
+        )
 
     if anndata.raw is None:  # Some datasets have no raw.
         new_raw = None
@@ -295,13 +309,13 @@ def _decategoricalize(anndata: ad.AnnData) -> ad.AnnData:
         if len(anndata.raw.var.columns) > 0:
             new_raw_var = pd.DataFrame.from_dict(
                 {
-                    k: util._to_tiledb_supported_array_type(v)
+                    k: util_tiledb.to_tiledb_supported_array_type(v)
                     for k, v in anndata.raw.var.items()
                 }
             )
 
         for key in anndata.raw.varm.keys():
-            anndata.raw.varm[key] = util._to_tiledb_supported_array_type(
+            anndata.raw.varm[key] = util_tiledb.to_tiledb_supported_array_type(
                 anndata.raw.varm[key]
             )
 

@@ -29,7 +29,7 @@ def from_h5ad(
     """
     Reads an .h5ad file and writes to a TileDB group structure.
     """
-    _from_h5ad_common(experiment, input_path, from_anndata, measurement_name)
+    _from_h5ad_common(experiment, input_path, measurement_name, from_anndata)
 
 
 # ----------------------------------------------------------------

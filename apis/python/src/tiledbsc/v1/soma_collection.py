@@ -4,10 +4,11 @@ from typing import Any, Dict, Iterator, List, Optional, Sequence
 
 import tiledb
 
+import tiledbsc.v1.util_tiledb as util_tiledb
+
 from .tiledb_array import TileDBArray
 from .tiledb_object import TileDBObject
 from .tiledb_platform_config import TileDBPlatformConfig
-from .util import is_tiledb_creation_uri
 
 
 class SOMACollection(TileDBObject):
@@ -206,7 +207,7 @@ class SOMACollection(TileDBObject):
         """
 
         # TODO: TEMP
-        if is_tiledb_creation_uri(self._uri):
+        if util_tiledb.is_tiledb_creation_uri(self._uri):
             return self._get_child_creation_uris(member_names)
 
         # Pre-checking if the group exists by calling tiledb.object_type is simple, however, for

@@ -5,9 +5,7 @@ import pandas as pd
 import pyarrow as pa
 import tiledb
 
-import tiledbsc.v1.util as util
-import tiledbsc.v1.util_arrow as util_arrow
-
+from . import util, util_arrow, util_pandas
 from .logging import log_io
 from .soma_collection import SOMACollection
 from .tiledb_array import TileDBArray
@@ -293,6 +291,8 @@ class SOMADataFrame(TileDBArray):
         Reads from SOMA storage into memory.  For `to_anndata`, as well as for any interactive use
         where the user wants a Pandas dataframe.  Returns a generator over dataframes for batched
         read. See also `read_as_pandas_all` for a convenience wrapper.
+
+        TODO: params-list
         """
 
         with self._tiledb_open() as A:
@@ -315,7 +315,7 @@ class SOMADataFrame(TileDBArray):
                 # This is the 'decode on read' part of our logic; in dim_select we have the 'encode on
                 # write' part.
                 # Context: https://github.com/single-cell-data/TileDB-SingleCell/issues/99.
-                df = util._ascii_to_unicode_pandas_readback(df)
+                df = util_pandas.ascii_to_unicode_pandas_readback(df)
 
                 if id_column_name is not None:
                     df.reset_index(inplace=True)

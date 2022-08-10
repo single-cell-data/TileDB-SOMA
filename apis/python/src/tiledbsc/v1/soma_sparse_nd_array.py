@@ -8,11 +8,7 @@ import pyarrow as pa
 import scipy.sparse as sp
 import tiledb
 
-import tiledbsc.v1.eta as eta
-import tiledbsc.v1.logging as logging
-import tiledbsc.v1.util as util
-import tiledbsc.v1.util_arrow as util_arrow
-
+from . import eta, logging, util, util_arrow
 from .soma_collection import SOMACollection
 from .tiledb_array import TileDBArray
 from .types import Matrix, NTuple
@@ -381,7 +377,7 @@ class SOMASparseNdArray(TileDBArray):
             while i < nrow:
                 t1 = time.time()
                 # Find a number of CSR rows which will result in a desired nnz for the chunk.
-                chunk_size = util._find_csr_chunk_size(
+                chunk_size = util.find_csr_chunk_size(
                     matrix, i, self._tiledb_platform_config.goal_chunk_nnz
                 )
                 i2 = i + chunk_size
