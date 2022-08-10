@@ -5,7 +5,7 @@ import pandas as pd
 import pyarrow as pa
 import tiledb
 
-from . import util, util_arrow, util_pandas
+from . import util, util_arrow, util_pandas, util_tiledb
 from .logging import log_io
 from .soma_collection import SOMACollection
 from .tiledb_array import TileDBArray
@@ -165,9 +165,9 @@ class SOMADataFrame(TileDBArray):
         ids: Optional[Any] = None,
         value_filter: Optional[str] = None,
         column_names: Optional[Sequence[str]] = None,
+        result_order: Optional[str] = None,
         # TODO: batch_size
         # TODO: partition,
-        # TODO: result_order,
         # TODO: platform_config,
     ) -> Iterator[pa.RecordBatch]:
         """
@@ -181,7 +181,8 @@ class SOMADataFrame(TileDBArray):
         :param partitions: an optional ``SOMAReadPartitions`` hint to indicate how results should be
         organized.
 
-        :param result_order: order of read results.  This can be one of 'rowid-ordered' or 'unordered'.
+        :param result_order: order of read results.  This can be one of 'row-major', 'col-major', or
+        'unordered'.
 
         :param value_filter: an optional [value filter] to apply to the results. Defaults to no
         filter.
@@ -189,12 +190,27 @@ class SOMADataFrame(TileDBArray):
         **Indexing**: the `ids` parameter will support, per dimension: a row offset (uint), a
         row-offset range (slice), or a list of both.
         """
+        tiledb_result_order = (
+            util_tiledb.tiledb_result_order_from_soma_result_order_non_indexed(
+                result_order
+            )
+        )
+
         with self._tiledb_open("r") as A:
             if value_filter is None:
-                query = A.query(return_arrow=True, return_incomplete=True)
+                query = A.query(
+                    return_arrow=True,
+                    return_incomplete=True,
+                    order=tiledb_result_order,
+                )
             else:
                 qc = tiledb.QueryCondition(value_filter)
-                query = A.query(return_arrow=True, return_incomplete=True, attr_cond=qc)
+                query = A.query(
+                    return_arrow=True,
+                    return_incomplete=True,
+                    attr_cond=qc,
+                    order=tiledb_result_order,
+                )
 
             if ids is None:
                 iterator = query.df[:]
@@ -222,6 +238,7 @@ class SOMADataFrame(TileDBArray):
         ids: Optional[Any] = None,
         value_filter: Optional[str] = None,
         column_names: Optional[Sequence[str]] = None,
+        result_order: Optional[str] = None,
         # TODO: batch_size
         # TODO: partition,
         # TODO: result_order,
@@ -233,7 +250,12 @@ class SOMADataFrame(TileDBArray):
         simply unit-test cases.
         """
         return util_arrow.concat_batches(
-            self.read(ids=ids, value_filter=value_filter, column_names=column_names)
+            self.read(
+                ids=ids,
+                value_filter=value_filter,
+                column_names=column_names,
+                result_order=result_order,
+            )
         )
 
     def write(self, values: pa.RecordBatch) -> None:
@@ -284,6 +306,7 @@ class SOMADataFrame(TileDBArray):
         ids: Optional[Ids] = None,
         value_filter: Optional[str] = None,
         column_names: Optional[Sequence[str]] = None,
+        result_order: Optional[str] = None,
         # to rename index to 'obs_id' or 'var_id', if desired, for anndata
         id_column_name: Optional[str] = None,
     ) -> Iterator[pd.DataFrame]:
@@ -294,13 +317,22 @@ class SOMADataFrame(TileDBArray):
 
         TODO: params-list
         """
+        tiledb_result_order = (
+            util_tiledb.tiledb_result_order_from_soma_result_order_non_indexed(
+                result_order
+            )
+        )
 
         with self._tiledb_open() as A:
             if value_filter is None:
-                query = A.query(return_incomplete=True)
+                query = A.query(return_incomplete=True, order=tiledb_result_order)
             else:
                 qc = tiledb.QueryCondition(value_filter)
-                query = A.query(return_incomplete=True, attr_cond=qc)
+                query = A.query(
+                    return_incomplete=True,
+                    attr_cond=qc,
+                    order=tiledb_result_order,
+                )
 
             if ids is None:
                 iterator = query.df[:]
@@ -329,6 +361,7 @@ class SOMADataFrame(TileDBArray):
         ids: Optional[Ids] = None,
         value_filter: Optional[str] = None,
         column_names: Optional[Sequence[str]] = None,
+        result_order: Optional[str] = None,
         # to rename index to 'obs_id' or 'var_id', if desired, for anndata
         id_column_name: Optional[str] = None,
     ) -> pd.DataFrame:
@@ -343,6 +376,7 @@ class SOMADataFrame(TileDBArray):
             value_filter=value_filter,
             column_names=column_names,
             id_column_name=id_column_name,
+            result_order=result_order,
         )
         for dataframe in generator:
             dataframes.append(dataframe)

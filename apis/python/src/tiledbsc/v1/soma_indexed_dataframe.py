@@ -5,8 +5,7 @@ import pandas as pd
 import pyarrow as pa
 import tiledb
 
-import tiledbsc.v1.util_arrow as util_arrow
-
+from . import util_arrow, util_tiledb
 from .soma_collection import SOMACollection
 from .tiledb_array import TileDBArray
 from .types import NTuple
@@ -225,6 +224,7 @@ class SOMAIndexedDataFrame(TileDBArray):
         ids: Optional[Any] = None,
         value_filter: Optional[str] = None,
         column_names: Optional[Union[Sequence[str], str]] = None,
+        result_order: Optional[str] = None,
         # TODO: more arguments
     ) -> Iterator[pa.RecordBatch]:
         """
@@ -247,13 +247,24 @@ class SOMAIndexedDataFrame(TileDBArray):
         **Indexing**: the `ids` parameter will support, per dimension: a list of values of the type
         of the indexed column.
         """
+        tiledb_result_order = (
+            util_tiledb.tiledb_result_order_from_soma_result_order_indexed(result_order)
+        )
+
         # TODO: more about index_column_names
         with self._tiledb_open("r") as A:
             if value_filter is None:
-                query = A.query(return_arrow=True, return_incomplete=True)
+                query = A.query(
+                    return_arrow=True, return_incomplete=True, order=tiledb_result_order
+                )
             else:
                 qc = tiledb.QueryCondition(value_filter)
-                query = A.query(return_arrow=True, return_incomplete=True, attr_cond=qc)
+                query = A.query(
+                    return_arrow=True,
+                    return_incomplete=True,
+                    attr_cond=qc,
+                    order=tiledb_result_order,
+                )
 
             if ids is None:
                 iterator = query.df[:]
@@ -281,9 +292,9 @@ class SOMAIndexedDataFrame(TileDBArray):
         ids: Optional[Any] = None,
         value_filter: Optional[str] = None,
         column_names: Optional[Sequence[str]] = None,
+        result_order: Optional[str] = None,
         # TODO: batch_size
         # TODO: partition,
-        # TODO: result_order,
         # TODO: platform_config,
     ) -> pa.RecordBatch:
         """

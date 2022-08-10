@@ -1,5 +1,5 @@
 import re
-from typing import TypeVar
+from typing import Optional, TypeVar
 
 import numpy as np
 import pandas as pd
@@ -14,6 +14,42 @@ SOMA_ENCODING_VERSION = "1"
 
 def is_tiledb_creation_uri(uri: str) -> bool:
     return bool(re.match("^tiledb://.*s3://.*$", uri))
+
+
+def tiledb_result_order_from_soma_result_order_non_indexed(
+    soma_result_order: Optional[str],
+) -> Optional[str]:
+    """
+    Maps SOMA-spec `result_order` syntax to TileDB-specific syntax, for non-indexed dataframes.
+    """
+    # :param order: 'C', 'F', or 'G' (row-major, col-major, tiledb global order)
+    if soma_result_order is None:
+        return None  # use tiledb default
+    elif soma_result_order == "rowid-ordered":
+        return "C"
+    elif soma_result_order == "unordered":
+        return "U"
+    else:
+        raise Exception(f'result-order value unrecognized: "{soma_result_order}"')
+
+
+def tiledb_result_order_from_soma_result_order_indexed(
+    soma_result_order: Optional[str],
+) -> Optional[str]:
+    """
+    Maps SOMA-spec `result_order` syntax to TileDB-specific syntax, for indexed dataframes.
+    """
+    # :param order: 'C', 'F', or 'G' (row-major, col-major, tiledb global order)
+    if soma_result_order is None:
+        return None  # use tiledb default
+    elif soma_result_order == "row-major":
+        return "C"
+    elif soma_result_order == "col-major":
+        return "F"
+    elif soma_result_order == "unordered":
+        return "U"
+    else:
+        raise Exception(f'result-order value unrecognized: "{soma_result_order}"')
 
 
 def to_tiledb_supported_dtype(dtype: np.dtype) -> np.dtype:
