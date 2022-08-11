@@ -11,6 +11,7 @@ from tiledbsc.tiledbsoma import (
     SOMASparseNdArray,
     logging,
     util,
+    util_scipy,
 )
 
 from .types import Path
@@ -46,7 +47,7 @@ def _from_h5ad_common(
     s = util.get_start_stamp()
     logging.log_io(
         None,
-        f"START  SOMAExperiment.from_h5ad {input_path} -> {experiment.get_uri()}",
+        f"START  SOMAExperiment.from_h5ad {input_path} -> {experiment._nested_name}",
     )
 
     logging.log_io(None, f"{experiment._indent}START  READING {input_path}")
@@ -64,7 +65,7 @@ def _from_h5ad_common(
         None,
         util.format_elapsed(
             s,
-            f"FINISH SOMAExperiment.from_h5ad {input_path} -> {experiment.get_uri()}",
+            f"FINISH SOMAExperiment.from_h5ad {input_path} -> {experiment._nested_name}",
         ),
     )
 
@@ -94,7 +95,9 @@ def from_anndata(
     )
 
     s = util.get_start_stamp()
-    logging.log_io(None, f"{experiment._indent}START  WRITING {experiment.get_uri()}")
+    logging.log_io(
+        None, f"{experiment._indent}START  WRITING {experiment._nested_name}"
+    )
 
     # Must be done first, to create the parent directory
     if not experiment.exists():
@@ -199,7 +202,7 @@ def from_anndata(
     logging.log_io(
         f"Wrote {experiment._nested_name}",
         util.format_elapsed(
-            s, f"{experiment._indent}FINISH WRITING {experiment.get_uri()}"
+            s, f"{experiment._indent}FINISH WRITING {experiment._nested_name}"
         ),
     )
 
@@ -213,7 +216,7 @@ def to_h5ad(experiment: SOMAExperiment, h5ad_path: Path, measurement_name: str) 
 
     s = util.get_start_stamp()
     logging.log_io(
-        None, f"START  SOMAExperiment.to_h5ad {experiment.get_uri()} -> {h5ad_path}"
+        None, f"START  SOMAExperiment.to_h5ad {experiment._nested_name} -> {h5ad_path}"
     )
 
     anndata = to_anndata(experiment, measurement_name=measurement_name)
@@ -231,7 +234,7 @@ def to_h5ad(experiment: SOMAExperiment, h5ad_path: Path, measurement_name: str) 
     logging.log_io(
         None,
         util.format_elapsed(
-            s, f"FINISH SOMAExperiment.to_h5ad {experiment.get_uri()} -> {h5ad_path}"
+            s, f"FINISH SOMAExperiment.to_h5ad {experiment._nested_name} -> {h5ad_path}"
         ),
     )
 
@@ -255,40 +258,65 @@ def to_anndata(
     """
 
     s = util.get_start_stamp()
-    logging.log_io(None, f"START  SOMAExperiment.to_anndata {experiment.get_uri()}")
+    logging.log_io(None, f"START  SOMAExperiment.to_anndata {experiment._nested_name}")
 
-    #    # TODO: need an index-converter ... inside the class maybe?
-    #    # sdf.write_from_pandas takes an optional id_column_name; so should sdf.read_as_pandas
+    measurement = experiment.ms[measurement_name]
 
     obs_df = experiment.obs.read_as_pandas_all(id_column_name="obs_id")
-    var_df = experiment.ms[measurement_name].var.read_as_pandas_all(
-        id_column_name="var_id"
-    )
+    var_df = measurement.var.read_as_pandas_all(id_column_name="var_id")
 
-    # TODO: re-index string obs_id/var_id into X ...
-    #    X_data = experiment.ms[measurement_name].X["data"]
-    #    assert X_data is not None
-    #    X_mat = X_data.read_as_pandas_all() # TODO: CSR/CSC options ...
+    nobs = len(obs_df.index)
+    nvar = len(var_df.index)
 
-    # TODO: re-index string obs_id/var_id into all ...
-    #    obsm = {}
-    #    for key in experiment.ms[measurement_name].obsm.keys():
-    #        obsm[key] = experiment.ms[measurement_name].obsm[key].read_as_pandas_all()
+    X_data = measurement.X["data"]
+    assert X_data is not None
+    X_mat = X_data.read_as_pandas_all()  # TODO: CSR/CSC options ...
+    X_csr = util_scipy.csr_from_tiledb_df(X_mat, nobs, nvar)
 
-    #    #   obsm = experiment.ms[measurement_name].obsm.to_dict_of_npnda()
-    #    #   varm = experiment.ms[measurement_name].varm.to_dict_of_npndacsr()
-    #
-    #    #   obsp = experiment.ms[measurement_name].obsp.to_dict_of_csr(obs_df.index, obs_df.index)
-    #    #   varp = experiment.ms[measurement_name].varp.to_dict_of_csr(var_df.index, var_df.index)
+    # XXX FIX OBSM/VARM SHAPES
+
+    obsm = {}
+    if measurement.obsm.exists():
+        for key in measurement.obsm.keys():
+            shape = measurement.obsm[key].get_shape()
+            assert len(shape) == 2
+            ncols = shape[1]
+            mat = measurement.obsm[key].read_as_pandas_all()
+            print("OBSM", key, mat.shape)
+            obsm[key] = util_scipy.csr_from_tiledb_df(mat, nobs, ncols)
+
+    varm = {}
+    if measurement.varm.exists():
+        for key in measurement.varm.keys():
+            shape = measurement.varm[key].get_shape()
+            assert len(shape) == 2
+            ncols = shape[1]
+            mat = measurement.varm[key].read_as_pandas_all()
+            print("VARM", key, mat.shape)
+            varm[key] = util_scipy.csr_from_tiledb_df(mat, nvar, ncols)
+
+    obsp = {}
+    if measurement.obsp.exists():
+        for key in measurement.obsp.keys():
+            mat = measurement.obsp[key].read_as_pandas_all()
+            print("OBSP", key, mat.shape)
+            obsp[key] = util_scipy.csr_from_tiledb_df(mat, nobs, nobs)
+
+    varp = {}
+    if measurement.varp.exists():
+        for key in measurement.varp.keys():
+            mat = measurement.varp[key].read_as_pandas_all()
+            print("VARP", key, mat.shape)
+            varp[key] = util_scipy.csr_from_tiledb_df(mat, nvar, nvar)
 
     anndata = ad.AnnData(
-        #        X=X_mat,
+        X=X_csr,
         obs=obs_df,
         var=var_df,
-        # obsm=obsm,
-        # varm=varm,
-        # obsp=obsp,
-        # varp=varp,
+        obsm=obsm,
+        varm=varm,
+        obsp=obsp,
+        varp=varp,
     )
 
     #    #   raw = None
@@ -320,7 +348,7 @@ def to_anndata(
     logging.log_io(
         None,
         util.format_elapsed(
-            s, f"FINISH SOMAExperiment.to_anndata {experiment.get_uri()}"
+            s, f"FINISH SOMAExperiment.to_anndata {experiment._nested_name}"
         ),
     )
 

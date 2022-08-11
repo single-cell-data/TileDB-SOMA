@@ -404,7 +404,7 @@ class SOMADataFrame(TileDBArray):
         attr_filters = tiledb.FilterList([tiledb.ZstdFilter(level=-1)])
 
         s = util.get_start_stamp()
-        log_io(None, f"{self._indent}START  WRITING {self.get_uri()}")
+        log_io(None, f"{self._indent}START  WRITING {self._nested_name}")
 
         # This is the non-indexed bit
         assert ROWID not in dataframe.keys()
@@ -416,7 +416,7 @@ class SOMADataFrame(TileDBArray):
         mode = "ingest"
         if self.exists():
             mode = "append"
-            log_io(None, f"{self._indent}Re-using existing array {self.get_uri()}")
+            log_io(None, f"{self._indent}Re-using existing array {self._nested_name}")
 
         # Make obs_id a data column
         dataframe.reset_index(inplace=True)
@@ -479,5 +479,5 @@ class SOMADataFrame(TileDBArray):
 
         log_io(
             f"Wrote {self._nested_name}",
-            util.format_elapsed(s, f"{self._indent}FINISH WRITING {self.get_uri()}"),
+            util.format_elapsed(s, f"{self._indent}FINISH WRITING {self._nested_name}"),
         )

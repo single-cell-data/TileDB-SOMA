@@ -8,7 +8,7 @@ import pyarrow as pa
 import scipy.sparse as sp
 import tiledb
 
-from . import eta, logging, util, util_arrow, util_tiledb
+from . import eta, logging, util, util_arrow, util_scipy, util_tiledb
 from .soma_collection import SOMACollection
 from .tiledb_array import TileDBArray
 from .types import Matrix, NTuple
@@ -327,11 +327,11 @@ class SOMASparseNdArray(TileDBArray):
         """
 
         s = util.get_start_stamp()
-        logging.log_io(None, f"{self._indent}START  WRITING {self.get_uri()}")
+        logging.log_io(None, f"{self._indent}START  WRITING {self._nested_name}")
 
         if self.exists():
             logging.log_io(
-                None, f"{self._indent}Re-using existing array {self.get_uri()}"
+                None, f"{self._indent}Re-using existing array {self._nested_name}"
             )
         else:
             self._create_empty_array(
@@ -353,7 +353,7 @@ class SOMASparseNdArray(TileDBArray):
 
         logging.log_io(
             f"Wrote {self._nested_name}",
-            util.format_elapsed(s, f"{self._indent}FINISH WRITING {self.get_uri()}"),
+            util.format_elapsed(s, f"{self._indent}FINISH WRITING {self._nested_name}"),
         )
 
     # ----------------------------------------------------------------
@@ -446,7 +446,7 @@ class SOMASparseNdArray(TileDBArray):
             while i < nrow:
                 t1 = time.time()
                 # Find a number of CSR rows which will result in a desired nnz for the chunk.
-                chunk_size = util.find_csr_chunk_size(
+                chunk_size = util_scipy.find_csr_chunk_size(
                     matrix, i, self._tiledb_platform_config.goal_chunk_nnz
                 )
                 i2 = i + chunk_size

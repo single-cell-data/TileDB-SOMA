@@ -302,11 +302,11 @@ class SOMADenseNdArray(TileDBArray):
         """
 
         s = util.get_start_stamp()
-        logging.log_io(None, f"{self._indent}START  WRITING {self.get_uri()}")
+        logging.log_io(None, f"{self._indent}START  WRITING {self._nested_name}")
 
         if self.exists():
             logging.log_io(
-                None, f"{self._indent}Re-using existing array {self.get_uri()}"
+                None, f"{self._indent}Re-using existing array {self._nested_name}"
             )
         else:
             self._create_empty_array(
@@ -324,7 +324,7 @@ class SOMADenseNdArray(TileDBArray):
 
         logging.log_io(
             f"Wrote {self._nested_name}",
-            util.format_elapsed(s, f"{self._indent}FINISH WRITING {self.get_uri()}"),
+            util.format_elapsed(s, f"{self._indent}FINISH WRITING {self._nested_name}"),
         )
 
     # ----------------------------------------------------------------
