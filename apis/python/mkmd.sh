@@ -1,4 +1,4 @@
-mkdir -p doc/v1
+mkdir -p doc/tiledbsoma
 export PATH=${PATH}:${HOME}/.local/bin
 for x in \
     annotation_dataframe \
@@ -21,26 +21,26 @@ for x in \
     util_ann \
     util_tiledb \
     \
-    v1/general_utilities \
-    v1/io \
-    v1/logging \
-    v1/soma_collection \
-    v1/soma_dataframe \
-    v1/soma_dense_nd_array \
-    v1/soma_experiment \
-    v1/soma_indexed_dataframe \
-    v1/soma_measurement \
-    v1/soma_metadata_mapping \
-    v1/soma_sparse_nd_array \
-    v1/test_general_utilities \
-    v1/tiledb_array \
-    v1/tiledb_object \
-    v1/tiledb_platform_config \
-    v1/util \
-    v1/util_ann \
-    v1/util_arrow \
-    v1/util_pandas \
-    v1/util_tiledb
+    tiledbsoma/general_utilities \
+    tiledbsoma/io \
+    tiledbsoma/logging \
+    tiledbsoma/soma_collection \
+    tiledbsoma/soma_dataframe \
+    tiledbsoma/soma_dense_nd_array \
+    tiledbsoma/soma_experiment \
+    tiledbsoma/soma_indexed_dataframe \
+    tiledbsoma/soma_measurement \
+    tiledbsoma/soma_metadata_mapping \
+    tiledbsoma/soma_sparse_nd_array \
+    tiledbsoma/test_general_utilities \
+    tiledbsoma/tiledb_array \
+    tiledbsoma/tiledb_object \
+    tiledbsoma/tiledb_platform_config \
+    tiledbsoma/util \
+    tiledbsoma/util_ann \
+    tiledbsoma/util_arrow \
+    tiledbsoma/util_pandas \
+    tiledbsoma/util_tiledb
 do
     echo $x
     pydoc-markdown -I src -m tiledbsc.$x > doc/$x.md
