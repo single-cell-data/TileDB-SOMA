@@ -33,7 +33,7 @@ Also see the `TileDBObject` constructor.
 def create(type: pa.DataType, shape: Union[NTuple, List[int]]) -> None
 ```
 
-Create a SOMADenseNdArray named with the URI.
+Create a `SOMADenseNdArray` named with the URI.
 
 **Arguments**:
 

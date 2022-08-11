@@ -44,7 +44,7 @@ class SOMADenseNdArray(TileDBArray):
         shape: Union[NTuple, List[int]],
     ) -> None:
         """
-        Create a SOMADenseNdArray named with the URI.
+        Create a `SOMADenseNdArray` named with the URI.
 
         :param type: an Arrow type defining the type of each element in the array. If the type is
         unsupported, an error will be raised.

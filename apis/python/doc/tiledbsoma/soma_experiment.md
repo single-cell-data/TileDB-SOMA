@@ -10,8 +10,8 @@
 class SOMAExperiment(SOMACollection)
 ```
 
-`obs`: Primary annotations on the _observation_ axis. The contents of the `soma_rowid` pseudo-column define
-the _observation_ index domain, aka `obsid`. All observations for the SOMAExperiment _must_ be
+`obs`: Primary annotations on the observation axis. The contents of the `soma_rowid` pseudo-column define
+the observation index domain, aka `obsid`. All observations for the SOMAExperiment must be
 defined in this dataframe.
 
 `ms`: A collection of named measurements.

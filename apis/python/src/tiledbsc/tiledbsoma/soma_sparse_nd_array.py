@@ -40,7 +40,7 @@ class SOMASparseNdArray(TileDBArray):
         shape: Union[NTuple, List[int]],
     ) -> None:
         """
-        Create a SOMASparseNdArray named with the URI.
+        Create a `SOMASparseNdArray` named with the URI.
 
         :param type: an Arrow type defining the type of each element in the array. If the type is
         unsupported, an error will be raised.
@@ -277,10 +277,10 @@ class SOMASparseNdArray(TileDBArray):
         tensor: Union[pa.SparseCOOTensor, pa.SparseCSFTensor],
     ) -> None:
         """
-        Write an Arrow.Tensor to the persistent object. As duplicate index values are not allowed, index
+        Write an `Arrow.Tensor` to the persistent object. As duplicate index values are not allowed, index
         values already present in the object are overwritten and new index values are added.
 
-        :param values: an Arrow.SparseTensor containing values to be written. The type of elements in `values`
+        :param values: an `Arrow.SparseTensor` containing values to be written. The type of elements in `values`
         must match the type of the `SOMASparseNdArray`.
         """
 

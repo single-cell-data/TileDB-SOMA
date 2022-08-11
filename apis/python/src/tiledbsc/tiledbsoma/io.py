@@ -247,10 +247,11 @@ def to_anndata(
     """
     Converts the experiment group to anndata. Choice of matrix formats is following
     what we often see in input .h5ad files:
-    * X as scipy.sparse.csr_matrix
-    * obs,var as pandas.dataframe
-    * obsm,varm arrays as numpy.ndarray
-    * obsp,varp arrays as scipy.sparse.csr_matrix
+
+    * X as `scipy.sparse.csr_matrix`
+    * obs,var as `pandas.dataframe`
+    * obsm,varm arrays as `numpy.ndarray`
+    * obsp,varp arrays as `scipy.sparse.csr_matrix`
     """
 
     s = util.get_start_stamp()

@@ -24,13 +24,13 @@ class TileDBArray(TileDBObject):
         parent: Optional["tiledbsc.tiledbsoma.SOMACollection"] = None,
     ):
         """
-        See the TileDBObject constructor.
+        See the `TileDBObject` constructor.
         """
         super().__init__(uri, name=name, parent=parent)
 
     def get_schema(self) -> pa.Schema:
         """
-        Return data schema, in the form of an Arrow Schema
+        Return data schema, in the form of an Arrow Schema.
         """
         return util_arrow.get_arrow_schema_from_tiledb_uri(self.get_uri(), self._ctx)
 

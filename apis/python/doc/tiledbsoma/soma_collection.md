@@ -11,8 +11,8 @@ class SOMACollection(TileDBObject)
 ```
 
 Contains a key-value mapping where the keys are string names and the values are any SOMA-defined
-foundational or composed type, including SOMACollection, SOMADataFrame, SOMADenseNdArray,
-SOMASparseNdArray or SOMAExperiment.
+foundational or composed type, including `SOMACollection`, `SOMADataFrame`, `SOMADenseNdArray`,
+`SOMASparseNdArray` or `SOMAExperiment`.
 
 <a id="tiledbsc.tiledbsoma/soma_collection.SOMACollection.__init__"></a>
 
@@ -68,7 +68,7 @@ Implements the `in` operator.
 def get(member_name: str) -> TileDBObject
 ```
 
-Get the member object associated with the key
+Gets the member object associated with the key.
 
 <a id="tiledbsc.tiledbsoma/soma_collection.SOMACollection.keys"></a>
 

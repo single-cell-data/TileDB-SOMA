@@ -14,9 +14,9 @@ class SOMAMeasurement(SOMACollection):
 
     `var`: `SOMADataFrame`
 
-    Primary annotations on the _variable_ axis, for variables in this measurement (i.e., annotates
-    columns of `X`). The contents of the `soma_rowid` pseudo-column define the _variable_ index domain,
-    AKA varid. All variables for this measurement _must_ be defined in this dataframe.
+    Primary annotations on the variable axis, for variables in this measurement (i.e., annotates
+    columns of `X`). The contents of the `soma_rowid` pseudo-column define the variable index domain,
+    AKA varid. All variables for this measurement must be defined in this dataframe.
 
     `X`: `SOMACollection` of `SOMASparseNdArray`
 

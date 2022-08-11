@@ -10,7 +10,7 @@
 def get_version() -> str
 ```
 
-Return semver-compatible version of the supported SOMA API
+Return semver-compatible version of the supported SOMA API.
 
 <a id="tiledbsc.tiledbsoma/general_utilities.get_implementation"></a>
 
@@ -20,7 +20,7 @@ Return semver-compatible version of the supported SOMA API
 def get_implementation() -> str
 ```
 
-Return the implementation name, e.g., "R-tiledb"
+Return the implementation name, e.g., "python-tiledb".
 
 <a id="tiledbsc.tiledbsoma/general_utilities.get_storage_engine"></a>
 
@@ -30,5 +30,5 @@ Return the implementation name, e.g., "R-tiledb"
 def get_storage_engine() -> str
 ```
 
-Return underlying storage engine name, e.g., "tiledb"
+Return underlying storage engine name, e.g., "tiledb".
 

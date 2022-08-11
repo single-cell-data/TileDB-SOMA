@@ -33,7 +33,7 @@ Also see the `TileDBObject` constructor.
 def create(type: pa.DataType, shape: Union[NTuple, List[int]]) -> None
 ```
 
-Create a SOMASparseNdArray named with the URI.
+Create a `SOMASparseNdArray` named with the URI.
 
 **Arguments**:
 
@@ -146,13 +146,13 @@ use is to simply unit-test cases.
 def write(tensor: Union[pa.SparseCOOTensor, pa.SparseCSFTensor]) -> None
 ```
 
-Write an Arrow.Tensor to the persistent object. As duplicate index values are not allowed, index
+Write an `Arrow.Tensor` to the persistent object. As duplicate index values are not allowed, index
 
 values already present in the object are overwritten and new index values are added.
 
 **Arguments**:
 
-- `values`: an Arrow.SparseTensor containing values to be written. The type of elements in `values`
+- `values`: an `Arrow.SparseTensor` containing values to be written. The type of elements in `values`
 must match the type of the `SOMASparseNdArray`.
 
 <a id="tiledbsc.tiledbsoma/soma_sparse_nd_array.SOMASparseNdArray.from_matrix"></a>

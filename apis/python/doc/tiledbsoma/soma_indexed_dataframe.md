@@ -12,9 +12,9 @@ class SOMAIndexedDataFrame(TileDBArray)
 
 Represents ``obs``, ``var``, and others.
 
-A SOMAIndexedDataFrame contains a "pseudo-column" called soma_rowid, of type uint64 and domain
-[0,num_rows).  The soma_rowid pseudo-column contains a unique value for each row in the
-SOMAIndexedDataFrame, and is intended to act as a join key for other objects, such as a SOMANdArray.
+A `SOMAIndexedDataFrame` contains a "pseudo-column" called `soma_rowid`, of type uint64 and domain
+[0,num_rows).  The `soma_rowid` pseudo-column contains a unique value for each row in the
+`SOMAIndexedDataFrame`, and is intended to act as a join key for other objects, such as a `SOMASparseNdArray`.
 
 <a id="tiledbsc.tiledbsoma/soma_indexed_dataframe.SOMAIndexedDataFrame.__init__"></a>
 
@@ -67,7 +67,7 @@ def keys() -> List[str]
 ```
 
 Returns the names of the columns when read back as a dataframe.
-TODO: make it clear whether or not this will read back soma_rowid / soma_joinid.
+TODO: make it clear whether or not this will read back `soma_rowid` / `soma_joinid`.
 
 <a id="tiledbsc.tiledbsoma/soma_indexed_dataframe.SOMAIndexedDataFrame.get_shape"></a>
 
@@ -77,7 +77,7 @@ TODO: make it clear whether or not this will read back soma_rowid / soma_joinid.
 def get_shape() -> NTuple
 ```
 
-Return length of each dimension, always a list of length ``ndims``
+Return length of each dimension, always a list of length ``ndims``.
 
 <a id="tiledbsc.tiledbsoma/soma_indexed_dataframe.SOMAIndexedDataFrame.get_ndims"></a>
 
@@ -87,7 +87,7 @@ Return length of each dimension, always a list of length ``ndims``
 def get_ndims() -> int
 ```
 
-Return number of index columns
+Return number of index columns.
 
 <a id="tiledbsc.tiledbsoma/soma_indexed_dataframe.SOMAIndexedDataFrame.get_index_column_names"></a>
 
@@ -111,14 +111,12 @@ def read(*,
          result_order: Optional[str] = None) -> Iterator[pa.RecordBatch]
 ```
 
-Read a user-defined subset of data, addressed by the dataframe indexing columns, optionally
-
-filtered, and return results as one or more Arrow.RecordBatch.
+Read a user-defined subset of data, addressed by the dataframe indexing columns, optionally filtered, and return results as one or more Arrow.RecordBatch.
 
 **Arguments**:
 
-- `ids`: for each index dimension, which rows to read. Defaults to 'all'.
-- `column_names`: the named columns to read and return. Defaults to 'all'.
+- `ids`: for each index dimension, which rows to read. Defaults to `None`, meaning no constraint -- all IDs.
+- `column_names`: the named columns to read and return. Defaults to `None`, meaning no constraint -- all column names.
 - `partitions`: an optional ``SOMAReadPartitions`` hint to indicate how results should be
 organized.
 - `result_order`: order of read results. This can be one of 'row-major', 'col-major', or

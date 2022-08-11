@@ -42,10 +42,8 @@ def find_csr_chunk_size(
     goal_chunk_nnz: int,
 ) -> int:
     """
-    Given a CSR matrix and a start row index, returns the number of rows with cumulative NNZ as
-    desired. Context is chunked-COO ingest of larger CSR matrices: if mat is say 8000x9000 but
-    sparse, maybe we'll read rows 0:45 as one chunk and convert that to COO and ingest, then maybe
-    rows 46:78 as a second chunk and convert that to COO and ingest, and so on.
+    Given a CSR matrix and a start row index, returns the number of rows with cumulative NNZ as desired. Context is chunked-COO ingest of larger CSR matrices: if mat is say 8000x9000 but sparse, maybe we'll read rows 0:45 as one chunk and convert that to COO and ingest, then maybe rows 46:78 as a second chunk and convert that to COO and ingest, and so on.
+
     :param mat: The input CSR matrix.
     :param start_row_index: the row index at which to start a chunk.
     :param goal_chunk_nnz: Desired number of non-zero array entries for the chunk.

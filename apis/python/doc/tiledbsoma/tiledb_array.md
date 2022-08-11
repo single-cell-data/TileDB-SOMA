@@ -25,7 +25,7 @@ def __init__(uri: str,
              parent: Optional["tiledbsc.tiledbsoma.SOMACollection"] = None)
 ```
 
-See the TileDBObject constructor.
+See the `TileDBObject` constructor.
 
 <a id="tiledbsc.tiledbsoma/tiledb_array.TileDBArray.get_schema"></a>
 
@@ -35,5 +35,5 @@ See the TileDBObject constructor.
 def get_schema() -> pa.Schema
 ```
 
-Return data schema, in the form of an Arrow Schema
+Return data schema, in the form of an Arrow Schema.
 

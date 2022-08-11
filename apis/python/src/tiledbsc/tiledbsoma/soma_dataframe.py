@@ -20,9 +20,9 @@ class SOMADataFrame(TileDBArray):
     """
     Represents ``obs``, ``var``, and others.
 
-    A SOMADataFrame contains a "pseudo-column" called soma_rowid, of type uint64 and domain
-    [0,num_rows).  The soma_rowid pseudo-column contains a unique value for each row in the
-    SOMADataFrame, and is intended to act as a join key for other objects, such as a SOMANdArray.
+    A `SOMADataFrame` contains a "pseudo-column" called `soma_rowid`, of type uint64 and domain
+    [0,num_rows).  The `soma_rowid` pseudo-column contains a unique value for each row in the
+    `SOMADataFrame`, and is intended to act as a join key for other objects, such as a `SOMASparseNdArray`.
     """
 
     _shape: Optional[NTuple] = None
@@ -64,7 +64,7 @@ class SOMADataFrame(TileDBArray):
         schema: pa.Schema,
     ) -> None:
         """
-        Create a TileDB 1D dense array with uint64 soma_rowid dimension and multiple attributes.
+        Create a TileDB 1D dense array with uint64 `soma_rowid` dimension and multiple attributes.
         """
 
         level = self._tiledb_platform_config.string_dim_zstd_level
@@ -132,13 +132,13 @@ class SOMADataFrame(TileDBArray):
     def keys(self) -> List[str]:
         """
         Returns the names of the columns when read back as a dataframe.
-        TODO: make it clear whether or not this will read back soma_rowid / soma_joinid.
+        TODO: make it clear whether or not this will read back `soma_rowid` / `soma_joinid`.
         """
         return self._tiledb_attr_names()
 
     def get_shape(self) -> NTuple:
         """
-        Return length of each dimension, always a list of length ``ndims``
+        Return length of each dimension, always a list of length ``ndims``.
         """
         if self._shape is None:
             with self._tiledb_open() as A:
@@ -147,7 +147,7 @@ class SOMADataFrame(TileDBArray):
 
     def get_ndims(self) -> int:
         """
-        Return number of index columns
+        Return number of index columns.
         """
         return len(self.get_index_column_names())
 
@@ -171,12 +171,11 @@ class SOMADataFrame(TileDBArray):
         # TODO: platform_config,
     ) -> Iterator[pa.RecordBatch]:
         """
-        Read a user-defined subset of data, addressed by the dataframe indexing column, optionally
-        filtered, and return results as one or more Arrow.RecordBatch.
+        Read a user-defined subset of data, addressed by the dataframe indexing column, optionally filtered, and return results as one or more `Arrow.RecordBatch`.
 
-        :param ids: Which rows to read. Defaults to 'all'.
+        :param ids: Which rows to read. Defaults to `None`, meaning no constraint -- all rows.
 
-        :param column_names: the named columns to read and return. Defaults to 'all'.
+        :param column_names: the named columns to read and return. Defaults to `None`, meaning no constraint -- all column names.
 
         :param partitions: an optional ``SOMAReadPartitions`` hint to indicate how results should be
         organized.

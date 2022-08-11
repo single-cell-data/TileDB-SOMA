@@ -28,7 +28,7 @@ def __init__(uri: str,
 ```
 
 Initialization-handling shared between `TileDBArray` and `SOMACollection`.  Specify
-tiledb_platform_config and ctx for the top-level object; omit them and specify parent for
+`tiledb_platform_config` and `ctx` for the top-level object; omit them and specify parent for
 non-top-level objects. Note that the parent reference is solely for propagating options,
 ctx, display depth, etc.
 
@@ -56,7 +56,7 @@ This might be in case an object has not yet been populated, or, if a containing 
 been populated but doesn't have a particular member (e.g. not all `SOMAMeasurement` objects
 have a `varp`).
 
-For tiledb:// URIs this is a REST-server request which we'd like to cache.
+For `tiledb://` URIs this is a REST-server request which we'd like to cache.
 However, remove-and-replace use-cases are possible and common in notebooks
 and it turns out caching the existence-check isn't a robust approach.
 
