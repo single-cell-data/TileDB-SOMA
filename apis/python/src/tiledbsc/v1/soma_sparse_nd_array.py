@@ -1,6 +1,6 @@
 import math
 import time
-from typing import Any, Iterator, List, Optional, Sequence, Union
+from typing import Iterator, List, Optional, Sequence, Union
 
 import numpy as np
 import pandas as pd
@@ -136,12 +136,21 @@ class SOMASparseNdArray(TileDBArray):
         """
         return True
 
+    # TODO
+    #    def get_nnz(self) -> wint:
+    #        """
+    #        Return the number of non-zero values in the array
+    #        """
+    #        return 999
+
     def read(
         self,
         *,
         # TODO: find the right syntax to get the typechecker to accept args like `ids=slice(0,10)`
-        # ids: Optional[Union[Sequence[int], Slice]] = None,
-        ids: Optional[Any] = None,
+        # row_ids: Optional[Union[Sequence[int], Slice]] = None,
+        # col_ids: Optional[Union[Sequence[int], Slice]] = None,
+        row_ids: Optional[Sequence[int]] = None,
+        col_ids: Optional[Sequence[int]] = None,
         result_order: Optional[str] = None,
         # TODO: batch_size
         # TODO: partition,
@@ -162,26 +171,65 @@ class SOMASparseNdArray(TileDBArray):
                 order=tiledb_result_order,
             )
 
-            if ids is None:
-                iterator = query.df[:]
+            if row_ids is None:
+                if col_ids is None:
+                    iterator = query.df[:, :]
+                else:
+                    iterator = query.df[:, col_ids]
             else:
-                iterator = query.df[ids]
+                if col_ids is None:
+                    iterator = query.df[row_ids, :]
+                else:
+                    iterator = query.df[row_ids, col_ids]
 
             for df in iterator:
                 batches = df.to_batches()
                 for batch in batches:
-                    # XXX COMMENT MORE
-                    # This is the 'decode on read' part of our logic; in dim_select we have the
-                    # 'encode on write' part.
-                    # Context: https://github.com/single-cell-data/TileDB-SingleCell/issues/99.
-                    yield util_arrow.ascii_to_unicode_pyarrow_readback(batch)
+                    yield batch
+
+    def read_as_pandas(
+        self,
+        *,
+        row_ids: Optional[Sequence[int]] = None,
+        col_ids: Optional[Sequence[int]] = None,
+        set_index: Optional[bool] = False,
+    ) -> pd.DataFrame:
+        """
+        TODO: comment
+        """
+        dim_names = None
+        if set_index:
+            dim_names = self.dim_names()
+
+        with self._tiledb_open() as A:
+            query = A.query(return_incomplete=True)
+
+            if row_ids is None:
+                if col_ids is None:
+                    iterator = query.df[:, :]
+                else:
+                    iterator = query.df[:, col_ids]
+            else:
+                if col_ids is None:
+                    iterator = query.df[row_ids, :]
+                else:
+                    iterator = query.df[row_ids, col_ids]
+
+            for df in iterator:
+                # Make this opt-in only.  For large arrays, this df.set_index is time-consuming
+                # so we should not do it without direction.
+                if set_index:
+                    df.set_index(dim_names, inplace=True)
+                yield df
 
     def read_all(
         self,
         *,
         # TODO: find the right syntax to get the typechecker to accept args like `ids=slice(0,10)`
-        # ids: Optional[Union[Sequence[int], Slice]] = None,
-        ids: Optional[Any] = None,
+        # row_ids: Optional[Union[Sequence[int], Slice]] = None,
+        # col_ids: Optional[Union[Sequence[int], Slice]] = None,
+        row_ids: Optional[Sequence[int]] = None,
+        col_ids: Optional[Sequence[int]] = None,
         result_order: Optional[str] = None,
         # TODO: batch_size
         # TODO: partition,
@@ -195,46 +243,33 @@ class SOMASparseNdArray(TileDBArray):
         """
         return util_arrow.concat_batches(
             self.read(
-                ids=ids,
+                row_ids=row_ids,
+                col_ids=col_ids,
                 result_order=result_order,
             )
         )
 
-    # TODO
-    #    def get_nnz(self) -> wint:
-    #        """
-    #        Return the number of non-zero values in the array
-    #        """
-    #        return 999
-
-    # TODO
-    #    def read():
-    #        """
-    #        Read a slice of data from the SOMASparseNdArray
-    #        """
-
-    # ### Operation: read()
-    #
-    # Read a user-specified subset of the object, and return as one or more Arrow.SparseTensor.
-    #
-    # Summary:
-    #
-    # ```
-    # read(
-    #     [slice, ...],
-    #     partitions,
-    #     result_order
-    # ) -> delayed iterator over Arrow.SparseTensor
-    # ```
-    #
-    # - slice - per-dimension slice, expressed as a scalar, a range, or a list of both.
-    # - partitions - an optional [`SOMAReadPartitions`](#SOMAReadPartitions) hint to indicate how
-    #   results should be organized.
-    # - result_order - order of read results. Can be one of row-major, column-major and unordered.
-    #
-    # The `read` operation will return a language-specific iterator over one or more Arrow SparseTensor
-    # objects, allowing the incremental processing of results larger than available memory. The actual
-    # iterator used is delegated to language-specific SOMA specs.
+    def read_as_pandas_all(
+        self,
+        *,
+        row_ids: Optional[Sequence[int]] = None,
+        col_ids: Optional[Sequence[int]] = None,
+        set_index: Optional[bool] = False,
+    ) -> pa.RecordBatch:
+        """
+        This is a convenience method around `read_as_pandas`. It iterates the return value from
+        `read_as_pandas` and returns a concatenation of all the record batches found. Its nominal
+        use is to simply unit-test cases.
+        """
+        dataframes = []
+        generator = self.read_as_pandas(
+            row_ids=row_ids,
+            col_ids=col_ids,
+            set_index=set_index,
+        )
+        for dataframe in generator:
+            dataframes.append(dataframe)
+        return pd.concat(dataframes)
 
     def write(
         self,
@@ -248,6 +283,8 @@ class SOMASparseNdArray(TileDBArray):
         :param values: an Arrow.SparseTensor containing values to be written. The type of elements in `values`
         must match the type of the `SOMASparseNdArray`.
         """
+
+        # TODO: CHUNKIFY
 
         # Example caller-side:
         #
@@ -283,38 +320,6 @@ class SOMASparseNdArray(TileDBArray):
         with self._tiledb_open("w") as A:
             A[icoords, jcoords] = data
 
-    # ================================================================
-    # ================================================================
-    # ================================================================
-    def read_as_pandas(
-        self,
-        *,
-        row_ids: Optional[Sequence[int]] = None,
-        col_ids: Optional[Sequence[int]] = None,
-        set_index: Optional[bool] = False,
-    ) -> pd.DataFrame:
-        """
-        TODO: comment
-        """
-        with self._tiledb_open() as A:
-            if row_ids is None:
-                if col_ids is None:
-                    df = A.df[:, :]
-                else:
-                    df = A.df[:, col_ids]
-            else:
-                if col_ids is None:
-                    df = A.df[row_ids, :]
-                else:
-                    df = A.df[row_ids, col_ids]
-        # Make this opt-in only.  For large arrays, this df.set_index is time-consuming
-        # so we should not do it without direction.
-        if set_index:
-            # TODO: get these from the schema while self._tiledb_open.
-            df.set_index(["__dim_0", "__dim_1"], inplace=True)
-        return df
-
-    # ----------------------------------------------------------------
     def from_matrix(self, matrix: Matrix) -> None:
         """
         Imports a matrix -- nominally `scipy.sparse.csr_matrix` or `numpy.ndarray` -- into a TileDB
@@ -520,7 +525,7 @@ class SOMASparseNdArray(TileDBArray):
             while j < ncol:
                 t1 = time.time()
                 # Find a number of CSC columns which will result in a desired nnz for the chunk.
-                chunk_size = util._find_csc_chunk_size(
+                chunk_size = util.find_csc_chunk_size(
                     matrix, j, self._tiledb_platform_config.goal_chunk_nnz
                 )
                 j2 = j + chunk_size

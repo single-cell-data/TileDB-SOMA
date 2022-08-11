@@ -82,7 +82,7 @@ def main():
         tiledbsc.v1.logging.info()
 
     soma = tiledbsc.v1.SOMAExperiment(input_path)
-    tiledbsc.v1.io.to_h5ad(soma, output_path)
+    tiledbsc.v1.io.to_h5ad(soma, output_path, measurement_name="mRNA")
 
     logger.info(f"Wrote {output_path}")
 

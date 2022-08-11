@@ -1,6 +1,6 @@
 import math
 import time
-from typing import Any, List, Optional, Tuple, Union
+from typing import Any, List, Optional, Sequence, Tuple, Union
 
 import numpy as np
 import pandas as pd
@@ -12,6 +12,7 @@ import tiledbsc.v1.eta as eta
 import tiledbsc.v1.logging as logging
 import tiledbsc.v1.util as util
 import tiledbsc.v1.util_arrow as util_arrow
+import tiledbsc.v1.util_tiledb as util_tiledb
 
 from .soma_collection import SOMACollection
 from .tiledb_array import TileDBArray
@@ -136,12 +137,6 @@ class SOMADenseNdArray(TileDBArray):
             # Returning Any from function declared to return "int"  [no-any-return]
             return A.schema.domain.ndim  # type: ignore
 
-    # TODO
-    #    def get_schema(self) -> Arrow.Schema:
-    #        """
-    #        Return data schema, in the form of an Arrow Schema
-    #        """
-
     def get_is_sparse(self) -> bool:
         """
         Returns ``False``.
@@ -150,14 +145,15 @@ class SOMADenseNdArray(TileDBArray):
 
     def read(
         self,
-        slice: Any,  # TODO: scalar, slice/range, or list of any of the above
         # TODO: partitions: Optional[SOMAReadPartitions] = None,,
-        # TODO: result_order: one of 'row-major' or 'column-major'
+        row_ids: Optional[Sequence[int]] = None,
+        col_ids: Optional[Sequence[int]] = None,
+        result_order: Optional[str] = None,
     ) -> Any:  # TODO: Iterator[DenseReadResult]
         """
         Read a user-specified subset of the object, and return as one or more Arrow.Tensor.
 
-        :param slice: per-dimension slice, expressed as a scalar, a range, or a list of both.
+        :param ids: per-dimension slice, expressed as a scalar, a range, or a list of both.
 
         :param partitions: an optional [`SOMAReadPartitions`](#SOMAReadPartitions) hint to indicate
         how results should be organized.
@@ -172,7 +168,111 @@ class SOMADenseNdArray(TileDBArray):
         * The coordinates of the slice (e.g., origin, shape)
         * an Arrow.Tensor with the slice values
         """
-        raise Exception("TBD")
+        tiledb_result_order = (
+            util_tiledb.tiledb_result_order_from_soma_result_order_indexed(result_order)
+        )
+
+        with self._tiledb_open("r") as A:
+            query = A.query(
+                return_arrow=True,
+                return_incomplete=True,
+                order=tiledb_result_order,
+            )
+
+            if row_ids is None:
+                if col_ids is None:
+                    iterator = query.df[:, :]
+                else:
+                    iterator = query.df[:, col_ids]
+            else:
+                if col_ids is None:
+                    iterator = query.df[row_ids, :]
+                else:
+                    iterator = query.df[row_ids, col_ids]
+
+            for df in iterator:
+                batches = df.to_batches()
+                for batch in batches:
+                    yield batch
+
+    def read_as_pandas(
+        self,
+        *,
+        row_ids: Optional[Sequence[int]] = None,
+        col_ids: Optional[Sequence[int]] = None,
+        set_index: Optional[bool] = False,
+    ) -> pd.DataFrame:
+        """
+        TODO: comment
+        """
+        with self._tiledb_open() as A:
+            query = A.query(return_incomplete=True)
+
+            if row_ids is None:
+                if col_ids is None:
+                    iterator = query.df[:, :]
+                else:
+                    iterator = query.df[:, col_ids]
+            else:
+                if col_ids is None:
+                    iterator = query.df[row_ids, :]
+                else:
+                    iterator = query.df[row_ids, col_ids]
+
+            for df in iterator:
+                # Make this opt-in only.  For large arrays, this df.set_index is time-consuming
+                # so we should not do it without direction.
+                if set_index:
+                    df.set_index(self.dim_names(), inplace=True)
+                yield df
+
+    def read_all(
+        self,
+        *,
+        # TODO: find the right syntax to get the typechecker to accept args like `ids=slice(0,10)`
+        # ids: Optional[Union[Sequence[int], Slice]] = None,
+        row_ids: Optional[Sequence[int]] = None,
+        col_ids: Optional[Sequence[int]] = None,
+        result_order: Optional[str] = None,
+        # TODO: batch_size
+        # TODO: partition,
+        # TODO: batch_format,
+        # TODO: platform_config,
+    ) -> pa.RecordBatch:
+        """
+        This is a convenience method around `read`. It iterates the return value from `read`
+        and returns a concatenation of all the record batches found. Its nominal use is to
+        simply unit-test cases.
+        """
+        return util_arrow.concat_batches(
+            self.read(
+                row_ids=row_ids,
+                col_ids=col_ids,
+                result_order=result_order,
+            )
+        )
+
+    def read_as_pandas_all(
+        self,
+        *,
+        row_ids: Optional[Sequence[int]] = None,
+        col_ids: Optional[Sequence[int]] = None,
+        set_index: Optional[bool] = False,
+    ) -> pa.RecordBatch:
+        """
+        This is a convenience method around `read_as_pandas`. It iterates the return value from
+        `read_as_pandas` and returns a concatenation of all the record batches found. Its nominal
+        use is to simply unit-test cases.
+        """
+        dataframes = []
+        generator = self.read_as_pandas(
+            row_ids=row_ids,
+            col_ids=col_ids,
+            set_index=set_index,
+        )
+        for dataframe in generator:
+            dataframes.append(dataframe)
+        return pd.concat(dataframes)
 
     def write(
         self,
@@ -193,13 +293,6 @@ class SOMADenseNdArray(TileDBArray):
 
         with self._tiledb_open("w") as A:
             A[coords] = values.to_numpy()
-
-    def to_pandas(self) -> pd.DataFrame:
-        """
-        TODO: comment
-        """
-        with self._tiledb_open() as A:
-            return A.df[:]
 
     # ----------------------------------------------------------------
     def from_matrix(self, matrix: Matrix) -> None:

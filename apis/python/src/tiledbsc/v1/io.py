@@ -1,6 +1,7 @@
 from typing import Callable
 
 import anndata as ad
+import numpy as np
 
 import tiledbsc.v1.util_ann as util_ann
 from tiledbsc.v1 import (
@@ -33,7 +34,6 @@ def from_h5ad(
 
 
 # ----------------------------------------------------------------
-# TODO TEMP WIP
 def _from_h5ad_common(
     experiment: SOMAExperiment,
     input_path: Path,
@@ -128,7 +128,11 @@ def from_anndata(
     measurement.X.create()
     measurement.set(measurement.X)
 
-    Xdata = SOMASparseNdArray(uri=f"{measurement.X.get_uri()}/data")
+    # TODO: more types to check?
+    if isinstance(anndata.X, np.ndarray):
+        Xdata = SOMADenseNdArray(uri=f"{measurement.X.get_uri()}/data")
+    else:
+        Xdata = SOMASparseNdArray(uri=f"{measurement.X.get_uri()}/data")
     Xdata.from_matrix(anndata.X)
     measurement.X.set(Xdata)
 
@@ -212,7 +216,7 @@ def to_h5ad(experiment: SOMAExperiment, h5ad_path: Path, measurement_name: str) 
         None, f"START  v1.SOMAExperiment.to_h5ad {experiment.get_uri()} -> {h5ad_path}"
     )
 
-    anndata = to_anndata(experiment)
+    anndata = to_anndata(experiment, measurement_name=measurement_name)
 
     s2 = util.get_start_stamp()
     logging.log_io(None, f"{experiment._indent}START  write {h5ad_path}")
@@ -249,74 +253,77 @@ def to_anndata(
     * obsp,varp arrays as scipy.sparse.csr_matrix
     """
 
-    raise Exception("to_anndata not implemented yet")
+    s = util.get_start_stamp()
+    logging.log_io(None, f"START  v1.SOMAExperiment.to_anndata {experiment.get_uri()}")
 
+    #    # TODO: need an index-converter ... inside the class maybe?
+    #    # sdf.write_from_pandas takes an optional id_column_name; so should sdf.read_as_pandas
 
-#    s = util.get_start_stamp()
-#    logging.log_io(None, f"START  v1.SOMAExperiment.to_anndata {experiment.get_uri()}")
-#
-#    # TODO: FINISH PORTING
-#
-#    # TODO: need an index-converter ... inside the class maybe?
-#    # sdf.write_from_pandas takes an optional id_column_name; so should sdf.read_as_pandas
-#
-#    obs_df = experiment.obs.read_as_pandas(id_column_name="obs_id")
-#    var_df = experiment.ms[measurement_name].var.read_as_pandas(id_column_name="var_id")
-#
-#    #   data = experiment.ms[measurement_name].X["data"]
-#    #   assert data is not None
-#    #   X_mat = data.to_csr_matrix(obs_df.index, var_df.index)
-#
-#    #   obsm = experiment.ms[measurement_name].obsm.to_dict_of_npnda()
-#    #   varm = experiment.ms[measurement_name].varm.to_dict_of_npndacsr()
-#
-#    #   obsp = experiment.ms[measurement_name].obsp.to_dict_of_csr(obs_df.index, obs_df.index)
-#    #   varp = experiment.ms[measurement_name].varp.to_dict_of_csr(var_df.index, var_df.index)
-#
-#    anndata = ad.AnnData(
-#        # X=X_mat,
-#        obs=obs_df,
-#        var=var_df,
-#        # obsm=obsm,
-#        # varm=varm,
-#        # obsp=obsp,
-#        # varp=varp
-#    )
-#
-#    #   raw = None
-#    #   if experiment.raw.exists():
-#    #       (raw_X, raw_var_df, raw_varm) = experiment.ms['raw'].to_anndata_raw(obs_df.index)
-#    #       raw = ad.Raw(
-#    #           anndata,
-#    #           X=raw_X,
-#    #           var=raw_var_df,
-#    #           varm=raw_varm,
-#    #       )
-#
-#    # TODO: PORT FROM V0 TO V1
-#    # uns = experiment.uns.to_dict_of_matrices()
-#
-#    anndata = ad.AnnData(
-#        #       X=anndata.X,
-#        #       dtype=None if anndata.X is None else anndata.X.dtype,  # some datasets have no X
-#        #       obs=anndata.obs,
-#        #       var=anndata.var,
-#        #       obsm=anndata.obsm,
-#        #       obsp=anndata.obsp,
-#        #       varm=anndata.varm,
-#        #       varp=anndata.varp,
-#        #       raw=raw,
-#        #       uns=uns,
-#    )
-#
-#    logging.log_io(
-#        None,
-#        util.format_elapsed(
-#            s, f"FINISH v1.SOMAExperiment.to_anndata {experiment.get_uri()}"
-#        ),
-#    )
-#
-#    return anndata
+    obs_df = experiment.obs.read_as_pandas_all(id_column_name="obs_id")
+    var_df = experiment.ms[measurement_name].var.read_as_pandas_all(
+        id_column_name="var_id"
+    )
+
+    # TODO: re-index string obs_id/var_id into X ...
+    #    X_data = experiment.ms[measurement_name].X["data"]
+    #    assert X_data is not None
+    #    X_mat = X_data.read_as_pandas_all() # TODO: CSR/CSC options ...
+
+    # TODO: re-index string obs_id/var_id into all ...
+    #    obsm = {}
+    #    for key in experiment.ms[measurement_name].obsm.keys():
+    #        obsm[key] = experiment.ms[measurement_name].obsm[key].read_as_pandas_all()
+
+    #    #   obsm = experiment.ms[measurement_name].obsm.to_dict_of_npnda()
+    #    #   varm = experiment.ms[measurement_name].varm.to_dict_of_npndacsr()
+    #
+    #    #   obsp = experiment.ms[measurement_name].obsp.to_dict_of_csr(obs_df.index, obs_df.index)
+    #    #   varp = experiment.ms[measurement_name].varp.to_dict_of_csr(var_df.index, var_df.index)
+
+    anndata = ad.AnnData(
+        #        X=X_mat,
+        obs=obs_df,
+        var=var_df,
+        # obsm=obsm,
+        # varm=varm,
+        # obsp=obsp,
+        # varp=varp,
+    )
+
+    #    #   raw = None
+    #    #   if experiment.raw.exists():
+    #    #       (raw_X, raw_var_df, raw_varm) = experiment.ms['raw'].to_anndata_raw(obs_df.index)
+    #    #       raw = ad.Raw(
+    #    #           anndata,
+    #    #           X=raw_X,
+    #    #           var=raw_var_df,
+    #    #           varm=raw_varm,
+    #    #       )
+    #
+    #    # TODO: PORT FROM V0 TO V1
+    #    # uns = experiment.uns.to_dict_of_matrices()
+
+    #    anndata = ad.AnnData(
+    #        #       X=anndata.X,
+    #        #       dtype=None if anndata.X is None else anndata.X.dtype,  # some datasets have no X
+    #        #       obs=anndata.obs,
+    #        #       var=anndata.var,
+    #        #       obsm=anndata.obsm,
+    #        #       obsp=anndata.obsp,
+    #        #       varm=anndata.varm,
+    #        #       varp=anndata.varp,
+    #        #       raw=raw,
+    #        #       uns=uns,
+    #    )
+
+    logging.log_io(
+        None,
+        util.format_elapsed(
+            s, f"FINISH v1.SOMAExperiment.to_anndata {experiment.get_uri()}"
+        ),
+    )
+
+    return anndata
 
 
 # ----------------------------------------------------------------
