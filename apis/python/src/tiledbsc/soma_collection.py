@@ -1,4 +1,5 @@
 from typing import Dict, Iterator, Optional, Sequence, Set, Union
+from concurrent.futures import ThreadPoolExecutor
 
 import tiledb
 
@@ -210,33 +211,39 @@ class SOMACollection(TileDBGroup):
         needn't specify these; if they don't, you must.
         """
 
+        soma_slice_futures = []
+
+        with ThreadPoolExecutor() as executor:
+            for soma in self:
+                # E.g. querying for 'cell_type == "blood"' but this SOMA doesn't have a cell_type column in
+                # its obs at all.
+                if obs_query_string is not None and not soma.obs.has_attr_names(
+                    obs_attrs or []
+                ):
+                    continue
+                # E.g. querying for 'feature_name == "MT-CO3"' but this SOMA doesn't have a feature_name
+                # column in its var at all.
+                if var_query_string is not None and not soma.var.has_attr_names(
+                    var_attrs or []
+                ):
+                    continue
+
+                soma_slice = executor.submit(
+                    soma.query,
+                    obs_attrs=obs_attrs,
+                    var_attrs=var_attrs,
+                    obs_query_string=obs_query_string,
+                    var_query_string=var_query_string,
+                    obs_ids=obs_ids,
+                    var_ids=var_ids,
+                )
+                if soma_slice is not None:
+                    # print("Slice SOMA from", soma.name, soma.X.data.shape(), "to", soma_slice.ann.X.shape)
+                    soma_slice_futures.append(soma_slice)
+
         soma_slices = []
-        for soma in self:
-            # E.g. querying for 'cell_type == "blood"' but this SOMA doesn't have a cell_type column in
-            # its obs at all.
-            if obs_query_string is not None and not soma.obs.has_attr_names(
-                obs_attrs or []
-            ):
-                continue
-            # E.g. querying for 'feature_name == "MT-CO3"' but this SOMA doesn't have a feature_name
-            # column in its var at all.
-            if var_query_string is not None and not soma.var.has_attr_names(
-                var_attrs or []
-            ):
-                continue
-
-            soma_slice = soma.query(
-                obs_attrs=obs_attrs,
-                var_attrs=var_attrs,
-                obs_query_string=obs_query_string,
-                var_query_string=var_query_string,
-                obs_ids=obs_ids,
-                var_ids=var_ids,
-            )
-            if soma_slice is not None:
-                # print("Slice SOMA from", soma.name, soma.X.data.shape(), "to", soma_slice.ann.X.shape)
-                soma_slices.append(soma_slice)
-
+        for f in soma_slice_futures:
+            soma_slices.append(f.result())
         return SOMASlice.concat(soma_slices)
 
     # ----------------------------------------------------------------
