@@ -1,5 +1,5 @@
-from typing import Dict, Iterator, Optional, Sequence, Set, Union
 from concurrent.futures import ThreadPoolExecutor
+from typing import Dict, Iterator, Optional, Sequence, Set, Union
 
 import tiledb
 
@@ -243,7 +243,9 @@ class SOMACollection(TileDBGroup):
 
         soma_slices = []
         for f in soma_slice_futures:
-            soma_slices.append(f.result())
+            soma_slice = f.result()
+            if soma_slice is not None:  # linter appeasement
+                soma_slices.append(soma_slice)
         return SOMASlice.concat(soma_slices)
 
     # ----------------------------------------------------------------
