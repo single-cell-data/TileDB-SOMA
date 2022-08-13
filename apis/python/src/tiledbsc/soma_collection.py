@@ -1,5 +1,5 @@
 from concurrent.futures import ThreadPoolExecutor
-from typing import Dict, Iterator, Optional, Sequence, Set, Union
+from typing import Dict, Iterator, Optional, Sequence, Set, Tuple, Union
 
 import tiledb
 
@@ -129,11 +129,52 @@ class SOMACollection(TileDBGroup):
         """
         Implements `for soma in soco: ...`
         """
-        for name, uri in self._get_member_names_to_uris().items():
-            if name not in self._somas:
-                # SOMA-constructor cache
-                self._somas[name] = SOMA(uri=uri, name=name, parent=self, ctx=self._ctx)
-            yield self._somas[name]
+        for _, soma in self._get_all_somas().items():
+            yield soma
+
+    def _get_all_somas(self) -> Dict[str, SOMA]:
+        self._populate_all()  # Parallelized cache pre-fill
+        return self._somas
+
+    def _populate_all(self) -> None:
+        """
+        Run constructors for all SOMAs in the collection, parallelized.
+
+        Note that we intentionally do not run this in the `SOMACollection` constructor --
+        collections may have very many SOMAs in them, and when an user instantiates a collection in
+        a notebook, we want the response to be rapid. If their user experience is that they only
+        want to examine a single SOMA via `soco.keys()` and `soma = soco['namehere']`, we should not
+        run hundreds of constructors (parallelized or not) -- this is not a good use of their
+        resources or time.
+
+        However, if the user is indeed iterating over the collection, we do need to run all the
+        constructors, and to do so quickly.
+
+        Thus, the nominal use-case for this method is in our `__iter__`.
+
+        The reason this is a good candidate for thread-pooling is member name-to-URI resolution in
+        the constructors. These read from storage using TileDB's core C++ storage engine, which
+        releases the GIL -- moreover, for TileDB Cloud storage, the member name-to-URI resolution in
+        core uses HTTP requests which are a fine candidate for parallelization.
+        """
+        futures = []
+        with ThreadPoolExecutor(
+            max_workers=self._soma_options.max_thread_pool_workers
+        ) as executor:
+            for name, uri in self._get_member_names_to_uris().items():
+                if name not in self._somas:
+                    future = executor.submit(self._populate_aux, name=name, uri=uri)
+                    futures.append(future)
+
+        for future in futures:
+            name, soma = future.result()
+            self._somas[name] = soma
+
+    def _populate_aux(self, name: str, uri: str) -> Tuple[str, SOMA]:
+        """
+        Helper method for `_populate`.`
+        """
+        return (name, SOMA(uri=uri, name=name, parent=self, ctx=self._ctx))
 
     # ----------------------------------------------------------------
     def __contains__(self, name: str) -> bool:
