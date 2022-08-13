@@ -1,3 +1,4 @@
+from concurrent.futures import ThreadPoolExecutor
 from typing import Optional, Sequence, Set, Tuple
 
 import numpy as np
@@ -186,14 +187,31 @@ class AnnotationDataFrame(TileDBArray):
             return self._ascii_to_unicode_dataframe_readback(slice_df)
 
     # ----------------------------------------------------------------
+    def _ascii_to_unicode_series_readback(
+        self, field_name: str, series: pd.Series
+    ) -> Tuple[str, bool, Optional[pd.Series]]:
+        if len(series) > 0 and type(series[0]) == bytes:
+            return (field_name, True, series.map(lambda e: e.decode()))
+        else:
+            return (field_name, False, None)
+
     def _ascii_to_unicode_dataframe_readback(self, df: pd.DataFrame) -> pd.DataFrame:
         """
         Implements the 'decode on read' partof our logic as noted in `dim_select()`.
         """
-        for k in df:
-            dfk = df[k]
-            if len(dfk) > 0 and type(dfk[0]) == bytes:
-                df[k] = dfk.map(lambda e: e.decode())
+        futures = []
+        with ThreadPoolExecutor() as executor:
+            for k in df:
+                future = executor.submit(
+                    self._ascii_to_unicode_series_readback, k, df[k]
+                )
+                futures.append(future)
+
+        for future in futures:
+            (k, modified, dfk) = future.result()
+            if modified:
+                df[k] = dfk
+
         return df
 
     # ----------------------------------------------------------------
