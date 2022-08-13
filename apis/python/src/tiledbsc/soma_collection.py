@@ -228,7 +228,7 @@ class SOMACollection(TileDBGroup):
                 ):
                     continue
 
-                soma_slice = executor.submit(
+                soma_slice_future = executor.submit(
                     soma.query,
                     obs_attrs=obs_attrs,
                     var_attrs=var_attrs,
@@ -237,14 +237,20 @@ class SOMACollection(TileDBGroup):
                     obs_ids=obs_ids,
                     var_ids=var_ids,
                 )
-                if soma_slice is not None:
-                    # print("Slice SOMA from", soma.name, soma.X.data.shape(), "to", soma_slice.ann.X.shape)
-                    soma_slice_futures.append(soma_slice)
+                soma_slice_futures.append(soma_slice_future)
+
+        # Linter:
+        # Argument 1 to "concat" of "SOMASlice" has incompatible type
+        # "List[Future[Optional[SOMASlice]]]"; expected "Sequence[SOMASlice]" [arg-type]
+        #
+        # but printing type(soma_slice) in the loop, it's of type SOMASlice -- and:
+        # o we've done soma_slice_future.result()
+        # o we've checked not-None
 
         soma_slices = []
-        for f in soma_slice_futures:
-            soma_slice = f.result()
-            if soma_slice is not None:  # linter appeasement
+        for soma_slice_future in soma_slice_futures:
+            soma_slice = soma_slice_future.result()
+            if soma_slice is not None:
                 soma_slices.append(soma_slice)
         return SOMASlice.concat(soma_slices)
 
