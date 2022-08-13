@@ -213,7 +213,9 @@ class SOMACollection(TileDBGroup):
 
         soma_slice_futures = []
 
-        with ThreadPoolExecutor() as executor:
+        with ThreadPoolExecutor(
+            max_workers=self._soma_options.max_thread_pool_workers
+        ) as executor:
             for soma in self:
                 # E.g. querying for 'cell_type == "blood"' but this SOMA doesn't have a cell_type column in
                 # its obs at all.
