@@ -144,7 +144,36 @@ class SOMASlice(TileDBGroup):
 
         # Use AnnData.concat.
         # TODO: try to remove this dependency.
+
+        # This is a possible candidate for threading -- one can imagine to_anndata() being at least
+        # partially implemented in C++ and releasing the GIL. However it appears to be pure Python;
+        # experiments have shown that threading here actually increases execution time by a little
+        # bit.
+
         anns = [soma_slice.to_anndata() for soma_slice in soma_slices]
+
+        # @classmethod
+        # def _concat_aux(cls, index, soma_slice):
+        #     ann = soma_slice.to_anndata()
+        #     return (index, ann)
+
+        # futures = []
+        # max_thread_pool_workers = 8
+        # with ThreadPoolExecutor(max_workers=max_thread_pool_workers) as executor:
+        #     for i, soma_slice in enumerate(soma_slices):
+        #         future = executor.submit(
+        #             cls._concat_aux,
+        #             i,
+        #             soma_slice,
+        #         )
+        #         futures.append(future)
+        # anns = []
+        # for future in futures:
+        #     index, ann = future.result()
+        #     if ann is not None:
+        #         anns.append(ann)
+
+        # We find that the ad.concat is relatively quick.
         annc = ad.concat(anns, join="outer", merge="first")
         annc.obs_names_make_unique()
         annc.var_names_make_unique()
@@ -157,4 +186,5 @@ class SOMASlice(TileDBGroup):
         for name in annc.layers:
             X[name] = annc.layers[name]
 
-        return cls(X=X, obs=annc.obs, var=annc.var)
+        retval = cls(X=X, obs=annc.obs, var=annc.var)
+        return retval

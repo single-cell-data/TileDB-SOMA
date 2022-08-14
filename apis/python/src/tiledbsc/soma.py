@@ -2,7 +2,8 @@ from __future__ import annotations
 
 import os
 from collections import Counter
-from typing import Optional, Sequence
+from concurrent.futures import ThreadPoolExecutor
+from typing import Optional, Sequence, Tuple
 
 import pandas as pd
 import tiledb
@@ -10,6 +11,7 @@ import tiledb
 from .annotation_dataframe import AnnotationDataFrame
 from .annotation_matrix_group import AnnotationMatrixGroup
 from .annotation_pairwise_matrix_group import AnnotationPairwiseMatrixGroup
+from .assay_matrix import AssayMatrix
 from .assay_matrix_group import AssayMatrixGroup
 from .raw_group import RawGroup
 from .soma_options import SOMAOptions
@@ -356,6 +358,84 @@ class SOMA(TileDBGroup):
         return self._assemble_soma_slice(obs_ids, var_ids, slice_obs_df, slice_var_df)
 
     # ----------------------------------------------------------------
+    @classmethod
+    def queries(
+        cls,
+        somas: Sequence[SOMA],
+        *,
+        obs_attrs: Optional[Sequence[str]] = None,
+        obs_query_string: Optional[str] = None,
+        obs_ids: Optional[Ids] = None,
+        var_attrs: Optional[Sequence[str]] = None,
+        var_query_string: Optional[str] = None,
+        var_ids: Optional[Ids] = None,
+        max_thread_pool_workers: Optional[int] = None,
+    ) -> Optional[SOMASlice]:
+        """
+        Subselects the obs, var, and X/data using the specified queries on obs and var,
+        concatenating across SOMAs in the list.  Queries use the TileDB-Py `QueryCondition`
+        API.
+
+        If `obs_query_string` is `None`, the `obs` dimension is not filtered and all of `obs` is
+        used; similiarly for `var`. Return value of `None` indicates an empty slice.  If `obs_ids`
+        or `var_ids` are not `None`, they are effectively ANDed into the query.  For example, you
+        can pass in a known list of `obs_ids`, then use `obs_query_string` to further restrict the
+        query.
+
+        If `obs_attrs` or `var_attrs` are unspecified, slices will take all `obs`/`var` attributes
+        from their source SOMAs; if they are specified, slices will take the specified `obs`/`var`
+        attributes.  If all SOMAs in the collection have the same `obs`/`var` attributes, then you
+        needn't specify these; if they don't, you must.
+        """
+
+        # This is a good candidate for parallelization because the soma.query bits are independent
+        # of one another, and are also in TileDB's core C++ engine which releases the GIL.
+        if max_thread_pool_workers is None:
+            max_thread_pool_workers = SOMAOptions().max_thread_pool_workers
+        soma_slice_futures = []
+        with ThreadPoolExecutor(max_workers=max_thread_pool_workers) as executor:
+            for soma in somas:
+                # E.g. querying for 'cell_type == "blood"' but this SOMA doesn't have a cell_type
+                # column in its obs at all.
+                if obs_query_string is not None and not soma.obs.has_attr_names(
+                    obs_attrs or []
+                ):
+                    continue
+                # E.g. querying for 'feature_name == "MT-CO3"' but this SOMA doesn't have a feature_name
+                # column in its var at all.
+                if var_query_string is not None and not soma.var.has_attr_names(
+                    var_attrs or []
+                ):
+                    continue
+
+                soma_slice_future = executor.submit(
+                    soma.query,
+                    obs_attrs=obs_attrs,
+                    var_attrs=var_attrs,
+                    obs_query_string=obs_query_string,
+                    var_query_string=var_query_string,
+                    obs_ids=obs_ids,
+                    var_ids=var_ids,
+                )
+                soma_slice_futures.append(soma_slice_future)
+
+        soma_slices = []
+        for soma_slice_future in soma_slice_futures:
+            soma_slice = soma_slice_future.result()
+            if soma_slice is not None:
+                soma_slices.append(soma_slice)
+        return SOMASlice.concat(soma_slices)
+
+    # ----------------------------------------------------------------
+    def _assemble_soma_slice_aux(
+        self,
+        layer_name: str,
+        X: AssayMatrix,
+        obs_ids: Optional[Ids],
+        var_ids: Optional[Ids],
+    ) -> Tuple[str, pd.DataFrame]:
+        return (layer_name, X.dim_select(obs_ids, var_ids))
+
     def _assemble_soma_slice(
         self,
         obs_ids: Optional[Ids],
@@ -366,11 +446,30 @@ class SOMA(TileDBGroup):
         """
         An internal method for constructing a `SOMASlice` object given query results.
         """
+        # There aren't always multiple X layers, and if there aren't, this parallelization doesn't
+        # help. But neither doesit hurt. And if there are, that's good news, since the dim_select is
+        # in TileDB's C++ core engine which releases the GIL.
+        futures = []
+        with ThreadPoolExecutor(
+            max_workers=self._soma_options.max_thread_pool_workers
+        ) as executor:
+            for layer_name in self.X.keys():
+                X_layer = self.X[layer_name]
+                if X_layer is not None:
+                    future = executor.submit(
+                        self._assemble_soma_slice_aux,
+                        layer_name,
+                        X_layer,
+                        obs_ids,
+                        var_ids,
+                    )
+                    futures.append(future)
+
         X = {}
-        for key in self.X.keys():
-            value = self.X[key]
-            assert value is not None
-            X[key] = value.dim_select(obs_ids, var_ids)
+        for future in futures:
+            layer_name, df = future.result()
+            assert df is not None
+            X[layer_name] = df
 
         return SOMASlice(X=X, obs=slice_obs_df, var=slice_var_df)
 
