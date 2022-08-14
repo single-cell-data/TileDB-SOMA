@@ -200,6 +200,8 @@ class AnnotationDataFrame(TileDBArray):
         Implements the 'decode on read' partof our logic as noted in `dim_select()`.
         """
         futures = []
+        # Empirically we find this has a bit of a speed-up. Presumably that's because of some NumPy
+        # C++ code releasing the GIL.
         with ThreadPoolExecutor() as executor:
             for k in df:
                 future = executor.submit(
