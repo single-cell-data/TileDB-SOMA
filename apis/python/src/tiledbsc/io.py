@@ -317,7 +317,14 @@ def to_anndata(soma: tiledbsc.SOMA) -> ad.AnnData:
     varp = soma.varp.to_dict_of_csr(var_df.index, var_df.index)
 
     anndata = ad.AnnData(
-        X=X_mat, obs=obs_df, var=var_df, obsm=obsm, varm=varm, obsp=obsp, varp=varp
+        X=X_mat,
+        obs=obs_df,
+        var=var_df,
+        obsm=obsm,
+        varm=varm,
+        obsp=obsp,
+        varp=varp,
+        dtype=None if X_mat is None else X_mat.dtype,  # some datasets have no X
     )
 
     raw = None
