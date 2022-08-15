@@ -259,7 +259,9 @@ def from_anndata_update_obs_and_var(soma: tiledbsc.SOMA, anndata: ad.AnnData) ->
 
 
 # ----------------------------------------------------------------
-def to_h5ad(soma: tiledbsc.SOMA, h5ad_path: Path) -> None:
+def to_h5ad(
+    soma: tiledbsc.SOMA, h5ad_path: Path, *, X_layer_name: str = "data"
+) -> None:
     """
     Converts the soma group to anndata format and writes it to the specified .h5ad file.
     As of 2022-05-05 this is an incomplete prototype.
@@ -268,7 +270,7 @@ def to_h5ad(soma: tiledbsc.SOMA, h5ad_path: Path) -> None:
     s = tiledbsc.util.get_start_stamp()
     log_io(None, f"START  SOMA.to_h5ad {soma.uri} -> {h5ad_path}")
 
-    anndata = to_anndata(soma)
+    anndata = to_anndata(soma, X_layer_name=X_layer_name)
 
     s2 = tiledbsc.util.get_start_stamp()
     log_io(None, f"{soma._indent}START  write {h5ad_path}")
@@ -289,7 +291,7 @@ def to_h5ad(soma: tiledbsc.SOMA, h5ad_path: Path) -> None:
 
 
 # ----------------------------------------------------------------
-def to_anndata(soma: tiledbsc.SOMA) -> ad.AnnData:
+def to_anndata(soma: tiledbsc.SOMA, *, X_layer_name: str = "data") -> ad.AnnData:
     """
     Converts the soma group to anndata. Choice of matrix formats is following
     what we often see in input .h5ad files:
@@ -306,7 +308,7 @@ def to_anndata(soma: tiledbsc.SOMA) -> ad.AnnData:
     obs_df = soma.obs.df()
     var_df = soma.var.df()
 
-    data = soma.X["data"]
+    data = soma.X[X_layer_name]
     assert data is not None
     X_mat = data.to_csr_matrix(obs_df.index, var_df.index)
 
@@ -351,14 +353,16 @@ def to_anndata(soma: tiledbsc.SOMA) -> ad.AnnData:
 
 
 # ----------------------------------------------------------------
-def to_anndata_from_raw(soma: tiledbsc.SOMA) -> ad.AnnData:
+def to_anndata_from_raw(
+    soma: tiledbsc.SOMA, *, X_layer_name: str = "data"
+) -> ad.AnnData:
     """
     Extract only the raw parts as a new AnnData object.
     """
 
     obs_df = soma.obs.df()
     var_df = soma.raw.var.df()
-    data = soma.raw.X["data"]
+    data = soma.raw.X[X_layer_name]
     assert data is not None
     X_mat = data.to_csr_matrix(obs_df.index, var_df.index)
 
