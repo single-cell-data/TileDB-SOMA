@@ -510,3 +510,16 @@ class SOMA(TileDBGroup):
             )
 
         return soma
+
+    # ----------------------------------------------------------------
+    def add_X_layer(
+        self,
+        matrix: Matrix,
+        layer_name: str = "data",
+    ) -> None:
+        """
+        Populates the `X` or `raw.X` subgroup for a `SOMA` object.
+        """
+        self.X.add_layer_from_matrix_and_dim_values(
+            matrix, self.obs.index(), self.var.index(), layer_name
+        )
