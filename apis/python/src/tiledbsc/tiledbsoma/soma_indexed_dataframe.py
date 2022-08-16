@@ -189,12 +189,6 @@ class SOMAIndexedDataFrame(TileDBArray):
         """
         return len(self.get_index_column_names())
 
-    # TODO
-    #    def get_schema(self) -> Arrow.Schema:
-    #        """
-    #        Return data schema, in the form of an Arrow Schema
-    #        """
-
     def get_indexed(self) -> bool:
         return False
 

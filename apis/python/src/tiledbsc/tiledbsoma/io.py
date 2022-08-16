@@ -317,6 +317,7 @@ def to_anndata(
         varm=varm,
         obsp=obsp,
         varp=varp,
+        dtype=None if X_csr is None else X_csr.dtype,  # some datasets have no X
     )
 
     #    #   raw = None
