@@ -60,7 +60,7 @@ class RawGroup(TileDBGroup):
         )
 
     # ----------------------------------------------------------------
-    def from_anndata(self, anndata: ad.AnnData) -> None:
+    def from_anndata(self, anndata: ad.AnnData, X_layer_name: str = "data") -> None:
         """
         Writes `anndata.raw` to a TileDB group structure.
         """
@@ -77,7 +77,7 @@ class RawGroup(TileDBGroup):
             matrix=anndata.raw.X,
             row_names=anndata.obs.index,
             col_names=anndata.raw.var.index,
-            layer_name="data",
+            layer_name=X_layer_name,
         )
         self._add_object(self.X)
 
@@ -92,15 +92,17 @@ class RawGroup(TileDBGroup):
 
     # ----------------------------------------------------------------
     def to_anndata_raw(
-        self, obs_labels: Labels
+        self,
+        obs_labels: Labels,
+        X_layer_name: str = "data",
     ) -> Tuple[sp.csr_matrix, pd.DataFrame, Dict[str, np.ndarray]]:
         """
         Reads TileDB storage and returns the material for an `anndata.Raw` object.
         The `obs_labels` must be from the parent object.
         """
         var_df = self.var.df()
-        data = self.X["data"]
-        assert data is not None
-        X_mat = data.to_csr_matrix(obs_labels, var_df.index)
+        X_mat = self.X[X_layer_name]
+        assert X_mat is not None
+        X_mat = X_mat.to_csr_matrix(obs_labels, var_df.index)
         varm = self.varm.to_dict_of_csr()
         return X_mat, var_df, varm
