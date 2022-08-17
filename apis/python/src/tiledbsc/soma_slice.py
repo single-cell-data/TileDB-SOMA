@@ -177,6 +177,27 @@ class SOMASlice(TileDBGroup):
         annc = ad.concat(anns, join="outer", merge="first")
 
         # Problem: https://discourse.scverse.org/t/help-with-concat/676
+        #
+        # Example of the problem:
+        # ---- SOMA1        ---- SOMA2        ---- SLICE (WITH QUERY ALL) AND CONCAT
+        # X:                X:                X:
+        # [[1. 2. 3.]       [[ 7.  8.]        [[ 1.  2.  3.    ]
+        #  [4. 5. 6.]]       [ 9. 10.]]        [ 4.  5.  6.    ]
+        # obs:              obs:               [ 7.          8.]
+        #        oa ob             oa ob       [ 9.         10.]]
+        # cell1  10  a      cell3  60  f      obs:
+        # cell2  20  b      cell4  70  g             oa ob
+        # var:              var:              cell1  10  a
+        #        va vb             va vb      cell2  20  b
+        # gene1  30  c      gene1  80  h      cell3  60  f
+        # gene2  40  d      gene4  90  i      cell4  70  g
+        # gene3  50  e                        var:
+        #                                              va   vb
+        #                                     gene1  30.0    c
+        #                                     gene2  40.0    d
+        #                                     gene3  50.0    e
+        #                                     gene4   NaN  NaN <---- make sure this doesn't happen
+
         # Solution thanks to Bruce Martin at CZI:
         merged_obs = pd.concat([ann.obs for ann in anns], join="outer")
         merged_var = pd.concat([ann.var for ann in anns], join="outer")
@@ -189,7 +210,6 @@ class SOMASlice(TileDBGroup):
         # Having leveraged AnnData solely for the concat method, pull out concatenated dataframes
         # into a SOMASlice object.
         X = {}
-        # TODO: SHAPE THIS
         X["data"] = annc.X
         for name in annc.layers:
             X[name] = annc.layers[name]

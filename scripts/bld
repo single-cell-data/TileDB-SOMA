@@ -24,6 +24,6 @@ else
 fi
 
 cmake -B build -S libtiledbsc -DCMAKE_BUILD_TYPE=${BUILD_TYPE} ${EXTRA_OPTS}
-cmake --build build --target check-format
+#cmake --build build --target check-format
 cmake --build build -j $(nproc)
 cmake --build build --target install-libtiledbsc
