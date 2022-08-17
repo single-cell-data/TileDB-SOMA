@@ -2,6 +2,8 @@
 #include <tiledb/tiledb>
 #include <tiledbsc/tiledbsc>
 
+#define VERBOSE 0
+
 #ifndef TILEDBSC_SOURCE_ROOT
 #define TILEDBSC_SOURCE_ROOT "not_defined"
 #endif
@@ -12,9 +14,17 @@ static const std::string soma_uri = root + "/test/soco/pbmc3k_processed";
 using namespace tiledb;
 using namespace tiledbsc;
 
+int soma_num_cells(MultiArrayBuffers& soma) {
+    return soma.begin()->second.begin()->second->size();
+}
+
 TEST_CASE("SOMA: Open arrays") {
+    if (VERBOSE) {
+        LOG_CONFIG("debug");
+    }
+
     Config config;
-    config["config.logging_level"] = "5";
+    // config.logging_level"] = "5";
 
     auto soma = SOMA::open(soma_uri, config);
     auto array_uris = soma->list_arrays();
@@ -29,11 +39,10 @@ TEST_CASE("SOMA: Open arrays") {
 TEST_CASE("SOMA: Full query") {
     auto soma = SOMA::open(soma_uri);
     auto sq = soma->query();
-    auto ctx = soma->context();
 
     size_t total_cells = 0;
     while (auto results = sq->next_results()) {
-        auto num_cells = results->at("obs_id")->size();
+        auto num_cells = soma_num_cells(*results);
         total_cells += num_cells;
     }
     REQUIRE(total_cells == 4848644);
@@ -54,7 +63,7 @@ TEST_CASE("SOMA: Sliced query (obs)") {
 
     size_t total_cells = 0;
     while (auto results = sq->next_results()) {
-        auto num_cells = results->at("obs_id")->size();
+        auto num_cells = soma_num_cells(*results);
         total_cells += num_cells;
     }
     REQUIRE(total_cells == 628596);
@@ -76,7 +85,7 @@ TEST_CASE("SOMA: Sliced query (var)") {
 
     size_t total_cells = 0;
     while (auto results = sq->next_results()) {
-        auto num_cells = results->at("obs_id")->size();
+        auto num_cells = soma_num_cells(*results);
         total_cells += num_cells;
     }
     REQUIRE(total_cells == 1308448);
@@ -94,7 +103,7 @@ TEST_CASE("SOMA: Sliced query (select ids)") {
 
     size_t total_cells = 0;
     while (auto results = sq->next_results()) {
-        auto num_cells = results->at("obs_id")->size();
+        auto num_cells = soma_num_cells(*results);
         total_cells += num_cells;
     }
     REQUIRE(total_cells == 9);

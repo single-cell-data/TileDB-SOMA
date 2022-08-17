@@ -1,6 +1,7 @@
 #include <regex>
 
 #include "tiledbsc/soma_collection.h"
+#include "tiledbsc/util.h"
 
 namespace tiledbsc {
 using namespace tiledb;
@@ -9,27 +10,44 @@ using namespace tiledb;
 //= public static
 //===================================================================
 
-SOMACollection SOMACollection::open(std::string_view uri, Context ctx) {
-    return SOMACollection(uri, ctx);
+std::unique_ptr<SOMACollection> SOMACollection::open(
+    std::string_view uri, std::shared_ptr<Context> ctx) {
+    return std::make_unique<SOMACollection>(uri, ctx);
+}
+
+std::unique_ptr<SOMACollection> SOMACollection::open(
+    std::string_view uri, const Config& config) {
+    return std::make_unique<SOMACollection>(
+        uri, std::make_shared<Context>(config));
 }
 
 //===================================================================
 //= public non-static
 //===================================================================
 
-SOMACollection::SOMACollection(std::string_view uri, Context ctx)
-    : ctx_(ctx) {
-    // Remove all trailing /
-    // TODO: move this to utils
-    uri_ = std::regex_replace(std::string(uri), std::regex("/+$"), "");
+SOMACollection::SOMACollection(
+    std::string_view uri, std::shared_ptr<Context> ctx)
+    : ctx_(ctx)
+    , uri_(util::rstrip_uri(uri)) {
 }
 
 std::unordered_map<std::string, std::string> SOMACollection::list_somas() {
     if (soma_uri_map_.empty()) {
-        Group group(ctx_, uri_, TILEDB_READ);
+        Group group(*ctx_, uri_, TILEDB_READ);
         build_uri_map(group);
     }
     return soma_uri_map_;
+}
+
+std::unordered_map<std::string, std::shared_ptr<SOMA>>
+SOMACollection::get_somas() {
+    if (soma_map_.empty()) {
+        for (auto& [name, uri] : list_somas()) {
+            soma_map_[name] = SOMA::open(uri, ctx_);
+        }
+    }
+
+    return soma_map_;
 }
 
 //===================================================================
@@ -45,7 +63,7 @@ void SOMACollection::build_uri_map(Group& group, std::string_view parent) {
                         std::string(parent) + "/" + member.name().value();
 
         if (member.type() == Object::Type::Group) {
-            auto subgroup = Group(ctx_, member.uri(), TILEDB_READ);
+            auto subgroup = Group(*ctx_, member.uri(), TILEDB_READ);
             // Determine if the subgroup is a SOMA or a nested SOCO
 
             // Read group metadata "__soma_object_type__"

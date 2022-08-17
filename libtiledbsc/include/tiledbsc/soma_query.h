@@ -14,9 +14,6 @@
 namespace tiledbsc {
 using namespace tiledb;
 
-constexpr size_t DEFAULT_INDEX_ALLOC = 1 << 20;  // 1M cells
-constexpr size_t DEFAULT_X_ALLOC = 1 << 26;      // 64M cells
-
 class SOMA;  // forward declaration
 
 class SOMAQuery {
@@ -24,12 +21,10 @@ class SOMAQuery {
     /**
      * @brief Construct a new SOMAQuery object
      *
-     * @param soma
+     * @param soma SOMA
+     * @param name SOMA name
      */
-    SOMAQuery(
-        SOMA* soma,
-        size_t index_alloc = DEFAULT_INDEX_ALLOC,
-        size_t x_alloc = DEFAULT_X_ALLOC);
+    SOMAQuery(SOMA* soma, std::string name);
 
     /**
      * @brief Select obs attributes to materialize.
@@ -85,20 +80,59 @@ class SOMAQuery {
         mq_var_->set_condition(qc);
     }
 
+    template <class T>
+    void set_obs_condition(const std::string& attr, T value, int op) {
+        auto qc = QueryCondition::create(
+            *ctx_, attr, value, (tiledb_query_condition_op_t)op);
+        set_obs_condition(qc);
+    }
+
+    template <class T>
+    void set_var_condition(const std::string& attr, T value, int op) {
+        auto qc = QueryCondition::create(
+            *ctx_, attr, value, (tiledb_query_condition_op_t)op);
+        set_var_condition(qc);
+    }
+
     /**
      * @brief Submit the query and return the first batch of results. To handle
      * incomplete queries, continue to call `next_results` until std::nullopt is
      * returned.
      *
-     * @return std::optional<
-     * std::unordered_map<std::string, std::shared_ptr<ColumnBuffer>>> Results
-     * or std::nullopt if the query is complete.
+     * @return std::optional<MultiArrayBuffers> Results or std::nullopt
      */
-    std::optional<
-        std::unordered_map<std::string, std::shared_ptr<ColumnBuffer>>>
-    next_results();
+    std::optional<MultiArrayBuffers> next_results();
+
+    std::optional<MultiArrayBuffers> results() {
+        if (results_.empty()) {
+            return std::nullopt;
+        }
+        return results_;
+    }
+
+    /**
+     * @brief Return true if the SOMA query is complete.
+     */
+    bool is_complete() {
+        return complete_;
+    }
+
+    /**
+     * @brief Return the SOMA name.
+     *
+     * @return std::string SOMA name.
+     */
+    std::string name() {
+        return name_;
+    }
 
    private:
+    // SOMA name
+    std::string name_;
+
+    // TileDB context
+    std::shared_ptr<Context> ctx_;
+
     // Managed query for the obs array
     std::unique_ptr<ManagedQuery> mq_obs_;
 
@@ -108,8 +142,17 @@ class SOMAQuery {
     // Managed query for the X array
     std::unique_ptr<ManagedQuery> mq_x_;
 
+    // Results of last call to next_results.
+    MultiArrayBuffers results_;
+
     // Mutex to control access to mq_x_
     std::mutex mtx_;
+
+    // If true, the query is empty because the obs or var query was empty
+    bool empty_ = false;
+
+    // If true, the query is complete
+    bool complete_ = false;
 
     /**
      * @brief Submit a query (obs or var) and use the results to slice

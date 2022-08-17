@@ -13,8 +13,6 @@ namespace tiledbsc {
 
 using namespace tiledb;
 
-constexpr size_t TILEDBSC_DEFAULT_ALLOC = 524288;
-
 class ManagedQuery {
    public:
     //===================================================================
@@ -25,11 +23,9 @@ class ManagedQuery {
      * @brief Construct a new Managed Query object
      *
      * @param array TileDB array
-     * @param initial_cells Initial number of cells to allocate
+     * @param name Name of the array
      */
-    ManagedQuery(
-        std::shared_ptr<Array> array,
-        size_t initial_cells = TILEDBSC_DEFAULT_ALLOC);
+    ManagedQuery(std::shared_ptr<Array> array, std::string name = "array");
 
     /**
      * @brief Select columns names to query (dim and attr). If the
@@ -196,12 +192,9 @@ class ManagedQuery {
     /**
      * @brief Return results from the query.
      *
-     * ** WIP FOR TESTING ONLY **
-     *
-     * @return std::unordered_map<std::string, std::shared_ptr<ColumnBuffer>>
-     * Results
+     * @return ArrayBuffers Results
      */
-    std::unordered_map<std::string, std::shared_ptr<ColumnBuffer>> results() {
+    ArrayBuffers results() {
         return buffers_;
     }
 
@@ -227,11 +220,11 @@ class ManagedQuery {
     // TileDB array being queried.
     std::shared_ptr<Array> array_;
 
+    // Name displayed in log messages
+    std::string name_;
+
     // Array schema
     ArraySchema schema_;
-
-    // Initial number of cells to allocate for each ColumnBuffer.
-    size_t initial_cells_;
 
     // TileDB query being managed.
     std::unique_ptr<Query> query_;
@@ -255,7 +248,7 @@ class ManagedQuery {
     size_t total_num_cells_ = 0;
 
     // Map of column name to ColumnBuffer.
-    std::unordered_map<std::string, std::shared_ptr<ColumnBuffer>> buffers_;
+    ArrayBuffers buffers_;
 };
 
 };  // namespace tiledbsc

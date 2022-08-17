@@ -10,10 +10,10 @@ using namespace tiledb;
 //= public non-static
 //===================================================================
 
-ManagedQuery::ManagedQuery(std::shared_ptr<Array> array, size_t initial_cells)
+ManagedQuery::ManagedQuery(std::shared_ptr<Array> array, std::string name)
     : array_(array)
-    , schema_(array->schema())
-    , initial_cells_(initial_cells) {
+    , name_(name)
+    , schema_(array->schema()) {
     query_ = std::make_unique<Query>(schema_.context(), *array);
     subarray_ = std::make_unique<Subarray>(schema_.context(), *array);
 
@@ -37,7 +37,9 @@ void ManagedQuery::select_columns(
         if (!schema_.has_attribute(name) &&
             !schema_.domain().has_dimension(name)) {
             LOG_DEBUG(fmt::format(
-                "[ManagedQuery] Invalid column selected: {}", name));
+                "[ManagedQuery] [{}] Invalid column selected: {}",
+                name_,
+                name));
             invalid_columns_selected_ = true;
         } else {
             columns_.insert(name);
@@ -71,18 +73,21 @@ size_t ManagedQuery::submit() {
 
         // Allocate and attach buffers
         for (auto& name : columns_) {
-            LOG_DEBUG(fmt::format("Adding buffer for column '{}'", name));
-            buffers_.emplace(
-                name, ColumnBuffer::create(array_, name, initial_cells_));
+            LOG_DEBUG(fmt::format(
+                "[ManagedQuery] [{}] Adding buffer for column '{}'",
+                name_,
+                name));
+            buffers_.emplace(name, ColumnBuffer::create(array_, name));
             buffers_[name]->attach(*query_);
         }
     }
 
     // Submit query
-    LOG_DEBUG(fmt::format("Submit query"));
+    LOG_DEBUG(fmt::format("[ManagedQuery] [{}] Submit query", name_));
     query_->submit();
     status = query_->query_status();
-    LOG_DEBUG(fmt::format("Query status = {}", (int)status));
+    LOG_DEBUG(fmt::format(
+        "[ManagedQuery] [{}] Query status = {}", name_, (int)status));
 
     // If the query was ever incomplete, the result buffers contents are not
     // complete.
@@ -94,14 +99,15 @@ size_t ManagedQuery::submit() {
     size_t num_cells = 0;
     for (auto& [name, buffer] : buffers_) {
         num_cells = buffer->update_size(*query_);
-        LOG_DEBUG(fmt::format("Buffer {} cells={}", name, num_cells));
+        LOG_DEBUG(fmt::format(
+            "[ManagedQuery] [{}] Buffer {} cells={}", name_, name, num_cells));
     }
     total_num_cells_ += num_cells;
 
     // TODO: retry the query with larger buffers
     if (status == Query::Status::INCOMPLETE && !num_cells) {
-        throw TileDBSCError(fmt::format(
-            "[ManagedQuery] Buffers are too small: {} cells", initial_cells_));
+        throw TileDBSCError(
+            fmt::format("[ManagedQuery] [{}] Buffers are too small.", name_));
     }
 
     return num_cells;
