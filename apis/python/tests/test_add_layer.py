@@ -51,6 +51,12 @@ def test_add_layer(adata):
     csr2 = soma.X.data2.csr()
     assert csr2.shape == orig_shape
 
+    # Add X layer -- more user-friendly syntax
+    soma.add_X_layer(csr, "data3")
+
+    csr3 = soma.X.data3.csr()
+    assert csr3.shape == orig_shape
+
     # Add obsm matrix
     soma.obsm.add_matrix_from_matrix_and_dim_values(
         soma.obsm.X_tsne.df(), soma.obs_keys(), "voila"

@@ -17,7 +17,7 @@ from .raw_group import RawGroup
 from .soma_options import SOMAOptions
 from .soma_slice import SOMASlice
 from .tiledb_group import TileDBGroup
-from .types import Ids
+from .types import Ids, Matrix
 from .uns_group import UnsGroup
 
 
@@ -521,5 +521,5 @@ class SOMA(TileDBGroup):
         Populates the `X` or `raw.X` subgroup for a `SOMA` object.
         """
         self.X.add_layer_from_matrix_and_dim_values(
-            matrix, self.obs.index(), self.var.index(), layer_name
+            matrix, self.obs.ids(), self.var.ids(), layer_name
         )
