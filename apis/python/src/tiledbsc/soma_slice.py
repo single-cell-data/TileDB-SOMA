@@ -175,6 +175,14 @@ class SOMASlice(TileDBGroup):
 
         # We find that the ad.concat is relatively quick.
         annc = ad.concat(anns, join="outer", merge="first")
+
+        # Problem: https://discourse.scverse.org/t/help-with-concat/676
+        # Solution thanks to Bruce Martin at CZI:
+        merged_obs = pd.concat([ann.obs for ann in anns], join="outer")
+        merged_var = pd.concat([ann.var for ann in anns], join="outer")
+        annc.obs = merged_obs[~merged_obs.index.duplicated()]
+        annc.var = merged_var[~merged_var.index.duplicated()]
+
         annc.obs_names_make_unique()
         annc.var_names_make_unique()
 
