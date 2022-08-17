@@ -163,9 +163,16 @@ class SOMAIndexedDataFrame(TileDBArray):
             + " "
             + self.__class__.__name__
             + " "
-            + str(self.get_shape())
+            + str(self._get_shape())
         ]
         return lines
+
+    def __getattr__(self, name: str) -> Any:
+        """
+        Implements `.shape`, etc. which are really method calls.
+        """
+        if name == "shape":
+            return self._get_shape()
 
     def keys(self) -> List[str]:
         """
@@ -174,7 +181,7 @@ class SOMAIndexedDataFrame(TileDBArray):
         """
         return self._tiledb_attr_names()
 
-    def get_shape(self) -> NTuple:
+    def _get_shape(self) -> NTuple:
         """
         Return length of each dimension, always a list of length ``ndims``.
         """

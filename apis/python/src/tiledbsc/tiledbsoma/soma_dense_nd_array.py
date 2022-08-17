@@ -113,11 +113,18 @@ class SOMADenseNdArray(TileDBArray):
             + " "
             + self.__class__.__name__
             + " "
-            + str(self.get_shape())
+            + str(self._get_shape())
         ]
         return lines
 
-    def get_shape(self) -> NTuple:
+    def __getattr__(self, name: str) -> Any:
+        """
+        Implements `.shape`, etc. which are really method calls.
+        """
+        if name == "shape":
+            return self._get_shape()
+
+    def _get_shape(self) -> NTuple:
         """
         Return length of each dimension, always a list of length ``ndims``
         """

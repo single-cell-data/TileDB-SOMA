@@ -278,7 +278,7 @@ def to_anndata(
     obsm = {}
     if measurement.obsm.exists():
         for key in measurement.obsm.keys():
-            shape = measurement.obsm[key].get_shape()
+            shape = measurement.obsm[key].shape
             assert len(shape) == 2
             ncols = shape[1]
             mat = measurement.obsm[key].read_as_pandas_all()
@@ -288,7 +288,7 @@ def to_anndata(
     varm = {}
     if measurement.varm.exists():
         for key in measurement.varm.keys():
-            shape = measurement.varm[key].get_shape()
+            shape = measurement.varm[key].shape
             assert len(shape) == 2
             ncols = shape[1]
             mat = measurement.varm[key].read_as_pandas_all()
