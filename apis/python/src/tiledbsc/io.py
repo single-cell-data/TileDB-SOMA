@@ -14,7 +14,9 @@ from .types import Path
 
 
 # ----------------------------------------------------------------
-def from_h5ad_unless_exists(soma: tiledbsc.SOMA, input_path: str) -> None:
+def from_h5ad_unless_exists(
+    soma: tiledbsc.SOMA, input_path: str, X_layer_name: str = "data"
+) -> None:
     """
     Skips the ingest if the SOMA is already there. A convenient keystroke-saver
     so users don't need to replicate the if-test.
@@ -22,15 +24,17 @@ def from_h5ad_unless_exists(soma: tiledbsc.SOMA, input_path: str) -> None:
     if tiledbsc.util.is_soma(soma.uri, ctx=soma._ctx):
         tiledbsc.logging.logger.info(f"Already exists, skipping ingest: {soma.uri}")
     else:
-        from_h5ad(soma, input_path)
+        from_h5ad(soma, input_path, X_layer_name)
 
 
 # ----------------------------------------------------------------
-def from_h5ad(soma: tiledbsc.SOMA, input_path: Path) -> None:
+def from_h5ad(
+    soma: tiledbsc.SOMA, input_path: Path, X_layer_name: str = "data"
+) -> None:
     """
     Reads an .h5ad file and writes to a TileDB group structure.
     """
-    _from_h5ad_common(soma, input_path, from_anndata)
+    _from_h5ad_common(soma, input_path, _from_anndata_aux, X_layer_name)
 
 
 # ----------------------------------------------------------------
@@ -39,14 +43,15 @@ def from_h5ad_update_obs_and_var(soma: tiledbsc.SOMA, input_path: Path) -> None:
     Rewrites obs and var from the specified .h5ad file, leaving all other data in place. Useful for
     updating schema/compression/etc. within an existing dataset.
     """
-    _from_h5ad_common(soma, input_path, from_anndata_update_obs_and_var)
+    _from_h5ad_common(soma, input_path, from_anndata_update_obs_and_var, "unused")
 
 
 # ----------------------------------------------------------------
 def _from_h5ad_common(
     soma: tiledbsc.SOMA,
     input_path: Path,
-    handler_func: Callable[[tiledbsc.SOMA, ad.AnnData], None],
+    handler_func: Callable[[tiledbsc.SOMA, ad.AnnData, str], None],
+    X_layer_name: str,
 ) -> None:
     """
     Common code for things we do when processing a .h5ad file for ingest/update.
@@ -64,7 +69,7 @@ def _from_h5ad_common(
         tiledbsc.util.format_elapsed(s, f"{soma._indent}FINISH READING {input_path}"),
     )
 
-    handler_func(soma, anndata)
+    handler_func(soma, anndata, X_layer_name)
 
     log_io(
         None,
@@ -86,7 +91,7 @@ def from_10x_unless_exists(soma: tiledbsc.SOMA, input_path: Path) -> None:
         from_10x(soma, input_path)
 
 
-def from_10x(soma: tiledbsc.SOMA, input_path: Path) -> None:
+def from_10x(soma: tiledbsc.SOMA, input_path: Path, X_layer_name: str = "data") -> None:
     """
     Reads a 10X file and writes to a TileDB group structure.
     """
@@ -102,7 +107,7 @@ def from_10x(soma: tiledbsc.SOMA, input_path: Path) -> None:
         tiledbsc.util.format_elapsed(s, f"{soma._indent}FINISH READING {input_path}"),
     )
 
-    from_anndata(soma, anndata)
+    _from_anndata_aux(soma, anndata, X_layer_name)
 
     log_io(
         None,
@@ -113,7 +118,9 @@ def from_10x(soma: tiledbsc.SOMA, input_path: Path) -> None:
 
 
 # ----------------------------------------------------------------
-def from_anndata_unless_exists(soma: tiledbsc.SOMA, anndata: ad.AnnData) -> None:
+def from_anndata_unless_exists(
+    soma: tiledbsc.SOMA, anndata: ad.AnnData, X_layer_name: str = "data"
+) -> None:
     """
     Skips the ingest if the SOMA is already there. A convenient keystroke-saver
     so users don't need to replicate the if-test.
@@ -121,13 +128,28 @@ def from_anndata_unless_exists(soma: tiledbsc.SOMA, anndata: ad.AnnData) -> None
     if tiledbsc.util.is_soma(soma.uri):
         tiledbsc.logging.logger.info(f"Already exists, skipping ingest: {soma.uri}")
     else:
-        from_anndata(soma, anndata)
+        _from_anndata_aux(soma, anndata, X_layer_name)
 
 
 # ----------------------------------------------------------------
-def from_anndata(soma: tiledbsc.SOMA, anndata: ad.AnnData) -> None:
+def from_anndata(
+    soma: tiledbsc.SOMA, anndata: ad.AnnData, X_layer_name: str = "data"
+) -> None:
     """
     Top-level writer method for creating a TileDB group for a SOMA object.
+    """
+    return _from_anndata_aux(soma, anndata, X_layer_name)
+
+
+def _from_anndata_aux(
+    soma: tiledbsc.SOMA,
+    anndata: ad.AnnData,
+    X_layer_name: str,
+) -> None:
+    """
+    Helper method for `from_anndata`. This simplified type-checking using `mypy` with regard to
+    callback functions -- this helper method as `X_layer_name` as non-optional, which confuses
+    `mypy` less.
     """
 
     # Without _at least_ an index, there is nothing to indicate the dimension indices.
@@ -164,7 +186,7 @@ def from_anndata(soma: tiledbsc.SOMA, anndata: ad.AnnData) -> None:
         matrix=anndata.X,
         row_names=anndata.obs.index,
         col_names=anndata.var.index,
-        layer_name="data",
+        layer_name=X_layer_name,
     )
     soma._add_object(soma.X)
 
@@ -214,7 +236,9 @@ def from_anndata(soma: tiledbsc.SOMA, anndata: ad.AnnData) -> None:
 
 
 # ----------------------------------------------------------------
-def from_anndata_update_obs_and_var(soma: tiledbsc.SOMA, anndata: ad.AnnData) -> None:
+def from_anndata_update_obs_and_var(
+    soma: tiledbsc.SOMA, anndata: ad.AnnData, _unused: str
+) -> None:
     """
     Rewrites obs and var from anndata, leaving all other data in place. Useful
     for updating schema/compression/etc. within an existing dataset.
@@ -259,9 +283,7 @@ def from_anndata_update_obs_and_var(soma: tiledbsc.SOMA, anndata: ad.AnnData) ->
 
 
 # ----------------------------------------------------------------
-def to_h5ad(
-    soma: tiledbsc.SOMA, h5ad_path: Path, *, X_layer_name: str = "data"
-) -> None:
+def to_h5ad(soma: tiledbsc.SOMA, h5ad_path: Path, X_layer_name: str = "data") -> None:
     """
     Converts the soma group to anndata format and writes it to the specified .h5ad file.
     As of 2022-05-05 this is an incomplete prototype.
@@ -291,7 +313,7 @@ def to_h5ad(
 
 
 # ----------------------------------------------------------------
-def to_anndata(soma: tiledbsc.SOMA, *, X_layer_name: str = "data") -> ad.AnnData:
+def to_anndata(soma: tiledbsc.SOMA, X_layer_name: str = "data") -> ad.AnnData:
     """
     Converts the soma group to anndata. Choice of matrix formats is following
     what we often see in input .h5ad files:
@@ -331,7 +353,9 @@ def to_anndata(soma: tiledbsc.SOMA, *, X_layer_name: str = "data") -> ad.AnnData
 
     raw = None
     if soma.raw.exists():
-        (raw_X, raw_var_df, raw_varm) = soma.raw.to_anndata_raw(obs_df.index)
+        (raw_X, raw_var_df, raw_varm) = soma.raw.to_anndata_raw(
+            obs_df.index, X_layer_name=X_layer_name
+        )
         raw = ad.Raw(
             anndata,
             X=raw_X,
@@ -360,9 +384,7 @@ def to_anndata(soma: tiledbsc.SOMA, *, X_layer_name: str = "data") -> ad.AnnData
 
 
 # ----------------------------------------------------------------
-def to_anndata_from_raw(
-    soma: tiledbsc.SOMA, *, X_layer_name: str = "data"
-) -> ad.AnnData:
+def to_anndata_from_raw(soma: tiledbsc.SOMA, X_layer_name: str = "data") -> ad.AnnData:
     """
     Extract only the raw parts as a new AnnData object.
     """
