@@ -135,6 +135,10 @@ class AnnotationDataFrame(TileDBArray):
         #   >>> A.meta.items()
         #   (('__pandas_index_dims', '{"obs_id": "<U0"}'),)
         # so the set_index is already done for us.
+        #
+        # However if the data was written somehow else (e.g. by tiledbscr-r) then we do.
+        if isinstance(df.index, pd.RangeIndex) and self.dim_name in df.columns:
+            df.set_index(self.dim_name, inplace=True)
 
         # TODO: when UTF-8 attributes are queryable using TileDB-Py's QueryCondition API we can remove this.
         # This is the 'decode on read' part of our logic; in dim_select we have the 'encode on write' part.
