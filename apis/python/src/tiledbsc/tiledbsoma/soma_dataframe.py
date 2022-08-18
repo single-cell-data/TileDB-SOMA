@@ -135,6 +135,8 @@ class SOMADataFrame(TileDBArray):
         """
         if name == "shape":
             return self._get_shape()
+        elif name == "ndims":
+            return self._get_ndims()
 
     def keys(self) -> List[str]:
         """
@@ -152,11 +154,11 @@ class SOMADataFrame(TileDBArray):
                 self._shape = A.shape
         return self._shape
 
-    def get_ndims(self) -> int:
+    def _get_ndims(self) -> int:
         """
         Return number of index columns.
         """
-        return len(self.get_index_column_names())
+        return len(self.keys())
 
     def get_indexed(self) -> bool:
         return False

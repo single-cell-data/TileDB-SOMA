@@ -121,6 +121,8 @@ class SOMASparseNdArray(TileDBArray):
         """
         if name == "shape":
             return self._get_shape()
+        elif name == "ndims":
+            return self._get_ndims()
 
     def _get_shape(self) -> NTuple:
         """
@@ -131,7 +133,7 @@ class SOMASparseNdArray(TileDBArray):
                 self._shape = A.shape
         return self._shape
 
-    def get_ndims(self) -> int:
+    def _get_ndims(self) -> int:
         """
         Return number of index columns
         """

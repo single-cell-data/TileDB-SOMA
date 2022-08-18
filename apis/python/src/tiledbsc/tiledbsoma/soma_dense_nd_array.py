@@ -123,6 +123,8 @@ class SOMADenseNdArray(TileDBArray):
         """
         if name == "shape":
             return self._get_shape()
+        elif name == "ndims":
+            return self._get_ndims()
 
     def _get_shape(self) -> NTuple:
         """
@@ -135,7 +137,7 @@ class SOMADenseNdArray(TileDBArray):
             # error: Returning Any from function declared to return "Tuple[int]"  [no-any-return]
             return A.schema.domain.shape  # type: ignore
 
-    def get_ndims(self) -> int:
+    def _get_ndims(self) -> int:
         """
         Return number of index columns
         """
