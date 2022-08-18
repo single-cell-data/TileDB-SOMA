@@ -106,6 +106,8 @@ class SOMASparseNdArray(TileDBArray):
         return "\n".join(self._repr_aux())
 
     def _repr_aux(self) -> List[str]:
+        if not self.exists():
+            return ['Unpopulated']
         lines = [
             self.get_name()
             + " "
