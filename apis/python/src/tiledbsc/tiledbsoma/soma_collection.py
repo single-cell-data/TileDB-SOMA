@@ -156,7 +156,7 @@ class SOMACollection(TileDBObject):
         Internal helper function for `__repr__` which is nesting-aware.
         """
         if not self.exists():
-            return ['Unpopulated']
+            return ["Unpopulated"]
         lines = [f"{self.get_name()} {self.__class__.__name__}:"]
         for key in self.keys():
             child_lines = self.get(key)._repr_aux()
