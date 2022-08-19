@@ -3,7 +3,7 @@ from __future__ import annotations
 import os
 from collections import Counter
 from concurrent.futures import ThreadPoolExecutor
-from typing import Optional, Sequence, Tuple
+from typing import List, Optional, Sequence, Tuple
 
 import pandas as pd
 import tiledb
@@ -370,7 +370,7 @@ class SOMA(TileDBGroup):
         var_query_string: Optional[str] = None,
         var_ids: Optional[Ids] = None,
         max_thread_pool_workers: Optional[int] = None,
-    ) -> Optional[SOMASlice]:
+    ) -> List[SOMASlice]:
         """
         Subselects the obs, var, and X/data using the specified queries on obs and var,
         concatenating across SOMAs in the list.  Queries use the TileDB-Py `QueryCondition`
@@ -424,7 +424,7 @@ class SOMA(TileDBGroup):
             soma_slice = soma_slice_future.result()
             if soma_slice is not None:
                 soma_slices.append(soma_slice)
-        return SOMASlice.concat(soma_slices)
+        return soma_slices
 
     # ----------------------------------------------------------------
     def _assemble_soma_slice_aux(
@@ -510,6 +510,32 @@ class SOMA(TileDBGroup):
             )
 
         return soma
+
+    # ----------------------------------------------------------------
+    # XXX COMMON OBS VAR
+    @classmethod
+    def find_common_obs_and_var_keys(
+        cls,
+        somas: Sequence[SOMA],
+    ) -> Tuple[List[str], List[str]]:
+        obs_attrs_set = None
+        var_attrs_set = None
+        for i, soma in enumerate(somas):
+            if i == 0:
+                obs_attrs_set = set(soma.obs.keys())
+                var_attrs_set = set(soma.var.keys())
+            else:
+                obs_attrs_set = set(soma.obs.keys()).intersection(obs_attrs_set)
+                var_attrs_set = set(soma.var.keys()).intersection(var_attrs_set)
+        if obs_attrs_set is None:  # linter appeasement
+            obs_attrs = []
+        else:
+            obs_attrs = sorted(list(obs_attrs_set))
+        if var_attrs_set is None:  # linter appeasement
+            var_attrs = []
+        else:
+            var_attrs = sorted(list(var_attrs_set))
+        return (obs_attrs, var_attrs)
 
     # ----------------------------------------------------------------
     def add_X_layer(

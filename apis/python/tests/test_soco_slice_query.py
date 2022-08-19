@@ -136,9 +136,16 @@ def test_soco_slice_query_nans(tmp_path):
 
     # ----------------------------------------------------------------
     # Slice query
-    slice = tiledbsc.SOMA.queries([soma1, soma2])
+    somas = [soma1, soma2]
+    (obs_attrs, var_attrs) = tiledbsc.SOMA.find_common_obs_and_var_keys(somas)
+    soma_slices = tiledbsc.SOMA.queries(somas, obs_attrs=obs_attrs, var_attrs=var_attrs)
 
-    adatac = slice.to_anndata()
+    assert len(soma_slices) == 2
+
+    result_soma_slice = tiledbsc.SOMASlice.concat(soma_slices)
+    assert result_soma_slice is not None
+
+    adatac = result_soma_slice.to_anndata()
 
     # ----------------------------------------------------------------
     # Store the slice to SOMA
@@ -146,12 +153,12 @@ def test_soco_slice_query_nans(tmp_path):
     tiledbsc.io.from_anndata(somac, adatac)
 
     # ----------------------------------------------------------------
-    # The success of this test is that it runs to the end without an exception.
+    # The primary success of this test is that it runs to the end without an exception.
     # We would get exceptions like
     #   NotImplementedError: boolean inferred dtype not supported
-    # if a bool column with NaNs is encountered first, or
+    # if a bool column with NaNs were encountered first, or
     #   tiledb.cc.TileDBError: Failed to convert buffer for attribute: 'vc'
-    # if a string column with NaNs is encountered first.
+    # if a string column with NaNs were encountered first.
 
     assert somac.obs.shape() == (4, 2)
     assert somac.var.shape() == (4, 3)

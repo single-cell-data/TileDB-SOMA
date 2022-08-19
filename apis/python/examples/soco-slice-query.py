@@ -19,16 +19,18 @@ def soco_query_and_store(
     var_query_string: Optional[str] = None,
 ) -> None:
 
-    result_soma_slice = soco.query(
+    result_soma_slices = soco.query(
         obs_attrs=obs_attrs,
         obs_query_string=obs_query_string,
         var_attrs=var_attrs,
         var_query_string=var_query_string,
     )
 
-    if result_soma_slice is None:
+    if result_soma_slices == []:
         print("Empty slice")
         return
+
+    result_soma_slice = tiledbsc.SOMASlices.concat(result_soma_slices)
 
     if output_h5ad_path is not None:
         a = result_soma_slice.to_anndata()

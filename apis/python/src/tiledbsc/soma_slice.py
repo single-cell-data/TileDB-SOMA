@@ -117,7 +117,8 @@ class SOMASlice(TileDBGroup):
     def concat(cls, soma_slices: Sequence[SOMASlice]) -> Optional[SOMASlice]:
         """
         Concatenates multiple `SOMASlice` objects into a single one. Implemented using `AnnData`'s
-        `concat`.
+        `concat`. Requires that all slices share the same `obs` and `var` keys. Please
+        see the `SOMA` class method `find_common_obs_and_var_keys`.
         """
 
         if len(soma_slices) == 0:

@@ -1,5 +1,5 @@
 from concurrent.futures import ThreadPoolExecutor
-from typing import Dict, Iterator, Optional, Sequence, Set, Tuple, Union
+from typing import Dict, Iterator, List, Optional, Sequence, Set, Tuple, Union
 
 import tiledb
 
@@ -234,7 +234,7 @@ class SOMACollection(TileDBGroup):
         var_attrs: Optional[Sequence[str]] = None,
         var_query_string: Optional[str] = None,
         var_ids: Optional[Ids] = None,
-    ) -> Optional[SOMASlice]:
+    ) -> List[SOMASlice]:
         """
         Subselects the obs, var, and X/data using the specified queries on obs and var,
         concatenating across SOMAs in the collection.  Queries use the TileDB-Py `QueryCondition`
