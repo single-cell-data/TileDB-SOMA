@@ -92,7 +92,7 @@ class UnsArray(TileDBArray):
 
         if self.exists():
             tiledbsc.logging.logger.info(
-                f"{self._indent}Re-using existing array {self.uri}"
+                f"{self._indent}Updating existing array {self.uri}"
             )
             tiledb.from_numpy(
                 uri=self.uri, array=arr, mode="append", start_idx=0, ctx=self._ctx
