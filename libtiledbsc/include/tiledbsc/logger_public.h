@@ -38,9 +38,8 @@
 
 #include <stdexcept>  // for windows: error C2039: 'runtime_error': is not a member of 'std'
 
-#define FMT_HEADER_ONLY
-#include <spdlog/fmt/bundled/format.h>
-#include <spdlog/fmt/bundled/ostream.h>
+#include <spdlog/fmt/fmt.h>
+#include <spdlog/fmt/ostr.h>
 
 namespace tiledbsc {
 
