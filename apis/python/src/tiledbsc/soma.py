@@ -520,21 +520,20 @@ class SOMA(TileDBGroup):
     ) -> Tuple[List[str], List[str]]:
         obs_attrs_set = None
         var_attrs_set = None
-        for i, soma in enumerate(somas):
-            if i == 0:
-                obs_attrs_set = set(soma.obs.keys())
-                var_attrs_set = set(soma.var.keys())
-            else:
-                obs_attrs_set = set(soma.obs.keys()).intersection(obs_attrs_set)
-                var_attrs_set = set(soma.var.keys()).intersection(var_attrs_set)
-        if obs_attrs_set is None:  # linter appeasement
-            obs_attrs = []
-        else:
-            obs_attrs = sorted(list(obs_attrs_set))
-        if var_attrs_set is None:  # linter appeasement
-            var_attrs = []
-        else:
-            var_attrs = sorted(list(var_attrs_set))
+
+        if len(somas) == 0:
+            return ([], [])
+
+        obs_attrs_set = set(somas[0].obs.keys())
+        var_attrs_set = set(somas[0].var.keys())
+
+        for soma in somas[1:]:
+            obs_attrs_set = set(soma.obs.keys()).intersection(obs_attrs_set)
+            var_attrs_set = set(soma.var.keys()).intersection(var_attrs_set)
+
+        obs_attrs = sorted(list(obs_attrs_set))
+        var_attrs = sorted(list(var_attrs_set))
+
         return (obs_attrs, var_attrs)
 
     # ----------------------------------------------------------------

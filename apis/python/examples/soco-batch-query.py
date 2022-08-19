@@ -40,15 +40,17 @@ for i, ctot_id in enumerate(ctot_ids):
 
     result_soma_slice = tiledbsc.SOMASlice.concat(soma_slices)
 
-    slice_means = result_soma_slice.X["data"].mean(axis=0)
-    j = 0
-    for var_id in result_soma_slice.var.index:
-        value = slice_means[0, j]
-        var_ids_column.append(var_id)
-        ctot_ids_column.append(ctot_id)
-        means_column.append(value)
-        j += 1
-    print("... %6.2f%% done %s" % (100 * i / n, ctot_id))
+    if result_soma_slice is not None:
+
+        slice_means = result_soma_slice.X["data"].mean(axis=0)
+        j = 0
+        for var_id in result_soma_slice.var.index:
+            value = slice_means[0, j]
+            var_ids_column.append(var_id)
+            ctot_ids_column.append(ctot_id)
+            means_column.append(value)
+            j += 1
+        print("... %6.2f%% done %s" % (100 * i / n, ctot_id))
 
 sparse_means_df = pd.DataFrame(
     {
