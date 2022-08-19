@@ -39,6 +39,8 @@ examples/cmake_project/build
 **/bin/*
 **/share/*
 **/build/*
+**/cmake-build-release/*
+**/cmake-build-debug/*
 **/__pycache__
 *.so
 *.dylib
