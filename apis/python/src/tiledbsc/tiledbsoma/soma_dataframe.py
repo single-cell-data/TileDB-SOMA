@@ -285,10 +285,6 @@ class SOMADataFrame(TileDBArray):
         # TODO: contiguity check, and/or split into multiple contiguous writes
         # For now: just assert that these _already are_ contiguous and start with 0.
         rowids = [e.as_py() for e in values.column(ROWID)]
-        assert len(rowids) > 0
-
-        rowids = sorted(rowids)
-        assert rowids[0] == 0
 
         attr_cols_map = {}
         for name in values.schema.names:
@@ -304,6 +300,12 @@ class SOMADataFrame(TileDBArray):
             with self._tiledb_open("w") as A:
                 A[rowids] = attr_cols_map
         else:
+            # TODO: This was a quick thing to bootstrap some early ingestion tests but needs more thought.
+            # In particular, rowids needn't be either zero-up or contiguous.
+            assert len(rowids) > 0
+            rowids = sorted(rowids)
+            assert rowids[0] == 0
+
             # dense write
             lo = rowids[0]
             hi = rowids[-1]
