@@ -238,6 +238,10 @@ class SOMADataFrame(TileDBArray):
                     # This is the 'decode on read' part of our logic; in dim_select we have the
                     # 'encode on write' part.
                     # Context: https://github.com/single-cell-data/TileDB-SingleCell/issues/99.
+                    #
+                    # Also: don't materialize these on read
+                    # TODO: get the arrow syntax for drop
+                    # df.drop(ROWID, axis=1)
                     yield util_arrow.ascii_to_unicode_pyarrow_readback(batch)
 
     def read_all(
@@ -367,7 +371,11 @@ class SOMADataFrame(TileDBArray):
                     df.reset_index(inplace=True)
                     df.set_index(id_column_name, inplace=True)
 
-                yield df
+                # Don't materialize soma_rowid on read
+                if ROWID in df.columns:
+                    yield df.drop(ROWID, axis=1)
+                else:
+                    yield df
 
     def read_as_pandas_all(
         self,
@@ -393,6 +401,7 @@ class SOMADataFrame(TileDBArray):
             result_order=result_order,
         )
         for dataframe in generator:
+            print("DF", dataframe)
             dataframes.append(dataframe)
         return pd.concat(dataframes)
 
