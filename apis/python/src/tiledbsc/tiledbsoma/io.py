@@ -105,7 +105,7 @@ def from_anndata(
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     # OBS
-    experiment.obs.write_from_pandas(
+    experiment.obs.write_all_from_pandas(
         dataframe=anndata.obs, extent=256, id_column_name="obs_id"
     )
     experiment.set(experiment.obs)
@@ -121,7 +121,7 @@ def from_anndata(
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     # MS/meas/VAR
-    measurement.var.write_from_pandas(
+    measurement.var.write_all_from_pandas(
         dataframe=anndata.var, extent=2048, id_column_name="var_id"
     )
     measurement.set(measurement.var)
@@ -181,7 +181,7 @@ def from_anndata(
         raw_measurement.create()
         experiment.ms.set(raw_measurement)
 
-        raw_measurement.var.write_from_pandas(
+        raw_measurement.var.write_all_from_pandas(
             dataframe=anndata.raw.var, extent=2048, id_column_name="var_id"
         )
         raw_measurement.set(raw_measurement.var)

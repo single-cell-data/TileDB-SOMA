@@ -403,7 +403,7 @@ class SOMADataFrame(TileDBArray):
         id_column_name: Optional[str] = None,
     ) -> None:
         """
-        Writes from memory to SOMA storage.
+        Writes from memory to SOMA storage. Same as `write_all_from_pandas`, except this method requires the `soma_rowid` column to be present (so it knows where to write data), whereas `write_all_from_pandas`  will populate `soma_rowid` for you as zero-up indices.
 
         :param dataframe: `anndata.obs` for example.
         :param extent: TileDB `extent` parameter for the array schema.
@@ -419,12 +419,9 @@ class SOMADataFrame(TileDBArray):
         s = util.get_start_stamp()
         log_io(None, f"{self._indent}START  WRITING {self._nested_name}")
 
-        # This is the non-indexed bit
-        assert ROWID not in dataframe.keys()
+        assert ROWID in dataframe.keys()
         assert len(dataframe.shape) == 2
         # E.g. (80, 7) is 80 rows x 7 columns
-        num_rows = dataframe.shape[0]
-        dataframe[ROWID] = np.asarray(range(num_rows))
 
         mode = "ingest"
         if self.exists():
@@ -494,3 +491,26 @@ class SOMADataFrame(TileDBArray):
             f"Wrote {self._nested_name}",
             util.format_elapsed(s, f"{self._indent}FINISH WRITING {self._nested_name}"),
         )
+
+    def write_all_from_pandas(
+        self,
+        dataframe: pd.DataFrame,
+        *,
+        extent: int = 2048,
+        # to rename index to 'obs_id' or 'var_id', if desired, for anndata
+        id_column_name: Optional[str] = None,
+    ) -> None:
+        """
+        Writes from memory to SOMA storage. Same as `write_from_pandas`, except `write_from_pandas` requires the `soma_rowid` column to be present (so it knows where to write data), whereas this method will populate `soma_rowid` for you as zero-up indices.
+
+        :param dataframe: `anndata.obs` for example.
+        :param extent: TileDB `extent` parameter for the array schema.
+        """
+
+        assert ROWID not in dataframe.keys()
+        assert len(dataframe.shape) == 2
+        # E.g. (80, 7) is 80 rows x 7 columns
+        num_rows = dataframe.shape[0]
+        dataframe[ROWID] = np.asarray(range(num_rows))
+
+        self.write_from_pandas(dataframe, extent=extent, id_column_name=id_column_name)
