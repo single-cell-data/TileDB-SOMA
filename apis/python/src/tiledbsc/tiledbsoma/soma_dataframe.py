@@ -337,22 +337,24 @@ class SOMADataFrame(TileDBArray):
 
         with self._tiledb_open() as A:
             if value_filter is None:
-                query = A.query(return_incomplete=True, order=tiledb_result_order)
+                query = A.query(
+                    return_incomplete=True,
+                    order=tiledb_result_order,
+                    attrs=column_names,
+                )
             else:
                 qc = tiledb.QueryCondition(value_filter)
                 query = A.query(
                     return_incomplete=True,
                     attr_cond=qc,
                     order=tiledb_result_order,
+                    attrs=column_names,
                 )
 
             if ids is None:
                 iterator = query.df[:]
             else:
                 iterator = query.df[ids]
-
-            if column_names is not None:
-                iterator = iterator[column_names]
 
             for df in iterator:
 
