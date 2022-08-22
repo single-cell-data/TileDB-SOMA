@@ -31,22 +31,26 @@ ctot_ids = soco.find_unique_obs_values("cell_type_ontology_term_id")
 n = len(ctot_ids)
 print("cell_type_ontology_term_id count =", n)
 for i, ctot_id in enumerate(ctot_ids):
-    soma_slice = soco.query(
+    soma_slices = soco.query(
         obs_attrs=["cell_type_ontology_term_id"],
         obs_query_string=f'cell_type_ontology_term_id == "{ctot_id}"',
     )
-    if soma_slice is None:
+    if soma_slices == []:
         continue
 
-    slice_means = soma_slice.X["data"].mean(axis=0)
-    j = 0
-    for var_id in soma_slice.var.index:
-        value = slice_means[0, j]
-        var_ids_column.append(var_id)
-        ctot_ids_column.append(ctot_id)
-        means_column.append(value)
-        j += 1
-    print("... %6.2f%% done %s" % (100 * i / n, ctot_id))
+    result_soma_slice = tiledbsc.SOMASlice.concat(soma_slices)
+
+    if result_soma_slice is not None:
+
+        slice_means = result_soma_slice.X["data"].mean(axis=0)
+        j = 0
+        for var_id in result_soma_slice.var.index:
+            value = slice_means[0, j]
+            var_ids_column.append(var_id)
+            ctot_ids_column.append(ctot_id)
+            means_column.append(value)
+            j += 1
+        print("... %6.2f%% done %s" % (100 * i / n, ctot_id))
 
 sparse_means_df = pd.DataFrame(
     {

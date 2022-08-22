@@ -19,29 +19,32 @@ def soco_query_and_store(
     var_query_string: Optional[str] = None,
 ) -> None:
 
-    result_soma_slice = soco.query(
+    result_soma_slices = soco.query(
         obs_attrs=obs_attrs,
         obs_query_string=obs_query_string,
         var_attrs=var_attrs,
         var_query_string=var_query_string,
     )
 
-    if result_soma_slice is None:
+    if result_soma_slices == []:
         print("Empty slice")
         return
 
-    if output_h5ad_path is not None:
-        a = result_soma_slice.to_anndata()
-        a.write_h5ad(output_h5ad_path)
-        print("Wrote", output_h5ad_path, a.X.shape)
+    result_soma_slice = tiledbsc.SOMASlice.concat(result_soma_slices)
 
-    if output_soma_path is not None:
-        if os.path.exists(output_soma_path):
-            shutil.rmtree(output_soma_path)
-        soma = tiledbsc.SOMA.from_soma_slice(result_soma_slice, output_soma_path)
-        data = soma.X.data
-        assert data is not None
-        print("Wrote", output_soma_path, data.shape())
+    if result_soma_slice is not None:
+        if output_h5ad_path is not None:
+            a = result_soma_slice.to_anndata()
+            a.write_h5ad(output_h5ad_path)
+            print("Wrote", output_h5ad_path, a.X.shape)
+
+        if output_soma_path is not None:
+            if os.path.exists(output_soma_path):
+                shutil.rmtree(output_soma_path)
+            soma = tiledbsc.SOMA.from_soma_slice(result_soma_slice, output_soma_path)
+            data = soma.X.data
+            assert data is not None
+            print("Wrote", output_soma_path, data.shape())
 
 
 # ----------------------------------------------------------------
