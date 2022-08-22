@@ -401,7 +401,6 @@ class SOMADataFrame(TileDBArray):
             result_order=result_order,
         )
         for dataframe in generator:
-            print("DF", dataframe)
             dataframes.append(dataframe)
         return pd.concat(dataframes)
 
