@@ -106,8 +106,9 @@ class TileDBObject(ABC):
         with self._open("w") as obj:
             obj.meta.update(
                 {
-                    util.SOMA_OBJECT_TYPE_METADATA_KEY: self.__class__.__name__,
                     util.SOMA_ENCODING_VERSION_METADATA_KEY: util.SOMA_ENCODING_VERSION,
+                    util.SOMA_SCHEMA_VERSION_METADATA_KEY: util.SOMA_SCHEMA_VERSION,
+                    util.SOMA_OBJECT_TYPE_METADATA_KEY: self.__class__.__name__,
                 }
             )
 

@@ -16,9 +16,16 @@ import tiledb
 # group contents.
 from tiledbsc.types import Labels
 
-SOMA_OBJECT_TYPE_METADATA_KEY = "soma_object_type"
+# Broad class-level distinctions, such as `SOMA` vs `SOMAExperiment` (`tiledbsc` vs `tiledbsoma`)
 SOMA_ENCODING_VERSION_METADATA_KEY = "soma_encoding_version"
-SOMA_ENCODING_VERSION = "0.1"
+SOMA_ENCODING_VERSION = "0"
+
+# TileDB-schema-lavel distinctions within an encoding version
+SOMA_SCHEMA_VERSION_METADATA_KEY = "soma_schema_version"
+SOMA_SCHEMA_VERSION = 0
+
+# Persists class names, facilitating polymorphic readback
+SOMA_OBJECT_TYPE_METADATA_KEY = "soma_object_type"
 
 
 # ----------------------------------------------------------------
