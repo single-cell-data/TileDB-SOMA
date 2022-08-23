@@ -201,7 +201,6 @@ class AssayMatrix(TileDBArray):
         Create a TileDB 2D sparse array with string dimensions and a single attribute.
         """
 
-        level = self._soma_options.string_dim_zstd_level
         dom = tiledb.Domain(
             tiledb.Dim(
                 name=self.row_dim_name,
@@ -213,7 +212,7 @@ class AssayMatrix(TileDBArray):
                 name=self.col_dim_name,
                 domain=(None, None),
                 dtype="ascii",
-                filters=[tiledb.ZstdFilter(level=level)],
+                filters=[tiledb.DictionaryFilter()],
             ),
             ctx=self._ctx,
         )
