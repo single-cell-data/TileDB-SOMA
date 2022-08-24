@@ -512,7 +512,6 @@ class SOMA(TileDBGroup):
         return soma
 
     # ----------------------------------------------------------------
-    # XXX COMMON OBS VAR
     @classmethod
     def find_common_obs_and_var_keys(
         cls,
