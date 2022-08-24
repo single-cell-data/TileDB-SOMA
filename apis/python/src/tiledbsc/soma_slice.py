@@ -1,9 +1,10 @@
 from __future__ import annotations
 
-from typing import Dict, Optional, Sequence, Union
+from typing import Dict, List, Optional, Sequence, Union
 
 import anndata as ad
 import pandas as pd
+import pyarrow as pa
 
 from tiledbsc import util
 
@@ -21,9 +22,9 @@ class SOMASlice(TileDBGroup):
     # ----------------------------------------------------------------
     def __init__(
         self,
-        X: Dict[str, Union[pd.DataFrame, Matrix]],
-        obs: pd.DataFrame,
-        var: pd.DataFrame,
+        X: Dict[str, Union[pd.DataFrame, pa.Table, Matrix]],
+        obs: Union[pd.DataFrame, pa.Table],
+        var: Union[pd.DataFrame, pa.Table],
         # TODO
         # obsm: Dict[str, pd.DataFrame],
         # varm: Dict[str, pd.DataFrame],
@@ -35,8 +36,8 @@ class SOMASlice(TileDBGroup):
         """
         Constructs an in-memory `SOMASlice` object. This is a simple collection of obs, var, and X dataframes.
         """
-        assert isinstance(obs, pd.DataFrame)
-        assert isinstance(var, pd.DataFrame)
+        assert isinstance(obs, pd.DataFrame) or isinstance(obs, pa.Table)
+        assert isinstance(var, pd.DataFrame) or isinstance(obs, pa.Table)
         assert "data" in X
 
         self.obs = obs
@@ -75,10 +76,20 @@ class SOMASlice(TileDBGroup):
         X_data = self.X["data"]
         if isinstance(X_data, pd.DataFrame):
             X_dtype = X_data.dtypes["value"]
+        elif isinstance(X_data, pa.Table):
+            X_dtype = X_data["value"].type.to_pandas_dtype()
         else:
             X_dtype = X_data.dtype
 
-        ann = ad.AnnData(obs=self.obs, var=self.var, dtype=X_dtype)
+        obs = self.obs
+        var = self.var
+        if isinstance(obs, pa.Table):
+            obs = obs.to_pandas()
+            obs.set_index("obs_id", inplace=True)
+        if isinstance(var, pa.Table):
+            var = var.to_pandas()
+            var.set_index("var_id", inplace=True)
+        ann = ad.AnnData(obs=obs, var=var, dtype=X_dtype)
 
         # TODO:
         # self.obsm = obsm
@@ -102,6 +113,9 @@ class SOMASlice(TileDBGroup):
                     self.obs.index,
                     self.var.index,
                 )
+            if isinstance(data, pa.Table):
+                data = data.to_pandas()
+                data.set_index(["obs_id", "var_id"], inplace=True)
             # We use AnnData as our in-memory storage. For SOMAs, all X layers are arrays within the
             # soma.X group; for AnnData, the 'data' layer is ann.X and all the others are in
             # ann.layers.
@@ -113,6 +127,13 @@ class SOMASlice(TileDBGroup):
         return ann
 
     # ----------------------------------------------------------------
+    @classmethod
+    def _keys_for_concat(cls, df: Union[pd.DataFrame, pa.Table, Matrix]) -> List[str]:
+        if isinstance(df, pa.Table):
+            return sorted(list(df.column_names))
+        else:
+            return sorted(list(df.keys()))
+
     @classmethod
     def concat(cls, soma_slices: Sequence[SOMASlice]) -> Optional[SOMASlice]:
         """
@@ -126,6 +147,9 @@ class SOMASlice(TileDBGroup):
 
         # Check column names for each dataframe-type are the same
         slice0 = soma_slices[0]
+        okeys0 = cls._keys_for_concat(slice0.obs)
+        vkeys0 = cls._keys_for_concat(slice0.var)
+
         for i, slicei in enumerate(soma_slices):
             if i == 0:
                 continue
@@ -134,11 +158,19 @@ class SOMASlice(TileDBGroup):
                 raise Exception(
                     "SOMA slices to be concatenated must have all the same X attributes"
                 )
-            if sorted(list(slicei.obs.keys())) != sorted(list(slice0.obs.keys())):
+            for key in slice0.X.keys():
+                if cls._keys_for_concat(slicei.X[key]) != cls._keys_for_concat(
+                    slice0.X[key]
+                ):
+                    raise Exception(
+                        "SOMA slices to be concatenated must have all the same obs attributes"
+                    )
+
+            if cls._keys_for_concat(slicei.obs) != okeys0:
                 raise Exception(
                     "SOMA slices to be concatenated must have all the same obs attributes"
                 )
-            if sorted(list(slicei.var.keys())) != sorted(list(slice0.var.keys())):
+            if cls._keys_for_concat(slicei.var) != vkeys0:
                 raise Exception(
                     "SOMA slices to be concatenated must have all the same var attributes"
                 )

@@ -48,6 +48,8 @@ def test_soco_slice_query(tmp_path):
         if not soma.var.has_attr_names(var_attrs):
             continue
 
+        # The return_arrow=True case drives arrow-format all the way through SOMA, SOMASlice,
+        # obs, var, X, etc.
         soma_slice = soma.query(
             obs_query_string=obs_query_string, var_query_string=var_query_string
         )
