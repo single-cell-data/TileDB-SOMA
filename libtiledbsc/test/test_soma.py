@@ -1,7 +1,7 @@
 import os
 import pandas as pd
 import pyarrow as pa
-import libtiledbsc as sc
+import tiledbsc.libtiledbsc as sc
 
 VERBOSE = True
 
