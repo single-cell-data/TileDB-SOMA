@@ -172,9 +172,9 @@ class AnnotationDataFrame(TileDBArray):
             if attrs is None:
                 slice_query = A.query(attr_cond=qc)
                 if ids is None:
-                    slice_df = slice_query.df[:][:]
+                    slice_df = slice_query.df[:]
                 else:
-                    slice_df = slice_query.df[ids][:]
+                    slice_df = slice_query.df[ids]
             else:
                 slice_query = A.query(attr_cond=qc, attrs=attrs)
                 if ids is None:
