@@ -141,7 +141,7 @@ class AnnotationDataFrame(TileDBArray):
             df.set_index(self.dim_name, inplace=True)
 
         # TODO: when UTF-8 attributes are queryable using TileDB-Py's QueryCondition API we can remove this.
-        # This is the 'decode on read' part of our logic; in dim_select we have the 'encode on write' part.
+        # This is the 'decode on read' part of our logic; in from_dataframe we have the 'encode on write' part.
         # Context: https://github.com/single-cell-data/TileDB-SingleCell/issues/99.
         return self._ascii_to_unicode_dataframe_readback(df)
 
