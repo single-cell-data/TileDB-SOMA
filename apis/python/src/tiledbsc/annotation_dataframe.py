@@ -117,16 +117,11 @@ class AnnotationDataFrame(TileDBArray):
         provided, they're used for the query; else, all attributes are returned.
         """
         with self._open("r") as A:
+            query = A.query(attrs=attrs)
             if ids is None:
-                if attrs is None:
-                    df = A.df[:]
-                else:
-                    df = A.df[:][attrs]
+                df = query.df[:]
             else:
-                if attrs is None:
-                    df = A.df[ids]
-                else:
-                    df = A.df[ids][attrs]
+                df = query.df[ids]
 
         # We do not need this:
         #   df.set_index(self.dim_name, inplace=True)
