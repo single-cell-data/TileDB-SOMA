@@ -105,17 +105,29 @@ class SOMASlice(TileDBGroup):
             if isinstance(data, pd.DataFrame):
                 # Make obs_id and var_id accessible as columns.
                 data = data.reset_index()
+
                 data = util.X_and_ids_to_sparse_matrix(
                     data,
                     "obs_id",  # row_dim_name
                     "var_id",  # col_dim_name
                     "value",  # attr_name
-                    self.obs.index,
-                    self.var.index,
+                    obs.index,
+                    var.index,
                 )
+
             if isinstance(data, pa.Table):
                 data = data.to_pandas()
                 data.set_index(["obs_id", "var_id"], inplace=True)
+
+                data = util.X_and_ids_to_sparse_matrix(
+                    data,
+                    "obs_id",  # row_dim_name
+                    "var_id",  # col_dim_name
+                    "value",  # attr_name
+                    obs.index,
+                    var.index,
+                )
+
             # We use AnnData as our in-memory storage. For SOMAs, all X layers are arrays within the
             # soma.X group; for AnnData, the 'data' layer is ann.X and all the others are in
             # ann.layers.
