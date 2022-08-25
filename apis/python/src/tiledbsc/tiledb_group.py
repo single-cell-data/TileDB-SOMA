@@ -224,9 +224,20 @@ class TileDBGroup(TileDBObject):
         self._cached_member_names_to_uris = None  # invalidate on add-member
         with self._open("r") as G:
             exists = obj.name in G
-        with self._open("w") as G:
-            if not exists:
-                G.add(uri=child_uri, relative=relative, name=obj.name)
+
+        # Write a TileDB fragment
+        exc = None
+        for _ in range(self._soma_options.num_write_retries):
+            try:
+                with self._open("w") as G:
+                    if not exists:
+                        G.add(uri=child_uri, relative=relative, name=obj.name)
+                break
+            except tiledb.TileDBError as e:
+                exc = e
+        if exc is not None:
+            raise exc
+
         # See _get_child_uri. Key point is that, on TileDB Cloud, URIs change from pre-creation to
         # post-creation. Example:
         # * Upload to pre-creation URI tiledb://namespace/s3://bucket/something/something/somaname
@@ -246,11 +257,30 @@ class TileDBGroup(TileDBObject):
             if member_name not in mapping:
                 raise Exception(f"name {member_name} not present in group {self.uri}")
             member_uri = mapping[member_name]
-            with self._open("w") as G:
-                G.remove(member_uri)
+
+            exc = None
+            for _ in range(self._soma_options.num_write_retries):
+                try:
+                    with self._open("w") as G:
+                        G.remove(member_uri)
+                    break
+                except tiledb.TileDBError as e:
+                    exc = e
+            if exc is not None:
+                raise exc
+
         else:
-            with self._open("w") as G:
-                G.remove(member_name)
+
+            exc = None
+            for _ in range(self._soma_options.num_write_retries):
+                try:
+                    with self._open("w") as G:
+                        G.remove(member_name)
+                    break
+                except tiledb.TileDBError as e:
+                    exc = e
+            if exc is not None:
+                raise exc
 
     def _get_member_names(self) -> Sequence[str]:
         """

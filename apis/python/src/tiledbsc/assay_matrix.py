@@ -277,8 +277,16 @@ class AssayMatrix(TileDBArray):
         d0 = row_names[mat_coo.row]
         d1 = col_names[mat_coo.col]
 
-        with tiledb.open(self.uri, mode="w", ctx=self._ctx) as A:
-            A[d0, d1] = mat_coo.data
+        exc = None
+        for _ in range(self._soma_options.num_write_retries):
+            try:
+                with tiledb.open(self.uri, mode="w", ctx=self._ctx) as A:
+                    A[d0, d1] = mat_coo.data
+                break
+            except tiledb.TileDBError as e:
+                exc = e
+        if exc is not None:
+            raise exc
 
     # ----------------------------------------------------------------
     # Example: suppose this 4x3 is to be written in two chunks of two rows each
@@ -390,7 +398,15 @@ class AssayMatrix(TileDBArray):
                 )
 
                 # Write a TileDB fragment
-                A[d0, d1] = chunk_coo.data
+                exc = None
+                for _ in range(self._soma_options.num_write_retries):
+                    try:
+                        A[d0, d1] = chunk_coo.data
+                        break
+                    except tiledb.TileDBError as e:
+                        exc = e
+                if exc is not None:
+                    raise exc
 
                 t2 = time.time()
                 chunk_seconds = t2 - t1
@@ -496,7 +512,15 @@ class AssayMatrix(TileDBArray):
                 )
 
                 # Write a TileDB fragment
-                A[d0, d1] = chunk_coo.data
+                exc = None
+                for _ in range(self._soma_options.num_write_retries):
+                    try:
+                        A[d0, d1] = chunk_coo.data
+                        break
+                    except tiledb.TileDBError as e:
+                        exc = e
+                if exc is not None:
+                    raise exc
 
                 t2 = time.time()
                 chunk_seconds = t2 - t1
@@ -604,7 +628,15 @@ class AssayMatrix(TileDBArray):
                 )
 
                 # Write a TileDB fragment
-                A[d0, d1] = chunk_coo.data
+                exc = None
+                for _ in range(self._soma_options.num_write_retries):
+                    try:
+                        A[d0, d1] = chunk_coo.data
+                        break
+                    except tiledb.TileDBError as e:
+                        exc = e
+                if exc is not None:
+                    raise exc
 
                 t2 = time.time()
                 chunk_seconds = t2 - t1

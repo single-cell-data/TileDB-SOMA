@@ -24,4 +24,7 @@ class SOMAOptions:
     member_uris_are_relative: Optional[bool] = None
     allows_duplicates: bool = False
 
+    # Especially important for trivial transients like 'Connection reset' on an HTTP socket for
+    # cloud writes.
+    num_write_retries: int = 3
     max_thread_pool_workers: int = 8

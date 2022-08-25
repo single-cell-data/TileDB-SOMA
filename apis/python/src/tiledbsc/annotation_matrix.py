@@ -145,8 +145,16 @@ class AnnotationMatrix(TileDBArray):
             self._create_empty_array([matrix.dtype] * nattr, attr_names)
 
         df = pd.DataFrame(matrix, columns=attr_names)
-        with tiledb.open(self.uri, mode="w", ctx=self._ctx) as A:
-            A[dim_values] = df.to_dict(orient="list")
+        exc = None
+        for _ in range(self._soma_options.num_write_retries):
+            try:
+                with tiledb.open(self.uri, mode="w", ctx=self._ctx) as A:
+                    A[dim_values] = df.to_dict(orient="list")
+                break
+            except tiledb.TileDBError as e:
+                exc = e
+        if exc is not None:
+            raise exc
 
     # ----------------------------------------------------------------
     def _from_pandas_dataframe(self, df: pd.DataFrame, dim_values: Labels) -> None:
@@ -158,8 +166,16 @@ class AnnotationMatrix(TileDBArray):
         else:
             self._create_empty_array(list(df.dtypes), attr_names)
 
-        with tiledb.open(self.uri, mode="w", ctx=self._ctx) as A:
-            A[dim_values] = df.to_dict(orient="list")
+        exc = None
+        for _ in range(self._soma_options.num_write_retries):
+            try:
+                with tiledb.open(self.uri, mode="w", ctx=self._ctx) as A:
+                    A[dim_values] = df.to_dict(orient="list")
+                break
+            except tiledb.TileDBError as e:
+                exc = e
+        if exc is not None:
+            raise exc
 
     # ----------------------------------------------------------------
     def _create_empty_array(

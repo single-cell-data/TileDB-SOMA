@@ -181,16 +181,34 @@ class UnsGroup(TileDBGroup):
 
             # Write scalars as metadata, not length-1 component arrays
             if isinstance(value, np.str_):
-                with self._open("w") as G:
-                    G.meta[key] = value
+                exc = None
+                for _ in range(self._soma_options.num_write_retries):
+                    try:
+                        with self._open("w") as G:
+                            G.meta[key] = value
+                        break
+                    except tiledb.TileDBError as e:
+                        exc = e
+                if exc is not None:
+                    raise exc
+
                 # TODO: WUT
                 # Needs explicit cast from numpy.str_ to str for tiledb.from_numpy
                 continue
 
             if isinstance(value, (int, float, str)):
                 # Nominally this is unit-test data
-                with self._open("w") as G:
-                    G.meta[key] = value
+                exc = None
+                for _ in range(self._soma_options.num_write_retries):
+                    try:
+                        with self._open("w") as G:
+                            G.meta[key] = value
+                        break
+                    except tiledb.TileDBError as e:
+                        exc = e
+                if exc is not None:
+                    raise exc
+
                 continue
 
             # Everything else is a component array, or unhandleable

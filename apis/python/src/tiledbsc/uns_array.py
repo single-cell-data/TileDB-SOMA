@@ -193,8 +193,17 @@ class UnsArray(TileDBArray):
         mat_coo = sp.coo_matrix(csr)
         d0 = mat_coo.row
         d1 = mat_coo.col
-        with tiledb.open(self.uri, mode="w", ctx=self._ctx) as A:
-            A[d0, d1] = mat_coo.data
+
+        exc = None
+        for _ in range(self._soma_options.num_write_retries):
+            try:
+                with tiledb.open(self.uri, mode="w", ctx=self._ctx) as A:
+                    A[d0, d1] = mat_coo.data
+                break
+            except tiledb.TileDBError as e:
+                exc = e
+        if exc is not None:
+            raise exc
 
     # ----------------------------------------------------------------
     # TODO: regardless of which matrix type (numpy.ndarray, scipy.sparse.csr_matrix, etc) was

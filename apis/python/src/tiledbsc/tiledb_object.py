@@ -88,8 +88,16 @@ class TileDBObject(ABC):
         """
         Returns metadata associated with the group/array.
         """
-        with self._open("w") as obj:
-            obj.meta[key] = value
+        exc = None
+        for _ in range(self._soma_options.num_write_retries):
+            try:
+                with self._open("w") as obj:
+                    obj.meta[key] = value
+                break
+            except tiledb.TileDBError as e:
+                exc = e
+        if exc is not None:
+            raise exc
 
     def get_object_type(self) -> str:
         """
@@ -103,13 +111,22 @@ class TileDBObject(ABC):
         This helps nested-structured traversals (especially those that start at the SOMACollection
         level) confidently navigate with a minimum of introspection on group contents.
         """
-        with self._open("w") as obj:
-            obj.meta.update(
-                {
-                    util.SOMA_OBJECT_TYPE_METADATA_KEY: self.__class__.__name__,
-                    util.SOMA_ENCODING_VERSION_METADATA_KEY: util.SOMA_ENCODING_VERSION,
-                }
-            )
+
+        exc = None
+        for _ in range(self._soma_options.num_write_retries):
+            try:
+                with self._open("w") as obj:
+                    obj.meta.update(
+                        {
+                            util.SOMA_OBJECT_TYPE_METADATA_KEY: self.__class__.__name__,
+                            util.SOMA_ENCODING_VERSION_METADATA_KEY: util.SOMA_ENCODING_VERSION,
+                        }
+                    )
+                break
+            except tiledb.TileDBError as e:
+                exc = e
+        if exc is not None:
+            raise exc
 
     @abstractmethod
     def _open(self, mode: str = "r") -> Union[tiledb.Array, tiledb.Group]:
