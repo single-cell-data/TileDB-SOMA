@@ -159,7 +159,10 @@ class AssayMatrix(TileDBArray):
         """
 
         s = util.get_start_stamp()
-        log_io(None, f"{self._indent}START  WRITING {self.uri}")
+        log_io(
+            f"Writing {self.nested_name} ...",
+            f"{self._indent}START  WRITING {self.uri}",
+        )
 
         assert len(row_names) == matrix.shape[0]
         assert len(col_names) == matrix.shape[1]
