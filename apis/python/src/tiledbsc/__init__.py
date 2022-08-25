@@ -36,6 +36,7 @@ from .annotation_matrix_group import AnnotationMatrixGroup
 from .annotation_pairwise_matrix_group import AnnotationPairwiseMatrixGroup
 from .assay_matrix import AssayMatrix
 from .assay_matrix_group import AssayMatrixGroup
+from .logging import info
 from .raw_group import RawGroup
 from .soma import SOMA
 from .soma_collection import SOMACollection
@@ -48,6 +49,9 @@ from .uns_array import UnsArray
 from .uns_group import UnsGroup
 from .util_ann import describe_ann_file
 from .util_tiledb import show_soma_schemas
+
+info()  # Good uploader-progress UX by default, especially for ingest of larger SOMAs
+del info  # cleanup
 
 __all__ = [
     "AnnotationMatrix",

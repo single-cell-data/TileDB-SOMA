@@ -77,9 +77,11 @@ def main():
         if not os.path.exists(outdir):
             os.mkdir(outdir)
 
-    verbose = not args.quiet
-    if verbose:
-        tiledbsc.logging.info()
+    if args.debug:
+        tiledbsc.logging.debug()
+    elif args.quiet:
+        tiledbsc.logging.warning()
+    # else default is tiledbsc.logging.info() in our __init__.py
 
     soma = tiledbsc.SOMA(input_path)
     tiledbsc.io.to_h5ad(soma, output_path)
