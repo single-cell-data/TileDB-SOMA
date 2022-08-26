@@ -56,8 +56,6 @@ add_library(TILEDB_SC_OBJECTS OBJECT
   ${CMAKE_CURRENT_SOURCE_DIR}/util.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/thread_pool/thread_pool.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/thread_pool/status.cc
-  ${CMAKE_CURRENT_SOURCE_DIR}/thread_pool/thread_pool.cc
-  ${CMAKE_CURRENT_SOURCE_DIR}/thread_pool/status.cc
 )
 
 message(WARNING "Building TileDB without deprecation warnings")
@@ -226,10 +224,14 @@ target_include_directories(tiledbsc-bin
 include(GNUInstallDirs)
 
 # Set rpath to be relative to the .so.
+# This allows tiledbsc shared objects to find the tiledb shared object in the
+# same directory, for example in the installed python module directory.
 if (APPLE)
   set_target_properties(tiledbsc PROPERTIES INSTALL_RPATH "@loader_path/")
+  set_target_properties(libtiledbsc PROPERTIES INSTALL_RPATH "@loader_path/")
 else()
   set_target_properties(tiledbsc PROPERTIES INSTALL_RPATH "$ORIGIN/")
+  set_target_properties(libtiledbsc PROPERTIES INSTALL_RPATH "$ORIGIN/")
 endif()
 
 set_property(
@@ -240,7 +242,8 @@ set_property(
 )
 
 install(
-  TARGETS tiledbsc tiledbsc-bin libtiledbsc
+#  TARGETS tiledbsc tiledbsc-bin libtiledbsc
+  TARGETS tiledbsc-bin libtiledbsc
   RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
   LIBRARY DESTINATION lib
   ARCHIVE DESTINATION lib

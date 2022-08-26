@@ -72,3 +72,9 @@ __all__ = [
     "describe_ann_file",
     "show_soma_schemas",
 ]
+
+try:
+    from . import libtiledbsc  # type: ignore[attr-defined] # noqa: F401
+except ImportError:
+    # mask error to import libtiledbsc if it is not installed
+    pass
