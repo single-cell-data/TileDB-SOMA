@@ -5,6 +5,7 @@ from typing import Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
+import pyarrow as pa
 import scipy.sparse as sp
 import tiledb
 
@@ -77,36 +78,46 @@ class AssayMatrix(TileDBArray):
 
     # ----------------------------------------------------------------
     def dim_select(
-        self, obs_ids: Optional[Ids], var_ids: Optional[Ids]
-    ) -> pd.DataFrame:
+        self,
+        obs_ids: Optional[Ids],
+        var_ids: Optional[Ids],
+        *,
+        return_arrow: bool = False,
+    ) -> Union[pd.DataFrame, pa.Table]:
         """
         Selects a slice out of the matrix with specified `obs_ids` and/or `var_ids`.
         Either or both of the ID lists may be `None`, meaning, do not subselect along
         that dimension. If both ID lists are `None`, the entire matrix is returned.
         """
         with tiledb.open(self.uri, ctx=self._ctx) as A:
+            query = A.query(return_arrow=return_arrow)
             if obs_ids is None:
                 if var_ids is None:
-                    df = A.df[:, :]
+                    df = query.df[:, :]
                 else:
-                    df = A.df[:, var_ids]
+                    df = query.df[:, var_ids]
             else:
                 if var_ids is None:
-                    df = A.df[obs_ids, :]
+                    df = query.df[obs_ids, :]
                 else:
-                    df = A.df[obs_ids, var_ids]
-        df.set_index([self.row_dim_name, self.col_dim_name], inplace=True)
+                    df = query.df[obs_ids, var_ids]
+        if not return_arrow:
+            df.set_index([self.row_dim_name, self.col_dim_name], inplace=True)
         return df
 
     # ----------------------------------------------------------------
     def df(
-        self, obs_ids: Optional[Ids] = None, var_ids: Optional[Ids] = None
-    ) -> pd.DataFrame:
+        self,
+        obs_ids: Optional[Ids] = None,
+        var_ids: Optional[Ids] = None,
+        *,
+        return_arrow: bool = False,
+    ) -> Union[pd.DataFrame, pa.Table]:
         """
         Keystroke-saving alias for `.dim_select()`. If either of `obs_ids` or `var_ids`
         are provided, they're used to subselect; if not, the entire dataframe is returned.
         """
-        return self.dim_select(obs_ids, var_ids)
+        return self.dim_select(obs_ids, var_ids, return_arrow=return_arrow)
 
     # ----------------------------------------------------------------
     def csr(
@@ -159,7 +170,10 @@ class AssayMatrix(TileDBArray):
         """
 
         s = util.get_start_stamp()
-        log_io(None, f"{self._indent}START  WRITING {self.uri}")
+        log_io(
+            f"Writing {self.nested_name} ...",
+            f"{self._indent}START  WRITING {self.uri}",
+        )
 
         assert len(row_names) == matrix.shape[0]
         assert len(col_names) == matrix.shape[1]

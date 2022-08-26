@@ -52,7 +52,7 @@ def main() -> int:
     args = parser.parse_args()
 
     if args.verbose:
-        tiledbsc.logging.info()
+        tiledbsc.logging.debug()
 
     uniformizer = Uniformizer(args.atlas_uri, args.allow_non_primary_data)
 

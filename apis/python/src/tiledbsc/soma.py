@@ -3,9 +3,10 @@ from __future__ import annotations
 import os
 from collections import Counter
 from concurrent.futures import ThreadPoolExecutor
-from typing import List, Optional, Sequence, Tuple
+from typing import List, Optional, Sequence, Tuple, Union
 
 import pandas as pd
+import pyarrow as pa
 import tiledb
 
 from .annotation_dataframe import AnnotationDataFrame
@@ -244,7 +245,11 @@ class SOMA(TileDBGroup):
 
     # ----------------------------------------------------------------
     def dim_slice(
-        self, obs_ids: Optional[Ids], var_ids: Optional[Ids]
+        self,
+        obs_ids: Optional[Ids],
+        var_ids: Optional[Ids],
+        *,
+        return_arrow: bool = False,
     ) -> Optional[SOMASlice]:
         """
         Subselects the SOMA's obs, var, and X/data using the specified obs_ids and var_ids.
@@ -255,28 +260,28 @@ class SOMA(TileDBGroup):
         if obs_ids is None:
             # Try the var slice first to see if that produces zero results -- if so we don't need to
             # load the obs.
-            slice_var_df = self.var.dim_select(var_ids)
+            slice_var_df = self.var.dim_select(var_ids, return_arrow=return_arrow)
             if slice_var_df.shape[0] == 0:
                 return None
-            slice_obs_df = self.obs.dim_select(obs_ids)
+            slice_obs_df = self.obs.dim_select(obs_ids, return_arrow=return_arrow)
             if slice_obs_df.shape[0] == 0:
                 return None
 
         elif var_ids is None:
             # Try the obs slice first to see if that produces zero results -- if so we don't need to
             # load the var.
-            slice_obs_df = self.obs.dim_select(obs_ids)
+            slice_obs_df = self.obs.dim_select(obs_ids, return_arrow=return_arrow)
             if slice_obs_df.shape[0] == 0:
                 return None
-            slice_var_df = self.var.dim_select(var_ids)
+            slice_var_df = self.var.dim_select(var_ids, return_arrow=return_arrow)
             if slice_var_df.shape[0] == 0:
                 return None
 
         else:
-            slice_obs_df = self.obs.dim_select(obs_ids)
+            slice_obs_df = self.obs.dim_select(obs_ids, return_arrow=return_arrow)
             if slice_obs_df.shape[0] == 0:
                 return None
-            slice_var_df = self.var.dim_select(var_ids)
+            slice_var_df = self.var.dim_select(var_ids, return_arrow=return_arrow)
             if slice_var_df.shape[0] == 0:
                 return None
 
@@ -290,7 +295,9 @@ class SOMA(TileDBGroup):
         # * obsp
         # * varp
 
-        return self._assemble_soma_slice(obs_ids, var_ids, slice_obs_df, slice_var_df)
+        return self._assemble_soma_slice(
+            obs_ids, var_ids, slice_obs_df, slice_var_df, return_arrow=return_arrow
+        )
 
     # ----------------------------------------------------------------
     def query(
@@ -302,6 +309,7 @@ class SOMA(TileDBGroup):
         var_attrs: Optional[Sequence[str]] = None,
         var_query_string: Optional[str] = None,
         var_ids: Optional[Ids] = None,
+        return_arrow: bool = False,
     ) -> Optional[SOMASlice]:
         """
         Subselects the SOMA's obs, var, and X/data using the specified queries on obs and var.
@@ -315,14 +323,21 @@ class SOMA(TileDBGroup):
         """
 
         slice_obs_df = self.obs.query(
-            query_string=obs_query_string, ids=obs_ids, attrs=obs_attrs
+            query_string=obs_query_string,
+            ids=obs_ids,
+            attrs=obs_attrs,
+            return_arrow=return_arrow,
         )
         # E.g. querying for 'cell_type == "blood"' and this SOMA does have a cell_type column in its
         # obs, but no rows with cell_type == "blood".
         if slice_obs_df is None:
             return None
-        if len(slice_obs_df.index) == 0:
-            return None
+        if return_arrow:
+            if len(slice_obs_df["obs_id"]) == 0:
+                return None
+        else:
+            if len(slice_obs_df.index) == 0:
+                return None
         # At the tiledb multi-index level, if we're say slicing on obs_ids but not var_ids,
         # we'll do `A.df[obs_ids, :]`. We can't pass a `:` down the callstack to get there,
         # but we pass `None` instead.
@@ -332,18 +347,30 @@ class SOMA(TileDBGroup):
         # `A.df[{158 obs ids}, {all 2000 var ids}]` is non-performant while
         # `A.df[{158 obs ids}, :]` is performant.
         if obs_ids is not None or obs_query_string is not None:
-            obs_ids = list(slice_obs_df.index)
+            if return_arrow:
+                obs_ids = [obs_id.as_py() for obs_id in slice_obs_df["obs_id"]]
+            else:
+                obs_ids = list(slice_obs_df.index)
 
-        slice_var_df = self.var.query(var_query_string, ids=var_ids, attrs=var_attrs)
+        slice_var_df = self.var.query(
+            var_query_string, ids=var_ids, attrs=var_attrs, return_arrow=return_arrow
+        )
         # E.g. querying for 'feature_name == "MT-CO3"' and this SOMA does have a feature_name column
         # in its var, but no rows with feature_name == "MT-CO3".
         if slice_var_df is None:
             return None
-        if len(slice_var_df.index) == 0:
-            return None
+        if return_arrow:
+            if len(slice_var_df["var_id"]) == 0:
+                return None
+        else:
+            if len(slice_var_df.index) == 0:
+                return None
         # See above comment re keeping obs_ids == None if that's what it came in as.
         if var_ids is not None or var_query_string is not None:
-            var_ids = list(slice_var_df.index)
+            if return_arrow:
+                var_ids = [var_id.as_py() for var_id in slice_var_df["var_id"]]
+            else:
+                var_ids = list(slice_var_df.index)
 
         # TODO:
         # do this here:
@@ -355,7 +382,9 @@ class SOMA(TileDBGroup):
         # * obsp
         # * varp
 
-        return self._assemble_soma_slice(obs_ids, var_ids, slice_obs_df, slice_var_df)
+        return self._assemble_soma_slice(
+            obs_ids, var_ids, slice_obs_df, slice_var_df, return_arrow=return_arrow
+        )
 
     # ----------------------------------------------------------------
     @classmethod
@@ -369,6 +398,7 @@ class SOMA(TileDBGroup):
         var_attrs: Optional[Sequence[str]] = None,
         var_query_string: Optional[str] = None,
         var_ids: Optional[Ids] = None,
+        return_arrow: bool = False,
         max_thread_pool_workers: Optional[int] = None,
     ) -> List[SOMASlice]:
         """
@@ -416,6 +446,7 @@ class SOMA(TileDBGroup):
                     var_query_string=var_query_string,
                     obs_ids=obs_ids,
                     var_ids=var_ids,
+                    return_arrow=return_arrow,
                 )
                 soma_slice_futures.append(soma_slice_future)
 
@@ -433,15 +464,19 @@ class SOMA(TileDBGroup):
         X: AssayMatrix,
         obs_ids: Optional[Ids],
         var_ids: Optional[Ids],
-    ) -> Tuple[str, pd.DataFrame]:
-        return (layer_name, X.dim_select(obs_ids, var_ids))
+        *,
+        return_arrow: bool = False,
+    ) -> Tuple[str, Union[pd.DataFrame, pa.Table]]:
+        return (layer_name, X.dim_select(obs_ids, var_ids, return_arrow=return_arrow))
 
     def _assemble_soma_slice(
         self,
         obs_ids: Optional[Ids],
         var_ids: Optional[Ids],
-        slice_obs_df: pd.DataFrame,
-        slice_var_df: pd.DataFrame,
+        slice_obs_df: Union[pd.DataFrame, pa.Table],
+        slice_var_df: Union[pd.DataFrame, pa.Table],
+        *,
+        return_arrow: bool = False,
     ) -> SOMASlice:
         """
         An internal method for constructing a `SOMASlice` object given query results.
@@ -462,6 +497,7 @@ class SOMA(TileDBGroup):
                         X_layer,
                         obs_ids,
                         var_ids,
+                        return_arrow=return_arrow,
                     )
                     futures.append(future)
 
@@ -512,7 +548,6 @@ class SOMA(TileDBGroup):
         return soma
 
     # ----------------------------------------------------------------
-    # XXX COMMON OBS VAR
     @classmethod
     def find_common_obs_and_var_keys(
         cls,
