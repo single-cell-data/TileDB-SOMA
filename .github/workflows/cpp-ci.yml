@@ -12,13 +12,15 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-#        os: [ubuntu-20.04, macos-11, windows-2019]
-        os: [ubuntu-20.04, macos-11]
+        os: [ubuntu-22.04, macos-12]
         python-version: ['3.8']
         include:
-          - runs-on: ubuntu-latest
-            cc: gcc-10
-            cxx: g++-10
+          - runs-on: ubuntu-22.04
+            cc: gcc-11
+            cxx: g++-11
+          - runs-on: macos-12
+            cc: gcc-11
+            cxx: g++-11
 
     steps:
     - name: 'Print env'
@@ -44,21 +46,7 @@ jobs:
     - name: Install Python packages
       shell: bash
       run: |
-        python -m pip install pytest pybind11 apis/python
-
-    - name: Build libtiledbsc
-      shell: bash
-      run: |
-        export pybind11_DIR=$(python -m pybind11 --cmakedir)
-        echo "pybind11_DIR is: ${pybind11_DIR}"
-        mkdir build
-        cmake -B ${GITHUB_WORKSPACE}/build -S ${GITHUB_WORKSPACE}/libtiledbsc -Dpybind11_DIR=${pybind11_DIR}
-        if [ "$RUNNER_OS" == "Linux" ]; then
-          cmake --build ${GITHUB_WORKSPACE}/build --target check-format
-        fi
-        cmake --build ${GITHUB_WORKSPACE}/build --config Release -j ${NUMBER_OF_PROCESSORS} 2>&1
-        cmake --build ${GITHUB_WORKSPACE}/build --config Release -j ${NUMBER_OF_PROCESSORS} -t install-libtiledbsc 2>&1
-        cmake --build ${GITHUB_WORKSPACE}/build/libtiledbsc --config Release -j ${NUMBER_OF_PROCESSORS} -t build_tests 2>&1
+        python -m pip install -v pytest pybind11 apis/python
       env:
         CC: ${{ matrix.cc }}
         CXX: ${{ matrix.cxx }}
@@ -72,10 +60,4 @@ jobs:
     - name: Run libtiledbsc tests
       shell: bash
       run: |
-        export PATH=${PATH}:${GITHUB_WORKSPACE}/build/externals/install/bin
-        pushd ${GITHUB_WORKSPACE}/build/libtiledbsc
-        ctest -C Release --verbose
-        cd -
-        export PYTHONPATH=$PWD/dist/lib
-        export LD_LIBRARY_PATH=$PWD/dist/lib
-        pytest -sv --durations=0 libtiledbsc
+        source ./scripts/test

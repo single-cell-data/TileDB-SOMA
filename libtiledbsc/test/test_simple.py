@@ -1,6 +1,6 @@
 import pandas as pd
 import pyarrow as pa
-import libtiledbsc as sc
+import tiledbsc.libtiledbsc as sc
 import pytest
 import numpy as np
 import random
