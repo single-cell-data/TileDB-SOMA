@@ -2,6 +2,7 @@ from typing import Optional, Sequence, Tuple, Union
 
 import numpy as np
 import pandas as pd
+import pyarrow as pa
 import tiledb
 
 import tiledbsc.util as util
@@ -66,27 +67,40 @@ class AnnotationMatrix(TileDBArray):
             return (num_rows, num_cols)
 
     # ----------------------------------------------------------------
-    def dim_select(self, ids: Optional[Ids]) -> pd.DataFrame:
+    def dim_select(
+        self,
+        ids: Optional[Ids] = None,
+        *,
+        return_arrow: bool = False,
+    ) -> Union[pd.DataFrame, pa.Table]:
         """
         Selects a slice out of the array with specified `obs_ids` (for `obsm` elements) or
         `var_ids` (for `varm` elements).  If `ids` is `None`, the entire array is returned.
         """
         if ids is None:
             with self._open() as A:
-                df = A.df[:]
+                query = A.query(return_arrow=return_arrow)
+                df = query.df[:]
         else:
             with self._open() as A:
-                df = A.df[ids]
-        df.set_index(self.dim_name, inplace=True)
+                query = A.query(return_arrow=return_arrow)
+                df = query.df[ids]
+        if not return_arrow:
+            df.set_index(self.dim_name, inplace=True)
         return df
 
     # ----------------------------------------------------------------
-    def df(self, ids: Optional[Ids] = None) -> pd.DataFrame:
+    def df(
+        self,
+        ids: Optional[Ids] = None,
+        *,
+        return_arrow: bool = False,
+    ) -> Union[pd.DataFrame, pa.Table]:
         """
         Keystroke-saving alias for `.dim_select()`. If `ids` are provided, they're used
         to subselect; if not, the entire dataframe is returned.
         """
-        return self.dim_select(ids)
+        return self.dim_select(ids, return_arrow=return_arrow)
 
     # ----------------------------------------------------------------
     def from_matrix_and_dim_values(

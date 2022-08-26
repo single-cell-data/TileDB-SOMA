@@ -234,6 +234,7 @@ class SOMACollection(TileDBGroup):
         var_attrs: Optional[Sequence[str]] = None,
         var_query_string: Optional[str] = None,
         var_ids: Optional[Ids] = None,
+        return_arrow: bool = False,
     ) -> List[SOMASlice]:
         """
         Subselects the obs, var, and X/data using the specified queries on obs and var,
@@ -260,6 +261,7 @@ class SOMACollection(TileDBGroup):
             var_attrs=var_attrs,
             var_query_string=var_query_string,
             var_ids=var_ids,
+            return_arrow=return_arrow,
         )
 
     # ----------------------------------------------------------------
