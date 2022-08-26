@@ -187,23 +187,37 @@ class AnnotationDataFrame(TileDBArray):
             if attrs is None:
                 slice_query = A.query(attr_cond=qc, return_arrow=return_arrow)
                 if ids is None:
-                    slice_df = slice_query.df[:]
+                    df = slice_query.df[:]
                 else:
-                    slice_df = slice_query.df[ids]
+                    df = slice_query.df[ids]
             else:
                 slice_query = A.query(
                     attr_cond=qc, attrs=attrs, return_arrow=return_arrow
                 )
                 if ids is None:
-                    slice_df = slice_query.df[:]
+                    df = slice_query.df[:]
                 else:
-                    slice_df = slice_query.df[ids]
-            # This is the 'decode on read' part of our logic; in dim_select we have the 'encode on write' part.
-            # Context: https://github.com/single-cell-data/TileDB-SingleCell/issues/99.
+                    df = slice_query.df[ids]
+
+            # We do not need this:
+            #   df.set_index(self.dim_name, inplace=True)
+            # as long as these arrays (for this class) are written using tiledb.from_pandas which
+            # sets this metadata:
+            #   >>> A.meta.items()
+            #   (('__pandas_index_dims', '{"obs_id": "<U0"}'),)
+            # so the set_index is already done for us.
+            #
+            # However if the data was written somehow else (e.g. by tiledbscr-r) then we do.
+            if not return_arrow:
+                if isinstance(df.index, pd.RangeIndex) and self.dim_name in df.columns:
+                    df.set_index(self.dim_name, inplace=True)
+                # This is the 'decode on read' part of our logic; in dim_select we have the 'encode on write' part.
+                # Context: https://github.com/single-cell-data/TileDB-SingleCell/issues/99.
+
             if return_arrow:
-                return self._ascii_to_unicode_arrow_readback(slice_df)
+                return self._ascii_to_unicode_arrow_readback(df)
             else:
-                return self._ascii_to_unicode_pandas_readback(slice_df)
+                return self._ascii_to_unicode_pandas_readback(df)
 
     # ----------------------------------------------------------------
     def _ascii_to_unicode_pandas_series_readback(
