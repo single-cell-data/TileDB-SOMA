@@ -106,8 +106,9 @@ select `relative=True`. (This is the default.)
     write_soco = args.soco
     if args.debug:
         tiledbsc.logging.debug()
-    elif not args.quiet:
-        tiledbsc.logging.info()
+    elif args.quiet:
+        tiledbsc.logging.warning()
+    # else default is tiledbsc.logging.info() in our __init__.py
 
     if args.relative is None:
         rel_member_uris = None
