@@ -46,7 +46,7 @@ jobs:
       run: python -m pip wheel --no-deps --wheel-dir=dist apis/python
 
     - name: Publish package to TestPyPI
-      if: matrix.os == 'ubuntu-latest' && github.event_name == 'release'
+      if: matrix.os == 'ubuntu-22.04' && github.event_name == 'release'
       uses: pypa/gh-action-pypi-publish@master
       continue-on-error: true
       with:
@@ -56,7 +56,7 @@ jobs:
         verbose: true
 
     - name: Publish package to PyPI
-      if: matrix.os == 'ubuntu-latest' && github.event_name == 'release' && !github.event.release.prerelease
+      if: matrix.os == 'ubuntu-22.04' && github.event_name == 'release' && !github.event.release.prerelease
       uses: pypa/gh-action-pypi-publish@master
       with:
         user: __token__
