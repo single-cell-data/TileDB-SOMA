@@ -43,7 +43,8 @@ jobs:
       run: python -m pytest apis/python/tests
 
     - name: Build wheel distribution
-      run: python -m pip wheel --no-deps --wheel-dir=dist apis/python
+      if: matrix.os == 'ubuntu-22.04' && github.event_name == 'release'
+      run: rm -rvf dist/bin && python -m pip wheel --no-deps --wheel-dir=dist apis/python
 
     - name: Publish package to TestPyPI
       if: matrix.os == 'ubuntu-22.04' && github.event_name == 'release'
