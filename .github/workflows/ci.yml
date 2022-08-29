@@ -43,8 +43,7 @@ jobs:
       run: python -m pytest apis/python/tests
 
     - name: Build wheel distribution
-      if: matrix.os == 'ubuntu-22.04' && github.event_name == 'release'
-      run: rm -rvf dist/bin && python -m pip wheel --no-deps --wheel-dir=dist apis/python
+      run: python -m pip wheel --no-deps --wheel-dir=dist-wheel apis/python
 
     - name: Publish package to TestPyPI
       if: matrix.os == 'ubuntu-22.04' && github.event_name == 'release'
@@ -54,6 +53,7 @@ jobs:
         repository_url: https://test.pypi.org/legacy/
         user: __token__
         password: ${{ secrets.TEST_PYPI_TOKEN }}
+        packages_dir: dist-wheel
         verbose: true
 
     - name: Publish package to PyPI
@@ -62,4 +62,5 @@ jobs:
       with:
         user: __token__
         password: ${{ secrets.PYPI_TOKEN }}
+        packages_dir: dist-wheel
         verbose: true
