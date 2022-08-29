@@ -180,7 +180,7 @@ class AnnotationDataFrame(TileDBArray):
         included in `attrs` if `attrs` is not `None`.  Returns `None` if the slice is empty.
         """
         if query_string is None:
-            return self.dim_select(ids, return_arrow=return_arrow)
+            return self.dim_select(ids, attrs=attrs, return_arrow=return_arrow)
 
         with self._open() as A:
             qc = tiledb.QueryCondition(query_string)
