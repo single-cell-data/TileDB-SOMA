@@ -34,7 +34,7 @@ jobs:
         python-version: ${{ matrix.python-version }}
 
     - name: Install Python packages
-      run: python -m pip install pytest pybind11 typeguard apis/python
+      run: python -m pip -v install pytest pybind11 typeguard apis/python
       env:
         CC: ${{ matrix.cc }}
         CXX: ${{ matrix.cxx }}
@@ -43,7 +43,7 @@ jobs:
       run: python -m pytest apis/python/tests
 
     - name: Build wheel distribution
-      run: python -m pip wheel --no-deps --wheel-dir=dist-wheel apis/python
+      run: python -m pip -v wheel --no-deps --wheel-dir=dist-wheel apis/python
 
     - name: Publish package to TestPyPI
       if: matrix.os == 'ubuntu-22.04' && github.event_name == 'release'
