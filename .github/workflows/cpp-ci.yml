@@ -8,6 +8,8 @@ on:
 jobs:
   build:
 
+    if: ${{ false }}  # disable this job until libiledbsc is ready for pypi
+
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
