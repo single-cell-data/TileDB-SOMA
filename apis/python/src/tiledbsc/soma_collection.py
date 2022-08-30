@@ -92,8 +92,30 @@ class SOMACollection(TileDBGroup):
     def add(self, soma: SOMA, relative: Optional[bool] = None) -> None:
         """
         Adds a `SOMA` to the `SOMACollection`.
+
+        * If `relative` is not supplied, it's taken from the `soma_options` the collection was
+        instantiated with.
+
+        * If `relative` is `False`, either via the `relative` argument or via `soma_options.member_uris_are_relative`,
+        then the collection will have the absolute path of the SOMA. For populating SOMA elements
+        within a SOMACollection on local disk, this can be useful if you want to be able to move the
+        SOMACollection storage around and have it remember the (unmoved) locations of SOMA objects
+        elsewhere, i.e.  if the SOMACollectio is in one place while its members are in other places.
+        If the SOMAs in the collection are contained within the SOMACollection directory, you
+        probably want `relative=True`.
+
+        * If `relative` is `True`, either via the `relative` argument or via `soma_options.member_uris_are_relative`,
+        then the group will have the relative path of the member. For TileDB Cloud, this is never
+        the right thing to do. For local-disk or S3 storage, this is essential if you want to move a
+        SOMA to another directory and have it remember the locations of the members within it.  In
+        this case the SOMA storage must be located as a direct component of the collection storage.
+        Example: `s3://mybucket/soco` and `s3://mybucket/soco/soma1`.
+
+        * If `relative` is `None`, either via the `relative` argument or via
+        `soma_options.member_uris_are_relative`, then we select `relative=False` if the URI starts
+        with `tiledb://`, else we select `relative=True`. This is the default.
         """
-        self._add_object(soma, relative)
+        self._add_object(soma, relative=relative, check_is_direct_child=True)
 
     # ----------------------------------------------------------------
     def remove(self, soma: Union[SOMA, str]) -> None:
