@@ -1,4 +1,4 @@
-# See./peek-ann.py
+# See ../tools/peek-ann.py
 
 import sys
 

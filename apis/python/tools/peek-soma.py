@@ -1,4 +1,4 @@
-# See./peek-soma.py
+# See ../tools/peek-soma.py
 
 import sys
 

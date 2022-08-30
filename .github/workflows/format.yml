@@ -17,7 +17,7 @@ jobs:
       - name: Check Python Black Format
         run: |
           python -m pip install black
-          python -m black --check --diff . tools/[a-z]* --force-exclude 'tools/peek-(ann|soma|soco)'
+          python -m black --check --diff . tools/[a-z]*
       - name: Check for unsorted / unformatted Python imports with isort
         run: |
           python -m pip install isort

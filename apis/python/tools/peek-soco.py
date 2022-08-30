@@ -1,4 +1,4 @@
-# See./peek-soco.py
+# See ../tools/peek-soco.py
 
 import sys
 

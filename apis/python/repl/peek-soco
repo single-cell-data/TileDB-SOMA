@@ -1,11 +1,11 @@
 #!/bin/bash
 
-# Simply runs python -i peek-soma.py.
-# That can be done with '#!/usr/bin/env python -i' in the peek-soma.py shebang
+# Simply runs python -i peek-soco.py.
+# That can be done with '#!/usr/bin/env python -i' in the peek-soco.py shebang
 # line, but not all OSes support three words being present in the shebang line.
 us=$(basename $0)
 ourdir=$(dirname $0)
-py=$ourdir/peek-soma.py
+py=$ourdir/../tools/peek-soco.py
 if [ ! -f $py ]; then
     echo "$us: cannot find $py" 1>&2
     exit 1
