@@ -101,17 +101,21 @@ class SOMACollection(TileDBGroup):
 
         * If ``relative`` is ``None``, either via the ``relative`` argument or via ``soma_options.member_uris_are_relative``, then we select ``relative=False`` if the URI starts with ``tiledb://``, else we select ``relative=True``. This is the default.
         """
+        s0 = self.timing_start("add", "total")
         self._add_object(soma, relative=relative, check_is_direct_child=True)
+        self.timing_end(s0)
 
     # ----------------------------------------------------------------
     def remove(self, soma: Union[SOMA, str]) -> None:
         """
         Removes a ``SOMA`` from the ``SOMACollection``, when invoked as ``soco.remove("namegoeshere")``.
         """
+        s0 = self.timing_start("remove", "total")
         if isinstance(soma, str):
             self._remove_object_by_name(soma)
         else:
             self._remove_object(soma)
+        self.timing_end(s0)
 
     def __delattr__(self, matrix_name: str) -> None:
         """
@@ -130,7 +134,10 @@ class SOMACollection(TileDBGroup):
         """
         Returns the names of the SOMAs in the collection.
         """
-        return self._get_member_names()
+        s0 = self.timing_start("keys", "total")
+        retval = self._get_member_names()
+        self.timing_end(s0)
+        return retval
 
     # ----------------------------------------------------------------
     def __iter__(self) -> Iterator[SOMA]:
@@ -141,7 +148,9 @@ class SOMACollection(TileDBGroup):
             yield soma
 
     def _get_all_somas(self) -> Dict[str, SOMA]:
+        s0 = self.timing_start("_get_all_somas", "total")
         self._populate_all()  # Parallelized cache pre-fill
+        self.timing_end(s0)
         return self._somas
 
     def _populate_all(self) -> None:
@@ -189,10 +198,13 @@ class SOMACollection(TileDBGroup):
         """
         Implements ``name in soco``
         """
+        s0 = self.timing_start("__contains__", "total")
         if not self.exists():
-            return False
+            retval = False
         with self._open("r") as G:
-            return name in G
+            retval = name in G
+        self.timing_end(s0)
+        return retval
 
     # At the tiledb-py API level, *all* groups are name-indexable.  But here at the tiledbsoma-py
     # level, we implement name-indexing only for some groups:
@@ -215,9 +227,10 @@ class SOMACollection(TileDBGroup):
         Returns a ``SOMA`` element at the given name within the group, or ``None`` if no such
         member exists.  Overloads the ``[...]`` operator.
         """
+        s0 = self.timing_start("__getitem__", "total")
         if name in self._somas:
             # SOMA-constructor cache
-            return self._somas[name]
+            retval = self._somas[name]
 
         with self._open("r") as G:
             try:
@@ -230,7 +243,10 @@ class SOMACollection(TileDBGroup):
                     f"Internal error: found element which is not a subgroup: type is {obj.type}"
                 )
 
-            return SOMA(uri=obj.uri, name=name, parent=self)
+            retval = SOMA(uri=obj.uri, name=name, parent=self)
+
+        self.timing_end(s0)
+        return retval
 
     # ----------------------------------------------------------------
     def query(
@@ -261,7 +277,8 @@ class SOMACollection(TileDBGroup):
         needn't specify these; if they don't, you must.
         """
 
-        return SOMA.queries(
+        s0 = self.timing_start("query", "total")
+        retval = SOMA.queries(
             list(self._get_all_somas().values()),
             obs_attrs=obs_attrs,
             obs_query_string=obs_query_string,
@@ -271,6 +288,8 @@ class SOMACollection(TileDBGroup):
             var_ids=var_ids,
             return_arrow=return_arrow,
         )
+        self.timing_end(s0)
+        return retval
 
     # ----------------------------------------------------------------
     def find_unique_obs_values(self, obs_label: str) -> Set[str]:

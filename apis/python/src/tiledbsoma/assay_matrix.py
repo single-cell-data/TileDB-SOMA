@@ -53,12 +53,14 @@ class AssayMatrix(TileDBArray):
         * For reading from an already-populated SOMA, we wish to avoid cache-coherency issues.
         """
         super().__init__(uri=uri, name=name, parent=parent)
+        s0 = self.timing_start("__init__", "total")
 
         self.row_dim_name = row_dim_name
         self.col_dim_name = col_dim_name
         self.attr_name = "value"
         self.row_dataframe = row_dataframe
         self.col_dataframe = col_dataframe
+        self.timing_end(s0)
 
     # ----------------------------------------------------------------
     def shape(self) -> Tuple[int, int]:
@@ -69,12 +71,15 @@ class AssayMatrix(TileDBArray):
 
         Note: currently implemented via data scan --- will be optimized for TileDB core 2.10.
         """
+        s1 = self.timing_start("shape", "total")
         with self._open():
             # These TileDB arrays are string-dimensioned sparse arrays so there is no '.shape'.
             # Instead we compute it ourselves.  See also:
             num_rows = self.row_dataframe.shape()[0]
             num_cols = self.col_dataframe.shape()[0]
-            return (num_rows, num_cols)
+            retval = (num_rows, num_cols)
+            self.timing_end(s1)
+            return retval
 
     # ----------------------------------------------------------------
     def dim_select(
@@ -89,7 +94,13 @@ class AssayMatrix(TileDBArray):
         Either or both of the ID lists may be ``None``, meaning, do not subselect along
         that dimension. If both ID lists are ``None``, the entire matrix is returned.
         """
+        s0 = self.timing_start("dim_select", "open")
+
+        s1 = self.timing_start("dim_select", "open")
         with tiledb.open(self.uri, ctx=self._ctx) as A:
+            self.timing_end(s1)
+
+            s2 = self.timing_start("dim_select", "tiledb_query")
             query = A.query(return_arrow=return_arrow)
             if obs_ids is None:
                 if var_ids is None:
@@ -101,8 +112,14 @@ class AssayMatrix(TileDBArray):
                     df = query.df[obs_ids, :]
                 else:
                     df = query.df[obs_ids, var_ids]
+            self.timing_end(s2)
+
+        s3 = self.timing_start("dim_select", "set_index")
         if not return_arrow:
             df.set_index([self.row_dim_name, self.col_dim_name], inplace=True)
+        self.timing_end(s3)
+
+        self.timing_end(s0)
         return df
 
     # ----------------------------------------------------------------
@@ -126,7 +143,10 @@ class AssayMatrix(TileDBArray):
         """
         Like ``.df()`` but returns results in ``scipy.sparse.csr_matrix`` format.
         """
-        return self._csr_or_csc("csr", obs_ids, var_ids)
+        s0 = self.timing_start("csr", "total")
+        retval = self._csr_or_csc("csr", obs_ids, var_ids)
+        self.timing_end(s0)
+        return retval
 
     def csc(
         self, obs_ids: Optional[Ids] = None, var_ids: Optional[Ids] = None
@@ -134,7 +154,10 @@ class AssayMatrix(TileDBArray):
         """
         Like ``.df()`` but returns results in ``scipy.sparse.csc_matrix`` format.
         """
-        return self._csr_or_csc("csc", obs_ids, var_ids)
+        s0 = self.timing_start("csc", "total")
+        retval = self._csr_or_csc("csc", obs_ids, var_ids)
+        self.timing_end(s0)
+        return retval
 
     def _csr_or_csc(
         self,
@@ -168,6 +191,7 @@ class AssayMatrix(TileDBArray):
         ``scipy.sparse.csr_matrix``, ``scipy.sparse.csc_matrix``, ``numpy.ndarray``, etc.
         For ingest from ``AnnData``, these should be ``ann.obs_names`` and ``ann.var_names``.
         """
+        s0 = self.timing_start("from_matrix_and_dim_values", "total")
 
         s = util.get_start_stamp()
         log_io(
@@ -206,11 +230,14 @@ class AssayMatrix(TileDBArray):
             util.format_elapsed(s, f"{self._indent}FINISH WRITING {self.uri}"),
         )
 
+        self.timing_end(s0)
+
     # ----------------------------------------------------------------
     def _create_empty_array(self, matrix_dtype: np.dtype) -> None:
         """
         Create a TileDB 2D sparse array with string dimensions and a single attribute.
         """
+        s0 = self.timing_start("_create_empty_array", "total")
 
         dom = tiledb.Domain(
             tiledb.Dim(
@@ -248,6 +275,7 @@ class AssayMatrix(TileDBArray):
         )
 
         tiledb.Array.create(self.uri, sch, ctx=self._ctx)
+        self.timing_end(s0)
 
     # ----------------------------------------------------------------
     def ingest_data_whole(
@@ -264,6 +292,7 @@ class AssayMatrix(TileDBArray):
         :param row_names: List of row names.
         :param col_names: List of column names.
         """
+        s0 = self.timing_start("ingest_data_whole", "total")
 
         assert len(row_names) == matrix.shape[0]
         assert len(col_names) == matrix.shape[1]
@@ -274,6 +303,7 @@ class AssayMatrix(TileDBArray):
 
         with tiledb.open(self.uri, mode="w", ctx=self._ctx) as A:
             A[d0, d1] = mat_coo.data
+        self.timing_end(s0)
 
     # ----------------------------------------------------------------
     # Example: suppose this 4x3 is to be written in two chunks of two rows each
@@ -321,6 +351,7 @@ class AssayMatrix(TileDBArray):
         :param row_names: List of row names.
         :param col_names: List of column names.
         """
+        s0 = self.timing_start("ingest_data_rows_chunked", "total")
 
         assert len(row_names) == matrix.shape[0]
         assert len(col_names) == matrix.shape[1]
@@ -408,6 +439,7 @@ class AssayMatrix(TileDBArray):
                 f"{self._indent}FINISH __ingest_coo_data_string_dims_rows_chunked",
             ),
         )
+        self.timing_end(s0)
 
     # This method is very similar to ingest_data_rows_chunked. The code is largely repeated,
     # and this is intentional. The algorithm here is non-trivial (among the most non-trivial
@@ -427,6 +459,7 @@ class AssayMatrix(TileDBArray):
         :param row_names: List of row names.
         :param col_names: List of column names.
         """
+        s0 = self.timing_start("ingest_data_cols_chunked", "total")
 
         assert len(row_names) == matrix.shape[0]
         assert len(col_names) == matrix.shape[1]
@@ -514,6 +547,7 @@ class AssayMatrix(TileDBArray):
                 f"{self._indent}FINISH __ingest_coo_data_string_dims_rows_chunked",
             ),
         )
+        self.timing_end(s0)
 
     # This method is very similar to ingest_data_rows_chunked. The code is largely repeated,
     # and this is intentional. The algorithm here is non-trivial (among the most non-trivial
@@ -533,6 +567,7 @@ class AssayMatrix(TileDBArray):
         :param row_names: List of row names.
         :param col_names: List of column names.
         """
+        s0 = self.timing_start("ingest_data_dense_rows_chunked", "total")
 
         assert len(row_names) == matrix.shape[0]
         assert len(col_names) == matrix.shape[1]
@@ -622,6 +657,7 @@ class AssayMatrix(TileDBArray):
                 f"{self._indent}FINISH __ingest_coo_data_string_dims_dense_rows_chunked",
             ),
         )
+        self.timing_end(s0)
 
     # ----------------------------------------------------------------
     def to_csr_matrix(self, row_labels: Labels, col_labels: Labels) -> sp.csr_matrix:
@@ -633,6 +669,7 @@ class AssayMatrix(TileDBArray):
         be in the same order as they were in any anndata object which was used to create the
         TileDB storage.
         """
+        s0 = self.timing_start("to_csr_matrix", "total")
 
         s = util.get_start_stamp()
         log_io(None, f"{self._indent}START  read {self.uri}")
@@ -644,4 +681,5 @@ class AssayMatrix(TileDBArray):
             util.format_elapsed(s, f"{self._indent}FINISH read {self.uri}"),
         )
 
+        self.timing_end(s0)
         return csr
