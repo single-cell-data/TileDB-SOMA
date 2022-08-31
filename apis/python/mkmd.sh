@@ -10,6 +10,7 @@ for x in \
     soma \
     soma_collection \
     soma_options \
+    soma_slice \
     tiledb_array \
     tiledb_group \
     tiledb_object \

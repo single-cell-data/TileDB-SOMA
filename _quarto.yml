@@ -82,6 +82,8 @@ website:
                   text: "SOMA"
                 - href: "apis/python/doc/soma_collection.md"
                   text: "SOMACollection"
+                - href: "apis/python/doc/soma_slice.md"
+                  text: "SOMASlice"
 
                 - href: "apis/python/doc/soma_options.md"
                   text: "SOMAOptions"
