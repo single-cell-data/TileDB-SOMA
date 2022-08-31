@@ -1,5 +1,16 @@
 from concurrent.futures import ThreadPoolExecutor
-from typing import Dict, Iterator, List, Optional, Sequence, Set, Tuple, Union
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    Iterator,
+    List,
+    Optional,
+    Sequence,
+    Set,
+    Tuple,
+    Union,
+)
 
 import tiledb
 
@@ -270,6 +281,40 @@ class SOMACollection(TileDBGroup):
             var_query_string=var_query_string,
             var_ids=var_ids,
             return_arrow=return_arrow,
+        )
+
+    def map(
+        self,
+        soma_callback: Callable[[SOMA, Optional[Any]], Any],
+        data: Optional[Dict[str, Any]] = None,
+        *,
+        max_thread_pool_workers: Optional[int] = None,
+        parallelize: bool = True,
+    ) -> Dict[str, Any]:
+        """
+        Invokes the callback function/lambda on every SOMA in the collection, and returns a dict
+        from SOMA name to return value of that callback.  If `data` is not `None`, it should be a
+        dict from SOMA name to something that should be passed as a callback argument.
+        Example use: invoke this once with a per-SOMA attribute-filter query and get back a list of
+        obs IDs per SOMA. Invoke this again with a lambda that does something with each SOMA's obs
+        IDs.
+        ```
+        obs_ids_per_soma = soco.map(
+            lambda soma, _: list(soma.obs.query(
+                query_string='cell_type == "pericyte cell"', attrs=["cell_type"]
+            ).index)
+        )
+        X_dfs = soco.map(
+            lambda soma, obs_ids: soma.X.data.df(obs_ids=obs_ids), obs_ids_per_soma
+        )
+        ```
+        """
+        return SOMA.map(
+            somas=list(self._get_all_somas().values()),
+            soma_callback=soma_callback,
+            data=data,
+            max_thread_pool_workers=max_thread_pool_workers,
+            parallelize=parallelize,
         )
 
     # ----------------------------------------------------------------

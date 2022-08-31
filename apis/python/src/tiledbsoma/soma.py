@@ -3,7 +3,7 @@ from __future__ import annotations
 import os
 from collections import Counter
 from concurrent.futures import ThreadPoolExecutor
-from typing import List, Optional, Sequence, Tuple, Union
+from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, Union
 
 import pandas as pd
 import pyarrow as pa
@@ -422,7 +422,7 @@ class SOMA(TileDBGroup):
         # of one another, and are also in TileDB's core C++ engine which releases the GIL.
         if max_thread_pool_workers is None:
             max_thread_pool_workers = SOMAOptions().max_thread_pool_workers
-        soma_slice_futures = []
+        futures = []
         with ThreadPoolExecutor(max_workers=max_thread_pool_workers) as executor:
             for soma in somas:
                 # E.g. querying for 'cell_type == "blood"' but this SOMA doesn't have a cell_type
@@ -438,7 +438,7 @@ class SOMA(TileDBGroup):
                 ):
                     continue
 
-                soma_slice_future = executor.submit(
+                future = executor.submit(
                     soma.query,
                     obs_attrs=obs_attrs,
                     var_attrs=var_attrs,
@@ -448,11 +448,11 @@ class SOMA(TileDBGroup):
                     var_ids=var_ids,
                     return_arrow=return_arrow,
                 )
-                soma_slice_futures.append(soma_slice_future)
+                futures.append(future)
 
         soma_slices = []
-        for soma_slice_future in soma_slice_futures:
-            soma_slice = soma_slice_future.result()
+        for future in futures:
+            soma_slice = future.result()
             if soma_slice is not None:
                 soma_slices.append(soma_slice)
         return soma_slices
@@ -546,6 +546,98 @@ class SOMA(TileDBGroup):
             )
 
         return soma
+
+    @classmethod
+    def map(
+        cls,
+        somas: List[SOMA],
+        soma_callback: Callable[[SOMA, Optional[Any]], Any],
+        data: Optional[Dict[str, Any]] = None,
+        *,
+        max_thread_pool_workers: Optional[int] = None,
+        parallelize: bool = True,
+    ) -> Dict[str, Any]:
+        """
+        Invokes the callback function/lambda on every SOMA in the list, and returns a dict
+        from SOMA name to return value of that callback.  If `data` is not `None`, it should be a
+        dict from SOMA name to something that should be passed as a callback argument.
+        Example use: invoke this once with a per-SOMA attribute-filter query and get back a list of
+        obs IDs per SOMA. Invoke this again with a lambda that does something with each SOMA's obs
+        IDs.
+        ```
+        obs_ids_per_soma = SOMA.map(
+            somas,
+            lambda soma, _: list(soma.obs.query(
+                query_string='cell_type == "pericyte cell"', attrs=["cell_type"]
+            ).index)
+        )
+        X_dfs = SOMA.map(
+            somas,
+            lambda soma, obs_ids: soma.X.data.df(obs_ids=obs_ids), obs_ids_per_soma
+        )
+        ```
+        """
+        if parallelize:
+            return cls._map_in_parallel(
+                somas,
+                soma_callback,
+                data,
+                max_thread_pool_workers=max_thread_pool_workers,
+            )
+        else:
+            return cls._map_sequentially(somas, soma_callback, data)
+
+    @classmethod
+    def _map_in_parallel(
+        cls,
+        somas: List[SOMA],
+        soma_callback: Callable[[SOMA, Optional[Any]], Any],
+        data: Optional[Dict[str, Any]] = None,
+        *,
+        max_thread_pool_workers: Optional[int] = None,
+    ) -> Dict[str, Any]:
+        """
+        Helper method for `map`.
+        """
+
+        if max_thread_pool_workers is None:
+            max_thread_pool_workers = SOMAOptions().max_thread_pool_workers
+
+        futures = {}
+        with ThreadPoolExecutor(max_workers=max_thread_pool_workers) as executor:
+            for soma in somas:
+                if data is None:
+                    futures[soma.name] = executor.submit(
+                        soma_callback,
+                        soma,
+                        None,
+                    )
+                else:
+                    futures[soma.name] = executor.submit(
+                        soma_callback,
+                        soma,
+                        data[soma.name],
+                    )
+
+        output = {}
+        for name, future in futures.items():
+            output[name] = future.result()
+        return output
+
+    @classmethod
+    def _map_sequentially(
+        cls,
+        somas: List[SOMA],
+        soma_callback: Callable[[SOMA, Optional[Any]], Any],
+        data: Optional[Dict[str, Any]] = None,
+    ) -> Dict[str, Any]:
+        """
+        Helper method for `map`.
+        """
+        if data is None:
+            return {soma.name: soma_callback(soma, None) for soma in somas}
+        else:
+            return {soma.name: soma_callback(soma, data[soma.name]) for soma in somas}
 
     # ----------------------------------------------------------------
     @classmethod
