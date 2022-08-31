@@ -164,7 +164,12 @@ class TileDBGroup(TileDBObject):
             # This means forward slash is acceptable in all cases.
             return self.uri + "/" + member_name
 
-    def _add_object(self, obj: TileDBObject, relative: Optional[bool] = None) -> None:
+    def _add_object(
+        self,
+        obj: TileDBObject,
+        relative: Optional[bool] = None,
+        check_is_direct_child: Optional[bool] = False,
+    ) -> None:
         """
         Adds a SOMA group/array to the current SOMA group -- e.g. base SOMA adding
         X, X adding a layer, obsm adding an element, etc.
@@ -197,6 +202,25 @@ class TileDBGroup(TileDBObject):
             relative = not child_uri.startswith("tiledb://")
         if relative:
             child_uri = obj.name
+
+        # Please see https://github.com/single-cell-data/TileDB-SingleCell/issues/258
+        if check_is_direct_child and not child_uri.startswith("tiledb://"):
+            parent_cleaned_path = self.uri.strip("/")
+            child_cleaned_path = obj.uri.strip("/")
+
+            # Windows paths may have `C:\something\something` or `C:/something/something`
+            # (including in our CI jobs) and this is user-dependent. Therefore, if we're going
+            # to compare for equality, we need to compare both ways.
+            expected_paths = [
+                parent_cleaned_path + "/" + obj.name,
+                parent_cleaned_path + "\\" + obj.name,
+            ]
+
+            if child_cleaned_path not in expected_paths:
+                raise Exception(
+                    f"Member URI {obj.uri} must be a direct child of parent URI {self.uri}"
+                )
+
         self._cached_member_names_to_uris = None  # invalidate on add-member
         with self._open("r") as G:
             exists = obj.name in G
