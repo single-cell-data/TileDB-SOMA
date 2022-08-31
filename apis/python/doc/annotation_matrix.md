@@ -45,7 +45,9 @@ Note: currently implemented via data scan -- will be optimized for TileDB core 2
 #### dim\_select
 
 ```python
-def dim_select(ids: Optional[Ids]) -> pd.DataFrame
+def dim_select(ids: Optional[Ids] = None,
+               *,
+               return_arrow: bool = False) -> Union[pd.DataFrame, pa.Table]
 ```
 
 Selects a slice out of the array with specified `obs_ids` (for `obsm` elements) or
@@ -56,7 +58,9 @@ Selects a slice out of the array with specified `obs_ids` (for `obsm` elements) 
 #### df
 
 ```python
-def df(ids: Optional[Ids] = None) -> pd.DataFrame
+def df(ids: Optional[Ids] = None,
+       *,
+       return_arrow: bool = False) -> Union[pd.DataFrame, pa.Table]
 ```
 
 Keystroke-saving alias for `.dim_select()`. If `ids` are provided, they're used

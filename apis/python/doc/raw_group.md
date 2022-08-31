@@ -32,7 +32,7 @@ See `AssayMatrix` for the rationale behind retaining a reference to the `parent_
 #### from\_anndata
 
 ```python
-def from_anndata(anndata: ad.AnnData) -> None
+def from_anndata(anndata: ad.AnnData, X_layer_name: str = "data") -> None
 ```
 
 Writes `anndata.raw` to a TileDB group structure.
@@ -43,7 +43,8 @@ Writes `anndata.raw` to a TileDB group structure.
 
 ```python
 def to_anndata_raw(
-    obs_labels: Labels
+    obs_labels: Labels,
+    X_layer_name: str = "data"
 ) -> Tuple[sp.csr_matrix, pd.DataFrame, Dict[str, np.ndarray]]
 ```
 

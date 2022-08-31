@@ -109,7 +109,9 @@ values for that label in the SOMA.
 
 ```python
 def dim_slice(obs_ids: Optional[Ids],
-              var_ids: Optional[Ids]) -> Optional[SOMASlice]
+              var_ids: Optional[Ids],
+              *,
+              return_arrow: bool = False) -> Optional[SOMASlice]
 ```
 
 Subselects the SOMA's obs, var, and X/data using the specified obs_ids and var_ids.
@@ -127,7 +129,8 @@ def query(*,
           obs_ids: Optional[Ids] = None,
           var_attrs: Optional[Sequence[str]] = None,
           var_query_string: Optional[str] = None,
-          var_ids: Optional[Ids] = None) -> Optional[SOMASlice]
+          var_ids: Optional[Ids] = None,
+          return_arrow: bool = False) -> Optional[SOMASlice]
 ```
 
 Subselects the SOMA's obs, var, and X/data using the specified queries on obs and var.
@@ -138,6 +141,40 @@ used; similiarly for `var`.
 
 If `obs_attrs` or `var_attrs` are unspecified, the slice will take all `obs`/`var` attributes
 from the source SOMAs; if they are specified, the slice will take the specified `obs`/`var`
+
+<a id="tiledbsc.soma.SOMA.queries"></a>
+
+#### queries
+
+```python
+@classmethod
+def queries(cls,
+            somas: Sequence[SOMA],
+            *,
+            obs_attrs: Optional[Sequence[str]] = None,
+            obs_query_string: Optional[str] = None,
+            obs_ids: Optional[Ids] = None,
+            var_attrs: Optional[Sequence[str]] = None,
+            var_query_string: Optional[str] = None,
+            var_ids: Optional[Ids] = None,
+            return_arrow: bool = False,
+            max_thread_pool_workers: Optional[int] = None) -> List[SOMASlice]
+```
+
+Subselects the obs, var, and X/data using the specified queries on obs and var,
+concatenating across SOMAs in the list.  Queries use the TileDB-Py `QueryCondition`
+API.
+
+If `obs_query_string` is `None`, the `obs` dimension is not filtered and all of `obs` is
+used; similiarly for `var`. Return value of `None` indicates an empty slice.  If `obs_ids`
+or `var_ids` are not `None`, they are effectively ANDed into the query.  For example, you
+can pass in a known list of `obs_ids`, then use `obs_query_string` to further restrict the
+query.
+
+If `obs_attrs` or `var_attrs` are unspecified, slices will take all `obs`/`var` attributes
+from their source SOMAs; if they are specified, slices will take the specified `obs`/`var`
+attributes.  If all SOMAs in the collection have the same `obs`/`var` attributes, then you
+needn't specify these; if they don't, you must.
 
 <a id="tiledbsc.soma.SOMA.from_soma_slice"></a>
 
@@ -156,4 +193,14 @@ def from_soma_slice(cls,
 ```
 
 Constructs `SOMA` storage from a given in-memory `SOMASlice` object.
+
+<a id="tiledbsc.soma.SOMA.add_X_layer"></a>
+
+#### add\_X\_layer
+
+```python
+def add_X_layer(matrix: Matrix, layer_name: str = "data") -> None
+```
+
+Populates the `X` or `raw.X` subgroup for a `SOMA` object.
 

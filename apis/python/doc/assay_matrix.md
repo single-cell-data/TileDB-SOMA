@@ -63,7 +63,10 @@ Note: currently implemented via data scan -- will be optimized for TileDB core 2
 #### dim\_select
 
 ```python
-def dim_select(obs_ids: Optional[Ids], var_ids: Optional[Ids]) -> pd.DataFrame
+def dim_select(obs_ids: Optional[Ids],
+               var_ids: Optional[Ids],
+               *,
+               return_arrow: bool = False) -> Union[pd.DataFrame, pa.Table]
 ```
 
 Selects a slice out of the matrix with specified `obs_ids` and/or `var_ids`.
@@ -76,7 +79,9 @@ that dimension. If both ID lists are `None`, the entire matrix is returned.
 
 ```python
 def df(obs_ids: Optional[Ids] = None,
-       var_ids: Optional[Ids] = None) -> pd.DataFrame
+       var_ids: Optional[Ids] = None,
+       *,
+       return_arrow: bool = False) -> Union[pd.DataFrame, pa.Table]
 ```
 
 Keystroke-saving alias for `.dim_select()`. If either of `obs_ids` or `var_ids`

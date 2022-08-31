@@ -146,7 +146,8 @@ def query(*,
           obs_ids: Optional[Ids] = None,
           var_attrs: Optional[Sequence[str]] = None,
           var_query_string: Optional[str] = None,
-          var_ids: Optional[Ids] = None) -> Optional[SOMASlice]
+          var_ids: Optional[Ids] = None,
+          return_arrow: bool = False) -> List[SOMASlice]
 ```
 
 Subselects the obs, var, and X/data using the specified queries on obs and var,

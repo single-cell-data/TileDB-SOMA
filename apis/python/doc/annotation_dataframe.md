@@ -91,7 +91,9 @@ Same as `.keys` but returns as set.
 
 ```python
 def dim_select(ids: Optional[Ids],
-               attrs: Optional[Sequence[str]] = None) -> pd.DataFrame
+               attrs: Optional[Sequence[str]] = None,
+               *,
+               return_arrow: bool = False) -> Union[pd.DataFrame, pa.Table]
 ```
 
 Selects a slice out of the dataframe with specified `obs_ids` (for `obs`) or `var_ids` (for
@@ -104,7 +106,9 @@ provided, they're used for the query; else, all attributes are returned.
 
 ```python
 def df(ids: Optional[Ids] = None,
-       attrs: Optional[Sequence[str]] = None) -> pd.DataFrame
+       attrs: Optional[Sequence[str]] = None,
+       *,
+       return_arrow: bool = False) -> Union[pd.DataFrame, pa.Table]
 ```
 
 Keystroke-saving alias for `.dim_select()`. If `ids` are provided, they're used
@@ -118,7 +122,9 @@ they're used for the query; else, all attributes are returned.
 ```python
 def query(query_string: Optional[str],
           ids: Optional[Ids] = None,
-          attrs: Optional[Sequence[str]] = None) -> pd.DataFrame
+          attrs: Optional[Sequence[str]] = None,
+          *,
+          return_arrow: bool = False) -> Union[pd.DataFrame, pa.Table]
 ```
 
 Selects from obs/var using a TileDB-Py `QueryCondition` string such as `cell_type ==
