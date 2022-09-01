@@ -198,10 +198,10 @@ select `relative=True`. (This is the default.)
             sys.exit(1)
 
     if args.stats:
-        tiledbsc.perf.tracker.show()
-    if args.stats and args.corestats:
         print()
+        tiledbsc.perf.tracker.show()
     if args.corestats:
+        print()
         tiledb.stats_dump()
 
 

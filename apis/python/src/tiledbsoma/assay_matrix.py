@@ -353,6 +353,7 @@ class AssayMatrix(TileDBArray):
         """
         s0 = self.timing_start("ingest_data_rows_chunked", "total")
 
+        s1 = self.timing_start("ingest_data_rows_chunked", "sortprep")
         assert len(row_names) == matrix.shape[0]
         assert len(col_names) == matrix.shape[1]
 
@@ -372,13 +373,20 @@ class AssayMatrix(TileDBArray):
             f"{self._indent}START  ingest_data_rows_chunked",
         )
 
+        self.timing_end(s1)
+
         eta_tracker = util.ETATracker()
+        s2 = self.timing_start("ingest_data_rows_chunked", "open")
         with tiledb.open(self.uri, mode="w", ctx=self._ctx) as A:
+            self.timing_end(s2)
+
             nrow = len(sorted_row_names)
 
             i = 0
             while i < nrow:
                 t1 = time.time()
+
+                s3 = self.timing_start("ingest_data_rows_chunked", "chunkprep")
                 # Find a number of CSR rows which will result in a desired nnz for the chunk.
                 chunk_size = util._find_csr_chunk_size(
                     matrix, permutation, i, self._soma_options.goal_chunk_nnz
@@ -391,6 +399,7 @@ class AssayMatrix(TileDBArray):
                 # Write the chunk-COO to TileDB.
                 d0 = sorted_row_names[chunk_coo.row + i]
                 d1 = col_names[chunk_coo.col]
+                self.timing_end(s3)
 
                 if len(d0) == 0:
                     i = i2
@@ -416,7 +425,9 @@ class AssayMatrix(TileDBArray):
                 )
 
                 # Write a TileDB fragment
+                s4 = self.timing_start("ingest_data_rows_chunked", "tiledb-write")
                 A[d0, d1] = chunk_coo.data
+                self.timing_end(s4)
 
                 t2 = time.time()
                 chunk_seconds = t2 - t1
