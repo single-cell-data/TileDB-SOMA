@@ -128,7 +128,7 @@ class Tracker:
             aligned_data = " ".join(
                 ["%-*s" % (max_widths[key], value) for key, value in row.items()]
             )
-            print(aligned_data)
+            print(aligned_data.rstrip())
 
 
 # ----------------------------------------------------------------
