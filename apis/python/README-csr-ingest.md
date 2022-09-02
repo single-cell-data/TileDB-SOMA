@@ -45,13 +45,23 @@ Some facts about this:
 * TileDB storage orders its dims. That means that if you have an input matrix as on the left, with `obs_id=A,B,C,D` and `var_id=S,T,U,V`, then it will be stored as on the right:
 
 ```
-  Input CSR    TileDB storage
-  ---------    --------------  all one fragment
-    T V S U      S T U V
-  C 1 2 . .    A 4 . . 3
-  A . 3 4 .    B: 5 . 6 .
-  B . . 5 6    C . 1 . 2
-  D 7 . 8 .    D 8 7 . .
+
+Input row labels from AnnData `obs`:
+[ C A B D ]
+  0 1 2 3
+ 
+Input column labels from AnnData `var`:
+[ T V S U ]
+  0 1 2 3
+  
+   Input CSR                                   TileDB storage
+from AnnData `X`
+  ---------                                    --------------  all one fragment in this example
+    T V S U                                      S T U V       -- for larger fragmented X, see below
+  C 1 2 . .                                    A 4 . . 3
+  A . 3 4 .                                    B: 5 . 6 .
+  B . . 5 6                                    C . 1 . 2
+  D 7 . 8 .                                    D 8 7 . .
 ```
 
 * TileDB storage is 3-level: _fragments_ (corresponding to different timestamped writes); _tiles_; and _cells_.
@@ -97,7 +107,7 @@ We must cursor-sort row labels so (with zero copy) the matrix will effectively l
     T V S U
   A . 3 4 .
   B . . 5 6
-  ---------- chunk boundary
+  ---------- chunk / fragment boundary
   C 1 2 . .
   D 7 . 8 .
 ```
