@@ -1,5 +1,7 @@
 # Prerequisites
 
+Known-good on Ubuntu 22.04:
+
 ```
 sudo apt install libfmt-dev libspdlog-dev
 ```
