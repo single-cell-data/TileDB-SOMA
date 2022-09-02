@@ -57,11 +57,11 @@ Input column labels from AnnData `var`:
    Input CSR                                   TileDB storage
 from AnnData `X`
   ---------                                    --------------  all one fragment in this example
-    T V S U                                      S T U V       -- for larger fragmented X, see below
-  C 1 2 . .                                    A 4 . . 3
-  A . 3 4 .                                    B: 5 . 6 .
-  B . . 5 6                                    C . 1 . 2
-  D 7 . 8 .                                    D 8 7 . .
+    0 1 2 3                                      S T U V       -- for larger fragmented X, see below
+  0 1 2 . .                                    A 4 . . 3
+  1 . 3 4 .                                    B: 5 . 6 .
+  2 . . 5 6                                    C . 1 . 2
+  3 7 . 8 .                                    D 8 7 . .
 ```
 
 * TileDB storage is 3-level: _fragments_ (corresponding to different timestamped writes); _tiles_; and _cells_.
