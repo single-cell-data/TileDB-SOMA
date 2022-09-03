@@ -29,8 +29,8 @@ class RawGroup(TileDBGroup):
         parent: Optional[TileDBGroup] = None,
     ):
         """
-        See the `TileDBObject` constructor.
-        See `AssayMatrix` for the rationale behind retaining a reference to the `parent_obs` object.
+        See the ``TileDBObject`` constructor.
+        See ``AssayMatrix`` for the rationale behind retaining a reference to the ``parent_obs`` object.
         """
         super().__init__(uri=uri, name=name, parent=parent)
         self.parent_obs = obs
@@ -62,7 +62,7 @@ class RawGroup(TileDBGroup):
     # ----------------------------------------------------------------
     def from_anndata(self, anndata: ad.AnnData, X_layer_name: str = "data") -> None:
         """
-        Writes `anndata.raw` to a TileDB group structure.
+        Writes ``anndata.raw`` to a TileDB group structure.
         """
         s = util.get_start_stamp()
         log_io(None, f"{self._indent}START  WRITING {self.uri}")
@@ -97,8 +97,8 @@ class RawGroup(TileDBGroup):
         X_layer_name: str = "data",
     ) -> Tuple[sp.csr_matrix, pd.DataFrame, Dict[str, np.ndarray]]:
         """
-        Reads TileDB storage and returns the material for an `anndata.Raw` object.
-        The `obs_labels` must be from the parent object.
+        Reads TileDB storage and returns the material for an ``anndata.Raw`` object.
+        The ``obs_labels`` must be from the parent object.
         """
         var_df = self.var.df()
         X_mat = self.X[X_layer_name]

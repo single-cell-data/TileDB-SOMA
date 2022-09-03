@@ -11,9 +11,9 @@ from .soma_options import SOMAOptions
 
 class TileDBObject(ABC):
     """
-    Base class for `TileDBArray` and `TileDBGroup`.
+    Base class for ``TileDBArray`` and ``TileDBGroup``.
 
-    Manages soma_options, context, etc. which are common to both.
+    Manages ``soma_options``, ``ctx``, etc. which are common to both.
     """
 
     uri: str
@@ -34,7 +34,7 @@ class TileDBObject(ABC):
         ctx: Optional[tiledb.Ctx] = None,
     ):
         """
-        Initialization-handling shared between `TileDBArray` and `TileDBGroup`.  Specify soma_options
+        Initialization-handling shared between ``TileDBArray`` and ``TileDBGroup``.  Specify soma_options
         and ctx for the top-level object; omit them and specify parent for non-top-level
         objects. Note that the parent reference is solely for propagating options, ctx, display
         depth, etc.
@@ -79,7 +79,7 @@ class TileDBObject(ABC):
     def get_metadata(self, key: str) -> Any:
         """
         Returns metadata associated with the group/array.
-        Raises `KeyError` if there is no such key in the metadata.
+        Raises ``KeyError`` if there is no such key in the metadata.
         """
         with self._open("r") as obj:
             return obj.meta[key]

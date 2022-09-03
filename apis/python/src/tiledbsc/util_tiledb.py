@@ -11,7 +11,7 @@ import tiledbsc
 # ----------------------------------------------------------------
 def show_soma_schemas(soma_uri: str, ctx: Optional[tiledb.Ctx] = None) -> None:
     """
-    Show some summary information about an ingested TileDB Single-Cell Group.  This tool goes a bit beyond `print(tiledb.group.Group(soma_uri))` by also revealing array schema. Additionally, by employing encoded domain-specific knowleldge, it traverses items in the familiar order `X`, `obs`, `var`, etc. rather than using the general-purpose tiledb-group-display function.
+    Show some summary information about an ingested TileDB Single-Cell Group.  This tool goes a bit beyond ``print(tiledb.group.Group(soma_uri))`` by also revealing array schema. Additionally, by employing encoded domain-specific knowleldge, it traverses items in the familiar order ``X``, ``obs``, ``var``, etc. rather than using the general-purpose tiledb-group-display function.
     """
 
     # Tab-completion at the shell can insert a trailing slash; leave it off
@@ -71,8 +71,8 @@ def show_tiledb_group_array_schemas(uri: str, ctx: Optional[tiledb.Ctx] = None) 
         print(uri)
 
         for element in G:
-            # Note: use `element.type` rather than `isinstance(element, tiledb.group.Group)`
-            # since type(element) is `tiledb.object.Object` in all cases.
+            # Note: use ``element.type`` rather than ``isinstance(element, tiledb.group.Group)``
+            # since type(element) is ``tiledb.object.Object`` in all cases.
             if element.type == tiledb.group.Group:
                 show_tiledb_group_array_schemas(element.uri)
             elif element.type == tiledb.libtiledb.Array:

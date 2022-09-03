@@ -15,7 +15,7 @@ from .types import Ids, Labels, Matrix
 
 class AnnotationMatrix(TileDBArray):
     """
-    Nominally for obsm and varm group elements within a soma.
+    Nominally for ``obsm`` and ``varm`` group elements within a SOMA.
     """
 
     # ----------------------------------------------------------------
@@ -36,11 +36,11 @@ class AnnotationMatrix(TileDBArray):
     # ----------------------------------------------------------------
     def shape(self) -> Tuple[int, int]:
         """
-        Returns a tuple with the number of rows and number of columns of the `AnnotationMatrix`.
-        The row-count is the number of obs_ids (for `obsm` elements) or the number of var_ids (for
-        `varm` elements).  The column-count is the number of columns/attributes in the dataframe.
+        Returns a tuple with the number of rows and number of columns of the ``AnnotationMatrix``.
+        The row-count is the number of obs_ids (for ``obsm`` elements) or the number of var_ids (for
+        ``varm`` elements).  The column-count is the number of columns/attributes in the dataframe.
 
-        Note: currently implemented via data scan -- will be optimized for TileDB core 2.10.
+        Note: currently implemented via data scan --- will be optimized in an upcoming TileDB Core release.
         """
         with self._open() as A:
             # These TileDB arrays are string-dimensioned sparse arrays so there is no '.shape'.
@@ -74,8 +74,8 @@ class AnnotationMatrix(TileDBArray):
         return_arrow: bool = False,
     ) -> Union[pd.DataFrame, pa.Table]:
         """
-        Selects a slice out of the array with specified `obs_ids` (for `obsm` elements) or
-        `var_ids` (for `varm` elements).  If `ids` is `None`, the entire array is returned.
+        Selects a slice out of the array with specified ``obs_ids`` (for ``obsm`` elements) or
+        ``var_ids`` (for ``varm`` elements).  If ``ids`` is ``None``, the entire array is returned.
         """
         if ids is None:
             with self._open() as A:
@@ -97,7 +97,7 @@ class AnnotationMatrix(TileDBArray):
         return_arrow: bool = False,
     ) -> Union[pd.DataFrame, pa.Table]:
         """
-        Keystroke-saving alias for `.dim_select()`. If `ids` are provided, they're used
+        Keystroke-saving alias for ``.dim_select()``. If ``ids`` are provided, they're used
         to subselect; if not, the entire dataframe is returned.
         """
         return self.dim_select(ids, return_arrow=return_arrow)
@@ -109,8 +109,8 @@ class AnnotationMatrix(TileDBArray):
         """
         Populates an array in the obsm/ or varm/ subgroup for a SOMA object.
 
-        :param matrix: anndata.obsm['foo'], anndata.varm['foo'], or anndata.raw.varm['foo'].
-        :param dim_values: anndata.obs_names, anndata.var_names, or anndata.raw.var_names.
+        :param matrix: ``anndata.obsm['foo']``, ``anndata.varm['foo']``, or ``anndata.raw.varm['foo']``.
+        :param dim_values: ``anndata.obs_names``, ``anndata.var_names``, or ``anndata.raw.var_names``.
         """
 
         s = util.get_start_stamp()
@@ -208,7 +208,7 @@ class AnnotationMatrix(TileDBArray):
             capacity=100000,
             cell_order="row-major",
             # As of TileDB core 2.8.2, we cannot consolidate string-indexed sparse arrays with
-            # col-major tile order: so we write `X` with row-major tile order.
+            # col-major tile order: so we write ``X`` with row-major tile order.
             tile_order="row-major",
             ctx=self._ctx,
         )

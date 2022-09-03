@@ -15,7 +15,7 @@ from .tiledb_group import TileDBGroup
 
 class UnsArray(TileDBArray):
     """
-    Holds TileDB storage for an array obtained from the nested `anndata.uns` field.
+    Holds TileDB storage for an array obtained from the nested ``anndata.uns`` field.
     """
 
     # ----------------------------------------------------------------
@@ -28,7 +28,7 @@ class UnsArray(TileDBArray):
     # ----------------------------------------------------------------
     def from_pandas_dataframe(self, df: pd.DataFrame) -> None:
         """
-        Ingests an `UnsArray` into TileDB storage, given a pandas.DataFrame.
+        Ingests an ``UnsArray`` into TileDB storage, given a pandas.DataFrame.
         """
 
         s = util.get_start_stamp()
@@ -52,7 +52,7 @@ class UnsArray(TileDBArray):
     # ----------------------------------------------------------------
     def _maybe_from_numpyable_object(self, obj: Any) -> bool:
         """
-        Nominally for ingest of `uns` nested data from anndata objects. Handles scalar or array values
+        Nominally for ingest of ``uns`` nested data from anndata objects. Handles scalar or array values
         -- the former, by wrapping in a 1D array. Maps to TileDB / tiledb.from_numpy storage semantics,
         including UTF-8 handling. Supports dtypes like
         """
@@ -79,8 +79,8 @@ class UnsArray(TileDBArray):
     # ----------------------------------------------------------------
     def from_numpy_ndarray(self, arr: np.ndarray) -> None:
         """
-        Writes a numpy.ndarray to a TileDB array, nominally for ingest of `uns` nested data from anndata
-        objects. Mostly tiledb.from_numpy, but with some necessary handling for data with UTF-8 values.
+        Writes a ``numpy.ndarray`` to a TileDB array, nominally for ingest of ``uns`` nested data from anndata
+        objects. Mostly ``tiledb.from_numpy``, but with some necessary handling for data with UTF-8 values.
         """
 
         s = util.get_start_stamp()
@@ -203,7 +203,7 @@ class UnsArray(TileDBArray):
     # type.
     def to_matrix(self) -> np.ndarray:
         """
-        Reads an uns array from TileDB storage and returns a matrix -- currently, always as numpy.ndarray.
+        Reads an uns array from TileDB storage and returns a matrix -- currently, always as ``numpy.ndarray``.
         """
         with tiledb.open(self.uri, ctx=self._ctx) as A:
             df = pd.DataFrame(A[:])

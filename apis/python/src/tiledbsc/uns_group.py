@@ -30,8 +30,8 @@ class UnsGroup(TileDBGroup):
     # ----------------------------------------------------------------
     def keys(self) -> Sequence[str]:
         """
-        For uns, `.keys()` is a keystroke-saver for the more general group-member
-        accessor `._get_member_names()`.
+        For uns, ``.keys()`` is a keystroke-saver for the more general group-member
+        accessor ``._get_member_names()``.
         """
         return self._get_member_names()
 
@@ -44,16 +44,16 @@ class UnsGroup(TileDBGroup):
     # * Index references are supported for obsm, varm, obsp, varp, and uns. E.g.
     #   soma.obsm['X_pca'] or soma.uns['neighbors']['params']['method']
     #
-    # * Overloading the `[]` operator at the TileDBGroup level isn't necessary -- e.g. we don't need
+    # * Overloading the ``[]`` operator at the TileDBGroup level isn't necessary -- e.g. we don't need
     #   soma['X'] when we have soma.X -- but also it causes circular-import issues in Python.
     #
-    # * Rather than doing a TileDBIndexableGroup which overloads the `[]` operator, we overload
-    #   the `[]` operator separately in the various classes which need indexing. This is again to
-    #   avoid circular-import issues, and means that [] on `AnnotationMatrixGroup` will return an
-    #   `AnnotationMatrix, [] on `UnsGroup` will return `UnsArray` or `UnsGroup`, etc.
+    # * Rather than doing a TileDBIndexableGroup which overloads the ``[]`` operator, we overload
+    #   the ``[]`` operator separately in the various classes which need indexing. This is again to
+    #   avoid circular-import issues, and means that [] on ``AnnotationMatrixGroup`` will return an
+    #   ``AnnotationMatrix, [] on ``UnsGroup`` will return ``UnsArray`` or ``UnsGroup``, etc.
     def __getitem__(self, name: str) -> Union[UnsGroup, UnsArray, None]:
         """
-        Returns an `UnsArray` or `UnsGroup` element at the given name within the group, or None if
+        Returns an ``UnsArray`` or ``UnsGroup`` element at the given name within the group, or None if
         no such member exists.  Overloads the [...] operator.
         """
 
@@ -82,7 +82,7 @@ class UnsGroup(TileDBGroup):
     # ----------------------------------------------------------------
     def __iter__(self) -> Iterator[Union[UnsGroup, UnsArray]]:
         """
-        Implements `for element in soma.uns: ...`
+        Implements ``for element in soma.uns: ...``
         """
         with self._open("r") as G:
             for obj in G:  # tiledb.object.Object
