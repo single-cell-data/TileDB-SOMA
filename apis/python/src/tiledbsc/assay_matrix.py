@@ -20,7 +20,7 @@ from .types import Ids, Labels, Matrix
 class AssayMatrix(TileDBArray):
     """
     Wraps a TileDB sparse array with two string dimensions.
-    Used for `X`, `raw.X`, `obsp` elements, and `varp` elements.
+    Used for ``X``, ``raw.X``, ``obsp`` elements, and ``varp`` elements.
     """
 
     # ----------------------------------------------------------------
@@ -38,12 +38,12 @@ class AssayMatrix(TileDBArray):
         """
         See the TileDBObject constructor.
 
-        The `row_dataframe` and `col_dataframe` are nominally:
+        The ``row_dataframe`` and ``col_dataframe`` are nominally:
 
-        * `soma.obs` and `soma.var`, for `soma.X["data"]`
-        * `soma.obs` and `soma.raw.var`, for `soma.raw.X["data"]`
-        * `soma.obs` and `soma.obs`, for `soma.obsp` elements
-        * `soma.var` and `soma.var`, for `soma.obsp` elements
+        * ``soma.obs`` and ``soma.var``, for ``soma.X["data"]``
+        * ``soma.obs`` and ``soma.raw.var``, for ``soma.raw.X["data"]``
+        * ``soma.obs`` and ``soma.obs``, for ``soma.obsp`` elements
+        * ``soma.var`` and ``soma.var``, for ``soma.obsp`` elements
 
         References to these objects are kept solely for obtaining dim labels for metadata
         acquisition at runtime (e.g. shape). We retain references to these objects, rather
@@ -63,11 +63,11 @@ class AssayMatrix(TileDBArray):
     # ----------------------------------------------------------------
     def shape(self) -> Tuple[int, int]:
         """
-        Returns a tuple with the number of rows and number of columns of the `AssayMatrix`.
-        In TileDB storage, these are string-indexed sparse arrays for which no `.shape()` exists,
-        but, we draw from the appropriate `obs`, `var`, `raw/var`, etc. as appropriate for a given matrix.
+        Returns a tuple with the number of rows and number of columns of the ``AssayMatrix``.
+        In TileDB storage, these are string-indexed sparse arrays for which no ``.shape()`` exists,
+        but, we draw from the appropriate ``obs``, ``var``, ``raw/var``, etc. as appropriate for a given matrix.
 
-        Note: currently implemented via data scan -- will be optimized for TileDB core 2.10.
+        Note: currently implemented via data scan --- will be optimized for TileDB core 2.10.
         """
         with self._open():
             # These TileDB arrays are string-dimensioned sparse arrays so there is no '.shape'.
@@ -85,9 +85,9 @@ class AssayMatrix(TileDBArray):
         return_arrow: bool = False,
     ) -> Union[pd.DataFrame, pa.Table]:
         """
-        Selects a slice out of the matrix with specified `obs_ids` and/or `var_ids`.
-        Either or both of the ID lists may be `None`, meaning, do not subselect along
-        that dimension. If both ID lists are `None`, the entire matrix is returned.
+        Selects a slice out of the matrix with specified ``obs_ids`` and/or ``var_ids``.
+        Either or both of the ID lists may be ``None``, meaning, do not subselect along
+        that dimension. If both ID lists are ``None``, the entire matrix is returned.
         """
         with tiledb.open(self.uri, ctx=self._ctx) as A:
             query = A.query(return_arrow=return_arrow)
@@ -114,7 +114,7 @@ class AssayMatrix(TileDBArray):
         return_arrow: bool = False,
     ) -> Union[pd.DataFrame, pa.Table]:
         """
-        Keystroke-saving alias for `.dim_select()`. If either of `obs_ids` or `var_ids`
+        Keystroke-saving alias for ``.dim_select()``. If either of ``obs_ids`` or ``var_ids``
         are provided, they're used to subselect; if not, the entire dataframe is returned.
         """
         return self.dim_select(obs_ids, var_ids, return_arrow=return_arrow)
@@ -124,7 +124,7 @@ class AssayMatrix(TileDBArray):
         self, obs_ids: Optional[Ids] = None, var_ids: Optional[Ids] = None
     ) -> sp.csr_matrix:
         """
-        Like `.df()` but returns results in `scipy.sparse.csr_matrix` format.
+        Like ``.df()`` but returns results in ``scipy.sparse.csr_matrix`` format.
         """
         return self._csr_or_csc("csr", obs_ids, var_ids)
 
@@ -132,7 +132,7 @@ class AssayMatrix(TileDBArray):
         self, obs_ids: Optional[Ids] = None, var_ids: Optional[Ids] = None
     ) -> sp.csc_matrix:
         """
-        Like `.df()` but returns results in `scipy.sparse.csc_matrix` format.
+        Like ``.df()`` but returns results in ``scipy.sparse.csc_matrix`` format.
         """
         return self._csr_or_csc("csc", obs_ids, var_ids)
 
@@ -143,7 +143,7 @@ class AssayMatrix(TileDBArray):
         var_ids: Optional[Ids] = None,
     ) -> Union[sp.csr_matrix, sp.csc_matrix]:
         """
-        Helper method for `csr` and `csc`.
+        Helper method for ``csr`` and ``csc``.
         """
         assert return_as in ("csr", "csc")
         return util.X_and_ids_to_sparse_matrix(
@@ -161,12 +161,12 @@ class AssayMatrix(TileDBArray):
         self, matrix: Matrix, row_names: Labels, col_names: Labels
     ) -> None:
         """
-        Imports a matrix -- nominally `scipy.sparse.csr_matrix` or `numpy.ndarray` -- into a TileDB
-        array which is used for `X`, `raw.X`, `obsp` members, and `varp` members.
+        Imports a matrix --- nominally ``scipy.sparse.csr_matrix`` or ``numpy.ndarray`` --- into a TileDB
+        array which is used for ``X``, ``raw.X``, ``obsp`` members, and ``varp`` members.
 
-        The `row_names` and `col_names` are row and column labels for the matrix; the matrix may be
-        `scipy.sparse.csr_matrix`, `scipy.sparse.csc_matrix`, `numpy.ndarray`, etc.
-        For ingest from `AnnData`, these should be `ann.obs_names` and `ann.var_names`.
+        The ``row_names`` and ``col_names`` are row and column labels for the matrix; the matrix may be
+        ``scipy.sparse.csr_matrix``, ``scipy.sparse.csc_matrix``, ``numpy.ndarray``, etc.
+        For ingest from ``AnnData``, these should be ``ann.obs_names`` and ``ann.var_names``.
         """
 
         s = util.get_start_stamp()
@@ -180,7 +180,7 @@ class AssayMatrix(TileDBArray):
 
         # Following Pythonic practice, the row_names and col_names can be all manner of things:
         # pandas.core.indexes.base.Index, numpy.ndarray, list of string, etc. However, we do have
-        # one requirement: that they be addressable via multi-index like `row_names[[0,1,2]]`.
+        # one requirement: that they be addressable via multi-index like ``row_names[[0,1,2]]``.
         if isinstance(row_names, list):
             row_names = np.asarray(row_names)
         if isinstance(col_names, list):
@@ -262,7 +262,7 @@ class AssayMatrix(TileDBArray):
         col_names: Union[np.ndarray, pd.Index],
     ) -> None:
         """
-        Convert `numpy.ndarray`, `scipy.sparse.csr_matrix`, or `scipy.sparse.csc_matrix`
+        Convert ``numpy.ndarray``, ``scipy.sparse.csr_matrix``, or ``scipy.sparse.csc_matrix``
         to COO matrix and ingest into TileDB.
 
         :param matrix: Matrix-like object coercible to a scipy COO matrix.
@@ -319,10 +319,10 @@ class AssayMatrix(TileDBArray):
         col_names: Union[np.ndarray, pd.Index],
     ) -> None:
         """
-        Convert csr_matrix to coo_matrix chunkwise and ingest into TileDB.
+        Convert ``csr_matrix`` to ``coo_matrix`` chunkwise and ingest into TileDB.
 
         :param uri: TileDB URI of the array to be written.
-        :param matrix: csr_matrix.
+        :param matrix: ``csr_matrix``.
         :param row_names: List of row names.
         :param col_names: List of column names.
         """
@@ -425,10 +425,10 @@ class AssayMatrix(TileDBArray):
         col_names: Union[np.ndarray, pd.Index],
     ) -> None:
         """
-        Convert csc_matrix to coo_matrix chunkwise and ingest into TileDB.
+        Convert ``csc_matrix`` to ``coo_matrix`` chunkwise and ingest into TileDB.
 
         :param uri: TileDB URI of the array to be written.
-        :param matrix: csc_matrix.
+        :param matrix: ``csc_matrix``.
         :param row_names: List of row names.
         :param col_names: List of column names.
         """
@@ -531,7 +531,7 @@ class AssayMatrix(TileDBArray):
         col_names: Union[np.ndarray, pd.Index],
     ) -> None:
         """
-        Convert dense matrix to coo_matrix chunkwise and ingest into TileDB.
+        Convert dense matrix to ``coo_matrix`` chunkwise and ingest into TileDB.
 
         :param uri: TileDB URI of the array to be written.
         :param matrix: dense matrix.
@@ -632,8 +632,8 @@ class AssayMatrix(TileDBArray):
     def to_csr_matrix(self, row_labels: Labels, col_labels: Labels) -> sp.csr_matrix:
         """
         Reads the TileDB array storage for the storage and returns a sparse CSR matrix.  The
-        row/columns labels should be `obs,var` labels if the `AssayMatrix` is `X`, or `obs,obs` labels if
-        the `AssayMatrix` is `obsp`, or `var,var` labels if the `AssayMatrix` is `varp`.
+        row/columns labels should be ``obs,var`` labels if the ``AssayMatrix`` is ``X``, or ``obs,obs`` labels if
+        the ``AssayMatrix`` is ``obsp``, or ``var,var`` labels if the ``AssayMatrix`` is ``varp``.
         Note in all cases that TileDB will have sorted the row and column labels; they won't
         be in the same order as they were in any anndata object which was used to create the
         TileDB storage.

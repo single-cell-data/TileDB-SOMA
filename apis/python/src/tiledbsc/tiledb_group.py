@@ -39,8 +39,8 @@ class TileDBGroup(TileDBObject):
     def exists(self) -> bool:
         """
         Tells whether or not there is storage for the group. This might be in case a SOMA
-        object has not yet been populated, e.g. before calling `from_anndata` -- or, if the
-        SOMA has been populated but doesn't have this member (e.g. not all SOMAs have a `varp`).
+        object has not yet been populated, e.g. before calling ``from_anndata`` -- or, if the
+        SOMA has been populated but doesn't have this member (e.g. not all SOMAs have a ``varp``).
         """
         # For tiledb:// URIs this is a REST-server request which we'd like to cache.
         # However, remove-and-replace use-cases are possible and common in notebooks
@@ -85,7 +85,7 @@ class TileDBGroup(TileDBObject):
     def _open(self, mode: str = "r") -> tiledb.Group:
         """
         This is just a convenience wrapper around tiledb group-open.
-        It works asa `with self._open() as G:` as well as `G = self._open(); ...; G.close()`.
+        It works asa ``with self._open() as G:`` as well as ``G = self._open(); ...; G.close()``.
         """
         assert mode in ("r", "w")
         # This works in with-open-as contexts because tiledb.Group has __enter__ and __exit__ methods.
@@ -94,7 +94,7 @@ class TileDBGroup(TileDBObject):
 
     def _get_child_uris(self, member_names: Sequence[str]) -> Dict[str, str]:
         """
-        Batched version of `get_child_uri`. Since there's REST-server latency for getting
+        Batched version of ``get_child_uri``. Since there's REST-server latency for getting
         name-to-URI mapping for group-member URIs, in the tiledb://... case, total latency
         is reduced when we ask for all group-element name-to-URI mappings in a single
         request to the REST server.
@@ -174,24 +174,24 @@ class TileDBGroup(TileDBObject):
         Adds a SOMA group/array to the current SOMA group -- e.g. base SOMA adding
         X, X adding a layer, obsm adding an element, etc.
 
-        Semantics of `relative` from `self._soma_options.member_uris_are_relative`:
+        Semantics of ``relative`` from ``self._soma_options.member_uris_are_relative``:
 
-        * If `False` then the group will have the absolute path of the member. For populating matrix
+        * If ``False`` then the group will have the absolute path of the member. For populating matrix
         elements within a SOMA in TileDB cloud, this is necessary. For populating SOMA elements within
         a SOMACollection on local disk, this can be useful if you want to be able to move the SOMACollection
         storage around and have it remember the (unmoved) locations of SOMA objects elsewhere, i.e.
         if the SOMACollectio is in one place while its members are in other places. If the SOMAs
-        in the collection are contained within the SOMACollection directory, you probably want `relative=True`.
+        in the collection are contained within the SOMACollection directory, you probably want ``relative=True``.
 
-        * If `True` then the group will have the relative path of the member. For TileDB Cloud, this
+        * If ``True`` then the group will have the relative path of the member. For TileDB Cloud, this
         is never the right thing to do. For local-disk storage, this is essential if you want to move
         a SOMA to another directory and have it remember the locations of the members within it.
 
-        * If `None`, then we select `relative=False` if the URI starts with `tiledb://`, else we
-        select `relative=True`. This is the default.
+        * If ``None``, then we select ``relative=False`` if the URI starts with ``tiledb://``, else we
+        select ``relative=True``. This is the default.
 
         If the relative argument is supplied and is not None, it is used; secondly
-        `self._soma_options.member_uris_are_relative` is consulted; thirdly the URI prefix
+        ``self._soma_options.member_uris_are_relative`` is consulted; thirdly the URI prefix
         is consulted as described above.
         """
         self.create_unless_exists()
@@ -208,7 +208,7 @@ class TileDBGroup(TileDBObject):
             parent_cleaned_path = self.uri.strip("/")
             child_cleaned_path = obj.uri.strip("/")
 
-            # Windows paths may have `C:\something\something` or `C:/something/something`
+            # Windows paths may have ``C:\something\something`` or ``C:/something/something``
             # (including in our CI jobs) and this is user-dependent. Therefore, if we're going
             # to compare for equality, we need to compare both ways.
             expected_paths = [
@@ -268,7 +268,7 @@ class TileDBGroup(TileDBObject):
 
     def _get_member_names_to_uris(self) -> Dict[str, str]:
         """
-        Like `_get_member_names()` and `_get_member_uris`, but returns a dict mapping from
+        Like ``_get_member_names()`` and ``_get_member_uris``, but returns a dict mapping from
         member name to member URI.
         """
         if self._cached_member_names_to_uris is None:

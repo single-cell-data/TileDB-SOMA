@@ -38,7 +38,7 @@ def is_soma(uri: str, ctx: Optional[tiledb.Ctx] = None) -> bool:
     # more questions.
     with tiledb.Group(uri, mode="r", ctx=ctx) as G:
         if SOMA_OBJECT_TYPE_METADATA_KEY in G.meta:
-            # Really `tiledbsc.SOMA.__name__`, but prevent a circular package import, so `"SOMA"`
+            # Really ``tiledbsc.SOMA.__name__``, but prevent a circular package import, so ``"SOMA"``
             return bool(G.meta[SOMA_OBJECT_TYPE_METADATA_KEY] == "SOMA")
 
         # At this point this path could be a SOMACollection, SOMA, or maybe SOMA element
@@ -72,7 +72,7 @@ def is_soma_collection(uri: str, ctx: Optional[tiledb.Ctx] = None) -> bool:
     # more questions.
     with tiledb.Group(uri, mode="r", ctx=ctx) as G:
         if SOMA_OBJECT_TYPE_METADATA_KEY in G.meta:
-            # Really `tiledbsc.SOMA.__name__`, but prevent a circular package import, so `"SOMA"`
+            # Really ``tiledbsc.SOMA.__name__``, but prevent a circular package import, so ``"SOMA"``
             return bool(G.meta[SOMA_OBJECT_TYPE_METADATA_KEY] == "SOMACollection")
 
         # At this point this path could be a SOMACollection, SOMA, or maybe SOMA element
@@ -117,7 +117,7 @@ def get_start_stamp() -> float:
 def format_elapsed(start_stamp: float, message: str) -> str:
     """
     Returns the message along with an elapsed-time indicator, with end time relative to start
-    start from `get_start_stamp`. Used for annotating elapsed time of a task.
+    start from ``get_start_stamp``. Used for annotating elapsed time of a task.
     """
     return "%s TIME %.3f seconds" % (message, time.time() - start_stamp)
 
@@ -226,7 +226,7 @@ def _to_tiledb_supported_array_type(x: T) -> T:
     See also https://docs.scipy.org/doc/numpy-1.10.1/reference/arrays.dtypes.html
 
     Preferentially converts to the underlying primitive type, as TileDB does not
-    support most complex types. NOTE: this does not support `datetime64` conversion.
+    support most complex types. NOTE: this does not support ``datetime64`` conversion.
 
     Categoricals are a special case. If the underlying categorical type is a
     primitive, convert to that. If the array contains NA/NaN (i.e. not in the
@@ -291,7 +291,7 @@ def X_and_ids_to_sparse_matrix(
     the return value of which is a dict with three columns -- obs_id, var_id, and value. For
     conversion to anndata, we need make a sparse COO/IJV-format array where the indices are
     not strings but ints, matching the obs and var labels.
-    The `return_as` parameter must be one of `"csr"` or `"csc"`.
+    The ``return_as`` parameter must be one of ``"csr"`` or ``"csc"``.
     """
 
     assert isinstance(Xdf, pd.DataFrame)
@@ -347,9 +347,9 @@ def X_and_ids_to_sparse_matrix(
 # ----------------------------------------------------------------
 def triples_to_dense_df(sparse_df: pd.DataFrame, fillna: float = 0.0) -> pd.DataFrame:
     """
-    Output from X dataframe reads is in "triples" format, e.g. two index columns `obs_id` and `var_id`,
-    and data column `value`. This is the default format, and is appropriate for large, possibly sparse matrices.
-    However, sometimes we want a dense matrix with `obs_id` row labels, `var_id` column labels, and `value` data.
+    Output from X dataframe reads is in "triples" format, e.g. two index columns ``obs_id`` and ``var_id``,
+    and data column ``value``. This is the default format, and is appropriate for large, possibly sparse matrices.
+    However, sometimes we want a dense matrix with ``obs_id`` row labels, ``var_id`` column labels, and ``value`` data.
     This function produces that.
     """
     assert isinstance(sparse_df, pd.DataFrame)

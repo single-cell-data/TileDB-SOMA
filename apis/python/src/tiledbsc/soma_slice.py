@@ -14,9 +14,9 @@ from .types import Matrix
 
 class SOMASlice(TileDBGroup):
     """
-    In-memory-only object for ephemeral extracting out of a SOMA. Can be used to _construct_ a SOMA
-    but is not a SOMA (which would entail out-of-memory storage).  Nothing more than a collection of
-    pandas.DataFrame objects. No raw or uns.
+    In-memory-only object for ephemeral extracting out of a SOMA. Can be used to *construct* a SOMA
+    but is not a SOMA (which would entail out-of-memory storage).  This is simply a collection of
+    either ``pandas.DataFrame`` or ``pyarrow.Table`` objects.
     """
 
     # ----------------------------------------------------------------
@@ -34,7 +34,7 @@ class SOMASlice(TileDBGroup):
         # raw_var: pd.DataFrame,
     ):
         """
-        Constructs an in-memory `SOMASlice` object. This is a simple collection of obs, var, and X dataframes.
+        Constructs an in-memory ``SOMASlice`` object. This is a simple collection of obs, var, and X dataframes.
         """
         assert isinstance(obs, pd.DataFrame) or isinstance(obs, pa.Table)
         assert isinstance(var, pd.DataFrame) or isinstance(obs, pa.Table)
@@ -69,7 +69,7 @@ class SOMASlice(TileDBGroup):
     # ----------------------------------------------------------------
     def to_anndata(self) -> ad.AnnData:
         """
-        Constructs an `AnnData` object from the current `SOMASlice` object.
+        Constructs an ``AnnData`` object from the current ``SOMASlice`` object.
         """
 
         # Find the dtype.
@@ -149,9 +149,9 @@ class SOMASlice(TileDBGroup):
     @classmethod
     def concat(cls, soma_slices: Sequence[SOMASlice]) -> Optional[SOMASlice]:
         """
-        Concatenates multiple `SOMASlice` objects into a single one. Implemented using `AnnData`'s
-        `concat`. Requires that all slices share the same `obs` and `var` keys. Please
-        see the `SOMA` class method `find_common_obs_and_var_keys`.
+        Concatenates multiple ``SOMASlice`` objects into a single one. Implemented using ``AnnData``'s
+        ``concat``. Requires that all slices share the same ``obs`` and ``var`` keys. Please
+        see the ``SOMA`` class method ``find_common_obs_and_var_keys``.
         """
 
         if len(soma_slices) == 0:

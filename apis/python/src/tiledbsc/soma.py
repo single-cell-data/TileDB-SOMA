@@ -27,22 +27,22 @@ class SOMA(TileDBGroup):
     Class for representing a group of TileDB groups/arrays that constitute an SOMA ('stack of matrices, annotated')
     which includes:
 
-    * `X` (group of `AssayMatrixGroup`): a group of one or more labeled 2D sparse arrays that share the same dimensions.
-    * `obs` (`AnnotationDataframe`): 1D labeled array with column labels for `X`
-    * `var` (`AnnotationDataframe`): 1D labeled array with row labels for `X`
-    * `obsm` (group of `AnnotationMatrix`): multi-attribute arrays keyed by IDs of `obs`
-    * `varm` (group of `AnnotationMatrix`): multi-attribute arrays keyed by IDs of `var`
-    * `obsp` (group of `AnnotationMatrix`): 2D arrays keyed by IDs of `obs`
-    * `varp` (group of `AnnotationMatrix`): 2D arrays keyed by IDs of `var`
-    * `raw`: contains raw versions of `X` and `varm`
-    * `uns`: nested, unstructured data
+    * ``X`` (group of ``AssayMatrixGroup``): a group of one or more labeled 2D sparse arrays that share the same dimensions.
+    * ``obs`` (``AnnotationDataframe``): 1D labeled array with column labels for ``X``
+    * ``var`` (``AnnotationDataframe``): 1D labeled array with row labels for ``X``
+    * ``obsm`` (group of ``AnnotationMatrix``): multi-attribute arrays keyed by IDs of ``obs``
+    * ``varm`` (group of ``AnnotationMatrix``): multi-attribute arrays keyed by IDs of ``var``
+    * ``obsp`` (group of ``AnnotationMatrix``): 2D arrays keyed by IDs of ``obs``
+    * ``varp`` (group of ``AnnotationMatrix``): 2D arrays keyed by IDs of ``var``
+    * ``raw``: contains raw versions of ``X`` and ``varm``
+    * ``uns``: nested, unstructured data
 
     Convenience accessors include:
 
-    * `soma.obs_keys()` for `soma.obs_names` for `soma.obs.ids()`
-    * `soma.var_keys()` for `soma.var_names` for `soma.var.ids()`
-    * `soma.n_obs` for `soma.obs.shape()[0]`
-    * `soma.n_var` for `soma.var.shape()[0]`
+    * ``soma.obs_keys()`` for ``soma.obs_names`` for ``soma.obs.ids()``
+    * ``soma.var_keys()`` for ``soma.var_names`` for ``soma.var.ids()``
+    * ``soma.n_obs`` for ``soma.obs.shape()[0]``
+    * ``soma.n_var`` for ``soma.var.shape()[0]``
     """
 
     # ----------------------------------------------------------------
@@ -57,7 +57,7 @@ class SOMA(TileDBGroup):
         parent: Optional[TileDBGroup] = None,  # E.g. a SOMA collection
     ):
         """
-        Create a new SOMA object. The existing array group is opened at the specified array `uri` if one is present, otherwise a new array group is created.
+        Create a new SOMA object. The existing array group is opened at the specified array ``uri`` if one is present, otherwise a new array group is created.
 
         :param uri: URI of the TileDB group
         """
@@ -193,28 +193,28 @@ class SOMA(TileDBGroup):
     # ----------------------------------------------------------------
     def obs_keys(self) -> Sequence[str]:
         """
-        An alias for `soma.obs.ids()`.
+        An alias for ``soma.obs.ids()``.
         """
         return self.obs.ids()
 
     # ----------------------------------------------------------------
     def var_keys(self) -> Sequence[str]:
         """
-        An alias for `soma.var.ids()`.
+        An alias for ``soma.var.ids()``.
         """
         return self.var.ids()
 
     # ----------------------------------------------------------------
     def get_obs_value_counts(self, obs_label: str) -> pd.DataFrame:
         """
-        Given an obs label, e.g. `cell_type`, returns a dataframe count the number of different
+        Given an obs label, e.g. ``cell_type``, returns a dataframe count the number of different
         values for that label in the SOMA.
         """
         return self._get_obs_or_var_value_counts(obs_label, True)
 
     def get_var_value_counts(self, var_label: str) -> pd.DataFrame:
         """
-        Given an var label, e.g. `feature_name`, returns a dataframe count the number of different
+        Given a var label, e.g. ``feature_name``, returns a dataframe count the number of different
         values for that label in the SOMA.
         """
         return self._get_obs_or_var_value_counts(var_label, False)
@@ -223,7 +223,7 @@ class SOMA(TileDBGroup):
         self, obs_or_var_label: str, use_obs: bool
     ) -> pd.DataFrame:
         """
-        Supporting method for `get_obs_value_counts` and `get_var_value_counts`.
+        Supporting method for ``get_obs_value_counts`` and ``get_var_value_counts``.
         """
         attrs = [obs_or_var_label]
         obs_or_var = self.obs.df(attrs=attrs) if use_obs else self.var.df(attrs=attrs)
@@ -252,9 +252,9 @@ class SOMA(TileDBGroup):
         return_arrow: bool = False,
     ) -> Optional[SOMASlice]:
         """
-        Subselects the SOMA's obs, var, and X/data using the specified obs_ids and var_ids.
-        Using a value of `None` for obs_ids means use all obs_ids, and likewise for var_ids.
-        Returns `None` for empty slice.
+        Subselects the SOMA's ``obs``, ``var``, and ``X/data`` using the specified ``obs_ids`` and ``var_ids``.
+        Using a value of ``None`` for obs_ids means use all ``obs_ids``, and likewise for ``var_ids``.
+        Returns ``None`` for empty slice.
         """
         assert obs_ids is not None or var_ids is not None
         if obs_ids is None:
@@ -313,13 +313,13 @@ class SOMA(TileDBGroup):
     ) -> Optional[SOMASlice]:
         """
         Subselects the SOMA's obs, var, and X/data using the specified queries on obs and var.
-        Queries use the TileDB-Py `QueryCondition` API.
+        Queries use the TileDB-Py ``QueryCondition`` API.
 
-        If `obs_query_string` is `None`, the `obs` dimension is not filtered and all of `obs` is
-        used; similiarly for `var`.
+        If ``obs_query_string`` is ``None``, the ``obs`` dimension is not filtered and all of ``obs`` is
+        used; similiarly for ``var``.
 
-        If `obs_attrs` or `var_attrs` are unspecified, the slice will take all `obs`/`var` attributes
-        from the source SOMAs; if they are specified, the slice will take the specified `obs`/`var`
+        If ``obs_attrs`` or ``var_attrs`` are unspecified, the slice will take all ``obs``/``var`` attributes
+        from the source SOMAs; if they are specified, the slice will take the specified ``obs``/``var``
         """
 
         slice_obs_df = self.obs.query(
@@ -339,13 +339,13 @@ class SOMA(TileDBGroup):
             if len(slice_obs_df.index) == 0:
                 return None
         # At the tiledb multi-index level, if we're say slicing on obs_ids but not var_ids,
-        # we'll do `A.df[obs_ids, :]`. We can't pass a `:` down the callstack to get there,
-        # but we pass `None` instead.
+        # we'll do ``A.df[obs_ids, :]``. We can't pass a ``:`` down the callstack to get there,
+        # but we pass ``None`` instead.
         #
         # It's important to do this. Say for example the X matrix is nobs=1000 by nvar=2000,
         # and we have a query that has 158 obs_ids. At the tiledb multi-index level, doing
-        # `A.df[{158 obs ids}, {all 2000 var ids}]` is non-performant while
-        # `A.df[{158 obs ids}, :]` is performant.
+        # ``A.df[{158 obs ids}, {all 2000 var ids}]`` is non-performant while
+        # ``A.df[{158 obs ids}, :]`` is performant.
         if obs_ids is not None or obs_query_string is not None:
             if return_arrow:
                 obs_ids = [obs_id.as_py() for obs_id in slice_obs_df["obs_id"]]
@@ -403,18 +403,18 @@ class SOMA(TileDBGroup):
     ) -> List[SOMASlice]:
         """
         Subselects the obs, var, and X/data using the specified queries on obs and var,
-        concatenating across SOMAs in the list.  Queries use the TileDB-Py `QueryCondition`
+        concatenating across SOMAs in the list.  Queries use the TileDB-Py ``QueryCondition``
         API.
 
-        If `obs_query_string` is `None`, the `obs` dimension is not filtered and all of `obs` is
-        used; similiarly for `var`. Return value of `None` indicates an empty slice.  If `obs_ids`
-        or `var_ids` are not `None`, they are effectively ANDed into the query.  For example, you
-        can pass in a known list of `obs_ids`, then use `obs_query_string` to further restrict the
+        If ``obs_query_string`` is ``None``, the ``obs`` dimension is not filtered and all of ``obs`` is
+        used; similiarly for ``var``. Return value of ``None`` indicates an empty slice.  If ``obs_ids``
+        or ``var_ids`` are not ``None``, they are effectively ANDed into the query.  For example, you
+        can pass in a known list of ``obs_ids``, then use ``obs_query_string`` to further restrict the
         query.
 
-        If `obs_attrs` or `var_attrs` are unspecified, slices will take all `obs`/`var` attributes
-        from their source SOMAs; if they are specified, slices will take the specified `obs`/`var`
-        attributes.  If all SOMAs in the collection have the same `obs`/`var` attributes, then you
+        If ``obs_attrs`` or ``var_attrs`` are unspecified, slices will take all ``obs``/``var`` attributes
+        from their source SOMAs; if they are specified, slices will take the specified ``obs``/``var``
+        attributes.  If all SOMAs in the collection have the same ``obs``/``var`` attributes, then you
         needn't specify these; if they don't, you must.
         """
 
@@ -479,7 +479,7 @@ class SOMA(TileDBGroup):
         return_arrow: bool = False,
     ) -> SOMASlice:
         """
-        An internal method for constructing a `SOMASlice` object given query results.
+        An internal method for constructing a ``SOMASlice`` object given query results.
         """
         # There aren't always multiple X layers, and if there aren't, this parallelization doesn't
         # help. But neither doesit hurt. And if there are, that's good news, since the dim_select is
@@ -522,7 +522,7 @@ class SOMA(TileDBGroup):
         parent: Optional[TileDBGroup] = None,  # E.g. a SOMA collection
     ) -> SOMA:
         """
-        Constructs `SOMA` storage from a given in-memory `SOMASlice` object.
+        Constructs ``SOMA`` storage from a given in-memory ``SOMASlice`` object.
         """
 
         soma = cls(
@@ -578,7 +578,7 @@ class SOMA(TileDBGroup):
         layer_name: str = "data",
     ) -> None:
         """
-        Populates the `X` or `raw.X` subgroup for a `SOMA` object.
+        Populates the ``X`` or ``raw.X`` subgroup for a ``SOMA`` object.
         """
         self.X.add_layer_from_matrix_and_dim_values(
             matrix, self.obs.ids(), self.var.ids(), layer_name

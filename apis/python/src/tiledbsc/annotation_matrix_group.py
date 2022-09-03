@@ -15,8 +15,8 @@ from .types import Labels, Matrix
 
 class AnnotationMatrixGroup(TileDBGroup):
     """
-    Nominally for soma obsm and varm. You can find element names using soma.obsm.keys(); you access
-    elements using soma.obsm['X_pca'] etc., or soma.obsm.X_pca if you prefer.  (The latter syntax is
+    Nominally for soma ``obsm`` and ``varm``. You can find element names using ``soma.obsm.keys()``; you access
+    elements using ``soma.obsm['X_pca']`` etc., or ``soma.obsm.X_pca`` if you prefer.  (The latter syntax is
     possible when the element name doesn't have dashes, dots, etc. in it.)
     """
 
@@ -29,7 +29,7 @@ class AnnotationMatrixGroup(TileDBGroup):
         parent: Optional[TileDBGroup] = None,
     ):
         """
-        See the TileDBObject constructor.
+        See the ``TileDBObject`` constructor.
         """
         assert name in ["obsm", "varm"]
         super().__init__(uri=uri, name=name, parent=parent)
@@ -38,8 +38,8 @@ class AnnotationMatrixGroup(TileDBGroup):
     # ----------------------------------------------------------------
     def keys(self) -> Sequence[str]:
         """
-        For `obsm` and `varm`, `.keys()` is a keystroke-saver for the more general group-member
-        accessor `._get_member_names()`.
+        For ``obsm`` and ``varm``, ``.keys()`` is a keystroke-saver for the more general group-member
+        accessor ``._get_member_names()``.
         """
         return self._get_member_names()
 
@@ -53,7 +53,7 @@ class AnnotationMatrixGroup(TileDBGroup):
     # ----------------------------------------------------------------
     def __iter__(self) -> Iterator[AnnotationMatrix]:
         """
-        Implements `for matrix in soma.obsm: ...` and `for matrix in soma.varm: ...`
+        Implements ``for matrix in soma.obsm: ...`` and ``for matrix in soma.varm: ...``
         """
         for name, uri in self._get_member_names_to_uris().items():
             yield AnnotationMatrix(
@@ -63,8 +63,8 @@ class AnnotationMatrixGroup(TileDBGroup):
     # ----------------------------------------------------------------
     def __getattr__(self, name: str) -> Optional[AnnotationMatrix]:
         """
-        This is called on `soma.obsm.name` when `name` is not already an attribute.
-        This way you can do `soma.obsm.X_tsne` as an alias for `soma.obsm['X_tsne']`.
+        This is called on ``soma.obsm.name`` when ``name`` is not already an attribute.
+        This way you can do ``soma.obsm.X_tsne`` as an alias for ``soma.obsm['X_tsne']``.
         """
         with self._open() as G:
             if name not in G:
@@ -83,17 +83,17 @@ class AnnotationMatrixGroup(TileDBGroup):
     # * Index references are supported for obsm, varm, obsp, varp, and uns. E.g.
     #   soma.obsm['X_pca'] or soma.uns['neighbors']['params']['method']
     #
-    # * Overloading the `[]` operator at the TileDBGroup level isn't necessary -- e.g. we don't need
+    # * Overloading the ``[]`` operator at the TileDBGroup level isn't necessary -- e.g. we don't need
     #   soma['X'] when we have soma.X -- but also it causes circular-import issues in Python.
     #
-    # * Rather than doing a TileDBIndexableGroup which overloads the `[]` operator, we overload
-    #   the `[]` operator separately in the various classes which need indexing. This is again to
-    #   avoid circular-import issues, and means that [] on `AnnotationMatrixGroup` will return an
-    #   `AnnotationMatrix, [] on `UnsGroup` will return `UnsArray` or `UnsGroup`, etc.
+    # * Rather than doing a TileDBIndexableGroup which overloads the ``[]`` operator, we overload
+    #   the ``[]`` operator separately in the various classes which need indexing. This is again to
+    #   avoid circular-import issues, and means that [] on ``AnnotationMatrixGroup`` will return an
+    #   ``AnnotationMatrix, [] on ``UnsGroup`` will return ``UnsArray`` or ``UnsGroup``, etc.
     def __getitem__(self, name: str) -> Optional[AnnotationMatrix]:
         """
-        Returns an `AnnotationMatrix` element at the given name within the group, or None if no such
-        member exists.  Overloads the `[...]` operator.
+        Returns an ``AnnotationMatrix`` element at the given name within the group, or None if no such
+        member exists.  Overloads the ``[...]`` operator.
         """
 
         with self._open("r") as G:
@@ -115,7 +115,7 @@ class AnnotationMatrixGroup(TileDBGroup):
     # ----------------------------------------------------------------
     def __contains__(self, name: str) -> bool:
         """
-        Implements the `in` operator, e.g. `"namegoeshere" in soma.obsm/soma.varm`.
+        Implements the ``in`` operator, e.g. ``"namegoeshere" in soma.obsm/soma.varm``.
         """
         with self._open("r") as G:
             return name in G
@@ -128,11 +128,11 @@ class AnnotationMatrixGroup(TileDBGroup):
         matrix_name: str,
     ) -> None:
         """
-        Populates a component of the `obsm` or `varm` subgroup for a SOMA object.
+        Populates a component of the ``obsm`` or ``varm`` subgroup for a SOMA object.
 
         :param matrix: element of anndata.obsm, anndata.varm, or anndata.raw.varm.
         :param dim_values: anndata.obs_names, anndata.var_names, or anndata.raw.var_names.
-        :param matrix_name: name of the matrix, like `"X_tsne"` or `"PCs"`.
+        :param matrix_name: name of the matrix, like ``"X_tsne"`` or ``"PCs"``.
         """
 
         # Must be done first, to create the parent directory
@@ -153,29 +153,29 @@ class AnnotationMatrixGroup(TileDBGroup):
     # ----------------------------------------------------------------
     def remove(self, matrix_name: str) -> None:
         """
-        Removes a component of the `obsm` or `varm` subgroup for a SOMA object,
-        when invoked as `soma.obsm.remove("namegoeshere").
+        Removes a component of the ``obsm`` or ``varm`` subgroup for a SOMA object,
+        when invoked as ``soma.obsm.remove("namegoeshere")``.
         """
         self._remove_object_by_name(matrix_name)
 
     def __delattr__(self, matrix_name: str) -> None:
         """
-        Removes a component of the `obsm` or `varm` subgroup for a SOMA object,
-        when invoked as `del soma.obsm.namegoeshere`.
+        Removes a component of the ``obsm`` or ``varm`` subgroup for a SOMA object,
+        when invoked as ``del soma.obsm.namegoeshere``.
         """
         self.remove(matrix_name)
 
     def __delitem__(self, matrix_name: str) -> None:
         """
-        Removes a component of the `obsm` or `varm` subgroup for a SOMA object,
-        when invoked as `del soma.obsm["namegoeshere"]`.
+        Removes a component of the ``obsm`` or ``varm`` subgroup for a SOMA object,
+        when invoked as ``del soma.obsm["namegoeshere"]``.
         """
         self.remove(matrix_name)
 
     # ----------------------------------------------------------------
     def to_dict_of_csr(self) -> Dict[str, np.ndarray]:
         """
-        Reads the obsm/varm group-member arrays into a dict from name to member array.
+        Reads the ``obsm``/``varm`` group-member arrays into a dict from name to member array.
         Member arrays are returned in sparse CSR format.
         """
         if not self.exists():

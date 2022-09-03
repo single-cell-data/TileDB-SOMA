@@ -32,7 +32,7 @@ def from_h5ad(
     soma: tiledbsc.SOMA, input_path: Path, X_layer_name: str = "data"
 ) -> None:
     """
-    Reads an .h5ad file and writes to a TileDB group structure.
+    Reads an ``.h5ad`` local-disk file and writes to a TileDB SOMA structure.
     """
     _from_h5ad_common(soma, input_path, _from_anndata_aux, X_layer_name)
 
@@ -136,7 +136,7 @@ def from_anndata(
     soma: tiledbsc.SOMA, anndata: ad.AnnData, X_layer_name: str = "data"
 ) -> None:
     """
-    Top-level writer method for creating a TileDB group for a SOMA object.
+    Given an in-memory ``AnnData`` object, writes to a TileDB SOMA structure.
     """
     return _from_anndata_aux(soma, anndata, X_layer_name)
 
@@ -147,9 +147,9 @@ def _from_anndata_aux(
     X_layer_name: str,
 ) -> None:
     """
-    Helper method for `from_anndata`. This simplified type-checking using `mypy` with regard to
-    callback functions -- this helper method as `X_layer_name` as non-optional, which confuses
-    `mypy` less.
+    Helper method for ``from_anndata``. This simplified type-checking using ``mypy`` with regard to
+    callback functions -- this helper method as ``X_layer_name`` as non-optional, which confuses
+    ``mypy`` less.
     """
 
     # Without _at least_ an index, there is nothing to indicate the dimension indices.
@@ -315,13 +315,12 @@ def to_h5ad(soma: tiledbsc.SOMA, h5ad_path: Path, X_layer_name: str = "data") ->
 # ----------------------------------------------------------------
 def to_anndata(soma: tiledbsc.SOMA, X_layer_name: str = "data") -> ad.AnnData:
     """
-    Converts the soma group to anndata. Choice of matrix formats is following
-    what we often see in input .h5ad files:
-    * X as scipy.sparse.csr_matrix
-    * obs,var as pandas.dataframe
-    * obsm,varm arrays as numpy.ndarray
-    * obsp,varp arrays as scipy.sparse.csr_matrix
-    As of 2022-05-05 this is an incomplete prototype.
+    Converts the soma group to anndata. Choice of matrix formats is following what we often see in input ``.h5ad`` files:
+
+    * X as ``scipy.sparse.csr_matrix``
+    * ``obs``, ``var`` as ``pandas.dataframe``
+    * ``obsm``, ``varm`` arrays as ``numpy.ndarray``
+    * ``obsp``, ``varp`` arrays as ``scipy.sparse.csr_matrix``
     """
 
     s = tiledbsc.util.get_start_stamp()
