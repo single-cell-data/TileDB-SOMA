@@ -23,7 +23,7 @@ from .uns_group import UnsGroup
 
 
 class SOMA(TileDBGroup):
-    """Single-cell group
+    """
     Class for representing a group of TileDB groups/arrays that constitute an SOMA ('stack of matrices, annotated')
     which includes:
 
