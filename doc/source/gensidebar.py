@@ -1,5 +1,5 @@
 #
-# This file generates the sidebar/toctree for all TileDB projects and should
+# This file generates the sidebar/toctree for all TileDB-SC projects and should
 # be copied to each project when it is updated.
 #
 # This file is originally from the RobotPy documentation project
@@ -33,7 +33,7 @@ def generate_sidebar(conf, conf_api):
         "",
     ]
 
-    url_base = "https://tiledb-inc-tiledb.readthedocs-hosted.com"
+    url_base = "https://tiledb-inc-tiledb-singlecell.readthedocs-hosted.com"
     lang = "en"
 
     def toctree(name):
@@ -75,7 +75,7 @@ def generate_sidebar(conf, conf_api):
 
     toctree("API Reference")
     write_api("tiledbsc-py", "Python", "python-api")
-    write_api_url("R", "https://tiledb-inc.github.io/TileDB-R/reference/index.html")
+    write_api_url("R", "https://tiledb-inc.github.io/tiledbsc/reference/index.html")
     endl()
 
     write_if_changed("_sidebar.rst.inc", "\n".join(lines))

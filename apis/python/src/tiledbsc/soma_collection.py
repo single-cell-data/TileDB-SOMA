@@ -99,9 +99,7 @@ class SOMACollection(TileDBGroup):
 
         * If ``relative`` is ``True``, either via the ``relative`` argument or via ``soma_options.member_uris_are_relative``, then the group will have the relative path of the member. For TileDB Cloud, this is never the right thing to do. For local-disk or S3 storage, this is essential if you want to move a SOMA to another directory and have it remember the locations of the members within it.  In this case the SOMA storage must be located as a direct component of the collection storage.  Example: ``s3://mybucket/soco`` and ``s3://mybucket/soco/soma1``.
 
-        * If ``relative`` is ``None``, either via the ``relative`` argument or via
-        ``soma_options.member_uris_are_relative``, then we select ``relative=False`` if the URI starts
-        with ``tiledb://``, else we select ``relative=True``. This is the default.
+        * If ``relative`` is ``None``, either via the ``relative`` argument or via ``soma_options.member_uris_are_relative``, then we select ``relative=False`` if the URI starts with ``tiledb://``, else we select ``relative=True``. This is the default.
         """
         self._add_object(soma, relative=relative, check_is_direct_child=True)
 

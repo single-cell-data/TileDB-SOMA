@@ -31,6 +31,7 @@ except ImportError:
     except DistributionNotFound:
         __version__ = "unknown"
 
+from .annotation_dataframe import AnnotationDataFrame
 from .annotation_matrix import AnnotationMatrix
 from .annotation_matrix_group import AnnotationMatrixGroup
 from .annotation_pairwise_matrix_group import AnnotationPairwiseMatrixGroup
@@ -54,6 +55,7 @@ info()  # Good uploader-progress UX by default, especially for ingest of larger 
 del info  # cleanup
 
 __all__ = [
+    "AnnotationDataFrame",
     "AnnotationMatrix",
     "AnnotationMatrixGroup",
     "AnnotationPairwiseMatrixGroup",

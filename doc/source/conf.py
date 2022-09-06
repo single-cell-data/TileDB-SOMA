@@ -46,11 +46,11 @@ extensions = ["sphinx.ext.autodoc", "sphinx.ext.doctest", "sphinx.ext.intersphin
 if readthedocs:
     intersphinx_mapping = {
         "tiledbsc": (
-            "https://tiledb-inc-tiledb.readthedocs-hosted.com/en/%s/" % rtd_version,
+            "https://tiledb-inc-tiledb-singlecell.readthedocs-hosted.com/en/%s/" % rtd_version,
             None,
         ),
         "tiledbsc-py": (
-            "https://tiledb-inc-tiledb.readthedocs-hosted.com/projects/python-api/en/%s/"
+            "https://tiledb-inc-tiledb-singlecell.readthedocs-hosted.com/projects/python-api/en/%s/"
             % rtd_version,
             None,
         ),
@@ -149,7 +149,7 @@ texinfo_documents = [
         "TileDBSC-Py Documentation",
         author,
         "TileDBSC-Py",
-        "One line description of project.",
+        "One-line description of project.",
         "Miscellaneous",
     )
 ]
