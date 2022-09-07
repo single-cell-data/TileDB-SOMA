@@ -72,7 +72,7 @@ class SOMADataFrame(TileDBArray):
         dom = tiledb.Domain(
             tiledb.Dim(
                 name=ROWID,
-                domain=(0, np.iinfo(np.uint64).max-1),
+                domain=(0, np.iinfo(np.uint64).max - 1),
                 tile=2048,  # TODO: PARAMETERIZE
                 dtype=np.uint64,
                 filters=[tiledb.ZstdFilter(level=level)],

@@ -1,4 +1,4 @@
-from typing import Any, Dict, Iterator
+from typing import Any, Dict, Iterator, List
 
 # importing tiledbsoma.TileDBObject leads to a circular reference as TileDBObject imports us. This
 # is, in turn, because this class requires a back-link to the underlying object -- hence,
@@ -12,17 +12,23 @@ class SOMAMetadataMapping:
     def __init__(self, underlying: "tiledbsoma.TileDBObject"):
         self._underlying = underlying
 
+    def keys(self) -> List[str]:
+        """
+        Returns the object's metadata keys as a list.
+        """
+        return list(self.items().keys())
+
     def get(self, key: str) -> Any:
         """
         Get the value associated with the key.
         """
-        return self._get_all()[key]
+        return self.items()[key]
 
     def has(self, key: str) -> bool:
         """
         Test for key existence.
         """
-        return key in self._get_all()
+        return key in self.items()
 
     def set(self, key: str, value: Any) -> None:
         """
@@ -42,7 +48,7 @@ class SOMAMetadataMapping:
         """
         Iterate over the collection.
         """
-        for k, v in self._get_all().items():
+        for k, v in self.items().items():
             # yield {k: v}
             yield (k, v)
 
@@ -50,11 +56,23 @@ class SOMAMetadataMapping:
         """
         Get the length of the map, the number of keys present.
         """
-        return len(self._get_all())
+        return len(self.items())
 
-    def _get_all(self) -> Dict[str, Any]:
+    def items(self) -> Dict[str, Any]:
         """
         Retrieves the full metadata set from storage.
         """
         with self._underlying._tiledb_open("r") as M:
             return dict(M.meta)
+
+    def __getitem__(self, key: str) -> Any:
+        """
+        Implements ``item.metadata["key"]``.
+        """
+        return self.get(key)
+
+    def __setitem__(self, key: str, value: Any) -> None:
+        """
+        Implements ``item.metadata["key"] = ...``.
+        """
+        return self.set(key, value)
