@@ -27,5 +27,6 @@ build:
   commands:
     # `pip install -e .` or `python setup.py develop` will _not_ let python find the tiledbsc package
     # within sphinx build
+    - pip install -r doc/requirements_doc.txt
     - cd apis/python; pip install .; cd ../..
     - sphinx-build -E -T -b html -d _readthedocs/doctrees -D language=en doc/source _readthedocs/html
