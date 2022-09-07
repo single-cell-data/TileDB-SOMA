@@ -91,13 +91,18 @@ html_static_path = ["_static"]
 html_logo = "_static/tiledb-logo_color_no_margin_@4x.png"
 html_favicon = "_static/favicon.ico"
 
-if readthedocs:
-    html_theme = "default"
-else:
-    import sphinx_rtd_theme
+# if readthedocs:
+#     html_theme = "default"
+# else:
+#     import sphinx_rtd_theme
+# 
+#     html_theme = "sphinx_rtd_theme"
+#     html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
 
-    html_theme = "sphinx_rtd_theme"
-    html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
+# TODO: experiment 2022-09-07 -- not sure why tiledb-py seems to not need this ...
+import sphinx_rtd_theme
+html_theme = "sphinx_rtd_theme"
+html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
 
 # -- Options for HTMLHelp output ---------------------------------------------
 
