@@ -521,6 +521,6 @@ class SOMADataFrame(TileDBArray):
         assert len(dataframe.shape) == 2
         # E.g. (80, 7) is 80 rows x 7 columns
         num_rows = dataframe.shape[0]
-        dataframe[ROWID] = np.asarray(range(num_rows))
+        dataframe[ROWID] = np.asarray(range(num_rows), dtype=np.uint64)
 
         self.write_from_pandas(dataframe, extent=extent, id_column_name=id_column_name)
