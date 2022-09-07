@@ -39,7 +39,18 @@ class SOMADataFrame(TileDBArray):
         See also the `TileDBOject` constructor.
         """
         super().__init__(uri=uri, name=name, parent=parent)
-        self._is_sparse = None
+
+        # Simpler would be:
+        # if self.exists():
+        #     with self._tiledb_open("r") as A:
+        #         self._is_sparse = A.schema.sparse
+        # but that has _two_ HTTP round trips in the tiledb-cloud case.
+        # This way, there is only one.
+        try:
+            with self._tiledb_open("r") as A:
+                self._is_sparse = A.schema.sparse
+        except tiledb.TileDBError:
+            self._is_sparse = None
 
     def create(
         self,
