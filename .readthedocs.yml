@@ -29,5 +29,7 @@ build:
     # within sphinx build
     #- apt-get install python3-sphinx
     - pip install -r doc/requirements_doc.txt
+    - pwd
+    - ls -alrt
     - cd apis/python && pip install . && cd ../..
     - sphinx-build -E -T -b html -d _readthedocs/doctrees -D language=en doc/source _readthedocs/html
