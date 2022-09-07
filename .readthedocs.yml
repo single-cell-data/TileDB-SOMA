@@ -31,5 +31,6 @@ build:
     - python -m pip install -r doc/requirements_doc.txt
     - pwd
     - ls -alrt
-    - cd apis/python && python -m pip install . && cd ../..
+    #- cd apis/python && python -m pip install . && cd ../..
+    - cd apis/python && python setup.py && cd ../..
     - sphinx-build -E -T -b html -d _readthedocs/doctrees -D language=en doc/source _readthedocs/html
