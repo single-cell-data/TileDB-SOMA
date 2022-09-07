@@ -1,3 +1,7 @@
+# Note: builds at
+# https://readthedocs.com/projects/tiledb-inc-tiledb-singlecell/builds/
+# (permissioned)
+
 # Don't build any extra formats
 formats: []
 
