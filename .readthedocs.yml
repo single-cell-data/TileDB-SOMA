@@ -29,6 +29,14 @@ build:
     # within sphinx build
     #- apt-get install python3-sphinx
     - python -m pip install -r doc/requirements_doc.txt
-    #- cd apis/python && python -m pip install . && cd ../..
+
+    # This fails at readthedocs with
+    #   LookupError: setuptools-scm was unable to detect version for /.
+    # - cd apis/python && python -m pip install . && cd ../..
     - cd apis/python && python setup.py install && cd ../..
-    - sphinx-build -E -T -b html -d _readthedocs/doctrees -D language=en doc/source _readthedocs/html
+
+    # This works but custom CSS styling is going missing somehow:
+    #- sphinx-build -E -T -b html -d _readthedocs/doctrees -D language=en doc/source _readthedocs/html
+    # Experiment copied from tiledb-py:
+    - python -m sphinx -T -E -b html -d _build/doctrees -D language=en . _build/html
+
