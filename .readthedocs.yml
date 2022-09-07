@@ -35,6 +35,8 @@ build:
     # - cd apis/python && python -m pip install . && cd ../..
     - cd apis/python && python setup.py install && cd ../..
 
+    - sphinx-build --version
+
     # This works but custom CSS styling is going missing somehow:
     #- sphinx-build -E -T -b html -d _readthedocs/doctrees -D language=en doc/source _readthedocs/html
     # Experiment copied from tiledb-py:
