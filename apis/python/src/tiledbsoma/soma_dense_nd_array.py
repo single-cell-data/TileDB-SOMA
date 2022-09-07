@@ -8,11 +8,11 @@ import pyarrow as pa
 import scipy.sparse as sp
 import tiledb
 
-import tiledbsc.tiledbsoma.eta as eta
-import tiledbsc.tiledbsoma.logging as logging
-import tiledbsc.tiledbsoma.util as util
-import tiledbsc.tiledbsoma.util_arrow as util_arrow
-import tiledbsc.tiledbsoma.util_tiledb as util_tiledb
+import tiledbsoma.eta as eta
+import tiledbsoma.logging as logging
+import tiledbsoma.util as util
+import tiledbsoma.util_arrow as util_arrow
+import tiledbsoma.util_tiledb as util_tiledb
 
 from .soma_collection import SOMACollection
 from .tiledb_array import TileDBArray

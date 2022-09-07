@@ -17,10 +17,10 @@ import sys
 
 import tiledb
 
-import tiledbsc.tiledbsoma
-import tiledbsc.tiledbsoma.io
-import tiledbsc.tiledbsoma.logging
-import tiledbsc.tiledbsoma.util
+import tiledbsoma
+import tiledbsoma.io
+import tiledbsoma.logging
+import tiledbsoma.util
 
 
 # ================================================================
@@ -96,9 +96,9 @@ select `relative=True`. (This is the default.)
 
     write_soco = args.soco
     if args.debug:
-        tiledbsc.tiledbsoma.logging.debug()
+        tiledbsoma.logging.debug()
     elif not args.quiet:
-        tiledbsc.tiledbsoma.logging.info()
+        tiledbsoma.logging.info()
 
     if args.relative is None:
         rel_member_uris = None
@@ -113,7 +113,7 @@ select `relative=True`. (This is the default.)
         else:
             raise Exception(f"Internal coding error in {__file__}")
 
-    tiledb_platform_config = tiledbsc.tiledbsoma.TileDBPlatformConfig(
+    tiledb_platform_config = tiledbsoma.TileDBPlatformConfig(
         member_uris_are_relative=rel_member_uris
     )
     outdir = args.o.rstrip("/")
@@ -182,7 +182,7 @@ def ingest_one(
     input_path: str,
     output_path: str,
     ifexists: str,
-    tiledb_platform_config: tiledbsc.tiledbsoma.TileDBPlatformConfig,
+    tiledb_platform_config: tiledbsoma.TileDBPlatformConfig,
     write_soco: bool,
     soco_dir: str,
 ):
@@ -190,7 +190,7 @@ def ingest_one(
     vfs = tiledb.VFS()
     if not vfs.is_file(input_path):
         # Print this neatly and exit neatly, to avoid a multi-line stack trace otherwise.
-        tiledbsc.tiledbsoma.logging.logger.error(f"Input path not found: {input_path}")
+        tiledbsoma.logging.logger.error(f"Input path not found: {input_path}")
         sys.exit(1)
 
     # Prepare to write the output.
@@ -198,11 +198,11 @@ def ingest_one(
     # use tiledb.vfs to remove any priors, and/or make use of a tiledb `overwrite` flag.
     parent = os.path.dirname(output_path.rstrip("/"))
     if parent != "":
-        if tiledbsc.tiledbsoma.util.is_local_path(parent):
+        if tiledbsoma.util.is_local_path(parent):
             if not os.path.exists(parent):
                 os.mkdir(parent)
 
-    exp = tiledbsc.tiledbsoma.SOMAExperiment(
+    exp = tiledbsoma.SOMAExperiment(
         uri=output_path, tiledb_platform_config=tiledb_platform_config
     )
 
@@ -210,19 +210,17 @@ def ingest_one(
         if not os.path.exists(output_path):
             raise Exception("Cannot update; doesn't exist yet:", output_path)
         # Do the ingest into TileDB.
-        tiledbsc.tiledbsoma.io.from_h5ad_update_obs_and_var(exp, input_path)
+        tiledbsoma.io.from_h5ad_update_obs_and_var(exp, input_path)
 
     else:
         if os.path.exists(output_path):
             if ifexists == "continue":
-                tiledbsc.tiledbsoma.logging.logger.info(
+                tiledbsoma.logging.logger.info(
                     f"Already exists; continuing: {output_path}"
                 )
                 return
             elif ifexists == "abort":
-                tiledbsc.tiledbsoma.logging.error(
-                    f"Already exists; aborting: {output_path}"
-                )
+                tiledbsoma.logging.error(f"Already exists; aborting: {output_path}")
                 sys.exit(1)
             elif ifexists == "replace":
                 if output_path.startswith("s3://") or output_path.startswith(
@@ -231,7 +229,7 @@ def ingest_one(
                     raise Exception(
                         "--ifexists replace currently only is compatible with local-disk paths"
                     )
-                tiledbsc.tiledbsoma.logging.logger.info(
+                tiledbsoma.logging.logger.info(
                     f"Already exists; replacing: {output_path}"
                 )
                 shutil.rmtree(output_path)  # Overwrite
@@ -240,12 +238,12 @@ def ingest_one(
                     "Internal coding error in --ifexists handling.", ifexists, "<"
                 )
         # Do the ingest into TileDB.
-        tiledbsc.tiledbsoma.io.from_h5ad(exp, input_path, "mRNA")
+        tiledbsoma.io.from_h5ad(exp, input_path, "mRNA")
 
-    tiledbsc.tiledbsoma.logging.logger.info(f"Wrote {output_path}")
+    tiledbsoma.logging.logger.info(f"Wrote {output_path}")
 
     if write_soco:
-        soco = tiledbsc.tiledbsoma.SOMACollection(
+        soco = tiledbsoma.SOMACollection(
             soco_dir, tiledb_platform_config=tiledb_platform_config
         )
         soco.create_unless_exists()
@@ -253,8 +251,8 @@ def ingest_one(
             raise Exception(f"Could not create SOCO at {soco.uri}")
         soco.add(exp)
 
-        tiledbsc.tiledbsoma.logging.logger.info("")
-        tiledbsc.tiledbsoma.logging.logger.info(
+        tiledbsoma.logging.logger.info("")
+        tiledbsoma.logging.logger.info(
             f"Added SOMAExperiment {exp.name} to SOMACollection {soco_dir}"
         )
 

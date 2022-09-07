@@ -1,8 +1,8 @@
-<a id="tiledbsc.tiledbsoma/soma_indexed_dataframe"></a>
+<a id="tiledbsoma/soma_indexed_dataframe"></a>
 
-# tiledbsc.tiledbsoma/soma\_indexed\_dataframe
+# tiledbsoma/soma\_indexed\_dataframe
 
-<a id="tiledbsc.tiledbsoma/soma_indexed_dataframe.SOMAIndexedDataFrame"></a>
+<a id="tiledbsoma/soma_indexed_dataframe.SOMAIndexedDataFrame"></a>
 
 ## SOMAIndexedDataFrame Objects
 
@@ -16,7 +16,7 @@ A `SOMAIndexedDataFrame` contains a "pseudo-column" called `soma_rowid`, of type
 [0,num_rows).  The `soma_rowid` pseudo-column contains a unique value for each row in the
 `SOMAIndexedDataFrame`, and is intended to act as a join key for other objects, such as a `SOMASparseNdArray`.
 
-<a id="tiledbsc.tiledbsoma/soma_indexed_dataframe.SOMAIndexedDataFrame.__init__"></a>
+<a id="tiledbsoma/soma_indexed_dataframe.SOMAIndexedDataFrame.__init__"></a>
 
 #### \_\_init\_\_
 
@@ -29,7 +29,7 @@ def __init__(uri: str,
 
 See also the `TileDBOject` constructor.
 
-<a id="tiledbsc.tiledbsoma/soma_indexed_dataframe.SOMAIndexedDataFrame.create"></a>
+<a id="tiledbsoma/soma_indexed_dataframe.SOMAIndexedDataFrame.create"></a>
 
 #### create
 
@@ -48,7 +48,7 @@ the SOMA implementation, an error will be raised.
 (e.g., ``['cell_type', 'tissue_type']``). All named columns must exist in the schema, and at
 least one index column name is required.
 
-<a id="tiledbsc.tiledbsoma/soma_indexed_dataframe.SOMAIndexedDataFrame.__repr__"></a>
+<a id="tiledbsoma/soma_indexed_dataframe.SOMAIndexedDataFrame.__repr__"></a>
 
 #### \_\_repr\_\_
 
@@ -58,7 +58,7 @@ def __repr__() -> str
 
 Default display of `SOMAIndexedDataFrame`.
 
-<a id="tiledbsc.tiledbsoma/soma_indexed_dataframe.SOMAIndexedDataFrame.keys"></a>
+<a id="tiledbsoma/soma_indexed_dataframe.SOMAIndexedDataFrame.keys"></a>
 
 #### keys
 
@@ -69,7 +69,7 @@ def keys() -> List[str]
 Returns the names of the columns when read back as a dataframe.
 TODO: make it clear whether or not this will read back `soma_rowid` / `soma_joinid`.
 
-<a id="tiledbsc.tiledbsoma/soma_indexed_dataframe.SOMAIndexedDataFrame.get_shape"></a>
+<a id="tiledbsoma/soma_indexed_dataframe.SOMAIndexedDataFrame.get_shape"></a>
 
 #### get\_shape
 
@@ -79,7 +79,7 @@ def get_shape() -> NTuple
 
 Return length of each dimension, always a list of length ``ndims``.
 
-<a id="tiledbsc.tiledbsoma/soma_indexed_dataframe.SOMAIndexedDataFrame.get_ndims"></a>
+<a id="tiledbsoma/soma_indexed_dataframe.SOMAIndexedDataFrame.get_ndims"></a>
 
 #### get\_ndims
 
@@ -89,7 +89,7 @@ def get_ndims() -> int
 
 Return number of index columns.
 
-<a id="tiledbsc.tiledbsoma/soma_indexed_dataframe.SOMAIndexedDataFrame.get_index_column_names"></a>
+<a id="tiledbsoma/soma_indexed_dataframe.SOMAIndexedDataFrame.get_index_column_names"></a>
 
 #### get\_index\_column\_names
 
@@ -99,7 +99,7 @@ def get_index_column_names() -> List[str]
 
 Return index (dimension) column names.
 
-<a id="tiledbsc.tiledbsoma/soma_indexed_dataframe.SOMAIndexedDataFrame.read"></a>
+<a id="tiledbsoma/soma_indexed_dataframe.SOMAIndexedDataFrame.read"></a>
 
 #### read
 
@@ -127,7 +127,7 @@ filter.
 **Indexing**: the `ids` parameter will support, per dimension: a list of values of the type
 of the indexed column.
 
-<a id="tiledbsc.tiledbsoma/soma_indexed_dataframe.SOMAIndexedDataFrame.read_all"></a>
+<a id="tiledbsoma/soma_indexed_dataframe.SOMAIndexedDataFrame.read_all"></a>
 
 #### read\_all
 
@@ -143,7 +143,7 @@ This is a convenience method around `read`. It iterates the return value from `r
 and returns a concatenation of all the record batches found. Its nominal use is to
 simply unit-test cases.
 
-<a id="tiledbsc.tiledbsoma/soma_indexed_dataframe.SOMAIndexedDataFrame.write"></a>
+<a id="tiledbsoma/soma_indexed_dataframe.SOMAIndexedDataFrame.write"></a>
 
 #### write
 
@@ -160,7 +160,7 @@ index values already present in the object are overwritten and new index values 
 - `values`: An Arrow.RecordBatch containing all columns, including the index columns. The
 schema for the values must match the schema for the `SOMAIndexedDataFrame`.
 
-<a id="tiledbsc.tiledbsoma/soma_indexed_dataframe.SOMAIndexedDataFrame.read_as_pandas"></a>
+<a id="tiledbsoma/soma_indexed_dataframe.SOMAIndexedDataFrame.read_as_pandas"></a>
 
 #### read\_as\_pandas
 
@@ -171,7 +171,7 @@ def read_as_pandas(attrs: Optional[Sequence[str]] = None,
 
 For `to_anndata`, as well as for any interactive use where the user wants a Pandas dataframe.
 
-<a id="tiledbsc.tiledbsoma/soma_indexed_dataframe.SOMAIndexedDataFrame.write_from_pandas"></a>
+<a id="tiledbsoma/soma_indexed_dataframe.SOMAIndexedDataFrame.write_from_pandas"></a>
 
 #### write\_from\_pandas
 

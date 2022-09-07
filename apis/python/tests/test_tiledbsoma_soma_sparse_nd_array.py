@@ -3,17 +3,17 @@
 import numpy as np
 import pyarrow as pa
 
-import tiledbsc.tiledbsoma
+import tiledbsoma
 
 
 def test_soma_sparse_nd_array_ok_no_storage():
-    arr = tiledbsc.tiledbsoma.SOMASparseNdArray(uri="/foo/bar")
+    arr = tiledbsoma.SOMASparseNdArray(uri="/foo/bar")
     assert arr.get_uri() == "/foo/bar"
     assert arr.get_name() == "bar"
 
 
 def test_soma_sparse_nd_array(tmp_path):
-    arr = tiledbsc.tiledbsoma.SOMASparseNdArray(uri=tmp_path.as_posix())
+    arr = tiledbsoma.SOMASparseNdArray(uri=tmp_path.as_posix())
 
     nr = 10
     nc = 20

@@ -1,7 +1,7 @@
 import numpy as np
 import pyarrow as pa
 
-import tiledbsc.tiledbsoma as t
+import tiledbsoma as t
 
 
 # ----------------------------------------------------------------

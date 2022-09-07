@@ -1,8 +1,8 @@
-<a id="tiledbsc.tiledbsoma/tiledb_object"></a>
+<a id="tiledbsoma/tiledb_object"></a>
 
-# tiledbsc.tiledbsoma/tiledb\_object
+# tiledbsoma/tiledb\_object
 
-<a id="tiledbsc.tiledbsoma/tiledb_object.TileDBObject"></a>
+<a id="tiledbsoma/tiledb_object.TileDBObject"></a>
 
 ## TileDBObject Objects
 
@@ -14,7 +14,7 @@ Base class for `TileDBArray` and `SOMACollection`.
 
 Manages tiledb_platform_config, context, etc. which are common to both.
 
-<a id="tiledbsc.tiledbsoma/tiledb_object.TileDBObject.__init__"></a>
+<a id="tiledbsoma/tiledb_object.TileDBObject.__init__"></a>
 
 #### \_\_init\_\_
 
@@ -22,7 +22,7 @@ Manages tiledb_platform_config, context, etc. which are common to both.
 def __init__(uri: str,
              name: Optional[str] = None,
              *,
-             parent: Optional["tiledbsc.tiledbsoma.SOMACollection"] = None,
+             parent: Optional["tiledbsoma.SOMACollection"] = None,
              tiledb_platform_config: Optional[TileDBPlatformConfig] = None,
              ctx: Optional[tiledb.Ctx] = None)
 ```
@@ -32,7 +32,7 @@ Initialization-handling shared between `TileDBArray` and `SOMACollection`.  Spec
 non-top-level objects. Note that the parent reference is solely for propagating options,
 ctx, display depth, etc.
 
-<a id="tiledbsc.tiledbsoma/tiledb_object.TileDBObject.__repr__"></a>
+<a id="tiledbsoma/tiledb_object.TileDBObject.__repr__"></a>
 
 #### \_\_repr\_\_
 
@@ -42,7 +42,7 @@ def __repr__() -> str
 
 Fallback string display. Will be overridden by any interesting subclasses.
 
-<a id="tiledbsc.tiledbsoma/tiledb_object.TileDBObject.exists"></a>
+<a id="tiledbsoma/tiledb_object.TileDBObject.exists"></a>
 
 #### exists
 

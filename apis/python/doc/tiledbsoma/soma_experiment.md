@@ -1,8 +1,8 @@
-<a id="tiledbsc.tiledbsoma/soma_experiment"></a>
+<a id="tiledbsoma/soma_experiment"></a>
 
-# tiledbsc.tiledbsoma/soma\_experiment
+# tiledbsoma/soma\_experiment
 
-<a id="tiledbsc.tiledbsoma/soma_experiment.SOMAExperiment"></a>
+<a id="tiledbsoma/soma_experiment.SOMAExperiment"></a>
 
 ## SOMAExperiment Objects
 
@@ -16,7 +16,7 @@ defined in this dataframe.
 
 `ms`: A collection of named measurements.
 
-<a id="tiledbsc.tiledbsoma/soma_experiment.SOMAExperiment.__init__"></a>
+<a id="tiledbsoma/soma_experiment.SOMAExperiment.__init__"></a>
 
 #### \_\_init\_\_
 
@@ -31,7 +31,7 @@ def __init__(uri: str,
 
 Also see the `TileDBObject` constructor.
 
-<a id="tiledbsc.tiledbsoma/soma_experiment.SOMAExperiment.create"></a>
+<a id="tiledbsoma/soma_experiment.SOMAExperiment.create"></a>
 
 #### create
 
@@ -41,7 +41,7 @@ def create() -> None
 
 Creates the data structure on disk/S3/cloud.
 
-<a id="tiledbsc.tiledbsoma/soma_experiment.SOMAExperiment.__getattr__"></a>
+<a id="tiledbsoma/soma_experiment.SOMAExperiment.__getattr__"></a>
 
 #### \_\_getattr\_\_
 
@@ -51,7 +51,7 @@ def __getattr__(name: str) -> Any
 
 Implements `experiment.obs` and `experiment.ms`.
 
-<a id="tiledbsc.tiledbsoma/soma_experiment.SOMAExperiment.constrain"></a>
+<a id="tiledbsoma/soma_experiment.SOMAExperiment.constrain"></a>
 
 #### constrain
 

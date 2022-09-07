@@ -1,15 +1,15 @@
 from typing import Any, Dict, Iterator
 
-# importing tiledbsc.tiledbsoma.TileDBObject leads to a circular reference as TileDBObject imports us. This
+# importing tiledbsoma.TileDBObject leads to a circular reference as TileDBObject imports us. This
 # is, in turn, because this class requires a back-link to the underlying object -- hence,
 # bidirectional references.
-import tiledbsc.tiledbsoma
+import tiledbsoma
 
 
 class SOMAMetadataMapping:
-    _underlying: "tiledbsc.tiledbsoma.TileDBObject"
+    _underlying: "tiledbsoma.TileDBObject"
 
-    def __init__(self, underlying: "tiledbsc.tiledbsoma.TileDBObject"):
+    def __init__(self, underlying: "tiledbsoma.TileDBObject"):
         self._underlying = underlying
 
     def get(self, key: str) -> Any:

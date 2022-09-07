@@ -1,11 +1,11 @@
 import numpy as np
 import pyarrow as pa
 
-import tiledbsc.tiledbsoma
+import tiledbsoma
 
 
 def test_soma_dense_nd_array_ok_no_storage():
-    arr = tiledbsc.tiledbsoma.SOMASparseNdArray(uri="/foo/bar")
+    arr = tiledbsoma.SOMASparseNdArray(uri="/foo/bar")
     assert arr.get_uri() == "/foo/bar"
     assert arr.get_name() == "bar"
 
@@ -13,7 +13,7 @@ def test_soma_dense_nd_array_ok_no_storage():
 def test_soma_dense_nd_array(tmp_path):
     nr = 10
     nc = 20
-    a = tiledbsc.tiledbsoma.SOMADenseNdArray(tmp_path.as_posix())
+    a = tiledbsoma.SOMADenseNdArray(tmp_path.as_posix())
 
     a.create(pa.float64(), [nr, nc])
 

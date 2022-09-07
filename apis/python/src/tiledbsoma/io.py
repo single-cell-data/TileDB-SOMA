@@ -3,8 +3,8 @@ from typing import Callable
 import anndata as ad
 import numpy as np
 
-import tiledbsc.tiledbsoma.util_ann as util_ann
-from tiledbsc.tiledbsoma import (
+import tiledbsoma.util_ann as util_ann
+from tiledbsoma import (
     SOMADenseNdArray,
     SOMAExperiment,
     SOMAMeasurement,

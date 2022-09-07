@@ -5,8 +5,8 @@ import anndata
 import pytest
 import tiledb
 
-import tiledbsc.tiledbsoma
-import tiledbsc.tiledbsoma.io
+import tiledbsoma
+import tiledbsoma.io
 
 HERE = Path(__file__).parent
 
@@ -33,8 +33,8 @@ def test_import_anndata(adata):
     orig = adata
 
     # Ingest
-    exp = tiledbsc.tiledbsoma.SOMAExperiment(output_path)
-    tiledbsc.tiledbsoma.io.from_anndata(exp, orig, "mRNA")
+    exp = tiledbsoma.SOMAExperiment(output_path)
+    tiledbsoma.io.from_anndata(exp, orig, "mRNA")
 
     # Structure:
     # pbmc-small SOMAExperiment:
@@ -57,16 +57,13 @@ def test_import_anndata(adata):
     #         data SOMASparseNdArray (80, 230)
 
     with tiledb.Group(output_path) as G:
-        assert (
-            G.meta[tiledbsc.tiledbsoma.util.SOMA_OBJECT_TYPE_METADATA_KEY]
-            == "SOMAExperiment"
-        )
+        assert G.meta[tiledbsoma.util.SOMA_OBJECT_TYPE_METADATA_KEY] == "SOMAExperiment"
 
     # Check obs
     df = exp.obs.read_as_pandas_all()
     assert sorted(df.columns.to_list()) == sorted(orig.obs_keys() + ["obs_id"])
     assert (
-        exp.obs.metadata.get(tiledbsc.tiledbsoma.util.SOMA_OBJECT_TYPE_METADATA_KEY)
+        exp.obs.metadata.get(tiledbsoma.util.SOMA_OBJECT_TYPE_METADATA_KEY)
         == "SOMADataFrame"
     )
     assert sorted(df["obs_id"]) == sorted(list(orig.obs_names))
@@ -79,7 +76,7 @@ def test_import_anndata(adata):
     #        keys = list(df.keys())
     #        assert keys == ["value", "obs_id", "var_id"]
     #        assert A.ndim == 2
-    #        assert A.meta[tiledbsc.tiledbsoma.util.SOMA_OBJECT_TYPE_METADATA_KEY] == "AssayMatrix"
+    #        assert A.meta[tiledbsoma.util.SOMA_OBJECT_TYPE_METADATA_KEY] == "AssayMatrix"
     # Convenience accessors
     #    assert exp.X["data"].shape() == exp.X.data.shape()
 
@@ -89,7 +86,7 @@ def test_import_anndata(adata):
     #        assert df.columns.to_list() == ["obs_id", "var_id", "value"]
     #        # verify sparsity of raw data
     #        assert df.shape[0] == orig.raw.X.nnz
-    #        assert A.meta[tiledbsc.tiledbsoma.util.SOMA_OBJECT_TYPE_METADATA_KEY] == "AssayMatrix"
+    #        assert A.meta[tiledbsoma.util.SOMA_OBJECT_TYPE_METADATA_KEY] == "AssayMatrix"
 
     # TODO: PORT FROM V0 TO V1
 
@@ -98,7 +95,7 @@ def test_import_anndata(adata):
     #        df = A.df[:]
     #        assert df.columns.to_list() == orig.var_keys()
     #        assert (
-    #            A.meta[tiledbsc.tiledbsoma.util.SOMA_OBJECT_TYPE_METADATA_KEY] == "AnnotationDataFrame"
+    #            A.meta[tiledbsoma.util.SOMA_OBJECT_TYPE_METADATA_KEY] == "AnnotationDataFrame"
     #        )
     #    assert sorted(exp.var.ids()) == sorted(list(orig.var_names))
     #    # Convenience accessors
@@ -115,7 +112,7 @@ def test_import_anndata(adata):
     #            assert df.shape[0] == orig.obsm[key].shape[0]
     #            assert exp.obsm[key].shape() == orig.obsm[key].shape
     #            assert (
-    #                A.meta[tiledbsc.tiledbsoma.util.SOMA_OBJECT_TYPE_METADATA_KEY]
+    #                A.meta[tiledbsoma.util.SOMA_OBJECT_TYPE_METADATA_KEY]
     #                == "AnnotationMatrix"
     #            )
     #    # Convenience accessors: exp.obsm.X_pca <-> exp.obsm['X_pca']
@@ -129,7 +126,7 @@ def test_import_anndata(adata):
     #            assert df.shape[0] == orig.varm[key].shape[0]
     #            assert exp.varm[key].shape() == orig.varm[key].shape
     #            assert (
-    #                A.meta[tiledbsc.tiledbsoma.util.SOMA_OBJECT_TYPE_METADATA_KEY]
+    #                A.meta[tiledbsoma.util.SOMA_OBJECT_TYPE_METADATA_KEY]
     #                == "AnnotationMatrix"
     #            )
     #    # Convenience accessors:
@@ -149,7 +146,7 @@ def test_import_anndata(adata):
     #            shape = exp.obsp[key].df().shape
     #            assert shape[0] == orig.obsp[key].nnz
     #            assert shape[1] == 1
-    #            assert A.meta[tiledbsc.tiledbsoma.util.SOMA_OBJECT_TYPE_METADATA_KEY] == "AssayMatrix"
+    #            assert A.meta[tiledbsoma.util.SOMA_OBJECT_TYPE_METADATA_KEY] == "AssayMatrix"
     #    # Convenience accessors:
     #    for key in exp.obsp.keys():
     #        assert getattr(exp.obsp, key).shape() == exp.obsp[key].shape()
@@ -166,10 +163,10 @@ def test_import_anndata(adata):
 #    orig = adata
 #
 #    # Ingest
-#    exp = tiledbsc.tiledbsoma.SOMAExperiment(output_path)
-#    tiledbsc.tiledbsoma.io.from_anndata(exp, orig)
+#    exp = tiledbsoma.SOMAExperiment(output_path)
+#    tiledbsoma.io.from_anndata(exp, orig)
 #
-#    readback = tiledbsc.tiledbsoma.io.to_anndata(exp)
+#    readback = tiledbsoma.io.to_anndata(exp)
 #
 #    assert readback.obs.shape == orig.obs.shape
 #    assert readback.var.shape == orig.var.shape

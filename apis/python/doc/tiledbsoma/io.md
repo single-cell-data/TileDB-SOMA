@@ -1,8 +1,8 @@
-<a id="tiledbsc.tiledbsoma/io"></a>
+<a id="tiledbsoma/io"></a>
 
-# tiledbsc.tiledbsoma/io
+# tiledbsoma/io
 
-<a id="tiledbsc.tiledbsoma/io.from_h5ad"></a>
+<a id="tiledbsoma/io.from_h5ad"></a>
 
 #### from\_h5ad
 
@@ -13,7 +13,7 @@ def from_h5ad(experiment: SOMAExperiment, input_path: Path,
 
 Reads an .h5ad file and writes to a TileDB group structure.
 
-<a id="tiledbsc.tiledbsoma/io.from_anndata"></a>
+<a id="tiledbsoma/io.from_anndata"></a>
 
 #### from\_anndata
 
@@ -24,7 +24,7 @@ def from_anndata(experiment: SOMAExperiment, anndata: ad.AnnData,
 
 Top-level writer method for creating a TileDB group for a `SOMAExperiment` object.
 
-<a id="tiledbsc.tiledbsoma/io.to_h5ad"></a>
+<a id="tiledbsoma/io.to_h5ad"></a>
 
 #### to\_h5ad
 
@@ -36,7 +36,7 @@ def to_h5ad(experiment: SOMAExperiment, h5ad_path: Path,
 Converts the experiment group to anndata format and writes it to the specified .h5ad file.
 As of 2022-05-05 this is an incomplete prototype.
 
-<a id="tiledbsc.tiledbsoma/io.to_anndata"></a>
+<a id="tiledbsoma/io.to_anndata"></a>
 
 #### to\_anndata
 

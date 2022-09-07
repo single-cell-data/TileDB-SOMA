@@ -1,8 +1,8 @@
-<a id="tiledbsc.tiledbsoma/util_ann"></a>
+<a id="tiledbsoma/util_ann"></a>
 
-# tiledbsc.tiledbsoma/util\_ann
+# tiledbsoma/util\_ann
 
-<a id="tiledbsc.tiledbsoma/util_ann.describe_ann_file"></a>
+<a id="tiledbsoma/util_ann.describe_ann_file"></a>
 
 #### describe\_ann\_file
 

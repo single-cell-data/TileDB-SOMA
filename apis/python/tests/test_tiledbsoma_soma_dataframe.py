@@ -1,6 +1,6 @@
 import pyarrow as pa
 
-import tiledbsc.tiledbsoma as t
+import tiledbsoma as t
 
 
 def test_soma_dataframe_non_indexed(tmp_path):

@@ -1,8 +1,8 @@
-<a id="tiledbsc.tiledbsoma/soma_sparse_nd_array"></a>
+<a id="tiledbsoma/soma_sparse_nd_array"></a>
 
-# tiledbsc.tiledbsoma/soma\_sparse\_nd\_array
+# tiledbsoma/soma\_sparse\_nd\_array
 
-<a id="tiledbsc.tiledbsoma/soma_sparse_nd_array.SOMASparseNdArray"></a>
+<a id="tiledbsoma/soma_sparse_nd_array.SOMASparseNdArray"></a>
 
 ## SOMASparseNdArray Objects
 
@@ -12,7 +12,7 @@ class SOMASparseNdArray(TileDBArray)
 
 Represents ``X`` and others.
 
-<a id="tiledbsc.tiledbsoma/soma_sparse_nd_array.SOMASparseNdArray.__init__"></a>
+<a id="tiledbsoma/soma_sparse_nd_array.SOMASparseNdArray.__init__"></a>
 
 #### \_\_init\_\_
 
@@ -25,7 +25,7 @@ def __init__(uri: str,
 
 Also see the `TileDBObject` constructor.
 
-<a id="tiledbsc.tiledbsoma/soma_sparse_nd_array.SOMASparseNdArray.create"></a>
+<a id="tiledbsoma/soma_sparse_nd_array.SOMASparseNdArray.create"></a>
 
 #### create
 
@@ -42,7 +42,7 @@ unsupported, an error will be raised.
 - `shape`: the length of each domain as a list, e.g., [100, 10]. All lengths must be in
 the uint64 range.
 
-<a id="tiledbsc.tiledbsoma/soma_sparse_nd_array.SOMASparseNdArray.__repr__"></a>
+<a id="tiledbsoma/soma_sparse_nd_array.SOMASparseNdArray.__repr__"></a>
 
 #### \_\_repr\_\_
 
@@ -52,7 +52,7 @@ def __repr__() -> str
 
 Default display of `SOMASparseNdArray`.
 
-<a id="tiledbsc.tiledbsoma/soma_sparse_nd_array.SOMASparseNdArray.get_shape"></a>
+<a id="tiledbsoma/soma_sparse_nd_array.SOMASparseNdArray.get_shape"></a>
 
 #### get\_shape
 
@@ -62,7 +62,7 @@ def get_shape() -> NTuple
 
 Return length of each dimension, always a list of length ``ndims``
 
-<a id="tiledbsc.tiledbsoma/soma_sparse_nd_array.SOMASparseNdArray.get_ndims"></a>
+<a id="tiledbsoma/soma_sparse_nd_array.SOMASparseNdArray.get_ndims"></a>
 
 #### get\_ndims
 
@@ -72,7 +72,7 @@ def get_ndims() -> int
 
 Return number of index columns
 
-<a id="tiledbsc.tiledbsoma/soma_sparse_nd_array.SOMASparseNdArray.get_is_sparse"></a>
+<a id="tiledbsoma/soma_sparse_nd_array.SOMASparseNdArray.get_is_sparse"></a>
 
 #### get\_is\_sparse
 
@@ -82,7 +82,7 @@ def get_is_sparse() -> bool
 
 Returns ``True``.
 
-<a id="tiledbsc.tiledbsoma/soma_sparse_nd_array.SOMASparseNdArray.read"></a>
+<a id="tiledbsoma/soma_sparse_nd_array.SOMASparseNdArray.read"></a>
 
 #### read
 
@@ -95,7 +95,7 @@ def read(*,
 
 TODO: comment
 
-<a id="tiledbsc.tiledbsoma/soma_sparse_nd_array.SOMASparseNdArray.read_as_pandas"></a>
+<a id="tiledbsoma/soma_sparse_nd_array.SOMASparseNdArray.read_as_pandas"></a>
 
 #### read\_as\_pandas
 
@@ -108,7 +108,7 @@ def read_as_pandas(*,
 
 TODO: comment
 
-<a id="tiledbsc.tiledbsoma/soma_sparse_nd_array.SOMASparseNdArray.read_all"></a>
+<a id="tiledbsoma/soma_sparse_nd_array.SOMASparseNdArray.read_all"></a>
 
 #### read\_all
 
@@ -123,7 +123,7 @@ This is a convenience method around `read`. It iterates the return value from `r
 and returns a concatenation of all the record batches found. Its nominal use is to
 simply unit-test cases.
 
-<a id="tiledbsc.tiledbsoma/soma_sparse_nd_array.SOMASparseNdArray.read_as_pandas_all"></a>
+<a id="tiledbsoma/soma_sparse_nd_array.SOMASparseNdArray.read_as_pandas_all"></a>
 
 #### read\_as\_pandas\_all
 
@@ -138,7 +138,7 @@ This is a convenience method around `read_as_pandas`. It iterates the return val
 `read_as_pandas` and returns a concatenation of all the record batches found. Its nominal
 use is to simply unit-test cases.
 
-<a id="tiledbsc.tiledbsoma/soma_sparse_nd_array.SOMASparseNdArray.write"></a>
+<a id="tiledbsoma/soma_sparse_nd_array.SOMASparseNdArray.write"></a>
 
 #### write
 
@@ -155,7 +155,7 @@ values already present in the object are overwritten and new index values are ad
 - `values`: an `Arrow.SparseTensor` containing values to be written. The type of elements in `values`
 must match the type of the `SOMASparseNdArray`.
 
-<a id="tiledbsc.tiledbsoma/soma_sparse_nd_array.SOMASparseNdArray.from_matrix"></a>
+<a id="tiledbsoma/soma_sparse_nd_array.SOMASparseNdArray.from_matrix"></a>
 
 #### from\_matrix
 

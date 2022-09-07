@@ -1,8 +1,8 @@
-<a id="tiledbsc.tiledbsoma/soma_measurement"></a>
+<a id="tiledbsoma/soma_measurement"></a>
 
-# tiledbsc.tiledbsoma/soma\_measurement
+# tiledbsoma/soma\_measurement
 
-<a id="tiledbsc.tiledbsoma/soma_measurement.SOMAMeasurement"></a>
+<a id="tiledbsoma/soma_measurement.SOMAMeasurement"></a>
 
 ## SOMAMeasurement Objects
 
@@ -44,7 +44,7 @@ A collection of dense matrices containing annotations of each `var` row. Has the
 A collection of sparse matrices containing pairwise annotations of each `var` row. Indexed with
 `[varid_1, varid_2]`
 
-<a id="tiledbsc.tiledbsoma/soma_measurement.SOMAMeasurement.__init__"></a>
+<a id="tiledbsoma/soma_measurement.SOMAMeasurement.__init__"></a>
 
 #### \_\_init\_\_
 
@@ -59,7 +59,7 @@ def __init__(uri: str,
 
 Also see the `TileDBObject` constructor.
 
-<a id="tiledbsc.tiledbsoma/soma_measurement.SOMAMeasurement.create"></a>
+<a id="tiledbsoma/soma_measurement.SOMAMeasurement.create"></a>
 
 #### create
 
@@ -69,7 +69,7 @@ def create() -> None
 
 Creates the data structure on disk/S3/cloud.
 
-<a id="tiledbsc.tiledbsoma/soma_measurement.SOMAMeasurement.__getattr__"></a>
+<a id="tiledbsoma/soma_measurement.SOMAMeasurement.__getattr__"></a>
 
 #### \_\_getattr\_\_
 
@@ -79,7 +79,7 @@ def __getattr__(name: str) -> Any
 
 Implements `experiment.var`, `experiment.X`, etc.
 
-<a id="tiledbsc.tiledbsoma/soma_measurement.SOMAMeasurement.constrain"></a>
+<a id="tiledbsoma/soma_measurement.SOMAMeasurement.constrain"></a>
 
 #### constrain
 

@@ -1,8 +1,8 @@
-<a id="tiledbsc.tiledbsoma/util_arrow"></a>
+<a id="tiledbsoma/util_arrow"></a>
 
-# tiledbsc.tiledbsoma/util\_arrow
+# tiledbsoma/util\_arrow
 
-<a id="tiledbsc.tiledbsoma/util_arrow.tiledb_type_from_arrow_type"></a>
+<a id="tiledbsoma/util_arrow.tiledb_type_from_arrow_type"></a>
 
 #### tiledb\_type\_from\_arrow\_type
 
@@ -12,7 +12,7 @@ def tiledb_type_from_arrow_type(t: pa.DataType) -> Union[type, np.dtype]
 
 Building block for Arrow-to-TileDB schema translation.
 
-<a id="tiledbsc.tiledbsoma/util_arrow.get_arrow_type_from_tiledb_dtype"></a>
+<a id="tiledbsoma/util_arrow.get_arrow_type_from_tiledb_dtype"></a>
 
 #### get\_arrow\_type\_from\_tiledb\_dtype
 
@@ -22,7 +22,7 @@ def get_arrow_type_from_tiledb_dtype(tiledb_dtype: np.dtype) -> pa.DataType
 
 TODO: COMMENT
 
-<a id="tiledbsc.tiledbsoma/util_arrow.get_arrow_schema_from_tiledb_uri"></a>
+<a id="tiledbsoma/util_arrow.get_arrow_schema_from_tiledb_uri"></a>
 
 #### get\_arrow\_schema\_from\_tiledb\_uri
 
@@ -34,7 +34,7 @@ def get_arrow_schema_from_tiledb_uri(tiledb_uri: str,
 
 TODO: COMMENT
 
-<a id="tiledbsc.tiledbsoma/util_arrow.ascii_to_unicode_pyarrow_readback"></a>
+<a id="tiledbsoma/util_arrow.ascii_to_unicode_pyarrow_readback"></a>
 
 #### ascii\_to\_unicode\_pyarrow\_readback
 
@@ -45,7 +45,7 @@ def ascii_to_unicode_pyarrow_readback(
 
 Implements the 'decode on read' part of our ASCII/Unicode logic
 
-<a id="tiledbsc.tiledbsoma/util_arrow.concat_batches"></a>
+<a id="tiledbsoma/util_arrow.concat_batches"></a>
 
 #### concat\_batches
 

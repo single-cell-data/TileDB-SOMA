@@ -1,8 +1,8 @@
-<a id="tiledbsc.tiledbsoma/util_pandas"></a>
+<a id="tiledbsoma/util_pandas"></a>
 
-# tiledbsc.tiledbsoma/util\_pandas
+# tiledbsoma/util\_pandas
 
-<a id="tiledbsc.tiledbsoma/util_pandas.ascii_to_unicode_pandas_readback"></a>
+<a id="tiledbsoma/util_pandas.ascii_to_unicode_pandas_readback"></a>
 
 #### ascii\_to\_unicode\_pandas\_readback
 

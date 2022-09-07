@@ -4,7 +4,7 @@ from typing import Optional, Union
 
 import tiledb
 
-import tiledbsc
+import tiledbsoma
 
 from . import util
 from .soma_metadata_mapping import SOMAMetadataMapping
@@ -31,7 +31,7 @@ class TileDBObject(ABC):
         name: Optional[str] = None,
         *,
         # Non-top-level objects can have a parent to propgate context, depth, etc.
-        parent: Optional["tiledbsc.tiledbsoma.SOMACollection"] = None,
+        parent: Optional["tiledbsoma.SOMACollection"] = None,
         # Top-level objects should specify these:
         tiledb_platform_config: Optional[TileDBPlatformConfig] = None,
         ctx: Optional[tiledb.Ctx] = None,

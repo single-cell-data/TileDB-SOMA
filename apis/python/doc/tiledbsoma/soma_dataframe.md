@@ -1,8 +1,8 @@
-<a id="tiledbsc.tiledbsoma/soma_dataframe"></a>
+<a id="tiledbsoma/soma_dataframe"></a>
 
-# tiledbsc.tiledbsoma/soma\_dataframe
+# tiledbsoma/soma\_dataframe
 
-<a id="tiledbsc.tiledbsoma/soma_dataframe.SOMADataFrame"></a>
+<a id="tiledbsoma/soma_dataframe.SOMADataFrame"></a>
 
 ## SOMADataFrame Objects
 
@@ -16,7 +16,7 @@ A `SOMADataFrame` contains a "pseudo-column" called `soma_rowid`, of type uint64
 [0,num_rows).  The `soma_rowid` pseudo-column contains a unique value for each row in the
 `SOMADataFrame`, and is intended to act as a join key for other objects, such as a `SOMASparseNdArray`.
 
-<a id="tiledbsc.tiledbsoma/soma_dataframe.SOMADataFrame.__init__"></a>
+<a id="tiledbsoma/soma_dataframe.SOMADataFrame.__init__"></a>
 
 #### \_\_init\_\_
 
@@ -29,7 +29,7 @@ def __init__(uri: str,
 
 See also the `TileDBOject` constructor.
 
-<a id="tiledbsc.tiledbsoma/soma_dataframe.SOMADataFrame.create"></a>
+<a id="tiledbsoma/soma_dataframe.SOMADataFrame.create"></a>
 
 #### create
 
@@ -44,7 +44,7 @@ columns. The column name ``soma_rowid`` is reserved for the pseudo-column of the
 If the schema includes types unsupported by the SOMA implementation, an error will be
 raised.
 
-<a id="tiledbsc.tiledbsoma/soma_dataframe.SOMADataFrame.__repr__"></a>
+<a id="tiledbsoma/soma_dataframe.SOMADataFrame.__repr__"></a>
 
 #### \_\_repr\_\_
 
@@ -54,7 +54,7 @@ def __repr__() -> str
 
 Default display of `SOMADataFrame`.
 
-<a id="tiledbsc.tiledbsoma/soma_dataframe.SOMADataFrame.keys"></a>
+<a id="tiledbsoma/soma_dataframe.SOMADataFrame.keys"></a>
 
 #### keys
 
@@ -65,7 +65,7 @@ def keys() -> List[str]
 Returns the names of the columns when read back as a dataframe.
 TODO: make it clear whether or not this will read back `soma_rowid` / `soma_joinid`.
 
-<a id="tiledbsc.tiledbsoma/soma_dataframe.SOMADataFrame.get_shape"></a>
+<a id="tiledbsoma/soma_dataframe.SOMADataFrame.get_shape"></a>
 
 #### get\_shape
 
@@ -75,7 +75,7 @@ def get_shape() -> NTuple
 
 Return length of each dimension, always a list of length ``ndims``.
 
-<a id="tiledbsc.tiledbsoma/soma_dataframe.SOMADataFrame.get_ndims"></a>
+<a id="tiledbsoma/soma_dataframe.SOMADataFrame.get_ndims"></a>
 
 #### get\_ndims
 
@@ -85,7 +85,7 @@ def get_ndims() -> int
 
 Return number of index columns.
 
-<a id="tiledbsc.tiledbsoma/soma_dataframe.SOMADataFrame.read"></a>
+<a id="tiledbsoma/soma_dataframe.SOMADataFrame.read"></a>
 
 #### read
 
@@ -113,7 +113,7 @@ filter.
 **Indexing**: the `ids` parameter will support, per dimension: a row offset (uint), a
 row-offset range (slice), or a list of both.
 
-<a id="tiledbsc.tiledbsoma/soma_dataframe.SOMADataFrame.read_all"></a>
+<a id="tiledbsoma/soma_dataframe.SOMADataFrame.read_all"></a>
 
 #### read\_all
 
@@ -129,7 +129,7 @@ This is a convenience method around `read`. It iterates the return value from `r
 and returns a concatenation of all the record batches found. Its nominal use is to
 simply unit-test cases.
 
-<a id="tiledbsc.tiledbsoma/soma_dataframe.SOMADataFrame.write"></a>
+<a id="tiledbsoma/soma_dataframe.SOMADataFrame.write"></a>
 
 #### write
 
@@ -147,7 +147,7 @@ schema for the values must match the schema for the `SOMADataFrame`.
 The ``values`` Arrow RecordBatch must contain a ``soma_rowid`` (uint64) column, indicating
 which rows are being written.
 
-<a id="tiledbsc.tiledbsoma/soma_dataframe.SOMADataFrame.read_as_pandas"></a>
+<a id="tiledbsoma/soma_dataframe.SOMADataFrame.read_as_pandas"></a>
 
 #### read\_as\_pandas
 
@@ -167,7 +167,7 @@ read. See also `read_as_pandas_all` for a convenience wrapper.
 
 TODO: params-list
 
-<a id="tiledbsc.tiledbsoma/soma_dataframe.SOMADataFrame.read_as_pandas_all"></a>
+<a id="tiledbsoma/soma_dataframe.SOMADataFrame.read_as_pandas_all"></a>
 
 #### read\_as\_pandas\_all
 
@@ -184,7 +184,7 @@ Reads from SOMA storage into memory.  Iterates over batches from `read_as_pandas
 the output into a single dataframe.  Convenient for unit-test use; also, handy whenever
 you're certain that the data being queried can be read entirely into memory.
 
-<a id="tiledbsc.tiledbsoma/soma_dataframe.SOMADataFrame.write_from_pandas"></a>
+<a id="tiledbsoma/soma_dataframe.SOMADataFrame.write_from_pandas"></a>
 
 #### write\_from\_pandas
 

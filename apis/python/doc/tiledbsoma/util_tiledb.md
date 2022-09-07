@@ -1,8 +1,8 @@
-<a id="tiledbsc.tiledbsoma/util_tiledb"></a>
+<a id="tiledbsoma/util_tiledb"></a>
 
-# tiledbsc.tiledbsoma/util\_tiledb
+# tiledbsoma/util\_tiledb
 
-<a id="tiledbsc.tiledbsoma/util_tiledb.tiledb_result_order_from_soma_result_order_non_indexed"></a>
+<a id="tiledbsoma/util_tiledb.tiledb_result_order_from_soma_result_order_non_indexed"></a>
 
 #### tiledb\_result\_order\_from\_soma\_result\_order\_non\_indexed
 
@@ -13,7 +13,7 @@ def tiledb_result_order_from_soma_result_order_non_indexed(
 
 Maps SOMA-spec `result_order` syntax to TileDB-specific syntax, for non-indexed dataframes.
 
-<a id="tiledbsc.tiledbsoma/util_tiledb.tiledb_result_order_from_soma_result_order_indexed"></a>
+<a id="tiledbsoma/util_tiledb.tiledb_result_order_from_soma_result_order_indexed"></a>
 
 #### tiledb\_result\_order\_from\_soma\_result\_order\_indexed
 
@@ -24,7 +24,7 @@ def tiledb_result_order_from_soma_result_order_indexed(
 
 Maps SOMA-spec `result_order` syntax to TileDB-specific syntax, for indexed dataframes.
 
-<a id="tiledbsc.tiledbsoma/util_tiledb.to_tiledb_supported_dtype"></a>
+<a id="tiledbsoma/util_tiledb.to_tiledb_supported_dtype"></a>
 
 #### to\_tiledb\_supported\_dtype
 
@@ -34,7 +34,7 @@ def to_tiledb_supported_dtype(dtype: np.dtype) -> np.dtype
 
 A handful of types are cast into the TileDB type system.
 
-<a id="tiledbsc.tiledbsoma/util_tiledb.to_tiledb_supported_array_type"></a>
+<a id="tiledbsoma/util_tiledb.to_tiledb_supported_array_type"></a>
 
 #### to\_tiledb\_supported\_array\_type
 

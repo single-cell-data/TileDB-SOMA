@@ -3,8 +3,8 @@ from typing import Optional, Sequence
 import pyarrow as pa
 import tiledb
 
-import tiledbsc
-import tiledbsc.tiledbsoma.util_arrow as util_arrow
+import tiledbsoma
+import tiledbsoma.util_arrow as util_arrow
 
 from .tiledb_object import TileDBObject
 
@@ -21,7 +21,7 @@ class TileDBArray(TileDBObject):
         uri: str,
         *,
         name: Optional[str] = None,
-        parent: Optional["tiledbsc.tiledbsoma.SOMACollection"] = None,
+        parent: Optional["tiledbsoma.SOMACollection"] = None,
     ):
         """
         See the `TileDBObject` constructor.

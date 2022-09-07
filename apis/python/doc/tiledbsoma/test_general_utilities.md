@@ -1,4 +1,4 @@
-<a id="tiledbsc.tiledbsoma/test_general_utilities"></a>
+<a id="tiledbsoma/test_general_utilities"></a>
 
-# tiledbsc.tiledbsoma/test\_general\_utilities
+# tiledbsoma/test\_general\_utilities
 

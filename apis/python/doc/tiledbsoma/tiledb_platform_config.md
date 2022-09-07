@@ -1,8 +1,8 @@
-<a id="tiledbsc.tiledbsoma/tiledb_platform_config"></a>
+<a id="tiledbsoma/tiledb_platform_config"></a>
 
-# tiledbsc.tiledbsoma/tiledb\_platform\_config
+# tiledbsoma/tiledb\_platform\_config
 
-<a id="tiledbsc.tiledbsoma/tiledb_platform_config.TileDBPlatformConfig"></a>
+<a id="tiledbsoma/tiledb_platform_config.TileDBPlatformConfig"></a>
 
 ## TileDBPlatformConfig Objects
 

@@ -1,8 +1,8 @@
-<a id="tiledbsc.tiledbsoma/soma_metadata_mapping"></a>
+<a id="tiledbsoma/soma_metadata_mapping"></a>
 
-# tiledbsc.tiledbsoma/soma\_metadata\_mapping
+# tiledbsoma/soma\_metadata\_mapping
 
-<a id="tiledbsc.tiledbsoma/soma_metadata_mapping.SOMAMetadataMapping"></a>
+<a id="tiledbsoma/soma_metadata_mapping.SOMAMetadataMapping"></a>
 
 ## SOMAMetadataMapping Objects
 
@@ -10,7 +10,7 @@
 class SOMAMetadataMapping()
 ```
 
-<a id="tiledbsc.tiledbsoma/soma_metadata_mapping.SOMAMetadataMapping.get"></a>
+<a id="tiledbsoma/soma_metadata_mapping.SOMAMetadataMapping.get"></a>
 
 #### get
 
@@ -20,7 +20,7 @@ def get(key: str) -> Any
 
 Get the value associated with the key.
 
-<a id="tiledbsc.tiledbsoma/soma_metadata_mapping.SOMAMetadataMapping.has"></a>
+<a id="tiledbsoma/soma_metadata_mapping.SOMAMetadataMapping.has"></a>
 
 #### has
 
@@ -30,7 +30,7 @@ def has(key: str) -> bool
 
 Test for key existence.
 
-<a id="tiledbsc.tiledbsoma/soma_metadata_mapping.SOMAMetadataMapping.set"></a>
+<a id="tiledbsoma/soma_metadata_mapping.SOMAMetadataMapping.set"></a>
 
 #### set
 
@@ -40,7 +40,7 @@ def set(key: str, value: Any) -> None
 
 Set the value associated with the key.
 
-<a id="tiledbsc.tiledbsoma/soma_metadata_mapping.SOMAMetadataMapping.__delete__"></a>
+<a id="tiledbsoma/soma_metadata_mapping.SOMAMetadataMapping.__delete__"></a>
 
 #### \_\_delete\_\_
 
@@ -50,7 +50,7 @@ def __delete__(key: str) -> None
 
 Remove the key/value from the collection.
 
-<a id="tiledbsc.tiledbsoma/soma_metadata_mapping.SOMAMetadataMapping.__iter__"></a>
+<a id="tiledbsoma/soma_metadata_mapping.SOMAMetadataMapping.__iter__"></a>
 
 #### \_\_iter\_\_
 
@@ -60,7 +60,7 @@ def __iter__() -> Iterator[Any]
 
 Iterate over the collection.
 
-<a id="tiledbsc.tiledbsoma/soma_metadata_mapping.SOMAMetadataMapping.__len__"></a>
+<a id="tiledbsoma/soma_metadata_mapping.SOMAMetadataMapping.__len__"></a>
 
 #### \_\_len\_\_
 

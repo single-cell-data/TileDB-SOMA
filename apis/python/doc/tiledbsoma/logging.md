@@ -1,8 +1,8 @@
-<a id="tiledbsc.tiledbsoma/logging"></a>
+<a id="tiledbsoma/logging"></a>
 
-# tiledbsc.tiledbsoma/logging
+# tiledbsoma/logging
 
-<a id="tiledbsc.tiledbsoma/logging.warning"></a>
+<a id="tiledbsoma/logging.warning"></a>
 
 #### warning
 
@@ -10,10 +10,10 @@
 def warning() -> None
 ```
 
-Sets `tiledbsc.tiledbsoma.logging` to a WARNING level. Use `tiledbsc.tiledbsoma.logging.info()` in notebooks to suppress
+Sets `tiledbsoma.logging` to a WARNING level. Use `tiledbsoma.logging.info()` in notebooks to suppress
 progress indicators for data ingestion.
 
-<a id="tiledbsc.tiledbsoma/logging.info"></a>
+<a id="tiledbsoma/logging.info"></a>
 
 #### info
 
@@ -21,10 +21,10 @@ progress indicators for data ingestion.
 def info() -> None
 ```
 
-Sets `tiledbsc.tiledbsoma.logging` to an INFO level. Use `tiledbsc.tiledbsoma.logging.info()` in notebooks to see
+Sets `tiledbsoma.logging` to an INFO level. Use `tiledbsoma.logging.info()` in notebooks to see
 progress indicators for data ingestion.
 
-<a id="tiledbsc.tiledbsoma/logging.debug"></a>
+<a id="tiledbsoma/logging.debug"></a>
 
 #### debug
 
@@ -32,10 +32,10 @@ progress indicators for data ingestion.
 def debug() -> None
 ```
 
-Sets `tiledbsc.tiledbsoma.logging` to an DEBUG level. Use `tiledbsc.tiledbsoma.logging.debug()` in notebooks to see more
+Sets `tiledbsoma.logging` to an DEBUG level. Use `tiledbsoma.logging.debug()` in notebooks to see more
 detailed progress indicators for data ingestion.
 
-<a id="tiledbsc.tiledbsoma/logging.log_io"></a>
+<a id="tiledbsoma/logging.log_io"></a>
 
 #### log\_io
 

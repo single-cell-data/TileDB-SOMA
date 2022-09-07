@@ -1,8 +1,8 @@
-<a id="tiledbsc.tiledbsoma/util"></a>
+<a id="tiledbsoma/util"></a>
 
-# tiledbsc.tiledbsoma/util
+# tiledbsoma/util
 
-<a id="tiledbsc.tiledbsoma/util.get_start_stamp"></a>
+<a id="tiledbsoma/util.get_start_stamp"></a>
 
 #### get\_start\_stamp
 
@@ -13,7 +13,7 @@ def get_start_stamp() -> float
 Returns information about start time of an event. Nominally float seconds since the epoch,
 but articulated here as being compatible with the format_elapsed function.
 
-<a id="tiledbsc.tiledbsoma/util.format_elapsed"></a>
+<a id="tiledbsoma/util.format_elapsed"></a>
 
 #### format\_elapsed
 
@@ -24,7 +24,7 @@ def format_elapsed(start_stamp: float, message: str) -> str
 Returns the message along with an elapsed-time indicator, with end time relative to start
 start from `get_start_stamp`. Used for annotating elapsed time of a task.
 
-<a id="tiledbsc.tiledbsoma/util.find_csr_chunk_size"></a>
+<a id="tiledbsoma/util.find_csr_chunk_size"></a>
 
 #### find\_csr\_chunk\_size
 
@@ -41,7 +41,7 @@ Given a CSR matrix and a start row index, returns the number of rows with cumula
 - `start_row_index`: the row index at which to start a chunk.
 - `goal_chunk_nnz`: Desired number of non-zero array entries for the chunk.
 
-<a id="tiledbsc.tiledbsoma/util.find_csc_chunk_size"></a>
+<a id="tiledbsoma/util.find_csc_chunk_size"></a>
 
 #### find\_csc\_chunk\_size
 

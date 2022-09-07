@@ -1,8 +1,8 @@
-<a id="tiledbsc.tiledbsoma/general_utilities"></a>
+<a id="tiledbsoma/general_utilities"></a>
 
-# tiledbsc.tiledbsoma/general\_utilities
+# tiledbsoma/general\_utilities
 
-<a id="tiledbsc.tiledbsoma/general_utilities.get_version"></a>
+<a id="tiledbsoma/general_utilities.get_version"></a>
 
 #### get\_version
 
@@ -12,7 +12,7 @@ def get_version() -> str
 
 Return semver-compatible version of the supported SOMA API.
 
-<a id="tiledbsc.tiledbsoma/general_utilities.get_implementation"></a>
+<a id="tiledbsoma/general_utilities.get_implementation"></a>
 
 #### get\_implementation
 
@@ -22,7 +22,7 @@ def get_implementation() -> str
 
 Return the implementation name, e.g., "python-tiledb".
 
-<a id="tiledbsc.tiledbsoma/general_utilities.get_storage_engine"></a>
+<a id="tiledbsoma/general_utilities.get_storage_engine"></a>
 
 #### get\_storage\_engine
 

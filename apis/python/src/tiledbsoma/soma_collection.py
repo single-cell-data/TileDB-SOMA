@@ -4,7 +4,7 @@ from typing import Any, Dict, Iterator, List, Optional, Sequence
 
 import tiledb
 
-import tiledbsc.tiledbsoma.util_tiledb as util_tiledb
+import tiledbsoma.util_tiledb as util_tiledb
 
 from .tiledb_array import TileDBArray
 from .tiledb_object import TileDBObject

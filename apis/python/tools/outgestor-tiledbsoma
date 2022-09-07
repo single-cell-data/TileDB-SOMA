@@ -20,9 +20,9 @@ import sys
 
 import tiledb
 
-import tiledbsc.tiledbsoma
-import tiledbsc.tiledbsoma.io
-import tiledbsc.tiledbsoma.util
+import tiledbsoma
+import tiledbsoma.io
+import tiledbsoma.util
 
 logger = logging.getLogger("tiledbsc")
 
@@ -73,16 +73,16 @@ def main():
 
     # This is for local-disk use only -- for S3-backed tiledb://... URIs we should
     # use tiledb.vfs to remove any priors, and/or make use of a tiledb `overwrite` flag.
-    if tiledbsc.tiledbsoma.util.is_local_path(outdir):
+    if tiledbsoma.util.is_local_path(outdir):
         if not os.path.exists(outdir):
             os.mkdir(outdir)
 
     verbose = not args.quiet
     if verbose:
-        tiledbsc.tiledbsoma.logging.info()
+        tiledbsoma.logging.info()
 
-    soma = tiledbsc.tiledbsoma.SOMAExperiment(input_path)
-    tiledbsc.tiledbsoma.io.to_h5ad(soma, output_path, measurement_name="mRNA")
+    soma = tiledbsoma.SOMAExperiment(input_path)
+    tiledbsoma.io.to_h5ad(soma, output_path, measurement_name="mRNA")
 
     logger.info(f"Wrote {output_path}")
 

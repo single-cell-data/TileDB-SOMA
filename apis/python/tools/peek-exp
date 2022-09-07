@@ -14,8 +14,8 @@ import pandas
 import scipy  # noqa: F401
 import tiledb  # noqa: F401
 
-import tiledbsc.tiledbsoma
-import tiledbsc.tiledbsoma.io
+import tiledbsoma
+import tiledbsoma.io
 
 # module aliases
 ad = anndata
@@ -23,7 +23,7 @@ np = numpy
 pd = pandas
 
 
-def count_obs(exp: tiledbsc.tiledbsoma.SOMAExperiment, attr_name: str) -> None:
+def count_obs(exp: tiledbsoma.SOMAExperiment, attr_name: str) -> None:
     print(
         exp.obs.to_dataframe(attrs=[attr_name]).groupby(attr_name).size().sort_values()
     )
@@ -42,7 +42,7 @@ cfg = tiledb.Config()
 cfg["py.init_buffer_bytes"] = 4 * 1024**3
 ctx = tiledb.Ctx(cfg)
 
-exp = tiledbsc.tiledbsoma.SOMAExperiment(input_path, ctx=ctx)
+exp = tiledbsoma.SOMAExperiment(input_path, ctx=ctx)
 if not exp.exists():
     print("Does not exist yet:", input_path)
 

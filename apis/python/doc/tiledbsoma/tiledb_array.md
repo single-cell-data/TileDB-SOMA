@@ -1,8 +1,8 @@
-<a id="tiledbsc.tiledbsoma/tiledb_array"></a>
+<a id="tiledbsoma/tiledb_array"></a>
 
-# tiledbsc.tiledbsoma/tiledb\_array
+# tiledbsoma/tiledb\_array
 
-<a id="tiledbsc.tiledbsoma/tiledb_array.TileDBArray"></a>
+<a id="tiledbsoma/tiledb_array.TileDBArray"></a>
 
 ## TileDBArray Objects
 
@@ -14,7 +14,7 @@ Wraps arrays from TileDB-Py by retaining a URI, options, etc.
 Also serves as an abstraction layer to hide TileDB-specific details from the API, unless
 requested.
 
-<a id="tiledbsc.tiledbsoma/tiledb_array.TileDBArray.__init__"></a>
+<a id="tiledbsoma/tiledb_array.TileDBArray.__init__"></a>
 
 #### \_\_init\_\_
 
@@ -22,12 +22,12 @@ requested.
 def __init__(uri: str,
              *,
              name: Optional[str] = None,
-             parent: Optional["tiledbsc.tiledbsoma.SOMACollection"] = None)
+             parent: Optional["tiledbsoma.SOMACollection"] = None)
 ```
 
 See the `TileDBObject` constructor.
 
-<a id="tiledbsc.tiledbsoma/tiledb_array.TileDBArray.get_schema"></a>
+<a id="tiledbsoma/tiledb_array.TileDBArray.get_schema"></a>
 
 #### get\_schema
 
