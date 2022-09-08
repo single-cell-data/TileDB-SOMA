@@ -64,7 +64,7 @@ Options
 
 .. autoclass:: tiledbsc.SOMAOptions
    :members:
-.. autoclass:: tiledbsc.logging
+.. automodule:: tiledbsc.logging
    :members:
 
 SOMA-element classes
@@ -98,9 +98,9 @@ Implementation-level classes
    :members:
 .. autoclass:: tiledbsc.TileDBObject
    :members:
-.. autoclass:: tiledbsc.util
+.. automodule:: tiledbsc.util
    :members:
-.. autoclass:: tiledbsc.util_ann
+.. automodule:: tiledbsc.util_ann
    :members:
-.. autoclass:: tiledbsc.util_tiledb
+.. automodule:: tiledbsc.util_tiledb
    :members:

@@ -22,7 +22,7 @@ def info() -> None:
 
 def debug() -> None:
     """
-    Sets tiledbsc logging to an DEBUG level. Use ``tiledbsc.logging.debug()`` in notebooks to see more
+    Sets tiledbsc logging to a DEBUG level. Use ``tiledbsc.logging.debug()`` in notebooks to see more
     detailed progress indicators for data ingestion.
     """
     _set_level(logging.DEBUG)
@@ -39,10 +39,9 @@ def _set_level(level: int) -> None:
 
 def log_io(info_message: Optional[str], debug_message: str) -> None:
     """
-    Data-ingesti timeframes range widely, from seconds to the better part of an hour.  Some folks
-    won't want details in the former; some will want details in the latter.  For I/O and for I/O
-    only, it's helpfulto print a short message at INFO level, or a different, longer message
-    at/beyond DEBUG level.
+    Data-ingestion timeframes range widely.  Some folks won't want details in the former; some will
+    want details in the latter.  For I/O and for I/O only, it's helpful to print a short message at
+    ``INFO`` level, or a different, longer message at/beyond ``DEBUG`` level.
     """
     if logger.level == logging.INFO:
         if info_message is not None:
