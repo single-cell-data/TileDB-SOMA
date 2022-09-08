@@ -1,10 +1,4 @@
-#!/usr/bin/env python -i
-
-# Invoke this with, for example,
-#
-#   peek-exp tiledb-data/pbmc3k_processed
-#
-# -- then you can inspect the soma object.
+## See ../repl/peek-exp
 
 import sys
 

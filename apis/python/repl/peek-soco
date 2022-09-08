@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Simply runs python -i peek-soco.py.
+# Simply runs python -i ../tools/peek-soco.py.
 # That can be done with '#!/usr/bin/env python -i' in the peek-soco.py shebang
 # line, but not all OSes support three words being present in the shebang line.
 us=$(basename $0)

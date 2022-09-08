@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Simply runs python -i peek-ann.py.
+# Simply runs python -i ../tools/peek-ann.py.
 # That can be done with '#!/usr/bin/env python -i' in the peek-ann.py shebang
 # line, but not all OSes support three words being present in the shebang line.
 us=$(basename $0)
