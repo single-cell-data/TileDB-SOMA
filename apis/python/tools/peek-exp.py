@@ -1,6 +1,6 @@
 #!/bin/bash
 
-## See ../repl/peek-exp
+# See ../repl/peek-exp
 
 import sys
 
