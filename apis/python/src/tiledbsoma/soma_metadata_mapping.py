@@ -37,6 +37,13 @@ class SOMAMetadataMapping:
         with self._underlying._tiledb_open("w") as M:
             M.meta[key] = value
 
+    def __contains__(self, key: str) -> bool:
+        """
+        Answers whether the object's metadata contains the given key.
+        """
+        with self._underlying._tiledb_open("r") as M:
+            return key in M.meta
+
     def __delete__(self, key: str) -> None:
         """
         Remove the key/value from the collection.
