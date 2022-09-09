@@ -249,11 +249,11 @@ def ingest_one(
         soco._create_unless_exists()
         if not soco.exists():
             raise Exception(f"Could not create SOCO at {soco.uri}")
-        soco.add(exp)
+        soco.set(exp)
 
         tiledbsoma.logging.logger.info("")
         tiledbsoma.logging.logger.info(
-            f"Added SOMAExperiment {exp.name} to SOMACollection {soco_dir}"
+            f"Added SOMAExperiment {exp.get_name()} to SOMACollection {soco_dir}"
         )
 
 
