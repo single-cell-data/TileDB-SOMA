@@ -312,16 +312,12 @@ class TileDBGroup(TileDBObject):
             child_indent = indent + "  "
             with self._open() as G:
                 for obj in G:  # This returns a tiledb.object.Object
-                    # It might appear simpler to have all this code within TileDBObject class,
-                    # rather than (with a little duplication) in TileDBGroup and TileDBArray.
-                    # However, getting it to work with a recursive data structure and finding the
-                    # required methods, it was simpler to split the logic this way.
                     object_type = tiledb.object_type(obj.uri, ctx=self._ctx)
                     if object_type == "group":
                         group = TileDBGroup(uri=obj.uri, name=obj.name, parent=self)
                         group._show_uris(recursively, indent=child_indent)
                     elif object_type == "array":
-                        print(f"{indent}{obj.name} array {obj.uri}")
+                        print(f"{child_indent}{obj.name} array {obj.uri}")
                     else:
                         raise Exception(
                             f"Unexpected object_type found: {object_type} at {obj.uri}"
