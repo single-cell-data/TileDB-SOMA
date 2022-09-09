@@ -51,7 +51,8 @@ class SOMASparseNdArray(TileDBArray):
 
         # checks on shape
         assert len(shape) > 0
-        # zero-length dimensions are OK (creating an empty array, then extending it later)
+        for e in shape:
+            assert e > 0
 
         level = self._tiledb_platform_config.string_dim_zstd_level
 
