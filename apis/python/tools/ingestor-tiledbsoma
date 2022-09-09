@@ -246,7 +246,7 @@ def ingest_one(
         soco = tiledbsoma.SOMACollection(
             soco_dir, tiledb_platform_config=tiledb_platform_config
         )
-        soco.create_unless_exists()
+        soco._create_unless_exists()
         if not soco.exists():
             raise Exception(f"Could not create SOCO at {soco.uri}")
         soco.add(exp)
