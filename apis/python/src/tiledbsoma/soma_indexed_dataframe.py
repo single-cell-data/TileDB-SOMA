@@ -34,11 +34,12 @@ class SOMAIndexedDataFrame(TileDBArray):
         *,
         name: Optional[str] = None,
         parent: Optional[SOMACollection] = None,
+        ctx: Optional[tiledb.Ctx] = None,
     ):
         """
         See also the `TileDBOject` constructor.
         """
-        super().__init__(uri=uri, name=name, parent=parent)
+        super().__init__(uri=uri, name=name, parent=parent, ctx=ctx)
         self._index_column_names = None
         self._is_sparse = None
 

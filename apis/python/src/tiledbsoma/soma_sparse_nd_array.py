@@ -27,12 +27,13 @@ class SOMASparseNdArray(TileDBArray):
         *,
         name: Optional[str] = None,
         parent: Optional[SOMACollection] = None,
+        ctx: Optional[tiledb.Ctx] = None,
     ):
         """
         Also see the `TileDBObject` constructor.
         """
 
-        super().__init__(uri=uri, name=name, parent=parent)
+        super().__init__(uri=uri, name=name, parent=parent, ctx=ctx)
 
     def create(
         self,

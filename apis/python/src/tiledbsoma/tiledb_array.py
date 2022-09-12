@@ -22,11 +22,12 @@ class TileDBArray(TileDBObject):
         *,
         name: Optional[str] = None,
         parent: Optional["tiledbsoma.SOMACollection"] = None,
+        ctx: Optional[tiledb.Ctx] = None,
     ):
         """
         See the `TileDBObject` constructor.
         """
-        super().__init__(uri, name=name, parent=parent)
+        super().__init__(uri, name=name, parent=parent, ctx=ctx)
 
     def get_schema(self) -> pa.Schema:
         """

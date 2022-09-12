@@ -34,11 +34,12 @@ class SOMADataFrame(TileDBArray):
         *,
         name: Optional[str] = None,
         parent: Optional[SOMACollection] = None,
+        ctx: Optional[tiledb.Ctx] = None,
     ):
         """
         See also the `TileDBOject` constructor.
         """
-        super().__init__(uri=uri, name=name, parent=parent)
+        super().__init__(uri=uri, name=name, parent=parent, ctx=ctx)
 
         # Simpler would be:
         # if self.exists():
