@@ -3,7 +3,7 @@ This module exists to avoid what would otherwise be cyclic-module-import issues 
 SOMACollection.
 """
 
-from typing import Union
+from typing import Optional, Union
 
 import tiledb
 
@@ -26,7 +26,10 @@ MemberType = Union[
 
 
 def _construct_member(
-    member_name: str, member_uri: str, parent: SOMACollection
+    member_name: str,
+    member_uri: str,
+    parent: SOMACollection,
+    ctx: Optional[tiledb.Ctx] = None,
 ) -> MemberType:
     """
     Solely for the use of `SOMACollection`. In fact this would/should be a method of the
@@ -54,16 +57,20 @@ def _construct_member(
 
     # Now invoke the appropriate per-class constructor.
     if class_name == "SOMAExperiment":
-        return SOMAExperiment(uri=member_uri, name=member_name, parent=parent)
+        return SOMAExperiment(uri=member_uri, name=member_name, parent=parent, ctx=ctx)
     elif class_name == "SOMAMeasurement":
-        return SOMAMeasurement(uri=member_uri, name=member_name, parent=parent)
+        return SOMAMeasurement(uri=member_uri, name=member_name, parent=parent, ctx=ctx)
     elif class_name == "SOMACollection":
-        return SOMACollection(uri=member_uri, name=member_name, parent=parent)
+        return SOMACollection(uri=member_uri, name=member_name, parent=parent, ctx=ctx)
     elif class_name == "SOMADataFrame":
-        return SOMADataFrame(uri=member_uri, name=member_name, parent=parent)
+        return SOMADataFrame(uri=member_uri, name=member_name, parent=parent, ctx=ctx)
     elif class_name == "SOMADenseNdArray":
-        return SOMADenseNdArray(uri=member_uri, name=member_name, parent=parent)
+        return SOMADenseNdArray(
+            uri=member_uri, name=member_name, parent=parent, ctx=ctx
+        )
     elif class_name == "SOMASparseNdArray":
-        return SOMASparseNdArray(uri=member_uri, name=member_name, parent=parent)
+        return SOMASparseNdArray(
+            uri=member_uri, name=member_name, parent=parent, ctx=ctx
+        )
     else:
         raise Exception(f'class name "{class_name}" unrecognized')

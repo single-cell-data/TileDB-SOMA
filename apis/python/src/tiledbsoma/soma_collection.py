@@ -370,10 +370,14 @@ class SOMACollection(TileDBObject):
                     # required methods, it was simpler to split the logic this way.
                     object_type = tiledb.object_type(obj.uri, ctx=self._ctx)
                     if object_type == "group":
-                        group = SOMACollection(uri=obj.uri, name=obj.name, parent=self)
+                        group = SOMACollection(
+                            uri=obj.uri, name=obj.name, parent=self, ctx=self._ctx
+                        )
                         group._show_metadata(recursively, indent=child_indent)
                     elif object_type == "array":
-                        array = TileDBArray(uri=obj.uri, name=obj.name, parent=self)
+                        array = TileDBArray(
+                            uri=obj.uri, name=obj.name, parent=self, ctx=self._ctx
+                        )
                         array._show_metadata(recursively, indent=child_indent)
                     else:
                         raise Exception(

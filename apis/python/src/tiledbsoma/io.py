@@ -1,7 +1,8 @@
-from typing import Callable
+from typing import Callable, Optional
 
 import anndata as ad
 import numpy as np
+import tiledb
 
 import tiledbsoma.util_ann as util_ann
 from tiledbsoma import (
@@ -26,12 +27,15 @@ from .types import Path
 
 # ----------------------------------------------------------------
 def from_h5ad(
-    experiment: SOMAExperiment, input_path: Path, measurement_name: str
+    experiment: SOMAExperiment,
+    input_path: Path,
+    measurement_name: str,
+    ctx: Optional[tiledb.Ctx] = None,
 ) -> None:
     """
     Reads an .h5ad file and writes to a TileDB group structure.
     """
-    _from_h5ad_common(experiment, input_path, measurement_name, from_anndata)
+    _from_h5ad_common(experiment, input_path, measurement_name, from_anndata, ctx=ctx)
 
 
 # ----------------------------------------------------------------
@@ -40,6 +44,7 @@ def _from_h5ad_common(
     input_path: Path,
     measurement_name: str,
     handler_func: Callable[[SOMAExperiment, ad.AnnData], None],
+    ctx: Optional[tiledb.Ctx] = None,
 ) -> None:
     """
     Common code for things we do when processing a .h5ad file for ingest/update.
@@ -59,7 +64,7 @@ def _from_h5ad_common(
         util.format_elapsed(s, f"{experiment._indent}FINISH READING {input_path}"),
     )
 
-    handler_func(experiment, anndata, measurement_name)
+    handler_func(experiment, anndata, measurement_name, ctx=ctx)
 
     logging.log_io(
         None,
@@ -72,7 +77,10 @@ def _from_h5ad_common(
 
 # ----------------------------------------------------------------
 def from_anndata(
-    experiment: SOMAExperiment, anndata: ad.AnnData, measurement_name: str
+    experiment: SOMAExperiment,
+    anndata: ad.AnnData,
+    measurement_name: str,
+    ctx: Optional[tiledb.Ctx] = None,
 ) -> None:
     """
     Top-level writer method for creating a TileDB group for a `SOMAExperiment` object.
@@ -115,7 +123,9 @@ def from_anndata(
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     # MS
-    measurement = SOMAMeasurement(uri=f"{experiment.ms.get_uri()}/{measurement_name}")
+    measurement = SOMAMeasurement(
+        uri=f"{experiment.ms.get_uri()}/{measurement_name}", ctx=ctx
+    )
     measurement.create()
     experiment.ms.set(measurement)
 
@@ -133,9 +143,9 @@ def from_anndata(
 
     # TODO: more types to check?
     if isinstance(anndata.X, np.ndarray):
-        Xdata = SOMADenseNdArray(uri=f"{measurement.X.get_uri()}/data")
+        Xdata = SOMADenseNdArray(uri=f"{measurement.X.get_uri()}/data", ctx=ctx)
     else:
-        Xdata = SOMASparseNdArray(uri=f"{measurement.X.get_uri()}/data")
+        Xdata = SOMASparseNdArray(uri=f"{measurement.X.get_uri()}/data", ctx=ctx)
     Xdata.from_matrix(anndata.X)
     measurement.X.set(Xdata)
 
@@ -145,7 +155,7 @@ def from_anndata(
     if len(anndata.obsm.keys()) > 0:  # do not create an empty collection
         measurement.obsm.create()
         for key in anndata.obsm.keys():
-            arr = SOMADenseNdArray(uri=f"{measurement.obsm.get_uri()}/{key}")
+            arr = SOMADenseNdArray(uri=f"{measurement.obsm.get_uri()}/{key}", ctx=ctx)
             arr.from_matrix(anndata.obsm[key])
             measurement.obsm.set(arr)
         measurement.set(measurement.obsm)
@@ -153,7 +163,7 @@ def from_anndata(
     if len(anndata.varm.keys()) > 0:  # do not create an empty collection
         measurement.varm.create()
         for key in anndata.varm.keys():
-            arr = SOMADenseNdArray(uri=f"{measurement.varm.get_uri()}/{key}")
+            arr = SOMADenseNdArray(uri=f"{measurement.varm.get_uri()}/{key}", ctx=ctx)
             arr.from_matrix(anndata.varm[key])
             measurement.varm.set(arr)
         measurement.set(measurement.varm)
@@ -161,7 +171,7 @@ def from_anndata(
     if len(anndata.obsp.keys()) > 0:  # do not create an empty collection
         measurement.obsp.create()
         for key in anndata.obsp.keys():
-            arr = SOMASparseNdArray(uri=f"{measurement.obsp.get_uri()}/{key}")
+            arr = SOMASparseNdArray(uri=f"{measurement.obsp.get_uri()}/{key}", ctx=ctx)
             arr.from_matrix(anndata.obsp[key])
             measurement.obsp.set(arr)
         measurement.set(measurement.obsp)
@@ -169,7 +179,7 @@ def from_anndata(
     if len(anndata.varp.keys()) > 0:  # do not create an empty collection
         measurement.varp.create()
         for key in anndata.varp.keys():
-            arr = SOMASparseNdArray(uri=f"{measurement.varp.get_uri()}/{key}")
+            arr = SOMASparseNdArray(uri=f"{measurement.varp.get_uri()}/{key}", ctx=ctx)
             arr.from_matrix(anndata.varp[key])
             measurement.varp.set(arr)
         measurement.set(measurement.varp)
@@ -177,7 +187,7 @@ def from_anndata(
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     # RAW
     if anndata.raw is not None:
-        raw_measurement = SOMAMeasurement(uri=f"{experiment.ms.get_uri()}/raw")
+        raw_measurement = SOMAMeasurement(uri=f"{experiment.ms.get_uri()}/raw", ctx=ctx)
         raw_measurement.create()
         experiment.ms.set(raw_measurement)
 
@@ -189,7 +199,7 @@ def from_anndata(
         raw_measurement.X.create()
         raw_measurement.set(raw_measurement.X)
 
-        rawXdata = SOMASparseNdArray(uri=f"{raw_measurement.X.get_uri()}/data")
+        rawXdata = SOMASparseNdArray(uri=f"{raw_measurement.X.get_uri()}/data", ctx=ctx)
         rawXdata.from_matrix(anndata.raw.X)
         raw_measurement.X.set(rawXdata)
 
@@ -208,7 +218,12 @@ def from_anndata(
 
 
 # ----------------------------------------------------------------
-def to_h5ad(experiment: SOMAExperiment, h5ad_path: Path, measurement_name: str) -> None:
+def to_h5ad(
+    experiment: SOMAExperiment,
+    h5ad_path: Path,
+    measurement_name: str,
+    ctx: Optional[tiledb.Ctx] = None,
+) -> None:
     """
     Converts the experiment group to anndata format and writes it to the specified .h5ad file.
     As of 2022-05-05 this is an incomplete prototype.
@@ -246,6 +261,7 @@ def to_anndata(
     # TODO: set a better name as capitalized-const
     # TODO: maybe if there are multiple measurements, default to the first one not named 'raw'
     measurement_name: str,
+    ctx: Optional[tiledb.Ctx] = None,
 ) -> ad.AnnData:
     """
     Converts the experiment group to anndata. Choice of matrix formats is following
