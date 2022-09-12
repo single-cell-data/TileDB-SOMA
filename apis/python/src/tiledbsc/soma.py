@@ -316,7 +316,7 @@ class SOMA(TileDBGroup):
         Queries use the TileDB-Py ``QueryCondition`` API.
 
         If ``obs_query_string`` is ``None``, the ``obs`` dimension is not filtered and all of ``obs`` is
-        used; similarly for ``var``.
+        used; similiarly for ``var``.
 
         If ``obs_attrs`` or ``var_attrs`` are unspecified, the slice will take all ``obs``/``var`` attributes
         from the source SOMAs; if they are specified, the slice will take the specified ``obs``/``var``
@@ -407,7 +407,7 @@ class SOMA(TileDBGroup):
         API.
 
         If ``obs_query_string`` is ``None``, the ``obs`` dimension is not filtered and all of ``obs`` is
-        used; similarly for ``var``. Return value of ``None`` indicates an empty slice.  If ``obs_ids``
+        used; similiarly for ``var``. Return value of ``None`` indicates an empty slice.  If ``obs_ids``
         or ``var_ids`` are not ``None``, they are effectively ANDed into the query.  For example, you
         can pass in a known list of ``obs_ids``, then use ``obs_query_string`` to further restrict the
         query.
