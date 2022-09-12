@@ -212,19 +212,18 @@ class AssayMatrix(TileDBArray):
         Create a TileDB 2D sparse array with string dimensions and a single attribute.
         """
 
-        level = self._soma_options.string_dim_zstd_level
         dom = tiledb.Domain(
             tiledb.Dim(
                 name=self.row_dim_name,
                 domain=(None, None),
                 dtype="ascii",
-                filters=[tiledb.RleFilter()],
+                filters=self._soma_options.X_data_row_filters,
             ),
             tiledb.Dim(
                 name=self.col_dim_name,
                 domain=(None, None),
                 dtype="ascii",
-                filters=[tiledb.ZstdFilter(level=level)],
+                filters=self._soma_options.X_data_col_filters,
             ),
             ctx=self._ctx,
         )
@@ -232,7 +231,7 @@ class AssayMatrix(TileDBArray):
         att = tiledb.Attr(
             self.attr_name,
             dtype=matrix_dtype,
-            filters=[tiledb.ZstdFilter()],
+            filters=self._soma_options.X_data_attr_filters,
             ctx=self._ctx,
         )
 
@@ -241,11 +240,7 @@ class AssayMatrix(TileDBArray):
             attrs=(att,),
             sparse=True,
             allows_duplicates=self._soma_options.allows_duplicates,
-            offsets_filters=[
-                tiledb.DoubleDeltaFilter(),
-                tiledb.BitWidthReductionFilter(),
-                tiledb.ZstdFilter(),
-            ],
+            offsets_filters=self._soma_options.X_data_offset_filters,
             capacity=self._soma_options.X_capacity,
             cell_order=self._soma_options.X_cell_order,
             tile_order=self._soma_options.X_tile_order,
