@@ -42,6 +42,7 @@ class AnnotationDataFrame(TileDBArray):
         The column-count is the number of columns/attributes in the dataframe.
         """
         with self._open("r") as A:
+            self.dim_name = A.domain.dim(0).name
             # These TileDB arrays are string-dimensioned sparse arrays so there is no '.shape'.
             # Instead we compute it ourselves.  See also:
             # * https://github.com/single-cell-data/TileDB-SingleCell/issues/10
@@ -74,6 +75,7 @@ class AnnotationDataFrame(TileDBArray):
         Returns the ``obs_ids`` in the matrix (for ``obs``) or the ``var_ids`` (for ``var``).
         """
         with self._open("r") as A:
+            self.dim_name = A.domain.dim(0).name
             # TileDB string dims are ASCII not UTF-8. Decode them so they readback
             # not like `b"AKR1C3"` but rather like `"AKR1C3"`.
             retval = A.query(attrs=[], dims=[self.dim_name])[:][self.dim_name].tolist()
@@ -122,6 +124,7 @@ class AnnotationDataFrame(TileDBArray):
         provided, they're used for the query; else, all attributes are returned.
         """
         with self._open("r") as A:
+            self.dim_name = A.domain.dim(0).name
             query = A.query(return_arrow=return_arrow, attrs=attrs)
             if ids is None:
                 df = query.df[:]
@@ -183,6 +186,7 @@ class AnnotationDataFrame(TileDBArray):
             return self.dim_select(ids, attrs=attrs, return_arrow=return_arrow)
 
         with self._open() as A:
+            self.dim_name = A.domain.dim(0).name
             qc = tiledb.QueryCondition(query_string)
             if attrs is None:
                 slice_query = A.query(attr_cond=qc, return_arrow=return_arrow)
