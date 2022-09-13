@@ -20,7 +20,7 @@ def tiledb_result_order_from_soma_result_order_non_indexed(
     soma_result_order: Optional[str],
 ) -> Optional[str]:
     """
-    Maps SOMA-spec `result_order` syntax to TileDB-specific syntax, for non-indexed dataframes.
+    Maps SOMA-spec ``result_order`` syntax to TileDB-specific syntax, for non-indexed dataframes.
     """
     # :param order: 'C', 'F', or 'G' (row-major, col-major, tiledb global order)
     if soma_result_order is None:
@@ -37,7 +37,7 @@ def tiledb_result_order_from_soma_result_order_indexed(
     soma_result_order: Optional[str],
 ) -> Optional[str]:
     """
-    Maps SOMA-spec `result_order` syntax to TileDB-specific syntax, for indexed dataframes.
+    Maps SOMA-spec ``result_order`` syntax to TileDB-specific syntax, for indexed dataframes.
     """
     # :param order: 'C', 'F', or 'G' (row-major, col-major, tiledb global order)
     if soma_result_order is None:
@@ -62,17 +62,13 @@ def to_tiledb_supported_dtype(dtype: np.dtype) -> np.dtype:
 
 def to_tiledb_supported_array_type(x: T) -> T:
     """
-    Converts datatypes unrepresentable by TileDB into datatypes it can represent.
-    E.g., categorical strings -> string.
+    Converts datatypes unrepresentable by TileDB into datatypes it can represent.  E.g., categorical strings -> string.
 
     See also [https://docs.scipy.org/doc/numpy-1.10.1/reference/arrays.dtypes.html](https://docs.scipy.org/doc/numpy-1.10.1/reference/arrays.dtypes.html).
 
-    Preferentially converts to the underlying primitive type, as TileDB does not
-    support most complex types. NOTE: this does not support `datetime64` conversion.
+    Preferentially converts to the underlying primitive type, as TileDB does not support most complex types. NOTE: this does not support ``datetime64`` conversion.
 
-    Categoricals are a special case. If the underlying categorical type is a
-    primitive, convert to that. If the array contains NA/NaN (i.e. not in the
-    category, code == -1), raise error unless it is a float or string.
+    Categoricals are a special case. If the underlying categorical type is a primitive, convert to that. If the array contains NA/NaN (i.e. not in the category, code == -1), raise error unless it is a float or string.
     """
     if isinstance(x, pd.DataFrame):
         return pd.DataFrame.from_dict(

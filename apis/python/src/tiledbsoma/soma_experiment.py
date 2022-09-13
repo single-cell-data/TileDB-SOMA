@@ -11,11 +11,9 @@ from .tiledb_platform_config import TileDBPlatformConfig
 
 class SOMAExperiment(SOMACollection):
     """
-    `obs`: Primary annotations on the observation axis. The contents of the `soma_rowid` pseudo-column define
-    the observation index domain, aka `obsid`. All observations for the SOMAExperiment must be
-    defined in this dataframe.
+    ``obs``: Primary annotations on the observation axis. The contents of the ``soma_rowid`` pseudo-column define the observation index domain, aka ``obsid``. All observations for the SOMAExperiment must be defined in this dataframe.
 
-    `ms`: A collection of named measurements.
+    ``ms``: A collection of named measurements.
     """
 
     _constructors: Dict[str, Any]
@@ -33,7 +31,7 @@ class SOMAExperiment(SOMACollection):
         ctx: Optional[tiledb.Ctx] = None,
     ):
         """
-        Also see the `TileDBObject` constructor.
+        Also see the ``TileDBObject`` constructor.
         """
         super().__init__(
             uri=uri,
@@ -57,7 +55,7 @@ class SOMAExperiment(SOMACollection):
 
     def __getattr__(self, name: str) -> Any:  # TODO: union type
         """
-        Implements `experiment.obs` and `experiment.ms`.
+        Implements ``experiment.obs`` and ``experiment.ms``.
         """
         if name in self._constructors:
             if name not in self._cached_members:
@@ -74,7 +72,7 @@ class SOMAExperiment(SOMACollection):
 
     def constrain(self) -> None:
         """
-        Checks constraints on the `SOMAExperiment`. Raises an exception if any is violated.
+        Checks constraints on the ``SOMAExperiment``. Raises an exception if any is violated.
         """
         # TODO: find a good spot to call this from.
 

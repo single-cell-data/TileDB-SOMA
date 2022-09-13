@@ -13,9 +13,7 @@ from .tiledb_platform_config import TileDBPlatformConfig
 
 class SOMACollection(TileDBObject):
     """
-    Contains a key-value mapping where the keys are string names and the values are any SOMA-defined
-    foundational or composed type, including `SOMACollection`, `SOMADataFrame`, `SOMADenseNdArray`,
-    `SOMASparseNdArray` or `SOMAExperiment`.
+    Contains a key-value mapping where the keys are string names and the values are any SOMA-defined foundational or composed type, including ``SOMACollection``, ``SOMADataFrame``, ``SOMADenseNdArray``, ``SOMASparseNdArray`` or ``SOMAExperiment``.
     """
 
     # Cache to avoid repeated calls to the REST server for resolving group-member URIs
@@ -37,7 +35,7 @@ class SOMACollection(TileDBObject):
         ctx: Optional[tiledb.Ctx] = None,
     ):
         """
-        Also see the `TileDBObject` constructor.
+        Also see the ``TileDBObject`` constructor.
         """
         super().__init__(
             uri=uri,
@@ -62,14 +60,13 @@ class SOMACollection(TileDBObject):
 
     def __len__(self) -> int:
         """
-        Returns the number of members in the collection.  Implements Python's `len(collection)`.
+        Returns the number of members in the collection.  Implements Python's ``len(collection)``.
         """
         return len(self._get_member_names_to_uris())
 
     def __contains__(self, member_name: str) -> bool:
         """
-        Tests for the existence of key in collection.
-        Implements the `in` operator.
+        Tests for the existence of key in collection.  Implements the ``in`` operator.
         """
         return member_name in self._get_member_names_to_uris()
 
@@ -96,13 +93,13 @@ class SOMACollection(TileDBObject):
 
     def __getitem__(self, member_name: str) -> TileDBObject:
         """
-        Get the member object associated with the key, when invoked as `collection["namegoeshere"]`.
+        Get the member object associated with the key, when invoked as ``collection["namegoeshere"]``.
         """
         return self.get(member_name)
 
     def __getattr__(self, member_name: str) -> TileDBObject:
         """
-        Get the member object associated with the key, when invoked as `collection.namegoeshere`.
+        Get the member object associated with the key, when invoked as ``collection.namegoeshere``.
         """
         return self.get(member_name)
 
@@ -115,25 +112,25 @@ class SOMACollection(TileDBObject):
 
     def delete(self, member_name: str) -> None:
         """
-        Removes a member from the collection, when invoked as `collection.delete("namegoeshere")`.
+        Removes a member from the collection, when invoked as ``collection.delete("namegoeshere")``.
         """
         self._remove_object_by_name(member_name)
 
     def __delattr__(self, member_name: str) -> None:
         """
-        Removes a member from the collection, when invoked as `del collection.namegoeshere`.
+        Removes a member from the collection, when invoked as ``del collection.namegoeshere``.
         """
         self.delete(member_name)
 
     def __delitem__(self, member_name: str) -> None:
         """
-        Removes a member from the collection, when invoked as `del collection["namegoeshere"]`.
+        Removes a member from the collection, when invoked as ``del collection["namegoeshere"]``.
         """
         self.delete(member_name)
 
     def __iter__(self) -> Iterator[Any]:  # TODO: union type
         """
-        Iterates over the collection.  Implements Python `for member in collection: ...` syntax.
+        Iterates over the collection.  Implements Python ``for member in collection: ...`` syntax.
         """
         for member_name, member_uri in self._get_member_names_to_uris().items():
             if member_name not in self._cached_members:
@@ -147,13 +144,13 @@ class SOMACollection(TileDBObject):
 
     def __repr__(self) -> str:
         """
-        Default display for `SOMACollection`.
+        Default display for ``SOMACollection``.
         """
         return "\n".join(self._repr_aux())
 
     def _repr_aux(self) -> List[str]:
         """
-        Internal helper function for `__repr__` which is nesting-aware.
+        Internal helper function for ``__repr__`` which is nesting-aware.
         """
         if not self.exists():
             return ["Unpopulated"]
@@ -170,8 +167,7 @@ class SOMACollection(TileDBObject):
 
     def _tiledb_open(self, mode: str = "r") -> tiledb.Group:
         """
-        This is just a convenience wrapper around tiledb group-open.
-        It works asa `with self._tiledb_open() as G:` as well as `G = self._tiledb_open(); ...; G.close()`.
+        This is just a convenience wrapper around tiledb group-open.  It works as ``with self._tiledb_open() as G:`` as well as ``G = self._tiledb_open(); ...; G.close()``.
         """
         assert mode in ("r", "w")
         # This works in with-open-as contexts because tiledb.Group has __enter__ and __exit__ methods.
@@ -179,7 +175,7 @@ class SOMACollection(TileDBObject):
 
     def _create_unless_exists(self) -> None:
         """
-        Auxiliary method for `_add_object`.
+        Auxiliary method for ``_add_object``.
         """
         # Pre-checking if the group exists by calling tiledb.object_type is simple, however, for
         # tiledb-cloud URIs that occurs a penalty of two HTTP requests to the REST server, even
@@ -197,15 +193,9 @@ class SOMACollection(TileDBObject):
 
     def _get_child_uris(self, member_names: Sequence[str]) -> Dict[str, str]:
         """
-        Computes the URIs for one or more children of the given object. For local disk, S3, and
-        tiledb://.../s3://...  pre-creation URIs, this is simply the parent's URI, a slash, and the
-        member name.  For post-creation TileDB-Cloud URIs, this is computed from the parent's
-        information.  (This is because in TileDB Cloud, members have URIs like
-        tiledb://namespace/df584345-28b7-45e5-abeb-043d409b1a97.)
+        Computes the URIs for one or more children of the given object. For local disk, S3, and tiledb://.../s3://...  pre-creation URIs, this is simply the parent's URI, a slash, and the member name.  For post-creation TileDB-Cloud URIs, this is computed from the parent's information.  (This is because in TileDB Cloud, members have URIs like tiledb://namespace/df584345-28b7-45e5-abeb-043d409b1a97.)
 
-        Since there's REST-server latency for getting name-to-URI mapping for group-member URIs, in
-        the tiledb://... case, total latency is reduced when we ask for all group-element
-        name-to-URI mappings in a single request to the REST server.
+        Since there's REST-server latency for getting name-to-URI mapping for group-member URIs, in the tiledb://... case, total latency is reduced when we ask for all group-element name-to-URI mappings in a single request to the REST server.
         """
 
         # TODO: TEMP
@@ -249,7 +239,7 @@ class SOMACollection(TileDBObject):
 
     def _get_child_creation_uris(self, member_names: Sequence[str]) -> Dict[str, str]:
         """
-        Auxiliary method for `_get_child_uris`.
+        Auxiliary method for ``_get_child_uris``.
         """
         # Group being constructed. Here, appending "/" and name is appropriate in all cases:
         # even for tiledb://... URIs, pre-construction URIs are of the form
@@ -260,34 +250,23 @@ class SOMACollection(TileDBObject):
 
     def _get_child_uri(self, member_name: str) -> str:
         """
-        Convenience wrapper around `_get_child_uris`.
+        Convenience wrapper around ``_get_child_uris``.
         """
         return self._get_child_uris([member_name])[member_name]
 
     def _add_object(self, obj: TileDBObject, relative: Optional[bool] = None) -> None:
         """
-        Adds a SOMA group/array to the current SOMA group -- e.g. base SOMA adding
-        X, X adding a layer, obsm adding an element, etc.
+        Adds a SOMA group/array to the current SOMA group -- e.g. base SOMA adding X, X adding a layer, obsm adding an element, etc.
 
-        Semantics of `relative` from `self._tiledb_platform_config.member_uris_are_relative`:
+        Semantics of ``relative`` from ``self._tiledb_platform_config.member_uris_are_relative``:
 
-        * If `False` then the group will have the absolute path of the member. For populating matrix
-        elements within a SOMA in TileDB cloud, this is necessary. For populating SOMA elements within
-        a SOMACollection on local disk, this can be useful if you want to be able to move the SOMACollection
-        storage around and have it remember the (unmoved) locations of SOMA objects elsewhere, i.e.
-        if the SOMACollectio is in one place while its members are in other places. If the SOMAs
-        in the collection are contained within the SOMACollection directory, you probably want `relative=True`.
+        * If ``False`` then the group will have the absolute path of the member. For populating matrix elements within a SOMA in TileDB cloud, this is necessary. For populating SOMA elements within a SOMACollection on local disk, this can be useful if you want to be able to move the SOMACollection storage around and have it remember the (unmoved) locations of SOMA objects elsewhere, i.e.  if the SOMACollectio is in one place while its members are in other places. If the SOMAs in the collection are contained within the SOMACollection directory, you probably want ``relative=True``.
 
-        * If `True` then the group will have the relative path of the member. For TileDB Cloud, this
-        is never the right thing to do. For local-disk storage, this is essential if you want to move
-        a SOMA to another directory and have it remember the locations of the members within it.
+        * If ``True`` then the group will have the relative path of the member. For TileDB Cloud, this is never the right thing to do. For local-disk storage, this is essential if you want to move a SOMA to another directory and have it remember the locations of the members within it.
 
-        * If `None`, then we select `relative=False` if the URI starts with `tiledb://`, else we
-        select `relative=True`. This is the default.
+        * If ``None``, then we select ``relative=False`` if the URI starts with ``tiledb://``, else we select ``relative=True``. This is the default.
 
-        If the relative argument is supplied and is not None, it is used; secondly
-        `self._tiledb_platform_config.member_uris_are_relative` is consulted; thirdly the URI prefix
-        is consulted as described above.
+        If the relative argument is supplied and is not None, it is used; secondly ``self._tiledb_platform_config.member_uris_are_relative`` is consulted; thirdly the URI prefix is consulted as described above.
         """
 
         if self._cached_member_names_to_uris is None:
@@ -331,22 +310,19 @@ class SOMACollection(TileDBObject):
 
     def _get_member_names(self) -> Sequence[str]:
         """
-        Returns the names of the group elements. For a SOMACollection, these will SOMA names;
-        for a SOMA, these will be matrix/group names; etc.
+        Returns the names of the group elements. For a SOMACollection, these will SOMA names; for a SOMA, these will be matrix/group names; etc.
         """
         return list(self._get_member_names_to_uris().keys())
 
     def _get_member_uris(self) -> Sequence[str]:
         """
-        Returns the URIs of the group elements. For a SOMACollection, these will SOMA URIs;
-        for a SOMA, these will be matrix/group URIs; etc.
+        Returns the URIs of the group elements. For a SOMACollection, these will SOMA URIs; for a SOMA, these will be matrix/group URIs; etc.
         """
         return list(self._get_member_names_to_uris().values())
 
     def _get_member_names_to_uris(self) -> Dict[str, str]:
         """
-        Like `_get_member_names()` and `_get_member_uris`, but returns a dict mapping from
-        member name to member URI.
+        Like ``_get_member_names()`` and ``_get_member_uris``, but returns a dict mapping from member name to member URI.
         """
         if self._cached_member_names_to_uris is None:
             with self._tiledb_open("r") as G:

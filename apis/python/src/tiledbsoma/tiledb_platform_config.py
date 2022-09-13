@@ -5,8 +5,7 @@ from typing import Optional
 @dataclass(frozen=True)
 class TileDBPlatformConfig:
     """
-    A place to put configuration options various users may wish to change.
-    These are mainly TileDB array-schema parameters.
+    A place to put configuration options various users may wish to change.  These are mainly TileDB array-schema parameters.
     """
 
     # TODO: pending further work on
@@ -17,7 +16,7 @@ class TileDBPlatformConfig:
     X_tile_order: str = "row-major"
     X_cell_order: str = "row-major"
     # https://github.com/single-cell-data/TileDB-SOMA/issues/27
-    string_dim_zstd_level: int = 22
+    string_dim_zstd_level: int = 3
     write_X_chunked: bool = True
     goal_chunk_nnz: int = 200_000_000
     # Allows relocatability for local disk / S3, and correct behavior for TileDB Cloud

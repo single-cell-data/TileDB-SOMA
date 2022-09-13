@@ -20,9 +20,7 @@ class SOMADataFrame(TileDBArray):
     """
     Represents ``obs``, ``var``, and others.
 
-    A `SOMADataFrame` contains a "pseudo-column" called `soma_rowid`, of type uint64 and domain
-    [0,num_rows).  The `soma_rowid` pseudo-column contains a unique value for each row in the
-    `SOMADataFrame`, and is intended to act as a join key for other objects, such as a `SOMASparseNdArray`.
+    A ``SOMADataFrame`` contains a "pseudo-column" called ``soma_rowid``, of type uint64 and domain [0,num_rows).  The ``soma_rowid`` pseudo-column contains a unique value for each row in the ``SOMADataFrame``, and is intended to act as a join key for other objects, such as a ``SOMASparseNdArray``.
     """
 
     _shape: Optional[NTuple] = None
@@ -37,7 +35,7 @@ class SOMADataFrame(TileDBArray):
         ctx: Optional[tiledb.Ctx] = None,
     ):
         """
-        See also the `TileDBOject` constructor.
+        See also the ``TileDBOject`` constructor.
         """
         super().__init__(uri=uri, name=name, parent=parent, ctx=ctx)
 
@@ -58,10 +56,7 @@ class SOMADataFrame(TileDBArray):
         schema: pa.Schema,
     ) -> None:
         """
-        :param schema: Arrow Schema defining the per-column schema. This schema must define all
-        columns. The column name ``soma_rowid`` is reserved for the pseudo-column of the same name.
-        If the schema includes types unsupported by the SOMA implementation, an error will be
-        raised.
+        :param schema: Arrow Schema defining the per-column schema. This schema must define all columns. The column name ``soma_rowid`` is reserved for the pseudo-column of the same name.  If the schema includes types unsupported by the SOMA implementation, an error will be raised.
         """
         assert ROWID not in schema.names
 
@@ -76,7 +71,7 @@ class SOMADataFrame(TileDBArray):
         schema: pa.Schema,
     ) -> None:
         """
-        Create a TileDB 1D dense array with uint64 `soma_rowid` dimension and multiple attributes.
+        Create a TileDB 1D dense array with uint64 ``soma_rowid`` dimension and multiple attributes.
         """
 
         level = self._tiledb_platform_config.string_dim_zstd_level
@@ -127,7 +122,7 @@ class SOMADataFrame(TileDBArray):
 
     def __repr__(self) -> str:
         """
-        Default display of `SOMADataFrame`.
+        Default display of ``SOMADataFrame``.
         """
         return "\n".join(self._repr_aux())
 
@@ -145,7 +140,7 @@ class SOMADataFrame(TileDBArray):
 
     def __getattr__(self, name: str) -> Any:
         """
-        Implements `.shape`, etc. which are really method calls.
+        Implements ``.shape``, etc. which are really method calls.
         """
         if name == "shape":
             return self._get_shape()
@@ -154,8 +149,7 @@ class SOMADataFrame(TileDBArray):
 
     def keys(self) -> List[str]:
         """
-        Returns the names of the columns when read back as a dataframe.
-        TODO: make it clear whether or not this will read back `soma_rowid` / `soma_joinid`.
+        Returns the names of the columns when read back as a dataframe.  TODO: make it clear whether or not this will read back ``soma_rowid`` / ``soma_joinid``.
         """
         return self._tiledb_attr_names()
 
@@ -183,7 +177,7 @@ class SOMADataFrame(TileDBArray):
     def read(
         self,
         *,
-        # TODO: find the right syntax to get the typechecker to accept args like `ids=slice(0,10)`
+        # TODO: find the right syntax to get the typechecker to accept args like ``ids=slice(0,10)``
         # ids: Optional[Union[Sequence[int], Slice]] = None,
         ids: Optional[Any] = None,
         value_filter: Optional[str] = None,
@@ -194,23 +188,19 @@ class SOMADataFrame(TileDBArray):
         # TODO: platform_config,
     ) -> Iterator[pa.RecordBatch]:
         """
-        Read a user-defined subset of data, addressed by the dataframe indexing column, optionally filtered, and return results as one or more `Arrow.RecordBatch`.
+        Read a user-defined subset of data, addressed by the dataframe indexing column, optionally filtered, and return results as one or more ``Arrow.RecordBatch``.
 
-        :param ids: Which rows to read. Defaults to `None`, meaning no constraint -- all rows.
+        :param ids: Which rows to read. Defaults to ``None``, meaning no constraint -- all rows.
 
-        :param column_names: the named columns to read and return. Defaults to `None`, meaning no constraint -- all column names.
+        :param column_names: the named columns to read and return. Defaults to ``None``, meaning no constraint -- all column names.
 
-        :param partitions: an optional ``SOMAReadPartitions`` hint to indicate how results should be
-        organized.
+        :param partitions: an optional ``SOMAReadPartitions`` hint to indicate how results should be organized.
 
-        :param result_order: order of read results.  This can be one of 'row-major', 'col-major', or
-        'unordered'.
+        :param result_order: order of read results.  This can be one of 'row-major', 'col-major', or 'unordered'.
 
-        :param value_filter: an optional [value filter] to apply to the results. Defaults to no
-        filter.
+        :param value_filter: an optional [value filter] to apply to the results. Defaults to no filter.
 
-        **Indexing**: the `ids` parameter will support, per dimension: a row offset (uint), a
-        row-offset range (slice), or a list of both.
+        **Indexing**: the ``ids`` parameter will support, per dimension: a row offset (uint), a row-offset range (slice), or a list of both.
         """
         tiledb_result_order = (
             util_tiledb.tiledb_result_order_from_soma_result_order_non_indexed(
@@ -259,7 +249,7 @@ class SOMADataFrame(TileDBArray):
     def read_all(
         self,
         *,
-        # TODO: find the right syntax to get the typechecker to accept args like `ids=slice(0,10)`
+        # TODO: find the right syntax to get the typechecker to accept args like ``ids=slice(0,10)``
         # ids: Optional[Union[Sequence[int], Slice]] = None,
         ids: Optional[Any] = None,
         value_filter: Optional[str] = None,
@@ -271,9 +261,7 @@ class SOMADataFrame(TileDBArray):
         # TODO: platform_config,
     ) -> pa.RecordBatch:
         """
-        This is a convenience method around `read`. It iterates the return value from `read`
-        and returns a concatenation of all the record batches found. Its nominal use is to
-        simply unit-test cases.
+        This is a convenience method around ``read``. It iterates the return value from ``read`` and returns a concatenation of all the record batches found. Its nominal use is to simply unit-test cases.
         """
         return util_arrow.concat_batches(
             self.read(
@@ -288,11 +276,9 @@ class SOMADataFrame(TileDBArray):
         """
         Write an Arrow.RecordBatch to the persistent object.
 
-        :param values: An Arrow.RecordBatch containing all columns, including the index columns. The
-        schema for the values must match the schema for the `SOMADataFrame`.
+        :param values: An Arrow.RecordBatch containing all columns, including the index columns. The schema for the values must match the schema for the ``SOMADataFrame``.
 
-        The ``values`` Arrow RecordBatch must contain a ``soma_rowid`` (uint64) column, indicating
-        which rows are being written.
+        The ``values`` Arrow RecordBatch must contain a ``soma_rowid`` (uint64) column, indicating which rows are being written.
         """
         self._shape = None  # cache-invalidate
 
@@ -339,9 +325,7 @@ class SOMADataFrame(TileDBArray):
         id_column_name: Optional[str] = None,
     ) -> Iterator[pd.DataFrame]:
         """
-        Reads from SOMA storage into memory.  For `to_anndata`, as well as for any interactive use
-        where the user wants a Pandas dataframe.  Returns a generator over dataframes for batched
-        read. See also `read_as_pandas_all` for a convenience wrapper.
+        Reads from SOMA storage into memory.  For ``to_anndata``, as well as for any interactive use where the user wants a Pandas dataframe.  Returns a generator over dataframes for batched read. See also ``read_as_pandas_all`` for a convenience wrapper.
 
         TODO: params-list
         """
@@ -400,9 +384,7 @@ class SOMADataFrame(TileDBArray):
         id_column_name: Optional[str] = None,
     ) -> pd.DataFrame:
         """
-        Reads from SOMA storage into memory.  Iterates over batches from `read_as_pandas`, concatenating
-        the output into a single dataframe.  Convenient for unit-test use; also, handy whenever
-        you're certain that the data being queried can be read entirely into memory.
+        Reads from SOMA storage into memory.  Iterates over batches from ``read_as_pandas``, concatenating the output into a single dataframe.  Convenient for unit-test use; also, handy whenever you're certain that the data being queried can be read entirely into memory.
         """
         dataframes = []
         generator = self.read_as_pandas(
@@ -425,10 +407,10 @@ class SOMADataFrame(TileDBArray):
         id_column_name: Optional[str] = None,
     ) -> None:
         """
-        Writes from memory to SOMA storage. Same as `write_all_from_pandas`, except this method requires the `soma_rowid` column to be present (so it knows where to write data), whereas `write_all_from_pandas`  will populate `soma_rowid` for you as zero-up indices.
+        Writes from memory to SOMA storage. Same as ``write_all_from_pandas``, except this method requires the ``soma_rowid`` column to be present (so it knows where to write data), whereas ``write_all_from_pandas``  will populate ``soma_rowid`` for you as zero-up indices.
 
-        :param dataframe: `anndata.obs` for example.
-        :param extent: TileDB `extent` parameter for the array schema.
+        :param dataframe: ``anndata.obs`` for example.
+        :param extent: TileDB ``extent`` parameter for the array schema.
         """
         self._shape = None  # cache-invalidate
 
@@ -477,10 +459,10 @@ class SOMADataFrame(TileDBArray):
         #
         # IMPLEMENTATION:
         # Python types -- float, string, what have you -- appear as dtype('O') which is not useful.
-        # Also, `tiledb.from_pandas` has `column_types` but that _forces_ things to string to a
+        # Also, ``tiledb.from_pandas`` has ``column_types`` but that _forces_ things to string to a
         # particular if they shouldn't be.
         #
-        # Instead, we use `dataframe.convert_dtypes` to get a little jump on what `tiledb.from_pandas`
+        # Instead, we use ``dataframe.convert_dtypes`` to get a little jump on what ``tiledb.from_pandas``
         # is going to be doing anyway, namely, type-inferring to see what is going to be a string.
         #
         # TODO: when UTF-8 attributes are queryable using TileDB-Py's QueryCondition API we can remove this.
@@ -523,10 +505,10 @@ class SOMADataFrame(TileDBArray):
         id_column_name: Optional[str] = None,
     ) -> None:
         """
-        Writes from memory to SOMA storage. Same as `write_from_pandas`, except `write_from_pandas` requires the `soma_rowid` column to be present (so it knows where to write data), whereas this method will populate `soma_rowid` for you as zero-up indices.
+        Writes from memory to SOMA storage. Same as ``write_from_pandas``, except ``write_from_pandas`` requires the ``soma_rowid`` column to be present (so it knows where to write data), whereas this method will populate ``soma_rowid`` for you as zero-up indices.
 
-        :param dataframe: `anndata.obs` for example.
-        :param extent: TileDB `extent` parameter for the array schema.
+        :param dataframe: ``anndata.obs`` for example.
+        :param extent: TileDB ``extent`` parameter for the array schema.
         """
 
         assert ROWID not in dataframe.keys()

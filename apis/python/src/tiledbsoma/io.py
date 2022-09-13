@@ -83,7 +83,7 @@ def from_anndata(
     ctx: Optional[tiledb.Ctx] = None,
 ) -> None:
     """
-    Top-level writer method for creating a TileDB group for a `SOMAExperiment` object.
+    Top-level writer method for creating a TileDB group for a ``SOMAExperiment`` object.
     """
 
     # Without _at least_ an index, there is nothing to indicate the dimension indices.
@@ -226,7 +226,6 @@ def to_h5ad(
 ) -> None:
     """
     Converts the experiment group to anndata format and writes it to the specified .h5ad file.
-    As of 2022-05-05 this is an incomplete prototype.
     """
 
     s = util.get_start_stamp()
@@ -264,13 +263,12 @@ def to_anndata(
     ctx: Optional[tiledb.Ctx] = None,
 ) -> ad.AnnData:
     """
-    Converts the experiment group to anndata. Choice of matrix formats is following
-    what we often see in input .h5ad files:
+    Converts the experiment group to anndata. Choice of matrix formats is following what we often see in input .h5ad files:
 
-    * X as `scipy.sparse.csr_matrix`
-    * obs,var as `pandas.dataframe`
-    * obsm,varm arrays as `numpy.ndarray`
-    * obsp,varp arrays as `scipy.sparse.csr_matrix`
+    * X as ``scipy.sparse.csr_matrix``
+    * obs,var as ``pandas.dataframe``
+    * obsm,varm arrays as ``numpy.ndarray``
+    * obsp,varp arrays as ``scipy.sparse.csr_matrix``
     """
 
     s = util.get_start_stamp()

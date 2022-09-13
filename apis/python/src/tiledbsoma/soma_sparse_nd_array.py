@@ -30,7 +30,7 @@ class SOMASparseNdArray(TileDBArray):
         ctx: Optional[tiledb.Ctx] = None,
     ):
         """
-        Also see the `TileDBObject` constructor.
+        Also see the ``TileDBObject`` constructor.
         """
 
         super().__init__(uri=uri, name=name, parent=parent, ctx=ctx)
@@ -41,13 +41,11 @@ class SOMASparseNdArray(TileDBArray):
         shape: Union[NTuple, List[int]],
     ) -> None:
         """
-        Create a `SOMASparseNdArray` named with the URI.
+        Create a ``SOMASparseNdArray`` named with the URI.
 
-        :param type: an Arrow type defining the type of each element in the array. If the type is
-        unsupported, an error will be raised.
+        :param type: an Arrow type defining the type of each element in the array. If the type is unsupported, an error will be raised.
 
-        :param shape: the length of each domain as a list, e.g., [100, 10]. All lengths must be in
-        the uint64 range.
+        :param shape: the length of each domain as a list, e.g., [100, 10]. All lengths must be in the uint64 range.
         """
 
         # checks on shape
@@ -60,7 +58,7 @@ class SOMASparseNdArray(TileDBArray):
         dims = []
         for e in shape:
             dim = tiledb.Dim(
-                # Use tiledb default names like `__dim_0`
+                # Use tiledb default names like ``__dim_0``
                 domain=(0, e - 1),
                 tile=min(e, 2048),  # TODO: PARAMETERIZE
                 dtype=np.uint64,
@@ -102,7 +100,7 @@ class SOMASparseNdArray(TileDBArray):
 
     def __repr__(self) -> str:
         """
-        Default display of `SOMASparseNdArray`.
+        Default display of ``SOMASparseNdArray``.
         """
         return "\n".join(self._repr_aux())
 
@@ -120,7 +118,7 @@ class SOMASparseNdArray(TileDBArray):
 
     def __getattr__(self, name: str) -> Any:
         """
-        Implements `.shape`, etc. which are really method calls.
+        Implements ``.shape``, etc. which are really method calls.
         """
         if name == "shape":
             return self._get_shape()
@@ -158,7 +156,7 @@ class SOMASparseNdArray(TileDBArray):
     def read(
         self,
         *,
-        # TODO: find the right syntax to get the typechecker to accept args like `ids=slice(0,10)`
+        # TODO: find the right syntax to get the typechecker to accept args like ``ids=slice(0,10)``
         # row_ids: Optional[Union[Sequence[int], Slice]] = None,
         # col_ids: Optional[Union[Sequence[int], Slice]] = None,
         row_ids: Optional[Sequence[int]] = None,
@@ -237,7 +235,7 @@ class SOMASparseNdArray(TileDBArray):
     def read_all(
         self,
         *,
-        # TODO: find the right syntax to get the typechecker to accept args like `ids=slice(0,10)`
+        # TODO: find the right syntax to get the typechecker to accept args like ``ids=slice(0,10)``
         # row_ids: Optional[Union[Sequence[int], Slice]] = None,
         # col_ids: Optional[Union[Sequence[int], Slice]] = None,
         row_ids: Optional[Sequence[int]] = None,
@@ -249,9 +247,7 @@ class SOMASparseNdArray(TileDBArray):
         # TODO: platform_config,
     ) -> pa.RecordBatch:
         """
-        This is a convenience method around `read`. It iterates the return value from `read`
-        and returns a concatenation of all the record batches found. Its nominal use is to
-        simply unit-test cases.
+        This is a convenience method around ``read``. It iterates the return value from ``read`` and returns a concatenation of all the record batches found. Its nominal use is to simply unit-test cases.
         """
         return util_arrow.concat_batches(
             self.read(
@@ -269,9 +265,7 @@ class SOMASparseNdArray(TileDBArray):
         set_index: Optional[bool] = False,
     ) -> pa.RecordBatch:
         """
-        This is a convenience method around `read_as_pandas`. It iterates the return value from
-        `read_as_pandas` and returns a concatenation of all the record batches found. Its nominal
-        use is to simply unit-test cases.
+        This is a convenience method around ``read_as_pandas``. It iterates the return value from ``read_as_pandas`` and returns a concatenation of all the record batches found. Its nominal use is to simply unit-test cases.
         """
         dataframes = []
         generator = self.read_as_pandas(
@@ -289,11 +283,9 @@ class SOMASparseNdArray(TileDBArray):
         tensor: Union[pa.SparseCOOTensor, pa.SparseCSFTensor],
     ) -> None:
         """
-        Write an `Arrow.Tensor` to the persistent object. As duplicate index values are not allowed, index
-        values already present in the object are overwritten and new index values are added.
+        Write an ``Arrow.Tensor`` to the persistent object. As duplicate index values are not allowed, index values already present in the object are overwritten and new index values are added.
 
-        :param values: an `Arrow.SparseTensor` containing values to be written. The type of elements in `values`
-        must match the type of the `SOMASparseNdArray`.
+        :param values: an ``Arrow.SparseTensor`` containing values to be written. The type of elements in ``values`` must match the type of the ``SOMASparseNdArray``.
         """
 
         # TODO: CHUNKIFY
@@ -307,7 +299,7 @@ class SOMASparseNdArray(TileDBArray):
         # )
         #
         # Here on the callee side: need to figure out how to extrat the coords separate from the
-        # data since tiledb write needs `A[coords] = data`.
+        # data since tiledb write needs ``A[coords] = data``.
 
         # >>> tensor.data
         # AttributeError: 'pyarrow.lib.SparseCOOTensor' object has no attribute 'data'
@@ -334,8 +326,7 @@ class SOMASparseNdArray(TileDBArray):
 
     def from_matrix(self, matrix: Matrix) -> None:
         """
-        Imports a matrix -- nominally `scipy.sparse.csr_matrix` or `numpy.ndarray` -- into a TileDB
-        array which is used for `X`, `obsm`, and `varm` matrices
+        Imports a matrix -- nominally ``scipy.sparse.csr_matrix`` or ``numpy.ndarray`` -- into a TileDB array which is used for ``X``, ``obsm``, and ``varm`` matrices
         """
 
         s = util.get_start_stamp()
@@ -420,8 +411,7 @@ class SOMASparseNdArray(TileDBArray):
         matrix: Matrix,
     ) -> None:
         """
-        Convert `numpy.ndarray`, `scipy.sparse.csr_matrix`, or `scipy.sparse.csc_matrix`
-        to COO matrix and ingest into TileDB.
+        Convert ``numpy.ndarray``, ``scipy.sparse.csr_matrix``, or ``scipy.sparse.csc_matrix`` to COO matrix and ingest into TileDB.
 
         :param matrix: Matrix-like object coercible to a scipy COO matrix.
         """

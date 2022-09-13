@@ -11,9 +11,7 @@ from .tiledb_object import TileDBObject
 
 class TileDBArray(TileDBObject):
     """
-    Wraps arrays from TileDB-Py by retaining a URI, options, etc.
-    Also serves as an abstraction layer to hide TileDB-specific details from the API, unless
-    requested.
+    Wraps arrays from TileDB-Py by retaining a URI, options, etc.  Also serves as an abstraction layer to hide TileDB-specific details from the API, unless requested.
     """
 
     def __init__(
@@ -25,7 +23,7 @@ class TileDBArray(TileDBObject):
         ctx: Optional[tiledb.Ctx] = None,
     ):
         """
-        See the `TileDBObject` constructor.
+        See the ``TileDBObject`` constructor.
         """
         super().__init__(uri, name=name, parent=parent, ctx=ctx)
 
@@ -43,8 +41,7 @@ class TileDBArray(TileDBObject):
 
     def _tiledb_open(self, mode: str = "r") -> tiledb.Array:
         """
-        This is just a convenience wrapper allowing 'with self._tiledb_open() as A: ...' rather than
-        'with tiledb.open(self._uri) as A: ...'.
+        This is just a convenience wrapper allowing 'with self._tiledb_open() as A: ...' rather than 'with tiledb.open(self._uri) as A: ...'.
         """
         assert mode in ["w", "r"]
         # This works in either 'with self._tiledb_open() as A:' or 'A = self._tiledb_open(); ...; A.close().  The

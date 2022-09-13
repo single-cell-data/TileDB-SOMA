@@ -17,8 +17,8 @@ class Tracker:
 
     def ingest_and_predict(self, chunk_percent: float, chunk_seconds: float) -> str:
         """
-        Updates from most recent chunk percent-done and chunk completion-seconds, then does a linear regression on all chunks done so far and estimates time to completion.
-        :param chunk_percent: a percent done like 6.1 or 10.3.
+        Updates from most recent chunk percent-done and chunk completion-seconds, then does a linear regression on all chunks done so far and estimates time to completion.  :param chunk_percent: a percent done like 6.1 or 10.3.
+
         :param chunk_seconds: number of seconds it took to do the current chunk operation.
         """
         self._ingest(chunk_percent, chunk_seconds)
@@ -28,10 +28,7 @@ class Tracker:
 
     def _ingest(self, chunk_percent: float, chunk_seconds: float) -> None:
         """
-        Takes the current percent done like 10.3 and current chunk seconds like 58.4 and grows an
-        array of percent-dones and cumulative seconds. This means self.chunk_percents is a list of
-        all the chunk_percent arguments from calling _ingest, while each self.chunk_seconds slot is
-        the sum of all previous chunk_seconds arguments from calling _ingest.
+        Takes the current percent done like 10.3 and current chunk seconds like 58.4 and grows an array of percent-dones and cumulative seconds. This means self.chunk_percents is a list of all the chunk_percent arguments from calling _ingest, while each self.chunk_seconds slot is the sum of all previous chunk_seconds arguments from calling _ingest.
         """
         if len(self.chunk_percents) == 0:
             self.chunk_percents = [chunk_percent]
@@ -42,8 +39,7 @@ class Tracker:
 
     def _predict(self) -> float:
         """
-        Does a linear regression on all chunks done so far and estimates time to completion.
-        Returns ETA seconds as a number.
+        Does a linear regression on all chunks done so far and estimates time to completion.  Returns ETA seconds as a number.
         """
         # Linear regression where x is cumulative seconds and y is percent done.
         x = np.array(self.cumulative_seconds)

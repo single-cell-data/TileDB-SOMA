@@ -32,11 +32,7 @@ def _construct_member(
     ctx: Optional[tiledb.Ctx] = None,
 ) -> MemberType:
     """
-    Solely for the use of `SOMACollection`. In fact this would/should be a method of the
-    `SOMACollection` class, but there are cyclic-module-import issues.  This allows us to examine
-    storage metadata and invoke the appropriate per-type constructor when reading SOMA groups/arrays
-    from storage.
-    See also `_set_object_type_metadata` and `_get_object_type_metadata` within `TileDBObject`.
+    Solely for the use of ``SOMACollection``. In fact this would/should be a method of the ``SOMACollection`` class, but there are cyclic-module-import issues.  This allows us to examine storage metadata and invoke the appropriate per-type constructor when reading SOMA groups/arrays from storage.  See also ``_set_object_type_metadata`` and ``_get_object_type_metadata`` within ``TileDBObject``.
     """
 
     # Get the class name from TileDB storage. At the TileDB level there are just "arrays" and

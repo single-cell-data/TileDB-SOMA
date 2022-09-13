@@ -35,7 +35,7 @@ class SOMADenseNdArray(TileDBArray):
         ctx: Optional[tiledb.Ctx] = None,
     ):
         """
-        Also see the `TileDBObject` constructor.
+        Also see the ``TileDBObject`` constructor.
         """
         super().__init__(uri=uri, name=name, parent=parent, ctx=ctx)
 
@@ -45,13 +45,11 @@ class SOMADenseNdArray(TileDBArray):
         shape: Union[NTuple, List[int]],
     ) -> None:
         """
-        Create a `SOMADenseNdArray` named with the URI.
+        Create a ``SOMADenseNdArray`` named with the URI.
 
-        :param type: an Arrow type defining the type of each element in the array. If the type is
-        unsupported, an error will be raised.
+        :param type: an Arrow type defining the type of each element in the array. If the type is unsupported, an error will be raised.
 
-        :param shape: the length of each domain as a list, e.g., [100, 10]. All lengths must be in
-        the uint64 range.
+        :param shape: the length of each domain as a list, e.g., [100, 10]. All lengths must be in the uint64 range.
         """
 
         # checks on shape
@@ -64,7 +62,7 @@ class SOMADenseNdArray(TileDBArray):
         dims = []
         for e in shape:
             dim = tiledb.Dim(
-                # Use tiledb default names like `__dim_0`
+                # Use tiledb default names like ``__dim_0``
                 domain=(0, e - 1),
                 tile=min(e, 2048),  # TODO: PARAMETERIZE
                 dtype=np.uint64,
@@ -104,7 +102,7 @@ class SOMADenseNdArray(TileDBArray):
 
     def __repr__(self) -> str:
         """
-        Default display of `SOMADenseNdArray`.
+        Default display of ``SOMADenseNdArray``.
         """
         return "\n".join(self._repr_aux())
 
@@ -122,7 +120,7 @@ class SOMADenseNdArray(TileDBArray):
 
     def __getattr__(self, name: str) -> Any:
         """
-        Implements `.shape`, etc. which are really method calls.
+        Implements ``.shape``, etc. which are really method calls.
         """
         if name == "shape":
             return self._get_shape()
@@ -167,15 +165,11 @@ class SOMADenseNdArray(TileDBArray):
 
         :param ids: per-dimension slice, expressed as a scalar, a range, or a list of both.
 
-        :param partitions: an optional [`SOMAReadPartitions`](#SOMAReadPartitions) hint to indicate
-        how results should be organized.
+        :param partitions: an optional [``SOMAReadPartitions``](#SOMAReadPartitions) hint to indicate how results should be organized.
 
         :param result_order: order of read results. Can be one of row-major or column-major.
 
-        The `read` operation will return a language-specific iterator over one or more Arrow Tensor
-        objects and information describing them, allowing the incremental processing of results larger
-        than available memory. The actual iterator used is delegated to language-specific SOMA specs. The
-        `DenseReadResult` should include:
+        The ``read`` operation will return a language-specific iterator over one or more Arrow Tensor objects and information describing them, allowing the incremental processing of results larger than available memory. The actual iterator used is delegated to language-specific SOMA specs. The ``DenseReadResult`` should include:
 
         * The coordinates of the slice (e.g., origin, shape)
         * an Arrow.Tensor with the slice values
@@ -241,7 +235,7 @@ class SOMADenseNdArray(TileDBArray):
     def read_all(
         self,
         *,
-        # TODO: find the right syntax to get the typechecker to accept args like `ids=slice(0,10)`
+        # TODO: find the right syntax to get the typechecker to accept args like ``ids=slice(0,10)``
         # ids: Optional[Union[Sequence[int], Slice]] = None,
         row_ids: Optional[Sequence[int]] = None,
         col_ids: Optional[Sequence[int]] = None,
@@ -252,9 +246,7 @@ class SOMADenseNdArray(TileDBArray):
         # TODO: platform_config,
     ) -> pa.RecordBatch:
         """
-        This is a convenience method around `read`. It iterates the return value from `read`
-        and returns a concatenation of all the record batches found. Its nominal use is to
-        simply unit-test cases.
+        This is a convenience method around ``read``. It iterates the return value from ``read`` and returns a concatenation of all the record batches found. Its nominal use is to simply unit-test cases.
         """
         return util_arrow.concat_batches(
             self.read(
@@ -272,9 +264,7 @@ class SOMADenseNdArray(TileDBArray):
         set_index: Optional[bool] = False,
     ) -> pa.RecordBatch:
         """
-        This is a convenience method around `read_as_pandas`. It iterates the return value from
-        `read_as_pandas` and returns a concatenation of all the record batches found. Its nominal
-        use is to simply unit-test cases.
+        This is a convenience method around ``read_as_pandas``. It iterates the return value from ``read_as_pandas`` and returns a concatenation of all the record batches found. Its nominal use is to simply unit-test cases.
         """
         dataframes = []
         generator = self.read_as_pandas(
@@ -294,13 +284,11 @@ class SOMADenseNdArray(TileDBArray):
         values: pa.Tensor,
     ) -> None:
         """
-        Write an Arrow.Tensor to the persistent object. As duplicate index values are not allowed, index
-        values already present in the object are overwritten and new index values are added.
+        Write an Arrow.Tensor to the persistent object. As duplicate index values are not allowed, index values already present in the object are overwritten and new index values are added.
 
         :param coords: location at which to write the tensor
 
-        :param values: an Arrow.Tensor containing values to be written. The type of elements in `values` must
-        match the type of the SOMADenseNdArray.
+        :param values: an Arrow.Tensor containing values to be written. The type of elements in ``values`` must match the type of the SOMADenseNdArray.
         """
 
         with self._tiledb_open("w") as A:
@@ -309,8 +297,7 @@ class SOMADenseNdArray(TileDBArray):
     # ----------------------------------------------------------------
     def from_matrix(self, matrix: Matrix) -> None:
         """
-        Imports a matrix -- nominally `numpy.ndarray` -- into a TileDB
-        array which is used for `obsp` and `varp` matrices
+        Imports a matrix -- nominally ``numpy.ndarray`` -- into a TileDB array which is used for ``obsp`` and ``varp`` matrices
         """
 
         s = util.get_start_stamp()

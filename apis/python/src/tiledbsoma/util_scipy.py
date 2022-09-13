@@ -42,10 +42,8 @@ def find_csc_chunk_size(
     goal_chunk_nnz: int,
 ) -> int:
     """
-    Given a CSC matrix and a start column index, returns the number of columns with cumulative nnz as
-    desired. Context is chunked-COO ingest of larger CSC matrices: if mat is say 8000x9000 but
-    sparse, maybe we'll read columns 0:45 as one chunk and convert that to COO and ingest, then maybe
-    columns 46:78 as a second chunk and convert that to COO and ingest, and so on.
+    Given a CSC matrix and a start column index, returns the number of columns with cumulative nnz as desired. Context is chunked-COO ingest of larger CSC matrices: if mat is say 8000x9000 but sparse, maybe we'll read columns 0:45 as one chunk and convert that to COO and ingest, then maybe columns 46:78 as a second chunk and convert that to COO and ingest, and so on.
+
     :param mat: The input CSC matrix.
     :param start_col_index: the column index at which to start a chunk.
     :param goal_chunk_nnz: Desired number of non-zero array entries for the chunk.

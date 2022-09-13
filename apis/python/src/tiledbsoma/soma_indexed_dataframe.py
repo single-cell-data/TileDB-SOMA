@@ -19,9 +19,7 @@ class SOMAIndexedDataFrame(TileDBArray):
     """
     Represents ``obs``, ``var``, and others.
 
-    A `SOMAIndexedDataFrame` contains a "pseudo-column" called `soma_rowid`, of type uint64 and domain
-    [0,num_rows).  The `soma_rowid` pseudo-column contains a unique value for each row in the
-    `SOMAIndexedDataFrame`, and is intended to act as a join key for other objects, such as a `SOMASparseNdArray`.
+    A ``SOMAIndexedDataFrame`` contains a "pseudo-column" called ``soma_rowid``, of type uint64 and domain [0,num_rows).  The ``soma_rowid`` pseudo-column contains a unique value for each row in the ``SOMAIndexedDataFrame``, and is intended to act as a join key for other objects, such as a ``SOMASparseNdArray``.
     """
 
     _index_column_names: Optional[List[str]]
@@ -37,7 +35,7 @@ class SOMAIndexedDataFrame(TileDBArray):
         ctx: Optional[tiledb.Ctx] = None,
     ):
         """
-        See also the `TileDBOject` constructor.
+        See also the ``TileDBOject`` constructor.
         """
         super().__init__(uri=uri, name=name, parent=parent, ctx=ctx)
         self._index_column_names = None
@@ -49,14 +47,9 @@ class SOMAIndexedDataFrame(TileDBArray):
         index_column_names: Optional[List[str]] = None,
     ) -> None:
         """
-        :param schema: Arrow Schema defining the per-column schema. This schema must define all
-        columns, including columns to be named as index columns. The column name ``soma_rowid`` is
-        reserved for the pseudo-column of the same name. If the schema includes types unsupported by
-        the SOMA implementation, an error will be raised.
+        :param schema: Arrow Schema defining the per-column schema. This schema must define all columns, including columns to be named as index columns. The column name ``soma_rowid`` is reserved for the pseudo-column of the same name. If the schema includes types unsupported by the SOMA implementation, an error will be raised.
 
-        :param index_column_names: A list of column names to use as user-defined index columns
-        (e.g., ``['cell_type', 'tissue_type']``). All named columns must exist in the schema, and at
-        least one index column name is required.
+        :param index_column_names: A list of column names to use as user-defined index columns (e.g., ``['cell_type', 'tissue_type']``). All named columns must exist in the schema, and at least one index column name is required.
         """
         assert index_column_names is not None
         assert len(index_column_names) >= 1
@@ -144,7 +137,7 @@ class SOMAIndexedDataFrame(TileDBArray):
             capacity=100000,
             cell_order="row-major",
             # As of TileDB core 2.8.2, we cannot consolidate string-indexed sparse arrays with
-            # col-major tile order: so we write `X` with row-major tile order.
+            # col-major tile order: so we write ``X`` with row-major tile order.
             tile_order="row-major",
             ctx=self._ctx,
         )
@@ -154,7 +147,7 @@ class SOMAIndexedDataFrame(TileDBArray):
 
     def __repr__(self) -> str:
         """
-        Default display of `SOMAIndexedDataFrame`.
+        Default display of ``SOMAIndexedDataFrame``.
         """
         return "\n".join(self._repr_aux())
 
@@ -172,7 +165,7 @@ class SOMAIndexedDataFrame(TileDBArray):
 
     def __getattr__(self, name: str) -> Any:
         """
-        Implements `.shape`, etc. which are really method calls.
+        Implements ``.shape``, etc. which are really method calls.
         """
         if name == "shape":
             return self._get_shape()
@@ -181,8 +174,7 @@ class SOMAIndexedDataFrame(TileDBArray):
 
     def keys(self) -> List[str]:
         """
-        Returns the names of the columns when read back as a dataframe.
-        TODO: make it clear whether or not this will read back `soma_rowid` / `soma_joinid`.
+        Returns the names of the columns when read back as a dataframe.  TODO: make it clear whether or not this will read back ``soma_rowid`` / ``soma_joinid``.
         """
         return self._tiledb_attr_names()
 
@@ -236,21 +228,17 @@ class SOMAIndexedDataFrame(TileDBArray):
         """
         Read a user-defined subset of data, addressed by the dataframe indexing columns, optionally filtered, and return results as one or more Arrow.RecordBatch.
 
-        :param ids: for each index dimension, which rows to read. Defaults to `None`, meaning no constraint -- all IDs.
+        :param ids: for each index dimension, which rows to read. Defaults to ``None``, meaning no constraint -- all IDs.
 
-        :param column_names: the named columns to read and return. Defaults to `None`, meaning no constraint -- all column names.
+        :param column_names: the named columns to read and return. Defaults to ``None``, meaning no constraint -- all column names.
 
-        :param partitions: an optional ``SOMAReadPartitions`` hint to indicate how results should be
-        organized.
+        :param partitions: an optional ``SOMAReadPartitions`` hint to indicate how results should be organized.
 
-        :param result_order: order of read results. This can be one of 'row-major', 'col-major', or
-        'unordered'.
+        :param result_order: order of read results. This can be one of 'row-major', 'col-major', or 'unordered'.
 
-        :param value_filter: an optional [value filter] to apply to the results. Defaults to no
-        filter.
+        :param value_filter: an optional [value filter] to apply to the results. Defaults to no filter.
 
-        **Indexing**: the `ids` parameter will support, per dimension: a list of values of the type
-        of the indexed column.
+        **Indexing**: the ``ids`` parameter will support, per dimension: a list of values of the type of the indexed column.
         """
         tiledb_result_order = (
             util_tiledb.tiledb_result_order_from_soma_result_order_indexed(result_order)
@@ -292,7 +280,7 @@ class SOMAIndexedDataFrame(TileDBArray):
     def read_all(
         self,
         *,
-        # TODO: find the right syntax to get the typechecker to accept args like `ids=slice(0,10)`
+        # TODO: find the right syntax to get the typechecker to accept args like ``ids=slice(0,10)``
         # ids: Optional[Union[Sequence[int], Slice]] = None,
         ids: Optional[Any] = None,
         value_filter: Optional[str] = None,
@@ -303,9 +291,7 @@ class SOMAIndexedDataFrame(TileDBArray):
         # TODO: platform_config,
     ) -> pa.RecordBatch:
         """
-        This is a convenience method around `read`. It iterates the return value from `read`
-        and returns a concatenation of all the record batches found. Its nominal use is to
-        simply unit-test cases.
+        This is a convenience method around ``read``. It iterates the return value from ``read`` and returns a concatenation of all the record batches found. Its nominal use is to simply unit-test cases.
         """
         return util_arrow.concat_batches(
             self.read(ids=ids, value_filter=value_filter, column_names=column_names)
@@ -313,11 +299,9 @@ class SOMAIndexedDataFrame(TileDBArray):
 
     def write(self, values: pa.RecordBatch) -> None:
         """
-        Write an Arrow.RecordBatch to the persistent object. As duplicate index values are not allowed,
-        index values already present in the object are overwritten and new index values are added.
+        Write an Arrow.RecordBatch to the persistent object. As duplicate index values are not allowed, index values already present in the object are overwritten and new index values are added.
 
-        :param values: An Arrow.RecordBatch containing all columns, including the index columns. The
-        schema for the values must match the schema for the `SOMAIndexedDataFrame`.
+        :param values: An Arrow.RecordBatch containing all columns, including the index columns. The schema for the values must match the schema for the ``SOMAIndexedDataFrame``.
         """
         self._shape = None  # cache-invalidate
 
@@ -339,7 +323,7 @@ class SOMAIndexedDataFrame(TileDBArray):
 
         dim_cols_list = [list(dim_col) for dim_col in dim_cols_list]
         with self._tiledb_open("w") as A:
-            # TODO: find the right syntax for vardims ... it's not the `*` operator ...
+            # TODO: find the right syntax for vardims ... it's not the ``*`` operator ...
             # A[*dim_cols_list] = attr_cols_map
             if len(dim_cols_list) == 1:
                 A[dim_cols_list[0]] = attr_cols_map
@@ -355,7 +339,7 @@ class SOMAIndexedDataFrame(TileDBArray):
         id_column_name: Optional[str] = None,
     ) -> Generator:
         """
-        For `to_anndata`, as well as for any interactive use where the user wants a Pandas dataframe.
+        For ``to_anndata``, as well as for any interactive use where the user wants a Pandas dataframe.
         """
         raise Exception("indexed read_as_pandas not implemented yet")
 
@@ -369,9 +353,9 @@ class SOMAIndexedDataFrame(TileDBArray):
         id_column_name: Optional[str] = None,
     ) -> None:
         """
-        Populates the `obs` element of a SOMAExperiment object.
+        Populates the ``obs`` element of a SOMAExperiment object.
 
-        :param dataframe: `anndata.obs`
-        :param extent: TileDB `extent` parameter for the array schema.
+        :param dataframe: ``anndata.obs``
+        :param extent: TileDB ``extent`` parameter for the array schema.
         """
         raise Exception("indexed write_from_pandas not implemented yet")

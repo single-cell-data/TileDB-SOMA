@@ -6,6 +6,7 @@ from .soma_experiment import SOMAExperiment
 from .soma_indexed_dataframe import SOMAIndexedDataFrame
 from .soma_measurement import SOMAMeasurement
 from .soma_sparse_nd_array import SOMASparseNdArray
+from .soma_metadata_mapping import SOMAMetadataMapping
 from .tiledb_array import TileDBArray
 from .tiledb_object import TileDBObject
 from .tiledb_platform_config import TileDBPlatformConfig
@@ -24,4 +25,5 @@ __all__ = [
     "SOMACollection",
     "SOMAExperiment",
     "SOMAMeasurement",
+    "SOMAMetadataMapping",
 ]

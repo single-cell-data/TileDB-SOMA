@@ -9,39 +9,31 @@ from .tiledb_platform_config import TileDBPlatformConfig
 
 class SOMAMeasurement(SOMACollection):
     """
-    A `SOMAMeasurement` is a sub-element of a `SOMAExperiment`, and is otherwise a specialized
-    `SOMACollection` with pre-defined fields:
+    A ``SOMAMeasurement`` is a sub-element of a ``SOMAExperiment``, and is otherwise a specialized ``SOMACollection`` with pre-defined fields:
 
-    `var`: `SOMADataFrame`
+    ``var``: ``SOMADataFrame``
 
-    Primary annotations on the variable axis, for variables in this measurement (i.e., annotates
-    columns of `X`). The contents of the `soma_rowid` pseudo-column define the variable index domain,
-    AKA varid. All variables for this measurement must be defined in this dataframe.
+    Primary annotations on the variable axis, for variables in this measurement (i.e., annotates columns of ``X``). The contents of the ``soma_rowid`` pseudo-column define the variable index domain, AKA varid. All variables for this measurement must be defined in this dataframe.
 
-    `X`: `SOMACollection` of `SOMASparseNdArray`
+    ``X``: ``SOMACollection`` of ``SOMASparseNdArray``
 
-    A collection of sparse matrices, each containing measured feature values. Each matrix is indexed
-    by `[obsid, varid]`.
+    A collection of sparse matrices, each containing measured feature values. Each matrix is indexed by ``[obsid, varid]``.
 
-    `obsm`: `SOMACollection` of `SOMADenseNdArray`
+    ``obsm``: ``SOMACollection`` of ``SOMADenseNdArray``
 
-    A collection of dense matrices containing annotations of each `obs` row. Has the same shape as
-    `obs`, and is indexed with `obsid`.
+    A collection of dense matrices containing annotations of each ``obs`` row. Has the same shape as ``obs``, and is indexed with ``obsid``.
 
-    `obsp`: `SOMACollection` of `SOMASparseNdArray`
+    ``obsp``: ``SOMACollection`` of ``SOMASparseNdArray``
 
-    A collection of sparse matrices containing pairwise annotations of each `obs` row. Indexed with
-    `[obsid_1, obsid_2]`.
+    A collection of sparse matrices containing pairwise annotations of each ``obs`` row. Indexed with ``[obsid_1, obsid_2]``.
 
-    `varm`: `SOMACollection` of `SOMADenseNdArray`
+    ``varm``: ``SOMACollection`` of ``SOMADenseNdArray``
 
-    A collection of dense matrices containing annotations of each `var` row. Has the same shape as
-    `var`, and is indexed with `varid`.
+    A collection of dense matrices containing annotations of each ``var`` row. Has the same shape as ``var``, and is indexed with ``varid``.
 
-    `varp`: `SOMACollection` of `SOMASparseNdArray`
+    ``varp``: ``SOMACollection`` of ``SOMASparseNdArray``
 
-    A collection of sparse matrices containing pairwise annotations of each `var` row. Indexed with
-    `[varid_1, varid_2]`
+    A collection of sparse matrices containing pairwise annotations of each ``var`` row. Indexed with ``[varid_1, varid_2]``
     """
 
     _constructors: Dict[str, Any]
@@ -59,7 +51,7 @@ class SOMAMeasurement(SOMACollection):
         ctx: Optional[tiledb.Ctx] = None,
     ):
         """
-        Also see the `TileDBObject` constructor.
+        Also see the ``TileDBObject`` constructor.
         """
         super().__init__(
             uri=uri,
@@ -86,7 +78,7 @@ class SOMAMeasurement(SOMACollection):
 
     def __getattr__(self, name: str) -> Any:
         """
-        Implements `experiment.var`, `experiment.X`, etc.
+        Implements ``experiment.var``, ``experiment.X``, etc.
         """
         if name in self._constructors:
             if name not in self._cached_members:
@@ -128,23 +120,23 @@ class SOMAMeasurement(SOMACollection):
         #                    f"element {element.name} of {self.get_type()}.{attr} should be SOMADenseNdArray; got {element.__class__.__name__}"
         #                )
 
-    # `X` collection values
-    # o All matrices must have the shape `(#obs, #var)`.
-    # o The domain of the first dimension is the values of `obs.soma_rowid`, and the index domain of
-    #   the second dimension is the values of `var.soma_rowid` in the containing `SOMAMeasurement`.
+    # ``X`` collection values
+    # o All matrices must have the shape ``(#obs, #var)``.
+    # o The domain of the first dimension is the values of ``obs.soma_rowid``, and the index domain of
+    #   the second dimension is the values of ``var.soma_rowid`` in the containing ``SOMAMeasurement``.
 
-    # `obsm` collection values
-    # o All matrices must have the shape `(#obs, M)`, where `M` is user-defined.
-    # o The domain of the first dimension is the values of `obs.soma_rowid`.
+    # ``obsm`` collection values
+    # o All matrices must have the shape ``(#obs, M)``, where ``M`` is user-defined.
+    # o The domain of the first dimension is the values of ``obs.soma_rowid``.
 
-    # `obsp` collection values
-    # o All matrices must have the shape `(#obs, #obs)`.
-    # o The domain of both dimensions is the values of `obs.soma_rowid`.
+    # ``obsp`` collection values
+    # o All matrices must have the shape ``(#obs, #obs)``.
+    # o The domain of both dimensions is the values of ``obs.soma_rowid``.
 
-    # `varm` collection values
-    # o All matrices must have the shape `(#var, M)`, where `M` is user-defined.
-    # o The domain of the first dimension is the values of `var.soma_rowid`.
+    # ``varm`` collection values
+    # o All matrices must have the shape ``(#var, M)``, where ``M`` is user-defined.
+    # o The domain of the first dimension is the values of ``var.soma_rowid``.
 
-    # `varp` collection values
-    # o All matrices must have the shape `(#var, #var)`.
-    # o The domain of both dimensions is the values of `var.soma_rowid`.
+    # ``varp`` collection values
+    # o All matrices must have the shape ``(#var, #var)``.
+    # o The domain of both dimensions is the values of ``var.soma_rowid``.
