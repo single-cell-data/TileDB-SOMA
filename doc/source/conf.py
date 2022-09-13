@@ -45,12 +45,12 @@ extensions = ["sphinx.ext.autodoc", "sphinx.ext.doctest", "sphinx.ext.intersphin
 # Mapping for linking between RTD subprojects.
 if readthedocs:
     intersphinx_mapping = {
-        "tiledbsc": (
-            "https://tiledb-inc-tiledb-singlecell.readthedocs-hosted.com/en/%s/" % rtd_version,
+        "tiledbsoma": (
+            "https://tiledb-inc-tiledb-soma.readthedocs-hosted.com/en/%s/" % rtd_version,
             None,
         ),
-        "tiledbsc-py": (
-            "https://tiledb-inc-tiledb-singlecell.readthedocs-hosted.com/projects/python-api/en/%s/"
+        "tiledbsoma-py": (
+            "https://tiledb-inc-tiledb-soma.readthedocs-hosted.com/projects/python-api/en/%s/"
             % rtd_version,
             None,
         ),
@@ -139,7 +139,7 @@ latex_documents = [
 
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
-man_pages = [(master_doc, "tiledbsc-py", "TileDBSC-Py Documentation", [author], 1)]
+man_pages = [(master_doc, "tiledbsoma-py", "TileDBSC-Py Documentation", [author], 1)]
 
 
 # -- Options for Texinfo output ----------------------------------------------
@@ -166,7 +166,7 @@ texinfo_documents = [
 import gensidebar
 
 gensidebar.generate_sidebar(
-    {"on_rtd": readthedocs, "rtd_version": rtd_version}, "tiledbsc-py"
+    {"on_rtd": readthedocs, "rtd_version": rtd_version}, "tiledbsoma-py"
 )
 
 # -- Custom setup -----------------------------------------------------------

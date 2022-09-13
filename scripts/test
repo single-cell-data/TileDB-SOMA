@@ -19,15 +19,15 @@ else
 fi
 
 # Build the tests
-cmake --build build/libtiledbsc --target build_tests -j $nproc
+cmake --build build/libtiledbsoma --target build_tests -j $nproc
 
 # Run unit tests
-cd build/libtiledbsc
+cd build/libtiledbsoma
 ctest -C Release --verbose
 
 # Run python tests
 cd -
-pytest -v --durations=0 libtiledbsc
+pytest -v --durations=0 libtiledbsoma
 
 # Generate coverage report
 if [[ -n $COVERAGE ]]; then
@@ -38,7 +38,7 @@ if [[ -n $COVERAGE ]]; then
 
   mkdir -p coverage
 
-  lcov --capture --directory build/libtiledbsc --output-file ${LCOV_INFO}.all >& /dev/null
+  lcov --capture --directory build/libtiledbsoma --output-file ${LCOV_INFO}.all >& /dev/null
   lcov --remove ${LCOV_INFO}.all \
     '/usr/include/*' \
     '*/catch2/*' \

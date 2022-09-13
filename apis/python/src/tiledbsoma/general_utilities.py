@@ -12,7 +12,7 @@ def get_implementation() -> str:
     return "python-tiledb"
 
 
-# One should use tiledbsc.__version__
+# One should use tiledbsoma.__version__
 # def get_implementation_version() -> str:
 #    """
 #    Return the package implementation version as a semver

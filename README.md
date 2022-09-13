@@ -1,8 +1,8 @@
 <a href="https://tiledb.com"><img src="https://github.com/TileDB-Inc/TileDB/raw/dev/doc/source/_static/tiledb-logo_color_no_margin_@4x.png" alt="TileDB logo" width="400"></a>
 
-[![TileDB-SingleCell CI](https://github.com/single-cell-data/TileDB-SingleCell/actions/workflows/ci.yml/badge.svg)](https://github.com/single-cell-data/TileDB-SingleCell/actions/workflows/ci.yml)
+[![TileDB-SOMA CI](https://github.com/single-cell-data/TileDB-SOMA/actions/workflows/ci.yml/badge.svg)](https://github.com/single-cell-data/TileDB-SOMA/actions/workflows/ci.yml)
 
-# TileDB-SingleCell
+# TileDB-SOMA
 
 A C++ library with APIs in Python and R for efficient storage and retrieval of single-cell data using [TileDB Embedded][tiledb].
 

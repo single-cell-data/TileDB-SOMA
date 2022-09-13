@@ -19,7 +19,7 @@ format:
 website:
   favicon: "images/favicon.ico"
   site-url: https://tiledb-singlecell-docs.s3.amazonaws.com/docs/overview.html
-  repo-url: https://github.com/single-cell-data/TileDB-SingleCell
+  repo-url: https://github.com/single-cell-data/TileDB-SOMA
   # We may want one or both of these, or neither:
   repo-actions: [edit, issue]
   page-navigation: true
@@ -35,7 +35,7 @@ website:
       - text: "Contact us"
         href: "https://tiledb.com/contact"
       - text: "Repo"
-        href: "https://github.com/single-cell-data/TileDB-SingleCell"
+        href: "https://github.com/single-cell-data/TileDB-SOMA"
 
   sidebar:
     - style: "floating"
@@ -47,9 +47,9 @@ website:
 
         - section: "R"
           contents:
-            - href: "https://tiledb-inc.github.io/tiledbsc/reference/index.html"
+            - href: "https://tiledb-inc.github.io/tiledbsoma/reference/index.html"
               text: "R API"
-            - href: "https://tiledb-inc.github.io/tiledbsc/articles/introduction.html"
+            - href: "https://tiledb-inc.github.io/tiledbsoma/articles/introduction.html"
               text: "R examples"
 
         - section: "Python"
@@ -115,8 +115,8 @@ website:
                   text: "TileDBObject"
 
                 - href: "apis/python/doc/util.md"
-                  text: "tiledbsc.util"
+                  text: "tiledbsoma.util"
                 - href: "apis/python/doc/util_ann.md"
-                  text: "tiledbsc.util_ann"
+                  text: "tiledbsoma.util_ann"
                 - href: "apis/python/doc/util_tiledb.md"
-                  text: "tiledbsc.util_tiledb"
+                  text: "tiledbsoma.util_tiledb"

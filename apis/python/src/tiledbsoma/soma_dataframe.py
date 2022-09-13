@@ -249,7 +249,7 @@ class SOMADataFrame(TileDBArray):
                     # XXX COMMENT MORE
                     # This is the 'decode on read' part of our logic; in dim_select we have the
                     # 'encode on write' part.
-                    # Context: https://github.com/single-cell-data/TileDB-SingleCell/issues/99.
+                    # Context: https://github.com/single-cell-data/TileDB-SOMA/issues/99.
                     #
                     # Also: don't materialize these on read
                     # TODO: get the arrow syntax for drop
@@ -376,7 +376,7 @@ class SOMADataFrame(TileDBArray):
 
                 # This is the 'decode on read' part of our logic; in dim_select we have the 'encode on
                 # write' part.
-                # Context: https://github.com/single-cell-data/TileDB-SingleCell/issues/99.
+                # Context: https://github.com/single-cell-data/TileDB-SOMA/issues/99.
                 df = util_pandas.ascii_to_unicode_pandas_readback(df)
 
                 if id_column_name is not None:
@@ -470,10 +470,10 @@ class SOMADataFrame(TileDBArray):
         # "α,β,γ".
         #
         # CONTEXT:
-        # https://github.com/single-cell-data/TileDB-SingleCell/issues/99
-        # https://github.com/single-cell-data/TileDB-SingleCell/pull/101
-        # https://github.com/single-cell-data/TileDB-SingleCell/issues/106
-        # https://github.com/single-cell-data/TileDB-SingleCell/pull/117
+        # https://github.com/single-cell-data/TileDB-SOMA/issues/99
+        # https://github.com/single-cell-data/TileDB-SOMA/pull/101
+        # https://github.com/single-cell-data/TileDB-SOMA/issues/106
+        # https://github.com/single-cell-data/TileDB-SOMA/pull/117
         #
         # IMPLEMENTATION:
         # Python types -- float, string, what have you -- appear as dtype('O') which is not useful.

@@ -1,7 +1,7 @@
 import logging
 from typing import Optional
 
-logger = logging.getLogger("tiledbsc")
+logger = logging.getLogger("tiledbsoma")
 
 
 def warning() -> None:

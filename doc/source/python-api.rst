@@ -21,86 +21,86 @@ Features:
 Modules
 -------
 
-Typical usage of the Python interface to TileDB-SC will use the top-level module ``tiledbsc``, e.g.
+Typical usage of the Python interface to TileDB-SOMA will use the top-level module ``tiledbsoma``, e.g.
 
 .. code-block:: python
 
-   import tiledbsc
+   import tiledbsoma
 
 There is also a submodule ``io`` which contains logic for importing data from ``AnnData`` to SOMA structure, and exporting back to ``AnnData``.
 
 .. code-block:: python
 
-   import tiledbsc.io
+   import tiledbsoma.io
 
 SOMA
 ----
 
-.. autoclass:: tiledbsc.SOMA
+.. autoclass:: tiledbsoma.SOMA
    :members:
 
 SOMACollection
 --------------
 
-.. autoclass:: tiledbsc.SOMACollection
+.. autoclass:: tiledbsoma.SOMACollection
    :members:
 
 SOMASlice
 ---------
 
-.. autoclass:: tiledbsc.SOMASlice
+.. autoclass:: tiledbsoma.SOMASlice
    :members:
 
 I/O functions
 -------------
 
-.. autofunction:: tiledbsc.io.from_h5ad
-.. autofunction:: tiledbsc.io.from_anndata
-.. autofunction:: tiledbsc.io.to_h5ad
-.. autofunction:: tiledbsc.io.to_anndata
+.. autofunction:: tiledbsoma.io.from_h5ad
+.. autofunction:: tiledbsoma.io.from_anndata
+.. autofunction:: tiledbsoma.io.to_h5ad
+.. autofunction:: tiledbsoma.io.to_anndata
 
 Options
 -------
 
-.. autoclass:: tiledbsc.SOMAOptions
+.. autoclass:: tiledbsoma.SOMAOptions
    :members:
-.. automodule:: tiledbsc.logging
+.. automodule:: tiledbsoma.logging
    :members:
 
 SOMA-element classes
 --------------------
 
-.. autoclass:: tiledbsc.AssayMatrixGroup
+.. autoclass:: tiledbsoma.AssayMatrixGroup
    :members:
-.. autoclass:: tiledbsc.AssayMatrix
+.. autoclass:: tiledbsoma.AssayMatrix
    :members:
-.. autoclass:: tiledbsc.AnnotationDataFrame
+.. autoclass:: tiledbsoma.AnnotationDataFrame
    :members:
-.. autoclass:: tiledbsc.AnnotationMatrixGroup
+.. autoclass:: tiledbsoma.AnnotationMatrixGroup
    :members:
-.. autoclass:: tiledbsc.AnnotationMatrix
+.. autoclass:: tiledbsoma.AnnotationMatrix
    :members:
-.. autoclass:: tiledbsc.AnnotationPairwiseMatrixGroup
+.. autoclass:: tiledbsoma.AnnotationPairwiseMatrixGroup
    :members:
-.. autoclass:: tiledbsc.RawGroup
+.. autoclass:: tiledbsoma.RawGroup
    :members:
-.. autoclass:: tiledbsc.UnsGroup
+.. autoclass:: tiledbsoma.UnsGroup
    :members:
-.. autoclass:: tiledbsc.UnsArray
+.. autoclass:: tiledbsoma.UnsArray
    :members:
 
 Implementation-level classes
 ----------------------------
 
-.. autoclass:: tiledbsc.TileDBArray
+.. autoclass:: tiledbsoma.TileDBArray
    :members:
-.. autoclass:: tiledbsc.TileDBGroup
+.. autoclass:: tiledbsoma.TileDBGroup
    :members:
-.. autoclass:: tiledbsc.TileDBObject
+.. autoclass:: tiledbsoma.TileDBObject
    :members:
-.. automodule:: tiledbsc.util
+.. automodule:: tiledbsoma.util
    :members:
-.. automodule:: tiledbsc.util_ann
+.. automodule:: tiledbsoma.util_ann
    :members:
-.. automodule:: tiledbsc.util_tiledb
+.. automodule:: tiledbsoma.util_tiledb
    :members:

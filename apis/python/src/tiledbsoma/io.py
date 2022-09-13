@@ -20,9 +20,9 @@ from .types import Path
 # import scanpy
 # import tiledb
 
-# import tiledbsc
-# import tiledbsc.logging
-# import tiledbsc.util
+# import tiledbsoma
+# import tiledbsoma.logging
+# import tiledbsoma.util
 
 
 # ----------------------------------------------------------------

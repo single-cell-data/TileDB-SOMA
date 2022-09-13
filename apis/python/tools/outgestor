@@ -24,7 +24,7 @@ import tiledbsoma
 import tiledbsoma.io
 import tiledbsoma.util
 
-logger = logging.getLogger("tiledbsc")
+logger = logging.getLogger("tiledbsoma")
 
 
 def main():

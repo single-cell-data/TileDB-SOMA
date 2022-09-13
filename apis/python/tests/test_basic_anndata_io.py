@@ -139,7 +139,7 @@ def test_import_anndata(adata):
     #            df = A.df[:]
     #            assert df.columns.to_list() == ["obs_id_i", "obs_id_j", "value"]
     #            assert df.shape[0] == orig.obsp[key].nnz
-    #            # https://github.com/single-cell-data/TileDB-SingleCell/issues/125
+    #            # https://github.com/single-cell-data/TileDB-SOMA/issues/125
     #            # At present (without that PR's suggested enhancement) the best we
     #            # can get is the NNZ x attrs shape -- note that there are two
     #            # dims and one attr so the shape is nnz x 1.
