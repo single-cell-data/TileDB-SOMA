@@ -1,16 +1,13 @@
 #!/usr/bin/env python
 
 """
-A simple driver for ingestion of anndata to a TileDB SOMA.
+A simple driver for ingestion of anndata to a TileDB SOMAExperiment.
 
 * Invoke this with one argument /path/to/some/somename.h5ad:
-  o Output will be ./tiledb-data/somename
+  o Output will be ./tiledbsoma-data/somename
 
 * Invoke this with two arguments to specify input anndata HDF5 file
   and output TileDB group.
-
-Nominal immediate-term support is to local disk and S3, although output to tiledb:/...
-URIs will be supported.
 """
 
 import argparse
@@ -20,15 +17,16 @@ import sys
 
 import tiledb
 
-import tiledbsc
-import tiledbsc.io
-import tiledbsc.util
+import tiledbsoma
+import tiledbsoma.io
+import tiledbsoma.logging
+import tiledbsoma.util
 
 
 # ================================================================
 def main():
     parser = argparse.ArgumentParser(
-        description="Ingest soma data from anndata/h5ad into TileDB group structure"
+        description="Ingest SOMA data from anndata/h5ad into TileDB group structure"
     )
     parser.add_argument(
         "-q", "--quiet", help="decrease output verbosity", action="store_true"
@@ -47,15 +45,10 @@ def main():
         action="store_true",
     )
     parser.add_argument(
-        "-u",
-        help="Shorthand for `--ifexists update`",
-        action="store_true",
-    )
-    parser.add_argument(
         "-o",
-        help="Specify output directory to contain the somas",
+        help="Specify output directory to contain the SOMAs",
         type=str,
-        default="./tiledb-data",
+        default="./tiledbsoma-data",
     )
     parser.add_argument(
         "--soco",
@@ -82,8 +75,8 @@ select `relative=True`. (This is the default.)
     # TODO: add an update option once we figure out tiledb.from_pandas mode=overwrite flag.
     parser.add_argument(
         "--ifexists",
-        help="What to do if soma storage already exists. Default: continue.",
-        choices=["replace", "abort", "continue", "update", "update_obs_and_var"],
+        help="What to do if SOMA storage already exists. Default: continue.",
+        choices=["replace", "abort", "continue", "update_obs_and_var"],
         type=str,
         nargs=1,
     )
@@ -98,17 +91,14 @@ select `relative=True`. (This is the default.)
     if args.ifexists is None:
         if args.x:
             args.ifexists = ["replace"]
-        elif args.u:
-            args.ifexists = ["update"]
         else:
             args.ifexists = ["continue"]
 
     write_soco = args.soco
     if args.debug:
-        tiledbsc.logging.debug()
-    elif args.quiet:
-        tiledbsc.logging.warning()
-    # else default is tiledbsc.logging.info() in our __init__.py
+        tiledbsoma.logging.debug()
+    elif not args.quiet:
+        tiledbsoma.logging.info()
 
     if args.relative is None:
         rel_member_uris = None
@@ -123,7 +113,9 @@ select `relative=True`. (This is the default.)
         else:
             raise Exception(f"Internal coding error in {__file__}")
 
-    soma_options = tiledbsc.SOMAOptions(member_uris_are_relative=rel_member_uris)
+    tiledb_platform_config = tiledbsoma.TileDBPlatformConfig(
+        member_uris_are_relative=rel_member_uris
+    )
     outdir = args.o.rstrip("/")
 
     if args.n:
@@ -131,7 +123,7 @@ select `relative=True`. (This is the default.)
             parser.print_help(file=sys.stderr)
             sys.exit(1)
         for input_path in args.paths:
-            # Example 'anndata/pbmc3k_processed.h5ad' -> 'tiledb-data/pbmc3k_processed'
+            # Example 'anndata/pbmc3k_processed.h5ad' -> 'tiledbsoma-data/pbmc3k_processed'
             output_path = os.path.join(
                 outdir, os.path.splitext(os.path.basename(input_path))[0]
             )
@@ -139,7 +131,7 @@ select `relative=True`. (This is the default.)
                 input_path,
                 output_path,
                 args.ifexists[0],
-                soma_options,
+                tiledb_platform_config,
                 write_soco,
                 outdir,
             )
@@ -151,13 +143,13 @@ select `relative=True`. (This is the default.)
                 input_path,
                 output_path,
                 args.ifexists[0],
-                soma_options,
+                tiledb_platform_config,
                 write_soco,
                 outdir,
             )
         elif len(args.paths) == 1:
             input_path = args.paths[0]
-            # Example 'anndata/pbmc3k_processed.h5ad' -> 'tiledb-data/pbmc3k_processed'
+            # Example 'anndata/pbmc3k_processed.h5ad' -> 'tiledbsoma-data/pbmc3k_processed'
             output_path = os.path.join(
                 outdir, os.path.splitext(os.path.basename(input_path))[0]
             )
@@ -165,7 +157,7 @@ select `relative=True`. (This is the default.)
                 input_path,
                 output_path,
                 args.ifexists[0],
-                soma_options,
+                tiledb_platform_config,
                 write_soco,
                 outdir,
             )
@@ -176,7 +168,7 @@ select `relative=True`. (This is the default.)
                 input_path,
                 output_path,
                 args.ifexists[0],
-                soma_options,
+                tiledb_platform_config,
                 write_soco,
                 outdir,
             )
@@ -190,7 +182,7 @@ def ingest_one(
     input_path: str,
     output_path: str,
     ifexists: str,
-    soma_options: tiledbsc.SOMAOptions,
+    tiledb_platform_config: tiledbsoma.TileDBPlatformConfig,
     write_soco: bool,
     soco_dir: str,
 ):
@@ -198,7 +190,7 @@ def ingest_one(
     vfs = tiledb.VFS()
     if not vfs.is_file(input_path):
         # Print this neatly and exit neatly, to avoid a multi-line stack trace otherwise.
-        tiledbsc.logging.logger.error(f"Input path not found: {input_path}")
+        tiledbsoma.logging.logger.error(f"Input path not found: {input_path}")
         sys.exit(1)
 
     # Prepare to write the output.
@@ -206,30 +198,30 @@ def ingest_one(
     # use tiledb.vfs to remove any priors, and/or make use of a tiledb `overwrite` flag.
     parent = os.path.dirname(output_path.rstrip("/"))
     if parent != "":
-        if tiledbsc.util.is_local_path(parent):
+        if tiledbsoma.util.is_local_path(parent):
             if not os.path.exists(parent):
                 os.mkdir(parent)
 
-    soma = tiledbsc.SOMA(uri=output_path, soma_options=soma_options)
+    exp = tiledbsoma.SOMAExperiment(
+        uri=output_path, tiledb_platform_config=tiledb_platform_config
+    )
 
     if ifexists == "update_obs_and_var":
         if not os.path.exists(output_path):
             raise Exception("Cannot update; doesn't exist yet:", output_path)
         # Do the ingest into TileDB.
-        tiledbsc.io.from_h5ad_update_obs_and_var(soma, input_path)
+        tiledbsoma.io.from_h5ad_update_obs_and_var(exp, input_path)
 
     else:
         if os.path.exists(output_path):
             if ifexists == "continue":
-                tiledbsc.logging.logger.info(
+                tiledbsoma.logging.logger.info(
                     f"Already exists; continuing: {output_path}"
                 )
                 return
-
             elif ifexists == "abort":
-                tiledbsc.logging.error(f"Already exists; aborting: {output_path}")
+                tiledbsoma.logging.error(f"Already exists; aborting: {output_path}")
                 sys.exit(1)
-
             elif ifexists == "replace":
                 if output_path.startswith("s3://") or output_path.startswith(
                     "tiledb://"
@@ -237,33 +229,31 @@ def ingest_one(
                     raise Exception(
                         "--ifexists replace currently only is compatible with local-disk paths"
                     )
-                tiledbsc.logging.logger.info(
+                tiledbsoma.logging.logger.info(
                     f"Already exists; replacing: {output_path}"
                 )
                 shutil.rmtree(output_path)  # Overwrite
-
-            elif ifexists == "update":
-                tiledbsc.logging.logger.info(f"Already exists; updating: {output_path}")
-
             else:
                 raise Exception(
                     "Internal coding error in --ifexists handling.", ifexists, "<"
                 )
         # Do the ingest into TileDB.
-        tiledbsc.io.from_h5ad(soma, input_path)
+        tiledbsoma.io.from_h5ad(exp, input_path, "mRNA")
 
-    tiledbsc.logging.logger.info(f"Wrote {output_path}")
+    tiledbsoma.logging.logger.info(f"Wrote {output_path}")
 
     if write_soco:
-        soco = tiledbsc.SOMACollection(soco_dir, soma_options=soma_options)
-        soco.create_unless_exists()
+        soco = tiledbsoma.SOMACollection(
+            soco_dir, tiledb_platform_config=tiledb_platform_config
+        )
+        soco._create_unless_exists()
         if not soco.exists():
             raise Exception(f"Could not create SOCO at {soco.uri}")
-        soco.add(soma)
+        soco.set(exp)
 
-        tiledbsc.logging.logger.info("")
-        tiledbsc.logging.logger.info(
-            f"Added SOMA {soma.name} to SOMACollection {soco_dir}"
+        tiledbsoma.logging.logger.info("")
+        tiledbsoma.logging.logger.info(
+            f"Added SOMAExperiment {exp.get_name()} to SOMACollection {soco_dir}"
         )
 
 
