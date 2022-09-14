@@ -1,9 +1,14 @@
+# Disabling flake8 and mypy checks because this file comes from TileDB-Py and we want to minimize the differences
+# flake8: noqa
+# type: ignore
+
 import ast
 from dataclasses import dataclass, field
-import numpy as np
 from typing import Any, Callable, List, Tuple, Type, Union
 
+import numpy as np
 import tiledb
+
 import tiledbsoma.libtiledbsoma as qc
 from tiledbsoma.libtiledbsoma import PyQueryCondition
 
