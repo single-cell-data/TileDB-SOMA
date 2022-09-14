@@ -1,5 +1,5 @@
-TileDB-SC Python API Reference
-==============================
+TileDB-SOMA Python API Reference
+================================
 
 **SOMA --- for stack of matrices, annotated --- is a unified data model and API for single-cell data.**
 
@@ -21,86 +21,118 @@ Features:
 Modules
 -------
 
-Typical usage of the Python interface to TileDB-SC will use the top-level module ``tiledbsc``, e.g.
+Typical usage of the Python interface to TileDB-SOMA will use the top-level module ``tiledbsoma``, e.g.
 
 .. code-block:: python
 
-   import tiledbsc
+   import tiledbsoma
 
 There is also a submodule ``io`` which contains logic for importing data from ``AnnData`` to SOMA structure, and exporting back to ``AnnData``.
 
 .. code-block:: python
 
-   import tiledbsc.io
+   import tiledbsoma.io
 
-SOMA
-----
 
-.. autoclass:: tiledbsc.SOMA
-   :members:
-
-SOMACollection
+Composed Types
 --------------
 
-.. autoclass:: tiledbsc.SOMACollection
+SOMACollection
+^^^^^^^^^^^^^^
+.. autoclass:: tiledbsoma.SOMACollection
    :members:
 
-SOMASlice
----------
-
-.. autoclass:: tiledbsc.SOMASlice
+SOMAExperiment
+^^^^^^^^^^^^^^
+.. autoclass:: tiledbsoma.SOMAExperiment
    :members:
+
+SOMAMeasurement
+^^^^^^^^^^^^^^^
+.. autoclass:: tiledbsoma.SOMAMeasurement
+   :members:
+
+Foundational Types
+------------------
+
+SOMADataFrame
+^^^^^^^^^^^^^
+.. autoclass:: tiledbsoma.SOMADataFrame
+   :members:
+
+SOMAIndexedDataFrame
+^^^^^^^^^^^^^^^^^^^^
+.. autoclass:: tiledbsoma.SOMAIndexedDataFrame
+   :members:
+
+SOMASparseNdArray
+^^^^^^^^^^^^^^^^^
+.. autoclass:: tiledbsoma.SOMASparseNdArray
+   :members:
+
+SOMADenseNdArray
+^^^^^^^^^^^^^^^^
+.. autoclass:: tiledbsoma.SOMADenseNdArray
+   :members:
+
+SOMAMetadataMapping
+^^^^^^^^^^^^^^^^^^^
+.. autoclass:: tiledbsoma.SOMAMetadataMapping
+   :members:
+
 
 I/O functions
 -------------
 
-.. autofunction:: tiledbsc.io.from_h5ad
-.. autofunction:: tiledbsc.io.from_anndata
-.. autofunction:: tiledbsc.io.to_h5ad
-.. autofunction:: tiledbsc.io.to_anndata
+from_h5ad
+^^^^^^^^^
+.. autofunction:: tiledbsoma.io.from_h5ad
+
+from_anndata
+^^^^^^^^^^^^
+.. autofunction:: tiledbsoma.io.from_anndata
+
+to_h5ad
+^^^^^^^
+.. autofunction:: tiledbsoma.io.to_h5ad
+
+to_anndata
+^^^^^^^^^^
+.. autofunction:: tiledbsoma.io.to_anndata
 
 Options
 -------
 
-.. autoclass:: tiledbsc.SOMAOptions
-   :members:
-.. automodule:: tiledbsc.logging
+TileDBPlatformConfig
+^^^^^^^^^^^^^^^^^^^^
+.. autoclass:: tiledbsoma.TileDBPlatformConfig
    :members:
 
-SOMA-element classes
---------------------
-
-.. autoclass:: tiledbsc.AssayMatrixGroup
-   :members:
-.. autoclass:: tiledbsc.AssayMatrix
-   :members:
-.. autoclass:: tiledbsc.AnnotationDataFrame
-   :members:
-.. autoclass:: tiledbsc.AnnotationMatrixGroup
-   :members:
-.. autoclass:: tiledbsc.AnnotationMatrix
-   :members:
-.. autoclass:: tiledbsc.AnnotationPairwiseMatrixGroup
-   :members:
-.. autoclass:: tiledbsc.RawGroup
-   :members:
-.. autoclass:: tiledbsc.UnsGroup
-   :members:
-.. autoclass:: tiledbsc.UnsArray
+logging
+^^^^^^^
+.. automodule:: tiledbsoma.logging
    :members:
 
 Implementation-level classes
 ----------------------------
 
-.. autoclass:: tiledbsc.TileDBArray
+.. autoclass:: tiledbsoma.TileDBArray
    :members:
-.. autoclass:: tiledbsc.TileDBGroup
+.. autoclass:: tiledbsoma.TileDBObject
    :members:
-.. autoclass:: tiledbsc.TileDBObject
+.. automodule:: tiledbsoma.factory
    :members:
-.. automodule:: tiledbsc.util
+.. automodule:: tiledbsoma.general_utilities
    :members:
-.. automodule:: tiledbsc.util_ann
+.. automodule:: tiledbsoma.util
    :members:
-.. automodule:: tiledbsc.util_tiledb
+.. automodule:: tiledbsoma.util_ann
+   :members:
+.. automodule:: tiledbsoma.util_arrow
+   :members:
+.. automodule:: tiledbsoma.util_pandas
+   :members:
+.. automodule:: tiledbsoma.util_scipy
+   :members:
+.. automodule:: tiledbsoma.util_tiledb
    :members:

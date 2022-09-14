@@ -5,11 +5,11 @@ cd $(git rev-parse --show-toplevel)
 
 echo "Waiting for file changes..."
 
-while inotifywait -r -e modify libtiledbsc >& /dev/null; do
+while inotifywait -r -e modify libtiledbsoma >& /dev/null; do
   cd build
 
   make -j16 && \
-    make install-libtiledbsc && \
+    make install-libtiledbsoma && \
     ../scripts/test && \
     banner "PASS" || banner "FAIL"
 

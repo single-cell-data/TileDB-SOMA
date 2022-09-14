@@ -1,5 +1,5 @@
 #
-# This file generates the sidebar/toctree for all TileDB-SC projects and should
+# This file generates the sidebar/toctree for all TileDB-SOMA projects and should
 # be copied to each project when it is updated.
 #
 # This file is originally from the RobotPy documentation project
@@ -33,7 +33,7 @@ def generate_sidebar(conf, conf_api):
         "",
     ]
 
-    url_base = "https://tiledb-inc-tiledb-singlecell.readthedocs-hosted.com"
+    url_base = "https://tiledb-inc-tiledb-soma.readthedocs-hosted.com"
     lang = "en"
 
     def toctree(name):
@@ -45,7 +45,7 @@ def generate_sidebar(conf, conf_api):
         lines.append("")
 
     def write(desc, link):
-        if conf_api == "tiledbsc":
+        if conf_api == "tiledbsoma":
             args = desc, link
         else:
             args = desc, "%s/%s/%s/%s.html" % (url_base, lang, version, link)
@@ -54,7 +54,7 @@ def generate_sidebar(conf, conf_api):
 
     def write_api(project, desc, rst_page):
         # From non-root project to root project link
-        if project == "tiledbsc" and conf_api != "tiledbsc":
+        if project == "tiledbsoma" and conf_api != "tiledbsoma":
             args = desc, url_base, lang, version, rst_page
             lines.append("    %s API <%s/%s/%s/%s.html>" % args)
         # From anything to non-root project link
@@ -74,8 +74,8 @@ def generate_sidebar(conf, conf_api):
     #
 
     toctree("API Reference")
-    write_api("tiledbsc-py", "Python", "python-api")
-    write_api_url("R", "https://tiledb-inc.github.io/tiledbsc/reference/index.html")
+    write_api("tiledbsoma-py", "Python", "python-api")
+    write_api_url("R", "https://tiledb-inc.github.io/TileDB-SOMA/reference/index.html")
     endl()
 
     write_if_changed("_sidebar.rst.inc", "\n".join(lines))

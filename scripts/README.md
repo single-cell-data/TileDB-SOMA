@@ -1,1 +1,1 @@
-Please see [../libtiledbsc/README.md](../libtiledbsc/README.md).
+Please see [../libtiledbsoma/README.md](../libtiledbsoma/README.md).

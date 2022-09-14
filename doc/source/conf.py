@@ -21,7 +21,7 @@ rtd_version = rtd_version if rtd_version in ["stable", "latest"] else "stable"
 
 # -- Project information -----------------------------------------------------
 
-project = "TileDBSC-Py"
+project = "TileDB-SOMA-Py"
 copyright = "2022, TileDB, Inc."
 author = "TileDB, Inc."
 
@@ -45,12 +45,12 @@ extensions = ["sphinx.ext.autodoc", "sphinx.ext.doctest", "sphinx.ext.intersphin
 # Mapping for linking between RTD subprojects.
 if readthedocs:
     intersphinx_mapping = {
-        "tiledbsc": (
-            "https://tiledb-inc-tiledb-singlecell.readthedocs-hosted.com/en/%s/" % rtd_version,
+        "tiledbsoma": (
+            "https://tiledb-inc-tiledb-soma.readthedocs-hosted.com/en/%s/" % rtd_version,
             None,
         ),
-        "tiledbsc-py": (
-            "https://tiledb-inc-tiledb-singlecell.readthedocs-hosted.com/projects/python-api/en/%s/"
+        "tiledbsoma-py": (
+            "https://tiledb-inc-tiledb-soma.readthedocs-hosted.com/projects/python-api/en/%s/"
             % rtd_version,
             None,
         ),
@@ -107,7 +107,7 @@ html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
 # -- Options for HTMLHelp output ---------------------------------------------
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = "TileDBSC-Pydoc"
+htmlhelp_basename = "TileDB-SOMA-Py-doc"
 
 
 # -- Options for LaTeX output ------------------------------------------------
@@ -131,7 +131,7 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-    (master_doc, "TileDBSC-Py.tex", "TileDBSC-Py Documentation", "TileDB, Inc.", "manual")
+    (master_doc, "TileDB-SOMA-Py.tex", "TileDB-SOMA-Py Documentation", "TileDB, Inc.", "manual")
 ]
 
 
@@ -139,7 +139,7 @@ latex_documents = [
 
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
-man_pages = [(master_doc, "tiledbsc-py", "TileDBSC-Py Documentation", [author], 1)]
+man_pages = [(master_doc, "tiledbsoma-py", "TileDB-SOMA-Py Documentation", [author], 1)]
 
 
 # -- Options for Texinfo output ----------------------------------------------
@@ -150,10 +150,10 @@ man_pages = [(master_doc, "tiledbsc-py", "TileDBSC-Py Documentation", [author], 
 texinfo_documents = [
     (
         master_doc,
-        "TileDBSC-Py",
-        "TileDBSC-Py Documentation",
+        "TileDB-SOMA-Py",
+        "TileDB-SOMA-Py Documentation",
         author,
-        "TileDBSC-Py",
+        "TileDB-SOMA-Py",
         "One-line description of project.",
         "Miscellaneous",
     )
@@ -166,7 +166,7 @@ texinfo_documents = [
 import gensidebar
 
 gensidebar.generate_sidebar(
-    {"on_rtd": readthedocs, "rtd_version": rtd_version}, "tiledbsc-py"
+    {"on_rtd": readthedocs, "rtd_version": rtd_version}, "tiledbsoma-py"
 )
 
 # -- Custom setup -----------------------------------------------------------

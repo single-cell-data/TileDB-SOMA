@@ -4,7 +4,7 @@
 # A simple driver for outgestion of a TileDB soma group to anndata.
 #
 # * Invoke this with one argument /path/to/some/somagroup:
-#   o Output will be ./anndata-readback/somagroup.h5ad
+#   o Output will be ./anndata-readback-tiledbsoma/somagroup.h5ad
 #
 # * Invoke this with two arguments to specify input TileDB group and
 #   output anndata HDF5 file.
@@ -20,11 +20,11 @@ import sys
 
 import tiledb
 
-import tiledbsc
-import tiledbsc.io
-import tiledbsc.util
+import tiledbsoma
+import tiledbsoma.io
+import tiledbsoma.util
 
-logger = logging.getLogger("tiledbsc")
+logger = logging.getLogger("tiledbsoma")
 
 
 def main():
@@ -36,9 +36,9 @@ def main():
     )
     parser.add_argument(
         "-o",
-        help="Specify output directory to contain the somas: default ./anndata-readback",
+        help="Specify output directory to contain the somas: default ./anndata-readback-tiledbsoma",
         type=str,
-        default="./anndata-readback",
+        default="./anndata-readback-tiledbsoma",
     )
     parser.add_argument(
         "paths",
@@ -51,7 +51,7 @@ def main():
     outdir = args.o.rstrip("/")
 
     if len(args.paths) == 0:
-        input_path = "tiledb-data/pbmc-small"
+        input_path = "tiledbsoma-data/pbmc-small"
         output_path = os.path.join(outdir, "pbmc-small.h5ad")
     elif len(args.paths) == 1:
         # Strip trailing slashes so basename will behave correctly
@@ -73,18 +73,16 @@ def main():
 
     # This is for local-disk use only -- for S3-backed tiledb://... URIs we should
     # use tiledb.vfs to remove any priors, and/or make use of a tiledb `overwrite` flag.
-    if tiledbsc.util.is_local_path(outdir):
+    if tiledbsoma.util.is_local_path(outdir):
         if not os.path.exists(outdir):
             os.mkdir(outdir)
 
-    if args.debug:
-        tiledbsc.logging.debug()
-    elif args.quiet:
-        tiledbsc.logging.warning()
-    # else default is tiledbsc.logging.info() in our __init__.py
+    verbose = not args.quiet
+    if verbose:
+        tiledbsoma.logging.info()
 
-    soma = tiledbsc.SOMA(input_path)
-    tiledbsc.io.to_h5ad(soma, output_path)
+    soma = tiledbsoma.SOMAExperiment(input_path)
+    tiledbsoma.io.to_h5ad(soma, output_path, measurement_name="mRNA")
 
     logger.info(f"Wrote {output_path}")
 

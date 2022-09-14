@@ -6,7 +6,7 @@
 
 import argparse
 
-import tiledbsc.util_tiledb
+import tiledbsoma.util_tiledb
 
 
 def main():
@@ -17,7 +17,7 @@ def main():
         help="URI of the array to list fragments for",
     )
     args = p.parse_args()
-    tiledbsc.util_tiledb.list_fragments(args.array_uri)
+    tiledbsoma.util_tiledb.list_fragments(args.array_uri)
 
 
 if __name__ == "__main__":

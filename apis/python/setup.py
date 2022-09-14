@@ -1,5 +1,5 @@
-# This file is enables building the libtiledbsc external package as part of the
-# tiledbsc module install process.
+# This file is enables building the libtiledbsoma external package as part of the
+# tiledbsoma module install process.
 #
 # Local non-editable install:
 #   `pip install .`
@@ -8,7 +8,7 @@
 #   `pip install -e .`
 #
 # Install from PyPI
-#   `pip install tiledbsc`
+#   `pip install tiledbsoma`
 #
 # Based on ideas from https://github.com/pybind/cmake_example
 # The `bld` script here is reused for pip install, CI, and local builds.
@@ -25,8 +25,8 @@ from setuptools.command.bdist_egg import bdist_egg
 from setuptools.command.build_ext import build_ext
 from wheel.bdist_wheel import bdist_wheel
 
-MODULE_NAME = "tiledbsc"
-EXT_NAME = "tiledbsc.libtiledbsc"
+MODULE_NAME = "tiledbsoma"
+EXT_NAME = "tiledbsoma.libtiledbsoma"
 
 
 def find_or_build(setuptools_cmd):
@@ -95,7 +95,7 @@ if __name__ == "__main__":
         author_email="help@tiledb.io",
         maintainer="TileDB, Inc.",
         maintainer_email="help@tiledb.io",
-        url="https://github.com/single-cell-data/TileDB-SingleCell/apis/python",
+        url="https://github.com/single-cell-data/TileDB-SOMA/apis/python",
         license="MIT",
         classifiers=[
             "Intended Audience :: Developers",
@@ -130,7 +130,7 @@ if __name__ == "__main__":
             "tiledb>=0.17.0",
         ],
         python_requires=">=3.7",
-        # TODO: enable when libtiledbsc is ready for pypi
+        # TODO: enable when libtiledbsoma is ready for pypi
         #        ext_modules=get_ext_modules(),
         #        cmdclass={
         #            "build_ext": BuildExtCmd,
