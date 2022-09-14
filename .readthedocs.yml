@@ -28,6 +28,7 @@ build:
     # `pip install -e .` or `python setup.py develop` will _not_ let python find the tiledbsoma package
     # within sphinx build
     #- apt-get install python3-sphinx
+    - export TILEDBSOMA_READTHEDOCS_BUILD=1
     - python -m pip install -r doc/requirements_doc.txt
 
     # This fails at readthedocs with

@@ -30,6 +30,11 @@ EXT_NAME = "tiledbsoma.libtiledbsoma"
 
 
 def find_or_build(setuptools_cmd):
+    # Disable native extension build when building docs
+    if os.getenv("TILEDBSOMA_READTHEDOCS_BUILD"):
+        print("skipping libtiledbsoma")
+        return
+
     # TODO: support windows
     if sys.platform.startswith("win32"):
         return
@@ -57,6 +62,11 @@ def find_or_build(setuptools_cmd):
 
 
 def get_ext_modules():
+    # Disable native extension build when building docs
+    if os.getenv("TILEDBSOMA_READTHEDOCS_BUILD"):
+        print("skipping libtiledbsoma")
+        return
+
     # Workaround windows issue compiling an extension with no source files
     if sys.platform.startswith("win32"):
         return []
