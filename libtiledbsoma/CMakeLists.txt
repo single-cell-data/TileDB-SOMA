@@ -32,7 +32,7 @@
 cmake_minimum_required(VERSION 3.21)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmake/Modules/")
 
-# TileDBSOMA Options
+# TileDB-SOMA Options
 option(TILEDBSOMA_ENABLE_PYTHON "Enables Python API bindings" ON)
 option(TILEDBSOMA_ENABLE_WERROR "Enables the -Werror flag during compilation." ON)
 
@@ -112,14 +112,14 @@ if (CMAKE_IDE)
 endif()
 
 if (SUPERBUILD)
-  project(TileDB-SOMA-Superbuild)
-  message(STATUS "Starting TileDB-SOMA superbuild.")
+  project(TileDB-SC-Superbuild)
+  message(STATUS "Starting TileDB-SingleCell superbuild.")
   include("cmake/Superbuild.cmake")
   return()
 endif()
 
-project(TileDB-SOMA)
-message(STATUS "Starting TileDB-SOMA regular build.")
+project(TileDB-SC)
+message(STATUS "Starting TileDB-SC regular build.")
 
 # Paths to locate the installed external projects.
 set(EP_SOURCE_DIR "${EP_BASE}/src")

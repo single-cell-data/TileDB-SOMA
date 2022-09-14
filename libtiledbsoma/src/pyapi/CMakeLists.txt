@@ -1,7 +1,7 @@
 find_package(pybind11 REQUIRED)
 
 pybind11_add_module(libtiledbsoma
-    $<TARGET_OBJECTS:TILEDBSOMA_OBJECTS>
+    $<TARGET_OBJECTS:TILEDB_SOMA_OBJECTS>
     libtiledbsoma.cc
 )
 
@@ -19,5 +19,5 @@ target_include_directories(libtiledbsoma
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${CMAKE_CURRENT_SOURCE_DIR}/../../include
     ${CMAKE_CURRENT_SOURCE_DIR}/../../src
-    ${TILEDBSOMA_EXPORT_HEADER_DIR}
+    ${TILEDB_SOMA_EXPORT_HEADER_DIR}
 )

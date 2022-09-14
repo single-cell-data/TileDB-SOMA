@@ -31,6 +31,7 @@
  */
 
 #include "tiledbsoma/column_buffer.h"
+#include "tiledbsoma/array_buffers.h"
 #include "tiledbsoma/common.h"
 #include "tiledbsoma/logger_public.h"
 
@@ -114,8 +115,6 @@ ColumnBuffer::ColumnBuffer(
         validity_.reserve(num_cells);
     }
 }
-
-ColumnBuffer::~ColumnBuffer(){};
 
 void ColumnBuffer::attach(Query& query) {
     // We cannot use:

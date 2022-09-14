@@ -42,7 +42,7 @@ using namespace tiledb;
 //= public non-static
 //===================================================================
 
-ManagedQuery::ManagedQuery(std::shared_ptr<Array> array, std::string name)
+ManagedQuery::ManagedQuery(std::shared_ptr<Array> array, std::string_view name)
     : array_(array)
     , name_(name)
     , schema_(array->schema()) {
@@ -57,7 +57,7 @@ ManagedQuery::ManagedQuery(std::shared_ptr<Array> array, std::string name)
 }
 
 void ManagedQuery::select_columns(
-    std::vector<std::string> names, bool if_not_empty) {
+    const std::vector<std::string>& names, bool if_not_empty) {
     // Return if we are selecting all columns (columns_ is empty) and we want to
     // continue selecting all columns (if_not_empty == true).
     if (if_not_empty && columns_.empty()) {
@@ -68,58 +68,82 @@ void ManagedQuery::select_columns(
         // Name is not an attribute or dimension.
         if (!schema_.has_attribute(name) &&
             !schema_.domain().has_dimension(name)) {
-            LOG_DEBUG(fmt::format(
-                "[ManagedQuery] [{}] Invalid column selected: {}",
+            LOG_WARN(fmt::format(
+                "[TileDB-SOMA::ManagedQuery] [{}] Invalid column selected: {}",
                 name_,
                 name));
-            invalid_columns_selected_ = true;
         } else {
-            columns_.insert(name);
+            columns_.push_back(name);
         }
     }
 }
 
-size_t ManagedQuery::submit() {
-    auto status = query_->query_status();
-
-    // Query is complete, return 0 cells read
-    if (status == Query::Status::COMPLETE) {
-        return 0;
+void ManagedQuery::submit() {
+    // Throw error if submit is called again before reading the results
+    if (query_submitted_) {
+        throw TileDBSOMAError(fmt::format(
+            "[ManagedQuery][{}] read results before calling submit again",
+            name_));
     }
 
-    // Query is uninitialized, allocate and attach buffers
-    if (status == Query::Status::UNINITIALIZED) {
-        // Set the subarray for range slicing
-        query_->set_subarray(*subarray_);
+    // If the query is complete, return so we do not submit it again
+    auto status = query_->query_status();
+    if (status == Query::Status::COMPLETE) {
+        return;
+    }
 
-        // If no columns were selected, select all columns
-        if (!columns_.size()) {
-            for (const auto& dim : array_->schema().domain().dimensions()) {
-                columns_.insert(dim.name());
-            }
-            for (const auto& [name, attr] : array_->schema().attributes()) {
-                (void)attr;
-                columns_.insert(name);
-            }
-        }
+    // Set the subarray for range slicing
+    query_->set_subarray(*subarray_);
 
-        // Allocate and attach buffers
-        for (auto& name : columns_) {
-            LOG_DEBUG(fmt::format(
-                "[ManagedQuery] [{}] Adding buffer for column '{}'",
-                name_,
-                name));
-            buffers_.emplace(name, ColumnBuffer::create(array_, name));
-            buffers_[name]->attach(*query_);
+    // If no columns were selected, select all columns.
+    // Add dims and attrs in the same order as specified in the schema
+    if (columns_.empty()) {
+        for (const auto& dim : array_->schema().domain().dimensions()) {
+            columns_.push_back(dim.name());
         }
+        int attribute_num = array_->schema().attribute_num();
+        for (int i = 0; i < attribute_num; i++) {
+            columns_.push_back(array_->schema().attribute(i).name());
+        }
+    }
+
+    // Allocate and attach buffers
+    LOG_TRACE("[ManagedQuery] allocate new buffers");
+    buffers_ = std::make_shared<ArrayBuffers>();
+    for (auto& name : columns_) {
+        LOG_DEBUG(fmt::format(
+            "[ManagedQuery] [{}] Adding buffer for column '{}'", name_, name));
+        buffers_->emplace(name, ColumnBuffer::create(array_, name));
+        buffers_->at(name)->attach(*query_);
     }
 
     // Submit query
     LOG_DEBUG(fmt::format("[ManagedQuery] [{}] Submit query", name_));
+
     query_->submit();
-    status = query_->query_status();
+    query_submitted_ = true;
+}
+
+std::shared_ptr<ArrayBuffers> ManagedQuery::results() {
+    if (!query_submitted_) {
+        throw TileDBSOMAError(fmt::format(
+            "[ManagedQuery][{}] submit query before reading results", name_));
+    }
+    query_submitted_ = false;
+
+    // Poll status until query is not INPROGRESS
+    Query::Status status;
+    do {
+        status = query_->query_status();
+    } while (status == Query::Status::INPROGRESS);
+
     LOG_DEBUG(fmt::format(
         "[ManagedQuery] [{}] Query status = {}", name_, (int)status));
+
+    if (status == Query::Status::FAILED) {
+        throw TileDBSOMAError(
+            fmt::format("[ManagedQuery] [{}] Query FAILED", name_));
+    }
 
     // If the query was ever incomplete, the result buffers contents are not
     // complete.
@@ -129,8 +153,8 @@ size_t ManagedQuery::submit() {
 
     // Update ColumnBuffer size to match query results
     size_t num_cells = 0;
-    for (auto& [name, buffer] : buffers_) {
-        num_cells = buffer->update_size(*query_);
+    for (auto& name : buffers_->names()) {
+        num_cells = buffers_->at(name)->update_size(*query_);
         LOG_DEBUG(fmt::format(
             "[ManagedQuery] [{}] Buffer {} cells={}", name_, name, num_cells));
     }
@@ -142,7 +166,7 @@ size_t ManagedQuery::submit() {
             fmt::format("[ManagedQuery] [{}] Buffers are too small.", name_));
     }
 
-    return num_cells;
+    return buffers_;
 }
 
 };  // namespace tiledbsoma

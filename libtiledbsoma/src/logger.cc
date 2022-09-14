@@ -71,7 +71,7 @@ Logger::Logger() {
 #endif
     }
     logger_->set_pattern(LOG_PATTERN);
-    set_level("FATAL");
+    set_level("INFO");
 }
 
 Logger::~Logger() {

@@ -38,6 +38,7 @@
 
 #include <tiledb/tiledb>
 
+#include "tiledbsoma/array_buffers.h"
 #include "tiledbsoma/column_buffer.h"
 #include "tiledbsoma/common.h"
 
@@ -57,7 +58,13 @@ class ManagedQuery {
      * @param array TileDB array
      * @param name Name of the array
      */
-    ManagedQuery(std::shared_ptr<Array> array, std::string name = "array");
+    ManagedQuery(
+        std::shared_ptr<Array> array, std::string_view name = "unnamed");
+
+    ManagedQuery() = delete;
+    ManagedQuery(const ManagedQuery&) = delete;
+    ManagedQuery(ManagedQuery&&) = default;
+    ~ManagedQuery() = default;
 
     /**
      * @brief Select columns names to query (dim and attr). If the
@@ -69,7 +76,7 @@ class ManagedQuery {
      * @param if_not_empty Prevent changing an "empty" selection of all columns
      */
     void select_columns(
-        std::vector<std::string> names, bool if_not_empty = false);
+        const std::vector<std::string>& names, bool if_not_empty = false);
 
     /**
      * @brief Select dimension ranges to query.
@@ -80,11 +87,10 @@ class ManagedQuery {
      */
     template <typename T>
     void select_ranges(
-        const std::string& dim, std::vector<std::pair<T, T>> ranges) {
+        const std::string& dim, const std::vector<std::pair<T, T>>& ranges) {
         for (auto& [start, stop] : ranges) {
             subarray_->add_range(dim, start, stop);
         }
-        sliced_ = true;
     }
 
     /**
@@ -95,11 +101,36 @@ class ManagedQuery {
      * @param points Vector of dimension points
      */
     template <typename T>
-    void select_points(const std::string& dim, std::vector<T> points) {
+    void select_points(const std::string& dim, const std::vector<T>& points) {
         for (auto& point : points) {
             subarray_->add_range(dim, point, point);
         }
-        sliced_ = true;
+    }
+
+    /**
+     * @brief Select dimension points to query.
+     *
+     * @tparam T Dimension type
+     * @param dim Dimension name
+     * @param points Vector of dimension points
+     */
+    template <typename T>
+    void select_points(const std::string& dim, const std::span<T> points) {
+        for (auto& point : points) {
+            subarray_->add_range(dim, point, point);
+        }
+    }
+
+    /**
+     * @brief Select dimension point to query.
+     *
+     * @tparam T Dimension type
+     * @param dim Dimension name
+     * @param point Dimension points
+     */
+    template <typename T>
+    void select_point(const std::string& dim, const T& point) {
+        subarray_->add_range(dim, point, point);
     }
 
     /**
@@ -109,23 +140,13 @@ class ManagedQuery {
      */
     void set_condition(const QueryCondition& qc) {
         query_->set_condition(qc);
-        sliced_ = true;
     }
 
     /**
-     * @brief Submit the query and return the number of cells read.
-     * To handle incomplete queries, `submit()` must be called until
-     * `is_complete()` is true.
+     * @brief Submit the query.
      *
-     * For example:
-     *   while (!mq.is_complete()) {
-     *     auto num_cells = mq.submit();
-     *     // process results
-     *   }
-     *
-     * @return size_t Number of cells read. Returns 0 when the read is complete.
      */
-    size_t submit();
+    void submit();
 
     /**
      * @brief Return the query status.
@@ -143,25 +164,6 @@ class ManagedQuery {
      */
     bool is_complete() {
         return query_->query_status() == Query::Status::COMPLETE;
-    }
-
-    /**
-     * @brief Return true if an invalid column has been selected.
-     *
-     * @return true An invalid column was selected
-     */
-    bool is_invalid() {
-        return invalid_columns_selected_;
-    }
-
-    /**
-     * @brief Return true if the query has dimension ranges selected or a query
-     * condition applied.
-     *
-     * @return true The query will be sliced
-     */
-    bool is_sliced() {
-        return sliced_;
     }
 
     /**
@@ -194,7 +196,7 @@ class ManagedQuery {
     template <typename T>
     std::span<T> data(const std::string& name) {
         check_column_name(name);
-        return buffers_.at(name)->data<T>();
+        return buffers_->at(name)->data<T>();
     }
 
     /**
@@ -205,7 +207,7 @@ class ManagedQuery {
      */
     std::vector<std::string> strings(const std::string& name) {
         check_column_name(name);
-        return buffers_.at(name)->strings();
+        return buffers_->at(name)->strings();
     }
 
     /**
@@ -218,17 +220,15 @@ class ManagedQuery {
      */
     std::string_view string_view(const std::string& name, uint64_t index) {
         check_column_name(name);
-        return buffers_.at(name)->string_view(index);
+        return buffers_->at(name)->string_view(index);
     }
 
     /**
      * @brief Return results from the query.
      *
-     * @return ArrayBuffers Results
+     * @return std::shared_ptr<ArrayBuffers>
      */
-    ArrayBuffers results() {
-        return buffers_;
-    }
+    std::shared_ptr<ArrayBuffers> results();
 
    private:
     //===================================================================
@@ -241,7 +241,7 @@ class ManagedQuery {
      * @param name Column name
      */
     void check_column_name(const std::string& name) {
-        if (!buffers_.contains(name)) {
+        if (!buffers_->contains(name)) {
             throw TileDBSOMAError(fmt::format(
                 "[ManagedQuery] Column '{}' is not available in the query "
                 "results.",
@@ -265,13 +265,7 @@ class ManagedQuery {
     std::unique_ptr<Subarray> subarray_;
 
     // Set of column names to read (dim and attr). If empty, query all columns.
-    std::unordered_set<std::string> columns_;
-
-    // Invalid columns have been selected.
-    bool invalid_columns_selected_ = false;
-
-    // Query is sliced with dimension range slices or query conditions.
-    bool sliced_ = false;
+    std::vector<std::string> columns_;
 
     // Results in the buffers are complete (the query was never incomplete)
     bool results_complete_ = true;
@@ -279,8 +273,11 @@ class ManagedQuery {
     // Total number of cells read by the query
     size_t total_num_cells_ = 0;
 
-    // Map of column name to ColumnBuffer.
-    ArrayBuffers buffers_;
+    // A collection of ColumnBuffers attached to the query
+    std::shared_ptr<ArrayBuffers> buffers_;
+
+    // True if the query has been submitted and the results have not been read
+    bool query_submitted_ = false;
 };
 
 };  // namespace tiledbsoma

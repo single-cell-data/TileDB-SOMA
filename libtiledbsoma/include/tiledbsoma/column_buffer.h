@@ -45,17 +45,6 @@ namespace tiledbsoma {
 
 using namespace tiledb;
 
-class ColumnBuffer;  // forward declaration
-
-// Using map instead of unordered map to preserve lexigraphical ordering.
-// However, we may want to preserve the order of insertion instead.
-
-// Map: column name -> ColumnBuffer
-using ArrayBuffers = std::map<std::string, std::shared_ptr<ColumnBuffer>>;
-
-// Map: array name -> ArrayBuffers
-using MultiArrayBuffers = std::map<std::string, ArrayBuffers>;
-
 /**
  * @brief Class to store data for a TileDB dimension or attribute.
  *
@@ -102,11 +91,13 @@ class ColumnBuffer {
         bool is_var = false,
         bool is_nullable = false);
 
-    /**
-     * @brief Destroy the ColumnBuffer object
-     *
-     */
-    ~ColumnBuffer();
+    ColumnBuffer() = delete;
+    ColumnBuffer(const ColumnBuffer&) = delete;
+    ColumnBuffer(ColumnBuffer&&) = default;
+
+    ~ColumnBuffer() {
+        LOG_TRACE(fmt::format("[ColumnBuffer] release '{}'", name_));
+    }
 
     /**
      * @brief Attach this ColumnBuffer to a TileDB query.
