@@ -71,7 +71,7 @@ jobs:
 # https://towardsdatascience.com/create-your-own-python-package-and-publish-it-into-pypi-9306a29bc116
 # TL;DR:
 # o cd apis/python
-# o python setup.py dist
+# o python setup.py sdist
 # o python -m twine upload --repository-url https://test.pypi.org/legacy/ dist/*
 #   - Be sure to use username __token__ and password being the token you set up at test.pypi.org
 # o pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple tiledbsoma
