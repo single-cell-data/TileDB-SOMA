@@ -43,7 +43,7 @@ def _from_h5ad_common(
     experiment: SOMAExperiment,
     input_path: Path,
     measurement_name: str,
-    handler_func: Callable[[SOMAExperiment, ad.AnnData], None],
+    handler_func: Callable[[SOMAExperiment, ad.AnnData, str, tiledb.Ctx], None],
     ctx: Optional[tiledb.Ctx] = None,
 ) -> None:
     """
@@ -64,7 +64,7 @@ def _from_h5ad_common(
         util.format_elapsed(s, f"{experiment._indent}FINISH READING {input_path}"),
     )
 
-    handler_func(experiment, anndata, measurement_name, ctx=ctx)
+    handler_func(experiment, anndata, measurement_name, ctx)
 
     logging.log_io(
         None,
@@ -143,11 +143,14 @@ def from_anndata(
 
     # TODO: more types to check?
     if isinstance(anndata.X, np.ndarray):
-        Xdata = SOMADenseNdArray(uri=f"{measurement.X.get_uri()}/data", ctx=ctx)
+        ddata = SOMADenseNdArray(uri=f"{measurement.X.get_uri()}/data", ctx=ctx)
+        # Code here and in else-block duplicated for linter appeasement
+        ddata.from_matrix(anndata.X)
+        measurement.X.set(ddata)
     else:
-        Xdata = SOMASparseNdArray(uri=f"{measurement.X.get_uri()}/data", ctx=ctx)
-    Xdata.from_matrix(anndata.X)
-    measurement.X.set(Xdata)
+        sdata = SOMASparseNdArray(uri=f"{measurement.X.get_uri()}/data", ctx=ctx)
+        sdata.from_matrix(anndata.X)
+        measurement.X.set(sdata)
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     # TODO: port from v0
@@ -163,25 +166,25 @@ def from_anndata(
     if len(anndata.varm.keys()) > 0:  # do not create an empty collection
         measurement.varm.create()
         for key in anndata.varm.keys():
-            arr = SOMADenseNdArray(uri=f"{measurement.varm.get_uri()}/{key}", ctx=ctx)
-            arr.from_matrix(anndata.varm[key])
-            measurement.varm.set(arr)
+            darr = SOMADenseNdArray(uri=f"{measurement.varm.get_uri()}/{key}", ctx=ctx)
+            darr.from_matrix(anndata.varm[key])
+            measurement.varm.set(darr)
         measurement.set(measurement.varm)
 
     if len(anndata.obsp.keys()) > 0:  # do not create an empty collection
         measurement.obsp.create()
         for key in anndata.obsp.keys():
-            arr = SOMASparseNdArray(uri=f"{measurement.obsp.get_uri()}/{key}", ctx=ctx)
-            arr.from_matrix(anndata.obsp[key])
-            measurement.obsp.set(arr)
+            sarr = SOMASparseNdArray(uri=f"{measurement.obsp.get_uri()}/{key}", ctx=ctx)
+            sarr.from_matrix(anndata.obsp[key])
+            measurement.obsp.set(sarr)
         measurement.set(measurement.obsp)
 
     if len(anndata.varp.keys()) > 0:  # do not create an empty collection
         measurement.varp.create()
         for key in anndata.varp.keys():
-            arr = SOMASparseNdArray(uri=f"{measurement.varp.get_uri()}/{key}", ctx=ctx)
-            arr.from_matrix(anndata.varp[key])
-            measurement.varp.set(arr)
+            sarr = SOMASparseNdArray(uri=f"{measurement.varp.get_uri()}/{key}", ctx=ctx)
+            sarr.from_matrix(anndata.varp[key])
+            measurement.varp.set(sarr)
         measurement.set(measurement.varp)
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

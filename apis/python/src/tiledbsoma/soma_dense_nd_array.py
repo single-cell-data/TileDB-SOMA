@@ -106,7 +106,7 @@ class SOMADenseNdArray(TileDBArray):
         """
         return "\n".join(self._repr_aux())
 
-    def _repr_aux(self) -> List[str]:
+    def _repr_aux(self) -> Sequence[str]:
         if not self.exists():
             return ["Unpopulated"]
         lines = [

@@ -1,4 +1,4 @@
-from typing import Any, Generator, Iterator, List, Optional, Sequence, TypeVar, Union
+from typing import Any, Iterator, List, Optional, Sequence, TypeVar, Union
 
 import numpy as np
 import pandas as pd
@@ -151,7 +151,7 @@ class SOMAIndexedDataFrame(TileDBArray):
         """
         return "\n".join(self._repr_aux())
 
-    def _repr_aux(self) -> List[str]:
+    def _repr_aux(self) -> Sequence[str]:
         if not self.exists():
             return ["Unpopulated"]
         lines = [
@@ -172,7 +172,7 @@ class SOMAIndexedDataFrame(TileDBArray):
         elif name == "ndims":
             return self._get_ndims()
 
-    def keys(self) -> List[str]:
+    def keys(self) -> Sequence[str]:
         """
         Returns the names of the columns when read back as a dataframe.  TODO: make it clear whether or not this will read back ``soma_rowid`` / ``soma_joinid``.
         """
@@ -196,7 +196,7 @@ class SOMAIndexedDataFrame(TileDBArray):
     def get_indexed(self) -> bool:
         return False
 
-    def get_index_column_names(self) -> List[str]:
+    def get_index_column_names(self) -> Sequence[str]:
         """
         Return index (dimension) column names.
         """
@@ -337,7 +337,7 @@ class SOMAIndexedDataFrame(TileDBArray):
         attrs: Optional[Sequence[str]] = None,
         # to rename index to 'obs_id' or 'var_id', if desired, for anndata
         id_column_name: Optional[str] = None,
-    ) -> Generator:
+    ) -> Iterator[pd.DataFrame]:
         """
         For ``to_anndata``, as well as for any interactive use where the user wants a Pandas dataframe.
         """

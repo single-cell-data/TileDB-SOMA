@@ -25,6 +25,7 @@ class SOMADataFrame(TileDBArray):
 
     _shape: Optional[NTuple] = None
     _is_sparse: Optional[bool]
+    _index_column_names: List[str]
 
     def __init__(
         self,
@@ -126,7 +127,7 @@ class SOMADataFrame(TileDBArray):
         """
         return "\n".join(self._repr_aux())
 
-    def _repr_aux(self) -> List[str]:
+    def _repr_aux(self) -> Sequence[str]:
         if not self.exists():
             return ["Unpopulated"]
         lines = [
@@ -147,7 +148,7 @@ class SOMADataFrame(TileDBArray):
         elif name == "ndims":
             return self._get_ndims()
 
-    def keys(self) -> List[str]:
+    def keys(self) -> Sequence[str]:
         """
         Returns the names of the columns when read back as a dataframe.  TODO: make it clear whether or not this will read back ``soma_rowid`` / ``soma_joinid``.
         """
@@ -171,7 +172,7 @@ class SOMADataFrame(TileDBArray):
     def get_indexed(self) -> bool:
         return False
 
-    def get_index_column_names(self) -> List[str]:
+    def get_index_column_names(self) -> Sequence[str]:
         return []
 
     def read(

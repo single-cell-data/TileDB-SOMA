@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any, Dict, Iterator, List, Optional, Sequence
+from typing import Any, Dict, Iterator, Optional, Sequence
 
 import tiledb
 
@@ -148,7 +148,7 @@ class SOMACollection(TileDBObject):
         """
         return "\n".join(self._repr_aux())
 
-    def _repr_aux(self) -> List[str]:
+    def _repr_aux(self) -> Sequence[str]:
         """
         Internal helper function for ``__repr__`` which is nesting-aware.
         """

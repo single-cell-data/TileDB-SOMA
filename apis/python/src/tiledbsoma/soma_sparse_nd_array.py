@@ -104,7 +104,7 @@ class SOMASparseNdArray(TileDBArray):
         """
         return "\n".join(self._repr_aux())
 
-    def _repr_aux(self) -> List[str]:
+    def _repr_aux(self) -> Sequence[str]:
         if not self.exists():
             return ["Unpopulated"]
         lines = [
@@ -527,7 +527,7 @@ class SOMASparseNdArray(TileDBArray):
             while j < ncol:
                 t1 = time.time()
                 # Find a number of CSC columns which will result in a desired nnz for the chunk.
-                chunk_size = util.find_csc_chunk_size(
+                chunk_size = util_scipy.find_csc_chunk_size(
                     matrix, j, self._tiledb_platform_config.goal_chunk_nnz
                 )
                 j2 = j + chunk_size

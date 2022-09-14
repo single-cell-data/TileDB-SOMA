@@ -1,4 +1,4 @@
-from typing import Any, Dict, Iterator, List
+from typing import Any, Dict, Iterator, Sequence
 
 # importing tiledbsoma.TileDBObject leads to a circular reference as TileDBObject imports us. This
 # is, in turn, because this class requires a back-link to the underlying object -- hence,
@@ -12,7 +12,7 @@ class SOMAMetadataMapping:
     def __init__(self, underlying: "tiledbsoma.TileDBObject"):
         self._underlying = underlying
 
-    def keys(self) -> List[str]:
+    def keys(self) -> Sequence[str]:
         """
         Returns the object's metadata keys as a list.
         """

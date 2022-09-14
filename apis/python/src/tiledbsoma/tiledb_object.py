@@ -1,6 +1,6 @@
 import os
 from abc import ABC, abstractmethod
-from typing import Optional, Union
+from typing import Optional, Sequence, Union
 
 import tiledb
 
@@ -65,6 +65,9 @@ class TileDBObject(ABC):
         Fallback string display. Will be overridden by any interesting subclasses.
         """
         return f"name={self._name},uri={self._uri}"
+
+    def _repr_aux(self) -> Sequence[str]:
+        raise Exception("Must be overridden by inherting classes.")
 
     def get_name(self) -> str:
         return self._name
