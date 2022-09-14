@@ -43,7 +43,7 @@ if (TILEDBSC_TESTING)
     target_compile_definitions(unit_sc PRIVATE CATCH_CONFIG_MAIN)
 
     if (NOT APPLE AND NOT WIN32)
-        target_link_libraries(unit_sc PRIVATE pthread)
+        target_link_libraries(unit_sc PRIVATE pthread fmt)
     endif()
 
     add_test(

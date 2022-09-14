@@ -43,4 +43,4 @@ export pybind11_DIR=$(python -m pybind11 --cmakedir)
 make -j 16
 ```
 
-Then in Python `import tiledb.libtiledb`.
+Then in Python `import tiledbsc.libtiledbsc`.
