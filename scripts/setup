@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+set -euo pipefail
+
 # cd to the top level directory of the repo
 cd $(git rev-parse --show-toplevel)
 
