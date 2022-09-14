@@ -5,8 +5,8 @@ from .soma_dense_nd_array import SOMADenseNdArray
 from .soma_experiment import SOMAExperiment
 from .soma_indexed_dataframe import SOMAIndexedDataFrame
 from .soma_measurement import SOMAMeasurement
-from .soma_sparse_nd_array import SOMASparseNdArray
 from .soma_metadata_mapping import SOMAMetadataMapping
+from .soma_sparse_nd_array import SOMASparseNdArray
 from .tiledb_array import TileDBArray
 from .tiledb_object import TileDBObject
 from .tiledb_platform_config import TileDBPlatformConfig
