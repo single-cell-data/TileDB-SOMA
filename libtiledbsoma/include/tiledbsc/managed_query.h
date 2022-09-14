@@ -242,7 +242,7 @@ class ManagedQuery {
      */
     void check_column_name(const std::string& name) {
         if (!buffers_.contains(name)) {
-            throw TileDBSCError(fmt::format(
+            throw TileDBSOMAError(fmt::format(
                 "[ManagedQuery] Column '{}' is not available in the query "
                 "results.",
                 name));

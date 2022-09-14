@@ -165,7 +165,7 @@ void SOMAQuery::query_and_select(
         if (num_cells && mq->is_sliced()) {
             auto points = mq->strings(dim_name);
             if (points.size() != num_cells) {
-                throw TileDBSCError(fmt::format(
+                throw TileDBSOMAError(fmt::format(
                     "[SOMAQuery] {} query failed sanity check: {} != {}",
                     dim_name,
                     points.size(),

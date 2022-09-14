@@ -121,7 +121,7 @@ class ArrowAdapter {
             default:
                 break;
         }
-        throw TileDBSCError(fmt::format(
+        throw TileDBSOMAError(fmt::format(
             "ArrowAdapter: Unsupported TileDB datatype: {} ",
             tiledb::impl::type_to_str(datatype)));
     }

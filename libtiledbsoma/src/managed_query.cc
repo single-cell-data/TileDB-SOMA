@@ -138,7 +138,7 @@ size_t ManagedQuery::submit() {
 
     // TODO: retry the query with larger buffers
     if (status == Query::Status::INCOMPLETE && !num_cells) {
-        throw TileDBSCError(
+        throw TileDBSOMAError(
             fmt::format("[ManagedQuery] [{}] Buffers are too small.", name_));
     }
 

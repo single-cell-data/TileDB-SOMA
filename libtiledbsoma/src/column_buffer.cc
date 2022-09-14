@@ -53,7 +53,7 @@ std::shared_ptr<ColumnBuffer> ColumnBuffer::create(
         bool is_nullable = attr.nullable();
 
         if (!is_var && attr.cell_val_num() != 1) {
-            throw TileDBSCError(
+            throw TileDBSOMAError(
                 "[ColumnBuffer] Values per cell > 1 is not supported: " +
                 name_str);
         }
@@ -68,7 +68,7 @@ std::shared_ptr<ColumnBuffer> ColumnBuffer::create(
                       dim.type() == TILEDB_STRING_UTF8;
 
         if (!is_var && dim.cell_val_num() != 1) {
-            throw TileDBSCError(
+            throw TileDBSOMAError(
                 "[ColumnBuffer] Values per cell > 1 is not supported: " +
                 name_str);
         }
@@ -77,7 +77,7 @@ std::shared_ptr<ColumnBuffer> ColumnBuffer::create(
             array, dim.name(), dim.type(), is_var, false);
     }
 
-    throw TileDBSCError("[ColumnBuffer] Column name not found: " + name_str);
+    throw TileDBSOMAError("[ColumnBuffer] Column name not found: " + name_str);
 }
 
 //===================================================================
@@ -184,7 +184,7 @@ std::shared_ptr<ColumnBuffer> ColumnBuffer::alloc(
         try {
             num_bytes = std::stoull(value_str);
         } catch (const std::exception& e) {
-            throw TileDBSCError(fmt::format(
+            throw TileDBSOMAError(fmt::format(
                 "[ColumnBuffer] Error parsing {}: {} ({})",
                 CONFIG_KEY_INIT_BYTES,
                 value_str,

@@ -164,7 +164,7 @@ class ColumnBuffer {
      */
     std::span<uint64_t> offsets() {
         if (!is_var_) {
-            throw TileDBSCError(
+            throw TileDBSOMAError(
                 "[ColumnBuffer] Offsets buffer not defined for " + name_);
         }
 
@@ -178,7 +178,7 @@ class ColumnBuffer {
      */
     std::span<uint8_t> validity() {
         if (!is_nullable_) {
-            throw TileDBSCError(
+            throw TileDBSOMAError(
                 "[ColumnBuffer] Validity buffer not defined for " + name_);
         }
         return std::span<uint8_t>(validity_.data(), num_cells_);

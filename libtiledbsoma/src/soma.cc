@@ -70,7 +70,7 @@ std::unordered_map<std::string, std::string> SOMA::list_arrays() {
             Group group(*ctx_, uri_, TILEDB_READ);
             build_uri_map(group);
         } catch (const std::exception& e) {
-            throw TileDBSCError(fmt::format(
+            throw TileDBSOMAError(fmt::format(
                 "[SOMA] Error opening group URI='{}' : {}", uri_, e.what()));
         }
     }
@@ -86,7 +86,7 @@ std::shared_ptr<Array> SOMA::open_array(const std::string& name) {
     try {
         return std::make_shared<Array>(*ctx_, uri, TILEDB_READ);
     } catch (const std::exception& e) {
-        throw TileDBSCError(
+        throw TileDBSOMAError(
             fmt::format("[SOMA] Error opening array '{}' : {}", uri, e.what()));
     }
 }
@@ -109,7 +109,7 @@ void SOMA::build_uri_map(Group& group, std::string_view parent) {
                 auto subgroup = Group(*ctx_, member.uri(), TILEDB_READ);
                 build_uri_map(subgroup, path);
             } catch (const std::exception& e) {
-                throw TileDBSCError(fmt::format(
+                throw TileDBSOMAError(fmt::format(
                     "[SOMA] Error opening group URI='{}' : {}",
                     uri_,
                     e.what()));

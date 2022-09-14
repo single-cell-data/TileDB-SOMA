@@ -32,7 +32,7 @@
 cmake_minimum_required(VERSION 3.21)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmake/Modules/")
 
-# TileDBSC Options
+# TileDBSOMA Options
 option(TILEDBSOMA_ENABLE_PYTHON "Enables Python API bindings" ON)
 option(TILEDBSOMA_ENABLE_WERROR "Enables the -Werror flag during compilation." ON)
 

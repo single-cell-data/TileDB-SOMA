@@ -39,11 +39,11 @@
 
 namespace tiledbsoma {
 
-class TileDBSCError : public std::runtime_error {
+class TileDBSOMAError : public std::runtime_error {
    public:
-    explicit TileDBSCError(const char* m)
+    explicit TileDBSOMAError(const char* m)
         : std::runtime_error(m){};
-    explicit TileDBSCError(std::string m)
+    explicit TileDBSOMAError(std::string m)
         : std::runtime_error(m.c_str()){};
 
    public:
