@@ -1,0 +1,12 @@
+^.*\.Rproj$
+^\.Rproj\.user$
+^doc$
+^Meta$
+^dev$
+^.lintr
+^.vscode
+^.devcontainer
+^LICENSE\.md$
+^\.github$
+^data-raw$
+^Makefile$
