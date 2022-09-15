@@ -38,8 +38,7 @@
 
 #include <stdexcept>  // for windows: error C2039: 'runtime_error': is not a member of 'std'
 
-#include <spdlog/fmt/fmt.h>
-#include <spdlog/fmt/ostr.h>
+#include <spdlog/spdlog.h>
 
 namespace tiledbsoma {
 

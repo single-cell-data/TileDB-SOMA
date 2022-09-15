@@ -33,11 +33,11 @@
 #ifndef __TILEDBSOMA__
 #define __TILEDBSOMA__
 
+#include <tiledbsoma/array_buffers.h>
 #include <tiledbsoma/column_buffer.h>
 #include <tiledbsoma/common.h>
 #include <tiledbsoma/logger_public.h>
 #include <tiledbsoma/managed_query.h>
 #include <tiledbsoma/soma_reader.h>
-#include "tiledbsoma/array_buffers.h"
 
 #endif
