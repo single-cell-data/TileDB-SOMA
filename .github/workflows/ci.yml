@@ -3,7 +3,7 @@ name: TileDB-SingleCell Python CI
 on:
   pull_request:
   push:
-    branches: [main-v0]
+    branches: [main-old]
   release:
     types: [published]
 

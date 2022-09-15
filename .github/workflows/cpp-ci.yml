@@ -3,7 +3,7 @@ name: TileDB-SingleCell C++ CI
 on:
   pull_request:
   push:
-    branches: [main]
+    branches: [main-old]
 
 jobs:
   build:
