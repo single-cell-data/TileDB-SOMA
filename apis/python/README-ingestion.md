@@ -14,7 +14,7 @@
   * [anndata](./anndata) contains some files from [https://cellxgene.cziscience.com](https://cellxgene.cziscience.com)
   * The most important reference is `anndata/pbmc3k_processed.h5ad`
 * Code:
-  * [./src/tiledbsc](./src/tiledbsc)
+  * [./src/tiledbsoma](./src/tiledbsoma)
 * Inspecting HDF5 input files
   * `./tools/desc-ann ./anndata/pbmc3k_processed.h5ad`
 * Ingesting
@@ -174,9 +174,9 @@ Look at various fields:
 ```
 $ python
 
->>> import tiledbsc
+>>> import tiledbsoma
 
->>> soma = tiledbsc.SOMA('tiledb-data/pbmc-small')
+>>> soma = tiledbsoma.SOMA('tiledb-data/pbmc-small')
 >>> soma.X["data"].df()
                             value
 obs_id         var_id

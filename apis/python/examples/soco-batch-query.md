@@ -15,13 +15,13 @@ Using [soco-batch-query.py](soco-batch-query.py) (this takes a while on a 2.2GB 
 is amenable to parallelization) looping over the distinct values of `cell_type_ontology_term_id` in the collection.
 
 ```
-import tiledbsc
-import tiledbsc.util
+import tiledbsoma
+import tiledbsoma.util
 import tiledb
 import pandas as pd
 import sys
 
-soco = tiledbsc.SOMACollection(soco_path)
+soco = tiledbsoma.SOMACollection(soco_path)
 
 ctx = tiledb.Ctx({"py.init_buffer_bytes": 4 * 1024**3}) # per-column buffer size
 
@@ -65,7 +65,7 @@ print(sparse_means_df)
 # Convert it to a dataframe with var_id row labels, cell_type_ontology_term_id column labels, and value data.
 print()
 print("As dense with zero-fill:")
-dense_means_df = tiledbsc.util.triples_to_dense_df(sparse_means_df)
+dense_means_df = tiledbsoma.util.triples_to_dense_df(sparse_means_df)
 print(dense_means_df)
 
 # Remove all-zeroes rows

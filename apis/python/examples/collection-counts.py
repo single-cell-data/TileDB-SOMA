@@ -5,14 +5,14 @@ from typing import Dict
 
 import pandas as pd
 
-import tiledbsc
+import tiledbsoma
 
 if len(sys.argv) == 2:
     soco_path = sys.argv[1]
 else:
     print(f"{sys.argv[0]}: need just one soma-collection path.", file=sys.stderr)
     sys.exit(1)
-soco = tiledbsc.SOMACollection(soco_path)
+soco = tiledbsoma.SOMACollection(soco_path)
 
 obs_labels = ["cell_type", "tissue", "cell_type_ontology_term_id"]
 var_labels = ["feature_name"]

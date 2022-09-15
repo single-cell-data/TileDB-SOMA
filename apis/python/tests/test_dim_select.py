@@ -6,8 +6,8 @@ import numpy as np
 import pandas as pd
 import pytest
 
-import tiledbsc
-import tiledbsc.io
+import tiledbsoma
+import tiledbsoma.io
 
 HERE = Path(__file__).parent
 
@@ -31,8 +31,8 @@ def test_dim_select(adata):
     output_path = tempdir.name
 
     # Ingest
-    soma = tiledbsc.SOMA(output_path)
-    tiledbsc.io.from_anndata(soma, adata)
+    soma = tiledbsoma.SOMA(output_path)
+    tiledbsoma.io.from_anndata(soma, adata)
 
     assert soma.obs.ids() == [
         "AAATTCGAATCACG",
@@ -243,8 +243,8 @@ def test_zeroes_handling():
     # Write SOMA
     tempdir = tempfile.TemporaryDirectory()
     soma_path = tempdir.name
-    soma = tiledbsc.SOMA(soma_path)
-    tiledbsc.io.from_anndata(soma, ann)
+    soma = tiledbsoma.SOMA(soma_path)
+    tiledbsoma.io.from_anndata(soma, ann)
 
     assert soma.obs.df().shape == (10, 1)
     assert soma.var.df().shape == (16, 1)

@@ -30,11 +30,11 @@ else
   EXTRA_OPTS=""
 fi
 
-cmake -B build -S libtiledbsc -DCMAKE_BUILD_TYPE=${BUILD_TYPE} ${EXTRA_OPTS}
+cmake -B build -S libtiledbsoma -DCMAKE_BUILD_TYPE=${BUILD_TYPE} ${EXTRA_OPTS}
 
 # check format on Linux
 #if [ $(uname) = "Linux" ]; then
 #  cmake --build build --target check-format
 #fi
 cmake --build build -j $nproc
-cmake --build build --target install-libtiledbsc
+cmake --build build --target install-libtiledbsoma

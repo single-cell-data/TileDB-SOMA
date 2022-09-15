@@ -8,7 +8,7 @@
 
 import sys
 
-import tiledbsc
+import tiledbsoma
 
 
 def main():
@@ -20,10 +20,10 @@ def main():
         sys.exit(1)
 
     for uri in sys.argv[1:]:
-        tiledbsc.util_tiledb.show_soma_schemas(uri)
+        tiledbsoma.util_tiledb.show_soma_schemas(uri)
         print()
         print("METADATA:")
-        soma = tiledbsc.SOMA(uri)
+        soma = tiledbsoma.SOMA(uri)
         soma.show_metadata(recursively=True)
 
 

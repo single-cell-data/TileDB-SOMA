@@ -4,8 +4,8 @@ from pathlib import Path
 import anndata
 import pytest
 
-import tiledbsc
-import tiledbsc.io
+import tiledbsoma
+import tiledbsoma.io
 
 HERE = Path(__file__).parent
 
@@ -29,8 +29,8 @@ def test_or_query(adata):
     output_path = tempdir.name
 
     # Ingest
-    soma = tiledbsc.SOMA(output_path)
-    tiledbsc.io.from_anndata(soma, adata)
+    soma = tiledbsoma.SOMA(output_path)
+    tiledbsoma.io.from_anndata(soma, adata)
 
     assert soma.obs.df(attrs=["groups"]).size == 80
     assert soma.obs.query('groups == "g1"', attrs=["groups"]).size == 44

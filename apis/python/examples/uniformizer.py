@@ -37,13 +37,13 @@ import scipy.sparse
 import scipy.stats
 import tiledb
 
-import tiledbsc
-import tiledbsc.io
+import tiledbsoma
+import tiledbsoma.io
 
 # ================================================================
 # MAIN ENTRYPOINT
 
-logger = logging.getLogger("tiledbsc")
+logger = logging.getLogger("tiledbsoma")
 
 
 # ----------------------------------------------------------------
@@ -52,7 +52,7 @@ def main() -> int:
     args = parser.parse_args()
 
     if args.verbose:
-        tiledbsc.logging.debug()
+        tiledbsoma.logging.debug()
 
     uniformizer = Uniformizer(args.atlas_uri, args.allow_non_primary_data)
 
@@ -207,18 +207,18 @@ class Uniformizer:
             raise Exception(f"SOMA {soma_name} is already in SOMACollection {soco.uri}")
 
         logger.info("Loading SOMA")
-        input_soma = tiledbsc.SOMA(input_soma_uri)
-        ann = tiledbsc.io.to_anndata(input_soma)
+        input_soma = tiledbsoma.SOMA(input_soma_uri)
+        ann = tiledbsoma.io.to_anndata(input_soma)
 
         self._clean_and_add(ann, soma_name, soco)
         return 0
 
     # ----------------------------------------------------------------
-    def _init_soco(self) -> tiledbsc.SOMACollection:
+    def _init_soco(self) -> tiledbsoma.SOMACollection:
         """
         Makes sure the destination SOMACollection exists for first write.
         """
-        soco = tiledbsc.SOMACollection(self.atlas_uri, name="atlas", ctx=self.ctx)
+        soco = tiledbsoma.SOMACollection(self.atlas_uri, name="atlas", ctx=self.ctx)
         soco.create_unless_exists()  # Must be done first, to create the parent directory
         if not soco.exists():
             raise Exception(f"Could not create SOCO at {soco.uri}")
@@ -237,7 +237,7 @@ class Uniformizer:
         self,
         ann: anndata.AnnData,
         soma_name: str,
-        soco: tiledbsc.SOMACollection,
+        soco: tiledbsoma.SOMACollection,
     ) -> None:
         """
         Cleans and uniformizes the data (whether obtained from H5AD or SOMA), writes a new SOMA, adds an
@@ -251,8 +251,8 @@ class Uniformizer:
 
         logger.info("Saving SOMA")
         soma_uri = f"{self.atlas_uri}/{soma_name}"
-        atlas_soma = tiledbsc.SOMA(uri=soma_uri, name=soma_name, ctx=self.ctx)
-        tiledbsc.io.from_anndata(atlas_soma, ann)
+        atlas_soma = tiledbsoma.SOMA(uri=soma_uri, name=soma_name, ctx=self.ctx)
+        tiledbsoma.io.from_anndata(atlas_soma, ann)
 
         logger.info(f"Adding SOMA name {atlas_soma.name} at SOMA URI {atlas_soma.uri}")
         soco.add(atlas_soma)

@@ -8,8 +8,8 @@ import pandas
 import scipy  # noqa: F401
 import tiledb  # noqa: F401
 
-import tiledbsc
-import tiledbsc.io
+import tiledbsoma
+import tiledbsoma.io
 
 # module aliases
 ad = anndata
@@ -17,11 +17,11 @@ np = numpy
 pd = pandas
 
 
-def count_obs(soma: tiledbsc.SOMA, attr_name: str) -> None:
+def count_obs(soma: tiledbsoma.SOMA, attr_name: str) -> None:
     print(soma.obs.df(attrs=[attr_name]).groupby(attr_name).size().sort_values())
 
 
-def count_var(soma: tiledbsc.SOMA, attr_name: str) -> None:
+def count_var(soma: tiledbsoma.SOMA, attr_name: str) -> None:
     print(soma.var.df(attrs=[attr_name]).groupby(attr_name).size().sort_values())
 
 
@@ -34,7 +34,7 @@ else:
     print(f"{sys.argv[0]}: need just one soma path.", file=sys.stderr)
     sys.exit(1)
 
-soma = tiledbsc.SOMA(input_path)
+soma = tiledbsoma.SOMA(input_path)
 if not soma.exists():
     print("Does not exist yet:", input_path)
 

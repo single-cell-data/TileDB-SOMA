@@ -8,10 +8,10 @@ This branch conforms to [this version](https://github.com/single-cell-data/TileD
 
 ## Using pip
 
-This code is hosted at [PyPI](https://pypi.org/project/tiledbsc/), so you can do
+This code is hosted at [PyPI](https://pypi.org/project/tiledbsoma/), so you can do
 
 ```
-python -m pip install tiledbsc
+python -m pip install tiledbsoma
 ```
 
 To install a specific version:
@@ -23,7 +23,7 @@ python -m pip install git+https://github.com/single-cell-data/TileDB-SOMA.git@0.
 To update to the latest version:
 
 ```
-python -m pip install --upgrade tiledbsc
+python -m pip install --upgrade tiledbsoma
 ```
 
 ## From source

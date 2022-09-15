@@ -8,8 +8,8 @@ import pandas
 import scipy  # noqa: F401
 import tiledb  # noqa: F401
 
-import tiledbsc
-import tiledbsc.io
+import tiledbsoma
+import tiledbsoma.io
 
 # module aliases
 ad = anndata
@@ -24,6 +24,6 @@ else:
     print(f"{sys.argv[0]}: need just one soma-collection path.", file=sys.stderr)
     sys.exit(1)
 
-soco = tiledbsc.SOMACollection(soco_path)
+soco = tiledbsoma.SOMACollection(soco_path)
 
 # Interact at the Python prompt now

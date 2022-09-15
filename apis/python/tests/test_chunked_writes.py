@@ -1,8 +1,8 @@
 import math
 from pathlib import Path
 
-import tiledbsc
-import tiledbsc.io
+import tiledbsoma
+import tiledbsoma.io
 
 HERE = Path(__file__).parent
 
@@ -43,19 +43,19 @@ def test_chunked_writes(tmp_path):
     # This chunk-size value is specifically chosen to ensure that the curated datafiles on this test
     # will get their X ingested in multiple chunks -- this is important in order to test the
     # chunked-ingest logic for all three variants: dense, CSR, and CSC.
-    unchunked_sopt = tiledbsc.SOMAOptions(write_X_chunked=False)
-    chunked_sopt = tiledbsc.SOMAOptions(goal_chunk_nnz=250)
+    unchunked_sopt = tiledbsoma.SOMAOptions(write_X_chunked=False)
+    chunked_sopt = tiledbsoma.SOMAOptions(goal_chunk_nnz=250)
 
     # Do the ingests from anndata .h5ad files to TileDB SOMAs.
-    soma_unchunked = tiledbsc.SOMA(soma_unchunked_path, soma_options=unchunked_sopt)
-    soma_dense = tiledbsc.SOMA(soma_dense_path, soma_options=chunked_sopt)
-    soma_csr = tiledbsc.SOMA(soma_csr_path, soma_options=chunked_sopt)
-    soma_csc = tiledbsc.SOMA(soma_csc_path, soma_options=chunked_sopt)
+    soma_unchunked = tiledbsoma.SOMA(soma_unchunked_path, soma_options=unchunked_sopt)
+    soma_dense = tiledbsoma.SOMA(soma_dense_path, soma_options=chunked_sopt)
+    soma_csr = tiledbsoma.SOMA(soma_csr_path, soma_options=chunked_sopt)
+    soma_csc = tiledbsoma.SOMA(soma_csc_path, soma_options=chunked_sopt)
 
-    tiledbsc.io.from_h5ad(soma_unchunked, ann_dense_path)
-    tiledbsc.io.from_h5ad(soma_dense, ann_dense_path)
-    tiledbsc.io.from_h5ad(soma_csr, ann_csr_path)
-    tiledbsc.io.from_h5ad(soma_csc, ann_csc_path)
+    tiledbsoma.io.from_h5ad(soma_unchunked, ann_dense_path)
+    tiledbsoma.io.from_h5ad(soma_dense, ann_dense_path)
+    tiledbsoma.io.from_h5ad(soma_csr, ann_csr_path)
+    tiledbsoma.io.from_h5ad(soma_csc, ann_csc_path)
 
     # Read the X arrays into memory as pandas dataframe objects.
     xdf_unchunked = soma_unchunked.X["data"].df()

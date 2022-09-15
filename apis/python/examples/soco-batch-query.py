@@ -9,8 +9,8 @@ import sys
 import pandas as pd
 import tiledb
 
-import tiledbsc
-import tiledbsc.util
+import tiledbsoma
+import tiledbsoma.util
 
 if len(sys.argv) == 2:
     soco_path = sys.argv[1]
@@ -18,7 +18,7 @@ else:
     print(f"{sys.argv[0]}: need just one soma-collection path.", file=sys.stderr)
     sys.exit(1)
 
-soco = tiledbsc.SOMACollection(soco_path)
+soco = tiledbsoma.SOMACollection(soco_path)
 
 # per-column buffer size
 ctx = tiledb.Ctx({"py.init_buffer_bytes": 4 * 1024**3})
@@ -38,7 +38,7 @@ for i, ctot_id in enumerate(ctot_ids):
     if soma_slices == []:
         continue
 
-    result_soma_slice = tiledbsc.SOMASlice.concat(soma_slices)
+    result_soma_slice = tiledbsoma.SOMASlice.concat(soma_slices)
 
     if result_soma_slice is not None:
 
@@ -67,7 +67,7 @@ print(sparse_means_df)
 # Convert it to a dataframe with var_id row labels, cell_type_ontology_term_id column labels, and value data.
 print()
 print("As dense with zero-fill:")
-dense_means_df = tiledbsc.util.triples_to_dense_df(sparse_means_df)
+dense_means_df = tiledbsoma.util.triples_to_dense_df(sparse_means_df)
 print(dense_means_df)
 
 # Remove all-zeroes rows

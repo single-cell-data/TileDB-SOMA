@@ -3,8 +3,8 @@ from pathlib import Path
 
 import pytest
 
-import tiledbsc
-import tiledbsc.io
+import tiledbsoma
+import tiledbsoma.io
 
 HERE = Path(__file__).parent
 
@@ -17,7 +17,7 @@ def h5ad_file(request):
 
 def test_soma_metadata(h5ad_file):
     """
-    Verify basic metadata access at the tiledbsc-py level.
+    Verify basic metadata access at the tiledbsoma-py level.
     """
 
     # Set up anndata input path and tiledb-group output path
@@ -25,8 +25,8 @@ def test_soma_metadata(h5ad_file):
     output_path = tempdir.name
 
     # Ingest
-    soma = tiledbsc.SOMA(output_path)
-    tiledbsc.io.from_h5ad(soma, h5ad_file)
+    soma = tiledbsoma.SOMA(output_path)
+    tiledbsoma.io.from_h5ad(soma, h5ad_file)
     assert soma.exists()
 
     # Group-level metadata

@@ -19,20 +19,20 @@ See also the
 
 ## Local ingestion
 
-If you have an in-memory `AnnData` object, you can ingest it into a SOMA using `tiledbsc.io.from_anndata()`:
+If you have an in-memory `AnnData` object, you can ingest it into a SOMA using `tiledbsoma.io.from_anndata()`:
 
 ```
 pbmc3k = scanpy.datasets.pbmc3k_processed()
-local_soma = tiledbsc.SOMA('pbmc3k')
-tiledbsc.io.from_anndata(local_soma, pbmc3k)
+local_soma = tiledbsoma.SOMA('pbmc3k')
+tiledbsoma.io.from_anndata(local_soma, pbmc3k)
 ```
 
 We'll focus from here on out mainly on ingesting from H5AD disk files.  Given local
 `pbmc3k_processed.h5ad`, as in the previous section, we can populate a SOMA.
 
 ```
-local_soma = tiledbsc.SOMA('pbmc3k')
-tiledbsc.io.from_h5ad(local_soma, './pbmc3k_processed.h5ad')
+local_soma = tiledbsoma.SOMA('pbmc3k')
+tiledbsoma.io.from_h5ad(local_soma, './pbmc3k_processed.h5ad')
 ```
 
 Now we can examine the data, using things like the following:
@@ -60,8 +60,8 @@ The simplest way to get S3 credentials set up is to export the `AWS_ACCESS_KEY_I
 :::
 
 ```
-s3_soma = tiledbsc.SOMA('s3://mybucket/scratch/puck-001', ctx=ctx)
-tiledbsc.io.from_h5ad(s3_soma, './Puck_200903_10.h5ad')
+s3_soma = tiledbsoma.SOMA('s3://mybucket/scratch/puck-001', ctx=ctx)
+tiledbsoma.io.from_h5ad(s3_soma, './Puck_200903_10.h5ad')
 ```
 
 ![](images/s3-inspect.png)
@@ -82,9 +82,9 @@ For upload to TileDB Cloud, we use _creation URIs_. Here you indicate your targe
 * Example post-upload URI: `tiledb://mynamespace/somaname`
 
 ```
-hscs = tiledbsc.SOMA('tiledb://johnkerl-tiledb/s3://tiledb-johnkerl/cloud/001/HSCs', ctx=ctx)
-tiledbsc.io.from_h5ad(hscs, 'HSCs.h5ad')
-hscs = tiledbsc.SOMA('tiledb://johnkerl-tiledb/HSCs', ctx=ctx)
+hscs = tiledbsoma.SOMA('tiledb://johnkerl-tiledb/s3://tiledb-johnkerl/cloud/001/HSCs', ctx=ctx)
+tiledbsoma.io.from_h5ad(hscs, 'HSCs.h5ad')
+hscs = tiledbsoma.SOMA('tiledb://johnkerl-tiledb/HSCs', ctx=ctx)
 ```
 
 ![](images/tiledb-cloud-inspect.png)
@@ -104,8 +104,8 @@ optimized storage solution (with admittedly non-negligible ingest time) is that 
 queries benefit from that optimized storage. In particular, various cross-corpus data queries shown
 in these examples take just seconds or minutes.
 
-A key point is **write once, read from multiple tools** -- in particular, using `tiledbsc-py` (this
-package) or [`tiledbsc-r`](https://github.com/TileDB-Inc/tiledbsc) you can read SOMAs in either
+A key point is **write once, read from multiple tools** -- in particular, using `tiledbsoma-py` (this
+package) or [`tiledbsoma-r`](https://github.com/TileDB-Inc/tiledbsoma) you can read SOMAs in either
 language, regardless of which language was used to store them. This lets you use
 best-in-class/state-of-the-art analysis algorithms, whichever language they're implemented in.
 

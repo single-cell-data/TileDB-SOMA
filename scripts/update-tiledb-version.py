@@ -43,7 +43,7 @@ def main(args):
     new_hash = get_version_hash(args.version)
 
     filepath = (
-        f"{os.path.dirname(__file__)}/../libtiledbsc/cmake/Modules/FindTileDB_EP.cmake"
+        f"{os.path.dirname(__file__)}/../libtiledbsoma/cmake/Modules/FindTileDB_EP.cmake"
     )
     filepath = os.path.realpath(filepath)
     print(f"Updating {filepath}")

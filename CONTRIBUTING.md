@@ -14,7 +14,7 @@ Thanks for your interest in TileDB-SingleCell. The notes below give some pointer
 
 ### Contribution Workflow
 
-- [Please follow these instructions to build from source](https://docs.tiledb.com/developer/tiledbsc/installation)
-- Make changes locally, then rebuild as appropriate for the level of changes (e.g.: `make` for `libtilebsc` or `python setup.py develop` for `apis/python`).
+- [Please follow these instructions to build from source](https://docs.tiledb.com/developer/tiledbsoma/installation)
+- Make changes locally, then rebuild as appropriate for the level of changes (e.g.: `make` for `libtiledbsoma` or `python setup.py develop` for `apis/python`).
 - Make sure to run `make check`, or `pytest` to verify changes against tests (add new tests where applicable).
-- Please submit [pull requests](https://help.github.com/en/desktop/contributing-to-projects/creating-a-pull-request) against the default [`main` branch of TileDB-SC](https://github.com/TileDB-Inc/TileDB-SC/tree/master).
+- Please submit [pull requests](https://help.github.com/en/desktop/contributing-to-projects/creating-a-pull-request) against the default [`main` branch of TileDB-SOMA](https://github.com/TileDB-Inc/TileDB-SOMA/tree/master).

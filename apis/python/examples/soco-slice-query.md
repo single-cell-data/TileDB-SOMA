@@ -23,7 +23,7 @@ As shown in the [public TileDB Cloud notebook](https://cloud.tiledb.com/notebook
 
 ```
 ctx = tiledb.Ctx({"py.init_buffer_bytes": 4 * 1024**3})
-soco = tiledbsc.SOMACollection("s3://tiledb-singlecell-data/soco/soco3", ctx)
+soco = tiledbsoma.SOMACollection("s3://tiledb-singlecell-data/soco/soco3", ctx)
 ```
 
 Slices to be concatenated must all have the same attributes for their `obs` and `var`. If the input SOMAs were all normalized (see also [Uniformizing a Collection](uniform-collection.md)), we wouldn't need to specify `obs_attrs` and `var_attrs`. Since the input data here is heterogeneous, though, we find which `obs`/`var` attributes they all have in common.
@@ -57,8 +57,8 @@ ann = slice.to_anndata()
 ## Persist the output
 
 ```
-slice_soma = tiledbsc.SOMA('slice-query-output')
-tiledbsc.io.from_anndata(slice_soma, ann)
+slice_soma = tiledbsoma.SOMA('slice-query-output')
+tiledbsoma.io.from_anndata(slice_soma, ann)
 ```
 
 ## Examine the results

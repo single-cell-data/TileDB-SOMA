@@ -9,7 +9,7 @@
   * `pip install pre-commit && pre-commit install`
   * Then on every `git commit` all configured linters will be run locally on the changed files, and the commit will be blocked if there is any error.
 * PyPI:
-  * https://pypi.org/project/tiledbsc/
+  * https://pypi.org/project/tiledbsoma/
   * `tiledbinc` is an owner
   * See https://github.com/single-cell-data/TileDB-SingleCell/pull/178 for setups that were done
 * Public-bucket status quo:
