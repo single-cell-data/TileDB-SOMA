@@ -48,11 +48,12 @@ jobs:
       - name: Install dependencies
         env:
           R_REMOTES_NO_ERRORS_FROM_WARNINGS: true
-        with:
-          working-directory: apis/R
         run: Rscript -e "install.packages(c('remotes', 'rcmdcheck'))" -e "remotes::install_deps(dependencies = TRUE)"
+        ####with:
+        ####  working-directory: apis/R
 
       - uses: r-lib/actions/check-r-package@v2
         with:
           working-directory: apis/R
 
+# trivial mod to force CI run

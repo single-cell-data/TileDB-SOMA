@@ -61,3 +61,4 @@ AnnotationMatrix <- R6::R6Class(
     }
   )
 )
+# trivial mod to force CI run
