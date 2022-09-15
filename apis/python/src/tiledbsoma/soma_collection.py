@@ -83,7 +83,14 @@ class SOMACollection(TileDBObject):
                 member_name, member_uri, self
             )
 
-        return self._cached_members[member_name]
+        if member_name in self._cached_members:
+            return self._cached_members[member_name]
+        else:
+            # Unlike __getattribute__ this is _only_ called when the member isn't otherwise
+            # resolvable. So raising here is the right thing to do.
+            raise AttributeError(
+                f"{self.__class__.__name__} has no attribute '{member_name}'"
+            )
 
     def keys(self) -> Sequence[str]:
         """
