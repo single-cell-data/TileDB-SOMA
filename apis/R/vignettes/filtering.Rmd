@@ -1,0 +1,147 @@
+---
+title: "Filtering"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Filtering}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+# Setup
+
+```{r setup}
+library(tiledbsoma)
+library(SeuratObject)
+```
+
+# Overview
+
+This vignette demonstrates how to leverage tiledbsoma's features for subsetting and filtering data stored as a SOMA.
+
+As described in `?SOMA`, there are two primary approaches for subsetting: dimension slicing and attribute filtering, both of which are described in this vignette and are performed using the `set_query()` method, provided by all tiledbsoma objects.
+
+## Dimension slicing
+
+### Low-level classes
+
+tiledbsoma objects within a SOMA are indexed by a set of common cell- or feature-identifiers, which are efficiently sliced by providing a list of dimension identifiers.
+
+As an example, let's ingest cell-level metadata from the `pbmc_small` dataset into an `AnnotationDataframe` indexed by the cell identifiers.
+
+```{r}
+data("pbmc_small", package = "SeuratObject")
+
+adf <- AnnotationDataframe$new(uri = file.path(tempdir(), "pbmc_small_obs"))
+adf$from_dataframe(pbmc_small[[]], index_col = "obs_id")
+adf
+```
+
+As you'd expect, reading the data back into memory recreates the same data frame with all 80 cells.
+
+```{r}
+dim(adf$to_dataframe())
+```
+
+We can use the `set_query()` method to read in a specific subset of cells by providing a named list of ranges for each dimension.
+
+```{r}
+adf$set_query(
+  dims = list(obs_id = c("AAATTCGAATCACG", "AAGCAAGAGCTTAG", "AAGCGACTTTGACG"))
+)
+```
+
+Now, the next time we call `to_dataframe()` the resulting data frame will only contain the cells we specified.
+
+```{r}
+adf$to_dataframe()
+```
+
+To clear this query and again read in all cells, we can use the `reset_query()` method.
+
+```{r}
+adf$reset_query()
+```
+
+This functionality is also available for `AnnotationGroup`-based classes, which ostensibly contain a group of arrays that all share the same dimensions. In this case, the `dims` argument is automatically applied to all child arrays.
+
+### High-level classes
+
+The `SOMA` class also provides a `set_query()` method for the same purpose. However, unlike the lower-level classes which are meant to be general-purpose,
+the `SOMA` class has well-defined requirements for the dimensions of its member arrays. As such, `SOMA$set_query()` provides arguments, `obs_ids` and `var_ids`, rather than the more general `dims` argument.
+
+To see this in action, let's create a `SOMA` from `pbmc_small`'s `RNA` assay.
+
+```{r}
+soma <- SOMA$new(uri = file.path(tempdir(), "pbmc_small_rna"))
+soma$from_seurat_assay(pbmc_small[["RNA"]])
+```
+
+Now let's use `set_query()` to slice three features of interest.
+
+```{r}
+soma$set_query(var_ids = c("PPBP", "PF4", "GNLY"))
+```
+
+Any of the individual SOMA components will respect the new query. So if we read in the feature-level metadata from `var`, the resulting data frame contains only the features we specified.
+
+```{r}
+soma$var$to_dataframe()
+```
+
+And when we recreate the entire Seurat `Assay` from the `SOMA`, the slice is carried through to all relevant components,
+
+```{r}
+pbmc_small_rna <- soma$to_seurat_assay()
+```
+
+including the raw counts,
+
+```{r}
+GetAssayData(pbmc_small_rna, slot = "counts")
+```
+
+and normalized/scaled data:
+
+```{r}
+GetAssayData(pbmc_small_rna, slot = "data")
+```
+
+Again, to retrieve all of the original data we need to reset the query:
+
+```{r}
+soma$reset_query()
+```
+
+## Attribute Filtering
+
+In addition to dimension slicing, `set_query()` allows you to filter query results using attribute filters. As a reminder, in TileDB parlance attributes are the non-dimensions (i.e., unindexed) components of a dataset.
+
+This is particularly useful for filtering SOMAs based on cell- and feature-level metadata stored in the `obs` and `var` arrays. For example, let's filter out genes with a `vst.mean` <= 5.
+
+Unlink dimension slicing, attribute filters are applied immediately to the `obs` or `var` arrays, and the identifiers that passed the filter are used to slice the data at read time.
+
+```{r}
+soma$set_query(var_attr_filter = vst.mean > 5)
+```
+
+With `verbose=TRUE`, running the above command will print a message indicating how many identifiers were selected. Now, when we read the data back into memory the resulting `Assay` will only include the 12 selected features.
+
+```{r}
+soma$to_seurat_assay()
+```
+
+These two filtering methods can also be combined. For example, let's apply the same attribute filter as above but only on the subset of features previously identified as highly-variable.
+
+```{r}
+vfs <- pbmc_small_rna@var.features
+soma$set_query(var_ids = vfs, var_attr_filter = vst.mean > 5)
+```
+
+This approach can be more performant because the filter is selectively applied to the subset of indexed identifiers.

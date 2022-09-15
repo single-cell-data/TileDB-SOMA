@@ -1,0 +1,191 @@
+---
+title: "Introduction"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Introduction}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+## Setup
+
+```{r setup}
+options(max.print = 500)
+
+library(tiledbsoma)
+library(fs)
+library(tiledb)
+library(SeuratObject)
+
+data_dir <- file.path(tempdir(), "pbmc_small")
+dir.create(data_dir, showWarnings = FALSE)
+```
+
+## Overview
+
+This vignette will cover the creation of an **SOMACollection** from a `Seurat` object.
+
+## Load data
+
+Load the subsetted 10X genomics [PBMC dataset](https://mojaveazure.github.io/seurat-object/reference/pbmc_small.html) provided by SeuratObject.
+
+```{r}
+data("pbmc_small", package = "SeuratObject")
+pbmc_small
+```
+
+## Convert a `Seurat` object to a TileDB-backed `SOMACollection`
+
+The `SOMACollection` class provides a method for converting an entire `Seurat` object to an `SOMACollection`. This is the recommended way to perform the conversion since it can handle multiple `Assay` objects and will (eventually) convert all of the standard slots that comprise a `Seurat` object.
+
+This first step is to create a new `SOMACollection` object and provide a URI where the dataset should be created:
+
+```{r}
+soco <- SOMACollection$new(uri = file.path(tempdir(), "soco"))
+```
+
+Next, we'll pass the entire `pbmc_small` object directly to `from_seurat()` and one `SOMA` will be created for each `Assay` object:
+
+```{r}
+soco$from_seurat(object = pbmc_small)
+```
+
+Examining the directory structure, you can see the top-level `SOMACollection` directory now contains a single `soma_RNA` sub-directory, corresponding to `pbmc_small`'s only assay, `"RNA"`:
+
+```{r}
+fs::dir_tree(soco$uri, recurse = 1)
+```
+
+Internally, the `SOMACollection` class is used to convert each Seurat `Assay` object to a `SOMA`, which creates and populates the various sub-components, including:
+
+- the `counts`, `data`, and `scale.data` matrices are each stored in separate attribute of the `X` array
+- the `data.frame` containing feature-level metadata is ingested into the `var` array
+
+Separately, any dimensional reductions are extracted and stored in corresponding `obsm`/`varm` arrays.
+
+
+To close the loop we can then read the on-disk `SOMACollection` back into memory as a `Seurat` object.
+
+```{r}
+soco$to_seurat(project = "SOCO Example")
+```
+
+
+## Convert a Seurat `Assay` to TileDB-backed `SOMA`
+
+Conversions can happen at multiple levels of the API. For example, we can operate directly on a Seurat `Assay` using `SOMA`. The workflow is largely the same:
+
+
+```{r}
+soma <- SOMA$new(uri = file.path(tempdir(), "soma"))
+fs::dir_tree(soma$uri)
+```
+
+Then we'll pass `RNA` assay from `pbmc_small` to the `from_seurat_assay()` method of the `SOMA` class.
+
+*Note: Because cell-level metadata is stored in the parent `Seurat` object, we need to provide this data separately.*
+
+```{r}
+soma$from_seurat_assay(
+  object = pbmc_small[["RNA"]],
+  obs = pbmc_small[[]]
+)
+```
+
+Examine the directory structure of the `soma` we can see the `X`, `var`, and `obs` arrays have all been created.
+
+```{r}
+fs::dir_tree(soma$uri, recurse = FALSE)
+```
+
+## Accessing individual components
+
+Any of the underlying TileDB arrays can be accessed directly from a `SOMACollection` object by navigating its internal classes.
+
+As an example, let's access the cell-level metadata. Recall from the [*SOMA* spec][soma-spec] that cell-level metadata is stored in the `obs` array of an `SOMA`. Therefore, we must first access a specific `SOMA` within the `SOMACollection`'s `somas` slot. Let's generate a list of the available `SOMA`s:
+
+```{r}
+names(soco$somas)
+```
+
+Easy choice. `"RNA"` can then be used to index the corresponding `SOMA`:
+
+
+```{r}
+soco$members$RNA
+```
+
+We can see we have access to a variety of fields and methods, but `obs` is the one we're after.
+
+```{r}
+soco$members$RNA$obs$to_dataframe()
+```
+
+This is a `AnnotationDataframe` object, which includes a method for reading the data into R as a `data.frame`:
+
+
+```{r}
+head(soco$members$RNA$obs$to_dataframe())
+```
+
+
+# Array Access
+
+## Helpers
+
+All of the array-based classes include a number of helper functions for interacting with the underlying arrays.
+
+Print the schema of an array:
+
+```{r}
+soma_obs <- soco$members$RNA$obs
+soma_obs$schema()
+```
+
+List the names of the array's dimensions (i.e., indexed columns)
+
+```{r}
+soma_obs$dimnames()
+```
+
+and attributes (i.e., non-indexed columns):
+
+```{r}
+soma_obs$attrnames()
+```
+
+## TileDB API access
+
+You can also use the `tiledb_array()` method to directly access the underlying arrays using the standard TileDB API, providing the full functionality of the [`tiledb`][tiledb-r] package. For example, let's query the `obs` array and  retrieve a subset of cells that match our QC criteria:
+
+```{r}
+obs_array <- soma_obs$tiledb_array(
+  return_as = "tibble",
+  attrs = c("nCount_RNA", "nFeature_RNA"),
+  query_condition = parse_query_condition(nFeature_RNA < 2500)
+)
+
+obs_array[]
+```
+
+
+# Session
+
+```{r}
+sessionInfo()
+```
+
+```{r cleanup, include=FALSE}
+tiledb::tiledb_vfs_remove_dir(data_dir)
+```
+
+<!-- links -->
+[tiledb-r]: https://tiledb-inc.github.io/TileDB-R/
+[soma-spec]: https://github.com/single-cell-data/soma

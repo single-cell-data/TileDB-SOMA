@@ -1,0 +1,15 @@
+.Rproj.user
+.Rhistory
+.RData
+.Ruserdata
+inst/doc
+/doc/
+/Meta/
+/dev/
+
+# Vim swapfiles:
+.*.sw?
+.sw?
+
+# macos
+.DS_Store

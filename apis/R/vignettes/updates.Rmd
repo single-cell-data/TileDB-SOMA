@@ -1,0 +1,159 @@
+---
+title: "Selective Updates"
+description: >
+  How to selectivley update components of an SCGroup.
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Updates}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+# Setup
+
+```{r setup}
+library(tiledbsoma)
+library(SeuratObject)
+```
+
+# Overview
+
+While *tiledbsoma* is currently focused on facilitating the storage and retrieval of complete Seurat/Bioconductor datasets, it is possible to selectively update specific components of an existing `SCGroup`.
+
+# Create the initial dataset
+
+As in the Introduction we'll use the `pbmc_small` dataset from the *SeuratObject* package.
+
+```{r}
+data("pbmc_small", package = "SeuratObject")
+pbmc_small
+```
+
+
+We'll start by creating a Seurat `Assay` object that contains only raw RNA counts
+
+```{r}
+pbmc_small_rna <- CreateAssayObject(
+  counts = GetAssayData(pbmc_small[["RNA"]], "counts")
+)
+
+Key(pbmc_small_rna) <- Key(pbmc_small[["RNA"]])
+```
+
+and then ingest this into a new `SOMA` on disk:
+
+```{r, include = FALSE}
+soma <- SOMA$new(uri = file.path(tempdir(), "pbmc_small_rna"))
+soma$from_seurat_assay(pbmc_small_rna)
+soma
+```
+
+This performed the following operations:
+
+- created groups `X`, `obsm`, `varm`, `obsp`, `varp`, and `misc`
+- created array, `obs`, with a single dimension containing all cell names and 0 attributes (because Seurat `Assay` objects do not contain cell-level metadata)
+- created array, `var`, with a single dimension containing all feature names and 0 attributes (because the feature-level metadata was empty)
+- created array `counts` within the `X` group and ingested all data from `pbmc_small_rna`'s `counts` slot
+
+Printing out the `X` group, we can see it contains only a single member, `counts`.
+
+```{r}
+soma$X
+```
+
+*Note: A Seurat `Assay` instantiated with data passed to the `counts` argument will store a reference to the same matrix in both the `counts` and `data` slots (i.e., `GetAssayData(pbmc_small_rna, "counts")` and `GetAssayData(pbmc_small_rna, "data")`). To avoid redundantly storing data on disk, *tiledbsoma* only ingests data from `data` when it is not identical to `counts`.*
+
+# Add new layers for normalized and scaled data
+
+Now let's populate `pbmc_small_rna`'s `counts` slot with normalized counts.
+
+```{r}
+pbmc_small_rna <- SetAssayData(
+  pbmc_small_rna,
+  slot = "data",
+  new.data = GetAssayData(pbmc_small[["RNA"]], "data")
+)
+
+pbmc_small_rna
+```
+
+At this point, `counts` and `data` contain different transformations of the same matrix but only the `counts` data has been written to disk.
+
+We could simply rerun `soma$from_seurat_assay(pbmc_small_rna)` to update the `SCGroup` and ingest the normalized counts matrix into `X/data`, however, this
+would perform another full conversion of the entire `Assay` object. As a result, data from the `counts` slot would be *re-ingested* into `X/counts` and feature-level metadata would be re-ingested into `var`.
+
+To avoid these redudndant ingestions, use the `layers` argument to specify which of the assay slots (`counts`, `data`, or `scale.data`) should be ingested. We also set `var = FALSE` to prevent re-ingestion of the feature-level metadata since it hasn't changed.
+
+```{r}
+soma$from_seurat_assay(pbmc_small_rna, layers = "data", var = FALSE)
+```
+
+Printing out the `X` group again reveals that it now contains 2 members: `counts` and `data`.
+
+```{r}
+soma$X
+```
+
+Let's repeat this process for the scaled/centered version of the data that's stored in the `scale.data` slot.
+
+```{r}
+pbmc_small_rna <- SetAssayData(
+  pbmc_small_rna,
+  slot = "scale.data",
+  new.data = GetAssayData(pbmc_small[["RNA"]], "scale.data")
+)
+
+soma$from_seurat_assay(pbmc_small_rna, layers = "scale.data", var = FALSE)
+soma$X
+```
+
+The `X` group now contains 3 arrays, each of which has only been written to a single time. We can verify this by counting the number of fragments contained within any of individual arrays:
+
+```{r}
+soma$X$members$count$fragment_count()
+```
+
+TileDB creates a new fragment each time a write is performed, so 1 fragment confirms the array has been written to only once.
+
+# Update an existing layer
+
+If the data in your Seurat `Assay` _has_ changed since it was ingested into TileDB, you can follow the same basic process to update the array.
+
+Here, we'll aritifically shift all of the values in the `scale.data` slot by 1 and then re-ingest the updated data into the `scale.data` layer on disk:
+
+```{r}
+pbmc_small_rna <- SetAssayData(
+  pbmc_small_rna,
+  slot = "scale.data",
+  new.data = GetAssayData(pbmc_small[["RNA"]], "scale.data") + 1
+)
+
+soma$from_seurat_assay(pbmc_small_rna, layers = "scale.data", var = FALSE)
+```
+
+Now let's verify that number of fragments in each `X`'s layers:
+
+```{r}
+sapply(
+  names(soma$X$members),
+  function(x) soma$X$members[[x]]$fragment_count()
+)
+```
+
+
+# Session
+
+```{r}
+sessionInfo()
+```
+
+```{r cleanup, include=FALSE}
+tiledb::tiledb_vfs_remove_dir(soma$uri)
+```
