@@ -37,10 +37,7 @@ jobs:
     - name: Checkout TileDB-SOMA
       uses: actions/checkout@v2
 
-    - name: Run libtiledbsoma unit tests
-      shell: bash
-      run: |
-        source ./scripts/test
+    # TODO: add clang-format check
 
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v2
