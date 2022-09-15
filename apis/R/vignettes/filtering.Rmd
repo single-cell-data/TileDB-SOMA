@@ -17,21 +17,21 @@ knitr::opts_chunk$set(
 # Setup
 
 ```{r setup}
-library(tiledbsc)
+library(tiledbsoma)
 library(SeuratObject)
 ```
 
 # Overview
 
-This vignette demonstrates how to leverage tiledbsc's features for subsetting and filtering data stored as a SOMA.
+This vignette demonstrates how to leverage tiledbsoma's features for subsetting and filtering data stored as a SOMA.
 
-As described in `?SOMA`, there are two primary approaches for subsetting: dimension slicing and attribute filtering, both of which are described in this vignette and are performed using the `set_query()` method, provided by all tiledbsc objects.
+As described in `?SOMA`, there are two primary approaches for subsetting: dimension slicing and attribute filtering, both of which are described in this vignette and are performed using the `set_query()` method, provided by all tiledbsoma objects.
 
 ## Dimension slicing
 
 ### Low-level classes
 
-tiledbsc objects within a SOMA are indexed by a set of common cell- or feature-identifiers, which are efficiently sliced by providing a list of dimension identifiers.
+tiledbsoma objects within a SOMA are indexed by a set of common cell- or feature-identifiers, which are efficiently sliced by providing a list of dimension identifiers.
 
 As an example, let's ingest cell-level metadata from the `pbmc_small` dataset into an `AnnotationDataframe` indexed by the cell identifiers.
 

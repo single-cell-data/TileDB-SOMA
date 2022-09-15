@@ -1,4 +1,4 @@
 library(testthat)
-library(tiledbsc)
+library(tiledbsoma)
 
-test_check("tiledbsc")
+test_check("tiledbsoma")

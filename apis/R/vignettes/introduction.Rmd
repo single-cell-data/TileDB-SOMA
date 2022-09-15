@@ -19,7 +19,7 @@ knitr::opts_chunk$set(
 ```{r setup}
 options(max.print = 500)
 
-library(tiledbsc)
+library(tiledbsoma)
 library(fs)
 library(tiledb)
 library(SeuratObject)

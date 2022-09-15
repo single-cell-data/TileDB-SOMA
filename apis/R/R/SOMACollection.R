@@ -351,7 +351,7 @@ SCDataset <- R6::R6Class(
       .Deprecated(
         new = "SOMACollection",
         old = "SCDataset",
-        package = "tiledbsc"
+        package = "tiledbsoma"
       )
       super$initialize(uri, verbose, config, ctx)
     },
@@ -363,7 +363,7 @@ SCDataset <- R6::R6Class(
       .Deprecated(
         new = "soma_uris",
         old = "scgroup_uri",
-        package = "tiledbsc"
+        package = "tiledbsoma"
       )
       self$soma_uris
     }
@@ -375,14 +375,14 @@ SCDataset <- R6::R6Class(
       if (!missing(value)) {
         stop("scgroups is read-only, use 'add_member()' to add a new SOMA")
       }
-      .Deprecated(new = "somas", old = "scgroups", package = "tiledbsc")
+      .Deprecated(new = "somas", old = "scgroups", package = "tiledbsoma")
       self$somas
     },
 
     #' @field misc An alias for `uns`.
     misc = function(value) {
       if (!missing(value)) stop("misc is read-only")
-      .Deprecated(new = "uns", old = "misc", package = "tiledbsc")
+      .Deprecated(new = "uns", old = "misc", package = "tiledbsoma")
       self$uns
     }
   )

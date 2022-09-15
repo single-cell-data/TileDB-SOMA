@@ -14,7 +14,7 @@ columns aligned to either the observations or features of \code{X}
 (\code{\link{AssayMatrix}}).
 }
 \section{Super classes}{
-\code{\link[tiledbsc:TileDBObject]{tiledbsc::TileDBObject}} -> \code{\link[tiledbsc:TileDBArray]{tiledbsc::TileDBArray}} -> \code{\link[tiledbsc:AnnotationArray]{tiledbsc::AnnotationArray}} -> \code{AnnotationPairwiseMatrix}
+\code{\link[tiledbsoma:TileDBObject]{tiledbsoma::TileDBObject}} -> \code{\link[tiledbsoma:TileDBArray]{tiledbsoma::TileDBArray}} -> \code{\link[tiledbsoma:AnnotationArray]{tiledbsoma::AnnotationArray}} -> \code{AnnotationPairwiseMatrix}
 }
 \section{Methods}{
 \subsection{Public methods}{
@@ -30,22 +30,22 @@ columns aligned to either the observations or features of \code{X}
 \if{html}{\out{
 <details><summary>Inherited methods</summary>
 <ul>
-<li><span class="pkg-link" data-pkg="tiledbsc" data-topic="TileDBObject" data-id="class"><a href='../../tiledbsc/html/TileDBObject.html#method-TileDBObject-class'><code>tiledbsc::TileDBObject$class()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsc" data-topic="TileDBObject" data-id="exists"><a href='../../tiledbsc/html/TileDBObject.html#method-TileDBObject-exists'><code>tiledbsc::TileDBObject$exists()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsc" data-topic="TileDBArray" data-id="add_metadata"><a href='../../tiledbsc/html/TileDBArray.html#method-TileDBArray-add_metadata'><code>tiledbsc::TileDBArray$add_metadata()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsc" data-topic="TileDBArray" data-id="array_exists"><a href='../../tiledbsc/html/TileDBArray.html#method-TileDBArray-array_exists'><code>tiledbsc::TileDBArray$array_exists()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsc" data-topic="TileDBArray" data-id="attributes"><a href='../../tiledbsc/html/TileDBArray.html#method-TileDBArray-attributes'><code>tiledbsc::TileDBArray$attributes()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsc" data-topic="TileDBArray" data-id="attrnames"><a href='../../tiledbsc/html/TileDBArray.html#method-TileDBArray-attrnames'><code>tiledbsc::TileDBArray$attrnames()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsc" data-topic="TileDBArray" data-id="dimensions"><a href='../../tiledbsc/html/TileDBArray.html#method-TileDBArray-dimensions'><code>tiledbsc::TileDBArray$dimensions()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsc" data-topic="TileDBArray" data-id="dimnames"><a href='../../tiledbsc/html/TileDBArray.html#method-TileDBArray-dimnames'><code>tiledbsc::TileDBArray$dimnames()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsc" data-topic="TileDBArray" data-id="fragment_count"><a href='../../tiledbsc/html/TileDBArray.html#method-TileDBArray-fragment_count'><code>tiledbsc::TileDBArray$fragment_count()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsc" data-topic="TileDBArray" data-id="get_metadata"><a href='../../tiledbsc/html/TileDBArray.html#method-TileDBArray-get_metadata'><code>tiledbsc::TileDBArray$get_metadata()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsc" data-topic="TileDBArray" data-id="initialize"><a href='../../tiledbsc/html/TileDBArray.html#method-TileDBArray-initialize'><code>tiledbsc::TileDBArray$initialize()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsc" data-topic="TileDBArray" data-id="print"><a href='../../tiledbsc/html/TileDBArray.html#method-TileDBArray-print'><code>tiledbsc::TileDBArray$print()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsc" data-topic="TileDBArray" data-id="reset_query"><a href='../../tiledbsc/html/TileDBArray.html#method-TileDBArray-reset_query'><code>tiledbsc::TileDBArray$reset_query()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsc" data-topic="TileDBArray" data-id="schema"><a href='../../tiledbsc/html/TileDBArray.html#method-TileDBArray-schema'><code>tiledbsc::TileDBArray$schema()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsc" data-topic="TileDBArray" data-id="set_query"><a href='../../tiledbsc/html/TileDBArray.html#method-TileDBArray-set_query'><code>tiledbsc::TileDBArray$set_query()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsc" data-topic="TileDBArray" data-id="tiledb_array"><a href='../../tiledbsc/html/TileDBArray.html#method-TileDBArray-tiledb_array'><code>tiledbsc::TileDBArray$tiledb_array()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBObject" data-id="class"><a href='../../tiledbsoma/html/TileDBObject.html#method-TileDBObject-class'><code>tiledbsoma::TileDBObject$class()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBObject" data-id="exists"><a href='../../tiledbsoma/html/TileDBObject.html#method-TileDBObject-exists'><code>tiledbsoma::TileDBObject$exists()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="add_metadata"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-add_metadata'><code>tiledbsoma::TileDBArray$add_metadata()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="array_exists"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-array_exists'><code>tiledbsoma::TileDBArray$array_exists()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="attributes"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-attributes'><code>tiledbsoma::TileDBArray$attributes()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="attrnames"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-attrnames'><code>tiledbsoma::TileDBArray$attrnames()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="dimensions"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-dimensions'><code>tiledbsoma::TileDBArray$dimensions()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="dimnames"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-dimnames'><code>tiledbsoma::TileDBArray$dimnames()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="fragment_count"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-fragment_count'><code>tiledbsoma::TileDBArray$fragment_count()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="get_metadata"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-get_metadata'><code>tiledbsoma::TileDBArray$get_metadata()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="initialize"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-initialize'><code>tiledbsoma::TileDBArray$initialize()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="print"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-print'><code>tiledbsoma::TileDBArray$print()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="reset_query"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-reset_query'><code>tiledbsoma::TileDBArray$reset_query()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="schema"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-schema'><code>tiledbsoma::TileDBArray$schema()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="set_query"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-set_query'><code>tiledbsoma::TileDBArray$set_query()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="tiledb_array"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-tiledb_array'><code>tiledbsoma::TileDBArray$tiledb_array()</code></a></span></li>
 </ul>
 </details>
 }}

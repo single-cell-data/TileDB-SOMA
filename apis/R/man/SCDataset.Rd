@@ -8,7 +8,7 @@ Class for representing the now-deprecated SCDataset object, which has been
 renamed to \code{\link{SOMACollection}}.
 }
 \section{Super classes}{
-\code{\link[tiledbsc:TileDBObject]{tiledbsc::TileDBObject}} -> \code{\link[tiledbsc:TileDBGroup]{tiledbsc::TileDBGroup}} -> \code{\link[tiledbsc:SOMACollection]{tiledbsc::SOMACollection}} -> \code{SCDataset}
+\code{\link[tiledbsoma:TileDBObject]{tiledbsoma::TileDBObject}} -> \code{\link[tiledbsoma:TileDBGroup]{tiledbsoma::TileDBGroup}} -> \code{\link[tiledbsoma:SOMACollection]{tiledbsoma::SOMACollection}} -> \code{SCDataset}
 }
 \section{Active bindings}{
 \if{html}{\out{<div class="r6-active-bindings">}}
@@ -30,27 +30,27 @@ renamed to \code{\link{SOMACollection}}.
 \if{html}{\out{
 <details><summary>Inherited methods</summary>
 <ul>
-<li><span class="pkg-link" data-pkg="tiledbsc" data-topic="TileDBObject" data-id="class"><a href='../../tiledbsc/html/TileDBObject.html#method-TileDBObject-class'><code>tiledbsc::TileDBObject$class()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsc" data-topic="TileDBObject" data-id="exists"><a href='../../tiledbsc/html/TileDBObject.html#method-TileDBObject-exists'><code>tiledbsc::TileDBObject$exists()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsc" data-topic="TileDBGroup" data-id="add_member"><a href='../../tiledbsc/html/TileDBGroup.html#method-TileDBGroup-add_member'><code>tiledbsc::TileDBGroup$add_member()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsc" data-topic="TileDBGroup" data-id="add_metadata"><a href='../../tiledbsc/html/TileDBGroup.html#method-TileDBGroup-add_metadata'><code>tiledbsc::TileDBGroup$add_metadata()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsc" data-topic="TileDBGroup" data-id="count_members"><a href='../../tiledbsc/html/TileDBGroup.html#method-TileDBGroup-count_members'><code>tiledbsc::TileDBGroup$count_members()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsc" data-topic="TileDBGroup" data-id="get_member"><a href='../../tiledbsc/html/TileDBGroup.html#method-TileDBGroup-get_member'><code>tiledbsc::TileDBGroup$get_member()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsc" data-topic="TileDBGroup" data-id="get_members"><a href='../../tiledbsc/html/TileDBGroup.html#method-TileDBGroup-get_members'><code>tiledbsc::TileDBGroup$get_members()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsc" data-topic="TileDBGroup" data-id="get_metadata"><a href='../../tiledbsc/html/TileDBGroup.html#method-TileDBGroup-get_metadata'><code>tiledbsc::TileDBGroup$get_metadata()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsc" data-topic="TileDBGroup" data-id="group_exists"><a href='../../tiledbsc/html/TileDBGroup.html#method-TileDBGroup-group_exists'><code>tiledbsc::TileDBGroup$group_exists()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsc" data-topic="TileDBGroup" data-id="list_member_uris"><a href='../../tiledbsc/html/TileDBGroup.html#method-TileDBGroup-list_member_uris'><code>tiledbsc::TileDBGroup$list_member_uris()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsc" data-topic="TileDBGroup" data-id="list_members"><a href='../../tiledbsc/html/TileDBGroup.html#method-TileDBGroup-list_members'><code>tiledbsc::TileDBGroup$list_members()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsc" data-topic="TileDBGroup" data-id="list_object_uris"><a href='../../tiledbsc/html/TileDBGroup.html#method-TileDBGroup-list_object_uris'><code>tiledbsc::TileDBGroup$list_object_uris()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsc" data-topic="TileDBGroup" data-id="list_objects"><a href='../../tiledbsc/html/TileDBGroup.html#method-TileDBGroup-list_objects'><code>tiledbsc::TileDBGroup$list_objects()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsc" data-topic="TileDBGroup" data-id="print"><a href='../../tiledbsc/html/TileDBGroup.html#method-TileDBGroup-print'><code>tiledbsc::TileDBGroup$print()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsc" data-topic="TileDBGroup" data-id="remove_member"><a href='../../tiledbsc/html/TileDBGroup.html#method-TileDBGroup-remove_member'><code>tiledbsc::TileDBGroup$remove_member()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsc" data-topic="TileDBGroup" data-id="tiledb_group"><a href='../../tiledbsc/html/TileDBGroup.html#method-TileDBGroup-tiledb_group'><code>tiledbsc::TileDBGroup$tiledb_group()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsc" data-topic="SOMACollection" data-id="from_seurat"><a href='../../tiledbsc/html/SOMACollection.html#method-SOMACollection-from_seurat'><code>tiledbsc::SOMACollection$from_seurat()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsc" data-topic="SOMACollection" data-id="reset_query"><a href='../../tiledbsc/html/SOMACollection.html#method-SOMACollection-reset_query'><code>tiledbsc::SOMACollection$reset_query()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsc" data-topic="SOMACollection" data-id="set_query"><a href='../../tiledbsc/html/SOMACollection.html#method-SOMACollection-set_query'><code>tiledbsc::SOMACollection$set_query()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsc" data-topic="SOMACollection" data-id="soma_uris"><a href='../../tiledbsc/html/SOMACollection.html#method-SOMACollection-soma_uris'><code>tiledbsc::SOMACollection$soma_uris()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsc" data-topic="SOMACollection" data-id="to_seurat"><a href='../../tiledbsc/html/SOMACollection.html#method-SOMACollection-to_seurat'><code>tiledbsc::SOMACollection$to_seurat()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBObject" data-id="class"><a href='../../tiledbsoma/html/TileDBObject.html#method-TileDBObject-class'><code>tiledbsoma::TileDBObject$class()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBObject" data-id="exists"><a href='../../tiledbsoma/html/TileDBObject.html#method-TileDBObject-exists'><code>tiledbsoma::TileDBObject$exists()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBGroup" data-id="add_member"><a href='../../tiledbsoma/html/TileDBGroup.html#method-TileDBGroup-add_member'><code>tiledbsoma::TileDBGroup$add_member()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBGroup" data-id="add_metadata"><a href='../../tiledbsoma/html/TileDBGroup.html#method-TileDBGroup-add_metadata'><code>tiledbsoma::TileDBGroup$add_metadata()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBGroup" data-id="count_members"><a href='../../tiledbsoma/html/TileDBGroup.html#method-TileDBGroup-count_members'><code>tiledbsoma::TileDBGroup$count_members()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBGroup" data-id="get_member"><a href='../../tiledbsoma/html/TileDBGroup.html#method-TileDBGroup-get_member'><code>tiledbsoma::TileDBGroup$get_member()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBGroup" data-id="get_members"><a href='../../tiledbsoma/html/TileDBGroup.html#method-TileDBGroup-get_members'><code>tiledbsoma::TileDBGroup$get_members()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBGroup" data-id="get_metadata"><a href='../../tiledbsoma/html/TileDBGroup.html#method-TileDBGroup-get_metadata'><code>tiledbsoma::TileDBGroup$get_metadata()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBGroup" data-id="group_exists"><a href='../../tiledbsoma/html/TileDBGroup.html#method-TileDBGroup-group_exists'><code>tiledbsoma::TileDBGroup$group_exists()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBGroup" data-id="list_member_uris"><a href='../../tiledbsoma/html/TileDBGroup.html#method-TileDBGroup-list_member_uris'><code>tiledbsoma::TileDBGroup$list_member_uris()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBGroup" data-id="list_members"><a href='../../tiledbsoma/html/TileDBGroup.html#method-TileDBGroup-list_members'><code>tiledbsoma::TileDBGroup$list_members()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBGroup" data-id="list_object_uris"><a href='../../tiledbsoma/html/TileDBGroup.html#method-TileDBGroup-list_object_uris'><code>tiledbsoma::TileDBGroup$list_object_uris()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBGroup" data-id="list_objects"><a href='../../tiledbsoma/html/TileDBGroup.html#method-TileDBGroup-list_objects'><code>tiledbsoma::TileDBGroup$list_objects()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBGroup" data-id="print"><a href='../../tiledbsoma/html/TileDBGroup.html#method-TileDBGroup-print'><code>tiledbsoma::TileDBGroup$print()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBGroup" data-id="remove_member"><a href='../../tiledbsoma/html/TileDBGroup.html#method-TileDBGroup-remove_member'><code>tiledbsoma::TileDBGroup$remove_member()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBGroup" data-id="tiledb_group"><a href='../../tiledbsoma/html/TileDBGroup.html#method-TileDBGroup-tiledb_group'><code>tiledbsoma::TileDBGroup$tiledb_group()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMACollection" data-id="from_seurat"><a href='../../tiledbsoma/html/SOMACollection.html#method-SOMACollection-from_seurat'><code>tiledbsoma::SOMACollection$from_seurat()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMACollection" data-id="reset_query"><a href='../../tiledbsoma/html/SOMACollection.html#method-SOMACollection-reset_query'><code>tiledbsoma::SOMACollection$reset_query()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMACollection" data-id="set_query"><a href='../../tiledbsoma/html/SOMACollection.html#method-SOMACollection-set_query'><code>tiledbsoma::SOMACollection$set_query()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMACollection" data-id="soma_uris"><a href='../../tiledbsoma/html/SOMACollection.html#method-SOMACollection-soma_uris'><code>tiledbsoma::SOMACollection$soma_uris()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMACollection" data-id="to_seurat"><a href='../../tiledbsoma/html/SOMACollection.html#method-SOMACollection-to_seurat'><code>tiledbsoma::SOMACollection$to_seurat()</code></a></span></li>
 </ul>
 </details>
 }}

@@ -1,8 +1,8 @@
 # Create an SCDataset containing pbmc_small using the current version of
-# tiledbsc for backwards compatibility testing
+# tiledbsoma for backwards compatibility testing
 
 library(tiledb)
-library(tiledbsc)
+library(tiledbsoma)
 library(SeuratObject)
 data("pbmc_small", package = "SeuratObject")
 
@@ -11,7 +11,7 @@ data_dir <- "tests/testthat/test-data"
 # version specific dataset name
 dataset_name <- paste(
   "scdataset-pbmc-small",
-  gsub("\\.", "-", packageVersion("tiledbsc")),
+  gsub("\\.", "-", packageVersion("tiledbsoma")),
   sep = "_"
 )
 

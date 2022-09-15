@@ -1,4 +1,4 @@
-library(tiledbsc)
+library(tiledbsoma)
 library(lobstr)
 library(tiledb)
 library(SeuratObject)
@@ -25,9 +25,9 @@ install_missing <- TRUE
 
 # create the output file
 output_metadata <- sprintf(
-  "%s_tiledbsc%s_tiledb%s",
+  "%s_tiledbsoma%s_tiledb%s",
   format(Sys.time(),"%Y%m%d-%H%M"),
-  packageVersion("tiledbsc"),
+  packageVersion("tiledbsoma"),
   packageVersion("tiledb")
 )
 

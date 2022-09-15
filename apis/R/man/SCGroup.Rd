@@ -8,7 +8,7 @@ Class for representing the now-deprecated SCGroup object, which has been
 renamed to \code{\link{SOMA}}.
 }
 \section{Super classes}{
-\code{\link[tiledbsc:TileDBObject]{tiledbsc::TileDBObject}} -> \code{\link[tiledbsc:TileDBGroup]{tiledbsc::TileDBGroup}} -> \code{\link[tiledbsc:SOMA]{tiledbsc::SOMA}} -> \code{SCGroup}
+\code{\link[tiledbsoma:TileDBObject]{tiledbsoma::TileDBObject}} -> \code{\link[tiledbsoma:TileDBGroup]{tiledbsoma::TileDBGroup}} -> \code{\link[tiledbsoma:SOMA]{tiledbsoma::SOMA}} -> \code{SCGroup}
 }
 \section{Active bindings}{
 \if{html}{\out{<div class="r6-active-bindings">}}
@@ -27,34 +27,34 @@ renamed to \code{\link{SOMA}}.
 \if{html}{\out{
 <details><summary>Inherited methods</summary>
 <ul>
-<li><span class="pkg-link" data-pkg="tiledbsc" data-topic="TileDBObject" data-id="class"><a href='../../tiledbsc/html/TileDBObject.html#method-TileDBObject-class'><code>tiledbsc::TileDBObject$class()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsc" data-topic="TileDBObject" data-id="exists"><a href='../../tiledbsc/html/TileDBObject.html#method-TileDBObject-exists'><code>tiledbsc::TileDBObject$exists()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsc" data-topic="TileDBGroup" data-id="add_member"><a href='../../tiledbsc/html/TileDBGroup.html#method-TileDBGroup-add_member'><code>tiledbsc::TileDBGroup$add_member()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsc" data-topic="TileDBGroup" data-id="add_metadata"><a href='../../tiledbsc/html/TileDBGroup.html#method-TileDBGroup-add_metadata'><code>tiledbsc::TileDBGroup$add_metadata()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsc" data-topic="TileDBGroup" data-id="count_members"><a href='../../tiledbsc/html/TileDBGroup.html#method-TileDBGroup-count_members'><code>tiledbsc::TileDBGroup$count_members()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsc" data-topic="TileDBGroup" data-id="get_member"><a href='../../tiledbsc/html/TileDBGroup.html#method-TileDBGroup-get_member'><code>tiledbsc::TileDBGroup$get_member()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsc" data-topic="TileDBGroup" data-id="get_members"><a href='../../tiledbsc/html/TileDBGroup.html#method-TileDBGroup-get_members'><code>tiledbsc::TileDBGroup$get_members()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsc" data-topic="TileDBGroup" data-id="get_metadata"><a href='../../tiledbsc/html/TileDBGroup.html#method-TileDBGroup-get_metadata'><code>tiledbsc::TileDBGroup$get_metadata()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsc" data-topic="TileDBGroup" data-id="group_exists"><a href='../../tiledbsc/html/TileDBGroup.html#method-TileDBGroup-group_exists'><code>tiledbsc::TileDBGroup$group_exists()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsc" data-topic="TileDBGroup" data-id="list_member_uris"><a href='../../tiledbsc/html/TileDBGroup.html#method-TileDBGroup-list_member_uris'><code>tiledbsc::TileDBGroup$list_member_uris()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsc" data-topic="TileDBGroup" data-id="list_members"><a href='../../tiledbsc/html/TileDBGroup.html#method-TileDBGroup-list_members'><code>tiledbsc::TileDBGroup$list_members()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsc" data-topic="TileDBGroup" data-id="list_object_uris"><a href='../../tiledbsc/html/TileDBGroup.html#method-TileDBGroup-list_object_uris'><code>tiledbsc::TileDBGroup$list_object_uris()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsc" data-topic="TileDBGroup" data-id="list_objects"><a href='../../tiledbsc/html/TileDBGroup.html#method-TileDBGroup-list_objects'><code>tiledbsc::TileDBGroup$list_objects()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsc" data-topic="TileDBGroup" data-id="print"><a href='../../tiledbsc/html/TileDBGroup.html#method-TileDBGroup-print'><code>tiledbsc::TileDBGroup$print()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsc" data-topic="TileDBGroup" data-id="remove_member"><a href='../../tiledbsc/html/TileDBGroup.html#method-TileDBGroup-remove_member'><code>tiledbsc::TileDBGroup$remove_member()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsc" data-topic="TileDBGroup" data-id="tiledb_group"><a href='../../tiledbsc/html/TileDBGroup.html#method-TileDBGroup-tiledb_group'><code>tiledbsc::TileDBGroup$tiledb_group()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsc" data-topic="SOMA" data-id="add_seurat_dimreduction"><a href='../../tiledbsc/html/SOMA.html#method-SOMA-add_seurat_dimreduction'><code>tiledbsc::SOMA$add_seurat_dimreduction()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsc" data-topic="SOMA" data-id="from_seurat_assay"><a href='../../tiledbsc/html/SOMA.html#method-SOMA-from_seurat_assay'><code>tiledbsc::SOMA$from_seurat_assay()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsc" data-topic="SOMA" data-id="get_annotation_matrix_arrays"><a href='../../tiledbsc/html/SOMA.html#method-SOMA-get_annotation_matrix_arrays'><code>tiledbsc::SOMA$get_annotation_matrix_arrays()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsc" data-topic="SOMA" data-id="get_annotation_pairwise_matrix_arrays"><a href='../../tiledbsc/html/SOMA.html#method-SOMA-get_annotation_pairwise_matrix_arrays'><code>tiledbsc::SOMA$get_annotation_pairwise_matrix_arrays()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsc" data-topic="SOMA" data-id="get_seurat_dimreduction"><a href='../../tiledbsc/html/SOMA.html#method-SOMA-get_seurat_dimreduction'><code>tiledbsc::SOMA$get_seurat_dimreduction()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsc" data-topic="SOMA" data-id="get_seurat_dimreductions_list"><a href='../../tiledbsc/html/SOMA.html#method-SOMA-get_seurat_dimreductions_list'><code>tiledbsc::SOMA$get_seurat_dimreductions_list()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsc" data-topic="SOMA" data-id="reset_query"><a href='../../tiledbsc/html/SOMA.html#method-SOMA-reset_query'><code>tiledbsc::SOMA$reset_query()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsc" data-topic="SOMA" data-id="set_query"><a href='../../tiledbsc/html/SOMA.html#method-SOMA-set_query'><code>tiledbsc::SOMA$set_query()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsc" data-topic="SOMA" data-id="to_seurat_assay"><a href='../../tiledbsc/html/SOMA.html#method-SOMA-to_seurat_assay'><code>tiledbsc::SOMA$to_seurat_assay()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsc" data-topic="SOMA" data-id="to_seurat_object"><a href='../../tiledbsc/html/SOMA.html#method-SOMA-to_seurat_object'><code>tiledbsc::SOMA$to_seurat_object()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsc" data-topic="SOMA" data-id="to_single_cell_experiment"><a href='../../tiledbsc/html/SOMA.html#method-SOMA-to_single_cell_experiment'><code>tiledbsc::SOMA$to_single_cell_experiment()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsc" data-topic="SOMA" data-id="to_summarized_experiment"><a href='../../tiledbsc/html/SOMA.html#method-SOMA-to_summarized_experiment'><code>tiledbsc::SOMA$to_summarized_experiment()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBObject" data-id="class"><a href='../../tiledbsoma/html/TileDBObject.html#method-TileDBObject-class'><code>tiledbsoma::TileDBObject$class()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBObject" data-id="exists"><a href='../../tiledbsoma/html/TileDBObject.html#method-TileDBObject-exists'><code>tiledbsoma::TileDBObject$exists()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBGroup" data-id="add_member"><a href='../../tiledbsoma/html/TileDBGroup.html#method-TileDBGroup-add_member'><code>tiledbsoma::TileDBGroup$add_member()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBGroup" data-id="add_metadata"><a href='../../tiledbsoma/html/TileDBGroup.html#method-TileDBGroup-add_metadata'><code>tiledbsoma::TileDBGroup$add_metadata()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBGroup" data-id="count_members"><a href='../../tiledbsoma/html/TileDBGroup.html#method-TileDBGroup-count_members'><code>tiledbsoma::TileDBGroup$count_members()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBGroup" data-id="get_member"><a href='../../tiledbsoma/html/TileDBGroup.html#method-TileDBGroup-get_member'><code>tiledbsoma::TileDBGroup$get_member()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBGroup" data-id="get_members"><a href='../../tiledbsoma/html/TileDBGroup.html#method-TileDBGroup-get_members'><code>tiledbsoma::TileDBGroup$get_members()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBGroup" data-id="get_metadata"><a href='../../tiledbsoma/html/TileDBGroup.html#method-TileDBGroup-get_metadata'><code>tiledbsoma::TileDBGroup$get_metadata()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBGroup" data-id="group_exists"><a href='../../tiledbsoma/html/TileDBGroup.html#method-TileDBGroup-group_exists'><code>tiledbsoma::TileDBGroup$group_exists()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBGroup" data-id="list_member_uris"><a href='../../tiledbsoma/html/TileDBGroup.html#method-TileDBGroup-list_member_uris'><code>tiledbsoma::TileDBGroup$list_member_uris()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBGroup" data-id="list_members"><a href='../../tiledbsoma/html/TileDBGroup.html#method-TileDBGroup-list_members'><code>tiledbsoma::TileDBGroup$list_members()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBGroup" data-id="list_object_uris"><a href='../../tiledbsoma/html/TileDBGroup.html#method-TileDBGroup-list_object_uris'><code>tiledbsoma::TileDBGroup$list_object_uris()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBGroup" data-id="list_objects"><a href='../../tiledbsoma/html/TileDBGroup.html#method-TileDBGroup-list_objects'><code>tiledbsoma::TileDBGroup$list_objects()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBGroup" data-id="print"><a href='../../tiledbsoma/html/TileDBGroup.html#method-TileDBGroup-print'><code>tiledbsoma::TileDBGroup$print()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBGroup" data-id="remove_member"><a href='../../tiledbsoma/html/TileDBGroup.html#method-TileDBGroup-remove_member'><code>tiledbsoma::TileDBGroup$remove_member()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBGroup" data-id="tiledb_group"><a href='../../tiledbsoma/html/TileDBGroup.html#method-TileDBGroup-tiledb_group'><code>tiledbsoma::TileDBGroup$tiledb_group()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMA" data-id="add_seurat_dimreduction"><a href='../../tiledbsoma/html/SOMA.html#method-SOMA-add_seurat_dimreduction'><code>tiledbsoma::SOMA$add_seurat_dimreduction()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMA" data-id="from_seurat_assay"><a href='../../tiledbsoma/html/SOMA.html#method-SOMA-from_seurat_assay'><code>tiledbsoma::SOMA$from_seurat_assay()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMA" data-id="get_annotation_matrix_arrays"><a href='../../tiledbsoma/html/SOMA.html#method-SOMA-get_annotation_matrix_arrays'><code>tiledbsoma::SOMA$get_annotation_matrix_arrays()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMA" data-id="get_annotation_pairwise_matrix_arrays"><a href='../../tiledbsoma/html/SOMA.html#method-SOMA-get_annotation_pairwise_matrix_arrays'><code>tiledbsoma::SOMA$get_annotation_pairwise_matrix_arrays()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMA" data-id="get_seurat_dimreduction"><a href='../../tiledbsoma/html/SOMA.html#method-SOMA-get_seurat_dimreduction'><code>tiledbsoma::SOMA$get_seurat_dimreduction()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMA" data-id="get_seurat_dimreductions_list"><a href='../../tiledbsoma/html/SOMA.html#method-SOMA-get_seurat_dimreductions_list'><code>tiledbsoma::SOMA$get_seurat_dimreductions_list()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMA" data-id="reset_query"><a href='../../tiledbsoma/html/SOMA.html#method-SOMA-reset_query'><code>tiledbsoma::SOMA$reset_query()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMA" data-id="set_query"><a href='../../tiledbsoma/html/SOMA.html#method-SOMA-set_query'><code>tiledbsoma::SOMA$set_query()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMA" data-id="to_seurat_assay"><a href='../../tiledbsoma/html/SOMA.html#method-SOMA-to_seurat_assay'><code>tiledbsoma::SOMA$to_seurat_assay()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMA" data-id="to_seurat_object"><a href='../../tiledbsoma/html/SOMA.html#method-SOMA-to_seurat_object'><code>tiledbsoma::SOMA$to_seurat_object()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMA" data-id="to_single_cell_experiment"><a href='../../tiledbsoma/html/SOMA.html#method-SOMA-to_single_cell_experiment'><code>tiledbsoma::SOMA$to_single_cell_experiment()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMA" data-id="to_summarized_experiment"><a href='../../tiledbsoma/html/SOMA.html#method-SOMA-to_summarized_experiment'><code>tiledbsoma::SOMA$to_summarized_experiment()</code></a></span></li>
 </ul>
 </details>
 }}

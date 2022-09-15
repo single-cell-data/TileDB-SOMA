@@ -758,7 +758,7 @@ SOMA <- R6::R6Class(
     instantiate_members = function() {
       members <- self$list_members()
 
-      # Currently tiledbsc-py creates a `raw` group when converting anndata
+      # Currently tiledbsoma-py creates a `raw` group when converting anndata
       # objects where `.raw` is populated. However, Seurat/BioC objects do not
       # have an obvious place to store this data, so we ignore it for now.
       if ("raw" %in% members$NAME) {
@@ -885,7 +885,7 @@ SCGroup <- R6::R6Class(
       .Deprecated(
         new = "SOMA",
         old = "SCGroup",
-        package = "tiledbsc"
+        package = "tiledbsoma"
       )
       super$initialize(uri, verbose, config, ctx)
     }
@@ -895,7 +895,7 @@ SCGroup <- R6::R6Class(
     #' @field misc An alias for `uns`.
     misc = function(value) {
       if (!missing(value)) stop("misc is read-only")
-      .Deprecated(new = "uns", old = "misc", package = "tiledbsc")
+      .Deprecated(new = "uns", old = "misc", package = "tiledbsoma")
       self$uns
     }
   )

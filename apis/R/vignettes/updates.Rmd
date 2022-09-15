@@ -19,13 +19,13 @@ knitr::opts_chunk$set(
 # Setup
 
 ```{r setup}
-library(tiledbsc)
+library(tiledbsoma)
 library(SeuratObject)
 ```
 
 # Overview
 
-While *tiledbsc* is currently focused on facilitating the storage and retrieval of complete Seurat/Bioconductor datasets, it is possible to selectively update specific components of an existing `SCGroup`.
+While *tiledbsoma* is currently focused on facilitating the storage and retrieval of complete Seurat/Bioconductor datasets, it is possible to selectively update specific components of an existing `SCGroup`.
 
 # Create the initial dataset
 
@@ -68,7 +68,7 @@ Printing out the `X` group, we can see it contains only a single member, `counts
 soma$X
 ```
 
-*Note: A Seurat `Assay` instantiated with data passed to the `counts` argument will store a reference to the same matrix in both the `counts` and `data` slots (i.e., `GetAssayData(pbmc_small_rna, "counts")` and `GetAssayData(pbmc_small_rna, "data")`). To avoid redundantly storing data on disk, *tiledbsc* only ingests data from `data` when it is not identical to `counts`.*
+*Note: A Seurat `Assay` instantiated with data passed to the `counts` argument will store a reference to the same matrix in both the `counts` and `data` slots (i.e., `GetAssayData(pbmc_small_rna, "counts")` and `GetAssayData(pbmc_small_rna, "data")`). To avoid redundantly storing data on disk, *tiledbsoma* only ingests data from `data` when it is not identical to `counts`.*
 
 # Add new layers for normalized and scaled data
 

@@ -1,4 +1,4 @@
-Package: tiledbsc
+Package: tiledbsoma
 Type: Package
 Title: TileDB Single Cell SOMA API
 Description: Interface for working with 'TileDB'-based Stack of Matrices,
@@ -26,9 +26,9 @@ Authors@R: c(
     person(given = "TileDB, Inc.",
            role = c("cph", "fnd"))
     )
-URL: https://github.com/TileDB-Inc/tiledbsc,
+URL: https://github.com/TileDB-Inc/tiledbsoma,
     https://github.com/single-cell-data/SOMA
-BugReports: https://github.com/TileDB-Inc/tiledbsc/issues
+BugReports: https://github.com/TileDB-Inc/tiledbsoma/issues
 License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
