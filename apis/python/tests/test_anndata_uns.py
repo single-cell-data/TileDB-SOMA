@@ -6,8 +6,8 @@ import pandas as pd
 import tiledb
 from anndata import AnnData
 
-import tiledbsc.io as io
-from tiledbsc import SOMA
+import tiledbsoma.io as io
+from tiledbsoma import SOMA
 
 """
 Verify that the AnnData.uns persists correctly. Currently focused on a simple

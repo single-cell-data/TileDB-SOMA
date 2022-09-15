@@ -2,8 +2,8 @@ import anndata as ad
 import numpy as np
 import pandas as pd
 
-import tiledbsc.io as io
-from tiledbsc import SOMA
+import tiledbsoma.io as io
+from tiledbsoma import SOMA
 
 
 def test_readback(tmp_path):

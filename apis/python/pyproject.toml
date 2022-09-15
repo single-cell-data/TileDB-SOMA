@@ -13,4 +13,4 @@ local_scheme = "dirty-tag"
 # Relative path to cwd, used for finding the SCM root
 root = "../.."
 # Path relative to root to a file that gets replaced with a file containing the current version
-write_to = "apis/python/src/tiledbsc/_version.py"
+write_to = "apis/python/src/tiledbsoma/_version.py"

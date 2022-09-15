@@ -6,8 +6,8 @@ import numpy as np
 import pandas as pd
 import scipy.sparse
 
-import tiledbsc
-import tiledbsc.io
+import tiledbsoma
+import tiledbsoma.io
 
 HERE = Path(__file__).parent
 
@@ -17,7 +17,7 @@ def test_soco_slice_query(tmp_path):
 
     soco_dir = tmp_path.as_posix()
 
-    soco = tiledbsc.SOMACollection(soco_dir)
+    soco = tiledbsoma.SOMACollection(soco_dir)
     soco.create_unless_exists()
 
     for name, h5ad_path in [
@@ -27,8 +27,8 @@ def test_soco_slice_query(tmp_path):
         ("subset-soma-04", HERE.parent / "anndata/subset-soma-04.h5ad"),
     ]:
         soma_path = os.path.join(soco_dir, name)
-        soma = tiledbsc.SOMA(soma_path)
-        tiledbsc.io.from_h5ad(soma, h5ad_path)
+        soma = tiledbsoma.SOMA(soma_path)
+        tiledbsoma.io.from_h5ad(soma, h5ad_path)
         soco.add(soma)
 
     # Do the slice query
@@ -60,7 +60,7 @@ def test_soco_slice_query(tmp_path):
             if soma_slice is not None:
                 soma_slices.append(soma_slice)
 
-        result_soma_slice = tiledbsc.SOMASlice.concat(soma_slices)
+        result_soma_slice = tiledbsoma.SOMASlice.concat(soma_slices)
         assert result_soma_slice is not None
 
         ann = result_soma_slice.to_anndata()
@@ -134,29 +134,31 @@ def test_soco_slice_query_nans(tmp_path):
 
     # ----------------------------------------------------------------
     # Write them into SOMAs
-    soma1 = tiledbsc.SOMA((tmp_path / "soma1").as_posix())
-    soma2 = tiledbsc.SOMA((tmp_path / "soma2").as_posix())
+    soma1 = tiledbsoma.SOMA((tmp_path / "soma1").as_posix())
+    soma2 = tiledbsoma.SOMA((tmp_path / "soma2").as_posix())
 
-    tiledbsc.io.from_anndata(soma1, adata1)
-    tiledbsc.io.from_anndata(soma2, adata2)
+    tiledbsoma.io.from_anndata(soma1, adata1)
+    tiledbsoma.io.from_anndata(soma2, adata2)
 
     # ----------------------------------------------------------------
     # Slice query
     somas = [soma1, soma2]
-    (obs_attrs, var_attrs) = tiledbsc.SOMA.find_common_obs_and_var_keys(somas)
-    soma_slices = tiledbsc.SOMA.queries(somas, obs_attrs=obs_attrs, var_attrs=var_attrs)
+    (obs_attrs, var_attrs) = tiledbsoma.SOMA.find_common_obs_and_var_keys(somas)
+    soma_slices = tiledbsoma.SOMA.queries(
+        somas, obs_attrs=obs_attrs, var_attrs=var_attrs
+    )
 
     assert len(soma_slices) == 2
 
-    result_soma_slice = tiledbsc.SOMASlice.concat(soma_slices)
+    result_soma_slice = tiledbsoma.SOMASlice.concat(soma_slices)
     assert result_soma_slice is not None
 
     adatac = result_soma_slice.to_anndata()
 
     # ----------------------------------------------------------------
     # Store the slice to SOMA
-    somac = tiledbsc.SOMA((tmp_path / "somac").as_posix())
-    tiledbsc.io.from_anndata(somac, adatac)
+    somac = tiledbsoma.SOMA((tmp_path / "somac").as_posix())
+    tiledbsoma.io.from_anndata(somac, adatac)
 
     # ----------------------------------------------------------------
     # The primary success of this test is that it runs to the end without an exception.

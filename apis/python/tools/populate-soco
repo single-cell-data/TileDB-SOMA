@@ -11,9 +11,9 @@ import logging
 import os
 import sys
 
-import tiledbsc
+import tiledbsoma
 
-logger = logging.getLogger("tiledbsc")
+logger = logging.getLogger("tiledbsoma")
 
 
 # ================================================================
@@ -83,9 +83,9 @@ select `relative=True`. (This is the default.)
         else:
             raise Exception(f"Internal coding error in {__file__}")
 
-    soco = tiledbsc.SOMACollection(
+    soco = tiledbsoma.SOMACollection(
         collection_path,
-        soma_options=tiledbsc.SOMAOptions(member_uris_are_relative=rel_member_uris),
+        soma_options=tiledbsoma.SOMAOptions(member_uris_are_relative=rel_member_uris),
     )
 
     count = 0
@@ -114,7 +114,7 @@ select `relative=True`. (This is the default.)
         for soma_uri in args.paths:
             soma_uri = soma_uri.rstrip("/")
             name = os.path.basename(soma_uri)
-            soma = tiledbsc.SOMA(uri=soma_uri, name=name, parent=soco)
+            soma = tiledbsoma.SOMA(uri=soma_uri, name=name, parent=soco)
             logger.info(f"Adding {name} to {soma_uri}")
             soco.add(soma)
 
@@ -122,7 +122,7 @@ select `relative=True`. (This is the default.)
         for soma_uri in args.paths:
             soma_uri = soma_uri.rstrip("/")
             name = os.path.basename(soma_uri)
-            soma = tiledbsc.SOMA(uri=soma_uri, name=name, parent=soco)
+            soma = tiledbsoma.SOMA(uri=soma_uri, name=name, parent=soco)
             logger.info(f"Removing {name} from {soma_uri}")
             soco.remove(soma)
 

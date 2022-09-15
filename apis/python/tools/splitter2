@@ -10,15 +10,15 @@ import sys
 
 import numpy as np
 
-import tiledbsc
-import tiledbsc.io
+import tiledbsoma
+import tiledbsoma.io
 
 
 # ----------------------------------------------------------------
 def write_subset(soma, indices, output_path):
     if os.path.exists(output_path):
         shutil.rmtree(output_path)
-    subset_soma = tiledbsc.SOMA(output_path)
+    subset_soma = tiledbsoma.SOMA(output_path)
     subset_soma.create_unless_exists()
 
     obs_ids = list(soma.obs.df().index[indices])
@@ -39,14 +39,14 @@ def write_subset(soma, indices, output_path):
 
     subset_soma.X.add_layer_from_matrix_and_dim_values(subset_X_data, obs_ids, var_ids)
 
-    tiledbsc.io.to_h5ad(subset_soma, output_path + ".h5ad")
+    tiledbsoma.io.to_h5ad(subset_soma, output_path + ".h5ad")
 
 
 # ----------------------------------------------------------------
 input_soma_uri = "atlas/4056cbab-2a32-4c9e-a55f-c930bc793fb6"
 if len(sys.argv) == 2:
     input_soma_uri = sys.argv[1]
-input_soma = tiledbsc.SOMA(input_soma_uri)
+input_soma = tiledbsoma.SOMA(input_soma_uri)
 
 write_subset(input_soma, range(100, 200), "subset2-soma-01")
 write_subset(input_soma, range(200, 300), "subset2-soma-02")

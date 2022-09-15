@@ -83,9 +83,9 @@ array([[-0.17146951, -0.28081203, -0.04667679, ..., -0.09826884,
 ## Single TileDB SOMA
 
 ```
->>> import tiledbsc
+>>> import tiledbsoma
 
->>> soma = tiledbsc.SOMA('tiledb://johnkerl-tiledb/pbmc3k_processed')
+>>> soma = tiledbsoma.SOMA('tiledb://johnkerl-tiledb/pbmc3k_processed')
 
 >>> soma
 Name:    pbmc3k_processed

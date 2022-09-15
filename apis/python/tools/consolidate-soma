@@ -4,9 +4,9 @@ import sys
 
 import tiledb
 
-import tiledbsc
-import tiledbsc.util
-import tiledbsc.util_tiledb
+import tiledbsoma
+import tiledbsoma.util
+import tiledbsoma.util_tiledb
 
 
 # ----------------------------------------------------------------
@@ -25,15 +25,15 @@ def main():
         sys.exit(1)
 
     for soma_uri in sys.argv[1:]:
-        soma = tiledbsc.SOMA(soma_uri)
+        soma = tiledbsoma.SOMA(soma_uri)
         for key in soma.X.keys():
             x_uri = soma.X[key].uri
-            tiledbsc.util_tiledb.list_fragments(x_uri)
-            s = tiledbsc.util.get_start_stamp()
+            tiledbsoma.util_tiledb.list_fragments(x_uri)
+            s = tiledbsoma.util.get_start_stamp()
             print(f"START  consolidate {x_uri}")
             tiledb.consolidate(x_uri, ctx=ctx)
             tiledb.vacuum(x_uri, ctx=ctx)
-            print(tiledbsc.util.format_elapsed(s, f"FINISH consolidate {x_uri}"))
+            print(tiledbsoma.util.format_elapsed(s, f"FINISH consolidate {x_uri}"))
 
 
 if __name__ == "__main__":

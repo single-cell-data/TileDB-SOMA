@@ -6,8 +6,8 @@ import anndata
 import pytest
 import tiledb
 
-import tiledbsc
-import tiledbsc.io
+import tiledbsoma
+import tiledbsoma.io
 
 HERE = Path(__file__).parent
 
@@ -34,8 +34,8 @@ def test_import_anndata(adata):
     orig = adata
 
     # Ingest
-    soma = tiledbsc.SOMA(output_path)
-    tiledbsc.io.from_anndata(soma, orig)
+    soma = tiledbsoma.SOMA(output_path)
+    tiledbsoma.io.from_anndata(soma, orig)
 
     # Structure:
     #   X/data
@@ -53,7 +53,7 @@ def test_import_anndata(adata):
     #   raw/varm/PCs
 
     with tiledb.Group(output_path) as G:
-        assert G.meta[tiledbsc.util.SOMA_OBJECT_TYPE_METADATA_KEY] == "SOMA"
+        assert G.meta[tiledbsoma.util.SOMA_OBJECT_TYPE_METADATA_KEY] == "SOMA"
 
     # Check X/data (dense)
     with tiledb.open(os.path.join(output_path, "X", "data")) as A:
@@ -61,7 +61,7 @@ def test_import_anndata(adata):
         keys = list(df.keys())
         assert keys == ["value", "obs_id", "var_id"]
         assert A.ndim == 2
-        assert A.meta[tiledbsc.util.SOMA_OBJECT_TYPE_METADATA_KEY] == "AssayMatrix"
+        assert A.meta[tiledbsoma.util.SOMA_OBJECT_TYPE_METADATA_KEY] == "AssayMatrix"
     # Convenience accessors
     assert soma.X["data"].shape() == soma.X.data.shape()
 
@@ -71,14 +71,15 @@ def test_import_anndata(adata):
         assert df.columns.to_list() == ["obs_id", "var_id", "value"]
         # verify sparsity of raw data
         assert df.shape[0] == orig.raw.X.nnz
-        assert A.meta[tiledbsc.util.SOMA_OBJECT_TYPE_METADATA_KEY] == "AssayMatrix"
+        assert A.meta[tiledbsoma.util.SOMA_OBJECT_TYPE_METADATA_KEY] == "AssayMatrix"
 
     # Check obs
     with tiledb.open(os.path.join(output_path, "obs")) as A:
         df = A.df[:]
         assert df.columns.to_list() == orig.obs_keys()
         assert (
-            A.meta[tiledbsc.util.SOMA_OBJECT_TYPE_METADATA_KEY] == "AnnotationDataFrame"
+            A.meta[tiledbsoma.util.SOMA_OBJECT_TYPE_METADATA_KEY]
+            == "AnnotationDataFrame"
         )
     assert sorted(soma.obs.ids()) == sorted(list(orig.obs_names))
     # Convenience accessors
@@ -91,7 +92,8 @@ def test_import_anndata(adata):
         df = A.df[:]
         assert df.columns.to_list() == orig.var_keys()
         assert (
-            A.meta[tiledbsc.util.SOMA_OBJECT_TYPE_METADATA_KEY] == "AnnotationDataFrame"
+            A.meta[tiledbsoma.util.SOMA_OBJECT_TYPE_METADATA_KEY]
+            == "AnnotationDataFrame"
         )
     assert sorted(soma.var.ids()) == sorted(list(orig.var_names))
     # Convenience accessors
@@ -108,7 +110,7 @@ def test_import_anndata(adata):
             assert df.shape[0] == orig.obsm[key].shape[0]
             assert soma.obsm[key].shape() == orig.obsm[key].shape
             assert (
-                A.meta[tiledbsc.util.SOMA_OBJECT_TYPE_METADATA_KEY]
+                A.meta[tiledbsoma.util.SOMA_OBJECT_TYPE_METADATA_KEY]
                 == "AnnotationMatrix"
             )
     # Convenience accessors: soma.obsm.X_pca <-> soma.obsm['X_pca']
@@ -122,7 +124,7 @@ def test_import_anndata(adata):
             assert df.shape[0] == orig.varm[key].shape[0]
             assert soma.varm[key].shape() == orig.varm[key].shape
             assert (
-                A.meta[tiledbsc.util.SOMA_OBJECT_TYPE_METADATA_KEY]
+                A.meta[tiledbsoma.util.SOMA_OBJECT_TYPE_METADATA_KEY]
                 == "AnnotationMatrix"
             )
     # Convenience accessors:
@@ -142,7 +144,9 @@ def test_import_anndata(adata):
             shape = soma.obsp[key].df().shape
             assert shape[0] == orig.obsp[key].nnz
             assert shape[1] == 1
-            assert A.meta[tiledbsc.util.SOMA_OBJECT_TYPE_METADATA_KEY] == "AssayMatrix"
+            assert (
+                A.meta[tiledbsoma.util.SOMA_OBJECT_TYPE_METADATA_KEY] == "AssayMatrix"
+            )
     # Convenience accessors:
     for key in soma.obsp.keys():
         assert getattr(soma.obsp, key).shape() == soma.obsp[key].shape()
@@ -159,10 +163,10 @@ def test_export_anndata(adata):
     orig = adata
 
     # Ingest
-    soma = tiledbsc.SOMA(output_path)
-    tiledbsc.io.from_anndata(soma, orig)
+    soma = tiledbsoma.SOMA(output_path)
+    tiledbsoma.io.from_anndata(soma, orig)
 
-    readback = tiledbsc.io.to_anndata(soma)
+    readback = tiledbsoma.io.to_anndata(soma)
 
     assert readback.obs.shape == orig.obs.shape
     assert readback.var.shape == orig.var.shape

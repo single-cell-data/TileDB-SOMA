@@ -54,7 +54,7 @@ setup_venv() {
 
 build_ext() {
     pushd "${ext_dir}"
-    pip install apis/python || die "could not install tiledbsc-py"
+    pip install apis/python || die "could not install tiledbsoma-py"
     popd
 }
 

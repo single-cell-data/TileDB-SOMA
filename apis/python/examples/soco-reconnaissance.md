@@ -7,7 +7,7 @@ afterward.
 As noted in the [public TileDB Cloud notebook](https://cloud.tiledb.com/notebooks/details/johnkerl-tiledb/33c4fe81-d15f-43cd-a588-5c277cf70cb6/preview), we prepared an example SOMA collection in the S3 public bucket:
 
 ```
-soco = tiledbsc.SOMACollection('s3://tiledb-singlecell-data/soco/soco6')
+soco = tiledbsoma.SOMACollection('s3://tiledb-singlecell-data/soco/soco6')
 for soma in soco:
   print("%-20s %s" % (soma.name, soma.uri))
 ```
@@ -50,7 +50,7 @@ Let's find out -- before running a query involving full `X` data -- solely by lo
 ## Counts by metadata values
 
 ```
-soco = tiledbsc.SOMACollection('s3://tiledb-singlecell-data/soco/soco3a')
+soco = tiledbsoma.SOMACollection('s3://tiledb-singlecell-data/soco/soco3a')
 soco
 
 soco.keys()

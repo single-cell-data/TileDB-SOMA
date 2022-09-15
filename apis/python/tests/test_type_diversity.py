@@ -7,8 +7,8 @@ import pytest
 import scipy.sparse
 import tiledb
 
-import tiledbsc.io as io
-from tiledbsc import SOMA
+import tiledbsoma.io as io
+from tiledbsoma import SOMA
 
 """
 Testing `from_anndata` with the wide diversity of types latent in AnnData.

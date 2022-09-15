@@ -5,12 +5,12 @@ import shutil
 import sys
 from typing import Optional, Sequence
 
-import tiledbsc
+import tiledbsoma
 
 
 # ----------------------------------------------------------------
 def soco_query_and_store(
-    soco: tiledbsc.SOMACollection,
+    soco: tiledbsoma.SOMACollection,
     output_h5ad_path: str,
     output_soma_path: str,
     obs_attrs: Optional[Sequence[str]] = None,
@@ -30,7 +30,7 @@ def soco_query_and_store(
         print("Empty slice")
         return
 
-    result_soma_slice = tiledbsc.SOMASlice.concat(result_soma_slices)
+    result_soma_slice = tiledbsoma.SOMASlice.concat(result_soma_slices)
 
     if result_soma_slice is not None:
         if output_h5ad_path is not None:
@@ -41,7 +41,7 @@ def soco_query_and_store(
         if output_soma_path is not None:
             if os.path.exists(output_soma_path):
                 shutil.rmtree(output_soma_path)
-            soma = tiledbsc.SOMA.from_soma_slice(result_soma_slice, output_soma_path)
+            soma = tiledbsoma.SOMA.from_soma_slice(result_soma_slice, output_soma_path)
             data = soma.X.data
             assert data is not None
             print("Wrote", output_soma_path, data.shape())
@@ -59,7 +59,7 @@ if __name__ == "__main__":
         sys.stderr.write("Need option")
         sys.exit(1)
 
-    soco = tiledbsc.SOMACollection(soco_uri)
+    soco = tiledbsoma.SOMACollection(soco_uri)
 
     if option == "1":
         print()

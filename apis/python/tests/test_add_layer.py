@@ -4,8 +4,8 @@ from pathlib import Path
 import anndata
 import pytest
 
-import tiledbsc
-import tiledbsc.io
+import tiledbsoma
+import tiledbsoma.io
 
 HERE = Path(__file__).parent
 
@@ -32,8 +32,8 @@ def test_add_layer(adata):
     orig = adata
 
     # Ingest
-    soma = tiledbsc.SOMA(output_path)
-    tiledbsc.io.from_anndata(soma, orig)
+    soma = tiledbsoma.SOMA(output_path)
+    tiledbsoma.io.from_anndata(soma, orig)
 
     csr = soma.X.data.csr()
     orig_shape = csr.shape

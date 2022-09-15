@@ -4,8 +4,8 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-import tiledbsc
-import tiledbsc.io
+import tiledbsoma
+import tiledbsoma.io
 
 HERE = Path(__file__).parent
 
@@ -18,7 +18,7 @@ def h5ad_file(request):
 
 def test_soma_group_indexing(h5ad_file):
     """
-    Verify basic group-member access at the tiledbsc-py level.
+    Verify basic group-member access at the tiledbsoma-py level.
     """
 
     # Set up anndata input path and tiledb-group output path
@@ -26,8 +26,8 @@ def test_soma_group_indexing(h5ad_file):
     output_path = tempdir.name
 
     # Ingest
-    soma = tiledbsc.SOMA(output_path)
-    tiledbsc.io.from_h5ad(soma, h5ad_file)
+    soma = tiledbsoma.SOMA(output_path)
+    tiledbsoma.io.from_h5ad(soma, h5ad_file)
     assert soma.exists()
 
     # Structure:
@@ -210,7 +210,7 @@ def test_soma_group_indexing(h5ad_file):
     assert set(soma.obsm._get_member_names()) == set(["X_pca", "X_tsne"])
     assert set(soma.obsm.keys()) == set(["X_pca", "X_tsne"])
     assert soma.obsm["X_pca"].exists()
-    assert isinstance(soma.obsm["X_pca"], tiledbsc.AnnotationMatrix)
+    assert isinstance(soma.obsm["X_pca"], tiledbsoma.AnnotationMatrix)
     assert soma.obsm["nonesuch"] is None
     assert soma.obsm["X_pca"].dim_names() == ["obs_id"]
     assert soma.obsm["X_pca"].shape() == (80, 19)
@@ -239,7 +239,7 @@ def test_soma_group_indexing(h5ad_file):
 
     assert set(soma.varm._get_member_names()) == set(["PCs"])
     assert soma.varm["PCs"].exists()
-    assert isinstance(soma.varm["PCs"], tiledbsc.AnnotationMatrix)
+    assert isinstance(soma.varm["PCs"], tiledbsoma.AnnotationMatrix)
     assert soma.varm["nonesuch"] is None
     assert soma.varm._get_member_names() == ["PCs"]
     assert soma.varm["PCs"].dim_names() == ["var_id"]
@@ -250,7 +250,7 @@ def test_soma_group_indexing(h5ad_file):
     assert soma.obsp["distances"].exists()
     assert soma.obsp["distances"].dim_names() == ["obs_id_i", "obs_id_j"]
     assert soma.obsp["distances"].shape() == (80, 80)
-    assert isinstance(soma.obsp["distances"], tiledbsc.AssayMatrix)
+    assert isinstance(soma.obsp["distances"], tiledbsoma.AssayMatrix)
 
     assert soma.varp["nonesuch"] is None
 
@@ -258,11 +258,11 @@ def test_soma_group_indexing(h5ad_file):
     assert set(soma.uns._get_member_names()) == set(["neighbors"])
     assert soma.uns["neighbors"].exists()
     assert soma.uns.exists()
-    assert isinstance(soma.uns["neighbors"], tiledbsc.UnsGroup)
+    assert isinstance(soma.uns["neighbors"], tiledbsoma.UnsGroup)
     assert set(soma.uns["neighbors"]._get_member_names()) == set(["params"])
-    assert isinstance(soma.uns["neighbors"]["params"], tiledbsc.UnsGroup)
+    assert isinstance(soma.uns["neighbors"]["params"], tiledbsoma.UnsGroup)
     assert set(soma.uns["neighbors"]["params"]._get_member_names()) == set(["method"])
-    assert isinstance(soma.uns["neighbors"]["params"]["method"], tiledbsc.UnsArray)
+    assert isinstance(soma.uns["neighbors"]["params"]["method"], tiledbsoma.UnsArray)
     assert soma.uns["nonesuch"] is None
 
     assert list(soma.uns.keys()) == ["neighbors"]
@@ -294,6 +294,6 @@ def test_soma_group_indexing(h5ad_file):
 
 
 def test_not_exists():
-    soma = tiledbsc.SOMA("/nonesuch/nowhere/never")
+    soma = tiledbsoma.SOMA("/nonesuch/nowhere/never")
     assert not soma.exists()
     assert not soma.obs.exists()

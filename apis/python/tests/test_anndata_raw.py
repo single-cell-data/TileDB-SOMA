@@ -14,8 +14,8 @@ import pytest
 import tiledb
 from anndata import AnnData
 
-import tiledbsc.io as io
-from tiledbsc import SOMA
+import tiledbsoma.io as io
+from tiledbsoma import SOMA
 
 
 def test_from_anndata_raw_X(tmp_path, adata):

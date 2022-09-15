@@ -30,7 +30,7 @@ examples/uniformizer.py -v /Users/testuser/mini-corpus/atlas add-soma soma-02
 After this, all the SOMAs in the collection will have the same schema:
 
 ```
->>> soco = tiledbsc.SOMACollection("/Users/testuser/mini-corpus/atlas")
+>>> soco = tiledbsoma.SOMACollection("/Users/testuser/mini-corpus/atlas")
 >>> for soma in soco:
 ...     print(soma.obs.keys())
 ...

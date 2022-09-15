@@ -4,8 +4,8 @@ import pytest
 import tiledb
 from anndata import AnnData
 
-import tiledbsc.io as io
-from tiledbsc import SOMA
+import tiledbsoma.io as io
+from tiledbsoma import SOMA
 
 
 # TODO: re-enable when #46 is resolved
