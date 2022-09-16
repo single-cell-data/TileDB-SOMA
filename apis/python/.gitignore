@@ -1,3 +1,5 @@
 __pycache__
 tiledb-data
+tiledbsoma-data
 anndata-readback
+anndata-readback-tiledbsoma

@@ -68,7 +68,7 @@ class SOMAExperiment(SOMACollection):
         else:
             # Unlike __getattribute__ this is _only_ called when the member isn't otherwise
             # resolvable. So raising here is the right thing to do.
-            raise AttributeError(f"unrecognized attribute: {name}")
+            raise AttributeError(f"{self.__class__.__name__} has no attribute '{name}'")
 
     def constrain(self) -> None:
         """
