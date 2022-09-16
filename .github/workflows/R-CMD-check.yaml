@@ -55,12 +55,15 @@ jobs:
 #          R_REMOTES_NO_ERRORS_FROM_WARNINGS: true
 #        run: sudo ./tools/ci/install-r-dependencies.sh
 
-      - uses: r-lib/actions/check-r-package@v2
-        if: matrix.os != 'windows-latest'
-        with:
-          working-directory: "apis/R"
+      - name: Build and check R package
+        run: ./tools/ci/build-and-check-r-package.sh
 
-      - uses: r-lib/actions/check-r-package@v2
-        if: matrix.os == 'windows-latest'
-        with:
-          working-directory: "apis\\R"
+#      - uses: r-lib/actions/check-r-package@v2
+#        if: matrix.os != 'windows-latest'
+#        with:
+#          working-directory: "apis/R"
+
+#      - uses: r-lib/actions/check-r-package@v2
+#        if: matrix.os == 'windows-latest'
+#        with:
+#          working-directory: "apis\\R"
