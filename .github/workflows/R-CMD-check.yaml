@@ -43,16 +43,26 @@ jobs:
           r-version: ${{ matrix.config.r }}
           http-user-agent: ${{ matrix.config.http-user-agent }}
           use-public-rspm: true
-          working-directory: apis/R
+          working-directory: "apis/R"
 
       - name: Install dependencies
+        if: matrix.os != 'windows-latest'
         env:
           R_REMOTES_NO_ERRORS_FROM_WARNINGS: true
-        with:
-          working-directory: apis/R
-        run: Rscript -e "install.packages(c('remotes', 'rcmdcheck'))" -e "remotes::install_deps(dependencies = TRUE)"
+        run: Rscript -e "install.packages(c('remotes', 'rcmdcheck'))" -e 'remotes::install_deps(pkgdir = "apis/R", dependencies = TRUE)'
+
+      - name: Install dependencies
+        if: matrix.os == 'windows-latest'
+        env:
+          R_REMOTES_NO_ERRORS_FROM_WARNINGS: true
+        run: Rscript -e "install.packages(c('remotes', 'rcmdcheck'))" -e 'remotes::install_deps(pkgdir = "apis\\R", dependencies = TRUE)'
 
       - uses: r-lib/actions/check-r-package@v2
+        if: matrix.os != 'windows-latest'
         with:
-          working-directory: apis/R
+          working-directory: "apis/R"
 
+      - uses: r-lib/actions/check-r-package@v2
+        if: matrix.os == 'windows-latest'
+        with:
+          working-directory: "apis\\R"
