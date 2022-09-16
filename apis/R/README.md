@@ -1,7 +1,7 @@
 # tiledbsoma
 
 <!-- badges: start -->
-[![R-CMD-check](https://github.com/TileDB-Inc/tiledbsoma/workflows/R-CMD-check/badge.svg)](https://github.com/TileDB-Inc/tiledbsoma/actions)
+[![r-cmd-check](https://github.com/TileDB-Inc/tiledbsoma/workflows/r-cmd-check/badge.svg)](https://github.com/TileDB-Inc/tiledbsoma/actions)
 <!-- badges: end -->
 
 An R implementation of the [Stack of Matrices, Annotated][soma-spec] (SOMA) API based on [TileDB](https://tiledb.com). SOMA is an open data model for representing annotated matrices, like those commonly used for single-cell data analysis. With tiledbsoma, users can import from and export to in-memory formats used by popular toolchains like [Seurat][], [Bioconductor][bioc], and even [AnnData][] using the companion [Python package][tiledbsoma-py].

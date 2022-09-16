@@ -20,7 +20,7 @@ jobs:
 
       - name: Install libgeos on Linux
         if: runner.os == 'Linux'
-        run: sudo apt-get update -y && sudo apt-get install -y libgeos-dev
+        run: sudo ./tools/ci/install-linux-dependencies.sh
 
       - uses: r-lib/actions/setup-pandoc@v1
         with:
@@ -32,14 +32,7 @@ jobs:
           working-directory: "apis/R"
 
       - name: Install dependencies
-        env:
-          R_REMOTES_NO_ERRORS_FROM_WARNINGS: true
-        run: Rscript -e "install.packages(c('remotes', 'pkgdown'))" -e 'remotes::install_deps("apis/R", dependencies = TRUE)' -e "remotes::install_local()"
+        run: ./tools/ci/install-pkgdown-dependencies.sh
 
       - name: Deploy package
-        with:
-          working-directory: "apis/R"
-        run: |
-          git config --local user.name "$GITHUB_ACTOR"
-          git config --local user.email "$GITHUB_ACTOR@users.noreply.github.com"
-          Rscript -e 'pkgdown::deploy_to_branch(new_process = FALSE)'
+        run: ./tools/ci/deploy-pkgdown.sh
