@@ -268,14 +268,8 @@ class AnnotationDataFrame(TileDBArray):
             #   (('__pandas_index_dims', '{"obs_id": "<U0"}'),)
             # so the set_index is already done for us.
             #
-<<<<<<< HEAD:apis/python/src/tiledbsoma/annotation_dataframe.py
             # However if the data was written somehow else (e.g. by tiledbsoma-r) then we do.
-||||||| parent of 19963aa (tiledbsc-py stats experiment):apis/python/src/tiledbsc/annotation_dataframe.py
-            # However if the data was written somehow else (e.g. by tiledbscr-r) then we do.
-=======
-            # However if the data was written somehow else (e.g. by tiledbscr-r) then we do.
             s3 = self.timing_start("query", "set_index")
->>>>>>> 19963aa (tiledbsc-py stats experiment):apis/python/src/tiledbsc/annotation_dataframe.py
             if not return_arrow:
                 if isinstance(df.index, pd.RangeIndex) and self.dim_name in df.columns:
                     df.set_index(self.dim_name, inplace=True)

@@ -199,7 +199,7 @@ select `relative=True`. (This is the default.)
 
     if args.stats:
         print()
-        tiledbsc.perf.tracker.show()
+        tiledbsoma.perf.tracker.show()
     if args.corestats:
         print()
         tiledb.stats_dump()
