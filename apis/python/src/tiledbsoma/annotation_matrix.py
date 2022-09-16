@@ -42,7 +42,6 @@ class AnnotationMatrix(TileDBArray):
 
         Note: currently implemented via data scan --- will be optimized in an upcoming TileDB Core release.
         """
-        s0 = self.timing_start("shape", "total")
         with self._open() as A:
             # These TileDB arrays are string-dimensioned sparse arrays so there is no '.shape'.
             # Instead we compute it ourselves.  See also:
@@ -65,7 +64,6 @@ class AnnotationMatrix(TileDBArray):
                         ].tolist()
                     )
             num_cols = A.schema.nattr
-            self.timing_end(s0)
             return (num_rows, num_cols)
 
     # ----------------------------------------------------------------
@@ -79,7 +77,6 @@ class AnnotationMatrix(TileDBArray):
         Selects a slice out of the array with specified ``obs_ids`` (for ``obsm`` elements) or
         ``var_ids`` (for ``varm`` elements).  If ``ids`` is ``None``, the entire array is returned.
         """
-        s0 = self.timing_start("dim_select", "total")
         if ids is None:
             with self._open() as A:
                 query = A.query(return_arrow=return_arrow)
@@ -90,7 +87,6 @@ class AnnotationMatrix(TileDBArray):
                 df = query.df[ids]
         if not return_arrow:
             df.set_index(self.dim_name, inplace=True)
-        self.timing_end(s0)
         return df
 
     # ----------------------------------------------------------------
@@ -116,8 +112,6 @@ class AnnotationMatrix(TileDBArray):
         :param matrix: ``anndata.obsm['foo']``, ``anndata.varm['foo']``, or ``anndata.raw.varm['foo']``.
         :param dim_values: ``anndata.obs_names``, ``anndata.var_names``, or ``anndata.raw.var_names``.
         """
-        s0 = self.timing_start("from_matrix_and_dim_values", "total")
-
         s = util.get_start_stamp()
         log_io(None, f"{self._indent}START  WRITING {self.uri}")
 
@@ -132,13 +126,11 @@ class AnnotationMatrix(TileDBArray):
             f"Wrote {self.nested_name}",
             util.format_elapsed(s, f"{self._indent}FINISH WRITING {self.uri}"),
         )
-        self.timing_end(s0)
 
     # ----------------------------------------------------------------
     def _numpy_ndarray_or_scipy_sparse_csr_matrix(
         self, matrix: Matrix, dim_values: Labels
     ) -> None:
-        s0 = self.timing_start("_numpy_ndarray_or_scipy_sparse_csr_matrix", "total")
         # We do not have column names for anndata-provenance annotation matrices.
         # So, if say we're looking at anndata.obsm['X_pca'], we create column names
         # 'X_pca_1', 'X_pca_2', etc.
@@ -154,11 +146,9 @@ class AnnotationMatrix(TileDBArray):
         df = pd.DataFrame(matrix, columns=attr_names)
         with tiledb.open(self.uri, mode="w", ctx=self._ctx) as A:
             A[dim_values] = df.to_dict(orient="list")
-        self.timing_end(s0)
 
     # ----------------------------------------------------------------
     def _from_pandas_dataframe(self, df: pd.DataFrame, dim_values: Labels) -> None:
-        s0 = self.timing_start("_from_pandas_dataframe", "total")
         attr_names = df.columns.values.tolist()
 
         # Ingest annotation matrices as 1D/multi-attribute sparse arrays
@@ -169,7 +159,6 @@ class AnnotationMatrix(TileDBArray):
 
         with tiledb.open(self.uri, mode="w", ctx=self._ctx) as A:
             A[dim_values] = df.to_dict(orient="list")
-        self.timing_end(s0)
 
     # ----------------------------------------------------------------
     def _create_empty_array(
@@ -182,7 +171,6 @@ class AnnotationMatrix(TileDBArray):
         repeated once per column. For pandas.DataFrame, there is a dtype per column.
         :param attr_names: column names for the dataframe
         """
-        s0 = self.timing_start("_create_empty_array", "total")
 
         # Nominally 'obs_id' or 'var_id'
         level = self._soma_options.string_dim_zstd_level
@@ -225,5 +213,3 @@ class AnnotationMatrix(TileDBArray):
         )
 
         tiledb.Array.create(self.uri, sch, ctx=self._ctx)
-
-        self.timing_end(s0)

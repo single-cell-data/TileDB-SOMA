@@ -158,7 +158,8 @@ def test_from_anndata_DataFrame_type(tmp_path):
     )
     X = np.ones((n, n), dtype=np.float32)
     adata = ad.AnnData(X=X, obs=df, var=df, dtype=X.dtype)
-    io.from_anndata(SOMA(tmp_path.as_posix()), adata)
+    soma = SOMA(tmp_path.as_posix())
+    io.from_anndata(soma, adata)
     assert all(
         (tmp_path / sub_array_path).exists()
         for sub_array_path in ["obs", "var", "X/data"]
@@ -176,33 +177,29 @@ def test_from_anndata_DataFrame_type(tmp_path):
             # TODO: see annotation_dataframe.py. Once Unicode attributes are queryable, we'll need
             # to remove this check which is verifying the current force-to-ASCII workaround.
             if ad_dtype.name == "str":
-                ad_dtype = np.dtype("U")
+                ad_dtype = np.dtype("bytes")
 
         return ad_dtype == tdb.dtype
 
     for df_name in ["var", "obs"]:
-        with tiledb.open((tmp_path / df_name).as_posix()) as arr:
-            df = getattr(adata, df_name)
+        annotation_dataframe = getattr(soma, df_name)
+        with annotation_dataframe._open() as A:
 
             # verify names match
-            assert set(arr.schema.attr(i).name for i in range(arr.schema.nattr)) == set(
+            assert set(A.schema.attr(i).name for i in range(A.schema.nattr)) == set(
                 getattr(adata, df_name).keys()
             )
 
             # verify length
-            assert n == len(arr.query(dims=[]).df[:])
+            assert n == len(A.query(dims=[]).df[:])
 
             # verify index
-            assert np.array_equal(
-                np.sort(df.index.to_numpy()), np.sort(arr[:][df_name + "_id"])
-            )
+            assert np.array_equal(np.sort(df.index.to_numpy()), np.sort(A.df[:].index))
 
             # verify individual column types
-            attr_idx = {
-                arr.schema.attr(idx).name: idx for idx in range(arr.schema.nattr)
-            }
+            attr_idx = {A.schema.attr(idx).name: idx for idx in range(A.schema.nattr)}
             for k in df.keys():
-                assert cmp_dtype(df[k], arr.schema.attr(attr_idx[k]))
+                assert cmp_dtype(df[k], A.schema.attr(attr_idx[k]))
 
 
 def test_from_anndata_annotations_empty(tmp_path):
@@ -218,23 +215,20 @@ def test_from_anndata_annotations_empty(tmp_path):
     X = np.ones((n_obs, n_var))
     adata = ad.AnnData(X=X, obs=obs, var=var, dtype=X.dtype)
 
-    io.from_anndata(SOMA(tmp_path.as_posix()), adata)
+    soma = SOMA(tmp_path.as_posix())
+    io.from_anndata(soma, adata)
 
-    assert all(
-        (tmp_path / sub_array_path).exists()
-        for sub_array_path in ["obs", "var", "X/data"]
-    )
+    assert soma.obs.exists()
+    assert soma.var.exists()
+    assert soma.X.data.exists()
 
     # obs/var are sparse. Sort before comparing contents.
-    with tiledb.open((tmp_path / "obs").as_posix()) as obs:
-        assert np.array_equal(
-            np.sort(adata.obs.index.to_numpy()), np.sort(obs[:]["obs_id"])
-        )
-
-    with tiledb.open((tmp_path / "var").as_posix()) as var:
-        assert np.array_equal(
-            np.sort(adata.var.index.to_numpy()), np.sort(var[:]["var_id"])
-        )
+    assert np.array_equal(
+        np.sort(adata.obs.index.to_numpy()), np.sort(soma.obs.df().index)
+    )
+    assert np.array_equal(
+        np.sort(adata.var.index.to_numpy()), np.sort(soma.var.df().index)
+    )
 
 
 def test_from_anndata_annotations_none(tmp_path):

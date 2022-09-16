@@ -63,16 +63,6 @@ def main():
         action="store_true",
     )
     parser.add_argument(
-        "--stats",
-        help="For internal use, to collect performance-optimization stats",
-        action="store_true",
-    )
-    parser.add_argument(
-        "--corestats",
-        help="For internal use, to collect performance-optimization stats",
-        action="store_true",
-    )
-    parser.add_argument(
         "-r",
         "--relative",
         help="""
@@ -136,9 +126,6 @@ select `relative=True`. (This is the default.)
     soma_options = tiledbsoma.SOMAOptions(member_uris_are_relative=rel_member_uris)
     outdir = args.o.rstrip("/")
 
-    if args.corestats:
-        tiledb.stats_enable()
-
     if args.n:
         if len(args.paths) < 1:
             parser.print_help(file=sys.stderr)
@@ -196,13 +183,6 @@ select `relative=True`. (This is the default.)
         else:
             parser.print_help(file=sys.stderr)
             sys.exit(1)
-
-    if args.stats:
-        print()
-        tiledbsoma.perf.tracker.show()
-    if args.corestats:
-        print()
-        tiledb.stats_dump()
 
 
 # ================================================================

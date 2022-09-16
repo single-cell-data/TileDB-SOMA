@@ -91,7 +91,6 @@ class SOMA(TileDBGroup):
             soma_options=soma_options,
             ctx=ctx,
         )
-        s0 = self.timing_start("__init__", "total")
 
         # See comments in _get_child_uris
         child_uris = self._get_child_uris(
@@ -137,8 +136,6 @@ class SOMA(TileDBGroup):
         )
         self.raw = RawGroup(uri=raw_uri, name="raw", obs=self.obs, parent=self)
         self.uns = UnsGroup(uri=uns_uri, name="uns", parent=self)
-
-        self.timing_end(s0)
 
         # Sample SOMA/member URIs:
         #
@@ -259,7 +256,6 @@ class SOMA(TileDBGroup):
         Using a value of ``None`` for obs_ids means use all ``obs_ids``, and likewise for ``var_ids``.
         Returns ``None`` for empty slice.
         """
-        s0 = self.timing_start("dim_slice", "total")
         assert obs_ids is not None or var_ids is not None
         if obs_ids is None:
             # Try the var slice first to see if that produces zero results -- if so we don't need to
@@ -299,11 +295,9 @@ class SOMA(TileDBGroup):
         # * obsp
         # * varp
 
-        retval = self._assemble_soma_slice(
+        return self._assemble_soma_slice(
             obs_ids, var_ids, slice_obs_df, slice_var_df, return_arrow=return_arrow
         )
-        self.timing_end(s0)
-        return retval
 
     # ----------------------------------------------------------------
     def query(
@@ -328,7 +322,6 @@ class SOMA(TileDBGroup):
         from the source SOMAs; if they are specified, the slice will take the specified ``obs``/``var``
         """
 
-        s0 = self.timing_start("query", "total")
         retval = self._query_aux(
             obs_attrs=obs_attrs,
             obs_query_string=obs_query_string,
@@ -338,7 +331,6 @@ class SOMA(TileDBGroup):
             var_ids=var_ids,
             return_arrow=return_arrow,
         )
-        self.timing_end(s0)
         return retval
 
     # ----------------------------------------------------------------
@@ -453,7 +445,6 @@ class SOMA(TileDBGroup):
         attributes.  If all SOMAs in the collection have the same ``obs``/``var`` attributes, then you
         needn't specify these; if they don't, you must.
         """
-        s0 = cls.cls_timing_start("queries", "total")
 
         # This is a good candidate for parallelization because the soma.query bits are independent
         # of one another, and are also in TileDB's core C++ engine which releases the GIL.
@@ -492,7 +483,6 @@ class SOMA(TileDBGroup):
             soma_slice = soma_slice_future.result()
             if soma_slice is not None:
                 soma_slices.append(soma_slice)
-        cls.cls_timing_end(s0)
         return soma_slices
 
     # ----------------------------------------------------------------
@@ -519,7 +509,6 @@ class SOMA(TileDBGroup):
         """
         An internal method for constructing a ``SOMASlice`` object given query results.
         """
-        s0 = self.timing_start("_assemble_soma_slice", "total")
         # There aren't always multiple X layers, and if there aren't, this parallelization doesn't
         # help. But neither doesit hurt. And if there are, that's good news, since the dim_select is
         # in TileDB's C++ core engine which releases the GIL.
@@ -546,9 +535,7 @@ class SOMA(TileDBGroup):
             assert df is not None
             X[layer_name] = df
 
-        retval = SOMASlice(X=X, obs=slice_obs_df, var=slice_var_df)
-        self.timing_end(s0)
-        return retval
+        return SOMASlice(X=X, obs=slice_obs_df, var=slice_var_df)
 
     # ----------------------------------------------------------------
     @classmethod
@@ -565,7 +552,6 @@ class SOMA(TileDBGroup):
         """
         Constructs ``SOMA`` storage from a given in-memory ``SOMASlice`` object.
         """
-        s0 = cls.cls_timing_start("from_soma_slice", "total")
 
         soma = cls(
             uri=uri,
@@ -587,7 +573,6 @@ class SOMA(TileDBGroup):
                 layer_name=layer_name,
             )
 
-        cls.cls_timing_end(s0)
         return soma
 
     # ----------------------------------------------------------------
@@ -623,8 +608,6 @@ class SOMA(TileDBGroup):
         """
         Populates the ``X`` or ``raw.X`` subgroup for a ``SOMA`` object.
         """
-        s0 = self.timing_start("add_X_layer", "total")
         self.X.add_layer_from_matrix_and_dim_values(
             matrix, self.obs.ids(), self.var.ids(), layer_name
         )
-        self.timing_end(s0)

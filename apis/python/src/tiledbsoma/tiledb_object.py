@@ -5,7 +5,7 @@ import tiledb
 
 import tiledbsoma
 
-from . import perf, util
+from . import util
 from .soma_options import SOMAOptions
 
 
@@ -114,35 +114,3 @@ class TileDBObject(ABC):
     @abstractmethod
     def _open(self, mode: str = "r") -> Union[tiledb.Array, tiledb.Group]:
         """Open the underlying TileDB array or Group"""
-
-    def timing_start(
-        self, func_name: str, phase_name: str, **kwargs: Any
-    ) -> perf.Entry:
-        return perf.Entry(
-            element_name=self.nested_name,
-            element_class=self.__class__.__name__,
-            func_name=func_name,
-            phase_name=phase_name,
-            **kwargs,
-        )
-
-    def timing_end(self, entry: perf.Entry) -> None:
-        entry.finish()
-        perf.tracker.track(entry)
-
-    @classmethod
-    def cls_timing_start(
-        cls, func_name: str, phase_name: str, **kwargs: Any
-    ) -> perf.Entry:
-        return perf.Entry(
-            element_name="N/A",
-            element_class=cls.__name__,
-            func_name=func_name,
-            phase_name=phase_name,
-            **kwargs,
-        )
-
-    @classmethod
-    def cls_timing_end(cls, entry: perf.Entry) -> None:
-        entry.finish()
-        perf.tracker.track(entry)

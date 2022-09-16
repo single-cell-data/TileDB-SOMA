@@ -31,9 +31,7 @@ class AnnotationDataFrame(TileDBArray):
         """
         assert name in ["obs", "var"]
         super().__init__(uri=uri, name=name, parent=parent)
-        s0 = self.timing_start("__init__", "total")
         self.dim_name = name + "_id"
-        self.timing_end(s0)
 
     # ----------------------------------------------------------------
     def shape(self) -> Tuple[int, int]:
@@ -42,10 +40,7 @@ class AnnotationDataFrame(TileDBArray):
         The row-count is the number of obs_ids (for ``obs``) or the number of var_ids (for ``var``).
         The column-count is the number of columns/attributes in the dataframe.
         """
-        s0 = self.timing_start("shape", "total")
-        s1 = self.timing_start("shape", "open")
         with self._open("r") as A:
-            self.timing_end(s1)
             self.dim_name = A.domain.dim(0).name
             # These TileDB arrays are string-dimensioned sparse arrays so there is no '.shape'.
             # Instead we compute it ourselves.  See also:
@@ -71,7 +66,6 @@ class AnnotationDataFrame(TileDBArray):
                         ].tolist()
                     )
             num_cols = A.schema.nattr
-            self.timing_end(s0)
             return (num_rows, num_cols)
 
     # ----------------------------------------------------------------
@@ -79,24 +73,15 @@ class AnnotationDataFrame(TileDBArray):
         """
         Returns the ``obs_ids`` in the matrix (for ``obs``) or the ``var_ids`` (for ``var``).
         """
-        s0 = self.timing_start("ids", "total")
-        s1 = self.timing_start("ids", "open")
         with self._open("r") as A:
-            self.timing_end(s1)
             self.dim_name = A.domain.dim(0).name
 
-            s2 = self.timing_start("ids", "tiledb_query")
             # TileDB string dims are ASCII not UTF-8. Decode them so they readback not like
             # `b"AKR1C3"` but rather like `"AKR1C3"`. Update as of
             # https://github.com/TileDB-Inc/TileDB-Py/pull/1304 these dims will read back OK.
             retval = A.query(attrs=[], dims=[self.dim_name])[:][self.dim_name].tolist()
-            self.timing_end(s2)
 
-            s3 = self.timing_start("ids", "decode")
             retval = [e.decode() for e in retval]
-            self.timing_end(s3)
-
-            self.timing_end(s0)
 
             if len(retval) > 0 and isinstance(retval[0], bytes):
                 return [e.decode() for e in retval]
@@ -124,10 +109,7 @@ class AnnotationDataFrame(TileDBArray):
         Returns the column names for the ``obs`` or ``var`` dataframe.  For obs and varp, ``.keys()`` is a
         keystroke-saver for the more general array-schema accessor ``attr_names``.
         """
-        s0 = self.timing_start("keys", "total")
-        retval = self.attr_names()
-        self.timing_end(s0)
-        return retval
+        return self.attr_names()
 
     # ----------------------------------------------------------------
     def keyset(self) -> Set[str]:
@@ -149,18 +131,13 @@ class AnnotationDataFrame(TileDBArray):
         ``var``).  If ``ids`` is ``None``, the entire dataframe is returned.  Similarly, if ``attrs`` are
         provided, they're used for the query; else, all attributes are returned.
         """
-        s0 = self.timing_start("dim_select", "total")
-        s1 = self.timing_start("dim_select", "open")
         with self._open("r") as A:
-            self.timing_end(s1)
             self.dim_name = A.domain.dim(0).name
-            s2 = self.timing_start("dim_select", "tiledb_query")
             query = A.query(return_arrow=return_arrow, attrs=attrs)
             if ids is None:
                 df = query.df[:]
             else:
                 df = query.df[ids]
-            self.timing_end(s2)
 
         # We do not need this:
         #   df.set_index(self.dim_name, inplace=True)
@@ -171,24 +148,17 @@ class AnnotationDataFrame(TileDBArray):
         # so the set_index is already done for us.
         #
         # However if the data was written somehow else (e.g. by tiledbsoma-r) then we do.
-        s3 = self.timing_start("dim_select", "set_index")
         if not return_arrow:
             if isinstance(df.index, pd.RangeIndex) and self.dim_name in df.columns:
                 df.set_index(self.dim_name, inplace=True)
-        self.timing_end(s3)
 
         # TODO: when UTF-8 attributes are queryable using TileDB-Py's QueryCondition API we can remove this.
         # This is the 'decode on read' part of our logic; in from_dataframe we have the 'encode on write' part.
         # Context: https://github.com/single-cell-data/TileDB-SingleCell/issues/99.
-        s4 = self.timing_start("dim_select", "ascii_to_unicode")
         if return_arrow:
-            retval = self._ascii_to_unicode_arrow_readback(df)
+            return self._ascii_to_unicode_arrow_readback(df)
         else:
-            retval = self._ascii_to_unicode_pandas_readback(df)
-        self.timing_end(s4)
-
-        self.timing_end(s0)
-        return retval
+            return self._ascii_to_unicode_pandas_readback(df)
 
     # ----------------------------------------------------------------
     def df(
@@ -223,12 +193,9 @@ class AnnotationDataFrame(TileDBArray):
         if query_string is None:
             return self.dim_select(ids, attrs=attrs, return_arrow=return_arrow)
 
-        s0 = self.timing_start("query", "total")
-        retval = self._query_aux(
+        return self._query_aux(
             query_string=query_string, ids=ids, attrs=attrs, return_arrow=return_arrow
         )
-        self.timing_end(s0)
-        return retval
 
     def _query_aux(
         self,
@@ -243,11 +210,8 @@ class AnnotationDataFrame(TileDBArray):
         elapsed-time stats in a call to this helper.
         """
 
-        s1 = self.timing_start("query", "open")
         with self._open() as A:
-            self.timing_end(s1)
             self.dim_name = A.domain.dim(0).name
-            s2 = self.timing_start("query", "tiledb_query")
             qc = tiledb.QueryCondition(query_string)
             if attrs is None:
                 slice_query = A.query(attr_cond=qc, return_arrow=return_arrow)
@@ -263,7 +227,6 @@ class AnnotationDataFrame(TileDBArray):
                     df = slice_query.df[:]
                 else:
                     df = slice_query.df[ids]
-            self.timing_end(s2)
 
             # We do not need this:
             #   df.set_index(self.dim_name, inplace=True)
@@ -274,22 +237,16 @@ class AnnotationDataFrame(TileDBArray):
             # so the set_index is already done for us.
             #
             # However if the data was written somehow else (e.g. by tiledbsoma-r) then we do.
-            s3 = self.timing_start("query", "set_index")
             if not return_arrow:
                 if isinstance(df.index, pd.RangeIndex) and self.dim_name in df.columns:
                     df.set_index(self.dim_name, inplace=True)
                 # This is the 'decode on read' part of our logic; in dim_select we have the 'encode on write' part.
                 # Context: https://github.com/single-cell-data/TileDB-SingleCell/issues/99.
-            self.timing_end(s3)
 
-            s4 = self.timing_start("query", "ascii_to_unicode")
             if return_arrow:
-                retval = self._ascii_to_unicode_arrow_readback(df)
+                return self._ascii_to_unicode_arrow_readback(df)
             else:
-                retval = self._ascii_to_unicode_pandas_readback(df)
-            self.timing_end(s4)
-
-            return retval
+                return self._ascii_to_unicode_pandas_readback(df)
 
     # ----------------------------------------------------------------
     def _ascii_to_unicode_pandas_series_readback(
@@ -378,7 +335,6 @@ class AnnotationDataFrame(TileDBArray):
         :param dataframe: ``anndata.obs``, ``anndata.var``, ``anndata.raw.var``.
         :param extent: TileDB ``extent`` parameter for the array schema.
         """
-        s0 = self.timing_start("from_dataframe", "total")
 
         offsets_filters = tiledb.FilterList(
             [tiledb.PositiveDeltaFilter(), tiledb.ZstdFilter(level=-1)]
@@ -474,5 +430,3 @@ class AnnotationDataFrame(TileDBArray):
             f"Wrote {self.nested_name}",
             util.format_elapsed(s, f"{self._indent}FINISH WRITING {self.uri}"),
         )
-
-        self.timing_end(s0)
