@@ -34,6 +34,8 @@ def from_h5ad(
     """
     Reads an ``.h5ad`` local-disk file and writes to a TileDB SOMA structure.
     """
+    if not isinstance(input_path, str):
+        raise Exception(f"Input path {input_path} is not a string -- did you want from_anndata?")
     _from_h5ad_common(soma, input_path, _from_anndata_aux, X_layer_name)
 
 
@@ -153,6 +155,8 @@ def _from_anndata_aux(
     callback functions -- this helper method as ``X_layer_name`` as non-optional, which confuses
     ``mypy`` less.
     """
+    if not isinstance(anndata, ad.Anndata):
+        raise Exception(f"Second argument is not an AnnData object -- did you want from_h5ad?")
 
     # Without _at least_ an index, there is nothing to indicate the dimension indices.
     if anndata.obs.index.empty or anndata.var.index.empty:
