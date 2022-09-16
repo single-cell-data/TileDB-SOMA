@@ -1,0 +1,14 @@
+#!/bin/bash
+
+# Simply runs python -i peek-ann.py.
+# That can be done with '#!/usr/bin/env python -i' in the peek-ann.py shebang
+# line, but not all OSes support three words being present in the shebang line.
+us=$(basename $0)
+ourdir=$(dirname $0)
+py=$ourdir/../tools/peek-ann.py
+if [ ! -f $py ]; then
+    echo "$us: cannot find $py" 1>&2
+    exit 1
+fi
+
+exec python -i $py "$@"

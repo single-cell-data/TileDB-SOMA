@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+
+# cd to the top level directory of the repo
+cd $(git rev-parse --show-toplevel)
+
+echo "Waiting for file changes..."
+
+while inotifywait -r -e modify libtiledbsoma >& /dev/null; do
+  cd build
+
+  make -j16 && \
+    make install-libtiledbsoma && \
+    ../scripts/test && \
+    banner "PASS" || banner "FAIL"
+
+  cd -
+  echo "Waiting for file changes..."
+done

@@ -1,0 +1,66 @@
+name: TileDB-SingleCell Python CI
+
+on:
+  pull_request:
+  push:
+    branches: [main-old]
+  release:
+    types: [published]
+
+jobs:
+  build:
+
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-22.04, macos-12, windows-2019]
+        python-version: ['3.8']
+        include:
+          - runs-on: ubuntu-22.04
+            cc: gcc-11
+            cxx: g++-11
+          - runs-on: macos-12
+            cc: gcc-11
+            cxx: g++-11
+
+    steps:
+    - name: Checkout TileDB-SingleCell
+      uses: actions/checkout@v2
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v2
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Install Python packages
+      run: python -m pip -v install pytest pybind11 typeguard apis/python
+      env:
+        CC: ${{ matrix.cc }}
+        CXX: ${{ matrix.cxx }}
+
+    - name: Run pytests
+      run: python -m pytest apis/python/tests
+
+    - name: Build wheel distribution
+      run: python -m pip -v wheel --no-deps --wheel-dir=dist-wheel apis/python
+
+    - name: Publish package to TestPyPI
+      if: matrix.os == 'ubuntu-22.04' && github.event_name == 'release'
+      uses: pypa/gh-action-pypi-publish@master
+      continue-on-error: true
+      with:
+        repository_url: https://test.pypi.org/legacy/
+        user: __token__
+        password: ${{ secrets.TEST_PYPI_TOKEN }}
+        packages_dir: dist-wheel
+        verbose: true
+
+    - name: Publish package to PyPI
+      if: matrix.os == 'ubuntu-22.04' && github.event_name == 'release' && !github.event.release.prerelease
+      uses: pypa/gh-action-pypi-publish@master
+      with:
+        user: __token__
+        password: ${{ secrets.PYPI_TOKEN }}
+        packages_dir: dist-wheel
+        verbose: true

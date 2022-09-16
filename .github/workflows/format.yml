@@ -1,0 +1,32 @@
+name: TileDB Python Linting
+
+on:
+  pull_request:
+  push:
+    branches: [main-old]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apis/python
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
+      - name: Check Python Black Format
+        run: |
+          python -m pip install black
+          python -m black --check --diff . tools/[a-z]*
+      - name: Check for unsorted / unformatted Python imports with isort
+        run: |
+          python -m pip install isort
+          python -m isort --check --diff .
+      - name: Check Python style guide enforcement with flake8
+        run: |
+          python -m pip install flake8-bugbear
+          python -m flake8 . tools/[a-z]*
+      - name: Check type annotations with mypy
+        run: |
+          python -m pip install mypy types-setuptools
+          python -m mypy .

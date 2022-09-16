@@ -1,0 +1,38 @@
+# Workflow derived from https://github.com/r-lib/actions/tree/master/examples
+# Need help debugging build failures? Start at https://github.com/r-lib/actions#where-to-find-help
+on:
+  push:
+    branches: [main-old]
+  release:
+    types: [published]
+  workflow_dispatch:
+
+name: pkgdown
+
+jobs:
+  pkgdown:
+    runs-on: ubuntu-latest
+    # This is GitHub Actions magic -- there are no secrets we as package owners need to set up or manage
+    env:
+      GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Install libgeos on Linux
+        if: runner.os == 'Linux'
+        run: sudo ./tools/ci/install-linux-dependencies.sh
+
+      - uses: r-lib/actions/setup-pandoc@v1
+        with:
+          working-directory: "apis/R"
+
+      - uses: r-lib/actions/setup-r@v1
+        with:
+          use-public-rspm: true
+          working-directory: "apis/R"
+
+      - name: Install dependencies
+        run: ./tools/ci/install-pkgdown-dependencies.sh
+
+      - name: Deploy package
+        run: ./tools/ci/deploy-pkgdown.sh

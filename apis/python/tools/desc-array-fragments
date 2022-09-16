@@ -1,0 +1,24 @@
+#!/usr/bin/env python3
+
+# ================================================================
+# Prints a table providing details about the fragments of an array.
+# ================================================================
+
+import argparse
+
+import tiledbsoma.util_tiledb
+
+
+def main():
+    p = argparse.ArgumentParser()
+    p.add_argument(
+        "array_uri",
+        type=str,
+        help="URI of the array to list fragments for",
+    )
+    args = p.parse_args()
+    tiledbsoma.util_tiledb.list_fragments(args.array_uri)
+
+
+if __name__ == "__main__":
+    main()
