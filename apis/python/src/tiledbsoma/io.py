@@ -1,3 +1,4 @@
+import pathlib
 from typing import Callable, Optional
 
 import anndata as ad
@@ -49,8 +50,10 @@ def _from_h5ad_common(
     """
     Common code for things we do when processing a .h5ad file for ingest/update.
     """
-    if not isinstance(input_path, str):
-        raise Exception(f"Input path {input_path} is not a string -- did you want from_anndata?")
+    if not (isinstance(input_path, str) or isinstance(input_path, pathlib.PosixPath)):
+        raise Exception(
+            f"Input path {input_path} is not a string -- did you want from_anndata?"
+        )
 
     s = util.get_start_stamp()
     logging.log_io(
@@ -88,8 +91,10 @@ def from_anndata(
     """
     Top-level writer method for creating a TileDB group for a ``SOMAExperiment`` object.
     """
-    if not isinstance(anndata, ad.Anndata):
-        raise Exception(f"Second argument is not an AnnData object -- did you want from_h5ad?")
+    if not isinstance(anndata, ad.AnnData):
+        raise Exception(
+            "Second argument is not an AnnData object -- did you want from_h5ad?"
+        )
 
     # Without _at least_ an index, there is nothing to indicate the dimension indices.
     if anndata.obs.index.empty or anndata.var.index.empty:
