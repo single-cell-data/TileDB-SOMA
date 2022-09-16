@@ -43,17 +43,15 @@ jobs:
           r-version: ${{ matrix.config.r }}
           http-user-agent: ${{ matrix.config.http-user-agent }}
           use-public-rspm: true
-          working-directory: apis/R
+          working-directory: "apis/R"
 
       - name: Install dependencies
         env:
           R_REMOTES_NO_ERRORS_FROM_WARNINGS: true
         run: Rscript -e "install.packages(c('remotes', 'rcmdcheck'))" -e 'remotes::install_deps("apis/R", dependencies = TRUE)'
         ####with:
-        ####  working-directory: apis/R
+        ####  working-directory: "apis/R"
 
       - uses: r-lib/actions/check-r-package@v2
         with:
-          working-directory: apis/R
-
-# trivial mod to force CI run
+          working-directory: "apis/R"
