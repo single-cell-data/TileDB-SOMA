@@ -1,4 +1,6 @@
-#!/bin/sh
+#!/bin/bash
+
+set -euo pipefail
 
 cd apis/R
 
@@ -11,7 +13,7 @@ echo "::group::Check TileDB R package"
 ## set flag to tolerate missing suggested packages (as e.g. vignette-building tools)
 export _R_CHECK_FORCE_SUGGESTS_=FALSE
 ## check package
-R CMD check --as-cran --no-manual --ignore-vignettes tiledb_*.tar.gz
+R CMD check --as-cran --no-manual --ignore-vignettes tiledbsoma_*.tar.gz
 echo "::endgroup::"
 
 cd ../..
