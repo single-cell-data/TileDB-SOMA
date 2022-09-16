@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 set -euo pipefail
 # Context: .github/workflows/*.yaml
 export R_REMOTES_NO_ERRORS_FROM_WARNINGS='true'
