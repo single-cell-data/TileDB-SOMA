@@ -3,7 +3,6 @@ from typing import Callable
 import anndata as ad
 import scanpy
 import tiledb
-import pathlib
 
 import tiledbsoma
 import tiledbsoma.logging
@@ -35,10 +34,8 @@ def from_h5ad(
     """
     Reads an ``.h5ad`` local-disk file and writes to a TileDB SOMA structure.
     """
-    if not (isinstance(input_path, str) or isinstance(input_path, pathlib.PosixPath)):
-        raise Exception(
-            f"Input path {input_path} is not a string -- did you want from_anndata?"
-        )
+    if isinstance(input_path, ad.AnnData):
+        raise Exception("Input path is an AnnData object -- did you want from_anndata?")
     _from_h5ad_common(soma, input_path, _from_anndata_aux, X_layer_name)
 
 
