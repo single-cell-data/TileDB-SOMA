@@ -1,4 +1,3 @@
-import pathlib
 from typing import Callable, Optional
 
 import anndata as ad
@@ -50,10 +49,8 @@ def _from_h5ad_common(
     """
     Common code for things we do when processing a .h5ad file for ingest/update.
     """
-    if not (isinstance(input_path, str) or isinstance(input_path, pathlib.PosixPath)):
-        raise Exception(
-            f"Input path {input_path} is not a string -- did you want from_anndata?"
-        )
+    if isinstance(input_path, ad.AnnData):
+        raise Exception("Input path is an AnnData object -- did you want from_anndata?")
 
     s = util.get_start_stamp()
     logging.log_io(
