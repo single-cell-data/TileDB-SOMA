@@ -51,16 +51,21 @@ class SOMASparseNdArray(TileDBArray):
         # checks on shape
         assert len(shape) > 0
         for e in shape:
-            assert e > 0
+            assert e >= 0
 
         level = self._tiledb_platform_config.string_dim_zstd_level
 
         dims = []
         for e in shape:
+            upper = e - 1
+            tile = min(e, 2048)  # TODO: parameterize
+            if e == 0:
+                upper = 1
+                tile = 1
             dim = tiledb.Dim(
                 # Use tiledb default names like ``__dim_0``
-                domain=(0, e - 1),
-                tile=min(e, 2048),  # TODO: PARAMETERIZE
+                domain=(0, upper),
+                tile=tile,
                 dtype=np.uint64,
                 filters=[tiledb.ZstdFilter(level=level)],
             )
