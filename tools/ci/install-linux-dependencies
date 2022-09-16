@@ -1,0 +1,5 @@
+#!/bin/sh
+
+# Invoked from .github/workflows/*.yaml
+
+apt-get update -y && apt-get install -y libgeos-dev
