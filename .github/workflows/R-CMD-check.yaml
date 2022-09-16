@@ -34,7 +34,7 @@ jobs:
 
       - name: Install libgeos on Linux
         if: runner.os == 'Linux'
-        run: sudo apt-get update -y && sudo apt-get install -y libgeos-dev
+        run: sudo ./tools/ci/install-linux-dependencies.sh
 
       - uses: r-lib/actions/setup-pandoc@v1
 
