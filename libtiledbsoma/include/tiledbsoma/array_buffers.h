@@ -1,5 +1,5 @@
 /**
- * @file   unit_soco.cc
+ * @file   array_buffers.h
  *
  * @section LICENSE
  *
@@ -27,33 +27,55 @@
  *
  * @section DESCRIPTION
  *
- * This file manages unit tests for soma collection objects
+ *   This declares the array buffers API
  */
 
-#include <catch2/catch_test_macros.hpp>
+#ifndef ARRAY_BUFFERS_H
+#define ARRAY_BUFFERS_H
+
+#include <stdexcept>  // for windows: error C2039: 'runtime_error': is not a member of 'std'
+
+#include <span>
 #include <tiledb/tiledb>
-#include <tiledbsoma/tiledbsoma>
 
-#ifndef TILEDBSOMA_SOURCE_ROOT
-#define TILEDBSOMA_SOURCE_ROOT "not_defined"
-#endif
+#include "tiledbsoma/column_buffer.h"
+#include "tiledbsoma/common.h"
+#include "tiledbsoma/logger_public.h"
 
-static const std::string root = TILEDBSOMA_SOURCE_ROOT;
-static const std::string soco_uri = root + "/test/soco";
+namespace tiledbsoma {
 
 using namespace tiledb;
-using namespace tiledbsoma;
 
-TEST_CASE("SOCO: Open arrays") {
-    Config config;
-    // config.logging_level"] = "5";
+class ArrayBuffers {
+   public:
+    ArrayBuffers() = default;
+    ArrayBuffers(const ArrayBuffers&) = delete;
+    ArrayBuffers(ArrayBuffers&&) = default;
+    ~ArrayBuffers() = default;
 
-    auto soco = SOMACollection::open(soco_uri, config);
-    auto soma_uris = soco->list_somas();
-    REQUIRE(soma_uris.size() == 2);
-
-    for (const auto& [name, uri] : soma_uris) {
-        (void)name;
-        auto soma = SOMA::open(uri);
+    std::shared_ptr<ColumnBuffer> at(const std::string& name) {
+        return buffers_[name];
     }
-}
+
+    bool contains(const std::string& name) {
+        return buffers_.contains(name);
+    }
+
+    void emplace(
+        const std::string& name, std::shared_ptr<ColumnBuffer> buffer) {
+        names_.push_back(name);
+        buffers_.emplace(name, buffer);
+    }
+
+    const std::vector<std::string>& names() {
+        return names_;
+    }
+
+   private:
+    std::vector<std::string> names_;
+    std::unordered_map<std::string, std::shared_ptr<ColumnBuffer>> buffers_;
+};
+
+}  // namespace tiledbsoma
+
+#endif

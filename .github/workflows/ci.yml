@@ -44,6 +44,9 @@ jobs:
 
     - name: Build wheel distribution
       run: python -m pip -v wheel --no-deps --wheel-dir=dist-wheel apis/python
+      env:
+        CC: ${{ matrix.cc }}
+        CXX: ${{ matrix.cxx }}
 
     - name: Publish package to TestPyPI
       if: matrix.os == 'ubuntu-22.04' && github.event_name == 'release'

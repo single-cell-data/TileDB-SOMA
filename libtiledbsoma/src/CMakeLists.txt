@@ -1,4 +1,4 @@
-message(STATUS "Starting TileDB-SOMA build.")
+message(STATUS "Starting TileDB-SC build.")
 
 set(CMAKE_WARN_DEPRECATED OFF CACHE BOOL "" FORCE)
 
@@ -45,32 +45,29 @@ message(STATUS "Building with commit hash ${BUILD_COMMIT_HASH}")
 # Common object library
 ############################################################
 
-add_library(TILEDBSOMA_OBJECTS OBJECT
+add_library(TILEDB_SOMA_OBJECTS OBJECT
   ${CMAKE_CURRENT_SOURCE_DIR}/column_buffer.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/logger.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/managed_query.cc
-  ${CMAKE_CURRENT_SOURCE_DIR}/soma_collection.cc
-  ${CMAKE_CURRENT_SOURCE_DIR}/soma_collection_query.cc
-  ${CMAKE_CURRENT_SOURCE_DIR}/soma_query.cc
-  ${CMAKE_CURRENT_SOURCE_DIR}/soma.cc
+  ${CMAKE_CURRENT_SOURCE_DIR}/soma_reader.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/util.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/thread_pool/thread_pool.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/thread_pool/status.cc
 )
 
 message(WARNING "Building TileDB without deprecation warnings")
-target_compile_definitions(TILEDBSOMA_OBJECTS PRIVATE
+target_compile_definitions(TILEDB_SOMA_OBJECTS PRIVATE
   -DBUILD_COMMIT_HASH="${BUILD_COMMIT_HASH}"
   -DTILEDB_DEPRECATED=
 )
 
 target_compile_options(
-  TILEDBSOMA_OBJECTS PRIVATE
+  TILEDB_SOMA_OBJECTS PRIVATE
 )
 
-set_property(TARGET TILEDBSOMA_OBJECTS PROPERTY POSITION_INDEPENDENT_CODE ON)
+set_property(TARGET TILEDB_SOMA_OBJECTS PROPERTY POSITION_INDEPENDENT_CODE ON)
 
-target_include_directories(TILEDBSOMA_OBJECTS
+target_include_directories(TILEDB_SOMA_OBJECTS
   PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${CMAKE_CURRENT_SOURCE_DIR}/../include
@@ -92,9 +89,9 @@ if (SANITIZER)
   if (NOT SANITIZER MATCHES "^(address|memory|leak|thread|undefined)$")
     message(FATAL_ERROR "Unknown clang sanitizer: ${SANITIZER})")
   else()
-    message(STATUS "The TileDB-SOMA library is compiled with sanitizer ${SANITIZER} enabled")
+    message(STATUS "The TileDB-SC library is compiled with sanitizer ${SANITIZER} enabled")
   endif()
-  target_compile_options(TILEDBSOMA_OBJECTS
+  target_compile_options(TILEDB_SOMA_OBJECTS
           PRIVATE
           -g -fno-omit-frame-pointer -fno-optimize-sibling-calls -fsanitize=${SANITIZER}
           )
@@ -105,7 +102,7 @@ endif()
 ############################################################
 
 add_library(tiledbsoma SHARED
-  $<TARGET_OBJECTS:TILEDBSOMA_OBJECTS>
+  $<TARGET_OBJECTS:TILEDB_SOMA_OBJECTS>
 )
 
 target_link_libraries(tiledbsoma
@@ -123,8 +120,9 @@ if (SANITIZER)
 endif()
 
 # List of API headers (to be installed)
-set(TILEDBSOMA_PUBLIC_HEADERS
+set(TILEDB_SOMA_PUBLIC_HEADERS
   ${CMAKE_CURRENT_SOURCE_DIR}/../include/tiledbsoma/tiledbsoma
+  ${CMAKE_CURRENT_SOURCE_DIR}/../include/tiledbsoma/array_buffers.h
   ${CMAKE_CURRENT_SOURCE_DIR}/../include/tiledbsoma/column_buffer.h
   ${CMAKE_CURRENT_SOURCE_DIR}/../include/tiledbsoma/common.h
   ${CMAKE_CURRENT_SOURCE_DIR}/../include/tiledbsoma/logger_public.h
@@ -140,30 +138,30 @@ set(TILEDBSOMA_PUBLIC_HEADERS
 include(GenerateExportHeader)
 
 # Generates the file 'tiledbsoma_export.h' suitable for the current compiler.
-generate_export_header(TILEDBSOMA_OBJECTS
+generate_export_header(TILEDB_SOMA_OBJECTS
   BASE_NAME tiledbsoma
 )
 
 # Set variables in the parent scope so the tests can reference it.
-set(TILEDBSOMA_EXPORT_HEADER_NAME "tiledbsoma_export.h" PARENT_SCOPE)
-set(TILEDBSOMA_EXPORT_HEADER_DIR "${CMAKE_CURRENT_BINARY_DIR}")
-set(TILEDBSOMA_EXPORT_HEADER_DIR "${CMAKE_CURRENT_BINARY_DIR}" PARENT_SCOPE)
-set(TILEDBSOMA_EXPORT_HEADER "${CMAKE_CURRENT_BINARY_DIR}/tiledbsoma_export.h")
-set(TILEDBSOMA_EXPORT_HEADER "${TILEDBSOMA_EXPORT_HEADER}" PARENT_SCOPE)
+set(TILEDB_SOMA_EXPORT_HEADER_NAME "tiledbsoma_export.h" PARENT_SCOPE)
+set(TILEDB_SOMA_EXPORT_HEADER_DIR "${CMAKE_CURRENT_BINARY_DIR}")
+set(TILEDB_SOMA_EXPORT_HEADER_DIR "${CMAKE_CURRENT_BINARY_DIR}" PARENT_SCOPE)
+set(TILEDB_SOMA_EXPORT_HEADER "${CMAKE_CURRENT_BINARY_DIR}/tiledbsoma_export.h")
+set(TILEDB_SOMA_EXPORT_HEADER "${TILEDB_SOMA_EXPORT_HEADER}" PARENT_SCOPE)
 
 # Set related compiler settings
-target_compile_definitions(TILEDBSOMA_OBJECTS PRIVATE -DTILEDBSOMA_OBJECTS_EXPORTS)
-target_include_directories(TILEDBSOMA_OBJECTS PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
+target_compile_definitions(TILEDB_SOMA_OBJECTS PRIVATE -DTILEDB_SOMA_OBJECTS_EXPORTS)
+target_include_directories(TILEDB_SOMA_OBJECTS PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
 
 # Add the generated header to the public headers list
-list(APPEND TILEDBSOMA_PUBLIC_HEADERS
-  "${TILEDBSOMA_EXPORT_HEADER}"
+list(APPEND TILEDB_SOMA_PUBLIC_HEADERS
+  "${TILEDB_SOMA_EXPORT_HEADER}"
 )
 
 # Set the public headers, which are the ones that get installed.
 set_target_properties(tiledbsoma
   PROPERTIES
-    PUBLIC_HEADER "${TILEDBSOMA_PUBLIC_HEADERS}"
+    PUBLIC_HEADER "${TILEDB_SOMA_PUBLIC_HEADERS}"
 )
 
 ############################################################
@@ -180,7 +178,7 @@ endif()
 
 add_executable(tiledbsoma-bin
   ${CMAKE_CURRENT_SOURCE_DIR}/cli.cc
-  $<TARGET_OBJECTS:TILEDBSOMA_OBJECTS>
+  $<TARGET_OBJECTS:TILEDB_SOMA_OBJECTS>
 )
 
 set_target_properties(tiledbsoma-bin PROPERTIES OUTPUT_NAME tdbsc)
@@ -213,7 +211,7 @@ target_include_directories(tiledbsoma-bin
   PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${CMAKE_CURRENT_SOURCE_DIR}/../include
-    ${TILEDBSOMA_EXPORT_HEADER_DIR}
+    ${TILEDB_SOMA_EXPORT_HEADER_DIR}
     ${pybind11_INCLUDE_DIRS}
 )
 

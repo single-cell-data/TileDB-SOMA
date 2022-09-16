@@ -27,19 +27,17 @@
  *
  * @section DESCRIPTION
  *
- * This is the main inport header for the C++ API
+ * This is the main import header for the C++ API
  */
 
- #ifndef __TILEDBSOMA__
+#ifndef __TILEDBSOMA__
 #define __TILEDBSOMA__
 
+#include <tiledbsoma/array_buffers.h>
 #include <tiledbsoma/column_buffer.h>
 #include <tiledbsoma/common.h>
 #include <tiledbsoma/logger_public.h>
 #include <tiledbsoma/managed_query.h>
-#include <tiledbsoma/soma.h>
-#include <tiledbsoma/soma_collection.h>
-#include <tiledbsoma/soma_collection_query.h>
-#include <tiledbsoma/soma_query.h>
+#include <tiledbsoma/soma_reader.h>
 
 #endif

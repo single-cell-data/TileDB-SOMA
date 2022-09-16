@@ -20,10 +20,9 @@ if (TILEDBSOMA_TESTING)
     find_package(Catch_EP REQUIRED)
 
     add_executable(unit_sc EXCLUDE_FROM_ALL
-        $<TARGET_OBJECTS:TILEDBSOMA_OBJECTS>
+        $<TARGET_OBJECTS:TILEDB_SOMA_OBJECTS>
         unit_column_buffer.cc
         unit_managed_query.cc
-        unit_soma.cc
         unit_thread_pool.cc
     )
 
