@@ -1,5 +1,7 @@
 #!/bin/sh
 
+set -euo pipefail
+
 cd apis/R
 
 echo "::group::Build TileDB R package"

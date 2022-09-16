@@ -1,5 +1,7 @@
 #!/bin/sh
 
+set -euo pipefail
+
 cd apis/R
 
 git config --local user.name "$GITHUB_ACTOR"
