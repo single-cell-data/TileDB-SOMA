@@ -47,15 +47,13 @@ jobs:
 
       - name: Install dependencies
         if: matrix.os != 'windows-latest'
-        env:
-          R_REMOTES_NO_ERRORS_FROM_WARNINGS: true
-        run: Rscript -e "install.packages(c('remotes', 'rcmdcheck'))" -e 'remotes::install_deps(pkgdir = "apis/R", dependencies = TRUE)'
+        run: ./tools/ci/install-r-dependencies.sh
 
-      - name: Install dependencies
-        if: matrix.os == 'windows-latest'
-        env:
-          R_REMOTES_NO_ERRORS_FROM_WARNINGS: true
-        run: Rscript -e "install.packages(c('remotes', 'rcmdcheck'))" -e 'remotes::install_deps(pkgdir = "apis\\R", dependencies = TRUE)'
+#      - name: Install dependencies
+#        if: matrix.os == 'windows-latest'
+#        env:
+#          R_REMOTES_NO_ERRORS_FROM_WARNINGS: true
+#        run: sudo ./tools/ci/install-r-dependencies.sh
 
       - uses: r-lib/actions/check-r-package@v2
         if: matrix.os != 'windows-latest'
