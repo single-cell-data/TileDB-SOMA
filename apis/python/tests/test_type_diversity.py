@@ -108,8 +108,10 @@ def test_from_anndata_DataFrame_type(tmp_path):
     df_col_type_sweep = [
         ("bool", lambda a: a.astype(bool)),
         ("str", lambda a: a.astype(str)),
-        ("bytes", lambda a: a.astype(str).astype(bytes)),
-        # ("float16", lambda a: a.astype(np.dtype("float16"))),         TODO: Enable when #39 is fixed
+        # TODO: restore once #274 is in place.
+        # ("bytes", lambda a: a.astype(str).astype(bytes)),
+        # TODO: Enable when #39 is fixed
+        # ("float16", lambda a: a.astype(np.dtype("float16"))),
         ("float32", lambda a: a.astype("float32")),
         ("float64", lambda a: a.astype("float64")),
         ("int8", lambda a: a.astype("int8")),
@@ -147,9 +149,7 @@ def test_from_anndata_DataFrame_type(tmp_path):
             ),
         ),
     ]
-    index = (
-        np.arange(1, n + 1).astype(str).astype(bytes)
-    )  # AnnData requires string indices, TileDB wants bytes. Use LCD
+    index = np.arange(1, n + 1).astype(str).astype(str)
     df = pd.DataFrame(
         data={
             f"col_{name}": cast(pd.Series(index=index, data=np.arange(n)))
@@ -176,7 +176,7 @@ def test_from_anndata_DataFrame_type(tmp_path):
             # TODO: see annotation_dataframe.py. Once Unicode attributes are queryable, we'll need
             # to remove this check which is verifying the current force-to-ASCII workaround.
             if ad_dtype.name == "str":
-                ad_dtype = np.dtype("S")
+                ad_dtype = np.dtype("U")
 
         return ad_dtype == tdb.dtype
 
@@ -212,9 +212,8 @@ def test_from_anndata_annotations_empty(tmp_path):
     n_obs = 100
     n_var = 10
 
-    # AnnData requires a string index. TileDB does not support UTF8, so use ASCII.
-    obs = pd.DataFrame(index=np.arange(n_obs).astype(bytes))
-    var = pd.DataFrame(index=np.arange(n_var).astype(bytes))
+    obs = pd.DataFrame(index=np.arange(n_obs).astype(str))
+    var = pd.DataFrame(index=np.arange(n_var).astype(str))
 
     X = np.ones((n_obs, n_var))
     adata = ad.AnnData(X=X, obs=obs, var=var, dtype=X.dtype)

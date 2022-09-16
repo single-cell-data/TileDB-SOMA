@@ -140,7 +140,7 @@ def test_dim_select(adata):
         "VDAC3",
     ]
 
-    df = soma.obs.dim_select([b"AAGCGACTTTGACG", b"AATGCGTGGACGGA"])
+    df = soma.obs.dim_select(["AAGCGACTTTGACG", "AATGCGTGGACGGA"])
     assert df.shape == (2, 7)
     assert df.at["AAGCGACTTTGACG", "groups"] == "g1"
     assert df.at["AATGCGTGGACGGA", "nFeature_RNA"] == 73
@@ -150,7 +150,7 @@ def test_dim_select(adata):
     # AATGCGTGGACGGA           0       389.0            73                1              1     g1              1
     assert soma.obs.dim_select(None).shape == (80, 7)
 
-    df = soma.var.dim_select([b"AKR1C3", b"MYL9"])
+    df = soma.var.dim_select(["AKR1C3", "MYL9"])
     assert df.shape == (2, 5)
     assert df.at["AKR1C3", "vst.variable"] == 1
     assert df.at["MYL9", "vst.variable"] == 1
@@ -158,15 +158,15 @@ def test_dim_select(adata):
 
     assert sorted(soma.obsm.keys()) == sorted(["X_tsne", "X_pca"])
 
-    df = soma.obsm["X_tsne"].dim_select([b"AAGCGACTTTGACG", b"AATGCGTGGACGGA"])
+    df = soma.obsm["X_tsne"].dim_select(["AAGCGACTTTGACG", "AATGCGTGGACGGA"])
     assert df.shape == (2, 2)
 
-    df = soma.obsm["X_pca"].dim_select([b"AAGCGACTTTGACG", b"AATGCGTGGACGGA"])
+    df = soma.obsm["X_pca"].dim_select(["AAGCGACTTTGACG", "AATGCGTGGACGGA"])
     assert df.shape == (2, 19)
 
-    assert soma.X["data"].dim_select([b"AAGCGACTTTGACG"], [b"AKR1C3"]).shape == (1, 1)
-    assert soma.X["data"].dim_select(None, [b"AKR1C3"]).shape == (80, 1)
-    assert soma.X["data"].dim_select([b"AAGCGACTTTGACG"], None).shape == (20, 1)
+    assert soma.X["data"].dim_select(["AAGCGACTTTGACG"], ["AKR1C3"]).shape == (1, 1)
+    assert soma.X["data"].dim_select(None, ["AKR1C3"]).shape == (80, 1)
+    assert soma.X["data"].dim_select(["AAGCGACTTTGACG"], None).shape == (20, 1)
     assert soma.X["data"].dim_select(None, None).shape == (1600, 1)
 
     tempdir.cleanup()
@@ -211,7 +211,8 @@ def test_zeroes_handling():
     n_obs = len(obs_ids)
     n_var = len(var_ids)
 
-    cell_types = ["blööd" if obs_id[1] == "A" else "lung" for obs_id in obs_ids]
+    # TODO: restore once https://github.com/single-cell-data/TileDB-SingleCell/issues/274 is in place.
+    cell_types = ["blood" if obs_id[1] == "A" else "lung" for obs_id in obs_ids]
     feature_names = [
         "ENSG00000999999" if var_id[1] < "M" else "ENSG00000123456"
         for var_id in var_ids
