@@ -266,20 +266,21 @@ class SOMADataFrame(TileDBArray):
         )
 
     def _get_is_sparse(self) -> bool:
-        if self._cached_is_sparse is not None:
-            return self._cached_is_sparse
+        if self._cached_is_sparse is None:
 
-        # Simpler would be:
-        # if self.exists():
-        #     with self._tiledb_open("r") as A:
-        #         self._cached_is_sparse = A.schema.sparse
-        # but that has _two_ HTTP round trips in the tiledb-cloud case.
-        # This way, there is only one.
-        try:
-            with self._tiledb_open("r") as A:
-                self._cached_is_sparse = A.schema.sparse
-        except tiledb.TileDBError:
-            raise Exception(f"could not read array schema at {self._uri}")
+            # Simpler would be:
+            # if self.exists():
+            #     with self._tiledb_open("r") as A:
+            #         self._cached_is_sparse = A.schema.sparse
+            # but that has _two_ HTTP round trips in the tiledb-cloud case.
+            # This way, there is only one.
+            try:
+                with self._tiledb_open("r") as A:
+                    self._cached_is_sparse = A.schema.sparse
+            except tiledb.TileDBError as e:
+                raise Exception(f"could not read array schema at {self._uri}") from e
+
+        return self._cached_is_sparse
 
     def write(self, values: pa.RecordBatch) -> None:
         """

@@ -186,7 +186,7 @@ class SOMACollection(TileDBObject):
                 lines.append("  " + line)
         return lines
 
-    def _repr_single_aux(self, key) -> Tuple[str, Sequence[str]]:
+    def _repr_single_aux(self, key: str) -> Tuple[str, Sequence[str]]:
         """
         Internal helper method for ``__repr__` which is designed for a single thread
         in a ``ThreadPoolExecutor`` context.

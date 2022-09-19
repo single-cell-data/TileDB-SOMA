@@ -4,6 +4,7 @@ from typing import Optional, TypeVar
 import numpy as np
 import pandas as pd
 import scipy.sparse as sp
+import tiledb
 
 T = TypeVar("T", np.ndarray, pd.Series, pd.DataFrame, sp.spmatrix)
 
@@ -112,3 +113,29 @@ def to_tiledb_supported_array_type(x: T) -> T:
 
     target_dtype = to_tiledb_supported_dtype(x.dtype)
     return x if target_dtype == x.dtype else x.astype(target_dtype)
+
+
+# ----------------------------------------------------------------
+def list_fragments(array_uri: str) -> None:
+    print(f"Listing fragments for array: '{array_uri}'")
+    vfs = tiledb.VFS()
+
+    fragments = []
+    fi = tiledb.fragment.FragmentInfoList(array_uri=array_uri)
+
+    for f in fi:
+        f_dict = {
+            "array_schema_name": f.array_schema_name,
+            "num": f.num,
+            "cell_num": f.cell_num,
+            "size": vfs.dir_size(f.uri),
+        }
+
+        # parse nonempty domains into separate columns
+        for d in range(len(f.nonempty_domain)):
+            f_dict[f"d{d}"] = f.nonempty_domain[d]
+
+        fragments.append(f_dict)
+
+    frags_df = pd.DataFrame(fragments)
+    print(frags_df)
