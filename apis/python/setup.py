@@ -70,7 +70,7 @@ class CMakeExtension(Extension):
 
 
 class BuildExtCmd(build_ext):
-    def build_extensions(self):
+    def run(self):
         find_or_build(self)
         super().build_extensions()
 
