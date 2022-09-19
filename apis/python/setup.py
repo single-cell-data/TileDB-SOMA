@@ -70,7 +70,7 @@ class CMakeExtension(Extension):
 
 
 class BuildExtCmd(build_ext):
-    def build_extensions(self):
+    def run(self):
         find_or_build(self)
         super().build_extensions()
 
@@ -115,10 +115,9 @@ if __name__ == "__main__":
         packages=find_packages("src"),
         zip_safe=False,
         setup_requires=[
-            "setuptools>=18.0",
+            "setuptools>=65.3.0",
             "setuptools_scm>=1.5.4",
             "wheel>=0.30",
-            "pybind11>=2.10.0",
             "setuptools_scm_git_archive",
         ],
         install_requires=[
@@ -128,6 +127,8 @@ if __name__ == "__main__":
             "scanpy",
             "scipy",
             "tiledb>=0.17.0",
+            "pybind11>=2.10.0",
+            "pytest>=7.1.3",
         ],
         python_requires=">=3.7",
         ext_modules=get_ext_modules(),

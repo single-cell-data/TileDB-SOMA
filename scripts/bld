@@ -13,9 +13,10 @@ cd $(git rev-parse --show-toplevel)
 # set env for pybind11 cmake
 export pybind11_DIR=$(python -m pybind11 --cmakedir)
 
-# remove existing build and install directories
+# remove existing build files
 rm -rf build dist
-mkdir -p build
+rm -f apis/python/src/tiledbsoma/libtiledb.*
+rm -f apis/python/src/tiledbsoma/libtiledbsoma.*
 
 if [ $(uname) = "Darwin" ]; then
     nproc=$(sysctl -n hw.ncpu)
@@ -23,13 +24,17 @@ else
     nproc=$(nproc)
 fi
 
-# add options for TileDB debug build
 if [ $BUILD_TYPE == "Debug" ]; then
+  # Debug build: build TileDB from source with debug enabled
+  EXTRA_OPTS="-DFORCE_EXTERNAL_TILEDB=ON -DDOWNLOAD_TILEDB_PREBUILT=OFF"
+elif [ $(uname -m) = "aarch64" ]; then
+  # build on arm: build TileDB from source
   EXTRA_OPTS="-DFORCE_EXTERNAL_TILEDB=ON -DDOWNLOAD_TILEDB_PREBUILT=OFF"
 else
   EXTRA_OPTS=""
 fi
 
+mkdir -p build
 cmake -B build -S libtiledbsoma -DCMAKE_BUILD_TYPE=${BUILD_TYPE} ${EXTRA_OPTS}
 cmake --build build -j $nproc
 cmake --build build --target install-libtiledbsoma

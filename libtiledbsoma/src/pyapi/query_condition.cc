@@ -135,7 +135,7 @@ private:
 }; // namespace tiledbpy
 
 void init_query_condition(py::module &m) {
-  py::class_<PyQueryCondition>(m, "PyQueryCondition")
+  py::class_<PyQueryCondition>(m, "PyQueryCondition", py::module_local())
       .def(py::init<py::object>(), py::arg("ctx") = py::none())
 
       /* TODO surely there's a better way to deal with templated PyBind11
@@ -195,7 +195,7 @@ void init_query_condition(py::module &m) {
       .def("__capsule__", &PyQueryCondition::__capsule__);
 
   py::enum_<tiledb_query_condition_op_t>(m, "tiledb_query_condition_op_t",
-                                         py::arithmetic())
+                                         py::arithmetic(), py::module_local())
       .value("TILEDB_LT", TILEDB_LT)
       .value("TILEDB_LE", TILEDB_LE)
       .value("TILEDB_GT", TILEDB_GT)
@@ -205,7 +205,7 @@ void init_query_condition(py::module &m) {
       .export_values();
 
   py::enum_<tiledb_query_condition_combination_op_t>(
-      m, "tiledb_query_condition_combination_op_t", py::arithmetic())
+      m, "tiledb_query_condition_combination_op_t", py::arithmetic(), py::module_local())
       .value("TILEDB_AND", TILEDB_AND)
       .value("TILEDB_OR", TILEDB_OR)
       .export_values();
