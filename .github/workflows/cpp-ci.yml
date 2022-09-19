@@ -57,6 +57,13 @@ jobs:
         echo "EOI"
         echo "EOI"
         echo "EOI"
+        find /Users/runner/work/TileDB-SOMA/TileDB-SOMA/build -follow -name spdlog.h
+        find /Users/runner/work/TileDB-SOMA/TileDB-SOMA/build -follow -name fmt.h
+        find /Users/runner/work/TileDB-SOMA/TileDB-SOMA/build -follow -name version.h
+        cat /dev/null $(find /Users/runner/work/TileDB-SOMA/TileDB-SOMA/build -follow -name version.h)
+        echo "XXX"
+        echo "XXX"
+        echo "XXX"
       env:
         CC: ${{ matrix.cc }}
         CXX: ${{ matrix.cxx }}
