@@ -15,8 +15,8 @@ source test/tiledbsoma/bin/activate
 Remove old build files:
 ```
 rm -rf build dist
-rm -f apis/python/src/tiledbsoma/libtiledb.so.*
-rm -f apis/python/src/tiledbsoma/libtiledbsoma.*.so
+rm -f apis/python/src/tiledbsoma/libtiledb.*
+rm -f apis/python/src/tiledbsoma/libtiledbsoma.*
 ```
 
 ## Build
