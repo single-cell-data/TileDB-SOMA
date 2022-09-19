@@ -24,7 +24,7 @@ class SOMADataFrame(TileDBArray):
     """
 
     _shape: Optional[NTuple] = None
-    _is_sparse: Optional[bool]
+    _cached_is_sparse: Optional[bool]
     _index_column_names: List[str]
 
     def __init__(
@@ -39,18 +39,7 @@ class SOMADataFrame(TileDBArray):
         See also the ``TileDBOject`` constructor.
         """
         super().__init__(uri=uri, name=name, parent=parent, ctx=ctx)
-
-        # Simpler would be:
-        # if self.exists():
-        #     with self._tiledb_open("r") as A:
-        #         self._is_sparse = A.schema.sparse
-        # but that has _two_ HTTP round trips in the tiledb-cloud case.
-        # This way, there is only one.
-        try:
-            with self._tiledb_open("r") as A:
-                self._is_sparse = A.schema.sparse
-        except tiledb.TileDBError:
-            self._is_sparse = None
+        self._cached_is_sparse = None
 
     def create(
         self,
@@ -118,7 +107,7 @@ class SOMADataFrame(TileDBArray):
             ctx=self._ctx,
         )
 
-        self._is_sparse = sch.sparse
+        self._cached_is_sparse = sch.sparse
         tiledb.Array.create(self._uri, sch, ctx=self._ctx)
 
     def __repr__(self) -> str:
@@ -128,14 +117,13 @@ class SOMADataFrame(TileDBArray):
         return "\n".join(self._repr_aux())
 
     def _repr_aux(self) -> Sequence[str]:
-        if not self.exists():
-            return ["Unpopulated"]
         lines = [
             self.get_name()
             + " "
             + self.__class__.__name__
-            + " "
-            + str(self._get_shape())
+            # Pending https://github.com/single-cell-data/TileDB-SOMA/issues/302
+            # + " "
+            # + str(self._get_shape())
         ]
         return lines
 
@@ -277,6 +265,22 @@ class SOMADataFrame(TileDBArray):
             )
         )
 
+    def _get_is_sparse(self) -> bool:
+        if self._cached_is_sparse is not None:
+            return self._cached_is_sparse
+
+        # Simpler would be:
+        # if self.exists():
+        #     with self._tiledb_open("r") as A:
+        #         self._cached_is_sparse = A.schema.sparse
+        # but that has _two_ HTTP round trips in the tiledb-cloud case.
+        # This way, there is only one.
+        try:
+            with self._tiledb_open("r") as A:
+                self._cached_is_sparse = A.schema.sparse
+        except tiledb.TileDBError:
+            raise Exception(f"could not read array schema at {self._uri}")
+
     def write(self, values: pa.RecordBatch) -> None:
         """
         Write an Arrow.RecordBatch to the persistent object.
@@ -302,7 +306,7 @@ class SOMADataFrame(TileDBArray):
                     )
                 )
 
-        if self._is_sparse:
+        if self._get_is_sparse():
             # sparse write
             with self._tiledb_open("w") as A:
                 A[rowids] = attr_cols_map

@@ -113,8 +113,9 @@ class SOMADenseNdArray(TileDBArray):
             self.get_name()
             + " "
             + self.__class__.__name__
-            + " "
-            + str(self._get_shape())
+            # Pending https://github.com/single-cell-data/TileDB-SOMA/issues/302
+            # + " "
+            # + str(self._get_shape())
         ]
         return lines
 
