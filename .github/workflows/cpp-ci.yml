@@ -47,6 +47,10 @@ jobs:
     - name: Install Python packages
       shell: bash
       run: |
+        echo "PWD"
+        pwd
+        echo "LS"
+        ls -l
         python -m pip install -v pytest pybind11 apis/python
         echo "SOI"
         echo "SOI"
@@ -62,8 +66,13 @@ jobs:
         find /Users/runner/work/TileDB-SOMA/TileDB-SOMA/build -follow -name version.h
         cat /dev/null $(find /Users/runner/work/TileDB-SOMA/TileDB-SOMA/build -follow -name version.h)
         echo "XXX"
+        cd libtiledbsoma; grep -rli spdlog | grep -v cc.o; cd ..
         echo "XXX"
+        cd libtiledbsoma; grep -C10 -i spdlog $(grep -rli spdlog | grep -v cc.o); cd ..
         echo "XXX"
+        echo "YYY"
+        echo "YYY"
+        echo "YYY"
       env:
         CC: ${{ matrix.cc }}
         CXX: ${{ matrix.cxx }}
