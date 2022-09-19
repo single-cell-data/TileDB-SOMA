@@ -4,20 +4,15 @@
 
 For example, create and activate activate a python venv:
 ```
-python -m venv test/tiledbsoma-venv
-source test/tiledbsoma-venv/bin/activate
-```
-
-## Install prerequisites:
-```
-python -m pip install pybind11 pytest
+python -m venv test/tiledbsoma
+source test/tiledbsoma/bin/activate
 ```
 
 ## Build
 
 ```
 cd apis/python
-python -m pip install .
+pip install -e .
 ```
 
 ## Check

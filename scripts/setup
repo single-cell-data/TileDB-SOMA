@@ -6,12 +6,15 @@ set -euo pipefail
 cd $(git rev-parse --show-toplevel)
 
 # create and activate venv
-python -m venv test/tiledbsoma-venv
-source test/tiledbsoma-venv/bin/activate
+python -m venv test/tiledbsoma
+source test/tiledbsoma/bin/activate
 
 # install python api and dependencies
 cd apis/python
-python -m pip install pybind11 pytest .
+pip install -v -e .
+
+# check
+python -c "import tiledbsoma.libtiledbsoma; print(tiledbsoma.libtiledbsoma.version())"
 
 # ingest test data into soco/soma
 cd -
@@ -27,4 +30,4 @@ pytest -v --durations=0 libtiledbsoma
 
 
 printf "\n\nActivate the tiledbsoma venv with this command:\n"
-printf "\n    source test/tiledbsoma-venv/bin/activate\n\n"
+printf "\n    source test/tiledbsoma/bin/activate\n\n"
