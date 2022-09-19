@@ -23,8 +23,11 @@ else
     nproc=$(nproc)
 fi
 
-# add options for TileDB debug build
 if [ $BUILD_TYPE == "Debug" ]; then
+  # Debug build: build TileDB from source with debug enabled
+  EXTRA_OPTS="-DFORCE_EXTERNAL_TILEDB=ON -DDOWNLOAD_TILEDB_PREBUILT=OFF"
+elif [ $(uname -m) = "aarch64" ]; then
+  # build on arm: build TileDB from source
   EXTRA_OPTS="-DFORCE_EXTERNAL_TILEDB=ON -DDOWNLOAD_TILEDB_PREBUILT=OFF"
 else
   EXTRA_OPTS=""

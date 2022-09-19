@@ -1,11 +1,22 @@
 # Build `tiledbsoma` from source
 
+Run the [../scripts/setup](../scripts/setup) script to execute these steps.
+
 ## Setup Python Environment (optional)
 
-For example, create and activate activate a python venv:
+For example, create and activate a python venv:
 ```
 python -m venv test/tiledbsoma
 source test/tiledbsoma/bin/activate
+```
+
+## Clean
+
+Remove old build files:
+```
+rm -rf build dist
+rm -f apis/python/src/tiledbsoma/libtiledb.so.*
+rm -f apis/python/src/tiledbsoma/libtiledbsoma.*.so
 ```
 
 ## Build
