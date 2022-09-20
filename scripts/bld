@@ -35,6 +35,9 @@ if [ $(uname) = "Darwin" ]; then
 else
     nproc=$(nproc)
 fi
+# XXX TEMP
+nproc=1
+# XXX TEMP
 echo ================================================================
 echo SCRIPTS/BLD NPROC $nproc
 echo ================================================================
