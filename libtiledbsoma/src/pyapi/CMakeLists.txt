@@ -18,10 +18,15 @@ target_link_libraries(libtiledbsoma
 
 target_include_directories(libtiledbsoma
   PRIVATE
+    "XXX-INCN-1"
     ${CMAKE_CURRENT_SOURCE_DIR}
+    "XXX-INCN-2"
     ${CMAKE_CURRENT_SOURCE_DIR}/../../include
+    "XXX-INCN-3"
     ${CMAKE_CURRENT_SOURCE_DIR}/../../src
+    "XXX-INCN-4"
     ${TILEDB_SOMA_EXPORT_HEADER_DIR}
+    "XXX-INCN-5"
 )
 message(STATUS "FILE EXIT libtiledbsoma/src/pyapi/CMakeLists.txt")
 message(STATUS "")

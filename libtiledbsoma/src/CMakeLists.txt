@@ -72,11 +72,24 @@ set_property(TARGET TILEDB_SOMA_OBJECTS PROPERTY POSITION_INDEPENDENT_CODE ON)
 message(STATUS "500 <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<")
 target_include_directories(TILEDB_SOMA_OBJECTS
   PRIVATE
+    "XXX-INCL-1"
     ${CMAKE_CURRENT_SOURCE_DIR}
+    "XXX-INCL-2"
     ${CMAKE_CURRENT_SOURCE_DIR}/../include
-    $<TARGET_PROPERTY:TileDB::tiledb_shared,INTERFACE_INCLUDE_DIRECTORIES>
+
+    #"XXX-INCL-3"
+    #$<TARGET_PROPERTY:TileDB::tiledb_shared,INTERFACE_INCLUDE_DIRECTORIES>
+    #"XXX-INCL-4"
+    #$<TARGET_PROPERTY:spdlog::spdlog,INTERFACE_INCLUDE_DIRECTORIES>
+
+    "XXX-INCL-4"
     $<TARGET_PROPERTY:spdlog::spdlog,INTERFACE_INCLUDE_DIRECTORIES>
+    "XXX-INCL-3"
+    $<TARGET_PROPERTY:TileDB::tiledb_shared,INTERFACE_INCLUDE_DIRECTORIES>
+
+    "XXX-INCL-5"
     ${pybind11_INCLUDE_DIRS}
+    "XXX-INCL-6"
 )
 message(STATUS "600 <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<")
 
@@ -213,10 +226,15 @@ endif()
 
 target_include_directories(tiledbsoma-bin
   PRIVATE
+    "XXX-INCM-1"
     ${CMAKE_CURRENT_SOURCE_DIR}
+    "XXX-INCM-2"
     ${CMAKE_CURRENT_SOURCE_DIR}/../include
+    "XXX-INCM-3"
     ${TILEDB_SOMA_EXPORT_HEADER_DIR}
+    "XXX-INCM-4"
     ${pybind11_INCLUDE_DIRS}
+    "XXX-INCM-5"
 )
 
 ############################################################
