@@ -47,34 +47,7 @@ jobs:
     - name: Install Python packages
       shell: bash
       run: |
-        echo "PWD"
-        pwd
-        echo "LS"
-        ls -l
         python -m pip install -v pytest pybind11 apis/python
-        echo "SOI"
-        echo "SOI"
-        echo "SOI"
-        for x in /Users/runner/work/TileDB-SOMA/TileDB-SOMA/build/externals/src/ep_spdlog-stamp/ep_spdlog-download-*.log; do
-            cat $x
-        done
-        echo "EOI"
-        echo "EOI"
-        echo "EOI"
-        find /Users/runner/work/TileDB-SOMA/TileDB-SOMA/build -follow -name spdlog.h
-        find /Users/runner/work/TileDB-SOMA/TileDB-SOMA/build -follow -name fmt.h
-        find /Users/runner/work/TileDB-SOMA/TileDB-SOMA/build -follow -name version.h
-        cat /dev/null $(find /Users/runner/work/TileDB-SOMA/TileDB-SOMA/build -follow -name version.h)
-        echo "XXX"
-        cd libtiledbsoma; grep -rli spdlog | grep -v cc.o; cd ..
-        echo "XXX"
-        cd libtiledbsoma; grep -C10 -i spdlog $(grep -rli spdlog | grep -v cc.o); cd ..
-        echo "XXX"
-        echo "YYY"
-        echo "YYY"
-        echo "YYY"
-        cat -n build/libtiledbsoma/_deps/catch2-build/src/CMakeFiles/Catch2WithMain.dir/build.make
-        echo "ZZZ"
       env:
         CC: ${{ matrix.cc }}
         CXX: ${{ matrix.cxx }}

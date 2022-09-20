@@ -4,8 +4,7 @@
 
 BUILD_TYPE=${1:-Release} # default to Release build
 echo ================================================================
-echo SCRIPTS/BLD
-echo "BUILD_TYPE ${BUILD_TYPE}"
+echo SCRIPTS/BLD "BUILD_TYPE ${BUILD_TYPE}"
 echo ================================================================
 
 set -eu -o pipefail
@@ -13,20 +12,19 @@ set -eu -o pipefail
 # cd to the top level directory of the repo
 cd $(git rev-parse --show-toplevel)
 echo ================================================================
-echo PWD
+echo SCRIPTS/BLD PWD
 pwd
 echo ================================================================
 
 # set env for pybind11 cmake
 export pybind11_DIR=$(python -m pybind11 --cmakedir)
 echo ================================================================
-echo PYBIND11 DIR
-echo "<<$pybind11_DIR>>"
+echo SCRIPTS/BLD PYBIND11 DIR=$pybind11_DIR
 echo ================================================================
 
 # remove existing build files
 echo ================================================================
-echo CLEAN
+echo SCRIPTS/BLD CLEAN
 echo ================================================================
 rm -rf build dist
 rm -f apis/python/src/tiledbsoma/libtiledb.*
@@ -38,7 +36,7 @@ else
     nproc=$(nproc)
 fi
 echo ================================================================
-echo NPROC $nproc
+echo SCRIPTS/BLD NPROC $nproc
 echo ================================================================
 
 if [ $BUILD_TYPE == "Debug" ]; then
@@ -52,22 +50,22 @@ else
   EXTRA_OPTS="-DCMAKE_VERBOSE_MAKEFILE:BOOL=ON"
 fi
 
-echo ================================================================
-echo mkdir -p build
 mkdir -p build
-echo ================================================================
 
 echo ================================================================
+echo SCRIPTS/BLD MAKEMAKE
 echo cmake -B build -S libtiledbsoma -DCMAKE_BUILD_TYPE=${BUILD_TYPE} ${EXTRA_OPTS}
 cmake -B build -S libtiledbsoma -DCMAKE_BUILD_TYPE=${BUILD_TYPE} ${EXTRA_OPTS}
 echo ================================================================
 
 echo ================================================================
+echo SCRIPTS/BLD MAKEBIN
 echo cmake --build build -j $nproc
 cmake --build build -j $nproc
 echo ================================================================
 
 echo ================================================================
+echo SCRIPTS/BLD MAKETEST
 echo cmake --build build --target install-libtiledbsoma
 cmake --build build --target install-libtiledbsoma
 echo ================================================================
