@@ -3,17 +3,31 @@
 # A script to build and install the C++ library
 
 BUILD_TYPE=${1:-Release} # default to Release build
-echo "Building ${BUILD_TYPE} build"
+echo ================================================================
+echo SCRIPTS/BLD
+echo "BUILD_TYPE ${BUILD_TYPE}"
+echo ================================================================
 
 set -eu -o pipefail
 
 # cd to the top level directory of the repo
 cd $(git rev-parse --show-toplevel)
+echo ================================================================
+echo PWD
+pwd
+echo ================================================================
 
 # set env for pybind11 cmake
 export pybind11_DIR=$(python -m pybind11 --cmakedir)
+echo ================================================================
+echo PYBIND11 DIR
+echo "<<$pybind11_DIR>>"
+echo ================================================================
 
 # remove existing build files
+echo ================================================================
+echo CLEAN
+echo ================================================================
 rm -rf build dist
 rm -f apis/python/src/tiledbsoma/libtiledb.*
 rm -f apis/python/src/tiledbsoma/libtiledbsoma.*
@@ -23,6 +37,9 @@ if [ $(uname) = "Darwin" ]; then
 else
     nproc=$(nproc)
 fi
+echo ================================================================
+echo NPROC $nproc
+echo ================================================================
 
 if [ $BUILD_TYPE == "Debug" ]; then
   # Debug build: build TileDB from source with debug enabled
@@ -31,10 +48,26 @@ elif [ $(uname -m) = "aarch64" ]; then
   # build on arm: build TileDB from source
   EXTRA_OPTS="-DFORCE_EXTERNAL_TILEDB=ON -DDOWNLOAD_TILEDB_PREBUILT=OFF"
 else
-  EXTRA_OPTS=""
+  #EXTRA_OPTS=""
+  EXTRA_OPTS="-DCMAKE_VERBOSE_MAKEFILE:BOOL=ON"
 fi
 
+echo ================================================================
+echo mkdir -p build
 mkdir -p build
+echo ================================================================
+
+echo ================================================================
+echo cmake -B build -S libtiledbsoma -DCMAKE_BUILD_TYPE=${BUILD_TYPE} ${EXTRA_OPTS}
 cmake -B build -S libtiledbsoma -DCMAKE_BUILD_TYPE=${BUILD_TYPE} ${EXTRA_OPTS}
+echo ================================================================
+
+echo ================================================================
+echo cmake --build build -j $nproc
 cmake --build build -j $nproc
+echo ================================================================
+
+echo ================================================================
+echo cmake --build build --target install-libtiledbsoma
 cmake --build build --target install-libtiledbsoma
+echo ================================================================

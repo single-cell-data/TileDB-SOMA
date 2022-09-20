@@ -73,6 +73,8 @@ jobs:
         echo "YYY"
         echo "YYY"
         echo "YYY"
+        cat -n build/libtiledbsoma/_deps/catch2-build/src/CMakeFiles/Catch2WithMain.dir/build.make
+        echo "ZZZ"
       env:
         CC: ${{ matrix.cc }}
         CXX: ${{ matrix.cxx }}
