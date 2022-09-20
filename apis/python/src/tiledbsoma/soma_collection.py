@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from typing import Any, Dict, Iterator, Optional, Sequence
+from concurrent.futures import ThreadPoolExecutor
+from typing import Any, Dict, Iterator, Optional, Sequence, Tuple
 
 import tiledb
 
@@ -155,22 +156,47 @@ class SOMACollection(TileDBObject):
         """
         return "\n".join(self._repr_aux())
 
-    def _repr_aux(self) -> Sequence[str]:
-        """
-        Internal helper function for ``__repr__`` which is nesting-aware.
-        """
-        if not self.exists():
-            return ["Unpopulated"]
-        lines = [f"{self.get_name()} {self.__class__.__name__}:"]
-        for key in self.keys():
-            child_lines = self.get(key)._repr_aux()
-            for line in child_lines:
-                lines.append("  " + line)
-        return lines
-
     # ================================================================
     # PRIVATE METHODS FROM HERE ON DOWN
     # ================================================================
+
+    def _repr_aux(self) -> Sequence[str]:
+        """
+        Internal helper method for ``__repr__`` which is nesting-aware.
+        """
+        if not self.exists():
+            return ["Unpopulated"]
+
+        futures = []
+        with ThreadPoolExecutor(
+            max_workers=self._tiledb_platform_config.max_thread_pool_workers
+        ) as executor:
+            for key in self.keys():
+                future = executor.submit(self._repr_single_aux, key)
+                futures.append(future)
+
+        lines_per_key = {}
+        for future in futures:
+            key, lines = future.result()
+            lines_per_key[key] = lines
+
+        lines = [f"{self.get_name()} {self.__class__.__name__}:"]
+        for key in self.keys():
+            for line in lines_per_key[key]:
+                lines.append("  " + line)
+        return lines
+
+    def _repr_single_aux(self, key: str) -> Tuple[str, Sequence[str]]:
+        """
+        Internal helper method for ``__repr__` which is designed for a single thread
+        in a ``ThreadPoolExecutor`` context.
+        """
+        child = self.get(
+            key
+        )  # Involves a constructor and a tiledb.open to get the class name from object metadata
+        child_lines = child._repr_aux()
+        # Indenting child lines automatically gives us nice visual nesting, for good UX.
+        return (key, ["  " + child_line for child_line in child_lines])
 
     def _tiledb_open(self, mode: str = "r") -> tiledb.Group:
         """
@@ -341,7 +367,7 @@ class SOMACollection(TileDBObject):
         Shows metadata for the group, recursively by default.
         """
         print(f"{indent}[{self._name}]")
-        for key, value in self.metadata:  # XXX TEMP
+        for key, value in self.metadata:
             print(f"{indent}- {key}: {value}")
         if recursively:
             child_indent = indent + "  "

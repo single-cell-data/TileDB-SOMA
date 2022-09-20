@@ -42,10 +42,10 @@ def _construct_member(
     if object_type is None:
         raise Exception(f"URI {member_uri} not found")
     elif object_type == "array":
-        with tiledb.open(member_uri) as A:  # TODO: CTX
+        with tiledb.open(member_uri, ctx=ctx) as A:
             class_name = A.meta[SOMA_OBJECT_TYPE_METADATA_KEY]
     elif object_type == "group":
-        with tiledb.Group(member_uri, mode="r") as G:  # TODO: CTX
+        with tiledb.Group(member_uri, mode="r", ctx=ctx) as G:
             class_name = G.meta[SOMA_OBJECT_TYPE_METADATA_KEY]
     else:
         raise Exception(f"object type {object_type} unrecognized")
