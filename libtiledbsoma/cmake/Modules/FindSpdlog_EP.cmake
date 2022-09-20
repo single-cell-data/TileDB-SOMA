@@ -75,7 +75,7 @@ if (NOT SPDLOG_FOUND)
     endif()
 
     message(STATUS "Adding spdlog as an external project")
-    message(STATUS "D-B-G 001 <<<<<<<<<<<<<<<<<<<<<<<<<<<<")
+    message(STATUS "001 <<<<<<<<<<<<<<<<<<<<<<<<<<<<")
     ExternalProject_Add(ep_spdlog
       PREFIX "externals"
       # Set download name to avoid collisions with only the version number in the filename
@@ -100,15 +100,16 @@ if (NOT SPDLOG_FOUND)
       LOG_INSTALL TRUE
       LOG_OUTPUT_ON_FAILURE TRUE
       DEPENDS ${SPDLOG_DEPENDS})
-    message(STATUS "D-B-G 001 <<<<<<<<<<<<<<<<<<<<<<<<<<<<")
-    message(STATUS "D-B-G SPDLOG_DEPENDS          " ${SPDLOG_DEPENDS})
-    message(STATUS "D-B-G EP_INSTALL_PREFIX       " ${EP_INSTALL_PREFIX})
-    message(STATUS "D-B-G CMAKE_OSX_ARCHITECTURES " ${CMAKE_OSX_ARCHITECTURES})
-    message(STATUS "D-B-G CMAKE_BUILD_TYPE        " ${CMAKE_BUILD_TYPE})
-    message(STATUS "D-B-G CMAKE_CXX_COMPILER      " ${CMAKE_CXX_COMPILER})
-    message(STATUS "D-B-G CMAKE_C_COMPILER        " ${CMAKE_C_COMPILER})
-    message(STATUS "D-B-G CMAKE_TOOLCHAIN_FILE    " ${CMAKE_TOOLCHAIN_FILE})
-    message(STATUS "D-B-G 003 <<<<<<<<<<<<<<<<<<<<<<<<<<<<")
+    message(STATUS "001 <<<<<<<<<<<<<<<<<<<<<<<<<<<<")
+    message(STATUS "SPDLOG_DEPENDS          " ${SPDLOG_DEPENDS})
+    message(STATUS "EP_INSTALL_PREFIX       " ${EP_INSTALL_PREFIX})
+    message(STATUS "CMAKE_OSX_ARCHITECTURES " ${CMAKE_OSX_ARCHITECTURES})
+    message(STATUS "CMAKE_BUILD_TYPE        " ${CMAKE_BUILD_TYPE})
+    message(STATUS "CMAKE_CXX_COMPILER      " ${CMAKE_CXX_COMPILER})
+    message(STATUS "CMAKE_C_COMPILER        " ${CMAKE_C_COMPILER})
+    message(STATUS "CMAKE_TOOLCHAIN_FILE    " ${CMAKE_TOOLCHAIN_FILE})
+    message(STATUS "SPDLOG_INCLUDE_DIR      " ${SPDLOG_INCLUDE_DIR})
+    message(STATUS "003 <<<<<<<<<<<<<<<<<<<<<<<<<<<<")
     list(APPEND EXTERNAL_PROJECTS ep_spdlog)
     list(APPEND FORWARD_EP_CMAKE_ARGS
             -DTILEDBSOMA_SPDLOG_EP_BUILT=TRUE
@@ -119,7 +120,7 @@ if (NOT SPDLOG_FOUND)
 endif()
 
 if (spdlog_FOUND AND NOT TARGET spdlog::spdlog)
-  message(STATUS "D-B-G 100 <<<<<<<<<<<<<<<<<<<<<<<<<<<<")
+  message(STATUS "100 <<<<<<<<<<<<<<<<<<<<<<<<<<<<")
   add_library(spdlog::spdlog INTERFACE IMPORTED)
   find_package(fmt QUIET)
   if (${fmt_FOUND})
@@ -130,7 +131,7 @@ if (spdlog_FOUND AND NOT TARGET spdlog::spdlog)
           )
   # If the target is defined we need to handle external fmt build types
 elseif(TARGET spdlog::spdlog)
-  message(STATUS "D-B-G 200 <<<<<<<<<<<<<<<<<<<<<<<<<<<<")
+  message(STATUS "200 <<<<<<<<<<<<<<<<<<<<<<<<<<<<")
   if (SPDLOG_FMT_EXTERNAL)
     # Since we are using header only we need to define this
     add_definitions("-DSPDLOG_FMT_EXTERNAL=1")

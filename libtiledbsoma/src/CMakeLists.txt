@@ -69,7 +69,7 @@ target_compile_options(
 
 set_property(TARGET TILEDB_SOMA_OBJECTS PROPERTY POSITION_INDEPENDENT_CODE ON)
 
-message(STATUS "D-B-G 500 <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<")
+message(STATUS "500 <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<")
 target_include_directories(TILEDB_SOMA_OBJECTS
   PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}
@@ -78,7 +78,7 @@ target_include_directories(TILEDB_SOMA_OBJECTS
     $<TARGET_PROPERTY:spdlog::spdlog,INTERFACE_INCLUDE_DIRECTORIES>
     ${pybind11_INCLUDE_DIRS}
 )
-message(STATUS "D-B-G 600 <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<")
+message(STATUS "600 <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<")
 
 ############################################################
 # Compile options/definitions
