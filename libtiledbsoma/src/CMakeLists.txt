@@ -1,4 +1,6 @@
-message(STATUS "Starting TileDB-SC build.")
+message(STATUS "")
+message(STATUS "FILE ENTER libtiledbsoma/src/CMakeLists.txt")
+#message(STATUS "Starting TileDB-SC build.")
 
 set(CMAKE_WARN_DEPRECATED OFF CACHE BOOL "" FORCE)
 
@@ -67,6 +69,7 @@ target_compile_options(
 
 set_property(TARGET TILEDB_SOMA_OBJECTS PROPERTY POSITION_INDEPENDENT_CODE ON)
 
+message(STATUS "D-B-G 500 <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<")
 target_include_directories(TILEDB_SOMA_OBJECTS
   PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}
@@ -75,6 +78,7 @@ target_include_directories(TILEDB_SOMA_OBJECTS
     $<TARGET_PROPERTY:spdlog::spdlog,INTERFACE_INCLUDE_DIRECTORIES>
     ${pybind11_INCLUDE_DIRS}
 )
+message(STATUS "D-B-G 600 <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<")
 
 ############################################################
 # Compile options/definitions
@@ -248,3 +252,5 @@ install(
   INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
   PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/tiledbsoma
 )
+message(STATUS "FILE EXIT libtiledbsoma/src/CMakeLists.txt")
+message(STATUS "")

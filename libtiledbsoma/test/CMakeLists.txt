@@ -1,6 +1,8 @@
 ############################################################
 # Definitions
 ############################################################
+message(STATUS "")
+message(STATUS "FILE ENTER libtiledbsoma/test/CMakeLists.txt")
 
 # Set root source directory as compiler definition for use in tests
 get_filename_component(TILEDBSOMA_SOURCE_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/../../" ABSOLUTE)
@@ -73,3 +75,5 @@ if (TILEDBSOMA_TESTING)
     )
 
 endif()
+message(STATUS "FILE EXIT libtiledbsoma/test/CMakeLists.txt")
+message(STATUS "")
