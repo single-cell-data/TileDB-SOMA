@@ -34,35 +34,56 @@
 
 using namespace tiledbsoma;
 
+// [[Rcpp::export]]
 void test_sdf(const std::string& uri) {
     std::map<std::string, std::string> config;
+    // Control buffer sizes, similar to tiledb-py
     // config["soma.init_buffer_bytes"] = "4294967296";
+
+    // Control core memory usage
     // config["sm.mem.total_budget"] = "1118388608";
 
+    // Read all values from the obs array
     auto obs = SOMAReader::open(uri + "/obs", "obs");
-    auto var = SOMAReader::open(uri + "/var", "var");
+    obs->submit();
     auto obs_data = obs->read_next();
+
+    // Read all values from the var array
+    auto var = SOMAReader::open(uri + "/ms/mRNA/var", "var");
+    var->submit();
     auto var_data = var->read_next();
+
+    // Check if obs and var reads are complete
     if (obs->results_complete() && var->results_complete()) {
         LOG_INFO("var and obs queries are complete");
     }
 
-    auto x_data = SOMAReader::open(uri + "/X/data", "X/data", config);
+    // Read all values from the X/data array
+    auto x_data = SOMAReader::open(uri + "/ms/mRNA/X/data", "X/data", config);
+    x_data->submit();
+
     int batches = 0;
     int total_num_rows = 0;
+
+    // Handle incomplete queries
     while (auto batch = x_data->read_next()) {
         batches++;
-        total_num_rows += batch.value()->at("obs_id")->size();
+        total_num_rows += (*batch)->num_rows();
     }
+
     LOG_INFO(fmt::format("X/data rows = {}", total_num_rows));
     LOG_INFO(fmt::format("  batches = {}", batches));
 }
 
+#if !defined(R_BUILD)
 int main(int argc, char** argv) {
     LOG_CONFIG("debug");
 
-    (void)argc;
-    (void)argv;
+    if (argc < 2) {
+        printf("Run with CI test SOMA:\n\n");
+        printf("  %s test/soco/pbmc3k_processed\n", argv[0]);
+        return 0;
+    }
 
     try {
         test_sdf(argv[1]);
@@ -73,3 +94,4 @@ int main(int argc, char** argv) {
 
     return 0;
 };
+#endif

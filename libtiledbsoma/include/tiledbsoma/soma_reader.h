@@ -194,10 +194,35 @@ class SOMAReader {
         mq_->set_condition(qc);
     }
 
+    /**
+     * @brief Submit the query
+     *
+     */
     void submit();
 
+    /**
+     * @brief Read the next chunk of results from the query. If all results have
+     * already been read, std::nullopt is returned.
+     *
+     * An example use model:
+     *
+     *   auto reader = SOMAReader::open(uri);
+     *   reader->submit();
+     *   while (auto batch = x_data->read_next()) {
+     *       ...process batch ...
+     *   }
+     *
+     * @return std::optional<std::shared_ptr<ArrayBuffers>>
+     */
     std::optional<std::shared_ptr<ArrayBuffers>> read_next();
 
+    /**
+     * @brief Return true if `read_next` returned all results from the
+     * query. The return value is false if the query was incomplete.
+     *
+     * @return True if last call to `read_next` returned all results of the
+     * query
+     */
     bool results_complete() {
         return mq_->results_complete();
     }

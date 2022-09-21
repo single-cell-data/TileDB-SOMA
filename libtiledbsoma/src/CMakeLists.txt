@@ -181,7 +181,7 @@ add_executable(tiledbsoma-bin
   $<TARGET_OBJECTS:TILEDB_SOMA_OBJECTS>
 )
 
-set_target_properties(tiledbsoma-bin PROPERTIES OUTPUT_NAME tdbsc)
+set_target_properties(tiledbsoma-bin PROPERTIES OUTPUT_NAME tdbsoma)
 
 target_link_libraries(tiledbsoma-bin
   PRIVATE
