@@ -1,4 +1,9 @@
-message(STATUS "Starting TileDB-SC build.")
+if(DEFINED ENV{LIBTILEDBSOMA_DEBUG_BUILD})
+  message(STATUS "")
+  message(STATUS "START libtiledbsoma/src/CMakeLists.txt")
+else()
+  message(STATUS "Starting TileDB-SOMA build.")
+endif()
 
 set(CMAKE_WARN_DEPRECATED OFF CACHE BOOL "" FORCE)
 
@@ -89,7 +94,7 @@ if (SANITIZER)
   if (NOT SANITIZER MATCHES "^(address|memory|leak|thread|undefined)$")
     message(FATAL_ERROR "Unknown clang sanitizer: ${SANITIZER})")
   else()
-    message(STATUS "The TileDB-SC library is compiled with sanitizer ${SANITIZER} enabled")
+    message(STATUS "The TileDB-SOMA library is compiled with sanitizer ${SANITIZER} enabled")
   endif()
   target_compile_options(TILEDB_SOMA_OBJECTS
           PRIVATE
@@ -248,3 +253,7 @@ install(
   INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
   PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/tiledbsoma
 )
+if(DEFINED ENV{LIBTILEDBSOMA_DEBUG_BUILD})
+  message(STATUS "END libtiledbsoma/src/CMakeLists.txt")
+  message(STATUS "")
+endif()

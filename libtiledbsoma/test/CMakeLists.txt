@@ -1,6 +1,10 @@
 ############################################################
 # Definitions
 ############################################################
+if(DEFINED ENV{LIBTILEDBSOMA_DEBUG_BUILD})
+  message(STATUS "")
+  message(STATUS "START libtiledbsoma/test/CMakeLists.txt")
+endif()
 
 # Set root source directory as compiler definition for use in tests
 get_filename_component(TILEDBSOMA_SOURCE_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/../../" ABSOLUTE)
@@ -72,4 +76,9 @@ if (TILEDBSOMA_TESTING)
         build_tests
     )
 
+endif()
+
+if(DEFINED ENV{LIBTILEDBSOMA_DEBUG_BUILD})
+  message(STATUS "END libtiledbsoma/test/CMakeLists.txt")
+  message(STATUS "")
 endif()

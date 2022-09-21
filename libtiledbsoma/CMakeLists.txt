@@ -30,6 +30,11 @@
 ############################################################
 
 cmake_minimum_required(VERSION 3.21)
+
+if(DEFINED ENV{LIBTILEDBSOMA_DEBUG_BUILD})
+  message(STATUS "")
+  message(STATUS "START libtiledbsoma/CMakeLists.txt")
+endif()
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmake/Modules/")
 
 # TileDB-SOMA Options
@@ -112,14 +117,18 @@ if (CMAKE_IDE)
 endif()
 
 if (SUPERBUILD)
-  project(TileDB-SC-Superbuild)
+  project(TileDB-SOMA-Superbuild)
   message(STATUS "Starting TileDB-SingleCell superbuild.")
   include("cmake/Superbuild.cmake")
+  if(DEFINED ENV{LIBTILEDBSOMA_DEBUG_BUILD})
+    message(STATUS "END libtiledbsoma/CMakeLists.txt")
+    message(STATUS "")
+  endif()
   return()
 endif()
 
-project(TileDB-SC)
-message(STATUS "Starting TileDB-SC regular build.")
+project(TileDB-SOMA)
+message(STATUS "Starting TileDB-SOMA regular build.")
 
 # Paths to locate the installed external projects.
 set(EP_SOURCE_DIR "${EP_BASE}/src")
@@ -199,3 +208,7 @@ enable_testing()
 
 add_subdirectory(src)
 add_subdirectory(test)
+if(DEFINED ENV{LIBTILEDBSOMA_DEBUG_BUILD})
+  message(STATUS "END libtiledbsoma/CMakeLists.txt")
+  message(STATUS "")
+endif()
