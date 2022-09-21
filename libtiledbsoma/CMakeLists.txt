@@ -117,7 +117,7 @@ if (CMAKE_IDE)
 endif()
 
 if (SUPERBUILD)
-  project(TileDB-SC-Superbuild)
+  project(TileDB-SOMA-Superbuild)
   message(STATUS "Starting TileDB-SingleCell superbuild.")
   include("cmake/Superbuild.cmake")
   if(DEFINED ENV{LIBTILEDBSOMA_DEBUG_BUILD})
@@ -127,8 +127,8 @@ if (SUPERBUILD)
   return()
 endif()
 
-project(TileDB-SC)
-message(STATUS "Starting TileDB-SC regular build.")
+project(TileDB-SOMA)
+message(STATUS "Starting TileDB-SOMA regular build.")
 
 # Paths to locate the installed external projects.
 set(EP_SOURCE_DIR "${EP_BASE}/src")
