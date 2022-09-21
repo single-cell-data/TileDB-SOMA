@@ -2,6 +2,12 @@
 
 # A script to build and install the C++ library
 
+# Supported types as of 2022-09-21:
+# * Release
+# * Debug
+# * RelWithDebInfo
+# * Coverage
+
 BUILD_TYPE=${1:-Release} # default to Release build
 echo "Building ${BUILD_TYPE} build"
 
