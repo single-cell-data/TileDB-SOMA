@@ -9,17 +9,51 @@
 # * Coverage
 
 BUILD_TYPE=${1:-Release} # default to Release build
-echo "Building ${BUILD_TYPE} build"
+if [ ! -z "$LIBTILEDBSOMA_DEBUG_BUILD" ]; then
+  echo
+  echo ================================================================
+  echo LIBTILEDBSOMA SCRIPTS/BLD BUILD_TYPE ${BUILD_TYPE}
+  echo ================================================================
+else
+  echo "Building ${BUILD_TYPE} build"
+fi
+
+# Convert these from unset to "" before we flip on `set -u`.
+if [ -z "$LIBTILEDBSOMA_DEBUG_BUILD" ]; then
+  export LIBTILEDBSOMA_DEBUG_BUILD=""
+fi
+if [ -z "$LIBTILEDBSOMA_NO_PARALLEL_BUILD" ]; then
+  export LIBTILEDBSOMA_NO_PARALLEL_BUILD=""
+fi
 
 set -eu -o pipefail
 
 # cd to the top level directory of the repo
 cd $(git rev-parse --show-toplevel)
+if [ ! -z "$LIBTILEDBSOMA_DEBUG_BUILD" ]; then
+  echo
+  echo ================================================================
+  echo LIBTILEDBSOMA SCRIPTS/BLD PWD
+  pwd
+  echo ================================================================
+fi
 
 # set env for pybind11 cmake
 export pybind11_DIR=$(python -m pybind11 --cmakedir)
+if [ ! -z "$LIBTILEDBSOMA_DEBUG_BUILD" ]; then
+  echo
+  echo ================================================================
+  echo LIBTILEDBSOMA SCRIPTS/BLD PYBIND11 DIR=$pybind11_DIR
+  echo ================================================================
+fi
 
 # remove existing build files
+if [ ! -z "$LIBTILEDBSOMA_DEBUG_BUILD" ]; then
+  echo
+  echo ================================================================
+  echo LIBTILEDBSOMA SCRIPTS/BLD CLEAN
+  echo ================================================================
+fi
 rm -rf build dist
 rm -f apis/python/src/tiledbsoma/libtiledb.*
 rm -f apis/python/src/tiledbsoma/libtiledbsoma.*
@@ -41,12 +75,46 @@ else
   # Debug note: this is _incredibly_ helpful in that it reveals the actual compile lines etc which
   # make itself shows by default but which cmake-driven make hides by default. Use this for any
   # non-trivial cmake debugging.
-  #
+  if [ ! -z "$LIBTILEDBSOMA_DEBUG_BUILD" ]; then
+    EXTRA_OPTS="-DCMAKE_VERBOSE_MAKEFILE:BOOL=ON"
+  fi
   # Also (pro-tip), set nproc=1 to get a more deterministic ordering of output lines.
-  # EXTRA_OPTS="-DCMAKE_VERBOSE_MAKEFILE:BOOL=ON"
+  if [ ! -z "$LIBTILEDBSOMA_NO_PARALLEL_BUILD" ]; then
+    nproc=1
+  fi
 fi
 
 mkdir -p build
+
+if [ ! -z "$LIBTILEDBSOMA_DEBUG_BUILD" ]; then
+  echo
+  echo ================================================================
+  echo LIBTILEDBSOMA SCRIPTS/BLD GENERATE MAKEFILES
+  echo cmake -B build -S libtiledbsoma -DCMAKE_BUILD_TYPE=${BUILD_TYPE} ${EXTRA_OPTS}
+fi
 cmake -B build -S libtiledbsoma -DCMAKE_BUILD_TYPE=${BUILD_TYPE} ${EXTRA_OPTS}
+if [ ! -z "$LIBTILEDBSOMA_DEBUG_BUILD" ]; then
+  echo ================================================================
+fi
+
+if [ ! -z "$LIBTILEDBSOMA_DEBUG_BUILD" ]; then
+  echo
+  echo ================================================================
+  echo LIBTILEDBSOMA EXECUTE MAKEFILES
+  echo cmake --build build -j $nproc
+fi
 cmake --build build -j $nproc
+if [ ! -z "$LIBTILEDBSOMA_DEBUG_BUILD" ]; then
+  echo ================================================================
+fi
+
+if [ ! -z "$LIBTILEDBSOMA_DEBUG_BUILD" ]; then
+  echo
+  echo ================================================================
+  echo LIBTILEDBSOMA SCRIPTS/BLD EXECUTE TESTS
+  echo cmake --build build --target install-libtiledbsoma
+fi
 cmake --build build --target install-libtiledbsoma
+if [ ! -z "$LIBTILEDBSOMA_DEBUG_BUILD" ]; then
+  echo ================================================================
+fi

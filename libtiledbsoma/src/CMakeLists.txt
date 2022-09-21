@@ -1,4 +1,9 @@
-message(STATUS "Starting TileDB-SC build.")
+if(DEFINED ENV{LIBTILEDBSOMA_DEBUG_BUILD})
+  message(STATUS "")
+  message(STATUS "START libtiledbsoma/src/CMakeLists.txt")
+else()
+  message(STATUS "Starting TileDB-SC build.")
+endif()
 
 set(CMAKE_WARN_DEPRECATED OFF CACHE BOOL "" FORCE)
 
@@ -248,3 +253,7 @@ install(
   INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
   PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/tiledbsoma
 )
+if(DEFINED ENV{LIBTILEDBSOMA_DEBUG_BUILD})
+  message(STATUS "END libtiledbsoma/src/CMakeLists.txt")
+  message(STATUS "")
+endif()
