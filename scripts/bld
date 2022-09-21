@@ -2,6 +2,12 @@
 
 # A script to build and install the C++ library
 
+# Supported types as of 2022-09-21:
+# * Release
+# * Debug
+# * RelWithDebInfo
+# * Coverage
+
 BUILD_TYPE=${1:-Release} # default to Release build
 echo "Building ${BUILD_TYPE} build"
 
@@ -32,6 +38,12 @@ elif [ $(uname -m) = "aarch64" ]; then
   EXTRA_OPTS="-DFORCE_EXTERNAL_TILEDB=ON -DDOWNLOAD_TILEDB_PREBUILT=OFF"
 else
   EXTRA_OPTS=""
+  # Debug note: this is _incredibly_ helpful in that it reveals the actual compile lines etc which
+  # make itself shows by default but which cmake-driven make hides by default. Use this for any
+  # non-trivial cmake debugging.
+  #
+  # Also (pro-tip), set nproc=1 to get a more deterministic ordering of output lines.
+  # EXTRA_OPTS="-DCMAKE_VERBOSE_MAKEFILE:BOOL=ON"
 fi
 
 mkdir -p build
