@@ -3,33 +3,17 @@
 # A script to build and install the C++ library
 
 BUILD_TYPE=${1:-Release} # default to Release build
-echo
-echo ================================================================
-echo LIBTILEDBSOMA SCRIPTS/BLD "BUILD_TYPE ${BUILD_TYPE}"
-echo ================================================================
+echo "Building ${BUILD_TYPE} build"
 
 set -eu -o pipefail
 
 # cd to the top level directory of the repo
 cd $(git rev-parse --show-toplevel)
-echo
-echo ================================================================
-echo LIBTILEDBSOMA SCRIPTS/BLD PWD
-pwd
-echo ================================================================
 
 # set env for pybind11 cmake
 export pybind11_DIR=$(python -m pybind11 --cmakedir)
-echo
-echo ================================================================
-echo LIBTILEDBSOMA SCRIPTS/BLD PYBIND11 DIR=$pybind11_DIR
-echo ================================================================
 
 # remove existing build files
-echo
-echo ================================================================
-echo LIBTILEDBSOMA SCRIPTS/BLD CLEAN
-echo ================================================================
 rm -rf build dist
 rm -f apis/python/src/tiledbsoma/libtiledb.*
 rm -f apis/python/src/tiledbsoma/libtiledbsoma.*
@@ -48,33 +32,9 @@ elif [ $(uname -m) = "aarch64" ]; then
   EXTRA_OPTS="-DFORCE_EXTERNAL_TILEDB=ON -DDOWNLOAD_TILEDB_PREBUILT=OFF"
 else
   EXTRA_OPTS=""
-  # Debug note: this is _incredibly_ helpful in that it reveals the actual compile lines etc which
-  # make itself shows by default but which cmake-driven make hides by default. Use this for any
-  # non-trivial cmake debugging.
-  #
-  # Also (pro-tip), set nproc=1 to get a more deterministic ordering of output lines.
-  # EXTRA_OPTS="-DCMAKE_VERBOSE_MAKEFILE:BOOL=ON"
 fi
 
 mkdir -p build
-
-echo
-echo ================================================================
-echo LIBTILEDBSOMA SCRIPTS/BLD GENERATE MAKEFILES
-echo cmake -B build -S libtiledbsoma -DCMAKE_BUILD_TYPE=${BUILD_TYPE} ${EXTRA_OPTS}
 cmake -B build -S libtiledbsoma -DCMAKE_BUILD_TYPE=${BUILD_TYPE} ${EXTRA_OPTS}
-echo ================================================================
-
-echo
-echo ================================================================
-echo LIBTILEDBSOMA EXECUTE MAKEFILES
-echo cmake --build build -j $nproc
 cmake --build build -j $nproc
-echo ================================================================
-
-echo
-echo ================================================================
-echo LIBTILEDBSOMA SCRIPTS/BLD EXECUTE TESTS
-echo cmake --build build --target install-libtiledbsoma
 cmake --build build --target install-libtiledbsoma
-echo ================================================================

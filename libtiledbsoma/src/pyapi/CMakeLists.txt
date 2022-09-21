@@ -1,5 +1,3 @@
-message(STATUS "")
-message(STATUS "START libtiledbsoma/src/pyapi/CMakeLists.txt")
 find_package(pybind11 REQUIRED)
 
 pybind11_add_module(libtiledbsoma
@@ -23,5 +21,3 @@ target_include_directories(libtiledbsoma
     ${CMAKE_CURRENT_SOURCE_DIR}/../../src
     ${TILEDB_SOMA_EXPORT_HEADER_DIR}
 )
-message(STATUS "END libtiledbsoma/src/pyapi/CMakeLists.txt")
-message(STATUS "")

@@ -30,8 +30,6 @@
 ############################################################
 
 cmake_minimum_required(VERSION 3.21)
-message(STATUS "")
-message(STATUS "START libtiledbsoma/CMakeLists.txt")
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmake/Modules/")
 
 # TileDB-SOMA Options
@@ -117,8 +115,6 @@ if (SUPERBUILD)
   project(TileDB-SC-Superbuild)
   message(STATUS "Starting TileDB-SingleCell superbuild.")
   include("cmake/Superbuild.cmake")
-  message(STATUS "END libtiledbsoma/CMakeLists.txt")
-  message(STATUS "")
   return()
 endif()
 
@@ -203,5 +199,3 @@ enable_testing()
 
 add_subdirectory(src)
 add_subdirectory(test)
-message(STATUS "END libtiledbsoma/CMakeLists.txt")
-message(STATUS "")
