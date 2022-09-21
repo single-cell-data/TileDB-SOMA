@@ -70,3 +70,11 @@ ii  libfmt8:amd64                     8.1.1+ds1-2                             am
 ii  libspdlog-dev:amd64               1:1.9.2+ds-0.2                          am
 ii  libspdlog1:amd64                  1:1.9.2+ds-0.2                          am
 ```
+
+MacOS known issues:
+
+* `brew uninstall spdlog` (if you have it)
+* `brew uninstall fmt` (if you have it)
+* `brew uninstall tiledb` (if you have it from `brew`)
+
+All these will be installed for you using compatible versions.
