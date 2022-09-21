@@ -34,6 +34,7 @@
 
 using namespace tiledbsoma;
 
+// [[Rcpp::export]]
 void test_sdf(const std::string& uri) {
     std::map<std::string, std::string> config;
     // Control buffer sizes, similar to tiledb-py
@@ -74,6 +75,7 @@ void test_sdf(const std::string& uri) {
     LOG_INFO(fmt::format("  batches = {}", batches));
 }
 
+#if !defined(R_BUILD)
 int main(int argc, char** argv) {
     LOG_CONFIG("debug");
 
@@ -92,3 +94,4 @@ int main(int argc, char** argv) {
 
     return 0;
 };
+#endif
