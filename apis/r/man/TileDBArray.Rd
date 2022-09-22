@@ -21,9 +21,7 @@ populate the private \code{create_empty_array()} and \code{ingest_data()} method
 \section{Methods}{
 \subsection{Public methods}{
 \itemize{
-\item \href{#method-TileDBArray-new}{\code{TileDBArray$new()}}
 \item \href{#method-TileDBArray-print}{\code{TileDBArray$print()}}
-\item \href{#method-TileDBArray-array_exists}{\code{TileDBArray$array_exists()}}
 \item \href{#method-TileDBArray-tiledb_array}{\code{TileDBArray$tiledb_array()}}
 \item \href{#method-TileDBArray-get_metadata}{\code{TileDBArray$get_metadata()}}
 \item \href{#method-TileDBArray-add_metadata}{\code{TileDBArray$add_metadata()}}
@@ -41,34 +39,12 @@ populate the private \code{create_empty_array()} and \code{ingest_data()} method
 \if{html}{\out{
 <details open><summary>Inherited methods</summary>
 <ul>
-<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBObject" data-id="class"><a href='../../tiledbsoma/html/TileDBObject.html#method-TileDBObject-class'><code>tiledbsoma::TileDBObject$class()</code></a></li>
-<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBObject" data-id="exists"><a href='../../tiledbsoma/html/TileDBObject.html#method-TileDBObject-exists'><code>tiledbsoma::TileDBObject$exists()</code></a></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBObject" data-id="class"><a href='../../tiledbsoma/html/TileDBObject.html#method-TileDBObject-class'><code>tiledbsoma::TileDBObject$class()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBObject" data-id="exists"><a href='../../tiledbsoma/html/TileDBObject.html#method-TileDBObject-exists'><code>tiledbsoma::TileDBObject$exists()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBObject" data-id="initialize"><a href='../../tiledbsoma/html/TileDBObject.html#method-TileDBObject-initialize'><code>tiledbsoma::TileDBObject$initialize()</code></a></span></li>
 </ul>
 </details>
 }}
-\if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-TileDBArray-new"></a>}}
-\if{latex}{\out{\hypertarget{method-TileDBArray-new}{}}}
-\subsection{Method \code{new()}}{
-Create a new TileDBArray object.
-\subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{TileDBArray$new(uri, verbose = TRUE, config = NULL, ctx = NULL)}\if{html}{\out{</div>}}
-}
-
-\subsection{Arguments}{
-\if{html}{\out{<div class="arguments">}}
-\describe{
-\item{\code{uri}}{URI for the TileDB array}
-
-\item{\code{verbose}}{Print status messages}
-
-\item{\code{config}}{optional configuration}
-
-\item{\code{ctx}}{optional tiledb context}
-}
-\if{html}{\out{</div>}}
-}
-}
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-TileDBArray-print"></a>}}
 \if{latex}{\out{\hypertarget{method-TileDBArray-print}{}}}
@@ -78,19 +54,6 @@ Print summary of the array.
 \if{html}{\out{<div class="r">}}\preformatted{TileDBArray$print()}\if{html}{\out{</div>}}
 }
 
-}
-\if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-TileDBArray-array_exists"></a>}}
-\if{latex}{\out{\hypertarget{method-TileDBArray-array_exists}{}}}
-\subsection{Method \code{array_exists()}}{
-Check if the array exists.
-\subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{TileDBArray$array_exists()}\if{html}{\out{</div>}}
-}
-
-\subsection{Returns}{
-TRUE if the array exists, FALSE otherwise.
-}
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-TileDBArray-tiledb_array"></a>}}

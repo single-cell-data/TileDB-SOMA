@@ -2,6 +2,7 @@
 
 export(TileDBArray)
 export(TileDBObject)
+importFrom(bit64,as.integer64)
 importFrom(glue,glue_collapse)
 importFrom(urltools,url_compose)
 importFrom(urltools,url_parse)
