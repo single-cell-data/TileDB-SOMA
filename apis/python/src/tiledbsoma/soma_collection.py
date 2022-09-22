@@ -81,7 +81,10 @@ class SOMACollection(TileDBObject):
 
             member_uri = self._get_child_uri(member_name)
             self._cached_members[member_name] = _construct_member(
-                member_name, member_uri, self
+                member_name,
+                member_uri,
+                self,
+                ctx=self._ctx,
             )
 
         if member_name in self._cached_members:
@@ -146,7 +149,10 @@ class SOMACollection(TileDBObject):
                 from .factory import _construct_member
 
                 self._cached_members[member_name] = _construct_member(
-                    member_name, member_uri, self
+                    member_name,
+                    member_uri,
+                    self,
+                    self._ctx,
                 )
             yield self._cached_members[member_name]
 
