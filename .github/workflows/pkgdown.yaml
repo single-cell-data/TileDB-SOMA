@@ -24,12 +24,12 @@ jobs:
 
       - uses: r-lib/actions/setup-pandoc@v1
         with:
-          working-directory: "apis/R"
+          working-directory: "apis/r"
 
       - uses: r-lib/actions/setup-r@v1
         with:
           use-public-rspm: true
-          working-directory: "apis/R"
+          working-directory: "apis/r"
 
       - name: Install dependencies
         run: ./tools/ci/install-pkgdown-dependencies.sh

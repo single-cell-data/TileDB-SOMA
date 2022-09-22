@@ -2,7 +2,7 @@
 
 set -euo pipefail
 
-cd apis/R
+cd apis/r
 
 echo "::group::Build TileDB R package"
 ## build package

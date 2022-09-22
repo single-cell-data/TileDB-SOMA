@@ -43,7 +43,7 @@ jobs:
           r-version: ${{ matrix.config.r }}
           http-user-agent: ${{ matrix.config.http-user-agent }}
           use-public-rspm: true
-          working-directory: "apis/R"
+          working-directory: "apis/r"
 
       - name: Install dependencies
         run: ./tools/ci/install-r-dependencies.sh
