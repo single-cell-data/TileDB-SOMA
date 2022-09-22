@@ -38,7 +38,7 @@ def _construct_member(
     # Get the class name from TileDB storage. At the TileDB level there are just "arrays" and
     # "groups", with separate metadata-getters.
     class_name = None
-    object_type = tiledb.object_type(member_uri)
+    object_type = tiledb.object_type(member_uri, ctx=ctx)
     if object_type is None:
         raise Exception(f"URI {member_uri} not found")
     elif object_type == "array":
