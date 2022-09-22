@@ -35,13 +35,9 @@ Imports:
     bit64,
     tiledb (>= 0.14.0),
     arrow,
-    SeuratObject,
-    jsonlite,
-    glue,
     utils,
-    fs,
-    urltools,
-    vctrs
+    glue,
+    urltools
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.2.1
 Suggests:
