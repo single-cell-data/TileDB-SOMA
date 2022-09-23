@@ -35,9 +35,9 @@ except ImportError:
 
 from .general_utilities import (
     get_implementation,
-    get_storage_engine,
-    get_SOMA_version,
     get_implementation_version,
+    get_SOMA_version,
+    get_storage_engine,
 )
 from .soma_collection import SOMACollection
 from .soma_dataframe import SOMADataFrame
