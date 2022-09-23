@@ -1,5 +1,5 @@
 import re
-from typing import Optional, TypeVar, List, Tuple, Union
+from typing import List, Optional, Tuple, TypeVar, Union
 
 import numpy as np
 import pandas as pd

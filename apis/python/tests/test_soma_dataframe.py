@@ -1,7 +1,6 @@
-import pytest
-
-import pyarrow as pa
 import pandas as pd
+import pyarrow as pa
+import pytest
 
 import tiledbsoma as t
 
