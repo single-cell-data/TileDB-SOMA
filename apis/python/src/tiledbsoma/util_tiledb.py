@@ -148,9 +148,9 @@ def split_column_names(
     Given a tiledb ArraySchema and a list of dim or attr names, split
     them into a tuple of (dim_names, attr_names).
 
-    This helper is used to turn the SOMA `column_names` parameter into a
+    This helper is used to turn the SOMA ``column_names`` parameter into a
     form that can be natively used by tiledb.Array.query, which requires
-    that the list of names be separated into `dims` and `attrs`.
+    that the list of names be separated into ``dims`` and ``attrs``.
 
     Parameters
     ----------
@@ -158,12 +158,12 @@ def split_column_names(
         An array schema which will be used to determine whether a
         column name is a dim or attr.
     column_names : Optional[Sequence[str]]
-        List of column names to split into `dim` and `attr` names.
+        List of column names to split into ``dim`` and ``attr`` names.
 
     Returns
     -------
     Tuple[Union[Sequence[str], None], Union[Sequence[str], None]]
-        If column_names is `None`, the tuple `(None, None)` will be returned.
+        If column_names is ``None``, the tuple ``(None, None)`` will be returned.
         Otherwise, returns a tuple of (dim_names, attr_names), with any unknown
         names, ie, not present in the array schema, ignored (dropped).
     """
