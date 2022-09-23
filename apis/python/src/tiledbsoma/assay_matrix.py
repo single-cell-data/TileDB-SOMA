@@ -101,8 +101,10 @@ class AssayMatrix(TileDBArray):
                     df = query.df[obs_ids, :]
                 else:
                     df = query.df[obs_ids, var_ids]
+
         if not return_arrow:
             df.set_index([self.row_dim_name, self.col_dim_name], inplace=True)
+
         return df
 
     # ----------------------------------------------------------------
@@ -168,7 +170,6 @@ class AssayMatrix(TileDBArray):
         ``scipy.sparse.csr_matrix``, ``scipy.sparse.csc_matrix``, ``numpy.ndarray``, etc.
         For ingest from ``AnnData``, these should be ``ann.obs_names`` and ``ann.var_names``.
         """
-
         s = util.get_start_stamp()
         log_io(
             f"Writing {self.nested_name} ...",

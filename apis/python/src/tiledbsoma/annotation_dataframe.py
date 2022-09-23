@@ -1,7 +1,6 @@
 from concurrent.futures import ThreadPoolExecutor
 from typing import Optional, Sequence, Set, Tuple, Union
 
-import numpy as np
 import pandas as pd
 import pyarrow as pa
 import tiledb
@@ -76,10 +75,19 @@ class AnnotationDataFrame(TileDBArray):
         """
         with self._open("r") as A:
             self.dim_name = A.domain.dim(0).name
-            # TileDB string dims are ASCII not UTF-8. Decode them so they readback
-            # not like `b"AKR1C3"` but rather like `"AKR1C3"`.
+
+            # TileDB string dims are ASCII not UTF-8. Decode them so they readback not like
+            # `b"AKR1C3"` but rather like `"AKR1C3"`. Update as of
+            # https://github.com/TileDB-Inc/TileDB-Py/pull/1304 these dims will read back OK.
             retval = A.query(attrs=[], dims=[self.dim_name])[:][self.dim_name].tolist()
-            return [e.decode() for e in retval]
+
+            retval = [e.decode() for e in retval]
+
+            if len(retval) > 0 and isinstance(retval[0], bytes):
+                return [e.decode() for e in retval]
+            else:
+                # list(...) is there to appease the linter which thinks we're returning `Any`
+                return list(retval)
 
     # ----------------------------------------------------------------
     def __repr__(self) -> str:
@@ -184,6 +192,23 @@ class AnnotationDataFrame(TileDBArray):
         """
         if query_string is None:
             return self.dim_select(ids, attrs=attrs, return_arrow=return_arrow)
+
+        return self._query_aux(
+            query_string=query_string, ids=ids, attrs=attrs, return_arrow=return_arrow
+        )
+
+    def _query_aux(
+        self,
+        query_string: Optional[str],
+        ids: Optional[Ids] = None,
+        attrs: Optional[Sequence[str]] = None,
+        *,
+        return_arrow: bool = False,
+    ) -> Union[pd.DataFrame, pa.Table]:
+        """
+        Helper method for `query`: as this has multiple `return` statements, it's easiest to track
+        elapsed-time stats in a call to this helper.
+        """
 
         with self._open() as A:
             self.dim_name = A.domain.dim(0).name
@@ -381,7 +406,7 @@ class AnnotationDataFrame(TileDBArray):
             dfc = dataframe[column_name]
             if len(dfc) > 0 and type(dfc[0]) == str:
                 # Force ASCII storage if string, in order to make obs/var columns queryable.
-                column_types[column_name] = np.dtype("S")
+                column_types[column_name] = "ascii"
 
         tiledb.from_pandas(
             uri=self.uri,

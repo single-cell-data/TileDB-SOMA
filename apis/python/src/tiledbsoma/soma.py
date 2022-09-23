@@ -322,6 +322,34 @@ class SOMA(TileDBGroup):
         from the source SOMAs; if they are specified, the slice will take the specified ``obs``/``var``
         """
 
+        retval = self._query_aux(
+            obs_attrs=obs_attrs,
+            obs_query_string=obs_query_string,
+            obs_ids=obs_ids,
+            var_attrs=var_attrs,
+            var_query_string=var_query_string,
+            var_ids=var_ids,
+            return_arrow=return_arrow,
+        )
+        return retval
+
+    # ----------------------------------------------------------------
+    def _query_aux(
+        self,
+        *,
+        obs_attrs: Optional[Sequence[str]] = None,
+        obs_query_string: Optional[str] = None,
+        obs_ids: Optional[Ids] = None,
+        var_attrs: Optional[Sequence[str]] = None,
+        var_query_string: Optional[str] = None,
+        var_ids: Optional[Ids] = None,
+        return_arrow: bool = False,
+    ) -> Optional[SOMASlice]:
+        """
+        Helper method for `query`: as this has multiple `return` statements, it's easiest to track
+        elapsed-time stats in a call to this helper.
+        """
+
         slice_obs_df = self.obs.query(
             query_string=obs_query_string,
             ids=obs_ids,

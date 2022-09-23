@@ -112,7 +112,6 @@ class AnnotationMatrix(TileDBArray):
         :param matrix: ``anndata.obsm['foo']``, ``anndata.varm['foo']``, or ``anndata.raw.varm['foo']``.
         :param dim_values: ``anndata.obs_names``, ``anndata.var_names``, or ``anndata.raw.var_names``.
         """
-
         s = util.get_start_stamp()
         log_io(None, f"{self._indent}START  WRITING {self.uri}")
 

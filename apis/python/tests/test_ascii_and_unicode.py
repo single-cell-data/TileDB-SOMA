@@ -1,11 +1,14 @@
 import anndata as ad
 import numpy as np
 import pandas as pd
+import pytest
 
 import tiledbsoma.io as io
 from tiledbsoma import SOMA
 
 
+# TODO: restore once https://github.com/single-cell-data/TileDB-SingleCell/issues/274 is in place.
+@pytest.mark.skip(reason="Unicode attributes temporarily unsupported")
 def test_readback(tmp_path):
     """
     Validate correct encode/decode of non-ASCII attribute text.
