@@ -1,5 +1,5 @@
 import re
-from typing import Optional, TypeVar
+from typing import Optional, TypeVar, List, Tuple, Union
 
 import numpy as np
 import pandas as pd
@@ -139,3 +139,26 @@ def list_fragments(array_uri: str) -> None:
 
     frags_df = pd.DataFrame(fragments)
     print(frags_df)
+
+
+def split_column_names(
+    array_schema: tiledb.ArraySchema, column_names: Optional[List[str]]
+) -> Tuple[Union[List[str], None], Union[List[str], None]]:
+    """
+    Given a tiledb ArraySchema and a list of dim or column names, split
+    them into a tuple of (dim_names, column_nanes).
+
+    This helper is used to turn the SOMA `column_names` parameter into a
+    form that can be used by tiledb.Array.query.
+    """
+    if column_names is None:
+        return (None, None)
+
+    dim_names = [
+        array_schema.domain.dim(i).name for i in range(array_schema.domain.ndim)
+    ]
+    attr_names = [array_schema.attr(i).name for i in range(array_schema.nattr)]
+    return (
+        [c for c in column_names if c in dim_names],
+        [c for c in column_names if c in attr_names],
+    )
