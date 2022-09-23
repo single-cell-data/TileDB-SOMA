@@ -202,11 +202,16 @@ class SOMADataFrame(TileDBArray):
         )
 
         with self._tiledb_open("r") as A:
+            dim_names, attr_names = util_tiledb.split_column_names(
+                A.schema, column_names
+            )
             if value_filter is None:
                 query = A.query(
                     return_arrow=True,
                     return_incomplete=True,
                     order=tiledb_result_order,
+                    dims=dim_names,
+                    attrs=attr_names,
                 )
             else:
                 qc = tiledb.QueryCondition(value_filter)
@@ -215,16 +220,14 @@ class SOMADataFrame(TileDBArray):
                     return_incomplete=True,
                     attr_cond=qc,
                     order=tiledb_result_order,
+                    dims=dim_names,
+                    attrs=attr_names,
                 )
 
             if ids is None:
                 iterator = query.df[:]
-                if column_names is not None:
-                    iterator = query.df[:][column_names]
             else:
                 iterator = query.df[ids]
-                if column_names is not None:
-                    iterator = query.df[ids][column_names]
 
             for df in iterator:
                 batches = df.to_batches()
@@ -346,11 +349,15 @@ class SOMADataFrame(TileDBArray):
         )
 
         with self._tiledb_open() as A:
+            dim_names, attr_names = util_tiledb.split_column_names(
+                A.schema, column_names
+            )
             if value_filter is None:
                 query = A.query(
                     return_incomplete=True,
                     order=tiledb_result_order,
-                    attrs=column_names,
+                    dims=dim_names,
+                    attrs=attr_names,
                 )
             else:
                 qc = tiledb.QueryCondition(value_filter)
@@ -358,7 +365,8 @@ class SOMADataFrame(TileDBArray):
                     return_incomplete=True,
                     attr_cond=qc,
                     order=tiledb_result_order,
-                    attrs=column_names,
+                    dims=dim_names,
+                    attrs=attr_names,
                 )
 
             if ids is None:
@@ -378,7 +386,11 @@ class SOMADataFrame(TileDBArray):
                     df.set_index(id_column_name, inplace=True)
 
                 # Don't materialize soma_rowid on read
-                if ROWID in df.columns:
+                if (
+                    ROWID in df.columns
+                    and column_names is not None
+                    and ROWID not in column_names
+                ):
                     yield df.drop(ROWID, axis=1)
                 else:
                     yield df
