@@ -1,4 +1,4 @@
-from typing import Any, Iterator, List, Optional, Sequence, TypeVar, Union
+from typing import Any, Iterator, List, Optional, Sequence, TypeVar
 
 import numpy as np
 import pandas as pd
@@ -19,7 +19,7 @@ class SOMAIndexedDataFrame(TileDBArray):
     """
     Represents ``obs``, ``var``, and others.
 
-    A ``SOMAIndexedDataFrame`` contains a "pseudo-column" called ``soma_rowid``, of type uint64 and domain [0,num_rows).  The ``soma_rowid`` pseudo-column contains a unique value for each row in the ``SOMAIndexedDataFrame``, and is intended to act as a join key for other objects, such as a ``SOMASparseNdArray``.
+    All `SOMAIndexedDataFrame` must contain a column called `soma_joinid`, of type `uint64`. The `soma_joinid` column contains a unique value for each row in the `SOMAIndexedDataFrame`, and intended to act as a joint key for other objects, such as `SOMASparseNdArray`.
     """
 
     _index_column_names: Optional[List[str]]
@@ -47,7 +47,7 @@ class SOMAIndexedDataFrame(TileDBArray):
         index_column_names: Optional[List[str]] = None,
     ) -> None:
         """
-        :param schema: Arrow Schema defining the per-column schema. This schema must define all columns, including columns to be named as index columns. The column name ``soma_rowid`` is reserved for the pseudo-column of the same name. If the schema includes types unsupported by the SOMA implementation, an error will be raised.
+        :param schema: Arrow Schema defining the per-column schema. This schema must define all columns, including columns to be named as index columns. If the schema includes types unsupported by the SOMA implementation, an error will be raised.
 
         :param index_column_names: A list of column names to use as user-defined index columns (e.g., ``['cell_type', 'tissue_type']``). All named columns must exist in the schema, and at least one index column name is required.
         """
@@ -74,7 +74,7 @@ class SOMAIndexedDataFrame(TileDBArray):
         index_column_names: List[str],
     ) -> None:
         """
-        Create a TileDB 1D sparse array with string dimension and multiple attributes.
+        Create a TileDB 1D sparse array with dimensions and attributes
         """
 
         level = self._tiledb_platform_config.string_dim_zstd_level
@@ -102,15 +102,6 @@ class SOMAIndexedDataFrame(TileDBArray):
         dom = tiledb.Domain(dims, ctx=self._ctx)
 
         attrs = []
-
-        attr = tiledb.Attr(
-            name=ROWID,
-            dtype=np.uint64,
-            filters=[tiledb.ZstdFilter()],
-            ctx=self._ctx,
-        )
-        attrs.append(attr)
-
         for attr_name in schema.names:
             if attr_name in index_column_names:
                 continue
@@ -226,7 +217,7 @@ class SOMAIndexedDataFrame(TileDBArray):
         # ids: Optional[Union[Sequence[int], str, Slice]] = None,
         ids: Optional[Any] = None,
         value_filter: Optional[str] = None,
-        column_names: Optional[Union[Sequence[str], str]] = None,
+        column_names: Optional[Sequence[str]] = None,
         result_order: Optional[str] = None,
         # TODO: more arguments
     ) -> Iterator[pa.RecordBatch]:
@@ -251,9 +242,16 @@ class SOMAIndexedDataFrame(TileDBArray):
 
         # TODO: more about index_column_names
         with self._tiledb_open("r") as A:
+            dims_names, attrs_names = util_tiledb.split_column_names(
+                A.schema, column_names
+            )
             if value_filter is None:
                 query = A.query(
-                    return_arrow=True, return_incomplete=True, order=tiledb_result_order
+                    return_arrow=True,
+                    return_incomplete=True,
+                    order=tiledb_result_order,
+                    dims=dims_names,
+                    attrs=attrs_names,
                 )
             else:
                 qc = tiledb.QueryCondition(value_filter)
@@ -262,16 +260,14 @@ class SOMAIndexedDataFrame(TileDBArray):
                     return_incomplete=True,
                     attr_cond=qc,
                     order=tiledb_result_order,
+                    dims=dims_names,
+                    attrs=attrs_names,
                 )
 
             if ids is None:
                 iterator = query.df[:]
-                if column_names is not None:
-                    iterator = query.df[:][column_names]
             else:
                 iterator = query.df[ids]
-                if column_names is not None:
-                    iterator = query.df[ids][column_names]
 
             for df in iterator:
                 batches = df.to_batches()
@@ -322,9 +318,6 @@ class SOMAIndexedDataFrame(TileDBArray):
             else:
                 attr_cols_map[name] = values.column(name).to_pandas()
         assert n is not None
-
-        # TODO: temporary
-        attr_cols_map[ROWID] = np.asarray(range(n))
 
         dim_cols_list = [list(dim_col) for dim_col in dim_cols_list]
         with self._tiledb_open("w") as A:
