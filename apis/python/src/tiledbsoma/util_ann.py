@@ -314,6 +314,7 @@ def _decategoricalize(anndata: ad.AnnData) -> ad.AnnData:
 
     return ad.AnnData(
         X=anndata.X,
+        layers=anndata.layers,
         dtype=None if anndata.X is None else anndata.X.dtype,  # some datasets have no X
         obs=new_obs,
         var=new_var,

@@ -196,6 +196,16 @@ def _from_anndata_aux(
         col_names=anndata.var.index,
         layer_name=X_layer_name,
     )
+
+    if anndata.layers is not None:
+        for layer_name in anndata.layers:
+            soma.X.add_layer_from_matrix_and_dim_values(
+                matrix=anndata.layers[layer_name],
+                row_names=anndata.obs.index,
+                col_names=anndata.var.index,
+                layer_name=layer_name,
+            )
+
     soma._add_object(soma.X)
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
