@@ -1,5 +1,5 @@
 import re
-from typing import List, Optional, Tuple, TypeVar, Union
+from typing import Optional, Sequence, Tuple, TypeVar, Union
 
 import numpy as np
 import pandas as pd
@@ -142,8 +142,8 @@ def list_fragments(array_uri: str) -> None:
 
 
 def split_column_names(
-    array_schema: tiledb.ArraySchema, column_names: Optional[List[str]]
-) -> Tuple[Union[List[str], None], Union[List[str], None]]:
+    array_schema: tiledb.ArraySchema, column_names: Optional[Sequence[str]]
+) -> Tuple[Union[Sequence[str], None], Union[Sequence[str], None]]:
     """
     Given a tiledb ArraySchema and a list of dim or column names, split
     them into a tuple of (dim_names, column_nanes).
