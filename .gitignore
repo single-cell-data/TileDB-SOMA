@@ -1,6 +1,7 @@
 .vscode*
 *.swp
 dist/*
+**/venv
 apis/spark/.gradle/*
 apis/spark/.project
 apis/spark/build/*
