@@ -18,7 +18,7 @@ def get_implementation_version() -> str:
     """
     from ._version import __version__
 
-    return __version__
+    return str(__version__)
 
 
 def get_storage_engine() -> str:
