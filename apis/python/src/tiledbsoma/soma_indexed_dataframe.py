@@ -242,7 +242,7 @@ class SOMAIndexedDataFrame(TileDBArray):
 
         # TODO: more about index_column_names
         with self._tiledb_open("r") as A:
-            dims_names, attrs_names = util_tiledb.split_column_names(
+            dim_names, attr_names = util_tiledb.split_column_names(
                 A.schema, column_names
             )
             if value_filter is None:
@@ -250,8 +250,8 @@ class SOMAIndexedDataFrame(TileDBArray):
                     return_arrow=True,
                     return_incomplete=True,
                     order=tiledb_result_order,
-                    dims=dims_names,
-                    attrs=attrs_names,
+                    dims=dim_names,
+                    attrs=attr_names,
                 )
             else:
                 qc = tiledb.QueryCondition(value_filter)
@@ -260,8 +260,8 @@ class SOMAIndexedDataFrame(TileDBArray):
                     return_incomplete=True,
                     attr_cond=qc,
                     order=tiledb_result_order,
-                    dims=dims_names,
-                    attrs=attrs_names,
+                    dims=dim_names,
+                    attrs=attr_names,
                 )
 
             if ids is None:
