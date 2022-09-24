@@ -140,7 +140,7 @@ class SOMASparseNdArray(TileDBArray):
         """
         Return number of index columns
         """
-        return len(self._get_shape())
+        return len(self.shape)
 
     @property
     def is_sparse(self) -> Literal[True]:
