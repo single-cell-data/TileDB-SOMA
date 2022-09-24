@@ -229,7 +229,7 @@ class SOMADenseNdArray(TileDBArray):
                 # Make this opt-in only.  For large arrays, this df.set_index is time-consuming
                 # so we should not do it without direction.
                 if set_index:
-                    df.set_index(self.dim_names(), inplace=True)
+                    df.set_index(self._tiledb_dim_names(), inplace=True)
                 yield df
 
     def read_all(

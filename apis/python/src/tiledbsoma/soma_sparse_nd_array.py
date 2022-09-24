@@ -212,7 +212,7 @@ class SOMASparseNdArray(TileDBArray):
         """
         dim_names = None
         if set_index:
-            dim_names = self.dim_names()
+            dim_names = self._tiledb_dim_names()
 
         with self._tiledb_open() as A:
             query = A.query(return_incomplete=True)

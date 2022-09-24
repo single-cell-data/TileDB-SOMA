@@ -64,7 +64,8 @@ class TileDBArray(TileDBObject):
         Reads the dimension names from the schema: for example, ['obs_id', 'var_id'].
         """
         with self._tiledb_open() as A:
-            return [A.schema.domain.dim(i).name for i in range(A.schema.domain.ndim)]
+            dom = A.dom
+            return [dom.dim(i).name for i in range(dom.ndim)]
 
     def _tiledb_attr_names(self) -> Sequence[str]:
         """
