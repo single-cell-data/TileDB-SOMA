@@ -1,6 +1,6 @@
 import math
 import time
-from typing import Any, List, Optional, Sequence, Tuple, Union
+from typing import Any, List, Optional, Sequence, Tuple, Union, Literal
 
 import numpy as np
 import pandas as pd
@@ -57,6 +57,11 @@ class SOMADenseNdArray(TileDBArray):
         for e in shape:
             assert e > 0
 
+        if not pa.types.is_primitive(type):
+            raise TypeError(
+                "Unsupported type - SOMADenseNdArray only supports primtive Arrow types"
+            )
+
         level = self._tiledb_platform_config.string_dim_zstd_level
 
         dims = []
@@ -110,29 +115,17 @@ class SOMADenseNdArray(TileDBArray):
         if not self.exists():
             return ["Unpopulated"]
         lines = [
-            self.get_name()
+            self.name
             + " "
             + self.__class__.__name__
             # Pending https://github.com/single-cell-data/TileDB-SOMA/issues/302
             # + " "
-            # + str(self._get_shape())
+            # + str(self.shape)
         ]
         return lines
 
-    def __getattr__(self, name: str) -> Any:
-        """
-        Implements ``.shape``, etc. which are really method calls.
-        """
-        if name == "shape":
-            return self._get_shape()
-        elif name == "ndims":
-            return self._get_ndims()
-        else:
-            # Unlike __getattribute__ this is _only_ called when the member isn't otherwise
-            # resolvable. So raising here is the right thing to do.
-            raise AttributeError(f"{self.__class__.__name__} has no attribute '{name}'")
-
-    def _get_shape(self) -> NTuple:
+    @property
+    def shape(self) -> NTuple:
         """
         Return length of each dimension, always a list of length ``ndims``
         """
@@ -143,7 +136,8 @@ class SOMADenseNdArray(TileDBArray):
             # error: Returning Any from function declared to return "Tuple[int]"  [no-any-return]
             return A.schema.domain.shape  # type: ignore
 
-    def _get_ndims(self) -> int:
+    @property
+    def ndims(self) -> int:
         """
         Return number of index columns
         """
@@ -152,7 +146,8 @@ class SOMADenseNdArray(TileDBArray):
             # Returning Any from function declared to return "int"  [no-any-return]
             return A.schema.domain.ndim  # type: ignore
 
-    def get_is_sparse(self) -> bool:
+    @property
+    def is_sparse(self) -> Literal[False]:
         """
         Returns ``False``.
         """
@@ -375,7 +370,7 @@ class SOMADenseNdArray(TileDBArray):
             ctx=self._ctx,
         )
 
-        tiledb.Array.create(self.get_uri(), sch, ctx=self._ctx)
+        tiledb.Array.create(self.uri, sch, ctx=self._ctx)
 
     def _ingest_data_dense_rows_chunked(
         self,
@@ -397,7 +392,7 @@ class SOMADenseNdArray(TileDBArray):
         )
 
         eta_tracker = eta.Tracker()
-        with tiledb.open(self.get_uri(), mode="w", ctx=self._ctx) as A:
+        with tiledb.open(self.uri, mode="w", ctx=self._ctx) as A:
 
             i = 0
             while i < nrow:
