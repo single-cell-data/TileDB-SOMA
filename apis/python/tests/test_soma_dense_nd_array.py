@@ -8,7 +8,6 @@ import tiledbsoma as soma
 
 from . import NDARRAY_ARROW_TYPES_NOT_SUPPORTED, NDARRAY_ARROW_TYPES_SUPPORTED
 
-
 """
 TODO:
 - [X] create
@@ -85,9 +84,7 @@ def test_soma_dense_nd_array_delete(tmp_path):
     assert not a.exists()
 
 
-
-
-""" XXX obsolete - remove """
+# XXX obsolete - remove
 def test_soma_dense_nd_array(tmp_path):
     nr = 10
     nc = 20
