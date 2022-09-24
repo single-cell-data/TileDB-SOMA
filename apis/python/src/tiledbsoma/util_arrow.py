@@ -4,7 +4,6 @@ import numpy as np
 import pyarrow as pa
 import tiledb
 
-
 """
 Conversion to/from Arrow and TileDB type systems. Must be capable
 of representing full type semantics, and correctly performing a

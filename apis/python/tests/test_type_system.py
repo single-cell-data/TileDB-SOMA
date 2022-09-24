@@ -3,10 +3,9 @@ import pyarrow as pa
 import pytest
 
 from tiledbsoma.util_arrow import (
-    tiledb_type_from_arrow_type,
     get_arrow_type_from_tiledb_dtype,
+    tiledb_type_from_arrow_type,
 )
-
 
 """Arrow types we expect to work"""
 SUPPORTED_ARROW_TYPES = [
