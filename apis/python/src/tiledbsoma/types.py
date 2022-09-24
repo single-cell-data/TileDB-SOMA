@@ -13,4 +13,4 @@ Labels = Union[Sequence[str], pd.Index]
 
 Matrix = Union[np.ndarray, sp.csr_matrix, sp.csc_matrix]
 
-NTuple = Union[Tuple[int], Tuple[int, int]]
+NTuple = Tuple[int, ...]
