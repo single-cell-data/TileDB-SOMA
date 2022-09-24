@@ -372,6 +372,9 @@ class SOMADenseNdArray(TileDBArray):
 
         tiledb.Array.create(self.uri, sch, ctx=self._ctx)
 
+    def _ingest_data_whole(self, matrix: np.ndarray) -> None:
+        raise NotImplementedError()
+
     def _ingest_data_dense_rows_chunked(
         self,
         matrix: np.ndarray,

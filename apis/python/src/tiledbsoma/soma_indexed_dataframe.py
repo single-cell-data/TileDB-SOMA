@@ -189,15 +189,14 @@ class SOMAIndexedDataFrame(TileDBArray):
         # If we've cached the answer, skip the storage read. Especially if the storage is on the
         # cloud, where we'll avoid an HTTP request.
         if self._index_column_names is None:
-            if self.is_indexed:
-                names = []
-                with self._tiledb_open() as A:
-                    dom = A.domain
-                    for i in range(dom.ndim):
-                        names.append(dom.dim(i).name)
-                self._index_column_names = names
-            else:
-                self._index_column_names = []
+            assert self.is_indexed
+            names = []
+            with self._tiledb_open() as A:
+                dom = A.domain
+                for i in range(dom.ndim):
+                    names.append(dom.dim(i).name)
+            self._index_column_names = names
+
         return self._index_column_names
 
     def read(
