@@ -1,6 +1,6 @@
 import math
 import time
-from typing import Any, Iterator, List, Optional, Sequence, Union, Literal
+from typing import Iterator, List, Literal, Optional, Sequence, Union
 
 import numpy as np
 import pandas as pd
