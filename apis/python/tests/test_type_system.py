@@ -62,7 +62,7 @@ UNSUPPORTED_ARROW_TYPES = [
 def test_supported_types_supported(arrow_type):
     """Verify round-trip conversion of types"""
     if pa.types.is_binary(arrow_type):
-        pytest.xfail("Awaiting UTF-8 support - issue #338")
+        pytest.xfail("Awaiting UTF-8 support - see issue #338")
 
     tdb_dtype = tiledb_type_from_arrow_type(arrow_type)
     assert isinstance(tdb_dtype, np.dtype)
