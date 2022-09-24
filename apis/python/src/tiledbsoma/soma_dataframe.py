@@ -1,4 +1,4 @@
-from typing import Any, Iterator, List, Optional, Sequence, TypeVar
+from typing import Any, Iterator, List, Literal, Optional, Sequence, TypeVar
 
 import numpy as np
 import pandas as pd
@@ -118,27 +118,14 @@ class SOMADataFrame(TileDBArray):
 
     def _repr_aux(self) -> Sequence[str]:
         lines = [
-            self.get_name()
+            self.name
             + " "
             + self.__class__.__name__
             # Pending https://github.com/single-cell-data/TileDB-SOMA/issues/302
             # + " "
-            # + str(self._get_shape())
+            # + str(self.shape)
         ]
         return lines
-
-    def __getattr__(self, name: str) -> Any:
-        """
-        Implements ``.shape``, etc. which are really method calls.
-        """
-        if name == "shape":
-            return self._get_shape()
-        elif name == "ndims":
-            return self._get_ndims()
-        else:
-            # Unlike __getattribute__ this is _only_ called when the member isn't otherwise
-            # resolvable. So raising here is the right thing to do.
-            raise AttributeError(f"{self.__class__.__name__} has no attribute '{name}'")
 
     def keys(self) -> Sequence[str]:
         """
@@ -146,7 +133,8 @@ class SOMADataFrame(TileDBArray):
         """
         return self._tiledb_attr_names()
 
-    def _get_shape(self) -> NTuple:
+    @property
+    def shape(self) -> NTuple:
         """
         Return length of each dimension, always a list of length ``ndims``.
         """
@@ -155,13 +143,15 @@ class SOMADataFrame(TileDBArray):
                 self._shape = A.shape
         return self._shape
 
-    def _get_ndims(self) -> int:
+    @property
+    def ndims(self) -> int:
         """
         Return number of index columns.
         """
         return len(self.keys())
 
-    def get_indexed(self) -> bool:
+    @property
+    def is_indexed(self) -> Literal[False]:
         return False
 
     def get_index_column_names(self) -> Sequence[str]:
@@ -496,9 +486,9 @@ class SOMADataFrame(TileDBArray):
                 column_types[column_name] = np.dtype("S")
 
         tiledb.from_pandas(
-            uri=self.get_uri(),
+            uri=self.uri,
             dataframe=dataframe,
-            name=self.get_name(),
+            name=self.name,
             sparse=True,  # TODO
             allows_duplicates=self._tiledb_platform_config.allows_duplicates,
             offsets_filters=offsets_filters,

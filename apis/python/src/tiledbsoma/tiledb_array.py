@@ -27,11 +27,12 @@ class TileDBArray(TileDBObject):
         """
         super().__init__(uri, name=name, parent=parent, ctx=ctx)
 
-    def get_schema(self) -> pa.Schema:
+    @property
+    def schema(self) -> pa.Schema:
         """
         Return data schema, in the form of an Arrow Schema.
         """
-        return util_arrow.get_arrow_schema_from_tiledb_uri(self.get_uri(), self._ctx)
+        return util_arrow.get_arrow_schema_from_tiledb_uri(self.uri, self._ctx)
 
     # TODO
     #    def delete(uri: str) -> None

@@ -106,7 +106,7 @@ class SOMAMeasurement(SOMACollection):
         #            # TODO: make this a SOMACollection method
         #            if not isinstance(element, SOMASparseNdArray):
         #                raise Exception(
-        #                    f"element {element.name} of {self.get_type()}.{attr} should be SOMASparseNdArray; got {element.__class__.__name__}"
+        #                    f"element {element.name} of {self.type}.{attr} should be SOMASparseNdArray; got {element.__class__.__name__}"
         #                )
 
         # for attr in ["obsm", "varm"]:
@@ -116,7 +116,7 @@ class SOMAMeasurement(SOMACollection):
         #            # TODO: make this a SOMACollection method
         #            if not isinstance(element, SOMADenseNdArray):
         #                raise Exception(
-        #                    f"element {element.name} of {self.get_type()}.{attr} should be SOMADenseNdArray; got {element.__class__.__name__}"
+        #                    f"element {element.name} of {self.type}.{attr} should be SOMADenseNdArray; got {element.__class__.__name__}"
         #                )
 
     # ``X`` collection values

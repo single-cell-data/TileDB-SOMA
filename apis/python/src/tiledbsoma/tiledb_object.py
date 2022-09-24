@@ -69,13 +69,16 @@ class TileDBObject(ABC):
     def _repr_aux(self) -> Sequence[str]:
         raise Exception("Must be overridden by inherting classes.")
 
-    def get_name(self) -> str:
+    @property
+    def name(self) -> str:
         return self._name
 
-    def get_uri(self) -> str:
+    @property
+    def uri(self) -> str:
         return self._uri
 
-    def get_type(self) -> str:
+    @property
+    def type(self) -> str:
         return type(self).__name__
 
     def exists(self) -> bool:
@@ -92,7 +95,7 @@ class TileDBObject(ABC):
         # before a third, successful HTTP request for group-open.  Instead, we directly attempt the
         # group-open request, checking for an exception.
         try:
-            return self._get_object_type_from_metadata() == self.get_type()
+            return self._get_object_type_from_metadata() == self.type
         except tiledb.cc.TileDBError:
             return False
 
@@ -114,7 +117,7 @@ class TileDBObject(ABC):
         with self._tiledb_open("w") as obj:
             obj.meta.update(
                 {
-                    util.SOMA_OBJECT_TYPE_METADATA_KEY: self.get_type(),
+                    util.SOMA_OBJECT_TYPE_METADATA_KEY: self.type,
                     util.SOMA_ENCODING_VERSION_METADATA_KEY: util.SOMA_ENCODING_VERSION,
                 }
             )

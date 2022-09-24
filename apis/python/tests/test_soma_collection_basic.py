@@ -64,7 +64,7 @@ def test_soma_collection_basic(tmp_path):
     collection.set(sparse_nd_array)
 
     # ----------------------------------------------------------------
-    readback_collection = t.SOMACollection(collection.get_uri())
+    readback_collection = t.SOMACollection(collection.uri)
     assert len(readback_collection) == 2
 
     readback_dataframe = readback_collection.get("sdf")

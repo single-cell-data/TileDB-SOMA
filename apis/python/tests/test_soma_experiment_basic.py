@@ -83,7 +83,7 @@ def test_soma_experiment_basic(tmp_path):
     experiment.ms.create()
     experiment.set(experiment.ms)
 
-    measurement = t.SOMAMeasurement(uri=f"{experiment.ms.get_uri()}/mRNA")
+    measurement = t.SOMAMeasurement(uri=f"{experiment.ms.uri}/mRNA")
     measurement.create()
     experiment.ms.set(measurement)
 
@@ -93,7 +93,7 @@ def test_soma_experiment_basic(tmp_path):
     measurement.X.create()
     measurement.set(measurement.X)
 
-    nda = t.SOMASparseNdArray(uri=f"{measurement.X.get_uri()}/data")
+    nda = t.SOMASparseNdArray(uri=f"{measurement.X.uri}/data")
     create_and_populate_sparse_nd_array(nda)
     measurement.X.set(nda)
 
@@ -135,8 +135,8 @@ def test_soma_experiment_basic(tmp_path):
     assert experiment.ms["mRNA"].X["data"].exists()
 
     # Paths exist but are not of the right type
-    assert not t.SOMADataFrame(experiment.get_uri()).exists()
-    assert not t.SOMACollection(experiment.obs.get_uri()).exists()
+    assert not t.SOMADataFrame(experiment.uri).exists()
+    assert not t.SOMACollection(experiment.obs.uri).exists()
 
     # Paths do not exist
     assert not t.SOMAExperiment("/nonesuch/no/nope/nope/never").exists()
