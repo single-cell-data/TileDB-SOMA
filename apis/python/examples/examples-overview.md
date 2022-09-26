@@ -28,7 +28,7 @@ In these example we will offer how-to's on the [TileDB SingleCell Python package
 
 See also for the R package:
 
-* [R repo](https://github.com/TileDB-Inc/tiledbsoma)
+* [R repo](https://github.com/TileDB-Inc/TileDB-SOMA)
 * [R docs](https://tiledb-inc.github.io/tiledbsoma)
 
 # Notebook

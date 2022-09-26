@@ -15,9 +15,9 @@ components described in the \href{https://github.com/single-cell-data/soma}{data
 \seealso{
 Useful links:
 \itemize{
-  \item \url{https://github.com/TileDB-Inc/tiledbsoma}
+  \item \url{https://github.com/single-cell-data/TileDB-SOMA}
   \item \url{https://github.com/single-cell-data/SOMA}
-  \item Report bugs at \url{https://github.com/TileDB-Inc/tiledbsoma/issues}
+  \item Report bugs at \url{https://github.com/single-cell-data/TileDB-SOMA/issues}
 }
 
 }

@@ -26,9 +26,9 @@ Authors@R: c(
     person(given = "TileDB, Inc.",
            role = c("cph", "fnd"))
     )
-URL: https://github.com/TileDB-Inc/tiledbsoma,
+URL: https://github.com/single-cell-data/TileDB-SOMA,
     https://github.com/single-cell-data/SOMA
-BugReports: https://github.com/TileDB-Inc/tiledbsoma/issues
+BugReports: https://github.com/single-cell-data/TileDB-SOMA/issues
 License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
