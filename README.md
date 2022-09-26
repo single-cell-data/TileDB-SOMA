@@ -6,6 +6,21 @@
 
 A C++ library with APIs in Python and R for efficient storage and retrieval of single-cell data using [TileDB Embedded][tiledb].
 
+# Language bindings and installation instructions
+
+* [Python](https://github.com/single-cell-data/TileDB-SOMA/tree/main/apis/python)
+* [R](https://github.com/single-cell-data/TileDB-SOMA/tree/main/apis/r)
+* [API documentation](https://tiledb-inc-tiledb-soma.readthedocs-hosted.com/en/latest/)
+
+# Issues and contacts
+
+* Any/all questions, comments, and concerns are welcome at https://github.com/single-cell-data/TileDB-SOMA/issues
+* Bug reports should ideally be accompanied by a minimally reproducible example, using sample data available outside your organization
+
+# Developer information
+
+* https://github.com/single-cell-data/TileDB-SOMA/wiki/Developer-resources
+
 # Code of Conduct
 
 All participants in TileDB spaces are expected to adhere to high standards of
