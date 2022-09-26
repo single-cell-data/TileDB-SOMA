@@ -1,7 +1,7 @@
 #' SOMASparseNdArray
 #'
 #' @description
-#' `SOMASparseNdArray` is a monomorphic, sparse, N-dimensional array with offset
+#' `SOMASparseNdArray` is a sparse, N-dimensional array with offset
 #' (zero-based) integer indexing on each dimension. The `SOMASparseNdArray` has
 #' a user-defined schema, which includes:
 #'
