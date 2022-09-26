@@ -10,10 +10,7 @@ Note this branch, `main`, implements the [newer specfication](https://github.com
 
 # Language bindings and installation instructions
 
-* [Python](https://github.com/single-cell-data/TileDB-SOMA/tree/main/apis/python)
-* [R](https://github.com/single-cell-data/TileDB-SOMA/tree/main/apis/r)
-* [API documentation](https://tiledb-inc-tiledb-soma.readthedocs-hosted.com/en/latest/)
-  * Note: these document the `main-old` branch; `main` docs are a WIP.
+While the [main-old](https://github.com/single-cell-data/TileDB-SOMA/blob/main-old/apis/python/README.md) has documentation hosted at `readthedocs`, for this `main` branch please use on-line `help` at the Python and R CLIs.
 
 # Issues and contacts
 
