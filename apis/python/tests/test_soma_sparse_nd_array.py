@@ -13,12 +13,12 @@ TODO:
 - [X] create
 - [-] delete
 - [X] exists
-- [-] get metadata
 - [X] get type
 - [X] get shape
 - [X] get ndims
 - [X] get schema
 - [X] get is_sparse
+- [ ] get metadata
 - [ ] read
 - [ ] write
 - [ ] reshape
@@ -84,7 +84,7 @@ def test_soma_sparse_nd_array_delete(tmp_path):
     assert not a.exists()
 
 
-# TODO XXX - obsolete cleanup
+# TODO - cleanup when test refactoring is complete
 def test_soma_sparse_nd_array(tmp_path):
     arr = soma.SOMASparseNdArray(uri=tmp_path.as_posix())
 

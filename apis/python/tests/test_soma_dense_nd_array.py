@@ -84,7 +84,7 @@ def test_soma_dense_nd_array_delete(tmp_path):
     assert not a.exists()
 
 
-# XXX obsolete - remove
+# TODO - remove when full test refactoring is complete
 def test_soma_dense_nd_array(tmp_path):
     nr = 10
     nc = 20
