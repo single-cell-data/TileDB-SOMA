@@ -19,7 +19,7 @@ TODO:
 - [X] get ndims
 - [X] get schema
 - [X] get is_sparse
-- [ ] get metadata
+- [X] get metadata
 - [ ] get nnz
 - [ ] read
 - [ ] write
