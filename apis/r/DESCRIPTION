@@ -1,0 +1,49 @@
+Package: tiledbsoma
+Type: Package
+Title: TileDB SOMA
+Description: Interface for working with 'TileDB'-based Stack of Matrices,
+    Annotated ('SOMA'): an open data model for representing annotated matrices,
+    like those commonly used for single cell data analysis.
+Version: 0.0.0.9000
+Authors@R: c(
+    person(given = "Aaron",
+           family = "Wolen",
+           role = c("cre", "aut"),
+           email = "aaron@tiledb.com",
+           comment = c(ORCID = "0000-0003-2542-2202")),
+    person(given = "Dirk",
+           family = "Eddelbuettel",
+           email = "dirk@tiledb.com",
+           role = "aut",
+           comment = c(ORCID = "0000-0001-6419-907X")),
+    person(given = "John",
+           family = "Kerl",
+           email = "john.kerl@tiledb.com",
+           role = "aut"),
+    person(given = "TileDB, Inc.",
+           role = c("cph", "fnd"))
+    )
+URL: https://github.com/single-cell-data/TileDB-SingleCell
+BugReports: https://github.com/single-cell-data/TileDB-SingleCell/issues
+License: MIT + file LICENSE
+Encoding: UTF-8
+LazyData: true
+Imports:
+    R6,
+    methods,
+    Matrix,
+    bit64,
+    tiledb (>= 0.14.0),
+    arrow,
+    utils,
+    glue,
+    urltools
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.2.1
+Suggests:
+    rmarkdown,
+    knitr,
+    withr,
+    testthat (>= 3.0.0)
+VignetteBuilder: knitr
+Config/testthat/edition: 2
