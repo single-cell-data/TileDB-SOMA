@@ -16,6 +16,7 @@ While the [main-old](https://github.com/single-cell-data/TileDB-SOMA/blob/main-o
 
 * Any/all questions, comments, and concerns are welcome at https://github.com/single-cell-data/TileDB-SOMA/issues
 * Bug reports should ideally be accompanied by a minimally reproducible example, using sample data available outside your organization
+* If you believe you have found a security issue, in lieu of filing an issue please responsibly disclose it by contacting [security@tiledb.com](mailto:security@tiledb.com).
 
 # Developer information
 
