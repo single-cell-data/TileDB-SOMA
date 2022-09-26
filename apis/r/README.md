@@ -8,7 +8,7 @@ An R implementation of the [Stack of Matrices, Annotated][soma-spec] (SOMA) API 
 
 ## Installation
 
-You can install the development version of *tiledbsoma* from [GitHub](https://github.com/TileDB-Inc/tiledbsoma) with:
+You can install the development version of `tiledbsoma` from [GitHub](https://github.com/TileDB-Inc/tiledbsoma) with:
 
 ``` r
 # install.packages("remotes")
