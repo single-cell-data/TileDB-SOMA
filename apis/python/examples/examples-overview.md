@@ -26,11 +26,6 @@ In these example we will offer how-to's on the [TileDB SingleCell Python package
 * How to ingest these into SOMA storage on local disk, S3, and TileDB Cloud for increasing levels of scalability and shareability
 * How to slice and query SOMA and SOMA-collection objects in new and empowering ways
 
-See also for the R package:
-
-* [R repo](https://github.com/TileDB-Inc/TileDB-SOMA)
-* [R docs](https://tiledb-inc.github.io/tiledbsoma)
-
 # Notebook
 
 Examples with screenshots and copy/pasteable reusable samples are shown here. As well, you can use
