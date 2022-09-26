@@ -9,6 +9,7 @@ import tiledbsoma as soma
 from . import NDARRAY_ARROW_TYPES_NOT_SUPPORTED, NDARRAY_ARROW_TYPES_SUPPORTED
 
 """
+comment will be removed when test rework is complete
 TODO:
 - [X] create
 - [-] delete
