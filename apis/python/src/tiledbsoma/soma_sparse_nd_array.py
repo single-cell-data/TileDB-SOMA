@@ -149,12 +149,12 @@ class SOMASparseNdArray(TileDBArray):
         """
         return True
 
-    # TODO
-    #    def get_nnz(self) -> wint:
-    #        """
-    #        Return the number of non-zero values in the array
-    #        """
-    #        return 999
+    @property
+    def nnz(self) -> int:
+        """
+        Return the number of stored values in the array
+        """
+        raise NotImplementedError()
 
     def read(
         self,
