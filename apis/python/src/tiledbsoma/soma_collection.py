@@ -119,7 +119,7 @@ class SOMACollection(TileDBObject):
         Adds a member to the collection.
         """
         self._add_object(member, relative)
-        self._cached_members[member.get_name()] = member
+        self._cached_members[member.name] = member
 
     def delete(self, member_name: str) -> None:
         """
@@ -186,7 +186,7 @@ class SOMACollection(TileDBObject):
             key, lines = future.result()
             lines_per_key[key] = lines
 
-        lines = [f"{self.get_name()} {self.__class__.__name__}:"]
+        lines = [f"{self.name} {self.__class__.__name__}:"]
         for key in self.keys():
             for line in lines_per_key[key]:
                 lines.append("  " + line)
@@ -311,8 +311,8 @@ class SOMACollection(TileDBObject):
         if self._cached_member_names_to_uris is None:
             self._create_unless_exists()
 
-        child_uri = obj.get_uri()
-        child_name = obj.get_name()
+        child_uri = obj.uri
+        child_name = obj.name
         if relative is None:
             relative = self._tiledb_platform_config.member_uris_are_relative
         if relative is None:
@@ -332,7 +332,7 @@ class SOMACollection(TileDBObject):
         obj._uri = self._get_child_uri(child_name)
 
     def _remove_object(self, obj: TileDBObject) -> None:
-        self._remove_object_by_name(obj.get_name())
+        self._remove_object_by_name(obj.name)
 
     def _remove_object_by_name(self, member_name: str) -> None:
         self._cached_member_names_to_uris = None  # invalidate on remove-member

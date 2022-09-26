@@ -1,4 +1,4 @@
-from typing import Any, Iterator, List, Optional, Sequence, TypeVar
+from typing import Any, Iterator, List, Literal, Optional, Sequence, TypeVar
 
 import numpy as np
 import pandas as pd
@@ -146,27 +146,14 @@ class SOMAIndexedDataFrame(TileDBArray):
         if not self.exists():
             return ["Unpopulated"]
         lines = [
-            self.get_name()
+            self.name
             + " "
             + self.__class__.__name__
             # Pending https://github.com/single-cell-data/TileDB-SOMA/issues/302
             # + " "
-            # + str(self._get_shape())
+            # + str(self.shape)
         ]
         return lines
-
-    def __getattr__(self, name: str) -> Any:
-        """
-        Implements ``.shape``, etc. which are really method calls.
-        """
-        if name == "shape":
-            return self._get_shape()
-        elif name == "ndims":
-            return self._get_ndims()
-        else:
-            # Unlike __getattribute__ this is _only_ called when the member isn't otherwise
-            # resolvable. So raising here is the right thing to do.
-            raise AttributeError(f"{self.__class__.__name__} has no attribute '{name}'")
 
     def keys(self) -> Sequence[str]:
         """
@@ -174,7 +161,8 @@ class SOMAIndexedDataFrame(TileDBArray):
         """
         return self._tiledb_attr_names()
 
-    def _get_shape(self) -> NTuple:
+    @property
+    def shape(self) -> NTuple:
         """
         Return length of each dimension, always a list of length ``ndims``.
         """
@@ -183,14 +171,16 @@ class SOMAIndexedDataFrame(TileDBArray):
                 self._shape = A.shape
         return self._shape
 
-    def _get_ndims(self) -> int:
+    @property
+    def ndims(self) -> int:
         """
         Return number of index columns.
         """
         return len(self.get_index_column_names())
 
-    def get_indexed(self) -> bool:
-        return False
+    @property
+    def is_indexed(self) -> Literal[True]:
+        return True
 
     def get_index_column_names(self) -> Sequence[str]:
         """
@@ -199,15 +189,14 @@ class SOMAIndexedDataFrame(TileDBArray):
         # If we've cached the answer, skip the storage read. Especially if the storage is on the
         # cloud, where we'll avoid an HTTP request.
         if self._index_column_names is None:
-            if self.get_is_indexed():
-                names = []
-                with self._tiledb_open() as A:
-                    dom = A.domain
-                    for i in range(dom.ndim):
-                        names.append(dom.dim(i).name)
-                self._index_column_names = names
-            else:
-                self._index_column_names = []
+            assert self.is_indexed
+            names = []
+            with self._tiledb_open() as A:
+                dom = A.domain
+                for i in range(dom.ndim):
+                    names.append(dom.dim(i).name)
+            self._index_column_names = names
+
         return self._index_column_names
 
     def read(

@@ -79,6 +79,6 @@ class SOMAExperiment(SOMACollection):
         for element in self.ms:
             if not isinstance(element, SOMAMeasurement):
                 raise Exception(
-                    f"element {element.name} of {self.get_type()}.ms should be SOMAMeasurement; got {element.__class__.__name__}"
+                    f"element {element.name} of {self.type}.ms should be SOMAMeasurement; got {element.__class__.__name__}"
                 )
             element.constrain()

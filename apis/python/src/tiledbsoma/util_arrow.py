@@ -4,20 +4,83 @@ import numpy as np
 import pyarrow as pa
 import tiledb
 
+"""
+Conversion to/from Arrow and TileDB type systems. Must be capable
+of representing full type semantics, and correctly performing a
+round trip conversion (eg, T == to_arrow(to_tiledb(T)))
+
+Most primitive types are simple - eg, uint8. Of particular challenge
+are datetime/timestamps as TileDB has no distinction between a "datetime" and
+a "timedelta". The best Arrow match is TimestampType, as long as that
+TimestampType instance does NOT have a timezone set.
+
+Because of our round-trip requirement, all other Arrow temporal types
+are unsupported (even though they are just int64 under the covers).
+"""
+ARROW_TO_TDB = {
+    # Dict of types unsupported by to_pandas_dtype, which require overrides.
+    # If the value is an instance of Exception, it will be raised.
+    #
+    # IMPORTANT: ALL non-primitive types supported by TileDB must be in this table.
+    #
+    pa.string(): np.dtype(
+        "S"
+    ),  # XXX TODO: temporary work-around until UTF8 support is native. GH #338.
+    pa.binary(): np.dtype("S"),
+    pa.timestamp("s"): "datetime64[s]",
+    pa.timestamp("ms"): "datetime64[ms]",
+    pa.timestamp("us"): "datetime64[us]",
+    pa.timestamp("ns"): "datetime64[ns]",
+    #
+    # Unsupported types in TileDB type system
+    pa.float16(): TypeError("float16 - unsupported type (use float32)"),
+    pa.date32(): TypeError("32-bit date - unsupported type (use TimestampType)"),
+    pa.date64(): TypeError("64-bit date - unsupported type (use TimestampType)"),
+}
+
 
 def tiledb_type_from_arrow_type(t: pa.DataType) -> Union[type, np.dtype]:
     """
+    Given an Arrow type, return the corresponding TileDB type as a Numpy dtype.
     Building block for Arrow-to-TileDB schema translation.
+
+    If type is unsupported, with raise a TypeError exception.
+
+    Parameters
+    ----------
+    t : pyarrow.DataType
+        Arrow DataType instance, eg, pyarrow.int8()
+
+    Returns
+    -------
+    numpy.dtype
+        The numpy dtype corresponding to the ``t`` parameter. ``TypeError`` will
+        be raised for unsupported types.
     """
-    if t == pa.string():
-        # pyarrow's to_pandas_dtype maps pa.string() to dtype object which
-        # isn't acceptable to tiledb -- we must say str.
-        # XXX COMMENT return str
-        return np.dtype("S")
-    else:
-        # mypy says:
-        # Returning Any from function declared to return "type"  [no-any-return]
-        return t.to_pandas_dtype()
+    if t in ARROW_TO_TDB:
+        arrow_type = ARROW_TO_TDB[t]
+        if isinstance(arrow_type, Exception):
+            raise arrow_type
+        return np.dtype(arrow_type)
+
+    if not pa.types.is_primitive(t):
+        raise TypeError(f"Type {str(t)} - unsupported type")
+    if pa.types.is_timestamp(t):
+        raise TypeError("TimeStampType - unsupported type (timezone not supported)")
+    if pa.types.is_time32(t):
+        raise TypeError("Time64Type - unsupported type (use TimestampType)")
+    if pa.types.is_time64(t):
+        raise TypeError("Time32Type - unsupported type (use TimestampType)")
+    if pa.types.is_duration(t):
+        raise TypeError("DurationType - unsupported type (use TimestampType)")
+
+    # else lets try the default conversion path
+    try:
+        # Must force into a dtype to catch places where the Pandas type
+        # system has extra information that can't be expressed
+        return np.dtype(t.to_pandas_dtype())
+    except NotImplementedError as exc:
+        raise TypeError("Unsupported Arrow type") from exc
 
 
 def get_arrow_type_from_tiledb_dtype(tiledb_dtype: np.dtype) -> pa.DataType:
@@ -25,6 +88,7 @@ def get_arrow_type_from_tiledb_dtype(tiledb_dtype: np.dtype) -> pa.DataType:
     TODO: COMMENT
     """
     if tiledb_dtype.name == "bytes":
+        # XXX TODO: temporary work-around until UTF8 support is native. GH #338.
         return pa.string()
     else:
         return pa.from_numpy_dtype(tiledb_dtype)
