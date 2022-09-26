@@ -1,5 +1,5 @@
 import collections.abc
-from typing import Any, Dict, Iterator
+from typing import Any, Dict, Iterator, Union
 
 # importing tiledbsoma.TileDBObject leads to a circular reference as TileDBObject imports us. This
 # is, in turn, because this class requires a back-link to the underlying object -- hence,
@@ -7,7 +7,9 @@ from typing import Any, Dict, Iterator
 import tiledbsoma
 
 
-class SOMAMetadataMapping(collections.abc.MutableMapping):
+class SOMAMetadataMapping(
+    collections.abc.MutableMapping[str, Union[float, int, bool, str]]
+):
     _underlying: "tiledbsoma.TileDBObject"
 
     def __init__(self, underlying: "tiledbsoma.TileDBObject"):
