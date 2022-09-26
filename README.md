@@ -6,7 +6,7 @@
 
 A C++ library with APIs in Python and R for efficient storage and retrieval of single-cell data using [TileDB Embedded][tiledb].
 
-Note this branch, `main`, implements the [newer specfication](https://github.com/single-cell-data/SOMA/blob/main/abstract_specification.md).  Please also see the `main-old` branch which implements the [older specification](https://github.com/single-cell-data/TileDB-SOMA/blob/main-old/spec/specification.md).
+Note this branch, `main`, implements the [updated specfication](https://github.com/single-cell-data/SOMA/blob/main/abstract_specification.md).  Please also see the `main-old` branch which implements the [original specification](https://github.com/single-cell-data/TileDB-SOMA/blob/main-old/spec/specification.md).
 
 # Language bindings and installation instructions
 
