@@ -253,7 +253,7 @@ def ingest_one(
 
         tiledbsoma.logging.logger.info("")
         tiledbsoma.logging.logger.info(
-            f"Added SOMAExperiment {exp.get_name()} to SOMACollection {soco_dir}"
+            f"Added SOMAExperiment {exp.name} to SOMACollection {soco_dir}"
         )
 
 
