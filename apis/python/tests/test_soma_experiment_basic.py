@@ -105,6 +105,9 @@ def test_soma_experiment_basic(tmp_path):
     assert "ms" in experiment
     assert "nonesuch" not in experiment
 
+    assert experiment.obs == experiment["obs"]
+    assert experiment.ms == experiment["ms"]
+
     assert len(experiment.ms) == 1
     assert isinstance(experiment.ms["mRNA"], t.SOMAMeasurement)
 
@@ -113,6 +116,9 @@ def test_soma_experiment_basic(tmp_path):
     assert "meas2" not in experiment.ms
     assert isinstance(experiment.ms["mRNA"].var, t.SOMADataFrame)
     assert isinstance(experiment.ms["mRNA"].X, t.SOMACollection)
+
+    assert experiment.ms["mRNA"].var == experiment["ms"]["mRNA"]["var"]
+    assert experiment.ms["mRNA"].X == experiment["ms"]["mRNA"]["X"]
 
     assert len(experiment.ms["mRNA"].X) == 1
     assert "data" in experiment.ms["mRNA"].X

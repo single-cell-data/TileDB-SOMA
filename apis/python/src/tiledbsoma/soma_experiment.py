@@ -53,7 +53,15 @@ class SOMAExperiment(SOMACollection):
         """
         super().create()
 
-    def __getattr__(self, name: str) -> Any:  # TODO: union type
+    @property
+    def obs(self):
+        return self["obs"]
+
+    @property
+    def ms(self):
+        return self["ms"]
+
+    def __getitem__(self, name: str) -> Any:  # TODO: union type
         """
         Implements ``experiment.obs`` and ``experiment.ms``.
         """
@@ -65,10 +73,8 @@ class SOMAExperiment(SOMACollection):
                 )
             return self._cached_members[name]
 
-        else:
-            # Unlike __getattribute__ this is _only_ called when the member isn't otherwise
-            # resolvable. So raising here is the right thing to do.
-            raise AttributeError(f"{self.__class__.__name__} has no attribute '{name}'")
+        # otherwise let generic collection handle it.
+        super().__getitem__(name)
 
     def constrain(self) -> None:
         """

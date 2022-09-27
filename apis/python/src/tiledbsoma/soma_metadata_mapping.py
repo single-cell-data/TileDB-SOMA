@@ -1,4 +1,4 @@
-from typing import Any, Dict, Iterator, MutableMapping, Union
+from typing import Any, Dict, Iterator, MutableMapping
 
 # importing tiledbsoma.TileDBObject leads to a circular reference as TileDBObject imports us. This
 # is, in turn, because this class requires a back-link to the underlying object -- hence,
@@ -6,7 +6,7 @@ from typing import Any, Dict, Iterator, MutableMapping, Union
 import tiledbsoma
 
 
-class SOMAMetadataMapping(MutableMapping[str, Union[str, bool, int, float]]):
+class SOMAMetadataMapping(MutableMapping[str, Any]):
     _underlying: "tiledbsoma.TileDBObject"
 
     def __init__(self, underlying: "tiledbsoma.TileDBObject"):
@@ -19,7 +19,7 @@ class SOMAMetadataMapping(MutableMapping[str, Union[str, bool, int, float]]):
         with self._underlying._tiledb_open("w") as M:
             del M.meta[key]
 
-    def __iter__(self) -> Iterator[Any]:
+    def __iter__(self) -> Iterator[str]:
         """
         Iterate over the collection.
         """
