@@ -48,6 +48,7 @@ test_that("array dimensions can be transposed", {
 })
 
 test_that("Incomplete queries can be completed via batching", {
+  skip_if_not_installed("SummarizedExperiment")
   uri <- withr::local_tempdir("assay-matrix-batched")
   with_allocation_size_preference(5e5)
 
