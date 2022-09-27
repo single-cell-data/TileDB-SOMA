@@ -14,40 +14,71 @@ class SOMAMetadataMapping(MutableMapping[str, Any]):
 
     def __delitem__(self, key: str) -> None:
         """
-        Remove the key from the collection.
+        Remove the key from the metadata collection.
         """
         with self._underlying._tiledb_open("w") as M:
             del M.meta[key]
 
     def __iter__(self) -> Iterator[str]:
         """
-        Iterate over the collection.
+        Return an iterator over the metadata collection.
         """
         return iter(self.as_dict())
 
     def __len__(self) -> int:
         """
-        Get the length of the map, the number of keys present.
+        Return the number of elements in the metadata collection.
+
+        Returns
+        -------
+        int
+            The number of elements in the metadata collection.
         """
         return len(self.as_dict())
 
     def as_dict(self) -> Dict[str, Any]:
         """
-        Retrieves the full metadata set from storage.
+        Return the metadata collection as a ``dict``.
+
+        Returns
+        -------
+        dict[str, any]
+            The contents of the metadata collection.
         """
         with self._underlying._tiledb_open("r") as M:
             return dict(M.meta)
 
     def __getitem__(self, key: str) -> Any:
         """
-        Implements ``item.metadata["key"]``.
+        Return the metadata element specified by ``key``.
+
+        Parameters
+        ----------
+        key : str
+            The name of the item.
         """
         with self._underlying._tiledb_open("r") as M:
             return M.meta[key]
 
     def __setitem__(self, key: str, value: Any) -> None:
         """
-        Implements ``item.metadata["key"] = ...``.
+        Update the metadata collection with a new element.
+
+        Parameters
+        ----------
+        key : str
+            The metadata element name.
+        value : any
+            The metadata element value. Must be a primitive type (int,
+            float, bool) or string.
+
+        Returns
+        -------
+        None
         """
+
+        if type(key) != str:
+            raise TypeError("Metadata keys must be a string.")
+
         with self._underlying._tiledb_open("w") as M:
             M.meta[key] = value
