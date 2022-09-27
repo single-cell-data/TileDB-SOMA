@@ -1,8 +1,8 @@
-def get_version() -> str:
+def get_SOMA_version() -> str:
     """
     Return semver-compatible version of the supported SOMA API.
     """
-    return "0.0.0-dev"
+    return "0.2.0-dev"
 
 
 def get_implementation() -> str:
@@ -12,12 +12,13 @@ def get_implementation() -> str:
     return "python-tiledb"
 
 
-# One should use tiledbsoma.__version__
-# def get_implementation_version() -> str:
-#    """
-#    Return the package implementation version as a semver
-#    """
-#    return __version__
+def get_implementation_version() -> str:
+    """
+    Return the package implementation version as a semver
+    """
+    from ._version import __version__
+
+    return str(__version__)
 
 
 def get_storage_engine() -> str:
