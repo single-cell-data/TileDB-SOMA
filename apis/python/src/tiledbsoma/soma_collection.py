@@ -88,23 +88,25 @@ class SOMACollection(TileDBObject, MutableMapping[str, TileDBObject]):
                 f"{self.__class__.__name__} has no attribute '{member_name}'"
             )
 
-    def set(self, member: TileDBObject, *, relative: Optional[bool] = None) -> None:
+    def set(
+        self,
+        member: TileDBObject,
+        *,
+        child_name: str = None,
+        relative: Optional[bool] = None,
+    ) -> None:
         """
         Adds a member to the collection.  This interface allows explicit control over
         `relative` URI, and uses the member's default name.
         """
-        self._add_object(member, relative=relative)
-        self._cached_members[member.name] = member
+        name = member.name if child_name is None else child_name
+        self._add_object(member, child_name=name, relative=relative)
+        self._cached_members[name] = member
 
     def __setitem__(self, name: str, member: TileDBObject) -> None:
         """
         Default collection __setattr__
         """
-        # TODO: it is desirable to have control over relative URI, even though
-        # the __setitem__ interface can't explicitly accept it.  Ideas:
-        # 1. each SOMACollection has per-instance state of "relative" true/false
-        # 2. global default relative true/false value
-        # for now, hard-code it
         self._add_object(member, child_name=name, relative=False)
         self._cached_members[name] = member
 
