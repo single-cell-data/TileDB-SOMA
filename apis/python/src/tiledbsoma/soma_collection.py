@@ -55,10 +55,6 @@ class SOMACollection(TileDBObject):
         tiledb.group_create(uri=self._uri, ctx=self._ctx)
         self._common_create()  # object-type metadata etc
 
-    # TODO
-    # delete(uri)
-    # Delete the SOMACollection specified with the URI.
-
     def __len__(self) -> int:
         """
         Returns the number of members in the collection.  Implements Python's ``len(collection)``.
@@ -121,11 +117,11 @@ class SOMACollection(TileDBObject):
         self._add_object(member, relative)
         self._cached_members[member.name] = member
 
-    def delete(self, member_name: str) -> None:
-        """
-        Removes a member from the collection, when invoked as ``collection.delete("namegoeshere")``.
-        """
-        self._remove_object_by_name(member_name)
+    # def delete(self, member_name: str) -> None:
+    #     """
+    #     Removes a member from the collection, when invoked as ``collection.delete("namegoeshere")``.
+    #     """
+    #     self._remove_object_by_name(member_name)
 
     def __delattr__(self, member_name: str) -> None:
         """
@@ -137,7 +133,7 @@ class SOMACollection(TileDBObject):
         """
         Removes a member from the collection, when invoked as ``del collection["namegoeshere"]``.
         """
-        self.delete(member_name)
+        self._remove_object_by_name(member_name)
 
     def __iter__(self) -> Iterator[Any]:  # TODO: union type
         """

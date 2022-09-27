@@ -34,18 +34,6 @@ class TileDBArray(TileDBObject):
         """
         return util_arrow.get_arrow_schema_from_tiledb_uri(self.uri, self._ctx)
 
-    def delete(self) -> None:
-        """
-        Delete the SOMADataFrame specified with the URI.
-
-        TODO: should this raise an error if the object does not exist?
-        """
-        try:
-            tiledb.remove(self.uri)
-        except tiledb.TileDBError:
-            pass
-        return
-
     def _tiledb_open(self, mode: str = "r") -> tiledb.Array:
         """
         This is just a convenience wrapper allowing 'with self._tiledb_open() as A: ...' rather than 'with tiledb.open(self._uri) as A: ...'.

@@ -60,6 +60,18 @@ class TileDBObject(ABC):
 
         self.metadata = SOMAMetadataMapping(self)
 
+    def delete(self) -> None:
+        """
+        Delete the SOMADataFrame specified with the URI.
+
+        TODO: should this raise an error if the object does not exist?
+        """
+        try:
+            tiledb.remove(self._uri)
+        except tiledb.TileDBError:
+            pass
+        return
+
     def __repr__(self) -> str:
         """
         Fallback string display. Will be overridden by any interesting subclasses.

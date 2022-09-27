@@ -82,7 +82,8 @@ def simple_soma_indexed_data_frame(tmp_path):
     n_data = len(data["index"])
     rb = pa.RecordBatch.from_pydict(data)
     sdf.write(rb)
-    return (schema, sdf, n_data, index_column_names)
+    yield (schema, sdf, n_data, index_column_names)
+    sdf.delete()
 
 
 @pytest.mark.parametrize(

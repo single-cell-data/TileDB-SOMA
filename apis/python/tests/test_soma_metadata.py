@@ -52,9 +52,7 @@ def soma_object(request, tmp_path):
 
     assert so is not None, f"Unknown class name: {class_name}"
     yield so
-
-    # XXX  TODO: several classes do not implement delete yet
-    # so.delete()
+    so.delete()
 
 
 def test_soma_metadata(soma_object):
