@@ -92,7 +92,7 @@ class SOMACollection(TileDBObject, MutableMapping[str, TileDBObject]):
         self,
         member: TileDBObject,
         *,
-        child_name: str = None,
+        child_name: Optional[str] = None,
         relative: Optional[bool] = None,
     ) -> None:
         """
