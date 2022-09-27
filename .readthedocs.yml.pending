@@ -1,3 +1,8 @@
+# ================================================================
+# The main branch is not published to readthedocs at present.
+# We only publish from main-old for now (2022-09-26).
+# ================================================================
+
 # Note: builds at
 # https://readthedocs.com/projects/tiledb-inc-tiledb-soma/builds/
 # (permissioned)
