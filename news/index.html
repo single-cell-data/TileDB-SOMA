@@ -45,7 +45,7 @@
   <a href="../news/index.html">Changelog</a>
 </li>
       </ul><ul class="nav navbar-nav navbar-right"><li>
-  <a href="https://github.com/TileDB-Inc/tiledbsoma/" class="external-link">
+  <a href="https://github.com/single-cell-data/TileDB-SOMA/" class="external-link">
     <span class="fab fa-github fa-lg"></span>
      
   </a>
@@ -60,7 +60,7 @@
   <div class="col-md-9 contents">
     <div class="page-header">
       <h1 data-toc-skip>Changelog <small></small></h1>
-      <small>Source: <a href="https://github.com/TileDB-Inc/tiledbsoma/blob/HEAD/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
+      <small>Source: <a href="https://github.com/single-cell-data/TileDB-SOMA/blob/HEAD/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
     <div class="section level2">
@@ -125,18 +125,18 @@
 <div class="section level3">
 <h3 id="changes-development-version">Changes<a class="anchor" aria-label="anchor" href="#changes-development-version"></a></h3>
 <ul><li>
-<code>AssayMatrix$from_matrix()</code>, <code>AssayMatrix$to_matrix()</code>, and <code>AssayMatrixGroup$add_assay_matrix()</code> gained a <code>transpose</code> argument (<a href="https://github.com/TileDB-Inc/tiledbsoma/issues/80" class="external-link">#80</a>).</li>
-<li>Removed vestigial code for merging non-layerable COO data.frames, which was previously used to add ingest dense <code>scaled.data</code> from a Seurat <code>Assay</code> as an attribute of the <code>X</code> array, along with <code>counts</code>/<code>data</code>. This is no longer necessary as each layer is now ingested into a separate array within the <code>X</code> group (<a href="https://github.com/TileDB-Inc/tiledbsoma/issues/73" class="external-link">#73</a>).</li>
-<li>The internal utility <code>dgtmatrix_to_dataframe()</code> was replaced with <code>matrix_to_coo()</code>, which converts Matrix-like objects to COO data frames much more efficiently (<a href="https://github.com/TileDB-Inc/tiledbsoma/issues/75" class="external-link">#75</a>).</li>
-<li>The internal utility <code>pad_matrix()</code> can now pad a matrix by adding empty rows (<a href="https://github.com/TileDB-Inc/tiledbsoma/issues/79" class="external-link">#79</a>).</li>
-<li>The internal assertion <code>has_dimnames()</code> was replaced with <code>is_labeled_matrix()</code> for clarity (<a href="https://github.com/TileDB-Inc/tiledbsoma/issues/79" class="external-link">#79</a>).</li>
+<code>AssayMatrix$from_matrix()</code>, <code>AssayMatrix$to_matrix()</code>, and <code>AssayMatrixGroup$add_assay_matrix()</code> gained a <code>transpose</code> argument (<a href="https://github.com/single-cell-data/TileDB-SOMA/issues/80" class="external-link">#80</a>).</li>
+<li>Removed vestigial code for merging non-layerable COO data.frames, which was previously used to add ingest dense <code>scaled.data</code> from a Seurat <code>Assay</code> as an attribute of the <code>X</code> array, along with <code>counts</code>/<code>data</code>. This is no longer necessary as each layer is now ingested into a separate array within the <code>X</code> group (<a href="https://github.com/single-cell-data/TileDB-SOMA/issues/73" class="external-link">#73</a>).</li>
+<li>The internal utility <code>dgtmatrix_to_dataframe()</code> was replaced with <code>matrix_to_coo()</code>, which converts Matrix-like objects to COO data frames much more efficiently (<a href="https://github.com/single-cell-data/TileDB-SOMA/issues/75" class="external-link">#75</a>).</li>
+<li>The internal utility <code>pad_matrix()</code> can now pad a matrix by adding empty rows (<a href="https://github.com/single-cell-data/TileDB-SOMA/issues/79" class="external-link">#79</a>).</li>
+<li>The internal assertion <code>has_dimnames()</code> was replaced with <code>is_labeled_matrix()</code> for clarity (<a href="https://github.com/single-cell-data/TileDB-SOMA/issues/79" class="external-link">#79</a>).</li>
 </ul></div>
 <div class="section level3">
 <h3 id="fixes-development-version">Fixes<a class="anchor" aria-label="anchor" href="#fixes-development-version"></a></h3>
 <ul><li>Matrix conversion message from <code>AssayMatrix</code> now respects the <code>verbose</code> option</li>
 <li>Upon initialization <code>SOMA</code> now looks for a <code>raw</code> group and warns the user it will be ignored. Currently tiledbsoma-py creates a <code>raw</code> group when converting anndata objects where <code>.raw</code> is populated. However, Seurat/BioC objects do not have an obvious place to store this data, so ignoring it improves compatibility.</li>
-<li>Fixed a non-user-facing issue with the internal <code>dgtmatrix_to_dataframe()</code> function used to convert unordered <code>dgTMatrix</code> objects to COO data frames (<a href="https://github.com/TileDB-Inc/tiledbsoma/issues/73" class="external-link">#73</a>).</li>
-<li>Pretty printing of classes that inherit from <code>TileDBObject</code> has been improved so that the class name is displayed first (<a href="https://github.com/TileDB-Inc/tiledbsoma/issues/79" class="external-link">#79</a>).</li>
+<li>Fixed a non-user-facing issue with the internal <code>dgtmatrix_to_dataframe()</code> function used to convert unordered <code>dgTMatrix</code> objects to COO data frames (<a href="https://github.com/single-cell-data/TileDB-SOMA/issues/73" class="external-link">#73</a>).</li>
+<li>Pretty printing of classes that inherit from <code>TileDBObject</code> has been improved so that the class name is displayed first (<a href="https://github.com/single-cell-data/TileDB-SOMA/issues/79" class="external-link">#79</a>).</li>
 </ul></div>
 <div class="section level3">
 <h3 id="build-and-test-systems-development-version">Build and Test Systems<a class="anchor" aria-label="anchor" href="#build-and-test-systems-development-version"></a></h3>
@@ -206,7 +206,7 @@
 </div>
     <div class="section level2">
 <h2 class="page-header" data-toc-text="0.1.2" id="tiledbsoma-012">tiledbsoma 0.1.2<a class="anchor" aria-label="anchor" href="#tiledbsoma-012"></a></h2>
-<p>Improve handling of Seurat objects with empty cell identities (<a href="https://github.com/TileDB-Inc/tiledbsoma/issues/58" class="external-link">#58</a>).</p>
+<p>Improve handling of Seurat objects with empty cell identities (<a href="https://github.com/single-cell-data/TileDB-SOMA/issues/58" class="external-link">#58</a>).</p>
 </div>
     <div class="section level2">
 <h2 class="page-header" data-toc-text="0.1.1" id="tiledbsoma-011">tiledbsoma 0.1.1<a class="anchor" aria-label="anchor" href="#tiledbsoma-011"></a></h2>
@@ -244,8 +244,8 @@
 <li>Internally group members are now added with names</li>
 <li>New internal <code>TileDBURI</code> class for handling various URI formats</li>
 <li>The <code>uri</code> field for all TileDB(Array|Group)-based classes is now an active binding that retrieves the URI from the private <code>tiledb_uri</code> field</li>
-<li>Several default parameters have been changed to store the the <code>X</code>, <code>obs</code>, and <code>var</code> arrays more efficiently on disk (<a href="https://github.com/TileDB-Inc/tiledbsoma/issues/50" class="external-link">#50</a>)</li>
-<li>Seurat cell identities are now stored in the <code>active_ident</code> attribute of the <code>obs</code> array (<a href="https://github.com/TileDB-Inc/tiledbsoma/issues/56" class="external-link">#56</a>)</li>
+<li>Several default parameters have been changed to store the the <code>X</code>, <code>obs</code>, and <code>var</code> arrays more efficiently on disk (<a href="https://github.com/single-cell-data/TileDB-SOMA/issues/50" class="external-link">#50</a>)</li>
+<li>Seurat cell identities are now stored in the <code>active_ident</code> attribute of the <code>obs</code> array (<a href="https://github.com/single-cell-data/TileDB-SOMA/issues/56" class="external-link">#56</a>)</li>
 <li>Require at least version 0.13.0 of tiledb-r to support retrieval of group names</li>
 </ul></div>
 </div>
