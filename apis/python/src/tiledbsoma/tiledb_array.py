@@ -73,5 +73,5 @@ class TileDBArray(TileDBObject):
         Prints metadata for the array, for interactive use.
         """
         print(f"{indent}[{self._name}]")
-        for key, value in self.metadata:
+        for key, value in self.metadata.items():
             print(f"{indent}- {key}: {value}")

@@ -54,11 +54,11 @@ class SOMAExperiment(SOMACollection):
         super().create()
 
     @property
-    def obs(self):
+    def obs(self) -> Any:
         return self["obs"]
 
     @property
-    def ms(self):
+    def ms(self) -> Any:
         return self["ms"]
 
     def __getitem__(self, name: str) -> Any:  # TODO: union type

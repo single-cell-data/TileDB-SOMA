@@ -340,7 +340,7 @@ class SOMACollection(TileDBObject, MutableMapping[str, TileDBObject]):
         Shows metadata for the group, recursively by default.
         """
         print(f"{indent}[{self._name}]")
-        for key, value in self.metadata:
+        for key, value in self.metadata.items():
             print(f"{indent}- {key}: {value}")
         if recursively:
             child_indent = indent + "  "
