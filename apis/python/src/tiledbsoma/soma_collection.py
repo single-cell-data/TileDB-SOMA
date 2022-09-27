@@ -127,7 +127,7 @@ class SOMACollection(TileDBObject):
         """
         Removes a member from the collection, when invoked as ``del collection.namegoeshere``.
         """
-        self.delete(member_name)
+        self._remove_object_by_name(member_name)
 
     def __delitem__(self, member_name: str) -> None:
         """
