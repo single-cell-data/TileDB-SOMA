@@ -4,7 +4,7 @@ Temporary and experimental.
 
 # Rationale
 
-* R docs (currently at [https://github.com/TileDB-Inc/tiledbsoma](https://github.com/TileDB-Inc/tiledbsoma)) have a wonderful combination of API docs (generated from in-source-code doc-blocks) as well as hand-written long-form "vignette" material.
+* R docs (currently at [https://github.com/single-cell-data/TileDB-SOMA](https://github.com/single-cell-data/TileDB-SOMA)) have a wonderful combination of API docs (generated from in-source-code doc-blocks) as well as hand-written long-form "vignette" material.
 * For Python RST-style docs, I am not yet aware of a nice way to do that -- other than what's presented here.
 * Tools like Sphinx and readthedocs are suitable for mapping a _single repo's single-language code-docs_ into a _single doc URL_. However, for this repo, we have Python API docs, Python examples/vignettes, and -- soon -- R docs as well. We wish to publish a _multi-lingual, multi-content doc tree_.
 

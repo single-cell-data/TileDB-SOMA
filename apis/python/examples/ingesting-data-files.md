@@ -104,10 +104,10 @@ optimized storage solution (with admittedly non-negligible ingest time) is that 
 queries benefit from that optimized storage. In particular, various cross-corpus data queries shown
 in these examples take just seconds or minutes.
 
-A key point is **write once, read from multiple tools** -- in particular, using `tiledbsoma-py` (this
-package) or [`tiledbsoma-r`](https://github.com/TileDB-Inc/tiledbsoma) you can read SOMAs in either
-language, regardless of which language was used to store them. This lets you use
-best-in-class/state-of-the-art analysis algorithms, whichever language they're implemented in.
+A key point is **write once, read from multiple tools** -- in particular, using either Python or R
+you can read SOMAs in either language, regardless of which language was used to store them. This
+lets you use best-in-class/state-of-the-art analysis algorithms, whichever language they're
+implemented in.
 
 # Populate a SOMA collection
 
