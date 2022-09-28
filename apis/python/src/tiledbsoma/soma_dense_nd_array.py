@@ -16,7 +16,7 @@ from tiledbsoma.util_tiledb import tiledb_result_order_from_soma_result_order
 
 from .soma_collection import SOMACollection
 from .tiledb_array import TileDBArray
-from .types import Matrix, NTuple, SOMAResultOrder
+from .types import Matrix, NTuple, SOMAResultOrder, SOMANdCoordinate
 
 
 class SOMADenseNdArray(TileDBArray):
@@ -280,11 +280,9 @@ class SOMADenseNdArray(TileDBArray):
             dataframes.append(dataframe)
         return pd.concat(dataframes)
 
-    def write(
+    def write_tensor(
         self,
-        # TODO: rework callsites with regard to the very latest spec rev
-        # coords: Union[tuple, tuple[slice], NTuple, List[int]],
-        coords: Any,
+        coords: SOMANdCoordinate,
         values: pa.Tensor,
     ) -> None:
         """
@@ -297,6 +295,12 @@ class SOMADenseNdArray(TileDBArray):
 
         with self._tiledb_open("w") as A:
             A[coords] = values.to_numpy()
+
+    def write_table(self, arrow_table: pa.Table):
+        pass
+
+    def write_record_batch(self, arrow_batch: pa.RecordBatch):
+        pass
 
     # ----------------------------------------------------------------
     def from_matrix(self, matrix: Matrix) -> None:

@@ -87,15 +87,18 @@ def test_soma_dense_nd_array_delete(tmp_path):
     assert soma.SOMADenseNdArray(uri="no such array").delete() is None
 
 
-# TODO - remove when full test refactoring is complete
-def test_soma_dense_nd_array(tmp_path):
+def test_soma_dense_nd_array_write_tensor(tmp_path):
     nr = 10
     nc = 20
     a = soma.SOMADenseNdArray(tmp_path.as_posix())
 
     a.create(pa.float64(), [nr, nc])
 
-    a.write((slice(0, nr), slice(0, nc)), pa.Tensor.from_numpy(np.eye(nr, nc)))
-    # a.write((slice(8, 12), slice(10, 16)), pa.Tensor.from_numpy(np.ones((4, 6))))
+    data = np.eye(nr, nc)
+    a.write_tensor((slice(0, nr), slice(0, nc)), pa.Tensor.from_numpy(data))
 
-    # TODO: check more things
+    rb = a.read_all(result_order="row-major")  # returns a RecordBatch
+    assert np.array_equal(rb.to_pandas()["data"].to_numpy(), data.flatten())
+
+    rb = a.read_all(result_order="column-major")  # returns a RecordBatch
+    assert np.array_equal(rb.to_pandas()["data"].to_numpy(), data.transpose().flatten())

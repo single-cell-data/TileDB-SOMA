@@ -29,3 +29,6 @@ ArrowReadResult = Union[
     pa.SparseCSRMatrix,
     pa.SparseCSCMatrix,
 ]
+
+SOMACoordinate = Union[int, slice, Tuple[int, ...], List[int], pa.IntegerArray]
+SOMANdCoordinate = Tuple[SOMACoordinate, ...]
