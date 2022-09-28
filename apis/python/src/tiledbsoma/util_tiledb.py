@@ -1,10 +1,12 @@
 import re
-from typing import Optional, Sequence, Tuple, TypeVar, Union
+from typing import List, Optional, Sequence, Tuple, TypeVar, Union
 
 import numpy as np
 import pandas as pd
 import scipy.sparse as sp
 import tiledb
+
+from .types import SOMAResultOrder
 
 T = TypeVar("T", np.ndarray, pd.Series, pd.DataFrame, sp.spmatrix)
 
@@ -17,40 +19,25 @@ def is_tiledb_creation_uri(uri: str) -> bool:
     return bool(re.match("^tiledb://.*s3://.*$", uri))
 
 
-def tiledb_result_order_from_soma_result_order_non_indexed(
-    soma_result_order: Optional[str],
+def tiledb_result_order_from_soma_result_order(
+    soma_result_order: Optional[SOMAResultOrder], accept: List[SOMAResultOrder]
 ) -> Optional[str]:
     """
-    Maps SOMA-spec ``result_order`` syntax to TileDB-specific syntax, for non-indexed dataframes.
+    Given a SOMAResultOrder, return a TileDB result order.  Raise an error if
+    the ``soma_result_order`` is not present in the acceptable values, as
+    defined by ``accept``.
     """
-    # :param order: 'C', 'F', or 'G' (row-major, col-major, tiledb global order)
-    if soma_result_order is None:
-        return None  # use tiledb default
-    elif soma_result_order == "rowid-ordered":
-        return "C"
-    elif soma_result_order == "unordered":
-        return "U"
-    else:
-        raise Exception(f'result-order value unrecognized: "{soma_result_order}"')
-
-
-def tiledb_result_order_from_soma_result_order_indexed(
-    soma_result_order: Optional[str],
-) -> Optional[str]:
-    """
-    Maps SOMA-spec ``result_order`` syntax to TileDB-specific syntax, for indexed dataframes.
-    """
-    # :param order: 'C', 'F', or 'G' (row-major, col-major, tiledb global order)
-    if soma_result_order is None:
-        return None  # use tiledb default
-    elif soma_result_order == "row-major":
-        return "C"
-    elif soma_result_order == "col-major":
-        return "F"
-    elif soma_result_order == "unordered":
-        return "U"
-    else:
-        raise Exception(f'result-order value unrecognized: "{soma_result_order}"')
+    OrderMap: dict[SOMAResultOrder, str] = {
+        "column-major": "F",
+        "row-major": "C",
+        "unordered": "U",
+        "rowid-ordered": "C",
+    }
+    if not soma_result_order:
+        return None
+    if soma_result_order not in accept or soma_result_order not in OrderMap:
+        raise ValueError("result_order unsupported supported.")
+    return OrderMap[soma_result_order]
 
 
 def to_tiledb_supported_dtype(dtype: np.dtype) -> np.dtype:

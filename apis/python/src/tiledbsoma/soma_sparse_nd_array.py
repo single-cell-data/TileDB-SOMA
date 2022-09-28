@@ -173,8 +173,8 @@ class SOMASparseNdArray(TileDBArray):
         """
         TODO: comment
         """
-        tiledb_result_order = (
-            util_tiledb.tiledb_result_order_from_soma_result_order_indexed(result_order)
+        tiledb_result_order = util_tiledb.tiledb_result_order_from_soma_result_order(
+            result_order, accept=["row-major", "column-major", "unordered"]
         )
 
         with self._tiledb_open("r") as A:

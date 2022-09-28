@@ -12,11 +12,11 @@ import tiledbsoma.eta as eta
 import tiledbsoma.logging as logging
 import tiledbsoma.util as util
 import tiledbsoma.util_arrow as util_arrow
-import tiledbsoma.util_tiledb as util_tiledb
+from tiledbsoma.util_tiledb import tiledb_result_order_from_soma_result_order
 
 from .soma_collection import SOMACollection
 from .tiledb_array import TileDBArray
-from .types import Matrix, NTuple
+from .types import Matrix, NTuple, SOMAResultOrder
 
 
 class SOMADenseNdArray(TileDBArray):
@@ -155,10 +155,14 @@ class SOMADenseNdArray(TileDBArray):
 
     def read(
         self,
-        # TODO: partitions: Optional[SOMAReadPartitions] = None,,
-        row_ids: Optional[Sequence[int]] = None,
+        row_ids: Optional[Sequence[int]] = None,  # BUG: we can have more than 2D arrays
         col_ids: Optional[Sequence[int]] = None,
-        result_order: Optional[str] = None,
+        *,
+        result_order: Optional[SOMAResultOrder] = None,
+        # TODO: batch_format: Optional[SOMABatchFormat] = "dense",
+        # TODO: batch_size: Optional[SOMABatchSize] = None,
+        # TODO: partitions: Optional[SOMAReadPartitions] = None,
+        # TODO: platform_config: Optional[dict],
     ) -> Any:  # TODO: Iterator[DenseReadResult]
         """
         Read a user-specified subset of the object, and return as one or more Arrow.Tensor.
@@ -174,8 +178,8 @@ class SOMADenseNdArray(TileDBArray):
         * The coordinates of the slice (e.g., origin, shape)
         * an Arrow.Tensor with the slice values
         """
-        tiledb_result_order = (
-            util_tiledb.tiledb_result_order_from_soma_result_order_indexed(result_order)
+        tiledb_result_order = tiledb_result_order_from_soma_result_order(
+            result_order, accept=["column-major", "row-major"]
         )
 
         with self._tiledb_open("r") as A:

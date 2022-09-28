@@ -76,7 +76,31 @@ class SOMAMeasurement(SOMACollection):
         """
         super().create()
 
-    def __getattr__(self, name: str) -> Any:
+    @property
+    def var(self) -> Any:
+        return self["var"]
+
+    @property
+    def X(self) -> Any:
+        return self["X"]
+
+    @property
+    def obsm(self) -> Any:
+        return self["obsm"]
+
+    @property
+    def obsp(self) -> Any:
+        return self["obsp"]
+
+    @property
+    def varm(self) -> Any:
+        return self["varm"]
+
+    @property
+    def varp(self) -> Any:
+        return self["varp"]
+
+    def __getitem__(self, name: str) -> Any:
         """
         Implements ``experiment.var``, ``experiment.X``, etc.
         """
@@ -87,10 +111,9 @@ class SOMAMeasurement(SOMACollection):
                     uri=child_uri, name=name, parent=self
                 )
             return self._cached_members[name]
-        else:
-            # Unlike __getattribute__ this is _only_ called when the member isn't otherwise
-            # resolvable. So raising here is the right thing to do.
-            raise AttributeError(f"{self.__class__.__name__} has no attribute '{name}'")
+
+        # otherwise let generic collection handle it.
+        super().__getitem__(name)
 
     def constrain(self) -> None:
         """
