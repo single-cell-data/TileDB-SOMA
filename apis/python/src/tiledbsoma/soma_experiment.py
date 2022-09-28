@@ -1,9 +1,10 @@
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, Union, cast
 
 import tiledb
 
 from .soma_collection import SOMACollection
 from .soma_dataframe import SOMADataFrame
+from .soma_indexed_dataframe import SOMAIndexedDataFrame
 from .soma_measurement import SOMAMeasurement
 from .tiledb_object import TileDBObject
 from .tiledb_platform_config import TileDBPlatformConfig
@@ -54,12 +55,12 @@ class SOMAExperiment(SOMACollection):
         super().create()
 
     @property
-    def obs(self) -> Any:
-        return self["obs"]
+    def obs(self) -> Union[SOMADataFrame, SOMAIndexedDataFrame]:
+        return cast(Union[SOMADataFrame, SOMAIndexedDataFrame], self["obs"])
 
     @property
-    def ms(self) -> Any:
-        return self["ms"]
+    def ms(self) -> SOMACollection:
+        return cast(SOMACollection, self["ms"])
 
     def __getitem__(self, name: str) -> Any:  # TODO: union type
         """
@@ -82,9 +83,10 @@ class SOMAExperiment(SOMACollection):
         """
         # TODO: find a good spot to call this from.
 
-        for element in self.ms:
+        for name in self.ms:
+            element = self.ms[name]
             if not isinstance(element, SOMAMeasurement):
                 raise Exception(
-                    f"element {element.name} of {self.type}.ms should be SOMAMeasurement; got {element.__class__.__name__}"
+                    f"element {name} of {self.type}.ms should be SOMAMeasurement; got {element.__class__.__name__}"
                 )
             element.constrain()

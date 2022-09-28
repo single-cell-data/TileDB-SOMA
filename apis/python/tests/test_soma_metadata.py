@@ -6,7 +6,7 @@ import pytest
 import tiledbsoma as soma
 
 """"
-Metadata handling tests for all SOMA Foundational datatypes.
+Metadata handling tests for all SOMA foundational datatypes.
 """
 
 
