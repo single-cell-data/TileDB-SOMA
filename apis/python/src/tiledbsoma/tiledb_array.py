@@ -1,4 +1,4 @@
-from typing import Optional, Sequence
+from typing import Any, Optional, Sequence
 
 import pyarrow as pa
 import tiledb
@@ -19,7 +19,7 @@ class TileDBArray(TileDBObject):
         uri: str,
         *,
         name: Optional[str] = None,
-        parent: Optional["tiledbsoma.SOMACollection"] = None,
+        parent: Optional["tiledbsoma.SOMACollectionBase[Any]"] = None,
         ctx: Optional[tiledb.Ctx] = None,
     ):
         """

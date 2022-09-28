@@ -2,7 +2,7 @@ from typing import Any, Dict, Optional, Union, cast
 
 import tiledb
 
-from .soma_collection import SOMACollection
+from .soma_collection import SOMACollection, SOMACollectionBase
 from .soma_dataframe import SOMADataFrame
 from .soma_indexed_dataframe import SOMAIndexedDataFrame
 from .soma_measurement import SOMAMeasurement
@@ -26,7 +26,7 @@ class SOMAExperiment(SOMACollection):
         *,
         name: Optional[str] = None,
         # Non-top-level objects can have a parent to propagate context, depth, etc.
-        parent: Optional[SOMACollection] = None,
+        parent: Optional[SOMACollectionBase[Any]] = None,
         # Top-level objects should specify these:
         tiledb_platform_config: Optional[TileDBPlatformConfig] = None,
         ctx: Optional[tiledb.Ctx] = None,
@@ -59,8 +59,8 @@ class SOMAExperiment(SOMACollection):
         return cast(Union[SOMADataFrame, SOMAIndexedDataFrame], self["obs"])
 
     @property
-    def ms(self) -> SOMACollection:
-        return cast(SOMACollection, self["ms"])
+    def ms(self) -> SOMACollectionBase[SOMAMeasurement]:
+        return cast(SOMACollectionBase[SOMAMeasurement], self["ms"])
 
     def __getitem__(self, name: str) -> Any:  # TODO: union type
         """
