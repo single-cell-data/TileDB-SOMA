@@ -11,7 +11,7 @@ import tiledb
 from . import eta, logging, util, util_arrow, util_scipy, util_tiledb
 from .soma_collection import SOMACollection
 from .tiledb_array import TileDBArray
-from .types import Matrix, NTuple
+from .types import Matrix, NTuple, SOMAResultOrder
 
 
 class SOMASparseNdArray(TileDBArray):
@@ -164,7 +164,7 @@ class SOMASparseNdArray(TileDBArray):
         # col_ids: Optional[Union[Sequence[int], Slice]] = None,
         row_ids: Optional[Sequence[int]] = None,
         col_ids: Optional[Sequence[int]] = None,
-        result_order: Optional[str] = None,
+        result_order: Optional[SOMAResultOrder] = None,
         # TODO: batch_size
         # TODO: partition,
         # TODO: batch_format,

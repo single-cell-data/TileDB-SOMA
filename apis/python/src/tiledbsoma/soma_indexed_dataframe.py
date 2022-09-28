@@ -8,7 +8,7 @@ import tiledb
 from . import util_arrow, util_tiledb
 from .soma_collection import SOMACollection
 from .tiledb_array import TileDBArray
-from .types import NTuple
+from .types import NTuple, SOMAResultOrder
 
 ROWID = "soma_rowid"
 
@@ -207,7 +207,7 @@ class SOMAIndexedDataFrame(TileDBArray):
         ids: Optional[Any] = None,
         value_filter: Optional[str] = None,
         column_names: Optional[Sequence[str]] = None,
-        result_order: Optional[str] = None,
+        result_order: Optional[SOMAResultOrder] = None,
         # TODO: more arguments
     ) -> Iterator[pa.RecordBatch]:
         """
