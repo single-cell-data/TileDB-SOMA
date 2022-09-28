@@ -109,11 +109,6 @@ if __name__ == "__main__":
         package_dir={"": "src"},
         packages=find_packages("src"),
         zip_safe=False,
-        setup_requires=[
-            "setuptools",
-            "setuptools_scm",
-            "wheel",
-        ],
         install_requires=[
             "anndata",
             "pandas",
@@ -121,8 +116,6 @@ if __name__ == "__main__":
             "scanpy",
             "scipy",
             "tiledb>=0.17.0",
-            "pybind11>=2.10.0",
-            "pytest>=7.1.3",
         ],
         python_requires=">=3.7",
         ext_modules=get_ext_modules(),
