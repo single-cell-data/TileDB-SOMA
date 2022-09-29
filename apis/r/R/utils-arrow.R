@@ -37,8 +37,8 @@ tiledb_type_from_arrow_type <- function(x) {
     # binary = "binary",
     # large_binary = "large_binary",
     # fixed_size_binary = "fixed_size_binary",
-    # based on tiledb::r_to_tiledb_type()
-    string = "UTF8",
+    # tiledb::r_to_tiledb_type() returns UTF8 but they are not yet queryable
+    string = "ASCII",
     # date32 = "date32",
     # date64 = "date64",
     # time32 = "time32",
