@@ -152,7 +152,7 @@ class SOMASparseNdArray(TileDBArray):
     @property
     def nnz(self) -> int:
         """
-        Return the number of stored values in the array
+        Return the number of stored values in the array, including explicitly stored zeros.
         """
         raise NotImplementedError()
 
