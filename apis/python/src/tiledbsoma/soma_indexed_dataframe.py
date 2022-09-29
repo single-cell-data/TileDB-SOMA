@@ -275,7 +275,7 @@ class SOMAIndexedDataFrame(TileDBArray):
         ids: Optional[Any] = None,
         value_filter: Optional[str] = None,
         column_names: Optional[Sequence[str]] = None,
-        result_order: Optional[str] = None,
+        result_order: Optional[SOMAResultOrder] = None,
         # TODO: batch_size
         # TODO: partition,
         # TODO: platform_config,

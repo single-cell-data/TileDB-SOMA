@@ -383,4 +383,8 @@ class SOMACollectionBase(TileDBObject, MutableMapping[str, CollectionElementType
 
 
 class SOMACollection(SOMACollectionBase[TileDBObject]):
+    """
+    A persistent collection of SOMA objects, mapping string keys to any SOMA object.
+    """
+
     pass

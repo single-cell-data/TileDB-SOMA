@@ -77,7 +77,7 @@ SOMAReader::SOMAReader(
         LOG_DEBUG(fmt::format("[SOMAReader] opening array '{}'", uri_));
         auto array = std::make_shared<Array>(*ctx_, uri_, TILEDB_READ);
         mq_ = std::make_unique<ManagedQuery>(array, name);
-        LOG_DEBUG(fmt::format("timestamp = {}", array->timestamp()));
+        LOG_DEBUG(fmt::format("timestamp = {}", array->open_timestamp_end()));
     } catch (const std::exception& e) {
         throw TileDBSOMAError(
             fmt::format("Error opening array: {}\n  {}", uri_, e.what()));

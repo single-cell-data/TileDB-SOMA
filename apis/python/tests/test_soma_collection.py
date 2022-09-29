@@ -126,7 +126,7 @@ def soma_object(request, tmp_path):
 
 
 def test_soma_collection_mapping(soma_object, tmp_path):
-    c = soma.SOMACollection(uri=tmp_path.joinpath("collection").as_posix())
+    c = soma.SOMACollection(uri=(tmp_path / "collection").as_posix())
     assert not c.exists()
     assert "foobar" not in c
 
@@ -152,3 +152,4 @@ def test_soma_collection_mapping(soma_object, tmp_path):
 
     c.delete()
     assert not c.exists()
+    assert not (tmp_path / "collection").exists()
