@@ -83,6 +83,16 @@ Effectively, this stores the data on disk in column-major order. However, the `t
 - Added `with_allocation_size_preference()` helper to temporarily set the allocation size preference for testing.
 - Tests were added to verify the internal `dgtmatrix_to_dataframe()` will error out if an input list contains non-layerable matrices.
 
+# tiledbsoma 0.1.12
+
+## Package name
+
+The package is now `tiledbsoma`. This R code has been moved from [tiledbsc](https://github.com/TileDB-Inc/tiledbsc); now, Python and R `tiledbsoma` are both in this repo.
+
+## Version
+
+The version bump to 0.1.12 reflects the fact that the previous (Python-only) version on this package was 0.1.11. Moving forward, GitHub tags will stamp updates to this combined Python-and-R package.
+
 # tiledbsoma 0.1.3
 
 ## Migration to SOMA-based names
