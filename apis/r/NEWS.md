@@ -1,4 +1,12 @@
-# tiledbsoma (development version)
+# tiledbsoma 0.1.12
+
+ ## Package name
+
+ The package is now called `tiledbsoma`. This R code has been moved from [tiledbsc](https://github.com/TileDB-Inc/tiledbsc); now, the Python and R `tiledbsoma` packages share a repo.
+
+ ## Version
+
+ The version bump to 0.1.12 reflects the fact that the previous (Python-only) version of this package was 0.1.11. Moving forward, GitHub tags will stamp updates to this combined Python-and-R package.
 
 ## Features
 
@@ -18,7 +26,7 @@
 
 `obs_id` is now the first dimension in TileDB arrays created by the `AssayMatrix` class when converting a `Seurat` object or *Seurat* `Assay` object to a `SOMACollection` or `SOMA`, respectively.
 
-This change is *backwards compatible* with existing SOMAs, but it is recommended that you recreate arrays with the latest version of *tiledbsoma*.
+This change is *backwards compatible* with existing SOMAs, but it is recommended that you recreate arrays with the latest version of *tiledbsc*.
 
 This functionality is enabled by the new `transpose` argument added to the `AssayMatrix` class' methods for reading/writing `matrix`-like objects. Concretely, this makes it possible to ingest a matrix into a TileDB array with the dimension order reversed relative to the original matrix shape. For example, consider matrix, `mat`, with dimensions i and j:
 
@@ -61,7 +69,7 @@ amat2$to_dataframe()
 #> 6 b C     6
 ```
 
-Effectively, this stores the data on disk in column-major order. However, the `transpose` approach makes it possible to store `var` &times; `obs` matrices used by *Seurat* and *SummarizedExperiment* in `obs` &times `var` arrays prescribed the SOMA specification and used by *tiledbsoma-py*.
+Effectively, this stores the data on disk in column-major order. However, the `transpose` approach makes it possible to store `var` &times; `obs` matrices used by *Seurat* and *SummarizedExperiment* in `obs` &times `var` arrays prescribed the SOMA specification and used by *tiledbsc-py*.
 
 ## Changes
 
@@ -74,7 +82,7 @@ Effectively, this stores the data on disk in column-major order. However, the `t
 ## Fixes
 
 * Matrix conversion message from `AssayMatrix` now respects the `verbose` option
-* Upon initialization `SOMA` now  looks for a `raw` group and warns the user it will be ignored. Currently tiledbsoma-py creates a `raw` group when converting anndata objects where `.raw` is populated. However, Seurat/BioC objects do not have an obvious place to store this data, so ignoring it improves compatibility.
+* Upon initialization `SOMA` now  looks for a `raw` group and warns the user it will be ignored. Currently tiledbsc-py creates a `raw` group when converting anndata objects where `.raw` is populated. However, Seurat/BioC objects do not have an obvious place to store this data, so ignoring it improves compatibility.
 * Fixed a non-user-facing issue with the internal `dgtmatrix_to_dataframe()` function used to convert unordered `dgTMatrix` objects to COO data frames (#73).
 * Pretty printing of classes that inherit from `TileDBObject` has been improved so that the class name is displayed first (#79).
 
@@ -83,11 +91,11 @@ Effectively, this stores the data on disk in column-major order. However, the `t
 - Added `with_allocation_size_preference()` helper to temporarily set the allocation size preference for testing.
 - Tests were added to verify the internal `dgtmatrix_to_dataframe()` will error out if an input list contains non-layerable matrices.
 
-# tiledbsoma 0.1.3
+# tiledbsc 0.1.3
 
 ## Migration to SOMA-based names
 
-This release changes the names of the 2 top-level classes in the tiledbsoma package to follow new nomenclature adopted by the [single-cell data model specification](https://github.com/single-cell-data/soma), which was implemented [here](https://github.com/single-cell-data/soma/pull/28). You can read more about the rationale for this change [here](https://github.com/single-cell-data/soma/issues/11#issuecomment-1109975498).
+This release changes the names of the 2 top-level classes in the tiledbsc package to follow new nomenclature adopted by the [single-cell data model specification](https://github.com/single-cell-data/soma), which was implemented [here](https://github.com/single-cell-data/soma/pull/28). You can read more about the rationale for this change [here](https://github.com/single-cell-data/soma/issues/11#issuecomment-1109975498).
 
 Additionally, the `misc` slot has been renamed to `uns`. See below for details.
 
@@ -144,15 +152,15 @@ See the new *Filtering* vignette for details.
 - Messages about updating existing arrays are only printed in verbose mode
 - Disable duplicates for `AnnotationArray`s so updates will overwrite existing cells
 
-# tiledbsoma 0.1.2
+# tiledbsc 0.1.2
 
 Improve handling of Seurat objects with empty cell identities (#58).
 
-# tiledbsoma 0.1.1
+# tiledbsc 0.1.1
 
-tiledbsoma now uses the enhanced Group API's introduced in TileDB v2.8 and TileDB-R 0.12.0.
+tiledbsc now uses the enhanced Group API's introduced in TileDB v2.8 and TileDB-R 0.12.0.
 
-*Note: The next version of tiledbsoma will migrate to the new SOMA-based naming scheme described [here](https://github.com/single-cell-data/soma/issues/27).*
+*Note: The next version of tiledbsc will migrate to the new SOMA-based naming scheme described [here](https://github.com/single-cell-data/soma/issues/27).*
 ## On-disk changes
 
 Group-level metadata is now natively supported by TileDB so `TileDBGroup`-based classes no longer create nested `__tiledb_group_metadata` arrays for the purpose of storing group-level metadata.
