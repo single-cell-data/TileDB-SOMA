@@ -5,7 +5,7 @@
 ##'
 ##' @param uri Character value with URI path to a SOMA data set
 ##' @param column Character value with the name of the column to retrieve
-##' @return The selected column from the give data set
+##' @return The selected data frame (or column) from the given data set
 ##' @examples
 ##' \dontrun{
 ##' uri <- "test/soco/pbmc3k_processed/obs"

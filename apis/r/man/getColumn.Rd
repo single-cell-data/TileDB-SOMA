@@ -15,7 +15,7 @@ getTable(uri = "test/soco/pbmc3k_processed/obs")
 \item{column}{Character value with the name of the column to retrieve}
 }
 \value{
-The selected column from the give data set
+The selected data frame (or column) from the given data set
 }
 \description{
 These functions access a given SOMA URI and extract, respectively, the

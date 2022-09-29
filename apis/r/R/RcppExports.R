@@ -2,14 +2,14 @@
 # Generator token: 10BE3573-1514-4C36-9D1C-5A225CD40393
 
 test_sdf <- function(uri) {
-    invisible(.Call('_tiledbsoma_test_sdf', PACKAGE = 'tiledbsoma', uri))
+    invisible(.Call(`_tiledbsoma_test_sdf`, uri))
 }
 
 get_column_names <- function(uri) {
-    .Call('_tiledbsoma_get_column_names', PACKAGE = 'tiledbsoma', uri)
+    .Call(`_tiledbsoma_get_column_names`, uri)
 }
 
 export_column <- function(uri, name, schemaxp, arrayxp) {
-    .Call('_tiledbsoma_export_column', PACKAGE = 'tiledbsoma', uri, name, schemaxp, arrayxp)
+    .Call(`_tiledbsoma_export_column`, uri, name, schemaxp, arrayxp)
 }
 
