@@ -31,6 +31,7 @@ Imports:
     R6,
     methods,
     Matrix,
+    stats,
     bit64,
     tiledb (>= 0.14.0),
     arrow,
