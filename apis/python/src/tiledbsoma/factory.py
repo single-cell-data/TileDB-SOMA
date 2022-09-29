@@ -3,11 +3,12 @@ This module exists to avoid what would otherwise be cyclic-module-import issues 
 SOMACollection.
 """
 
-from typing import Optional, Union
+from typing import Any, Optional, Union
 
 import tiledb
 
 from .soma_collection import SOMACollection as SOMACollection
+from .soma_collection import SOMACollectionBase as SOMACollectionBase
 from .soma_dataframe import SOMADataFrame as SOMADataFrame
 from .soma_dense_nd_array import SOMADenseNdArray as SOMADenseNdArray
 from .soma_experiment import SOMAExperiment as SOMAExperiment
@@ -19,6 +20,7 @@ from .util import SOMA_OBJECT_TYPE_METADATA_KEY
 MemberType = Union[
     SOMAExperiment,
     SOMAMeasurement,
+    SOMACollectionBase,
     SOMACollection,
     SOMADataFrame,
     SOMAIndexedDataFrame,
@@ -30,7 +32,7 @@ MemberType = Union[
 def _construct_member(
     member_name: str,
     member_uri: str,
-    parent: SOMACollection,
+    parent: SOMACollectionBase[Any],
     ctx: Optional[tiledb.Ctx] = None,
 ) -> Optional[MemberType]:
     """
@@ -68,7 +70,9 @@ def _construct_member(
     elif class_name == "SOMAMeasurement":
         return SOMAMeasurement(uri=member_uri, name=member_name, parent=parent, ctx=ctx)
     elif class_name == "SOMACollection":
-        return SOMACollection(uri=member_uri, name=member_name, parent=parent, ctx=ctx)
+        return SOMACollectionBase(
+            uri=member_uri, name=member_name, parent=parent, ctx=ctx
+        )
     elif class_name == "SOMADataFrame":
         return SOMADataFrame(uri=member_uri, name=member_name, parent=parent, ctx=ctx)
     elif class_name == "SOMADenseNdArray":

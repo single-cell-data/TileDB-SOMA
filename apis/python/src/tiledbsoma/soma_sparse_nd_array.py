@@ -1,6 +1,6 @@
 import math
 import time
-from typing import Iterator, List, Literal, Optional, Sequence, Union
+from typing import Any, Iterator, List, Literal, Optional, Sequence, Union
 
 import numpy as np
 import pandas as pd
@@ -9,7 +9,7 @@ import scipy.sparse as sp
 import tiledb
 
 from . import eta, logging, util, util_arrow, util_scipy, util_tiledb
-from .soma_collection import SOMACollection
+from .soma_collection import SOMACollectionBase
 from .tiledb_array import TileDBArray
 from .types import Matrix, NTuple, SOMAResultOrder
 
@@ -26,7 +26,7 @@ class SOMASparseNdArray(TileDBArray):
         uri: str,
         *,
         name: Optional[str] = None,
-        parent: Optional[SOMACollection] = None,
+        parent: Optional[SOMACollectionBase[Any]] = None,
         ctx: Optional[tiledb.Ctx] = None,
     ):
         """

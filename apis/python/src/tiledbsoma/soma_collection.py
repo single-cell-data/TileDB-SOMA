@@ -1,7 +1,17 @@
 from __future__ import annotations
 
 from concurrent.futures import ThreadPoolExecutor
-from typing import Dict, Iterator, MutableMapping, Optional, Sequence, Tuple
+from typing import (
+    Any,
+    Dict,
+    Iterator,
+    MutableMapping,
+    Optional,
+    Sequence,
+    Tuple,
+    TypeVar,
+    cast,
+)
 
 import tiledb
 
@@ -11,8 +21,11 @@ from .tiledb_array import TileDBArray
 from .tiledb_object import TileDBObject
 from .tiledb_platform_config import TileDBPlatformConfig
 
+# A collection can hold any sub-type of TileDBObject
+CollectionElementType = TypeVar("CollectionElementType", bound=TileDBObject)
 
-class SOMACollection(TileDBObject, MutableMapping[str, TileDBObject]):
+
+class SOMACollectionBase(TileDBObject, MutableMapping[str, CollectionElementType]):
     """
     Contains a key-value mapping where the keys are string names and the values are any SOMA-defined foundational or composed type, including ``SOMACollection``, ``SOMADataFrame``, ``SOMADenseNdArray``, ``SOMASparseNdArray`` or ``SOMAExperiment``.
     """
@@ -22,7 +35,7 @@ class SOMACollection(TileDBObject, MutableMapping[str, TileDBObject]):
     _cached_member_names_to_uris: Optional[Dict[str, str]]
 
     # TODO: comment re the performance impact of this cache.
-    _cached_members: Dict[str, TileDBObject]
+    _cached_members: Dict[str, Any]
 
     def __init__(
         self,
@@ -30,7 +43,7 @@ class SOMACollection(TileDBObject, MutableMapping[str, TileDBObject]):
         *,
         name: Optional[str] = None,
         # Non-top-level objects can have a parent to propagate context, depth, etc.
-        parent: Optional[SOMACollection] = None,
+        parent: Optional[SOMACollectionBase[Any]] = None,
         # Top-level objects should specify these:
         tiledb_platform_config: Optional[TileDBPlatformConfig] = None,
         ctx: Optional[tiledb.Ctx] = None,
@@ -61,7 +74,7 @@ class SOMACollection(TileDBObject, MutableMapping[str, TileDBObject]):
         """
         return len(self._get_member_names_to_uris())
 
-    def __getitem__(self, member_name: str) -> TileDBObject:
+    def __getitem__(self, member_name: str) -> CollectionElementType:
         """
         Gets the member object associated with the key.
         """
@@ -80,7 +93,7 @@ class SOMACollection(TileDBObject, MutableMapping[str, TileDBObject]):
                 self._cached_members[member_name] = member
 
         if member_name in self._cached_members:
-            return self._cached_members[member_name]
+            return cast(CollectionElementType, self._cached_members[member_name])
         else:
             # Unlike __getattribute__ this is _only_ called when the member isn't otherwise
             # resolvable. So raising here is the right thing to do.
@@ -90,7 +103,7 @@ class SOMACollection(TileDBObject, MutableMapping[str, TileDBObject]):
 
     def set(
         self,
-        member: TileDBObject,
+        member: CollectionElementType,
         *,
         child_name: Optional[str] = None,
         relative: Optional[bool] = None,
@@ -103,7 +116,7 @@ class SOMACollection(TileDBObject, MutableMapping[str, TileDBObject]):
         self._add_object(member, child_name=name, relative=relative)
         self._cached_members[name] = member
 
-    def __setitem__(self, name: str, member: TileDBObject) -> None:
+    def __setitem__(self, name: str, member: CollectionElementType) -> None:
         """
         Default collection __setattr__
         """
@@ -258,7 +271,7 @@ class SOMACollection(TileDBObject, MutableMapping[str, TileDBObject]):
 
     def _add_object(
         self,
-        obj: TileDBObject,
+        obj: CollectionElementType,
         child_name: Optional[str] = None,
         relative: Optional[bool] = None,
     ) -> None:
@@ -354,7 +367,7 @@ class SOMACollection(TileDBObject, MutableMapping[str, TileDBObject]):
                     # required methods, it was simpler to split the logic this way.
                     object_type = tiledb.object_type(obj.uri, ctx=self._ctx)
                     if object_type == "group":
-                        group = SOMACollection(
+                        group = SOMACollectionBase[Any](
                             uri=obj.uri, name=obj.name, parent=self, ctx=self._ctx
                         )
                         group._show_metadata(recursively, indent=child_indent)
@@ -367,3 +380,7 @@ class SOMACollection(TileDBObject, MutableMapping[str, TileDBObject]):
                         raise Exception(
                             f"Unexpected object_type found: {object_type} at {obj.uri}"
                         )
+
+
+class SOMACollection(SOMACollectionBase[TileDBObject]):
+    pass

@@ -1,9 +1,12 @@
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, Union, cast
 
 import tiledb
 
-from .soma_collection import SOMACollection
+from .soma_collection import SOMACollection, SOMACollectionBase
 from .soma_dataframe import SOMADataFrame
+from .soma_dense_nd_array import SOMADenseNdArray
+from .soma_indexed_dataframe import SOMAIndexedDataFrame
+from .soma_sparse_nd_array import SOMASparseNdArray
 from .tiledb_platform_config import TileDBPlatformConfig
 
 
@@ -45,7 +48,7 @@ class SOMAMeasurement(SOMACollection):
         *,
         name: Optional[str] = None,
         # Non-top-level objects can have a parent to propagate context, depth, etc.
-        parent: Optional[SOMACollection] = None,
+        parent: Optional[SOMACollectionBase[Any]] = None,
         # Top-level objects should specify these:
         tiledb_platform_config: Optional[TileDBPlatformConfig] = None,
         ctx: Optional[tiledb.Ctx] = None,
@@ -77,28 +80,30 @@ class SOMAMeasurement(SOMACollection):
         super().create()
 
     @property
-    def var(self) -> Any:
-        return self["var"]
+    def var(self) -> Union[SOMADataFrame, SOMAIndexedDataFrame]:
+        return cast(Union[SOMADataFrame, SOMAIndexedDataFrame], self["var"])
 
     @property
-    def X(self) -> Any:
-        return self["X"]
+    def X(self) -> SOMACollectionBase[Union[SOMADenseNdArray, SOMASparseNdArray]]:
+        return cast(
+            SOMACollectionBase[Union[SOMADenseNdArray, SOMASparseNdArray]], self["X"]
+        )
 
     @property
-    def obsm(self) -> Any:
-        return self["obsm"]
+    def obsm(self) -> SOMACollectionBase[SOMADenseNdArray]:
+        return cast(SOMACollectionBase[SOMADenseNdArray], self["obsm"])
 
     @property
-    def obsp(self) -> Any:
-        return self["obsp"]
+    def obsp(self) -> SOMACollectionBase[SOMASparseNdArray]:
+        return cast(SOMACollectionBase[SOMASparseNdArray], self["obsp"])
 
     @property
-    def varm(self) -> Any:
-        return self["varm"]
+    def varm(self) -> SOMACollectionBase[SOMADenseNdArray]:
+        return cast(SOMACollectionBase[SOMADenseNdArray], self["varm"])
 
     @property
-    def varp(self) -> Any:
-        return self["varp"]
+    def varp(self) -> SOMACollectionBase[SOMASparseNdArray]:
+        return cast(SOMACollectionBase[SOMASparseNdArray], self["varp"])
 
     def __getitem__(self, name: str) -> Any:
         """

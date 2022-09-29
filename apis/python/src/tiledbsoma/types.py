@@ -30,5 +30,8 @@ ArrowReadResult = Union[
     pa.SparseCSCMatrix,
 ]
 
-SOMACoordinate = Union[int, slice, Tuple[int, ...], List[int], pa.IntegerArray]
-SOMANdCoordinate = Tuple[SOMACoordinate, ...]
+SOMADenseCoordinates = Union[int, slice]
+SOMADenseNdCoordinates = Tuple[SOMADenseCoordinates, ...]
+
+SOMASparseCoordinates = Union[int, slice, Tuple[int, ...], List[int], pa.IntegerArray]
+SOMASparseNdCoordinates = Tuple[SOMADenseCoordinates, ...]
