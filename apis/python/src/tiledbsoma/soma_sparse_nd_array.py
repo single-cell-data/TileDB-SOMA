@@ -243,7 +243,7 @@ class SOMASparseNdArray(TileDBArray):
         # col_ids: Optional[Union[Sequence[int], Slice]] = None,
         row_ids: Optional[Sequence[int]] = None,
         col_ids: Optional[Sequence[int]] = None,
-        result_order: Optional[str] = None,
+        result_order: Optional[SOMAResultOrder] = None,
         # TODO: batch_size
         # TODO: partition,
         # TODO: batch_format,
