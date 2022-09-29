@@ -1,9 +1,8 @@
 import math
 import time
-from typing import Any, Iterator, List, Literal, Optional, Sequence, Tuple, Union, cast
+from typing import Any, List, Literal, Optional, Sequence, Tuple, Union, cast
 
 import numpy as np
-import pandas as pd
 import pyarrow as pa
 import scipy.sparse as sp
 import tiledb

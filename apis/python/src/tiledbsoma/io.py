@@ -2,8 +2,8 @@ from typing import Callable, Optional
 
 import anndata as ad
 import numpy as np
-import tiledb
 import scipy.sparse as sp
+import tiledb
 
 import tiledbsoma.util_ann as util_ann
 from tiledbsoma import (
