@@ -17,7 +17,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">tiledbsoma</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.1.3.9006</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.1.12</span>
       </span>
     </div>
 
@@ -64,11 +64,15 @@
     </div>
 
     <div class="section level2">
-<h2 class="page-header" data-toc-text="development version" id="tiledbsoma-development-version">tiledbsoma (development version)<a class="anchor" aria-label="anchor" href="#tiledbsoma-development-version"></a></h2>
+<h2 class="page-header" data-toc-text="0.1.12" id="tiledbsoma-0112">tiledbsoma 0.1.12<a class="anchor" aria-label="anchor" href="#tiledbsoma-0112"></a></h2>
+<p>## Package name</p>
+<p>The package is now called <code>tiledbsoma</code>. This R code has been moved from <a href="https://github.com/TileDB-Inc/tiledbsc" class="external-link">tiledbsc</a>; now, the Python and R <code>tiledbsoma</code> packages share a repo.</p>
+<p>## Version</p>
+<p>The version bump to 0.1.12 reflects the fact that the previous (Python-only) version of this package was 0.1.11. Moving forward, GitHub tags will stamp updates to this combined Python-and-R package.</p>
 <div class="section level3">
-<h3 id="features-development-version">Features<a class="anchor" aria-label="anchor" href="#features-development-version"></a></h3>
+<h3 id="features-0-1-12">Features<a class="anchor" aria-label="anchor" href="#features-0-1-12"></a></h3>
 <div class="section level4">
-<h4 id="batched-reads-development-version">Batched Reads<a class="anchor" aria-label="anchor" href="#batched-reads-development-version"></a></h4>
+<h4 id="batched-reads-0-1-12">Batched Reads<a class="anchor" aria-label="anchor" href="#batched-reads-0-1-12"></a></h4>
 <ul><li>Added <code>batch_mode</code> option to methods that read <code>X</code> layers (i.e., <code>AssayMatrix</code> objects) into memory. When enabled, batch mode leverages the family of <code>Batched</code> classes added to tiledb-r in version <a href="https://github.com/TileDB-Inc/TileDB-R/releases/tag/0.14.0" class="external-link">0.14.0</a> to detect partial query results and resubmit until all results are retrieved. This feature is currently disabled by default and only applies to <code>X</code> layers (which are typically the largest arrays). You can enable batch mode from the following methods:<ul><li><code>SOMACollection$to_seurat()</code></li>
 <li><code>SOMA$to_seurat_assay()</code></li>
 <li><code>SOMA$to_summarized_experiment()</code></li>
@@ -80,10 +84,10 @@
 </li>
 </ul></div>
 <div class="section level4">
-<h4 id="assaymatrix-dimension-order-development-version">
-<code>AssayMatrix</code> Dimension Order<a class="anchor" aria-label="anchor" href="#assaymatrix-dimension-order-development-version"></a></h4>
+<h4 id="assaymatrix-dimension-order-0-1-12">
+<code>AssayMatrix</code> Dimension Order<a class="anchor" aria-label="anchor" href="#assaymatrix-dimension-order-0-1-12"></a></h4>
 <p><code>obs_id</code> is now the first dimension in TileDB arrays created by the <code>AssayMatrix</code> class when converting a <code>Seurat</code> object or <em>Seurat</em> <code>Assay</code> object to a <code>SOMACollection</code> or <code>SOMA</code>, respectively.</p>
-<p>This change is <em>backwards compatible</em> with existing SOMAs, but it is recommended that you recreate arrays with the latest version of <em>tiledbsoma</em>.</p>
+<p>This change is <em>backwards compatible</em> with existing SOMAs, but it is recommended that you recreate arrays with the latest version of <em>tiledbsc</em>.</p>
 <p>This functionality is enabled by the new <code>transpose</code> argument added to the <code>AssayMatrix</code> class’ methods for reading/writing <code>matrix</code>-like objects. Concretely, this makes it possible to ingest a matrix into a TileDB array with the dimension order reversed relative to the original matrix shape. For example, consider matrix, <code>mat</code>, with dimensions i and j:</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span></span>
@@ -119,11 +123,11 @@
 <span><span class="co">#&gt; 4 b A     4</span></span>
 <span><span class="co">#&gt; 5 b B     5</span></span>
 <span><span class="co">#&gt; 6 b C     6</span></span></code></pre></div>
-<p>Effectively, this stores the data on disk in column-major order. However, the <code>transpose</code> approach makes it possible to store <code>var</code> × <code>obs</code> matrices used by <em>Seurat</em> and <em>SummarizedExperiment</em> in <code>obs</code> &amp;times <code>var</code> arrays prescribed the SOMA specification and used by <em>tiledbsoma-py</em>.</p>
+<p>Effectively, this stores the data on disk in column-major order. However, the <code>transpose</code> approach makes it possible to store <code>var</code> × <code>obs</code> matrices used by <em>Seurat</em> and <em>SummarizedExperiment</em> in <code>obs</code> &amp;times <code>var</code> arrays prescribed the SOMA specification and used by <em>tiledbsc-py</em>.</p>
 </div>
 </div>
 <div class="section level3">
-<h3 id="changes-development-version">Changes<a class="anchor" aria-label="anchor" href="#changes-development-version"></a></h3>
+<h3 id="changes-0-1-12">Changes<a class="anchor" aria-label="anchor" href="#changes-0-1-12"></a></h3>
 <ul><li>
 <code>AssayMatrix$from_matrix()</code>, <code>AssayMatrix$to_matrix()</code>, and <code>AssayMatrixGroup$add_assay_matrix()</code> gained a <code>transpose</code> argument (<a href="https://github.com/single-cell-data/TileDB-SOMA/issues/80" class="external-link">#80</a>).</li>
 <li>Removed vestigial code for merging non-layerable COO data.frames, which was previously used to add ingest dense <code>scaled.data</code> from a Seurat <code>Assay</code> as an attribute of the <code>X</code> array, along with <code>counts</code>/<code>data</code>. This is no longer necessary as each layer is now ingested into a separate array within the <code>X</code> group (<a href="https://github.com/single-cell-data/TileDB-SOMA/issues/73" class="external-link">#73</a>).</li>
@@ -132,121 +136,16 @@
 <li>The internal assertion <code>has_dimnames()</code> was replaced with <code>is_labeled_matrix()</code> for clarity (<a href="https://github.com/single-cell-data/TileDB-SOMA/issues/79" class="external-link">#79</a>).</li>
 </ul></div>
 <div class="section level3">
-<h3 id="fixes-development-version">Fixes<a class="anchor" aria-label="anchor" href="#fixes-development-version"></a></h3>
+<h3 id="fixes-0-1-12">Fixes<a class="anchor" aria-label="anchor" href="#fixes-0-1-12"></a></h3>
 <ul><li>Matrix conversion message from <code>AssayMatrix</code> now respects the <code>verbose</code> option</li>
-<li>Upon initialization <code>SOMA</code> now looks for a <code>raw</code> group and warns the user it will be ignored. Currently tiledbsoma-py creates a <code>raw</code> group when converting anndata objects where <code>.raw</code> is populated. However, Seurat/BioC objects do not have an obvious place to store this data, so ignoring it improves compatibility.</li>
+<li>Upon initialization <code>SOMA</code> now looks for a <code>raw</code> group and warns the user it will be ignored. Currently tiledbsc-py creates a <code>raw</code> group when converting anndata objects where <code>.raw</code> is populated. However, Seurat/BioC objects do not have an obvious place to store this data, so ignoring it improves compatibility.</li>
 <li>Fixed a non-user-facing issue with the internal <code>dgtmatrix_to_dataframe()</code> function used to convert unordered <code>dgTMatrix</code> objects to COO data frames (<a href="https://github.com/single-cell-data/TileDB-SOMA/issues/73" class="external-link">#73</a>).</li>
 <li>Pretty printing of classes that inherit from <code>TileDBObject</code> has been improved so that the class name is displayed first (<a href="https://github.com/single-cell-data/TileDB-SOMA/issues/79" class="external-link">#79</a>).</li>
 </ul></div>
 <div class="section level3">
-<h3 id="build-and-test-systems-development-version">Build and Test Systems<a class="anchor" aria-label="anchor" href="#build-and-test-systems-development-version"></a></h3>
+<h3 id="build-and-test-systems-0-1-12">Build and Test Systems<a class="anchor" aria-label="anchor" href="#build-and-test-systems-0-1-12"></a></h3>
 <ul><li>Added <code>with_allocation_size_preference()</code> helper to temporarily set the allocation size preference for testing.</li>
 <li>Tests were added to verify the internal <code>dgtmatrix_to_dataframe()</code> will error out if an input list contains non-layerable matrices.</li>
-</ul></div>
-</div>
-    <div class="section level2">
-<h2 class="page-header" data-toc-text="0.1.3" id="tiledbsoma-013">tiledbsoma 0.1.3<a class="anchor" aria-label="anchor" href="#tiledbsoma-013"></a></h2>
-<div class="section level3">
-<h3 id="migration-to-soma-based-names-0-1-3">Migration to SOMA-based names<a class="anchor" aria-label="anchor" href="#migration-to-soma-based-names-0-1-3"></a></h3>
-<p>This release changes the names of the 2 top-level classes in the tiledbsoma package to follow new nomenclature adopted by the <a href="https://github.com/single-cell-data/soma" class="external-link">single-cell data model specification</a>, which was implemented <a href="https://github.com/single-cell-data/soma/pull/28" class="external-link">here</a>. You can read more about the rationale for this change <a href="https://github.com/single-cell-data/soma/issues/11#issuecomment-1109975498" class="external-link">here</a>.</p>
-<p>Additionally, the <code>misc</code> slot has been renamed to <code>uns</code>. See below for details.</p>
-<p>New class names</p>
-<ul><li>
-<code>SCGroup</code> is replaced by <code>SOMA</code> (stack of matrices, annotated)</li>
-<li>
-<code>SCDataset</code> is replaced by <code>SOMACollection</code>
-</li>
-</ul><p>There are no functional changes to either class. <code>SOMA</code> is a drop-in replacement for <code>SCGroup</code> and <code>SOMACollection</code> is a drop-in replacement for <code>SCDataset</code>. However, with the new names two of <code>SOMACollection</code>’s methods have changed accordingly:</p>
-<ul><li>the <code>scgroups</code> field is now <code>somas</code>
-</li>
-<li>
-<code>scgroup_uris()</code> is now <code>soma_uris()</code>
-</li>
-</ul><p>To ease the transition, the <code>SCDataset</code> and <code>SCGroup</code> classes are still available as aliases for <code>SOMACollection</code> and <code>SOMA</code>, respectively. However, they have been deprecated and will be removed in the future.</p>
-</div>
-<div class="section level3">
-<h3 id="new-location-for-miscellaneousunstructured-data-0-1-3">New location for miscellaneous/unstructured data<a class="anchor" aria-label="anchor" href="#new-location-for-miscellaneousunstructured-data-0-1-3"></a></h3>
-<p>Previously, the <code>SCDataset</code> and <code>SCGroup</code> classes included a TileDB group called <code>misc</code> that was intended for miscellaneous/unstructured data. To better align with the SOMA specification this group has been renamed to <code>uns</code>. Practically, this means new <code>SOMA</code>s and <code>SOMACollection</code>s will create TileDB groups named <code>uns</code>, rather than <code>misc</code>. And these groups can be accessed with the <code>SOMA</code> and <code>SOMACollection</code> classes using <code>SOMA$uns</code>.</p>
-<p>For backwards compatibility: - if a <code>misc</code> group exists within a <code>SOMACollection</code> or <code>SOMA</code> on disk, it will be accessible via the <code>uns</code> field of the parent class - the deprecated <code>SCDataset</code> and <code>SCGroup</code> will continue to provide a <code>misc</code> field (actually an active binding that aliases the <code>uns</code> slot) so users can continue to use the old name</p>
-</div>
-<div class="section level3">
-<h3 id="dimension-slicing-and-attribute-filtering-0-1-3">Dimension slicing and attribute filtering<a class="anchor" aria-label="anchor" href="#dimension-slicing-and-attribute-filtering-0-1-3"></a></h3>
-<p>It’s now possible to read only a specific subset of data into memory.</p>
-<p>The following classes now have a <code>set_query()</code> method:</p>
-<ul><li>
-<code>TileDBArray</code> and its subclasses</li>
-<li>
-<code>AnnotationGroup</code> and its subclasses</li>
-<li><code>SOMA</code></li>
-<li><code>SOMACollection</code></li>
-</ul><p>With <code>set_query()</code> you can specify:</p>
-<ul><li>the ranges of the indexed dimensions to slice</li>
-<li>attribute filter conditions</li>
-</ul><p>See the new <em>Filtering</em> vignette for details.</p>
-</div>
-<div class="section level3">
-<h3 id="additional-changes-0-1-3">Additional changes<a class="anchor" aria-label="anchor" href="#additional-changes-0-1-3"></a></h3>
-<ul><li>Added <code>TileDBObject</code> base class to provide fields and methods common to both <code>TileDBArray</code>- and <code>TileDBGroup</code>-based classes</li>
-<li>The <code>array_exists()</code> and <code>group_exists()</code> methods have been deprecated in favor of the more general <code><a href="https://rdrr.io/r/base/exists.html" class="external-link">exists()</a></code>
-</li>
-<li>Similar to the <code>TileDBGroup</code> class, <code>TileDBArray</code> now maintains a reference to the underlying array pointer</li>
-<li>All classes gain an <code>objects</code> field to provide direct access to the underlying TileDB objects</li>
-<li>Added missing <code>config</code>/<code>ctx</code> fields to <code>AnnotationGroup</code>
-</li>
-<li>
-<code>AnnotationDataframe</code> gains <code>ids()</code> to retrieve all values from the array’s dimension</li>
-<li>
-<code>soma_object_type</code> and <code>soma_encoding_version</code> metadata are written to groups/arrays at write time</li>
-<li>Minimum required version of tiledb-r is now 0.14.0, which also updates TileDB to version 2.10</li>
-<li>
-<code>AnnotationDataframe$from_dataframe()</code> no longer coerces <code>logical</code> columns to <code>integer</code>s, as TileDB 2.10 provides support for <code>BOOL</code> data types</li>
-<li>Messages about updating existing arrays are only printed in verbose mode</li>
-<li>Disable duplicates for <code>AnnotationArray</code>s so updates will overwrite existing cells</li>
-</ul></div>
-</div>
-    <div class="section level2">
-<h2 class="page-header" data-toc-text="0.1.2" id="tiledbsoma-012">tiledbsoma 0.1.2<a class="anchor" aria-label="anchor" href="#tiledbsoma-012"></a></h2>
-<p>Improve handling of Seurat objects with empty cell identities (<a href="https://github.com/single-cell-data/TileDB-SOMA/issues/58" class="external-link">#58</a>).</p>
-</div>
-    <div class="section level2">
-<h2 class="page-header" data-toc-text="0.1.1" id="tiledbsoma-011">tiledbsoma 0.1.1<a class="anchor" aria-label="anchor" href="#tiledbsoma-011"></a></h2>
-<p>tiledbsoma now uses the enhanced Group API’s introduced in TileDB v2.8 and TileDB-R 0.12.0.</p>
-<p><em>Note: The next version of tiledbsoma will migrate to the new SOMA-based naming scheme described <a href="https://github.com/single-cell-data/soma/issues/27" class="external-link">here</a>.</em> ## On-disk changes</p>
-<p>Group-level metadata is now natively supported by TileDB so <code>TileDBGroup</code>-based classes no longer create nested <code>__tiledb_group_metadata</code> arrays for the purpose of storing group-level metadata.</p>
-<p>See <a href="https://github.com/TileDB-Inc/TileDB/releases/tag/2.8.0" class="external-link">TileDB 2.8 release notes</a> for additional changes.</p>
-<div class="section level3">
-<h3 id="api-changes-0-1-1">API changes<a class="anchor" aria-label="anchor" href="#api-changes-0-1-1"></a></h3>
-<div class="section level4">
-<h4 id="for-tiledbgroup-and-its-child-classes-0-1-1">For <code>TileDBGroup</code> and its child classes:<a class="anchor" aria-label="anchor" href="#for-tiledbgroup-and-its-child-classes-0-1-1"></a></h4>
-<ul><li>the <code>arrays</code> field has been replaced with <code>members</code>, which includes both TileDB arrays <em>and</em> groups</li>
-<li>
-<code>get_array()</code> has been replaced with <code>get_member()</code> which add a <code>type</code> argument to filter by object type</li>
-<li>gain the following methods: <code>count_members()</code>, <code>list_members()</code>, <code>list_member_uris()</code>, and <code>add_member()</code>
-</li>
-</ul></div>
-<div class="section level4">
-<h4 id="scgroup-0-1-1">SCGroup<a class="anchor" aria-label="anchor" href="#scgroup-0-1-1"></a></h4>
-<ul><li>the <code>scgroup_uris</code> argument has been dropped from <code>SCDataset</code>’s initialize method (<code>add_member()</code> should now be used instead to add additional <code>SCGroup</code>s)</li></ul></div>
-<div class="section level4">
-<h4 id="scdataset-0-1-1">SCDataset<a class="anchor" aria-label="anchor" href="#scdataset-0-1-1"></a></h4>
-<ul><li>
-<code>SCDataset</code>’s <code>scgroups</code> field is now an active binding that filters <code>members</code> for <code>SCGroup</code> objects</li></ul></div>
-</div>
-<div class="section level3">
-<h3 id="other-changes-0-1-1">Other changes<a class="anchor" aria-label="anchor" href="#other-changes-0-1-1"></a></h3>
-<ul><li>added a <code>NEWS.md</code> file to track changes to the package</li>
-<li>the <em>fs</em> package is now a dependency</li>
-<li>
-<code>SCGroup</code>’s <code>from_seurat_assay()</code> method gained two new arguments: <code>layers</code>, to specify which Seurat <code>Assay</code> slots should be ingested, and <code>var</code>, to control whether feature-level metadata is ingested</li>
-<li>
-<code>SCGroup</code>’s <code>from_seurat_assay()</code> method will no longer ingest the <code>data</code> slot if it is identical to <code>counts</code>
-</li>
-<li>Internally group members are now added with names</li>
-<li>New internal <code>TileDBURI</code> class for handling various URI formats</li>
-<li>The <code>uri</code> field for all TileDB(Array|Group)-based classes is now an active binding that retrieves the URI from the private <code>tiledb_uri</code> field</li>
-<li>Several default parameters have been changed to store the the <code>X</code>, <code>obs</code>, and <code>var</code> arrays more efficiently on disk (<a href="https://github.com/single-cell-data/TileDB-SOMA/issues/50" class="external-link">#50</a>)</li>
-<li>Seurat cell identities are now stored in the <code>active_ident</code> attribute of the <code>obs</code> array (<a href="https://github.com/single-cell-data/TileDB-SOMA/issues/56" class="external-link">#56</a>)</li>
-<li>Require at least version 0.13.0 of tiledb-r to support retrieval of group names</li>
 </ul></div>
 </div>
   </div>
