@@ -166,7 +166,7 @@ class SOMADenseNdArray(TileDBArray):
     # TODO: read_numpy or read_ndarray?
     def read_numpy(
         self,
-        coords,
+        coords: SOMADenseNdCoordinates,
         *,
         result_order: Optional[SOMAResultOrder] = None,
     ) -> np.ndarray:
@@ -194,7 +194,7 @@ class SOMADenseNdArray(TileDBArray):
             A[coords] = values.to_numpy()
 
     # TODO: should this be named write_numpy or write_ndarray?
-    def write_numpy(self, coords: SOMADenseNdCoordinates, values: np.ndarray):
+    def write_numpy(self, coords: SOMADenseNdCoordinates, values: np.ndarray) -> None:
         self.write_tensor(coords, pa.Tensor.from_numpy(values))
 
     # ----------------------------------------------------------------
