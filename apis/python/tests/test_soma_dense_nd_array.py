@@ -12,14 +12,14 @@ from . import NDARRAY_ARROW_TYPES_NOT_SUPPORTED, NDARRAY_ARROW_TYPES_SUPPORTED
 comment will be removed when test rework is complete
 TODO:
 - [X] create
-- [-] delete
+- [X] delete
 - [X] exists
 - [X] get type
 - [X] get shape
 - [X] get ndims
 - [X] get schema
 - [X] get is_sparse
-- [ ] get metadata
+- [X] get metadata
 - [ ] read
 - [ ] write
 - [ ] reshape
@@ -74,8 +74,6 @@ def test_soma_dense_nd_array_create_fail(
     assert not a.exists()
 
 
-# TODO: implement test when operation is implemented
-@pytest.mark.xfail(reason="Unimplemented operation")
 def test_soma_dense_nd_array_delete(tmp_path):
     a = soma.SOMADenseNdArray(uri=tmp_path.as_posix())
     a.create(pa.int8(), (100, 100))
@@ -83,6 +81,10 @@ def test_soma_dense_nd_array_delete(tmp_path):
 
     a.delete()
     assert not a.exists()
+
+    # should be silent about non-existent object
+    assert a.delete() is None
+    assert soma.SOMADenseNdArray(uri="no such array").delete() is None
 
 
 # TODO - remove when full test refactoring is complete

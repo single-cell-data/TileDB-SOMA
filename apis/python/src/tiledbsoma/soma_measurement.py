@@ -1,9 +1,12 @@
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, Union, cast
 
 import tiledb
 
-from .soma_collection import SOMACollection
+from .soma_collection import SOMACollection, SOMACollectionBase
 from .soma_dataframe import SOMADataFrame
+from .soma_dense_nd_array import SOMADenseNdArray
+from .soma_indexed_dataframe import SOMAIndexedDataFrame
+from .soma_sparse_nd_array import SOMASparseNdArray
 from .tiledb_platform_config import TileDBPlatformConfig
 
 
@@ -45,7 +48,7 @@ class SOMAMeasurement(SOMACollection):
         *,
         name: Optional[str] = None,
         # Non-top-level objects can have a parent to propagate context, depth, etc.
-        parent: Optional[SOMACollection] = None,
+        parent: Optional[SOMACollectionBase[Any]] = None,
         # Top-level objects should specify these:
         tiledb_platform_config: Optional[TileDBPlatformConfig] = None,
         ctx: Optional[tiledb.Ctx] = None,
@@ -76,7 +79,33 @@ class SOMAMeasurement(SOMACollection):
         """
         super().create()
 
-    def __getattr__(self, name: str) -> Any:
+    @property
+    def var(self) -> Union[SOMADataFrame, SOMAIndexedDataFrame]:
+        return cast(Union[SOMADataFrame, SOMAIndexedDataFrame], self["var"])
+
+    @property
+    def X(self) -> SOMACollectionBase[Union[SOMADenseNdArray, SOMASparseNdArray]]:
+        return cast(
+            SOMACollectionBase[Union[SOMADenseNdArray, SOMASparseNdArray]], self["X"]
+        )
+
+    @property
+    def obsm(self) -> SOMACollectionBase[SOMADenseNdArray]:
+        return cast(SOMACollectionBase[SOMADenseNdArray], self["obsm"])
+
+    @property
+    def obsp(self) -> SOMACollectionBase[SOMASparseNdArray]:
+        return cast(SOMACollectionBase[SOMASparseNdArray], self["obsp"])
+
+    @property
+    def varm(self) -> SOMACollectionBase[SOMADenseNdArray]:
+        return cast(SOMACollectionBase[SOMADenseNdArray], self["varm"])
+
+    @property
+    def varp(self) -> SOMACollectionBase[SOMASparseNdArray]:
+        return cast(SOMACollectionBase[SOMASparseNdArray], self["varp"])
+
+    def __getitem__(self, name: str) -> Any:
         """
         Implements ``experiment.var``, ``experiment.X``, etc.
         """
@@ -87,10 +116,9 @@ class SOMAMeasurement(SOMACollection):
                     uri=child_uri, name=name, parent=self
                 )
             return self._cached_members[name]
-        else:
-            # Unlike __getattribute__ this is _only_ called when the member isn't otherwise
-            # resolvable. So raising here is the right thing to do.
-            raise AttributeError(f"{self.__class__.__name__} has no attribute '{name}'")
+
+        # otherwise let generic collection handle it.
+        super().__getitem__(name)
 
     def constrain(self) -> None:
         """

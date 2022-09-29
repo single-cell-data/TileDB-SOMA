@@ -6,9 +6,9 @@ import pyarrow as pa
 import tiledb
 
 from . import util_arrow, util_tiledb
-from .soma_collection import SOMACollection
+from .soma_collection import SOMACollectionBase
 from .tiledb_array import TileDBArray
-from .types import NTuple
+from .types import Ids, NTuple
 
 ROWID = "soma_rowid"
 
@@ -31,7 +31,7 @@ class SOMAIndexedDataFrame(TileDBArray):
         uri: str,
         *,
         name: Optional[str] = None,
-        parent: Optional[SOMACollection] = None,
+        parent: Optional[SOMACollectionBase[Any]] = None,
         ctx: Optional[tiledb.Ctx] = None,
     ):
         """
@@ -328,7 +328,19 @@ class SOMAIndexedDataFrame(TileDBArray):
         """
         For ``to_anndata``, as well as for any interactive use where the user wants a Pandas dataframe.
         """
-        raise Exception("indexed read_as_pandas not implemented yet")
+        raise NotImplementedError("indexed read_as_pandas not implemented yet")
+
+    def read_as_pandas_all(
+        self,
+        *,
+        ids: Optional[Ids] = None,
+        value_filter: Optional[str] = None,
+        column_names: Optional[Sequence[str]] = None,
+        result_order: Optional[str] = None,
+        # to rename index to 'obs_id' or 'var_id', if desired, for anndata
+        id_column_name: Optional[str] = None,
+    ) -> pd.DataFrame:
+        raise NotImplementedError("read_as_pandas_all not implemented.")
 
     def write_from_pandas(
         self,
@@ -345,4 +357,14 @@ class SOMAIndexedDataFrame(TileDBArray):
         :param dataframe: ``anndata.obs``
         :param extent: TileDB ``extent`` parameter for the array schema.
         """
-        raise Exception("indexed write_from_pandas not implemented yet")
+        raise NotImplementedError("indexed write_from_pandas not implemented yet")
+
+    def write_all_from_pandas(
+        self,
+        dataframe: pd.DataFrame,
+        *,
+        extent: int = 2048,
+        # to rename index to 'obs_id' or 'var_id', if desired, for anndata
+        id_column_name: Optional[str] = None,
+    ) -> None:
+        raise NotImplementedError("write_all_from_pandas not implemented")

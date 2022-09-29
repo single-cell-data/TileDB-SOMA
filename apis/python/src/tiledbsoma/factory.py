@@ -3,14 +3,16 @@ This module exists to avoid what would otherwise be cyclic-module-import issues 
 SOMACollection.
 """
 
-from typing import Optional, Union
+from typing import Any, Optional, Union
 
 import tiledb
 
 from .soma_collection import SOMACollection as SOMACollection
+from .soma_collection import SOMACollectionBase as SOMACollectionBase
 from .soma_dataframe import SOMADataFrame as SOMADataFrame
 from .soma_dense_nd_array import SOMADenseNdArray as SOMADenseNdArray
 from .soma_experiment import SOMAExperiment as SOMAExperiment
+from .soma_indexed_dataframe import SOMAIndexedDataFrame as SOMAIndexedDataFrame
 from .soma_measurement import SOMAMeasurement as SOMAMeasurement
 from .soma_sparse_nd_array import SOMASparseNdArray as SOMASparseNdArray
 from .util import SOMA_OBJECT_TYPE_METADATA_KEY
@@ -18,8 +20,10 @@ from .util import SOMA_OBJECT_TYPE_METADATA_KEY
 MemberType = Union[
     SOMAExperiment,
     SOMAMeasurement,
+    SOMACollectionBase,
     SOMACollection,
     SOMADataFrame,
+    SOMAIndexedDataFrame,
     SOMADenseNdArray,
     SOMASparseNdArray,
 ]
@@ -28,11 +32,20 @@ MemberType = Union[
 def _construct_member(
     member_name: str,
     member_uri: str,
-    parent: SOMACollection,
+    parent: SOMACollectionBase[Any],
     ctx: Optional[tiledb.Ctx] = None,
-) -> MemberType:
+) -> Optional[MemberType]:
     """
-    Solely for the use of ``SOMACollection``. In fact this would/should be a method of the ``SOMACollection`` class, but there are cyclic-module-import issues.  This allows us to examine storage metadata and invoke the appropriate per-type constructor when reading SOMA groups/arrays from storage.  See also ``_set_object_type_metadata`` and ``_get_object_type_metadata`` within ``TileDBObject``.
+    Given a name/uri from a SOMACollection, create a SOMA object matching the type
+    of the underlying object. In other words, if the name/uri points to a SOMADataFrame,
+    instantiate a SOMADataFrame pointing at the underlying array.
+
+    Returns None if the URI does not point at a TileDB object.
+
+    Solely for the use of ``SOMACollection``. In fact this would/should be a method of the ``SOMACollection`` class,
+    but there are cyclic-module-import issues.  This allows us to examine storage metadata and invoke the appropriate
+    per-type constructor when reading SOMA groups/arrays from storage.  See also ``_set_object_type_metadata`` and
+    ``_get_object_type_metadata`` within ``TileDBObject``.
     """
 
     # Get the class name from TileDB storage. At the TileDB level there are just "arrays" and
@@ -40,7 +53,7 @@ def _construct_member(
     class_name = None
     object_type = tiledb.object_type(member_uri, ctx=ctx)
     if object_type is None:
-        raise Exception(f"URI {member_uri} not found")
+        return None
     elif object_type == "array":
         with tiledb.open(member_uri, ctx=ctx) as A:
             class_name = A.meta[SOMA_OBJECT_TYPE_METADATA_KEY]
@@ -57,7 +70,9 @@ def _construct_member(
     elif class_name == "SOMAMeasurement":
         return SOMAMeasurement(uri=member_uri, name=member_name, parent=parent, ctx=ctx)
     elif class_name == "SOMACollection":
-        return SOMACollection(uri=member_uri, name=member_name, parent=parent, ctx=ctx)
+        return SOMACollectionBase(
+            uri=member_uri, name=member_name, parent=parent, ctx=ctx
+        )
     elif class_name == "SOMADataFrame":
         return SOMADataFrame(uri=member_uri, name=member_name, parent=parent, ctx=ctx)
     elif class_name == "SOMADenseNdArray":

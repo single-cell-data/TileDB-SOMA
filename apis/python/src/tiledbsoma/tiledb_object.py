@@ -1,6 +1,6 @@
 import os
 from abc import ABC, abstractmethod
-from typing import Optional, Sequence, Union
+from typing import Any, Optional, Sequence, Union
 
 import tiledb
 
@@ -31,7 +31,7 @@ class TileDBObject(ABC):
         name: Optional[str] = None,
         *,
         # Non-top-level objects can have a parent to propgate context, depth, etc.
-        parent: Optional["tiledbsoma.SOMACollection"] = None,
+        parent: Optional["tiledbsoma.SOMACollectionBase[Any]"] = None,
         # Top-level objects should specify these:
         tiledb_platform_config: Optional[TileDBPlatformConfig] = None,
         ctx: Optional[tiledb.Ctx] = None,
@@ -59,6 +59,18 @@ class TileDBObject(ABC):
         # Null ctx is OK if that's what they wanted (e.g. not doing any TileDB-Cloud ops).
 
         self.metadata = SOMAMetadataMapping(self)
+
+    def delete(self) -> None:
+        """
+        Delete the SOMADataFrame specified with the URI.
+
+        TODO: should this raise an error if the object does not exist?
+        """
+        try:
+            tiledb.remove(self._uri)
+        except tiledb.TileDBError:
+            pass
+        return
 
     def __repr__(self) -> str:
         """

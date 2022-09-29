@@ -1,9 +1,10 @@
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, Union, cast
 
 import tiledb
 
-from .soma_collection import SOMACollection
+from .soma_collection import SOMACollection, SOMACollectionBase
 from .soma_dataframe import SOMADataFrame
+from .soma_indexed_dataframe import SOMAIndexedDataFrame
 from .soma_measurement import SOMAMeasurement
 from .tiledb_object import TileDBObject
 from .tiledb_platform_config import TileDBPlatformConfig
@@ -25,7 +26,7 @@ class SOMAExperiment(SOMACollection):
         *,
         name: Optional[str] = None,
         # Non-top-level objects can have a parent to propagate context, depth, etc.
-        parent: Optional[SOMACollection] = None,
+        parent: Optional[SOMACollectionBase[Any]] = None,
         # Top-level objects should specify these:
         tiledb_platform_config: Optional[TileDBPlatformConfig] = None,
         ctx: Optional[tiledb.Ctx] = None,
@@ -53,7 +54,15 @@ class SOMAExperiment(SOMACollection):
         """
         super().create()
 
-    def __getattr__(self, name: str) -> Any:  # TODO: union type
+    @property
+    def obs(self) -> Union[SOMADataFrame, SOMAIndexedDataFrame]:
+        return cast(Union[SOMADataFrame, SOMAIndexedDataFrame], self["obs"])
+
+    @property
+    def ms(self) -> SOMACollectionBase[SOMAMeasurement]:
+        return cast(SOMACollectionBase[SOMAMeasurement], self["ms"])
+
+    def __getitem__(self, name: str) -> Any:  # TODO: union type
         """
         Implements ``experiment.obs`` and ``experiment.ms``.
         """
@@ -65,10 +74,8 @@ class SOMAExperiment(SOMACollection):
                 )
             return self._cached_members[name]
 
-        else:
-            # Unlike __getattribute__ this is _only_ called when the member isn't otherwise
-            # resolvable. So raising here is the right thing to do.
-            raise AttributeError(f"{self.__class__.__name__} has no attribute '{name}'")
+        # otherwise let generic collection handle it.
+        super().__getitem__(name)
 
     def constrain(self) -> None:
         """
@@ -76,9 +83,10 @@ class SOMAExperiment(SOMACollection):
         """
         # TODO: find a good spot to call this from.
 
-        for element in self.ms:
+        for name in self.ms:
+            element = self.ms[name]
             if not isinstance(element, SOMAMeasurement):
                 raise Exception(
-                    f"element {element.name} of {self.type}.ms should be SOMAMeasurement; got {element.__class__.__name__}"
+                    f"element {name} of {self.type}.ms should be SOMAMeasurement; got {element.__class__.__name__}"
                 )
             element.constrain()

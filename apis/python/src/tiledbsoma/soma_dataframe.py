@@ -7,7 +7,7 @@ import tiledb
 
 from . import util, util_arrow, util_pandas, util_tiledb
 from .logging import log_io
-from .soma_collection import SOMACollection
+from .soma_collection import SOMACollectionBase
 from .tiledb_array import TileDBArray
 from .types import Ids, NTuple
 
@@ -32,7 +32,7 @@ class SOMADataFrame(TileDBArray):
         uri: str,
         *,
         name: Optional[str] = None,
-        parent: Optional[SOMACollection] = None,
+        parent: Optional[SOMACollectionBase[Any]] = None,
         ctx: Optional[tiledb.Ctx] = None,
     ):
         """
