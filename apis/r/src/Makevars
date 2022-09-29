@@ -1,0 +1,4 @@
+CXX_STD = CXX20
+
+PKG_CPPFLAGS=-I../inst/include -I. -DR_BUILD
+PKG_LIBS=-ltiledb
