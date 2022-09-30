@@ -61,7 +61,6 @@ const std::string FILE_LOGGER = "tiledbsoma-file";
 Logger::Logger() {
     logger_ = spdlog::get(CONSOLE_LOGGER);
     if (logger_ == nullptr) {
-<<<<<<< HEAD
 #if !defined(R_BUILD)
         logger_ = spdlog::stdout_color_mt(CONSOLE_LOGGER);
 #else
@@ -69,10 +68,6 @@ Logger::Logger() {
         spdlog::set_default_logger(logger_);
 #endif
 #if !defined(R_BUILD) && !defined(_WIN32)
-=======
-        logger_ = spdlog::stdout_color_mt(CONSOLE_LOGGER);
-#ifndef _WIN32
->>>>>>> f4c9b50 (Add initial C++ support for the R package)
         // change color of critical messages
         auto console_sink = static_cast<spdlog::sinks::stdout_color_sink_mt*>(
             logger_->sinks().back().get());
