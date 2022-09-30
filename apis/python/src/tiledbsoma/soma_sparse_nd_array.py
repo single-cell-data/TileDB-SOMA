@@ -182,7 +182,9 @@ class SOMASparseNdArray(TileDBArray):
                             for n in range(self.ndims)
                         ]
                     ).T
-                    yield pa.SparseCOOTensor.from_numpy(coo_data, coo_coords, shape=A.shape)
+                    yield pa.SparseCOOTensor.from_numpy(
+                        coo_data, coo_coords, shape=A.shape
+                    )
 
                 elif format in ("csr", "csc"):
                     # Temporary: as these must be 2D, convert to scipy COO and use
