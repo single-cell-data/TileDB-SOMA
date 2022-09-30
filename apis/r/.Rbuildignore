@@ -9,3 +9,4 @@
 ^test$
 ^src/thread_pool/.clang-format$
 ^src/CMakeLists.txt$
+^\.github$

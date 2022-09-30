@@ -26,7 +26,7 @@ getColumn <- function(uri, column) {
 
 ##' @rdname getColumn
 ##' @export
-getTable <- function(uri = "test/soco/pbmc3k_processed/obs") {
+getTable <- function(uri) {
     colnames <- get_column_names(uri)
     ll <- lapply(colnames, \(n) getColumn(uri, n))
     names(ll) <- colnames
