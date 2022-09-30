@@ -57,11 +57,7 @@ def find_or_build(setuptools_cmd):
 
 
 def get_ext_modules():
-    # Workaround windows issue compiling an extension with no source files
-    if sys.platform.startswith("win32"):
-        return []
-    else:
-        return [CMakeExtension(EXT_NAME)]
+    return [CMakeExtension(EXT_NAME)]
 
 
 class CMakeExtension(Extension):
@@ -72,7 +68,6 @@ class CMakeExtension(Extension):
 class BuildExtCmd(build_ext):
     def run(self):
         find_or_build(self)
-        super().build_extensions()
 
 
 class BdistEggCmd(bdist_egg):
@@ -114,12 +109,6 @@ if __name__ == "__main__":
         package_dir={"": "src"},
         packages=find_packages("src"),
         zip_safe=False,
-        setup_requires=[
-            "setuptools>=65.3.0",
-            "setuptools_scm>=1.5.4",
-            "wheel>=0.30",
-            "setuptools_scm_git_archive",
-        ],
         install_requires=[
             "anndata",
             "pandas",
@@ -127,8 +116,6 @@ if __name__ == "__main__":
             "scanpy",
             "scipy",
             "tiledb>=0.17.0",
-            "pybind11>=2.10.0",
-            "pytest>=7.1.3",
         ],
         python_requires=">=3.7",
         ext_modules=get_ext_modules(),
