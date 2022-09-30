@@ -51,7 +51,7 @@
 #ifndef TILEDB_LOGGER_H
 #define TILEDB_LOGGER_H
 
-#include <spdlog/spdlog.h>
+#include <RcppSpdlog>
 
 namespace tiledbsoma {
 
