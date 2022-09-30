@@ -27,6 +27,7 @@ ctest -C Release --verbose
 
 # Run python tests
 cd -
+pip install pytest
 pytest -v --durations=0 libtiledbsoma
 
 # Generate coverage report

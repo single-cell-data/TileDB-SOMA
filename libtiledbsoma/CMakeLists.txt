@@ -192,6 +192,10 @@ endif()
 # Definitions for all targets
 add_definitions(-D_FILE_OFFSET_BITS=64)
 
+# Disable incorrect availability check on conda build
+# https://conda-forge.org/docs/maintainer/knowledge_base.html#newer-c-features-with-old-sdk
+add_compile_options(-D_LIBCPP_DISABLE_AVAILABILITY)
+
 # AVX2 flag
 include(CheckAVX2Support)
 CheckAVX2Support()
