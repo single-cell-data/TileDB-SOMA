@@ -162,6 +162,26 @@ class SOMASparseNdArray(TileDBArray):
         *,
         format: Literal["coo", "csr", "csc"] = "coo",
     ) -> Iterator[Union[pa.SparseCOOTensor, pa.SparseCSCMatrix, pa.SparseCSRMatrix]]:
+        """
+        Read a use-defined slice of the SparseNdArray and return as an Arrow sparse tensor.
+
+        Parameters
+        ----------
+        coords : Tuple[Union[int, slice, Tuple[int, ...], List[int], pa.IntegerArray], ...]
+            Per-dimension tuple of scalar, slice, sequence of scalar or Arrow IntegerArray
+            Arrow arrays currently uninimplemented.
+
+        format - Literal["coo", "csr", "csc"]
+            Requested return format:
+            * ``coo`` - return an Arrow SparseCOOTensor (default)
+            * ``csr`` - return an Arrow SparseCSRMatrix
+            * ``csc`` - return an Arrow SparseCSCMatrix
+
+
+        Returns
+        -------
+        The requested data in the sparse tensor format specified.
+        """
 
         if format != "coo" and self.ndims != 2:
             raise ValueError(f"Format {format} only supported for 2D SparseNdArray")
@@ -199,6 +219,10 @@ class SOMASparseNdArray(TileDBArray):
                         yield pa.SparseCSCMatrix.from_scipy(scipy_coo.tocsc())
 
     def read_table(self, coords: SOMASparseNdCoordinates) -> Iterator[pa.Table]:
+        """
+        Read a user-defined slice of the sparse array and return in COO format
+        as an Arrow Table
+        """
         with self._tiledb_open("r") as A:
             query = A.query(
                 return_arrow=True,
@@ -208,10 +232,17 @@ class SOMASparseNdArray(TileDBArray):
                 yield arrow_tbl
 
     def read_as_pandas(self, coords: SOMASparseNdCoordinates) -> Iterator[pd.DataFrame]:
+        """
+        Read a user-defined slice of the sparse array and return as a Pandas DataFrame
+        containing COO data.
+        """
         for arrow_tbl in self.read_table(coords):
             yield arrow_tbl.to_pandas()
 
     def read_as_pandas_all(self) -> pd.DataFrame:
+        """
+        Return the entire sparse array as a Pandas DataFrame containing COO data.
+        """
         return pd.concat(self.read_as_pandas((slice(None),) * self.ndims))
 
     def write_sparse_tensor(
