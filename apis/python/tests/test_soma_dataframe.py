@@ -168,7 +168,8 @@ def simple_soma_data_frame(tmp_path):
     n_data = len(data["soma_rowid"])
     rb = pa.RecordBatch.from_pydict(data)
     sdf.write(rb)
-    return (schema, sdf, n_data)
+    yield (schema, sdf, n_data)
+    sdf.delete()
 
 
 @pytest.mark.parametrize(

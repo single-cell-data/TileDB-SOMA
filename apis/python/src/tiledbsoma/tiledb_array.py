@@ -1,4 +1,4 @@
-from typing import Optional, Sequence
+from typing import Any, Optional, Sequence
 
 import pyarrow as pa
 import tiledb
@@ -19,7 +19,7 @@ class TileDBArray(TileDBObject):
         uri: str,
         *,
         name: Optional[str] = None,
-        parent: Optional["tiledbsoma.SOMACollection"] = None,
+        parent: Optional["tiledbsoma.SOMACollectionBase[Any]"] = None,
         ctx: Optional[tiledb.Ctx] = None,
     ):
         """
@@ -33,12 +33,6 @@ class TileDBArray(TileDBObject):
         Return data schema, in the form of an Arrow Schema.
         """
         return util_arrow.get_arrow_schema_from_tiledb_uri(self.uri, self._ctx)
-
-    # TODO
-    #    def delete(uri: str) -> None
-    #        """
-    #        Delete the SOMADataFrame specified with the URI.
-    #        """
 
     def _tiledb_open(self, mode: str = "r") -> tiledb.Array:
         """
@@ -79,5 +73,5 @@ class TileDBArray(TileDBObject):
         Prints metadata for the array, for interactive use.
         """
         print(f"{indent}[{self._name}]")
-        for key, value in self.metadata:
+        for key, value in self.metadata.items():
             print(f"{indent}- {key}: {value}")

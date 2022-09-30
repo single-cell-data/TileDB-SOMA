@@ -14,7 +14,7 @@ import tiledbsoma.util as util
 import tiledbsoma.util_arrow as util_arrow
 import tiledbsoma.util_tiledb as util_tiledb
 
-from .soma_collection import SOMACollection
+from .soma_collection import SOMACollectionBase
 from .tiledb_array import TileDBArray
 from .types import Matrix, NTuple
 
@@ -31,7 +31,7 @@ class SOMADenseNdArray(TileDBArray):
         uri: str,
         *,
         name: Optional[str] = None,
-        parent: Optional[SOMACollection] = None,
+        parent: Optional[SOMACollectionBase[Any]] = None,
         ctx: Optional[tiledb.Ctx] = None,
     ):
         """

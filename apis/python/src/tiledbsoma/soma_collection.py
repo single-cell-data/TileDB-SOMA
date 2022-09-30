@@ -1,7 +1,17 @@
 from __future__ import annotations
 
 from concurrent.futures import ThreadPoolExecutor
-from typing import Any, Dict, Iterator, Optional, Sequence, Tuple
+from typing import (
+    Any,
+    Dict,
+    Iterator,
+    MutableMapping,
+    Optional,
+    Sequence,
+    Tuple,
+    TypeVar,
+    cast,
+)
 
 import tiledb
 
@@ -11,8 +21,11 @@ from .tiledb_array import TileDBArray
 from .tiledb_object import TileDBObject
 from .tiledb_platform_config import TileDBPlatformConfig
 
+# A collection can hold any sub-type of TileDBObject
+CollectionElementType = TypeVar("CollectionElementType", bound=TileDBObject)
 
-class SOMACollection(TileDBObject):
+
+class SOMACollectionBase(TileDBObject, MutableMapping[str, CollectionElementType]):
     """
     Contains a key-value mapping where the keys are string names and the values are any SOMA-defined foundational or composed type, including ``SOMACollection``, ``SOMADataFrame``, ``SOMADenseNdArray``, ``SOMASparseNdArray`` or ``SOMAExperiment``.
     """
@@ -22,7 +35,7 @@ class SOMACollection(TileDBObject):
     _cached_member_names_to_uris: Optional[Dict[str, str]]
 
     # TODO: comment re the performance impact of this cache.
-    _cached_members: Dict[str, TileDBObject]
+    _cached_members: Dict[str, Any]
 
     def __init__(
         self,
@@ -30,7 +43,7 @@ class SOMACollection(TileDBObject):
         *,
         name: Optional[str] = None,
         # Non-top-level objects can have a parent to propagate context, depth, etc.
-        parent: Optional[SOMACollection] = None,
+        parent: Optional[SOMACollectionBase[Any]] = None,
         # Top-level objects should specify these:
         tiledb_platform_config: Optional[TileDBPlatformConfig] = None,
         ctx: Optional[tiledb.Ctx] = None,
@@ -55,23 +68,13 @@ class SOMACollection(TileDBObject):
         tiledb.group_create(uri=self._uri, ctx=self._ctx)
         self._common_create()  # object-type metadata etc
 
-    # TODO
-    # delete(uri)
-    # Delete the SOMACollection specified with the URI.
-
     def __len__(self) -> int:
         """
         Returns the number of members in the collection.  Implements Python's ``len(collection)``.
         """
         return len(self._get_member_names_to_uris())
 
-    def __contains__(self, member_name: str) -> bool:
-        """
-        Tests for the existence of key in collection.  Implements the ``in`` operator.
-        """
-        return member_name in self._get_member_names_to_uris()
-
-    def get(self, member_name: str) -> TileDBObject:
+    def __getitem__(self, member_name: str) -> CollectionElementType:
         """
         Gets the member object associated with the key.
         """
@@ -80,81 +83,54 @@ class SOMACollection(TileDBObject):
             from .factory import _construct_member
 
             member_uri = self._get_child_uri(member_name)
-            self._cached_members[member_name] = _construct_member(
+            member = _construct_member(
                 member_name,
                 member_uri,
                 self,
                 ctx=self._ctx,
             )
+            if member:
+                self._cached_members[member_name] = member
 
         if member_name in self._cached_members:
-            return self._cached_members[member_name]
+            return cast(CollectionElementType, self._cached_members[member_name])
         else:
             # Unlike __getattribute__ this is _only_ called when the member isn't otherwise
             # resolvable. So raising here is the right thing to do.
-            raise AttributeError(
+            raise KeyError(
                 f"{self.__class__.__name__} has no attribute '{member_name}'"
             )
 
-    def keys(self) -> Sequence[str]:
+    def set(
+        self,
+        member: CollectionElementType,
+        *,
+        child_name: Optional[str] = None,
+        relative: Optional[bool] = None,
+    ) -> None:
         """
-        Gets the names of the members of the collection.
+        Adds a member to the collection.  This interface allows explicit control over
+        `relative` URI, and uses the member's default name.
         """
-        return self._get_member_names()
+        name = member.name if child_name is None else child_name
+        self._add_object(member, child_name=name, relative=relative)
+        self._cached_members[name] = member
 
-    def __getitem__(self, member_name: str) -> TileDBObject:
+    def __setitem__(self, name: str, member: CollectionElementType) -> None:
         """
-        Get the member object associated with the key, when invoked as ``collection["namegoeshere"]``.
+        Default collection __setattr__
         """
-        return self.get(member_name)
-
-    def __getattr__(self, member_name: str) -> TileDBObject:
-        """
-        Get the member object associated with the key, when invoked as ``collection.namegoeshere``.
-        """
-        return self.get(member_name)
-
-    def set(self, member: TileDBObject, *, relative: Optional[bool] = None) -> None:
-        """
-        Adds a member to the collection.
-        """
-        self._add_object(member, relative)
-        self._cached_members[member.name] = member
-
-    def delete(self, member_name: str) -> None:
-        """
-        Removes a member from the collection, when invoked as ``collection.delete("namegoeshere")``.
-        """
-        self._remove_object_by_name(member_name)
-
-    def __delattr__(self, member_name: str) -> None:
-        """
-        Removes a member from the collection, when invoked as ``del collection.namegoeshere``.
-        """
-        self.delete(member_name)
+        self._add_object(member, child_name=name, relative=False)
+        self._cached_members[name] = member
 
     def __delitem__(self, member_name: str) -> None:
         """
         Removes a member from the collection, when invoked as ``del collection["namegoeshere"]``.
         """
-        self.delete(member_name)
+        self._remove_object_by_name(member_name)
 
-    def __iter__(self) -> Iterator[Any]:  # TODO: union type
-        """
-        Iterates over the collection.  Implements Python ``for member in collection: ...`` syntax.
-        """
-        for member_name, member_uri in self._get_member_names_to_uris().items():
-            if member_name not in self._cached_members:
-                # Do this here to avoid a cyclic module dependency:
-                from .factory import _construct_member
-
-                self._cached_members[member_name] = _construct_member(
-                    member_name,
-                    member_uri,
-                    self,
-                    self._ctx,
-                )
-            yield self._cached_members[member_name]
+    def __iter__(self) -> Iterator[str]:
+        return iter(self._get_member_names_to_uris())
 
     def __repr__(self) -> str:
         """
@@ -197,7 +173,7 @@ class SOMACollection(TileDBObject):
         Internal helper method for ``__repr__` which is designed for a single thread
         in a ``ThreadPoolExecutor`` context.
         """
-        child = self.get(
+        child = self.__getitem__(
             key
         )  # Involves a constructor and a tiledb.open to get the class name from object metadata
         child_lines = child._repr_aux()
@@ -293,7 +269,12 @@ class SOMACollection(TileDBObject):
         """
         return self._get_child_uris([member_name])[member_name]
 
-    def _add_object(self, obj: TileDBObject, relative: Optional[bool] = None) -> None:
+    def _add_object(
+        self,
+        obj: CollectionElementType,
+        child_name: Optional[str] = None,
+        relative: Optional[bool] = None,
+    ) -> None:
         """
         Adds a SOMA group/array to the current SOMA group -- e.g. base SOMA adding X, X adding a layer, obsm adding an element, etc.
 
@@ -312,7 +293,7 @@ class SOMACollection(TileDBObject):
             self._create_unless_exists()
 
         child_uri = obj.uri
-        child_name = obj.name
+        child_name = obj.name if child_name is None else child_name
         if relative is None:
             relative = self._tiledb_platform_config.member_uris_are_relative
         if relative is None:
@@ -335,6 +316,7 @@ class SOMACollection(TileDBObject):
         self._remove_object_by_name(obj.name)
 
     def _remove_object_by_name(self, member_name: str) -> None:
+        del self._cached_members[member_name]
         self._cached_member_names_to_uris = None  # invalidate on remove-member
         if self._uri.startswith("tiledb://"):
             mapping = self._get_member_names_to_uris()
@@ -373,7 +355,7 @@ class SOMACollection(TileDBObject):
         Shows metadata for the group, recursively by default.
         """
         print(f"{indent}[{self._name}]")
-        for key, value in self.metadata:
+        for key, value in self.metadata.items():
             print(f"{indent}- {key}: {value}")
         if recursively:
             child_indent = indent + "  "
@@ -385,7 +367,7 @@ class SOMACollection(TileDBObject):
                     # required methods, it was simpler to split the logic this way.
                     object_type = tiledb.object_type(obj.uri, ctx=self._ctx)
                     if object_type == "group":
-                        group = SOMACollection(
+                        group = SOMACollectionBase[Any](
                             uri=obj.uri, name=obj.name, parent=self, ctx=self._ctx
                         )
                         group._show_metadata(recursively, indent=child_indent)
@@ -398,3 +380,11 @@ class SOMACollection(TileDBObject):
                         raise Exception(
                             f"Unexpected object_type found: {object_type} at {obj.uri}"
                         )
+
+
+class SOMACollection(SOMACollectionBase[TileDBObject]):
+    """
+    A persistent collection of SOMA objects, mapping string keys to any SOMA object.
+    """
+
+    pass
