@@ -152,6 +152,9 @@ class SOMADenseNdArray(TileDBArray):
         *,
         result_order: Optional[SOMAResultOrder] = "row-major",
     ) -> pa.Tensor:
+        """
+        Read a user-defined dense slice of the array and return as an Arrow ``Tensor``.
+        """
         tiledb_result_order = tiledb_result_order_from_soma_result_order(
             result_order, accept=["column-major", "row-major"]
         )
@@ -169,6 +172,9 @@ class SOMADenseNdArray(TileDBArray):
         *,
         result_order: Optional[SOMAResultOrder] = None,
     ) -> np.ndarray:
+        """
+        Read a user-specified dense slice of the array and return as an Numpy ``ndarray``.
+        """
         return cast(
             np.ndarray, self.read_tensor(coords, result_order=result_order).to_numpy()
         )
@@ -195,6 +201,9 @@ class SOMADenseNdArray(TileDBArray):
             A[coords] = values.to_numpy()
 
     def write_numpy(self, coords: SOMADenseNdCoordinates, values: np.ndarray) -> None:
+        """ "
+        Write a numpy ``ndarray`` to the user specified coordinates
+        """
         self.write_tensor(coords, pa.Tensor.from_numpy(values))
 
     # ----------------------------------------------------------------
