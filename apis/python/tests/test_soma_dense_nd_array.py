@@ -20,7 +20,7 @@ TODO:
 - [X] get schema
 - [X] get is_sparse
 - [X] get metadata
-- [ ] read
+- [X] read
 - [X] write
 - [ ] reshape
 """

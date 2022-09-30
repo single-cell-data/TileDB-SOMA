@@ -8,10 +8,10 @@ import pyarrow as pa
 import scipy.sparse as sp
 import tiledb
 
-from . import eta, logging, util, util_arrow, util_scipy, util_tiledb
+from . import eta, logging, util, util_arrow, util_scipy
 from .soma_collection import SOMACollectionBase
 from .tiledb_array import TileDBArray
-from .types import Matrix, NTuple, SOMAResultOrder
+from .types import Matrix, NTuple, SOMASparseNdCoordinates
 
 
 class SOMASparseNdArray(TileDBArray):
@@ -154,183 +154,123 @@ class SOMASparseNdArray(TileDBArray):
         """
         Return the number of stored values in the array, including explicitly stored zeros.
         """
-        raise NotImplementedError()
+        raise NotImplementedError("SOMASparseNdArray.nnz is not implemented.")
 
-    def read(
+    def read_sparse_tensor(
         self,
+        coords: SOMASparseNdCoordinates,
         *,
-        # TODO: find the right syntax to get the typechecker to accept args like ``ids=slice(0,10)``
-        # row_ids: Optional[Union[Sequence[int], Slice]] = None,
-        # col_ids: Optional[Union[Sequence[int], Slice]] = None,
-        row_ids: Optional[Sequence[int]] = None,
-        col_ids: Optional[Sequence[int]] = None,
-        result_order: Optional[SOMAResultOrder] = None,
-        # TODO: batch_size
-        # TODO: partition,
-        # TODO: batch_format,
-        # TODO: platform_config,
-    ) -> Iterator[pa.RecordBatch]:
-        """
-        TODO: comment
-        """
-        tiledb_result_order = util_tiledb.tiledb_result_order_from_soma_result_order(
-            result_order, accept=["row-major", "column-major", "unordered"]
-        )
+        format: Literal["coo", "csr", "csc"] = "coo",
+    ) -> Iterator[Union[pa.SparseCOOTensor, pa.SparseCSCMatrix, pa.SparseCSRMatrix]]:
+
+        if format != "coo" and self.ndims != 2:
+            raise ValueError(f"Format {format} only supported for 2D SparseNdArray")
+        if format not in ("coo", "csr", "csc"):
+            raise NotImplementedError("format not implemented")
 
         with self._tiledb_open("r") as A:
             query = A.query(
                 return_arrow=True,
                 return_incomplete=True,
-                order=tiledb_result_order,
             )
+            for arrow_tbl in query.df[coords]:
+                if format == "coo":
+                    coo_data = arrow_tbl.column("data").to_numpy()
+                    coo_coords = np.array(
+                        [
+                            arrow_tbl.column(f"__dim_{n}").to_numpy()
+                            for n in range(self.ndims)
+                        ]
+                    ).T
+                    yield pa.SparseCOOTensor.from_numpy(coo_data, coo_coords, shape=A.shape)
 
-            if row_ids is None:
-                if col_ids is None:
-                    iterator = query.df[:, :]
-                else:
-                    iterator = query.df[:, col_ids]
-            else:
-                if col_ids is None:
-                    iterator = query.df[row_ids, :]
-                else:
-                    iterator = query.df[row_ids, col_ids]
+                elif format in ("csr", "csc"):
+                    # Temporary: as these must be 2D, convert to scipy COO and use
+                    # scipy to perform conversions.  C++ reader will be nicer!
+                    data = arrow_tbl.column("data").to_numpy()
+                    row = arrow_tbl.column("__dim_0").to_numpy()
+                    col = arrow_tbl.column("__dim_1").to_numpy()
+                    scipy_coo = sp.coo_array((data, (row, col)), shape=A.shape)
+                    if format == "csr":
+                        yield pa.SparseCSRMatrix.from_scipy(scipy_coo.tocsr())
+                    if format == "csc":
+                        yield pa.SparseCSCMatrix.from_scipy(scipy_coo.tocsc())
 
-            for df in iterator:
-                batches = df.to_batches()
-                for batch in batches:
-                    yield batch
-
-    def read_as_pandas(
-        self,
-        *,
-        row_ids: Optional[Sequence[int]] = None,
-        col_ids: Optional[Sequence[int]] = None,
-        set_index: Optional[bool] = False,
-    ) -> pd.DataFrame:
-        """
-        TODO: comment
-        """
-        dim_names = None
-        if set_index:
-            dim_names = self._tiledb_dim_names()
-
-        with self._tiledb_open() as A:
-            query = A.query(return_incomplete=True)
-
-            if row_ids is None:
-                if col_ids is None:
-                    iterator = query.df[:, :]
-                else:
-                    iterator = query.df[:, col_ids]
-            else:
-                if col_ids is None:
-                    iterator = query.df[row_ids, :]
-                else:
-                    iterator = query.df[row_ids, col_ids]
-
-            for df in iterator:
-                # Make this opt-in only.  For large arrays, this df.set_index is time-consuming
-                # so we should not do it without direction.
-                if set_index:
-                    df.set_index(dim_names, inplace=True)
-                yield df
-
-    def read_all(
-        self,
-        *,
-        # TODO: find the right syntax to get the typechecker to accept args like ``ids=slice(0,10)``
-        # row_ids: Optional[Union[Sequence[int], Slice]] = None,
-        # col_ids: Optional[Union[Sequence[int], Slice]] = None,
-        row_ids: Optional[Sequence[int]] = None,
-        col_ids: Optional[Sequence[int]] = None,
-        result_order: Optional[SOMAResultOrder] = None,
-        # TODO: batch_size
-        # TODO: partition,
-        # TODO: batch_format,
-        # TODO: platform_config,
-    ) -> pa.RecordBatch:
-        """
-        This is a convenience method around ``read``. It iterates the return value from ``read`` and returns a concatenation of all the record batches found. Its nominal use is to simply unit-test cases.
-        """
-        return util_arrow.concat_batches(
-            self.read(
-                row_ids=row_ids,
-                col_ids=col_ids,
-                result_order=result_order,
+    def read_table(self, coords: SOMASparseNdCoordinates) -> Iterator[pa.Table]:
+        with self._tiledb_open("r") as A:
+            query = A.query(
+                return_arrow=True,
+                return_incomplete=True,
             )
-        )
+            for arrow_tbl in query.df[coords]:
+                yield arrow_tbl
 
-    def read_as_pandas_all(
-        self,
-        *,
-        row_ids: Optional[Sequence[int]] = None,
-        col_ids: Optional[Sequence[int]] = None,
-        set_index: Optional[bool] = False,
-    ) -> pa.RecordBatch:
-        """
-        This is a convenience method around ``read_as_pandas``. It iterates the return value from ``read_as_pandas`` and returns a concatenation of all the record batches found. Its nominal use is to simply unit-test cases.
-        """
-        dataframes = []
-        generator = self.read_as_pandas(
-            row_ids=row_ids,
-            col_ids=col_ids,
-            set_index=set_index,
-        )
-        for dataframe in generator:
-            dataframes.append(dataframe)
-        return pd.concat(dataframes)
+    def read_as_pandas(self, coords: SOMASparseNdCoordinates) -> Iterator[pd.DataFrame]:
+        for arrow_tbl in self.read_table(coords):
+            yield arrow_tbl.to_pandas()
 
-    def write(
+    def read_as_pandas_all(self) -> pd.DataFrame:
+        return pd.concat(self.read_as_pandas((slice(None),) * self.ndims))
+
+    def write_sparse_tensor(
         self,
-        # TODO: define a compound type for this in types.py
-        tensor: Union[pa.SparseCOOTensor, pa.SparseCSFTensor],
+        tensor: Union[
+            pa.SparseCOOTensor,
+            pa.SparseCSRMatrix,
+            pa.SparseCSCMatrix,
+        ],
     ) -> None:
         """
-        Write an ``Arrow.Tensor`` to the persistent object. As duplicate index values are not allowed, index values already present in the object are overwritten and new index values are added.
+        Write an Arrow sparse tensor to the SOMASparseNdArray. The coordinates in the Arrow
+        SparseTensor will be interpreted as the coordinates to write to.
 
-        :param values: an ``Arrow.SparseTensor`` containing values to be written. The type of elements in ``values`` must match the type of the ``SOMASparseNdArray``.
+        Currently supports the _experimental_ Arrow SparseCOOTensor, SparseCSRMatrix and
+        SparseCSCMatrix. There is currently no support for Arrow SparseCSFTensor or dense
+        Tensor.
         """
+        if isinstance(tensor, pa.SparseCOOTensor):
+            data, coords = tensor.to_numpy()
+            with self._tiledb_open("w") as A:
+                A[tuple(c for c in coords.T)] = data
+            return
 
-        # TODO: CHUNKIFY
+        if isinstance(tensor, (pa.SparseCSCMatrix, pa.SparseCSRMatrix)):
+            if self.ndims != 2:
+                raise ValueError(
+                    f"Unable to write 2D Arrow sparse matrix to {self.ndims}D SOMASparseNdArray"
+                )
+            sp = tensor.to_scipy().tocoo()
+            with self._tiledb_open("w") as A:
+                A[sp.row, sp.col] = sp.data
+            return
 
-        # Example caller-side:
-        #
-        # tensor = pa.SparseCOOTensor.from_numpy(
-        #     data=np.asarray([4,5,6]),
-        #     coords=[[1,2], [3,4], [5,6]],
-        #     shape=(nr, nc),
-        # )
-        #
-        # Here on the callee side: need to figure out how to extrat the coords separate from the
-        # data since tiledb write needs ``A[coords] = data``.
+        raise TypeError("Unsuppoted tensor type")
 
-        # >>> tensor.data
-        # AttributeError: 'pyarrow.lib.SparseCOOTensor' object has no attribute 'data'
-
-        # >>> tensor.coords
-        # AttributeError: 'pyarrow.lib.SparseCOOTensor' object has no attribute 'coords'
-
-        # :headdesk:
-
-        nt = tensor.to_numpy()
-        assert len(nt) == 2
-        coords = nt[1]
-        data = nt[0]
-
-        # The coords come in as a list of [i,j] pairs. We need a list of i's and a list of j's.
-        # TODO: for now, only support 2D matrices. We need to complexify this code to handle n-d arrays.
-        assert len(coords) > 0
-        assert len(coords[0]) == 2
-        icoords = coords[:, 0]
-        jcoords = coords[:, 1]
-
+    def write_table(self, arrow_table: pa.Table) -> None:
+        """
+        Write a COO table, with columns named ``__dim_0``, ..., ``__dim_N`` and ``data``
+        to the dense nD array.
+        """
+        data = arrow_table.column("data").to_numpy()
+        coord_tbl = arrow_table.drop(["data"])
+        coords = tuple(
+            coord_tbl.column(f"__dim_{n}").to_numpy()
+            for n in range(coord_tbl.num_columns)
+        )
         with self._tiledb_open("w") as A:
-            A[icoords, jcoords] = data
+            A[coords] = data
 
+    # ---------------
+    # TODO: most of this code should be moved into a helper package (eg, soma.io), as
+    # is it not part of the core API, and could be built on top of the core API.
+    # ---------------
     def from_matrix(self, matrix: Matrix) -> None:
         """
         Imports a matrix -- nominally ``scipy.sparse.csr_matrix`` or ``numpy.ndarray`` -- into a TileDB array which is used for ``X``, ``obsm``, and ``varm`` matrices
         """
+
+        # TODO: Note that scipy.sparse.*_matrix is being deprecated in favor of sparse.*_array.
+        # https://docs.scipy.org/doc/scipy/reference/sparse.html
 
         s = util.get_start_stamp()
         logging.log_io(None, f"{self._indent}START  WRITING {self._nested_name}")

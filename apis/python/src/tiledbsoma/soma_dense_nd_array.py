@@ -163,14 +163,15 @@ class SOMADenseNdArray(TileDBArray):
                 arrow_tbl.column("data").to_numpy().reshape(target_shape)
             )
 
-    # TODO: read_numpy or read_ndarray?
     def read_numpy(
         self,
         coords: SOMADenseNdCoordinates,
         *,
         result_order: Optional[SOMAResultOrder] = None,
     ) -> np.ndarray:
-        return self.read_tensor(coords, result_order=result_order).to_numpy()
+        return cast(
+            np.ndarray, self.read_tensor(coords, result_order=result_order).to_numpy()
+        )
 
     def write_tensor(
         self,
@@ -193,7 +194,6 @@ class SOMADenseNdArray(TileDBArray):
         with self._tiledb_open("w") as A:
             A[coords] = values.to_numpy()
 
-    # TODO: should this be named write_numpy or write_ndarray?
     def write_numpy(self, coords: SOMADenseNdCoordinates, values: np.ndarray) -> None:
         self.write_tensor(coords, pa.Tensor.from_numpy(values))
 
