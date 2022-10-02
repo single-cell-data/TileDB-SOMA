@@ -24,7 +24,9 @@ target_include_directories(libtiledbsoma
     ${CMAKE_CURRENT_SOURCE_DIR}/../../include
     ${CMAKE_CURRENT_SOURCE_DIR}/../../src
     ${TILEDB_SOMA_EXPORT_HEADER_DIR}
+    $<TARGET_PROPERTY:spdlog::spdlog,INTERFACE_INCLUDE_DIRECTORIES>
 )
+
 if(DEFINED ENV{LIBTILEDBSOMA_DEBUG_BUILD})
   message(STATUS "END libtiledbsoma/src/pyapi/CMakeLists.txt")
   message(STATUS "")
