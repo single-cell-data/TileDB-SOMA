@@ -316,3 +316,11 @@ def test_soma_sparse_nd_array_read_as_pandas(
     assert df.sort_values(by=dim_names, ignore_index=True).equals(
         data.to_pandas().sort_values(by=dim_names, ignore_index=True)
     )
+
+
+@pytest.mark.parametrize("shape", [(), (0,), (10, 0), (0, 10), (1, 2, 0)])
+def test_zero_length_fail(tmp_path, shape):
+    """Zero length dimensions are expected to fail"""
+    a = soma.SOMASparseNdArray(tmp_path.as_posix())
+    with pytest.raises(ValueError):
+        a.create(type=pa.float32(), shape=shape)
