@@ -209,9 +209,9 @@ class SOMAIndexedDataFrame(TileDBArray):
         column_names: Optional[Sequence[str]] = None,
         result_order: Optional[SOMAResultOrder] = None,
         # TODO: more arguments
-    ) -> Iterator[pa.RecordBatch]:
+    ) -> Iterator[pa.Table]:
         """
-        Read a user-defined subset of data, addressed by the dataframe indexing columns, optionally filtered, and return results as one or more Arrow.RecordBatch.
+        Read a user-defined subset of data, addressed by the dataframe indexing columns, optionally filtered, and return results as one or more Arrow.Table.
 
         :param ids: for each index dimension, which rows to read. Defaults to ``None``, meaning no constraint -- all IDs.
 
@@ -258,14 +258,12 @@ class SOMAIndexedDataFrame(TileDBArray):
             else:
                 iterator = query.df[ids]
 
-            for df in iterator:
-                batches = df.to_batches()
-                for batch in batches:
-                    # XXX COMMENT MORE
-                    # This is the 'decode on read' part of our logic; in dim_select we have the
-                    # 'encode on write' part.
-                    # Context: # https://github.com/single-cell-data/TileDB-SOMA/issues/99.
-                    yield util_arrow.ascii_to_unicode_pyarrow_readback(batch)
+            for table in iterator:
+                # XXX COMMENT MORE
+                # This is the 'decode on read' part of our logic; in dim_select we have the
+                # 'encode on write' part.
+                # Context: # https://github.com/single-cell-data/TileDB-SOMA/issues/99.
+                yield util_arrow.ascii_to_unicode_pyarrow_readback(table)
 
     def read_all(
         self,
@@ -279,19 +277,19 @@ class SOMAIndexedDataFrame(TileDBArray):
         # TODO: batch_size
         # TODO: partition,
         # TODO: platform_config,
-    ) -> pa.RecordBatch:
+    ) -> pa.Table:
         """
-        This is a convenience method around ``read``. It iterates the return value from ``read`` and returns a concatenation of all the record batches found. Its nominal use is to simply unit-test cases.
+        This is a convenience method around ``read``. It iterates the return value from ``read`` and returns a concatenation of all the table-pieces found. Its nominal use is to simply unit-test cases.
         """
-        return util_arrow.concat_batches(
+        return util_arrow.concat_tables(
             self.read(ids=ids, value_filter=value_filter, column_names=column_names)
         )
 
-    def write(self, values: pa.RecordBatch) -> None:
+    def write(self, values: pa.Table) -> None:
         """
-        Write an Arrow.RecordBatch to the persistent object. As duplicate index values are not allowed, index values already present in the object are overwritten and new index values are added.
+        Write an Arrow.Table to the persistent object. As duplicate index values are not allowed, index values already present in the object are overwritten and new index values are added.
 
-        :param values: An Arrow.RecordBatch containing all columns, including the index columns. The schema for the values must match the schema for the ``SOMAIndexedDataFrame``.
+        :param values: An Arrow.Table containing all columns, including the index columns. The schema for the values must match the schema for the ``SOMAIndexedDataFrame``.
         """
         self._shape = None  # cache-invalidate
 

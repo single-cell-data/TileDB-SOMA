@@ -171,6 +171,21 @@ class SOMADenseNdArray(TileDBArray):
             )
 
     def read_numpy(
+            if row_ids is None:
+                if col_ids is None:
+                    iterator = query.df[:, :]
+                else:
+                    iterator = query.df[:, col_ids]
+            else:
+                if col_ids is None:
+                    iterator = query.df[row_ids, :]
+                else:
+                    iterator = query.df[row_ids, col_ids]
+
+            for table in iterator:
+                yield table
+
+    def read_as_pandas(
         self,
         coords: SOMADenseNdCoordinates,
         *,
@@ -181,11 +196,77 @@ class SOMADenseNdArray(TileDBArray):
         """
         return cast(
             np.ndarray, self.read_tensor(coords, result_order=result_order).to_numpy()
+        with self._tiledb_open() as A:
+            query = A.query(return_incomplete=True)
+
+            if row_ids is None:
+                if col_ids is None:
+                    iterator = query.df[:, :]
+                else:
+                    iterator = query.df[:, col_ids]
+            else:
+                if col_ids is None:
+                    iterator = query.df[row_ids, :]
+                else:
+                    iterator = query.df[row_ids, col_ids]
+
+            for df in iterator:
+                # Make this opt-in only.  For large arrays, this df.set_index is time-consuming
+                # so we should not do it without direction.
+                if set_index:
+                    df.set_index(self._tiledb_dim_names(), inplace=True)
+                yield df
+
+    def read_all(
+        self,
+        *,
+        # TODO: find the right syntax to get the typechecker to accept args like ``ids=slice(0,10)``
+        # ids: Optional[Union[Sequence[int], Slice]] = None,
+        row_ids: Optional[Sequence[int]] = None,
+        col_ids: Optional[Sequence[int]] = None,
+        result_order: Optional[str] = None,
+        # TODO: batch_size
+        # TODO: partition,
+        # TODO: batch_format,
+        # TODO: platform_config,
+    ) -> pa.Table:
+        """
+        This is a convenience method around ``read``. It iterates the return value from ``read`` and returns a concatenation of all the table-pieces found. Its nominal use is to simply unit-test cases.
+        """
+        return util_arrow.concat_tables(
+            self.read(
+                row_ids=row_ids,
+                col_ids=col_ids,
+                result_order=result_order,
+            )
         )
 
     def write_tensor(
         self,
         coords: SOMADenseNdCoordinates,
+        *,
+        row_ids: Optional[Sequence[int]] = None,
+        col_ids: Optional[Sequence[int]] = None,
+        set_index: Optional[bool] = False,
+    ) -> pa.Table:
+        """
+        This is a convenience method around ``read_as_pandas``. It iterates the return value from ``read_as_pandas`` and returns a concatenation of all the table-pieces found. Its nominal use is to simply unit-test cases.
+        """
+        dataframes = []
+        generator = self.read_as_pandas(
+            row_ids=row_ids,
+            col_ids=col_ids,
+            set_index=set_index,
+        )
+        for dataframe in generator:
+            dataframes.append(dataframe)
+        return pd.concat(dataframes)
+
+    def write(
+        self,
+        # TODO: rework callsites with regard to the very latest spec rev
+        # coords: Union[tuple, tuple[slice], NTuple, List[int]],
+        coords: Any,
         values: pa.Tensor,
     ) -> None:
         """
