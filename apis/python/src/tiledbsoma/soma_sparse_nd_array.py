@@ -239,11 +239,15 @@ class SOMASparseNdArray(TileDBArray):
         for arrow_tbl in self.read_table(coords):
             yield arrow_tbl.to_pandas()
 
-    def read_as_pandas_all(self) -> pd.DataFrame:
+    def read_as_pandas_all(
+        self, coords: Optional[SOMASparseNdCoordinates] = None
+    ) -> pd.DataFrame:
         """
-        Return the entire sparse array as a Pandas DataFrame containing COO data.
+        Return the sparse array as a single Pandas DataFrame containing COO data.
         """
-        return pd.concat(self.read_as_pandas((slice(None),) * self.ndims))
+        if coords is None:
+            coords = (slice(None),) * self.ndims
+        return pd.concat(self.read_as_pandas(coords))
 
     def write_sparse_tensor(
         self,
