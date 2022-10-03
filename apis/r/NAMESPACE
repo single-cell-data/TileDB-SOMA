@@ -2,7 +2,11 @@
 
 export(TileDBArray)
 export(TileDBObject)
+export(getColumn)
+export(getTable)
+importFrom(Rcpp,evalCpp)
 importFrom(bit64,as.integer64)
 importFrom(glue,glue_collapse)
 importFrom(urltools,url_compose)
 importFrom(urltools,url_parse)
+useDynLib(tiledbsoma, .registration=TRUE)

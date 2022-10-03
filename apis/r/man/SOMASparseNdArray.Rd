@@ -4,7 +4,7 @@
 \alias{SOMASparseNdArray}
 \title{SOMASparseNdArray}
 \description{
-\code{SOMASparseNdArray} is a monomorphic, sparse, N-dimensional array with offset
+\code{SOMASparseNdArray} is a sparse, N-dimensional array with offset
 (zero-based) integer indexing on each dimension. The \code{SOMASparseNdArray} has
 a user-defined schema, which includes:
 \itemize{
