@@ -312,7 +312,6 @@ def to_anndata(
             shape = measurement.obsm[key].shape
             assert len(shape) == 2
             mat = measurement.obsm[key].read_numpy((slice(None),) * len(shape))
-            print("OBSM", key, mat.shape)
             obsm[key] = sp.csr_array(mat)
 
     varm = {}
@@ -321,21 +320,18 @@ def to_anndata(
             shape = measurement.varm[key].shape
             assert len(shape) == 2
             mat = measurement.varm[key].read_numpy((slice(None),) * len(shape))
-            print("VARM", key, mat.shape)
             varm[key] = sp.csr_array(mat)
 
     obsp = {}
     if measurement.obsp.exists():
         for key in measurement.obsp.keys():
             mat = measurement.obsp[key].read_as_pandas_all()
-            print("OBSP", key, mat.shape)
             obsp[key] = util_scipy.csr_from_tiledb_df(mat, nobs, nobs)
 
     varp = {}
     if measurement.varp.exists():
         for key in measurement.varp.keys():
             mat = measurement.varp[key].read_as_pandas_all()
-            print("VARP", key, mat.shape)
             varp[key] = util_scipy.csr_from_tiledb_df(mat, nvar, nvar)
 
     anndata = ad.AnnData(
