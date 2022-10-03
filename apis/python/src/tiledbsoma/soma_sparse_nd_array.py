@@ -48,10 +48,11 @@ class SOMASparseNdArray(TileDBArray):
         :param shape: the length of each domain as a list, e.g., [100, 10]. All lengths must be in the uint64 range.
         """
 
-        # checks on shape
-        assert len(shape) > 0
-        for e in shape:
-            assert e >= 0
+        # check on shape
+        if len(shape) == 0 or any(e <= 0 for e in shape):
+            raise ValueError(
+                "DenseNdArray shape must be non-zero length tuple of ints > 0"
+            )
 
         if not pa.types.is_primitive(type):
             raise TypeError(
@@ -62,15 +63,10 @@ class SOMASparseNdArray(TileDBArray):
 
         dims = []
         for e in shape:
-            upper = e - 1
-            tile = min(e, 2048)  # TODO: parameterize
-            if e == 0:
-                upper = 1
-                tile = 1
             dim = tiledb.Dim(
                 # Use tiledb default names like ``__dim_0``
-                domain=(0, upper),
-                tile=tile,
+                domain=(0, e - 1),
+                tile=min(e, 2048),  # TODO: PARAMETERIZE,
                 dtype=np.uint64,
                 filters=[tiledb.ZstdFilter(level=level)],
             )

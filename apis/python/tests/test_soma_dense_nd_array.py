@@ -116,3 +116,11 @@ def test_soma_dense_nd_array_read_write_tensor(tmp_path, shape: Tuple[int, ...])
     data[(0,) * len(shape)] = 0.0
     t = b.read_tensor((slice(None),) * ndim)
     assert t.equals(pa.Tensor.from_numpy(data))
+
+
+@pytest.mark.parametrize("shape", [(), (0,), (10, 0), (0, 10), (1, 2, 0)])
+def test_zero_length_fail(tmp_path, shape):
+    """Zero length dimensions are expected to fail"""
+    a = soma.SOMADenseNdArray(tmp_path.as_posix())
+    with pytest.raises(ValueError):
+        a.create(type=pa.float32(), shape=shape)
