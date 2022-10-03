@@ -89,7 +89,7 @@ class SOMACollectionBase(TileDBObject, MutableMapping[str, CollectionElementType
                 self,
                 ctx=self._ctx,
             )
-            if member:
+            if member is not None:
                 self._cached_members[member_name] = member
 
         if member_name in self._cached_members:
