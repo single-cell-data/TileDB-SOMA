@@ -1,0 +1,20 @@
+#!/bin/sh
+
+if test -d inst/include/tiledbsoma && test -f src/soma_reader.cc; then
+   echo "** Seeing files present, nothing to configure, exiting."
+   exit 0
+fi
+
+if ! test -d ../../libtiledbsoma; then
+   echo "** Not all source files present but not repo layout. Hm. Exiting."
+   exit 1
+fi   
+
+if ! test -d inst/include/tiledbsoma; then
+   mkdir -p inst/include/tiledbsoma
+   echo "** copying C++ header files"
+   cp -vax ../../libtiledbsoma/include/tiledbsoma/* inst/include/tiledbsoma/
+   echo "** copying C++ source and header files"
+   cp -vax ../../libtiledbsoma/src/* src/
+fi
+
