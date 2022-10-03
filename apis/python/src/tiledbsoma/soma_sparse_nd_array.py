@@ -131,6 +131,9 @@ class SOMASparseNdArray(TileDBArray):
                 self._shape = A.shape
         return self._shape
 
+    def reshape(self, shape: NTuple) -> None:
+        raise NotImplementedError("reshape operation not implemented.")
+
     @property
     def ndims(self) -> int:
         """
