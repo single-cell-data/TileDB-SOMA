@@ -42,7 +42,7 @@ def create_and_populate_sparse_nd_array(
         coords=[[0, 1], [2, 3], [3, 4]],
         shape=(nr, nc),
     )
-    sparse_nd_array.write(tensor)
+    sparse_nd_array.write_sparse_tensor(tensor)
 
 
 # ----------------------------------------------------------------

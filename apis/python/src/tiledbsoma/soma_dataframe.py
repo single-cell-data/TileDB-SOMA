@@ -9,7 +9,7 @@ from . import util, util_arrow, util_pandas, util_tiledb
 from .logging import log_io
 from .soma_collection import SOMACollectionBase
 from .tiledb_array import TileDBArray
-from .types import Ids, NTuple
+from .types import Ids, NTuple, SOMAResultOrder
 
 ROWID = "soma_rowid"
 
@@ -165,7 +165,7 @@ class SOMADataFrame(TileDBArray):
         ids: Optional[Any] = None,
         value_filter: Optional[str] = None,
         column_names: Optional[Sequence[str]] = None,
-        result_order: Optional[str] = None,
+        result_order: Optional[SOMAResultOrder] = None,
         # TODO: batch_size
         # TODO: partition,
         # TODO: platform_config,
@@ -185,10 +185,8 @@ class SOMADataFrame(TileDBArray):
 
         **Indexing**: the ``ids`` parameter will support, per dimension: a row offset (uint), a row-offset range (slice), or a list of both.
         """
-        tiledb_result_order = (
-            util_tiledb.tiledb_result_order_from_soma_result_order_non_indexed(
-                result_order
-            )
+        tiledb_result_order = util_tiledb.tiledb_result_order_from_soma_result_order(
+            result_order, accept=["rowid-ordered", "unordered"]
         )
 
         with self._tiledb_open("r") as A:
@@ -240,7 +238,7 @@ class SOMADataFrame(TileDBArray):
         ids: Optional[Any] = None,
         value_filter: Optional[str] = None,
         column_names: Optional[Sequence[str]] = None,
-        result_order: Optional[str] = None,
+        result_order: Optional[SOMAResultOrder] = None,
         # TODO: batch_size
         # TODO: partition,
         # TODO: result_order,
@@ -323,7 +321,7 @@ class SOMADataFrame(TileDBArray):
         ids: Optional[Ids] = None,
         value_filter: Optional[str] = None,
         column_names: Optional[Sequence[str]] = None,
-        result_order: Optional[str] = None,
+        result_order: Optional[SOMAResultOrder] = None,
         # to rename index to 'obs_id' or 'var_id', if desired, for anndata
         id_column_name: Optional[str] = None,
     ) -> Iterator[pd.DataFrame]:
@@ -332,10 +330,8 @@ class SOMADataFrame(TileDBArray):
 
         TODO: params-list
         """
-        tiledb_result_order = (
-            util_tiledb.tiledb_result_order_from_soma_result_order_non_indexed(
-                result_order
-            )
+        tiledb_result_order = util_tiledb.tiledb_result_order_from_soma_result_order(
+            result_order, accept=["rowid-ordered", "unordered"]
         )
 
         with self._tiledb_open() as A:
@@ -391,7 +387,7 @@ class SOMADataFrame(TileDBArray):
         ids: Optional[Ids] = None,
         value_filter: Optional[str] = None,
         column_names: Optional[Sequence[str]] = None,
-        result_order: Optional[str] = None,
+        result_order: Optional[SOMAResultOrder] = None,
         # to rename index to 'obs_id' or 'var_id', if desired, for anndata
         id_column_name: Optional[str] = None,
     ) -> pd.DataFrame:

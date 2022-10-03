@@ -1,9 +1,8 @@
 import math
 import time
-from typing import Any, List, Literal, Optional, Sequence, Tuple, Union
+from typing import Any, List, Literal, Optional, Sequence, Tuple, Union, cast
 
 import numpy as np
-import pandas as pd
 import pyarrow as pa
 import scipy.sparse as sp
 import tiledb
@@ -12,11 +11,11 @@ import tiledbsoma.eta as eta
 import tiledbsoma.logging as logging
 import tiledbsoma.util as util
 import tiledbsoma.util_arrow as util_arrow
-import tiledbsoma.util_tiledb as util_tiledb
+from tiledbsoma.util_tiledb import tiledb_result_order_from_soma_result_order
 
 from .soma_collection import SOMACollectionBase
 from .tiledb_array import TileDBArray
-from .types import Matrix, NTuple
+from .types import Matrix, NTuple, SOMADenseNdCoordinates, SOMAResultOrder
 
 
 class SOMADenseNdArray(TileDBArray):
@@ -52,10 +51,11 @@ class SOMADenseNdArray(TileDBArray):
         :param shape: the length of each domain as a list, e.g., [100, 10]. All lengths must be in the uint64 range.
         """
 
-        # checks on shape
-        assert len(shape) > 0
-        for e in shape:
-            assert e > 0
+        # check on shape
+        if len(shape) == 0 or any(e <= 0 for e in shape):
+            raise ValueError(
+                "DenseNdArray shape must be non-zero length tuple of ints > 0"
+            )
 
         if not pa.types.is_primitive(type):
             raise TypeError(
@@ -129,12 +129,8 @@ class SOMADenseNdArray(TileDBArray):
         """
         Return length of each dimension, always a list of length ``ndims``
         """
-        # TODO: cache read
-        # return self._shape
         with self._tiledb_open() as A:
-            # mypy says:
-            # error: Returning Any from function declared to return "Tuple[int]"  [no-any-return]
-            return A.schema.domain.shape  # type: ignore
+            return cast(NTuple, A.schema.domain.shape)
 
     @property
     def ndims(self) -> int:
@@ -142,9 +138,7 @@ class SOMADenseNdArray(TileDBArray):
         Return number of index columns
         """
         with self._tiledb_open() as A:
-            # mypy says:
-            # Returning Any from function declared to return "int"  [no-any-return]
-            return A.schema.domain.ndim  # type: ignore
+            return cast(int, A.schema.domain.ndim)
 
     @property
     def is_sparse(self) -> Literal[False]:
@@ -153,148 +147,72 @@ class SOMADenseNdArray(TileDBArray):
         """
         return False
 
-    def read(
+    def read_tensor(
         self,
-        # TODO: partitions: Optional[SOMAReadPartitions] = None,,
-        row_ids: Optional[Sequence[int]] = None,
-        col_ids: Optional[Sequence[int]] = None,
-        result_order: Optional[str] = None,
-    ) -> Any:  # TODO: Iterator[DenseReadResult]
+        coords: SOMADenseNdCoordinates,
+        *,
+        result_order: Optional[SOMAResultOrder] = "row-major",
+    ) -> pa.Tensor:
         """
-        Read a user-specified subset of the object, and return as one or more Arrow.Tensor.
-
-        :param ids: per-dimension slice, expressed as a scalar, a range, or a list of both.
-
-        :param partitions: an optional [``SOMAReadPartitions``](#SOMAReadPartitions) hint to indicate how results should be organized.
-
-        :param result_order: order of read results. Can be one of row-major or column-major.
-
-        The ``read`` operation will return a language-specific iterator over one or more Arrow Tensor objects and information describing them, allowing the incremental processing of results larger than available memory. The actual iterator used is delegated to language-specific SOMA specs. The ``DenseReadResult`` should include:
-
-        * The coordinates of the slice (e.g., origin, shape)
-        * an Arrow.Tensor with the slice values
+        Read a user-defined dense slice of the array and return as an Arrow ``Tensor``.
         """
-        tiledb_result_order = (
-            util_tiledb.tiledb_result_order_from_soma_result_order_indexed(result_order)
+        tiledb_result_order = tiledb_result_order_from_soma_result_order(
+            result_order, accept=["column-major", "row-major"]
         )
-
         with self._tiledb_open("r") as A:
-            query = A.query(
-                return_arrow=True,
-                return_incomplete=True,
-                order=tiledb_result_order,
+            target_shape = _dense_index_to_shape(coords, A.shape, result_order)
+            query = A.query(return_arrow=True, order=tiledb_result_order)
+            arrow_tbl = query.df[coords]
+            return pa.Tensor.from_numpy(
+                arrow_tbl.column("data").to_numpy().reshape(target_shape)
             )
 
-            if row_ids is None:
-                if col_ids is None:
-                    iterator = query.df[:, :]
-                else:
-                    iterator = query.df[:, col_ids]
-            else:
-                if col_ids is None:
-                    iterator = query.df[row_ids, :]
-                else:
-                    iterator = query.df[row_ids, col_ids]
-
-            for df in iterator:
-                batches = df.to_batches()
-                for batch in batches:
-                    yield batch
-
-    def read_as_pandas(
+    def read_numpy(
         self,
+        coords: SOMADenseNdCoordinates,
         *,
-        row_ids: Optional[Sequence[int]] = None,
-        col_ids: Optional[Sequence[int]] = None,
-        set_index: Optional[bool] = False,
-    ) -> pd.DataFrame:
+        result_order: Optional[SOMAResultOrder] = None,
+    ) -> np.ndarray:
         """
-        TODO: comment
+        Read a user-specified dense slice of the array and return as an Numpy ``ndarray``.
         """
-        with self._tiledb_open() as A:
-            query = A.query(return_incomplete=True)
-
-            if row_ids is None:
-                if col_ids is None:
-                    iterator = query.df[:, :]
-                else:
-                    iterator = query.df[:, col_ids]
-            else:
-                if col_ids is None:
-                    iterator = query.df[row_ids, :]
-                else:
-                    iterator = query.df[row_ids, col_ids]
-
-            for df in iterator:
-                # Make this opt-in only.  For large arrays, this df.set_index is time-consuming
-                # so we should not do it without direction.
-                if set_index:
-                    df.set_index(self._tiledb_dim_names(), inplace=True)
-                yield df
-
-    def read_all(
-        self,
-        *,
-        # TODO: find the right syntax to get the typechecker to accept args like ``ids=slice(0,10)``
-        # ids: Optional[Union[Sequence[int], Slice]] = None,
-        row_ids: Optional[Sequence[int]] = None,
-        col_ids: Optional[Sequence[int]] = None,
-        result_order: Optional[str] = None,
-        # TODO: batch_size
-        # TODO: partition,
-        # TODO: batch_format,
-        # TODO: platform_config,
-    ) -> pa.RecordBatch:
-        """
-        This is a convenience method around ``read``. It iterates the return value from ``read`` and returns a concatenation of all the record batches found. Its nominal use is to simply unit-test cases.
-        """
-        return util_arrow.concat_batches(
-            self.read(
-                row_ids=row_ids,
-                col_ids=col_ids,
-                result_order=result_order,
-            )
+        return cast(
+            np.ndarray, self.read_tensor(coords, result_order=result_order).to_numpy()
         )
 
-    def read_as_pandas_all(
+    def write_tensor(
         self,
-        *,
-        row_ids: Optional[Sequence[int]] = None,
-        col_ids: Optional[Sequence[int]] = None,
-        set_index: Optional[bool] = False,
-    ) -> pa.RecordBatch:
-        """
-        This is a convenience method around ``read_as_pandas``. It iterates the return value from ``read_as_pandas`` and returns a concatenation of all the record batches found. Its nominal use is to simply unit-test cases.
-        """
-        dataframes = []
-        generator = self.read_as_pandas(
-            row_ids=row_ids,
-            col_ids=col_ids,
-            set_index=set_index,
-        )
-        for dataframe in generator:
-            dataframes.append(dataframe)
-        return pd.concat(dataframes)
-
-    def write(
-        self,
-        # TODO: rework callsites with regard to the very latest spec rev
-        # coords: Union[tuple, tuple[slice], NTuple, List[int]],
-        coords: Any,
+        coords: SOMADenseNdCoordinates,
         values: pa.Tensor,
     ) -> None:
         """
-        Write an Arrow.Tensor to the persistent object. As duplicate index values are not allowed, index values already present in the object are overwritten and new index values are added.
+        Write subarray, defined by ``coords`` and ``values``. Will overwrite existing
+        values in the array.
 
-        :param coords: location at which to write the tensor
+        Parameters
+        ----------
+        coords - per-dimension tuple of scalar or slice
+            Define the bounds of the subarray to be written.
 
-        :param values: an Arrow.Tensor containing values to be written. The type of elements in ``values`` must match the type of the SOMADenseNdArray.
+        values - pyarrow.Tensor
+            Define the values to be written to the subarray.  Must have same shape
+            as defind by ``coords``, and the type must match the SOMADenseNdArray.
         """
-
         with self._tiledb_open("w") as A:
             A[coords] = values.to_numpy()
 
+    def write_numpy(self, coords: SOMADenseNdCoordinates, values: np.ndarray) -> None:
+        """ "
+        Write a numpy ``ndarray`` to the user specified coordinates
+        """
+        self.write_tensor(coords, pa.Tensor.from_numpy(values))
+
     # ----------------------------------------------------------------
+    #
+    # TODO: this code seems obsolete given the current API. Can we port the `io` package
+    # to use the above API, or move this into tiledbsoma.io as helper code?
+    #
+    #
     def from_matrix(self, matrix: Matrix) -> None:
         """
         Imports a matrix -- nominally ``numpy.ndarray`` -- into a TileDB array which is used for ``obsp`` and ``varp`` matrices
@@ -455,3 +373,34 @@ class SOMADenseNdArray(TileDBArray):
                 f"{self._indent}FINISH ingest",
             ),
         )
+
+
+# module-private utility
+def _dense_index_to_shape(
+    coords: Tuple[Union[int, slice], ...],
+    array_shape: Tuple[int, ...],
+    result_order: Optional[SOMAResultOrder] = "row-major",
+) -> Tuple[int, ...]:
+    """
+    Given a subarray index specified as a tuple of per-dimension slices or scalars
+    (eg, ``([:], 1, [1:2])``), and the shape of the array, return the shape of
+    the subarray.
+
+    See read_tensor for usage.
+    """
+    shape: List[int] = []
+    for n, idx in enumerate(coords):
+        if type(idx) is int:
+            shape.append(1)
+        elif type(idx) is slice:
+            start, stop, step = idx.indices(array_shape[n])
+            if step != 1:
+                raise ValueError("stepped slice ranges are not supported")
+            shape.append(stop - start)
+        else:
+            raise ValueError("coordinates must be tuple of int or slice")
+
+    if result_order == "row-major":
+        return tuple(shape)
+
+    return tuple(reversed(shape))

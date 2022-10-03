@@ -8,7 +8,7 @@ import tiledb
 from . import util_arrow, util_tiledb
 from .soma_collection import SOMACollectionBase
 from .tiledb_array import TileDBArray
-from .types import Ids, NTuple
+from .types import Ids, NTuple, SOMAResultOrder
 
 ROWID = "soma_rowid"
 
@@ -207,7 +207,7 @@ class SOMAIndexedDataFrame(TileDBArray):
         ids: Optional[Any] = None,
         value_filter: Optional[str] = None,
         column_names: Optional[Sequence[str]] = None,
-        result_order: Optional[str] = None,
+        result_order: Optional[SOMAResultOrder] = None,
         # TODO: more arguments
     ) -> Iterator[pa.RecordBatch]:
         """
@@ -225,8 +225,8 @@ class SOMAIndexedDataFrame(TileDBArray):
 
         **Indexing**: the ``ids`` parameter will support, per dimension: a list of values of the type of the indexed column.
         """
-        tiledb_result_order = (
-            util_tiledb.tiledb_result_order_from_soma_result_order_indexed(result_order)
+        tiledb_result_order = util_tiledb.tiledb_result_order_from_soma_result_order(
+            result_order, accept=["row-major", "column-major", "unordered"]
         )
 
         # TODO: more about index_column_names
@@ -275,7 +275,7 @@ class SOMAIndexedDataFrame(TileDBArray):
         ids: Optional[Any] = None,
         value_filter: Optional[str] = None,
         column_names: Optional[Sequence[str]] = None,
-        result_order: Optional[str] = None,
+        result_order: Optional[SOMAResultOrder] = None,
         # TODO: batch_size
         # TODO: partition,
         # TODO: platform_config,

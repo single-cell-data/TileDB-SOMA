@@ -2,6 +2,7 @@ from typing import Callable, Optional
 
 import anndata as ad
 import numpy as np
+import scipy.sparse as sp
 import tiledb
 
 import tiledbsoma.util_ann as util_ann
@@ -294,8 +295,14 @@ def to_anndata(
 
     X_data = measurement.X["data"]
     assert X_data is not None
-    X_mat = X_data.read_as_pandas_all()  # TODO: CSR/CSC options ...
-    X_csr = util_scipy.csr_from_tiledb_df(X_mat, nobs, nvar)
+    X_dtype = None  # some datasets have no X
+    if type(X_data) == SOMADenseNdArray:
+        X_ndarray = X_data.read_numpy((slice(None), slice(None)))
+        X_dtype = X_ndarray.dtype
+    elif type(X_data) == SOMASparseNdArray:
+        X_mat = X_data.read_as_pandas_all()  # TODO: CSR/CSC options ...
+        X_csr = util_scipy.csr_from_tiledb_df(X_mat, nobs, nvar)
+        X_dtype = X_csr.dtype
 
     # XXX FIX OBSM/VARM SHAPES
 
@@ -304,44 +311,38 @@ def to_anndata(
         for key in measurement.obsm.keys():
             shape = measurement.obsm[key].shape
             assert len(shape) == 2
-            ncols = shape[1]
-            mat = measurement.obsm[key].read_as_pandas_all()
-            print("OBSM", key, mat.shape)
-            obsm[key] = util_scipy.csr_from_tiledb_df(mat, nobs, ncols)
+            mat = measurement.obsm[key].read_numpy((slice(None),) * len(shape))
+            obsm[key] = sp.csr_array(mat)
 
     varm = {}
     if measurement.varm.exists():
         for key in measurement.varm.keys():
             shape = measurement.varm[key].shape
             assert len(shape) == 2
-            ncols = shape[1]
-            mat = measurement.varm[key].read_as_pandas_all()
-            print("VARM", key, mat.shape)
-            varm[key] = util_scipy.csr_from_tiledb_df(mat, nvar, ncols)
+            mat = measurement.varm[key].read_numpy((slice(None),) * len(shape))
+            varm[key] = sp.csr_array(mat)
 
     obsp = {}
     if measurement.obsp.exists():
         for key in measurement.obsp.keys():
             mat = measurement.obsp[key].read_as_pandas_all()
-            print("OBSP", key, mat.shape)
             obsp[key] = util_scipy.csr_from_tiledb_df(mat, nobs, nobs)
 
     varp = {}
     if measurement.varp.exists():
         for key in measurement.varp.keys():
             mat = measurement.varp[key].read_as_pandas_all()
-            print("VARP", key, mat.shape)
             varp[key] = util_scipy.csr_from_tiledb_df(mat, nvar, nvar)
 
     anndata = ad.AnnData(
-        X=X_csr,
+        X=X_csr if X_csr is not None else X_ndarray,
         obs=obs_df,
         var=var_df,
         obsm=obsm,
         varm=varm,
         obsp=obsp,
         varp=varp,
-        dtype=None if X_csr is None else X_csr.dtype,  # some datasets have no X
+        dtype=X_dtype,
     )
 
     #    #   raw = None

@@ -66,7 +66,7 @@ def create_and_populate_sparse_nd_array(sparse_nd_array: t.SOMASparseNdArray) ->
         coords=[[0, 2], [3, 1], [4, 2]],
         shape=(nr, nc),
     )
-    sparse_nd_array.write(tensor)
+    sparse_nd_array.write_sparse_tensor(tensor)
 
 
 # ----------------------------------------------------------------
