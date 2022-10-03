@@ -1,6 +1,6 @@
 #!/bin/sh
 
-if test -d inst/include/tiledbsoma && test -d src/soma_reader.cc; then
+if test -d inst/include/tiledbsoma && test -f src/soma_reader.cc; then
    echo "** Seeing files present, nothing to configure, exiting."
    exit 0
 fi
