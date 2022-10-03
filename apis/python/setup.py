@@ -82,6 +82,8 @@ class BdistWheelCmd(bdist_wheel):
         bdist_wheel.run(self)
 
 
+# temp commit to check CI off this commit
+
 if __name__ == "__main__":
     setup(
         name=MODULE_NAME,
