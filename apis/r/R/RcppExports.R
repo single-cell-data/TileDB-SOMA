@@ -12,4 +12,3 @@ get_column_names <- function(uri) {
 export_column <- function(uri, name, schemaxp, arrayxp) {
     .Call(`_tiledbsoma_export_column`, uri, name, schemaxp, arrayxp)
 }
-
