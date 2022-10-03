@@ -70,7 +70,7 @@ jobs:
       # if: matrix.os == 'ubuntu-22.04' && github.event_name == 'release' && !github.event.release.prerelease
 
       # For now:
-      if: matrix.os == 'ubuntu-22.04' && github.event_name == 'release' && (contains(github.event.release.tag_name, "a") || contains(github.event.release.tag_name, "b"))
+      if: matrix.os == 'ubuntu-22.04' && github.event_name == 'release' && (contains(${{github.event.release.tag_name}}, "a") || contains(${github.event.release.tag_name}}, "b"))
       uses: pypa/gh-action-pypi-publish@master
       with:
         user: __token__
