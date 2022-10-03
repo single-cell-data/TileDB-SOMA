@@ -245,7 +245,7 @@ class SOMADataFrame(TileDBArray):
         """
         This is a convenience method around ``read``. It iterates the return value from ``read`` and returns a concatenation of all the table-pieces found. Its nominal use is to simply unit-test cases.
         """
-        return util_arrow.concat_tables(
+        return pa.concat_tables(
             self.read(
                 ids=ids,
                 value_filter=value_filter,
@@ -271,13 +271,13 @@ class SOMADataFrame(TileDBArray):
 
         return self._cached_is_sparse
 
-    def write(self, values: pa.Table) -> None:
+    def write(self, values: pa.RecordBatch) -> None:
         """
-        Write an Arrow.Table to the persistent object.
+        Write an Arrow.RecordBatch to the persistent object.
 
-        :param values: An Arrow.Table containing all columns, including the index columns. The schema for the values must match the schema for the ``SOMADataFrame``.
+        :param values: An Arrow.RecordBatch containing all columns, including the index columns. The schema for the values must match the schema for the ``SOMADataFrame``.
 
-        The ``values`` Arrow Table must contain a ``soma_rowid`` (uint64) column, indicating which rows are being written.
+        The ``values`` Arrow RecordBatch must contain a ``soma_rowid`` (uint64) column, indicating which rows are being written.
         """
         self._shape = None  # cache-invalidate
 

@@ -1,4 +1,4 @@
-from typing import Iterator, Optional, Union
+from typing import Optional, Union
 
 import numpy as np
 import pyarrow as pa
@@ -138,14 +138,3 @@ def ascii_to_unicode_pyarrow_readback(table: pa.Table) -> pa.Table:
         else:
             new_fields.append(old_field)
     return pa.Table.from_arrays(new_fields, names=names)
-
-
-def concat_tables(table_generator: Iterator[Any]) -> pa.Table:
-    """
-    Iterates a generator of ``pyarrow.Table`` (e.g. ``SOMADataFrame.read``) and returns a concatenation of all the table-pieces found. The nominal use is to simply unit-test cases.
-    """
-    tables = []
-    for table in table_generator:
-        tables.append(table)
-    assert len(tables) > 0
-    return pa.concat_tables(tables)

@@ -161,17 +161,6 @@ class SOMASparseNdArray(TileDBArray):
         *,
         format: Literal["coo", "csr", "csc"] = "coo",
     ) -> Iterator[Union[pa.SparseCOOTensor, pa.SparseCSCMatrix, pa.SparseCSRMatrix]]:
-        # TODO: find the right syntax to get the typechecker to accept args like ``ids=slice(0,10)``
-        # row_ids: Optional[Union[Sequence[int], Slice]] = None,
-        # col_ids: Optional[Union[Sequence[int], Slice]] = None,
-        row_ids: Optional[Sequence[int]] = None,
-        col_ids: Optional[Sequence[int]] = None,
-        result_order: Optional[str] = None,
-        # TODO: batch_size
-        # TODO: partition,
-        # TODO: batch_format,
-        # TODO: platform_config,
-    ) -> Iterator[pa.Table]:
         """
         Read a use-defined slice of the SparseNdArray and return as an Arrow sparse tensor.
 
@@ -229,16 +218,6 @@ class SOMASparseNdArray(TileDBArray):
                         yield pa.SparseCSCMatrix.from_scipy(scipy_coo.tocsc())
 
     def read_table(self, coords: SOMASparseNdCoordinates) -> Iterator[pa.Table]:
-            for table in iterator:
-                yield table
-
-    def read_as_pandas(
-        self,
-        *,
-        row_ids: Optional[Sequence[int]] = None,
-        col_ids: Optional[Sequence[int]] = None,
-        set_index: Optional[bool] = False,
-    ) -> pd.DataFrame:
         """
         Read a user-defined slice of the sparse array and return in COO format
         as an Arrow Table
@@ -247,53 +226,6 @@ class SOMASparseNdArray(TileDBArray):
             query = A.query(
                 return_arrow=True,
                 return_incomplete=True,
-        dim_names = None
-        if set_index:
-            dim_names = self._tiledb_dim_names()
-
-        with self._tiledb_open() as A:
-            query = A.query(return_incomplete=True)
-
-            if row_ids is None:
-                if col_ids is None:
-                    iterator = query.df[:, :]
-                else:
-                    iterator = query.df[:, col_ids]
-            else:
-                if col_ids is None:
-                    iterator = query.df[row_ids, :]
-                else:
-                    iterator = query.df[row_ids, col_ids]
-
-            for df in iterator:
-                # Make this opt-in only.  For large arrays, this df.set_index is time-consuming
-                # so we should not do it without direction.
-                if set_index:
-                    df.set_index(dim_names, inplace=True)
-                yield df
-
-    def read_all(
-        self,
-        *,
-        # TODO: find the right syntax to get the typechecker to accept args like ``ids=slice(0,10)``
-        # row_ids: Optional[Union[Sequence[int], Slice]] = None,
-        # col_ids: Optional[Union[Sequence[int], Slice]] = None,
-        row_ids: Optional[Sequence[int]] = None,
-        col_ids: Optional[Sequence[int]] = None,
-        result_order: Optional[str] = None,
-        # TODO: batch_size
-        # TODO: partition,
-        # TODO: batch_format,
-        # TODO: platform_config,
-    ) -> pa.Table:
-        """
-        This is a convenience method around ``read``. It iterates the return value from ``read`` and returns a concatenation of all the table-pieces found. Its nominal use is to simply unit-test cases.
-        """
-        return util_arrow.concat_tables(
-            self.read(
-                row_ids=row_ids,
-                col_ids=col_ids,
-                result_order=result_order,
             )
             for arrow_tbl in query.df[coords]:
                 yield arrow_tbl
@@ -309,15 +241,8 @@ class SOMASparseNdArray(TileDBArray):
     def read_as_pandas_all(
         self, coords: Optional[SOMASparseNdCoordinates] = None
     ) -> pd.DataFrame:
-        self,
-        *,
-        row_ids: Optional[Sequence[int]] = None,
-        col_ids: Optional[Sequence[int]] = None,
-        set_index: Optional[bool] = False,
-    ) -> pa.Table:
         """
         Return the sparse array as a single Pandas DataFrame containing COO data.
-        This is a convenience method around ``read_as_pandas``. It iterates the return value from ``read_as_pandas`` and returns a concatenation of all the table-pieces found. Its nominal use is to simply unit-test cases.
         """
         if coords is None:
             coords = (slice(None),) * self.ndims

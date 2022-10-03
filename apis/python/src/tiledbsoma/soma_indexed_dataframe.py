@@ -281,7 +281,7 @@ class SOMAIndexedDataFrame(TileDBArray):
         """
         This is a convenience method around ``read``. It iterates the return value from ``read`` and returns a concatenation of all the table-pieces found. Its nominal use is to simply unit-test cases.
         """
-        return util_arrow.concat_tables(
+        return pa.concat_tables(
             self.read(ids=ids, value_filter=value_filter, column_names=column_names)
         )
 
