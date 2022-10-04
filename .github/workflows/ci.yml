@@ -14,13 +14,13 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-22.04, macos-12, windows-2019]
+        os: [ubuntu-22.04, macos-11, windows-2019]
         python-version: ['3.8']
         include:
           - runs-on: ubuntu-22.04
             cc: gcc-11
             cxx: g++-11
-          - runs-on: macos-12
+          - runs-on: macos-11
             cc: gcc-11
             cxx: g++-11
 
