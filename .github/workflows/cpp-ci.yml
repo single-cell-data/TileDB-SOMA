@@ -18,6 +18,7 @@ jobs:
             cc: gcc-11
             cxx: g++-11
           # Pending https://github.com/actions/runner-images/issues/6350
+          # - runs-on: macos-12
           - runs-on: macos-11
             cc: gcc-11
             cxx: g++-11

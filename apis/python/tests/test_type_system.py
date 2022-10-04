@@ -65,7 +65,7 @@ def test_supported_types_supported(arrow_type):
         pytest.xfail("Awaiting UTF-8 support - see issue #338")
 
     tdb_dtype = tiledb_type_from_arrow_type(arrow_type)
-    assert isinstance(tdb_dtype, np.dtype)
+    assert isinstance(tdb_dtype, np.dtype) or tdb_dtype == "ascii"
     rt_arrow_type = get_arrow_type_from_tiledb_dtype(tdb_dtype)
     assert isinstance(rt_arrow_type, pa.DataType)
     assert arrow_type == rt_arrow_type

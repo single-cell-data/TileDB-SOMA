@@ -23,9 +23,7 @@ ARROW_TO_TDB = {
     #
     # IMPORTANT: ALL non-primitive types supported by TileDB must be in this table.
     #
-    pa.string(): np.dtype(
-        "S"
-    ),  # XXX TODO: temporary work-around until UTF8 support is native. GH #338.
+    pa.string(): "ascii",  # XXX TODO: temporary work-around until UTF8 support is native. GH #338.
     pa.binary(): np.dtype("S"),
     pa.timestamp("s"): "datetime64[s]",
     pa.timestamp("ms"): "datetime64[ms]",
@@ -39,7 +37,7 @@ ARROW_TO_TDB = {
 }
 
 
-def tiledb_type_from_arrow_type(t: pa.DataType) -> Union[type, np.dtype]:
+def tiledb_type_from_arrow_type(t: pa.DataType) -> Union[type, np.dtype, str]:
     """
     Given an Arrow type, return the corresponding TileDB type as a Numpy dtype.
     Building block for Arrow-to-TileDB schema translation.
@@ -61,7 +59,10 @@ def tiledb_type_from_arrow_type(t: pa.DataType) -> Union[type, np.dtype]:
         arrow_type = ARROW_TO_TDB[t]
         if isinstance(arrow_type, Exception):
             raise arrow_type
-        return np.dtype(arrow_type)
+        if arrow_type == "ascii":
+            return arrow_type
+        else:
+            return np.dtype(arrow_type)
 
     if not pa.types.is_primitive(t):
         raise TypeError(f"Type {str(t)} - unsupported type")
@@ -83,11 +84,11 @@ def tiledb_type_from_arrow_type(t: pa.DataType) -> Union[type, np.dtype]:
         raise TypeError("Unsupported Arrow type") from exc
 
 
-def get_arrow_type_from_tiledb_dtype(tiledb_dtype: np.dtype) -> pa.DataType:
+def get_arrow_type_from_tiledb_dtype(tiledb_dtype: Union[str, np.dtype]) -> pa.DataType:
     """
     TODO: COMMENT
     """
-    if tiledb_dtype.name == "bytes":
+    if tiledb_dtype == "ascii" or tiledb_dtype.name == "bytes":
         # XXX TODO: temporary work-around until UTF8 support is native. GH #338.
         return pa.string()
     else:
@@ -119,26 +120,3 @@ def get_arrow_schema_from_tiledb_uri(
             arrow_schema_dict[name] = get_arrow_type_from_tiledb_dtype(attr.dtype)
 
     return pa.schema(arrow_schema_dict)
-
-
-def ascii_to_unicode_pyarrow_readback(table: pa.Table) -> pa.Table:
-    """
-    Implements the 'decode on read' part of our ASCII/Unicode logic
-    """
-    # TODO: COMMENT/LINK HEAVILY
-    names = [ofield.name for ofield in table.schema]
-    new_fields = []
-    for name in names:
-        old_field = table[name]
-        # Preferred syntax:
-        # if len(old_field) > 0 and pa.types.is_large_binary(old_field[0]):
-        # but:
-        # AttributeError: 'pyarrow.lib.UInt64Scalar' object has no attribute 'id'
-        if len(old_field) > 0 and isinstance(old_field[0], pa.LargeBinaryScalar):
-            nfield = pa.array(
-                [element.as_py().decode("utf-8") for element in old_field]
-            )
-            new_fields.append(nfield)
-        else:
-            new_fields.append(old_field)
-    return pa.Table.from_arrays(new_fields, names=names)
