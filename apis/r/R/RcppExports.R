@@ -5,10 +5,17 @@ test_sdf <- function(uri) {
     invisible(.Call(`_tiledbsoma_test_sdf`, uri))
 }
 
+#' @rdname get_table
+#' @export
 get_column_names <- function(uri) {
     .Call(`_tiledbsoma_get_column_names`, uri)
 }
 
-export_column <- function(uri, name, schemaxp, arrayxp) {
-    .Call(`_tiledbsoma_export_column`, uri, name, schemaxp, arrayxp)
+export_column <- function(uri, colname, schemaxp, arrayxp) {
+    .Call(`_tiledbsoma_export_column`, uri, colname, schemaxp, arrayxp)
 }
+
+export_column_direct <- function(uri, colname) {
+    .Call(`_tiledbsoma_export_column_direct`, uri, colname)
+}
+

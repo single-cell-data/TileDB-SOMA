@@ -10,11 +10,19 @@
 ##' \dontrun{
 ##' uri <- "test/soco/pbmc3k_processed/obs"
 ##' column <-  "n_counts"
-##' summary(getColumn(uri, column)
-##' summary(getTable(uri))
+##' summary(get_table(uri))
 ##' }
 ##' @export
-getColumn <- function(uri, column) {
+get_table <- function(uri) {
+    colnames <- get_column_names(uri)
+    ll <- lapply(colnames, function(n) get_column(uri, n))
+    names(ll) <- colnames
+    as.data.frame(ll)
+}
+
+##' @rdname get_table
+##' @export
+get_column <- function(uri, column) {
     schema <- arch::arch_allocate_schema()
     array <- arch::arch_allocate_array_data()
     ## modeled after libtiledb_query_export_buffer_arch_pointers
@@ -24,15 +32,7 @@ getColumn <- function(uri, column) {
     res
 }
 
-##' @rdname getColumn
-##' @export
-getTable <- function(uri) {
-    colnames <- get_column_names(uri)
-    ll <- lapply(colnames, \(n) getColumn(uri, n))
-    names(ll) <- colnames
-    as.data.frame(ll)
-}
-
 ##' @importFrom Rcpp evalCpp
+##' @import arch
 ##' @useDynLib tiledbsoma, .registration=TRUE
 NULL
