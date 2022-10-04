@@ -11,7 +11,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-22.04, macos-12]
+        os: [ubuntu-22.04, macos-11]
         python-version: ['3.8']
         include:
           - runs-on: ubuntu-22.04
