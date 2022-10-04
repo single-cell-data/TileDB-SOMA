@@ -193,6 +193,9 @@ class SOMASparseNdArray(TileDBArray):
                 return_incomplete=True,
             )
             for arrow_tbl in query.df[coords]:
+                if arrow_tbl.num_rows == 0:
+                    return
+
                 if format == "coo":
                     coo_data = arrow_tbl.column("data").to_numpy()
                     coo_coords = np.array(
@@ -228,6 +231,9 @@ class SOMASparseNdArray(TileDBArray):
                 return_incomplete=True,
             )
             for arrow_tbl in query.df[coords]:
+                if arrow_tbl.num_rows == 0:
+                    return
+
                 yield arrow_tbl
 
     def read_as_pandas(self, coords: SOMASparseNdCoordinates) -> Iterator[pd.DataFrame]:
