@@ -78,7 +78,7 @@ def create_random_tensor(
     format: str,
     shape: Tuple[int, ...],
     dtype: np.dtype,
-    density: Optional[float] = None,
+    density: Optional[float] = 0.33,
 ):
     """
     Create a random tensor/table of specified format, shape and dtype.
@@ -88,7 +88,6 @@ def create_random_tensor(
     """
     rng = np.random.default_rng()
     ndim = len(shape)
-    density = 0.33 if density is None else density
     assert density > 0 and density <= 1
 
     assert format in ["coo", "csc", "csr", "table"], "Unimplemented format"
@@ -318,7 +317,7 @@ def test_zero_length_fail(tmp_path, shape):
 
 def test_soma_sparse_nd_array_nnz(tmp_path):
     """
-    This operation is current unimplemented. This test is
+    This operation is currently unimplemented. This test is
     designed to start failing as soon as it is implemented,
     to provide a reminder to create a real test.
 
