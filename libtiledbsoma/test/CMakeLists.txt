@@ -15,6 +15,7 @@ add_compile_definitions(TILEDBSOMA_SOURCE_ROOT="${TILEDBSOMA_SOURCE_ROOT}")
 ############################################################
 
 find_package(TileDB_EP REQUIRED)
+find_package(Spdlog_EP REQUIRED)
 
 ############################################################
 # SC unit test
@@ -41,6 +42,7 @@ if (TILEDBSOMA_TESTING)
         ${CMAKE_CURRENT_SOURCE_DIR}/../src
         ${CMAKE_CURRENT_SOURCE_DIR}/../include
         ${pybind11_INCLUDE_DIRS}
+        $<TARGET_PROPERTY:spdlog::spdlog,INTERFACE_INCLUDE_DIRECTORIES>
     )
 
     target_compile_definitions(unit_sc PRIVATE CATCH_CONFIG_MAIN)
