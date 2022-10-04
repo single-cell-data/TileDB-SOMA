@@ -8,23 +8,6 @@ import tiledbsoma as soma
 
 from . import NDARRAY_ARROW_TYPES_NOT_SUPPORTED, NDARRAY_ARROW_TYPES_SUPPORTED
 
-"""
-comment will be removed when test rework is complete
-TODO:
-- [X] create
-- [X] delete
-- [X] exists
-- [X] get type
-- [X] get shape
-- [X] get ndims
-- [X] get schema
-- [X] get is_sparse
-- [X] get metadata
-- [X] read
-- [X] write
-- [ ] reshape
-"""
-
 
 def test_soma_dense_nd_array_ok_no_storage():
     arr = soma.SOMADenseNdArray(uri="/foo/bar")
@@ -124,3 +107,13 @@ def test_zero_length_fail(tmp_path, shape):
     a = soma.SOMADenseNdArray(tmp_path.as_posix())
     with pytest.raises(ValueError):
         a.create(type=pa.float32(), shape=shape)
+
+
+def test_soma_dense_nd_array_reshape(tmp_path):
+    """
+    Reshape currently unimplemented.
+    """
+    a = soma.SOMADenseNdArray(tmp_path.as_posix())
+    a.create(type=pa.int32(), shape=(10, 10, 10))
+    with pytest.raises(NotImplementedError):
+        assert a.reshape((100, 10, 1))

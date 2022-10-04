@@ -132,6 +132,9 @@ class SOMADenseNdArray(TileDBArray):
         with self._tiledb_open() as A:
             return cast(NTuple, A.schema.domain.shape)
 
+    def reshape(self, shape: NTuple) -> None:
+        raise NotImplementedError("reshape operation not implemented.")
+
     @property
     def ndims(self) -> int:
         """

@@ -1,4 +1,4 @@
-from typing import Tuple, Union
+from typing import Optional, Tuple, Union
 
 import numpy as np
 import pyarrow as pa
@@ -9,23 +9,6 @@ import tiledbsoma as soma
 
 from . import NDARRAY_ARROW_TYPES_NOT_SUPPORTED, NDARRAY_ARROW_TYPES_SUPPORTED
 
-"""
-comment will be removed when test rework is complete
-TODO:
-- [X] create
-- [X] delete
-- [X] exists
-- [X] get type
-- [X] get shape
-- [X] get ndims
-- [X] get schema
-- [X] get is_sparse
-- [X] get metadata
-- [ ] get nnz
-- [X] read
-- [X] write
-- [ ] reshape
-"""
 AnySparseTensor = Union[pa.SparseCOOTensor, pa.SparseCSRMatrix, pa.SparseCSCMatrix]
 
 
@@ -91,7 +74,12 @@ def test_soma_sparse_nd_array_delete(tmp_path):
     assert soma.SOMASparseNdArray(uri="no such array").delete() is None
 
 
-def create_random_tensor(format: str, shape: Tuple[int, ...], dtype: np.dtype):
+def create_random_tensor(
+    format: str,
+    shape: Tuple[int, ...],
+    dtype: np.dtype,
+    density: Optional[float] = 0.33,
+):
     """
     Create a random tensor/table of specified format, shape and dtype.
 
@@ -100,11 +88,12 @@ def create_random_tensor(format: str, shape: Tuple[int, ...], dtype: np.dtype):
     """
     rng = np.random.default_rng()
     ndim = len(shape)
+    assert density > 0 and density <= 1
 
     assert format in ["coo", "csc", "csr", "table"], "Unimplemented format"
 
     if format == "coo":
-        nrec = rng.integers(np.prod(shape)) + 1
+        nrec = int(density * np.prod(shape))
         data = rng.choice(10 * nrec, size=nrec, replace=False).astype(dtype)
         all_coords = np.array(
             np.meshgrid(*tuple(np.arange(dim_len) for dim_len in shape))
@@ -113,7 +102,7 @@ def create_random_tensor(format: str, shape: Tuple[int, ...], dtype: np.dtype):
         return pa.SparseCOOTensor.from_numpy(data, coords, shape=shape)
 
     if format == "table":
-        nrec = rng.integers(np.prod(shape)) + 1
+        nrec = int(density * np.prod(shape))
         data = rng.choice(10 * nrec, size=nrec, replace=False).astype(dtype)
         all_coords = np.array(
             np.meshgrid(*tuple(np.arange(dim_len) for dim_len in shape))
@@ -130,7 +119,7 @@ def create_random_tensor(format: str, shape: Tuple[int, ...], dtype: np.dtype):
         return pa.SparseCSCMatrix.from_scipy(
             sparse.random(
                 *shape,
-                density=0.33,
+                density=density,
                 format=format,
                 random_state=rng,
                 dtype=dtype,
@@ -142,7 +131,7 @@ def create_random_tensor(format: str, shape: Tuple[int, ...], dtype: np.dtype):
         return pa.SparseCSRMatrix.from_scipy(
             sparse.random(
                 *shape,
-                density=0.33,
+                density=density,
                 format=format,
                 random_state=rng,
                 dtype=dtype,
@@ -324,3 +313,34 @@ def test_zero_length_fail(tmp_path, shape):
     a = soma.SOMASparseNdArray(tmp_path.as_posix())
     with pytest.raises(ValueError):
         a.create(type=pa.float32(), shape=shape)
+
+
+def test_soma_sparse_nd_array_nnz(tmp_path):
+    """
+    This operation is currently unimplemented. This test is
+    designed to start failing as soon as it is implemented,
+    to provide a reminder to create a real test.
+
+    Just remove the pytest.raises when implemented
+    """
+    a = soma.SOMASparseNdArray(tmp_path.as_posix())
+    a.create(type=pa.int32(), shape=(10, 10, 10))
+    with pytest.raises(NotImplementedError):
+        assert a.nnz == 0
+
+    t: pa.SparseCOOTensor = create_random_tensor(
+        "coo", a.shape, pa.int32().to_pandas_dtype(), 0.1
+    )
+    a.write_sparse_tensor(t)
+    with pytest.raises(NotImplementedError):
+        assert t.non_zero_length == a.nnz
+
+
+def test_soma_sparse_nd_array_reshape(tmp_path):
+    """
+    Reshape currently unimplemented.
+    """
+    a = soma.SOMASparseNdArray(tmp_path.as_posix())
+    a.create(type=pa.int32(), shape=(10, 10, 10))
+    with pytest.raises(NotImplementedError):
+        assert a.reshape((100, 10, 1))
