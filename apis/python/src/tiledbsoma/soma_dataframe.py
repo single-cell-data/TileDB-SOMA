@@ -254,13 +254,13 @@ class SOMADataFrame(TileDBArray):
 
         return self._cached_is_sparse
 
-    def write(self, values: pa.RecordBatch) -> None:
+    def write(self, values: pa.Table) -> None:
         """
-        Write an Arrow.RecordBatch to the persistent object.
+        Write an Arrow.Table to the persistent object.
 
-        :param values: An Arrow.RecordBatch containing all columns, including the index columns. The schema for the values must match the schema for the ``SOMADataFrame``.
+        :param values: An Arrow.Table containing all columns, including the index columns. The schema for the values must match the schema for the ``SOMADataFrame``.
 
-        The ``values`` Arrow RecordBatch must contain a ``soma_rowid`` (uint64) column, indicating which rows are being written.
+        The ``values`` Arrow Table must contain a ``soma_rowid`` (uint64) column, indicating which rows are being written.
         """
         self._shape = None  # cache-invalidate
 
