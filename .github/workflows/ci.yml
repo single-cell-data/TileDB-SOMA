@@ -59,24 +59,24 @@ jobs:
         packages_dir: dist-wheel
         verbose: true
 
-    - name: Publish package to PyPI
-      # Until general release of the main branch of tiledbsoma we'll follow the convention of tagging releases
-      # 0.5.0a1, 0.5.1a1, etc -- always with the "a1" suffix -- that way PyPI will automagically make these
-      # "prereleases". Then:
-      # pip install tiledbsoma -> 0.1.12 (or whatever the main-old branch is at)
-      # pip install --pre tiledbsoma -> 0.5.0a1 (or whatever the main branch is at)
+    # Until general release of the main branch of tiledbsoma we'll follow the convention of tagging releases
+    # 0.5.0a1, 0.5.1a1, etc -- always with the "a1" suffix -- that way PyPI will automagically make these
+    # "prereleases". Then:
+    # pip install tiledbsoma -> 0.1.12 (or whatever the main-old branch is at)
+    # pip install --pre tiledbsoma -> 0.5.0a1 (or whatever the main branch is at)
 
-      # When we're ready for prime time:
-      # if: matrix.os == 'ubuntu-22.04' && github.event_name == 'release' && !github.event.release.prerelease
+    # When we're ready for prime time:
+    # if: matrix.os == 'ubuntu-22.04' && github.event_name == 'release' && !github.event.release.prerelease
 
-      # For now:
-      if: matrix.os == 'ubuntu-22.04' && github.event_name == 'release' && (contains(${{github.event.release.tag_name}}, "a") || contains(${github.event.release.tag_name}}, "b"))
-      uses: pypa/gh-action-pypi-publish@master
-      with:
-        user: __token__
-        password: ${{ secrets.PYPI_TOKEN }}
-        packages_dir: dist-wheel
-        verbose: true
+#    # For now:
+#    - name: Publish package to PyPI
+#      if: matrix.os == 'ubuntu-22.04' && github.event_name == 'release' && (contains(${{github.event.release.tag_name}}, "a") || contains(${github.event.release.tag_name}}, "b"))
+#      uses: pypa/gh-action-pypi-publish@master
+#      with:
+#        user: __token__
+#        password: ${{ secrets.PYPI_TOKEN }}
+#        packages_dir: dist-wheel
+#        verbose: true
 
 # Notes:
 # The above is fine for releases; notes here are for manual ops.
