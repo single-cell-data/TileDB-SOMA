@@ -31,8 +31,8 @@ SOMADataFrame <- R6::R6Class(
       # soma_rowid array dimension
       tdb_dim <- tiledb::tiledb_dim(
         name = "soma_rowid",
-        # TODO: tiledbsoma-py uses the full uint64 range but we can't do that
-        # here (see https://issues.apache.org/jira/browse/ARROW-9083)
+        # TODO: tiledbsoma-py uses the full uint64 range here but R is limited
+        # to 32bit integers out of the box or 64bit integers using bit64
         domain = bit64::as.integer64(c(0, 2^32 - 1)),
         tile = bit64::as.integer64(2048),
         type = "UINT64",
@@ -104,6 +104,24 @@ SOMADataFrame <- R6::R6Class(
       private$open("WRITE")
       arr <- self$object
       arr[] <- df
+    },
+
+    #' @description Read
+    #' Read a user-defined subset of data, addressed by the dataframe indexing
+    #' column, optionally filtered, and return results as one or more
+    #' @return An [`arrow::RecordBatch`].
+    read = function(ids = NULL, column_names = NULL) {
+      on.exit(private$close())
+      private$open("READ")
+
+      arr <- self$object
+      # soma_rowid should not be included in the results
+      tiledb::extended(arr) <- FALSE
+      if (!is.null(ids)) {
+        tiledb::selected_ranges(arr) <- list(soma_rowid = cbind(ids, ids))
+      }
+
+      arrow::record_batch(as.data.frame(arr[]))
     }
   )
 )

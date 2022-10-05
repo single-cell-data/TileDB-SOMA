@@ -12,14 +12,14 @@ test_that("SOMADataFrame creation", {
   expect_true(sdf$exists())
   expect_true(dir.exists(uri))
 
-  rb <- arrow::record_batch(
+  rb0 <- arrow::record_batch(
     data.frame(foo = 1L:10L, bar = 1.1:10.1, baz = letters[1:10]),
   )
-  expect_error(sdf$write(rb), "must contain a 'soma_rowid' column name")
+  expect_error(sdf$write(rb0), "must contain a 'soma_rowid' column name")
 
   # add a soma_rowid column and try again
-  rb <- cbind(soma_rowid = 0L:9L, rb)
-  sdf$write(rb)
+  rb1 <- cbind(soma_rowid = 0L:9L, rb0)
+  sdf$write(rb1)
 
   # read back the data (ignore attributes)
   expect_equivalent(
@@ -27,4 +27,12 @@ test_that("SOMADataFrame creation", {
     as.list(rb),
     ignore_attr = TRUE
   )
+
+  # Read result should recreate the original RecordBatch without the soma_rowid
+  rb2 <- sdf$read()
+  expect_true(rb2$Equals(rb0))
+
+  # Slicing by soma_rowid
+  rb2 <- sdf$read(ids = 0:2)
+  expect_true(rb2$Equals(rb0$Slice(offset = 0, length = 3)))
 })
