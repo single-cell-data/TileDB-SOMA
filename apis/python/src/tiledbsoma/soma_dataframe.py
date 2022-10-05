@@ -169,9 +169,9 @@ class SOMADataFrame(TileDBArray):
         # TODO: batch_size
         # TODO: partition,
         # TODO: platform_config,
-    ) -> Iterator[pa.RecordBatch]:
+    ) -> Iterator[pa.Table]:
         """
-        Read a user-defined subset of data, addressed by the dataframe indexing column, optionally filtered, and return results as one or more ``Arrow.RecordBatch``.
+        Read a user-defined subset of data, addressed by the dataframe indexing column, optionally filtered, and return results as one or more ``Arrow.Table``.
 
         :param ids: Which rows to read. Defaults to ``None``, meaning no constraint -- all rows.
 
@@ -217,18 +217,12 @@ class SOMADataFrame(TileDBArray):
             else:
                 iterator = query.df[ids]
 
-            for df in iterator:
-                batches = df.to_batches()
-                for batch in batches:
-                    # XXX COMMENT MORE
-                    # This is the 'decode on read' part of our logic; in dim_select we have the
-                    # 'encode on write' part.
-                    # Context: https://github.com/single-cell-data/TileDB-SOMA/issues/99.
-                    #
-                    # Also: don't materialize these on read
-                    # TODO: get the arrow syntax for drop
-                    # df.drop(ROWID, axis=1)
-                    yield util_arrow.ascii_to_unicode_pyarrow_readback(batch)
+            for table in iterator:
+                # XXX COMMENT MORE
+                # This is the 'decode on read' part of our logic; in dim_select we have the
+                # 'encode on write' part.
+                # Context: https://github.com/single-cell-data/TileDB-SOMA/issues/99.
+                yield util_arrow.ascii_to_unicode_pyarrow_readback(table)
 
     def read_all(
         self,
@@ -243,11 +237,11 @@ class SOMADataFrame(TileDBArray):
         # TODO: partition,
         # TODO: result_order,
         # TODO: platform_config,
-    ) -> pa.RecordBatch:
+    ) -> pa.Table:
         """
-        This is a convenience method around ``read``. It iterates the return value from ``read`` and returns a concatenation of all the record batches found. Its nominal use is to simply unit-test cases.
+        This is a convenience method around ``read``. It concatenates all partial read results into a single Table. Its nominal use is to simplify unit-test cases.
         """
-        return util_arrow.concat_batches(
+        return pa.concat_tables(
             self.read(
                 ids=ids,
                 value_filter=value_filter,
@@ -273,13 +267,13 @@ class SOMADataFrame(TileDBArray):
 
         return self._cached_is_sparse
 
-    def write(self, values: pa.RecordBatch) -> None:
+    def write(self, values: pa.Table) -> None:
         """
-        Write an Arrow.RecordBatch to the persistent object.
+        Write an Arrow.Table to the persistent object.
 
-        :param values: An Arrow.RecordBatch containing all columns, including the index columns. The schema for the values must match the schema for the ``SOMADataFrame``.
+        :param values: An Arrow.Table containing all columns, including the index columns. The schema for the values must match the schema for the ``SOMADataFrame``.
 
-        The ``values`` Arrow RecordBatch must contain a ``soma_rowid`` (uint64) column, indicating which rows are being written.
+        The ``values`` Arrow Table must contain a ``soma_rowid`` (uint64) column, indicating which rows are being written.
         """
         self._shape = None  # cache-invalidate
 
@@ -392,7 +386,7 @@ class SOMADataFrame(TileDBArray):
         id_column_name: Optional[str] = None,
     ) -> pd.DataFrame:
         """
-        Reads from SOMA storage into memory.  Iterates over batches from ``read_as_pandas``, concatenating the output into a single dataframe.  Convenient for unit-test use; also, handy whenever you're certain that the data being queried can be read entirely into memory.
+        This is a convenience method around ``read``. It concatenates all partial read results into a single DataFrame. Its nominal use is to simplify unit-test cases.
         """
         dataframes = []
         generator = self.read_as_pandas(

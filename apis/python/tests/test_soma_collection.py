@@ -25,7 +25,7 @@ def create_and_populate_dataframe(dataframe: soma.SOMADataFrame) -> None:
     pydict["foo"] = [10, 20, 30, 40, 50]
     pydict["bar"] = [4.1, 5.2, 6.3, 7.4, 8.5]
     pydict["baz"] = ["apple", "ball", "cat", "dog", "egg"]
-    rb = pa.RecordBatch.from_pydict(pydict)
+    rb = pa.Table.from_pydict(pydict)
     dataframe.write(rb)
 
 

@@ -23,7 +23,7 @@ def create_and_populate_obs(obs: t.SOMADataFrame) -> None:
     pydict["foo"] = [10, 20, 30, 40, 50]
     pydict["bar"] = [4.1, 5.2, 6.3, 7.4, 8.5]
     pydict["baz"] = ["apple", "ball", "cat", "dog", "egg"]
-    rb = pa.RecordBatch.from_pydict(pydict)
+    rb = pa.Table.from_pydict(pydict)
     obs.write(rb)
 
 
@@ -43,7 +43,7 @@ def create_and_populate_var(var: t.SOMADataFrame) -> None:
     pydict["soma_rowid"] = [0, 1, 2, 3]
     pydict["quux"] = ["zebra", "yak", "xylophone", "wapiti"]
     pydict["xyzzy"] = [12.3, 23.4, 34.5, 45.6]
-    rb = pa.RecordBatch.from_pydict(pydict)
+    rb = pa.Table.from_pydict(pydict)
     var.write(rb)
 
 

@@ -24,36 +24,28 @@ def test_soma_indexed_dataframe(tmp_path):
         pydict["foo"] = [10, 20, 30, 40, 50]
         pydict["bar"] = [4.1, 5.2, 6.3, 7.4, 8.5]
         pydict["baz"] = ["apple", "ball", "cat", "dog", "egg"]
-        rb = pa.RecordBatch.from_pydict(pydict)
+        rb = pa.Table.from_pydict(pydict)
         sdf.write(rb)
 
     # Read all
-    batch = sdf.read_all()
-    # Weird thing about pyarrow RecordBatch:
-    # * We should have 5 "rows" with 3 "columns"
-    # * Indeed batch.num_rows is 5 and batch.num_columns is 3
-    # * But len(batch) is 3
-    # * If you thought `for record in record_batch` would print records ... you would be wrong -- it
-    #   loops over columns
-    assert batch.num_rows == 5
-    assert batch.num_columns == 3
-    assert [e.as_py() for e in list(batch["foo"])] == pydict["foo"]
-    assert [e.as_py() for e in list(batch["bar"])] == pydict["bar"]
-    assert [e.as_py() for e in list(batch["baz"])] == pydict["baz"]
+    table = sdf.read_all()
+    # Weird thing about pyarrow Table:
+    # * We have table.num_rows is 5 and table.num_columns is 3
+    # * But len(table) is 3
+    # * `for column in table` loops over columns
+    assert table.num_rows == 5
+    assert table.num_columns == 3
+    assert [e.as_py() for e in list(table["foo"])] == pydict["foo"]
+    assert [e.as_py() for e in list(table["bar"])] == pydict["bar"]
+    assert [e.as_py() for e in list(table["baz"])] == pydict["baz"]
 
     # Read ids
-    batch = sdf.read_all(ids=[30, 10])
-    # Weird thing about pyarrow RecordBatch:
-    # * We should have 5 "rows" with 3 "columns"
-    # * Indeed batch.num_rows is 5 and batch.num_columns is 3
-    # * But len(batch) is 3
-    # * If you thought `for record in record_batch` would print records ... you would be wrong -- it
-    #   loops over columns
-    assert batch.num_rows == 2
-    assert batch.num_columns == 3
-    assert sorted([e.as_py() for e in list(batch["foo"])]) == [10, 30]
-    assert sorted([e.as_py() for e in list(batch["bar"])]) == [4.1, 6.3]
-    assert sorted([e.as_py() for e in list(batch["baz"])]) == ["apple", "cat"]
+    table = sdf.read_all(ids=[30, 10])
+    assert table.num_rows == 2
+    assert table.num_columns == 3
+    assert sorted([e.as_py() for e in list(table["foo"])]) == [10, 30]
+    assert sorted([e.as_py() for e in list(table["bar"])]) == [4.1, 6.3]
+    assert sorted([e.as_py() for e in list(table["baz"])]) == ["apple", "cat"]
 
 
 @pytest.fixture
@@ -80,7 +72,7 @@ def simple_soma_indexed_data_frame(tmp_path):
         "C": ["this", "is", "a", "test"],
     }
     n_data = len(data["index"])
-    rb = pa.RecordBatch.from_pydict(data)
+    rb = pa.Table.from_pydict(data)
     sdf.write(rb)
     yield (schema, sdf, n_data, index_column_names)
     sdf.delete()
@@ -134,12 +126,12 @@ def test_SOMAIndexedDataFrame_read_column_names(
         )
 
     _check_tbl(
-        pa.Table.from_batches(sdf.read(ids=ids, column_names=col_names)),
+        sdf.read_all(ids=ids, column_names=col_names),
         col_names,
         ids,
     )
     _check_tbl(
-        pa.Table.from_batches([sdf.read_all(column_names=col_names)]),
+        sdf.read_all(column_names=col_names),
         col_names,
         None,
     )
