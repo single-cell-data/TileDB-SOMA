@@ -24,7 +24,9 @@ ARROW_TO_TDB = {
     # IMPORTANT: ALL non-primitive types supported by TileDB must be in this table.
     #
     pa.string(): "ascii",  # XXX TODO: temporary work-around until UTF8 support is native. GH #338.
+    pa.large_string(): "ascii",  # XXX TODO: temporary work-around until UTF8 support is native. GH #338.
     pa.binary(): np.dtype("S"),
+    pa.large_binary(): np.dtype("S"),
     pa.timestamp("s"): "datetime64[s]",
     pa.timestamp("ms"): "datetime64[ms]",
     pa.timestamp("us"): "datetime64[us]",
@@ -90,7 +92,7 @@ def get_arrow_type_from_tiledb_dtype(tiledb_dtype: Union[str, np.dtype]) -> pa.D
     """
     if tiledb_dtype == "ascii" or tiledb_dtype.name == "bytes":
         # XXX TODO: temporary work-around until UTF8 support is native. GH #338.
-        return pa.string()
+        return pa.large_string()
     else:
         return pa.from_numpy_dtype(tiledb_dtype)
 

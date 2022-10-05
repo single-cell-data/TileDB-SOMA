@@ -25,7 +25,9 @@ SUPPORTED_ARROW_TYPES = [
     pa.timestamp("us"),
     pa.timestamp("ns"),
     pa.string(),
+    pa.large_string(),
     pa.binary(),
+    pa.large_binary(),
 ]
 
 

@@ -13,7 +13,7 @@ def test_soma_dataframe_non_indexed(tmp_path):
         [
             ("foo", pa.int32()),
             ("bar", pa.float64()),
-            ("baz", pa.string()),
+            ("baz", pa.large_string()),
         ]
     )
     sdf.create(schema=asch)
@@ -120,7 +120,7 @@ def simple_soma_data_frame(tmp_path):
             ("soma_rowid", pa.uint64()),
             ("A", pa.int64()),
             ("B", pa.float64()),
-            ("C", pa.string()),
+            ("C", pa.large_string()),
         ]
     )
     sdf = t.SOMADataFrame(uri=tmp_path.as_posix())

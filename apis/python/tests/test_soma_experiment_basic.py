@@ -14,7 +14,7 @@ def create_and_populate_obs(obs: soma.SOMADataFrame) -> soma.SOMADataFrame:
         [
             ("foo", pa.int32()),
             ("bar", pa.float64()),
-            ("baz", pa.string()),
+            ("baz", pa.large_string()),
         ]
     )
 
@@ -37,7 +37,7 @@ def create_and_populate_var(var: soma.SOMADataFrame) -> soma.SOMADataFrame:
 
     var_arrow_schema = pa.schema(
         [
-            ("quux", pa.string()),
+            ("quux", pa.large_string()),
             ("xyzzy", pa.float64()),
         ]
     )
