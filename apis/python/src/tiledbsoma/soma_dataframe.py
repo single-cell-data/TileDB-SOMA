@@ -222,10 +222,6 @@ class SOMADataFrame(TileDBArray):
                 # This is the 'decode on read' part of our logic; in dim_select we have the
                 # 'encode on write' part.
                 # Context: https://github.com/single-cell-data/TileDB-SOMA/issues/99.
-                #
-                # Also: don't materialize these on read
-                # TODO: get the arrow syntax for drop
-                # df.drop(ROWID, axis=1)
                 yield util_arrow.ascii_to_unicode_pyarrow_readback(table)
 
     def read_all(
@@ -243,7 +239,7 @@ class SOMADataFrame(TileDBArray):
         # TODO: platform_config,
     ) -> pa.Table:
         """
-        This is a convenience method around ``read``. It iterates the return value from ``read`` and returns a concatenation of all the table-pieces found. Its nominal use is to simply unit-test cases.
+        This is a convenience method around ``read``. It concatenates all partial read results into a single Table. Its nominal use is to simplify unit-test cases.
         """
         return pa.concat_tables(
             self.read(
@@ -390,7 +386,7 @@ class SOMADataFrame(TileDBArray):
         id_column_name: Optional[str] = None,
     ) -> pd.DataFrame:
         """
-        Reads from SOMA storage into memory.  Iterates over batches from ``read_as_pandas``, concatenating the output into a single dataframe.  Convenient for unit-test use; also, handy whenever you're certain that the data being queried can be read entirely into memory.
+        This is a convenience method around ``read``. It concatenates all partial read results into a single DataFrame. Its nominal use is to simplify unit-test cases.
         """
         dataframes = []
         generator = self.read_as_pandas(
