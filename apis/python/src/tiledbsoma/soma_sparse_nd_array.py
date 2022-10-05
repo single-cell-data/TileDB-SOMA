@@ -194,8 +194,10 @@ class SOMASparseNdArray(TileDBArray):
             )
             for arrow_tbl in query.df[coords]:
                 """
-                In PyArrow 9.0.0, there is a bug preventing the creation of "empty" (zero element)
-                SparseCOOTensor objects. See https://issues.apache.org/jira/browse/ARROW-17933
+                In PyArrow 9.0.0, there is a bug preventing the creation of "empty"
+                (zero element) SparseCOOTensor objects.
+
+                See https://issues.apache.org/jira/browse/ARROW-17933
 
                 Just stop the iteration when we run out of results. The caller must be
                 prepared to have a StopIteration, rather than an empty tensor, as the result of
