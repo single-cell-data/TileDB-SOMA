@@ -108,9 +108,14 @@ SOMADataFrame <- R6::R6Class(
 
     #' @description Read
     #' Read a user-defined subset of data, addressed by the dataframe indexing
-    #' column, optionally filtered, and return results as one or more
+    #' column, and optionally filtered.
+    #' @param ids Integer indices specifying the rows to read.
+    #' @param column_names Character vector of column names to return.
+    #' @param value_filter A string containing a logical expression that is used
+    #' to filter the returned values. See [`tiledb::parse_query_condition`] for
+    #' more information.
     #' @return An [`arrow::RecordBatch`].
-    read = function(ids = NULL, column_names = NULL) {
+    read = function(ids = NULL, column_names = NULL, value_filter = NULL) {
       on.exit(private$close())
       private$open("READ")
 
@@ -124,6 +129,15 @@ SOMADataFrame <- R6::R6Class(
       # select ranges
       if (!is.null(ids)) {
         tiledb::selected_ranges(arr) <- list(soma_rowid = cbind(ids, ids))
+      }
+
+      # filter
+      if (!is.null(value_filter)) {
+        stopifnot(is_scalar_character(value_filter))
+        tiledb::query_condition(arr) <- do.call(
+          what = tiledb::parse_query_condition,
+          args = list(expr = str2lang(value_filter), ta = self$object)
+        )
       }
 
       arrow::record_batch(as.data.frame(arr[]))

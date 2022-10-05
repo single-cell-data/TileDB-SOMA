@@ -39,4 +39,8 @@ test_that("SOMADataFrame creation", {
   # Subselecting columns
   rb2 <- sdf$read(column_names = "foo")
   expect_true(rb2$Equals(rb0$SelectColumns(0L)))
+
+  # Attribute filters
+  rb2 <- sdf$read(value_filter = "foo < 5")
+  expect_true(rb2$Equals(rb0$Filter(rb0$foo < 5)))
 })
