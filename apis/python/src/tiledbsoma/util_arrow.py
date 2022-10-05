@@ -134,7 +134,7 @@ def ascii_to_unicode_pyarrow_readback(table: pa.Table) -> pa.Table:
         # if len(old_field) > 0 and pa.types.is_large_binary(old_field[0]):
         # but:
         # AttributeError: 'pyarrow.lib.UInt64Scalar' object has no attribute 'id'
-        if len(old_field) > 0 and isinstance(old_field[0], pa.LargeBinaryArray):
+        if len(old_field) > 0 and isinstance(old_field[0], pa.LargeBinaryScalar):
             nfield = pa.array(
                 [element.as_py().decode("utf-8") for element in old_field]
             )
