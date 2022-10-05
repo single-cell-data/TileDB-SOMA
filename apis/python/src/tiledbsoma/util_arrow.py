@@ -1,4 +1,4 @@
-from typing import Iterator, Optional, Union
+from typing import Optional, Union
 
 import numpy as np
 import pyarrow as pa
@@ -121,36 +121,24 @@ def get_arrow_schema_from_tiledb_uri(
     return pa.schema(arrow_schema_dict)
 
 
-def ascii_to_unicode_pyarrow_readback(record_batch: pa.RecordBatch) -> pa.RecordBatch:
+def ascii_to_unicode_pyarrow_readback(table: pa.Table) -> pa.Table:
     """
     Implements the 'decode on read' part of our ASCII/Unicode logic
     """
     # TODO: COMMENT/LINK HEAVILY
-    names = [ofield.name for ofield in record_batch.schema]
+    names = [ofield.name for ofield in table.schema]
     new_fields = []
     for name in names:
-        old_field = record_batch[name]
-        if isinstance(old_field, pa.LargeBinaryArray):
+        old_field = table[name]
+        # Preferred syntax:
+        # if len(old_field) > 0 and pa.types.is_large_binary(old_field[0]):
+        # but:
+        # AttributeError: 'pyarrow.lib.UInt64Scalar' object has no attribute 'id'
+        if len(old_field) > 0 and isinstance(old_field[0], pa.LargeBinaryScalar):
             nfield = pa.array(
                 [element.as_py().decode("utf-8") for element in old_field]
             )
             new_fields.append(nfield)
         else:
             new_fields.append(old_field)
-    return pa.RecordBatch.from_arrays(new_fields, names=names)
-
-
-def concat_batches(batch_generator: Iterator[pa.RecordBatch]) -> pa.RecordBatch:
-    """
-    Iterates a generator of ``pyarrow.RecordBatch`` (e.g. ``SOMADataFrame.read``) and returns a concatenation of all the record batches found. The nominal use is to simply unit-test cases.
-    """
-    batches = []
-    for batch in batch_generator:
-        batches.append(batch)
-    assert len(batches) > 0
-    names = [field.name for field in batches[0].schema]
-    arrays = []
-    for name in names:
-        array = pa.concat_arrays([batch[name] for batch in batches])
-        arrays.append(array)
-    return pa.RecordBatch.from_arrays(arrays, names=names)
+    return pa.Table.from_arrays(new_fields, names=names)
