@@ -2,11 +2,14 @@
 % Please edit documentation in R/RcppExports.R, R/getData.R
 \name{get_column_names}
 \alias{get_column_names}
+\alias{export_column_direct}
 \alias{get_table}
 \alias{get_column}
 \title{Access a DataFrame or Single Column From a Given URI}
 \usage{
 get_column_names(uri)
+
+export_column_direct(uri, colnames)
 
 get_table(uri)
 
@@ -14,6 +17,8 @@ get_column(uri, column)
 }
 \arguments{
 \item{uri}{Character value with URI path to a SOMA data set}
+
+\item{colnames}{Vector of character value with the name of the columns to retrieve}
 
 \item{column}{Character value with the name of the column to retrieve}
 }
