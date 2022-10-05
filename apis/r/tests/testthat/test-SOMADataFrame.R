@@ -35,4 +35,8 @@ test_that("SOMADataFrame creation", {
   # Slicing by soma_rowid
   rb2 <- sdf$read(ids = 0:2)
   expect_true(rb2$Equals(rb0$Slice(offset = 0, length = 3)))
+
+  # Subselecting columns
+  rb2 <- sdf$read(column_names = "foo")
+  expect_true(rb2$Equals(rb0$SelectColumns(0L)))
 })

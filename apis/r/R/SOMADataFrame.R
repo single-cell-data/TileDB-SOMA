@@ -117,6 +117,11 @@ SOMADataFrame <- R6::R6Class(
       arr <- self$object
       # soma_rowid should not be included in the results
       tiledb::extended(arr) <- FALSE
+
+      # select columns
+      tiledb::attrs(arr) <- column_names %||% character()
+
+      # select ranges
       if (!is.null(ids)) {
         tiledb::selected_ranges(arr) <- list(soma_rowid = cbind(ids, ids))
       }
