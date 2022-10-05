@@ -24,7 +24,7 @@ test_that("SOMADataFrame creation", {
   # read back the data (ignore attributes)
   expect_equivalent(
     tiledb::tiledb_array(sdf$uri, return_as = "asis")[],
-    as.list(rb),
+    as.list(rb1),
     ignore_attr = TRUE
   )
 
