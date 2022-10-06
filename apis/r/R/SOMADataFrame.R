@@ -33,7 +33,7 @@ SOMADataFrame <- R6::R6Class(
         name = "soma_rowid",
         # TODO: tiledbsoma-py uses the full uint64 range here but R is limited
         # to 32bit integers out of the box or 64bit integers using bit64
-        domain = bit64::as.integer64(c(0, 2^32 - 1)),
+        domain = arrow_type_range(arrow::uint64()),
         tile = bit64::as.integer64(2048),
         type = "UINT64",
         filter_list = tiledb::tiledb_filter_list(c(
