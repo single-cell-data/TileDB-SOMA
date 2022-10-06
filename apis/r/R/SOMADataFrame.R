@@ -2,8 +2,8 @@
 #'
 #' @description
 #' `SOMADataFrame` is a multi-column table containing a "pseudo-column" called
-#' `soma_rowid`, of type `uint64` and domain `[0, #rows)`. `soma_rowid` is the
-#' row offset (row id), and is a contiguous integer number beginning with zero.
+#' `soma_rowid`, of type `uint64` and domain `[0, #rows)`, which is the
+#' row offset (row id), and is a contiguous integer beginning with zero.
 #'
 #' `SOMADataFrame` must contain a column called `soma_joinid`, of type `uint64`.
 #' The `soma_joinid` column contains a unique value for each row in the
