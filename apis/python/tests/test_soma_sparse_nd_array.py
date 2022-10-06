@@ -307,6 +307,56 @@ def test_soma_sparse_nd_array_read_as_pandas(
     )
 
 
+def test_empty_read(tmp_path):
+    """
+    Verify that queries expected to return empty results actually
+    work. There are edge cases around SparseTensors, which are unable
+    to represent empty arrays.
+    """
+    a = soma.SOMASparseNdArray(uri=tmp_path.as_posix())
+    a.create(type=pa.uint16(), shape=(10, 100))
+    assert a.exists()
+
+    #
+    # First, test reads of zero element array
+    #
+
+    # These work as expected
+    coords = (slice(None),)
+    assert sum(len(t) for t in a.read_table(coords)) == 0
+    assert (
+        sum(t.non_zero_length for t in a.read_sparse_tensor(coords, format="coo")) == 0
+    )
+    assert (
+        sum(t.non_zero_length for t in a.read_sparse_tensor(coords, format="csr")) == 0
+    )
+    assert (
+        sum(t.non_zero_length for t in a.read_sparse_tensor(coords, format="csc")) == 0
+    )
+
+    #
+    # Next, test empty queries on non-empty array
+    #
+    a.write_sparse_tensor(
+        pa.SparseCOOTensor.from_scipy(
+            sparse.coo_matrix(([1], ([0], [0])), shape=a.shape)
+        )
+    )
+    assert sum(len(t) for t in a.read_table((slice(None),))) == 1
+
+    coords = (1, 1)  # no element at this coordinate
+    assert sum(len(t) for t in a.read_table(coords)) == 0
+    assert (
+        sum(t.non_zero_length for t in a.read_sparse_tensor(coords, format="coo")) == 0
+    )
+    assert (
+        sum(t.non_zero_length for t in a.read_sparse_tensor(coords, format="csr")) == 0
+    )
+    assert (
+        sum(t.non_zero_length for t in a.read_sparse_tensor(coords, format="csc")) == 0
+    )
+
+
 @pytest.mark.parametrize("shape", [(), (0,), (10, 0), (0, 10), (1, 2, 0)])
 def test_zero_length_fail(tmp_path, shape):
     """Zero length dimensions are expected to fail"""
