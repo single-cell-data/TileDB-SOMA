@@ -114,12 +114,20 @@ SOMADataFrame <- R6::R6Class(
     #' @param value_filter A string containing a logical expression that is used
     #' to filter the returned values. See [`tiledb::parse_query_condition`] for
     #' more information.
+    #' @param result_order Order of read results. This can be one of either
+    #' `"ROW_MAJOR, `"COL_MAJOR"`, `"GLOBAL_ORDER"`, or `"UNORDERED"`.
     #' @return An [`arrow::RecordBatch`].
-    read = function(ids = NULL, column_names = NULL, value_filter = NULL) {
+    read = function(
+      ids = NULL,
+      column_names = NULL,
+      value_filter = NULL,
+      result_order = "UNORDERED"
+    ) {
       on.exit(private$close())
       private$open("READ")
 
       arr <- self$object
+
       # soma_rowid should not be included in the results
       tiledb::extended(arr) <- FALSE
 
@@ -139,6 +147,9 @@ SOMADataFrame <- R6::R6Class(
           args = list(expr = str2lang(value_filter), ta = self$object)
         )
       }
+
+      # result order
+      tiledb::query_layout(arr) <- match_query_layout(result_order)
 
       arrow::record_batch(as.data.frame(arr[]))
     }
