@@ -10,6 +10,10 @@ is_arrow_record_batch <- function(x) {
   is_arrow_object(x) && inherits(x, "RecordBatch")
 }
 
+is_arrow_table <- function(x) {
+  is_arrow_object(x) && inherits(x, "Table")
+}
+
 #' Convert Arrow types to supported TileDB type
 #' List of TileDB types supported in R: https://github.com/TileDB-Inc/TileDB-R/blob/8014da156b5fee5b4cc221d57b4aa7d388abc968/inst/tinytest/test_dim.R#L97-L121
 #'

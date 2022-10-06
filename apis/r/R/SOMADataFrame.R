@@ -84,16 +84,16 @@ SOMADataFrame <- R6::R6Class(
 
     #' @description Write
     #'
-    #' @param values An [`arrow::RecordBatch`] containing all columns, including
+    #' @param values An [`arrow::Table`] containing all columns, including
     #' the `soma_rowid` index column. The schema for `values` must match the
     #' schema for the `SOMADataFrame`.
     #'
     write = function(values) {
       stopifnot(
-        "'values' must be an Arrow RecordBatch" =
-          is_arrow_record_batch(values),
+        "'values' must be an Arrow Table" =
+          is_arrow_table(values),
         "'values' must contain a 'soma_rowid' column name" =
-          "soma_rowid" %in% values$names()
+          "soma_rowid" %in% colnames(values)
       )
 
       df <- as.data.frame(values)[c(self$dimnames(), self$attrnames())]
@@ -116,7 +116,7 @@ SOMADataFrame <- R6::R6Class(
     #' more information.
     #' @param result_order Order of read results. This can be one of either
     #' `"ROW_MAJOR, `"COL_MAJOR"`, `"GLOBAL_ORDER"`, or `"UNORDERED"`.
-    #' @return An [`arrow::RecordBatch`].
+    #' @return An [`arrow::Table`].
     read = function(
       ids = NULL,
       column_names = NULL,
@@ -151,7 +151,7 @@ SOMADataFrame <- R6::R6Class(
       # result order
       tiledb::query_layout(arr) <- match_query_layout(result_order)
 
-      arrow::record_batch(as.data.frame(arr[]))
+      arrow::arrow_table(as.data.frame(arr[]))
     }
   )
 )
