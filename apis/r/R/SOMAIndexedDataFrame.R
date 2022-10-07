@@ -17,6 +17,9 @@ SOMAIndexedDataFrame <- R6::R6Class(
 
     #' @description Create
     #' @param schema an [`arrow::schema`].
+    #' @param index_column_names A vector of column names to use as user-defined
+    #' index columns.  All named columns must exist in the schema, and at least
+    #' one index column name is required.
     create = function(schema, index_column_names) {
       stopifnot(
         "'schema' must be a valid Arrow schema" =
