@@ -205,6 +205,7 @@ def ingest_one(
     exp = tiledbsoma.SOMAExperiment(
         uri=output_path, tiledb_platform_config=tiledb_platform_config
     )
+    exp_name = os.path.splitext(os.path.basename(soco_dir))[0]
 
     if ifexists == "update_obs_and_var":
         if not os.path.exists(output_path):
@@ -246,14 +247,15 @@ def ingest_one(
         soco = tiledbsoma.SOMACollection(
             soco_dir, tiledb_platform_config=tiledb_platform_config
         )
-        soco._create_unless_exists()
+        if not soco.exists():
+            soco.create()
         if not soco.exists():
             raise Exception(f"Could not create SOCO at {soco.uri}")
-        soco.set(exp)
+        soco.set(exp_name, exp)
 
         tiledbsoma.logging.logger.info("")
         tiledbsoma.logging.logger.info(
-            f"Added SOMAExperiment {exp.name} to SOMACollection {soco_dir}"
+            f"Added SOMAExperiment {exp_name} to SOMACollection {soco_dir}"
         )
 
 
