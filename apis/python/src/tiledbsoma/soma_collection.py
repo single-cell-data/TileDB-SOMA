@@ -277,8 +277,8 @@ class SOMACollectionBase(TileDBObject, MutableMapping[str, CollectionElementType
 
     def _make_relative_uri(self, other_uri: str) -> str:
         """
-        Return a URI relative to the current colleciton object, if possible.
-        Raise a ValueError if not possib.e
+        Return a URI relative to the current collection object. If not possible,
+        raise a ValueError.
         """
         collection_path = urllib.parse.urlparse(self.uri).path
         other_path = urllib.parse.urlparse(other_uri).path
