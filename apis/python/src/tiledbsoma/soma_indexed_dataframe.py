@@ -88,8 +88,14 @@ class SOMAIndexedDataFrame(TileDBArray):
             lo = None
             hi = None
             if dtype != str:
-                lo = np.iinfo(dtype).min
-                hi = np.iinfo(dtype).max - 1
+                if np.issubdtype(dtype, np.integer):
+                    lo = np.iinfo(dtype).min
+                    hi = np.iinfo(dtype).max - 1
+                elif np.issubdtype(dtype, np.floating):
+                    lo = np.finfo(dtype).min
+                    hi = np.finfo(dtype).max
+                else:
+                    raise TypeError(f"Unsupported dtype {dtype}")
             dim = tiledb.Dim(
                 name=index_column_name,
                 domain=(lo, hi),
