@@ -1,16 +1,17 @@
-from typing import Any, Dict, Optional, Union, cast
+from typing import Any, Dict, Literal, Optional, Tuple, Union, cast
 
 import tiledb
 
-from .soma_collection import SOMACollection, SOMACollectionBase
+from .soma_collection import SOMACollectionBase
 from .soma_dataframe import SOMADataFrame
 from .soma_dense_nd_array import SOMADenseNdArray
 from .soma_indexed_dataframe import SOMAIndexedDataFrame
 from .soma_sparse_nd_array import SOMASparseNdArray
+from .tiledb_object import TileDBObject
 from .tiledb_platform_config import TileDBPlatformConfig
 
 
-class SOMAMeasurement(SOMACollection):
+class SOMAMeasurement(SOMACollectionBase[TileDBObject]):
     """
     A ``SOMAMeasurement`` is a sub-element of a ``SOMAExperiment``, and is otherwise a specialized ``SOMACollection`` with pre-defined fields:
 
@@ -39,14 +40,19 @@ class SOMAMeasurement(SOMACollection):
     A collection of sparse matrices containing pairwise annotations of each ``var`` row. Indexed with ``[varid_1, varid_2]``
     """
 
-    _constructors: Dict[str, Any]
-    _cached_members: Dict[str, Any]
+    _subclass_constrained_types: Dict[str, Tuple[str, ...]] = {
+        "var": ("SOMADataFrame", "SOMAIndexedDataFrame"),
+        "X": ("SOMACollection",),
+        "obsm": ("SOMACollection",),
+        "obsp": ("SOMACollection",),
+        "varm": ("SOMACollection",),
+        "varp": ("SOMACollection",),
+    }
 
     def __init__(
         self,
         uri: str,
         *,
-        name: Optional[str] = None,
         # Non-top-level objects can have a parent to propagate context, depth, etc.
         parent: Optional[SOMACollectionBase[Any]] = None,
         # Top-level objects should specify these:
@@ -58,26 +64,21 @@ class SOMAMeasurement(SOMACollection):
         """
         super().__init__(
             uri=uri,
-            name=name,
             parent=parent,
             tiledb_platform_config=tiledb_platform_config,
             ctx=ctx,
         )
-        self._constructors = {
-            "var": SOMADataFrame,
-            "X": SOMACollection,
-            "obsm": SOMACollection,
-            "obsp": SOMACollection,
-            "varm": SOMACollection,
-            "varp": SOMACollection,
-        }
-        self._cached_members = {}
 
-    def create(self) -> None:
+    @property
+    def type(self) -> Literal["SOMAMeasurement"]:
+        return "SOMAMeasurement"
+
+    def create(self) -> "SOMAMeasurement":
         """
         Creates the data structure on disk/S3/cloud.
         """
         super().create()
+        return self
 
     @property
     def var(self) -> Union[SOMADataFrame, SOMAIndexedDataFrame]:
@@ -104,66 +105,3 @@ class SOMAMeasurement(SOMACollection):
     @property
     def varp(self) -> SOMACollectionBase[SOMASparseNdArray]:
         return cast(SOMACollectionBase[SOMASparseNdArray], self["varp"])
-
-    def __getitem__(self, name: str) -> Any:
-        """
-        Implements ``experiment.var``, ``experiment.X``, etc.
-        """
-        if name in self._constructors:
-            if name not in self._cached_members:
-                child_uri = self._get_child_uri(name)
-                self._cached_members[name] = self._constructors[name](
-                    uri=child_uri, name=name, parent=self
-                )
-            return self._cached_members[name]
-
-        # otherwise let generic collection handle it.
-        super().__getitem__(name)
-
-    def constrain(self) -> None:
-        """
-        Checks constraints on the collection. Raises an exception if any is violated.
-        """
-        # TODO: find a good spot to call this from.
-
-        # TODO: resolve polymorphism issues
-        # for attr in ["obsp", "varp", "X"]:
-        #    if attr in self:
-        #        # error: "TileDBObject" has no attribute "__iter__" (not iterable)  [attr-defined]
-        #        for element in self[attr]:
-        #            # TODO: make this a SOMACollection method
-        #            if not isinstance(element, SOMASparseNdArray):
-        #                raise Exception(
-        #                    f"element {element.name} of {self.type}.{attr} should be SOMASparseNdArray; got {element.__class__.__name__}"
-        #                )
-
-        # for attr in ["obsm", "varm"]:
-        #    if attr in self:
-        #        # error: "TileDBObject" has no attribute "__iter__" (not iterable)  [attr-defined]
-        #        for element in self[attr]:
-        #            # TODO: make this a SOMACollection method
-        #            if not isinstance(element, SOMADenseNdArray):
-        #                raise Exception(
-        #                    f"element {element.name} of {self.type}.{attr} should be SOMADenseNdArray; got {element.__class__.__name__}"
-        #                )
-
-    # ``X`` collection values
-    # o All matrices must have the shape ``(#obs, #var)``.
-    # o The domain of the first dimension is the values of ``obs.soma_rowid``, and the index domain of
-    #   the second dimension is the values of ``var.soma_rowid`` in the containing ``SOMAMeasurement``.
-
-    # ``obsm`` collection values
-    # o All matrices must have the shape ``(#obs, M)``, where ``M`` is user-defined.
-    # o The domain of the first dimension is the values of ``obs.soma_rowid``.
-
-    # ``obsp`` collection values
-    # o All matrices must have the shape ``(#obs, #obs)``.
-    # o The domain of both dimensions is the values of ``obs.soma_rowid``.
-
-    # ``varm`` collection values
-    # o All matrices must have the shape ``(#var, M)``, where ``M`` is user-defined.
-    # o The domain of the first dimension is the values of ``var.soma_rowid``.
-
-    # ``varp`` collection values
-    # o All matrices must have the shape ``(#var, #var)``.
-    # o The domain of both dimensions is the values of ``var.soma_rowid``.

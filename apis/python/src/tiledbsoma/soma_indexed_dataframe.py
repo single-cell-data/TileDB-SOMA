@@ -30,22 +30,25 @@ class SOMAIndexedDataFrame(TileDBArray):
         self,
         uri: str,
         *,
-        name: Optional[str] = None,
         parent: Optional[SOMACollectionBase[Any]] = None,
         ctx: Optional[tiledb.Ctx] = None,
     ):
         """
         See also the ``TileDBOject`` constructor.
         """
-        super().__init__(uri=uri, name=name, parent=parent, ctx=ctx)
+        super().__init__(uri=uri, parent=parent, ctx=ctx)
         self._index_column_names = None
         self._is_sparse = None
+
+    @property
+    def type(self) -> Literal["SOMAIndexedDataFrame"]:
+        return "SOMAIndexedDataFrame"
 
     def create(
         self,
         schema: pa.Schema,
         index_column_names: Optional[List[str]] = None,
-    ) -> None:
+    ) -> "SOMAIndexedDataFrame":
         """
         :param schema: Arrow Schema defining the per-column schema. This schema must define all columns, including columns to be named as index columns. If the schema includes types unsupported by the SOMA implementation, an error will be raised.
 
@@ -67,6 +70,7 @@ class SOMAIndexedDataFrame(TileDBArray):
         self._index_column_names = index_column_names
 
         self._common_create()  # object-type metadata etc
+        return self
 
     def _create_empty(
         self,
@@ -135,25 +139,6 @@ class SOMAIndexedDataFrame(TileDBArray):
         self._is_sparse = sch.sparse
 
         tiledb.Array.create(self._uri, sch, ctx=self._ctx)
-
-    def __repr__(self) -> str:
-        """
-        Default display of ``SOMAIndexedDataFrame``.
-        """
-        return "\n".join(self._repr_aux())
-
-    def _repr_aux(self) -> Sequence[str]:
-        if not self.exists():
-            return ["Unpopulated"]
-        lines = [
-            self.name
-            + " "
-            + self.__class__.__name__
-            # Pending https://github.com/single-cell-data/TileDB-SOMA/issues/302
-            # + " "
-            # + str(self.shape)
-        ]
-        return lines
 
     def keys(self) -> Sequence[str]:
         """

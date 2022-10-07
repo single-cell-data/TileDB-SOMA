@@ -1,4 +1,5 @@
 from typing import Callable, Optional
+from urllib.parse import urljoin
 
 import anndata as ad
 import numpy as np
@@ -7,6 +8,8 @@ import tiledb
 
 import tiledbsoma.util_ann as util_ann
 from tiledbsoma import (
+    SOMACollection,
+    SOMADataFrame,
     SOMADenseNdArray,
     SOMAExperiment,
     SOMAMeasurement,
@@ -56,7 +59,7 @@ def _from_h5ad_common(
     s = util.get_start_stamp()
     logging.log_io(
         None,
-        f"START  SOMAExperiment.from_h5ad {input_path} -> {experiment._nested_name}",
+        f"START  SOMAExperiment.from_h5ad {input_path}",
     )
 
     logging.log_io(None, f"{experiment._indent}START  READING {input_path}")
@@ -74,7 +77,7 @@ def _from_h5ad_common(
         None,
         util.format_elapsed(
             s,
-            f"FINISH SOMAExperiment.from_h5ad {input_path} -> {experiment._nested_name}",
+            f"FINISH SOMAExperiment.from_h5ad {input_path}",
         ),
     )
 
@@ -111,23 +114,21 @@ def from_anndata(
     )
 
     s = util.get_start_stamp()
-    logging.log_io(
-        None, f"{experiment._indent}START  WRITING {experiment._nested_name}"
-    )
+    logging.log_io(None, f"{experiment._indent}START  WRITING")
 
-    # Must be done first, to create the parent directory
+    # Must be done first, to create the parent directory.
     if not experiment.exists():
         experiment.create()
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     # OBS
-    experiment.obs.write_all_from_pandas(
+    obs = SOMADataFrame(uri=urljoin(experiment.uri, "obs"))
+    obs.write_all_from_pandas(
         dataframe=anndata.obs, extent=256, id_column_name="obs_id"
     )
-    experiment.set(experiment.obs)
+    experiment.set("obs", obs)
 
-    experiment.ms.create()
-    experiment.set(experiment.ms)
+    experiment.set("ms", SOMACollection(uri=urljoin(experiment.uri, "ms")).create())
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     # MS
@@ -135,84 +136,90 @@ def from_anndata(
         uri=f"{experiment.ms.uri}/{measurement_name}", ctx=ctx
     )
     measurement.create()
-    experiment.ms.set(measurement)
+    experiment.ms.set(measurement_name, measurement)
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     # MS/meas/VAR
-    measurement.var.write_all_from_pandas(
+    var = SOMADataFrame(uri=urljoin(measurement.uri, "var"))
+    var.write_all_from_pandas(
         dataframe=anndata.var, extent=2048, id_column_name="var_id"
     )
-    measurement.set(measurement.var)
+    measurement["var"] = var
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     # MS/meas/X/DATA
-    measurement.X.create()
-    measurement.set(measurement.X)
+    measurement["X"] = SOMACollection(uri=urljoin(measurement.uri, "X")).create()
 
     # TODO: more types to check?
     if isinstance(anndata.X, np.ndarray):
         ddata = SOMADenseNdArray(uri=f"{measurement.X.uri}/data", ctx=ctx)
         # Code here and in else-block duplicated for linter appeasement
         ddata.from_matrix(anndata.X)
-        measurement.X.set(ddata)
+        measurement.X.set("data", ddata)
     else:
         sdata = SOMASparseNdArray(uri=f"{measurement.X.uri}/data", ctx=ctx)
         sdata.from_matrix(anndata.X)
-        measurement.X.set(sdata)
+        measurement.X.set("data", sdata)
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     # TODO: port from v0
 
     if len(anndata.obsm.keys()) > 0:  # do not create an empty collection
-        measurement.obsm.create()
+        measurement["obsm"] = SOMACollection(
+            uri=urljoin(measurement.uri, "obsm")
+        ).create()
         for key in anndata.obsm.keys():
             arr = SOMADenseNdArray(uri=f"{measurement.obsm.uri}/{key}", ctx=ctx)
             arr.from_matrix(anndata.obsm[key])
-            measurement.obsm.set(arr)
-        measurement.set(measurement.obsm)
+            measurement.obsm.set(key, arr)
 
     if len(anndata.varm.keys()) > 0:  # do not create an empty collection
-        measurement.varm.create()
+        measurement["varm"] = SOMACollection(
+            uri=urljoin(measurement.uri, "varm")
+        ).create()
         for key in anndata.varm.keys():
             darr = SOMADenseNdArray(uri=f"{measurement.varm.uri}/{key}", ctx=ctx)
             darr.from_matrix(anndata.varm[key])
-            measurement.varm.set(darr)
-        measurement.set(measurement.varm)
+            measurement.varm.set(key, darr)
 
     if len(anndata.obsp.keys()) > 0:  # do not create an empty collection
-        measurement.obsp.create()
+        measurement["obsp"] = SOMACollection(
+            uri=urljoin(measurement.uri, "obsp")
+        ).create()
         for key in anndata.obsp.keys():
             sarr = SOMASparseNdArray(uri=f"{measurement.obsp.uri}/{key}", ctx=ctx)
             sarr.from_matrix(anndata.obsp[key])
-            measurement.obsp.set(sarr)
-        measurement.set(measurement.obsp)
+            measurement.obsp.set(key, sarr)
 
     if len(anndata.varp.keys()) > 0:  # do not create an empty collection
-        measurement.varp.create()
+        measurement["varp"] = SOMACollection(
+            uri=urljoin(measurement.uri, "varp")
+        ).create()
         for key in anndata.varp.keys():
             sarr = SOMASparseNdArray(uri=f"{measurement.varp.uri}/{key}", ctx=ctx)
             sarr.from_matrix(anndata.varp[key])
-            measurement.varp.set(sarr)
-        measurement.set(measurement.varp)
+            measurement.varp.set(key, sarr)
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     # RAW
     if anndata.raw is not None:
         raw_measurement = SOMAMeasurement(uri=f"{experiment.ms.uri}/raw", ctx=ctx)
         raw_measurement.create()
-        experiment.ms.set(raw_measurement)
+        experiment.ms.set("raw", raw_measurement)
 
-        raw_measurement.var.write_all_from_pandas(
+        var = SOMADataFrame(uri=urljoin(raw_measurement.uri, "var"))
+        var.write_all_from_pandas(
             dataframe=anndata.raw.var, extent=2048, id_column_name="var_id"
         )
-        raw_measurement.set(raw_measurement.var)
+        raw_measurement.set("var", var)
 
-        raw_measurement.X.create()
-        raw_measurement.set(raw_measurement.X)
+        raw_measurement["X"] = SOMACollection(
+            uri=urljoin(raw_measurement.uri, "X")
+        ).create()
 
         rawXdata = SOMASparseNdArray(uri=f"{raw_measurement.X.uri}/data", ctx=ctx)
         rawXdata.from_matrix(anndata.raw.X)
-        raw_measurement.X.set(rawXdata)
+        raw_measurement.X.set("data", rawXdata)
 
     # TODO: port uns from v0 to v1
     #    # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -221,10 +228,8 @@ def from_anndata(
     #        experiment.set(experiment.uns)
 
     logging.log_io(
-        f"Wrote {experiment._nested_name}",
-        util.format_elapsed(
-            s, f"{experiment._indent}FINISH WRITING {experiment._nested_name}"
-        ),
+        "Wrote",
+        util.format_elapsed(s, f"{experiment._indent}FINISH WRITING"),
     )
 
 
@@ -240,9 +245,7 @@ def to_h5ad(
     """
 
     s = util.get_start_stamp()
-    logging.log_io(
-        None, f"START  SOMAExperiment.to_h5ad {experiment._nested_name} -> {h5ad_path}"
-    )
+    logging.log_io(None, f"START  SOMAExperiment.to_h5ad -> {h5ad_path}")
 
     anndata = to_anndata(experiment, measurement_name=measurement_name)
 
@@ -258,9 +261,7 @@ def to_h5ad(
 
     logging.log_io(
         None,
-        util.format_elapsed(
-            s, f"FINISH SOMAExperiment.to_h5ad {experiment._nested_name} -> {h5ad_path}"
-        ),
+        util.format_elapsed(s, f"FINISH SOMAExperiment.to_h5ad -> {h5ad_path}"),
     )
 
 
@@ -283,7 +284,7 @@ def to_anndata(
     """
 
     s = util.get_start_stamp()
-    logging.log_io(None, f"START  SOMAExperiment.to_anndata {experiment._nested_name}")
+    logging.log_io(None, "START  SOMAExperiment.to_anndata")
 
     measurement = experiment.ms[measurement_name]
 
@@ -373,9 +374,7 @@ def to_anndata(
 
     logging.log_io(
         None,
-        util.format_elapsed(
-            s, f"FINISH SOMAExperiment.to_anndata {experiment._nested_name}"
-        ),
+        util.format_elapsed(s, "FINISH SOMAExperiment.to_anndata"),
     )
 
     return anndata

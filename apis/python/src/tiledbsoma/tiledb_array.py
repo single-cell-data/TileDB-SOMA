@@ -1,12 +1,10 @@
-from typing import Any, Optional, Sequence
+from typing import Optional, Sequence
 
 import pyarrow as pa
 import tiledb
 
-import tiledbsoma
-import tiledbsoma.util_arrow as util_arrow
-
 from .tiledb_object import TileDBObject
+from .util_arrow import get_arrow_schema_from_tiledb_uri
 
 
 class TileDBArray(TileDBObject):
@@ -18,21 +16,20 @@ class TileDBArray(TileDBObject):
         self,
         uri: str,
         *,
-        name: Optional[str] = None,
-        parent: Optional["tiledbsoma.SOMACollectionBase[Any]"] = None,
+        parent: Optional["TileDBObject"] = None,
         ctx: Optional[tiledb.Ctx] = None,
     ):
         """
         See the ``TileDBObject`` constructor.
         """
-        super().__init__(uri, name=name, parent=parent, ctx=ctx)
+        super().__init__(uri, parent=parent, ctx=ctx)
 
     @property
     def schema(self) -> pa.Schema:
         """
         Return data schema, in the form of an Arrow Schema.
         """
-        return util_arrow.get_arrow_schema_from_tiledb_uri(self.uri, self._ctx)
+        return get_arrow_schema_from_tiledb_uri(self.uri, self._ctx)
 
     def _tiledb_open(self, mode: str = "r") -> tiledb.Array:
         """
@@ -72,6 +69,5 @@ class TileDBArray(TileDBObject):
         """
         Prints metadata for the array, for interactive use.
         """
-        print(f"{indent}[{self._name}]")
         for key, value in self.metadata.items():
             print(f"{indent}- {key}: {value}")

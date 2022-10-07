@@ -1,6 +1,6 @@
 import math
 import time
-from typing import Any, Iterator, List, Literal, Optional, Sequence, Union
+from typing import Any, Iterator, List, Literal, Optional, Union
 
 import numpy as np
 import pandas as pd
@@ -25,7 +25,6 @@ class SOMASparseNdArray(TileDBArray):
         self,
         uri: str,
         *,
-        name: Optional[str] = None,
         parent: Optional[SOMACollectionBase[Any]] = None,
         ctx: Optional[tiledb.Ctx] = None,
     ):
@@ -33,13 +32,17 @@ class SOMASparseNdArray(TileDBArray):
         Also see the ``TileDBObject`` constructor.
         """
 
-        super().__init__(uri=uri, name=name, parent=parent, ctx=ctx)
+        super().__init__(uri=uri, parent=parent, ctx=ctx)
+
+    @property
+    def type(self) -> Literal["SOMASparseNdArray"]:
+        return "SOMASparseNdArray"
 
     def create(
         self,
         type: pa.DataType,
         shape: Union[NTuple, List[int]],
-    ) -> None:
+    ) -> "SOMASparseNdArray":
         """
         Create a ``SOMASparseNdArray`` named with the URI.
 
@@ -104,22 +107,7 @@ class SOMASparseNdArray(TileDBArray):
 
         self._common_create()  # object-type metadata etc
 
-    def __repr__(self) -> str:
-        """
-        Default display of ``SOMASparseNdArray``.
-        """
-        return "\n".join(self._repr_aux())
-
-    def _repr_aux(self) -> Sequence[str]:
-        lines = [
-            self.name
-            + " "
-            + self.__class__.__name__
-            # Pending https://github.com/single-cell-data/TileDB-SOMA/issues/302
-            # + " "
-            # + str(self.shape)
-        ]
-        return lines
+        return self
 
     @property
     def shape(self) -> NTuple:
@@ -309,12 +297,10 @@ class SOMASparseNdArray(TileDBArray):
         # https://docs.scipy.org/doc/scipy/reference/sparse.html
 
         s = util.get_start_stamp()
-        logging.log_io(None, f"{self._indent}START  WRITING {self._nested_name}")
+        logging.log_io(None, f"{self._indent}START  WRITING")
 
         if self.exists():
-            logging.log_io(
-                None, f"{self._indent}Re-using existing array {self._nested_name}"
-            )
+            logging.log_io(None, f"{self._indent}Re-using existing array")
         else:
             self._create_empty_array(
                 matrix_dtype=matrix.dtype,
@@ -334,8 +320,8 @@ class SOMASparseNdArray(TileDBArray):
         self._common_create()  # object-type metadata etc
 
         logging.log_io(
-            f"Wrote {self._nested_name}",
-            util.format_elapsed(s, f"{self._indent}FINISH WRITING {self._nested_name}"),
+            "Wrote",
+            util.format_elapsed(s, f"{self._indent}FINISH WRITING"),
         )
 
     # ----------------------------------------------------------------
@@ -463,8 +449,7 @@ class SOMASparseNdArray(TileDBArray):
 
                 if chunk_percent < 100:
                     logging.log_io(
-                        "... %s %7.3f%% done, ETA %s"
-                        % (self._nested_name, chunk_percent, eta_seconds),
+                        "... %7.3f%% done, ETA %s" % (chunk_percent, eta_seconds),
                         "%sFINISH chunk in %.3f seconds, %7.3f%% done, ETA %s"
                         % (self._indent, chunk_seconds, chunk_percent, eta_seconds),
                     )
@@ -542,8 +527,7 @@ class SOMASparseNdArray(TileDBArray):
 
                 if chunk_percent < 100:
                     logging.log_io(
-                        "... %s %7.3f%% done, ETA %s"
-                        % (self._nested_name, chunk_percent, eta_seconds),
+                        "... %7.3f%% done, ETA %s" % (chunk_percent, eta_seconds),
                         "%sFINISH chunk in %.3f seconds, %7.3f%% done, ETA %s"
                         % (self._indent, chunk_seconds, chunk_percent, eta_seconds),
                     )
@@ -627,8 +611,7 @@ class SOMASparseNdArray(TileDBArray):
 
                 if chunk_percent < 100:
                     logging.log_io(
-                        "... %s %7.3f%% done, ETA %s"
-                        % (self._nested_name, chunk_percent, eta_seconds),
+                        "... %7.3f%% done, ETA %s" % (chunk_percent, eta_seconds),
                         "%sFINISH chunk in %.3f seconds, %7.3f%% done, ETA %s"
                         % (self._indent, chunk_seconds, chunk_percent, eta_seconds),
                     )

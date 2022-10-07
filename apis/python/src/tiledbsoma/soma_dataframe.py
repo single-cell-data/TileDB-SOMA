@@ -31,20 +31,23 @@ class SOMADataFrame(TileDBArray):
         self,
         uri: str,
         *,
-        name: Optional[str] = None,
         parent: Optional[SOMACollectionBase[Any]] = None,
         ctx: Optional[tiledb.Ctx] = None,
     ):
         """
         See also the ``TileDBOject`` constructor.
         """
-        super().__init__(uri=uri, name=name, parent=parent, ctx=ctx)
+        super().__init__(uri=uri, parent=parent, ctx=ctx)
         self._cached_is_sparse = None
+
+    @property
+    def type(self) -> Literal["SOMADataFrame"]:
+        return "SOMADataFrame"
 
     def create(
         self,
         schema: pa.Schema,
-    ) -> None:
+    ) -> "SOMADataFrame":
         """
         :param schema: Arrow Schema defining the per-column schema. This schema must define all columns. The column name ``soma_rowid`` is reserved for the pseudo-column of the same name.  If the schema includes types unsupported by the SOMA implementation, an error will be raised.
         """
@@ -55,6 +58,7 @@ class SOMADataFrame(TileDBArray):
         self._index_column_names = []
 
         self._common_create()  # object-type metadata etc
+        return self
 
     def _create_empty(
         self,
@@ -109,23 +113,6 @@ class SOMADataFrame(TileDBArray):
 
         self._cached_is_sparse = sch.sparse
         tiledb.Array.create(self._uri, sch, ctx=self._ctx)
-
-    def __repr__(self) -> str:
-        """
-        Default display of ``SOMADataFrame``.
-        """
-        return "\n".join(self._repr_aux())
-
-    def _repr_aux(self) -> Sequence[str]:
-        lines = [
-            self.name
-            + " "
-            + self.__class__.__name__
-            # Pending https://github.com/single-cell-data/TileDB-SOMA/issues/302
-            # + " "
-            # + str(self.shape)
-        ]
-        return lines
 
     def keys(self) -> Sequence[str]:
         """
@@ -423,7 +410,7 @@ class SOMADataFrame(TileDBArray):
         attr_filters = tiledb.FilterList([tiledb.ZstdFilter(level=-1)])
 
         s = util.get_start_stamp()
-        log_io(None, f"{self._indent}START  WRITING {self._nested_name}")
+        log_io(None, f"{self._indent}START  WRITING")
 
         assert ROWID in dataframe.keys()
         assert len(dataframe.shape) == 2
@@ -432,7 +419,7 @@ class SOMADataFrame(TileDBArray):
         mode = "ingest"
         if self.exists():
             mode = "append"
-            log_io(None, f"{self._indent}Re-using existing array {self._nested_name}")
+            log_io(None, f"{self._indent}Re-using existing array")
 
         # Make obs_id a data column
         dataframe.reset_index(inplace=True)
@@ -478,7 +465,7 @@ class SOMADataFrame(TileDBArray):
         tiledb.from_pandas(
             uri=self.uri,
             dataframe=dataframe,
-            name=self.name,
+            # name=self.name,
             sparse=True,  # TODO
             allows_duplicates=self._tiledb_platform_config.allows_duplicates,
             offsets_filters=offsets_filters,
@@ -494,8 +481,8 @@ class SOMADataFrame(TileDBArray):
         self._common_create()  # object-type metadata etc
 
         log_io(
-            f"Wrote {self._nested_name}",
-            util.format_elapsed(s, f"{self._indent}FINISH WRITING {self._nested_name}"),
+            "Wrote ",
+            util.format_elapsed(s, f"{self._indent}FINISH WRITING"),
         )
 
     def write_all_from_pandas(
