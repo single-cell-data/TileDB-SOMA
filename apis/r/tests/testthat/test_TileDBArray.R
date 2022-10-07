@@ -1,10 +1,5 @@
 test_that("TileDBArray helper functions", {
   uri <- withr::local_tempdir(pattern = "test-array")
-
-  ## expect_message(
-  ##   tdb <- TileDBArray$new(uri = uri, verbose = TRUE),
-  ##   "No TileDBArray found at"
-  ## )
   tdb <- TileDBArray$new(uri = uri, verbose = TRUE)
 
   expect_error(
@@ -17,11 +12,6 @@ test_that("TileDBArray helper functions", {
   df <- as.data.frame(UCBAdmissions)
   tiledb::fromDataFrame(df, uri, col_index = index_cols)
 
-  ## expect_message(
-  ##   tdb <- TileDBArray$new(uri = uri, verbose = TRUE),
-  ##   "Found existing TileDBArray at"
-  ## )
-  tdb <- TileDBArray$new(uri = uri, verbose = TRUE)
   expect_identical(tdb$uri, uri)
   expect_is(tdb$tiledb_array(), "tiledb_array")
   expect_is(tdb$object, "tiledb_array")
