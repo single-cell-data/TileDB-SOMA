@@ -3,6 +3,7 @@
 \name{get_column_names}
 \alias{get_column_names}
 \alias{export_column_direct}
+\alias{export_recordbatch}
 \alias{get_table}
 \alias{get_column}
 \title{Access a DataFrame or Single Column From a Given URI}
@@ -10,6 +11,8 @@
 get_column_names(uri)
 
 export_column_direct(uri, colnames)
+
+export_recordbatch(uri, colnames)
 
 get_table(uri)
 
@@ -34,5 +37,11 @@ complete data.frame or named column from the data set.
 uri <- "test/soco/pbmc3k_processed/obs"
 column <-  "n_counts"
 summary(get_table(uri))
+summary(get_columns(uri, column))
+columns <- c("n_genes", "louvain")
+z <- export_recordbatch(uri, columns)
+rb <- arch::from_arch_array(z, arrow::RecordBatch)
+z <- export_recordbatch(uri, columns)
+tb <- arrow::as_arrow_table(arch::from_arch_array(z, arrow::RecordBatch))
 }
 }

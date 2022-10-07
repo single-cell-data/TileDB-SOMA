@@ -23,8 +23,8 @@ Authors@R: c(
     person(given = "TileDB, Inc.",
            role = c("cph", "fnd"))
     )
-URL: https://github.com/single-cell-data/TileDB-SingleCell
-BugReports: https://github.com/single-cell-data/TileDB-SingleCell/issues
+URL: https://github.com/single-cell-data/TileDB-SOMA
+BugReports: https://github.com/single-cell-data/TileDB-SOMA/issues
 License: MIT + file LICENSE
 Encoding: UTF-8
 Imports:

@@ -17,3 +17,9 @@ export_column_direct <- function(uri, colnames) {
     .Call(`_tiledbsoma_export_column_direct`, uri, colnames)
 }
 
+#' @rdname get_table
+#' @export
+export_recordbatch <- function(uri, colnames) {
+    .Call(`_tiledbsoma_export_recordbatch`, uri, colnames)
+}
+

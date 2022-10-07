@@ -12,7 +12,14 @@
 ##' uri <- "test/soco/pbmc3k_processed/obs"
 ##' column <-  "n_counts"
 ##' summary(get_table(uri))
+##' summary(get_columns(uri, column))
+##' columns <- c("n_genes", "louvain")
+##' z <- export_recordbatch(uri, columns)
+##' rb <- arch::from_arch_array(z, arrow::RecordBatch)
+##' z <- export_recordbatch(uri, columns)
+##' tb <- arrow::as_arrow_table(arch::from_arch_array(z, arrow::RecordBatch))
 ##' }
+##' @importFrom arch arch_allocate_schema arch_allocate_array_data arch_array as_arch_array_stream from_arch_array arch_schema_info
 ##' @export
 get_table <- function(uri) {
     colnames <- get_column_names(uri)
@@ -34,6 +41,5 @@ get_column <- function(uri, column) {
 }
 
 ##' @importFrom Rcpp evalCpp
-##' @import arch
 ##' @useDynLib tiledbsoma, .registration=TRUE
 NULL
