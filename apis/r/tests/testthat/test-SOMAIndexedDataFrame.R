@@ -1,4 +1,4 @@
-test_that("SOMADataFrame creation", {
+test_that("SOMAIndexedDataFrame creation", {
   uri <- withr::local_tempdir("soma-indexed-dataframe4")
   asch <- arrow::schema(
     foo = arrow::int32(),
