@@ -1,52 +1,70 @@
 #' SOMADataFrame
 #'
 #' @description
-#' `SOMADataFrame` is a multi-column table containing a "pseudo-column" called
-#' `soma_rowid`, of type `uint64` and domain `[0, #rows)`, which is the
-#' row offset (row id), and is a contiguous integer beginning with zero.
-#'
-#' `SOMADataFrame` must contain a column called `soma_joinid`, of type `uint64`.
-#' The `soma_joinid` column contains a unique value for each row in the
-#' `SOMADataFrame`, and intended to act as a joint key for other objects, such
-#' as [`SOMASparseNdArray`].
+#' `SOMAIndexedDataFrame` is a multi-column table that must contain a column
+#' called `soma_joinid` of type `uint64`, which contains a unique value for each
+#' row and is intended to act as a join key for other objects, such as
+#' [`SOMASparseNdArray`].
+
 #' @importFrom stats setNames
 #' @export
 
-SOMADataFrame <- R6::R6Class(
-  classname = "SOMADataFrame",
+SOMAIndexedDataFrame <- R6::R6Class(
+  classname = "SOMAIndexedDataFrame",
   inherit = TileDBArray,
 
   public = list(
 
     #' @description Create
     #' @param schema an [`arrow::schema`].
-    create = function(schema) {
+    #' @param index_column_names A vector of column names to use as user-defined
+    #' index columns.  All named columns must exist in the schema, and at least
+    #' one index column name is required.
+    create = function(schema, index_column_names) {
       stopifnot(
         "'schema' must be a valid Arrow schema" =
-          is_arrow_schema(schema),
+          inherits(schema, "Schema"),
         "'soma_rowid' is a reserved column name" =
-          !"soma_rowid" %in% schema$names
+          !"soma_rowid" %in% schema$names,
+        is.character(index_column_names) && length(index_column_names) > 0,
+        "All 'index_column_names' must be defined in the 'schema'" =
+          (index_column_names %in% schema$names)
       )
 
-      # soma_rowid array dimension
-      tdb_dim <- tiledb::tiledb_dim(
-        name = "soma_rowid",
-        # TODO: tiledbsoma-py uses the full uint64 range here but R is limited
-        # to 32bit integers out of the box or 64bit integers using bit64
-        domain = arrow_type_range(arrow::uint64()),
-        tile = bit64::as.integer64(2048),
-        type = "UINT64",
-        filter_list = tiledb::tiledb_filter_list(c(
-          tiledb_zstd_filter()
-        ))
+      attr_column_names <- setdiff(schema$names, index_column_names)
+      stopifnot(
+        "At least one non-index column must be defined in the schema" =
+          length(attr_column_names) > 0
       )
 
-      # create array attributes
+      # array dimensions
+      tdb_dims <- stats::setNames(
+        object = vector(mode = "list", length = length(index_column_names)),
+        nm = index_column_names
+      )
+
+      for (field_name in index_column_names) {
+        field <- schema$GetFieldByName(field_name)
+
+        tdb_dims[[field_name]] <- tiledb::tiledb_dim(
+          name = field_name,
+          domain = arrow_type_range(field$type),
+          # TODO: Parameterize
+          tile = 2048L,
+          type = tiledb_type_from_arrow_type(field$type),
+          filter_list = tiledb::tiledb_filter_list(c(
+            tiledb_zstd_filter()
+          ))
+        )
+      }
+
+      # array attributes
       tdb_attrs <- stats::setNames(
-        object = vector(mode = "list", length = schema$num_fields),
-        nm = schema$names
+        object = vector(mode = "list", length = length(attr_column_names)),
+        nm = attr_column_names
       )
-      for (field_name in schema$names) {
+
+      for (field_name in attr_column_names) {
         field <- schema$GetFieldByName(field_name)
         field_type <- tiledb_type_from_arrow_type(field$type)
 
@@ -63,7 +81,7 @@ SOMADataFrame <- R6::R6Class(
 
       # array schema
       tdb_schema <- tiledb::tiledb_array_schema(
-        domain = tiledb::tiledb_domain(tdb_dim),
+        domain = tiledb::tiledb_domain(tdb_dims),
         attrs = tdb_attrs,
         sparse = TRUE,
         cell_order = "ROW_MAJOR",
@@ -86,21 +104,22 @@ SOMADataFrame <- R6::R6Class(
     #'
     #' @param values An [`arrow::Table`] containing all columns, including
     #' the `soma_rowid` index column. The schema for `values` must match the
-    #' schema for the `SOMADataFrame`.
+    #' schema for the `SOMAIndexedDataFrame`.
     #'
     write = function(values) {
+      on.exit(private$close())
+      schema_names <- c(self$dimnames(), self$attrnames())
+
       stopifnot(
         "'values' must be an Arrow Table" =
           is_arrow_table(values),
-        "'values' must contain a 'soma_rowid' column name" =
-          "soma_rowid" %in% colnames(values)
+        "All columns in 'values' must be defined in the schema" =
+          all(values$ColumnNames() %in% schema_names),
+        "All schema fields must be present in 'values'" =
+          all(schema_names %in% values$ColumnNames())
       )
 
-      df <- as.data.frame(values)[c(self$dimnames(), self$attrnames())]
-      # coerce from integer to integer64 in order to match the dimension type
-      df$soma_rowid <- bit64::as.integer64(df$soma_rowid)
-
-      on.exit(private$close())
+      df <- as.data.frame(values)[schema_names]
       private$open("WRITE")
       arr <- self$object
       arr[] <- df
@@ -109,7 +128,7 @@ SOMADataFrame <- R6::R6Class(
     #' @description Read
     #' Read a user-defined subset of data, addressed by the dataframe indexing
     #' column, and optionally filtered.
-    #' @param ids Integer indices specifying the rows to read.
+    #' @param ids Indices specifying the rows to read.
     #' @param column_names Character vector of column names to return.
     #' @param value_filter A string containing a logical expression that is used
     #' to filter the returned values. See [`tiledb::parse_query_condition`] for
@@ -128,15 +147,18 @@ SOMADataFrame <- R6::R6Class(
 
       arr <- self$object
 
-      # soma_rowid should not be included in the results
-      tiledb::extended(arr) <- FALSE
-
       # select columns
-      tiledb::attrs(arr) <- column_names %||% character()
+      if (!is.null(column_names)) {
+        stopifnot(
+          "'column_names' must only contain non-index columns" =
+            all(!column_names %in% self$dimnames())
+        )
+        tiledb::attrs(arr) <- column_names
+      }
 
       # select ranges
       if (!is.null(ids)) {
-        tiledb::selected_ranges(arr) <- list(soma_rowid = cbind(ids, ids))
+        tiledb::selected_ranges(arr) <- list(cbind(ids, ids))
       }
 
       # filter
