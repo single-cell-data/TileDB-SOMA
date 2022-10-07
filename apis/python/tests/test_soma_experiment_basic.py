@@ -82,7 +82,7 @@ def create_and_populate_sparse_nd_array(
 
 # ----------------------------------------------------------------
 def test_soma_experiment_basic(tmp_path):
-    basedir = tmp_path.as_posix()
+    basedir = tmp_path.as_uri()
 
     # ----------------------------------------------------------------
     experiment = soma.SOMAExperiment(basedir)
