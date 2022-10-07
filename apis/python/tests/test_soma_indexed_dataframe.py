@@ -3,15 +3,20 @@ import pytest
 
 import tiledbsoma as t
 
+
 @pytest.fixture
 def arrow_schema():
     def _schema():
-        return pa.schema([
-            pa.field("foo", pa.int64()),
-            pa.field("bar", pa.float64()),
-            pa.field("baz", pa.string())
-        ])
+        return pa.schema(
+            [
+                pa.field("foo", pa.int64()),
+                pa.field("bar", pa.float64()),
+                pa.field("baz", pa.string()),
+            ]
+        )
+
     return _schema
+
 
 def test_soma_indexed_dataframe(tmp_path, arrow_schema):
     sdf = t.SOMAIndexedDataFrame(uri=tmp_path.as_posix())
@@ -49,11 +54,13 @@ def test_soma_indexed_dataframe(tmp_path, arrow_schema):
     assert sorted([e.as_py() for e in list(table["bar"])]) == [4.1, 6.3]
     assert sorted([e.as_py() for e in list(table["baz"])]) == ["apple", "cat"]
 
+
 def test_soma_indexed_dataframe_with_float_dim(tmp_path, arrow_schema):
     sdf = t.SOMAIndexedDataFrame(uri=tmp_path.as_posix())
     asch = arrow_schema()
     sdf.create(schema=asch, index_column_names=["bar"])
     assert sdf.get_index_column_names() == ["bar"]
+
 
 @pytest.fixture
 def simple_soma_indexed_data_frame(tmp_path):
