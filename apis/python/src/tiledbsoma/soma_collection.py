@@ -8,6 +8,7 @@ from typing import (
     Any,
     Dict,
     Iterator,
+    List,
     Literal,
     MutableMapping,
     Optional,
@@ -184,7 +185,7 @@ class SOMACollectionBase(TileDBObject, MutableMapping[str, CollectionElementType
         """
         Default display for ``SOMACollection``.
         """
-        return self._get_collection_repr()
+        return "\n".join(self._get_collection_repr())
 
     # ================================================================
     # PRIVATE METHODS FROM HERE ON DOWN
@@ -193,14 +194,18 @@ class SOMACollectionBase(TileDBObject, MutableMapping[str, CollectionElementType
     @classmethod
     def _get_element_repr(
         cls, args: Tuple[SOMACollectionBase[CollectionElementType], str]
-    ) -> str:
+    ) -> List[str]:
         collection, key = args
-        return collection.__getitem__(key).__repr__()
+        value = collection.__getitem__(key)
+        if isinstance(value, SOMACollectionBase):
+            return value._get_collection_repr()
+        else:
+            return [value.__repr__()]
 
-    def _get_collection_repr(self) -> str:
+    def _get_collection_repr(self) -> List[str]:
         me = super().__repr__()
         if not self.exists():
-            return me
+            return [me]
 
         self._load_tdb_group_cache()
         assert self._cached_values is not None
@@ -211,15 +216,17 @@ class SOMACollectionBase(TileDBObject, MutableMapping[str, CollectionElementType
         with ThreadPoolExecutor(
             max_workers=self._tiledb_platform_config.max_thread_pool_workers
         ) as executor:
-            for elmt_key, elmt_repr in zip(
+            for elmt_key, elmt_repr_lines in zip(
                 keys,
                 executor.map(
                     SOMACollectionBase._get_element_repr, [(self, k) for k in keys]
                 ),
             ):
-                lines.append(f'  "{elmt_key}": {elmt_repr}')
+                lines.append(f'  "{elmt_key}": {elmt_repr_lines[0]}')
+                for line in elmt_repr_lines[1:]:
+                    lines.append(f"    {line}")
 
-        return "\n".join(lines)
+        return lines
 
     def _load_tdb_group(self) -> Optional[Dict[str, tiledb.Object]]:
         try:
