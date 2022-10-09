@@ -1,8 +1,5 @@
 #!/usr/bin/env Rscript
 
-res <- jsonlite::fromJSON("https://api.github.com/repos/tiledb-inc/tiledb/releases/latest")
-cat("Seeing", res$name, "\n")
-
 ## todo: chipset for macOS to detect arm
 isX86 <- Sys.info()["machine"] == "x86_64"
 isMac <- Sys.info()['sysname'] == "Darwin"
@@ -11,14 +8,13 @@ macosver <- ""
 
 if (isMac) {
     if (isX86) {
-        url <- res$assets$browser_download_url[grepl("macos-x86", res$assets$browser_download_url)]
+        url <- "https://github.com/TileDB-Inc/TileDB/releases/download/2.11.1/tiledb-macos-x86_64-2.11.1-15a1161.tar.gz"
         macosver <- "-mmacosx-version-min=10.14"
     } else {
-        url <- res$assets$browser_download_url[grepl("macos-arm64", res$assets$browser_download_url)]
+        url <- "https://github.com/TileDB-Inc/TileDB/releases/download/2.11.1/tiledb-macos-arm64-2.11.1-15a1161.tar.gz"
     }
 } else if (isLinux) {
-    ## use [1] as [2] is the noavx2 one
-    url <- res$assets$browser_download_url[grepl("linux", res$assets$browser_download_url)][1]
+    url <- "https://github.com/TileDB-Inc/TileDB/releases/download/2.11.1/tiledb-linux-x86_64-2.11.1-15a1161.tar.gz"
 } else {
     stop("Unsupported platform for downloading artifacts. Please have TileDB Core installed locally.")
 }
