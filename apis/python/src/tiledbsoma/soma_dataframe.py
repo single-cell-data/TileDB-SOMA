@@ -481,7 +481,7 @@ class SOMADataFrame(TileDBArray):
         self._common_create()  # object-type metadata etc
 
         log_io(
-            "Wrote ",
+            f"Wrote {self.uri}",
             util.format_elapsed(s, f"{self._indent}FINISH WRITING"),
         )
 

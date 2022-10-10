@@ -334,7 +334,7 @@ class SOMASparseNdArray(TileDBArray):
         self._common_create()  # object-type metadata etc
 
         logging.log_io(
-            "Wrote",
+            f"Wrote {self.uri}",
             util.format_elapsed(s, f"{self._indent}FINISH WRITING"),
         )
 

@@ -67,5 +67,5 @@ def uri_joinpath(base: str, path: str) -> str:
     """
     p_base = urllib.parse.urlparse(base)
     parts = [*p_base]
-    parts[3] = pathlib.PurePath(p_base.path).joinpath(path)
+    parts[2] = pathlib.PurePath(p_base.path).joinpath(path).as_posix()
     return urllib.parse.urlunparse(parts)
