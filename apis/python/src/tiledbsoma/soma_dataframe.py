@@ -410,7 +410,7 @@ class SOMADataFrame(TileDBArray):
         attr_filters = tiledb.FilterList([tiledb.ZstdFilter(level=-1)])
 
         s = util.get_start_stamp()
-        log_io(None, f"{self._indent}START  WRITING")
+        log_io(None, f"{self._indent}START  WRITING {self.uri}")
 
         assert ROWID in dataframe.keys()
         assert len(dataframe.shape) == 2
@@ -482,7 +482,7 @@ class SOMADataFrame(TileDBArray):
 
         log_io(
             f"Wrote {self.uri}",
-            util.format_elapsed(s, f"{self._indent}FINISH WRITING"),
+            util.format_elapsed(s, f"{self._indent}FINISH WRITING {self.uri}"),
         )
 
     def write_all_from_pandas(

@@ -311,7 +311,7 @@ class SOMASparseNdArray(TileDBArray):
         # https://docs.scipy.org/doc/scipy/reference/sparse.html
 
         s = util.get_start_stamp()
-        logging.log_io(None, f"{self._indent}START  WRITING")
+        logging.log_io(None, f"{self._indent}START  WRITING {self.uri}")
 
         if self.exists():
             logging.log_io(None, f"{self._indent}Re-using existing array")
@@ -335,7 +335,7 @@ class SOMASparseNdArray(TileDBArray):
 
         logging.log_io(
             f"Wrote {self.uri}",
-            util.format_elapsed(s, f"{self._indent}FINISH WRITING"),
+            util.format_elapsed(s, f"{self._indent}FINISH WRITING {self.uri}"),
         )
 
     # ----------------------------------------------------------------

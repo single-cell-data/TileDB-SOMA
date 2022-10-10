@@ -114,7 +114,7 @@ def from_anndata(
     )
 
     s = util.get_start_stamp()
-    logging.log_io(None, f"{experiment._indent}START  WRITING")
+    logging.log_io(None, f"{experiment._indent}START  WRITING {experiment.uri}")
 
     # Must be done first, to create the parent directory.
     if not experiment.exists():
@@ -231,7 +231,7 @@ def from_anndata(
 
     logging.log_io(
         f"Wrote {experiment.uri}",
-        util.format_elapsed(s, f"{experiment._indent}FINISH WRITING"),
+        util.format_elapsed(s, f"{experiment._indent}FINISH WRITING {experiment.uri}"),
     )
 
 
