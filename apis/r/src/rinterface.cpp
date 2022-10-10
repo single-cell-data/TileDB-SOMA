@@ -141,7 +141,7 @@ SEXP export_recordbatch(const std::string& uri, const std::vector<std::string>& 
     auto obs = tdbs::SOMAReader::open(uri, "", {}, colnames);
     obs->submit();
 
-    // Getting next batch:  std::optinal<std::shared_ptr<ArrayBuffers>>
+    // Getting next batch:  std::optional<std::shared_ptr<ArrayBuffers>>
     auto obs_data = obs->read_next();
     if (!obs->results_complete()) {
         Rcpp::warning("Read of '%s' incomplete", uri);
