@@ -62,10 +62,33 @@ def make_relative_path(uri: str, relative_to: str) -> str:
 
 def uri_joinpath(base: str, path: str) -> str:
     """
-    Join a path to a URI. Assumes that the URI scheme uses Posix-like
-    path semantics.
+    Join a path to a URI.
+
+    Supports relative paths for `file` or unspecified schemes, assuming
+    they are file system paths.  Assumes NO suport for relative paths
+    otherwise.
     """
     p_base = urllib.parse.urlparse(base)
     parts = [*p_base]
-    parts[2] = pathlib.PurePath(p_base.path).joinpath(path).as_posix()
+    print(parts)
+
+    if len(path) == 0:
+        return base
+
+    if p_base.scheme == "" or p_base.scheme == "file":
+        # if a file path, just use pathlib.
+        parts[2] = pathlib.PurePath(p_base.path).joinpath(path).as_posix()
+    else:
+        if ".." in path:
+            raise ValueError("Relative paths unsupported")
+        if path.startswith("/"):
+            # if absolute, just use the path
+            parts[2] = path
+        else:
+            # join, being careful about extraneous path sep
+            if parts[2].endswith("/"):
+                parts[2] = parts[2] + path
+            else:
+                parts[2] = parts[2] + "/" + path
+
     return urllib.parse.urlunparse(parts)
