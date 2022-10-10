@@ -228,7 +228,7 @@ def from_anndata(
     #        experiment.set(experiment.uns)
 
     logging.log_io(
-        "Wrote",
+        f"Wrote {experiment.uri}",
         util.format_elapsed(s, f"{experiment._indent}FINISH WRITING"),
     )
 

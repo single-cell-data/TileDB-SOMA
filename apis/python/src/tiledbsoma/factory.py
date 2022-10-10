@@ -20,7 +20,6 @@ SOMAObjectTypes = Union[
     SOMAExperiment,
     SOMAMeasurement,
     SOMACollection,
-    SOMACollection,
     SOMADataFrame,
     SOMAIndexedDataFrame,
     SOMADenseNdArray,
@@ -53,7 +52,7 @@ def _construct_member(
     if object_type is None:
         object_type = tiledb.object_type(member_uri, ctx=ctx)
 
-    # auto-detect class name from meta-data
+    # auto-detect class name from metadata
     try:
         if object_type == "array":
             with tiledb.open(member_uri, ctx=ctx) as A:
