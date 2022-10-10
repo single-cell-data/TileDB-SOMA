@@ -1,20 +1,48 @@
 #!/bin/sh
 
+## for single-cell-data/apis/r repo, consider completing sources
 if test -d inst/include/tiledbsoma && test -f src/soma_reader.cc; then
-   echo "** Seeing files present, nothing to configure, exiting."
-   exit 0
+    echo "** Source files present, no adjustments needed."
+else
+
+    if ! test -d ../../libtiledbsoma; then
+        echo "** Not all source files present but no repo layout. Hm. Exiting."
+        exit 1
+    fi
+
+    if ! test -d inst/include/tiledbsoma; then
+        mkdir -p inst/include/tiledbsoma
+        echo "** copying C++ header files"
+        cp -vax ../../libtiledbsoma/include/tiledbsoma/* inst/include/tiledbsoma/
+        echo "** copying C++ source and header files"
+        cp -vax ../../libtiledbsoma/src/* src/
+    fi
 fi
 
-if ! test -d ../../libtiledbsoma; then
-   echo "** Not all source files present but not repo layout. Hm. Exiting."
-   exit 1
-fi   
+## look for tiledb core library and either use system library or download build
+have_tiledb="false"
 
-if ! test -d inst/include/tiledbsoma; then
-   mkdir -p inst/include/tiledbsoma
-   echo "** copying C++ header files"
-   cp -vax ../../libtiledbsoma/include/tiledbsoma/* inst/include/tiledbsoma/
-   echo "** copying C++ source and header files"
-   cp -vax ../../libtiledbsoma/src/* src/
+## check for pkg-config and use it to inquire about tiledb build options
+pkg-config --version >/dev/null 2>&1
+if [ $? -eq 0 ]; then
+    pkg-config --exists tiledb
+    if [ $? -eq 0 ]; then
+        pkgcflags=`pkg-config --cflags tiledb`
+        pkglibs=`pkg-config --libs tiledb`
+        archincl=`${R_HOME}/bin/Rscript -e 'cat("-I", system.file("include", package="arch"), sep="")'`
+
+        ## substitute them in (leaving @tiledb_rpath@ and @cxx20_macos@ alone for now)
+        sed -e "s|@tiledb_include@|$pkgcflags $archincl|" \
+            -e "s|@tiledb_libs@|$pkglibs|" \
+            -e "s|@tiledb_rpath@||" \
+            -e "s|@cxx20_macos@||" \
+            src/Makevars.in > src/Makevars
+
+        have_tiledb="true"
+        echo "*** updated src/Makevars for system library via pkg-config"
+    fi
 fi
 
+if [ x"${have_tiledb}" = x"false" ]; then
+    ${R_HOME}/bin/Rscript tools/get_tarball.R
+fi

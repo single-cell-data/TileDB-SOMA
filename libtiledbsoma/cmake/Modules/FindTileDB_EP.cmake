@@ -48,6 +48,7 @@ else()
     endif()
 
     # Try to download prebuilt artifacts unless the user specifies to build from source
+    # NB When updating the pinned URLs here, please also update in file apis/r/tools/get_tarball.R
     if(DOWNLOAD_TILEDB_PREBUILT)
         if (WIN32) # Windows
           SET(DOWNLOAD_URL "https://github.com/TileDB-Inc/TileDB/releases/download/2.11.1/tiledb-windows-x86_64-2.11.1-15a1161.zip")
