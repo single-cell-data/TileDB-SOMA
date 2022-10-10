@@ -212,18 +212,11 @@ class SOMACollectionBase(TileDBObject, MutableMapping[str, CollectionElementType
         me += ":" if len(keys) > 0 else ""
         lines = [me]
 
-        with ThreadPoolExecutor(
-            max_workers=self._tiledb_platform_config.max_thread_pool_workers
-        ) as executor:
-            for elmt_key, elmt_repr_lines in zip(
-                keys,
-                executor.map(
-                    SOMACollectionBase._get_element_repr, [(self, k) for k in keys]
-                ),
-            ):
-                lines.append(f'  "{elmt_key}": {elmt_repr_lines[0]}')
-                for line in elmt_repr_lines[1:]:
-                    lines.append(f"    {line}")
+        for elmt_key in keys:
+            elmt_repr_lines = SOMACollectionBase._get_element_repr((self, elmt_key))
+            lines.append(f'  "{elmt_key}": {elmt_repr_lines[0]}')
+            for line in elmt_repr_lines[1:]:
+                lines.append(f"    {line}")
 
         return lines
 
