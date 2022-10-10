@@ -154,12 +154,12 @@ def from_anndata(
 
     # TODO: more types to check?
     if isinstance(anndata.X, np.ndarray):
-        ddata = SOMADenseNdArray(uri=f"{measurement.X.uri}/data", ctx=ctx)
+        ddata = SOMADenseNdArray(uri=uri_joinpath(measurement.X.uri, "data"), ctx=ctx)
         # Code here and in else-block duplicated for linter appeasement
         ddata.from_matrix(anndata.X)
         measurement.X.set("data", ddata)
     else:
-        sdata = SOMASparseNdArray(uri=f"{measurement.X.uri}/data", ctx=ctx)
+        sdata = SOMASparseNdArray(uri=uri_joinpath(measurement.X.uri, "data"), ctx=ctx)
         sdata.from_matrix(anndata.X)
         measurement.X.set("data", sdata)
 
@@ -171,7 +171,7 @@ def from_anndata(
             uri=uri_joinpath(measurement.uri, "obsm")
         ).create()
         for key in anndata.obsm.keys():
-            arr = SOMADenseNdArray(uri=f"{measurement.obsm.uri}/{key}", ctx=ctx)
+            arr = SOMADenseNdArray(uri=uri_joinpath(measurement.obsm.uri, key), ctx=ctx)
             arr.from_matrix(anndata.obsm[key])
             measurement.obsm.set(key, arr)
 
@@ -180,7 +180,9 @@ def from_anndata(
             uri=uri_joinpath(measurement.uri, "varm")
         ).create()
         for key in anndata.varm.keys():
-            darr = SOMADenseNdArray(uri=f"{measurement.varm.uri}/{key}", ctx=ctx)
+            darr = SOMADenseNdArray(
+                uri=uri_joinpath(measurement.varm.uri, key), ctx=ctx
+            )
             darr.from_matrix(anndata.varm[key])
             measurement.varm.set(key, darr)
 
@@ -189,7 +191,9 @@ def from_anndata(
             uri=uri_joinpath(measurement.uri, "obsp")
         ).create()
         for key in anndata.obsp.keys():
-            sarr = SOMASparseNdArray(uri=f"{measurement.obsp.uri}/{key}", ctx=ctx)
+            sarr = SOMASparseNdArray(
+                uri=uri_joinpath(measurement.obsp.uri, key), ctx=ctx
+            )
             sarr.from_matrix(anndata.obsp[key])
             measurement.obsp.set(key, sarr)
 
@@ -198,14 +202,18 @@ def from_anndata(
             uri=uri_joinpath(measurement.uri, "varp")
         ).create()
         for key in anndata.varp.keys():
-            sarr = SOMASparseNdArray(uri=f"{measurement.varp.uri}/{key}", ctx=ctx)
+            sarr = SOMASparseNdArray(
+                uri=uri_joinpath(measurement.varp.uri, key), ctx=ctx
+            )
             sarr.from_matrix(anndata.varp[key])
             measurement.varp.set(key, sarr)
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     # RAW
     if anndata.raw is not None:
-        raw_measurement = SOMAMeasurement(uri=f"{experiment.ms.uri}/raw", ctx=ctx)
+        raw_measurement = SOMAMeasurement(
+            uri=uri_joinpath(experiment.ms.uri, "raw"), ctx=ctx
+        )
         raw_measurement.create()
         experiment.ms.set("raw", raw_measurement)
 
@@ -219,7 +227,9 @@ def from_anndata(
             uri=uri_joinpath(raw_measurement.uri, "X")
         ).create()
 
-        rawXdata = SOMASparseNdArray(uri=f"{raw_measurement.X.uri}/data", ctx=ctx)
+        rawXdata = SOMASparseNdArray(
+            uri=uri_joinpath(raw_measurement.X.uri, "data"), ctx=ctx
+        )
         rawXdata.from_matrix(anndata.raw.X)
         raw_measurement.X.set("data", rawXdata)
 
