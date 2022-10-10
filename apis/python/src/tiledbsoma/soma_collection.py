@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-import pathlib
-import urllib.parse
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from typing import (
@@ -24,6 +22,7 @@ import tiledb
 from .soma_exception import SOMADoesNotExistError, SOMAError
 from .tiledb_object import TileDBObject
 from .tiledb_platform_config import TileDBPlatformConfig
+from .util import make_relative_path
 from .util_tiledb import is_does_not_exist_error, is_duplicate_group_key_error
 
 # A collection can hold any sub-type of TileDBObject
@@ -282,16 +281,6 @@ class SOMACollectionBase(TileDBObject, MutableMapping[str, CollectionElementType
             return True
         return None
 
-    def _make_relative_uri(self, other_uri: str) -> str:
-        """
-        Return a URI relative to the current collection object. If not possible,
-        raise a ValueError.
-        """
-        collection_path = urllib.parse.urlparse(self.uri).path
-        other_path = urllib.parse.urlparse(other_uri).path
-        relpath = pathlib.PurePath(other_path).relative_to(collection_path).as_posix()
-        return relpath
-
     def _set_element(
         self, key: str, value: CollectionElementType, relative: Optional[bool] = None
     ) -> None:
@@ -311,7 +300,11 @@ class SOMACollectionBase(TileDBObject, MutableMapping[str, CollectionElementType
         # API only has add/delete. Assume add will succeed, and deal with delete/retry
         # if we get an error on add.
 
-        uri = self._make_relative_uri(value.uri) if relative else value.uri
+        uri = (
+            make_relative_path(value.uri, relative_to=self.uri)
+            if relative
+            else value.uri
+        )
         for retry in [True, False]:
             try:
                 with self._tiledb_open("w") as G:

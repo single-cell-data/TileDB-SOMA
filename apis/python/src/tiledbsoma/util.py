@@ -1,4 +1,6 @@
+import pathlib
 import time
+import urllib.parse
 from typing import TypeVar
 
 import numpy as np
@@ -32,3 +34,38 @@ def is_local_path(path: str) -> bool:
     if "://" in path:
         return False
     return True
+
+
+def make_relative_path(uri: str, relative_to: str) -> str:
+    """
+    Return a URI relative to another URI. If not possible, raise a ValueError.
+
+    This function assumes that the URI scheme follows posix path conventions
+    and only contains a scheme, netloc and path. It does not handle query params,
+    fragments, etc.
+
+    The default scheme, if one is not specified, is assumed to be `file`
+    """
+    p_uri = urllib.parse.urlparse(uri)
+    p_relative_to = urllib.parse.urlparse(relative_to)
+
+    uri_scheme = p_uri.scheme if p_uri.scheme != "" else "file"
+    relative_to_scheme = p_relative_to.scheme if p_relative_to.scheme != "" else "file"
+    if uri_scheme != relative_to_scheme:
+        raise ValueError(
+            "Unable to make relative path between URIs with different scheme"
+        )
+
+    relpath = pathlib.PurePath(p_uri.path).relative_to(p_relative_to.path).as_posix()
+    return relpath
+
+
+def uri_joinpath(base: str, path: str) -> str:
+    """
+    Join a path to a URI. Assumes that the URI scheme uses Posix-like
+    path semantics.
+    """
+    p_base = urllib.parse.urlparse(base)
+    parts = [*p_base]
+    parts[3] = pathlib.PurePath(p_base.path).joinpath(path)
+    return urllib.parse.urlunparse(parts)

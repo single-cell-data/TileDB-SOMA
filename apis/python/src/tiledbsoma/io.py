@@ -1,5 +1,4 @@
 from typing import Callable, Optional
-from urllib.parse import urljoin
 
 import anndata as ad
 import numpy as np
@@ -20,6 +19,7 @@ from tiledbsoma import (
 )
 
 from .types import Path
+from .util import uri_joinpath
 
 # import scanpy
 # import tiledb
@@ -122,13 +122,15 @@ def from_anndata(
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     # OBS
-    obs = SOMADataFrame(uri=urljoin(experiment.uri, "obs"))
+    obs = SOMADataFrame(uri=uri_joinpath(experiment.uri, "obs"))
     obs.write_all_from_pandas(
         dataframe=anndata.obs, extent=256, id_column_name="obs_id"
     )
     experiment.set("obs", obs)
 
-    experiment.set("ms", SOMACollection(uri=urljoin(experiment.uri, "ms")).create())
+    experiment.set(
+        "ms", SOMACollection(uri=uri_joinpath(experiment.uri, "ms")).create()
+    )
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     # MS
@@ -140,7 +142,7 @@ def from_anndata(
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     # MS/meas/VAR
-    var = SOMADataFrame(uri=urljoin(measurement.uri, "var"))
+    var = SOMADataFrame(uri=uri_joinpath(measurement.uri, "var"))
     var.write_all_from_pandas(
         dataframe=anndata.var, extent=2048, id_column_name="var_id"
     )
@@ -148,7 +150,7 @@ def from_anndata(
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     # MS/meas/X/DATA
-    measurement["X"] = SOMACollection(uri=urljoin(measurement.uri, "X")).create()
+    measurement["X"] = SOMACollection(uri=uri_joinpath(measurement.uri, "X")).create()
 
     # TODO: more types to check?
     if isinstance(anndata.X, np.ndarray):
@@ -166,7 +168,7 @@ def from_anndata(
 
     if len(anndata.obsm.keys()) > 0:  # do not create an empty collection
         measurement["obsm"] = SOMACollection(
-            uri=urljoin(measurement.uri, "obsm")
+            uri=uri_joinpath(measurement.uri, "obsm")
         ).create()
         for key in anndata.obsm.keys():
             arr = SOMADenseNdArray(uri=f"{measurement.obsm.uri}/{key}", ctx=ctx)
@@ -175,7 +177,7 @@ def from_anndata(
 
     if len(anndata.varm.keys()) > 0:  # do not create an empty collection
         measurement["varm"] = SOMACollection(
-            uri=urljoin(measurement.uri, "varm")
+            uri=uri_joinpath(measurement.uri, "varm")
         ).create()
         for key in anndata.varm.keys():
             darr = SOMADenseNdArray(uri=f"{measurement.varm.uri}/{key}", ctx=ctx)
@@ -184,7 +186,7 @@ def from_anndata(
 
     if len(anndata.obsp.keys()) > 0:  # do not create an empty collection
         measurement["obsp"] = SOMACollection(
-            uri=urljoin(measurement.uri, "obsp")
+            uri=uri_joinpath(measurement.uri, "obsp")
         ).create()
         for key in anndata.obsp.keys():
             sarr = SOMASparseNdArray(uri=f"{measurement.obsp.uri}/{key}", ctx=ctx)
@@ -193,7 +195,7 @@ def from_anndata(
 
     if len(anndata.varp.keys()) > 0:  # do not create an empty collection
         measurement["varp"] = SOMACollection(
-            uri=urljoin(measurement.uri, "varp")
+            uri=uri_joinpath(measurement.uri, "varp")
         ).create()
         for key in anndata.varp.keys():
             sarr = SOMASparseNdArray(uri=f"{measurement.varp.uri}/{key}", ctx=ctx)
@@ -207,14 +209,14 @@ def from_anndata(
         raw_measurement.create()
         experiment.ms.set("raw", raw_measurement)
 
-        var = SOMADataFrame(uri=urljoin(raw_measurement.uri, "var"))
+        var = SOMADataFrame(uri=uri_joinpath(raw_measurement.uri, "var"))
         var.write_all_from_pandas(
             dataframe=anndata.raw.var, extent=2048, id_column_name="var_id"
         )
         raw_measurement.set("var", var)
 
         raw_measurement["X"] = SOMACollection(
-            uri=urljoin(raw_measurement.uri, "X")
+            uri=uri_joinpath(raw_measurement.uri, "X")
         ).create()
 
         rawXdata = SOMASparseNdArray(uri=f"{raw_measurement.X.uri}/data", ctx=ctx)
