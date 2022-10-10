@@ -1,3 +1,8 @@
 #!/bin/sh
 
-rm -f  src/*.o src/*.so src/*.dylib */*~ *~
+rm -r -f \
+   src/*.o src/*.so src/*.dylib */*~ *~ \
+   src/Makevars \
+   tiledb.tar.gz \
+   tiledb/ \
+   inst/tiledb/
