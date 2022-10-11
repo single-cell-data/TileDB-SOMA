@@ -270,7 +270,8 @@ class SOMACollectionBase(TileDBObject, MutableMapping[str, CollectionElementType
         if self._tiledb_platform_config.member_uris_are_relative is not None:
             return self._tiledb_platform_config.member_uris_are_relative
         if uri.startswith("tiledb://"):
-            return True
+            # TileDB-Cloud does not use relative URIs, ever.
+            return False
         return None
 
     def _set_element(
