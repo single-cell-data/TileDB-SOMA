@@ -20,7 +20,7 @@ class SOMADataFrame(TileDBArray):
     """
     Represents ``obs``, ``var``, and others.
 
-    A ``SOMADataFrame`` contains a "pseudo-column" called ``soma_rowid``, of type uint64 and domain [0,num_rows).  The ``soma_rowid`` pseudo-column contains a unique value for each row in the ``SOMADataFrame``, and is intended to act as a join key for other objects, such as a ``SOMASparseNdArray``.
+    A ``SOMADataFrame`` contains a "pseudo-column" called ``soma_rowid``, of type int64 and domain [0,num_rows).  The ``soma_rowid`` pseudo-column contains a unique value for each row in the ``SOMADataFrame``, and is intended to act as a join key for other objects, such as a ``SOMASparseNdArray``.
     """
 
     _shape: Optional[NTuple] = None
@@ -65,7 +65,7 @@ class SOMADataFrame(TileDBArray):
         schema: pa.Schema,
     ) -> None:
         """
-        Create a TileDB 1D dense array with uint64 ``soma_rowid`` dimension and multiple attributes.
+        Create a TileDB 1D dense array with int64 ``soma_rowid`` dimension and multiple attributes.
         """
 
         level = self._tiledb_platform_config.string_dim_zstd_level
@@ -73,9 +73,9 @@ class SOMADataFrame(TileDBArray):
         dom = tiledb.Domain(
             tiledb.Dim(
                 name=ROWID,
-                domain=(0, np.iinfo(np.uint64).max - 1),
+                domain=(0, np.iinfo(np.int64).max - 1),
                 tile=2048,  # TODO: PARAMETERIZE
-                dtype=np.uint64,
+                dtype=np.int64,
                 filters=[tiledb.ZstdFilter(level=level)],
             ),
             ctx=self._ctx,
@@ -256,7 +256,7 @@ class SOMADataFrame(TileDBArray):
 
         :param values: An Arrow.Table containing all columns, including the index columns. The schema for the values must match the schema for the ``SOMADataFrame``.
 
-        The ``values`` Arrow Table must contain a ``soma_rowid`` (uint64) column, indicating which rows are being written.
+        The ``values`` Arrow Table must contain a ``soma_rowid`` (int64) column, indicating which rows are being written.
         """
         self._shape = None  # cache-invalidate
 
@@ -471,6 +471,6 @@ class SOMADataFrame(TileDBArray):
         assert len(dataframe.shape) == 2
         # E.g. (80, 7) is 80 rows x 7 columns
         num_rows = dataframe.shape[0]
-        dataframe[ROWID] = np.asarray(range(num_rows), dtype=np.uint64)
+        dataframe[ROWID] = np.asarray(range(num_rows), dtype=np.int64)
 
         self.write_from_pandas(dataframe, extent=extent, id_column_name=id_column_name)

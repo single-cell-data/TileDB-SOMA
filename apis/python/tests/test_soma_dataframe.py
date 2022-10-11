@@ -117,7 +117,7 @@ def simple_soma_data_frame(tmp_path):
     """
     schema = pa.schema(
         [
-            ("soma_rowid", pa.uint64()),
+            ("soma_rowid", pa.int64()),
             ("A", pa.int64()),
             ("B", pa.float64()),
             ("C", pa.large_string()),

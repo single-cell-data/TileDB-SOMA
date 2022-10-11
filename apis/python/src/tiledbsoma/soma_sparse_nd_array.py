@@ -48,7 +48,7 @@ class SOMASparseNdArray(TileDBArray):
 
         :param type: an Arrow type defining the type of each element in the array. If the type is unsupported, an error will be raised.
 
-        :param shape: the length of each domain as a list, e.g., [100, 10]. All lengths must be in the uint64 range.
+        :param shape: the length of each domain as a list, e.g., [100, 10]. All lengths must be in the positive int64 range.
         """
 
         # check on shape
@@ -65,12 +65,12 @@ class SOMASparseNdArray(TileDBArray):
         level = self._tiledb_platform_config.string_dim_zstd_level
 
         dims = []
-        for e in shape:
+        for n, e in enumerate(shape):
             dim = tiledb.Dim(
-                # Use tiledb default names like ``__dim_0``
+                name=f"soma_dim_{n}",
                 domain=(0, e - 1),
                 tile=min(e, 2048),  # TODO: PARAMETERIZE,
-                dtype=np.uint64,
+                dtype=np.int64,
                 filters=[tiledb.ZstdFilter(level=level)],
             )
             dims.append(dim)
@@ -78,7 +78,7 @@ class SOMASparseNdArray(TileDBArray):
 
         attrs = [
             tiledb.Attr(
-                name="data",
+                name="soma_data",
                 dtype=util_arrow.tiledb_type_from_arrow_type(type),
                 filters=[tiledb.ZstdFilter()],
                 ctx=self._ctx,
@@ -196,10 +196,10 @@ class SOMASparseNdArray(TileDBArray):
 
                 if format == "coo":
 
-                    coo_data = arrow_tbl.column("data").to_numpy()
+                    coo_data = arrow_tbl.column("soma_data").to_numpy()
                     coo_coords = np.array(
                         [
-                            arrow_tbl.column(f"__dim_{n}").to_numpy()
+                            arrow_tbl.column(f"soma_dim_{n}").to_numpy()
                             for n in range(self.ndims)
                         ]
                     ).T
@@ -210,9 +210,9 @@ class SOMASparseNdArray(TileDBArray):
                 elif format in ("csr", "csc"):
                     # Temporary: as these must be 2D, convert to scipy COO and use
                     # scipy to perform conversions.  C++ reader will be nicer!
-                    data = arrow_tbl.column("data").to_numpy()
-                    row = arrow_tbl.column("__dim_0").to_numpy()
-                    col = arrow_tbl.column("__dim_1").to_numpy()
+                    data = arrow_tbl.column("soma_data").to_numpy()
+                    row = arrow_tbl.column("soma_dim_0").to_numpy()
+                    col = arrow_tbl.column("soma_dim_1").to_numpy()
                     scipy_coo = sp.coo_array((data, (row, col)), shape=A.shape)
                     if format == "csr":
                         yield pa.SparseCSRMatrix.from_scipy(scipy_coo.tocsr())
@@ -286,13 +286,13 @@ class SOMASparseNdArray(TileDBArray):
 
     def write_table(self, arrow_table: pa.Table) -> None:
         """
-        Write a COO table, with columns named ``__dim_0``, ..., ``__dim_N`` and ``data``
+        Write a COO table, with columns named ``soma_dim_0``, ..., ``soma_dim_N`` and ``soma_data``
         to the dense nD array.
         """
-        data = arrow_table.column("data").to_numpy()
-        coord_tbl = arrow_table.drop(["data"])
+        data = arrow_table.column("soma_data").to_numpy()
+        coord_tbl = arrow_table.drop(["soma_data"])
         coords = tuple(
-            coord_tbl.column(f"__dim_{n}").to_numpy()
+            coord_tbl.column(f"soma_dim_{n}").to_numpy()
             for n in range(coord_tbl.num_columns)
         )
         with self._tiledb_open("w") as A:
@@ -348,19 +348,22 @@ class SOMASparseNdArray(TileDBArray):
 
         dom = tiledb.Domain(
             tiledb.Dim(
+                name="soma_dim_0",
                 domain=(0, num_rows - 1),
-                dtype=np.uint64,
+                dtype=np.int64,
                 # TODO: filters=[tiledb.RleFilter()],
             ),
             tiledb.Dim(
+                name="soma_dim_1",
                 domain=(0, num_cols - 1),
-                dtype=np.uint64,
+                dtype=np.int64,
                 # TODO: filters=[tiledb.ZstdFilter(level=level)],
             ),
             ctx=self._ctx,
         )
 
         attrs = tiledb.Attr(
+            name="soma_data",
             dtype=matrix_dtype,
             filters=[tiledb.ZstdFilter()],
             ctx=self._ctx,

@@ -7,7 +7,8 @@ def csr_from_tiledb_df(df: pd.DataFrame, num_rows: int, num_cols: int) -> sp.csr
     TODO: COMMENT
     """
     return sp.csr_matrix(
-        (df[""], (df["__dim_0"], df["__dim_1"])), shape=(num_rows, num_cols)
+        (df["soma_data"], (df["soma_dim_0"], df["soma_dim_1"])),
+        shape=(num_rows, num_cols),
     )
 
 

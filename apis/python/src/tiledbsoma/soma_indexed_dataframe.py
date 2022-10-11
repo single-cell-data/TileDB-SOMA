@@ -19,7 +19,7 @@ class SOMAIndexedDataFrame(TileDBArray):
     """
     Represents ``obs``, ``var``, and others.
 
-    All ``SOMAIndexedDataFrame`` must contain a column called ``soma_joinid``, of type ``uint64``. The ``soma_joinid`` column contains a unique value for each row in the ``SOMAIndexedDataFrame``, and intended to act as a joint key for other objects, such as ``SOMASparseNdArray``.
+    All ``SOMAIndexedDataFrame`` must contain a column called ``soma_joinid``, of type ``int64``. The ``soma_joinid`` column contains a unique value for each row in the ``SOMAIndexedDataFrame``, and intended to act as a joint key for other objects, such as ``SOMASparseNdArray``.
     """
 
     _index_column_names: Optional[List[str]]

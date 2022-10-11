@@ -51,7 +51,7 @@ class SOMADenseNdArray(TileDBArray):
 
         :param type: an Arrow type defining the type of each element in the array. If the type is unsupported, an error will be raised.
 
-        :param shape: the length of each domain as a list, e.g., [100, 10]. All lengths must be in the uint64 range.
+        :param shape: the length of each domain as a list, e.g., [100, 10]. All lengths must be in the positive int64 range.
         """
 
         # check on shape
@@ -68,12 +68,12 @@ class SOMADenseNdArray(TileDBArray):
         level = self._tiledb_platform_config.string_dim_zstd_level
 
         dims = []
-        for e in shape:
+        for n, e in enumerate(shape):
             dim = tiledb.Dim(
-                # Use tiledb default names like ``__dim_0``
+                name=f"soma_dim_{n}",
                 domain=(0, e - 1),
                 tile=min(e, 2048),  # TODO: PARAMETERIZE
-                dtype=np.uint64,
+                dtype=np.int64,
                 filters=[tiledb.ZstdFilter(level=level)],
             )
             dims.append(dim)
@@ -81,7 +81,7 @@ class SOMADenseNdArray(TileDBArray):
 
         attrs = [
             tiledb.Attr(
-                name="data",
+                name="soma_data",
                 dtype=util_arrow.tiledb_type_from_arrow_type(type),
                 filters=[tiledb.ZstdFilter()],
                 ctx=self._ctx,
@@ -153,7 +153,7 @@ class SOMADenseNdArray(TileDBArray):
             query = A.query(return_arrow=True, order=tiledb_result_order)
             arrow_tbl = query.df[coords]
             return pa.Tensor.from_numpy(
-                arrow_tbl.column("data").to_numpy().reshape(target_shape)
+                arrow_tbl.column("soma_data").to_numpy().reshape(target_shape)
             )
 
     def read_numpy(
@@ -241,19 +241,22 @@ class SOMADenseNdArray(TileDBArray):
 
         dom = tiledb.Domain(
             tiledb.Dim(
+                name="soma_dim_0",
                 domain=(0, num_rows - 1),
-                dtype=np.uint64,
+                dtype=np.int64,
                 # TODO: filters=[tiledb.RleFilter()],
             ),
             tiledb.Dim(
+                name="soma_dim_1",
                 domain=(0, num_cols - 1),
-                dtype=np.uint64,
+                dtype=np.int64,
                 # TODO: filters=[tiledb.ZstdFilter(level=level)],
             ),
             ctx=self._ctx,
         )
 
         attrs = tiledb.Attr(
+            name="soma_data",
             dtype=matrix_dtype,
             filters=[tiledb.ZstdFilter()],
             ctx=self._ctx,
