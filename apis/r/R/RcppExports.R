@@ -19,7 +19,12 @@ export_column_direct <- function(uri, colnames) {
 
 #' @rdname get_table
 #' @export
-export_recordbatch <- function(uri, colnames) {
-    .Call(`_tiledbsoma_export_recordbatch`, uri, colnames)
+export_arrow_array <- function(uri, colnames, qc = NULL, loglevel = "warn") {
+    .Call(`_tiledbsoma_export_arrow_array`, uri, colnames, qc, loglevel)
+}
+
+#' @noRd
+set_log_level <- function(level) {
+    invisible(.Call(`_tiledbsoma_set_log_level`, level))
 }
 
