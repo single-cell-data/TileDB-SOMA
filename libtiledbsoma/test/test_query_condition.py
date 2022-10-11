@@ -26,13 +26,11 @@ def pandas_query(uri, condition):
     return arrow_table.to_pandas().query(condition)
 
 
-def soma_query(uri, column_names, condition):
+def soma_query(uri, condition):
     qc = QueryCondition(condition)
     schema = tiledb.open(uri).schema
 
-    sr = sc.SOMAReader(
-        uri, column_names=column_names, query_condition=qc, schema=schema
-    )
+    sr = sc.SOMAReader(uri, query_condition=qc, schema=schema)
     sr.submit()
     arrow_table = sr.read_next()
     assert sr.results_complete()
@@ -46,8 +44,7 @@ def test_query_condition_int():
 
     pandas = pandas_query(uri, condition)
 
-    column_names = ["n_genes"]
-    soma_arrow = soma_query(uri, column_names, condition)
+    soma_arrow = soma_query(uri, condition)
 
     assert len(pandas.index) == soma_arrow.num_rows
 
@@ -58,8 +55,7 @@ def test_query_condition_string():
 
     pandas = pandas_query(uri, condition)
 
-    column_names = ["louvain"]
-    soma_arrow = soma_query(uri, column_names, condition)
+    soma_arrow = soma_query(uri, condition)
 
     assert len(pandas.index) == soma_arrow.num_rows
 
@@ -70,8 +66,7 @@ def test_query_condition_float():
 
     pandas = pandas_query(uri, condition)
 
-    column_names = ["percent_mito"]
-    soma_arrow = soma_query(uri, column_names, condition)
+    soma_arrow = soma_query(uri, condition)
 
     assert len(pandas.index) == soma_arrow.num_rows
 
@@ -82,8 +77,7 @@ def test_query_condition_and():
 
     pandas = pandas_query(uri, condition)
 
-    column_names = ["percent_mito", "n_genes"]
-    soma_arrow = soma_query(uri, column_names, condition)
+    soma_arrow = soma_query(uri, condition)
 
     assert len(pandas.index) == soma_arrow.num_rows
 
@@ -94,8 +88,7 @@ def test_query_condition_and_or():
 
     pandas = pandas_query(uri, condition)
 
-    column_names = ["percent_mito", "n_genes", "louvain"]
-    soma_arrow = soma_query(uri, column_names, condition)
+    soma_arrow = soma_query(uri, condition)
 
     assert len(pandas.index) == soma_arrow.num_rows
 
