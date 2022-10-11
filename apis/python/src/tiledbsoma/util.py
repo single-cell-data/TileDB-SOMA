@@ -70,7 +70,6 @@ def uri_joinpath(base: str, path: str) -> str:
     """
     p_base = urllib.parse.urlparse(base)
     parts = [*p_base]
-    print(parts)
 
     if len(path) == 0:
         return base
