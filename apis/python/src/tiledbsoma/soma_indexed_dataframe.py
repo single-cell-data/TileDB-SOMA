@@ -250,11 +250,7 @@ class SOMAIndexedDataFrame(TileDBArray):
                 iterator = query.df[ids]
 
             for table in iterator:
-                # XXX COMMENT MORE
-                # This is the 'decode on read' part of our logic; in dim_select we have the
-                # 'encode on write' part.
-                # Context: # https://github.com/single-cell-data/TileDB-SOMA/issues/99.
-                yield util_arrow.ascii_to_unicode_pyarrow_readback(table)
+                yield table
 
     def read_all(
         self,

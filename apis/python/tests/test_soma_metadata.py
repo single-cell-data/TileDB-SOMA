@@ -33,7 +33,7 @@ def soma_object(request, tmp_path):
 
     elif class_name == "SOMADataFrame":
         so = soma.SOMADataFrame(uri=uri)
-        so.create(pa.schema([("A", pa.int32()), ("B", pa.string())]))
+        so.create(pa.schema([("A", pa.int32()), ("B", pa.large_string())]))
 
     elif class_name == "SOMAIndexedDataFrame":
         so = soma.SOMAIndexedDataFrame(uri=uri)

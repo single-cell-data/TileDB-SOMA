@@ -21,6 +21,14 @@ def arrow_schema():
 def test_soma_indexed_dataframe(tmp_path, arrow_schema):
     sdf = t.SOMAIndexedDataFrame(uri=tmp_path.as_posix())
 
+    asch = pa.schema(
+        [
+            ("foo", pa.int32()),
+            ("bar", pa.float64()),
+            ("baz", pa.large_string()),
+        ]
+    )
+
     # Create
     asch = arrow_schema()
     sdf.create(schema=asch, index_column_names=["foo"])
@@ -72,7 +80,7 @@ def simple_soma_indexed_data_frame(tmp_path):
             ("index", pa.uint64()),
             ("A", pa.int64()),
             ("B", pa.float64()),
-            ("C", pa.string()),
+            ("C", pa.large_string()),
         ]
     )
     index_column_names = ["index"]

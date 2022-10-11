@@ -5,7 +5,7 @@ import pandas as pd
 import pyarrow as pa
 import tiledb
 
-from . import util, util_arrow, util_pandas, util_tiledb
+from . import util, util_arrow, util_tiledb
 from .logging import log_io
 from .soma_collection import SOMACollectionBase
 from .tiledb_array import TileDBArray
@@ -205,11 +205,7 @@ class SOMADataFrame(TileDBArray):
                 iterator = query.df[ids]
 
             for table in iterator:
-                # XXX COMMENT MORE
-                # This is the 'decode on read' part of our logic; in dim_select we have the
-                # 'encode on write' part.
-                # Context: https://github.com/single-cell-data/TileDB-SOMA/issues/99.
-                yield util_arrow.ascii_to_unicode_pyarrow_readback(table)
+                yield table
 
     def read_all(
         self,
@@ -275,7 +271,7 @@ class SOMADataFrame(TileDBArray):
             if name != ROWID:
                 attr_cols_map[name] = np.asarray(
                     values.column(name).to_pandas(
-                        types_mapper=util_arrow.tiledb_type_from_arrow_type,
+                        types_mapper=util_arrow.tiledb_type_from_arrow_type_for_write,
                     )
                 )
 
@@ -342,11 +338,6 @@ class SOMADataFrame(TileDBArray):
                 iterator = query.df[ids]
 
             for df in iterator:
-
-                # This is the 'decode on read' part of our logic; in dim_select we have the 'encode on
-                # write' part.
-                # Context: https://github.com/single-cell-data/TileDB-SOMA/issues/99.
-                df = util_pandas.ascii_to_unicode_pandas_readback(df)
 
                 if id_column_name is not None:
                     df.reset_index(inplace=True)
@@ -428,39 +419,15 @@ class SOMADataFrame(TileDBArray):
 
         dataframe.set_index(ROWID, inplace=True)
 
-        # ISSUE:
-        #
-        # TileDB attributes can be stored as Unicode but they are not yet queryable via the TileDB
-        # QueryCondition API. While this needs to be addressed -- global collaborators will want to
-        # write annotation-dataframe values in Unicode -- until then, to make obs/var data possible
-        # to query, we need to store these as ASCII.
-        #
-        # This is (besides collation) a storage-level issue not a presentation-level issue: At write
-        # time, this works — "α,β,γ" stores as "\xce\xb1,\xce\xb2,\xce\xb3"; at read time: since
-        # SOMA is an API: utf8-decode those strings when a query is done & give the user back
-        # "α,β,γ".
-        #
-        # CONTEXT:
-        # https://github.com/single-cell-data/TileDB-SOMA/issues/99
-        # https://github.com/single-cell-data/TileDB-SOMA/pull/101
-        # https://github.com/single-cell-data/TileDB-SOMA/issues/106
-        # https://github.com/single-cell-data/TileDB-SOMA/pull/117
-        #
-        # IMPLEMENTATION:
-        # Python types -- float, string, what have you -- appear as dtype('O') which is not useful.
-        # Also, ``tiledb.from_pandas`` has ``column_types`` but that _forces_ things to string to a
-        # particular if they shouldn't be.
-        #
-        # Instead, we use ``dataframe.convert_dtypes`` to get a little jump on what ``tiledb.from_pandas``
-        # is going to be doing anyway, namely, type-inferring to see what is going to be a string.
-        #
-        # TODO: when UTF-8 attributes are queryable using TileDB-Py's QueryCondition API we can remove this.
+        # Force ASCII storage if string, in order to make obs/var columns queryable.
+        # TODO: when UTF-8 attributes are fully supported we can remove this.
         column_types = {}
         for column_name in dataframe.keys():
             dfc = dataframe[column_name]
             if len(dfc) > 0 and type(dfc[0]) == str:
-                # Force ASCII storage if string, in order to make obs/var columns queryable.
-                column_types[column_name] = np.dtype("S")
+                column_types[column_name] = "ascii"
+            if len(dfc) > 0 and type(dfc[0]) == bytes:
+                column_types[column_name] = "bytes"
 
         tiledb.from_pandas(
             uri=self.uri,

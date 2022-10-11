@@ -15,7 +15,7 @@ def create_and_populate_dataframe(dataframe: soma.SOMADataFrame) -> None:
         [
             ("foo", pa.int32()),
             ("bar", pa.float64()),
-            ("baz", pa.string()),
+            ("baz", pa.large_string()),
         ]
     )
 
@@ -108,7 +108,7 @@ def soma_object(request, tmp_path):
 
     elif class_name == "SOMADataFrame":
         so = soma.SOMADataFrame(uri=uri)
-        so.create(pa.schema([("A", pa.int32()), ("B", pa.string())]))
+        so.create(pa.schema([("A", pa.int32()), ("B", pa.large_string())]))
 
     elif class_name == "SOMAIndexedDataFrame":
         so = soma.SOMAIndexedDataFrame(uri=uri)
