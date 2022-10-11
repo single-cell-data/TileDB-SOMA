@@ -64,7 +64,7 @@ class TileDBObject(ABC):
         Default repr
         """
         if self.exists():
-            return f"{self.type}(uri={self._uri})"
+            return f'{self.type}(uri="{self._uri}")'
         else:
             return f"{self.type}(not created)"
 
