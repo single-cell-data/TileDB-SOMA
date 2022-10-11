@@ -5,16 +5,32 @@
 ##'
 ##' @param uri Character value with URI path to a SOMA data set
 ##' @param column Character value with the name of the column to retrieve
+##' @param colnames Vector of character value with the name of the columns to retrieve
 ##' @return The selected data frame (or column) from the given data set
 ##' @examples
 ##' \dontrun{
 ##' uri <- "test/soco/pbmc3k_processed/obs"
 ##' column <-  "n_counts"
-##' summary(getColumn(uri, column)
-##' summary(getTable(uri))
+##' summary(get_table(uri))
+##' summary(get_columns(uri, column))
+##' columns <- c("n_genes", "louvain")
+##' z <- export_recordbatch(uri, columns)
+##' rb <- arch::from_arch_array(z, arrow::RecordBatch)
+##' z <- export_recordbatch(uri, columns)
+##' tb <- arrow::as_arrow_table(arch::from_arch_array(z, arrow::RecordBatch))
 ##' }
+##' @importFrom arch arch_allocate_schema arch_allocate_array_data arch_array as_arch_array_stream from_arch_array arch_schema_info
 ##' @export
-getColumn <- function(uri, column) {
+get_table <- function(uri) {
+    colnames <- get_column_names(uri)
+    ll <- lapply(colnames, function(n) get_column(uri, n))
+    names(ll) <- colnames
+    as.data.frame(ll)
+}
+
+##' @rdname get_table
+##' @export
+get_column <- function(uri, column) {
     schema <- arch::arch_allocate_schema()
     array <- arch::arch_allocate_array_data()
     ## modeled after libtiledb_query_export_buffer_arch_pointers
@@ -22,15 +38,6 @@ getColumn <- function(uri, column) {
     aa <- arch::arch_array(schema, array, FALSE)
     res <- arch::from_arch_array(aa)
     res
-}
-
-##' @rdname getColumn
-##' @export
-getTable <- function(uri) {
-    colnames <- get_column_names(uri)
-    ll <- lapply(colnames, \(n) getColumn(uri, n))
-    names(ll) <- colnames
-    as.data.frame(ll)
 }
 
 ##' @importFrom Rcpp evalCpp
