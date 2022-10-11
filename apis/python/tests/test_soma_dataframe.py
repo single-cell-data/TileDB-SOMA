@@ -174,37 +174,57 @@ def test_SOMADataFrame_read_column_names(simple_soma_data_frame, ids, col_names)
     schema, sdf, n_data = simple_soma_data_frame
     assert sdf.exists()
 
-    def _check_tbl(tbl, col_names, ids):
+    def _check_tbl(tbl, col_names, ids, *, demote):
         assert tbl.num_columns == (
             len(schema.names) if col_names is None else len(col_names)
         )
         assert tbl.num_rows == (n_data if ids is None else len(ids))
-        assert tbl.schema == pa.schema(
-            [
-                schema.field(f)
-                for f in (col_names if col_names is not None else schema.names)
-            ]
-        )
 
+        if demote:
+            assert tbl.schema == pa.schema(
+                [
+                    pa.field(schema.field(f).name, pa.string())
+                    if schema.field(f).type == pa.large_string()
+                    else schema.field(f)
+                    for f in (col_names if col_names is not None else schema.names)
+                ]
+            )
+        else:
+            assert tbl.schema == pa.schema(
+                [
+                    schema.field(f)
+                    for f in (col_names if col_names is not None else schema.names)
+                ]
+            )
+
+    # TileDB ASCII -> Arrow large_string
     _check_tbl(
         sdf.read_all(ids=ids, column_names=col_names),
         col_names,
         ids,
+        demote=False,
     )
+
     _check_tbl(
         sdf.read_all(column_names=col_names),
         col_names,
         None,
+        demote=False,
     )
+
+    # TileDB ASCII -> Pandas string -> Arrow string (not large_string)
     _check_tbl(
         pa.Table.from_pandas(
             pd.concat(sdf.read_as_pandas(ids=ids, column_names=col_names))
         ),
         col_names,
         ids,
+        demote=True,
     )
+
     _check_tbl(
         pa.Table.from_pandas(sdf.read_as_pandas_all(column_names=col_names)),
         col_names,
         None,
+        demote=True,
     )

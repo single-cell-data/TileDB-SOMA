@@ -426,6 +426,8 @@ class SOMADataFrame(TileDBArray):
             dfc = dataframe[column_name]
             if len(dfc) > 0 and type(dfc[0]) == str:
                 column_types[column_name] = "ascii"
+            if len(dfc) > 0 and type(dfc[0]) == bytes:
+                column_types[column_name] = "bytes"
 
         tiledb.from_pandas(
             uri=self.uri,

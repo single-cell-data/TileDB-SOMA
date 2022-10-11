@@ -9,13 +9,17 @@ Conversion to/from Arrow and TileDB type systems. Must be capable
 of representing full type semantics, and correctly performing a
 round trip conversion (eg, T == to_arrow(to_tiledb(T)))
 
-Most primitive types are simple - eg, uint8. Of particular challenge
+Most primitive types are simple -- e.g., uint8. Of particular challenge
 are datetime/timestamps as TileDB has no distinction between a "datetime" and
 a "timedelta". The best Arrow match is TimestampType, as long as that
 TimestampType instance does NOT have a timezone set.
 
 Because of our round-trip requirement, all other Arrow temporal types
 are unsupported (even though they are just int64 under the covers).
+
+We auto-promote Arrow's string and binary to large_string and large_binary,
+respectively, as this is what TileDB stores -- a sequence of bytes preceded
+by a 64-bit (not 32-bit) length int.
 """
 ARROW_TO_TDB = {
     # Dict of types unsupported by to_pandas_dtype, which require overrides.
@@ -25,8 +29,8 @@ ARROW_TO_TDB = {
     #
     pa.string(): "ascii",  # XXX TODO: temporary work-around until UTF8 support is native. GH #338.
     pa.large_string(): "ascii",  # XXX TODO: temporary work-around until UTF8 support is native. GH #338.
-    pa.binary(): np.dtype("S"),
-    pa.large_binary(): np.dtype("S"),
+    pa.binary(): "bytes",  # XXX TODO: temporary work-around until UTF8 support is native. GH #338.
+    pa.large_binary(): "bytes",  # XXX TODO: temporary work-around until UTF8 support is native. GH #338.
     pa.timestamp("s"): "datetime64[s]",
     pa.timestamp("ms"): "datetime64[ms]",
     pa.timestamp("us"): "datetime64[us]",
@@ -63,8 +67,9 @@ def tiledb_type_from_arrow_type(t: pa.DataType) -> Union[type, np.dtype, str]:
             raise arrow_type
         if arrow_type == "ascii":
             return arrow_type
-        else:
-            return np.dtype(arrow_type)
+        if arrow_type == "bytes":
+            return arrow_type  # np.int8()
+        return np.dtype(arrow_type)
 
     if not pa.types.is_primitive(t):
         raise TypeError(f"Type {str(t)} - unsupported type")
@@ -90,11 +95,12 @@ def get_arrow_type_from_tiledb_dtype(tiledb_dtype: Union[str, np.dtype]) -> pa.D
     """
     TODO: COMMENT
     """
-    if tiledb_dtype == "ascii" or tiledb_dtype.name == "bytes":
+    if tiledb_dtype == "bytes":
+        return pa.large_binary()
+    if isinstance(tiledb_dtype, str) and tiledb_dtype == "ascii":
         # XXX TODO: temporary work-around until UTF8 support is native. GH #338.
         return pa.large_string()
-    else:
-        return pa.from_numpy_dtype(tiledb_dtype)
+    return pa.from_numpy_dtype(tiledb_dtype)
 
 
 def get_arrow_schema_from_tiledb_uri(
