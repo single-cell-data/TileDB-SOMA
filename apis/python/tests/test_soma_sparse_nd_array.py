@@ -34,7 +34,7 @@ def test_soma_sparse_nd_array_create_ok(
     a = soma.SOMASparseNdArray(uri=tmp_path.as_posix())
     a.create(element_type, shape)
     assert a.type == "SOMASparseNdArray"
-    assert a.uri == tmp_path.as_posix() + "/"
+    assert a.uri == tmp_path.as_posix()
     assert a.ndims == len(shape)
     assert a.shape == tuple(shape)
     assert a.is_sparse is True

@@ -33,8 +33,6 @@ class TileDBObject(ABC):
         """
         Initialization-handling shared between ``TileDBArray`` and ``SOMACollection``.  Specify ``tiledb_platform_config`` and ``ctx`` for the top-level object; omit them and specify parent for non-top-level objects. Note that the parent reference is solely for propagating options, ctx, display depth, etc.
         """
-        if not uri.endswith("/"):
-            uri += "/"
         self._uri = uri
         if parent is None:
             self._ctx = ctx

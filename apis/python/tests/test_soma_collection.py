@@ -58,7 +58,7 @@ def test_soma_collection_basic(tmp_path):
 
     collection.create()
     assert collection.exists()
-    assert collection.uri == basedir + "/"
+    assert collection.uri == basedir
     assert "foobar" not in collection
 
     dataframe = soma.SOMADataFrame(os.path.join(basedir, "sdf"), parent=collection)
@@ -166,12 +166,12 @@ def test_collection_repr(tmp_path, relative):
     a = soma.SOMACollection(uri=(tmp_path / "A").as_uri())
     a.create()
     assert a.exists()
-    assert a.uri == (tmp_path / "A").as_uri() + "/"
+    assert a.uri == (tmp_path / "A").as_uri()
 
     b = soma.SOMACollection(uri=(tmp_path / "A" / "B").as_uri())
     b.create()
     assert b.exists()
-    assert b.uri == (tmp_path / "A" / "B").as_uri() + "/"
+    assert b.uri == (tmp_path / "A" / "B").as_uri()
 
     a.set("Another_Name", b, relative=relative)
     assert list(a.keys()) == ["Another_Name"]
@@ -179,7 +179,7 @@ def test_collection_repr(tmp_path, relative):
         a.__repr__()
         == f'SOMACollection(uri={a.uri}):\n  "Another_Name": SOMACollection(uri={b.uri})'
     )
-    assert a["Another_Name"].uri == (tmp_path / "A" / "B").as_uri() + "/"
+    assert a["Another_Name"].uri == (tmp_path / "A" / "B").as_uri()
     del a
 
     # re-open, reconfirm
@@ -189,7 +189,7 @@ def test_collection_repr(tmp_path, relative):
         aPrime.__repr__()
         == f'SOMACollection(uri={aPrime.uri}):\n  "Another_Name": SOMACollection(uri={b.uri})'
     )
-    assert aPrime["Another_Name"].uri == (tmp_path / "A" / "B").as_uri() + "/"
+    assert aPrime["Another_Name"].uri == (tmp_path / "A" / "B").as_uri()
     del aPrime
 
     # move container, re-confirm wrt "relative" value
@@ -197,7 +197,7 @@ def test_collection_repr(tmp_path, relative):
     aMoved = soma.SOMACollection(uri=(tmp_path / "A_moved").as_uri())
     assert list(aMoved.keys()) == ["Another_Name"]
     if relative:
-        assert aMoved["Another_Name"].uri == (tmp_path / "A_moved" / "B").as_uri() + "/"
+        assert aMoved["Another_Name"].uri == (tmp_path / "A_moved" / "B").as_uri()
         assert (
             aMoved.__repr__()
             == f'SOMACollection(uri={aMoved.uri}):\n  "Another_Name": SOMACollection(uri={aMoved["Another_Name"].uri})'
