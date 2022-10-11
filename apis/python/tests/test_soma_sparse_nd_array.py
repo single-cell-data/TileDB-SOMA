@@ -207,10 +207,7 @@ def tables_are_same_value(a: pa.Table, b: pa.Table) -> bool:
 
     for n in range(ndim):
         dim_name = f"soma_dim_{n}"
-        if (
-            a.field(dim_name).type != pa.int64()
-            or b.field(dim_name).type != pa.int64()
-        ):
+        if a.field(dim_name).type != pa.int64() or b.field(dim_name).type != pa.int64():
             return False
         if not np.array_equal(
             np.take_along_axis(a.column(dim_name).to_numpy(), ai, axis=0),
