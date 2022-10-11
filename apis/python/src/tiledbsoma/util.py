@@ -1,7 +1,7 @@
 import pathlib
 import time
 import urllib.parse
-from typing import TypeVar
+from typing import List, TypeVar
 
 import numpy as np
 import pandas as pd
@@ -91,3 +91,19 @@ def uri_joinpath(base: str, path: str) -> str:
                 parts[2] = parts[2] + "/" + path
 
     return urllib.parse.urlunparse(parts)
+
+
+def slice_to_list(sl: slice) -> List[int]:
+    """
+    TODO: COMMENT GOES HERE
+    """
+    # xxx note tiledb doesn't support stepped slices -- only 1 (and maybe -1)?
+    assert isinstance(sl, slice)
+    step = sl.step
+    if step is None:
+        if sl.start <= sl.stop:
+            step = 1
+        else:
+            step = -1
+    stop = sl.stop + step
+    return list(range(sl.start, stop, step))

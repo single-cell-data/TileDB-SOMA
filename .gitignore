@@ -52,5 +52,6 @@ apis/python/src/tiledbsoma/libtiledb.*
 apis/python/src/tiledbsoma/libtiledbsoma.*
 
 /.quarto/
+/tags
 
 /NOTES/
