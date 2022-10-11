@@ -90,7 +90,7 @@ def test_query_condition_and():
 
 def test_query_condition_and_or():
     uri = os.path.join(SOMA_URI, "obs")
-    condition = "(percent_mito > 0.02 and n_genes > 700) or (percent_mito < 0.015 and louvain == 'B cells')"
+    condition = '(percent_mito > 0.02 and n_genes > 700) or (percent_mito < 0.015 and louvain == "B cells")'
 
     pandas = pandas_query(uri, condition)
 

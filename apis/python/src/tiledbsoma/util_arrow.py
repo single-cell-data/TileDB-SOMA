@@ -43,6 +43,20 @@ ARROW_TO_TDB = {
 }
 
 
+def tiledb_type_from_arrow_type_for_write(t: pa.DataType) -> Union[type, np.dtype, str]:
+    """
+    Same as ``tiledb_type_from_arrow_type`` except that this is used for writing to a TileDB array.
+    The syntax of TileDB-Py is such that when we want to create a schema with an ASCII column,
+    we use the string ``"ascii"`` in place of a dtype. But when we want to write data, we need to
+    use a dtype of ``np.str``, which is now deprecated in favor of simply ``str``.
+    """
+    retval = tiledb_type_from_arrow_type(t)
+    if retval == "ascii":
+        return str
+    else:
+        return retval
+
+
 def tiledb_type_from_arrow_type(t: pa.DataType) -> Union[type, np.dtype, str]:
     """
     Given an Arrow type, return the corresponding TileDB type as a Numpy dtype.

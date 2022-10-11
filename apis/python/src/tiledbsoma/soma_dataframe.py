@@ -271,7 +271,7 @@ class SOMADataFrame(TileDBArray):
             if name != ROWID:
                 attr_cols_map[name] = np.asarray(
                     values.column(name).to_pandas(
-                        types_mapper=util_arrow.tiledb_type_from_arrow_type,
+                        types_mapper=util_arrow.tiledb_type_from_arrow_type_for_write,
                     )
                 )
 
