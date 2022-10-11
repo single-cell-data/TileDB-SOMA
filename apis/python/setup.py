@@ -115,7 +115,7 @@ if __name__ == "__main__":
             "pyarrow",
             "scanpy",
             "scipy",
-            "tiledb>=0.17.0",
+            "tiledb>=0.17.5",
         ],
         python_requires=">=3.7",
         ext_modules=get_ext_modules(),
