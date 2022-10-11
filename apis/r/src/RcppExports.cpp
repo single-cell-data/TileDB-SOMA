@@ -10,16 +10,6 @@ Rcpp::Rostream<true>&  Rcpp::Rcout = Rcpp::Rcpp_cout_get();
 Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 #endif
 
-// test_sdf
-void test_sdf(const std::string& uri);
-RcppExport SEXP _tiledbsoma_test_sdf(SEXP uriSEXP) {
-BEGIN_RCPP
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const std::string& >::type uri(uriSEXP);
-    test_sdf(uri);
-    return R_NilValue;
-END_RCPP
-}
 // get_column_names
 std::vector<std::string> get_column_names(const std::string& uri);
 RcppExport SEXP _tiledbsoma_get_column_names(SEXP uriSEXP) {
@@ -32,24 +22,49 @@ BEGIN_RCPP
 END_RCPP
 }
 // export_column
-bool export_column(const std::string& uri, const std::string& name, SEXP schemaxp, SEXP arrayxp);
-RcppExport SEXP _tiledbsoma_export_column(SEXP uriSEXP, SEXP nameSEXP, SEXP schemaxpSEXP, SEXP arrayxpSEXP) {
+bool export_column(const std::string& uri, const std::string& colname, SEXP schemaxp, SEXP arrayxp);
+RcppExport SEXP _tiledbsoma_export_column(SEXP uriSEXP, SEXP colnameSEXP, SEXP schemaxpSEXP, SEXP arrayxpSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< const std::string& >::type uri(uriSEXP);
-    Rcpp::traits::input_parameter< const std::string& >::type name(nameSEXP);
+    Rcpp::traits::input_parameter< const std::string& >::type colname(colnameSEXP);
     Rcpp::traits::input_parameter< SEXP >::type schemaxp(schemaxpSEXP);
     Rcpp::traits::input_parameter< SEXP >::type arrayxp(arrayxpSEXP);
-    rcpp_result_gen = Rcpp::wrap(export_column(uri, name, schemaxp, arrayxp));
+    rcpp_result_gen = Rcpp::wrap(export_column(uri, colname, schemaxp, arrayxp));
+    return rcpp_result_gen;
+END_RCPP
+}
+// export_column_direct
+SEXP export_column_direct(const std::string& uri, const std::vector<std::string>& colnames);
+RcppExport SEXP _tiledbsoma_export_column_direct(SEXP uriSEXP, SEXP colnamesSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const std::string& >::type uri(uriSEXP);
+    Rcpp::traits::input_parameter< const std::vector<std::string>& >::type colnames(colnamesSEXP);
+    rcpp_result_gen = Rcpp::wrap(export_column_direct(uri, colnames));
+    return rcpp_result_gen;
+END_RCPP
+}
+// export_recordbatch
+SEXP export_recordbatch(const std::string& uri, const std::vector<std::string>& colnames);
+RcppExport SEXP _tiledbsoma_export_recordbatch(SEXP uriSEXP, SEXP colnamesSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const std::string& >::type uri(uriSEXP);
+    Rcpp::traits::input_parameter< const std::vector<std::string>& >::type colnames(colnamesSEXP);
+    rcpp_result_gen = Rcpp::wrap(export_recordbatch(uri, colnames));
     return rcpp_result_gen;
 END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
-    {"_tiledbsoma_test_sdf", (DL_FUNC) &_tiledbsoma_test_sdf, 1},
     {"_tiledbsoma_get_column_names", (DL_FUNC) &_tiledbsoma_get_column_names, 1},
     {"_tiledbsoma_export_column", (DL_FUNC) &_tiledbsoma_export_column, 4},
+    {"_tiledbsoma_export_column_direct", (DL_FUNC) &_tiledbsoma_export_column_direct, 2},
+    {"_tiledbsoma_export_recordbatch", (DL_FUNC) &_tiledbsoma_export_recordbatch, 2},
     {NULL, NULL, 0}
 };
 
