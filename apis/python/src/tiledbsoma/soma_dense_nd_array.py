@@ -1,6 +1,6 @@
 import math
 import time
-from typing import Any, List, Literal, Optional, Sequence, Tuple, Union, cast
+from typing import Any, List, Literal, Optional, Tuple, Union, cast
 
 import numpy as np
 import pyarrow as pa
@@ -29,20 +29,23 @@ class SOMADenseNdArray(TileDBArray):
         self,
         uri: str,
         *,
-        name: Optional[str] = None,
         parent: Optional[SOMACollectionBase[Any]] = None,
         ctx: Optional[tiledb.Ctx] = None,
     ):
         """
         Also see the ``TileDBObject`` constructor.
         """
-        super().__init__(uri=uri, name=name, parent=parent, ctx=ctx)
+        super().__init__(uri=uri, parent=parent, ctx=ctx)
+
+    @property
+    def type(self) -> Literal["SOMADenseNdArray"]:
+        return "SOMADenseNdArray"
 
     def create(
         self,
         type: pa.DataType,
         shape: Union[NTuple, List[int]],
-    ) -> None:
+    ) -> "SOMADenseNdArray":
         """
         Create a ``SOMADenseNdArray`` named with the URI.
 
@@ -105,24 +108,7 @@ class SOMADenseNdArray(TileDBArray):
 
         self._common_create()  # object-type metadata etc
 
-    def __repr__(self) -> str:
-        """
-        Default display of ``SOMADenseNdArray``.
-        """
-        return "\n".join(self._repr_aux())
-
-    def _repr_aux(self) -> Sequence[str]:
-        if not self.exists():
-            return ["Unpopulated"]
-        lines = [
-            self.name
-            + " "
-            + self.__class__.__name__
-            # Pending https://github.com/single-cell-data/TileDB-SOMA/issues/302
-            # + " "
-            # + str(self.shape)
-        ]
-        return lines
+        return self
 
     @property
     def shape(self) -> NTuple:
@@ -222,12 +208,10 @@ class SOMADenseNdArray(TileDBArray):
         """
 
         s = util.get_start_stamp()
-        logging.log_io(None, f"{self._indent}START  WRITING {self._nested_name}")
+        logging.log_io(None, f"{self._indent}START  WRITING {self.uri}")
 
         if self.exists():
-            logging.log_io(
-                None, f"{self._indent}Re-using existing array {self._nested_name}"
-            )
+            logging.log_io(None, f"{self._indent}Re-using existing array")
         else:
             self._create_empty_array(
                 matrix_dtype=matrix.dtype,
@@ -243,8 +227,8 @@ class SOMADenseNdArray(TileDBArray):
         self._common_create()  # object-type metadata etc
 
         logging.log_io(
-            f"Wrote {self._nested_name}",
-            util.format_elapsed(s, f"{self._indent}FINISH WRITING {self._nested_name}"),
+            f"Wrote {self.uri}",
+            util.format_elapsed(s, f"{self._indent}FINISH WRITING {self.uri}"),
         )
 
     # ----------------------------------------------------------------
@@ -361,8 +345,7 @@ class SOMADenseNdArray(TileDBArray):
 
                 if chunk_percent < 100:
                     logging.log_io(
-                        "... %s %7.3f%% done, ETA %s"
-                        % (self._nested_name, chunk_percent, eta_seconds),
+                        "... %7.3f%% done, ETA %s" % (chunk_percent, eta_seconds),
                         "%sFINISH chunk in %.3f seconds, %7.3f%% done, ETA %s"
                         % (self._indent, chunk_seconds, chunk_percent, eta_seconds),
                     )

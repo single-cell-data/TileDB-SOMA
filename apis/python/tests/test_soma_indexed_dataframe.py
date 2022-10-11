@@ -119,13 +119,6 @@ def test_SOMAIndexedDataFrame_read_column_names(
     schema, sdf, n_data, index_column_names = simple_soma_indexed_data_frame
     assert sdf.exists()
 
-    print(schema)
-    print(sdf)
-    print(n_data)
-    print(index_column_names)
-    print(col_names)
-    print(ids)
-
     def _check_tbl(tbl, col_names, ids):
         print(tbl)
         assert tbl.num_columns == (

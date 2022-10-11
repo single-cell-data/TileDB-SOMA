@@ -39,9 +39,10 @@ from .general_utilities import (
     get_SOMA_version,
     get_storage_engine,
 )
-from .soma_collection import SOMACollection, SOMACollectionBase
+from .soma_collection import SOMACollection
 from .soma_dataframe import SOMADataFrame
 from .soma_dense_nd_array import SOMADenseNdArray
+from .soma_exception import SOMADoesNotExistError, SOMAError
 from .soma_experiment import SOMAExperiment
 from .soma_indexed_dataframe import SOMAIndexedDataFrame
 from .soma_measurement import SOMAMeasurement
@@ -59,13 +60,14 @@ __all__ = [
     "TileDBPlatformConfig",
     "TileDBObject",
     "TileDBArray",
-    "SOMADataFrame",
-    "SOMAIndexedDataFrame",
-    "SOMASparseNdArray",
-    "SOMADenseNdArray",
     "SOMACollection",
-    "SOMACollectionBase",
+    "SOMADataFrame",
+    "SOMADenseNdArray",
+    "SOMADoesNotExistError",
     "SOMAExperiment",
+    "SOMAError",
+    "SOMAIndexedDataFrame",
     "SOMAMeasurement",
     "SOMAMetadataMapping",
+    "SOMASparseNdArray",
 ]

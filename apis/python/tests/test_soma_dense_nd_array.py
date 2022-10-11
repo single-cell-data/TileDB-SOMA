@@ -10,9 +10,8 @@ from . import NDARRAY_ARROW_TYPES_NOT_SUPPORTED, NDARRAY_ARROW_TYPES_SUPPORTED
 
 
 def test_soma_dense_nd_array_ok_no_storage():
-    arr = soma.SOMADenseNdArray(uri="/foo/bar")
-    assert arr.uri == "/foo/bar"
-    assert arr.name == "bar"
+    arr = soma.SOMADenseNdArray(uri="/foo/bar/")
+    assert arr.uri == "/foo/bar/"
     assert not arr.exists()
     assert arr.type == "SOMADenseNdArray"
 

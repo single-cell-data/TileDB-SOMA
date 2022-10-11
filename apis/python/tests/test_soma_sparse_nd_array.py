@@ -13,9 +13,8 @@ AnySparseTensor = Union[pa.SparseCOOTensor, pa.SparseCSRMatrix, pa.SparseCSCMatr
 
 
 def test_soma_sparse_nd_array_ok_no_storage():
-    arr = soma.SOMASparseNdArray(uri="/foo/bar")
-    assert arr.uri == "/foo/bar"
-    assert arr.name == "bar"
+    arr = soma.SOMASparseNdArray(uri="/foo/bar/")
+    assert arr.uri == "/foo/bar/"
     assert not arr.exists()
     assert arr.type == "SOMASparseNdArray"
 

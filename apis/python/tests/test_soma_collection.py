@@ -5,6 +5,7 @@ import pyarrow as pa
 import pytest
 
 import tiledbsoma as soma
+from tiledbsoma.soma_exception import SOMADoesNotExistError
 
 
 # ----------------------------------------------------------------
@@ -47,14 +48,18 @@ def create_and_populate_sparse_nd_array(
 
 # ----------------------------------------------------------------
 def test_soma_collection_basic(tmp_path):
-    basedir = tmp_path.as_posix()
+    basedir = tmp_path.as_uri()
     collection = soma.SOMACollection(basedir)
 
     # ----------------------------------------------------------------
     assert not collection.exists()
+    with pytest.raises(soma.SOMADoesNotExistError):
+        assert "foobar" not in collection
+
     collection.create()
     assert collection.exists()
     assert collection.uri == basedir
+    assert "foobar" not in collection
 
     dataframe = soma.SOMADataFrame(os.path.join(basedir, "sdf"), parent=collection)
     create_and_populate_dataframe(dataframe)
@@ -64,8 +69,8 @@ def test_soma_collection_basic(tmp_path):
     )
     create_and_populate_sparse_nd_array(sparse_nd_array)
 
-    collection.set(dataframe)
-    collection.set(sparse_nd_array)
+    collection.set("sdf", dataframe)
+    collection.set("snda", sparse_nd_array)
 
     # ----------------------------------------------------------------
     readback_collection = soma.SOMACollection(collection.uri)
@@ -94,7 +99,7 @@ def soma_object(request, tmp_path):
     """
     Make an empty test object of the given foundational class name.
     """
-    uri = tmp_path.joinpath("object").as_posix()
+    uri = tmp_path.joinpath("object").as_uri()
     class_name = request.param
 
     if class_name == "SOMACollection":
@@ -126,9 +131,10 @@ def soma_object(request, tmp_path):
 
 
 def test_soma_collection_mapping(soma_object, tmp_path):
-    c = soma.SOMACollection(uri=(tmp_path / "collection").as_posix())
+    c = soma.SOMACollection(uri=(tmp_path / "collection").as_uri())
     assert not c.exists()
-    assert "foobar" not in c
+    with pytest.raises(soma.SOMADoesNotExistError):
+        assert "foobar" not in c
 
     c.create()
     assert c.exists()
@@ -153,3 +159,98 @@ def test_soma_collection_mapping(soma_object, tmp_path):
     c.delete()
     assert not c.exists()
     assert not (tmp_path / "collection").exists()
+
+
+@pytest.mark.parametrize("relative", [False, True])
+def test_collection_repr(tmp_path, relative):
+    a = soma.SOMACollection(uri=(tmp_path / "A").as_uri())
+    a.create()
+    assert a.exists()
+    assert a.uri == (tmp_path / "A").as_uri()
+
+    b = soma.SOMACollection(uri=(tmp_path / "A" / "B").as_uri())
+    b.create()
+    assert b.exists()
+    assert b.uri == (tmp_path / "A" / "B").as_uri()
+
+    a.set("Another_Name", b, relative=relative)
+    assert list(a.keys()) == ["Another_Name"]
+    assert (
+        a.__repr__()
+        == f'SOMACollection(uri="{a.uri}"):\n  "Another_Name": SOMACollection(uri="{b.uri}")'
+    )
+    assert a["Another_Name"].uri == (tmp_path / "A" / "B").as_uri()
+    del a
+
+    # re-open, reconfirm
+    aPrime = soma.SOMACollection(uri=(tmp_path / "A").as_uri())
+    assert list(aPrime.keys()) == ["Another_Name"]
+    assert (
+        aPrime.__repr__()
+        == f'SOMACollection(uri="{aPrime.uri}"):\n  "Another_Name": SOMACollection(uri="{b.uri}")'
+    )
+    assert aPrime["Another_Name"].uri == (tmp_path / "A" / "B").as_uri()
+    del aPrime
+
+    # move container, re-confirm wrt "relative" value
+    os.rename((tmp_path / "A"), (tmp_path / "A_moved"))
+    aMoved = soma.SOMACollection(uri=(tmp_path / "A_moved").as_uri())
+    assert list(aMoved.keys()) == ["Another_Name"]
+    if relative:
+        assert aMoved["Another_Name"].uri == (tmp_path / "A_moved" / "B").as_uri()
+        assert (
+            aMoved.__repr__()
+            == f'SOMACollection(uri="{aMoved.uri}"):\n  "Another_Name": SOMACollection(uri="{aMoved["Another_Name"].uri}")'
+        )
+    else:
+        with pytest.raises(KeyError):
+            aMoved["Another_Name"].uri
+
+    del aMoved
+
+
+def test_soma_collection_update_on_set(tmp_path):
+    """
+    SOMACollection.__setattr__ (and .set) have update semantics. Underlying
+    tiledb.Group only has add/del. Verify.
+    """
+
+    sc = soma.SOMACollection(tmp_path.as_uri()).create()
+    A = soma.SOMADenseNdArray(uri=(tmp_path / "A").as_uri()).create(
+        type=pa.float64(), shape=(100, 10, 1)
+    )
+    B = soma.SOMADenseNdArray(uri=(tmp_path / "B").as_uri()).create(
+        type=pa.float64(), shape=(100, 10, 1)
+    )
+    assert sc.exists()
+    assert set(sc.keys()) == set([])
+
+    sc["A"] = A
+    assert set(sc.keys()) == set(["A"])
+    assert sc["A"] == A
+
+    sc["A"] = B
+    assert set(sc.keys()) == set(["A"])
+    assert sc["A"] == B
+
+
+def test_exceptions_on_not_created(tmp_path):
+    """
+    When the collection has not been created, we should get
+    a meaningful error
+    """
+    sc = soma.SOMACollection(tmp_path.as_uri())
+
+    A = soma.SOMADenseNdArray(uri=(tmp_path / "A").as_uri()).create(
+        type=pa.float64(), shape=(100, 10, 1)
+    )
+    with pytest.raises(SOMADoesNotExistError):
+        sc["A"] = A
+    with pytest.raises(SOMADoesNotExistError):
+        del sc["A"]
+    with pytest.raises(SOMADoesNotExistError):
+        assert "A" not in sc
+    with pytest.raises(SOMADoesNotExistError):
+        list(sc)
+    with pytest.raises(SOMADoesNotExistError):
+        len(sc)

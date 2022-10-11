@@ -1,10 +1,7 @@
-import os
-from abc import ABC, abstractmethod
-from typing import Any, Optional, Sequence, Union
+from abc import ABC, abstractmethod, abstractproperty
+from typing import Optional, Union
 
 import tiledb
-
-import tiledbsoma
 
 from . import util
 from .soma_metadata_mapping import SOMAMetadataMapping
@@ -19,8 +16,6 @@ class TileDBObject(ABC):
     """
 
     _uri: str
-    _name: str
-    _nested_name: str
     _tiledb_platform_config: TileDBPlatformConfig
     metadata: SOMAMetadataMapping
 
@@ -28,10 +23,9 @@ class TileDBObject(ABC):
         self,
         # All objects:
         uri: str,
-        name: Optional[str] = None,
         *,
         # Non-top-level objects can have a parent to propgate context, depth, etc.
-        parent: Optional["tiledbsoma.SOMACollectionBase[Any]"] = None,
+        parent: Optional["TileDBObject"] = None,
         # Top-level objects should specify these:
         tiledb_platform_config: Optional[TileDBPlatformConfig] = None,
         ctx: Optional[tiledb.Ctx] = None,
@@ -40,20 +34,13 @@ class TileDBObject(ABC):
         Initialization-handling shared between ``TileDBArray`` and ``SOMACollection``.  Specify ``tiledb_platform_config`` and ``ctx`` for the top-level object; omit them and specify parent for non-top-level objects. Note that the parent reference is solely for propagating options, ctx, display depth, etc.
         """
         self._uri = uri
-        if name is None:
-            self._name = os.path.basename(uri)
-        else:
-            self._name = name
-
         if parent is None:
             self._ctx = ctx
             self._indent = ""
-            self._nested_name = self._name
         else:
             tiledb_platform_config = parent._tiledb_platform_config
             self._ctx = parent._ctx
             self._indent = parent._indent + "  "
-            self._nested_name = parent._nested_name + "/" + self._name
 
         self._tiledb_platform_config = tiledb_platform_config or TileDBPlatformConfig()
         # Null ctx is OK if that's what they wanted (e.g. not doing any TileDB-Cloud ops).
@@ -74,24 +61,25 @@ class TileDBObject(ABC):
 
     def __repr__(self) -> str:
         """
-        Fallback string display. Will be overridden by any interesting subclasses.
+        Default repr
         """
-        return f"name={self._name},uri={self._uri}"
+        if self.exists():
+            return f'{self.type}(uri="{self._uri}")'
+        else:
+            return f"{self.type}(not created)"
 
-    def _repr_aux(self) -> Sequence[str]:
-        raise Exception("Must be overridden by inherting classes.")
-
-    @property
-    def name(self) -> str:
-        return self._name
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, TileDBObject):
+            return False
+        return self._uri == other._uri
 
     @property
     def uri(self) -> str:
         return self._uri
 
-    @property
+    @abstractproperty
     def type(self) -> str:
-        return type(self).__name__
+        ...
 
     def exists(self) -> bool:
         """
@@ -114,6 +102,7 @@ class TileDBObject(ABC):
     @abstractmethod
     def _tiledb_open(self, mode: str = "r") -> Union[tiledb.Array, tiledb.Group]:
         """Open the underlying TileDB array or Group"""
+        ...
 
     def _common_create(self) -> None:
         """

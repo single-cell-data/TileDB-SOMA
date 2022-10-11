@@ -1,47 +1,86 @@
 from __future__ import annotations
 
-from concurrent.futures import ThreadPoolExecutor
+from dataclasses import dataclass
 from typing import (
     Any,
     Dict,
     Iterator,
+    List,
+    Literal,
     MutableMapping,
     Optional,
-    Sequence,
     Tuple,
+    Type,
     TypeVar,
+    Union,
     cast,
 )
 
 import tiledb
 
-import tiledbsoma.util_tiledb as util_tiledb
-
-from .tiledb_array import TileDBArray
+from .soma_exception import SOMADoesNotExistError, SOMAError
 from .tiledb_object import TileDBObject
 from .tiledb_platform_config import TileDBPlatformConfig
+from .util import make_relative_path
+from .util_tiledb import is_does_not_exist_error, is_duplicate_group_key_error
 
 # A collection can hold any sub-type of TileDBObject
 CollectionElementType = TypeVar("CollectionElementType", bound=TileDBObject)
 
 
+@dataclass
+class _CachedElement:
+    """
+    Private class representing cached state. Includes the Collection's
+    backing tiledb.Group state, which reduces I/O overhead, and
+    SOMA objects pointing to the collection elements.
+    """
+
+    TdbInfo = TypeVar("TdbInfo", bound="_CachedElement._TdbInfo")
+
+    @dataclass
+    class _TdbInfo:
+        type: str
+        uri: str
+        name: str
+
+        @classmethod
+        def from_tdb_object(
+            cls: Type[_CachedElement.TdbInfo], o: tiledb.Object
+        ) -> _CachedElement._TdbInfo:
+            assert o.name is not None
+            return cls(type=o.type.__name__.lower(), uri=o.uri, name=o.name)
+
+    tdb: _TdbInfo
+    soma: Optional[TileDBObject] = None
+
+
 class SOMACollectionBase(TileDBObject, MutableMapping[str, CollectionElementType]):
     """
-    Contains a key-value mapping where the keys are string names and the values are any SOMA-defined foundational or composed type, including ``SOMACollection``, ``SOMADataFrame``, ``SOMADenseNdArray``, ``SOMASparseNdArray`` or ``SOMAExperiment``.
+    Contains a key-value mapping where the keys are string names and the values
+    are any SOMA-defined foundational or composed type, including ``SOMACollection``,
+    ``SOMADataFrame``, ``SOMADenseNdArray``, ``SOMASparseNdArray`` or ``SOMAExperiment``.
     """
 
-    # Cache to avoid repeated calls to the REST server for resolving group-member URIs
-    # in the tiledb-cloud case. We invalidate this on add-member or remove-member.
-    _cached_member_names_to_uris: Optional[Dict[str, str]]
+    # Subclass protocol to constrain which SOMA objects types  may be set on a
+    # particular collection key. Used by SOMAExperiment and SOMAMeasurement.
+    _subclass_constrained_types: Dict[str, Tuple[str, ...]] = {}
 
-    # TODO: comment re the performance impact of this cache.
-    _cached_members: Dict[str, Any]
+    # The collection is persisted as a TileDB Group. The group contents are
+    # cached for read performance on higher-latency storage systems such as
+    # S3 or TileDB-Cloud. The cache is re-validated on a read miss or on a
+    # collection update (add or delete).
+    #
+    # A value of None implies that the cache has not been loaded, either
+    # due to the Collection not existing (ie, TileDB Group does not exist),
+    # or because we have not yet tried to read it.
+    #
+    _cached_values: Union[Dict[str, _CachedElement], None]
 
     def __init__(
         self,
         uri: str,
         *,
-        name: Optional[str] = None,
         # Non-top-level objects can have a parent to propagate context, depth, etc.
         parent: Optional[SOMACollectionBase[Any]] = None,
         # Top-level objects should specify these:
@@ -53,311 +92,266 @@ class SOMACollectionBase(TileDBObject, MutableMapping[str, CollectionElementType
         """
         super().__init__(
             uri=uri,
-            name=name,
             parent=parent,
             tiledb_platform_config=tiledb_platform_config,
             ctx=ctx,
         )
-        self._cached_members = {}
-        self._cached_member_names_to_uris = None
+        self._cached_values = None
 
-    def create(self) -> None:
+    def create(self) -> "SOMACollectionBase[CollectionElementType]":
         """
         Creates the data structure on disk/S3/cloud.
         """
         tiledb.group_create(uri=self._uri, ctx=self._ctx)
         self._common_create()  # object-type metadata etc
+        self._cached_values = {}
+        return self
 
     def __len__(self) -> int:
         """
-        Returns the number of members in the collection.  Implements Python's ``len(collection)``.
+        Return the number of members in the collection
         """
-        return len(self._get_member_names_to_uris())
+        self._load_tdb_group_cache()
+        return 0 if self._cached_values is None else len(self._cached_values)
 
-    def __getitem__(self, member_name: str) -> CollectionElementType:
+    def __getitem__(self, key: str) -> CollectionElementType:
         """
-        Gets the member object associated with the key.
+        Gets the value associated with the key.
         """
-        if member_name not in self._cached_members:
-            # Do this here to avoid a cyclic module dependency:
-            from .factory import _construct_member
+        err_str = f"{self.__class__.__name__} has no attribute '{key}'"
 
-            member_uri = self._get_child_uri(member_name)
-            member = _construct_member(
-                member_name,
-                member_uri,
-                self,
-                ctx=self._ctx,
-            )
-            if member is not None:
-                self._cached_members[member_name] = member
+        # Load cached TileDB Group if not yet loaded or if key not in cache.
+        if self._cached_values is None or key not in self._cached_values:
+            self._load_tdb_group_cache()
+            if self._cached_values is None:
+                # This collection was not yet created
+                # TODO: SOMA needs better exception types
+                raise SOMADoesNotExistError("SOMACollection has not been created")
 
-        if member_name in self._cached_members:
-            return cast(CollectionElementType, self._cached_members[member_name])
-        else:
-            # Unlike __getattribute__ this is _only_ called when the member isn't otherwise
-            # resolvable. So raising here is the right thing to do.
-            raise KeyError(
-                f"{self.__class__.__name__} has no attribute '{member_name}'"
-            )
+        # if element is in the TileDB Group, so make a SOMA in-memory object to represent it.
+        if key in self._cached_values:
+            soma = self._cached_values[key].soma
+            if soma is None:
+                from .factory import _construct_member
+
+                tdb: tiledb.Object = self._cached_values[key].tdb
+                soma = _construct_member(
+                    tdb.uri, self, ctx=self._ctx, object_type=tdb.type
+                )
+                if soma is None:
+                    # if we were unable to create an object, it wasn't actually a SOMA object
+                    raise KeyError(err_str)
+
+                self._cached_values[key].soma = soma
+
+            return cast(CollectionElementType, self._cached_values[key].soma)
+
+        raise KeyError(err_str)
 
     def set(
         self,
-        member: CollectionElementType,
+        key: str,
+        value: CollectionElementType,
         *,
-        child_name: Optional[str] = None,
         relative: Optional[bool] = None,
     ) -> None:
         """
-        Adds a member to the collection.  This interface allows explicit control over
+        Adds an element to the collection.  This interface allows explicit control over
         `relative` URI, and uses the member's default name.
         """
-        name = member.name if child_name is None else child_name
-        self._add_object(member, child_name=name, relative=relative)
-        self._cached_members[name] = member
+        self._set_element(key, value, relative=relative)
 
-    def __setitem__(self, name: str, member: CollectionElementType) -> None:
+    def __setitem__(self, key: str, value: CollectionElementType) -> None:
         """
         Default collection __setattr__
         """
-        self._add_object(member, child_name=name, relative=False)
-        self._cached_members[name] = member
+        self._set_element(key, value)
 
-    def __delitem__(self, member_name: str) -> None:
+    def __delitem__(self, key: str) -> None:
         """
         Removes a member from the collection, when invoked as ``del collection["namegoeshere"]``.
         """
-        self._remove_object_by_name(member_name)
+        self._del_element(key)
 
     def __iter__(self) -> Iterator[str]:
-        return iter(self._get_member_names_to_uris())
+        if self._cached_values is None:
+            self._load_tdb_group_cache()
+        assert self._cached_values is not None
+        return iter(self._cached_values)
 
     def __repr__(self) -> str:
         """
         Default display for ``SOMACollection``.
         """
-        return "\n".join(self._repr_aux())
+        return "\n".join(self._get_collection_repr())
 
     # ================================================================
     # PRIVATE METHODS FROM HERE ON DOWN
     # ================================================================
 
-    def _repr_aux(self) -> Sequence[str]:
-        """
-        Internal helper method for ``__repr__`` which is nesting-aware.
-        """
+    @classmethod
+    def _get_element_repr(
+        cls, args: Tuple[SOMACollectionBase[CollectionElementType], str]
+    ) -> List[str]:
+        collection, key = args
+        value = collection.__getitem__(key)
+        if isinstance(value, SOMACollectionBase):
+            return value._get_collection_repr()
+        else:
+            return [value.__repr__()]
+
+    def _get_collection_repr(self) -> List[str]:
+        me = super().__repr__()
         if not self.exists():
-            return ["Unpopulated"]
+            return [me]
 
-        futures = []
-        with ThreadPoolExecutor(
-            max_workers=self._tiledb_platform_config.max_thread_pool_workers
-        ) as executor:
-            for key in self.keys():
-                future = executor.submit(self._repr_single_aux, key)
-                futures.append(future)
+        self._load_tdb_group_cache()
+        assert self._cached_values is not None
+        keys = list(self._cached_values.keys())
+        me += ":" if len(keys) > 0 else ""
+        lines = [me]
 
-        lines_per_key = {}
-        for future in futures:
-            key, lines = future.result()
-            lines_per_key[key] = lines
+        for elmt_key in keys:
+            elmt_repr_lines = SOMACollectionBase._get_element_repr((self, elmt_key))
+            lines.append(f'  "{elmt_key}": {elmt_repr_lines[0]}')
+            for line in elmt_repr_lines[1:]:
+                lines.append(f"    {line}")
 
-        lines = [f"{self.name} {self.__class__.__name__}:"]
-        for key in self.keys():
-            for line in lines_per_key[key]:
-                lines.append("  " + line)
         return lines
 
-    def _repr_single_aux(self, key: str) -> Tuple[str, Sequence[str]]:
+    def _load_tdb_group(self) -> Optional[Dict[str, tiledb.Object]]:
+        try:
+            with self._tiledb_open("r") as G:
+                return {o.name: o for o in G if o.name is not None}
+
+        except tiledb.TileDBError as e:
+            if is_does_not_exist_error(e):
+                raise SOMADoesNotExistError("Collection not created") from e
+            raise
+
+    def _load_tdb_group_cache(self) -> None:
         """
-        Internal helper method for ``__repr__` which is designed for a single thread
-        in a ``ThreadPoolExecutor`` context.
+        Load all objects in the persistent tiledb group. Discard any anonymous objects,
+        as all SOMACollection elements must have a key.
+
+        Update the cache with the group contents:
+        * delete cached items not in tdb group
+        * update/overwrite cache items where there is a URI or type mismatch
+        * add any new elements to cache
         """
-        child = self.__getitem__(
-            key
-        )  # Involves a constructor and a tiledb.open to get the class name from object metadata
-        child_lines = child._repr_aux()
-        # Indenting child lines automatically gives us nice visual nesting, for good UX.
-        return (key, ["  " + child_line for child_line in child_lines])
+        tdb_group = self._load_tdb_group()
+        if tdb_group is None:
+            return
+
+        if self._cached_values is None:
+            self._cached_values = {}
+
+        # first, remove anything in cache but not in the group
+        for key in list(self._cached_values):
+            if key not in tdb_group:
+                del self._cached_values[key]
+
+        # then, update cache with the group contents
+        for key in tdb_group:
+            tdb = tdb_group[key]
+            if key in self._cached_values:
+                cached = self._cached_values[key]
+                if tdb.uri == cached.tdb.uri and tdb.type == cached.tdb.type:
+                    continue
+
+            self._cached_values[key] = _CachedElement(
+                soma=None, tdb=_CachedElement._TdbInfo.from_tdb_object(tdb)
+            )
+
+        assert self._cached_values is not None
+
+    def _determine_default_relative(self, uri: str) -> Optional[bool]:
+        """Defaulting for the relative parameter."""
+        if self._tiledb_platform_config.member_uris_are_relative is not None:
+            return self._tiledb_platform_config.member_uris_are_relative
+        if uri.startswith("tiledb://"):
+            # TileDB-Cloud does not use relative URIs, ever.
+            return False
+        return None
+
+    def _set_element(
+        self, key: str, value: CollectionElementType, relative: Optional[bool] = None
+    ) -> None:
+        if relative is None:
+            relative = self._determine_default_relative(value.uri)
+
+        if key in self._subclass_constrained_types:
+            # Implement the sub-class protocol constraining the value type of certain item keys
+            accepted_types = self._subclass_constrained_types[key]
+            if not isinstance(value, TileDBObject) or value.type not in accepted_types:
+                NL = "\n"
+                raise TypeError(
+                    f"{self.__class__.__name__} field '{key}' only accepts values of type(s) {NL.join(accepted_types)}."
+                )
+
+        # Set has update semantics. Add if missing, delete/add if not. The TileDB Group
+        # API only has add/delete. Assume add will succeed, and deal with delete/retry
+        # if we get an error on add.
+
+        uri = (
+            make_relative_path(value.uri, relative_to=self.uri)
+            if relative
+            else value.uri
+        )
+        for retry in [True, False]:
+            try:
+                with self._tiledb_open("w") as G:
+                    G.add(uri=uri, relative=relative, name=key)
+                break
+            except tiledb.TileDBError as e:
+                if is_does_not_exist_error(e):
+                    raise SOMADoesNotExistError("Collection not created") from e
+                if not is_duplicate_group_key_error(e):
+                    raise e
+            if retry:
+                self._del_element(key, skip_cache_reload=True)
+
+        self._load_tdb_group_cache()
+        if self._cached_values is not None:
+            self._cached_values[key].soma = value
+        else:
+            # This can only happen if _load_tdb_group_cache failed
+            raise SOMAError("Internal error - unable to save TileDB Group")
+
+    def _del_element(self, key: str, skip_cache_reload: bool = False) -> None:
+        if self._cached_values is not None:
+            del self._cached_values[key]
+        try:
+            with self._tiledb_open("w") as G:
+                G.remove(key)
+        except tiledb.TileDBError as e:
+            if is_does_not_exist_error(e):
+                raise SOMADoesNotExistError("Collection has not been created") from e
+            raise
+
+        if not skip_cache_reload:
+            self._load_tdb_group_cache()
 
     def _tiledb_open(self, mode: str = "r") -> tiledb.Group:
         """
-        This is just a convenience wrapper around tiledb group-open.  It works as ``with self._tiledb_open() as G:`` as well as ``G = self._tiledb_open(); ...; G.close()``.
+        This is just a convenience wrapper around tiledb group-open.  It works
+        as ``with self._tiledb_open() as G:``
+        as well as ``G = self._tiledb_open(); ...; G.close()``.
         """
         assert mode in ("r", "w")
         # This works in with-open-as contexts because tiledb.Group has __enter__ and __exit__ methods.
         return tiledb.Group(self._uri, mode=mode, ctx=self._ctx)
 
-    def _create_unless_exists(self) -> None:
-        """
-        Auxiliary method for ``_add_object``.
-        """
-        # Pre-checking if the group exists by calling tiledb.object_type is simple, however, for
-        # tiledb-cloud URIs that occurs a penalty of two HTTP requests to the REST server, even
-        # before a third, successful HTTP request for group-open.  Instead, we directly attempt the
-        # group-create request, checking for an exception.
-        try:
-            self.create()
-        except tiledb.cc.TileDBError as e:
-            stre = str(e)
-            # Local-disk/S3/tiledb-cloud exceptions all three say 'already exists'
-            if "already exists" in stre:
-                pass
-            else:
-                raise e
-
-    def _get_child_uris(self, member_names: Sequence[str]) -> Dict[str, str]:
-        """
-        Computes the URIs for one or more children of the given object. For local disk, S3, and tiledb://.../s3://...  pre-creation URIs, this is simply the parent's URI, a slash, and the member name.  For post-creation TileDB-Cloud URIs, this is computed from the parent's information.  (This is because in TileDB Cloud, members have URIs like tiledb://namespace/df584345-28b7-45e5-abeb-043d409b1a97.)
-
-        Since there's REST-server latency for getting name-to-URI mapping for group-member URIs, in the tiledb://... case, total latency is reduced when we ask for all group-element name-to-URI mappings in a single request to the REST server.
-        """
-
-        # TODO: TEMP
-        if util_tiledb.is_tiledb_creation_uri(self._uri):
-            return self._get_child_creation_uris(member_names)
-
-        # Pre-checking if the group exists by calling tiledb.object_type is simple, however, for
-        # tiledb-cloud URIs that occurs a penalty of two HTTP requests to the REST server, even
-        # before a third, successful HTTP request for group-open.  Instead, we directly attempt the
-        # group-open request, checking for an exception.
-
-        try:
-            # If the group exists, get URIs for elements. In local disk, S3, etc this is just
-            # concatenating a slash and the member name to the self URI; for TileDB Cloud,
-            # the member URIs involve UUIDs which are known to the server.
-            answer = {}
-
-            mapping = self._get_member_names_to_uris()
-            for member_name in member_names:
-                if member_name in mapping:
-                    answer[member_name] = mapping[member_name]
-                else:
-                    # Truly a slash, not os.path.join:
-                    # * If the client is Linux/Un*x/Mac, it's the same of course
-                    # * On Windows, os.path.sep is a backslash but backslashes are _not_ accepted for S3 or
-                    #   tiledb-cloud URIs, whereas in Windows versions for years now forward slashes _are_
-                    #   accepted for local-disk paths.
-                    # This means forward slash is acceptable in all cases.
-                    answer[member_name] = self._uri + "/" + member_name
-
-            return answer
-
-        except tiledb.cc.TileDBError as e:
-            stre = str(e)
-            # Local-disk/S3 does-not-exist exceptions say 'Group does not exist'; TileDB Cloud
-            # does-not-exist exceptions are worded less clearly.
-            if "Group does not exist" in stre or "HTTP code 401" in stre:
-                return self._get_child_creation_uris(member_names)
-            else:
-                raise e
-
-    def _get_child_creation_uris(self, member_names: Sequence[str]) -> Dict[str, str]:
-        """
-        Auxiliary method for ``_get_child_uris``.
-        """
-        # Group being constructed. Here, appending "/" and name is appropriate in all cases:
-        # even for tiledb://... URIs, pre-construction URIs are of the form
-        # tiledb://namespace/s3://something/something/soma/membername.
-        return {
-            member_name: self._uri + "/" + member_name for member_name in member_names
-        }
-
-    def _get_child_uri(self, member_name: str) -> str:
-        """
-        Convenience wrapper around ``_get_child_uris``.
-        """
-        return self._get_child_uris([member_name])[member_name]
-
-    def _add_object(
-        self,
-        obj: CollectionElementType,
-        child_name: Optional[str] = None,
-        relative: Optional[bool] = None,
-    ) -> None:
-        """
-        Adds a SOMA group/array to the current SOMA group -- e.g. base SOMA adding X, X adding a layer, obsm adding an element, etc.
-
-        Semantics of ``relative`` from ``self._tiledb_platform_config.member_uris_are_relative``:
-
-        * If ``False`` then the group will have the absolute path of the member. For populating matrix elements within a SOMA in TileDB cloud, this is necessary. For populating SOMA elements within a SOMACollection on local disk, this can be useful if you want to be able to move the SOMACollection storage around and have it remember the (unmoved) locations of SOMA objects elsewhere, i.e.  if the SOMACollectio is in one place while its members are in other places. If the SOMAs in the collection are contained within the SOMACollection directory, you probably want ``relative=True``.
-
-        * If ``True`` then the group will have the relative path of the member. For TileDB Cloud, this is never the right thing to do. For local-disk storage, this is essential if you want to move a SOMA to another directory and have it remember the locations of the members within it.
-
-        * If ``None``, then we select ``relative=False`` if the URI starts with ``tiledb://``, else we select ``relative=True``. This is the default.
-
-        If the relative argument is supplied and is not None, it is used; secondly ``self._tiledb_platform_config.member_uris_are_relative`` is consulted; thirdly the URI prefix is consulted as described above.
-        """
-
-        if self._cached_member_names_to_uris is None:
-            self._create_unless_exists()
-
-        child_uri = obj.uri
-        child_name = obj.name if child_name is None else child_name
-        if relative is None:
-            relative = self._tiledb_platform_config.member_uris_are_relative
-        if relative is None:
-            relative = not child_uri.startswith("tiledb://")
-        if relative:
-            child_uri = child_name
-        self._cached_member_names_to_uris = None  # invalidate on add-member
-        with self._tiledb_open("w") as G:
-            G.add(uri=child_uri, relative=relative, name=child_name)
-        # See _get_child_uri. Key point is that, on TileDB Cloud, URIs change from pre-creation to
-        # post-creation. Example:
-        # * Upload to pre-creation URI tiledb://namespace/s3://bucket/something/something/somaname
-        # * Results will be at post-creation URI tiledb://namespace/somaname
-        # * Note people can still use the pre-creation URI to read the data if they like.
-        # * Member pre-creation URI tiledb://namespace/s3://bucket/something/something/somaname/obs
-        # * Member post-creation URI tiledb://somaname/e4de581a-1353-4150-b1f4-6ed12548e497
-        obj._uri = self._get_child_uri(child_name)
-
-    def _remove_object(self, obj: TileDBObject) -> None:
-        self._remove_object_by_name(obj.name)
-
-    def _remove_object_by_name(self, member_name: str) -> None:
-        del self._cached_members[member_name]
-        self._cached_member_names_to_uris = None  # invalidate on remove-member
-        if self._uri.startswith("tiledb://"):
-            mapping = self._get_member_names_to_uris()
-            if member_name not in mapping:
-                raise Exception(f"name {member_name} not present in group {self._uri}")
-            member_uri = mapping[member_name]
-            with self._tiledb_open("w") as G:
-                G.remove(member_uri)
-        else:
-            with self._tiledb_open("w") as G:
-                G.remove(member_name)
-
-    def _get_member_names(self) -> Sequence[str]:
-        """
-        Returns the names of the group elements. For a SOMACollection, these will SOMA names; for a SOMA, these will be matrix/group names; etc.
-        """
-        return list(self._get_member_names_to_uris().keys())
-
-    def _get_member_uris(self) -> Sequence[str]:
-        """
-        Returns the URIs of the group elements. For a SOMACollection, these will SOMA URIs; for a SOMA, these will be matrix/group URIs; etc.
-        """
-        return list(self._get_member_names_to_uris().values())
-
-    def _get_member_names_to_uris(self) -> Dict[str, str]:
-        """
-        Like ``_get_member_names()`` and ``_get_member_uris``, but returns a dict mapping from member name to member URI.
-        """
-        if self._cached_member_names_to_uris is None:
-            with self._tiledb_open("r") as G:
-                self._cached_member_names_to_uris = {obj.name: obj.uri for obj in G}
-        return self._cached_member_names_to_uris
-
     def _show_metadata(self, recursively: bool = True, indent: str = "") -> None:
         """
         Shows metadata for the group, recursively by default.
         """
-        print(f"{indent}[{self._name}]")
+        # TODO: this code should move to a helper package, outside of SOMA core
         for key, value in self.metadata.items():
             print(f"{indent}- {key}: {value}")
         if recursively:
+            from .factory import _construct_member
+
             child_indent = indent + "  "
             with self._tiledb_open() as G:
                 for obj in G:  # This returns a tiledb.object.Object
@@ -365,21 +359,12 @@ class SOMACollectionBase(TileDBObject, MutableMapping[str, CollectionElementType
                     # rather than (with a little duplication) in SOMACollection and TileDBArray.
                     # However, getting it to work with a recursive data structure and finding the
                     # required methods, it was simpler to split the logic this way.
-                    object_type = tiledb.object_type(obj.uri, ctx=self._ctx)
-                    if object_type == "group":
-                        group = SOMACollectionBase[Any](
-                            uri=obj.uri, name=obj.name, parent=self, ctx=self._ctx
-                        )
-                        group._show_metadata(recursively, indent=child_indent)
-                    elif object_type == "array":
-                        array = TileDBArray(
-                            uri=obj.uri, name=obj.name, parent=self, ctx=self._ctx
-                        )
-                        array._show_metadata(recursively, indent=child_indent)
+
+                    soma = _construct_member(obj.uri, self, ctx=self._ctx)
+                    if soma is not None:
+                        soma._show_metadata(recursively, indent=child_indent)
                     else:
-                        raise Exception(
-                            f"Unexpected object_type found: {object_type} at {obj.uri}"
-                        )
+                        raise Exception(f"Unexpected object_type found at {obj.uri}")
 
 
 class SOMACollection(SOMACollectionBase[TileDBObject]):
@@ -387,4 +372,6 @@ class SOMACollection(SOMACollectionBase[TileDBObject]):
     A persistent collection of SOMA objects, mapping string keys to any SOMA object.
     """
 
-    pass
+    @property
+    def type(self) -> Literal["SOMACollection"]:
+        return "SOMACollection"
