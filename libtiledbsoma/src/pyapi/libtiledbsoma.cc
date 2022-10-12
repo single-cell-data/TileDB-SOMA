@@ -225,15 +225,7 @@ PYBIND11_MODULE(libtiledbsoma, m) {
             "set_dim_ranges",
             static_cast<void (SOMAReader::*)(
                 const std::string&,
-                const std::vector<std::pair<uint64_t, uint64_t>>&)>(
-                &SOMAReader::set_dim_ranges))
-
-        // NOTE: string binding for v0 arrays
-        .def(
-            "set_dim_ranges",
-            static_cast<void (SOMAReader::*)(
-                const std::string&,
-                const std::vector<std::pair<std::string, std::string>>&)>(
+                const std::vector<std::pair<int64_t, int64_t>>&)>(
                 &SOMAReader::set_dim_ranges))
 
         .def("submit", &SOMAReader::submit)
