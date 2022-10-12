@@ -369,17 +369,15 @@ class SOMADataFrame(TileDBArray):
         """
         This is a convenience method around ``read``. It concatenates all partial read results into a single DataFrame. Its nominal use is to simplify unit-test cases.
         """
-        dataframes = []
-        generator = self.read_as_pandas(
-            ids=ids,
-            value_filter=value_filter,
-            column_names=column_names,
-            id_column_name=id_column_name,
-            result_order=result_order,
+        return pd.concat(
+            self.read_as_pandas(
+                ids=ids,
+                value_filter=value_filter,
+                column_names=column_names,
+                result_order=result_order,
+                id_column_name=id_column_name,
+            )
         )
-        for dataframe in generator:
-            dataframes.append(dataframe)
-        return pd.concat(dataframes)
 
     def write_from_pandas(
         self,
