@@ -1,3 +1,4 @@
+import pandas as pd
 import pyarrow as pa
 import pytest
 
@@ -135,49 +136,56 @@ def test_SOMAIndexedDataFrame_read_column_names(
     schema, sdf, n_data, index_column_names = simple_soma_indexed_data_frame
     assert sdf.exists()
 
-    def _check_tbl(tbl, col_names, ids):
+    def _check_tbl(tbl, col_names, ids, *, demote):
         assert tbl.num_columns == (
             len(schema.names) if col_names is None else len(col_names)
         )
         assert tbl.num_rows == (n_data if ids is None else len(ids))
-        assert tbl.schema == pa.schema(
-            [
-                schema.field(f)
-                for f in (col_names if col_names is not None else schema.names)
-            ]
-        )
 
+        if demote:
+            assert tbl.schema == pa.schema(
+                [
+                    pa.field(schema.field(f).name, pa.string())
+                    if schema.field(f).type == pa.large_string()
+                    else schema.field(f)
+                    for f in (col_names if col_names is not None else schema.names)
+                ]
+            )
+        else:
+            assert tbl.schema == pa.schema(
+                [
+                    schema.field(f)
+                    for f in (col_names if col_names is not None else schema.names)
+                ]
+            )
+
+    # TileDB ASCII -> Arrow large_string
     _check_tbl(
-        sdf.read_all(ids=ids, column_names=col_names),
+        sdf.read_all(ids=ids, column_names=col_names), col_names, ids, demote=False
+    )
+    _check_tbl(sdf.read_all(column_names=col_names), col_names, None, demote=False)
+
+    # TileDB ASCII -> Pandas string -> Arrow string (not large_string)
+    _check_tbl(
+        pa.Table.from_pandas(
+            pd.concat(sdf.read_as_pandas(ids=ids, column_names=col_names))
+        ),
         col_names,
         ids,
+        demote=True,
     )
     _check_tbl(
-        sdf.read_all(column_names=col_names),
+        pa.Table.from_pandas(sdf.read_as_pandas_all(column_names=col_names)),
         col_names,
         None,
+        demote=True,
     )
-
-    # TODO: currently unimplemented. Enable tests when issue #329 is resolved.
-    #
-    # _check_tbl(
-    #     pa.Table.from_pandas(
-    #         pd.concat(sdf.read_as_pandas(ids=ids, column_names=col_names))
-    #     ),
-    #     col_names,
-    #     ids,
-    # )
-    # _check_tbl(
-    #     pa.Table.from_pandas(sdf.read_as_pandas_all(column_names=col_names)),
-    #     col_names,
-    #     None,
-    # )
 
 
 def test_soma_columns(tmp_path):
     """
     1. soma_joinid is int64
-    2. soma_joinid will be added by default if missing
+    2. soma_joinid will be added by default, if missing in call to create
     3. soma_joinid is explicit in keys/schema
     4. No other soma_ ids allowed
     """

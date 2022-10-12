@@ -225,7 +225,7 @@ def test_SOMADataFrame_read_column_names(simple_soma_data_frame, ids, col_names)
 def test_soma_columns(tmp_path):
     """
     1. soma_joinid/soma_rowid are int64
-    2. both will be added by default if missing
+    2. both will be added by default, if missing in call to create
     3. both are explicit in keys/schema
     4. no other soma_ ids allowed
     """
