@@ -41,11 +41,11 @@ def test_soma_sparse_nd_array_create_ok(
     assert a.exists()
 
     assert a.schema is not None
-    expected_field_names = ["data"] + [f"__dim_{d}" for d in range(len(shape))]
+    expected_field_names = ["soma_data"] + [f"soma_dim_{d}" for d in range(len(shape))]
     assert set(a.schema.names) == set(expected_field_names)
     for d in range(len(shape)):
-        assert a.schema.field(f"__dim_{d}").type == pa.uint64()
-    assert a.schema.field("data").type == element_type
+        assert a.schema.field(f"soma_dim_{d}").type == pa.int64()
+    assert a.schema.field("soma_data").type == element_type
 
 
 @pytest.mark.parametrize("shape", [(10,)])
@@ -108,9 +108,9 @@ def create_random_tensor(
         ).T.reshape(-1, ndim)
         coords = rng.choice(all_coords, nrec, replace=False).T
         pydict = {
-            f"__dim_{n}": pa.array(coords[n], type=pa.uint64()) for n in range(ndim)
+            f"soma_dim_{n}": pa.array(coords[n], type=pa.int64()) for n in range(ndim)
         }
-        pydict.update({"data": pa.array(data)})
+        pydict.update({"soma_data": pa.array(data)})
         return pa.Table.from_pydict(pydict)
 
     if format == "csc":
@@ -187,30 +187,27 @@ def tables_are_same_value(a: pa.Table, b: pa.Table) -> bool:
     """
     if a.shape != b.shape:
         return False
-    if a.field("data").type != b.field("data").type:
+    if a.field("soma_data").type != b.field("soma_data").type:
         return False
     for tbl in (a, b):
         if not all(
-            tbl.field(f"__dim_{n}").type == pa.uint64()
+            tbl.field(f"soma_dim_{n}").type == pa.int64()
             for n in range(tbl.num_columns - 1)
         ):
             return False
 
     ndim = a.shape[1] - 1
-    ai = a.column("data").to_numpy().argsort()
-    bi = b.column("data").to_numpy().argsort()
+    ai = a.column("soma_data").to_numpy().argsort()
+    bi = b.column("soma_data").to_numpy().argsort()
     if not np.array_equal(
-        np.take_along_axis(a.column("data").to_numpy(), ai, axis=0),
-        np.take_along_axis(b.column("data").to_numpy(), bi, axis=0),
+        np.take_along_axis(a.column("soma_data").to_numpy(), ai, axis=0),
+        np.take_along_axis(b.column("soma_data").to_numpy(), bi, axis=0),
     ):
         return False
 
     for n in range(ndim):
-        dim_name = f"__dim_{n}"
-        if (
-            a.field(dim_name).type != pa.uint64()
-            or b.field(dim_name).type != pa.uint64()
-        ):
+        dim_name = f"soma_dim_{n}"
+        if a.field(dim_name).type != pa.int64() or b.field(dim_name).type != pa.int64():
             return False
         if not np.array_equal(
             np.take_along_axis(a.column(dim_name).to_numpy(), ai, axis=0),
@@ -300,7 +297,7 @@ def test_soma_sparse_nd_array_read_as_pandas(
 
     df = a.read_as_pandas_all()
 
-    dim_names = [f"__dim_{n}" for n in range(len(shape))]
+    dim_names = [f"soma_dim_{n}" for n in range(len(shape))]
     assert df.sort_values(by=dim_names, ignore_index=True).equals(
         data.to_pandas().sort_values(by=dim_names, ignore_index=True)
     )

@@ -1,4 +1,4 @@
-from typing import Optional, Sequence
+from typing import List, Optional, Sequence, Tuple
 
 import pyarrow as pa
 import tiledb
@@ -50,15 +50,23 @@ class TileDBArray(TileDBObject):
         with self._tiledb_open() as A:
             return A.schema
 
-    def _tiledb_dim_names(self) -> Sequence[str]:
+    def _tiledb_array_keys(self) -> Sequence[str]:
+        """
+        Return all dim and attr names.
+        """
+        with self._tiledb_open() as A:
+            dim_names = [A.domain.dim(i).name for i in range(A.domain.ndim)]
+            attr_names = [A.schema.attr(i).name for i in range(A.schema.nattr)]
+            return dim_names + attr_names
+
+    def _tiledb_dim_names(self) -> Tuple[str, ...]:
         """
         Reads the dimension names from the schema: for example, ['obs_id', 'var_id'].
         """
         with self._tiledb_open() as A:
-            dom = A.dom
-            return [dom.dim(i).name for i in range(dom.ndim)]
+            return tuple([A.domain.dim(i).name for i in range(A.domain.ndim)])
 
-    def _tiledb_attr_names(self) -> Sequence[str]:
+    def _tiledb_attr_names(self) -> List[str]:
         """
         Reads the attribute names from the schema: for example, the list of column names in a dataframe.
         """

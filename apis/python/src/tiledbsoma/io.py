@@ -2,6 +2,8 @@ from typing import Callable, Optional
 
 import anndata as ad
 import numpy as np
+import pandas as pd
+import pyarrow as pa
 import scipy.sparse as sp
 import tiledb
 
@@ -18,15 +20,9 @@ from tiledbsoma import (
     util_scipy,
 )
 
+from .constants import SOMA_JOINID, SOMA_ROWID
 from .types import Path
 from .util import uri_joinpath
-
-# import scanpy
-# import tiledb
-
-# import tiledbsoma
-# import tiledbsoma.logging
-# import tiledbsoma.util
 
 
 # ----------------------------------------------------------------
@@ -82,6 +78,75 @@ def _from_h5ad_common(
     )
 
 
+def _write_dataframe(
+    soma_df: SOMADataFrame, df: pd.DataFrame, id_column_name: Optional[str]
+) -> None:
+    s = util.get_start_stamp()
+    logging.log_io(None, f"{soma_df._indent}START  WRITING {soma_df.uri}")
+
+    assert not soma_df.exists()
+
+    df[SOMA_ROWID] = np.asarray(range(len(df)), dtype=np.int64)
+    df[SOMA_JOINID] = np.asarray(range(len(df)), dtype=np.int64)
+
+    df.reset_index(inplace=True)
+    if id_column_name is not None:
+        df.rename(columns={"index": id_column_name}, inplace=True)
+    df.set_index(SOMA_ROWID, inplace=True)
+
+    # TODO: This is a proposed replacement for use of tiledb.from_pandas,
+    # behind a feature flag.
+    #
+    if soma_df._tiledb_platform_config.from_anndata_write_pandas_using_arrow:
+        # categoricals are not yet well supported, so we must flatten
+        for k in df:
+            if df[k].dtype == "category":
+                df[k] = df[k].astype(df[k].cat.categories.dtype)
+        arrow_table = pa.Table.from_pandas(df)
+        soma_df.create(arrow_table.schema)
+        soma_df.write(arrow_table)
+
+    else:
+        # Legacy cut & paste - to be removed if the above code works
+
+        offsets_filters = tiledb.FilterList(
+            [tiledb.PositiveDeltaFilter(), tiledb.ZstdFilter(level=-1)]
+        )
+        dim_filters = tiledb.FilterList([tiledb.ZstdFilter(level=-1)])
+        attr_filters = tiledb.FilterList([tiledb.ZstdFilter(level=-1)])
+
+        # Force ASCII storage if string, in order to make obs/var columns queryable.
+        # TODO: when UTF-8 attributes are fully supported we can remove this.
+        column_types = {}
+        for column_name in df.keys():
+            dfc = df[column_name]
+            if len(dfc) > 0 and isinstance(dfc[0], str):
+                column_types[column_name] = "ascii"
+            if len(dfc) > 0 and isinstance(dfc[0], bytes):
+                column_types[column_name] = "bytes"
+
+        tiledb.from_pandas(
+            uri=soma_df.uri,
+            dataframe=df,
+            sparse=True,
+            allows_duplicates=soma_df._tiledb_platform_config.allows_duplicates,
+            offsets_filters=offsets_filters,
+            attr_filters=attr_filters,
+            dim_filters=dim_filters,
+            capacity=100000,
+            column_types=column_types,
+            ctx=soma_df._ctx,
+            mode="ingest",
+        )
+
+        soma_df._common_create()  # object-type metadata etc
+
+    logging.log_io(
+        f"Wrote {soma_df.uri}",
+        util.format_elapsed(s, f"{soma_df._indent}FINISH WRITING {soma_df.uri}"),
+    )
+
+
 # ----------------------------------------------------------------
 def from_anndata(
     experiment: SOMAExperiment,
@@ -123,9 +188,7 @@ def from_anndata(
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     # OBS
     obs = SOMADataFrame(uri=uri_joinpath(experiment.uri, "obs"))
-    obs.write_all_from_pandas(
-        dataframe=anndata.obs, extent=256, id_column_name="obs_id"
-    )
+    _write_dataframe(obs, anndata.obs, id_column_name="obs_id")
     experiment.set("obs", obs)
 
     experiment.set(
@@ -143,9 +206,7 @@ def from_anndata(
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     # MS/meas/VAR
     var = SOMADataFrame(uri=uri_joinpath(measurement.uri, "var"))
-    var.write_all_from_pandas(
-        dataframe=anndata.var, extent=2048, id_column_name="var_id"
-    )
+    _write_dataframe(var, anndata.var, id_column_name="var_id")
     measurement["var"] = var
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -218,9 +279,7 @@ def from_anndata(
         experiment.ms.set("raw", raw_measurement)
 
         var = SOMADataFrame(uri=uri_joinpath(raw_measurement.uri, "var"))
-        var.write_all_from_pandas(
-            dataframe=anndata.raw.var, extent=2048, id_column_name="var_id"
-        )
+        _write_dataframe(var, anndata.raw.var, id_column_name="var_id")
         raw_measurement.set("var", var)
 
         raw_measurement["X"] = SOMACollection(
@@ -300,8 +359,12 @@ def to_anndata(
 
     measurement = experiment.ms[measurement_name]
 
-    obs_df = experiment.obs.read_as_pandas_all(id_column_name="obs_id")
-    var_df = measurement.var.read_as_pandas_all(id_column_name="var_id")
+    obs_df = experiment.obs.read_as_pandas_all()
+    obs_df.reset_index(inplace=True)
+    obs_df.set_index("obs_id", inplace=True)
+    var_df = measurement.var.read_as_pandas_all()
+    var_df.reset_index(inplace=True)
+    var_df.set_index("var_id", inplace=True)
 
     nobs = len(obs_df.index)
     nvar = len(var_df.index)

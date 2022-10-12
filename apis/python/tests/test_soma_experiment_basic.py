@@ -23,6 +23,7 @@ def create_and_populate_obs(obs: soma.SOMADataFrame) -> soma.SOMADataFrame:
 
     pydict = {}
     pydict["soma_rowid"] = [0, 1, 2, 3, 4]
+    pydict["soma_joinid"] = [0, 1, 2, 3, 4]
     pydict["foo"] = [10, 20, 30, 40, 50]
     pydict["bar"] = [4.1, 5.2, 6.3, 7.4, 8.5]
     pydict["baz"] = ["apple", "ball", "cat", "dog", "egg"]
@@ -46,6 +47,7 @@ def create_and_populate_var(var: soma.SOMADataFrame) -> soma.SOMADataFrame:
 
     pydict = {}
     pydict["soma_rowid"] = [0, 1, 2, 3]
+    pydict["soma_joinid"] = [0, 1, 2, 3]
     pydict["quux"] = ["zebra", "yak", "xylophone", "wapiti"]
     pydict["xyzzy"] = [12.3, 23.4, 34.5, 45.6]
     rb = pa.Table.from_pydict(pydict)

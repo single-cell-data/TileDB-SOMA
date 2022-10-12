@@ -38,11 +38,11 @@ def test_soma_dense_nd_array_create_ok(
     assert a.exists()
 
     assert a.schema is not None
-    expected_field_names = ["data"] + [f"__dim_{d}" for d in range(len(shape))]
+    expected_field_names = ["soma_data"] + [f"soma_dim_{d}" for d in range(len(shape))]
     assert set(a.schema.names) == set(expected_field_names)
     for d in range(len(shape)):
-        assert a.schema.field(f"__dim_{d}").type == pa.uint64()
-    assert a.schema.field("data").type == element_type
+        assert a.schema.field(f"soma_dim_{d}").type == pa.int64()
+    assert a.schema.field("soma_data").type == element_type
 
 
 @pytest.mark.parametrize("shape", [(10,)])

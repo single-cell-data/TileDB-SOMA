@@ -1,17 +1,15 @@
-from typing import Any, Iterator, List, Literal, Optional, Sequence, TypeVar
+from typing import Any, Iterator, Literal, Optional, Sequence, TypeVar
 
 import numpy as np
 import pandas as pd
 import pyarrow as pa
 import tiledb
 
-from . import util, util_arrow, util_tiledb
-from .logging import log_io
+from . import util_arrow, util_tiledb
+from .constants import SOMA_JOINID, SOMA_ROWID
 from .soma_collection import SOMACollectionBase
 from .tiledb_array import TileDBArray
-from .types import Ids, NTuple, SOMAResultOrder
-
-ROWID = "soma_rowid"
+from .types import Ids, SOMAResultOrder
 
 Slice = TypeVar("Slice", bound=Sequence[int])
 
@@ -20,12 +18,10 @@ class SOMADataFrame(TileDBArray):
     """
     Represents ``obs``, ``var``, and others.
 
-    A ``SOMADataFrame`` contains a "pseudo-column" called ``soma_rowid``, of type uint64 and domain [0,num_rows).  The ``soma_rowid`` pseudo-column contains a unique value for each row in the ``SOMADataFrame``, and is intended to act as a join key for other objects, such as a ``SOMASparseNdArray``.
+    A ``SOMADataFrame`` contains a "pseudo-column" called ``soma_rowid``, of type int64 and domain [0,num_rows).  The ``soma_rowid`` pseudo-column contains a unique value for each row in the ``SOMADataFrame``, and is intended to act as a join key for other objects, such as a ``SOMASparseNdArray``.
     """
 
-    _shape: Optional[NTuple] = None
     _cached_is_sparse: Optional[bool]
-    _index_column_names: List[str]
 
     def __init__(
         self,
@@ -51,11 +47,9 @@ class SOMADataFrame(TileDBArray):
         """
         :param schema: Arrow Schema defining the per-column schema. This schema must define all columns. The column name ``soma_rowid`` is reserved for the pseudo-column of the same name.  If the schema includes types unsupported by the SOMA implementation, an error will be raised.
         """
-        assert ROWID not in schema.names
-
+        schema = _validate_schema(schema)
         self._create_empty(schema)
         self._is_indexed = False
-        self._index_column_names = []
 
         self._common_create()  # object-type metadata etc
         return self
@@ -65,17 +59,17 @@ class SOMADataFrame(TileDBArray):
         schema: pa.Schema,
     ) -> None:
         """
-        Create a TileDB 1D dense array with uint64 ``soma_rowid`` dimension and multiple attributes.
+        Create a TileDB 1D dense array with int64 ``soma_rowid`` dimension and multiple attributes.
         """
 
         level = self._tiledb_platform_config.string_dim_zstd_level
 
         dom = tiledb.Domain(
             tiledb.Dim(
-                name=ROWID,
-                domain=(0, np.iinfo(np.uint64).max - 1),
+                name=SOMA_ROWID,
+                domain=(0, np.iinfo(np.int64).max - 1),
                 tile=2048,  # TODO: PARAMETERIZE
-                dtype=np.uint64,
+                dtype=np.int64,
                 filters=[tiledb.ZstdFilter(level=level)],
             ),
             ctx=self._ctx,
@@ -91,6 +85,7 @@ class SOMADataFrame(TileDBArray):
                 ctx=self._ctx,
             )
             for attr_name in schema.names
+            if attr_name != SOMA_ROWID
         ]
 
         sch = tiledb.ArraySchema(
@@ -116,33 +111,16 @@ class SOMADataFrame(TileDBArray):
 
     def keys(self) -> Sequence[str]:
         """
-        Returns the names of the columns when read back as a dataframe.  TODO: make it clear whether or not this will read back ``soma_rowid`` / ``soma_joinid``.
+        Returns the names of the columns when read back as a dataframe.
         """
-        return self._tiledb_attr_names()
-
-    @property
-    def shape(self) -> NTuple:
-        """
-        Return length of each dimension, always a list of length ``ndims``.
-        """
-        if self._shape is None:
-            with self._tiledb_open() as A:
-                self._shape = A.shape
-        return self._shape
-
-    @property
-    def ndims(self) -> int:
-        """
-        Return number of index columns.
-        """
-        return len(self.keys())
+        return self._tiledb_array_keys()
 
     @property
     def is_indexed(self) -> Literal[False]:
         return False
 
     def get_index_column_names(self) -> Sequence[str]:
-        return []
+        return ()
 
     def read(
         self,
@@ -256,19 +234,23 @@ class SOMADataFrame(TileDBArray):
 
         :param values: An Arrow.Table containing all columns, including the index columns. The schema for the values must match the schema for the ``SOMADataFrame``.
 
-        The ``values`` Arrow Table must contain a ``soma_rowid`` (uint64) column, indicating which rows are being written.
+        The ``values`` Arrow Table must contain a ``soma_rowid`` (int64) column, indicating which rows are being written.
         """
-        self._shape = None  # cache-invalidate
-
-        assert ROWID in values.schema.names
+        if (
+            SOMA_ROWID not in values.schema.names
+            or SOMA_JOINID not in values.schema.names
+        ):
+            raise ValueError(
+                f"Write requires both {SOMA_ROWID} and {SOMA_JOINID} to be specified in table."
+            )
 
         # TODO: contiguity check, and/or split into multiple contiguous writes
         # For now: just assert that these _already are_ contiguous and start with 0.
-        rowids = [e.as_py() for e in values.column(ROWID)]
+        rowids = [e.as_py() for e in values.column(SOMA_ROWID)]
 
         attr_cols_map = {}
         for name in values.schema.names:
-            if name != ROWID:
+            if name != SOMA_ROWID:
                 attr_cols_map[name] = np.asarray(
                     values.column(name).to_pandas(
                         types_mapper=util_arrow.tiledb_type_from_arrow_type_for_write,
@@ -299,59 +281,14 @@ class SOMADataFrame(TileDBArray):
         value_filter: Optional[str] = None,
         column_names: Optional[Sequence[str]] = None,
         result_order: Optional[SOMAResultOrder] = None,
-        # to rename index to 'obs_id' or 'var_id', if desired, for anndata
-        id_column_name: Optional[str] = None,
     ) -> Iterator[pd.DataFrame]:
-        """
-        Reads from SOMA storage into memory.  For ``to_anndata``, as well as for any interactive use where the user wants a Pandas dataframe.  Returns a generator over dataframes for batched read. See also ``read_as_pandas_all`` for a convenience wrapper.
-
-        TODO: params-list
-        """
-        tiledb_result_order = util_tiledb.tiledb_result_order_from_soma_result_order(
-            result_order, accept=["rowid-ordered", "unordered"]
-        )
-
-        with self._tiledb_open() as A:
-            dim_names, attr_names = util_tiledb.split_column_names(
-                A.schema, column_names
-            )
-            if value_filter is None:
-                query = A.query(
-                    return_incomplete=True,
-                    order=tiledb_result_order,
-                    dims=dim_names,
-                    attrs=attr_names,
-                )
-            else:
-                qc = tiledb.QueryCondition(value_filter)
-                query = A.query(
-                    return_incomplete=True,
-                    attr_cond=qc,
-                    order=tiledb_result_order,
-                    dims=dim_names,
-                    attrs=attr_names,
-                )
-
-            if ids is None:
-                iterator = query.df[:]
-            else:
-                iterator = query.df[ids]
-
-            for df in iterator:
-
-                if id_column_name is not None:
-                    df.reset_index(inplace=True)
-                    df.set_index(id_column_name, inplace=True)
-
-                # Don't materialize soma_rowid on read
-                if (
-                    ROWID in df.columns
-                    and column_names is not None
-                    and ROWID not in column_names
-                ):
-                    yield df.drop(ROWID, axis=1)
-                else:
-                    yield df
+        for tbl in self.read(
+            ids=ids,
+            value_filter=value_filter,
+            column_names=column_names,
+            result_order=result_order,
+        ):
+            yield tbl.to_pandas()
 
     def read_as_pandas_all(
         self,
@@ -360,117 +297,51 @@ class SOMADataFrame(TileDBArray):
         value_filter: Optional[str] = None,
         column_names: Optional[Sequence[str]] = None,
         result_order: Optional[SOMAResultOrder] = None,
-        # to rename index to 'obs_id' or 'var_id', if desired, for anndata
-        id_column_name: Optional[str] = None,
     ) -> pd.DataFrame:
-        """
-        This is a convenience method around ``read``. It concatenates all partial read results into a single DataFrame. Its nominal use is to simplify unit-test cases.
-        """
-        dataframes = []
-        generator = self.read_as_pandas(
-            ids=ids,
-            value_filter=value_filter,
-            column_names=column_names,
-            id_column_name=id_column_name,
-            result_order=result_order,
-        )
-        for dataframe in generator:
-            dataframes.append(dataframe)
-        return pd.concat(dataframes)
-
-    def write_from_pandas(
-        self,
-        dataframe: pd.DataFrame,
-        *,
-        extent: int = 2048,
-        # to rename index to 'obs_id' or 'var_id', if desired, for anndata
-        id_column_name: Optional[str] = None,
-    ) -> None:
-        """
-        Writes from memory to SOMA storage. Same as ``write_all_from_pandas``, except this method requires the ``soma_rowid`` column to be present (so it knows where to write data), whereas ``write_all_from_pandas``  will populate ``soma_rowid`` for you as zero-up indices.
-
-        :param dataframe: ``anndata.obs`` for example.
-        :param extent: TileDB ``extent`` parameter for the array schema.
-        """
-        self._shape = None  # cache-invalidate
-
-        offsets_filters = tiledb.FilterList(
-            [tiledb.PositiveDeltaFilter(), tiledb.ZstdFilter(level=-1)]
-        )
-        dim_filters = tiledb.FilterList([tiledb.ZstdFilter(level=-1)])
-        attr_filters = tiledb.FilterList([tiledb.ZstdFilter(level=-1)])
-
-        s = util.get_start_stamp()
-        log_io(None, f"{self._indent}START  WRITING {self.uri}")
-
-        assert ROWID in dataframe.keys()
-        assert len(dataframe.shape) == 2
-        # E.g. (80, 7) is 80 rows x 7 columns
-
-        mode = "ingest"
-        if self.exists():
-            mode = "append"
-            log_io(None, f"{self._indent}Re-using existing array")
-
-        # Make obs_id a data column
-        dataframe.reset_index(inplace=True)
-        if id_column_name is not None:
-            dataframe.rename(columns={"index": id_column_name}, inplace=True)
-
-        dataframe.set_index(ROWID, inplace=True)
-
-        # Force ASCII storage if string, in order to make obs/var columns queryable.
-        # TODO: when UTF-8 attributes are fully supported we can remove this.
-        column_types = {}
-        for column_name in dataframe.keys():
-            dfc = dataframe[column_name]
-            if len(dfc) > 0 and type(dfc[0]) == str:
-                column_types[column_name] = "ascii"
-            if len(dfc) > 0 and type(dfc[0]) == bytes:
-                column_types[column_name] = "bytes"
-
-        tiledb.from_pandas(
-            uri=self.uri,
-            dataframe=dataframe,
-            # name=self.name,
-            sparse=True,  # TODO
-            allows_duplicates=self._tiledb_platform_config.allows_duplicates,
-            offsets_filters=offsets_filters,
-            attr_filters=attr_filters,
-            dim_filters=dim_filters,
-            capacity=100000,
-            tile=extent,
-            column_types=column_types,
-            ctx=self._ctx,
-            mode=mode,
+        return pd.concat(
+            self.read_as_pandas(
+                ids=ids,
+                value_filter=value_filter,
+                column_names=column_names,
+                result_order=result_order,
+            )
         )
 
-        self._common_create()  # object-type metadata etc
-
-        log_io(
-            f"Wrote {self.uri}",
-            util.format_elapsed(s, f"{self._indent}FINISH WRITING {self.uri}"),
-        )
-
-    def write_all_from_pandas(
-        self,
-        dataframe: pd.DataFrame,
-        *,
-        extent: int = 2048,
-        # to rename index to 'obs_id' or 'var_id', if desired, for anndata
-        id_column_name: Optional[str] = None,
-    ) -> None:
+    def write_from_pandas(self, dataframe: pd.DataFrame) -> None:
         """
-        Writes from memory to SOMA storage. Same as ``write_from_pandas``, except ``write_from_pandas`` requires the ``soma_rowid`` column to be present (so it knows where to write data), whereas this method will populate ``soma_rowid`` for you as zero-up indices.
-
-        :param dataframe: ``anndata.obs`` for example.
-        :param extent: TileDB ``extent`` parameter for the array schema.
+        Write the Pandas DataFrame. The Pandas DataFrame must contain a soma_rowid and soma_joinid
+        column of type int64.
         """
+        self.write(pa.Table.from_pandas(dataframe))
 
-        assert ROWID not in dataframe.keys()
-        assert len(dataframe.shape) == 2
-        # E.g. (80, 7) is 80 rows x 7 columns
-        num_rows = dataframe.shape[0]
-        dataframe[ROWID] = np.asarray(range(num_rows), dtype=np.uint64)
 
-        self.write_from_pandas(dataframe, extent=extent, id_column_name=id_column_name)
+def _validate_schema(schema: pa.Schema) -> pa.Schema:
+    """
+    Handle default column additions (eg, soma_rowid) and error checking on required columns.
+
+    Returns a schema, which may be modified by the addition of required columns.
+    """
+    if SOMA_ROWID in schema.names:
+        if schema.field(SOMA_ROWID).type != pa.int64():
+            raise TypeError(f"{SOMA_ROWID} field must be of type Arrow int64")
+    else:
+        # add SOMA_ROWID
+        schema = schema.insert(0, pa.field(SOMA_ROWID, pa.int64()))
+
+    if SOMA_JOINID in schema.names:
+        if schema.field(SOMA_JOINID).type != pa.int64():
+            raise TypeError(f"{SOMA_JOINID} field must be of type Arrow int64")
+    else:
+        # add SOMA_JOINID
+        schema = schema.insert(1, pa.field(SOMA_JOINID, pa.int64()))
+
+    for field_name in schema.names:
+        if field_name.startswith("soma_") and field_name not in [
+            SOMA_ROWID,
+            SOMA_JOINID,
+        ]:
+            raise ValueError(
+                "SOMADataFrame schema may not contain fields with name prefix `soma_`"
+            )
+
+    return schema
