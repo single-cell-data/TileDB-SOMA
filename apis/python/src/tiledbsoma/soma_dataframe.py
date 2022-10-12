@@ -10,7 +10,7 @@ import tiledbsoma.libtiledbsoma as clib
 
 # from .query_condition import QueryCondition
 from . import query_condition as qcmodule
-from . import util, util_arrow, util_tiledb
+from . import util, util_arrow
 from .logging import log_io
 from .soma_collection import SOMACollectionBase
 from .tiledb_array import TileDBArray
@@ -236,6 +236,52 @@ class SOMADataFrame(TileDBArray):
             )
         )
 
+    def read_as_pandas(
+        self,
+        *,
+        ids: Optional[Ids] = None,
+        value_filter: Optional[str] = None,
+        column_names: Optional[Sequence[str]] = None,
+        result_order: Optional[SOMAResultOrder] = None,
+        # to rename index to 'obs_id' or 'var_id', if desired, for anndata
+        id_column_name: Optional[str] = None,
+    ) -> Iterator[pd.DataFrame]:
+        """
+        Reads from SOMA storage into memory.  For ``to_anndata``, as well as for any interactive use where the user wants a Pandas dataframe.  Returns a generator over dataframes for batched read. See also ``read_as_pandas_all`` for a convenience wrapper.
+
+        TODO: params-list
+        """
+        for tbl in self.read(
+            ids=ids,
+            value_filter=value_filter,
+            column_names=column_names,
+            result_order=result_order,
+        ):
+            yield tbl.to_pandas()
+
+    def read_as_pandas_all(
+        self,
+        *,
+        ids: Optional[Ids] = None,
+        value_filter: Optional[str] = None,
+        column_names: Optional[Sequence[str]] = None,
+        result_order: Optional[SOMAResultOrder] = None,
+        # to rename index to 'obs_id' or 'var_id', if desired, for anndata
+        id_column_name: Optional[str] = None,
+    ) -> pd.DataFrame:
+        """
+        This is a convenience method around ``read``. It concatenates all partial read results into a single DataFrame. Its nominal use is to simplify unit-test cases.
+        """
+        return pd.concat(
+            self.read_as_pandas(
+                ids=ids,
+                value_filter=value_filter,
+                column_names=column_names,
+                result_order=result_order,
+                id_column_name=id_column_name,
+            )
+        )
+
     def _get_is_sparse(self) -> bool:
         if self._cached_is_sparse is None:
 
@@ -294,90 +340,6 @@ class SOMADataFrame(TileDBArray):
             hi = rowids[-1]
             with self._tiledb_open("w") as A:
                 A[lo : (hi + 1)] = attr_cols_map
-
-    def read_as_pandas(
-        self,
-        *,
-        ids: Optional[Ids] = None,
-        value_filter: Optional[str] = None,
-        column_names: Optional[Sequence[str]] = None,
-        result_order: Optional[SOMAResultOrder] = None,
-        # to rename index to 'obs_id' or 'var_id', if desired, for anndata
-        id_column_name: Optional[str] = None,
-    ) -> Iterator[pd.DataFrame]:
-        """
-        Reads from SOMA storage into memory.  For ``to_anndata``, as well as for any interactive use where the user wants a Pandas dataframe.  Returns a generator over dataframes for batched read. See also ``read_as_pandas_all`` for a convenience wrapper.
-
-        TODO: params-list
-        """
-        tiledb_result_order = util_tiledb.tiledb_result_order_from_soma_result_order(
-            result_order, accept=["rowid-ordered", "unordered"]
-        )
-
-        with self._tiledb_open() as A:
-            dim_names, attr_names = util_tiledb.split_column_names(
-                A.schema, column_names
-            )
-            if value_filter is None:
-                query = A.query(
-                    return_incomplete=True,
-                    order=tiledb_result_order,
-                    dims=dim_names,
-                    attrs=attr_names,
-                )
-            else:
-                query_condition = qcmodule.QueryCondition(value_filter)
-                query = A.query(
-                    return_incomplete=True,
-                    attr_cond=query_condition,
-                    order=tiledb_result_order,
-                    dims=dim_names,
-                    attrs=attr_names,
-                )
-
-            if ids is None:
-                iterator = query.df[:]
-            else:
-                iterator = query.df[ids]
-
-            for df in iterator:
-
-                if id_column_name is not None:
-                    df.reset_index(inplace=True)
-                    df.set_index(id_column_name, inplace=True)
-
-                # Don't materialize soma_rowid on read
-                if (
-                    ROWID in df.columns
-                    and column_names is not None
-                    and ROWID not in column_names
-                ):
-                    yield df.drop(ROWID, axis=1)
-                else:
-                    yield df
-
-    def read_as_pandas_all(
-        self,
-        *,
-        ids: Optional[Ids] = None,
-        value_filter: Optional[str] = None,
-        column_names: Optional[Sequence[str]] = None,
-        result_order: Optional[SOMAResultOrder] = None,
-        # to rename index to 'obs_id' or 'var_id', if desired, for anndata
-        id_column_name: Optional[str] = None,
-    ) -> pd.DataFrame:
-        """
-        This is a convenience method around ``read``. It concatenates all partial read results into a single DataFrame. Its nominal use is to simplify unit-test cases.
-        """
-        return pd.concat(
-            self.read_as_pandas(
-                ids=ids,
-                value_filter=value_filter,
-                column_names=column_names,
-                result_order=result_order,
-                id_column_name=id_column_name,
-            )
-        )
 
     def write_from_pandas(
         self,

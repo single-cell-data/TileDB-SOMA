@@ -61,7 +61,9 @@ def test_import_anndata(adata):
 
     # Check obs
     df = exp.obs.read_as_pandas_all()
-    assert sorted(df.columns.to_list()) == sorted(orig.obs_keys() + ["obs_id"])
+    assert sorted(df.columns.to_list()) == sorted(
+        orig.obs_keys() + ["obs_id", "soma_rowid"]
+    )
     assert (
         exp.obs.metadata.get(tiledbsoma.util.SOMA_OBJECT_TYPE_METADATA_KEY)
         == "SOMADataFrame"
