@@ -8,8 +8,8 @@ import tiledb
 # This package's pybind11 code
 import tiledbsoma.libtiledbsoma as clib
 
-from . import query_condition as qcmodule
 from . import util, util_arrow
+from .query_condition import QueryCondition
 from .soma_collection import SOMACollectionBase
 from .tiledb_array import TileDBArray
 from .types import Ids, NTuple, SOMAResultOrder
@@ -225,7 +225,7 @@ class SOMAIndexedDataFrame(TileDBArray):
         with self._tiledb_open("r") as A:
             query_condition = None
             if value_filter is not None:
-                query_condition = qcmodule.QueryCondition(value_filter)
+                query_condition = QueryCondition(value_filter)  # type: ignore
 
             # As an arg to this method, `column_names` is optional-None. For the pybind11
             # code it's optional-[].
