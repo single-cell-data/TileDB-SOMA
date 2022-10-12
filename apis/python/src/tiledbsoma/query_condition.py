@@ -323,10 +323,8 @@ class QueryConditionTree(ast.NodeVisitor):
             raise tiledb.TileDBError(f"Attribute `{att}` not found in schema.")
 
         if att not in self.query_attrs:
-            raise tiledb.TileDBError(
-                f"Attribute `{att}` given to filter in query's `attr_cond` "
-                "arg but not found in `attr` arg."
-            )
+            # https://github.com/TileDB-Inc/TileDB-Py/pull/1333/files
+            self.query_attrs.append(att)
 
         return att
 
