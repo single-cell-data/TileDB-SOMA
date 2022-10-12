@@ -1,4 +1,4 @@
-from typing import Tuple
+from typing import List, Tuple, Union
 
 import numpy as np
 import pyarrow as pa
@@ -21,7 +21,7 @@ def test_soma_dense_nd_array_ok_no_storage():
 )
 @pytest.mark.parametrize("element_type", NDARRAY_ARROW_TYPES_SUPPORTED)
 def test_soma_dense_nd_array_create_ok(
-    tmp_path, shape: Tuple[int, ...], element_type: pa.DataType
+    tmp_path, shape: Union[Tuple[int, ...], List], element_type: pa.DataType
 ):
     """
     Test all cases we expect "create" to succeed.

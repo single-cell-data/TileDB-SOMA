@@ -1,4 +1,4 @@
-from typing import Optional, Tuple, Union
+from typing import List, Optional, Tuple, Union
 
 import numpy as np
 import pyarrow as pa
@@ -24,7 +24,7 @@ def test_soma_sparse_nd_array_ok_no_storage():
 )
 @pytest.mark.parametrize("element_type", NDARRAY_ARROW_TYPES_SUPPORTED)
 def test_soma_sparse_nd_array_create_ok(
-    tmp_path, shape: Tuple[int, ...], element_type: pa.DataType
+    tmp_path, shape: Union[Tuple[int, ...], List[int]], element_type: pa.DataType
 ):
     """
     Test all cases we expect "create" to succeed.
@@ -250,7 +250,7 @@ def test_soma_sparse_nd_array_read_write_sparse_tensor(
     assert a.shape == shape
 
     # make a random sample in the desired format
-    data = create_random_tensor(format, shape, np.float64)
+    data = create_random_tensor(format, shape, np.dtype(np.float64))
     a.write_sparse_tensor(data)
     del a
 
@@ -271,7 +271,7 @@ def test_soma_sparse_nd_array_read_write_table(
     assert a.shape == shape
 
     # make a random sample in the desired format
-    data = create_random_tensor("table", shape, np.float32)
+    data = create_random_tensor("table", shape, np.dtype(np.float32))
     a.write_table(data)
     del a
 
@@ -282,7 +282,15 @@ def test_soma_sparse_nd_array_read_write_table(
     assert tables_are_same_value(data, t)
 
 
-@pytest.mark.parametrize("dtype", [np.float32, np.float64, np.int32, np.int64])
+@pytest.mark.parametrize(
+    "dtype",
+    [
+        np.dtype(np.float32),
+        np.dtype(np.float64),
+        np.dtype(np.int32),
+        np.dtype(np.int64),
+    ],
+)
 @pytest.mark.parametrize("shape", [(1,), (23, 14), (35, 3, 2), (8, 4, 2, 30)])
 def test_soma_sparse_nd_array_read_as_pandas(
     tmp_path, dtype: np.dtype, shape: Tuple[int, ...]
@@ -378,7 +386,7 @@ def test_soma_sparse_nd_array_nnz(tmp_path):
         assert a.nnz == 0
 
     t: pa.SparseCOOTensor = create_random_tensor(
-        "coo", a.shape, pa.int32().to_pandas_dtype(), 0.1
+        "coo", a.shape, np.dtype(pa.int32().to_pandas_dtype()), 0.1
     )
     a.write_sparse_tensor(t)
     with pytest.raises(NotImplementedError):
