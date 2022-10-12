@@ -3,7 +3,7 @@
 \name{get_column_names}
 \alias{get_column_names}
 \alias{export_column_direct}
-\alias{export_recordbatch}
+\alias{export_arrow_array}
 \alias{get_table}
 \alias{get_column}
 \title{Access a DataFrame or Single Column From a Given URI}
@@ -12,7 +12,7 @@ get_column_names(uri)
 
 export_column_direct(uri, colnames)
 
-export_recordbatch(uri, colnames)
+export_arrow_array(uri, colnames, qc = NULL, loglevel = "warn")
 
 get_table(uri)
 
@@ -23,10 +23,15 @@ get_column(uri, column)
 
 \item{colnames}{Vector of character value with the name of the columns to retrieve}
 
+\item{qc}{External Pointer object to TileDB Query Condition, defaults to \sQuote{NULL} i.e.
+no query condition}
+
+\item{loglevel}{Character value with the desired logging level, defaults to \sQuote{warn}}
+
 \item{column}{Character value with the name of the column to retrieve}
 }
 \value{
-The selected data frame (or column) from the given data set
+The selected data object(s) from the given data set
 }
 \description{
 These functions access a given SOMA URI and extract, respectively, the
