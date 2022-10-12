@@ -6,7 +6,10 @@
 ##' @param uri Character value with URI path to a SOMA data set
 ##' @param column Character value with the name of the column to retrieve
 ##' @param colnames Vector of character value with the name of the columns to retrieve
-##' @return The selected data frame (or column) from the given data set
+##' @param qc External Pointer object to TileDB Query Condition, defaults to \sQuote{NULL} i.e.
+##' no query condition
+##' @param loglevel Character value with the desired logging level, defaults to \sQuote{warn}
+##' @return The selected data object(s) from the given data set
 ##' @examples
 ##' \dontrun{
 ##' uri <- "test/soco/pbmc3k_processed/obs"
