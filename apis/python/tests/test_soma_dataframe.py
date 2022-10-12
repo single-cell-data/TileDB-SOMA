@@ -28,7 +28,7 @@ def test_soma_dataframe_non_indexed(tmp_path):
     for _i in range(3):
         pydict = {}
         pydict["soma_rowid"] = [0, 1, 2, 3, 4]
-        pydict["soma_joinid"] = [0, 1, 2, 3, 4]
+        pydict["soma_joinid"] = [101, 102, 103, 104, 105]
         pydict["foo"] = [10, 20, 30, 40, 50]
         pydict["bar"] = [4.1, 5.2, 6.3, 7.4, 8.5]
         pydict["baz"] = ["apple", "ball", "cat", "dog", "egg"]
@@ -44,7 +44,7 @@ def test_soma_dataframe_non_indexed(tmp_path):
     assert table.num_columns == 5
 
     assert [e.as_py() for e in list(table["soma_rowid"])] == [0, 1, 2, 3, 4]
-    assert [e.as_py() for e in list(table["soma_joinid"])] == [0, 1, 2, 3, 4]
+    assert [e.as_py() for e in list(table["soma_joinid"])] == [101, 102, 103, 104, 105]
     assert [e.as_py() for e in list(table["foo"])] == pydict["foo"]
     assert [e.as_py() for e in list(table["bar"])] == pydict["bar"]
     assert [e.as_py() for e in list(table["baz"])] == pydict["baz"]
@@ -122,7 +122,7 @@ def simple_soma_data_frame(tmp_path):
     sdf = soma.SOMADataFrame(uri=tmp_path.as_posix()).create(schema)
     data = {
         "soma_rowid": [0, 1, 2, 3],
-        "soma_joinid": [0, 1, 2, 3],
+        "soma_joinid": [100, 200, 300, 400],
         "A": [10, 11, 12, 13],
         "B": [100.1, 200.2, 300.3, 400.4],
         "C": ["this", "is", "a", "test"],
