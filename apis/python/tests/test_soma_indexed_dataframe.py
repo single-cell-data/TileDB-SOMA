@@ -73,8 +73,8 @@ def test_soma_indexed_dataframe(tmp_path, arrow_schema):
 def test_soma_indexed_dataframe_with_float_dim(tmp_path, arrow_schema):
     sdf = soma.SOMAIndexedDataFrame(uri=tmp_path.as_posix())
     asch = arrow_schema()
-    sdf.create(schema=asch, index_column_names=["bar"])
-    assert sdf.get_index_column_names() == ["bar"]
+    sdf.create(schema=asch, index_column_names=("bar",))
+    assert sdf.get_index_column_names() == ("bar",)
 
 
 @pytest.fixture
@@ -197,7 +197,7 @@ def test_soma_columns(tmp_path):
     A.delete()
 
     B = soma.SOMAIndexedDataFrame((tmp_path / "B").as_posix())
-    with pytest.raises(TypeError):
+    with pytest.raises(ValueError):
         B.create(
             pa.schema([("a", pa.int32()), ("soma_joinid", pa.float32())]),
             index_column_names=["a"],

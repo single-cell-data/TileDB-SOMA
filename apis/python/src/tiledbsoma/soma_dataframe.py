@@ -1,4 +1,4 @@
-from typing import Any, Iterator, List, Literal, Optional, Sequence, TypeVar
+from typing import Any, Iterator, Literal, Optional, Sequence, TypeVar
 
 import numpy as np
 import pandas as pd
@@ -22,7 +22,6 @@ class SOMADataFrame(TileDBArray):
     """
 
     _cached_is_sparse: Optional[bool]
-    _index_column_names: List[str]
 
     def __init__(
         self,
@@ -48,44 +47,12 @@ class SOMADataFrame(TileDBArray):
         """
         :param schema: Arrow Schema defining the per-column schema. This schema must define all columns. The column name ``soma_rowid`` is reserved for the pseudo-column of the same name.  If the schema includes types unsupported by the SOMA implementation, an error will be raised.
         """
-        schema = self._validate_schema(schema)
+        schema = _validate_schema(schema)
         self._create_empty(schema)
         self._is_indexed = False
-        self._index_column_names = []
 
         self._common_create()  # object-type metadata etc
         return self
-
-    def _validate_schema(self, schema: pa.Schema) -> pa.Schema:
-        """
-        Handle default column additions (eg, soma_rowid) and error checking on required columns.
-
-        Returns a schema, which may be modified by the addition of required columns.
-        """
-        if SOMA_ROWID in schema.names:
-            if schema.field(SOMA_ROWID).type != pa.int64():
-                raise TypeError(f"{SOMA_ROWID} field must be of type Arrow int64")
-        else:
-            # add SOMA_ROWID
-            schema = schema.insert(0, pa.field(SOMA_ROWID, pa.int64()))
-
-        if SOMA_JOINID in schema.names:
-            if schema.field(SOMA_JOINID).type != pa.int64():
-                raise TypeError(f"{SOMA_JOINID} field must be of type Arrow int64")
-        else:
-            # add SOMA_JOINID
-            schema = schema.insert(1, pa.field(SOMA_JOINID, pa.int64()))
-
-        for field_name in schema.names:
-            if field_name.startswith("soma_") and field_name not in [
-                SOMA_ROWID,
-                SOMA_JOINID,
-            ]:
-                raise ValueError(
-                    "SOMADataFrame schema may not contain fields with name prefix `soma_`"
-                )
-
-        return schema
 
     def _create_empty(
         self,
@@ -153,7 +120,7 @@ class SOMADataFrame(TileDBArray):
         return False
 
     def get_index_column_names(self) -> Sequence[str]:
-        return []
+        return ()
 
     def read(
         self,
@@ -273,11 +240,9 @@ class SOMADataFrame(TileDBArray):
             SOMA_ROWID not in values.schema.names
             or SOMA_JOINID not in values.schema.names
         ):
-            raise TypeError(
+            raise ValueError(
                 f"Write requires both {SOMA_ROWID} and {SOMA_JOINID} to be specified in table."
             )
-
-        assert SOMA_ROWID in values.schema.names
 
         # TODO: contiguity check, and/or split into multiple contiguous writes
         # For now: just assert that these _already are_ contiguous and start with 0.
@@ -348,3 +313,35 @@ class SOMADataFrame(TileDBArray):
         column of type int64.
         """
         self.write(pa.Table.from_pandas(dataframe))
+
+
+def _validate_schema(schema: pa.Schema) -> pa.Schema:
+    """
+    Handle default column additions (eg, soma_rowid) and error checking on required columns.
+
+    Returns a schema, which may be modified by the addition of required columns.
+    """
+    if SOMA_ROWID in schema.names:
+        if schema.field(SOMA_ROWID).type != pa.int64():
+            raise TypeError(f"{SOMA_ROWID} field must be of type Arrow int64")
+    else:
+        # add SOMA_ROWID
+        schema = schema.insert(0, pa.field(SOMA_ROWID, pa.int64()))
+
+    if SOMA_JOINID in schema.names:
+        if schema.field(SOMA_JOINID).type != pa.int64():
+            raise TypeError(f"{SOMA_JOINID} field must be of type Arrow int64")
+    else:
+        # add SOMA_JOINID
+        schema = schema.insert(1, pa.field(SOMA_JOINID, pa.int64()))
+
+    for field_name in schema.names:
+        if field_name.startswith("soma_") and field_name not in [
+            SOMA_ROWID,
+            SOMA_JOINID,
+        ]:
+            raise ValueError(
+                "SOMADataFrame schema may not contain fields with name prefix `soma_`"
+            )
+
+    return schema

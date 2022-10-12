@@ -1,4 +1,4 @@
-from typing import Any, Iterator, List, Literal, Optional, Sequence, TypeVar
+from typing import Any, Iterator, Literal, Optional, Sequence, Tuple, TypeVar, Union
 
 import numpy as np
 import pandas as pd
@@ -21,7 +21,7 @@ class SOMAIndexedDataFrame(TileDBArray):
     All ``SOMAIndexedDataFrame`` must contain a column called ``soma_joinid``, of type ``int64``. The ``soma_joinid`` column contains a unique value for each row in the ``SOMAIndexedDataFrame``, and intended to act as a joint key for other objects, such as ``SOMASparseNdArray``.
     """
 
-    _index_column_names: Optional[List[str]]
+    _index_column_names: Union[Tuple[()], Tuple[str, ...]]
     _is_sparse: Optional[bool]
 
     def __init__(
@@ -35,7 +35,7 @@ class SOMAIndexedDataFrame(TileDBArray):
         See also the ``TileDBOject`` constructor.
         """
         super().__init__(uri=uri, parent=parent, ctx=ctx)
-        self._index_column_names = None
+        self._index_column_names = ()
         self._is_sparse = None
 
     @property
@@ -52,53 +52,13 @@ class SOMAIndexedDataFrame(TileDBArray):
 
         :param index_column_names: A list of column names to use as user-defined index columns (e.g., ``['cell_type', 'tissue_type']``). All named columns must exist in the schema, and at least one index column name is required.
         """
-        schema = self._validate_schema(schema, index_column_names)
+        schema = _validate_schema(schema, index_column_names)
         self._create_empty(schema, index_column_names)
         self._is_indexed = True
-        self._index_column_names = list(index_column_names)
+        self._index_column_names = tuple(index_column_names)
 
         self._common_create()  # object-type metadata etc
         return self
-
-    def _validate_schema(
-        self, schema: pa.Schema, index_column_names: Sequence[str]
-    ) -> pa.Schema:
-        """
-        Handle default column additions (eg, soma_joinid) and error checking on required columns.
-
-        Returns a schema, which may be modified by the addition of required columns.
-        """
-        if index_column_names is None or len(index_column_names) == 0:
-            raise ValueError("SOMAIndexedDataFrame requires one or more index columns")
-
-        if SOMA_JOINID in schema.names:
-            if schema.field(SOMA_JOINID).type != pa.int64():
-                raise TypeError(f"{SOMA_JOINID} field must be of type Arrow int64")
-        else:
-            # add SOMA_JOINID
-            schema = schema.append(pa.field(SOMA_JOINID, pa.int64()))
-
-        # verify no illegal use of soma_ prefix
-        for field_name in schema.names:
-            if field_name.startswith("soma_") and field_name not in [SOMA_JOINID]:
-                raise ValueError(
-                    "SOMAIndexedDataFrame schema may not contain fields with name prefix `soma_`"
-                )
-
-        # verify that all index_column_names are present in the schema
-        schema_names_set = set(schema.names)
-        for index_column_name in index_column_names:
-            if (
-                index_column_name.startswith("soma_")
-                and index_column_name != SOMA_JOINID
-            ):
-                raise ValueError(
-                    "SOMAIndexedDataFrame schema may not contain fields with name prefix `soma_`"
-                )
-            if index_column_name not in schema_names_set:
-                raise ValueError("All index names must be dataframe schema")
-
-        return schema
 
     def _create_empty(
         self,
@@ -190,7 +150,7 @@ class SOMAIndexedDataFrame(TileDBArray):
         """
         # If we've cached the answer, skip the storage read. Especially if the storage is on the
         # cloud, where we'll avoid an HTTP request.
-        if self._index_column_names is None:
+        if self._index_column_names == ():
             assert self.is_indexed
             self._index_column_names = self._tiledb_dim_names()
 
@@ -349,3 +309,39 @@ class SOMAIndexedDataFrame(TileDBArray):
         dataframe: pd.DataFrame,
     ) -> None:
         self.write(pa.Table.from_pandas(dataframe))
+
+
+def _validate_schema(schema: pa.Schema, index_column_names: Sequence[str]) -> pa.Schema:
+    """
+    Handle default column additions (eg, soma_joinid) and error checking on required columns.
+
+    Returns a schema, which may be modified by the addition of required columns.
+    """
+    if not index_column_names:
+        raise ValueError("SOMAIndexedDataFrame requires one or more index columns")
+
+    if SOMA_JOINID in schema.names:
+        if schema.field(SOMA_JOINID).type != pa.int64():
+            raise ValueError(f"{SOMA_JOINID} field must be of type Arrow int64")
+    else:
+        # add SOMA_JOINID
+        schema = schema.append(pa.field(SOMA_JOINID, pa.int64()))
+
+    # verify no illegal use of soma_ prefix
+    for field_name in schema.names:
+        if field_name.startswith("soma_") and field_name != SOMA_JOINID:
+            raise ValueError(
+                "SOMAIndexedDataFrame schema may not contain fields with name prefix `soma_`"
+            )
+
+    # verify that all index_column_names are present in the schema
+    schema_names_set = set(schema.names)
+    for index_column_name in index_column_names:
+        if index_column_name.startswith("soma_") and index_column_name != SOMA_JOINID:
+            raise ValueError(
+                "SOMAIndexedDataFrame schema may not contain fields with name prefix `soma_`"
+            )
+        if index_column_name not in schema_names_set:
+            raise ValueError("All index names must be dataframe schema")
+
+    return schema
