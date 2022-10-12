@@ -61,14 +61,18 @@ def test_import_anndata(adata):
 
     # Check obs
     df = exp.obs.read_as_pandas_all()
-    assert sorted(df.columns.to_list()) == sorted(orig.obs_keys() + ["obs_id"])
+    assert sorted(df.columns.to_list()) == sorted(
+        orig.obs_keys() + ["soma_rowid", "obs_id"]
+    )
     assert (
         exp.obs.metadata.get(tiledbsoma.util.SOMA_OBJECT_TYPE_METADATA_KEY)
         == "SOMADataFrame"
     )
     assert sorted(df["obs_id"]) == sorted(list(orig.obs_names))
     # Convenience accessor
-    assert sorted(exp.obs.keys()) == sorted(list(orig.obs.keys()) + ["obs_id"])
+    assert sorted(exp.obs.keys()) == sorted(
+        list(orig.obs.keys()) + ["soma_rowid", "obs_id"]
+    )
 
     # Check X/data (dense)
     #    with tiledb.open(os.path.join(output_path, "X", "data")) as A:

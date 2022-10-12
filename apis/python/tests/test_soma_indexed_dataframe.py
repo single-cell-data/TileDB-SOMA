@@ -1,7 +1,7 @@
 import pyarrow as pa
 import pytest
 
-import tiledbsoma as t
+import tiledbsoma as soma
 
 
 @pytest.fixture
@@ -19,7 +19,7 @@ def arrow_schema():
 
 
 def test_soma_indexed_dataframe(tmp_path, arrow_schema):
-    sdf = t.SOMAIndexedDataFrame(uri=tmp_path.as_posix())
+    sdf = soma.SOMAIndexedDataFrame(uri=tmp_path.as_posix())
 
     asch = pa.schema(
         [
@@ -33,9 +33,13 @@ def test_soma_indexed_dataframe(tmp_path, arrow_schema):
     asch = arrow_schema()
     sdf.create(schema=asch, index_column_names=["foo"])
 
+    assert sorted(sdf.schema.names) == sorted(["foo", "bar", "baz", "soma_joinid"])
+    assert sorted(sdf.keys()) == sorted(sdf.schema.names)
+
     # Write
     for _ in range(3):
         pydict = {}
+        pydict["soma_joinid"] = [0, 1, 2, 3, 4]
         pydict["foo"] = [10, 20, 30, 40, 50]
         pydict["bar"] = [4.1, 5.2, 6.3, 7.4, 8.5]
         pydict["baz"] = ["apple", "ball", "cat", "dog", "egg"]
@@ -49,7 +53,8 @@ def test_soma_indexed_dataframe(tmp_path, arrow_schema):
     # * But len(table) is 3
     # * `for column in table` loops over columns
     assert table.num_rows == 5
-    assert table.num_columns == 3
+    assert table.num_columns == 4
+    assert [e.as_py() for e in list(table["soma_joinid"])] == pydict["soma_joinid"]
     assert [e.as_py() for e in list(table["foo"])] == pydict["foo"]
     assert [e.as_py() for e in list(table["bar"])] == pydict["bar"]
     assert [e.as_py() for e in list(table["baz"])] == pydict["baz"]
@@ -57,14 +62,15 @@ def test_soma_indexed_dataframe(tmp_path, arrow_schema):
     # Read ids
     table = sdf.read_all(ids=[30, 10])
     assert table.num_rows == 2
-    assert table.num_columns == 3
+    assert table.num_columns == 4
+    assert sorted([e.as_py() for e in list(table["soma_joinid"])]) == [0, 2]
     assert sorted([e.as_py() for e in list(table["foo"])]) == [10, 30]
     assert sorted([e.as_py() for e in list(table["bar"])]) == [4.1, 6.3]
     assert sorted([e.as_py() for e in list(table["baz"])]) == ["apple", "cat"]
 
 
 def test_soma_indexed_dataframe_with_float_dim(tmp_path, arrow_schema):
-    sdf = t.SOMAIndexedDataFrame(uri=tmp_path.as_posix())
+    sdf = soma.SOMAIndexedDataFrame(uri=tmp_path.as_posix())
     asch = arrow_schema()
     sdf.create(schema=asch, index_column_names=["bar"])
     assert sdf.get_index_column_names() == ["bar"]
@@ -78,17 +84,19 @@ def simple_soma_indexed_data_frame(tmp_path):
     schema = pa.schema(
         [
             ("index", pa.uint64()),
+            ("soma_joinid", pa.int64()),
             ("A", pa.int64()),
             ("B", pa.float64()),
             ("C", pa.large_string()),
         ]
     )
     index_column_names = ["index"]
-    sdf = t.SOMAIndexedDataFrame(uri=tmp_path.as_posix())
+    sdf = soma.SOMAIndexedDataFrame(uri=tmp_path.as_posix())
     sdf.create(schema=schema, index_column_names=index_column_names)
 
     data = {
         "index": [0, 1, 2, 3],
+        "soma_joinid": [10, 11, 12, 13],
         "A": [10, 11, 12, 13],
         "B": [100.1, 200.2, 300.3, 400.4],
         "C": ["this", "is", "a", "test"],
@@ -104,9 +112,7 @@ def simple_soma_indexed_data_frame(tmp_path):
     "ids",
     [
         None,
-        [
-            0,
-        ],
+        [0],
         [1, 3],
     ],
 )
@@ -118,6 +124,8 @@ def simple_soma_indexed_data_frame(tmp_path):
         ["A", "B"],
         ["index"],
         ["index", "A", "B", "C"],
+        ["soma_joinid"],
+        ["soma_joinid", "A"],
         None,
     ],
 )
@@ -128,7 +136,6 @@ def test_SOMAIndexedDataFrame_read_column_names(
     assert sdf.exists()
 
     def _check_tbl(tbl, col_names, ids):
-        print(tbl)
         assert tbl.num_columns == (
             len(schema.names) if col_names is None else len(col_names)
         )
@@ -165,3 +172,41 @@ def test_SOMAIndexedDataFrame_read_column_names(
     #     col_names,
     #     None,
     # )
+
+
+def test_soma_columns(tmp_path):
+    """
+    1. soma_joinid is int64
+    2. soma_joinid will be added by default if missing
+    3. soma_joinid is explicit in keys/schema
+    4. No other soma_ ids allowed
+    """
+
+    A = soma.SOMAIndexedDataFrame((tmp_path / "A").as_posix())
+    A.create(pa.schema([("a", pa.int32())]), index_column_names=["a"])
+    assert sorted(A.keys()) == sorted(["a", "soma_joinid"])
+    assert A.schema.field("soma_joinid").type == pa.int64()
+    A.delete()
+
+    B = soma.SOMAIndexedDataFrame((tmp_path / "B").as_posix())
+    with pytest.raises(TypeError):
+        B.create(
+            pa.schema([("a", pa.int32()), ("soma_joinid", pa.float32())]),
+            index_column_names=["a"],
+        )
+
+    D = soma.SOMAIndexedDataFrame((tmp_path / "D").as_posix())
+    D.create(
+        pa.schema([("a", pa.int32()), ("soma_joinid", pa.int64())]),
+        index_column_names=["a"],
+    )
+    assert sorted(D.keys()) == sorted(["a", "soma_joinid"])
+    assert D.schema.field("soma_joinid").type == pa.int64()
+    D.delete()
+
+    E = soma.SOMAIndexedDataFrame((tmp_path / "E").as_posix())
+    with pytest.raises(ValueError):
+        E.create(
+            pa.schema([("a", pa.int32()), ("soma_rowid", pa.bool_())]),
+            index_column_names=["a"],
+        )

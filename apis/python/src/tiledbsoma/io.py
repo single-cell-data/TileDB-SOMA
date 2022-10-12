@@ -300,8 +300,12 @@ def to_anndata(
 
     measurement = experiment.ms[measurement_name]
 
-    obs_df = experiment.obs.read_as_pandas_all(id_column_name="obs_id")
-    var_df = measurement.var.read_as_pandas_all(id_column_name="var_id")
+    obs_df = experiment.obs.read_as_pandas_all()
+    obs_df.reset_index(inplace=True)
+    obs_df.set_index("obs_id", inplace=True)
+    var_df = measurement.var.read_as_pandas_all()
+    var_df.reset_index(inplace=True)
+    var_df.set_index("var_id", inplace=True)
 
     nobs = len(obs_df.index)
     nvar = len(var_df.index)

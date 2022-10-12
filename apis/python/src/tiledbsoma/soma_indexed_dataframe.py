@@ -6,11 +6,10 @@ import pyarrow as pa
 import tiledb
 
 from . import util_arrow, util_tiledb
+from .constants import SOMA_JOINID
 from .soma_collection import SOMACollectionBase
 from .tiledb_array import TileDBArray
-from .types import Ids, NTuple, SOMAResultOrder
-
-ROWID = "soma_rowid"
+from .types import Ids, SOMAResultOrder
 
 Slice = TypeVar("Slice", bound=Sequence[int])
 
@@ -23,7 +22,6 @@ class SOMAIndexedDataFrame(TileDBArray):
     """
 
     _index_column_names: Optional[List[str]]
-    _shape: Optional[NTuple] = None
     _is_sparse: Optional[bool]
 
     def __init__(
@@ -47,35 +45,65 @@ class SOMAIndexedDataFrame(TileDBArray):
     def create(
         self,
         schema: pa.Schema,
-        index_column_names: Optional[List[str]] = None,
+        index_column_names: Sequence[str],
     ) -> "SOMAIndexedDataFrame":
         """
         :param schema: Arrow Schema defining the per-column schema. This schema must define all columns, including columns to be named as index columns. If the schema includes types unsupported by the SOMA implementation, an error will be raised.
 
         :param index_column_names: A list of column names to use as user-defined index columns (e.g., ``['cell_type', 'tissue_type']``). All named columns must exist in the schema, and at least one index column name is required.
         """
-        assert index_column_names is not None
-        assert len(index_column_names) >= 1
-
-        # assert all index_column_names are present in the schema
-        schema_names_set = set(schema.names)
-        for index_column_name in index_column_names:
-            assert index_column_name in schema_names_set
-
-        assert ROWID not in index_column_names
-        assert ROWID not in schema_names_set
-
+        schema = self._validate_schema(schema, index_column_names)
         self._create_empty(schema, index_column_names)
         self._is_indexed = True
-        self._index_column_names = index_column_names
+        self._index_column_names = list(index_column_names)
 
         self._common_create()  # object-type metadata etc
         return self
 
+    def _validate_schema(
+        self, schema: pa.Schema, index_column_names: Sequence[str]
+    ) -> pa.Schema:
+        """
+        Handle default column additions (eg, soma_joinid) and error checking on required columns.
+
+        Returns a schema, which may be modified by the addition of required columns.
+        """
+        if index_column_names is None or len(index_column_names) == 0:
+            raise ValueError("SOMAIndexedDataFrame requires one or more index columns")
+
+        if SOMA_JOINID in schema.names:
+            if schema.field(SOMA_JOINID).type != pa.int64():
+                raise TypeError(f"{SOMA_JOINID} field must be of type Arrow int64")
+        else:
+            # add SOMA_JOINID
+            schema = schema.append(pa.field(SOMA_JOINID, pa.int64()))
+
+        # verify no illegal use of soma_ prefix
+        for field_name in schema.names:
+            if field_name.startswith("soma_") and field_name not in [SOMA_JOINID]:
+                raise ValueError(
+                    "SOMAIndexedDataFrame schema may not contain fields with name prefix `soma_`"
+                )
+
+        # verify that all index_column_names are present in the schema
+        schema_names_set = set(schema.names)
+        for index_column_name in index_column_names:
+            if (
+                index_column_name.startswith("soma_")
+                and index_column_name != SOMA_JOINID
+            ):
+                raise ValueError(
+                    "SOMAIndexedDataFrame schema may not contain fields with name prefix `soma_`"
+                )
+            if index_column_name not in schema_names_set:
+                raise ValueError("All index names must be dataframe schema")
+
+        return schema
+
     def _create_empty(
         self,
         schema: pa.Schema,
-        index_column_names: List[str],
+        index_column_names: Sequence[str],
     ) -> None:
         """
         Create a TileDB 1D sparse array with dimensions and attributes
@@ -89,8 +117,8 @@ class SOMAIndexedDataFrame(TileDBArray):
                 schema.field(index_column_name).type
             )
             # We need domain=(None,None) for string dims
-            lo = None
-            hi = None
+            lo: Any = None
+            hi: Any = None
             if dtype != str:
                 if np.issubdtype(dtype, np.integer):
                     lo = np.iinfo(dtype).min
@@ -148,26 +176,9 @@ class SOMAIndexedDataFrame(TileDBArray):
 
     def keys(self) -> Sequence[str]:
         """
-        Returns the names of the columns when read back as a dataframe.  TODO: make it clear whether or not this will read back ``soma_rowid`` / ``soma_joinid``.
+        Returns the names of the columns when read back as a dataframe.
         """
-        return self._tiledb_attr_names()
-
-    @property
-    def shape(self) -> NTuple:
-        """
-        Return length of each dimension, always a list of length ``ndims``.
-        """
-        if self._shape is None:
-            with self._tiledb_open() as A:
-                self._shape = A.shape
-        return self._shape
-
-    @property
-    def ndims(self) -> int:
-        """
-        Return number of index columns.
-        """
-        return len(self.get_index_column_names())
+        return self._tiledb_array_keys()
 
     @property
     def is_indexed(self) -> Literal[True]:
@@ -181,12 +192,7 @@ class SOMAIndexedDataFrame(TileDBArray):
         # cloud, where we'll avoid an HTTP request.
         if self._index_column_names is None:
             assert self.is_indexed
-            names = []
-            with self._tiledb_open() as A:
-                dom = A.domain
-                for i in range(dom.ndim):
-                    names.append(dom.dim(i).name)
-            self._index_column_names = names
+            self._index_column_names = self._tiledb_dim_names()
 
         return self._index_column_names
 
@@ -269,7 +275,12 @@ class SOMAIndexedDataFrame(TileDBArray):
         This is a convenience method around ``read``. It iterates the return value from ``read`` and returns a concatenation of all the table-pieces found. Its nominal use is to simply unit-test cases.
         """
         return pa.concat_tables(
-            self.read(ids=ids, value_filter=value_filter, column_names=column_names)
+            self.read(
+                ids=ids,
+                value_filter=value_filter,
+                column_names=column_names,
+                result_order=result_order,
+            )
         )
 
     def write(self, values: pa.Table) -> None:
@@ -278,8 +289,6 @@ class SOMAIndexedDataFrame(TileDBArray):
 
         :param values: An Arrow.Table containing all columns, including the index columns. The schema for the values must match the schema for the ``SOMAIndexedDataFrame``.
         """
-        self._shape = None  # cache-invalidate
-
         dim_cols_list = []
         attr_cols_map = {}
         dim_names_set = self.get_index_column_names()
@@ -306,26 +315,34 @@ class SOMAIndexedDataFrame(TileDBArray):
 
     def read_as_pandas(
         self,
-        attrs: Optional[Sequence[str]] = None,
-        # to rename index to 'obs_id' or 'var_id', if desired, for anndata
-        id_column_name: Optional[str] = None,
+        ids: Optional[Any] = None,
+        value_filter: Optional[str] = None,
+        column_names: Optional[Sequence[str]] = None,
+        result_order: Optional[SOMAResultOrder] = None,
     ) -> Iterator[pd.DataFrame]:
-        """
-        For ``to_anndata``, as well as for any interactive use where the user wants a Pandas dataframe.
-        """
-        raise NotImplementedError("indexed read_as_pandas not implemented yet")
+        for tbl in self.read(
+            ids=ids,
+            value_filter=value_filter,
+            column_names=column_names,
+            result_order=result_order,
+        ):
+            yield tbl.to_pandas()
 
     def read_as_pandas_all(
         self,
-        *,
         ids: Optional[Ids] = None,
         value_filter: Optional[str] = None,
         column_names: Optional[Sequence[str]] = None,
-        result_order: Optional[str] = None,
-        # to rename index to 'obs_id' or 'var_id', if desired, for anndata
-        id_column_name: Optional[str] = None,
+        result_order: Optional[SOMAResultOrder] = None,
     ) -> pd.DataFrame:
-        raise NotImplementedError("read_as_pandas_all not implemented.")
+        return pd.concat(
+            self.read_as_pandas(
+                ids=ids,
+                value_filter=value_filter,
+                column_names=column_names,
+                result_order=result_order,
+            )
+        )
 
     def write_from_pandas(
         self,

@@ -23,8 +23,6 @@ class SOMADenseNdArray(TileDBArray):
     Represents ``X`` and others.
     """
 
-    _shape: Tuple[int]
-
     def __init__(
         self,
         uri: str,

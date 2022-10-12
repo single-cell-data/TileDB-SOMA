@@ -1,6 +1,6 @@
 import math
 import time
-from typing import Any, Iterator, List, Literal, Optional, Union
+from typing import Any, Iterator, List, Literal, Optional, Union, cast
 
 import numpy as np
 import pandas as pd
@@ -18,8 +18,6 @@ class SOMASparseNdArray(TileDBArray):
     """
     Represents ``X`` and others.
     """
-
-    _shape: Optional[NTuple] = None
 
     def __init__(
         self,
@@ -114,10 +112,8 @@ class SOMASparseNdArray(TileDBArray):
         """
         Return length of each dimension, always a list of length ``ndims``
         """
-        if self._shape is None:
-            with self._tiledb_open() as A:
-                self._shape = A.shape
-        return self._shape
+        with self._tiledb_open() as A:
+            return cast(NTuple, A.schema.domain.shape)
 
     def reshape(self, shape: NTuple) -> None:
         raise NotImplementedError("reshape operation not implemented.")

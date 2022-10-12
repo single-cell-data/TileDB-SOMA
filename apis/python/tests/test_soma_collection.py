@@ -23,6 +23,7 @@ def create_and_populate_dataframe(dataframe: soma.SOMADataFrame) -> None:
 
     pydict = {}
     pydict["soma_rowid"] = [0, 1, 2, 3, 4]
+    pydict["soma_joinid"] = [0, 1, 2, 3, 4]
     pydict["foo"] = [10, 20, 30, 40, 50]
     pydict["bar"] = [4.1, 5.2, 6.3, 7.4, 8.5]
     pydict["baz"] = ["apple", "ball", "cat", "dog", "egg"]
