@@ -4,7 +4,7 @@
 
 import ast
 from dataclasses import dataclass, field
-from typing import Any, Callable, List, Tuple, Type, Union
+from typing import Any, Callable, List, Tuple, Union
 
 import numpy as np
 import tiledb
@@ -183,7 +183,7 @@ class QueryConditionTree(ast.NodeVisitor):
     def visit_List(self, node):
         return list(node.elts)
 
-    def visit_Compare(self, node: Type[ast.Compare]) -> PyQueryCondition:
+    def visit_Compare(self, node: ast.Compare) -> PyQueryCondition:
         operator = self.visit(node.ops[0])
 
         if operator in (

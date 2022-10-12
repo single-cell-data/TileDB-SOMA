@@ -1,7 +1,18 @@
 import pyarrow as pa
-from typeguard.importhook import install_import_hook
+from typeguard.importhook import TypeguardFinder, install_import_hook
 
-install_import_hook("tiledbsoma")
+class CustomFinder(TypeguardFinder):
+    """
+    As noted in apis/python/src/tiledbsoma/query_condition.py we intentionally
+    suppress ``mypy`` there. However we need this extra step to also suppress
+    ``typeguard`` there.
+    """
+    def should_instrument(self, module_name: str):
+        if module_name == 'tiledbsoma.query_condition':
+            return False
+        return True
+
+install_import_hook("tiledbsoma", cls=CustomFinder)
 
 """Types supported in a SOMA*NdArray """
 NDARRAY_ARROW_TYPES_SUPPORTED = [
