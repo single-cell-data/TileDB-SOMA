@@ -342,7 +342,7 @@ class SOMADataFrame(TileDBArray):
             )
         )
 
-    def write_from_pandas(self, dataframe: pd.DataFrame):
+    def write_from_pandas(self, dataframe: pd.DataFrame) -> None:
         """
         Write the Pandas DataFrame. The Pandas DataFrame must contain a soma_rowid and soma_joinid
         column of type int64.
