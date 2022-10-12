@@ -1,7 +1,7 @@
 import pathlib
 import time
 import urllib.parse
-from typing import TypeVar
+from typing import List, TypeVar, Union
 
 import numpy as np
 import pandas as pd
@@ -91,3 +91,25 @@ def uri_joinpath(base: str, path: str) -> str:
                 parts[2] = parts[2] + "/" + path
 
     return urllib.parse.urlunparse(parts)
+
+
+def ids_to_list(ids: Union[slice, List[int]]) -> List[int]:
+    """
+    For the interface between ``SOMADataFrame::read`` et al. (Python) and ``SOMAReader`` (C++): the
+    ``ids`` argument to the former can be slice or list; the argument to
+    ``SOMAReader::set_dim_points`` must be a list.
+    """
+    if isinstance(ids, list):
+        return ids
+    if isinstance(ids, slice):
+        if ids.start is None:
+            return []
+        step = ids.step
+        if step is None:
+            if ids.start <= ids.stop:
+                step = 1
+            else:
+                step = -1
+        stop = ids.stop + step
+        return list(range(ids.start, stop, step))
+    raise Exception(f"expected ids as slice or list; got {type(ids)}")

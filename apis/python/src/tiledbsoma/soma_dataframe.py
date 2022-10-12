@@ -5,8 +5,12 @@ import pandas as pd
 import pyarrow as pa
 import tiledb
 
-from . import util_arrow, util_tiledb
+# This package's pybind11 code
+import tiledbsoma.libtiledbsoma as clib
+
+from . import util, util_arrow
 from .constants import SOMA_JOINID, SOMA_ROWID
+from .query_condition import QueryCondition  # type: ignore
 from .soma_collection import SOMACollectionBase
 from .tiledb_array import TileDBArray
 from .types import Ids, SOMAResultOrder
@@ -150,40 +154,32 @@ class SOMADataFrame(TileDBArray):
 
         **Indexing**: the ``ids`` parameter will support, per dimension: a row offset (uint), a row-offset range (slice), or a list of both.
         """
-        tiledb_result_order = util_tiledb.tiledb_result_order_from_soma_result_order(
-            result_order, accept=["rowid-ordered", "unordered"]
-        )
-
         with self._tiledb_open("r") as A:
-            dim_names, attr_names = util_tiledb.split_column_names(
-                A.schema, column_names
+            query_condition = None
+            if value_filter is not None:
+                query_condition = QueryCondition(value_filter)
+
+            # As an arg to this method, `column_names` is optional-None. For the pybind11
+            # code it's optional-[].
+            lib_column_names = [] if column_names is None else column_names
+
+            sr = clib.SOMAReader(
+                self._uri,
+                name=self.__class__.__name__,
+                schema=A.schema,  # query_condition needs this
+                column_names=lib_column_names,
+                query_condition=query_condition,
             )
-            if value_filter is None:
-                query = A.query(
-                    return_arrow=True,
-                    return_incomplete=True,
-                    order=tiledb_result_order,
-                    dims=dim_names,
-                    attrs=attr_names,
-                )
-            else:
-                qc = tiledb.QueryCondition(value_filter)
-                query = A.query(
-                    return_arrow=True,
-                    return_incomplete=True,
-                    attr_cond=qc,
-                    order=tiledb_result_order,
-                    dims=dim_names,
-                    attrs=attr_names,
-                )
+            if ids is not None:
+                sr.set_dim_points(SOMA_ROWID, util.ids_to_list(ids))
 
-            if ids is None:
-                iterator = query.df[:]
-            else:
-                iterator = query.df[ids]
+            # TODO: platform_config
+            # TODO: batch_size
+            # TODO: result_order
+            sr.submit()
 
-            for table in iterator:
-                yield table
+            while arrow_table := sr.read_next():
+                yield arrow_table
 
     def read_all(
         self,
