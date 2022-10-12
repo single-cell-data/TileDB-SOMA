@@ -178,17 +178,13 @@ class SOMADataFrame(TileDBArray):
         **Indexing**: the ``ids`` parameter will support, per dimension: a row offset (uint), a row-offset range (slice), or a list of both.
         """
         with self._tiledb_open("r") as A:
-            dim_names, attr_names = util_tiledb.split_column_names(
-                A.schema, column_names
-            )
-
             query_condition = None
             if value_filter is not None:
                 query_condition = qcmodule.QueryCondition(value_filter)
 
             # As an arg to this method, `column_names` is optional-None. For the pybind11
             # code it's optional-[].
-            lib_column_names = [] if attr_names is None else attr_names
+            lib_column_names = [] if column_names is None else column_names
 
             sr = clib.SOMAReader(
                 self._uri,

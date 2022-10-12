@@ -175,15 +175,6 @@ def test_SOMADataFrame_read_column_names(simple_soma_data_frame, ids, col_names)
     assert sdf.exists()
 
     def _check_tbl(tbl, col_names, ids, *, demote):
-        print()
-        print("================================================================")
-        print("TABLE")
-        print(tbl)
-        print("COL_NAMES")
-        print(col_names)
-        expncol = len(schema.names) if col_names is None else len(col_names)
-        print("TBL.NUM_COLUMNS", tbl.num_columns, "EXPNCOL", expncol, "CMP", tbl.num_columns == expncol)
-        print("================================================================")
         assert tbl.num_columns == (
             len(schema.names) if col_names is None else len(col_names)
         )
