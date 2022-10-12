@@ -347,26 +347,5 @@ class SOMAIndexedDataFrame(TileDBArray):
     def write_from_pandas(
         self,
         dataframe: pd.DataFrame,
-        index_column_names: List[str],
-        *,
-        extent: int = 2048,
-        # to rename index to 'obs_id' or 'var_id', if desired, for anndata
-        id_column_name: Optional[str] = None,
     ) -> None:
-        """
-        Populates the ``obs`` element of a SOMAExperiment object.
-
-        :param dataframe: ``anndata.obs``
-        :param extent: TileDB ``extent`` parameter for the array schema.
-        """
-        raise NotImplementedError("indexed write_from_pandas not implemented yet")
-
-    def write_all_from_pandas(
-        self,
-        dataframe: pd.DataFrame,
-        *,
-        extent: int = 2048,
-        # to rename index to 'obs_id' or 'var_id', if desired, for anndata
-        id_column_name: Optional[str] = None,
-    ) -> None:
-        raise NotImplementedError("write_all_from_pandas not implemented")
+        self.write(pa.Table.from_pandas(dataframe))

@@ -5,9 +5,8 @@ import pandas as pd
 import pyarrow as pa
 import tiledb
 
-from . import util, util_arrow, util_tiledb
+from . import util_arrow, util_tiledb
 from .constants import SOMA_JOINID, SOMA_ROWID
-from .logging import log_io
 from .soma_collection import SOMACollectionBase
 from .tiledb_array import TileDBArray
 from .types import Ids, SOMAResultOrder
@@ -343,97 +342,9 @@ class SOMADataFrame(TileDBArray):
             )
         )
 
-    def write_from_pandas(
-        self,
-        dataframe: pd.DataFrame,
-        *,
-        extent: int = 2048,
-        # to rename index to 'obs_id' or 'var_id', if desired, for anndata
-        id_column_name: Optional[str] = None,
-    ) -> None:
+    def write_from_pandas(self, dataframe: pd.DataFrame):
         """
-        Writes from memory to SOMA storage. Same as ``write_all_from_pandas``, except this method requires the ``soma_rowid`` column to be present (so it knows where to write data), whereas ``write_all_from_pandas``  will populate ``soma_rowid`` for you as zero-up indices.
-
-        :param dataframe: ``anndata.obs`` for example.
-        :param extent: TileDB ``extent`` parameter for the array schema.
+        Write the Pandas DataFrame. The Pandas DataFrame must contain a soma_rowid and soma_joinid
+        column of type int64.
         """
-        offsets_filters = tiledb.FilterList(
-            [tiledb.PositiveDeltaFilter(), tiledb.ZstdFilter(level=-1)]
-        )
-        dim_filters = tiledb.FilterList([tiledb.ZstdFilter(level=-1)])
-        attr_filters = tiledb.FilterList([tiledb.ZstdFilter(level=-1)])
-
-        s = util.get_start_stamp()
-        log_io(None, f"{self._indent}START  WRITING {self.uri}")
-
-        assert SOMA_ROWID in dataframe.keys()
-        assert len(dataframe.shape) == 2
-        # E.g. (80, 7) is 80 rows x 7 columns
-
-        mode = "ingest"
-        if self.exists():
-            mode = "append"
-            log_io(None, f"{self._indent}Re-using existing array")
-
-        # Make obs_id a data column
-        dataframe.reset_index(inplace=True)
-        if id_column_name is not None:
-            dataframe.rename(columns={"index": id_column_name}, inplace=True)
-
-        dataframe.set_index(SOMA_ROWID, inplace=True)
-
-        # Force ASCII storage if string, in order to make obs/var columns queryable.
-        # TODO: when UTF-8 attributes are fully supported we can remove this.
-        column_types = {}
-        for column_name in dataframe.keys():
-            dfc = dataframe[column_name]
-            if len(dfc) > 0 and type(dfc[0]) == str:
-                column_types[column_name] = "ascii"
-            if len(dfc) > 0 and type(dfc[0]) == bytes:
-                column_types[column_name] = "bytes"
-
-        tiledb.from_pandas(
-            uri=self.uri,
-            dataframe=dataframe,
-            # name=self.name,
-            sparse=True,  # TODO
-            allows_duplicates=self._tiledb_platform_config.allows_duplicates,
-            offsets_filters=offsets_filters,
-            attr_filters=attr_filters,
-            dim_filters=dim_filters,
-            capacity=100000,
-            tile=extent,
-            column_types=column_types,
-            ctx=self._ctx,
-            mode=mode,
-        )
-
-        self._common_create()  # object-type metadata etc
-
-        log_io(
-            f"Wrote {self.uri}",
-            util.format_elapsed(s, f"{self._indent}FINISH WRITING {self.uri}"),
-        )
-
-    def write_all_from_pandas(
-        self,
-        dataframe: pd.DataFrame,
-        *,
-        extent: int = 2048,
-        # to rename index to 'obs_id' or 'var_id', if desired, for anndata
-        id_column_name: Optional[str] = None,
-    ) -> None:
-        """
-        Writes from memory to SOMA storage. Same as ``write_from_pandas``, except ``write_from_pandas`` requires the ``soma_rowid`` column to be present (so it knows where to write data), whereas this method will populate ``soma_rowid`` for you as zero-up indices.
-
-        :param dataframe: ``anndata.obs`` for example.
-        :param extent: TileDB ``extent`` parameter for the array schema.
-        """
-
-        assert SOMA_ROWID not in dataframe.keys()
-        assert len(dataframe.shape) == 2
-        # E.g. (80, 7) is 80 rows x 7 columns
-        num_rows = dataframe.shape[0]
-        dataframe[SOMA_ROWID] = np.asarray(range(num_rows), dtype=np.int64)
-
-        self.write_from_pandas(dataframe, extent=extent, id_column_name=id_column_name)
+        self.write(pa.Table.from_pandas(dataframe))
