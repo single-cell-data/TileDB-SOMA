@@ -176,14 +176,7 @@ PYBIND11_MODULE(libtiledbsoma, m) {
         .def(
             "set_dim_points",
             static_cast<void (SOMAReader::*)(
-                const std::string&, const std::vector<uint64_t>&)>(
-                &SOMAReader::set_dim_points))
-
-        // NOTE: string binding for v0 arrays
-        .def(
-            "set_dim_points",
-            static_cast<void (SOMAReader::*)(
-                const std::string&, const std::vector<std::string>&)>(
+                const std::string&, const std::vector<int64_t>&)>(
                 &SOMAReader::set_dim_points))
 
         // Binding to set slices using PyArrow::ChunkedArray
@@ -205,26 +198,13 @@ PYBIND11_MODULE(libtiledbsoma, m) {
                     array.attr("_export_to_c")(
                         arrow_array_ptr, arrow_schema_ptr);
 
-                    if (!strcmp(arrow_schema.format, "L") ||
-                        !strcmp(arrow_schema.format, "l")) {
-                        std::span<uint64_t> data{
-                            (uint64_t*)arrow_array.buffers[1],
+                    // 'l' = arrow data type int64
+                    if (!strcmp(arrow_schema.format, "l")) {
+                        std::span<int64_t> data{
+                            (int64_t*)arrow_array.buffers[1],
                             (uint64_t)arrow_array.length};
                         reader.set_dim_points(
                             dim, data, partition_index, partition_count);
-                    } else if (!strcmp(arrow_schema.format, "U")) {
-                        // String dim for v0 arrays
-                        // TODO: partitioning is not supported for string dims
-                        const char* data = (const char*)(arrow_array
-                                                             .buffers[2]);
-                        const uint64_t*
-                            offsets = (const uint64_t*)(arrow_array.buffers[1]);
-
-                        for (int64_t i = 0; i < arrow_array.length; i++) {
-                            auto value = std::string{
-                                data + offsets[i], offsets[i + 1] - offsets[i]};
-                            reader.set_dim_point(dim, value);
-                        }
                     } else {
                         throw TileDBSOMAError(fmt::format(
                             "[libtiledbsoma] set_dim_arrow: type={} not "
