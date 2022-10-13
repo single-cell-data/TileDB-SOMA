@@ -5,6 +5,7 @@
 \alias{export_column_direct}
 \alias{export_arrow_array}
 \alias{nnz}
+\alias{get_column_types}
 \alias{get_table}
 \alias{get_column}
 \title{Access SOME Data From a Given URI}
@@ -13,7 +14,16 @@ get_column_names(uri)
 
 export_column_direct(uri, colnames)
 
-export_arrow_array(uri, colnames, qc = NULL, loglevel = "warn")
+export_arrow_array(
+  uri,
+  colnames,
+  qc = NULL,
+  dim_points = NULL,
+  dim_ranges = NULL,
+  loglevel = "warn"
+)
+
+get_column_types(uri, names)
 
 nnz(uri)
 

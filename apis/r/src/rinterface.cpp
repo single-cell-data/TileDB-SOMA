@@ -121,13 +121,14 @@ SEXP export_column_direct(const std::string& uri, const std::vector<std::string>
     return reslist;
 }
 
-
 //' @rdname get_table
 //' @export
 // [[Rcpp::export]]
 Rcpp::List export_arrow_array(const std::string& uri,
                               const std::vector<std::string>& colnames,
-                              Rcpp::Nullable<Rcpp::XPtr<tiledb::QueryCondition>> qc=R_NilValue,
+                              Rcpp::Nullable<Rcpp::XPtr<tiledb::QueryCondition>> qc = R_NilValue,
+                              Rcpp::Nullable<Rcpp::DataFrame> dim_points = R_NilValue,
+                              Rcpp::Nullable<Rcpp::DataFrame> dim_ranges = R_NilValue,
                               const std::string& loglevel = "warn") {
 
     tdbs::LOG_SET_LEVEL(loglevel);
@@ -143,6 +144,88 @@ Rcpp::List export_arrow_array(const std::string& uri,
         Rcpp::XPtr<tiledb::QueryCondition> qcxp(qc);
         obs->set_condition(*qcxp);
     }
+
+    // If we have a dimension points, apply them
+    if (!dim_points.isNull()) {
+        Rcpp::DataFrame df(dim_points);
+        Rcpp::CharacterVector nm = df[0];
+        Rcpp::CharacterVector tp = df[1];
+        Rcpp::NumericVector val = df[2]; // works as proxy for int and float types not for string
+        for (int i=0; i<df.nrow(); i++) {
+            std::string s(nm[i]);
+            std::string t(tp[i]);
+            if (t == "UINT64") {
+                uint64_t v = static_cast<uint64_t>(makeScalarInteger64(val[i]));
+                obs->set_dim_point<uint64_t>(s, v);
+                tdbs::LOG_INFO(fmt::format("Applying dim point {} on {} for {} with {}", i, nm[i], tp[i], v));
+            } else if (t == "INT64") {
+                int64_t v = makeScalarInteger64(val[i]);
+                obs->set_dim_point<int64_t>(s, v);
+                tdbs::LOG_INFO(fmt::format("Applying dim point {} on {} for {} with {}", i, nm[i], tp[i], v));
+            } else if (t == "FLOAT32") {
+                float v = static_cast<float>(val[i]);
+                obs->set_dim_point<float>(s, v);
+                tdbs::LOG_INFO(fmt::format("Applying dim point {} on {} for {} with {}", i, nm[i], tp[i], v));
+            } else if (t == "FLOAT64") {
+                double v = val[i];
+                obs->set_dim_point<double>(s, v);
+                tdbs::LOG_INFO(fmt::format("Applying dim point {} on {} for {} with {}", i, nm[i], tp[i], v));
+            } else if (t == "INT32") {
+                int32_t v = static_cast<int32_t>(val[i]);
+                obs->set_dim_point<int32_t>(s, v);
+                tdbs::LOG_INFO(fmt::format("Applying dim point {} on {} for {} with {}", i, nm[i], tp[i], v));
+            } else {
+                Rcpp::stop("Currently unsupported type: ", t);
+            }
+        }
+    }
+
+    // If we have a dimension points, apply them
+    if (!dim_ranges.isNull()) {
+        Rcpp::DataFrame df(dim_ranges);
+        Rcpp::CharacterVector nm = df[0];
+        Rcpp::CharacterVector tp = df[1];
+        Rcpp::NumericVector lo = df[2]; // works as proxy for int and float types not for string
+        Rcpp::NumericVector hi = df[3]; // works as proxy for int and float types not for string
+        for (int i=0; i<df.nrow(); i++) {
+            std::string s(nm[i]);
+            std::string t(tp[i]);
+            if (t == "UINT64") {
+                uint64_t l = static_cast<uint64_t>(makeScalarInteger64(lo[i]));
+                uint64_t h = static_cast<uint64_t>(makeScalarInteger64(hi[i]));
+                std::vector<std::pair<uint64_t, uint64_t>> vp{std::make_pair(l,h)};
+                obs->set_dim_ranges<uint64_t>(s, vp);
+                tdbs::LOG_INFO(fmt::format("Applying dim point {} on {} for {} with {} - {}", i, nm[i], tp[i], l, h));
+            } else if (t == "INT64") {
+                int64_t l = makeScalarInteger64(lo[i]);
+                int64_t h = makeScalarInteger64(hi[i]);
+                std::vector<std::pair<int64_t, int64_t>> vp{std::make_pair(l,h)};
+                obs->set_dim_ranges<int64_t>(s, vp);
+                tdbs::LOG_INFO(fmt::format("Applying dim point {} on {} for {} with {} - {}", i, nm[i], tp[i], l, h));
+            } else if (t == "FLOAT32") {
+                float l = static_cast<float>(lo[i]);
+                float h = static_cast<float>(hi[i]);
+                std::vector<std::pair<float, float>> vp{std::make_pair(l,h)};
+                obs->set_dim_ranges<float>(s, vp);
+                tdbs::LOG_INFO(fmt::format("Applying dim point {} on {} for {} with {} - {}", i, nm[i], tp[i], l, h));
+            } else if (t == "FLOAT64") {
+                double l = lo[i];
+                double h = hi[i];
+                std::vector<std::pair<double, double>> vp{std::make_pair(l,h)};
+                obs->set_dim_ranges<double>(s, vp);
+                tdbs::LOG_INFO(fmt::format("Applying dim point {} on {} for {} with {} - {}", i, nm[i], tp[i], l, h));
+            } else if (t == "INT32") {
+                int32_t l = static_cast<int32_t>(lo[i]);
+                int32_t h = static_cast<int32_t>(hi[i]);
+                std::vector<std::pair<int32_t, int32_t>> vp{std::make_pair(l,h)};
+                obs->set_dim_ranges<int32_t>(s, vp);
+                tdbs::LOG_INFO(fmt::format("Applying dim point {} on {} for {} with {} - {}", i, nm[i], tp[i], l, h));
+            } else {
+                Rcpp::stop("Currently unsupported type: ", t);
+            }
+        }
+    }
+
     obs->submit();
 
     // Getting next batch:  std::optional<std::shared_ptr<ArrayBuffers>>
@@ -211,4 +294,23 @@ void set_log_level(const std::string& level) {
 double nnz(const std::string& uri) {
     auto sr = tdbs::SOMAReader::open(uri);
     return static_cast<double>(sr->nnz());
+}
+
+//' @rdname get_table
+//' @export
+// [[Rcpp::export]]
+Rcpp::CharacterVector get_column_types(const std::string& uri,
+                                       const std::vector<std::string>& names) {
+
+    auto obs = tdbs::SOMAReader::open(uri);
+    obs->submit();
+    auto obs_data = obs->read_next();
+    size_t n = names.size();
+    Rcpp::CharacterVector vs(n);
+    for (size_t i=0; i<n; i++) {
+        auto datatype = obs_data->get()->at(names[i])->type();
+        vs[i] = std::string(_tiledb_datatype_to_string(datatype));
+    }
+    vs.attr("names") = names;
+    return vs;
 }
