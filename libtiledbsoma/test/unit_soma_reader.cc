@@ -32,6 +32,7 @@
 
 #include <catch2/catch_template_test_macros.hpp>
 #include <catch2/catch_test_macros.hpp>
+#include <catch2/generators/catch_generators_all.hpp>
 #include <catch2/matchers/catch_matchers_exception.hpp>
 #include <catch2/matchers/catch_matchers_floating_point.hpp>
 #include <catch2/matchers/catch_matchers_predicate.hpp>
@@ -61,7 +62,8 @@ uint64_t create_array(
     Context& ctx,
     int num_cells_per_fragment = 10,
     int num_fragments = 1,
-    bool overlap = false) {
+    bool overlap = false,
+    bool allow_duplicates = false) {
     // Delete array if it exists
     auto vfs = VFS(ctx);
     if (vfs.is_dir(uri)) {
@@ -80,7 +82,7 @@ uint64_t create_array(
 
     auto attr = Attribute::create<int>(ctx, "a0");
     schema.add_attribute(attr);
-    schema.set_allows_dups(false);
+    schema.set_allows_dups(allow_duplicates);
     schema.check();
 
     // Create array and open for writing
@@ -129,38 +131,37 @@ uint64_t create_array(
 
 };  // namespace
 
-TEST_CASE("SOMAReader: nnz, one fragment") {
-    // Create array
-    std::string uri = "mem://unit-test-array";
-    auto ctx = std::make_shared<Context>();
-    auto expected_nnz = create_array(uri, *ctx);
+TEST_CASE("SOMAReader: nnz") {
+    auto num_fragments = GENERATE(1, 10, 10);
+    auto overlap = GENERATE(false, true);
+    auto allow_duplicates = GENERATE(false, true);
+    int num_cells_per_fragment = 128;
 
-    // Get total cell num
-    auto sr = SOMAReader::open(ctx, uri);
-    auto nnz = sr->nnz();
-    REQUIRE(nnz == expected_nnz);
-}
+    SECTION(fmt::format(
+        " - fragments={}, overlap={}, allow_duplicates={}",
+        num_fragments,
+        overlap,
+        allow_duplicates)) {
+        // Create array
+        std::string uri = "mem://unit-test-array";
+        auto ctx = std::make_shared<Context>();
+        auto expected_nnz = create_array(
+            uri,
+            *ctx,
+            num_cells_per_fragment,
+            num_fragments,
+            overlap,
+            allow_duplicates);
 
-TEST_CASE("SOMAReader: nnz, multiple fragments") {
-    // Create array
-    std::string uri = "mem://unit-test-array";
-    auto ctx = std::make_shared<Context>();
-    auto expected_nnz = create_array(uri, *ctx, 10, 10);
+        // Get total cell num
+        auto sr = SOMAReader::open(ctx, uri);
 
-    // Get total cell num
-    auto sr = SOMAReader::open(ctx, uri);
-    auto nnz = sr->nnz();
-    REQUIRE(nnz == expected_nnz);
-}
-
-TEST_CASE("SOMAReader: nnz, overlapping fragments") {
-    // Create array
-    std::string uri = "mem://unit-test-array";
-    auto ctx = std::make_shared<Context>();
-    auto expected_nnz = create_array(uri, *ctx, 100, 21, true);
-
-    // Get total cell num
-    auto sr = SOMAReader::open(ctx, uri);
-    auto nnz = sr->nnz();
-    REQUIRE(nnz == expected_nnz);
+        uint64_t nnz;
+        if (num_fragments > 1 && overlap && allow_duplicates) {
+            REQUIRE_THROWS(nnz = sr->nnz());
+        } else {
+            nnz = sr->nnz();
+            REQUIRE(nnz == expected_nnz);
+        }
+    }
 }

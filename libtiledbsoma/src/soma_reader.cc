@@ -193,6 +193,12 @@ uint64_t SOMAReader::nnz() {
 
     //===============================================================
     // Found overlapping fragments, count cells
+    if (mq_->schema()->allows_dups()) {
+        throw TileDBSOMAError(
+            "[SOMAReader] nnz not supported for overlapping fragments with "
+            "duplicates");
+    }
+
     LOG_WARN("[SOMAReader] Found overlapping fragments, counting cells...");
 
     // TODO[perf]: Reuse "this" object to read, then reset the state of "this"
