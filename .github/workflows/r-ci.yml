@@ -1,8 +1,9 @@
 name: TileDB-SOMA R CI
 
 on:
-  push:
   pull_request:
+  push:
+    branches: [main]
 
 jobs:
   ci:
