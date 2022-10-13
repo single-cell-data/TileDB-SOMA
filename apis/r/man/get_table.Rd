@@ -23,7 +23,7 @@ export_arrow_array(
   loglevel = "warn"
 )
 
-get_column_types(uri, names)
+get_column_types(uri, colnames)
 
 nnz(uri)
 
@@ -38,6 +38,11 @@ get_column(uri, column)
 
 \item{qc}{External Pointer object to TileDB Query Condition, defaults to \sQuote{NULL} i.e.
 no query condition}
+
+\item{dim_points}{A data.frame object with name, type and point value to select rows.}
+
+\item{dim_ranges}{A data.frame object with name, type, and low and high values to select
+rows by ranges.}
 
 \item{loglevel}{Character value with the desired logging level, defaults to \sQuote{warn}}
 

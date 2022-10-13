@@ -50,7 +50,6 @@ Suggests:
     rmarkdown,
     knitr,
     withr,
-    testthat (>= 3.0.0),
-    tiledb
+    testthat (>= 3.0.0)
 VignetteBuilder: knitr
 Config/testthat/edition: 2

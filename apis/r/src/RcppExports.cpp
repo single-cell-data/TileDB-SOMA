@@ -84,25 +84,26 @@ BEGIN_RCPP
     return R_NilValue;
 END_RCPP
 }
-<<<<<<< HEAD
 // nnz
 double nnz(const std::string& uri);
 RcppExport SEXP _tiledbsoma_nnz(SEXP uriSEXP) {
-=======
-// get_column_types
-Rcpp::CharacterVector get_column_types(const std::string& uri, const std::vector<std::string>& names);
-RcppExport SEXP _tiledbsoma_get_column_types(SEXP uriSEXP, SEXP namesSEXP) {
->>>>>>> e304d13 (Support row selection via points and ranges)
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< const std::string& >::type uri(uriSEXP);
-<<<<<<< HEAD
     rcpp_result_gen = Rcpp::wrap(nnz(uri));
-=======
-    Rcpp::traits::input_parameter< const std::vector<std::string>& >::type names(namesSEXP);
-    rcpp_result_gen = Rcpp::wrap(get_column_types(uri, names));
->>>>>>> e304d13 (Support row selection via points and ranges)
+    return rcpp_result_gen;
+END_RCPP
+}
+// get_column_types
+Rcpp::CharacterVector get_column_types(const std::string& uri, const std::vector<std::string>& colnames);
+RcppExport SEXP _tiledbsoma_get_column_types(SEXP uriSEXP, SEXP colnamesSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const std::string& >::type uri(uriSEXP);
+    Rcpp::traits::input_parameter< const std::vector<std::string>& >::type colnames(colnamesSEXP);
+    rcpp_result_gen = Rcpp::wrap(get_column_types(uri, colnames));
     return rcpp_result_gen;
 END_RCPP
 }

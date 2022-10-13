@@ -36,9 +36,11 @@ set_log_level <- function(level) {
 #' @export
 nnz <- function(uri) {
     .Call(`_tiledbsoma_nnz`, uri)
+}
 
 #' @rdname get_table
 #' @export
-get_column_types <- function(uri, names) {
-    .Call(`_tiledbsoma_get_column_types`, uri, names)
+get_column_types <- function(uri, colnames) {
+    .Call(`_tiledbsoma_get_column_types`, uri, colnames)
 }
+

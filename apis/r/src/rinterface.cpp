@@ -300,17 +300,17 @@ double nnz(const std::string& uri) {
 //' @export
 // [[Rcpp::export]]
 Rcpp::CharacterVector get_column_types(const std::string& uri,
-                                       const std::vector<std::string>& names) {
+                                       const std::vector<std::string>& colnames) {
 
     auto obs = tdbs::SOMAReader::open(uri);
     obs->submit();
     auto obs_data = obs->read_next();
-    size_t n = names.size();
+    size_t n = colnames.size();
     Rcpp::CharacterVector vs(n);
     for (size_t i=0; i<n; i++) {
-        auto datatype = obs_data->get()->at(names[i])->type();
+        auto datatype = obs_data->get()->at(colnames[i])->type();
         vs[i] = std::string(_tiledb_datatype_to_string(datatype));
     }
-    vs.attr("names") = names;
+    vs.attr("names") = colnames;
     return vs;
 }
