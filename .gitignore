@@ -54,3 +54,6 @@ apis/python/src/tiledbsoma/libtiledbsoma.*
 /.quarto/
 
 /NOTES/
+
+## R package tarballs
+apis/r/tiledbsoma_*tar.gz
