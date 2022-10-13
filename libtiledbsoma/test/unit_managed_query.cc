@@ -56,6 +56,8 @@ const std::string src_path = TILEDBSOMA_SOURCE_ROOT;
 
 namespace {
 
+bool VERBOSE = false;
+
 auto create_array(const std::string& uri, Context& ctx) {
     // Delete array if it exists
     auto vfs = VFS(ctx);
@@ -104,7 +106,9 @@ auto create_array(const std::string& uri, Context& ctx) {
 };  // namespace
 
 TEST_CASE("ManagedQuery: Basic execution test") {
-    LOG_CONFIG("debug");
+    if (VERBOSE) {
+        LOG_CONFIG("debug");
+    }
 
     std::string uri = "mem://unit-test-array";
     auto ctx = Context();
