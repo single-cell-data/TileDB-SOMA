@@ -1,0 +1,31 @@
+name: TileDB-SOMA R CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  ci:
+    strategy:
+      matrix:
+        include:
+          #- {os: macOS-latest}
+          #- {os: ubuntu-latest}
+          - {os: ubuntu-22.04}
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Bootstrap
+        run: cd apis/r && tools/r-ci.sh bootstrap
+
+      - name: Dependencies
+        run: cd apis/r && tools/r-ci.sh install_all
+
+      - name: MkVars
+        run: mkdir ~/.R && echo "CXX20FLAGS=-Wno-deprecated-declarations -Wno-deprecated" > ~/.R/Makevars
+
+      - name: Test
+        run: cd apis/r && tools/r-ci.sh run_tests
