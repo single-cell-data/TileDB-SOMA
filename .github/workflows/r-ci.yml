@@ -28,7 +28,7 @@ jobs:
         run: mkdir ~/.R && echo "CXX20FLAGS=-Wno-deprecated-declarations -Wno-deprecated" > ~/.R/Makevars
 
       - name: BuildTgz
-        run: cd apis/r && R CMD build .
+        run: cd apis/r && ./configure && R CMD build .
 
       - name: InstallTgz
         run: cd apis/r && R CMD INSTALL tiledbsoma_*tar.gz
