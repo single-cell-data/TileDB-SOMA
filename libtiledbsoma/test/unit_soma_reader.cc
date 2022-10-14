@@ -132,7 +132,7 @@ uint64_t create_array(
 };  // namespace
 
 TEST_CASE("SOMAReader: nnz") {
-    auto num_fragments = GENERATE(1, 10, 10);
+    auto num_fragments = GENERATE(1, 10);
     auto overlap = GENERATE(false, true);
     auto allow_duplicates = GENERATE(false, true);
     int num_cells_per_fragment = 128;
