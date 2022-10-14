@@ -39,7 +39,7 @@ class SOMAIndexedDataFrame(TileDBArray):
         self._is_sparse = None
 
     @property
-    def type(self) -> Literal["SOMAIndexedDataFrame"]:
+    def soma_type(self) -> Literal["SOMAIndexedDataFrame"]:
         return "SOMAIndexedDataFrame"
 
     def create(

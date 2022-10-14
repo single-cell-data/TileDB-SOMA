@@ -37,7 +37,7 @@ class SOMADataFrame(TileDBArray):
         self._cached_is_sparse = None
 
     @property
-    def type(self) -> Literal["SOMADataFrame"]:
+    def soma_type(self) -> Literal["SOMADataFrame"]:
         return "SOMADataFrame"
 
     def create(

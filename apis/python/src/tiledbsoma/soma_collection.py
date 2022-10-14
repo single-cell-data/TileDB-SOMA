@@ -283,7 +283,10 @@ class SOMACollectionBase(TileDBObject, MutableMapping[str, CollectionElementType
         if key in self._subclass_constrained_types:
             # Implement the sub-class protocol constraining the value type of certain item keys
             accepted_types = self._subclass_constrained_types[key]
-            if not isinstance(value, TileDBObject) or value.type not in accepted_types:
+            if (
+                not isinstance(value, TileDBObject)
+                or value.soma_type not in accepted_types
+            ):
                 NL = "\n"
                 raise TypeError(
                     f"{self.__class__.__name__} field '{key}' only accepts values of type(s) {NL.join(accepted_types)}."
@@ -373,5 +376,5 @@ class SOMACollection(SOMACollectionBase[TileDBObject]):
     """
 
     @property
-    def type(self) -> Literal["SOMACollection"]:
+    def soma_type(self) -> Literal["SOMACollection"]:
         return "SOMACollection"

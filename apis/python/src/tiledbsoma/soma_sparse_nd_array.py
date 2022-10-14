@@ -33,7 +33,7 @@ class SOMASparseNdArray(TileDBArray):
         super().__init__(uri=uri, parent=parent, ctx=ctx)
 
     @property
-    def type(self) -> Literal["SOMASparseNdArray"]:
+    def soma_type(self) -> Literal["SOMASparseNdArray"]:
         return "SOMASparseNdArray"
 
     def create(
