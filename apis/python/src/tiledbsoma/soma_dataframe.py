@@ -304,7 +304,8 @@ class SOMADataFrame(TileDBArray):
                 value_filter=value_filter,
                 column_names=column_names,
                 result_order=result_order,
-            )
+            ),
+            ignore_index=True,
         )
 
     def write_from_pandas(self, dataframe: pd.DataFrame) -> None:
