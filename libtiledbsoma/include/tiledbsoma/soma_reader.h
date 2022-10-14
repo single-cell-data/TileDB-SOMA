@@ -215,6 +215,20 @@ class SOMAReader {
     }
 
     /**
+     * @brief Select columns names to query (dim and attr). If the
+     * `if_not_empty` parameter is `true`, the column will be selected iff the
+     * list of selected columns is empty. This prevents a `select_columns` call
+     * from changing an empty list (all columns) to a subset of columns.
+     *
+     * @param names Vector of column names
+     * @param if_not_empty Prevent changing an "empty" selection of all columns
+     */
+    void select_columns(
+        const std::vector<std::string>& names, bool if_not_empty = false) {
+        mq_->select_columns(names, if_not_empty);
+    }
+
+    /**
      * @brief Submit the query
      *
      */
@@ -253,6 +267,16 @@ class SOMAReader {
      * @return uint64_t Total number of unique cells
      */
     uint64_t nnz();
+
+    /**
+     * @brief Get the schema of the array.
+     *
+     * @return std::shared_ptr<ArraySchema> Schema
+     */
+    std::shared_ptr<ArraySchema> schema() {
+        return mq_->schema();
+    }
+
 
    private:
     //===================================================================
