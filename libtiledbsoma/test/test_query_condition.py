@@ -8,7 +8,7 @@ import tiledb
 from tiledbsoma.query_condition import QueryCondition
 
 
-VERBOSE = True
+VERBOSE = False
 
 TEST_DIR = os.path.dirname(__file__)
 SOMA_URI = f"{TEST_DIR}/../../test/soco/pbmc3k_processed"

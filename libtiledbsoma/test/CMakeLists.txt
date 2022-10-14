@@ -28,6 +28,7 @@ if (TILEDBSOMA_TESTING)
         $<TARGET_OBJECTS:TILEDB_SOMA_OBJECTS>
         unit_column_buffer.cc
         unit_managed_query.cc
+        unit_soma_reader.cc
         unit_thread_pool.cc
     )
 

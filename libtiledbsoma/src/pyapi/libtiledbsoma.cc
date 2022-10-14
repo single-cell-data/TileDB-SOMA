@@ -231,16 +231,21 @@ PYBIND11_MODULE(libtiledbsoma, m) {
         .def("submit", &SOMAReader::submit)
         .def("results_complete", &SOMAReader::results_complete)
 
-        .def("read_next", [](SOMAReader& reader) -> std::optional<py::object> {
-            // Try to read more data
-            auto buffers = reader.read_next();
+        .def(
+            "read_next",
+            [](SOMAReader& reader) -> std::optional<py::object> {
+                // Try to read more data
+                auto buffers = reader.read_next();
 
-            // If more data was read, convert it to an arrow table and return
-            if (buffers.has_value()) {
-                return to_table(*buffers);
-            }
+                // If more data was read, convert it to an arrow table and
+                // return
+                if (buffers.has_value()) {
+                    return to_table(*buffers);
+                }
 
-            // No data was read, the query is complete, return nullopt
-            return std::nullopt;
-        });
+                // No data was read, the query is complete, return nullopt
+                return std::nullopt;
+            })
+
+        .def("nnz", &SOMAReader::nnz);
 }

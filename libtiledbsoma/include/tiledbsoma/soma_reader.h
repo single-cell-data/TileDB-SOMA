@@ -56,15 +56,35 @@ class SOMAReader {
      *
      * @param uri URI of the array
      * @param name Name of the array
+     * @param platform_config Config parameter dictionary
+     * @param column_names Columns to read
      * @param batch_size Read batch size
      * @param result_order Read result order
-     * @param platform_config Config parameter dictionary
      * @return std::unique_ptr<SOMAReader> SOMAReader
      */
     static std::unique_ptr<SOMAReader> open(
         std::string_view uri,
         std::string_view name = "unnamed",
         std::map<std::string, std::string> platform_config = {},
+        std::vector<std::string> column_names = {},
+        std::string_view batch_size = "auto",
+        std::string_view result_order = "auto");
+
+    /**
+     * @brief Open an array at the specified URI and return SOMAReader object.
+     *
+     * @param ctx TileDB context
+     * @param uri URI of the array
+     * @param name Name of the array
+     * @param column_names Columns to read
+     * @param batch_size Read batch size
+     * @param result_order Read result order
+     * @return std::unique_ptr<SOMAReader> SOMAReader
+     */
+    static std::unique_ptr<SOMAReader> open(
+        std::shared_ptr<Context> ctx,
+        std::string_view uri,
+        std::string_view name = "unnamed",
         std::vector<std::string> column_names = {},
         std::string_view batch_size = "auto",
         std::string_view result_order = "auto");
@@ -226,6 +246,13 @@ class SOMAReader {
     bool results_complete() {
         return mq_->results_complete();
     }
+
+    /**
+     * @brief Get the total number of unique cells in the array.
+     *
+     * @return uint64_t Total number of unique cells
+     */
+    uint64_t nnz();
 
    private:
     //===================================================================

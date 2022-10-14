@@ -1,9 +1,11 @@
+#!/usr/bin/env python
+
 import os
 import pandas as pd
 import pyarrow as pa
 import tiledbsoma.libtiledbsoma as sc
 
-VERBOSE = True
+VERBOSE = False
 
 TEST_DIR = os.path.dirname(__file__)
 SOMA_URI = f"{TEST_DIR}/../../test/soco/pbmc3k_processed"
@@ -139,22 +141,15 @@ def test_soma_reader_column_names():
     assert arrow_table.num_columns == 2
 
 
-# TODO: implement value filter
-def todo_soma_reader_value_filter():
-    """Read obs array into an arrow table with value filter applied."""
-
+def test_nnz():
     name = "obs"
     uri = os.path.join(SOMA_URI, name)
     sr = sc.SOMAReader(uri)
 
-    sr.set_value_filter("foo > 1")
+    total_cell_count = sr.nnz()
 
-    sr.submit()
-    arrow_table = sr.read_next()
-
-    # test that all results are present in the arrow table (no incomplete queries)
-    assert sr.results_complete()
+    assert total_cell_count == 2638
 
 
 if __name__ == "__main__":
-    test_soma_reader_var()
+    test_nnz()

@@ -230,6 +230,15 @@ class ManagedQuery {
      */
     std::shared_ptr<ArrayBuffers> results();
 
+    /**
+     * @brief Get the schema of the array.
+     *
+     * @return std::shared_ptr<ArraySchema> Schema
+     */
+    std::shared_ptr<ArraySchema> schema() {
+        return schema_;
+    }
+
    private:
     //===================================================================
     //= private non-static
@@ -256,7 +265,7 @@ class ManagedQuery {
     std::string name_;
 
     // Array schema
-    ArraySchema schema_;
+    std::shared_ptr<ArraySchema> schema_;
 
     // TileDB query being managed.
     std::unique_ptr<Query> query_;

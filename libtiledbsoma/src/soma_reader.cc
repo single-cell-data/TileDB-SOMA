@@ -57,6 +57,17 @@ std::unique_ptr<SOMAReader> SOMAReader::open(
         result_order);
 }
 
+std::unique_ptr<SOMAReader> SOMAReader::open(
+    std::shared_ptr<Context> ctx,
+    std::string_view uri,
+    std::string_view name,
+    std::vector<std::string> column_names,
+    std::string_view batch_size,
+    std::string_view result_order) {
+    return std::make_unique<SOMAReader>(
+        uri, name, ctx, column_names, batch_size, result_order);
+}
+
 //===================================================================
 //= public non-static
 //===================================================================
@@ -116,6 +127,95 @@ std::optional<std::shared_ptr<ArrayBuffers>> SOMAReader::read_next() {
 
     // Return the results, possibly incomplete
     return mq_->results();
+}
+
+uint64_t SOMAReader::nnz() {
+    // Verify array is sparse
+    if (mq_->schema()->array_type() != TILEDB_SPARSE) {
+        throw TileDBSOMAError(
+            "[SOMAReader] nnz is only supported for sparse arrays");
+    }
+
+    // Load fragment info
+    FragmentInfo fragment_info(*ctx_, uri_);
+    fragment_info.load();
+
+    LOG_DEBUG(fmt::format("[SOMAReader] Fragment info for array '{}'", uri_));
+    if (LOG_DEBUG_ENABLED()) {
+        fragment_info.dump();
+    }
+
+    //===============================================================
+    // If only one fragment, return total_cell_num
+    auto fragment_count = fragment_info.fragment_num();
+    if (fragment_count == 1) {
+        return fragment_info.total_cell_num();
+    }
+
+    //===============================================================
+    // Check for overlapping fragments on the first dimension
+    std::vector<std::array<uint64_t, 2>> non_empty_domains(fragment_count);
+
+    // Get all non-empty domains for first dimension
+    for (uint32_t i = 0; i < fragment_count; i++) {
+        // TODO[perf]: Reading fragment info is not supported on TileDB Cloud
+        // yet, but reading one fragment at a time will be slow. Is there
+        // another way?
+        fragment_info.get_non_empty_domain(i, 0, &non_empty_domains[i]);
+        LOG_DEBUG(fmt::format(
+            "[SOMAReader] fragment {} non-empty domain = [{}, {}]",
+            i,
+            non_empty_domains[i][0],
+            non_empty_domains[i][1]));
+    }
+
+    // Sort non-empty domains by the start of their ranges
+    std::sort(non_empty_domains.begin(), non_empty_domains.end());
+
+    // After sorting, if the end of a non-empty domain is >= the beginning of
+    // the next non-empty domain, there is an overlap
+    bool overlap = false;
+    for (uint32_t i = 0; i < fragment_count - 1; i++) {
+        LOG_DEBUG(fmt::format(
+            "[SOMAReader] Checking {} < {}",
+            non_empty_domains[i][1],
+            non_empty_domains[i + 1][0]));
+        if (non_empty_domains[i][1] >= non_empty_domains[i + 1][0]) {
+            overlap = true;
+            break;
+        }
+    }
+
+    // If multiple fragments do not overlap, return the total_cell_num
+    if (!overlap) {
+        return fragment_info.total_cell_num();
+    }
+
+    //===============================================================
+    // Found overlapping fragments, count cells
+    if (mq_->schema()->allows_dups()) {
+        throw TileDBSOMAError(
+            "[SOMAReader] nnz not supported for overlapping fragments with "
+            "duplicates");
+    }
+
+    LOG_WARN("[SOMAReader] Found overlapping fragments, counting cells...");
+
+    // TODO[perf]: Reuse "this" object to read, then reset the state of "this"
+    // so it could be used to read again (for TileDB Cloud)
+    auto sr = SOMAReader::open(
+        ctx_,
+        uri_,
+        "count_cells",
+        {mq_->schema()->domain().dimension(0).name()});
+    sr->submit();
+
+    uint64_t total_cell_num = 0;
+    while (auto batch = sr->read_next()) {
+        total_cell_num += (*batch)->num_rows();
+    }
+
+    return total_cell_num;
 }
 
 }  // namespace tiledbsoma
