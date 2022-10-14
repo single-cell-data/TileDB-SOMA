@@ -46,7 +46,7 @@ class SOMAExperiment(SOMACollectionBase[TileDBObject]):
         )
 
     @property
-    def type(self) -> Literal["SOMAExperiment"]:
+    def soma_type(self) -> Literal["SOMAExperiment"]:
         return "SOMAExperiment"
 
     def create(self) -> "SOMAExperiment":

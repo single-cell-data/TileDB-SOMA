@@ -36,7 +36,7 @@ class SOMADenseNdArray(TileDBArray):
         super().__init__(uri=uri, parent=parent, ctx=ctx)
 
     @property
-    def type(self) -> Literal["SOMADenseNdArray"]:
+    def soma_type(self) -> Literal["SOMADenseNdArray"]:
         return "SOMADenseNdArray"
 
     def create(

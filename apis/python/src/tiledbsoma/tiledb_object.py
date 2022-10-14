@@ -66,9 +66,9 @@ class TileDBObject(ABC):
         Default repr
         """
         if self.exists():
-            return f'{self.type}(uri="{self._uri}")'
+            return f'{self.soma_type}(uri="{self._uri}")'
         else:
-            return f"{self.type}(not created)"
+            return f"{self.soma_type}(not created)"
 
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, TileDBObject):
@@ -80,7 +80,7 @@ class TileDBObject(ABC):
         return self._uri
 
     @abstractproperty
-    def type(self) -> str:
+    def soma_type(self) -> str:
         ...
 
     def exists(self) -> bool:
@@ -97,7 +97,7 @@ class TileDBObject(ABC):
         # before a third, successful HTTP request for group-open.  Instead, we directly attempt the
         # group-open request, checking for an exception.
         try:
-            return self._get_object_type_from_metadata() == self.type
+            return self._get_object_type_from_metadata() == self.soma_type
         except tiledb.cc.TileDBError:
             return False
 
@@ -120,7 +120,7 @@ class TileDBObject(ABC):
         with self._tiledb_open("w") as obj:
             obj.meta.update(
                 {
-                    util.SOMA_OBJECT_TYPE_METADATA_KEY: self.type,
+                    util.SOMA_OBJECT_TYPE_METADATA_KEY: self.soma_type,
                     util.SOMA_ENCODING_VERSION_METADATA_KEY: util.SOMA_ENCODING_VERSION,
                 }
             )
