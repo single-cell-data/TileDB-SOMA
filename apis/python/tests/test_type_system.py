@@ -1,41 +1,34 @@
-import numpy as np
 import pyarrow as pa
 import pytest
 
-from tiledbsoma.util_arrow import (
-    get_arrow_type_from_tiledb_dtype,
-    tiledb_type_from_arrow_type,
-)
+import tiledbsoma as soma
 
-"""Arrow types we expect to work"""
+"""
+Arrow types we expect to work. A handful of types will promote, eg, string->large_string.
+Most must be literally as requested, or error out.
+
+Tuple is (requested_type, expected_type).
+"""
 SUPPORTED_ARROW_TYPES = [
-    pa.bool_(),
-    pa.int8(),
-    pa.int16(),
-    pa.int32(),
-    pa.int16(),
-    pa.uint8(),
-    pa.uint16(),
-    pa.uint32(),
-    pa.uint64(),
-    pa.float32(),
-    pa.float64(),
-    pa.timestamp("s"),
-    pa.timestamp("ms"),
-    pa.timestamp("us"),
-    pa.timestamp("ns"),
-    # We use Arrow's large_string for ASCII and, ultimately, for Unicode as well
-    # https://github.com/single-cell-data/TileDB-SOMA/issues/99
-    # https://github.com/single-cell-data/TileDB-SOMA/pull/359
-    # https://github.com/single-cell-data/TileDB-SOMA/issues/274
-    pa.large_string(),
-    pa.large_binary(),
-]
-
-"""Arrow types we expect to auto-promote"""
-PROMOTED_ARROW_TYPES = [
+    (pa.bool_(),) * 2,
+    (pa.int8(),) * 2,
+    (pa.int16(),) * 2,
+    (pa.int32(),) * 2,
+    (pa.int16(),) * 2,
+    (pa.uint8(),) * 2,
+    (pa.uint16(),) * 2,
+    (pa.uint32(),) * 2,
+    (pa.uint64(),) * 2,
+    (pa.float32(),) * 2,
+    (pa.float64(),) * 2,
+    (pa.timestamp("s"),) * 2,
+    (pa.timestamp("ms"),) * 2,
+    (pa.timestamp("us"),) * 2,
+    (pa.timestamp("ns"),) * 2,
     (pa.string(), pa.large_string()),
-    # XXX (pa.binary(), pa.large_binary()),
+    (pa.binary(), pa.large_binary()),
+    (pa.large_string(),) * 2,
+    (pa.large_binary(),) * 2,
 ]
 
 
@@ -54,12 +47,6 @@ UNSUPPORTED_ARROW_TYPES = [
     pa.duration("us"),
     pa.duration("ns"),
     pa.month_day_nano_interval(),
-    # We use Arrow's large_string for ASCII and, ultimately, for Unicode as well
-    # https://github.com/single-cell-data/TileDB-SOMA/issues/99
-    # https://github.com/single-cell-data/TileDB-SOMA/pull/359
-    # https://github.com/single-cell-data/TileDB-SOMA/issues/274
-    pa.string(),
-    pa.binary(),
     pa.binary(10),
     pa.decimal128(1),
     pa.decimal128(38),
@@ -71,38 +58,26 @@ UNSUPPORTED_ARROW_TYPES = [
 ]
 
 
-@pytest.mark.parametrize("arrow_type", SUPPORTED_ARROW_TYPES)
-def test_arrow_types_supported(arrow_type):
-    """Verify round-trip conversion of types"""
-    # if pa.types.is_binary(arrow_type):
-    # pytest.xfail("Awaiting UTF-8 support - see issue #274")
+@pytest.mark.parametrize("arrow_type_info", SUPPORTED_ARROW_TYPES)
+def test_arrow_types_supported(tmp_path, arrow_type_info):
+    """Verify round-trip conversion of types which should work "as is" """
+    arrow_type, expected_arrow_type = arrow_type_info
 
-    tdb_dtype = tiledb_type_from_arrow_type(arrow_type)
-    assert (
-        isinstance(tdb_dtype, np.dtype) or tdb_dtype == "ascii" or tdb_dtype == "bytes"
+    sdf = soma.SOMADataFrame(tmp_path.as_posix())
+    assert sdf == sdf.create(pa.schema([(str(arrow_type), arrow_type)]))
+    schema = sdf.schema
+    assert schema is not None
+    assert sorted(schema.names) == sorted(
+        ["soma_joinid", "soma_rowid", str(arrow_type)]
     )
-    arrow_rt_type = get_arrow_type_from_tiledb_dtype(tdb_dtype)
-    assert isinstance(arrow_rt_type, pa.DataType)
-    assert arrow_type == arrow_rt_type
-
-
-@pytest.mark.parametrize("arrow_from_to_pair", PROMOTED_ARROW_TYPES)
-def test_arrow_types_promoted(arrow_from_to_pair):
-    """Verify round-trip conversion of types"""
-    arrow_from_type = arrow_from_to_pair[0]
-    arrow_to_type = arrow_from_to_pair[1]
-
-    tdb_dtype = tiledb_type_from_arrow_type(arrow_from_type)
-    assert (
-        isinstance(tdb_dtype, np.dtype) or tdb_dtype == "ascii" or tdb_dtype == "bytes"
-    )
-    arrow_rt_type = get_arrow_type_from_tiledb_dtype(tdb_dtype)
-    assert isinstance(arrow_rt_type, pa.DataType)
-    assert arrow_to_type == arrow_rt_type
+    assert schema.field(str(arrow_type)).type == expected_arrow_type
 
 
 @pytest.mark.parametrize("arrow_type", UNSUPPORTED_ARROW_TYPES)
-def test_arrow_types_unsupported(arrow_type):
-    """Verify correct error for unsupported types"""
-    with pytest.raises(TypeError):
-        tiledb_type_from_arrow_type(arrow_type, match=r".*unsupported type.*")
+def test_arrow_types_unsupported(tmp_path, arrow_type):
+    """Verify explicit error for unsupported types"""
+
+    sdf = soma.SOMADataFrame(tmp_path.as_posix())
+
+    with pytest.raises(TypeError, match=r"unsupported type|Unsupported Arrow type"):
+        assert sdf == sdf.create(pa.schema([(str(arrow_type), arrow_type)]))
