@@ -1,5 +1,5 @@
 test_that("SOMASparseNdArray creation", {
-    skip_if(TRUE)
+  skip_if(TRUE) # bonks for me
   uri <- withr::local_tempdir("sparse-ndarray")
   ndarray <- SOMASparseNdArray$new(uri)
   ndarray$create(arrow::int32(), shape = c(10, 10))
