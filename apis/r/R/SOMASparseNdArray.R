@@ -42,11 +42,10 @@ SOMASparseNdArray <- R6::R6Class(
       ))
 
       # create array dimensions
-      # use tiledb default names like `__dim_0`
       tdb_dims <- vector(mode = "list", length = length(shape))
       for (i in seq_along(shape)) {
         tdb_dims[[i]] <- tiledb::tiledb_dim(
-          name = paste0("__dim_", i - 1L),
+          name = paste0("soma_dim_", i - 1L),
           domain = bit64::as.integer64(c(0L, shape[i] - 1L)),
           tile = bit64::as.integer64(min(c(shape[i], 2048L))),
           type = "INT64"
@@ -56,7 +55,7 @@ SOMASparseNdArray <- R6::R6Class(
 
       # create array attribute
       tdb_attr <- tiledb::tiledb_attr(
-        name = "data",
+        name = "soma_data",
         type = tiledb_type_from_arrow_type(type),
         filter_list = zstd_filter_list
       )
