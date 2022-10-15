@@ -11,16 +11,6 @@ Rcpp::Rostream<true>&  Rcpp::Rcout = Rcpp::Rcpp_cout_get();
 Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 #endif
 
-// test_sdf
-void test_sdf(const std::string& uri);
-RcppExport SEXP _tiledbsoma_test_sdf(SEXP uriSEXP) {
-BEGIN_RCPP
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const std::string& >::type uri(uriSEXP);
-    test_sdf(uri);
-    return R_NilValue;
-END_RCPP
-}
 // get_column_names
 std::vector<std::string> get_column_names(const std::string& uri);
 RcppExport SEXP _tiledbsoma_get_column_names(SEXP uriSEXP) {
@@ -59,7 +49,7 @@ BEGIN_RCPP
 END_RCPP
 }
 // export_arrow_array
-Rcpp::List export_arrow_array(const std::string& uri, const std::vector<std::string>& colnames, Rcpp::Nullable<Rcpp::XPtr<tiledb::QueryCondition>> qc, Rcpp::Nullable<Rcpp::DataFrame> dim_points, Rcpp::Nullable<Rcpp::DataFrame> dim_ranges, const std::string& loglevel);
+Rcpp::List export_arrow_array(const std::string& uri, const std::vector<std::string>& colnames, Rcpp::Nullable<Rcpp::XPtr<tiledb::QueryCondition>> qc, Rcpp::Nullable<Rcpp::List> dim_points, Rcpp::Nullable<Rcpp::List> dim_ranges, const std::string& loglevel);
 RcppExport SEXP _tiledbsoma_export_arrow_array(SEXP uriSEXP, SEXP colnamesSEXP, SEXP qcSEXP, SEXP dim_pointsSEXP, SEXP dim_rangesSEXP, SEXP loglevelSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
@@ -67,8 +57,8 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< const std::string& >::type uri(uriSEXP);
     Rcpp::traits::input_parameter< const std::vector<std::string>& >::type colnames(colnamesSEXP);
     Rcpp::traits::input_parameter< Rcpp::Nullable<Rcpp::XPtr<tiledb::QueryCondition>> >::type qc(qcSEXP);
-    Rcpp::traits::input_parameter< Rcpp::Nullable<Rcpp::DataFrame> >::type dim_points(dim_pointsSEXP);
-    Rcpp::traits::input_parameter< Rcpp::Nullable<Rcpp::DataFrame> >::type dim_ranges(dim_rangesSEXP);
+    Rcpp::traits::input_parameter< Rcpp::Nullable<Rcpp::List> >::type dim_points(dim_pointsSEXP);
+    Rcpp::traits::input_parameter< Rcpp::Nullable<Rcpp::List> >::type dim_ranges(dim_rangesSEXP);
     Rcpp::traits::input_parameter< const std::string& >::type loglevel(loglevelSEXP);
     rcpp_result_gen = Rcpp::wrap(export_arrow_array(uri, colnames, qc, dim_points, dim_ranges, loglevel));
     return rcpp_result_gen;
@@ -109,7 +99,6 @@ END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
-    {"_tiledbsoma_test_sdf", (DL_FUNC) &_tiledbsoma_test_sdf, 1},
     {"_tiledbsoma_get_column_names", (DL_FUNC) &_tiledbsoma_get_column_names, 1},
     {"_tiledbsoma_export_column", (DL_FUNC) &_tiledbsoma_export_column, 4},
     {"_tiledbsoma_export_column_direct", (DL_FUNC) &_tiledbsoma_export_column_direct, 2},
