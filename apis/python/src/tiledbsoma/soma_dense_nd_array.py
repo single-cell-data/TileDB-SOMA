@@ -1,21 +1,16 @@
-import math
-import time
 from typing import Any, List, Literal, Optional, Tuple, Union, cast
 
 import numpy as np
 import pyarrow as pa
-import scipy.sparse as sp
 import tiledb
 
-import tiledbsoma.eta as eta
-import tiledbsoma.logging as logging
-import tiledbsoma.util as util
 import tiledbsoma.util_arrow as util_arrow
 from tiledbsoma.util_tiledb import tiledb_result_order_from_soma_result_order
 
 from .soma_collection import SOMACollectionBase
 from .tiledb_array import TileDBArray
-from .types import Matrix, NTuple, SOMADenseNdCoordinates, SOMAResultOrder
+from .tiledb_platform_config import TileDBPlatformConfig
+from .types import NTuple, SOMADenseNdCoordinates, SOMAResultOrder
 
 
 class SOMADenseNdArray(TileDBArray):
@@ -28,12 +23,18 @@ class SOMADenseNdArray(TileDBArray):
         uri: str,
         *,
         parent: Optional[SOMACollectionBase[Any]] = None,
+        tiledb_platform_config: Optional[TileDBPlatformConfig] = None,
         ctx: Optional[tiledb.Ctx] = None,
     ):
         """
         Also see the ``TileDBObject`` constructor.
         """
-        super().__init__(uri=uri, parent=parent, ctx=ctx)
+        super().__init__(
+            uri=uri,
+            parent=parent,
+            tiledb_platform_config=tiledb_platform_config,
+            ctx=ctx,
+        )
 
     @property
     def soma_type(self) -> Literal["SOMADenseNdArray"]:
@@ -111,7 +112,7 @@ class SOMADenseNdArray(TileDBArray):
     @property
     def shape(self) -> NTuple:
         """
-        Return length of each dimension, always a list of length ``ndims``
+        Return length of each dimension, always a list of length ``ndim``
         """
         with self._tiledb_open() as A:
             return cast(NTuple, A.schema.domain.shape)
@@ -120,7 +121,7 @@ class SOMADenseNdArray(TileDBArray):
         raise NotImplementedError("reshape operation not implemented.")
 
     @property
-    def ndims(self) -> int:
+    def ndim(self) -> int:
         """
         Return number of index columns
         """
@@ -138,7 +139,7 @@ class SOMADenseNdArray(TileDBArray):
         self,
         coords: SOMADenseNdCoordinates,
         *,
-        result_order: Optional[SOMAResultOrder] = "row-major",
+        result_order: SOMAResultOrder = "row-major",
     ) -> pa.Tensor:
         """
         Read a user-defined dense slice of the array and return as an Arrow ``Tensor``.
@@ -158,7 +159,7 @@ class SOMADenseNdArray(TileDBArray):
         self,
         coords: SOMADenseNdCoordinates,
         *,
-        result_order: Optional[SOMAResultOrder] = None,
+        result_order: SOMAResultOrder = "row-major",
     ) -> np.ndarray:
         """
         Read a user-specified dense slice of the array and return as an Numpy ``ndarray``.
@@ -194,179 +195,12 @@ class SOMADenseNdArray(TileDBArray):
         """
         self.write_tensor(coords, pa.Tensor.from_numpy(values))
 
-    # ----------------------------------------------------------------
-    #
-    # TODO: this code seems obsolete given the current API. Can we port the `io` package
-    # to use the above API, or move this into tiledbsoma.io as helper code?
-    #
-    #
-    def from_matrix(self, matrix: Matrix) -> None:
-        """
-        Imports a matrix -- nominally ``numpy.ndarray`` -- into a TileDB array which is used for ``obsp`` and ``varp`` matrices
-        """
-
-        s = util.get_start_stamp()
-        logging.log_io(None, f"{self._indent}START  WRITING {self.uri}")
-
-        if self.exists():
-            logging.log_io(None, f"{self._indent}Re-using existing array")
-        else:
-            self._create_empty_array(
-                matrix_dtype=matrix.dtype,
-                num_rows=matrix.shape[0],
-                num_cols=matrix.shape[1],
-            )
-
-        if not self._tiledb_platform_config.write_X_chunked:
-            self._ingest_data_whole(matrix)
-        else:
-            self._ingest_data_dense_rows_chunked(matrix)
-
-        self._common_create()  # object-type metadata etc
-
-        logging.log_io(
-            f"Wrote {self.uri}",
-            util.format_elapsed(s, f"{self._indent}FINISH WRITING {self.uri}"),
-        )
-
-    # ----------------------------------------------------------------
-    def _create_empty_array(
-        self, *, matrix_dtype: np.dtype, num_rows: int, num_cols: int
-    ) -> None:
-        """
-        Create a TileDB 2D dense array with int dimensions and a single attribute.
-        """
-
-        dom = tiledb.Domain(
-            tiledb.Dim(
-                name="soma_dim_0",
-                domain=(0, num_rows - 1),
-                dtype=np.int64,
-                # TODO: filters=[tiledb.RleFilter()],
-            ),
-            tiledb.Dim(
-                name="soma_dim_1",
-                domain=(0, num_cols - 1),
-                dtype=np.int64,
-                # TODO: filters=[tiledb.ZstdFilter(level=level)],
-            ),
-            ctx=self._ctx,
-        )
-
-        attrs = tiledb.Attr(
-            name="soma_data",
-            dtype=matrix_dtype,
-            filters=[tiledb.ZstdFilter()],
-            ctx=self._ctx,
-        )
-
-        sch = tiledb.ArraySchema(
-            domain=dom,
-            attrs=(attrs,),
-            sparse=True,
-            allows_duplicates=self._tiledb_platform_config.allows_duplicates,
-            offsets_filters=[
-                tiledb.DoubleDeltaFilter(),
-                tiledb.BitWidthReductionFilter(),
-                tiledb.ZstdFilter(),
-            ],
-            capacity=self._tiledb_platform_config.X_capacity,
-            cell_order=self._tiledb_platform_config.X_cell_order,
-            tile_order=self._tiledb_platform_config.X_tile_order,
-            ctx=self._ctx,
-        )
-
-        tiledb.Array.create(self.uri, sch, ctx=self._ctx)
-
-    def _ingest_data_whole(self, matrix: np.ndarray) -> None:
-        raise NotImplementedError()
-
-    def _ingest_data_dense_rows_chunked(
-        self,
-        matrix: np.ndarray,
-    ) -> None:
-        """
-        Convert dense matrix to coo_matrix chunkwise and ingest into TileDB.
-
-        :param uri: TileDB URI of the array to be written.
-        :param matrix: dense matrix.
-        """
-
-        nrow, ncol = matrix.shape
-
-        s = util.get_start_stamp()
-        logging.log_io(
-            None,
-            f"{self._indent}START  ingest",
-        )
-
-        eta_tracker = eta.Tracker()
-        with tiledb.open(self.uri, mode="w", ctx=self._ctx) as A:
-
-            i = 0
-            while i < nrow:
-                t1 = time.time()
-                # Find a number of dense rows which will result in a desired nnz for the chunk,
-                # rounding up to the nearest integer. Example: goal_chunk_nnz is 120. ncol is 50;
-                # 120/50 rounds up to 3; take 3 rows per chunk.
-                chunk_size = int(
-                    math.ceil(self._tiledb_platform_config.goal_chunk_nnz / ncol)
-                )
-                i2 = i + chunk_size
-
-                # Convert the chunk to a COO matrix.
-                chunk = matrix[i:i2]
-                chunk_coo = sp.csr_matrix(chunk).tocoo()
-
-                # Python ranges are (lo, hi) with lo inclusive and hi exclusive. But saying that
-                # makes us look buggy if we say we're ingesting chunk 0:18 and then 18:32.
-                # Instead, print doubly-inclusive lo..hi like 0..17 and 18..31.
-                chunk_percent = min(100, 100 * (i2 - 1) / nrow)
-                logging.log_io(
-                    None,
-                    "%sSTART  chunk rows %d..%d of %d (%.3f%%), nnz=%d"
-                    % (
-                        self._indent,
-                        i,
-                        i2 - 1,
-                        nrow,
-                        chunk_percent,
-                        chunk_coo.nnz,
-                    ),
-                )
-
-                # Write a TileDB fragment
-                A[chunk_coo.row + i, chunk_coo.col] = chunk_coo.data
-
-                t2 = time.time()
-                chunk_seconds = t2 - t1
-                eta_seconds = eta_tracker.ingest_and_predict(
-                    chunk_percent, chunk_seconds
-                )
-
-                if chunk_percent < 100:
-                    logging.log_io(
-                        "... %7.3f%% done, ETA %s" % (chunk_percent, eta_seconds),
-                        "%sFINISH chunk in %.3f seconds, %7.3f%% done, ETA %s"
-                        % (self._indent, chunk_seconds, chunk_percent, eta_seconds),
-                    )
-
-                i = i2
-
-        logging.log_io(
-            None,
-            util.format_elapsed(
-                s,
-                f"{self._indent}FINISH ingest",
-            ),
-        )
-
 
 # module-private utility
 def _dense_index_to_shape(
     coords: Tuple[Union[int, slice], ...],
     array_shape: Tuple[int, ...],
-    result_order: Optional[SOMAResultOrder] = "row-major",
+    result_order: SOMAResultOrder,
 ) -> Tuple[int, ...]:
     """
     Given a subarray index specified as a tuple of per-dimension slices or scalars
