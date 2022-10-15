@@ -11,7 +11,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-22.04, macos-11]
+        os: [ubuntu-22.04, macos-12]
         python-version: ['3.8']
         include:
           - runs-on: ubuntu-22.04
@@ -19,11 +19,18 @@ jobs:
             cxx: g++-11
           # Pending https://github.com/actions/runner-images/issues/6350
           # - runs-on: macos-12
-          - runs-on: macos-11
+          - runs-on: macos-12
             cc: gcc-11
             cxx: g++-11
 
     steps:
+    - name: Select XCode version
+      uses: maxim-lobanov/setup-xcode@v1
+      with:
+        # Pending https://github.com/actions/runner-images/issues/6350
+        xcode-version: '13.4'
+      if: ${{ runner.os == 'macOS' }}
+
     - name: 'Print env'
       run: |
         echo "'uname -s' is:"

@@ -9,22 +9,30 @@ on:
 
 jobs:
   build:
-
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-22.04, macos-11, windows-2019]
-        python-version: ['3.8']
+        # TODO: restore Windows build once we have C++/libtiledbsoma integration supported there
+        os: [ubuntu-22.04, macos-12]
+        # os: [ubuntu-22.04, macos-12, windows-2019]
+        python-version: ['3.8', '3.9', '3.10']
         include:
           - runs-on: ubuntu-22.04
             cc: gcc-11
             cxx: g++-11
-          - runs-on: macos-11
+          - runs-on: macos-12
             cc: gcc-11
             cxx: g++-11
 
     steps:
+    - name: Select XCode version
+      uses: maxim-lobanov/setup-xcode@v1
+      with:
+        # Pending https://github.com/actions/runner-images/issues/6350
+        xcode-version: '13.4'
+      if: ${{ runner.os == 'macOS' }}
+
     - name: Checkout TileDB-SOMA
       uses: actions/checkout@v2
 
