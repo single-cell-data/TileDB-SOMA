@@ -1,3 +1,4 @@
+import numpy as np
 import pandas as pd
 import pyarrow as pa
 import pytest
@@ -218,3 +219,67 @@ def test_soma_columns(tmp_path):
             pa.schema([("a", pa.int32()), ("soma_rowid", pa.bool_())]),
             index_column_names=["a"],
         )
+
+
+@pytest.fixture
+def make_dataframe(request):
+    index_type = request.param
+
+    index = {
+        pa.string(): ["A", "B", "C"],
+        pa.large_string(): ["A", "B", "C"],
+        pa.binary(): [b"A", b"B", b"C"],
+        pa.large_binary(): [b"A", b"B", b"C"],
+        **{
+            t: np.arange(3, dtype=t.to_pandas_dtype())
+            for t in (
+                pa.int32(),
+                pa.uint32(),
+                pa.int64(),
+                pa.uint64(),
+                pa.float32(),
+                pa.float64(),
+            )
+        },
+    }[index_type]
+
+    df = pd.DataFrame(
+        data={
+            "index": index,
+            "soma_joinid": np.arange(3, dtype=np.int64),
+            "ascii": ["aa", "bbb", "cccccc"],
+            "float32": np.array([0.0, 1.1, 2.2], np.float32),
+        }
+    )
+    return pa.Table.from_pandas(df)
+
+
+@pytest.mark.parametrize(
+    "make_dataframe",
+    [
+        pa.float32(),
+        pa.float64(),
+        pa.int32(),
+        pa.uint32(),
+        pa.int64(),
+        pa.uint64(),
+        pytest.param(
+            pa.string(), marks=pytest.mark.xfail
+        ),  # TODO: remove xfail when #418 is fixed
+        pytest.param(
+            pa.large_string(), marks=pytest.mark.xfail
+        ),  # TODO: remove xfail when #418 is fixed
+        pytest.param(
+            pa.binary(), marks=pytest.mark.xfail
+        ),  # TODO: remove xfail when #419 is fixed
+        pytest.param(
+            pa.large_binary(), marks=pytest.mark.xfail
+        ),  # TODO: remove xfail when #419 is fixed
+    ],
+    indirect=True,
+)
+def test_soma_index_types(tmp_path, make_dataframe):
+    """Verify that the index columns can be of various types"""
+    sdf = soma.SOMAIndexedDataFrame(tmp_path.as_posix())
+    sdf.create(make_dataframe.schema, index_column_names=["index"])
+    sdf.write(make_dataframe)
