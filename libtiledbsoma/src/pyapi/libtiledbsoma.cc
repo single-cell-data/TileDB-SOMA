@@ -200,7 +200,7 @@ PYBIND11_MODULE(libtiledbsoma, m) {
 
                     // 'l' = arrow data type int64
                     if (!strcmp(arrow_schema.format, "l")) {
-                        std::span<int64_t> data{
+                        tcb::span<int64_t> data{
                             (int64_t*)arrow_array.buffers[1],
                             (uint64_t)arrow_array.length};
                         reader.set_dim_points(

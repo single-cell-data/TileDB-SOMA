@@ -47,7 +47,7 @@ template <typename T>
 VarlenBufferPair to_varlen_buffers(std::vector<T> data, bool arrow = true);
 
 template <class T>
-std::vector<T> to_vector(const std::span<T>& s) {
+std::vector<T> to_vector(const tcb::span<T>& s) {
     return std::vector<T>(s.begin(), s.end());
 }
 

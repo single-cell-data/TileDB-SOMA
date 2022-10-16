@@ -137,7 +137,7 @@ class SOMAReader {
     template <typename T>
     void set_dim_points(
         const std::string& dim,
-        const std::span<T> points,
+        const tcb::span<T> points,
         int partition_index,
         int partition_count) {
         // Validate partition inputs
@@ -170,7 +170,7 @@ class SOMAReader {
                 points.size()));
 
             mq_->select_points(
-                dim, std::span<T>{&points[start], partition_size});
+                dim, tcb::span<T>{&points[start], partition_size});
         } else {
             mq_->select_points(dim, points);
         }
