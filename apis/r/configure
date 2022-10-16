@@ -11,9 +11,10 @@ else
     fi
 
     if ! test -d inst/include/tiledbsoma; then
-        mkdir -p inst/include/tiledbsoma
+        mkdir -p inst/include/tiledbsoma inst/include/externals
         echo "** copying C++ header files"
         cp -ax ../../libtiledbsoma/include/tiledbsoma/* inst/include/tiledbsoma/
+        cp -ax ../../libtiledbsoma/include/externals/* inst/include/externals/
         echo "** copying C++ source and header files"
         cp -ax ../../libtiledbsoma/src/* src/
     fi
@@ -31,11 +32,11 @@ if [ $? -eq 0 ]; then
         pkglibs=`pkg-config --libs tiledb`
         archincl=`${R_HOME}/bin/Rscript -e 'cat("-I", system.file("include", package="arch"), sep="")'`
 
-        ## substitute them in (leaving @tiledb_rpath@ and @cxx20_macos@ alone for now)
+        ## substitute them in (leaving @tiledb_rpath@ and @cxx17_macos@ alone for now)
         sed -e "s|@tiledb_include@|$pkgcflags $archincl|" \
             -e "s|@tiledb_libs@|$pkglibs|" \
             -e "s|@tiledb_rpath@||" \
-            -e "s|@cxx20_macos@||" \
+            -e "s|@cxx17_macos@||" \
             src/Makevars.in > src/Makevars
 
         have_tiledb="true"
