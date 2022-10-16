@@ -205,7 +205,7 @@ def ingest_one(
     exp = tiledbsoma.SOMAExperiment(
         uri=output_path, tiledb_platform_config=tiledb_platform_config
     )
-    exp_name = os.path.splitext(os.path.basename(soco_dir))[0]
+    exp_name = os.path.splitext(os.path.basename(output_path))[0]
 
     if ifexists == "update_obs_and_var":
         if not os.path.exists(output_path):
