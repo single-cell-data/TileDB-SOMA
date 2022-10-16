@@ -74,7 +74,7 @@ class ArrayBuffers {
      * @return True if a buffer with the given name exists
      */
     bool contains(const std::string& name) {
-        return buffers_.contains(name);
+        return buffers_.find(name) != buffers_.end();
     }
 
     /**
