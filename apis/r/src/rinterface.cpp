@@ -2,6 +2,7 @@
 #include <tiledbsoma/tiledbsoma>
 #include "pyapi/arrow_adapter.h"
 #include <archAPI.h>
+#include "rutilities.h"
 
 namespace tdbs = tiledbsoma;
 
@@ -202,4 +203,12 @@ Rcpp::List export_arrow_array(const std::string& uri,
 // [[Rcpp::export]]
 void set_log_level(const std::string& level) {
     tdbs::LOG_SET_LEVEL(level);
+}
+
+//' @rdname get_table
+//' @export
+// [[Rcpp::export]]
+double nnz(const std::string& uri) {
+    auto sr = tdbs::SOMAReader::open(uri);
+    return static_cast<double>(sr->nnz());
 }

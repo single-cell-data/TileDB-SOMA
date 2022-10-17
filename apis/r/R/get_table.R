@@ -1,13 +1,17 @@
-##' Access a DataFrame or Single Column From a Given URI
+##' Access SOMA Data From a Given URI
 ##'
 ##' These functions access a given SOMA URI and extract, respectively, the
-##' complete data.frame or named column from the data set.
+##' complete data.frame, a named column, or the number of non-zero elements
+##' from the given data set.
 ##'
 ##' @param uri Character value with URI path to a SOMA data set
 ##' @param column Character value with the name of the column to retrieve
 ##' @param colnames Vector of character value with the name of the columns to retrieve
 ##' @param qc External Pointer object to TileDB Query Condition, defaults to \sQuote{NULL} i.e.
 ##' no query condition
+##' @param dim_points A data.frame object with name, type and point value to select rows.
+##' @param dim_ranges A data.frame object with name, type, and low and high values to select
+##' rows by ranges.
 ##' @param loglevel Character value with the desired logging level, defaults to \sQuote{warn}
 ##' @return The selected data object(s) from the given data set
 ##' @examples

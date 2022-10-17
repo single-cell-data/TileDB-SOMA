@@ -28,3 +28,10 @@ set_log_level <- function(level) {
     invisible(.Call(`_tiledbsoma_set_log_level`, level))
 }
 
+
+#' @rdname get_table
+#' @export
+nnz <- function(uri) {
+    .Call(`_tiledbsoma_nnz`, uri)
+}
+

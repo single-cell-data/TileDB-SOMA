@@ -72,6 +72,17 @@ BEGIN_RCPP
     return R_NilValue;
 END_RCPP
 }
+// nnz
+double nnz(const std::string& uri);
+RcppExport SEXP _tiledbsoma_nnz(SEXP uriSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const std::string& >::type uri(uriSEXP);
+    rcpp_result_gen = Rcpp::wrap(nnz(uri));
+    return rcpp_result_gen;
+END_RCPP
+}
 
 static const R_CallMethodDef CallEntries[] = {
     {"_tiledbsoma_get_column_names", (DL_FUNC) &_tiledbsoma_get_column_names, 1},
@@ -79,6 +90,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_tiledbsoma_export_column_direct", (DL_FUNC) &_tiledbsoma_export_column_direct, 2},
     {"_tiledbsoma_export_arrow_array", (DL_FUNC) &_tiledbsoma_export_arrow_array, 4},
     {"_tiledbsoma_set_log_level", (DL_FUNC) &_tiledbsoma_set_log_level, 1},
+    {"_tiledbsoma_nnz", (DL_FUNC) &_tiledbsoma_nnz, 1},
     {NULL, NULL, 0}
 };
 
