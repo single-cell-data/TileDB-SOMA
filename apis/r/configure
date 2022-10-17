@@ -13,9 +13,9 @@ else
     if ! test -d inst/include/tiledbsoma; then
         mkdir -p inst/include/tiledbsoma
         echo "** copying C++ header files"
-        cp -vax ../../libtiledbsoma/include/tiledbsoma/* inst/include/tiledbsoma/
+        cp -ax ../../libtiledbsoma/include/tiledbsoma/* inst/include/tiledbsoma/
         echo "** copying C++ source and header files"
-        cp -vax ../../libtiledbsoma/src/* src/
+        cp -ax ../../libtiledbsoma/src/* src/
     fi
 fi
 

@@ -42,7 +42,6 @@ Imports:
     arch
 LinkingTo:
     Rcpp,
-    RcppSpdlog,
     arch
 Additional_repositories: https://ghrr.github.io/drat
 Roxygen: list(markdown = TRUE)
