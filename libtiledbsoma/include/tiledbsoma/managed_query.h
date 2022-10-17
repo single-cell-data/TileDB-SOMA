@@ -90,6 +90,7 @@ class ManagedQuery {
         const std::string& dim, const std::vector<std::pair<T, T>>& ranges) {
         for (auto& [start, stop] : ranges) {
             subarray_->add_range(dim, start, stop);
+            subarray_range_set_ = true;
         }
     }
 
@@ -104,6 +105,7 @@ class ManagedQuery {
     void select_points(const std::string& dim, const std::vector<T>& points) {
         for (auto& point : points) {
             subarray_->add_range(dim, point, point);
+            subarray_range_set_ = true;
         }
     }
 
@@ -118,6 +120,7 @@ class ManagedQuery {
     void select_points(const std::string& dim, const std::span<T> points) {
         for (auto& point : points) {
             subarray_->add_range(dim, point, point);
+            subarray_range_set_ = true;
         }
     }
 
@@ -131,6 +134,7 @@ class ManagedQuery {
     template <typename T>
     void select_point(const std::string& dim, const T& point) {
         subarray_->add_range(dim, point, point);
+        subarray_range_set_ = true;
     }
 
     /**
@@ -272,6 +276,9 @@ class ManagedQuery {
 
     // TileDB subarray containing the ranges for slicing.
     std::unique_ptr<Subarray> subarray_;
+
+    // True if a range has been added to the subarray
+    bool subarray_range_set_ = false;
 
     // Set of column names to read (dim and attr). If empty, query all columns.
     std::vector<std::string> columns_;

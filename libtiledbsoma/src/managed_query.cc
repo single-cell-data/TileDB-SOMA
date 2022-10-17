@@ -92,8 +92,27 @@ void ManagedQuery::submit() {
         return;
     }
 
-    // Set the subarray for range slicing
-    query_->set_subarray(*subarray_);
+    // If the query is uninitialized, set the subarray for the query
+    if (status == Query::Status::UNINITIALIZED) {
+        // Dense array must have a subarray set. If the array is dense and no
+        // ranges have been set, add a range for the array's entire non-empty
+        // domain on dimension 0.
+        if (array_->schema().array_type() == TILEDB_DENSE &&
+            !subarray_range_set_) {
+            auto non_empty_domain = array_->non_empty_domain<int64_t>(0);
+            subarray_->add_range(
+                0, non_empty_domain.first, non_empty_domain.second);
+
+            LOG_DEBUG(fmt::format(
+                "[ManagedQuery] Add full NDE range to dense subarray = (0, {}, "
+                "{})",
+                non_empty_domain.first,
+                non_empty_domain.second));
+        }
+
+        // Set the subarray for range slicing
+        query_->set_subarray(*subarray_);
+    }
 
     // If no columns were selected, select all columns.
     // Add dims and attrs in the same order as specified in the schema
