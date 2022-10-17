@@ -6,5 +6,8 @@
 test -d inst/include/tiledbsoma && \
     rm -rf inst/include/tiledbsoma
 
+test -d inst/include/externals && \
+    rm -rf inst/include/externals
+
 test -f src/soma_reader.cc && \
     rm -rf src/pyapi/ src/thread_pool/ src/*.cc src/logger.h src/CMakeLists.txt

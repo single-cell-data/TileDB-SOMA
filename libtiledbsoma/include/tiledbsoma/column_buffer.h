@@ -35,7 +35,7 @@
 
 #include <stdexcept>  // for windows: error C2039: 'runtime_error': is not a member of 'std'
 
-#include <span>
+#include <externals/span/span.hpp>
 #include <tiledb/tiledb>
 
 #include "tiledbsoma/common.h"
@@ -126,11 +126,11 @@ class ColumnBuffer {
      * @brief Return a view of the ColumnBuffer data.
      *
      * @tparam T Data type
-     * @return std::span<T> data view
+     * @return tcb::span<T> data view
      */
     template <typename T>
-    std::span<T> data() {
-        return std::span<T>((T*)data_.data(), num_cells_);
+    tcb::span<T> data() {
+        return tcb::span<T>((T*)data_.data(), num_cells_);
     }
 
     /**
@@ -151,28 +151,28 @@ class ColumnBuffer {
     /**
      * @brief Return a view of the ColumnBuffer offsets.
      *
-     * @return std::span<uint64_t> offsets view
+     * @return tcb::span<uint64_t> offsets view
      */
-    std::span<uint64_t> offsets() {
+    tcb::span<uint64_t> offsets() {
         if (!is_var_) {
             throw TileDBSOMAError(
                 "[ColumnBuffer] Offsets buffer not defined for " + name_);
         }
 
-        return std::span<uint64_t>(offsets_.data(), num_cells_);
+        return tcb::span<uint64_t>(offsets_.data(), num_cells_);
     }
 
     /**
      * @brief Return a view of the validity buffer.
      *
-     * @return std::span<uint8_t> validity view
+     * @return tcb::span<uint8_t> validity view
      */
-    std::span<uint8_t> validity() {
+    tcb::span<uint8_t> validity() {
         if (!is_nullable_) {
             throw TileDBSOMAError(
                 "[ColumnBuffer] Validity buffer not defined for " + name_);
         }
-        return std::span<uint8_t>(validity_.data(), num_cells_);
+        return tcb::span<uint8_t>(validity_.data(), num_cells_);
     }
 
     /**

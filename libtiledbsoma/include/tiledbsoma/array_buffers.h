@@ -35,7 +35,7 @@
 
 #include <stdexcept>  // for windows: error C2039: 'runtime_error': is not a member of 'std'
 
-#include <span>
+#include <externals/span/span.hpp>
 #include <tiledb/tiledb>
 
 #include "tiledbsoma/column_buffer.h"
@@ -74,7 +74,7 @@ class ArrayBuffers {
      * @return True if a buffer with the given name exists
      */
     bool contains(const std::string& name) {
-        return buffers_.contains(name);
+        return buffers_.find(name) != buffers_.end();
     }
 
     /**

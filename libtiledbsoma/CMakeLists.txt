@@ -60,8 +60,8 @@ option(ENABLE_ARROW_EXPORT "Installs an extra header for exporting in-memory res
 option(TILEDB_LOG_OUTPUT_ON_FAILURE "If true, print error logs if dependency sub-project build fails" ON)
 option(TILEDBSOMA_TESTING "Enable tests" ON)
 
-# Set C++20 as required standard for all C++ targets (C++17 minimum is required to use the TileDB C++ API).
-set(CMAKE_CXX_STANDARD 20)
+# Set C++17 as required standard for all C++ targets (C++17 minimum is required to use the TileDB C++ API).
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF) # Don't use GNU extensions
 
