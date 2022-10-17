@@ -35,7 +35,7 @@ def test_soma_sparse_nd_array_create_ok(
     a.create(element_type, shape)
     assert a.soma_type == "SOMASparseNdArray"
     assert a.uri == tmp_path.as_posix()
-    assert a.ndims == len(shape)
+    assert a.ndim == len(shape)
     assert a.shape == tuple(shape)
     assert a.is_sparse is True
     assert a.exists()

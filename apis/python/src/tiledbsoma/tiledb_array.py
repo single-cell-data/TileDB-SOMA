@@ -4,6 +4,7 @@ import pyarrow as pa
 import tiledb
 
 from .tiledb_object import TileDBObject
+from .tiledb_platform_config import TileDBPlatformConfig
 from .util_arrow import get_arrow_schema_from_tiledb_uri
 
 
@@ -17,12 +18,15 @@ class TileDBArray(TileDBObject):
         uri: str,
         *,
         parent: Optional["TileDBObject"] = None,
+        tiledb_platform_config: Optional[TileDBPlatformConfig] = None,
         ctx: Optional[tiledb.Ctx] = None,
     ):
         """
         See the ``TileDBObject`` constructor.
         """
-        super().__init__(uri, parent=parent, ctx=ctx)
+        super().__init__(
+            uri, parent=parent, tiledb_platform_config=tiledb_platform_config, ctx=ctx
+        )
 
     @property
     def schema(self) -> pa.Schema:

@@ -271,7 +271,7 @@ class SOMAIndexedDataFrame(TileDBArray):
             elif len(dim_cols_list) == 2:
                 A[dim_cols_list[0], dim_cols_list[1]] = attr_cols_map
             else:
-                raise Exception("ndims >= 2 not currently supported")
+                raise Exception("ndim >= 2 not currently supported")
 
     def read_as_pandas(
         self,
