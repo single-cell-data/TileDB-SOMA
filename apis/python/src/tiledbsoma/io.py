@@ -132,7 +132,7 @@ def _write_dataframe(
             uri=soma_df.uri,
             dataframe=df,
             sparse=True,
-            allows_duplicates=soma_df._tiledb_platform_config.allows_duplicates,
+            allows_duplicates=False,
             offsets_filters=offsets_filters,
             attr_filters=attr_filters,
             dim_filters=dim_filters,

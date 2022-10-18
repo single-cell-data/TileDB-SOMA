@@ -21,7 +21,6 @@ class TileDBPlatformConfig:
     goal_chunk_nnz: int = 200_000_000
     # Allows relocatability for local disk / S3, and correct behavior for TileDB Cloud
     member_uris_are_relative: Optional[bool] = None
-    allows_duplicates: bool = False
 
     max_thread_pool_workers: int = 8
 
