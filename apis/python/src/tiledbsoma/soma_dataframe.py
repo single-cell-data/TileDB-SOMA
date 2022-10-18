@@ -94,7 +94,7 @@ class SOMADataFrame(TileDBArray):
             # TODO: pending tiledb issue involving dense dataframes
             # sparse=False,
             sparse=True,
-            allows_duplicates=self._tiledb_platform_config.allows_duplicates,
+            allows_duplicates=False,
             offsets_filters=[
                 tiledb.DoubleDeltaFilter(),
                 tiledb.BitWidthReductionFilter(),

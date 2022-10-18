@@ -117,7 +117,7 @@ class SOMAIndexedDataFrame(TileDBArray):
             domain=dom,
             attrs=attrs,
             sparse=True,
-            allows_duplicates=self._tiledb_platform_config.allows_duplicates,
+            allows_duplicates=False,
             offsets_filters=[
                 tiledb.DoubleDeltaFilter(),
                 tiledb.BitWidthReductionFilter(),
