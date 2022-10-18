@@ -158,7 +158,7 @@ Rcpp::List export_arrow_array(const std::string& uri,
     }
 
     // If we have dimension points, apply them
-    // The interface is named list, where each (named) list elements is one (named) dimesion
+    // The interface is named list, where each (named) list elements is one (named) dimension
     // The List element is a simple vector of points and each point is applied to the named dimension
     if (!dim_points.isNull()) {
         Rcpp::List lst(dim_points);
