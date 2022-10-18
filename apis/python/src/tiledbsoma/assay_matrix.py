@@ -240,7 +240,7 @@ class AssayMatrix(TileDBArray):
             domain=dom,
             attrs=(att,),
             sparse=True,
-            allows_duplicates=self._soma_options.allows_duplicates,
+            allows_duplicates=False,
             offsets_filters=self._soma_options.X_data_offset_filters,
             capacity=self._soma_options.X_capacity,
             cell_order=self._soma_options.X_cell_order,

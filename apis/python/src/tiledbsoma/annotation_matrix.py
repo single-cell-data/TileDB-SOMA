@@ -198,7 +198,7 @@ class AnnotationMatrix(TileDBArray):
             domain=dom,
             attrs=attrs,
             sparse=True,
-            allows_duplicates=self._soma_options.allows_duplicates,
+            allows_duplicates=False,
             offsets_filters=[
                 tiledb.DoubleDeltaFilter(),
                 tiledb.BitWidthReductionFilter(),
