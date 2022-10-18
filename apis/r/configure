@@ -40,11 +40,18 @@ if [ $? -eq 0 ]; then
             src/Makevars.in > src/Makevars
 
         have_tiledb="true"
-        echo "*** updated src/Makevars for system library via pkg-config"
+        echo "** updated src/Makevars for system library via pkg-config"
     fi
 fi
 
-${R_HOME=`R RHOME`}
 if [ x"${have_tiledb}" = x"false" ]; then
+    ## allow for standard CRAN override preference for settable R_HOME
+    ## with fallback to query R in $PATH for its value
+    : ${R_HOME=`R RHOME`}
+    if test -z "${R_HOME}"; then
+        echo Could not determine R_HOME.
+        exit 1
+    fi
+
     ${R_HOME}/bin/Rscript tools/get_tarball.R
 fi
