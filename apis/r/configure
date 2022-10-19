@@ -13,10 +13,10 @@ else
     if ! test -d inst/include/tiledbsoma; then
         mkdir -p inst/include/tiledbsoma inst/include/externals
         echo "** copying C++ header files"
-        cp -ax ../../libtiledbsoma/include/tiledbsoma/* inst/include/tiledbsoma/
-        cp -ax ../../libtiledbsoma/include/externals/* inst/include/externals/
+        cp -a ../../libtiledbsoma/include/tiledbsoma/* inst/include/tiledbsoma/
+        cp -a ../../libtiledbsoma/include/externals/* inst/include/externals/
         echo "** copying C++ source and header files"
-        cp -ax ../../libtiledbsoma/src/* src/
+        cp -a ../../libtiledbsoma/src/* src/
     fi
 fi
 
@@ -40,10 +40,18 @@ if [ $? -eq 0 ]; then
             src/Makevars.in > src/Makevars
 
         have_tiledb="true"
-        echo "*** updated src/Makevars for system library via pkg-config"
+        echo "** updated src/Makevars for system library via pkg-config"
     fi
 fi
 
 if [ x"${have_tiledb}" = x"false" ]; then
+    ## allow for standard CRAN override preference for settable R_HOME
+    ## with fallback to query R in $PATH for its value
+    : ${R_HOME=`R RHOME`}
+    if test -z "${R_HOME}"; then
+        echo Could not determine R_HOME.
+        exit 1
+    fi
+
     ${R_HOME}/bin/Rscript tools/get_tarball.R
 fi

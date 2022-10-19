@@ -26,7 +26,7 @@ if (!dir.exists("inst/tiledb")) untar(tarball, exdir="inst/tiledb")
 archincl <- paste0("-I", system.file("include", package="arch"))
 
 mkvar <- readLines("src/Makevars.in")
-mkvar <- gsub("@cxx20_macos@", macosver, mkvar)
+mkvar <- gsub("@cxx17_macos@", macosver, mkvar)
 mkvar <- gsub("@tiledb_include@", paste("-I../inst/tiledb/include", archincl), mkvar)
 mkvar <- gsub("@tiledb_libs@", "-ltiledb -L../inst/tiledb/lib", mkvar)
 mkvar <- gsub("@tiledb_rpath@", "-Wl,-rpath,'$$ORIGIN/../tiledb/lib'", mkvar)
