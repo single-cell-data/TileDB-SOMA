@@ -23,7 +23,8 @@ SOMADenseNdArray <- R6::R6Class(
   public = list(
 
     #' @description Create a SOMADenseNdArray named with the URI.
-    #' @param type an [Arrow type][arrow::data-type] defining the type of each element in the array.
+    #' @param type an [Arrow type][arrow::data-type] defining the type of each
+    #' element in the array.
     #' @param shape a vector of integers defining the shape of the array.
     create = function(type, shape) {
       stopifnot(
@@ -42,7 +43,7 @@ SOMADenseNdArray <- R6::R6Class(
       tdb_dims <- vector(mode = "list", length = length(shape))
       for (i in seq_along(shape)) {
         tdb_dims[[i]] <- tiledb::tiledb_dim(
-          name = paste0("__dim_", i - 1L),
+          name = paste0("soma_dim_", i - 1L),
           domain = bit64::as.integer64(c(0L, shape[i] - 1L)),
           tile = bit64::as.integer64(min(c(shape[i], 2048L))),
           type = "INT64"
@@ -52,7 +53,7 @@ SOMADenseNdArray <- R6::R6Class(
 
       # create array attribute
       tdb_attr <- tiledb::tiledb_attr(
-        name = "data",
+        name = "soma_data",
         type = tiledb_type_from_arrow_type(type),
         filter_list = zstd_filter_list
       )
@@ -61,7 +62,7 @@ SOMADenseNdArray <- R6::R6Class(
       tdb_schema <- tiledb::tiledb_array_schema(
         domain = tiledb::tiledb_domain(tdb_dims),
         attrs = tdb_attr,
-        sparse = TRUE,
+        sparse = FALSE,
         cell_order = "ROW_MAJOR",
         tile_order = "ROW_MAJOR",
         capacity=100000,
@@ -76,39 +77,34 @@ SOMADenseNdArray <- R6::R6Class(
       tiledb::tiledb_array_create(uri = self$uri, schema = tdb_schema)
     },
 
-    #' @description Write matrix-like data to the array.
+    #' @description Write matrix data to the array.
     #'
-    #' @param data Any `matrix`-like object coercible to a
-    #' [`TsparseMatrix`][`Matrix::TsparseMatrix-class`]. Character dimension
-    #' names are ignored because `SOMANdArray`'s use integer indexing.
-    #'
-    write = function(data) {
+    #' @param values A `matrix`. Character dimension names are ignored because
+    #' `SOMANdArray`'s use integer indexing.
+    #' @param coords A `list` of integer vectors, one for each dimension, with a
+    #' length equal to the number of values to write. If `NULL`, the default,
+    #' the values are taken from the row and column names of `values`.
+    write = function(values, coords = NULL) {
       stopifnot(
-        "'data' must be a matrix" = is_matrix(data)
+        "'values' must be a matrix" = is.matrix(values)
       )
-      # coerce to a TsparseMatrix, which uses 0-based COO indexing
-      data <- as(data, Class = "TsparseMatrix")
-      coo <- data.frame(
-        i = bit64::as.integer64(data@i),
-        j = bit64::as.integer64(data@j),
-        x = data@x
+
+      if (is.null(coords)) {
+        coords <- list(seq_len(nrow(values)), seq_len(ncol(values)))
+      }
+
+      stopifnot(
+        "'coords' must be a list of integer vectors" =
+          is.list(coords) && all(vapply_lgl(coords, is.integer)),
+        "length of 'coords' must match number of dimensions" =
+          length(coords) == length(self$dimensions())
       )
-      colnames(coo) <- c(self$dimnames(), self$attrnames())
-      private$write_coo_dataframe(coo)
-    }
-  ),
 
-  private = list(
-
-    # @description Ingest COO-formatted dataframe into the TileDB array.
-    # @param x A [`data.frame`].
-    write_coo_dataframe = function(data) {
-      stopifnot(is.data.frame(data))
-      # private$log_array_ingestion()
       on.exit(private$close())
       private$open("WRITE")
       arr <- self$object
-      arr[] <- data
+      tiledb::query_layout(arr) <- "COL_MAJOR"
+      arr[] <- values
     }
   )
 )

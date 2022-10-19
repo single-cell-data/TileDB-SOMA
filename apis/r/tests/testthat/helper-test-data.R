@@ -17,3 +17,12 @@ create_sparse_matrix_with_string_dims <- function(nrows = 10, ncols = 5, seed = 
   )
   smat
 }
+
+create_dense_matrix_with_int_dims <- function(nrows = 10, ncols = 5, seed = 1) {
+  set.seed(seed)
+  matrix(
+    data = as.integer(runif(nrows * ncols, min = 1, max = 100)),
+    nrow = nrows,
+    ncol = ncols
+  )
+}
