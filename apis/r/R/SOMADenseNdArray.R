@@ -1,25 +1,21 @@
 #' SOMADenseNdArray
 #'
 #' @description
-#' `SOMADenseNdArray` is a sparse, N-dimensional array with offset
-#' (zero-based) integer indexing on each dimension. The `SOMADenseNdArray` has
-#' a user-defined schema, which includes:
+#' `SOMADenseNdArray` is a dense, N-dimensional array of `primitive` type, with
+#' offset (zero-based) `int64` integer indexing on each dimension with domain
+#' `[0, maxUint64)`. The `SOMADenseNdArray` has a user-defined schema, which
+#' includes:
 #'
-#' - type - a `primitive` type, expressed as an Arrow type (e.g., `int64`, `float32`, etc)
-#' - shape - the shape of the array, i.e., number and length of each dimension
+#' - **type**: a `primitive` type, expressed as an Arrow type (e.g., `int64`,
+#'   `float32`, etc), indicating the type of data contained within the array
+#' - **shape**: the shape of the array, i.e., number and length of each
+#'   dimension
 #'
-#' All dimensions must have a positive, non-zero length.
+#' All dimensions must have a positive, non-zero length, and there must be 1 or
+#' more dimensions.
 #'
-#' **Note** - on TileDB this is an sparse array with `N` uint64 dimensions of
-#' domain [0, maxUint64), and a single attribute.
-#'
-#' ## Duplicate writes
-#'
-#' As duplicate index values are not allowed, index values already present in
-#' the object are overwritten and new index values are added.
-#'
-#' @importFrom bit64 as.integer64
-
+#' The default "fill" value for `SOMADenseNdArray` is the zero or null value of
+#' the array type (e.g., Arrow.float32 defaults to 0.0).
 SOMADenseNdArray <- R6::R6Class(
   classname = "SOMADenseNdArray",
   inherit = TileDBArray,
