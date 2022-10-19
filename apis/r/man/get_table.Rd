@@ -5,6 +5,7 @@
 \alias{export_column_direct}
 \alias{export_arrow_array}
 \alias{nnz}
+\alias{get_column_types}
 \alias{get_table}
 \alias{get_column}
 \title{Access SOME Data From a Given URI}
@@ -13,7 +14,16 @@ get_column_names(uri)
 
 export_column_direct(uri, colnames)
 
-export_arrow_array(uri, colnames, qc = NULL, loglevel = "warn")
+export_arrow_array(
+  uri,
+  colnames,
+  qc = NULL,
+  dim_points = NULL,
+  dim_ranges = NULL,
+  loglevel = "warn"
+)
+
+get_column_types(uri, colnames)
 
 nnz(uri)
 
@@ -28,6 +38,11 @@ get_column(uri, column)
 
 \item{qc}{External Pointer object to TileDB Query Condition, defaults to \sQuote{NULL} i.e.
 no query condition}
+
+\item{dim_points}{A data.frame object with name, type and point value to select rows.}
+
+\item{dim_ranges}{A data.frame object with name, type, and low and high values to select
+rows by ranges.}
 
 \item{loglevel}{Character value with the desired logging level, defaults to \sQuote{warn}}
 

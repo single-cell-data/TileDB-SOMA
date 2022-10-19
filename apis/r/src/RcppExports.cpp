@@ -49,16 +49,18 @@ BEGIN_RCPP
 END_RCPP
 }
 // export_arrow_array
-Rcpp::List export_arrow_array(const std::string& uri, const std::vector<std::string>& colnames, Rcpp::Nullable<Rcpp::XPtr<tiledb::QueryCondition>> qc, const std::string& loglevel);
-RcppExport SEXP _tiledbsoma_export_arrow_array(SEXP uriSEXP, SEXP colnamesSEXP, SEXP qcSEXP, SEXP loglevelSEXP) {
+Rcpp::List export_arrow_array(const std::string& uri, const std::vector<std::string>& colnames, Rcpp::Nullable<Rcpp::XPtr<tiledb::QueryCondition>> qc, Rcpp::Nullable<Rcpp::List> dim_points, Rcpp::Nullable<Rcpp::List> dim_ranges, const std::string& loglevel);
+RcppExport SEXP _tiledbsoma_export_arrow_array(SEXP uriSEXP, SEXP colnamesSEXP, SEXP qcSEXP, SEXP dim_pointsSEXP, SEXP dim_rangesSEXP, SEXP loglevelSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< const std::string& >::type uri(uriSEXP);
     Rcpp::traits::input_parameter< const std::vector<std::string>& >::type colnames(colnamesSEXP);
     Rcpp::traits::input_parameter< Rcpp::Nullable<Rcpp::XPtr<tiledb::QueryCondition>> >::type qc(qcSEXP);
+    Rcpp::traits::input_parameter< Rcpp::Nullable<Rcpp::List> >::type dim_points(dim_pointsSEXP);
+    Rcpp::traits::input_parameter< Rcpp::Nullable<Rcpp::List> >::type dim_ranges(dim_rangesSEXP);
     Rcpp::traits::input_parameter< const std::string& >::type loglevel(loglevelSEXP);
-    rcpp_result_gen = Rcpp::wrap(export_arrow_array(uri, colnames, qc, loglevel));
+    rcpp_result_gen = Rcpp::wrap(export_arrow_array(uri, colnames, qc, dim_points, dim_ranges, loglevel));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -83,14 +85,27 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// get_column_types
+Rcpp::CharacterVector get_column_types(const std::string& uri, const std::vector<std::string>& colnames);
+RcppExport SEXP _tiledbsoma_get_column_types(SEXP uriSEXP, SEXP colnamesSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const std::string& >::type uri(uriSEXP);
+    Rcpp::traits::input_parameter< const std::vector<std::string>& >::type colnames(colnamesSEXP);
+    rcpp_result_gen = Rcpp::wrap(get_column_types(uri, colnames));
+    return rcpp_result_gen;
+END_RCPP
+}
 
 static const R_CallMethodDef CallEntries[] = {
     {"_tiledbsoma_get_column_names", (DL_FUNC) &_tiledbsoma_get_column_names, 1},
     {"_tiledbsoma_export_column", (DL_FUNC) &_tiledbsoma_export_column, 4},
     {"_tiledbsoma_export_column_direct", (DL_FUNC) &_tiledbsoma_export_column_direct, 2},
-    {"_tiledbsoma_export_arrow_array", (DL_FUNC) &_tiledbsoma_export_arrow_array, 4},
+    {"_tiledbsoma_export_arrow_array", (DL_FUNC) &_tiledbsoma_export_arrow_array, 6},
     {"_tiledbsoma_set_log_level", (DL_FUNC) &_tiledbsoma_set_log_level, 1},
     {"_tiledbsoma_nnz", (DL_FUNC) &_tiledbsoma_nnz, 1},
+    {"_tiledbsoma_get_column_types", (DL_FUNC) &_tiledbsoma_get_column_types, 2},
     {NULL, NULL, 0}
 };
 

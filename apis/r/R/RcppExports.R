@@ -19,8 +19,8 @@ export_column_direct <- function(uri, colnames) {
 
 #' @rdname get_table
 #' @export
-export_arrow_array <- function(uri, colnames, qc = NULL, loglevel = "warn") {
-    .Call(`_tiledbsoma_export_arrow_array`, uri, colnames, qc, loglevel)
+export_arrow_array <- function(uri, colnames, qc = NULL, dim_points = NULL, dim_ranges = NULL, loglevel = "warn") {
+    .Call(`_tiledbsoma_export_arrow_array`, uri, colnames, qc, dim_points, dim_ranges, loglevel)
 }
 
 #' @noRd
@@ -28,10 +28,15 @@ set_log_level <- function(level) {
     invisible(.Call(`_tiledbsoma_set_log_level`, level))
 }
 
-
 #' @rdname get_table
 #' @export
 nnz <- function(uri) {
     .Call(`_tiledbsoma_nnz`, uri)
+}
+
+#' @rdname get_table
+#' @export
+get_column_types <- function(uri, colnames) {
+    .Call(`_tiledbsoma_get_column_types`, uri, colnames)
 }
 
