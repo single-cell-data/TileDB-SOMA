@@ -93,5 +93,20 @@ def test_query_condition_and_or():
     assert len(pandas.index) == soma_arrow.num_rows
 
 
+def test_query_condition_select_columns():
+    uri = os.path.join(SOMA_URI, "obs")
+    condition = "percent_mito > 0.02"
+
+    qc = QueryCondition(condition)
+    schema = tiledb.open(uri).schema
+
+    sr = sc.SOMAReader(uri, query_condition=qc, schema=schema, column_names=["n_genes"])
+    sr.submit()
+    arrow_table = sr.read_next()
+
+    assert sr.results_complete()
+    assert arrow_table.num_rows == 1332
+
+
 if __name__ == "__main__":
     test_query_condition_and_or()
