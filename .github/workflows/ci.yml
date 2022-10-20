@@ -47,6 +47,10 @@ jobs:
         CC: ${{ matrix.cc }}
         CXX: ${{ matrix.cxx }}
 
+    - name: 'Dump logs on install failure'
+      if: ${{ failure()}} # only run this job if the build step failed
+          run: for x in /home/runner/work/TileDB-SOMA/TileDB-SOMA/build/externals/src/ep_tiledb-stamp/ep_tiledb-build-*.log; do echo; echo ------------------ $x; cat $x; done
+
     - name: Run pytests
       run: python -m pytest apis/python/tests
 

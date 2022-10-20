@@ -8,6 +8,8 @@
 # * RelWithDebInfo
 # * Coverage
 
+LIBTILEDBSOMA_DEBUG_BUILD=true
+
 BUILD_TYPE=${1:-Release} # default to Release build
 if [ ! -z "$LIBTILEDBSOMA_DEBUG_BUILD" ]; then
   echo
