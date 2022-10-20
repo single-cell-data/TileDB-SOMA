@@ -8,8 +8,6 @@
 # * RelWithDebInfo
 # * Coverage
 
-LIBTILEDBSOMA_DEBUG_BUILD=true
-
 BUILD_TYPE=${1:-Release} # default to Release build
 if [ ! -z "$LIBTILEDBSOMA_DEBUG_BUILD" ]; then
   echo
@@ -78,9 +76,9 @@ else
   # make itself shows by default but which cmake-driven make hides by default. Use this for any
   # non-trivial cmake debugging.
   if [ ! -z "$LIBTILEDBSOMA_DEBUG_BUILD" ]; then
-    #EXTRA_OPTS="-DCMAKE_VERBOSE_MAKEFILE:BOOL=ON"
+    EXTRA_OPTS="-DCMAKE_VERBOSE_MAKEFILE:BOOL=ON"
     # TILEDB_WERROR=OFF is necessary to build core with XCode 14; doesn't hurt for XCode 13.
-    EXTRA_OPTS="-DCMAKE_VERBOSE_MAKEFILE:BOOL=ON -DTILEDB_WERROR=OFF _DENABLE_TILEDBSOMA_WERROR=OFF"
+    # EXTRA_OPTS="-DCMAKE_VERBOSE_MAKEFILE:BOOL=ON -DTILEDB_WERROR=OFF _DENABLE_TILEDBSOMA_WERROR=OFF"
   fi
   # Also (pro-tip), set nproc=1 to get a more deterministic ordering of output lines.
   if [ ! -z "$LIBTILEDBSOMA_NO_PARALLEL_BUILD" ]; then

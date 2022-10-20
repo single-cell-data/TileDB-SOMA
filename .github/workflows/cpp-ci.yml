@@ -55,8 +55,8 @@ jobs:
 
     - name: Install Python packages
       shell: bash
-      #run: python -m pip install -v pytest pybind11 apis/python
-      run: python -m pip -v install pytest pybind11 typeguard apis/python || scripts/show-ep-tiledb-build-logs.sh
+      run: |
+        python -m pip install -v pytest pybind11 apis/python
       env:
         CC: ${{ matrix.cc }}
         CXX: ${{ matrix.cxx }}
