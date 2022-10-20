@@ -47,6 +47,12 @@ jobs:
         CC: ${{ matrix.cc }}
         CXX: ${{ matrix.cxx }}
 
+    - name: Show package versions
+      run: python scripts/show-versions.py
+
+    - name: Show XCode version
+      run: clang --version
+
     - name: Run pytests
       run: python -m pytest apis/python/tests
 
