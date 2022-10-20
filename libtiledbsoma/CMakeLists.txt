@@ -39,7 +39,7 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmake/Mo
 
 # TileDB-SOMA Options
 option(TILEDBSOMA_ENABLE_PYTHON "Enables Python API bindings" ON)
-option(ENABLE_TILEDBSOMA_WERROR "Enables the -Werror flag during compilation." ON)
+option(TILEDBSOMA_ENABLE_WERROR "Enables the -Werror flag during compilation." ON)
 
 # Superbuild option must be on by default.
 option(SUPERBUILD "If true, perform a superbuild (builds all missing dependencies)." ON)
@@ -152,7 +152,7 @@ if (MSVC)
   #   C4996: deprecation warning about e.g. sscanf.
   add_compile_options(/W4 /wd4101 /wd4146 /wd4244 /wd4251 /wd4456 /wd4457 /wd4702 /wd4800 /wd4996)
   # Warnings as errors:
-  if (ENABLE_TILEDBSOMA_WERROR)
+  if (TILEDBSOMA_ENABLE_WERROR)
     add_compile_options(/WX)
   endif()
   # Disable GDI (which we don't need, and causes some macro
@@ -168,7 +168,7 @@ if (MSVC)
                       )
 else()
   add_compile_options(-Wall -Wextra)
-  if (ENABLE_TILEDBSOMA_WERROR)
+  if (TILEDBSOMA_ENABLE_WERROR)
     add_compile_options(-Werror)
   endif()
   # Build-specific flags
