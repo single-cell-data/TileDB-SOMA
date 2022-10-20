@@ -148,12 +148,6 @@ uint64_t SOMAReader::nnz() {
     //===============================================================
     // If only one fragment, return total_cell_num
     auto fragment_count = fragment_info.fragment_num();
-
-    if (fragment_count == 0) {
-        // Array schema has been created but no data have been written
-        return 0;
-    }
-
     if (fragment_count == 1) {
         return fragment_info.total_cell_num();
     }

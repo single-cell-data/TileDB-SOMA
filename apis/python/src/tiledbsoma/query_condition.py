@@ -111,6 +111,7 @@ class QueryCondition:
     """
 
     expression: str
+    ctx: tiledb.Ctx = field(default_factory=tiledb.default_ctx, repr=False)
     tree: ast.Expression = field(init=False, repr=False)
     c_obj: PyQueryCondition = field(init=False, repr=False)
 
@@ -130,7 +131,7 @@ class QueryCondition:
             )
 
     def init_query_condition(self, schema: tiledb.ArraySchema, query_attrs: List[str]):
-        qctree = QueryConditionTree(schema, query_attrs)
+        qctree = QueryConditionTree(self.ctx, schema, query_attrs)
         self.c_obj = qctree.visit(self.tree.body)
 
         if not isinstance(self.c_obj, PyQueryCondition):
@@ -142,6 +143,7 @@ class QueryCondition:
 
 @dataclass
 class QueryConditionTree(ast.NodeVisitor):
+    ctx: tiledb.Ctx
     schema: tiledb.ArraySchema
     query_attrs: List[str]
 
@@ -239,7 +241,7 @@ class QueryConditionTree(ast.NodeVisitor):
         dtype = "string" if dt.kind in "SUa" else dt.name
         val = self.cast_val_to_dtype(val, dtype)
 
-        pyqc = PyQueryCondition()
+        pyqc = PyQueryCondition(self.ctx)
         self.init_pyqc(pyqc, dtype)(att, val, op)
 
         return pyqc

@@ -46,9 +46,7 @@ option(SUPERBUILD "If true, perform a superbuild (builds all missing dependencie
 option(CMAKE_IDE "(Used for CLion builds). Disables superbuild and sets the EP install dir." OFF)
 option(FORCE_BUILD_TILEDB "Forces a local build of TileDB instead of searching system paths." ON)
 option(TILEDB_FORCE_ALL_DEPS "Forces a local build of TileDB instead of searching system paths." OFF)
-# TODO: keep this until the next TileDB core release
-# option(DOWNLOAD_TILEDB_PREBUILT "If tiledb is being super built, this controls downloading prebuilt artifacts or building from source" ON)
-option(DOWNLOAD_TILEDB_PREBUILT "If tiledb is being super built, this controls downloading prebuilt artifacts or building from source" OFF)
+option(DOWNLOAD_TILEDB_PREBUILT "If tiledb is being super built, this controls downloading prebuilt artifacts or building from source" ON)
 
 # TileDB BUILD Options
 option(TILEDB_S3 "Enables S3/minio support using aws-cpp-sdk" ON)
@@ -154,7 +152,7 @@ if (MSVC)
   #   C4996: deprecation warning about e.g. sscanf.
   add_compile_options(/W4 /wd4101 /wd4146 /wd4244 /wd4251 /wd4456 /wd4457 /wd4702 /wd4800 /wd4996)
   # Warnings as errors:
-  if (TILEDBSOMA_ENABLE_WERROR)
+  if (ENABLE_TILEDBSOMA_WERROR)
     add_compile_options(/WX)
   endif()
   # Disable GDI (which we don't need, and causes some macro
