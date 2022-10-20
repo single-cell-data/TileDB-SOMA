@@ -91,7 +91,8 @@ else()
           # URL "https://johnkerl.org/2.11.1.zip"
           # URL_HASH SHA1=92f69e3b905d9cc854f52dae910f42a63c543f23
           GIT_REPOSITORY "https://github.com/TileDB-Inc/TileDB/"
-          GIT_TAG "yt/ch22464/make_logger_prefix_unique"
+          #GIT_TAG "yt/ch22464/make_logger_prefix_unique"
+          GIT_TAG "yt/ch22464/make_logger_prefix_unique-2.12"
           DOWNLOAD_NAME "tiledb.zip"
           CMAKE_ARGS
             -DCMAKE_INSTALL_PREFIX=${EP_INSTALL_PREFIX}
