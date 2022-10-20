@@ -101,6 +101,7 @@ else()
             -DTILEDB_VERBOSE=ON
             -DTILEDB_SERIALIZATION=ON
             -DTILEDB_TESTS=OFF
+            -DTILEDB_WERROR=OFF
             -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
           UPDATE_COMMAND ""
           INSTALL_COMMAND
