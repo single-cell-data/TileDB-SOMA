@@ -6,9 +6,10 @@ import pyarrow as pa
 import scipy.sparse as sp
 import tiledb
 
+# This package's pybind11 code
 import tiledbsoma.libtiledbsoma as clib
 
-from . import util_arrow
+from . import util, util_arrow
 from .soma_collection import SOMACollectionBase
 from .tiledb_array import TileDBArray
 from .tiledb_platform_config import TileDBPlatformConfig
@@ -228,12 +229,43 @@ class SOMASparseNdArray(TileDBArray):
         as an Arrow Table
         """
         with self._tiledb_open("r") as A:
-            query = A.query(
-                return_arrow=True,
-                return_incomplete=True,
+            #            query = A.query(
+            #                return_arrow=True,
+            #                return_incomplete=True,
+            #            )
+            #            for arrow_tbl in query.df[coords]:
+            #                yield arrow_tbl
+
+            sr = clib.SOMAReader(
+                self._uri,
+                name=self.__class__.__name__,
+                schema=A.schema,
             )
-            for arrow_tbl in query.df[coords]:
-                yield arrow_tbl
+
+            # coords are a tuple of (int or slice-of-int)
+            # XXX TO DO:
+            # * assert len coords == ndim
+            # * pick out for each dim
+            if len(coords) != A.schema.domain.ndim:
+                raise ValueError(
+                    f"coordinate length {len(coords)} != array ndim {A.schema.domain.ndim}"
+                )
+            for i in range(A.schema.domain.ndim):
+                coord = coords[i]
+                if isinstance(coord, int):
+                    ids = [coord]
+                elif isinstance(coord, slice):
+                    ids = util.ids_to_list(coord)
+                else:
+                    raise TypeError(
+                        f"unsupported coordinate type {type(coord)}; expected int or slice of int"
+                    )
+                sr.set_dim_points(A.schema.domain.dim(i).name, ids)
+
+            sr.submit()
+
+            while arrow_table := sr.read_next():
+                yield arrow_table
 
     def read_as_pandas(self, coords: SOMASparseNdCoordinates) -> Iterator[pd.DataFrame]:
         """
