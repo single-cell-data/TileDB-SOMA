@@ -172,7 +172,6 @@ PYBIND11_MODULE(libtiledbsoma, m) {
         // Binding overloaded methods to templated member functions requires
         // more effort, see:
         // https://pybind11.readthedocs.io/en/stable/classes.html#overloaded-methods
-
         .def(
             "set_dim_points",
             static_cast<void (SOMAReader::*)(

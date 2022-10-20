@@ -39,7 +39,7 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmake/Mo
 
 # TileDB-SOMA Options
 option(TILEDBSOMA_ENABLE_PYTHON "Enables Python API bindings" ON)
-option(TILEDBSOMA_ENABLE_WERROR "Enables the -Werror flag during compilation." ON)
+option(ENABLE_TILEDBSOMA_WERROR "Enables the -Werror flag during compilation." ON)
 
 # Superbuild option must be on by default.
 option(SUPERBUILD "If true, perform a superbuild (builds all missing dependencies)." ON)
