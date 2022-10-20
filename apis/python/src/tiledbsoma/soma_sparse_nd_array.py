@@ -6,8 +6,6 @@ import pyarrow as pa
 import scipy.sparse as sp
 import tiledb
 
-import tiledbsoma.libtiledbsoma as clib
-
 from . import util_arrow
 from .soma_collection import SOMACollectionBase
 from .tiledb_array import TileDBArray
@@ -144,7 +142,7 @@ class SOMASparseNdArray(TileDBArray):
         """
         Return the number of stored values in the array, including explicitly stored zeros.
         """
-        return cast(int, clib.SOMAReader(self.uri).nnz())
+        raise NotImplementedError("SOMASparseNdArray.nnz is not implemented.")
 
     def read_sparse_tensor(
         self,

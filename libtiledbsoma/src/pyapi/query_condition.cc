@@ -68,11 +68,8 @@ public:
   PyQueryCondition() = delete;
 
   PyQueryCondition(py::object ctx) {
-    (void)ctx;
     try {
-      // create one global context for all query conditions
-      static Context context = Context();
-      ctx_ = context;
+      set_ctx(ctx);
       qc_ = shared_ptr<QueryCondition>(new QueryCondition(ctx_));
     } catch (TileDBError &e) {
       TPY_ERROR_LOC(e.what());

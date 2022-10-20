@@ -86,11 +86,8 @@ else()
     else() # Build from source
         ExternalProject_Add(ep_tiledb
           PREFIX "externals"
-          # TODO: keep this until the next TileDB core release
-          # URL "https://github.com/TileDB-Inc/TileDB/archive/2.11.1.zip"
-          # URL_HASH SHA1=98505ca9924b0fe703feb0da08c0918e675b2a8f
-          GIT_REPOSITORY "https://github.com/TileDB-Inc/TileDB/"
-          GIT_TAG "yt/ch22464/make_logger_prefix_unique-2.12"
+          URL "https://github.com/TileDB-Inc/TileDB/archive/2.11.1.zip"
+          URL_HASH SHA1=98505ca9924b0fe703feb0da08c0918e675b2a8f
           DOWNLOAD_NAME "tiledb.zip"
           CMAKE_ARGS
             -DCMAKE_INSTALL_PREFIX=${EP_INSTALL_PREFIX}
