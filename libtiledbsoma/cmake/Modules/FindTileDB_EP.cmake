@@ -49,7 +49,7 @@ else()
 
     # Try to download prebuilt artifacts unless the user specifies to build from source
     # NB When updating the pinned URLs here, please also update in file apis/r/tools/get_tarball.R
-    if(DOWNLOAD_TILEDB_PREBUILT)
+    if(FALSE) #DOWNLOAD_TILEDB_PREBUILT)
         if (WIN32) # Windows
           SET(DOWNLOAD_URL "https://github.com/TileDB-Inc/TileDB/releases/download/2.11.1/tiledb-windows-x86_64-2.11.1-15a1161.zip")
           SET(DOWNLOAD_SHA1 "f88420f4269aaac69a1dfb53e20f4848c407fa3f")
@@ -86,8 +86,8 @@ else()
     else() # Build from source
         ExternalProject_Add(ep_tiledb
           PREFIX "externals"
-          URL "https://github.com/TileDB-Inc/TileDB/archive/2.11.1.zip"
-          URL_HASH SHA1=98505ca9924b0fe703feb0da08c0918e675b2a8f
+          GIT_REPOSITORY "https://github.com/TileDB-Inc/TileDB/"
+          GIT_TAG "yt/ch22464/make_logger_prefix_unique"
           DOWNLOAD_NAME "tiledb.zip"
           CMAKE_ARGS
             -DCMAKE_INSTALL_PREFIX=${EP_INSTALL_PREFIX}
