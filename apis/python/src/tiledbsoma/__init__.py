@@ -39,6 +39,7 @@ from .general_utilities import (
     get_SOMA_version,
     get_storage_engine,
 )
+from .query_condition import QueryCondition  # type: ignore
 from .soma_collection import SOMACollection
 from .soma_dataframe import SOMADataFrame
 from .soma_dense_nd_array import SOMADenseNdArray
@@ -70,4 +71,5 @@ __all__ = [
     "SOMAMeasurement",
     "SOMAMetadataMapping",
     "SOMASparseNdArray",
+    "QueryCondition",
 ]
