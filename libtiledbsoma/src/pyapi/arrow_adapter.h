@@ -61,7 +61,7 @@ class ArrowAdapter {
         std::unique_ptr<ArrowArray> array = std::make_unique<ArrowArray>();
 
         schema->format = to_arrow_format(column->type()).data();  // mandatory
-        schema->name = column->name().c_str();                    // optional
+        schema->name = column->name().data();                     // optional
         schema->metadata = nullptr;                               // optional
         schema->flags = 0;                                        // optional
         schema->n_children = 0;                                   // mandatory

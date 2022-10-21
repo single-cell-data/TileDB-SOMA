@@ -31,6 +31,7 @@
  */
 
 #include <tiledbsoma/tiledbsoma>
+#include "pyapi/arrow_adapter.h"
 
 using namespace tiledbsoma;
 
@@ -75,6 +76,34 @@ void test_sdf(const std::string& uri) {
     LOG_INFO(fmt::format("  batches = {}", batches));
 }
 
+namespace tdbs = tiledbsoma;
+void test_arrow(const std::string& uri) {
+    const std::vector<std::string>& colnames{"n_counts", "n_genes", "louvain"};
+    auto obs = tdbs::SOMAReader::open(uri, "", {}, colnames);
+    obs->submit();
+    // Getting next batch:  std::optional<std::shared_ptr<ArrayBuffers>>
+    auto obs_data = obs->read_next();
+    if (!obs->results_complete()) {
+        tdbs::LOG_WARN(fmt::format("Read of '{}' incomplete", uri));
+        exit(-1);
+    }
+    tdbs::LOG_INFO(fmt::format(
+        "Read complete with {} obs and {} cols",
+        obs_data->get()->num_rows(),
+        obs_data->get()->names().size()));
+    std::vector<std::string> names = obs_data->get()->names();
+    for (auto nm : names) {
+        auto buf = obs_data->get()->at(nm);
+        auto pp = tdbs::ArrowAdapter::to_arrow(buf);
+        ArrowSchema* schema = pp.second.get();
+        tdbs::LOG_INFO(fmt::format(
+            "Accessing '{}', retrieved '{}', n_children {}",
+            nm,
+            schema->name,
+            schema->n_children));
+    }
+}
+
 #if !defined(R_BUILD)
 int main(int argc, char** argv) {
     LOG_CONFIG("debug");
@@ -86,7 +115,8 @@ int main(int argc, char** argv) {
     }
 
     try {
-        test_sdf(argv[1]);
+        test_arrow(argv[1]);
+        //        test_sdf(argv[1]);
     } catch (const std::exception& e) {
         printf("%s\n", e.what());
         return 1;
