@@ -47,7 +47,7 @@ option(CMAKE_IDE "(Used for CLion builds). Disables superbuild and sets the EP i
 option(FORCE_BUILD_TILEDB "Forces a local build of TileDB instead of searching system paths." ON)
 option(TILEDB_FORCE_ALL_DEPS "Forces a local build of TileDB instead of searching system paths." OFF)
 # option(DOWNLOAD_TILEDB_PREBUILT "If tiledb is being super built, this controls downloading prebuilt artifacts or building from source" ON)
-option(DOWNLOAD_TILEDB_PREBUILT "If tiledb is being super built, this controls downloading prebuilt artifacts or building from source" OFF)
+option(DOWNLOAD_TILEDB_PREBUILT "If tiledb is being super built, this controls downloading prebuilt artifacts or building from source" ON)
 
 # TileDB BUILD Options
 option(TILEDB_S3 "Enables S3/minio support using aws-cpp-sdk" ON)
