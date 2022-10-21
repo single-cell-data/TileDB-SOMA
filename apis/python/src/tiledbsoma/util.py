@@ -5,6 +5,7 @@ from typing import List, TypeVar, Union
 
 import numpy as np
 import pandas as pd
+import pyarrow as pa
 import scipy.sparse as sp
 
 T = TypeVar("T", np.ndarray, pd.Series, pd.DataFrame, sp.spmatrix)
@@ -93,7 +94,7 @@ def uri_joinpath(base: str, path: str) -> str:
     return urllib.parse.urlunparse(parts)
 
 
-def ids_to_list(ids: Union[slice, List[int]]) -> List[int]:
+def ids_to_list(ids: Union[slice, List[int], pa.Array]) -> List[int]:
     """
     For the interface between ``SOMADataFrame::read`` et al. (Python) and ``SOMAReader`` (C++): the
     ``ids`` argument to the former can be slice or list; the argument to
@@ -112,4 +113,6 @@ def ids_to_list(ids: Union[slice, List[int]]) -> List[int]:
                 step = -1
         stop = ids.stop + step
         return list(range(ids.start, stop, step))
+    if isinstance(ids, pa.Array):
+        return [id.as_py() for id in ids]
     raise Exception(f"expected ids as slice or list; got {type(ids)}")
