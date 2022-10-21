@@ -1,4 +1,4 @@
-files: ^apis/python/
+exclude: ^doc/source/
 repos:
   - repo: https://github.com/ambv/black
     rev: 22.12.0
