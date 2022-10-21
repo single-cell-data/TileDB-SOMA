@@ -1,12 +1,12 @@
 #!/usr/bin/env python
 
 import os
+
 import pandas as pd
 import pyarrow as pa
-import tiledbsoma.libtiledbsoma as sc
 import tiledb
+import tiledbsoma.libtiledbsoma as sc
 from tiledbsoma.query_condition import QueryCondition
-
 
 VERBOSE = False
 

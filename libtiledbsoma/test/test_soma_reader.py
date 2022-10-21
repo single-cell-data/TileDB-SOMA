@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import os
+
 import pandas as pd
 import pyarrow as pa
 import tiledbsoma.libtiledbsoma as sc

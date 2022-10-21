@@ -1,9 +1,10 @@
+import random
+
+import numpy as np
 import pandas as pd
 import pyarrow as pa
-import tiledbsoma.libtiledbsoma as sc
 import pytest
-import numpy as np
-import random
+import tiledbsoma.libtiledbsoma as sc
 
 DATA_SIZE = 1 << 14
 VERBOSE = False
