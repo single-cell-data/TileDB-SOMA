@@ -180,48 +180,43 @@ class SOMASparseNdArray(TileDBArray):
             raise NotImplementedError("format not implemented")
 
         with self._tiledb_open("r") as A:
-            query = A.query(
-                return_arrow=True,
-                return_incomplete=True,
-            )
-            for arrow_tbl in query.df[coords]:
-                """
-                In PyArrow 9.0.0, there is a bug preventing the creation of "empty"
-                (zero element) SparseCOOTensor objects.
+            shape = A.shape
+        for arrow_tbl in self.read_table(coords):
+            """
+            In PyArrow 9.0.0, there is a bug preventing the creation of "empty"
+            (zero element) SparseCOOTensor objects.
 
-                See https://issues.apache.org/jira/browse/ARROW-17933
+            See https://issues.apache.org/jira/browse/ARROW-17933
 
-                Just stop the iteration when we run out of results. The caller must be
-                prepared to have a StopIteration, rather than an empty tensor, as the result of
-                an empty query.
-                """
-                if arrow_tbl.num_rows == 0:
-                    return
+            Just stop the iteration when we run out of results. The caller must be
+            prepared to have a StopIteration, rather than an empty tensor, as the result of
+            an empty query.
+            """
+            if arrow_tbl.num_rows == 0:
+                return
 
-                if format == "coo":
+            if format == "coo":
 
-                    coo_data = arrow_tbl.column("soma_data").to_numpy()
-                    coo_coords = np.array(
-                        [
-                            arrow_tbl.column(f"soma_dim_{n}").to_numpy()
-                            for n in range(self.ndim)
-                        ]
-                    ).T
-                    yield pa.SparseCOOTensor.from_numpy(
-                        coo_data, coo_coords, shape=A.shape
-                    )
+                coo_data = arrow_tbl.column("soma_data").to_numpy()
+                coo_coords = np.array(
+                    [
+                        arrow_tbl.column(f"soma_dim_{n}").to_numpy()
+                        for n in range(self.ndim)
+                    ]
+                ).T
+                yield pa.SparseCOOTensor.from_numpy(coo_data, coo_coords, shape=shape)
 
-                elif format in ("csr", "csc"):
-                    # Temporary: as these must be 2D, convert to scipy COO and use
-                    # scipy to perform conversions.  C++ reader will be nicer!
-                    data = arrow_tbl.column("soma_data").to_numpy()
-                    row = arrow_tbl.column("soma_dim_0").to_numpy()
-                    col = arrow_tbl.column("soma_dim_1").to_numpy()
-                    scipy_coo = sp.coo_array((data, (row, col)), shape=A.shape)
-                    if format == "csr":
-                        yield pa.SparseCSRMatrix.from_scipy(scipy_coo.tocsr())
-                    if format == "csc":
-                        yield pa.SparseCSCMatrix.from_scipy(scipy_coo.tocsc())
+            elif format in ("csr", "csc"):
+                # Temporary: as these must be 2D, convert to scipy COO and use
+                # scipy to perform conversions.  C++ reader will be nicer!
+                data = arrow_tbl.column("soma_data").to_numpy()
+                row = arrow_tbl.column("soma_dim_0").to_numpy()
+                col = arrow_tbl.column("soma_dim_1").to_numpy()
+                scipy_coo = sp.coo_array((data, (row, col)), shape=shape)
+                if format == "csr":
+                    yield pa.SparseCSRMatrix.from_scipy(scipy_coo.tocsr())
+                if format == "csc":
+                    yield pa.SparseCSCMatrix.from_scipy(scipy_coo.tocsc())
 
     def read_table(self, coords: SOMASparseNdCoordinates) -> Iterator[pa.Table]:
         """
@@ -235,6 +230,7 @@ class SOMASparseNdArray(TileDBArray):
                 schema=A.schema,
             )
 
+            # TODO: make a util function to be shared with SOMADenseNdArray
             # coords are a tuple of (int or slice-of-int)
             if len(coords) == 1 and coords[0] == slice(None):
                 # Special case which tiledb-py supports, so we should too
