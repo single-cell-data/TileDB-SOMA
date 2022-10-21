@@ -1,5 +1,8 @@
 #!/bin/sh
 
+## Ensure R_HOME is set either explicitly or implicitly from the running R instance
+: ${R_HOME=`R RHOME`}
+
 ## for single-cell-data/apis/r repo, consider completing sources
 if test -d inst/include/tiledbsoma && test -f src/soma_reader.cc; then
     echo "** Source files present, no adjustments needed."
@@ -47,7 +50,6 @@ fi
 if [ x"${have_tiledb}" = x"false" ]; then
     ## allow for standard CRAN override preference for settable R_HOME
     ## with fallback to query R in $PATH for its value
-    : ${R_HOME=`R RHOME`}
     if test -z "${R_HOME}"; then
         echo Could not determine R_HOME.
         exit 1
