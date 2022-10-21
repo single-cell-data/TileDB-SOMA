@@ -125,12 +125,18 @@ PYBIND11_MODULE(libtiledbsoma, m) {
         .def(
             py::init([](std::string_view uri,
                         std::string_view name,
-                        std::vector<std::string> column_names,
+                        std::optional<std::vector<std::string>> column_names_in,
                         py::object py_query_condition,
                         py::object py_schema,
                         std::string_view batch_size,
                         std::string_view result_order,
                         std::map<std::string, std::string> platform_config) {
+                // Handle optional args
+                std::vector<std::string> column_names;
+                if (column_names_in) {
+                    column_names = *column_names_in;
+                }
+
                 auto reader = SOMAReader::open(
                     uri,
                     name,
@@ -162,7 +168,7 @@ PYBIND11_MODULE(libtiledbsoma, m) {
             "uri"_a,
             py::kw_only(),
             "name"_a = "unnamed",
-            "column_names"_a = py::list(),
+            "column_names"_a = py::none(),
             "query_condition"_a = py::none(),
             "schema"_a = py::none(),
             "batch_size"_a = "auto",
