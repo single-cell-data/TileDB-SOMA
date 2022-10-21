@@ -106,7 +106,24 @@ def test_query_condition_select_columns():
 
     assert sr.results_complete()
     assert arrow_table.num_rows == 1332
+    assert arrow_table.num_columns == 2
+
+
+def test_query_condition_all_columns():
+    uri = os.path.join(SOMA_URI, "obs")
+    condition = "percent_mito > 0.02"
+
+    qc = QueryCondition(condition)
+    schema = tiledb.open(uri).schema
+
+    sr = sc.SOMAReader(uri, query_condition=qc, schema=schema)
+    sr.submit()
+    arrow_table = sr.read_next()
+
+    assert sr.results_complete()
+    assert arrow_table.num_rows == 1332
+    assert arrow_table.num_columns == 7
 
 
 if __name__ == "__main__":
-    test_query_condition_and_or()
+    test_query_condition_select_columns()
