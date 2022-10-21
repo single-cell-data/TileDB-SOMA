@@ -2,8 +2,6 @@
 
 import os
 
-import pandas as pd
-import pyarrow as pa
 import tiledbsoma.libtiledbsoma as sc
 
 VERBOSE = False
@@ -24,7 +22,8 @@ def test_soma_reader_obs():
     sr.submit()
     arrow_table = sr.read_next()
 
-    # test that all results are present in the arrow table (no incomplete queries)
+    # test that all results are present in the arrow table (no incomplete
+    # queries)
     assert sr.results_complete()
     assert arrow_table.num_rows == 2638
 
@@ -38,7 +37,8 @@ def test_soma_reader_var():
     sr.submit()
     arrow_table = sr.read_next()
 
-    # test that all results are present in the arrow table (no incomplete queries)
+    # test that all results are present in the arrow table (no incomplete
+    # queries)
     assert sr.results_complete()
     assert arrow_table.num_rows == 1838
 
@@ -56,7 +56,8 @@ def test_soma_reader_var_x_data():
     while arrow_table := sr.read_next():
         total_num_rows += arrow_table.num_rows
 
-    # test that all results are not present in the arrow table (incomplete queries)
+    # test that all results are not present in the arrow table (incomplete
+    #  queries)
     assert not sr.results_complete()
     assert total_num_rows == 4848644
 
@@ -75,7 +76,8 @@ def test_soma_reader_dim_points():
     sr.submit()
     arrow_table = sr.read_next()
 
-    # test that all results are present in the arrow table (no incomplete queries)
+    # test that all results are present in the arrow table (no incomplete
+    # queries)
     assert sr.results_complete()
     assert arrow_table.num_rows == len(obs_id_points)
 
@@ -97,13 +99,16 @@ def test_soma_reader_dim_ranges():
     sr.submit()
     arrow_table = sr.read_next()
 
-    # test that all results are present in the arrow table (no incomplete queries)
+    # test that all results are present in the arrow table (no incomplete
+    # queries)
     assert sr.results_complete()
     assert arrow_table.num_rows == 10
 
 
 def test_soma_reader_dim_mixed():
-    """Read scalar and range dimension slice from obs array into an arrow table."""
+    """
+    Read scalar and range dimension slice from obs array into an arrow table.
+    """
 
     name = "obs"
     uri = os.path.join(SOMA_URI, name)
@@ -122,7 +127,8 @@ def test_soma_reader_dim_mixed():
     sr.submit()
     arrow_table = sr.read_next()
 
-    # test that all results are present in the arrow table (no incomplete queries)
+    # test that all results are present in the arrow table (no incomplete
+    # queries)
     assert sr.results_complete()
     assert arrow_table.num_rows == 60
 
@@ -137,7 +143,8 @@ def test_soma_reader_column_names():
     sr.submit()
     arrow_table = sr.read_next()
 
-    # test that all results are present in the arrow table (no incomplete queries)
+    # test that all results are present in the arrow table (no incomplete
+    # queries)
     assert sr.results_complete()
     assert arrow_table.num_columns == 2
 

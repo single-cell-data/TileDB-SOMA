@@ -2,8 +2,6 @@
 
 import os
 
-import pandas as pd
-import pyarrow as pa
 import tiledb
 import tiledbsoma.libtiledbsoma as sc
 from tiledbsoma.query_condition import QueryCondition
@@ -84,7 +82,7 @@ def test_query_condition_and():
 
 def test_query_condition_and_or():
     uri = os.path.join(SOMA_URI, "obs")
-    condition = '(percent_mito > 0.02 and n_genes > 700) or (percent_mito < 0.015 and louvain == "B cells")'
+    condition = '(percent_mito > 0.02 and n_genes > 700) or (percent_mito < 0.015 and louvain == "B cells")'  # noqa
 
     pandas = pandas_query(uri, condition)
 
@@ -100,7 +98,13 @@ def test_query_condition_select_columns():
     qc = QueryCondition(condition)
     schema = tiledb.open(uri).schema
 
-    sr = sc.SOMAReader(uri, query_condition=qc, schema=schema, column_names=["n_genes"])
+    sr = sc.SOMAReader(
+        uri,
+        query_condition=qc,
+        schema=schema,
+        column_names=["n_genes"],
+    )
+
     sr.submit()
     arrow_table = sr.read_next()
 

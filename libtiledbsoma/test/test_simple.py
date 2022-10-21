@@ -3,8 +3,10 @@ import random
 import numpy as np
 import pandas as pd
 import pyarrow as pa
-import pytest
 import tiledbsoma.libtiledbsoma as sc
+
+# Not used yet while we have skips
+# import pytest
 
 DATA_SIZE = 1 << 14
 VERBOSE = False
@@ -13,7 +15,8 @@ rng = np.random.default_rng()
 
 
 def random_strings(max_length=32):
-    # Generate list of random length strings (omit 0 to avoid string comparison failure)
+    # Generate list of random length strings (omit 0 to avoid string comparison
+    # failure)
     chars = "".join(chr(i) for i in range(64, 128))
     strings = [
         "".join(random.choices(chars, k=np.random.randint(max_length)))
@@ -25,7 +28,13 @@ def random_strings(max_length=32):
     offsets, data = map(np.array, pa_data.buffers()[1:])
     offsets = offsets.view(np.uint32).astype(np.uint64)
 
-    cb = sc.ColumnBuffer("buf", sc.DataType.STRING_ASCII, len(strings), data, offsets)
+    cb = sc.ColumnBuffer(
+        "buf",
+        sc.DataType.STRING_ASCII,
+        len(strings),
+        data,
+        offsets,
+    )
 
     return strings, cb
 
@@ -45,9 +54,22 @@ def check_array(data, cb):
 
 
 def skip_test_init():
-    orig_data = np.random.randint(-1 << 31, 1 << 31, size=DATA_SIZE, dtype=np.int32)
-    orig_offsets = np.random.randint(1 << 63, size=DATA_SIZE + 1, dtype=np.uint64)
-    orig_validity = np.random.randint(1 << 7, size=DATA_SIZE + 1, dtype=np.uint8)
+    orig_data = np.random.randint(
+        -1 << 31,
+        1 << 31,
+        size=DATA_SIZE,
+        dtype=np.int32,
+    )
+    orig_offsets = np.random.randint(
+        1 << 63,
+        size=DATA_SIZE + 1,
+        dtype=np.uint64,
+    )
+    orig_validity = np.random.randint(
+        1 << 7,
+        size=DATA_SIZE + 1,
+        dtype=np.uint8,
+    )
     ovs = [
         (orig_data, None, None),
         (orig_data, orig_offsets, None),
@@ -116,7 +138,10 @@ def skip_test_table():
     d_cb = sc.ColumnBuffer("d", sc.DataType.FLOAT64, len(d), d)
     e, e_cb = random_strings(8)
 
-    arrow = sc.to_arrow({"a": a_cb, "b": b_cb, "c": c_cb, "d": d_cb, "e": e_cb})
+    # flake8 line-length lint fights with black-formatters that wants to
+    # join lines. Hence the seemingly unnecessary mydict variable.
+    mydict = {"a": a_cb, "b": b_cb, "c": c_cb, "d": d_cb, "e": e_cb}
+    arrow = sc.to_arrow(mydict)
     df = arrow.to_pandas()
     df_expected = pd.DataFrame({"a": a, "b": b, "c": c, "d": d, "e": e})
 
@@ -135,4 +160,4 @@ def skip_test_table():
 
 
 if __name__ == "__main__":
-    test_new()
+    skip_test_init()

@@ -2,12 +2,6 @@
 
 import sys
 
-import tiledb
-import tiledbsoma
-import tiledbsoma.io
-
-t = tiledbsoma
-
 import anndata as ad
 import numpy as np
 import pandas as pd
@@ -15,6 +9,9 @@ import pyarrow as pa
 import pybind11
 import scanpy as sc
 import scipy as sp
+import tiledb
+import tiledbsoma
+import tiledbsoma.io
 
 print("tiledbsoma.__version__   ", tiledbsoma.__version__)
 print("tiledb.__version__       ", tiledb.__version__)

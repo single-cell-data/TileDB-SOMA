@@ -93,7 +93,8 @@ def main(args):
     new_hash = get_version_hash(new_version)
 
     # update cmake version
-    filepath = f"{os.path.dirname(__file__)}/../libtiledbsoma/cmake/Modules/FindTileDB_EP.cmake"
+    dir = os.path.dirname(__file__)
+    filepath = f"{dir}/../libtiledbsoma/cmake/Modules/FindTileDB_EP.cmake"
     update_version(filepath, new_version, new_hash)
 
     # update R version
@@ -102,9 +103,10 @@ def main(args):
 
 
 if __name__ == "__main__":
-    description = (
-        "Update FindTileDB_EP.cmake and get_tarball.R with a new TileDB version"
-    )
+    # Line-length lint fights with black-formatter which wants join split lines
+    part1 = "Update FindTileDB_EP.cmake and get_tarball.R "
+    part2 = "with a new TileDB version"
+    description = part1 + part2
     epilog = f"Example: {__file__} 2.12.0"
     parser = argparse.ArgumentParser(description=description, epilog=epilog)
     parser.add_argument("version", help="new TileDB version")

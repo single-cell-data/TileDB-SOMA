@@ -22,7 +22,7 @@ jobs:
       - name: Check Python style guide enforcement with flake8
         run: |
           python -m pip install flake8-bugbear
-          python -m flake8 apis/python apis/python/tools/[a-z]*
+          python -m flake8 apis/python scripts libtiledbsoma/test apis/python/tools/[a-z]*
       - name: Check type annotations with mypy
         run: |
           python -m pip install mypy types-setuptools
