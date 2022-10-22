@@ -371,15 +371,13 @@ def test_soma_sparse_nd_array_nnz(tmp_path):
     """
     a = soma.SOMASparseNdArray(tmp_path.as_posix())
     a.create(type=pa.int32(), shape=(10, 10, 10))
-    with pytest.raises(NotImplementedError):
-        assert a.nnz == 0
+    assert a.nnz == 0
 
     t: pa.SparseCOOTensor = create_random_tensor(
         "coo", a.shape, pa.int32().to_pandas_dtype(), 0.1
     )
     a.write_sparse_tensor(t)
-    with pytest.raises(NotImplementedError):
-        assert t.non_zero_length == a.nnz
+    assert t.non_zero_length == a.nnz
 
 
 def test_soma_sparse_nd_array_reshape(tmp_path):

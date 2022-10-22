@@ -4,7 +4,7 @@
 
 import ast
 from dataclasses import dataclass, field
-from typing import Any, Callable, List, Tuple, Type, Union
+from typing import Any, Callable, List, Tuple, Union
 
 import numpy as np
 import tiledb
@@ -99,19 +99,18 @@ class QueryCondition:
     >>>     # Select cells where the attribute values for `foo` are less than 5
     >>>     # and `bar` equal to string "asdf".
     >>>     # Note precedence is equivalent to:
-    >>>     # tiledb.QueryCondition("foo > 5 or ('asdf' == attr('b a r') and baz <= val(1.0))")
-    >>>     qc = tiledb.QueryCondition("foo > 5 or 'asdf' == attr('b a r') and baz <= val(1.0)")
+    >>>     # tiledbsoma.QueryCondition("foo > 5 or ('asdf' == attr('b a r') and baz <= val(1.0))")
+    >>>     qc = tiledbsoma.QueryCondition("foo > 5 or 'asdf' == attr('b a r') and baz <= val(1.0)")
     >>>     A.query(attr_cond=qc)
     >>>
     >>>     # Select cells where the attribute values for `foo` are equal to
     >>>     # 1, 2, or 3.
     >>>     # Note this is equivalent to:
-    >>>     # tiledb.QueryCondition("foo == 1 or foo == 2 or foo == 3")
-    >>>     A.query(attr_cond=tiledb.QueryCondition("foo in [1, 2, 3]"))
+    >>>     # tiledbsoma.QueryCondition("foo == 1 or foo == 2 or foo == 3")
+    >>>     A.query(attr_cond=tiledbsoma.QueryCondition("foo in [1, 2, 3]"))
     """
 
     expression: str
-    ctx: tiledb.Ctx = field(default_factory=tiledb.default_ctx, repr=False)
     tree: ast.Expression = field(init=False, repr=False)
     c_obj: PyQueryCondition = field(init=False, repr=False)
 
@@ -131,7 +130,7 @@ class QueryCondition:
             )
 
     def init_query_condition(self, schema: tiledb.ArraySchema, query_attrs: List[str]):
-        qctree = QueryConditionTree(self.ctx, schema, query_attrs)
+        qctree = QueryConditionTree(schema, query_attrs)
         self.c_obj = qctree.visit(self.tree.body)
 
         if not isinstance(self.c_obj, PyQueryCondition):
@@ -140,10 +139,11 @@ class QueryCondition:
                 "be made up of one or more Boolean expressions."
             )
 
+        return query_attrs
+
 
 @dataclass
 class QueryConditionTree(ast.NodeVisitor):
-    ctx: tiledb.Ctx
     schema: tiledb.ArraySchema
     query_attrs: List[str]
 
@@ -183,7 +183,7 @@ class QueryConditionTree(ast.NodeVisitor):
     def visit_List(self, node):
         return list(node.elts)
 
-    def visit_Compare(self, node: Type[ast.Compare]) -> PyQueryCondition:
+    def visit_Compare(self, node: ast.Compare) -> PyQueryCondition:
         operator = self.visit(node.ops[0])
 
         if operator in (
@@ -241,7 +241,7 @@ class QueryConditionTree(ast.NodeVisitor):
         dtype = "string" if dt.kind in "SUa" else dt.name
         val = self.cast_val_to_dtype(val, dtype)
 
-        pyqc = PyQueryCondition(self.ctx)
+        pyqc = PyQueryCondition()
         self.init_pyqc(pyqc, dtype)(att, val, op)
 
         return pyqc
@@ -323,10 +323,7 @@ class QueryConditionTree(ast.NodeVisitor):
             raise tiledb.TileDBError(f"Attribute `{att}` not found in schema.")
 
         if att not in self.query_attrs:
-            raise tiledb.TileDBError(
-                f"Attribute `{att}` given to filter in query's `attr_cond` "
-                "arg but not found in `attr` arg."
-            )
+            self.query_attrs.append(att)
 
         return att
 
@@ -360,8 +357,8 @@ class QueryConditionTree(ast.NodeVisitor):
         return val
 
     def cast_val_to_dtype(
-        self, val: Union[str, int, float, bytes], dtype: str
-    ) -> Union[str, int, float, bytes]:
+        self, val: Union[str, int, float, bytes, np.int32], dtype: str
+    ) -> Union[str, int, float, bytes, np.int32]:
         if dtype != "string":
             try:
                 # this prevents numeric strings ("1", '123.32') from getting

@@ -131,6 +131,36 @@ PYBIND11_MODULE(libtiledbsoma, m) {
                         std::string_view batch_size,
                         std::string_view result_order,
                         std::map<std::string, std::string> platform_config) {
+                // Handle query condition based on
+                // TileDB-Py::PyQuery::set_attr_cond()
+                QueryCondition* qc = nullptr;
+                if (!py_query_condition.is(py::none())) {
+                    py::object init_pyqc = py_query_condition.attr(
+                        "init_query_condition");
+
+                    try {
+                        // Column names will be updated with columns present in
+                        // the query condition
+                        auto new_column_names =
+                            init_pyqc(py_schema, column_names)
+                                .cast<std::vector<std::string>>();
+
+                        // Update the column_names list if it was not empty,
+                        // otherwise continue selecting all columns with an
+                        // empty column_names list
+                        if (!column_names.empty()) {
+                            column_names = new_column_names;
+                        }
+                    } catch (const std::exception& e) {
+                        throw TileDBSOMAError(e.what());
+                    }
+
+                    qc = py_query_condition.attr("c_obj")
+                             .cast<tiledbpy::PyQueryCondition>()
+                             .ptr()
+                             .get();
+                }
+
                 auto reader = SOMAReader::open(
                     uri,
                     name,
@@ -139,21 +169,8 @@ PYBIND11_MODULE(libtiledbsoma, m) {
                     batch_size,
                     result_order);
 
-                // Handle query condition based on
-                // TileDB-Py::PyQuery::set_attr_cond()
-                if (!py_query_condition.is(py::none())) {
-                    py::object init_pyqc = py_query_condition.attr(
-                        "init_query_condition");
-
-                    try {
-                        init_pyqc(py_schema, column_names);
-                    } catch (const std::exception& e) {
-                        throw TileDBSOMAError(e.what());
-                    }
-
-                    auto pyqc = (py_query_condition.attr("c_obj"))
-                                    .cast<tiledbpy::PyQueryCondition>();
-                    auto qc = pyqc.ptr().get();
+                // Set query condition if present
+                if (qc) {
                     reader->set_condition(*qc);
                 }
 
@@ -172,7 +189,6 @@ PYBIND11_MODULE(libtiledbsoma, m) {
         // Binding overloaded methods to templated member functions requires
         // more effort, see:
         // https://pybind11.readthedocs.io/en/stable/classes.html#overloaded-methods
-
         .def(
             "set_dim_points",
             static_cast<void (SOMAReader::*)(
