@@ -137,14 +137,6 @@ PYBIND11_MODULE(libtiledbsoma, m) {
                     column_names = *column_names_in;
                 }
 
-                auto reader = SOMAReader::open(
-                    uri,
-                    name,
-                    platform_config,
-                    column_names,
-                    batch_size,
-                    result_order);
-
                 // Handle query condition based on
                 // TileDB-Py::PyQuery::set_attr_cond()
                 QueryCondition* qc = nullptr;
