@@ -85,7 +85,7 @@ def simple_soma_indexed_data_frame(tmp_path):
     """
     schema = pa.schema(
         [
-            ("index", pa.uint64()),
+            ("index", pa.int64()),
             ("soma_joinid", pa.int64()),
             ("A", pa.int64()),
             ("B", pa.float64()),

@@ -139,6 +139,8 @@ class QueryCondition:
                 "be made up of one or more Boolean expressions."
             )
 
+        return query_attrs
+
 
 @dataclass
 class QueryConditionTree(ast.NodeVisitor):
@@ -321,10 +323,7 @@ class QueryConditionTree(ast.NodeVisitor):
             raise tiledb.TileDBError(f"Attribute `{att}` not found in schema.")
 
         if att not in self.query_attrs:
-            raise tiledb.TileDBError(
-                f"Attribute `{att}` given to filter in query's `attr_cond` "
-                "arg but not found in `attr` arg."
-            )
+            self.query_attrs.append(att)
 
         return att
 
@@ -359,7 +358,7 @@ class QueryConditionTree(ast.NodeVisitor):
 
     def cast_val_to_dtype(
         self, val: Union[str, int, float, bytes, np.int32], dtype: str
-    ) -> Union[str, int, float, bytes]:
+    ) -> Union[str, int, float, bytes, np.int32]:
         if dtype != "string":
             try:
                 # this prevents numeric strings ("1", '123.32') from getting

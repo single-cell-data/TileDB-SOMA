@@ -147,19 +147,44 @@ PYBIND11_MODULE(libtiledbsoma, m) {
 
                 // Handle query condition based on
                 // TileDB-Py::PyQuery::set_attr_cond()
+                QueryCondition* qc = nullptr;
                 if (!py_query_condition.is(py::none())) {
                     py::object init_pyqc = py_query_condition.attr(
                         "init_query_condition");
 
                     try {
-                        init_pyqc(py_schema, column_names);
+                        // Column names will be updated with columns present in
+                        // the query condition
+                        auto new_column_names =
+                            init_pyqc(py_schema, column_names)
+                                .cast<std::vector<std::string>>();
+
+                        // Update the column_names list if it was not empty,
+                        // otherwise continue selecting all columns with an
+                        // empty column_names list
+                        if (!column_names.empty()) {
+                            column_names = new_column_names;
+                        }
                     } catch (const std::exception& e) {
                         throw TileDBSOMAError(e.what());
                     }
 
-                    auto pyqc = (py_query_condition.attr("c_obj"))
-                                    .cast<tiledbpy::PyQueryCondition>();
-                    auto qc = pyqc.ptr().get();
+                    qc = py_query_condition.attr("c_obj")
+                             .cast<tiledbpy::PyQueryCondition>()
+                             .ptr()
+                             .get();
+                }
+
+                auto reader = SOMAReader::open(
+                    uri,
+                    name,
+                    platform_config,
+                    column_names,
+                    batch_size,
+                    result_order);
+
+                // Set query condition if present
+                if (qc) {
                     reader->set_condition(*qc);
                 }
 
