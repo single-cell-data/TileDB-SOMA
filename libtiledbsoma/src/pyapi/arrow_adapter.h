@@ -61,7 +61,7 @@ class ArrowAdapter {
         std::unique_ptr<ArrowArray> array = std::make_unique<ArrowArray>();
 
         schema->format = to_arrow_format(column->type()).data();  // mandatory
-        schema->name = nullptr;                                   // optional
+        schema->name = column->name().data();                     // optional
         schema->metadata = nullptr;                               // optional
         schema->flags = 0;                                        // optional
         schema->n_children = 0;                                   // mandatory
@@ -72,6 +72,13 @@ class ArrowAdapter {
 
         int n_buffers = column->is_var() ? 3 : 2;
 
+        // Create an ArrowBuffer to manage the lifetime of `column`.
+        // - `arrow_buffer` holds a shared_ptr to `column`, which increments
+        //   the use count and keeps the ColumnBuffer data alive.
+        // - When the arrow array is released, `array->release()` is called with
+        //   `arrow_buffer` in `private_data`. `arrow_buffer` is deleted, which
+        //   decrements the the `column` use count. When the `column` use count
+        //   reaches 0, the ColumnBuffer data will be deleted.
         auto arrow_buffer = new ArrowBuffer(column);
 
         array->length = column->size();             // mandatory
