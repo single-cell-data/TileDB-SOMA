@@ -4,11 +4,11 @@
 \alias{get_column_names}
 \alias{export_column_direct}
 \alias{export_arrow_array}
-\alias{nnz}
 \alias{get_column_types}
+\alias{nnz}
 \alias{get_table}
 \alias{get_column}
-\title{Access SOME Data From a Given URI}
+\title{Access SOMA Data From a Given URI}
 \usage{
 get_column_names(uri)
 
@@ -16,7 +16,7 @@ export_column_direct(uri, colnames)
 
 export_arrow_array(
   uri,
-  colnames,
+  colnames = NULL,
   qc = NULL,
   dim_points = NULL,
   dim_ranges = NULL,
@@ -53,7 +53,8 @@ The selected data object(s) from the given data set
 }
 \description{
 These functions access a given SOMA URI and extract, respectively, the
-complete data.frame or named column from the data set.
+complete data.frame, a named column, or the number of non-zero elements
+from the given data set.
 }
 \examples{
 \dontrun{
