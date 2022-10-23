@@ -178,9 +178,9 @@ class ColumnBuffer {
     /**
      * @brief Return the name of the buffer.
      *
-     * @return std::string name
+     * @return std::string_view
      */
-    std::string name() const {
+    std::string_view name() {
         return name_;
     }
 
