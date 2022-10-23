@@ -79,6 +79,19 @@ def test_soma_dataframe_non_indexed(tmp_path):
     assert sorted([e.as_py() for e in list(table["baz"])]) == ["ball", "cat"]
 
     # ----------------------------------------------------------------
+    # Read by ids
+    table = next(sdf.read(ids=pa.array([1, 3])))
+    assert table.num_rows == 2
+
+    # We should be getting back the soma_rowid & soma_joinid column as well
+    assert table.num_columns == 5
+
+    assert [e.as_py() for e in list(table["soma_rowid"])] == [1, 3]
+    assert sorted([e.as_py() for e in list(table["foo"])]) == [20, 40]
+    assert sorted([e.as_py() for e in list(table["bar"])]) == [5.2, 7.4]
+    assert sorted([e.as_py() for e in list(table["baz"])]) == ["ball", "dog"]
+
+    # ----------------------------------------------------------------
     # Read by value_filter
     table = sdf.read_all(value_filter="foo == 40 or foo == 20")
     assert table.num_rows == 2

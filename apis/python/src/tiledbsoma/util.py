@@ -94,17 +94,18 @@ def uri_joinpath(base: str, path: str) -> str:
     return urllib.parse.urlunparse(parts)
 
 
-def ids_to_list(ids: Union[slice, List[int], pa.Array]) -> List[int]:
+# TODO: handle slices like `1:` or `:2`
+def ids_to_list(ids: Union[slice, List[int], pa.Array]) -> pa.ChunkedArray:
     """
     For the interface between ``SOMADataFrame::read`` et al. (Python) and ``SOMAReader`` (C++): the
     ``ids`` argument to the former can be slice or list; the argument to
     ``SOMAReader::set_dim_points`` must be a list.
     """
     if isinstance(ids, list):
-        return ids
+        return pa.chunked_array(pa.array(ids))
     if isinstance(ids, slice):
         if ids.start is None:
-            return []
+            return pa.chunked_array(pa.array([]))
         step = ids.step
         if step is None:
             if ids.start <= ids.stop:
@@ -112,7 +113,7 @@ def ids_to_list(ids: Union[slice, List[int], pa.Array]) -> List[int]:
             else:
                 step = -1
         stop = ids.stop + step
-        return list(range(ids.start, stop, step))
+        return pa.chunked_array(pa.array(list(range(ids.start, stop, step))))
     if isinstance(ids, pa.Array):
-        return [id.as_py() for id in ids]
+        return pa.chunked_array(ids)
     raise Exception(f"expected ids as slice or list; got {type(ids)}")
