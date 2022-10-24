@@ -217,7 +217,33 @@ class SOMAIndexedDataFrame(TileDBArray):
             # TODO: result_order
             sr.submit()
 
-            while arrow_table := sr.read_next():
+            # This requires careful handling in the no-data case.
+            #
+            # When there is at least one table which has non-zero length, we could use the following:
+            #   while arrow_table := sr.read_next():
+            #     yield arrow_table
+            # This respects the caller's expectation that there will always be at least one table in
+            # the iterator. (For example, pd.concat(self.read_as_pandas(coords)) will raise an
+            # exception if the iterator has zero elements.)
+            #
+            # But when there is only zero-length data available, the above does *not* respect
+            # caller expectations: because a zero-length pyarrow.Table is falsy (not truthy)
+            # the while-loop becomes zero-pass.
+            #
+            # A tempting alternative is to instead write:
+            #   for arrow_table in sr.read_next():
+            #       yield arrow_table
+            # This is correctly one-pass. However, it yields an iterator of pyarrow.ChunkedArray,
+            # not an iterator of pyarrow.Table.
+            #
+            # For this reason, we use the following i > 0 check to guarantee a minimum of one
+            # pass through the yielded iterator even when the resulting table is zero-length.
+            i = 0
+            while True:
+                arrow_table = sr.read_next()
+                if not arrow_table and i > 0:
+                    break
+                i += 1
                 yield arrow_table
 
     def read_all(

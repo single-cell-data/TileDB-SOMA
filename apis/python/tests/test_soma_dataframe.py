@@ -235,6 +235,12 @@ def test_SOMADataFrame_read_column_names(simple_soma_data_frame, ids, col_names)
     )
 
 
+def test_empty_soma_dataframe(tmp_path):
+    a = soma.SOMADataFrame((tmp_path / "A").as_posix())
+    a.create(pa.schema([("a", pa.bool_())]))
+    next(a.read())
+
+
 def test_soma_columns(tmp_path):
     """
     1. soma_joinid/soma_rowid are int64
