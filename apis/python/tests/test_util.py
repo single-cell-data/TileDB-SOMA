@@ -1,7 +1,6 @@
-import pyarrow as pa
 import pytest
 
-from tiledbsoma.util import ids_to_list, uri_joinpath
+from tiledbsoma.util import uri_joinpath
 
 
 def test_uri_joinpath_file():
@@ -33,14 +32,3 @@ def test_uri_joinpath_tiledb():
 
     with pytest.raises(ValueError):
         assert uri_joinpath("tiledb://acct/A/", "../B/")
-
-
-def test_ids_to_list():
-    assert ids_to_list([]) == pa.chunked_array(pa.array([]))
-    assert ids_to_list([]) == pa.chunked_array(pa.array([]))
-    assert ids_to_list([1, 2, 3]) == pa.chunked_array(pa.array([1, 2, 3]))
-    assert ids_to_list(pa.array([])) == pa.chunked_array(pa.array([]))
-    assert ids_to_list(pa.array([1, 2, 3])) == pa.chunked_array(pa.array([1, 2, 3]))
-    assert ids_to_list(slice(None)) == pa.chunked_array(pa.array([]))
-    assert ids_to_list(slice(1, 5)) == pa.chunked_array(pa.array([1, 2, 3, 4, 5]))
-    assert ids_to_list(slice(5, 1)) == pa.chunked_array(pa.array([5, 4, 3, 2, 1]))

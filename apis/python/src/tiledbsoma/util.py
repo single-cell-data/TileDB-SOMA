@@ -1,11 +1,10 @@
 import pathlib
 import time
 import urllib.parse
-from typing import List, TypeVar, Union
+from typing import Optional, Tuple, TypeVar
 
 import numpy as np
 import pandas as pd
-import pyarrow as pa
 import scipy.sparse as sp
 
 T = TypeVar("T", np.ndarray, pd.Series, pd.DataFrame, sp.spmatrix)
@@ -94,26 +93,17 @@ def uri_joinpath(base: str, path: str) -> str:
     return urllib.parse.urlunparse(parts)
 
 
-# TODO: handle slices like `1:` or `:2`
-def ids_to_list(ids: Union[slice, List[int], pa.Array]) -> pa.ChunkedArray:
+def slice_to_range(ids: slice) -> Optional[Tuple[int, int]]:
     """
-    For the interface between ``SOMADataFrame::read`` et al. (Python) and ``SOMAReader`` (C++): the
-    ``ids`` argument to the former can be slice or list; the argument to
-    ``SOMAReader::set_dim_points`` must be a list.
+    For the interface between ``SOMADataFrame::read`` et al. (Python) and ``SOMAReader`` (C++).
     """
-    if isinstance(ids, list):
-        return pa.chunked_array(pa.array(ids))
-    if isinstance(ids, slice):
-        if ids.start is None:
-            return pa.chunked_array(pa.array([]))
-        step = ids.step
-        if step is None:
-            if ids.start <= ids.stop:
-                step = 1
-            else:
-                step = -1
-        stop = ids.stop + step
-        return pa.chunked_array(pa.array(list(range(ids.start, stop, step))))
-    if isinstance(ids, pa.Array):
-        return pa.chunked_array(ids)
-    raise Exception(f"expected ids as slice or list; got {type(ids)}")
+    if ids.start is None and ids.stop is None:
+        return None
+    if ids.start is None or ids.stop is None:
+        # TODO: https://github.com/single-cell-data/TileDB-SOMA/issues/457
+        raise ValueError("slice start and stop must be both specified, or neither")
+    if ids.start > ids.stop:
+        raise ValueError("slice start must be <= slice stop")
+    if ids.step is not None and ids.step != 1:
+        raise ValueError("slice step must be 1 or None")
+    return (ids.start, ids.stop)  # XXX TEMP

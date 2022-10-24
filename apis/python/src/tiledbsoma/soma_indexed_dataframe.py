@@ -191,20 +191,26 @@ class SOMAIndexedDataFrame(TileDBArray):
             if value_filter is not None:
                 query_condition = QueryCondition(value_filter)
 
-            # As an arg to this method, `column_names` is optional-None. For the pybind11
-            # code it's optional-[].
-            lib_column_names = [] if column_names is None else column_names
-
             sr = clib.SOMAReader(
                 self._uri,
                 name=self.__class__.__name__,
                 schema=A.schema,  # query_condition needs this
-                column_names=lib_column_names,
+                column_names=column_names,
                 query_condition=query_condition,
             )
 
             if ids is not None:
-                sr.set_dim_points(A.schema.domain.dim(0).name, util.ids_to_list(ids))
+                dim_name = A.schema.domain.dim(0).name
+                if isinstance(ids, list):
+                    sr.set_dim_points(dim_name, ids)
+                elif isinstance(ids, pa.ChunkedArray):
+                    sr.set_dim_points(dim_name, ids)
+                elif isinstance(ids, pa.Array):
+                    sr.set_dim_points(dim_name, pa.chunked_array(ids))
+                elif isinstance(ids, slice):
+                    lo_hi = util.slice_to_range(ids)
+                    if lo_hi is not None:
+                        sr.set_dim_ranges(dim_name, lo_hi)
 
             # TODO: platform_config
             # TODO: batch_size
@@ -212,7 +218,7 @@ class SOMAIndexedDataFrame(TileDBArray):
             sr.submit()
 
             while arrow_table := sr.read_next():
-                yield arrow_table  # XXX what other post-processing
+                yield arrow_table
 
     def read_all(
         self,
