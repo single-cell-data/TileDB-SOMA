@@ -44,9 +44,9 @@ class AssayMatrixGroup(TileDBGroup):
     def keys(self) -> Sequence[str]:
         """
         For ``obsm`` and ``varm``, ``.keys()`` is a keystroke-saver for the more general group-member
-        accessor ``._get_member_names()``.
+        accessor ``.get_member_names()``.
         """
-        return self._get_member_names()
+        return self.get_member_names()
 
     # ----------------------------------------------------------------
     def __repr__(self) -> str:
@@ -126,7 +126,7 @@ class AssayMatrixGroup(TileDBGroup):
         """
         Implements ``for matrix in soma.obsm: ...`` and ``for matrix in soma.varm: ...``
         """
-        for name, uri in self._get_member_names_to_uris().items():
+        for name, uri in self.get_member_names_to_uris().items():
             yield AssayMatrix(
                 uri=uri,
                 name=name,

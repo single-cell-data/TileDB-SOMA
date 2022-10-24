@@ -39,9 +39,9 @@ class AnnotationMatrixGroup(TileDBGroup):
     def keys(self) -> Sequence[str]:
         """
         For ``obsm`` and ``varm``, ``.keys()`` is a keystroke-saver for the more general group-member
-        accessor ``._get_member_names()``.
+        accessor ``.get_member_names()``.
         """
-        return self._get_member_names()
+        return self.get_member_names()
 
     # ----------------------------------------------------------------
     def __repr__(self) -> str:
@@ -55,7 +55,7 @@ class AnnotationMatrixGroup(TileDBGroup):
         """
         Implements ``for matrix in soma.obsm: ...`` and ``for matrix in soma.varm: ...``
         """
-        for name, uri in self._get_member_names_to_uris().items():
+        for name, uri in self.get_member_names_to_uris().items():
             yield AnnotationMatrix(
                 uri=uri, name=name, dim_name=self.dim_name, parent=self
             )

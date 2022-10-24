@@ -35,21 +35,21 @@ def test_import_anndata(tmp_path):
         assert G.meta[tiledbsoma.util.SOMA_OBJECT_TYPE_METADATA_KEY] == "SOMA"
 
     soco.create_unless_exists()
-    assert len(soco._get_member_names()) == 0
+    assert len(soco.get_member_names()) == 0
 
     soco.add(soma1)
-    assert len(soco._get_member_names()) == 1
+    assert len(soco.get_member_names()) == 1
     soco.add(soma2)
-    assert len(soco._get_member_names()) == 2
+    assert len(soco.get_member_names()) == 2
     soco.add(soma3)
-    assert len(soco._get_member_names()) == 3
+    assert len(soco.get_member_names()) == 3
 
     soco.remove(soma1)
-    assert len(soco._get_member_names()) == 2
+    assert len(soco.get_member_names()) == 2
     del soco["soma2"]
-    assert len(soco._get_member_names()) == 1
+    assert len(soco.get_member_names()) == 1
     del soco.soma3
-    assert len(soco._get_member_names()) == 0
+    assert len(soco.get_member_names()) == 0
 
     assert tiledbsoma.util.is_soma(soma1.uri)
     assert tiledbsoma.util.is_soma(soma2.uri)
