@@ -243,6 +243,7 @@ def test_empty_soma_dataframe(tmp_path):
     assert len(a.read_all()) == 0
     assert len(next(a.read_as_pandas())) == 0
     assert len(a.read_as_pandas_all()) == 0
+    assert isinstance(a.read_as_pandas_all(), pd.DataFrame)
 
 
 def test_soma_columns(tmp_path):
