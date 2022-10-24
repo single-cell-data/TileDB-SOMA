@@ -126,6 +126,50 @@ def test_soma_reader_dim_mixed():
     assert arrow_table.num_rows == 60
 
 
+def test_soma_reader_obs_slice_x():
+    """Read X/data sliced by obs."""
+
+    # read obs
+    # ---------------------------------------------------------------1
+    name = "obs"
+    uri = os.path.join(SOMA_URI, name)
+    sr = sc.SOMAReader(uri)
+
+    obs_id_points = list(range(0, 100, 2))
+
+    obs_id_ranges = [
+        [1000, 1004],
+        [2000, 2004],
+    ]
+
+    sr.set_dim_points("soma_rowid", obs_id_points)
+    sr.set_dim_ranges("soma_rowid", obs_id_ranges)
+
+    sr.submit()
+    obs = sr.read_next()
+
+    # test that all results are present in the arrow table (no incomplete queries)
+    assert sr.results_complete()
+    assert obs.num_rows == 60
+
+    # read X/data
+    # ---------------------------------------------------------------1
+    name = "X/data"
+    uri = os.path.join(SOMA_URI, "ms/mRNA", name)
+    sr = sc.SOMAReader(uri)
+
+    # slice X/data read with obs.soma_rowid column
+    sr.set_dim_points("soma_dim_0", obs.column("soma_rowid"))
+    sr.submit()
+
+    # iterate read batches until all results have been processed
+    total_num_rows = 0
+    while x_data := sr.read_next():
+        total_num_rows += x_data.num_rows
+
+    assert total_num_rows == 110280
+
+
 def test_soma_reader_column_names():
     """Read specified column names of obs array into an arrow table."""
 
@@ -152,4 +196,4 @@ def test_nnz():
 
 
 if __name__ == "__main__":
-    test_nnz()
+    test_soma_reader_obs_slice_x()
