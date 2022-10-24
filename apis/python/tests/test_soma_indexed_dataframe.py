@@ -183,6 +183,12 @@ def test_SOMAIndexedDataFrame_read_column_names(
     )
 
 
+def test_empty_soma_indexed_dataframe(tmp_path):
+    a = soma.SOMAIndexedDataFrame((tmp_path / "A").as_posix())
+    a.create(pa.schema([("a", pa.int32())]), index_column_names=["a"])
+    next(a.read())
+
+
 def test_soma_columns(tmp_path):
     """
     1. soma_joinid is int64
