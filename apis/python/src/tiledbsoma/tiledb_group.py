@@ -106,7 +106,7 @@ class TileDBGroup(TileDBObject):
             # the member URIs involve UUIDs which are known to the server.
             answer = {}
 
-            mapping = self._get_member_names_to_uris()
+            mapping = self.get_member_names_to_uris()
             for member_name in member_names:
                 if member_name in mapping:
                     answer[member_name] = mapping[member_name]
@@ -152,7 +152,7 @@ class TileDBGroup(TileDBObject):
         if not self.exists():
             # TODO: comment
             return self.uri + "/" + member_name
-        mapping = self._get_member_names_to_uris()
+        mapping = self.get_member_names_to_uris()
         if member_name in mapping:
             return mapping[member_name]
         else:
@@ -242,7 +242,7 @@ class TileDBGroup(TileDBObject):
     def _remove_object_by_name(self, member_name: str) -> None:
         self._cached_member_names_to_uris = None  # invalidate on remove-member
         if self.uri.startswith("tiledb://"):
-            mapping = self._get_member_names_to_uris()
+            mapping = self.get_member_names_to_uris()
             if member_name not in mapping:
                 raise Exception(f"name {member_name} not present in group {self.uri}")
             member_uri = mapping[member_name]
@@ -252,23 +252,23 @@ class TileDBGroup(TileDBObject):
             with self._open("w") as G:
                 G.remove(member_name)
 
-    def _get_member_names(self) -> Sequence[str]:
+    def get_member_names(self) -> Sequence[str]:
         """
         Returns the names of the group elements. For a SOMACollection, these will SOMA names;
         for a SOMA, these will be matrix/group names; etc.
         """
-        return list(self._get_member_names_to_uris().keys())
+        return list(self.get_member_names_to_uris().keys())
 
-    def _get_member_uris(self) -> Sequence[str]:
+    def get_member_uris(self) -> Sequence[str]:
         """
         Returns the URIs of the group elements. For a SOMACollection, these will SOMA URIs;
         for a SOMA, these will be matrix/group URIs; etc.
         """
-        return list(self._get_member_names_to_uris().values())
+        return list(self.get_member_names_to_uris().values())
 
-    def _get_member_names_to_uris(self) -> Dict[str, str]:
+    def get_member_names_to_uris(self) -> Dict[str, str]:
         """
-        Like ``_get_member_names()`` and ``_get_member_uris``, but returns a dict mapping from
+        Like ``get_member_names()`` and ``get_member_uris``, but returns a dict mapping from
         member name to member URI.
         """
         if self._cached_member_names_to_uris is None:

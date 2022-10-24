@@ -31,9 +31,9 @@ class UnsGroup(TileDBGroup):
     def keys(self) -> Sequence[str]:
         """
         For uns, ``.keys()`` is a keystroke-saver for the more general group-member
-        accessor ``._get_member_names()``.
+        accessor ``.get_member_names()``.
         """
-        return self._get_member_names()
+        return self.get_member_names()
 
     # At the tiledb-py API level, *all* groups are name-indexable.  But here at the tiledbsoma-py
     # level, we implement name-indexing only for some groups:

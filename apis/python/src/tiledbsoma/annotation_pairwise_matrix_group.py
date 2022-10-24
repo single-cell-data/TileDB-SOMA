@@ -49,9 +49,9 @@ class AnnotationPairwiseMatrixGroup(TileDBGroup):
     def keys(self) -> Sequence[str]:
         """
         For obsp and varp, ``.keys()`` is a keystroke-saver for the more general group-member
-        accessor ``._get_member_names()``.
+        accessor ``.get_member_names()``.
         """
-        return self._get_member_names()
+        return self.get_member_names()
 
     # ----------------------------------------------------------------
     def __repr__(self) -> str:
@@ -134,7 +134,7 @@ class AnnotationPairwiseMatrixGroup(TileDBGroup):
         """
         Implements ``for matrix in soma.obsp: ...`` and ``for matrix in soma.varp: ...``
         """
-        for name, uri in self._get_member_names_to_uris().items():
+        for name, uri in self.get_member_names_to_uris().items():
             yield AssayMatrix(
                 uri=uri,
                 name=name,

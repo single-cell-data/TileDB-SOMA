@@ -86,7 +86,7 @@ class SOMACollection(TileDBGroup):
         """
         Implements ``len(soco)``. Returns the number of elements in the collection.
         """
-        return len(self._get_member_names())
+        return len(self.get_member_names())
 
     # ----------------------------------------------------------------
     def add(self, soma: SOMA, relative: Optional[bool] = None) -> None:
@@ -130,7 +130,7 @@ class SOMACollection(TileDBGroup):
         """
         Returns the names of the SOMAs in the collection.
         """
-        return self._get_member_names()
+        return self.get_member_names()
 
     # ----------------------------------------------------------------
     def __iter__(self) -> Iterator[SOMA]:
@@ -169,7 +169,7 @@ class SOMACollection(TileDBGroup):
         with ThreadPoolExecutor(
             max_workers=self._soma_options.max_thread_pool_workers
         ) as executor:
-            for name, uri in self._get_member_names_to_uris().items():
+            for name, uri in self.get_member_names_to_uris().items():
                 if name not in self._somas:
                     future = executor.submit(self._populate_aux, name=name, uri=uri)
                     futures.append(future)
