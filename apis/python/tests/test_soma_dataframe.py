@@ -238,7 +238,11 @@ def test_SOMADataFrame_read_column_names(simple_soma_data_frame, ids, col_names)
 def test_empty_soma_dataframe(tmp_path):
     a = soma.SOMADataFrame((tmp_path / "A").as_posix())
     a.create(pa.schema([("a", pa.bool_())]))
-    next(a.read())
+    # Must not throw
+    assert len(next(a.read())) == 0
+    assert len(a.read_all()) == 0
+    assert len(next(a.read_as_pandas())) == 0
+    assert len(a.read_as_pandas_all()) == 0
 
 
 def test_soma_columns(tmp_path):
