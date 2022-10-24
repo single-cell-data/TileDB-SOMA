@@ -246,7 +246,9 @@ class SOMASparseNdArray(TileDBArray):
                     continue
 
                 dim_name = A.schema.domain.dim(i).name
-                if isinstance(coord, list):
+                if isinstance(coord, int):
+                    sr.set_dim_points(dim_name, [coord])
+                elif isinstance(coord, list):
                     sr.set_dim_points(dim_name, coord)
                 elif isinstance(coord, pa.ChunkedArray):
                     sr.set_dim_points(dim_name, coord)
@@ -256,6 +258,10 @@ class SOMASparseNdArray(TileDBArray):
                     lo_hi = util.slice_to_range(coord)
                     if lo_hi is not None:
                         sr.set_dim_ranges(dim_name, [lo_hi])
+                else:
+                    raise ValueError(
+                        f"could not handle coordinate with value {coord} of type {type(coord)}"
+                    )
 
             sr.submit()
 
