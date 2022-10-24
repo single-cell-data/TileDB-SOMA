@@ -186,7 +186,12 @@ def test_SOMAIndexedDataFrame_read_column_names(
 def test_empty_soma_indexed_dataframe(tmp_path):
     a = soma.SOMAIndexedDataFrame((tmp_path / "A").as_posix())
     a.create(pa.schema([("a", pa.int32())]), index_column_names=["a"])
-    next(a.read())
+    # Must not throw
+    assert len(next(a.read())) == 0
+    assert len(a.read_all()) == 0
+    assert len(next(a.read_as_pandas())) == 0
+    assert len(a.read_as_pandas_all()) == 0
+    assert isinstance(a.read_as_pandas_all(), pd.DataFrame)
 
 
 def test_soma_columns(tmp_path):
