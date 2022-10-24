@@ -1,7 +1,7 @@
 import pathlib
 import time
 import urllib.parse
-from typing import TypeVar
+from typing import Optional, Tuple, TypeVar
 
 import numpy as np
 import pandas as pd
@@ -91,3 +91,19 @@ def uri_joinpath(base: str, path: str) -> str:
                 parts[2] = parts[2] + "/" + path
 
     return urllib.parse.urlunparse(parts)
+
+
+def slice_to_range(ids: slice) -> Optional[Tuple[int, int]]:
+    """
+    For the interface between ``SOMADataFrame::read`` et al. (Python) and ``SOMAReader`` (C++).
+    """
+    if ids.start is None and ids.stop is None:
+        return None
+    if ids.start is None or ids.stop is None:
+        # TODO: https://github.com/single-cell-data/TileDB-SOMA/issues/457
+        raise ValueError("slice start and stop must be both specified, or neither")
+    if ids.start > ids.stop:
+        raise ValueError("slice start must be <= slice stop")
+    if ids.step is not None and ids.step != 1:
+        raise ValueError("slice step must be 1 or None")
+    return (ids.start, ids.stop)  # XXX TEMP
