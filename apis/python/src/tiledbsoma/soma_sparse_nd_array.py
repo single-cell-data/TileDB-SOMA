@@ -241,15 +241,21 @@ class SOMASparseNdArray(TileDBArray):
                 )
             for i in range(A.schema.domain.ndim):
                 coord = coords[i]
-                if isinstance(coord, int):
-                    ids = [coord]
+
+                if coord is None:
+                    continue
+
+                dim_name = A.schema.domain.dim(i).name
+                if isinstance(coord, list):
+                    sr.set_dim_points(dim_name, coord)
+                elif isinstance(coord, pa.ChunkedArray):
+                    sr.set_dim_points(dim_name, coord)
+                elif isinstance(coord, pa.Array):
+                    sr.set_dim_points(dim_name, pa.chunked_array(coord))
                 elif isinstance(coord, slice):
-                    ids = util.ids_to_list(coord)
-                else:
-                    raise TypeError(
-                        f"unsupported coordinate type {type(coord)}; expected int or slice of int"
-                    )
-                sr.set_dim_points(A.schema.domain.dim(i).name, ids)
+                    lo_hi = util.slice_to_range(coord)
+                    if lo_hi is not None:
+                        sr.set_dim_ranges(dim_name, [lo_hi])
 
             sr.submit()
 
