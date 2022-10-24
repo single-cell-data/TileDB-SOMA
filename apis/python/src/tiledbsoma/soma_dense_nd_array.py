@@ -217,7 +217,7 @@ def _dense_index_to_shape(
             start, stop, step = idx.indices(array_shape[n])
             if step != 1:
                 raise ValueError("stepped slice ranges are not supported")
-            shape.append(stop - start + 1)
+            shape.append(stop - start)
         else:
             raise ValueError("coordinates must be tuple of int or slice")
 
