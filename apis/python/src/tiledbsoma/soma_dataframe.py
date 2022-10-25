@@ -146,7 +146,7 @@ class DataFrame(TileDBArray):
 
         :param column_names: the named columns to read and return. Defaults to ``None``, meaning no constraint -- all column names.
 
-        :param partitions: an optional ``SOMAReadPartitions`` hint to indicate how results should be organized.
+        :param partitions: an optional ``ReadPartitions`` hint to indicate how results should be organized.
 
         :param result_order: order of read results.  This can be one of 'row-major', 'col-major', or 'unordered'.
 

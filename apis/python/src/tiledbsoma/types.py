@@ -12,9 +12,9 @@ Labels = Union[Sequence[str], pd.Index]
 
 NTuple = Tuple[int, ...]
 
-SOMABatchFormat = Literal["dense", "coo", "csr", "csc", "record-batch", "table"]
-SOMAReadPartitions = Literal["IofN"]
-SOMABatchSize = Literal["count", "size", "auto"]
+BatchFormat = Literal["dense", "coo", "csr", "csc", "record-batch", "table"]
+ReadPartitions = Literal["IofN"]
+BatchSize = Literal["count", "size", "auto"]
 ResultOrder = Literal["row-major", "column-major", "unordered", "rowid-ordered"]
 
 ArrowReadResult = Union[
