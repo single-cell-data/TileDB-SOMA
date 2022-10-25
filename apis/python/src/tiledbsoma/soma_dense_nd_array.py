@@ -10,7 +10,7 @@ from tiledbsoma.util_tiledb import tiledb_result_order_from_soma_result_order
 from .soma_collection import CollectionBase
 from .tiledb_array import TileDBArray
 from .tiledb_platform_config import TileDBPlatformConfig
-from .types import NTuple, SOMADenseNdCoordinates, ResultOrder
+from .types import NTuple, DenseNdCoordinates, ResultOrder
 
 
 class DenseNdArray(TileDBArray):
@@ -137,7 +137,7 @@ class DenseNdArray(TileDBArray):
 
     def read_tensor(
         self,
-        coords: SOMADenseNdCoordinates,
+        coords: DenseNdCoordinates,
         *,
         result_order: ResultOrder = "row-major",
     ) -> pa.Tensor:
@@ -157,7 +157,7 @@ class DenseNdArray(TileDBArray):
 
     def read_numpy(
         self,
-        coords: SOMADenseNdCoordinates,
+        coords: DenseNdCoordinates,
         *,
         result_order: ResultOrder = "row-major",
     ) -> np.ndarray:
@@ -170,7 +170,7 @@ class DenseNdArray(TileDBArray):
 
     def write_tensor(
         self,
-        coords: SOMADenseNdCoordinates,
+        coords: DenseNdCoordinates,
         values: pa.Tensor,
     ) -> None:
         """
@@ -189,7 +189,7 @@ class DenseNdArray(TileDBArray):
         with self._tiledb_open("w") as A:
             A[coords] = values.to_numpy()
 
-    def write_numpy(self, coords: SOMADenseNdCoordinates, values: np.ndarray) -> None:
+    def write_numpy(self, coords: DenseNdCoordinates, values: np.ndarray) -> None:
         """ "
         Write a numpy ``ndarray`` to the user specified coordinates
         """

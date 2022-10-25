@@ -13,7 +13,7 @@ from . import util, util_arrow
 from .soma_collection import CollectionBase
 from .tiledb_array import TileDBArray
 from .tiledb_platform_config import TileDBPlatformConfig
-from .types import NTuple, SOMASparseNdCoordinates
+from .types import NTuple, SparseNdCoordinates
 
 
 class SparseNdArray(TileDBArray):
@@ -149,7 +149,7 @@ class SparseNdArray(TileDBArray):
 
     def read_sparse_tensor(
         self,
-        coords: SOMASparseNdCoordinates,
+        coords: SparseNdCoordinates,
         *,
         format: Literal["coo", "csr", "csc"] = "coo",
     ) -> Iterator[Union[pa.SparseCOOTensor, pa.SparseCSCMatrix, pa.SparseCSRMatrix]]:
@@ -218,7 +218,7 @@ class SparseNdArray(TileDBArray):
                 if format == "csc":
                     yield pa.SparseCSCMatrix.from_scipy(scipy_coo.tocsc())
 
-    def read_table(self, coords: SOMASparseNdCoordinates) -> Iterator[pa.Table]:
+    def read_table(self, coords: SparseNdCoordinates) -> Iterator[pa.Table]:
         """
         Read a user-defined slice of the sparse array and return in COO format
         as an Arrow Table
@@ -294,7 +294,7 @@ class SparseNdArray(TileDBArray):
                 i += 1
                 yield arrow_table
 
-    def read_as_pandas(self, coords: SOMASparseNdCoordinates) -> Iterator[pd.DataFrame]:
+    def read_as_pandas(self, coords: SparseNdCoordinates) -> Iterator[pd.DataFrame]:
         """
         Read a user-defined slice of the sparse array and return as a Pandas DataFrame
         containing COO data.
@@ -303,7 +303,7 @@ class SparseNdArray(TileDBArray):
             yield arrow_tbl.to_pandas()
 
     def read_as_pandas_all(
-        self, coords: Optional[SOMASparseNdCoordinates] = None
+        self, coords: Optional[SparseNdCoordinates] = None
     ) -> pd.DataFrame:
         """
         Return the sparse array as a single Pandas DataFrame containing COO data.

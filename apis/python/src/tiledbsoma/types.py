@@ -27,7 +27,7 @@ ArrowReadResult = Union[
 ]
 
 SOMADenseCoordinates = Union[int, slice, pa.Array]
-SOMADenseNdCoordinates = Tuple[SOMADenseCoordinates, ...]
+DenseNdCoordinates = Tuple[SOMADenseCoordinates, ...]
 
 SOMASparseCoordinates = Union[int, slice, Tuple[int, ...], List[int], pa.IntegerArray]
-SOMASparseNdCoordinates = Tuple[SOMADenseCoordinates, ...]
+SparseNdCoordinates = Tuple[SOMADenseCoordinates, ...]
