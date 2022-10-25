@@ -1,13 +1,13 @@
 """
 This module exists to avoid what would otherwise be cyclic-module-import issues within
-SOMACollection.
+Collection.
 """
 
 from typing import Any, Optional, Union
 
 import tiledb
 
-from .soma_collection import SOMACollection, SOMACollectionBase
+from .soma_collection import Collection, CollectionBase
 from .soma_dataframe import SOMADataFrame
 from .soma_dense_nd_array import SOMADenseNdArray
 from .soma_experiment import SOMAExperiment
@@ -19,7 +19,7 @@ from .util import SOMA_OBJECT_TYPE_METADATA_KEY
 SOMAObjectTypes = Union[
     SOMAExperiment,
     SOMAMeasurement,
-    SOMACollection,
+    Collection,
     SOMADataFrame,
     SOMAIndexedDataFrame,
     SOMADenseNdArray,
@@ -29,19 +29,19 @@ SOMAObjectTypes = Union[
 
 def _construct_member(
     member_uri: str,
-    parent: SOMACollectionBase[Any],
+    parent: CollectionBase[Any],
     ctx: Optional[tiledb.Ctx] = None,
     object_type: Optional[str] = None,
 ) -> Optional[SOMAObjectTypes]:
     """
-    Given a name/uri from a SOMACollection, create a SOMA object matching the type
+    Given a name/uri from a Collection, create a SOMA object matching the type
     of the underlying object. In other words, if the name/uri points to a SOMADataFrame,
     instantiate a SOMADataFrame pointing at the underlying array.
 
     Returns None if the URI does not point at a TileDB object, or if the TileDB
     object is not recognized as a SOMA object.
 
-    Solely for the use of ``SOMACollection``. In fact this would/should be a method of the ``SOMACollection`` class,
+    Solely for the use of ``Collection``. In fact this would/should be a method of the ``Collection`` class,
     but there are cyclic-module-import issues.  This allows us to examine storage metadata and invoke the appropriate
     per-type constructor when reading SOMA groups/arrays from storage.  See also ``_set_object_type_metadata`` and
     ``_get_object_type_metadata`` within ``TileDBObject``.
@@ -75,9 +75,9 @@ def _construct_member(
     elif class_name == "SOMAMeasurement":
         assert object_type is None or object_type == "group"
         return SOMAMeasurement(uri=member_uri, parent=parent, ctx=ctx)
-    elif class_name == "SOMACollection":
+    elif class_name == "Collection":
         assert object_type is None or object_type == "group"
-        return SOMACollection(uri=member_uri, parent=parent, ctx=ctx)
+        return Collection(uri=member_uri, parent=parent, ctx=ctx)
     elif class_name == "SOMADataFrame":
         assert object_type is None or object_type == "array"
         return SOMADataFrame(uri=member_uri, parent=parent, ctx=ctx)

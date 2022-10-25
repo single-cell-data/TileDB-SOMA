@@ -2,7 +2,7 @@ from typing import Any, Dict, Literal, Optional, Tuple, Union, cast
 
 import tiledb
 
-from .soma_collection import SOMACollectionBase
+from .soma_collection import CollectionBase
 from .soma_dataframe import SOMADataFrame
 from .soma_dense_nd_array import SOMADenseNdArray
 from .soma_indexed_dataframe import SOMAIndexedDataFrame
@@ -11,42 +11,42 @@ from .tiledb_object import TileDBObject
 from .tiledb_platform_config import TileDBPlatformConfig
 
 
-class SOMAMeasurement(SOMACollectionBase[TileDBObject]):
+class SOMAMeasurement(CollectionBase[TileDBObject]):
     """
-    A ``SOMAMeasurement`` is a sub-element of a ``SOMAExperiment``, and is otherwise a specialized ``SOMACollection`` with pre-defined fields:
+    A ``SOMAMeasurement`` is a sub-element of a ``SOMAExperiment``, and is otherwise a specialized ``Collection`` with pre-defined fields:
 
     ``var``: ``SOMADataFrame``
 
     Primary annotations on the variable axis, for variables in this measurement (i.e., annotates columns of ``X``). The contents of the ``soma_rowid`` pseudo-column define the variable index domain, AKA varid. All variables for this measurement must be defined in this dataframe.
 
-    ``X``: ``SOMACollection`` of ``SOMASparseNdArray``
+    ``X``: ``Collection`` of ``SOMASparseNdArray``
 
     A collection of sparse matrices, each containing measured feature values. Each matrix is indexed by ``[obsid, varid]``.
 
-    ``obsm``: ``SOMACollection`` of ``SOMADenseNdArray``
+    ``obsm``: ``Collection`` of ``SOMADenseNdArray``
 
     A collection of dense matrices containing annotations of each ``obs`` row. Has the same shape as ``obs``, and is indexed with ``obsid``.
 
-    ``obsp``: ``SOMACollection`` of ``SOMASparseNdArray``
+    ``obsp``: ``Collection`` of ``SOMASparseNdArray``
 
     A collection of sparse matrices containing pairwise annotations of each ``obs`` row. Indexed with ``[obsid_1, obsid_2]``.
 
-    ``varm``: ``SOMACollection`` of ``SOMADenseNdArray``
+    ``varm``: ``Collection`` of ``SOMADenseNdArray``
 
     A collection of dense matrices containing annotations of each ``var`` row. Has the same shape as ``var``, and is indexed with ``varid``.
 
-    ``varp``: ``SOMACollection`` of ``SOMASparseNdArray``
+    ``varp``: ``Collection`` of ``SOMASparseNdArray``
 
     A collection of sparse matrices containing pairwise annotations of each ``var`` row. Indexed with ``[varid_1, varid_2]``
     """
 
     _subclass_constrained_types: Dict[str, Tuple[str, ...]] = {
         "var": ("SOMADataFrame", "SOMAIndexedDataFrame"),
-        "X": ("SOMACollection",),
-        "obsm": ("SOMACollection",),
-        "obsp": ("SOMACollection",),
-        "varm": ("SOMACollection",),
-        "varp": ("SOMACollection",),
+        "X": ("Collection",),
+        "obsm": ("Collection",),
+        "obsp": ("Collection",),
+        "varm": ("Collection",),
+        "varp": ("Collection",),
     }
 
     def __init__(
@@ -54,7 +54,7 @@ class SOMAMeasurement(SOMACollectionBase[TileDBObject]):
         uri: str,
         *,
         # Non-top-level objects can have a parent to propagate context, depth, etc.
-        parent: Optional[SOMACollectionBase[Any]] = None,
+        parent: Optional[CollectionBase[Any]] = None,
         # Top-level objects should specify these:
         tiledb_platform_config: Optional[TileDBPlatformConfig] = None,
         ctx: Optional[tiledb.Ctx] = None,
@@ -85,23 +85,23 @@ class SOMAMeasurement(SOMACollectionBase[TileDBObject]):
         return cast(Union[SOMADataFrame, SOMAIndexedDataFrame], self["var"])
 
     @property
-    def X(self) -> SOMACollectionBase[Union[SOMADenseNdArray, SOMASparseNdArray]]:
+    def X(self) -> CollectionBase[Union[SOMADenseNdArray, SOMASparseNdArray]]:
         return cast(
-            SOMACollectionBase[Union[SOMADenseNdArray, SOMASparseNdArray]], self["X"]
+            CollectionBase[Union[SOMADenseNdArray, SOMASparseNdArray]], self["X"]
         )
 
     @property
-    def obsm(self) -> SOMACollectionBase[SOMADenseNdArray]:
-        return cast(SOMACollectionBase[SOMADenseNdArray], self["obsm"])
+    def obsm(self) -> CollectionBase[SOMADenseNdArray]:
+        return cast(CollectionBase[SOMADenseNdArray], self["obsm"])
 
     @property
-    def obsp(self) -> SOMACollectionBase[SOMASparseNdArray]:
-        return cast(SOMACollectionBase[SOMASparseNdArray], self["obsp"])
+    def obsp(self) -> CollectionBase[SOMASparseNdArray]:
+        return cast(CollectionBase[SOMASparseNdArray], self["obsp"])
 
     @property
-    def varm(self) -> SOMACollectionBase[SOMADenseNdArray]:
-        return cast(SOMACollectionBase[SOMADenseNdArray], self["varm"])
+    def varm(self) -> CollectionBase[SOMADenseNdArray]:
+        return cast(CollectionBase[SOMADenseNdArray], self["varm"])
 
     @property
-    def varp(self) -> SOMACollectionBase[SOMASparseNdArray]:
-        return cast(SOMACollectionBase[SOMASparseNdArray], self["varp"])
+    def varp(self) -> CollectionBase[SOMASparseNdArray]:
+        return cast(CollectionBase[SOMASparseNdArray], self["varp"])

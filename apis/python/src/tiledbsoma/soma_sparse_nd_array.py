@@ -10,7 +10,7 @@ import tiledb
 import tiledbsoma.libtiledbsoma as clib
 
 from . import util, util_arrow
-from .soma_collection import SOMACollectionBase
+from .soma_collection import CollectionBase
 from .tiledb_array import TileDBArray
 from .tiledb_platform_config import TileDBPlatformConfig
 from .types import NTuple, SOMASparseNdCoordinates
@@ -25,7 +25,7 @@ class SOMASparseNdArray(TileDBArray):
         self,
         uri: str,
         *,
-        parent: Optional[SOMACollectionBase[Any]] = None,
+        parent: Optional[CollectionBase[Any]] = None,
         tiledb_platform_config: Optional[TileDBPlatformConfig] = None,
         ctx: Optional[tiledb.Ctx] = None,
     ):

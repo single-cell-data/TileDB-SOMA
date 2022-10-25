@@ -2,7 +2,7 @@ from typing import Any, Dict, Literal, Optional, Tuple, Union, cast
 
 import tiledb
 
-from .soma_collection import SOMACollectionBase
+from .soma_collection import CollectionBase
 from .soma_dataframe import SOMADataFrame
 from .soma_indexed_dataframe import SOMAIndexedDataFrame
 from .soma_measurement import SOMAMeasurement
@@ -10,7 +10,7 @@ from .tiledb_object import TileDBObject
 from .tiledb_platform_config import TileDBPlatformConfig
 
 
-class SOMAExperiment(SOMACollectionBase[TileDBObject]):
+class SOMAExperiment(CollectionBase[TileDBObject]):
     """
     ``obs``: Primary annotations on the observation axis. The contents of the
              ``soma_rowid`` pseudo-column define the observation index domain,
@@ -22,7 +22,7 @@ class SOMAExperiment(SOMACollectionBase[TileDBObject]):
 
     _subclass_constrained_types: Dict[str, Tuple[str, ...]] = {
         "obs": ("SOMADataFrame", "SOMAIndexedDataFrame"),
-        "ms": ("SOMACollection",),
+        "ms": ("Collection",),
     }
 
     def __init__(
@@ -30,7 +30,7 @@ class SOMAExperiment(SOMACollectionBase[TileDBObject]):
         uri: str,
         *,
         # Non-top-level objects can have a parent to propagate context, depth, etc.
-        parent: Optional[SOMACollectionBase[Any]] = None,
+        parent: Optional[CollectionBase[Any]] = None,
         # Top-level objects should specify these:
         tiledb_platform_config: Optional[TileDBPlatformConfig] = None,
         ctx: Optional[tiledb.Ctx] = None,
@@ -61,5 +61,5 @@ class SOMAExperiment(SOMACollectionBase[TileDBObject]):
         return cast(Union[SOMADataFrame, SOMAIndexedDataFrame], self["obs"])
 
     @property
-    def ms(self) -> SOMACollectionBase[SOMAMeasurement]:
-        return cast(SOMACollectionBase[SOMAMeasurement], self["ms"])
+    def ms(self) -> CollectionBase[SOMAMeasurement]:
+        return cast(CollectionBase[SOMAMeasurement], self["ms"])

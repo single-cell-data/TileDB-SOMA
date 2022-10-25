@@ -13,7 +13,7 @@ Metadata handling tests for all SOMA foundational datatypes.
 @pytest.fixture(
     scope="function",
     params=[
-        "SOMACollection",
+        "Collection",
         "SOMADataFrame",
         "SOMAIndexedDataFrame",
         "SOMADenseNdArray",
@@ -27,8 +27,8 @@ def soma_object(request, tmp_path):
     uri = tmp_path.as_posix()
     class_name = request.param
 
-    if class_name == "SOMACollection":
-        so = soma.SOMACollection(uri=uri)
+    if class_name == "Collection":
+        so = soma.Collection(uri=uri)
         so.create()
 
     elif class_name == "SOMADataFrame":

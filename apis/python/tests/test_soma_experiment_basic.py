@@ -93,7 +93,7 @@ def test_soma_experiment_basic(tmp_path):
     experiment["obs"] = create_and_populate_obs(
         soma.SOMADataFrame(uri=urljoin(basedir, "obs"))
     )
-    experiment["ms"] = soma.SOMACollection(uri=urljoin(basedir, "ms")).create()
+    experiment["ms"] = soma.Collection(uri=urljoin(basedir, "ms")).create()
 
     measurement = soma.SOMAMeasurement(uri=f"{experiment.ms.uri}/mRNA")
     measurement.create()
@@ -102,7 +102,7 @@ def test_soma_experiment_basic(tmp_path):
     measurement["var"] = create_and_populate_var(
         soma.SOMADataFrame(uri=urljoin(measurement.uri, "var"))
     )
-    measurement["X"] = soma.SOMACollection(uri=urljoin(measurement.uri, "X")).create()
+    measurement["X"] = soma.Collection(uri=urljoin(measurement.uri, "X")).create()
 
     nda = create_and_populate_sparse_nd_array(
         soma.SOMASparseNdArray(uri=urljoin(measurement.X.uri, "data"))
@@ -112,7 +112,7 @@ def test_soma_experiment_basic(tmp_path):
     # ----------------------------------------------------------------
     assert len(experiment) == 2
     assert isinstance(experiment.obs, soma.SOMADataFrame)
-    assert isinstance(experiment.ms, soma.SOMACollection)
+    assert isinstance(experiment.ms, soma.Collection)
     assert "obs" in experiment
     assert "ms" in experiment
     assert "nonesuch" not in experiment
@@ -127,7 +127,7 @@ def test_soma_experiment_basic(tmp_path):
     assert "mRNA" in experiment.ms
     assert "meas2" not in experiment.ms
     assert isinstance(experiment.ms["mRNA"].var, soma.SOMADataFrame)
-    assert isinstance(experiment.ms["mRNA"].X, soma.SOMACollection)
+    assert isinstance(experiment.ms["mRNA"].X, soma.Collection)
 
     assert experiment.ms["mRNA"].var == experiment["ms"]["mRNA"]["var"]
     assert experiment.ms["mRNA"].X == experiment["ms"]["mRNA"]["X"]
@@ -154,7 +154,7 @@ def test_soma_experiment_basic(tmp_path):
 
     # Paths exist but are not of the right type
     assert not soma.SOMADataFrame(experiment.uri).exists()
-    assert not soma.SOMACollection(experiment.obs.uri).exists()
+    assert not soma.Collection(experiment.obs.uri).exists()
 
     # Paths do not exist
     assert not soma.SOMAExperiment("/nonesuch/no/nope/nope/never").exists()
@@ -173,7 +173,7 @@ def test_soma_experiment_obs_type_constraint(tmp_path):
     se = soma.SOMAExperiment(uri=tmp_path.as_uri()).create()
 
     with pytest.raises(TypeError):
-        se["obs"] = soma.SOMACollection(uri=(tmp_path / "A").as_uri()).create()
+        se["obs"] = soma.Collection(uri=(tmp_path / "A").as_uri()).create()
     with pytest.raises(TypeError):
         se["obs"] = soma.SOMASparseNdArray(uri=(tmp_path / "B").as_uri()).create(
             type=pa.float32(), shape=(10,)
@@ -195,7 +195,7 @@ def test_soma_experiment_obs_type_constraint(tmp_path):
 def test_soma_experiment_ms_type_constraint(tmp_path):
     se = soma.SOMAExperiment(uri=tmp_path.as_uri()).create()
 
-    se["ms"] = soma.SOMACollection(uri=(tmp_path / "A").as_uri()).create()
+    se["ms"] = soma.Collection(uri=(tmp_path / "A").as_uri()).create()
     with pytest.raises(TypeError):
         se["ms"] = soma.SOMASparseNdArray(uri=(tmp_path / "B").as_uri()).create(
             type=pa.float32(), shape=(10,)

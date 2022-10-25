@@ -40,7 +40,7 @@ from .general_utilities import (
     get_storage_engine,
 )
 from .query_condition import QueryCondition  # type: ignore
-from .soma_collection import SOMACollection
+from .soma_collection import Collection
 from .soma_dataframe import SOMADataFrame
 from .soma_dense_nd_array import SOMADenseNdArray
 from .soma_exception import SOMADoesNotExistError, SOMAError
@@ -61,7 +61,7 @@ __all__ = [
     "TileDBPlatformConfig",
     "TileDBObject",
     "TileDBArray",
-    "SOMACollection",
+    "Collection",
     "SOMADataFrame",
     "SOMADenseNdArray",
     "SOMADoesNotExistError",

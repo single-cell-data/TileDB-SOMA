@@ -10,7 +10,7 @@ from .tiledb_platform_config import TileDBPlatformConfig
 
 class TileDBObject(ABC):
     """
-    Base class for ``TileDBArray`` and ``SOMACollection``.
+    Base class for ``TileDBArray`` and ``Collection``.
 
     Manages tiledb_platform_config, context, etc. which are common to both.
     """
@@ -31,7 +31,7 @@ class TileDBObject(ABC):
         ctx: Optional[tiledb.Ctx] = None,
     ):
         """
-        Initialization-handling shared between ``TileDBArray`` and ``SOMACollection``.  Specify ``tiledb_platform_config`` and ``ctx`` for the top-level object; omit them and specify parent for non-top-level objects. Note that the parent reference is solely for propagating options, ctx, display depth, etc.
+        Initialization-handling shared between ``TileDBArray`` and ``Collection``.  Specify ``tiledb_platform_config`` and ``ctx`` for the top-level object; omit them and specify parent for non-top-level objects. Note that the parent reference is solely for propagating options, ctx, display depth, etc.
         """
         self._uri = uri
         if parent is None:
@@ -114,7 +114,7 @@ class TileDBObject(ABC):
 
     def _set_object_type_metadata(self) -> None:
         """
-        This helps nested-structure traversals (especially those that start at the SOMACollection level) confidently navigate with a minimum of introspection on group contents.
+        This helps nested-structure traversals (especially those that start at the Collection level) confidently navigate with a minimum of introspection on group contents.
         """
         # TODO: make a multi-set in SOMAMetadataMapping that would above a double-open there.
         with self._tiledb_open("w") as obj:

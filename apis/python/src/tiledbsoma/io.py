@@ -12,7 +12,7 @@ import tiledb
 import tiledbsoma.eta as eta
 import tiledbsoma.util_ann as util_ann
 from tiledbsoma import (
-    SOMACollection,
+    Collection,
     SOMADataFrame,
     SOMADenseNdArray,
     SOMAExperiment,
@@ -374,7 +374,7 @@ def from_anndata(
     experiment.set("obs", obs)
 
     experiment.set(
-        "ms", SOMACollection(uri=uri_joinpath(experiment.uri, "ms")).create()
+        "ms", Collection(uri=uri_joinpath(experiment.uri, "ms")).create()
     )
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -393,7 +393,7 @@ def from_anndata(
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     # MS/meas/X/DATA
-    measurement["X"] = SOMACollection(uri=uri_joinpath(measurement.uri, "X")).create()
+    measurement["X"] = Collection(uri=uri_joinpath(measurement.uri, "X")).create()
 
     # TODO: more types to check?
     if isinstance(anndata.X, np.ndarray):
@@ -410,7 +410,7 @@ def from_anndata(
     # TODO: port from v0
 
     if len(anndata.obsm.keys()) > 0:  # do not create an empty collection
-        measurement["obsm"] = SOMACollection(
+        measurement["obsm"] = Collection(
             uri=uri_joinpath(measurement.uri, "obsm")
         ).create()
         for key in anndata.obsm.keys():
@@ -419,7 +419,7 @@ def from_anndata(
             measurement.obsm.set(key, arr)
 
     if len(anndata.varm.keys()) > 0:  # do not create an empty collection
-        measurement["varm"] = SOMACollection(
+        measurement["varm"] = Collection(
             uri=uri_joinpath(measurement.uri, "varm")
         ).create()
         for key in anndata.varm.keys():
@@ -430,7 +430,7 @@ def from_anndata(
             measurement.varm.set(key, darr)
 
     if len(anndata.obsp.keys()) > 0:  # do not create an empty collection
-        measurement["obsp"] = SOMACollection(
+        measurement["obsp"] = Collection(
             uri=uri_joinpath(measurement.uri, "obsp")
         ).create()
         for key in anndata.obsp.keys():
@@ -441,7 +441,7 @@ def from_anndata(
             measurement.obsp.set(key, sarr)
 
     if len(anndata.varp.keys()) > 0:  # do not create an empty collection
-        measurement["varp"] = SOMACollection(
+        measurement["varp"] = Collection(
             uri=uri_joinpath(measurement.uri, "varp")
         ).create()
         for key in anndata.varp.keys():
@@ -464,7 +464,7 @@ def from_anndata(
         _write_dataframe(var, anndata.raw.var, id_column_name="var_id")
         raw_measurement.set("var", var)
 
-        raw_measurement["X"] = SOMACollection(
+        raw_measurement["X"] = Collection(
             uri=uri_joinpath(raw_measurement.uri, "X")
         ).create()
 

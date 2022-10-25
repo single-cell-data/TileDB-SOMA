@@ -11,7 +11,7 @@ import tiledbsoma.libtiledbsoma as clib
 from . import util, util_arrow
 from .constants import SOMA_JOINID
 from .query_condition import QueryCondition  # type: ignore
-from .soma_collection import SOMACollectionBase
+from .soma_collection import CollectionBase
 from .tiledb_array import TileDBArray
 from .types import Ids, SOMAResultOrder
 
@@ -32,7 +32,7 @@ class SOMAIndexedDataFrame(TileDBArray):
         self,
         uri: str,
         *,
-        parent: Optional[SOMACollectionBase[Any]] = None,
+        parent: Optional[CollectionBase[Any]] = None,
         ctx: Optional[tiledb.Ctx] = None,
     ):
         """

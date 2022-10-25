@@ -39,21 +39,21 @@ def test_import_anndata(adata):
     # Structure:
     # pbmc-small SOMAExperiment:
     #   obs SOMADataFrame (80,)
-    #   ms SOMACollection:
+    #   ms Collection:
     #     mRNA SOMAMeasurement:
-    #       X SOMACollection:
+    #       X Collection:
     #         data SOMASparseNdArray (80, 20)
-    #       obsp SOMACollection:
+    #       obsp Collection:
     #         distances SOMASparseNdArray (80, 80)
     #       var SOMADataFrame (20,)
-    #       obsm SOMACollection:
+    #       obsm Collection:
     #         X_tsne SOMADenseNdArray (80, 2)
     #         X_pca SOMADenseNdArray (80, 19)
-    #       varm SOMACollection:
+    #       varm Collection:
     #         PCs SOMADenseNdArray (20, 19)
     #     raw SOMAMeasurement:
     #       var SOMADataFrame (230,)
-    #       X SOMACollection:
+    #       X Collection:
     #         data SOMASparseNdArray (80, 230)
 
     with tiledb.Group(output_path) as G:
