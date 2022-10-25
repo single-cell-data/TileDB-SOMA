@@ -41,11 +41,11 @@ from .general_utilities import (
 )
 from .query_condition import QueryCondition  # type: ignore
 from .soma_collection import Collection
-from .soma_dataframe import SOMADataFrame
+from .soma_dataframe import DataFrame
 from .soma_dense_nd_array import SOMADenseNdArray
 from .soma_exception import SOMADoesNotExistError, SOMAError
 from .soma_experiment import Experiment
-from .soma_indexed_dataframe import SOMAIndexedDataFrame
+from .soma_indexed_dataframe import IndexedDataFrame
 from .soma_measurement import Measurement
 from .soma_metadata_mapping import SOMAMetadataMapping
 from .soma_sparse_nd_array import SOMASparseNdArray
@@ -62,12 +62,12 @@ __all__ = [
     "TileDBObject",
     "TileDBArray",
     "Collection",
-    "SOMADataFrame",
+    "DataFrame",
     "SOMADenseNdArray",
     "SOMADoesNotExistError",
     "Experiment",
     "SOMAError",
-    "SOMAIndexedDataFrame",
+    "IndexedDataFrame",
     "Measurement",
     "SOMAMetadataMapping",
     "SOMASparseNdArray",

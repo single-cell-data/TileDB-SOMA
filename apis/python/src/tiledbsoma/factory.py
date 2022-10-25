@@ -8,10 +8,10 @@ from typing import Any, Optional, Union
 import tiledb
 
 from .soma_collection import Collection, CollectionBase
-from .soma_dataframe import SOMADataFrame
+from .soma_dataframe import DataFrame
 from .soma_dense_nd_array import SOMADenseNdArray
 from .soma_experiment import Experiment
-from .soma_indexed_dataframe import SOMAIndexedDataFrame
+from .soma_indexed_dataframe import IndexedDataFrame
 from .soma_measurement import Measurement
 from .soma_sparse_nd_array import SOMASparseNdArray
 from .util import SOMA_OBJECT_TYPE_METADATA_KEY
@@ -20,8 +20,8 @@ SOMAObjectTypes = Union[
     Experiment,
     Measurement,
     Collection,
-    SOMADataFrame,
-    SOMAIndexedDataFrame,
+    DataFrame,
+    IndexedDataFrame,
     SOMADenseNdArray,
     SOMASparseNdArray,
 ]
@@ -35,8 +35,8 @@ def _construct_member(
 ) -> Optional[SOMAObjectTypes]:
     """
     Given a name/uri from a Collection, create a SOMA object matching the type
-    of the underlying object. In other words, if the name/uri points to a SOMADataFrame,
-    instantiate a SOMADataFrame pointing at the underlying array.
+    of the underlying object. In other words, if the name/uri points to a DataFrame,
+    instantiate a DataFrame pointing at the underlying array.
 
     Returns None if the URI does not point at a TileDB object, or if the TileDB
     object is not recognized as a SOMA object.
@@ -78,12 +78,12 @@ def _construct_member(
     elif class_name == "Collection":
         assert object_type is None or object_type == "group"
         return Collection(uri=member_uri, parent=parent, ctx=ctx)
-    elif class_name == "SOMADataFrame":
+    elif class_name == "DataFrame":
         assert object_type is None or object_type == "array"
-        return SOMADataFrame(uri=member_uri, parent=parent, ctx=ctx)
-    elif class_name == "SOMAIndexedDataFrame":
+        return DataFrame(uri=member_uri, parent=parent, ctx=ctx)
+    elif class_name == "IndexedDataFrame":
         assert object_type is None or object_type == "array"
-        return SOMAIndexedDataFrame(uri=member_uri, parent=parent, ctx=ctx)
+        return IndexedDataFrame(uri=member_uri, parent=parent, ctx=ctx)
     elif class_name == "SOMADenseNdArray":
         assert object_type is None or object_type == "array"
         return SOMADenseNdArray(uri=member_uri, parent=parent, ctx=ctx)

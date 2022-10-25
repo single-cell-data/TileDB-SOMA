@@ -3,9 +3,9 @@ from typing import Any, Dict, Literal, Optional, Tuple, Union, cast
 import tiledb
 
 from .soma_collection import CollectionBase
-from .soma_dataframe import SOMADataFrame
+from .soma_dataframe import DataFrame
 from .soma_dense_nd_array import SOMADenseNdArray
-from .soma_indexed_dataframe import SOMAIndexedDataFrame
+from .soma_indexed_dataframe import IndexedDataFrame
 from .soma_sparse_nd_array import SOMASparseNdArray
 from .tiledb_object import TileDBObject
 from .tiledb_platform_config import TileDBPlatformConfig
@@ -15,7 +15,7 @@ class Measurement(CollectionBase[TileDBObject]):
     """
     A ``Measurement`` is a sub-element of a ``Experiment``, and is otherwise a specialized ``Collection`` with pre-defined fields:
 
-    ``var``: ``SOMADataFrame``
+    ``var``: ``DataFrame``
 
     Primary annotations on the variable axis, for variables in this measurement (i.e., annotates columns of ``X``). The contents of the ``soma_rowid`` pseudo-column define the variable index domain, AKA varid. All variables for this measurement must be defined in this dataframe.
 
@@ -41,7 +41,7 @@ class Measurement(CollectionBase[TileDBObject]):
     """
 
     _subclass_constrained_types: Dict[str, Tuple[str, ...]] = {
-        "var": ("SOMADataFrame", "SOMAIndexedDataFrame"),
+        "var": ("DataFrame", "IndexedDataFrame"),
         "X": ("Collection",),
         "obsm": ("Collection",),
         "obsp": ("Collection",),
@@ -81,8 +81,8 @@ class Measurement(CollectionBase[TileDBObject]):
         return self
 
     @property
-    def var(self) -> Union[SOMADataFrame, SOMAIndexedDataFrame]:
-        return cast(Union[SOMADataFrame, SOMAIndexedDataFrame], self["var"])
+    def var(self) -> Union[DataFrame, IndexedDataFrame]:
+        return cast(Union[DataFrame, IndexedDataFrame], self["var"])
 
     @property
     def X(self) -> CollectionBase[Union[SOMADenseNdArray, SOMASparseNdArray]]:

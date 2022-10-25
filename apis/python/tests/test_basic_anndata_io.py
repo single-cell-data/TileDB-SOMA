@@ -38,21 +38,21 @@ def test_import_anndata(adata):
 
     # Structure:
     # pbmc-small Experiment:
-    #   obs SOMADataFrame (80,)
+    #   obs DataFrame (80,)
     #   ms Collection:
     #     mRNA Measurement:
     #       X Collection:
     #         data SOMASparseNdArray (80, 20)
     #       obsp Collection:
     #         distances SOMASparseNdArray (80, 80)
-    #       var SOMADataFrame (20,)
+    #       var DataFrame (20,)
     #       obsm Collection:
     #         X_tsne SOMADenseNdArray (80, 2)
     #         X_pca SOMADenseNdArray (80, 19)
     #       varm Collection:
     #         PCs SOMADenseNdArray (20, 19)
     #     raw Measurement:
-    #       var SOMADataFrame (230,)
+    #       var DataFrame (230,)
     #       X Collection:
     #         data SOMASparseNdArray (80, 230)
 
@@ -66,7 +66,7 @@ def test_import_anndata(adata):
     )
     assert (
         exp.obs.metadata.get(tiledbsoma.util.SOMA_OBJECT_TYPE_METADATA_KEY)
-        == "SOMADataFrame"
+        == "DataFrame"
     )
     assert sorted(df["obs_id"]) == sorted(list(orig.obs_names))
     # Convenience accessor

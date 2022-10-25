@@ -6,7 +6,7 @@ import tiledbsoma as soma
 
 
 def test_soma_dataframe_non_indexed(tmp_path):
-    sdf = soma.SOMADataFrame(uri=tmp_path.as_posix())
+    sdf = soma.DataFrame(uri=tmp_path.as_posix())
 
     # Create
     asch = pa.schema(
@@ -121,7 +121,7 @@ def test_soma_dataframe_non_indexed(tmp_path):
 @pytest.fixture
 def simple_soma_data_frame(tmp_path):
     """
-    A pytest fixture which creates a simple SOMADataFrame for use in tests below.
+    A pytest fixture which creates a simple DataFrame for use in tests below.
     """
     schema = pa.schema(
         [
@@ -132,7 +132,7 @@ def simple_soma_data_frame(tmp_path):
             ("C", pa.large_string()),
         ]
     )
-    sdf = soma.SOMADataFrame(uri=tmp_path.as_posix()).create(schema)
+    sdf = soma.DataFrame(uri=tmp_path.as_posix()).create(schema)
     data = {
         "soma_rowid": [0, 1, 2, 3],
         "soma_joinid": [100, 200, 300, 400],
@@ -168,11 +168,11 @@ def simple_soma_data_frame(tmp_path):
         None,
     ],
 )
-def test_SOMADataFrame_read_column_names(simple_soma_data_frame, ids, col_names):
+def test_DataFrame_read_column_names(simple_soma_data_frame, ids, col_names):
     """
     Issue #312 - `column_names` parameter not correctly handled.
 
-    While the bug report was only against SOMADataFrame.read,this
+    While the bug report was only against DataFrame.read,this
     test covers all of the read* methods.
     """
 
@@ -236,7 +236,7 @@ def test_SOMADataFrame_read_column_names(simple_soma_data_frame, ids, col_names)
 
 
 def test_empty_soma_dataframe(tmp_path):
-    a = soma.SOMADataFrame((tmp_path / "A").as_posix())
+    a = soma.DataFrame((tmp_path / "A").as_posix())
     a.create(pa.schema([("a", pa.bool_())]))
     # Must not throw
     assert len(next(a.read())) == 0
@@ -254,22 +254,22 @@ def test_soma_columns(tmp_path):
     4. no other soma_ ids allowed
     """
 
-    A = soma.SOMADataFrame((tmp_path / "A").as_posix())
+    A = soma.DataFrame((tmp_path / "A").as_posix())
     A.create(pa.schema([("a", pa.bool_())]))
     assert sorted(A.keys()) == sorted(["a", "soma_rowid", "soma_joinid"])
     assert A.schema.field("soma_joinid").type == pa.int64()
     assert A.schema.field("soma_rowid").type == pa.int64()
     A.delete()
 
-    B = soma.SOMADataFrame((tmp_path / "B").as_posix())
+    B = soma.DataFrame((tmp_path / "B").as_posix())
     with pytest.raises(TypeError):
         B.create(pa.schema([("a", pa.bool_()), ("soma_rowid", pa.float32())]))
 
-    C = soma.SOMADataFrame((tmp_path / "C").as_posix())
+    C = soma.DataFrame((tmp_path / "C").as_posix())
     with pytest.raises(TypeError):
         C.create(pa.schema([("a", pa.bool_()), ("soma_joinid", pa.float32())]))
 
-    D = soma.SOMADataFrame((tmp_path / "D").as_posix())
+    D = soma.DataFrame((tmp_path / "D").as_posix())
     D.create(
         pa.schema(
             [("a", pa.bool_()), ("soma_joinid", pa.int64()), ("soma_rowid", pa.int64())]
@@ -280,6 +280,6 @@ def test_soma_columns(tmp_path):
     assert D.schema.field("soma_rowid").type == pa.int64()
     D.delete()
 
-    E = soma.SOMADataFrame((tmp_path / "E").as_posix())
+    E = soma.DataFrame((tmp_path / "E").as_posix())
     with pytest.raises(ValueError):
         E.create(pa.schema([("soma_test", pa.bool_())]))

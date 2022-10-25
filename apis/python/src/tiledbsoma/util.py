@@ -95,7 +95,7 @@ def uri_joinpath(base: str, path: str) -> str:
 
 def slice_to_range(ids: slice) -> Optional[Tuple[int, int]]:
     """
-    For the interface between ``SOMADataFrame::read`` et al. (Python) and ``SOMAReader`` (C++).
+    For the interface between ``DataFrame::read`` et al. (Python) and ``SOMAReader`` (C++).
     """
     if ids.start is None and ids.stop is None:
         return None
