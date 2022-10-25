@@ -30,7 +30,7 @@ The \verb{sr_*} functions provide low-level access to an instance of the SOMARea
 class so that iterative access over parts of a (large) array is possible.
 \describe{
 \item{\code{sr_setup}}{instantiates and by default also submits a query}
-\item{\code{sr_complete}}{checks is more data is available}
+\item{\code{sr_complete}}{checks if more data is available}
 \code{\code{sr_next}} returns the next chunk.
 }
 }
