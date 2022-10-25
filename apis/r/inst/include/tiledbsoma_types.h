@@ -3,3 +3,6 @@
 
 // for QueryCondition etc
 #include <tiledb/tiledb>
+#include <tiledbsoma/tiledbsoma>
+
+namespace tdbs = tiledbsoma;
