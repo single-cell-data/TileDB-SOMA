@@ -13,7 +13,7 @@ from .constants import SOMA_JOINID, SOMA_ROWID
 from .query_condition import QueryCondition  # type: ignore
 from .soma_collection import CollectionBase
 from .tiledb_array import TileDBArray
-from .types import Ids, SOMAResultOrder
+from .types import Ids, ResultOrder
 
 Slice = TypeVar("Slice", bound=Sequence[int])
 
@@ -134,7 +134,7 @@ class DataFrame(TileDBArray):
         ids: Optional[Any] = None,
         value_filter: Optional[str] = None,
         column_names: Optional[Sequence[str]] = None,
-        result_order: Optional[SOMAResultOrder] = None,
+        result_order: Optional[ResultOrder] = None,
         # TODO: batch_size
         # TODO: partition,
         # TODO: platform_config,
@@ -221,7 +221,7 @@ class DataFrame(TileDBArray):
         ids: Optional[Any] = None,
         value_filter: Optional[str] = None,
         column_names: Optional[Sequence[str]] = None,
-        result_order: Optional[SOMAResultOrder] = None,
+        result_order: Optional[ResultOrder] = None,
         # TODO: batch_size
         # TODO: partition,
         # TODO: result_order,
@@ -308,7 +308,7 @@ class DataFrame(TileDBArray):
         ids: Optional[Ids] = None,
         value_filter: Optional[str] = None,
         column_names: Optional[Sequence[str]] = None,
-        result_order: Optional[SOMAResultOrder] = None,
+        result_order: Optional[ResultOrder] = None,
     ) -> Iterator[pd.DataFrame]:
         for tbl in self.read(
             ids=ids,
@@ -324,7 +324,7 @@ class DataFrame(TileDBArray):
         ids: Optional[Ids] = None,
         value_filter: Optional[str] = None,
         column_names: Optional[Sequence[str]] = None,
-        result_order: Optional[SOMAResultOrder] = None,
+        result_order: Optional[ResultOrder] = None,
     ) -> pd.DataFrame:
         return pd.concat(
             self.read_as_pandas(

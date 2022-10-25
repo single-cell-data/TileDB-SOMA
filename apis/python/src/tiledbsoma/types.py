@@ -15,7 +15,7 @@ NTuple = Tuple[int, ...]
 SOMABatchFormat = Literal["dense", "coo", "csr", "csc", "record-batch", "table"]
 SOMAReadPartitions = Literal["IofN"]
 SOMABatchSize = Literal["count", "size", "auto"]
-SOMAResultOrder = Literal["row-major", "column-major", "unordered", "rowid-ordered"]
+ResultOrder = Literal["row-major", "column-major", "unordered", "rowid-ordered"]
 
 ArrowReadResult = Union[
     pa.Table,

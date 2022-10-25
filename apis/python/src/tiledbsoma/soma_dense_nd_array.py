@@ -10,7 +10,7 @@ from tiledbsoma.util_tiledb import tiledb_result_order_from_soma_result_order
 from .soma_collection import CollectionBase
 from .tiledb_array import TileDBArray
 from .tiledb_platform_config import TileDBPlatformConfig
-from .types import NTuple, SOMADenseNdCoordinates, SOMAResultOrder
+from .types import NTuple, SOMADenseNdCoordinates, ResultOrder
 
 
 class DenseNdArray(TileDBArray):
@@ -139,7 +139,7 @@ class DenseNdArray(TileDBArray):
         self,
         coords: SOMADenseNdCoordinates,
         *,
-        result_order: SOMAResultOrder = "row-major",
+        result_order: ResultOrder = "row-major",
     ) -> pa.Tensor:
         """
         Read a user-defined dense slice of the array and return as an Arrow ``Tensor``.
@@ -159,7 +159,7 @@ class DenseNdArray(TileDBArray):
         self,
         coords: SOMADenseNdCoordinates,
         *,
-        result_order: SOMAResultOrder = "row-major",
+        result_order: ResultOrder = "row-major",
     ) -> np.ndarray:
         """
         Read a user-specified dense slice of the array and return as an Numpy ``ndarray``.
@@ -200,7 +200,7 @@ class DenseNdArray(TileDBArray):
 def _dense_index_to_shape(
     coords: Tuple[Union[int, slice], ...],
     array_shape: Tuple[int, ...],
-    result_order: SOMAResultOrder,
+    result_order: ResultOrder,
 ) -> Tuple[int, ...]:
     """
     Given a subarray index specified as a tuple of per-dimension slices or scalars
