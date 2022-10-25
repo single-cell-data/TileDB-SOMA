@@ -1,6 +1,7 @@
 import pandas as pd
 import pyarrow as pa
 import pytest
+import tiledb
 
 import tiledbsoma as soma
 
@@ -94,28 +95,43 @@ def test_soma_dataframe_non_indexed(tmp_path):
     # ----------------------------------------------------------------
     # Read by value_filter
     table = sdf.read_all(value_filter="foo == 40 or foo == 20")
-    assert table.num_rows == 2
+    assert table.num_rows == 5
 
     # We should be getting back the soma_rowid & soma_joinid column as well
     assert table.num_columns == 5
 
-    assert [e.as_py() for e in list(table["soma_rowid"])] == [1, 3]
-    assert sorted([e.as_py() for e in list(table["foo"])]) == [20, 40]
-    assert sorted([e.as_py() for e in list(table["bar"])]) == [5.2, 7.4]
-    assert sorted([e.as_py() for e in list(table["baz"])]) == ["ball", "dog"]
+    with sdf._tiledb_open() as A:
+        mask = A.attr("soma_joinid").fill
+
+    retain_flags = table["soma_joinid"] != mask
+    filtered_table = table.filter(retain_flags)
+
+    assert [e.as_py() for e in list(filtered_table["soma_rowid"])] == [1, 3]
+    assert sorted([e.as_py() for e in list(filtered_table["foo"])]) == [20, 40]
+    assert sorted([e.as_py() for e in list(filtered_table["bar"])]) == [5.2, 7.4]
+    assert sorted([e.as_py() for e in list(filtered_table["baz"])]) == ["ball", "dog"]
 
     # ----------------------------------------------------------------
     # Read by value_filter
     table = sdf.read_all(value_filter='baz == "ball" or baz == "dog"')
-    assert table.num_rows == 2
+    assert table.num_rows == 5
 
     # We should be getting back the soma_rowid & soma_joind column as well
     assert table.num_columns == 5
 
-    # TODO assert [e.as_py() for e in list(table['soma_rowid'])] == [0,1,2,3,4]
-    assert sorted([e.as_py() for e in list(table["foo"])]) == [20, 40]
-    assert sorted([e.as_py() for e in list(table["bar"])]) == [5.2, 7.4]
-    assert sorted([e.as_py() for e in list(table["baz"])]) == ["ball", "dog"]
+    with sdf._tiledb_open() as A:
+        mask = A.attr("soma_joinid").fill
+
+    retain_flags = table["soma_joinid"] != mask
+    filtered_table = table.filter(retain_flags)
+
+    assert sorted([e.as_py() for e in list(filtered_table["soma_joinid"])]) == [
+        102,
+        104,
+    ]
+    assert sorted([e.as_py() for e in list(filtered_table["foo"])]) == [20, 40]
+    assert sorted([e.as_py() for e in list(filtered_table["bar"])]) == [5.2, 7.4]
+    assert sorted([e.as_py() for e in list(filtered_table["baz"])]) == ["ball", "dog"]
 
 
 @pytest.fixture
@@ -239,11 +255,23 @@ def test_empty_soma_dataframe(tmp_path):
     a = soma.SOMADataFrame((tmp_path / "A").as_posix())
     a.create(pa.schema([("a", pa.bool_())]))
     # Must not throw
-    assert len(next(a.read())) == 0
-    assert len(a.read_all()) == 0
-    assert len(next(a.read_as_pandas())) == 0
-    assert len(a.read_as_pandas_all()) == 0
-    assert isinstance(a.read_as_pandas_all(), pd.DataFrame)
+    ta1 = next(a.read())
+    ta2 = a.read_all()
+    tp1 = next(a.read_as_pandas())
+    tp2 = a.read_as_pandas_all()
+
+    assert len(ta1) == 1
+    assert len(ta2) == 1
+    assert len(tp1) == 1
+    assert len(tp2) == 1
+    assert isinstance(tp2, pd.DataFrame)
+
+    with tiledb.open(a.uri) as A:
+        jid_mask = A.attr("soma_joinid").fill
+    assert ta1["soma_joinid"][0].as_py() == jid_mask
+    assert ta2["soma_joinid"][0].as_py() == jid_mask
+    assert tp1["soma_joinid"][0] == jid_mask
+    assert tp2["soma_joinid"][0] == jid_mask
 
 
 def test_soma_columns(tmp_path):

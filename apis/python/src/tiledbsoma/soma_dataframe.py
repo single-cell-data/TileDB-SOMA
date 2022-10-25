@@ -25,8 +25,6 @@ class SOMADataFrame(TileDBArray):
     A ``SOMADataFrame`` contains a "pseudo-column" called ``soma_rowid``, of type int64 and domain [0,num_rows).  The ``soma_rowid`` pseudo-column contains a unique value for each row in the ``SOMADataFrame``, and is intended to act as a join key for other objects, such as a ``SOMASparseNdArray``.
     """
 
-    _cached_is_sparse: Optional[bool]
-
     def __init__(
         self,
         uri: str,
@@ -38,7 +36,6 @@ class SOMADataFrame(TileDBArray):
         See also the ``TileDBOject`` constructor.
         """
         super().__init__(uri=uri, parent=parent, ctx=ctx)
-        self._cached_is_sparse = None
 
     @property
     def soma_type(self) -> Literal["SOMADataFrame"]:
@@ -95,9 +92,7 @@ class SOMADataFrame(TileDBArray):
         sch = tiledb.ArraySchema(
             domain=dom,
             attrs=attrs,
-            # TODO: pending tiledb issue involving dense dataframes
-            # sparse=False,
-            sparse=True,
+            sparse=False,
             allows_duplicates=False,
             offsets_filters=[
                 tiledb.DoubleDeltaFilter(),
@@ -110,7 +105,6 @@ class SOMADataFrame(TileDBArray):
             ctx=self._ctx,
         )
 
-        self._cached_is_sparse = sch.sparse
         tiledb.Array.create(self._uri, sch, ctx=self._ctx)
 
     def keys(self) -> Sequence[str]:
@@ -239,23 +233,6 @@ class SOMADataFrame(TileDBArray):
             )
         )
 
-    def _get_is_sparse(self) -> bool:
-        if self._cached_is_sparse is None:
-
-            # Simpler would be:
-            # if self.exists():
-            #     with self._tiledb_open("r") as A:
-            #         self._cached_is_sparse = A.schema.sparse
-            # but that has _two_ HTTP round trips in the tiledb-cloud case.
-            # This way, there is only one.
-            try:
-                with self._tiledb_open("r") as A:
-                    self._cached_is_sparse = A.schema.sparse
-            except tiledb.TileDBError as e:
-                raise Exception(f"could not read array schema at {self._uri}") from e
-
-        return self._cached_is_sparse
-
     def write(self, values: pa.Table) -> None:
         """
         Write an Arrow.Table to the persistent object.
@@ -285,22 +262,17 @@ class SOMADataFrame(TileDBArray):
                     )
                 )
 
-        if self._get_is_sparse():
-            # sparse write
-            with self._tiledb_open("w") as A:
-                A[rowids] = attr_cols_map
-        else:
-            # TODO: This was a quick thing to bootstrap some early ingestion tests but needs more thought.
-            # In particular, rowids needn't be either zero-up or contiguous.
-            assert len(rowids) > 0
-            rowids = sorted(rowids)
-            assert rowids[0] == 0
+        # TODO: This was a quick thing to bootstrap some early ingestion tests but needs more thought.
+        # In particular, rowids needn't be either zero-up or contiguous.
+        assert len(rowids) > 0
+        rowids = sorted(rowids)
+        assert rowids[0] == 0
 
-            # dense write
-            lo = rowids[0]
-            hi = rowids[-1]
-            with self._tiledb_open("w") as A:
-                A[lo : (hi + 1)] = attr_cols_map
+        # dense write
+        lo = rowids[0]
+        hi = rowids[-1]
+        with self._tiledb_open("w") as A:
+            A[lo : (hi + 1)] = attr_cols_map
 
     def read_as_pandas(
         self,
