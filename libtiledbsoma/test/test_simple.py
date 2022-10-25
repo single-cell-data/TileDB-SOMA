@@ -1,6 +1,6 @@
 import pandas as pd
 import pyarrow as pa
-import tiledbsoma.libtiledbsoma as sc
+import tiledbsoma.libtiledbsoma as clib
 import pytest
 import numpy as np
 import random
@@ -24,7 +24,7 @@ def random_strings(max_length=32):
     offsets, data = map(np.array, pa_data.buffers()[1:])
     offsets = offsets.view(np.uint32).astype(np.uint64)
 
-    cb = sc.ColumnBuffer("buf", sc.DataType.STRING_ASCII, len(strings), data, offsets)
+    cb = clib.ColumnBuffer("buf", clib.DataType.STRING_ASCII, len(strings), data, offsets)
 
     return strings, cb
 
@@ -55,8 +55,8 @@ def skip_test_init():
 
     for ov in ovs:
         data, offsets, validity = ov
-        buf = sc.ColumnBuffer(
-            "buf", sc.DataType.INT32, len(data), data, offsets, validity
+        buf = clib.ColumnBuffer(
+            "buf", clib.DataType.INT32, len(data), data, offsets, validity
         )
 
         assert np.array_equal(buf.data(), data)
@@ -66,28 +66,28 @@ def skip_test_init():
 
 def skip_test_int32():
     data = np.random.randint(-1 << 31, 1 << 31, size=DATA_SIZE, dtype=np.int32)
-    cb = sc.ColumnBuffer("buf", sc.DataType.INT32, len(data), data)
+    cb = clib.ColumnBuffer("buf", clib.DataType.INT32, len(data), data)
 
     check_array(data, cb)
 
 
 def skip_test_int64():
     data = np.random.randint(-1 << 63, 1 << 63, size=DATA_SIZE, dtype=np.int64)
-    cb = sc.ColumnBuffer("buf", sc.DataType.INT64, len(data), data)
+    cb = clib.ColumnBuffer("buf", clib.DataType.INT64, len(data), data)
 
     check_array(data, cb)
 
 
 def skip_test_float32():
     data = rng.random(size=DATA_SIZE, dtype=np.float32)
-    cb = sc.ColumnBuffer("buf", sc.DataType.FLOAT32, len(data), data)
+    cb = clib.ColumnBuffer("buf", clib.DataType.FLOAT32, len(data), data)
 
     check_array(data, cb)
 
 
 def skip_test_float64():
     data = rng.random(size=DATA_SIZE, dtype=np.float64)
-    cb = sc.ColumnBuffer("buf", sc.DataType.FLOAT64, len(data), data)
+    cb = clib.ColumnBuffer("buf", clib.DataType.FLOAT64, len(data), data)
 
     check_array(data, cb)
 
@@ -106,16 +106,16 @@ def skip_test_string():
 
 def skip_test_table():
     a = np.random.randint(-1 << 31, 1 << 31, size=DATA_SIZE, dtype=np.int32)
-    a_cb = sc.ColumnBuffer("a", sc.DataType.INT32, len(a), a)
+    a_cb = clib.ColumnBuffer("a", clib.DataType.INT32, len(a), a)
     b = np.random.randint(-1 << 63, 1 << 63, size=DATA_SIZE, dtype=np.int64)
-    b_cb = sc.ColumnBuffer("b", sc.DataType.INT64, len(b), b)
+    b_cb = clib.ColumnBuffer("b", clib.DataType.INT64, len(b), b)
     c = rng.random(size=DATA_SIZE, dtype=np.float32)
-    c_cb = sc.ColumnBuffer("c", sc.DataType.FLOAT32, len(c), c)
+    c_cb = clib.ColumnBuffer("c", clib.DataType.FLOAT32, len(c), c)
     d = rng.random(size=DATA_SIZE, dtype=np.float64)
-    d_cb = sc.ColumnBuffer("d", sc.DataType.FLOAT64, len(d), d)
+    d_cb = clib.ColumnBuffer("d", clib.DataType.FLOAT64, len(d), d)
     e, e_cb = random_strings(8)
 
-    arrow = sc.to_arrow({"a": a_cb, "b": b_cb, "c": c_cb, "d": d_cb, "e": e_cb})
+    arrow = clib.to_arrow({"a": a_cb, "b": b_cb, "c": c_cb, "d": d_cb, "e": e_cb})
     df = arrow.to_pandas()
     df_expected = pd.DataFrame({"a": a, "b": b, "c": c, "d": d, "e": e})
 

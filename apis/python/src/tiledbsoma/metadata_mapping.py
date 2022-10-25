@@ -6,7 +6,7 @@ from typing import Any, Dict, Iterator, MutableMapping
 import tiledbsoma
 
 
-class SOMAMetadataMapping(MutableMapping[str, Any]):
+class MetadataMapping(MutableMapping[str, Any]):
     _underlying: "tiledbsoma.TileDBObject"
 
     def __init__(self, underlying: "tiledbsoma.TileDBObject"):

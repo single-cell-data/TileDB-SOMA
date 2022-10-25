@@ -12,8 +12,8 @@ from . import NDARRAY_ARROW_TYPES_NOT_SUPPORTED, NDARRAY_ARROW_TYPES_SUPPORTED
 AnySparseTensor = Union[pa.SparseCOOTensor, pa.SparseCSRMatrix, pa.SparseCSCMatrix]
 
 
-def test_soma_sparse_nd_array_ok_no_storage():
-    arr = soma.SOMASparseNdArray(uri="/foo/bar/")
+def test_sparse_nd_array_ok_no_storage():
+    arr = soma.SparseNdArray(uri="/foo/bar/")
     assert arr.uri == "/foo/bar/"
     assert not arr.exists()
     assert arr.soma_type == "SOMASparseNdArray"
@@ -23,7 +23,7 @@ def test_soma_sparse_nd_array_ok_no_storage():
     "shape", [(10,), (1, 100), (10, 1, 100), (2, 4, 6, 8), [1], (1, 2, 3, 4, 5)]
 )
 @pytest.mark.parametrize("element_type", NDARRAY_ARROW_TYPES_SUPPORTED)
-def test_soma_sparse_nd_array_create_ok(
+def test_sparse_nd_array_create_ok(
     tmp_path, shape: Tuple[int, ...], element_type: pa.DataType
 ):
     """
@@ -31,7 +31,7 @@ def test_soma_sparse_nd_array_create_ok(
     """
     assert pa.types.is_primitive(element_type)  # sanity check incoming params
 
-    a = soma.SOMASparseNdArray(uri=tmp_path.as_posix())
+    a = soma.SparseNdArray(uri=tmp_path.as_posix())
     a.create(element_type, shape)
     assert a.soma_type == "SOMASparseNdArray"
     assert a.uri == tmp_path.as_posix()
@@ -50,17 +50,17 @@ def test_soma_sparse_nd_array_create_ok(
 
 @pytest.mark.parametrize("shape", [(10,)])
 @pytest.mark.parametrize("element_type", NDARRAY_ARROW_TYPES_NOT_SUPPORTED)
-def test_soma_sparse_nd_array_create_fail(
+def test_sparse_nd_array_create_fail(
     tmp_path, shape: Tuple[int, ...], element_type: pa.DataType
 ):
-    a = soma.SOMASparseNdArray(uri=tmp_path.as_posix())
+    a = soma.SparseNdArray(uri=tmp_path.as_posix())
     with pytest.raises(TypeError):
         a.create(element_type, shape)
     assert not a.exists()
 
 
-def test_soma_sparse_nd_array_delete(tmp_path):
-    a = soma.SOMASparseNdArray(uri=tmp_path.as_posix())
+def test_sparse_nd_array_delete(tmp_path):
+    a = soma.SparseNdArray(uri=tmp_path.as_posix())
     a.create(pa.int8(), (100, 100))
     assert a.exists()
 
@@ -70,7 +70,7 @@ def test_soma_sparse_nd_array_delete(tmp_path):
 
     # should be silent about non-existent object
     assert a.delete() is None
-    assert soma.SOMASparseNdArray(uri="no such array").delete() is None
+    assert soma.SparseNdArray(uri="no such array").delete() is None
 
 
 def create_random_tensor(
@@ -231,7 +231,7 @@ def tables_are_same_value(a: pa.Table, b: pa.Table) -> bool:
     ],
 )
 @pytest.mark.parametrize("test_enumeration", range(10))
-def test_soma_sparse_nd_array_read_write_sparse_tensor(
+def test_sparse_nd_array_read_write_sparse_tensor(
     tmp_path,
     shape: Tuple[int, ...],
     format: str,
@@ -241,7 +241,7 @@ def test_soma_sparse_nd_array_read_write_sparse_tensor(
     assert format in ("coo", "csr", "csc")
     assert not (format in ("csc", "csr") and len(shape) != 2)
 
-    a = soma.SOMASparseNdArray(tmp_path.as_posix())
+    a = soma.SparseNdArray(tmp_path.as_posix())
     a.create(pa.float64(), shape)
     assert a.exists()
     assert a.shape == shape
@@ -252,17 +252,17 @@ def test_soma_sparse_nd_array_read_write_sparse_tensor(
     del a
 
     # Read back and validate
-    b = soma.SOMASparseNdArray(tmp_path.as_posix())
+    b = soma.SparseNdArray(tmp_path.as_posix())
     t = next(b.read_sparse_tensor((slice(None),) * len(shape), format=format))
     assert tensors_are_same_value(t, data)
 
 
 @pytest.mark.parametrize("shape", [(10,), (23, 4), (5, 3, 1), (8, 4, 2, 30)])
 @pytest.mark.parametrize("test_enumeration", range(10))
-def test_soma_sparse_nd_array_read_write_table(
+def test_sparse_nd_array_read_write_table(
     tmp_path, shape: Tuple[int, ...], test_enumeration: int
 ):
-    a = soma.SOMASparseNdArray(tmp_path.as_posix())
+    a = soma.SparseNdArray(tmp_path.as_posix())
     a.create(pa.float32(), shape)
     assert a.exists()
     assert a.shape == shape
@@ -273,7 +273,7 @@ def test_soma_sparse_nd_array_read_write_table(
     del a
 
     # Read back and validate
-    b = soma.SOMASparseNdArray(tmp_path.as_posix())
+    b = soma.SparseNdArray(tmp_path.as_posix())
     t = next(b.read_table((slice(None),) * len(shape)))
     assert isinstance(t, pa.Table)
     assert tables_are_same_value(data, t)
@@ -281,12 +281,12 @@ def test_soma_sparse_nd_array_read_write_table(
 
 @pytest.mark.parametrize("dtype", [np.float32, np.float64, np.int32, np.int64])
 @pytest.mark.parametrize("shape", [(1,), (23, 14), (35, 3, 2), (8, 4, 2, 30)])
-def test_soma_sparse_nd_array_read_as_pandas(
+def test_sparse_nd_array_read_as_pandas(
     tmp_path, dtype: np.dtype, shape: Tuple[int, ...]
 ):
 
     dtype = np.dtype(dtype)
-    a = soma.SOMASparseNdArray(tmp_path.as_posix())
+    a = soma.SparseNdArray(tmp_path.as_posix())
     a.create(pa.from_numpy_dtype(dtype), shape)
     assert a.exists()
     assert a.shape == shape
@@ -309,7 +309,7 @@ def test_empty_read(tmp_path):
     work. There are edge cases around SparseTensors, which are unable
     to represent empty arrays.
     """
-    a = soma.SOMASparseNdArray(uri=tmp_path.as_posix())
+    a = soma.SparseNdArray(uri=tmp_path.as_posix())
     a.create(type=pa.uint16(), shape=(10, 100))
     assert a.exists()
 
@@ -356,12 +356,12 @@ def test_empty_read(tmp_path):
 @pytest.mark.parametrize("shape", [(), (0,), (10, 0), (0, 10), (1, 2, 0)])
 def test_zero_length_fail(tmp_path, shape):
     """Zero length dimensions are expected to fail"""
-    a = soma.SOMASparseNdArray(tmp_path.as_posix())
+    a = soma.SparseNdArray(tmp_path.as_posix())
     with pytest.raises(ValueError):
         a.create(type=pa.float32(), shape=shape)
 
 
-def test_soma_sparse_nd_array_nnz(tmp_path):
+def test_sparse_nd_array_nnz(tmp_path):
     """
     This operation is currently unimplemented. This test is
     designed to start failing as soon as it is implemented,
@@ -369,7 +369,7 @@ def test_soma_sparse_nd_array_nnz(tmp_path):
 
     Just remove the pytest.raises when implemented
     """
-    a = soma.SOMASparseNdArray(tmp_path.as_posix())
+    a = soma.SparseNdArray(tmp_path.as_posix())
     a.create(type=pa.int32(), shape=(10, 10, 10))
     assert a.nnz == 0
 
@@ -380,11 +380,11 @@ def test_soma_sparse_nd_array_nnz(tmp_path):
     assert t.non_zero_length == a.nnz
 
 
-def test_soma_sparse_nd_array_reshape(tmp_path):
+def test_sparse_nd_array_reshape(tmp_path):
     """
     Reshape currently unimplemented.
     """
-    a = soma.SOMASparseNdArray(tmp_path.as_posix())
+    a = soma.SparseNdArray(tmp_path.as_posix())
     a.create(type=pa.int32(), shape=(10, 10, 10))
     with pytest.raises(NotImplementedError):
         assert a.reshape((100, 10, 1))

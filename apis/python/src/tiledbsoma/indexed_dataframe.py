@@ -9,20 +9,20 @@ import tiledb
 import tiledbsoma.libtiledbsoma as clib
 
 from . import util, util_arrow
+from .collection import CollectionBase
 from .constants import SOMA_JOINID
 from .query_condition import QueryCondition  # type: ignore
-from .soma_collection import SOMACollectionBase
 from .tiledb_array import TileDBArray
-from .types import Ids, SOMAResultOrder
+from .types import Ids, ResultOrder
 
 Slice = TypeVar("Slice", bound=Sequence[int])
 
 
-class SOMAIndexedDataFrame(TileDBArray):
+class IndexedDataFrame(TileDBArray):
     """
     Represents ``obs``, ``var``, and others.
 
-    All ``SOMAIndexedDataFrame`` must contain a column called ``soma_joinid``, of type ``int64``. The ``soma_joinid`` column contains a unique value for each row in the ``SOMAIndexedDataFrame``, and intended to act as a joint key for other objects, such as ``SOMASparseNdArray``.
+    All ``IndexedDataFrame`` must contain a column called ``soma_joinid``, of type ``int64``. The ``soma_joinid`` column contains a unique value for each row in the ``IndexedDataFrame``, and intended to act as a joint key for other objects, such as ``SparseNdArray``.
     """
 
     _index_column_names: Union[Tuple[()], Tuple[str, ...]]
@@ -32,7 +32,7 @@ class SOMAIndexedDataFrame(TileDBArray):
         self,
         uri: str,
         *,
-        parent: Optional[SOMACollectionBase[Any]] = None,
+        parent: Optional[CollectionBase[Any]] = None,
         ctx: Optional[tiledb.Ctx] = None,
     ):
         """
@@ -50,7 +50,7 @@ class SOMAIndexedDataFrame(TileDBArray):
         self,
         schema: pa.Schema,
         index_column_names: Sequence[str],
-    ) -> "SOMAIndexedDataFrame":
+    ) -> "IndexedDataFrame":
         """
         :param schema: Arrow Schema defining the per-column schema. This schema must define all columns, including columns to be named as index columns. If the schema includes types unsupported by the SOMA implementation, an error will be raised.
 
@@ -168,7 +168,7 @@ class SOMAIndexedDataFrame(TileDBArray):
         ids: Optional[Any] = None,
         value_filter: Optional[str] = None,
         column_names: Optional[Sequence[str]] = None,
-        result_order: Optional[SOMAResultOrder] = None,
+        result_order: Optional[ResultOrder] = None,
         # TODO: more arguments
     ) -> Iterator[pa.Table]:
         """
@@ -178,7 +178,7 @@ class SOMAIndexedDataFrame(TileDBArray):
 
         :param column_names: the named columns to read and return. Defaults to ``None``, meaning no constraint -- all column names.
 
-        :param partitions: an optional ``SOMAReadPartitions`` hint to indicate how results should be organized.
+        :param partitions: an optional ``ReadPartitions`` hint to indicate how results should be organized.
 
         :param result_order: order of read results. This can be one of 'row-major', 'col-major', or 'unordered'.
 
@@ -254,7 +254,7 @@ class SOMAIndexedDataFrame(TileDBArray):
         ids: Optional[Any] = None,
         value_filter: Optional[str] = None,
         column_names: Optional[Sequence[str]] = None,
-        result_order: Optional[SOMAResultOrder] = None,
+        result_order: Optional[ResultOrder] = None,
         # TODO: batch_size
         # TODO: partition,
         # TODO: platform_config,
@@ -275,7 +275,7 @@ class SOMAIndexedDataFrame(TileDBArray):
         """
         Write an Arrow.Table to the persistent object. As duplicate index values are not allowed, index values already present in the object are overwritten and new index values are added.
 
-        :param values: An Arrow.Table containing all columns, including the index columns. The schema for the values must match the schema for the ``SOMAIndexedDataFrame``.
+        :param values: An Arrow.Table containing all columns, including the index columns. The schema for the values must match the schema for the ``IndexedDataFrame``.
         """
         dim_cols_list = []
         attr_cols_map = {}
@@ -306,7 +306,7 @@ class SOMAIndexedDataFrame(TileDBArray):
         ids: Optional[Any] = None,
         value_filter: Optional[str] = None,
         column_names: Optional[Sequence[str]] = None,
-        result_order: Optional[SOMAResultOrder] = None,
+        result_order: Optional[ResultOrder] = None,
     ) -> Iterator[pd.DataFrame]:
         for tbl in self.read(
             ids=ids,
@@ -321,7 +321,7 @@ class SOMAIndexedDataFrame(TileDBArray):
         ids: Optional[Ids] = None,
         value_filter: Optional[str] = None,
         column_names: Optional[Sequence[str]] = None,
-        result_order: Optional[SOMAResultOrder] = None,
+        result_order: Optional[ResultOrder] = None,
     ) -> pd.DataFrame:
         return pd.concat(
             self.read_as_pandas(
@@ -347,7 +347,7 @@ def _validate_schema(schema: pa.Schema, index_column_names: Sequence[str]) -> pa
     Returns a schema, which may be modified by the addition of required columns.
     """
     if not index_column_names:
-        raise ValueError("SOMAIndexedDataFrame requires one or more index columns")
+        raise ValueError("IndexedDataFrame requires one or more index columns")
 
     if SOMA_JOINID in schema.names:
         if schema.field(SOMA_JOINID).type != pa.int64():
@@ -360,7 +360,7 @@ def _validate_schema(schema: pa.Schema, index_column_names: Sequence[str]) -> pa
     for field_name in schema.names:
         if field_name.startswith("soma_") and field_name != SOMA_JOINID:
             raise ValueError(
-                "SOMAIndexedDataFrame schema may not contain fields with name prefix `soma_`"
+                "IndexedDataFrame schema may not contain fields with name prefix `soma_`"
             )
 
     # verify that all index_column_names are present in the schema
@@ -368,7 +368,7 @@ def _validate_schema(schema: pa.Schema, index_column_names: Sequence[str]) -> pa
     for index_column_name in index_column_names:
         if index_column_name.startswith("soma_") and index_column_name != SOMA_JOINID:
             raise ValueError(
-                "SOMAIndexedDataFrame schema may not contain fields with name prefix `soma_`"
+                "IndexedDataFrame schema may not contain fields with name prefix `soma_`"
             )
         if index_column_name not in schema_names_set:
             raise ValueError("All index names must be dataframe schema")

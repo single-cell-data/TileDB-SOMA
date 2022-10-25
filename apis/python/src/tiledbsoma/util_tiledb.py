@@ -6,7 +6,7 @@ import pandas as pd
 import scipy.sparse as sp
 import tiledb
 
-from .types import SOMAResultOrder
+from .types import ResultOrder
 
 T = TypeVar("T", np.ndarray, pd.Series, pd.DataFrame, sp.spmatrix)
 
@@ -20,14 +20,14 @@ def is_tiledb_creation_uri(uri: str) -> bool:
 
 
 def tiledb_result_order_from_soma_result_order(
-    soma_result_order: Optional[SOMAResultOrder], accept: List[SOMAResultOrder]
+    soma_result_order: Optional[ResultOrder], accept: List[ResultOrder]
 ) -> Optional[str]:
     """
-    Given a SOMAResultOrder, return a TileDB result order.  Raise an error if
+    Given a ResultOrder, return a TileDB result order.  Raise an error if
     the ``soma_result_order`` is not present in the acceptable values, as
     defined by ``accept``.
     """
-    OrderMap: dict[SOMAResultOrder, str] = {
+    OrderMap: dict[ResultOrder, str] = {
         "column-major": "F",
         "row-major": "C",
         "unordered": "U",

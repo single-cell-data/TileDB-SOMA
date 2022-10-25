@@ -10,13 +10,13 @@ import tiledb
 import tiledbsoma.libtiledbsoma as clib
 
 from . import util, util_arrow
-from .soma_collection import SOMACollectionBase
+from .collection import CollectionBase
 from .tiledb_array import TileDBArray
 from .tiledb_platform_config import TileDBPlatformConfig
-from .types import NTuple, SOMASparseNdCoordinates
+from .types import NTuple, SparseNdCoordinates
 
 
-class SOMASparseNdArray(TileDBArray):
+class SparseNdArray(TileDBArray):
     """
     Represents ``X`` and others.
     """
@@ -25,7 +25,7 @@ class SOMASparseNdArray(TileDBArray):
         self,
         uri: str,
         *,
-        parent: Optional[SOMACollectionBase[Any]] = None,
+        parent: Optional[CollectionBase[Any]] = None,
         tiledb_platform_config: Optional[TileDBPlatformConfig] = None,
         ctx: Optional[tiledb.Ctx] = None,
     ):
@@ -48,9 +48,9 @@ class SOMASparseNdArray(TileDBArray):
         self,
         type: pa.DataType,
         shape: Union[NTuple, List[int]],
-    ) -> "SOMASparseNdArray":
+    ) -> "SparseNdArray":
         """
-        Create a ``SOMASparseNdArray`` named with the URI.
+        Create a ``SparseNdArray`` named with the URI.
 
         :param type: an Arrow type defining the type of each element in the array. If the type is unsupported, an error will be raised.
 
@@ -65,7 +65,7 @@ class SOMASparseNdArray(TileDBArray):
 
         if not pa.types.is_primitive(type):
             raise TypeError(
-                "Unsupported type - SOMADenseNdArray only supports primtive Arrow types"
+                "Unsupported type - DenseNdArray only supports primtive Arrow types"
             )
 
         level = self._tiledb_platform_config.string_dim_zstd_level
@@ -91,7 +91,7 @@ class SOMASparseNdArray(TileDBArray):
             )
         ]
 
-        # TODO: code-dedupe w/ regard to SOMADenseNdArray. The two creates are
+        # TODO: code-dedupe w/ regard to DenseNdArray. The two creates are
         # almost identical & could share a common parent-class _create() method.
         sch = tiledb.ArraySchema(
             domain=dom,
@@ -149,7 +149,7 @@ class SOMASparseNdArray(TileDBArray):
 
     def read_sparse_tensor(
         self,
-        coords: SOMASparseNdCoordinates,
+        coords: SparseNdCoordinates,
         *,
         format: Literal["coo", "csr", "csc"] = "coo",
     ) -> Iterator[Union[pa.SparseCOOTensor, pa.SparseCSCMatrix, pa.SparseCSRMatrix]]:
@@ -218,7 +218,7 @@ class SOMASparseNdArray(TileDBArray):
                 if format == "csc":
                     yield pa.SparseCSCMatrix.from_scipy(scipy_coo.tocsc())
 
-    def read_table(self, coords: SOMASparseNdCoordinates) -> Iterator[pa.Table]:
+    def read_table(self, coords: SparseNdCoordinates) -> Iterator[pa.Table]:
         """
         Read a user-defined slice of the sparse array and return in COO format
         as an Arrow Table
@@ -230,7 +230,7 @@ class SOMASparseNdArray(TileDBArray):
                 schema=A.schema,
             )
 
-            # TODO: make a util function to be shared with SOMADenseNdArray
+            # TODO: make a util function to be shared with DenseNdArray
             # coords are a tuple of (int or slice-of-int)
             if len(coords) == 1 and coords[0] == slice(None):
                 # Special case which tiledb-py supports, so we should too
@@ -294,7 +294,7 @@ class SOMASparseNdArray(TileDBArray):
                 i += 1
                 yield arrow_table
 
-    def read_as_pandas(self, coords: SOMASparseNdCoordinates) -> Iterator[pd.DataFrame]:
+    def read_as_pandas(self, coords: SparseNdCoordinates) -> Iterator[pd.DataFrame]:
         """
         Read a user-defined slice of the sparse array and return as a Pandas DataFrame
         containing COO data.
@@ -303,7 +303,7 @@ class SOMASparseNdArray(TileDBArray):
             yield arrow_tbl.to_pandas()
 
     def read_as_pandas_all(
-        self, coords: Optional[SOMASparseNdCoordinates] = None
+        self, coords: Optional[SparseNdCoordinates] = None
     ) -> pd.DataFrame:
         """
         Return the sparse array as a single Pandas DataFrame containing COO data.
@@ -321,7 +321,7 @@ class SOMASparseNdArray(TileDBArray):
         ],
     ) -> None:
         """
-        Write an Arrow sparse tensor to the SOMASparseNdArray. The coordinates in the Arrow
+        Write an Arrow sparse tensor to the SparseNdArray. The coordinates in the Arrow
         SparseTensor will be interpreted as the coordinates to write to.
 
         Currently supports the _experimental_ Arrow SparseCOOTensor, SparseCSRMatrix and
@@ -337,7 +337,7 @@ class SOMASparseNdArray(TileDBArray):
         if isinstance(tensor, (pa.SparseCSCMatrix, pa.SparseCSRMatrix)):
             if self.ndim != 2:
                 raise ValueError(
-                    f"Unable to write 2D Arrow sparse matrix to {self.ndim}D SOMASparseNdArray"
+                    f"Unable to write 2D Arrow sparse matrix to {self.ndim}D SparseNdArray"
                 )
             # TODO: the `to_scipy` function is not zero copy. Need to explore zero-copy options.
             sp = tensor.to_scipy().tocoo()

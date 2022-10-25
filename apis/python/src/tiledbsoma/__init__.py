@@ -33,22 +33,22 @@ except ImportError:
         __version__ = "unknown"
 # ----------------------------------------------------------------
 
+from .collection import Collection
+from .dataframe import DataFrame
+from .dense_nd_array import DenseNdArray
+from .exception import DoesNotExistError, SOMAError
+from .experiment import Experiment
 from .general_utilities import (
     get_implementation,
     get_implementation_version,
     get_SOMA_version,
     get_storage_engine,
 )
+from .indexed_dataframe import IndexedDataFrame
+from .measurement import Measurement
+from .metadata_mapping import MetadataMapping
 from .query_condition import QueryCondition  # type: ignore
-from .soma_collection import SOMACollection
-from .soma_dataframe import SOMADataFrame
-from .soma_dense_nd_array import SOMADenseNdArray
-from .soma_exception import SOMADoesNotExistError, SOMAError
-from .soma_experiment import SOMAExperiment
-from .soma_indexed_dataframe import SOMAIndexedDataFrame
-from .soma_measurement import SOMAMeasurement
-from .soma_metadata_mapping import SOMAMetadataMapping
-from .soma_sparse_nd_array import SOMASparseNdArray
+from .sparse_nd_array import SparseNdArray
 from .tiledb_array import TileDBArray
 from .tiledb_object import TileDBObject
 from .tiledb_platform_config import TileDBPlatformConfig
@@ -61,15 +61,15 @@ __all__ = [
     "TileDBPlatformConfig",
     "TileDBObject",
     "TileDBArray",
-    "SOMACollection",
-    "SOMADataFrame",
-    "SOMADenseNdArray",
-    "SOMADoesNotExistError",
-    "SOMAExperiment",
+    "Collection",
+    "DataFrame",
+    "DenseNdArray",
+    "DoesNotExistError",
+    "Experiment",
     "SOMAError",
-    "SOMAIndexedDataFrame",
-    "SOMAMeasurement",
-    "SOMAMetadataMapping",
-    "SOMASparseNdArray",
+    "IndexedDataFrame",
+    "Measurement",
+    "MetadataMapping",
+    "SparseNdArray",
     "QueryCondition",
 ]
