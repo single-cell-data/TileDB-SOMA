@@ -44,3 +44,55 @@ nnz <- function(uri) {
     .Call(`_tiledbsoma_nnz`, uri)
 }
 
+#' Iterator-Style Access to SOMA Array via SOMAReader
+#'
+#' The `sr_*` functions provide low-level access to an instance of the SOMAReader
+#' class so that iterative access over parts of a (large) array is possible.
+#' \describe{
+#'   \item{\code{sr_setup}}{instantiates and by default also submits a query}
+#'   \item{\code{sr_complete}}{checks is more data is available}
+#'   \code{\code{sr_next}} returns the next chunk.
+#' }
+#'
+#' @param ctx An external pointer to a TileDB Context object
+#' @param uri Character value with URI path to a SOMA data set
+#' @param loglevel Character value with the desired logging level, defaults to \sQuote{warn}
+#' @param sr An external pointer to a TileDB SOMAReader object
+#'
+#' @return \code{sr_setup} returns an external pointer to a SOMAReader. \code{sr_complete}
+#' returns a boolean, and \code{sr_next} returns an Arrow array helper object.
+#'
+#' @examples
+#' \dontrun{
+#' ctx <- tiledb_ctx()
+#' sr <- sr_setup(ctx@ptr, uri, "warn")
+#' rl <- data.frame()
+#' while (!tiledbsoma:::sr_complete(sr)) {
+#'     dat <- tiledbsoma:::sr_next(sr)
+#'     dat |>
+#'         arch::from_arch_array(arrow::RecordBatch) |>
+#'         arrow::as_arrow_table() |>
+#'         collect() |>
+#'         as.data.frame() |>
+#'         data.table() -> D
+#'     rl <- rbind(rl, D)
+#' }
+#' summary(rl)
+#' }
+#' @export
+sr_setup <- function(ctx, uri, loglevel = "warn") {
+    .Call(`_tiledbsoma_sr_setup`, ctx, uri, loglevel)
+}
+
+#' @rdname sr_setup
+#' @export
+sr_complete <- function(sr) {
+    .Call(`_tiledbsoma_sr_complete`, sr)
+}
+
+#' @rdname sr_setup
+#' @export
+sr_next <- function(sr) {
+    .Call(`_tiledbsoma_sr_next`, sr)
+}
+
