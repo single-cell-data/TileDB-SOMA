@@ -10,7 +10,7 @@ from tiledbsoma.util_tiledb import tiledb_result_order_from_soma_result_order
 from .collection import CollectionBase
 from .tiledb_array import TileDBArray
 from .tiledb_platform_config import TileDBPlatformConfig
-from .types import NTuple, DenseNdCoordinates, ResultOrder
+from .types import DenseNdCoordinates, NTuple, ResultOrder
 
 
 class DenseNdArray(TileDBArray):

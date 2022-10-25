@@ -9,9 +9,9 @@ import tiledb
 import tiledbsoma.libtiledbsoma as clib
 
 from . import util, util_arrow
+from .collection import CollectionBase
 from .constants import SOMA_JOINID, SOMA_ROWID
 from .query_condition import QueryCondition  # type: ignore
-from .collection import CollectionBase
 from .tiledb_array import TileDBArray
 from .types import Ids, ResultOrder
 

@@ -33,21 +33,21 @@ except ImportError:
         __version__ = "unknown"
 # ----------------------------------------------------------------
 
+from .collection import Collection
+from .dataframe import DataFrame
+from .dense_nd_array import DenseNdArray
+from .exception import DoesNotExistError, Error
+from .experiment import Experiment
 from .general_utilities import (
     get_implementation,
     get_implementation_version,
     get_SOMA_version,
     get_storage_engine,
 )
-from .query_condition import QueryCondition  # type: ignore
-from .collection import Collection
-from .dataframe import DataFrame
-from .dense_nd_array import DenseNdArray
-from .exception import DoesNotExistError, Error
-from .experiment import Experiment
 from .indexed_dataframe import IndexedDataFrame
 from .measurement import Measurement
 from .metadata_mapping import MetadataMapping
+from .query_condition import QueryCondition  # type: ignore
 from .sparse_nd_array import SparseNdArray
 from .tiledb_array import TileDBArray
 from .tiledb_object import TileDBObject

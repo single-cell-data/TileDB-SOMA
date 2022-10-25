@@ -373,15 +373,11 @@ def from_anndata(
     _write_dataframe(obs, anndata.obs, id_column_name="obs_id")
     experiment.set("obs", obs)
 
-    experiment.set(
-        "ms", Collection(uri=uri_joinpath(experiment.uri, "ms")).create()
-    )
+    experiment.set("ms", Collection(uri=uri_joinpath(experiment.uri, "ms")).create())
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     # MS
-    measurement = Measurement(
-        uri=f"{experiment.ms.uri}/{measurement_name}", ctx=ctx
-    )
+    measurement = Measurement(uri=f"{experiment.ms.uri}/{measurement_name}", ctx=ctx)
     measurement.create()
     experiment.ms.set(measurement_name, measurement)
 
@@ -423,9 +419,7 @@ def from_anndata(
             uri=uri_joinpath(measurement.uri, "varm")
         ).create()
         for key in anndata.varm.keys():
-            darr = DenseNdArray(
-                uri=uri_joinpath(measurement.varm.uri, key), ctx=ctx
-            )
+            darr = DenseNdArray(uri=uri_joinpath(measurement.varm.uri, key), ctx=ctx)
             create_from_matrix(darr, anndata.varm[key])
             measurement.varm.set(key, darr)
 
@@ -434,9 +428,7 @@ def from_anndata(
             uri=uri_joinpath(measurement.uri, "obsp")
         ).create()
         for key in anndata.obsp.keys():
-            sarr = SparseNdArray(
-                uri=uri_joinpath(measurement.obsp.uri, key), ctx=ctx
-            )
+            sarr = SparseNdArray(uri=uri_joinpath(measurement.obsp.uri, key), ctx=ctx)
             create_from_matrix(sarr, anndata.obsp[key])
             measurement.obsp.set(key, sarr)
 
@@ -445,9 +437,7 @@ def from_anndata(
             uri=uri_joinpath(measurement.uri, "varp")
         ).create()
         for key in anndata.varp.keys():
-            sarr = SparseNdArray(
-                uri=uri_joinpath(measurement.varp.uri, key), ctx=ctx
-            )
+            sarr = SparseNdArray(uri=uri_joinpath(measurement.varp.uri, key), ctx=ctx)
             create_from_matrix(sarr, anndata.varp[key])
             measurement.varp.set(key, sarr)
 

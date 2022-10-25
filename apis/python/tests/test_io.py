@@ -50,9 +50,7 @@ def test_io_create_from_matrix_Dense_nd_array(tmp_path, plfm_config, src_matrix)
     * _tiledb_platform_config.write_X_chunked: True or False
     * src_array bigger or smaller than _tiledb_platform_config.goal_chunk_nnz
     """
-    snda = soma.DenseNdArray(
-        tmp_path.as_posix(), tiledb_platform_config=plfm_config
-    )
+    snda = soma.DenseNdArray(tmp_path.as_posix(), tiledb_platform_config=plfm_config)
     somaio.create_from_matrix(snda, src_matrix)
 
     assert snda.shape == src_matrix.shape
@@ -96,9 +94,7 @@ def test_io_create_from_matrix_Sparse_nd_array(tmp_path, plfm_config, src_matrix
     * _tiledb_platform_config.write_X_chunked: True or False
     * src_array bigger or smaller than _tiledb_platform_config.goal_chunk_nnz
     """
-    snda = soma.SparseNdArray(
-        tmp_path.as_posix(), tiledb_platform_config=plfm_config
-    )
+    snda = soma.SparseNdArray(tmp_path.as_posix(), tiledb_platform_config=plfm_config)
     somaio.create_from_matrix(snda, src_matrix)
 
     assert snda.shape == src_matrix.shape

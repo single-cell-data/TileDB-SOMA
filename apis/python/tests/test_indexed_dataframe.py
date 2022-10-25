@@ -131,9 +131,7 @@ def simple_indexed_data_frame(tmp_path):
         None,
     ],
 )
-def test_IndexedDataFrame_read_column_names(
-    simple_indexed_data_frame, ids, col_names
-):
+def test_IndexedDataFrame_read_column_names(simple_indexed_data_frame, ids, col_names):
     schema, sdf, n_data, index_column_names = simple_indexed_data_frame
     assert sdf.exists()
 

@@ -86,9 +86,7 @@ class Measurement(CollectionBase[TileDBObject]):
 
     @property
     def X(self) -> CollectionBase[Union[DenseNdArray, SparseNdArray]]:
-        return cast(
-            CollectionBase[Union[DenseNdArray, SparseNdArray]], self["X"]
-        )
+        return cast(CollectionBase[Union[DenseNdArray, SparseNdArray]], self["X"])
 
     @property
     def obsm(self) -> CollectionBase[DenseNdArray]:
