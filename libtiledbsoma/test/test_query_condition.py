@@ -3,7 +3,7 @@
 import os
 import pandas as pd
 import pyarrow as pa
-import tiledbsoma.libtiledbsoma as sc
+import tiledbsoma.libtiledbsoma as clib
 import tiledb
 from tiledbsoma.query_condition import QueryCondition
 
@@ -14,11 +14,11 @@ TEST_DIR = os.path.dirname(__file__)
 SOMA_URI = f"{TEST_DIR}/../../test/soco/pbmc3k_processed"
 
 if VERBOSE:
-    sc.config_logging("debug")
+    clib.config_logging("debug")
 
 
 def pandas_query(uri, condition):
-    sr = sc.SOMAReader(uri)
+    sr = clib.SOMAReader(uri)
     sr.submit()
     arrow_table = sr.read_next()
     assert sr.results_complete()
@@ -30,7 +30,7 @@ def soma_query(uri, condition):
     qc = QueryCondition(condition)
     schema = tiledb.open(uri).schema
 
-    sr = sc.SOMAReader(uri, query_condition=qc, schema=schema)
+    sr = clib.SOMAReader(uri, query_condition=qc, schema=schema)
     sr.submit()
     arrow_table = sr.read_next()
     assert sr.results_complete()
@@ -100,7 +100,7 @@ def test_query_condition_select_columns():
     qc = QueryCondition(condition)
     schema = tiledb.open(uri).schema
 
-    sr = sc.SOMAReader(uri, query_condition=qc, schema=schema, column_names=["n_genes"])
+    sr = clib.SOMAReader(uri, query_condition=qc, schema=schema, column_names=["n_genes"])
     sr.submit()
     arrow_table = sr.read_next()
 
@@ -116,7 +116,7 @@ def test_query_condition_all_columns():
     qc = QueryCondition(condition)
     schema = tiledb.open(uri).schema
 
-    sr = sc.SOMAReader(uri, query_condition=qc, schema=schema)
+    sr = clib.SOMAReader(uri, query_condition=qc, schema=schema)
     sr.submit()
     arrow_table = sr.read_next()
 
