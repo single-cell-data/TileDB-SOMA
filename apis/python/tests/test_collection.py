@@ -5,7 +5,7 @@ import pyarrow as pa
 import pytest
 
 import tiledbsoma as soma
-from tiledbsoma.soma_exception import DoesNotExistError
+from tiledbsoma.exception import DoesNotExistError
 
 
 # ----------------------------------------------------------------

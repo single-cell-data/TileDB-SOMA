@@ -7,13 +7,13 @@ from typing import Any, Optional, Union
 
 import tiledb
 
-from .soma_collection import Collection, CollectionBase
-from .soma_dataframe import DataFrame
-from .soma_dense_nd_array import DenseNdArray
-from .soma_experiment import Experiment
-from .soma_indexed_dataframe import IndexedDataFrame
-from .soma_measurement import Measurement
-from .soma_sparse_nd_array import SparseNdArray
+from .collection import Collection, CollectionBase
+from .dataframe import DataFrame
+from .dense_nd_array import DenseNdArray
+from .experiment import Experiment
+from .indexed_dataframe import IndexedDataFrame
+from .measurement import Measurement
+from .sparse_nd_array import SparseNdArray
 from .util import SOMA_OBJECT_TYPE_METADATA_KEY
 
 ObjectTypes = Union[

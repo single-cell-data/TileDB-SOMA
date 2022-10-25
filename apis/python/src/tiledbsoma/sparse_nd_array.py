@@ -10,7 +10,7 @@ import tiledb
 import tiledbsoma.libtiledbsoma as clib
 
 from . import util, util_arrow
-from .soma_collection import CollectionBase
+from .collection import CollectionBase
 from .tiledb_array import TileDBArray
 from .tiledb_platform_config import TileDBPlatformConfig
 from .types import NTuple, SparseNdCoordinates

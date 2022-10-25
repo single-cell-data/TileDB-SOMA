@@ -7,7 +7,7 @@ import tiledb
 import tiledbsoma.util_arrow as util_arrow
 from tiledbsoma.util_tiledb import tiledb_result_order_from_soma_result_order
 
-from .soma_collection import CollectionBase
+from .collection import CollectionBase
 from .tiledb_array import TileDBArray
 from .tiledb_platform_config import TileDBPlatformConfig
 from .types import NTuple, DenseNdCoordinates, ResultOrder

@@ -2,10 +2,10 @@ from typing import Any, Dict, Literal, Optional, Tuple, Union, cast
 
 import tiledb
 
-from .soma_collection import CollectionBase
-from .soma_dataframe import DataFrame
-from .soma_indexed_dataframe import IndexedDataFrame
-from .soma_measurement import Measurement
+from .collection import CollectionBase
+from .dataframe import DataFrame
+from .indexed_dataframe import IndexedDataFrame
+from .measurement import Measurement
 from .tiledb_object import TileDBObject
 from .tiledb_platform_config import TileDBPlatformConfig
 

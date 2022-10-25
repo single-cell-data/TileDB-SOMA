@@ -4,7 +4,7 @@ from typing import Optional, Union
 import tiledb
 
 from . import util
-from .soma_metadata_mapping import MetadataMapping
+from .metadata_mapping import MetadataMapping
 from .tiledb_platform_config import TileDBPlatformConfig
 
 

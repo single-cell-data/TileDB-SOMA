@@ -18,7 +18,7 @@ from typing import (
 
 import tiledb
 
-from .soma_exception import DoesNotExistError, Error
+from .exception import DoesNotExistError, Error
 from .tiledb_object import TileDBObject
 from .tiledb_platform_config import TileDBPlatformConfig
 from .util import make_relative_path

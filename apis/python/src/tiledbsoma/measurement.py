@@ -2,11 +2,11 @@ from typing import Any, Dict, Literal, Optional, Tuple, Union, cast
 
 import tiledb
 
-from .soma_collection import CollectionBase
-from .soma_dataframe import DataFrame
-from .soma_dense_nd_array import DenseNdArray
-from .soma_indexed_dataframe import IndexedDataFrame
-from .soma_sparse_nd_array import SparseNdArray
+from .collection import CollectionBase
+from .dataframe import DataFrame
+from .dense_nd_array import DenseNdArray
+from .indexed_dataframe import IndexedDataFrame
+from .sparse_nd_array import SparseNdArray
 from .tiledb_object import TileDBObject
 from .tiledb_platform_config import TileDBPlatformConfig
 

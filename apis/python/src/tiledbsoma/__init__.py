@@ -40,15 +40,15 @@ from .general_utilities import (
     get_storage_engine,
 )
 from .query_condition import QueryCondition  # type: ignore
-from .soma_collection import Collection
-from .soma_dataframe import DataFrame
-from .soma_dense_nd_array import DenseNdArray
-from .soma_exception import DoesNotExistError, Error
-from .soma_experiment import Experiment
-from .soma_indexed_dataframe import IndexedDataFrame
-from .soma_measurement import Measurement
-from .soma_metadata_mapping import MetadataMapping
-from .soma_sparse_nd_array import SparseNdArray
+from .collection import Collection
+from .dataframe import DataFrame
+from .dense_nd_array import DenseNdArray
+from .exception import DoesNotExistError, Error
+from .experiment import Experiment
+from .indexed_dataframe import IndexedDataFrame
+from .measurement import Measurement
+from .metadata_mapping import MetadataMapping
+from .sparse_nd_array import SparseNdArray
 from .tiledb_array import TileDBArray
 from .tiledb_object import TileDBObject
 from .tiledb_platform_config import TileDBPlatformConfig
