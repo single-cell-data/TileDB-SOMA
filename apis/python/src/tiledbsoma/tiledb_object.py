@@ -4,7 +4,7 @@ from typing import Optional, Union
 import tiledb
 
 from . import util
-from .soma_metadata_mapping import SOMAMetadataMapping
+from .soma_metadata_mapping import MetadataMapping
 from .tiledb_platform_config import TileDBPlatformConfig
 
 
@@ -17,7 +17,7 @@ class TileDBObject(ABC):
 
     _uri: str
     _tiledb_platform_config: TileDBPlatformConfig
-    metadata: SOMAMetadataMapping
+    metadata: MetadataMapping
 
     def __init__(
         self,
@@ -47,7 +47,7 @@ class TileDBObject(ABC):
         self._tiledb_platform_config = tiledb_platform_config or TileDBPlatformConfig()
         # Null ctx is OK if that's what they wanted (e.g. not doing any TileDB-Cloud ops).
 
-        self.metadata = SOMAMetadataMapping(self)
+        self.metadata = MetadataMapping(self)
 
     def delete(self) -> None:
         """
@@ -116,7 +116,7 @@ class TileDBObject(ABC):
         """
         This helps nested-structure traversals (especially those that start at the Collection level) confidently navigate with a minimum of introspection on group contents.
         """
-        # TODO: make a multi-set in SOMAMetadataMapping that would above a double-open there.
+        # TODO: make a multi-set in MetadataMapping that would above a double-open there.
         with self._tiledb_open("w") as obj:
             obj.meta.update(
                 {

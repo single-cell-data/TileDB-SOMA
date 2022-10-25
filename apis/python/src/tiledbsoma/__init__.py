@@ -47,7 +47,7 @@ from .soma_exception import SOMADoesNotExistError, SOMAError
 from .soma_experiment import Experiment
 from .soma_indexed_dataframe import IndexedDataFrame
 from .soma_measurement import Measurement
-from .soma_metadata_mapping import SOMAMetadataMapping
+from .soma_metadata_mapping import MetadataMapping
 from .soma_sparse_nd_array import SparseNdArray
 from .tiledb_array import TileDBArray
 from .tiledb_object import TileDBObject
@@ -69,7 +69,7 @@ __all__ = [
     "SOMAError",
     "IndexedDataFrame",
     "Measurement",
-    "SOMAMetadataMapping",
+    "MetadataMapping",
     "SparseNdArray",
     "QueryCondition",
 ]
