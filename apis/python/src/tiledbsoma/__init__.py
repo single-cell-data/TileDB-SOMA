@@ -36,7 +36,7 @@ except ImportError:
 from .collection import Collection
 from .dataframe import DataFrame
 from .dense_nd_array import DenseNdArray
-from .exception import SOMADoesNotExistError, SOMAError
+from .exception import DoesNotExistError, SOMAError
 from .experiment import Experiment
 from .general_utilities import (
     get_implementation,
@@ -64,7 +64,7 @@ __all__ = [
     "Collection",
     "DataFrame",
     "DenseNdArray",
-    "SOMADoesNotExistError",
+    "DoesNotExistError",
     "Experiment",
     "SOMAError",
     "IndexedDataFrame",

@@ -18,7 +18,7 @@ from typing import (
 
 import tiledb
 
-from .exception import SOMADoesNotExistError, SOMAError
+from .exception import DoesNotExistError, SOMAError
 from .tiledb_object import TileDBObject
 from .tiledb_platform_config import TileDBPlatformConfig
 from .util import make_relative_path
@@ -126,7 +126,7 @@ class CollectionBase(TileDBObject, MutableMapping[str, CollectionElementType]):
             if self._cached_values is None:
                 # This collection was not yet created
                 # TODO: SOMA needs better exception types
-                raise SOMADoesNotExistError("Collection has not been created")
+                raise DoesNotExistError("Collection has not been created")
 
         # if element is in the TileDB Group, so make a SOMA in-memory object to represent it.
         if key in self._cached_values:
@@ -226,7 +226,7 @@ class CollectionBase(TileDBObject, MutableMapping[str, CollectionElementType]):
 
         except tiledb.TileDBError as e:
             if is_does_not_exist_error(e):
-                raise SOMADoesNotExistError("Collection not created") from e
+                raise DoesNotExistError("Collection not created") from e
             raise
 
     def _load_tdb_group_cache(self) -> None:
@@ -308,7 +308,7 @@ class CollectionBase(TileDBObject, MutableMapping[str, CollectionElementType]):
                 break
             except tiledb.TileDBError as e:
                 if is_does_not_exist_error(e):
-                    raise SOMADoesNotExistError("Collection not created") from e
+                    raise DoesNotExistError("Collection not created") from e
                 if not is_duplicate_group_key_error(e):
                     raise e
             if retry:
@@ -329,7 +329,7 @@ class CollectionBase(TileDBObject, MutableMapping[str, CollectionElementType]):
                 G.remove(key)
         except tiledb.TileDBError as e:
             if is_does_not_exist_error(e):
-                raise SOMADoesNotExistError("Collection has not been created") from e
+                raise DoesNotExistError("Collection has not been created") from e
             raise
 
         if not skip_cache_reload:

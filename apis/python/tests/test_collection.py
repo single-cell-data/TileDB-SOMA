@@ -5,7 +5,7 @@ import pyarrow as pa
 import pytest
 
 import tiledbsoma as soma
-from tiledbsoma.exception import SOMADoesNotExistError
+from tiledbsoma.exception import DoesNotExistError
 
 
 # ----------------------------------------------------------------
@@ -54,7 +54,7 @@ def test_collection_basic(tmp_path):
 
     # ----------------------------------------------------------------
     assert not collection.exists()
-    with pytest.raises(soma.SOMADoesNotExistError):
+    with pytest.raises(soma.DoesNotExistError):
         assert "foobar" not in collection
 
     collection.create()
@@ -134,7 +134,7 @@ def soma_object(request, tmp_path):
 def test_collection_mapping(soma_object, tmp_path):
     c = soma.Collection(uri=(tmp_path / "collection").as_uri())
     assert not c.exists()
-    with pytest.raises(soma.SOMADoesNotExistError):
+    with pytest.raises(soma.DoesNotExistError):
         assert "foobar" not in c
 
     c.create()
@@ -245,13 +245,13 @@ def test_exceptions_on_not_created(tmp_path):
     A = soma.DenseNdArray(uri=(tmp_path / "A").as_uri()).create(
         type=pa.float64(), shape=(100, 10, 1)
     )
-    with pytest.raises(SOMADoesNotExistError):
+    with pytest.raises(DoesNotExistError):
         sc["A"] = A
-    with pytest.raises(SOMADoesNotExistError):
+    with pytest.raises(DoesNotExistError):
         del sc["A"]
-    with pytest.raises(SOMADoesNotExistError):
+    with pytest.raises(DoesNotExistError):
         assert "A" not in sc
-    with pytest.raises(SOMADoesNotExistError):
+    with pytest.raises(DoesNotExistError):
         list(sc)
-    with pytest.raises(SOMADoesNotExistError):
+    with pytest.raises(DoesNotExistError):
         len(sc)

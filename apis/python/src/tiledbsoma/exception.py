@@ -2,5 +2,5 @@ class SOMAError(Exception):
     pass
 
 
-class SOMADoesNotExistError(SOMAError):
+class DoesNotExistError(SOMAError):
     pass
