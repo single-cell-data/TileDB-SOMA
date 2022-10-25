@@ -87,7 +87,7 @@ class TileDBObject(ABC):
         """
         Returns true if the object exists and has the desired class name.
 
-        This might be in case an object has not yet been populated, or, if a containing object has been populated but doesn't have a particular member (e.g. not all ``SOMAMeasurement`` objects have a ``varp``).
+        This might be in case an object has not yet been populated, or, if a containing object has been populated but doesn't have a particular member (e.g. not all ``Measurement`` objects have a ``varp``).
 
         For ``tiledb://`` URIs this is a REST-server request which we'd like to cache.  However, remove-and-replace use-cases are possible and common in notebooks and it turns out caching the existence-check isn't a robust approach.
         """

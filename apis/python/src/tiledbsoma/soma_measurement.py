@@ -11,9 +11,9 @@ from .tiledb_object import TileDBObject
 from .tiledb_platform_config import TileDBPlatformConfig
 
 
-class SOMAMeasurement(CollectionBase[TileDBObject]):
+class Measurement(CollectionBase[TileDBObject]):
     """
-    A ``SOMAMeasurement`` is a sub-element of a ``Experiment``, and is otherwise a specialized ``Collection`` with pre-defined fields:
+    A ``Measurement`` is a sub-element of a ``Experiment``, and is otherwise a specialized ``Collection`` with pre-defined fields:
 
     ``var``: ``SOMADataFrame``
 
@@ -70,10 +70,10 @@ class SOMAMeasurement(CollectionBase[TileDBObject]):
         )
 
     @property
-    def soma_type(self) -> Literal["SOMAMeasurement"]:
-        return "SOMAMeasurement"
+    def soma_type(self) -> Literal["Measurement"]:
+        return "Measurement"
 
-    def create(self) -> "SOMAMeasurement":
+    def create(self) -> "Measurement":
         """
         Creates the data structure on disk/S3/cloud.
         """

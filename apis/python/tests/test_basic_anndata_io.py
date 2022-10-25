@@ -40,7 +40,7 @@ def test_import_anndata(adata):
     # pbmc-small Experiment:
     #   obs SOMADataFrame (80,)
     #   ms Collection:
-    #     mRNA SOMAMeasurement:
+    #     mRNA Measurement:
     #       X Collection:
     #         data SOMASparseNdArray (80, 20)
     #       obsp Collection:
@@ -51,7 +51,7 @@ def test_import_anndata(adata):
     #         X_pca SOMADenseNdArray (80, 19)
     #       varm Collection:
     #         PCs SOMADenseNdArray (20, 19)
-    #     raw SOMAMeasurement:
+    #     raw Measurement:
     #       var SOMADataFrame (230,)
     #       X Collection:
     #         data SOMASparseNdArray (80, 230)

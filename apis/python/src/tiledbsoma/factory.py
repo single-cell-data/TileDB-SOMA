@@ -12,13 +12,13 @@ from .soma_dataframe import SOMADataFrame
 from .soma_dense_nd_array import SOMADenseNdArray
 from .soma_experiment import Experiment
 from .soma_indexed_dataframe import SOMAIndexedDataFrame
-from .soma_measurement import SOMAMeasurement
+from .soma_measurement import Measurement
 from .soma_sparse_nd_array import SOMASparseNdArray
 from .util import SOMA_OBJECT_TYPE_METADATA_KEY
 
 SOMAObjectTypes = Union[
     Experiment,
-    SOMAMeasurement,
+    Measurement,
     Collection,
     SOMADataFrame,
     SOMAIndexedDataFrame,
@@ -72,9 +72,9 @@ def _construct_member(
     if class_name == "Experiment":
         assert object_type is None or object_type == "group"
         return Experiment(uri=member_uri, parent=parent, ctx=ctx)
-    elif class_name == "SOMAMeasurement":
+    elif class_name == "Measurement":
         assert object_type is None or object_type == "group"
-        return SOMAMeasurement(uri=member_uri, parent=parent, ctx=ctx)
+        return Measurement(uri=member_uri, parent=parent, ctx=ctx)
     elif class_name == "Collection":
         assert object_type is None or object_type == "group"
         return Collection(uri=member_uri, parent=parent, ctx=ctx)

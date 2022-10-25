@@ -95,7 +95,7 @@ def test_soma_experiment_basic(tmp_path):
     )
     experiment["ms"] = soma.Collection(uri=urljoin(basedir, "ms")).create()
 
-    measurement = soma.SOMAMeasurement(uri=f"{experiment.ms.uri}/mRNA")
+    measurement = soma.Measurement(uri=f"{experiment.ms.uri}/mRNA")
     measurement.create()
     experiment.ms.set("mRNA", measurement)
 
@@ -121,7 +121,7 @@ def test_soma_experiment_basic(tmp_path):
     assert experiment.ms == experiment["ms"]
 
     assert len(experiment.ms) == 1
-    assert isinstance(experiment.ms["mRNA"], soma.SOMAMeasurement)
+    assert isinstance(experiment.ms["mRNA"], soma.Measurement)
 
     assert len(experiment.ms["mRNA"]) == 2
     assert "mRNA" in experiment.ms
@@ -183,7 +183,7 @@ def test_soma_experiment_obs_type_constraint(tmp_path):
             type=pa.float32(), shape=(10,)
         )
     with pytest.raises(TypeError):
-        se["obs"] = soma.SOMAMeasurement(uri=(tmp_path / "D").as_uri()).create()
+        se["obs"] = soma.Measurement(uri=(tmp_path / "D").as_uri()).create()
     se["obs"] = soma.SOMADataFrame(uri=(tmp_path / "E").as_uri()).create(
         schema=pa.schema([("A", pa.int32())])
     )
@@ -205,7 +205,7 @@ def test_soma_experiment_ms_type_constraint(tmp_path):
             type=pa.float32(), shape=(10,)
         )
     with pytest.raises(TypeError):
-        se["ms"] = soma.SOMAMeasurement(uri=(tmp_path / "D").as_uri()).create()
+        se["ms"] = soma.Measurement(uri=(tmp_path / "D").as_uri()).create()
     with pytest.raises(TypeError):
         se["ms"] = soma.SOMADataFrame(uri=(tmp_path / "E").as_uri()).create(
             schema=pa.schema([("A", pa.int32())])

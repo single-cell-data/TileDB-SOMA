@@ -5,7 +5,7 @@ import tiledb
 from .soma_collection import CollectionBase
 from .soma_dataframe import SOMADataFrame
 from .soma_indexed_dataframe import SOMAIndexedDataFrame
-from .soma_measurement import SOMAMeasurement
+from .soma_measurement import Measurement
 from .tiledb_object import TileDBObject
 from .tiledb_platform_config import TileDBPlatformConfig
 
@@ -61,5 +61,5 @@ class Experiment(CollectionBase[TileDBObject]):
         return cast(Union[SOMADataFrame, SOMAIndexedDataFrame], self["obs"])
 
     @property
-    def ms(self) -> CollectionBase[SOMAMeasurement]:
-        return cast(CollectionBase[SOMAMeasurement], self["ms"])
+    def ms(self) -> CollectionBase[Measurement]:
+        return cast(CollectionBase[Measurement], self["ms"])

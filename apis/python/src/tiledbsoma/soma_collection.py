@@ -63,7 +63,7 @@ class CollectionBase(TileDBObject, MutableMapping[str, CollectionElementType]):
     """
 
     # Subclass protocol to constrain which SOMA objects types  may be set on a
-    # particular collection key. Used by Experiment and SOMAMeasurement.
+    # particular collection key. Used by Experiment and Measurement.
     _subclass_constrained_types: Dict[str, Tuple[str, ...]] = {}
 
     # The collection is persisted as a TileDB Group. The group contents are

@@ -16,7 +16,7 @@ from tiledbsoma import (
     SOMADataFrame,
     SOMADenseNdArray,
     Experiment,
-    SOMAMeasurement,
+    Measurement,
     SOMASparseNdArray,
     logging,
     util,
@@ -379,7 +379,7 @@ def from_anndata(
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     # MS
-    measurement = SOMAMeasurement(
+    measurement = Measurement(
         uri=f"{experiment.ms.uri}/{measurement_name}", ctx=ctx
     )
     measurement.create()
@@ -454,7 +454,7 @@ def from_anndata(
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     # RAW
     if anndata.raw is not None:
-        raw_measurement = SOMAMeasurement(
+        raw_measurement = Measurement(
             uri=uri_joinpath(experiment.ms.uri, "raw"), ctx=ctx
         )
         raw_measurement.create()
