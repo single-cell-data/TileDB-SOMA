@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 """
-A simple driver for ingestion of anndata to a TileDB SOMAExperiment.
+A simple driver for ingestion of anndata to a TileDB Experiment.
 
 * Invoke this with one argument /path/to/some/somename.h5ad:
   o Output will be ./tiledbsoma-data/somename
@@ -202,7 +202,7 @@ def ingest_one(
             if not os.path.exists(parent):
                 os.mkdir(parent)
 
-    exp = tiledbsoma.SOMAExperiment(
+    exp = tiledbsoma.Experiment(
         uri=output_path, tiledb_platform_config=tiledb_platform_config
     )
     exp_name = os.path.splitext(os.path.basename(output_path))[0]
@@ -255,7 +255,7 @@ def ingest_one(
 
         tiledbsoma.logging.logger.info("")
         tiledbsoma.logging.logger.info(
-            f"Added SOMAExperiment {exp_name} to Collection {soco_dir}"
+            f"Added Experiment {exp_name} to Collection {soco_dir}"
         )
 
 

@@ -15,7 +15,7 @@ from tiledbsoma import (
     Collection,
     SOMADataFrame,
     SOMADenseNdArray,
-    SOMAExperiment,
+    Experiment,
     SOMAMeasurement,
     SOMASparseNdArray,
     logging,
@@ -30,7 +30,7 @@ from .util import uri_joinpath
 
 # ----------------------------------------------------------------
 def from_h5ad(
-    experiment: SOMAExperiment,
+    experiment: Experiment,
     input_path: Path,
     measurement_name: str,
     ctx: Optional[tiledb.Ctx] = None,
@@ -43,10 +43,10 @@ def from_h5ad(
 
 # ----------------------------------------------------------------
 def _from_h5ad_common(
-    experiment: SOMAExperiment,
+    experiment: Experiment,
     input_path: Path,
     measurement_name: str,
-    handler_func: Callable[[SOMAExperiment, ad.AnnData, str, tiledb.Ctx], None],
+    handler_func: Callable[[Experiment, ad.AnnData, str, tiledb.Ctx], None],
     ctx: Optional[tiledb.Ctx] = None,
 ) -> None:
     """
@@ -58,7 +58,7 @@ def _from_h5ad_common(
     s = util.get_start_stamp()
     logging.log_io(
         None,
-        f"START  SOMAExperiment.from_h5ad {input_path}",
+        f"START  Experiment.from_h5ad {input_path}",
     )
 
     logging.log_io(None, f"{experiment._indent}START  READING {input_path}")
@@ -76,7 +76,7 @@ def _from_h5ad_common(
         None,
         util.format_elapsed(
             s,
-            f"FINISH SOMAExperiment.from_h5ad {input_path}",
+            f"FINISH Experiment.from_h5ad {input_path}",
         ),
     )
 
@@ -331,13 +331,13 @@ def create_from_matrix(
 
 # ----------------------------------------------------------------
 def from_anndata(
-    experiment: SOMAExperiment,
+    experiment: Experiment,
     anndata: ad.AnnData,
     measurement_name: str,
     ctx: Optional[tiledb.Ctx] = None,
 ) -> None:
     """
-    Top-level writer method for creating a TileDB group for a ``SOMAExperiment`` object.
+    Top-level writer method for creating a TileDB group for a ``Experiment`` object.
     """
     if not isinstance(anndata, ad.AnnData):
         raise Exception(
@@ -488,7 +488,7 @@ def from_anndata(
 
 # ----------------------------------------------------------------
 def to_h5ad(
-    experiment: SOMAExperiment,
+    experiment: Experiment,
     h5ad_path: Path,
     measurement_name: str,
     ctx: Optional[tiledb.Ctx] = None,
@@ -498,7 +498,7 @@ def to_h5ad(
     """
 
     s = util.get_start_stamp()
-    logging.log_io(None, f"START  SOMAExperiment.to_h5ad -> {h5ad_path}")
+    logging.log_io(None, f"START  Experiment.to_h5ad -> {h5ad_path}")
 
     anndata = to_anndata(experiment, measurement_name=measurement_name)
 
@@ -514,13 +514,13 @@ def to_h5ad(
 
     logging.log_io(
         None,
-        util.format_elapsed(s, f"FINISH SOMAExperiment.to_h5ad -> {h5ad_path}"),
+        util.format_elapsed(s, f"FINISH Experiment.to_h5ad -> {h5ad_path}"),
     )
 
 
 # ----------------------------------------------------------------
 def to_anndata(
-    experiment: SOMAExperiment,
+    experiment: Experiment,
     *,
     # TODO: set a better name as capitalized-const
     # TODO: maybe if there are multiple measurements, default to the first one not named 'raw'
@@ -537,7 +537,7 @@ def to_anndata(
     """
 
     s = util.get_start_stamp()
-    logging.log_io(None, "START  SOMAExperiment.to_anndata")
+    logging.log_io(None, "START  Experiment.to_anndata")
 
     measurement = experiment.ms[measurement_name]
 
@@ -631,7 +631,7 @@ def to_anndata(
 
     logging.log_io(
         None,
-        util.format_elapsed(s, "FINISH SOMAExperiment.to_anndata"),
+        util.format_elapsed(s, "FINISH Experiment.to_anndata"),
     )
 
     return anndata

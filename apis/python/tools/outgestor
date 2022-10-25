@@ -81,7 +81,7 @@ def main():
     if verbose:
         tiledbsoma.logging.info()
 
-    soma = tiledbsoma.SOMAExperiment(input_path)
+    soma = tiledbsoma.Experiment(input_path)
     tiledbsoma.io.to_h5ad(soma, output_path, measurement_name="mRNA")
 
     logger.info(f"Wrote {output_path}")

@@ -10,11 +10,11 @@ from .tiledb_object import TileDBObject
 from .tiledb_platform_config import TileDBPlatformConfig
 
 
-class SOMAExperiment(CollectionBase[TileDBObject]):
+class Experiment(CollectionBase[TileDBObject]):
     """
     ``obs``: Primary annotations on the observation axis. The contents of the
              ``soma_rowid`` pseudo-column define the observation index domain,
-             aka ``obsid``. All observations for the SOMAExperiment must be
+             aka ``obsid``. All observations for the Experiment must be
              defined in this dataframe.
 
     ``ms``: A collection of named measurements.
@@ -46,10 +46,10 @@ class SOMAExperiment(CollectionBase[TileDBObject]):
         )
 
     @property
-    def soma_type(self) -> Literal["SOMAExperiment"]:
-        return "SOMAExperiment"
+    def soma_type(self) -> Literal["Experiment"]:
+        return "Experiment"
 
-    def create(self) -> "SOMAExperiment":
+    def create(self) -> "Experiment":
         """
         Creates the data structure on disk/S3/cloud.
         """

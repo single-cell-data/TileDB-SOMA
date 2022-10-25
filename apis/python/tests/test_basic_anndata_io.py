@@ -33,11 +33,11 @@ def test_import_anndata(adata):
     orig = adata
 
     # Ingest
-    exp = tiledbsoma.SOMAExperiment(output_path)
+    exp = tiledbsoma.Experiment(output_path)
     tiledbsoma.io.from_anndata(exp, orig, "mRNA")
 
     # Structure:
-    # pbmc-small SOMAExperiment:
+    # pbmc-small Experiment:
     #   obs SOMADataFrame (80,)
     #   ms Collection:
     #     mRNA SOMAMeasurement:
@@ -57,7 +57,7 @@ def test_import_anndata(adata):
     #         data SOMASparseNdArray (80, 230)
 
     with tiledb.Group(output_path) as G:
-        assert G.meta[tiledbsoma.util.SOMA_OBJECT_TYPE_METADATA_KEY] == "SOMAExperiment"
+        assert G.meta[tiledbsoma.util.SOMA_OBJECT_TYPE_METADATA_KEY] == "Experiment"
 
     # Check obs
     df = exp.obs.read_as_pandas_all()
@@ -167,7 +167,7 @@ def test_import_anndata(adata):
 #    orig = adata
 #
 #    # Ingest
-#    exp = tiledbsoma.SOMAExperiment(output_path)
+#    exp = tiledbsoma.Experiment(output_path)
 #    tiledbsoma.io.from_anndata(exp, orig)
 #
 #    readback = tiledbsoma.io.to_anndata(exp)

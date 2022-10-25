@@ -10,14 +10,14 @@ import tiledb
 from .soma_collection import Collection, CollectionBase
 from .soma_dataframe import SOMADataFrame
 from .soma_dense_nd_array import SOMADenseNdArray
-from .soma_experiment import SOMAExperiment
+from .soma_experiment import Experiment
 from .soma_indexed_dataframe import SOMAIndexedDataFrame
 from .soma_measurement import SOMAMeasurement
 from .soma_sparse_nd_array import SOMASparseNdArray
 from .util import SOMA_OBJECT_TYPE_METADATA_KEY
 
 SOMAObjectTypes = Union[
-    SOMAExperiment,
+    Experiment,
     SOMAMeasurement,
     Collection,
     SOMADataFrame,
@@ -69,9 +69,9 @@ def _construct_member(
     assert class_name is not None
 
     # Now invoke the appropriate per-class constructor.
-    if class_name == "SOMAExperiment":
+    if class_name == "Experiment":
         assert object_type is None or object_type == "group"
-        return SOMAExperiment(uri=member_uri, parent=parent, ctx=ctx)
+        return Experiment(uri=member_uri, parent=parent, ctx=ctx)
     elif class_name == "SOMAMeasurement":
         assert object_type is None or object_type == "group"
         return SOMAMeasurement(uri=member_uri, parent=parent, ctx=ctx)

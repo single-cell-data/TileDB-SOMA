@@ -59,11 +59,11 @@ class CollectionBase(TileDBObject, MutableMapping[str, CollectionElementType]):
     """
     Contains a key-value mapping where the keys are string names and the values
     are any SOMA-defined foundational or composed type, including ``Collection``,
-    ``SOMADataFrame``, ``SOMADenseNdArray``, ``SOMASparseNdArray`` or ``SOMAExperiment``.
+    ``SOMADataFrame``, ``SOMADenseNdArray``, ``SOMASparseNdArray`` or ``Experiment``.
     """
 
     # Subclass protocol to constrain which SOMA objects types  may be set on a
-    # particular collection key. Used by SOMAExperiment and SOMAMeasurement.
+    # particular collection key. Used by Experiment and SOMAMeasurement.
     _subclass_constrained_types: Dict[str, Tuple[str, ...]] = {}
 
     # The collection is persisted as a TileDB Group. The group contents are

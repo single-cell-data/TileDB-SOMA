@@ -13,7 +13,7 @@ from .tiledb_platform_config import TileDBPlatformConfig
 
 class SOMAMeasurement(CollectionBase[TileDBObject]):
     """
-    A ``SOMAMeasurement`` is a sub-element of a ``SOMAExperiment``, and is otherwise a specialized ``Collection`` with pre-defined fields:
+    A ``SOMAMeasurement`` is a sub-element of a ``Experiment``, and is otherwise a specialized ``Collection`` with pre-defined fields:
 
     ``var``: ``SOMADataFrame``
 

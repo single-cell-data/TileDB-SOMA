@@ -87,7 +87,7 @@ def test_soma_experiment_basic(tmp_path):
     basedir = tmp_path.as_uri()
 
     # ----------------------------------------------------------------
-    experiment = soma.SOMAExperiment(basedir)
+    experiment = soma.Experiment(basedir)
     experiment.create()
 
     experiment["obs"] = create_and_populate_obs(
@@ -157,7 +157,7 @@ def test_soma_experiment_basic(tmp_path):
     assert not soma.Collection(experiment.obs.uri).exists()
 
     # Paths do not exist
-    assert not soma.SOMAExperiment("/nonesuch/no/nope/nope/never").exists()
+    assert not soma.Experiment("/nonesuch/no/nope/nope/never").exists()
     assert not soma.SOMADataFrame("/nonesuch/no/nope/nope/never").exists()
 
     # ----------------------------------------------------------------
@@ -170,7 +170,7 @@ def test_soma_experiment_obs_type_constraint(tmp_path):
     only allow a constrained set of types to be set in their slots.
     """
 
-    se = soma.SOMAExperiment(uri=tmp_path.as_uri()).create()
+    se = soma.Experiment(uri=tmp_path.as_uri()).create()
 
     with pytest.raises(TypeError):
         se["obs"] = soma.Collection(uri=(tmp_path / "A").as_uri()).create()
@@ -193,7 +193,7 @@ def test_soma_experiment_obs_type_constraint(tmp_path):
 
 
 def test_soma_experiment_ms_type_constraint(tmp_path):
-    se = soma.SOMAExperiment(uri=tmp_path.as_uri()).create()
+    se = soma.Experiment(uri=tmp_path.as_uri()).create()
 
     se["ms"] = soma.Collection(uri=(tmp_path / "A").as_uri()).create()
     with pytest.raises(TypeError):

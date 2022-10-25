@@ -44,7 +44,7 @@ from .soma_collection import Collection
 from .soma_dataframe import SOMADataFrame
 from .soma_dense_nd_array import SOMADenseNdArray
 from .soma_exception import SOMADoesNotExistError, SOMAError
-from .soma_experiment import SOMAExperiment
+from .soma_experiment import Experiment
 from .soma_indexed_dataframe import SOMAIndexedDataFrame
 from .soma_measurement import SOMAMeasurement
 from .soma_metadata_mapping import SOMAMetadataMapping
@@ -65,7 +65,7 @@ __all__ = [
     "SOMADataFrame",
     "SOMADenseNdArray",
     "SOMADoesNotExistError",
-    "SOMAExperiment",
+    "Experiment",
     "SOMAError",
     "SOMAIndexedDataFrame",
     "SOMAMeasurement",
