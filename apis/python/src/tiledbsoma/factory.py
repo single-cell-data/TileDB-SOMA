@@ -10,6 +10,7 @@ import tiledb
 from .collection import Collection, CollectionBase
 from .dataframe import DataFrame
 from .dense_nd_array import DenseNdArray
+from .exception import SOMAError
 from .experiment import Experiment
 from .indexed_dataframe import IndexedDataFrame
 from .measurement import Measurement
@@ -68,7 +69,7 @@ def _construct_member(
 
     assert spec_name is not None
     if spec_name not in SPEC_NAMES_TO_CLASS_NAMES:
-        raise Exception(f'name "{spec_name}" unrecognized')
+        raise SOMAError(f'name "{spec_name}" unrecognized')
     class_name = SPEC_NAMES_TO_CLASS_NAMES[spec_name]
 
     # Now invoke the appropriate per-class constructor.
@@ -94,6 +95,6 @@ def _construct_member(
         assert object_type is None or object_type == "array"
         return SparseNdArray(uri=member_uri, parent=parent, ctx=ctx)
     else:
-        raise Exception(
+        raise SOMAError(
             f'internal coding error: class name "{class_name}" unrecognized'
         )
