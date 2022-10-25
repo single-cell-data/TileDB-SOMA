@@ -16,7 +16,7 @@ from .soma_measurement import Measurement
 from .soma_sparse_nd_array import SparseNdArray
 from .util import SOMA_OBJECT_TYPE_METADATA_KEY
 
-SOMAObjectTypes = Union[
+ObjectTypes = Union[
     Experiment,
     Measurement,
     Collection,
@@ -32,7 +32,7 @@ def _construct_member(
     parent: CollectionBase[Any],
     ctx: Optional[tiledb.Ctx] = None,
     object_type: Optional[str] = None,
-) -> Optional[SOMAObjectTypes]:
+) -> Optional[ObjectTypes]:
     """
     Given a name/uri from a Collection, create a SOMA object matching the type
     of the underlying object. In other words, if the name/uri points to a DataFrame,
