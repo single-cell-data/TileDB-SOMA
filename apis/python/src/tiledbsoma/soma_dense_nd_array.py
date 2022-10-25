@@ -13,7 +13,7 @@ from .tiledb_platform_config import TileDBPlatformConfig
 from .types import NTuple, SOMADenseNdCoordinates, SOMAResultOrder
 
 
-class SOMADenseNdArray(TileDBArray):
+class DenseNdArray(TileDBArray):
     """
     Represents ``X`` and others.
     """
@@ -37,16 +37,16 @@ class SOMADenseNdArray(TileDBArray):
         )
 
     @property
-    def soma_type(self) -> Literal["SOMADenseNdArray"]:
-        return "SOMADenseNdArray"
+    def soma_type(self) -> Literal["DenseNdArray"]:
+        return "DenseNdArray"
 
     def create(
         self,
         type: pa.DataType,
         shape: Union[NTuple, List[int]],
-    ) -> "SOMADenseNdArray":
+    ) -> "DenseNdArray":
         """
-        Create a ``SOMADenseNdArray`` named with the URI.
+        Create a ``DenseNdArray`` named with the URI.
 
         :param type: an Arrow type defining the type of each element in the array. If the type is unsupported, an error will be raised.
 
@@ -61,7 +61,7 @@ class SOMADenseNdArray(TileDBArray):
 
         if not pa.types.is_primitive(type):
             raise TypeError(
-                "Unsupported type - SOMADenseNdArray only supports primtive Arrow types"
+                "Unsupported type - DenseNdArray only supports primtive Arrow types"
             )
 
         level = self._tiledb_platform_config.string_dim_zstd_level
@@ -184,7 +184,7 @@ class SOMADenseNdArray(TileDBArray):
 
         values - pyarrow.Tensor
             Define the values to be written to the subarray.  Must have same shape
-            as defind by ``coords``, and the type must match the SOMADenseNdArray.
+            as defind by ``coords``, and the type must match the DenseNdArray.
         """
         with self._tiledb_open("w") as A:
             A[coords] = values.to_numpy()

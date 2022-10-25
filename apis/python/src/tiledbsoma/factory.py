@@ -9,11 +9,11 @@ import tiledb
 
 from .soma_collection import Collection, CollectionBase
 from .soma_dataframe import DataFrame
-from .soma_dense_nd_array import SOMADenseNdArray
+from .soma_dense_nd_array import DenseNdArray
 from .soma_experiment import Experiment
 from .soma_indexed_dataframe import IndexedDataFrame
 from .soma_measurement import Measurement
-from .soma_sparse_nd_array import SOMASparseNdArray
+from .soma_sparse_nd_array import SparseNdArray
 from .util import SOMA_OBJECT_TYPE_METADATA_KEY
 
 SOMAObjectTypes = Union[
@@ -22,8 +22,8 @@ SOMAObjectTypes = Union[
     Collection,
     DataFrame,
     IndexedDataFrame,
-    SOMADenseNdArray,
-    SOMASparseNdArray,
+    DenseNdArray,
+    SparseNdArray,
 ]
 
 
@@ -84,12 +84,12 @@ def _construct_member(
     elif class_name == "IndexedDataFrame":
         assert object_type is None or object_type == "array"
         return IndexedDataFrame(uri=member_uri, parent=parent, ctx=ctx)
-    elif class_name == "SOMADenseNdArray":
+    elif class_name == "DenseNdArray":
         assert object_type is None or object_type == "array"
-        return SOMADenseNdArray(uri=member_uri, parent=parent, ctx=ctx)
-    elif class_name == "SOMASparseNdArray":
+        return DenseNdArray(uri=member_uri, parent=parent, ctx=ctx)
+    elif class_name == "SparseNdArray":
         assert object_type is None or object_type == "array"
-        return SOMASparseNdArray(uri=member_uri, parent=parent, ctx=ctx)
+        return SparseNdArray(uri=member_uri, parent=parent, ctx=ctx)
     else:
         # TODO: SOMA needs better exception typing
         raise Exception(f'class name "{class_name}" unrecognized')

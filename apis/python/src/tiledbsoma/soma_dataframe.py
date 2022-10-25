@@ -22,7 +22,7 @@ class DataFrame(TileDBArray):
     """
     Represents ``obs``, ``var``, and others.
 
-    A ``DataFrame`` contains a "pseudo-column" called ``soma_rowid``, of type int64 and domain [0,num_rows).  The ``soma_rowid`` pseudo-column contains a unique value for each row in the ``DataFrame``, and is intended to act as a join key for other objects, such as a ``SOMASparseNdArray``.
+    A ``DataFrame`` contains a "pseudo-column" called ``soma_rowid``, of type int64 and domain [0,num_rows).  The ``soma_rowid`` pseudo-column contains a unique value for each row in the ``DataFrame``, and is intended to act as a join key for other objects, such as a ``SparseNdArray``.
     """
 
     _cached_is_sparse: Optional[bool]

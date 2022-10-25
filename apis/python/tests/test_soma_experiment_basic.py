@@ -58,8 +58,8 @@ def create_and_populate_var(var: soma.DataFrame) -> soma.DataFrame:
 
 # ----------------------------------------------------------------
 def create_and_populate_sparse_nd_array(
-    sparse_nd_array: soma.SOMASparseNdArray,
-) -> soma.SOMASparseNdArray:
+    sparse_nd_array: soma.SparseNdArray,
+) -> soma.SparseNdArray:
     nr = 5
     nc = 3
 
@@ -105,7 +105,7 @@ def test_soma_experiment_basic(tmp_path):
     measurement["X"] = soma.Collection(uri=urljoin(measurement.uri, "X")).create()
 
     nda = create_and_populate_sparse_nd_array(
-        soma.SOMASparseNdArray(uri=urljoin(measurement.X.uri, "data"))
+        soma.SparseNdArray(uri=urljoin(measurement.X.uri, "data"))
     )
     measurement.X.set("data", nda)
 
@@ -135,7 +135,7 @@ def test_soma_experiment_basic(tmp_path):
     assert len(experiment.ms["mRNA"].X) == 1
     assert "data" in experiment.ms["mRNA"].X
     assert "nonesuch" not in experiment.ms["mRNA"].X
-    assert isinstance(experiment.ms["mRNA"].X["data"], soma.SOMASparseNdArray)
+    assert isinstance(experiment.ms["mRNA"].X["data"], soma.SparseNdArray)
 
     # >>> experiment.ms.mRNA.X.data._tiledb_open().df[:]
     #    __dim_0  __dim_1  data
@@ -175,11 +175,11 @@ def test_soma_experiment_obs_type_constraint(tmp_path):
     with pytest.raises(TypeError):
         se["obs"] = soma.Collection(uri=(tmp_path / "A").as_uri()).create()
     with pytest.raises(TypeError):
-        se["obs"] = soma.SOMASparseNdArray(uri=(tmp_path / "B").as_uri()).create(
+        se["obs"] = soma.SparseNdArray(uri=(tmp_path / "B").as_uri()).create(
             type=pa.float32(), shape=(10,)
         )
     with pytest.raises(TypeError):
-        se["obs"] = soma.SOMADenseNdArray(uri=(tmp_path / "C").as_uri()).create(
+        se["obs"] = soma.DenseNdArray(uri=(tmp_path / "C").as_uri()).create(
             type=pa.float32(), shape=(10,)
         )
     with pytest.raises(TypeError):
@@ -197,11 +197,11 @@ def test_soma_experiment_ms_type_constraint(tmp_path):
 
     se["ms"] = soma.Collection(uri=(tmp_path / "A").as_uri()).create()
     with pytest.raises(TypeError):
-        se["ms"] = soma.SOMASparseNdArray(uri=(tmp_path / "B").as_uri()).create(
+        se["ms"] = soma.SparseNdArray(uri=(tmp_path / "B").as_uri()).create(
             type=pa.float32(), shape=(10,)
         )
     with pytest.raises(TypeError):
-        se["ms"] = soma.SOMADenseNdArray(uri=(tmp_path / "C").as_uri()).create(
+        se["ms"] = soma.DenseNdArray(uri=(tmp_path / "C").as_uri()).create(
             type=pa.float32(), shape=(10,)
         )
     with pytest.raises(TypeError):

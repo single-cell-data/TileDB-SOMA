@@ -42,13 +42,13 @@ from .general_utilities import (
 from .query_condition import QueryCondition  # type: ignore
 from .soma_collection import Collection
 from .soma_dataframe import DataFrame
-from .soma_dense_nd_array import SOMADenseNdArray
+from .soma_dense_nd_array import DenseNdArray
 from .soma_exception import SOMADoesNotExistError, SOMAError
 from .soma_experiment import Experiment
 from .soma_indexed_dataframe import IndexedDataFrame
 from .soma_measurement import Measurement
 from .soma_metadata_mapping import SOMAMetadataMapping
-from .soma_sparse_nd_array import SOMASparseNdArray
+from .soma_sparse_nd_array import SparseNdArray
 from .tiledb_array import TileDBArray
 from .tiledb_object import TileDBObject
 from .tiledb_platform_config import TileDBPlatformConfig
@@ -63,13 +63,13 @@ __all__ = [
     "TileDBArray",
     "Collection",
     "DataFrame",
-    "SOMADenseNdArray",
+    "DenseNdArray",
     "SOMADoesNotExistError",
     "Experiment",
     "SOMAError",
     "IndexedDataFrame",
     "Measurement",
     "SOMAMetadataMapping",
-    "SOMASparseNdArray",
+    "SparseNdArray",
     "QueryCondition",
 ]

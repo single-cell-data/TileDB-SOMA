@@ -43,14 +43,14 @@ def src_matrix(request):
 )
 def test_soma_io_create_from_matrix_Dense_nd_array(tmp_path, plfm_config, src_matrix):
     """
-    Test soma.io.from_matrix to a SOMADenseNdArray.
+    Test soma.io.from_matrix to a DenseNdArray.
 
     Cases:
     * src matrix is:  csc, csr, ndarray
     * _tiledb_platform_config.write_X_chunked: True or False
     * src_array bigger or smaller than _tiledb_platform_config.goal_chunk_nnz
     """
-    snda = soma.SOMADenseNdArray(
+    snda = soma.DenseNdArray(
         tmp_path.as_posix(), tiledb_platform_config=plfm_config
     )
     somaio.create_from_matrix(snda, src_matrix)
@@ -89,14 +89,14 @@ def test_soma_io_create_from_matrix_Dense_nd_array(tmp_path, plfm_config, src_ma
 )
 def test_soma_io_create_from_matrix_Sparse_nd_array(tmp_path, plfm_config, src_matrix):
     """
-    Test soma.io.from_matrix to a SOMASparseNdArray.
+    Test soma.io.from_matrix to a SparseNdArray.
 
     Cases:
     * src matrix is:  csc, csr, ndarray
     * _tiledb_platform_config.write_X_chunked: True or False
     * src_array bigger or smaller than _tiledb_platform_config.goal_chunk_nnz
     """
-    snda = soma.SOMASparseNdArray(
+    snda = soma.SparseNdArray(
         tmp_path.as_posix(), tiledb_platform_config=plfm_config
     )
     somaio.create_from_matrix(snda, src_matrix)

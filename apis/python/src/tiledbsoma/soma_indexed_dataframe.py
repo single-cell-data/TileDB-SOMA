@@ -22,7 +22,7 @@ class IndexedDataFrame(TileDBArray):
     """
     Represents ``obs``, ``var``, and others.
 
-    All ``IndexedDataFrame`` must contain a column called ``soma_joinid``, of type ``int64``. The ``soma_joinid`` column contains a unique value for each row in the ``IndexedDataFrame``, and intended to act as a joint key for other objects, such as ``SOMASparseNdArray``.
+    All ``IndexedDataFrame`` must contain a column called ``soma_joinid``, of type ``int64``. The ``soma_joinid`` column contains a unique value for each row in the ``IndexedDataFrame``, and intended to act as a joint key for other objects, such as ``SparseNdArray``.
     """
 
     _index_column_names: Union[Tuple[()], Tuple[str, ...]]

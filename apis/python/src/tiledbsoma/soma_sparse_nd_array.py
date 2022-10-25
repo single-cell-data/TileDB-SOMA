@@ -16,7 +16,7 @@ from .tiledb_platform_config import TileDBPlatformConfig
 from .types import NTuple, SOMASparseNdCoordinates
 
 
-class SOMASparseNdArray(TileDBArray):
+class SparseNdArray(TileDBArray):
     """
     Represents ``X`` and others.
     """
@@ -41,16 +41,16 @@ class SOMASparseNdArray(TileDBArray):
         )
 
     @property
-    def soma_type(self) -> Literal["SOMASparseNdArray"]:
-        return "SOMASparseNdArray"
+    def soma_type(self) -> Literal["SparseNdArray"]:
+        return "SparseNdArray"
 
     def create(
         self,
         type: pa.DataType,
         shape: Union[NTuple, List[int]],
-    ) -> "SOMASparseNdArray":
+    ) -> "SparseNdArray":
         """
-        Create a ``SOMASparseNdArray`` named with the URI.
+        Create a ``SparseNdArray`` named with the URI.
 
         :param type: an Arrow type defining the type of each element in the array. If the type is unsupported, an error will be raised.
 
@@ -65,7 +65,7 @@ class SOMASparseNdArray(TileDBArray):
 
         if not pa.types.is_primitive(type):
             raise TypeError(
-                "Unsupported type - SOMADenseNdArray only supports primtive Arrow types"
+                "Unsupported type - DenseNdArray only supports primtive Arrow types"
             )
 
         level = self._tiledb_platform_config.string_dim_zstd_level
@@ -91,7 +91,7 @@ class SOMASparseNdArray(TileDBArray):
             )
         ]
 
-        # TODO: code-dedupe w/ regard to SOMADenseNdArray. The two creates are
+        # TODO: code-dedupe w/ regard to DenseNdArray. The two creates are
         # almost identical & could share a common parent-class _create() method.
         sch = tiledb.ArraySchema(
             domain=dom,
@@ -230,7 +230,7 @@ class SOMASparseNdArray(TileDBArray):
                 schema=A.schema,
             )
 
-            # TODO: make a util function to be shared with SOMADenseNdArray
+            # TODO: make a util function to be shared with DenseNdArray
             # coords are a tuple of (int or slice-of-int)
             if len(coords) == 1 and coords[0] == slice(None):
                 # Special case which tiledb-py supports, so we should too
@@ -321,7 +321,7 @@ class SOMASparseNdArray(TileDBArray):
         ],
     ) -> None:
         """
-        Write an Arrow sparse tensor to the SOMASparseNdArray. The coordinates in the Arrow
+        Write an Arrow sparse tensor to the SparseNdArray. The coordinates in the Arrow
         SparseTensor will be interpreted as the coordinates to write to.
 
         Currently supports the _experimental_ Arrow SparseCOOTensor, SparseCSRMatrix and
@@ -337,7 +337,7 @@ class SOMASparseNdArray(TileDBArray):
         if isinstance(tensor, (pa.SparseCSCMatrix, pa.SparseCSRMatrix)):
             if self.ndim != 2:
                 raise ValueError(
-                    f"Unable to write 2D Arrow sparse matrix to {self.ndim}D SOMASparseNdArray"
+                    f"Unable to write 2D Arrow sparse matrix to {self.ndim}D SparseNdArray"
                 )
             # TODO: the `to_scipy` function is not zero copy. Need to explore zero-copy options.
             sp = tensor.to_scipy().tocoo()

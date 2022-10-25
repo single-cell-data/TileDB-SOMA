@@ -14,10 +14,10 @@ import tiledbsoma.util_ann as util_ann
 from tiledbsoma import (
     Collection,
     DataFrame,
-    SOMADenseNdArray,
+    DenseNdArray,
     Experiment,
     Measurement,
-    SOMASparseNdArray,
+    SparseNdArray,
     logging,
     util,
     util_scipy,
@@ -151,10 +151,10 @@ def _write_dataframe(
 
 
 def _write_matrix_to_denseNdArray(
-    soma_ndarray: SOMADenseNdArray,
+    soma_ndarray: DenseNdArray,
     src_matrix: Union[np.ndarray, sp.csr_matrix, sp.csc_matrix],
 ) -> None:
-    """Write a matrix to an empty SOMADenseNdArray"""
+    """Write a matrix to an empty DenseNdArray"""
 
     # Write all at once?
     if soma_ndarray._tiledb_platform_config.write_X_chunked:
@@ -213,10 +213,10 @@ def _write_matrix_to_denseNdArray(
 
 
 def _write_matrix_to_sparseNdArray(
-    soma_ndarray: SOMASparseNdArray,
+    soma_ndarray: SparseNdArray,
     src_matrix: Union[np.ndarray, sp.csr_matrix, sp.csc_matrix],
 ) -> None:
-    """Write a matrix to an empty SOMADenseNdArray"""
+    """Write a matrix to an empty DenseNdArray"""
 
     def _coo_to_table(mat_coo: sp.coo_matrix, axis: int = 0, base: int = 0) -> pa.Table:
         pydict = {
@@ -299,7 +299,7 @@ def _write_matrix_to_sparseNdArray(
 
 
 def create_from_matrix(
-    soma_ndarray: Union[SOMADenseNdArray, SOMASparseNdArray],
+    soma_ndarray: Union[DenseNdArray, SparseNdArray],
     src_matrix: Union[np.ndarray, sp.csr_matrix, sp.csc_matrix],
 ) -> None:
     """
@@ -307,7 +307,7 @@ def create_from_matrix(
     """
     assert not soma_ndarray.exists()
     assert src_matrix.ndim == 2
-    assert soma_ndarray.soma_type in ("SOMADenseNdArray", "SOMASparseNdArray")
+    assert soma_ndarray.soma_type in ("DenseNdArray", "SparseNdArray")
 
     s = util.get_start_stamp()
     logging.log_io(None, f"{soma_ndarray._indent}START  WRITING {soma_ndarray.uri}")
@@ -316,7 +316,7 @@ def create_from_matrix(
         type=pa.from_numpy_dtype(src_matrix.dtype), shape=src_matrix.shape
     )
 
-    if soma_ndarray.soma_type == "SOMADenseNdArray":
+    if soma_ndarray.soma_type == "DenseNdArray":
         _write_matrix_to_denseNdArray(soma_ndarray, src_matrix)
     else:  # SOMmASparseNdArray
         _write_matrix_to_sparseNdArray(soma_ndarray, src_matrix)
@@ -397,12 +397,12 @@ def from_anndata(
 
     # TODO: more types to check?
     if isinstance(anndata.X, np.ndarray):
-        ddata = SOMADenseNdArray(uri=uri_joinpath(measurement.X.uri, "data"), ctx=ctx)
+        ddata = DenseNdArray(uri=uri_joinpath(measurement.X.uri, "data"), ctx=ctx)
         # Code here and in else-block duplicated for linter appeasement
         create_from_matrix(ddata, anndata.X)
         measurement.X.set("data", ddata)
     else:
-        sdata = SOMASparseNdArray(uri=uri_joinpath(measurement.X.uri, "data"), ctx=ctx)
+        sdata = SparseNdArray(uri=uri_joinpath(measurement.X.uri, "data"), ctx=ctx)
         create_from_matrix(sdata, anndata.X)
         measurement.X.set("data", sdata)
 
@@ -414,7 +414,7 @@ def from_anndata(
             uri=uri_joinpath(measurement.uri, "obsm")
         ).create()
         for key in anndata.obsm.keys():
-            arr = SOMADenseNdArray(uri=uri_joinpath(measurement.obsm.uri, key), ctx=ctx)
+            arr = DenseNdArray(uri=uri_joinpath(measurement.obsm.uri, key), ctx=ctx)
             create_from_matrix(arr, anndata.obsm[key])
             measurement.obsm.set(key, arr)
 
@@ -423,7 +423,7 @@ def from_anndata(
             uri=uri_joinpath(measurement.uri, "varm")
         ).create()
         for key in anndata.varm.keys():
-            darr = SOMADenseNdArray(
+            darr = DenseNdArray(
                 uri=uri_joinpath(measurement.varm.uri, key), ctx=ctx
             )
             create_from_matrix(darr, anndata.varm[key])
@@ -434,7 +434,7 @@ def from_anndata(
             uri=uri_joinpath(measurement.uri, "obsp")
         ).create()
         for key in anndata.obsp.keys():
-            sarr = SOMASparseNdArray(
+            sarr = SparseNdArray(
                 uri=uri_joinpath(measurement.obsp.uri, key), ctx=ctx
             )
             create_from_matrix(sarr, anndata.obsp[key])
@@ -445,7 +445,7 @@ def from_anndata(
             uri=uri_joinpath(measurement.uri, "varp")
         ).create()
         for key in anndata.varp.keys():
-            sarr = SOMASparseNdArray(
+            sarr = SparseNdArray(
                 uri=uri_joinpath(measurement.varp.uri, key), ctx=ctx
             )
             create_from_matrix(sarr, anndata.varp[key])
@@ -468,7 +468,7 @@ def from_anndata(
             uri=uri_joinpath(raw_measurement.uri, "X")
         ).create()
 
-        rawXdata = SOMASparseNdArray(
+        rawXdata = SparseNdArray(
             uri=uri_joinpath(raw_measurement.X.uri, "data"), ctx=ctx
         )
         create_from_matrix(rawXdata, anndata.raw.X)
@@ -554,10 +554,10 @@ def to_anndata(
     X_data = measurement.X["data"]
     assert X_data is not None
     X_dtype = None  # some datasets have no X
-    if type(X_data) == SOMADenseNdArray:
+    if type(X_data) == DenseNdArray:
         X_ndarray = X_data.read_numpy((slice(None), slice(None)))
         X_dtype = X_ndarray.dtype
-    elif type(X_data) == SOMASparseNdArray:
+    elif type(X_data) == SparseNdArray:
         X_mat = X_data.read_as_pandas_all()  # TODO: CSR/CSC options ...
         X_csr = util_scipy.csr_from_tiledb_df(X_mat, nobs, nvar)
         X_dtype = X_csr.dtype

@@ -42,19 +42,19 @@ def test_import_anndata(adata):
     #   ms Collection:
     #     mRNA Measurement:
     #       X Collection:
-    #         data SOMASparseNdArray (80, 20)
+    #         data SparseNdArray (80, 20)
     #       obsp Collection:
-    #         distances SOMASparseNdArray (80, 80)
+    #         distances SparseNdArray (80, 80)
     #       var DataFrame (20,)
     #       obsm Collection:
-    #         X_tsne SOMADenseNdArray (80, 2)
-    #         X_pca SOMADenseNdArray (80, 19)
+    #         X_tsne DenseNdArray (80, 2)
+    #         X_pca DenseNdArray (80, 19)
     #       varm Collection:
-    #         PCs SOMADenseNdArray (20, 19)
+    #         PCs DenseNdArray (20, 19)
     #     raw Measurement:
     #       var DataFrame (230,)
     #       X Collection:
-    #         data SOMASparseNdArray (80, 230)
+    #         data SparseNdArray (80, 230)
 
     with tiledb.Group(output_path) as G:
         assert G.meta[tiledbsoma.util.SOMA_OBJECT_TYPE_METADATA_KEY] == "Experiment"
