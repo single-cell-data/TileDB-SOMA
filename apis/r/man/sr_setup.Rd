@@ -39,7 +39,7 @@ class so that iterative access over parts of a (large) array is possible.
 ctx <- tiledb_ctx()
 sr <- sr_setup(ctx@ptr, uri, "warn")
 rl <- data.frame()
-while (!tiledbsoma:::sr_complete(sr)) {
+while (nrow(rl) == 0 || !tiledbsoma:::sr_complete(sr)) {
     dat <- tiledbsoma:::sr_next(sr)
     dat |>
         arch::from_arch_array(arrow::RecordBatch) |>
