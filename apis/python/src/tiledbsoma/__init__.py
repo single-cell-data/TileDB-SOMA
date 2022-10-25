@@ -43,7 +43,7 @@ from .query_condition import QueryCondition  # type: ignore
 from .soma_collection import Collection
 from .soma_dataframe import DataFrame
 from .soma_dense_nd_array import DenseNdArray
-from .soma_exception import SOMADoesNotExistError, SOMAError
+from .soma_exception import DoesNotExistError, Error
 from .soma_experiment import Experiment
 from .soma_indexed_dataframe import IndexedDataFrame
 from .soma_measurement import Measurement
@@ -64,9 +64,9 @@ __all__ = [
     "Collection",
     "DataFrame",
     "DenseNdArray",
-    "SOMADoesNotExistError",
+    "DoesNotExistError",
     "Experiment",
-    "SOMAError",
+    "Error",
     "IndexedDataFrame",
     "Measurement",
     "MetadataMapping",
