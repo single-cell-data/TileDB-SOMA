@@ -70,8 +70,8 @@ class Measurement(CollectionBase[TileDBObject]):
         )
 
     @property
-    def soma_type(self) -> Literal["Measurement"]:
-        return "Measurement"
+    def soma_type(self) -> Literal["SOMAMeasurement"]:
+        return "SOMAMeasurement"
 
     def create(self) -> "Measurement":
         """

@@ -41,8 +41,8 @@ class SparseNdArray(TileDBArray):
         )
 
     @property
-    def soma_type(self) -> Literal["SparseNdArray"]:
-        return "SparseNdArray"
+    def soma_type(self) -> Literal["SOMASparseNdArray"]:
+        return "SOMASparseNdArray"
 
     def create(
         self,

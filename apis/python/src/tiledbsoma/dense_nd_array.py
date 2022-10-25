@@ -37,8 +37,8 @@ class DenseNdArray(TileDBArray):
         )
 
     @property
-    def soma_type(self) -> Literal["DenseNdArray"]:
-        return "DenseNdArray"
+    def soma_type(self) -> Literal["SOMADenseNdArray"]:
+        return "SOMADenseNdArray"
 
     def create(
         self,

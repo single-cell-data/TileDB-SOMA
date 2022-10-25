@@ -376,5 +376,5 @@ class Collection(CollectionBase[TileDBObject]):
     """
 
     @property
-    def soma_type(self) -> Literal["Collection"]:
-        return "Collection"
+    def soma_type(self) -> Literal["SOMACollection"]:
+        return "SOMACollection"
