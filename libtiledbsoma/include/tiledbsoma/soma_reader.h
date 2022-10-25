@@ -251,6 +251,15 @@ class SOMAReader {
     std::optional<std::shared_ptr<ArrayBuffers>> read_next();
 
     /**
+     * @brief Check if the query is complete.
+     *
+     * @return true Query status is COMPLETE
+     */
+    bool is_complete() {
+        return mq_->is_complete();
+    }
+
+    /**
      * @brief Return true if `read_next` returned all results from the
      * query. The return value is false if the query was incomplete.
      *
