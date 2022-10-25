@@ -1,6 +1,6 @@
-class Error(Exception):
+class SOMAError(Exception):
     pass
 
 
-class DoesNotExistError(Error):
+class SOMADoesNotExistError(SOMAError):
     pass
