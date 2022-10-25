@@ -307,7 +307,7 @@ def create_from_matrix(
     """
     assert not soma_ndarray.exists()
     assert src_matrix.ndim == 2
-    assert soma_ndarray.soma_type in ("DenseNdArray", "SparseNdArray")
+    assert soma_ndarray.soma_type in ("SOMADenseNdArray", "SOMASparseNdArray")
 
     s = util.get_start_stamp()
     logging.log_io(None, f"{soma_ndarray._indent}START  WRITING {soma_ndarray.uri}")
@@ -316,7 +316,7 @@ def create_from_matrix(
         type=pa.from_numpy_dtype(src_matrix.dtype), shape=src_matrix.shape
     )
 
-    if soma_ndarray.soma_type == "DenseNdArray":
+    if soma_ndarray.soma_type == "SOMADenseNdArray":
         _write_matrix_to_denseNdArray(soma_ndarray, src_matrix)
     else:  # SOMmASparseNdArray
         _write_matrix_to_sparseNdArray(soma_ndarray, src_matrix)

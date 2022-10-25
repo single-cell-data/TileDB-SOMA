@@ -13,7 +13,7 @@ def test_dense_nd_array_ok_no_storage():
     arr = soma.DenseNdArray(uri="/foo/bar/")
     assert arr.uri == "/foo/bar/"
     assert not arr.exists()
-    assert arr.soma_type == "DenseNdArray"
+    assert arr.soma_type == "SOMADenseNdArray"
 
 
 @pytest.mark.parametrize(
@@ -30,7 +30,7 @@ def test_dense_nd_array_create_ok(
 
     a = soma.DenseNdArray(uri=tmp_path.as_posix())
     a.create(element_type, shape)
-    assert a.soma_type == "DenseNdArray"
+    assert a.soma_type == "SOMADenseNdArray"
     assert a.uri == tmp_path.as_posix()
     assert a.ndim == len(shape)
     assert a.shape == tuple(shape)

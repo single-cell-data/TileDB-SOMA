@@ -64,7 +64,7 @@ class CollectionBase(TileDBObject, MutableMapping[str, CollectionElementType]):
 
     # Subclass protocol to constrain which SOMA objects types  may be set on a
     # particular collection key. Used by Experiment and Measurement.
-    _subclass_constrained_types: Dict[str, Tuple[str, ...]] = {}
+    _subclass_constrained_soma_types: Dict[str, Tuple[str, ...]] = {}
 
     # The collection is persisted as a TileDB Group. The group contents are
     # cached for read performance on higher-latency storage systems such as
@@ -280,9 +280,9 @@ class CollectionBase(TileDBObject, MutableMapping[str, CollectionElementType]):
         if relative is None:
             relative = self._determine_default_relative(value.uri)
 
-        if key in self._subclass_constrained_types:
+        if key in self._subclass_constrained_soma_types:
             # Implement the sub-class protocol constraining the value type of certain item keys
-            accepted_types = self._subclass_constrained_types[key]
+            accepted_types = self._subclass_constrained_soma_types[key]
             if (
                 not isinstance(value, TileDBObject)
                 or value.soma_type not in accepted_types

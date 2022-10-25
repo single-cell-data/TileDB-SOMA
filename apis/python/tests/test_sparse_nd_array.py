@@ -16,7 +16,7 @@ def test_sparse_nd_array_ok_no_storage():
     arr = soma.SparseNdArray(uri="/foo/bar/")
     assert arr.uri == "/foo/bar/"
     assert not arr.exists()
-    assert arr.soma_type == "SparseNdArray"
+    assert arr.soma_type == "SOMASparseNdArray"
 
 
 @pytest.mark.parametrize(
@@ -33,7 +33,7 @@ def test_sparse_nd_array_create_ok(
 
     a = soma.SparseNdArray(uri=tmp_path.as_posix())
     a.create(element_type, shape)
-    assert a.soma_type == "SparseNdArray"
+    assert a.soma_type == "SOMASparseNdArray"
     assert a.uri == tmp_path.as_posix()
     assert a.ndim == len(shape)
     assert a.shape == tuple(shape)

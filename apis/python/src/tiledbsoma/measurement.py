@@ -40,13 +40,13 @@ class Measurement(CollectionBase[TileDBObject]):
     A collection of sparse matrices containing pairwise annotations of each ``var`` row. Indexed with ``[varid_1, varid_2]``
     """
 
-    _subclass_constrained_types: Dict[str, Tuple[str, ...]] = {
-        "var": ("DataFrame", "IndexedDataFrame"),
-        "X": ("Collection",),
-        "obsm": ("Collection",),
-        "obsp": ("Collection",),
-        "varm": ("Collection",),
-        "varp": ("Collection",),
+    _subclass_constrained_soma_types: Dict[str, Tuple[str, ...]] = {
+        "var": ("SOMADataFrame", "SOMAIndexedDataFrame"),
+        "X": ("SOMACollection",),
+        "obsm": ("SOMACollection",),
+        "obsp": ("SOMACollection",),
+        "varm": ("SOMACollection",),
+        "varp": ("SOMACollection",),
     }
 
     def __init__(

@@ -20,9 +20,9 @@ class Experiment(CollectionBase[TileDBObject]):
     ``ms``: A collection of named measurements.
     """
 
-    _subclass_constrained_types: Dict[str, Tuple[str, ...]] = {
-        "obs": ("DataFrame", "IndexedDataFrame"),
-        "ms": ("Collection",),
+    _subclass_constrained_soma_types: Dict[str, Tuple[str, ...]] = {
+        "obs": ("SOMADataFrame", "SOMAIndexedDataFrame"),
+        "ms": ("SOMACollection",),
     }
 
     def __init__(

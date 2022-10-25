@@ -178,7 +178,7 @@ def test_collection_repr(tmp_path, relative):
     assert list(a.keys()) == ["Another_Name"]
     assert (
         a.__repr__()
-        == f'Collection(uri="{a.uri}"):\n  "Another_Name": Collection(uri="{b.uri}")'
+        == f'SOMACollection(uri="{a.uri}"):\n  "Another_Name": SOMACollection(uri="{b.uri}")'
     )
     assert a["Another_Name"].uri == (tmp_path / "A" / "B").as_uri()
     del a
@@ -188,7 +188,7 @@ def test_collection_repr(tmp_path, relative):
     assert list(aPrime.keys()) == ["Another_Name"]
     assert (
         aPrime.__repr__()
-        == f'Collection(uri="{aPrime.uri}"):\n  "Another_Name": Collection(uri="{b.uri}")'
+        == f'SOMACollection(uri="{aPrime.uri}"):\n  "Another_Name": SOMACollection(uri="{b.uri}")'
     )
     assert aPrime["Another_Name"].uri == (tmp_path / "A" / "B").as_uri()
     del aPrime
@@ -201,7 +201,7 @@ def test_collection_repr(tmp_path, relative):
         assert aMoved["Another_Name"].uri == (tmp_path / "A_moved" / "B").as_uri()
         assert (
             aMoved.__repr__()
-            == f'Collection(uri="{aMoved.uri}"):\n  "Another_Name": Collection(uri="{aMoved["Another_Name"].uri}")'
+            == f'SOMACollection(uri="{aMoved.uri}"):\n  "Another_Name": SOMACollection(uri="{aMoved["Another_Name"].uri}")'
         )
     else:
         with pytest.raises(KeyError):

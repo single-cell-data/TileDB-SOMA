@@ -13,6 +13,28 @@ SOMA_OBJECT_TYPE_METADATA_KEY = "soma_object_type"
 SOMA_ENCODING_VERSION_METADATA_KEY = "soma_encoding_version"
 SOMA_ENCODING_VERSION = "1"
 
+SPEC_NAMES_TO_CLASS_NAMES = {
+    """ Maps languge-independent-spec names to Python-implementation class names """
+    "SOMAExperiment": "Experiment",
+    "SOMAMeasurement": "Measurement",
+    "SOMACollection": "Collection",
+    "SOMADataFrame": "DataFrame",
+    "SOMAIndexedDataFrame": "IndexedDataFrame",
+    "SOMADenseNdArray": "DenseNdArray",
+    "SOMASparseNdArray": "SparseNdArray",
+}
+
+CLASS_NAMES_TO_SPEC_NAMES = {
+    """ Maps Python-implementation class names to language-independent-spec names """
+    "Experiment": "SOMAExperiment",
+    "Measurement": "SOMAMeasurement",
+    "Collection": "SOMACollection",
+    "DataFrame": "SOMADataFrame",
+    "IndexedDataFrame": "SOMAIndexedDataFrame",
+    "DenseNdArray": "SOMADenseNdArray",
+    "SparseNdArray": "SOMASparseNdArray",
+}
+
 
 def get_start_stamp() -> float:
     """

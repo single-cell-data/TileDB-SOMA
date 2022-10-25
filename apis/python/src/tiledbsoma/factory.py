@@ -14,7 +14,7 @@ from .experiment import Experiment
 from .indexed_dataframe import IndexedDataFrame
 from .measurement import Measurement
 from .sparse_nd_array import SparseNdArray
-from .util import SOMA_OBJECT_TYPE_METADATA_KEY
+from .util import SOMA_OBJECT_TYPE_METADATA_KEY, SPEC_NAMES_TO_CLASS_NAMES
 
 ObjectTypes = Union[
     Experiment,
@@ -56,17 +56,20 @@ def _construct_member(
     try:
         if object_type == "array":
             with tiledb.open(member_uri, ctx=ctx) as A:
-                class_name = A.meta[SOMA_OBJECT_TYPE_METADATA_KEY]
+                spec_name = A.meta[SOMA_OBJECT_TYPE_METADATA_KEY]
         elif object_type == "group":
             with tiledb.Group(member_uri, mode="r", ctx=ctx) as G:
-                class_name = G.meta[SOMA_OBJECT_TYPE_METADATA_KEY]
+                spec_name = G.meta[SOMA_OBJECT_TYPE_METADATA_KEY]
         else:
             return None
 
     except tiledb.TileDBError:
         return None
 
-    assert class_name is not None
+    assert spec_name is not None
+    if spec_name not in SPEC_NAMES_TO_CLASS_NAMES:
+        raise Exception(f'name "{spec_name}" unrecognized')
+    class_name = SPEC_NAMES_TO_CLASS_NAMES[spec_name]
 
     # Now invoke the appropriate per-class constructor.
     if class_name == "Experiment":
@@ -91,5 +94,6 @@ def _construct_member(
         assert object_type is None or object_type == "array"
         return SparseNdArray(uri=member_uri, parent=parent, ctx=ctx)
     else:
-        # TODO: SOMA needs better exception typing
-        raise Exception(f'class name "{class_name}" unrecognized')
+        raise Exception(
+            f'internal coding error: class name "{class_name}" unrecognized'
+        )

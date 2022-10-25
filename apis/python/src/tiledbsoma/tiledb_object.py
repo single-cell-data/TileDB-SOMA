@@ -97,7 +97,7 @@ class TileDBObject(ABC):
         # before a third, successful HTTP request for group-open.  Instead, we directly attempt the
         # group-open request, checking for an exception.
         try:
-            return self._get_object_type_from_metadata() == self.soma_type
+            return self._get_soma_type_from_metadata() == self.soma_type
         except tiledb.cc.TileDBError:
             return False
 
@@ -125,7 +125,7 @@ class TileDBObject(ABC):
                 }
             )
 
-    def _get_object_type_from_metadata(self) -> str:
+    def _get_soma_type_from_metadata(self) -> str:
         """
         Returns the class name associated with the group/array.
         """
