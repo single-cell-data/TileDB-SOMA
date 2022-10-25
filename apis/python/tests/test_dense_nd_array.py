@@ -9,7 +9,7 @@ import tiledbsoma as soma
 from . import NDARRAY_ARROW_TYPES_NOT_SUPPORTED, NDARRAY_ARROW_TYPES_SUPPORTED
 
 
-def test_soma_dense_nd_array_ok_no_storage():
+def test_dense_nd_array_ok_no_storage():
     arr = soma.DenseNdArray(uri="/foo/bar/")
     assert arr.uri == "/foo/bar/"
     assert not arr.exists()
@@ -20,7 +20,7 @@ def test_soma_dense_nd_array_ok_no_storage():
     "shape", [(10,), (1, 100), (10, 1, 100), (2, 4, 6, 8), [1], (1, 2, 3, 4, 5)]
 )
 @pytest.mark.parametrize("element_type", NDARRAY_ARROW_TYPES_SUPPORTED)
-def test_soma_dense_nd_array_create_ok(
+def test_dense_nd_array_create_ok(
     tmp_path, shape: Tuple[int, ...], element_type: pa.DataType
 ):
     """
@@ -47,7 +47,7 @@ def test_soma_dense_nd_array_create_ok(
 
 @pytest.mark.parametrize("shape", [(10,)])
 @pytest.mark.parametrize("element_type", NDARRAY_ARROW_TYPES_NOT_SUPPORTED)
-def test_soma_dense_nd_array_create_fail(
+def test_dense_nd_array_create_fail(
     tmp_path, shape: Tuple[int, ...], element_type: pa.DataType
 ):
     a = soma.DenseNdArray(uri=tmp_path.as_posix())
@@ -56,7 +56,7 @@ def test_soma_dense_nd_array_create_fail(
     assert not a.exists()
 
 
-def test_soma_dense_nd_array_delete(tmp_path):
+def test_dense_nd_array_delete(tmp_path):
     a = soma.DenseNdArray(uri=tmp_path.as_posix())
     a.create(pa.int8(), (100, 100))
     assert a.exists()
@@ -70,7 +70,7 @@ def test_soma_dense_nd_array_delete(tmp_path):
 
 
 @pytest.mark.parametrize("shape", [(10,), (10, 20), (10, 20, 2), (2, 4, 6, 8)])
-def test_soma_dense_nd_array_read_write_tensor(tmp_path, shape: Tuple[int, ...]):
+def test_dense_nd_array_read_write_tensor(tmp_path, shape: Tuple[int, ...]):
     a = soma.DenseNdArray(tmp_path.as_posix())
     a.create(pa.float64(), shape)
     ndim = len(shape)
@@ -108,7 +108,7 @@ def test_zero_length_fail(tmp_path, shape):
         a.create(type=pa.float32(), shape=shape)
 
 
-def test_soma_dense_nd_array_reshape(tmp_path):
+def test_dense_nd_array_reshape(tmp_path):
     """
     Reshape currently unimplemented.
     """

@@ -83,7 +83,7 @@ def create_and_populate_sparse_nd_array(
 
 
 # ----------------------------------------------------------------
-def test_soma_experiment_basic(tmp_path):
+def test_experiment_basic(tmp_path):
     basedir = tmp_path.as_uri()
 
     # ----------------------------------------------------------------
@@ -164,7 +164,7 @@ def test_soma_experiment_basic(tmp_path):
     # TODO: check more things
 
 
-def test_soma_experiment_obs_type_constraint(tmp_path):
+def test_experiment_obs_type_constraint(tmp_path):
     """
     The obs and ms keys are special props, and should
     only allow a constrained set of types to be set in their slots.
@@ -192,7 +192,7 @@ def test_soma_experiment_obs_type_constraint(tmp_path):
     )
 
 
-def test_soma_experiment_ms_type_constraint(tmp_path):
+def test_experiment_ms_type_constraint(tmp_path):
     se = soma.Experiment(uri=tmp_path.as_uri()).create()
 
     se["ms"] = soma.Collection(uri=(tmp_path / "A").as_uri()).create()

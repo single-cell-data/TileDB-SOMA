@@ -5,7 +5,7 @@ import pytest
 import tiledbsoma as soma
 
 
-def test_soma_dataframe_non_indexed(tmp_path):
+def test_dataframe_non_indexed(tmp_path):
     sdf = soma.DataFrame(uri=tmp_path.as_posix())
 
     # Create
@@ -119,7 +119,7 @@ def test_soma_dataframe_non_indexed(tmp_path):
 
 
 @pytest.fixture
-def simple_soma_data_frame(tmp_path):
+def simple_data_frame(tmp_path):
     """
     A pytest fixture which creates a simple DataFrame for use in tests below.
     """
@@ -168,7 +168,7 @@ def simple_soma_data_frame(tmp_path):
         None,
     ],
 )
-def test_DataFrame_read_column_names(simple_soma_data_frame, ids, col_names):
+def test_DataFrame_read_column_names(simple_data_frame, ids, col_names):
     """
     Issue #312 - `column_names` parameter not correctly handled.
 
@@ -176,7 +176,7 @@ def test_DataFrame_read_column_names(simple_soma_data_frame, ids, col_names):
     test covers all of the read* methods.
     """
 
-    schema, sdf, n_data = simple_soma_data_frame
+    schema, sdf, n_data = simple_data_frame
     assert sdf.exists()
 
     def _check_tbl(tbl, col_names, ids, *, demote):
@@ -235,7 +235,7 @@ def test_DataFrame_read_column_names(simple_soma_data_frame, ids, col_names):
     )
 
 
-def test_empty_soma_dataframe(tmp_path):
+def test_empty_dataframe(tmp_path):
     a = soma.DataFrame((tmp_path / "A").as_posix())
     a.create(pa.schema([("a", pa.bool_())]))
     # Must not throw
@@ -246,7 +246,7 @@ def test_empty_soma_dataframe(tmp_path):
     assert isinstance(a.read_as_pandas_all(), pd.DataFrame)
 
 
-def test_soma_columns(tmp_path):
+def test_columns(tmp_path):
     """
     1. soma_joinid/soma_rowid are int64
     2. both will be added by default, if missing in call to create

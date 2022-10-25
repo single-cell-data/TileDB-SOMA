@@ -55,7 +55,7 @@ def soma_object(request, tmp_path):
     so.delete()
 
 
-def test_soma_metadata(soma_object):
+def test_metadata(soma_object):
     """Basic API endpoints"""
     assert soma_object.exists()
 
@@ -101,7 +101,7 @@ def test_soma_metadata(soma_object):
         -math.inf,
     ],
 )
-def test_soma_metadata_marshalling_OK(soma_object, test_value):
+def test_metadata_marshalling_OK(soma_object, test_value):
     """
     Test the various data type marshalling we expect to work,
     which is any Arrow primitive and Arrow strings
@@ -121,7 +121,7 @@ def test_soma_metadata_marshalling_OK(soma_object, test_value):
     "test_value",
     [["a", "b", "c"], {"a": False}],
 )
-def test_soma_metadata_marshalling_FAIL(soma_object, test_value):
+def test_metadata_marshalling_FAIL(soma_object, test_value):
     """Test the various data type marshalling we expect to FAIL"""
 
     with pytest.raises(TypeError):

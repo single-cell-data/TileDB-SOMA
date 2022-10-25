@@ -48,7 +48,7 @@ def create_and_populate_sparse_nd_array(
 
 
 # ----------------------------------------------------------------
-def test_soma_collection_basic(tmp_path):
+def test_collection_basic(tmp_path):
     basedir = tmp_path.as_uri()
     collection = soma.Collection(basedir)
 
@@ -131,7 +131,7 @@ def soma_object(request, tmp_path):
     so.delete()
 
 
-def test_soma_collection_mapping(soma_object, tmp_path):
+def test_collection_mapping(soma_object, tmp_path):
     c = soma.Collection(uri=(tmp_path / "collection").as_uri())
     assert not c.exists()
     with pytest.raises(soma.DoesNotExistError):
@@ -210,7 +210,7 @@ def test_collection_repr(tmp_path, relative):
     del aMoved
 
 
-def test_soma_collection_update_on_set(tmp_path):
+def test_collection_update_on_set(tmp_path):
     """
     Collection.__setattr__ (and .set) have update semantics. Underlying
     tiledb.Group only has add/del. Verify.

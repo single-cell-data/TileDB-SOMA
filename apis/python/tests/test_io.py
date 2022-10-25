@@ -41,7 +41,7 @@ def src_matrix(request):
     ],
     indirect=True,
 )
-def test_soma_io_create_from_matrix_Dense_nd_array(tmp_path, plfm_config, src_matrix):
+def test_io_create_from_matrix_Dense_nd_array(tmp_path, plfm_config, src_matrix):
     """
     Test soma.io.from_matrix to a DenseNdArray.
 
@@ -87,7 +87,7 @@ def test_soma_io_create_from_matrix_Dense_nd_array(tmp_path, plfm_config, src_ma
     ],
     indirect=True,
 )
-def test_soma_io_create_from_matrix_Sparse_nd_array(tmp_path, plfm_config, src_matrix):
+def test_io_create_from_matrix_Sparse_nd_array(tmp_path, plfm_config, src_matrix):
     """
     Test soma.io.from_matrix to a SparseNdArray.
 
