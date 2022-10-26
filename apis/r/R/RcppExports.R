@@ -5,26 +5,46 @@ test_sdf <- function(uri) {
     invisible(.Call(`_tiledbsoma_test_sdf`, uri))
 }
 
-#' @rdname get_table
-#' @export
+#' @noRd
 get_column_names <- function(uri) {
     .Call(`_tiledbsoma_get_column_names`, uri)
 }
 
+#' @noRd
 export_column <- function(uri, colname, schemaxp, arrayxp) {
     .Call(`_tiledbsoma_export_column`, uri, colname, schemaxp, arrayxp)
 }
 
-#' @rdname get_table
-#' @export
+#' @noRd
 export_column_direct <- function(uri, colnames) {
     .Call(`_tiledbsoma_export_column_direct`, uri, colnames)
 }
 
-#' @rdname get_table
+#' Read SOMA Data From a Given URI
+#'
+#' This functions access a given SOMA URI and returns a complete data.frame. It does
+#' not iterate; if your data is large than the initial read size consider the \code{sr_*}
+#' functions.
+#'
+#' @param uri Character value with URI path to a SOMA data set
+#' @param colnames Optional vector of character value with the name of the columns to retrieve
+#' @param qc Optional external Pointer object to TileDB Query Condition, defaults to \sQuote{NULL} i.e.
+#' no query condition
+#' @param dim_points Optional named list with vector of data points to select on the given
+#' dimension(s). Each dimension can be one entry in the list.
+#' @param dim_ranges Optional named list with two-column matrix where each row select a range
+#' for the given dimension. Each dimension can be one entry in the list.
+#' @param loglevel Character value with the desired logging level, defaults to \sQuote{warn}
+#' @return An Arrow data structure is returned
+#' @examples
+#' \dontrun{
+#' uri <- "test/soco/pbmc3k_processed/obs"
+#' z <- some_reader(uri)
+#' tb <- arrow::as_arrow_table(arch::from_arch_array(z, arrow::RecordBatch))
+#' }
 #' @export
-export_arrow_array <- function(uri, colnames = NULL, qc = NULL, dim_points = NULL, dim_ranges = NULL, loglevel = "warn") {
-    .Call(`_tiledbsoma_export_arrow_array`, uri, colnames, qc, dim_points, dim_ranges, loglevel)
+soma_reader <- function(uri, colnames = NULL, qc = NULL, dim_points = NULL, dim_ranges = NULL, loglevel = "warn") {
+    .Call(`_tiledbsoma_soma_reader`, uri, colnames, qc, dim_points, dim_ranges, loglevel)
 }
 
 #' @noRd
@@ -32,13 +52,12 @@ set_log_level <- function(level) {
     invisible(.Call(`_tiledbsoma_set_log_level`, level))
 }
 
-#' @rdname get_table
-#' @export
+#' @noRd
 get_column_types <- function(uri, colnames) {
     .Call(`_tiledbsoma_get_column_types`, uri, colnames)
 }
 
-#' @rdname get_table
+#' @rdname soma_reader
 #' @export
 nnz <- function(uri) {
     .Call(`_tiledbsoma_nnz`, uri)
@@ -51,7 +70,7 @@ nnz <- function(uri) {
 #' \describe{
 #'   \item{\code{sr_setup}}{instantiates and by default also submits a query}
 #'   \item{\code{sr_complete}}{checks if more data is available}
-#'   \code{\code{sr_next}} returns the next chunk.
+#'   \item{\code{sr_next}}{returns the next chunk}
 #' }
 #'
 #' @param ctx An external pointer to a TileDB Context object
