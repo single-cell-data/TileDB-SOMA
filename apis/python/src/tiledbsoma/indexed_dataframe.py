@@ -10,6 +10,7 @@ import tiledbsoma.libtiledbsoma as clib
 
 from . import util, util_arrow
 from .collection import CollectionBase
+from .exception import SOMAError
 from .constants import SOMA_JOINID
 from .query_condition import QueryCondition  # type: ignore
 from .tiledb_array import TileDBArray
@@ -211,6 +212,8 @@ class IndexedDataFrame(TileDBArray):
                     lo_hi = util.slice_to_range(ids)
                     if lo_hi is not None:
                         sr.set_dim_ranges(dim_name, lo_hi)
+                else:
+                    raise SOMAError(f"ids type {type(ids)} unhandled")
 
             # TODO: platform_config
             # TODO: batch_size
