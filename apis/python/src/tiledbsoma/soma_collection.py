@@ -242,6 +242,7 @@ class SOMACollection(TileDBGroup):
         var_attrs: Optional[Sequence[str]] = None,
         var_query_string: Optional[str] = None,
         var_ids: Optional[Ids] = None,
+        X_layer_names: Optional[Sequence[str]] = None,
         return_arrow: bool = False,
     ) -> List[SOMASlice]:
         """
@@ -254,6 +255,9 @@ class SOMACollection(TileDBGroup):
         or ``var_ids`` are not ``None``, they are effectively ANDed into the query.  For example, you
         can pass in a known list of ``obs_ids``, then use ``obs_query_string`` to further restrict the
         query.
+
+        If ``X_layer_names`` is `None`, they are all returned; otherwise you can specify which layer(s)
+        you want to be operated on.
 
         If ``obs_attrs`` or ``var_attrs`` are unspecified, slices will take all ``obs``/``var`` attributes
         from their source SOMAs; if they are specified, slices will take the specified ``obs``/``var``
@@ -269,6 +273,7 @@ class SOMACollection(TileDBGroup):
             var_attrs=var_attrs,
             var_query_string=var_query_string,
             var_ids=var_ids,
+            X_layer_names=X_layer_names,
             return_arrow=return_arrow,
         )
 
