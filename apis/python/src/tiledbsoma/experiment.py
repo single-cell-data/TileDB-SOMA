@@ -2,25 +2,25 @@ from typing import Any, Dict, Literal, Optional, Tuple, Union, cast
 
 import tiledb
 
-from .soma_collection import SOMACollectionBase
-from .soma_dataframe import SOMADataFrame
-from .soma_indexed_dataframe import SOMAIndexedDataFrame
-from .soma_measurement import SOMAMeasurement
+from .collection import CollectionBase
+from .dataframe import DataFrame
+from .indexed_dataframe import IndexedDataFrame
+from .measurement import Measurement
 from .tiledb_object import TileDBObject
 from .tiledb_platform_config import TileDBPlatformConfig
 
 
-class SOMAExperiment(SOMACollectionBase[TileDBObject]):
+class Experiment(CollectionBase[TileDBObject]):
     """
     ``obs``: Primary annotations on the observation axis. The contents of the
              ``soma_rowid`` pseudo-column define the observation index domain,
-             aka ``obsid``. All observations for the SOMAExperiment must be
+             aka ``obsid``. All observations for the Experiment must be
              defined in this dataframe.
 
     ``ms``: A collection of named measurements.
     """
 
-    _subclass_constrained_types: Dict[str, Tuple[str, ...]] = {
+    _subclass_constrained_soma_types: Dict[str, Tuple[str, ...]] = {
         "obs": ("SOMADataFrame", "SOMAIndexedDataFrame"),
         "ms": ("SOMACollection",),
     }
@@ -30,7 +30,7 @@ class SOMAExperiment(SOMACollectionBase[TileDBObject]):
         uri: str,
         *,
         # Non-top-level objects can have a parent to propagate context, depth, etc.
-        parent: Optional[SOMACollectionBase[Any]] = None,
+        parent: Optional[CollectionBase[Any]] = None,
         # Top-level objects should specify these:
         tiledb_platform_config: Optional[TileDBPlatformConfig] = None,
         ctx: Optional[tiledb.Ctx] = None,
@@ -49,7 +49,7 @@ class SOMAExperiment(SOMACollectionBase[TileDBObject]):
     def soma_type(self) -> Literal["SOMAExperiment"]:
         return "SOMAExperiment"
 
-    def create(self) -> "SOMAExperiment":
+    def create(self) -> "Experiment":
         """
         Creates the data structure on disk/S3/cloud.
         """
@@ -57,9 +57,9 @@ class SOMAExperiment(SOMACollectionBase[TileDBObject]):
         return self
 
     @property
-    def obs(self) -> Union[SOMADataFrame, SOMAIndexedDataFrame]:
-        return cast(Union[SOMADataFrame, SOMAIndexedDataFrame], self["obs"])
+    def obs(self) -> Union[DataFrame, IndexedDataFrame]:
+        return cast(Union[DataFrame, IndexedDataFrame], self["obs"])
 
     @property
-    def ms(self) -> SOMACollectionBase[SOMAMeasurement]:
-        return cast(SOMACollectionBase[SOMAMeasurement], self["ms"])
+    def ms(self) -> CollectionBase[Measurement]:
+        return cast(CollectionBase[Measurement], self["ms"])

@@ -18,7 +18,7 @@ from typing import (
 
 import tiledb
 
-from .soma_exception import SOMADoesNotExistError, SOMAError
+from .exception import DoesNotExistError, SOMAError
 from .tiledb_object import TileDBObject
 from .tiledb_platform_config import TileDBPlatformConfig
 from .util import make_relative_path
@@ -55,16 +55,16 @@ class _CachedElement:
     soma: Optional[TileDBObject] = None
 
 
-class SOMACollectionBase(TileDBObject, MutableMapping[str, CollectionElementType]):
+class CollectionBase(TileDBObject, MutableMapping[str, CollectionElementType]):
     """
     Contains a key-value mapping where the keys are string names and the values
-    are any SOMA-defined foundational or composed type, including ``SOMACollection``,
-    ``SOMADataFrame``, ``SOMADenseNdArray``, ``SOMASparseNdArray`` or ``SOMAExperiment``.
+    are any SOMA-defined foundational or composed type, including ``Collection``,
+    ``DataFrame``, ``DenseNdArray``, ``SparseNdArray`` or ``Experiment``.
     """
 
     # Subclass protocol to constrain which SOMA objects types  may be set on a
-    # particular collection key. Used by SOMAExperiment and SOMAMeasurement.
-    _subclass_constrained_types: Dict[str, Tuple[str, ...]] = {}
+    # particular collection key. Used by Experiment and Measurement.
+    _subclass_constrained_soma_types: Dict[str, Tuple[str, ...]] = {}
 
     # The collection is persisted as a TileDB Group. The group contents are
     # cached for read performance on higher-latency storage systems such as
@@ -82,7 +82,7 @@ class SOMACollectionBase(TileDBObject, MutableMapping[str, CollectionElementType
         uri: str,
         *,
         # Non-top-level objects can have a parent to propagate context, depth, etc.
-        parent: Optional[SOMACollectionBase[Any]] = None,
+        parent: Optional[CollectionBase[Any]] = None,
         # Top-level objects should specify these:
         tiledb_platform_config: Optional[TileDBPlatformConfig] = None,
         ctx: Optional[tiledb.Ctx] = None,
@@ -98,7 +98,7 @@ class SOMACollectionBase(TileDBObject, MutableMapping[str, CollectionElementType
         )
         self._cached_values = None
 
-    def create(self) -> "SOMACollectionBase[CollectionElementType]":
+    def create(self) -> "CollectionBase[CollectionElementType]":
         """
         Creates the data structure on disk/S3/cloud.
         """
@@ -126,7 +126,7 @@ class SOMACollectionBase(TileDBObject, MutableMapping[str, CollectionElementType
             if self._cached_values is None:
                 # This collection was not yet created
                 # TODO: SOMA needs better exception types
-                raise SOMADoesNotExistError("SOMACollection has not been created")
+                raise DoesNotExistError("Collection has not been created")
 
         # if element is in the TileDB Group, so make a SOMA in-memory object to represent it.
         if key in self._cached_values:
@@ -181,7 +181,7 @@ class SOMACollectionBase(TileDBObject, MutableMapping[str, CollectionElementType
 
     def __repr__(self) -> str:
         """
-        Default display for ``SOMACollection``.
+        Default display for ``Collection``.
         """
         return "\n".join(self._get_collection_repr())
 
@@ -191,11 +191,11 @@ class SOMACollectionBase(TileDBObject, MutableMapping[str, CollectionElementType
 
     @classmethod
     def _get_element_repr(
-        cls, args: Tuple[SOMACollectionBase[CollectionElementType], str]
+        cls, args: Tuple[CollectionBase[CollectionElementType], str]
     ) -> List[str]:
         collection, key = args
         value = collection.__getitem__(key)
-        if isinstance(value, SOMACollectionBase):
+        if isinstance(value, CollectionBase):
             return value._get_collection_repr()
         else:
             return [value.__repr__()]
@@ -212,7 +212,7 @@ class SOMACollectionBase(TileDBObject, MutableMapping[str, CollectionElementType
         lines = [me]
 
         for elmt_key in keys:
-            elmt_repr_lines = SOMACollectionBase._get_element_repr((self, elmt_key))
+            elmt_repr_lines = CollectionBase._get_element_repr((self, elmt_key))
             lines.append(f'  "{elmt_key}": {elmt_repr_lines[0]}')
             for line in elmt_repr_lines[1:]:
                 lines.append(f"    {line}")
@@ -226,13 +226,13 @@ class SOMACollectionBase(TileDBObject, MutableMapping[str, CollectionElementType
 
         except tiledb.TileDBError as e:
             if is_does_not_exist_error(e):
-                raise SOMADoesNotExistError("Collection not created") from e
+                raise DoesNotExistError("Collection not created") from e
             raise
 
     def _load_tdb_group_cache(self) -> None:
         """
         Load all objects in the persistent tiledb group. Discard any anonymous objects,
-        as all SOMACollection elements must have a key.
+        as all Collection elements must have a key.
 
         Update the cache with the group contents:
         * delete cached items not in tdb group
@@ -280,9 +280,9 @@ class SOMACollectionBase(TileDBObject, MutableMapping[str, CollectionElementType
         if relative is None:
             relative = self._determine_default_relative(value.uri)
 
-        if key in self._subclass_constrained_types:
+        if key in self._subclass_constrained_soma_types:
             # Implement the sub-class protocol constraining the value type of certain item keys
-            accepted_types = self._subclass_constrained_types[key]
+            accepted_types = self._subclass_constrained_soma_types[key]
             if (
                 not isinstance(value, TileDBObject)
                 or value.soma_type not in accepted_types
@@ -308,7 +308,7 @@ class SOMACollectionBase(TileDBObject, MutableMapping[str, CollectionElementType
                 break
             except tiledb.TileDBError as e:
                 if is_does_not_exist_error(e):
-                    raise SOMADoesNotExistError("Collection not created") from e
+                    raise DoesNotExistError("Collection not created") from e
                 if not is_duplicate_group_key_error(e):
                     raise e
             if retry:
@@ -329,7 +329,7 @@ class SOMACollectionBase(TileDBObject, MutableMapping[str, CollectionElementType
                 G.remove(key)
         except tiledb.TileDBError as e:
             if is_does_not_exist_error(e):
-                raise SOMADoesNotExistError("Collection has not been created") from e
+                raise DoesNotExistError("Collection has not been created") from e
             raise
 
         if not skip_cache_reload:
@@ -359,7 +359,7 @@ class SOMACollectionBase(TileDBObject, MutableMapping[str, CollectionElementType
             with self._tiledb_open() as G:
                 for obj in G:  # This returns a tiledb.object.Object
                     # It might appear simpler to have all this code within TileDBObject class,
-                    # rather than (with a little duplication) in SOMACollection and TileDBArray.
+                    # rather than (with a little duplication) in Collection and TileDBArray.
                     # However, getting it to work with a recursive data structure and finding the
                     # required methods, it was simpler to split the logic this way.
 
@@ -370,7 +370,7 @@ class SOMACollectionBase(TileDBObject, MutableMapping[str, CollectionElementType
                         raise Exception(f"Unexpected object_type found at {obj.uri}")
 
 
-class SOMACollection(SOMACollectionBase[TileDBObject]):
+class Collection(CollectionBase[TileDBObject]):
     """
     A persistent collection of SOMA objects, mapping string keys to any SOMA object.
     """

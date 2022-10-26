@@ -20,8 +20,8 @@ def arrow_schema():
     return _schema
 
 
-def test_soma_indexed_dataframe(tmp_path, arrow_schema):
-    sdf = soma.SOMAIndexedDataFrame(uri=tmp_path.as_posix())
+def test_indexed_dataframe(tmp_path, arrow_schema):
+    sdf = soma.IndexedDataFrame(uri=tmp_path.as_posix())
 
     asch = pa.schema(
         [
@@ -71,17 +71,17 @@ def test_soma_indexed_dataframe(tmp_path, arrow_schema):
     assert sorted([e.as_py() for e in list(table["baz"])]) == ["apple", "cat"]
 
 
-def test_soma_indexed_dataframe_with_float_dim(tmp_path, arrow_schema):
-    sdf = soma.SOMAIndexedDataFrame(uri=tmp_path.as_posix())
+def test_indexed_dataframe_with_float_dim(tmp_path, arrow_schema):
+    sdf = soma.IndexedDataFrame(uri=tmp_path.as_posix())
     asch = arrow_schema()
     sdf.create(schema=asch, index_column_names=("bar",))
     assert sdf.get_index_column_names() == ("bar",)
 
 
 @pytest.fixture
-def simple_soma_indexed_data_frame(tmp_path):
+def simple_indexed_data_frame(tmp_path):
     """
-    A pytest fixture which creates a simple SOMAIndexedDataFrame for use in tests below.
+    A pytest fixture which creates a simple IndexedDataFrame for use in tests below.
     """
     schema = pa.schema(
         [
@@ -93,7 +93,7 @@ def simple_soma_indexed_data_frame(tmp_path):
         ]
     )
     index_column_names = ["index"]
-    sdf = soma.SOMAIndexedDataFrame(uri=tmp_path.as_posix())
+    sdf = soma.IndexedDataFrame(uri=tmp_path.as_posix())
     sdf.create(schema=schema, index_column_names=index_column_names)
 
     data = {
@@ -131,10 +131,8 @@ def simple_soma_indexed_data_frame(tmp_path):
         None,
     ],
 )
-def test_SOMAIndexedDataFrame_read_column_names(
-    simple_soma_indexed_data_frame, ids, col_names
-):
-    schema, sdf, n_data, index_column_names = simple_soma_indexed_data_frame
+def test_IndexedDataFrame_read_column_names(simple_indexed_data_frame, ids, col_names):
+    schema, sdf, n_data, index_column_names = simple_indexed_data_frame
     assert sdf.exists()
 
     def _check_tbl(tbl, col_names, ids, *, demote):
@@ -183,8 +181,8 @@ def test_SOMAIndexedDataFrame_read_column_names(
     )
 
 
-def test_empty_soma_indexed_dataframe(tmp_path):
-    a = soma.SOMAIndexedDataFrame((tmp_path / "A").as_posix())
+def test_empty_indexed_dataframe(tmp_path):
+    a = soma.IndexedDataFrame((tmp_path / "A").as_posix())
     a.create(pa.schema([("a", pa.int32())]), index_column_names=["a"])
     # Must not throw
     assert len(next(a.read())) == 0
@@ -194,7 +192,7 @@ def test_empty_soma_indexed_dataframe(tmp_path):
     assert isinstance(a.read_as_pandas_all(), pd.DataFrame)
 
 
-def test_soma_columns(tmp_path):
+def test_columns(tmp_path):
     """
     1. soma_joinid is int64
     2. soma_joinid will be added by default, if missing in call to create
@@ -202,20 +200,20 @@ def test_soma_columns(tmp_path):
     4. No other soma_ ids allowed
     """
 
-    A = soma.SOMAIndexedDataFrame((tmp_path / "A").as_posix())
+    A = soma.IndexedDataFrame((tmp_path / "A").as_posix())
     A.create(pa.schema([("a", pa.int32())]), index_column_names=["a"])
     assert sorted(A.keys()) == sorted(["a", "soma_joinid"])
     assert A.schema.field("soma_joinid").type == pa.int64()
     A.delete()
 
-    B = soma.SOMAIndexedDataFrame((tmp_path / "B").as_posix())
+    B = soma.IndexedDataFrame((tmp_path / "B").as_posix())
     with pytest.raises(ValueError):
         B.create(
             pa.schema([("a", pa.int32()), ("soma_joinid", pa.float32())]),
             index_column_names=["a"],
         )
 
-    D = soma.SOMAIndexedDataFrame((tmp_path / "D").as_posix())
+    D = soma.IndexedDataFrame((tmp_path / "D").as_posix())
     D.create(
         pa.schema([("a", pa.int32()), ("soma_joinid", pa.int64())]),
         index_column_names=["a"],
@@ -224,7 +222,7 @@ def test_soma_columns(tmp_path):
     assert D.schema.field("soma_joinid").type == pa.int64()
     D.delete()
 
-    E = soma.SOMAIndexedDataFrame((tmp_path / "E").as_posix())
+    E = soma.IndexedDataFrame((tmp_path / "E").as_posix())
     with pytest.raises(ValueError):
         E.create(
             pa.schema([("a", pa.int32()), ("soma_rowid", pa.bool_())]),
@@ -289,8 +287,8 @@ def make_dataframe(request):
     ],
     indirect=True,
 )
-def test_soma_index_types(tmp_path, make_dataframe):
+def test_index_types(tmp_path, make_dataframe):
     """Verify that the index columns can be of various types"""
-    sdf = soma.SOMAIndexedDataFrame(tmp_path.as_posix())
+    sdf = soma.IndexedDataFrame(tmp_path.as_posix())
     sdf.create(make_dataframe.schema, index_column_names=["index"])
     sdf.write(make_dataframe)

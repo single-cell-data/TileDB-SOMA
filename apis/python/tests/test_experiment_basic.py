@@ -8,7 +8,7 @@ import tiledbsoma as soma
 
 
 # ----------------------------------------------------------------
-def create_and_populate_obs(obs: soma.SOMADataFrame) -> soma.SOMADataFrame:
+def create_and_populate_obs(obs: soma.DataFrame) -> soma.DataFrame:
 
     obs_arrow_schema = pa.schema(
         [
@@ -34,7 +34,7 @@ def create_and_populate_obs(obs: soma.SOMADataFrame) -> soma.SOMADataFrame:
 
 
 # ----------------------------------------------------------------
-def create_and_populate_var(var: soma.SOMADataFrame) -> soma.SOMADataFrame:
+def create_and_populate_var(var: soma.DataFrame) -> soma.DataFrame:
 
     var_arrow_schema = pa.schema(
         [
@@ -58,8 +58,8 @@ def create_and_populate_var(var: soma.SOMADataFrame) -> soma.SOMADataFrame:
 
 # ----------------------------------------------------------------
 def create_and_populate_sparse_nd_array(
-    sparse_nd_array: soma.SOMASparseNdArray,
-) -> soma.SOMASparseNdArray:
+    sparse_nd_array: soma.SparseNdArray,
+) -> soma.SparseNdArray:
     nr = 5
     nc = 3
 
@@ -83,36 +83,36 @@ def create_and_populate_sparse_nd_array(
 
 
 # ----------------------------------------------------------------
-def test_soma_experiment_basic(tmp_path):
+def test_experiment_basic(tmp_path):
     basedir = tmp_path.as_uri()
 
     # ----------------------------------------------------------------
-    experiment = soma.SOMAExperiment(basedir)
+    experiment = soma.Experiment(basedir)
     experiment.create()
 
     experiment["obs"] = create_and_populate_obs(
-        soma.SOMADataFrame(uri=urljoin(basedir, "obs"))
+        soma.DataFrame(uri=urljoin(basedir, "obs"))
     )
-    experiment["ms"] = soma.SOMACollection(uri=urljoin(basedir, "ms")).create()
+    experiment["ms"] = soma.Collection(uri=urljoin(basedir, "ms")).create()
 
-    measurement = soma.SOMAMeasurement(uri=f"{experiment.ms.uri}/mRNA")
+    measurement = soma.Measurement(uri=f"{experiment.ms.uri}/mRNA")
     measurement.create()
     experiment.ms.set("mRNA", measurement)
 
     measurement["var"] = create_and_populate_var(
-        soma.SOMADataFrame(uri=urljoin(measurement.uri, "var"))
+        soma.DataFrame(uri=urljoin(measurement.uri, "var"))
     )
-    measurement["X"] = soma.SOMACollection(uri=urljoin(measurement.uri, "X")).create()
+    measurement["X"] = soma.Collection(uri=urljoin(measurement.uri, "X")).create()
 
     nda = create_and_populate_sparse_nd_array(
-        soma.SOMASparseNdArray(uri=urljoin(measurement.X.uri, "data"))
+        soma.SparseNdArray(uri=urljoin(measurement.X.uri, "data"))
     )
     measurement.X.set("data", nda)
 
     # ----------------------------------------------------------------
     assert len(experiment) == 2
-    assert isinstance(experiment.obs, soma.SOMADataFrame)
-    assert isinstance(experiment.ms, soma.SOMACollection)
+    assert isinstance(experiment.obs, soma.DataFrame)
+    assert isinstance(experiment.ms, soma.Collection)
     assert "obs" in experiment
     assert "ms" in experiment
     assert "nonesuch" not in experiment
@@ -121,13 +121,13 @@ def test_soma_experiment_basic(tmp_path):
     assert experiment.ms == experiment["ms"]
 
     assert len(experiment.ms) == 1
-    assert isinstance(experiment.ms["mRNA"], soma.SOMAMeasurement)
+    assert isinstance(experiment.ms["mRNA"], soma.Measurement)
 
     assert len(experiment.ms["mRNA"]) == 2
     assert "mRNA" in experiment.ms
     assert "meas2" not in experiment.ms
-    assert isinstance(experiment.ms["mRNA"].var, soma.SOMADataFrame)
-    assert isinstance(experiment.ms["mRNA"].X, soma.SOMACollection)
+    assert isinstance(experiment.ms["mRNA"].var, soma.DataFrame)
+    assert isinstance(experiment.ms["mRNA"].X, soma.Collection)
 
     assert experiment.ms["mRNA"].var == experiment["ms"]["mRNA"]["var"]
     assert experiment.ms["mRNA"].X == experiment["ms"]["mRNA"]["X"]
@@ -135,7 +135,7 @@ def test_soma_experiment_basic(tmp_path):
     assert len(experiment.ms["mRNA"].X) == 1
     assert "data" in experiment.ms["mRNA"].X
     assert "nonesuch" not in experiment.ms["mRNA"].X
-    assert isinstance(experiment.ms["mRNA"].X["data"], soma.SOMASparseNdArray)
+    assert isinstance(experiment.ms["mRNA"].X["data"], soma.SparseNdArray)
 
     # >>> experiment.ms.mRNA.X.data._tiledb_open().df[:]
     #    __dim_0  __dim_1  data
@@ -153,64 +153,64 @@ def test_soma_experiment_basic(tmp_path):
     assert experiment.ms["mRNA"].X["data"].exists()
 
     # Paths exist but are not of the right type
-    assert not soma.SOMADataFrame(experiment.uri).exists()
-    assert not soma.SOMACollection(experiment.obs.uri).exists()
+    assert not soma.DataFrame(experiment.uri).exists()
+    assert not soma.Collection(experiment.obs.uri).exists()
 
     # Paths do not exist
-    assert not soma.SOMAExperiment("/nonesuch/no/nope/nope/never").exists()
-    assert not soma.SOMADataFrame("/nonesuch/no/nope/nope/never").exists()
+    assert not soma.Experiment("/nonesuch/no/nope/nope/never").exists()
+    assert not soma.DataFrame("/nonesuch/no/nope/nope/never").exists()
 
     # ----------------------------------------------------------------
     # TODO: check more things
 
 
-def test_soma_experiment_obs_type_constraint(tmp_path):
+def test_experiment_obs_type_constraint(tmp_path):
     """
     The obs and ms keys are special props, and should
     only allow a constrained set of types to be set in their slots.
     """
 
-    se = soma.SOMAExperiment(uri=tmp_path.as_uri()).create()
+    se = soma.Experiment(uri=tmp_path.as_uri()).create()
 
     with pytest.raises(TypeError):
-        se["obs"] = soma.SOMACollection(uri=(tmp_path / "A").as_uri()).create()
+        se["obs"] = soma.Collection(uri=(tmp_path / "A").as_uri()).create()
     with pytest.raises(TypeError):
-        se["obs"] = soma.SOMASparseNdArray(uri=(tmp_path / "B").as_uri()).create(
+        se["obs"] = soma.SparseNdArray(uri=(tmp_path / "B").as_uri()).create(
             type=pa.float32(), shape=(10,)
         )
     with pytest.raises(TypeError):
-        se["obs"] = soma.SOMADenseNdArray(uri=(tmp_path / "C").as_uri()).create(
+        se["obs"] = soma.DenseNdArray(uri=(tmp_path / "C").as_uri()).create(
             type=pa.float32(), shape=(10,)
         )
     with pytest.raises(TypeError):
-        se["obs"] = soma.SOMAMeasurement(uri=(tmp_path / "D").as_uri()).create()
-    se["obs"] = soma.SOMADataFrame(uri=(tmp_path / "E").as_uri()).create(
+        se["obs"] = soma.Measurement(uri=(tmp_path / "D").as_uri()).create()
+    se["obs"] = soma.DataFrame(uri=(tmp_path / "E").as_uri()).create(
         schema=pa.schema([("A", pa.int32())])
     )
-    se["obs"] = soma.SOMAIndexedDataFrame(uri=(tmp_path / "F").as_uri()).create(
+    se["obs"] = soma.IndexedDataFrame(uri=(tmp_path / "F").as_uri()).create(
         schema=pa.schema([("A", pa.int32())]), index_column_names=["A"]
     )
 
 
-def test_soma_experiment_ms_type_constraint(tmp_path):
-    se = soma.SOMAExperiment(uri=tmp_path.as_uri()).create()
+def test_experiment_ms_type_constraint(tmp_path):
+    se = soma.Experiment(uri=tmp_path.as_uri()).create()
 
-    se["ms"] = soma.SOMACollection(uri=(tmp_path / "A").as_uri()).create()
+    se["ms"] = soma.Collection(uri=(tmp_path / "A").as_uri()).create()
     with pytest.raises(TypeError):
-        se["ms"] = soma.SOMASparseNdArray(uri=(tmp_path / "B").as_uri()).create(
+        se["ms"] = soma.SparseNdArray(uri=(tmp_path / "B").as_uri()).create(
             type=pa.float32(), shape=(10,)
         )
     with pytest.raises(TypeError):
-        se["ms"] = soma.SOMADenseNdArray(uri=(tmp_path / "C").as_uri()).create(
+        se["ms"] = soma.DenseNdArray(uri=(tmp_path / "C").as_uri()).create(
             type=pa.float32(), shape=(10,)
         )
     with pytest.raises(TypeError):
-        se["ms"] = soma.SOMAMeasurement(uri=(tmp_path / "D").as_uri()).create()
+        se["ms"] = soma.Measurement(uri=(tmp_path / "D").as_uri()).create()
     with pytest.raises(TypeError):
-        se["ms"] = soma.SOMADataFrame(uri=(tmp_path / "E").as_uri()).create(
+        se["ms"] = soma.DataFrame(uri=(tmp_path / "E").as_uri()).create(
             schema=pa.schema([("A", pa.int32())])
         )
     with pytest.raises(TypeError):
-        se["ms"] = soma.SOMAIndexedDataFrame(uri=(tmp_path / "F").as_uri()).create(
+        se["ms"] = soma.IndexedDataFrame(uri=(tmp_path / "F").as_uri()).create(
             schema=pa.schema([("A", pa.int32())]), index_column_names=["A"]
         )

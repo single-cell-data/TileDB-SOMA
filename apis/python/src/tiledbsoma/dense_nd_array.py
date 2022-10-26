@@ -7,13 +7,13 @@ import tiledb
 import tiledbsoma.util_arrow as util_arrow
 from tiledbsoma.util_tiledb import tiledb_result_order_from_soma_result_order
 
-from .soma_collection import SOMACollectionBase
+from .collection import CollectionBase
 from .tiledb_array import TileDBArray
 from .tiledb_platform_config import TileDBPlatformConfig
-from .types import NTuple, SOMADenseNdCoordinates, SOMAResultOrder
+from .types import DenseNdCoordinates, NTuple, ResultOrder
 
 
-class SOMADenseNdArray(TileDBArray):
+class DenseNdArray(TileDBArray):
     """
     Represents ``X`` and others.
     """
@@ -22,7 +22,7 @@ class SOMADenseNdArray(TileDBArray):
         self,
         uri: str,
         *,
-        parent: Optional[SOMACollectionBase[Any]] = None,
+        parent: Optional[CollectionBase[Any]] = None,
         tiledb_platform_config: Optional[TileDBPlatformConfig] = None,
         ctx: Optional[tiledb.Ctx] = None,
     ):
@@ -44,9 +44,9 @@ class SOMADenseNdArray(TileDBArray):
         self,
         type: pa.DataType,
         shape: Union[NTuple, List[int]],
-    ) -> "SOMADenseNdArray":
+    ) -> "DenseNdArray":
         """
-        Create a ``SOMADenseNdArray`` named with the URI.
+        Create a ``DenseNdArray`` named with the URI.
 
         :param type: an Arrow type defining the type of each element in the array. If the type is unsupported, an error will be raised.
 
@@ -61,7 +61,7 @@ class SOMADenseNdArray(TileDBArray):
 
         if not pa.types.is_primitive(type):
             raise TypeError(
-                "Unsupported type - SOMADenseNdArray only supports primtive Arrow types"
+                "Unsupported type - DenseNdArray only supports primtive Arrow types"
             )
 
         level = self._tiledb_platform_config.string_dim_zstd_level
@@ -137,9 +137,9 @@ class SOMADenseNdArray(TileDBArray):
 
     def read_tensor(
         self,
-        coords: SOMADenseNdCoordinates,
+        coords: DenseNdCoordinates,
         *,
-        result_order: SOMAResultOrder = "row-major",
+        result_order: ResultOrder = "row-major",
     ) -> pa.Tensor:
         """
         Read a user-defined dense slice of the array and return as an Arrow ``Tensor``.
@@ -157,9 +157,9 @@ class SOMADenseNdArray(TileDBArray):
 
     def read_numpy(
         self,
-        coords: SOMADenseNdCoordinates,
+        coords: DenseNdCoordinates,
         *,
-        result_order: SOMAResultOrder = "row-major",
+        result_order: ResultOrder = "row-major",
     ) -> np.ndarray:
         """
         Read a user-specified dense slice of the array and return as an Numpy ``ndarray``.
@@ -170,7 +170,7 @@ class SOMADenseNdArray(TileDBArray):
 
     def write_tensor(
         self,
-        coords: SOMADenseNdCoordinates,
+        coords: DenseNdCoordinates,
         values: pa.Tensor,
     ) -> None:
         """
@@ -184,12 +184,12 @@ class SOMADenseNdArray(TileDBArray):
 
         values - pyarrow.Tensor
             Define the values to be written to the subarray.  Must have same shape
-            as defind by ``coords``, and the type must match the SOMADenseNdArray.
+            as defind by ``coords``, and the type must match the DenseNdArray.
         """
         with self._tiledb_open("w") as A:
             A[coords] = values.to_numpy()
 
-    def write_numpy(self, coords: SOMADenseNdCoordinates, values: np.ndarray) -> None:
+    def write_numpy(self, coords: DenseNdCoordinates, values: np.ndarray) -> None:
         """ "
         Write a numpy ``ndarray`` to the user specified coordinates
         """
@@ -200,7 +200,7 @@ class SOMADenseNdArray(TileDBArray):
 def _dense_index_to_shape(
     coords: Tuple[Union[int, slice], ...],
     array_shape: Tuple[int, ...],
-    result_order: SOMAResultOrder,
+    result_order: ResultOrder,
 ) -> Tuple[int, ...]:
     """
     Given a subarray index specified as a tuple of per-dimension slices or scalars

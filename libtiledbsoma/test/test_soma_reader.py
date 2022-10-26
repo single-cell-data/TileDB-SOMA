@@ -3,7 +3,7 @@
 import os
 import pandas as pd
 import pyarrow as pa
-import tiledbsoma.libtiledbsoma as sc
+import tiledbsoma.libtiledbsoma as clib
 
 VERBOSE = False
 
@@ -11,7 +11,7 @@ TEST_DIR = os.path.dirname(__file__)
 SOMA_URI = f"{TEST_DIR}/../../test/soco/pbmc3k_processed"
 
 if VERBOSE:
-    sc.config_logging("debug")
+    clib.config_logging("debug")
 
 
 def test_soma_reader_obs():
@@ -19,7 +19,7 @@ def test_soma_reader_obs():
 
     name = "obs"
     uri = os.path.join(SOMA_URI, name)
-    sr = sc.SOMAReader(uri)
+    sr = clib.SOMAReader(uri)
     sr.submit()
     arrow_table = sr.read_next()
 
@@ -33,7 +33,7 @@ def test_soma_reader_var():
 
     name = "var"
     uri = os.path.join(SOMA_URI, "ms/mRNA", name)
-    sr = sc.SOMAReader(uri)
+    sr = clib.SOMAReader(uri)
     sr.submit()
     arrow_table = sr.read_next()
 
@@ -47,7 +47,7 @@ def test_soma_reader_var_x_data():
 
     name = "X/data"
     uri = os.path.join(SOMA_URI, "ms/mRNA", name)
-    sr = sc.SOMAReader(uri)
+    sr = clib.SOMAReader(uri)
     sr.submit()
 
     # iterate read batches until all results have been processed
@@ -65,7 +65,7 @@ def test_soma_reader_dim_points():
 
     name = "obs"
     uri = os.path.join(SOMA_URI, name)
-    sr = sc.SOMAReader(uri)
+    sr = clib.SOMAReader(uri)
 
     obs_id_points = list(range(0, 100, 2))
 
@@ -84,7 +84,7 @@ def test_soma_reader_dim_ranges():
 
     name = "obs"
     uri = os.path.join(SOMA_URI, name)
-    sr = sc.SOMAReader(uri)
+    sr = clib.SOMAReader(uri)
 
     obs_id_ranges = [
         [1000, 1004],
@@ -106,7 +106,7 @@ def test_soma_reader_dim_mixed():
 
     name = "obs"
     uri = os.path.join(SOMA_URI, name)
-    sr = sc.SOMAReader(uri)
+    sr = clib.SOMAReader(uri)
 
     obs_id_points = list(range(0, 100, 2))
 
@@ -133,7 +133,7 @@ def test_soma_reader_obs_slice_x():
     # ---------------------------------------------------------------1
     name = "obs"
     uri = os.path.join(SOMA_URI, name)
-    sr = sc.SOMAReader(uri)
+    sr = clib.SOMAReader(uri)
 
     obs_id_points = list(range(0, 100, 2))
 
@@ -156,7 +156,7 @@ def test_soma_reader_obs_slice_x():
     # ---------------------------------------------------------------1
     name = "X/data"
     uri = os.path.join(SOMA_URI, "ms/mRNA", name)
-    sr = sc.SOMAReader(uri)
+    sr = clib.SOMAReader(uri)
 
     # slice X/data read with obs.soma_rowid column
     sr.set_dim_points("soma_dim_0", obs.column("soma_rowid"))
@@ -175,7 +175,7 @@ def test_soma_reader_column_names():
 
     name = "obs"
     uri = os.path.join(SOMA_URI, name)
-    sr = sc.SOMAReader(uri, column_names=["soma_rowid", "louvain"])
+    sr = clib.SOMAReader(uri, column_names=["soma_rowid", "louvain"])
 
     sr.submit()
     arrow_table = sr.read_next()
@@ -188,7 +188,7 @@ def test_soma_reader_column_names():
 def test_nnz():
     name = "obs"
     uri = os.path.join(SOMA_URI, name)
-    sr = sc.SOMAReader(uri)
+    sr = clib.SOMAReader(uri)
 
     total_cell_count = sr.nnz()
 

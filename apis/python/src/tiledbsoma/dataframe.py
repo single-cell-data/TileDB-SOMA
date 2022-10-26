@@ -9,27 +9,27 @@ import tiledb
 import tiledbsoma.libtiledbsoma as clib
 
 from . import util, util_arrow
+from .collection import CollectionBase
 from .constants import SOMA_JOINID, SOMA_ROWID
 from .query_condition import QueryCondition  # type: ignore
-from .soma_collection import SOMACollectionBase
 from .tiledb_array import TileDBArray
-from .types import Ids, SOMAResultOrder
+from .types import Ids, ResultOrder
 
 Slice = TypeVar("Slice", bound=Sequence[int])
 
 
-class SOMADataFrame(TileDBArray):
+class DataFrame(TileDBArray):
     """
     Represents ``obs``, ``var``, and others.
 
-    A ``SOMADataFrame`` contains a "pseudo-column" called ``soma_rowid``, of type int64 and domain [0,num_rows).  The ``soma_rowid`` pseudo-column contains a unique value for each row in the ``SOMADataFrame``, and is intended to act as a join key for other objects, such as a ``SOMASparseNdArray``.
+    A ``DataFrame`` contains a "pseudo-column" called ``soma_rowid``, of type int64 and domain [0,num_rows).  The ``soma_rowid`` pseudo-column contains a unique value for each row in the ``DataFrame``, and is intended to act as a join key for other objects, such as a ``SparseNdArray``.
     """
 
     def __init__(
         self,
         uri: str,
         *,
-        parent: Optional[SOMACollectionBase[Any]] = None,
+        parent: Optional[CollectionBase[Any]] = None,
         ctx: Optional[tiledb.Ctx] = None,
     ):
         """
@@ -44,7 +44,7 @@ class SOMADataFrame(TileDBArray):
     def create(
         self,
         schema: pa.Schema,
-    ) -> "SOMADataFrame":
+    ) -> "DataFrame":
         """
         :param schema: Arrow Schema defining the per-column schema. This schema must define all columns. The column name ``soma_rowid`` is reserved for the pseudo-column of the same name.  If the schema includes types unsupported by the SOMA implementation, an error will be raised.
         """
@@ -128,7 +128,7 @@ class SOMADataFrame(TileDBArray):
         ids: Optional[Any] = None,
         value_filter: Optional[str] = None,
         column_names: Optional[Sequence[str]] = None,
-        result_order: Optional[SOMAResultOrder] = None,
+        result_order: Optional[ResultOrder] = None,
         # TODO: batch_size
         # TODO: partition,
         # TODO: platform_config,
@@ -140,7 +140,7 @@ class SOMADataFrame(TileDBArray):
 
         :param column_names: the named columns to read and return. Defaults to ``None``, meaning no constraint -- all column names.
 
-        :param partitions: an optional ``SOMAReadPartitions`` hint to indicate how results should be organized.
+        :param partitions: an optional ``ReadPartitions`` hint to indicate how results should be organized.
 
         :param result_order: order of read results.  This can be one of 'row-major', 'col-major', or 'unordered'.
 
@@ -215,7 +215,7 @@ class SOMADataFrame(TileDBArray):
         ids: Optional[Any] = None,
         value_filter: Optional[str] = None,
         column_names: Optional[Sequence[str]] = None,
-        result_order: Optional[SOMAResultOrder] = None,
+        result_order: Optional[ResultOrder] = None,
         # TODO: batch_size
         # TODO: partition,
         # TODO: result_order,
@@ -237,7 +237,7 @@ class SOMADataFrame(TileDBArray):
         """
         Write an Arrow.Table to the persistent object.
 
-        :param values: An Arrow.Table containing all columns, including the index columns. The schema for the values must match the schema for the ``SOMADataFrame``.
+        :param values: An Arrow.Table containing all columns, including the index columns. The schema for the values must match the schema for the ``DataFrame``.
 
         The ``values`` Arrow Table must contain a ``soma_rowid`` (int64) column, indicating which rows are being written.
         """
@@ -280,7 +280,7 @@ class SOMADataFrame(TileDBArray):
         ids: Optional[Ids] = None,
         value_filter: Optional[str] = None,
         column_names: Optional[Sequence[str]] = None,
-        result_order: Optional[SOMAResultOrder] = None,
+        result_order: Optional[ResultOrder] = None,
     ) -> Iterator[pd.DataFrame]:
         for tbl in self.read(
             ids=ids,
@@ -296,7 +296,7 @@ class SOMADataFrame(TileDBArray):
         ids: Optional[Ids] = None,
         value_filter: Optional[str] = None,
         column_names: Optional[Sequence[str]] = None,
-        result_order: Optional[SOMAResultOrder] = None,
+        result_order: Optional[ResultOrder] = None,
     ) -> pd.DataFrame:
         return pd.concat(
             self.read_as_pandas(
@@ -342,7 +342,7 @@ def _validate_schema(schema: pa.Schema) -> pa.Schema:
             SOMA_JOINID,
         ]:
             raise ValueError(
-                "SOMADataFrame schema may not contain fields with name prefix `soma_`"
+                "DataFrame schema may not contain fields with name prefix `soma_`"
             )
 
     return schema

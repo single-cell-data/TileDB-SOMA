@@ -9,8 +9,8 @@ import tiledbsoma as soma
 from . import NDARRAY_ARROW_TYPES_NOT_SUPPORTED, NDARRAY_ARROW_TYPES_SUPPORTED
 
 
-def test_soma_dense_nd_array_ok_no_storage():
-    arr = soma.SOMADenseNdArray(uri="/foo/bar/")
+def test_dense_nd_array_ok_no_storage():
+    arr = soma.DenseNdArray(uri="/foo/bar/")
     assert arr.uri == "/foo/bar/"
     assert not arr.exists()
     assert arr.soma_type == "SOMADenseNdArray"
@@ -20,7 +20,7 @@ def test_soma_dense_nd_array_ok_no_storage():
     "shape", [(10,), (1, 100), (10, 1, 100), (2, 4, 6, 8), [1], (1, 2, 3, 4, 5)]
 )
 @pytest.mark.parametrize("element_type", NDARRAY_ARROW_TYPES_SUPPORTED)
-def test_soma_dense_nd_array_create_ok(
+def test_dense_nd_array_create_ok(
     tmp_path, shape: Tuple[int, ...], element_type: pa.DataType
 ):
     """
@@ -28,7 +28,7 @@ def test_soma_dense_nd_array_create_ok(
     """
     assert pa.types.is_primitive(element_type)  # sanity check incoming params
 
-    a = soma.SOMADenseNdArray(uri=tmp_path.as_posix())
+    a = soma.DenseNdArray(uri=tmp_path.as_posix())
     a.create(element_type, shape)
     assert a.soma_type == "SOMADenseNdArray"
     assert a.uri == tmp_path.as_posix()
@@ -47,17 +47,17 @@ def test_soma_dense_nd_array_create_ok(
 
 @pytest.mark.parametrize("shape", [(10,)])
 @pytest.mark.parametrize("element_type", NDARRAY_ARROW_TYPES_NOT_SUPPORTED)
-def test_soma_dense_nd_array_create_fail(
+def test_dense_nd_array_create_fail(
     tmp_path, shape: Tuple[int, ...], element_type: pa.DataType
 ):
-    a = soma.SOMADenseNdArray(uri=tmp_path.as_posix())
+    a = soma.DenseNdArray(uri=tmp_path.as_posix())
     with pytest.raises(TypeError):
         a.create(element_type, shape)
     assert not a.exists()
 
 
-def test_soma_dense_nd_array_delete(tmp_path):
-    a = soma.SOMADenseNdArray(uri=tmp_path.as_posix())
+def test_dense_nd_array_delete(tmp_path):
+    a = soma.DenseNdArray(uri=tmp_path.as_posix())
     a.create(pa.int8(), (100, 100))
     assert a.exists()
 
@@ -66,12 +66,12 @@ def test_soma_dense_nd_array_delete(tmp_path):
 
     # should be silent about non-existent object
     assert a.delete() is None
-    assert soma.SOMADenseNdArray(uri="no such array").delete() is None
+    assert soma.DenseNdArray(uri="no such array").delete() is None
 
 
 @pytest.mark.parametrize("shape", [(10,), (10, 20), (10, 20, 2), (2, 4, 6, 8)])
-def test_soma_dense_nd_array_read_write_tensor(tmp_path, shape: Tuple[int, ...]):
-    a = soma.SOMADenseNdArray(tmp_path.as_posix())
+def test_dense_nd_array_read_write_tensor(tmp_path, shape: Tuple[int, ...]):
+    a = soma.DenseNdArray(tmp_path.as_posix())
     a.create(pa.float64(), shape)
     ndim = len(shape)
 
@@ -82,7 +82,7 @@ def test_soma_dense_nd_array_read_write_tensor(tmp_path, shape: Tuple[int, ...])
     del a
 
     # check multiple read paths
-    b = soma.SOMADenseNdArray(tmp_path.as_posix())
+    b = soma.DenseNdArray(tmp_path.as_posix())
 
     t = b.read_tensor((slice(None),) * ndim, result_order="row-major")
     assert t.equals(pa.Tensor.from_numpy(data))
@@ -103,16 +103,16 @@ def test_soma_dense_nd_array_read_write_tensor(tmp_path, shape: Tuple[int, ...])
 @pytest.mark.parametrize("shape", [(), (0,), (10, 0), (0, 10), (1, 2, 0)])
 def test_zero_length_fail(tmp_path, shape):
     """Zero length dimensions are expected to fail"""
-    a = soma.SOMADenseNdArray(tmp_path.as_posix())
+    a = soma.DenseNdArray(tmp_path.as_posix())
     with pytest.raises(ValueError):
         a.create(type=pa.float32(), shape=shape)
 
 
-def test_soma_dense_nd_array_reshape(tmp_path):
+def test_dense_nd_array_reshape(tmp_path):
     """
     Reshape currently unimplemented.
     """
-    a = soma.SOMADenseNdArray(tmp_path.as_posix())
+    a = soma.DenseNdArray(tmp_path.as_posix())
     a.create(type=pa.int32(), shape=(10, 10, 10))
     with pytest.raises(NotImplementedError):
         assert a.reshape((100, 10, 1))

@@ -19,7 +19,7 @@ np = numpy
 pd = pandas
 
 
-def count_obs(exp: tiledbsoma.SOMAExperiment, attr_name: str) -> None:
+def count_obs(exp: tiledbsoma.Experiment, attr_name: str) -> None:
     print(
         exp.obs.read_as_pandas_all(column_names=[attr_name])
         .groupby(attr_name)
@@ -34,14 +34,14 @@ if len(sys.argv) == 1:
 elif len(sys.argv) == 2:
     input_path = sys.argv[1]
 else:
-    print(f"{sys.argv[0]}: need just one SOMAExperiment path.", file=sys.stderr)
+    print(f"{sys.argv[0]}: need just one Experiment path.", file=sys.stderr)
     sys.exit(1)
 
 cfg = tiledb.Config()
 cfg["py.init_buffer_bytes"] = 4 * 1024**3
 ctx = tiledb.Ctx(cfg)
 
-exp = tiledbsoma.SOMAExperiment(input_path, ctx=ctx)
+exp = tiledbsoma.Experiment(input_path, ctx=ctx)
 if not exp.exists():
     print("Does not exist yet:", input_path)
 

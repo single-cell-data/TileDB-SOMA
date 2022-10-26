@@ -12,10 +12,10 @@ Labels = Union[Sequence[str], pd.Index]
 
 NTuple = Tuple[int, ...]
 
-SOMABatchFormat = Literal["dense", "coo", "csr", "csc", "record-batch", "table"]
-SOMAReadPartitions = Literal["IofN"]
-SOMABatchSize = Literal["count", "size", "auto"]
-SOMAResultOrder = Literal["row-major", "column-major", "unordered", "rowid-ordered"]
+BatchFormat = Literal["dense", "coo", "csr", "csc", "record-batch", "table"]
+ReadPartitions = Literal["IofN"]
+BatchSize = Literal["count", "size", "auto"]
+ResultOrder = Literal["row-major", "column-major", "unordered", "rowid-ordered"]
 
 ArrowReadResult = Union[
     pa.Table,
@@ -26,8 +26,8 @@ ArrowReadResult = Union[
     pa.SparseCSCMatrix,
 ]
 
-SOMADenseCoordinates = Union[int, slice, pa.Array]
-SOMADenseNdCoordinates = Tuple[SOMADenseCoordinates, ...]
+DenseCoordinates = Union[int, slice, pa.Array]
+DenseNdCoordinates = Tuple[DenseCoordinates, ...]
 
-SOMASparseCoordinates = Union[int, slice, Tuple[int, ...], List[int], pa.IntegerArray]
-SOMASparseNdCoordinates = Tuple[SOMADenseCoordinates, ...]
+SparseCoordinates = Union[int, slice, Tuple[int, ...], List[int], pa.IntegerArray]
+SparseNdCoordinates = Tuple[DenseCoordinates, ...]

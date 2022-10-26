@@ -13,11 +13,11 @@ Metadata handling tests for all SOMA foundational datatypes.
 @pytest.fixture(
     scope="function",
     params=[
-        "SOMACollection",
-        "SOMADataFrame",
-        "SOMAIndexedDataFrame",
-        "SOMADenseNdArray",
-        "SOMASparseNdArray",
+        "Collection",
+        "DataFrame",
+        "IndexedDataFrame",
+        "DenseNdArray",
+        "SparseNdArray",
     ],
 )
 def soma_object(request, tmp_path):
@@ -27,27 +27,27 @@ def soma_object(request, tmp_path):
     uri = tmp_path.as_posix()
     class_name = request.param
 
-    if class_name == "SOMACollection":
-        so = soma.SOMACollection(uri=uri)
+    if class_name == "Collection":
+        so = soma.Collection(uri=uri)
         so.create()
 
-    elif class_name == "SOMADataFrame":
-        so = soma.SOMADataFrame(uri=uri)
+    elif class_name == "DataFrame":
+        so = soma.DataFrame(uri=uri)
         so.create(pa.schema([("A", pa.int32()), ("B", pa.large_string())]))
 
-    elif class_name == "SOMAIndexedDataFrame":
-        so = soma.SOMAIndexedDataFrame(uri=uri)
+    elif class_name == "IndexedDataFrame":
+        so = soma.IndexedDataFrame(uri=uri)
         so.create(
             schema=pa.schema([("C", pa.float32()), ("D", pa.uint32())]),
             index_column_names=["D"],
         )
 
-    elif class_name == "SOMADenseNdArray":
-        so = soma.SOMADenseNdArray(uri=uri)
+    elif class_name == "DenseNdArray":
+        so = soma.DenseNdArray(uri=uri)
         so.create(type=pa.float64(), shape=(100, 10, 1))
 
-    elif class_name == "SOMASparseNdArray":
-        so = soma.SOMASparseNdArray(uri=uri)
+    elif class_name == "SparseNdArray":
+        so = soma.SparseNdArray(uri=uri)
         so.create(type=pa.int8(), shape=(11,))
 
     assert so is not None, f"Unknown class name: {class_name}"
@@ -55,7 +55,7 @@ def soma_object(request, tmp_path):
     so.delete()
 
 
-def test_soma_metadata(soma_object):
+def test_metadata(soma_object):
     """Basic API endpoints"""
     assert soma_object.exists()
 
@@ -101,7 +101,7 @@ def test_soma_metadata(soma_object):
         -math.inf,
     ],
 )
-def test_soma_metadata_marshalling_OK(soma_object, test_value):
+def test_metadata_marshalling_OK(soma_object, test_value):
     """
     Test the various data type marshalling we expect to work,
     which is any Arrow primitive and Arrow strings
@@ -121,7 +121,7 @@ def test_soma_metadata_marshalling_OK(soma_object, test_value):
     "test_value",
     [["a", "b", "c"], {"a": False}],
 )
-def test_soma_metadata_marshalling_FAIL(soma_object, test_value):
+def test_metadata_marshalling_FAIL(soma_object, test_value):
     """Test the various data type marshalling we expect to FAIL"""
 
     with pytest.raises(TypeError):

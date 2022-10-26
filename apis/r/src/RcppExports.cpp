@@ -107,6 +107,41 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// sr_setup
+Rcpp::XPtr<tdbs::SOMAReader> sr_setup(Rcpp::XPtr<tiledb::Context> ctx, const std::string& uri, const std::string& loglevel);
+RcppExport SEXP _tiledbsoma_sr_setup(SEXP ctxSEXP, SEXP uriSEXP, SEXP loglevelSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::XPtr<tiledb::Context> >::type ctx(ctxSEXP);
+    Rcpp::traits::input_parameter< const std::string& >::type uri(uriSEXP);
+    Rcpp::traits::input_parameter< const std::string& >::type loglevel(loglevelSEXP);
+    rcpp_result_gen = Rcpp::wrap(sr_setup(ctx, uri, loglevel));
+    return rcpp_result_gen;
+END_RCPP
+}
+// sr_complete
+bool sr_complete(Rcpp::XPtr<tdbs::SOMAReader> sr);
+RcppExport SEXP _tiledbsoma_sr_complete(SEXP srSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::XPtr<tdbs::SOMAReader> >::type sr(srSEXP);
+    rcpp_result_gen = Rcpp::wrap(sr_complete(sr));
+    return rcpp_result_gen;
+END_RCPP
+}
+// sr_next
+Rcpp::List sr_next(Rcpp::XPtr<tdbs::SOMAReader> sr);
+RcppExport SEXP _tiledbsoma_sr_next(SEXP srSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::XPtr<tdbs::SOMAReader> >::type sr(srSEXP);
+    rcpp_result_gen = Rcpp::wrap(sr_next(sr));
+    return rcpp_result_gen;
+END_RCPP
+}
 
 static const R_CallMethodDef CallEntries[] = {
     {"_tiledbsoma_test_sdf", (DL_FUNC) &_tiledbsoma_test_sdf, 1},
@@ -117,6 +152,9 @@ static const R_CallMethodDef CallEntries[] = {
     {"_tiledbsoma_set_log_level", (DL_FUNC) &_tiledbsoma_set_log_level, 1},
     {"_tiledbsoma_get_column_types", (DL_FUNC) &_tiledbsoma_get_column_types, 2},
     {"_tiledbsoma_nnz", (DL_FUNC) &_tiledbsoma_nnz, 1},
+    {"_tiledbsoma_sr_setup", (DL_FUNC) &_tiledbsoma_sr_setup, 3},
+    {"_tiledbsoma_sr_complete", (DL_FUNC) &_tiledbsoma_sr_complete, 1},
+    {"_tiledbsoma_sr_next", (DL_FUNC) &_tiledbsoma_sr_next, 1},
     {NULL, NULL, 0}
 };
 

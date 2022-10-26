@@ -12,12 +12,12 @@ import tiledb
 import tiledbsoma.eta as eta
 import tiledbsoma.util_ann as util_ann
 from tiledbsoma import (
-    SOMACollection,
-    SOMADataFrame,
-    SOMADenseNdArray,
-    SOMAExperiment,
-    SOMAMeasurement,
-    SOMASparseNdArray,
+    Collection,
+    DataFrame,
+    DenseNdArray,
+    Experiment,
+    Measurement,
+    SparseNdArray,
     logging,
     util,
     util_scipy,
@@ -30,7 +30,7 @@ from .util import uri_joinpath
 
 # ----------------------------------------------------------------
 def from_h5ad(
-    experiment: SOMAExperiment,
+    experiment: Experiment,
     input_path: Path,
     measurement_name: str,
     ctx: Optional[tiledb.Ctx] = None,
@@ -43,10 +43,10 @@ def from_h5ad(
 
 # ----------------------------------------------------------------
 def _from_h5ad_common(
-    experiment: SOMAExperiment,
+    experiment: Experiment,
     input_path: Path,
     measurement_name: str,
-    handler_func: Callable[[SOMAExperiment, ad.AnnData, str, tiledb.Ctx], None],
+    handler_func: Callable[[Experiment, ad.AnnData, str, tiledb.Ctx], None],
     ctx: Optional[tiledb.Ctx] = None,
 ) -> None:
     """
@@ -58,7 +58,7 @@ def _from_h5ad_common(
     s = util.get_start_stamp()
     logging.log_io(
         None,
-        f"START  SOMAExperiment.from_h5ad {input_path}",
+        f"START  Experiment.from_h5ad {input_path}",
     )
 
     logging.log_io(None, f"{experiment._indent}START  READING {input_path}")
@@ -76,13 +76,13 @@ def _from_h5ad_common(
         None,
         util.format_elapsed(
             s,
-            f"FINISH SOMAExperiment.from_h5ad {input_path}",
+            f"FINISH Experiment.from_h5ad {input_path}",
         ),
     )
 
 
 def _write_dataframe(
-    soma_df: SOMADataFrame, df: pd.DataFrame, id_column_name: Optional[str]
+    soma_df: DataFrame, df: pd.DataFrame, id_column_name: Optional[str]
 ) -> None:
     s = util.get_start_stamp()
     logging.log_io(None, f"{soma_df._indent}START  WRITING {soma_df.uri}")
@@ -151,10 +151,10 @@ def _write_dataframe(
 
 
 def _write_matrix_to_denseNdArray(
-    soma_ndarray: SOMADenseNdArray,
+    soma_ndarray: DenseNdArray,
     src_matrix: Union[np.ndarray, sp.csr_matrix, sp.csc_matrix],
 ) -> None:
-    """Write a matrix to an empty SOMADenseNdArray"""
+    """Write a matrix to an empty DenseNdArray"""
 
     # Write all at once?
     if soma_ndarray._tiledb_platform_config.write_X_chunked:
@@ -213,10 +213,10 @@ def _write_matrix_to_denseNdArray(
 
 
 def _write_matrix_to_sparseNdArray(
-    soma_ndarray: SOMASparseNdArray,
+    soma_ndarray: SparseNdArray,
     src_matrix: Union[np.ndarray, sp.csr_matrix, sp.csc_matrix],
 ) -> None:
-    """Write a matrix to an empty SOMADenseNdArray"""
+    """Write a matrix to an empty DenseNdArray"""
 
     def _coo_to_table(mat_coo: sp.coo_matrix, axis: int = 0, base: int = 0) -> pa.Table:
         pydict = {
@@ -299,7 +299,7 @@ def _write_matrix_to_sparseNdArray(
 
 
 def create_from_matrix(
-    soma_ndarray: Union[SOMADenseNdArray, SOMASparseNdArray],
+    soma_ndarray: Union[DenseNdArray, SparseNdArray],
     src_matrix: Union[np.ndarray, sp.csr_matrix, sp.csc_matrix],
 ) -> None:
     """
@@ -331,13 +331,13 @@ def create_from_matrix(
 
 # ----------------------------------------------------------------
 def from_anndata(
-    experiment: SOMAExperiment,
+    experiment: Experiment,
     anndata: ad.AnnData,
     measurement_name: str,
     ctx: Optional[tiledb.Ctx] = None,
 ) -> None:
     """
-    Top-level writer method for creating a TileDB group for a ``SOMAExperiment`` object.
+    Top-level writer method for creating a TileDB group for a ``Experiment`` object.
     """
     if not isinstance(anndata, ad.AnnData):
         raise Exception(
@@ -369,40 +369,36 @@ def from_anndata(
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     # OBS
-    obs = SOMADataFrame(uri=uri_joinpath(experiment.uri, "obs"))
+    obs = DataFrame(uri=uri_joinpath(experiment.uri, "obs"))
     _write_dataframe(obs, anndata.obs, id_column_name="obs_id")
     experiment.set("obs", obs)
 
-    experiment.set(
-        "ms", SOMACollection(uri=uri_joinpath(experiment.uri, "ms")).create()
-    )
+    experiment.set("ms", Collection(uri=uri_joinpath(experiment.uri, "ms")).create())
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     # MS
-    measurement = SOMAMeasurement(
-        uri=f"{experiment.ms.uri}/{measurement_name}", ctx=ctx
-    )
+    measurement = Measurement(uri=f"{experiment.ms.uri}/{measurement_name}", ctx=ctx)
     measurement.create()
     experiment.ms.set(measurement_name, measurement)
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     # MS/meas/VAR
-    var = SOMADataFrame(uri=uri_joinpath(measurement.uri, "var"))
+    var = DataFrame(uri=uri_joinpath(measurement.uri, "var"))
     _write_dataframe(var, anndata.var, id_column_name="var_id")
     measurement["var"] = var
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     # MS/meas/X/DATA
-    measurement["X"] = SOMACollection(uri=uri_joinpath(measurement.uri, "X")).create()
+    measurement["X"] = Collection(uri=uri_joinpath(measurement.uri, "X")).create()
 
     # TODO: more types to check?
     if isinstance(anndata.X, np.ndarray):
-        ddata = SOMADenseNdArray(uri=uri_joinpath(measurement.X.uri, "data"), ctx=ctx)
+        ddata = DenseNdArray(uri=uri_joinpath(measurement.X.uri, "data"), ctx=ctx)
         # Code here and in else-block duplicated for linter appeasement
         create_from_matrix(ddata, anndata.X)
         measurement.X.set("data", ddata)
     else:
-        sdata = SOMASparseNdArray(uri=uri_joinpath(measurement.X.uri, "data"), ctx=ctx)
+        sdata = SparseNdArray(uri=uri_joinpath(measurement.X.uri, "data"), ctx=ctx)
         create_from_matrix(sdata, anndata.X)
         measurement.X.set("data", sdata)
 
@@ -410,65 +406,59 @@ def from_anndata(
     # TODO: port from v0
 
     if len(anndata.obsm.keys()) > 0:  # do not create an empty collection
-        measurement["obsm"] = SOMACollection(
+        measurement["obsm"] = Collection(
             uri=uri_joinpath(measurement.uri, "obsm")
         ).create()
         for key in anndata.obsm.keys():
-            arr = SOMADenseNdArray(uri=uri_joinpath(measurement.obsm.uri, key), ctx=ctx)
+            arr = DenseNdArray(uri=uri_joinpath(measurement.obsm.uri, key), ctx=ctx)
             create_from_matrix(arr, anndata.obsm[key])
             measurement.obsm.set(key, arr)
 
     if len(anndata.varm.keys()) > 0:  # do not create an empty collection
-        measurement["varm"] = SOMACollection(
+        measurement["varm"] = Collection(
             uri=uri_joinpath(measurement.uri, "varm")
         ).create()
         for key in anndata.varm.keys():
-            darr = SOMADenseNdArray(
-                uri=uri_joinpath(measurement.varm.uri, key), ctx=ctx
-            )
+            darr = DenseNdArray(uri=uri_joinpath(measurement.varm.uri, key), ctx=ctx)
             create_from_matrix(darr, anndata.varm[key])
             measurement.varm.set(key, darr)
 
     if len(anndata.obsp.keys()) > 0:  # do not create an empty collection
-        measurement["obsp"] = SOMACollection(
+        measurement["obsp"] = Collection(
             uri=uri_joinpath(measurement.uri, "obsp")
         ).create()
         for key in anndata.obsp.keys():
-            sarr = SOMASparseNdArray(
-                uri=uri_joinpath(measurement.obsp.uri, key), ctx=ctx
-            )
+            sarr = SparseNdArray(uri=uri_joinpath(measurement.obsp.uri, key), ctx=ctx)
             create_from_matrix(sarr, anndata.obsp[key])
             measurement.obsp.set(key, sarr)
 
     if len(anndata.varp.keys()) > 0:  # do not create an empty collection
-        measurement["varp"] = SOMACollection(
+        measurement["varp"] = Collection(
             uri=uri_joinpath(measurement.uri, "varp")
         ).create()
         for key in anndata.varp.keys():
-            sarr = SOMASparseNdArray(
-                uri=uri_joinpath(measurement.varp.uri, key), ctx=ctx
-            )
+            sarr = SparseNdArray(uri=uri_joinpath(measurement.varp.uri, key), ctx=ctx)
             create_from_matrix(sarr, anndata.varp[key])
             measurement.varp.set(key, sarr)
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     # RAW
     if anndata.raw is not None:
-        raw_measurement = SOMAMeasurement(
+        raw_measurement = Measurement(
             uri=uri_joinpath(experiment.ms.uri, "raw"), ctx=ctx
         )
         raw_measurement.create()
         experiment.ms.set("raw", raw_measurement)
 
-        var = SOMADataFrame(uri=uri_joinpath(raw_measurement.uri, "var"))
+        var = DataFrame(uri=uri_joinpath(raw_measurement.uri, "var"))
         _write_dataframe(var, anndata.raw.var, id_column_name="var_id")
         raw_measurement.set("var", var)
 
-        raw_measurement["X"] = SOMACollection(
+        raw_measurement["X"] = Collection(
             uri=uri_joinpath(raw_measurement.uri, "X")
         ).create()
 
-        rawXdata = SOMASparseNdArray(
+        rawXdata = SparseNdArray(
             uri=uri_joinpath(raw_measurement.X.uri, "data"), ctx=ctx
         )
         create_from_matrix(rawXdata, anndata.raw.X)
@@ -488,7 +478,7 @@ def from_anndata(
 
 # ----------------------------------------------------------------
 def to_h5ad(
-    experiment: SOMAExperiment,
+    experiment: Experiment,
     h5ad_path: Path,
     measurement_name: str,
     ctx: Optional[tiledb.Ctx] = None,
@@ -498,7 +488,7 @@ def to_h5ad(
     """
 
     s = util.get_start_stamp()
-    logging.log_io(None, f"START  SOMAExperiment.to_h5ad -> {h5ad_path}")
+    logging.log_io(None, f"START  Experiment.to_h5ad -> {h5ad_path}")
 
     anndata = to_anndata(experiment, measurement_name=measurement_name)
 
@@ -514,13 +504,13 @@ def to_h5ad(
 
     logging.log_io(
         None,
-        util.format_elapsed(s, f"FINISH SOMAExperiment.to_h5ad -> {h5ad_path}"),
+        util.format_elapsed(s, f"FINISH Experiment.to_h5ad -> {h5ad_path}"),
     )
 
 
 # ----------------------------------------------------------------
 def to_anndata(
-    experiment: SOMAExperiment,
+    experiment: Experiment,
     *,
     # TODO: set a better name as capitalized-const
     # TODO: maybe if there are multiple measurements, default to the first one not named 'raw'
@@ -537,7 +527,7 @@ def to_anndata(
     """
 
     s = util.get_start_stamp()
-    logging.log_io(None, "START  SOMAExperiment.to_anndata")
+    logging.log_io(None, "START  Experiment.to_anndata")
 
     measurement = experiment.ms[measurement_name]
 
@@ -554,10 +544,10 @@ def to_anndata(
     X_data = measurement.X["data"]
     assert X_data is not None
     X_dtype = None  # some datasets have no X
-    if type(X_data) == SOMADenseNdArray:
+    if type(X_data) == DenseNdArray:
         X_ndarray = X_data.read_numpy((slice(None), slice(None)))
         X_dtype = X_ndarray.dtype
-    elif type(X_data) == SOMASparseNdArray:
+    elif type(X_data) == SparseNdArray:
         X_mat = X_data.read_as_pandas_all()  # TODO: CSR/CSC options ...
         X_csr = util_scipy.csr_from_tiledb_df(X_mat, nobs, nvar)
         X_dtype = X_csr.dtype
@@ -631,7 +621,7 @@ def to_anndata(
 
     logging.log_io(
         None,
-        util.format_elapsed(s, "FINISH SOMAExperiment.to_anndata"),
+        util.format_elapsed(s, "FINISH Experiment.to_anndata"),
     )
 
     return anndata

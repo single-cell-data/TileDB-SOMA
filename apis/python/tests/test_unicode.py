@@ -45,8 +45,8 @@ def sample_arrow_table():
 #
 @pytest.mark.xfail
 def test_dataframe_unicode(tmp_path, sample_arrow_table):
-    """Verify round-trip of unicode in SOMADataFrame attributes"""
-    sdf = soma.SOMADataFrame(tmp_path.as_posix())
+    """Verify round-trip of unicode in DataFrame attributes"""
+    sdf = soma.DataFrame(tmp_path.as_posix())
     sdf.create(sample_arrow_table.schema)
     sdf.write(sample_arrow_table)
     assert sdf.read_all().equals(sample_arrow_table)
@@ -56,10 +56,10 @@ def test_dataframe_unicode(tmp_path, sample_arrow_table):
 #
 @pytest.mark.xfail
 def test_indexed_dataframe_unicode_attr(tmp_path, sample_arrow_table):
-    """Verify round-trip of unicode in SOMAIndexedDataFrame value columns"""
+    """Verify round-trip of unicode in IndexedDataFrame value columns"""
     sample_arrow_table = sample_arrow_table.drop(["soma_rowid"])
 
-    sdf = soma.SOMAIndexedDataFrame(tmp_path.as_posix())
+    sdf = soma.IndexedDataFrame(tmp_path.as_posix())
     sdf.create(sample_arrow_table.schema, index_column_names=["soma_joinid"])
     sdf.write(sample_arrow_table)
     assert sdf.read_all().equals(sample_arrow_table)
@@ -69,10 +69,10 @@ def test_indexed_dataframe_unicode_attr(tmp_path, sample_arrow_table):
 #
 @pytest.mark.xfail
 def test_indexed_dataframe_unicode_index(tmp_path, sample_arrow_table):
-    """Verify round-trip of unicode in SOMAIndexedDataFrame index columns"""
+    """Verify round-trip of unicode in IndexedDataFrame index columns"""
     sample_arrow_table = sample_arrow_table.drop(["soma_rowid"])
 
-    sdf = soma.SOMAIndexedDataFrame(tmp_path.as_posix())
+    sdf = soma.IndexedDataFrame(tmp_path.as_posix())
     sdf.create(sample_arrow_table.schema, index_column_names=["unicode"])
     sdf.write(sample_arrow_table)
     assert sdf.read_all().equals(sample_arrow_table)
