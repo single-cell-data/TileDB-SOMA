@@ -309,7 +309,6 @@ class SOMA(TileDBGroup):
         var_attrs: Optional[Sequence[str]] = None,
         var_query_string: Optional[str] = None,
         var_ids: Optional[Ids] = None,
-        X_layer_names: Optional[Sequence[str]] = None,
         return_arrow: bool = False,
     ) -> Optional[SOMASlice]:
         """
@@ -321,9 +320,6 @@ class SOMA(TileDBGroup):
 
         If ``obs_attrs`` or ``var_attrs`` are unspecified, the slice will take all ``obs``/``var`` attributes
         from the source SOMAs; if they are specified, the slice will take the specified ``obs``/``var``
-
-        If ``X_layer_names`` is `None`, they are all returned; otherwise you can specify which layer(s)
-        you want to be operated on.
         """
 
         retval = self._query_aux(
@@ -333,7 +329,6 @@ class SOMA(TileDBGroup):
             var_attrs=var_attrs,
             var_query_string=var_query_string,
             var_ids=var_ids,
-            X_layer_names=X_layer_names,
             return_arrow=return_arrow,
         )
         return retval
@@ -348,7 +343,6 @@ class SOMA(TileDBGroup):
         var_attrs: Optional[Sequence[str]] = None,
         var_query_string: Optional[str] = None,
         var_ids: Optional[Ids] = None,
-        X_layer_names: Optional[Sequence[str]] = None,
         return_arrow: bool = False,
     ) -> Optional[SOMASlice]:
         """
@@ -417,12 +411,7 @@ class SOMA(TileDBGroup):
         # * varp
 
         return self._assemble_soma_slice(
-            obs_ids,
-            var_ids,
-            slice_obs_df,
-            slice_var_df,
-            X_layer_names=X_layer_names,
-            return_arrow=return_arrow,
+            obs_ids, var_ids, slice_obs_df, slice_var_df, return_arrow=return_arrow
         )
 
     # ----------------------------------------------------------------
@@ -516,26 +505,23 @@ class SOMA(TileDBGroup):
         slice_var_df: Union[pd.DataFrame, pa.Table],
         *,
         return_arrow: bool = False,
-        X_layer_names: Optional[Sequence[str]] = None,
     ) -> SOMASlice:
         """
         An internal method for constructing a ``SOMASlice`` object given query results.
         """
         # There aren't always multiple X layers, and if there aren't, this parallelization doesn't
-        # help. But neither does it hurt. And if there are, that's good news, since the dim_select is
+        # help. But neither doesit hurt. And if there are, that's good news, since the dim_select is
         # in TileDB's C++ core engine which releases the GIL.
         futures = []
-        if X_layer_names is None:
-            X_layer_names = self.X.keys()
         with ThreadPoolExecutor(
             max_workers=self._soma_options.max_thread_pool_workers
         ) as executor:
-            for X_layer_name in X_layer_names:
-                X_layer = self.X[X_layer_name]
+            for layer_name in self.X.keys():
+                X_layer = self.X[layer_name]
                 if X_layer is not None:
                     future = executor.submit(
                         self._assemble_soma_slice_aux,
-                        X_layer_name,
+                        layer_name,
                         X_layer,
                         obs_ids,
                         var_ids,
@@ -545,9 +531,9 @@ class SOMA(TileDBGroup):
 
         X = {}
         for future in futures:
-            X_layer_name, df = future.result()
+            layer_name, df = future.result()
             assert df is not None
-            X[X_layer_name] = df
+            X[layer_name] = df
 
         return SOMASlice(X=X, obs=slice_obs_df, var=slice_var_df)
 
