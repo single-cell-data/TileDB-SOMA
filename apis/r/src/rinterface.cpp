@@ -6,11 +6,10 @@
 
 namespace tdbs = tiledbsoma;
 
-// initial 'proof of light' function to access column names
+// Initial 'proof of light' function to access column names
 // will likely be replaced / changed in due course
 //
-//' @rdname get_table
-//' @export
+//' @noRd
 // [[Rcpp::export]]
 std::vector<std::string> get_column_names(const std::string& uri) {
     std::map<std::string, std::string> config;
@@ -31,9 +30,10 @@ std::vector<std::string> get_column_names(const std::string& uri) {
     return names;
 }
 
-// initial 'proof of light' function to a column by name
+// Initial 'proof of light' function to a column by name
 // will likely be replaced / changed in due course
 //
+//' @noRd
 // [[Rcpp::export]]
 bool export_column(const std::string& uri, const std::string& colname,
                    SEXP schemaxp, SEXP arrayxp) {
@@ -66,8 +66,7 @@ bool export_column(const std::string& uri, const std::string& colname,
 // still relies on helper from package 'arch' that we expect to be
 // replaced in due course by package 'nanoarrow' (once released)
 //
-//' @rdname get_table
-//' @export
+//' @noRd
 // [[Rcpp::export]]
 SEXP export_column_direct(const std::string& uri, const std::vector<std::string>& colnames) {
 
@@ -121,15 +120,36 @@ SEXP export_column_direct(const std::string& uri, const std::vector<std::string>
     return reslist;
 }
 
-//' @rdname get_table
+//' Read SOMA Data From a Given URI
+//'
+//' This functions access a given SOMA URI and returns a complete data.frame. It does
+//' not iterate; if your data is large than the initial read size consider the \code{sr_*}
+//' functions.
+//'
+//' @param uri Character value with URI path to a SOMA data set
+//' @param colnames Optional vector of character value with the name of the columns to retrieve
+//' @param qc Optional external Pointer object to TileDB Query Condition, defaults to \sQuote{NULL} i.e.
+//' no query condition
+//' @param dim_points Optional named list with vector of data points to select on the given
+//' dimension(s). Each dimension can be one entry in the list.
+//' @param dim_ranges Optional named list with two-column matrix where each row select a range
+//' for the given dimension. Each dimension can be one entry in the list.
+//' @param loglevel Character value with the desired logging level, defaults to \sQuote{warn}
+//' @return An Arrow data structure is returned
+//' @examples
+//' \dontrun{
+//' uri <- "test/soco/pbmc3k_processed/obs"
+//' z <- some_reader(uri)
+//' tb <- arrow::as_arrow_table(arch::from_arch_array(z, arrow::RecordBatch))
+//' }
 //' @export
 // [[Rcpp::export]]
-Rcpp::List export_arrow_array(const std::string& uri,
-                              Rcpp::Nullable<Rcpp::CharacterVector> colnames = R_NilValue,
-                              Rcpp::Nullable<Rcpp::XPtr<tiledb::QueryCondition>> qc = R_NilValue,
-                              Rcpp::Nullable<Rcpp::List> dim_points = R_NilValue,
-                              Rcpp::Nullable<Rcpp::List> dim_ranges = R_NilValue,
-                              const std::string& loglevel = "warn") {
+Rcpp::List soma_reader(const std::string& uri,
+                       Rcpp::Nullable<Rcpp::CharacterVector> colnames = R_NilValue,
+                       Rcpp::Nullable<Rcpp::XPtr<tiledb::QueryCondition>> qc = R_NilValue,
+                       Rcpp::Nullable<Rcpp::List> dim_points = R_NilValue,
+                       Rcpp::Nullable<Rcpp::List> dim_ranges = R_NilValue,
+                       const std::string& loglevel = "warn") {
 
     tdbs::LOG_SET_LEVEL(loglevel);
 
@@ -337,8 +357,7 @@ void set_log_level(const std::string& level) {
     tdbs::LOG_SET_LEVEL(level);
 }
 
-//' @rdname get_table
-//' @export
+//' @noRd
 // [[Rcpp::export]]
 Rcpp::CharacterVector get_column_types(const std::string& uri,
                                        const std::vector<std::string>& colnames) {
@@ -356,7 +375,7 @@ Rcpp::CharacterVector get_column_types(const std::string& uri,
     return vs;
 }
 
-//' @rdname get_table
+//' @rdname soma_reader
 //' @export
 // [[Rcpp::export]]
 double nnz(const std::string& uri) {

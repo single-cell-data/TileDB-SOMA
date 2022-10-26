@@ -92,7 +92,7 @@ template<typename T> void check_xptr_tag(Rcpp::XPtr<T> ptr) {
 //' \describe{
 //'   \item{\code{sr_setup}}{instantiates and by default also submits a query}
 //'   \item{\code{sr_complete}}{checks if more data is available}
-//'   \code{\code{sr_next}} returns the next chunk.
+//'   \item{\code{sr_next}}{returns the next chunk}
 //' }
 //'
 //' @param ctx An external pointer to a TileDB Context object
