@@ -9,24 +9,10 @@ set -eu -o pipefail
 # cd to the top level directory of the repo
 cd $(git rev-parse --show-toplevel)
 
-# Set env for pybind11 cmake
-export pybind11_DIR=$(python -m pybind11 --cmakedir)
-
-if [ $(uname) = "Darwin" ]; then
-    nproc=$(sysctl -n hw.ncpu)
-else
-    nproc=$(nproc)
-fi
-
-# Build the tests
-cmake --build build/libtiledbsoma --target build_tests -j $nproc
-
 # Run unit tests
-cd build/libtiledbsoma
-ctest -C Release --verbose
+ctest --test-dir build/libtiledbsoma -C Release --verbose
 
 # Run python tests
-cd -
 pip install pytest
 pytest -v --durations=0 libtiledbsoma
 

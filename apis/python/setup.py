@@ -18,7 +18,6 @@
 import os
 import shutil
 import subprocess
-import sys
 
 from setuptools import Extension, find_packages, setup
 from setuptools.command.bdist_egg import bdist_egg
@@ -30,19 +29,14 @@ EXT_NAME = "tiledbsoma.libtiledbsoma"
 
 
 def find_or_build(setuptools_cmd):
-    # TODO: support windows
-    if sys.platform.startswith("win32"):
-        return
-
     # Setup paths
     python_dir = os.path.abspath(os.path.dirname(__file__))
     src_dir = f"{python_dir}/src/{MODULE_NAME}"
     scripts_dir = f"{python_dir}/../../scripts"
     lib_dir = f"{python_dir}/../../dist/lib"
 
-    # Call the build script if the install library directory does not exist
-    if not os.path.exists(lib_dir):
-        subprocess.check_call([f"{scripts_dir}/bld"])
+    # Run the build script
+    subprocess.run("bash bld", cwd=scripts_dir, shell=True)
 
     # Copy native libs into the package dir so they can be found by package_data
     package_data = []
@@ -102,9 +96,9 @@ if __name__ == "__main__":
             "Operating System :: Unix",
             "Operating System :: POSIX :: Linux",
             "Operating System :: MacOS :: MacOS X",
-            "Programming Language :: Python :: 3.7",
             "Programming Language :: Python :: 3.8",
             "Programming Language :: Python :: 3.9",
+            "Programming Language :: Python :: 3.10",
         ],
         package_dir={"": "src"},
         packages=find_packages("src"),
@@ -117,7 +111,7 @@ if __name__ == "__main__":
             "scipy",
             "tiledb>=0.17.5",
         ],
-        python_requires=">=3.7",
+        python_requires=">=3.8",
         ext_modules=get_ext_modules(),
         cmdclass={
             "build_ext": BuildExtCmd,

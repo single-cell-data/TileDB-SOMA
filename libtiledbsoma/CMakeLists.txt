@@ -31,15 +31,13 @@
 
 cmake_minimum_required(VERSION 3.21)
 
-if(DEFINED ENV{LIBTILEDBSOMA_DEBUG_BUILD})
-  message(STATUS "")
-  message(STATUS "START libtiledbsoma/CMakeLists.txt")
-endif()
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmake/Modules/")
 
 # TileDB-SOMA Options
 option(TILEDBSOMA_ENABLE_PYTHON "Enables Python API bindings" ON)
 option(TILEDBSOMA_ENABLE_WERROR "Enables the -Werror flag during compilation." ON)
+option(TILEDBSOMA_TESTING "Enable tests" OFF)
+option(TILEDBSOMA_CLI "Build tiledbsoma CLI tool" OFF)
 
 # Superbuild option must be on by default.
 option(SUPERBUILD "If true, perform a superbuild (builds all missing dependencies)." ON)
@@ -58,7 +56,6 @@ option(TILEDB_SERIALIZATION "If true, enables building with support for query se
 option(OVERRIDE_INSTALL_PREFIX "Ignores the setting of CMAKE_INSTALL_PREFIX and sets a default prefix" ON)
 option(ENABLE_ARROW_EXPORT "Installs an extra header for exporting in-memory results with Apache Arrow" ON)
 option(TILEDB_LOG_OUTPUT_ON_FAILURE "If true, print error logs if dependency sub-project build fails" ON)
-option(TILEDBSOMA_TESTING "Enable tests" ON)
 
 # Set C++17 as required standard for all C++ targets (C++17 minimum is required to use the TileDB C++ API).
 set(CMAKE_CXX_STANDARD 17)
@@ -120,10 +117,6 @@ if (SUPERBUILD)
   project(TileDB-SOMA-Superbuild)
   message(STATUS "Starting TileDB-SingleCell superbuild.")
   include("cmake/Superbuild.cmake")
-  if(DEFINED ENV{LIBTILEDBSOMA_DEBUG_BUILD})
-    message(STATUS "END libtiledbsoma/CMakeLists.txt")
-    message(STATUS "")
-  endif()
   return()
 endif()
 
@@ -207,12 +200,9 @@ endif()
 # Regular build
 ############################################################
 
-# Enable testing
-enable_testing()
-
 add_subdirectory(src)
-add_subdirectory(test)
-if(DEFINED ENV{LIBTILEDBSOMA_DEBUG_BUILD})
-  message(STATUS "END libtiledbsoma/CMakeLists.txt")
-  message(STATUS "")
+
+if (TILEDBSOMA_TESTING OR DEFINED ENV{CI})
+  enable_testing()
+  add_subdirectory(test)
 endif()

@@ -10,20 +10,10 @@ python -m venv test/tiledbsoma
 source test/tiledbsoma/bin/activate
 ```
 
-## Clean
-
-Remove old build files:
-```
-rm -rf build dist
-rm -f apis/python/src/tiledbsoma/libtiledb.*
-rm -f apis/python/src/tiledbsoma/libtiledbsoma.*
-```
-
 ## Build
 
 ```
-cd apis/python
-pip install -e .
+pip install -e apis/python
 ```
 
 ## Check
@@ -36,9 +26,9 @@ python -c "import tiledbsoma.libtiledbsoma; print(tiledbsoma.libtiledbsoma.versi
 
 Install test data:
 ```
-cd ../..
 mkdir -p test
 ./apis/python/tools/ingestor \
+  --ifexists replace \
   --soco \
   -o test/soco \
   -n \
