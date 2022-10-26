@@ -212,16 +212,15 @@ class AnnotationDataFrame(TileDBArray):
 
         with self._open() as A:
             self.dim_name = A.domain.dim(0).name
-            qc = tiledb.QueryCondition(query_string)
             if attrs is None:
-                slice_query = A.query(attr_cond=qc, return_arrow=return_arrow)
+                slice_query = A.query(cond=query_string, return_arrow=return_arrow)
                 if ids is None:
                     df = slice_query.df[:]
                 else:
                     df = slice_query.df[ids]
             else:
                 slice_query = A.query(
-                    attr_cond=qc, attrs=attrs, return_arrow=return_arrow
+                    cond=query_string, attrs=attrs, return_arrow=return_arrow
                 )
                 if ids is None:
                     df = slice_query.df[:]
