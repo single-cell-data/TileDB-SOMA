@@ -105,8 +105,8 @@ def test_dataframe_non_indexed(tmp_path):
     assert sorted([e.as_py() for e in list(table["baz"])]) == ["ball", "dog"]
 
     # ----------------------------------------------------------------
-    # Read by value_filter
-    table = sdf.read_all(value_filter='baz == "ball" or baz == "dog"')
+    # Read by value_filter; also check leading/trailing whitespace is handled
+    table = sdf.read_all(value_filter=' baz == "ball" or baz == "dog" ')
     assert table.num_rows == 2
 
     # We should be getting back the soma_rowid & soma_joind column as well

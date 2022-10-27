@@ -189,7 +189,7 @@ class IndexedDataFrame(TileDBArray):
         with self._tiledb_open("r") as A:
             query_condition = None
             if value_filter is not None:
-                query_condition = QueryCondition(value_filter)
+                query_condition = QueryCondition(value_filter.strip())
 
             sr = clib.SOMAReader(
                 self._uri,
