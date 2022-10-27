@@ -241,8 +241,8 @@ class AnnotationPairwiseMatrixGroup(TileDBGroup):
         grp.close()
 
         log_io(
-            f"Wrote {self.nested_name}",
-            util.format_elapsed(s, f"{self._indent}FINISH WRITING {self.uri}"),
+            f"Read {self.nested_name}",
+            util.format_elapsed(s, f"{self._indent}FINISH READING {self.uri}"),
         )
 
         return matrices_in_group
