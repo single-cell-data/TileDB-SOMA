@@ -39,7 +39,9 @@ Imports:
     glue,
     urltools,
     Rcpp,
-    arch
+    arch,
+    dplyr,
+    data.table
 LinkingTo:
     Rcpp,
     RcppSpdlog,
