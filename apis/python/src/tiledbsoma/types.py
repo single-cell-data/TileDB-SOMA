@@ -30,4 +30,4 @@ DenseCoordinates = Union[int, slice, pa.Array]
 DenseNdCoordinates = Tuple[DenseCoordinates, ...]
 
 SparseCoordinates = Union[int, slice, Tuple[int, ...], List[int], pa.IntegerArray]
-SparseNdCoordinates = Tuple[DenseCoordinates, ...]
+SparseNdCoordinates = Union[Tuple[DenseCoordinates, ...], List[DenseCoordinates]]

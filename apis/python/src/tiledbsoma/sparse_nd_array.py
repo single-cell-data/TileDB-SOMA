@@ -264,6 +264,7 @@ class SparseNdArray(TileDBArray):
             #   list/ndarray/paarray/etc of values, a slice, etc.
 
             if not (isinstance(coords, list) or isinstance(coords, tuple)):
+                # if not isinstance(coords, tuple):
                 raise SOMAError(
                     f"coords type {type(coords)} unhandled; expected list or tuple"
                 )
