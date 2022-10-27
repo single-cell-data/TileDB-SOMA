@@ -204,7 +204,7 @@ class AnnotationMatrixGroup(TileDBGroup):
                 )
 
         log_io(
-            f"Wrote {self.nested_name}",
+            f"Read {self.nested_name}",
             util.format_elapsed(s, f"{self._indent}FINISH read {self.uri}"),
         )
 
