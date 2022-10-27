@@ -11,6 +11,7 @@ import tiledbsoma.libtiledbsoma as clib
 from . import util, util_arrow
 from .collection import CollectionBase
 from .constants import SOMA_JOINID, SOMA_ROWID
+from .exception import DoesNotExistError
 from .query_condition import QueryCondition  # type: ignore
 from .tiledb_array import TileDBArray
 from .types import Ids, ResultOrder
@@ -252,7 +253,9 @@ class DataFrame(TileDBArray):
                 with self._tiledb_open("r") as A:
                     self._cached_is_sparse = A.schema.sparse
             except tiledb.TileDBError as e:
-                raise Exception(f"could not read array schema at {self._uri}") from e
+                raise DoesNotExistError(
+                    f"could not read array schema at {self._uri}"
+                ) from e
 
         return self._cached_is_sparse
 

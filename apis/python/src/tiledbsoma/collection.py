@@ -367,7 +367,7 @@ class CollectionBase(TileDBObject, MutableMapping[str, CollectionElementType]):
                     if soma is not None:
                         soma._show_metadata(recursively, indent=child_indent)
                     else:
-                        raise Exception(f"Unexpected object_type found at {obj.uri}")
+                        raise SOMAError(f"Unexpected object_type found at {obj.uri}")
 
 
 class Collection(CollectionBase[TileDBObject]):

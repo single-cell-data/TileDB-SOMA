@@ -24,6 +24,7 @@ from tiledbsoma import (
 )
 
 from .constants import SOMA_JOINID, SOMA_ROWID
+from .exception import SOMAError
 from .types import Path
 from .util import uri_joinpath
 
@@ -53,7 +54,7 @@ def _from_h5ad_common(
     Common code for things we do when processing a .h5ad file for ingest/update.
     """
     if isinstance(input_path, ad.AnnData):
-        raise Exception("Input path is an AnnData object -- did you want from_anndata?")
+        raise SOMAError("Input path is an AnnData object -- did you want from_anndata?")
 
     s = util.get_start_stamp()
     logging.log_io(
@@ -340,7 +341,7 @@ def from_anndata(
     Top-level writer method for creating a TileDB group for a ``Experiment`` object.
     """
     if not isinstance(anndata, ad.AnnData):
-        raise Exception(
+        raise SOMAError(
             "Second argument is not an AnnData object -- did you want from_h5ad?"
         )
 

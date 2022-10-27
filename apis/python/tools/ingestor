@@ -18,6 +18,7 @@ import sys
 import tiledb
 
 import tiledbsoma
+import tiledbsoma.exception
 import tiledbsoma.io
 import tiledbsoma.logging
 import tiledbsoma.util
@@ -111,7 +112,7 @@ select `relative=True`. (This is the default.)
         elif relative == "auto":
             rel_member_uris = None
         else:
-            raise Exception(f"Internal coding error in {__file__}")
+            raise tiledbsoma.exception.SOMAError(f"Internal coding error in {__file__}")
 
     tiledb_platform_config = tiledbsoma.TileDBPlatformConfig(
         member_uris_are_relative=rel_member_uris
