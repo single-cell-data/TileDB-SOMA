@@ -257,6 +257,43 @@ def test_sparse_nd_array_read_write_sparse_tensor(
     assert tensors_are_same_value(t, data)
 
 
+@pytest.mark.parametrize(
+    "shape,format",
+    [
+        ((10,), "coo"),
+        ((10, 21), "coo"),
+        ((10, 21), "csr"),
+        ((10, 21), "csc"),
+        ((10, 20, 2), "coo"),
+        ((2, 4, 6, 8), "coo"),
+        ((1, 2, 4, 6, 8), "coo"),
+    ],
+)
+def test_sparse_nd_array_read_write_corner_of_tensor(
+    tmp_path,
+    shape: Tuple[int, ...],
+    format: str,
+):
+    # Test sanity: Tensor only, and CSC and CSR only support 2D, so fail any nonsense configs
+    assert format in ("coo", "csr", "csc")
+    assert not (format in ("csc", "csr") and len(shape) != 2)
+
+    a = soma.SparseNdArray(tmp_path.as_posix())
+    a.create(pa.float64(), shape)
+    assert a.exists()
+    assert a.shape == shape
+
+    # make a random sample in the desired format
+    data = create_random_tensor(format, shape, np.float64, 1.0)
+    a.write_sparse_tensor(data)
+    del a
+
+    # Read back and validate
+    b = soma.SparseNdArray(tmp_path.as_posix())
+    t = next(b.read_sparse_tensor((0,) * len(shape), format=format))
+    assert t.shape == (1,) * len(shape)
+
+
 @pytest.mark.parametrize("shape", [(10,), (23, 4), (5, 3, 1), (8, 4, 2, 30)])
 @pytest.mark.parametrize("test_enumeration", range(10))
 def test_sparse_nd_array_read_write_table(
