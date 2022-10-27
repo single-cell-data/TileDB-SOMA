@@ -11,6 +11,7 @@ import tiledbsoma.libtiledbsoma as clib
 
 from . import util, util_arrow
 from .collection import CollectionBase
+from .exception import SOMAError
 from .tiledb_array import TileDBArray
 from .tiledb_platform_config import TileDBPlatformConfig
 from .types import NTuple, SparseNdCoordinates
@@ -230,23 +231,28 @@ class SparseNdArray(TileDBArray):
                 schema=A.schema,
             )
 
-            # TODO: make a util function to be shared with DenseNdArray
-            # coords are a tuple of (int or slice-of-int)
-            if len(coords) == 1 and coords[0] == slice(None):
-                # Special case which tiledb-py supports, so we should too
-                coords = coords * A.schema.domain.ndim
-            elif len(coords) != A.schema.domain.ndim:
-                raise ValueError(
-                    f"coordinate length {len(coords)} != array ndim {A.schema.domain.ndim}"
+            # * A sequence of coordinates is accepted, one per dimension.
+            # * Sequence length must be at least one and <= number of dimensions.
+            # * If the sequence contains missing coordinates (length less than number of dimensions),
+            #   then "slice(None)" is assumed for the missing dimensions.
+            # * Per-dimension, explicitly specified coordinates can be one of: a value, a
+            #   list/ndarray/paarray/etc of values, a slice, etc.
+
+            if not (isinstance(coords, list) or isinstance(coords, tuple)):
+                raise SOMAError(
+                    f"coords type {type(coords)} unhandled; expected list or tuple"
                 )
-            for i in range(A.schema.domain.ndim):
-                coord = coords[i]
+            if len(coords) < 1 or len(coords) > A.schema.domain.ndim:
+                raise SOMAError(
+                    f"coords {coords} must have length between 1 and ndim ({A.schema.domain.ndim}); got {len(coords)}"
+                )
 
-                if coord is None:
-                    continue
-
+            for i in range(len(coords)):
                 dim_name = A.schema.domain.dim(i).name
-                if isinstance(coord, int):
+                coord = coords[i]
+                if coord is None:
+                    pass
+                elif isinstance(coord, int):
                     sr.set_dim_points(dim_name, [coord])
                 elif isinstance(coord, list):
                     sr.set_dim_points(dim_name, coord)
@@ -257,11 +263,9 @@ class SparseNdArray(TileDBArray):
                 elif isinstance(coord, slice):
                     lo_hi = util.slice_to_range(coord)
                     if lo_hi is not None:
-                        sr.set_dim_ranges(dim_name, [lo_hi])
+                        sr.set_dim_ranges(dim_name, lo_hi)
                 else:
-                    raise ValueError(
-                        f"could not handle coordinate with value {coord} of type {type(coord)}"
-                    )
+                    raise SOMAError(f"coord type {type(coord)} at slot {i} unhandled")
 
             sr.submit()
 
