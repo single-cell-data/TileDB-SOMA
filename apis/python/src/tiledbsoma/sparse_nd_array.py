@@ -180,8 +180,33 @@ class SparseNdArray(TileDBArray):
         if format not in ("coo", "csr", "csc"):
             raise NotImplementedError("format not implemented")
 
+        # The full shape of the data is a template for the shape of the answer.
+        # For example if the data is 2D and coords is (None, [5,7,9]), then
+        # output shape[0] will be taken from the full shape, and output shape[1] will
+        # be 3.
         with self._tiledb_open("r") as A:
-            shape = A.shape
+            shape = list(A.shape)
+
+        for i in range(len(coords)):
+            coord = coords[i]
+            if coord is None:
+                pass
+            elif isinstance(coord, int):
+                shape[i] = 1
+            elif isinstance(coord, list):
+                shape[i] = len(coord)
+            elif isinstance(coord, pa.ChunkedArray):
+                shape[i] = len(coord)
+            elif isinstance(coord, pa.Array):
+                shape[i] = len(coord)
+            elif isinstance(coord, slice):
+                lo_hi = util.slice_to_range(coord)
+                if lo_hi is not None:
+                    lo, hi = lo_hi
+                    shape[i] = hi - lo + 1
+            else:
+                raise SOMAError(f"coord type {type(coord)} at slot {i} unhandled")
+
         for arrow_tbl in self.read_table(coords):
             """
             In PyArrow 9.0.0, there is a bug preventing the creation of "empty"
