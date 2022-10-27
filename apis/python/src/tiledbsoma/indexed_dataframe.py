@@ -10,8 +10,8 @@ import tiledbsoma.libtiledbsoma as clib
 
 from . import util, util_arrow
 from .collection import CollectionBase
-from .exception import SOMAError
 from .constants import SOMA_JOINID
+from .exception import SOMAError
 from .query_condition import QueryCondition  # type: ignore
 from .tiledb_array import TileDBArray
 from .types import Ids, ResultOrder
@@ -187,6 +187,7 @@ class IndexedDataFrame(TileDBArray):
 
         **Indexing**: the ``ids`` parameter will support, per dimension: a list of values of the type of the indexed column.
         """
+
         with self._tiledb_open("r") as A:
             query_condition = None
             if value_filter is not None:
@@ -200,20 +201,44 @@ class IndexedDataFrame(TileDBArray):
                 query_condition=query_condition,
             )
 
+            # * A sequence of coordinates is accepted, one per dimension.
+            # * Sequence length must be at least one and <= number of dimensions.
+            # * If the sequence contains missing coordinates (length less than number of dimensions),
+            #   then "slice(None)" is assumed for the missing dimensions.
+            # * Per-dimension, explicitly specified coordinates can be one of: a value, a
+            #   list/ndarray/paarray/etc of values, a slice, etc.
+
             if ids is not None:
-                dim_name = A.schema.domain.dim(0).name
-                if isinstance(ids, list):
-                    sr.set_dim_points(dim_name, ids)
-                elif isinstance(ids, pa.ChunkedArray):
-                    sr.set_dim_points(dim_name, ids)
-                elif isinstance(ids, pa.Array):
-                    sr.set_dim_points(dim_name, pa.chunked_array(ids))
-                elif isinstance(ids, slice):
-                    lo_hi = util.slice_to_range(ids)
-                    if lo_hi is not None:
-                        sr.set_dim_ranges(dim_name, lo_hi)
-                else:
-                    raise SOMAError(f"ids type {type(ids)} unhandled")
+                if not (isinstance(ids, list) or isinstance(ids, tuple)):
+                    raise SOMAError(
+                        f"ids type {type(ids)} unhandled; expected list or tuple"
+                    )
+                if len(ids) < 1 or len(ids) > A.schema.domain.ndim:
+                    raise SOMAError(
+                        f"ids {ids} must have length between 1 and ndim ({A.schema.domain.ndim}); got {len(ids)}"
+                    )
+
+                for i in range(len(ids)):
+                    dim_name = A.schema.domain.dim(i).name
+                    dim_ids = ids[i]
+                    if dim_ids is None:
+                        pass
+                    elif isinstance(dim_ids, int):
+                        sr.set_dim_points(dim_name, [dim_ids])
+                    elif isinstance(dim_ids, list):
+                        sr.set_dim_points(dim_name, dim_ids)
+                    elif isinstance(dim_ids, pa.ChunkedArray):
+                        sr.set_dim_points(dim_name, dim_ids)
+                    elif isinstance(dim_ids, pa.Array):
+                        sr.set_dim_points(dim_name, pa.chunked_array(dim_ids))
+                    elif isinstance(dim_ids, slice):
+                        lo_hi = util.slice_to_range(dim_ids)
+                        if lo_hi is not None:
+                            sr.set_dim_ranges(dim_name, lo_hi)
+                    else:
+                        raise SOMAError(
+                            f"dim_ids type {type(dim_ids)} at slot {i} unhandled"
+                        )
 
             # TODO: platform_config
             # TODO: batch_size

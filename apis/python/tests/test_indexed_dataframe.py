@@ -21,7 +21,7 @@ def arrow_schema():
 
 
 def test_indexed_dataframe(tmp_path, arrow_schema):
-    sdf = soma.IndexedDataFrame(uri=tmp_path.as_posix())
+    sidf = soma.IndexedDataFrame(uri=tmp_path.as_posix())
 
     asch = pa.schema(
         [
@@ -33,10 +33,10 @@ def test_indexed_dataframe(tmp_path, arrow_schema):
 
     # Create
     asch = arrow_schema()
-    sdf.create(schema=asch, index_column_names=["foo"])
+    sidf.create(schema=asch, index_column_names=["foo"])
 
-    assert sorted(sdf.schema.names) == sorted(["foo", "bar", "baz", "soma_joinid"])
-    assert sorted(sdf.keys()) == sorted(sdf.schema.names)
+    assert sorted(sidf.schema.names) == sorted(["foo", "bar", "baz", "soma_joinid"])
+    assert sorted(sidf.keys()) == sorted(sidf.schema.names)
 
     # Write
     for _ in range(3):
@@ -46,10 +46,10 @@ def test_indexed_dataframe(tmp_path, arrow_schema):
         pydict["bar"] = [4.1, 5.2, 6.3, 7.4, 8.5]
         pydict["baz"] = ["apple", "ball", "cat", "dog", "egg"]
         rb = pa.Table.from_pydict(pydict)
-        sdf.write(rb)
+        sidf.write(rb)
 
     # Read all
-    table = sdf.read_all()
+    table = sidf.read_all()
     # Weird thing about pyarrow Table:
     # * We have table.num_rows is 5 and table.num_columns is 3
     # * But len(table) is 3
@@ -62,7 +62,7 @@ def test_indexed_dataframe(tmp_path, arrow_schema):
     assert [e.as_py() for e in list(table["baz"])] == pydict["baz"]
 
     # Read ids
-    table = sdf.read_all(ids=[30, 10])
+    table = sidf.read_all(ids=[[30, 10]])
     assert table.num_rows == 2
     assert table.num_columns == 4
     assert sorted([e.as_py() for e in list(table["soma_joinid"])]) == [0, 2]
@@ -72,10 +72,10 @@ def test_indexed_dataframe(tmp_path, arrow_schema):
 
 
 def test_indexed_dataframe_with_float_dim(tmp_path, arrow_schema):
-    sdf = soma.IndexedDataFrame(uri=tmp_path.as_posix())
+    sidf = soma.IndexedDataFrame(uri=tmp_path.as_posix())
     asch = arrow_schema()
-    sdf.create(schema=asch, index_column_names=("bar",))
-    assert sdf.get_index_column_names() == ("bar",)
+    sidf.create(schema=asch, index_column_names=("bar",))
+    assert sidf.get_index_column_names() == ("bar",)
 
 
 @pytest.fixture
@@ -93,8 +93,8 @@ def simple_indexed_data_frame(tmp_path):
         ]
     )
     index_column_names = ["index"]
-    sdf = soma.IndexedDataFrame(uri=tmp_path.as_posix())
-    sdf.create(schema=schema, index_column_names=index_column_names)
+    sidf = soma.IndexedDataFrame(uri=tmp_path.as_posix())
+    sidf.create(schema=schema, index_column_names=index_column_names)
 
     data = {
         "index": [0, 1, 2, 3],
@@ -105,17 +105,17 @@ def simple_indexed_data_frame(tmp_path):
     }
     n_data = len(data["index"])
     rb = pa.Table.from_pydict(data)
-    sdf.write(rb)
-    yield (schema, sdf, n_data, index_column_names)
-    sdf.delete()
+    sidf.write(rb)
+    yield (schema, sidf, n_data, index_column_names)
+    sidf.delete()
 
 
 @pytest.mark.parametrize(
     "ids",
     [
-        None,
+        [None],
         [0],
-        [1, 3],
+        [[1, 3]],
     ],
 )
 @pytest.mark.parametrize(
@@ -132,14 +132,22 @@ def simple_indexed_data_frame(tmp_path):
     ],
 )
 def test_IndexedDataFrame_read_column_names(simple_indexed_data_frame, ids, col_names):
-    schema, sdf, n_data, index_column_names = simple_indexed_data_frame
-    assert sdf.exists()
+    schema, sidf, n_data, index_column_names = simple_indexed_data_frame
+    assert sidf.exists()
 
     def _check_tbl(tbl, col_names, ids, *, demote):
         assert tbl.num_columns == (
             len(schema.names) if col_names is None else len(col_names)
         )
-        assert tbl.num_rows == (n_data if ids is None else len(ids))
+
+        if ids is None:
+            assert tbl.num_rows == n_data
+        elif ids[0] is None:
+            assert tbl.num_rows == n_data
+        elif isinstance(ids[0], int):
+            assert tbl.num_rows == 1
+        else:
+            assert tbl.num_rows == len(ids[0])
 
         if demote:
             assert tbl.schema == pa.schema(
@@ -160,21 +168,21 @@ def test_IndexedDataFrame_read_column_names(simple_indexed_data_frame, ids, col_
 
     # TileDB ASCII -> Arrow large_string
     _check_tbl(
-        sdf.read_all(ids=ids, column_names=col_names), col_names, ids, demote=False
+        sidf.read_all(ids=ids, column_names=col_names), col_names, ids, demote=False
     )
-    _check_tbl(sdf.read_all(column_names=col_names), col_names, None, demote=False)
+    _check_tbl(sidf.read_all(column_names=col_names), col_names, None, demote=False)
 
     # TileDB ASCII -> Pandas string -> Arrow string (not large_string)
     _check_tbl(
         pa.Table.from_pandas(
-            pd.concat(sdf.read_as_pandas(ids=ids, column_names=col_names))
+            pd.concat(sidf.read_as_pandas(ids=ids, column_names=col_names))
         ),
         col_names,
         ids,
         demote=True,
     )
     _check_tbl(
-        pa.Table.from_pandas(sdf.read_as_pandas_all(column_names=col_names)),
+        pa.Table.from_pandas(sidf.read_as_pandas_all(column_names=col_names)),
         col_names,
         None,
         demote=True,
@@ -289,6 +297,6 @@ def make_dataframe(request):
 )
 def test_index_types(tmp_path, make_dataframe):
     """Verify that the index columns can be of various types"""
-    sdf = soma.IndexedDataFrame(tmp_path.as_posix())
-    sdf.create(make_dataframe.schema, index_column_names=["index"])
-    sdf.write(make_dataframe)
+    sidf = soma.IndexedDataFrame(tmp_path.as_posix())
+    sidf.create(make_dataframe.schema, index_column_names=["index"])
+    sidf.write(make_dataframe)
