@@ -97,6 +97,13 @@ template<typename T> void check_xptr_tag(Rcpp::XPtr<T> ptr) {
 //'
 //' @param ctx An external pointer to a TileDB Context object
 //' @param uri Character value with URI path to a SOMA data set
+//' @param colnames Optional vector of character value with the name of the columns to retrieve
+//' @param qc Optional external Pointer object to TileDB Query Condition, defaults to \sQuote{NULL} i.e.
+//' no query condition
+//' @param dim_points Optional named list with vector of data points to select on the given
+//' dimension(s). Each dimension can be one entry in the list.
+//' @param dim_ranges Optional named list with two-column matrix where each row select a range
+//' for the given dimension. Each dimension can be one entry in the list.
 //' @param loglevel Character value with the desired logging level, defaults to \sQuote{warn}
 //' @param sr An external pointer to a TileDB SOMAReader object
 //'
@@ -106,6 +113,7 @@ template<typename T> void check_xptr_tag(Rcpp::XPtr<T> ptr) {
 //' @examples
 //' \dontrun{
 //' ctx <- tiledb_ctx()
+//' uri <- "test/soco/pbmc3k_processed/obs"
 //' sr <- sr_setup(ctx@ptr, uri, "warn")
 //' rl <- data.frame()
 //' while (nrow(rl) == 0 || !tiledbsoma:::sr_complete(sr)) {
@@ -124,6 +132,10 @@ template<typename T> void check_xptr_tag(Rcpp::XPtr<T> ptr) {
 // [[Rcpp::export]]
 Rcpp::XPtr<tdbs::SOMAReader> sr_setup(Rcpp::XPtr<tiledb::Context> ctx,
                                       const std::string& uri,
+                                      Rcpp::Nullable<Rcpp::CharacterVector> colnames = R_NilValue,
+                                      Rcpp::Nullable<Rcpp::XPtr<tiledb::QueryCondition>> qc = R_NilValue,
+                                      Rcpp::Nullable<Rcpp::List> dim_points = R_NilValue,
+                                      Rcpp::Nullable<Rcpp::List> dim_ranges = R_NilValue,
                                       const std::string& loglevel = "warn") {
     check_xptr_tag<tiledb::Context>(ctx);
     tdbs::LOG_SET_LEVEL(loglevel);
@@ -139,7 +151,44 @@ Rcpp::XPtr<tdbs::SOMAReader> sr_setup(Rcpp::XPtr<tiledb::Context> ctx,
     tiledb::Config cfg{ctx.get()->config()}; // get config in order to make shared_ptr
     std::shared_ptr<tiledb::Context> ctxptr = std::make_shared<tiledb::Context>(cfg);
 
+    if (!colnames.isNull()) {
+        column_names = Rcpp::as<std::vector<std::string>>(colnames);
+    }
+
     auto ptr = new tdbs::SOMAReader(uri, name, ctxptr, column_names, batch_size, result_order);
+
+    std::unordered_map<std::string, tiledb_datatype_t> name2type;
+    std::shared_ptr<tiledb::ArraySchema> schema = ptr->schema();
+    tiledb::Domain domain = schema->domain();
+    std::vector<tiledb::Dimension> dims = domain.dimensions();
+    for (auto& dim: dims) {
+        tdbs::LOG_INFO(fmt::format("[soma_reader] Dimension {} type {} domain {} extent {}",
+                                   dim.name(), tiledb::impl::to_str(dim.type()),
+                                   dim.domain_to_str(), dim.tile_extent_to_str()));
+        name2type.emplace(std::make_pair(dim.name(), dim.type()));
+    }
+
+    // If we have a query condition, apply it
+    if (!qc.isNull()) {
+        tdbs::LOG_INFO(fmt::format("[soma_reader] Applying query condition"));
+        Rcpp::XPtr<tiledb::QueryCondition> qcxp(qc);
+        ptr->set_condition(*qcxp);
+    }
+
+    // If we have dimension points, apply them
+    // The interface is named list, where each (named) list elements is one (named) dimesion
+    // The List element is a simple vector of points and each point is applied to the named dimension
+    if (!dim_points.isNull()) {
+        Rcpp::List lst(dim_points);
+        apply_dim_points(ptr, name2type, lst);
+    }
+
+    // If we have a dimension points, apply them
+    if (!dim_ranges.isNull()) {
+        Rcpp::List lst(dim_ranges);
+        apply_dim_ranges(ptr, name2type, lst);
+    }
+
     ptr->submit();
     Rcpp::XPtr<tdbs::SOMAReader> xptr = make_xptr<tdbs::SOMAReader>(ptr);
     return xptr;

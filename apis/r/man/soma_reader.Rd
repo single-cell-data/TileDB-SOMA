@@ -43,7 +43,7 @@ functions.
 \examples{
 \dontrun{
 uri <- "test/soco/pbmc3k_processed/obs"
-z <- some_reader(uri)
+z <- soma_reader(uri)
 tb <- arrow::as_arrow_table(arch::from_arch_array(z, arrow::RecordBatch))
 }
 }
