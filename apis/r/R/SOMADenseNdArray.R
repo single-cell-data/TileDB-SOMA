@@ -77,6 +77,34 @@ SOMADenseNdArray <- R6::R6Class(
       tiledb::tiledb_array_create(uri = self$uri, schema = tdb_schema)
     },
 
+    #' @description Read as an ['arrow::Table']
+    #' @param coords A `list` of integer vectors, one for each dimension, with a
+    #' length equal to the number of values to read. If `NULL`, all values are
+    #' read.
+    #' @param result_order Order of read results. This can be one of either
+    #' `"ROW_MAJOR, `"COL_MAJOR"`, `"GLOBAL_ORDER"`, or `"UNORDERED"`.
+    #' @return An [`arrow::Table`].
+    read_arrow_table = function(
+      coords = NULL,
+      result_order = "ROW_MAJOR"
+    ) {
+      on.exit(private$close())
+      private$open("READ")
+
+      arr <- self$object
+
+      # select ranges
+      if (!is.null(coords)) {
+        tiledb::selected_ranges(arr) <- coords
+      }
+
+      # result order
+      tiledb::query_layout(arr) <- match_query_layout(result_order)
+      tiledb::return_as(arr) <- "asis"
+
+      do.call(arrow::arrow_table, arr[])
+    },
+
     #' @description Write matrix data to the array.
     #'
     #' @param values A `matrix`. Character dimension names are ignored because
