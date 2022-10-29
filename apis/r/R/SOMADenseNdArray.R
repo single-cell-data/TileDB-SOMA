@@ -80,7 +80,7 @@ SOMADenseNdArray <- R6::R6Class(
     #' @description Read as an ['arrow::Table']
     #' @param coords A `list` of integer vectors, one for each dimension, with a
     #' length equal to the number of values to read. If `NULL`, all values are
-    #' read.
+    #' read. List elements can be named when specifying a subset of dimensions.
     #' @param result_order Order of read results. This can be one of either
     #' `"ROW_MAJOR, `"COL_MAJOR"`, `"GLOBAL_ORDER"`, or `"UNORDERED"`.
     #' @return An [`arrow::Table`].
@@ -95,7 +95,12 @@ SOMADenseNdArray <- R6::R6Class(
 
       # select ranges
       if (!is.null(coords)) {
-        tiledb::selected_ranges(arr) <- coords
+        stopifnot(
+          is.list(coords),
+          "'coords' must be a list of vectors" =
+            all(vapply_lgl(coords, is.vector))
+        )
+        tiledb::selected_ranges(arr) <- lapply(coords, function(x) cbind(x, x))
       }
 
       # result order

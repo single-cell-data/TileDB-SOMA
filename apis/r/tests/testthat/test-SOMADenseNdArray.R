@@ -13,6 +13,7 @@ test_that("SOMADenseNdArray creation", {
   mat <- create_dense_matrix_with_int_dims(10, 5)
   ndarray$write(mat)
 
+  # Read result in column-major order to match R matrix layout
   tbl <- ndarray$read_arrow_table(result_order = "COL_MAJOR")
   expect_true(is_arrow_table(tbl))
   expect_equal(tbl$ColumnNames(), c("soma_dim_0", "soma_dim_1", "soma_data"))
@@ -20,5 +21,31 @@ test_that("SOMADenseNdArray creation", {
   expect_identical(
     as.numeric(tbl$GetColumnByName("soma_data")),
     as.numeric(mat)
+  )
+
+  # Suset the array on both dimensions
+  tbl <- ndarray$read_arrow_table(
+    coords = list(0:3, 0:2),
+    result_order = "COL_MAJOR"
+  )
+  expect_identical(
+    as.numeric(tbl$GetColumnByName("soma_data")),
+    as.numeric(mat[1:4, 1:3])
+  )
+
+  # Subset the array on the second dimension
+  tbl <- ndarray$read_arrow_table(
+    coords = list(soma_dim_1 = 0:2),
+    result_order = "COL_MAJOR"
+  )
+  expect_identical(
+    as.numeric(tbl$GetColumnByName("soma_data")),
+    as.numeric(mat[, 1:3])
+  )
+
+  # Validating coords format
+  expect_error(
+    ndarray$read_arrow_table(coords = list(cbind(0, 1))),
+    "must be a list of vectors"
   )
 })
