@@ -82,9 +82,10 @@ TileDBArray <- R6::R6Class(
     },
 
     #' @description Retrieve the array dimensions
-    #' @return A list of [`tiledb::tiledb_dim`] objects
+    #' @return A named list of [`tiledb::tiledb_dim`] objects
     dimensions = function() {
-      tiledb::dimensions(self$schema())
+      dims <- tiledb::dimensions(self$schema())
+      setNames(dims, nm = vapply_char(dims, tiledb::name))
     },
 
     #' @description Retrieve the array attributes
