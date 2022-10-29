@@ -73,6 +73,25 @@ tiledb_type_from_arrow_type <- function(x) {
   )
 }
 
+arrow_type_from_tiledb_type <- function(x) {
+  stopifnot(is.character(x))
+  switch(x,
+    INT8 = arrow::int8(),
+    INT16 = arrow::int16(),
+    INT32 = arrow::int32(),
+    INT64 = arrow::int64(),
+    UINT8 = arrow::uint8(),
+    UINT16 = arrow::uint16(),
+    UINT32 = arrow::uint32(),
+    UINT64 = arrow::uint64(),
+    FLOAT32 = arrow::float32(),
+    FLOAT64 = arrow::float64(),
+    BOOL = arrow::boolean(),
+    ASCII = arrow::utf8(),
+    stop("Unsupported data type", call. = FALSE)
+  )
+}
+
 #' Retrieve limits for Arrow types
 #' @importFrom bit64 lim.integer64
 #' @noRd
@@ -98,5 +117,27 @@ arrow_type_range <- function(x) {
     utf8 = NULL,
     string = NULL,
     stop("Unsupported data type", call. = FALSE)
+  )
+}
+
+#' Create an Arrow field from a TileDB dimension
+#' @noRd
+arrow_field_from_tiledb_dim <- function(x) {
+  stopifnot(inherits(x, "tiledb_dim"))
+  arrow::field(
+    name = tiledb::name(x),
+    type = arrow_type_from_tiledb_type(tiledb::datatype(x)),
+    nullable = FALSE
+  )
+}
+
+#' Create an Arrow field from a TileDB attribute
+#' @noRd
+arrow_field_from_tiledb_attr <- function(x) {
+  stopifnot(inherits(x, "tiledb_attr"))
+  arrow::field(
+    name = tiledb::name(x),
+    type = arrow_type_from_tiledb_type(tiledb::datatype(x)),
+    nullable = tiledb::tiledb_attribute_get_nullable(x)
   )
 }
