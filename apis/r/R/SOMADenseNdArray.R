@@ -16,6 +16,7 @@
 #'
 #' The default "fill" value for `SOMADenseNdArray` is the zero or null value of
 #' the array type (e.g., Arrow.float32 defaults to 0.0).
+#' @export
 SOMADenseNdArray <- R6::R6Class(
   classname = "SOMADenseNdArray",
   inherit = TileDBArray,
