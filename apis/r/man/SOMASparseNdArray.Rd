@@ -23,7 +23,7 @@ the object are overwritten and new index values are added.
 }
 }
 \section{Super classes}{
-\code{\link[tiledbsoma:TileDBObject]{tiledbsoma::TileDBObject}} -> \code{\link[tiledbsoma:TileDBArray]{tiledbsoma::TileDBArray}} -> \code{SOMASparseNdArray}
+\code{tiledbsoma::TileDBObject} -> \code{tiledbsoma::TileDBArray} -> \code{SOMASparseNdArray}
 }
 \section{Methods}{
 \subsection{Public methods}{
