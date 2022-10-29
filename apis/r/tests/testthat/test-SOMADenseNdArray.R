@@ -23,7 +23,7 @@ test_that("SOMADenseNdArray creation", {
     as.numeric(mat)
   )
 
-  # Suset the array on both dimensions
+  # Subset the array on both dimensions
   tbl <- ndarray$read_arrow_table(
     coords = list(0:3, 0:2),
     result_order = "COL_MAJOR"

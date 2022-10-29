@@ -3,7 +3,7 @@
 #' @description
 #' `SOMADenseNdArray` is a dense, N-dimensional array of `primitive` type, with
 #' offset (zero-based) `int64` integer indexing on each dimension with domain
-#' `[0, maxUint64)`. The `SOMADenseNdArray` has a user-defined schema, which
+#' `[0, maxInt64)`. The `SOMADenseNdArray` has a user-defined schema, which
 #' includes:
 #'
 #' - **type**: a `primitive` type, expressed as an Arrow type (e.g., `int64`,
