@@ -100,14 +100,13 @@ class QueryCondition:
     >>>     # and `bar` equal to string "asdf".
     >>>     # Note precedence is equivalent to:
     >>>     # tiledbsoma.QueryCondition("foo > 5 or ('asdf' == attr('b a r') and baz <= val(1.0))")
-    >>>     qc = tiledbsoma.QueryCondition("foo > 5 or 'asdf' == attr('b a r') and baz <= val(1.0)")
-    >>>     A.query(attr_cond=qc)
+    >>>     A.query(cond="foo > 5 or 'asdf' == attr('b a r') and baz <= val(1.0)")
     >>>
     >>>     # Select cells where the attribute values for `foo` are equal to
     >>>     # 1, 2, or 3.
     >>>     # Note this is equivalent to:
     >>>     # tiledbsoma.QueryCondition("foo == 1 or foo == 2 or foo == 3")
-    >>>     A.query(attr_cond=tiledbsoma.QueryCondition("foo in [1, 2, 3]"))
+    >>>     A.query(cond="foo in [1, 2, 3]")
     """
 
     expression: str

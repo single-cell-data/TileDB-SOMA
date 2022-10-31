@@ -11,6 +11,7 @@ import tiledbsoma.libtiledbsoma as clib
 from . import util, util_arrow
 from .collection import CollectionBase
 from .constants import SOMA_JOINID
+from .exception import SOMAError
 from .query_condition import QueryCondition  # type: ignore
 from .tiledb_array import TileDBArray
 from .types import Ids, ResultOrder
@@ -299,7 +300,7 @@ class IndexedDataFrame(TileDBArray):
             elif len(dim_cols_list) == 2:
                 A[dim_cols_list[0], dim_cols_list[1]] = attr_cols_map
             else:
-                raise Exception("ndim >= 2 not currently supported")
+                raise SOMAError("ndim >= 2 not currently supported")
 
     def read_as_pandas(
         self,

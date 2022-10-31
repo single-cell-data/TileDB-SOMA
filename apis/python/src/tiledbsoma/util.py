@@ -14,7 +14,7 @@ SOMA_ENCODING_VERSION_METADATA_KEY = "soma_encoding_version"
 SOMA_ENCODING_VERSION = "1"
 
 SPEC_NAMES_TO_CLASS_NAMES = {
-    """ Maps languge-independent-spec names to Python-implementation class names """
+    # Maps languge-independent-spec names to Python-implementation class names
     "SOMAExperiment": "Experiment",
     "SOMAMeasurement": "Measurement",
     "SOMACollection": "Collection",
@@ -25,7 +25,7 @@ SPEC_NAMES_TO_CLASS_NAMES = {
 }
 
 CLASS_NAMES_TO_SPEC_NAMES = {
-    """ Maps Python-implementation class names to language-independent-spec names """
+    # Maps Python-implementation class names to language-independent-spec names
     "Experiment": "SOMAExperiment",
     "Measurement": "SOMAMeasurement",
     "Collection": "SOMACollection",

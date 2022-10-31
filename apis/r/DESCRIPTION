@@ -4,7 +4,7 @@ Title: TileDB SOMA
 Description: Interface for working with 'TileDB'-based Stack of Matrices,
     Annotated ('SOMA'): an open data model for representing annotated matrices,
     like those commonly used for single cell data analysis.
-Version: 0.0.0.9002
+Version: 0.0.0.9003
 Authors@R: c(
     person(given = "Aaron",
            family = "Wolen",
@@ -39,7 +39,9 @@ Imports:
     glue,
     urltools,
     Rcpp,
-    arch
+    arch,
+    dplyr,
+    data.table
 LinkingTo:
     Rcpp,
     RcppSpdlog,
