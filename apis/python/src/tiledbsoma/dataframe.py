@@ -11,8 +11,7 @@ import tiledbsoma.libtiledbsoma as clib
 from . import util, util_arrow
 from .collection import CollectionBase
 from .constants import SOMA_JOINID, SOMA_ROWID
-from .exception import SOMAError
-from .exception import DoesNotExistError
+from .exception import DoesNotExistError, SOMAError
 from .query_condition import QueryCondition  # type: ignore
 from .tiledb_array import TileDBArray
 from .types import Ids, ResultOrder
