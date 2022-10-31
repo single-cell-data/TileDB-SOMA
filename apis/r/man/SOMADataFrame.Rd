@@ -14,7 +14,7 @@ The \code{soma_joinid} column contains a unique value for each row in the
 as \code{\link{SOMASparseNdArray}}.
 }
 \section{Super classes}{
-\code{\link[tiledbsoma:TileDBObject]{tiledbsoma::TileDBObject}} -> \code{\link[tiledbsoma:TileDBArray]{tiledbsoma::TileDBArray}} -> \code{SOMADataFrame}
+\code{tiledbsoma::TileDBObject} -> \code{tiledbsoma::TileDBArray} -> \code{SOMADataFrame}
 }
 \section{Methods}{
 \subsection{Public methods}{

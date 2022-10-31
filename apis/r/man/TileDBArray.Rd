@@ -16,7 +16,7 @@ populate the private \code{create_empty_array()} and \code{ingest_data()} method
 }
 }
 \section{Super class}{
-\code{\link[tiledbsoma:TileDBObject]{tiledbsoma::TileDBObject}} -> \code{TileDBArray}
+\code{tiledbsoma::TileDBObject} -> \code{TileDBArray}
 }
 \section{Methods}{
 \subsection{Public methods}{
