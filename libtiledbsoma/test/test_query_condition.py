@@ -28,14 +28,18 @@ def pandas_query(uri, condition):
 
 def soma_query(uri, condition):
     qc = QueryCondition(condition)
-    schema = tiledb.open(uri).schema
+
+    with tiledb.open(uri) as A:
+        schema = A.schema
+        mask = A.attr("soma_joinid").fill
 
     sr = clib.SOMAReader(uri, query_condition=qc, schema=schema)
     sr.submit()
     arrow_table = sr.read_next()
     assert sr.results_complete()
 
-    return arrow_table
+    retain_flags = arrow_table["soma_joinid"] != mask
+    return arrow_table.filter(retain_flags)
 
 
 def test_query_condition_int():
@@ -98,15 +102,24 @@ def test_query_condition_select_columns():
     condition = "percent_mito > 0.02"
 
     qc = QueryCondition(condition)
-    schema = tiledb.open(uri).schema
 
-    sr = clib.SOMAReader(uri, query_condition=qc, schema=schema, column_names=["n_genes"])
+    with tiledb.open(uri) as A:
+        schema = A.schema
+        mask = A.attr("soma_joinid").fill
+
+    sr = clib.SOMAReader(uri, query_condition=qc, schema=schema, column_names=["n_genes", "soma_joinid"])
     sr.submit()
     arrow_table = sr.read_next()
 
     assert sr.results_complete()
-    assert arrow_table.num_rows == 1332
-    assert arrow_table.num_columns == 2
+
+    # For SOMADataFrame stored as dense TileDB arrays, filtering is client-side
+    # assert arrow_table.shape == (1332, 3)
+    assert arrow_table.shape == (2638, 3)
+
+    retain_flags = arrow_table["soma_joinid"] != mask
+    filtered_table = arrow_table.filter(retain_flags)
+    assert filtered_table.shape == (1332, 3)
 
 
 def test_query_condition_all_columns():
@@ -114,15 +127,22 @@ def test_query_condition_all_columns():
     condition = "percent_mito > 0.02"
 
     qc = QueryCondition(condition)
-    schema = tiledb.open(uri).schema
+
+    with tiledb.open(uri) as A:
+        schema = A.schema
+        mask = A.attr("soma_joinid").fill
 
     sr = clib.SOMAReader(uri, query_condition=qc, schema=schema)
     sr.submit()
     arrow_table = sr.read_next()
 
     assert sr.results_complete()
-    assert arrow_table.num_rows == 1332
-    assert arrow_table.num_columns == 7
+
+    retain_flags = arrow_table["soma_joinid"] != mask
+    filtered_table = arrow_table.filter(retain_flags)
+
+    assert filtered_table.num_rows == 1332
+    assert filtered_table.num_columns == 7
 
 
 if __name__ == "__main__":
