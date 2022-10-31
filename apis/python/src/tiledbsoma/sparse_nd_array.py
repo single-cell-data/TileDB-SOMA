@@ -187,26 +187,6 @@ class SparseNdArray(TileDBArray):
         with self._tiledb_open("r") as A:
             shape = list(A.shape)
 
-#        for i in range(len(coords)):
-#            coord = coords[i]
-#            if coord is None:
-#                pass
-#            elif isinstance(coord, int):
-#                shape[i] = 1
-#            elif isinstance(coord, list):
-#                shape[i] = len(coord)
-#            elif isinstance(coord, pa.ChunkedArray):
-#                shape[i] = len(coord)
-#            elif isinstance(coord, pa.Array):
-#                shape[i] = len(coord)
-#            elif isinstance(coord, slice):
-#                lo_hi = util.slice_to_range(coord)
-#                if lo_hi is not None:
-#                    lo, hi = lo_hi
-#                    shape[i] = hi - lo + 1
-#            else:
-#                raise SOMAError(f"coord type {type(coord)} at slot {i} unhandled")
-
         for arrow_tbl in self.read_table(coords):
             """
             In PyArrow 9.0.0, there is a bug preventing the creation of "empty"
@@ -289,7 +269,7 @@ class SparseNdArray(TileDBArray):
                 elif isinstance(coord, slice):
                     lo_hi = util.slice_to_range(coord)
                     if lo_hi is not None:
-                        sr.set_dim_ranges(dim_name, [lo_hi])
+                        sr.set_dim_ranges(dim_name, lo_hi)
                 else:
                     raise SOMAError(f"coord type {type(coord)} at slot {i} unhandled")
 
