@@ -139,7 +139,7 @@ SEXP export_column_direct(const std::string& uri, const std::vector<std::string>
 //' @examples
 //' \dontrun{
 //' uri <- "test/soco/pbmc3k_processed/obs"
-//' z <- some_reader(uri)
+//' z <- soma_reader(uri)
 //' tb <- arrow::as_arrow_table(arch::from_arch_array(z, arrow::RecordBatch))
 //' }
 //' @export
@@ -153,7 +153,7 @@ Rcpp::List soma_reader(const std::string& uri,
 
     tdbs::LOG_SET_LEVEL(loglevel);
 
-    tdbs::LOG_INFO(fmt::format("[export_arrow_array] Reading from {}", uri));
+    tdbs::LOG_INFO(fmt::format("[soma_reader] Reading from {}", uri));
 
     // Read selected columns from the uri (return is unique_ptr<SOMAReader>)
     auto sr = tdbs::SOMAReader::open(uri);
@@ -163,7 +163,7 @@ Rcpp::List soma_reader(const std::string& uri,
     tiledb::Domain domain = schema->domain();
     std::vector<tiledb::Dimension> dims = domain.dimensions();
     for (auto& dim: dims) {
-        tdbs::LOG_INFO(fmt::format("[export_arrow_array] Dimension {} type {} domain {} extent {}",
+        tdbs::LOG_INFO(fmt::format("[soma_reader] Dimension {} type {} domain {} extent {}",
                                    dim.name(), tiledb::impl::to_str(dim.type()),
                                    dim.domain_to_str(), dim.tile_extent_to_str()));
         name2type.emplace(std::make_pair(dim.name(), dim.type()));
@@ -172,13 +172,13 @@ Rcpp::List soma_reader(const std::string& uri,
     // If we have column names, select them
     if (!colnames.isNull()) {
         std::vector<std::string> cn = Rcpp::as<std::vector<std::string>>(colnames);
-        tdbs::LOG_INFO(fmt::format("[export_arrow_array] Selecting {} columns", cn.size()));
+        tdbs::LOG_INFO(fmt::format("[soma_reader] Selecting {} columns", cn.size()));
         sr->select_columns(cn);
     }
 
     // If we have a query condition, apply it
     if (!qc.isNull()) {
-        tdbs::LOG_INFO(fmt::format("[export_arrow_array] Applying query condition"));
+        tdbs::LOG_INFO(fmt::format("[soma_reader] Applying query condition"));
         Rcpp::XPtr<tiledb::QueryCondition> qcxp(qc);
         sr->set_condition(*qcxp);
     }
@@ -188,112 +188,15 @@ Rcpp::List soma_reader(const std::string& uri,
     // The List element is a simple vector of points and each point is applied to the named dimension
     if (!dim_points.isNull()) {
         Rcpp::List lst(dim_points);
-        std::vector<std::string> colnames = lst.attr("names");
-        for (auto& nm: colnames) {
-            auto tp = name2type[nm];
-            if (tp == TILEDB_UINT64) {
-                Rcpp::NumericVector payload = lst[nm];
-                std::vector<int64_t> iv = getInt64Vector(payload);
-                std::vector<uint64_t> uv(iv.size());
-                for (size_t i=0; i<iv.size(); i++) {
-                    uv[i] = static_cast<uint64_t>(iv[i]);
-                    sr->set_dim_point<uint64_t>(nm, uv[i]);  // bonked when use with vector
-                    tdbs::LOG_INFO(fmt::format("[export_arrow_array] Applying dim point {} on {}", uv[i], nm));
-                }
-            } else if (tp == TILEDB_INT64) {
-                Rcpp::NumericVector payload = lst[nm];
-                std::vector<int64_t> iv = getInt64Vector(payload);
-                for (size_t i=0; i<iv.size(); i++) {
-                    sr->set_dim_point<int64_t>(nm, iv[i]);
-                    tdbs::LOG_INFO(fmt::format("[export_arrow_array] Applying dim point {} on {}", iv[i], nm));
-                }
-            } else if (tp == TILEDB_FLOAT32) {
-                Rcpp::NumericVector payload = lst[nm];
-                for (R_xlen_t i=0; i<payload.size(); i++) {
-                    float v = static_cast<uint64_t>(payload[i]);
-                    sr->set_dim_point<float>(nm, v);
-                    tdbs::LOG_INFO(fmt::format("[export_arrow_array] Applying dim point {} on {}", v, nm));
-                }
-            } else if (tp == TILEDB_FLOAT64) {
-                Rcpp::NumericVector payload = lst[nm];
-                for (R_xlen_t i=0; i<payload.size(); i++) {
-                    sr->set_dim_point<double>(nm,payload[i]);
-                    tdbs::LOG_INFO(fmt::format("[export_arrow_array] Applying dim point {} on {}", payload[i], nm));
-                }
-            } else if (tp == TILEDB_INT32) {
-                Rcpp::IntegerVector payload = lst[nm];
-                for (R_xlen_t i=0; i<payload.size(); i++) {
-                    sr->set_dim_point<int32_t>(nm,payload[i]);
-                    tdbs::LOG_INFO(fmt::format("[export_arrow_array] Applying dim point {} on {}", payload[i], nm));
-                }
-            } else {
-                Rcpp::stop("Currently unsupported type: ", tiledb::impl::to_str(tp));
-            }
-        }
+        apply_dim_points(sr.get(), name2type, lst);
     }
 
     // If we have a dimension points, apply them
     if (!dim_ranges.isNull()) {
         Rcpp::List lst(dim_ranges);
-        std::vector<std::string> colnames = lst.attr("names");
-        for (auto& nm: colnames) {
-            auto tp = name2type[nm];
-            if (tp == TILEDB_UINT64) {
-                Rcpp::NumericMatrix mm = lst[nm];
-                Rcpp::NumericMatrix::Column lo = mm.column(0); // works as proxy for int and float types
-                Rcpp::NumericMatrix::Column hi = mm.column(1); // works as proxy for int and float types
-                for (int i=0; i<mm.nrow(); i++) {
-                    uint64_t l = static_cast<uint64_t>(makeScalarInteger64(lo[i]));
-                    uint64_t h = static_cast<uint64_t>(makeScalarInteger64(hi[i]));
-                    std::vector<std::pair<uint64_t, uint64_t>> vp{std::make_pair(l,h)};
-                    sr->set_dim_ranges<uint64_t>(nm, vp);
-                    tdbs::LOG_INFO(fmt::format("[export_arrow_array] Applying dim point {} on {} with {} - {}", i, nm, l, h));
-                }
-            } else if (tp == TILEDB_INT64) {
-                Rcpp::NumericMatrix mm = lst[nm];
-                std::vector<int64_t> lo = getInt64Vector(mm.column(0));
-                std::vector<int64_t> hi = getInt64Vector(mm.column(1));
-                for (int i=0; i<mm.nrow(); i++) {
-                    std::vector<std::pair<int64_t, int64_t>> vp{std::make_pair(lo[i], hi[i])};
-                    sr->set_dim_ranges<int64_t>(nm, vp);
-                    tdbs::LOG_INFO(fmt::format("[export_arrow_array] Applying dim point {} on {} with {} - {}", i, nm, lo[i], hi[i]));
-                }
-            } else if (tp == TILEDB_FLOAT32) {
-                Rcpp::NumericMatrix mm = lst[nm];
-                Rcpp::NumericMatrix::Column lo = mm.column(0); // works as proxy for int and float types
-                Rcpp::NumericMatrix::Column hi = mm.column(1); // works as proxy for int and float types
-                for (int i=0; i<mm.nrow(); i++) {
-                    float l = static_cast<float_t>(lo[i]);
-                    float h = static_cast<float_t>(hi[i]);
-                    std::vector<std::pair<float, float>> vp{std::make_pair(l,h)};
-                    sr->set_dim_ranges<float>(nm, vp);
-                    tdbs::LOG_INFO(fmt::format("[export_arrow_array] Applying dim point {} on {} with {} - {}", i, nm, l, h));
-                }
-            } else if (tp == TILEDB_FLOAT64) {
-                Rcpp::NumericMatrix mm = lst[nm];
-                Rcpp::NumericMatrix::Column lo = mm.column(0); // works as proxy for int and float types
-                Rcpp::NumericMatrix::Column hi = mm.column(1); // works as proxy for int and float types
-                for (int i=0; i<mm.nrow(); i++) {
-                    std::vector<std::pair<double, double>> vp{std::make_pair(lo[i],hi[i])};
-                    sr->set_dim_ranges<double>(nm, vp);
-                    tdbs::LOG_INFO(fmt::format("[export_arrow_array] Applying dim point {} on {} with {} - {}", i, nm, lo[i], hi[i]));
-                }
-            } else if (tp == TILEDB_INT32) {
-                Rcpp::IntegerMatrix mm = lst[nm];
-                Rcpp::IntegerMatrix::Column lo = mm.column(0); // works as proxy for int and float types
-                Rcpp::IntegerMatrix::Column hi = mm.column(1); // works as proxy for int and float types
-                for (int i=0; i<mm.nrow(); i++) {
-                    int32_t l = static_cast<int32_t>(lo[i]);
-                    int32_t h = static_cast<int32_t>(hi[i]);
-                    std::vector<std::pair<int32_t, int32_t>> vp{std::make_pair(l,h)};
-                    sr->set_dim_ranges<int32_t>(nm, vp);
-                    tdbs::LOG_INFO(fmt::format("[export_arrow_array] Applying dim point {} on {} with {} - {}", i, nm[i], l, h));
-                }
-            } else {
-                Rcpp::stop("Currently unsupported type: ", tiledb::impl::to_str(tp));
-            }
-        }
+        apply_dim_ranges(sr.get(), name2type, lst);
     }
+
     sr->submit();
 
     // Getting next batch:  std::optional<std::shared_ptr<ArrayBuffers>>
@@ -301,7 +204,7 @@ Rcpp::List soma_reader(const std::string& uri,
     if (!sr->results_complete()) {
         Rcpp::warning("Read of '%s' incomplete", uri);
     }
-    tdbs::LOG_INFO(fmt::format("[export_arrow_array] Read complete with {} rows and {} cols",
+    tdbs::LOG_INFO(fmt::format("[soma_reader] Read complete with {} rows and {} cols",
                                sr_data->get()->num_rows(),
                                sr_data->get()->names().size()));
 
@@ -314,7 +217,7 @@ Rcpp::List soma_reader(const std::string& uri,
         SEXP schemaxp = arch_c_allocate_schema();
         SEXP arrayxp = arch_c_allocate_array_data();
 
-        tdbs::LOG_INFO(fmt::format("[export_arrow_array] Accessing {} at {}", names[i], i));
+        tdbs::LOG_INFO(fmt::format("[soma_reader] Accessing {} at {}", names[i], i));
 
         // now buf is a shared_ptr to ColumnBuffer
         auto buf = sr_data->get()->at(names[i]);
@@ -325,7 +228,7 @@ Rcpp::List soma_reader(const std::string& uri,
         memcpy((void*) R_ExternalPtrAddr(schemaxp), pp.second.get(), sizeof(ArrowSchema));
         memcpy((void*) R_ExternalPtrAddr(arrayxp), pp.first.get(), sizeof(ArrowArray));
 
-        tdbs::LOG_INFO(fmt::format("[export_arrow_array] Incoming name {}", std::string(pp.second->name)));
+        tdbs::LOG_INFO(fmt::format("[soma_reader] Incoming name {}", std::string(pp.second->name)));
 
         schlst[i] = schemaxp;
         arrlst[i] = arrayxp;
