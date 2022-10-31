@@ -84,7 +84,7 @@ class IndexedDataFrame(TileDBArray):
             # We need domain=(None,None) for string dims
             lo: Any = None
             hi: Any = None
-            if dtype != str:
+            if dtype != str and dtype != "ascii":
                 if np.issubdtype(dtype, np.integer):
                     lo = np.iinfo(dtype).min
                     hi = np.iinfo(dtype).max - 1
@@ -201,11 +201,13 @@ class IndexedDataFrame(TileDBArray):
                 query_condition=query_condition,
             )
 
+            # Acceptable ways to index:
+            # * None
             # * A sequence of coordinates is accepted, one per dimension.
             # * Sequence length must be at least one and <= number of dimensions.
             # * If the sequence contains missing coordinates (length less than number of dimensions),
             #   then "slice(None)" is assumed for the missing dimensions.
-            # * Per-dimension, explicitly specified coordinates can be one of: a value, a
+            # * Per-dimension, explicitly specified coordinates can be one of: None, a value, a
             #   list/ndarray/paarray/etc of values, a slice, etc.
 
             if ids is not None:
@@ -221,7 +223,7 @@ class IndexedDataFrame(TileDBArray):
                 for i in range(len(ids)):
                     dim_name = A.schema.domain.dim(i).name
                     dim_ids = ids[i]
-                    if dim_ids is None:
+                    if dim_ids is None:  # select all in this dimension
                         pass
                     elif isinstance(dim_ids, int):
                         sr.set_dim_points(dim_name, [dim_ids])
@@ -234,7 +236,7 @@ class IndexedDataFrame(TileDBArray):
                     elif isinstance(dim_ids, slice):
                         lo_hi = util.slice_to_range(dim_ids)
                         if lo_hi is not None:
-                            sr.set_dim_ranges(dim_name, lo_hi)
+                            sr.set_dim_ranges(dim_name, [lo_hi])
                     else:
                         raise SOMAError(
                             f"dim_ids type {type(dim_ids)} at slot {i} unhandled"

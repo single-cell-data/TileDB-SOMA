@@ -50,10 +50,6 @@ def test_indexed_dataframe(tmp_path, arrow_schema):
 
     # Read all
     table = sidf.read_all()
-    # Weird thing about pyarrow Table:
-    # * We have table.num_rows is 5 and table.num_columns is 3
-    # * But len(table) is 3
-    # * `for column in table` loops over columns
     assert table.num_rows == 5
     assert table.num_columns == 4
     assert [e.as_py() for e in list(table["soma_joinid"])] == pydict["soma_joinid"]
@@ -104,6 +100,38 @@ def simple_indexed_data_frame(tmp_path):
         "C": ["this", "is", "a", "test"],
     }
     n_data = len(data["index"])
+    rb = pa.Table.from_pydict(data)
+    sidf.write(rb)
+    yield (schema, sidf, n_data, index_column_names)
+    sidf.delete()
+
+
+@pytest.fixture
+def doubly_indexed_data_frame(tmp_path):
+    """
+    A pytest fixture which creates a doubly indexed IndexedDataFrame for use in tests below.
+    """
+    schema = pa.schema(
+        [
+            ("index1", pa.large_string()),
+            ("index2", pa.int64()),
+            ("soma_joinid", pa.int64()),
+            ("A", pa.int64()),
+        ]
+    )
+
+    index_column_names = ["index1", "index2"]
+    sidf = soma.IndexedDataFrame(uri=tmp_path.as_posix())
+    sidf.create(schema=schema, index_column_names=index_column_names)
+
+    data = {
+        "index1": ["aa", "aa", "bb", "bb", "cc", "cc"],
+        "index2": [0, 1, 0, 1, 0, 1],
+        "soma_joinid": [10, 11, 12, 13, 14, 15],
+        "A": [10, 11, 12, 13, 14, 15],
+    }
+
+    n_data = len(data["index1"])
     rb = pa.Table.from_pydict(data)
     sidf.write(rb)
     yield (schema, sidf, n_data, index_column_names)
@@ -300,3 +328,163 @@ def test_index_types(tmp_path, make_dataframe):
     sidf = soma.IndexedDataFrame(tmp_path.as_posix())
     sidf.create(make_dataframe.schema, index_column_names=["index"])
     sidf.write(make_dataframe)
+
+
+# TODO:
+# * None
+# * int
+# * list
+# * pa.ChunkedArray
+# * pa.Array
+# * slice
+# * something else
+# * multi-index !
+@pytest.mark.parametrize(
+    "io",
+    [
+        # Indexing list is None
+        {
+            "ids": None,
+            "A": [10, 11, 12, 13],
+            "throws": None,
+        },
+        # Indexing slot is None
+        {
+            "ids": [None],
+            "A": [10, 11, 12, 13],
+            "throws": None,
+        },
+        # Indexing slot is int
+        {
+            "ids": [0],
+            "A": [10],
+            "throws": None,
+        },
+        {
+            "ids": [100],
+            "A": [],
+            "throws": None,
+        },
+        {
+            "ids": [-100],
+            "A": [],
+            "throws": None,
+        },
+        # Indexing slot is list
+        {
+            "ids": [[1, 3]],
+            "A": [11, 13],
+            "throws": None,
+        },
+        {
+            "ids": [[-100, 100]],
+            "A": [],
+            "throws": None,
+        },
+        # Indexing slot is pa.ChunkedArray
+        {
+            "ids": [pa.chunked_array(pa.array([1, 3]))],
+            "A": [11, 13],
+            "throws": None,
+        },
+        # Indexing slot is pa.Array
+        {
+            "ids": [pa.array([1, 3])],
+            "A": [11, 13],
+            "throws": None,
+        },
+        # Indexing slot is slice
+        {
+            "ids": [slice(1, 3)],  # Indexing slot is double-ended slice
+            "A": [11, 12, 13],
+            "throws": None,
+        },
+        {
+            "ids": [slice(None, None)],  # Indexing slot is slice-all
+            "A": [10, 11, 12, 13],
+            "throws": None,
+        },
+        {
+            "ids": [slice(None, 3)],  # Half-slices are not supported yet
+            "A": None,
+            "throws": ValueError,
+        },
+        {
+            "ids": [slice(1, None)],  # Half-slices are not supported yet
+            "A": None,
+            "throws": ValueError,
+        },
+        {
+            "ids": [slice(1, 5, 2)],  # Slice step must be 1 or None
+            "A": None,
+            "throws": ValueError,
+        },
+        # Indexing slot is of invalid type
+        {
+            "ids": ["nonesuch"],
+            "A": None,
+            "throws": soma.SOMAError,
+        },
+    ],
+)
+def test_indexing_single_dim(simple_indexed_data_frame, io):
+    """Test various ways of indexing"""
+    schema, sidf, n_data, index_column_names = simple_indexed_data_frame
+    assert sidf.exists()
+
+    col_names = ["A"]
+
+    if io["throws"] is not None:
+        with pytest.raises(io["throws"]):
+            table = sidf.read_all(ids=io["ids"], column_names=col_names)
+    else:
+        table = sidf.read_all(ids=io["ids"], column_names=col_names)
+        assert table["A"].to_pylist() == io["A"]
+
+    # TODO:
+    # read_all
+    # etc.
+
+
+@pytest.mark.parametrize(
+    "io",
+    [
+        # Indexing list is None
+        {
+            "ids": None,
+            "A": [10, 11, 12, 13, 14, 15],
+            "throws": None,
+        },
+        # Indexing slot is None
+        {
+            "ids": [None, None],
+            "A": [10, 11, 12, 13, 14, 15],
+            "throws": None,
+        },
+        # Indexing slot is int
+        {
+            "ids": ["aa", 0],
+            "A": [10],
+            # TODO: at present SOMAReader only accepts int dims.
+            "throws": soma.SOMAError,
+        },
+        # Indexing slot is list
+        {
+            "ids": [None, [1, 3]],
+            "A": [11, 13, 15],
+            "throws": None,
+        },
+    ],
+)
+def test_indexing_double_dim(doubly_indexed_data_frame, io):
+    schema, sidf, n_data, index_column_names = doubly_indexed_data_frame
+    assert sidf.exists()
+
+    col_names = ["A"]
+
+    if io["throws"] is not None:
+        with pytest.raises(io["throws"]):
+            table = sidf.read_all(ids=io["ids"], column_names=col_names)
+    else:
+        table = sidf.read_all(ids=io["ids"], column_names=col_names)
+        assert table["A"].to_pylist() == io["A"]
