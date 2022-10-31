@@ -11,3 +11,4 @@
 ^src/CMakeLists.txt$
 ^\.github$
 ^prune_libtiledbsoma_sources.sh$
+^dev$
