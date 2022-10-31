@@ -269,7 +269,7 @@ class SparseNdArray(TileDBArray):
                 elif isinstance(coord, slice):
                     lo_hi = util.slice_to_range(coord)
                     if lo_hi is not None:
-                        sr.set_dim_ranges(dim_name, lo_hi)
+                        sr.set_dim_ranges(dim_name, [lo_hi])
                 else:
                     raise SOMAError(f"coord type {type(coord)} at slot {i} unhandled")
 

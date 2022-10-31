@@ -425,3 +425,146 @@ def test_sparse_nd_array_reshape(tmp_path):
     a.create(type=pa.int32(), shape=(10, 10, 10))
     with pytest.raises(NotImplementedError):
         assert a.reshape((100, 10, 1))
+
+
+@pytest.mark.parametrize(
+    "io",
+    [
+        {
+            "coords": (0, 0),
+            "soma_dim_0": [0],
+            "soma_dim_1": [0],
+            "soma_data": [0],
+        },
+        {
+            "coords": (3, 4),
+            "soma_dim_0": [3],
+            "soma_dim_1": [4],
+            "soma_data": [304],
+        },
+        {
+            "coords": (slice(1, 2), slice(3, 4)),
+            "soma_dim_0": [1, 1, 2, 2],
+            "soma_dim_1": [3, 4, 3, 4],
+            "soma_data": [103, 104, 203, 204],
+        },
+        {
+            "coords": (slice(None), slice(3, 4)),
+            "soma_dim_0": [0, 0, 1, 1, 2, 2, 3, 3],
+            "soma_dim_1": [3, 4, 3, 4, 3, 4, 3, 4],
+            "soma_data": [3, 4, 103, 104, 203, 204, 303, 304],
+        },
+        {
+            "coords": (slice(1, 2), slice(None)),
+            "soma_dim_0": [1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2],
+            "soma_dim_1": [0, 1, 2, 3, 4, 5, 0, 1, 2, 3, 4, 5],
+            "soma_data": [100, 101, 102, 103, 104, 105, 200, 201, 202, 203, 204, 205],
+        },
+        {
+            "coords": (slice(None), slice(None)),
+            "soma_dim_0": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                1,
+                1,
+                1,
+                1,
+                1,
+                1,
+                2,
+                2,
+                2,
+                2,
+                2,
+                2,
+                3,
+                3,
+                3,
+                3,
+                3,
+                3,
+            ],
+            "soma_dim_1": [
+                0,
+                1,
+                2,
+                3,
+                4,
+                5,
+                0,
+                1,
+                2,
+                3,
+                4,
+                5,
+                0,
+                1,
+                2,
+                3,
+                4,
+                5,
+                0,
+                1,
+                2,
+                3,
+                4,
+                5,
+            ],
+            "soma_data": [
+                0,
+                1,
+                2,
+                3,
+                4,
+                5,
+                100,
+                101,
+                102,
+                103,
+                104,
+                105,
+                200,
+                201,
+                202,
+                203,
+                204,
+                205,
+                300,
+                301,
+                302,
+                303,
+                304,
+                305,
+            ],
+        },
+    ],
+)
+def test_sparse_nd_array_table_slicing(tmp_path, io):
+    num_rows = 4
+    num_cols = 6
+
+    # Set up contents
+    npa = np.zeros((num_rows, num_cols), dtype=np.float64)
+    for i in range(num_rows):
+        for j in range(num_cols):
+            npa[i, j] = 100 * i + j
+
+    pat = pa.Tensor.from_numpy(npa)
+    pacoo = pa.SparseCOOTensor.from_tensor(pat)
+
+    snda = soma.SparseNdArray(tmp_path.as_posix())
+    snda.create(pa.float64(), npa.shape)
+    snda.write_sparse_tensor(pacoo)
+
+    table = next(snda.read_table(io["coords"]))
+    assert table["soma_dim_0"].to_pylist() == io["soma_dim_0"]
+    assert table["soma_dim_1"].to_pylist() == io["soma_dim_1"]
+    assert table["soma_data"].to_pylist() == io["soma_data"]
+
+    # TODO:
+    # snda.read_as_pandas
+    # snda.read_sparse_tensor
