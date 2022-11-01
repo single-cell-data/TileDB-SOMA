@@ -220,9 +220,8 @@ class IndexedDataFrame(TileDBArray):
                         f"ids {ids} must have length between 1 and ndim ({A.schema.domain.ndim}); got {len(ids)}"
                     )
 
-                for i in range(len(ids)):
+                for i, dim_ids in enumerate(ids):
                     dim_name = A.schema.domain.dim(i).name
-                    dim_ids = ids[i]
                     if dim_ids is None:  # select all in this dimension
                         pass
                     elif isinstance(dim_ids, int):
@@ -239,7 +238,7 @@ class IndexedDataFrame(TileDBArray):
                             sr.set_dim_ranges(dim_name, [lo_hi])
                     else:
                         raise SOMAError(
-                            f"dim_ids type {type(dim_ids)} at slot {i} unhandled"
+                            f"dim_ids type {type(dim_ids)} at slot {i} unsupported"
                         )
 
             # TODO: platform_config

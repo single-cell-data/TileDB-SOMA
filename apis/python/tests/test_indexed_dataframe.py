@@ -334,6 +334,7 @@ def test_index_types(tmp_path, make_dataframe):
 # * None
 # * int
 # * list
+# * tuple
 # * pa.ChunkedArray
 # * pa.Array
 # * slice
