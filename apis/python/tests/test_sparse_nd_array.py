@@ -291,7 +291,7 @@ def test_sparse_nd_array_read_write_corner_of_tensor(
     # Read back and validate
     b = soma.SparseNdArray(tmp_path.as_posix())
     t = next(b.read_sparse_tensor((0,) * len(shape), format=format))
-    assert t.shape == (1,) * len(shape)
+    assert t.shape == shape
 
 
 @pytest.mark.parametrize("shape", [(10,), (23, 4), (5, 3, 1), (8, 4, 2, 30)])
