@@ -14,7 +14,7 @@ from .constants import SOMA_JOINID
 from .exception import SOMAError
 from .query_condition import QueryCondition  # type: ignore
 from .tiledb_array import TileDBArray
-from .types import ResultOrder
+from .types import ResultOrder, SparseIndexedDataFrameCoordinates
 
 Slice = TypeVar("Slice", bound=Sequence[int])
 
@@ -164,7 +164,7 @@ class IndexedDataFrame(TileDBArray):
     def read(
         self,
         *,
-        ids: Optional[Union[Sequence[int], slice]] = None,
+        ids: Optional[SparseIndexedDataFrameCoordinates] = None,
         value_filter: Optional[str] = None,
         column_names: Optional[Sequence[str]] = None,
         result_order: Optional[ResultOrder] = None,
@@ -276,7 +276,7 @@ class IndexedDataFrame(TileDBArray):
     def read_all(
         self,
         *,
-        ids: Optional[Union[Sequence[int], slice]] = None,
+        ids: Optional[SparseIndexedDataFrameCoordinates] = None,
         value_filter: Optional[str] = None,
         column_names: Optional[Sequence[str]] = None,
         result_order: Optional[ResultOrder] = None,
@@ -328,7 +328,7 @@ class IndexedDataFrame(TileDBArray):
 
     def read_as_pandas(
         self,
-        ids: Optional[Union[Sequence[int], slice]] = None,
+        ids: Optional[SparseIndexedDataFrameCoordinates] = None,
         value_filter: Optional[str] = None,
         column_names: Optional[Sequence[str]] = None,
         result_order: Optional[ResultOrder] = None,
@@ -343,7 +343,7 @@ class IndexedDataFrame(TileDBArray):
 
     def read_as_pandas_all(
         self,
-        ids: Optional[Union[Sequence[int], slice]] = None,
+        ids: Optional[SparseIndexedDataFrameCoordinates] = None,
         value_filter: Optional[str] = None,
         column_names: Optional[Sequence[str]] = None,
         result_order: Optional[ResultOrder] = None,

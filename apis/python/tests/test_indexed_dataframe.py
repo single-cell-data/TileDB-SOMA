@@ -113,7 +113,7 @@ def doubly_indexed_data_frame(tmp_path):
     """
     schema = pa.schema(
         [
-            ("index1", pa.large_string()),
+            ("index1", pa.int64()),
             ("index2", pa.int64()),
             ("soma_joinid", pa.int64()),
             ("A", pa.int64()),
@@ -125,7 +125,7 @@ def doubly_indexed_data_frame(tmp_path):
     sidf.create(schema=schema, index_column_names=index_column_names)
 
     data = {
-        "index1": ["aa", "aa", "bb", "bb", "cc", "cc"],
+        "index1": [400, 400, 500, 500, 600, 600],
         "index2": [0, 1, 0, 1, 0, 1],
         "soma_joinid": [10, 11, 12, 13, 14, 15],
         "A": [10, 11, 12, 13, 14, 15],
@@ -421,11 +421,15 @@ def test_index_types(tmp_path, make_dataframe):
             "throws": ValueError,
         },
         # Indexing slot is of invalid type
-        {
-            "ids": ["nonesuch"],
-            "A": None,
-            "throws": soma.SOMAError,
-        },
+        # TODO: I want to test this but Typeguard fails the test since it already knows strings are not
+        # valid until we implement
+        # https://github.com/single-cell-data/TileDB-SOMA/issues/418
+        # https://github.com/single-cell-data/TileDB-SOMA/issues/419
+        # {
+        #    "ids": ["nonesuch"], # noqa
+        #    "A": None,
+        #    "throws": soma.SOMAError,
+        # },
     ],
 )
 def test_indexing_single_dim(simple_indexed_data_frame, io):
@@ -463,11 +467,13 @@ def test_indexing_single_dim(simple_indexed_data_frame, io):
             "throws": None,
         },
         # Indexing slot is int
+        # TODO: at present SOMAReader only accepts int dims. See also:
+        # https://github.com/single-cell-data/TileDB-SOMA/issues/418
+        # https://github.com/single-cell-data/TileDB-SOMA/issues/419
         {
-            "ids": ["aa", 0],
+            "ids": [400, 0],
             "A": [10],
-            # TODO: at present SOMAReader only accepts int dims.
-            "throws": soma.SOMAError,
+            "throws": None,
         },
         # Indexing slot is list
         {
