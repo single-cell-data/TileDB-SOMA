@@ -84,7 +84,7 @@ class IndexedDataFrame(TileDBArray):
             # We need domain=(None,None) for string dims
             lo: Any = None
             hi: Any = None
-            if dtype != str and dtype != "ascii":
+            if dtype != str:
                 if np.issubdtype(dtype, np.integer):
                     lo = np.iinfo(dtype).min
                     hi = np.iinfo(dtype).max - 1
