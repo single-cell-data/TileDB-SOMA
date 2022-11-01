@@ -14,7 +14,7 @@ from .constants import SOMA_JOINID
 from .exception import SOMAError
 from .query_condition import QueryCondition  # type: ignore
 from .tiledb_array import TileDBArray
-from .types import Ids, ResultOrder
+from .types import ResultOrder
 
 Slice = TypeVar("Slice", bound=Sequence[int])
 
@@ -164,9 +164,7 @@ class IndexedDataFrame(TileDBArray):
     def read(
         self,
         *,
-        # TODO: find out how to spell this in a way the type-checker will accept :(
-        # ids: Optional[Union[Sequence[int], str, Slice]] = None,
-        ids: Optional[Any] = None,
+        ids: Optional[Union[Sequence[int], slice]] = None,
         value_filter: Optional[str] = None,
         column_names: Optional[Sequence[str]] = None,
         result_order: Optional[ResultOrder] = None,
@@ -278,9 +276,7 @@ class IndexedDataFrame(TileDBArray):
     def read_all(
         self,
         *,
-        # TODO: find the right syntax to get the typechecker to accept args like ``ids=slice(0,10)``
-        # ids: Optional[Union[Sequence[int], Slice]] = None,
-        ids: Optional[Any] = None,
+        ids: Optional[Union[Sequence[int], slice]] = None,
         value_filter: Optional[str] = None,
         column_names: Optional[Sequence[str]] = None,
         result_order: Optional[ResultOrder] = None,
@@ -332,7 +328,7 @@ class IndexedDataFrame(TileDBArray):
 
     def read_as_pandas(
         self,
-        ids: Optional[Any] = None,
+        ids: Optional[Union[Sequence[int], slice]] = None,
         value_filter: Optional[str] = None,
         column_names: Optional[Sequence[str]] = None,
         result_order: Optional[ResultOrder] = None,
@@ -347,7 +343,7 @@ class IndexedDataFrame(TileDBArray):
 
     def read_as_pandas_all(
         self,
-        ids: Optional[Ids] = None,
+        ids: Optional[Union[Sequence[int], slice]] = None,
         value_filter: Optional[str] = None,
         column_names: Optional[Sequence[str]] = None,
         result_order: Optional[ResultOrder] = None,
