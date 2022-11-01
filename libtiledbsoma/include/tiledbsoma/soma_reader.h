@@ -286,7 +286,6 @@ class SOMAReader {
         return mq_->schema();
     }
 
-
    private:
     //===================================================================
     //= private non-static

@@ -21,6 +21,7 @@ While the [main-old](https://github.com/single-cell-data/TileDB-SOMA/blob/main-o
 # Developer information
 
 * https://github.com/single-cell-data/TileDB-SOMA/wiki/Developer-resources
+* [Build instructions for developers](libtiledbsoma/README.md)
 
 # Code of Conduct
 

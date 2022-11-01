@@ -1,5 +1,5 @@
 import re
-from typing import List, Optional, Sequence, Tuple, TypeVar, Union
+from typing import Dict, List, Optional, Sequence, Tuple, TypeVar, Union
 
 import numpy as np
 import pandas as pd
@@ -27,7 +27,7 @@ def tiledb_result_order_from_soma_result_order(
     the ``soma_result_order`` is not present in the acceptable values, as
     defined by ``accept``.
     """
-    OrderMap: dict[ResultOrder, str] = {
+    OrderMap: Dict[ResultOrder, str] = {
         "column-major": "F",
         "row-major": "C",
         "unordered": "U",

@@ -71,7 +71,6 @@ set(INHERITED_CMAKE_ARGS
 
 #TBD include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/Modules/FindCLI11_EP.cmake)
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/Modules/FindTileDB_EP.cmake)
-# include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/Modules/FindCatch_EP.cmake)
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/Modules/FindSpdlog_EP.cmake)
 
 ############################################################
@@ -118,3 +117,8 @@ add_custom_target(check
   COMMAND ${CMAKE_COMMAND} --build . --target check --config ${CMAKE_BUILD_TYPE}
   WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/libtiledbsoma
 )
+
+
+# TODO: add command to build add links to apis/python/src/tiledbsoma/
+# add_custom_target(link_target ALL
+#                  COMMAND ${CMAKE_COMMAND} -E create_symlink ${target} ${link})
