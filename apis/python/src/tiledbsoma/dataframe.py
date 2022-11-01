@@ -1,4 +1,4 @@
-from typing import Any, Iterator, Literal, Optional, Sequence, TypeVar
+from typing import Any, Iterator, Literal, Optional, Sequence, TypeVar, Union
 
 import numpy as np
 import pandas as pd
@@ -13,9 +13,7 @@ from .collection import CollectionBase
 from .constants import SOMA_JOINID, SOMA_ROWID
 from .query_condition import QueryCondition  # type: ignore
 from .tiledb_array import TileDBArray
-from .types import Ids, ResultOrder
-
-Slice = TypeVar("Slice", bound=Sequence[int])
+from .types import ResultOrder
 
 
 class DataFrame(TileDBArray):
@@ -123,9 +121,7 @@ class DataFrame(TileDBArray):
     def read(
         self,
         *,
-        # TODO: find the right syntax to get the typechecker to accept args like ``ids=slice(0,10)``
-        # ids: Optional[Union[Sequence[int], Slice]] = None,
-        ids: Optional[Any] = None,
+        ids: Optional[Union[int, slice]] = None,
         value_filter: Optional[str] = None,
         column_names: Optional[Sequence[str]] = None,
         result_order: Optional[ResultOrder] = None,
@@ -162,16 +158,16 @@ class DataFrame(TileDBArray):
             )
 
             if ids is not None:
-                if isinstance(ids, list):
-                    sr.set_dim_points(SOMA_ROWID, ids)
-                elif isinstance(ids, pa.ChunkedArray):
-                    sr.set_dim_points(SOMA_ROWID, ids)
-                elif isinstance(ids, pa.Array):
-                    sr.set_dim_points(SOMA_ROWID, pa.chunked_array(ids))
+                if isinstance(ids, int):
+                    sr.set_dim_ranges(SOMA_ROWID, [ids])
                 elif isinstance(ids, slice):
                     lo_hi = util.slice_to_range(ids)
                     if lo_hi is not None:
                         sr.set_dim_ranges(SOMA_ROWID, [lo_hi])
+                    # else this was a `slice(None, None)` which is the same as None --
+                    # Python-syntactically equivalent to [:].
+                else:
+                    raise ValueError(f"ids type {type(ids)} unsupported.")
 
             # TODO: platform_config
             # TODO: batch_size
@@ -210,9 +206,7 @@ class DataFrame(TileDBArray):
     def read_all(
         self,
         *,
-        # TODO: find the right syntax to get the typechecker to accept args like ``ids=slice(0,10)``
-        # ids: Optional[Union[Sequence[int], Slice]] = None,
-        ids: Optional[Any] = None,
+        ids: Optional[Union[int, slice]] = None,
         value_filter: Optional[str] = None,
         column_names: Optional[Sequence[str]] = None,
         result_order: Optional[ResultOrder] = None,
@@ -277,7 +271,7 @@ class DataFrame(TileDBArray):
     def read_as_pandas(
         self,
         *,
-        ids: Optional[Ids] = None,
+        ids: Optional[Union[int, slice]] = None,
         value_filter: Optional[str] = None,
         column_names: Optional[Sequence[str]] = None,
         result_order: Optional[ResultOrder] = None,
@@ -293,7 +287,7 @@ class DataFrame(TileDBArray):
     def read_as_pandas_all(
         self,
         *,
-        ids: Optional[Ids] = None,
+        ids: Optional[Union[int, slice]] = None,
         value_filter: Optional[str] = None,
         column_names: Optional[Sequence[str]] = None,
         result_order: Optional[ResultOrder] = None,
