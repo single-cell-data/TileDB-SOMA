@@ -42,7 +42,7 @@ jobs:
         python-version: ${{ matrix.python-version }}
 
     - name: Install Python packages
-      run: python -m pip -v install pytest pybind11 typeguard apis/python
+      run: python -m pip -v install pytest pytest-cov pybind11 typeguard apis/python
       env:
         CC: ${{ matrix.cc }}
         CXX: ${{ matrix.cxx }}
@@ -54,7 +54,11 @@ jobs:
       run: clang --version
 
     - name: Run pytests
-      run: python -m pytest apis/python/tests
+      run: PYTHONPATH=$(pwd)/apis/python/src python -m pytest --cov=apis/python/src --cov-report=xml apis/python/tests
+
+    - name: Report coverage to Codecov
+      if: matrix.os == 'ubuntu-22.04' && matrix.python-version == '3.9'
+      uses: codecov/codecov-action@v3
 
     - name: Build wheel distribution
       run: python -m pip -v wheel --no-deps --wheel-dir=dist-wheel apis/python

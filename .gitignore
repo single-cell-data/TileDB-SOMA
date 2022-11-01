@@ -57,3 +57,8 @@ apis/python/src/tiledbsoma/libtiledbsoma.*
 
 ## R package tarballs
 apis/r/tiledbsoma_*tar.gz
+
+
+# Coverage/codecov
+.coverage
+coverage.xml
