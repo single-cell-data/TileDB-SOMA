@@ -62,8 +62,6 @@ jobs:
     - name: Report coverage to Codecov
       if: matrix.os == 'ubuntu-22.04' && matrix.python-version == '3.9'
       uses: codecov/codecov-action@v3
-      with:
-        flags: python
 
     - name: Build wheel distribution
       run: python -m pip -v wheel --no-deps --wheel-dir=dist-wheel apis/python
