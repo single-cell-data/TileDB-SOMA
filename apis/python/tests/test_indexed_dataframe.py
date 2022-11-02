@@ -336,18 +336,6 @@ def make_multiply_indexed_dataframe(tmp_path, index_column_names: List[str]):
     return (schema, sidf, n_data)
 
 
-# TODO:
-# * None
-# * int
-# * list
-# * tuple
-# * pa.ChunkedArray
-# * pa.Array
-# * slice
-# * something else
-# * multi-index !
-
-
 @pytest.mark.parametrize(
     "io",
     [
@@ -397,11 +385,18 @@ def make_multiply_indexed_dataframe(tmp_path, index_column_names: List[str]):
             "A": [],
             "throws": None,
         },
-        # 1D: indexing slot is tiple
+        # 1D: indexing slot is tuple
         {
             "index_column_names": ["index1"],
             "ids": [(1, 3)],
             "A": [11, 13],
+            "throws": None,
+        },
+        # 1D: indexing slot is range
+        {
+            "index_column_names": ["index1"],
+            "ids": [range(1, 3)],
+            "A": [11, 12],
             "throws": None,
         },
         # 1D: indexing slot is pa.ChunkedArray
@@ -419,6 +414,14 @@ def make_multiply_indexed_dataframe(tmp_path, index_column_names: List[str]):
             "throws": None,
         },
         # 1D: indexing slot is slice
+        {
+            "index_column_names": ["index1"],
+            "ids": [
+                slice(None)
+            ],  # Indexing slot is none-slice i.e. `[:]` which is like None
+            "A": [10, 11, 12, 13, 14, 15],
+            "throws": None,
+        },
         {
             "index_column_names": ["index1"],
             "ids": [slice(1, 3)],  # Indexing slot is double-ended slice
