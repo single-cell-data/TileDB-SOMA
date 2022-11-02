@@ -6,6 +6,10 @@ is_arrow_data_type <- function(x) {
   is_arrow_object(x) && inherits(x, "DataType")
 }
 
+is_arrow_field <- function(x) {
+  is_arrow_object(x) && inherits(x, "Field")
+}
+
 is_arrow_record_batch <- function(x) {
   is_arrow_object(x) && inherits(x, "RecordBatch")
 }
