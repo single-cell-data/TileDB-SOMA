@@ -435,24 +435,28 @@ def test_sparse_nd_array_reshape(tmp_path):
             "soma_dim_0": [0],
             "soma_dim_1": [0],
             "soma_data": [90000],
+            "throws": None,
         },
         {
             "coords": (3, 4),
             "soma_dim_0": [3],
             "soma_dim_1": [4],
             "soma_data": [90304],
+            "throws": None,
         },
         {
             "coords": (slice(1, 2), slice(3, 4)),
             "soma_dim_0": [1, 1, 2, 2],
             "soma_dim_1": [3, 4, 3, 4],
             "soma_data": [90103, 90104, 90203, 90204],
+            "throws": None,
         },
         {
             "coords": (slice(None), slice(3, 4)),
             "soma_dim_0": [0, 0, 1, 1, 2, 2, 3, 3],
             "soma_dim_1": [3, 4, 3, 4, 3, 4, 3, 4],
             "soma_data": [90003, 90004, 90103, 90104, 90203, 90204, 90303, 90304],
+            "throws": None,
         },
         {
             "coords": (slice(1, 2), slice(None)),
@@ -472,6 +476,7 @@ def test_sparse_nd_array_reshape(tmp_path):
                 90204,
                 90205,
             ],
+            "throws": None,
         },
         {
             "coords": (slice(None), slice(None)),
@@ -553,6 +558,7 @@ def test_sparse_nd_array_reshape(tmp_path):
                 90304,
                 90305,
             ],
+            "throws": None,
         },
     ],
 )
@@ -573,11 +579,22 @@ def test_sparse_nd_array_table_slicing(tmp_path, io):
     snda.create(pa.float64(), npa.shape)
     snda.write_sparse_tensor(pacoo)
 
-    table = next(snda.read_table(io["coords"]))
-    assert table["soma_dim_0"].to_pylist() == io["soma_dim_0"]
-    assert table["soma_dim_1"].to_pylist() == io["soma_dim_1"]
-    assert table["soma_data"].to_pylist() == io["soma_data"]
+    if io["throws"] is not None:
+        with pytest.raises(io["throws"]):
+            next(snda.read_table(io["coords"]))
+    else:
+        table = next(snda.read_table(io["coords"]))
+        assert table["soma_dim_0"].to_pylist() == io["soma_dim_0"]
+        assert table["soma_dim_1"].to_pylist() == io["soma_dim_1"]
+        assert table["soma_data"].to_pylist() == io["soma_data"]
 
     # TODO:
-    # snda.read_as_pandas
-    # snda.read_sparse_tensor
+    # * read methods:
+    #   o snda.read_as_pandas -> just a wrapper around read_table -> to_pandas
+    #   o snda.read_sparse_tensor -> reshape around read_table
+    # * ndim
+    # * format
+    #   o coo require 2d
+    #   o nonesuch format -> NotImplementedError
+    # * StopIteration on empty query
+    # * ids type-switching borrow from 470
