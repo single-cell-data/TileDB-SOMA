@@ -12,7 +12,6 @@ import tiledbsoma.libtiledbsoma as clib
 
 from . import util, util_arrow
 from .collection import CollectionBase
-from .exception import SOMAError
 from .tiledb_array import TileDBArray
 from .tiledb_platform_config import TileDBPlatformConfig
 from .types import NTuple, SparseNdCoordinates
@@ -247,11 +246,11 @@ class SparseNdArray(TileDBArray):
             #   list/ndarray/paarray/etc of values, a slice, etc.
 
             if not isinstance(coords, (list, tuple)):
-                raise SOMAError(
+                raise TypeError(
                     f"coords type {type(coords)} unsupported; expected list or tuple"
                 )
             if len(coords) < 1 or len(coords) > A.schema.domain.ndim:
-                raise SOMAError(
+                raise ValueError(
                     f"coords {coords} must have length between 1 and ndim ({A.schema.domain.ndim}); got {len(coords)}"
                 )
 
@@ -287,7 +286,7 @@ class SparseNdArray(TileDBArray):
                     # Else, no constraint in this slot. This is `slice(None)` which is like
                     # Python indexing syntax `[:]`.
                 else:
-                    raise SOMAError(f"coord type {type(coord)} at slot {i} unsupported")
+                    raise TypeError(f"coord type {type(coord)} at slot {i} unsupported")
 
             sr.submit()
 
