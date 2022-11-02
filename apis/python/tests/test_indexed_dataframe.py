@@ -5,6 +5,8 @@ import pytest
 
 import tiledbsoma as soma
 
+from typing import List
+
 
 @pytest.fixture
 def arrow_schema():
@@ -102,40 +104,7 @@ def simple_indexed_data_frame(tmp_path):
     n_data = len(data["index"])
     rb = pa.Table.from_pydict(data)
     sidf.write(rb)
-    yield (schema, sidf, n_data, index_column_names)
-    sidf.delete()
-
-
-@pytest.fixture
-def doubly_indexed_data_frame(tmp_path):
-    """
-    A pytest fixture which creates a doubly indexed IndexedDataFrame for use in tests below.
-    """
-    schema = pa.schema(
-        [
-            ("index1", pa.int64()),
-            ("index2", pa.int64()),
-            ("soma_joinid", pa.int64()),
-            ("A", pa.int64()),
-        ]
-    )
-
-    index_column_names = ["index1", "index2"]
-    sidf = soma.IndexedDataFrame(uri=tmp_path.as_posix())
-    sidf.create(schema=schema, index_column_names=index_column_names)
-
-    data = {
-        "index1": [400, 400, 500, 500, 600, 600],
-        "index2": [0, 1, 0, 1, 0, 1],
-        "soma_joinid": [10, 11, 12, 13, 14, 15],
-        "A": [10, 11, 12, 13, 14, 15],
-    }
-
-    n_data = len(data["index1"])
-    rb = pa.Table.from_pydict(data)
-    sidf.write(rb)
-    yield (schema, sidf, n_data, index_column_names)
-    sidf.delete()
+    return (schema, sidf, n_data, index_column_names)
 
 
 @pytest.mark.parametrize(
@@ -330,6 +299,42 @@ def test_index_types(tmp_path, make_dataframe):
     sidf.write(make_dataframe)
 
 
+def make_multiply_indexed_dataframe(tmp_path, index_column_names: List[str]):
+    """
+    A pytest fixture which creates a doubly indexed IndexedDataFrame for use in tests below.
+    """
+    schema = pa.schema(
+        [
+            # TO DO: Support non-int index types when we have non-int index support
+            # in libtiledbsoma's SOMAReader. See also
+            # https://github.com/single-cell-data/TileDB-SOMA/issues/418
+            # https://github.com/single-cell-data/TileDB-SOMA/issues/419
+            ("index1", pa.int64()),
+            ("index2", pa.int64()),
+            ("index3", pa.int64()),
+            ("index4", pa.int64()),
+            ("soma_joinid", pa.int64()),
+            ("A", pa.int64()),
+        ]
+    )
+
+    sidf = soma.IndexedDataFrame(uri=tmp_path.as_posix())
+    sidf.create(schema=schema, index_column_names=index_column_names)
+
+    data = {
+        "index1": [0, 1, 2, 3, 4, 5],
+        "index2": [400, 400, 500, 500, 600, 600],
+        "index3": [0, 1, 0, 1, 0, 1],
+        "index4": [1000, 2000, 1000, 1000, 1000, 1000],
+        "soma_joinid": [10, 11, 12, 13, 14, 15],
+        "A": [10, 11, 12, 13, 14, 15],
+    }
+
+    n_data = len(data["index1"])
+    rb = pa.Table.from_pydict(data)
+    sidf.write(rb)
+    return (schema, sidf, n_data)
+
 # TODO:
 # * None
 # * int
@@ -340,101 +345,151 @@ def test_index_types(tmp_path, make_dataframe):
 # * slice
 # * something else
 # * multi-index !
+
 @pytest.mark.parametrize(
     "io",
     [
-        # Indexing list is None
+        # 1D: indexing list is None
         {
+            "index_column_names": ["index1"],
             "ids": None,
-            "A": [10, 11, 12, 13],
+            "A": [10, 11, 12, 13, 14, 15],
             "throws": None,
         },
-        # Indexing slot is None
+        # 1D: indexing slot is None
         {
+            "index_column_names": ["index1"],
             "ids": [None],
-            "A": [10, 11, 12, 13],
+            "A": [10, 11, 12, 13, 14, 15],
             "throws": None,
         },
-        # Indexing slot is int
+        # 1D: indexing slot is int
         {
+            "index_column_names": ["index1"],
             "ids": [0],
             "A": [10],
             "throws": None,
         },
         {
+            "index_column_names": ["index1"],
             "ids": [100],
             "A": [],
             "throws": None,
         },
         {
+            "index_column_names": ["index1"],
             "ids": [-100],
             "A": [],
             "throws": None,
         },
-        # Indexing slot is list
+        # 1D: indexing slot is list
         {
+            "index_column_names": ["index1"],
             "ids": [[1, 3]],
             "A": [11, 13],
             "throws": None,
         },
         {
+            "index_column_names": ["index1"],
             "ids": [[-100, 100]],
             "A": [],
             "throws": None,
         },
-        # Indexing slot is pa.ChunkedArray
+        # 1D: indexing slot is pa.ChunkedArray
         {
+            "index_column_names": ["index1"],
             "ids": [pa.chunked_array(pa.array([1, 3]))],
             "A": [11, 13],
             "throws": None,
         },
-        # Indexing slot is pa.Array
+        # 1D: indexing slot is pa.Array
         {
+            "index_column_names": ["index1"],
             "ids": [pa.array([1, 3])],
             "A": [11, 13],
             "throws": None,
         },
-        # Indexing slot is slice
+        # 1D: indexing slot is slice
         {
+            "index_column_names": ["index1"],
             "ids": [slice(1, 3)],  # Indexing slot is double-ended slice
             "A": [11, 12, 13],
             "throws": None,
         },
         {
+            "index_column_names": ["index1"],
             "ids": [slice(None, None)],  # Indexing slot is slice-all
-            "A": [10, 11, 12, 13],
+            "A": [10, 11, 12, 13, 14, 15],
             "throws": None,
         },
         {
+            "index_column_names": ["index1"],
             "ids": [slice(None, 3)],  # Half-slices are not supported yet
             "A": None,
             "throws": ValueError,
         },
         {
+            "index_column_names": ["index1"],
             "ids": [slice(1, None)],  # Half-slices are not supported yet
             "A": None,
             "throws": ValueError,
         },
         {
+            "index_column_names": ["index1"],
             "ids": [slice(1, 5, 2)],  # Slice step must be 1 or None
             "A": None,
             "throws": ValueError,
         },
-        # Indexing slot is of invalid type
+        # 1D: indexing slot is of invalid type
         # TODO: I want to test this but Typeguard fails the test since it already knows strings are not
         # valid until we implement
         # https://github.com/single-cell-data/TileDB-SOMA/issues/418
         # https://github.com/single-cell-data/TileDB-SOMA/issues/419
         # {
+        #    "index_column_names": ["index1"],
         #    "ids": ["nonesuch"], # noqa
         #    "A": None,
         #    "throws": soma.SOMAError,
         # },
+
+        # 2D: indexing list is None
+        {
+            "index_column_names": ["index2", "index3"],
+            "ids": None,
+            "A": [10, 11, 12, 13, 14, 15],
+            "throws": None,
+        },
+        # 2D: indexing slot is None
+        {
+            "index_column_names": ["index2", "index3"],
+            "ids": [None, None],
+            "A": [10, 11, 12, 13, 14, 15],
+            "throws": None,
+        },
+        # 2D: indexing slot is int
+        {
+            "index_column_names": ["index2", "index3"],
+            "ids": [400, 0],
+            "A": [10],
+            "throws": None,
+        },
+        # 2D: indexing slot is list
+        # TODO: at present SOMAReader only accepts int dims. See also:
+        # https://github.com/single-cell-data/TileDB-SOMA/issues/418
+        # https://github.com/single-cell-data/TileDB-SOMA/issues/419
+        {
+            "index_column_names": ["index2", "index3"],
+            "ids": [[400, 600], None],
+            "A": [10, 11, 14, 15],
+            "throws": None,
+        },
+
     ],
 )
-def test_indexing_single_dim(simple_indexed_data_frame, io):
+def test_indexing(tmp_path, io):
     """Test various ways of indexing"""
-    schema, sidf, n_data, index_column_names = simple_indexed_data_frame
+
+    schema, sidf, n_data = make_multiply_indexed_dataframe(tmp_path, io["index_column_names"])
     assert sidf.exists()
 
     col_names = ["A"]
@@ -449,49 +504,4 @@ def test_indexing_single_dim(simple_indexed_data_frame, io):
     # TODO:
     # read_all
     # etc.
-
-
-@pytest.mark.parametrize(
-    "io",
-    [
-        # Indexing list is None
-        {
-            "ids": None,
-            "A": [10, 11, 12, 13, 14, 15],
-            "throws": None,
-        },
-        # Indexing slot is None
-        {
-            "ids": [None, None],
-            "A": [10, 11, 12, 13, 14, 15],
-            "throws": None,
-        },
-        # Indexing slot is int
-        # TODO: at present SOMAReader only accepts int dims. See also:
-        # https://github.com/single-cell-data/TileDB-SOMA/issues/418
-        # https://github.com/single-cell-data/TileDB-SOMA/issues/419
-        {
-            "ids": [400, 0],
-            "A": [10],
-            "throws": None,
-        },
-        # Indexing slot is list
-        {
-            "ids": [None, [1, 3]],
-            "A": [11, 13, 15],
-            "throws": None,
-        },
-    ],
-)
-def test_indexing_double_dim(doubly_indexed_data_frame, io):
-    schema, sidf, n_data, index_column_names = doubly_indexed_data_frame
-    assert sidf.exists()
-
-    col_names = ["A"]
-
-    if io["throws"] is not None:
-        with pytest.raises(io["throws"]):
-            table = sidf.read_all(ids=io["ids"], column_names=col_names)
-    else:
-        table = sidf.read_all(ids=io["ids"], column_names=col_names)
-        assert table["A"].to_pylist() == io["A"]
+    sidf.delete()
