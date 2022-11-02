@@ -104,7 +104,7 @@ def _describe_ann_file_show_types(anndata: ad.AnnData) -> None:
         print("%-*s %s" % (namewidth, "X/raw", type(X)))
         m, n = X.shape
         print("%-*s (%d, %d)" % (namewidth, "X/raw shape", m, n))
-        print("%-*s %s" % (namewidth, "X/data dtype", X.dtype))
+        print("%-*s %s" % (namewidth, "X/raw/data dtype", X.dtype))
         if isinstance(X, (sp.csr_matrix, sp.csc_matrix)):
             density = X.nnz / (m * n)
             print("%-*s %.4f" % (namewidth, "X/raw density", density))
