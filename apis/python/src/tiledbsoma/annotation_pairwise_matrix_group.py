@@ -1,4 +1,3 @@
-import os
 from typing import Dict, Iterator, Optional, Sequence
 
 import scipy.sparse as sp
@@ -217,32 +216,34 @@ class AnnotationPairwiseMatrixGroup(TileDBGroup):
         except tiledb.TileDBError:
             pass
         if grp is None:
-            log_io(None, f"{self._indent}{self.uri} not found")
+            log_io(None, f"{self._indent}{self.nested_name} not found")
             return {}
 
         s = util.get_start_stamp()
-        log_io(None, f"{self._indent}START  read {self.uri}")
+        log_io(None, f"{self._indent}START  read {self.nested_name}")
 
         matrices_in_group = {}
         for element in self:
             s2 = util.get_start_stamp()
-            log_io(None, f"{self._indent}START  read {element.uri}")
+            log_io(None, f"{self._indent}START  read {element.nested_name}")
 
-            matrix_name = os.path.basename(element.uri)  # TODO: fix for tiledb cloud
+            matrix_name = element.name
             matrices_in_group[matrix_name] = element.to_csr_matrix(
                 obs_df_index, var_df_index
             )
 
             log_io(
                 None,
-                util.format_elapsed(s2, f"{self._indent}FINISH read {element.uri}"),
+                util.format_elapsed(
+                    s2, f"{self._indent}FINISH read {element.nested_name}"
+                ),
             )
 
         grp.close()
 
         log_io(
             f"Read {self.nested_name}",
-            util.format_elapsed(s, f"{self._indent}FINISH READING {self.uri}"),
+            util.format_elapsed(s, f"{self._indent}FINISH READING {self.nested_name}"),
         )
 
         return matrices_in_group

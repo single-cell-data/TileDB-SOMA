@@ -167,6 +167,10 @@ def test_export_anndata(adata):
     tiledbsoma.io.from_anndata(soma, orig)
 
     readback = tiledbsoma.io.to_anndata(soma)
+    print("================================================================")
+    print("READBACK")
+    print(readback)
+    print("================================================================")
 
     assert readback.obs.shape == orig.obs.shape
     assert readback.var.shape == orig.var.shape

@@ -35,6 +35,9 @@ def main():
         "-q", "--quiet", help="decrease output verbosity", action="store_true"
     )
     parser.add_argument(
+        "--debug", help="increase output verbosity", action="store_true"
+    )
+    parser.add_argument(
         "-o",
         help="Specify output directory to contain the somas: default ./anndata-readback",
         type=str,
@@ -65,11 +68,12 @@ def main():
         parser.print_help(file=sys.stderr)
         sys.exit(1)
 
-    vfs = tiledb.VFS()
-    if not vfs.is_dir(input_path):
-        # Print this neatly and exit neatly, to avoid a multi-line stack trace otherwise.
-        logging.error(f"Input path not found: {input_path}")
-        sys.exit(1)
+    if not input_path.startswith("tiledb://"):
+        vfs = tiledb.VFS()
+        if not vfs.is_dir(input_path):
+            # Print this neatly and exit neatly, to avoid a multi-line stack trace otherwise.
+            logging.error(f"Input path not found: {input_path}")
+            sys.exit(1)
 
     # This is for local-disk use only -- for S3-backed tiledb://... URIs we should
     # use tiledb.vfs to remove any priors, and/or make use of a tiledb `overwrite` flag.
