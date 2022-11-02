@@ -262,29 +262,22 @@ class SparseNdArray(TileDBArray):
                     pass  # No constraint; select all in this dimension
                 elif isinstance(coord, int):
                     sr.set_dim_points(dim_name, [coord])
-                elif isinstance(coord, collections.abc.Sequence):
-                    sr.set_dim_points(dim_name, coord)
-
                 elif isinstance(coord, np.ndarray):
                     if coord.ndim != 1:
                         raise ValueError(
                             f"only 1D numpy arrays may be used to index; got {coord.ndim}"
                         )
                     sr.set_dim_points(dim_name, coord)
-
-                elif isinstance(coord, pa.ChunkedArray):
-                    sr.set_dim_points(dim_name, coord)
-                elif isinstance(coord, pa.Array):
-                    # TODO: modify libtiledbsoma.SOMAReader so we needn't convert from pyarrow.Array
-                    # to pyarrow.ChunkedArray here.
-                    # https://github.com/single-cell-data/TileDB-SOMA/issues/497
-                    sr.set_dim_points(dim_name, pa.chunked_array(coord))
                 elif isinstance(coord, slice):
                     lo_hi = util.slice_to_range(coord)
                     if lo_hi is not None:
                         sr.set_dim_ranges(dim_name, [lo_hi])
                     # Else, no constraint in this slot. This is `slice(None)` which is like
                     # Python indexing syntax `[:]`.
+                elif isinstance(
+                    coord, (collections.abc.Sequence, pa.Array, pa.ChunkedArray)
+                ):
+                    sr.set_dim_points(dim_name, coord)
                 else:
                     raise TypeError(f"coord type {type(coord)} at slot {i} unsupported")
 
