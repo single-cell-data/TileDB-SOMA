@@ -67,4 +67,16 @@ test_that("TileDB classes can be converted to Arrow equivalents", {
     tiledb_type_from_arrow_type(attr1_field$type),
     tiledb::datatype(attr1)
   )
+
+  # TileDB schema to Arrow schema
+  tdb_schema <- tiledb::tiledb_array_schema(
+    domain = tiledb::tiledb_domain(c(dim0, dim1)),
+    attrs = c(attr0, attr1),
+    sparse = TRUE
+  )
+
+  arrow_schema <- arrow_schema_from_tiledb_schema(tdb_schema)
+  expect_true(is_arrow_schema(arrow_schema))
+  expect_equal(length(arrow_schema$fields), 4)
+  expect_equal(names(arrow_schema), c("dim0", "dim1", "attr0", "attr1"))
 })

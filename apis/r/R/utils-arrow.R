@@ -145,3 +145,14 @@ arrow_field_from_tiledb_attr <- function(x) {
     nullable = tiledb::tiledb_attribute_get_nullable(x)
   )
 }
+
+#' Create an Arrow schema from a TileDB array schema
+#' @noRd
+arrow_schema_from_tiledb_schema <- function(x) {
+  stopifnot(inherits(x, "tiledb_array_schema"))
+  fields <- c(
+    lapply(tiledb::dimensions(x), arrow_field_from_tiledb_dim),
+    lapply(tiledb::attrs(x), arrow_field_from_tiledb_attr)
+  )
+  arrow::schema(fields)
+}
