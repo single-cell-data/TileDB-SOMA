@@ -54,7 +54,7 @@ add_library(TILEDB_SOMA_OBJECTS OBJECT
   ${CMAKE_CURRENT_SOURCE_DIR}/thread_pool/status.cc
 )
 
-message(WARNING "Building TileDB without deprecation warnings")
+message(NOTICE "Building TileDB without deprecation warnings")
 target_compile_definitions(TILEDB_SOMA_OBJECTS PRIVATE
   -DBUILD_COMMIT_HASH="${BUILD_COMMIT_HASH}"
   -DTILEDB_DEPRECATED=
@@ -120,20 +120,26 @@ if (SANITIZER)
           )
 endif()
 
-# List of API headers (to be installed)
-set(TILEDB_SOMA_PUBLIC_HEADERS
-  ${CMAKE_CURRENT_SOURCE_DIR}/../include/tiledbsoma/tiledbsoma
-  ${CMAKE_CURRENT_SOURCE_DIR}/../include/tiledbsoma/array_buffers.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/../include/tiledbsoma/column_buffer.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/../include/tiledbsoma/common.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/../include/tiledbsoma/logger_public.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/../include/tiledbsoma/managed_query.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/../include/tiledbsoma/soma_reader.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/../include/tiledbsoma/util.h  
+# Define FILE_SET of headers to install, which preserves the
+# directory structure of BASE_DIRS
+target_sources(tiledbsoma
+  PUBLIC
+    FILE_SET headers TYPE HEADERS
+    BASE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/../include
+    FILES
+      ${CMAKE_CURRENT_SOURCE_DIR}/../include/tiledbsoma/tiledbsoma
+      ${CMAKE_CURRENT_SOURCE_DIR}/../include/tiledbsoma/array_buffers.h
+      ${CMAKE_CURRENT_SOURCE_DIR}/../include/tiledbsoma/column_buffer.h
+      ${CMAKE_CURRENT_SOURCE_DIR}/../include/tiledbsoma/common.h
+      ${CMAKE_CURRENT_SOURCE_DIR}/../include/tiledbsoma/logger_public.h
+      ${CMAKE_CURRENT_SOURCE_DIR}/../include/tiledbsoma/managed_query.h
+      ${CMAKE_CURRENT_SOURCE_DIR}/../include/tiledbsoma/soma_reader.h
+      ${CMAKE_CURRENT_SOURCE_DIR}/../include/tiledbsoma/util.h
+      ${CMAKE_CURRENT_SOURCE_DIR}/../include/externals/span/span.hpp
 )
 
 ############################################################
-# API symbol exports (and public headers for install)
+# API symbol exports
 ############################################################
 
 include(GenerateExportHeader)
@@ -154,15 +160,10 @@ set(TILEDB_SOMA_EXPORT_HEADER "${TILEDB_SOMA_EXPORT_HEADER}" PARENT_SCOPE)
 target_compile_definitions(TILEDB_SOMA_OBJECTS PRIVATE -DTILEDB_SOMA_OBJECTS_EXPORTS)
 target_include_directories(TILEDB_SOMA_OBJECTS PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
 
-# Add the generated header to the public headers list
-list(APPEND TILEDB_SOMA_PUBLIC_HEADERS
-  "${TILEDB_SOMA_EXPORT_HEADER}"
-)
-
-# Set the public headers, which are the ones that get installed.
+# Add public headers, which are the ones that get installed.
 set_target_properties(tiledbsoma
   PROPERTIES
-    PUBLIC_HEADER "${TILEDB_SOMA_PUBLIC_HEADERS}"
+    PUBLIC_HEADER "${TILEDB_SOMA_EXPORT_HEADER}"
 )
 
 ############################################################
@@ -236,4 +237,5 @@ install(
   ARCHIVE DESTINATION lib
   INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
   PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/tiledbsoma
+  FILE_SET headers DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
 )

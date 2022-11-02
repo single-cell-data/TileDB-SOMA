@@ -29,7 +29,7 @@
 # CMake setup
 ############################################################
 
-cmake_minimum_required(VERSION 3.21)
+cmake_minimum_required(VERSION 3.23)
 if (CMAKE_VERSION VERSION_GREATER_EQUAL "3.24.0")
   cmake_policy(SET CMP0135 NEW)
 endif()

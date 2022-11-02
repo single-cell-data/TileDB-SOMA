@@ -1,4 +1,4 @@
-cmake >= 3.21
+cmake >= 3.23
 pybind11-global >= 2.10.0
 typeguard 
 pytest
