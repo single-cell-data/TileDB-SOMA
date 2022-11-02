@@ -301,7 +301,7 @@ def test_index_types(tmp_path, make_dataframe):
 
 def make_multiply_indexed_dataframe(tmp_path, index_column_names: List[str]):
     """
-    A pytest fixture which creates a doubly indexed IndexedDataFrame for use in tests below.
+    Creates a variably-indexed IndexedDataFrame for use in tests below.
     """
     schema = pa.schema(
         [
@@ -413,6 +413,26 @@ def make_multiply_indexed_dataframe(tmp_path, index_column_names: List[str]):
             "A": [11, 13],
             "throws": None,
         },
+        # 1D: indexing slot is pa.Array
+        {
+            "index_column_names": ["index1"],
+            "ids": [pa.array([1, 3])],
+            "A": [11, 13],
+            "throws": None,
+        },
+        # 1D: indexing slot is np.ndarray
+        {
+            "index_column_names": ["index1"],
+            "ids": [np.asarray([1, 3])],
+            "A": [11, 13],
+            "throws": None,
+        },
+        {
+            "index_column_names": ["index1"],
+            "ids": [np.asarray([[1, 3], [2, 4]])],  # Error since 2D array in the slot
+            "A": [11, 13],
+            "throws": ValueError,
+        },
         # 1D: indexing slot is slice
         {
             "index_column_names": ["index1"],
@@ -457,12 +477,15 @@ def make_multiply_indexed_dataframe(tmp_path, index_column_names: List[str]):
         # valid until we implement
         # https://github.com/single-cell-data/TileDB-SOMA/issues/418
         # https://github.com/single-cell-data/TileDB-SOMA/issues/419
-        # {
-        #    "index_column_names": ["index1"],
-        #    "ids": ["nonesuch"], # noqa
-        #    "A": None,
-        #    "throws": soma.SOMAError,
-        # },
+        pytest.param(
+            {
+                "index_column_names": ["index1"],
+                "ids": ["nonesuch"],  # noqa
+                "A": None,
+                "throws": soma.SOMAError,
+            },
+            marks=pytest.mark.xfail,
+        ),
         # 2D: indexing list is None
         {
             "index_column_names": ["index2", "index3"],
@@ -501,6 +524,13 @@ def make_multiply_indexed_dataframe(tmp_path, index_column_names: List[str]):
             "A": [10, 11, 14, 15],
             "throws": None,
         },
+        # 3D: indexing slot is mixed
+        {
+            "index_column_names": ["index2", "index3", "index4"],
+            "ids": [range(400, 600), None, np.asarray([2000, 9999])],
+            "A": [11],
+            "throws": None,
+        },
     ],
 )
 def test_indexing(tmp_path, io):
@@ -515,12 +545,16 @@ def test_indexing(tmp_path, io):
 
     if io["throws"] is not None:
         with pytest.raises(io["throws"]):
-            table = sidf.read_all(ids=io["ids"], column_names=col_names)
+            next(sidf.read(ids=io["ids"], column_names=col_names))
     else:
-        table = sidf.read_all(ids=io["ids"], column_names=col_names)
+        table = next(sidf.read(ids=io["ids"], column_names=col_names))
         assert table["A"].to_pylist() == io["A"]
 
-    # TODO:
-    # read_all
-    # etc.
+    if io["throws"] is not None:
+        with pytest.raises(io["throws"]):
+            next(sidf.read_as_pandas(ids=io["ids"], column_names=col_names))
+    else:
+        table = next(sidf.read_as_pandas(ids=io["ids"], column_names=col_names))
+        assert table["A"].to_list() == io["A"]
+
     sidf.delete()

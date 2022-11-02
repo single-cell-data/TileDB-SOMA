@@ -12,7 +12,6 @@ import tiledbsoma.libtiledbsoma as clib
 from . import util, util_arrow
 from .collection import CollectionBase
 from .constants import SOMA_JOINID
-from .exception import SOMAError
 from .query_condition import QueryCondition  # type: ignore
 from .tiledb_array import TileDBArray
 from .types import ResultOrder, SparseIndexedDataFrameCoordinates
@@ -210,12 +209,12 @@ class IndexedDataFrame(TileDBArray):
             #   list/ndarray/paarray/etc of values, a slice, etc.
 
             if ids is not None:
-                if not (isinstance(ids, list) or isinstance(ids, tuple)):
-                    raise SOMAError(
-                        f"ids type {type(ids)} unhandled; expected list or tuple"
+                if not isinstance(ids, (list, tuple)):
+                    raise TypeError(
+                        f"ids type {type(ids)} unsupported; expected list or tuple"
                     )
                 if len(ids) < 1 or len(ids) > A.schema.domain.ndim:
-                    raise SOMAError(
+                    raise ValueError(
                         f"ids {ids} must have length between 1 and ndim ({A.schema.domain.ndim}); got {len(ids)}"
                     )
 
@@ -233,11 +232,18 @@ class IndexedDataFrame(TileDBArray):
                         sr.set_dim_points(dim_name, [dim_ids])
                     elif isinstance(dim_ids, collections.abc.Sequence):
                         sr.set_dim_points(dim_name, dim_ids)
+                    elif isinstance(dim_ids, np.ndarray):
+                        if dim_ids.ndim != 1:
+                            raise ValueError(
+                                f"only 1D numpy arrays may be used to index; got {dim_ids.ndim}"
+                            )
+                        sr.set_dim_points(dim_name, dim_ids)
                     elif isinstance(dim_ids, pa.ChunkedArray):
                         sr.set_dim_points(dim_name, dim_ids)
                     elif isinstance(dim_ids, pa.Array):
                         # TODO: modify libtiledbsoma.SOMAReader so we needn't convert from pyarrow.Array
                         # to pyarrow.ChunkedArray here.
+                        # https://github.com/single-cell-data/TileDB-SOMA/issues/497
                         sr.set_dim_points(dim_name, pa.chunked_array(dim_ids))
                     elif isinstance(dim_ids, slice):
                         lo_hi = util.slice_to_range(dim_ids)
@@ -246,7 +252,7 @@ class IndexedDataFrame(TileDBArray):
                         # Else, no constraint in this slot. This is `slice(None)` which is like
                         # Python indexing syntax `[:]`.
                     else:
-                        raise SOMAError(
+                        raise TypeError(
                             f"dim_ids type {type(dim_ids)} at slot {i} unsupported"
                         )
 
