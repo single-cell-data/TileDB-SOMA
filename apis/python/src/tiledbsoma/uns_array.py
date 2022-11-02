@@ -32,7 +32,9 @@ class UnsArray(TileDBArray):
         """
 
         s = util.get_start_stamp()
-        log_io(None, f"{self._indent}START  WRITING PANDAS.DATAFRAME {self.uri}")
+        log_io(
+            None, f"{self._indent}START  WRITING PANDAS.DATAFRAME {self.nested_name}"
+        )
 
         tiledb.from_pandas(
             uri=self.uri,
@@ -45,7 +47,7 @@ class UnsArray(TileDBArray):
         log_io(
             None,
             util.format_elapsed(
-                s, f"{self._indent}FINISH WRITING PANDAS.DATAFRAME {self.uri}"
+                s, f"{self._indent}FINISH WRITING PANDAS.DATAFRAME {self.nested_name}"
             ),
         )
 
@@ -84,7 +86,9 @@ class UnsArray(TileDBArray):
         """
 
         s = util.get_start_stamp()
-        log_io(None, f"{self._indent}START  WRITING FROM NUMPY.NDARRAY {self.uri}")
+        log_io(
+            None, f"{self._indent}START  WRITING FROM NUMPY.NDARRAY {self.nested_name}"
+        )
 
         if "numpy" in str(type(arr)) and str(arr.dtype).startswith("<U"):
             # Note arr.astype('str') does not lead to a successfuly tiledb.from_numpy.
@@ -92,7 +96,7 @@ class UnsArray(TileDBArray):
 
         if self.exists():
             tiledbsoma.logging.logger.info(
-                f"{self._indent}Updating existing array {self.uri}"
+                f"{self._indent}Updating existing array {self.nested_name}"
             )
             tiledb.from_numpy(
                 uri=self.uri, array=arr, mode="append", start_idx=0, ctx=self._ctx
@@ -103,7 +107,7 @@ class UnsArray(TileDBArray):
         log_io(
             None,
             util.format_elapsed(
-                s, f"{self._indent}FINISH WRITING FROM NUMPY.NDARRAY {self.uri}"
+                s, f"{self._indent}FINISH WRITING FROM NUMPY.NDARRAY {self.nested_name}"
             ),
         )
 
@@ -116,11 +120,14 @@ class UnsArray(TileDBArray):
         """
 
         s = util.get_start_stamp()
-        log_io(None, f"{self._indent}START  WRITING FROM SCIPY.SPARSE.CSR {self.uri}")
+        log_io(
+            None,
+            f"{self._indent}START  WRITING FROM SCIPY.SPARSE.CSR {self.nested_name}",
+        )
 
         nrows, ncols = csr.shape
         if self.exists():
-            log_io(None, f"{self._indent}Re-using existing array {self.uri}")
+            log_io(None, f"{self._indent}Re-using existing array {self.nested_name}")
         else:
             self.create_empty_array_for_csr("data", csr.dtype, nrows, ncols)
 
@@ -129,7 +136,8 @@ class UnsArray(TileDBArray):
         log_io(
             None,
             util.format_elapsed(
-                s, f"{self._indent}FINISH WRITING FROM SCIPY.SPARSE.CSR {self.uri}"
+                s,
+                f"{self._indent}FINISH WRITING FROM SCIPY.SPARSE.CSR {self.nested_name}",
             ),
         )
 

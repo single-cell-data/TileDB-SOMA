@@ -65,7 +65,7 @@ class RawGroup(TileDBGroup):
         Writes ``anndata.raw`` to a TileDB group structure.
         """
         s = util.get_start_stamp()
-        log_io(None, f"{self._indent}START  WRITING {self.uri}")
+        log_io(None, f"{self._indent}START  WRITING {self.nested_name}")
 
         # Must be done first, to create the parent directory
         self.create_unless_exists()
@@ -88,7 +88,10 @@ class RawGroup(TileDBGroup):
             )
         self._add_object(self.varm)
 
-        log_io(None, util.format_elapsed(s, f"{self._indent}FINISH WRITING {self.uri}"))
+        log_io(
+            None,
+            util.format_elapsed(s, f"{self._indent}FINISH WRITING {self.nested_name}"),
+        )
 
     # ----------------------------------------------------------------
     def to_anndata_raw(

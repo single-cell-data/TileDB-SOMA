@@ -1,5 +1,4 @@
 import math
-import os
 import time
 from typing import Optional, Tuple, Union
 
@@ -173,7 +172,7 @@ class AssayMatrix(TileDBArray):
         s = util.get_start_stamp()
         log_io(
             f"Writing {self.nested_name} ...",
-            f"{self._indent}START  WRITING {self.uri}",
+            f"{self._indent}START  WRITING {self.nested_name}",
         )
 
         assert len(row_names) == matrix.shape[0]
@@ -188,7 +187,7 @@ class AssayMatrix(TileDBArray):
             col_names = np.asarray(col_names)
 
         if self.exists():
-            log_io(None, f"{self._indent}Re-using existing array {self.uri}")
+            log_io(None, f"{self._indent}Re-using existing array {self.nested_name}")
         else:
             self._create_empty_array(matrix_dtype=matrix.dtype)
 
@@ -204,7 +203,7 @@ class AssayMatrix(TileDBArray):
             self.ingest_data_dense_rows_chunked(matrix, row_names, col_names)
         log_io(
             f"Wrote {self.nested_name}",
-            util.format_elapsed(s, f"{self._indent}FINISH WRITING {self.uri}"),
+            util.format_elapsed(s, f"{self._indent}FINISH WRITING {self.nested_name}"),
         )
 
     # ----------------------------------------------------------------
@@ -636,13 +635,13 @@ class AssayMatrix(TileDBArray):
         """
 
         s = util.get_start_stamp()
-        log_io(None, f"{self._indent}START  read {self.uri}")
+        log_io(None, f"{self._indent}START  read {self.nested_name}")
 
         csr = self.csr()
 
         log_io(
-            os.path.basename(self.uri),
-            util.format_elapsed(s, f"{self._indent}FINISH read {self.uri}"),
+            f"Read {self.nested_name}",
+            util.format_elapsed(s, f"{self._indent}FINISH read {self.nested_name}"),
         )
 
         return csr

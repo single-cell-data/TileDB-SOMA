@@ -22,7 +22,9 @@ def from_h5ad_unless_exists(
     so users don't need to replicate the if-test.
     """
     if tiledbsoma.util.is_soma(soma.uri, ctx=soma._ctx):
-        tiledbsoma.logging.logger.info(f"Already exists, skipping ingest: {soma.uri}")
+        tiledbsoma.logging.logger.info(
+            f"Already exists, skipping ingest: {soma.nested_name}"
+        )
     else:
         from_h5ad(soma, input_path, X_layer_name)
 
@@ -59,7 +61,7 @@ def _from_h5ad_common(
     Common code for things we do when processing a .h5ad file for ingest/update.
     """
     s = tiledbsoma.util.get_start_stamp()
-    log_io(None, f"START  SOMA.from_h5ad {input_path} -> {soma.uri}")
+    log_io(None, f"START  SOMA.from_h5ad {input_path} -> {soma.nested_name}")
 
     s = tiledbsoma.util.get_start_stamp()
     log_io(None, f"{soma._indent}START  READING {input_path}")
@@ -76,7 +78,7 @@ def _from_h5ad_common(
     log_io(
         None,
         tiledbsoma.util.format_elapsed(
-            s, f"FINISH SOMA.from_h5ad {input_path} -> {soma.uri}"
+            s, f"FINISH SOMA.from_h5ad {input_path} -> {soma.nested_name}"
         ),
     )
 
@@ -88,7 +90,9 @@ def from_10x_unless_exists(soma: tiledbsoma.SOMA, input_path: Path) -> None:
     so users don't need to replicate the if-test.
     """
     if tiledbsoma.util.is_soma(soma.uri):
-        tiledbsoma.logging.logger.info(f"Already exists, skipping ingest: {soma.uri}")
+        tiledbsoma.logging.logger.info(
+            f"Already exists, skipping ingest: {soma.nested_name}"
+        )
     else:
         from_10x(soma, input_path)
 
@@ -100,7 +104,7 @@ def from_10x(
     Reads a 10X file and writes to a TileDB group structure.
     """
     s = tiledbsoma.util.get_start_stamp()
-    log_io(None, f"START  SOMA.from_10x {input_path} -> {soma.uri}")
+    log_io(None, f"START  SOMA.from_10x {input_path} -> {soma.nested_name}")
 
     log_io(None, f"{soma._indent}START  READING {input_path}")
 
@@ -116,7 +120,7 @@ def from_10x(
     log_io(
         None,
         tiledbsoma.util.format_elapsed(
-            s, f"FINISH SOMA.from_10x {input_path} -> {soma.uri}"
+            s, f"FINISH SOMA.from_10x {input_path} -> {soma.nested_name}"
         ),
     )
 
@@ -130,7 +134,9 @@ def from_anndata_unless_exists(
     so users don't need to replicate the if-test.
     """
     if tiledbsoma.util.is_soma(soma.uri):
-        tiledbsoma.logging.logger.info(f"Already exists, skipping ingest: {soma.uri}")
+        tiledbsoma.logging.logger.info(
+            f"Already exists, skipping ingest: {soma.nested_name}"
+        )
     else:
         _from_anndata_aux(soma, anndata, X_layer_name)
 
@@ -177,7 +183,7 @@ def _from_anndata_aux(
     )
 
     s = tiledbsoma.util.get_start_stamp()
-    log_io(None, f"{soma._indent}START  WRITING {soma.uri}")
+    log_io(None, f"{soma._indent}START  WRITING {soma.nested_name}")
 
     # Must be done first, to create the parent directory
     soma.create_unless_exists()
@@ -249,7 +255,9 @@ def _from_anndata_aux(
 
     log_io(
         f"Wrote {soma.nested_name}",
-        tiledbsoma.util.format_elapsed(s, f"{soma._indent}FINISH WRITING {soma.uri}"),
+        tiledbsoma.util.format_elapsed(
+            s, f"{soma._indent}FINISH WRITING {soma.nested_name}"
+        ),
     )
 
 
@@ -279,7 +287,7 @@ def from_anndata_update_obs_and_var(
     )
 
     s = tiledbsoma.util.get_start_stamp()
-    log_io(None, f"{soma._indent}START  WRITING {soma.uri}")
+    log_io(None, f"{soma._indent}START  WRITING {soma.nested_name}")
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     soma._remove_object(soma.obs)
@@ -296,7 +304,9 @@ def from_anndata_update_obs_and_var(
 
     log_io(
         None,
-        tiledbsoma.util.format_elapsed(s, f"{soma._indent}FINISH WRITING {soma.uri}"),
+        tiledbsoma.util.format_elapsed(
+            s, f"{soma._indent}FINISH WRITING {soma.nested_name}"
+        ),
     )
 
 
@@ -308,7 +318,7 @@ def to_h5ad(soma: tiledbsoma.SOMA, h5ad_path: Path, X_layer_name: str = "data") 
     """
 
     s = tiledbsoma.util.get_start_stamp()
-    log_io(None, f"START  SOMA.to_h5ad {soma.uri} -> {h5ad_path}")
+    log_io(None, f"START  SOMA.to_h5ad {soma.nested_name} -> {h5ad_path}")
 
     anndata = to_anndata(soma, X_layer_name=X_layer_name)
 
@@ -325,7 +335,7 @@ def to_h5ad(soma: tiledbsoma.SOMA, h5ad_path: Path, X_layer_name: str = "data") 
     log_io(
         None,
         tiledbsoma.util.format_elapsed(
-            s, f"FINISH SOMA.to_h5ad {soma.uri} -> {h5ad_path}"
+            s, f"FINISH SOMA.to_h5ad {soma.nested_name} -> {h5ad_path}"
         ),
     )
 
@@ -342,7 +352,7 @@ def to_anndata(soma: tiledbsoma.SOMA, X_layer_name: str = "data") -> ad.AnnData:
     """
 
     s = tiledbsoma.util.get_start_stamp()
-    log_io(None, f"START  SOMA.to_anndata {soma.uri}")
+    log_io(None, f"START  SOMA.to_anndata {soma.nested_name}")
 
     obs_df = soma.obs.df()
     var_df = soma.var.df()
@@ -396,7 +406,8 @@ def to_anndata(soma: tiledbsoma.SOMA, X_layer_name: str = "data") -> ad.AnnData:
     )
 
     log_io(
-        None, tiledbsoma.util.format_elapsed(s, f"FINISH SOMA.to_anndata {soma.uri}")
+        None,
+        tiledbsoma.util.format_elapsed(s, f"FINISH SOMA.to_anndata {soma.nested_name}"),
     )
 
     return anndata

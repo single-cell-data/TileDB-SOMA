@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import os
 from typing import Any, Iterator, Mapping, Optional, Sequence, Union
 
 import numpy as np
@@ -138,7 +137,7 @@ class UnsGroup(TileDBGroup):
         """
 
         s = util.get_start_stamp()
-        log_io(None, f"{self._indent}START  WRITING {self.uri}")
+        log_io(None, f"{self._indent}START  WRITING {self.nested_name}")
 
         # Must be done first, to create the parent directory
         self.create_unless_exists()
@@ -214,7 +213,7 @@ class UnsGroup(TileDBGroup):
 
         log_io(
             f"Wrote {self.nested_name}",
-            util.format_elapsed(s, f"{self._indent}FINISH WRITING {self.uri}"),
+            util.format_elapsed(s, f"{self._indent}FINISH WRITING {self.nested_name}"),
         )
 
     # ----------------------------------------------------------------
@@ -225,18 +224,18 @@ class UnsGroup(TileDBGroup):
         """
         if not self.exists():
             log_io(
-                f"{self._indent}{self.uri} not found",
-                f"{self._indent}{self.uri} not found",
+                f"{self._indent}{self.nested_name} not found",
+                f"{self._indent}{self.nested_name} not found",
             )
             return {}
 
         s = util.get_start_stamp()
-        log_io(None, f"{self._indent}START  read {self.uri}")
+        log_io(None, f"{self._indent}START  read {self.nested_name}")
 
         with self._open() as G:
             retval = {}
             for element in G:
-                name = os.path.basename(element.uri)  # TODO: update for tiledb cloud
+                name = element.name
 
                 if element.type == tiledb.tiledb.Group:
                     child_group = UnsGroup(uri=element.uri, name=name, parent=self)
@@ -253,7 +252,7 @@ class UnsGroup(TileDBGroup):
 
         log_io(
             f"Read {self.nested_name}",
-            util.format_elapsed(s, f"{self._indent}FINISH READING {self.uri}"),
+            util.format_elapsed(s, f"{self._indent}FINISH READING {self.nested_name}"),
         )
 
         return retval
