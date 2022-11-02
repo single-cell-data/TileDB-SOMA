@@ -209,8 +209,16 @@ PYBIND11_MODULE(libtiledbsoma, m) {
                py::object py_arrow_array,
                int partition_index,
                int partition_count) {
-                for (auto& array :
-                     py_arrow_array.attr("chunks").cast<py::list>()) {
+                // Create a list of array chunks
+                py::list array_chunks;
+                if (py::hasattr(py_arrow_array, "chunks")) {
+                    array_chunks = py_arrow_array.attr("chunks")
+                                       .cast<py::list>();
+                } else {
+                    array_chunks.append(py_arrow_array);
+                }
+
+                for (auto& array : array_chunks) {
                     ArrowSchema arrow_schema;
                     ArrowArray arrow_array;
                     uintptr_t arrow_schema_ptr = (uintptr_t)(&arrow_schema);
@@ -229,7 +237,7 @@ PYBIND11_MODULE(libtiledbsoma, m) {
                             dim, data, partition_index, partition_count);
                     } else {
                         throw TileDBSOMAError(fmt::format(
-                            "[libtiledbsoma] set_dim_arrow: type={} not "
+                            "[libtiledbsoma] set_dim_points: type={} not "
                             "supported",
                             arrow_schema.format));
                     }
