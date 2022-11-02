@@ -18,7 +18,7 @@ git clone https://github.com/single-cell-data/TileDB-SOMA.git
 cd TileDB-SOMA
 ```
 ---
-## Setup a Python Virtual Environment
+## Set up a Python Virtual Environment
 Create a python virtual environment and install the [developer requirements](../apis/python/requirements_dev.txt):
 ```
 python -m venv test/tiledbsoma
@@ -26,7 +26,7 @@ source test/tiledbsoma/bin/activate
 pip install -r apis/python/requirements_dev.txt
 ```
 ---
-## Python Only Development
+## Python-only Development
 Developers who do not need to modify the C++ code must use these build commands:
 ```
 pip install -e apis/python

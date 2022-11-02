@@ -38,7 +38,6 @@
 
 #include <tiledbsoma/tiledbsoma>
 
-#include "arrow_adapter.h"
 #include "query_condition.cc"
 
 #ifdef BUILD_COMMIT_HASH

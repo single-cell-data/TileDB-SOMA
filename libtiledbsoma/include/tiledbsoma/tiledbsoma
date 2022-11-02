@@ -34,6 +34,7 @@
 #define __TILEDBSOMA__
 
 #include <tiledbsoma/array_buffers.h>
+#include <tiledbsoma/arrow_adapter.h>
 #include <tiledbsoma/column_buffer.h>
 #include <tiledbsoma/common.h>
 #include <tiledbsoma/logger_public.h>

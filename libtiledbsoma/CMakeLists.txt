@@ -39,15 +39,9 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmake/Mo
 # TileDB-SOMA Options
 option(TILEDBSOMA_BUILD_PYTHON "Build Python API bindings" ON)
 option(TILEDBSOMA_BUILD_CLI "Build tiledbsoma CLI tool" ON)
+option(TILEDBSOMA_BUILD_R "Build a static library (only) for R" OFF)
 option(TILEDBSOMA_ENABLE_TESTING "Enable tests" ON)
 option(TILEDBSOMA_ENABLE_WERROR "Enables the -Werror flag during compilation." ON)
-
-# Disable build targets when building for R
-if (DEFINED ENV{R_BUILD})
-  set(TILEDBSOMA_BUILD_PYTHON OFF)
-  set(TILEDBSOMA_BUILD_CLI OFF)
-  set(TILEDBSOMA_ENABLE_TESTING OFF)  
-endif()
 
 # Superbuild option must be on by default.
 option(SUPERBUILD "If true, perform a superbuild (builds all missing dependencies)." ON)
@@ -66,6 +60,14 @@ option(TILEDB_SERIALIZATION "If true, enables building with support for query se
 option(OVERRIDE_INSTALL_PREFIX "Ignores the setting of CMAKE_INSTALL_PREFIX and sets a default prefix" ON)
 option(ENABLE_ARROW_EXPORT "Installs an extra header for exporting in-memory results with Apache Arrow" ON)
 option(TILEDB_LOG_OUTPUT_ON_FAILURE "If true, print error logs if dependency sub-project build fails" ON)
+
+# Disable build targets when building for R
+# NOTE: Add TILEDBSOMA_BUILD_R to INHERITED_CMAKE_ARGS in Superbuild.cmake
+if (TILEDBSOMA_BUILD_R)
+  set(TILEDBSOMA_BUILD_PYTHON OFF)
+  set(TILEDBSOMA_BUILD_CLI OFF)
+  set(TILEDBSOMA_ENABLE_TESTING OFF)
+endif()
 
 # Set C++17 as required standard for all C++ targets (C++17 minimum is required to use the TileDB C++ API).
 set(CMAKE_CXX_STANDARD 17)

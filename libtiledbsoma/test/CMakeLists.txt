@@ -24,7 +24,8 @@ add_executable(unit_soma EXCLUDE_FROM_ALL
     unit_column_buffer.cc
     unit_managed_query.cc
     unit_soma_reader.cc
-    unit_thread_pool.cc
+# TODO: uncomment when thread_pool is enabled
+#    unit_thread_pool.cc
 )
 
 target_link_libraries(unit_soma
@@ -37,6 +38,7 @@ target_include_directories(unit_soma
   PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/../src
     ${CMAKE_CURRENT_SOURCE_DIR}/../include
+    ${CMAKE_CURRENT_SOURCE_DIR}/../external/include
     ${pybind11_INCLUDE_DIRS}
     $<TARGET_PROPERTY:spdlog::spdlog,INTERFACE_INCLUDE_DIRECTORIES>
 )
