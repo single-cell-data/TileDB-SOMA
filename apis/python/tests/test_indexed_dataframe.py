@@ -473,6 +473,7 @@ def make_multiply_indexed_dataframe(tmp_path, index_column_names: List[str]):
             "A": [10],
             "throws": None,
         },
+
         # 2D: indexing slot is list
         # TODO: at present SOMAReader only accepts int dims. See also:
         # https://github.com/single-cell-data/TileDB-SOMA/issues/418
@@ -480,6 +481,14 @@ def make_multiply_indexed_dataframe(tmp_path, index_column_names: List[str]):
         {
             "index_column_names": ["index2", "index3"],
             "ids": [[400, 600], None],
+            "A": [10, 11, 14, 15],
+            "throws": None,
+        },
+
+        # 3D: indexing slot is list
+        {
+            "index_column_names": ["index2", "index3", "index4"],
+            "ids": [[400, 600], None, None],
             "A": [10, 11, 14, 15],
             "throws": None,
         },

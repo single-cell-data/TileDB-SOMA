@@ -315,16 +315,9 @@ class IndexedDataFrame(TileDBArray):
                 attr_cols_map[name] = values.column(name).to_pandas()
         assert n is not None
 
-        dim_cols_list = [list(dim_col) for dim_col in dim_cols_list]
+        dim_cols_tuple = tuple([list(dim_col) for dim_col in dim_cols_list])
         with self._tiledb_open("w") as A:
-            # TODO: find the right syntax for vardims ... it's not the ``*`` operator ...
-            # A[*dim_cols_list] = attr_cols_map
-            if len(dim_cols_list) == 1:
-                A[dim_cols_list[0]] = attr_cols_map
-            elif len(dim_cols_list) == 2:
-                A[dim_cols_list[0], dim_cols_list[1]] = attr_cols_map
-            else:
-                raise SOMAError("ndim >= 2 not currently supported")
+            A[dim_cols_tuple] = attr_cols_map
 
     def read_as_pandas(
         self,
