@@ -11,7 +11,7 @@ import tiledbsoma.libtiledbsoma as clib
 from . import util, util_arrow
 from .collection import CollectionBase
 from .constants import SOMA_JOINID, SOMA_ROWID
-from .exception import DoesNotExistError, SOMAError
+from .exception import DoesNotExistError
 from .query_condition import QueryCondition  # type: ignore
 from .tiledb_array import TileDBArray
 from .types import Ids, ResultOrder
@@ -180,7 +180,7 @@ class DataFrame(TileDBArray):
                     if lo_hi is not None:
                         sr.set_dim_ranges(SOMA_ROWID, [lo_hi])
                 else:
-                    raise SOMAError(f"ids type {type(ids)} unhandled")
+                    raise TypeError(f"ids type {type(ids)} unsupported")
 
             # TODO: platform_config
             # TODO: batch_size
