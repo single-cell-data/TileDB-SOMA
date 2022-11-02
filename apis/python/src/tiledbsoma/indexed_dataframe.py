@@ -222,35 +222,30 @@ class IndexedDataFrame(TileDBArray):
                     # Example: ids = [None, 3, slice(4,5)]
                     # dim_ids takes on values None, 3, and slice(4,5) in this loop body.
                     dim_name = A.schema.domain.dim(i).name
-                    if dim_ids is None:  # select all in this dimension
-                        pass
+                    if dim_ids is None:
+                        pass  # No constraint; select all in this dimension
                     elif isinstance(dim_ids, int):
                         # TO DO: Support non-int index types when we have non-int index support
                         # in libtiledbsoma's SOMAReader. See also
                         # https://github.com/single-cell-data/TileDB-SOMA/issues/418
                         # https://github.com/single-cell-data/TileDB-SOMA/issues/419
                         sr.set_dim_points(dim_name, [dim_ids])
-                    elif isinstance(dim_ids, collections.abc.Sequence):
-                        sr.set_dim_points(dim_name, dim_ids)
                     elif isinstance(dim_ids, np.ndarray):
                         if dim_ids.ndim != 1:
                             raise ValueError(
                                 f"only 1D numpy arrays may be used to index; got {dim_ids.ndim}"
                             )
                         sr.set_dim_points(dim_name, dim_ids)
-                    elif isinstance(dim_ids, pa.ChunkedArray):
-                        sr.set_dim_points(dim_name, dim_ids)
-                    elif isinstance(dim_ids, pa.Array):
-                        # TODO: modify libtiledbsoma.SOMAReader so we needn't convert from pyarrow.Array
-                        # to pyarrow.ChunkedArray here.
-                        # https://github.com/single-cell-data/TileDB-SOMA/issues/497
-                        sr.set_dim_points(dim_name, pa.chunked_array(dim_ids))
                     elif isinstance(dim_ids, slice):
                         lo_hi = util.slice_to_range(dim_ids)
                         if lo_hi is not None:
                             sr.set_dim_ranges(dim_name, [lo_hi])
                         # Else, no constraint in this slot. This is `slice(None)` which is like
                         # Python indexing syntax `[:]`.
+                    elif isinstance(
+                        dim_ids, (collections.abc.Sequence, pa.Array, pa.ChunkedArray)
+                    ):
+                        sr.set_dim_points(dim_name, dim_ids)
                     else:
                         raise TypeError(
                             f"dim_ids type {type(dim_ids)} at slot {i} unsupported"
