@@ -1,11 +1,11 @@
+from typing import List
+
 import numpy as np
 import pandas as pd
 import pyarrow as pa
 import pytest
 
 import tiledbsoma as soma
-
-from typing import List
 
 
 @pytest.fixture
@@ -335,6 +335,7 @@ def make_multiply_indexed_dataframe(tmp_path, index_column_names: List[str]):
     sidf.write(rb)
     return (schema, sidf, n_data)
 
+
 # TODO:
 # * None
 # * int
@@ -345,6 +346,7 @@ def make_multiply_indexed_dataframe(tmp_path, index_column_names: List[str]):
 # * slice
 # * something else
 # * multi-index !
+
 
 @pytest.mark.parametrize(
     "io",
@@ -393,6 +395,13 @@ def make_multiply_indexed_dataframe(tmp_path, index_column_names: List[str]):
             "index_column_names": ["index1"],
             "ids": [[-100, 100]],
             "A": [],
+            "throws": None,
+        },
+        # 1D: indexing slot is tiple
+        {
+            "index_column_names": ["index1"],
+            "ids": [(1, 3)],
+            "A": [11, 13],
             "throws": None,
         },
         # 1D: indexing slot is pa.ChunkedArray
@@ -451,7 +460,6 @@ def make_multiply_indexed_dataframe(tmp_path, index_column_names: List[str]):
         #    "A": None,
         #    "throws": soma.SOMAError,
         # },
-
         # 2D: indexing list is None
         {
             "index_column_names": ["index2", "index3"],
@@ -473,7 +481,6 @@ def make_multiply_indexed_dataframe(tmp_path, index_column_names: List[str]):
             "A": [10],
             "throws": None,
         },
-
         # 2D: indexing slot is list
         # TODO: at present SOMAReader only accepts int dims. See also:
         # https://github.com/single-cell-data/TileDB-SOMA/issues/418
@@ -484,7 +491,6 @@ def make_multiply_indexed_dataframe(tmp_path, index_column_names: List[str]):
             "A": [10, 11, 14, 15],
             "throws": None,
         },
-
         # 3D: indexing slot is list
         {
             "index_column_names": ["index2", "index3", "index4"],
@@ -492,13 +498,14 @@ def make_multiply_indexed_dataframe(tmp_path, index_column_names: List[str]):
             "A": [10, 11, 14, 15],
             "throws": None,
         },
-
     ],
 )
 def test_indexing(tmp_path, io):
     """Test various ways of indexing"""
 
-    schema, sidf, n_data = make_multiply_indexed_dataframe(tmp_path, io["index_column_names"])
+    schema, sidf, n_data = make_multiply_indexed_dataframe(
+        tmp_path, io["index_column_names"]
+    )
     assert sidf.exists()
 
     col_names = ["A"]
