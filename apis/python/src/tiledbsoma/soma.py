@@ -339,6 +339,73 @@ class SOMA(TileDBGroup):
         return retval
 
     # ----------------------------------------------------------------
+    def _query_aux(
+        self,
+        *,
+        obs_attrs: Optional[Sequence[str]] = None,
+        obs_query_string: Optional[str] = None,
+        obs_ids: Optional[Ids] = None,
+        var_attrs: Optional[Sequence[str]] = None,
+        var_query_string: Optional[str] = None,
+        var_ids: Optional[Ids] = None,
+        X_layer_names: Optional[Sequence[str]] = None,
+        return_arrow: bool = False,
+    ) -> Optional[SOMASlice]:
+        """
+        Helper method for `query`: as this has multiple `return` statements, it's easiest to track
+        elapsed-time stats in a call to this helper.
+        """
+
+        # This is a good candidate for parallelization because the soma.query bits are independent
+        # of one another, and are also in TileDB's core C++ engine which releases the GIL.
+        max_thread_pool_workers = SOMAOptions().max_thread_pool_workers
+        id_df_futures = []
+        with ThreadPoolExecutor(max_workers=max_thread_pool_workers) as executor:
+
+            obs_future = executor.submit(
+                self._query_aux_obs,
+                obs_attrs=obs_attrs,
+                obs_query_string=obs_query_string,
+                obs_ids=obs_ids,
+                return_arrow=return_arrow,
+            )
+            id_df_futures.append(obs_future)
+
+            var_future = executor.submit(
+                self._query_aux_var,
+                var_attrs=var_attrs,
+                var_query_string=var_query_string,
+                var_ids=var_ids,
+                return_arrow=return_arrow,
+            )
+            id_df_futures.append(var_future)
+
+        for id_future in id_df_futures:
+            triple = id_future.result()
+            if triple is None:
+                return None
+            name, df, ids = triple
+            if name == "obs":
+                slice_obs_df = df
+                obs_ids = ids
+            elif name == "var":
+                slice_var_df = df
+                var_ids = ids
+            else:
+                # ToDO
+                # raise SOMAError
+                raise Exception("internal coding error")
+
+        return self._assemble_soma_slice(
+            obs_ids,
+            var_ids,
+            slice_obs_df,
+            slice_var_df,
+            X_layer_names=X_layer_names,
+            return_arrow=return_arrow,
+        )
+
+    # ----------------------------------------------------------------
     def _query_aux_obs(
         self,
         *,
@@ -381,7 +448,7 @@ class SOMA(TileDBGroup):
             else:
                 obs_ids = list(slice_obs_df.index)
 
-        return (slice_obs_df, obs_ids)
+        return ("obs", slice_obs_df, obs_ids)
 
     # ----------------------------------------------------------------
     def _query_aux_var(
@@ -416,56 +483,7 @@ class SOMA(TileDBGroup):
             else:
                 var_ids = list(slice_var_df.index)
 
-        return (slice_var_df, var_ids)
-
-    # ----------------------------------------------------------------
-    def _query_aux(
-        self,
-        *,
-        obs_attrs: Optional[Sequence[str]] = None,
-        obs_query_string: Optional[str] = None,
-        obs_ids: Optional[Ids] = None,
-        var_attrs: Optional[Sequence[str]] = None,
-        var_query_string: Optional[str] = None,
-        var_ids: Optional[Ids] = None,
-        X_layer_names: Optional[Sequence[str]] = None,
-        return_arrow: bool = False,
-    ) -> Optional[SOMASlice]:
-        """
-        Helper method for `query`: as this has multiple `return` statements, it's easiest to track
-        elapsed-time stats in a call to this helper.
-        """
-
-        pair = self._query_aux_obs(
-            obs_attrs=obs_attrs,
-            obs_query_string=obs_query_string,
-            obs_ids=obs_ids,
-            return_arrow=return_arrow,
-        )
-        if pair is None:
-            return None
-        else:
-            slice_obs_df, obs_ids = pair
-
-        pair = self._query_aux_var(
-            var_attrs=var_attrs,
-            var_query_string=var_query_string,
-            var_ids=var_ids,
-            return_arrow=return_arrow,
-        )
-        if pair is None:
-            return None
-        else:
-            slice_var_df, var_ids = pair
-
-        return self._assemble_soma_slice(
-            obs_ids,
-            var_ids,
-            slice_obs_df,
-            slice_var_df,
-            X_layer_names=X_layer_names,
-            return_arrow=return_arrow,
-        )
+        return ("var", slice_var_df, var_ids)
 
     # ----------------------------------------------------------------
     @classmethod
