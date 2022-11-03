@@ -33,7 +33,6 @@ TRIM_APT_SOURCES=${TRIM_APT_SOURCES:-"TRUE"}
 ## Optional setting of type argument in covr::coverage() call below, defaults to "tests"
 COVERAGE_TYPE=${COVERAGE_TYPE:-"tests"}
 COVERAGE_FLAGS=${COVERAGE_FLAGS:-"r"}
-COVERAGE_TOKEN=${COVERAGE_TOKEN:-"missing_please_access_in_yaml_file_from_repo_settings"}
 
 R_BUILD_ARGS=${R_BUILD_ARGS-"--no-build-vignettes --no-manual"}
 R_CHECK_ARGS=${R_CHECK_ARGS-"--no-vignettes --no-manual --as-cran"}
@@ -374,7 +373,7 @@ Coverage() {
     ## assumes that the Rutter PPAs are in fact known, which is a given here
     AptGetInstall r-cran-covr
 
-    Rscript -e "covr::codecov(type = '${COVERAGE_TYPE}', quiet = FALSE, token = '${COVERAGE_TOKEN}', flags = '${COVERAGE_FLAGS}')"
+    Rscript -e "covr::codecov(type = '${COVERAGE_TYPE}', quiet = FALSE, flags = '${COVERAGE_FLAGS}')"
 }
 
 RunTests() {
