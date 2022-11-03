@@ -5,6 +5,9 @@ on:
   push:
     branches: [main]
 
+env:
+  COVERAGE_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+    
 jobs:
   ci:
     strategy:
@@ -29,3 +32,7 @@ jobs:
 
       - name: Test
         run: cd apis/r && ./configure && tools/r-ci.sh run_tests
+
+      - name: Coverage
+        if: ${{ matrix.os == 'ubuntu-latest' }}
+        run: cd apis/r && tools/r-ci.sh coverage
