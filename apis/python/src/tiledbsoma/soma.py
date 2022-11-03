@@ -3,7 +3,7 @@ from __future__ import annotations
 import os
 from collections import Counter
 from concurrent.futures import ThreadPoolExecutor
-from typing import List, Optional, Sequence, Tuple, Union
+from typing import Any, List, Optional, Sequence, Tuple, Union
 
 import pandas as pd
 import pyarrow as pa
@@ -339,21 +339,16 @@ class SOMA(TileDBGroup):
         return retval
 
     # ----------------------------------------------------------------
-    def _query_aux(
+    def _query_aux_obs(
         self,
         *,
         obs_attrs: Optional[Sequence[str]] = None,
         obs_query_string: Optional[str] = None,
         obs_ids: Optional[Ids] = None,
-        var_attrs: Optional[Sequence[str]] = None,
-        var_query_string: Optional[str] = None,
-        var_ids: Optional[Ids] = None,
-        X_layer_names: Optional[Sequence[str]] = None,
         return_arrow: bool = False,
-    ) -> Optional[SOMASlice]:
+    ) -> Any:  # Optional[SOMASlice]:
         """
-        Helper method for `query`: as this has multiple `return` statements, it's easiest to track
-        elapsed-time stats in a call to this helper.
+        TODO
         """
 
         slice_obs_df = self.obs.query(
@@ -386,6 +381,21 @@ class SOMA(TileDBGroup):
             else:
                 obs_ids = list(slice_obs_df.index)
 
+        return (slice_obs_df, obs_ids)
+
+    # ----------------------------------------------------------------
+    def _query_aux_var(
+        self,
+        *,
+        var_attrs: Optional[Sequence[str]] = None,
+        var_query_string: Optional[str] = None,
+        var_ids: Optional[Ids] = None,
+        return_arrow: bool = False,
+    ) -> Any:  # Optional[SOMASlice]:
+        """
+        TODO
+        """
+
         slice_var_df = self.var.query(
             var_query_string, ids=var_ids, attrs=var_attrs, return_arrow=return_arrow
         )
@@ -406,15 +416,47 @@ class SOMA(TileDBGroup):
             else:
                 var_ids = list(slice_var_df.index)
 
-        # TODO:
-        # do this here:
-        # * raw_var
-        # do these in _assemble_soma_slice:
-        # * raw_X
-        # * obsm
-        # * varm
-        # * obsp
-        # * varp
+        return (slice_var_df, var_ids)
+
+    # ----------------------------------------------------------------
+    def _query_aux(
+        self,
+        *,
+        obs_attrs: Optional[Sequence[str]] = None,
+        obs_query_string: Optional[str] = None,
+        obs_ids: Optional[Ids] = None,
+        var_attrs: Optional[Sequence[str]] = None,
+        var_query_string: Optional[str] = None,
+        var_ids: Optional[Ids] = None,
+        X_layer_names: Optional[Sequence[str]] = None,
+        return_arrow: bool = False,
+    ) -> Optional[SOMASlice]:
+        """
+        Helper method for `query`: as this has multiple `return` statements, it's easiest to track
+        elapsed-time stats in a call to this helper.
+        """
+
+        pair = self._query_aux_obs(
+            obs_attrs=obs_attrs,
+            obs_query_string=obs_query_string,
+            obs_ids=obs_ids,
+            return_arrow=return_arrow,
+        )
+        if pair is None:
+            return None
+        else:
+            slice_obs_df, obs_ids = pair
+
+        pair = self._query_aux_var(
+            var_attrs=var_attrs,
+            var_query_string=var_query_string,
+            var_ids=var_ids,
+            return_arrow=return_arrow,
+        )
+        if pair is None:
+            return None
+        else:
+            slice_var_df, var_ids = pair
 
         return self._assemble_soma_slice(
             obs_ids,
