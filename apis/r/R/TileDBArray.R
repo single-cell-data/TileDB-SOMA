@@ -100,7 +100,8 @@ TileDBArray <- R6::R6Class(
       vapply(
         self$dimensions(),
         FUN = tiledb::name,
-        FUN.VALUE = vector("character", 1L)
+        FUN.VALUE = vector("character", 1L),
+        USE.NAMES = FALSE
       )
     },
 
