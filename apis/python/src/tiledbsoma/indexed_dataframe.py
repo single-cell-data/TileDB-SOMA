@@ -184,6 +184,16 @@ class IndexedDataFrame(TileDBArray):
         :param value_filter: an optional [value filter] to apply to the results. Defaults to no filter.
 
         **Indexing**: the ``ids`` parameter will support, per dimension: a list of values of the type of the indexed column.
+
+        Acceptable ways to index:
+
+        * None
+        * A sequence of coordinates is accepted, one per dimension.
+        * Sequence length must be at least one and <= number of dimensions.
+        * If the sequence contains missing coordinates (length less than number of dimensions),
+          then "slice(None)" is assumed for the missing dimensions.
+        * Per-dimension, explicitly specified coordinates can be one of: None, a value, a
+          list/ndarray/paarray/etc of values, a slice, etc.
         """
 
         with self._tiledb_open("r") as A:
@@ -198,15 +208,6 @@ class IndexedDataFrame(TileDBArray):
                 column_names=column_names,
                 query_condition=query_condition,
             )
-
-            # Acceptable ways to index:
-            # * None
-            # * A sequence of coordinates is accepted, one per dimension.
-            # * Sequence length must be at least one and <= number of dimensions.
-            # * If the sequence contains missing coordinates (length less than number of dimensions),
-            #   then "slice(None)" is assumed for the missing dimensions.
-            # * Per-dimension, explicitly specified coordinates can be one of: None, a value, a
-            #   list/ndarray/paarray/etc of values, a slice, etc.
 
             if ids is not None:
                 if not isinstance(ids, (list, tuple)):
