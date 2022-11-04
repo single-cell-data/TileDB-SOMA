@@ -1,5 +1,5 @@
 import pathlib
-from typing import List, Literal, Optional, Sequence, Tuple, Union
+from typing import List, Literal, Sequence, Tuple, Union
 
 import numpy as np
 import pandas as pd
@@ -37,7 +37,11 @@ SparseNdCoordinates = Tuple[DenseCoordinates, ...]
 # for non-ints. See also:
 # https://github.com/single-cell-data/TileDB-SOMA/issues/418
 # https://github.com/single-cell-data/TileDB-SOMA/issues/419
-SparseIndexedDataFrameCoordinate = Optional[
-    Union[int, slice, Sequence[int], pa.Array, pa.ChunkedArray, np.ndarray]
+#
+# Note: we intentionally use `Union[None, ...]` in place of `Optional[...]` since
+# we choose to emphasize that the argument-slots this is used in are not "optional"
+# arguments -- they're required argments, which can take the `None` value.
+SparseIndexedDataFrameCoordinate = Union[
+    None, Union[int, slice, Sequence[int], pa.Array, pa.ChunkedArray, np.ndarray]
 ]
 SparseIndexedDataFrameCoordinates = Sequence[SparseIndexedDataFrameCoordinate]
