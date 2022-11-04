@@ -327,7 +327,7 @@ class IndexedDataFrame(TileDBArray):
                 attr_cols_map[name] = values.column(name).to_pandas()
         assert n is not None
 
-        dim_cols_tuple = tuple([list(dim_col) for dim_col in dim_cols_list])
+        dim_cols_tuple = tuple(dim_cols_list)
         with self._tiledb_open("w") as A:
             A[dim_cols_tuple] = attr_cols_map
 
