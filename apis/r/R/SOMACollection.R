@@ -215,16 +215,17 @@ SOMACollection <- R6::R6Class(
       obs_df <- self$somas[[1]]$obs$to_dataframe()
 
       # retain cell identities before restoring cell-level metadata
-  idents <- obs_df$active_ident
+      idents <- obs_df$active_ident
       if (!is.null(idents)) {
-        idents <- setNames(idents, rownames(obs_df))
+        idents <- stats::setNames(idents, rownames(obs_df))
         obs_df$active_ident <- NULL
       }
 
       object <- SeuratObject::CreateSeuratObject(
         counts = assays[[1]],
         project = project,
-        meta.data = obs_df
+        meta.data = obs_df,
+        assay = names(assays)[1]
       )
 
       if (!is.null(idents)) {
