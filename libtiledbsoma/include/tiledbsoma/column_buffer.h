@@ -35,7 +35,7 @@
 
 #include <stdexcept>  // for windows: error C2039: 'runtime_error': is not a member of 'std'
 
-#include <externals/span/span.hpp>
+#include <span/span.hpp>
 #include <tiledb/tiledb>
 
 #include "tiledbsoma/common.h"

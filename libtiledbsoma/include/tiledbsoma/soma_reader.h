@@ -39,7 +39,6 @@
 
 #include <tiledb/tiledb>
 
-#include "thread_pool/thread_pool.h"
 #include "tiledbsoma/managed_query.h"
 
 namespace tiledbsoma {
@@ -285,7 +284,6 @@ class SOMAReader {
     std::shared_ptr<ArraySchema> schema() {
         return mq_->schema();
     }
-
 
    private:
     //===================================================================

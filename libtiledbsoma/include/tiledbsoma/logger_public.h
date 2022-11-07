@@ -41,7 +41,7 @@
 #if !defined(R_BUILD)
 #include <spdlog/spdlog.h>
 #else
-#include <spdlog_with_R.h>
+#include "tiledbsoma/spdlog_with_R.h"
 #endif
 
 namespace tiledbsoma {

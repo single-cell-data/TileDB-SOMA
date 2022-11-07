@@ -1,11 +1,6 @@
-if(DEFINED ENV{LIBTILEDBSOMA_DEBUG_BUILD})
-  message(STATUS "")
-  message(STATUS "START libtiledbsoma/src/CMakeLists.txt")
-else()
-  message(STATUS "Starting TileDB-SOMA build.")
-endif()
+message(STATUS "Starting TileDB-SOMA build.")
 
-set(CMAKE_WARN_DEPRECATED OFF CACHE BOOL "" FORCE)
+set(TILEDBSOMA_INSTALL_TARGETS "")
 
 ############################################################
 # Find required dependencies
@@ -13,7 +8,6 @@ set(CMAKE_WARN_DEPRECATED OFF CACHE BOOL "" FORCE)
 
 find_package(TileDB_EP REQUIRED)
 find_package(Spdlog_EP REQUIRED)
-find_package(pybind11 REQUIRED)
 
 ############################################################
 # Get source commit hash
@@ -56,11 +50,12 @@ add_library(TILEDB_SOMA_OBJECTS OBJECT
   ${CMAKE_CURRENT_SOURCE_DIR}/managed_query.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/soma_reader.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/util.cc
-  ${CMAKE_CURRENT_SOURCE_DIR}/thread_pool/thread_pool.cc
-  ${CMAKE_CURRENT_SOURCE_DIR}/thread_pool/status.cc
+# TODO: uncomment when thread_pool is enabled
+#  ${CMAKE_CURRENT_SOURCE_DIR}/../external/src/thread_pool/thread_pool.cc
+#  ${CMAKE_CURRENT_SOURCE_DIR}/../external/src/thread_pool/status.cc
 )
 
-message(WARNING "Building TileDB without deprecation warnings")
+message(STATUS "Building TileDB without deprecation warnings")
 target_compile_definitions(TILEDB_SOMA_OBJECTS PRIVATE
   -DBUILD_COMMIT_HASH="${BUILD_COMMIT_HASH}"
   -DTILEDB_DEPRECATED=
@@ -76,6 +71,7 @@ target_include_directories(TILEDB_SOMA_OBJECTS
   PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${CMAKE_CURRENT_SOURCE_DIR}/../include
+    ${CMAKE_CURRENT_SOURCE_DIR}/../external/include
     $<TARGET_PROPERTY:TileDB::tiledb_shared,INTERFACE_INCLUDE_DIRECTORIES>
     $<TARGET_PROPERTY:spdlog::spdlog,INTERFACE_INCLUDE_DIRECTORIES>
     ${pybind11_INCLUDE_DIRS}
@@ -106,9 +102,11 @@ endif()
 # tiledbsoma library target
 ############################################################
 
-add_library(tiledbsoma SHARED
+add_library(tiledbsoma STATIC
   $<TARGET_OBJECTS:TILEDB_SOMA_OBJECTS>
 )
+
+list(APPEND TILEDBSOMA_INSTALL_TARGETS tiledbsoma)
 
 target_link_libraries(tiledbsoma
   PUBLIC
@@ -124,20 +122,17 @@ if (SANITIZER)
           )
 endif()
 
-# List of API headers (to be installed)
-set(TILEDB_SOMA_PUBLIC_HEADERS
-  ${CMAKE_CURRENT_SOURCE_DIR}/../include/tiledbsoma/tiledbsoma
-  ${CMAKE_CURRENT_SOURCE_DIR}/../include/tiledbsoma/array_buffers.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/../include/tiledbsoma/column_buffer.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/../include/tiledbsoma/common.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/../include/tiledbsoma/logger_public.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/../include/tiledbsoma/soma_collection.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/../include/tiledbsoma/soma_collection_query.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/../include/tiledbsoma/soma.h
+# Install header files and preserve directory structure
+# target_sources FILE_SET is preferred with cmake>=3.23
+install(DIRECTORY 
+  ${CMAKE_CURRENT_SOURCE_DIR}/../external/include/span
+  ${CMAKE_CURRENT_SOURCE_DIR}/../external/include/thread_pool
+  ${CMAKE_CURRENT_SOURCE_DIR}/../include/tiledbsoma 
+  TYPE INCLUDE
 )
 
 ############################################################
-# API symbol exports (and public headers for install)
+# API symbol exports
 ############################################################
 
 include(GenerateExportHeader)
@@ -158,22 +153,17 @@ set(TILEDB_SOMA_EXPORT_HEADER "${TILEDB_SOMA_EXPORT_HEADER}" PARENT_SCOPE)
 target_compile_definitions(TILEDB_SOMA_OBJECTS PRIVATE -DTILEDB_SOMA_OBJECTS_EXPORTS)
 target_include_directories(TILEDB_SOMA_OBJECTS PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
 
-# Add the generated header to the public headers list
-list(APPEND TILEDB_SOMA_PUBLIC_HEADERS
-  "${TILEDB_SOMA_EXPORT_HEADER}"
-)
-
-# Set the public headers, which are the ones that get installed.
+# Add public headers, which are the ones that get installed.
 set_target_properties(tiledbsoma
   PROPERTIES
-    PUBLIC_HEADER "${TILEDB_SOMA_PUBLIC_HEADERS}"
+    PUBLIC_HEADER "${TILEDB_SOMA_EXPORT_HEADER}"
 )
 
 ############################################################
 # Python API bindings
 ############################################################
 
-if (TILEDBSOMA_ENABLE_PYTHON)
+if (TILEDBSOMA_BUILD_PYTHON)
   add_subdirectory(pyapi)
 endif()
 
@@ -181,44 +171,52 @@ endif()
 # CLI executable target
 ############################################################
 
-add_executable(tiledbsoma-bin
-  ${CMAKE_CURRENT_SOURCE_DIR}/cli.cc
-  $<TARGET_OBJECTS:TILEDB_SOMA_OBJECTS>
-)
+if (TILEDBSOMA_BUILD_CLI)
+  add_executable(tiledbsoma-cli
+    ${CMAKE_CURRENT_SOURCE_DIR}/cli.cc
+    $<TARGET_OBJECTS:TILEDB_SOMA_OBJECTS>
+  )
 
-set_target_properties(tiledbsoma-bin PROPERTIES OUTPUT_NAME tdbsoma)
+  list(APPEND TILEDBSOMA_INSTALL_TARGETS tiledbsoma-cli)
 
-target_link_libraries(tiledbsoma-bin
-  PRIVATE
-)
+  set_target_properties(tiledbsoma-cli PROPERTIES OUTPUT_NAME tdbsoma)
 
-target_link_libraries(tiledbsoma-bin
-  PUBLIC
-    #CLI11::CLI11
-    spdlog::spdlog
-    tiledbsoma
-    TileDB::tiledb_shared
-)
+  target_link_libraries(tiledbsoma-cli
+    PUBLIC
+      #CLI11::CLI11
+      #spdlog::spdlog
+      tiledbsoma
+      TileDB::tiledb_shared
+  )
 
-# Sanitizer linker flags
-if (SANITIZER)
-  target_link_libraries(tiledbsoma-bin
-          INTERFACE
-          -fsanitize=${SANITIZER}
-          )
+  # Sanitizer linker flags
+  if (SANITIZER)
+    target_link_libraries(tiledbsoma-cli
+            INTERFACE
+            -fsanitize=${SANITIZER}
+            )
+  endif()
+
+  if (NOT APPLE AND NOT WIN32)
+    target_link_libraries(tiledbsoma-cli PRIVATE pthread)
+  endif()
+
+  target_include_directories(tiledbsoma-cli
+    PRIVATE
+      ${CMAKE_CURRENT_SOURCE_DIR}
+      ${CMAKE_CURRENT_SOURCE_DIR}/../include
+      ${CMAKE_CURRENT_SOURCE_DIR}/../external/include
+      ${TILEDB_SOMA_EXPORT_HEADER_DIR}
+      ${pybind11_INCLUDE_DIRS}
+  )
+
+  set_property(
+    TARGET tiledbsoma-cli
+    PROPERTY INSTALL_RPATH
+      "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}"
+      "${CMAKE_INSTALL_PREFIX}/lib"
+  )  
 endif()
-
-if (NOT APPLE AND NOT WIN32)
-  target_link_libraries(tiledbsoma-bin PRIVATE pthread)
-endif()
-
-target_include_directories(tiledbsoma-bin
-  PRIVATE
-    ${CMAKE_CURRENT_SOURCE_DIR}
-    ${CMAKE_CURRENT_SOURCE_DIR}/../include
-    ${TILEDB_SOMA_EXPORT_HEADER_DIR}
-    ${pybind11_INCLUDE_DIRS}
-)
 
 ############################################################
 # Installation
@@ -226,34 +224,11 @@ target_include_directories(tiledbsoma-bin
 
 include(GNUInstallDirs)
 
-# Set rpath to be relative to the .so.
-# This allows tiledbsoma shared objects to find the tiledb shared object in the
-# same directory, for example in the installed python module directory.
-if (APPLE)
-  set_target_properties(tiledbsoma PROPERTIES INSTALL_RPATH "@loader_path/")
-  set_target_properties(libtiledbsoma PROPERTIES INSTALL_RPATH "@loader_path/")
-else()
-  set_target_properties(tiledbsoma PROPERTIES INSTALL_RPATH "$ORIGIN/")
-  set_target_properties(libtiledbsoma PROPERTIES INSTALL_RPATH "$ORIGIN/")
-endif()
-
-set_property(
-  TARGET tiledbsoma-bin
-  PROPERTY INSTALL_RPATH
-    "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}"
-    "${CMAKE_INSTALL_PREFIX}/lib"
-)
-
 install(
-#  TARGETS tiledbsoma tiledbsoma-bin libtiledbsoma
-  TARGETS tiledbsoma-bin libtiledbsoma
+  TARGETS ${TILEDBSOMA_INSTALL_TARGETS}
   RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
   LIBRARY DESTINATION lib
   ARCHIVE DESTINATION lib
   INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
   PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/tiledbsoma
 )
-if(DEFINED ENV{LIBTILEDBSOMA_DEBUG_BUILD})
-  message(STATUS "END libtiledbsoma/src/CMakeLists.txt")
-  message(STATUS "")
-endif()

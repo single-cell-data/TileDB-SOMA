@@ -31,7 +31,6 @@
  */
 
 #include <tiledbsoma/tiledbsoma>
-#include "pyapi/arrow_adapter.h"
 
 using namespace tiledbsoma;
 
