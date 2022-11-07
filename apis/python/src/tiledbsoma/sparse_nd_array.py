@@ -242,6 +242,9 @@ class SparseNdArray(TileDBArray):
           then `slice(None)` -- i.e. no constraint -- is assumed for the missing dimensions.
         * Per-dimension, explicitly specified coordinates can be one of: None, a value, a
           list/ndarray/paarray/etc of values, a slice, etc.
+        * Slices are doubly inclusive: slice(2,4) means [2,3,4] not [2,3]. Slice steps can only be +1.
+          Slices can be `slice(None)`, meaning select all in that dimension, but may not be half-specified:
+          `slice(2,None)` and `slice(None,4)` are both unsupported.
         """
 
         with self._tiledb_open("r") as A:
