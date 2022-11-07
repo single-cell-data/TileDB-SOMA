@@ -260,7 +260,13 @@ class IndexedDataFrame(TileDBArray):
                     elif isinstance(
                         dim_ids, (collections.abc.Sequence, pa.Array, pa.ChunkedArray)
                     ):
-                        sr.set_dim_points(dim_name, dim_ids)
+                        if (
+                            dim_ids == []
+                        ):  # TileDB-Py maps [] to all; we want it to map to none.
+                            # TODO: find out how to best implement this
+                            pass
+                        else:
+                            sr.set_dim_points(dim_name, dim_ids)
                     else:
                         raise TypeError(
                             f"dim_ids type {type(dim_ids)} at slot {i} unsupported"
@@ -417,5 +423,16 @@ def _validate_schema(schema: pa.Schema, index_column_names: Sequence[str]) -> pa
             )
         if index_column_name not in schema_names_set:
             raise ValueError("All index names must be dataframe schema")
+        # TODO: Pending
+        # https://github.com/single-cell-data/TileDB-SOMA/issues/418
+        # https://github.com/single-cell-data/TileDB-SOMA/issues/419
+        assert schema.field(index_column_name).type in [
+            pa.int32(),
+            pa.uint32(),
+            pa.int64(),
+            pa.uint64(),
+            pa.float32(),
+            pa.float64(),
+        ]
 
     return schema

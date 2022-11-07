@@ -271,8 +271,8 @@ def make_dataframe(request):
 @pytest.mark.parametrize(
     "make_dataframe",
     [
-        pa.float32(),
-        pa.float64(),
+        pytest.param(pa.float32(), marks=pytest.mark.xfail),
+        pytest.param(pa.float64(), marks=pytest.mark.xfail),
         pa.int32(),
         pa.uint32(),
         pa.int64(),
@@ -382,6 +382,12 @@ def make_multiply_indexed_dataframe(tmp_path, index_column_names: List[str]):
         {
             "index_column_names": ["index1"],
             "ids": [[-100, 100]],
+            "A": [],
+            "throws": None,
+        },
+        {
+            "index_column_names": ["index1"],
+            "ids": [[]],
             "A": [],
             "throws": None,
         },
