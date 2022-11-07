@@ -1,6 +1,5 @@
 #include <Rcpp.h>
 #include <tiledbsoma/tiledbsoma>
-#include "pyapi/arrow_adapter.h"
 #include <archAPI.h>
 #include "rutilities.h"
 
