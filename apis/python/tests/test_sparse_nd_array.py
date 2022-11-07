@@ -400,27 +400,24 @@ def test_sparse_nd_array_reshape(tmp_path):
 @pytest.mark.parametrize(
     "io",
     [
-
         # Coords is None
         {
             "shape": (4,),
             "coords": None,
             "dims": {
-                "soma_dim_0": [0,1,2,3],
+                "soma_dim_0": [0, 1, 2, 3],
             },
             "throws": None,
         },
-
         # Coords has None in a slot
         {
             "shape": (4,),
             "coords": (None,),
             "dims": {
-                "soma_dim_0": [0,1,2,3],
+                "soma_dim_0": [0, 1, 2, 3],
             },
             "throws": None,
         },
-
         # Coords has int in a slot
         {
             "shape": (4,),
@@ -439,7 +436,6 @@ def test_sparse_nd_array_reshape(tmp_path):
             },
             "throws": None,
         },
-
         # Coords doesn't specify all dimensions, so the rest are implicit-all
         {
             "shape": (4, 6),
@@ -450,18 +446,16 @@ def test_sparse_nd_array_reshape(tmp_path):
             },
             "throws": None,
         },
-
         # Coords specifies too many dimensions
         {
             "shape": (4, 6),
-            "coords": (0,0,0),
+            "coords": (0, 0, 0),
             "dims": {
                 "soma_dim_0": [0, 0, 0, 0, 0, 0],
                 "soma_dim_1": [0, 1, 2, 3, 4, 5],
             },
             "throws": ValueError,
         },
-
         {
             "shape": (4, 5, 6),
             "coords": (2, 3, 4),
@@ -472,7 +466,6 @@ def test_sparse_nd_array_reshape(tmp_path):
             },
             "throws": None,
         },
-
         {
             "shape": (4, 6),
             "coords": (3, 4),
@@ -482,7 +475,6 @@ def test_sparse_nd_array_reshape(tmp_path):
             },
             "throws": None,
         },
-
         {
             "shape": (4, 6),
             "coords": (slice(1, 2), slice(3, 4)),
@@ -492,7 +484,33 @@ def test_sparse_nd_array_reshape(tmp_path):
             },
             "throws": None,
         },
-
+        {
+            "shape": (4, 6),
+            "coords": (slice(1, 2), [3, 4]),
+            "dims": {
+                "soma_dim_0": [1, 1, 2, 2],
+                "soma_dim_1": [3, 4, 3, 4],
+            },
+            "throws": None,
+        },
+        {
+            "shape": (4, 6),
+            "coords": (np.asarray([1, 2]), pa.array([3, 4])),
+            "dims": {
+                "soma_dim_0": [1, 1, 2, 2],
+                "soma_dim_1": [3, 4, 3, 4],
+            },
+            "throws": None,
+        },
+        {
+            "shape": (4, 6),
+            "coords": (np.asarray([[1, 2]]), pa.array([3, 4])),
+            "dims": {
+                "soma_dim_0": [1, 1, 2, 2],
+                "soma_dim_1": [3, 4, 3, 4],
+            },
+            "throws": ValueError,  # np.ndarray must be 1D
+        },
         {
             "shape": (4, 6),
             "coords": (slice(None), slice(3, 4)),
@@ -502,7 +520,6 @@ def test_sparse_nd_array_reshape(tmp_path):
             },
             "throws": None,
         },
-
         {
             "shape": (4, 6),
             "coords": (slice(1, 2), slice(None)),
@@ -512,7 +529,6 @@ def test_sparse_nd_array_reshape(tmp_path):
             },
             "throws": None,
         },
-
         {
             "shape": (3, 4),
             "coords": (slice(None), slice(None)),
@@ -548,7 +564,6 @@ def test_sparse_nd_array_reshape(tmp_path):
             },
             "throws": None,
         },
-
     ],
 )
 def test_sparse_nd_array_table_slicing(tmp_path, io):

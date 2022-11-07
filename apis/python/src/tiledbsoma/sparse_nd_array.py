@@ -286,7 +286,9 @@ class SparseNdArray(TileDBArray):
                     ):
                         sr.set_dim_points(dim_name, coord)
                     else:
-                        raise TypeError(f"coord type {type(coord)} at slot {i} unsupported")
+                        raise TypeError(
+                            f"coord type {type(coord)} at slot {i} unsupported"
+                        )
 
             sr.submit()
 

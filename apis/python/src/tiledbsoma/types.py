@@ -1,6 +1,7 @@
 import pathlib
 from typing import List, Literal, Sequence, Tuple, Union
 
+import numpy as np
 import pandas as pd
 import pyarrow as pa
 
@@ -32,5 +33,10 @@ DenseNdCoordinates = Tuple[DenseCoordinates, ...]
 # Note: we intentionally use `Union[None, ...]` in place of `Optional[...]` since
 # we choose to emphasize that the argument-slots this is used in are not "optional"
 # arguments -- they're required argments, which can take the `None` value.
-SparseCoordinates = Union[int, slice, Tuple[int, ...], List[int], pa.IntegerArray]
-SparseNdCoordinates = Union[None, Sequence[Union[None,DenseCoordinates]]]
+
+SparseCoordinates = Union[int, slice, Sequence[int], pa.IntegerArray]
+
+SparseNdCoordinates = Union[
+    None,
+    Sequence[Union[None, DenseCoordinates, Sequence[int], np.ndarray, pa.IntegerArray]],
+]
