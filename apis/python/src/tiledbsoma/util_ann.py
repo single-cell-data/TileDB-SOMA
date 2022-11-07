@@ -9,6 +9,14 @@ import scipy.sparse as sp
 from . import util_tiledb
 from .types import Path
 
+print()
+print("================================================================")
+print("CI DEBUG")
+print(dir(ad))
+print(ad.__file__)
+print("================================================================")
+print()
+
 
 # ----------------------------------------------------------------
 def describe_ann_file(
