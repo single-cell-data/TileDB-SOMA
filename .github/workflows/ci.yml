@@ -64,6 +64,7 @@ jobs:
       uses: codecov/codecov-action@v3
       with:
         flags: python
+        token: ${{ secrets.CODECOV_TOKEN }}
 
     - name: Build wheel distribution
       run: python -m pip -v wheel --no-deps --wheel-dir=dist-wheel apis/python
