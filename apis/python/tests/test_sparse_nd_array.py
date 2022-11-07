@@ -428,6 +428,22 @@ def test_sparse_nd_array_reshape(tmp_path):
             "throws": None,
         },
         {
+            "shape": (6,),
+            "coords": [[2, 4]],
+            "dims": {
+                "soma_dim_0": [2, 4],
+            },
+            "throws": None,
+        },
+        {
+            "shape": (6,),
+            "coords": [[-2, -4]],
+            "dims": {
+                "soma_dim_0": [2, 4],
+            },
+            "throws": RuntimeError,  # Negative indices are not supported
+        },
+        {
             "shape": (4, 6),
             "coords": (0, 0),
             "dims": {

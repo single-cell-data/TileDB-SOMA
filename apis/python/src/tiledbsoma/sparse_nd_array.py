@@ -245,6 +245,7 @@ class SparseNdArray(TileDBArray):
         * Slices are doubly inclusive: slice(2,4) means [2,3,4] not [2,3]. Slice steps can only be +1.
           Slices can be `slice(None)`, meaning select all in that dimension, but may not be half-specified:
           `slice(2,None)` and `slice(None,4)` are both unsupported.
+        * Negative indexing is unsupported.
         """
 
         with self._tiledb_open("r") as A:
@@ -281,6 +282,15 @@ class SparseNdArray(TileDBArray):
                     elif isinstance(coord, slice):
                         lo_hi = util.slice_to_range(coord)
                         if lo_hi is not None:
+                            lo, hi = lo_hi
+                            if lo < 0 or hi < 0:
+                                raise ValueError(
+                                    f"slice start and stop may not be negative; got ({lo}, {hi})"
+                                )
+                            if lo > hi:
+                                raise ValueError(
+                                    f"slice start must be <= slice stop; got ({lo}, {hi})"
+                                )
                             sr.set_dim_ranges(dim_name, [lo_hi])
                         # Else, no constraint in this slot. This is `slice(None)` which is like
                         # Python indexing syntax `[:]`.
