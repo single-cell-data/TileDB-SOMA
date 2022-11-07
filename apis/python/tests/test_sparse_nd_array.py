@@ -400,153 +400,169 @@ def test_sparse_nd_array_reshape(tmp_path):
 @pytest.mark.parametrize(
     "io",
     [
+
+        # Coords is None
         {
+            "shape": (4,),
+            "coords": None,
+            "dims": {
+                "soma_dim_0": [0,1,2,3],
+            },
+            "throws": None,
+        },
+
+        # Coords has None in a slot
+        {
+            "shape": (4,),
+            "coords": (None,),
+            "dims": {
+                "soma_dim_0": [0,1,2,3],
+            },
+            "throws": None,
+        },
+
+        # Coords has int in a slot
+        {
+            "shape": (4,),
+            "coords": (1,),
+            "dims": {
+                "soma_dim_0": [1],
+            },
+            "throws": None,
+        },
+        {
+            "shape": (4, 6),
             "coords": (0, 0),
-            "soma_dim_0": [0],
-            "soma_dim_1": [0],
-            "soma_data": [90000],
+            "dims": {
+                "soma_dim_0": [0],
+                "soma_dim_1": [0],
+            },
             "throws": None,
         },
+
+        # Coords doesn't specify all dimensions, so the rest are implicit-all
         {
+            "shape": (4, 6),
+            "coords": (0,),
+            "dims": {
+                "soma_dim_0": [0, 0, 0, 0, 0, 0],
+                "soma_dim_1": [0, 1, 2, 3, 4, 5],
+            },
+            "throws": None,
+        },
+
+        # Coords specifies too many dimensions
+        {
+            "shape": (4, 6),
+            "coords": (0,0,0),
+            "dims": {
+                "soma_dim_0": [0, 0, 0, 0, 0, 0],
+                "soma_dim_1": [0, 1, 2, 3, 4, 5],
+            },
+            "throws": ValueError,
+        },
+
+        {
+            "shape": (4, 5, 6),
+            "coords": (2, 3, 4),
+            "dims": {
+                "soma_dim_0": [2],
+                "soma_dim_1": [3],
+                "soma_dim_2": [4],
+            },
+            "throws": None,
+        },
+
+        {
+            "shape": (4, 6),
             "coords": (3, 4),
-            "soma_dim_0": [3],
-            "soma_dim_1": [4],
-            "soma_data": [90304],
+            "dims": {
+                "soma_dim_0": [3],
+                "soma_dim_1": [4],
+            },
             "throws": None,
         },
+
         {
+            "shape": (4, 6),
             "coords": (slice(1, 2), slice(3, 4)),
-            "soma_dim_0": [1, 1, 2, 2],
-            "soma_dim_1": [3, 4, 3, 4],
-            "soma_data": [90103, 90104, 90203, 90204],
+            "dims": {
+                "soma_dim_0": [1, 1, 2, 2],
+                "soma_dim_1": [3, 4, 3, 4],
+            },
             "throws": None,
         },
+
         {
+            "shape": (4, 6),
             "coords": (slice(None), slice(3, 4)),
-            "soma_dim_0": [0, 0, 1, 1, 2, 2, 3, 3],
-            "soma_dim_1": [3, 4, 3, 4, 3, 4, 3, 4],
-            "soma_data": [90003, 90004, 90103, 90104, 90203, 90204, 90303, 90304],
+            "dims": {
+                "soma_dim_0": [0, 0, 1, 1, 2, 2, 3, 3],
+                "soma_dim_1": [3, 4, 3, 4, 3, 4, 3, 4],
+            },
             "throws": None,
         },
+
         {
+            "shape": (4, 6),
             "coords": (slice(1, 2), slice(None)),
-            "soma_dim_0": [1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2],
-            "soma_dim_1": [0, 1, 2, 3, 4, 5, 0, 1, 2, 3, 4, 5],
-            "soma_data": [
-                90100,
-                90101,
-                90102,
-                90103,
-                90104,
-                90105,
-                90200,
-                90201,
-                90202,
-                90203,
-                90204,
-                90205,
-            ],
+            "dims": {
+                "soma_dim_0": [1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2],
+                "soma_dim_1": [0, 1, 2, 3, 4, 5, 0, 1, 2, 3, 4, 5],
+            },
             "throws": None,
         },
+
         {
+            "shape": (3, 4),
             "coords": (slice(None), slice(None)),
-            "soma_dim_0": [
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                1,
-                1,
-                1,
-                1,
-                1,
-                1,
-                2,
-                2,
-                2,
-                2,
-                2,
-                2,
-                3,
-                3,
-                3,
-                3,
-                3,
-                3,
-            ],
-            "soma_dim_1": [
-                0,
-                1,
-                2,
-                3,
-                4,
-                5,
-                0,
-                1,
-                2,
-                3,
-                4,
-                5,
-                0,
-                1,
-                2,
-                3,
-                4,
-                5,
-                0,
-                1,
-                2,
-                3,
-                4,
-                5,
-            ],
-            "soma_data": [
-                90000,
-                90001,
-                90002,
-                90003,
-                90004,
-                90005,
-                90100,
-                90101,
-                90102,
-                90103,
-                90104,
-                90105,
-                90200,
-                90201,
-                90202,
-                90203,
-                90204,
-                90205,
-                90300,
-                90301,
-                90302,
-                90303,
-                90304,
-                90305,
-            ],
+            "dims": {
+                "soma_dim_0": [
+                    0,
+                    0,
+                    0,
+                    0,
+                    1,
+                    1,
+                    1,
+                    1,
+                    2,
+                    2,
+                    2,
+                    2,
+                ],
+                "soma_dim_1": [
+                    0,
+                    1,
+                    2,
+                    3,
+                    0,
+                    1,
+                    2,
+                    3,
+                    0,
+                    1,
+                    2,
+                    3,
+                ],
+            },
             "throws": None,
         },
+
     ],
 )
 def test_sparse_nd_array_table_slicing(tmp_path, io):
-    num_rows = 4
-    num_cols = 6
 
     # Set up contents
-    npa = np.zeros((num_rows, num_cols), dtype=np.float64)
-    for i in range(num_rows):
-        for j in range(num_cols):
-            npa[i, j] = 90000 + 100 * i + j
-
-    pat = pa.Tensor.from_numpy(npa)
-    pacoo = pa.SparseCOOTensor.from_tensor(pat)
+    pacoo = create_random_tensor(
+        format="coo",
+        shape=io["shape"],
+        dtype=np.float32(),
+        density=1.0,
+    )
 
     snda = soma.SparseNdArray(tmp_path.as_posix())
-    snda.create(pa.float64(), npa.shape)
+    snda.create(pa.float64(), io["shape"])
     snda.write_sparse_tensor(pacoo)
 
     if io["throws"] is not None:
@@ -554,9 +570,9 @@ def test_sparse_nd_array_table_slicing(tmp_path, io):
             next(snda.read_table(io["coords"]))
     else:
         table = next(snda.read_table(io["coords"]))
-        assert table["soma_dim_0"].to_pylist() == io["soma_dim_0"]
-        assert table["soma_dim_1"].to_pylist() == io["soma_dim_1"]
-        assert table["soma_data"].to_pylist() == io["soma_data"]
+        for column_name in table.column_names:
+            if column_name in io["dims"]:
+                assert table[column_name].to_pylist() == io["dims"][column_name]
 
     # TODO:
     # * read methods:

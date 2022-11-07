@@ -169,6 +169,9 @@ class SparseNdArray(TileDBArray):
             * ``csr`` - return an Arrow SparseCSRMatrix
             * ``csc`` - return an Arrow SparseCSCMatrix
 
+        Acceptable ways to index
+        ------------------------
+        See `read_table`.
 
         Returns
         -------
@@ -228,7 +231,19 @@ class SparseNdArray(TileDBArray):
         """
         Read a user-defined slice of the sparse array and return in COO format
         as an Arrow Table
+
+        Acceptable ways to index
+        ------------------------
+
+        * None
+        * A sequence of coordinates is accepted, one per dimension.
+        * Sequence length must be at least one and <= number of dimensions.
+        * If the sequence contains missing coordinates (length less than number of dimensions),
+          then `slice(None)` -- i.e. no constraint -- is assumed for the missing dimensions.
+        * Per-dimension, explicitly specified coordinates can be one of: None, a value, a
+          list/ndarray/paarray/etc of values, a slice, etc.
         """
+
         with self._tiledb_open("r") as A:
             sr = clib.SOMAReader(
                 self._uri,
@@ -236,50 +251,42 @@ class SparseNdArray(TileDBArray):
                 schema=A.schema,
             )
 
-            # Acceptable ways to index:
-            # * None
-            # * A sequence of coordinates is accepted, one per dimension.
-            # * Sequence length must be at least one and <= number of dimensions.
-            # * If the sequence contains missing coordinates (length less than number of dimensions),
-            #   then `slice(None)` -- i.e. no constraint -- is assumed for the missing dimensions.
-            # * Per-dimension, explicitly specified coordinates can be one of: None, a value, a
-            #   list/ndarray/paarray/etc of values, a slice, etc.
+            if coords is not None:
+                if not isinstance(coords, (list, tuple)):
+                    raise TypeError(
+                        f"coords type {type(coords)} unsupported; expected list or tuple"
+                    )
+                if len(coords) < 1 or len(coords) > A.schema.domain.ndim:
+                    raise ValueError(
+                        f"coords {coords} must have length between 1 and ndim ({A.schema.domain.ndim}); got {len(coords)}"
+                    )
 
-            if not isinstance(coords, (list, tuple)):
-                raise TypeError(
-                    f"coords type {type(coords)} unsupported; expected list or tuple"
-                )
-            if len(coords) < 1 or len(coords) > A.schema.domain.ndim:
-                raise ValueError(
-                    f"coords {coords} must have length between 1 and ndim ({A.schema.domain.ndim}); got {len(coords)}"
-                )
-
-            for i, coord in enumerate(coords):
-                #                # Example: coords = [None, 3, slice(4,5)]
-                #                # coor takes on values None, 3, and slice(4,5) in this loop body.
-                dim_name = A.schema.domain.dim(i).name
-                if coord is None:
-                    pass  # No constraint; select all in this dimension
-                elif isinstance(coord, int):
-                    sr.set_dim_points(dim_name, [coord])
-                elif isinstance(coord, np.ndarray):
-                    if coord.ndim != 1:
-                        raise ValueError(
-                            f"only 1D numpy arrays may be used to index; got {coord.ndim}"
-                        )
-                    sr.set_dim_points(dim_name, coord)
-                elif isinstance(coord, slice):
-                    lo_hi = util.slice_to_range(coord)
-                    if lo_hi is not None:
-                        sr.set_dim_ranges(dim_name, [lo_hi])
-                    # Else, no constraint in this slot. This is `slice(None)` which is like
-                    # Python indexing syntax `[:]`.
-                elif isinstance(
-                    coord, (collections.abc.Sequence, pa.Array, pa.ChunkedArray)
-                ):
-                    sr.set_dim_points(dim_name, coord)
-                else:
-                    raise TypeError(f"coord type {type(coord)} at slot {i} unsupported")
+                for i, coord in enumerate(coords):
+                    #                # Example: coords = [None, 3, slice(4,5)]
+                    #                # coor takes on values None, 3, and slice(4,5) in this loop body.
+                    dim_name = A.schema.domain.dim(i).name
+                    if coord is None:
+                        pass  # No constraint; select all in this dimension
+                    elif isinstance(coord, int):
+                        sr.set_dim_points(dim_name, [coord])
+                    elif isinstance(coord, np.ndarray):
+                        if coord.ndim != 1:
+                            raise ValueError(
+                                f"only 1D numpy arrays may be used to index; got {coord.ndim}"
+                            )
+                        sr.set_dim_points(dim_name, coord)
+                    elif isinstance(coord, slice):
+                        lo_hi = util.slice_to_range(coord)
+                        if lo_hi is not None:
+                            sr.set_dim_ranges(dim_name, [lo_hi])
+                        # Else, no constraint in this slot. This is `slice(None)` which is like
+                        # Python indexing syntax `[:]`.
+                    elif isinstance(
+                        coord, (collections.abc.Sequence, pa.Array, pa.ChunkedArray)
+                    ):
+                        sr.set_dim_points(dim_name, coord)
+                    else:
+                        raise TypeError(f"coord type {type(coord)} at slot {i} unsupported")
 
             sr.submit()
 
