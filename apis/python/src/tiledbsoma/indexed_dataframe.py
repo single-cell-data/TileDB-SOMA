@@ -185,15 +185,20 @@ class IndexedDataFrame(TileDBArray):
 
         **Indexing**: the ``ids`` parameter will support, per dimension: a list of values of the type of the indexed column.
 
-        Acceptable ways to index:
+        Acceptable ways to index
+        ------------------------
 
         * None
         * A sequence of coordinates is accepted, one per dimension.
         * Sequence length must be at least one and <= number of dimensions.
         * If the sequence contains missing coordinates (length less than number of dimensions),
-          then "slice(None)" is assumed for the missing dimensions.
+          then `slice(None)` -- i.e. no constraint -- is assumed for the missing dimensions.
         * Per-dimension, explicitly specified coordinates can be one of: None, a value, a
           list/ndarray/paarray/etc of values, a slice, etc.
+        * Slices are doubly inclusive: slice(2,4) means [2,3,4] not [2,3]. Slice steps can only be +1.
+          Slices can be `slice(None)`, meaning select all in that dimension, but may not be half-specified:
+          `slice(2,None)` and `slice(None,4)` are both unsupported.
+        * Negative indexing is unsupported.
         """
 
         with self._tiledb_open("r") as A:
@@ -240,6 +245,11 @@ class IndexedDataFrame(TileDBArray):
                     elif isinstance(dim_ids, slice):
                         lo_hi = util.slice_to_range(dim_ids)
                         if lo_hi is not None:
+                            lo, hi = lo_hi
+                            if lo < 0 or hi < 0:
+                                raise ValueError(f"slice start and stop may not be negative; got ({lo}, {hi})")
+                            if lo > hi:
+                                raise ValueError(f"slice start must be <= slice stop; got ({lo}, {hi})")
                             sr.set_dim_ranges(dim_name, [lo_hi])
                         # Else, no constraint in this slot. This is `slice(None)` which is like
                         # Python indexing syntax `[:]`.

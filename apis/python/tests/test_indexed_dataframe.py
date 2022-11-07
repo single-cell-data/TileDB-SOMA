@@ -472,6 +472,14 @@ def make_multiply_indexed_dataframe(tmp_path, index_column_names: List[str]):
             "A": None,
             "throws": ValueError,
         },
+
+        {
+            "index_column_names": ["index1"],
+            "ids": [slice(-2, -1)],  # Negative slices are not supported
+            "A": None,
+            "throws": ValueError,
+        },
+
         # 1D: indexing slot is of invalid type
         # TODO: I want to test this but Typeguard fails the test since it already knows strings are not
         # valid until we implement
