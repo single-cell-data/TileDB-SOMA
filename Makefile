@@ -61,4 +61,4 @@ clean:
 .PHONY: cleaner
 cleaner:
 	@echo "*** dry-run mode: remove -n to actually remove files"
-	git clean -n -ffdx -e .vscode -e test/tiledbsoma
+	git clean -ffdx -e .vscode -e test/tiledbsoma -n

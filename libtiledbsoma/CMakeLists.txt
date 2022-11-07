@@ -61,12 +61,15 @@ option(OVERRIDE_INSTALL_PREFIX "Ignores the setting of CMAKE_INSTALL_PREFIX and 
 option(ENABLE_ARROW_EXPORT "Installs an extra header for exporting in-memory results with Apache Arrow" ON)
 option(TILEDB_LOG_OUTPUT_ON_FAILURE "If true, print error logs if dependency sub-project build fails" ON)
 
-# Disable build targets when building for R
-# NOTE: Add TILEDBSOMA_BUILD_R to INHERITED_CMAKE_ARGS in Superbuild.cmake
+# NOTE: TILEDBSOMA_BUILD_R is added to INHERITED_CMAKE_ARGS in Superbuild.cmake
+# so the option is forwarded to the non-superbuild
 if (TILEDBSOMA_BUILD_R)
+  # Disable build targets when building for R
   set(TILEDBSOMA_BUILD_PYTHON OFF)
   set(TILEDBSOMA_BUILD_CLI OFF)
   set(TILEDBSOMA_ENABLE_TESTING OFF)
+
+  add_compile_options(-DR_BUILD)
 endif()
 
 # Set C++17 as required standard for all C++ targets (C++17 minimum is required to use the TileDB C++ API).
