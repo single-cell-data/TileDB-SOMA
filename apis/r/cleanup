@@ -5,4 +5,7 @@ rm -r -f \
    src/Makevars \
    tiledb.tar.gz \
    tiledb/ \
-   inst/tiledb/
+   inst/tiledb/ \
+   src/include/ \
+   src/lib \
+   src/cmake_log.txt
