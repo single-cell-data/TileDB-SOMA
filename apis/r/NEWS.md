@@ -1,3 +1,8 @@
+# tiledbsoma (development version)
+
+## Fixes
+* Don't use default assay name when recreating a `Seurat` object (thanks @dan11mcguire)
+
 # tiledbsoma 0.1.12
 
  ## Package name
