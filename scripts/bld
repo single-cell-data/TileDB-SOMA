@@ -48,7 +48,7 @@ if false; then
   extra_opts+=" -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON"
 
   # TILEDB_WERROR=OFF is necessary to build core with XCode 14; doesn't hurt for XCode 13.
-  extra_opts+=" -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON -DTILEDB_WERROR=OFF _DTILEDBSOMA_ENABLE_WERROR=OFF"
+  extra_opts+=" -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON -DTILEDB_WERROR=OFF -DTILEDBSOMA_ENABLE_WERROR=OFF"
   
   # Also (pro-tip), set nproc=1 to get a more deterministic ordering of output lines.
   nproc=1

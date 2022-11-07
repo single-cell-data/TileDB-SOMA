@@ -55,11 +55,7 @@ add_library(TILEDB_SOMA_OBJECTS OBJECT
 #  ${CMAKE_CURRENT_SOURCE_DIR}/../external/src/thread_pool/status.cc
 )
 
-<<<<<<< HEAD
-message(NOTICE "Building TileDB without deprecation warnings")
-=======
 message(STATUS "Building TileDB without deprecation warnings")
->>>>>>> eb648bde15d48f64b18155396dd208d688946fde
 target_compile_definitions(TILEDB_SOMA_OBJECTS PRIVATE
   -DBUILD_COMMIT_HASH="${BUILD_COMMIT_HASH}"
   -DTILEDB_DEPRECATED=
@@ -235,5 +231,4 @@ install(
   ARCHIVE DESTINATION lib
   INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
   PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/tiledbsoma
-  FILE_SET headers DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
 )
