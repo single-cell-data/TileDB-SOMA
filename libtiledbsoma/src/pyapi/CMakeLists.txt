@@ -24,6 +24,7 @@ target_include_directories(libtiledbsoma
   PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${CMAKE_CURRENT_SOURCE_DIR}/../../include
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../external/include
     ${CMAKE_CURRENT_SOURCE_DIR}/../../src
     ${TILEDB_SOMA_EXPORT_HEADER_DIR}
     $<TARGET_PROPERTY:spdlog::spdlog,INTERFACE_INCLUDE_DIRECTORIES>

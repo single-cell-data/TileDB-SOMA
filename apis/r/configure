@@ -20,10 +20,10 @@ else
     fi
 
     if ! test -d inst/include/tiledbsoma; then
-        mkdir -p inst/include/tiledbsoma inst/include/externals
+        mkdir -p inst/include/tiledbsoma
         echo "** copying C++ header files"
         cp -a ../../libtiledbsoma/include/tiledbsoma/* inst/include/tiledbsoma/
-        cp -a ../../libtiledbsoma/include/externals/* inst/include/externals/
+        cp -a ../../libtiledbsoma/external/include/* inst/include/
         echo "** copying C++ source and header files"
         cp -a ../../libtiledbsoma/src/* src/
     fi

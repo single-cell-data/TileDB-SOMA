@@ -31,7 +31,7 @@ install-debug: clean
 # - build the c++ static library for r
 .PHONY: r-build
 r-build: clean
-	R_BUILD=1 ./scripts/bld
+	./scripts/bld --prefix=${prefix} --r-build
 
 # - run the data rule
 # - run c++ unit tests
@@ -60,5 +60,5 @@ clean:
 # - run git clean (in dry-run mode)
 .PHONY: cleaner
 cleaner:
-	@echo "*** running in dry-run mode ***"
-	git clean -nffdx -e .vscode -e test/tiledbsoma
+	@echo "*** dry-run mode: remove -n to actually remove files"
+	git clean -ffdx -e .vscode -e test/tiledbsoma -n

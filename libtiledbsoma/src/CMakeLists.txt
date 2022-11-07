@@ -50,11 +50,16 @@ add_library(TILEDB_SOMA_OBJECTS OBJECT
   ${CMAKE_CURRENT_SOURCE_DIR}/managed_query.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/soma_reader.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/util.cc
-  ${CMAKE_CURRENT_SOURCE_DIR}/thread_pool/thread_pool.cc
-  ${CMAKE_CURRENT_SOURCE_DIR}/thread_pool/status.cc
+# TODO: uncomment when thread_pool is enabled
+#  ${CMAKE_CURRENT_SOURCE_DIR}/../external/src/thread_pool/thread_pool.cc
+#  ${CMAKE_CURRENT_SOURCE_DIR}/../external/src/thread_pool/status.cc
 )
 
+<<<<<<< HEAD
 message(NOTICE "Building TileDB without deprecation warnings")
+=======
+message(STATUS "Building TileDB without deprecation warnings")
+>>>>>>> eb648bde15d48f64b18155396dd208d688946fde
 target_compile_definitions(TILEDB_SOMA_OBJECTS PRIVATE
   -DBUILD_COMMIT_HASH="${BUILD_COMMIT_HASH}"
   -DTILEDB_DEPRECATED=
@@ -70,6 +75,7 @@ target_include_directories(TILEDB_SOMA_OBJECTS
   PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${CMAKE_CURRENT_SOURCE_DIR}/../include
+    ${CMAKE_CURRENT_SOURCE_DIR}/../external/include
     $<TARGET_PROPERTY:TileDB::tiledb_shared,INTERFACE_INCLUDE_DIRECTORIES>
     $<TARGET_PROPERTY:spdlog::spdlog,INTERFACE_INCLUDE_DIRECTORIES>
     ${pybind11_INCLUDE_DIRS}
@@ -120,22 +126,13 @@ if (SANITIZER)
           )
 endif()
 
-# Define FILE_SET of headers to install, which preserves the
-# directory structure of BASE_DIRS
-target_sources(tiledbsoma
-  PUBLIC
-    FILE_SET headers TYPE HEADERS
-    BASE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/../include
-    FILES
-      ${CMAKE_CURRENT_SOURCE_DIR}/../include/tiledbsoma/tiledbsoma
-      ${CMAKE_CURRENT_SOURCE_DIR}/../include/tiledbsoma/array_buffers.h
-      ${CMAKE_CURRENT_SOURCE_DIR}/../include/tiledbsoma/column_buffer.h
-      ${CMAKE_CURRENT_SOURCE_DIR}/../include/tiledbsoma/common.h
-      ${CMAKE_CURRENT_SOURCE_DIR}/../include/tiledbsoma/logger_public.h
-      ${CMAKE_CURRENT_SOURCE_DIR}/../include/tiledbsoma/managed_query.h
-      ${CMAKE_CURRENT_SOURCE_DIR}/../include/tiledbsoma/soma_reader.h
-      ${CMAKE_CURRENT_SOURCE_DIR}/../include/tiledbsoma/util.h
-      ${CMAKE_CURRENT_SOURCE_DIR}/../include/externals/span/span.hpp
+# Install header files and preserve directory structure
+# target_sources FILE_SET is preferred with cmake>=3.23
+install(DIRECTORY 
+  ${CMAKE_CURRENT_SOURCE_DIR}/../external/include/span
+  ${CMAKE_CURRENT_SOURCE_DIR}/../external/include/thread_pool
+  ${CMAKE_CURRENT_SOURCE_DIR}/../include/tiledbsoma 
+  TYPE INCLUDE
 )
 
 ############################################################
@@ -212,6 +209,7 @@ if (TILEDBSOMA_BUILD_CLI)
     PRIVATE
       ${CMAKE_CURRENT_SOURCE_DIR}
       ${CMAKE_CURRENT_SOURCE_DIR}/../include
+      ${CMAKE_CURRENT_SOURCE_DIR}/../external/include
       ${TILEDB_SOMA_EXPORT_HEADER_DIR}
       ${pybind11_INCLUDE_DIRS}
   )
