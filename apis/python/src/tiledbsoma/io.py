@@ -1,3 +1,4 @@
+from concurrent.futures import ThreadPoolExecutor
 from typing import Callable
 
 import anndata as ad
@@ -189,66 +190,123 @@ def _from_anndata_aux(
     soma.create_unless_exists()
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-    soma.obs.from_dataframe(dataframe=anndata.obs, extent=256)
-    soma._add_object(soma.obs)
-
-    soma.var.from_dataframe(dataframe=anndata.var, extent=2048)
-    soma._add_object(soma.var)
+    max_workers = soma._soma_options.max_thread_pool_workers
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-    soma.X.add_layer_from_matrix_and_dim_values(
-        matrix=anndata.X,
-        row_names=anndata.obs.index,
-        col_names=anndata.var.index,
-        layer_name=X_layer_name,
-    )
-
-    if anndata.layers is not None:
-        for layer_name in anndata.layers:
-            soma.X.add_layer_from_matrix_and_dim_values(
-                matrix=anndata.layers[layer_name],
+    futures = []
+    with ThreadPoolExecutor(max_workers=max_workers) as executor:
+        futures.append(
+            executor.submit(
+                soma.obs.from_dataframe,
+                dataframe=anndata.obs,
+                extent=256,
+            )
+        )
+        futures.append(
+            executor.submit(
+                soma.var.from_dataframe,
+                dataframe=anndata.var,
+                extent=2048,
+            )
+        )
+        futures.append(
+            executor.submit(
+                soma.X.add_layer_from_matrix_and_dim_values,
+                matrix=anndata.X,
                 row_names=anndata.obs.index,
                 col_names=anndata.var.index,
-                layer_name=layer_name,
+                layer_name=X_layer_name,
             )
+        )
 
+        if anndata.layers is not None:
+            for layer_name in anndata.layers:
+                futures.append(
+                    executor.submit(
+                        soma.X.add_layer_from_matrix_and_dim_values,
+                        matrix=anndata.layers[layer_name],
+                        row_names=anndata.obs.index,
+                        col_names=anndata.var.index,
+                        layer_name=layer_name,
+                    )
+                )
+
+    for future in futures:
+        future.result()
+
+    # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    soma._add_object(soma.obs)
+    soma._add_object(soma.var)
     soma._add_object(soma.X)
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     soma.obsm.create_unless_exists()
-    for key in anndata.obsm.keys():
-        soma.obsm.add_matrix_from_matrix_and_dim_values(
-            anndata.obsm[key], anndata.obs_names, key
-        )
-    soma._add_object(soma.obsm)
-
     soma.varm.create_unless_exists()
-    for key in anndata.varm.keys():
-        soma.varm.add_matrix_from_matrix_and_dim_values(
-            anndata.varm[key], anndata.var_names, key
-        )
-    soma._add_object(soma.varm)
-
     soma.obsp.create_unless_exists()
-    for key in anndata.obsp.keys():
-        soma.obsp.add_matrix_from_matrix_and_dim_values(
-            anndata.obsp[key], anndata.obs_names, key
-        )
-    soma._add_object(soma.obsp)
-
     soma.varp.create_unless_exists()
-    for key in anndata.varp.keys():
-        soma.varp.add_matrix_from_matrix_and_dim_values(
-            anndata.varp[key], anndata.var_names, key
-        )
-    soma._add_object(soma.varp)
 
-    # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    futures = []
+    with ThreadPoolExecutor(max_workers=max_workers) as executor:
+        for key in anndata.obsm.keys():
+            futures.append(
+                executor.submit(
+                    soma.obsm.add_matrix_from_matrix_and_dim_values,
+                    anndata.obsm[key],
+                    anndata.obs_names,
+                    key,
+                )
+            )
+
+        for key in anndata.varm.keys():
+            futures.append(
+                executor.submit(
+                    soma.varm.add_matrix_from_matrix_and_dim_values,
+                    anndata.varm[key],
+                    anndata.var_names,
+                    key,
+                )
+            )
+
+        for key in anndata.obsp.keys():
+            futures.append(
+                executor.submit(
+                    soma.obsp.add_matrix_from_matrix_and_dim_values,
+                    anndata.obsp[key],
+                    anndata.obs_names,
+                    key,
+                )
+            )
+
+        for key in anndata.varp.keys():
+            futures.append(
+                executor.submit(
+                    soma.varp.add_matrix_from_matrix_and_dim_values,
+                    anndata.varp[key],
+                    anndata.var_names,
+                    key,
+                )
+            )
+
+        if anndata.raw is not None:
+            futures.append(
+                executor.submit(
+                    soma.raw.from_anndata,
+                    anndata,
+                )
+            )
+
+    for future in futures:
+        future.result()
+
+    soma._add_object(soma.obsm)
+    soma._add_object(soma.varm)
+    soma._add_object(soma.obsp)
+    soma._add_object(soma.varp)
     if anndata.raw is not None:
-        soma.raw.from_anndata(anndata)
         soma._add_object(soma.raw)
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    # Already parallelized recursively
     if anndata.uns is not None:
         soma.uns.from_anndata_uns(anndata.uns)
         soma._add_object(soma.uns)
