@@ -246,15 +246,22 @@ def test_sparse_nd_array_read_write_sparse_tensor(
     assert a.exists()
     assert a.shape == shape
 
-    # make a random sample in the desired format
-    data = create_random_tensor(format, shape, np.float64)
+    # Make a random sample in the desired format
+    # As discussed in the SparseNdArray implementation, Arrow SparseTensor objects can't be zero-length
+    # so we must be prepared for StopIteration on reading them. It simplifies unit-test logic to use
+    # occupation density of 1.0 for this test.
+    data = create_random_tensor(format, shape, np.float64, 1.0)
     a.write_sparse_tensor(data)
     del a
 
     # Read back and validate
     b = soma.SparseNdArray(tmp_path.as_posix())
+
     t = next(b.read_sparse_tensor((slice(None),) * len(shape), format=format))
     assert tensors_are_same_value(t, data)
+
+    t = next(b.read_sparse_tensor((0,) * len(shape), format=format))
+    assert t.shape == shape
 
 
 @pytest.mark.parametrize("shape", [(10,), (23, 4), (5, 3, 1), (8, 4, 2, 30)])
@@ -388,3 +395,277 @@ def test_sparse_nd_array_reshape(tmp_path):
     a.create(type=pa.int32(), shape=(10, 10, 10))
     with pytest.raises(NotImplementedError):
         assert a.reshape((100, 10, 1))
+
+
+@pytest.mark.parametrize("read_format", ["csr", "csc"])
+@pytest.mark.parametrize(
+    "shape",
+    [(4,), (4, 5, 6)],
+)
+def test_csr_csc_2d_read(tmp_path, read_format, shape):
+
+    arrow_tensor = create_random_tensor(
+        format="coo",
+        shape=shape,
+        dtype=np.float32(),
+    )
+
+    snda = soma.SparseNdArray(tmp_path.as_posix())
+    snda.create(pa.float64(), shape)
+    snda.write_sparse_tensor(arrow_tensor)
+
+    with pytest.raises(ValueError):
+        next(snda.read_sparse_tensor(None, format=read_format))
+
+
+@pytest.mark.parametrize(
+    "write_format",
+    ["coo", "csr", "csc"],
+)
+@pytest.mark.parametrize(
+    # We want to test read_format == "none_of_the_above", to ensure it throws NotImplementedError,
+    # but that can't be gotten past typeguard.
+    "read_format",
+    ["table", "coo", "csr", "csc"],
+)
+@pytest.mark.parametrize(
+    "io",
+    [
+        # Coords is None
+        {
+            "shape": (4,),
+            "coords": None,
+            "dims": {
+                "soma_dim_0": [0, 1, 2, 3],
+            },
+            "throws": None,
+        },
+        # Coords has None in a slot
+        {
+            "shape": (4,),
+            "coords": (None,),
+            "dims": {
+                "soma_dim_0": [0, 1, 2, 3],
+            },
+            "throws": None,
+        },
+        # Coords has int in a slot
+        {
+            "shape": (4,),
+            "coords": (1,),
+            "dims": {
+                "soma_dim_0": [1],
+            },
+            "throws": None,
+        },
+        {
+            "shape": (6,),
+            "coords": [[2, 4]],
+            "dims": {
+                "soma_dim_0": [2, 4],
+            },
+            "throws": None,
+        },
+        {
+            "shape": (6,),
+            "coords": [[-2, -4]],
+            "dims": {
+                "soma_dim_0": [2, 4],
+            },
+            "throws": RuntimeError,  # Negative indices are not supported
+        },
+        {
+            "shape": (4, 6),
+            "coords": (0, 0),
+            "dims": {
+                "soma_dim_0": [0],
+                "soma_dim_1": [0],
+            },
+            "throws": None,
+        },
+        # Coords doesn't specify all dimensions, so the rest are implicit-all
+        {
+            "shape": (4, 6),
+            "coords": (0,),
+            "dims": {
+                "soma_dim_0": [0, 0, 0, 0, 0, 0],
+                "soma_dim_1": [0, 1, 2, 3, 4, 5],
+            },
+            "throws": None,
+        },
+        # Coords specifies too many dimensions
+        {
+            "shape": (4, 6),
+            "coords": (0, 0, 0),
+            "dims": {
+                "soma_dim_0": [0, 0, 0, 0, 0, 0],
+                "soma_dim_1": [0, 1, 2, 3, 4, 5],
+            },
+            "throws": ValueError,
+        },
+        {
+            "shape": (4, 5, 6),
+            "coords": (2, 3, 4),
+            "dims": {
+                "soma_dim_0": [2],
+                "soma_dim_1": [3],
+                "soma_dim_2": [4],
+            },
+            "throws": None,
+        },
+        {
+            "shape": (4, 6),
+            "coords": (3, 4),
+            "dims": {
+                "soma_dim_0": [3],
+                "soma_dim_1": [4],
+            },
+            "throws": None,
+        },
+        {
+            "shape": (4, 6),
+            "coords": (slice(1, 2), slice(3, 4)),
+            "dims": {
+                "soma_dim_0": [1, 1, 2, 2],
+                "soma_dim_1": [3, 4, 3, 4],
+            },
+            "throws": None,
+        },
+        {
+            "shape": (4, 6),
+            "coords": (slice(1, 2), [3, 4]),
+            "dims": {
+                "soma_dim_0": [1, 1, 2, 2],
+                "soma_dim_1": [3, 4, 3, 4],
+            },
+            "throws": None,
+        },
+        {
+            "shape": (4, 6),
+            "coords": (np.asarray([1, 2]), pa.array([3, 4])),
+            "dims": {
+                "soma_dim_0": [1, 1, 2, 2],
+                "soma_dim_1": [3, 4, 3, 4],
+            },
+            "throws": None,
+        },
+        {
+            "shape": (4, 6),
+            "coords": (np.asarray([[1, 2]]), pa.array([3, 4])),
+            "dims": {
+                "soma_dim_0": [1, 1, 2, 2],
+                "soma_dim_1": [3, 4, 3, 4],
+            },
+            "throws": ValueError,  # np.ndarray must be 1D
+        },
+        {
+            "shape": (4, 6),
+            "coords": (slice(None), slice(3, 4)),
+            "dims": {
+                "soma_dim_0": [0, 0, 1, 1, 2, 2, 3, 3],
+                "soma_dim_1": [3, 4, 3, 4, 3, 4, 3, 4],
+            },
+            "throws": None,
+        },
+        {
+            "shape": (4, 6),
+            "coords": (slice(1, 2), slice(None)),
+            "dims": {
+                "soma_dim_0": [1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2],
+                "soma_dim_1": [0, 1, 2, 3, 4, 5, 0, 1, 2, 3, 4, 5],
+            },
+            "throws": None,
+        },
+        {
+            "shape": (3, 4),
+            "coords": (slice(None), slice(None)),
+            "dims": {
+                "soma_dim_0": [
+                    0,
+                    0,
+                    0,
+                    0,
+                    1,
+                    1,
+                    1,
+                    1,
+                    2,
+                    2,
+                    2,
+                    2,
+                ],
+                "soma_dim_1": [
+                    0,
+                    1,
+                    2,
+                    3,
+                    0,
+                    1,
+                    2,
+                    3,
+                    0,
+                    1,
+                    2,
+                    3,
+                ],
+            },
+            "throws": None,
+        },
+        {
+            "shape": (4, 5, 6),
+            "coords": (slice(1, 2), slice(2, 3), slice(3, 4)),
+            "dims": {
+                "soma_dim_0": [1, 1, 1, 1, 2, 2, 2, 2],
+                "soma_dim_1": [2, 2, 3, 3, 2, 2, 3, 3],
+                "soma_dim_2": [3, 4, 3, 4, 3, 4, 3, 4],
+            },
+            "throws": None,
+        },
+        {
+            "shape": (4, 5, 6),
+            "coords": (slice(1, 2), slice(2, 3), slice(3, 4)),
+            "dims": {
+                "soma_dim_0": [1, 1, 1, 1, 2, 2, 2, 2],
+                "soma_dim_1": [2, 2, 3, 3, 2, 2, 3, 3],
+                "soma_dim_2": [3, 4, 3, 4, 3, 4, 3, 4],
+            },
+            "throws": None,
+        },
+    ],
+)
+def test_sparse_nd_array_table_slicing(tmp_path, io, write_format, read_format):
+
+    if (write_format == "csr" or write_format == "csc") and len(io["shape"]) != 2:
+        return  # Not supported by create_random_tensor
+    if (read_format == "csr" or read_format == "csc") and len(io["shape"]) != 2:
+        return  # Not supported by readback; exception-throwing for this is tested separately above.
+
+    # Set up contents
+    arrow_tensor = create_random_tensor(
+        format=write_format,
+        shape=io["shape"],
+        dtype=np.float32(),
+        density=1.0,
+    )
+
+    snda = soma.SparseNdArray(tmp_path.as_posix())
+    snda.create(pa.float64(), io["shape"])
+    snda.write_sparse_tensor(arrow_tensor)
+
+    if read_format == "table":
+        if io["throws"] is not None:
+            with pytest.raises(io["throws"]):
+                next(snda.read_table(io["coords"]))
+        else:
+            table = next(snda.read_table(io["coords"]))
+            for column_name in table.column_names:
+                if column_name in io["dims"]:
+                    assert table[column_name].to_pylist() == io["dims"][column_name]
+
+    else:
+        if io["throws"] is not None:
+            with pytest.raises(io["throws"]):
+                next(snda.read_sparse_tensor(io["coords"], format=read_format))
+        else:
+            tensor = next(snda.read_sparse_tensor(io["coords"], format=read_format))
+            assert tensor.shape == io["shape"]

@@ -39,6 +39,7 @@
 #include <catch2/matchers/catch_matchers_string.hpp>
 #include <catch2/matchers/catch_matchers_templated.hpp>
 #include <catch2/matchers/catch_matchers_vector.hpp>
+#include <numeric>
 #include <random>
 
 #include <tiledbsoma/util.h>

@@ -30,7 +30,7 @@
  * This file defines the ThreadPool class.
  */
 
-#include "thread_pool.h"
+#include "thread_pool/thread_pool.h"
 
 #include <cassert>
 #include <memory>
