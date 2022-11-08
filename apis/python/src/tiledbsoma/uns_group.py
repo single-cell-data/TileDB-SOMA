@@ -215,14 +215,16 @@ class UnsGroup(TileDBGroup):
 
         futures = []
         max_workers = self._soma_options.max_thread_pool_workers
+
+        threadsafe_args = {}
+        for key in uns.keys():
+            threadsafe_args[key] = (key, child_uris[key], uns[key])
+
         with ThreadPoolExecutor(max_workers=max_workers) as executor:
             for key in uns.keys():
-                component_uri = child_uris[key]
-                value = uns[key]
-
-                self._from_anndata_uns_aux(key, value, component_uri)
+                arg_key, arg_component_uri, arg_value = threadsafe_args[key]
                 future = executor.submit(
-                    self._from_anndata_uns_aux, key, value, component_uri
+                    self._from_anndata_uns_aux, arg_key, arg_value, arg_component_uri
                 )
                 futures.append(future)
 
