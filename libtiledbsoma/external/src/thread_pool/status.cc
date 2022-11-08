@@ -45,7 +45,7 @@
  * external synchronization.
  */
 
-#include "status.h"
+#include "thread_pool/status.h"
 #include <cassert>
 
 namespace tiledbsoma {

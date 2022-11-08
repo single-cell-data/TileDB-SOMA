@@ -38,7 +38,6 @@
 
 #include <tiledbsoma/tiledbsoma>
 
-#include "arrow_adapter.h"
 #include "query_condition.cc"
 
 #ifdef BUILD_COMMIT_HASH
@@ -53,6 +52,8 @@ using namespace tiledbsoma;
 
 namespace py = pybind11;
 using namespace py::literals;
+
+namespace tiledbsoma {
 
 /**
  * @brief Convert ColumnBuffer to Arrow array.
@@ -90,6 +91,13 @@ py::object to_table(std::shared_ptr<ArrayBuffers> array_buffers) {
     return pa_table_from_arrays(arrays, names);
 }
 
+std::string version() {
+    int major, minor, patch;
+    tiledb_version(&major, &minor, &patch);
+    return fmt::format(
+        "libtiledbsoma={}\nlibtiledb={}.{}.{}", VERSION, major, minor, patch);
+}
+
 /**
  * @brief pybind11 bindings
  *
@@ -99,16 +107,7 @@ PYBIND11_MODULE(libtiledbsoma, m) {
 
     m.doc() = "SOMA acceleration library";
 
-    m.def("version", []() {
-        int major, minor, patch;
-        tiledb_version(&major, &minor, &patch);
-        return fmt::format(
-            "libtiledbsoma={} libtiledb={}.{}.{}",
-            VERSION,
-            major,
-            minor,
-            patch);
-    });
+    m.def("version", []() { return version(); });
 
     m.def(
         "config_logging",
@@ -120,6 +119,15 @@ PYBIND11_MODULE(libtiledbsoma, m) {
 
     m.def("info", &LOG_INFO, "message"_a = "");
     m.def("debug", &LOG_DEBUG, "message"_a = "");
+
+    m.def("stats_enable", []() { tiledb::Stats::enable(); });
+    m.def("stats_disable", []() { tiledb::Stats::disable(); });
+    m.def("stats_reset", []() { tiledb::Stats::reset(); });
+    m.def("stats_dump", []() {
+        std::string stats;
+        tiledb::Stats::dump(&stats);
+        std::cout << version() << "\n" << stats;
+    });
 
     py::class_<SOMAReader>(m, "SOMAReader")
         .def(
@@ -218,7 +226,7 @@ PYBIND11_MODULE(libtiledbsoma, m) {
                     array_chunks.append(py_arrow_array);
                 }
 
-                for (auto& array : array_chunks) {
+                for (const pybind11::handle array : array_chunks) {
                     ArrowSchema arrow_schema;
                     ArrowArray arrow_array;
                     uintptr_t arrow_schema_ptr = (uintptr_t)(&arrow_schema);
@@ -279,3 +287,4 @@ PYBIND11_MODULE(libtiledbsoma, m) {
 
         .def("nnz", &SOMAReader::nnz);
 }
+}  // namespace tiledbsoma

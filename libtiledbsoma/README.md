@@ -1,59 +1,86 @@
-# Build `tiledbsoma` from source
+# Developer Build Instructions
 
-Run the [../scripts/setup](../scripts/setup) script to execute these steps.
+## System Dependencies
 
-## Setup Python Environment (optional)
+* C++17 compiler
+* Python 3.7+
 
-For example, create and activate a python venv:
+Run these commands to setup a fresh Ubuntu 22.04 instance (tested on x86 and Arm):
+```
+sudo apt update
+sudo apt install -y g++ make pkg-config
+sudo apt install -y python3 python-is-python3 python3.10-venv python-dev-is-python3
+```
+---
+## Clone the source code
+```
+git clone https://github.com/single-cell-data/TileDB-SOMA.git
+cd TileDB-SOMA
+```
+---
+## Set up a Python Virtual Environment
+Create a python virtual environment and install the [developer requirements](../apis/python/requirements_dev.txt):
 ```
 python -m venv test/tiledbsoma
 source test/tiledbsoma/bin/activate
+pip install -r apis/python/requirements_dev.txt
+```
+---
+## Python-only Development
+Developers who do not need to modify the C++ code must use these build commands:
+```
+pip install -e apis/python
+pytest apis/python
+```
+This approach leverages the build-system defined in [pyproject.toml](../apis/python/pyproject.toml) to reduce the number of dependencies required to build `tiledbsoma`.
+
+> **Note** - Running `python setup.py develop` is not supported.
+
+---
+
+## Python and C++ Development
+
+Developers who plan to modify the C++ code must use these build commands: 
+
+```
+make install
+make test
 ```
 
-## Clean
+> **Note** - These steps avoid issues when trying to use `cmake` from the [pyproject.toml](../apis/python/pyproject.toml) build-system overlay environment.
 
-Remove old build files:
-```
-rm -rf build dist
-rm -f apis/python/src/tiledbsoma/libtiledb.*
-rm -f apis/python/src/tiledbsoma/libtiledbsoma.*
-```
+> **Note** - All CI and local builds of python, R, and C++ leverage the [../scripts/bld](../scripts/bld) build script, providing a common source for the build flows.
 
-## Build
+> **Note** - Common developer use cases are captured in the [Makefile](../Makefile) described below.
 
-```
-cd apis/python
-pip install -e .
-```
+### Developer Makefile
 
-## Check
+The [Makefile](../Makefile) automates common developer use cases and promotes sharing of consistent build flows, including the following:
 
 ```
-python -c "import tiledbsoma.libtiledbsoma; print(tiledbsoma.libtiledbsoma.version())"
-```
+# Build libtiledbsoma, install the project in editable mode
+make install
 
-## Test
+# Run the tests, installing test data if needed
+make test
 
-Install test data:
-```
-cd ../..
-mkdir -p test
-./apis/python/tools/ingestor \
-  --soco \
-  -o test/soco \
-  -n \
-  data/pbmc3k_processed.h5ad \
-  data/10x-pbmc-multiome-v1.0/subset_100_100.h5ad
-```
+# Build debug versions libtiledbsoma and libtiledb, install the project in editable mode
+make install-debug
 
-Run pytests:
+# Remove the C++ build, dist, and test data directories
+make clean
+
+# Build a static libtiledbsoma library for R
+make r-build
+
+# Incrementally compile modified C++ code and install in the editable python project
+make
 ```
-pytest -v --durations=0 libtiledbsoma
-```
+> **Note** - Please update the `Makefile` to share new build flows with other developers.
+
+---
 
 ## Notes
-
-### C++ Prerequisites
 
 A build system with `libfmt` and `libspdlog` installed may conflict with the required versions for `tiledbsoma`. If that is the case, this configuration is known-good on Ubuntu 22.04:
 
