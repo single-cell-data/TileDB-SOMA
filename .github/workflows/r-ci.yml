@@ -24,9 +24,9 @@ jobs:
       - name: Dependencies
         run: cd apis/r && tools/r-ci.sh install_all
 
-      - name: Binary Dependencies
-        run: cd apis/r && tools/r-ci.sh install_aptget cmake
-        
+      - name: CMake
+        uses: lukka/get-cmake@latest
+
       - name: MkVars
         run: mkdir ~/.R && echo "CXX17FLAGS=-Wno-deprecated-declarations -Wno-deprecated" > ~/.R/Makevars
 
