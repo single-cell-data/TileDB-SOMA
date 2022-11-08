@@ -217,7 +217,7 @@ PYBIND11_MODULE(libtiledbsoma, m) {
                     array_chunks.append(py_arrow_array);
                 }
 
-                for (auto& array : array_chunks) {
+                for (const pybind11::handle array : array_chunks) {
                     ArrowSchema arrow_schema;
                     ArrowArray arrow_array;
                     uintptr_t arrow_schema_ptr = (uintptr_t)(&arrow_schema);
