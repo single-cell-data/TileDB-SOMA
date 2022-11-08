@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from concurrent.futures import ThreadPoolExecutor
 from typing import Any, Iterator, Mapping, Optional, Sequence, Union
 
 import numpy as np
@@ -129,28 +130,6 @@ class UnsGroup(TileDBGroup):
         return "\n".join(strings)
 
     # ----------------------------------------------------------------
-#from concurrent.futures import ThreadPoolExecutor
-
-#        futures = []
-#        with ThreadPoolExecutor(
-#            max_workers=self._soma_options.max_thread_pool_workers
-#        ) as executor:
-#            for name, uri in self.get_member_names_to_uris().items():
-#                if name not in self._somas:
-#                    future = executor.submit(self._populate_aux, name=name, uri=uri)
-#                    futures.append(future)
-#
-#        for future in futures:
-#            name, soma = future.result()
-#            self._somas[name] = soma
-
-#    def _populate_aux(self, name: str, uri: str) -> Tuple[str, SOMA]:
-#        """
-#        Helper method for ``_populate``.``
-#        """
-#        return (name, SOMA(uri=uri, name=name, parent=self, ctx=self._ctx))
-
-    # ----------------------------------------------------------------
     def _from_anndata_uns_aux(self, key: str, value: Any, component_uri: str) -> None:
         """
         Helper method for `from_anndata_uns`.
@@ -173,9 +152,7 @@ class UnsGroup(TileDBGroup):
             # support nested cells, AKA "list" type.
             #
             # This could, however, be converted to a dataframe and ingested that way.
-            log_io(
-                None, f"{self._indent}Skipping structured array: {component_uri}"
-            )
+            log_io(None, f"{self._indent}Skipping structured array: {component_uri}")
             return
 
         if isinstance(value, Mapping):
@@ -236,11 +213,21 @@ class UnsGroup(TileDBGroup):
         # See comments in _get_child_uris
         child_uris = self._get_child_uris(list(uns.keys()))
 
-        for key in uns.keys():
-            component_uri = child_uris[key]
-            value = uns[key]
+        futures = []
+        max_workers = self._soma_options.max_thread_pool_workers
+        with ThreadPoolExecutor(max_workers=max_workers) as executor:
+            for key in uns.keys():
+                component_uri = child_uris[key]
+                value = uns[key]
 
-            self._from_anndata_uns_aux(key, value, component_uri)
+                self._from_anndata_uns_aux(key, value, component_uri)
+                future = executor.submit(
+                    self._from_anndata_uns_aux, key, value, component_uri
+                )
+                futures.append(future)
+
+        for future in futures:
+            future.result()
 
         log_io(
             f"Wrote {self.nested_name}",
