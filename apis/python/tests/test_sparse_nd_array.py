@@ -397,13 +397,42 @@ def test_sparse_nd_array_reshape(tmp_path):
         assert a.reshape((100, 10, 1))
 
 
+@pytest.mark.parametrize("read_format", ["csr", "csc"])
+@pytest.mark.parametrize(
+    "shape",
+    [(4,), (4, 5, 6)],
+)
+def test_csr_csc_2d_read(tmp_path, read_format, shape):
+
+    arrow_tensor = create_random_tensor(
+        format="coo",
+        shape=shape,
+        dtype=np.float32(),
+    )
+
+    snda = soma.SparseNdArray(tmp_path.as_posix())
+    snda.create(pa.float64(), shape)
+    snda.write_sparse_tensor(arrow_tensor)
+
+    with pytest.raises(ValueError):
+        next(snda.read_sparse_tensor(None, format=read_format))
+
+
+@pytest.mark.parametrize(
+    "write_format",
+    ["coo", "csr", "csc"],
+)
+@pytest.mark.parametrize(
+    # We want to test read_format == "none_of_the_above", to ensure it throws NotImplementedError,
+    # but that can't be gotten past typeguard.
+    "read_format",
+    ["table", "coo", "csr", "csc"],
+)
 @pytest.mark.parametrize(
     "io",
     [
         # Coords is None
         {
-            "write_format": "coo",
-            "read_format": "table",
             "shape": (4,),
             "coords": None,
             "dims": {
@@ -413,8 +442,6 @@ def test_sparse_nd_array_reshape(tmp_path):
         },
         # Coords has None in a slot
         {
-            "write_format": "coo",
-            "read_format": "table",
             "shape": (4,),
             "coords": (None,),
             "dims": {
@@ -424,8 +451,6 @@ def test_sparse_nd_array_reshape(tmp_path):
         },
         # Coords has int in a slot
         {
-            "write_format": "coo",
-            "read_format": "table",
             "shape": (4,),
             "coords": (1,),
             "dims": {
@@ -434,8 +459,6 @@ def test_sparse_nd_array_reshape(tmp_path):
             "throws": None,
         },
         {
-            "write_format": "coo",
-            "read_format": "table",
             "shape": (6,),
             "coords": [[2, 4]],
             "dims": {
@@ -444,8 +467,6 @@ def test_sparse_nd_array_reshape(tmp_path):
             "throws": None,
         },
         {
-            "write_format": "coo",
-            "read_format": "table",
             "shape": (6,),
             "coords": [[-2, -4]],
             "dims": {
@@ -454,8 +475,6 @@ def test_sparse_nd_array_reshape(tmp_path):
             "throws": RuntimeError,  # Negative indices are not supported
         },
         {
-            "write_format": "coo",
-            "read_format": "table",
             "shape": (4, 6),
             "coords": (0, 0),
             "dims": {
@@ -466,8 +485,6 @@ def test_sparse_nd_array_reshape(tmp_path):
         },
         # Coords doesn't specify all dimensions, so the rest are implicit-all
         {
-            "write_format": "coo",
-            "read_format": "table",
             "shape": (4, 6),
             "coords": (0,),
             "dims": {
@@ -478,8 +495,6 @@ def test_sparse_nd_array_reshape(tmp_path):
         },
         # Coords specifies too many dimensions
         {
-            "write_format": "coo",
-            "read_format": "table",
             "shape": (4, 6),
             "coords": (0, 0, 0),
             "dims": {
@@ -489,8 +504,6 @@ def test_sparse_nd_array_reshape(tmp_path):
             "throws": ValueError,
         },
         {
-            "write_format": "coo",
-            "read_format": "table",
             "shape": (4, 5, 6),
             "coords": (2, 3, 4),
             "dims": {
@@ -501,8 +514,6 @@ def test_sparse_nd_array_reshape(tmp_path):
             "throws": None,
         },
         {
-            "write_format": "coo",
-            "read_format": "table",
             "shape": (4, 6),
             "coords": (3, 4),
             "dims": {
@@ -512,8 +523,6 @@ def test_sparse_nd_array_reshape(tmp_path):
             "throws": None,
         },
         {
-            "write_format": "coo",
-            "read_format": "table",
             "shape": (4, 6),
             "coords": (slice(1, 2), slice(3, 4)),
             "dims": {
@@ -523,8 +532,6 @@ def test_sparse_nd_array_reshape(tmp_path):
             "throws": None,
         },
         {
-            "write_format": "coo",
-            "read_format": "table",
             "shape": (4, 6),
             "coords": (slice(1, 2), [3, 4]),
             "dims": {
@@ -534,8 +541,6 @@ def test_sparse_nd_array_reshape(tmp_path):
             "throws": None,
         },
         {
-            "write_format": "coo",
-            "read_format": "table",
             "shape": (4, 6),
             "coords": (np.asarray([1, 2]), pa.array([3, 4])),
             "dims": {
@@ -545,8 +550,6 @@ def test_sparse_nd_array_reshape(tmp_path):
             "throws": None,
         },
         {
-            "write_format": "coo",
-            "read_format": "table",
             "shape": (4, 6),
             "coords": (np.asarray([[1, 2]]), pa.array([3, 4])),
             "dims": {
@@ -556,8 +559,6 @@ def test_sparse_nd_array_reshape(tmp_path):
             "throws": ValueError,  # np.ndarray must be 1D
         },
         {
-            "write_format": "coo",
-            "read_format": "table",
             "shape": (4, 6),
             "coords": (slice(None), slice(3, 4)),
             "dims": {
@@ -567,8 +568,6 @@ def test_sparse_nd_array_reshape(tmp_path):
             "throws": None,
         },
         {
-            "write_format": "coo",
-            "read_format": "table",
             "shape": (4, 6),
             "coords": (slice(1, 2), slice(None)),
             "dims": {
@@ -578,8 +577,6 @@ def test_sparse_nd_array_reshape(tmp_path):
             "throws": None,
         },
         {
-            "write_format": "coo",
-            "read_format": "table",
             "shape": (3, 4),
             "coords": (slice(None), slice(None)),
             "dims": {
@@ -615,8 +612,6 @@ def test_sparse_nd_array_reshape(tmp_path):
             "throws": None,
         },
         {
-            "write_format": "coo",
-            "read_format": "table",
             "shape": (4, 5, 6),
             "coords": (slice(1, 2), slice(2, 3), slice(3, 4)),
             "dims": {
@@ -627,8 +622,6 @@ def test_sparse_nd_array_reshape(tmp_path):
             "throws": None,
         },
         {
-            "write_format": "coo",
-            "read_format": "coo",
             "shape": (4, 5, 6),
             "coords": (slice(1, 2), slice(2, 3), slice(3, 4)),
             "dims": {
@@ -638,38 +631,18 @@ def test_sparse_nd_array_reshape(tmp_path):
             },
             "throws": None,
         },
-        {
-            "write_format": "coo",
-            "read_format": "csr",
-            "shape": (4,),
-            "coords": None,
-            "dims": None,
-            "throws": ValueError,  # CSR is supported only for 2D arrays
-        },
-        {
-            "write_format": "coo",
-            "read_format": "csr",
-            "shape": (4, 5, 6),
-            "coords": None,
-            "dims": None,
-            "throws": ValueError,  # CSR is supported only for 2D arrays
-        },
-        # This can't be gotten past typeguard:
-        #        {
-        #            "write_format": "bogus_format",
-        #            "read_format": "csr",
-        #            "shape": (4, 5, 6),
-        #            "coords": None,
-        #            "dims": None,
-        #            "throws": NotImplementedError, # No such format
-        #        },
     ],
 )
-def test_sparse_nd_array_table_slicing(tmp_path, io):
+def test_sparse_nd_array_table_slicing(tmp_path, io, write_format, read_format):
+
+    if (write_format == "csr" or write_format == "csc") and len(io["shape"]) != 2:
+        return  # Not supported by create_random_tensor
+    if (read_format == "csr" or read_format == "csc") and len(io["shape"]) != 2:
+        return  # Not supported by readback; exception-throwing for this is tested separately above.
 
     # Set up contents
     arrow_tensor = create_random_tensor(
-        format=io["write_format"],
+        format=write_format,
         shape=io["shape"],
         dtype=np.float32(),
         density=1.0,
@@ -678,8 +651,6 @@ def test_sparse_nd_array_table_slicing(tmp_path, io):
     snda = soma.SparseNdArray(tmp_path.as_posix())
     snda.create(pa.float64(), io["shape"])
     snda.write_sparse_tensor(arrow_tensor)
-
-    read_format = io["read_format"]
 
     if read_format == "table":
         if io["throws"] is not None:

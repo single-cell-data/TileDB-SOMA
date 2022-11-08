@@ -385,7 +385,7 @@ class SparseNdArray(TileDBArray):
                 A[sp.row, sp.col] = sp.data
             return
 
-        raise TypeError("Unsuppoted tensor type")
+        raise TypeError("Unsupported tensor type")
 
     def write_table(self, arrow_table: pa.Table) -> None:
         """
