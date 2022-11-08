@@ -148,6 +148,8 @@ def test_soma_reader_dim_mixed():
 def test_soma_reader_obs_slice_x():
     """Read X/data sliced by obs."""
 
+    clib.stats_enable()
+
     # read obs
     # ---------------------------------------------------------------1
     name = "obs"
@@ -171,6 +173,9 @@ def test_soma_reader_obs_slice_x():
     assert sr.results_complete()
     assert obs.num_rows == 60
 
+    clib.stats_dump()
+    clib.stats_reset()
+
     # read X/data
     # ---------------------------------------------------------------1
     name = "X/data"
@@ -187,6 +192,9 @@ def test_soma_reader_obs_slice_x():
         total_num_rows += x_data.num_rows
 
     assert total_num_rows == 110280
+
+    clib.stats_dump()
+    clib.stats_disable()
 
 
 def test_soma_reader_column_names():

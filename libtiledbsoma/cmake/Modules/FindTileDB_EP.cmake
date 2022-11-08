@@ -114,7 +114,7 @@ else()
   endif()
 endif()
 
-if (EP_TILEDB_BUILT AND TARGET TileDB::tiledb_shared)
+if (EP_TILEDB_BUILT AND TARGET TileDB::tiledb_shared AND NOT TILEDBSOMA_BUILD_R)
   include(TileDBCommon)
   install_target_libs(TileDB::tiledb_shared)
 endif()
