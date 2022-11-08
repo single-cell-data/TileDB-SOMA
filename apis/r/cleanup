@@ -8,4 +8,5 @@ rm -r -f \
    inst/tiledb/ \
    src/include/ \
    src/lib \
-   src/cmake_log.txt
+   src/cmake_log.txt \
+   src/build 

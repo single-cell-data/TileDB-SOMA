@@ -30,8 +30,12 @@ jobs:
       - name: MkVars
         run: mkdir ~/.R && echo "CXX17FLAGS=-Wno-deprecated-declarations -Wno-deprecated" > ~/.R/Makevars
 
+      - name: Copy libtiledbsoma
+        ## we build 'as in an R package' with all sources within apis/r/
+        run: cd apis/r && ./copy_source.sh
+        
       - name: Test
-        run: cd apis/r && ./configure && tools/r-ci.sh run_tests
+        run: cd apis/r && tools/r-ci.sh run_tests
 
       - name: Coverage
         if: ${{ matrix.os == 'ubuntu-latest' }}

@@ -13,10 +13,20 @@ fi
 if test -f src/lib/libtiledbsoma.a; then
     echo "** static library present"
 else
-    echo "** so static library present"
-    if test -d ../../libtiledbsoma; then
-        (cd ../../; make prefix=apis/r/src r-build > apis/r/src/cmake_log.txt; )
-        echo "** static library made; build log in 'src/cmake_log.txt'"
+    echo "** no static library present"
+    #if test -d ../../libtiledbsoma; then
+    #    (cd ../../; make prefix=apis/r/src r-build > apis/r/src/cmake_log.txt; )
+    #    echo "** static library made; build log in 'src/cmake_log.txt'"
+    #elif test -d src/libtiledbsoma; then
+    if test -d src/libtiledbsoma; then
+        cd src
+        mkdir -p build
+        cmake -B build -S libtiledbsoma -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=. -DOVERRIDE_INSTALL_PREFIX=OFF -DTILEDBSOMA_BUILD_R=ON > cmake_log.txt
+        cmake --build build -j 2 >> cmake_log.txt
+        cmake --build build --target install-libtiledbsoma >> cmake_log.txt
+        rm -rf build
+        cd ..
+        echo "** static library made; NO build log in 'src/cmake_log.txt'"
     else
         echo "** no sources, exiting"
         exit 1
