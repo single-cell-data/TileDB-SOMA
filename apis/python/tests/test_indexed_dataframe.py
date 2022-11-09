@@ -525,12 +525,12 @@ def make_multiply_indexed_dataframe(tmp_path, index_column_names: List[str]):
             "throws": None,
         },
         # 2D: indexing slot is None
-        {
-            "index_column_names": ["index2", "index3"],
-            "ids": [None, None],
-            "A": [10, 11, 12, 13, 14, 15],
-            "throws": None,
-        },
+        # {
+        #    "index_column_names": ["index2", "index3"],
+        #    "ids": [None, None],
+        #    "A": [10, 11, 12, 13, 14, 15],
+        #    "throws": None,
+        # },
         #        # 2D: indexing slot is int
         #        {
         #            "index_column_names": ["index2", "index3"],
