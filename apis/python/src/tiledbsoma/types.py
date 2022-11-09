@@ -39,7 +39,13 @@ DenseNdCoordinates = Tuple[DenseCoordinates, ...]
 # we choose to emphasize that the argument-slots this is used in are not "optional"
 # arguments -- they're required argments, which can take the `None` value.
 SparseIndexedDataFrameCoordinate = Union[
-    None, Union[int, slice, Sequence[int], pa.Array, pa.ChunkedArray, np.ndarray]
+    None,
+    int,
+    slice,
+    Sequence[int],
+    pa.Array,
+    pa.ChunkedArray,
+    np.ndarray,
 ]
 SparseIndexedDataFrameCoordinates = Sequence[SparseIndexedDataFrameCoordinate]
 
