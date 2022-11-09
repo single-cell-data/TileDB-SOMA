@@ -58,10 +58,10 @@ class TileDBGroup(TileDBObject):
                 self._set_object_type_metadata()
             except tiledb.cc.TileDBError as e:
                 stre = str(e)
-                if (
-                    "already exists" not in stre
-                ):  # This is fine in case of parallel creates
-                    raise e
+                # This is fine in case of parallel creates
+                if "already exists" not in stre:
+                    # bare raise will raise the current exception without rewriting the stack trace
+                    raise
 
     def _set_object_type_metadata_recursively(self) -> None:
         """
