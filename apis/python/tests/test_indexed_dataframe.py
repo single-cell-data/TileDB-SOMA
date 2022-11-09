@@ -238,55 +238,9 @@ def test_columns(tmp_path):
 @pytest.fixture
 def make_dataframe(request):
     index_type = request.param
-    print()
-    print("================================================================")
-    print("INDEX_TYPE", index_type)
 
-    foo = {
-        pa.string(): ["A", "B", "C"],
-        pa.large_string(): ["A", "B", "C"],
-        pa.binary(): [b"A", b"B", b"C"],
-        pa.large_binary(): [b"A", b"B", b"C"],
-        **{
-            t: np.arange(3, dtype=t.to_pandas_dtype())
-            for t in (
-                pa.int8(),
-                pa.uint8(),
-                pa.int16(),
-                pa.uint16(),
-                pa.int32(),
-                pa.uint32(),
-                pa.int64(),
-                pa.uint64(),
-                pa.float32(),
-                pa.float64(),
-            )
-        },
-    }
-    print("FOO")
-    print(foo)
-
-    # {
-    #    DataType(string): ['A', 'B', 'C'],
-    #    DataType(large_string): ['A', 'B', 'C'],
-    #    DataType(binary): [b'A', b'B', b'C'],
-    #    DataType(large_binary): [b'A', b'B', b'C'],
-    #    DataType(int8): array([0, 1, 2], dtype=int8),
-    #    DataType(uint8): array([0, 1, 2], dtype=uint8),
-    #    DataType(int16): array([0, 1, 2], dtype=int16),
-    #    DataType(uint16): array([0, 1, 2], dtype=uint16),
-    #    DataType(int32): array([0, 1, 2], dtype=int32),
-    #    DataType(uint32): array([0, 1, 2], dtype=uint32),
-    #    DataType(int64): array([0, 1, 2]),
-    #    DataType(uint64): array([0, 1, 2], dtype=uint64),
-    #    DataType(float): array([0., 1., 2.], dtype=float32),
-    #    DataType(double): array([0., 1., 2.])
-    # }
-
-    print("BAR")
-    print(foo[index_type])
-
-    print("================================================================")
+    # TODO: https://github.com/single-cell-data/TileDB-SOMA/issues/518
+    # Check against all `SUPPORTED_ARROW_TYPES` in tests/test_type_system.py`
 
     index = {
         pa.string(): ["A", "B", "C"],
