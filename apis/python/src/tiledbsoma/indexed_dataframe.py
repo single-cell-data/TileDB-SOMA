@@ -263,7 +263,7 @@ class IndexedDataFrame(TileDBArray):
                         if (
                             dim_ids == []
                         ):  # TileDB-Py maps [] to all; we want it to map to none.
-                            # TODO: find out how to best implement this
+                            # TODO: Fix this on https://github.com/single-cell-data/TileDB-SOMA/issues/484
                             pass
                         else:
                             sr.set_dim_points(dim_name, dim_ids)
@@ -427,6 +427,10 @@ def _validate_schema(schema: pa.Schema, index_column_names: Sequence[str]) -> pa
         # https://github.com/single-cell-data/TileDB-SOMA/issues/418
         # https://github.com/single-cell-data/TileDB-SOMA/issues/419
         assert schema.field(index_column_name).type in [
+            pa.int8(),
+            pa.uint8(),
+            pa.int16(),
+            pa.uint16(),
             pa.int32(),
             pa.uint32(),
             pa.int64(),
