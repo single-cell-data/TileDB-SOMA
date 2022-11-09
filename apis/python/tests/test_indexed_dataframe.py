@@ -452,57 +452,57 @@ def make_multiply_indexed_dataframe(tmp_path, index_column_names: List[str]):
             "A": [11, 13],
             "throws": None,
         },
-        #        {
-        #            "index_column_names": ["index1"],
-        #            "ids": [np.asarray([[1, 3], [2, 4]])],  # Error since 2D array in the slot
-        #            "A": [11, 13],
-        #            "throws": ValueError,
-        #        },
-        #        # 1D: indexing slot is slice
-        #        {
-        #            "index_column_names": ["index1"],
-        #            "ids": [
-        #                slice(None)
-        #            ],  # Indexing slot is none-slice i.e. `[:]` which is like None
-        #            "A": [10, 11, 12, 13, 14, 15],
-        #            "throws": None,
-        #        },
-        #        {
-        #            "index_column_names": ["index1"],
-        #            "ids": [slice(1, 3)],  # Indexing slot is double-ended slice
-        #            "A": [11, 12, 13],
-        #            "throws": None,
-        #        },
-        #        {
-        #            "index_column_names": ["index1"],
-        #            "ids": [slice(None, None)],  # Indexing slot is slice-all
-        #            "A": [10, 11, 12, 13, 14, 15],
-        #            "throws": None,
-        #        },
-        #        {
-        #            "index_column_names": ["index1"],
-        #            "ids": [slice(None, 3)],  # Half-slices are not supported yet
-        #            "A": None,
-        #            "throws": ValueError,
-        #        },
-        #        {
-        #            "index_column_names": ["index1"],
-        #            "ids": [slice(1, None)],  # Half-slices are not supported yet
-        #            "A": None,
-        #            "throws": ValueError,
-        #        },
-        #        {
-        #            "index_column_names": ["index1"],
-        #            "ids": [slice(1, 5, 2)],  # Slice step must be 1 or None
-        #            "A": None,
-        #            "throws": ValueError,
-        #        },
-        #        {
-        #            "index_column_names": ["index1"],
-        #            "ids": [slice(-2, -1)],  # Negative slices are not supported
-        #            "A": None,
-        #            "throws": ValueError,
-        #        },
+        {
+            "index_column_names": ["index1"],
+            "ids": [np.asarray([[1, 3], [2, 4]])],  # Error since 2D array in the slot
+            "A": [11, 13],
+            "throws": ValueError,
+        },
+        # 1D: indexing slot is slice
+        {
+            "index_column_names": ["index1"],
+            "ids": [
+                slice(None)
+            ],  # Indexing slot is none-slice i.e. `[:]` which is like None
+            "A": [10, 11, 12, 13, 14, 15],
+            "throws": None,
+        },
+        {
+            "index_column_names": ["index1"],
+            "ids": [slice(1, 3)],  # Indexing slot is double-ended slice
+            "A": [11, 12, 13],
+            "throws": None,
+        },
+        {
+            "index_column_names": ["index1"],
+            "ids": [slice(None, None)],  # Indexing slot is slice-all
+            "A": [10, 11, 12, 13, 14, 15],
+            "throws": None,
+        },
+        {
+            "index_column_names": ["index1"],
+            "ids": [slice(None, 3)],  # Half-slices are not supported yet
+            "A": None,
+            "throws": ValueError,
+        },
+        {
+            "index_column_names": ["index1"],
+            "ids": [slice(1, None)],  # Half-slices are not supported yet
+            "A": None,
+            "throws": ValueError,
+        },
+        {
+            "index_column_names": ["index1"],
+            "ids": [slice(1, 5, 2)],  # Slice step must be 1 or None
+            "A": None,
+            "throws": ValueError,
+        },
+        {
+            "index_column_names": ["index1"],
+            "ids": [slice(-2, -1)],  # Negative slices are not supported
+            "A": None,
+            "throws": ValueError,
+        },
         #        # 1D: indexing slot is of invalid type
         #        # TODO: I want to test this but Typeguard fails the test since it already knows strings are not
         #        # valid until we implement
