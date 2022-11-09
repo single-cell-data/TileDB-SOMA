@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from concurrent.futures import ThreadPoolExecutor
 from typing import Any, Iterator, Mapping, Optional, Sequence, Union
 
 import numpy as np
@@ -129,6 +130,73 @@ class UnsGroup(TileDBGroup):
         return "\n".join(strings)
 
     # ----------------------------------------------------------------
+    def _from_anndata_uns_aux(self, key: str, value: Any, component_uri: str) -> None:
+        """
+        Helper method for `from_anndata_uns`.
+        """
+
+        if key == "rank_genes_groups":
+            # TODO:
+            # This is of type 'structured array':
+            # https://numpy.org/doc/stable/user/basics.rec.html
+            #
+            # >>> a.uns['rank_genes_groups']['names'].dtype
+            # dtype([('0', 'O'), ('1', 'O'), ('2', 'O'), ('3', 'O'), ('4', 'O'), ('5', 'O'), ('6', 'O'), ('7', 'O')])
+            # >>> type(a.uns['rank_genes_groups']['names'])
+            # <class 'numpy.ndarray'>
+            #
+            # We don’t have a way to model this directly in TileDB schema right now. We support
+            # multiplicities of a single scalar type, e.g. a record array with cell_val_num==3
+            # and float32 slots (which would correspond to numpy record array
+            # np.dtype([("field1", "f4"), ("field2", "f4"), ("field3", "f4",)])). We don’t
+            # support nested cells, AKA "list" type.
+            #
+            # This could, however, be converted to a dataframe and ingested that way.
+            log_io(None, f"{self._indent}Skipping structured array: {component_uri}")
+            return
+
+        if isinstance(value, Mapping):
+            # Nested data, e.g. a.uns['draw-graph']['params']['layout']
+            subgroup = UnsGroup(uri=component_uri, name=key, parent=self)
+            subgroup.from_anndata_uns(value)
+            self._add_object(subgroup)
+            return
+
+        # Write scalars as metadata, not length-1 component arrays
+        if isinstance(value, np.str_):
+            with self._open("w") as G:
+                G.meta[key] = value
+            # TODO: WUT
+            # Needs explicit cast from numpy.str_ to str for tiledb.from_numpy
+            return
+
+        if isinstance(value, (int, float, str)):
+            # Nominally this is unit-test data
+            with self._open("w") as G:
+                G.meta[key] = value
+            return
+
+        # Everything else is a component array, or unhandleable
+        array = UnsArray(uri=component_uri, name=key, parent=self)
+
+        if isinstance(value, pd.DataFrame):
+            array.from_pandas_dataframe(value)
+            self._add_object(array)
+            return
+
+        if isinstance(value, sp.csr_matrix):
+            array.from_scipy_csr(value)
+            self._add_object(array)
+            return
+
+        if array._maybe_from_numpyable_object(value):
+            self._add_object(array)
+            return
+
+        logger.error(
+            f"{self._indent}Skipping unrecognized type: {component_uri} {type(value)}",
+        )
+
     def from_anndata_uns(self, uns: Mapping[str, Any]) -> None:
         """
         Populates the uns group for the soma object.
@@ -145,71 +213,18 @@ class UnsGroup(TileDBGroup):
         # See comments in _get_child_uris
         child_uris = self._get_child_uris(list(uns.keys()))
 
-        for key in uns.keys():
-            component_uri = child_uris[key]
-            value = uns[key]
+        futures = []
+        max_workers = self._soma_options.max_thread_pool_workers
 
-            if key == "rank_genes_groups":
-                # TODO:
-                # This is of type 'structured array':
-                # https://numpy.org/doc/stable/user/basics.rec.html
-                #
-                # >>> a.uns['rank_genes_groups']['names'].dtype
-                # dtype([('0', 'O'), ('1', 'O'), ('2', 'O'), ('3', 'O'), ('4', 'O'), ('5', 'O'), ('6', 'O'), ('7', 'O')])
-                # >>> type(a.uns['rank_genes_groups']['names'])
-                # <class 'numpy.ndarray'>
-                #
-                # We don’t have a way to model this directly in TileDB schema right now. We support
-                # multiplicities of a single scalar type, e.g. a record array with cell_val_num==3
-                # and float32 slots (which would correspond to numpy record array
-                # np.dtype([("field1", "f4"), ("field2", "f4"), ("field3", "f4",)])). We don’t
-                # support nested cells, AKA "list" type.
-                #
-                # This could, however, be converted to a dataframe and ingested that way.
-                log_io(
-                    None, f"{self._indent}Skipping structured array: {component_uri}"
+        with ThreadPoolExecutor(max_workers=max_workers) as executor:
+            for key in uns.keys():
+                future = executor.submit(
+                    self._from_anndata_uns_aux, key, uns[key], child_uris[key]
                 )
-                continue
+                futures.append(future)
 
-            if isinstance(value, Mapping):
-                # Nested data, e.g. a.uns['draw-graph']['params']['layout']
-                subgroup = UnsGroup(uri=component_uri, name=key, parent=self)
-                subgroup.from_anndata_uns(value)
-                self._add_object(subgroup)
-                continue
-
-            # Write scalars as metadata, not length-1 component arrays
-            if isinstance(value, np.str_):
-                with self._open("w") as G:
-                    G.meta[key] = value
-                # TODO: WUT
-                # Needs explicit cast from numpy.str_ to str for tiledb.from_numpy
-                continue
-
-            if isinstance(value, (int, float, str)):
-                # Nominally this is unit-test data
-                with self._open("w") as G:
-                    G.meta[key] = value
-                continue
-
-            # Everything else is a component array, or unhandleable
-            array = UnsArray(uri=component_uri, name=key, parent=self)
-
-            if isinstance(value, pd.DataFrame):
-                array.from_pandas_dataframe(value)
-                self._add_object(array)
-
-            elif isinstance(value, sp.csr_matrix):
-                array.from_scipy_csr(value)
-                self._add_object(array)
-
-            elif array._maybe_from_numpyable_object(value):
-                self._add_object(array)
-
-            else:
-                logger.error(
-                    f"{self._indent}Skipping unrecognized type: {component_uri} {type(value)}",
-                )
+        for future in futures:
+            future.result()
 
         log_io(
             f"Wrote {self.nested_name}",

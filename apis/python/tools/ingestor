@@ -58,6 +58,12 @@ def main():
         default="./tiledb-data",
     )
     parser.add_argument(
+        "--threads",
+        help="Specify max thread-pool workers",
+        type=int,
+        default=tiledbsoma.SOMAOptions().max_thread_pool_workers,
+    )
+    parser.add_argument(
         "--soco",
         help="Write the SOMA and also append to a SOMACollection there",
         action="store_true",
@@ -123,7 +129,10 @@ select `relative=True`. (This is the default.)
         else:
             raise Exception(f"Internal coding error in {__file__}")
 
-    soma_options = tiledbsoma.SOMAOptions(member_uris_are_relative=rel_member_uris)
+    soma_options = tiledbsoma.SOMAOptions(
+        member_uris_are_relative=rel_member_uris,
+        max_thread_pool_workers=args.threads,
+    )
     outdir = args.o.rstrip("/")
 
     if args.n:

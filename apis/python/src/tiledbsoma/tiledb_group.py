@@ -53,8 +53,15 @@ class TileDBGroup(TileDBObject):
         """
         if not self.exists():
             logger.debug(f"{self._indent}Creating TileDB group {self.nested_name}")
-            tiledb.group_create(uri=self.uri, ctx=self._ctx)
-            self._set_object_type_metadata()
+            try:
+                tiledb.group_create(uri=self.uri, ctx=self._ctx)
+                self._set_object_type_metadata()
+            except tiledb.cc.TileDBError as e:
+                stre = str(e)
+                # This is fine in case of parallel creates
+                if "already exists" not in stre:
+                    # bare raise will raise the current exception without rewriting the stack trace
+                    raise
 
     def _set_object_type_metadata_recursively(self) -> None:
         """
