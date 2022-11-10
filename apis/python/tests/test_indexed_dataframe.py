@@ -517,51 +517,51 @@ def make_multiply_indexed_dataframe(tmp_path, index_column_names: List[str]):
             },
             marks=pytest.mark.xfail,
         ),
-        # 2D: indexing list is None
-        # {
-        #    "index_column_names": ["index2", "index3"],
-        #    "ids": None,
-        #    "A": [10, 11, 12, 13, 14, 15],
-        #    "throws": None,
-        # },
-        # 2D: indexing slot is None
-        # {
-        #    "index_column_names": ["index2", "index3"],
-        #    "ids": [None, None],
-        #    "A": [10, 11, 12, 13, 14, 15],
-        #    "throws": None,
-        # },
-        # 2D: indexing slot is int
-        {
-            "index_column_names": ["index2", "index3"],
-            "ids": [400, 0],
-            "A": [10],
-            "throws": None,
-        },
-        # 2D: indexing slot is list
-        # TODO: at present SOMAReader only accepts int dims. See also:
-        # https://github.com/single-cell-data/TileDB-SOMA/issues/418
-        # https://github.com/single-cell-data/TileDB-SOMA/issues/419
-        {
-            "index_column_names": ["index2", "index3"],
-            "ids": [[400, 600], None],
-            "A": [10, 11, 14, 15],
-            "throws": None,
-        },
-        # 3D: indexing slot is list
-        {
-            "index_column_names": ["index2", "index3", "index4"],
-            "ids": [[400, 600], None, None],
-            "A": [10, 11, 14, 15],
-            "throws": None,
-        },
-        # 3D: indexing slot is mixed
-        {
-            "index_column_names": ["index2", "index3", "index4"],
-            "ids": [range(400, 600), None, np.asarray([2000, 9999])],
-            "A": [11],
-            "throws": None,
-        },
+        #        # 2D: indexing list is None
+        #        {
+        #           "index_column_names": ["index2", "index3"],
+        #           "ids": None,
+        #           "A": [10, 11, 12, 13, 14, 15],
+        #           "throws": None,
+        #        },
+        #        # 2D: indexing slot is None
+        #        {
+        #           "index_column_names": ["index2", "index3"],
+        #           "ids": [None, None],
+        #           "A": [10, 11, 12, 13, 14, 15],
+        #           "throws": None,
+        #        # },
+        #        # 2D: indexing slot is int
+        #        {
+        #            "index_column_names": ["index2", "index3"],
+        #            "ids": [400, 0],
+        #            "A": [10],
+        #            "throws": None,
+        #        },
+        #        # 2D: indexing slot is list
+        #        # TODO: at present SOMAReader only accepts int dims. See also:
+        #        # https://github.com/single-cell-data/TileDB-SOMA/issues/418
+        #        # https://github.com/single-cell-data/TileDB-SOMA/issues/419
+        #        {
+        #            "index_column_names": ["index2", "index3"],
+        #            "ids": [[400, 600], None],
+        #            "A": [10, 11, 14, 15],
+        #            "throws": None,
+        #        },
+        #        # 3D: indexing slot is list
+        #        {
+        #            "index_column_names": ["index2", "index3", "index4"],
+        #            "ids": [[400, 600], None, None],
+        #            "A": [10, 11, 14, 15],
+        #            "throws": None,
+        #        },
+        #        # 3D: indexing slot is mixed
+        #        {
+        #            "index_column_names": ["index2", "index3", "index4"],
+        #            "ids": [range(400, 600), None, np.asarray([2000, 9999])],
+        #            "A": [11],
+        #            "throws": None,
+        #        },
     ],
 )
 def test_read_indexing(tmp_path, io):
