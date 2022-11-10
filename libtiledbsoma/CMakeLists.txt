@@ -120,6 +120,9 @@ endif()
 # Export symbols without decorating the code
 set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
 
+# Append path to linked library files to the rpath
+set(CMAKE_INSTALL_RPATH_USE_LINK_PATH ON)
+
 ############################################################
 # Superbuild setup
 ############################################################

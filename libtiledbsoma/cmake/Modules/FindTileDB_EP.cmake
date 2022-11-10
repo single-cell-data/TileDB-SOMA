@@ -29,7 +29,7 @@
 # If TileDB was installed as an EP, need to search the EP install path also.
 set(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} "${EP_INSTALL_PREFIX}")
 
-if (FORCE_EXTERNAL_TILEDB)
+if (FORCE_BUILD_TILEDB)
   find_package(TileDB CONFIG PATHS ${EP_INSTALL_PREFIX} NO_DEFAULT_PATH)
 else()
   find_package(TileDB CONFIG)

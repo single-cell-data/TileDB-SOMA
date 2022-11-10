@@ -29,7 +29,13 @@ pip install -r apis/python/requirements_dev.txt
 ## Python-only Development
 Developers who do not need to modify the C++ code must use these build commands:
 ```
-pip install -e apis/python
+# remove old build artifacts
+make clean
+
+# build and install
+pip install -v -e apis/python
+
+# test
 pytest apis/python
 ```
 This approach leverages the build-system defined in [pyproject.toml](../apis/python/pyproject.toml) to reduce the number of dependencies required to build `tiledbsoma`.
@@ -43,7 +49,10 @@ This approach leverages the build-system defined in [pyproject.toml](../apis/pyt
 Developers who plan to modify the C++ code must use these build commands: 
 
 ```
+# clean, build, and install
 make install
+
+# test
 make test
 ```
 
@@ -84,8 +93,6 @@ Examples:
   Install Release build with custom libtiledb
 
     make install tiledb=$PWD/../TileDB/dist
-    export LD_LIBRARY_PATH=$PWD/../TileDB/dist/lib:$LD_LIBRARY_PATH     # linux
-    export DYLD_LIBRARY_PATH=$PWD/../TileDB/dist/lib:$DYLD_LIBRARY_PATH # macos
 
   Incrementally build C++ changes and update the python module
 

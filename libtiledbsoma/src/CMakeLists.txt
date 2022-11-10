@@ -210,12 +210,8 @@ if (TILEDBSOMA_BUILD_CLI)
       ${pybind11_INCLUDE_DIRS}
   )
 
-  set_property(
-    TARGET tiledbsoma-cli
-    PROPERTY INSTALL_RPATH
-      "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}"
-      "${CMAKE_INSTALL_PREFIX}/lib"
-  )  
+  set_target_properties(tiledbsoma-cli PROPERTIES INSTALL_RPATH ${CMAKE_INSTALL_PREFIX}/lib)
+
 endif()
 
 ############################################################

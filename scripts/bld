@@ -35,13 +35,13 @@ fi
 # -------------------------------------------------------------------
 extra_opts=""
 if [ "${build}" == "Debug" ] && [ -z "${tiledb}" ]; then
-  # Debug build: build TileDB from source with debug enabled
-  extra_opts+=" -DFORCE_EXTERNAL_TILEDB=ON -DDOWNLOAD_TILEDB_PREBUILT=OFF"
+  # Debug build of TileDB from source
+  extra_opts+=" -DDOWNLOAD_TILEDB_PREBUILT=OFF"
 fi
 
-# build on arm: build TileDB from source
 if [ "$(uname -m)" == "aarch64" ]; then
-  extra_opts=+" -DFORCE_EXTERNAL_TILEDB=ON -DDOWNLOAD_TILEDB_PREBUILT=OFF"
+  # build TileDB from source on arm
+  extra_opts=+" -DDOWNLOAD_TILEDB_PREBUILT=OFF"
 fi
 
 # NOTE: set to true to debug the cmake build
@@ -74,6 +74,7 @@ fi
 # build with custom tiledb
 if [ -n "${tiledb}"  ]; then
   printf "Build with TileDB: ${tiledb}\n"
+  extra_opts+=" -DFORCE_BUILD_TILEDB=OFF"
   export TileDB_DIR="${tiledb}"
   export LD_LIBRARY_PATH="${tiledb}"
   export DYLD_LIBRARY_PATH="${tiledb}"
