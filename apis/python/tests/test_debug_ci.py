@@ -76,6 +76,15 @@ def make_multiply_indexed_dataframe_debug_ci(tmp_path, index_column_names: List[
             "A": None,
             "throws": ValueError,
         },
+        pytest.param(
+            {
+                "index_column_names": ["index1"],
+                "ids": ["nonesuch"],  # noqa
+                "A": None,
+                "throws": soma.SOMAError,
+            },
+            marks=pytest.mark.xfail,
+        ),
         # 2D: indexing list is None
         {
             "index_column_names": ["index2", "index3"],
