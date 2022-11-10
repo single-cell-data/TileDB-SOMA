@@ -58,7 +58,7 @@ Usage: make rule [options]
 
 Rules:
   install [options]   Build C++ library and install python module
-  r-build [options]   Build C++ static library for R
+  r-build [options]   Build C++ static library with "#define R_BUILD" for R
   update              Incrementally build C++ library and update python module
   test                Run tests
   clean               Remove build artifacts

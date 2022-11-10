@@ -62,14 +62,14 @@ Usage: make rule [options]
 
 Rules:
   install [options]   Build C++ library and install python module
-  r-build [options]   Build C++ static library for R
+  r-build [options]   Build C++ static library with "#define R_BUILD" for R
   update              Incrementally build C++ library and update python module
   test                Run tests
   clean               Remove build artifacts
 
 Options:
   build=BUILD_TYPE    Cmake build type = Release|Debug|RelWithDebInfo|Coverage [Release]
-  prefix=PREFIX       Install location [/home/gspowley/work/TileDB-SOMA/dist]
+  prefix=PREFIX       Install location [dist]
   tiledb=TILEDB_DIST  Absolute path to custom TileDB build 
 
 Examples:
@@ -89,7 +89,7 @@ Examples:
 
   Incrementally build C++ changes and update the python module
 
-    make update test
+    make update
 ```
 
 ---
