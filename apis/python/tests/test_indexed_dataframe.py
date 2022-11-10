@@ -508,7 +508,7 @@ def make_multiply_indexed_dataframe(tmp_path, index_column_names: List[str]):
         # valid until we implement
         # https://github.com/single-cell-data/TileDB-SOMA/issues/418
         # https://github.com/single-cell-data/TileDB-SOMA/issues/419
-        #pytest.param(
+        # pytest.param(
         #    {
         #        "index_column_names": ["index1"],
         #        "ids": ["nonesuch"],  # noqa
@@ -516,7 +516,7 @@ def make_multiply_indexed_dataframe(tmp_path, index_column_names: List[str]):
         #        "throws": soma.SOMAError,
         #    },
         #    marks=pytest.mark.xfail,
-        #),
+        # ),
         # 2D: indexing list is None
         # {
         #    "index_column_names": ["index2", "index3"],
