@@ -548,20 +548,20 @@ def make_multiply_indexed_dataframe(tmp_path, index_column_names: List[str]):
         #            "A": [10, 11, 14, 15],
         #            "throws": None,
         #        },
-        #        # 3D: indexing slot is list
-        #        {
-        #            "index_column_names": ["index2", "index3", "index4"],
-        #            "ids": [[400, 600], None, None],
-        #            "A": [10, 11, 14, 15],
-        #            "throws": None,
-        #        },
-        #        # 3D: indexing slot is mixed
-        #        {
-        #            "index_column_names": ["index2", "index3", "index4"],
-        #            "ids": [range(400, 600), None, np.asarray([2000, 9999])],
-        #            "A": [11],
-        #            "throws": None,
-        #        },
+        # 3D: indexing slot is list
+        {
+            "index_column_names": ["index2", "index3", "index4"],
+            "ids": [[400, 600], None, None],
+            "A": [10, 11, 14, 15],
+            "throws": None,
+        },
+        # 3D: indexing slot is mixed
+        {
+            "index_column_names": ["index2", "index3", "index4"],
+            "ids": [range(400, 600), None, np.asarray([2000, 9999])],
+            "A": [11],
+            "throws": None,
+        },
     ],
 )
 def test_read_indexing(tmp_path, io):
