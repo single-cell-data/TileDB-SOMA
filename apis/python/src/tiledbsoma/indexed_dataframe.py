@@ -1,3 +1,4 @@
+import collections.abc
 from typing import Any, Iterator, Literal, Optional, Sequence, Tuple, TypeVar, Union
 
 import numpy as np
@@ -11,10 +12,9 @@ import tiledbsoma.libtiledbsoma as clib
 from . import util, util_arrow
 from .collection import CollectionBase
 from .constants import SOMA_JOINID
-from .exception import SOMAError
 from .query_condition import QueryCondition  # type: ignore
 from .tiledb_array import TileDBArray
-from .types import Ids, ResultOrder
+from .types import ResultOrder, SparseIndexedDataFrameCoordinates
 
 Slice = TypeVar("Slice", bound=Sequence[int])
 
@@ -164,9 +164,7 @@ class IndexedDataFrame(TileDBArray):
     def read(
         self,
         *,
-        # TODO: find out how to spell this in a way the type-checker will accept :(
-        # ids: Optional[Union[Sequence[int], str, Slice]] = None,
-        ids: Optional[Any] = None,
+        ids: Optional[SparseIndexedDataFrameCoordinates] = None,
         value_filter: Optional[str] = None,
         column_names: Optional[Sequence[str]] = None,
         result_order: Optional[ResultOrder] = None,
@@ -186,7 +184,23 @@ class IndexedDataFrame(TileDBArray):
         :param value_filter: an optional [value filter] to apply to the results. Defaults to no filter.
 
         **Indexing**: the ``ids`` parameter will support, per dimension: a list of values of the type of the indexed column.
+
+        Acceptable ways to index
+        ------------------------
+
+        * None
+        * A sequence of coordinates is accepted, one per dimension.
+        * Sequence length must be at least one and <= number of dimensions.
+        * If the sequence contains missing coordinates (length less than number of dimensions),
+          then `slice(None)` -- i.e. no constraint -- is assumed for the missing dimensions.
+        * Per-dimension, explicitly specified coordinates can be one of: None, a value, a
+          list/ndarray/paarray/etc of values, a slice, etc.
+        * Slices are doubly inclusive: slice(2,4) means [2,3,4] not [2,3]. Slice steps can only be +1.
+          Slices can be `slice(None)`, meaning select all in that dimension, but may not be half-specified:
+          `slice(2,None)` and `slice(None,4)` are both unsupported.
+        * Negative indexing is unsupported.
         """
+
         with self._tiledb_open("r") as A:
             query_condition = None
             if value_filter is not None:
@@ -201,17 +215,62 @@ class IndexedDataFrame(TileDBArray):
             )
 
             if ids is not None:
-                dim_name = A.schema.domain.dim(0).name
-                if isinstance(ids, list):
-                    sr.set_dim_points(dim_name, ids)
-                elif isinstance(ids, pa.ChunkedArray):
-                    sr.set_dim_points(dim_name, ids)
-                elif isinstance(ids, pa.Array):
-                    sr.set_dim_points(dim_name, pa.chunked_array(ids))
-                elif isinstance(ids, slice):
-                    lo_hi = util.slice_to_range(ids)
-                    if lo_hi is not None:
-                        sr.set_dim_ranges(dim_name, lo_hi)
+                if not isinstance(ids, (list, tuple)):
+                    raise TypeError(
+                        f"ids type {type(ids)} unsupported; expected list or tuple"
+                    )
+                if len(ids) < 1 or len(ids) > A.schema.domain.ndim:
+                    raise ValueError(
+                        f"ids {ids} must have length between 1 and ndim ({A.schema.domain.ndim}); got {len(ids)}"
+                    )
+
+                for i, dim_ids in enumerate(ids):
+                    # Example: ids = [None, 3, slice(4,5)]
+                    # dim_ids takes on values None, 3, and slice(4,5) in this loop body.
+                    dim_name = A.schema.domain.dim(i).name
+                    if dim_ids is None:
+                        pass  # No constraint; select all in this dimension
+                    elif isinstance(dim_ids, int):
+                        # TO DO: Support non-int index types when we have non-int index support
+                        # in libtiledbsoma's SOMAReader. See also
+                        # https://github.com/single-cell-data/TileDB-SOMA/issues/418
+                        # https://github.com/single-cell-data/TileDB-SOMA/issues/419
+                        sr.set_dim_points(dim_name, [dim_ids])
+                    elif isinstance(dim_ids, np.ndarray):
+                        if dim_ids.ndim != 1:
+                            raise ValueError(
+                                f"only 1D numpy arrays may be used to index; got {dim_ids.ndim}"
+                            )
+                        sr.set_dim_points(dim_name, dim_ids)
+                    elif isinstance(dim_ids, slice):
+                        lo_hi = util.slice_to_range(dim_ids)
+                        if lo_hi is not None:
+                            lo, hi = lo_hi
+                            if lo < 0 or hi < 0:
+                                raise ValueError(
+                                    f"slice start and stop may not be negative; got ({lo}, {hi})"
+                                )
+                            if lo > hi:
+                                raise ValueError(
+                                    f"slice start must be <= slice stop; got ({lo}, {hi})"
+                                )
+                            sr.set_dim_ranges(dim_name, [lo_hi])
+                        # Else, no constraint in this slot. This is `slice(None)` which is like
+                        # Python indexing syntax `[:]`.
+                    elif isinstance(
+                        dim_ids, (collections.abc.Sequence, pa.Array, pa.ChunkedArray)
+                    ):
+                        if (
+                            dim_ids == []
+                        ):  # TileDB-Py maps [] to all; we want it to map to none.
+                            # TODO: Fix this on https://github.com/single-cell-data/TileDB-SOMA/issues/484
+                            pass
+                        else:
+                            sr.set_dim_points(dim_name, dim_ids)
+                    else:
+                        raise TypeError(
+                            f"dim_ids type {type(dim_ids)} at slot {i} unsupported"
+                        )
 
             # TODO: platform_config
             # TODO: batch_size
@@ -250,9 +309,7 @@ class IndexedDataFrame(TileDBArray):
     def read_all(
         self,
         *,
-        # TODO: find the right syntax to get the typechecker to accept args like ``ids=slice(0,10)``
-        # ids: Optional[Union[Sequence[int], Slice]] = None,
-        ids: Optional[Any] = None,
+        ids: Optional[SparseIndexedDataFrameCoordinates] = None,
         value_filter: Optional[str] = None,
         column_names: Optional[Sequence[str]] = None,
         result_order: Optional[ResultOrder] = None,
@@ -291,20 +348,13 @@ class IndexedDataFrame(TileDBArray):
                 attr_cols_map[name] = values.column(name).to_pandas()
         assert n is not None
 
-        dim_cols_list = [list(dim_col) for dim_col in dim_cols_list]
+        dim_cols_tuple = tuple(dim_cols_list)
         with self._tiledb_open("w") as A:
-            # TODO: find the right syntax for vardims ... it's not the ``*`` operator ...
-            # A[*dim_cols_list] = attr_cols_map
-            if len(dim_cols_list) == 1:
-                A[dim_cols_list[0]] = attr_cols_map
-            elif len(dim_cols_list) == 2:
-                A[dim_cols_list[0], dim_cols_list[1]] = attr_cols_map
-            else:
-                raise SOMAError("ndim >= 2 not currently supported")
+            A[dim_cols_tuple] = attr_cols_map
 
     def read_as_pandas(
         self,
-        ids: Optional[Any] = None,
+        ids: Optional[SparseIndexedDataFrameCoordinates] = None,
         value_filter: Optional[str] = None,
         column_names: Optional[Sequence[str]] = None,
         result_order: Optional[ResultOrder] = None,
@@ -319,7 +369,7 @@ class IndexedDataFrame(TileDBArray):
 
     def read_as_pandas_all(
         self,
-        ids: Optional[Ids] = None,
+        ids: Optional[SparseIndexedDataFrameCoordinates] = None,
         value_filter: Optional[str] = None,
         column_names: Optional[Sequence[str]] = None,
         result_order: Optional[ResultOrder] = None,
@@ -373,5 +423,20 @@ def _validate_schema(schema: pa.Schema, index_column_names: Sequence[str]) -> pa
             )
         if index_column_name not in schema_names_set:
             raise ValueError("All index names must be dataframe schema")
+        # TODO: Pending
+        # https://github.com/single-cell-data/TileDB-SOMA/issues/418
+        # https://github.com/single-cell-data/TileDB-SOMA/issues/419
+        assert schema.field(index_column_name).type in [
+            pa.int8(),
+            pa.uint8(),
+            pa.int16(),
+            pa.uint16(),
+            pa.int32(),
+            pa.uint32(),
+            pa.int64(),
+            pa.uint64(),
+            pa.float32(),
+            pa.float64(),
+        ]
 
     return schema

@@ -1,3 +1,5 @@
+from typing import List
+
 import numpy as np
 import pandas as pd
 import pyarrow as pa
@@ -21,7 +23,7 @@ def arrow_schema():
 
 
 def test_indexed_dataframe(tmp_path, arrow_schema):
-    sdf = soma.IndexedDataFrame(uri=tmp_path.as_posix())
+    sidf = soma.IndexedDataFrame(uri=tmp_path.as_posix())
 
     asch = pa.schema(
         [
@@ -33,10 +35,10 @@ def test_indexed_dataframe(tmp_path, arrow_schema):
 
     # Create
     asch = arrow_schema()
-    sdf.create(schema=asch, index_column_names=["foo"])
+    sidf.create(schema=asch, index_column_names=["foo"])
 
-    assert sorted(sdf.schema.names) == sorted(["foo", "bar", "baz", "soma_joinid"])
-    assert sorted(sdf.keys()) == sorted(sdf.schema.names)
+    assert sorted(sidf.schema.names) == sorted(["foo", "bar", "baz", "soma_joinid"])
+    assert sorted(sidf.keys()) == sorted(sidf.schema.names)
 
     # Write
     for _ in range(3):
@@ -46,14 +48,10 @@ def test_indexed_dataframe(tmp_path, arrow_schema):
         pydict["bar"] = [4.1, 5.2, 6.3, 7.4, 8.5]
         pydict["baz"] = ["apple", "ball", "cat", "dog", "egg"]
         rb = pa.Table.from_pydict(pydict)
-        sdf.write(rb)
+        sidf.write(rb)
 
     # Read all
-    table = sdf.read_all()
-    # Weird thing about pyarrow Table:
-    # * We have table.num_rows is 5 and table.num_columns is 3
-    # * But len(table) is 3
-    # * `for column in table` loops over columns
+    table = sidf.read_all()
     assert table.num_rows == 5
     assert table.num_columns == 4
     assert [e.as_py() for e in list(table["soma_joinid"])] == pydict["soma_joinid"]
@@ -62,7 +60,7 @@ def test_indexed_dataframe(tmp_path, arrow_schema):
     assert [e.as_py() for e in list(table["baz"])] == pydict["baz"]
 
     # Read ids
-    table = sdf.read_all(ids=[30, 10])
+    table = sidf.read_all(ids=[[30, 10]])
     assert table.num_rows == 2
     assert table.num_columns == 4
     assert sorted([e.as_py() for e in list(table["soma_joinid"])]) == [0, 2]
@@ -72,10 +70,10 @@ def test_indexed_dataframe(tmp_path, arrow_schema):
 
 
 def test_indexed_dataframe_with_float_dim(tmp_path, arrow_schema):
-    sdf = soma.IndexedDataFrame(uri=tmp_path.as_posix())
+    sidf = soma.IndexedDataFrame(uri=tmp_path.as_posix())
     asch = arrow_schema()
-    sdf.create(schema=asch, index_column_names=("bar",))
-    assert sdf.get_index_column_names() == ("bar",)
+    sidf.create(schema=asch, index_column_names=("bar",))
+    assert sidf.get_index_column_names() == ("bar",)
 
 
 @pytest.fixture
@@ -93,8 +91,8 @@ def simple_indexed_data_frame(tmp_path):
         ]
     )
     index_column_names = ["index"]
-    sdf = soma.IndexedDataFrame(uri=tmp_path.as_posix())
-    sdf.create(schema=schema, index_column_names=index_column_names)
+    sidf = soma.IndexedDataFrame(uri=tmp_path.as_posix())
+    sidf.create(schema=schema, index_column_names=index_column_names)
 
     data = {
         "index": [0, 1, 2, 3],
@@ -105,17 +103,16 @@ def simple_indexed_data_frame(tmp_path):
     }
     n_data = len(data["index"])
     rb = pa.Table.from_pydict(data)
-    sdf.write(rb)
-    yield (schema, sdf, n_data, index_column_names)
-    sdf.delete()
+    sidf.write(rb)
+    return (schema, sidf, n_data, index_column_names)
 
 
 @pytest.mark.parametrize(
     "ids",
     [
-        None,
+        [None],
         [0],
-        [1, 3],
+        [[1, 3]],
     ],
 )
 @pytest.mark.parametrize(
@@ -132,14 +129,22 @@ def simple_indexed_data_frame(tmp_path):
     ],
 )
 def test_IndexedDataFrame_read_column_names(simple_indexed_data_frame, ids, col_names):
-    schema, sdf, n_data, index_column_names = simple_indexed_data_frame
-    assert sdf.exists()
+    schema, sidf, n_data, index_column_names = simple_indexed_data_frame
+    assert sidf.exists()
 
     def _check_tbl(tbl, col_names, ids, *, demote):
         assert tbl.num_columns == (
             len(schema.names) if col_names is None else len(col_names)
         )
-        assert tbl.num_rows == (n_data if ids is None else len(ids))
+
+        if ids is None:
+            assert tbl.num_rows == n_data
+        elif ids[0] is None:
+            assert tbl.num_rows == n_data
+        elif isinstance(ids[0], int):
+            assert tbl.num_rows == 1
+        else:
+            assert tbl.num_rows == len(ids[0])
 
         if demote:
             assert tbl.schema == pa.schema(
@@ -160,21 +165,21 @@ def test_IndexedDataFrame_read_column_names(simple_indexed_data_frame, ids, col_
 
     # TileDB ASCII -> Arrow large_string
     _check_tbl(
-        sdf.read_all(ids=ids, column_names=col_names), col_names, ids, demote=False
+        sidf.read_all(ids=ids, column_names=col_names), col_names, ids, demote=False
     )
-    _check_tbl(sdf.read_all(column_names=col_names), col_names, None, demote=False)
+    _check_tbl(sidf.read_all(column_names=col_names), col_names, None, demote=False)
 
     # TileDB ASCII -> Pandas string -> Arrow string (not large_string)
     _check_tbl(
         pa.Table.from_pandas(
-            pd.concat(sdf.read_as_pandas(ids=ids, column_names=col_names))
+            pd.concat(sidf.read_as_pandas(ids=ids, column_names=col_names))
         ),
         col_names,
         ids,
         demote=True,
     )
     _check_tbl(
-        pa.Table.from_pandas(sdf.read_as_pandas_all(column_names=col_names)),
+        pa.Table.from_pandas(sidf.read_as_pandas_all(column_names=col_names)),
         col_names,
         None,
         demote=True,
@@ -234,6 +239,9 @@ def test_columns(tmp_path):
 def make_dataframe(request):
     index_type = request.param
 
+    # TODO: https://github.com/single-cell-data/TileDB-SOMA/issues/518
+    # Check against all `SUPPORTED_ARROW_TYPES` in tests/test_type_system.py`
+
     index = {
         pa.string(): ["A", "B", "C"],
         pa.large_string(): ["A", "B", "C"],
@@ -242,6 +250,10 @@ def make_dataframe(request):
         **{
             t: np.arange(3, dtype=t.to_pandas_dtype())
             for t in (
+                pa.int8(),
+                pa.uint8(),
+                pa.int16(),
+                pa.uint16(),
                 pa.int32(),
                 pa.uint32(),
                 pa.int64(),
@@ -266,8 +278,16 @@ def make_dataframe(request):
 @pytest.mark.parametrize(
     "make_dataframe",
     [
-        pa.float32(),
-        pa.float64(),
+        pytest.param(pa.float32(), marks=pytest.mark.xfail),
+        pytest.param(pa.float64(), marks=pytest.mark.xfail),
+        pytest.param(
+            pa.int8(), marks=pytest.mark.xfail
+        ),  # TODO: remove xfail when #518 is fixed
+        pytest.param(
+            pa.uint8(), marks=pytest.mark.xfail
+        ),  # TODO: remove xfail when #518 is fixed
+        pa.int16(),
+        pa.uint16(),
         pa.int32(),
         pa.uint32(),
         pa.int64(),
@@ -289,6 +309,286 @@ def make_dataframe(request):
 )
 def test_index_types(tmp_path, make_dataframe):
     """Verify that the index columns can be of various types"""
-    sdf = soma.IndexedDataFrame(tmp_path.as_posix())
-    sdf.create(make_dataframe.schema, index_column_names=["index"])
-    sdf.write(make_dataframe)
+    sidf = soma.IndexedDataFrame(tmp_path.as_posix())
+    sidf.create(make_dataframe.schema, index_column_names=["index"])
+    sidf.write(make_dataframe)
+
+
+def make_multiply_indexed_dataframe(tmp_path, index_column_names: List[str]):
+    """
+    Creates a variably-indexed IndexedDataFrame for use in tests below.
+    """
+    schema = pa.schema(
+        [
+            # TO DO: Support non-int index types when we have non-int index support
+            # in libtiledbsoma's SOMAReader. See also
+            # https://github.com/single-cell-data/TileDB-SOMA/issues/418
+            # https://github.com/single-cell-data/TileDB-SOMA/issues/419
+            ("index1", pa.int64()),
+            ("index2", pa.int64()),
+            ("index3", pa.int64()),
+            ("index4", pa.int64()),
+            ("soma_joinid", pa.int64()),
+            ("A", pa.int64()),
+        ]
+    )
+
+    sidf = soma.IndexedDataFrame(uri=tmp_path.as_posix())
+    sidf.create(schema=schema, index_column_names=index_column_names)
+
+    data = {
+        "index1": [0, 1, 2, 3, 4, 5],
+        "index2": [400, 400, 500, 500, 600, 600],
+        "index3": [0, 1, 0, 1, 0, 1],
+        "index4": [1000, 2000, 1000, 1000, 1000, 1000],
+        "soma_joinid": [10, 11, 12, 13, 14, 15],
+        "A": [10, 11, 12, 13, 14, 15],
+    }
+
+    n_data = len(data["index1"])
+    rb = pa.Table.from_pydict(data)
+    sidf.write(rb)
+    return (schema, sidf, n_data)
+
+
+@pytest.mark.parametrize(
+    "io",
+    [
+        # 1D: indexing list is None
+        {
+            "index_column_names": ["index1"],
+            "ids": None,
+            "A": [10, 11, 12, 13, 14, 15],
+            "throws": None,
+        },
+        # 1D: indexing slot is None
+        {
+            "index_column_names": ["index1"],
+            "ids": [None],
+            "A": [10, 11, 12, 13, 14, 15],
+            "throws": None,
+        },
+        # 1D: indexing slot is int
+        {
+            "index_column_names": ["index1"],
+            "ids": [0],
+            "A": [10],
+            "throws": None,
+        },
+        {
+            "index_column_names": ["index1"],
+            "ids": [100],
+            "A": [],
+            "throws": None,
+        },
+        {
+            "index_column_names": ["index1"],
+            "ids": [-100],
+            "A": [],
+            "throws": None,
+        },
+        # 1D: indexing slot is list
+        {
+            "index_column_names": ["index1"],
+            "ids": [[1, 3]],
+            "A": [11, 13],
+            "throws": None,
+        },
+        {
+            "index_column_names": ["index1"],
+            "ids": [[-100, 100]],
+            "A": [],
+            "throws": None,
+        },
+        pytest.param(
+            # TODO: use after https://github.com/single-cell-data/TileDB-SOMA/issues/484 is resolved
+            {
+                "index_column_names": ["index1"],
+                "ids": [[]],
+                "A": [],
+                "throws": None,
+            },
+            marks=pytest.mark.xfail,
+        ),
+        # 1D: indexing slot is tuple
+        {
+            "index_column_names": ["index1"],
+            "ids": [(1, 3)],
+            "A": [11, 13],
+            "throws": None,
+        },
+        # 1D: indexing slot is range
+        {
+            "index_column_names": ["index1"],
+            "ids": [range(1, 3)],
+            "A": [11, 12],
+            "throws": None,
+        },
+        # 1D: indexing slot is pa.ChunkedArray
+        {
+            "index_column_names": ["index1"],
+            "ids": [pa.chunked_array(pa.array([1, 3]))],
+            "A": [11, 13],
+            "throws": None,
+        },
+        # 1D: indexing slot is pa.Array
+        {
+            "index_column_names": ["index1"],
+            "ids": [pa.array([1, 3])],
+            "A": [11, 13],
+            "throws": None,
+        },
+        # 1D: indexing slot is pa.Array
+        {
+            "index_column_names": ["index1"],
+            "ids": [pa.array([1, 3])],
+            "A": [11, 13],
+            "throws": None,
+        },
+        # 1D: indexing slot is np.ndarray
+        {
+            "index_column_names": ["index1"],
+            "ids": [np.asarray([1, 3])],
+            "A": [11, 13],
+            "throws": None,
+        },
+        {
+            "index_column_names": ["index1"],
+            "ids": [np.asarray([[1, 3], [2, 4]])],  # Error since 2D array in the slot
+            "A": [11, 13],
+            "throws": ValueError,
+        },
+        # 1D: indexing slot is slice
+        {
+            "index_column_names": ["index1"],
+            "ids": [
+                slice(None)
+            ],  # Indexing slot is none-slice i.e. `[:]` which is like None
+            "A": [10, 11, 12, 13, 14, 15],
+            "throws": None,
+        },
+        {
+            "index_column_names": ["index1"],
+            "ids": [slice(1, 3)],  # Indexing slot is double-ended slice
+            "A": [11, 12, 13],
+            "throws": None,
+        },
+        {
+            "index_column_names": ["index1"],
+            "ids": [slice(None, None)],  # Indexing slot is slice-all
+            "A": [10, 11, 12, 13, 14, 15],
+            "throws": None,
+        },
+        {
+            "index_column_names": ["index1"],
+            "ids": [slice(None, 3)],  # Half-slices are not supported yet
+            "A": None,
+            "throws": ValueError,
+        },
+        {
+            "index_column_names": ["index1"],
+            "ids": [slice(1, None)],  # Half-slices are not supported yet
+            "A": None,
+            "throws": ValueError,
+        },
+        {
+            "index_column_names": ["index1"],
+            "ids": [slice(1, 5, 2)],  # Slice step must be 1 or None
+            "A": None,
+            "throws": ValueError,
+        },
+        {
+            "index_column_names": ["index1"],
+            "ids": [slice(-2, -1)],  # Negative slices are not supported
+            "A": None,
+            "throws": ValueError,
+        },
+        # 1D: indexing slot is of invalid type
+        # TODO: I want to test this but Typeguard fails the test since it already knows strings are not
+        # valid until we implement
+        # https://github.com/single-cell-data/TileDB-SOMA/issues/418
+        # https://github.com/single-cell-data/TileDB-SOMA/issues/419
+        #
+        # Also TO DO: This xfail, when uncommented, causes "Abort trap: 6" but only
+        # in MacOS CI, not on my Mac outside of CI, and not in Linux CI.
+        # pytest.param(
+        #    {
+        #        "index_column_names": ["index1"],
+        #        "ids": ["nonesuch"],  # noqa
+        #        "A": None,
+        #        "throws": soma.SOMAError,
+        #    },
+        #    marks=pytest.mark.xfail,
+        # ),
+        # 2D: indexing list is None
+        {
+            "index_column_names": ["index2", "index3"],
+            "ids": None,
+            "A": [10, 11, 12, 13, 14, 15],
+            "throws": None,
+        },
+        # 2D: indexing slot is None
+        {
+            "index_column_names": ["index2", "index3"],
+            "ids": [None, None],
+            "A": [10, 11, 12, 13, 14, 15],
+            "throws": None,
+        },
+        # 2D: indexing slot is int
+        {
+            "index_column_names": ["index2", "index3"],
+            "ids": [400, 0],
+            "A": [10],
+            "throws": None,
+        },
+        # 2D: indexing slot is list
+        # TODO: at present SOMAReader only accepts int dims. See also:
+        # https://github.com/single-cell-data/TileDB-SOMA/issues/418
+        # https://github.com/single-cell-data/TileDB-SOMA/issues/419
+        {
+            "index_column_names": ["index2", "index3"],
+            "ids": [[400, 600], None],
+            "A": [10, 11, 14, 15],
+            "throws": None,
+        },
+        # 3D: indexing slot is list
+        {
+            "index_column_names": ["index2", "index3", "index4"],
+            "ids": [[400, 600], None, None],
+            "A": [10, 11, 14, 15],
+            "throws": None,
+        },
+        # 3D: indexing slot is mixed
+        {
+            "index_column_names": ["index2", "index3", "index4"],
+            "ids": [range(400, 600), None, np.asarray([2000, 9999])],
+            "A": [11],
+            "throws": None,
+        },
+    ],
+)
+def test_read_indexing(tmp_path, io):
+    """Test various ways of indexing on read"""
+
+    schema, sidf, n_data = make_multiply_indexed_dataframe(
+        tmp_path, io["index_column_names"]
+    )
+    assert sidf.exists()
+
+    col_names = ["A"]
+
+    if io["throws"] is not None:
+        with pytest.raises(io["throws"]):
+            next(sidf.read(ids=io["ids"], column_names=col_names))
+    else:
+        table = next(sidf.read(ids=io["ids"], column_names=col_names))
+        assert table["A"].to_pylist() == io["A"]
+
+    if io["throws"] is not None:
+        with pytest.raises(io["throws"]):
+            next(sidf.read_as_pandas(ids=io["ids"], column_names=col_names))
+    else:
+        table = next(sidf.read_as_pandas(ids=io["ids"], column_names=col_names))
+        assert table["A"].to_list() == io["A"]
+
+    sidf.delete()

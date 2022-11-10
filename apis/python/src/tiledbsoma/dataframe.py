@@ -179,6 +179,8 @@ class DataFrame(TileDBArray):
                     lo_hi = util.slice_to_range(ids)
                     if lo_hi is not None:
                         sr.set_dim_ranges(SOMA_ROWID, [lo_hi])
+                else:
+                    raise TypeError(f"ids type {type(ids)} unsupported")
 
             # TODO: platform_config
             # TODO: batch_size
