@@ -212,6 +212,7 @@ class IndexedDataFrame(TileDBArray):
                 schema=A.schema,  # query_condition needs this
                 column_names=column_names,
                 query_condition=query_condition,
+                platform_config={} if self._ctx is None else self._ctx.config().dict(),
             )
 
             if ids is not None:
