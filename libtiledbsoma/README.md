@@ -3,7 +3,7 @@
 ## System Dependencies
 
 * C++17 compiler
-* Python 3.7+
+* Python 3.8+
 
 Run these commands to setup a fresh Ubuntu 22.04 instance (tested on x86 and Arm):
 ```
@@ -55,28 +55,42 @@ make test
 
 ### Developer Makefile
 
-The [Makefile](../Makefile) automates common developer use cases and promotes sharing of consistent build flows, including the following:
+The [Makefile](../Makefile) automates common developer use cases and promotes sharing of consistent build flows.
 
 ```
-# Build libtiledbsoma, install the project in editable mode
-make install
+Usage: make rule [options]
 
-# Run the tests, installing test data if needed
-make test
+Rules:
+  install [options]   Build C++ library and install python module
+  r-build [options]   Build C++ static library with "#define R_BUILD" for R
+  update              Incrementally build C++ library and update python module
+  test                Run tests
+  clean               Remove build artifacts
 
-# Build debug versions libtiledbsoma and libtiledb, install the project in editable mode
-make install-debug
+Options:
+  build=BUILD_TYPE    Cmake build type = Release|Debug|RelWithDebInfo|Coverage [Release]
+  prefix=PREFIX       Install location [dist]
+  tiledb=TILEDB_DIST  Absolute path to custom TileDB build 
 
-# Remove the C++ build, dist, and test data directories
-make clean
+Examples:
+  Install Release build
 
-# Build a static libtiledbsoma library for R
-make r-build
+    make install
 
-# Incrementally compile modified C++ code and install in the editable python project
-make
+  Install Debug build of libtiledbsoma and libtiledb
+
+    make install build=Debug
+
+  Install Release build with custom libtiledb
+
+    make install tiledb=$PWD/../TileDB/dist
+    export LD_LIBRARY_PATH=$PWD/../TileDB/dist/lib:$LD_LIBRARY_PATH     # linux
+    export DYLD_LIBRARY_PATH=$PWD/../TileDB/dist/lib:$DYLD_LIBRARY_PATH # macos
+
+  Incrementally build C++ changes and update the python module
+
+    make update
 ```
-> **Note** - Please update the `Makefile` to share new build flows with other developers.
 
 ---
 
