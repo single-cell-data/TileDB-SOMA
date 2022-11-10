@@ -166,8 +166,9 @@ class SOMA(TileDBGroup):
             if self.raw.exists():
                 lines.append("raw/X:   " + repr(self.raw.X))
                 lines.append("raw/var: " + repr(self.raw.var))
-            # repr(self.uns) is very chatty (too chatty) for some datasets:
-            lines.append("uns:     " + ", ".join(self.uns.keys()))
+            if self.uns.exists():
+                # repr(self.uns) is very chatty (too chatty) for some datasets:
+                lines.append("uns:     " + ", ".join(self.uns.keys()))
         else:
             lines.append("Unpopulated")
 
