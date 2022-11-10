@@ -46,6 +46,36 @@ def make_multiply_indexed_dataframe_debug_ci(tmp_path, index_column_names: List[
 @pytest.mark.parametrize(
     "io",
     [
+        {
+            "index_column_names": ["index1"],
+            "ids": [slice(None, None)],  # Indexing slot is slice-all
+            "A": [10, 11, 12, 13, 14, 15],
+            "throws": None,
+        },
+        {
+            "index_column_names": ["index1"],
+            "ids": [slice(None, 3)],  # Half-slices are not supported yet
+            "A": None,
+            "throws": ValueError,
+        },
+        {
+            "index_column_names": ["index1"],
+            "ids": [slice(1, None)],  # Half-slices are not supported yet
+            "A": None,
+            "throws": ValueError,
+        },
+        {
+            "index_column_names": ["index1"],
+            "ids": [slice(1, 5, 2)],  # Slice step must be 1 or None
+            "A": None,
+            "throws": ValueError,
+        },
+        {
+            "index_column_names": ["index1"],
+            "ids": [slice(-2, -1)],  # Negative slices are not supported
+            "A": None,
+            "throws": ValueError,
+        },
         # 2D: indexing list is None
         {
             "index_column_names": ["index2", "index3"],
