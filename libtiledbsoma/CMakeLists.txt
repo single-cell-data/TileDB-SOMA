@@ -72,6 +72,13 @@ if (TILEDBSOMA_BUILD_R)
   add_compile_options(-DR_BUILD)
 endif()
 
+# Enable compiler cache to speed up recompilation
+find_program(CCACHE_FOUND ccache)
+if(CCACHE_FOUND)
+  set_property(GLOBAL PROPERTY RULE_LAUNCH_COMPILE ccache)
+  set_property(GLOBAL PROPERTY RULE_LAUNCH_LINK ccache)
+endif()
+
 # Set C++17 as required standard for all C++ targets (C++17 minimum is required to use the TileDB C++ API).
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)

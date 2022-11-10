@@ -8,15 +8,17 @@ set -eu -o pipefail
 # -------------------------------------------------------------------
 arg() { echo "$1" | sed "s/^${2-[^=]*=}//" | sed "s/:/;/g"; }
 
+build="Release"
 prefix=""
-build_type="Release"
 r_build="OFF"
+tiledb=""
 
 while test $# != 0; do
   case "$1" in
+  --build=*) build=$(arg "$1");;
   --prefix=*) prefix=$(arg "$1");;
-  --enable-debug) build_type="Debug";;
   --r-build) r_build="ON";;
+  --tiledb=*) tiledb=$(arg "$1");;
   esac
   shift
 done
@@ -32,11 +34,13 @@ fi
 # set extra cmake options
 # -------------------------------------------------------------------
 extra_opts=""
-if [ "${build_type}" == "Debug" ]; then
+if [ "${build}" == "Debug" ] && [ -z "${tiledb}" ]; then
   # Debug build: build TileDB from source with debug enabled
   extra_opts+=" -DFORCE_EXTERNAL_TILEDB=ON -DDOWNLOAD_TILEDB_PREBUILT=OFF"
-elif [ "$(uname -m)" == "aarch64" ]; then
-  # build on arm: build TileDB from source
+fi
+
+# build on arm: build TileDB from source
+if [ "$(uname -m)" == "aarch64" ]; then
   extra_opts=+" -DFORCE_EXTERNAL_TILEDB=ON -DDOWNLOAD_TILEDB_PREBUILT=OFF"
 fi
 
@@ -50,29 +54,43 @@ if false; then
   # TILEDB_WERROR=OFF is necessary to build core with XCode 14; doesn't hurt for XCode 13.
   extra_opts+=" -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON -DTILEDB_WERROR=OFF -DTILEDBSOMA_ENABLE_WERROR=OFF"
   
+  # Debug cmake find commands
+  extra_opts+=" --debug-find"
+
   # Also (pro-tip), set nproc=1 to get a more deterministic ordering of output lines.
   nproc=1
 fi
 
+# set installation path
 if [ -n "${prefix}"  ]; then 
   extra_opts+=" -DCMAKE_INSTALL_PREFIX=${prefix} -DOVERRIDE_INSTALL_PREFIX=OFF"
 fi
 
+# build for R only
 if [ "${r_build}" == "ON" ]; then 
   extra_opts+=" -DTILEDBSOMA_BUILD_R=${r_build}"
 fi
 
+# build with custom tiledb
+if [ -n "${tiledb}"  ]; then
+  printf "Build with TileDB: ${tiledb}\n"
+  export TileDB_DIR="${tiledb}"
+  export LD_LIBRARY_PATH="${tiledb}"
+  export DYLD_LIBRARY_PATH="${tiledb}"
+fi
+
 # run cmake
 # -------------------------------------------------------------------
-echo "Building ${build_type} build"
-echo -e "${extra_opts}"
+printf "Building ${build} build\n"
 
 # cd to the top level directory of the repo
-cd "$(git rev-parse --show-toplevel)"
+if [ "${r_build}" == "OFF" ]; then 
+  cd "$(git rev-parse --show-toplevel)"
+fi
 
 rm -rf build
 mkdir -p build
-cmake -B build -S libtiledbsoma -DCMAKE_BUILD_TYPE=${build_type} ${extra_opts}
+cmake -B build -S libtiledbsoma -DCMAKE_BUILD_TYPE=${build} ${extra_opts}
 cmake --build build -j ${nproc}
 cmake --build build --target install-libtiledbsoma
 
