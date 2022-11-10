@@ -173,7 +173,7 @@ def test_soma_reader_obs_slice_x():
     assert sr.results_complete()
     assert obs.num_rows == 60
 
-    clib.stats_dump()
+    # clib.stats_dump()
     clib.stats_reset()
 
     # read X/data
@@ -193,7 +193,7 @@ def test_soma_reader_obs_slice_x():
 
     assert total_num_rows == 110280
 
-    clib.stats_dump()
+    # clib.stats_dump()
     clib.stats_disable()
 
 

@@ -37,8 +37,10 @@ endif()
 
 if (TILEDB_FOUND)
   get_target_property(TILEDB_LIB TileDB::tiledb_shared IMPORTED_LOCATION_RELEASE)
-  # NOTE: TILEDB_LIB-NOTFOUND here is not indicative of error.
-  #       TODO maybe needs fix in TileDBConfig? Check actual linkage.
+  # If release build location not found, check for debug build location
+  if (TILEDB_LIB MATCHES "NOTFOUND")
+    get_target_property(TILEDB_LIB TileDB::tiledb_shared IMPORTED_LOCATION_DEBUG)
+  endif()
   message(STATUS "Found TileDB: ${TILEDB_LIB}")
 else()
   if (SUPERBUILD)
