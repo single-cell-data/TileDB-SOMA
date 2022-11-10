@@ -18,7 +18,6 @@
 import os
 import shutil
 import subprocess
-import sys
 
 from setuptools import Extension, find_packages, setup
 from setuptools.command.bdist_egg import bdist_egg
@@ -30,10 +29,6 @@ EXT_NAME = "tiledbsoma.libtiledbsoma"
 
 
 def find_or_build(setuptools_cmd):
-    # TODO: support windows
-    if sys.platform.startswith("win32"):
-        return
-
     # Setup paths
     python_dir = os.path.abspath(os.path.dirname(__file__))
     src_dir = f"{python_dir}/src/{MODULE_NAME}"
@@ -42,14 +37,16 @@ def find_or_build(setuptools_cmd):
 
     # Call the build script if the install library directory does not exist
     if not os.path.exists(lib_dir):
-        subprocess.check_call([f"{scripts_dir}/bld"])
+        subprocess.run("bash bld", cwd=scripts_dir, shell=True)
 
     # Copy native libs into the package dir so they can be found by package_data
     package_data = []
     for obj in [os.path.join(lib_dir, f) for f in os.listdir(lib_dir)]:
-        print(f"  copying file {obj} to {src_dir}")
-        shutil.copy(obj, src_dir)
-        package_data.append(os.path.basename(obj))
+        # skip static library
+        if not obj.endswith(".a"):
+            print(f"  copying file {obj} to {src_dir}")
+            shutil.copy(obj, src_dir)
+            package_data.append(os.path.basename(obj))
 
     # Install shared libraries inside the Python module via package_data.
     print(f"  adding to package_data: {package_data}")
@@ -115,7 +112,7 @@ if __name__ == "__main__":
             "pyarrow",
             "scanpy",
             "scipy",
-            "tiledb>=0.18.0",
+            "tiledb>=0.18.1",
         ],
         python_requires=">=3.7",
         ext_modules=get_ext_modules(),

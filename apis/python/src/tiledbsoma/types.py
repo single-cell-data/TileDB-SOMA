@@ -1,6 +1,7 @@
 import pathlib
 from typing import List, Literal, Sequence, Tuple, Union
 
+import numpy as np
 import pandas as pd
 import pyarrow as pa
 
@@ -29,5 +30,30 @@ ArrowReadResult = Union[
 DenseCoordinates = Union[int, slice, pa.Array]
 DenseNdCoordinates = Tuple[DenseCoordinates, ...]
 
-SparseCoordinates = Union[int, slice, Tuple[int, ...], List[int], pa.IntegerArray]
-SparseNdCoordinates = Tuple[DenseCoordinates, ...]
+# TODO: add support for non-ints once the libtiledbsoma SOMAReader class has supports
+# for non-ints. See also:
+# https://github.com/single-cell-data/TileDB-SOMA/issues/418
+# https://github.com/single-cell-data/TileDB-SOMA/issues/419
+#
+# Note: we intentionally use `Union[None, ...]` in place of `Optional[...]` since
+# we choose to emphasize that the argument-slots this is used in are not "optional"
+# arguments -- they're required argments, which can take the `None` value.
+SparseIndexedDataFrameCoordinate = Union[
+    None,
+    int,
+    slice,
+    Sequence[int],
+    pa.Array,
+    pa.ChunkedArray,
+    np.ndarray,
+]
+SparseIndexedDataFrameCoordinates = Sequence[SparseIndexedDataFrameCoordinate]
+
+# Note: we intentionally use `Union[None, ...]` in place of `Optional[...]` since
+# we choose to emphasize that the argument-slots this is used in are not "optional"
+# arguments -- they're required argments, which can take the `None` value.
+
+SparseNdCoordinates = Union[
+    None,
+    Sequence[Union[None, DenseCoordinates, Sequence[int], np.ndarray, pa.IntegerArray]],
+]

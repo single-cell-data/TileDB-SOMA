@@ -167,7 +167,7 @@ class DataFrame(TileDBArray):
                     # else this was a `slice(None, None)` which is the same as None --
                     # Python-syntactically equivalent to [:].
                 else:
-                    raise ValueError(f"ids type {type(ids)} unsupported.")
+                    raise TypeError(f"ids type {type(ids)} unsupported")
 
             # TODO: platform_config
             # TODO: batch_size
