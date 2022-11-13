@@ -1,5 +1,15 @@
 import collections.abc
-from typing import Any, Iterator, Literal, Optional, Sequence, Tuple, TypeVar, Union, get_args
+from typing import (
+    Any,
+    Iterator,
+    Literal,
+    Optional,
+    Sequence,
+    Tuple,
+    TypeVar,
+    Union,
+    get_args,
+)
 
 import numpy as np
 import pandas as pd
@@ -201,7 +211,9 @@ class DataFrame(TileDBArray):
                 query_condition = QueryCondition(value_filter)
 
             if result_order is not None and result_order not in get_args(ResultOrder):
-                raise ValueError("result_order must be one of " + ", ".join(get_args(ResultOrder)))
+                raise ValueError(
+                    "result_order must be one of " + ", ".join(get_args(ResultOrder))
+                )
 
             sr = clib.SOMAReader(
                 self._uri,
@@ -210,7 +222,9 @@ class DataFrame(TileDBArray):
                 column_names=column_names,
                 query_condition=query_condition,
                 platform_config={} if self._ctx is None else self._ctx.config().dict(),
-                result_order = "auto" if result_order in (None, "unordered") else result_order
+                result_order="auto"
+                if result_order in (None, "unordered")
+                else result_order,
             )
 
             if ids is not None:
