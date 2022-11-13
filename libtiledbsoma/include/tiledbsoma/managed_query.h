@@ -146,6 +146,10 @@ class ManagedQuery {
         query_->set_condition(qc);
     }
 
+    void set_layout(tiledb_layout_t layout) {
+        query_->set_layout(layout);
+    }
+
     /**
      * @brief Submit the query.
      *

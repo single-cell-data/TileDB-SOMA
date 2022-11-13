@@ -651,3 +651,31 @@ def test_read_indexing(tmp_path, io):
         assert table["A"].to_list() == io["A"]
 
     sidf.delete()
+
+
+def test_result_order(tmp_path):
+    # cf. https://docs.tiledb.com/main/background/key-concepts-and-data-format#data-layout
+    schema = pa.schema(
+        [
+            ("row", pa.int64()),
+            ("col", pa.int64()),
+            ("soma_joinid", pa.int64()),
+        ]
+    )
+    sidf = soma.DataFrame(uri=tmp_path.as_posix())
+    sidf.create(schema=schema, index_column_names=["row", "col"])
+    data = {
+        "row": [0]*4 + [1]*4 + [2]*4 + [3]*4,
+        "col": [0, 1, 2, 3]*4,
+        "soma_joinid": list(range(16))
+    }
+    sidf.write(pa.Table.from_pydict(data))
+
+    table = sidf.read_as_pandas_all(result_order="row-major")
+    assert table["soma_joinid"].to_list() == list(range(16))
+
+    table = sidf.read_as_pandas_all(result_order="column-major")
+    assert table["soma_joinid"].to_list() == [0, 4, 8, 12, 1, 5, 9, 13, 2, 6, 10, 14, 3, 7, 11, 15]
+
+    with pytest.raises(ValueError):
+        next(sidf.read(result_order="bogus"))

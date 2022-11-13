@@ -84,7 +84,6 @@ SOMAReader::SOMAReader(
     , batch_size_(std::string(batch_size)) {
     // Validate parameters
     try {
-        (void)result_order;
         LOG_DEBUG(fmt::format("[SOMAReader] opening array '{}'", uri_));
         auto array = std::make_shared<Array>(*ctx_, uri_, TILEDB_READ);
         mq_ = std::make_unique<ManagedQuery>(array, name);
@@ -96,6 +95,18 @@ SOMAReader::SOMAReader(
 
     if (!column_names.empty()) {
         mq_->select_columns(column_names);
+    }
+
+    if (!result_order.empty() && result_order != "auto") {
+        tiledb_layout_t layout;
+        if (result_order == "row-major") {
+            layout = TILEDB_ROW_MAJOR;
+        } else if (result_order == "column-major") {
+            layout = TILEDB_COL_MAJOR;
+        } else {
+            throw TileDBSOMAError(fmt::format("Unknown result_order {}", result_order));
+        }
+        mq_->set_layout(layout);
     }
 }
 
