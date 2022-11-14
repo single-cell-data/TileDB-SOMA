@@ -586,7 +586,7 @@ def test_read_indexing(tmp_path, io):
         tmp_path, io["index_column_names"]
     )
     assert sidf.exists()
-    assert sidf.is_indexed == True
+    assert sidf.is_indexed is True
     assert list(sidf.get_index_column_names()) == io["index_column_names"]
     assert (
         list(sidf.get_index_column_names()) == io["index_column_names"]
