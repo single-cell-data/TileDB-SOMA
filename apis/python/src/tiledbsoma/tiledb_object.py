@@ -55,6 +55,17 @@ class TileDBObject(ABC):
         self._soma_options = soma_options or SOMAOptions()
         # Null ctx is OK if that's what they wanted (e.g. not doing any TileDB-Cloud ops).
 
+    def _default_ctx(self) -> tiledb.Ctx:
+        """
+        Default TileDB configuration parameters, for when none other has been specified by the
+        user.
+        """
+        return tiledb.Ctx(
+            {
+                "py.init_buffer_bytes": 2 * 1024**3,
+            }
+        )
+
     def metadata(self) -> Mapping[str, Any]:
         """
         Returns metadata from the group/array as a dict.
