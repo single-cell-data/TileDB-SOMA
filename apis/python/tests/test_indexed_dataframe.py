@@ -585,12 +585,10 @@ def test_read_indexing(tmp_path, io):
     schema, sidf, n_data = make_multiply_indexed_dataframe(
         tmp_path, io["index_column_names"]
     )
+    sidf = soma.IndexedDataFrame(uri=sidf.uri)  # reopen
     assert sidf.exists()
     assert sidf.is_indexed is True
     assert list(sidf.get_index_column_names()) == io["index_column_names"]
-    assert (
-        list(sidf.get_index_column_names()) == io["index_column_names"]
-    )  # test cached path
 
     col_names = ["A"]
 
