@@ -19,33 +19,33 @@ void apply_dim_points(tdbs::SOMAReader *sr,
             for (size_t i=0; i<iv.size(); i++) {
                 uv[i] = static_cast<uint64_t>(iv[i]);
                 sr->set_dim_point<uint64_t>(nm, uv[i]);  // bonked when use with vector
-                tdbs::LOG_INFO(fmt::format("[export_arrow_array] Applying dim point {} on {}", uv[i], nm));
+                spdl::info(fmt::format("[export_arrow_array] Applying dim point {} on {}", uv[i], nm));
             }
         } else if (tp == TILEDB_INT64) {
             Rcpp::NumericVector payload = lst[nm];
             std::vector<int64_t> iv = getInt64Vector(payload);
             for (size_t i=0; i<iv.size(); i++) {
                 sr->set_dim_point<int64_t>(nm, iv[i]);
-                tdbs::LOG_INFO(fmt::format("[export_arrow_array] Applying dim point {} on {}", iv[i], nm));
+                spdl::info(fmt::format("[export_arrow_array] Applying dim point {} on {}", iv[i], nm));
             }
         } else if (tp == TILEDB_FLOAT32) {
             Rcpp::NumericVector payload = lst[nm];
             for (R_xlen_t i=0; i<payload.size(); i++) {
                 float v = static_cast<uint64_t>(payload[i]);
                 sr->set_dim_point<float>(nm, v);
-                tdbs::LOG_INFO(fmt::format("[export_arrow_array] Applying dim point {} on {}", v, nm));
+                spdl::info(fmt::format("[export_arrow_array] Applying dim point {} on {}", v, nm));
             }
         } else if (tp == TILEDB_FLOAT64) {
             Rcpp::NumericVector payload = lst[nm];
             for (R_xlen_t i=0; i<payload.size(); i++) {
                 sr->set_dim_point<double>(nm,payload[i]);
-                tdbs::LOG_INFO(fmt::format("[export_arrow_array] Applying dim point {} on {}", payload[i], nm));
+                spdl::info(fmt::format("[export_arrow_array] Applying dim point {} on {}", payload[i], nm));
             }
         } else if (tp == TILEDB_INT32) {
             Rcpp::IntegerVector payload = lst[nm];
             for (R_xlen_t i=0; i<payload.size(); i++) {
                 sr->set_dim_point<int32_t>(nm,payload[i]);
-                tdbs::LOG_INFO(fmt::format("[export_arrow_array] Applying dim point {} on {}", payload[i], nm));
+                spdl::info(fmt::format("[export_arrow_array] Applying dim point {} on {}", payload[i], nm));
             }
         } else {
             Rcpp::stop("Currently unsupported type: ", tiledb::impl::to_str(tp));
@@ -68,7 +68,7 @@ void apply_dim_ranges(tdbs::SOMAReader* sr,
                 uint64_t h = static_cast<uint64_t>(makeScalarInteger64(hi[i]));
                 std::vector<std::pair<uint64_t, uint64_t>> vp{std::make_pair(l,h)};
                 sr->set_dim_ranges<uint64_t>(nm, vp);
-                tdbs::LOG_INFO(fmt::format("[export_arrow_array] Applying dim point {} on {} with {} - {}", i, nm, l, h));
+                spdl::info(fmt::format("[export_arrow_array] Applying dim point {} on {} with {} - {}", i, nm, l, h));
             }
         } else if (tp == TILEDB_INT64) {
             Rcpp::NumericMatrix mm = lst[nm];
@@ -77,7 +77,7 @@ void apply_dim_ranges(tdbs::SOMAReader* sr,
             for (int i=0; i<mm.nrow(); i++) {
                 std::vector<std::pair<int64_t, int64_t>> vp{std::make_pair(lo[i], hi[i])};
                 sr->set_dim_ranges<int64_t>(nm, vp);
-                tdbs::LOG_INFO(fmt::format("[export_arrow_array] Applying dim point {} on {} with {} - {}", i, nm, lo[i], hi[i]));
+                spdl::info(fmt::format("[export_arrow_array] Applying dim point {} on {} with {} - {}", i, nm, lo[i], hi[i]));
             }
         } else if (tp == TILEDB_FLOAT32) {
             Rcpp::NumericMatrix mm = lst[nm];
@@ -88,7 +88,7 @@ void apply_dim_ranges(tdbs::SOMAReader* sr,
                 float h = static_cast<float_t>(hi[i]);
                 std::vector<std::pair<float, float>> vp{std::make_pair(l,h)};
                 sr->set_dim_ranges<float>(nm, vp);
-                tdbs::LOG_INFO(fmt::format("[export_arrow_array] Applying dim point {} on {} with {} - {}", i, nm, l, h));
+                spdl::info(fmt::format("[export_arrow_array] Applying dim point {} on {} with {} - {}", i, nm, l, h));
             }
         } else if (tp == TILEDB_FLOAT64) {
             Rcpp::NumericMatrix mm = lst[nm];
@@ -97,7 +97,7 @@ void apply_dim_ranges(tdbs::SOMAReader* sr,
             for (int i=0; i<mm.nrow(); i++) {
                 std::vector<std::pair<double, double>> vp{std::make_pair(lo[i],hi[i])};
                 sr->set_dim_ranges<double>(nm, vp);
-                tdbs::LOG_INFO(fmt::format("[export_arrow_array] Applying dim point {} on {} with {} - {}", i, nm, lo[i], hi[i]));
+                spdl::info(fmt::format("[export_arrow_array] Applying dim point {} on {} with {} - {}", i, nm, lo[i], hi[i]));
             }
         } else if (tp == TILEDB_INT32) {
             Rcpp::IntegerMatrix mm = lst[nm];
@@ -108,7 +108,7 @@ void apply_dim_ranges(tdbs::SOMAReader* sr,
                 int32_t h = static_cast<int32_t>(hi[i]);
                 std::vector<std::pair<int32_t, int32_t>> vp{std::make_pair(l,h)};
                 sr->set_dim_ranges<int32_t>(nm, vp);
-                tdbs::LOG_INFO(fmt::format("[export_arrow_array] Applying dim point {} on {} with {} - {}", i, nm[i], l, h));
+                spdl::info(fmt::format("[export_arrow_array] Applying dim point {} on {} with {} - {}", i, nm[i], l, h));
             }
         } else {
             Rcpp::stop("Currently unsupported type: ", tiledb::impl::to_str(tp));

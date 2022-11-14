@@ -15,7 +15,7 @@ a user-defined schema, which includes:
 All dimensions must have a positive, non-zero length.
 
 \strong{Note} - on TileDB this is an sparse array with \code{N} uint64 dimensions of
-domain [0, maxInt64), and a single attribute.
+domain [0, maxUint64), and a single attribute.
 \subsection{Duplicate writes}{
 
 As duplicate index values are not allowed, index values already present in
@@ -23,7 +23,7 @@ the object are overwritten and new index values are added.
 }
 }
 \section{Super classes}{
-\code{tiledbsoma::TileDBObject} -> \code{tiledbsoma::TileDBArray} -> \code{SOMASparseNdArray}
+\code{\link[tiledbsoma:TileDBObject]{tiledbsoma::TileDBObject}} -> \code{\link[tiledbsoma:TileDBArray]{tiledbsoma::TileDBArray}} -> \code{SOMASparseNdArray}
 }
 \section{Methods}{
 \subsection{Public methods}{
