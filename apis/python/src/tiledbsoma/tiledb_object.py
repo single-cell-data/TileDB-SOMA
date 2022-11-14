@@ -42,6 +42,9 @@ class TileDBObject(ABC):
         self.uri = uri
         self.name = name
 
+        if ctx is None:
+            ctx = self._default_ctx()
+
         if parent is None:
             self._ctx = ctx
             self._indent = ""
