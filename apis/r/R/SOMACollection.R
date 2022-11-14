@@ -199,14 +199,48 @@ SOMACollection <- R6::R6Class(
     #' @description Convert to a [SeuratObject::Seurat] object.
     #' @param project [`SeuratObject::Project`] name for the `Seurat` object
     #' @param batch_mode logical, if `TRUE`, batch query mode is enabled for
-    #' retrieving `X`, `obsm`/`varm`, and `obsp`/`varp` layers. See
+    #' retrieving `X` layers. See
     #' [`AssayMatrix$to_dataframe()`][`AssayMatrix`] for more information.
-    to_seurat = function(project = "SeuratProject", batch_mode = FALSE) {
-      stopifnot(is_scalar_character(project))
+    #' @param somas character vector, names of `SOMA`s to include as
+    #' [`SeuratObject::Assay`]s in the `Seurat` object. If `NULL`, all `SOMA`s
+    #' are included. Can also be a named list of character vectors, where each
+    #' element corresponds to a `SOMA` name and the value is a character vector
+    #' of `X` layers from that `SOMA` to include as assays (e.g., `list("RNA" =
+    #' c("counts", "logcounts"))`).
+    to_seurat = function(
+      project = "SeuratProject",
+      somas = NULL,
+      batch_mode = FALSE
+    ) {
+      stopifnot(
+        is_scalar_character(project),
+        "'somas' must be a character vector or named list"
+          = is.null(somas) || is.character(somas) || is.list(somas)
+      )
 
-      assays <- lapply(
-        X = self$somas,
-        FUN = function(x) x$to_seurat_assay(batch_mode = batch_mode)
+      # default list containing all somas and all layers
+      soma_list <- sapply(
+        names(self$somas),
+        FUN = function(x) c("counts", "data", "scale.data"),
+        simplify = FALSE
+      )
+
+      if (is.character(somas)) {
+        stopifnot(assert_subset(somas, names(soma_list)))
+        soma_list <- soma_list[somas]
+      } else if (is.list(somas)) {
+        stopifnot(assert_subset(names(somas), names(soma_list)))
+        soma_list <- somas
+      }
+
+      assays <- mapply(
+        FUN = function(soma, layers, batch_mode) {
+          soma$to_seurat_assay(layers = layers, batch_mode = batch_mode)
+        },
+        soma = self$somas[names(soma_list)],
+        layers = soma_list,
+        MoreArgs = list(batch_mode = batch_mode),
+        SIMPLIFY = FALSE
       )
       nassays <- length(assays)
 
@@ -243,8 +277,9 @@ SOMACollection <- R6::R6Class(
       # Retrieve list of all techniques used in any soma's obsm/varm
       # dimensionality reduction arrays. The association between assay and
       # dimreduction is maintained by the DimReduc's `assay.used` slot.
-      dimreductions <- lapply(self$somas,
-        function(x) x$get_seurat_dimreductions_list(batch_mode)
+      dimreductions <- lapply(
+        self$somas,
+        function(x) x$get_seurat_dimreductions_list()
       )
       object@reductions <- Reduce(base::c, dimreductions)
 
