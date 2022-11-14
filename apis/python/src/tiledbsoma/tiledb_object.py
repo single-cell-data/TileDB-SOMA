@@ -65,7 +65,7 @@ class TileDBObject(ABC):
         """
         return tiledb.Ctx(
             {
-                "py.init_buffer_bytes": 512 * 1024**2,
+                "py.init_buffer_bytes": 256 * 1024**2,
             }
         )
 
