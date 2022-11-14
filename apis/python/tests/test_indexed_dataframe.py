@@ -515,6 +515,30 @@ def make_multiply_indexed_dataframe(tmp_path, index_column_names: List[str]):
             "A": None,
             "throws": ValueError,
         },
+        {
+            "index_column_names": ["index1"],
+            "ids": [],  # len(ids) != len(index_column_names)
+            "A": None,
+            "throws": ValueError,
+        },
+        {
+            "index_column_names": ["index1"],
+            "ids": [(1,), (2,)],  # len(ids) != len(index_column_names)
+            "A": None,
+            "throws": ValueError,
+        },
+        {
+            "index_column_names": ["index1"],
+            "ids": "bogus",  # ids not list/tuple
+            "A": None,
+            "throws": TypeError,
+        },
+        {
+            "index_column_names": ["index1"],
+            "ids": [{"bogus": True}],  # bad index type
+            "A": None,
+            "throws": TypeError,
+        },
         # 1D: indexing slot is of invalid type
         # TODO: I want to test this but Typeguard fails the test since it already knows strings are not
         # valid until we implement
