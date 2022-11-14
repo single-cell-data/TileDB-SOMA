@@ -418,10 +418,10 @@ def _validate_schema(schema: pa.Schema, index_column_names: Sequence[str]) -> pa
     # verify that all index_column_names are present in the schema
     schema_names_set = set(schema.names)
     for index_column_name in index_column_names:
-        if index_column_name.startswith("soma_") and index_column_name != SOMA_JOINID:
-            raise ValueError(
-                "IndexedDataFrame schema may not contain fields with name prefix `soma_`"
-            )
+        assert (
+            not index_column_name.startswith("soma_")
+            or index_column_name == SOMA_JOINID
+        )
         if index_column_name not in schema_names_set:
             raise ValueError("All index names must be dataframe schema")
         # TODO: Pending

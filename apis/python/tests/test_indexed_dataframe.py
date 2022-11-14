@@ -35,6 +35,12 @@ def test_indexed_dataframe(tmp_path, arrow_schema):
 
     # Create
     asch = arrow_schema()
+    with pytest.raises(ValueError):
+        # requires one or more index columns
+        sidf.create(schema=asch, index_column_names=[])
+    with pytest.raises(ValueError):
+        # nonexistent indexed column
+        sidf.create(schema=asch, index_column_names=["bogus"])
     sidf.create(schema=asch, index_column_names=["foo"])
 
     assert sorted(sidf.schema.names) == sorted(["foo", "bar", "baz", "soma_joinid"])
@@ -196,6 +202,13 @@ def test_empty_indexed_dataframe(tmp_path):
     assert len(a.read_as_pandas_all()) == 0
     assert isinstance(a.read_as_pandas_all(), pd.DataFrame)
 
+    with pytest.raises(ValueError):
+        # illegal column name
+        soma.IndexedDataFrame((tmp_path / "B").as_posix()).create(
+            pa.schema([("a", pa.int32()), ("soma_bogus", pa.int32())]),
+            index_column_names=["a"],
+        )
+
 
 def test_columns(tmp_path):
     """
@@ -346,8 +359,7 @@ def make_multiply_indexed_dataframe(tmp_path, index_column_names: List[str]):
     }
 
     n_data = len(data["index1"])
-    rb = pa.Table.from_pydict(data)
-    sidf.write(rb)
+    sidf.write_from_pandas(pd.DataFrame(data=data))
     return (schema, sidf, n_data)
 
 
@@ -574,6 +586,11 @@ def test_read_indexing(tmp_path, io):
         tmp_path, io["index_column_names"]
     )
     assert sidf.exists()
+    assert sidf.is_indexed == True
+    assert list(sidf.get_index_column_names()) == io["index_column_names"]
+    assert (
+        list(sidf.get_index_column_names()) == io["index_column_names"]
+    )  # test cached path
 
     col_names = ["A"]
 
