@@ -251,10 +251,7 @@ class IndexedDataFrame(TileDBArray):
                                 raise ValueError(
                                     f"slice start and stop may not be negative; got ({lo}, {hi})"
                                 )
-                            if lo > hi:
-                                raise ValueError(
-                                    f"slice start must be <= slice stop; got ({lo}, {hi})"
-                                )
+                            assert lo <= hi
                             sr.set_dim_ranges(dim_name, [lo_hi])
                         # Else, no constraint in this slot. This is `slice(None)` which is like
                         # Python indexing syntax `[:]`.
