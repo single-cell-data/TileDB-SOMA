@@ -237,7 +237,9 @@ class TileDBGroup(TileDBObject):
             # This is fine in case of parallel creates. Even in the case of non-parallel
             # creates, it's faster to try/except than it is to open once for read as G, check if
             # name in G, then if not exists open again for write.
-            if ("already exists" not in stre) and ("asset is already in the group" not in stre):
+            if ("already exists" not in stre) and (
+                "asset is already in the group" not in stre
+            ):
                 # bare raise will raise the current exception without rewriting the stack trace
                 raise
 
