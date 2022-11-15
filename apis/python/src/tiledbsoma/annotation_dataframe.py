@@ -407,21 +407,44 @@ class AnnotationDataFrame(TileDBArray):
                 # Force ASCII storage if string, in order to make obs/var columns queryable.
                 column_types[column_name] = "ascii"
 
-        tiledb.from_pandas(
-            uri=self.uri,
-            dataframe=dataframe,
-            name=self.name,
-            sparse=True,
-            allows_duplicates=False,
-            offsets_filters=offsets_filters,
-            attr_filters=attr_filters,
-            dim_filters=dim_filters,
-            capacity=100000,
-            tile=extent,
-            column_types=column_types,
-            ctx=self._ctx,
-            mode=mode,
-        )
+        try:
+            tiledb.from_pandas(
+                uri=self.uri,
+                dataframe=dataframe,
+                name=self.name,
+                sparse=True,
+                allows_duplicates=False,
+                offsets_filters=offsets_filters,
+                attr_filters=attr_filters,
+                dim_filters=dim_filters,
+                capacity=100000,
+                tile=extent,
+                column_types=column_types,
+                ctx=self._ctx,
+                mode=mode,
+            )
+
+        except tiledb.cc.TileDBError as e:
+            # This is fine in case of parallel creates
+            if "already exists" not in str(e):
+                # bare raise will raise the current exception without rewriting the stack trace
+                raise
+
+            tiledb.from_pandas(
+                uri=self.uri,
+                dataframe=dataframe,
+                name=self.name,
+                sparse=True,
+                allows_duplicates=False,
+                offsets_filters=offsets_filters,
+                attr_filters=attr_filters,
+                dim_filters=dim_filters,
+                capacity=100000,
+                tile=extent,
+                column_types=column_types,
+                ctx=self._ctx,
+                mode="append",
+            )
 
         self._set_object_type_metadata()
 

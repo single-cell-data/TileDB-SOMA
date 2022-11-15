@@ -57,9 +57,8 @@ class TileDBGroup(TileDBObject):
                 tiledb.group_create(uri=self.uri, ctx=self._ctx)
                 self._set_object_type_metadata()
             except tiledb.cc.TileDBError as e:
-                stre = str(e)
                 # This is fine in case of parallel creates
-                if "already exists" not in stre:
+                if "already exists" not in str(e):
                     # bare raise will raise the current exception without rewriting the stack trace
                     raise
 
@@ -129,10 +128,10 @@ class TileDBGroup(TileDBObject):
             return answer
 
         except tiledb.cc.TileDBError as e:
-            stre = str(e)
             # Local-disk/S3 does-not-exist exceptions say 'Group does not exist'; TileDB Cloud
             # does-not-exist exceptions are worded less clearly.
             # 'Group' or 'group'
+            stre = str(e)
             if "roup does not exist" in stre or "HTTP code 401" in stre:
                 # Group not constructed yet, but we must return pre-creation URIs. Here, appending
                 # "/" and name is appropriate in all cases: even for tiledb://... URIs,
@@ -233,7 +232,14 @@ class TileDBGroup(TileDBObject):
             exists = obj.name in G
         with self._open("w") as G:
             if not exists:
-                G.add(uri=child_uri, relative=relative, name=obj.name)
+                try:
+                    G.add(uri=child_uri, relative=relative, name=obj.name)
+                except tiledb.cc.TileDBError as e:
+                    # This is fine in case of parallel creates
+                    if "already exists" not in str(e):
+                        # bare raise will raise the current exception without rewriting the stack trace
+                        raise
+
         # See _get_child_uri. Key point is that, on TileDB Cloud, URIs change from pre-creation to
         # post-creation. Example:
         # * Upload to pre-creation URI tiledb://namespace/s3://bucket/something/something/somaname

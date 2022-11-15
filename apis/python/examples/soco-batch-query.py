@@ -21,7 +21,7 @@ else:
 soco = tiledbsoma.SOMACollection(soco_path)
 
 # per-column buffer size
-ctx = tiledb.Ctx({"py.init_buffer_bytes": 4 * 1024**3})
+ctx = tiledb.Ctx({"py.init_buffer_bytes": 4 * 1024 ** 3})
 
 var_ids_column = []
 ctot_ids_column = []

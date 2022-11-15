@@ -13,8 +13,8 @@ import tiledbsoma.util_tiledb
 def main():
 
     config = tiledb.Config()
-    config["sm.mem.total_budget"] = 8 * 1024**3
-    config["sm.consolidation.buffer_size"] = 1024**3
+    config["sm.mem.total_budget"] = 8 * 1024 ** 3
+    config["sm.consolidation.buffer_size"] = 1024 ** 3
     ctx = tiledb.Ctx(config)
 
     if len(sys.argv) < 2:

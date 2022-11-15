@@ -189,7 +189,13 @@ class UnsArray(TileDBArray):
             tile_order="col-major",
             ctx=self._ctx,
         )
-        tiledb.Array.create(self.uri, sch, ctx=self._ctx)
+        try:
+            tiledb.Array.create(self.uri, sch, ctx=self._ctx)
+        except tiledb.cc.TileDBError as e:
+            # This is fine in case of parallel creates
+            if "already exists" not in str(e):
+                # bare raise will raise the current exception without rewriting the stack trace
+                raise
 
     # ----------------------------------------------------------------
     def ingest_data_from_csr(self, csr: sp.csr_matrix) -> None:
