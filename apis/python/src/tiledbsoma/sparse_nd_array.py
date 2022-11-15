@@ -146,7 +146,13 @@ class SparseNdArray(TileDBArray):
         """
         Return the number of stored values in the array, including explicitly stored zeros.
         """
-        return cast(int, clib.SOMAReader(self.uri).nnz())
+        return cast(
+            int,
+            clib.SOMAReader(
+                self.uri,
+                platform_config={} if self._ctx is None else self._ctx.config().dict(),
+            ).nnz(),
+        )
 
     def read_sparse_tensor(
         self,
@@ -253,6 +259,7 @@ class SparseNdArray(TileDBArray):
                 self._uri,
                 name=self.__class__.__name__,
                 schema=A.schema,
+                platform_config={} if self._ctx is None else self._ctx.config().dict(),
             )
 
             if coords is not None:
