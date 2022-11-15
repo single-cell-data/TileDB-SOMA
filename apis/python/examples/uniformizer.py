@@ -178,7 +178,7 @@ class Uniformizer:
         return tiledb.Ctx(
             {
                 "vfs.s3.region": os.environ.get("AWS_DEFAULT_REGION", "us-west-2"),
-                "py.init_buffer_bytes": 4 * 1024 ** 3,  # per-column buffer size
+                "py.init_buffer_bytes": 4 * 1024**3,  # per-column buffer size
             }
         )
 
