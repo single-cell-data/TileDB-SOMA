@@ -228,17 +228,18 @@ class TileDBGroup(TileDBObject):
                 )
 
         self._cached_member_names_to_uris = None  # invalidate on add-member
-        with self._open("r") as G:
-            exists = obj.name in G
-        with self._open("w") as G:
-            if not exists:
-                try:
-                    G.add(uri=child_uri, relative=relative, name=obj.name)
-                except tiledb.cc.TileDBError as e:
-                    # This is fine in case of parallel creates
-                    if "already exists" not in str(e):
-                        # bare raise will raise the current exception without rewriting the stack trace
-                        raise
+
+        try:
+            with self._open("w") as G:
+                G.add(uri=child_uri, relative=relative, name=obj.name)
+        except tiledb.cc.TileDBError as e:
+            stre = str(e)
+            # This is fine in case of parallel creates. Even in the case of non-parallel
+            # creates, it's faster to try/except than it is to open once for read as G, check if
+            # name in G, then if not exists open again for write.
+            if ("already exists" not in stre) and ("asset is already in the group" not in stre):
+                # bare raise will raise the current exception without rewriting the stack trace
+                raise
 
         # See _get_child_uri. Key point is that, on TileDB Cloud, URIs change from pre-creation to
         # post-creation. Example:
