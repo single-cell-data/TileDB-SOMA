@@ -7,6 +7,10 @@ help:
 
 # install 
 # -------------------------------------------------------------------
+
+# set default variable values, if non-null
+build ?= Release
+
 .PHONY: install
 install: clean
 	@./scripts/bld --prefix=${prefix} --tiledb=${tiledb} --build=${build}
@@ -14,7 +18,7 @@ install: clean
 
 .PHONY: r-build
 r-build: clean
-	@./scripts/bld --prefix=${prefix} --tiledb=${tiledb} --r-build
+	@./scripts/bld --prefix=${prefix} --tiledb=${tiledb} --build=${build} --r-build
 
 # incremental compile and update python install
 # -------------------------------------------------------------------
@@ -80,8 +84,6 @@ Examples:
   Install Release build with custom libtiledb
 
     make install tiledb=$$PWD/../TileDB/dist
-    export LD_LIBRARY_PATH=$$PWD/../TileDB/dist/lib:$$LD_LIBRARY_PATH     # linux
-    export DYLD_LIBRARY_PATH=$$PWD/../TileDB/dist/lib:$$DYLD_LIBRARY_PATH # macos
 
   Incrementally build C++ changes and update the python module
 
