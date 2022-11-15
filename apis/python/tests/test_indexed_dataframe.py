@@ -4,6 +4,7 @@ import numpy as np
 import pandas as pd
 import pyarrow as pa
 import pytest
+import tiledb
 
 import tiledbsoma as soma
 
@@ -35,6 +36,12 @@ def test_indexed_dataframe(tmp_path, arrow_schema):
 
     # Create
     asch = arrow_schema()
+    with pytest.raises(ValueError):
+        # requires one or more index columns
+        sidf.create(schema=asch, index_column_names=[])
+    with pytest.raises(ValueError):
+        # nonexistent indexed column
+        sidf.create(schema=asch, index_column_names=["bogus"])
     sidf.create(schema=asch, index_column_names=["foo"])
 
     assert sorted(sidf.schema.names) == sorted(["foo", "bar", "baz", "soma_joinid"])
@@ -196,6 +203,13 @@ def test_empty_indexed_dataframe(tmp_path):
     assert len(a.read_as_pandas_all()) == 0
     assert isinstance(a.read_as_pandas_all(), pd.DataFrame)
 
+    with pytest.raises(ValueError):
+        # illegal column name
+        soma.IndexedDataFrame((tmp_path / "B").as_posix()).create(
+            pa.schema([("a", pa.int32()), ("soma_bogus", pa.int32())]),
+            index_column_names=["a"],
+        )
+
 
 def test_columns(tmp_path):
     """
@@ -346,8 +360,7 @@ def make_multiply_indexed_dataframe(tmp_path, index_column_names: List[str]):
     }
 
     n_data = len(data["index1"])
-    rb = pa.Table.from_pydict(data)
-    sidf.write(rb)
+    sidf.write_from_pandas(pd.DataFrame(data=data))
     return (schema, sidf, n_data)
 
 
@@ -503,6 +516,36 @@ def make_multiply_indexed_dataframe(tmp_path, index_column_names: List[str]):
             "A": None,
             "throws": ValueError,
         },
+        {
+            "index_column_names": ["index1"],
+            "ids": [slice(1, 0)],  # hi < lo
+            "A": None,
+            "throws": ValueError,
+        },
+        {
+            "index_column_names": ["index1"],
+            "ids": [],  # len(ids) != len(index_column_names)
+            "A": None,
+            "throws": ValueError,
+        },
+        {
+            "index_column_names": ["index1"],
+            "ids": [(1,), (2,)],  # len(ids) != len(index_column_names)
+            "A": None,
+            "throws": ValueError,
+        },
+        {
+            "index_column_names": ["index1"],
+            "ids": "bogus",  # ids not list/tuple
+            "A": None,
+            "throws": TypeError,
+        },
+        {
+            "index_column_names": ["index1"],
+            "ids": [{"bogus": True}],  # bad index type
+            "A": None,
+            "throws": TypeError,
+        },
         # 1D: indexing slot is of invalid type
         # TODO: I want to test this but Typeguard fails the test since it already knows strings are not
         # valid until we implement
@@ -565,6 +608,20 @@ def make_multiply_indexed_dataframe(tmp_path, index_column_names: List[str]):
             "A": [11],
             "throws": None,
         },
+        # value_filter
+        {
+            "index_column_names": ["index1", "index2"],
+            "ids": [None, slice(500, 1000)],
+            "value_filter": "soma_joinid > 13",
+            "A": [14, 15],
+        },
+        {
+            "index_column_names": ["index1", "index2"],
+            "ids": [None, slice(500, 1000)],
+            "value_filter": "quick brown fox",
+            "A": None,
+            "throws": tiledb.TileDBError,  # TODO: should this be wrapped?
+        },
     ],
 )
 def test_read_indexing(tmp_path, io):
@@ -573,22 +630,25 @@ def test_read_indexing(tmp_path, io):
     schema, sidf, n_data = make_multiply_indexed_dataframe(
         tmp_path, io["index_column_names"]
     )
+    sidf = soma.IndexedDataFrame(uri=sidf.uri)  # reopen
     assert sidf.exists()
+    assert sidf.is_indexed is True
+    assert list(sidf.get_index_column_names()) == io["index_column_names"]
 
-    col_names = ["A"]
-
-    if io["throws"] is not None:
+    read_kwargs = {"column_names": ["A"]}
+    read_kwargs.update({k: io[k] for k in ("ids", "value_filter") if k in io})
+    if io.get("throws", None):
         with pytest.raises(io["throws"]):
-            next(sidf.read(ids=io["ids"], column_names=col_names))
+            next(sidf.read(**read_kwargs))
     else:
-        table = next(sidf.read(ids=io["ids"], column_names=col_names))
+        table = next(sidf.read(**read_kwargs))
         assert table["A"].to_pylist() == io["A"]
 
-    if io["throws"] is not None:
+    if io.get("throws", None):
         with pytest.raises(io["throws"]):
-            next(sidf.read_as_pandas(ids=io["ids"], column_names=col_names))
+            next(sidf.read_as_pandas(**read_kwargs))
     else:
-        table = next(sidf.read_as_pandas(ids=io["ids"], column_names=col_names))
+        table = next(sidf.read_as_pandas(**read_kwargs))
         assert table["A"].to_list() == io["A"]
 
     sidf.delete()
