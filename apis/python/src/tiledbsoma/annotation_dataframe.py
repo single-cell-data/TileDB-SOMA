@@ -327,7 +327,9 @@ class AnnotationDataFrame(TileDBArray):
         return pa.Table.from_arrays(new_arrays, names=array_names)
 
     # ----------------------------------------------------------------
-    def from_dataframe(self, dataframe: pd.DataFrame, extent: int = 2048) -> None:
+    def from_dataframe(
+        self, dataframe: pd.DataFrame, *, extent: int = 2048, schema_only: bool = False
+    ) -> None:
         """
         Populates the ``obs`` or ``var`` subgroup for a SOMA object.
 
@@ -369,10 +371,15 @@ class AnnotationDataFrame(TileDBArray):
         #   CTTGATTGATCTTC 0          233.0      76           ...
         dataframe = dataframe.rename_axis(self.dim_name)
 
-        mode = "ingest"
-        if self.exists():
-            mode = "append"
-            log_io(None, f"{self._indent}Re-using existing array {self.nested_name}")
+        if schema_only:
+            mode = "schema_only"
+        else:
+            mode = "ingest"
+            if self.exists():
+                mode = "append"
+                log_io(
+                    None, f"{self._indent}Re-using existing array {self.nested_name}"
+                )
 
         # ISSUE:
         # TileDB attributes can be stored as Unicode but they are not yet queryable via the TileDB

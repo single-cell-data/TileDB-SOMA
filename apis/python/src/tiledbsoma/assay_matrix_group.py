@@ -144,6 +144,8 @@ class AssayMatrixGroup(TileDBGroup):
         row_names: Labels,
         col_names: Labels,
         layer_name: str = "data",
+        *,
+        schema_only: bool = False,
     ) -> None:
         """
         Populates the ``X`` or ``raw.X`` subgroup for a ``SOMA`` object.  For ``X`` and ``raw.X``,
@@ -168,6 +170,8 @@ class AssayMatrixGroup(TileDBGroup):
                 col_dataframe=self.col_dataframe,
                 parent=self,
             )
-            assay_matrix.from_matrix_and_dim_values(matrix, row_names, col_names)
+            assay_matrix.from_matrix_and_dim_values(
+                matrix, row_names, col_names, schema_only=schema_only
+            )
 
             self._add_object(assay_matrix)

@@ -60,7 +60,13 @@ class RawGroup(TileDBGroup):
         )
 
     # ----------------------------------------------------------------
-    def from_anndata(self, anndata: ad.AnnData, X_layer_name: str = "data") -> None:
+    def from_anndata(
+        self,
+        anndata: ad.AnnData,
+        X_layer_name: str = "data",
+        *,
+        schema_only: bool = False,
+    ) -> None:
         """
         Writes ``anndata.raw`` to a TileDB group structure.
         """
@@ -70,7 +76,9 @@ class RawGroup(TileDBGroup):
         # Must be done first, to create the parent directory
         self.create_unless_exists()
 
-        self.var.from_dataframe(dataframe=anndata.raw.var, extent=2048)
+        self.var.from_dataframe(
+            dataframe=anndata.raw.var, extent=2048, schema_only=schema_only
+        )
         self._add_object(self.var)
 
         self.X.add_layer_from_matrix_and_dim_values(
@@ -78,13 +86,17 @@ class RawGroup(TileDBGroup):
             row_names=anndata.obs.index,
             col_names=anndata.raw.var.index,
             layer_name=X_layer_name,
+            schema_only=schema_only,
         )
         self._add_object(self.X)
 
         self.varm.create_unless_exists()
         for key in anndata.raw.varm.keys():
             self.varm.add_matrix_from_matrix_and_dim_values(
-                anndata.raw.varm[key], anndata.raw.var_names, key
+                anndata.raw.varm[key],
+                anndata.raw.var_names,
+                key,
+                schema_only=schema_only,
             )
         self._add_object(self.varm)
 
