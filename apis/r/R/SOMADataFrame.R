@@ -28,7 +28,7 @@ SOMADataFrame <- R6::R6Class(
           !"soma_rowid" %in% schema$names,
         is.character(index_column_names) && length(index_column_names) > 0,
         "All 'index_column_names' must be defined in the 'schema'" =
-          (index_column_names %in% schema$names)
+          assert_subset(index_column_names, schema$names, type = "field")
       )
 
       attr_column_names <- setdiff(schema$names, index_column_names)
