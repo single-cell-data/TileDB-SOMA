@@ -23,7 +23,7 @@ SOMADataFrame <- R6::R6Class(
     create = function(schema, index_column_names) {
       stopifnot(
         "'schema' must be a valid Arrow schema" =
-          inherits(schema, "Schema"),
+          is_arrow_schema(schema)
         "'soma_rowid' is a reserved column name" =
           !"soma_rowid" %in% schema$names,
         is.character(index_column_names) && length(index_column_names) > 0,
