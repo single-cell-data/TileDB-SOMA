@@ -104,7 +104,10 @@ class AnnotationMatrix(TileDBArray):
 
     # ----------------------------------------------------------------
     def from_matrix_and_dim_values(
-        self, matrix: Union[pd.DataFrame, Matrix], dim_values: Labels
+        self,
+        matrix: Union[pd.DataFrame, Matrix],
+        dim_values: Labels,
+        schema_only: bool = False,
     ) -> None:
         """
         Populates an array in the obsm/ or varm/ subgroup for a SOMA object.
@@ -116,9 +119,11 @@ class AnnotationMatrix(TileDBArray):
         log_io(None, f"{self._indent}START  WRITING {self.nested_name}")
 
         if isinstance(matrix, pd.DataFrame):
-            self._from_pandas_dataframe(matrix, dim_values)
+            self._from_pandas_dataframe(matrix, dim_values, schema_only=schema_only)
         else:
-            self._numpy_ndarray_or_scipy_sparse_csr_matrix(matrix, dim_values)
+            self._numpy_ndarray_or_scipy_sparse_csr_matrix(
+                matrix, dim_values, schema_only=schema_only
+            )
 
         self._set_object_type_metadata()
 
@@ -129,7 +134,10 @@ class AnnotationMatrix(TileDBArray):
 
     # ----------------------------------------------------------------
     def _numpy_ndarray_or_scipy_sparse_csr_matrix(
-        self, matrix: Matrix, dim_values: Labels
+        self,
+        matrix: Matrix,
+        dim_values: Labels,
+        schema_only: bool = False,
     ) -> None:
         # We do not have column names for anndata-provenance annotation matrices.
         # So, if say we're looking at anndata.obsm['X_pca'], we create column names
@@ -143,12 +151,15 @@ class AnnotationMatrix(TileDBArray):
         else:
             self._create_empty_array([matrix.dtype] * nattr, attr_names)
 
-        df = pd.DataFrame(matrix, columns=attr_names)
-        with tiledb.open(self.uri, mode="w", ctx=self._ctx) as A:
-            A[dim_values] = df.to_dict(orient="list")
+        if not schema_only:
+            df = pd.DataFrame(matrix, columns=attr_names)
+            with tiledb.open(self.uri, mode="w", ctx=self._ctx) as A:
+                A[dim_values] = df.to_dict(orient="list")
 
     # ----------------------------------------------------------------
-    def _from_pandas_dataframe(self, df: pd.DataFrame, dim_values: Labels) -> None:
+    def _from_pandas_dataframe(
+        self, df: pd.DataFrame, dim_values: Labels, *, schema_only: bool = False
+    ) -> None:
         attr_names = df.columns.values.tolist()
 
         # Ingest annotation matrices as 1D/multi-attribute sparse arrays
@@ -157,8 +168,9 @@ class AnnotationMatrix(TileDBArray):
         else:
             self._create_empty_array(list(df.dtypes), attr_names)
 
-        with tiledb.open(self.uri, mode="w", ctx=self._ctx) as A:
-            A[dim_values] = df.to_dict(orient="list")
+        if not schema_only:
+            with tiledb.open(self.uri, mode="w", ctx=self._ctx) as A:
+                A[dim_values] = df.to_dict(orient="list")
 
     # ----------------------------------------------------------------
     def _create_empty_array(

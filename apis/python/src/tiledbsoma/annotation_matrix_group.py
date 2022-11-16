@@ -125,6 +125,8 @@ class AnnotationMatrixGroup(TileDBGroup):
         matrix: Union[pd.DataFrame, Matrix],
         dim_values: Labels,
         matrix_name: str,
+        *,
+        schema_only: bool = False,
     ) -> None:
         """
         Populates a component of the ``obsm`` or ``varm`` subgroup for a SOMA object.
@@ -146,7 +148,9 @@ class AnnotationMatrixGroup(TileDBGroup):
             dim_name=self.dim_name,
             parent=self,
         )
-        annotation_matrix.from_matrix_and_dim_values(matrix, dim_values)
+        annotation_matrix.from_matrix_and_dim_values(
+            matrix, dim_values, schema_only=schema_only
+        )
         self._add_object(annotation_matrix)
 
     # ----------------------------------------------------------------

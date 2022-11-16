@@ -159,7 +159,11 @@ class AssayMatrix(TileDBArray):
 
     # ----------------------------------------------------------------
     def from_matrix_and_dim_values(
-        self, matrix: Matrix, row_names: Labels, col_names: Labels
+        self,
+        matrix: Matrix,
+        row_names: Labels,
+        col_names: Labels,
+        schema_only: bool = False,
     ) -> None:
         """
         Imports a matrix --- nominally ``scipy.sparse.csr_matrix`` or ``numpy.ndarray`` --- into a TileDB
@@ -193,14 +197,16 @@ class AssayMatrix(TileDBArray):
 
         self._set_object_type_metadata()
 
-        if not self._soma_options.write_X_chunked:
-            self.ingest_data_whole(matrix, row_names, col_names)
-        elif isinstance(matrix, sp.csr_matrix):
-            self.ingest_data_rows_chunked(matrix, row_names, col_names)
-        elif isinstance(matrix, sp.csc_matrix):
-            self.ingest_data_cols_chunked(matrix, row_names, col_names)
-        else:
-            self.ingest_data_dense_rows_chunked(matrix, row_names, col_names)
+        if not schema_only:
+            if not self._soma_options.write_X_chunked:
+                self.ingest_data_whole(matrix, row_names, col_names)
+            elif isinstance(matrix, sp.csr_matrix):
+                self.ingest_data_rows_chunked(matrix, row_names, col_names)
+            elif isinstance(matrix, sp.csc_matrix):
+                self.ingest_data_cols_chunked(matrix, row_names, col_names)
+            else:
+                self.ingest_data_dense_rows_chunked(matrix, row_names, col_names)
+
         log_io(
             f"Wrote {self.nested_name}",
             util.format_elapsed(s, f"{self._indent}FINISH WRITING {self.nested_name}"),
