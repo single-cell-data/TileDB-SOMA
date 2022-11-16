@@ -2,7 +2,7 @@
 % Please edit documentation in R/SOMAIndexedDataFrame.R
 \name{SOMAIndexedDataFrame}
 \alias{SOMAIndexedDataFrame}
-\title{SOMADataFrame}
+\title{SOMAIndexedDataFrame}
 \description{
 \code{SOMAIndexedDataFrame} is a multi-column table that must contain a column
 called \code{soma_joinid} of type \code{uint64}, which contains a unique value for each

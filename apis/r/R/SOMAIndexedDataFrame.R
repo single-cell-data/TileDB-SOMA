@@ -1,4 +1,4 @@
-#' SOMADataFrame
+#' SOMAIndexedDataFrame
 #'
 #' @description
 #' `SOMAIndexedDataFrame` is a multi-column table that must contain a column
