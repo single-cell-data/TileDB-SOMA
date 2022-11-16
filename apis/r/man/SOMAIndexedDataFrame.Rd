@@ -10,7 +10,7 @@ row and is intended to act as a join key for other objects, such as
 \code{\link{SOMASparseNdArray}}.
 }
 \section{Super classes}{
-\code{tiledbsoma::TileDBObject} -> \code{tiledbsoma::TileDBArray} -> \code{SOMAIndexedDataFrame}
+\code{\link[tiledbsoma:TileDBObject]{tiledbsoma::TileDBObject}} -> \code{\link[tiledbsoma:TileDBArray]{tiledbsoma::TileDBArray}} -> \code{SOMAIndexedDataFrame}
 }
 \section{Methods}{
 \subsection{Public methods}{

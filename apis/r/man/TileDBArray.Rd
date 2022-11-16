@@ -16,7 +16,7 @@ populate the private \code{create_empty_array()} and \code{ingest_data()} method
 }
 }
 \section{Super class}{
-\code{tiledbsoma::TileDBObject} -> \code{TileDBArray}
+\code{\link[tiledbsoma:TileDBObject]{tiledbsoma::TileDBObject}} -> \code{TileDBArray}
 }
 \section{Methods}{
 \subsection{Public methods}{
@@ -143,7 +143,7 @@ Retrieve the array dimensions
 }
 
 \subsection{Returns}{
-A list of \code{\link[tiledb:tiledb_dim]{tiledb::tiledb_dim}} objects
+A named list of \code{\link[tiledb:tiledb_dim]{tiledb::tiledb_dim}} objects
 }
 }
 \if{html}{\out{<hr>}}
