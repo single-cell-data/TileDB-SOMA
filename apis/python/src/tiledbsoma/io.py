@@ -32,14 +32,17 @@ def from_h5ad_unless_exists(
 
 # ----------------------------------------------------------------
 def from_h5ad(
-    soma: tiledbsoma.SOMA, input_path: Path, X_layer_name: str = "data"
+    soma: tiledbsoma.SOMA,
+    input_path: Path,
+    X_layer_name: str = "data",
+    schema_only: bool = False,
 ) -> None:
     """
     Reads an ``.h5ad`` local-disk file and writes to a TileDB SOMA structure.
     """
     if isinstance(input_path, ad.AnnData):
         raise Exception("Input path is an AnnData object -- did you want from_anndata?")
-    _from_h5ad_common(soma, input_path, _from_anndata_aux, X_layer_name)
+    _from_h5ad_common(soma, input_path, _from_anndata_aux, X_layer_name, schema_only)
 
 
 # ----------------------------------------------------------------
@@ -48,15 +51,22 @@ def from_h5ad_update_obs_and_var(soma: tiledbsoma.SOMA, input_path: Path) -> Non
     Rewrites obs and var from the specified .h5ad file, leaving all other data in place. Useful for
     updating schema/compression/etc. within an existing dataset.
     """
-    _from_h5ad_common(soma, input_path, from_anndata_update_obs_and_var, "unused")
+    _from_h5ad_common(
+        soma,
+        input_path,
+        from_anndata_update_obs_and_var,
+        "unused",
+        False,
+    )
 
 
 # ----------------------------------------------------------------
 def _from_h5ad_common(
     soma: tiledbsoma.SOMA,
     input_path: Path,
-    handler_func: Callable[[tiledbsoma.SOMA, ad.AnnData, str], None],
+    handler_func: Callable[[tiledbsoma.SOMA, ad.AnnData, str, bool], None],
     X_layer_name: str,
+    schema_only: bool,
 ) -> None:
     """
     Common code for things we do when processing a .h5ad file for ingest/update.
@@ -74,7 +84,7 @@ def _from_h5ad_common(
         tiledbsoma.util.format_elapsed(s, f"{soma._indent}FINISH READING {input_path}"),
     )
 
-    handler_func(soma, anndata, X_layer_name)
+    handler_func(soma, anndata, X_layer_name, schema_only)
 
     log_io(
         None,
@@ -99,7 +109,10 @@ def from_10x_unless_exists(soma: tiledbsoma.SOMA, input_path: Path) -> None:
 
 
 def from_10x(
-    soma: tiledbsoma.SOMA, input_path: Path, X_layer_name: str = "data"
+    soma: tiledbsoma.SOMA,
+    input_path: Path,
+    X_layer_name: str = "data",
+    schema_only: bool = False,
 ) -> None:
     """
     Reads a 10X file and writes to a TileDB group structure.
@@ -116,7 +129,7 @@ def from_10x(
         tiledbsoma.util.format_elapsed(s, f"{soma._indent}FINISH READING {input_path}"),
     )
 
-    _from_anndata_aux(soma, anndata, X_layer_name)
+    _from_anndata_aux(soma, anndata, X_layer_name, schema_only=schema_only)
 
     log_io(
         None,
@@ -128,7 +141,10 @@ def from_10x(
 
 # ----------------------------------------------------------------
 def from_anndata_unless_exists(
-    soma: tiledbsoma.SOMA, anndata: ad.AnnData, X_layer_name: str = "data"
+    soma: tiledbsoma.SOMA,
+    anndata: ad.AnnData,
+    X_layer_name: str = "data",
+    schema_only: bool = False,
 ) -> None:
     """
     Skips the ingest if the SOMA is already there. A convenient keystroke-saver
@@ -139,23 +155,27 @@ def from_anndata_unless_exists(
             f"Already exists, skipping ingest: {soma.nested_name}"
         )
     else:
-        _from_anndata_aux(soma, anndata, X_layer_name)
+        _from_anndata_aux(soma, anndata, X_layer_name, schema_only)
 
 
 # ----------------------------------------------------------------
 def from_anndata(
-    soma: tiledbsoma.SOMA, anndata: ad.AnnData, X_layer_name: str = "data"
+    soma: tiledbsoma.SOMA,
+    anndata: ad.AnnData,
+    X_layer_name: str = "data",
+    schema_only: bool = False,
 ) -> None:
     """
     Given an in-memory ``AnnData`` object, writes to a TileDB SOMA structure.
     """
-    return _from_anndata_aux(soma, anndata, X_layer_name)
+    return _from_anndata_aux(soma, anndata, X_layer_name, schema_only)
 
 
 def _from_anndata_aux(
     soma: tiledbsoma.SOMA,
     anndata: ad.AnnData,
     X_layer_name: str,
+    schema_only: bool,
 ) -> None:
     """
     Helper method for ``from_anndata``. This simplified type-checking using ``mypy`` with regard to
@@ -200,6 +220,7 @@ def _from_anndata_aux(
                 soma.obs.from_dataframe,
                 dataframe=anndata.obs,
                 extent=256,
+                schema_only=schema_only,
             )
         )
         futures.append(
@@ -207,6 +228,7 @@ def _from_anndata_aux(
                 soma.var.from_dataframe,
                 dataframe=anndata.var,
                 extent=2048,
+                schema_only=schema_only,
             )
         )
         futures.append(
@@ -216,6 +238,7 @@ def _from_anndata_aux(
                 row_names=anndata.obs.index,
                 col_names=anndata.var.index,
                 layer_name=X_layer_name,
+                schema_only=schema_only,
             )
         )
 
@@ -228,6 +251,7 @@ def _from_anndata_aux(
                         row_names=anndata.obs.index,
                         col_names=anndata.var.index,
                         layer_name=layer_name,
+                        schema_only=schema_only,
                     )
                 )
 
@@ -254,6 +278,7 @@ def _from_anndata_aux(
                     anndata.obsm[key],
                     anndata.obs_names,
                     key,
+                    schema_only=schema_only,
                 )
             )
 
@@ -264,6 +289,7 @@ def _from_anndata_aux(
                     anndata.varm[key],
                     anndata.var_names,
                     key,
+                    schema_only=schema_only,
                 )
             )
 
@@ -274,6 +300,7 @@ def _from_anndata_aux(
                     anndata.obsp[key],
                     anndata.obs_names,
                     key,
+                    schema_only=schema_only,
                 )
             )
 
@@ -284,6 +311,7 @@ def _from_anndata_aux(
                     anndata.varp[key],
                     anndata.var_names,
                     key,
+                    schema_only=schema_only,
                 )
             )
 
@@ -292,6 +320,7 @@ def _from_anndata_aux(
                 executor.submit(
                     soma.raw.from_anndata,
                     anndata,
+                    schema_only=schema_only,
                 )
             )
 
@@ -307,9 +336,16 @@ def _from_anndata_aux(
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     # Already parallelized recursively
-    if anndata.uns is not None:
-        soma.uns.from_anndata_uns(anndata.uns)
-        soma._add_object(soma.uns)
+    if not schema_only:
+        # Writing multiple H5ADs in append mode to the same SOMA is a supported mode.  However the
+        # uns structures _cannot_ have all the same schema -- in particular there are dense arrays.
+        # For append mode, users must set `anndata.uns = {}`, or "nest" each input anndata object's
+        # `uns` as `anndata.uns = { "some_unique_name" : anndata.uns }`. In either case, there is
+        # nothing to be done at the schema-only step. The uns objects _have_ no fixed schema -- as
+        # indicated by the name `uns` for "unstructured".
+        if anndata.uns is not None:
+            soma.uns.from_anndata_uns(anndata.uns)
+            soma._add_object(soma.uns)
 
     log_io(
         f"Wrote {soma.nested_name}",
@@ -321,7 +357,10 @@ def _from_anndata_aux(
 
 # ----------------------------------------------------------------
 def from_anndata_update_obs_and_var(
-    soma: tiledbsoma.SOMA, anndata: ad.AnnData, _unused: str
+    soma: tiledbsoma.SOMA,
+    anndata: ad.AnnData,
+    _unused1: str,
+    _unused2: bool = False,
 ) -> None:
     """
     Rewrites obs and var from anndata, leaving all other data in place. Useful

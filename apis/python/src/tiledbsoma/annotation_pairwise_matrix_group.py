@@ -172,6 +172,8 @@ class AnnotationPairwiseMatrixGroup(TileDBGroup):
         matrix: Matrix,
         dim_values: Labels,
         matrix_name: str,
+        *,
+        schema_only: bool = False,
     ) -> None:
         """
         Populates a component of the ``obsp`` or ``varp`` subgroup for a SOMA object.
@@ -197,7 +199,10 @@ class AnnotationPairwiseMatrixGroup(TileDBGroup):
             parent=self,
         )
         annotation_pairwise_matrix.from_matrix_and_dim_values(
-            matrix, dim_values, dim_values
+            matrix,
+            dim_values,
+            dim_values,
+            schema_only=schema_only,
         )
         self._add_object(annotation_pairwise_matrix)
 
