@@ -1,4 +1,4 @@
-test_that("SOMAIndexedDataFrame creation", {
+test_that("SOMADataFrame creation", {
   skip_if(TRUE) # temporary
   uri <- withr::local_tempdir("soma-indexed-dataframe4")
   asch <- arrow::schema(
@@ -7,7 +7,7 @@ test_that("SOMAIndexedDataFrame creation", {
     baz = arrow::string()
   )
 
-  sidf <- SOMAIndexedDataFrame$new(uri)
+  sidf <- SOMADataFrame$new(uri)
   expect_error(
     sidf$create(asch),
     "argument \"index_column_names\" is missing, with no default"

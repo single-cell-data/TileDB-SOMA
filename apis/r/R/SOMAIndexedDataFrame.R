@@ -1,7 +1,7 @@
-#' SOMAIndexedDataFrame
+#' SOMADataFrame
 #'
 #' @description
-#' `SOMAIndexedDataFrame` is a multi-column table that must contain a column
+#' `SOMADataFrame` is a multi-column table that must contain a column
 #' called `soma_joinid` of type `uint64`, which contains a unique value for each
 #' row and is intended to act as a join key for other objects, such as
 #' [`SOMASparseNdArray`].
@@ -9,8 +9,8 @@
 #' @importFrom stats setNames
 #' @export
 
-SOMAIndexedDataFrame <- R6::R6Class(
-  classname = "SOMAIndexedDataFrame",
+SOMADataFrame <- R6::R6Class(
+  classname = "SOMADataFrame",
   inherit = TileDBArray,
 
   public = list(
@@ -104,7 +104,7 @@ SOMAIndexedDataFrame <- R6::R6Class(
     #'
     #' @param values An [`arrow::Table`] containing all columns, including
     #' the `soma_rowid` index column. The schema for `values` must match the
-    #' schema for the `SOMAIndexedDataFrame`.
+    #' schema for the `SOMADataFrame`.
     #'
     write = function(values) {
       on.exit(private$close())
