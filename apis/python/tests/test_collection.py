@@ -22,7 +22,6 @@ def create_and_populate_dataframe(dataframe: soma.DataFrame) -> None:
     dataframe.create(schema=arrow_schema)
 
     pydict = {}
-    pydict["soma_rowid"] = [0, 1, 2, 3, 4]
     pydict["soma_joinid"] = [0, 1, 2, 3, 4]
     pydict["foo"] = [10, 20, 30, 40, 50]
     pydict["bar"] = [4.1, 5.2, 6.3, 7.4, 8.5]
@@ -91,7 +90,6 @@ def test_collection_basic(tmp_path):
     params=[
         "Collection",
         "DataFrame",
-        "IndexedDataFrame",
         "DenseNdArray",
         "SparseNdArray",
     ],
@@ -109,10 +107,6 @@ def soma_object(request, tmp_path):
 
     elif class_name == "DataFrame":
         so = soma.DataFrame(uri=uri)
-        so.create(pa.schema([("A", pa.int32()), ("B", pa.large_string())]))
-
-    elif class_name == "IndexedDataFrame":
-        so = soma.IndexedDataFrame(uri=uri)
         so.create(
             schema=pa.schema([("C", pa.float32()), ("D", pa.uint32())]),
             index_column_names=["D"],

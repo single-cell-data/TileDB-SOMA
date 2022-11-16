@@ -78,7 +78,7 @@ SOMADenseNdArray <- R6::R6Class(
       tiledb::tiledb_array_create(uri = self$uri, schema = tdb_schema)
     },
 
-    #' @description Read as an ['arrow::Table']
+    #' @description Read as an 'arrow::Table'
     #' @param coords A `list` of integer vectors, one for each dimension, with a
     #' length equal to the number of values to read. If `NULL`, all values are
     #' read. List elements can be named when specifying a subset of dimensions.

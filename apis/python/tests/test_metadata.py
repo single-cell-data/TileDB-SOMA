@@ -15,7 +15,6 @@ Metadata handling tests for all SOMA foundational datatypes.
     params=[
         "Collection",
         "DataFrame",
-        "IndexedDataFrame",
         "DenseNdArray",
         "SparseNdArray",
     ],
@@ -33,10 +32,6 @@ def soma_object(request, tmp_path):
 
     elif class_name == "DataFrame":
         so = soma.DataFrame(uri=uri)
-        so.create(pa.schema([("A", pa.int32()), ("B", pa.large_string())]))
-
-    elif class_name == "IndexedDataFrame":
-        so = soma.IndexedDataFrame(uri=uri)
         so.create(
             schema=pa.schema([("C", pa.float32()), ("D", pa.uint32())]),
             index_column_names=["D"],

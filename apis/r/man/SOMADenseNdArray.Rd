@@ -6,7 +6,7 @@
 \description{
 \code{SOMADenseNdArray} is a dense, N-dimensional array of \code{primitive} type, with
 offset (zero-based) \code{int64} integer indexing on each dimension with domain
-\verb{[0, maxUint64)}. The \code{SOMADenseNdArray} has a user-defined schema, which
+\verb{[0, maxInt64)}. The \code{SOMADenseNdArray} has a user-defined schema, which
 includes:
 \itemize{
 \item \strong{type}: a \code{primitive} type, expressed as an Arrow type (e.g., \code{int64},
@@ -22,7 +22,7 @@ The default "fill" value for \code{SOMADenseNdArray} is the zero or null value o
 the array type (e.g., Arrow.float32 defaults to 0.0).
 }
 \section{Super classes}{
-\code{tiledbsoma::TileDBObject} -> \code{tiledbsoma::TileDBArray} -> \code{SOMADenseNdArray}
+\code{\link[tiledbsoma:TileDBObject]{tiledbsoma::TileDBObject}} -> \code{\link[tiledbsoma:TileDBArray]{tiledbsoma::TileDBArray}} -> \code{SOMADenseNdArray}
 }
 \section{Methods}{
 \subsection{Public methods}{
@@ -78,7 +78,7 @@ element in the array.}
 \if{html}{\out{<a id="method-SOMADenseNdArray-read_arrow_table"></a>}}
 \if{latex}{\out{\hypertarget{method-SOMADenseNdArray-read_arrow_table}{}}}
 \subsection{Method \code{read_arrow_table()}}{
-Read as an \link['arrow:Table']{'arrow::Table'}
+Read as an 'arrow::Table'
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{SOMADenseNdArray$read_arrow_table(coords = NULL, result_order = "ROW_MAJOR")}\if{html}{\out{</div>}}
 }

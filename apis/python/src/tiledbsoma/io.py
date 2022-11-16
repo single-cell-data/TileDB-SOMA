@@ -23,7 +23,7 @@ from tiledbsoma import (
     util_scipy,
 )
 
-from .constants import SOMA_JOINID, SOMA_ROWID
+from .constants import SOMA_JOINID
 from .types import Path
 from .util import uri_joinpath
 
@@ -89,13 +89,12 @@ def _write_dataframe(
 
     assert not soma_df.exists()
 
-    df[SOMA_ROWID] = np.asarray(range(len(df)), dtype=np.int64)
     df[SOMA_JOINID] = np.asarray(range(len(df)), dtype=np.int64)
 
     df.reset_index(inplace=True)
     if id_column_name is not None:
         df.rename(columns={"index": id_column_name}, inplace=True)
-    df.set_index(SOMA_ROWID, inplace=True)
+    df.set_index(SOMA_JOINID, inplace=True)  # XXX MAYBE NOT?
 
     # TODO: This is a proposed replacement for use of tiledb.from_pandas,
     # behind a feature flag.

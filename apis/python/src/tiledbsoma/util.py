@@ -19,7 +19,6 @@ SPEC_NAMES_TO_CLASS_NAMES = {
     "SOMAMeasurement": "Measurement",
     "SOMACollection": "Collection",
     "SOMADataFrame": "DataFrame",
-    "SOMAIndexedDataFrame": "IndexedDataFrame",
     "SOMADenseNdArray": "DenseNdArray",
     "SOMASparseNdArray": "SparseNdArray",
 }
@@ -30,7 +29,6 @@ CLASS_NAMES_TO_SPEC_NAMES = {
     "Measurement": "SOMAMeasurement",
     "Collection": "SOMACollection",
     "DataFrame": "SOMADataFrame",
-    "IndexedDataFrame": "SOMAIndexedDataFrame",
     "DenseNdArray": "SOMADenseNdArray",
     "SparseNdArray": "SOMASparseNdArray",
 }

@@ -4,6 +4,7 @@
 #pragma once
 
 #include <tiledb/tiledb>
+#include <spdl.h>
 
 namespace tdbs = tiledbsoma;
 
