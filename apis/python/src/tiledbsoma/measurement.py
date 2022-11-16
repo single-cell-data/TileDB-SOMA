@@ -3,8 +3,8 @@ from typing import Any, Dict, Literal, Optional, Tuple, Union, cast
 import tiledb
 
 from .collection import CollectionBase
+from .dataframe import DataFrame
 from .dense_nd_array import DenseNdArray
-from .indexed_dataframe import DataFrame
 from .sparse_nd_array import SparseNdArray
 from .tiledb_object import TileDBObject
 from .tiledb_platform_config import TileDBPlatformConfig

@@ -54,7 +54,7 @@ def test_dataframe_unicode(tmp_path, sample_arrow_table):
 # TODO: Remove the `xfail` annotation when issue TileDB-SOMA#415 is fixed
 #
 @pytest.mark.xfail
-def test_indexed_dataframe_unicode_attr(tmp_path, sample_arrow_table):
+def test_dataframe_unicode_attr(tmp_path, sample_arrow_table):
     """Verify round-trip of unicode in DataFrame value columns"""
     sdf = soma.DataFrame(tmp_path.as_posix())
     sdf.create(sample_arrow_table.schema, index_column_names=["soma_joinid"])
@@ -65,7 +65,7 @@ def test_indexed_dataframe_unicode_attr(tmp_path, sample_arrow_table):
 # TODO: Remove the `xfail` annotation when issues TileDB-SOMA#415 and TileDB-SOMA#418 are fixed
 #
 @pytest.mark.xfail
-def test_indexed_dataframe_unicode_index(tmp_path, sample_arrow_table):
+def test_dataframe_unicode_index(tmp_path, sample_arrow_table):
     """Verify round-trip of unicode in DataFrame index columns"""
     sdf = soma.DataFrame(tmp_path.as_posix())
     sdf.create(sample_arrow_table.schema, index_column_names=["unicode"])

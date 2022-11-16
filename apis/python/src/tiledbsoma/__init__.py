@@ -34,6 +34,7 @@ except ImportError:
 # ----------------------------------------------------------------
 
 from .collection import Collection
+from .dataframe import DataFrame
 from .dense_nd_array import DenseNdArray
 from .exception import DoesNotExistError, SOMAError
 from .experiment import Experiment
@@ -43,7 +44,6 @@ from .general_utilities import (
     get_SOMA_version,
     get_storage_engine,
 )
-from .indexed_dataframe import DataFrame
 from .measurement import Measurement
 from .metadata_mapping import MetadataMapping
 from .query_condition import QueryCondition  # type: ignore

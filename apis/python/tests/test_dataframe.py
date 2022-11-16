@@ -23,7 +23,7 @@ def arrow_schema():
     return _schema
 
 
-def test_indexed_dataframe(tmp_path, arrow_schema):
+def test_dataframe(tmp_path, arrow_schema):
     sidf = soma.DataFrame(uri=tmp_path.as_posix())
 
     asch = pa.schema(
@@ -76,7 +76,7 @@ def test_indexed_dataframe(tmp_path, arrow_schema):
     assert sorted([e.as_py() for e in list(table["baz"])]) == ["apple", "cat"]
 
 
-def test_indexed_dataframe_with_float_dim(tmp_path, arrow_schema):
+def test_dataframe_with_float_dim(tmp_path, arrow_schema):
     sidf = soma.DataFrame(uri=tmp_path.as_posix())
     asch = arrow_schema()
     sidf.create(schema=asch, index_column_names=("bar",))
@@ -84,7 +84,7 @@ def test_indexed_dataframe_with_float_dim(tmp_path, arrow_schema):
 
 
 @pytest.fixture
-def simple_indexed_data_frame(tmp_path):
+def simple_data_frame(tmp_path):
     """
     A pytest fixture which creates a simple DataFrame for use in tests below.
     """
@@ -135,8 +135,8 @@ def simple_indexed_data_frame(tmp_path):
         None,
     ],
 )
-def test_DataFrame_read_column_names(simple_indexed_data_frame, ids, col_names):
-    schema, sidf, n_data, index_column_names = simple_indexed_data_frame
+def test_DataFrame_read_column_names(simple_data_frame, ids, col_names):
+    schema, sidf, n_data, index_column_names = simple_data_frame
     assert sidf.exists()
 
     def _check_tbl(tbl, col_names, ids, *, demote):
@@ -193,7 +193,7 @@ def test_DataFrame_read_column_names(simple_indexed_data_frame, ids, col_names):
     )
 
 
-def test_empty_indexed_dataframe(tmp_path):
+def test_empty_dataframe(tmp_path):
     a = soma.DataFrame((tmp_path / "A").as_posix())
     a.create(pa.schema([("a", pa.int32())]), index_column_names=["a"])
     # Must not throw

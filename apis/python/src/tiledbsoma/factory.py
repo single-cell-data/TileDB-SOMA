@@ -8,10 +8,10 @@ from typing import Any, Optional, Union
 import tiledb
 
 from .collection import Collection, CollectionBase
+from .dataframe import DataFrame
 from .dense_nd_array import DenseNdArray
 from .exception import SOMAError
 from .experiment import Experiment
-from .indexed_dataframe import DataFrame
 from .measurement import Measurement
 from .sparse_nd_array import SparseNdArray
 from .util import SOMA_OBJECT_TYPE_METADATA_KEY, SPEC_NAMES_TO_CLASS_NAMES

@@ -3,7 +3,7 @@ from typing import Any, Dict, Literal, Optional, Tuple, cast
 import tiledb
 
 from .collection import CollectionBase
-from .indexed_dataframe import DataFrame
+from .dataframe import DataFrame
 from .measurement import Measurement
 from .tiledb_object import TileDBObject
 from .tiledb_platform_config import TileDBPlatformConfig
