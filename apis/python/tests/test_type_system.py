@@ -67,9 +67,7 @@ def test_arrow_types_supported(tmp_path, arrow_type_info):
     assert sdf == sdf.create(pa.schema([(str(arrow_type), arrow_type)]))
     schema = sdf.schema
     assert schema is not None
-    assert sorted(schema.names) == sorted(
-        ["soma_joinid", "soma_rowid", str(arrow_type)]
-    )
+    assert sorted(schema.names) == sorted(["soma_joinid", str(arrow_type)])
     assert schema.field(str(arrow_type)).type == expected_arrow_type
 
 

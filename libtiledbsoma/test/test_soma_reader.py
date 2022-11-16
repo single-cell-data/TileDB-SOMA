@@ -69,7 +69,7 @@ def test_soma_reader_dim_points():
 
     obs_id_points = list(range(0, 100, 2))
 
-    sr.set_dim_points("soma_rowid", obs_id_points)
+    sr.set_dim_points("soma_joinid", obs_id_points)
 
     sr.submit()
     arrow_table = sr.read_next()
@@ -88,7 +88,7 @@ def test_soma_reader_dim_points_arrow_array():
 
     obs_id_points = pa.array([0, 2, 4, 6, 8])
 
-    sr.set_dim_points("soma_rowid", obs_id_points)
+    sr.set_dim_points("soma_joinid", obs_id_points)
 
     sr.submit()
     arrow_table = sr.read_next()
@@ -110,7 +110,7 @@ def test_soma_reader_dim_ranges():
         [2000, 2004],
     ]
 
-    sr.set_dim_ranges("soma_rowid", obs_id_ranges)
+    sr.set_dim_ranges("soma_joinid", obs_id_ranges)
 
     sr.submit()
     arrow_table = sr.read_next()
@@ -134,8 +134,8 @@ def test_soma_reader_dim_mixed():
         [2000, 2004],
     ]
 
-    sr.set_dim_points("soma_rowid", obs_id_points)
-    sr.set_dim_ranges("soma_rowid", obs_id_ranges)
+    sr.set_dim_points("soma_joinid", obs_id_points)
+    sr.set_dim_ranges("soma_joinid", obs_id_ranges)
 
     sr.submit()
     arrow_table = sr.read_next()
@@ -163,8 +163,8 @@ def test_soma_reader_obs_slice_x():
         [2000, 2004],
     ]
 
-    sr.set_dim_points("soma_rowid", obs_id_points)
-    sr.set_dim_ranges("soma_rowid", obs_id_ranges)
+    sr.set_dim_points("soma_joinid", obs_id_points)
+    sr.set_dim_ranges("soma_joinid", obs_id_ranges)
 
     sr.submit()
     obs = sr.read_next()
@@ -182,8 +182,8 @@ def test_soma_reader_obs_slice_x():
     uri = os.path.join(SOMA_URI, "ms/mRNA", name)
     sr = clib.SOMAReader(uri)
 
-    # slice X/data read with obs.soma_rowid column
-    sr.set_dim_points("soma_dim_0", obs.column("soma_rowid"))
+    # slice X/data read with obs.soma_joinid column
+    sr.set_dim_points("soma_dim_0", obs.column("soma_joinid"))
     sr.submit()
 
     # iterate read batches until all results have been processed
@@ -202,7 +202,7 @@ def test_soma_reader_column_names():
 
     name = "obs"
     uri = os.path.join(SOMA_URI, name)
-    sr = clib.SOMAReader(uri, column_names=["soma_rowid", "louvain"])
+    sr = clib.SOMAReader(uri, column_names=["soma_joinid", "louvain"])
 
     sr.submit()
     arrow_table = sr.read_next()

@@ -22,7 +22,6 @@ def create_and_populate_obs(obs: soma.DataFrame) -> soma.DataFrame:
     obs.create(schema=obs_arrow_schema)
 
     pydict = {}
-    pydict["soma_rowid"] = [0, 1, 2, 3, 4]
     pydict["soma_joinid"] = [0, 1, 2, 3, 4]
     pydict["foo"] = [10, 20, 30, 40, 50]
     pydict["bar"] = [4.1, 5.2, 6.3, 7.4, 8.5]
@@ -46,7 +45,6 @@ def create_and_populate_var(var: soma.DataFrame) -> soma.DataFrame:
     var.create(schema=var_arrow_schema)
 
     pydict = {}
-    pydict["soma_rowid"] = [0, 1, 2, 3]
     pydict["soma_joinid"] = [0, 1, 2, 3]
     pydict["quux"] = ["zebra", "yak", "xylophone", "wapiti"]
     pydict["xyzzy"] = [12.3, 23.4, 34.5, 45.6]
@@ -187,7 +185,7 @@ def test_experiment_obs_type_constraint(tmp_path):
     se["obs"] = soma.DataFrame(uri=(tmp_path / "E").as_uri()).create(
         schema=pa.schema([("A", pa.int32())])
     )
-    se["obs"] = soma.IndexedDataFrame(uri=(tmp_path / "F").as_uri()).create(
+    se["obs"] = soma.DataFrame(uri=(tmp_path / "F").as_uri()).create(
         schema=pa.schema([("A", pa.int32())]), index_column_names=["A"]
     )
 
@@ -211,6 +209,6 @@ def test_experiment_ms_type_constraint(tmp_path):
             schema=pa.schema([("A", pa.int32())])
         )
     with pytest.raises(TypeError):
-        se["ms"] = soma.IndexedDataFrame(uri=(tmp_path / "F").as_uri()).create(
+        se["ms"] = soma.DataFrame(uri=(tmp_path / "F").as_uri()).create(
             schema=pa.schema([("A", pa.int32())]), index_column_names=["A"]
         )
