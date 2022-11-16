@@ -62,7 +62,7 @@ def test_import_anndata(adata):
     # Check obs
     df = exp.obs.read_as_pandas_all()
     assert sorted(df.columns.to_list()) == sorted(
-        orig.obs_keys() + ["soma_rowid", "soma_joinid", "obs_id"]
+        orig.obs_keys() + ["soma_joinid", "obs_id"]
     )
     assert (
         exp.obs.metadata.get(tiledbsoma.util.SOMA_OBJECT_TYPE_METADATA_KEY)
@@ -71,7 +71,7 @@ def test_import_anndata(adata):
     assert sorted(df["obs_id"]) == sorted(list(orig.obs_names))
     # Convenience accessor
     assert sorted(exp.obs.keys()) == sorted(
-        list(orig.obs.keys()) + ["soma_rowid", "soma_joinid", "obs_id"]
+        list(orig.obs.keys()) + ["soma_joinid", "obs_id"]
     )
 
     # Check X/data (dense)

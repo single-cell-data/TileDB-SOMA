@@ -44,7 +44,6 @@ from .general_utilities import (
     get_SOMA_version,
     get_storage_engine,
 )
-from .indexed_dataframe import IndexedDataFrame
 from .measurement import Measurement
 from .metadata_mapping import MetadataMapping
 from .query_condition import QueryCondition  # type: ignore
@@ -62,12 +61,11 @@ __all__ = [
     "TileDBObject",
     "TileDBArray",
     "Collection",
-    "DataFrame",
     "DenseNdArray",
     "DoesNotExistError",
     "Experiment",
     "SOMAError",
-    "IndexedDataFrame",
+    "DataFrame",
     "Measurement",
     "MetadataMapping",
     "SparseNdArray",

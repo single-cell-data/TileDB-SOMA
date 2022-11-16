@@ -51,7 +51,7 @@ class TileDBObject(ABC):
 
     def delete(self) -> None:
         """
-        Delete the DataFrame specified with the URI.
+        Delete the storage specified with the URI.
 
         TODO: should this raise an error if the object does not exist?
         """

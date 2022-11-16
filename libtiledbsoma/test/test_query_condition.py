@@ -122,7 +122,7 @@ def test_query_condition_all_columns():
 
     assert sr.results_complete()
     assert arrow_table.num_rows == 1332
-    assert arrow_table.num_columns == 7
+    assert arrow_table.num_columns == 6
 
 
 if __name__ == "__main__":
