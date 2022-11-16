@@ -57,7 +57,11 @@ class SOMAOptions:
         default_factory=default_X_data_attr_filters
     )
 
-    X_capacity: int = 100000
+    # Appropriate for SOMA use-cases: typically X queries are _not_ anything like subarray queries,
+    # but rather, "pepper queries" with many obs_ids and/or var_ids sprinkled throughout the
+    # dimension space. Analysis reveals that smaller capacities are helpful here in order to
+    # increase the ratio of used-cells-per-tile to all-cells-per-tile.
+    X_capacity: int = 1000
     X_tile_order: str = "row-major"
     X_cell_order: str = "row-major"
 

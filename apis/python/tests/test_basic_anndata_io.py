@@ -228,3 +228,21 @@ def test_export_anndata(adata):
         assert readback.obsp[key].shape == orig.obsp[key].shape
     for key in orig.varp.keys():
         assert readback.varp[key].shape == orig.varp[key].shape
+
+
+@pytest.mark.parametrize("X_capacity", [1000, 10000, 100000])
+def test_X_capacity(adata, X_capacity):
+
+    # Set up anndata input path and tiledb-group output path
+    tempdir = tempfile.TemporaryDirectory()
+    output_path = tempdir.name
+
+    # Ingest
+    soma_options = tiledbsoma.SOMAOptions(X_capacity=X_capacity)
+    soma = tiledbsoma.SOMA(output_path, soma_options=soma_options)
+    tiledbsoma.io.from_anndata(soma, adata)
+
+    with soma.X["data"]._open() as X:
+        assert X.schema.capacity == X_capacity
+
+    tempdir.cleanup()

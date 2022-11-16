@@ -42,6 +42,9 @@ class TileDBObject(ABC):
         self.uri = uri
         self.name = name
 
+        if ctx is None:
+            ctx = self._default_ctx()
+
         if parent is None:
             self._ctx = ctx
             self._indent = ""
@@ -54,6 +57,19 @@ class TileDBObject(ABC):
 
         self._soma_options = soma_options or SOMAOptions()
         # Null ctx is OK if that's what they wanted (e.g. not doing any TileDB-Cloud ops).
+
+    def _default_ctx(self) -> tiledb.Ctx:
+        """
+        Default TileDB configuration parameters, for when none other has been specified by the
+        user.
+        """
+        return tiledb.Ctx(
+            {
+                # This is necessary for smaller tile capacities when querying with a smaller memory
+                # budget.
+                "sm.mem.reader.sparse_global_order.ratio_array_data": 0.3,
+            }
+        )
 
     def metadata(self) -> Mapping[str, Any]:
         """
