@@ -3,7 +3,7 @@ from typing import Any, Dict, Literal, Optional, Tuple, cast
 import tiledb
 
 from .collection import CollectionBase
-from .indexed_dataframe import IndexedDataFrame
+from .indexed_dataframe import DataFrame
 from .measurement import Measurement
 from .tiledb_object import TileDBObject
 from .tiledb_platform_config import TileDBPlatformConfig
@@ -20,7 +20,7 @@ class Experiment(CollectionBase[TileDBObject]):
     """
 
     _subclass_constrained_soma_types: Dict[str, Tuple[str, ...]] = {
-        "obs": ("SOMAIndexedDataFrame",),
+        "obs": ("SOMADataFrame",),
         "ms": ("SOMACollection",),
     }
 
@@ -56,8 +56,8 @@ class Experiment(CollectionBase[TileDBObject]):
         return self
 
     @property
-    def obs(self) -> IndexedDataFrame:
-        return cast(IndexedDataFrame, self["obs"])
+    def obs(self) -> DataFrame:
+        return cast(DataFrame, self["obs"])
 
     @property
     def ms(self) -> CollectionBase[Measurement]:

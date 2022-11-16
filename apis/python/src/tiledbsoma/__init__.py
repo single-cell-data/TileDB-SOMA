@@ -43,7 +43,7 @@ from .general_utilities import (
     get_SOMA_version,
     get_storage_engine,
 )
-from .indexed_dataframe import IndexedDataFrame
+from .indexed_dataframe import DataFrame
 from .measurement import Measurement
 from .metadata_mapping import MetadataMapping
 from .query_condition import QueryCondition  # type: ignore
@@ -65,7 +65,7 @@ __all__ = [
     "DoesNotExistError",
     "Experiment",
     "SOMAError",
-    "IndexedDataFrame",
+    "DataFrame",
     "Measurement",
     "MetadataMapping",
     "SparseNdArray",

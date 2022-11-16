@@ -4,7 +4,7 @@ import tiledb
 
 from .collection import CollectionBase
 from .dense_nd_array import DenseNdArray
-from .indexed_dataframe import IndexedDataFrame
+from .indexed_dataframe import DataFrame
 from .sparse_nd_array import SparseNdArray
 from .tiledb_object import TileDBObject
 from .tiledb_platform_config import TileDBPlatformConfig
@@ -14,7 +14,7 @@ class Measurement(CollectionBase[TileDBObject]):
     """
     A ``Measurement`` is a sub-element of a ``Experiment``, and is otherwise a specialized ``Collection`` with pre-defined fields:
 
-    ``var``: ``IndexedDataFrame``
+    ``var``: ``DataFrame``
 
     Primary annotations on the variable axis, for variables in this measurement (i.e., annotates columns of ``X``). The contents of the ``soma_joinid`` column define the variable index domain, AKA var_id. All variables for this measurement must be defined in this dataframe.
 
@@ -40,7 +40,7 @@ class Measurement(CollectionBase[TileDBObject]):
     """
 
     _subclass_constrained_soma_types: Dict[str, Tuple[str, ...]] = {
-        "var": ("SOMADataFrame", "SOMAIndexedDataFrame"),
+        "var": ("SOMADataFrame", "SOMADataFrame"),
         "X": ("SOMACollection",),
         "obsm": ("SOMACollection",),
         "obsp": ("SOMACollection",),
@@ -80,8 +80,8 @@ class Measurement(CollectionBase[TileDBObject]):
         return self
 
     @property
-    def var(self) -> IndexedDataFrame:
-        return cast(IndexedDataFrame, self["var"])
+    def var(self) -> DataFrame:
+        return cast(DataFrame, self["var"])
 
     @property
     def X(self) -> CollectionBase[Union[DenseNdArray, SparseNdArray]]:

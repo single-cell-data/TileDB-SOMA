@@ -13,9 +13,9 @@ import tiledbsoma.eta as eta
 import tiledbsoma.util_ann as util_ann
 from tiledbsoma import (
     Collection,
+    DataFrame,
     DenseNdArray,
     Experiment,
-    IndexedDataFrame,
     Measurement,
     SparseNdArray,
     logging,
@@ -82,7 +82,7 @@ def _from_h5ad_common(
 
 
 def _write_dataframe(
-    soma_df: IndexedDataFrame, df: pd.DataFrame, id_column_name: Optional[str]
+    soma_df: DataFrame, df: pd.DataFrame, id_column_name: Optional[str]
 ) -> None:
     s = util.get_start_stamp()
     logging.log_io(None, f"{soma_df._indent}START  WRITING {soma_df.uri}")
@@ -368,7 +368,7 @@ def from_anndata(
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     # OBS
-    obs = IndexedDataFrame(uri=uri_joinpath(experiment.uri, "obs"))
+    obs = DataFrame(uri=uri_joinpath(experiment.uri, "obs"))
     _write_dataframe(obs, anndata.obs, id_column_name="obs_id")
     experiment.set("obs", obs)
 
@@ -382,7 +382,7 @@ def from_anndata(
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     # MS/meas/VAR
-    var = IndexedDataFrame(uri=uri_joinpath(measurement.uri, "var"))
+    var = DataFrame(uri=uri_joinpath(measurement.uri, "var"))
     _write_dataframe(var, anndata.var, id_column_name="var_id")
     measurement["var"] = var
 
@@ -449,7 +449,7 @@ def from_anndata(
         raw_measurement.create()
         experiment.ms.set("raw", raw_measurement)
 
-        var = IndexedDataFrame(uri=uri_joinpath(raw_measurement.uri, "var"))
+        var = DataFrame(uri=uri_joinpath(raw_measurement.uri, "var"))
         _write_dataframe(var, anndata.raw.var, id_column_name="var_id")
         raw_measurement.set("var", var)
 

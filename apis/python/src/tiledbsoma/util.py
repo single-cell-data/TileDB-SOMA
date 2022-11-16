@@ -18,7 +18,7 @@ SPEC_NAMES_TO_CLASS_NAMES = {
     "SOMAExperiment": "Experiment",
     "SOMAMeasurement": "Measurement",
     "SOMACollection": "Collection",
-    "SOMAIndexedDataFrame": "IndexedDataFrame",
+    "SOMADataFrame": "DataFrame",
     "SOMADenseNdArray": "DenseNdArray",
     "SOMASparseNdArray": "SparseNdArray",
 }
@@ -28,7 +28,7 @@ CLASS_NAMES_TO_SPEC_NAMES = {
     "Experiment": "SOMAExperiment",
     "Measurement": "SOMAMeasurement",
     "Collection": "SOMACollection",
-    "IndexedDataFrame": "SOMAIndexedDataFrame",
+    "DataFrame": "SOMADataFrame",
     "DenseNdArray": "SOMADenseNdArray",
     "SparseNdArray": "SOMASparseNdArray",
 }
@@ -115,7 +115,7 @@ def uri_joinpath(base: str, path: str) -> str:
 
 def slice_to_range(ids: slice) -> Optional[Tuple[int, int]]:
     """
-    For the interface between ``IndexedDataFrame::read`` et al. (Python) and ``SOMAReader`` (C++).
+    For the interface between ``DataFrame::read`` et al. (Python) and ``SOMAReader`` (C++).
     """
     if ids.start is None and ids.stop is None:
         return None

@@ -24,7 +24,7 @@ def arrow_schema():
 
 
 def test_indexed_dataframe(tmp_path, arrow_schema):
-    sidf = soma.IndexedDataFrame(uri=tmp_path.as_posix())
+    sidf = soma.DataFrame(uri=tmp_path.as_posix())
 
     asch = pa.schema(
         [
@@ -77,7 +77,7 @@ def test_indexed_dataframe(tmp_path, arrow_schema):
 
 
 def test_indexed_dataframe_with_float_dim(tmp_path, arrow_schema):
-    sidf = soma.IndexedDataFrame(uri=tmp_path.as_posix())
+    sidf = soma.DataFrame(uri=tmp_path.as_posix())
     asch = arrow_schema()
     sidf.create(schema=asch, index_column_names=("bar",))
     assert sidf.get_index_column_names() == ("bar",)
@@ -86,7 +86,7 @@ def test_indexed_dataframe_with_float_dim(tmp_path, arrow_schema):
 @pytest.fixture
 def simple_indexed_data_frame(tmp_path):
     """
-    A pytest fixture which creates a simple IndexedDataFrame for use in tests below.
+    A pytest fixture which creates a simple DataFrame for use in tests below.
     """
     schema = pa.schema(
         [
@@ -98,7 +98,7 @@ def simple_indexed_data_frame(tmp_path):
         ]
     )
     index_column_names = ["index"]
-    sidf = soma.IndexedDataFrame(uri=tmp_path.as_posix())
+    sidf = soma.DataFrame(uri=tmp_path.as_posix())
     sidf.create(schema=schema, index_column_names=index_column_names)
 
     data = {
@@ -135,7 +135,7 @@ def simple_indexed_data_frame(tmp_path):
         None,
     ],
 )
-def test_IndexedDataFrame_read_column_names(simple_indexed_data_frame, ids, col_names):
+def test_DataFrame_read_column_names(simple_indexed_data_frame, ids, col_names):
     schema, sidf, n_data, index_column_names = simple_indexed_data_frame
     assert sidf.exists()
 
@@ -194,7 +194,7 @@ def test_IndexedDataFrame_read_column_names(simple_indexed_data_frame, ids, col_
 
 
 def test_empty_indexed_dataframe(tmp_path):
-    a = soma.IndexedDataFrame((tmp_path / "A").as_posix())
+    a = soma.DataFrame((tmp_path / "A").as_posix())
     a.create(pa.schema([("a", pa.int32())]), index_column_names=["a"])
     # Must not throw
     assert len(next(a.read())) == 0
@@ -205,7 +205,7 @@ def test_empty_indexed_dataframe(tmp_path):
 
     with pytest.raises(ValueError):
         # illegal column name
-        soma.IndexedDataFrame((tmp_path / "B").as_posix()).create(
+        soma.DataFrame((tmp_path / "B").as_posix()).create(
             pa.schema([("a", pa.int32()), ("soma_bogus", pa.int32())]),
             index_column_names=["a"],
         )
@@ -219,20 +219,20 @@ def test_columns(tmp_path):
     4. No other soma_ ids allowed
     """
 
-    A = soma.IndexedDataFrame((tmp_path / "A").as_posix())
+    A = soma.DataFrame((tmp_path / "A").as_posix())
     A.create(pa.schema([("a", pa.int32())]), index_column_names=["a"])
     assert sorted(A.keys()) == sorted(["a", "soma_joinid"])
     assert A.schema.field("soma_joinid").type == pa.int64()
     A.delete()
 
-    B = soma.IndexedDataFrame((tmp_path / "B").as_posix())
+    B = soma.DataFrame((tmp_path / "B").as_posix())
     with pytest.raises(ValueError):
         B.create(
             pa.schema([("a", pa.int32()), ("soma_joinid", pa.float32())]),
             index_column_names=["a"],
         )
 
-    D = soma.IndexedDataFrame((tmp_path / "D").as_posix())
+    D = soma.DataFrame((tmp_path / "D").as_posix())
     D.create(
         pa.schema([("a", pa.int32()), ("soma_joinid", pa.int64())]),
         index_column_names=["a"],
@@ -241,7 +241,7 @@ def test_columns(tmp_path):
     assert D.schema.field("soma_joinid").type == pa.int64()
     D.delete()
 
-    E = soma.IndexedDataFrame((tmp_path / "E").as_posix())
+    E = soma.DataFrame((tmp_path / "E").as_posix())
     with pytest.raises(ValueError):
         E.create(
             pa.schema([("a", pa.int32()), ("soma_is_a_reserved_prefix", pa.bool_())]),
@@ -323,14 +323,14 @@ def make_dataframe(request):
 )
 def test_index_types(tmp_path, make_dataframe):
     """Verify that the index columns can be of various types"""
-    sidf = soma.IndexedDataFrame(tmp_path.as_posix())
+    sidf = soma.DataFrame(tmp_path.as_posix())
     sidf.create(make_dataframe.schema, index_column_names=["index"])
     sidf.write(make_dataframe)
 
 
 def make_multiply_indexed_dataframe(tmp_path, index_column_names: List[str]):
     """
-    Creates a variably-indexed IndexedDataFrame for use in tests below.
+    Creates a variably-indexed DataFrame for use in tests below.
     """
     schema = pa.schema(
         [
@@ -347,7 +347,7 @@ def make_multiply_indexed_dataframe(tmp_path, index_column_names: List[str]):
         ]
     )
 
-    sidf = soma.IndexedDataFrame(uri=tmp_path.as_posix())
+    sidf = soma.DataFrame(uri=tmp_path.as_posix())
     sidf.create(schema=schema, index_column_names=index_column_names)
 
     data = {
@@ -630,7 +630,7 @@ def test_read_indexing(tmp_path, io):
     schema, sidf, n_data = make_multiply_indexed_dataframe(
         tmp_path, io["index_column_names"]
     )
-    sidf = soma.IndexedDataFrame(uri=sidf.uri)  # reopen
+    sidf = soma.DataFrame(uri=sidf.uri)  # reopen
     assert sidf.exists()
     assert sidf.is_indexed is True
     assert list(sidf.get_index_column_names()) == io["index_column_names"]

@@ -9,7 +9,7 @@ from tiledbsoma.exception import DoesNotExistError
 
 
 # ----------------------------------------------------------------
-def create_and_populate_dataframe(dataframe: soma.IndexedDataFrame) -> None:
+def create_and_populate_dataframe(dataframe: soma.DataFrame) -> None:
 
     arrow_schema = pa.schema(
         [
@@ -61,7 +61,7 @@ def test_collection_basic(tmp_path):
     assert collection.uri == basedir
     assert "foobar" not in collection
 
-    dataframe = soma.IndexedDataFrame(os.path.join(basedir, "sdf"), parent=collection)
+    dataframe = soma.DataFrame(os.path.join(basedir, "sdf"), parent=collection)
     create_and_populate_dataframe(dataframe)
 
     sparse_nd_array = soma.SparseNdArray(
@@ -89,7 +89,7 @@ def test_collection_basic(tmp_path):
     scope="function",
     params=[
         "Collection",
-        "IndexedDataFrame",
+        "DataFrame",
         "DenseNdArray",
         "SparseNdArray",
     ],
@@ -105,8 +105,8 @@ def soma_object(request, tmp_path):
         so = soma.Collection(uri=uri)
         so.create()
 
-    elif class_name == "IndexedDataFrame":
-        so = soma.IndexedDataFrame(uri=uri)
+    elif class_name == "DataFrame":
+        so = soma.DataFrame(uri=uri)
         so.create(
             schema=pa.schema([("C", pa.float32()), ("D", pa.uint32())]),
             index_column_names=["D"],

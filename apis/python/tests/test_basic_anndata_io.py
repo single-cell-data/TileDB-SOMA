@@ -38,21 +38,21 @@ def test_import_anndata(adata):
 
     # Structure:
     # pbmc-small Experiment:
-    #   obs IndexedDataFrame (80,)
+    #   obs DataFrame (80,)
     #   ms Collection:
     #     mRNA Measurement:
     #       X Collection:
     #         data SparseNdArray (80, 20)
     #       obsp Collection:
     #         distances SparseNdArray (80, 80)
-    #       var IndexedDataFrame (20,)
+    #       var DataFrame (20,)
     #       obsm Collection:
     #         X_tsne DenseNdArray (80, 2)
     #         X_pca DenseNdArray (80, 19)
     #       varm Collection:
     #         PCs DenseNdArray (20, 19)
     #     raw Measurement:
-    #       var IndexedDataFrame (230,)
+    #       var DataFrame (230,)
     #       X Collection:
     #         data SparseNdArray (80, 230)
 
@@ -66,7 +66,7 @@ def test_import_anndata(adata):
     )
     assert (
         exp.obs.metadata.get(tiledbsoma.util.SOMA_OBJECT_TYPE_METADATA_KEY)
-        == "SOMAIndexedDataFrame"
+        == "SOMADataFrame"
     )
     assert sorted(df["obs_id"]) == sorted(list(orig.obs_names))
     # Convenience accessor
@@ -99,7 +99,7 @@ def test_import_anndata(adata):
     #        df = A.df[:]
     #        assert df.columns.to_list() == orig.var_keys()
     #        assert (
-    #            A.meta[tiledbsoma.util.SOMA_OBJECT_TYPE_METADATA_KEY] == "SOMAAnnotationIndexedDataFrame"
+    #            A.meta[tiledbsoma.util.SOMA_OBJECT_TYPE_METADATA_KEY] == "SOMAAnnotationDataFrame"
     #        )
     #    assert sorted(exp.var.ids()) == sorted(list(orig.var_names))
     #    # Convenience accessors
