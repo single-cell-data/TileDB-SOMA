@@ -34,7 +34,6 @@ except ImportError:
 # ----------------------------------------------------------------
 
 from .collection import Collection
-from .dataframe import DataFrame
 from .dense_nd_array import DenseNdArray
 from .exception import DoesNotExistError, SOMAError
 from .experiment import Experiment
@@ -62,7 +61,6 @@ __all__ = [
     "TileDBObject",
     "TileDBArray",
     "Collection",
-    "DataFrame",
     "DenseNdArray",
     "DoesNotExistError",
     "Experiment",

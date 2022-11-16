@@ -9,7 +9,7 @@ from tiledbsoma.exception import DoesNotExistError
 
 
 # ----------------------------------------------------------------
-def create_and_populate_dataframe(dataframe: soma.DataFrame) -> None:
+def create_and_populate_dataframe(dataframe: soma.IndexedDataFrame) -> None:
 
     arrow_schema = pa.schema(
         [
@@ -22,7 +22,6 @@ def create_and_populate_dataframe(dataframe: soma.DataFrame) -> None:
     dataframe.create(schema=arrow_schema)
 
     pydict = {}
-    pydict["soma_rowid"] = [0, 1, 2, 3, 4]
     pydict["soma_joinid"] = [0, 1, 2, 3, 4]
     pydict["foo"] = [10, 20, 30, 40, 50]
     pydict["bar"] = [4.1, 5.2, 6.3, 7.4, 8.5]
@@ -62,7 +61,7 @@ def test_collection_basic(tmp_path):
     assert collection.uri == basedir
     assert "foobar" not in collection
 
-    dataframe = soma.DataFrame(os.path.join(basedir, "sdf"), parent=collection)
+    dataframe = soma.IndexedDataFrame(os.path.join(basedir, "sdf"), parent=collection)
     create_and_populate_dataframe(dataframe)
 
     sparse_nd_array = soma.SparseNdArray(
@@ -90,7 +89,6 @@ def test_collection_basic(tmp_path):
     scope="function",
     params=[
         "Collection",
-        "DataFrame",
         "IndexedDataFrame",
         "DenseNdArray",
         "SparseNdArray",
@@ -106,10 +104,6 @@ def soma_object(request, tmp_path):
     if class_name == "Collection":
         so = soma.Collection(uri=uri)
         so.create()
-
-    elif class_name == "DataFrame":
-        so = soma.DataFrame(uri=uri)
-        so.create(pa.schema([("A", pa.int32()), ("B", pa.large_string())]))
 
     elif class_name == "IndexedDataFrame":
         so = soma.IndexedDataFrame(uri=uri)

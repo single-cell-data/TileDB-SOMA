@@ -1,9 +1,8 @@
-from typing import Any, Dict, Literal, Optional, Tuple, Union, cast
+from typing import Any, Dict, Literal, Optional, Tuple, cast
 
 import tiledb
 
 from .collection import CollectionBase
-from .dataframe import DataFrame
 from .indexed_dataframe import IndexedDataFrame
 from .measurement import Measurement
 from .tiledb_object import TileDBObject
@@ -13,15 +12,15 @@ from .tiledb_platform_config import TileDBPlatformConfig
 class Experiment(CollectionBase[TileDBObject]):
     """
     ``obs``: Primary annotations on the observation axis. The contents of the
-             ``soma_rowid`` pseudo-column define the observation index domain,
-             aka ``obsid``. All observations for the Experiment must be
+             ``soma_joinid`` column define the observation index domain,
+             aka ``obs_id``. All observations for the Experiment must be
              defined in this dataframe.
 
     ``ms``: A collection of named measurements.
     """
 
     _subclass_constrained_soma_types: Dict[str, Tuple[str, ...]] = {
-        "obs": ("SOMADataFrame", "SOMAIndexedDataFrame"),
+        "obs": ("SOMAIndexedDataFrame",),
         "ms": ("SOMACollection",),
     }
 
@@ -57,8 +56,8 @@ class Experiment(CollectionBase[TileDBObject]):
         return self
 
     @property
-    def obs(self) -> Union[DataFrame, IndexedDataFrame]:
-        return cast(Union[DataFrame, IndexedDataFrame], self["obs"])
+    def obs(self) -> IndexedDataFrame:
+        return cast(IndexedDataFrame, self["obs"])
 
     @property
     def ms(self) -> CollectionBase[Measurement]:

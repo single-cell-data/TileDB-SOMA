@@ -244,7 +244,7 @@ def test_columns(tmp_path):
     E = soma.IndexedDataFrame((tmp_path / "E").as_posix())
     with pytest.raises(ValueError):
         E.create(
-            pa.schema([("a", pa.int32()), ("soma_rowid", pa.bool_())]),
+            pa.schema([("a", pa.int32()), ("soma_is_a_reserved_prefix", pa.bool_())]),
             index_column_names=["a"],
         )
 

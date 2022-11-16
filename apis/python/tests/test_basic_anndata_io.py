@@ -38,21 +38,21 @@ def test_import_anndata(adata):
 
     # Structure:
     # pbmc-small Experiment:
-    #   obs DataFrame (80,)
+    #   obs IndexedDataFrame (80,)
     #   ms Collection:
     #     mRNA Measurement:
     #       X Collection:
     #         data SparseNdArray (80, 20)
     #       obsp Collection:
     #         distances SparseNdArray (80, 80)
-    #       var DataFrame (20,)
+    #       var IndexedDataFrame (20,)
     #       obsm Collection:
     #         X_tsne DenseNdArray (80, 2)
     #         X_pca DenseNdArray (80, 19)
     #       varm Collection:
     #         PCs DenseNdArray (20, 19)
     #     raw Measurement:
-    #       var DataFrame (230,)
+    #       var IndexedDataFrame (230,)
     #       X Collection:
     #         data SparseNdArray (80, 230)
 
@@ -62,16 +62,16 @@ def test_import_anndata(adata):
     # Check obs
     df = exp.obs.read_as_pandas_all()
     assert sorted(df.columns.to_list()) == sorted(
-        orig.obs_keys() + ["soma_rowid", "soma_joinid", "obs_id"]
+        orig.obs_keys() + ["soma_joinid", "obs_id"]
     )
     assert (
         exp.obs.metadata.get(tiledbsoma.util.SOMA_OBJECT_TYPE_METADATA_KEY)
-        == "SOMADataFrame"
+        == "SOMAIndexedDataFrame"
     )
     assert sorted(df["obs_id"]) == sorted(list(orig.obs_names))
     # Convenience accessor
     assert sorted(exp.obs.keys()) == sorted(
-        list(orig.obs.keys()) + ["soma_rowid", "soma_joinid", "obs_id"]
+        list(orig.obs.keys()) + ["soma_joinid", "obs_id"]
     )
 
     # Check X/data (dense)
@@ -99,7 +99,7 @@ def test_import_anndata(adata):
     #        df = A.df[:]
     #        assert df.columns.to_list() == orig.var_keys()
     #        assert (
-    #            A.meta[tiledbsoma.util.SOMA_OBJECT_TYPE_METADATA_KEY] == "SOMAAnnotationDataFrame"
+    #            A.meta[tiledbsoma.util.SOMA_OBJECT_TYPE_METADATA_KEY] == "SOMAAnnotationIndexedDataFrame"
     #        )
     #    assert sorted(exp.var.ids()) == sorted(list(orig.var_names))
     #    # Convenience accessors

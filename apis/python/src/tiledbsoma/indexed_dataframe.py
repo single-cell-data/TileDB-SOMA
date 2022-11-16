@@ -50,7 +50,7 @@ class IndexedDataFrame(TileDBArray):
     def create(
         self,
         schema: pa.Schema,
-        index_column_names: Sequence[str],
+        index_column_names: Sequence[str] = (SOMA_JOINID,),
     ) -> "IndexedDataFrame":
         """
         :param schema: Arrow Schema defining the per-column schema. This schema must define all columns, including columns to be named as index columns. If the schema includes types unsupported by the SOMA implementation, an error will be raised.
@@ -409,7 +409,7 @@ def _validate_schema(schema: pa.Schema, index_column_names: Sequence[str]) -> pa
     for field_name in schema.names:
         if field_name.startswith("soma_") and field_name != SOMA_JOINID:
             raise ValueError(
-                "IndexedDataFrame schema may not contain fields with name prefix `soma_`"
+                f"IndexedDataFrame schema may not contain fields with name prefix `soma_`: got `{field_name}`"
             )
 
     # verify that all index_column_names are present in the schema
@@ -420,7 +420,10 @@ def _validate_schema(schema: pa.Schema, index_column_names: Sequence[str]) -> pa
             or index_column_name == SOMA_JOINID
         )
         if index_column_name not in schema_names_set:
-            raise ValueError("All index names must be dataframe schema")
+            schema_names_string = "{}".format(list(schema_names_set))
+            raise ValueError(
+                f"All index names must be dataframe schema: '{index_column_name}' not in {schema_names_string}"
+            )
         # TODO: Pending
         # https://github.com/single-cell-data/TileDB-SOMA/issues/418
         # https://github.com/single-cell-data/TileDB-SOMA/issues/419

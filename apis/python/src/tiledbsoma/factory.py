@@ -8,7 +8,6 @@ from typing import Any, Optional, Union
 import tiledb
 
 from .collection import Collection, CollectionBase
-from .dataframe import DataFrame
 from .dense_nd_array import DenseNdArray
 from .exception import SOMAError
 from .experiment import Experiment
@@ -21,7 +20,6 @@ ObjectTypes = Union[
     Experiment,
     Measurement,
     Collection,
-    DataFrame,
     IndexedDataFrame,
     DenseNdArray,
     SparseNdArray,
@@ -36,8 +34,8 @@ def _construct_member(
 ) -> Optional[ObjectTypes]:
     """
     Given a name/uri from a Collection, create a SOMA object matching the type
-    of the underlying object. In other words, if the name/uri points to a DataFrame,
-    instantiate a DataFrame pointing at the underlying array.
+    of the underlying object. In other words, if the name/uri points to an IndexedDataFrame,
+    instantiate an IndexedDataFrame pointing at the underlying array.
 
     Returns None if the URI does not point at a TileDB object, or if the TileDB
     object is not recognized as a SOMA object.
@@ -82,9 +80,6 @@ def _construct_member(
     elif class_name == "Collection":
         assert object_type is None or object_type == "group"
         return Collection(uri=member_uri, parent=parent, ctx=ctx)
-    elif class_name == "DataFrame":
-        assert object_type is None or object_type == "array"
-        return DataFrame(uri=member_uri, parent=parent, ctx=ctx)
     elif class_name == "IndexedDataFrame":
         assert object_type is None or object_type == "array"
         return IndexedDataFrame(uri=member_uri, parent=parent, ctx=ctx)

@@ -8,7 +8,7 @@ import tiledbsoma as soma
 
 
 # ----------------------------------------------------------------
-def create_and_populate_obs(obs: soma.DataFrame) -> soma.DataFrame:
+def create_and_populate_obs(obs: soma.IndexedDataFrame) -> soma.IndexedDataFrame:
 
     obs_arrow_schema = pa.schema(
         [
@@ -22,7 +22,6 @@ def create_and_populate_obs(obs: soma.DataFrame) -> soma.DataFrame:
     obs.create(schema=obs_arrow_schema)
 
     pydict = {}
-    pydict["soma_rowid"] = [0, 1, 2, 3, 4]
     pydict["soma_joinid"] = [0, 1, 2, 3, 4]
     pydict["foo"] = [10, 20, 30, 40, 50]
     pydict["bar"] = [4.1, 5.2, 6.3, 7.4, 8.5]
@@ -34,7 +33,7 @@ def create_and_populate_obs(obs: soma.DataFrame) -> soma.DataFrame:
 
 
 # ----------------------------------------------------------------
-def create_and_populate_var(var: soma.DataFrame) -> soma.DataFrame:
+def create_and_populate_var(var: soma.IndexedDataFrame) -> soma.IndexedDataFrame:
 
     var_arrow_schema = pa.schema(
         [
@@ -46,7 +45,6 @@ def create_and_populate_var(var: soma.DataFrame) -> soma.DataFrame:
     var.create(schema=var_arrow_schema)
 
     pydict = {}
-    pydict["soma_rowid"] = [0, 1, 2, 3]
     pydict["soma_joinid"] = [0, 1, 2, 3]
     pydict["quux"] = ["zebra", "yak", "xylophone", "wapiti"]
     pydict["xyzzy"] = [12.3, 23.4, 34.5, 45.6]
@@ -91,7 +89,7 @@ def test_experiment_basic(tmp_path):
     experiment.create()
 
     experiment["obs"] = create_and_populate_obs(
-        soma.DataFrame(uri=urljoin(basedir, "obs"))
+        soma.IndexedDataFrame(uri=urljoin(basedir, "obs"))
     )
     experiment["ms"] = soma.Collection(uri=urljoin(basedir, "ms")).create()
 
@@ -100,7 +98,7 @@ def test_experiment_basic(tmp_path):
     experiment.ms.set("mRNA", measurement)
 
     measurement["var"] = create_and_populate_var(
-        soma.DataFrame(uri=urljoin(measurement.uri, "var"))
+        soma.IndexedDataFrame(uri=urljoin(measurement.uri, "var"))
     )
     measurement["X"] = soma.Collection(uri=urljoin(measurement.uri, "X")).create()
 
@@ -111,7 +109,7 @@ def test_experiment_basic(tmp_path):
 
     # ----------------------------------------------------------------
     assert len(experiment) == 2
-    assert isinstance(experiment.obs, soma.DataFrame)
+    assert isinstance(experiment.obs, soma.IndexedDataFrame)
     assert isinstance(experiment.ms, soma.Collection)
     assert "obs" in experiment
     assert "ms" in experiment
@@ -126,7 +124,7 @@ def test_experiment_basic(tmp_path):
     assert len(experiment.ms["mRNA"]) == 2
     assert "mRNA" in experiment.ms
     assert "meas2" not in experiment.ms
-    assert isinstance(experiment.ms["mRNA"].var, soma.DataFrame)
+    assert isinstance(experiment.ms["mRNA"].var, soma.IndexedDataFrame)
     assert isinstance(experiment.ms["mRNA"].X, soma.Collection)
 
     assert experiment.ms["mRNA"].var == experiment["ms"]["mRNA"]["var"]
@@ -153,12 +151,12 @@ def test_experiment_basic(tmp_path):
     assert experiment.ms["mRNA"].X["data"].exists()
 
     # Paths exist but are not of the right type
-    assert not soma.DataFrame(experiment.uri).exists()
+    assert not soma.IndexedDataFrame(experiment.uri).exists()
     assert not soma.Collection(experiment.obs.uri).exists()
 
     # Paths do not exist
     assert not soma.Experiment("/nonesuch/no/nope/nope/never").exists()
-    assert not soma.DataFrame("/nonesuch/no/nope/nope/never").exists()
+    assert not soma.IndexedDataFrame("/nonesuch/no/nope/nope/never").exists()
 
     # ----------------------------------------------------------------
     # TODO: check more things
@@ -184,7 +182,7 @@ def test_experiment_obs_type_constraint(tmp_path):
         )
     with pytest.raises(TypeError):
         se["obs"] = soma.Measurement(uri=(tmp_path / "D").as_uri()).create()
-    se["obs"] = soma.DataFrame(uri=(tmp_path / "E").as_uri()).create(
+    se["obs"] = soma.IndexedDataFrame(uri=(tmp_path / "E").as_uri()).create(
         schema=pa.schema([("A", pa.int32())])
     )
     se["obs"] = soma.IndexedDataFrame(uri=(tmp_path / "F").as_uri()).create(
@@ -207,7 +205,7 @@ def test_experiment_ms_type_constraint(tmp_path):
     with pytest.raises(TypeError):
         se["ms"] = soma.Measurement(uri=(tmp_path / "D").as_uri()).create()
     with pytest.raises(TypeError):
-        se["ms"] = soma.DataFrame(uri=(tmp_path / "E").as_uri()).create(
+        se["ms"] = soma.IndexedDataFrame(uri=(tmp_path / "E").as_uri()).create(
             schema=pa.schema([("A", pa.int32())])
         )
     with pytest.raises(TypeError):
