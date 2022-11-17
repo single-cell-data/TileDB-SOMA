@@ -33,9 +33,7 @@ TileDBObject <- R6::R6Class(
       }
 
       if (is.null(self$ctx)) {
-        config <- tiledb_config()
-        config["sm.mem.reader.sparse_global_order.ratio_array_data"] = "0.3"
-        self$ctx <- tiledb::tiledb_ctx(config)
+        self$ctx <- tiledb::tiledb_get_context()
       }
     },
 
