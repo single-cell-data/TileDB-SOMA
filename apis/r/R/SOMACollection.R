@@ -199,7 +199,7 @@ SOMACollection <- R6::R6Class(
     #' @description Convert to a [SeuratObject::Seurat] object.
     #' @param project [`SeuratObject::Project`] name for the `Seurat` object
     #' @param batch_mode logical, if `TRUE`, batch query mode is enabled for
-    #' retrieving `X` layers. See
+    #' retrieving `X`, `obsm`/`varm`, and `obsp`/`varp` layers. See
     #' [`AssayMatrix$to_dataframe()`][`AssayMatrix`] for more information.
     to_seurat = function(project = "SeuratProject", batch_mode = FALSE) {
       stopifnot(is_scalar_character(project))
@@ -243,9 +243,8 @@ SOMACollection <- R6::R6Class(
       # Retrieve list of all techniques used in any soma's obsm/varm
       # dimensionality reduction arrays. The association between assay and
       # dimreduction is maintained by the DimReduc's `assay.used` slot.
-      dimreductions <- lapply(
-        self$somas,
-        function(x) x$get_seurat_dimreductions_list()
+      dimreductions <- lapply(self$somas,
+        function(x) x$get_seurat_dimreductions_list(batch_mode)
       )
       object@reductions <- Reduce(base::c, dimreductions)
 

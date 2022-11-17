@@ -107,30 +107,11 @@ AssayMatrix <- R6::R6Class(
     #' all attributes are retrieved.
     #' @return A [`Matrix::dgTMatrix-class`].
     to_dataframe = function(attrs = NULL, batch_mode = FALSE) {
-      if (self$verbose) {
-        message(
-          sprintf("Reading %s into memory from '%s'", self$class(), self$uri)
-        )
-      }
-      arr <- self$object
-      tiledb::attrs(arr) <- attrs %||% character()
-      tiledb::return_as(arr) <- "data.frame"
-
-      if (batch_mode) {
-        if (self$verbose) message("...reading in batches")
-        batcher <- tiledb:::createBatched(arr)
-        results <- list()
-        i <- 1
-        while(isFALSE(tiledb::completedBatched(batcher))) {
-          if (self$verbose) message(sprintf("...retrieving batch %d", i))
-          results[[i]] <- tiledb::fetchBatched(arr, batcher)
-          i <- i + 1
-        }
-        results <- vctrs::vec_rbind(!!!results)
-      } else {
-        results <- arr[]
-      }
-      results
+      private$read_data(
+        attrs = attrs,
+        batch_mode = batch_mode,
+        return_as = "data.frame"
+      )
     },
 
     #' @description Retrieve assay data from TileDB as a 2D sparse matrix.
@@ -146,7 +127,11 @@ AssayMatrix <- R6::R6Class(
       }
       stopifnot(is_scalar_character(attr))
 
-      assay_data <- self$to_dataframe(attrs = attr, batch_mode = batch_mode)
+      assay_data <- private$read_data(
+        attrs = attr,
+        batch_mode = batch_mode,
+        return_as = "data.frame"
+      )
 
       # reverse index columns if transposing array dimensions
       if (transpose) assay_data <- assay_data[c(rev(self$dimnames()), attr)]
