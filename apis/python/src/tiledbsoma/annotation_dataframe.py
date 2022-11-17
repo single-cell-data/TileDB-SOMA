@@ -381,6 +381,13 @@ class AnnotationDataFrame(TileDBArray):
                     None, f"{self._indent}Re-using existing array {self.nested_name}"
                 )
 
+        if schema_only and self.exists():
+            log_io(
+                f"Reused {self.nested_name}",
+                util.format_elapsed(s, f"{self._indent}REUSED {self.nested_name}"),
+            )
+            return
+
         # ISSUE:
         # TileDB attributes can be stored as Unicode but they are not yet queryable via the TileDB
         # QueryCondition API. While this needs to be addressed -- global collaborators will want to
