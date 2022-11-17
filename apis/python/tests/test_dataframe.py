@@ -632,7 +632,6 @@ def test_read_indexing(tmp_path, io):
     )
     sidf = soma.DataFrame(uri=sidf.uri)  # reopen
     assert sidf.exists()
-    assert sidf.is_indexed is True
     assert list(sidf.get_index_column_names()) == io["index_column_names"]
 
     read_kwargs = {"column_names": ["A"]}
