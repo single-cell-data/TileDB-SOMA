@@ -33,7 +33,10 @@ TileDBObject <- R6::R6Class(
       }
 
       if (is.null(self$ctx)) {
-        self$ctx <- tiledb::tiledb_get_context()
+        config <- tiledb_config()
+        # This is important for cloud queries to URIs created with capacity=1000.
+        config["sm.mem.reader.sparse_global_order.ratio_array_data"] = "0.3"
+        self$ctx <- tiledb::tiledb_ctx(config)
       }
     },
 
