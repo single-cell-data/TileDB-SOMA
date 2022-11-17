@@ -59,7 +59,6 @@ class DataFrame(TileDBArray):
         """
         schema = _validate_schema(schema, index_column_names)
         self._create_empty(schema, index_column_names)
-        self._is_indexed = True
         self._index_column_names = tuple(index_column_names)
 
         self._common_create()  # object-type metadata etc
@@ -145,10 +144,6 @@ class DataFrame(TileDBArray):
         """
         return self._tiledb_array_keys()
 
-    @property
-    def is_indexed(self) -> Literal[True]:
-        return True
-
     def get_index_column_names(self) -> Sequence[str]:
         """
         Return index (dimension) column names.
@@ -156,7 +151,6 @@ class DataFrame(TileDBArray):
         # If we've cached the answer, skip the storage read. Especially if the storage is on the
         # cloud, where we'll avoid an HTTP request.
         if self._index_column_names == ():
-            assert self.is_indexed
             self._index_column_names = self._tiledb_dim_names()
 
         return self._index_column_names
