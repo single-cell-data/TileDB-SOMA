@@ -44,7 +44,7 @@ test_that("SOMADataFrame creation", {
     ignore_attr = TRUE
   )
 
-  # Read result should recreate the original Table without the soma_rowid
+  # Read result should recreate the original Table
   tbl1 <- sidf$read()
   expect_true(tbl1$Equals(tbl0))
 

@@ -23,9 +23,7 @@ SOMADataFrame <- R6::R6Class(
     create = function(schema, index_column_names) {
       stopifnot(
         "'schema' must be a valid Arrow schema" =
-          is_arrow_schema(schema)
-        "'soma_rowid' is a reserved column name" =
-          !"soma_rowid" %in% schema$names,
+          is_arrow_schema(schema),
         is.character(index_column_names) && length(index_column_names) > 0,
         "All 'index_column_names' must be defined in the 'schema'" =
           assert_subset(index_column_names, schema$names, type = "field")
@@ -103,7 +101,7 @@ SOMADataFrame <- R6::R6Class(
     #' @description Write
     #'
     #' @param values An [`arrow::Table`] containing all columns, including
-    #' the `soma_rowid` index column. The schema for `values` must match the
+    #' any index columns. The schema for `values` must match the
     #' schema for the `SOMADataFrame`.
     #'
     write = function(values) {

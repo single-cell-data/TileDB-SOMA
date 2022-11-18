@@ -8,7 +8,7 @@ test_that("Basic SOMAReader", {
     uri <- file.path(tdir, "obs")
     names <- tiledbsoma:::get_column_names(uri)
     expect_equal(length(names), 6L)
-    expect_equal(names, c("soma_rowid", "obs_id", "n_genes", "percent_mito", "n_counts", "louvain"))
+    expect_equal(names, c("soma_joinid", "obs_id", "n_genes", "percent_mito", "n_counts", "louvain"))
 
     for (n in names) {
         col <- get_column(uri, n)
