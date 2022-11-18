@@ -1,50 +1,67 @@
 test_that("SOMADataFrame creation", {
   skip_if(TRUE) # temporary
-  uri <- withr::local_tempdir("soma-dataframe")
+  uri <- withr::local_tempdir("soma-indexed-dataframe4")
   asch <- arrow::schema(
     foo = arrow::int32(),
     bar = arrow::float64(),
     baz = arrow::string()
   )
 
-  sdf <- SOMADataFrame$new(uri)
-  sdf$create(asch)
+  sidf <- SOMADataFrame$new(uri)
+  expect_error(
+    sidf$create(asch),
+    "argument \"index_column_names\" is missing, with no default"
+  )
+  expect_error(
+    sidf$create(asch, index_column_names = "qux"),
+    "All 'index_column_names' must be defined in the 'schema'"
+  )
 
-  expect_true(sdf$exists())
+  sidf$create(asch, index_column_names = "foo")
+  expect_true(sidf$exists())
   expect_true(dir.exists(uri))
+
+  # check for missing columns
+  expect_error(
+    sidf$write(arrow::arrow_table(foo = 1L:10L)),
+    "All schema fields must be present in 'values'"
+  )
+  # check for extra columns
+  expect_error(
+    sidf$write(arrow::arrow_table(qux = 1L:10L)),
+    "All columns in 'values' must be defined in the schema"
+  )
 
   tbl0 <- arrow::arrow_table(
     foo = 1L:10L, bar = 1.1:10.1, baz = letters[1:10]
   )
-  expect_error(sdf$write(tbl0), "must contain a 'soma_rowid' column name")
-
-  # add a soma_rowid column and try again
-  tbl1 <- cbind(soma_rowid = 0L:9L, tbl0)
-  sdf$write(tbl1)
+  sidf$write(tbl0)
 
   # read back the data (ignore attributes)
   expect_equivalent(
-    tiledb::tiledb_array(sdf$uri, return_as = "asis")[],
-    as.list(tbl1),
+    tiledb::tiledb_array(sidf$uri, return_as = "asis")[],
+    as.list(tbl0),
     ignore_attr = TRUE
   )
 
-  # Read result should recreate the original Table without the soma_rowid
-  tbl2 <- sdf$read()
-  expect_true(tbl2$Equals(tbl0))
+  # Read result should recreate the original Table
+  tbl1 <- sidf$read()
+  expect_true(tbl1$Equals(tbl0))
 
-  # Slicing by soma_rowid
-  tbl2 <- sdf$read(ids = 0:2)
-  expect_true(tbl2$Equals(tbl0$Slice(offset = 0, length = 3)))
+  # Slicing by foo
+  tbl1 <- sidf$read(ids = 1L:2L)
+  expect_true(tbl1$Equals(tbl1$Slice(offset = 0, length = 2)))
 
   # Subselecting columns
-  tbl2 <- sdf$read(column_names = "foo")
-  expect_true(tbl2$Equals(tbl0$SelectColumns(0L)))
+  expect_error(
+    sidf$read(column_names = "foo"),
+    "'column_names' must only contain non-index columns"
+  )
+
+  tbl1 <- sidf$read(column_names = "bar")
+  expect_true(tbl1$Equals(tbl0$SelectColumns(c(0L, 1L))))
 
   # Attribute filters
-  tbl2 <- sdf$read(value_filter = "foo < 5")
-  expect_true(tbl2$Equals(tbl0$Filter(tbl0$foo < 5)))
-
-  # Result ordering
-  expect_error(sdf$read(result_order = "foo"))
+  tbl1 <- sidf$read(value_filter = "bar < 5")
+  expect_true(tbl1$Equals(tbl0$Filter(tbl0$bar < 5)))
 })

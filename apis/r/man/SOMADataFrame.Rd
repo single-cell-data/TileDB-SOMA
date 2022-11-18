@@ -4,14 +4,10 @@
 \alias{SOMADataFrame}
 \title{SOMADataFrame}
 \description{
-\code{SOMADataFrame} is a multi-column table containing a "pseudo-column" called
-\code{soma_rowid}, of type \code{uint64} and domain \verb{[0, #rows)}, which is the
-row offset (row id), and is a contiguous integer beginning with zero.
-
-\code{SOMADataFrame} must contain a column called \code{soma_joinid}, of type \code{uint64}.
-The \code{soma_joinid} column contains a unique value for each row in the
-\code{SOMADataFrame}, and intended to act as a joint key for other objects, such
-as \code{\link{SOMASparseNdArray}}.
+\code{SOMADataFrame} is a multi-column table that must contain a column
+called \code{soma_joinid} of type \code{uint64}, which contains a unique value for each
+row and is intended to act as a join key for other objects, such as
+\code{\link{SOMASparseNdArray}}.
 }
 \section{Super classes}{
 \code{\link[tiledbsoma:TileDBObject]{tiledbsoma::TileDBObject}} -> \code{\link[tiledbsoma:TileDBArray]{tiledbsoma::TileDBArray}} -> \code{SOMADataFrame}
@@ -52,13 +48,17 @@ as \code{\link{SOMASparseNdArray}}.
 \subsection{Method \code{create()}}{
 Create
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{SOMADataFrame$create(schema)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{SOMADataFrame$create(schema, index_column_names)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
 \item{\code{schema}}{an \code{\link[arrow:Schema]{arrow::schema}}.}
+
+\item{\code{index_column_names}}{A vector of column names to use as user-defined
+index columns.  All named columns must exist in the schema, and at least
+one index column name is required.}
 }
 \if{html}{\out{</div>}}
 }
@@ -101,7 +101,7 @@ column, and optionally filtered.
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{ids}}{Integer indices specifying the rows to read.}
+\item{\code{ids}}{Indices specifying the rows to read.}
 
 \item{\code{column_names}}{Character vector of column names to return.}
 

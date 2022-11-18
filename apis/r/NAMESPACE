@@ -2,7 +2,6 @@
 
 export(SOMADataFrame)
 export(SOMADenseNdArray)
-export(SOMAIndexedDataFrame)
 export(TileDBArray)
 export(TileDBObject)
 export(nnz)
