@@ -103,6 +103,8 @@ template<typename T> void check_xptr_tag(Rcpp::XPtr<T> ptr) {
 //' dimension(s). Each dimension can be one entry in the list.
 //' @param dim_ranges Optional named list with two-column matrix where each row select a range
 //' for the given dimension. Each dimension can be one entry in the list.
+//' @param config Optional named chracter vector with \sQuote{key} and \sQuote{value} pairs
+//' used as TileDB config parameters. If unset default configuration is used.
 //' @param loglevel Character value with the desired logging level, defaults to \sQuote{warn}
 //' @param sr An external pointer to a TileDB SOMAReader object
 //'
@@ -135,20 +137,37 @@ Rcpp::XPtr<tdbs::SOMAReader> sr_setup(Rcpp::XPtr<tiledb::Context> ctx,
                                       Rcpp::Nullable<Rcpp::XPtr<tiledb::QueryCondition>> qc = R_NilValue,
                                       Rcpp::Nullable<Rcpp::List> dim_points = R_NilValue,
                                       Rcpp::Nullable<Rcpp::List> dim_ranges = R_NilValue,
+                                      Rcpp::Nullable<Rcpp::CharacterVector> config = R_NilValue,
                                       const std::string& loglevel = "warn") {
     check_xptr_tag<tiledb::Context>(ctx);
     spdl::set_level(loglevel);
 
     spdl::info("[sr_setup] Setting up {}", uri);
 
-    //std::map<std::string, std::string> platform_config;
     std::string_view name = "unnamed";
     std::vector<std::string> column_names = {};
     std::string_view batch_size = "auto";
     std::string_view result_order = "auto";
 
-    tiledb::Config cfg{ctx.get()->config()}; // get config in order to make shared_ptr
-    std::shared_ptr<tiledb::Context> ctxptr = std::make_shared<tiledb::Context>(cfg);
+    std::shared_ptr<tiledb::Context> ctxptr = nullptr;
+
+    std::map<std::string, std::string> platform_config = {};
+    if (!config.isNull()) {
+        Rcpp::CharacterVector confvec(config);
+        Rcpp::CharacterVector namesvec = confvec.attr("names"); // extract names from named R vector
+        size_t n = confvec.length();
+        for (size_t i = 0; i<n; i++) {
+            platform_config.emplace(std::make_pair(std::string(namesvec[i]), std::string(confvec[i])));
+            spdl::debug("[sr_setup] config map adding '{}' = '{}'", std::string(namesvec[i]), std::string(confvec[i]));
+        }
+        tiledb::Config cfg(platform_config);
+        spdl::debug("[sr_setup] creating ctx object with supplied config");
+        ctxptr = std::make_shared<tiledb::Context>(cfg);
+    } else {
+        tiledb::Config cfg{ctx.get()->config()}; // get default config in order to make shared_ptr
+        spdl::debug("[sr_setup] creating ctx object with default config");
+        ctxptr = std::make_shared<tiledb::Context>(cfg);
+    }
 
     if (!colnames.isNull()) {
         column_names = Rcpp::as<std::vector<std::string>>(colnames);

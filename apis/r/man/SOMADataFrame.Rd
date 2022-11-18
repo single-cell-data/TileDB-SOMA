@@ -76,7 +76,7 @@ Write
 \if{html}{\out{<div class="arguments">}}
 \describe{
 \item{\code{values}}{An \code{\link[arrow:Table]{arrow::Table}} containing all columns, including
-the \code{soma_rowid} index column. The schema for \code{values} must match the
+any index columns. The schema for \code{values} must match the
 schema for the \code{SOMADataFrame}.}
 }
 \if{html}{\out{</div>}}
