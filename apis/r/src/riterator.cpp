@@ -139,7 +139,7 @@ Rcpp::XPtr<tdbs::SOMAReader> sr_setup(Rcpp::XPtr<tiledb::Context> ctx,
     check_xptr_tag<tiledb::Context>(ctx);
     spdl::set_level(loglevel);
 
-    spdl::info(fmt::format("[sr_setup] Setting up {}", uri));
+    spdl::info("[sr_setup] Setting up {}", uri);
 
     //std::map<std::string, std::string> platform_config;
     std::string_view name = "unnamed";
@@ -161,15 +161,15 @@ Rcpp::XPtr<tdbs::SOMAReader> sr_setup(Rcpp::XPtr<tiledb::Context> ctx,
     tiledb::Domain domain = schema->domain();
     std::vector<tiledb::Dimension> dims = domain.dimensions();
     for (auto& dim: dims) {
-        spdl::info(fmt::format("[soma_reader] Dimension {} type {} domain {} extent {}",
-                               dim.name(), tiledb::impl::to_str(dim.type()),
-                               dim.domain_to_str(), dim.tile_extent_to_str()));
+        spdl::info("[soma_reader] Dimension {} type {} domain {} extent {}",
+                   dim.name(), tiledb::impl::to_str(dim.type()),
+                   dim.domain_to_str(), dim.tile_extent_to_str());
         name2type.emplace(std::make_pair(dim.name(), dim.type()));
     }
 
     // If we have a query condition, apply it
     if (!qc.isNull()) {
-        spdl::info(fmt::format("[soma_reader] Applying query condition"));
+        spdl::info("[soma_reader] Applying query condition") ;
         Rcpp::XPtr<tiledb::QueryCondition> qcxp(qc);
         ptr->set_condition(*qcxp);
     }
@@ -197,7 +197,7 @@ Rcpp::XPtr<tdbs::SOMAReader> sr_setup(Rcpp::XPtr<tiledb::Context> ctx,
 // [[Rcpp::export]]
 bool sr_complete(Rcpp::XPtr<tdbs::SOMAReader> sr) {
    check_xptr_tag<tdbs::SOMAReader>(sr);
-   spdl::info(fmt::format("[sr_complete] Complete test is {}", sr->is_complete()));
+   spdl::info("[sr_complete] Complete test is {}", sr->is_complete());
    return sr->is_complete();
 }
 
@@ -209,10 +209,10 @@ Rcpp::List sr_next(Rcpp::XPtr<tdbs::SOMAReader> sr) {
 
    auto sr_data = sr->read_next();
    if (!sr->results_complete()) {
-       tdbs::LOG_TRACE(fmt::format("[sr_next] Read is incomplete"));
+       spdl::trace("[sr_next] Read is incomplete");
    }
-   spdl::info(fmt::format("[sr_next] Read {} rows and {} cols",
-                          sr_data->get()->num_rows(), sr_data->get()->names().size()));
+   spdl::info("[sr_next] Read {} rows and {} cols",
+              sr_data->get()->num_rows(), sr_data->get()->names().size()) ;
 
    const std::vector<std::string> names = sr_data->get()->names();
    auto ncol = names.size();
@@ -223,7 +223,7 @@ Rcpp::List sr_next(Rcpp::XPtr<tdbs::SOMAReader> sr) {
        SEXP schemaxp = arch_c_allocate_schema();
        SEXP arrayxp = arch_c_allocate_array_data();
 
-       tdbs::LOG_TRACE(fmt::format("[sr_next] Accessing {} at {}", names[i], i));
+       spdl::trace("[sr_next] Accessing {} at {}", names[i], i);
 
        // now buf is a shared_ptr to ColumnBuffer
        auto buf = sr_data->get()->at(names[i]);
