@@ -175,6 +175,9 @@ PYBIND11_MODULE(libtiledbsoma, m) {
                              .get();
                 }
 
+                // Release python GIL after we're done accessing python objects
+                py::gil_scoped_release release;
+
                 auto reader = SOMAReader::open(
                     uri,
                     name,
@@ -266,18 +269,26 @@ PYBIND11_MODULE(libtiledbsoma, m) {
                 const std::vector<std::pair<int64_t, int64_t>>&)>(
                 &SOMAReader::set_dim_ranges))
 
-        .def("submit", &SOMAReader::submit)
+        .def(
+            "submit",
+            &SOMAReader::submit,
+            py::call_guard<py::gil_scoped_release>())
         .def("results_complete", &SOMAReader::results_complete)
 
         .def(
             "read_next",
             [](SOMAReader& reader) -> std::optional<py::object> {
+                // Release python GIL before reading data
+                py::gil_scoped_release release;
+
                 // Try to read more data
                 auto buffers = reader.read_next();
 
                 // If more data was read, convert it to an arrow table and
                 // return
                 if (buffers.has_value()) {
+                    // Acquire python GIL before accessing python objects
+                    py::gil_scoped_acquire acquire;
                     return to_table(*buffers);
                 }
 
@@ -285,6 +296,6 @@ PYBIND11_MODULE(libtiledbsoma, m) {
                 return std::nullopt;
             })
 
-        .def("nnz", &SOMAReader::nnz);
+        .def("nnz", &SOMAReader::nnz, py::call_guard<py::gil_scoped_release>());
 }
 }  // namespace tiledbsoma
