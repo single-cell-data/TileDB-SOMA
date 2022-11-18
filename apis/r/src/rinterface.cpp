@@ -69,7 +69,7 @@ bool export_column(const std::string& uri, const std::string& colname,
 // [[Rcpp::export]]
 SEXP export_column_direct(const std::string& uri, const std::vector<std::string>& colnames) {
 
-    spdl::info(fmt::format("Reading from {}", uri));
+    spdl::info("Reading from {}", uri);
 
     // Read selected columns from the uri array (return is unique_ptr<SOMAReader>)
     auto sr = tdbs::SOMAReader::open(uri, "", {}, colnames);
@@ -80,8 +80,8 @@ SEXP export_column_direct(const std::string& uri, const std::vector<std::string>
     if (!sr->results_complete()) {
         Rcpp::warning("Read of '%s' incomplete", uri);
     }
-    spdl::info(fmt::format("Read complete with {} rows and {} cols",
-                           sr_data->get()->num_rows(), sr_data->get()->names().size()));
+    spdl::info("Read complete with {} rows and {} cols",
+               sr_data->get()->num_rows(), sr_data->get()->names().size());
 
     auto ncol = sr_data->get()->names().size();
     Rcpp::List reslist(ncol);
@@ -95,7 +95,7 @@ SEXP export_column_direct(const std::string& uri, const std::vector<std::string>
         // now buf is a shared_ptr to ColumnBuffer
         auto buf = sr_data->get()->at(colnames[i]);
 
-        spdl::info(fmt::format("Accessing {} at {}", colnames[i], i));
+        spdl::info("Accessing {} at {}", colnames[i], i);
 
         // this is pair of array and schema pointer
         auto pp = tdbs::ArrowAdapter::to_arrow(buf);
@@ -149,10 +149,9 @@ Rcpp::List soma_reader(const std::string& uri,
                        Rcpp::Nullable<Rcpp::List> dim_ranges = R_NilValue,
                        const std::string& loglevel = "warn") {
 
-    tdbs::LOG_SET_LEVEL(loglevel);
     spdl::set_level(loglevel);
 
-    spdl::info(fmt::format("[soma_reader] Reading from {}", uri));
+    spdl::info("[soma_reader] Reading from {}", uri);
 
     // Read selected columns from the uri (return is unique_ptr<SOMAReader>)
     auto sr = tdbs::SOMAReader::open(uri);
@@ -162,22 +161,22 @@ Rcpp::List soma_reader(const std::string& uri,
     tiledb::Domain domain = schema->domain();
     std::vector<tiledb::Dimension> dims = domain.dimensions();
     for (auto& dim: dims) {
-        spdl::info(fmt::format("[soma_reader] Dimension {} type {} domain {} extent {}",
-                               dim.name(), tiledb::impl::to_str(dim.type()),
-                               dim.domain_to_str(), dim.tile_extent_to_str()));
+        spdl::info("[soma_reader] Dimension {} type {} domain {} extent {}",
+                   dim.name(), tiledb::impl::to_str(dim.type()),
+                   dim.domain_to_str(), dim.tile_extent_to_str());
         name2type.emplace(std::make_pair(dim.name(), dim.type()));
     }
 
     // If we have column names, select them
     if (!colnames.isNull()) {
         std::vector<std::string> cn = Rcpp::as<std::vector<std::string>>(colnames);
-        spdl::info(fmt::format("[soma_reader] Selecting {} columns", cn.size()));
+        spdl::info("[soma_reader] Selecting {} columns", cn.size());
         sr->select_columns(cn);
     }
 
     // If we have a query condition, apply it
     if (!qc.isNull()) {
-        spdl::info(fmt::format("[soma_reader] Applying query condition"));
+        spdl::info("[soma_reader] Applying query condition");
         Rcpp::XPtr<tiledb::QueryCondition> qcxp(qc);
         sr->set_condition(*qcxp);
     }
@@ -203,9 +202,8 @@ Rcpp::List soma_reader(const std::string& uri,
     if (!sr->results_complete()) {
         Rcpp::warning("Read of '%s' incomplete", uri);
     }
-    spdl::info(fmt::format("[soma_reader] Read complete with {} rows and {} cols",
-                               sr_data->get()->num_rows(),
-                               sr_data->get()->names().size()));
+    spdl::info("[soma_reader] Read complete with {} rows and {} cols",
+               sr_data->get()->num_rows(), sr_data->get()->names().size());
 
     const std::vector<std::string> names = sr_data->get()->names();
     auto ncol = names.size();
@@ -216,7 +214,7 @@ Rcpp::List soma_reader(const std::string& uri,
         SEXP schemaxp = arch_c_allocate_schema();
         SEXP arrayxp = arch_c_allocate_array_data();
 
-        spdl::info(fmt::format("[soma_reader] Accessing {} at {}", names[i], i));
+        spdl::info("[soma_reader] Accessing {} at {}", names[i], i);
 
         // now buf is a shared_ptr to ColumnBuffer
         auto buf = sr_data->get()->at(names[i]);
@@ -227,7 +225,7 @@ Rcpp::List soma_reader(const std::string& uri,
         memcpy((void*) R_ExternalPtrAddr(schemaxp), pp.second.get(), sizeof(ArrowSchema));
         memcpy((void*) R_ExternalPtrAddr(arrayxp), pp.first.get(), sizeof(ArrowArray));
 
-        spdl::info(fmt::format("[soma_reader] Incoming name {}", std::string(pp.second->name)));
+        spdl::info("[soma_reader] Incoming name {}", std::string(pp.second->name));
 
         schlst[i] = schemaxp;
         arrlst[i] = arrayxp;
@@ -256,7 +254,7 @@ Rcpp::List soma_reader(const std::string& uri,
 //' @noRd
 // [[Rcpp::export]]
 void set_log_level(const std::string& level) {
-    tdbs::LOG_SET_LEVEL(level);
+    spdl::set_level(level);
 }
 
 //' @noRd
