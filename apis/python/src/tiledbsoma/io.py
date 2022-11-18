@@ -24,7 +24,7 @@ from tiledbsoma import (
 )
 
 from .constants import SOMA_JOINID
-from .types import Path
+from .types import Path, PlatformConfig
 from .util import uri_joinpath
 
 
@@ -34,11 +34,19 @@ def from_h5ad(
     input_path: Path,
     measurement_name: str,
     ctx: Optional[tiledb.Ctx] = None,
+    platform_config: Optional[PlatformConfig] = None,
 ) -> None:
     """
     Reads an .h5ad file and writes to a TileDB group structure.
     """
-    _from_h5ad_common(experiment, input_path, measurement_name, from_anndata, ctx=ctx)
+    _from_h5ad_common(
+        experiment,
+        input_path,
+        measurement_name,
+        from_anndata,
+        ctx=ctx,
+        platform_config=platform_config,
+    )
 
 
 # ----------------------------------------------------------------
@@ -46,8 +54,11 @@ def _from_h5ad_common(
     experiment: Experiment,
     input_path: Path,
     measurement_name: str,
-    handler_func: Callable[[Experiment, ad.AnnData, str, tiledb.Ctx], None],
+    handler_func: Callable[
+        [Experiment, ad.AnnData, str, tiledb.Ctx, Optional[PlatformConfig]], None
+    ],
     ctx: Optional[tiledb.Ctx] = None,
+    platform_config: Optional[PlatformConfig] = None,
 ) -> None:
     """
     Common code for things we do when processing a .h5ad file for ingest/update.
@@ -70,7 +81,7 @@ def _from_h5ad_common(
         util.format_elapsed(s, f"{experiment._indent}FINISH READING {input_path}"),
     )
 
-    handler_func(experiment, anndata, measurement_name, ctx)
+    handler_func(experiment, anndata, measurement_name, ctx, platform_config)
 
     logging.log_io(
         None,
@@ -82,7 +93,10 @@ def _from_h5ad_common(
 
 
 def _write_dataframe(
-    soma_df: DataFrame, df: pd.DataFrame, id_column_name: Optional[str]
+    soma_df: DataFrame,
+    df: pd.DataFrame,
+    id_column_name: Optional[str],
+    platform_config: Optional[PlatformConfig] = None,
 ) -> None:
     s = util.get_start_stamp()
     logging.log_io(None, f"{soma_df._indent}START  WRITING {soma_df.uri}")
@@ -105,7 +119,7 @@ def _write_dataframe(
             if df[k].dtype == "category":
                 df[k] = df[k].astype(df[k].cat.categories.dtype)
         arrow_table = pa.Table.from_pandas(df)
-        soma_df.create(arrow_table.schema)
+        soma_df.create(arrow_table.schema, platform_config=platform_config)
         soma_df.write(arrow_table)
 
     else:
@@ -300,6 +314,7 @@ def _write_matrix_to_sparseNdArray(
 def create_from_matrix(
     soma_ndarray: Union[DenseNdArray, SparseNdArray],
     src_matrix: Union[np.ndarray, sp.csr_matrix, sp.csc_matrix],
+    platform_config: Optional[PlatformConfig] = None,
 ) -> None:
     """
     Create and populate the ``soma_matrix`` from the contents of ``src_matrix``.
@@ -312,7 +327,9 @@ def create_from_matrix(
     logging.log_io(None, f"{soma_ndarray._indent}START  WRITING {soma_ndarray.uri}")
 
     soma_ndarray.create(
-        type=pa.from_numpy_dtype(src_matrix.dtype), shape=src_matrix.shape
+        type=pa.from_numpy_dtype(src_matrix.dtype),
+        shape=src_matrix.shape,
+        platform_config=platform_config,
     )
 
     if soma_ndarray.soma_type == "SOMADenseNdArray":
@@ -334,6 +351,7 @@ def from_anndata(
     anndata: ad.AnnData,
     measurement_name: str,
     ctx: Optional[tiledb.Ctx] = None,
+    platform_config: Optional[PlatformConfig] = None,
 ) -> None:
     """
     Top-level writer method for creating a TileDB group for a ``Experiment`` object.
@@ -369,10 +387,15 @@ def from_anndata(
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     # OBS
     obs = DataFrame(uri=uri_joinpath(experiment.uri, "obs"))
-    _write_dataframe(obs, anndata.obs, id_column_name="obs_id")
+    _write_dataframe(
+        obs, anndata.obs, id_column_name="obs_id", platform_config=platform_config
+    )
     experiment.set("obs", obs)
 
-    experiment.set("ms", Collection(uri=uri_joinpath(experiment.uri, "ms")).create())
+    experiment.set(
+        "ms",
+        Collection(uri=uri_joinpath(experiment.uri, "ms")).create(),
+    )
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     # MS
@@ -383,7 +406,9 @@ def from_anndata(
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     # MS/meas/VAR
     var = DataFrame(uri=uri_joinpath(measurement.uri, "var"))
-    _write_dataframe(var, anndata.var, id_column_name="var_id")
+    _write_dataframe(
+        var, anndata.var, id_column_name="var_id", platform_config=platform_config
+    )
     measurement["var"] = var
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -394,23 +419,21 @@ def from_anndata(
     if isinstance(anndata.X, np.ndarray):
         ddata = DenseNdArray(uri=uri_joinpath(measurement.X.uri, "data"), ctx=ctx)
         # Code here and in else-block duplicated for linter appeasement
-        create_from_matrix(ddata, anndata.X)
+        create_from_matrix(ddata, anndata.X, platform_config=platform_config)
         measurement.X.set("data", ddata)
     else:
         sdata = SparseNdArray(uri=uri_joinpath(measurement.X.uri, "data"), ctx=ctx)
-        create_from_matrix(sdata, anndata.X)
+        create_from_matrix(sdata, anndata.X, platform_config=platform_config)
         measurement.X.set("data", sdata)
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-    # TODO: port from v0
-
     if len(anndata.obsm.keys()) > 0:  # do not create an empty collection
         measurement["obsm"] = Collection(
             uri=uri_joinpath(measurement.uri, "obsm")
         ).create()
         for key in anndata.obsm.keys():
             arr = DenseNdArray(uri=uri_joinpath(measurement.obsm.uri, key), ctx=ctx)
-            create_from_matrix(arr, anndata.obsm[key])
+            create_from_matrix(arr, anndata.obsm[key], platform_config=platform_config)
             measurement.obsm.set(key, arr)
 
     if len(anndata.varm.keys()) > 0:  # do not create an empty collection
@@ -419,7 +442,7 @@ def from_anndata(
         ).create()
         for key in anndata.varm.keys():
             darr = DenseNdArray(uri=uri_joinpath(measurement.varm.uri, key), ctx=ctx)
-            create_from_matrix(darr, anndata.varm[key])
+            create_from_matrix(darr, anndata.varm[key], platform_config=platform_config)
             measurement.varm.set(key, darr)
 
     if len(anndata.obsp.keys()) > 0:  # do not create an empty collection
@@ -428,7 +451,7 @@ def from_anndata(
         ).create()
         for key in anndata.obsp.keys():
             sarr = SparseNdArray(uri=uri_joinpath(measurement.obsp.uri, key), ctx=ctx)
-            create_from_matrix(sarr, anndata.obsp[key])
+            create_from_matrix(sarr, anndata.obsp[key], platform_config=platform_config)
             measurement.obsp.set(key, sarr)
 
     if len(anndata.varp.keys()) > 0:  # do not create an empty collection
@@ -437,7 +460,7 @@ def from_anndata(
         ).create()
         for key in anndata.varp.keys():
             sarr = SparseNdArray(uri=uri_joinpath(measurement.varp.uri, key), ctx=ctx)
-            create_from_matrix(sarr, anndata.varp[key])
+            create_from_matrix(sarr, anndata.varp[key], platform_config=platform_config)
             measurement.varp.set(key, sarr)
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -450,7 +473,12 @@ def from_anndata(
         experiment.ms.set("raw", raw_measurement)
 
         var = DataFrame(uri=uri_joinpath(raw_measurement.uri, "var"))
-        _write_dataframe(var, anndata.raw.var, id_column_name="var_id")
+        _write_dataframe(
+            var,
+            anndata.raw.var,
+            id_column_name="var_id",
+            platform_config=platform_config,
+        )
         raw_measurement.set("var", var)
 
         raw_measurement["X"] = Collection(
@@ -460,7 +488,7 @@ def from_anndata(
         rawXdata = SparseNdArray(
             uri=uri_joinpath(raw_measurement.X.uri, "data"), ctx=ctx
         )
-        create_from_matrix(rawXdata, anndata.raw.X)
+        create_from_matrix(rawXdata, anndata.raw.X, platform_config=platform_config)
         raw_measurement.X.set("data", rawXdata)
 
     # TODO: port uns from v0 to v1
