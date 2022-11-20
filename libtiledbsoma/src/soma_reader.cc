@@ -97,7 +97,7 @@ SOMAReader::SOMAReader(
         mq_->select_columns(column_names);
     }
 
-    if (!result_order.empty() && result_order != "auto") {
+    if (result_order != "auto") {  // default "auto" is set in soma_reader.h
         tiledb_layout_t layout;
         if (result_order == "row-major") {
             layout = TILEDB_ROW_MAJOR;

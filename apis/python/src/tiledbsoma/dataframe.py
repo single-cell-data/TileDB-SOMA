@@ -183,7 +183,7 @@ class DataFrame(TileDBArray):
 
         :param partitions: an optional ``ReadPartitions`` hint to indicate how results should be organized.
 
-        :param result_order: order of read results. This can be one of 'row-major', 'col-major', or 'unordered'.
+        :param result_order: order of read results. This can be one of 'row-major', 'col-major', or 'auto'.
 
         :param value_filter: an optional [value filter] to apply to the results. Defaults to no filter.
 
@@ -222,9 +222,7 @@ class DataFrame(TileDBArray):
                 column_names=column_names,
                 query_condition=query_condition,
                 platform_config={} if self._ctx is None else self._ctx.config().dict(),
-                result_order="auto"
-                if result_order in (None, "unordered")
-                else result_order,
+                result_order=(result_order or "auto"),
             )
 
             if ids is not None:
