@@ -101,68 +101,43 @@ class ArrowAdapter {
         array->buffers = (const void**)malloc(sizeof(void*) * n_buffers);
         assert(array->buffers != nullptr);
         array->buffers[0] = nullptr;  // validity
-        bool boolean_column_type = column->type() == 41 ? true : false;
-
-        if (n_buffers == 2) {
-            if (boolean_column_type) {
-                out_bitmap(column, array.get(), 1);
-            } else {
-                array->buffers[1] = column->data<void*>().data();
-            }
-        } else if (n_buffers == 3) {
-            array->buffers[1] = column->offsets().data();
-            if (boolean_column_type) {
-                out_bitmap(column, array.get(), 2);
-            } else {
-                array->buffers[2] = column->data<void*>().data();
+        array->buffers[n_buffers - 1] = column->data<void*>().data();  // data
+        if (n_buffers == 3) {
+            array->buffers[1] = column->offsets().data();  // offsets
+        }
+        
+        /* Workaround to cast TILEDB_BOOL from uint8 to 1-bit Arrow boolean. */
+        if (column->type() == TILEDB_BOOL) {
+            int bitmap_count = 0;
+            for (int buff_idx = 0; buff_idx < array->length; buff_idx++) {
+                // Every 8 bytes will be rewritten into a one-byte bitmap
+                if (buff_idx % 8 == 0) {
+                    ((uint8_t*) array->buffers[n_buffers - 1])[bitmap_count] = 
+                        bitmap(column, buff_idx);
+                    bitmap_count++;
+                }
             }
         }
 
         return std::pair(std::move(array), std::move(schema));
     }
 
-    static void out_bitmap(
-            std::shared_ptr<ColumnBuffer> column, 
-            ArrowArray* array, 
-            int buffer_index) {
-        auto in_bytemap = column->data<bool>().data();
-        int in_byte_length = column->size();
-        
-        // If the array length is not byte-aligned, get the difference
-        int byte_align = in_byte_length % 8 == 0 ? 0 : 
-            8 - (in_byte_length % 8);
-        int out_bit_length = in_byte_length + byte_align;
-        uint8_t out_bitmap[out_bit_length / 8];
-        
-        // Pad input array with 0s so it's byte-aligned
-        if (byte_align != 0) {
-            for (int i = 0; i < byte_align; i++) {
-                in_bytemap[in_byte_length + i] = 0;
-                in_byte_length++;
-            }
-        }
+    static uint8_t bitmap(
+            std::shared_ptr<ColumnBuffer> column, int bytemap_idx) {
+        auto bytemap = column->data<bool>().data();
+        uint8_t bitmap = 0;
 
-        for (int in_byte_idx = 0; in_byte_idx < out_bit_length; in_byte_idx++) {
-            int out_byte_idx = in_byte_idx / 8;
-            // If it's the start of the byte, set the dest byte to 0
-            if (in_byte_idx % 8 == 0) {
-                out_bitmap[out_byte_idx] = 0;
+        // Each one-byte bitmap corresponds to 8 bytes in the source bytemap
+        for (int idx = bytemap_idx; idx < bytemap_idx + 8; idx++) {
+            auto bit = 0b0;
+            if (bytemap[idx] != 0) {
+                bit = 0b1;
             }
-            for (int ob_idx = 0; ob_idx < 8; ob_idx++) {
-                // Retrieve the source bit from the input bytemap array
-                auto in_bitset = std::bitset<8>(in_bytemap[in_byte_idx]);
-                auto source_bit = in_bitset[7-ob_idx];
                 
-                // this works, the translation to Arrow bool is what's failing
-                out_bitmap[out_byte_idx] |= 
-                    0b00000000 | source_bit << (7 - (in_byte_idx % 8));
-                
-                // Sanity check: Print the bitmap
-                if(ob_idx == 7 && in_byte_idx != 0 && in_byte_idx % 7 == 0)
-                    std::cerr<<out_byte_idx<<": "<<std::bitset<8>(out_bitmap[out_byte_idx])<<std::endl;
-            }
+            // Bitmap will be byte-aligned, padded with 0s
+            bitmap |= 0b00000000 | bit << (idx % 8);
         }
-        array->buffers[buffer_index] = (bool*)out_bitmap;
+        return bitmap;
     }
 
     /**
@@ -180,7 +155,6 @@ class ArrowAdapter {
             case TILEDB_BLOB:
                 return "Z";  // large because TileDB uses 64bit offsets
             case TILEDB_BOOL:
-                //return "C";  // TILEDB_BOOL is 8bit but arrow BOOL is 1bit
                 return "b";
             case TILEDB_INT32:
                 return "i";
