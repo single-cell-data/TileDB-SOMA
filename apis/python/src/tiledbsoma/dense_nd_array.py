@@ -7,10 +7,11 @@ import tiledb
 import tiledbsoma.util_arrow as util_arrow
 from tiledbsoma.util_tiledb import tiledb_result_order_from_soma_result_order
 
+from . import tiledb_platform_config as tdbpc
 from .collection import CollectionBase
 from .tiledb_array import TileDBArray
 from .tiledb_platform_config import TileDBPlatformConfig
-from .types import DenseNdCoordinates, NTuple, ResultOrder
+from .types import DenseNdCoordinates, NTuple, PlatformConfig, ResultOrder
 
 
 class DenseNdArray(TileDBArray):
@@ -44,6 +45,7 @@ class DenseNdArray(TileDBArray):
         self,
         type: pa.DataType,
         shape: Union[NTuple, List[int]],
+        platform_config: Optional[PlatformConfig] = None,
     ) -> "DenseNdArray":
         """
         Create a ``DenseNdArray`` named with the URI.
@@ -65,15 +67,19 @@ class DenseNdArray(TileDBArray):
             )
 
         level = self._tiledb_platform_config.string_dim_zstd_level
+        create_options = tdbpc.from_param(platform_config).create_options()
 
         dims = []
         for n, e in enumerate(shape):
+            dim_name = f"soma_dim_{n}"
             dim = tiledb.Dim(
-                name=f"soma_dim_{n}",
+                name=dim_name,
                 domain=(0, e - 1),
-                tile=min(e, 2048),  # TODO: PARAMETERIZE
+                tile=create_options.dim_tile(dim_name, min(e, 2048)),
                 dtype=np.int64,
-                filters=[tiledb.ZstdFilter(level=level)],
+                filters=create_options.dim_filters(
+                    dim_name, [dict(_type="ZstdFilter", level=level)]
+                ),
             )
             dims.append(dim)
         dom = tiledb.Domain(dims, ctx=self._ctx)
@@ -82,24 +88,22 @@ class DenseNdArray(TileDBArray):
             tiledb.Attr(
                 name="soma_data",
                 dtype=util_arrow.tiledb_type_from_arrow_type(type),
-                filters=[tiledb.ZstdFilter()],
+                filters=create_options.attr_filters("soma_data", ["ZstdFilter"]),
                 ctx=self._ctx,
             )
         ]
+
+        cell_order, tile_order = create_options.cell_tile_orders()
 
         sch = tiledb.ArraySchema(
             domain=dom,
             attrs=attrs,
             sparse=False,
             allows_duplicates=False,
-            offsets_filters=[
-                tiledb.DoubleDeltaFilter(),
-                tiledb.BitWidthReductionFilter(),
-                tiledb.ZstdFilter(),
-            ],
-            capacity=100000,
-            cell_order="row-major",
-            tile_order="row-major",
+            offsets_filters=create_options.offsets_filters(),
+            capacity=create_options.get("capacity", 100000),
+            cell_order=cell_order,
+            tile_order=tile_order,
             ctx=self._ctx,
         )
 

@@ -1,5 +1,5 @@
 import pathlib
-from typing import List, Literal, Sequence, Tuple, Union
+from typing import Any, List, Literal, Mapping, Sequence, Tuple, Union
 
 import numpy as np
 import pandas as pd
@@ -57,3 +57,6 @@ SparseNdCoordinates = Union[
     None,
     Sequence[Union[None, DenseCoordinates, Sequence[int], np.ndarray, pa.IntegerArray]],
 ]
+
+PlatformConfig = Mapping[str, Any]
+"""The platform-configuration dictionary. May contain a ``tiledb`` key."""

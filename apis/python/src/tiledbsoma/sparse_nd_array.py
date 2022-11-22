@@ -10,11 +10,11 @@ import tiledb
 # This package's pybind11 code
 import tiledbsoma.libtiledbsoma as clib
 
+from . import tiledb_platform_config as tdbpc
 from . import util, util_arrow
 from .collection import CollectionBase
 from .tiledb_array import TileDBArray
-from .tiledb_platform_config import TileDBPlatformConfig
-from .types import NTuple, SparseNdCoordinates
+from .types import NTuple, PlatformConfig, SparseNdCoordinates
 
 
 class SparseNdArray(TileDBArray):
@@ -27,7 +27,7 @@ class SparseNdArray(TileDBArray):
         uri: str,
         *,
         parent: Optional[CollectionBase[Any]] = None,
-        tiledb_platform_config: Optional[TileDBPlatformConfig] = None,
+        tiledb_platform_config: Optional[tdbpc.TileDBPlatformConfig] = None,
         ctx: Optional[tiledb.Ctx] = None,
     ):
         """
@@ -49,6 +49,7 @@ class SparseNdArray(TileDBArray):
         self,
         type: pa.DataType,
         shape: Union[NTuple, List[int]],
+        platform_config: Optional[PlatformConfig] = None,
     ) -> "SparseNdArray":
         """
         Create a ``SparseNdArray`` named with the URI.
@@ -70,15 +71,19 @@ class SparseNdArray(TileDBArray):
             )
 
         level = self._tiledb_platform_config.string_dim_zstd_level
+        create_options = tdbpc.from_param(platform_config).create_options()
 
         dims = []
         for n, e in enumerate(shape):
+            dim_name = f"soma_dim_{n}"
             dim = tiledb.Dim(
-                name=f"soma_dim_{n}",
+                name=dim_name,
                 domain=(0, e - 1),
-                tile=min(e, 2048),  # TODO: PARAMETERIZE,
+                tile=create_options.dim_tile(dim_name, min(e, 2048)),
                 dtype=np.int64,
-                filters=[tiledb.ZstdFilter(level=level)],
+                filters=create_options.dim_filters(
+                    dim_name, [dict(_type="ZstdFilter", level=level)]
+                ),
             )
             dims.append(dim)
         dom = tiledb.Domain(dims, ctx=self._ctx)
@@ -87,10 +92,12 @@ class SparseNdArray(TileDBArray):
             tiledb.Attr(
                 name="soma_data",
                 dtype=util_arrow.tiledb_type_from_arrow_type(type),
-                filters=[tiledb.ZstdFilter()],
+                filters=create_options.attr_filters("soma_data", ["ZstdFilter"]),
                 ctx=self._ctx,
             )
         ]
+
+        cell_order, tile_order = create_options.cell_tile_orders()
 
         # TODO: code-dedupe w/ regard to DenseNdArray. The two creates are
         # almost identical & could share a common parent-class _create() method.
@@ -99,14 +106,10 @@ class SparseNdArray(TileDBArray):
             attrs=attrs,
             sparse=True,
             allows_duplicates=False,
-            offsets_filters=[
-                tiledb.DoubleDeltaFilter(),
-                tiledb.BitWidthReductionFilter(),
-                tiledb.ZstdFilter(),
-            ],
-            capacity=100000,
-            cell_order="row-major",
-            tile_order="row-major",
+            offsets_filters=create_options.offsets_filters(),
+            capacity=create_options.get("capacity", 100000),
+            tile_order=cell_order,
+            cell_order=tile_order,
             ctx=self._ctx,
         )
 
