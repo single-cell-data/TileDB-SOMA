@@ -3,6 +3,9 @@
 #' Base class for matrix-like data with rows aligned to the observations or
 #' features of a [`SOMA`].
 #'
+#' @param batch_mode logical, if `TRUE`, batch query mode is enabled, which
+#' provides the ability to detect partial query results and resubmit until
+#' all results are retrieved.
 #' @export
 
 AnnotationMatrix <- R6::R6Class(
@@ -42,15 +45,17 @@ AnnotationMatrix <- R6::R6Class(
     },
 
     #' @description Retrieve the annotation data from TileDB
+    #' @param attrs A character vector of the attribute names to retrieve. By
+    #' default, all attributes are retrieved.
     #' @return A [`matrix`]
-    to_matrix = function() {
-      if (self$verbose) {
-        message(
-          sprintf("Reading %s into memory from '%s'", self$class(), self$uri)
-        )
-      }
+    to_matrix = function(attrs = NULL, batch_mode = FALSE) {
 
-      df <- self$tiledb_array(return_as = "data.frame")[]
+      df <- private$read_data(
+        attrs = attrs,
+        batch_mode = batch_mode,
+        return_as = "data.frame"
+      )
+
       index_col <- self$dimnames()
       attr_cols <- setdiff(colnames(df), index_col)
 

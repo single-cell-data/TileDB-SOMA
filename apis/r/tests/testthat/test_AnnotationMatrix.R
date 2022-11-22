@@ -23,4 +23,8 @@ test_that("annotation matrix can be stored and retrieved", {
   expect_equal(sort(colnames(mat2)), sort(colnames(mat)))
 
   expect_identical(mat[rlabs, clabs], mat2[rlabs, clabs])
+
+  # test that result is identical with batch mode
+  mat3 <- annotmat$to_matrix(batch_mode = TRUE)
+  expect_identical(mat2, mat3)
 })
