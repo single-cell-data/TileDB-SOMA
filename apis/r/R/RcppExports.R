@@ -78,6 +78,8 @@ nnz <- function(uri) {
 #' dimension(s). Each dimension can be one entry in the list.
 #' @param dim_ranges Optional named list with two-column matrix where each row select a range
 #' for the given dimension. Each dimension can be one entry in the list.
+#' @param config Optional named chracter vector with \sQuote{key} and \sQuote{value} pairs
+#' used as TileDB config parameters. If unset default configuration is used.
 #' @param loglevel Character value with the desired logging level, defaults to \sQuote{warn}
 #' @param sr An external pointer to a TileDB SOMAReader object
 #'
@@ -103,8 +105,8 @@ nnz <- function(uri) {
 #' summary(rl)
 #' }
 #' @export
-sr_setup <- function(ctx, uri, colnames = NULL, qc = NULL, dim_points = NULL, dim_ranges = NULL, loglevel = "warn") {
-    .Call(`_tiledbsoma_sr_setup`, ctx, uri, colnames, qc, dim_points, dim_ranges, loglevel)
+sr_setup <- function(ctx, uri, colnames = NULL, qc = NULL, dim_points = NULL, dim_ranges = NULL, config = NULL, loglevel = "warn") {
+    .Call(`_tiledbsoma_sr_setup`, ctx, uri, colnames, qc, dim_points, dim_ranges, config, loglevel)
 }
 
 #' @rdname sr_setup

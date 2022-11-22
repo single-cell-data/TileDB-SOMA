@@ -13,6 +13,7 @@ sr_setup(
   qc = NULL,
   dim_points = NULL,
   dim_ranges = NULL,
+  config = NULL,
   loglevel = "warn"
 )
 
@@ -35,6 +36,9 @@ dimension(s). Each dimension can be one entry in the list.}
 
 \item{dim_ranges}{Optional named list with two-column matrix where each row select a range
 for the given dimension. Each dimension can be one entry in the list.}
+
+\item{config}{Optional named chracter vector with \sQuote{key} and \sQuote{value} pairs
+used as TileDB config parameters. If unset default configuration is used.}
 
 \item{loglevel}{Character value with the desired logging level, defaults to \sQuote{warn}}
 
