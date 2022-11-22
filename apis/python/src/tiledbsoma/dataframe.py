@@ -1,5 +1,15 @@
 import collections.abc
-from typing import Any, Iterator, Literal, Optional, Sequence, Tuple, TypeVar, Union
+from typing import (
+    Any,
+    Iterator,
+    Literal,
+    Optional,
+    Sequence,
+    Tuple,
+    TypeVar,
+    Union,
+    get_args,
+)
 
 import numpy as np
 import pandas as pd
@@ -177,7 +187,7 @@ class DataFrame(TileDBArray):
 
         :param partitions: an optional ``ReadPartitions`` hint to indicate how results should be organized.
 
-        :param result_order: order of read results. This can be one of 'row-major', 'col-major', or 'unordered'.
+        :param result_order: order of read results. This can be one of 'row-major', 'col-major', or 'auto'.
 
         :param value_filter: an optional [value filter] to apply to the results. Defaults to no filter.
 
@@ -204,6 +214,11 @@ class DataFrame(TileDBArray):
             if value_filter is not None:
                 query_condition = QueryCondition(value_filter)
 
+            if result_order is not None and result_order not in get_args(ResultOrder):
+                raise ValueError(
+                    "result_order must be one of " + ", ".join(get_args(ResultOrder))
+                )
+
             sr = clib.SOMAReader(
                 self._uri,
                 name=self.__class__.__name__,
@@ -211,6 +226,7 @@ class DataFrame(TileDBArray):
                 column_names=column_names,
                 query_condition=query_condition,
                 platform_config={} if self._ctx is None else self._ctx.config().dict(),
+                result_order=(result_order or "auto"),
             )
 
             if ids is not None:
@@ -270,7 +286,6 @@ class DataFrame(TileDBArray):
 
             # TODO: platform_config
             # TODO: batch_size
-            # TODO: result_order
             sr.submit()
 
             # This requires careful handling in the no-data case.

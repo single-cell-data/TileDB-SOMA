@@ -30,8 +30,7 @@ def tiledb_result_order_from_soma_result_order(
     OrderMap: Dict[ResultOrder, str] = {
         "column-major": "F",
         "row-major": "C",
-        "unordered": "U",
-        "rowid-ordered": "C",
+        "auto": "U",
     }
     if not soma_result_order:
         return None

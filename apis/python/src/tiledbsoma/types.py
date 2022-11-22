@@ -16,7 +16,7 @@ NTuple = Tuple[int, ...]
 BatchFormat = Literal["dense", "coo", "csr", "csc", "record-batch", "table"]
 ReadPartitions = Literal["IofN"]
 BatchSize = Literal["count", "size", "auto"]
-ResultOrder = Literal["row-major", "column-major", "unordered", "rowid-ordered"]
+ResultOrder = Literal["row-major", "column-major", "auto"]
 
 ArrowReadResult = Union[
     pa.Table,

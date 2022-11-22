@@ -147,6 +147,15 @@ class ManagedQuery {
     }
 
     /**
+     * @brief Set query result order (layout).
+     *
+     * @param layout A tiledb_layout_t constant
+     */
+    void set_layout(tiledb_layout_t layout) {
+        query_->set_layout(layout);
+    }
+
+    /**
      * @brief Submit the query.
      *
      */
