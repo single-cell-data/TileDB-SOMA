@@ -436,7 +436,7 @@ def _validate_schema(schema: pa.Schema, index_column_names: Sequence[str]) -> pa
         # TODO: Pending
         # https://github.com/single-cell-data/TileDB-SOMA/issues/418
         # https://github.com/single-cell-data/TileDB-SOMA/issues/419
-        assert schema.field(index_column_name).type in [
+        if not schema.field(index_column_name).type in [
             pa.int8(),
             pa.uint8(),
             pa.int16(),
@@ -447,6 +447,7 @@ def _validate_schema(schema: pa.Schema, index_column_names: Sequence[str]) -> pa
             pa.uint64(),
             pa.float32(),
             pa.float64(),
-        ]
+        ]:
+            raise TypeError("Unsupported index type - pending fix #418 and #419")
 
     return schema

@@ -653,6 +653,86 @@ def test_read_indexing(tmp_path, io):
     sidf.delete()
 
 
+@pytest.mark.parametrize(
+    "schema",
+    [
+        pa.schema(
+            [
+                (
+                    "A",
+                    pa.dictionary(
+                        value_type=pa.string(), index_type=pa.int8(), ordered=True
+                    ),
+                ),
+            ]
+        ),
+        pa.schema(
+            [
+                (
+                    "A",
+                    pa.dictionary(
+                        value_type=pa.string(), index_type=pa.int8(), ordered=False
+                    ),
+                ),
+            ]
+        ),
+        pa.Schema.from_pandas(
+            pd.DataFrame(
+                data={
+                    "A": pd.Categorical(
+                        ["a", "b", "a", "b"], ordered=True, categories=["b", "a"]
+                    )
+                }
+            )
+        ),
+        pa.Schema.from_pandas(
+            pd.DataFrame(
+                data={
+                    "A": pd.Categorical(
+                        ["a", "b", "a", "b"], ordered=False, categories=["b", "a"]
+                    )
+                }
+            )
+        ),
+    ],
+)
+def test_create_categorical_types(tmp_path, schema):
+    """
+    Verify that `create` throws expected error on (unsupported) dictionary/categorical types.
+    """
+    sdf = soma.DataFrame(tmp_path.as_posix())
+    schema = schema.insert(0, pa.field("soma_joinid", pa.int64()))
+
+    # Test exception as normal column
+    with pytest.raises(TypeError):
+        sdf.create(schema, index_column_names=["soma_joinid"])
+
+    # test as index column
+    with pytest.raises(TypeError):
+        sdf.create(schema, index_column_names=["A"])
+
+
+def test_write_categorical_types(tmp_path):
+    """
+    Verify that write path accepts categoricals
+    """
+    sdf = soma.DataFrame(tmp_path.as_posix())
+    schema = pa.schema([("soma_joinid", pa.int64()), ("A", pa.large_string())])
+    sdf.create(schema, index_column_names=["soma_joinid"])
+
+    df = pd.DataFrame(
+        data={
+            "soma_joinid": [0, 1, 2, 3],
+            "A": pd.Categorical(
+                ["a", "b", "a", "b"], ordered=True, categories=["b", "a"]
+            ),
+        }
+    )
+    sdf.write(pa.Table.from_pandas(df))
+
+    assert (df == sdf.read_as_pandas_all()).all().all()
+
+
 def test_result_order(tmp_path):
     # cf. https://docs.tiledb.com/main/background/key-concepts-and-data-format#data-layout
     schema = pa.schema(
