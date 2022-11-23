@@ -3,7 +3,6 @@
 
 #include <tiledbsoma/tiledbsoma>
 #include "carrow.h"
-#include <stdio.h>
 
 // https://arrow.apache.org/docs/format/CDataInterface.html
 // https://arrow.apache.org/docs/format/Columnar.html#buffer-listing-for-each-layout
@@ -110,7 +109,7 @@ class ArrowAdapter {
         if (column->type() == TILEDB_BOOL) {
             int bitmap_count = 0;
             for (int buff_idx = 0; buff_idx < array->length; buff_idx++) {
-                // Every 8 bytes will be rewritten into a one-byte bitmap
+                // Overwrite every 8 bytes with a one-byte bitmap
                 if (buff_idx % 8 == 0) {
                     ((uint8_t*) array->buffers[n_buffers - 1])[bitmap_count] = 
                         bitmap(column, buff_idx);
@@ -122,20 +121,24 @@ class ArrowAdapter {
         return std::pair(std::move(array), std::move(schema));
     }
 
+    /**
+     * Beginning at the bytemap_idx, fetch 8 bytes from the column buffer and 
+     * return the corresponding bitmap.
+     * 
+     * @param column the column buffer which contains the data bytemap
+     * @param bytemap_idx the bytemap's 8-byte boundary
+     * @return uint8_t one-byte bitmap
+     */
     static uint8_t bitmap(
             std::shared_ptr<ColumnBuffer> column, int bytemap_idx) {
         auto bytemap = column->data<bool>().data();
         uint8_t bitmap = 0;
 
-        // Each one-byte bitmap corresponds to 8 bytes in the source bytemap
+        // Each bit in the bitmap corresponds to one byte in the source bytemap
+        // Note: the bitmap must be byte-aligned (8 bits)
         for (int idx = bytemap_idx; idx < bytemap_idx + 8; idx++) {
-            auto bit = 0b0;
-            if (bytemap[idx] != 0) {
-                bit = 0b1;
-            }
-                
-            // Bitmap will be byte-aligned, padded with 0s
-            bitmap |= 0b00000000 | bit << (idx % 8);
+            auto bit = bytemap[idx];
+            bitmap |= bit << (idx % 8);
         }
         return bitmap;
     }
