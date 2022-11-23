@@ -79,3 +79,72 @@ def test_arrow_types_unsupported(tmp_path, arrow_type):
 
     with pytest.raises(TypeError, match=r"unsupported type|Unsupported Arrow type"):
         assert sdf == sdf.create(pa.schema([(str(arrow_type), arrow_type)]))
+
+
+# ================================================================
+# Test writing bool byte-arrays to Arrow bit-arrays
+@pytest.mark.parametrize(
+    "bool_array",
+    [
+        # Length-zero bit-array
+        [],
+        # Length-one bit-array
+        [True],
+        # Less than a full byte
+        [True, False, False, True, False, False, False],
+        # A single byte
+        [True, False, False, True, False, False, False, True],
+        # More than a single byte
+        [True, False, False, True, False, False, False, True, True],
+        # Multiple bytes
+        [
+            True,
+            False,
+            False,
+            False,
+            False,
+            False,
+            False,
+            False,
+            False,
+            True,
+            False,
+            False,
+            False,
+            False,
+            False,
+            False,
+            False,
+            False,
+            True,
+            False,
+            False,
+            False,
+            False,
+            False,
+        ],
+    ],
+)
+def test_bool_arrays(tmp_path, bool_array):
+    schema = pa.schema(
+        [
+            ("soma_joinid", pa.int64()),
+            ("b", pa.bool_()),
+        ]
+    )
+    index_column_names = ["soma_joinid"]
+    sidf = soma.DataFrame(uri=tmp_path.as_posix())
+    sidf.create(schema=schema, index_column_names=index_column_names)
+    n_data = len(bool_array)
+
+    data = {
+        "soma_joinid": list(range(n_data)),
+        "b": bool_array,
+    }
+    rb = pa.Table.from_pydict(data)
+    sidf.write(rb)
+
+    assert sidf.exists()
+
+    table = sidf.read_all()
+    assert table["b"].to_pylist() == bool_array

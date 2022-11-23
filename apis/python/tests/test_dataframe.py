@@ -17,6 +17,7 @@ def arrow_schema():
                 pa.field("foo", pa.int64()),
                 pa.field("bar", pa.float64()),
                 pa.field("baz", pa.string()),
+                pa.field("quux", pa.bool_()),
             ]
         )
 
@@ -31,6 +32,7 @@ def test_dataframe(tmp_path, arrow_schema):
             ("foo", pa.int32()),
             ("bar", pa.float64()),
             ("baz", pa.large_string()),
+            ("quux", pa.bool_()),
         ]
     )
 
@@ -44,7 +46,9 @@ def test_dataframe(tmp_path, arrow_schema):
         sidf.create(schema=asch, index_column_names=["bogus"])
     sidf.create(schema=asch, index_column_names=["foo"])
 
-    assert sorted(sidf.schema.names) == sorted(["foo", "bar", "baz", "soma_joinid"])
+    assert sorted(sidf.schema.names) == sorted(
+        ["foo", "bar", "baz", "soma_joinid", "quux"]
+    )
     assert sorted(sidf.keys()) == sorted(sidf.schema.names)
 
     # Write
@@ -54,26 +58,29 @@ def test_dataframe(tmp_path, arrow_schema):
         pydict["foo"] = [10, 20, 30, 40, 50]
         pydict["bar"] = [4.1, 5.2, 6.3, 7.4, 8.5]
         pydict["baz"] = ["apple", "ball", "cat", "dog", "egg"]
+        pydict["quux"] = [True, False, False, True, False]
         rb = pa.Table.from_pydict(pydict)
         sidf.write(rb)
 
     # Read all
     table = sidf.read_all()
     assert table.num_rows == 5
-    assert table.num_columns == 4
+    assert table.num_columns == 5
     assert [e.as_py() for e in list(table["soma_joinid"])] == pydict["soma_joinid"]
     assert [e.as_py() for e in list(table["foo"])] == pydict["foo"]
     assert [e.as_py() for e in list(table["bar"])] == pydict["bar"]
     assert [e.as_py() for e in list(table["baz"])] == pydict["baz"]
+    assert [e.as_py() for e in list(table["quux"])] == pydict["quux"]
 
     # Read ids
     table = sidf.read_all(ids=[[30, 10]])
     assert table.num_rows == 2
-    assert table.num_columns == 4
+    assert table.num_columns == 5
     assert sorted([e.as_py() for e in list(table["soma_joinid"])]) == [0, 2]
     assert sorted([e.as_py() for e in list(table["foo"])]) == [10, 30]
     assert sorted([e.as_py() for e in list(table["bar"])]) == [4.1, 6.3]
     assert sorted([e.as_py() for e in list(table["baz"])]) == ["apple", "cat"]
+    assert [e.as_py() for e in list(table["quux"])] == [True, False]
 
 
 def test_dataframe_with_float_dim(tmp_path, arrow_schema):
