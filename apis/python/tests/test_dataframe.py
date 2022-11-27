@@ -802,8 +802,10 @@ def test_paginated_read(tmp_path):
     }
     sidf.write(pa.Table.from_pydict(data))
 
-    assert sum(1 for table in sidf.read_as_pandas()) == 1
+    # on defaults, table should read out in one iteration
+    assert sum(x for x in next(sidf.read_as_pandas())["i"].to_list()) == N * (N - 1) / 2
 
+    # setting in platform_config cause it to come out in multiple pages
     pages = 0
     total = 0
     for table in sidf.read_as_pandas(platform_config={"soma.init_buffer_bytes": "64"}):
