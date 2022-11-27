@@ -176,7 +176,7 @@ class DataFrame(TileDBArray):
         value_filter: Optional[str] = None,
         column_names: Optional[Sequence[str]] = None,
         result_order: Optional[ResultOrder] = None,
-        # TODO: more arguments
+        platform_config: Optional[PlatformConfig] = None,
     ) -> Iterator[pa.Table]:
         """
         Read a user-defined subset of data, addressed by the dataframe indexing columns, optionally filtered, and return results as one or more Arrow.Table.
@@ -219,13 +219,15 @@ class DataFrame(TileDBArray):
                     "result_order must be one of " + ", ".join(get_args(ResultOrder))
                 )
 
+            if platform_config is None:
+                platform_config = {} if self._ctx is None else self._ctx.config().dict()
             sr = clib.SOMAReader(
                 self._uri,
                 name=self.__class__.__name__,
                 schema=A.schema,  # query_condition needs this
                 column_names=column_names,
                 query_condition=query_condition,
-                platform_config={} if self._ctx is None else self._ctx.config().dict(),
+                platform_config=platform_config,
                 result_order=(result_order or "auto"),
             )
 
@@ -284,7 +286,6 @@ class DataFrame(TileDBArray):
                             f"dim_ids type {type(dim_ids)} at slot {i} unsupported"
                         )
 
-            # TODO: platform_config
             # TODO: batch_size
             sr.submit()
 
@@ -324,9 +325,9 @@ class DataFrame(TileDBArray):
         value_filter: Optional[str] = None,
         column_names: Optional[Sequence[str]] = None,
         result_order: Optional[ResultOrder] = None,
+        platform_config: Optional[PlatformConfig] = None,
         # TODO: batch_size
         # TODO: partition,
-        # TODO: platform_config,
     ) -> pa.Table:
         """
         This is a convenience method around ``read``. It iterates the return value from ``read`` and returns a concatenation of all the table-pieces found. Its nominal use is to simply unit-test cases.
@@ -337,6 +338,7 @@ class DataFrame(TileDBArray):
                 value_filter=value_filter,
                 column_names=column_names,
                 result_order=result_order,
+                platform_config=platform_config,
             )
         )
 
@@ -369,12 +371,14 @@ class DataFrame(TileDBArray):
         value_filter: Optional[str] = None,
         column_names: Optional[Sequence[str]] = None,
         result_order: Optional[ResultOrder] = None,
+        platform_config: Optional[PlatformConfig] = None,
     ) -> Iterator[pd.DataFrame]:
         for tbl in self.read(
             ids=ids,
             value_filter=value_filter,
             column_names=column_names,
             result_order=result_order,
+            platform_config=platform_config,
         ):
             yield tbl.to_pandas()
 
@@ -384,6 +388,7 @@ class DataFrame(TileDBArray):
         value_filter: Optional[str] = None,
         column_names: Optional[Sequence[str]] = None,
         result_order: Optional[ResultOrder] = None,
+        platform_config: Optional[PlatformConfig] = None,
     ) -> pd.DataFrame:
         return pd.concat(
             self.read_as_pandas(
@@ -391,6 +396,7 @@ class DataFrame(TileDBArray):
                 value_filter=value_filter,
                 column_names=column_names,
                 result_order=result_order,
+                platform_config=platform_config,
             ),
             ignore_index=True,
         )

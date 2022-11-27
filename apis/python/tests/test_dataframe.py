@@ -783,3 +783,31 @@ def test_result_order(tmp_path):
 
     with pytest.raises(ValueError):
         next(sidf.read(result_order="bogus"))
+
+
+def test_paginated_read(tmp_path):
+    N = 256
+
+    schema = pa.schema(
+        [
+            ("i", pa.int64()),
+            ("soma_joinid", pa.int64()),
+        ]
+    )
+    sidf = soma.DataFrame(uri=tmp_path.as_posix())
+    sidf.create(schema=schema, index_column_names=["i"])
+    data = {
+        "i": list(reversed(range(N))),
+        "soma_joinid": list(range(N)),
+    }
+    sidf.write(pa.Table.from_pydict(data))
+
+    assert sum(1 for table in sidf.read_as_pandas()) == 1
+
+    pages = 0
+    total = 0
+    for table in sidf.read_as_pandas(platform_config={"soma.init_buffer_bytes": "64"}):
+        pages += 1
+        total += sum(x for x in table["i"].to_list())
+    assert pages > 1
+    assert total == N * (N - 1) / 2
