@@ -222,7 +222,7 @@ class DataFrame(TileDBArray):
 
             # preprocess platform_config for libtiledbsoma: extract "tiledb" entry, and stringify
             # values since SOMAReader expects map<string,string>.
-            if platform_config:
+            if platform_config is None:
                 platform_config = platform_config.get("tiledb", {})
             else:
                 platform_config = {} if self._ctx is None else self._ctx.config().dict()
