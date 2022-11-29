@@ -3,6 +3,7 @@ from typing import (
     Any,
     Iterator,
     Literal,
+    Mapping,
     Optional,
     Sequence,
     Tuple,
@@ -225,6 +226,7 @@ class DataFrame(TileDBArray):
                 platform_config = platform_config.get("tiledb", {})
             else:
                 platform_config = {} if self._ctx is None else self._ctx.config().dict()
+            assert isinstance(platform_config, Mapping)
             platform_config = {k: str(platform_config[k]) for k in platform_config}
 
             sr = clib.SOMAReader(
