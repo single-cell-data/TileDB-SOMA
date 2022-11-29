@@ -65,6 +65,18 @@ class SOMAOptions:
     X_tile_order: str = "row-major"
     X_cell_order: str = "row-major"
 
+    # Appropriate for SOMA use-cases: typically X queries are _not_ anything like subarray queries,
+    # but rather, "pepper queries" using attribute filters on an obs/var column name resulting in
+    # many obs_ids and/or var_ids sprinkled throughout the dimension space. Analysis reveals that
+    # smaller capacities are helpful here in order to increase the ratio of used-cells-per-tile to
+    # all-cells-per-tile. We find that 100,000 results in tiles that are too large to load when
+    # there are hundreds of fragments (e.g. the append-to-soma use-case); 10,000 works well to solve
+    # that problem; 1,000 does as well but results in slightly longer query times, but will be a
+    # safe default for data-reads as the number of fragments grows in multi-ingest use-cases
+    df_capacity: int = 1000
+    df_tile_order: str = "row-major"
+    df_cell_order: str = "row-major"
+
     # https://github.com/single-cell-data/TileDB-SingleCell/issues/27
     string_dim_zstd_level: int = 3
 
