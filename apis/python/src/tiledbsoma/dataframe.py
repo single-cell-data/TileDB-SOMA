@@ -219,8 +219,14 @@ class DataFrame(TileDBArray):
                     "result_order must be one of " + ", ".join(get_args(ResultOrder))
                 )
 
-            if platform_config is None:
+            # preprocess platform_config for libtiledbsoma: extract "tiledb" entry, and stringify
+            # values since SOMAReader expects map<string,string>.
+            if platform_config:
+                platform_config = platform_config.get("tiledb", {})
+            else:
                 platform_config = {} if self._ctx is None else self._ctx.config().dict()
+            platform_config = {k: str(platform_config[k]) for k in platform_config}
+
             sr = clib.SOMAReader(
                 self._uri,
                 name=self.__class__.__name__,

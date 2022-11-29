@@ -805,11 +805,13 @@ def test_paginated_read(tmp_path):
     # on defaults, table should read out in one iteration
     assert sum(x for x in next(sidf.read_as_pandas())["i"].to_list()) == N * (N - 1) / 2
 
-    # setting in platform_config cause it to come out in multiple pages
+    # changing buffer size in platform_config cause it to come out in numerous pages
     pages = 0
     total = 0
-    for table in sidf.read_as_pandas(platform_config={"soma.init_buffer_bytes": "64"}):
+    for table in sidf.read_as_pandas(
+        platform_config={"tiledb": {"soma.init_buffer_bytes": 64}}
+    ):
         pages += 1
         total += sum(x for x in table["i"].to_list())
-    assert pages > 1
+    assert pages > 10, pages
     assert total == N * (N - 1) / 2
