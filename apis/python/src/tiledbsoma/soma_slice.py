@@ -38,7 +38,6 @@ class SOMASlice(TileDBGroup):
         """
         assert isinstance(obs, pd.DataFrame) or isinstance(obs, pa.Table)
         assert isinstance(var, pd.DataFrame) or isinstance(obs, pa.Table)
-        assert "data" in X
 
         self.obs = obs
         self.var = var
@@ -50,7 +49,6 @@ class SOMASlice(TileDBGroup):
         # self.varp = varp
         # self.raw_X = raw_X
         # self.raw_var = raw_var
-        assert "data" in X
 
     # ----------------------------------------------------------------
     def __repr__(self) -> str:
