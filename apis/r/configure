@@ -14,11 +14,18 @@ if test -f src/lib/libtiledbsoma.a; then
     echo "** static library present"
 else
     echo "** no static library present"
-    #if test -d ../../libtiledbsoma; then
-    #    (cd ../../; make prefix=apis/r/src r-build > apis/r/src/cmake_log.txt; )
-    #    echo "** static library made; build log in 'src/cmake_log.txt'"
-    #elif test -d src/libtiledbsoma; then
-    if test -d src/libtiledbsoma; then
+    ## check for cmake, needed to build from source
+    have_cmake=`which cmake`
+    if [ "x${have_cmake}" = "x" ]; then
+        echo "** cmake is required, but not in the path, exiting"
+        exit 1
+    fi
+    if test -d ../../libtiledbsoma; then
+        ## if in git repo, use build script
+        (cd ../../; make prefix=apis/r/src r-build > apis/r/src/cmake_log.txt; )
+        echo "** static library made; build log in 'src/cmake_log.txt'"
+    elif test -d src/libtiledbsoma; then
+        ## else with sources build by hand
         cd src
         mkdir -p build
         cmake -B build -S libtiledbsoma -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=. -DOVERRIDE_INSTALL_PREFIX=OFF -DTILEDBSOMA_BUILD_R=ON > cmake_log.txt
