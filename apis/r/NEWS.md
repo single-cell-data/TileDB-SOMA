@@ -2,7 +2,8 @@
 
 ## Features
 
-* New function `dataset_seurat_pbmc3k()` to download the pbmc3k dataset from 10X and import as a `Seurat` object without requiring any extra dependencies.
+- The `SOMACollection`'s `to_seurat()` method gains a `somas` argument that makes it possible to select a subset of `SOMA`s and `X` layers to be retrieved (#571).
+- New function `dataset_seurat_pbmc3k()` to download the pbmc3k dataset from 10X and import as a `Seurat` object without requiring any extra dependencies.
 
 # tiledbsoma 0.1.19
 
@@ -14,7 +15,7 @@
 
 ## Features
 
-- The `AnnotationMatrix`'s `to_matrix()` method now supports batched reads via the `batch_mode` argument. This functionality can also be leveraged from `SOMA`'s  `get_seurat_dimreductions_list()` and `get_seurat_dimreduction()` methods.
+- The `AnnotationMatrix`'s `to_matrix()` method now supports batched reads via the `batch_mode` argument. This functionality can also be leveraged from `SOMA`'s  `get_seurat_dimreductions_list()` and `get_seurat_dimreduction()` methods (#548).
 
 ## Changes
 
@@ -22,7 +23,7 @@
 
 ## Fixes
 
-- Don't use default assay name when recreating a `Seurat` object (thanks @dan11mcguire)
+- Don't use default assay name when recreating a `Seurat` object (thanks @dan11mcguire).
 
 # tiledbsoma 0.1.12
 
