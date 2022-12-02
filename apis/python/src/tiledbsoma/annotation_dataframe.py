@@ -414,21 +414,23 @@ class AnnotationDataFrame(TileDBArray):
                 # Force ASCII storage if string, in order to make obs/var columns queryable.
                 column_types[column_name] = "ascii"
 
-        tiledb.from_pandas(
-            uri=self.uri,
-            dataframe=dataframe,
-            name=self.name,
-            sparse=True,
-            allows_duplicates=False,
-            offsets_filters=offsets_filters,
-            attr_filters=attr_filters,
-            dim_filters=dim_filters,
-            capacity=100000,
-            tile=extent,
-            column_types=column_types,
-            ctx=self._ctx,
-            mode=mode,
-        )
+        # XXX TEMP
+        with tiledb.scope_ctx(self._ctx):
+            tiledb.from_pandas(
+                uri=self.uri,
+                dataframe=dataframe,
+                name=self.name,
+                sparse=True,
+                allows_duplicates=False,
+                offsets_filters=offsets_filters,
+                attr_filters=attr_filters,
+                dim_filters=dim_filters,
+                capacity=100000,
+                tile=extent,
+                column_types=column_types,
+                ctx=self._ctx,
+                mode=mode,
+            )
 
         self._set_object_type_metadata()
 
