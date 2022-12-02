@@ -65,6 +65,10 @@ class SOMAOptions:
     X_tile_order: str = "row-major"
     X_cell_order: str = "row-major"
 
+    df_capacity: int = 10000
+    df_tile_order: str = "row-major"
+    df_cell_order: str = "row-major"
+
     # https://github.com/single-cell-data/TileDB-SingleCell/issues/27
     string_dim_zstd_level: int = 3
 
