@@ -4,6 +4,9 @@ import numpy as np
 import pyarrow as pa
 import tiledb
 
+# This package's pybind11 code
+import tiledbsoma.libtiledbsoma as clib
+import tiledbsoma.util as util
 import tiledbsoma.util_arrow as util_arrow
 from tiledbsoma.util import dense_indices_to_shape
 from tiledbsoma.util_tiledb import tiledb_result_order_from_soma_result_order
@@ -149,16 +152,65 @@ class DenseNdArray(TileDBArray):
         """
         Read a user-defined dense slice of the array and return as an Arrow ``Tensor``.
         """
-        tiledb_result_order = tiledb_result_order_from_soma_result_order(
-            result_order, accept=["column-major", "row-major"]
-        )
         with self._tiledb_open("r") as A:
             target_shape = dense_indices_to_shape(coords, A.shape, result_order)
-            query = A.query(return_arrow=True, order=tiledb_result_order)
-            arrow_tbl = query.df[coords]
-            return pa.Tensor.from_numpy(
-                arrow_tbl.column("soma_data").to_numpy().reshape(target_shape)
-            )
+            schema = A.schema
+
+        sr = clib.SOMAReader(
+            self._uri,
+            name=self.__class__.__name__,
+            result_order=result_order,
+            platform_config={} if self._ctx is None else self._ctx.config().dict(),
+        )
+
+        if coords is not None:
+            if not isinstance(coords, (list, tuple)):
+                raise TypeError(
+                    f"coords type {type(coords)} unsupported; expected list or tuple"
+                )
+            if len(coords) < 1 or len(coords) > schema.domain.ndim:
+                raise ValueError(
+                    f"coords {coords} must have length between 1 and ndim ({schema.domain.ndim}); got {len(coords)}"
+                )
+
+            for i, coord in enumerate(coords):
+                #                # Example: coords = [None, 3, slice(4,5)]
+                #                # coor takes on values None, 3, and slice(4,5) in this loop body.
+                dim_name = schema.domain.dim(i).name
+                if coord is None:
+                    pass  # No constraint; select all in this dimension
+                elif isinstance(coord, int):
+                    sr.set_dim_points(dim_name, [coord])
+                elif isinstance(coord, slice):
+                    lo_hi = util.slice_to_range(coord)
+                    if lo_hi is not None:
+                        lo, hi = lo_hi
+                        if lo < 0 or hi < 0:
+                            raise ValueError(
+                                f"slice start and stop may not be negative; got ({lo}, {hi})"
+                            )
+                        if lo > hi:
+                            raise ValueError(
+                                f"slice start must be <= slice stop; got ({lo}, {hi})"
+                            )
+                        sr.set_dim_ranges(dim_name, [lo_hi])
+                    # Else, no constraint in this slot. This is `slice(None)` which is like
+                    # Python indexing syntax `[:]`.
+                elif isinstance(
+                    coord, (collections.abc.Sequence, pa.Array, pa.ChunkedArray)
+                ):
+                    sr.set_dim_points(dim_name, coord)
+                else:
+                    raise TypeError(f"coord type {type(coord)} at slot {i} unsupported")
+
+        sr.submit()
+
+        arrow_table = sr.read_next()
+        # XXX assert no more data remaining
+        return pa.Tensor.from_numpy(
+            arrow_table.column("soma_data").to_numpy().reshape(target_shape)
+        )
+>>>>>>> 6840c7c (Use C++ reader for SOMA.DenseNdArray)
 
     def read_numpy(
         self,
