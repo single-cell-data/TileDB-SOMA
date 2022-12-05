@@ -88,10 +88,14 @@ class ManagedQuery {
     template <typename T>
     void select_ranges(
         const std::string& dim, const std::vector<std::pair<T, T>>& ranges) {
+        printf("ASP0: %d (%d %d)\n", (int)ranges.size(), subarray_range_set_, subarray_nonempty_range_set_);
+        subarray_range_set_ = true;
         for (auto& [start, stop] : ranges) {
             subarray_->add_range(dim, start, stop);
-            subarray_range_set_ = true;
+            printf("YES0\n");
+            subarray_nonempty_range_set_ = true;
         }
+        printf("ZSP0: %d (%d %d)\n", (int)ranges.size(), subarray_range_set_, subarray_nonempty_range_set_);
     }
 
     /**
@@ -103,10 +107,14 @@ class ManagedQuery {
      */
     template <typename T>
     void select_points(const std::string& dim, const std::vector<T>& points) {
+        printf("ASP1: %d (%d %d)\n", (int)points.size(), subarray_range_set_, subarray_nonempty_range_set_);
+        subarray_range_set_ = true;
         for (auto& point : points) {
             subarray_->add_range(dim, point, point);
-            subarray_range_set_ = true;
+            printf("YES1\n");
+            subarray_nonempty_range_set_ = true;
         }
+        printf("ZSP1: %d (%d %d)\n", (int)points.size(), subarray_range_set_, subarray_nonempty_range_set_);
     }
 
     /**
@@ -118,10 +126,14 @@ class ManagedQuery {
      */
     template <typename T>
     void select_points(const std::string& dim, const tcb::span<T> points) {
+        printf("ASP2: %d (%d %d)\n", (int)points.size(), subarray_range_set_, subarray_nonempty_range_set_);
+        subarray_range_set_ = true;
         for (auto& point : points) {
             subarray_->add_range(dim, point, point);
-            subarray_range_set_ = true;
+            printf("YES2\n");
+            subarray_nonempty_range_set_ = true;
         }
+        printf("ZSP2: %d (%d %d)\n", (int)points.size(), subarray_range_set_, subarray_nonempty_range_set_);
     }
 
     /**
@@ -133,8 +145,12 @@ class ManagedQuery {
      */
     template <typename T>
     void select_point(const std::string& dim, const T& point) {
+        printf("ASP3: %d (%d %d)\n", 1, subarray_range_set_, subarray_nonempty_range_set_);
+        printf("SP3: %d\n", 1);
         subarray_->add_range(dim, point, point);
+        subarray_nonempty_range_set_ = true;
         subarray_range_set_ = true;
+        printf("ZSP3: %d (%d %d)\n", 1, subarray_range_set_, subarray_nonempty_range_set_);
     }
 
     /**
@@ -176,7 +192,7 @@ class ManagedQuery {
      * @return true Query status is COMPLETE
      */
     bool is_complete() {
-        return query_->query_status() == Query::Status::COMPLETE;
+        return query_->query_status() == Query::Status::COMPLETE || has_empty_query();
     }
 
     /**
@@ -186,7 +202,7 @@ class ManagedQuery {
      * @return true The buffers hold all results from the query.
      */
     bool results_complete() {
-        return is_complete() && results_complete_;
+        return (is_complete() && results_complete_) || has_empty_query();
     }
 
     /**
@@ -252,6 +268,10 @@ class ManagedQuery {
         return schema_;
     }
 
+    bool has_empty_query() {
+      return subarray_range_set_ && !subarray_nonempty_range_set_;
+    }
+
    private:
     //===================================================================
     //= private non-static
@@ -288,6 +308,10 @@ class ManagedQuery {
 
     // True if a range has been added to the subarray
     bool subarray_range_set_ = false;
+
+    // True if a range has been added to the subarray and it has nonzero number of points.
+    // Without this, indexing by [] would return all rows, rather than none.
+    bool subarray_nonempty_range_set_ = false;
 
     // Set of column names to read (dim and attr). If empty, query all columns.
     std::vector<std::string> columns_;

@@ -117,6 +117,20 @@ void SOMAReader::submit() {
 }
 
 std::optional<std::shared_ptr<ArrayBuffers>> SOMAReader::read_next() {
+    // XXX
+    printf("C1\n");
+    if (mq_->has_empty_query()) {
+        printf("C2\n");
+        // If the query is complete, return `std::nullopt`.
+        if (mq_->is_complete()) {
+            printf("C3\n");
+            //return std::nullopt;
+            return mq_->results();
+        }
+        printf("C4\n");
+        return mq_->results();
+    }
+
     if (mq_->status() == Query::Status::UNINITIALIZED) {
         throw TileDBSOMAError(
             "[SOMAReader] submit must be called before read_next");

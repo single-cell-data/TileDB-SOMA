@@ -139,11 +139,26 @@ void ManagedQuery::submit() {
     // Submit query
     LOG_DEBUG(fmt::format("[ManagedQuery] [{}] Submit query", name_));
 
-    query_->submit();
+    if (subarray_range_set_ && !subarray_nonempty_range_set_) {
+        printf("T1 EMPTY\n");
+        //
+    } else {
+        printf("T1 NON-EMPTY\n");
+        query_->submit();
+    }
     query_submitted_ = true;
 }
 
 std::shared_ptr<ArrayBuffers> ManagedQuery::results() {
+    auto query_is_empty = subarray_range_set_ && !subarray_nonempty_range_set_;
+
+    if (query_is_empty) {
+        printf("T2 EMPTY\n");
+        query_submitted_ = false;
+        return buffers_;
+    }
+    printf("T2 NON-EMPTY\n");
+
     if (!query_submitted_) {
         throw TileDBSOMAError(fmt::format(
             "[ManagedQuery][{}] submit query before reading results", name_));
