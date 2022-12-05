@@ -174,8 +174,8 @@ class DenseNdArray(TileDBArray):
                 )
 
             for i, coord in enumerate(coords):
-                #                # Example: coords = [None, 3, slice(4,5)]
-                #                # coor takes on values None, 3, and slice(4,5) in this loop body.
+                # Example: coords = [None, 3, slice(4,5)]
+                # coord takes on values None, 3, and slice(4,5) in this loop body.
                 dim_name = schema.domain.dim(i).name
                 if coord is None:
                     pass  # No constraint; select all in this dimension
@@ -196,10 +196,6 @@ class DenseNdArray(TileDBArray):
                         sr.set_dim_ranges(dim_name, [lo_hi])
                     # Else, no constraint in this slot. This is `slice(None)` which is like
                     # Python indexing syntax `[:]`.
-                elif isinstance(
-                    coord, (collections.abc.Sequence, pa.Array, pa.ChunkedArray)
-                ):
-                    sr.set_dim_points(dim_name, coord)
                 else:
                     raise TypeError(f"coord type {type(coord)} at slot {i} unsupported")
 
