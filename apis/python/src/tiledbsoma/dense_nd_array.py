@@ -174,7 +174,7 @@ class DenseNdArray(TileDBArray):
                 )
 
             for i, coord in enumerate(coords):
-                # Example: coords = [None, 3, slice(4,5)]
+                # Loop-specific context: example: with coords = [None, 3, slice(4,5)],
                 # coord takes on values None, 3, and slice(4,5) in this loop body.
                 dim_name = schema.domain.dim(i).name
                 if coord is None:
@@ -206,7 +206,6 @@ class DenseNdArray(TileDBArray):
         return pa.Tensor.from_numpy(
             arrow_table.column("soma_data").to_numpy().reshape(target_shape)
         )
->>>>>>> 6840c7c (Use C++ reader for SOMA.DenseNdArray)
 
     def read_numpy(
         self,
