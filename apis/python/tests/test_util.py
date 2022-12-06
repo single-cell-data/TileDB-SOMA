@@ -1,6 +1,6 @@
 import pytest
 
-from tiledbsoma.util import dense_index_to_shape, uri_joinpath
+from tiledbsoma.util import dense_index_to_shape, dense_indices_to_shape, uri_joinpath
 
 
 def test_uri_joinpath_file():
@@ -51,3 +51,68 @@ def test_uri_joinpath_tiledb():
 )
 def test_dense_index_to_shape(io):
     assert dense_index_to_shape(io["coord"], io["array_length"]) == io["expected_shape"]
+
+
+@pytest.mark.parametrize(
+    "io",
+    [
+        # Note: SOMA slices are doubly inclusive
+        {
+            "coord": (1,),
+            "input_shape": (10,),
+            "result_order": "row-major",
+            "output_shape": (1,),
+        },
+        {
+            "coord": (1,),
+            "input_shape": (10,),
+            "result_order": "col-major",
+            "output_shape": (1,),
+        },
+        {
+            "coord": (1, 2),
+            "input_shape": (10, 20, 30),
+            "result_order": "row-major",
+            "output_shape": (1, 1, 30),
+        },
+        {
+            "coord": (1, 2),
+            "input_shape": (10, 20, 30),
+            "result_order": "col-major",
+            "output_shape": (30, 1, 1),
+        },
+        {
+            "coord": (1, 2, 3),
+            "input_shape": (10, 20, 30),
+            "result_order": "row-major",
+            "output_shape": (1, 1, 1),
+        },
+        {
+            "coord": (1, 2, 3),
+            "input_shape": (10, 20, 30),
+            "result_order": "col-major",
+            "output_shape": (1, 1, 1),
+        },
+        {
+            "coord": (1, 2, 3, 4),
+            "input_shape": (10, 20, 30),
+            "result_order": "row-major",
+            "throws": ValueError,
+        },
+        {
+            "coord": (1, 2, 3, 4),
+            "input_shape": (10, 20, 30),
+            "result_order": "col-major",
+            "throws": ValueError,
+        },
+    ],
+)
+def test_dense_indices_to_shape(io):
+    if "throws" in io:
+        with pytest.raises(io["throws"]):
+            dense_indices_to_shape(io["coord"], io["input_shape"], io["result_order"])
+    else:
+        assert (
+            dense_indices_to_shape(io["coord"], io["input_shape"], io["result_order"])
+            == io["output_shape"]
+        )
