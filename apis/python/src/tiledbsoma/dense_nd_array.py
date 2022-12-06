@@ -201,8 +201,22 @@ class DenseNdArray(TileDBArray):
 
         sr.submit()
 
-        arrow_table = sr.read_next()
-        # XXX assert no more data remaining
+        arrow_tables = None
+        i = 0
+        while arrow_table_piece := sr.read_next():
+            print(f"YOINK {i}")
+            if i == 0:
+                arrow_tables = [arrow_table_piece]
+            else:
+                arrow_tables.append(arrow_table_piece)  # XXX copy
+            i += 1
+
+        if arrow_tables is None:
+            raise SOMAError("b04k") # XXX todo
+
+        # XXX needs comment that we require at least one table
+        # XXX needs zero-length-output test case
+        arrow_table = pa.concat_tables(arrow_tables)
         return pa.Tensor.from_numpy(
             arrow_table.column("soma_data").to_numpy().reshape(target_shape)
         )
