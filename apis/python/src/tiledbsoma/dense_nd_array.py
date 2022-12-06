@@ -155,6 +155,7 @@ class DenseNdArray(TileDBArray):
             target_shape = _dense_index_to_shape(coords, A.shape, result_order)
             query = A.query(return_arrow=True, order=tiledb_result_order)
             arrow_tbl = query.df[coords]
+            print("COORDS      ", coords)
             return pa.Tensor.from_numpy(
                 arrow_tbl.column("soma_data").to_numpy().reshape(target_shape)
             )
@@ -213,6 +214,8 @@ def _dense_index_to_shape(
 
     See read_tensor for usage.
     """
+    print("INPUT COORDS", coords)
+    print("INPUT SHAPE ", array_shape)
     shape: List[int] = []
     for n, idx in enumerate(coords):
         if type(idx) is int:
@@ -221,11 +224,19 @@ def _dense_index_to_shape(
             start, stop, step = idx.indices(array_shape[n])
             if step != 1:
                 raise ValueError("stepped slice ranges are not supported")
-            shape.append(stop - start)
+            #shape.append(stop - start)
+            # XXX
+            if idx.stop is None:
+                shape.append(stop - start)
+            else:
+                shape.append(stop - start)
+            # XXX
         else:
             raise ValueError("coordinates must be tuple of int or slice")
 
     if result_order == "row-major":
+        print("OUTPUT SHAPE", tuple(shape))
         return tuple(shape)
 
+    print("OUTPUT SHAPE", tuple(reversed(shape)))
     return tuple(reversed(shape))
