@@ -183,4 +183,4 @@ def dense_index_to_shape(
         stop = min(stop, array_length - 1)
         return stop - start + 1
 
-    raise ValueError("coordinates must be tuple of int or slice")
+    raise TypeError("coordinates must be tuple of int or slice")
