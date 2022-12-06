@@ -1,6 +1,6 @@
 import pytest
 
-from tiledbsoma.util import uri_joinpath
+from tiledbsoma.util import dense_index_to_shape, uri_joinpath
 
 
 def test_uri_joinpath_file():
@@ -50,4 +50,4 @@ def test_uri_joinpath_tiledb():
     ],
 )
 def test_dense_index_to_shape(io):
-    pass
+    assert dense_index_to_shape(io["coord"], io["array_length"]) == io["expected_shape"]
