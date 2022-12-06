@@ -206,14 +206,19 @@ class DenseNdArray(TileDBArray):
 
         arrow_tables = []
         while arrow_table_piece := sr.read_next():
-            print(f"YOINK {i}")
-            arrow_tables.append(arrow_table_piece)  # XXX copy
+            arrow_tables.append(arrow_table_piece)  # XXX address the copy question
 
+        # For dense arrays there is no zero-output case: attempting to make a test case
+        # to do that, say by indexing a 10x20 array by positions 888 and 999, results
+        # in read-time errors of the form
+        #
+        # [TileDB::Subarray] Error: Cannot add range to dimension 'soma_dim_0'; Range [888, 888] is
+        # out of domain bounds [0, 9]
         if arrow_tables == []:
-            raise SOMAError("b04k")  # XXX todo
+            raise SOMAError(
+                "internal error: at least one table-piece should have been returned"
+            )
 
-        # XXX needs comment that we require at least one table
-        # XXX needs zero-length-output test case
         arrow_table = pa.concat_tables(arrow_tables)
         return pa.Tensor.from_numpy(
             arrow_table.column("soma_data").to_numpy().reshape(target_shape)
