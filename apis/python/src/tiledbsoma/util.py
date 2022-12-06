@@ -113,17 +113,22 @@ def uri_joinpath(base: str, path: str) -> str:
     return urllib.parse.urlunparse(parts)
 
 
-def slice_to_range(ids: slice) -> Optional[Tuple[int, int]]:
+def slice_to_range(ids: slice, nonempty_domain) -> Optional[Tuple[int, int]]:
     """
     For the interface between ``DataFrame::read`` et al. (Python) and ``SOMAReader`` (C++).
     """
-    if ids.start is None and ids.stop is None:
-        return None
-    if ids.start is None or ids.stop is None:
-        # TODO: https://github.com/single-cell-data/TileDB-SOMA/issues/457
-        raise ValueError("slice start and stop must be both specified, or neither")
-    if ids.start > ids.stop:
-        raise ValueError("slice start must be <= slice stop")
     if ids.step is not None and ids.step != 1:
         raise ValueError("slice step must be 1 or None")
-    return (ids.start, ids.stop)  # XXX TEMP
+    if ids.start is None and ids.stop is None:
+        return None
+    start = ids.start
+    stop = ids.stop
+
+    if start is None:
+        start = nonempty_domain[0]
+    if stop is None:
+        stop = nonempty_domain[1]
+
+    if start > stop:
+        raise ValueError("slice start must be <= slice stop")
+    return (start, stop)  # XXX TEMP
