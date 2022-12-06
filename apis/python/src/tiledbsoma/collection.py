@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import time
 from dataclasses import dataclass
 from typing import (
     Any,
@@ -313,6 +314,14 @@ class CollectionBase(TileDBObject, MutableMapping[str, CollectionElementType]):
                     raise e
             if retry:
                 self._del_element(key, skip_cache_reload=True)
+                # There can be timestamp overlap in a very-rapid-fire unit-test environment.  When
+                # that happens, we effectively fall back to filesystem file order, which will be the
+                # lexical ordering of the group-metadata filenames. Since the timestamp components
+                # are the same, that will be the lexical order of the UUIDs.  So if the new metadata
+                # file is sorted before the old one, the group will look like the old state.
+                #
+                # The standard solution is a negligible but non-zero delay.
+                time.sleep(0.001)
 
         self._load_tdb_group_cache()
         if self._cached_values is not None:
