@@ -173,8 +173,7 @@ def dense_index_to_shape(
         if step != 1:
             raise ValueError("stepped slice ranges are not supported")
         # This is correct for doubly-inclusive slices which SOMA uses.
-        if stop >= array_length:
-            stop = array_length - 1
+        stop = min(stop, array_length - 1)
         return stop - start + 1
 
     raise ValueError("coordinates must be tuple of int or slice")
