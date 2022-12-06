@@ -151,6 +151,11 @@ class DenseNdArray(TileDBArray):
     ) -> pa.Tensor:
         """
         Read a user-defined dense slice of the array and return as an Arrow ``Tensor``.
+        Coordinates must specify a contiguous subarray, and the number of coordinates
+        must be less than or equal to the number of dimensions. For example, if the array
+        is 10 by 20, then some acceptable values of ``coords`` include ``(3, 4)``,
+        ``(slice(5, 10),)``, and ``(slice(5, 10), slice(6, 12))``. Slice indices are
+        doubly inclusive.
         """
         with self._tiledb_open("r") as A:
             target_shape = dense_indices_to_shape(coords, A.shape, result_order)
@@ -174,8 +179,6 @@ class DenseNdArray(TileDBArray):
                 )
 
             for i, coord in enumerate(coords):
-                # Loop-specific context: example: with coords = [None, 3, slice(4,5)],
-                # coord takes on values None, 3, and slice(4,5) in this loop body.
                 dim_name = schema.domain.dim(i).name
                 if coord is None:
                     pass  # No constraint; select all in this dimension
