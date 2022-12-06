@@ -5,119 +5,6 @@
 
 namespace tdbs = tiledbsoma;
 
-// Initial 'proof of light' function to access column names
-// will likely be replaced / changed in due course
-//
-//' @noRd
-// [[Rcpp::export]]
-std::vector<std::string> get_column_names(const std::string& uri) {
-    std::map<std::string, std::string> config;
-
-    // Read all values from the array (return is unique_ptr<SOMAReader>)
-    auto sr = tdbs::SOMAReader::open(uri);
-    sr->submit();
-
-    // Getting next batch:  std::optinal<std::shared_ptr<ArrayBuffers>>
-    auto sr_data = sr->read_next();
-    if (!sr->results_complete()) {
-        Rcpp::warning("Read of '%s' incomplete", uri);
-    }
-
-    // names gets a vector of strings, at() gets a particular column buffer by name
-    auto names = sr_data->get()->names();
-
-    return names;
-}
-
-// Initial 'proof of light' function to a column by name
-// will likely be replaced / changed in due course
-//
-//' @noRd
-// [[Rcpp::export]]
-bool export_column(const std::string& uri, const std::string& colname,
-                   SEXP schemaxp, SEXP arrayxp) {
-    std::map<std::string, std::string> config;
-
-    // Read all values from the array (return is unique_ptr<SOMAReader>)
-    auto sr = tdbs::SOMAReader::open(uri);
-    sr->submit();
-
-    // Getting next batch:  std::optinal<std::shared_ptr<ArrayBuffers>>
-    auto sr_data = sr->read_next();
-    if (!sr->results_complete()) {
-        Rcpp::warning("Read of '%s' incomplete", uri);
-    }
-
-    // now buf is a shared_ptr to ColumnBuffer
-    auto buf = sr_data->get()->at(colname);
-
-    // this is pair of array and schema pointer
-    auto pp = tdbs::ArrowAdapter::to_arrow(buf);
-
-    memcpy((void*) R_ExternalPtrAddr(schemaxp), pp.second.get(), sizeof(ArrowSchema));
-    memcpy((void*) R_ExternalPtrAddr(arrayxp), pp.first.get(), sizeof(ArrowArray));
-
-    return true;
-}
-
-
-// more efficient column accessor doing more 'in C++' rather than
-// still relies on helper from package 'arch' that we expect to be
-// replaced in due course by package 'nanoarrow' (once released)
-//
-//' @noRd
-// [[Rcpp::export]]
-SEXP export_column_direct(const std::string& uri, const std::vector<std::string>& colnames) {
-
-    spdl::info("Reading from {}", uri);
-
-    // Read selected columns from the uri array (return is unique_ptr<SOMAReader>)
-    auto sr = tdbs::SOMAReader::open(uri, "", {}, colnames);
-    sr->submit();
-
-    // Getting next batch:  std::optinal<std::shared_ptr<ArrayBuffers>>
-    auto sr_data = sr->read_next();
-    if (!sr->results_complete()) {
-        Rcpp::warning("Read of '%s' incomplete", uri);
-    }
-    spdl::info("Read complete with {} rows and {} cols",
-               sr_data->get()->num_rows(), sr_data->get()->names().size());
-
-    auto ncol = sr_data->get()->names().size();
-    Rcpp::List reslist(ncol);
-    reslist.attr("names") = sr_data->get()->names();
-
-    for (size_t i=0; i<ncol; i++) {
-        // this allocates, and properly wraps as external pointers controlling lifetime
-        SEXP schemaxp = arch_c_allocate_schema();
-        SEXP arrayxp = arch_c_allocate_array_data();
-
-        // now buf is a shared_ptr to ColumnBuffer
-        auto buf = sr_data->get()->at(colnames[i]);
-
-        spdl::info("Accessing {} at {}", colnames[i], i);
-
-        // this is pair of array and schema pointer
-        auto pp = tdbs::ArrowAdapter::to_arrow(buf);
-
-        memcpy((void*) R_ExternalPtrAddr(schemaxp), pp.second.get(), sizeof(ArrowSchema));
-        memcpy((void*) R_ExternalPtrAddr(arrayxp), pp.first.get(), sizeof(ArrowArray));
-
-        // in R:
-        //   aa <- arch::arch_array(schema, array, FALSE)    # R/array.R:16
-        // which just passes throught and then creates as S3 class
-        // sp here we just set an S3 object up: a list with a class attribute
-        Rcpp::List res = Rcpp::List::create(Rcpp::Named("schema") = schemaxp,
-                                            Rcpp::Named("array_data") = arrayxp);
-        res.attr("class") = Rcpp::CharacterVector::create("arch_array");
-        // in R:  arch::from_arch_array()
-
-        reslist[i] = res;
-    }
-
-    return reslist;
-}
-
 //' Read SOMA Data From a Given URI
 //'
 //' This functions access a given SOMA URI and returns a complete data.frame. It does
@@ -133,6 +20,7 @@ SEXP export_column_direct(const std::string& uri, const std::vector<std::string>
 //' @param dim_ranges Optional named list with two-column matrix where each row select a range
 //' for the given dimension. Each dimension can be one entry in the list.
 //' @param loglevel Character value with the desired logging level, defaults to \sQuote{warn}
+//' @param arrlst A list containing the pointers to an Arrow data structure
 //' @return An Arrow data structure is returned
 //' @examples
 //' \dontrun{
