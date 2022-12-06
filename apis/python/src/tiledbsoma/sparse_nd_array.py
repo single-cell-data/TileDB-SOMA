@@ -108,8 +108,8 @@ class SparseNdArray(TileDBArray):
             allows_duplicates=False,
             offsets_filters=create_options.offsets_filters(),
             capacity=create_options.get("capacity", 100000),
-            tile_order=cell_order,
-            cell_order=tile_order,
+            tile_order=tile_order,
+            cell_order=cell_order,
             ctx=self._ctx,
         )
 
