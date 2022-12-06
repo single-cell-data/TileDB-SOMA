@@ -144,6 +144,11 @@ def test_dense_nd_array_reshape(tmp_path):
             "coords": (slice(0, 2), slice(5, 5)),
             "output": np.array([[5], [105], [205]]),
         },
+        {
+            "coords": (pa.array([1, 2, 3]),),  # No pa.array for dense reads
+            "output": np.array([[5], [105], [205]]),
+            "throws": ValueError,
+        },
     ],
 )
 def test_dense_nd_array_slicing(tmp_path, io):
@@ -166,5 +171,9 @@ def test_dense_nd_array_slicing(tmp_path, io):
         coords=(slice(0, nr), slice(0, nc)), values=pa.Tensor.from_numpy(npa)
     )
 
-    output = a.read_numpy(io["coords"])
-    assert np.all(output == io["output"])
+    if "throws" in io:
+        with pytest.raises(io["throws"]):
+            a.read_numpy(io["coords"])
+    else:
+        output = a.read_numpy(io["coords"])
+        assert np.all(output == io["output"])
