@@ -139,13 +139,20 @@ def dense_indices_to_shape(
     """
     Given a subarray index specified as a tuple of per-dimension slices or scalars
     (eg, ``([:], 1, [1:2])``), and the shape of the array, return the shape of
-    the subarray.
-
-    See read_tensor for usage.
+    the subarray. Note that the number of coordinates may be less than or equal
+    to the number of dimensions in the array.
     """
+    if len(coords) > len(array_shape):
+        raise ValueError(
+            f"coordinate length ({len(coords)}) must be <= array dimension count ({len(array_shape)})"
+        )
+
     shape: List[int] = []
-    for n, coord in enumerate(coords):
-        shape.append(dense_index_to_shape(coord, array_shape[n]))
+    for i, extent in enumerate(array_shape):
+        if i < len(coords):
+            shape.append(dense_index_to_shape(coords[i], extent))
+        else:
+            shape.append(extent)
 
     if result_order == "row-major":
         return tuple(shape)
@@ -173,8 +180,7 @@ def dense_index_to_shape(
         if step != 1:
             raise ValueError("stepped slice ranges are not supported")
         # This is correct for doubly-inclusive slices which SOMA uses.
-        if stop >= array_length:
-            stop = array_length - 1
+        stop = min(stop, array_length - 1)
         return stop - start + 1
 
     raise ValueError("coordinates must be tuple of int or slice")
