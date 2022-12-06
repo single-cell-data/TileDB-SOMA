@@ -113,7 +113,9 @@ def uri_joinpath(base: str, path: str) -> str:
     return urllib.parse.urlunparse(parts)
 
 
-def slice_to_range(ids: slice, nonempty_domain) -> Optional[Tuple[int, int]]:
+def slice_to_range(
+    ids: slice, nonempty_domain: Tuple[int, int]
+) -> Optional[Tuple[int, int]]:
     """
     For the interface between ``DataFrame::read`` et al. (Python) and ``SOMAReader`` (C++).
     """

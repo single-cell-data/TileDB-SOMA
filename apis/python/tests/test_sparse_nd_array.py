@@ -486,7 +486,7 @@ def test_csr_csc_2d_read(tmp_path, read_format, shape):
         # Coords has None in a slot and int in a slot
         {
             "shape": (3, 4),
-            "coords": (slice(None,2), slice(2,None)),
+            "coords": (slice(None, 2), slice(2, None)),
             "dims": {
                 "soma_dim_0": [0, 0, 1, 1, 2, 2],
                 "soma_dim_1": [2, 3, 2, 3, 2, 3],
