@@ -1,7 +1,7 @@
 import pathlib
 import time
 import urllib.parse
-from typing import Optional, Tuple, TypeVar
+from typing import Tuple, TypeVar
 
 import numpy as np
 import pandas as pd
@@ -113,9 +113,7 @@ def uri_joinpath(base: str, path: str) -> str:
     return urllib.parse.urlunparse(parts)
 
 
-def slice_to_range(
-    ids: slice, nonempty_domain: Tuple[int, int]
-) -> Tuple[int, int]:
+def slice_to_range(ids: slice, nonempty_domain: Tuple[int, int]) -> Tuple[int, int]:
     """
     For the interface between ``DataFrame::read`` et al. (Python) and ``SOMAReader`` (C++).
     """
@@ -123,7 +121,7 @@ def slice_to_range(
         raise ValueError("slice step must be 1 or None")
     if ids.start is None and ids.stop is None:
         return None
-    
+
     start = ids.start
     stop = ids.stop
 

@@ -290,7 +290,7 @@ class SparseNdArray(TileDBArray):
                             )
                         sr.set_dim_points(dim_name, coord)
                     elif isinstance(coord, slice):
-                        ned = A.nonempty_domain() # None iff the array has no data
+                        ned = A.nonempty_domain()  # None iff the array has no data
                         lo_hi = util.slice_to_range(coord, ned[i]) if ned else None
                         if lo_hi is not None:
                             lo, hi = lo_hi
