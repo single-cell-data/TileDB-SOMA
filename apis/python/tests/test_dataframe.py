@@ -501,15 +501,15 @@ def make_multiply_indexed_dataframe(tmp_path, index_column_names: List[str]):
         },
         {
             "index_column_names": ["index1"],
-            "ids": [slice(None, 3)],  # Half-slices are not supported yet
-            "A": None,
-            "throws": ValueError,
+            "ids": [slice(None, 3)],  # Half-slice
+            "A": [10, 11, 12, 13],
+            "throws": None,
         },
         {
             "index_column_names": ["index1"],
-            "ids": [slice(1, None)],  # Half-slices are not supported yet
-            "A": None,
-            "throws": ValueError,
+            "ids": [slice(2, None)],  # Half-slice
+            "A": [12, 13, 14, 15],
+            "throws": None,
         },
         {
             "index_column_names": ["index1"],
