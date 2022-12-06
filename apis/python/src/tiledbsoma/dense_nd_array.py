@@ -215,7 +215,7 @@ class DenseNdArray(TileDBArray):
         #
         # [TileDB::Subarray] Error: Cannot add range to dimension 'soma_dim_0'; Range [888, 888] is
         # out of domain bounds [0, 9]
-        if arrow_tables == []:
+        if not arrow_tables:
             raise SOMAError(
                 "internal error: at least one table-piece should have been returned"
             )
