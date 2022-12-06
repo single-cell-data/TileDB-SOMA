@@ -1,10 +1,11 @@
-from typing import Any, List, Literal, Optional, Tuple, Union, cast
+from typing import Any, List, Literal, Optional, Union, cast
 
 import numpy as np
 import pyarrow as pa
 import tiledb
 
 import tiledbsoma.util_arrow as util_arrow
+from tiledbsoma.util import dense_indices_to_shape
 from tiledbsoma.util_tiledb import tiledb_result_order_from_soma_result_order
 
 from . import tiledb_platform_config as tdbpc
@@ -152,7 +153,7 @@ class DenseNdArray(TileDBArray):
             result_order, accept=["column-major", "row-major"]
         )
         with self._tiledb_open("r") as A:
-            target_shape = _dense_index_to_shape(coords, A.shape, result_order)
+            target_shape = dense_indices_to_shape(coords, A.shape, result_order)
             query = A.query(return_arrow=True, order=tiledb_result_order)
             arrow_tbl = query.df[coords]
             return pa.Tensor.from_numpy(
@@ -198,34 +199,3 @@ class DenseNdArray(TileDBArray):
         Write a numpy ``ndarray`` to the user specified coordinates
         """
         self.write_tensor(coords, pa.Tensor.from_numpy(values))
-
-
-# module-private utility
-def _dense_index_to_shape(
-    coords: Tuple[Union[int, slice], ...],
-    array_shape: Tuple[int, ...],
-    result_order: ResultOrder,
-) -> Tuple[int, ...]:
-    """
-    Given a subarray index specified as a tuple of per-dimension slices or scalars
-    (eg, ``([:], 1, [1:2])``), and the shape of the array, return the shape of
-    the subarray.
-
-    See read_tensor for usage.
-    """
-    shape: List[int] = []
-    for n, idx in enumerate(coords):
-        if type(idx) is int:
-            shape.append(1)
-        elif type(idx) is slice:
-            start, stop, step = idx.indices(array_shape[n])
-            if step != 1:
-                raise ValueError("stepped slice ranges are not supported")
-            shape.append(stop - start)
-        else:
-            raise ValueError("coordinates must be tuple of int or slice")
-
-    if result_order == "row-major":
-        return tuple(shape)
-
-    return tuple(reversed(shape))

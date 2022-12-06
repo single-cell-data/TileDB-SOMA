@@ -1,11 +1,13 @@
 import pathlib
 import time
 import urllib.parse
-from typing import Optional, Tuple, TypeVar
+from typing import List, Optional, Tuple, TypeVar, Union
 
 import numpy as np
 import pandas as pd
 import scipy.sparse as sp
+
+from .types import DenseNdCoordinates, ResultOrder
 
 T = TypeVar("T", np.ndarray, pd.Series, pd.DataFrame, sp.spmatrix)
 
@@ -135,4 +137,59 @@ def slice_to_range(
 
     if start > stop:
         raise ValueError("slice start must be <= slice stop")
-    return (start, stop)  # XXX TEMP
+    return (start, stop)
+
+
+def dense_indices_to_shape(
+    coords: DenseNdCoordinates,
+    array_shape: Tuple[int, ...],
+    result_order: ResultOrder,
+) -> Tuple[int, ...]:
+    """
+    Given a subarray index specified as a tuple of per-dimension slices or scalars
+    (eg, ``([:], 1, [1:2])``), and the shape of the array, return the shape of
+    the subarray. Note that the number of coordinates may be less than or equal
+    to the number of dimensions in the array.
+    """
+    if len(coords) > len(array_shape):
+        raise ValueError(
+            f"coordinate length ({len(coords)}) must be <= array dimension count ({len(array_shape)})"
+        )
+
+    shape: List[int] = []
+    for i, extent in enumerate(array_shape):
+        if i < len(coords):
+            shape.append(dense_index_to_shape(coords[i], extent))
+        else:
+            shape.append(extent)
+
+    if result_order == "row-major":
+        return tuple(shape)
+
+    return tuple(reversed(shape))
+
+
+def dense_index_to_shape(
+    coord: Union[int, slice],
+    array_length: int,
+) -> int:
+    """
+    Given a subarray per-dimension index specified as a slice or scalar (e.g, ``[:], 1, [1:2]``),
+    and the shape of the array in that dimension, return the shape of the subarray in
+    that dimension.
+
+    Note that Python slice semantics are right-endpoint-exclusive whereas SOMA slice semantics are
+    doubly inclusive.
+    """
+    if type(coord) is int:
+        return 1
+
+    if type(coord) is slice:
+        start, stop, step = coord.indices(array_length)
+        if step != 1:
+            raise ValueError("stepped slice ranges are not supported")
+        # This is correct for doubly-inclusive slices which SOMA uses.
+        stop = min(stop, array_length - 1)
+        return stop - start + 1
+
+    raise TypeError("coordinates must be tuple of int or slice")
