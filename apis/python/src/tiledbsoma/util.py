@@ -115,7 +115,7 @@ def uri_joinpath(base: str, path: str) -> str:
 
 def slice_to_range(
     ids: slice, nonempty_domain: Tuple[int, int]
-) -> Optional[Tuple[int, int]]:
+) -> Tuple[int, int]:
     """
     For the interface between ``DataFrame::read`` et al. (Python) and ``SOMAReader`` (C++).
     """
@@ -123,9 +123,11 @@ def slice_to_range(
         raise ValueError("slice step must be 1 or None")
     if ids.start is None and ids.stop is None:
         return None
+    
     start = ids.start
     stop = ids.stop
 
+    # TODO: with future C++ improvements, move half-slice logic to SOMAReader
     if start is None:
         start = nonempty_domain[0]
     if stop is None:
