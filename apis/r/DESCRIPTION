@@ -42,7 +42,6 @@ Imports:
     arch,
     dplyr,
     data.table,
-    RcppSpdlog,
     spdl
 LinkingTo:
     Rcpp,
