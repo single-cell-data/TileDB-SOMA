@@ -32,3 +32,22 @@ def test_uri_joinpath_tiledb():
 
     with pytest.raises(ValueError):
         assert uri_joinpath("tiledb://acct/A/", "../B/")
+
+
+@pytest.mark.parametrize(
+    "io",
+    [
+        # Note: SOMA slices are doubly inclusive
+        {"coord": 1, "array_length": 10, "expected_shape": 1},
+        {"coord": slice(None), "array_length": 10, "expected_shape": 10},
+        {"coord": slice(0, 10), "array_length": 10, "expected_shape": 10},
+        {"coord": slice(0, 9), "array_length": 10, "expected_shape": 10},
+        {"coord": slice(0, 8), "array_length": 10, "expected_shape": 9},
+        {"coord": slice(0, 8), "array_length": 10, "expected_shape": 9},
+        {"coord": slice(3, 3), "array_length": 10, "expected_shape": 1},
+        {"coord": slice(None, 3), "array_length": 10, "expected_shape": 4},
+        {"coord": slice(3, None), "array_length": 10, "expected_shape": 7},
+    ],
+)
+def test_dense_index_to_shape(io):
+    pass

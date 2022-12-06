@@ -1,11 +1,13 @@
 import pathlib
 import time
 import urllib.parse
-from typing import Optional, Tuple, TypeVar
+from typing import List, Optional, Tuple, TypeVar, Union
 
 import numpy as np
 import pandas as pd
 import scipy.sparse as sp
+
+from .types import ResultOrder
 
 T = TypeVar("T", np.ndarray, pd.Series, pd.DataFrame, sp.spmatrix)
 
@@ -127,3 +129,52 @@ def slice_to_range(ids: slice) -> Optional[Tuple[int, int]]:
     if ids.step is not None and ids.step != 1:
         raise ValueError("slice step must be 1 or None")
     return (ids.start, ids.stop)  # XXX TEMP
+
+
+def dense_indices_to_shape(
+    coords: Tuple[Union[int, slice], ...],
+    array_shape: Tuple[int, ...],
+    result_order: ResultOrder,
+) -> Tuple[int, ...]:
+    """
+    Given a subarray index specified as a tuple of per-dimension slices or scalars
+    (eg, ``([:], 1, [1:2])``), and the shape of the array, return the shape of
+    the subarray.
+
+    See read_tensor for usage.
+    """
+    shape: List[int] = []
+    for n, coord in enumerate(coords):
+        shape.append(dense_index_to_shape(coord, array_shape[n]))
+
+    if result_order == "row-major":
+        return tuple(shape)
+
+    return tuple(reversed(shape))
+
+
+def dense_index_to_shape(
+    coord: Union[int, slice],
+    array_length: int,
+) -> int:
+    """
+    Given a subarray per-dimension index specified as a slice or scalar (e.g, ``[:], 1, [1:2]``),
+    and the shape of the array in that dimension, return the shape of the subarray in
+    that dimension.
+
+    Note that Python slice semantics are right-endpoint-exclusive whereas SOMA slice semantics are
+    doubly inclusive.
+    """
+    if type(coord) is int:
+        return 1
+
+    if type(coord) is slice:
+        start, stop, step = coord.indices(array_length)
+        if step != 1:
+            raise ValueError("stepped slice ranges are not supported")
+        # This is correct for doubly-inclusive slices which SOMA uses.
+        if stop >= array_length:
+            stop = array_length - 1
+        return stop - start + 1
+
+    raise ValueError("coordinates must be tuple of int or slice")
