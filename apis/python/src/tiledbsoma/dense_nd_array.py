@@ -207,7 +207,7 @@ class DenseNdArray(TileDBArray):
 
         arrow_tables = []
         while arrow_table_piece := sr.read_next():
-            arrow_tables.append(arrow_table_piece)  # XXX address the copy question
+            arrow_tables.append(arrow_table_piece)
 
         # For dense arrays there is no zero-output case: attempting to make a test case
         # to do that, say by indexing a 10x20 array by positions 888 and 999, results
