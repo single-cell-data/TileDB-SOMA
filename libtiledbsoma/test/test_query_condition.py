@@ -70,6 +70,16 @@ def test_query_condition_float():
 
     assert len(pandas.index) == soma_arrow.num_rows
 
+def test_query_condition_bool():
+    uri = os.path.join(SOMA_URI, "obs")
+    condition = "is_b_cell == True"
+
+    pandas = pandas_query(uri, condition)
+
+    soma_arrow = soma_query(uri, condition)
+
+    assert len(pandas.index) == 342
+
 
 def test_query_condition_and():
     uri = os.path.join(SOMA_URI, "obs")
