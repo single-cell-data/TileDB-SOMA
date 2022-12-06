@@ -93,6 +93,18 @@ def test_dense_index_to_shape(io):
             "result_order": "col-major",
             "output_shape": (1, 1, 1),
         },
+    ],
+)
+def test_dense_indices_to_shape(io):
+    assert (
+        dense_indices_to_shape(io["coord"], io["input_shape"], io["result_order"])
+        == io["output_shape"]
+    )
+
+
+@pytest.mark.parametrize(
+    "io",
+    [
         {
             "coord": (1, 2, 3, 4),
             "input_shape": (10, 20, 30),
@@ -107,12 +119,6 @@ def test_dense_index_to_shape(io):
         },
     ],
 )
-def test_dense_indices_to_shape(io):
-    if "throws" in io:
-        with pytest.raises(io["throws"]):
-            dense_indices_to_shape(io["coord"], io["input_shape"], io["result_order"])
-    else:
-        assert (
-            dense_indices_to_shape(io["coord"], io["input_shape"], io["result_order"])
-            == io["output_shape"]
-        )
+def test_dense_indices_to_shape_error_cases(io):
+    with pytest.raises(io["throws"]):
+        dense_indices_to_shape(io["coord"], io["input_shape"], io["result_order"])
