@@ -160,6 +160,7 @@ class DenseNdArray(TileDBArray):
         with self._tiledb_open("r") as A:
             target_shape = dense_indices_to_shape(coords, A.shape, result_order)
             schema = A.schema
+            ned = A.nonempty_domain()
 
         sr = clib.SOMAReader(
             self._uri,
@@ -185,7 +186,7 @@ class DenseNdArray(TileDBArray):
                 elif isinstance(coord, int):
                     sr.set_dim_points(dim_name, [coord])
                 elif isinstance(coord, slice):
-                    lo_hi = util.slice_to_range(coord)
+                    lo_hi = util.slice_to_range(coord, ned[i]) if ned else None
                     if lo_hi is not None:
                         lo, hi = lo_hi
                         if lo < 0 or hi < 0:
