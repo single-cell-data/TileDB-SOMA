@@ -3,6 +3,7 @@ from typing import Tuple
 import numpy as np
 import pyarrow as pa
 import pytest
+import tiledb
 
 import tiledbsoma as soma
 
@@ -133,9 +134,30 @@ def test_dense_nd_array_reshape(tmp_path):
             "coords": (2, slice(None)),
             "output": np.array([[200, 201, 202, 203, 204, 205]]),
         },
+        pytest.param(  # pending https://github.com/single-cell-data/TileDB-SOMA/issues/457
+            {
+                "coords": (slice(None, 2), slice(5, None)),
+                "output": np.array([[5], [105], [205]]),
+            },
+            marks=pytest.mark.xfail,
+        ),
         {
-            "coords": (slice(None, 2), slice(5, None)),
+            "coords": (slice(0, 2), slice(5, 5)),
             "output": np.array([[5], [105], [205]]),
+        },
+        {
+            "coords": (slice(None), slice(None)),
+            "cfg": {
+                "soma.init_buffer_bytes": 100
+            },  # Known small enough to force multiple reads
+            "output": np.array(
+                [
+                    [0, 1, 2, 3, 4, 5],
+                    [100, 101, 102, 103, 104, 105],
+                    [200, 201, 202, 203, 204, 205],
+                    [300, 301, 302, 303, 304, 305],
+                ]
+            ),
         },
     ],
 )
@@ -146,7 +168,12 @@ def test_dense_nd_array_slicing(tmp_path, io):
     SOMA's doubly-inclusive slice indexing semantics against Python's singly-inclusive slicing
     semantics, ensuring that none of the latter has crept into the former.
     """
-    a = soma.DenseNdArray(tmp_path.as_posix())
+    cfg = {}
+    if "cfg" in io:
+        cfg = io["cfg"]
+    ctx = tiledb.Ctx(cfg)
+
+    a = soma.DenseNdArray(tmp_path.as_posix(), ctx=ctx)
     nr = 4
     nc = 6
 
@@ -159,5 +186,9 @@ def test_dense_nd_array_slicing(tmp_path, io):
         coords=(slice(0, nr), slice(0, nc)), values=pa.Tensor.from_numpy(npa)
     )
 
-    output = a.read_numpy(io["coords"])
-    assert np.all(output == io["output"])
+    if "throws" in io:
+        with pytest.raises(io["throws"]):
+            a.read_numpy(io["coords"])
+    else:
+        output = a.read_numpy(io["coords"])
+        assert np.all(output == io["output"])
