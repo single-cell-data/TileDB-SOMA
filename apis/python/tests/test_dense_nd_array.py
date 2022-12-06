@@ -146,11 +146,6 @@ def test_dense_nd_array_reshape(tmp_path):
             "output": np.array([[5], [105], [205]]),
         },
         {
-            "coords": (pa.array([1, 2, 3]),),  # No pa.array for dense reads
-            "output": np.array([[5], [105], [205]]),
-            "throws": ValueError,
-        },
-        {
             "coords": (slice(None), slice(None)),
             "cfg": {
                 "soma.init_buffer_bytes": 100
