@@ -258,7 +258,7 @@ class DataFrame(TileDBArray):
                             )
                         sr.set_dim_points(dim_name, dim_ids)
                     elif isinstance(dim_ids, slice):
-                        ned = A.nonempty_domain()
+                        ned = A.nonempty_domain()  # None iff the array has no data
                         lo_hi = util.slice_to_range(dim_ids, ned[i]) if ned else None
                         if lo_hi is not None:
                             lo, hi = lo_hi
