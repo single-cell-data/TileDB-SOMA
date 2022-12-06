@@ -9,10 +9,10 @@ import tiledbsoma.libtiledbsoma as clib
 import tiledbsoma.util as util
 import tiledbsoma.util_arrow as util_arrow
 from tiledbsoma.util import dense_indices_to_shape
-from tiledbsoma.util_tiledb import tiledb_result_order_from_soma_result_order
 
 from . import tiledb_platform_config as tdbpc
 from .collection import CollectionBase
+from .exception import SOMAError
 from .tiledb_array import TileDBArray
 from .tiledb_platform_config import TileDBPlatformConfig
 from .types import DenseNdCoordinates, NTuple, PlatformConfig, ResultOrder
@@ -201,18 +201,13 @@ class DenseNdArray(TileDBArray):
 
         sr.submit()
 
-        arrow_tables = None
-        i = 0
+        arrow_tables = []
         while arrow_table_piece := sr.read_next():
             print(f"YOINK {i}")
-            if i == 0:
-                arrow_tables = [arrow_table_piece]
-            else:
-                arrow_tables.append(arrow_table_piece)  # XXX copy
-            i += 1
+            arrow_tables.append(arrow_table_piece)  # XXX copy
 
-        if arrow_tables is None:
-            raise SOMAError("b04k") # XXX todo
+        if arrow_tables == []:
+            raise SOMAError("b04k")  # XXX todo
 
         # XXX needs comment that we require at least one table
         # XXX needs zero-length-output test case
