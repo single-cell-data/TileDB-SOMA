@@ -7,7 +7,7 @@ import numpy as np
 import pandas as pd
 import scipy.sparse as sp
 
-from .types import ResultOrder
+from .types import DenseNdCoordinates, ResultOrder
 
 T = TypeVar("T", np.ndarray, pd.Series, pd.DataFrame, sp.spmatrix)
 
@@ -132,7 +132,7 @@ def slice_to_range(ids: slice) -> Optional[Tuple[int, int]]:
 
 
 def dense_indices_to_shape(
-    coords: Tuple[Union[int, slice], ...],
+    coords: DenseNdCoordinates,
     array_shape: Tuple[int, ...],
     result_order: ResultOrder,
 ) -> Tuple[int, ...]:
