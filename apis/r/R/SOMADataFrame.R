@@ -134,44 +134,34 @@ SOMADataFrame <- R6::R6Class(
     #' @param result_order Order of read results. This can be one of either
     #' `"ROW_MAJOR, `"COL_MAJOR"`, `"GLOBAL_ORDER"`, or `"UNORDERED"`.
     #' @return An [`arrow::Table`].
-    read = function(
-      ids = NULL,
-      column_names = NULL,
-      value_filter = NULL,
-      result_order = "UNORDERED"
-    ) {
-      on.exit(private$close())
-      private$open("READ")
+    read = function(ids = NULL,
+                    column_names = NULL,
+                    value_filter = NULL,
+                    result_order = c("UNORDERED", "ROW_MAJOR", "COL_MAJOR", "GLOBAL_ORDER")) {
 
-      arr <- self$object
+      result_order <- match.arg(result_order)
 
-      # select columns
-      if (!is.null(column_names)) {
-        stopifnot(
-          "'column_names' must only contain non-index columns" =
-            all(!column_names %in% self$dimnames())
-        )
-        tiledb::attrs(arr) <- column_names
-      }
+      uri <- self$uri
+      arr <- self$object                 # need array (schema) to properly parse query condition
 
-      # select ranges
-      if (!is.null(ids)) {
-        tiledb::selected_ranges(arr) <- list(cbind(ids, ids))
-      }
+      # check columns
+      stopifnot("'column_names' must only contain non-index columns" =
+                    is.null(column_names) || all(!column_names %in% self$dimnames()))
+      stopifnot("'value_filter' must be a single argument" =
+                    is.null(value_filter) || is_scalar_character(value_filter))
 
-      # filter
       if (!is.null(value_filter)) {
-        stopifnot(is_scalar_character(value_filter))
-        tiledb::query_condition(arr) <- do.call(
-          what = tiledb::parse_query_condition,
-          args = list(expr = str2lang(value_filter), ta = self$object)
-        )
+          value_filter <- do.call(what = tiledb::parse_query_condition,
+                                  args = list(expr = str2lang(value_filter), ta = arr))
       }
 
-      # result order
-      tiledb::query_layout(arr) <- match_query_layout(result_order)
+      rl <- soma_reader(uri = uri,
+                        colnames = column_names,   # NULL is dealt with by soma_reader()
+                        qc = value_filter,         # idem
+                        dim_points = ids)          # idem
 
-      arrow::arrow_table(as.data.frame(arr[]))
+      arrow::as_arrow_table( arch::from_arch_array(rl, arrow::RecordBatch))
     }
+
   )
 )
