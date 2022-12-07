@@ -78,7 +78,7 @@ def test_query_condition_bool():
 
     soma_arrow = soma_query(uri, condition)
 
-    assert len(pandas.index) == 342
+    assert len(pandas.index) == soma_arrow.num_rows
 
 
 def test_query_condition_and():
