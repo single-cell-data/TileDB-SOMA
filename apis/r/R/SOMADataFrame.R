@@ -147,12 +147,20 @@ SOMADataFrame <- R6::R6Class(
       # check columns
       stopifnot("'column_names' must only contain non-index columns" =
                     is.null(column_names) || all(!column_names %in% self$dimnames()))
+      # check and parse value filter
       stopifnot("'value_filter' must be a single argument" =
                     is.null(value_filter) || is_scalar_character(value_filter))
-
       if (!is.null(value_filter)) {
-          value_filter <- do.call(what = tiledb::parse_query_condition,
-                                  args = list(expr = str2lang(value_filter), ta = arr))
+          parsed <- do.call(what = tiledb::parse_query_condition,
+                            args = list(expr = str2lang(value_filter), ta = arr))
+          value_filter <- parsed@ptr
+      }
+      # ensure ids is a (named) list
+      if (!is.null(ids)) {
+          if (!is.list(ids))
+              ids <- list(ids)
+          if (is.null(names(ids)))
+              names(ids) <- self$dimnames() # TODO: ensure dimensionality
       }
 
       rl <- soma_reader(uri = uri,

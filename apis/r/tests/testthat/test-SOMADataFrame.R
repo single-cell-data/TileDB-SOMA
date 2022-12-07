@@ -6,7 +6,6 @@ test_that("SOMADataFrame creation", {
     bar = arrow::float64(),
     baz = arrow::string()
   )
-
   sidf <- SOMADataFrame$new(uri)
   expect_error(
     sidf$create(asch),
@@ -32,9 +31,13 @@ test_that("SOMADataFrame creation", {
     "All columns in 'values' must be defined in the schema"
   )
 
-  tbl0 <- arrow::arrow_table(
-    foo = 1L:10L, bar = 1.1:10.1, baz = letters[1:10]
-  )
+  tbl0 <- arrow::arrow_table(foo = 1L:10L,
+                             bar = 1.1:10.1,
+                             baz = letters[1:10],
+                             schema=arrow::schema(arrow::field("foo", arrow::int32(), nullable=FALSE),
+                                                  arrow::field("bar", arrow::float64(), nullable=FALSE),
+                                                  arrow::field("baz", arrow::large_utf8(), nullable=FALSE)))
+
   sidf$write(tbl0)
 
   # read back the data (ignore attributes)
@@ -59,9 +62,10 @@ test_that("SOMADataFrame creation", {
   )
 
   tbl1 <- sidf$read(column_names = "bar")
-  expect_true(tbl1$Equals(tbl0$SelectColumns(c(0L, 1L))))
+  expect_true(tbl1$Equals(tbl0$SelectColumns(1L)))
 
   # Attribute filters
   tbl1 <- sidf$read(value_filter = "bar < 5")
   expect_true(tbl1$Equals(tbl0$Filter(tbl0$bar < 5)))
 })
+
