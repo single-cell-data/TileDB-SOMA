@@ -1,5 +1,5 @@
 test_that("SOMADataFrame creation", {
-  skip_if(TRUE) # temporary
+
   uri <- withr::local_tempdir("soma-indexed-dataframe4")
   asch <- arrow::schema(
     foo = arrow::int32(),
@@ -14,7 +14,7 @@ test_that("SOMADataFrame creation", {
   )
   expect_error(
     sidf$create(asch, index_column_names = "qux"),
-    "All 'index_column_names' must be defined in the 'schema'"
+    "The following field does not exist: qux"
   )
 
   sidf$create(asch, index_column_names = "foo")
