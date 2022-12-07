@@ -1,11 +1,13 @@
 import pathlib
 import time
 import urllib.parse
-from typing import Optional, Tuple, TypeVar
+from typing import List, Optional, Tuple, TypeVar, Union
 
 import numpy as np
 import pandas as pd
 import scipy.sparse as sp
+
+from .types import DenseNdCoordinates, ResultOrder
 
 T = TypeVar("T", np.ndarray, pd.Series, pd.DataFrame, sp.spmatrix)
 
@@ -113,17 +115,81 @@ def uri_joinpath(base: str, path: str) -> str:
     return urllib.parse.urlunparse(parts)
 
 
-def slice_to_range(ids: slice) -> Optional[Tuple[int, int]]:
+def slice_to_range(
+    ids: slice, nonempty_domain: Tuple[int, int]
+) -> Optional[Tuple[int, int]]:
     """
     For the interface between ``DataFrame::read`` et al. (Python) and ``SOMAReader`` (C++).
     """
-    if ids.start is None and ids.stop is None:
-        return None
-    if ids.start is None or ids.stop is None:
-        # TODO: https://github.com/single-cell-data/TileDB-SOMA/issues/457
-        raise ValueError("slice start and stop must be both specified, or neither")
-    if ids.start > ids.stop:
-        raise ValueError("slice start must be <= slice stop")
     if ids.step is not None and ids.step != 1:
         raise ValueError("slice step must be 1 or None")
-    return (ids.start, ids.stop)  # XXX TEMP
+    if ids.start is None and ids.stop is None:
+        return None
+
+    start = ids.start
+    stop = ids.stop
+
+    # TODO: with future C++ improvements, move half-slice logic to SOMAReader
+    if start is None:
+        start = nonempty_domain[0]
+    if stop is None:
+        stop = nonempty_domain[1]
+
+    if start > stop:
+        raise ValueError("slice start must be <= slice stop")
+    return (start, stop)
+
+
+def dense_indices_to_shape(
+    coords: DenseNdCoordinates,
+    array_shape: Tuple[int, ...],
+    result_order: ResultOrder,
+) -> Tuple[int, ...]:
+    """
+    Given a subarray index specified as a tuple of per-dimension slices or scalars
+    (eg, ``([:], 1, [1:2])``), and the shape of the array, return the shape of
+    the subarray. Note that the number of coordinates may be less than or equal
+    to the number of dimensions in the array.
+    """
+    if len(coords) > len(array_shape):
+        raise ValueError(
+            f"coordinate length ({len(coords)}) must be <= array dimension count ({len(array_shape)})"
+        )
+
+    shape: List[int] = []
+    for i, extent in enumerate(array_shape):
+        if i < len(coords):
+            shape.append(dense_index_to_shape(coords[i], extent))
+        else:
+            shape.append(extent)
+
+    if result_order == "row-major":
+        return tuple(shape)
+
+    return tuple(reversed(shape))
+
+
+def dense_index_to_shape(
+    coord: Union[int, slice],
+    array_length: int,
+) -> int:
+    """
+    Given a subarray per-dimension index specified as a slice or scalar (e.g, ``[:], 1, [1:2]``),
+    and the shape of the array in that dimension, return the shape of the subarray in
+    that dimension.
+
+    Note that Python slice semantics are right-endpoint-exclusive whereas SOMA slice semantics are
+    doubly inclusive.
+    """
+    if type(coord) is int:
+        return 1
+
+    if type(coord) is slice:
+        start, stop, step = coord.indices(array_length)
+        if step != 1:
+            raise ValueError("stepped slice ranges are not supported")
+        # This is correct for doubly-inclusive slices which SOMA uses.
+        stop = min(stop, array_length - 1)
+        return stop - start + 1
+
+    raise TypeError("coordinates must be tuple of int or slice")

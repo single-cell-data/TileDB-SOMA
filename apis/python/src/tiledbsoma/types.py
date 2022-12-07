@@ -27,7 +27,7 @@ ArrowReadResult = Union[
     pa.SparseCSCMatrix,
 ]
 
-DenseCoordinates = Union[int, slice, pa.Array]
+DenseCoordinates = Union[int, slice]
 DenseNdCoordinates = Tuple[DenseCoordinates, ...]
 
 # TODO: add support for non-ints once the libtiledbsoma SOMAReader class has supports

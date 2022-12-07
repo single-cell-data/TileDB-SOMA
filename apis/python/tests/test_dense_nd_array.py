@@ -3,6 +3,7 @@ from typing import Tuple
 import numpy as np
 import pyarrow as pa
 import pytest
+import tiledb
 
 import tiledbsoma as soma
 
@@ -116,3 +117,78 @@ def test_dense_nd_array_reshape(tmp_path):
     a.create(type=pa.int32(), shape=(10, 10, 10))
     with pytest.raises(NotImplementedError):
         assert a.reshape((100, 10, 1))
+
+
+@pytest.mark.parametrize(
+    "io",
+    [
+        {
+            "coords": (2, 3),
+            "output": np.array([[203]]),
+        },
+        {
+            "coords": (slice(None), 3),
+            "output": np.array([[3], [103], [203], [303]]),
+        },
+        {
+            "coords": (2, slice(None)),
+            "output": np.array([[200, 201, 202, 203, 204, 205]]),
+        },
+        pytest.param(  # pending https://github.com/single-cell-data/TileDB-SOMA/issues/457
+            {
+                "coords": (slice(None, 2), slice(5, None)),
+                "output": np.array([[5], [105], [205]]),
+            },
+            marks=pytest.mark.xfail,
+        ),
+        {
+            "coords": (slice(0, 2), slice(5, 5)),
+            "output": np.array([[5], [105], [205]]),
+        },
+        {
+            "coords": (slice(None), slice(None)),
+            "cfg": {
+                "soma.init_buffer_bytes": 100
+            },  # Known small enough to force multiple reads
+            "output": np.array(
+                [
+                    [0, 1, 2, 3, 4, 5],
+                    [100, 101, 102, 103, 104, 105],
+                    [200, 201, 202, 203, 204, 205],
+                    [300, 301, 302, 303, 304, 305],
+                ]
+            ),
+        },
+    ],
+)
+def test_dense_nd_array_slicing(tmp_path, io):
+    """
+    We already have tests that check n-d for various values of n. This one (which happens to use 2-d
+    data, though not in an essential way) checks subarray slicing. In particular, it validates
+    SOMA's doubly-inclusive slice indexing semantics against Python's singly-inclusive slicing
+    semantics, ensuring that none of the latter has crept into the former.
+    """
+    cfg = {}
+    if "cfg" in io:
+        cfg = io["cfg"]
+    ctx = tiledb.Ctx(cfg)
+
+    a = soma.DenseNdArray(tmp_path.as_posix(), ctx=ctx)
+    nr = 4
+    nc = 6
+
+    a.create(pa.int64(), [nr, nc])
+    npa = np.zeros((nr, nc))
+    for i in range(nr):
+        for j in range(nc):
+            npa[i, j] = 100 * i + j
+    a.write_tensor(
+        coords=(slice(0, nr), slice(0, nc)), values=pa.Tensor.from_numpy(npa)
+    )
+
+    if "throws" in io:
+        with pytest.raises(io["throws"]):
+            a.read_numpy(io["coords"])
+    else:
+        output = a.read_numpy(io["coords"])
+        assert np.all(output == io["output"])

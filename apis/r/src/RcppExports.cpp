@@ -11,43 +11,6 @@ Rcpp::Rostream<true>&  Rcpp::Rcout = Rcpp::Rcpp_cout_get();
 Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 #endif
 
-// get_column_names
-std::vector<std::string> get_column_names(const std::string& uri);
-RcppExport SEXP _tiledbsoma_get_column_names(SEXP uriSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const std::string& >::type uri(uriSEXP);
-    rcpp_result_gen = Rcpp::wrap(get_column_names(uri));
-    return rcpp_result_gen;
-END_RCPP
-}
-// export_column
-bool export_column(const std::string& uri, const std::string& colname, SEXP schemaxp, SEXP arrayxp);
-RcppExport SEXP _tiledbsoma_export_column(SEXP uriSEXP, SEXP colnameSEXP, SEXP schemaxpSEXP, SEXP arrayxpSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const std::string& >::type uri(uriSEXP);
-    Rcpp::traits::input_parameter< const std::string& >::type colname(colnameSEXP);
-    Rcpp::traits::input_parameter< SEXP >::type schemaxp(schemaxpSEXP);
-    Rcpp::traits::input_parameter< SEXP >::type arrayxp(arrayxpSEXP);
-    rcpp_result_gen = Rcpp::wrap(export_column(uri, colname, schemaxp, arrayxp));
-    return rcpp_result_gen;
-END_RCPP
-}
-// export_column_direct
-SEXP export_column_direct(const std::string& uri, const std::vector<std::string>& colnames);
-RcppExport SEXP _tiledbsoma_export_column_direct(SEXP uriSEXP, SEXP colnamesSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const std::string& >::type uri(uriSEXP);
-    Rcpp::traits::input_parameter< const std::vector<std::string>& >::type colnames(colnamesSEXP);
-    rcpp_result_gen = Rcpp::wrap(export_column_direct(uri, colnames));
-    return rcpp_result_gen;
-END_RCPP
-}
 // soma_reader
 Rcpp::List soma_reader(const std::string& uri, Rcpp::Nullable<Rcpp::CharacterVector> colnames, Rcpp::Nullable<Rcpp::XPtr<tiledb::QueryCondition>> qc, Rcpp::Nullable<Rcpp::List> dim_points, Rcpp::Nullable<Rcpp::List> dim_ranges, const std::string& loglevel);
 RcppExport SEXP _tiledbsoma_soma_reader(SEXP uriSEXP, SEXP colnamesSEXP, SEXP qcSEXP, SEXP dim_pointsSEXP, SEXP dim_rangesSEXP, SEXP loglevelSEXP) {
@@ -139,9 +102,6 @@ END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
-    {"_tiledbsoma_get_column_names", (DL_FUNC) &_tiledbsoma_get_column_names, 1},
-    {"_tiledbsoma_export_column", (DL_FUNC) &_tiledbsoma_export_column, 4},
-    {"_tiledbsoma_export_column_direct", (DL_FUNC) &_tiledbsoma_export_column_direct, 2},
     {"_tiledbsoma_soma_reader", (DL_FUNC) &_tiledbsoma_soma_reader, 6},
     {"_tiledbsoma_set_log_level", (DL_FUNC) &_tiledbsoma_set_log_level, 1},
     {"_tiledbsoma_get_column_types", (DL_FUNC) &_tiledbsoma_get_column_types, 2},
