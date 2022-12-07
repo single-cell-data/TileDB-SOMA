@@ -69,3 +69,29 @@ test_that("SOMADataFrame creation", {
   expect_true(tbl1$Equals(tbl0$Filter(tbl0$bar < 5)))
 })
 
+test_that("SOMADataFrame read", {
+    tdir <- tempfile()
+    tgzfile <- system.file("raw-data", "soco-pbmc3k_processed-obs.tar.gz", package="tiledbsoma")
+    untar(tarfile = tgzfile, exdir = tdir)
+
+    uri <- file.path(tdir, "obs")
+
+    sdf <- SOMADataFrame$new(uri)
+    z <- sdf$read()
+    tbl <- tibble::as_tibble(z)
+    expect_equal(nrow(tbl), 2638L)
+    expect_equal(ncol(tbl), 6L)
+
+    columns <- c("n_counts", "n_genes", "louvain")
+    sdf <- SOMADataFrame$new(uri)
+    z <- sdf$read(column_names=columns)
+    tbl <- tibble::as_tibble(z)
+    expect_equal(ncol(tbl), 3L)
+    expect_equal(colnames(tbl), columns)
+
+    ids <- bit64::as.integer64(seq(100, 109))
+    sdf <- SOMADataFrame$new(uri)
+    z <- sdf$read(ids = ids)
+    tbl <- tibble::as_tibble(z)
+    print(nrow(tbl))
+})
