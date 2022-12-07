@@ -15,18 +15,28 @@ jobs:
       - uses: actions/checkout@v2
       - uses: actions/setup-python@v2
       - name: Check Python Black Format
+        with:
+          python-version: "3.8"
         run: |
           python -m pip install black
           python -m black --check --diff . tools/[a-z]*
       - name: Check for unsorted / unformatted Python imports with isort
+        with:
+          python-version: "3.8"
         run: |
           python -m pip install isort
           python -m isort --check --diff .
       - name: Check Python style guide enforcement with flake8
+        with:
+          python-version: "3.8"
         run: |
           python -m pip install flake8-bugbear
+          python --version
+          python -m flake8 --version
           python -m flake8 . tools/[a-z]*
       - name: Check type annotations with mypy
+        with:
+          python-version: "3.8"
         run: |
           # mypy 0.990 has false positives on `import anndata as ad` and `Module has no attribute
           # "read_h5ad"` etc :(
