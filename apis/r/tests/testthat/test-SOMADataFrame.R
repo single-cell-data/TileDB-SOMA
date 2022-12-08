@@ -77,9 +77,8 @@ test_that("SOMADataFrame read", {
 
     sdf <- SOMADataFrame$new(uri)
     z <- sdf$read()
-    tbl <- tibble::as_tibble(z)
-    expect_equal(nrow(tbl), 2638L)
-    expect_equal(ncol(tbl), 6L)
+    expect_equal(z$num_rows, 2638L)
+    expect_equal(z$num_columns, 6L)
 
     columns <- c("n_counts", "n_genes", "louvain")
     sdf <- SOMADataFrame$new(uri)
@@ -95,7 +94,6 @@ test_that("SOMADataFrame read", {
     ids <- bit64::as.integer64(seq(100, 109))
     sdf <- SOMADataFrame$new(uri)
     z <- sdf$read(ids = list(soma_joinid=ids))
-    tbl <- tibble::as_tibble(z)
-    expect_equal(nrow(tbl), 10L)
+    expect_equal(z$num_rows, 10L)
 
 })
