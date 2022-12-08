@@ -1,9 +1,9 @@
 test_that("SOMADataFrame creation", {
   uri <- withr::local_tempdir("soma-indexed-dataframe4")
   asch <- arrow::schema(
-    foo = arrow::int32(),
-    bar = arrow::float64(),
-    baz = arrow::string()
+    arrow::field("foo", arrow::int32(), nullable = FALSE),
+    arrow::field("bar", arrow::float64(), nullable = FALSE),
+    arrow::field("baz", arrow::large_utf8(), nullable = FALSE)
   )
   sidf <- SOMADataFrame$new(uri)
   expect_error(
@@ -33,9 +33,7 @@ test_that("SOMADataFrame creation", {
   tbl0 <- arrow::arrow_table(foo = 1L:10L,
                              bar = 1.1:10.1,
                              baz = letters[1:10],
-                             schema=arrow::schema(arrow::field("foo", arrow::int32(), nullable=FALSE),
-                                                  arrow::field("bar", arrow::float64(), nullable=FALSE),
-                                                  arrow::field("baz", arrow::large_utf8(), nullable=FALSE)))
+                             schema=asch)
 
   sidf$write(tbl0)
 
