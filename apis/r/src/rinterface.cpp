@@ -38,6 +38,7 @@ Rcpp::List soma_reader(const std::string& uri,
                        const std::string& loglevel = "warn") {
 
     spdl::set_level(loglevel);
+    tdbs::LOG_SET_LEVEL(loglevel);
 
     spdl::info("[soma_reader] Reading from {}", uri);
 
@@ -143,6 +144,7 @@ Rcpp::List soma_reader(const std::string& uri,
 // [[Rcpp::export]]
 void set_log_level(const std::string& level) {
     spdl::set_level(level);
+    tdbs::LOG_SET_LEVEL(level);
 }
 
 //' @noRd
