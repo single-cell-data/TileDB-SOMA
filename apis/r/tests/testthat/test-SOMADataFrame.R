@@ -1,5 +1,4 @@
 test_that("SOMADataFrame creation", {
-
   uri <- withr::local_tempdir("soma-indexed-dataframe4")
   asch <- arrow::schema(
     foo = arrow::int32(),
@@ -57,8 +56,8 @@ test_that("SOMADataFrame creation", {
 
   # Subselecting columns
   expect_error(
-    sidf$read(column_names = "foo"),
-    "'column_names' must only contain non-index columns"
+    sidf$read(column_names = "foobar"),
+    "'column_names' must only contain valid dimension or attribute columns"
   )
 
   tbl1 <- sidf$read(column_names = "bar")
@@ -89,9 +88,14 @@ test_that("SOMADataFrame read", {
     expect_equal(ncol(tbl), 3L)
     expect_equal(colnames(tbl), columns)
 
+    columns <- c("n_counts", "does_not_exist")
+    sdf <- SOMADataFrame$new(uri)
+    expect_error(sdf$read(column_names=columns))
+
     ids <- bit64::as.integer64(seq(100, 109))
     sdf <- SOMADataFrame$new(uri)
     z <- sdf$read(ids = ids)
     tbl <- tibble::as_tibble(z)
-    print(nrow(tbl))
+    expect_equal(nrow(tbl), 10L)
+
 })
