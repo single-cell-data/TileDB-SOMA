@@ -51,7 +51,7 @@ test_that("SOMADataFrame creation", {
   expect_true(tbl1$Equals(tbl0))
 
   # Slicing by foo
-  tbl1 <- sidf$read(ids = 1L:2L)
+  tbl1 <- sidf$read(ids = list(foo=1L:2L))
   expect_true(tbl1$Equals(tbl1$Slice(offset = 0, length = 2)))
 
   # Subselecting columns
@@ -94,7 +94,7 @@ test_that("SOMADataFrame read", {
 
     ids <- bit64::as.integer64(seq(100, 109))
     sdf <- SOMADataFrame$new(uri)
-    z <- sdf$read(ids = ids)
+    z <- sdf$read(ids = list(soma_joinid=ids))
     tbl <- tibble::as_tibble(z)
     expect_equal(nrow(tbl), 10L)
 

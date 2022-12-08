@@ -126,7 +126,8 @@ SOMADataFrame <- R6::R6Class(
     #' @description Read
     #' Read a user-defined subset of data, addressed by the dataframe indexing
     #' column, and optionally filtered.
-    #' @param ids Optional indices specifying the rows to read.
+    #' @param ids Optional named list of indices specifying the rows to read; each (named)
+    #' list element corresponds to a dimension of the same name.
     #' @param column_names Optional character vector of column names to return.
     #' @param value_filter Optional string containing a logical expression that is used
     #' to filter the returned values. See [`tiledb::parse_query_condition`] for
@@ -160,12 +161,9 @@ SOMADataFrame <- R6::R6Class(
           value_filter <- parsed@ptr
       }
       # ensure ids is a (named) list
-      if (!is.null(ids)) {
-          if (!is.list(ids))
-              ids <- list(ids)
-          if (is.null(names(ids)))
-              names(ids) <- self$dimnames() # TODO: ensure dimensionality
-      }
+      stopifnot("'ids' must be a list" = is.null(ids) || is.list(ids),
+                "names of 'ids' must correspond to dimension names" =
+                    is.null(ids) || all(names(ids) %in% self$dimnames()))
 
       rl <- soma_reader(uri = uri,
                         colnames = column_names,   # NULL is dealt with by soma_reader()
