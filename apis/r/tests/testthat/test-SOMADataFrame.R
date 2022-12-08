@@ -81,9 +81,8 @@ test_that("SOMADataFrame read", {
     columns <- c("n_counts", "n_genes", "louvain")
     sdf <- SOMADataFrame$new(uri)
     z <- sdf$read(column_names=columns)
-    tbl <- tibble::as_tibble(z)
-    expect_equal(ncol(tbl), 3L)
-    expect_equal(colnames(tbl), columns)
+    expect_equal(z$num_columns, 3L)
+    expect_equal(z$ColumnNames(), columns)
 
     columns <- c("n_counts", "does_not_exist")
     sdf <- SOMADataFrame$new(uri)
@@ -93,5 +92,4 @@ test_that("SOMADataFrame read", {
     sdf <- SOMADataFrame$new(uri)
     z <- sdf$read(ids = list(soma_joinid=ids))
     expect_equal(z$num_rows, 10L)
-
 })
