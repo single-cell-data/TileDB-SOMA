@@ -134,13 +134,10 @@ def test_dense_nd_array_reshape(tmp_path):
             "coords": (2, slice(None)),
             "output": np.array([[200, 201, 202, 203, 204, 205]]),
         },
-        pytest.param(  # pending https://github.com/single-cell-data/TileDB-SOMA/issues/457
-            {
-                "coords": (slice(None, 2), slice(5, None)),
-                "output": np.array([[5], [105], [205]]),
-            },
-            marks=pytest.mark.xfail,
-        ),
+        {
+            "coords": (slice(None, 2), slice(5, None)),
+            "output": np.array([[5], [105], [205]]),
+        },
         {
             "coords": (slice(0, 2), slice(5, 5)),
             "output": np.array([[5], [105], [205]]),
