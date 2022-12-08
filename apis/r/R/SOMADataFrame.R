@@ -145,8 +145,10 @@ SOMADataFrame <- R6::R6Class(
       arr <- self$object                 # need array (schema) to properly parse query condition
 
       # check columns
-      stopifnot("'column_names' must only contain non-index columns" =
-                    is.null(column_names) || all(!column_names %in% self$dimnames()))
+      stopifnot("'column_names' must only contain valid dimension or attribute columns" =
+                    is.null(column_names) ||
+                    all(column_names %in% c(self$dimnames(), self$attrnames())))
+
       # check and parse value filter
       stopifnot("'value_filter' must be a single argument" =
                     is.null(value_filter) || is_scalar_character(value_filter))
