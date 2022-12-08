@@ -126,20 +126,22 @@ SOMADataFrame <- R6::R6Class(
     #' @description Read
     #' Read a user-defined subset of data, addressed by the dataframe indexing
     #' column, and optionally filtered.
-    #' @param ids Indices specifying the rows to read.
-    #' @param column_names Character vector of column names to return.
-    #' @param value_filter A string containing a logical expression that is used
+    #' @param ids Optional indices specifying the rows to read.
+    #' @param column_names Optional character vector of column names to return.
+    #' @param value_filter Optional string containing a logical expression that is used
     #' to filter the returned values. See [`tiledb::parse_query_condition`] for
     #' more information.
-    #' @param result_order Order of read results. This can be one of either
+    #' @param result_order Optional order of read results. This can be one of either
     #' `"ROW_MAJOR, `"COL_MAJOR"`, `"GLOBAL_ORDER"`, or `"UNORDERED"`.
+    #' @param log_level Optional logging level with default value of `"warn"`.
     #' @return An [`arrow::Table`].
     read = function(ids = NULL,
                     column_names = NULL,
                     value_filter = NULL,
-                    result_order = c("UNORDERED", "ROW_MAJOR", "COL_MAJOR", "GLOBAL_ORDER")) {
+                    result_order = "UNORDERED",
+                    log_level = "warn") {
 
-      result_order <- match.arg(result_order)
+      result_order <- match_query_layout(result_order)
 
       uri <- self$uri
       arr <- self$object                 # need array (schema) to properly parse query condition
@@ -168,7 +170,8 @@ SOMADataFrame <- R6::R6Class(
       rl <- soma_reader(uri = uri,
                         colnames = column_names,   # NULL is dealt with by soma_reader()
                         qc = value_filter,         # idem
-                        dim_points = ids)          # idem
+                        dim_points = ids,          # idem
+                        loglevel = log_level)      # idem
 
       arrow::as_arrow_table( arch::from_arch_array(rl, arrow::RecordBatch))
     }

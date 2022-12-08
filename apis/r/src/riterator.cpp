@@ -141,6 +141,7 @@ Rcpp::XPtr<tdbs::SOMAReader> sr_setup(Rcpp::XPtr<tiledb::Context> ctx,
                                       const std::string& loglevel = "warn") {
     check_xptr_tag<tiledb::Context>(ctx);
     spdl::set_level(loglevel);
+    tdbs::LOG_SET_LEVEL(loglevel);
 
     spdl::info("[sr_setup] Setting up {}", uri);
 
