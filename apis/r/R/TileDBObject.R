@@ -7,30 +7,21 @@
 TileDBObject <- R6::R6Class(
   classname = "TileDBObject",
   public = list(
-    #' @field verbose Whether to print verbose output
-    verbose = TRUE,
-    #' @field config optional configuration
-    config = NULL,
-    #' @field ctx optional tiledb context
+    #' @field platform_config Optional platform configuration
+    platform_config = NULL,
+    #' @field ctx Optional TileDB context
     ctx = NULL,
 
     #' @description Create a new TileDB object.
     #' @param uri URI for the TileDB object
     #' @param verbose Print status messages
-    #' @param config optional configuration
+    #' @param platform_config Optional platform configuration
     #' @param ctx optional TileDB context
-    initialize = function(uri, verbose = TRUE, config = NULL, ctx = NULL) {
-      if (missing(uri)) stop("A `uri` must be specified")
+    initialize = function(uri, platform_config = NULL, ctx = NULL) {
+      if (missing(uri)) stop("Must specify a `uri`")
       private$tiledb_uri <- TileDBURI$new(uri)
-      self$verbose <- verbose
-      self$config <- config
+      self$platform_config <- platform_config
       self$ctx <- ctx
-
-      if (!is.null(config) && !is.null(ctx)) stop("Cannot pass a config and context, please choose one")
-
-      if (!is.null(self$config)) {
-        self$ctx <- tiledb::tiledb_ctx(self$config)
-      }
 
       if (is.null(self$ctx)) {
         self$ctx <- tiledb::tiledb_get_context()
@@ -42,7 +33,7 @@ TileDBObject <- R6::R6Class(
       class(self)[1]
     },
 
-    #' @description Print summary of the array.
+    #' @description Print-friendly representation of the object.
     print = function() {
       cat("  uri:", self$uri, "\n")
       cat(glue::glue("<{self$class()}>"), sep = "\n")
@@ -70,24 +61,6 @@ TileDBObject <- R6::R6Class(
     uri = function(value) {
       if (missing(value)) return(private$tiledb_uri$uri)
       stop(sprintf("'%s' is a read-only field.", "uri"))
-    },
-
-    #' @field object Access the underlying TileB object directly (either a
-    #' [`tiledb::tiledb_array`] or [`tiledb::tiledb_group`]).
-    object = function(value) {
-      if (!missing(value)) {
-        stop(sprintf("'%s' is a read-only field.", "object"))
-      }
-      # If the array was created after the object was instantiated, we need to
-      # initialize private$tiledb_object
-      if (is.null(private$tiledb_object)) {
-        if (self$exists()) {
-          private$initialize_object()
-        } else {
-          stop("TileDB object does not exist")
-        }
-      }
-      private$tiledb_object
     }
   ),
 
