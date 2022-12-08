@@ -189,3 +189,83 @@ def test_dense_nd_array_slicing(tmp_path, io):
     else:
         output = a.read_numpy(io["coords"])
         assert np.all(output == io["output"])
+
+
+@pytest.mark.parametrize(
+    "io",
+    [
+        {
+            "shape": (10,),
+            "coords": (-1,),
+            "throws": RuntimeError,
+        },
+        {
+            "shape": (10,),
+            "coords": (12,),
+            "throws": RuntimeError,
+        },
+        {
+            "shape": (10,),
+            "coords": (
+                2,
+                3,
+            ),
+            "throws": ValueError,
+        },
+        {
+            "shape": (10, 20),
+            "coords": (
+                2,
+                3,
+                4,
+            ),
+            "throws": ValueError,
+        },
+        {
+            "shape": (10, 20),
+            "coords": (slice(-2, -1),),
+            "throws": ValueError,
+        },
+        {
+            "shape": (10, 20),
+            "coords": (slice(2, 3, -1),),
+            "throws": ValueError,
+        },
+        {
+            "shape": (10, 20),
+            "coords": (slice(3, 2, 1),),
+            "throws": ValueError,
+        },
+        {
+            "shape": (10, 20),
+            "coords": (slice(4, 8, 2),),
+            "throws": ValueError,
+        },
+        pytest.param(  # pending https://github.com/single-cell-data/TileDB-SOMA/issues/584
+            {
+                "shape": (10, 20),
+                "coords": (
+                    pa.array(
+                        [1, 2, 3],
+                    )
+                ),
+                "throws": ValueError,
+            },
+            marks=pytest.mark.xfail,
+        ),
+    ],
+)
+def test_dense_nd_array_indexing_errors(tmp_path, io):
+    shape = io["shape"]
+    read_coords = io["coords"]
+
+    a = soma.DenseNdArray(tmp_path.as_posix())
+    a.create(pa.int64(), shape)
+
+    npa = np.random.default_rng().standard_normal(np.prod(shape)).reshape(shape)
+
+    write_coords = tuple(slice(0, dim_len) for dim_len in shape)
+    a.write_tensor(coords=write_coords, values=pa.Tensor.from_numpy(npa))
+
+    with pytest.raises(io["throws"]):
+        a.read_numpy(coords=read_coords)
