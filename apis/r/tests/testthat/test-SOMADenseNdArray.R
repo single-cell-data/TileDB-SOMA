@@ -1,5 +1,4 @@
 test_that("SOMADenseNdArray creation", {
-  # skip_if(TRUE) # temporary
   uri <- withr::local_tempdir("dense-ndarray")
 
   ndarray <- SOMADenseNdArray$new(uri)
