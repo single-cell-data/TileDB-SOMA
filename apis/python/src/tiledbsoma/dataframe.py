@@ -97,7 +97,11 @@ class DataFrame(TileDBArray):
             # We need domain=(None,None) for string dims
             lo: Any = None
             hi: Any = None
-            if dtype != str:
+
+            if dtype == "ascii":
+                # Special "dtype" for TileDB-Py
+                pass
+            elif dtype != str:
                 if np.issubdtype(dtype, np.integer):
                     lo = np.iinfo(dtype).min
                     hi = np.iinfo(dtype).max - 1
@@ -106,6 +110,7 @@ class DataFrame(TileDBArray):
                     hi = np.finfo(dtype).max
                 else:
                     raise TypeError(f"Unsupported dtype {dtype}")
+
             dim = tiledb.Dim(
                 name=index_column_name,
                 domain=(lo, hi),
@@ -245,10 +250,9 @@ class DataFrame(TileDBArray):
                     dim_name = A.schema.domain.dim(i).name
                     if dim_ids is None:
                         pass  # No constraint; select all in this dimension
-                    elif isinstance(dim_ids, int):
-                        # TO DO: Support non-int index types when we have non-int index support
+                    elif isinstance(dim_ids, int) or isinstance(dim_ids, str):
+                        # TO DO: Support index types other than int and string when we have support
                         # in libtiledbsoma's SOMAReader. See also
-                        # https://github.com/single-cell-data/TileDB-SOMA/issues/418
                         # https://github.com/single-cell-data/TileDB-SOMA/issues/419
                         sr.set_dim_points(dim_name, [dim_ids])
                     elif isinstance(dim_ids, np.ndarray):
@@ -446,6 +450,8 @@ def _validate_schema(schema: pa.Schema, index_column_names: Sequence[str]) -> pa
             pa.uint64(),
             pa.float32(),
             pa.float64(),
+            pa.string(),
+            pa.large_string(),
         ]:
             raise TypeError("Unsupported index type - pending fix #418 and #419")
 
