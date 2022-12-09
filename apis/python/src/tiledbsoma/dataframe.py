@@ -97,7 +97,10 @@ class DataFrame(TileDBArray):
             # We need domain=(None,None) for string dims
             lo: Any = None
             hi: Any = None
-            if dtype != str:
+
+            if dtype == 'ascii':
+                pass
+            elif dtype != str:
                 if np.issubdtype(dtype, np.integer):
                     lo = np.iinfo(dtype).min
                     hi = np.iinfo(dtype).max - 1
@@ -452,6 +455,8 @@ def _validate_schema(schema: pa.Schema, index_column_names: Sequence[str]) -> pa
             pa.uint64(),
             pa.float32(),
             pa.float64(),
+            pa.string(),
+            pa.large_string(),
         ]:
             raise TypeError("Unsupported index type - pending fix #418 and #419")
 
