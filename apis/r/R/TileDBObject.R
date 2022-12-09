@@ -35,8 +35,8 @@ TileDBObject <- R6::R6Class(
 
     #' @description Print-friendly representation of the object.
     print = function() {
-      cat("  uri:", self$uri, "\n")
       cat(glue::glue("<{self$class()}>"), sep = "\n")
+      cat("  uri:", self$uri, "\n")
     },
 
     #' @description Check if the object exists.
