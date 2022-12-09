@@ -1,6 +1,6 @@
 test_that("TileDBArray helper functions", {
   uri <- withr::local_tempdir(pattern = "test-array")
-  tdb <- TileDBArray$new(uri = uri, verbose = TRUE)
+  tdb <- TileDBArray$new(uri = uri)
 
   expect_error(
     tdb$object,
@@ -22,13 +22,13 @@ test_that("TileDBArray helper functions", {
 
   # metadata
   md <- list(baz = "qux", foo = "bar")
-  tdb$add_metadata(md)
+  tdb$set_metadata(md)
   expect_equal(tdb$get_metadata(key = "foo"), "bar")
   expect_equal(tdb$get_metadata(prefix = "foo"), md["foo"])
   expect_equal(tdb$get_metadata(), md)
 
   # dimension slicing
-  tdb <- TileDBArray$new(uri = uri, verbose = TRUE)
+  tdb <- TileDBArray$new(uri = uri)
   expect_error(
     tdb$set_query(dims = "foo"),
     "'dims' must be a named list of character vectors"
@@ -63,7 +63,7 @@ test_that("TileDBArray helper functions", {
   )
 
   # set attribute filter
-  tdb <- TileDBArray$new(uri = uri, verbose = TRUE)
+  tdb <- TileDBArray$new(uri = uri)
   tdb$set_query(attr_filter = Admit == "Admitted")
   expect_true(all(tdb$object[]$Admit == "Admitted"))
 

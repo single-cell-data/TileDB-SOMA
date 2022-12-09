@@ -58,17 +58,16 @@ TileDBArray <- R6::R6Class(
 
     #' @description Add list of metadata to the specified TileDB array.
     #' @param metadata Named list of metadata to add.
-    #' @param prefix Optional prefix to add to the metadata attribute names.
     #' @return NULL
-    add_metadata = function(metadata, prefix = "") {
+    set_metadata = function(metadata) {
       stopifnot(
         "Metadata must be a named list" = is_named_list(metadata)
       )
       on.exit(private$close())
       private$open("WRITE")
-      mapply(
+      dev_null <- mapply(
         FUN = tiledb::tiledb_put_metadata,
-        key = paste0(prefix, names(metadata)),
+        key = names(metadata),
         val = metadata,
         MoreArgs = list(arr = self$object),
         SIMPLIFY = FALSE
@@ -220,9 +219,9 @@ TileDBArray <- R6::R6Class(
 
     write_object_type_metadata = function() {
       meta <- list()
-      meta[[SOMA_OBJECT_TYPE_METADATA_KEY]] <- class(self)[1]
+      meta[[SOMA_OBJECT_TYPE_METADATA_KEY]] <- self$class()
       meta[[SOMA_ENCODING_VERSION_METADATA_KEY]] <- SOMA_ENCODING_VERSION
-      self$add_metadata(meta) # TileDBArray or TileDBGroup
+      self$set_metadata(meta)
     },
 
     # @description Create empty TileDB array.
