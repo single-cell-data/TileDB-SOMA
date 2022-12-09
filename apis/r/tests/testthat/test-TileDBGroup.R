@@ -1,0 +1,74 @@
+
+test_that("Basic mechanics", {
+  uri <- file.path(withr::local_tempdir(), "new-group")
+  group <- TileDBGroup$new(uri)
+
+  # Should not exist on disk until created
+  expect_false(dir.exists(uri))
+  expect_false(group$exists())
+
+  # Create the collection on disk
+  group$create()
+  expect_true(dir.exists(uri))
+  expect_true(group$exists())
+  expect_match(tiledb::tiledb_object_type(uri), "GROUP")
+  expect_equal(group$length(), 0)
+
+  # Check exporters
+  expect_is(group$to_list(), "list")
+  expect_length(group$to_list(), 0)
+  expect_is(group$to_data_frame(), "data.frame")
+  expect_equal(nrow(group$to_data_frame()), 0)
+
+  # Add members to the group
+  a1 <- TileDBArray$new(
+    uri = create_empty_test_array(file.path(uri, "a1"))
+  )
+  g1 <- TileDBGroup$new(
+    uri = tiledb::tiledb_group_create(file.path(uri, "g1"))
+  )
+
+  # Objects are present but not yet members
+  expect_true(a1$exists())
+  expect_true(g1$exists())
+  expect_equal(group$length(), 0)
+
+  # Add sub-array/group as members
+  group$set(a1, name = "a1")
+  expect_equal(group$length(), 1)
+  expect_equal(group$to_data_frame()$type, "ARRAY")
+
+  group$set(g1, name = "g1")
+  expect_equal(group$length(), 2)
+  expect_setequal(group$to_data_frame()$type, c("ARRAY", "GROUP"))
+
+  # Read back the members
+  group_readback <- TileDBGroup$new(group$uri)
+  expect_equal(group_readback$length(), 2)
+
+  # Retrieve
+  expect_is(group_readback$get("a1"), "TileDBArray")
+  expect_is(group_readback$get("g1"), "TileDBGroup")
+
+  # Remove
+  group_readback$remove("a1")
+  expect_equal(group_readback$length(), 1)
+  group_readback$remove("g1")
+  expect_equal(group_readback$length(), 0)
+})
+
+test_that("Metadata", {
+  uri <- file.path(withr::local_tempdir(), "group-metadata")
+  group <- TileDBGroup$new(uri)
+  group$create()
+
+  md <- list(baz = "qux", foo = "bar")
+  group$set_metadata(md)
+  expect_equivalent(group$get_metadata("foo"), "bar")
+  expect_equivalent(group$get_metadata("baz"), "qux")
+
+  # Read all metadata
+  readmd <- group$get_metadata()
+  expect_equivalent(readmd[["baz"]], "qux")
+  expect_equivalent(readmd[["foo"]], "bar")
+})
