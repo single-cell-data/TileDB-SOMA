@@ -258,7 +258,8 @@ class DataFrame(TileDBArray):
                             )
                         sr.set_dim_points(dim_name, dim_ids)
                     elif isinstance(dim_ids, slice):
-                        lo_hi = util.slice_to_range(dim_ids)
+                        ned = A.nonempty_domain()  # None iff the array has no data
+                        lo_hi = util.slice_to_range(dim_ids, ned[i]) if ned else None
                         if lo_hi is not None:
                             lo, hi = lo_hi
                             if lo < 0 or hi < 0:
@@ -272,12 +273,6 @@ class DataFrame(TileDBArray):
                     elif isinstance(
                         dim_ids, (collections.abc.Sequence, pa.Array, pa.ChunkedArray)
                     ):
-                        #if (
-                            #dim_ids == []
-                        #):  # TileDB-Py maps [] to all; we want it to map to none.
-                            ## TODO: Fix this on https://github.com/single-cell-data/TileDB-SOMA/issues/484
-                            #pass
-                        #else:
                         sr.set_dim_points(dim_name, dim_ids)
                     else:
                         raise TypeError(

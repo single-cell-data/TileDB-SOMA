@@ -88,14 +88,11 @@ class ManagedQuery {
     template <typename T>
     void select_ranges(
         const std::string& dim, const std::vector<std::pair<T, T>>& ranges) {
-        printf("ASP0: %d (%d %d)\n", (int)ranges.size(), subarray_range_set_, subarray_nonempty_range_set_);
         subarray_range_set_ = true;
         for (auto& [start, stop] : ranges) {
             subarray_->add_range(dim, start, stop);
-            printf("YES0\n");
             subarray_nonempty_range_set_ = true;
         }
-        printf("ZSP0: %d (%d %d)\n", (int)ranges.size(), subarray_range_set_, subarray_nonempty_range_set_);
     }
 
     /**
@@ -107,14 +104,11 @@ class ManagedQuery {
      */
     template <typename T>
     void select_points(const std::string& dim, const std::vector<T>& points) {
-        printf("ASP1: %d (%d %d)\n", (int)points.size(), subarray_range_set_, subarray_nonempty_range_set_);
         subarray_range_set_ = true;
         for (auto& point : points) {
             subarray_->add_range(dim, point, point);
-            printf("YES1\n");
             subarray_nonempty_range_set_ = true;
         }
-        printf("ZSP1: %d (%d %d)\n", (int)points.size(), subarray_range_set_, subarray_nonempty_range_set_);
     }
 
     /**
@@ -126,14 +120,11 @@ class ManagedQuery {
      */
     template <typename T>
     void select_points(const std::string& dim, const tcb::span<T> points) {
-        printf("ASP2: %d (%d %d)\n", (int)points.size(), subarray_range_set_, subarray_nonempty_range_set_);
         subarray_range_set_ = true;
         for (auto& point : points) {
             subarray_->add_range(dim, point, point);
-            printf("YES2\n");
             subarray_nonempty_range_set_ = true;
         }
-        printf("ZSP2: %d (%d %d)\n", (int)points.size(), subarray_range_set_, subarray_nonempty_range_set_);
     }
 
     /**
@@ -145,12 +136,9 @@ class ManagedQuery {
      */
     template <typename T>
     void select_point(const std::string& dim, const T& point) {
-        printf("ASP3: %d (%d %d)\n", 1, subarray_range_set_, subarray_nonempty_range_set_);
-        printf("SP3: %d\n", 1);
         subarray_->add_range(dim, point, point);
         subarray_nonempty_range_set_ = true;
         subarray_range_set_ = true;
-        printf("ZSP3: %d (%d %d)\n", 1, subarray_range_set_, subarray_nonempty_range_set_);
     }
 
     /**
@@ -268,9 +256,26 @@ class ManagedQuery {
         return schema_;
     }
 
+    /**
+     * @brief Tells whether this is an empty-ids-list query.
+     *
+     * If the ids-list was completely empty, this is a different kind of query:
+     *
+     * o Normally, we pass core our buffers. It loops through tiles, filtering
+     *   optionally by specified (non-empty) ids-list, and/or doing attr filters
+     *   to select output cells.
+     *
+     * o But if the caller explicitly specifed empty ids-list then there are zero
+     *   tiles to load, zero filtering, etc. We have everything we need in terms
+     *   of the schema (typed column-buffers) -- all that remains to "execute"
+     *   this empty-ids-list "query" is to say that the column buffers all have
+     *   zero output cells.
+     */
     bool has_empty_query() {
       return subarray_range_set_ && !subarray_nonempty_range_set_;
     }
+
+    void mark_buffers_empty();
 
    private:
     //===================================================================

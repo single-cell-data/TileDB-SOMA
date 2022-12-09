@@ -139,25 +139,20 @@ void ManagedQuery::submit() {
     // Submit query
     LOG_DEBUG(fmt::format("[ManagedQuery] [{}] Submit query", name_));
 
-    if (subarray_range_set_ && !subarray_nonempty_range_set_) {
-        printf("T1 EMPTY\n");
-        //
+    if (has_empty_query()) {
+      // Empty-ids-list query, e.g. Python `ids=[]`.
+        mark_buffers_empty();
     } else {
-        printf("T1 NON-EMPTY\n");
         query_->submit();
     }
     query_submitted_ = true;
 }
 
 std::shared_ptr<ArrayBuffers> ManagedQuery::results() {
-    auto query_is_empty = subarray_range_set_ && !subarray_nonempty_range_set_;
-
-    if (query_is_empty) {
-        printf("T2 EMPTY\n");
+    if (has_empty_query()) {
         query_submitted_ = false;
         return buffers_;
     }
-    printf("T2 NON-EMPTY\n");
 
     if (!query_submitted_) {
         throw TileDBSOMAError(fmt::format(
@@ -201,6 +196,15 @@ std::shared_ptr<ArrayBuffers> ManagedQuery::results() {
     }
 
     return buffers_;
+}
+
+// For empty-ids-list query.
+void ManagedQuery::mark_buffers_empty() {
+    for (auto& name : buffers_->names()) {
+        buffers_->at(name)->mark_empty();
+        LOG_DEBUG(fmt::format(
+            "[ManagedQuery] [{}] Buffer {} cells=0", name_, name));
+    }
 }
 
 };  // namespace tiledbsoma

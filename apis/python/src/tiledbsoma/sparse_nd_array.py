@@ -108,8 +108,8 @@ class SparseNdArray(TileDBArray):
             allows_duplicates=False,
             offsets_filters=create_options.offsets_filters(),
             capacity=create_options.get("capacity", 100000),
-            tile_order=cell_order,
-            cell_order=tile_order,
+            tile_order=tile_order,
+            cell_order=cell_order,
             ctx=self._ctx,
         )
 
@@ -277,7 +277,7 @@ class SparseNdArray(TileDBArray):
 
                 for i, coord in enumerate(coords):
                     #                # Example: coords = [None, 3, slice(4,5)]
-                    #                # coor takes on values None, 3, and slice(4,5) in this loop body.
+                    #                # coord takes on values None, 3, and slice(4,5) in this loop body.
                     dim_name = A.schema.domain.dim(i).name
                     if coord is None:
                         pass  # No constraint; select all in this dimension
@@ -290,7 +290,8 @@ class SparseNdArray(TileDBArray):
                             )
                         sr.set_dim_points(dim_name, coord)
                     elif isinstance(coord, slice):
-                        lo_hi = util.slice_to_range(coord)
+                        ned = A.nonempty_domain()  # None iff the array has no data
+                        lo_hi = util.slice_to_range(coord, ned[i]) if ned else None
                         if lo_hi is not None:
                             lo, hi = lo_hi
                             if lo < 0 or hi < 0:

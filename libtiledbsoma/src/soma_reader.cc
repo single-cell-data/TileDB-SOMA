@@ -117,17 +117,17 @@ void SOMAReader::submit() {
 }
 
 std::optional<std::shared_ptr<ArrayBuffers>> SOMAReader::read_next() {
-    // XXX
-    printf("C1\n");
+    // This is from a query with empty ids-list (e.g. Python `[]`).
+    // There is no mq_->submit().
     if (mq_->has_empty_query()) {
-        printf("C2\n");
-        // If the query is complete, return `std::nullopt`.
         if (mq_->is_complete()) {
-            printf("C3\n");
-            //return std::nullopt;
-            return mq_->results();
+            if (first_read_next_) {
+              first_read_next_ = false;
+              return mq_->results();
+            } else {
+              return std::nullopt;
+            }
         }
-        printf("C4\n");
         return mq_->results();
     }
 

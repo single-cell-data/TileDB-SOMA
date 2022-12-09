@@ -148,6 +148,23 @@ size_t ColumnBuffer::update_size(const Query& query) {
     return num_cells_;
 }
 
+// This is from a "query" with empty ids-list (e.g. Python `[]`).
+void ColumnBuffer::mark_empty() {
+    uint64_t num_offsets = 0;
+    uint64_t num_elements = 0;
+
+    if (is_var()) {
+        num_cells_ = num_offsets;
+        // Add extra offset for arrow.
+        if (offsets_.capacity() < num_offsets + 1) {
+            offsets_.reserve(num_offsets + 1);
+        }
+        offsets_[num_offsets] = num_elements;
+    } else {
+        num_cells_ = num_elements;
+    }
+}
+
 std::vector<std::string> ColumnBuffer::strings() {
     std::vector<std::string> result;
 

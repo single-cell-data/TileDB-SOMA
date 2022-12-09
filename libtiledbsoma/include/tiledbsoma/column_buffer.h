@@ -114,6 +114,12 @@ class ColumnBuffer {
     size_t update_size(const Query& query);
 
     /**
+     * @brief Size num_cells_ to match results from a query with empty ids-list
+     * (e.g. Python `[]`).
+     */
+    void mark_empty();
+
+    /**
      * @brief Return the number of cells in the buffer.
      *
      * @return size_t
