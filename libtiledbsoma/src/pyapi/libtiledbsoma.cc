@@ -212,6 +212,12 @@ PYBIND11_MODULE(libtiledbsoma, m) {
                 const std::string&, const std::vector<int64_t>&)>(
                 &SOMAReader::set_dim_points))
 
+        .def(
+            "set_dim_points",
+            static_cast<void (SOMAReader::*)(
+                const std::string&, const std::vector<std::string>&)>(
+                &SOMAReader::set_dim_points))
+
         // Binding to set slices using PyArrow::ChunkedArray
         .def(
             "set_dim_points",
@@ -246,6 +252,15 @@ PYBIND11_MODULE(libtiledbsoma, m) {
                             (uint64_t)arrow_array.length};
                         reader.set_dim_points(
                             dim, data, partition_index, partition_count);
+                    } else if (!strcmp(arrow_schema.format, "U")) {
+                        // TODO: partitioning is not supported for string dims
+                        const char* data = (const char*)(arrow_array.buffers[2]);
+                        const uint64_t* offsets = (const uint64_t*)(arrow_array.buffers[1]);
+
+                        for (int64_t i = 0; i < arrow_array.length; i++) {
+                            auto value = std::string{data + offsets[i], offsets[i + 1] - offsets[i]};
+                            reader.set_dim_point(dim, value);
+                        }
                     } else {
                         throw TileDBSOMAError(fmt::format(
                             "[libtiledbsoma] set_dim_points: type={} not "
@@ -267,6 +282,13 @@ PYBIND11_MODULE(libtiledbsoma, m) {
             static_cast<void (SOMAReader::*)(
                 const std::string&,
                 const std::vector<std::pair<int64_t, int64_t>>&)>(
+                &SOMAReader::set_dim_ranges))
+
+        .def(
+            "set_dim_ranges",
+            static_cast<void (SOMAReader::*)(
+                const std::string&,
+                const std::vector<std::pair<std::string, std::string>>&)>(
                 &SOMAReader::set_dim_ranges))
 
         .def(
