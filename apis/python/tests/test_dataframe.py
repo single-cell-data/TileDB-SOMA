@@ -420,16 +420,12 @@ def make_multiply_indexed_dataframe(tmp_path, index_column_names: List[str]):
             "A": [],
             "throws": None,
         },
-        pytest.param(
-            # TODO: use after https://github.com/single-cell-data/TileDB-SOMA/issues/484 is resolved
-            {
-                "index_column_names": ["index1"],
-                "ids": [[]],
-                "A": [],
-                "throws": None,
-            },
-            marks=pytest.mark.xfail,
-        ),
+        {
+            "index_column_names": ["index1"],
+            "ids": [[]],
+            "A": [],
+            "throws": None,
+        },
         # 1D: indexing slot is tuple
         {
             "index_column_names": ["index1"],
