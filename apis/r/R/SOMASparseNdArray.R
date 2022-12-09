@@ -77,6 +77,7 @@ SOMASparseNDArray <- R6::R6Class(
 
       # create array
       tiledb::tiledb_array_create(uri = self$uri, schema = tdb_schema)
+      private$write_object_type_metadata()
     },
 
     #' @description Write matrix-like data to the array.
