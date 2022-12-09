@@ -313,12 +313,8 @@ def make_dataframe(request):
         pa.uint32(),
         pa.int64(),
         pa.uint64(),
-        pytest.param(
-            pa.string(), marks=pytest.mark.xfail
-        ),  # TODO: remove xfail when #418 is fixed
-        pytest.param(
-            pa.large_string(), marks=pytest.mark.xfail
-        ),  # TODO: remove xfail when #418 is fixed
+        pa.string(),
+        pa.large_string(),
         pytest.param(
             pa.binary(), marks=pytest.mark.xfail
         ),  # TODO: remove xfail when #419 is fixed
@@ -341,12 +337,11 @@ def make_multiply_indexed_dataframe(tmp_path, index_column_names: List[str]):
     """
     schema = pa.schema(
         [
-            # TO DO: Support non-int index types when we have non-int index support
-            # in libtiledbsoma's SOMAReader. See also
-            # https://github.com/single-cell-data/TileDB-SOMA/issues/418
-            # https://github.com/single-cell-data/TileDB-SOMA/issues/419
+            # TO DO: Support other index types when we have support for more than int and string
+            # index types in libtiledbsoma's SOMAReader. See also
+            # https://github.com/single-cell-data/TileDB-SOMA/issues/419.
             ("index1", pa.int64()),
-            ("index2", pa.int64()),
+            ("index2", pa.string()),
             ("index3", pa.int64()),
             ("index4", pa.int64()),
             ("soma_joinid", pa.int64()),
@@ -359,7 +354,7 @@ def make_multiply_indexed_dataframe(tmp_path, index_column_names: List[str]):
 
     data = {
         "index1": [0, 1, 2, 3, 4, 5],
-        "index2": [400, 400, 500, 500, 600, 600],
+        "index2": ["aaa", "aaa", "bbb", "bbb", "ccc", "ccc"],
         "index3": [0, 1, 0, 1, 0, 1],
         "index4": [1000, 2000, 1000, 1000, 1000, 1000],
         "soma_joinid": [10, 11, 12, 13, 14, 15],
@@ -554,22 +549,12 @@ def make_multiply_indexed_dataframe(tmp_path, index_column_names: List[str]):
             "throws": TypeError,
         },
         # 1D: indexing slot is of invalid type
-        # TODO: I want to test this but Typeguard fails the test since it already knows strings are not
-        # valid until we implement
-        # https://github.com/single-cell-data/TileDB-SOMA/issues/418
-        # https://github.com/single-cell-data/TileDB-SOMA/issues/419
-        #
-        # Also TO DO: This xfail, when uncommented, causes "Abort trap: 6" but only
-        # in MacOS CI, not on my Mac outside of CI, and not in Linux CI.
-        # pytest.param(
-        #    {
-        #        "index_column_names": ["index1"],
-        #        "ids": ["nonesuch"],  # noqa
-        #        "A": None,
-        #        "throws": soma.SOMAError,
-        #    },
-        #    marks=pytest.mark.xfail,
-        # ),
+        {
+            "index_column_names": ["index2", "index3"],
+            "ids": [[True], slice(None)],
+            "A": None,
+            "throws": RuntimeError,
+        },
         # 2D: indexing list is None
         {
             "index_column_names": ["index2", "index3"],
@@ -586,45 +571,58 @@ def make_multiply_indexed_dataframe(tmp_path, index_column_names: List[str]):
         },
         # 2D: indexing slot is int
         {
+            "index_column_names": ["index1", "index3"],
+            "ids": [0, 0],
+            "A": [10],
+            "throws": None,
+        },
+        # 2D: indexing slots are string and int
+        {
             "index_column_names": ["index2", "index3"],
-            "ids": [400, 0],
+            "ids": [["aaa"], 0],
+            "A": [10],
+            "throws": None,
+        },
+        # 2D: indexing slot is string not list/tuple of string
+        {
+            "index_column_names": ["index2", "index3"],
+            "ids": ["aaa", 0],
             "A": [10],
             "throws": None,
         },
         # 2D: indexing slot is list
-        # TODO: at present SOMAReader only accepts int dims. See also:
-        # https://github.com/single-cell-data/TileDB-SOMA/issues/418
+        # TODO: at present SOMAReader only accepts int and string dims. See also:
         # https://github.com/single-cell-data/TileDB-SOMA/issues/419
         {
             "index_column_names": ["index2", "index3"],
-            "ids": [[400, 600], None],
+            "ids": [["aaa", "ccc"], None],
             "A": [10, 11, 14, 15],
             "throws": None,
         },
         # 3D: indexing slot is list
         {
             "index_column_names": ["index2", "index3", "index4"],
-            "ids": [[400, 600], None, None],
+            "ids": [["aaa", "ccc"], None, None],
             "A": [10, 11, 14, 15],
             "throws": None,
         },
         # 3D: indexing slot is mixed
         {
             "index_column_names": ["index2", "index3", "index4"],
-            "ids": [range(400, 600), None, np.asarray([2000, 9999])],
+            "ids": [("aaa", "ccc"), None, np.asarray([2000, 9999])],
             "A": [11],
             "throws": None,
         },
         # value_filter
         {
             "index_column_names": ["index1", "index2"],
-            "ids": [None, slice(500, 1000)],
+            "ids": [None, ("ccc", "zzz")],
             "value_filter": "soma_joinid > 13",
             "A": [14, 15],
         },
         {
             "index_column_names": ["index1", "index2"],
-            "ids": [None, slice(500, 1000)],
+            "ids": [None, ("bbb", "zzz")],
             "value_filter": "quick brown fox",
             "A": None,
             "throws": tiledb.TileDBError,  # TODO: should this be wrapped?
