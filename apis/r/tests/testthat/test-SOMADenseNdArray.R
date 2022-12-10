@@ -24,13 +24,24 @@ test_that("SOMADenseNdArray creation", {
 
   # Subset the array on both dimensions
   tbl <- ndarray$read_arrow_table(
-    coords = list(soma_dim_0=bit64::as.integer64(0:3), soma_dim_1=bit64::as.integer64(0:2)),
+    coords = list(soma_dim_0=0:3, soma_dim_1=0:2),
     result_order = "COL_MAJOR"
   )
   expect_identical(
     as.numeric(tbl$GetColumnByName("soma_data")),
     as.numeric(mat[1:4, 1:3])
   )
+
+  # Subset the array on both dimensions, unnamed list
+  tbl <- ndarray$read_arrow_table(
+    coords = list(0:3, 0:2),
+    result_order = "COL_MAJOR"
+  )
+  expect_identical(
+    as.numeric(tbl$GetColumnByName("soma_data")),
+    as.numeric(mat[1:4, 1:3])
+  )
+
 
   # Subset the array on the second dimension
   tbl <- ndarray$read_arrow_table(

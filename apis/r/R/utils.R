@@ -34,6 +34,10 @@ is_matrix <- function(x) {
   is.matrix(x) || inherits(x, "Matrix")
 }
 
+is_vector_or_int64 <- function(x) {
+    is.vector(x) || inherits(x, "integer64")
+}
+
 has_dimnames <- function(x) {
   stopifnot(is_matrix(x))
   dims <- dimnames(x) %||% list(NULL)

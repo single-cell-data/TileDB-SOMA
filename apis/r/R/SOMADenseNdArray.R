@@ -82,7 +82,7 @@ SOMADenseNdArray <- R6::R6Class(
     #' @param coords Optional `list` of integer vectors, one for each dimension, with a
     #' length equal to the number of values to read. If `NULL`, all values are
     #' read. List elements can be named when specifying a subset of dimensions.
-    #' @param result_order Order of read results. This can be one of either
+    #' @param result_order Optional order of read results. This can be one of either
     #' `"ROW_MAJOR, `"COL_MAJOR"`, `"GLOBAL_ORDER"`, or `"UNORDERED"`.
     #' @param log_level Optional logging level with default value of `"warn"`.
     #' @return An [`arrow::Table`].
@@ -92,17 +92,25 @@ SOMADenseNdArray <- R6::R6Class(
       log_level = "warn"
     ) {
       uri <- self$uri
-      arr <- self$object
 
       result_order <- map_query_layout(match_query_layout(result_order))
 
-      # ensure coords is a named list, use to select dim points
-      stopifnot("'coords' must be a list" = is.null(coords) || is.list(coords),
-                "names of 'coords' must correspond to dimension names" =
-                    is.null(coords) || all(names(coords) %in% self$dimnames()),
-                "'coords' must be a list of vectors or integer64" =
-                    is.null(coords) || all(vapply_lgl(coords, \(x) is.vector(x) || inherits(x, "integer64")))
-                )
+      if (!is.null(coords)) {
+          ## ensure coords is a named list, use to select dim points
+          stopifnot("'coords' must be a list" = is.list(coords),
+                    "'coords' must be a list of vectors or integer64" =
+                        all(vapply_lgl(coords, is_vector_or_int64)),
+                    "'coords' if unnamed must have length of dim names, else if named names must match dim names" =
+                        (is.null(names(coords)) && length(coords) == length(self$dimnames())) ||
+                        (!is.null(names(coords)) && all(names(coords) %in% self$dimnames()))
+                    )
+
+          ## if unnamed (and test for length has passed in previous statement) set names
+          if (is.null(names(coords))) names(coords) <- self$dimnames()
+
+          ## convert integer to integer64 to match dimension type
+          coords <- lapply(coords, function(x) if (inherits(x, "integer")) bit64::as.integer64(x) else x)
+      }
 
       rl <- soma_reader(uri = uri,
                         dim_points = coords,       	# NULL is dealt with by soma_reader()
