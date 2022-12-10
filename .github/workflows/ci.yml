@@ -52,7 +52,7 @@ jobs:
         python setup.py sdist
         pip install dist/tiledbsoma-*.tar.gz
         python -c 'import tiledbsoma; print(tiledbsoma.libtiledbsoma.__file__)'
-        python setup.py build_ext  # for coverage run below
+        pip install .  # build extension for coverage run below
       working-directory: ./apis/python
       env:
         CC: ${{ matrix.cc }}
