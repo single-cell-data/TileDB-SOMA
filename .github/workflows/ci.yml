@@ -46,9 +46,9 @@ jobs:
     - name: Install Python packages
       run: python -m pip -v install pytest pytest-cov typeguard wheel
 
-    - name: Build & install tiledbsoma python sdist
+    - name: Build python sdist
       # This provides an early check that the sdist contains the complete sources for libtiledbsoma
-      run: python setup.py sdist && pip install dist/tiledbsoma-*.tar.gz
+      run: python setup.py sdist && pip install dist/tiledbsoma-*.tar.gz && python setup.py build_ext
       working-directory: ./apis/python
       env:
         CC: ${{ matrix.cc }}
