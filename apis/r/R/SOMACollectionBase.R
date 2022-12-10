@@ -39,16 +39,6 @@ SOMACollectionBase <- R6::R6Class(
     }
   ),
 
-  active = list(
-    #' @field somas Retrieve  members.
-    members = function(value) {
-      if (!missing(value)) {
-        stop("somas is read-only, use 'add_member()' to add a new SOMA")
-      }
-      Filter(function(x) inherits(x, "SOMA"), self$members)
-    }
-  ),
-
   private = list(
 
     # Instantiate a soma member object.
