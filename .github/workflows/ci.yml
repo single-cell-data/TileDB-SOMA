@@ -42,7 +42,7 @@ jobs:
         python-version: ${{ matrix.python-version }}
 
     - name: Install Python packages
-      run: python -m pip -v install pytest pytest-cov typeguard
+      run: python -m pip -v install pytest pytest-cov typeguard wheel
 
     - name: Build & install tiledbsoma python sdist
       # This provides an early check that the sdist contains the complete sources for libtiledbsoma
