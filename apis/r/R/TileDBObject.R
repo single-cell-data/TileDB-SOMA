@@ -42,7 +42,7 @@ TileDBObject <- R6::R6Class(
     #' @description Check if the object exists.
     #' @return `TRUE`` if the object exists, `FALSE` otherwise.
     exists = function() {
-      if (self$class() == "TileDBGroup") {
+      if (self$class() == "TileDBObject") {
         expected_type <- c("ARRAY", "GROUP")
       } else if (inherits(self, "TileDBArray")) {
         expected_type <- "ARRAY"
