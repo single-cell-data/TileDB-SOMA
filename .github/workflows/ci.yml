@@ -48,7 +48,8 @@ jobs:
 
     - name: Build & install tiledbsoma python sdist
       # This provides an early check that the sdist contains the complete sources for libtiledbsoma
-      run: env -C apis/python python setup.py sdist && pip install apis/python/dist/tiledbsoma-*.tar.gz
+      run: python setup.py sdist && pip install dist/tiledbsoma-*.tar.gz
+      working-directory: ./apis/python
       env:
         CC: ${{ matrix.cc }}
         CXX: ${{ matrix.cxx }}
