@@ -82,6 +82,7 @@ jobs:
       run: |
         ls -lR
         find . -name 'tiledbsoma-*-cp38-cp38-*${{ matrix.platform }}*_${{ matrix.arch }}.whl'
+        pip install wheel
         pip install $(find . -name 'tiledbsoma-*-cp38-cp38-*${{ matrix.platform }}*_${{ matrix.arch }}.whl')
     - name: Smoke test ${{ matrix.os }}
       run: python -c 'import tiledbsoma; print(tiledbsoma.libtiledbsoma.__file__)'
