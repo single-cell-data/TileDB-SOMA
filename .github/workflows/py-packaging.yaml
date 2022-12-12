@@ -64,7 +64,6 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        python-version: ['3.8', '3.9', '3.10']
         include:
         - os: ubuntu-20.04
           platform: manylinux2014
@@ -73,17 +72,16 @@ jobs:
           platform: macosx
           arch: x86_64
     steps:
-    - name: Set up Python ${{ matrix.python-version }}
+    - name: Set up Python 3.8
       uses: actions/setup-python@v4
       with:
-        python-version: ${{ matrix.python-version }}
+        python-version: 3.8
     - name: Download artifacts
       uses: actions/download-artifact@v3
     - name: Install wheel
       run: |
         ls -lR
-        find . -name 'tiledbsoma-*-cp${cpv}-cp${cpv}-${{ matrix.platform }}_*_${{ matrix.arch }}.whl'
-        cpv=$( echo '${{ matrix.python-version }}' | tr -d .)
-        pip install $(find . -name 'tiledbsoma-*-cp${cpv}-cp${cpv}-${{ matrix.platform }}_*_${{ matrix.arch }}.whl')
+        find . -name 'tiledbsoma-*-cp38-cp38-${{ matrix.platform }}_*_${{ matrix.arch }}.whl'
+        pip install $(find . -name 'tiledbsoma-*-cp38-cp38-${{ matrix.platform }}_*_${{ matrix.arch }}.whl')
     - name: Smoke test ${{ matrix.os }}
       run: python -c 'import tiledbsoma; print(tiledbsoma.libtiledbsoma.__file__)'
