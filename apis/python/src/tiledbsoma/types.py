@@ -2,6 +2,7 @@ import pathlib
 from typing import Any, List, Literal, Mapping, Sequence, Tuple, Union
 
 import numpy as np
+import numpy.typing as npt
 import pandas as pd
 import pyarrow as pa
 
@@ -45,7 +46,7 @@ SparseDataFrameCoordinate = Union[
     Sequence[int],
     pa.Array,
     pa.ChunkedArray,
-    np.ndarray,
+    npt.NDArray[np.integer],
 ]
 SparseDataFrameCoordinates = Sequence[SparseDataFrameCoordinate]
 
@@ -55,7 +56,15 @@ SparseDataFrameCoordinates = Sequence[SparseDataFrameCoordinate]
 
 SparseNdCoordinates = Union[
     None,
-    Sequence[Union[None, DenseCoordinates, Sequence[int], np.ndarray, pa.IntegerArray]],
+    Sequence[
+        Union[
+            None,
+            DenseCoordinates,
+            Sequence[int],
+            npt.NDArray[np.integer],
+            pa.IntegerArray,
+        ]
+    ],
 ]
 
 PlatformConfig = Mapping[str, Any]
