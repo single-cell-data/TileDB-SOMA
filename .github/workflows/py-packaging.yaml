@@ -47,12 +47,12 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           name: sdist
-      - name: tree
-        run: ls -lR
+      - name: rename sdist
+        run: cp tiledbsoma-*.tar.gz tiledbsoma.tar.gz && ls -lh
       - name: Build wheels
         uses: pypa/cibuildwheel@v2.11.3
         with:
-          package-dir: dist
+          package-dir: tiledbsoma.tar.gz
         env:
           CIBW_BUILD: ${{ matrix.cibw_build }}
       - uses: actions/upload-artifact@v3
