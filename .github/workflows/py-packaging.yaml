@@ -81,7 +81,9 @@ jobs:
       uses: actions/download-artifact@v3
     - name: Install wheel
       run: |
+        ls -lR
+        find . -name 'tiledbsoma-*-cp${cpv}-cp${cpv}-${{ matrix.platform }}_*_${{ matrix.arch }}.whl'
         cpv=$( echo '${{ matrix.python-version }}' | tr -d .)
-        pip install tiledbsoma-*-cp${cpv}-cp${cpv}-${{ matrix.platform }}_*_${{ matrix.arch }}.whl
-    - name: Smoke test
+        pip install $(find . -name 'tiledbsoma-*-cp${cpv}-cp${cpv}-${{ matrix.platform }}_*_${{ matrix.arch }}.whl')
+    - name: Smoke test ${{ matrix.os }}
       run: python -c 'import tiledbsoma; print(tiledbsoma.libtiledbsoma.__file__)'
