@@ -53,6 +53,7 @@ jobs:
       env:
         CIBW_BUILD: ${{ matrix.cibw_build }}
         CIBW_BUILD_VERBOSITY: 1
+        CIBW_BEFORE_BUILD: find . -type f -name 'libtiledbsoma*.so' && find . -type f -name 'libtiledbsoma*.dylib'
     - name: Upload wheels-${{ matrix.platform }}
       uses: actions/upload-artifact@v3
       with:
