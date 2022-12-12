@@ -80,9 +80,10 @@ jobs:
       uses: actions/download-artifact@v3
     - name: Install wheel
       run: |
+        set -x
         ls -lR
-        find . -name 'tiledbsoma-*-cp38-cp38-*${{ matrix.platform }}*_${{ matrix.arch }}.whl'
-        pip install wheel
-        pip install $(find . -name 'tiledbsoma-*-cp38-cp38-*${{ matrix.platform }}*_${{ matrix.arch }}.whl')
+        whl=$(find . -name 'tiledbsoma-*-cp38-cp38-*${{ matrix.platform }}*_${{ matrix.arch }}.whl')
+        unzip -l $whl
+        pip install wheel $whl
     - name: Smoke test ${{ matrix.os }}
       run: python -c 'import tiledbsoma; print(tiledbsoma.libtiledbsoma.__file__)'

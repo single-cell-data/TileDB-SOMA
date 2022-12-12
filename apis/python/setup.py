@@ -47,7 +47,9 @@ def find_or_build(setuptools_cmd):
 
     # Call the build script if the install library directory does not exist
     if not os.path.exists(lib_dir):
-        subprocess.run("bash bld", cwd=scripts_dir, shell=True)
+        bld_env = dict(os.environ)
+        bld_env["PYTHON_EXECUTABLE"] = sys.executable
+        subprocess.run("bash bld", cwd=scripts_dir, shell=True, env=bld_env)
 
     # Copy native libs into the package dir so they can be found by package_data
     package_data = []

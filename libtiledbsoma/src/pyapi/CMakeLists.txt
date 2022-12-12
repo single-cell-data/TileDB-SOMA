@@ -1,5 +1,5 @@
 # https://pybind11.readthedocs.io/en/stable/compiling.html#findpython-mode
-#find_package(Python COMPONENTS Interpreter Development)
+find_package(Python COMPONENTS Interpreter Development)
 find_package(pybind11 CONFIG REQUIRED)
 
 pybind11_add_module(libtiledbsoma
