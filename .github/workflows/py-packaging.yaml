@@ -20,10 +20,6 @@ jobs:
     - name: Build sdist
       run: python setup.py sdist
       working-directory: ./apis/python
-    - name: Smoke test
-      run: |
-        pip install apis/python/dist/tiledbsoma-*.tar.gz
-        python -c 'import tiledbsoma; print(tiledbsoma.libtiledbsoma.__file__)'
     - name: Upload sdist artifact
       uses: actions/upload-artifact@v3
       with:
@@ -39,22 +35,53 @@ jobs:
         include:
         - os: ubuntu-20.04
           cibw_build: '*-manylinux_x86_64'
+          platform: manylinux2014
         - os: macos-11
           cibw_build: '*-macosx_x86_64'
+          platform: macosx
     steps:
-      - name: Download sdist artifact
-        id: download
-        uses: actions/download-artifact@v3
-        with:
-          name: sdist
-      - name: rename sdist
-        run: cp tiledbsoma-*.tar.gz tiledbsoma.tar.gz && ls -lh
-      - name: Build wheels
-        uses: pypa/cibuildwheel@v2.11.3
-        with:
-          package-dir: tiledbsoma.tar.gz
-        env:
-          CIBW_BUILD: ${{ matrix.cibw_build }}
-      - uses: actions/upload-artifact@v3
-        with:
-          path: ./wheelhouse/*.whl
+    - name: Download sdist artifact
+      uses: actions/download-artifact@v3
+      with:
+        name: sdist
+    - name: rename sdist
+      run: cp tiledbsoma-*.tar.gz tiledbsoma.tar.gz && ls -lh
+    - name: Build wheels
+      uses: pypa/cibuildwheel@v2.11.3
+      with:
+        package-dir: tiledbsoma.tar.gz
+      env:
+        CIBW_BUILD: ${{ matrix.cibw_build }}
+    - name: Upload wheels-${{ matrix.platform }}
+      uses: actions/upload-artifact@v3
+      with:
+        name: wheels-${{ matrix.platform }}
+        path: ./wheelhouse/*.whl
+
+  smoke-test:
+    name: Smoke test
+    needs: wheels
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        python-version: ['3.8', '3.9', '3.10']
+        include:
+        - os: ubuntu-20.04
+          platform: manylinux2014
+          arch: x86_64
+        - os: macos-11
+          platform: macosx
+          arch: x86_64
+    steps:
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+    - name: Download artifacts
+      uses: actions/download-artifact@v3
+    - name: Install wheel
+      run: |
+        cpv=$( echo '${{ matrix.python-version }}' | tr -d .)
+        pip install tiledbsoma-*-cp${cpv}-cp${cpv}-${{ matrix.platform }}_*_${{ matrix.arch }.whl
+    - name: Smoke test
+      run: python -c 'import tiledbsoma; print(tiledbsoma.libtiledbsoma.__file__)'
