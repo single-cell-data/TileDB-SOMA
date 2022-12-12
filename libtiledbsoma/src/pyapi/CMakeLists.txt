@@ -1,5 +1,6 @@
 # https://pybind11.readthedocs.io/en/stable/compiling.html#findpython-mode
-find_package(Python COMPONENTS Interpreter Development)
+execute_process(COMMAND which python3 OUTPUT_STRIP_TRAILING_WHITESPACE OUTPUT_VARIABLE PYTHON_EXECUTABLE)
+find_package(Python COMPONENTS Interpreter Development.Module)
 find_package(pybind11 CONFIG REQUIRED)
 
 pybind11_add_module(libtiledbsoma
