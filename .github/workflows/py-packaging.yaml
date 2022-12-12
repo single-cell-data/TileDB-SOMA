@@ -53,7 +53,7 @@ jobs:
       env:
         CIBW_BUILD: ${{ matrix.cibw_build }}
         CIBW_BUILD_VERBOSITY: 1
-        CIBW_BEFORE_BUILD: find . -type d -name dist | tee | xargs rm -rf
+        CIBW_BEFORE_BUILD: find . -type d -name dist -print -exec rm -rf \;
         # ^ clear out any previously-built extension libraries that might be found by
         #   apis/python/setup.py:find_or_build()
     - name: Upload wheels-${{ matrix.platform }}
