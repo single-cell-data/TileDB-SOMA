@@ -21,7 +21,7 @@ jobs:
       run: python setup.py sdist
       working-directory: ./apis/python
     - name: Smoke test
-      run:
+      run: |
         pip install apis/python/dist/tiledbsoma-*.tar.gz
         python -c 'import tiledbsoma; print(tiledbsoma.libtiledbsoma.__file__)'
     - name: Upload sdist artifact
@@ -32,6 +32,7 @@ jobs:
 
   wheels:
     name: Build wheels on ${{ matrix.os }}
+    needs: sdist
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
