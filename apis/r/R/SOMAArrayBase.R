@@ -1,0 +1,38 @@
+#' SOMA Array Base Class
+#'
+#' Adds SOMA-specific functionality to the [`TileDBArray`] class.
+
+SOMAArrayBase <- R6::R6Class(
+  classname = "SOMAArrayBase",
+  inherit = TileDBArray,
+
+  active = list(
+    #' @field somas Retrieve [`SOMA`] members.
+    soma_type = function(value) {
+      if (!missing(value)) {
+        stop("`soma_type` is a read-only field", call. = FALSE)
+      }
+      if (is.null(private$soma_type_cache)) {
+        private$update_soma_type_cache()
+      }
+      private$soma_type_cache
+    }
+  ),
+
+  private = list(
+
+    # Cache object's SOMA_OBJECT_TYPE_METADATA_KEY
+    soma_type_cache = NULL,
+
+    update_soma_type_cache = function() {
+      private$soma_type_cache <- self$get_metadata(SOMA_OBJECT_TYPE_METADATA_KEY)
+    },
+
+    write_object_type_metadata = function() {
+      meta <- list()
+      meta[[SOMA_OBJECT_TYPE_METADATA_KEY]] <- self$class()
+      meta[[SOMA_ENCODING_VERSION_METADATA_KEY]] <- SOMA_ENCODING_VERSION
+      self$set_metadata(meta)
+    }
+  )
+)

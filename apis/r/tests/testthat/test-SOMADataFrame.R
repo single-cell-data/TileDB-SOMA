@@ -1,5 +1,5 @@
 test_that("SOMADataFrame creation", {
-  uri <- withr::local_tempdir("soma-indexed-dataframe4")
+  uri <- withr::local_tempdir("soma-indexed-dataframe")
   asch <- arrow::schema(
     arrow::field("foo", arrow::int32(), nullable = FALSE),
     arrow::field("bar", arrow::float64(), nullable = FALSE),
@@ -18,6 +18,7 @@ test_that("SOMADataFrame creation", {
   sidf$create(asch, index_column_names = "foo")
   expect_true(sidf$exists())
   expect_true(dir.exists(uri))
+  expect_match(sidf$soma_type, "SOMADataFrame")
 
   # check for missing columns
   expect_error(

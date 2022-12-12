@@ -11,7 +11,7 @@
 
 SOMADataFrame <- R6::R6Class(
   classname = "SOMADataFrame",
-  inherit = TileDBArray,
+  inherit = SOMAArrayBase,
 
   public = list(
 

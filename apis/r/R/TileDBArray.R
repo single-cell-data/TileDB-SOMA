@@ -217,13 +217,6 @@ TileDBArray <- R6::R6Class(
       private$close()
     },
 
-    write_object_type_metadata = function() {
-      meta <- list()
-      meta[[SOMA_OBJECT_TYPE_METADATA_KEY]] <- self$class()
-      meta[[SOMA_ENCODING_VERSION_METADATA_KEY]] <- SOMA_ENCODING_VERSION
-      self$set_metadata(meta)
-    },
-
     # @description Create empty TileDB array.
     create_empty_array = function() return(NULL),
 

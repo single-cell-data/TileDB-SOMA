@@ -22,7 +22,7 @@
 
 SOMASparseNDArray <- R6::R6Class(
   classname = "SOMASparseNDArray",
-  inherit = TileDBArray,
+  inherit = SOMAArrayBase,
 
   public = list(
 
