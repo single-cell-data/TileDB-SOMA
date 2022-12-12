@@ -19,7 +19,6 @@ TileDBGroup <- R6::R6Class(
     create = function() {
       message(sprintf("Creating new %s at '%s'", self$class(), self$uri))
       tiledb::tiledb_group_create(self$uri, ctx = self$ctx)
-      private$write_object_type_metadata()
     },
 
     #' @description Add new member to the group.
@@ -173,13 +172,6 @@ TileDBGroup <- R6::R6Class(
     initialize_object = function() {
       private$tiledb_object <- tiledb::tiledb_group(self$uri, ctx = self$ctx)
       private$close()
-    },
-
-    write_object_type_metadata = function() {
-      meta <- list()
-      meta[[SOMA_OBJECT_TYPE_METADATA_KEY]] <- self$class()
-      meta[[SOMA_ENCODING_VERSION_METADATA_KEY]] <- SOMA_ENCODING_VERSION
-      self$set_metadata(meta)
     },
 
     # @description Retrieve all group members.

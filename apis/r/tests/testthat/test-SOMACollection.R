@@ -10,9 +10,11 @@ test_that("SOMACollection basics", {
 
   # Create the collection on disk
   collection$create()
+
   expect_true(dir.exists(uri))
-  expect_true(collection$exists())
   expect_match(tiledb::tiledb_object_type(uri), "GROUP")
+  expect_true(collection$soma_type == "SOMACollection")
+  expect_true(collection$exists())
   expect_equal(collection$length(), 0)
 
   # Add an element to the collection
