@@ -53,9 +53,11 @@ jobs:
       env:
         CIBW_BUILD: ${{ matrix.cibw_build }}
         CIBW_BUILD_VERBOSITY: 1
-        CIBW_BEFORE_BUILD: find . -type d -name dist -print -exec rm -rf \;
-        # ^ clear out any previously-built extension libraries that might be found by
-        #   apis/python/setup.py:find_or_build()
+        CIBW_BEFORE_BUILD: rm -rf tiledbsoma-*/dist_links/dist/lib
+        # ^ Delete lib folder that apis/python/setup.py:find_or_build() looks for in deciding to
+        #   run CMake build or not. Otherwise it'll keep reusing the library file built in the
+        #   first iteration of cibuildwheel's outer loop, resulting in wheels with the library
+        #   built for the wrong python version.
     - name: Upload wheels-${{ matrix.platform }}
       uses: actions/upload-artifact@v3
       with:
