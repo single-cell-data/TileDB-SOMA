@@ -15,6 +15,8 @@
 #' dimension(s). Each dimension can be one entry in the list.
 #' @param dim_ranges Optional named list with two-column matrix where each row select a range
 #' for the given dimension. Each dimension can be one entry in the list.
+#' @param batch_size Character value with the desired batch size, defaults to \sQuote{auto}
+#' @param result_order Character value with the desired result order, defaults to \sQuote{auto}
 #' @param loglevel Character value with the desired logging level, defaults to \sQuote{warn}
 #' @param arrlst A list containing the pointers to an Arrow data structure
 #' @return An Arrow data structure is returned
@@ -25,8 +27,8 @@
 #' tb <- arrow::as_arrow_table(arch::from_arch_array(z, arrow::RecordBatch))
 #' }
 #' @export
-soma_reader <- function(uri, colnames = NULL, qc = NULL, dim_points = NULL, dim_ranges = NULL, loglevel = "warn") {
-    .Call(`_tiledbsoma_soma_reader`, uri, colnames, qc, dim_points, dim_ranges, loglevel)
+soma_reader <- function(uri, colnames = NULL, qc = NULL, dim_points = NULL, dim_ranges = NULL, batch_size = "auto", result_order = "auto", loglevel = "warn") {
+    .Call(`_tiledbsoma_soma_reader`, uri, colnames, qc, dim_points, dim_ranges, batch_size, result_order, loglevel)
 }
 
 #' @noRd
