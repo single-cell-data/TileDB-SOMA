@@ -80,6 +80,10 @@ if [ -n "${tiledb}"  ]; then
   export DYLD_LIBRARY_PATH="${tiledb}"
 fi
 
+if [ -n "${PYTHON_EXECUTABLE}" ]; then
+  extra_opts+=" -DPYTHON_EXECUTABLE=${PYTHON_EXECUTABLE}"
+fi
+
 # run cmake
 # -------------------------------------------------------------------
 printf "Building ${build} build\n"
