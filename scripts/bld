@@ -81,7 +81,11 @@ if [ -n "${tiledb}"  ]; then
 fi
 
 if [ -n "${PYTHON_EXECUTABLE}" ]; then
-  extra_opts+=" -DPYTHON_EXECUTABLE=${PYTHON_EXECUTABLE}"
+  extra_opts+=" -DPython_EXECUTABLE=${PYTHON_EXECUTABLE}"
+fi
+
+if [ -n "${PYTHON_EXEC_PREFIX}" ]; then
+  extra_opts+=" -DPython_ROOT_DIR=${PYTHON_EXEC_PREFIX}"
 fi
 
 # run cmake

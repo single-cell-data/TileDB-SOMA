@@ -49,6 +49,7 @@ def find_or_build(setuptools_cmd):
     if not os.path.exists(lib_dir):
         bld_env = dict(os.environ)
         bld_env["PYTHON_EXECUTABLE"] = sys.executable
+        bld_env["PYTHON_EXEC_PREFIX"] = sys.exec_prefix
         subprocess.run("bash bld", cwd=scripts_dir, shell=True, env=bld_env)
 
     # Copy native libs into the package dir so they can be found by package_data
