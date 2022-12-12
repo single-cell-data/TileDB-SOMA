@@ -79,36 +79,44 @@ SOMADenseNdArray <- R6::R6Class(
     },
 
     #' @description Read as an 'arrow::Table'
-    #' @param coords A `list` of integer vectors, one for each dimension, with a
+    #' @param coords Optional `list` of integer vectors, one for each dimension, with a
     #' length equal to the number of values to read. If `NULL`, all values are
     #' read. List elements can be named when specifying a subset of dimensions.
-    #' @param result_order Order of read results. This can be one of either
+    #' @param result_order Optional order of read results. This can be one of either
     #' `"ROW_MAJOR, `"COL_MAJOR"`, `"GLOBAL_ORDER"`, or `"UNORDERED"`.
+    #' @param log_level Optional logging level with default value of `"warn"`.
     #' @return An [`arrow::Table`].
     read_arrow_table = function(
       coords = NULL,
-      result_order = "ROW_MAJOR"
+      result_order = "ROW_MAJOR",
+      log_level = "warn"
     ) {
-      on.exit(private$close())
-      private$open("READ")
+      uri <- self$uri
 
-      arr <- self$object
+      result_order <- map_query_layout(match_query_layout(result_order))
 
-      # select ranges
       if (!is.null(coords)) {
-        stopifnot(
-          is.list(coords),
-          "'coords' must be a list of vectors" =
-            all(vapply_lgl(coords, is.vector))
-        )
-        tiledb::selected_ranges(arr) <- lapply(coords, function(x) cbind(x, x))
+          ## ensure coords is a named list, use to select dim points
+          stopifnot("'coords' must be a list" = is.list(coords),
+                    "'coords' must be a list of vectors or integer64" =
+                        all(vapply_lgl(coords, is_vector_or_int64)),
+                    "'coords' if unnamed must have length of dim names, else if named names must match dim names" =
+                        (is.null(names(coords)) && length(coords) == length(self$dimnames())) ||
+                        (!is.null(names(coords)) && all(names(coords) %in% self$dimnames()))
+                    )
+
+          ## if unnamed (and test for length has passed in previous statement) set names
+          if (is.null(names(coords))) names(coords) <- self$dimnames()
+
+          ## convert integer to integer64 to match dimension type
+          coords <- lapply(coords, function(x) if (inherits(x, "integer")) bit64::as.integer64(x) else x)
       }
 
-      # result order
-      tiledb::query_layout(arr) <- match_query_layout(result_order)
-      tiledb::return_as(arr) <- "asis"
-
-      do.call(arrow::arrow_table, arr[])
+      rl <- soma_reader(uri = uri,
+                        dim_points = coords,       	# NULL is dealt with by soma_reader()
+                        result_order = result_order,
+                        loglevel = log_level)      	# idem
+      arrow::as_arrow_table(arch::from_arch_array(rl, arrow::RecordBatch))
     },
 
     #' @description Write matrix data to the array.

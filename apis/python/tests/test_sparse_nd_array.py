@@ -641,6 +641,30 @@ def test_csr_csc_2d_read(tmp_path, read_format, shape):
             },
             "throws": None,
         },
+        {
+            "shape": (9, 11),
+            "coords": (
+                np.array([1, 2], dtype=np.int32),
+                np.array([3, 4], dtype=np.int64),
+            ),
+            "dims": {
+                "soma_dim_0": [1, 1, 2, 2],
+                "soma_dim_1": [3, 4, 3, 4],
+            },
+            "throws": None,
+        },
+        {
+            "shape": (9, 11),
+            "coords": (
+                np.array([1, 2], dtype=np.uint64),
+                np.array([3, 4], dtype=np.uint32),
+            ),
+            "dims": {
+                "soma_dim_0": [1, 1, 2, 2],
+                "soma_dim_1": [3, 4, 3, 4],
+            },
+            "throws": None,
+        },
     ],
 )
 def test_sparse_nd_array_table_slicing(tmp_path, io, write_format, read_format):

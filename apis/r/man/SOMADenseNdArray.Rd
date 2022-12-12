@@ -80,18 +80,24 @@ element in the array.}
 \subsection{Method \code{read_arrow_table()}}{
 Read as an 'arrow::Table'
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{SOMADenseNdArray$read_arrow_table(coords = NULL, result_order = "ROW_MAJOR")}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{SOMADenseNdArray$read_arrow_table(
+  coords = NULL,
+  result_order = "ROW_MAJOR",
+  log_level = "warn"
+)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{coords}}{A \code{list} of integer vectors, one for each dimension, with a
+\item{\code{coords}}{Optional \code{list} of integer vectors, one for each dimension, with a
 length equal to the number of values to read. If \code{NULL}, all values are
 read. List elements can be named when specifying a subset of dimensions.}
 
 \item{\code{result_order}}{Order of read results. This can be one of either
 \verb{"ROW_MAJOR, }"COL_MAJOR"\verb{, }"GLOBAL_ORDER"\verb{, or }"UNORDERED"`.}
+
+\item{\code{log_level}}{Optional logging level with default value of \code{"warn"}.}
 }
 \if{html}{\out{</div>}}
 }

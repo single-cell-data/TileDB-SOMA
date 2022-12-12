@@ -94,23 +94,27 @@ column, and optionally filtered.
   ids = NULL,
   column_names = NULL,
   value_filter = NULL,
-  result_order = "UNORDERED"
+  result_order = "UNORDERED",
+  log_level = "warn"
 )}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{ids}}{Indices specifying the rows to read.}
+\item{\code{ids}}{Optional named list of indices specifying the rows to read; each (named)
+list element corresponds to a dimension of the same name.}
 
-\item{\code{column_names}}{Character vector of column names to return.}
+\item{\code{column_names}}{Optional character vector of column names to return.}
 
-\item{\code{value_filter}}{A string containing a logical expression that is used
+\item{\code{value_filter}}{Optional string containing a logical expression that is used
 to filter the returned values. See \code{\link[tiledb:parse_query_condition]{tiledb::parse_query_condition}} for
 more information.}
 
-\item{\code{result_order}}{Order of read results. This can be one of either
+\item{\code{result_order}}{Optional order of read results. This can be one of either
 \verb{"ROW_MAJOR, }"COL_MAJOR"\verb{, }"GLOBAL_ORDER"\verb{, or }"UNORDERED"`.}
+
+\item{\code{log_level}}{Optional logging level with default value of \code{"warn"}.}
 }
 \if{html}{\out{</div>}}
 }

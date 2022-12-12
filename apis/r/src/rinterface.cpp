@@ -19,6 +19,8 @@ namespace tdbs = tiledbsoma;
 //' dimension(s). Each dimension can be one entry in the list.
 //' @param dim_ranges Optional named list with two-column matrix where each row select a range
 //' for the given dimension. Each dimension can be one entry in the list.
+//' @param batch_size Character value with the desired batch size, defaults to \sQuote{auto}
+//' @param result_order Character value with the desired result order, defaults to \sQuote{auto}
 //' @param loglevel Character value with the desired logging level, defaults to \sQuote{warn}
 //' @param arrlst A list containing the pointers to an Arrow data structure
 //' @return An Arrow data structure is returned
@@ -35,6 +37,8 @@ Rcpp::List soma_reader(const std::string& uri,
                        Rcpp::Nullable<Rcpp::XPtr<tiledb::QueryCondition>> qc = R_NilValue,
                        Rcpp::Nullable<Rcpp::List> dim_points = R_NilValue,
                        Rcpp::Nullable<Rcpp::List> dim_ranges = R_NilValue,
+                       std::string batch_size = "auto",
+                       std::string result_order = "auto",
                        const std::string& loglevel = "warn") {
 
     spdl::set_level(loglevel);
@@ -42,8 +46,21 @@ Rcpp::List soma_reader(const std::string& uri,
 
     spdl::info("[soma_reader] Reading from {}", uri);
 
+    std::map<std::string, std::string> platform_config = {}; // to add, see riterator.cpp
+
+    std::vector<std::string> column_names = {};
+    if (!colnames.isNull()) {    // If we have column names, select them
+        column_names = Rcpp::as<std::vector<std::string>>(colnames);
+        spdl::debug("[soma_reader] Selecting {} columns", column_names.size());
+    }
+
     // Read selected columns from the uri (return is unique_ptr<SOMAReader>)
-    auto sr = tdbs::SOMAReader::open(uri);
+    auto sr = tdbs::SOMAReader::open(uri,
+                                     "unnamed", 		  // name parameter could be added
+                                     platform_config,             // to add, done in iterated reader
+                                     column_names,
+                                     batch_size,
+                                     result_order);
 
     std::unordered_map<std::string, tiledb_datatype_t> name2type;
     std::shared_ptr<tiledb::ArraySchema> schema = sr->schema();
@@ -54,13 +71,6 @@ Rcpp::List soma_reader(const std::string& uri,
                    dim.name(), tiledb::impl::to_str(dim.type()),
                    dim.domain_to_str(), dim.tile_extent_to_str());
         name2type.emplace(std::make_pair(dim.name(), dim.type()));
-    }
-
-    // If we have column names, select them
-    if (!colnames.isNull()) {
-        std::vector<std::string> cn = Rcpp::as<std::vector<std::string>>(colnames);
-        spdl::info("[soma_reader] Selecting {} columns", cn.size());
-        sr->select_columns(cn);
     }
 
     // If we have a query condition, apply it

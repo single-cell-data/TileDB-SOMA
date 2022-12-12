@@ -171,7 +171,7 @@ SOMADataFrame <- R6::R6Class(
                         dim_points = ids,          # idem
                         loglevel = log_level)      # idem
 
-      arrow::as_arrow_table( arch::from_arch_array(rl, arrow::RecordBatch))
+      arrow::as_arrow_table(arch::from_arch_array(rl, arrow::RecordBatch))
     }
 
   )
