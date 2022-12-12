@@ -28,7 +28,7 @@ jobs:
       uses: actions/upload-artifact@v3
       with:
         name: sdist
-        path: apis/python/dist/tiledbsoma-*.tar.gz
+        path: apis/python/dist/
 
   wheels:
     name: Build wheels on ${{ matrix.os }}
@@ -47,10 +47,12 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           name: sdist
+      - name: tree
+        run: tree -sl
       - name: Build wheels
         uses: pypa/cibuildwheel@v2.11.3
         with:
-          package-dir: ${{ steps.download.outputs.download-path }}
+          package-dir: dist
         env:
           CIBW_BUILD: ${{ matrix.cibw_build }}
       - uses: actions/upload-artifact@v3
