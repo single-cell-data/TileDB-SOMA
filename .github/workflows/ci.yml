@@ -36,7 +36,7 @@ jobs:
     - name: Checkout TileDB-SOMA
       uses: actions/checkout@v3
       with:
-        fetch-depth: 0
+        fetch-depth: 0  # ensure we get all tags to inform package version determination
 
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v4
@@ -45,15 +45,6 @@ jobs:
 
     - name: Install Python packages
       run: python -m pip -v install pytest pytest-cov typeguard wheel
-
-    - name: Build python sdist
-      # This provides an early check that the sdist contains the complete sources for libtiledbsoma
-      run: |
-        python setup.py sdist
-        pip install dist/tiledbsoma-*.tar.gz
-        python -c 'import tiledbsoma; print(tiledbsoma.libtiledbsoma.__file__)'
-        pip install .  # build extension for coverage run below
-      working-directory: ./apis/python
       env:
         CC: ${{ matrix.cc }}
         CXX: ${{ matrix.cxx }}

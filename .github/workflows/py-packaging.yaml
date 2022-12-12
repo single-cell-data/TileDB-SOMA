@@ -1,12 +1,11 @@
 name: Build python sdist & wheels
 
 on:
+  workflow_dispatch:
   push:
-  #workflow_dispatch:
-  #push:
-  #  branches: [main]
-  #release:
-  #  types: [published]
+    branches: [main]
+  release:
+    types: [published]
 
 jobs:
   sdist:
@@ -16,7 +15,7 @@ jobs:
     - name: Checkout TileDB-SOMA
       uses: actions/checkout@v3
       with:
-        fetch-depth: 0
+        fetch-depth: 0  # ensure we get all tags to inform package version determination
     - name: Build sdist
       run: python setup.py sdist
       working-directory: ./apis/python
@@ -54,6 +53,8 @@ jobs:
         CIBW_BUILD: ${{ matrix.cibw_build }}
         CIBW_BUILD_VERBOSITY: 1
         CIBW_BEFORE_BUILD: find . -type f -name 'libtiledbsoma*.so' && find . -type f -name 'libtiledbsoma*.dylib'
+        # ^ clear out any previously-built extension libraries that might be found by
+        #   apis/python/setup.py:find_or_build()
     - name: Upload wheels-${{ matrix.platform }}
       uses: actions/upload-artifact@v3
       with:
@@ -61,7 +62,7 @@ jobs:
         path: ./wheelhouse/*.whl
 
   smoke-test:
-    name: Smoke test
+    name: Smoke test wheels
     needs: wheels
     runs-on: ${{ matrix.os }}
     strategy:
@@ -90,3 +91,4 @@ jobs:
         pip install $whl
     - name: Smoke test ${{ matrix.os }}
       run: python -c 'import tiledbsoma; print(tiledbsoma.libtiledbsoma.__file__)'
+      # TODO: more-thorough test
