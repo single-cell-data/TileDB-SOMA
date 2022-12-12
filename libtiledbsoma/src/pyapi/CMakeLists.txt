@@ -1,5 +1,10 @@
+include(CMakePrintHelpers)
+
 # https://pybind11.readthedocs.io/en/stable/compiling.html#findpython-mode
+# For cibuildwheel, it's critical to set PYTHON_EXECUTABLE to ensure the correct python version
+# will be used (as the manylinux container used will have multiple versions installed).
 execute_process(COMMAND which python3 OUTPUT_STRIP_TRAILING_WHITESPACE OUTPUT_VARIABLE PYTHON_EXECUTABLE)
+cmake_print_variables(PYTHON_EXECUTABLE)
 find_package(Python COMPONENTS Interpreter Development.Module)
 find_package(pybind11 CONFIG REQUIRED)
 

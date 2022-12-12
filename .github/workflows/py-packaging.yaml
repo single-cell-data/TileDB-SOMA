@@ -52,6 +52,7 @@ jobs:
         package-dir: tiledbsoma.tar.gz
       env:
         CIBW_BUILD: ${{ matrix.cibw_build }}
+        CIBW_BUILD_VERBOSITY: 1
     - name: Upload wheels-${{ matrix.platform }}
       uses: actions/upload-artifact@v3
       with:
