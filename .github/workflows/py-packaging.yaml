@@ -82,6 +82,6 @@ jobs:
     - name: Install wheel
       run: |
         cpv=$( echo '${{ matrix.python-version }}' | tr -d .)
-        pip install tiledbsoma-*-cp${cpv}-cp${cpv}-${{ matrix.platform }}_*_${{ matrix.arch }.whl
+        pip install tiledbsoma-*-cp${cpv}-cp${cpv}-${{ matrix.platform }}_*_${{ matrix.arch }}.whl
     - name: Smoke test
       run: python -c 'import tiledbsoma; print(tiledbsoma.libtiledbsoma.__file__)'
