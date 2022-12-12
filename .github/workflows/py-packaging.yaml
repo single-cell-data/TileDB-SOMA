@@ -48,7 +48,7 @@ jobs:
         with:
           name: sdist
       - name: tree
-        run: tree -sl
+        run: ls -lR
       - name: Build wheels
         uses: pypa/cibuildwheel@v2.11.3
         with:
