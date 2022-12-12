@@ -1,0 +1,57 @@
+name: Build python sdist & wheels
+
+on:
+  push:
+  #workflow_dispatch:
+  #push:
+  #  branches: [main]
+  #release:
+  #  types: [published]
+
+jobs:
+  sdist:
+    name: Build source distribution
+    runs-on: ubuntu-20.04
+    steps:
+    - name: Checkout TileDB-SOMA
+      uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
+    - name: Build sdist
+      run: python setup.py sdist
+      working-directory: ./apis/python
+    - name: Smoke test
+      run:
+        pip install apis/python/dist/tiledbsoma-*.tar.gz
+        python -c 'import tiledbsoma; print(tiledbsoma.libtiledbsoma.__file__)'
+    - name: Upload sdist artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: sdist
+        path: apis/python/dist/tiledbsoma-*.tar.gz
+
+  wheels:
+    name: Build wheels on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+        - os: ubuntu-20.04
+          cibw_build: '*-manylinux_x86_64'
+        - os: macos-11
+          cibw_build: '*-macosx_x86_64'
+    steps:
+      - name: Download sdist artifact
+        id: download
+        uses: actions/download-artifact@v3
+        with:
+          name: sdist
+      - name: Build wheels
+        uses: pypa/cibuildwheel@v2.11.3
+        with:
+          package-dir: ${{ steps.download.outputs.download-path }}
+        env:
+          CIBW_BUILD: ${{ matrix.cibw_build }}
+      - uses: actions/upload-artifact@v3
+        with:
+          path: ./wheelhouse/*.whl

@@ -13,9 +13,7 @@ python3 setup.py sdist
 docker pull quay.io/pypa/manylinux2014_x86_64
 echo '
 FROM quay.io/pypa/manylinux2014_x86_64
-RUN yum install -y python3
-RUN yum install -y python3-wheel
-RUN yum install -y python3-pip
+RUN yum install -y python3-wheel python3-pip
 RUN pip3 install "pybind11[global]"
 ' | docker build -t "${PKG}_manylinux_builder" -
 
