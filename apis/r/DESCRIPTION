@@ -49,7 +49,7 @@ LinkingTo:
     arch
 Additional_repositories: https://ghrr.github.io/drat
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.2.2
+RoxygenNote: 7.2.3
 Suggests:
     rmarkdown,
     knitr,

@@ -94,7 +94,7 @@ Read as an 'arrow::Table'
 length equal to the number of values to read. If \code{NULL}, all values are
 read. List elements can be named when specifying a subset of dimensions.}
 
-\item{\code{result_order}}{Order of read results. This can be one of either
+\item{\code{result_order}}{Optional order of read results. This can be one of either
 \verb{"ROW_MAJOR, }"COL_MAJOR"\verb{, }"GLOBAL_ORDER"\verb{, or }"UNORDERED"`.}
 
 \item{\code{log_level}}{Optional logging level with default value of \code{"warn"}.}
