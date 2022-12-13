@@ -21,7 +21,8 @@ namespace tdbs = tiledbsoma;
 //' for the given dimension. Each dimension can be one entry in the list.
 //' @param batch_size Character value with the desired batch size, defaults to \sQuote{auto}
 //' @param result_order Character value with the desired result order, defaults to \sQuote{auto}
-//' @param loglevel Character value with the desired logging level, defaults to \sQuote{warn}
+//' @param loglevel Character value with the desired logging level, defaults to \sQuote{auto}
+//' which lets prior setting prevail, any other value is set as new logging level.
 //' @param arrlst A list containing the pointers to an Arrow data structure
 //' @return An Arrow data structure is returned
 //' @examples
@@ -39,10 +40,12 @@ Rcpp::List soma_reader(const std::string& uri,
                        Rcpp::Nullable<Rcpp::List> dim_ranges = R_NilValue,
                        std::string batch_size = "auto",
                        std::string result_order = "auto",
-                       const std::string& loglevel = "warn") {
+                       const std::string& loglevel = "auto") {
 
-    spdl::set_level(loglevel);
-    tdbs::LOG_SET_LEVEL(loglevel);
+    if (loglevel != "auto") {
+        spdl::set_level(loglevel);
+        tdbs::LOG_SET_LEVEL(loglevel);
+    }
 
     spdl::info("[soma_reader] Reading from {}", uri);
 
