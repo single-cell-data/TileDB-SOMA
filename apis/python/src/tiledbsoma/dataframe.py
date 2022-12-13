@@ -34,7 +34,7 @@ class DataFrame(TileDBArray):
     """
     Represents ``obs``, ``var``, and others.
 
-    All ``DataFrame`` must contain a column called ``soma_joinid``, of type ``int64``. The ``soma_joinid`` column contains a unique value for each row in the ``DataFrame``, and intended to act as a joint key for other objects, such as ``SparseNdArray``.
+    All ``DataFrame`` must contain a column called ``soma_joinid``, of type ``int64``. The ``soma_joinid`` column contains a unique value for each row in the ``DataFrame``, and intended to act as a joint key for other objects, such as ``SparseNDArray``.
     """
 
     _index_column_names: Union[Tuple[()], Tuple[str, ...]]
