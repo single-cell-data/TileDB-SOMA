@@ -105,7 +105,8 @@ template<typename T> void check_xptr_tag(Rcpp::XPtr<T> ptr) {
 //' for the given dimension. Each dimension can be one entry in the list.
 //' @param config Optional named chracter vector with \sQuote{key} and \sQuote{value} pairs
 //' used as TileDB config parameters. If unset default configuration is used.
-//' @param loglevel Character value with the desired logging level, defaults to \sQuote{warn}
+//' @param loglevel Character value with the desired logging level, defaults to \sQuote{auto}
+//' which lets prior setting prevail, any other value is set as new logging level.
 //' @param sr An external pointer to a TileDB SOMAReader object
 //'
 //' @return \code{sr_setup} returns an external pointer to a SOMAReader. \code{sr_complete}
@@ -138,10 +139,12 @@ Rcpp::XPtr<tdbs::SOMAReader> sr_setup(Rcpp::XPtr<tiledb::Context> ctx,
                                       Rcpp::Nullable<Rcpp::List> dim_points = R_NilValue,
                                       Rcpp::Nullable<Rcpp::List> dim_ranges = R_NilValue,
                                       Rcpp::Nullable<Rcpp::CharacterVector> config = R_NilValue,
-                                      const std::string& loglevel = "warn") {
+                                      const std::string& loglevel = "auto") {
     check_xptr_tag<tiledb::Context>(ctx);
-    spdl::set_level(loglevel);
-    tdbs::LOG_SET_LEVEL(loglevel);
+    if (loglevel != "auto") {
+        spdl::set_level(loglevel);
+        tdbs::LOG_SET_LEVEL(loglevel);
+    }
 
     spdl::info("[sr_setup] Setting up {}", uri);
 

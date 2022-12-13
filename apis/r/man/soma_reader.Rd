@@ -14,7 +14,7 @@ soma_reader(
   dim_ranges = NULL,
   batch_size = "auto",
   result_order = "auto",
-  loglevel = "warn"
+  loglevel = "auto"
 )
 
 nnz(uri)
@@ -39,7 +39,8 @@ for the given dimension. Each dimension can be one entry in the list.}
 
 \item{result_order}{Character value with the desired result order, defaults to \sQuote{auto}}
 
-\item{loglevel}{Character value with the desired logging level, defaults to \sQuote{warn}}
+\item{loglevel}{Character value with the desired logging level, defaults to \sQuote{auto}
+which lets prior setting prevail, any other value is set as new logging level.}
 
 \item{arrlst}{A list containing the pointers to an Arrow data structure}
 }
