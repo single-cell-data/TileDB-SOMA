@@ -4,7 +4,7 @@
 #' `SOMADataFrame` is a multi-column table that must contain a column
 #' called `soma_joinid` of type `uint64`, which contains a unique value for each
 #' row and is intended to act as a join key for other objects, such as
-#' [`SOMASparseNdArray`].
+#' [`SOMASparseNDArray`].
 
 #' @importFrom stats setNames
 #' @export

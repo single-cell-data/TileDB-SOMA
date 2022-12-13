@@ -1,7 +1,7 @@
-test_that("SOMASparseNdArray creation", {
+test_that("SOMASparseNDArray creation", {
   skip_if(TRUE) # temporary
   uri <- withr::local_tempdir("sparse-ndarray")
-  ndarray <- SOMASparseNdArray$new(uri)
+  ndarray <- SOMASparseNDArray$new(uri)
   ndarray$create(arrow::int32(), shape = c(10, 10))
 
   expect_equal(tiledb::tiledb_object_type(uri), "ARRAY")
