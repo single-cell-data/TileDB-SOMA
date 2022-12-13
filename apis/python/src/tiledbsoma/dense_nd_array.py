@@ -18,7 +18,7 @@ from .tiledb_platform_config import TileDBPlatformConfig
 from .types import DenseNdCoordinates, NTuple, PlatformConfig, ResultOrder
 
 
-class DenseNdArray(TileDBArray):
+class DenseNDArray(TileDBArray):
     """
     Represents ``X`` and others.
     """
@@ -42,17 +42,17 @@ class DenseNdArray(TileDBArray):
         )
 
     @property
-    def soma_type(self) -> Literal["SOMADenseNdArray"]:
-        return "SOMADenseNdArray"
+    def soma_type(self) -> Literal["SOMADenseNDArray"]:
+        return "SOMADenseNDArray"
 
     def create(
         self,
         type: pa.DataType,
         shape: Union[NTuple, List[int]],
         platform_config: Optional[PlatformConfig] = None,
-    ) -> "DenseNdArray":
+    ) -> "DenseNDArray":
         """
-        Create a ``DenseNdArray`` named with the URI.
+        Create a ``DenseNDArray`` named with the URI.
 
         :param type: an Arrow type defining the type of each element in the array. If the type is unsupported, an error will be raised.
 
@@ -62,12 +62,12 @@ class DenseNdArray(TileDBArray):
         # check on shape
         if len(shape) == 0 or any(e <= 0 for e in shape):
             raise ValueError(
-                "DenseNdArray shape must be non-zero length tuple of ints > 0"
+                "DenseNDArray shape must be non-zero length tuple of ints > 0"
             )
 
         if not pa.types.is_primitive(type):
             raise TypeError(
-                "Unsupported type - DenseNdArray only supports primtive Arrow types"
+                "Unsupported type - DenseNDArray only supports primtive Arrow types"
             )
 
         level = self._tiledb_platform_config.string_dim_zstd_level
@@ -254,7 +254,7 @@ class DenseNdArray(TileDBArray):
 
         values - pyarrow.Tensor
             Define the values to be written to the subarray.  Must have same shape
-            as defind by ``coords``, and the type must match the DenseNdArray.
+            as defind by ``coords``, and the type must match the DenseNDArray.
         """
         with self._tiledb_open("w") as A:
             A[coords] = values.to_numpy()
