@@ -1,5 +1,3 @@
-# ----------------------------------------------------------------
-
 from .collection import Collection
 from .dataframe import DataFrame
 from .dense_nd_array import DenseNdArray
