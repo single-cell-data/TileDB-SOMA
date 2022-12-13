@@ -26,7 +26,7 @@ from setuptools.command.build_ext import build_ext
 from wheel.bdist_wheel import bdist_wheel
 
 sys.path.insert(0, os.path.dirname(__file__))
-import version
+import version  # noqa E402
 
 MODULE_NAME = "tiledbsoma"
 EXT_NAME = "tiledbsoma.libtiledbsoma"

@@ -72,7 +72,7 @@ def readGitVersion():
         if proc.returncode:
             return None
         ver = data.decode().splitlines()[0].strip()
-    except:
+    except Exception:
         return None
 
     if not ver:
@@ -104,7 +104,7 @@ def readReleaseVersion():
                 "will use it anyway\n" % ver
             )
         return ver
-    except:
+    except Exception:
         return None
 
 
