@@ -1,5 +1,12 @@
+include(CMakePrintHelpers)
+
 # https://pybind11.readthedocs.io/en/stable/compiling.html#findpython-mode
-find_package(Python COMPONENTS Interpreter Development)
+# But FindPython mode doesn't necessarily find the "activated" version. Therefore set
+# PYTHON_EXECUTABLE explicitly to ensure the correct python version is used (as the manylinux
+# container used in cibuildwheel will have multiple python versions installed).
+execute_process(COMMAND which python3 OUTPUT_STRIP_TRAILING_WHITESPACE OUTPUT_VARIABLE PYTHON_EXECUTABLE)
+cmake_print_variables(PYTHON_EXECUTABLE)
+find_package(Python COMPONENTS Interpreter Development.Module)
 find_package(pybind11 CONFIG REQUIRED)
 
 pybind11_add_module(libtiledbsoma

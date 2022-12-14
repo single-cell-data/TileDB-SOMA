@@ -3,3 +3,5 @@ tiledb-data
 tiledbsoma-data
 anndata-readback
 anndata-readback-tiledbsoma
+RELEASE-VERSION
+dist/
