@@ -18,11 +18,15 @@
 import os
 import shutil
 import subprocess
+import sys
 
 from setuptools import Extension, find_packages, setup
 from setuptools.command.bdist_egg import bdist_egg
 from setuptools.command.build_ext import build_ext
 from wheel.bdist_wheel import bdist_wheel
+
+sys.path.insert(0, os.path.dirname(__file__))
+import version  # noqa E402
 
 MODULE_NAME = "tiledbsoma"
 EXT_NAME = "tiledbsoma.libtiledbsoma"
@@ -32,8 +36,14 @@ def find_or_build(setuptools_cmd):
     # Setup paths
     python_dir = os.path.abspath(os.path.dirname(__file__))
     src_dir = f"{python_dir}/src/{MODULE_NAME}"
-    scripts_dir = f"{python_dir}/../../scripts"
-    lib_dir = f"{python_dir}/../../dist/lib"
+    if os.path.islink(os.path.join(python_dir, "dist_links/scripts")):
+        # in git source tree
+        scripts_dir = f"{python_dir}/../../scripts"
+        lib_dir = f"{python_dir}/../../dist/lib"
+    else:
+        # in extracted sdist, with libtiledbsoma copied into dist_links/
+        scripts_dir = f"{python_dir}/dist_links/scripts"
+        lib_dir = f"{python_dir}/dist_links/dist/lib"
 
     # Call the build script if the install library directory does not exist
     if not os.path.exists(lib_dir):
@@ -121,4 +131,5 @@ if __name__ == "__main__":
             "bdist_egg": BdistEggCmd,
             "bdist_wheel": BdistWheelCmd,
         },
+        version=version.getVersion(),
     )
