@@ -1,6 +1,6 @@
 from .collection import Collection
 from .dataframe import DataFrame
-from .dense_nd_array import DenseNdArray
+from .dense_nd_array import DenseNDArray
 from .exception import DoesNotExistError, SOMAError
 from .experiment import Experiment
 from .general_utilities import (
@@ -12,7 +12,7 @@ from .general_utilities import (
 from .measurement import Measurement
 from .metadata_mapping import MetadataMapping
 from .query_condition import QueryCondition  # type: ignore
-from .sparse_nd_array import SparseNdArray
+from .sparse_nd_array import SparseNDArray
 from .tiledb_array import TileDBArray
 from .tiledb_object import TileDBObject
 from .tiledb_platform_config import TileDBPlatformConfig
@@ -28,13 +28,13 @@ __all__ = [
     "TileDBObject",
     "TileDBArray",
     "Collection",
-    "DenseNdArray",
+    "DenseNDArray",
     "DoesNotExistError",
     "Experiment",
     "SOMAError",
     "DataFrame",
     "Measurement",
     "MetadataMapping",
-    "SparseNdArray",
+    "SparseNDArray",
     "QueryCondition",
 ]

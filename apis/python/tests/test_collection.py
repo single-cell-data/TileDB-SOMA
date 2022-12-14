@@ -32,7 +32,7 @@ def create_and_populate_dataframe(dataframe: soma.DataFrame) -> None:
 
 # ----------------------------------------------------------------
 def create_and_populate_sparse_nd_array(
-    sparse_nd_array: soma.SparseNdArray,
+    sparse_nd_array: soma.SparseNDArray,
 ) -> None:
     nr = 10
     nc = 20
@@ -64,7 +64,7 @@ def test_collection_basic(tmp_path):
     dataframe = soma.DataFrame(os.path.join(basedir, "sdf"), parent=collection)
     create_and_populate_dataframe(dataframe)
 
-    sparse_nd_array = soma.SparseNdArray(
+    sparse_nd_array = soma.SparseNDArray(
         os.path.join(basedir, "snda"), parent=collection
     )
     create_and_populate_sparse_nd_array(sparse_nd_array)
@@ -90,8 +90,8 @@ def test_collection_basic(tmp_path):
     params=[
         "Collection",
         "DataFrame",
-        "DenseNdArray",
-        "SparseNdArray",
+        "DenseNDArray",
+        "SparseNDArray",
     ],
 )
 def soma_object(request, tmp_path):
@@ -112,12 +112,12 @@ def soma_object(request, tmp_path):
             index_column_names=["D"],
         )
 
-    elif class_name == "DenseNdArray":
-        so = soma.DenseNdArray(uri=uri)
+    elif class_name == "DenseNDArray":
+        so = soma.DenseNDArray(uri=uri)
         so.create(type=pa.float64(), shape=(100, 10, 1))
 
-    elif class_name == "SparseNdArray":
-        so = soma.SparseNdArray(uri=uri)
+    elif class_name == "SparseNDArray":
+        so = soma.SparseNDArray(uri=uri)
         so.create(type=pa.int8(), shape=(11,))
 
     assert so is not None, f"Unknown class name: {class_name}"
@@ -211,10 +211,10 @@ def test_collection_update_on_set(tmp_path):
     """
 
     sc = soma.Collection(tmp_path.as_uri()).create()
-    A = soma.DenseNdArray(uri=(tmp_path / "A").as_uri()).create(
+    A = soma.DenseNDArray(uri=(tmp_path / "A").as_uri()).create(
         type=pa.float64(), shape=(100, 10, 1)
     )
-    B = soma.DenseNdArray(uri=(tmp_path / "B").as_uri()).create(
+    B = soma.DenseNDArray(uri=(tmp_path / "B").as_uri()).create(
         type=pa.float64(), shape=(100, 10, 1)
     )
     assert sc.exists()
@@ -236,7 +236,7 @@ def test_exceptions_on_not_created(tmp_path):
     """
     sc = soma.Collection(tmp_path.as_uri())
 
-    A = soma.DenseNdArray(uri=(tmp_path / "A").as_uri()).create(
+    A = soma.DenseNDArray(uri=(tmp_path / "A").as_uri()).create(
         type=pa.float64(), shape=(100, 10, 1)
     )
     with pytest.raises(DoesNotExistError):
