@@ -1,6 +1,17 @@
 # -*- coding: utf-8 -*-
 
-"""Calculates the current version number.
+"""
+NOTICE (mlin 2022-12-15): we'd prefer to use setuptools_scm instead of this
+ad hoc script from gist; but as of this writing, it has issues with our repo
+structure where the python package is in a subdirectory rather than the top
+level.
+  https://gist.github.com/mina86/8782771
+  https://github.com/pypa/setuptools_scm/issues/188
+  https://github.com/pypa/setuptools_scm/issues/788
+
+----
+
+Calculates the current version number.
 
 If possible, uses output of “git describe” modified to conform to the
 visioning scheme that setuptools uses (see PEP 386).  Releases must be
@@ -56,7 +67,7 @@ RELEASE_VERSION_FILE = "RELEASE-VERSION"
 # http://www.python.org/dev/peps/pep-0386/
 _PEP386_SHORT_VERSION_RE = r"\d+(?:\.\d+)+(?:(?:[abc]|rc)\d+(?:\.\d+)*)?"
 _PEP386_VERSION_RE = r"^%s(?:\.post\d+)?(?:\.dev\d+)?$" % (_PEP386_SHORT_VERSION_RE)
-_GIT_DESCRIPTION_RE = r"^v(?P<ver>%s)-(?P<commits>\d+)-g(?P<sha>[\da-f]+)$" % (
+_GIT_DESCRIPTION_RE = r"^(?P<ver>%s)-(?P<commits>\d+)-g(?P<sha>[\da-f]+)$" % (
     _PEP386_SHORT_VERSION_RE
 )
 
@@ -64,7 +75,7 @@ _GIT_DESCRIPTION_RE = r"^v(?P<ver>%s)-(?P<commits>\d+)-g(?P<sha>[\da-f]+)$" % (
 def readGitVersion():
     try:
         proc = subprocess.Popen(
-            ("git", "describe", "--long", "--tags", "--match", "v[0-9]*.*"),
+            ("git", "describe", "--long", "--tags", "--match", "[0-9]*.*"),
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
         )
