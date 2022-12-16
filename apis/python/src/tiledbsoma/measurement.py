@@ -1,6 +1,7 @@
-from typing import Any, Dict, Literal, Optional, Tuple, Union, cast
+from typing import Any, Dict, Optional, Tuple, Union, cast
 
 import tiledb
+from typing_extensions import Final
 
 from .collection import CollectionBase
 from .dataframe import DataFrame
@@ -68,9 +69,7 @@ class Measurement(CollectionBase[TileDBObject]):
             ctx=ctx,
         )
 
-    @property
-    def soma_type(self) -> Literal["SOMAMeasurement"]:
-        return "SOMAMeasurement"
+    soma_type: Final = "SOMAMeasurement"
 
     def create(self) -> "Measurement":
         """
