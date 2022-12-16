@@ -1,8 +1,9 @@
-from typing import Any, List, Literal, Optional, Union, cast
+from typing import Any, List, Optional, Union, cast
 
 import numpy as np
 import pyarrow as pa
 import tiledb
+from typing_extensions import Final
 
 # This package's pybind11 code
 import tiledbsoma.libtiledbsoma as clib
@@ -41,9 +42,7 @@ class DenseNDArray(TileDBArray):
             ctx=ctx,
         )
 
-    @property
-    def soma_type(self) -> Literal["SOMADenseNDArray"]:
-        return "SOMADenseNDArray"
+    soma_type: Final = "SOMADenseNDArray"
 
     def create(
         self,
@@ -136,12 +135,7 @@ class DenseNDArray(TileDBArray):
         with self._tiledb_open() as A:
             return cast(int, A.schema.domain.ndim)
 
-    @property
-    def is_sparse(self) -> Literal[False]:
-        """
-        Returns ``False``.
-        """
-        return False
+    is_sparse: Final = False
 
     def read_tensor(
         self,

@@ -1,11 +1,12 @@
 import collections.abc
-from typing import Any, Iterator, List, Literal, Optional, Union, cast
+from typing import Any, Iterator, List, Optional, Union, cast
 
 import numpy as np
 import pandas as pd
 import pyarrow as pa
 import scipy.sparse as sp
 import tiledb
+from typing_extensions import Final, Literal
 
 # This package's pybind11 code
 import tiledbsoma.libtiledbsoma as clib
@@ -41,9 +42,7 @@ class SparseNDArray(TileDBArray):
             ctx=ctx,
         )
 
-    @property
-    def soma_type(self) -> Literal["SOMASparseNDArray"]:
-        return "SOMASparseNDArray"
+    soma_type: Final = "SOMASparseNDArray"
 
     def create(
         self,
@@ -137,12 +136,7 @@ class SparseNDArray(TileDBArray):
         """
         return len(self.shape)
 
-    @property
-    def is_sparse(self) -> Literal[True]:
-        """
-        Returns ``True``.
-        """
-        return True
+    is_sparse: Final = True
 
     @property
     def nnz(self) -> int:

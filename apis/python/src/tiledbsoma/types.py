@@ -1,10 +1,11 @@
 import pathlib
-from typing import Any, List, Literal, Mapping, Sequence, Tuple, Union
+from typing import Any, List, Mapping, Sequence, Tuple, Union
 
 import numpy as np
 import numpy.typing as npt
 import pandas as pd
 import pyarrow as pa
+from typing_extensions import Literal
 
 Path = Union[str, pathlib.Path]
 

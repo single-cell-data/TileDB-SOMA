@@ -1,20 +1,11 @@
 import collections.abc
-from typing import (
-    Any,
-    Iterator,
-    Literal,
-    Optional,
-    Sequence,
-    Tuple,
-    TypeVar,
-    Union,
-    get_args,
-)
+from typing import Any, Iterator, Optional, Sequence, Tuple, TypeVar, Union
 
 import numpy as np
 import pandas as pd
 import pyarrow as pa
 import tiledb
+from typing_extensions import Final, get_args
 
 # This package's pybind11 code
 import tiledbsoma.libtiledbsoma as clib
@@ -54,9 +45,7 @@ class DataFrame(TileDBArray):
         self._index_column_names = ()
         self._is_sparse = None
 
-    @property
-    def soma_type(self) -> Literal["SOMADataFrame"]:
-        return "SOMADataFrame"
+    soma_type: Final = "SOMADataFrame"
 
     def create(
         self,

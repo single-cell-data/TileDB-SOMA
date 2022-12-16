@@ -332,7 +332,7 @@ def create_from_matrix(
         platform_config=platform_config,
     )
 
-    if soma_ndarray.soma_type == "SOMADenseNDArray":
+    if isinstance(soma_ndarray, DenseNDArray):
         _write_matrix_to_denseNDArray(soma_ndarray, src_matrix)
     else:  # SOMmASparseNDArray
         _write_matrix_to_sparseNDArray(soma_ndarray, src_matrix)
@@ -571,13 +571,15 @@ def to_anndata(
     X_data = measurement.X["data"]
     assert X_data is not None
     X_dtype = None  # some datasets have no X
-    if type(X_data) == DenseNDArray:
+    if isinstance(X_data, DenseNDArray):
         X_ndarray = X_data.read_numpy((slice(None), slice(None)))
         X_dtype = X_ndarray.dtype
-    elif type(X_data) == SparseNDArray:
+    elif isinstance(X_data, SparseNDArray):
         X_mat = X_data.read_as_pandas_all()  # TODO: CSR/CSC options ...
         X_csr = util_scipy.csr_from_tiledb_df(X_mat, nobs, nvar)
         X_dtype = X_csr.dtype
+    else:
+        raise TypeError(f"Unexpected NDArray type {type(X_data)}")
 
     # XXX FIX OBSM/VARM SHAPES
 

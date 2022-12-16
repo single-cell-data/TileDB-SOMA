@@ -7,7 +7,6 @@ from typing import (
     Dict,
     Iterator,
     List,
-    Literal,
     MutableMapping,
     Optional,
     Tuple,
@@ -18,6 +17,7 @@ from typing import (
 )
 
 import tiledb
+from typing_extensions import Final
 
 from .exception import DoesNotExistError, SOMAError
 from .tiledb_object import TileDBObject
@@ -384,6 +384,4 @@ class Collection(CollectionBase[TileDBObject]):
     A persistent collection of SOMA objects, mapping string keys to any SOMA object.
     """
 
-    @property
-    def soma_type(self) -> Literal["SOMACollection"]:
-        return "SOMACollection"
+    soma_type: Final = "SOMACollection"
