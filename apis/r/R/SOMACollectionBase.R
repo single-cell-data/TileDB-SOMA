@@ -42,7 +42,7 @@ SOMACollectionBase <- R6::R6Class(
     #' @returns SOMA object.
     get = function(name) {
       super$get(name)
-    },
+    }
 
   ),
 
