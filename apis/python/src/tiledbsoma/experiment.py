@@ -1,6 +1,7 @@
-from typing import Any, Dict, Literal, Optional, Tuple, cast
+from typing import Any, Dict, Optional, Tuple, cast
 
 import tiledb
+from typing_extensions import Final
 
 from .collection import CollectionBase
 from .dataframe import DataFrame
@@ -44,9 +45,7 @@ class Experiment(CollectionBase[TileDBObject]):
             ctx=ctx,
         )
 
-    @property
-    def soma_type(self) -> Literal["SOMAExperiment"]:
-        return "SOMAExperiment"
+    soma_type: Final = "SOMAExperiment"
 
     def create(self) -> "Experiment":
         """

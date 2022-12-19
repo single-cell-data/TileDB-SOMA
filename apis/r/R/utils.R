@@ -145,6 +145,5 @@ arrow_to_dt <- function(arrlst) {
 ##' @importFrom data.table data.table
 ##' @importFrom dplyr collect
 ##' @importFrom spdl setup
-##' @exportPattern "^[[:alpha:]]+"
 ##' @useDynLib tiledbsoma, .registration=TRUE
 NULL

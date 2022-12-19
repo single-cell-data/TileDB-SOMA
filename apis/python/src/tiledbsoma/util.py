@@ -22,7 +22,9 @@ SPEC_NAMES_TO_CLASS_NAMES = {
     "SOMACollection": "Collection",
     "SOMADataFrame": "DataFrame",
     "SOMADenseNDArray": "DenseNDArray",
+    "SOMADenseNdArray": "DenseNDArray",
     "SOMASparseNDArray": "SparseNDArray",
+    "SOMASparseNdArray": "SparseNDArray",
 }
 
 CLASS_NAMES_TO_SPEC_NAMES = {

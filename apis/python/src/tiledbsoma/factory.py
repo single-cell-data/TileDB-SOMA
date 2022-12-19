@@ -83,10 +83,10 @@ def _construct_member(
     elif class_name == "DataFrame":
         assert object_type is None or object_type == "array"
         return DataFrame(uri=member_uri, parent=parent, ctx=ctx)
-    elif class_name == "DenseNDArray":
+    elif class_name in ["DenseNDArray", "DenseNdArray"]:
         assert object_type is None or object_type == "array"
         return DenseNDArray(uri=member_uri, parent=parent, ctx=ctx)
-    elif class_name == "SparseNDArray":
+    elif class_name in ["SparseNDArray", "SparseNdArray"]:
         assert object_type is None or object_type == "array"
         return SparseNDArray(uri=member_uri, parent=parent, ctx=ctx)
     else:

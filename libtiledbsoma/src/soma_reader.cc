@@ -104,7 +104,8 @@ SOMAReader::SOMAReader(
         } else if (result_order == "column-major") {
             layout = TILEDB_COL_MAJOR;
         } else {
-            throw TileDBSOMAError(fmt::format("Unknown result_order {}", result_order));
+            throw TileDBSOMAError(
+                fmt::format("Unknown result_order {}", result_order));
         }
         mq_->set_layout(layout);
     }

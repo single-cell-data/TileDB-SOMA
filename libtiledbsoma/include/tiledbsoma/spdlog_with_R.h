@@ -1,3 +1,4 @@
+// clang-format off
 //                                               Emacs make this -*- mode: C++; -*-
 //
 // R and spdlog -- simplified interface borrowing from RcppSpdlog
