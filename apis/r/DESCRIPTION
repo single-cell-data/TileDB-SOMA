@@ -7,7 +7,7 @@ Description: Interface for working with 'TileDB'-based Stack of Matrices,
     from and export to in-memory formats used by popular toolchains like
     'Seurat', 'Bioconductor', and even 'AnnData' using the companion Python
     package.
-Version: 0.1.16.9001
+Version: 0.1.19
 Authors@R: c(
     person(given = "Aaron",
            family = "Wolen",
