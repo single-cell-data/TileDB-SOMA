@@ -1,10 +1,9 @@
-from typing import List
-
 import numpy as np
 import pandas as pd
 import pyarrow as pa
 import pytest
 import tiledb
+from typing_extensions import List
 
 import tiledbsoma as soma
 

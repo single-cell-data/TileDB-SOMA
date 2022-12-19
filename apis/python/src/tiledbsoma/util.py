@@ -1,11 +1,11 @@
 import pathlib
 import time
 import urllib.parse
-from typing import List, Optional, Tuple, TypeVar, Union
 
 import numpy as np
 import pandas as pd
 import scipy.sparse as sp
+from typing_extensions import List, Optional, Tuple, TypeVar, Union
 
 from .types import DenseNdCoordinates, ResultOrder
 

@@ -1,4 +1,4 @@
-from typing import Any, Dict, Iterator, MutableMapping
+from typing_extensions import Any, Dict, Iterator, MutableMapping
 
 # importing tiledbsoma.TileDBObject leads to a circular reference as TileDBObject imports us. This
 # is, in turn, because this class requires a back-link to the underlying object -- hence,

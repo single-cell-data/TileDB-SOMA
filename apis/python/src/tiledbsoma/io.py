@@ -1,6 +1,5 @@
 import math
 import time
-from typing import Callable, Optional, Union
 
 import anndata as ad
 import numpy as np
@@ -8,6 +7,7 @@ import pandas as pd
 import pyarrow as pa
 import scipy.sparse as sp
 import tiledb
+from typing_extensions import Callable, Optional, Union
 
 import tiledbsoma.eta as eta
 import tiledbsoma.util_ann as util_ann

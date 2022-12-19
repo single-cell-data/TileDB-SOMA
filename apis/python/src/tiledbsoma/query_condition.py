@@ -4,10 +4,10 @@
 
 import ast
 from dataclasses import dataclass, field
-from typing import Any, Callable, List, Tuple, Union
 
 import numpy as np
 import tiledb
+from typing_extensions import Any, Callable, List, Tuple, Union
 
 import tiledbsoma.libtiledbsoma as qc
 from tiledbsoma.libtiledbsoma import PyQueryCondition

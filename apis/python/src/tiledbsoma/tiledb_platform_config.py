@@ -1,5 +1,7 @@
 from dataclasses import dataclass
-from typing import (
+
+import tiledb
+from typing_extensions import (
     Any,
     Dict,
     Iterator,
@@ -11,8 +13,6 @@ from typing import (
     Union,
     cast,
 )
-
-import tiledb
 
 from .types import PlatformConfig
 

@@ -1,9 +1,7 @@
-from typing import Any, List, Optional, Union, cast
-
 import numpy as np
 import pyarrow as pa
 import tiledb
-from typing_extensions import Final
+from typing_extensions import Any, Final, List, Optional, Union, cast
 
 # This package's pybind11 code
 import tiledbsoma.libtiledbsoma as clib
@@ -200,7 +198,10 @@ class DenseNDArray(TileDBArray):
         sr.submit()
 
         arrow_tables = []
-        while arrow_table_piece := sr.read_next():
+        while True:
+            arrow_table_piece = sr.read_next()
+            if not arrow_table_piece:
+                break
             arrow_tables.append(arrow_table_piece)
 
         # For dense arrays there is no zero-output case: attempting to make a test case

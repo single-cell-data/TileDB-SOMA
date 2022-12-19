@@ -2,9 +2,12 @@ from __future__ import annotations
 
 import time
 from dataclasses import dataclass
-from typing import (
+
+import tiledb
+from typing_extensions import (
     Any,
     Dict,
+    Final,
     Iterator,
     List,
     MutableMapping,
@@ -15,9 +18,6 @@ from typing import (
     Union,
     cast,
 )
-
-import tiledb
-from typing_extensions import Final
 
 from .exception import DoesNotExistError, SOMAError
 from .tiledb_object import TileDBObject

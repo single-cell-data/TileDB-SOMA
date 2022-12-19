@@ -3,9 +3,8 @@ This module exists to avoid what would otherwise be cyclic-module-import issues 
 Collection.
 """
 
-from typing import Any, Optional, Union
-
 import tiledb
+from typing_extensions import Any, Optional, Union
 
 from .collection import Collection, CollectionBase
 from .dataframe import DataFrame
