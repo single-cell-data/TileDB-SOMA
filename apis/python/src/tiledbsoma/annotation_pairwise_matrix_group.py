@@ -173,7 +173,7 @@ class AnnotationPairwiseMatrixGroup(TileDBGroup):
         dim_values: Labels,
         matrix_name: str,
         *,
-        schema_only: bool = False,
+        ingest_mode: str = "write",
     ) -> None:
         """
         Populates a component of the ``obsp`` or ``varp`` subgroup for a SOMA object.
@@ -202,7 +202,7 @@ class AnnotationPairwiseMatrixGroup(TileDBGroup):
             matrix,
             dim_values,
             dim_values,
-            schema_only=schema_only,
+            ingest_mode=ingest_mode,
         )
         self._add_object(annotation_pairwise_matrix)
 

@@ -328,7 +328,11 @@ class AnnotationDataFrame(TileDBArray):
 
     # ----------------------------------------------------------------
     def from_dataframe(
-        self, dataframe: pd.DataFrame, *, extent: int = 2048, schema_only: bool = False
+        self,
+        dataframe: pd.DataFrame,
+        *,
+        extent: int = 2048,
+        ingest_mode: str = "write",
     ) -> None:
         """
         Populates the ``obs`` or ``var`` subgroup for a SOMA object.
@@ -371,7 +375,7 @@ class AnnotationDataFrame(TileDBArray):
         #   CTTGATTGATCTTC 0          233.0      76           ...
         dataframe = dataframe.rename_axis(self.dim_name)
 
-        if schema_only:
+        if ingest_mode == "schema-only":
             mode = "schema_only"
         else:
             mode = "ingest"

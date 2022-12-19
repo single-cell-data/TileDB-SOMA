@@ -42,9 +42,10 @@ def main():
         action="store_true",
     )
     parser.add_argument(
-        "--schema-only",
-        help="Only create groups and array schemas; do not write array data. Useful for prep-step for parallel append-mode ingest.",
-        action="store_true",
+        "--ingest-mode",
+        help="XXX Only create groups and array schemas; do not write array data. Useful for prep-step for parallel append-mode ingest.",
+        choices=["write", "schema-only", "resume"],
+        nargs=1,
     )
     parser.add_argument(
         "-x",
@@ -153,7 +154,7 @@ select `relative=True`. (This is the default.)
                 input_path=input_path,
                 output_path=output_path,
                 ifexists=args.ifexists[0],
-                schema_only=args.schema_only,
+                ingest_mode=args.ingest_mode[0],
                 soma_options=soma_options,
                 write_soco=write_soco,
                 soco_dir=outdir,
@@ -166,7 +167,7 @@ select `relative=True`. (This is the default.)
                 input_path=input_path,
                 output_path=output_path,
                 ifexists=args.ifexists[0],
-                schema_only=args.schema_only,
+                ingest_mode=args.ingest_mode[0],
                 soma_options=soma_options,
                 write_soco=write_soco,
                 soco_dir=outdir,
@@ -181,7 +182,7 @@ select `relative=True`. (This is the default.)
                 input_path=input_path,
                 output_path=output_path,
                 ifexists=args.ifexists[0],
-                schema_only=args.schema_only,
+                ingest_mode=args.ingest_mode[0],
                 soma_options=soma_options,
                 write_soco=write_soco,
                 soco_dir=outdir,
@@ -193,7 +194,7 @@ select `relative=True`. (This is the default.)
                 input_path=input_path,
                 output_path=output_path,
                 ifexists=args.ifexists[0],
-                schema_only=args.schema_only,
+                ingest_mode=args.ingest_mode[0],
                 soma_options=soma_options,
                 write_soco=write_soco,
                 soco_dir=outdir,
@@ -209,7 +210,7 @@ def ingest_one(
     input_path: str,
     output_path: str,
     ifexists: str,
-    schema_only: bool,
+    ingest_mode: str,
     soma_options: tiledbsoma.SOMAOptions,
     write_soco: bool,
     soco_dir: str,
@@ -237,7 +238,7 @@ def ingest_one(
             raise Exception("Cannot update; doesn't exist yet:", output_path)
         # Do the ingest into TileDB.
         tiledbsoma.io.from_h5ad_update_obs_and_var(
-            soma, input_path, schema_only=schema_only
+            soma, input_path, ingest_mode=ingest_mode
         )
 
     else:
@@ -274,7 +275,7 @@ def ingest_one(
                     "Internal coding error in --ifexists handling.", ifexists, "<"
                 )
         # Do the ingest into TileDB.
-        tiledbsoma.io.from_h5ad(soma, input_path, schema_only=schema_only)
+        tiledbsoma.io.from_h5ad(soma, input_path, ingest_mode=ingest_mode)
 
     tiledbsoma.logging.logger.info(f"Wrote {output_path}")
 

@@ -126,7 +126,7 @@ class AnnotationMatrixGroup(TileDBGroup):
         dim_values: Labels,
         matrix_name: str,
         *,
-        schema_only: bool = False,
+        ingest_mode: str = "write",
     ) -> None:
         """
         Populates a component of the ``obsm`` or ``varm`` subgroup for a SOMA object.
@@ -149,7 +149,7 @@ class AnnotationMatrixGroup(TileDBGroup):
             parent=self,
         )
         annotation_matrix.from_matrix_and_dim_values(
-            matrix, dim_values, schema_only=schema_only
+            matrix, dim_values, ingest_mode=ingest_mode
         )
         self._add_object(annotation_matrix)
 

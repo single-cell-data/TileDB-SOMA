@@ -163,7 +163,7 @@ class AssayMatrix(TileDBArray):
         matrix: Matrix,
         row_names: Labels,
         col_names: Labels,
-        schema_only: bool = False,
+        ingest_mode: str = "write",
     ) -> None:
         """
         Imports a matrix --- nominally ``scipy.sparse.csr_matrix`` or ``numpy.ndarray`` --- into a TileDB
@@ -197,7 +197,7 @@ class AssayMatrix(TileDBArray):
 
         self._set_object_type_metadata()
 
-        if not schema_only:
+        if ingest_mode != "schema-only":
             if not self._soma_options.write_X_chunked:
                 self.ingest_data_whole(matrix, row_names, col_names)
             elif isinstance(matrix, sp.csr_matrix):

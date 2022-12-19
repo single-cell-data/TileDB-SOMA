@@ -35,14 +35,14 @@ def from_h5ad(
     soma: tiledbsoma.SOMA,
     input_path: Path,
     X_layer_name: str = "data",
-    schema_only: bool = False,
+    ingest_mode: str = "write",
 ) -> None:
     """
     Reads an ``.h5ad`` local-disk file and writes to a TileDB SOMA structure.
     """
     if isinstance(input_path, ad.AnnData):
         raise Exception("Input path is an AnnData object -- did you want from_anndata?")
-    _from_h5ad_common(soma, input_path, _from_anndata_aux, X_layer_name, schema_only)
+    _from_h5ad_common(soma, input_path, _from_anndata_aux, X_layer_name, ingest_mode)
 
 
 # ----------------------------------------------------------------
@@ -66,7 +66,7 @@ def _from_h5ad_common(
     input_path: Path,
     handler_func: Callable[[tiledbsoma.SOMA, ad.AnnData, str, bool], None],
     X_layer_name: str,
-    schema_only: bool,
+    ingest_mode: str,
 ) -> None:
     """
     Common code for things we do when processing a .h5ad file for ingest/update.
@@ -84,7 +84,7 @@ def _from_h5ad_common(
         tiledbsoma.util.format_elapsed(s, f"{soma._indent}FINISH READING {input_path}"),
     )
 
-    handler_func(soma, anndata, X_layer_name, schema_only)
+    handler_func(soma, anndata, X_layer_name, ingest_mode)
 
     log_io(
         None,
@@ -112,7 +112,7 @@ def from_10x(
     soma: tiledbsoma.SOMA,
     input_path: Path,
     X_layer_name: str = "data",
-    schema_only: bool = False,
+    ingest_mode: str = False,
 ) -> None:
     """
     Reads a 10X file and writes to a TileDB group structure.
@@ -129,7 +129,7 @@ def from_10x(
         tiledbsoma.util.format_elapsed(s, f"{soma._indent}FINISH READING {input_path}"),
     )
 
-    _from_anndata_aux(soma, anndata, X_layer_name, schema_only=schema_only)
+    _from_anndata_aux(soma, anndata, X_layer_name, ingest_mode=ingest_mode)
 
     log_io(
         None,
@@ -144,7 +144,7 @@ def from_anndata_unless_exists(
     soma: tiledbsoma.SOMA,
     anndata: ad.AnnData,
     X_layer_name: str = "data",
-    schema_only: bool = False,
+    ingest_mode: str = False,
 ) -> None:
     """
     Skips the ingest if the SOMA is already there. A convenient keystroke-saver
@@ -155,7 +155,7 @@ def from_anndata_unless_exists(
             f"Already exists, skipping ingest: {soma.nested_name}"
         )
     else:
-        _from_anndata_aux(soma, anndata, X_layer_name, schema_only)
+        _from_anndata_aux(soma, anndata, X_layer_name, ingest_mode)
 
 
 # ----------------------------------------------------------------
@@ -163,19 +163,19 @@ def from_anndata(
     soma: tiledbsoma.SOMA,
     anndata: ad.AnnData,
     X_layer_name: str = "data",
-    schema_only: bool = False,
+    ingest_mode: str = "write",
 ) -> None:
     """
     Given an in-memory ``AnnData`` object, writes to a TileDB SOMA structure.
     """
-    return _from_anndata_aux(soma, anndata, X_layer_name, schema_only)
+    return _from_anndata_aux(soma, anndata, X_layer_name, ingest_mode)
 
 
 def _from_anndata_aux(
     soma: tiledbsoma.SOMA,
     anndata: ad.AnnData,
     X_layer_name: str,
-    schema_only: bool,
+    ingest_mode: str,
 ) -> None:
     """
     Helper method for ``from_anndata``. This simplified type-checking using ``mypy`` with regard to
@@ -220,7 +220,7 @@ def _from_anndata_aux(
                 soma.obs.from_dataframe,
                 dataframe=anndata.obs,
                 extent=256,
-                schema_only=schema_only,
+                ingest_mode=ingest_mode,
             )
         )
         futures.append(
@@ -228,7 +228,7 @@ def _from_anndata_aux(
                 soma.var.from_dataframe,
                 dataframe=anndata.var,
                 extent=2048,
-                schema_only=schema_only,
+                ingest_mode=ingest_mode,
             )
         )
         futures.append(
@@ -238,7 +238,7 @@ def _from_anndata_aux(
                 row_names=anndata.obs.index,
                 col_names=anndata.var.index,
                 layer_name=X_layer_name,
-                schema_only=schema_only,
+                ingest_mode=ingest_mode,
             )
         )
 
@@ -251,7 +251,7 @@ def _from_anndata_aux(
                         row_names=anndata.obs.index,
                         col_names=anndata.var.index,
                         layer_name=layer_name,
-                        schema_only=schema_only,
+                        ingest_mode=ingest_mode,
                     )
                 )
 
@@ -278,7 +278,7 @@ def _from_anndata_aux(
                     anndata.obsm[key],
                     anndata.obs_names,
                     key,
-                    schema_only=schema_only,
+                    ingest_mode=ingest_mode,
                 )
             )
 
@@ -289,7 +289,7 @@ def _from_anndata_aux(
                     anndata.varm[key],
                     anndata.var_names,
                     key,
-                    schema_only=schema_only,
+                    ingest_mode=ingest_mode,
                 )
             )
 
@@ -300,7 +300,7 @@ def _from_anndata_aux(
                     anndata.obsp[key],
                     anndata.obs_names,
                     key,
-                    schema_only=schema_only,
+                    ingest_mode=ingest_mode,
                 )
             )
 
@@ -311,7 +311,7 @@ def _from_anndata_aux(
                     anndata.varp[key],
                     anndata.var_names,
                     key,
-                    schema_only=schema_only,
+                    ingest_mode=ingest_mode,
                 )
             )
 
@@ -320,7 +320,7 @@ def _from_anndata_aux(
                 executor.submit(
                     soma.raw.from_anndata,
                     anndata,
-                    schema_only=schema_only,
+                    ingest_mode=ingest_mode,
                 )
             )
 
@@ -336,7 +336,7 @@ def _from_anndata_aux(
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     # Already parallelized recursively
-    if not schema_only:
+    if ingest_mode != "schema-only":
         # Writing multiple H5ADs in append mode to the same SOMA is a supported mode.  However the
         # uns structures _cannot_ have all the same schema -- in particular there are dense arrays.
         # For append mode, users must set `anndata.uns = {}`, or "nest" each input anndata object's
