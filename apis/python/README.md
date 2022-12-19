@@ -93,3 +93,7 @@ interface TDBFilterSpec {
   [kwarg: string]: any;
 }
 ```
+
+# Information for developers
+
+Please see the [TileDB-SOMA wiki](https://github.com/single-cell-data/TileDB-SOMA/wiki).
