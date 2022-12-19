@@ -78,6 +78,24 @@ def test_soma_reader_dim_points():
     assert sr.results_complete()
     assert arrow_table.num_rows == len(obs_id_points)
 
+def test_soma_reader_empty_dim_points():
+    """Read scalar dimension slice from obs array into an arrow table."""
+
+    name = "obs"
+    uri = os.path.join(SOMA_URI, name)
+    sr = clib.SOMAReader(uri)
+
+    obs_id_points = []
+
+    sr.set_dim_points("soma_joinid", obs_id_points)
+
+    sr.submit()
+    arrow_table = sr.read_next()
+
+    # test that all results are present in the arrow table (no incomplete queries)
+    assert sr.results_complete()
+    assert arrow_table.num_rows == len(obs_id_points)
+
 
 def test_soma_reader_dim_points_arrow_array():
     """Read scalar dimension slice from obs array into an arrow table."""

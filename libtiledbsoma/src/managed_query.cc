@@ -104,7 +104,7 @@ void ManagedQuery::submit() {
                 0, non_empty_domain.first, non_empty_domain.second);
 
             LOG_DEBUG(fmt::format(
-                "[ManagedQuery] Add full NDE range to dense subarray = (0, {}, "
+                "[ManagedQuery] Add full NED range to dense subarray = (0, {}, "
                 "{})",
                 non_empty_domain.first,
                 non_empty_domain.second));
@@ -139,11 +139,19 @@ void ManagedQuery::submit() {
     // Submit query
     LOG_DEBUG(fmt::format("[ManagedQuery] [{}] Submit query", name_));
 
-    query_->submit();
+    // Do not submit if the query contains only empty ranges
+    if (!is_empty_query()) {
+        query_->submit();
+    }
     query_submitted_ = true;
 }
 
 std::shared_ptr<ArrayBuffers> ManagedQuery::results() {
+    if (is_empty_query()) {
+        query_submitted_ = false;
+        return buffers_;
+    }
+
     if (!query_submitted_) {
         throw TileDBSOMAError(fmt::format(
             "[ManagedQuery][{}] submit query before reading results", name_));

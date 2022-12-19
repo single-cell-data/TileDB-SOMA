@@ -88,9 +88,10 @@ class ManagedQuery {
     template <typename T>
     void select_ranges(
         const std::string& dim, const std::vector<std::pair<T, T>>& ranges) {
+        subarray_range_set_ = true;
         for (auto& [start, stop] : ranges) {
             subarray_->add_range(dim, start, stop);
-            subarray_range_set_ = true;
+            subarray_range_empty_ = false;
         }
     }
 
@@ -103,9 +104,10 @@ class ManagedQuery {
      */
     template <typename T>
     void select_points(const std::string& dim, const std::vector<T>& points) {
+        subarray_range_set_ = true;
         for (auto& point : points) {
             subarray_->add_range(dim, point, point);
-            subarray_range_set_ = true;
+            subarray_range_empty_ = false;
         }
     }
 
@@ -118,9 +120,10 @@ class ManagedQuery {
      */
     template <typename T>
     void select_points(const std::string& dim, const tcb::span<T> points) {
+        subarray_range_set_ = true;
         for (auto& point : points) {
             subarray_->add_range(dim, point, point);
-            subarray_range_set_ = true;
+            subarray_range_empty_ = false;
         }
     }
 
@@ -135,6 +138,7 @@ class ManagedQuery {
     void select_point(const std::string& dim, const T& point) {
         subarray_->add_range(dim, point, point);
         subarray_range_set_ = true;
+        subarray_range_empty_ = false;
     }
 
     /**
@@ -162,21 +166,13 @@ class ManagedQuery {
     void submit();
 
     /**
-     * @brief Return the query status.
-     *
-     * @return Query::Status Query status
-     */
-    Query::Status status() {
-        return query_->query_status();
-    }
-
-    /**
      * @brief Check if the query is complete.
      *
      * @return true Query status is COMPLETE
      */
     bool is_complete() {
-        return query_->query_status() == Query::Status::COMPLETE;
+        return query_->query_status() == Query::Status::COMPLETE ||
+               is_empty_query();
     }
 
     /**
@@ -252,6 +248,15 @@ class ManagedQuery {
         return schema_;
     }
 
+    /**
+     * @brief Return true if the only ranges selected were empty.
+     *
+     * @return true if the query contains only empty ranges.
+     */
+    bool is_empty_query() {
+        return subarray_range_set_ && subarray_range_empty_;
+    }
+
    private:
     //===================================================================
     //= private non-static
@@ -288,6 +293,9 @@ class ManagedQuery {
 
     // True if a range has been added to the subarray
     bool subarray_range_set_ = false;
+
+    // True unless a non-empty range has been added to the subarray
+    bool subarray_range_empty_ = true;
 
     // Set of column names to read (dim and attr). If empty, query all columns.
     std::vector<std::string> columns_;
