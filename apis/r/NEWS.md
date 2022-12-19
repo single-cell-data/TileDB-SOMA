@@ -12,7 +12,7 @@
 
 ## Changes
 
-- Increased capacity of `AssayMatrix` arrays from 1,000 to 100,000 to improve remote-read performance (#543)
+- Decreased capacity of `AssayMatrix` arrays from 100,000 to 1,000 to improve remote-read performance (#543)
 
 ## Fixes
 
