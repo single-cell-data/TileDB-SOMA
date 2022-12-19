@@ -1,11 +1,12 @@
 import collections.abc
+from typing import Any, Final, Iterator, List, Optional, Union, cast
 
 import numpy as np
 import pandas as pd
 import pyarrow as pa
 import scipy.sparse as sp
 import tiledb
-from typing_extensions import Any, Final, Iterator, List, Literal, Optional, Union, cast
+from typing_extensions import Literal
 
 # This package's pybind11 code
 import tiledbsoma.libtiledbsoma as clib

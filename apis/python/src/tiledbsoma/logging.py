@@ -1,6 +1,5 @@
 import logging
-
-from typing_extensions import Optional
+from typing import Optional
 
 logger = logging.getLogger("tiledbsoma")
 

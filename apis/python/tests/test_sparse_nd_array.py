@@ -1,8 +1,9 @@
+from typing import Optional, Tuple, Union
+
 import numpy as np
 import pyarrow as pa
 import pytest
 import scipy.sparse as sparse
-from typing_extensions import Optional, Tuple, Union
 
 import tiledbsoma as soma
 

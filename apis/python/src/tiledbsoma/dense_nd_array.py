@@ -1,7 +1,8 @@
+from typing import Any, Final, List, Optional, Union, cast
+
 import numpy as np
 import pyarrow as pa
 import tiledb
-from typing_extensions import Any, Final, List, Optional, Union, cast
 
 # This package's pybind11 code
 import tiledbsoma.libtiledbsoma as clib

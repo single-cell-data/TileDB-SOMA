@@ -1,8 +1,9 @@
+from typing import Tuple
+
 import numpy as np
 import pyarrow as pa
 import pytest
 import tiledb
-from typing_extensions import Tuple
 
 import tiledbsoma as soma
 

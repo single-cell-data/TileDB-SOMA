@@ -1,6 +1,7 @@
+from typing import List, Optional, Sequence, Tuple
+
 import pyarrow as pa
 import tiledb
-from typing_extensions import List, Optional, Sequence, Tuple
 
 from .tiledb_object import TileDBObject
 from .tiledb_platform_config import TileDBPlatformConfig

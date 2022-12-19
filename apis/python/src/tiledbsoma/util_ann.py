@@ -1,10 +1,10 @@
 import os
+from typing import Any, List, Mapping
 
 import anndata as ad
 import numpy as np
 import pandas as pd
 import scipy.sparse as sp
-from typing_extensions import Any, List, Mapping
 
 from . import util_tiledb
 from .types import Path

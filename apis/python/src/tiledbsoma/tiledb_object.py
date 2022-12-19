@@ -3,7 +3,6 @@ from abc import ABC, abstractmethod, abstractproperty
 from typing import Optional, Union, cast
 
 import tiledb
-from typing_extensions import Optional, Union
 
 from . import util
 from .metadata_mapping import MetadataMapping

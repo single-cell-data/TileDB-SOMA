@@ -1,5 +1,6 @@
+from typing import Any, Dict, Final, Optional, Tuple, cast
+
 import tiledb
-from typing_extensions import Any, Dict, Final, Optional, Tuple, cast
 
 from .collection import CollectionBase
 from .dataframe import DataFrame

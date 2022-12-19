@@ -1,6 +1,7 @@
+from typing import List, Union
+
 import pandas as pd
 import scipy.sparse as sp
-from typing_extensions import List, Union
 
 
 def csr_from_tiledb_df(df: pd.DataFrame, num_rows: int, num_cols: int) -> sp.csr_matrix:

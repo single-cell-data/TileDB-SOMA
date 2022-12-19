@@ -1,10 +1,10 @@
 import re
+from typing import Dict, List, Optional, Sequence, Tuple, TypeVar, Union
 
 import numpy as np
 import pandas as pd
 import scipy.sparse as sp
 import tiledb
-from typing_extensions import Dict, List, Optional, Sequence, Tuple, TypeVar, Union
 
 from .types import ResultOrder
 

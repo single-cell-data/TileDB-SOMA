@@ -1,10 +1,5 @@
 import collections.abc
-
-import numpy as np
-import pandas as pd
-import pyarrow as pa
-import tiledb
-from typing_extensions import (
+from typing import (
     Any,
     Final,
     Iterator,
@@ -15,6 +10,11 @@ from typing_extensions import (
     Union,
     get_args,
 )
+
+import numpy as np
+import pandas as pd
+import pyarrow as pa
+import tiledb
 
 # This package's pybind11 code
 import tiledbsoma.libtiledbsoma as clib

@@ -1,5 +1,6 @@
+from typing import List
+
 import numpy as np
-from typing_extensions import List
 
 
 class Tracker:

@@ -1,7 +1,8 @@
+from typing import Optional, Union
+
 import numpy as np
 import pyarrow as pa
 import tiledb
-from typing_extensions import Optional, Union
 
 """
 Conversion to/from Arrow and TileDB type systems. Must be capable
