@@ -95,7 +95,7 @@ ColumnBuffer::ColumnBuffer(
     : name_(name)
     , type_(type)
     , type_size_(tiledb::impl::type_size(type))
-    , num_cells_(0)
+    , num_cells_(num_cells)
     , is_var_(is_var)
     , is_nullable_(is_nullable) {
     LOG_DEBUG(fmt::format(
@@ -124,11 +124,10 @@ void ColumnBuffer::attach(Query& query) {
     query.set_data_buffer(
         name_, (void*)data_.data(), data_.capacity() / type_size_);
     if (is_var_) {
-        query.set_offsets_buffer(name_, offsets_.data(), offsets_.capacity());
+        query.set_offsets_buffer(name_, offsets_.data(), num_cells_);
     }
     if (is_nullable_) {
-        query.set_validity_buffer(
-            name_, validity_.data(), validity_.capacity());
+        query.set_validity_buffer(name_, validity_.data(), num_cells_);
     }
 }
 
@@ -204,9 +203,11 @@ std::shared_ptr<ColumnBuffer> ColumnBuffer::alloc(
     //   from the type size.
     size_t num_cells = is_var ? num_bytes / sizeof(uint64_t) :
                                 num_bytes / tiledb::impl::type_size(type);
+    size_t num_offsets = is_var ? num_cells + 1 : 0;  // + 1 for arrow
+    size_t num_validity = is_nullable ? num_cells : 0;
 
     return std::make_shared<ColumnBuffer>(
-        name, type, num_cells, num_bytes, is_var, is_nullable);
+        name, type, num_cells, num_bytes, num_offsets, num_validity);
 }
 
 }  // namespace tiledbsoma
