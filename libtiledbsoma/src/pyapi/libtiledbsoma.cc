@@ -254,11 +254,14 @@ PYBIND11_MODULE(libtiledbsoma, m) {
                             dim, data, partition_index, partition_count);
                     } else if (!strcmp(arrow_schema.format, "U")) {
                         // TODO: partitioning is not supported for string dims
-                        const char* data = (const char*)(arrow_array.buffers[2]);
-                        const uint64_t* offsets = (const uint64_t*)(arrow_array.buffers[1]);
+                        const char* data = (const char*)(arrow_array
+                                                             .buffers[2]);
+                        const uint64_t*
+                            offsets = (const uint64_t*)(arrow_array.buffers[1]);
 
                         for (int64_t i = 0; i < arrow_array.length; i++) {
-                            auto value = std::string{data + offsets[i], offsets[i + 1] - offsets[i]};
+                            auto value = std::string{
+                                data + offsets[i], offsets[i + 1] - offsets[i]};
                             reader.set_dim_point(dim, value);
                         }
                     } else {

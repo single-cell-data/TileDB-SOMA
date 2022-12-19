@@ -32,7 +32,7 @@ update:
 .PHONY: test
 test: data
 	ctest --test-dir build/libtiledbsoma -C Release --verbose
-	pytest
+	pytest apis/python/tests libtiledbsoma/test
 
 .PHONY: data
 data:
@@ -43,6 +43,18 @@ data:
 		-n \
 		data/pbmc3k_processed.h5ad \
 		data/10x-pbmc-multiome-v1.0/subset_100_100.h5ad
+
+# format
+# -------------------------------------------------------------------
+.PHONY: check-format
+check-format:
+	 @./scripts/run-clang-format.sh . clang-format 0 \
+	 	`find libtiledbsoma -name "*.cc" -or -name "*.h"`
+
+.PHONY: format
+format:
+	 @./scripts/run-clang-format.sh . clang-format 1 \
+	 	`find libtiledbsoma -name "*.cc" -or -name "*.h"`
 
 # clean
 # -------------------------------------------------------------------
@@ -65,6 +77,8 @@ Rules:
   r-build [options]   Build C++ static library with "#define R_BUILD" for R
   update              Incrementally build C++ library and update python module
   test                Run tests
+  check-format        Run C++ format check
+  format              Run C++ format
   clean               Remove build artifacts
 
 Options:
