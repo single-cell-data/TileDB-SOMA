@@ -2,7 +2,7 @@
 
 ## Changes
 
-- Updated `setup-r` GitHub Action to v2
+- Updated `setup-r` GitHub Action to v2 and `checkout` to v3
 
 # tiledbsoma 0.1.18
 
