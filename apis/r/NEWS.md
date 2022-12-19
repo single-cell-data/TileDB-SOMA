@@ -4,6 +4,10 @@
 
 - The `AnnotationMatrix`'s `to_matrix()` method now supports batched reads via the `batch_mode` argument. This functionality can also be leveraged from `SOMA`'s  `get_seurat_dimreductions_list()` and `get_seurat_dimreduction()` methods.
 
+## Changes
+
+- Updated `setup-r` GitHub Action to v2
+
 ## Fixes
 * Don't use default assay name when recreating a `Seurat` object (thanks @dan11mcguire)
 
