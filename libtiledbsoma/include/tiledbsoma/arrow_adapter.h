@@ -105,42 +105,25 @@ class ArrowAdapter {
             array->buffers[1] = column->offsets().data();  // offsets
         }
 
+        if (column->is_nullable()) {
+            schema->flags |= ARROW_FLAG_NULLABLE;
+
+            // Count nulls
+            for (auto v : column->validity()) {
+                array->null_count += v == 0;
+            }
+
+            // Convert validity bytemap to a bitmap in place
+            column->validity_to_bitmap();
+            array->buffers[0] = column->validity().data();
+        }
+
         /* Workaround to cast TILEDB_BOOL from uint8 to 1-bit Arrow boolean. */
         if (column->type() == TILEDB_BOOL) {
-            int bitmap_count = 0;
-            for (int buff_idx = 0; buff_idx < array->length; buff_idx++) {
-                // Overwrite every 8 bytes with a one-byte bitmap
-                if (buff_idx % 8 == 0) {
-                    ((uint8_t*)array->buffers[n_buffers - 1])[bitmap_count] =
-                        bitmap(column, buff_idx);
-                    bitmap_count++;
-                }
-            }
+            column->data_to_bitmap();
         }
 
         return std::pair(std::move(array), std::move(schema));
-    }
-
-    /**
-     * Beginning at the bytemap_idx, fetch 8 bytes from the column buffer and
-     * return the corresponding bitmap.
-     *
-     * @param column the column buffer which contains the data bytemap
-     * @param bytemap_idx the bytemap's 8-byte boundary
-     * @return uint8_t one-byte bitmap
-     */
-    static uint8_t bitmap(
-        std::shared_ptr<ColumnBuffer> column, int bytemap_idx) {
-        auto bytemap = column->data<bool>().data();
-        uint8_t bitmap = 0;
-
-        // Each bit in the bitmap corresponds to one byte in the source bytemap
-        // Note: the bitmap must be byte-aligned (8 bits)
-        for (int idx = bytemap_idx; idx < bytemap_idx + 8; idx++) {
-            auto bit = bytemap[idx];
-            bitmap |= bit << (idx % 8);
-        }
-        return bitmap;
     }
 
     /**

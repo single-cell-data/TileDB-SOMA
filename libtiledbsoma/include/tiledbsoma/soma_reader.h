@@ -304,6 +304,9 @@ class SOMAReader {
 
     // True if this is the first call to read_next()
     bool first_read_next_ = true;
+
+    // True if the query was submitted
+    bool submitted_ = false;
 };
 
 }  // namespace tiledbsoma

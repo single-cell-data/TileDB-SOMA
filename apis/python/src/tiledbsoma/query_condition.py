@@ -366,6 +366,9 @@ class QueryConditionTree(ast.NodeVisitor):
                     raise tiledb.TileDBError(f"Cannot cast `{val}` to {dtype}.")
                 if np.issubdtype(dtype, np.datetime64):
                     cast = getattr(np, "int64")
+                # silence DeprecationWarning: `np.bool`
+                elif dtype == "bool":
+                    cast = bool
                 else:
                     cast = getattr(np, dtype)
                 val = cast(val)
