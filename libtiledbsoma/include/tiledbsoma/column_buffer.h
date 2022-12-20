@@ -69,6 +69,12 @@ class ColumnBuffer {
     static std::shared_ptr<ColumnBuffer> create(
         std::shared_ptr<Array> array, std::string_view name);
 
+    /**
+     * @brief Convert a bytemap to a bitmap in place.
+     *
+     */
+    static void to_bitmap(tcb::span<uint8_t> bytemap);
+
     //===================================================================
     //= public non-static
     //===================================================================
@@ -205,6 +211,22 @@ class ColumnBuffer {
      */
     bool is_nullable() const {
         return is_nullable_;
+    }
+
+    /**
+     * @brief Convert the data bytemap to a bitmap in place.
+     *
+     */
+    void data_to_bitmap() {
+        ColumnBuffer::to_bitmap(data<uint8_t>());
+    }
+
+    /**
+     * @brief Convert the validity bytemap to a bitmap in place.
+     *
+     */
+    void validity_to_bitmap() {
+        ColumnBuffer::to_bitmap(validity());
     }
 
    private:

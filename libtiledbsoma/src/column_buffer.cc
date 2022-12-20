@@ -81,6 +81,22 @@ std::shared_ptr<ColumnBuffer> ColumnBuffer::create(
     throw TileDBSOMAError("[ColumnBuffer] Column name not found: " + name_str);
 }
 
+void ColumnBuffer::to_bitmap(tcb::span<uint8_t> bytemap) {
+    int i_dst = 0;
+    for (unsigned int i_src = 0; i_src < bytemap.size(); i_src++) {
+        // Overwrite every 8 bytes with a one-byte bitmap
+        if (i_src % 8 == 0) {
+            // Each bit in the bitmap corresponds to one byte in the bytemap
+            // Note: the bitmap must be byte-aligned (8 bits)
+            int bitmap = 0;
+            for (unsigned int i = i_src; i < i_src + 8; i++) {
+                bitmap |= bytemap[i] << (i % 8);
+            }
+            bytemap[i_dst++] = bitmap;
+        }
+    }
+}
+
 //===================================================================
 //= public non-static
 //===================================================================
@@ -109,7 +125,7 @@ ColumnBuffer::ColumnBuffer(
     // resident memory footprint of the buffer.
     data_.reserve(num_bytes);
     if (is_var_) {
-        offsets_.reserve(num_cells + 1);
+        offsets_.reserve(num_cells + 1);  // extra offset for arrow
     }
     if (is_nullable_) {
         validity_.reserve(num_cells);
@@ -124,7 +140,10 @@ void ColumnBuffer::attach(Query& query) {
     query.set_data_buffer(
         name_, (void*)data_.data(), data_.capacity() / type_size_);
     if (is_var_) {
-        query.set_offsets_buffer(name_, offsets_.data(), offsets_.capacity());
+        // Remove one offset for TileDB, which checks that the
+        // offsets and validity buffers are the same size
+        query.set_offsets_buffer(
+            name_, offsets_.data(), offsets_.capacity() - 1);
     }
     if (is_nullable_) {
         query.set_validity_buffer(
@@ -137,10 +156,7 @@ size_t ColumnBuffer::update_size(const Query& query) {
 
     if (is_var()) {
         num_cells_ = num_offsets;
-        // Add extra offset for arrow.
-        if (offsets_.capacity() < num_offsets + 1) {
-            offsets_.reserve(num_offsets + 1);
-        }
+        // Set the extra offset value for arrow.
         offsets_[num_offsets] = num_elements;
     } else {
         num_cells_ = num_elements;

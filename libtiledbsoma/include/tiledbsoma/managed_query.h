@@ -209,6 +209,17 @@ class ManagedQuery {
     }
 
     /**
+     * @brief Return a view of validity values for column `name`.
+     *
+     * @param name Column name
+     * @return tcb::span<uint8_t> Validity view
+     */
+    const tcb::span<uint8_t> validity(const std::string& name) {
+        check_column_name(name);
+        return buffers_->at(name)->validity();
+    }
+
+    /**
      * @brief Return a vector of strings from the column `name`.
      *
      * @param name Column name
