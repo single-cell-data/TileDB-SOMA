@@ -57,7 +57,7 @@ test_that("Arrow Interface from SOMAReader", {
 
 
     uri <- tempfile()
-    ndarray <- SOMADenseNdArray$new(uri)
+    ndarray <- SOMADenseNDArray$new(uri)
     ndarray$create(arrow::int32(), shape = c(4, 4))
     M <- matrix(1:16, 4, 4)
     ndarray$write(M)
