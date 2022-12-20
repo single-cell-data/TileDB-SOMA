@@ -1,9 +1,9 @@
-#' SOMADenseNdArray
+#' SOMADenseNDArray
 #'
 #' @description
-#' `SOMADenseNdArray` is a dense, N-dimensional array of `primitive` type, with
+#' `SOMADenseNDArray` is a dense, N-dimensional array of `primitive` type, with
 #' offset (zero-based) `int64` integer indexing on each dimension with domain
-#' `[0, maxInt64)`. The `SOMADenseNdArray` has a user-defined schema, which
+#' `[0, maxInt64)`. The `SOMADenseNDArray` has a user-defined schema, which
 #' includes:
 #'
 #' - **type**: a `primitive` type, expressed as an Arrow type (e.g., `int64`,
@@ -14,16 +14,16 @@
 #' All dimensions must have a positive, non-zero length, and there must be 1 or
 #' more dimensions.
 #'
-#' The default "fill" value for `SOMADenseNdArray` is the zero or null value of
+#' The default "fill" value for `SOMADenseNDArray` is the zero or null value of
 #' the array type (e.g., Arrow.float32 defaults to 0.0).
 #' @export
-SOMADenseNdArray <- R6::R6Class(
-  classname = "SOMADenseNdArray",
+SOMADenseNDArray <- R6::R6Class(
+  classname = "SOMADenseNDArray",
   inherit = TileDBArray,
 
   public = list(
 
-    #' @description Create a SOMADenseNdArray named with the URI.
+    #' @description Create a SOMADenseNDArray named with the URI.
     #' @param type an [Arrow type][arrow::data-type] defining the type of each
     #' element in the array.
     #' @param shape a vector of integers defining the shape of the array.
@@ -122,7 +122,7 @@ SOMADenseNdArray <- R6::R6Class(
     #' @description Write matrix data to the array.
     #'
     #' @param values A `matrix`. Character dimension names are ignored because
-    #' `SOMANdArray`'s use integer indexing.
+    #' `SOMANDArray`'s use integer indexing.
     #' @param coords A `list` of integer vectors, one for each dimension, with a
     #' length equal to the number of values to write. If `NULL`, the default,
     #' the values are taken from the row and column names of `values`.
