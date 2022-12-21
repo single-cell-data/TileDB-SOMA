@@ -203,6 +203,68 @@ PYBIND11_MODULE(libtiledbsoma, m) {
             "result_order"_a = "auto",
             "platform_config"_a = py::dict())
 
+        .def(
+            "reset",
+            [](SOMAReader& reader,
+               std::optional<std::vector<std::string>> column_names_in,
+               py::object py_query_condition,
+               py::object py_schema,
+               std::string_view batch_size,
+               std::string_view result_order) {
+                // Handle optional args
+                std::vector<std::string> column_names;
+                if (column_names_in) {
+                    column_names = *column_names_in;
+                }
+
+                // Handle query condition based on
+                // TileDB-Py::PyQuery::set_attr_cond()
+                QueryCondition* qc = nullptr;
+                if (!py_query_condition.is(py::none())) {
+                    py::object init_pyqc = py_query_condition.attr(
+                        "init_query_condition");
+
+                    try {
+                        // Column names will be updated with columns present in
+                        // the query condition
+                        auto new_column_names =
+                            init_pyqc(py_schema, column_names)
+                                .cast<std::vector<std::string>>();
+
+                        // Update the column_names list if it was not empty,
+                        // otherwise continue selecting all columns with an
+                        // empty column_names list
+                        if (!column_names.empty()) {
+                            column_names = new_column_names;
+                        }
+                    } catch (const std::exception& e) {
+                        throw TileDBSOMAError(e.what());
+                    }
+
+                    qc = py_query_condition.attr("c_obj")
+                             .cast<tiledbpy::PyQueryCondition>()
+                             .ptr()
+                             .get();
+                }
+
+                // Release python GIL after we're done accessing python objects
+                py::gil_scoped_release release;
+
+                // Reset state of the existing SOMAReader object
+                reader.reset(column_names, batch_size, result_order);
+
+                // Set query condition if present
+                if (qc) {
+                    reader.set_condition(*qc);
+                }
+            },
+            py::kw_only(),
+            "column_names"_a = py::none(),
+            "query_condition"_a = py::none(),
+            "schema"_a = py::none(),
+            "batch_size"_a = "auto",
+            "result_order"_a = "auto")
+
         // Binding overloaded methods to templated member functions requires
         // more effort, see:
         // https://pybind11.readthedocs.io/en/stable/classes.html#overloaded-methods
@@ -298,6 +360,7 @@ PYBIND11_MODULE(libtiledbsoma, m) {
             "submit",
             &SOMAReader::submit,
             py::call_guard<py::gil_scoped_release>())
+
         .def("results_complete", &SOMAReader::results_complete)
 
         .def(

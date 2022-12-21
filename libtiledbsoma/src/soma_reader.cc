@@ -80,8 +80,7 @@ SOMAReader::SOMAReader(
     std::string_view batch_size,
     std::string_view result_order)
     : ctx_(ctx)
-    , uri_(util::rstrip_uri(uri))
-    , batch_size_(std::string(batch_size)) {
+    , uri_(util::rstrip_uri(uri)) {
     // Validate parameters
     try {
         LOG_DEBUG(fmt::format("[SOMAReader] opening array '{}'", uri_));
@@ -93,9 +92,21 @@ SOMAReader::SOMAReader(
             fmt::format("Error opening array: {}\n  {}", uri_, e.what()));
     }
 
+    reset(column_names, batch_size, result_order);
+}
+
+void SOMAReader::reset(
+    std::vector<std::string> column_names,
+    std::string_view batch_size,
+    std::string_view result_order) {
+    // Reset managed query
+    mq_->reset();
+
     if (!column_names.empty()) {
         mq_->select_columns(column_names);
     }
+
+    batch_size_ = batch_size;
 
     if (result_order != "auto") {  // default "auto" is set in soma_reader.h
         tiledb_layout_t layout;

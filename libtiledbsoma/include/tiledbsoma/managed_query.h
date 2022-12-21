@@ -53,7 +53,7 @@ class ManagedQuery {
     //===================================================================
 
     /**
-     * @brief Construct a new Managed Query object
+     * @brief Construct a new ManagedQuery object
      *
      * @param array TileDB array
      * @param name Name of the array
@@ -65,6 +65,13 @@ class ManagedQuery {
     ManagedQuery(const ManagedQuery&) = delete;
     ManagedQuery(ManagedQuery&&) = default;
     ~ManagedQuery() = default;
+
+    /**
+     * @brief Reset the state of this ManagedQuery object to prepare for a new
+     * query, while holding the array open.
+     *
+     */
+    void reset();
 
     /**
      * @brief Select columns names to query (dim and attr). If the
