@@ -120,12 +120,14 @@ void SOMAReader::reset(
         }
         mq_->set_layout(layout);
     }
+
+    first_read_next_ = true;
+    submitted_ = false;
 }
 
 void SOMAReader::submit() {
     // Submit the query
     mq_->submit();
-    first_read_next_ = true;
     submitted_ = true;
 }
 
