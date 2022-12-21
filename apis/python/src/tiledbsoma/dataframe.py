@@ -266,13 +266,7 @@ class DataFrame(TileDBArray):
                     elif isinstance(
                         dim_ids, (collections.abc.Sequence, pa.Array, pa.ChunkedArray)
                     ):
-                        if (
-                            dim_ids == []
-                        ):  # TileDB-Py maps [] to all; we want it to map to none.
-                            # TODO: Fix this on https://github.com/single-cell-data/TileDB-SOMA/issues/484
-                            pass
-                        else:
-                            sr.set_dim_points(dim_name, dim_ids)
+                        sr.set_dim_points(dim_name, dim_ids)
                     else:
                         raise TypeError(
                             f"dim_ids type {type(dim_ids)} at slot {i} unsupported"
