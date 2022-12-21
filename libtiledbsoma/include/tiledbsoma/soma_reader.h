@@ -112,6 +112,19 @@ class SOMAReader {
     ~SOMAReader() = default;
 
     /**
+     * @brief Reset the state of this SOMAReader object to prepare for a new
+     * query, while holding the array open.
+     *
+     * @param column_names
+     * @param batch_size
+     * @param result_order
+     */
+    void reset(
+        std::vector<std::string> column_names = {},
+        std::string_view batch_size = "auto",
+        std::string_view result_order = "auto");
+
+    /**
      * @brief Set the dimension slice using one point
      *
      * @note Partitioning is not supported

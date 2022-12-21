@@ -46,14 +46,26 @@ ManagedQuery::ManagedQuery(std::shared_ptr<Array> array, std::string_view name)
     : array_(array)
     , name_(name)
     , schema_(std::make_shared<ArraySchema>(array->schema())) {
-    query_ = std::make_unique<Query>(schema_->context(), *array);
-    subarray_ = std::make_unique<Subarray>(schema_->context(), *array);
+    reset();
+}
 
-    if (array->schema().array_type() == TILEDB_SPARSE) {
+void ManagedQuery::reset() {
+    query_ = std::make_unique<Query>(schema_->context(), *array_);
+    subarray_ = std::make_unique<Subarray>(schema_->context(), *array_);
+
+    if (array_->schema().array_type() == TILEDB_SPARSE) {
         query_->set_layout(TILEDB_UNORDERED);
     } else {
         query_->set_layout(TILEDB_ROW_MAJOR);
     }
+
+    subarray_range_set_ = false;
+    subarray_range_empty_ = true;
+    columns_.clear();
+    results_complete_ = true;
+    total_num_cells_ = 0;
+    buffers_.reset();
+    query_submitted_ = false;
 }
 
 void ManagedQuery::select_columns(
