@@ -61,13 +61,8 @@ class TileDBObject(ABC):
 
         cfg = {}
 
-        # Crucial for reducing number of HTTP requests for tiledb-cloud URIs.
-        # With default (small) value, it can take many HTTP-request round trips to satisfy
-        # a single query.
-        cfg["py.init_buffer_bytes"] = 4 * 1024**3
-
         # This is necessary for smaller tile capacities when querying with a smaller memory budget.
-        cfg["sm.mem.reader.sparse_global_order.ratio_array_data"] = 0.3  # type: ignore
+        cfg["sm.mem.reader.sparse_global_order.ratio_array_data"] = 0.3
 
         # Temp workaround pending https://app.shortcut.com/tiledb-inc/story/23827
         region = os.getenv("AWS_DEFAULT_REGION")
