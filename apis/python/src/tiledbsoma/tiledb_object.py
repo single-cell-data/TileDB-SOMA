@@ -1,5 +1,6 @@
+import os
 from abc import ABC, abstractmethod, abstractproperty
-from typing import Optional, Union
+from typing import Optional, Union, cast
 
 import tiledb
 
@@ -33,6 +34,9 @@ class TileDBObject(ABC):
         """
         Initialization-handling shared between ``TileDBArray`` and ``Collection``.  Specify ``tiledb_platform_config`` and ``ctx`` for the top-level object; omit them and specify parent for non-top-level objects. Note that the parent reference is solely for propagating options, ctx, display depth, etc.
         """
+
+        if ctx is None:
+            ctx = self._default_ctx()
         self._uri = uri
         if parent is None:
             self._ctx = ctx
@@ -48,6 +52,29 @@ class TileDBObject(ABC):
         # Null ctx is OK if that's what they wanted (e.g. not doing any TileDB-Cloud ops).
 
         self.metadata = MetadataMapping(self)
+
+    def _default_ctx(self) -> tiledb.Ctx:
+        """
+        The TileDB context used when no other is supplied. Must have good defaults for positive
+        out-of-the-box UX.
+        """
+
+        cfg = {}
+
+        # Crucial for reducing number of HTTP requests for tiledb-cloud URIs.
+        # With default (small) value, it can take many HTTP-request round trips to satisfy
+        # a single query.
+        cfg["py.init_buffer_bytes"] = 4 * 1024**3
+
+        # This is necessary for smaller tile capacities when querying with a smaller memory budget.
+        cfg["sm.mem.reader.sparse_global_order.ratio_array_data"] = 0.3  # type: ignore
+
+        # Temp workaround pending https://app.shortcut.com/tiledb-inc/story/23827
+        region = os.getenv("AWS_DEFAULT_REGION")
+        if region is not None:
+            cfg["vfs.s3.region"] = cast(str, region)  # type: ignore
+
+        return tiledb.Ctx(cfg)
 
     def delete(self) -> None:
         """
