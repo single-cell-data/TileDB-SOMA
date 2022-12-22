@@ -36,6 +36,7 @@ Imports:
     tiledb (>= 0.17.0),
     arrow,
     utils,
+    fs,
     glue,
     urltools,
     Rcpp,
