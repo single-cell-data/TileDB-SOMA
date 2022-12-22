@@ -82,7 +82,7 @@ class RawGroup(TileDBGroup):
         self._add_object(self.var)
 
         self.X.add_layer_from_matrix_and_dim_values(
-            matrix=anndata.raw.X,
+            matrix=anndata.raw.X[:],  # See comments in io.py
             row_names=anndata.obs.index,
             col_names=anndata.raw.var.index,
             layer_name=X_layer_name,
