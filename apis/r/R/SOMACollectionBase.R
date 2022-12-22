@@ -13,6 +13,7 @@ SOMACollectionBase <- R6::R6Class(
     #' @description Create a new `SOMACollection`.
     #'
     #' @param uri URI of the TileDB group
+    #' @param platform_config Optional storage-engine specific configuration
     #' @param ctx optional tiledb context
     initialize = function(uri, platform_config = NULL, ctx = NULL) {
       super$initialize(uri, platform_config, ctx)
@@ -47,7 +48,7 @@ SOMACollectionBase <- R6::R6Class(
   ),
 
   active = list(
-    #' @field somas Retrieve [`SOMA`] members.
+    #' @field soma_type Retrieve the SOMA object type.
     soma_type = function(value) {
       if (!missing(value)) {
         stop("`soma_type` is a read-only field", call. = FALSE)

@@ -7,7 +7,7 @@ SOMAArrayBase <- R6::R6Class(
   inherit = TileDBArray,
 
   active = list(
-    #' @field somas Retrieve [`SOMA`] members.
+    #' @field soma_type Retrieve the SOMA object type.
     soma_type = function(value) {
       if (!missing(value)) {
         stop("`soma_type` is a read-only field", call. = FALSE)
