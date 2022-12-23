@@ -7,10 +7,8 @@
 SOMA object.
 }
 \description{
-Contains a key-value mapping where the keys are string names
-and the values are any SOMA-defined foundational or composed type, including
-\code{SOMACollection}, \code{SOMADataFrame}, \code{SOMADenseNdArray}, \code{SOMASparseNdArray}
-or \code{SOMAExperiment}.
+Base class for objects containing persistent collection of SOMA
+objects, mapping string keys to any SOMA object.
 }
 \section{Super classes}{
 \code{tiledbsoma::TileDBObject} -> \code{tiledbsoma::TileDBGroup} -> \code{SOMACollectionBase}

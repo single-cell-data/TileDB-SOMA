@@ -1,9 +1,7 @@
 #' SOMA Collection Base Class
 #'
-#' @description Contains a key-value mapping where the keys are string names
-#' and the values are any SOMA-defined foundational or composed type, including
-#' `SOMACollection`, `SOMADataFrame`, `SOMADenseNdArray`, `SOMASparseNdArray`
-#' or `SOMAExperiment`.
+#' @description Base class for objects containing persistent collection of SOMA
+#' objects, mapping string keys to any SOMA object.
 SOMACollectionBase <- R6::R6Class(
   classname = "SOMACollectionBase",
   inherit = TileDBGroup,

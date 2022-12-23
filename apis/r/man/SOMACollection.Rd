@@ -4,9 +4,10 @@
 \alias{SOMACollection}
 \title{SOMA Collection}
 \description{
-SOMA Collection
-
-SOMA Collection
+Contains a key-value mapping where the keys are string names
+and the values are any SOMA-defined foundational or composed type, including
+\code{SOMACollection}, \code{SOMADataFrame}, \code{SOMADenseNdArray}, \code{SOMASparseNdArray}
+or \code{SOMAExperiment}.
 }
 \section{Super classes}{
 \code{tiledbsoma::TileDBObject} -> \code{tiledbsoma::TileDBGroup} -> \code{tiledbsoma::SOMACollectionBase} -> \code{SOMACollection}
