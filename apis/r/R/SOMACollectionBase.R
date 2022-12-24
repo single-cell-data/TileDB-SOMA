@@ -48,9 +48,7 @@ SOMACollectionBase <- R6::R6Class(
   active = list(
     #' @field soma_type Retrieve the SOMA object type.
     soma_type = function(value) {
-      if (!missing(value)) {
-        stop("`soma_type` is a read-only field", call. = FALSE)
-      }
+      stopifnot("'soma_type' is a read-only field" = missing(value))
       if (is.null(private$soma_type_cache)) {
         private$update_soma_type_cache()
       }
@@ -83,11 +81,11 @@ SOMACollectionBase <- R6::R6Class(
       )
 
       # We have to use the appropriate TileDB base class to read the soma_type
-      # from the object's metadata so we knowh which SOMA class to instantiate
+      # from the object's metadata so we know which SOMA class to instantiate
       tiledb_constructor <- switch(type,
         ARRAY = TileDBArray$new,
         GROUP = TileDBGroup$new,
-        stop(sprintf("Unknown member TileDB type: %s", type))
+        stop(sprintf("Unknown member TileDB type: %s", type), call. = FALSE)
       )
 
       tiledb_object <- tiledb_constructor(uri, self$ctx, self$platform_config)
@@ -98,7 +96,7 @@ SOMACollectionBase <- R6::R6Class(
         SOMADenseNdArray = SOMADenseNdArray$new,
         SOMASparseNdArray = SOMASparseNdArray$new,
         SOMACollection = SOMACollection$new,
-        stop(sprintf("Unknown member SOMA type: %s", soma_type))
+        stop(sprintf("Unknown member SOMA type: %s", soma_type), call. = FALSE)
       )
       soma_constructor(uri, self$ctx, self$platform_config)
     }

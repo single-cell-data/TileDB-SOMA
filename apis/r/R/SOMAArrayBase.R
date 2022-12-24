@@ -9,9 +9,7 @@ SOMAArrayBase <- R6::R6Class(
   active = list(
     #' @field soma_type Retrieve the SOMA object type.
     soma_type = function(value) {
-      if (!missing(value)) {
-        stop("`soma_type` is a read-only field", call. = FALSE)
-      }
+      stopifnot("'soma_type' is a read-only field" = missing(value))
       if (is.null(private$soma_type_cache)) {
         private$update_soma_type_cache()
       }
