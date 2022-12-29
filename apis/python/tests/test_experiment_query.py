@@ -1,3 +1,5 @@
+import sys
+
 import numpy as np
 import pyarrow as pa
 import pytest
@@ -71,6 +73,14 @@ def soma_experiment(request, tmp_path, obs, var):
     return experiment
 
 
+# This fails in 3.10+ due to a bug in typeguard. Remove when fixed AND released:
+# Underlying issue: https://github.com/agronholm/typeguard/issues/242
+# Related: https://github.com/agronholm/typeguard/issues/257
+#
+@pytest.mark.xfail(
+    sys.version_info.major == 3 and sys.version_info.minor >= 10,
+    reason="typeguard bug #242",
+)
 def test_experiment_query_all(soma_experiment):
     assert soma_experiment.exists()
 
