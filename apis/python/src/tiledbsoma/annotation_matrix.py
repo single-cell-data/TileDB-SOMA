@@ -118,7 +118,17 @@ class AnnotationMatrix(TileDBArray):
         s = util.get_start_stamp()
         log_io(None, f"{self._indent}START  WRITING {self.nested_name}")
 
-        # XXX NEEDS NED CHECK on dim_values
+        if ingest_mode == "resume":
+            # This lets us check for already-ingested arrays, when in resume-ingest mode.
+            ned = self._get_non_empty_domain_as_strings(1)
+            sorted_dim_values = sorted(dim_values)
+            data_mbr = ((sorted_dim_values[0], sorted_dim_values[-1]),)
+            if self._chunk_is_contained_in(data_mbr, ned):
+                log_io(
+                    f"Skipped {self.nested_name}",
+                    util.format_elapsed(s, f"{self._indent}SKIPPED {self.nested_name}"),
+                )
+                return
 
         if isinstance(matrix, pd.DataFrame):
             self._from_pandas_dataframe(matrix, dim_values, ingest_mode=ingest_mode)
