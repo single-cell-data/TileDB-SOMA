@@ -179,6 +179,10 @@ class UnsGroup(TileDBGroup):
         # Everything else is a component array, or unhandleable
         array = UnsArray(uri=component_uri, name=key, parent=self)
 
+        # XXX TEMP
+        # XXX CHECK MODE == RESUME
+        # XXX TEMP
+
         if isinstance(value, pd.DataFrame):
             array.from_pandas_dataframe(value)
             self._add_object(array)

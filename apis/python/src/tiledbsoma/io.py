@@ -42,6 +42,7 @@ def from_h5ad(
     """
     if isinstance(input_path, ad.AnnData):
         raise Exception("Input path is an AnnData object -- did you want from_anndata?")
+    assert ingest_mode in ["write", "schema_only", "resume"]
     _from_h5ad_common(soma, input_path, _from_anndata_aux, X_layer_name, ingest_mode)
 
 
@@ -112,7 +113,7 @@ def from_10x(
     soma: tiledbsoma.SOMA,
     input_path: Path,
     X_layer_name: str = "data",
-    ingest_mode: str = False,
+    ingest_mode: str = "write",
 ) -> None:
     """
     Reads a 10X file and writes to a TileDB group structure.
@@ -144,12 +145,13 @@ def from_anndata_unless_exists(
     soma: tiledbsoma.SOMA,
     anndata: ad.AnnData,
     X_layer_name: str = "data",
-    ingest_mode: str = False,
+    ingest_mode: str = "write",
 ) -> None:
     """
     Skips the ingest if the SOMA is already there. A convenient keystroke-saver
     so users don't need to replicate the if-test.
     """
+    assert ingest_mode in ["write", "schema_only", "resume"]
     if tiledbsoma.util.is_soma(soma.uri):
         tiledbsoma.logging.logger.info(
             f"Already exists, skipping ingest: {soma.nested_name}"
@@ -168,6 +170,7 @@ def from_anndata(
     """
     Given an in-memory ``AnnData`` object, writes to a TileDB SOMA structure.
     """
+    assert ingest_mode in ["write", "schema_only", "resume"]
     return _from_anndata_aux(soma, anndata, X_layer_name, ingest_mode)
 
 
@@ -336,12 +339,12 @@ def _from_anndata_aux(
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     # Already parallelized recursively
-    if ingest_mode != "schema-only":
+    if ingest_mode != "schema_only":
         # Writing multiple H5ADs in append mode to the same SOMA is a supported mode.  However the
         # uns structures _cannot_ have all the same schema -- in particular there are dense arrays.
         # For append mode, users must set `anndata.uns = {}`, or "nest" each input anndata object's
         # `uns` as `anndata.uns = { "some_unique_name" : anndata.uns }`. In either case, there is
-        # nothing to be done at the schema-only step. The uns objects _have_ no fixed schema -- as
+        # nothing to be done at the schema_only step. The uns objects _have_ no fixed schema -- as
         # indicated by the name `uns` for "unstructured".
         if anndata.uns is not None:
             soma.uns.from_anndata_uns(anndata.uns)

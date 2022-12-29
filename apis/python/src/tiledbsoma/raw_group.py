@@ -65,7 +65,7 @@ class RawGroup(TileDBGroup):
         anndata: ad.AnnData,
         X_layer_name: str = "data",
         *,
-        ingest_mode: str = "write",
+        ingest_mode: str,
     ) -> None:
         """
         Writes ``anndata.raw`` to a TileDB group structure.

@@ -15,7 +15,6 @@ URIs will be supported.
 
 import argparse
 import os
-import shutil
 import sys
 
 import tiledb
@@ -43,18 +42,21 @@ def main():
     )
     parser.add_argument(
         "--ingest-mode",
-        help="XXX Only create groups and array schemas; do not write array data. Useful for prep-step for parallel append-mode ingest.",
-        choices=["write", "schema-only", "resume"],
+        help="""Write mode (the default) writes all data, creating new layers if the soma already exists.
+
+Resume mode skip data writes if data are within MBRs of the existing soma.
+This is useful for continuing after a partial/interrupted previous upload.
+
+Schema-only mode creates groups and array schema, without writing array data.
+This is useful as a prep-step for parallel append-mode ingest.""",
+        choices=["write", "schema_only", "resume"],
+        default=["write"],
         nargs=1,
     )
     parser.add_argument(
-        "-x",
-        help="Shorthand for `--ifexists replace`",
-        action="store_true",
-    )
-    parser.add_argument(
-        "-u",
-        help="Shorthand for `--ifexists update`",
+        "--update-obs-and-var",
+        help="""Updates obs and var from the specified .h5ad file, leaving all other data in place. Useful for
+updating schema/compression/etc. within an existing dataset.""",
         action="store_true",
     )
     parser.add_argument(
@@ -91,14 +93,6 @@ select `relative=True`. (This is the default.)
         choices=["true", "false", "auto"],
         nargs=1,
     )
-    # TODO: add an update option once we figure out tiledb.from_pandas mode=overwrite flag.
-    parser.add_argument(
-        "--ifexists",
-        help="What to do if soma storage already exists. Default: continue.",
-        choices=["replace", "abort", "continue", "update", "update_obs_and_var"],
-        type=str,
-        nargs=1,
-    )
     parser.add_argument(
         "paths",
         type=str,
@@ -106,14 +100,6 @@ select `relative=True`. (This is the default.)
         nargs="*",
     )
     args = parser.parse_args()
-
-    if args.ifexists is None:
-        if args.x:
-            args.ifexists = ["replace"]
-        elif args.u:
-            args.ifexists = ["update"]
-        else:
-            args.ifexists = ["continue"]
 
     write_soco = args.soco
     if args.debug:
@@ -153,8 +139,8 @@ select `relative=True`. (This is the default.)
             ingest_one(
                 input_path=input_path,
                 output_path=output_path,
-                ifexists=args.ifexists[0],
                 ingest_mode=args.ingest_mode[0],
+                update_obs_and_var=args.update_obs_and_var,
                 soma_options=soma_options,
                 write_soco=write_soco,
                 soco_dir=outdir,
@@ -166,8 +152,8 @@ select `relative=True`. (This is the default.)
             ingest_one(
                 input_path=input_path,
                 output_path=output_path,
-                ifexists=args.ifexists[0],
                 ingest_mode=args.ingest_mode[0],
+                update_obs_and_var=args.update_obs_and_var,
                 soma_options=soma_options,
                 write_soco=write_soco,
                 soco_dir=outdir,
@@ -181,8 +167,8 @@ select `relative=True`. (This is the default.)
             ingest_one(
                 input_path=input_path,
                 output_path=output_path,
-                ifexists=args.ifexists[0],
                 ingest_mode=args.ingest_mode[0],
+                update_obs_and_var=args.update_obs_and_var,
                 soma_options=soma_options,
                 write_soco=write_soco,
                 soco_dir=outdir,
@@ -193,8 +179,8 @@ select `relative=True`. (This is the default.)
             ingest_one(
                 input_path=input_path,
                 output_path=output_path,
-                ifexists=args.ifexists[0],
                 ingest_mode=args.ingest_mode[0],
+                update_obs_and_var=args.update_obs_and_var,
                 soma_options=soma_options,
                 write_soco=write_soco,
                 soco_dir=outdir,
@@ -209,8 +195,8 @@ def ingest_one(
     *,
     input_path: str,
     output_path: str,
-    ifexists: str,
     ingest_mode: str,
+    update_obs_and_var: bool,
     soma_options: tiledbsoma.SOMAOptions,
     write_soco: bool,
     soco_dir: str,
@@ -233,7 +219,7 @@ def ingest_one(
 
     soma = tiledbsoma.SOMA(uri=output_path, soma_options=soma_options)
 
-    if ifexists == "update_obs_and_var":
+    if update_obs_and_var:
         if not os.path.exists(output_path):
             raise Exception("Cannot update; doesn't exist yet:", output_path)
         # Do the ingest into TileDB.
@@ -242,42 +228,10 @@ def ingest_one(
         )
 
     else:
-        if os.path.exists(output_path):
-            if ifexists == "continue":
-                tiledbsoma.logging.logger.info(
-                    f"Already exists; continuing: {output_path}"
-                )
-                return
-
-            elif ifexists == "abort":
-                tiledbsoma.logging.error(f"Already exists; aborting: {output_path}")
-                sys.exit(1)
-
-            elif ifexists == "replace":
-                if output_path.startswith("s3://") or output_path.startswith(
-                    "tiledb://"
-                ):
-                    raise Exception(
-                        "--ifexists replace currently only is compatible with local-disk paths"
-                    )
-                tiledbsoma.logging.logger.info(
-                    f"Already exists; replacing: {output_path}"
-                )
-                shutil.rmtree(output_path)  # Overwrite
-
-            elif ifexists == "update":
-                tiledbsoma.logging.logger.info(
-                    f"Already exists; updating: {output_path}"
-                )
-
-            else:
-                raise Exception(
-                    "Internal coding error in --ifexists handling.", ifexists, "<"
-                )
         # Do the ingest into TileDB.
         tiledbsoma.io.from_h5ad(soma, input_path, ingest_mode=ingest_mode)
 
-    tiledbsoma.logging.logger.info(f"Wrote {output_path}")
+    tiledbsoma.logging.logger.info(f"Complete: {output_path}")
 
     if write_soco:
         soco = tiledbsoma.SOMACollection(soco_dir, soma_options=soma_options)

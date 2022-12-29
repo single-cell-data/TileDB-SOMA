@@ -29,14 +29,14 @@ def adata(h5ad_file):
     "ingest_modes",
     [
         ["write"],  # Standard ingest: normal use-case
-        ["schema-only"],  # User only creates schema
-        ["write", "schema-only"],  # User creates schema, then writes data
+        ["schema_only"],  # User only creates schema
+        ["write", "schema_only"],  # User creates schema, then writes data
         [
             "write",
-            "schema-only",
-            "schema-only",
+            "schema_only",
+            "schema_only",
         ],  # User creates schema, then writes and re-writes the same data
-        ["schema-only", "schema-only"],  # User writes and re-writes the same data
+        ["schema_only", "schema_only"],  # User writes and re-writes the same data
     ],
 )
 def test_import_anndata(adata, ingest_modes):
@@ -88,7 +88,7 @@ def test_import_anndata(adata, ingest_modes):
             df = A.df[:]
             assert df.columns.to_list() == ["obs_id", "var_id", "value"]
             # verify sparsity of raw data
-            if ingest_mode == "schema-only":
+            if ingest_mode == "schema_only":
                 assert df.shape[0] == 0
             else:
                 assert df.shape[0] == orig.raw.X.nnz
@@ -104,7 +104,7 @@ def test_import_anndata(adata, ingest_modes):
                 A.meta[tiledbsoma.util.SOMA_OBJECT_TYPE_METADATA_KEY]
                 == "AnnotationDataFrame"
             )
-        if ingest_mode == "schema-only":
+        if ingest_mode == "schema_only":
             assert sorted(soma.obs.ids()) == []
         else:
             assert sorted(soma.obs.ids()) == sorted(list(orig.obs_names))
@@ -121,7 +121,7 @@ def test_import_anndata(adata, ingest_modes):
                 A.meta[tiledbsoma.util.SOMA_OBJECT_TYPE_METADATA_KEY]
                 == "AnnotationDataFrame"
             )
-        if ingest_mode == "schema-only":
+        if ingest_mode == "schema_only":
             assert sorted(soma.var.ids()) == []
         else:
             assert sorted(soma.var.ids()) == sorted(list(orig.var_names))
@@ -136,7 +136,7 @@ def test_import_anndata(adata, ingest_modes):
         for key in orig.obsm_keys():
             with tiledb.open(os.path.join(output_path, "obsm", key)) as A:
                 df = A.df[:]
-                if ingest_mode == "schema-only":
+                if ingest_mode == "schema_only":
                     assert df.shape[0] == 0
                     assert soma.obsm[key].shape() == (0, orig.obsm[key].shape[1])
                 else:
@@ -154,7 +154,7 @@ def test_import_anndata(adata, ingest_modes):
         for key in orig.varm_keys():
             with tiledb.open(os.path.join(output_path, "varm", key)) as A:
                 df = A.df[:]
-                if ingest_mode == "schema-only":
+                if ingest_mode == "schema_only":
                     assert df.shape[0] == 0
                     assert soma.varm[key].shape() == (0, orig.varm[key].shape[1])
                 else:
@@ -173,7 +173,7 @@ def test_import_anndata(adata, ingest_modes):
             with tiledb.open(os.path.join(output_path, "obsp", key)) as A:
                 df = A.df[:]
                 assert df.columns.to_list() == ["obs_id_i", "obs_id_j", "value"]
-                if ingest_mode == "schema-only":
+                if ingest_mode == "schema_only":
                     assert df.shape[0] == 0
                 else:
                     assert df.shape[0] == orig.obsp[key].nnz
@@ -182,7 +182,7 @@ def test_import_anndata(adata, ingest_modes):
                 # can get is the NNZ x attrs shape -- note that there are two
                 # dims and one attr so the shape is nnz x 1.
                 shape = soma.obsp[key].df().shape
-                if ingest_mode == "schema-only":
+                if ingest_mode == "schema_only":
                     assert shape[0] == 0
                 else:
                     assert shape[0] == orig.obsp[key].nnz
