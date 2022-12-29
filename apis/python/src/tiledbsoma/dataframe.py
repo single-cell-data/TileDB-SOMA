@@ -1,20 +1,11 @@
 import collections.abc
-from typing import (
-    Any,
-    Final,
-    Iterator,
-    Optional,
-    Sequence,
-    Tuple,
-    TypeVar,
-    Union,
-    get_args,
-)
+from typing import Any, Iterator, Optional, Sequence, Tuple, TypeVar, Union
 
 import numpy as np
 import pandas as pd
 import pyarrow as pa
 import tiledb
+from typing_extensions import Final, get_args
 
 # This package's pybind11 code
 import tiledbsoma.libtiledbsoma as clib

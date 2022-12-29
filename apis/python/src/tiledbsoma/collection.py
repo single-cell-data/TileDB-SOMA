@@ -5,7 +5,6 @@ from dataclasses import dataclass
 from typing import (
     Any,
     Dict,
-    Final,
     Iterator,
     List,
     MutableMapping,
@@ -18,6 +17,7 @@ from typing import (
 )
 
 import tiledb
+from typing_extensions import Final
 
 from .exception import DoesNotExistError, SOMAError
 from .tiledb_object import TileDBObject
