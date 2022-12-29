@@ -39,7 +39,7 @@ Imports:
     glue,
     urltools,
     Rcpp,
-    arch,
+    arch (>= 0.0.2),
     dplyr,
     data.table,
     spdl
