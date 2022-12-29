@@ -13,5 +13,8 @@ Labels = Union[Sequence[str], pd.Index]
 
 Matrix = Union[np.ndarray, sp.csr_matrix, sp.csc_matrix]
 
-NTupleStr = Tuple[Union[None, str], ...]
+NTupleStr = Tuple[Union[str], ...]
 MNTupleStr = Tuple[NTupleStr, ...]
+
+NTupleStrNone = Tuple[Union[None, str], ...]
+MNTupleStrNone = Tuple[NTupleStrNone, ...]

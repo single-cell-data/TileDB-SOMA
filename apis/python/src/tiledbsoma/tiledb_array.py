@@ -1,11 +1,11 @@
-from typing import Dict, Optional, Sequence, Tuple, Union
+from typing import Dict, Optional, Sequence, Union
 
 import tiledb
 
 import tiledbsoma
 
 from .tiledb_object import TileDBObject
-from .types import MNTupleStr
+from .types import MNTupleStr, MNTupleStrNone
 
 
 class TileDBArray(TileDBObject):
@@ -118,7 +118,7 @@ class TileDBArray(TileDBObject):
         else:
             raise NotImplementedError(f"expected bytes or str; got {type(value)}")
 
-    def _get_non_empty_domain_as_strings(self, expected_ndim: int) -> MNTupleStr:
+    def _get_non_empty_domain_as_strings(self, expected_ndim: int) -> MNTupleStrNone:
         """
         Returns nonempty domain tuples. Due to an implementation detail in TileDB-Py, we get these
         from TileDB-Py as tuples of bytes, not strings. Here we take care of that, as a
@@ -152,8 +152,8 @@ class TileDBArray(TileDBObject):
 
     def _chunk_is_contained_in(
         self,
-        chunk_mbr: Tuple[Tuple[str]],
-        storage_nonempty_domain: Tuple[Tuple[Union[str, None]]],
+        chunk_mbr: MNTupleStr,
+        storage_nonempty_domain: MNTupleStrNone,
     ) -> bool:
         """
         Determines if a dim range is included within the array's non-empty domain.  Note that

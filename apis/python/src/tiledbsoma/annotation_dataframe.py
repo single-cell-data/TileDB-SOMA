@@ -332,7 +332,7 @@ class AnnotationDataFrame(TileDBArray):
         dataframe: pd.DataFrame,
         *,
         extent: int = 2048,
-        ingest_mode: str,
+        ingest_mode: str = "write",
     ) -> None:
         """
         Populates the ``obs`` or ``var`` subgroup for a SOMA object.

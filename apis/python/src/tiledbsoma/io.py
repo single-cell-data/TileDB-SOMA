@@ -57,7 +57,7 @@ def from_h5ad_update_obs_and_var(soma: tiledbsoma.SOMA, input_path: Path) -> Non
         input_path,
         from_anndata_update_obs_and_var,
         "unused",
-        False,
+        "write",
     )
 
 
@@ -65,7 +65,7 @@ def from_h5ad_update_obs_and_var(soma: tiledbsoma.SOMA, input_path: Path) -> Non
 def _from_h5ad_common(
     soma: tiledbsoma.SOMA,
     input_path: Path,
-    handler_func: Callable[[tiledbsoma.SOMA, ad.AnnData, str, bool], None],
+    handler_func: Callable[[tiledbsoma.SOMA, ad.AnnData, str, str], None],
     X_layer_name: str,
     ingest_mode: str,
 ) -> None:
@@ -362,8 +362,8 @@ def _from_anndata_aux(
 def from_anndata_update_obs_and_var(
     soma: tiledbsoma.SOMA,
     anndata: ad.AnnData,
-    _unused1: str,
-    _unused2: bool = False,
+    _unused1: str = "",
+    _unused2: str = "",
 ) -> None:
     """
     Rewrites obs and var from anndata, leaving all other data in place. Useful

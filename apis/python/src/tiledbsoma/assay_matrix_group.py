@@ -145,7 +145,7 @@ class AssayMatrixGroup(TileDBGroup):
         col_names: Labels,
         layer_name: str = "data",
         *,
-        ingest_mode: str,
+        ingest_mode: str = "write",
     ) -> None:
         """
         Populates the ``X`` or ``raw.X`` subgroup for a ``SOMA`` object.  For ``X`` and ``raw.X``,
