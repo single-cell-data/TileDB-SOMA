@@ -320,8 +320,16 @@ def X_and_ids_to_sparse_matrix(
     #
     # In order to accomplish this, we need to map ['A','B','C','D'] to [0,1,2,3] via {'A':0,
     # 'B':1, 'C':2, 'D':3} and similarly for the other dimension.
-    row_labels_to_indices = dict(zip(row_labels, [i for i, e in enumerate(row_labels)]))
-    col_labels_to_indices = dict(zip(col_labels, [i for i, e in enumerate(col_labels)]))
+    #
+    # B905 is because Flake8 in *some* versions of Python insists we use an explicit `strict=`
+    # parameter, while in older versions that parameter does not exist. Not all versions can
+    # simultaneously be made happy.
+    row_labels_to_indices = dict(
+        zip(row_labels, [i for i, e in enumerate(row_labels)])  # noqa: B905
+    )
+    col_labels_to_indices = dict(
+        zip(col_labels, [i for i, e in enumerate(col_labels)])  # noqa: B905
+    )
 
     # Make the obs_id/var_id indices addressable as columns.
     Xdf.reset_index(inplace=True)
