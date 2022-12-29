@@ -335,7 +335,6 @@ def _from_anndata_aux(
 
         if anndata.raw is not None:
             futures.append(
-                # XXX EFF
                 executor.submit(
                     soma.raw.from_anndata,
                     anndata,
