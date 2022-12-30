@@ -182,7 +182,10 @@ class AssayMatrix(TileDBArray):
             sorted_row_names = sorted(row_names)
             sorted_col_names = sorted(col_names)
 
-            matrix_mbr = ((sorted_row_names[0], sorted_row_names[-1]), (sorted_col_names[0], sorted_col_names[-1]))
+            matrix_mbr = (
+                (sorted_row_names[0], sorted_row_names[-1]),
+                (sorted_col_names[0], sorted_col_names[-1]),
+            )
 
             if self._chunk_is_contained_in(matrix_mbr, ned):
                 log_io(

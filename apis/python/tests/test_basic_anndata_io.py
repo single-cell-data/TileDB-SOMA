@@ -37,6 +37,11 @@ def adata(h5ad_file):
             "schema_only",
         ],  # User creates schema, then writes and re-writes the same data
         ["schema_only", "schema_only"],  # User writes and re-writes the same data
+        [
+            "write",
+            "resume",
+        ],  # User writes data, then a subsequent write creates nothing new
+        ["resume"],  # "Resume" after no write at all does write new data
     ],
 )
 def test_import_anndata(adata, ingest_modes):
@@ -196,6 +201,63 @@ def test_import_anndata(adata, ingest_modes):
             assert getattr(soma.obsp, key).shape() == soma.obsp[key].shape()
 
     tempdir.cleanup()
+
+
+def _get_fragment_count(array_uri):
+    return len(tiledb.fragment.FragmentInfoList(array_uri=array_uri))
+
+
+def test_resume_mode(adata):
+    """
+    Makes sure resume-mode ingest after successful ingest of the same input data does not write
+    anything new
+    """
+
+    tempdir1 = tempfile.TemporaryDirectory()
+    tempdir2 = tempfile.TemporaryDirectory()
+    output_path1 = tempdir1.name
+    output_path2 = tempdir2.name
+
+    soma1 = tiledbsoma.SOMA(output_path1)
+    soma2 = tiledbsoma.SOMA(output_path2)
+    tiledbsoma.io.from_anndata(soma1, adata, ingest_mode="write")
+    tiledbsoma.io.from_anndata(soma2, adata, ingest_mode="write")
+    tiledbsoma.io.from_anndata(soma2, adata, ingest_mode="resume")
+
+    assert _get_fragment_count(soma1.obs.uri) == _get_fragment_count(soma2.obs.uri)
+    assert _get_fragment_count(soma1.var.uri) == _get_fragment_count(soma2.var.uri)
+    assert _get_fragment_count(soma1.X["data"].uri) == _get_fragment_count(
+        soma2.X["data"].uri
+    )
+
+    assert _get_fragment_count(soma1.raw.var.uri) == _get_fragment_count(
+        soma2.raw.var.uri
+    )
+    assert _get_fragment_count(soma1.raw.X["data"].uri) == _get_fragment_count(
+        soma2.raw.X["data"].uri
+    )
+
+    assert _get_fragment_count(soma1.obsm["X_pca"].uri) == _get_fragment_count(
+        soma2.obsm["X_pca"].uri
+    )
+    assert _get_fragment_count(soma1.obsm["X_tsne"].uri) == _get_fragment_count(
+        soma2.obsm["X_tsne"].uri
+    )
+
+    assert _get_fragment_count(soma1.obsp["distances"].uri) == _get_fragment_count(
+        soma2.obsp["distances"].uri
+    )
+
+    assert _get_fragment_count(soma1.varm["PCs"].uri) == _get_fragment_count(
+        soma2.varm["PCs"].uri
+    )
+
+    assert _get_fragment_count(
+        soma1.uns["neighbors"]["params"]["method"].uri
+    ) == _get_fragment_count(soma2.uns["neighbors"]["params"]["method"].uri)
+
+    tempdir1.cleanup()
+    tempdir2.cleanup()
 
 
 def test_export_anndata(adata):
