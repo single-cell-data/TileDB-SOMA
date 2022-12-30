@@ -140,7 +140,7 @@ class TileDBArray(TileDBObject):
             row_lo, row_hi = ned[0]
             row_lo = self._ned_value_to_string(row_lo)
             row_hi = self._ned_value_to_string(row_hi)
-            col_lo, col_hi = ned[0]
+            col_lo, col_hi = ned[1]
             col_lo = self._ned_value_to_string(col_lo)
             col_hi = self._ned_value_to_string(col_hi)
             return ((row_lo, row_hi), (col_lo, col_hi))

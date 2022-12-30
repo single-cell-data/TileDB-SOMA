@@ -174,6 +174,23 @@ class AssayMatrix(TileDBArray):
         For ingest from ``AnnData``, these should be ``ann.obs_names`` and ``ann.var_names``.
         """
         s = util.get_start_stamp()
+
+        # XXX COMMENT WHY: ned-check here _as well as_ within
+        if ingest_mode == "resume" and self.exists():
+            # This lets us check for already-ingested chunks, when in resume-ingest mode.
+            ned = self._get_non_empty_domain_as_strings(2)
+            sorted_row_names = sorted(row_names)
+            sorted_col_names = sorted(col_names)
+
+            matrix_mbr = ((sorted_row_names[0], sorted_row_names[-1]), (sorted_col_names[0], sorted_col_names[-1]))
+
+            if self._chunk_is_contained_in(matrix_mbr, ned):
+                log_io(
+                    f"Skipped {self.nested_name} ...",
+                    f"{self._indent}SKIPPED WRITING {self.nested_name}",
+                )
+                return
+
         log_io(
             f"Writing {self.nested_name} ...",
             f"{self._indent}START  WRITING {self.nested_name}",

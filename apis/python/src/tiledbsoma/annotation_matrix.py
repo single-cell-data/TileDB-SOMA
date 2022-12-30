@@ -116,9 +116,8 @@ class AnnotationMatrix(TileDBArray):
         :param dim_values: ``anndata.obs_names``, ``anndata.var_names``, or ``anndata.raw.var_names``.
         """
         s = util.get_start_stamp()
-        log_io(None, f"{self._indent}START  WRITING {self.nested_name}")
 
-        if ingest_mode == "resume":
+        if ingest_mode == "resume" and self.exists():
             # This lets us check for already-ingested arrays, when in resume-ingest mode.
             ned = self._get_non_empty_domain_as_strings(1)
             sorted_dim_values = sorted(dim_values)
@@ -129,6 +128,8 @@ class AnnotationMatrix(TileDBArray):
                     util.format_elapsed(s, f"{self._indent}SKIPPED {self.nested_name}"),
                 )
                 return
+
+        log_io(None, f"{self._indent}START  WRITING {self.nested_name}")
 
         if isinstance(matrix, pd.DataFrame):
             self._from_pandas_dataframe(matrix, dim_values, ingest_mode=ingest_mode)

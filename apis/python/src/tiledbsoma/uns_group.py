@@ -130,7 +130,9 @@ class UnsGroup(TileDBGroup):
         return "\n".join(strings)
 
     # ----------------------------------------------------------------
-    def _from_anndata_uns_aux(self, key: str, value: Any, component_uri: str) -> None:
+    def _from_anndata_uns_aux(
+        self, key: str, value: Any, component_uri: str, ingest_mode: str
+    ) -> None:
         """
         Helper method for `from_anndata_uns`.
         """
@@ -158,7 +160,7 @@ class UnsGroup(TileDBGroup):
         if isinstance(value, Mapping):
             # Nested data, e.g. a.uns['draw-graph']['params']['layout']
             subgroup = UnsGroup(uri=component_uri, name=key, parent=self)
-            subgroup.from_anndata_uns(value)
+            subgroup.from_anndata_uns(value, ingest_mode)
             self._add_object(subgroup)
             return
 
@@ -179,9 +181,12 @@ class UnsGroup(TileDBGroup):
         # Everything else is a component array, or unhandleable
         array = UnsArray(uri=component_uri, name=key, parent=self)
 
-        # XXX TEMP
-        # XXX CHECK MODE == RESUME
-        # XXX TEMP
+        if ingest_mode == "resume" and array.exists():
+            log_io(
+                f"Skipped {array.nested_name}",
+                f"{self._indent}Skipping existing array {array.nested_name}",
+            )
+            return
 
         if isinstance(value, pd.DataFrame):
             array.from_pandas_dataframe(value)
@@ -201,7 +206,7 @@ class UnsGroup(TileDBGroup):
             f"{self._indent}Skipping unrecognized type: {component_uri} {type(value)}",
         )
 
-    def from_anndata_uns(self, uns: Mapping[str, Any]) -> None:
+    def from_anndata_uns(self, uns: Mapping[str, Any], ingest_mode: str) -> None:
         """
         Populates the uns group for the soma object.
 
@@ -223,7 +228,11 @@ class UnsGroup(TileDBGroup):
         with ThreadPoolExecutor(max_workers=max_workers) as executor:
             for key in uns.keys():
                 future = executor.submit(
-                    self._from_anndata_uns_aux, key, uns[key], child_uris[key]
+                    self._from_anndata_uns_aux,
+                    key,
+                    uns[key],
+                    child_uris[key],
+                    ingest_mode,
                 )
                 futures.append(future)
 
@@ -231,7 +240,7 @@ class UnsGroup(TileDBGroup):
             future.result()
 
         log_io(
-            f"Wrote {self.nested_name}",
+            None,  # At info level, print only arrays not groups
             util.format_elapsed(s, f"{self._indent}FINISH WRITING {self.nested_name}"),
         )
 

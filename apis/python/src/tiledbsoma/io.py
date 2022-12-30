@@ -347,7 +347,7 @@ def _from_anndata_aux(
         # nothing to be done at the schema_only step. The uns objects _have_ no fixed schema -- as
         # indicated by the name `uns` for "unstructured".
         if anndata.uns is not None:
-            soma.uns.from_anndata_uns(anndata.uns)
+            soma.uns.from_anndata_uns(anndata.uns, ingest_mode)
             soma._add_object(soma.uns)
 
     log_io(
