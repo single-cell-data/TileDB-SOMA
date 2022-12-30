@@ -340,6 +340,7 @@ class AnnotationDataFrame(TileDBArray):
         :param dataframe: ``anndata.obs``, ``anndata.var``, ``anndata.raw.var``.
         :param extent: TileDB ``extent`` parameter for the array schema.
         """
+        assert ingest_mode in util.INGEST_MODES
 
         offsets_filters = tiledb.FilterList(
             [tiledb.PositiveDeltaFilter(), tiledb.ZstdFilter(level=-1)]

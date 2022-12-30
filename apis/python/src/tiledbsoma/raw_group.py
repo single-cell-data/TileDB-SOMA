@@ -70,6 +70,8 @@ class RawGroup(TileDBGroup):
         """
         Writes ``anndata.raw`` to a TileDB group structure.
         """
+        assert ingest_mode in util.INGEST_MODES
+
         s = util.get_start_stamp()
         log_io(None, f"{self._indent}START  WRITING {self.nested_name}")
 

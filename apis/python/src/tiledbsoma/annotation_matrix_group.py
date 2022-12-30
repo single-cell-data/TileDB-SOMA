@@ -135,6 +135,7 @@ class AnnotationMatrixGroup(TileDBGroup):
         :param dim_values: anndata.obs_names, anndata.var_names, or anndata.raw.var_names.
         :param matrix_name: name of the matrix, like ``"X_tsne"`` or ``"PCs"``.
         """
+        assert ingest_mode in util.INGEST_MODES
 
         # Must be done first, to create the parent directory
         self.create_unless_exists()

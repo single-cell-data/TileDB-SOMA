@@ -48,7 +48,7 @@ Resume mode skip data writes if data are within MBRs of the existing soma.
 This is useful for continuing after a partial/interrupted previous upload.
 
 Schema-only mode creates groups and array schema, without writing array data.
-This is useful as a prep-step for parallel append-mode ingest.""",
+This is useful as a prep-step for parallel append-ingest of multiple H5ADs to a single soma.""",
         choices=["write", "schema_only", "resume"],
         default=["write"],
         nargs=1,
@@ -201,6 +201,8 @@ def ingest_one(
     write_soco: bool,
     soco_dir: str,
 ):
+    assert ingest_mode in tiledbsoma.util.INGEST_MODES
+
     # Check that the input exists.
     vfs = tiledb.VFS()
     if not vfs.is_file(input_path):

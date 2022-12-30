@@ -6,6 +6,7 @@ from .annotation_dataframe import AnnotationDataFrame
 from .assay_matrix import AssayMatrix
 from .tiledb_group import TileDBGroup
 from .types import Labels, Matrix
+from .util import INGEST_MODES
 
 
 class AssayMatrixGroup(TileDBGroup):
@@ -153,6 +154,7 @@ class AssayMatrixGroup(TileDBGroup):
         ``anndata.var_names`` or ``anndata.raw.var_names``.  For ``obsp`` elements, both will
         be ``anndata.obs_names``; for ``varp elements, both will be ``anndata.var_names``.
         """
+        assert ingest_mode in INGEST_MODES
 
         if matrix is not None:
             # Must be done first, to create the parent directory

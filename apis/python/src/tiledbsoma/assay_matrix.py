@@ -173,9 +173,16 @@ class AssayMatrix(TileDBArray):
         ``scipy.sparse.csr_matrix``, ``scipy.sparse.csc_matrix``, ``numpy.ndarray``, etc.
         For ingest from ``AnnData``, these should be ``ann.obs_names`` and ``ann.var_names``.
         """
+        assert ingest_mode in util.INGEST_MODES
+
         s = util.get_start_stamp()
 
-        # XXX COMMENT WHY: ned-check here _as well as_ within
+        # There is a chunk-by-chunk already-done check for resume mode, below.
+        # This full-matrix-level check here might seem redundant, but in fact it's important:
+        # * By checking input MBR against storage NED here, we can see if the entire matrix
+        #   was already ingested and avoid even loading chunks;
+        # * By checking chunkwise we can catch the case where a matrix was already *partly*
+        #   ingested.
         if ingest_mode == "resume" and self.exists():
             # This lets us check for already-ingested chunks, when in resume-ingest mode.
             ned = self._get_non_empty_domain_as_strings(2)
@@ -219,13 +226,17 @@ class AssayMatrix(TileDBArray):
 
         if ingest_mode != "schema_only":
             if not self._soma_options.write_X_chunked:
-                self.ingest_data_whole(matrix, row_names, col_names, ingest_mode)
+                self._ingest_data_whole(matrix, row_names, col_names, ingest_mode)
             elif isinstance(matrix, sp.csr_matrix):
-                self.ingest_data_rows_chunked(matrix, row_names, col_names, ingest_mode)
+                self._ingest_data_rows_chunked(
+                    matrix, row_names, col_names, ingest_mode
+                )
             elif isinstance(matrix, sp.csc_matrix):
-                self.ingest_data_cols_chunked(matrix, row_names, col_names, ingest_mode)
+                self._ingest_data_cols_chunked(
+                    matrix, row_names, col_names, ingest_mode
+                )
             else:
-                self.ingest_data_dense_rows_chunked(
+                self._ingest_data_dense_rows_chunked(
                     matrix, row_names, col_names, ingest_mode
                 )
 
@@ -278,7 +289,7 @@ class AssayMatrix(TileDBArray):
         tiledb.Array.create(self.uri, sch, ctx=self._ctx)
 
     # ----------------------------------------------------------------
-    def ingest_data_whole(
+    def _ingest_data_whole(
         self,
         matrix: Matrix,
         row_names: Union[np.ndarray, pd.Index],
@@ -344,7 +355,7 @@ class AssayMatrix(TileDBArray):
     # See README-csr-ingest.md for important information of using this ingestor.
     # ----------------------------------------------------------------
 
-    def ingest_data_rows_chunked(
+    def _ingest_data_rows_chunked(
         self,
         matrix: sp.csr_matrix,
         row_names: Union[np.ndarray, pd.Index],
@@ -376,7 +387,7 @@ class AssayMatrix(TileDBArray):
         s = util.get_start_stamp()
         log_io(
             None,
-            f"{self._indent}START  ingest_data_rows_chunked",
+            f"{self._indent}START  _ingest_data_rows_chunked",
         )
 
         # This lets us check for already-ingested chunks, when in resume-ingest mode.
@@ -472,11 +483,11 @@ class AssayMatrix(TileDBArray):
             ),
         )
 
-    # This method is very similar to ingest_data_rows_chunked. The code is largely repeated,
+    # This method is very similar to _ingest_data_rows_chunked. The code is largely repeated,
     # and this is intentional. The algorithm here is non-trivial (among the most non-trivial
     # in this package), and adding an abstraction layer would overconfuse it. Here we err
     # on the side of increased readability, at the expense of line-count.
-    def ingest_data_cols_chunked(
+    def _ingest_data_cols_chunked(
         self,
         matrix: sp.csc_matrix,
         row_names: Union[np.ndarray, pd.Index],
@@ -511,7 +522,7 @@ class AssayMatrix(TileDBArray):
         s = util.get_start_stamp()
         log_io(
             None,
-            f"{self._indent}START  ingest_data_cols_chunked",
+            f"{self._indent}START  _ingest_data_cols_chunked",
         )
 
         eta_tracker = util.ETATracker()
@@ -604,11 +615,11 @@ class AssayMatrix(TileDBArray):
             ),
         )
 
-    # This method is very similar to ingest_data_rows_chunked. The code is largely repeated,
+    # This method is very similar to _ingest_data_rows_chunked. The code is largely repeated,
     # and this is intentional. The algorithm here is non-trivial (among the most non-trivial
     # in this package), and adding an abstraction layer would overconfuse it. Here we err
     # on the side of increased readability, at the expense of line-count.
-    def ingest_data_dense_rows_chunked(
+    def _ingest_data_dense_rows_chunked(
         self,
         matrix: np.ndarray,
         row_names: Union[np.ndarray, pd.Index],

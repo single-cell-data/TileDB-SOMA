@@ -182,6 +182,7 @@ class AnnotationPairwiseMatrixGroup(TileDBGroup):
         :param dim_values: anndata.obs_names or anndata.var_names.
         :param matrix_name_name: name of the matrix, like ``"distances"``.
         """
+        assert ingest_mode in util.INGEST_MODES
 
         # Must be done first, to create the parent directory
         self.create_unless_exists()

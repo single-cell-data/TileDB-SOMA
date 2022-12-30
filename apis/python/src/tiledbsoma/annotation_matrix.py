@@ -115,6 +115,8 @@ class AnnotationMatrix(TileDBArray):
         :param matrix: ``anndata.obsm['foo']``, ``anndata.varm['foo']``, or ``anndata.raw.varm['foo']``.
         :param dim_values: ``anndata.obs_names``, ``anndata.var_names``, or ``anndata.raw.var_names``.
         """
+        assert ingest_mode in util.INGEST_MODES
+
         s = util.get_start_stamp()
 
         if ingest_mode == "resume" and self.exists():

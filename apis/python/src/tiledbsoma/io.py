@@ -39,7 +39,17 @@ def from_h5ad(
 ) -> None:
     """
     Reads an ``.h5ad`` local-disk file and writes to a TileDB SOMA structure.
+
+    The "write" ingest_mode (which is the default) writes all data, creating new layers if the soma already exists.
+
+    The "resume" ingest_mode skips data writes if data are within dimension ranges of the existing soma.
+    This is useful for continuing after a partial/interrupted previous upload.
+
+    The "schema_only" ingest_mode creates groups and array schema, without writing array data.
+    This is useful as a prep-step for parallel append-ingest of multiple H5ADs to a single soma.
     """
+    assert ingest_mode in tiledbsoma.util.INGEST_MODES
+
     if isinstance(input_path, ad.AnnData):
         raise Exception("Input path is an AnnData object -- did you want from_anndata?")
     assert ingest_mode in ["write", "schema_only", "resume"]
@@ -118,6 +128,8 @@ def from_10x(
     """
     Reads a 10X file and writes to a TileDB group structure.
     """
+    assert ingest_mode in tiledbsoma.util.INGEST_MODES
+
     s = tiledbsoma.util.get_start_stamp()
     log_io(None, f"START  SOMA.from_10x {input_path} -> {soma.nested_name}")
 
@@ -151,6 +163,8 @@ def from_anndata_unless_exists(
     Skips the ingest if the SOMA is already there. A convenient keystroke-saver
     so users don't need to replicate the if-test.
     """
+    assert ingest_mode in tiledbsoma.util.INGEST_MODES
+
     assert ingest_mode in ["write", "schema_only", "resume"]
     if tiledbsoma.util.is_soma(soma.uri):
         tiledbsoma.logging.logger.info(
@@ -169,7 +183,11 @@ def from_anndata(
 ) -> None:
     """
     Given an in-memory ``AnnData`` object, writes to a TileDB SOMA structure.
+
+    See comments on `from_h5ad` for details about the `ingest_mode` parameter.
     """
+    assert ingest_mode in tiledbsoma.util.INGEST_MODES
+
     assert ingest_mode in ["write", "schema_only", "resume"]
     return _from_anndata_aux(soma, anndata, X_layer_name, ingest_mode)
 
