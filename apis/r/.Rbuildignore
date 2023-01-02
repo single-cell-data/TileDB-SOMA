@@ -15,4 +15,6 @@
 ^local
 ^copy_source.sh$
 
-
+# vscode
+^\.vscode$
+^\.devcontainer$
