@@ -46,8 +46,8 @@ test_that("SOMADataFrame creation", {
   expect_true(tbl1$Equals(tbl0))
 
   # Slicing by foo
-  tbl1 <- sidf$read(ids = list(foo=1L:2L))
-  expect_true(tbl1$Equals(tbl1$Slice(offset = 0, length = 2)))
+  tbl1 <- sidf$read(ids = list(foo = 1L:2L))
+  expect_true(tbl1$Equals(tbl0$Slice(offset = 0, length = 2)))
 
   # Subselecting columns
   expect_error(
