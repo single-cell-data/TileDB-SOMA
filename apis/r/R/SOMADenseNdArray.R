@@ -17,9 +17,10 @@
 #' The default "fill" value for `SOMADenseNDArray` is the zero or null value of
 #' the array type (e.g., Arrow.float32 defaults to 0.0).
 #' @export
+
 SOMADenseNDArray <- R6::R6Class(
   classname = "SOMADenseNDArray",
-  inherit = TileDBArray,
+  inherit = SOMAArrayBase,
 
   public = list(
 
@@ -76,6 +77,7 @@ SOMADenseNDArray <- R6::R6Class(
 
       # create array
       tiledb::tiledb_array_create(uri = self$uri, schema = tdb_schema)
+      private$write_object_type_metadata()
     },
 
     #' @description Read as an 'arrow::Table'

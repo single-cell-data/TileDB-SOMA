@@ -11,7 +11,7 @@
 
 SOMADataFrame <- R6::R6Class(
   classname = "SOMADataFrame",
-  inherit = TileDBArray,
+  inherit = SOMAArrayBase,
 
   public = list(
 
@@ -96,6 +96,7 @@ SOMADataFrame <- R6::R6Class(
 
       # create array
       tiledb::tiledb_array_create(uri = self$uri, schema = tdb_schema)
+      private$write_object_type_metadata()
     },
 
     #' @description Write
