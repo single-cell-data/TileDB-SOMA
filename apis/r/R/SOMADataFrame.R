@@ -189,7 +189,9 @@ SOMADataFrame <- R6::R6Class(
           is_arrow_schema(schema),
         is.character(index_column_names) && length(index_column_names) > 0,
         "All 'index_column_names' must be defined in the 'schema'" =
-          assert_subset(index_column_names, schema$names, type = "field")
+          assert_subset(index_column_names, schema$names, type = "field"),
+        "Column names must not start with reserved prefix 'soma_'" =
+          all(!startsWith(setdiff(schema$names, "soma_joinid"), "soma_"))
       )
 
       # Add soma_joinid column if not present

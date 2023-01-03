@@ -120,6 +120,23 @@ test_that("SOMADataFrame read", {
     expect_equal(z$num_rows, 10L)
 })
 
+test_that("soma_ prefix is reserved", {
+  uri <- withr::local_tempdir("soma-indexed-dataframe")
+  asch <- create_arrow_schema()
+
+  # Add a soma_joinid column with the wrong type
+  asch <- asch$AddField(
+    i = 1,
+    field = arrow::field("soma_foo", arrow::int32(), nullable = FALSE)
+  )
+
+  sidf <- SOMADataFrame$new(uri)
+  expect_error(
+    sidf$create(asch, index_column_names = "foo"),
+    "Column names must not start with reserved prefix 'soma_'"
+  )
+})
+
 test_that("soma_joinid is added on creation", {
   uri <- withr::local_tempdir("soma-indexed-dataframe")
   asch <- create_arrow_schema()
