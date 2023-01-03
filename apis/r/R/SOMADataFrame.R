@@ -21,13 +21,7 @@ SOMADataFrame <- R6::R6Class(
     #' index columns.  All named columns must exist in the schema, and at least
     #' one index column name is required.
     create = function(schema, index_column_names) {
-      stopifnot(
-        "'schema' must be a valid Arrow schema" =
-          is_arrow_schema(schema),
-        is.character(index_column_names) && length(index_column_names) > 0,
-        "All 'index_column_names' must be defined in the 'schema'" =
-          assert_subset(index_column_names, schema$names, type = "field")
-      )
+      schema <- private$validate_schema(schema, index_column_names)
 
       attr_column_names <- setdiff(schema$names, index_column_names)
       stopifnot(
@@ -180,5 +174,38 @@ SOMADataFrame <- R6::R6Class(
       arrow::as_arrow_table(arch::from_arch_array(rl, arrow::RecordBatch))
     }
 
+  ),
+
+  private = list(
+
+    # @description Validate schema
+    # Handle default column additions (eg, soma_joinid) and error checking on
+    # required columns
+    # @return An [`arrow::Schema`], which may be modified by the addition of
+    # required columns.
+    validate_schema = function(schema, index_column_names) {
+      stopifnot(
+        "'schema' must be a valid Arrow schema" =
+          is_arrow_schema(schema),
+        is.character(index_column_names) && length(index_column_names) > 0,
+        "All 'index_column_names' must be defined in the 'schema'" =
+          assert_subset(index_column_names, schema$names, type = "field")
+      )
+
+      # Add soma_joinid column if not present
+      if ("soma_joinid" %in% schema$names) {
+        stopifnot(
+          "soma_joinid field must be of type Arrow int64" =
+            schema$GetFieldByName("soma_joinid")$type == arrow::int64()
+        )
+      } else {
+        schema <- schema$AddField(
+          i = 0,
+          field = arrow::field("soma_joinid", arrow::int64())
+        )
+      }
+
+      schema
+    }
   )
 )

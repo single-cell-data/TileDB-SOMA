@@ -119,3 +119,16 @@ test_that("SOMADataFrame read", {
     z <- sdf$read(ids = list(soma_joinid=ids))
     expect_equal(z$num_rows, 10L)
 })
+
+test_that("soma_joinid is added on creation", {
+  uri <- withr::local_tempdir("soma-indexed-dataframe")
+  asch <- create_arrow_schema()
+
+  sidf <- SOMADataFrame$new(uri)
+  sidf$create(asch, index_column_names = "foo")
+
+  expect_true("soma_joinid" %in% sidf$attrnames())
+  expect_equal(tiledb::datatype(sidf$attributes()$soma_joinid), "INT64")
+})
+
+
