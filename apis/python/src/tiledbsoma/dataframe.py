@@ -1,5 +1,5 @@
 import collections.abc
-from typing import Any, Iterator, Optional, Sequence, Tuple, TypeVar, Union
+from typing import Any, Iterator, Optional, Sequence, Tuple, TypeVar, Union, cast
 
 import numpy as np
 import pandas as pd
@@ -162,6 +162,23 @@ class DataFrame(TileDBArray):
             self._index_column_names = self._tiledb_dim_names()
 
         return self._index_column_names
+
+    @property
+    def count(self) -> int:
+        """
+        Return the number of rows in the dataframe
+        """
+
+        # A.domain.shape at the tiledb level gives us the 0..2^63 range which is not what we want
+        num_rows = cast(
+            int,
+            clib.SOMAReader(
+                self.uri,
+                platform_config={} if self._ctx is None else self._ctx.config().dict(),
+            ).nnz(),
+        )
+
+        return num_rows
 
     def read(
         self,
