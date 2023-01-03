@@ -2,12 +2,6 @@ test_that("Basic mechanics", {
   uri <- withr::local_tempdir("soma-indexed-dataframe")
   asch <- create_arrow_schema()
 
-  # Add a soma_joinid column to the schema
-  asch <- asch$AddField(
-    i = 1,
-    field = arrow::field("soma_joinid", arrow::int64(), nullable = FALSE)
-  )
-
   sidf <- SOMADataFrame$new(uri)
   expect_error(
     sidf$create(asch),
@@ -75,12 +69,12 @@ test_that("int64 values are stored correctly", {
   uri <- withr::local_tempdir("soma-indexed-dataframe")
   asch <- arrow::schema(
     arrow::field("foo", arrow::int32(), nullable = FALSE),
-    arrow::field("bar", arrow::int64(), nullable = FALSE),
+    arrow::field("soma_joinid", arrow::int64(), nullable = FALSE),
   )
 
   sidf <- SOMADataFrame$new(uri)
   sidf$create(asch, index_column_names = "foo")
-  tbl0 <- arrow::arrow_table(foo = 1L:10L, bar = 1L:10L, schema = asch)
+  tbl0 <- arrow::arrow_table(foo = 1L:10L, soma_joinid = 1L:10L, schema = asch)
 
   orig_downcast_value <- getOption("arrow.int64_downcast")
 
@@ -140,6 +134,7 @@ test_that("soma_ prefix is reserved", {
 test_that("soma_joinid is added on creation", {
   uri <- withr::local_tempdir("soma-indexed-dataframe")
   asch <- create_arrow_schema()
+  asch <- asch$RemoveField(match("soma_joinid", asch$names) - 1)
 
   sidf <- SOMADataFrame$new(uri)
   sidf$create(asch, index_column_names = "foo")
@@ -153,6 +148,7 @@ test_that("soma_joinid validations", {
   asch <- create_arrow_schema()
 
   # Add a soma_joinid column with the wrong type
+  asch <- asch$RemoveField(match("soma_joinid", asch$names) - 1)
   asch <- asch$AddField(
     i = 1,
     field = arrow::field("soma_joinid", arrow::int32(), nullable = FALSE)
