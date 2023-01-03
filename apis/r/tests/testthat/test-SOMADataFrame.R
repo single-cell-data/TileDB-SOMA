@@ -67,6 +67,27 @@ test_that("SOMADataFrame creation", {
   expect_true(tbl1$Equals(tbl0$Filter(tbl0$bar < 5)))
 })
 
+test_that("int64 values are stored correctly", {
+  uri <- withr::local_tempdir("soma-indexed-dataframe")
+  asch <- arrow::schema(
+    arrow::field("foo", arrow::int32(), nullable = FALSE),
+    arrow::field("bar", arrow::int64(), nullable = FALSE),
+  )
+
+  sidf <- SOMADataFrame$new(uri)
+  sidf$create(asch, index_column_names = "foo")
+  tbl0 <- arrow::arrow_table(foo = 1L:10L, bar = 1L:10L, schema = asch)
+
+  orig_downcast_value <- getOption("arrow.int64_downcast")
+
+  sidf$write(tbl0)
+  tbl1 <- sidf$read()
+  expect_true(tbl1$Equals(tbl0))
+
+  # verify int64_downcast option was restored
+  expect_equal(getOption("arrow.int64_downcast"), orig_downcast_value)
+})
+
 test_that("SOMADataFrame read", {
     tdir <- tempfile()
     tgzfile <- system.file("raw-data", "soco-pbmc3k_processed-obs.tar.gz", package="tiledbsoma")

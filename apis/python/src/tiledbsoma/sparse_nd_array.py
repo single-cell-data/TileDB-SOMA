@@ -127,6 +127,9 @@ class SparseNDArray(TileDBArray):
             return cast(NTuple, A.schema.domain.shape)
 
     def reshape(self, shape: NTuple) -> None:
+        """
+        Unsupported operation for this object type.
+        """
         raise NotImplementedError("reshape operation not implemented.")
 
     @property
