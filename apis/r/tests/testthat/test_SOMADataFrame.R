@@ -1,6 +1,13 @@
-test_that("SOMADataFrame creation", {
+test_that("Basic mechanics", {
   uri <- withr::local_tempdir("soma-indexed-dataframe")
   asch <- create_arrow_schema()
+
+  # Add a soma_joinid column to the schema
+  asch <- asch$AddField(
+    i = 1,
+    field = arrow::field("soma_joinid", arrow::int64(), nullable = FALSE)
+  )
+
   sidf <- SOMADataFrame$new(uri)
   expect_error(
     sidf$create(asch),
@@ -28,9 +35,10 @@ test_that("SOMADataFrame creation", {
   )
 
   tbl0 <- arrow::arrow_table(foo = 1L:10L,
+                             soma_joinid = 1L:10L,
                              bar = 1.1:10.1,
                              baz = letters[1:10],
-                             schema=asch)
+                             schema = asch)
 
   sidf$write(tbl0)
 
@@ -56,7 +64,7 @@ test_that("SOMADataFrame creation", {
   )
 
   tbl1 <- sidf$read(column_names = "bar")
-  expect_true(tbl1$Equals(tbl0$SelectColumns(1L)))
+  expect_true(tbl1$Equals(tbl0$SelectColumns(2L)))
 
   # Attribute filters
   tbl1 <- sidf$read(value_filter = "bar < 5")
