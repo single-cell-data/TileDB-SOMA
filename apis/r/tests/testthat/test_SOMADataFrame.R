@@ -131,4 +131,19 @@ test_that("soma_joinid is added on creation", {
   expect_equal(tiledb::datatype(sidf$attributes()$soma_joinid), "INT64")
 })
 
+test_that("soma_joinid validations", {
+  uri <- withr::local_tempdir("soma-indexed-dataframe")
+  asch <- create_arrow_schema()
 
+  # Add a soma_joinid column with the wrong type
+  asch <- asch$AddField(
+    i = 1,
+    field = arrow::field("soma_joinid", arrow::int32(), nullable = FALSE)
+  )
+
+  sidf <- SOMADataFrame$new(uri)
+  expect_error(
+    sidf$create(asch, index_column_names = "foo"),
+    "soma_joinid field must be of type Arrow int64"
+  )
+})
