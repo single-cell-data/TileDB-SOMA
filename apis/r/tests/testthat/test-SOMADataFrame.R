@@ -78,12 +78,14 @@ test_that("int64 values are stored correctly", {
   sidf$create(asch, index_column_names = "foo")
   tbl0 <- arrow::arrow_table(foo = 1L:10L, bar = 1L:10L, schema = asch)
 
+  orig_downcast_value <- getOption("arrow.int64_downcast")
+
   sidf$write(tbl0)
   tbl1 <- sidf$read()
   expect_true(tbl1$Equals(tbl0))
 
   # verify int64_downcast option was restored
-  expect_true(is.null(getOption("arrow.int64_downcast")))
+  expect_equal(getOption("arrow.int64_downcast"), orig_downcast_value)
 })
 
 test_that("SOMADataFrame read", {
