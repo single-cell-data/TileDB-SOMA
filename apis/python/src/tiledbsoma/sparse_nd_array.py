@@ -14,6 +14,7 @@ import tiledbsoma.libtiledbsoma as clib
 from . import tiledb_platform_config as tdbpc
 from . import util, util_arrow
 from .collection import CollectionBase
+from .exception import SOMAError
 from .tiledb_array import TileDBArray
 from .types import NTuple, PlatformConfig, SparseNdCoordinates
 
@@ -229,6 +230,91 @@ class SparseNDArray(TileDBArray):
                     yield pa.SparseCSRMatrix.from_scipy(scipy_coo.tocsr())
                 if format == "csc":
                     yield pa.SparseCSCMatrix.from_scipy(scipy_coo.tocsc())
+
+    def read_sparse_tensor_all(
+        self,
+        coords: SparseNdCoordinates,
+        *,
+        format: Literal["coo", "csr", "csc"] = "coo",
+    ) -> Union[pa.SparseCOOTensor, pa.SparseCSCMatrix, pa.SparseCSRMatrix]:
+        """
+        Same as ``read_sparse_tensor``, but returns a concatenated complete result rather than
+        an iterator over partial results.
+
+        Parameters
+        ----------
+        coords : Tuple[Union[int, slice, Tuple[int, ...], List[int], pa.IntegerArray], ...]
+            Per-dimension tuple of scalar, slice, sequence of scalar or Arrow IntegerArray
+            Arrow arrays currently uninimplemented.
+
+        format - Literal["coo", "csr", "csc"]
+            Requested return format:
+            * ``coo`` - return an Arrow SparseCOOTensor (default)
+            * ``csr`` - return an Arrow SparseCSRMatrix
+            * ``csc`` - return an Arrow SparseCSCMatrix
+
+        Acceptable ways to index
+        ------------------------
+        See `read_table`.
+
+        Returns
+        -------
+        The requested data in the sparse tensor format specified.
+        """
+
+        if format != "coo" and self.ndim != 2:
+            raise ValueError(f"Format {format} only supported for 2D SparseNDArray")
+        if format not in ("coo", "csr", "csc"):
+            raise NotImplementedError("format not implemented")
+
+        # The full shape of the data is a template for the shape of the answer.
+        # For example if the data is 2D and coords is (None, [5,7,9]), then
+        # output shape[0] will be taken from the full shape, and output shape[1] will
+        # be 3.
+        with self._tiledb_open("r") as A:
+            shape = A.shape
+
+        arrow_tbls = []
+        for arrow_tbl in self.read_table(coords):
+            arrow_tbls.append(arrow_tbl)
+
+        """
+        In PyArrow 9.0.0, there is a bug preventing the creation of "empty"
+        (zero element) SparseCOOTensor objects.
+
+        See https://issues.apache.org/jira/browse/ARROW-17933
+
+        Just stop the iteration when we run out of results. The caller must be
+        prepared to have a StopIteration, rather than an empty tensor, as the result of
+        an empty query.
+        """
+        if len(arrow_tbls) == 0:
+            raise SOMAError("Needs a decision here")
+
+        arrow_tbl = pa.concat_tables(arrow_tbls)
+
+        if format == "coo":
+
+            coo_data = arrow_tbl.column("soma_data").to_numpy()
+            coo_coords = np.array(
+                [arrow_tbl.column(f"soma_dim_{n}").to_numpy() for n in range(self.ndim)]
+            ).T
+            return pa.SparseCOOTensor.from_numpy(coo_data, coo_coords, shape=shape)
+
+        elif format in ("csr", "csc"):
+            # Temporary: as these must be 2D, convert to scipy COO and use
+            # scipy to perform conversions.  C++ reader will be nicer!
+            data = arrow_tbl.column("soma_data").to_numpy()
+            row = arrow_tbl.column("soma_dim_0").to_numpy()
+            col = arrow_tbl.column("soma_dim_1").to_numpy()
+            scipy_coo = sp.coo_array((data, (row, col)), shape=shape)
+            if format == "csr":
+                return pa.SparseCSRMatrix.from_scipy(scipy_coo.tocsr())
+            if format == "csc":
+                return pa.SparseCSCMatrix.from_scipy(scipy_coo.tocsc())
+
+        else:  # for the linter
+            raise NotImplementedError("format not implemented")
 
     def read_table(self, coords: SparseNdCoordinates) -> Iterator[pa.Table]:
         """
