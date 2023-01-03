@@ -1,10 +1,6 @@
 test_that("SOMADataFrame creation", {
   uri <- withr::local_tempdir("soma-indexed-dataframe")
-  asch <- arrow::schema(
-    arrow::field("foo", arrow::int32(), nullable = FALSE),
-    arrow::field("bar", arrow::float64(), nullable = FALSE),
-    arrow::field("baz", arrow::large_utf8(), nullable = FALSE)
-  )
+  asch <- create_arrow_schema()
   sidf <- SOMADataFrame$new(uri)
   expect_error(
     sidf$create(asch),
