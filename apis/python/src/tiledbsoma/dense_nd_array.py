@@ -126,7 +126,7 @@ class DenseNDArray(TileDBArray):
 
     def reshape(self, shape: NTuple) -> None:
         """
-        Unsupported operation for this object type.
+        Unsupported operation for this object type [lifecycle: experimental].
         """
         raise NotImplementedError("reshape operation not implemented.")
 

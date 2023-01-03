@@ -107,7 +107,7 @@ class TileDBObject(ABC):
     @abstractproperty
     def soma_type(self) -> str:
         """
-        Abstract accessor for `soma_type` string. To be implemented by child classes.
+        Returns the SOMA object type, e.g. "SOMADataFrame".
         """
         ...
 
