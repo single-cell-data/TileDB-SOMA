@@ -99,10 +99,16 @@ class TileDBObject(ABC):
 
     @property
     def uri(self) -> str:
+        """
+        Accessor for the object's storage URI
+        """
         return self._uri
 
     @abstractproperty
     def soma_type(self) -> str:
+        """
+        Abstract accessor for `soma_type` string. To be implemented by child classes.
+        """
         ...
 
     def exists(self) -> bool:

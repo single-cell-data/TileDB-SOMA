@@ -149,7 +149,7 @@ def dense_indices_to_shape(
 ) -> Tuple[int, ...]:
     """
     Given a subarray index specified as a tuple of per-dimension slices or scalars
-    (eg, ``([:], 1, [1:2])``), and the shape of the array, return the shape of
+    (e.g., ``([:], 1, [1:2])``), and the shape of the array, return the shape of
     the subarray. Note that the number of coordinates may be less than or equal
     to the number of dimensions in the array.
     """

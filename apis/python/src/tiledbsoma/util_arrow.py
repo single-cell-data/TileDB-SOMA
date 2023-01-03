@@ -7,7 +7,7 @@ import tiledb
 """
 Conversion to/from Arrow and TileDB type systems. Must be capable
 of representing full type semantics, and correctly performing a
-round trip conversion (eg, T == to_arrow(to_tiledb(T)))
+round trip conversion (e.g., T == to_arrow(to_tiledb(T)))
 
 Most primitive types are simple -- e.g., uint8. Of particular challenge
 are datetime/timestamps as TileDB has no distinction between a "datetime" and
@@ -67,7 +67,7 @@ def tiledb_type_from_arrow_type(t: pa.DataType) -> Union[type, np.dtype, str]:
     Parameters
     ----------
     t : pyarrow.DataType
-        Arrow DataType instance, eg, pyarrow.int8()
+        Arrow DataType instance, e.g., pyarrow.int8()
 
     Returns
     -------

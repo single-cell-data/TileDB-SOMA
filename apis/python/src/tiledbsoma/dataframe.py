@@ -392,7 +392,7 @@ class DataFrame(TileDBArray):
 
 def _validate_schema(schema: pa.Schema, index_column_names: Sequence[str]) -> pa.Schema:
     """
-    Handle default column additions (eg, soma_joinid) and error checking on required columns.
+    Handle default column additions (e.g., soma_joinid) and error checking on required columns.
 
     Returns a schema, which may be modified by the addition of required columns.
     """
