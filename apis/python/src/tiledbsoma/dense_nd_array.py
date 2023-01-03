@@ -125,6 +125,9 @@ class DenseNDArray(TileDBArray):
             return cast(NTuple, A.schema.domain.shape)
 
     def reshape(self, shape: NTuple) -> None:
+        """
+        Unsupported operation for this object type [lifecycle: experimental].
+        """
         raise NotImplementedError("reshape operation not implemented.")
 
     @property
