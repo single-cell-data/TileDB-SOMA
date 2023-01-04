@@ -84,12 +84,8 @@ class ExperimentQuery:
         self.ms = measurement_name
 
         self._query = {
-            "obs": obs_query
-            if obs_query is not None
-            else AxisQuery(coords=(slice(None),)),
-            "var": var_query
-            if var_query is not None
-            else AxisQuery(coords=(slice(None),)),
+            "obs": obs_query if obs_query is not None else AxisQuery(),
+            "var": var_query if var_query is not None else AxisQuery(),
         }
         self._joinids = {
             "obs": None,
@@ -125,8 +121,8 @@ class ExperimentQuery:
         column_names: Optional[Sequence[str]],
     ) -> pa.Table:
         """
-        Read the specified axis. Will load and save the resulting soma_joinids for that
-        axis if they are not already know.
+        Read the specified axis. Will load and save the resulting soma_joinids for the
+        axis, if they are not already known.
         """
         query = self._query[axis]
         need_joinids = self._joinids[axis] is None
