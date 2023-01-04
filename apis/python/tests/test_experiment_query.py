@@ -2,12 +2,13 @@ import sys
 from typing import Tuple
 
 import numpy as np
+import pandas as pd
 import pyarrow as pa
 import pytest
 from scipy import sparse
 
 import tiledbsoma as soma
-from tiledbsoma.experiment_query import AxisQuery, ExperimentQuery
+from tiledbsoma.experiment_query import AxisQuery, ExperimentQuery, X_as_series
 
 """
 WIP tracker - delete when complete.
@@ -296,6 +297,27 @@ def test_query_cleanup(soma_experiment: soma.Experiment):
         assert query._default_threadpool is not None
 
     assert query._default_threadpool is None
+
+
+def test_X_as_series():
+    soma_dim_0 = np.arange(0, 100, dtype=np.int64)
+    soma_dim_1 = np.arange(200, 300, dtype=np.int64)
+    soma_data = np.random.default_rng().standard_normal(100, dtype=np.float32)
+    ser = X_as_series(
+        pa.Table.from_arrays(
+            [soma_dim_0, soma_dim_1, soma_data],
+            names=["soma_dim_0", "soma_dim_1", "soma_data"],
+        )
+    )
+
+    assert isinstance(ser, pd.Series)
+    assert np.array_equal(ser.to_numpy(), soma_data)
+    assert np.array_equal(
+        ser.index.get_level_values("soma_dim_0").to_numpy(), soma_dim_0
+    )
+    assert np.array_equal(
+        ser.index.get_level_values("soma_dim_1").to_numpy(), soma_dim_1
+    )
 
 
 """
