@@ -15,7 +15,6 @@ WIP tracker - delete when complete.
 Missing tests:
 * X method
 * read method
-* using both coord & value_filter in an AxisQuery
 * async
 
 """
