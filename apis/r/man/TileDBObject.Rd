@@ -10,11 +10,9 @@ TileDBGroup classes.
 \section{Public fields}{
 \if{html}{\out{<div class="r6-fields">}}
 \describe{
-\item{\code{verbose}}{Whether to print verbose output}
+\item{\code{platform_config}}{Optional platform configuration}
 
-\item{\code{config}}{optional configuration}
-
-\item{\code{ctx}}{optional tiledb context}
+\item{\code{ctx}}{Optional TileDB context}
 }
 \if{html}{\out{</div>}}
 }
@@ -44,7 +42,7 @@ TileDBGroup classes.
 \subsection{Method \code{new()}}{
 Create a new TileDB object.
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{TileDBObject$new(uri, verbose = TRUE, config = NULL, ctx = NULL)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{TileDBObject$new(uri, platform_config = NULL, ctx = NULL)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
@@ -52,11 +50,11 @@ Create a new TileDB object.
 \describe{
 \item{\code{uri}}{URI for the TileDB object}
 
-\item{\code{verbose}}{Print status messages}
-
-\item{\code{config}}{optional configuration}
+\item{\code{platform_config}}{Optional platform configuration}
 
 \item{\code{ctx}}{optional TileDB context}
+
+\item{\code{verbose}}{Print status messages}
 }
 \if{html}{\out{</div>}}
 }
@@ -75,7 +73,7 @@ Print the name of the R6 class.
 \if{html}{\out{<a id="method-TileDBObject-print"></a>}}
 \if{latex}{\out{\hypertarget{method-TileDBObject-print}{}}}
 \subsection{Method \code{print()}}{
-Print summary of the array.
+Print-friendly representation of the object.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{TileDBObject$print()}\if{html}{\out{</div>}}
 }

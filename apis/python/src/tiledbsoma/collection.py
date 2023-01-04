@@ -73,7 +73,7 @@ class CollectionBase(TileDBObject, MutableMapping[str, CollectionElementType]):
     # collection update (add or delete).
     #
     # A value of None implies that the cache has not been loaded, either
-    # due to the Collection not existing (ie, TileDB Group does not exist),
+    # due to the Collection not existing (i.e., TileDB Group does not exist),
     # or because we have not yet tried to read it.
     #
     _cached_values: Union[Dict[str, _CachedElement], None]

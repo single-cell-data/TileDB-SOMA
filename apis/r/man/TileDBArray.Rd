@@ -16,7 +16,7 @@ populate the private \code{create_empty_array()} and \code{ingest_data()} method
 }
 }
 \section{Super class}{
-\code{\link[tiledbsoma:TileDBObject]{tiledbsoma::TileDBObject}} -> \code{TileDBArray}
+\code{tiledbsoma::TileDBObject} -> \code{TileDBArray}
 }
 \section{Methods}{
 \subsection{Public methods}{
@@ -24,7 +24,7 @@ populate the private \code{create_empty_array()} and \code{ingest_data()} method
 \item \href{#method-TileDBArray-print}{\code{TileDBArray$print()}}
 \item \href{#method-TileDBArray-tiledb_array}{\code{TileDBArray$tiledb_array()}}
 \item \href{#method-TileDBArray-get_metadata}{\code{TileDBArray$get_metadata()}}
-\item \href{#method-TileDBArray-add_metadata}{\code{TileDBArray$add_metadata()}}
+\item \href{#method-TileDBArray-set_metadata}{\code{TileDBArray$set_metadata()}}
 \item \href{#method-TileDBArray-schema}{\code{TileDBArray$schema()}}
 \item \href{#method-TileDBArray-dimensions}{\code{TileDBArray$dimensions()}}
 \item \href{#method-TileDBArray-attributes}{\code{TileDBArray$attributes()}}
@@ -99,20 +99,18 @@ A list of metadata values.
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-TileDBArray-add_metadata"></a>}}
-\if{latex}{\out{\hypertarget{method-TileDBArray-add_metadata}{}}}
-\subsection{Method \code{add_metadata()}}{
+\if{html}{\out{<a id="method-TileDBArray-set_metadata"></a>}}
+\if{latex}{\out{\hypertarget{method-TileDBArray-set_metadata}{}}}
+\subsection{Method \code{set_metadata()}}{
 Add list of metadata to the specified TileDB array.
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{TileDBArray$add_metadata(metadata, prefix = "")}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{TileDBArray$set_metadata(metadata)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
 \item{\code{metadata}}{Named list of metadata to add.}
-
-\item{\code{prefix}}{Optional prefix to add to the metadata attribute names.}
 }
 \if{html}{\out{</div>}}
 }

@@ -151,7 +151,7 @@ def split_column_names(
     Tuple[Union[Sequence[str], None], Union[Sequence[str], None]]
         If column_names is ``None``, the tuple ``(None, None)`` will be returned.
         Otherwise, returns a tuple of (dim_names, attr_names), with any unknown
-        names, ie, not present in the array schema, ignored (dropped).
+        names, i.e., not present in the array schema, ignored (dropped).
     """
     if column_names is None:
         return (None, None)
