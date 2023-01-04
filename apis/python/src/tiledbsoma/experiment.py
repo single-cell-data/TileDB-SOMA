@@ -1,6 +1,7 @@
-from typing import Any, Dict, Literal, Optional, Tuple, cast
+from typing import Any, Dict, Optional, Tuple, cast
 
 import tiledb
+from typing_extensions import Final
 
 from .collection import CollectionBase
 from .dataframe import DataFrame
@@ -13,7 +14,7 @@ class Experiment(CollectionBase[TileDBObject]):
     """
     ``obs``: Primary annotations on the observation axis. The contents of the
              ``soma_joinid`` column define the observation index domain,
-             aka ``obs_id``. All observations for the Experiment must be
+             AKA ``obs_id``. All observations for the Experiment must be
              defined in this dataframe.
 
     ``ms``: A collection of named measurements.
@@ -44,9 +45,7 @@ class Experiment(CollectionBase[TileDBObject]):
             ctx=ctx,
         )
 
-    @property
-    def soma_type(self) -> Literal["SOMAExperiment"]:
-        return "SOMAExperiment"
+    soma_type: Final = "SOMAExperiment"
 
     def create(self) -> "Experiment":
         """
@@ -57,8 +56,17 @@ class Experiment(CollectionBase[TileDBObject]):
 
     @property
     def obs(self) -> DataFrame:
+        """
+        Primary annotations on the observation axis. The contents of the
+        ``soma_joinid`` column define the observation index domain,
+        AKA ``obs_id``. All observations for the Experiment must be
+        defined in this dataframe.
+        """
         return cast(DataFrame, self["obs"])
 
     @property
     def ms(self) -> CollectionBase[Measurement]:
+        """
+        A collection of named measurements.
+        """
         return cast(CollectionBase[Measurement], self["ms"])

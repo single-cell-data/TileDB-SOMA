@@ -16,7 +16,7 @@ jobs:
         # TODO: restore Windows build once we have C++/libtiledbsoma integration supported there
         os: [ubuntu-22.04, macos-12]
         # os: [ubuntu-22.04, macos-12, windows-2019]
-        python-version: ['3.8', '3.9']
+        python-version: ['3.7', '3.8', '3.9', '3.10']
         include:
           - runs-on: ubuntu-22.04
             cc: gcc-11
@@ -35,6 +35,8 @@ jobs:
 
     - name: Checkout TileDB-SOMA
       uses: actions/checkout@v3
+      with:
+        fetch-depth: 0  # ensure we get all tags to inform package version determination
 
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v4
@@ -42,7 +44,7 @@ jobs:
         python-version: ${{ matrix.python-version }}
 
     - name: Install Python packages
-      run: python -m pip -v install pytest pytest-cov typeguard apis/python
+      run: python -m pip -v install pytest pytest-cov typeguard typing_extensions apis/python
       env:
         CC: ${{ matrix.cc }}
         CXX: ${{ matrix.cxx }}

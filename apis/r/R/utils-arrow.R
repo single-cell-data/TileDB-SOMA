@@ -47,7 +47,6 @@ tiledb_type_from_arrow_type <- function(x) {
     double = "FLOAT64",
     boolean = "BOOL",
     bool = "BOOL",
-    # large_utf8 = "large_string",
     # large_string = "large_string",
     # binary = "binary",
     # large_binary = "large_binary",
@@ -56,6 +55,7 @@ tiledb_type_from_arrow_type <- function(x) {
     # not yet queryable so we use ASCII for now
     utf8 = "ASCII",
     string = "ASCII",
+    large_utf8 = "ASCII",
     # date32 = "date32",
     # date64 = "date64",
     # time32 = "time32",

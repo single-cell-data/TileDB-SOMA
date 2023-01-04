@@ -10,22 +10,22 @@ import scipy.sparse as sp
 import tiledb
 
 import tiledbsoma.eta as eta
+import tiledbsoma.util as util
 import tiledbsoma.util_ann as util_ann
+import tiledbsoma.util_tiledb as util_tiledb
 from tiledbsoma import (
     Collection,
     DataFrame,
-    DenseNdArray,
+    DenseNDArray,
     Experiment,
     Measurement,
-    SparseNdArray,
+    SparseNDArray,
     logging,
-    util,
     util_scipy,
 )
 
 from .constants import SOMA_JOINID
 from .types import Path, PlatformConfig
-from .util import uri_joinpath
 
 
 # ----------------------------------------------------------------
@@ -74,7 +74,7 @@ def _from_h5ad_common(
 
     logging.log_io(None, f"{experiment._indent}START  READING {input_path}")
 
-    anndata = ad.read_h5ad(input_path)
+    anndata = ad.read_h5ad(input_path, backed="r")
 
     logging.log_io(
         None,
@@ -163,11 +163,11 @@ def _write_dataframe(
     )
 
 
-def _write_matrix_to_denseNdArray(
-    soma_ndarray: DenseNdArray,
+def _write_matrix_to_denseNDArray(
+    soma_ndarray: DenseNDArray,
     src_matrix: Union[np.ndarray, sp.csr_matrix, sp.csc_matrix],
 ) -> None:
-    """Write a matrix to an empty DenseNdArray"""
+    """Write a matrix to an empty DenseNDArray"""
 
     # Write all at once?
     if soma_ndarray._tiledb_platform_config.write_X_chunked:
@@ -225,11 +225,11 @@ def _write_matrix_to_denseNdArray(
     return
 
 
-def _write_matrix_to_sparseNdArray(
-    soma_ndarray: SparseNdArray,
+def _write_matrix_to_sparseNDArray(
+    soma_ndarray: SparseNDArray,
     src_matrix: Union[np.ndarray, sp.csr_matrix, sp.csc_matrix],
 ) -> None:
-    """Write a matrix to an empty DenseNdArray"""
+    """Write a matrix to an empty DenseNDArray"""
 
     def _coo_to_table(mat_coo: sp.coo_matrix, axis: int = 0, base: int = 0) -> pa.Table:
         pydict = {
@@ -312,7 +312,7 @@ def _write_matrix_to_sparseNdArray(
 
 
 def create_from_matrix(
-    soma_ndarray: Union[DenseNdArray, SparseNdArray],
+    soma_ndarray: Union[DenseNDArray, SparseNDArray],
     src_matrix: Union[np.ndarray, sp.csr_matrix, sp.csc_matrix],
     platform_config: Optional[PlatformConfig] = None,
 ) -> None:
@@ -321,7 +321,7 @@ def create_from_matrix(
     """
     assert not soma_ndarray.exists()
     assert src_matrix.ndim == 2
-    assert soma_ndarray.soma_type in ("SOMADenseNdArray", "SOMASparseNdArray")
+    assert soma_ndarray.soma_type in ("SOMADenseNDArray", "SOMASparseNDArray")
 
     s = util.get_start_stamp()
     logging.log_io(None, f"{soma_ndarray._indent}START  WRITING {soma_ndarray.uri}")
@@ -332,10 +332,10 @@ def create_from_matrix(
         platform_config=platform_config,
     )
 
-    if soma_ndarray.soma_type == "SOMADenseNdArray":
-        _write_matrix_to_denseNdArray(soma_ndarray, src_matrix)
-    else:  # SOMmASparseNdArray
-        _write_matrix_to_sparseNdArray(soma_ndarray, src_matrix)
+    if isinstance(soma_ndarray, DenseNDArray):
+        _write_matrix_to_denseNDArray(soma_ndarray, src_matrix)
+    else:  # SOMmASparseNDArray
+        _write_matrix_to_sparseNDArray(soma_ndarray, src_matrix)
 
     logging.log_io(
         f"Wrote {soma_ndarray.uri}",
@@ -370,7 +370,6 @@ def from_anndata(
 
     anndata.obs_names_make_unique()
     anndata.var_names_make_unique()
-    anndata = util_ann._decategoricalize(anndata)
 
     logging.log_io(
         None,
@@ -386,15 +385,18 @@ def from_anndata(
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     # OBS
-    obs = DataFrame(uri=uri_joinpath(experiment.uri, "obs"))
+    obs = DataFrame(uri=util.uri_joinpath(experiment.uri, "obs"))
     _write_dataframe(
-        obs, anndata.obs, id_column_name="obs_id", platform_config=platform_config
+        obs,
+        util_ann._decategoricalize_obs_or_var(anndata.obs),
+        id_column_name="obs_id",
+        platform_config=platform_config,
     )
     experiment.set("obs", obs)
 
     experiment.set(
         "ms",
-        Collection(uri=uri_joinpath(experiment.uri, "ms")).create(),
+        Collection(uri=util.uri_joinpath(experiment.uri, "ms")).create(),
     )
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -405,93 +407,120 @@ def from_anndata(
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     # MS/meas/VAR
-    var = DataFrame(uri=uri_joinpath(measurement.uri, "var"))
+    var = DataFrame(uri=util.uri_joinpath(measurement.uri, "var"))
     _write_dataframe(
-        var, anndata.var, id_column_name="var_id", platform_config=platform_config
+        var,
+        util_ann._decategoricalize_obs_or_var(anndata.var),
+        id_column_name="var_id",
+        platform_config=platform_config,
     )
     measurement["var"] = var
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     # MS/meas/X/DATA
-    measurement["X"] = Collection(uri=uri_joinpath(measurement.uri, "X")).create()
+    measurement["X"] = Collection(uri=util.uri_joinpath(measurement.uri, "X")).create()
 
     # TODO: more types to check?
     if isinstance(anndata.X, np.ndarray):
-        ddata = DenseNdArray(uri=uri_joinpath(measurement.X.uri, "data"), ctx=ctx)
+        ddata = DenseNDArray(uri=util.uri_joinpath(measurement.X.uri, "data"), ctx=ctx)
         # Code here and in else-block duplicated for linter appeasement
-        create_from_matrix(ddata, anndata.X, platform_config=platform_config)
+        create_from_matrix(ddata, anndata.X[:], platform_config=platform_config)
         measurement.X.set("data", ddata)
     else:
-        sdata = SparseNdArray(uri=uri_joinpath(measurement.X.uri, "data"), ctx=ctx)
-        create_from_matrix(sdata, anndata.X, platform_config=platform_config)
+        sdata = SparseNDArray(uri=util.uri_joinpath(measurement.X.uri, "data"), ctx=ctx)
+        create_from_matrix(sdata, anndata.X[:], platform_config=platform_config)
         measurement.X.set("data", sdata)
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     if len(anndata.obsm.keys()) > 0:  # do not create an empty collection
         measurement["obsm"] = Collection(
-            uri=uri_joinpath(measurement.uri, "obsm")
+            uri=util.uri_joinpath(measurement.uri, "obsm")
         ).create()
         for key in anndata.obsm.keys():
-            arr = DenseNdArray(uri=uri_joinpath(measurement.obsm.uri, key), ctx=ctx)
-            create_from_matrix(arr, anndata.obsm[key], platform_config=platform_config)
+            arr = DenseNDArray(
+                uri=util.uri_joinpath(measurement.obsm.uri, key), ctx=ctx
+            )
+            create_from_matrix(
+                arr,
+                util_tiledb.to_tiledb_supported_array_type(anndata.obsm[key]),
+                platform_config=platform_config,
+            )
             measurement.obsm.set(key, arr)
 
     if len(anndata.varm.keys()) > 0:  # do not create an empty collection
         measurement["varm"] = Collection(
-            uri=uri_joinpath(measurement.uri, "varm")
+            uri=util.uri_joinpath(measurement.uri, "varm")
         ).create()
         for key in anndata.varm.keys():
-            darr = DenseNdArray(uri=uri_joinpath(measurement.varm.uri, key), ctx=ctx)
-            create_from_matrix(darr, anndata.varm[key], platform_config=platform_config)
+            darr = DenseNDArray(
+                uri=util.uri_joinpath(measurement.varm.uri, key), ctx=ctx
+            )
+            create_from_matrix(
+                darr,
+                util_tiledb.to_tiledb_supported_array_type(anndata.varm[key]),
+                platform_config=platform_config,
+            )
             measurement.varm.set(key, darr)
 
     if len(anndata.obsp.keys()) > 0:  # do not create an empty collection
         measurement["obsp"] = Collection(
-            uri=uri_joinpath(measurement.uri, "obsp")
+            uri=util.uri_joinpath(measurement.uri, "obsp")
         ).create()
         for key in anndata.obsp.keys():
-            sarr = SparseNdArray(uri=uri_joinpath(measurement.obsp.uri, key), ctx=ctx)
-            create_from_matrix(sarr, anndata.obsp[key], platform_config=platform_config)
+            sarr = SparseNDArray(
+                uri=util.uri_joinpath(measurement.obsp.uri, key), ctx=ctx
+            )
+            create_from_matrix(
+                sarr,
+                util_tiledb.to_tiledb_supported_array_type(anndata.obsp[key]),
+                platform_config=platform_config,
+            )
             measurement.obsp.set(key, sarr)
 
     if len(anndata.varp.keys()) > 0:  # do not create an empty collection
         measurement["varp"] = Collection(
-            uri=uri_joinpath(measurement.uri, "varp")
+            uri=util.uri_joinpath(measurement.uri, "varp")
         ).create()
         for key in anndata.varp.keys():
-            sarr = SparseNdArray(uri=uri_joinpath(measurement.varp.uri, key), ctx=ctx)
-            create_from_matrix(sarr, anndata.varp[key], platform_config=platform_config)
+            sarr = SparseNDArray(
+                uri=util.uri_joinpath(measurement.varp.uri, key), ctx=ctx
+            )
+            create_from_matrix(
+                sarr,
+                util_tiledb.to_tiledb_supported_array_type(anndata.varp[key]),
+                platform_config=platform_config,
+            )
             measurement.varp.set(key, sarr)
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     # RAW
     if anndata.raw is not None:
         raw_measurement = Measurement(
-            uri=uri_joinpath(experiment.ms.uri, "raw"), ctx=ctx
+            uri=util.uri_joinpath(experiment.ms.uri, "raw"), ctx=ctx
         )
         raw_measurement.create()
         experiment.ms.set("raw", raw_measurement)
 
-        var = DataFrame(uri=uri_joinpath(raw_measurement.uri, "var"))
+        var = DataFrame(uri=util.uri_joinpath(raw_measurement.uri, "var"))
         _write_dataframe(
             var,
-            anndata.raw.var,
+            util_ann._decategoricalize_obs_or_var(anndata.raw.var),
             id_column_name="var_id",
             platform_config=platform_config,
         )
         raw_measurement.set("var", var)
 
         raw_measurement["X"] = Collection(
-            uri=uri_joinpath(raw_measurement.uri, "X")
+            uri=util.uri_joinpath(raw_measurement.uri, "X")
         ).create()
 
-        rawXdata = SparseNdArray(
-            uri=uri_joinpath(raw_measurement.X.uri, "data"), ctx=ctx
+        rawXdata = SparseNDArray(
+            uri=util.uri_joinpath(raw_measurement.X.uri, "data"), ctx=ctx
         )
-        create_from_matrix(rawXdata, anndata.raw.X, platform_config=platform_config)
+        create_from_matrix(rawXdata, anndata.raw.X[:], platform_config=platform_config)
         raw_measurement.X.set("data", rawXdata)
 
-    # TODO: port uns from v0 to v1
+    # TODO: port uns from main-old to main
     #    # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     #    if anndata.uns is not None:
     #        experiment.uns.from_anndata_uns(anndata.uns)
@@ -571,13 +600,15 @@ def to_anndata(
     X_data = measurement.X["data"]
     assert X_data is not None
     X_dtype = None  # some datasets have no X
-    if type(X_data) == DenseNdArray:
+    if isinstance(X_data, DenseNDArray):
         X_ndarray = X_data.read_numpy((slice(None), slice(None)))
         X_dtype = X_ndarray.dtype
-    elif type(X_data) == SparseNdArray:
+    elif isinstance(X_data, SparseNDArray):
         X_mat = X_data.read_as_pandas_all()  # TODO: CSR/CSC options ...
         X_csr = util_scipy.csr_from_tiledb_df(X_mat, nobs, nvar)
         X_dtype = X_csr.dtype
+    else:
+        raise TypeError(f"Unexpected NDArray type {type(X_data)}")
 
     # XXX FIX OBSM/VARM SHAPES
 
@@ -619,32 +650,6 @@ def to_anndata(
         varp=varp,
         dtype=X_dtype,
     )
-
-    #    #   raw = None
-    #    #   if experiment.raw.exists():
-    #    #       (raw_X, raw_var_df, raw_varm) = experiment.ms['raw'].to_anndata_raw(obs_df.index)
-    #    #       raw = ad.Raw(
-    #    #           anndata,
-    #    #           X=raw_X,
-    #    #           var=raw_var_df,
-    #    #           varm=raw_varm,
-    #    #       )
-    #
-    #    # TODO: PORT FROM V0 TO V1
-    #    # uns = experiment.uns.to_dict_of_matrices()
-
-    #    anndata = ad.AnnData(
-    #        #       X=anndata.X,
-    #        #       dtype=None if anndata.X is None else anndata.X.dtype,  # some datasets have no X
-    #        #       obs=anndata.obs,
-    #        #       var=anndata.var,
-    #        #       obsm=anndata.obsm,
-    #        #       obsp=anndata.obsp,
-    #        #       varm=anndata.varm,
-    #        #       varp=anndata.varp,
-    #        #       raw=raw,
-    #        #       uns=uns,
-    #    )
 
     logging.log_io(
         None,

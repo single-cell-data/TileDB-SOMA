@@ -1,9 +1,11 @@
 import pathlib
-from typing import Any, List, Literal, Mapping, Sequence, Tuple, Union
+from typing import Any, List, Mapping, Sequence, Tuple, Union
 
 import numpy as np
+import numpy.typing as npt
 import pandas as pd
 import pyarrow as pa
+from typing_extensions import Literal
 
 Path = Union[str, pathlib.Path]
 
@@ -27,7 +29,7 @@ ArrowReadResult = Union[
     pa.SparseCSCMatrix,
 ]
 
-DenseCoordinates = Union[int, slice, pa.Array]
+DenseCoordinates = Union[int, slice]
 DenseNdCoordinates = Tuple[DenseCoordinates, ...]
 
 # TODO: add support for non-ints once the libtiledbsoma SOMAReader class has supports
@@ -45,7 +47,7 @@ SparseDataFrameCoordinate = Union[
     Sequence[int],
     pa.Array,
     pa.ChunkedArray,
-    np.ndarray,
+    npt.NDArray[np.integer],
 ]
 SparseDataFrameCoordinates = Sequence[SparseDataFrameCoordinate]
 
@@ -55,7 +57,15 @@ SparseDataFrameCoordinates = Sequence[SparseDataFrameCoordinate]
 
 SparseNdCoordinates = Union[
     None,
-    Sequence[Union[None, DenseCoordinates, Sequence[int], np.ndarray, pa.IntegerArray]],
+    Sequence[
+        Union[
+            None,
+            DenseCoordinates,
+            Sequence[int],
+            npt.NDArray[np.integer],
+            pa.IntegerArray,
+        ]
+    ],
 ]
 
 PlatformConfig = Mapping[str, Any]

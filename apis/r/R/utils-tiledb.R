@@ -10,3 +10,11 @@ match_query_layout <- function(layout) {
   layouts <- c("ROW_MAJOR", "COL_MAJOR", "GLOBAL_ORDER", "UNORDERED")
   match.arg(layout, choices = layouts, several.ok = FALSE)
 }
+
+map_query_layout <- function(layout) {
+    switch(layout,
+           ROW_MAJOR = "row-major",
+           COL_MAJOR = "column-major",
+           tolower(layout)
+    )
+}

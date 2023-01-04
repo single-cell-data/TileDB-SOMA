@@ -8,9 +8,6 @@ import pandas
 import scipy  # noqa: F401
 import tiledb  # noqa: F401
 
-import tiledbsoma
-import tiledbsoma.io
-
 # module aliases
 ad = anndata
 np = numpy
@@ -25,7 +22,6 @@ else:
     sys.exit(1)
 
 ann = anndata.read_h5ad(input_path)
-decat = tiledbsoma.util_ann._decategoricalize
 
 
 # Interact at the prompt now:

@@ -17,6 +17,10 @@ is_named_list <- function(x) {
   is.list(x) && is_named(x)
 }
 
+is_scalar_logical <- function(x) {
+  is.logical(x) && length(x) == 1
+}
+
 is_scalar_character <- function(x) {
   is.character(x) && length(x) == 1
 }
@@ -32,6 +36,10 @@ has_character_rownames <- function(x) {
 
 is_matrix <- function(x) {
   is.matrix(x) || inherits(x, "Matrix")
+}
+
+is_vector_or_int64 <- function(x) {
+    is.vector(x) || inherits(x, "integer64")
 }
 
 has_dimnames <- function(x) {
@@ -141,6 +149,5 @@ arrow_to_dt <- function(arrlst) {
 ##' @importFrom data.table data.table
 ##' @importFrom dplyr collect
 ##' @importFrom spdl setup
-##' @exportPattern "^[[:alpha:]]+"
 ##' @useDynLib tiledbsoma, .registration=TRUE
 NULL

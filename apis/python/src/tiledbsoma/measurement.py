@@ -1,11 +1,12 @@
-from typing import Any, Dict, Literal, Optional, Tuple, Union, cast
+from typing import Any, Dict, Optional, Tuple, Union, cast
 
 import tiledb
+from typing_extensions import Final
 
 from .collection import CollectionBase
 from .dataframe import DataFrame
-from .dense_nd_array import DenseNdArray
-from .sparse_nd_array import SparseNdArray
+from .dense_nd_array import DenseNDArray
+from .sparse_nd_array import SparseNDArray
 from .tiledb_object import TileDBObject
 from .tiledb_platform_config import TileDBPlatformConfig
 
@@ -18,23 +19,23 @@ class Measurement(CollectionBase[TileDBObject]):
 
     Primary annotations on the variable axis, for variables in this measurement (i.e., annotates columns of ``X``). The contents of the ``soma_joinid`` column define the variable index domain, AKA var_id. All variables for this measurement must be defined in this dataframe.
 
-    ``X``: ``Collection`` of ``SparseNdArray``
+    ``X``: ``Collection`` of ``SparseNDArray``
 
     A collection of sparse matrices, each containing measured feature values. Each matrix is indexed by ``[obsid, varid]``.
 
-    ``obsm``: ``Collection`` of ``DenseNdArray``
+    ``obsm``: ``Collection`` of ``DenseNDArray``
 
     A collection of dense matrices containing annotations of each ``obs`` row. Has the same shape as ``obs``, and is indexed with ``obsid``.
 
-    ``obsp``: ``Collection`` of ``SparseNdArray``
+    ``obsp``: ``Collection`` of ``SparseNDArray``
 
     A collection of sparse matrices containing pairwise annotations of each ``obs`` row. Indexed with ``[obsid_1, obsid_2]``.
 
-    ``varm``: ``Collection`` of ``DenseNdArray``
+    ``varm``: ``Collection`` of ``DenseNDArray``
 
     A collection of dense matrices containing annotations of each ``var`` row. Has the same shape as ``var``, and is indexed with ``varid``.
 
-    ``varp``: ``Collection`` of ``SparseNdArray``
+    ``varp``: ``Collection`` of ``SparseNDArray``
 
     A collection of sparse matrices containing pairwise annotations of each ``var`` row. Indexed with ``[varid_1, varid_2]``
     """
@@ -68,9 +69,7 @@ class Measurement(CollectionBase[TileDBObject]):
             ctx=ctx,
         )
 
-    @property
-    def soma_type(self) -> Literal["SOMAMeasurement"]:
-        return "SOMAMeasurement"
+    soma_type: Final = "SOMAMeasurement"
 
     def create(self) -> "Measurement":
         """
@@ -84,21 +83,21 @@ class Measurement(CollectionBase[TileDBObject]):
         return cast(DataFrame, self["var"])
 
     @property
-    def X(self) -> CollectionBase[Union[DenseNdArray, SparseNdArray]]:
-        return cast(CollectionBase[Union[DenseNdArray, SparseNdArray]], self["X"])
+    def X(self) -> CollectionBase[Union[DenseNDArray, SparseNDArray]]:
+        return cast(CollectionBase[Union[DenseNDArray, SparseNDArray]], self["X"])
 
     @property
-    def obsm(self) -> CollectionBase[DenseNdArray]:
-        return cast(CollectionBase[DenseNdArray], self["obsm"])
+    def obsm(self) -> CollectionBase[DenseNDArray]:
+        return cast(CollectionBase[DenseNDArray], self["obsm"])
 
     @property
-    def obsp(self) -> CollectionBase[SparseNdArray]:
-        return cast(CollectionBase[SparseNdArray], self["obsp"])
+    def obsp(self) -> CollectionBase[SparseNDArray]:
+        return cast(CollectionBase[SparseNDArray], self["obsp"])
 
     @property
-    def varm(self) -> CollectionBase[DenseNdArray]:
-        return cast(CollectionBase[DenseNdArray], self["varm"])
+    def varm(self) -> CollectionBase[DenseNDArray]:
+        return cast(CollectionBase[DenseNDArray], self["varm"])
 
     @property
-    def varp(self) -> CollectionBase[SparseNdArray]:
-        return cast(CollectionBase[SparseNdArray], self["varp"])
+    def varp(self) -> CollectionBase[SparseNDArray]:
+        return cast(CollectionBase[SparseNDArray], self["varp"])

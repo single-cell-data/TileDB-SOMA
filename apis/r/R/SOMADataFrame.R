@@ -4,14 +4,14 @@
 #' `SOMADataFrame` is a multi-column table that must contain a column
 #' called `soma_joinid` of type `uint64`, which contains a unique value for each
 #' row and is intended to act as a join key for other objects, such as
-#' [`SOMASparseNdArray`].
+#' [`SOMASparseNDArray`].
 
 #' @importFrom stats setNames
 #' @export
 
 SOMADataFrame <- R6::R6Class(
   classname = "SOMADataFrame",
-  inherit = TileDBArray,
+  inherit = SOMAArrayBase,
 
   public = list(
 
@@ -96,6 +96,7 @@ SOMADataFrame <- R6::R6Class(
 
       # create array
       tiledb::tiledb_array_create(uri = self$uri, schema = tdb_schema)
+      private$write_object_type_metadata()
     },
 
     #' @description Write
@@ -106,6 +107,11 @@ SOMADataFrame <- R6::R6Class(
     #'
     write = function(values) {
       on.exit(private$close())
+
+      # Prevent downcasting of int64 to int32 when materializing a column
+      op <- options(arrow.int64_downcast = FALSE)
+      on.exit(options(op), add = TRUE, after = FALSE)
+
       schema_names <- c(self$dimnames(), self$attrnames())
 
       stopifnot(
@@ -126,52 +132,53 @@ SOMADataFrame <- R6::R6Class(
     #' @description Read
     #' Read a user-defined subset of data, addressed by the dataframe indexing
     #' column, and optionally filtered.
-    #' @param ids Indices specifying the rows to read.
-    #' @param column_names Character vector of column names to return.
-    #' @param value_filter A string containing a logical expression that is used
+    #' @param ids Optional named list of indices specifying the rows to read; each (named)
+    #' list element corresponds to a dimension of the same name.
+    #' @param column_names Optional character vector of column names to return.
+    #' @param value_filter Optional string containing a logical expression that is used
     #' to filter the returned values. See [`tiledb::parse_query_condition`] for
     #' more information.
-    #' @param result_order Order of read results. This can be one of either
+    #' @param result_order Optional order of read results. This can be one of either
     #' `"ROW_MAJOR, `"COL_MAJOR"`, `"GLOBAL_ORDER"`, or `"UNORDERED"`.
+    #' @param log_level Optional logging level with default value of `"warn"`.
     #' @return An [`arrow::Table`].
-    read = function(
-      ids = NULL,
-      column_names = NULL,
-      value_filter = NULL,
-      result_order = "UNORDERED"
-    ) {
-      on.exit(private$close())
-      private$open("READ")
+    read = function(ids = NULL,
+                    column_names = NULL,
+                    value_filter = NULL,
+                    result_order = "UNORDERED",
+                    log_level = "warn") {
 
-      arr <- self$object
+      result_order <- match_query_layout(result_order)
 
-      # select columns
-      if (!is.null(column_names)) {
-        stopifnot(
-          "'column_names' must only contain non-index columns" =
-            all(!column_names %in% self$dimnames())
-        )
-        tiledb::attrs(arr) <- column_names
-      }
+      uri <- self$uri
+      arr <- self$object                 # need array (schema) to properly parse query condition
 
-      # select ranges
-      if (!is.null(ids)) {
-        tiledb::selected_ranges(arr) <- list(cbind(ids, ids))
-      }
+      # check columns
+      stopifnot("'column_names' must only contain valid dimension or attribute columns" =
+                    is.null(column_names) ||
+                    all(column_names %in% c(self$dimnames(), self$attrnames())))
 
-      # filter
+      # check and parse value filter
+      stopifnot("'value_filter' must be a single argument" =
+                    is.null(value_filter) || is_scalar_character(value_filter))
       if (!is.null(value_filter)) {
-        stopifnot(is_scalar_character(value_filter))
-        tiledb::query_condition(arr) <- do.call(
-          what = tiledb::parse_query_condition,
-          args = list(expr = str2lang(value_filter), ta = self$object)
-        )
+          parsed <- do.call(what = tiledb::parse_query_condition,
+                            args = list(expr = str2lang(value_filter), ta = arr))
+          value_filter <- parsed@ptr
       }
+      # ensure ids is a (named) list
+      stopifnot("'ids' must be a list" = is.null(ids) || is.list(ids),
+                "names of 'ids' must correspond to dimension names" =
+                    is.null(ids) || all(names(ids) %in% self$dimnames()))
 
-      # result order
-      tiledb::query_layout(arr) <- match_query_layout(result_order)
+      rl <- soma_reader(uri = uri,
+                        colnames = column_names,   # NULL is dealt with by soma_reader()
+                        qc = value_filter,         # idem
+                        dim_points = ids,          # idem
+                        loglevel = log_level)      # idem
 
-      arrow::arrow_table(as.data.frame(arr[]))
+      arrow::as_arrow_table(arch::from_arch_array(rl, arrow::RecordBatch))
     }
+
   )
 )

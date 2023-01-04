@@ -9,11 +9,11 @@ import tiledb
 
 from .collection import Collection, CollectionBase
 from .dataframe import DataFrame
-from .dense_nd_array import DenseNdArray
+from .dense_nd_array import DenseNDArray
 from .exception import SOMAError
 from .experiment import Experiment
 from .measurement import Measurement
-from .sparse_nd_array import SparseNdArray
+from .sparse_nd_array import SparseNDArray
 from .util import SOMA_OBJECT_TYPE_METADATA_KEY, SPEC_NAMES_TO_CLASS_NAMES
 
 ObjectTypes = Union[
@@ -21,8 +21,8 @@ ObjectTypes = Union[
     Measurement,
     Collection,
     DataFrame,
-    DenseNdArray,
-    SparseNdArray,
+    DenseNDArray,
+    SparseNDArray,
 ]
 
 
@@ -83,12 +83,12 @@ def _construct_member(
     elif class_name == "DataFrame":
         assert object_type is None or object_type == "array"
         return DataFrame(uri=member_uri, parent=parent, ctx=ctx)
-    elif class_name == "DenseNdArray":
+    elif class_name in ["DenseNDArray", "DenseNdArray"]:
         assert object_type is None or object_type == "array"
-        return DenseNdArray(uri=member_uri, parent=parent, ctx=ctx)
-    elif class_name == "SparseNdArray":
+        return DenseNDArray(uri=member_uri, parent=parent, ctx=ctx)
+    elif class_name in ["SparseNDArray", "SparseNdArray"]:
         assert object_type is None or object_type == "array"
-        return SparseNdArray(uri=member_uri, parent=parent, ctx=ctx)
+        return SparseNDArray(uri=member_uri, parent=parent, ctx=ctx)
     else:
         raise SOMAError(
             f'internal coding error: class name "{class_name}" unrecognized'

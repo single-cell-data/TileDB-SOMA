@@ -15,8 +15,8 @@ Metadata handling tests for all SOMA foundational datatypes.
     params=[
         "Collection",
         "DataFrame",
-        "DenseNdArray",
-        "SparseNdArray",
+        "DenseNDArray",
+        "SparseNDArray",
     ],
 )
 def soma_object(request, tmp_path):
@@ -37,12 +37,12 @@ def soma_object(request, tmp_path):
             index_column_names=["D"],
         )
 
-    elif class_name == "DenseNdArray":
-        so = soma.DenseNdArray(uri=uri)
+    elif class_name == "DenseNDArray":
+        so = soma.DenseNDArray(uri=uri)
         so.create(type=pa.float64(), shape=(100, 10, 1))
 
-    elif class_name == "SparseNdArray":
-        so = soma.SparseNdArray(uri=uri)
+    elif class_name == "SparseNDArray":
+        so = soma.SparseNDArray(uri=uri)
         so.create(type=pa.int8(), shape=(11,))
 
     assert so is not None, f"Unknown class name: {class_name}"

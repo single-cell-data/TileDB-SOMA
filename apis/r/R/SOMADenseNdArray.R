@@ -1,9 +1,9 @@
-#' SOMADenseNdArray
+#' SOMADenseNDArray
 #'
 #' @description
-#' `SOMADenseNdArray` is a dense, N-dimensional array of `primitive` type, with
+#' `SOMADenseNDArray` is a dense, N-dimensional array of `primitive` type, with
 #' offset (zero-based) `int64` integer indexing on each dimension with domain
-#' `[0, maxInt64)`. The `SOMADenseNdArray` has a user-defined schema, which
+#' `[0, maxInt64)`. The `SOMADenseNDArray` has a user-defined schema, which
 #' includes:
 #'
 #' - **type**: a `primitive` type, expressed as an Arrow type (e.g., `int64`,
@@ -14,16 +14,17 @@
 #' All dimensions must have a positive, non-zero length, and there must be 1 or
 #' more dimensions.
 #'
-#' The default "fill" value for `SOMADenseNdArray` is the zero or null value of
+#' The default "fill" value for `SOMADenseNDArray` is the zero or null value of
 #' the array type (e.g., Arrow.float32 defaults to 0.0).
 #' @export
-SOMADenseNdArray <- R6::R6Class(
-  classname = "SOMADenseNdArray",
-  inherit = TileDBArray,
+
+SOMADenseNDArray <- R6::R6Class(
+  classname = "SOMADenseNDArray",
+  inherit = SOMAArrayBase,
 
   public = list(
 
-    #' @description Create a SOMADenseNdArray named with the URI.
+    #' @description Create a SOMADenseNDArray named with the URI.
     #' @param type an [Arrow type][arrow::data-type] defining the type of each
     #' element in the array.
     #' @param shape a vector of integers defining the shape of the array.
@@ -76,45 +77,54 @@ SOMADenseNdArray <- R6::R6Class(
 
       # create array
       tiledb::tiledb_array_create(uri = self$uri, schema = tdb_schema)
+      private$write_object_type_metadata()
     },
 
     #' @description Read as an 'arrow::Table'
-    #' @param coords A `list` of integer vectors, one for each dimension, with a
+    #' @param coords Optional `list` of integer vectors, one for each dimension, with a
     #' length equal to the number of values to read. If `NULL`, all values are
     #' read. List elements can be named when specifying a subset of dimensions.
-    #' @param result_order Order of read results. This can be one of either
+    #' @param result_order Optional order of read results. This can be one of either
     #' `"ROW_MAJOR, `"COL_MAJOR"`, `"GLOBAL_ORDER"`, or `"UNORDERED"`.
+    #' @param log_level Optional logging level with default value of `"warn"`.
     #' @return An [`arrow::Table`].
     read_arrow_table = function(
       coords = NULL,
-      result_order = "ROW_MAJOR"
+      result_order = "ROW_MAJOR",
+      log_level = "warn"
     ) {
-      on.exit(private$close())
-      private$open("READ")
+      uri <- self$uri
 
-      arr <- self$object
+      result_order <- map_query_layout(match_query_layout(result_order))
 
-      # select ranges
       if (!is.null(coords)) {
-        stopifnot(
-          is.list(coords),
-          "'coords' must be a list of vectors" =
-            all(vapply_lgl(coords, is.vector))
-        )
-        tiledb::selected_ranges(arr) <- lapply(coords, function(x) cbind(x, x))
+          ## ensure coords is a named list, use to select dim points
+          stopifnot("'coords' must be a list" = is.list(coords),
+                    "'coords' must be a list of vectors or integer64" =
+                        all(vapply_lgl(coords, is_vector_or_int64)),
+                    "'coords' if unnamed must have length of dim names, else if named names must match dim names" =
+                        (is.null(names(coords)) && length(coords) == length(self$dimnames())) ||
+                        (!is.null(names(coords)) && all(names(coords) %in% self$dimnames()))
+                    )
+
+          ## if unnamed (and test for length has passed in previous statement) set names
+          if (is.null(names(coords))) names(coords) <- self$dimnames()
+
+          ## convert integer to integer64 to match dimension type
+          coords <- lapply(coords, function(x) if (inherits(x, "integer")) bit64::as.integer64(x) else x)
       }
 
-      # result order
-      tiledb::query_layout(arr) <- match_query_layout(result_order)
-      tiledb::return_as(arr) <- "asis"
-
-      do.call(arrow::arrow_table, arr[])
+      rl <- soma_reader(uri = uri,
+                        dim_points = coords,       	# NULL is dealt with by soma_reader()
+                        result_order = result_order,
+                        loglevel = log_level)      	# idem
+      arrow::as_arrow_table(arch::from_arch_array(rl, arrow::RecordBatch))
     },
 
     #' @description Write matrix data to the array.
     #'
     #' @param values A `matrix`. Character dimension names are ignored because
-    #' `SOMANdArray`'s use integer indexing.
+    #' `SOMANDArray`'s use integer indexing.
     #' @param coords A `list` of integer vectors, one for each dimension, with a
     #' length equal to the number of values to write. If `NULL`, the default,
     #' the values are taken from the row and column names of `values`.

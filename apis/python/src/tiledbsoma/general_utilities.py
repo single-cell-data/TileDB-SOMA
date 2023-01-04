@@ -1,3 +1,6 @@
+from pkg_resources import DistributionNotFound, get_distribution
+
+
 def get_SOMA_version() -> str:
     """
     Return semver-compatible version of the supported SOMA API.
@@ -16,9 +19,10 @@ def get_implementation_version() -> str:
     """
     Return the package implementation version as a semver
     """
-    from ._version import __version__
-
-    return str(__version__)
+    try:
+        return get_distribution("tiledbsoma").version
+    except DistributionNotFound:
+        return "unknown"
 
 
 def get_storage_engine() -> str:

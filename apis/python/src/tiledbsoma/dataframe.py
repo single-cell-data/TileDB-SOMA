@@ -1,20 +1,11 @@
 import collections.abc
-from typing import (
-    Any,
-    Iterator,
-    Literal,
-    Optional,
-    Sequence,
-    Tuple,
-    TypeVar,
-    Union,
-    get_args,
-)
+from typing import Any, Iterator, Optional, Sequence, Tuple, TypeVar, Union, cast
 
 import numpy as np
 import pandas as pd
 import pyarrow as pa
 import tiledb
+from typing_extensions import Final, get_args
 
 # This package's pybind11 code
 import tiledbsoma.libtiledbsoma as clib
@@ -34,7 +25,7 @@ class DataFrame(TileDBArray):
     """
     Represents ``obs``, ``var``, and others.
 
-    All ``DataFrame`` must contain a column called ``soma_joinid``, of type ``int64``. The ``soma_joinid`` column contains a unique value for each row in the ``DataFrame``, and intended to act as a joint key for other objects, such as ``SparseNdArray``.
+    All ``DataFrame`` must contain a column called ``soma_joinid``, of type ``int64``. The ``soma_joinid`` column contains a unique value for each row in the ``DataFrame``, and intended to act as a joint key for other objects, such as ``SparseNDArray``.
     """
 
     _index_column_names: Union[Tuple[()], Tuple[str, ...]]
@@ -54,9 +45,7 @@ class DataFrame(TileDBArray):
         self._index_column_names = ()
         self._is_sparse = None
 
-    @property
-    def soma_type(self) -> Literal["SOMADataFrame"]:
-        return "SOMADataFrame"
+    soma_type: Final = "SOMADataFrame"
 
     def create(
         self,
@@ -97,7 +86,11 @@ class DataFrame(TileDBArray):
             # We need domain=(None,None) for string dims
             lo: Any = None
             hi: Any = None
-            if dtype != str:
+
+            if dtype == "ascii":
+                # Special "dtype" for TileDB-Py
+                pass
+            elif dtype != str:
                 if np.issubdtype(dtype, np.integer):
                     lo = np.iinfo(dtype).min
                     hi = np.iinfo(dtype).max - 1
@@ -106,6 +99,7 @@ class DataFrame(TileDBArray):
                     hi = np.finfo(dtype).max
                 else:
                     raise TypeError(f"Unsupported dtype {dtype}")
+
             dim = tiledb.Dim(
                 name=index_column_name,
                 domain=(lo, hi),
@@ -168,6 +162,23 @@ class DataFrame(TileDBArray):
             self._index_column_names = self._tiledb_dim_names()
 
         return self._index_column_names
+
+    @property
+    def count(self) -> int:
+        """
+        Return the number of rows in the dataframe
+        """
+
+        # A.domain.shape at the tiledb level gives us the 0..2^63 range which is not what we want
+        num_rows = cast(
+            int,
+            clib.SOMAReader(
+                self.uri,
+                platform_config={} if self._ctx is None else self._ctx.config().dict(),
+            ).nnz(),
+        )
+
+        return num_rows
 
     def read(
         self,
@@ -245,10 +256,9 @@ class DataFrame(TileDBArray):
                     dim_name = A.schema.domain.dim(i).name
                     if dim_ids is None:
                         pass  # No constraint; select all in this dimension
-                    elif isinstance(dim_ids, int):
-                        # TO DO: Support non-int index types when we have non-int index support
+                    elif isinstance(dim_ids, int) or isinstance(dim_ids, str):
+                        # TO DO: Support index types other than int and string when we have support
                         # in libtiledbsoma's SOMAReader. See also
-                        # https://github.com/single-cell-data/TileDB-SOMA/issues/418
                         # https://github.com/single-cell-data/TileDB-SOMA/issues/419
                         sr.set_dim_points(dim_name, [dim_ids])
                     elif isinstance(dim_ids, np.ndarray):
@@ -273,13 +283,7 @@ class DataFrame(TileDBArray):
                     elif isinstance(
                         dim_ids, (collections.abc.Sequence, pa.Array, pa.ChunkedArray)
                     ):
-                        if (
-                            dim_ids == []
-                        ):  # TileDB-Py maps [] to all; we want it to map to none.
-                            # TODO: Fix this on https://github.com/single-cell-data/TileDB-SOMA/issues/484
-                            pass
-                        else:
-                            sr.set_dim_points(dim_name, dim_ids)
+                        sr.set_dim_points(dim_name, dim_ids)
                     else:
                         raise TypeError(
                             f"dim_ids type {type(dim_ids)} at slot {i} unsupported"
@@ -405,7 +409,7 @@ class DataFrame(TileDBArray):
 
 def _validate_schema(schema: pa.Schema, index_column_names: Sequence[str]) -> pa.Schema:
     """
-    Handle default column additions (eg, soma_joinid) and error checking on required columns.
+    Handle default column additions (e.g., soma_joinid) and error checking on required columns.
 
     Returns a schema, which may be modified by the addition of required columns.
     """
@@ -452,6 +456,8 @@ def _validate_schema(schema: pa.Schema, index_column_names: Sequence[str]) -> pa
             pa.uint64(),
             pa.float32(),
             pa.float64(),
+            pa.string(),
+            pa.large_string(),
         ]:
             raise TypeError("Unsupported index type - pending fix #418 and #419")
 

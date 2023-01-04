@@ -15,7 +15,10 @@
 #' dimension(s). Each dimension can be one entry in the list.
 #' @param dim_ranges Optional named list with two-column matrix where each row select a range
 #' for the given dimension. Each dimension can be one entry in the list.
-#' @param loglevel Character value with the desired logging level, defaults to \sQuote{warn}
+#' @param batch_size Character value with the desired batch size, defaults to \sQuote{auto}
+#' @param result_order Character value with the desired result order, defaults to \sQuote{auto}
+#' @param loglevel Character value with the desired logging level, defaults to \sQuote{auto}
+#' which lets prior setting prevail, any other value is set as new logging level.
 #' @param arrlst A list containing the pointers to an Arrow data structure
 #' @return An Arrow data structure is returned
 #' @examples
@@ -25,8 +28,8 @@
 #' tb <- arrow::as_arrow_table(arch::from_arch_array(z, arrow::RecordBatch))
 #' }
 #' @export
-soma_reader <- function(uri, colnames = NULL, qc = NULL, dim_points = NULL, dim_ranges = NULL, loglevel = "warn") {
-    .Call(`_tiledbsoma_soma_reader`, uri, colnames, qc, dim_points, dim_ranges, loglevel)
+soma_reader <- function(uri, colnames = NULL, qc = NULL, dim_points = NULL, dim_ranges = NULL, batch_size = "auto", result_order = "auto", loglevel = "auto") {
+    .Call(`_tiledbsoma_soma_reader`, uri, colnames, qc, dim_points, dim_ranges, batch_size, result_order, loglevel)
 }
 
 #' @noRd
@@ -66,7 +69,8 @@ nnz <- function(uri) {
 #' for the given dimension. Each dimension can be one entry in the list.
 #' @param config Optional named chracter vector with \sQuote{key} and \sQuote{value} pairs
 #' used as TileDB config parameters. If unset default configuration is used.
-#' @param loglevel Character value with the desired logging level, defaults to \sQuote{warn}
+#' @param loglevel Character value with the desired logging level, defaults to \sQuote{auto}
+#' which lets prior setting prevail, any other value is set as new logging level.
 #' @param sr An external pointer to a TileDB SOMAReader object
 #'
 #' @return \code{sr_setup} returns an external pointer to a SOMAReader. \code{sr_complete}
@@ -91,7 +95,7 @@ nnz <- function(uri) {
 #' summary(rl)
 #' }
 #' @export
-sr_setup <- function(ctx, uri, colnames = NULL, qc = NULL, dim_points = NULL, dim_ranges = NULL, config = NULL, loglevel = "warn") {
+sr_setup <- function(ctx, uri, colnames = NULL, qc = NULL, dim_points = NULL, dim_ranges = NULL, config = NULL, loglevel = "auto") {
     .Call(`_tiledbsoma_sr_setup`, ctx, uri, colnames, qc, dim_points, dim_ranges, config, loglevel)
 }
 

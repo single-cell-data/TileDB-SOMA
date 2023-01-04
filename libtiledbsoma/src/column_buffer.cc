@@ -81,6 +81,22 @@ std::shared_ptr<ColumnBuffer> ColumnBuffer::create(
     throw TileDBSOMAError("[ColumnBuffer] Column name not found: " + name_str);
 }
 
+void ColumnBuffer::to_bitmap(tcb::span<uint8_t> bytemap) {
+    int i_dst = 0;
+    for (unsigned int i_src = 0; i_src < bytemap.size(); i_src++) {
+        // Overwrite every 8 bytes with a one-byte bitmap
+        if (i_src % 8 == 0) {
+            // Each bit in the bitmap corresponds to one byte in the bytemap
+            // Note: the bitmap must be byte-aligned (8 bits)
+            int bitmap = 0;
+            for (unsigned int i = i_src; i < i_src + 8; i++) {
+                bitmap |= bytemap[i] << (i % 8);
+            }
+            bytemap[i_dst++] = bitmap;
+        }
+    }
+}
+
 //===================================================================
 //= public non-static
 //===================================================================
@@ -95,7 +111,7 @@ ColumnBuffer::ColumnBuffer(
     : name_(name)
     , type_(type)
     , type_size_(tiledb::impl::type_size(type))
-    , num_cells_(num_cells)
+    , num_cells_(0)
     , is_var_(is_var)
     , is_nullable_(is_nullable) {
     LOG_DEBUG(fmt::format(
@@ -109,7 +125,7 @@ ColumnBuffer::ColumnBuffer(
     // resident memory footprint of the buffer.
     data_.reserve(num_bytes);
     if (is_var_) {
-        offsets_.reserve(num_cells + 1);
+        offsets_.reserve(num_cells + 1);  // extra offset for arrow
     }
     if (is_nullable_) {
         validity_.reserve(num_cells);
@@ -124,10 +140,14 @@ void ColumnBuffer::attach(Query& query) {
     query.set_data_buffer(
         name_, (void*)data_.data(), data_.capacity() / type_size_);
     if (is_var_) {
-        query.set_offsets_buffer(name_, offsets_.data(), num_cells_);
+        // Remove one offset for TileDB, which checks that the
+        // offsets and validity buffers are the same size
+        query.set_offsets_buffer(
+            name_, offsets_.data(), offsets_.capacity() - 1);
     }
     if (is_nullable_) {
-        query.set_validity_buffer(name_, validity_.data(), num_cells_);
+        query.set_validity_buffer(
+            name_, validity_.data(), validity_.capacity());
     }
 }
 
@@ -136,10 +156,7 @@ size_t ColumnBuffer::update_size(const Query& query) {
 
     if (is_var()) {
         num_cells_ = num_offsets;
-        // Add extra offset for arrow.
-        if (offsets_.capacity() < num_offsets + 1) {
-            offsets_.reserve(num_offsets + 1);
-        }
+        // Set the extra offset value for arrow.
         offsets_[num_offsets] = num_elements;
     } else {
         num_cells_ = num_elements;
@@ -203,11 +220,9 @@ std::shared_ptr<ColumnBuffer> ColumnBuffer::alloc(
     //   from the type size.
     size_t num_cells = is_var ? num_bytes / sizeof(uint64_t) :
                                 num_bytes / tiledb::impl::type_size(type);
-    size_t num_offsets = is_var ? num_cells + 1 : 0;  // + 1 for arrow
-    size_t num_validity = is_nullable ? num_cells : 0;
 
     return std::make_shared<ColumnBuffer>(
-        name, type, num_cells, num_bytes, num_offsets, num_validity);
+        name, type, num_cells, num_bytes, is_var, is_nullable);
 }
 
 }  // namespace tiledbsoma
