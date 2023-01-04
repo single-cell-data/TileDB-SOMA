@@ -195,7 +195,7 @@ class ExperimentQuery(ContextManager["ExperimentQuery"]):
     def n_vars(self) -> int:
         return len(self.var_joinids())
 
-    def _ensure_joinids_loaded(self):
+    def _ensure_joinids_loaded(self) -> None:
         """Private. Ensure joinids for both axis are in-memory."""
         futures = []
         if not self._joinids["obs"]:
