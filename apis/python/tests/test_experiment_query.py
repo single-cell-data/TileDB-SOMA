@@ -35,17 +35,17 @@ def soma_experiment(tmp_path, n_obs, n_vars, obs, var):
     return make_experiment(tmp_path, n_obs, n_vars, obs, var)
 
 
-@pytest.mark.xfail(
-    # This test fails on Python 3.10+ due to a bug in typeguard. The bug
-    # is tripped any time we use the context manager. Remove
-    # work-around when the typeguard issue is fixed AND released.
-    # Underlying issue:
-    #   https://github.com/agronholm/typeguard/issues/242
-    # Related to _when_ we might see a release:
-    #   https://github.com/agronholm/typeguard/issues/257
-    sys.version_info.major == 3 and sys.version_info.minor >= 10,
-    reason="typeguard bug #242",
-)
+# @pytest.mark.xfail(
+#     # This test fails on Python 3.10+ due to a bug in typeguard. The bug
+#     # is tripped any time we use the context manager. Remove
+#     # work-around when the typeguard issue is fixed AND released.
+#     # Underlying issue:
+#     #   https://github.com/agronholm/typeguard/issues/242
+#     # Related to _when_ we might see a release:
+#     #   https://github.com/agronholm/typeguard/issues/257
+#     sys.version_info.major == 3 and sys.version_info.minor >= 10,
+#     reason="typeguard bug #242",
+# )
 @pytest.mark.parametrize("n_obs,n_vars", [(101, 11)])
 def test_experiment_query_all(soma_experiment):
     assert soma_experiment.exists()
@@ -111,11 +111,11 @@ def test_experiment_query_coords(soma_experiment):
         )
 
 
-@pytest.mark.xfail(
-    # see comment on test_experiment_query_all
-    sys.version_info.major == 3 and sys.version_info.minor >= 10,
-    reason="typeguard bug #242",
-)
+# @pytest.mark.xfail(
+#     # see comment on test_experiment_query_all
+#     sys.version_info.major == 3 and sys.version_info.minor >= 10,
+#     reason="typeguard bug #242",
+# )
 @pytest.mark.parametrize("n_obs,n_vars", [(1001, 99)])
 def test_experiment_query_value_filter(soma_experiment):
     """Test query by value filter"""
@@ -133,11 +133,11 @@ def test_experiment_query_value_filter(soma_experiment):
         assert query.var()["label"].to_pylist() == var_label_values
 
 
-@pytest.mark.xfail(
-    # see comment on test_experiment_query_all
-    sys.version_info.major == 3 and sys.version_info.minor >= 10,
-    reason="typeguard bug #242",
-)
+# @pytest.mark.xfail(
+#     # see comment on test_experiment_query_all
+#     sys.version_info.major == 3 and sys.version_info.minor >= 10,
+#     reason="typeguard bug #242",
+# )
 @pytest.mark.parametrize("n_obs,n_vars", [(1001, 99)])
 def test_experiment_query_combo(soma_experiment):
     """Test query by combinations of coords and value_filter"""
@@ -181,11 +181,11 @@ def test_experiment_query_combo(soma_experiment):
         assert query.var()["label"].to_pylist() == var_label_values
 
 
-@pytest.mark.xfail(
-    # see comment on test_experiment_query_all
-    sys.version_info.major == 3 and sys.version_info.minor >= 10,
-    reason="typeguard bug #242",
-)
+# @pytest.mark.xfail(
+#     # see comment on test_experiment_query_all
+#     sys.version_info.major == 3 and sys.version_info.minor >= 10,
+#     reason="typeguard bug #242",
+# )
 @pytest.mark.parametrize("n_obs,n_vars", [(1001, 99)])
 def test_experiment_query_indexer(soma_experiment):
     """Test result indexer"""
