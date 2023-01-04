@@ -42,7 +42,7 @@ create_and_populate_soma_dataframe <- function(uri) {
 
   tbl <- arrow::arrow_table(
     foo = 1L:10L,
-    soma_joinid = 1L:10L,
+    soma_joinid = 11L:20L,
     bar = 1.1:10.1,
     baz = letters[1:10],
     schema = arrow_schema
