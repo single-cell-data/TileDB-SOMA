@@ -39,17 +39,6 @@ class TileDBPlatformConfig:
 
     max_thread_pool_workers: int = 8
 
-    # Temporary
-    #
-    # Feature flag controlling some test features in soma.io. If False,
-    # uses original tiledb.from_pandas code to create axis dataframes
-    # in soma.io. If True, uses the core SOMA classes to do so.
-    #
-    # Feature flag in place to allow for additional compatibility testing.
-    # TODO: remove when SOMA/Arrow path is known to be working well.
-    #
-    from_anndata_write_pandas_using_arrow: bool = True
-
 
 def from_param(pc: Optional[PlatformConfig]) -> "ParamWrapper":
     """Extracts the TileDB-specific platform config key."""
