@@ -30,7 +30,7 @@ test_that("Arrow Interface from SOMAReader", {
     soma_reader(uri, columns, qc@ptr) |>
         arch::from_arch_array(arrow::RecordBatch) |>
         arrow::as_arrow_table() |>
-        collect() -> D
+        dplyr::collect() -> D
 
     expect_equal(nrow(D), 47)
     expect_true(all(D$n_counts < 1000))
@@ -40,7 +40,7 @@ test_that("Arrow Interface from SOMAReader", {
     soma_reader(uri) |>              # read everything
         arch::from_arch_array(arrow::RecordBatch) |>
         arrow::as_arrow_table() |>
-        collect() -> D
+        dplyr::collect() -> D
     expect_equal(nrow(D), 2638)
     expect_equal(ncol(D), 6)
 
@@ -51,8 +51,34 @@ test_that("Arrow Interface from SOMAReader", {
                 dim_points=list(soma_joinid=bit64::as.integer64(seq(0, 100, by=20)))) |>
         arch::from_arch_array(arrow::RecordBatch) |>
         arrow::as_arrow_table() |>
-        collect() -> D
+        dplyr::collect() -> D
     expect_equal(nrow(D), 16)
     expect_equal(ncol(D), 4)
+
+
+    uri <- tempfile()
+    ndarray <- SOMADenseNDArray$new(uri)
+    ndarray$create(arrow::int32(), shape = c(4, 4))
+    M <- matrix(1:16, 4, 4)
+    ndarray$write(M)
+
+    M1 <- soma_reader(uri = uri, result_order = "auto") |>
+        arch::from_arch_array(arrow::RecordBatch) |>
+        arrow::as_arrow_table() |>
+        dplyr::collect()
+    expect_equal(M, matrix(M1$soma_data, 4, 4, byrow=TRUE))
+
+    M2 <- soma_reader(uri = uri, result_order = "row-major") |>
+        arch::from_arch_array(arrow::RecordBatch) |>
+        arrow::as_arrow_table() |>
+        dplyr::collect()
+    expect_equal(M, matrix(M2$soma_data, 4, 4, byrow=TRUE))
+
+    M3 <- soma_reader(uri = uri, result_order = "column-major") |>
+        arch::from_arch_array(arrow::RecordBatch) |>
+        arrow::as_arrow_table() |>
+        dplyr::collect()
+    expect_equal(M, matrix(M3$soma_data, 4, 4, byrow=FALSE))
+
 
 })

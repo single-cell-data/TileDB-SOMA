@@ -86,7 +86,7 @@ printf "Building ${build} build\n"
 
 # cd to the top level directory of the repo
 if [ "${r_build}" == "OFF" ]; then 
-  cd "$(git rev-parse --show-toplevel)"
+  cd "$(dirname "$0")/.."
 fi
 
 rm -rf build

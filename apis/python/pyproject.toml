@@ -1,17 +1,8 @@
 [build-system]
 requires = [
     "pybind11[global]>=2.10.0",
-    "setuptools>=65.4.0",
-    "setuptools_scm[toml]>=7.0.5",
+    "setuptools>=65.5.1",
     "wheel>=0.37.1",
     "cmake>=3.21",
 ]
 build-backend = "setuptools.build_meta"
-
-[tool.setuptools_scm]
-version_scheme = "guess-next-dev"
-local_scheme = "dirty-tag"
-# Relative path to cwd, used for finding the SCM root
-root = "../.."
-# Path relative to root to a file that gets replaced with a file containing the current version
-write_to = "apis/python/src/tiledbsoma/_version.py"

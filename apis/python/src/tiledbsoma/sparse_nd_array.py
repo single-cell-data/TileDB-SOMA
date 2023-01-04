@@ -1,11 +1,12 @@
 import collections.abc
-from typing import Any, Iterator, List, Literal, Optional, Union, cast
+from typing import Any, Iterator, List, Optional, Union, cast
 
 import numpy as np
 import pandas as pd
 import pyarrow as pa
 import scipy.sparse as sp
 import tiledb
+from typing_extensions import Final, Literal
 
 # This package's pybind11 code
 import tiledbsoma.libtiledbsoma as clib
@@ -17,7 +18,7 @@ from .tiledb_array import TileDBArray
 from .types import NTuple, PlatformConfig, SparseNdCoordinates
 
 
-class SparseNdArray(TileDBArray):
+class SparseNDArray(TileDBArray):
     """
     Represents ``X`` and others.
     """
@@ -41,18 +42,16 @@ class SparseNdArray(TileDBArray):
             ctx=ctx,
         )
 
-    @property
-    def soma_type(self) -> Literal["SOMASparseNdArray"]:
-        return "SOMASparseNdArray"
+    soma_type: Final = "SOMASparseNDArray"
 
     def create(
         self,
         type: pa.DataType,
         shape: Union[NTuple, List[int]],
         platform_config: Optional[PlatformConfig] = None,
-    ) -> "SparseNdArray":
+    ) -> "SparseNDArray":
         """
-        Create a ``SparseNdArray`` named with the URI.
+        Create a ``SparseNDArray`` named with the URI.
 
         :param type: an Arrow type defining the type of each element in the array. If the type is unsupported, an error will be raised.
 
@@ -62,12 +61,12 @@ class SparseNdArray(TileDBArray):
         # check on shape
         if len(shape) == 0 or any(e <= 0 for e in shape):
             raise ValueError(
-                "DenseNdArray shape must be non-zero length tuple of ints > 0"
+                "DenseNDArray shape must be non-zero length tuple of ints > 0"
             )
 
         if not pa.types.is_primitive(type):
             raise TypeError(
-                "Unsupported type - DenseNdArray only supports primtive Arrow types"
+                "Unsupported type - DenseNDArray only supports primtive Arrow types"
             )
 
         level = self._tiledb_platform_config.string_dim_zstd_level
@@ -99,7 +98,7 @@ class SparseNdArray(TileDBArray):
 
         cell_order, tile_order = create_options.cell_tile_orders()
 
-        # TODO: code-dedupe w/ regard to DenseNdArray. The two creates are
+        # TODO: code-dedupe w/ regard to DenseNDArray. The two creates are
         # almost identical & could share a common parent-class _create() method.
         sch = tiledb.ArraySchema(
             domain=dom,
@@ -108,8 +107,8 @@ class SparseNdArray(TileDBArray):
             allows_duplicates=False,
             offsets_filters=create_options.offsets_filters(),
             capacity=create_options.get("capacity", 100000),
-            tile_order=cell_order,
-            cell_order=tile_order,
+            tile_order=tile_order,
+            cell_order=cell_order,
             ctx=self._ctx,
         )
 
@@ -128,6 +127,9 @@ class SparseNdArray(TileDBArray):
             return cast(NTuple, A.schema.domain.shape)
 
     def reshape(self, shape: NTuple) -> None:
+        """
+        Unsupported operation for this object type.
+        """
         raise NotImplementedError("reshape operation not implemented.")
 
     @property
@@ -137,12 +139,7 @@ class SparseNdArray(TileDBArray):
         """
         return len(self.shape)
 
-    @property
-    def is_sparse(self) -> Literal[True]:
-        """
-        Returns ``True``.
-        """
-        return True
+    is_sparse: Final = True
 
     @property
     def nnz(self) -> int:
@@ -164,7 +161,7 @@ class SparseNdArray(TileDBArray):
         format: Literal["coo", "csr", "csc"] = "coo",
     ) -> Iterator[Union[pa.SparseCOOTensor, pa.SparseCSCMatrix, pa.SparseCSRMatrix]]:
         """
-        Read a use-defined slice of the SparseNdArray and return as an Arrow sparse tensor.
+        Read a use-defined slice of the SparseNDArray and return as an Arrow sparse tensor.
 
         Parameters
         ----------
@@ -188,7 +185,7 @@ class SparseNdArray(TileDBArray):
         """
 
         if format != "coo" and self.ndim != 2:
-            raise ValueError(f"Format {format} only supported for 2D SparseNdArray")
+            raise ValueError(f"Format {format} only supported for 2D SparseNDArray")
         if format not in ("coo", "csr", "csc"):
             raise NotImplementedError("format not implemented")
 
@@ -230,7 +227,10 @@ class SparseNdArray(TileDBArray):
                 data = arrow_tbl.column("soma_data").to_numpy()
                 row = arrow_tbl.column("soma_dim_0").to_numpy()
                 col = arrow_tbl.column("soma_dim_1").to_numpy()
-                scipy_coo = sp.coo_array((data, (row, col)), shape=shape)
+                # sp.coo_array is the more modern name but we support Python 3.7
+                # with scipy 1.8 wherein the name is sp.coo_matrix (which also works
+                # in newer versions).
+                scipy_coo = sp.coo_matrix((data, (row, col)), shape=shape)
                 if format == "csr":
                     yield pa.SparseCSRMatrix.from_scipy(scipy_coo.tocsr())
                 if format == "csc":
@@ -277,7 +277,7 @@ class SparseNdArray(TileDBArray):
 
                 for i, coord in enumerate(coords):
                     #                # Example: coords = [None, 3, slice(4,5)]
-                    #                # coor takes on values None, 3, and slice(4,5) in this loop body.
+                    #                # coord takes on values None, 3, and slice(4,5) in this loop body.
                     dim_name = A.schema.domain.dim(i).name
                     if coord is None:
                         pass  # No constraint; select all in this dimension
@@ -290,7 +290,8 @@ class SparseNdArray(TileDBArray):
                             )
                         sr.set_dim_points(dim_name, coord)
                     elif isinstance(coord, slice):
-                        lo_hi = util.slice_to_range(coord)
+                        ned = A.nonempty_domain()  # None iff the array has no data
+                        lo_hi = util.slice_to_range(coord, ned[i]) if ned else None
                         if lo_hi is not None:
                             lo, hi = lo_hi
                             if lo < 0 or hi < 0:
@@ -371,7 +372,7 @@ class SparseNdArray(TileDBArray):
         ],
     ) -> None:
         """
-        Write an Arrow sparse tensor to the SparseNdArray. The coordinates in the Arrow
+        Write an Arrow sparse tensor to the SparseNDArray. The coordinates in the Arrow
         SparseTensor will be interpreted as the coordinates to write to.
 
         Currently supports the _experimental_ Arrow SparseCOOTensor, SparseCSRMatrix and
@@ -387,7 +388,7 @@ class SparseNdArray(TileDBArray):
         if isinstance(tensor, (pa.SparseCSCMatrix, pa.SparseCSRMatrix)):
             if self.ndim != 2:
                 raise ValueError(
-                    f"Unable to write 2D Arrow sparse matrix to {self.ndim}D SparseNdArray"
+                    f"Unable to write 2D Arrow sparse matrix to {self.ndim}D SparseNDArray"
                 )
             # TODO: the `to_scipy` function is not zero copy. Need to explore zero-copy options.
             sp = tensor.to_scipy().tocoo()

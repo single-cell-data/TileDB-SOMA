@@ -1,20 +1,25 @@
-from typing import Any, List, Literal, Optional, Tuple, Union, cast
+from typing import Any, List, Optional, Union, cast
 
 import numpy as np
 import pyarrow as pa
 import tiledb
+from typing_extensions import Final
 
+# This package's pybind11 code
+import tiledbsoma.libtiledbsoma as clib
+import tiledbsoma.util as util
 import tiledbsoma.util_arrow as util_arrow
-from tiledbsoma.util_tiledb import tiledb_result_order_from_soma_result_order
+from tiledbsoma.util import dense_indices_to_shape
 
 from . import tiledb_platform_config as tdbpc
 from .collection import CollectionBase
+from .exception import SOMAError
 from .tiledb_array import TileDBArray
 from .tiledb_platform_config import TileDBPlatformConfig
 from .types import DenseNdCoordinates, NTuple, PlatformConfig, ResultOrder
 
 
-class DenseNdArray(TileDBArray):
+class DenseNDArray(TileDBArray):
     """
     Represents ``X`` and others.
     """
@@ -37,18 +42,16 @@ class DenseNdArray(TileDBArray):
             ctx=ctx,
         )
 
-    @property
-    def soma_type(self) -> Literal["SOMADenseNdArray"]:
-        return "SOMADenseNdArray"
+    soma_type: Final = "SOMADenseNDArray"
 
     def create(
         self,
         type: pa.DataType,
         shape: Union[NTuple, List[int]],
         platform_config: Optional[PlatformConfig] = None,
-    ) -> "DenseNdArray":
+    ) -> "DenseNDArray":
         """
-        Create a ``DenseNdArray`` named with the URI.
+        Create a ``DenseNDArray`` named with the URI.
 
         :param type: an Arrow type defining the type of each element in the array. If the type is unsupported, an error will be raised.
 
@@ -58,12 +61,12 @@ class DenseNdArray(TileDBArray):
         # check on shape
         if len(shape) == 0 or any(e <= 0 for e in shape):
             raise ValueError(
-                "DenseNdArray shape must be non-zero length tuple of ints > 0"
+                "DenseNDArray shape must be non-zero length tuple of ints > 0"
             )
 
         if not pa.types.is_primitive(type):
             raise TypeError(
-                "Unsupported type - DenseNdArray only supports primtive Arrow types"
+                "Unsupported type - DenseNDArray only supports primtive Arrow types"
             )
 
         level = self._tiledb_platform_config.string_dim_zstd_level
@@ -122,6 +125,9 @@ class DenseNdArray(TileDBArray):
             return cast(NTuple, A.schema.domain.shape)
 
     def reshape(self, shape: NTuple) -> None:
+        """
+        Unsupported operation for this object type [lifecycle: experimental].
+        """
         raise NotImplementedError("reshape operation not implemented.")
 
     @property
@@ -132,12 +138,7 @@ class DenseNdArray(TileDBArray):
         with self._tiledb_open() as A:
             return cast(int, A.schema.domain.ndim)
 
-    @property
-    def is_sparse(self) -> Literal[False]:
-        """
-        Returns ``False``.
-        """
-        return False
+    is_sparse: Final = False
 
     def read_tensor(
         self,
@@ -147,17 +148,82 @@ class DenseNdArray(TileDBArray):
     ) -> pa.Tensor:
         """
         Read a user-defined dense slice of the array and return as an Arrow ``Tensor``.
+        Coordinates must specify a contiguous subarray, and the number of coordinates
+        must be less than or equal to the number of dimensions. For example, if the array
+        is 10 by 20, then some acceptable values of ``coords`` include ``(3, 4)``,
+        ``(slice(5, 10),)``, and ``(slice(5, 10), slice(6, 12))``. Slice indices are
+        doubly inclusive.
         """
-        tiledb_result_order = tiledb_result_order_from_soma_result_order(
-            result_order, accept=["column-major", "row-major"]
-        )
         with self._tiledb_open("r") as A:
-            target_shape = _dense_index_to_shape(coords, A.shape, result_order)
-            query = A.query(return_arrow=True, order=tiledb_result_order)
-            arrow_tbl = query.df[coords]
-            return pa.Tensor.from_numpy(
-                arrow_tbl.column("soma_data").to_numpy().reshape(target_shape)
+            target_shape = dense_indices_to_shape(coords, A.shape, result_order)
+            schema = A.schema
+            ned = A.nonempty_domain()
+
+        sr = clib.SOMAReader(
+            self._uri,
+            name=self.__class__.__name__,
+            result_order=result_order,
+            platform_config={} if self._ctx is None else self._ctx.config().dict(),
+        )
+
+        if coords is not None:
+            if not isinstance(coords, (list, tuple)):
+                raise TypeError(
+                    f"coords type {type(coords)} unsupported; expected list or tuple"
+                )
+            if len(coords) < 1 or len(coords) > schema.domain.ndim:
+                raise ValueError(
+                    f"coords {coords} must have length between 1 and ndim ({schema.domain.ndim}); got {len(coords)}"
+                )
+
+            for i, coord in enumerate(coords):
+                dim_name = schema.domain.dim(i).name
+                if coord is None:
+                    pass  # No constraint; select all in this dimension
+                elif isinstance(coord, int):
+                    sr.set_dim_points(dim_name, [coord])
+                elif isinstance(coord, slice):
+                    lo_hi = util.slice_to_range(coord, ned[i]) if ned else None
+                    if lo_hi is not None:
+                        lo, hi = lo_hi
+                        if lo < 0 or hi < 0:
+                            raise ValueError(
+                                f"slice start and stop may not be negative; got ({lo}, {hi})"
+                            )
+                        if lo > hi:
+                            raise ValueError(
+                                f"slice start must be <= slice stop; got ({lo}, {hi})"
+                            )
+                        sr.set_dim_ranges(dim_name, [lo_hi])
+                    # Else, no constraint in this slot. This is `slice(None)` which is like
+                    # Python indexing syntax `[:]`.
+                else:
+                    raise TypeError(f"coord type {type(coord)} at slot {i} unsupported")
+
+        sr.submit()
+
+        arrow_tables = []
+        while True:
+            arrow_table_piece = sr.read_next()
+            if not arrow_table_piece:
+                break
+            arrow_tables.append(arrow_table_piece)
+
+        # For dense arrays there is no zero-output case: attempting to make a test case
+        # to do that, say by indexing a 10x20 array by positions 888 and 999, results
+        # in read-time errors of the form
+        #
+        # [TileDB::Subarray] Error: Cannot add range to dimension 'soma_dim_0'; Range [888, 888] is
+        # out of domain bounds [0, 9]
+        if not arrow_tables:
+            raise SOMAError(
+                "internal error: at least one table-piece should have been returned"
             )
+
+        arrow_table = pa.concat_tables(arrow_tables)
+        return pa.Tensor.from_numpy(
+            arrow_table.column("soma_data").to_numpy().reshape(target_shape)
+        )
 
     def read_numpy(
         self,
@@ -188,7 +254,7 @@ class DenseNdArray(TileDBArray):
 
         values - pyarrow.Tensor
             Define the values to be written to the subarray.  Must have same shape
-            as defind by ``coords``, and the type must match the DenseNdArray.
+            as defind by ``coords``, and the type must match the DenseNDArray.
         """
         with self._tiledb_open("w") as A:
             A[coords] = values.to_numpy()
@@ -198,34 +264,3 @@ class DenseNdArray(TileDBArray):
         Write a numpy ``ndarray`` to the user specified coordinates
         """
         self.write_tensor(coords, pa.Tensor.from_numpy(values))
-
-
-# module-private utility
-def _dense_index_to_shape(
-    coords: Tuple[Union[int, slice], ...],
-    array_shape: Tuple[int, ...],
-    result_order: ResultOrder,
-) -> Tuple[int, ...]:
-    """
-    Given a subarray index specified as a tuple of per-dimension slices or scalars
-    (eg, ``([:], 1, [1:2])``), and the shape of the array, return the shape of
-    the subarray.
-
-    See read_tensor for usage.
-    """
-    shape: List[int] = []
-    for n, idx in enumerate(coords):
-        if type(idx) is int:
-            shape.append(1)
-        elif type(idx) is slice:
-            start, stop, step = idx.indices(array_shape[n])
-            if step != 1:
-                raise ValueError("stepped slice ranges are not supported")
-            shape.append(stop - start)
-        else:
-            raise ValueError("coordinates must be tuple of int or slice")
-
-    if result_order == "row-major":
-        return tuple(shape)
-
-    return tuple(reversed(shape))

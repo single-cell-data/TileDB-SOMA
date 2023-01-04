@@ -1,0 +1,78 @@
+@startuml
+
+skinparam monochrome true
+scale 800 height
+autonumber
+' autoactivate on
+
+participant "user app (py)" as py
+participant "tiledbsoma (py)" as soma
+participant "libtiledbsoma (c++)" as clib
+participant "SOMAReader (c++)" as sr
+participant "ManagedQuery (c++)" as mq
+
+
+' =====================================
+note across: Open SOMADataFrame|SOMASparseNdArray in read mode
+
+note over py: **SPEC CHANGE**\n- platform_config passed once to create object\n- open in read mode
+py -> soma : a = SOMA*.open(uri, platform_config, mode="r")
+note over soma: Extract tiledb_config from platform_config
+soma -> clib : SOMAReader(uri, tiledb_config)
+clib -> sr ** : SOMAReader(uri, tiledb_config)
+sr++
+note over sr: Open array using timestamp in tiledb_config
+
+sr -> mq ** : ManagedQuery(array)
+mq ++
+soma -> py : a
+
+' =====================================
+note across: Mulitple reads to the same open array
+loop Multiple reads
+    py -> soma : a.read(ids, column_names, value_filter,\n batch_size, result_order)
+    soma -> clib : reset(column_names, value_filter\n batch_size, result_order)
+    clib -> sr : reset(column_names,\n batch_size, result_order)
+    sr -> mq : reset()
+    sr -> mq : select_columns()
+    sr -> mq : set_layout()
+
+    clib -> sr : set_condition()
+    sr -> mq : set_condition()
+
+    soma -> clib : set_dim_points()
+    clib -> sr : set_dim_points()
+    sr -> mq : set_dim_points()
+
+    soma -> clib : set_dim_ranges()
+    clib -> sr : set_dim_ranges()
+    sr -> mq : set_dim_ranges()
+
+    soma -> clib : submit()
+    clib -> sr : submit()
+    sr -> mq : submit()
+    soma -> py : iter
+
+
+    loop while iter returns data
+        py -> soma : iter.next()
+        soma -> clib : read_next()
+        clib -> sr : read_next()
+        sr -> mq : results()
+        mq -> sr : data [ArrayBuffers]
+        sr -> clib : data [ArrayBuffers]
+        clib -> soma : data [Arrow Table]
+        soma -> py : data [Arrow Table]
+    end
+end
+
+' =====================================
+note across: Delete SOMASparseNdArray instance
+
+py -> soma : a.close()
+soma -> clib : close()
+clib -> sr -- : ~SOMAReader()
+sr -> mq -- : ~ManagedQuery()
+note over mq : Array closed
+
+@enduml

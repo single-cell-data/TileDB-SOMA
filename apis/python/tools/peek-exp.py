@@ -37,11 +37,7 @@ else:
     print(f"{sys.argv[0]}: need just one Experiment path.", file=sys.stderr)
     sys.exit(1)
 
-cfg = tiledb.Config()
-cfg["py.init_buffer_bytes"] = 4 * 1024**3
-ctx = tiledb.Ctx(cfg)
-
-exp = tiledbsoma.Experiment(input_path, ctx=ctx)
+exp = tiledbsoma.Experiment(input_path)
 if not exp.exists():
     print("Does not exist yet:", input_path)
 

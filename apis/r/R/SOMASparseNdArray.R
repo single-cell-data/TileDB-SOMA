@@ -1,8 +1,8 @@
-#' SOMASparseNdArray
+#' SOMASparseNDArray
 #'
 #' @description
-#' `SOMASparseNdArray` is a sparse, N-dimensional array with offset
-#' (zero-based) integer indexing on each dimension. The `SOMASparseNdArray` has
+#' `SOMASparseNDArray` is a sparse, N-dimensional array with offset
+#' (zero-based) integer indexing on each dimension. The `SOMASparseNDArray` has
 #' a user-defined schema, which includes:
 #'
 #' - type - a `primitive` type, expressed as an Arrow type (e.g., `int64`, `float32`, etc)
@@ -20,13 +20,13 @@
 #'
 #' @importFrom bit64 as.integer64
 
-SOMASparseNdArray <- R6::R6Class(
-  classname = "SOMASparseNdArray",
-  inherit = TileDBArray,
+SOMASparseNDArray <- R6::R6Class(
+  classname = "SOMASparseNDArray",
+  inherit = SOMAArrayBase,
 
   public = list(
 
-    #' @description Create a SOMASparseNdArray named with the URI.
+    #' @description Create a SOMASparseNDArray named with the URI.
     #' @param type an [Arrow type][arrow::data-type] defining the type of each element in the array.
     #' @param shape a vector of integers defining the shape of the array.
     create = function(type, shape) {
@@ -77,13 +77,14 @@ SOMASparseNdArray <- R6::R6Class(
 
       # create array
       tiledb::tiledb_array_create(uri = self$uri, schema = tdb_schema)
+      private$write_object_type_metadata()
     },
 
     #' @description Write matrix-like data to the array.
     #'
     #' @param data Any `matrix`-like object coercible to a
     #' [`TsparseMatrix`][`Matrix::TsparseMatrix-class`]. Character dimension
-    #' names are ignored because `SOMANdArray`'s use integer indexing.
+    #' names are ignored because `SOMANDArray`'s use integer indexing.
     #'
     write = function(data) {
       stopifnot(

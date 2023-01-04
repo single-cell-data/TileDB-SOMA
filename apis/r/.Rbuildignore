@@ -12,3 +12,9 @@
 ^\.github$
 ^prune_libtiledbsoma_sources.sh$
 ^dev$
+^local
+^copy_source.sh$
+
+# vscode
+^\.vscode$
+^\.devcontainer$

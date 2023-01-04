@@ -14,7 +14,7 @@ sr_setup(
   dim_points = NULL,
   dim_ranges = NULL,
   config = NULL,
-  loglevel = "warn"
+  loglevel = "auto"
 )
 
 sr_complete(sr)
@@ -40,7 +40,8 @@ for the given dimension. Each dimension can be one entry in the list.}
 \item{config}{Optional named chracter vector with \sQuote{key} and \sQuote{value} pairs
 used as TileDB config parameters. If unset default configuration is used.}
 
-\item{loglevel}{Character value with the desired logging level, defaults to \sQuote{warn}}
+\item{loglevel}{Character value with the desired logging level, defaults to \sQuote{auto}
+which lets prior setting prevail, any other value is set as new logging level.}
 
 \item{sr}{An external pointer to a TileDB SOMAReader object}
 }

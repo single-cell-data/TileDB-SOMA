@@ -26,3 +26,24 @@ create_dense_matrix_with_int_dims <- function(nrows = 10, ncols = 5, seed = 1) {
     ncol = ncols
   )
 }
+
+create_and_populate_soma_dataframe <- function(uri) {
+
+  arrow_schema <- arrow::schema(
+    arrow::field("foo", arrow::int32(), nullable = FALSE),
+    arrow::field("bar", arrow::float64(), nullable = FALSE),
+    arrow::field("baz", arrow::large_utf8(), nullable = FALSE)
+  )
+
+  tbl <- arrow::arrow_table(
+    foo = 1L:10L,
+    bar = 1.1:10.1,
+    baz = letters[1:10],
+    schema = arrow_schema
+  )
+
+  sdf <- SOMADataFrame$new(uri)
+  sdf$create(arrow_schema, index_column_names = "foo")
+  sdf$write(tbl)
+  sdf
+}

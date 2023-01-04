@@ -1,0 +1,96 @@
+name: TileDB-SOMA python sdist & wheels
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+  release:
+    types: [published]
+
+jobs:
+  sdist:
+    name: Build source distribution
+    runs-on: ubuntu-20.04
+    steps:
+    - name: Checkout TileDB-SOMA
+      uses: actions/checkout@v3
+      with:
+        fetch-depth: 0  # ensure we get all tags to inform package version determination
+    - name: Build sdist
+      run: python setup.py sdist
+      working-directory: ./apis/python
+    - name: Upload sdist artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: sdist
+        path: apis/python/dist/
+
+  wheels:
+    name: Build wheels on ${{ matrix.os }}
+    needs: sdist
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+        - os: ubuntu-20.04
+          cibw_build: '*-manylinux_x86_64'
+          platform: manylinux2014
+        - os: macos-11
+          cibw_build: '*-macosx_x86_64'
+          platform: macosx
+    steps:
+    - name: Download sdist artifact
+      uses: actions/download-artifact@v3
+      with:
+        name: sdist
+    - name: rename sdist
+      run: cp tiledbsoma-*.tar.gz tiledbsoma.tar.gz && ls -lh
+    - name: Build wheels
+      uses: pypa/cibuildwheel@v2.11.3
+      with:
+        package-dir: tiledbsoma.tar.gz
+      env:
+        CIBW_BUILD: ${{ matrix.cibw_build }}
+        CIBW_BUILD_VERBOSITY: 1
+        CIBW_BEFORE_BUILD: bash -x -c 'rm -rf tiledbsoma*/dist_links/dist/lib'
+        # ^ Delete lib folder that apis/python/setup.py:find_or_build() looks for in deciding to
+        #   run CMake build or not. Otherwise it'll keep reusing the library file built in the
+        #   first iteration of cibuildwheel's outer loop, resulting in wheels with the library
+        #   built for the wrong python version.
+    - name: Upload wheels-${{ matrix.platform }}
+      uses: actions/upload-artifact@v3
+      with:
+        name: wheels-${{ matrix.platform }}
+        path: ./wheelhouse/*.whl
+
+  smoke-test:
+    name: Smoke test wheels
+    needs: wheels
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+        - os: ubuntu-20.04
+          platform: manylinux2014
+          arch: x86_64
+        - os: macos-11
+          platform: macosx
+          arch: x86_64
+    steps:
+    - name: Set up Python 3.8
+      uses: actions/setup-python@v4
+      with:
+        python-version: 3.8
+    - name: Download artifacts
+      uses: actions/download-artifact@v3
+    - name: Install wheel
+      run: |
+        set -x
+        ls -lR
+        whl=$(find . -name 'tiledbsoma-*-cp38-cp38-*${{ matrix.platform }}*_${{ matrix.arch }}.whl')
+        unzip -l $whl
+        pip install wheel
+        pip install $whl
+    - name: Smoke test ${{ matrix.os }}
+      run: python -c 'import tiledbsoma; print(tiledbsoma.libtiledbsoma.__file__)'
+      # TODO: more-thorough test
