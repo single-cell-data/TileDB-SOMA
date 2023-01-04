@@ -13,9 +13,9 @@ from tiledbsoma.experiment_query import AxisQuery, ExperimentQuery
 WIP tracker - delete when complete.
 
 Missing tests:
-* X method
-* read method
-* async
+* async API
+* query by coords when there is >1 dimension
+* read prefetch
 
 """
 
@@ -48,6 +48,7 @@ def soma_experiment(tmp_path, n_obs, n_vars, obs, var):
 )
 @pytest.mark.parametrize("n_obs,n_vars", [(101, 11)])
 def test_experiment_query_all(soma_experiment):
+    """Test a query with default obs_query / var_query - i.e., query all."""
     assert soma_experiment.exists()
 
     with ExperimentQuery(soma_experiment, "RNA") as query:
@@ -68,7 +69,23 @@ def test_experiment_query_all(soma_experiment):
             "soma_joinid": list(range(11)),
             "label": [str(i) for i in range(11)],
         }
+        assert pa.concat_tables(query.X("raw")) == pa.concat_tables(
+            soma_experiment.ms["RNA"].X["raw"].read_table((slice(None), slice(None)))
+        )
 
+        # read as table
+        arrow_reads = query.read("raw")
+        assert "X_layers" not in arrow_reads
+        assert isinstance(arrow_reads["obs"], pa.Table)
+        assert isinstance(arrow_reads["var"], pa.Table)
+        assert isinstance(arrow_reads["X"], pa.Table)
+        assert arrow_reads["obs"] == query.obs()
+        assert arrow_reads["var"] == query.var()
+        assert arrow_reads["X"] == pa.concat_tables(
+            soma_experiment.ms["RNA"].X["raw"].read_table((slice(None), slice(None)))
+        )
+
+        # read as anndata
         ad = query.read_as_anndata("raw")
         assert ad.n_obs == query.n_obs and ad.n_vars == query.n_vars
         assert set(ad.obs.keys().to_list()) == set(["soma_joinid", "label"])
