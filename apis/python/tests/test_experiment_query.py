@@ -1,4 +1,5 @@
 import sys
+from typing import Tuple
 
 import numpy as np
 import pyarrow as pa
@@ -6,68 +7,27 @@ import pytest
 from scipy import sparse
 
 import tiledbsoma as soma
-from tiledbsoma.experiment_query import experiment_query, AxisQuery
+from tiledbsoma.experiment_query import AxisQuery, experiment_query
 
 
-def make_dataframe(path, sz) -> soma.DataFrame:
-    df = soma.DataFrame(uri=path)
-    df.create(
-        schema=pa.schema(
-            [
-                ("soma_joinid", pa.int64()),
-                ("label", pa.large_string()),
-            ]
-        ),
-        index_column_names=["soma_joinid"],
-    )
-    df.write(
-        pa.Table.from_pydict(
-            {
-                "soma_joinid": [i for i in range(sz)],
-                "label": [str(i) for i in range(sz)],
-            }
-        )
-    )
-    return df
+"""
+WIP tracker - delete when complete.
+
+Missing tests:
+* X method
+* read method
+* using both coord & value_filter in an AxisQuery
+* async
+
+"""
 
 
-def make_sparse_array(path, shape) -> soma.SparseNDArray:
-    a = soma.SparseNDArray(path).create(pa.float32(), shape)
-    tensor = pa.SparseCOOTensor.from_scipy(
-        sparse.random(
-            shape[0],
-            shape[1],
-            density=0.1,
-            format="coo",
-            dtype=np.float32,
-            random_state=np.random.default_rng(),
-        )
-    )
-    a.write_sparse_tensor(tensor)
-    return a
-
-
-def make_experiment(path, n_obs, n_vars, obs, var):
-    experiment = soma.Experiment((path / "exp").as_posix()).create()
-    experiment["ms"] = soma.Collection((path / "ms").as_posix()).create()
-    experiment.ms["RNA"] = soma.Measurement(uri=f"{experiment.ms.uri}/RNA").create()
-    experiment["obs"] = obs
-
-    measurement = experiment.ms["RNA"]
-    measurement["var"] = var
-    measurement["X"] = soma.Collection(uri=f"{measurement.uri}/X").create()
-
-    measurement.X["raw"] = make_sparse_array((path / "raw").as_posix(), (n_obs, n_vars))
-
-    return experiment
-
-
-@pytest.fixture
+@pytest.fixture(scope="function")
 def obs(tmp_path, n_obs) -> soma.DataFrame:
     return make_dataframe((tmp_path / "obs").as_posix(), n_obs)
 
 
-@pytest.fixture
+@pytest.fixture(scope="function")
 def var(tmp_path, n_vars) -> soma.DataFrame:
     return make_dataframe((tmp_path / "var").as_posix(), n_vars)
 
@@ -77,13 +37,13 @@ def soma_experiment(tmp_path, n_obs, n_vars, obs, var):
     return make_experiment(tmp_path, n_obs, n_vars, obs, var)
 
 
-# This test fails on Python 3.10+ due to a bug in typeguard. Remove this work-around
-# when the typeguard issue is fixed AND released. Underlying issue:
-#   https://github.com/agronholm/typeguard/issues/242
-# Related to _when_ we might see a release:
-#   https://github.com/agronholm/typeguard/issues/257
-#
 @pytest.mark.xfail(
+    # This test fails on Python 3.10+ due to a bug in typeguard. Remove
+    # work-around when the typeguard issue is fixed AND released.
+    # Underlying issue:
+    #   https://github.com/agronholm/typeguard/issues/242
+    # Related to _when_ we might see a release:
+    #   https://github.com/agronholm/typeguard/issues/257
     sys.version_info.major == 3 and sys.version_info.minor >= 10,
     reason="typeguard bug #242",
 )
@@ -92,26 +52,125 @@ def test_experiment_query_all(soma_experiment):
     assert soma_experiment.exists()
 
     with experiment_query(soma_experiment, "RNA") as query:
-        ad = query.read_as_anndata("raw")
-        assert ad.n_obs == 101 and ad.n_vars == 11
-
-    with experiment_query(soma_experiment, "RNA") as query:
         assert query.n_obs == 101
         assert query.n_vars == 11
+
         assert np.array_equal(query.obs_joinids().to_numpy(), np.arange(101))
         assert np.array_equal(query.var_joinids().to_numpy(), np.arange(11))
+
         assert len(query.obs()) == 101
         assert len(query.var()) == 11
 
+        assert query.obs().to_pydict() == {
+            "soma_joinid": list(range(101)),
+            "label": [str(i) for i in range(101)],
+        }
+        assert query.var().to_pydict() == {
+            "soma_joinid": list(range(11)),
+            "label": [str(i) for i in range(11)],
+        }
+
         ad = query.read_as_anndata("raw")
         assert ad.n_obs == query.n_obs and ad.n_vars == query.n_vars
+        assert set(ad.obs.keys().to_list()) == set(["soma_joinid", "label"])
+        assert set(ad.var.keys().to_list()) == set(["soma_joinid", "label"])
 
-    with experiment_query(soma_experiment, "RNA") as query:
-        ad = query.read_as_anndata("raw")
-        assert ad.n_obs == 101 and ad.n_vars == 11
+        raw_X = pa.concat_tables(
+            soma_experiment.ms["RNA"].X["raw"].read_table((slice(None), slice(None)))
+        )
+        ad_X_coo = ad.X.tocoo()
+        assert np.array_equal(raw_X["soma_dim_0"], ad_X_coo.row)
+        assert np.array_equal(raw_X["soma_dim_1"], ad_X_coo.col)
+        assert np.array_equal(raw_X["soma_data"], ad_X_coo.data)
 
 
 @pytest.mark.xfail(
+    # see comment on test_experiment_query_all
+    sys.version_info.major == 3 and sys.version_info.minor >= 10,
+    reason="typeguard bug #242",
+)
+@pytest.mark.parametrize("n_obs,n_vars", [(1001, 99)])
+def test_experiment_query_coords(soma_experiment):
+    """Test query by dimension coordinates"""
+    obs_slice = slice(3, 72)
+    var_slice = slice(7, 21)
+    with experiment_query(
+        soma_experiment,
+        "RNA",
+        obs_query=AxisQuery(coords=(obs_slice,)),
+        var_query=AxisQuery(coords=(var_slice,)),
+    ) as query:
+        assert query.n_obs == obs_slice.stop - obs_slice.start + 1
+        assert query.n_vars == var_slice.stop - var_slice.start + 1
+        assert np.array_equal(
+            query.obs_joinids().to_numpy(),
+            np.arange(obs_slice.start, obs_slice.stop + 1),
+        )
+        assert np.array_equal(
+            query.var_joinids().to_numpy(),
+            np.arange(var_slice.start, var_slice.stop + 1),
+        )
+
+
+@pytest.mark.xfail(
+    # see comment on test_experiment_query_all
+    sys.version_info.major == 3 and sys.version_info.minor >= 10,
+    reason="typeguard bug #242",
+)
+@pytest.mark.parametrize("n_obs,n_vars", [(1001, 99)])
+def test_experiment_query_value_filter(soma_experiment):
+    """Test query by value filter"""
+    obs_label_values = ["3", "7", "38", "99"]
+    var_label_values = ["18", "34", "67"]
+    with experiment_query(
+        soma_experiment,
+        "RNA",
+        obs_query=AxisQuery(value_filter=f"label in {obs_label_values}"),
+        var_query=AxisQuery(value_filter=f"label in {var_label_values}"),
+    ) as query:
+        assert query.n_obs == len(obs_label_values)
+        assert query.n_vars == len(var_label_values)
+        assert query.obs()["label"].to_pylist() == obs_label_values
+        assert query.var()["label"].to_pylist() == var_label_values
+
+
+@pytest.mark.xfail(
+    # see comment on test_experiment_query_all
+    sys.version_info.major == 3 and sys.version_info.minor >= 10,
+    reason="typeguard bug #242",
+)
+@pytest.mark.parametrize("n_obs,n_vars", [(1001, 99)])
+def test_experiment_query_combo(soma_experiment):
+    """Test query by combinations of coords and value_filter"""
+    obs_label_values = ["3", "7", "38", "99"]
+    var_label_values = ["18", "34", "67"]
+    obs_slice = slice(3, 72)
+    var_slice = slice(7, 21)
+
+    with experiment_query(
+        soma_experiment,
+        "RNA",
+        obs_query=AxisQuery(coords=(obs_slice,)),
+        var_query=AxisQuery(value_filter=f"label in {var_label_values}"),
+    ) as query:
+        assert query.n_obs == obs_slice.stop - obs_slice.start + 1
+        assert query.var()["label"].to_pylist() == var_label_values
+
+    with experiment_query(
+        soma_experiment,
+        "RNA",
+        obs_query=AxisQuery(value_filter=f"label in {obs_label_values}"),
+        var_query=AxisQuery(coords=(var_slice,)),
+    ) as query:
+        assert query.obs()["label"].to_pylist() == obs_label_values
+        assert np.array_equal(
+            query.var_joinids().to_numpy(),
+            np.arange(var_slice.start, var_slice.stop + 1),
+        )
+
+
+@pytest.mark.xfail(
+    # see comment on test_experiment_query_all
     sys.version_info.major == 3 and sys.version_info.minor >= 10,
     reason="typeguard bug #242",
 )
@@ -143,8 +202,99 @@ def test_experiment_query_indexer(soma_experiment):
         assert np.array_equal(indexer.var_index(np.array([10, 1])), np.array([9, 0]))
 
 
+def test_axis_query():
+    """Basic test of the AxisQuery dataclass"""
+    assert AxisQuery().coords == (slice(None),)
+    assert AxisQuery().value_filter is None
+
+    assert AxisQuery(coords=(1,)).coords == (1,)
+    assert AxisQuery(coords=(slice(1, 2),)).coords == (slice(1, 2),)
+    assert AxisQuery(coords=((1, 88),)).coords == (pa.array([1, 88]),)
+    assert AxisQuery(coords=(np.array([9, 283, 4]),)).coords == (pa.array([9, 283, 4]),)
+
+    assert AxisQuery(coords=(1, 2)).coords == (1, 2)
+    assert AxisQuery(coords=(slice(1, 2), slice(None))).coords == (
+        slice(1, 2),
+        slice(None),
+    )
+    assert AxisQuery(coords=(slice(1, 2),)).value_filter is None
+
+    assert AxisQuery(value_filter="foo == 'bar'").value_filter == "foo == 'bar'"
+    assert AxisQuery(value_filter="foo == 'bar'").coords == (slice(None),)
+
+    assert AxisQuery(coords=(slice(1, 100),), value_filter="foo == 'bar'").coords == (
+        slice(1, 100),
+    )
+    assert (
+        AxisQuery(coords=(slice(1, 100),), value_filter="foo == 'bar'").value_filter
+        == "foo == 'bar'"
+    )
+
+    with pytest.raises(TypeError):
+        AxisQuery(coords=True)
+
+    with pytest.raises(TypeError):
+        AxisQuery(value_filter=[])
+
+    with pytest.raises(TypeError):
+        AxisQuery(coords=({},))
+
+
 """
-Missing tests:
-* X
-* read
+Fixture support & utility functions below.
 """
+
+
+def make_dataframe(path: str, sz: int) -> soma.DataFrame:
+    df = soma.DataFrame(uri=path)
+    df.create(
+        schema=pa.schema(
+            [
+                ("soma_joinid", pa.int64()),
+                ("label", pa.large_string()),
+            ]
+        ),
+        index_column_names=["soma_joinid"],
+    )
+    df.write(
+        pa.Table.from_pydict(
+            {
+                "soma_joinid": [i for i in range(sz)],
+                "label": [str(i) for i in range(sz)],
+            }
+        )
+    )
+    return df
+
+
+def make_sparse_array(path: str, shape: Tuple[int, int]) -> soma.SparseNDArray:
+    a = soma.SparseNDArray(path).create(pa.float32(), shape)
+    tensor = pa.SparseCOOTensor.from_scipy(
+        sparse.random(
+            shape[0],
+            shape[1],
+            density=0.1,
+            format="coo",
+            dtype=np.float32,
+            random_state=np.random.default_rng(),
+        )
+    )
+    a.write_sparse_tensor(tensor)
+    return a
+
+
+def make_experiment(
+    path: str, n_obs: int, n_vars: int, obs: soma.DataFrame, var: soma.DataFrame
+) -> soma.Experiment:
+    experiment = soma.Experiment((path / "exp").as_posix()).create()
+    experiment["ms"] = soma.Collection((path / "ms").as_posix()).create()
+    experiment.ms["RNA"] = soma.Measurement(uri=f"{experiment.ms.uri}/RNA").create()
+    experiment["obs"] = obs
+
+    measurement = experiment.ms["RNA"]
+    measurement["var"] = var
+    measurement["X"] = soma.Collection(uri=f"{measurement.uri}/X").create()
+
+    measurement.X["raw"] = make_sparse_array((path / "raw").as_posix(), (n_obs, n_vars))
+
+    return experiment
