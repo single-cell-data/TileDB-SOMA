@@ -11,13 +11,11 @@ import tiledbsoma as soma
 from tiledbsoma.experiment_query import AxisQuery, ExperimentQuery, X_as_series
 
 """
-WIP tracker - delete when complete.
-
-Missing tests:
+WIP tracker - delete when complete.  Missing tests:
 * async API
 * query by coords when there is >1 dimension
 * read prefetch
-
+* obsp, varp
 """
 
 

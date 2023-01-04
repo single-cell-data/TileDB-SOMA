@@ -195,6 +195,18 @@ class ExperimentQuery(ContextManager["ExperimentQuery"]):
     def n_vars(self) -> int:
         return len(self.var_joinids())
 
+    def _ensure_joinids_loaded(self):
+        """Private. Ensure joinids for both axis are in-memory."""
+        futures = []
+        if not self._joinids["obs"]:
+            futures.append(self.default_threadpool.submit(self.obs_joinids))
+        if not self._joinids["var"]:
+            futures.append(self.default_threadpool.submit(self.var_joinids))
+        if futures:
+            concurrent.futures.wait(futures)
+        assert self._joinids["obs"] is not None
+        assert self._joinids["var"] is not None
+
     def _fetchX(
         self, X: SOMASparseNDArray, prefetch: bool = False
     ) -> Iterator[pa.Table]:
@@ -236,13 +248,7 @@ class ExperimentQuery(ContextManager["ExperimentQuery"]):
             raise NotImplementedError("Dense array unsupported")
         assert isinstance(X, SOMASparseNDArray)
 
-        futures = []
-        if not self._joinids["obs"]:
-            futures.append(self.default_threadpool.submit(self.obs_joinids))
-        if not self._joinids["var"]:
-            futures.append(self.default_threadpool.submit(self.var_joinids))
-        if futures:
-            concurrent.futures.wait(futures)
+        self._ensure_joinids_loaded()
 
         yield from self._fetchX(X, prefetch=prefetch)
 
