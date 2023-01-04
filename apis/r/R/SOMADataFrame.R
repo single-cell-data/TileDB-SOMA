@@ -11,7 +11,7 @@
 
 SOMADataFrame <- R6::R6Class(
   classname = "SOMADataFrame",
-  inherit = TileDBArray,
+  inherit = SOMAArrayBase,
 
   public = list(
 
@@ -96,6 +96,7 @@ SOMADataFrame <- R6::R6Class(
 
       # create array
       tiledb::tiledb_array_create(uri = self$uri, schema = tdb_schema)
+      private$write_object_type_metadata()
     },
 
     #' @description Write
@@ -106,6 +107,11 @@ SOMADataFrame <- R6::R6Class(
     #'
     write = function(values) {
       on.exit(private$close())
+
+      # Prevent downcasting of int64 to int32 when materializing a column
+      op <- options(arrow.int64_downcast = FALSE)
+      on.exit(options(op), add = TRUE, after = FALSE)
+
       schema_names <- c(self$dimnames(), self$attrnames())
 
       stopifnot(

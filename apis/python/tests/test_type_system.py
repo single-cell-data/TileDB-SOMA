@@ -4,7 +4,7 @@ import pytest
 import tiledbsoma as soma
 
 """
-Arrow types we expect to work. A handful of types will promote, eg, string->large_string.
+Arrow types we expect to work. A handful of types will promote, e.g., string->large_string.
 Most must be literally as requested, or error out.
 
 Tuple is (requested_type, expected_type).
