@@ -47,6 +47,7 @@ def test_dataframe(tmp_path, arrow_schema):
     sidf.create(schema=asch, index_column_names=["foo"])
 
     assert sidf.count == 0
+    assert len(sidf) == 0
 
     assert sorted(sidf.schema.names) == sorted(
         ["foo", "bar", "baz", "soma_joinid", "quux"]
@@ -65,6 +66,7 @@ def test_dataframe(tmp_path, arrow_schema):
         sidf.write(rb)
 
     assert sidf.count == 5
+    assert len(sidf) == 5
 
     # Read all
     table = sidf.read_all()
