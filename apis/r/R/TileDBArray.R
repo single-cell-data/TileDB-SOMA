@@ -264,6 +264,43 @@ TileDBArray <- R6::R6Class(
     },
 
     # @description Ingest data into the TileDB array.
-    ingest_data = function() return(NULL)
+    ingest_data = function() return(NULL),
+
+    # @description Retrieve data from the TileDB array
+    # @param batch_mode logical, if `TRUE`, batch query mode is enabled, which
+    # provides the ability to detect partial query results and resubmit until
+    # all results are retrieved.
+    # @param return_as Data can be read in as a `list` (default), `array`,
+    # `matrix`, `data.frame`, `data.table` or `tibble`.
+    read_data = function(attrs = NULL, batch_mode = FALSE, return_as = NULL) {
+      if (self$verbose) {
+        message(
+          sprintf("Reading %s into memory from '%s'", self$class(), self$uri)
+        )
+      }
+      arr <- self$object
+      tiledb::attrs(arr) <- attrs %||% character()
+      tiledb::return_as(arr) <- return_as %||% "asis"
+
+      if (batch_mode) {
+        if (self$verbose) message("...reading in batches")
+        batcher <- tiledb::createBatched(arr)
+        results <- list()
+        i <- 1
+        while (isFALSE(tiledb::completedBatched(batcher))) {
+          if (self$verbose) message(sprintf("...retrieving batch %d", i))
+          results[[i]] <- tiledb::fetchBatched(arr, batcher)
+          i <- i + 1
+        }
+
+        # TODO: currently tiledb-r's batched reader ignores return_as and a
+        # data.frame is always returned. When this is addressed we'll need to
+        # add class-specific concatenation logic here.
+        results <- vctrs::vec_rbind(!!!results)
+      } else {
+        results <- arr[]
+      }
+      results
+    }
   )
 )

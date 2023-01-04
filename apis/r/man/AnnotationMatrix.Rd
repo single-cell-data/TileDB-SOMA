@@ -79,9 +79,21 @@ contain the matrix row names.}
 \subsection{Method \code{to_matrix()}}{
 Retrieve the annotation data from TileDB
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{AnnotationMatrix$to_matrix()}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{AnnotationMatrix$to_matrix(attrs = NULL, batch_mode = FALSE)}\if{html}{\out{</div>}}
 }
 
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{attrs}}{A character vector of the attribute names to retrieve. By
+default, all attributes are retrieved.}
+
+\item{\code{batch_mode}}{logical, if \code{TRUE}, batch query mode is enabled, which
+provides the ability to detect partial query results and resubmit until
+all results are retrieved.}
+}
+\if{html}{\out{</div>}}
+}
 \subsection{Returns}{
 A \code{\link{matrix}}
 }

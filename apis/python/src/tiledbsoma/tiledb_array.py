@@ -41,7 +41,8 @@ class TileDBArray(TileDBObject):
         object has not yet been populated, e.g. before calling ``from_anndata`` --- or, if the
         SOMA has been populated but doesn't have this member (e.g. not all SOMAs have a ``varp``).
         """
-        return bool(tiledb.array_exists(self.uri))
+        with tiledb.scope_ctx(self._ctx):
+            return bool(tiledb.array_exists(self.uri))
 
     def tiledb_array_schema(self) -> tiledb.ArraySchema:
         """

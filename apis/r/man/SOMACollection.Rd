@@ -184,7 +184,7 @@ Convert to a \link[SeuratObject:Seurat-class]{SeuratObject::Seurat} object.
 \item{\code{project}}{\code{\link[SeuratObject:Project]{SeuratObject::Project}} name for the \code{Seurat} object}
 
 \item{\code{batch_mode}}{logical, if \code{TRUE}, batch query mode is enabled for
-retrieving \code{X} layers. See
+retrieving \code{X}, \code{obsm}/\code{varm}, and \code{obsp}/\code{varp} layers. See
 \code{\link[=AssayMatrix]{AssayMatrix$to_dataframe()}} for more information.}
 }
 \if{html}{\out{</div>}}

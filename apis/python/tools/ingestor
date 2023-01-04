@@ -42,6 +42,11 @@ def main():
         action="store_true",
     )
     parser.add_argument(
+        "--schema-only",
+        help="Only create groups and array schemas; do not write array data. Useful for prep-step for parallel append-mode ingest.",
+        action="store_true",
+    )
+    parser.add_argument(
         "-x",
         help="Shorthand for `--ifexists replace`",
         action="store_true",
@@ -145,24 +150,26 @@ select `relative=True`. (This is the default.)
                 outdir, os.path.splitext(os.path.basename(input_path))[0]
             )
             ingest_one(
-                input_path,
-                output_path,
-                args.ifexists[0],
-                soma_options,
-                write_soco,
-                outdir,
+                input_path=input_path,
+                output_path=output_path,
+                ifexists=args.ifexists[0],
+                schema_only=args.schema_only,
+                soma_options=soma_options,
+                write_soco=write_soco,
+                soco_dir=outdir,
             )
     else:
         if len(args.paths) == 0:
             input_path = "anndata/pbmc-small.h5ad"
             output_path = os.path.join(outdir, "pbmc-small")
             ingest_one(
-                input_path,
-                output_path,
-                args.ifexists[0],
-                soma_options,
-                write_soco,
-                outdir,
+                input_path=input_path,
+                output_path=output_path,
+                ifexists=args.ifexists[0],
+                schema_only=args.schema_only,
+                soma_options=soma_options,
+                write_soco=write_soco,
+                soco_dir=outdir,
             )
         elif len(args.paths) == 1:
             input_path = args.paths[0]
@@ -171,23 +178,25 @@ select `relative=True`. (This is the default.)
                 outdir, os.path.splitext(os.path.basename(input_path))[0]
             )
             ingest_one(
-                input_path,
-                output_path,
-                args.ifexists[0],
-                soma_options,
-                write_soco,
-                outdir,
+                input_path=input_path,
+                output_path=output_path,
+                ifexists=args.ifexists[0],
+                schema_only=args.schema_only,
+                soma_options=soma_options,
+                write_soco=write_soco,
+                soco_dir=outdir,
             )
         elif len(args.paths) == 2:
             input_path = args.paths[0]
             output_path = args.paths[1]
             ingest_one(
-                input_path,
-                output_path,
-                args.ifexists[0],
-                soma_options,
-                write_soco,
-                outdir,
+                input_path=input_path,
+                output_path=output_path,
+                ifexists=args.ifexists[0],
+                schema_only=args.schema_only,
+                soma_options=soma_options,
+                write_soco=write_soco,
+                soco_dir=outdir,
             )
         else:
             parser.print_help(file=sys.stderr)
@@ -196,9 +205,11 @@ select `relative=True`. (This is the default.)
 
 # ================================================================
 def ingest_one(
+    *,
     input_path: str,
     output_path: str,
     ifexists: str,
+    schema_only: bool,
     soma_options: tiledbsoma.SOMAOptions,
     write_soco: bool,
     soco_dir: str,
@@ -225,7 +236,9 @@ def ingest_one(
         if not os.path.exists(output_path):
             raise Exception("Cannot update; doesn't exist yet:", output_path)
         # Do the ingest into TileDB.
-        tiledbsoma.io.from_h5ad_update_obs_and_var(soma, input_path)
+        tiledbsoma.io.from_h5ad_update_obs_and_var(
+            soma, input_path, schema_only=schema_only
+        )
 
     else:
         if os.path.exists(output_path):
@@ -261,7 +274,7 @@ def ingest_one(
                     "Internal coding error in --ifexists handling.", ifexists, "<"
                 )
         # Do the ingest into TileDB.
-        tiledbsoma.io.from_h5ad(soma, input_path)
+        tiledbsoma.io.from_h5ad(soma, input_path, schema_only=schema_only)
 
     tiledbsoma.logging.logger.info(f"Wrote {output_path}")
 

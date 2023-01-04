@@ -66,6 +66,9 @@ class TileDBObject(ABC):
         return tiledb.Ctx(
             {
                 "py.init_buffer_bytes": 256 * 1024**2,
+                # This is necessary for smaller tile capacities when querying with a smaller memory
+                # budget.
+                "sm.mem.reader.sparse_global_order.ratio_array_data": 0.3,
             }
         )
 
