@@ -7,7 +7,7 @@ import pytest
 from scipy import sparse
 
 import tiledbsoma as soma
-from tiledbsoma.experiment_query import AxisQuery, experiment_query
+from tiledbsoma.experiment_query import AxisQuery, ExperimentQuery
 
 """
 WIP tracker - delete when complete.
@@ -50,7 +50,7 @@ def soma_experiment(tmp_path, n_obs, n_vars, obs, var):
 def test_experiment_query_all(soma_experiment):
     assert soma_experiment.exists()
 
-    with experiment_query(soma_experiment, "RNA") as query:
+    with ExperimentQuery(soma_experiment, "RNA") as query:
         assert query.n_obs == 101
         assert query.n_vars == 11
 
@@ -93,7 +93,7 @@ def test_experiment_query_coords(soma_experiment):
     """Test query by dimension coordinates"""
     obs_slice = slice(3, 72)
     var_slice = slice(7, 21)
-    with experiment_query(
+    with ExperimentQuery(
         soma_experiment,
         "RNA",
         obs_query=AxisQuery(coords=(obs_slice,)),
@@ -121,7 +121,7 @@ def test_experiment_query_value_filter(soma_experiment):
     """Test query by value filter"""
     obs_label_values = ["3", "7", "38", "99"]
     var_label_values = ["18", "34", "67"]
-    with experiment_query(
+    with ExperimentQuery(
         soma_experiment,
         "RNA",
         obs_query=AxisQuery(value_filter=f"label in {obs_label_values}"),
@@ -146,7 +146,7 @@ def test_experiment_query_combo(soma_experiment):
     obs_slice = slice(3, 101)
     var_slice = slice(7, 80)
 
-    with experiment_query(
+    with ExperimentQuery(
         soma_experiment,
         "RNA",
         obs_query=AxisQuery(coords=(obs_slice,)),
@@ -155,7 +155,7 @@ def test_experiment_query_combo(soma_experiment):
         assert query.n_obs == obs_slice.stop - obs_slice.start + 1
         assert query.var()["label"].to_pylist() == var_label_values
 
-    with experiment_query(
+    with ExperimentQuery(
         soma_experiment,
         "RNA",
         obs_query=AxisQuery(value_filter=f"label in {obs_label_values}"),
@@ -167,7 +167,7 @@ def test_experiment_query_combo(soma_experiment):
             np.arange(var_slice.start, var_slice.stop + 1),
         )
 
-    with experiment_query(
+    with ExperimentQuery(
         soma_experiment,
         "RNA",
         obs_query=AxisQuery(
@@ -191,7 +191,7 @@ def test_experiment_query_indexer(soma_experiment):
     """Test result indexer"""
     assert soma_experiment.exists()
 
-    with experiment_query(
+    with ExperimentQuery(
         soma_experiment,
         "RNA",
         obs_query=AxisQuery(coords=(slice(1, 10),)),

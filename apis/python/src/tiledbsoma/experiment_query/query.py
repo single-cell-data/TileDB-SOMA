@@ -2,8 +2,9 @@ import asyncio
 import concurrent.futures
 import contextvars
 import functools
-from contextlib import contextmanager
+from contextlib import AbstractContextManager
 from typing import (
+    Any,
     AsyncIterator,
     Callable,
     Dict,
@@ -22,7 +23,6 @@ import numpy as np
 import numpy.typing as npt
 import pandas as pd
 import pyarrow as pa
-from typeguard import typeguard_ignore
 from typing_extensions import Literal, ParamSpec, TypedDict
 
 from ..dataframe import DataFrame as SOMADataFrame
@@ -41,7 +41,7 @@ AxisJoinIds = TypedDict(
 )
 
 
-class ExperimentQuery:
+class ExperimentQuery(AbstractContextManager["ExperimentQuery"]):
     """
     ExperimentQuery allows easy selection and extraction of data from a single soma.Measurement
     in a soma.Experiment [lifecycle: experimental].
@@ -53,8 +53,12 @@ class ExperimentQuery:
     features such as `n_obs` and `n_vars` codify this in the API.
 
     IMPORTANT: you must call `close()` on any instance of this class in order to release
-    underlying resources. It is strongly suggested that the context manager `experiment_query`
-    is used to make this easy/safe.
+    underlying resources. The ExperimentQuery is a context manager, so it is recommended
+    that you use the following pattern to make this easy and safe:
+    ```
+        with ExperimentQuery(...) as query:
+            ...
+    ```
     """
 
     experiment: SOMAExperiment
@@ -112,6 +116,9 @@ class ExperimentQuery:
         if self._default_threadpool is not None:
             self._default_threadpool.shutdown()
             self._default_threadpool = None
+
+    def __exit__(self, *excinfo: Any) -> None:
+        self.close()
 
     def _read_axis_dataframe(
         self,
@@ -364,32 +371,6 @@ class ExperimentQuery:
 
     def get_indexer(self) -> "AxisIndexer":
         return self._indexer
-
-
-"""
-Typeguard has a bug https://github.com/agronholm/typeguard/issues/115 which
-requires work-around for the context manager type annotations.
-"""
-
-
-@typeguard_ignore
-@contextmanager
-def experiment_query(
-    experiment: SOMAExperiment,
-    measurement_name: str,
-    *,
-    obs_query: Optional[AxisQuery] = None,
-    var_query: Optional[AxisQuery] = None,
-) -> Iterator[ExperimentQuery]:
-    """
-    Context manager which simplifies use of the query by ensuring that
-    query.close() is called [lifecycle: experimental].
-    """
-    query = ExperimentQuery(
-        experiment, measurement_name, obs_query=obs_query, var_query=var_query
-    )
-    yield query
-    query.close()
 
 
 class AsyncExperimentQuery:
