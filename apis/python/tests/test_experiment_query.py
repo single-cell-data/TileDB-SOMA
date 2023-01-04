@@ -1,5 +1,5 @@
 import sys
-from typing import Tuple
+from typing import List, Tuple
 
 import numpy as np
 import pandas as pd
@@ -32,8 +32,8 @@ def var(tmp_path, n_vars) -> soma.DataFrame:
 
 
 @pytest.fixture(scope="function")
-def soma_experiment(tmp_path, n_obs, n_vars, obs, var):
-    return make_experiment(tmp_path, n_obs, n_vars, obs, var)
+def soma_experiment(tmp_path, n_obs, n_vars, obs, var, X_layer_names):
+    return make_experiment(tmp_path, n_obs, n_vars, obs, var, X_layer_names)
 
 
 @pytest.mark.xfail(
@@ -47,7 +47,7 @@ def soma_experiment(tmp_path, n_obs, n_vars, obs, var):
     sys.version_info.major == 3 and sys.version_info.minor >= 10,
     reason="typeguard bug #242",
 )
-@pytest.mark.parametrize("n_obs,n_vars", [(101, 11)])
+@pytest.mark.parametrize("n_obs,n_vars,X_layer_names", [(101, 11, ("raw", "extra"))])
 def test_experiment_query_all(soma_experiment):
     """Test a query with default obs_query / var_query - i.e., query all."""
     assert soma_experiment.exists()
@@ -106,7 +106,7 @@ def test_experiment_query_all(soma_experiment):
     sys.version_info.major == 3 and sys.version_info.minor >= 10,
     reason="typeguard bug #242",
 )
-@pytest.mark.parametrize("n_obs,n_vars", [(1001, 99)])
+@pytest.mark.parametrize("n_obs,n_vars,X_layer_names", [(1001, 99, ["raw"])])
 def test_experiment_query_coords(soma_experiment):
     """Test query by dimension coordinates"""
     obs_slice = slice(3, 72)
@@ -134,7 +134,7 @@ def test_experiment_query_coords(soma_experiment):
     sys.version_info.major == 3 and sys.version_info.minor >= 10,
     reason="typeguard bug #242",
 )
-@pytest.mark.parametrize("n_obs,n_vars", [(1001, 99)])
+@pytest.mark.parametrize("n_obs,n_vars,X_layer_names", [(1001, 99, ["raw"])])
 def test_experiment_query_value_filter(soma_experiment):
     """Test query by value filter"""
     obs_label_values = ["3", "7", "38", "99"]
@@ -156,7 +156,7 @@ def test_experiment_query_value_filter(soma_experiment):
     sys.version_info.major == 3 and sys.version_info.minor >= 10,
     reason="typeguard bug #242",
 )
-@pytest.mark.parametrize("n_obs,n_vars", [(1001, 99)])
+@pytest.mark.parametrize("n_obs,n_vars,X_layer_names", [(1001, 99, ["raw"])])
 def test_experiment_query_combo(soma_experiment):
     """Test query by combinations of coords and value_filter"""
     obs_label_values = ["3", "7", "38", "99"]
@@ -204,7 +204,40 @@ def test_experiment_query_combo(soma_experiment):
     sys.version_info.major == 3 and sys.version_info.minor >= 10,
     reason="typeguard bug #242",
 )
-@pytest.mark.parametrize("n_obs,n_vars", [(1001, 99)])
+@pytest.mark.parametrize("n_obs,n_vars,X_layer_names", [(1001, 99, ["A", "B", "C"])])
+def test_X_layers(soma_experiment):
+    """Verify multi-layer-X handling"""
+    assert soma_experiment.exists()
+    A = pa.concat_tables(
+        soma_experiment.ms["RNA"].X["A"].read_table((slice(None), slice(None)))
+    )
+    B = pa.concat_tables(
+        soma_experiment.ms["RNA"].X["B"].read_table((slice(None), slice(None)))
+    )
+
+    with ExperimentQuery(soma_experiment, "RNA") as query:
+        arrow_reads = query.read("A", X_layers=["B"])
+        assert arrow_reads["X"] == A
+        assert arrow_reads["X_layers"]["B"] == B
+
+        ad = query.read_as_anndata("B", X_layers=["A"])
+        ad_X_coo = ad.X.tocoo()
+        assert np.array_equal(B["soma_dim_0"], ad_X_coo.row)
+        assert np.array_equal(B["soma_dim_1"], ad_X_coo.col)
+        assert np.array_equal(B["soma_data"], ad_X_coo.data)
+
+        ad_lyr_coo = ad.layers["A"].tocoo()
+        assert np.array_equal(A["soma_dim_0"], ad_lyr_coo.row)
+        assert np.array_equal(A["soma_dim_1"], ad_lyr_coo.col)
+        assert np.array_equal(A["soma_data"], ad_lyr_coo.data)
+
+
+@pytest.mark.xfail(
+    # see comment on test_experiment_query_all
+    sys.version_info.major == 3 and sys.version_info.minor >= 10,
+    reason="typeguard bug #242",
+)
+@pytest.mark.parametrize("n_obs,n_vars,X_layer_names", [(1001, 99, ["raw"])])
 def test_experiment_query_indexer(soma_experiment):
     """Test result indexer"""
     assert soma_experiment.exists()
@@ -276,7 +309,7 @@ def test_axis_query():
     sys.version_info.major == 3 and sys.version_info.minor >= 10,
     reason="typeguard bug #242",
 )
-@pytest.mark.parametrize("n_obs,n_vars", [(1001, 99)])
+@pytest.mark.parametrize("n_obs,n_vars,X_layer_names", [(1001, 99, ["raw"])])
 def test_query_cleanup(soma_experiment: soma.Experiment):
     """
     Verify soma.Experiment.query works as context manager and stand-alone,
@@ -364,7 +397,12 @@ def make_sparse_array(path: str, shape: Tuple[int, int]) -> soma.SparseNDArray:
 
 
 def make_experiment(
-    path: str, n_obs: int, n_vars: int, obs: soma.DataFrame, var: soma.DataFrame
+    path: str,
+    n_obs: int,
+    n_vars: int,
+    obs: soma.DataFrame,
+    var: soma.DataFrame,
+    X_layer_names: List[str],
 ) -> soma.Experiment:
     experiment = soma.Experiment((path / "exp").as_posix()).create()
     experiment["ms"] = soma.Collection((path / "ms").as_posix()).create()
@@ -375,6 +413,9 @@ def make_experiment(
     measurement["var"] = var
     measurement["X"] = soma.Collection(uri=f"{measurement.uri}/X").create()
 
-    measurement.X["raw"] = make_sparse_array((path / "raw").as_posix(), (n_obs, n_vars))
+    for X_layer_name in X_layer_names:
+        measurement.X[X_layer_name] = make_sparse_array(
+            (path / X_layer_name).as_posix(), (n_obs, n_vars)
+        )
 
     return experiment
