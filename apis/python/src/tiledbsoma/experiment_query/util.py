@@ -6,7 +6,7 @@ def X_as_series(tbl: pa.Table) -> pd.Series:
     """
     Convert SOMA 2D data from Arrow Table to Pandas Series [lifecycle: experimental].
 
-    NOTE: this is not zero copy.
+    NOTE: this operation is not zero copy.
     """
     data = tbl["soma_data"].to_numpy()
     dim_0 = tbl["soma_dim_0"].to_numpy()
