@@ -46,6 +46,8 @@ def test_dataframe(tmp_path, arrow_schema):
         sidf.create(schema=asch, index_column_names=["bogus"])
     sidf.create(schema=asch, index_column_names=["foo"])
 
+    assert sidf.count == 0
+
     assert sorted(sidf.schema.names) == sorted(
         ["foo", "bar", "baz", "soma_joinid", "quux"]
     )
@@ -61,6 +63,8 @@ def test_dataframe(tmp_path, arrow_schema):
         pydict["quux"] = [True, False, False, True, False]
         rb = pa.Table.from_pydict(pydict)
         sidf.write(rb)
+
+    assert sidf.count == 5
 
     # Read all
     table = sidf.read_all()
