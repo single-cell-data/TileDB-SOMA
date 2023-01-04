@@ -9,7 +9,6 @@ from scipy import sparse
 import tiledbsoma as soma
 from tiledbsoma.experiment_query import AxisQuery, experiment_query
 
-
 """
 WIP tracker - delete when complete.
 
