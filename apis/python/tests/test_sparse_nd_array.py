@@ -369,13 +369,6 @@ def test_zero_length_fail(tmp_path, shape):
 
 
 def test_sparse_nd_array_nnz(tmp_path):
-    """
-    This operation is currently unimplemented. This test is
-    designed to start failing as soon as it is implemented,
-    to provide a reminder to create a real test.
-
-    Just remove the pytest.raises when implemented
-    """
     a = soma.SparseNDArray(tmp_path.as_posix())
     a.create(type=pa.int32(), shape=(10, 10, 10))
     assert a.nnz == 0
