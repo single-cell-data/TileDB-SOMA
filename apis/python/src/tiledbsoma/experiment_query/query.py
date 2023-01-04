@@ -2,11 +2,11 @@ import asyncio
 import concurrent.futures
 import contextvars
 import functools
-from contextlib import AbstractContextManager
 from typing import (
     Any,
     AsyncIterator,
     Callable,
+    ContextManager,
     Dict,
     Iterator,
     List,
@@ -41,7 +41,7 @@ AxisJoinIds = TypedDict(
 )
 
 
-class ExperimentQuery(AbstractContextManager["ExperimentQuery"]):
+class ExperimentQuery(ContextManager["ExperimentQuery"]):
     """
     ExperimentQuery allows easy selection and extraction of data from a single soma.Measurement
     in a soma.Experiment [lifecycle: experimental].
@@ -53,7 +53,7 @@ class ExperimentQuery(AbstractContextManager["ExperimentQuery"]):
     features such as `n_obs` and `n_vars` codify this in the API.
 
     IMPORTANT: you must call `close()` on any instance of this class in order to release
-    underlying resources. The ExperimentQuery is a context manager, so it is recommended
+    underlying resources. The ExperimentQuery is a context manager -- it is recommended
     that you use the following pattern to make this easy and safe:
     ```
         with ExperimentQuery(...) as query:
@@ -116,6 +116,9 @@ class ExperimentQuery(AbstractContextManager["ExperimentQuery"]):
         if self._default_threadpool is not None:
             self._default_threadpool.shutdown()
             self._default_threadpool = None
+
+    def __enter__(self) -> "ExperimentQuery":
+        return self
 
     def __exit__(self, *excinfo: Any) -> None:
         self.close()
