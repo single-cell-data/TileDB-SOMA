@@ -110,52 +110,13 @@ def _write_dataframe(
         df.rename(columns={"index": id_column_name}, inplace=True)
     df.set_index(SOMA_JOINID, inplace=True)  # XXX MAYBE NOT?
 
-    # TODO: This is a proposed replacement for use of tiledb.from_pandas,
-    # behind a feature flag.
-    #
-    if soma_df._tiledb_platform_config.from_anndata_write_pandas_using_arrow:
-        # categoricals are not yet well supported, so we must flatten
-        for k in df:
-            if df[k].dtype == "category":
-                df[k] = df[k].astype(df[k].cat.categories.dtype)
-        arrow_table = pa.Table.from_pandas(df)
-        soma_df.create(arrow_table.schema, platform_config=platform_config)
-        soma_df.write(arrow_table)
-
-    else:
-        # Legacy cut & paste - to be removed if the above code works
-
-        offsets_filters = tiledb.FilterList(
-            [tiledb.PositiveDeltaFilter(), tiledb.ZstdFilter(level=-1)]
-        )
-        dim_filters = tiledb.FilterList([tiledb.ZstdFilter(level=-1)])
-        attr_filters = tiledb.FilterList([tiledb.ZstdFilter(level=-1)])
-
-        # Force ASCII storage if string, in order to make obs/var columns queryable.
-        # TODO: when UTF-8 attributes are fully supported we can remove this.
-        column_types = {}
-        for column_name in df.keys():
-            dfc = df[column_name]
-            if len(dfc) > 0 and isinstance(dfc[0], str):
-                column_types[column_name] = "ascii"
-            if len(dfc) > 0 and isinstance(dfc[0], bytes):
-                column_types[column_name] = "bytes"
-
-        tiledb.from_pandas(
-            uri=soma_df.uri,
-            dataframe=df,
-            sparse=True,
-            allows_duplicates=False,
-            offsets_filters=offsets_filters,
-            attr_filters=attr_filters,
-            dim_filters=dim_filters,
-            capacity=100000,
-            column_types=column_types,
-            ctx=soma_df._ctx,
-            mode="ingest",
-        )
-
-        soma_df._common_create()  # object-type metadata etc
+    # Categoricals are not yet well supported, so we must flatten
+    for k in df:
+        if df[k].dtype == "category":
+            df[k] = df[k].astype(df[k].cat.categories.dtype)
+    arrow_table = pa.Table.from_pandas(df)
+    soma_df.create(arrow_table.schema, platform_config=platform_config)
+    soma_df.write(arrow_table)
 
     logging.log_io(
         f"Wrote {soma_df.uri}",
