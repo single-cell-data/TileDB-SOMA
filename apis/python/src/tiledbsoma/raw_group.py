@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 import scipy.sparse as sp
 
-from . import util
+from . import util, util_ann
 from .annotation_dataframe import AnnotationDataFrame
 from .annotation_matrix_group import AnnotationMatrixGroup
 from .annotation_pairwise_matrix_group import AnnotationPairwiseMatrixGroup
@@ -79,12 +79,14 @@ class RawGroup(TileDBGroup):
         self.create_unless_exists()
 
         self.var.from_dataframe(
-            dataframe=anndata.raw.var, extent=2048, ingest_mode=ingest_mode
+            dataframe=util_ann._decategoricalize_obs_or_var(anndata.raw.var),
+            extent=2048,
+            ingest_mode=ingest_mode,
         )
         self._add_object(self.var)
 
         self.X.add_layer_from_matrix_and_dim_values(
-            matrix=anndata.raw.X,
+            matrix=anndata.raw.X[:],  # See comments in io.py
             row_names=anndata.obs.index,
             col_names=anndata.raw.var.index,
             layer_name=X_layer_name,
@@ -95,7 +97,7 @@ class RawGroup(TileDBGroup):
         self.varm.create_unless_exists()
         for key in anndata.raw.varm.keys():
             self.varm.add_matrix_from_matrix_and_dim_values(
-                anndata.raw.varm[key],
+                util._to_tiledb_supported_array_type(anndata.raw.varm[key]),
                 anndata.raw.var_names,
                 key,
                 ingest_mode=ingest_mode,
