@@ -3,6 +3,7 @@ import concurrent.futures
 import contextvars
 import functools
 from typing import (
+    TYPE_CHECKING,
     Any,
     AsyncIterator,
     Callable,
@@ -26,7 +27,9 @@ import pyarrow as pa
 from typing_extensions import Literal, ParamSpec, TypedDict
 
 from ..dataframe import DataFrame as SOMADataFrame
-from ..experiment import Experiment as SOMAExperiment
+
+if TYPE_CHECKING:
+    from ..experiment import Experiment
 from ..sparse_nd_array import SparseNDArray as SOMASparseNDArray
 from .anndata import make_anndata
 from .axis import AxisQuery, MatrixAxisQuery
@@ -61,7 +64,7 @@ class ExperimentQuery(ContextManager["ExperimentQuery"]):
     ```
     """
 
-    experiment: SOMAExperiment
+    experiment: "Experiment"
     ms: str
 
     _query: MatrixAxisQuery
@@ -73,7 +76,7 @@ class ExperimentQuery(ContextManager["ExperimentQuery"]):
 
     def __init__(
         self,
-        experiment: SOMAExperiment,
+        experiment: "Experiment",
         measurement_name: str,
         *,
         obs_query: Optional[AxisQuery] = None,

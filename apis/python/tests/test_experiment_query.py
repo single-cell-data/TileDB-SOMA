@@ -253,6 +253,34 @@ def test_axis_query():
         AxisQuery(coords=({},))
 
 
+@pytest.mark.xfail(
+    # see comment on test_experiment_query_all
+    sys.version_info.major == 3 and sys.version_info.minor >= 10,
+    reason="typeguard bug #242",
+)
+@pytest.mark.parametrize("n_obs,n_vars", [(1001, 99)])
+def test_query_cleanup(soma_experiment: soma.Experiment):
+    """
+    Verify soma.Experiment.query works as context manager and stand-alone,
+    and htat it cleans up correct.
+    """
+    from contextlib import closing
+
+    with soma_experiment.query("RNA") as query:
+        assert query.n_obs == 1001
+        assert query.n_vars == 99
+        assert query.read_as_anndata("raw") is not None
+        assert query._default_threadpool is not None
+
+    assert query._default_threadpool is None
+
+    with closing(soma_experiment.query("RNA")) as query:
+        assert query.read_as_anndata("raw") is not None
+        assert query._default_threadpool is not None
+
+    assert query._default_threadpool is None
+
+
 """
 Fixture support & utility functions below.
 """
