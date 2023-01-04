@@ -228,10 +228,8 @@ class ExperimentQuery(ContextManager["ExperimentQuery"]):
         """
         Return an X layer as an iterator of Arrow Tables.
         """
-        if not layer:
+        if not (layer and layer in self.experiment.ms[self.ms].X):
             raise ValueError("Must specify X layer")
-        if layer not in self.experiment.ms[self.ms].X:
-            raise ValueError("Unknown X layer")
 
         X = self.experiment.ms[self.ms].X[layer]
         if X.soma_type != "SOMASparseNDArray":

@@ -353,6 +353,27 @@ def test_X_as_series():
     )
 
 
+@pytest.mark.xfail(
+    # see comment on test_experiment_query_all
+    sys.version_info.major == 3 and sys.version_info.minor >= 10,
+    reason="typeguard bug #242",
+)
+@pytest.mark.parametrize("n_obs,n_vars,X_layer_names", [(2833, 107, ["raw"])])
+def test_error_corners(soma_experiment: soma.Experiment):
+    """Verify a couple of error conditions / corner cases."""
+    assert soma_experiment.exists()
+
+    with pytest.raises(ValueError):
+        soma_experiment.query("no-such-measurement")
+
+    with pytest.raises(ValueError):
+        soma.Experiment(uri="foobar").query("foobar")
+
+    with pytest.raises(ValueError):
+        with soma_experiment.query("RNA") as query:
+            next(query.X("no-such-layer"))
+
+
 """
 Fixture support & utility functions below.
 """
