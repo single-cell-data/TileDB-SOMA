@@ -1,6 +1,6 @@
 from .axis import AxisCoordinate, AxisCoordinates, AxisQuery, AxisValueFilter
+from .eq_types import AxisColumnNames, ExperimentQueryReadArrowResult
 from .query import ExperimentQuery
-from .types import AxisColumnNames, ExperimentQueryReadArrowResult
 from .util import X_as_series
 
 __all__ = [

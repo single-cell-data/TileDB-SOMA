@@ -4,7 +4,7 @@ import anndata
 import pyarrow as pa
 import scipy.sparse as sparse
 
-from .types import ExperimentQueryReadArrowResult
+from .eq_types import ExperimentQueryReadArrowResult
 
 
 def arrow_to_scipy_csr(X: pa.Table, shape: Tuple[int, int]) -> sparse.csr_matrix:

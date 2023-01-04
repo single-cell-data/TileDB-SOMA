@@ -33,7 +33,7 @@ if TYPE_CHECKING:
 from ..sparse_nd_array import SparseNDArray as SOMASparseNDArray
 from .anndata import make_anndata
 from .axis import AxisQuery, MatrixAxisQuery
-from .types import AxisColumnNames, ExperimentQueryReadArrowResult
+from .eq_types import AxisColumnNames, ExperimentQueryReadArrowResult
 
 AxisJoinIds = TypedDict(
     "AxisJoinIds",
