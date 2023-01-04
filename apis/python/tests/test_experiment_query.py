@@ -250,10 +250,12 @@ def test_experiment_query_indexer(soma_experiment):
 
         # coords outside of our query should return -1
         assert np.array_equal(
-            indexer.obs_index(np.array([-1, 0, 11, 1003])), np.array([-1, -1, -1, -1])
+            indexer.obs_index(np.array([-1, 0, 11, 1003])),
+            np.array([-1, -1, -1, -1]),
         )
         assert np.array_equal(
-            indexer.var_index(np.array([-1, 0, 11, 1003])), np.array([-1, -1, -1, -1])
+            indexer.var_index(np.array([-1, 0, 11, 1003])),
+            np.array([-1, -1, -1, -1]),
         )
 
         # inside results, indexed
@@ -261,6 +263,55 @@ def test_experiment_query_indexer(soma_experiment):
             indexer.obs_index(np.array([1, 4, 2])), np.array([0, 3, 1])
         )
         assert np.array_equal(indexer.var_index(np.array([10, 1])), np.array([9, 0]))
+
+
+@pytest.mark.xfail(
+    # see comment on test_experiment_query_all
+    sys.version_info.major == 3 and sys.version_info.minor >= 10,
+    reason="typeguard bug #242",
+)
+@pytest.mark.parametrize("n_obs,n_vars,X_layer_names", [(2833, 107, ["raw"])])
+def test_error_corners(soma_experiment: soma.Experiment):
+    """Verify a couple of error conditions / corner cases."""
+    assert soma_experiment.exists()
+
+    with pytest.raises(ValueError):
+        soma_experiment.query("no-such-measurement")
+
+    with pytest.raises(ValueError):
+        soma.Experiment(uri="foobar").query("foobar")
+
+    with pytest.raises(ValueError):
+        with soma_experiment.query("RNA") as query:
+            next(query.X("no-such-layer"))
+
+
+@pytest.mark.xfail(
+    # see comment on test_experiment_query_all
+    sys.version_info.major == 3 and sys.version_info.minor >= 10,
+    reason="typeguard bug #242",
+)
+@pytest.mark.parametrize("n_obs,n_vars,X_layer_names", [(1001, 99, ["raw"])])
+def test_query_cleanup(soma_experiment: soma.Experiment):
+    """
+    Verify soma.Experiment.query works as context manager and stand-alone,
+    and htat it cleans up correct.
+    """
+    from contextlib import closing
+
+    with soma_experiment.query("RNA") as query:
+        assert query.n_obs == 1001
+        assert query.n_vars == 99
+        assert query.read_as_anndata("raw") is not None
+        assert query._default_threadpool is not None
+
+    assert query._default_threadpool is None
+
+    with closing(soma_experiment.query("RNA")) as query:
+        assert query.read_as_anndata("raw") is not None
+        assert query._default_threadpool is not None
+
+    assert query._default_threadpool is None
 
 
 def test_axis_query():
@@ -302,34 +353,6 @@ def test_axis_query():
         AxisQuery(coords=({},))
 
 
-@pytest.mark.xfail(
-    # see comment on test_experiment_query_all
-    sys.version_info.major == 3 and sys.version_info.minor >= 10,
-    reason="typeguard bug #242",
-)
-@pytest.mark.parametrize("n_obs,n_vars,X_layer_names", [(1001, 99, ["raw"])])
-def test_query_cleanup(soma_experiment: soma.Experiment):
-    """
-    Verify soma.Experiment.query works as context manager and stand-alone,
-    and htat it cleans up correct.
-    """
-    from contextlib import closing
-
-    with soma_experiment.query("RNA") as query:
-        assert query.n_obs == 1001
-        assert query.n_vars == 99
-        assert query.read_as_anndata("raw") is not None
-        assert query._default_threadpool is not None
-
-    assert query._default_threadpool is None
-
-    with closing(soma_experiment.query("RNA")) as query:
-        assert query.read_as_anndata("raw") is not None
-        assert query._default_threadpool is not None
-
-    assert query._default_threadpool is None
-
-
 def test_X_as_series():
     soma_dim_0 = np.arange(0, 100, dtype=np.int64)
     soma_dim_1 = np.arange(200, 300, dtype=np.int64)
@@ -351,25 +374,42 @@ def test_X_as_series():
     )
 
 
+@pytest.mark.asyncio
 @pytest.mark.xfail(
     # see comment on test_experiment_query_all
     sys.version_info.major == 3 and sys.version_info.minor >= 10,
     reason="typeguard bug #242",
 )
-@pytest.mark.parametrize("n_obs,n_vars,X_layer_names", [(2833, 107, ["raw"])])
-def test_error_corners(soma_experiment: soma.Experiment):
-    """Verify a couple of error conditions / corner cases."""
-    assert soma_experiment.exists()
+@pytest.mark.parametrize("n_obs,n_vars,X_layer_names", [(1001, 99, ["raw"])])
+async def test_async_query(soma_experiment: soma.Experiment):
+    """Verify basic async API functions"""
+    async with soma_experiment.query("RNA").get_async() as query:
+        assert len(await query.obs()) == 1001
+        assert len(await query.var()) == 99
 
-    with pytest.raises(ValueError):
-        soma_experiment.query("no-such-measurement")
+        assert np.array_equal((await query.obs_joinids()).to_numpy(), np.arange(1001))
+        assert np.array_equal((await query.var_joinids()).to_numpy(), np.arange(99))
 
-    with pytest.raises(ValueError):
-        soma.Experiment(uri="foobar").query("foobar")
+        ad = await query.read_as_anndata("raw")
+        assert ad is not None
+        assert ad.n_obs == 1001
+        assert ad.n_vars == 99
 
-    with pytest.raises(ValueError):
-        with soma_experiment.query("RNA") as query:
-            next(query.X("no-such-layer"))
+
+@pytest.mark.asyncio
+@pytest.mark.xfail(
+    # see comment on test_experiment_query_all
+    sys.version_info.major == 3 and sys.version_info.minor >= 10,
+    reason="typeguard bug #242",
+)
+@pytest.mark.parametrize("n_obs,n_vars,X_layer_names", [(1001, 99, ["raw"])])
+async def test_async_query_cleanup(soma_experiment: soma.Experiment):
+    """Verify clean up occurs when used as a context manager."""
+    async with soma_experiment.query("RNA").get_async() as query:
+        assert [a async for a in query.X("raw")]
+        assert query.query._default_threadpool is not None
+
+    assert query.query._default_threadpool is None
 
 
 """

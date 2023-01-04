@@ -394,6 +394,12 @@ class AsyncExperimentQuery:
     def __init__(self, query: ExperimentQuery):
         self.query = query
 
+    async def __aenter__(self) -> "AsyncExperimentQuery":
+        return self
+
+    async def __aexit__(self, *excinfo: Any) -> None:
+        self.close()
+
     def close(self) -> None:
         self.query.close()
 
@@ -429,6 +435,20 @@ class AsyncExperimentQuery:
         chunk: pa.Table
         async for chunk in async_iter((i for i in self.query.X(layer, prefetch))):
             yield chunk
+
+    async def read_as_anndata(
+        self,
+        X_name: str,
+        *,
+        column_names: Optional[AxisColumnNames] = None,
+        X_layers: Optional[List[str]] = None,
+    ) -> anndata.AnnData:
+        return await to_thread(
+            self.query.read_as_anndata,
+            X_name,
+            column_names=column_names,
+            X_layers=X_layers,
+        )
 
 
 T = TypeVar("T")
