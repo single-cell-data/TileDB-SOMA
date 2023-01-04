@@ -37,7 +37,8 @@ def soma_experiment(tmp_path, n_obs, n_vars, obs, var):
 
 
 @pytest.mark.xfail(
-    # This test fails on Python 3.10+ due to a bug in typeguard. Remove
+    # This test fails on Python 3.10+ due to a bug in typeguard. The bug
+    # is tripped any time we use the context manager. Remove
     # work-around when the typeguard issue is fixed AND released.
     # Underlying issue:
     #   https://github.com/agronholm/typeguard/issues/242
@@ -143,8 +144,8 @@ def test_experiment_query_combo(soma_experiment):
     """Test query by combinations of coords and value_filter"""
     obs_label_values = ["3", "7", "38", "99"]
     var_label_values = ["18", "34", "67"]
-    obs_slice = slice(3, 72)
-    var_slice = slice(7, 21)
+    obs_slice = slice(3, 101)
+    var_slice = slice(7, 80)
 
     with experiment_query(
         soma_experiment,
@@ -166,6 +167,19 @@ def test_experiment_query_combo(soma_experiment):
             query.var_joinids().to_numpy(),
             np.arange(var_slice.start, var_slice.stop + 1),
         )
+
+    with experiment_query(
+        soma_experiment,
+        "RNA",
+        obs_query=AxisQuery(
+            coords=(obs_slice,), value_filter=f"label in {obs_label_values}"
+        ),
+        var_query=AxisQuery(
+            coords=(var_slice,), value_filter=f"label in {var_label_values}"
+        ),
+    ) as query:
+        assert query.obs()["label"].to_pylist() == obs_label_values
+        assert query.var()["label"].to_pylist() == var_label_values
 
 
 @pytest.mark.xfail(
@@ -205,6 +219,7 @@ def test_axis_query():
     """Basic test of the AxisQuery dataclass"""
     assert AxisQuery().coords == (slice(None),)
     assert AxisQuery().value_filter is None
+    assert AxisQuery() == AxisQuery(coords=(slice(None),))
 
     assert AxisQuery(coords=(1,)).coords == (1,)
     assert AxisQuery(coords=(slice(1, 2),)).coords == (slice(1, 2),)
