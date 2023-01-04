@@ -128,6 +128,9 @@ class SparseNDArray(TileDBArray):
             return cast(NTuple, A.schema.domain.shape)
 
     def reshape(self, shape: NTuple) -> None:
+        """
+        Unsupported operation for this object type.
+        """
         raise NotImplementedError("reshape operation not implemented.")
 
     @property
@@ -225,7 +228,10 @@ class SparseNDArray(TileDBArray):
                 data = arrow_tbl.column("soma_data").to_numpy()
                 row = arrow_tbl.column("soma_dim_0").to_numpy()
                 col = arrow_tbl.column("soma_dim_1").to_numpy()
-                scipy_coo = sp.coo_array((data, (row, col)), shape=shape)
+                # sp.coo_array is the more modern name but we support Python 3.7
+                # with scipy 1.8 wherein the name is sp.coo_matrix (which also works
+                # in newer versions).
+                scipy_coo = sp.coo_matrix((data, (row, col)), shape=shape)
                 if format == "csr":
                     yield pa.SparseCSRMatrix.from_scipy(scipy_coo.tocsr())
                 if format == "csc":

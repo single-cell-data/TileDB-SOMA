@@ -125,6 +125,9 @@ class DenseNDArray(TileDBArray):
             return cast(NTuple, A.schema.domain.shape)
 
     def reshape(self, shape: NTuple) -> None:
+        """
+        Unsupported operation for this object type [lifecycle: experimental].
+        """
         raise NotImplementedError("reshape operation not implemented.")
 
     @property
@@ -200,7 +203,10 @@ class DenseNDArray(TileDBArray):
         sr.submit()
 
         arrow_tables = []
-        while arrow_table_piece := sr.read_next():
+        while True:
+            arrow_table_piece = sr.read_next()
+            if not arrow_table_piece:
+                break
             arrow_tables.append(arrow_table_piece)
 
         # For dense arrays there is no zero-output case: attempting to make a test case

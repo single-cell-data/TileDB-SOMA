@@ -3,6 +3,7 @@
 export(SOMACollection)
 export(SOMADataFrame)
 export(SOMADenseNDArray)
+export(SOMASparseNDArray)
 export(TileDBArray)
 export(TileDBGroup)
 export(TileDBObject)

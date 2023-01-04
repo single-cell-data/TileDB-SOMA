@@ -1,5 +1,5 @@
 import collections.abc
-from typing import Any, Iterator, Optional, Sequence, Tuple, TypeVar, Union
+from typing import Any, Iterator, Optional, Sequence, Tuple, TypeVar, Union, cast
 
 import numpy as np
 import pandas as pd
@@ -162,6 +162,29 @@ class DataFrame(TileDBArray):
             self._index_column_names = self._tiledb_dim_names()
 
         return self._index_column_names
+
+    @property
+    def count(self) -> int:
+        """
+        Return the number of rows in the dataframe. Same as `len(df)`.
+        """
+
+        # A.domain.shape at the tiledb level gives us the 0..2^63 range which is not what we want
+        num_rows = cast(
+            int,
+            clib.SOMAReader(
+                self.uri,
+                platform_config={} if self._ctx is None else self._ctx.config().dict(),
+            ).nnz(),
+        )
+
+        return num_rows
+
+    def __len__(self) -> int:
+        """
+        Return the number of rows in the dataframe. Same as `df.count`.
+        """
+        return self.count
 
     def read(
         self,
@@ -392,7 +415,7 @@ class DataFrame(TileDBArray):
 
 def _validate_schema(schema: pa.Schema, index_column_names: Sequence[str]) -> pa.Schema:
     """
-    Handle default column additions (eg, soma_joinid) and error checking on required columns.
+    Handle default column additions (e.g., soma_joinid) and error checking on required columns.
 
     Returns a schema, which may be modified by the addition of required columns.
     """

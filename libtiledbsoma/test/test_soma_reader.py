@@ -52,7 +52,13 @@ def test_soma_reader_var_x_data():
 
     # iterate read batches until all results have been processed
     total_num_rows = 0
-    while arrow_table := sr.read_next():
+    # The := "walrus" operator is really the appropriate thing here, but alas, is not
+    # supported in Python 3.7 which we do wish to preserve compatibility with.
+    # while arrow_table := sr.read_next():
+    while True:
+        arrow_table = sr.read_next()
+        if not arrow_table:
+            break
         total_num_rows += arrow_table.num_rows
 
     # test that all results are not present in the arrow table (incomplete queries)
@@ -207,7 +213,13 @@ def test_soma_reader_obs_slice_x():
 
     # iterate read batches until all results have been processed
     total_num_rows = 0
-    while x_data := sr.read_next():
+    # The := "walrus" operator is really the appropriate thing here, but alas, is not
+    # supported in Python 3.7 which we do wish to preserve compatibility with.
+    # while x_data := sr.read_next():
+    while True:
+        x_data = sr.read_next()
+        if not x_data:
+            break
         total_num_rows += x_data.num_rows
 
     assert total_num_rows == 110280
