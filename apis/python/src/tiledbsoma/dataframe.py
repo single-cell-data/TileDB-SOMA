@@ -166,7 +166,7 @@ class DataFrame(TileDBArray):
     @property
     def count(self) -> int:
         """
-        Return the number of rows in the dataframe
+        Return the number of rows in the dataframe. Same as `len(df)`.
         """
 
         # A.domain.shape at the tiledb level gives us the 0..2^63 range which is not what we want
@@ -179,6 +179,12 @@ class DataFrame(TileDBArray):
         )
 
         return num_rows
+
+    def __len__(self) -> int:
+        """
+        Return the number of rows in the dataframe. Same as `df.count`.
+        """
+        return self.count
 
     def read(
         self,
