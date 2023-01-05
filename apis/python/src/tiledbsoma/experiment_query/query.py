@@ -211,7 +211,7 @@ class ExperimentAxisQuery(ContextManager["ExperimentAxisQuery"]):
         """Return number of var axis query results"""
         return len(self.var_joinids())
 
-    def _ensure_joinids_loaded(self) -> None:
+    def _load_joinids(self) -> None:
         """Private. Ensure joinids for both axis are in-memory."""
         futures = []
         if not self._joinids["obs"]:
@@ -220,8 +220,8 @@ class ExperimentAxisQuery(ContextManager["ExperimentAxisQuery"]):
             futures.append(self._threadpool.submit(self.var_joinids))
         if futures:
             concurrent.futures.wait(futures)
-        assert self._joinids["obs"] is not None
-        assert self._joinids["var"] is not None
+        assert self._joinids["obs"] is not None, "Internal error"
+        assert self._joinids["var"] is not None, "Internal error"
 
     def _fetchX(
         self, X: SOMASparseNDArray, prefetch: bool = False
@@ -289,9 +289,39 @@ class ExperimentAxisQuery(ContextManager["ExperimentAxisQuery"]):
             raise NotImplementedError("Dense array unsupported")
         assert isinstance(X, SOMASparseNDArray)
 
-        self._ensure_joinids_loaded()
+        self._load_joinids()
 
         yield from self._fetchX(X, prefetch=prefetch)
+
+    def _axisp_inner(self, axis: str, layer: str) -> Iterator[pa.Table]:
+        assert axis in ["obs", "var"]
+        key = f"{axis}p"
+
+        if key not in self.experiment.ms[self.ms]:
+            raise ValueError(f"Measurement does not contain {key} data")
+        if not (layer and layer in self.experiment.ms[self.ms][key]):
+            raise ValueError(f"Must specify '{key}' layer")
+
+        axisp = self.experiment.ms[self.ms][key][layer]
+        if axisp.soma_type != "SOMASparseNDArray":
+            raise TypeError(f"Unexpected SOMA type stored in '{key}' layer")
+        assert isinstance(axisp, SOMASparseNDArray)
+
+        self._load_joinids()
+        assert self._joinids[axis] is not None
+
+        joinids = self._joinids[axis]
+        if len(joinids) == 0:
+            yield pa.Table.from_pylist([], schema=axisp.schema)
+            return
+
+        yield from axisp.read_table((joinids, joinids))
+
+    def obsp(self, layer: str) -> Iterator[pa.Table]:
+        yield from self._axisp_inner("obs", layer)
+
+    def varp(self, layer: str) -> Iterator[pa.Table]:
+        yield from self._axisp_inner("var", layer)
 
     def read(
         self,
