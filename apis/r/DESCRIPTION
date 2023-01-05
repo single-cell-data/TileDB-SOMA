@@ -36,7 +36,6 @@ Imports:
     R6,
     methods,
     Matrix,
-    tiledb (>= 0.17.0),
     SeuratObject,
     jsonlite,
     glue,
