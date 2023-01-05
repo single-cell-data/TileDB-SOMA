@@ -122,7 +122,7 @@ if __name__ == "__main__":
             "pyarrow",
             "scanpy",
             "scipy",
-            "tiledb>=0.19.1",
+            "tiledb>=0.19.0",
             "typing",
         ],
         python_requires=">=3.7",
