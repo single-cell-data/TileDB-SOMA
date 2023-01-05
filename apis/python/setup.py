@@ -124,7 +124,7 @@ if __name__ == "__main__":
             "scanpy",
             "scipy",
             "tiledb>=0.19.0",
-            "typing_extensions",
+            "typing-extensions",  # Note "-" even though `import typing_extensions`
         ],
         python_requires=">=3.7",
         ext_modules=get_ext_modules(),
