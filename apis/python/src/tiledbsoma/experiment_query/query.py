@@ -293,29 +293,33 @@ class ExperimentAxisQuery(ContextManager["ExperimentAxisQuery"]):
 
         yield from self._fetchX(X, prefetch=prefetch)
 
-    def _axisp_inner(self, axis: str, layer: str) -> Iterator[pa.Table]:
+    def _axisp_inner(
+        self, axis: Literal["obs", "var"], layer: str
+    ) -> Iterator[pa.Table]:
         assert axis in ["obs", "var"]
         key = f"{axis}p"
 
+        ms = self.experiment.ms[self.ms]
         if key not in self.experiment.ms[self.ms]:
             raise ValueError(f"Measurement does not contain {key} data")
-        if not (layer and layer in self.experiment.ms[self.ms][key]):
+
+        axisp = ms.obsp if axis == "obs" else ms.varp
+        if not (layer and layer in axisp):
             raise ValueError(f"Must specify '{key}' layer")
 
-        axisp = self.experiment.ms[self.ms][key][layer]
-        if axisp.soma_type != "SOMASparseNDArray":
+        if axisp[layer].soma_type != "SOMASparseNDArray":
             raise TypeError(f"Unexpected SOMA type stored in '{key}' layer")
-        assert isinstance(axisp, SOMASparseNDArray)
+        assert isinstance(axisp[layer], SOMASparseNDArray)
 
         self._load_joinids()
         assert self._joinids[axis] is not None
 
         joinids = self._joinids[axis]
         if len(joinids) == 0:
-            yield pa.Table.from_pylist([], schema=axisp.schema)
+            yield pa.Table.from_pylist([], schema=axisp[layer].schema)
             return
 
-        yield from axisp.read_table((joinids, joinids))
+        yield from axisp[layer].read_table((joinids, joinids))
 
     def obsp(self, layer: str) -> Iterator[pa.Table]:
         yield from self._axisp_inner("obs", layer)
