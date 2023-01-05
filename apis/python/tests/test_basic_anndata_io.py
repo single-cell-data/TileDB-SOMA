@@ -211,10 +211,6 @@ def test_export_anndata(adata):
     tiledbsoma.io.from_anndata(soma, orig)
 
     readback = tiledbsoma.io.to_anndata(soma)
-    print("================================================================")
-    print("READBACK")
-    print(readback)
-    print("================================================================")
 
     assert readback.obs.shape == orig.obs.shape
     assert readback.var.shape == orig.var.shape
@@ -244,5 +240,25 @@ def test_X_capacity(adata, X_capacity):
 
     with soma.X["data"]._open() as X:
         assert X.schema.capacity == X_capacity
+
+    tempdir.cleanup()
+
+
+@pytest.mark.parametrize("df_capacity", [1000, 10000, 100000])
+def test_df_capacity(adata, df_capacity):
+
+    # Set up anndata input path and tiledb-group output path
+    tempdir = tempfile.TemporaryDirectory()
+    output_path = tempdir.name
+
+    # Ingest
+    soma_options = tiledbsoma.SOMAOptions(df_capacity=df_capacity)
+    soma = tiledbsoma.SOMA(output_path, soma_options=soma_options)
+    tiledbsoma.io.from_anndata(soma, adata)
+
+    with soma.obs._open() as D:
+        assert D.schema.capacity == df_capacity
+    with soma.var._open() as D:
+        assert D.schema.capacity == df_capacity
 
     tempdir.cleanup()

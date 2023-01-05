@@ -1,7 +1,22 @@
-# tiledbsoma (development version)
+# tiledbsoma 0.1.19
+
+## Changes
+
+- Updated `setup-r` GitHub Action to v2 and `checkout` to v3
+
+# tiledbsoma 0.1.18
+
+## Features
+
+- The `AnnotationMatrix`'s `to_matrix()` method now supports batched reads via the `batch_mode` argument. This functionality can also be leveraged from `SOMA`'s  `get_seurat_dimreductions_list()` and `get_seurat_dimreduction()` methods.
+
+## Changes
+
+- Decreased capacity of `AssayMatrix` arrays from 100,000 to 1,000 to improve remote-read performance (#543)
 
 ## Fixes
-* Don't use default assay name when recreating a `Seurat` object (thanks @dan11mcguire)
+
+- Don't use default assay name when recreating a `Seurat` object (thanks @dan11mcguire)
 
 # tiledbsoma 0.1.12
 

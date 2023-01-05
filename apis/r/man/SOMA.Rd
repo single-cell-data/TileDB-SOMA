@@ -333,7 +333,7 @@ results column names (required by Seurat)
 \subsection{Method \code{get_seurat_dimreduction()}}{
 Convert to a \code{\link[SeuratObject:DimReduc-class]{SeuratObject::DimReduc}} object.
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{SOMA$get_seurat_dimreduction(technique = NULL)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{SOMA$get_seurat_dimreduction(technique = NULL, batch_mode = FALSE)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
@@ -342,6 +342,10 @@ Convert to a \code{\link[SeuratObject:DimReduc-class]{SeuratObject::DimReduc}} o
 \item{\code{technique}}{Name of the dimensionality reduction technique. Used to
 identify which \code{obsm}/\code{varm} array will be retrieved. If \code{NULL}, we
 default to the first \code{obsm/dimreduction_} array.}
+
+\item{\code{batch_mode}}{logical, if \code{TRUE}, batch query mode is enabled for
+retrieving \code{X} layers. See \code{\link[=AssayMatrix]{AssayMatrix$to_dataframe()}} for
+more information.}
 }
 \if{html}{\out{</div>}}
 }
@@ -352,9 +356,18 @@ default to the first \code{obsm/dimreduction_} array.}
 \subsection{Method \code{get_seurat_dimreductions_list()}}{
 Retrieve a list of all \code{\link[SeuratObject:DimReduc-class]{SeuratObject::DimReduc}} objects.
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{SOMA$get_seurat_dimreductions_list()}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{SOMA$get_seurat_dimreductions_list(batch_mode = FALSE)}\if{html}{\out{</div>}}
 }
 
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{batch_mode}}{logical, if \code{TRUE}, batch query mode is enabled for
+retrieving \code{X} layers. See \code{\link[=AssayMatrix]{AssayMatrix$to_dataframe()}} for
+more information.}
+}
+\if{html}{\out{</div>}}
+}
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-SOMA-to_seurat_object"></a>}}

@@ -576,7 +576,7 @@ SOMA <- R6::R6Class(
     #' @param technique Name of the dimensionality reduction technique. Used to
     #' identify which `obsm`/`varm` array will be retrieved. If `NULL`, we
     #' default to the first `obsm/dimreduction_` array.
-    get_seurat_dimreduction = function(technique = NULL) {
+    get_seurat_dimreduction = function(technique = NULL, batch_mode = FALSE) {
 
       # Identify all obsm/varm dimreduction_ arrays
       prefix <- "dimreduction_"
@@ -613,7 +613,9 @@ SOMA <- R6::R6Class(
       }
 
       # TODO: validate we're only returning 1 array per dimension
-      mats <- lapply(arrays, function(x) x[[1]]$to_matrix())
+      mats <- lapply(arrays,
+        function(x) x[[1]]$to_matrix(batch_mode = batch_mode)
+      )
 
       # TODO: validate all keys match? For now just take the first one
       key <- unlist(arrays)[[1]]$get_metadata(key = "dimreduction_key")
@@ -627,13 +629,13 @@ SOMA <- R6::R6Class(
     },
 
     #' @description Retrieve a list of all [`SeuratObject::DimReduc`] objects.
-    get_seurat_dimreductions_list = function() {
-      arrays <-self$get_annotation_matrix_arrays(prefix = "dimreduction_")
+    get_seurat_dimreductions_list = function(batch_mode = FALSE) {
+      arrays <- self$get_annotation_matrix_arrays(prefix = "dimreduction_")
       array_names <- names(unlist(arrays))
       techniques <- unique(sub("(obs|var)m\\.dimreduction_", "", array_names))
       sapply(
         techniques,
-        function(x) self$get_seurat_dimreduction(x),
+        function(x) self$get_seurat_dimreduction(x, batch_mode = batch_mode),
         simplify = FALSE,
         USE.NAMES = TRUE
       )
