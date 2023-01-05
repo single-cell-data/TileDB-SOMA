@@ -173,7 +173,7 @@ class AnnotationPairwiseMatrixGroup(TileDBGroup):
         dim_values: Labels,
         matrix_name: str,
         *,
-        schema_only: bool = False,
+        ingest_mode: str,
     ) -> None:
         """
         Populates a component of the ``obsp`` or ``varp`` subgroup for a SOMA object.
@@ -182,6 +182,7 @@ class AnnotationPairwiseMatrixGroup(TileDBGroup):
         :param dim_values: anndata.obs_names or anndata.var_names.
         :param matrix_name_name: name of the matrix, like ``"distances"``.
         """
+        assert ingest_mode in util.INGEST_MODES
 
         # Must be done first, to create the parent directory
         self.create_unless_exists()
@@ -202,7 +203,7 @@ class AnnotationPairwiseMatrixGroup(TileDBGroup):
             matrix,
             dim_values,
             dim_values,
-            schema_only=schema_only,
+            ingest_mode=ingest_mode,
         )
         self._add_object(annotation_pairwise_matrix)
 

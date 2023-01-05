@@ -163,7 +163,7 @@ class AssayMatrix(TileDBArray):
         matrix: Matrix,
         row_names: Labels,
         col_names: Labels,
-        schema_only: bool = False,
+        ingest_mode: str,
     ) -> None:
         """
         Imports a matrix --- nominally ``scipy.sparse.csr_matrix`` or ``numpy.ndarray`` --- into a TileDB
@@ -173,7 +173,34 @@ class AssayMatrix(TileDBArray):
         ``scipy.sparse.csr_matrix``, ``scipy.sparse.csc_matrix``, ``numpy.ndarray``, etc.
         For ingest from ``AnnData``, these should be ``ann.obs_names`` and ``ann.var_names``.
         """
+        assert ingest_mode in util.INGEST_MODES
+
         s = util.get_start_stamp()
+
+        # There is a chunk-by-chunk already-done check for resume mode, below.
+        # This full-matrix-level check here might seem redundant, but in fact it's important:
+        # * By checking input MBR against storage NED here, we can see if the entire matrix
+        #   was already ingested and avoid even loading chunks;
+        # * By checking chunkwise we can catch the case where a matrix was already *partly*
+        #   ingested.
+        if ingest_mode == "resume" and self.exists():
+            # This lets us check for already-ingested chunks, when in resume-ingest mode.
+            ned = self._get_non_empty_domain_as_strings(2)
+            sorted_row_names = sorted(row_names)
+            sorted_col_names = sorted(col_names)
+
+            matrix_mbr = (
+                (sorted_row_names[0], sorted_row_names[-1]),
+                (sorted_col_names[0], sorted_col_names[-1]),
+            )
+
+            if self._chunk_is_contained_in(matrix_mbr, ned):
+                log_io(
+                    f"Skipped {self.nested_name} ...",
+                    f"{self._indent}SKIPPED WRITING {self.nested_name}",
+                )
+                return
+
         log_io(
             f"Writing {self.nested_name} ...",
             f"{self._indent}START  WRITING {self.nested_name}",
@@ -197,15 +224,21 @@ class AssayMatrix(TileDBArray):
 
         self._set_object_type_metadata()
 
-        if not schema_only:
+        if ingest_mode != "schema_only":
             if not self._soma_options.write_X_chunked:
-                self.ingest_data_whole(matrix, row_names, col_names)
+                self._ingest_data_whole(matrix, row_names, col_names, ingest_mode)
             elif isinstance(matrix, sp.csr_matrix):
-                self.ingest_data_rows_chunked(matrix, row_names, col_names)
+                self._ingest_data_rows_chunked(
+                    matrix, row_names, col_names, ingest_mode
+                )
             elif isinstance(matrix, sp.csc_matrix):
-                self.ingest_data_cols_chunked(matrix, row_names, col_names)
+                self._ingest_data_cols_chunked(
+                    matrix, row_names, col_names, ingest_mode
+                )
             else:
-                self.ingest_data_dense_rows_chunked(matrix, row_names, col_names)
+                self._ingest_data_dense_rows_chunked(
+                    matrix, row_names, col_names, ingest_mode
+                )
 
         log_io(
             f"Wrote {self.nested_name}",
@@ -256,11 +289,12 @@ class AssayMatrix(TileDBArray):
         tiledb.Array.create(self.uri, sch, ctx=self._ctx)
 
     # ----------------------------------------------------------------
-    def ingest_data_whole(
+    def _ingest_data_whole(
         self,
         matrix: Matrix,
         row_names: Union[np.ndarray, pd.Index],
         col_names: Union[np.ndarray, pd.Index],
+        ingest_mode: str,
     ) -> None:
         """
         Convert ``numpy.ndarray``, ``scipy.sparse.csr_matrix``, or ``scipy.sparse.csc_matrix``
@@ -274,9 +308,17 @@ class AssayMatrix(TileDBArray):
         assert len(row_names) == matrix.shape[0]
         assert len(col_names) == matrix.shape[1]
 
+        # This lets us check for already-ingested chunks, when in resume-ingest mode.
+        ned = self._get_non_empty_domain_as_strings(2)
+
         mat_coo = sp.coo_matrix(matrix)
         d0 = row_names[mat_coo.row]
         d1 = col_names[mat_coo.col]
+
+        chunk_mbr = ((d0[0], d0[-1]), (d1[0], d1[-1]))
+
+        if ingest_mode == "resume" and self._chunk_is_contained_in(chunk_mbr, ned):
+            return
 
         with tiledb.open(self.uri, mode="w", ctx=self._ctx) as A:
             A[d0, d1] = mat_coo.data
@@ -313,11 +355,12 @@ class AssayMatrix(TileDBArray):
     # See README-csr-ingest.md for important information of using this ingestor.
     # ----------------------------------------------------------------
 
-    def ingest_data_rows_chunked(
+    def _ingest_data_rows_chunked(
         self,
         matrix: sp.csr_matrix,
         row_names: Union[np.ndarray, pd.Index],
         col_names: Union[np.ndarray, pd.Index],
+        ingest_mode: str,
     ) -> None:
         """
         Convert ``csr_matrix`` to ``coo_matrix`` chunkwise and ingest into TileDB.
@@ -344,8 +387,11 @@ class AssayMatrix(TileDBArray):
         s = util.get_start_stamp()
         log_io(
             None,
-            f"{self._indent}START  ingest_data_rows_chunked",
+            f"{self._indent}START  _ingest_data_rows_chunked",
         )
+
+        # This lets us check for already-ingested chunks, when in resume-ingest mode.
+        ned = self._get_non_empty_domain_as_strings(2)
 
         eta_tracker = util.ETATracker()
         with tiledb.open(self.uri, mode="w", ctx=self._ctx) as A:
@@ -375,6 +421,28 @@ class AssayMatrix(TileDBArray):
                 # makes us look buggy if we say we're ingesting chunk 0:18 and then 18:32.
                 # Instead, print doubly-inclusive lo..hi like 0..17 and 18..31.
                 chunk_percent = min(100, 100 * (i2 - 1) / nrow)
+
+                chunk_mbr = ((d0[0], d0[-1]), (d1[0], d1[-1]))
+                if ingest_mode == "resume" and self._chunk_is_contained_in(
+                    chunk_mbr, ned
+                ):
+                    log_io(
+                        None,
+                        "%sSKIP   chunk rows %d..%d of %d (%.3f%%), obs_ids %s..%s, nnz=%d"
+                        % (
+                            self._indent,
+                            i,
+                            i2 - 1,
+                            nrow,
+                            chunk_percent,
+                            d0[0],
+                            d0[-1],
+                            chunk_coo.nnz,
+                        ),
+                    )
+                    i = i2
+                    continue
+
                 log_io(
                     None,
                     "%sSTART  chunk rows %d..%d of %d (%.3f%%), obs_ids %s..%s, nnz=%d"
@@ -415,15 +483,16 @@ class AssayMatrix(TileDBArray):
             ),
         )
 
-    # This method is very similar to ingest_data_rows_chunked. The code is largely repeated,
+    # This method is very similar to _ingest_data_rows_chunked. The code is largely repeated,
     # and this is intentional. The algorithm here is non-trivial (among the most non-trivial
     # in this package), and adding an abstraction layer would overconfuse it. Here we err
     # on the side of increased readability, at the expense of line-count.
-    def ingest_data_cols_chunked(
+    def _ingest_data_cols_chunked(
         self,
         matrix: sp.csc_matrix,
         row_names: Union[np.ndarray, pd.Index],
         col_names: Union[np.ndarray, pd.Index],
+        ingest_mode: str,
     ) -> None:
         """
         Convert ``csc_matrix`` to ``coo_matrix`` chunkwise and ingest into TileDB.
@@ -447,10 +516,13 @@ class AssayMatrix(TileDBArray):
         # Using numpy we can index this with a list of indices, which a plain Python list doesn't support.
         sorted_col_names = np.asarray(sorted_col_names)
 
+        # This lets us check for already-ingested chunks, when in resume-ingest mode.
+        ned = self._get_non_empty_domain_as_strings(2)
+
         s = util.get_start_stamp()
         log_io(
             None,
-            f"{self._indent}START  ingest_data_cols_chunked",
+            f"{self._indent}START  _ingest_data_cols_chunked",
         )
 
         eta_tracker = util.ETATracker()
@@ -481,9 +553,31 @@ class AssayMatrix(TileDBArray):
                 # makes us look buggy if we say we're ingesting chunk 0:18 and then 18:32.
                 # Instead, print doubly-inclusive lo..hi like 0..17 and 18..31.
                 chunk_percent = min(100, 100 * (j2 - 1) / ncol)
+
+                chunk_mbr = ((d0[0], d0[-1]), (d1[0], d1[-1]))
+                if ingest_mode == "resume" and self._chunk_is_contained_in(
+                    chunk_mbr, ned
+                ):
+                    log_io(
+                        None,
+                        "%sSKIP   chunk cols %d..%d of %d (%.3f%%), obs_ids %s..%s, nnz=%d"
+                        % (
+                            self._indent,
+                            j,
+                            j2 - 1,
+                            ncol,
+                            chunk_percent,
+                            d1[0],
+                            d1[-1],
+                            chunk_coo.nnz,
+                        ),
+                    )
+                    j = j2
+                    continue
+
                 log_io(
                     None,
-                    "%sSTART  chunk rows %d..%d of %d (%.3f%%), var_ids %s..%s, nnz=%d"
+                    "%sSTART  chunk cols %d..%d of %d (%.3f%%), var_ids %s..%s, nnz=%d"
                     % (
                         self._indent,
                         j,
@@ -521,15 +615,16 @@ class AssayMatrix(TileDBArray):
             ),
         )
 
-    # This method is very similar to ingest_data_rows_chunked. The code is largely repeated,
+    # This method is very similar to _ingest_data_rows_chunked. The code is largely repeated,
     # and this is intentional. The algorithm here is non-trivial (among the most non-trivial
     # in this package), and adding an abstraction layer would overconfuse it. Here we err
     # on the side of increased readability, at the expense of line-count.
-    def ingest_data_dense_rows_chunked(
+    def _ingest_data_dense_rows_chunked(
         self,
         matrix: np.ndarray,
         row_names: Union[np.ndarray, pd.Index],
         col_names: Union[np.ndarray, pd.Index],
+        ingest_mode: str,
     ) -> None:
         """
         Convert dense matrix to ``coo_matrix`` chunkwise and ingest into TileDB.
@@ -558,6 +653,9 @@ class AssayMatrix(TileDBArray):
             None,
             f"{self._indent}START  ingest_data_dense_rows_chunked",
         )
+
+        # This lets us check for already-ingested chunks, when in resume-ingest mode.
+        ned = self._get_non_empty_domain_as_strings(2)
 
         eta_tracker = util.ETATracker()
         with tiledb.open(self.uri, mode="w", ctx=self._ctx) as A:
@@ -589,6 +687,28 @@ class AssayMatrix(TileDBArray):
                 # makes us look buggy if we say we're ingesting chunk 0:18 and then 18:32.
                 # Instead, print doubly-inclusive lo..hi like 0..17 and 18..31.
                 chunk_percent = min(100, 100 * (i2 - 1) / nrow)
+
+                chunk_mbr = ((d0[0], d0[-1]), (d1[0], d1[-1]))
+                if ingest_mode == "resume" and self._chunk_is_contained_in(
+                    chunk_mbr, ned
+                ):
+                    log_io(
+                        None,
+                        "%sSKIP   chunk rows %d..%d of %d (%.3f%%), obs_ids %s..%s, nnz=%d"
+                        % (
+                            self._indent,
+                            i,
+                            i2 - 1,
+                            nrow,
+                            chunk_percent,
+                            d0[0],
+                            d0[-1],
+                            chunk_coo.nnz,
+                        ),
+                    )
+                    i = i2
+                    continue
+
                 log_io(
                     None,
                     "%sSTART  chunk rows %d..%d of %d (%.3f%%), obs_ids %s..%s, nnz=%d"

@@ -126,7 +126,7 @@ class AnnotationMatrixGroup(TileDBGroup):
         dim_values: Labels,
         matrix_name: str,
         *,
-        schema_only: bool = False,
+        ingest_mode: str,
     ) -> None:
         """
         Populates a component of the ``obsm`` or ``varm`` subgroup for a SOMA object.
@@ -135,6 +135,7 @@ class AnnotationMatrixGroup(TileDBGroup):
         :param dim_values: anndata.obs_names, anndata.var_names, or anndata.raw.var_names.
         :param matrix_name: name of the matrix, like ``"X_tsne"`` or ``"PCs"``.
         """
+        assert ingest_mode in util.INGEST_MODES
 
         # Must be done first, to create the parent directory
         self.create_unless_exists()
@@ -149,7 +150,7 @@ class AnnotationMatrixGroup(TileDBGroup):
             parent=self,
         )
         annotation_matrix.from_matrix_and_dim_values(
-            matrix, dim_values, schema_only=schema_only
+            matrix, dim_values, ingest_mode=ingest_mode
         )
         self._add_object(annotation_matrix)
 
