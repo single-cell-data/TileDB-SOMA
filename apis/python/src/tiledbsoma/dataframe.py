@@ -100,13 +100,9 @@ class DataFrame(TileDBArray):
                 else:
                     raise TypeError(f"Unsupported dtype {dtype}")
 
+            # Default 2048 mods to 0 for 8-bit types and 0 is an invalid extent
             extent = create_options.dim_tile(index_column_name)
-            if (
-                dtype == pa.int8()
-                or dtype == pa.uint8()
-                or dtype == np.int8
-                or dtype == np.uint8
-            ):
+            if isinstance(dtype, np.dtype) and dtype.itemsize == 1:
                 extent = 64
 
             dim = tiledb.Dim(
