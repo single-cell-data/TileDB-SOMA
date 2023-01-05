@@ -118,6 +118,7 @@ if __name__ == "__main__":
         zip_safe=False,
         install_requires=[
             "anndata",
+            "numpy",
             "pandas",
             "pyarrow",
             "scanpy",
