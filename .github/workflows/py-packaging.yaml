@@ -91,7 +91,6 @@ jobs:
         unzip -l $whl
         pip install wheel
         pip install $whl
-        pip install typing_extensions
     - name: Smoke test ${{ matrix.os }}
       run: python -c 'import tiledbsoma; print(tiledbsoma.libtiledbsoma.__file__)'
       # TODO: more-thorough test
