@@ -118,12 +118,13 @@ if __name__ == "__main__":
         zip_safe=False,
         install_requires=[
             "anndata",
+            "numpy",
             "pandas",
             "pyarrow",
             "scanpy",
             "scipy",
-            "tiledb==0.19.0",
-            "typing",
+            "tiledb>=0.19.0",
+            "typing-extensions",  # Note "-" even though `import typing_extensions`
         ],
         python_requires=">=3.7",
         ext_modules=get_ext_modules(),
