@@ -35,14 +35,25 @@ def from_h5ad(
     soma: tiledbsoma.SOMA,
     input_path: Path,
     X_layer_name: str = "data",
-    schema_only: bool = False,
+    ingest_mode: str = "write",
 ) -> None:
     """
     Reads an ``.h5ad`` local-disk file and writes to a TileDB SOMA structure.
+
+    The "write" ingest_mode (which is the default) writes all data, creating new layers if the soma already exists.
+
+    The "resume" ingest_mode skips data writes if data are within dimension ranges of the existing soma.
+    This is useful for continuing after a partial/interrupted previous upload.
+
+    The "schema_only" ingest_mode creates groups and array schema, without writing array data.
+    This is useful as a prep-step for parallel append-ingest of multiple H5ADs to a single soma.
     """
+    assert ingest_mode in tiledbsoma.util.INGEST_MODES
+
     if isinstance(input_path, ad.AnnData):
         raise Exception("Input path is an AnnData object -- did you want from_anndata?")
-    _from_h5ad_common(soma, input_path, _from_anndata_aux, X_layer_name, schema_only)
+    assert ingest_mode in ["write", "schema_only", "resume"]
+    _from_h5ad_common(soma, input_path, _from_anndata_aux, X_layer_name, ingest_mode)
 
 
 # ----------------------------------------------------------------
@@ -56,7 +67,7 @@ def from_h5ad_update_obs_and_var(soma: tiledbsoma.SOMA, input_path: Path) -> Non
         input_path,
         from_anndata_update_obs_and_var,
         "unused",
-        False,
+        "write",
     )
 
 
@@ -64,9 +75,9 @@ def from_h5ad_update_obs_and_var(soma: tiledbsoma.SOMA, input_path: Path) -> Non
 def _from_h5ad_common(
     soma: tiledbsoma.SOMA,
     input_path: Path,
-    handler_func: Callable[[tiledbsoma.SOMA, ad.AnnData, str, bool], None],
+    handler_func: Callable[[tiledbsoma.SOMA, ad.AnnData, str, str], None],
     X_layer_name: str,
-    schema_only: bool,
+    ingest_mode: str,
 ) -> None:
     """
     Common code for things we do when processing a .h5ad file for ingest/update.
@@ -85,7 +96,7 @@ def _from_h5ad_common(
         tiledbsoma.util.format_elapsed(s, f"{soma._indent}FINISH READING {input_path}"),
     )
 
-    handler_func(soma, anndata, X_layer_name, schema_only)
+    handler_func(soma, anndata, X_layer_name, ingest_mode)
 
     log_io(
         None,
@@ -113,11 +124,13 @@ def from_10x(
     soma: tiledbsoma.SOMA,
     input_path: Path,
     X_layer_name: str = "data",
-    schema_only: bool = False,
+    ingest_mode: str = "write",
 ) -> None:
     """
     Reads a 10X file and writes to a TileDB group structure.
     """
+    assert ingest_mode in tiledbsoma.util.INGEST_MODES
+
     s = tiledbsoma.util.get_start_stamp()
     log_io(None, f"START  SOMA.from_10x {input_path} -> {soma.nested_name}")
 
@@ -130,7 +143,7 @@ def from_10x(
         tiledbsoma.util.format_elapsed(s, f"{soma._indent}FINISH READING {input_path}"),
     )
 
-    _from_anndata_aux(soma, anndata, X_layer_name, schema_only=schema_only)
+    _from_anndata_aux(soma, anndata, X_layer_name, ingest_mode=ingest_mode)
 
     log_io(
         None,
@@ -145,18 +158,21 @@ def from_anndata_unless_exists(
     soma: tiledbsoma.SOMA,
     anndata: ad.AnnData,
     X_layer_name: str = "data",
-    schema_only: bool = False,
+    ingest_mode: str = "write",
 ) -> None:
     """
     Skips the ingest if the SOMA is already there. A convenient keystroke-saver
     so users don't need to replicate the if-test.
     """
+    assert ingest_mode in tiledbsoma.util.INGEST_MODES
+
+    assert ingest_mode in ["write", "schema_only", "resume"]
     if tiledbsoma.util.is_soma(soma.uri):
         tiledbsoma.logging.logger.info(
             f"Already exists, skipping ingest: {soma.nested_name}"
         )
     else:
-        _from_anndata_aux(soma, anndata, X_layer_name, schema_only)
+        _from_anndata_aux(soma, anndata, X_layer_name, ingest_mode)
 
 
 # ----------------------------------------------------------------
@@ -164,19 +180,24 @@ def from_anndata(
     soma: tiledbsoma.SOMA,
     anndata: ad.AnnData,
     X_layer_name: str = "data",
-    schema_only: bool = False,
+    ingest_mode: str = "write",
 ) -> None:
     """
     Given an in-memory ``AnnData`` object, writes to a TileDB SOMA structure.
+
+    See comments on `from_h5ad` for details about the `ingest_mode` parameter.
     """
-    return _from_anndata_aux(soma, anndata, X_layer_name, schema_only)
+    assert ingest_mode in tiledbsoma.util.INGEST_MODES
+
+    assert ingest_mode in ["write", "schema_only", "resume"]
+    return _from_anndata_aux(soma, anndata, X_layer_name, ingest_mode)
 
 
 def _from_anndata_aux(
     soma: tiledbsoma.SOMA,
     anndata: ad.AnnData,
     X_layer_name: str,
-    schema_only: bool,
+    ingest_mode: str,
 ) -> None:
     """
     Helper method for ``from_anndata``. This simplified type-checking using ``mypy`` with regard to
@@ -220,7 +241,7 @@ def _from_anndata_aux(
                 soma.obs.from_dataframe,
                 dataframe=tiledbsoma.util_ann._decategoricalize_obs_or_var(anndata.obs),
                 extent=256,
-                schema_only=schema_only,
+                ingest_mode=ingest_mode,
             )
         )
         futures.append(
@@ -228,7 +249,7 @@ def _from_anndata_aux(
                 soma.var.from_dataframe,
                 dataframe=tiledbsoma.util_ann._decategoricalize_obs_or_var(anndata.var),
                 extent=2048,
-                schema_only=schema_only,
+                ingest_mode=ingest_mode,
             )
         )
         futures.append(
@@ -255,7 +276,7 @@ def _from_anndata_aux(
                 row_names=anndata.obs.index,
                 col_names=anndata.var.index,
                 layer_name=X_layer_name,
-                schema_only=schema_only,
+                ingest_mode=ingest_mode,
             )
         )
 
@@ -269,7 +290,7 @@ def _from_anndata_aux(
                         row_names=anndata.obs.index,
                         col_names=anndata.var.index,
                         layer_name=layer_name,
-                        schema_only=schema_only,
+                        ingest_mode=ingest_mode,
                     )
                 )
 
@@ -296,7 +317,7 @@ def _from_anndata_aux(
                     tiledbsoma.util._to_tiledb_supported_array_type(anndata.obsm[key]),
                     anndata.obs_names,
                     key,
-                    schema_only=schema_only,
+                    ingest_mode=ingest_mode,
                 )
             )
 
@@ -307,7 +328,7 @@ def _from_anndata_aux(
                     tiledbsoma.util._to_tiledb_supported_array_type(anndata.varm[key]),
                     anndata.var_names,
                     key,
-                    schema_only=schema_only,
+                    ingest_mode=ingest_mode,
                 )
             )
 
@@ -318,7 +339,7 @@ def _from_anndata_aux(
                     tiledbsoma.util._to_tiledb_supported_array_type(anndata.obsp[key]),
                     anndata.obs_names,
                     key,
-                    schema_only=schema_only,
+                    ingest_mode=ingest_mode,
                 )
             )
 
@@ -329,7 +350,7 @@ def _from_anndata_aux(
                     tiledbsoma.util._to_tiledb_supported_array_type(anndata.varp[key]),
                     anndata.var_names,
                     key,
-                    schema_only=schema_only,
+                    ingest_mode=ingest_mode,
                 )
             )
 
@@ -338,7 +359,7 @@ def _from_anndata_aux(
                 executor.submit(
                     soma.raw.from_anndata,
                     anndata,
-                    schema_only=schema_only,
+                    ingest_mode=ingest_mode,
                 )
             )
 
@@ -354,15 +375,15 @@ def _from_anndata_aux(
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     # Already parallelized recursively
-    if not schema_only:
+    if ingest_mode != "schema_only":
         # Writing multiple H5ADs in append mode to the same SOMA is a supported mode.  However the
         # uns structures _cannot_ have all the same schema -- in particular there are dense arrays.
         # For append mode, users must set `anndata.uns = {}`, or "nest" each input anndata object's
         # `uns` as `anndata.uns = { "some_unique_name" : anndata.uns }`. In either case, there is
-        # nothing to be done at the schema-only step. The uns objects _have_ no fixed schema -- as
+        # nothing to be done at the schema_only step. The uns objects _have_ no fixed schema -- as
         # indicated by the name `uns` for "unstructured".
         if anndata.uns is not None:
-            soma.uns.from_anndata_uns(anndata.uns)
+            soma.uns.from_anndata_uns(anndata.uns, ingest_mode)
             soma._add_object(soma.uns)
 
     log_io(
@@ -377,8 +398,8 @@ def _from_anndata_aux(
 def from_anndata_update_obs_and_var(
     soma: tiledbsoma.SOMA,
     anndata: ad.AnnData,
-    _unused1: str,
-    _unused2: bool = False,
+    _unused1: str = "",
+    _unused2: str = "",
 ) -> None:
     """
     Rewrites obs and var from anndata, leaving all other data in place. Useful

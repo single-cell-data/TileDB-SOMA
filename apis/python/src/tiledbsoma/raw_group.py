@@ -65,11 +65,13 @@ class RawGroup(TileDBGroup):
         anndata: ad.AnnData,
         X_layer_name: str = "data",
         *,
-        schema_only: bool = False,
+        ingest_mode: str,
     ) -> None:
         """
         Writes ``anndata.raw`` to a TileDB group structure.
         """
+        assert ingest_mode in util.INGEST_MODES
+
         s = util.get_start_stamp()
         log_io(None, f"{self._indent}START  WRITING {self.nested_name}")
 
@@ -79,7 +81,7 @@ class RawGroup(TileDBGroup):
         self.var.from_dataframe(
             dataframe=util_ann._decategoricalize_obs_or_var(anndata.raw.var),
             extent=2048,
-            schema_only=schema_only,
+            ingest_mode=ingest_mode,
         )
         self._add_object(self.var)
 
@@ -88,7 +90,7 @@ class RawGroup(TileDBGroup):
             row_names=anndata.obs.index,
             col_names=anndata.raw.var.index,
             layer_name=X_layer_name,
-            schema_only=schema_only,
+            ingest_mode=ingest_mode,
         )
         self._add_object(self.X)
 
@@ -98,7 +100,7 @@ class RawGroup(TileDBGroup):
                 util._to_tiledb_supported_array_type(anndata.raw.varm[key]),
                 anndata.raw.var_names,
                 key,
-                schema_only=schema_only,
+                ingest_mode=ingest_mode,
             )
         self._add_object(self.varm)
 

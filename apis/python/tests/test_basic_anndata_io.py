@@ -26,22 +26,27 @@ def adata(h5ad_file):
 
 
 @pytest.mark.parametrize(
-    "schema_onlies",
+    "ingest_modes",
     [
-        [False],  # Standard ingest: normal use-case
-        [True],  # User only creates schema
-        [False, True],  # User creates schema, then writes data
+        ["write"],  # Standard ingest: normal use-case
+        ["schema_only"],  # User only creates schema
+        ["write", "schema_only"],  # User creates schema, then writes data
         [
-            False,
-            True,
-            True,
+            "write",
+            "schema_only",
+            "schema_only",
         ],  # User creates schema, then writes and re-writes the same data
-        [True, True],  # User writes and re-writes the same data
+        ["schema_only", "schema_only"],  # User writes and re-writes the same data
+        [
+            "write",
+            "resume",
+        ],  # User writes data, then a subsequent write creates nothing new
+        ["resume"],  # "Resume" after no write at all does write new data
     ],
 )
-def test_import_anndata(adata, schema_onlies):
+def test_import_anndata(adata, ingest_modes):
 
-    for schema_only in schema_onlies:
+    for ingest_mode in ingest_modes:
 
         # Set up anndata input path and tiledb-group output path
         tempdir = tempfile.TemporaryDirectory()
@@ -51,7 +56,7 @@ def test_import_anndata(adata, schema_onlies):
 
         # Ingest
         soma = tiledbsoma.SOMA(output_path)
-        tiledbsoma.io.from_anndata(soma, orig, schema_only=schema_only)
+        tiledbsoma.io.from_anndata(soma, orig, ingest_mode=ingest_mode)
 
         # Structure:
         #   X/data
@@ -88,7 +93,7 @@ def test_import_anndata(adata, schema_onlies):
             df = A.df[:]
             assert df.columns.to_list() == ["obs_id", "var_id", "value"]
             # verify sparsity of raw data
-            if schema_only:
+            if ingest_mode == "schema_only":
                 assert df.shape[0] == 0
             else:
                 assert df.shape[0] == orig.raw.X.nnz
@@ -104,7 +109,7 @@ def test_import_anndata(adata, schema_onlies):
                 A.meta[tiledbsoma.util.SOMA_OBJECT_TYPE_METADATA_KEY]
                 == "AnnotationDataFrame"
             )
-        if schema_only:
+        if ingest_mode == "schema_only":
             assert sorted(soma.obs.ids()) == []
         else:
             assert sorted(soma.obs.ids()) == sorted(list(orig.obs_names))
@@ -121,7 +126,7 @@ def test_import_anndata(adata, schema_onlies):
                 A.meta[tiledbsoma.util.SOMA_OBJECT_TYPE_METADATA_KEY]
                 == "AnnotationDataFrame"
             )
-        if schema_only:
+        if ingest_mode == "schema_only":
             assert sorted(soma.var.ids()) == []
         else:
             assert sorted(soma.var.ids()) == sorted(list(orig.var_names))
@@ -136,7 +141,7 @@ def test_import_anndata(adata, schema_onlies):
         for key in orig.obsm_keys():
             with tiledb.open(os.path.join(output_path, "obsm", key)) as A:
                 df = A.df[:]
-                if schema_only:
+                if ingest_mode == "schema_only":
                     assert df.shape[0] == 0
                     assert soma.obsm[key].shape() == (0, orig.obsm[key].shape[1])
                 else:
@@ -154,7 +159,7 @@ def test_import_anndata(adata, schema_onlies):
         for key in orig.varm_keys():
             with tiledb.open(os.path.join(output_path, "varm", key)) as A:
                 df = A.df[:]
-                if schema_only:
+                if ingest_mode == "schema_only":
                     assert df.shape[0] == 0
                     assert soma.varm[key].shape() == (0, orig.varm[key].shape[1])
                 else:
@@ -173,7 +178,7 @@ def test_import_anndata(adata, schema_onlies):
             with tiledb.open(os.path.join(output_path, "obsp", key)) as A:
                 df = A.df[:]
                 assert df.columns.to_list() == ["obs_id_i", "obs_id_j", "value"]
-                if schema_only:
+                if ingest_mode == "schema_only":
                     assert df.shape[0] == 0
                 else:
                     assert df.shape[0] == orig.obsp[key].nnz
@@ -182,7 +187,7 @@ def test_import_anndata(adata, schema_onlies):
                 # can get is the NNZ x attrs shape -- note that there are two
                 # dims and one attr so the shape is nnz x 1.
                 shape = soma.obsp[key].df().shape
-                if schema_only:
+                if ingest_mode == "schema_only":
                     assert shape[0] == 0
                 else:
                     assert shape[0] == orig.obsp[key].nnz
@@ -196,6 +201,63 @@ def test_import_anndata(adata, schema_onlies):
             assert getattr(soma.obsp, key).shape() == soma.obsp[key].shape()
 
     tempdir.cleanup()
+
+
+def _get_fragment_count(array_uri):
+    return len(tiledb.fragment.FragmentInfoList(array_uri=array_uri))
+
+
+def test_resume_mode(adata):
+    """
+    Makes sure resume-mode ingest after successful ingest of the same input data does not write
+    anything new
+    """
+
+    tempdir1 = tempfile.TemporaryDirectory()
+    tempdir2 = tempfile.TemporaryDirectory()
+    output_path1 = tempdir1.name
+    output_path2 = tempdir2.name
+
+    soma1 = tiledbsoma.SOMA(output_path1)
+    soma2 = tiledbsoma.SOMA(output_path2)
+    tiledbsoma.io.from_anndata(soma1, adata, ingest_mode="write")
+    tiledbsoma.io.from_anndata(soma2, adata, ingest_mode="write")
+    tiledbsoma.io.from_anndata(soma2, adata, ingest_mode="resume")
+
+    assert _get_fragment_count(soma1.obs.uri) == _get_fragment_count(soma2.obs.uri)
+    assert _get_fragment_count(soma1.var.uri) == _get_fragment_count(soma2.var.uri)
+    assert _get_fragment_count(soma1.X["data"].uri) == _get_fragment_count(
+        soma2.X["data"].uri
+    )
+
+    assert _get_fragment_count(soma1.raw.var.uri) == _get_fragment_count(
+        soma2.raw.var.uri
+    )
+    assert _get_fragment_count(soma1.raw.X["data"].uri) == _get_fragment_count(
+        soma2.raw.X["data"].uri
+    )
+
+    assert _get_fragment_count(soma1.obsm["X_pca"].uri) == _get_fragment_count(
+        soma2.obsm["X_pca"].uri
+    )
+    assert _get_fragment_count(soma1.obsm["X_tsne"].uri) == _get_fragment_count(
+        soma2.obsm["X_tsne"].uri
+    )
+
+    assert _get_fragment_count(soma1.obsp["distances"].uri) == _get_fragment_count(
+        soma2.obsp["distances"].uri
+    )
+
+    assert _get_fragment_count(soma1.varm["PCs"].uri) == _get_fragment_count(
+        soma2.varm["PCs"].uri
+    )
+
+    assert _get_fragment_count(
+        soma1.uns["neighbors"]["params"]["method"].uri
+    ) == _get_fragment_count(soma2.uns["neighbors"]["params"]["method"].uri)
+
+    tempdir1.cleanup()
+    tempdir2.cleanup()
 
 
 def test_export_anndata(adata):

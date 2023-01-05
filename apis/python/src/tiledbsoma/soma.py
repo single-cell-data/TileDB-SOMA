@@ -20,6 +20,7 @@ from .soma_slice import SOMASlice
 from .tiledb_group import TileDBGroup
 from .types import Ids, Matrix
 from .uns_group import UnsGroup
+from .util import INGEST_MODES
 
 
 class SOMA(TileDBGroup):
@@ -684,10 +685,17 @@ class SOMA(TileDBGroup):
         self,
         matrix: Matrix,
         layer_name: str = "data",
+        ingest_mode: str = "write",
     ) -> None:
         """
         Populates the ``X`` or ``raw.X`` subgroup for a ``SOMA`` object.
         """
+        assert ingest_mode in INGEST_MODES
+
         self.X.add_layer_from_matrix_and_dim_values(
-            matrix, self.obs.ids(), self.var.ids(), layer_name
+            matrix,
+            self.obs.ids(),
+            self.var.ids(),
+            layer_name,
+            ingest_mode=ingest_mode,
         )

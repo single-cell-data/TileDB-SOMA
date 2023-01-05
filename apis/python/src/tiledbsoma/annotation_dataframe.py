@@ -328,7 +328,11 @@ class AnnotationDataFrame(TileDBArray):
 
     # ----------------------------------------------------------------
     def from_dataframe(
-        self, dataframe: pd.DataFrame, *, extent: int = 2048, schema_only: bool = False
+        self,
+        dataframe: pd.DataFrame,
+        *,
+        extent: int = 2048,
+        ingest_mode: str = "write",
     ) -> None:
         """
         Populates the ``obs`` or ``var`` subgroup for a SOMA object.
@@ -336,6 +340,7 @@ class AnnotationDataFrame(TileDBArray):
         :param dataframe: ``anndata.obs``, ``anndata.var``, ``anndata.raw.var``.
         :param extent: TileDB ``extent`` parameter for the array schema.
         """
+        assert ingest_mode in util.INGEST_MODES
 
         offsets_filters = tiledb.FilterList(
             [tiledb.PositiveDeltaFilter(), tiledb.ZstdFilter(level=-1)]
@@ -371,12 +376,12 @@ class AnnotationDataFrame(TileDBArray):
         #   CTTGATTGATCTTC 0          233.0      76           ...
         dataframe = dataframe.rename_axis(self.dim_name)
 
-        if schema_only:
-            mode = "schema_only"
+        if ingest_mode == "schema_only":
+            from_pandas_mode = "schema_only"
         else:
-            mode = "ingest"
+            from_pandas_mode = "ingest"
             if self.exists():
-                mode = "append"
+                from_pandas_mode = "append"
                 log_io(
                     None, f"{self._indent}Re-using existing array {self.nested_name}"
                 )
@@ -414,6 +419,21 @@ class AnnotationDataFrame(TileDBArray):
                 # Force ASCII storage if string, in order to make obs/var columns queryable.
                 column_types[column_name] = "ascii"
 
+        if ingest_mode == "resume" and self.exists():
+            # This lets us check for already-ingested chunks, when in resume-ingest mode.
+            ned = self._get_non_empty_domain_as_strings(1)
+            sorted_dim_values = sorted(list(dfc.index))
+            dim_range = ((sorted_dim_values[0], sorted_dim_values[-1]),)
+            if self._chunk_is_contained_in(dim_range, ned):
+                self._set_object_type_metadata()
+                log_io(
+                    f"Skipped {self.nested_name}",
+                    util.format_elapsed(
+                        s, f"{self._indent}SKIPPED WRITING {self.nested_name}"
+                    ),
+                )
+                return
+
         tiledb.from_pandas(
             uri=self.uri,
             dataframe=dataframe,
@@ -429,7 +449,7 @@ class AnnotationDataFrame(TileDBArray):
             tile=extent,
             column_types=column_types,
             ctx=self._ctx,
-            mode=mode,
+            mode=from_pandas_mode,
         )
 
         self._set_object_type_metadata()

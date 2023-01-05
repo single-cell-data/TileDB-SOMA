@@ -1,10 +1,11 @@
-from typing import Dict, Optional, Sequence
+from typing import Dict, Optional, Sequence, Union
 
 import tiledb
 
 import tiledbsoma
 
 from .tiledb_object import TileDBObject
+from .types import MNTupleStr, MNTupleStrNone
 
 
 class TileDBArray(TileDBObject):
@@ -103,3 +104,76 @@ class TileDBArray(TileDBObject):
         print(f"{indent}[{self.name}]")
         for key, value in self.metadata().items():
             print(f"{indent}- {key}: {value}")
+
+    def _ned_value_to_string(self, value: Union[bytes, str, None]) -> Union[None, str]:
+        """
+        Helper function for _get_non_empty_domain_as_strings
+        """
+        if value is None:
+            return value
+        elif isinstance(value, bytes):
+            return value.decode()
+        elif isinstance(value, str):
+            return value
+        else:
+            raise NotImplementedError(f"expected bytes or str; got {type(value)}")
+
+    def _get_non_empty_domain_as_strings(self, expected_ndim: int) -> MNTupleStrNone:
+        """
+        Returns nonempty domain tuples. Due to an implementation detail in TileDB-Py, we get these
+        from TileDB-Py as tuples of bytes, not strings. Here we take care of that, as a
+        keystroke-saver for callers. This is a helper for resume-ingest mode.
+        """
+        with self._open() as A:
+            # Note that if an array has had its schema written but no data written,
+            # its non-empty domain will have `None` values.
+            ned = A.nonempty_domain()
+
+        assert len(ned) == expected_ndim
+        if expected_ndim == 1:
+            lo, hi = ned[0]
+            lo = self._ned_value_to_string(lo)
+            hi = self._ned_value_to_string(hi)
+            return ((lo, hi),)
+
+        elif expected_ndim == 2:
+            row_lo, row_hi = ned[0]
+            row_lo = self._ned_value_to_string(row_lo)
+            row_hi = self._ned_value_to_string(row_hi)
+            col_lo, col_hi = ned[1]
+            col_lo = self._ned_value_to_string(col_lo)
+            col_hi = self._ned_value_to_string(col_hi)
+            return ((row_lo, row_hi), (col_lo, col_hi))
+
+        else:
+            raise NotImplementedError(
+                f"only ndims 1 or 2 are supported; got {expected_ndim}"
+            )
+
+    def _chunk_is_contained_in(
+        self,
+        chunk_mbr: MNTupleStr,
+        storage_nonempty_domain: MNTupleStrNone,
+    ) -> bool:
+        """
+        Determines if a dim range is included within the array's non-empty domain.  Note that
+        `_get_non_empty_domain_as_string()` is provided to cache non-empty domain values.  Ranges
+        are inclusive on both endpoints.  This is a helper for resume-ingest mode.
+        """
+        assert len(chunk_mbr) == len(storage_nonempty_domain)
+        ndim = len(chunk_mbr)
+
+        for i in range(ndim):
+            chunk_lo, chunk_hi = chunk_mbr[i]
+            storage_lo, storage_hi = storage_nonempty_domain[i]
+
+            if storage_lo is None or storage_hi is None:
+                # E.g. an array has had its schema created but no data written yet
+                return False
+
+            if chunk_lo < storage_lo or chunk_lo > storage_hi:
+                return False
+            if chunk_hi < storage_lo or chunk_hi > storage_hi:
+                return False
+
+        return True

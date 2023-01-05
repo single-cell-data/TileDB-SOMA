@@ -107,7 +107,7 @@ class AnnotationMatrix(TileDBArray):
         self,
         matrix: Union[pd.DataFrame, Matrix],
         dim_values: Labels,
-        schema_only: bool = False,
+        ingest_mode: str,
     ) -> None:
         """
         Populates an array in the obsm/ or varm/ subgroup for a SOMA object.
@@ -115,14 +115,29 @@ class AnnotationMatrix(TileDBArray):
         :param matrix: ``anndata.obsm['foo']``, ``anndata.varm['foo']``, or ``anndata.raw.varm['foo']``.
         :param dim_values: ``anndata.obs_names``, ``anndata.var_names``, or ``anndata.raw.var_names``.
         """
+        assert ingest_mode in util.INGEST_MODES
+
         s = util.get_start_stamp()
+
+        if ingest_mode == "resume" and self.exists():
+            # This lets us check for already-ingested arrays, when in resume-ingest mode.
+            ned = self._get_non_empty_domain_as_strings(1)
+            sorted_dim_values = sorted(dim_values)
+            data_mbr = ((sorted_dim_values[0], sorted_dim_values[-1]),)
+            if self._chunk_is_contained_in(data_mbr, ned):
+                log_io(
+                    f"Skipped {self.nested_name}",
+                    util.format_elapsed(s, f"{self._indent}SKIPPED {self.nested_name}"),
+                )
+                return
+
         log_io(None, f"{self._indent}START  WRITING {self.nested_name}")
 
         if isinstance(matrix, pd.DataFrame):
-            self._from_pandas_dataframe(matrix, dim_values, schema_only=schema_only)
+            self._from_pandas_dataframe(matrix, dim_values, ingest_mode=ingest_mode)
         else:
             self._numpy_ndarray_or_scipy_sparse_csr_matrix(
-                matrix, dim_values, schema_only=schema_only
+                matrix, dim_values, ingest_mode=ingest_mode
             )
 
         self._set_object_type_metadata()
@@ -137,7 +152,7 @@ class AnnotationMatrix(TileDBArray):
         self,
         matrix: Matrix,
         dim_values: Labels,
-        schema_only: bool = False,
+        ingest_mode: str,
     ) -> None:
         # We do not have column names for anndata-provenance annotation matrices.
         # So, if say we're looking at anndata.obsm['X_pca'], we create column names
@@ -151,14 +166,18 @@ class AnnotationMatrix(TileDBArray):
         else:
             self._create_empty_array([matrix.dtype] * nattr, attr_names)
 
-        if not schema_only:
+        if ingest_mode != "schema_only":
             df = pd.DataFrame(matrix, columns=attr_names)
             with tiledb.open(self.uri, mode="w", ctx=self._ctx) as A:
                 A[dim_values] = df.to_dict(orient="list")
 
     # ----------------------------------------------------------------
     def _from_pandas_dataframe(
-        self, df: pd.DataFrame, dim_values: Labels, *, schema_only: bool = False
+        self,
+        df: pd.DataFrame,
+        dim_values: Labels,
+        *,
+        ingest_mode: str,
     ) -> None:
         attr_names = df.columns.values.tolist()
 
@@ -168,7 +187,7 @@ class AnnotationMatrix(TileDBArray):
         else:
             self._create_empty_array(list(df.dtypes), attr_names)
 
-        if not schema_only:
+        if ingest_mode != "schema_only":
             with tiledb.open(self.uri, mode="w", ctx=self._ctx) as A:
                 A[dim_values] = df.to_dict(orient="list")
 

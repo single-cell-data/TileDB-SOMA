@@ -6,6 +6,7 @@ from .annotation_dataframe import AnnotationDataFrame
 from .assay_matrix import AssayMatrix
 from .tiledb_group import TileDBGroup
 from .types import Labels, Matrix
+from .util import INGEST_MODES
 
 
 class AssayMatrixGroup(TileDBGroup):
@@ -145,7 +146,7 @@ class AssayMatrixGroup(TileDBGroup):
         col_names: Labels,
         layer_name: str = "data",
         *,
-        schema_only: bool = False,
+        ingest_mode: str = "write",
     ) -> None:
         """
         Populates the ``X`` or ``raw.X`` subgroup for a ``SOMA`` object.  For ``X`` and ``raw.X``,
@@ -153,6 +154,7 @@ class AssayMatrixGroup(TileDBGroup):
         ``anndata.var_names`` or ``anndata.raw.var_names``.  For ``obsp`` elements, both will
         be ``anndata.obs_names``; for ``varp elements, both will be ``anndata.var_names``.
         """
+        assert ingest_mode in INGEST_MODES
 
         if matrix is not None:
             # Must be done first, to create the parent directory
@@ -171,7 +173,7 @@ class AssayMatrixGroup(TileDBGroup):
                 parent=self,
             )
             assay_matrix.from_matrix_and_dim_values(
-                matrix, row_names, col_names, schema_only=schema_only
+                matrix, row_names, col_names, ingest_mode=ingest_mode
             )
 
             self._add_object(assay_matrix)
