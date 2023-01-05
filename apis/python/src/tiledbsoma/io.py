@@ -77,7 +77,8 @@ def _from_h5ad_common(
     s = tiledbsoma.util.get_start_stamp()
     log_io(None, f"{soma._indent}START  READING {input_path}")
 
-    anndata = ad.read_h5ad(input_path)
+    # No gains found from using "r+" AFAICT
+    anndata = ad.read_h5ad(input_path, backed="r")
 
     log_io(
         None,
@@ -196,7 +197,6 @@ def _from_anndata_aux(
 
     anndata.obs_names_make_unique()
     anndata.var_names_make_unique()
-    anndata = tiledbsoma.util_ann._decategoricalize(anndata)
 
     log_io(
         None,
@@ -218,7 +218,7 @@ def _from_anndata_aux(
         futures.append(
             executor.submit(
                 soma.obs.from_dataframe,
-                dataframe=anndata.obs,
+                dataframe=tiledbsoma.util_ann._decategoricalize_obs_or_var(anndata.obs),
                 extent=256,
                 schema_only=schema_only,
             )
@@ -226,7 +226,7 @@ def _from_anndata_aux(
         futures.append(
             executor.submit(
                 soma.var.from_dataframe,
-                dataframe=anndata.var,
+                dataframe=tiledbsoma.util_ann._decategoricalize_obs_or_var(anndata.var),
                 extent=2048,
                 schema_only=schema_only,
             )
@@ -234,7 +234,24 @@ def _from_anndata_aux(
         futures.append(
             executor.submit(
                 soma.X.add_layer_from_matrix_and_dim_values,
-                matrix=anndata.X,
+                # Note:
+                # * Using anndata.X[:] loads the entire CSR (or whatever) into memory
+                # * If we use just anndata.X then we get a super-cool object which
+                #   we can index with things like matrix[0:10], matrix[10:20], etc
+                #   which would allow us even further control over memory use --
+                #   in particular this would allow us to do distributed ingest
+                #   via UDFs ...
+                # * ... but ... sadly there's a problem (in main-old).
+                # * Context: while in main the dims are join-ids and we can H5AD-read
+                #   and TileDB-write the matrices in their H5AD order (e.g. matrix[0:10] or
+                #   whatever), in main-old we must write string dims in sorted order
+                #   in order to avoid non-overlapping fragments. That in turn requires
+                #   util._get_sort_and_permutation() which gets matrix[i].nnz. And
+                #   in turn the anndata super-snazzy indexed-matrix object I was raving
+                #   about ... doesn't do well _at all_ in performance here. Effectively
+                #   the util._get_sort_and_permutation() never completes. :(
+                # * So for main we'll be able to drop the [:] here and it will be grand. :)
+                matrix=anndata.X[:],
                 row_names=anndata.obs.index,
                 col_names=anndata.var.index,
                 layer_name=X_layer_name,
@@ -247,7 +264,8 @@ def _from_anndata_aux(
                 futures.append(
                     executor.submit(
                         soma.X.add_layer_from_matrix_and_dim_values,
-                        matrix=anndata.layers[layer_name],
+                        # See comments on anndata.X[:], above
+                        matrix=anndata.layers[layer_name][:],
                         row_names=anndata.obs.index,
                         col_names=anndata.var.index,
                         layer_name=layer_name,
@@ -275,7 +293,7 @@ def _from_anndata_aux(
             futures.append(
                 executor.submit(
                     soma.obsm.add_matrix_from_matrix_and_dim_values,
-                    anndata.obsm[key],
+                    tiledbsoma.util._to_tiledb_supported_array_type(anndata.obsm[key]),
                     anndata.obs_names,
                     key,
                     schema_only=schema_only,
@@ -286,7 +304,7 @@ def _from_anndata_aux(
             futures.append(
                 executor.submit(
                     soma.varm.add_matrix_from_matrix_and_dim_values,
-                    anndata.varm[key],
+                    tiledbsoma.util._to_tiledb_supported_array_type(anndata.varm[key]),
                     anndata.var_names,
                     key,
                     schema_only=schema_only,
@@ -297,7 +315,7 @@ def _from_anndata_aux(
             futures.append(
                 executor.submit(
                     soma.obsp.add_matrix_from_matrix_and_dim_values,
-                    anndata.obsp[key],
+                    tiledbsoma.util._to_tiledb_supported_array_type(anndata.obsp[key]),
                     anndata.obs_names,
                     key,
                     schema_only=schema_only,
@@ -308,7 +326,7 @@ def _from_anndata_aux(
             futures.append(
                 executor.submit(
                     soma.varp.add_matrix_from_matrix_and_dim_values,
-                    anndata.varp[key],
+                    tiledbsoma.util._to_tiledb_supported_array_type(anndata.varp[key]),
                     anndata.var_names,
                     key,
                     schema_only=schema_only,
@@ -376,7 +394,9 @@ def from_anndata_update_obs_and_var(
 
     anndata.obs_names_make_unique()
     anndata.var_names_make_unique()
-    anndata = tiledbsoma.util_ann._decategoricalize(anndata)
+
+    obs = tiledbsoma.util_ann._decategoricalize_obs_or_var(anndata.obs)
+    var = tiledbsoma.util_ann._decategoricalize_obs_or_var(anndata.var)
 
     log_io(
         None,
@@ -388,13 +408,13 @@ def from_anndata_update_obs_and_var(
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     soma._remove_object(soma.obs)
-    soma.obs.from_dataframe(dataframe=anndata.obs, extent=256)
+    soma.obs.from_dataframe(dataframe=obs, extent=256)
     soma._add_object(soma.obs)
     tiledb.consolidate(soma.obs.uri)
     tiledb.vacuum(soma.obs.uri)
 
     soma._remove_object(soma.var)
-    soma.var.from_dataframe(dataframe=anndata.var, extent=2048)
+    soma.var.from_dataframe(dataframe=var, extent=2048)
     soma._add_object(soma.var)
     tiledb.consolidate(soma.var.uri)
     tiledb.vacuum(soma.var.uri)
