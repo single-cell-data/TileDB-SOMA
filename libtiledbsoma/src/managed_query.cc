@@ -46,14 +46,26 @@ ManagedQuery::ManagedQuery(std::shared_ptr<Array> array, std::string_view name)
     : array_(array)
     , name_(name)
     , schema_(std::make_shared<ArraySchema>(array->schema())) {
-    query_ = std::make_unique<Query>(schema_->context(), *array);
-    subarray_ = std::make_unique<Subarray>(schema_->context(), *array);
+    reset();
+}
 
-    if (array->schema().array_type() == TILEDB_SPARSE) {
+void ManagedQuery::reset() {
+    query_ = std::make_unique<Query>(schema_->context(), *array_);
+    subarray_ = std::make_unique<Subarray>(schema_->context(), *array_);
+
+    if (array_->schema().array_type() == TILEDB_SPARSE) {
         query_->set_layout(TILEDB_UNORDERED);
     } else {
         query_->set_layout(TILEDB_ROW_MAJOR);
     }
+
+    subarray_range_set_ = false;
+    subarray_range_empty_ = true;
+    columns_.clear();
+    results_complete_ = true;
+    total_num_cells_ = 0;
+    buffers_.reset();
+    query_submitted_ = false;
 }
 
 void ManagedQuery::select_columns(
@@ -104,7 +116,7 @@ void ManagedQuery::submit() {
                 0, non_empty_domain.first, non_empty_domain.second);
 
             LOG_DEBUG(fmt::format(
-                "[ManagedQuery] Add full NDE range to dense subarray = (0, {}, "
+                "[ManagedQuery] Add full NED range to dense subarray = (0, {}, "
                 "{})",
                 non_empty_domain.first,
                 non_empty_domain.second));
@@ -139,11 +151,19 @@ void ManagedQuery::submit() {
     // Submit query
     LOG_DEBUG(fmt::format("[ManagedQuery] [{}] Submit query", name_));
 
-    query_->submit();
+    // Do not submit if the query contains only empty ranges
+    if (!is_empty_query()) {
+        query_->submit();
+    }
     query_submitted_ = true;
 }
 
 std::shared_ptr<ArrayBuffers> ManagedQuery::results() {
+    if (is_empty_query()) {
+        query_submitted_ = false;
+        return buffers_;
+    }
+
     if (!query_submitted_) {
         throw TileDBSOMAError(fmt::format(
             "[ManagedQuery][{}] submit query before reading results", name_));

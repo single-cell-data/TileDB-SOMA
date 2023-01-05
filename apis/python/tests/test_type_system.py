@@ -4,7 +4,7 @@ import pytest
 import tiledbsoma as soma
 
 """
-Arrow types we expect to work. A handful of types will promote, eg, string->large_string.
+Arrow types we expect to work. A handful of types will promote, e.g., string->large_string.
 Most must be literally as requested, or error out.
 
 Tuple is (requested_type, expected_type).
@@ -63,13 +63,11 @@ def test_arrow_types_supported(tmp_path, arrow_type_info):
     """Verify round-trip conversion of types which should work "as is" """
     arrow_type, expected_arrow_type = arrow_type_info
 
-    sdf = soma.SOMADataFrame(tmp_path.as_posix())
+    sdf = soma.DataFrame(tmp_path.as_posix())
     assert sdf == sdf.create(pa.schema([(str(arrow_type), arrow_type)]))
     schema = sdf.schema
     assert schema is not None
-    assert sorted(schema.names) == sorted(
-        ["soma_joinid", "soma_rowid", str(arrow_type)]
-    )
+    assert sorted(schema.names) == sorted(["soma_joinid", str(arrow_type)])
     assert schema.field(str(arrow_type)).type == expected_arrow_type
 
 
@@ -77,7 +75,76 @@ def test_arrow_types_supported(tmp_path, arrow_type_info):
 def test_arrow_types_unsupported(tmp_path, arrow_type):
     """Verify explicit error for unsupported types"""
 
-    sdf = soma.SOMADataFrame(tmp_path.as_posix())
+    sdf = soma.DataFrame(tmp_path.as_posix())
 
     with pytest.raises(TypeError, match=r"unsupported type|Unsupported Arrow type"):
         assert sdf == sdf.create(pa.schema([(str(arrow_type), arrow_type)]))
+
+
+# ================================================================
+# Test writing bool byte-arrays to Arrow bit-arrays
+@pytest.mark.parametrize(
+    "bool_array",
+    [
+        # Length-zero bit-array
+        [],
+        # Length-one bit-array
+        [True],
+        # Less than a full byte
+        [True, False, False, True, False, False, False],
+        # A single byte
+        [True, False, False, True, False, False, False, True],
+        # More than a single byte
+        [True, False, False, True, False, False, False, True, True],
+        # Multiple bytes
+        [
+            True,
+            False,
+            False,
+            False,
+            False,
+            False,
+            False,
+            False,
+            False,
+            True,
+            False,
+            False,
+            False,
+            False,
+            False,
+            False,
+            False,
+            False,
+            True,
+            False,
+            False,
+            False,
+            False,
+            False,
+        ],
+    ],
+)
+def test_bool_arrays(tmp_path, bool_array):
+    schema = pa.schema(
+        [
+            ("soma_joinid", pa.int64()),
+            ("b", pa.bool_()),
+        ]
+    )
+    index_column_names = ["soma_joinid"]
+    sidf = soma.DataFrame(uri=tmp_path.as_posix())
+    sidf.create(schema=schema, index_column_names=index_column_names)
+    n_data = len(bool_array)
+
+    data = {
+        "soma_joinid": list(range(n_data)),
+        "b": bool_array,
+    }
+    rb = pa.Table.from_pydict(data)
+    sidf.write(rb)
+
+    assert sidf.exists()
+
+    table = sidf.read_all()
+    assert table["b"].to_pylist() == bool_array

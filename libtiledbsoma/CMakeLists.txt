@@ -30,21 +30,23 @@
 ############################################################
 
 cmake_minimum_required(VERSION 3.21)
-
-if(DEFINED ENV{LIBTILEDBSOMA_DEBUG_BUILD})
-  message(STATUS "")
-  message(STATUS "START libtiledbsoma/CMakeLists.txt")
+if (CMAKE_VERSION VERSION_GREATER_EQUAL "3.24.0")
+  cmake_policy(SET CMP0135 NEW)
 endif()
+
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmake/Modules/")
 
 # TileDB-SOMA Options
-option(TILEDBSOMA_ENABLE_PYTHON "Enables Python API bindings" ON)
+option(TILEDBSOMA_BUILD_PYTHON "Build Python API bindings" ON)
+option(TILEDBSOMA_BUILD_CLI "Build tiledbsoma CLI tool" ON)
+option(TILEDBSOMA_BUILD_R "Build a static library (only) for R" OFF)
+option(TILEDBSOMA_ENABLE_TESTING "Enable tests" ON)
 option(TILEDBSOMA_ENABLE_WERROR "Enables the -Werror flag during compilation." ON)
 
 # Superbuild option must be on by default.
 option(SUPERBUILD "If true, perform a superbuild (builds all missing dependencies)." ON)
 option(CMAKE_IDE "(Used for CLion builds). Disables superbuild and sets the EP install dir." OFF)
-option(FORCE_BUILD_TILEDB "Forces a local build of TileDB instead of searching system paths." ON)
+option(FORCE_BUILD_TILEDB "Forces a local build of TileDB instead of searching system paths." OFF)
 option(TILEDB_FORCE_ALL_DEPS "Forces a local build of TileDB instead of searching system paths." OFF)
 option(DOWNLOAD_TILEDB_PREBUILT "If tiledb is being super built, this controls downloading prebuilt artifacts or building from source" ON)
 
@@ -58,7 +60,24 @@ option(TILEDB_SERIALIZATION "If true, enables building with support for query se
 option(OVERRIDE_INSTALL_PREFIX "Ignores the setting of CMAKE_INSTALL_PREFIX and sets a default prefix" ON)
 option(ENABLE_ARROW_EXPORT "Installs an extra header for exporting in-memory results with Apache Arrow" ON)
 option(TILEDB_LOG_OUTPUT_ON_FAILURE "If true, print error logs if dependency sub-project build fails" ON)
-option(TILEDBSOMA_TESTING "Enable tests" ON)
+
+# NOTE: TILEDBSOMA_BUILD_R is added to INHERITED_CMAKE_ARGS in Superbuild.cmake
+# so the option is forwarded to the non-superbuild
+if (TILEDBSOMA_BUILD_R)
+  # Disable build targets when building for R
+  set(TILEDBSOMA_BUILD_PYTHON OFF)
+  set(TILEDBSOMA_BUILD_CLI OFF)
+  set(TILEDBSOMA_ENABLE_TESTING OFF)
+
+  add_compile_options(-DR_BUILD)
+endif()
+
+# Enable compiler cache to speed up recompilation
+find_program(CCACHE_FOUND ccache)
+if(CCACHE_FOUND)
+  set_property(GLOBAL PROPERTY RULE_LAUNCH_COMPILE ccache)
+  set_property(GLOBAL PROPERTY RULE_LAUNCH_LINK ccache)
+endif()
 
 # Set C++17 as required standard for all C++ targets (C++17 minimum is required to use the TileDB C++ API).
 set(CMAKE_CXX_STANDARD 17)
@@ -101,6 +120,9 @@ endif()
 # Export symbols without decorating the code
 set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
 
+# Append path to linked library files to the rpath
+set(CMAKE_INSTALL_RPATH_USE_LINK_PATH ON)
+
 ############################################################
 # Superbuild setup
 ############################################################
@@ -118,12 +140,8 @@ endif()
 
 if (SUPERBUILD)
   project(TileDB-SOMA-Superbuild)
-  message(STATUS "Starting TileDB-SingleCell superbuild.")
+  message(STATUS "Starting TileDB-SOMA superbuild.")
   include("cmake/Superbuild.cmake")
-  if(DEFINED ENV{LIBTILEDBSOMA_DEBUG_BUILD})
-    message(STATUS "END libtiledbsoma/CMakeLists.txt")
-    message(STATUS "")
-  endif()
   return()
 endif()
 
@@ -207,12 +225,9 @@ endif()
 # Regular build
 ############################################################
 
-# Enable testing
-enable_testing()
-
 add_subdirectory(src)
-add_subdirectory(test)
-if(DEFINED ENV{LIBTILEDBSOMA_DEBUG_BUILD})
-  message(STATUS "END libtiledbsoma/CMakeLists.txt")
-  message(STATUS "")
+
+if (TILEDBSOMA_ENABLE_TESTING)
+  enable_testing()
+  add_subdirectory(test)
 endif()

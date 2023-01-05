@@ -1,7 +1,9 @@
 #!/usr/bin/env python
 
 import os
-
+import pandas as pd
+import pyarrow as pa
+import tiledbsoma.libtiledbsoma as clib
 import tiledb
 import tiledbsoma.libtiledbsoma as sc
 from tiledbsoma.query_condition import QueryCondition
@@ -12,11 +14,11 @@ TEST_DIR = os.path.dirname(__file__)
 SOMA_URI = f"{TEST_DIR}/../../test/soco/pbmc3k_processed"
 
 if VERBOSE:
-    sc.config_logging("debug")
+    clib.config_logging("debug")
 
 
 def pandas_query(uri, condition):
-    sr = sc.SOMAReader(uri)
+    sr = clib.SOMAReader(uri)
     sr.submit()
     arrow_table = sr.read_next()
     assert sr.results_complete()
@@ -28,7 +30,7 @@ def soma_query(uri, condition):
     qc = QueryCondition(condition)
     schema = tiledb.open(uri).schema
 
-    sr = sc.SOMAReader(uri, query_condition=qc, schema=schema)
+    sr = clib.SOMAReader(uri, query_condition=qc, schema=schema)
     sr.submit()
     arrow_table = sr.read_next()
     assert sr.results_complete()
@@ -69,6 +71,17 @@ def test_query_condition_float():
     assert len(pandas.index) == soma_arrow.num_rows
 
 
+def test_query_condition_bool():
+    uri = os.path.join(SOMA_URI, "obs")
+    condition = "is_b_cell == True"
+
+    pandas = pandas_query(uri, condition)
+
+    soma_arrow = soma_query(uri, condition)
+
+    assert len(pandas.index) == soma_arrow.num_rows
+
+
 def test_query_condition_and():
     uri = os.path.join(SOMA_URI, "obs")
     condition = "percent_mito > 0.02 and n_genes > 700"
@@ -98,13 +111,9 @@ def test_query_condition_select_columns():
     qc = QueryCondition(condition)
     schema = tiledb.open(uri).schema
 
-    sr = sc.SOMAReader(
-        uri,
-        query_condition=qc,
-        schema=schema,
-        column_names=["n_genes"],
+    sr = clib.SOMAReader(
+        uri, query_condition=qc, schema=schema, column_names=["n_genes"]
     )
-
     sr.submit()
     arrow_table = sr.read_next()
 
@@ -120,13 +129,42 @@ def test_query_condition_all_columns():
     qc = QueryCondition(condition)
     schema = tiledb.open(uri).schema
 
-    sr = sc.SOMAReader(uri, query_condition=qc, schema=schema)
+    sr = clib.SOMAReader(uri, query_condition=qc, schema=schema)
     sr.submit()
     arrow_table = sr.read_next()
 
     assert sr.results_complete()
     assert arrow_table.num_rows == 1332
     assert arrow_table.num_columns == 7
+
+
+def test_query_condition_reset():
+    uri = os.path.join(SOMA_URI, "obs")
+    condition = "percent_mito > 0.02"
+
+    qc = QueryCondition(condition)
+    schema = tiledb.open(uri).schema
+
+    sr = clib.SOMAReader(uri, query_condition=qc, schema=schema)
+    sr.submit()
+    arrow_table = sr.read_next()
+
+    assert sr.results_complete()
+    assert arrow_table.num_rows == 1332
+    assert arrow_table.num_columns == 7
+
+    # reset and submit new query with open array
+    # ---------------------------------------------------------------
+    condition = "percent_mito < 0.02"
+    qc = QueryCondition(condition)
+    sr.reset(column_names=["percent_mito"], query_condition=qc, schema=schema)
+
+    sr.submit()
+    arrow_table = sr.read_next()
+
+    assert sr.results_complete()
+    assert arrow_table.num_rows == 1306
+    assert arrow_table.num_columns == 1
 
 
 if __name__ == "__main__":

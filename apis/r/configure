@@ -9,24 +9,37 @@ if test -z "${R_HOME}"; then
     exit 1
 fi
 
-## for single-cell-data/apis/r repo, consider completing sources
-if test -d inst/include/tiledbsoma && test -f src/soma_reader.cc; then
-    echo "** Source files present, no adjustments needed."
+### for single-cell-data/apis/r repo, consider completing sources
+if test -f src/lib/libtiledbsoma.a; then
+    echo "** static library present"
 else
-
-    if ! test -d ../../libtiledbsoma; then
-        echo "** Not all source files present but no repo layout. Hm. Exiting."
+    echo "** no static library present"
+    ## check for cmake, needed to build from source
+    have_cmake=`which cmake`
+    if [ "x${have_cmake}" = "x" ]; then
+        echo "** cmake is required, but not in the path, exiting"
+        exit 1
+    fi
+    if test -d ../../libtiledbsoma; then
+        ## if in git repo, use build script
+        (cd ../../; make prefix=apis/r/src r-build > apis/r/src/cmake_log.txt; )
+        echo "** static library made; build log in 'src/cmake_log.txt'"
+    elif test -d src/libtiledbsoma; then
+        ## else with sources build by hand
+        cd src
+        mkdir -p build
+        cmake -B build -S libtiledbsoma -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=. -DOVERRIDE_INSTALL_PREFIX=OFF -DTILEDBSOMA_BUILD_R=ON > cmake_log.txt
+        cmake --build build -j 2 >> cmake_log.txt
+        cmake --build build --target install-libtiledbsoma >> cmake_log.txt
+        rm -rf build
+        cd ..
+        echo "** static library made; NO build log in 'src/cmake_log.txt'"
+    else
+        echo "** no sources, exiting"
         exit 1
     fi
 
-    if ! test -d inst/include/tiledbsoma; then
-        mkdir -p inst/include/tiledbsoma inst/include/externals
-        echo "** copying C++ header files"
-        cp -a ../../libtiledbsoma/include/tiledbsoma/* inst/include/tiledbsoma/
-        cp -a ../../libtiledbsoma/include/externals/* inst/include/externals/
-        echo "** copying C++ source and header files"
-        cp -a ../../libtiledbsoma/src/* src/
-    fi
+    ## TODO: Case when we do not build in the git repo
 fi
 
 ## look for tiledb core library and either use system library or download build

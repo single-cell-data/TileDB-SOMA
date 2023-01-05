@@ -1,9 +1,12 @@
 import pyarrow as pa
 from typeguard.importhook import install_import_hook
 
+# avoid typeguard by importing before calling install_import_hook
+from tiledbsoma import query_condition  # noqa: F401
+
 install_import_hook("tiledbsoma")
 
-"""Types supported in a SOMA*NdArray """
+"""Types supported in a SOMA*NDArray """
 NDARRAY_ARROW_TYPES_SUPPORTED = [
     pa.bool_(),
     pa.int8(),
@@ -22,7 +25,7 @@ NDARRAY_ARROW_TYPES_SUPPORTED = [
     pa.timestamp("ns"),
 ]
 
-"""Primitive types NOT supported in a SOMA*NdArray """
+"""Primitive types NOT supported in a SOMA*NDArray """
 NDARRAY_ARROW_TYPES_NOT_SUPPORTED = [
     pa.float16(),
     pa.date32(),

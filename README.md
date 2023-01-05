@@ -1,6 +1,9 @@
 <a href="https://tiledb.com"><img src="https://github.com/TileDB-Inc/TileDB/raw/dev/doc/source/_static/tiledb-logo_color_no_margin_@4x.png" alt="TileDB logo" width="400"></a>
 
 [![TileDB-SOMA CI](https://github.com/single-cell-data/TileDB-SOMA/actions/workflows/ci.yml/badge.svg)](https://github.com/single-cell-data/TileDB-SOMA/actions/workflows/ci.yml)
+[![TileDB-SOMA R CI](https://github.com/single-cell-data/TileDB-SOMA/actions/workflows/r-ci.yml/badge.svg)](https://github.com/single-cell-data/TileDB-SOMA/actions/workflows/r-ci.yml)
+[![codecov](https://codecov.io/github/single-cell-data/TileDB-SOMA/branch/main/graph/badge.svg)](https://codecov.io/github/single-cell-data/TileDB-SOMA)
+
 
 # TileDB-SOMA
 
@@ -20,7 +23,8 @@ While the [main-old](https://github.com/single-cell-data/TileDB-SOMA/blob/main-o
 
 # Developer information
 
-* https://github.com/single-cell-data/TileDB-SOMA/wiki/Developer-resources
+* [TileDB-SOMA wiki](https://github.com/single-cell-data/TileDB-SOMA/wiki).
+* [Build instructions for developers](libtiledbsoma/README.md)
 
 # Code of Conduct
 

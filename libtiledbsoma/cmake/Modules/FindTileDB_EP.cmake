@@ -29,7 +29,7 @@
 # If TileDB was installed as an EP, need to search the EP install path also.
 set(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} "${EP_INSTALL_PREFIX}")
 
-if (FORCE_EXTERNAL_TILEDB)
+if (FORCE_BUILD_TILEDB)
   find_package(TileDB CONFIG PATHS ${EP_INSTALL_PREFIX} NO_DEFAULT_PATH)
 else()
   find_package(TileDB CONFIG)
@@ -37,8 +37,10 @@ endif()
 
 if (TILEDB_FOUND)
   get_target_property(TILEDB_LIB TileDB::tiledb_shared IMPORTED_LOCATION_RELEASE)
-  # NOTE: TILEDB_LIB-NOTFOUND here is not indicative of error.
-  #       TODO maybe needs fix in TileDBConfig? Check actual linkage.
+  # If release build location not found, check for debug build location
+  if (TILEDB_LIB MATCHES "NOTFOUND")
+    get_target_property(TILEDB_LIB TileDB::tiledb_shared IMPORTED_LOCATION_DEBUG)
+  endif()
   message(STATUS "Found TileDB: ${TILEDB_LIB}")
 else()
   if (SUPERBUILD)
@@ -51,20 +53,20 @@ else()
     # NB When updating the pinned URLs here, please also update in file apis/r/tools/get_tarball.R
     if(DOWNLOAD_TILEDB_PREBUILT)
         if (WIN32) # Windows
-          SET(DOWNLOAD_URL "https://github.com/TileDB-Inc/TileDB/releases/download/2.12.0/tiledb-windows-x86_64-2.12.0-ac8a0df.zip")
-          SET(DOWNLOAD_SHA1 "b82ed9593a04d2e0950d4267a77412055fce320a")
+          SET(DOWNLOAD_URL "https://github.com/TileDB-Inc/TileDB/releases/download/2.13.0/tiledb-windows-x86_64-2.13.0-db00e70.zip")
+          SET(DOWNLOAD_SHA1 "e38b77c672ff885c47d50e89fba8b344cd4ebe38")
         elseif(APPLE) # OSX
 
           if (CMAKE_OSX_ARCHITECTURES STREQUAL x86_64 OR CMAKE_SYSTEM_PROCESSOR MATCHES "(x86_64)|(AMD64|amd64)|(^i.86$)")
-            SET(DOWNLOAD_URL "https://github.com/TileDB-Inc/TileDB/releases/download/2.12.0/tiledb-macos-x86_64-2.12.0-ac8a0df.tar.gz")
-            SET(DOWNLOAD_SHA1 "6811578e847f6e4a1e0ecd16229970f4d4e7ffde")
+            SET(DOWNLOAD_URL "https://github.com/TileDB-Inc/TileDB/releases/download/2.13.0/tiledb-macos-x86_64-2.13.0-db00e70.tar.gz")
+            SET(DOWNLOAD_SHA1 "ac9f7a735568e2461a4b72706d574b799e84a7c6")
           elseif (CMAKE_OSX_ARCHITECTURES STREQUAL arm64 OR CMAKE_SYSTEM_PROCESSOR MATCHES "^aarch64" OR CMAKE_SYSTEM_PROCESSOR MATCHES "^arm")
-            SET(DOWNLOAD_URL "https://github.com/TileDB-Inc/TileDB/releases/download/2.12.0/tiledb-macos-arm64-2.12.0-ac8a0df.tar.gz")
-            SET(DOWNLOAD_SHA1 "53a969307a9250c4a7cdb869495523590cb98e09")
+            SET(DOWNLOAD_URL "https://github.com/TileDB-Inc/TileDB/releases/download/2.13.0/tiledb-macos-arm64-2.13.0-db00e70.tar.gz")
+            SET(DOWNLOAD_SHA1 "77f4223a8dfef1a4c66ce82e105717be8b0e4038")
           endif()
         else() # Linux
-          SET(DOWNLOAD_URL "https://github.com/TileDB-Inc/TileDB/releases/download/2.12.0/tiledb-linux-x86_64-2.12.0-ac8a0df.tar.gz")
-          SET(DOWNLOAD_SHA1 "23e6ed9c397096a2368974de5eaccb0b3e66ce0b")
+          SET(DOWNLOAD_URL "https://github.com/TileDB-Inc/TileDB/releases/download/2.13.0/tiledb-linux-x86_64-2.13.0-db00e70.tar.gz")
+          SET(DOWNLOAD_SHA1 "5ea6c6008c2c1bab80fee5093eff50179a02db23")
         endif()
 
         ExternalProject_Add(ep_tiledb
@@ -86,8 +88,8 @@ else()
     else() # Build from source
         ExternalProject_Add(ep_tiledb
           PREFIX "externals"
-          URL "https://github.com/TileDB-Inc/TileDB/archive/2.12.0.zip"
-          URL_HASH SHA1=ce00bb068b7222616a07ef0b98b5222246c8d02d
+          URL "https://github.com/TileDB-Inc/TileDB/archive/2.13.0.zip"
+          URL_HASH SHA1=2bb9f4f20702bdc0471df4ece58d5d06e89dc6d8
           DOWNLOAD_NAME "tiledb.zip"
           CMAKE_ARGS
             -DCMAKE_INSTALL_PREFIX=${EP_INSTALL_PREFIX}
@@ -114,7 +116,7 @@ else()
   endif()
 endif()
 
-if (EP_TILEDB_BUILT AND TARGET TileDB::tiledb_shared)
+if (EP_TILEDB_BUILT AND TARGET TileDB::tiledb_shared AND NOT TILEDBSOMA_BUILD_R)
   include(TileDBCommon)
   install_target_libs(TileDB::tiledb_shared)
 endif()

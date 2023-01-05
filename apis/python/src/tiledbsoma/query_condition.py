@@ -17,8 +17,10 @@ A high level wrapper around the Pybind11 query_condition.cc implementation for
 filtering query results on attribute values.
 """
 
+# In Python 3.7, a boolean literal like `True` is of type `ast.NameConstant`.
+# Above that, it's of type `ast.Constant`.
 QueryConditionNodeElem = Union[
-    ast.Name, ast.Constant, ast.Call, ast.Num, ast.Str, ast.Bytes
+    ast.Name, ast.Constant, ast.NameConstant, ast.Call, ast.Num, ast.Str, ast.Bytes
 ]
 
 
@@ -100,14 +102,13 @@ class QueryCondition:
     >>>     # and `bar` equal to string "asdf".
     >>>     # Note precedence is equivalent to:
     >>>     # tiledbsoma.QueryCondition("foo > 5 or ('asdf' == attr('b a r') and baz <= val(1.0))")
-    >>>     qc = tiledbsoma.QueryCondition("foo > 5 or 'asdf' == attr('b a r') and baz <= val(1.0)")
-    >>>     A.query(attr_cond=qc)
+    >>>     A.query(cond="foo > 5 or 'asdf' == attr('b a r') and baz <= val(1.0)")
     >>>
     >>>     # Select cells where the attribute values for `foo` are equal to
     >>>     # 1, 2, or 3.
     >>>     # Note this is equivalent to:
     >>>     # tiledbsoma.QueryCondition("foo == 1 or foo == 2 or foo == 3")
-    >>>     A.query(attr_cond=tiledbsoma.QueryCondition("foo in [1, 2, 3]"))
+    >>>     A.query(cond="foo in [1, 2, 3]")
     """
 
     expression: str
@@ -256,6 +257,7 @@ class QueryConditionTree(ast.NodeVisitor):
 
             return (
                 isinstance(att.args[0], ast.Constant)
+                or isinstance(att.args[0], ast.NameConstant)
                 or isinstance(att.args[0], ast.Str)
                 or isinstance(att.args[0], ast.Bytes)
             )
@@ -300,7 +302,9 @@ class QueryConditionTree(ast.NodeVisitor):
 
             if isinstance(att_node, ast.Name):
                 att = att_node.id
-            elif isinstance(att_node, ast.Constant):
+            elif isinstance(att_node, ast.Constant) or isinstance(
+                att_node, ast.NameConstant
+            ):
                 att = att_node.value
             elif isinstance(att_node, ast.Str) or isinstance(att_node, ast.Bytes):
                 # deprecated in 3.8
@@ -341,7 +345,7 @@ class QueryConditionTree(ast.NodeVisitor):
                     f"Incorrect type for cast value: {node.func.id}"
                 )
 
-        if isinstance(val_node, ast.Constant):
+        if isinstance(val_node, ast.Constant) or isinstance(val_node, ast.NameConstant):
             val = val_node.value
         elif isinstance(val_node, ast.Num):
             # deprecated in 3.8
@@ -367,6 +371,9 @@ class QueryConditionTree(ast.NodeVisitor):
                     raise tiledb.TileDBError(f"Cannot cast `{val}` to {dtype}.")
                 if np.issubdtype(dtype, np.datetime64):
                     cast = getattr(np, "int64")
+                # silence DeprecationWarning: `np.bool`
+                elif dtype == "bool":
+                    cast = bool
                 else:
                     cast = getattr(np, dtype)
                 val = cast(val)
@@ -435,6 +442,9 @@ class QueryConditionTree(ast.NodeVisitor):
     def visit_Constant(self, node: ast.Constant) -> ast.Constant:
         return node
 
+    def visit_NameConstant(self, node: ast.NameConstant) -> ast.NameConstant:
+        return node
+
     def visit_UnaryOp(self, node: ast.UnaryOp, sign: int = 1):
         if isinstance(node.op, ast.UAdd):
             sign *= 1
@@ -446,7 +456,9 @@ class QueryConditionTree(ast.NodeVisitor):
         if isinstance(node.operand, ast.UnaryOp):
             return self.visit_UnaryOp(node.operand, sign)
         else:
-            if isinstance(node.operand, ast.Constant):
+            if isinstance(node.operand, ast.Constant) or isinstance(
+                node.operand, ast.NameConstant
+            ):
                 node.operand.value *= sign
             elif isinstance(node.operand, ast.Num):
                 node.operand.n *= sign

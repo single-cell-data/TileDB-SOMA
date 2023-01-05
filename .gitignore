@@ -16,7 +16,6 @@ core/obj/*
 core/lib/*
 core/include/temp
 core/src/temp
-coverage.info
 test/*
 test/inputs/arrays/read_compatibility_test*
 Doxyfile.log
@@ -57,3 +56,10 @@ apis/python/src/tiledbsoma/libtiledbsoma.*
 
 ## R package tarballs
 apis/r/tiledbsoma_*tar.gz
+apis/r/local/*
+
+
+# Coverage/codecov
+.coverage
+coverage.xml
+coverage.info

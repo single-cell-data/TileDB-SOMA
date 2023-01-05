@@ -58,17 +58,16 @@ TileDBArray <- R6::R6Class(
 
     #' @description Add list of metadata to the specified TileDB array.
     #' @param metadata Named list of metadata to add.
-    #' @param prefix Optional prefix to add to the metadata attribute names.
     #' @return NULL
-    add_metadata = function(metadata, prefix = "") {
+    set_metadata = function(metadata) {
       stopifnot(
         "Metadata must be a named list" = is_named_list(metadata)
       )
       on.exit(private$close())
       private$open("WRITE")
-      mapply(
+      dev_null <- mapply(
         FUN = tiledb::tiledb_put_metadata,
-        key = paste0(prefix, names(metadata)),
+        key = names(metadata),
         val = metadata,
         MoreArgs = list(arr = self$object),
         SIMPLIFY = FALSE
@@ -82,9 +81,10 @@ TileDBArray <- R6::R6Class(
     },
 
     #' @description Retrieve the array dimensions
-    #' @return A list of [`tiledb::tiledb_dim`] objects
+    #' @return A named list of [`tiledb::tiledb_dim`] objects
     dimensions = function() {
-      tiledb::dimensions(self$schema())
+      dims <- tiledb::dimensions(self$schema())
+      setNames(dims, nm = vapply_char(dims, tiledb::name))
     },
 
     #' @description Retrieve the array attributes
@@ -99,7 +99,8 @@ TileDBArray <- R6::R6Class(
       vapply(
         self$dimensions(),
         FUN = tiledb::name,
-        FUN.VALUE = vector("character", 1L)
+        FUN.VALUE = vector("character", 1L),
+        USE.NAMES = FALSE
       )
     },
 
@@ -214,13 +215,6 @@ TileDBArray <- R6::R6Class(
         query_layout = "UNORDERED"
       )
       private$close()
-    },
-
-    write_object_type_metadata = function() {
-      meta <- list()
-      meta[[SOMA_OBJECT_TYPE_METADATA_KEY]] <- class(self)[1]
-      meta[[SOMA_ENCODING_VERSION_METADATA_KEY]] <- SOMA_ENCODING_VERSION
-      self$add_metadata(meta) # TileDBArray or TileDBGroup
     },
 
     # @description Create empty TileDB array.

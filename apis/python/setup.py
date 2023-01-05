@@ -25,31 +25,38 @@ from setuptools.command.bdist_egg import bdist_egg
 from setuptools.command.build_ext import build_ext
 from wheel.bdist_wheel import bdist_wheel
 
+sys.path.insert(0, os.path.dirname(__file__))
+import version  # noqa E402
+
 MODULE_NAME = "tiledbsoma"
 EXT_NAME = "tiledbsoma.libtiledbsoma"
 
 
 def find_or_build(setuptools_cmd):
-    # TODO: support windows
-    if sys.platform.startswith("win32"):
-        return
-
     # Setup paths
     python_dir = os.path.abspath(os.path.dirname(__file__))
     src_dir = f"{python_dir}/src/{MODULE_NAME}"
-    scripts_dir = f"{python_dir}/../../scripts"
-    lib_dir = f"{python_dir}/../../dist/lib"
+    if os.path.islink(os.path.join(python_dir, "dist_links/scripts")):
+        # in git source tree
+        scripts_dir = f"{python_dir}/../../scripts"
+        lib_dir = f"{python_dir}/../../dist/lib"
+    else:
+        # in extracted sdist, with libtiledbsoma copied into dist_links/
+        scripts_dir = f"{python_dir}/dist_links/scripts"
+        lib_dir = f"{python_dir}/dist_links/dist/lib"
 
     # Call the build script if the install library directory does not exist
     if not os.path.exists(lib_dir):
-        subprocess.check_call([f"{scripts_dir}/bld"])
+        subprocess.run("bash bld", cwd=scripts_dir, shell=True)
 
     # Copy native libs into the package dir so they can be found by package_data
     package_data = []
     for obj in [os.path.join(lib_dir, f) for f in os.listdir(lib_dir)]:
-        print(f"  copying file {obj} to {src_dir}")
-        shutil.copy(obj, src_dir)
-        package_data.append(os.path.basename(obj))
+        # skip static library
+        if not obj.endswith(".a"):
+            print(f"  copying file {obj} to {src_dir}")
+            shutil.copy(obj, src_dir)
+            package_data.append(os.path.basename(obj))
 
     # Install shared libraries inside the Python module via package_data.
     print(f"  adding to package_data: {package_data}")
@@ -111,11 +118,13 @@ if __name__ == "__main__":
         zip_safe=False,
         install_requires=[
             "anndata",
+            "numpy",
             "pandas",
             "pyarrow",
             "scanpy",
             "scipy",
-            "tiledb>=0.17.5",
+            "tiledb>=0.19.0",
+            "typing-extensions",  # Note "-" even though `import typing_extensions`
         ],
         python_requires=">=3.7",
         ext_modules=get_ext_modules(),
@@ -124,4 +133,5 @@ if __name__ == "__main__":
             "bdist_egg": BdistEggCmd,
             "bdist_wheel": BdistWheelCmd,
         },
+        version=version.getVersion(),
     )

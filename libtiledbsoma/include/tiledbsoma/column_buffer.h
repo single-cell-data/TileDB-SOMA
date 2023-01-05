@@ -35,7 +35,7 @@
 
 #include <stdexcept>  // for windows: error C2039: 'runtime_error': is not a member of 'std'
 
-#include <externals/span/span.hpp>
+#include <span/span.hpp>
 #include <tiledb/tiledb>
 
 #include "tiledbsoma/common.h"
@@ -69,6 +69,12 @@ class ColumnBuffer {
     static std::shared_ptr<ColumnBuffer> create(
         std::shared_ptr<Array> array, std::string_view name);
 
+    /**
+     * @brief Convert a bytemap to a bitmap in place.
+     *
+     */
+    static void to_bitmap(tcb::span<uint8_t> bytemap);
+
     //===================================================================
     //= public non-static
     //===================================================================
@@ -78,8 +84,8 @@ class ColumnBuffer {
      *
      * @param name Column name
      * @param type TileDB datatype
-     * @param num_cells Number of cells
-     * @param data View of data
+     * @param num_cells Number of cells to allocate for offsets and validity
+     * @param num_bytes Number of bytes to allocate for data
      * @param is_var Column type is variable length
      * @param is_nullable Column can contain null values
      */
@@ -87,7 +93,7 @@ class ColumnBuffer {
         std::string_view name,
         tiledb_datatype_t type,
         size_t num_cells,
-        size_t data,
+        size_t num_bytes,
         bool is_var = false,
         bool is_nullable = false);
 
@@ -178,9 +184,9 @@ class ColumnBuffer {
     /**
      * @brief Return the name of the buffer.
      *
-     * @return std::string name
+     * @return std::string_view
      */
-    std::string name() const {
+    std::string_view name() {
         return name_;
     }
 
@@ -205,6 +211,22 @@ class ColumnBuffer {
      */
     bool is_nullable() const {
         return is_nullable_;
+    }
+
+    /**
+     * @brief Convert the data bytemap to a bitmap in place.
+     *
+     */
+    void data_to_bitmap() {
+        ColumnBuffer::to_bitmap(data<uint8_t>());
+    }
+
+    /**
+     * @brief Convert the validity bytemap to a bitmap in place.
+     *
+     */
+    void validity_to_bitmap() {
+        ColumnBuffer::to_bitmap(validity());
     }
 
    private:

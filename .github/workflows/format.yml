@@ -1,4 +1,4 @@
-name: TileDB Python Linting
+name: TileDB Python and C++ Linting
 
 on:
   pull_request:
@@ -9,8 +9,8 @@ jobs:
   lint:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-python@v2
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
       - name: Check Python Black Format
         run: |
           python -m pip install black
@@ -25,5 +25,13 @@ jobs:
           python -m flake8 apis/python scripts libtiledbsoma/test apis/python/tools/[a-z]*
       - name: Check type annotations with mypy
         run: |
-          python -m pip install mypy types-setuptools
-          python -m mypy apis/python
+          # mypy 0.990 has false positives on `import anndata as ad` and `Module has no attribute
+          # "read_h5ad"` etc :(
+          # python -m pip install mypy types-setuptools
+          python -m pip install mypy==0.982 types-setuptools
+          python -m mypy .
+      - name: Check C++ Format
+        run: |
+          cd ../..
+          ./scripts/run-clang-format.sh . clang-format 0 \
+            $(find libtiledbsoma -name "*.cc" -or -name "*.h")

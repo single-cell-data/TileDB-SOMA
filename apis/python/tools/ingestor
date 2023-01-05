@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 """
-A simple driver for ingestion of anndata to a TileDB SOMAExperiment.
+A simple driver for ingestion of anndata to a TileDB Experiment.
 
 * Invoke this with one argument /path/to/some/somename.h5ad:
   o Output will be ./tiledbsoma-data/somename
@@ -18,6 +18,7 @@ import sys
 import tiledb
 
 import tiledbsoma
+import tiledbsoma.exception
 import tiledbsoma.io
 import tiledbsoma.logging
 import tiledbsoma.util
@@ -52,7 +53,7 @@ def main():
     )
     parser.add_argument(
         "--soco",
-        help="Write the SOMA and also append to a SOMACollection there",
+        help="Write the SOMA and also append to a Collection there",
         action="store_true",
     )
     parser.add_argument(
@@ -111,7 +112,7 @@ select `relative=True`. (This is the default.)
         elif relative == "auto":
             rel_member_uris = None
         else:
-            raise Exception(f"Internal coding error in {__file__}")
+            raise tiledbsoma.exception.SOMAError(f"Internal coding error in {__file__}")
 
     tiledb_platform_config = tiledbsoma.TileDBPlatformConfig(
         member_uris_are_relative=rel_member_uris
@@ -202,7 +203,7 @@ def ingest_one(
             if not os.path.exists(parent):
                 os.mkdir(parent)
 
-    exp = tiledbsoma.SOMAExperiment(
+    exp = tiledbsoma.Experiment(
         uri=output_path, tiledb_platform_config=tiledb_platform_config
     )
     exp_name = os.path.splitext(os.path.basename(output_path))[0]
@@ -244,7 +245,7 @@ def ingest_one(
     tiledbsoma.logging.logger.info(f"Wrote {output_path}")
 
     if write_soco:
-        soco = tiledbsoma.SOMACollection(
+        soco = tiledbsoma.Collection(
             soco_dir, tiledb_platform_config=tiledb_platform_config
         )
         if not soco.exists():
@@ -255,7 +256,7 @@ def ingest_one(
 
         tiledbsoma.logging.logger.info("")
         tiledbsoma.logging.logger.info(
-            f"Added SOMAExperiment {exp_name} to SOMACollection {soco_dir}"
+            f"Added Experiment {exp_name} to Collection {soco_dir}"
         )
 
 

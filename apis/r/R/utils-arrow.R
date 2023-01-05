@@ -6,6 +6,10 @@ is_arrow_data_type <- function(x) {
   is_arrow_object(x) && inherits(x, "DataType")
 }
 
+is_arrow_field <- function(x) {
+  is_arrow_object(x) && inherits(x, "Field")
+}
+
 is_arrow_record_batch <- function(x) {
   is_arrow_object(x) && inherits(x, "RecordBatch")
 }
@@ -43,7 +47,6 @@ tiledb_type_from_arrow_type <- function(x) {
     double = "FLOAT64",
     boolean = "BOOL",
     bool = "BOOL",
-    # large_utf8 = "large_string",
     # large_string = "large_string",
     # binary = "binary",
     # large_binary = "large_binary",
@@ -52,6 +55,7 @@ tiledb_type_from_arrow_type <- function(x) {
     # not yet queryable so we use ASCII for now
     utf8 = "ASCII",
     string = "ASCII",
+    large_utf8 = "ASCII",
     # date32 = "date32",
     # date64 = "date64",
     # time32 = "time32",
@@ -69,6 +73,25 @@ tiledb_type_from_arrow_type <- function(x) {
     # fixed_size_list = "fixed_size_list",
     # map_of = "map",
     # duration = "duration",
+    stop("Unsupported data type", call. = FALSE)
+  )
+}
+
+arrow_type_from_tiledb_type <- function(x) {
+  stopifnot(is.character(x))
+  switch(x,
+    INT8 = arrow::int8(),
+    INT16 = arrow::int16(),
+    INT32 = arrow::int32(),
+    INT64 = arrow::int64(),
+    UINT8 = arrow::uint8(),
+    UINT16 = arrow::uint16(),
+    UINT32 = arrow::uint32(),
+    UINT64 = arrow::uint64(),
+    FLOAT32 = arrow::float32(),
+    FLOAT64 = arrow::float64(),
+    BOOL = arrow::boolean(),
+    ASCII = arrow::utf8(),
     stop("Unsupported data type", call. = FALSE)
   )
 }
@@ -99,4 +122,37 @@ arrow_type_range <- function(x) {
     string = NULL,
     stop("Unsupported data type", call. = FALSE)
   )
+}
+
+#' Create an Arrow field from a TileDB dimension
+#' @noRd
+arrow_field_from_tiledb_dim <- function(x) {
+  stopifnot(inherits(x, "tiledb_dim"))
+  arrow::field(
+    name = tiledb::name(x),
+    type = arrow_type_from_tiledb_type(tiledb::datatype(x)),
+    nullable = FALSE
+  )
+}
+
+#' Create an Arrow field from a TileDB attribute
+#' @noRd
+arrow_field_from_tiledb_attr <- function(x) {
+  stopifnot(inherits(x, "tiledb_attr"))
+  arrow::field(
+    name = tiledb::name(x),
+    type = arrow_type_from_tiledb_type(tiledb::datatype(x)),
+    nullable = tiledb::tiledb_attribute_get_nullable(x)
+  )
+}
+
+#' Create an Arrow schema from a TileDB array schema
+#' @noRd
+arrow_schema_from_tiledb_schema <- function(x) {
+  stopifnot(inherits(x, "tiledb_array_schema"))
+  fields <- c(
+    lapply(tiledb::dimensions(x), arrow_field_from_tiledb_dim),
+    lapply(tiledb::attrs(x), arrow_field_from_tiledb_attr)
+  )
+  arrow::schema(fields)
 }

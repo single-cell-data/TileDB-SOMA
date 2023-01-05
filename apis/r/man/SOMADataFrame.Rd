@@ -4,17 +4,13 @@
 \alias{SOMADataFrame}
 \title{SOMADataFrame}
 \description{
-\code{SOMADataFrame} is a multi-column table containing a "pseudo-column" called
-\code{soma_rowid}, of type \code{uint64} and domain \verb{[0, #rows)}, which is the
-row offset (row id), and is a contiguous integer beginning with zero.
-
-\code{SOMADataFrame} must contain a column called \code{soma_joinid}, of type \code{uint64}.
-The \code{soma_joinid} column contains a unique value for each row in the
-\code{SOMADataFrame}, and intended to act as a joint key for other objects, such
-as \code{\link{SOMASparseNdArray}}.
+\code{SOMADataFrame} is a multi-column table that must contain a column
+called \code{soma_joinid} of type \code{uint64}, which contains a unique value for each
+row and is intended to act as a join key for other objects, such as
+\code{\link{SOMASparseNDArray}}.
 }
 \section{Super classes}{
-\code{\link[tiledbsoma:TileDBObject]{tiledbsoma::TileDBObject}} -> \code{\link[tiledbsoma:TileDBArray]{tiledbsoma::TileDBArray}} -> \code{SOMADataFrame}
+\code{\link[tiledbsoma:TileDBObject]{tiledbsoma::TileDBObject}} -> \code{\link[tiledbsoma:TileDBArray]{tiledbsoma::TileDBArray}} -> \code{\link[tiledbsoma:SOMAArrayBase]{tiledbsoma::SOMAArrayBase}} -> \code{SOMADataFrame}
 }
 \section{Methods}{
 \subsection{Public methods}{
@@ -31,7 +27,6 @@ as \code{\link{SOMASparseNdArray}}.
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBObject" data-id="class"><a href='../../tiledbsoma/html/TileDBObject.html#method-TileDBObject-class'><code>tiledbsoma::TileDBObject$class()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBObject" data-id="exists"><a href='../../tiledbsoma/html/TileDBObject.html#method-TileDBObject-exists'><code>tiledbsoma::TileDBObject$exists()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBObject" data-id="initialize"><a href='../../tiledbsoma/html/TileDBObject.html#method-TileDBObject-initialize'><code>tiledbsoma::TileDBObject$initialize()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="add_metadata"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-add_metadata'><code>tiledbsoma::TileDBArray$add_metadata()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="attributes"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-attributes'><code>tiledbsoma::TileDBArray$attributes()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="attrnames"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-attrnames'><code>tiledbsoma::TileDBArray$attrnames()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="dimensions"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-dimensions'><code>tiledbsoma::TileDBArray$dimensions()</code></a></span></li>
@@ -41,6 +36,7 @@ as \code{\link{SOMASparseNdArray}}.
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="print"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-print'><code>tiledbsoma::TileDBArray$print()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="reset_query"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-reset_query'><code>tiledbsoma::TileDBArray$reset_query()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="schema"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-schema'><code>tiledbsoma::TileDBArray$schema()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="set_metadata"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-set_metadata'><code>tiledbsoma::TileDBArray$set_metadata()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="set_query"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-set_query'><code>tiledbsoma::TileDBArray$set_query()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="tiledb_array"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-tiledb_array'><code>tiledbsoma::TileDBArray$tiledb_array()</code></a></span></li>
 </ul>
@@ -52,13 +48,17 @@ as \code{\link{SOMASparseNdArray}}.
 \subsection{Method \code{create()}}{
 Create
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{SOMADataFrame$create(schema)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{SOMADataFrame$create(schema, index_column_names)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
 \item{\code{schema}}{an \code{\link[arrow:Schema]{arrow::schema}}.}
+
+\item{\code{index_column_names}}{A vector of column names to use as user-defined
+index columns.  All named columns must exist in the schema, and at least
+one index column name is required.}
 }
 \if{html}{\out{</div>}}
 }
@@ -76,7 +76,7 @@ Write
 \if{html}{\out{<div class="arguments">}}
 \describe{
 \item{\code{values}}{An \code{\link[arrow:Table]{arrow::Table}} containing all columns, including
-the \code{soma_rowid} index column. The schema for \code{values} must match the
+any index columns. The schema for \code{values} must match the
 schema for the \code{SOMADataFrame}.}
 }
 \if{html}{\out{</div>}}
@@ -94,23 +94,27 @@ column, and optionally filtered.
   ids = NULL,
   column_names = NULL,
   value_filter = NULL,
-  result_order = "UNORDERED"
+  result_order = "UNORDERED",
+  log_level = "warn"
 )}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{ids}}{Integer indices specifying the rows to read.}
+\item{\code{ids}}{Optional named list of indices specifying the rows to read; each (named)
+list element corresponds to a dimension of the same name.}
 
-\item{\code{column_names}}{Character vector of column names to return.}
+\item{\code{column_names}}{Optional character vector of column names to return.}
 
-\item{\code{value_filter}}{A string containing a logical expression that is used
+\item{\code{value_filter}}{Optional string containing a logical expression that is used
 to filter the returned values. See \code{\link[tiledb:parse_query_condition]{tiledb::parse_query_condition}} for
 more information.}
 
-\item{\code{result_order}}{Order of read results. This can be one of either
+\item{\code{result_order}}{Optional order of read results. This can be one of either
 \verb{"ROW_MAJOR, }"COL_MAJOR"\verb{, }"GLOBAL_ORDER"\verb{, or }"UNORDERED"`.}
+
+\item{\code{log_level}}{Optional logging level with default value of \code{"warn"}.}
 }
 \if{html}{\out{</div>}}
 }

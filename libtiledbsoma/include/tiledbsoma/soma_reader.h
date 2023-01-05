@@ -39,7 +39,6 @@
 
 #include <tiledb/tiledb>
 
-#include "thread_pool/thread_pool.h"
 #include "tiledbsoma/managed_query.h"
 
 namespace tiledbsoma {
@@ -111,6 +110,19 @@ class SOMAReader {
     SOMAReader(const SOMAReader&) = delete;
     SOMAReader(SOMAReader&&) = default;
     ~SOMAReader() = default;
+
+    /**
+     * @brief Reset the state of this SOMAReader object to prepare for a new
+     * query, while holding the array open.
+     *
+     * @param column_names
+     * @param batch_size
+     * @param result_order
+     */
+    void reset(
+        std::vector<std::string> column_names = {},
+        std::string_view batch_size = "auto",
+        std::string_view result_order = "auto");
 
     /**
      * @brief Set the dimension slice using one point
@@ -251,6 +263,15 @@ class SOMAReader {
     std::optional<std::shared_ptr<ArrayBuffers>> read_next();
 
     /**
+     * @brief Check if the query is complete.
+     *
+     * @return true Query status is COMPLETE
+     */
+    bool is_complete() {
+        return mq_->is_complete();
+    }
+
+    /**
      * @brief Return true if `read_next` returned all results from the
      * query. The return value is false if the query was incomplete.
      *
@@ -277,7 +298,6 @@ class SOMAReader {
         return mq_->schema();
     }
 
-
    private:
     //===================================================================
     //= private non-static
@@ -297,6 +317,9 @@ class SOMAReader {
 
     // True if this is the first call to read_next()
     bool first_read_next_ = true;
+
+    // True if the query was submitted
+    bool submitted_ = false;
 };
 
 }  // namespace tiledbsoma

@@ -1,23 +1,24 @@
+import os
 from abc import ABC, abstractmethod, abstractproperty
-from typing import Optional, Union
+from typing import Optional, Union, cast
 
 import tiledb
 
 from . import util
-from .soma_metadata_mapping import SOMAMetadataMapping
+from .metadata_mapping import MetadataMapping
 from .tiledb_platform_config import TileDBPlatformConfig
 
 
 class TileDBObject(ABC):
     """
-    Base class for ``TileDBArray`` and ``SOMACollection``.
+    Base class for ``TileDBArray`` and ``Collection``.
 
     Manages tiledb_platform_config, context, etc. which are common to both.
     """
 
     _uri: str
     _tiledb_platform_config: TileDBPlatformConfig
-    metadata: SOMAMetadataMapping
+    metadata: MetadataMapping
 
     def __init__(
         self,
@@ -31,8 +32,11 @@ class TileDBObject(ABC):
         ctx: Optional[tiledb.Ctx] = None,
     ):
         """
-        Initialization-handling shared between ``TileDBArray`` and ``SOMACollection``.  Specify ``tiledb_platform_config`` and ``ctx`` for the top-level object; omit them and specify parent for non-top-level objects. Note that the parent reference is solely for propagating options, ctx, display depth, etc.
+        Initialization-handling shared between ``TileDBArray`` and ``Collection``.  Specify ``tiledb_platform_config`` and ``ctx`` for the top-level object; omit them and specify parent for non-top-level objects. Note that the parent reference is solely for propagating options, ctx, display depth, etc.
         """
+
+        if ctx is None:
+            ctx = self._default_ctx()
         self._uri = uri
         if parent is None:
             self._ctx = ctx
@@ -47,11 +51,29 @@ class TileDBObject(ABC):
         self._tiledb_platform_config = tiledb_platform_config or TileDBPlatformConfig()
         # Null ctx is OK if that's what they wanted (e.g. not doing any TileDB-Cloud ops).
 
-        self.metadata = SOMAMetadataMapping(self)
+        self.metadata = MetadataMapping(self)
+
+    def _default_ctx(self) -> tiledb.Ctx:
+        """
+        The TileDB context used when no other is supplied. Must have good defaults for positive
+        out-of-the-box UX.
+        """
+
+        cfg = {}
+
+        # This is necessary for smaller tile capacities when querying with a smaller memory budget.
+        cfg["sm.mem.reader.sparse_global_order.ratio_array_data"] = 0.3
+
+        # Temp workaround pending https://app.shortcut.com/tiledb-inc/story/23827
+        region = os.getenv("AWS_DEFAULT_REGION")
+        if region is not None:
+            cfg["vfs.s3.region"] = cast(str, region)  # type: ignore
+
+        return tiledb.Ctx(cfg)
 
     def delete(self) -> None:
         """
-        Delete the SOMADataFrame specified with the URI.
+        Delete the storage specified with the URI.
 
         TODO: should this raise an error if the object does not exist?
         """
@@ -77,17 +99,23 @@ class TileDBObject(ABC):
 
     @property
     def uri(self) -> str:
+        """
+        Accessor for the object's storage URI
+        """
         return self._uri
 
     @abstractproperty
     def soma_type(self) -> str:
+        """
+        Returns the SOMA object type, e.g. "SOMADataFrame".
+        """
         ...
 
     def exists(self) -> bool:
         """
         Returns true if the object exists and has the desired class name.
 
-        This might be in case an object has not yet been populated, or, if a containing object has been populated but doesn't have a particular member (e.g. not all ``SOMAMeasurement`` objects have a ``varp``).
+        This might be in case an object has not yet been populated, or, if a containing object has been populated but doesn't have a particular member (e.g. not all ``Measurement`` objects have a ``varp``).
 
         For ``tiledb://`` URIs this is a REST-server request which we'd like to cache.  However, remove-and-replace use-cases are possible and common in notebooks and it turns out caching the existence-check isn't a robust approach.
         """
@@ -97,7 +125,7 @@ class TileDBObject(ABC):
         # before a third, successful HTTP request for group-open.  Instead, we directly attempt the
         # group-open request, checking for an exception.
         try:
-            return self._get_object_type_from_metadata() == self.soma_type
+            return self._get_soma_type_from_metadata() == self.soma_type
         except tiledb.cc.TileDBError:
             return False
 
@@ -114,9 +142,9 @@ class TileDBObject(ABC):
 
     def _set_object_type_metadata(self) -> None:
         """
-        This helps nested-structure traversals (especially those that start at the SOMACollection level) confidently navigate with a minimum of introspection on group contents.
+        This helps nested-structure traversals (especially those that start at the Collection level) confidently navigate with a minimum of introspection on group contents.
         """
-        # TODO: make a multi-set in SOMAMetadataMapping that would above a double-open there.
+        # TODO: make a multi-set in MetadataMapping that would above a double-open there.
         with self._tiledb_open("w") as obj:
             obj.meta.update(
                 {
@@ -125,7 +153,7 @@ class TileDBObject(ABC):
                 }
             )
 
-    def _get_object_type_from_metadata(self) -> str:
+    def _get_soma_type_from_metadata(self) -> str:
         """
         Returns the class name associated with the group/array.
         """

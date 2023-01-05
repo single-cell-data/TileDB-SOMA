@@ -1,8 +1,11 @@
 import pathlib
-from typing import List, Literal, Sequence, Tuple, Union
+from typing import Any, List, Mapping, Sequence, Tuple, Union
 
+import numpy as np
+import numpy.typing as npt
 import pandas as pd
 import pyarrow as pa
+from typing_extensions import Literal
 
 Path = Union[str, pathlib.Path]
 
@@ -12,10 +15,10 @@ Labels = Union[Sequence[str], pd.Index]
 
 NTuple = Tuple[int, ...]
 
-SOMABatchFormat = Literal["dense", "coo", "csr", "csc", "record-batch", "table"]
-SOMAReadPartitions = Literal["IofN"]
-SOMABatchSize = Literal["count", "size", "auto"]
-SOMAResultOrder = Literal["row-major", "column-major", "unordered", "rowid-ordered"]
+BatchFormat = Literal["dense", "coo", "csr", "csc", "record-batch", "table"]
+ReadPartitions = Literal["IofN"]
+BatchSize = Literal["count", "size", "auto"]
+ResultOrder = Literal["row-major", "column-major", "auto"]
 
 ArrowReadResult = Union[
     pa.Table,
@@ -26,8 +29,44 @@ ArrowReadResult = Union[
     pa.SparseCSCMatrix,
 ]
 
-SOMADenseCoordinates = Union[int, slice]
-SOMADenseNdCoordinates = Tuple[SOMADenseCoordinates, ...]
+DenseCoordinates = Union[int, slice]
+DenseNdCoordinates = Tuple[DenseCoordinates, ...]
 
-SOMASparseCoordinates = Union[int, slice, Tuple[int, ...], List[int], pa.IntegerArray]
-SOMASparseNdCoordinates = Tuple[SOMADenseCoordinates, ...]
+# TODO: add support for non-ints once the libtiledbsoma SOMAReader class has supports
+# for non-ints. See also:
+# https://github.com/single-cell-data/TileDB-SOMA/issues/418
+# https://github.com/single-cell-data/TileDB-SOMA/issues/419
+#
+# Note: we intentionally use `Union[None, ...]` in place of `Optional[...]` since
+# we choose to emphasize that the argument-slots this is used in are not "optional"
+# arguments -- they're required argments, which can take the `None` value.
+SparseDataFrameCoordinate = Union[
+    None,
+    int,
+    slice,
+    Sequence[int],
+    pa.Array,
+    pa.ChunkedArray,
+    npt.NDArray[np.integer],
+]
+SparseDataFrameCoordinates = Sequence[SparseDataFrameCoordinate]
+
+# Note: we intentionally use `Union[None, ...]` in place of `Optional[...]` since
+# we choose to emphasize that the argument-slots this is used in are not "optional"
+# arguments -- they're required argments, which can take the `None` value.
+
+SparseNdCoordinates = Union[
+    None,
+    Sequence[
+        Union[
+            None,
+            DenseCoordinates,
+            Sequence[int],
+            npt.NDArray[np.integer],
+            pa.IntegerArray,
+        ]
+    ],
+]
+
+PlatformConfig = Mapping[str, Any]
+"""The platform-configuration dictionary. May contain a ``tiledb`` key."""

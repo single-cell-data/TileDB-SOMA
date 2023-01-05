@@ -38,7 +38,6 @@
 
 #include <tiledbsoma/tiledbsoma>
 
-#include "arrow_adapter.h"
 #include "query_condition.cc"
 
 #ifdef BUILD_COMMIT_HASH
@@ -53,6 +52,8 @@ using namespace tiledbsoma;
 
 namespace py = pybind11;
 using namespace py::literals;
+
+namespace tiledbsoma {
 
 /**
  * @brief Convert ColumnBuffer to Arrow array.
@@ -90,6 +91,13 @@ py::object to_table(std::shared_ptr<ArrayBuffers> array_buffers) {
     return pa_table_from_arrays(arrays, names);
 }
 
+std::string version() {
+    int major, minor, patch;
+    tiledb_version(&major, &minor, &patch);
+    return fmt::format(
+        "libtiledbsoma={}\nlibtiledb={}.{}.{}", VERSION, major, minor, patch);
+}
+
 /**
  * @brief pybind11 bindings
  *
@@ -99,16 +107,7 @@ PYBIND11_MODULE(libtiledbsoma, m) {
 
     m.doc() = "SOMA acceleration library";
 
-    m.def("version", []() {
-        int major, minor, patch;
-        tiledb_version(&major, &minor, &patch);
-        return fmt::format(
-            "libtiledbsoma={} libtiledb={}.{}.{}",
-            VERSION,
-            major,
-            minor,
-            patch);
-    });
+    m.def("version", []() { return version(); });
 
     m.def(
         "config_logging",
@@ -121,16 +120,31 @@ PYBIND11_MODULE(libtiledbsoma, m) {
     m.def("info", &LOG_INFO, "message"_a = "");
     m.def("debug", &LOG_DEBUG, "message"_a = "");
 
+    m.def("stats_enable", []() { tiledb::Stats::enable(); });
+    m.def("stats_disable", []() { tiledb::Stats::disable(); });
+    m.def("stats_reset", []() { tiledb::Stats::reset(); });
+    m.def("stats_dump", []() {
+        std::string stats;
+        tiledb::Stats::dump(&stats);
+        std::cout << version() << "\n" << stats;
+    });
+
     py::class_<SOMAReader>(m, "SOMAReader")
         .def(
             py::init([](std::string_view uri,
                         std::string_view name,
-                        std::vector<std::string> column_names,
+                        std::optional<std::vector<std::string>> column_names_in,
                         py::object py_query_condition,
                         py::object py_schema,
                         std::string_view batch_size,
                         std::string_view result_order,
                         std::map<std::string, std::string> platform_config) {
+                // Handle optional args
+                std::vector<std::string> column_names;
+                if (column_names_in) {
+                    column_names = *column_names_in;
+                }
+
                 // Handle query condition based on
                 // TileDB-Py::PyQuery::set_attr_cond()
                 QueryCondition* qc = nullptr;
@@ -161,6 +175,9 @@ PYBIND11_MODULE(libtiledbsoma, m) {
                              .get();
                 }
 
+                // Release python GIL after we're done accessing python objects
+                py::gil_scoped_release release;
+
                 auto reader = SOMAReader::open(
                     uri,
                     name,
@@ -179,12 +196,74 @@ PYBIND11_MODULE(libtiledbsoma, m) {
             "uri"_a,
             py::kw_only(),
             "name"_a = "unnamed",
-            "column_names"_a = py::list(),
+            "column_names"_a = py::none(),
             "query_condition"_a = py::none(),
             "schema"_a = py::none(),
             "batch_size"_a = "auto",
             "result_order"_a = "auto",
             "platform_config"_a = py::dict())
+
+        .def(
+            "reset",
+            [](SOMAReader& reader,
+               std::optional<std::vector<std::string>> column_names_in,
+               py::object py_query_condition,
+               py::object py_schema,
+               std::string_view batch_size,
+               std::string_view result_order) {
+                // Handle optional args
+                std::vector<std::string> column_names;
+                if (column_names_in) {
+                    column_names = *column_names_in;
+                }
+
+                // Handle query condition based on
+                // TileDB-Py::PyQuery::set_attr_cond()
+                QueryCondition* qc = nullptr;
+                if (!py_query_condition.is(py::none())) {
+                    py::object init_pyqc = py_query_condition.attr(
+                        "init_query_condition");
+
+                    try {
+                        // Column names will be updated with columns present in
+                        // the query condition
+                        auto new_column_names =
+                            init_pyqc(py_schema, column_names)
+                                .cast<std::vector<std::string>>();
+
+                        // Update the column_names list if it was not empty,
+                        // otherwise continue selecting all columns with an
+                        // empty column_names list
+                        if (!column_names.empty()) {
+                            column_names = new_column_names;
+                        }
+                    } catch (const std::exception& e) {
+                        throw TileDBSOMAError(e.what());
+                    }
+
+                    qc = py_query_condition.attr("c_obj")
+                             .cast<tiledbpy::PyQueryCondition>()
+                             .ptr()
+                             .get();
+                }
+
+                // Release python GIL after we're done accessing python objects
+                py::gil_scoped_release release;
+
+                // Reset state of the existing SOMAReader object
+                reader.reset(column_names, batch_size, result_order);
+
+                // Set query condition if present
+                if (qc) {
+                    reader.set_condition(*qc);
+                }
+            },
+            py::kw_only(),
+            "column_names"_a = py::none(),
+            "query_condition"_a = py::none(),
+            "schema"_a = py::none(),
+            "batch_size"_a = "auto",
+            "result_order"_a = "auto")
 
         // Binding overloaded methods to templated member functions requires
         // more effort, see:
@@ -195,6 +274,12 @@ PYBIND11_MODULE(libtiledbsoma, m) {
                 const std::string&, const std::vector<int64_t>&)>(
                 &SOMAReader::set_dim_points))
 
+        .def(
+            "set_dim_points",
+            static_cast<void (SOMAReader::*)(
+                const std::string&, const std::vector<std::string>&)>(
+                &SOMAReader::set_dim_points))
+
         // Binding to set slices using PyArrow::ChunkedArray
         .def(
             "set_dim_points",
@@ -203,8 +288,16 @@ PYBIND11_MODULE(libtiledbsoma, m) {
                py::object py_arrow_array,
                int partition_index,
                int partition_count) {
-                for (auto& array :
-                     py_arrow_array.attr("chunks").cast<py::list>()) {
+                // Create a list of array chunks
+                py::list array_chunks;
+                if (py::hasattr(py_arrow_array, "chunks")) {
+                    array_chunks = py_arrow_array.attr("chunks")
+                                       .cast<py::list>();
+                } else {
+                    array_chunks.append(py_arrow_array);
+                }
+
+                for (const pybind11::handle array : array_chunks) {
                     ArrowSchema arrow_schema;
                     ArrowArray arrow_array;
                     uintptr_t arrow_schema_ptr = (uintptr_t)(&arrow_schema);
@@ -221,9 +314,21 @@ PYBIND11_MODULE(libtiledbsoma, m) {
                             (uint64_t)arrow_array.length};
                         reader.set_dim_points(
                             dim, data, partition_index, partition_count);
+                    } else if (!strcmp(arrow_schema.format, "U")) {
+                        // TODO: partitioning is not supported for string dims
+                        const char* data = (const char*)(arrow_array
+                                                             .buffers[2]);
+                        const uint64_t*
+                            offsets = (const uint64_t*)(arrow_array.buffers[1]);
+
+                        for (int64_t i = 0; i < arrow_array.length; i++) {
+                            auto value = std::string{
+                                data + offsets[i], offsets[i + 1] - offsets[i]};
+                            reader.set_dim_point(dim, value);
+                        }
                     } else {
                         throw TileDBSOMAError(fmt::format(
-                            "[libtiledbsoma] set_dim_arrow: type={} not "
+                            "[libtiledbsoma] set_dim_points: type={} not "
                             "supported",
                             arrow_schema.format));
                     }
@@ -244,18 +349,34 @@ PYBIND11_MODULE(libtiledbsoma, m) {
                 const std::vector<std::pair<int64_t, int64_t>>&)>(
                 &SOMAReader::set_dim_ranges))
 
-        .def("submit", &SOMAReader::submit)
+        .def(
+            "set_dim_ranges",
+            static_cast<void (SOMAReader::*)(
+                const std::string&,
+                const std::vector<std::pair<std::string, std::string>>&)>(
+                &SOMAReader::set_dim_ranges))
+
+        .def(
+            "submit",
+            &SOMAReader::submit,
+            py::call_guard<py::gil_scoped_release>())
+
         .def("results_complete", &SOMAReader::results_complete)
 
         .def(
             "read_next",
             [](SOMAReader& reader) -> std::optional<py::object> {
+                // Release python GIL before reading data
+                py::gil_scoped_release release;
+
                 // Try to read more data
                 auto buffers = reader.read_next();
 
                 // If more data was read, convert it to an arrow table and
                 // return
                 if (buffers.has_value()) {
+                    // Acquire python GIL before accessing python objects
+                    py::gil_scoped_acquire acquire;
                     return to_table(*buffers);
                 }
 
@@ -263,5 +384,6 @@ PYBIND11_MODULE(libtiledbsoma, m) {
                 return std::nullopt;
             })
 
-        .def("nnz", &SOMAReader::nnz);
+        .def("nnz", &SOMAReader::nnz, py::call_guard<py::gil_scoped_release>());
 }
+}  // namespace tiledbsoma

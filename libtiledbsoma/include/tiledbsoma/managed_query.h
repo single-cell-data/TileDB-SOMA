@@ -53,7 +53,7 @@ class ManagedQuery {
     //===================================================================
 
     /**
-     * @brief Construct a new Managed Query object
+     * @brief Construct a new ManagedQuery object
      *
      * @param array TileDB array
      * @param name Name of the array
@@ -65,6 +65,13 @@ class ManagedQuery {
     ManagedQuery(const ManagedQuery&) = delete;
     ManagedQuery(ManagedQuery&&) = default;
     ~ManagedQuery() = default;
+
+    /**
+     * @brief Reset the state of this ManagedQuery object to prepare for a new
+     * query, while holding the array open.
+     *
+     */
+    void reset();
 
     /**
      * @brief Select columns names to query (dim and attr). If the
@@ -88,9 +95,10 @@ class ManagedQuery {
     template <typename T>
     void select_ranges(
         const std::string& dim, const std::vector<std::pair<T, T>>& ranges) {
+        subarray_range_set_ = true;
         for (auto& [start, stop] : ranges) {
             subarray_->add_range(dim, start, stop);
-            subarray_range_set_ = true;
+            subarray_range_empty_ = false;
         }
     }
 
@@ -103,9 +111,10 @@ class ManagedQuery {
      */
     template <typename T>
     void select_points(const std::string& dim, const std::vector<T>& points) {
+        subarray_range_set_ = true;
         for (auto& point : points) {
             subarray_->add_range(dim, point, point);
-            subarray_range_set_ = true;
+            subarray_range_empty_ = false;
         }
     }
 
@@ -118,9 +127,10 @@ class ManagedQuery {
      */
     template <typename T>
     void select_points(const std::string& dim, const tcb::span<T> points) {
+        subarray_range_set_ = true;
         for (auto& point : points) {
             subarray_->add_range(dim, point, point);
-            subarray_range_set_ = true;
+            subarray_range_empty_ = false;
         }
     }
 
@@ -135,6 +145,7 @@ class ManagedQuery {
     void select_point(const std::string& dim, const T& point) {
         subarray_->add_range(dim, point, point);
         subarray_range_set_ = true;
+        subarray_range_empty_ = false;
     }
 
     /**
@@ -147,19 +158,19 @@ class ManagedQuery {
     }
 
     /**
+     * @brief Set query result order (layout).
+     *
+     * @param layout A tiledb_layout_t constant
+     */
+    void set_layout(tiledb_layout_t layout) {
+        query_->set_layout(layout);
+    }
+
+    /**
      * @brief Submit the query.
      *
      */
     void submit();
-
-    /**
-     * @brief Return the query status.
-     *
-     * @return Query::Status Query status
-     */
-    Query::Status status() {
-        return query_->query_status();
-    }
 
     /**
      * @brief Check if the query is complete.
@@ -167,7 +178,8 @@ class ManagedQuery {
      * @return true Query status is COMPLETE
      */
     bool is_complete() {
-        return query_->query_status() == Query::Status::COMPLETE;
+        return query_->query_status() == Query::Status::COMPLETE ||
+               is_empty_query();
     }
 
     /**
@@ -201,6 +213,17 @@ class ManagedQuery {
     tcb::span<T> data(const std::string& name) {
         check_column_name(name);
         return buffers_->at(name)->data<T>();
+    }
+
+    /**
+     * @brief Return a view of validity values for column `name`.
+     *
+     * @param name Column name
+     * @return tcb::span<uint8_t> Validity view
+     */
+    const tcb::span<uint8_t> validity(const std::string& name) {
+        check_column_name(name);
+        return buffers_->at(name)->validity();
     }
 
     /**
@@ -243,6 +266,15 @@ class ManagedQuery {
         return schema_;
     }
 
+    /**
+     * @brief Return true if the only ranges selected were empty.
+     *
+     * @return true if the query contains only empty ranges.
+     */
+    bool is_empty_query() {
+        return subarray_range_set_ && subarray_range_empty_;
+    }
+
    private:
     //===================================================================
     //= private non-static
@@ -279,6 +311,9 @@ class ManagedQuery {
 
     // True if a range has been added to the subarray
     bool subarray_range_set_ = false;
+
+    // True unless a non-empty range has been added to the subarray
+    bool subarray_range_empty_ = true;
 
     // Set of column names to read (dim and attr). If empty, query all columns.
     std::vector<std::string> columns_;
