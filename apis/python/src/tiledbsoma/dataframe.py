@@ -100,10 +100,19 @@ class DataFrame(TileDBArray):
                 else:
                     raise TypeError(f"Unsupported dtype {dtype}")
 
+            extent = create_options.dim_tile(index_column_name)
+            if (
+                dtype == pa.int8()
+                or dtype == pa.uint8()
+                or dtype == np.int8
+                or dtype == np.uint8
+            ):
+                extent = 64
+
             dim = tiledb.Dim(
                 name=index_column_name,
                 domain=(lo, hi),
-                tile=create_options.dim_tile(index_column_name),
+                tile=extent,
                 dtype=dtype,
                 filters=create_options.dim_filters(
                     index_column_name, [dict(_type="ZstdFilter", level=level)]
