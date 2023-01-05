@@ -4,7 +4,7 @@ import anndata
 import pyarrow as pa
 import scipy.sparse as sparse
 
-from .eq_types import ExperimentQueryReadArrowResult
+from .eq_types import ExperimentAxisQueryReadArrowResult
 
 
 def _arrow_to_scipy_csr(X: pa.Table, shape: Tuple[int, int]) -> sparse.csr_matrix:
@@ -25,7 +25,7 @@ def _arrow_to_scipy_csr(X: pa.Table, shape: Tuple[int, int]) -> sparse.csr_matri
     )
 
 
-def make_anndata(query_result: ExperimentQueryReadArrowResult) -> anndata.AnnData:
+def make_anndata(query_result: ExperimentAxisQueryReadArrowResult) -> anndata.AnnData:
 
     obs = query_result["obs"]
     obs = obs.to_pandas()

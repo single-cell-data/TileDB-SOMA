@@ -32,8 +32,8 @@ if TYPE_CHECKING:
     from ..experiment import Experiment
 from ..sparse_nd_array import SparseNDArray as SOMASparseNDArray
 from .anndata import make_anndata
-from .axis import AxisQuery, MatrixAxisQuery
-from .eq_types import AxisColumnNames, ExperimentQueryReadArrowResult
+from .axis import AxisQuery
+from .eq_types import AxisColumnNames, ExperimentAxisQueryReadArrowResult
 
 AxisJoinIds = TypedDict(
     "AxisJoinIds",
@@ -43,11 +43,22 @@ AxisJoinIds = TypedDict(
     },
 )
 
+MatrixAxisQuery = TypedDict(
+    "MatrixAxisQuery",
+    {
+        "obs": AxisQuery,
+        "var": AxisQuery,
+    },
+)
 
-class ExperimentQuery(ContextManager["ExperimentQuery"]):
+
+class ExperimentAxisQuery(ContextManager["ExperimentAxisQuery"]):
     """
-    ExperimentQuery allows easy selection and extraction of data from a single soma.Measurement
-    in a soma.Experiment [lifecycle: experimental].
+    ExperimentAxisQuery allows easy selection and extraction of data from a single soma.Measurement
+    in a soma.Experiment, by obs/var (axis) coordinates and/or value filter [lifecycle: experimental].
+
+    The primary use for this class is slicing Experiment ``X`` layers by obs or var value and/or coordinates.
+    Slicing on SparseNDArray ``X`` matrices is support; DenseNDArray is not supported at this time.
 
     IMPORTANT: this class is not thread safe.
 
@@ -56,10 +67,10 @@ class ExperimentQuery(ContextManager["ExperimentQuery"]):
     features such as `n_obs` and `n_vars` codify this in the API.
 
     IMPORTANT: you must call `close()` on any instance of this class in order to release
-    underlying resources. The ExperimentQuery is a context manager -- it is recommended
+    underlying resources. The ExperimentAxisQuery is a context manager, and it is recommended
     that you use the following pattern to make this easy and safe:
     ```
-        with ExperimentQuery(...) as query:
+        with ExperimentAxisQuery(...) as query:
             ...
     ```
     """
@@ -70,7 +81,7 @@ class ExperimentQuery(ContextManager["ExperimentQuery"]):
     _query: MatrixAxisQuery
     _joinids: AxisJoinIds
     _indexer: "AxisIndexer"
-    _default_threadpool: Optional[
+    __threadpool: Optional[
         concurrent.futures.ThreadPoolExecutor
     ]  # lazily created, use property accessor
 
@@ -100,27 +111,28 @@ class ExperimentQuery(ContextManager["ExperimentQuery"]):
         }
         self._indexer = AxisIndexer(self)
 
-        self._default_threadpool = None
+        self.__threadpool = None
 
     @property
-    def default_threadpool(self) -> concurrent.futures.ThreadPoolExecutor:
-        if self._default_threadpool is None:
+    def _threadpool(self) -> concurrent.futures.ThreadPoolExecutor:
+        """Private threadpool cache."""
+        if self.__threadpool is None:
             # TODO: the user should be able to set their own threadpool, a la asyncio's
             # loop.set_default_executor().  This is important for managing the level of
             # concurrency, etc.
-            self._default_threadpool = concurrent.futures.ThreadPoolExecutor()
-        return self._default_threadpool
+            self.__threadpool = concurrent.futures.ThreadPoolExecutor()
+        return self.__threadpool
 
     def close(self) -> None:
         """
         Cleanup and close all resources. This must be called or the thread pool
-        will not be release, etc.
+        will not be release.
         """
-        if self._default_threadpool is not None:
-            self._default_threadpool.shutdown()
-            self._default_threadpool = None
+        if self.__threadpool is not None:
+            self.__threadpool.shutdown()
+            self.__threadpool = None
 
-    def __enter__(self) -> "ExperimentQuery":
+    def __enter__(self) -> "ExperimentAxisQuery":
         return self
 
     def __exit__(self, *excinfo: Any) -> None:
@@ -182,26 +194,30 @@ class ExperimentQuery(ContextManager["ExperimentQuery"]):
         )
 
     def obs_joinids(self) -> pa.Array:
+        """Return obs soma_joinids as an Arrow array"""
         return self._read_axis_joinids("obs", self.experiment.obs)
 
     def var_joinids(self) -> pa.Array:
+        """Return var soma_joinids as an Arrow array"""
         return self._read_axis_joinids("var", self.experiment.ms[self.ms].var)
 
     @property
     def n_obs(self) -> int:
+        """Return number of obs axis query results"""
         return len(self.obs_joinids())
 
     @property
     def n_vars(self) -> int:
+        """Return number of var axis query results"""
         return len(self.var_joinids())
 
     def _ensure_joinids_loaded(self) -> None:
         """Private. Ensure joinids for both axis are in-memory."""
         futures = []
         if not self._joinids["obs"]:
-            futures.append(self.default_threadpool.submit(self.obs_joinids))
+            futures.append(self._threadpool.submit(self.obs_joinids))
         if not self._joinids["var"]:
-            futures.append(self.default_threadpool.submit(self.var_joinids))
+            futures.append(self._threadpool.submit(self.var_joinids))
         if futures:
             concurrent.futures.wait(futures)
         assert self._joinids["obs"] is not None
@@ -227,18 +243,43 @@ class ExperimentQuery(ContextManager["ExperimentQuery"]):
         else:
             # prefetch
             fn = wrap_generator(X.read_table((obs_joinids, var_joinids)))
-            _prefetch_future = self.default_threadpool.submit(fn)
+            _prefetch_future = self._threadpool.submit(fn)
             while True:
                 value, done = _prefetch_future.result()
                 if done:
                     return
                 assert value is not None
-                _prefetch_future = self.default_threadpool.submit(fn)
+                _prefetch_future = self._threadpool.submit(fn)
                 yield value
 
     def X(self, layer: str, prefetch: bool = False) -> Iterator[pa.Table]:
         """
         Return an X layer as an iterator of Arrow Tables.
+
+        Parameters
+        ----------
+        layer : str
+            The X layer name to return.
+        prefetch : Optional[bool], default False
+            If true, attempt to use threading to prefetch incremental results.
+
+        Examples
+        --------
+        >>> with ExperimentAxisQuery(
+        ...     exp,
+        ...     "RNA",
+        ...     obs_query=AxisQuery(value_filter='tissue == "lung"')
+        ... ) as query:
+        ...     X_result = pa.concat_tables(query.X("raw"))
+        >>> X_result
+        pyarrow.Table
+        soma_dim_0: int64
+        soma_dim_1: int64
+        soma_data: float
+        ----
+        soma_dim_0: [[1538112,1538112,1538112,1538112,1538112,...,1538308,1538308,1538308,1538308,1538308], ...]
+        soma_dim_1: [[5,19,26,34,37,...,10577,10603,10616,10617,10655], ...]
+        soma_data: [[2,2,1,1,1,...,1,1,1,2,2], ...]
         """
         if not (layer and layer in self.experiment.ms[self.ms].X):
             raise ValueError("Must specify X layer")
@@ -259,7 +300,7 @@ class ExperimentQuery(ContextManager["ExperimentQuery"]):
         use_position_indexing: bool = False,
         column_names: Optional[AxisColumnNames] = None,
         X_layers: Optional[List[str]] = None,
-    ) -> ExperimentQueryReadArrowResult:
+    ) -> ExperimentAxisQueryReadArrowResult:
         """
         Read the _entire_ query result into Arrow Tables. Low-level routine
         intended to be the basis for exporting to other in-core formats, such
@@ -289,13 +330,13 @@ class ExperimentQuery(ContextManager["ExperimentQuery"]):
             column_names["var"] = None
 
         futures = (
-            self.default_threadpool.submit(
+            self._threadpool.submit(
                 self._read_axis_dataframe,
                 "obs",
                 self.experiment.obs,
                 column_names=column_names["obs"],
             ),
-            self.default_threadpool.submit(
+            self._threadpool.submit(
                 self._read_axis_dataframe,
                 "var",
                 self.experiment.ms[self.ms].var,
@@ -313,7 +354,7 @@ class ExperimentQuery(ContextManager["ExperimentQuery"]):
             X_tables = self._rewrite_X_for_positional_indexing(X_tables)
 
         X = X_tables.pop(X_name)
-        query_result: ExperimentQueryReadArrowResult = {
+        query_result: ExperimentAxisQueryReadArrowResult = {
             "obs": obs_table,
             "var": var_table,
             "X": X,
@@ -333,6 +374,24 @@ class ExperimentQuery(ContextManager["ExperimentQuery"]):
     ) -> anndata.AnnData:
         """
         Execute the query and return result as an AnnData in-memory object.
+
+        Parameters
+        ----------
+        X_name : str
+            The name of the X layer to read and return in the AnnData.X slot
+        column_names : Optional[dict]
+            Specify which column names in ``var`` and ``obs`` dataframes to read and return.
+        X_layers : Optional[List[str]]
+            Addtional X layers read read and return in the AnnData.layers slot
+
+        Examples
+        --------
+        >>> with exp.query_by_axis("RNA", obs_query=AxisQuery(value_filter='tissue == "lung"')) as query:
+        ...     ad = query.read_as_anndata("raw", column_names={"obs": ["cell_type", "tissue"]})
+        >>> ad
+        AnnData object with n_obs × n_vars = 127310 × 52373
+        obs: 'cell_type', 'tissue'
+        var: 'soma_joinid', 'feature_id', 'feature_name', 'feature_length'
         """
         query_result = self.read(
             X_name,
@@ -376,25 +435,25 @@ class ExperimentQuery(ContextManager["ExperimentQuery"]):
             )
         return new_X_tables
 
-    def get_async(self) -> "AsyncExperimentQuery":
-        return AsyncExperimentQuery(self)
+    def get_async(self) -> "AsyncExperimentAxisQuery":
+        return AsyncExperimentAxisQuery(self)
 
     def get_indexer(self) -> "AxisIndexer":
         return self._indexer
 
 
-class AsyncExperimentQuery:
+class AsyncExperimentAxisQuery:
     """
-    An async proxy for ExperimentQuery, allowing use with coroutines
+    An async proxy for ExperimentAxisQuery, allowing use with coroutines
     [lifecycle: experimental].
     """
 
-    query: ExperimentQuery
+    query: ExperimentAxisQuery
 
-    def __init__(self, query: ExperimentQuery):
+    def __init__(self, query: ExperimentAxisQuery):
         self.query = query
 
-    async def __aenter__(self) -> "AsyncExperimentQuery":
+    async def __aenter__(self) -> "AsyncExperimentAxisQuery":
         return self
 
     async def __aexit__(self, *excinfo: Any) -> None:
@@ -512,12 +571,12 @@ class AxisIndexer:
     Given a query, providing index-bulding services for obs/var axis.
     """
 
-    query: ExperimentQuery
+    query: ExperimentAxisQuery
     _obs_index: pd.Index
     _var_index: pd.Index
 
-    def __init__(self, query: Union[ExperimentQuery, AsyncExperimentQuery]):
-        if isinstance(query, AsyncExperimentQuery):
+    def __init__(self, query: Union[ExperimentAxisQuery, AsyncExperimentAxisQuery]):
+        if isinstance(query, AsyncExperimentAxisQuery):
             query = query.query
 
         self.query = query
