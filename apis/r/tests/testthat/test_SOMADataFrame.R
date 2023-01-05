@@ -1,10 +1,7 @@
-test_that("SOMADataFrame creation", {
+test_that("Basic mechanics", {
   uri <- withr::local_tempdir("soma-indexed-dataframe")
-  asch <- arrow::schema(
-    arrow::field("foo", arrow::int32(), nullable = FALSE),
-    arrow::field("bar", arrow::float64(), nullable = FALSE),
-    arrow::field("baz", arrow::large_utf8(), nullable = FALSE)
-  )
+  asch <- create_arrow_schema()
+
   sidf <- SOMADataFrame$new(uri)
   expect_error(
     sidf$create(asch),
@@ -32,9 +29,10 @@ test_that("SOMADataFrame creation", {
   )
 
   tbl0 <- arrow::arrow_table(foo = 1L:10L,
+                             soma_joinid = 1L:10L,
                              bar = 1.1:10.1,
                              baz = letters[1:10],
-                             schema=asch)
+                             schema = asch)
 
   sidf$write(tbl0)
 
@@ -50,8 +48,8 @@ test_that("SOMADataFrame creation", {
   expect_true(tbl1$Equals(tbl0))
 
   # Slicing by foo
-  tbl1 <- sidf$read(ids = list(foo=1L:2L))
-  expect_true(tbl1$Equals(tbl1$Slice(offset = 0, length = 2)))
+  tbl1 <- sidf$read(ids = list(foo = 1L:2L))
+  expect_true(tbl1$Equals(tbl0$Slice(offset = 0, length = 2)))
 
   # Subselecting columns
   expect_error(
@@ -60,7 +58,7 @@ test_that("SOMADataFrame creation", {
   )
 
   tbl1 <- sidf$read(column_names = "bar")
-  expect_true(tbl1$Equals(tbl0$SelectColumns(1L)))
+  expect_true(tbl1$Equals(tbl0$SelectColumns(2L)))
 
   # Attribute filters
   tbl1 <- sidf$read(value_filter = "bar < 5")
@@ -71,12 +69,12 @@ test_that("int64 values are stored correctly", {
   uri <- withr::local_tempdir("soma-indexed-dataframe")
   asch <- arrow::schema(
     arrow::field("foo", arrow::int32(), nullable = FALSE),
-    arrow::field("bar", arrow::int64(), nullable = FALSE),
+    arrow::field("soma_joinid", arrow::int64(), nullable = FALSE),
   )
 
   sidf <- SOMADataFrame$new(uri)
   sidf$create(asch, index_column_names = "foo")
-  tbl0 <- arrow::arrow_table(foo = 1L:10L, bar = 1L:10L, schema = asch)
+  tbl0 <- arrow::arrow_table(foo = 1L:10L, soma_joinid = 1L:10L, schema = asch)
 
   orig_downcast_value <- getOption("arrow.int64_downcast")
 
@@ -114,4 +112,51 @@ test_that("SOMADataFrame read", {
     sdf <- SOMADataFrame$new(uri)
     z <- sdf$read(ids = list(soma_joinid=ids))
     expect_equal(z$num_rows, 10L)
+})
+
+test_that("soma_ prefix is reserved", {
+  uri <- withr::local_tempdir("soma-indexed-dataframe")
+  asch <- create_arrow_schema()
+
+  # Add a soma_joinid column with the wrong type
+  asch <- asch$AddField(
+    i = 1,
+    field = arrow::field("soma_foo", arrow::int32(), nullable = FALSE)
+  )
+
+  sidf <- SOMADataFrame$new(uri)
+  expect_error(
+    sidf$create(asch, index_column_names = "foo"),
+    "Column names must not start with reserved prefix 'soma_'"
+  )
+})
+
+test_that("soma_joinid is added on creation", {
+  uri <- withr::local_tempdir("soma-indexed-dataframe")
+  asch <- create_arrow_schema()
+  asch <- asch$RemoveField(match("soma_joinid", asch$names) - 1)
+
+  sidf <- SOMADataFrame$new(uri)
+  sidf$create(asch, index_column_names = "foo")
+
+  expect_true("soma_joinid" %in% sidf$attrnames())
+  expect_equal(tiledb::datatype(sidf$attributes()$soma_joinid), "INT64")
+})
+
+test_that("soma_joinid validations", {
+  uri <- withr::local_tempdir("soma-indexed-dataframe")
+  asch <- create_arrow_schema()
+
+  # Add a soma_joinid column with the wrong type
+  asch <- asch$RemoveField(match("soma_joinid", asch$names) - 1)
+  asch <- asch$AddField(
+    i = 1,
+    field = arrow::field("soma_joinid", arrow::int32(), nullable = FALSE)
+  )
+
+  sidf <- SOMADataFrame$new(uri)
+  expect_error(
+    sidf$create(asch, index_column_names = "foo"),
+    "soma_joinid field must be of type Arrow int64"
+  )
 })
