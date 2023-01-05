@@ -3,6 +3,8 @@ set -euo pipefail
 # Context: .github/workflows/*.yaml
 export R_REMOTES_NO_ERRORS_FROM_WARNINGS='true'
 
+Rscript -e 'install.packages("remotes")'
+
 # TODO: Remove this once we have either a TileDB-R 0.17.1 depending on core 2.13.1, or, a TileDB-R
 # 0.18 depending on core 2.14.
 #
@@ -10,12 +12,7 @@ export R_REMOTES_NO_ERRORS_FROM_WARNINGS='true'
 #
 # * Enable repository from tiledb-inc
 # * Download and install tiledb in R
-Rscript -e '
-    options(repos = c(tiledbinc = "https://tiledb-inc.r-universe.dev", CRAN = "https://cloud.r-project.org"));
-    install.packages("tiledb")
-'
-
-Rscript -e 'install.packages("remotes")'
+Rscript -e 'options(repos = c(tiledbinc = "https://tiledb-inc.r-universe.dev", CRAN = "https://cloud.r-project.org")); install.packages("tiledb")'
 
 cd apis/r
 Rscript -e 'remotes::install_deps(dependencies = TRUE)'
