@@ -307,13 +307,12 @@ def make_dataframe(request):
     [
         pytest.param(pa.float32(), marks=pytest.mark.xfail),
         pytest.param(pa.float64(), marks=pytest.mark.xfail),
-        # TODO: as of 2023-01-04 2.13.1 0.19.1 -- segv here being debugged
-        # pytest.param(
-        #    pa.int8(), marks=pytest.mark.xfail
-        # ),  # TODO: remove xfail when #518 is fixed
-        # pytest.param(
-        #    pa.uint8(), marks=pytest.mark.xfail
-        # ),  # TODO: remove xfail when #518 is fixed
+        pytest.param(
+            pa.int8(), marks=pytest.mark.xfail
+        ),  # TODO: remove xfail when #518 is fixed
+        pytest.param(
+            pa.uint8(), marks=pytest.mark.xfail
+        ),  # TODO: remove xfail when #518 is fixed
         pa.int16(),
         pa.uint16(),
         pa.int32(),
