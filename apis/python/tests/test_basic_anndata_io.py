@@ -34,13 +34,13 @@ def test_import_anndata(adata):
 
     # Ingest
     exp = tiledbsoma.Experiment(output_path)
-    tiledbsoma.io.from_anndata(exp, orig, "mRNA")
+    tiledbsoma.io.from_anndata(exp, orig, "RNA")
 
     # Structure:
     # pbmc-small Experiment:
     #   obs DataFrame (80,)
     #   ms Collection:
-    #     mRNA Measurement:
+    #     RNA Measurement:
     #       X Collection:
     #         data SparseNDArray (80, 20)
     #       obsp Collection:
