@@ -38,11 +38,20 @@ SOMADataFrame <- R6::R6Class(
       for (field_name in index_column_names) {
         field <- schema$GetFieldByName(field_name)
 
+        # TODO: Parameterize
+        tile_extent <- 2048L
+
+        tile_extent <- switch(field$type$ToString(),
+          "int64" = bit64::as.integer64(tile_extent),
+          "double" = as.double(tile_extent),
+          "string" = NULL,
+          tile_extent
+        )
+
         tdb_dims[[field_name]] <- tiledb::tiledb_dim(
           name = field_name,
           domain = arrow_type_range(field$type),
-          # TODO: Parameterize
-          tile = 2048L,
+          tile = tile_extent,
           type = tiledb_type_from_arrow_type(field$type),
           filter_list = tiledb::tiledb_filter_list(c(
             tiledb_zstd_filter()
