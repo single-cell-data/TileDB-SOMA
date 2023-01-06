@@ -50,7 +50,8 @@ SOMADataFrame <- R6::R6Class(
 
         tdb_dims[[field_name]] <- tiledb::tiledb_dim(
           name = field_name,
-          domain = arrow_type_range(field$type),
+          # Numeric index types must be positive values for indexing
+          domain = arrow_type_unsigned_range(field$type),
           tile = tile_extent,
           type = tiledb_type_from_arrow_type(field$type),
           filter_list = tiledb::tiledb_filter_list(c(

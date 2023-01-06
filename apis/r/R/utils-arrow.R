@@ -99,7 +99,7 @@ arrow_type_from_tiledb_type <- function(x) {
 #' Retrieve limits for Arrow types
 #' @importFrom bit64 lim.integer64
 #' @noRd
-arrow_type_range <- function(x) {
+arrow_type_range <- function(x, signed = TRUE) {
   stopifnot(is_arrow_data_type(x))
 
   switch(x$name,
@@ -122,7 +122,23 @@ arrow_type_range <- function(x) {
     utf8 = NULL,
     stop("Unsupported data type", call. = FALSE)
   )
+}
 
+#' Retrieve unsigned limits for Arrow types
+#' This restricts the lower bound of signed numeric types to 0
+#' @noRd
+arrow_type_unsigned_range <- function(x) {
+  range <- arrow_type_range(x)
+  range[1] <- switch(x$name,
+    int8 = 0L,
+    int16 = 0L,
+    int32 = 0L,
+    int64 = bit64::as.integer64(0),
+    float = 0,
+    double = 0,
+    range[1]
+  )
+  range
 }
 
 #' Create an Arrow field from a TileDB dimension
