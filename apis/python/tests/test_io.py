@@ -56,7 +56,7 @@ def test_io_create_from_matrix_Dense_nd_array(tmp_path, plfm_config, src_matrix)
     assert snda.shape == src_matrix.shape
     assert snda.ndim == src_matrix.ndim
 
-    read_back = snda.read_numpy((slice(None), slice(None)))
+    read_back = snda.read((slice(None), slice(None))).to_numpy()
 
     if isinstance(src_matrix, np.ndarray):
         assert np.array_equal(read_back, src_matrix)

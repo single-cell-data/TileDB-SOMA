@@ -331,7 +331,7 @@ def _write_matrix_to_denseNDArray(
             nd_array = src_matrix
         else:
             nd_array = src_matrix.toarray()
-        soma_ndarray.write_numpy((slice(None),), nd_array)
+        soma_ndarray.write((slice(None),), pa.Tensor.from_numpy(nd_array))
         return
 
     # OR, write in chunks
@@ -362,7 +362,7 @@ def _write_matrix_to_denseNDArray(
             tensor = pa.Tensor.from_numpy(chunk)
         else:
             tensor = pa.Tensor.from_numpy(chunk.toarray())
-        soma_ndarray.write_tensor((slice(i, i2), slice(None)), tensor)
+        soma_ndarray.write((slice(i, i2), slice(None)), tensor)
 
         t2 = time.time()
         chunk_seconds = t2 - t1
@@ -535,7 +535,7 @@ def to_anndata(
     assert X_data is not None
     X_dtype = None  # some datasets have no X
     if isinstance(X_data, DenseNDArray):
-        X_ndarray = X_data.read_numpy((slice(None), slice(None)))
+        X_ndarray = X_data.read((slice(None), slice(None))).to_numpy()
         X_dtype = X_ndarray.dtype
     elif isinstance(X_data, SparseNDArray):
         X_mat = X_data.read_as_pandas_all()  # TODO: CSR/CSC options ...
@@ -551,7 +551,7 @@ def to_anndata(
         for key in measurement.obsm.keys():
             shape = measurement.obsm[key].shape
             assert len(shape) == 2
-            mat = measurement.obsm[key].read_numpy((slice(None),) * len(shape))
+            mat = measurement.obsm[key].read((slice(None),) * len(shape)).to_numpy()
             obsm[key] = sp.csr_array(mat)
 
     varm = {}
@@ -559,7 +559,7 @@ def to_anndata(
         for key in measurement.varm.keys():
             shape = measurement.varm[key].shape
             assert len(shape) == 2
-            mat = measurement.varm[key].read_numpy((slice(None),) * len(shape))
+            mat = measurement.varm[key].read((slice(None),) * len(shape)).to_numpy()
             varm[key] = sp.csr_array(mat)
 
     obsp = {}
