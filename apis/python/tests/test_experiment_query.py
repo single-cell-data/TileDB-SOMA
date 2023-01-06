@@ -13,9 +13,7 @@ from tiledbsoma.experiment_query import AxisQuery, ExperimentAxisQuery, X_as_ser
 """
 WIP tracker - delete when complete.  Missing tests:
 * query by coords when there is >1 dimension
-* read prefetch
-* obsp/varp
-* obsm/varm
+* error check handling of Dense X/obsm/varm
 """
 
 
@@ -118,7 +116,7 @@ def test_experiment_query_all(soma_experiment):
         )
 
         # read as anndata
-        ad = query.read_as_anndata("raw")
+        ad = query.to_anndata("raw")
         assert ad.n_obs == query.n_obs and ad.n_vars == query.n_vars
         assert set(ad.obs.keys().to_list()) == set(["soma_joinid", "label"])
         assert set(ad.var.keys().to_list()) == set(["soma_joinid", "label"])
@@ -130,6 +128,41 @@ def test_experiment_query_all(soma_experiment):
         assert np.array_equal(raw_X["soma_dim_0"], ad_X_coo.row)
         assert np.array_equal(raw_X["soma_dim_1"], ad_X_coo.col)
         assert np.array_equal(raw_X["soma_data"], ad_X_coo.data)
+
+
+@pytest.mark.xfail(
+    # see comment on test_experiment_query_all
+    sys.version_info.major == 3 and sys.version_info.minor >= 10,
+    reason="typeguard bug #242",
+)
+@pytest.mark.parametrize("n_obs,n_vars", [(1001, 99)])
+def test_experiment_query_prototype(soma_experiment: soma.Experiment):
+    obs_slice = slice(3, 72)
+    var_slice = slice(7, 21)
+    assert soma_experiment.exists()
+    with soma_experiment.query_by_axis(
+        "RNA",
+        obs_query=AxisQuery(coords=(obs_slice,)),
+        var_query=AxisQuery(coords=(var_slice,)),
+    ) as query:
+        # test prototype
+        assert pa.concat_tables(query.obs_new().tables()) == query.obs()
+        assert query.obs_new().tables().flat() == query.obs()
+
+        raw_X = pa.concat_tables(
+            soma_experiment.ms["RNA"].X["raw"].read_table((obs_slice, var_slice))
+        )
+        assert query.X_new("raw").tables().flat() == raw_X
+        assert query.X_new("raw").coo().flat() == pa.SparseCOOTensor.from_numpy(
+            raw_X["soma_data"].to_numpy(),
+            np.array(
+                [
+                    raw_X["soma_dim_0"].to_numpy(),
+                    raw_X["soma_dim_1"].to_numpy(),
+                ]
+            ).T,
+            shape=soma_experiment.ms["RNA"].X["raw"].shape,
+        )
 
 
 @pytest.mark.xfail(
@@ -251,7 +284,7 @@ def test_X_layers(soma_experiment):
         assert arrow_reads["X"] == A
         assert arrow_reads["X_layers"]["B"] == B
 
-        ad = query.read_as_anndata("B", X_layers=["A"])
+        ad = query.to_anndata("B", X_layers=["A"])
         ad_X_coo = ad.X.tocoo()
         assert np.array_equal(B["soma_dim_0"], ad_X_coo.row)
         assert np.array_equal(B["soma_dim_1"], ad_X_coo.col)
@@ -343,13 +376,13 @@ def test_query_cleanup(soma_experiment: soma.Experiment):
     with soma_experiment.query_by_axis("RNA") as query:
         assert query.n_obs == 1001
         assert query.n_vars == 99
-        assert query.read_as_anndata("raw") is not None
+        assert query.to_anndata("raw") is not None
         assert query._ExperimentAxisQuery__threadpool is not None
 
     assert query._ExperimentAxisQuery__threadpool is None
 
     with closing(soma_experiment.query_by_axis("RNA")) as query:
-        assert query.read_as_anndata("raw") is not None
+        assert query.to_anndata("raw") is not None
         assert query._ExperimentAxisQuery__threadpool is not None
 
     assert query._ExperimentAxisQuery__threadpool is None
@@ -448,44 +481,6 @@ def test_X_as_series():
     assert np.array_equal(
         ser.index.get_level_values("soma_dim_1").to_numpy(), soma_dim_1
     )
-
-
-@pytest.mark.asyncio
-@pytest.mark.xfail(
-    # see comment on test_experiment_query_all
-    sys.version_info.major == 3 and sys.version_info.minor >= 10,
-    reason="typeguard bug #242",
-)
-@pytest.mark.parametrize("n_obs,n_vars", [(1001, 99)])
-async def test_async_query(soma_experiment: soma.Experiment):
-    """Verify basic async API functions"""
-    async with soma_experiment.query_by_axis("RNA").get_async() as query:
-        assert len(await query.obs()) == 1001
-        assert len(await query.var()) == 99
-
-        assert np.array_equal((await query.obs_joinids()).to_numpy(), np.arange(1001))
-        assert np.array_equal((await query.var_joinids()).to_numpy(), np.arange(99))
-
-        ad = await query.read_as_anndata("raw")
-        assert ad is not None
-        assert ad.n_obs == 1001
-        assert ad.n_vars == 99
-
-
-@pytest.mark.asyncio
-@pytest.mark.xfail(
-    # see comment on test_experiment_query_all
-    sys.version_info.major == 3 and sys.version_info.minor >= 10,
-    reason="typeguard bug #242",
-)
-@pytest.mark.parametrize("n_obs,n_vars", [(1001, 99)])
-async def test_async_query_cleanup(soma_experiment: soma.Experiment):
-    """Verify clean up occurs when used as a context manager."""
-    async with soma_experiment.query_by_axis("RNA").get_async() as query:
-        assert [a async for a in query.X("raw")]
-        assert query.query._ExperimentAxisQuery__threadpool is not None
-
-    assert query.query._ExperimentAxisQuery__threadpool is None
 
 
 """

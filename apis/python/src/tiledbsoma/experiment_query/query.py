@@ -1,12 +1,8 @@
-import asyncio
+import abc
 import concurrent.futures
-import contextvars
-import functools
 from typing import (
     TYPE_CHECKING,
     Any,
-    AsyncIterator,
-    Callable,
     ContextManager,
     Dict,
     Iterator,
@@ -24,7 +20,7 @@ import numpy as np
 import numpy.typing as npt
 import pandas as pd
 import pyarrow as pa
-from typing_extensions import Literal, ParamSpec, TypedDict
+from typing_extensions import Literal, TypedDict
 
 from ..dataframe import DataFrame as SOMADataFrame
 
@@ -50,6 +46,17 @@ MatrixAxisQuery = TypedDict(
         "var": AxisQuery,
     },
 )
+
+
+"""TEMPORARY
+
+    with exp.query(...) as query:
+
+        query.obs().tables() -> Iterator[pa.Table]
+        query.obs().tables().concat() -> pa.Table
+        query.
+
+"""
 
 
 class ExperimentAxisQuery(ContextManager["ExperimentAxisQuery"]):
@@ -187,6 +194,19 @@ class ExperimentAxisQuery(ContextManager["ExperimentAxisQuery"]):
             "obs", self.experiment.obs, column_names=column_names
         )
 
+    def obs_new(
+        self, *, column_names: Optional[Sequence[str]] = None
+    ) -> "DataFrameTableRead":
+        query = self._query["obs"]
+        return DataFrameTableRead(
+            self,
+            self.experiment.obs.read(
+                ids=query.coords,
+                value_filter=query.value_filter,
+                column_names=column_names,
+            ),
+        )
+
     def var(self, *, column_names: Optional[Sequence[str]] = None) -> pa.Table:
         """Return var as an Arrow table."""
         return self._read_axis_dataframe(
@@ -223,9 +243,7 @@ class ExperimentAxisQuery(ContextManager["ExperimentAxisQuery"]):
         assert self._joinids["obs"] is not None, "Internal error"
         assert self._joinids["var"] is not None, "Internal error"
 
-    def _fetchX(
-        self, X: SOMASparseNDArray, prefetch: bool = False
-    ) -> Iterator[pa.Table]:
+    def _fetchX(self, X: SOMASparseNDArray) -> Iterator[pa.Table]:
         """Private helper for ``X``"""
         assert self._joinids["obs"] is not None
         assert self._joinids["var"] is not None
@@ -237,23 +255,10 @@ class ExperimentAxisQuery(ContextManager["ExperimentAxisQuery"]):
             yield pa.Table.from_pylist([], schema=X.schema)
             return
 
-        if not prefetch:
-            # yield for clarity
-            yield from X.read_table((obs_joinids, var_joinids))
+        # yield for clarity
+        yield from X.read_table((obs_joinids, var_joinids))
 
-        else:
-            # prefetch
-            fn = wrap_generator(X.read_table((obs_joinids, var_joinids)))
-            _prefetch_future = self._threadpool.submit(fn)
-            while True:
-                value, done = _prefetch_future.result()
-                if done:
-                    return
-                assert value is not None
-                _prefetch_future = self._threadpool.submit(fn)
-                yield value
-
-    def X(self, layer: str, prefetch: bool = False) -> Iterator[pa.Table]:
+    def X(self, layer: str) -> Iterator[pa.Table]:
         """
         Return an X layer as an iterator of Arrow Tables.
 
@@ -261,8 +266,6 @@ class ExperimentAxisQuery(ContextManager["ExperimentAxisQuery"]):
         ----------
         layer : str
             The X layer name to return.
-        prefetch : Optional[bool], default False
-            If true, attempt to use threading to prefetch incremental results.
 
         Examples
         --------
@@ -291,7 +294,20 @@ class ExperimentAxisQuery(ContextManager["ExperimentAxisQuery"]):
 
         self._load_joinids()
 
-        yield from self._fetchX(X, prefetch=prefetch)
+        yield from self._fetchX(X)
+
+    def X_new(self, layer: str) -> "SparseNDArrayTableRead":
+        if not (layer and layer in self.experiment.ms[self.ms].X):
+            raise ValueError("Must specify X layer")
+
+        X = self.experiment.ms[self.ms].X[layer]
+        if X.soma_type != "SOMASparseNDArray":
+            raise NotImplementedError("Dense array unsupported")
+        assert isinstance(X, SOMASparseNDArray)
+
+        self._load_joinids()
+
+        return SparseNDArrayTableRead(self, X.shape, self._fetchX(X))
 
     def _axisp_inner(
         self, axis: Literal["obs", "var"], layer: str
@@ -381,7 +397,7 @@ class ExperimentAxisQuery(ContextManager["ExperimentAxisQuery"]):
         obs_table, var_table = (f.result() for f in futures)
 
         X_tables = {
-            _xname: pa.concat_tables(self._fetchX(all_X_arrays[_xname], prefetch=True))
+            _xname: pa.concat_tables(self._fetchX(all_X_arrays[_xname]))
             for _xname in all_X_arrays
         }
         if use_position_indexing:
@@ -399,7 +415,7 @@ class ExperimentAxisQuery(ContextManager["ExperimentAxisQuery"]):
 
         return query_result
 
-    def read_as_anndata(
+    def to_anndata(
         self,
         X_name: str,
         *,
@@ -421,7 +437,7 @@ class ExperimentAxisQuery(ContextManager["ExperimentAxisQuery"]):
         Examples
         --------
         >>> with exp.query_by_axis("RNA", obs_query=AxisQuery(value_filter='tissue == "lung"')) as query:
-        ...     ad = query.read_as_anndata("raw", column_names={"obs": ["cell_type", "tissue"]})
+        ...     ad = query.to_anndata("raw", column_names={"obs": ["cell_type", "tissue"]})
         >>> ad
         AnnData object with n_obs × n_vars = 127310 × 52373
         obs: 'cell_type', 'tissue'
@@ -469,135 +485,8 @@ class ExperimentAxisQuery(ContextManager["ExperimentAxisQuery"]):
             )
         return new_X_tables
 
-    def get_async(self) -> "AsyncExperimentAxisQuery":
-        return AsyncExperimentAxisQuery(self)
-
     def get_indexer(self) -> "AxisIndexer":
         return self._indexer
-
-
-class AsyncExperimentAxisQuery:
-    """
-    An async proxy for ExperimentAxisQuery, allowing use within coroutines
-    [lifecycle: experimental].
-    """
-
-    query: ExperimentAxisQuery
-
-    def __init__(self, query: ExperimentAxisQuery):
-        self.query = query
-
-    async def __aenter__(self) -> "AsyncExperimentAxisQuery":
-        return self
-
-    async def __aexit__(self, *excinfo: Any) -> None:
-        self.close()
-
-    def close(self) -> None:
-        self.query.close()
-
-    @property
-    def n_obs(self) -> int:
-        return self.query.n_obs
-
-    @property
-    def n_vars(self) -> int:
-        return self.query.n_vars
-
-    async def obs(
-        self, *, column_names: Optional[Sequence[str]] = None
-    ) -> AsyncIterator[pa.Table]:
-        return await to_thread(self.query.obs, column_names=column_names)
-
-    async def var(
-        self, *, column_names: Optional[Sequence[str]] = None
-    ) -> AsyncIterator[pa.Table]:
-        return await to_thread(self.query.var, column_names=column_names)
-
-    async def obs_joinids(self) -> pa.Array:
-        if self.query._joinids["obs"] is not None:
-            return self.query._joinids["obs"]
-        return await to_thread(self.query.obs_joinids)
-
-    async def var_joinids(self) -> pa.Array:
-        if self.query._joinids["var"] is not None:
-            return self.query._joinids["var"]
-        return await to_thread(self.query.var_joinids)
-
-    async def X(self, layer: str, prefetch: bool = False) -> AsyncIterator[pa.Table]:
-        chunk: pa.Table
-        async for chunk in async_iter((i for i in self.query.X(layer, prefetch))):
-            yield chunk
-
-    async def read_as_anndata(
-        self,
-        X_name: str,
-        *,
-        column_names: Optional[AxisColumnNames] = None,
-        X_layers: Optional[List[str]] = None,
-    ) -> anndata.AnnData:
-        return await to_thread(
-            self.query.read_as_anndata,
-            X_name,
-            column_names=column_names,
-            X_layers=X_layers,
-        )
-
-
-T = TypeVar("T")
-
-
-async def async_iter(gen: Iterator[T]) -> AsyncIterator[T]:
-    """
-    Convert a generator into an async coroutine
-    """
-    fn = wrap_generator(gen)
-    while True:
-        value, done = await to_thread(fn)
-        if done:
-            return
-        assert value is not None
-        yield value
-
-
-def wrap_generator(it: Iterator[T]) -> Callable[[], Tuple[Optional[T], bool]]:
-    """
-    Wrap a generator, making it a "normal" function that is amenable
-    to running in a thread. Each time it is called, it returns a
-    tuple:
-        If there is another value: (next_value, False)
-        If end of iteration:       (None, True)
-    """
-
-    def _next() -> Tuple[Optional[T], bool]:
-        try:
-            value = next(it)
-            return value, False
-        except StopIteration:
-            return None, True
-
-    return _next
-
-
-_P = ParamSpec("_P")
-_R = TypeVar("_R")
-
-
-async def to_thread(
-    __func: Callable[_P, _R], *args: _P.args, **kwargs: _P.kwargs
-) -> _R:
-    """
-    Reimplementation of asyncio.to_thread, which was introduced in Py 3.9. Added
-    here for support on earlier versions of Python.
-
-    See https://docs.python.org/3/library/asyncio-task.html#asyncio.to_thread
-    """
-    loop = asyncio.events.get_running_loop()
-    ctx = contextvars.copy_context()
-    func_call = cast(
-        Callable[..., _R], functools.partial(ctx.run, __func, *args, **kwargs)
-    )
-    return await loop.run_in_executor(None, func_call)
 
 
 class AxisIndexer:
@@ -609,10 +498,7 @@ class AxisIndexer:
     _obs_index: pd.Index
     _var_index: pd.Index
 
-    def __init__(self, query: Union[ExperimentAxisQuery, AsyncExperimentAxisQuery]):
-        if isinstance(query, AsyncExperimentAxisQuery):
-            query = query.query
-
+    def __init__(self, query: ExperimentAxisQuery):
         self.query = query
         self._obs_index = None
         self._var_index = None
@@ -634,3 +520,109 @@ class AxisIndexer:
         if self._var_index is None:
             self._var_index = pd.Index(data=self.query.var_joinids().to_numpy())
         return cast(npt.NDArray[np.intp], self._var_index.get_indexer(coords))
+
+
+# ********* XXX: Begin temporary code **********
+#
+
+"""
+TODO: This code is temporary mock until such time as the core classes implement
+these interfaces (at which point we can remove all of this).
+"""
+_T = TypeVar("_T")
+
+
+class ReadIter(Iterator[_T], metaclass=abc.ABCMeta):
+    """SparseRead result iterator allowing users to flatten the iteration."""
+
+    # __iter__ is already implemented as `return self` in Iterator
+    # SOMA implementations must implement __next__.
+
+    # XXX: Considering the name "flat" here too.
+    @abc.abstractmethod
+    def flat(self) -> _T:
+        """Returns all the requested data in a single operation."""
+        raise NotImplementedError()
+
+
+class SparseRead(metaclass=abc.ABCMeta):
+    """Intermediate type to allow users to format when reading a sparse array."""
+
+    def coos(self) -> ReadIter[pa.SparseCOOTensor]:
+        raise NotImplementedError()
+
+    def cscs(self) -> ReadIter[pa.SparseCSCMatrix]:
+        raise NotImplementedError()
+
+    def csrs(self) -> ReadIter[pa.SparseCSRMatrix]:
+        raise NotImplementedError()
+
+    def record_batches(self) -> ReadIter[pa.RecordBatch]:
+        raise NotImplementedError()
+
+    def tables(self) -> ReadIter[pa.Table]:
+        raise NotImplementedError()
+
+
+class ReadTableIter(ReadIter[pa.Table]):
+    def __init__(self, tables: Iterator[pa.Table]):
+        self._tables = tables
+
+    def __next__(self) -> pa.Table:
+        return next(self._tables)
+
+    def flat(self) -> pa.Table:
+        return pa.concat_tables(self._tables)
+
+
+class ReadCOOTensorIter(ReadIter[pa.SparseCOOTensor]):
+    def __init__(self, shape: Tuple[int, ...], tables: Iterator[pa.Table]):
+        self._tables = tables
+        self._shape = shape
+
+    def _make_coo_tensor(self, arrow_tbl: pa.Table) -> pa.SparseCOOTensor:
+        coo_data = arrow_tbl.column("soma_data").to_numpy()
+        coo_coords = np.array(
+            [
+                arrow_tbl.column(f"soma_dim_{n}").to_numpy()
+                for n in range(len(self._shape))
+            ]
+        ).T
+        return pa.SparseCOOTensor.from_numpy(coo_data, coo_coords, shape=self._shape)
+
+    def __next__(self) -> pa.SparseCOOTensor:
+        return self._make_coo_tensor(next(self._tables))
+
+    def flat(self) -> pa.SparseCOOTensor:
+        return self._make_coo_tensor(pa.concat_tables(self._tables))
+
+
+class DataFrameTableRead(SparseRead):
+    def __init__(self, query: ExperimentAxisQuery, tables: Iterator[pa.Table]):
+        self._query = query
+        self._tables = tables
+
+    def tables(self) -> ReadIter[pa.Table]:
+        return ReadTableIter(self._tables)
+
+
+class SparseNDArrayTableRead(SparseRead):
+    def __init__(
+        self,
+        query: ExperimentAxisQuery,
+        shape: Tuple[int, ...],
+        tables: Iterator[pa.Table],
+    ):
+        self._query = query
+        self._tables = tables
+        self._shape = shape
+
+    def tables(self) -> ReadIter[pa.Table]:
+        return ReadTableIter(self._tables)
+
+    def coo(self) -> ReadIter[pa.SparseCOOTensor]:
+        return ReadCOOTensorIter(self._shape, self._tables)
+
+
+#
+# ********* XXX End temporary copy **********
