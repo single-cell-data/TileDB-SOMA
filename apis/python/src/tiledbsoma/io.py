@@ -72,13 +72,13 @@ def _from_h5ad_common(
         f"START  Experiment.from_h5ad {input_path}",
     )
 
-    logging.log_io(None, f"{experiment._indent}START  READING {input_path}")
+    logging.log_io(None, f"START  READING {input_path}")
 
     anndata = ad.read_h5ad(input_path, backed="r")
 
     logging.log_io(
         None,
-        util.format_elapsed(s, f"{experiment._indent}FINISH READING {input_path}"),
+        util.format_elapsed(s, f"FINISH READING {input_path}"),
     )
 
     handler_func(experiment, anndata, measurement_name, ctx, platform_config)
@@ -99,7 +99,7 @@ def _write_dataframe(
     platform_config: Optional[PlatformConfig] = None,
 ) -> None:
     s = util.get_start_stamp()
-    logging.log_io(None, f"{soma_df._indent}START  WRITING {soma_df.uri}")
+    logging.log_io(None, f"START  WRITING {soma_df.uri}")
 
     assert not soma_df.exists()
 
@@ -120,7 +120,7 @@ def _write_dataframe(
 
     logging.log_io(
         f"Wrote {soma_df.uri}",
-        util.format_elapsed(s, f"{soma_df._indent}FINISH WRITING {soma_df.uri}"),
+        util.format_elapsed(s, f"FINISH WRITING {soma_df.uri}"),
     )
 
 
@@ -141,7 +141,7 @@ def _write_matrix_to_denseNDArray(
 
     # OR, write in chunks
     s = util.get_start_stamp()
-    logging.log_io(None, f"{soma_ndarray._indent}START  ingest")
+    logging.log_io(None, "START  ingest")
 
     eta_tracker = eta.Tracker()
     nrow, ncol = src_matrix.shape
@@ -158,8 +158,8 @@ def _write_matrix_to_denseNDArray(
         chunk_percent = min(100, 100 * (i2 - 1) / nrow)
         logging.log_io(
             None,
-            "%sSTART  chunk rows %d..%d of %d (%.3f%%)"
-            % (soma_ndarray._indent, i, i2 - 1, nrow, chunk_percent),
+            "START  chunk rows %d..%d of %d (%.3f%%)"
+            % (i, i2 - 1, nrow, chunk_percent),
         )
 
         chunk = src_matrix[i:i2, :]
@@ -176,13 +176,13 @@ def _write_matrix_to_denseNDArray(
         if chunk_percent < 100:
             logging.log_io(
                 "... %7.3f%% done, ETA %s" % (chunk_percent, eta_seconds),
-                "%sFINISH chunk in %.3f seconds, %7.3f%% done, ETA %s"
-                % (soma_ndarray._indent, chunk_seconds, chunk_percent, eta_seconds),
+                "FINISH chunk in %.3f seconds, %7.3f%% done, ETA %s"
+                % (chunk_seconds, chunk_percent, eta_seconds),
             )
 
         i = i2
 
-    logging.log_io(None, util.format_elapsed(s, f"{soma_ndarray._indent}FINISH ingest"))
+    logging.log_io(None, util.format_elapsed(s, "FINISH ingest"))
     return
 
 
@@ -223,7 +223,7 @@ def _write_matrix_to_sparseNDArray(
     dim_max_size = src_matrix.shape[stride_axis]
 
     s = util.get_start_stamp()
-    logging.log_io(None, f"{soma_ndarray._indent}START  ingest")
+    logging.log_io(None, "START  ingest")
 
     eta_tracker = eta.Tracker()
     goal_chunk_nnz = soma_ndarray._tiledb_platform_config.goal_chunk_nnz
@@ -243,9 +243,8 @@ def _write_matrix_to_sparseNDArray(
         chunk_percent = min(100, 100 * (i2 - 1) / dim_max_size)
         logging.log_io(
             None,
-            "%sSTART  chunk rows %d..%d of %d (%.3f%%), nnz=%d"
+            "START  chunk rows %d..%d of %d (%.3f%%), nnz=%d"
             % (
-                soma_ndarray._indent,
                 i,
                 i2 - 1,
                 dim_max_size,
@@ -263,13 +262,13 @@ def _write_matrix_to_sparseNDArray(
         if chunk_percent < 100:
             logging.log_io(
                 "... %7.3f%% done, ETA %s" % (chunk_percent, eta_seconds),
-                "%sFINISH chunk in %.3f seconds, %7.3f%% done, ETA %s"
-                % (soma_ndarray._indent, chunk_seconds, chunk_percent, eta_seconds),
+                "FINISH chunk in %.3f seconds, %7.3f%% done, ETA %s"
+                % (chunk_seconds, chunk_percent, eta_seconds),
             )
 
         i = i2
 
-    logging.log_io(None, util.format_elapsed(s, f"{soma_ndarray._indent}FINISH ingest"))
+    logging.log_io(None, util.format_elapsed(s, "FINISH ingest"))
 
 
 def create_from_matrix(
@@ -285,7 +284,7 @@ def create_from_matrix(
     assert soma_ndarray.soma_type in ("SOMADenseNDArray", "SOMASparseNDArray")
 
     s = util.get_start_stamp()
-    logging.log_io(None, f"{soma_ndarray._indent}START  WRITING {soma_ndarray.uri}")
+    logging.log_io(None, f"START  WRITING {soma_ndarray.uri}")
 
     soma_ndarray.create(
         type=pa.from_numpy_dtype(src_matrix.dtype),
@@ -300,9 +299,7 @@ def create_from_matrix(
 
     logging.log_io(
         f"Wrote {soma_ndarray.uri}",
-        util.format_elapsed(
-            s, f"{soma_ndarray._indent}FINISH WRITING {soma_ndarray.uri}"
-        ),
+        util.format_elapsed(s, f"FINISH WRITING {soma_ndarray.uri}"),
     )
 
 
@@ -327,18 +324,18 @@ def from_anndata(
         raise NotImplementedError("Empty AnnData.obs or AnnData.var unsupported.")
 
     s = util.get_start_stamp()
-    logging.log_io(None, f"{experiment._indent}START  DECATEGORICALIZING")
+    logging.log_io(None, "START  DECATEGORICALIZING")
 
     anndata.obs_names_make_unique()
     anndata.var_names_make_unique()
 
     logging.log_io(
         None,
-        util.format_elapsed(s, f"{experiment._indent}FINISH DECATEGORICALIZING"),
+        util.format_elapsed(s, "FINISH DECATEGORICALIZING"),
     )
 
     s = util.get_start_stamp()
-    logging.log_io(None, f"{experiment._indent}START  WRITING {experiment.uri}")
+    logging.log_io(None, f"START  WRITING {experiment.uri}")
 
     # Must be done first, to create the parent directory.
     if not experiment.exists():
@@ -489,7 +486,7 @@ def from_anndata(
 
     logging.log_io(
         f"Wrote {experiment.uri}",
-        util.format_elapsed(s, f"{experiment._indent}FINISH WRITING {experiment.uri}"),
+        util.format_elapsed(s, f"FINISH WRITING {experiment.uri}"),
     )
 
 
@@ -510,13 +507,13 @@ def to_h5ad(
     anndata = to_anndata(experiment, measurement_name=measurement_name)
 
     s2 = util.get_start_stamp()
-    logging.log_io(None, f"{experiment._indent}START  write {h5ad_path}")
+    logging.log_io(None, f"START  write {h5ad_path}")
 
     anndata.write_h5ad(h5ad_path)
 
     logging.log_io(
         None,
-        util.format_elapsed(s2, f"{experiment._indent}FINISH write {h5ad_path}"),
+        util.format_elapsed(s2, f"FINISH write {h5ad_path}"),
     )
 
     logging.log_io(
