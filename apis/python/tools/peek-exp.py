@@ -21,7 +21,9 @@ pd = pandas
 
 def count_obs(exp: tiledbsoma.Experiment, attr_name: str) -> None:
     print(
-        exp.obs.read_as_pandas_all(column_names=[attr_name])
+        exp.obs.read(column_names=[attr_name])
+        .concat()
+        .to_pandas()
         .groupby(attr_name)
         .size()
         .sort_values()

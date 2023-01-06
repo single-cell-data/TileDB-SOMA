@@ -545,10 +545,10 @@ def to_anndata(
 
     measurement = experiment.ms[measurement_name]
 
-    obs_df = experiment.obs.read_as_pandas_all()
+    obs_df = experiment.obs.read().concat().to_pandas()
     obs_df.reset_index(inplace=True)
     obs_df.set_index("obs_id", inplace=True)
-    var_df = measurement.var.read_as_pandas_all()
+    var_df = measurement.var.read().concat().to_pandas()
     var_df.reset_index(inplace=True)
     var_df.set_index("var_id", inplace=True)
 

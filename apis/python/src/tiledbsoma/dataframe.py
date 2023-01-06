@@ -1,5 +1,5 @@
 import collections.abc
-from typing import Any, Iterator, Optional, Sequence, Tuple, TypeVar, Union, cast
+from typing import Any, Optional, Sequence, Tuple, TypeVar, Union, cast
 
 import numpy as np
 import pandas as pd
@@ -10,6 +10,7 @@ from typing_extensions import Final, get_args
 # This package's pybind11 code
 import tiledbsoma.libtiledbsoma as clib
 
+from . import somacore  # to be replaced by somacore package, when available
 from . import tiledb_platform_config as tdbpc
 from . import util, util_arrow
 from .collection import CollectionBase
@@ -199,7 +200,7 @@ class DataFrame(TileDBArray):
         column_names: Optional[Sequence[str]] = None,
         result_order: Optional[ResultOrder] = None,
         # TODO: more arguments
-    ) -> Iterator[pa.Table]:
+    ) -> "DataFrameReadIter":
         """
         Read a user-defined subset of data, addressed by the dataframe indexing columns, optionally filtered, and return results as one or more Arrow.Table.
 
@@ -302,59 +303,9 @@ class DataFrame(TileDBArray):
 
             # TODO: platform_config
             # TODO: batch_size
-            sr.submit()
 
-            # This requires careful handling in the no-data case.
-            #
-            # When there is at least one table which has non-zero length, we could use the following:
-            #   while arrow_table := sr.read_next():
-            #     yield arrow_table
-            # This respects the caller's expectation that there will always be at least one table in
-            # the iterator. (For example, pd.concat(self.read_as_pandas(coords)) will raise an
-            # exception if the iterator has zero elements.)
-            #
-            # But when there is only zero-length data available, the above does *not* respect
-            # caller expectations: because a zero-length pyarrow.Table is falsy (not truthy)
-            # the while-loop becomes zero-pass.
-            #
-            # A tempting alternative is to instead write:
-            #   for arrow_table in sr.read_next():
-            #       yield arrow_table
-            # This is correctly one-pass. However, it yields an iterator of pyarrow.ChunkedArray,
-            # not an iterator of pyarrow.Table.
-            #
-            # For this reason, we use the following i > 0 check to guarantee a minimum of one
-            # pass through the yielded iterator even when the resulting table is zero-length.
-            i = 0
-            while True:
-                arrow_table = sr.read_next()
-                if not arrow_table and i > 0:
-                    break
-                i += 1
-                yield arrow_table
-
-    def read_all(
-        self,
-        *,
-        ids: Optional[SparseDataFrameCoordinates] = None,
-        value_filter: Optional[str] = None,
-        column_names: Optional[Sequence[str]] = None,
-        result_order: Optional[ResultOrder] = None,
-        # TODO: batch_size
-        # TODO: partition,
-        # TODO: platform_config,
-    ) -> pa.Table:
-        """
-        This is a convenience method around ``read``. It iterates the return value from ``read`` and returns a concatenation of all the table-pieces found. Its nominal use is to simply unit-test cases.
-        """
-        return pa.concat_tables(
-            self.read(
-                ids=ids,
-                value_filter=value_filter,
-                column_names=column_names,
-                result_order=result_order,
-            )
-        )
+        sr.submit()
+        return DataFrameReadIter(sr)
 
     def write(self, values: pa.Table) -> None:
         """
@@ -378,38 +329,6 @@ class DataFrame(TileDBArray):
         dim_cols_tuple = tuple(dim_cols_list)
         with self._tiledb_open("w") as A:
             A[dim_cols_tuple] = attr_cols_map
-
-    def read_as_pandas(
-        self,
-        ids: Optional[SparseDataFrameCoordinates] = None,
-        value_filter: Optional[str] = None,
-        column_names: Optional[Sequence[str]] = None,
-        result_order: Optional[ResultOrder] = None,
-    ) -> Iterator[pd.DataFrame]:
-        for tbl in self.read(
-            ids=ids,
-            value_filter=value_filter,
-            column_names=column_names,
-            result_order=result_order,
-        ):
-            yield tbl.to_pandas()
-
-    def read_as_pandas_all(
-        self,
-        ids: Optional[SparseDataFrameCoordinates] = None,
-        value_filter: Optional[str] = None,
-        column_names: Optional[Sequence[str]] = None,
-        result_order: Optional[ResultOrder] = None,
-    ) -> pd.DataFrame:
-        return pd.concat(
-            self.read_as_pandas(
-                ids=ids,
-                value_filter=value_filter,
-                column_names=column_names,
-                result_order=result_order,
-            ),
-            ignore_index=True,
-        )
 
     def write_from_pandas(
         self,
@@ -473,3 +392,28 @@ def _validate_schema(schema: pa.Schema, index_column_names: Sequence[str]) -> pa
             raise TypeError("Unsupported index type - pending fix #418 and #419")
 
     return schema
+
+
+class DataFrameReadIter(somacore.ReadIter[pa.Table]):
+    def __init__(self, sr: clib.SOMAReader):
+        self.sr = sr
+        self.called_once = False
+
+    def __next__(self) -> pa.Table:
+        """
+        Read is defined as returning an empty Arrow Table if there are no
+        results, i.e., it will never return an zero-length iterator.
+        """
+        arrow_table = self.sr.read_next()
+        if not arrow_table and self.called_once:
+            raise StopIteration
+
+        self.called_once = True
+        return arrow_table
+
+    def concat(self) -> pa.Table:
+        return pa.concat_tables(self)
+
+    def close(self) -> None:
+        """TODO: Implement when there is a stateful handle that needs to be closed"""
+        pass

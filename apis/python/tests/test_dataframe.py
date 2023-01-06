@@ -69,7 +69,8 @@ def test_dataframe(tmp_path, arrow_schema):
     assert len(sidf) == 5
 
     # Read all
-    table = sidf.read_all()
+    # table = sidf.read_all()
+    table = sidf.read().concat()
     assert table.num_rows == 5
     assert table.num_columns == 5
     assert [e.as_py() for e in list(table["soma_joinid"])] == pydict["soma_joinid"]
@@ -79,7 +80,7 @@ def test_dataframe(tmp_path, arrow_schema):
     assert [e.as_py() for e in list(table["quux"])] == pydict["quux"]
 
     # Read ids
-    table = sidf.read_all(ids=[[30, 10]])
+    table = sidf.read(ids=[[30, 10]]).concat()
     assert table.num_rows == 2
     assert table.num_columns == 5
     assert sorted([e.as_py() for e in list(table["soma_joinid"])]) == [0, 2]
@@ -185,21 +186,28 @@ def test_DataFrame_read_column_names(simple_data_frame, ids, col_names):
 
     # TileDB ASCII -> Arrow large_string
     _check_tbl(
-        sidf.read_all(ids=ids, column_names=col_names), col_names, ids, demote=False
+        sidf.read(ids=ids, column_names=col_names).concat(),
+        col_names,
+        ids,
+        demote=False,
     )
-    _check_tbl(sidf.read_all(column_names=col_names), col_names, None, demote=False)
+    _check_tbl(
+        sidf.read(column_names=col_names).concat(), col_names, None, demote=False
+    )
 
     # TileDB ASCII -> Pandas string -> Arrow string (not large_string)
     _check_tbl(
         pa.Table.from_pandas(
-            pd.concat(sidf.read_as_pandas(ids=ids, column_names=col_names))
+            pd.concat(
+                [tbl.to_pandas() for tbl in sidf.read(ids=ids, column_names=col_names)]
+            )
         ),
         col_names,
         ids,
         demote=True,
     )
     _check_tbl(
-        pa.Table.from_pandas(sidf.read_as_pandas_all(column_names=col_names)),
+        pa.Table.from_pandas(sidf.read(column_names=col_names).concat().to_pandas()),
         col_names,
         None,
         demote=True,
@@ -211,10 +219,10 @@ def test_empty_dataframe(tmp_path):
     a.create(pa.schema([("a", pa.int32())]), index_column_names=["a"])
     # Must not throw
     assert len(next(a.read())) == 0
-    assert len(a.read_all()) == 0
-    assert len(next(a.read_as_pandas())) == 0
-    assert len(a.read_as_pandas_all()) == 0
-    assert isinstance(a.read_as_pandas_all(), pd.DataFrame)
+    assert len(a.read().concat()) == 0
+    assert len(next(a.read()).to_pandas()) == 0
+    assert len(a.read().concat().to_pandas()) == 0
+    assert isinstance(a.read().concat().to_pandas(), pd.DataFrame)
 
     with pytest.raises(ValueError):
         # illegal column name
@@ -649,9 +657,9 @@ def test_read_indexing(tmp_path, io):
 
     if io.get("throws", None):
         with pytest.raises(io["throws"]):
-            next(sidf.read_as_pandas(**read_kwargs))
+            next(sidf.read(**read_kwargs)).to_pandas()
     else:
-        table = next(sidf.read_as_pandas(**read_kwargs))
+        table = next(sidf.read(**read_kwargs)).to_pandas()
         assert table["A"].to_list() == io["A"]
 
     sidf.delete()
@@ -734,7 +742,7 @@ def test_write_categorical_types(tmp_path):
     )
     sdf.write(pa.Table.from_pandas(df))
 
-    assert (df == sdf.read_as_pandas_all()).all().all()
+    assert (df == sdf.read().concat().to_pandas()).all().all()
 
 
 def test_result_order(tmp_path):
@@ -755,10 +763,10 @@ def test_result_order(tmp_path):
     }
     sidf.write(pa.Table.from_pydict(data))
 
-    table = sidf.read_as_pandas_all(result_order="row-major")
+    table = sidf.read(result_order="row-major").concat().to_pandas()
     assert table["soma_joinid"].to_list() == list(range(16))
 
-    table = sidf.read_as_pandas_all(result_order="column-major")
+    table = sidf.read(result_order="column-major").concat().to_pandas()
     assert table["soma_joinid"].to_list() == [
         0,
         4,

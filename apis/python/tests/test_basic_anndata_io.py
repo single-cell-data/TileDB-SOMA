@@ -60,7 +60,7 @@ def test_import_anndata(adata):
         assert G.meta[tiledbsoma.util.SOMA_OBJECT_TYPE_METADATA_KEY] == "SOMAExperiment"
 
     # Check obs
-    df = exp.obs.read_as_pandas_all()
+    df = exp.obs.read().concat().to_pandas()
     assert sorted(df.columns.to_list()) == sorted(
         orig.obs_keys() + ["soma_joinid", "obs_id"]
     )
