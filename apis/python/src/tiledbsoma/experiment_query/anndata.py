@@ -25,7 +25,8 @@ def _arrow_to_scipy_csr(X: pa.Table, shape: Tuple[int, int]) -> sparse.csr_matri
     )
 
 
-def make_anndata(query_result: ExperimentAxisQueryReadArrowResult) -> anndata.AnnData:
+def _make_anndata(query_result: ExperimentAxisQueryReadArrowResult) -> anndata.AnnData:
+    """Private utility to create an AnnData from an ExperimentAxisQueryReadArrowResult"""
 
     obs = query_result["obs"]
     obs = obs.to_pandas()

@@ -31,7 +31,7 @@ from ..dataframe import DataFrame as SOMADataFrame
 if TYPE_CHECKING:
     from ..experiment import Experiment
 from ..sparse_nd_array import SparseNDArray as SOMASparseNDArray
-from .anndata import make_anndata
+from .anndata import _make_anndata
 from .axis import AxisQuery
 from .eq_types import AxisColumnNames, ExperimentAxisQueryReadArrowResult
 
@@ -115,7 +115,7 @@ class ExperimentAxisQuery(ContextManager["ExperimentAxisQuery"]):
 
     @property
     def _threadpool(self) -> concurrent.futures.ThreadPoolExecutor:
-        """Private threadpool cache."""
+        """Private threadpool cache"""
         if self.__threadpool is None:
             # TODO: the user should be able to set their own threadpool, a la asyncio's
             # loop.set_default_executor().  This is important for managing the level of
@@ -126,7 +126,7 @@ class ExperimentAxisQuery(ContextManager["ExperimentAxisQuery"]):
     def close(self) -> None:
         """
         Cleanup and close all resources. This must be called or the thread pool
-        will not be release.
+        will not be released.
         """
         if self.__threadpool is not None:
             self.__threadpool.shutdown()
@@ -146,7 +146,7 @@ class ExperimentAxisQuery(ContextManager["ExperimentAxisQuery"]):
         column_names: Optional[Sequence[str]],
     ) -> pa.Table:
         """
-        Read the specified axis. Will load and save the resulting soma_joinids for the
+        Private. Read the specified axis. Will load and save the resulting soma_joinids for the
         axis, if they are not already known.
         """
         query = self._query[axis]
@@ -226,6 +226,7 @@ class ExperimentAxisQuery(ContextManager["ExperimentAxisQuery"]):
     def _fetchX(
         self, X: SOMASparseNDArray, prefetch: bool = False
     ) -> Iterator[pa.Table]:
+        """Private helper for ``X``"""
         assert self._joinids["obs"] is not None
         assert self._joinids["var"] is not None
 
@@ -265,8 +266,7 @@ class ExperimentAxisQuery(ContextManager["ExperimentAxisQuery"]):
 
         Examples
         --------
-        >>> with ExperimentAxisQuery(
-        ...     exp,
+        >>> with experiment.query(
         ...     "RNA",
         ...     obs_query=AxisQuery(value_filter='tissue == "lung"')
         ... ) as query:
@@ -433,13 +433,13 @@ class ExperimentAxisQuery(ContextManager["ExperimentAxisQuery"]):
             X_layers=X_layers,
             use_position_indexing=True,
         )
-        return make_anndata(query_result)
+        return _make_anndata(query_result)
 
     def _rewrite_X_for_positional_indexing(
         self, X_tables: Dict[str, pa.Table]
     ) -> Dict[str, pa.Table]:
         """
-        This is a private convenience function to convert axis dataframe to X matrix joins
+        Private convenience function to convert axis dataframe to X matrix joins
         from `soma_joinid`-based joins to positionally indexed joins (like AnnData uses).
 
         Input is organized as:
@@ -478,7 +478,7 @@ class ExperimentAxisQuery(ContextManager["ExperimentAxisQuery"]):
 
 class AsyncExperimentAxisQuery:
     """
-    An async proxy for ExperimentAxisQuery, allowing use with coroutines
+    An async proxy for ExperimentAxisQuery, allowing use within coroutines
     [lifecycle: experimental].
     """
 
