@@ -28,31 +28,30 @@ def adata(h5ad_file):
 @pytest.mark.parametrize(
     "ingest_modes",
     [
-        ["write"],  # Standard ingest: normal use-case
-        ["schema_only"],  # User only creates schema
-        ["write", "schema_only"],  # User creates schema, then writes data
-        [
-            "write",
-            "schema_only",
-            "schema_only",
-        ],  # User creates schema, then writes and re-writes the same data
-        ["schema_only", "schema_only"],  # User writes and re-writes the same data
+        # Standard ingest: normal use-case:
+        ["write"],
+        # Schema only:
+        ["schema_only"],
+        # Schema only, then populate:
+        ["schema_only", "resume"],
+        # User writes data, then a subsequent write creates nothing new:
         [
             "write",
             "resume",
-        ],  # User writes data, then a subsequent write creates nothing new
-        ["resume"],  # "Resume" after no write at all does write new data
+        ],
+        # "Resume" after no write at all does write new data
+        ["resume"],
     ],
 )
 def test_import_anndata(adata, ingest_modes):
 
+    # Set up anndata input path and tiledb-group output path
+    tempdir = tempfile.TemporaryDirectory()
+    output_path = tempdir.name
+
+    orig = adata
+
     for ingest_mode in ingest_modes:
-
-        # Set up anndata input path and tiledb-group output path
-        tempdir = tempfile.TemporaryDirectory()
-        output_path = tempdir.name
-
-        orig = adata
 
         # Ingest
         soma = tiledbsoma.SOMA(output_path)
