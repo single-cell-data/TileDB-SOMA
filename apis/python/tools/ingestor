@@ -240,7 +240,7 @@ def ingest_one(
                     "Internal coding error in --ifexists handling.", ifexists, "<"
                 )
         # Do the ingest into TileDB.
-        tiledbsoma.io.from_h5ad(exp, input_path, "mRNA")
+        tiledbsoma.io.from_h5ad(exp, input_path, "RNA")
 
     tiledbsoma.logging.logger.info(f"Wrote {output_path}")
 
