@@ -1,3 +1,4 @@
+import sys
 from typing import Optional, Tuple, Union
 
 import numpy as np
@@ -342,12 +343,6 @@ def test_empty_read(tmp_path):
     assert sum(t.non_zero_length for t in a.read(coords).csrs()) == 0
     assert sum(t.non_zero_length for t in a.read(coords).cscs()) == 0
 
-    # TODO: Due to bug https://issues.apache.org/jira/browse/ARROW-17933, this
-    # _incorrectly_ raises an ArrowInvalid exception. Remove the `pyarrow.throws`
-    # when fixed, as it is supported API and should work.
-    with pytest.raises(pa.ArrowInvalid):
-        assert sum(t.non_zero_length for t in a.read(coords).coos()) == 0
-
     #
     # Next, test empty queries on non-empty array
     #
@@ -363,11 +358,41 @@ def test_empty_read(tmp_path):
     assert sum(t.non_zero_length for t in a.read(coords).csrs()) == 0
     assert sum(t.non_zero_length for t in a.read(coords).cscs()) == 0
 
-    # TODO: Due to bug https://issues.apache.org/jira/browse/ARROW-17933, this
-    # _incorrectly_ raises an ArrowInvalid exception. Remove the `pyarrow.throws`
-    # when fixed, as it is supported API and should work.
-    with pytest.raises(pa.ArrowInvalid):
-        assert sum(t.non_zero_length for t in a.read(coords).coos()) == 0
+
+@pytest.mark.xfail(sys.version_info.minor > 7, reason="bug ARROW-17933")
+def test_empty_read_sparse_coo(tmp_path):
+    """
+    this test is factored from test_empty_read() because it is subject
+    to ARROW-17933, and is xfailed on certain python verisons. The tests
+    can be recombined with test_empty_read once the behavior is consistent
+    across versions.
+
+    ---
+
+    TODO: Due to bug https://issues.apache.org/jira/browse/ARROW-17933, this
+    _incorrectly_ raises an ArrowInvalid exception. Remove the `pyarrow.throws`
+    when fixed, as it is supported API and should work.
+
+    It does NOT fail on Python3.7, but does fail on later versions (unclear why,
+    perhaps a NumPy difference)
+
+    """
+    a = soma.SparseNDArray(uri=tmp_path.as_posix())
+    a.create(type=pa.uint16(), shape=(10, 100))
+    assert a.exists()
+
+    coords = (slice(None),)
+    assert sum(t.non_zero_length for t in a.read(coords).coos()) == 0
+
+    a.write(
+        pa.SparseCOOTensor.from_scipy(
+            sparse.coo_matrix(([1], ([0], [0])), shape=a.shape)
+        )
+    )
+    assert sum(len(t) for t in a.read((slice(None),)).tables()) == 1
+
+    coords = (1, 1)  # no element at this coordinate
+    assert sum(t.non_zero_length for t in a.read(coords).coos()) == 0
 
 
 @pytest.mark.parametrize("shape", [(), (0,), (10, 0), (0, 10), (1, 2, 0)])
