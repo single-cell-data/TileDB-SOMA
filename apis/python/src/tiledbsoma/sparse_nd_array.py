@@ -283,13 +283,13 @@ class SparseNDArrayRead(somacore.SparseRead):
         self.sr = sr
         self.shape = shape
 
-    def coos(self) -> somacore.ReadIter[pa.SparseCOOTensor]:
+    def coos(self) -> SparseCOOTensorReadIter:
         return SparseCOOTensorReadIter(self.sr, self.shape)
 
-    def cscs(self) -> somacore.ReadIter[pa.SparseCSCMatrix]:
+    def cscs(self) -> SparseCSCMatrixReadIter:
         return SparseCSCMatrixReadIter(self.sr, self.shape)
 
-    def csrs(self) -> somacore.ReadIter[pa.SparseCSRMatrix]:
+    def csrs(self) -> SparseCSRMatrixReadIter:
         return SparseCSRMatrixReadIter(self.sr, self.shape)
 
     def dense_tensors(self) -> somacore.ReadIter[pa.Tensor]:

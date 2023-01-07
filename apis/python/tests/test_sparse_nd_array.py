@@ -259,11 +259,11 @@ def test_sparse_nd_array_read_write_sparse_tensor(
     b = soma.SparseNDArray(tmp_path.as_posix())
 
     if format == "coo":
-        t = next(b.read((slice(None),) * len(shape)).coos())
+        t = b.read((slice(None),) * len(shape)).coos().concat()
     elif format == "csc":
-        t = next(b.read((slice(None),) * len(shape)).cscs())
+        t = b.read((slice(None),) * len(shape)).cscs().concat()
     elif format == "csr":
-        t = next(b.read((slice(None),) * len(shape)).csrs())
+        t = b.read((slice(None),) * len(shape)).csrs().concat()
 
     assert tensors_are_same_value(t, data)
 
@@ -430,6 +430,7 @@ def test_sparse_nd_array_reshape(tmp_path):
     [(4,), (4, 5, 6)],
 )
 def test_csr_csc_2d_read(tmp_path, shape):
+    """Arrays which are not 2D can't be requested in CSC or CSR format."""
 
     arrow_tensor = create_random_tensor(
         format="coo",
