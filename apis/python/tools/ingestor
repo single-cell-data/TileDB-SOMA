@@ -12,7 +12,6 @@ A simple driver for ingestion of anndata to a TileDB Experiment.
 
 import argparse
 import os
-import shutil
 import sys
 
 import tiledb
@@ -36,20 +35,28 @@ def main():
         "--debug", help="increase output verbosity", action="store_true"
     )
     parser.add_argument(
-        "-n",
-        help="All arguments after flags are treated as input paths",
-        action="store_true",
+        "--ingest-mode",
+        help="""Write mode (the default) writes all data, creating new layers if the soma already exists.
+
+Resume mode skip data writes if data are within MBRs of the existing soma.
+This is useful for continuing after a partial/interrupted previous upload.
+
+Schema-only mode creates groups and array schema, without writing array data.
+This is useful as a prep-step for parallel append-ingest of multiple H5ADs to a single soma.""",
+        choices=["write", "schema_only", "schema-only", "resume"],
+        default=["write"],
+        nargs=1,
     )
     parser.add_argument(
-        "-x",
-        help="Shorthand for `--ifexists replace`",
+        "-n",
+        help="All arguments after flags are treated as input paths",
         action="store_true",
     )
     parser.add_argument(
         "-o",
         help="Specify output directory to contain the SOMAs",
         type=str,
-        default="./tiledbsoma-data",
+        default=".",
     )
     parser.add_argument(
         "--soco",
@@ -73,14 +80,6 @@ select `relative=True`. (This is the default.)
         choices=["true", "false", "auto"],
         nargs=1,
     )
-    # TODO: add an update option once we figure out tiledb.from_pandas mode=overwrite flag.
-    parser.add_argument(
-        "--ifexists",
-        help="What to do if SOMA storage already exists. Default: continue.",
-        choices=["replace", "abort", "continue", "update_obs_and_var"],
-        type=str,
-        nargs=1,
-    )
     parser.add_argument(
         "paths",
         type=str,
@@ -88,12 +87,6 @@ select `relative=True`. (This is the default.)
         nargs="*",
     )
     args = parser.parse_args()
-
-    if args.ifexists is None:
-        if args.x:
-            args.ifexists = ["replace"]
-        else:
-            args.ifexists = ["continue"]
 
     write_soco = args.soco
     if args.debug:
@@ -117,7 +110,7 @@ select `relative=True`. (This is the default.)
     tiledb_platform_config = tiledbsoma.TileDBPlatformConfig(
         member_uris_are_relative=rel_member_uris
     )
-    outdir = args.o.rstrip("/")
+    soco_dir = args.o.rstrip("/")
 
     if args.n:
         if len(args.paths) < 1:
@@ -126,52 +119,52 @@ select `relative=True`. (This is the default.)
         for input_path in args.paths:
             # Example 'anndata/pbmc3k_processed.h5ad' -> 'tiledbsoma-data/pbmc3k_processed'
             output_path = os.path.join(
-                outdir, os.path.splitext(os.path.basename(input_path))[0]
+                soco_dir, os.path.splitext(os.path.basename(input_path))[0]
             )
             ingest_one(
-                input_path,
-                output_path,
-                args.ifexists[0],
-                tiledb_platform_config,
-                write_soco,
-                outdir,
+                input_path=input_path,
+                output_path=output_path,
+                ingest_mode=args.ingest_mode[0],
+                tiledb_platform_config=tiledb_platform_config,
+                write_soco=write_soco,
+                soco_dir=soco_dir,
             )
     else:
         if len(args.paths) == 0:
             input_path = "anndata/pbmc-small.h5ad"
-            output_path = os.path.join(outdir, "pbmc-small")
+            output_path = os.path.join(soco_dir, "pbmc-small")
             ingest_one(
-                input_path,
-                output_path,
-                args.ifexists[0],
-                tiledb_platform_config,
-                write_soco,
-                outdir,
+                input_path=input_path,
+                output_path=output_path,
+                ingest_mode=args.ingest_mode[0],
+                tiledb_platform_config=tiledb_platform_config,
+                write_soco=write_soco,
+                soco_dir=soco_dir,
             )
         elif len(args.paths) == 1:
             input_path = args.paths[0]
             # Example 'anndata/pbmc3k_processed.h5ad' -> 'tiledbsoma-data/pbmc3k_processed'
             output_path = os.path.join(
-                outdir, os.path.splitext(os.path.basename(input_path))[0]
+                soco_dir, os.path.splitext(os.path.basename(input_path))[0]
             )
             ingest_one(
-                input_path,
-                output_path,
-                args.ifexists[0],
-                tiledb_platform_config,
-                write_soco,
-                outdir,
+                input_path=input_path,
+                output_path=output_path,
+                ingest_mode=args.ingest_mode[0],
+                tiledb_platform_config=tiledb_platform_config,
+                write_soco=write_soco,
+                soco_dir=soco_dir,
             )
         elif len(args.paths) == 2:
             input_path = args.paths[0]
             output_path = args.paths[1]
             ingest_one(
-                input_path,
-                output_path,
-                args.ifexists[0],
-                tiledb_platform_config,
-                write_soco,
-                outdir,
+                input_path=input_path,
+                output_path=output_path,
+                ingest_mode=args.ingest_mode[0],
+                tiledb_platform_config=tiledb_platform_config,
+                write_soco=write_soco,
+                soco_dir=soco_dir,
             )
         else:
             parser.print_help(file=sys.stderr)
@@ -180,13 +173,21 @@ select `relative=True`. (This is the default.)
 
 # ================================================================
 def ingest_one(
+    *,
     input_path: str,
     output_path: str,
-    ifexists: str,
+    ingest_mode: str,
     tiledb_platform_config: tiledbsoma.TileDBPlatformConfig,
     write_soco: bool,
     soco_dir: str,
 ):
+    # This will be a very common command-line thing to do since the arg is `--ingest-mode` not
+    # `--ingest_mode`. Let's be kind and supportive about it.
+    if ingest_mode == "schema-only":
+        ingest_mode = "schema_only"
+
+    assert ingest_mode in tiledbsoma.types.INGEST_MODES
+
     # Check that the input exists.
     vfs = tiledb.VFS()
     if not vfs.is_file(input_path):
@@ -208,41 +209,7 @@ def ingest_one(
     )
     exp_name = os.path.splitext(os.path.basename(output_path))[0]
 
-    if ifexists == "update_obs_and_var":
-        if not os.path.exists(output_path):
-            raise Exception("Cannot update; doesn't exist yet:", output_path)
-        # Do the ingest into TileDB.
-        tiledbsoma.io.from_h5ad_update_obs_and_var(exp, input_path)
-
-    else:
-        if os.path.exists(output_path):
-            if ifexists == "continue":
-                tiledbsoma.logging.logger.info(
-                    f"Already exists; continuing: {output_path}"
-                )
-                return
-            elif ifexists == "abort":
-                tiledbsoma.logging.error(f"Already exists; aborting: {output_path}")
-                sys.exit(1)
-            elif ifexists == "replace":
-                if output_path.startswith("s3://") or output_path.startswith(
-                    "tiledb://"
-                ):
-                    raise Exception(
-                        "--ifexists replace currently only is compatible with local-disk paths"
-                    )
-                tiledbsoma.logging.logger.info(
-                    f"Already exists; replacing: {output_path}"
-                )
-                shutil.rmtree(output_path)  # Overwrite
-            else:
-                raise Exception(
-                    "Internal coding error in --ifexists handling.", ifexists, "<"
-                )
-        # Do the ingest into TileDB.
-        tiledbsoma.io.from_h5ad(exp, input_path, "mRNA")
-
-    tiledbsoma.logging.logger.info(f"Wrote {output_path}")
+    tiledbsoma.io.from_h5ad(exp, input_path, "mRNA", ingest_mode=ingest_mode)
 
     if write_soco:
         soco = tiledbsoma.Collection(

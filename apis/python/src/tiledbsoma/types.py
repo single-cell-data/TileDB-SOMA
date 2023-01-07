@@ -19,6 +19,8 @@ BatchFormat = Literal["dense", "coo", "csr", "csc", "record-batch", "table"]
 ReadPartitions = Literal["IofN"]
 BatchSize = Literal["count", "size", "auto"]
 ResultOrder = Literal["row-major", "column-major", "auto"]
+IngestMode = Literal["write", "schema_only", "resume"]  # for static-analysis checks
+INGEST_MODES = ("write", "schema_only", "resume")  # for run-time checks
 
 ArrowReadResult = Union[
     pa.Table,

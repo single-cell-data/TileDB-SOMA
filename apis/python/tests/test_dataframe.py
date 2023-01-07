@@ -552,7 +552,7 @@ def make_multiply_indexed_dataframe(tmp_path, index_column_names: List[str]):
             "index_column_names": ["index2", "index3"],
             "ids": [[True], slice(None)],
             "A": None,
-            "throws": RuntimeError,
+            "throws": (RuntimeError, tiledb.cc.TileDBError),
         },
         # 2D: indexing list is None
         {

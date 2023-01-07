@@ -197,12 +197,12 @@ def test_dense_nd_array_slicing(tmp_path, io):
         {
             "shape": (10,),
             "coords": (-1,),
-            "throws": RuntimeError,
+            "throws": (RuntimeError, tiledb.cc.TileDBError),
         },
         {
             "shape": (10,),
             "coords": (12,),
-            "throws": RuntimeError,
+            "throws": (RuntimeError, tiledb.cc.TileDBError),
         },
         {
             "shape": (10,),

@@ -36,8 +36,8 @@ test: data
 
 .PHONY: data
 data:
+	rm -rvf test/soco
 	./apis/python/tools/ingestor \
-		--ifexists replace \
 		--soco \
 		-o test/soco \
 		-n \

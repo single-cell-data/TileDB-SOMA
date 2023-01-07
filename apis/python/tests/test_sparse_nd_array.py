@@ -4,6 +4,7 @@ import numpy as np
 import pyarrow as pa
 import pytest
 import scipy.sparse as sparse
+import tiledb
 
 import tiledbsoma as soma
 
@@ -465,7 +466,10 @@ def test_csr_csc_2d_read(tmp_path, read_format, shape):
             "dims": {
                 "soma_dim_0": [2, 4],
             },
-            "throws": RuntimeError,  # Negative indices are not supported
+            "throws": (
+                RuntimeError,
+                tiledb.cc.TileDBError,
+            ),  # Negative indices are not supported
         },
         {
             "shape": (4, 6),

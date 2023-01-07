@@ -21,7 +21,7 @@ else:
     print(f"{sys.argv[0]}: need just one .h5ad file name.", file=sys.stderr)
     sys.exit(1)
 
-ann = anndata.read_h5ad(input_path)
+ann = anndata.read_h5ad(input_path, "r")
 
 
 # Interact at the prompt now:

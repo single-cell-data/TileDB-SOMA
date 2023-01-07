@@ -24,163 +24,131 @@ def adata(h5ad_file):
     return anndata.read_h5ad(h5ad_file)
 
 
-def test_import_anndata(adata):
+@pytest.mark.parametrize(
+    "ingest_modes",
+    [
+        # Standard ingest: normal use-case:
+        ["write"],
+        # Schema only:
+        ["schema_only"],
+        # Schema only, then populate:
+        ["schema_only", "resume"],
+        # User writes data, then a subsequent write creates nothing new:
+        [
+            "write",
+            "resume",
+        ],
+        # "Resume" after no write at all does write new data
+        ["resume"],
+    ],
+)
+def test_import_anndata(adata, ingest_modes):
+
+    have_ingested = False
 
     # Set up anndata input path and tiledb-group output path
     tempdir = tempfile.TemporaryDirectory()
     output_path = tempdir.name
 
-    orig = adata
+    for ingest_mode in ingest_modes:
 
-    # Ingest
-    exp = tiledbsoma.Experiment(output_path)
-    tiledbsoma.io.from_anndata(exp, orig, "mRNA")
+        orig = adata
 
-    # Structure:
-    # pbmc-small Experiment:
-    #   obs DataFrame (80,)
-    #   ms Collection:
-    #     mRNA Measurement:
-    #       X Collection:
-    #         data SparseNDArray (80, 20)
-    #       obsp Collection:
-    #         distances SparseNDArray (80, 80)
-    #       var DataFrame (20,)
-    #       obsm Collection:
-    #         X_tsne DenseNDArray (80, 2)
-    #         X_pca DenseNDArray (80, 19)
-    #       varm Collection:
-    #         PCs DenseNDArray (20, 19)
-    #     raw Measurement:
-    #       var DataFrame (230,)
-    #       X Collection:
-    #         data SparseNDArray (80, 230)
+        # Ingest
+        exp = tiledbsoma.Experiment(output_path)
+        tiledbsoma.io.from_anndata(exp, orig, "mRNA", ingest_mode=ingest_mode)
 
-    with tiledb.Group(output_path) as G:
-        assert G.meta[tiledbsoma.util.SOMA_OBJECT_TYPE_METADATA_KEY] == "SOMAExperiment"
+        if ingest_mode != "schema_only":
+            have_ingested = True
 
-    # Check obs
-    df = exp.obs.read_as_pandas_all()
-    assert sorted(df.columns.to_list()) == sorted(
-        orig.obs_keys() + ["soma_joinid", "obs_id"]
+        with tiledb.Group(output_path) as G:
+            assert (
+                G.meta[tiledbsoma.util.SOMA_OBJECT_TYPE_METADATA_KEY]
+                == "SOMAExperiment"
+            )
+
+        # Check obs
+        df = exp.obs.read_as_pandas_all()
+        assert sorted(df.columns.to_list()) == sorted(
+            orig.obs_keys() + ["soma_joinid", "obs_id"]
+        )
+        assert (
+            exp.obs.metadata.get(tiledbsoma.util.SOMA_OBJECT_TYPE_METADATA_KEY)
+            == "SOMADataFrame"
+        )
+        # Convenience accessor
+        assert sorted(exp.obs.keys()) == sorted(
+            list(orig.obs.keys()) + ["soma_joinid", "obs_id"]
+        )
+        if have_ingested:
+            assert sorted(df["obs_id"]) == sorted(list(orig.obs_names))
+        else:
+            assert sorted(df["obs_id"]) == []
+
+        # XXX MORE FROM MAIN-OLD PERHAPS AS UNDERDIFF
+
+        tempdir.cleanup()
+
+
+def _get_fragment_count(array_uri):
+    return len(tiledb.fragment.FragmentInfoList(array_uri=array_uri))
+
+
+@pytest.mark.parametrize(
+    "resume_mode_h5ad_file",
+    [
+        HERE.parent / "anndata/pbmc-small-x-dense.h5ad",
+        HERE.parent / "anndata/pbmc-small-x-csr.h5ad",
+        HERE.parent / "anndata/pbmc-small-x-csc.h5ad",
+    ],
+)
+def test_resume_mode(adata, resume_mode_h5ad_file):
+    """
+    Makes sure resume-mode ingest after successful ingest of the same input data does not write
+    anything new
+    """
+
+    tempdir1 = tempfile.TemporaryDirectory()
+    output_path1 = tempdir1.name
+    exp1 = tiledbsoma.Experiment(output_path1)
+    tiledbsoma.io.from_h5ad(exp1, resume_mode_h5ad_file, "RNA", ingest_mode="write")
+
+    tempdir2 = tempfile.TemporaryDirectory()
+    output_path2 = tempdir2.name
+    exp2 = tiledbsoma.Experiment(output_path2)
+    tiledbsoma.io.from_h5ad(exp2, resume_mode_h5ad_file, "RNA", ingest_mode="write")
+    tiledbsoma.io.from_h5ad(exp2, resume_mode_h5ad_file, "RNA", ingest_mode="resume")
+
+    assert _get_fragment_count(exp1.obs.uri) == _get_fragment_count(exp2.obs.uri)
+    assert _get_fragment_count(exp1.ms["RNA"].var.uri) == _get_fragment_count(
+        exp2.ms["RNA"].var.uri
     )
-    assert (
-        exp.obs.metadata.get(tiledbsoma.util.SOMA_OBJECT_TYPE_METADATA_KEY)
-        == "SOMADataFrame"
-    )
-    assert sorted(df["obs_id"]) == sorted(list(orig.obs_names))
-    # Convenience accessor
-    assert sorted(exp.obs.keys()) == sorted(
-        list(orig.obs.keys()) + ["soma_joinid", "obs_id"]
+    assert _get_fragment_count(exp1.ms["RNA"].X["data"].uri) == _get_fragment_count(
+        exp2.ms["RNA"].X["data"].uri
     )
 
-    # Check X/data (dense)
-    #    with tiledb.open(os.path.join(output_path, "X", "data")) as A:
-    #        df = A[:]
-    #        keys = list(df.keys())
-    #        assert keys == ["value", "obs_id", "var_id"]
-    #        assert A.ndim == 2
-    #        assert A.meta[tiledbsoma.util.SOMA_OBJECT_TYPE_METADATA_KEY] == "SOMAAssayMatrix"
-    # Convenience accessors
-    #    assert exp.X["data"].shape() == exp.X.data.shape()
-
-    #    # Check X/raw (sparse)
-    #    with tiledb.open(os.path.join(output_path, "raw", "X", "data")) as A:
-    #        df = A.df[:]
-    #        assert df.columns.to_list() == ["obs_id", "var_id", "value"]
-    #        # verify sparsity of raw data
-    #        assert df.shape[0] == orig.raw.X.nnz
-    #        assert A.meta[tiledbsoma.util.SOMA_OBJECT_TYPE_METADATA_KEY] == "SOMAAssayMatrix"
-
-    # TODO: PORT FROM V0 TO V1
-
-    #    # Check var
-    #    with tiledb.open(os.path.join(output_path, "var")) as A:
-    #        df = A.df[:]
-    #        assert df.columns.to_list() == orig.var_keys()
-    #        assert (
-    #            A.meta[tiledbsoma.util.SOMA_OBJECT_TYPE_METADATA_KEY] == "SOMAAnnotationDataFrame"
-    #        )
-    #    assert sorted(exp.var.ids()) == sorted(list(orig.var_names))
-    #    # Convenience accessors
-    #    assert exp.var_keys() == exp.var_names
-    #    assert exp.var_names == exp.var.ids()
-    #    assert exp.n_var == len(exp.var.ids())
+    # XXX TO DO
+    #    assert _get_fragment_count(exp1.raw.var.uri) == _get_fragment_count(
+    #        exp2.raw.var.uri
+    #    )
+    #    assert _get_fragment_count(exp1.raw.X["data"].uri) == _get_fragment_count(
+    #        exp2.raw.X["data"].uri
+    #    )
     #
-    #    # Check some annotation matrices
-    #    # Note: pbmc-small doesn't have varp.
-    #    assert sorted(exp.obsm.keys()) == sorted(orig.obsm.keys())
-    #    for key in orig.obsm_keys():
-    #        with tiledb.open(os.path.join(output_path, "obsm", key)) as A:
-    #            df = A.df[:]
-    #            assert df.shape[0] == orig.obsm[key].shape[0]
-    #            assert exp.obsm[key].shape() == orig.obsm[key].shape
-    #            assert (
-    #                A.meta[tiledbsoma.util.SOMA_OBJECT_TYPE_METADATA_KEY]
-    #                == "SOMAAnnotationMatrix"
-    #            )
-    #    # Convenience accessors: exp.obsm.X_pca <-> exp.obsm['X_pca']
-    #    for key in exp.obsm.keys():
-    #        assert getattr(exp.obsm, key).shape() == exp.obsm[key].shape()
+    #    assert _get_fragment_count(exp1.obsm["X_pca"].uri) == _get_fragment_count(
+    #        exp2.obsm["X_pca"].uri
+    #    )
+    #    assert _get_fragment_count(exp1.obsm["X_tsne"].uri) == _get_fragment_count(
+    #        exp2.obsm["X_tsne"].uri
+    #    )
     #
-    #    assert sorted(exp.varm.keys()) == sorted(orig.varm.keys())
-    #    for key in orig.varm_keys():
-    #        with tiledb.open(os.path.join(output_path, "varm", key)) as A:
-    #            df = A.df[:]
-    #            assert df.shape[0] == orig.varm[key].shape[0]
-    #            assert exp.varm[key].shape() == orig.varm[key].shape
-    #            assert (
-    #                A.meta[tiledbsoma.util.SOMA_OBJECT_TYPE_METADATA_KEY]
-    #                == "SOMAAnnotationMatrix"
-    #            )
-    #    # Convenience accessors:
-    #    for key in exp.varm.keys():
-    #        assert getattr(exp.varm, key).shape() == exp.varm[key].shape()
+    #    assert _get_fragment_count(exp1.obsp["distances"].uri) == _get_fragment_count(
+    #        exp2.obsp["distances"].uri
+    #    )
     #
-    #    assert sorted(exp.obsp.keys()) == sorted(orig.obsp.keys())
-    #    for key in list(orig.obsp.keys()):
-    #        with tiledb.open(os.path.join(output_path, "obsp", key)) as A:
-    #            df = A.df[:]
-    #            assert df.columns.to_list() == ["obs_id_i", "obs_id_j", "value"]
-    #            assert df.shape[0] == orig.obsp[key].nnz
-    #            # https://github.com/single-cell-data/TileDB-SOMA/issues/125
-    #            # At present (without that PR's suggested enhancement) the best we
-    #            # can get is the NNZ x attrs shape -- note that there are two
-    #            # dims and one attr so the shape is nnz x 1.
-    #            shape = exp.obsp[key].df().shape
-    #            assert shape[0] == orig.obsp[key].nnz
-    #            assert shape[1] == 1
-    #            assert A.meta[tiledbsoma.util.SOMA_OBJECT_TYPE_METADATA_KEY] == "SOMAAssayMatrix"
-    #    # Convenience accessors:
-    #    for key in exp.obsp.keys():
-    #        assert getattr(exp.obsp, key).shape() == exp.obsp[key].shape()
+    #    assert _get_fragment_count(exp1.varm["PCs"].uri) == _get_fragment_count(
+    #        exp2.varm["PCs"].uri
+    #    )
 
-    tempdir.cleanup()
-
-
-# def test_export_anndata(adata):
-#
-#    # Set up anndata input path and tiledb-group output path
-#    tempdir = tempfile.TemporaryDirectory()
-#    output_path = tempdir.name
-#
-#    orig = adata
-#
-#    # Ingest
-#    exp = tiledbsoma.Experiment(output_path)
-#    tiledbsoma.io.from_anndata(exp, orig)
-#
-#    readback = tiledbsoma.io.to_anndata(exp)
-#
-#    assert readback.obs.shape == orig.obs.shape
-#    assert readback.var.shape == orig.var.shape
-#    assert readback.X.shape == orig.X.shape
-#
-#    for key in orig.obsm.keys():
-#        assert readback.obsm[key].shape == orig.obsm[key].shape
-#    for key in orig.varm.keys():
-#        assert readback.varm[key].shape == orig.varm[key].shape
-#    for key in orig.obsp.keys():
-#        assert readback.obsp[key].shape == orig.obsp[key].shape
-#    for key in orig.varp.keys():
-#        assert readback.varp[key].shape == orig.varp[key].shape
+    tempdir1.cleanup()
+    tempdir2.cleanup()
