@@ -1,6 +1,6 @@
 import math
 import time
-from typing import Callable, Optional, Union
+from typing import Optional, Union
 
 import anndata as ad
 import numpy as np
@@ -39,30 +39,6 @@ def from_h5ad(
     """
     Reads an .h5ad file and writes to a TileDB group structure.
     """
-    _from_h5ad_common(
-        experiment,
-        input_path,
-        measurement_name,
-        from_anndata,
-        ctx=ctx,
-        platform_config=platform_config,
-    )
-
-
-# ----------------------------------------------------------------
-def _from_h5ad_common(
-    experiment: Experiment,
-    input_path: Path,
-    measurement_name: str,
-    handler_func: Callable[
-        [Experiment, ad.AnnData, str, tiledb.Ctx, Optional[PlatformConfig]], None
-    ],
-    ctx: Optional[tiledb.Ctx] = None,
-    platform_config: Optional[PlatformConfig] = None,
-) -> None:
-    """
-    Common code for things we do when processing a .h5ad file for ingest/update.
-    """
     if isinstance(input_path, ad.AnnData):
         raise TypeError("Input path is an AnnData object -- did you want from_anndata?")
 
@@ -72,236 +48,22 @@ def _from_h5ad_common(
         f"START  Experiment.from_h5ad {input_path}",
     )
 
-    logging.log_io(None, f"{experiment._indent}START  READING {input_path}")
+    logging.log_io(None, f"START  READING {input_path}")
 
     anndata = ad.read_h5ad(input_path, backed="r")
 
     logging.log_io(
         None,
-        util.format_elapsed(s, f"{experiment._indent}FINISH READING {input_path}"),
+        util.format_elapsed(s, f"FINISH READING {input_path}"),
     )
 
-    handler_func(experiment, anndata, measurement_name, ctx, platform_config)
+    from_anndata(experiment, anndata, measurement_name, ctx, platform_config)
 
     logging.log_io(
         None,
         util.format_elapsed(
             s,
             f"FINISH Experiment.from_h5ad {input_path}",
-        ),
-    )
-
-
-def _write_dataframe(
-    soma_df: DataFrame,
-    df: pd.DataFrame,
-    id_column_name: Optional[str],
-    platform_config: Optional[PlatformConfig] = None,
-) -> None:
-    s = util.get_start_stamp()
-    logging.log_io(None, f"{soma_df._indent}START  WRITING {soma_df.uri}")
-
-    assert not soma_df.exists()
-
-    df[SOMA_JOINID] = np.asarray(range(len(df)), dtype=np.int64)
-
-    df.reset_index(inplace=True)
-    if id_column_name is not None:
-        df.rename(columns={"index": id_column_name}, inplace=True)
-    df.set_index(SOMA_JOINID, inplace=True)  # XXX MAYBE NOT?
-
-    # Categoricals are not yet well supported, so we must flatten
-    for k in df:
-        if df[k].dtype == "category":
-            df[k] = df[k].astype(df[k].cat.categories.dtype)
-    arrow_table = pa.Table.from_pandas(df)
-    soma_df.create(arrow_table.schema, platform_config=platform_config)
-    soma_df.write(arrow_table)
-
-    logging.log_io(
-        f"Wrote {soma_df.uri}",
-        util.format_elapsed(s, f"{soma_df._indent}FINISH WRITING {soma_df.uri}"),
-    )
-
-
-def _write_matrix_to_denseNDArray(
-    soma_ndarray: DenseNDArray,
-    src_matrix: Union[np.ndarray, sp.csr_matrix, sp.csc_matrix],
-) -> None:
-    """Write a matrix to an empty DenseNDArray"""
-
-    # Write all at once?
-    if soma_ndarray._tiledb_platform_config.write_X_chunked:
-        if isinstance(src_matrix, np.ndarray):
-            nd_array = src_matrix
-        else:
-            nd_array = src_matrix.toarray()
-        soma_ndarray.write_numpy((slice(None),), nd_array)
-        return
-
-    # OR, write in chunks
-    s = util.get_start_stamp()
-    logging.log_io(None, f"{soma_ndarray._indent}START  ingest")
-
-    eta_tracker = eta.Tracker()
-    nrow, ncol = src_matrix.shape
-    i = 0
-    # number of rows to chunk by. Dense writes, so this is a constant.
-    chunk_size = int(
-        math.ceil(soma_ndarray._tiledb_platform_config.goal_chunk_nnz / ncol)
-    )
-    while i < nrow:
-        t1 = time.time()
-        i2 = i + chunk_size
-
-        # Print doubly-inclusive lo..hi like 0..17 and 18..31.
-        chunk_percent = min(100, 100 * (i2 - 1) / nrow)
-        logging.log_io(
-            None,
-            "%sSTART  chunk rows %d..%d of %d (%.3f%%)"
-            % (soma_ndarray._indent, i, i2 - 1, nrow, chunk_percent),
-        )
-
-        chunk = src_matrix[i:i2, :]
-        if isinstance(chunk, np.ndarray):
-            tensor = pa.Tensor.from_numpy(chunk)
-        else:
-            tensor = pa.Tensor.from_numpy(chunk.toarray())
-        soma_ndarray.write_tensor((slice(i, i2), slice(None)), tensor)
-
-        t2 = time.time()
-        chunk_seconds = t2 - t1
-        eta_seconds = eta_tracker.ingest_and_predict(chunk_percent, chunk_seconds)
-
-        if chunk_percent < 100:
-            logging.log_io(
-                "... %7.3f%% done, ETA %s" % (chunk_percent, eta_seconds),
-                "%sFINISH chunk in %.3f seconds, %7.3f%% done, ETA %s"
-                % (soma_ndarray._indent, chunk_seconds, chunk_percent, eta_seconds),
-            )
-
-        i = i2
-
-    logging.log_io(None, util.format_elapsed(s, f"{soma_ndarray._indent}FINISH ingest"))
-    return
-
-
-def _write_matrix_to_sparseNDArray(
-    soma_ndarray: SparseNDArray,
-    src_matrix: Union[np.ndarray, sp.csr_matrix, sp.csc_matrix],
-) -> None:
-    """Write a matrix to an empty DenseNDArray"""
-
-    def _coo_to_table(mat_coo: sp.coo_matrix, axis: int = 0, base: int = 0) -> pa.Table:
-        pydict = {
-            "soma_data": mat_coo.data,
-            "soma_dim_0": mat_coo.row + base if base > 0 and axis == 0 else mat_coo.row,
-            "soma_dim_1": mat_coo.col + base if base > 0 and axis == 1 else mat_coo.col,
-        }
-        return pa.Table.from_pydict(pydict)
-
-    def _find_chunk_size(
-        mat: Union[np.ndarray, sp.csr_matrix, sp.csc_matrix],
-        start_index: int,
-        axis: int,
-        goal_chunk_nnz: int,
-    ) -> int:
-        if isinstance(mat, np.ndarray):
-            return int(math.ceil(goal_chunk_nnz / mat.shape[axis]))
-        else:
-            return util_scipy.find_sparse_chunk_size(
-                mat, start_index, axis, goal_chunk_nnz
-            )
-
-    # Write all at once?
-    if not soma_ndarray._tiledb_platform_config.write_X_chunked:
-        soma_ndarray.write_table(_coo_to_table(sp.coo_matrix(src_matrix)))
-        return
-
-    # Or, write in chunks, striding across the most efficient slice axis
-    stride_axis = 0 if not sp.isspmatrix_csc(src_matrix) else 1
-    dim_max_size = src_matrix.shape[stride_axis]
-
-    s = util.get_start_stamp()
-    logging.log_io(None, f"{soma_ndarray._indent}START  ingest")
-
-    eta_tracker = eta.Tracker()
-    goal_chunk_nnz = soma_ndarray._tiledb_platform_config.goal_chunk_nnz
-    coords = [slice(None), slice(None)]
-    i = 0
-    while i < dim_max_size:
-        t1 = time.time()
-
-        # chunk size on the stride axis
-        chunk_size = _find_chunk_size(src_matrix, i, stride_axis, goal_chunk_nnz)
-        i2 = i + chunk_size
-
-        coords[stride_axis] = slice(i, i2)
-        chunk_coo = sp.coo_matrix(src_matrix[tuple(coords)])
-
-        # print doubly-inclusive lo..hi like 0..17 and 18..31.
-        chunk_percent = min(100, 100 * (i2 - 1) / dim_max_size)
-        logging.log_io(
-            None,
-            "%sSTART  chunk rows %d..%d of %d (%.3f%%), nnz=%d"
-            % (
-                soma_ndarray._indent,
-                i,
-                i2 - 1,
-                dim_max_size,
-                chunk_percent,
-                chunk_coo.nnz,
-            ),
-        )
-
-        soma_ndarray.write_table(_coo_to_table(chunk_coo, stride_axis, i))
-
-        t2 = time.time()
-        chunk_seconds = t2 - t1
-        eta_seconds = eta_tracker.ingest_and_predict(chunk_percent, chunk_seconds)
-
-        if chunk_percent < 100:
-            logging.log_io(
-                "... %7.3f%% done, ETA %s" % (chunk_percent, eta_seconds),
-                "%sFINISH chunk in %.3f seconds, %7.3f%% done, ETA %s"
-                % (soma_ndarray._indent, chunk_seconds, chunk_percent, eta_seconds),
-            )
-
-        i = i2
-
-    logging.log_io(None, util.format_elapsed(s, f"{soma_ndarray._indent}FINISH ingest"))
-
-
-def create_from_matrix(
-    soma_ndarray: Union[DenseNDArray, SparseNDArray],
-    src_matrix: Union[np.ndarray, sp.csr_matrix, sp.csc_matrix],
-    platform_config: Optional[PlatformConfig] = None,
-) -> None:
-    """
-    Create and populate the ``soma_matrix`` from the contents of ``src_matrix``.
-    """
-    assert not soma_ndarray.exists()
-    assert src_matrix.ndim == 2
-    assert soma_ndarray.soma_type in ("SOMADenseNDArray", "SOMASparseNDArray")
-
-    s = util.get_start_stamp()
-    logging.log_io(None, f"{soma_ndarray._indent}START  WRITING {soma_ndarray.uri}")
-
-    soma_ndarray.create(
-        type=pa.from_numpy_dtype(src_matrix.dtype),
-        shape=src_matrix.shape,
-        platform_config=platform_config,
-    )
-
-    if isinstance(soma_ndarray, DenseNDArray):
-        _write_matrix_to_denseNDArray(soma_ndarray, src_matrix)
-    else:  # SOMmASparseNDArray
-        _write_matrix_to_sparseNDArray(soma_ndarray, src_matrix)
-
-    logging.log_io(
-        f"Wrote {soma_ndarray.uri}",
-        util.format_elapsed(
-            s, f"{soma_ndarray._indent}FINISH WRITING {soma_ndarray.uri}"
         ),
     )
 
@@ -327,18 +89,18 @@ def from_anndata(
         raise NotImplementedError("Empty AnnData.obs or AnnData.var unsupported.")
 
     s = util.get_start_stamp()
-    logging.log_io(None, f"{experiment._indent}START  DECATEGORICALIZING")
+    logging.log_io(None, "START  DECATEGORICALIZING")
 
     anndata.obs_names_make_unique()
     anndata.var_names_make_unique()
 
     logging.log_io(
         None,
-        util.format_elapsed(s, f"{experiment._indent}FINISH DECATEGORICALIZING"),
+        util.format_elapsed(s, "FINISH DECATEGORICALIZING"),
     )
 
     s = util.get_start_stamp()
-    logging.log_io(None, f"{experiment._indent}START  WRITING {experiment.uri}")
+    logging.log_io(None, f"START  WRITING {experiment.uri}")
 
     # Must be done first, to create the parent directory.
     if not experiment.exists():
@@ -489,8 +251,219 @@ def from_anndata(
 
     logging.log_io(
         f"Wrote {experiment.uri}",
-        util.format_elapsed(s, f"{experiment._indent}FINISH WRITING {experiment.uri}"),
+        util.format_elapsed(s, f"FINISH WRITING {experiment.uri}"),
     )
+
+
+def _write_dataframe(
+    soma_df: DataFrame,
+    df: pd.DataFrame,
+    id_column_name: Optional[str],
+    platform_config: Optional[PlatformConfig] = None,
+) -> None:
+    s = util.get_start_stamp()
+    logging.log_io(None, f"START  WRITING {soma_df.uri}")
+
+    assert not soma_df.exists()
+
+    df[SOMA_JOINID] = np.asarray(range(len(df)), dtype=np.int64)
+
+    df.reset_index(inplace=True)
+    if id_column_name is not None:
+        df.rename(columns={"index": id_column_name}, inplace=True)
+    df.set_index(SOMA_JOINID, inplace=True)  # XXX MAYBE NOT?
+
+    # Categoricals are not yet well supported, so we must flatten
+    for k in df:
+        if df[k].dtype == "category":
+            df[k] = df[k].astype(df[k].cat.categories.dtype)
+    arrow_table = pa.Table.from_pandas(df)
+    soma_df.create(arrow_table.schema, platform_config=platform_config)
+    soma_df.write(arrow_table)
+
+    logging.log_io(
+        f"Wrote {soma_df.uri}",
+        util.format_elapsed(s, f"FINISH WRITING {soma_df.uri}"),
+    )
+
+
+def create_from_matrix(
+    soma_ndarray: Union[DenseNDArray, SparseNDArray],
+    src_matrix: Union[np.ndarray, sp.csr_matrix, sp.csc_matrix],
+    platform_config: Optional[PlatformConfig] = None,
+) -> None:
+    """
+    Create and populate the ``soma_matrix`` from the contents of ``src_matrix``.
+    """
+    assert not soma_ndarray.exists()
+    assert src_matrix.ndim == 2
+    assert soma_ndarray.soma_type in ("SOMADenseNDArray", "SOMASparseNDArray")
+
+    s = util.get_start_stamp()
+    logging.log_io(None, f"START  WRITING {soma_ndarray.uri}")
+
+    soma_ndarray.create(
+        type=pa.from_numpy_dtype(src_matrix.dtype),
+        shape=src_matrix.shape,
+        platform_config=platform_config,
+    )
+
+    if isinstance(soma_ndarray, DenseNDArray):
+        _write_matrix_to_denseNDArray(soma_ndarray, src_matrix)
+    else:  # SOMmASparseNDArray
+        _write_matrix_to_sparseNDArray(soma_ndarray, src_matrix)
+
+    logging.log_io(
+        f"Wrote {soma_ndarray.uri}",
+        util.format_elapsed(s, f"FINISH WRITING {soma_ndarray.uri}"),
+    )
+
+
+def _write_matrix_to_denseNDArray(
+    soma_ndarray: DenseNDArray,
+    src_matrix: Union[np.ndarray, sp.csr_matrix, sp.csc_matrix],
+) -> None:
+    """Write a matrix to an empty DenseNDArray"""
+
+    # Write all at once?
+    if soma_ndarray._tiledb_platform_config.write_X_chunked:
+        if isinstance(src_matrix, np.ndarray):
+            nd_array = src_matrix
+        else:
+            nd_array = src_matrix.toarray()
+        soma_ndarray.write_numpy((slice(None),), nd_array)
+        return
+
+    # OR, write in chunks
+    s = util.get_start_stamp()
+    logging.log_io(None, "START  ingest")
+
+    eta_tracker = eta.Tracker()
+    nrow, ncol = src_matrix.shape
+    i = 0
+    # number of rows to chunk by. Dense writes, so this is a constant.
+    chunk_size = int(
+        math.ceil(soma_ndarray._tiledb_platform_config.goal_chunk_nnz / ncol)
+    )
+    while i < nrow:
+        t1 = time.time()
+        i2 = i + chunk_size
+
+        # Print doubly-inclusive lo..hi like 0..17 and 18..31.
+        chunk_percent = min(100, 100 * (i2 - 1) / nrow)
+        logging.log_io(
+            None,
+            "START  chunk rows %d..%d of %d (%.3f%%)"
+            % (i, i2 - 1, nrow, chunk_percent),
+        )
+
+        chunk = src_matrix[i:i2, :]
+        if isinstance(chunk, np.ndarray):
+            tensor = pa.Tensor.from_numpy(chunk)
+        else:
+            tensor = pa.Tensor.from_numpy(chunk.toarray())
+        soma_ndarray.write_tensor((slice(i, i2), slice(None)), tensor)
+
+        t2 = time.time()
+        chunk_seconds = t2 - t1
+        eta_seconds = eta_tracker.ingest_and_predict(chunk_percent, chunk_seconds)
+
+        if chunk_percent < 100:
+            logging.log_io(
+                "... %7.3f%% done, ETA %s" % (chunk_percent, eta_seconds),
+                "FINISH chunk in %.3f seconds, %7.3f%% done, ETA %s"
+                % (chunk_seconds, chunk_percent, eta_seconds),
+            )
+
+        i = i2
+
+    logging.log_io(None, util.format_elapsed(s, "FINISH ingest"))
+    return
+
+
+def _write_matrix_to_sparseNDArray(
+    soma_ndarray: SparseNDArray,
+    src_matrix: Union[np.ndarray, sp.csr_matrix, sp.csc_matrix],
+) -> None:
+    """Write a matrix to an empty DenseNDArray"""
+
+    def _coo_to_table(mat_coo: sp.coo_matrix, axis: int = 0, base: int = 0) -> pa.Table:
+        pydict = {
+            "soma_data": mat_coo.data,
+            "soma_dim_0": mat_coo.row + base if base > 0 and axis == 0 else mat_coo.row,
+            "soma_dim_1": mat_coo.col + base if base > 0 and axis == 1 else mat_coo.col,
+        }
+        return pa.Table.from_pydict(pydict)
+
+    def _find_chunk_size(
+        mat: Union[np.ndarray, sp.csr_matrix, sp.csc_matrix],
+        start_index: int,
+        axis: int,
+        goal_chunk_nnz: int,
+    ) -> int:
+        if isinstance(mat, np.ndarray):
+            return int(math.ceil(goal_chunk_nnz / mat.shape[axis]))
+        else:
+            return util_scipy.find_sparse_chunk_size(
+                mat, start_index, axis, goal_chunk_nnz
+            )
+
+    # Write all at once?
+    if not soma_ndarray._tiledb_platform_config.write_X_chunked:
+        soma_ndarray.write_table(_coo_to_table(sp.coo_matrix(src_matrix)))
+        return
+
+    # Or, write in chunks, striding across the most efficient slice axis
+    stride_axis = 0 if not sp.isspmatrix_csc(src_matrix) else 1
+    dim_max_size = src_matrix.shape[stride_axis]
+
+    s = util.get_start_stamp()
+    logging.log_io(None, "START  ingest")
+
+    eta_tracker = eta.Tracker()
+    goal_chunk_nnz = soma_ndarray._tiledb_platform_config.goal_chunk_nnz
+    coords = [slice(None), slice(None)]
+    i = 0
+    while i < dim_max_size:
+        t1 = time.time()
+
+        # chunk size on the stride axis
+        chunk_size = _find_chunk_size(src_matrix, i, stride_axis, goal_chunk_nnz)
+        i2 = i + chunk_size
+
+        coords[stride_axis] = slice(i, i2)
+        chunk_coo = sp.coo_matrix(src_matrix[tuple(coords)])
+
+        # print doubly-inclusive lo..hi like 0..17 and 18..31.
+        chunk_percent = min(100, 100 * (i2 - 1) / dim_max_size)
+        logging.log_io(
+            None,
+            "START  chunk rows %d..%d of %d (%.3f%%), nnz=%d"
+            % (
+                i,
+                i2 - 1,
+                dim_max_size,
+                chunk_percent,
+                chunk_coo.nnz,
+            ),
+        )
+
+        soma_ndarray.write_table(_coo_to_table(chunk_coo, stride_axis, i))
+
+        t2 = time.time()
+        chunk_seconds = t2 - t1
+        eta_seconds = eta_tracker.ingest_and_predict(chunk_percent, chunk_seconds)
+
+        if chunk_percent < 100:
+            logging.log_io(
+                "... %7.3f%% done, ETA %s" % (chunk_percent, eta_seconds),
+                "FINISH chunk in %.3f seconds, %7.3f%% done, ETA %s"
+                % (chunk_seconds, chunk_percent, eta_seconds),
+            )
+
+        i = i2
+
+    logging.log_io(None, util.format_elapsed(s, "FINISH ingest"))
 
 
 # ----------------------------------------------------------------
@@ -510,13 +483,13 @@ def to_h5ad(
     anndata = to_anndata(experiment, measurement_name=measurement_name)
 
     s2 = util.get_start_stamp()
-    logging.log_io(None, f"{experiment._indent}START  write {h5ad_path}")
+    logging.log_io(None, f"START  write {h5ad_path}")
 
     anndata.write_h5ad(h5ad_path)
 
     logging.log_io(
         None,
-        util.format_elapsed(s2, f"{experiment._indent}FINISH write {h5ad_path}"),
+        util.format_elapsed(s2, f"FINISH write {h5ad_path}"),
     )
 
     logging.log_io(
