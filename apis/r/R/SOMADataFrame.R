@@ -48,6 +48,11 @@ SOMADataFrame <- R6::R6Class(
           tile_extent
         )
 
+        # Default 2048 mods to 0 for 8-bit types and 0 is an invalid extent
+        if (field$type$bit_width %||% 0L == 8L) {
+          tile_extent <- 64L
+        }
+
         tdb_dims[[field_name]] <- tiledb::tiledb_dim(
           name = field_name,
           # Numeric index types must be positive values for indexing
