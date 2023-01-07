@@ -284,18 +284,23 @@ class SparseNDArrayRead(somacore.SparseRead):
         self.shape = shape
 
     def coos(self) -> SparseCOOTensorReadIter:
+        """Return an iterator of Arrow SparseCOOTensor"""
         return SparseCOOTensorReadIter(self.sr, self.shape)
 
     def cscs(self) -> SparseCSCMatrixReadIter:
+        """Return an iterator of Arrow SparseCSCMatrix"""
         return SparseCSCMatrixReadIter(self.sr, self.shape)
 
     def csrs(self) -> SparseCSRMatrixReadIter:
+        """Return an iterator of Arrow SparseCSRMatrix"""
         return SparseCSRMatrixReadIter(self.sr, self.shape)
 
     def dense_tensors(self) -> somacore.ReadIter[pa.Tensor]:
+        """Return an iterator of Arrow Tensor"""
         raise NotImplementedError()
 
     def tables(self) -> TableReadIter:
+        """Return an iterator of Arrow Table"""
         return TableReadIter(self.sr)
 
     def close(self) -> None:

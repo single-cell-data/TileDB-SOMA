@@ -13,6 +13,8 @@ from .types import NTuple
 
 
 class TableReadIter(somacore.ReadIter[pa.Table]):
+    """Iterator over Arrow Table elements"""
+
     def __init__(self, sr: clib.SOMAReader):
         self.sr = sr
 
@@ -24,6 +26,7 @@ class TableReadIter(somacore.ReadIter[pa.Table]):
         return arrow_table
 
     def concat(self) -> pa.Table:
+        """Concatenate remainder of iterator, and return as a single Arrow Table"""
         return pa.concat_tables(self)
 
     def close(self) -> None:
@@ -53,6 +56,11 @@ class SparseTensorReadIterBase(somacore.ReadIter[RT], metaclass=abc.ABCMeta):
         return self._from_table(arrow_table)
 
     def concat(self) -> RT:
+        """Returns all the requested data in a single operation.
+
+        If some data has already been retrieved using ``next``, this will return
+        the rest of the data after that is already returned.
+        """
         arrow_tables = pa.concat_tables(TableReadIter(self.sr))
         return self._from_table(arrow_tables)
 
@@ -62,6 +70,8 @@ class SparseTensorReadIterBase(somacore.ReadIter[RT], metaclass=abc.ABCMeta):
 
 
 class SparseCOOTensorReadIter(SparseTensorReadIterBase[pa.SparseCOOTensor]):
+    """Iterator over Arrow SparseCOOTensor elements"""
+
     def _from_table(self, arrow_table: pa.Table) -> pa.SparseCOOTensor:
         coo_data = arrow_table.column("soma_data").to_numpy()
         coo_coords = np.array(
@@ -74,6 +84,8 @@ class SparseCOOTensorReadIter(SparseTensorReadIterBase[pa.SparseCOOTensor]):
 
 
 class SparseCSRMatrixReadIter(SparseTensorReadIterBase[pa.SparseCSRMatrix]):
+    """Iterator over Arrow SparseCSRMatrix elements"""
+
     def __init__(self, sr: clib.SOMAReader, shape: NTuple):
         if len(shape) != 2:
             raise ValueError("CSR matrix format only supported for 2D SparseNDArray")
@@ -90,6 +102,8 @@ class SparseCSRMatrixReadIter(SparseTensorReadIterBase[pa.SparseCSRMatrix]):
 
 
 class SparseCSCMatrixReadIter(SparseTensorReadIterBase[pa.SparseCSCMatrix]):
+    """Iterator over Arrow SparseCSCMatrix elements"""
+
     def __init__(self, sr: clib.SOMAReader, shape: NTuple):
         if len(shape) != 2:
             raise ValueError("CSC matrix format only supported for 2D SparseNDArray")
