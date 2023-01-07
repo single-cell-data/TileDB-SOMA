@@ -115,7 +115,7 @@ arrow_type_range <- function(x) {
     # float32/float
     float = c(-3.4028235e+38, 3.4028235e+38),
     # float64/double
-    double =  c(-1.7976931348623157e+308, 1.7976931348623157e+308),
+    double =  c(.Machine$double.xmin, .Machine$double.xmax),
     # boolean/bool
     bool = NULL,
     # string/utf8
