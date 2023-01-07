@@ -69,7 +69,6 @@ def test_dataframe(tmp_path, arrow_schema):
     assert len(sidf) == 5
 
     # Read all
-    # table = sidf.read_all()
     table = sidf.read().concat()
     assert table.num_rows == 5
     assert table.num_columns == 5
