@@ -66,11 +66,24 @@ test_that("Basic mechanics", {
 })
 
 test_that("creation with all supported dimension data types", {
+
+  sch <- arrow::schema(
+    arrow::field("int8", arrow::int8(), nullable = FALSE),
+    arrow::field("int16", arrow::int16(), nullable = FALSE),
+    arrow::field("double", arrow::float64(), nullable = FALSE),
+    arrow::field("int", arrow::int32(), nullable = FALSE),
+    arrow::field("int64", arrow::int64(), nullable = FALSE),
+    arrow::field("string", arrow::utf8(), nullable = FALSE)
+  )
+
   tbl0 <- arrow::arrow_table(
+    int8 = 1L:10L,
+    int16 = 1:10L,
     double = 1.1:10.1,
     int = 1L:10L,
     int64 = bit64::as.integer64(1L:10L),
-    string = letters[1:10]
+    string = letters[1:10],
+    schema = sch
   )
 
   for (dtype in tbl0$ColumnNames()) {
