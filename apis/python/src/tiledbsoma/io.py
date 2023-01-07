@@ -538,7 +538,7 @@ def to_anndata(
         X_ndarray = X_data.read((slice(None), slice(None))).to_numpy()
         X_dtype = X_ndarray.dtype
     elif isinstance(X_data, SparseNDArray):
-        X_mat = X_data.read().concat().to_pandas()  # TODO: CSR/CSC options ...
+        X_mat = X_data.read().tables().concat().to_pandas()  # TODO: CSR/CSC options ...
         X_csr = util_scipy.csr_from_tiledb_df(X_mat, nobs, nvar)
         X_dtype = X_csr.dtype
     else:
