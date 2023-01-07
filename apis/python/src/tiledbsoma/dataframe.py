@@ -330,12 +330,6 @@ class DataFrame(TileDBArray):
         with self._tiledb_open("w") as A:
             A[dim_cols_tuple] = attr_cols_map
 
-    def write_from_pandas(
-        self,
-        dataframe: pd.DataFrame,
-    ) -> None:
-        self.write(pa.Table.from_pandas(dataframe))
-
 
 def _validate_schema(schema: pa.Schema, index_column_names: Sequence[str]) -> pa.Schema:
     """

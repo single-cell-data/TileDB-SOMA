@@ -372,7 +372,8 @@ def make_multiply_indexed_dataframe(tmp_path, index_column_names: List[str]):
     }
 
     n_data = len(data["index1"])
-    sidf.write_from_pandas(pd.DataFrame(data=data))
+    sidf.write(pa.Table.from_pandas(pd.DataFrame(data=data)))
+
     return (schema, sidf, n_data)
 
 
