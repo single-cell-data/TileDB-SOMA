@@ -17,7 +17,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">tiledbsoma</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.1.16.9000</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.1.19</span>
       </span>
     </div>
 
@@ -64,9 +64,21 @@
     </div>
 
     <div class="section level2">
-<h2 class="page-header" data-toc-text="development version" id="tiledbsoma-development-version">tiledbsoma (development version)<a class="anchor" aria-label="anchor" href="#tiledbsoma-development-version"></a></h2>
+<h2 class="page-header" data-toc-text="0.1.19" id="tiledbsoma-0119">tiledbsoma 0.1.19<a class="anchor" aria-label="anchor" href="#tiledbsoma-0119"></a></h2>
 <div class="section level3">
-<h3 id="fixes-development-version">Fixes<a class="anchor" aria-label="anchor" href="#fixes-development-version"></a></h3>
+<h3 id="changes-0-1-19">Changes<a class="anchor" aria-label="anchor" href="#changes-0-1-19"></a></h3>
+<ul><li>Updated <code>setup-r</code> GitHub Action to v2 and <code>checkout</code> to v3</li></ul></div>
+</div>
+    <div class="section level2">
+<h2 class="page-header" data-toc-text="0.1.18" id="tiledbsoma-0118">tiledbsoma 0.1.18<a class="anchor" aria-label="anchor" href="#tiledbsoma-0118"></a></h2>
+<div class="section level3">
+<h3 id="features-0-1-18">Features<a class="anchor" aria-label="anchor" href="#features-0-1-18"></a></h3>
+<ul><li>The <code>AnnotationMatrix</code>’s <code>to_matrix()</code> method now supports batched reads via the <code>batch_mode</code> argument. This functionality can also be leveraged from <code>SOMA</code>’s <code>get_seurat_dimreductions_list()</code> and <code>get_seurat_dimreduction()</code> methods.</li></ul></div>
+<div class="section level3">
+<h3 id="changes-0-1-18">Changes<a class="anchor" aria-label="anchor" href="#changes-0-1-18"></a></h3>
+<ul><li>Decreased capacity of <code>AssayMatrix</code> arrays from 100,000 to 1,000 to improve remote-read performance (<a href="https://github.com/single-cell-data/TileDB-SOMA/issues/543" class="external-link">#543</a>)</li></ul></div>
+<div class="section level3">
+<h3 id="fixes-0-1-18">Fixes<a class="anchor" aria-label="anchor" href="#fixes-0-1-18"></a></h3>
 <ul><li>Don’t use default assay name when recreating a <code>Seurat</code> object (thanks <a href="https://github.com/dan11mcguire" class="external-link">@dan11mcguire</a>)</li></ul></div>
 </div>
     <div class="section level2">
@@ -168,7 +180,7 @@
 </div>
 
 <div class="pkgdown">
-  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.6.</p>
+  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.7.</p>
 </div>
 
       </footer></div>

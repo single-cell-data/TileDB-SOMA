@@ -18,7 +18,7 @@ Single-cell Annotation Matrix"><!-- mathjax --><script src="https://cdnjs.cloudf
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">tiledbsoma</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.1.16.9000</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.1.19</span>
       </span>
     </div>
 
@@ -139,9 +139,24 @@ contain the matrix row names.</p></dd>
 <h3 id="method-to-matrix-">Method <code>to_matrix()</code><a class="anchor" aria-label="anchor" href="#method-to-matrix-"></a></h3>
 <p>Retrieve the annotation data from TileDB</p><div class="section">
 <h4 id="usage-1">Usage<a class="anchor" aria-label="anchor" href="#usage-1"></a></h4>
-<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">AnnotationMatrix</span><span class="op">$</span><span class="fu">to_matrix</span><span class="op">(</span><span class="op">)</span></span></code></pre></div><p></p></div>
+<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">AnnotationMatrix</span><span class="op">$</span><span class="fu">to_matrix</span><span class="op">(</span>attrs <span class="op">=</span> <span class="cn">NULL</span>, batch_mode <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
+<div class="section">
+<h4 id="arguments-1">Arguments<a class="anchor" aria-label="anchor" href="#arguments-1"></a></h4>
+<p></p><div class="arguments"><dl><dt><code>attrs</code></dt>
+<dd><p>A character vector of the attribute names to retrieve. By
+default, all attributes are retrieved.</p></dd>
+
+
+<dt><code>batch_mode</code></dt>
+<dd><p>logical, if <code>TRUE</code>, batch query mode is enabled, which
+provides the ability to detect partial query results and resubmit until
+all results are retrieved.</p></dd>
+
+
+</dl><p></p></div>
+</div>
 <div class="section">
 <h4 id="returns">Returns<a class="anchor" aria-label="anchor" href="#returns"></a></h4>
 <p>A <code><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></code></p>
@@ -155,7 +170,7 @@ contain the matrix row names.</p></dd>
 </div>
 
 <div class="section">
-<h4 id="arguments-1">Arguments<a class="anchor" aria-label="anchor" href="#arguments-1"></a></h4>
+<h4 id="arguments-2">Arguments<a class="anchor" aria-label="anchor" href="#arguments-2"></a></h4>
 <p></p><div class="arguments"><dl><dt><code>deep</code></dt>
 <dd><p>Whether to make a deep clone.</p></dd>
 
@@ -179,7 +194,7 @@ contain the matrix row names.</p></dd>
 </div>
 
 <div class="pkgdown">
-  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.6.</p>
+  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.7.</p>
 </div>
 
       </footer></div>

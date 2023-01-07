@@ -25,7 +25,7 @@ var (AnnotationDataframe): 1D labeled array with row labels for X
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">tiledbsoma</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.1.16.9000</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.1.19</span>
       </span>
     </div>
 
@@ -440,7 +440,7 @@ results column names (required by Seurat)</p></li>
 <h3 id="method-get-seurat-dimreduction-">Method <code>get_seurat_dimreduction()</code><a class="anchor" aria-label="anchor" href="#method-get-seurat-dimreduction-"></a></h3>
 <p>Convert to a <code><a href="https://mojaveazure.github.io/seurat-object/reference/DimReduc-class.html" class="external-link">SeuratObject::DimReduc</a></code> object.</p><div class="section">
 <h4 id="usage-6">Usage<a class="anchor" aria-label="anchor" href="#usage-6"></a></h4>
-<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">SOMA</span><span class="op">$</span><span class="fu">get_seurat_dimreduction</span><span class="op">(</span>technique <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div><p></p></div>
+<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">SOMA</span><span class="op">$</span><span class="fu">get_seurat_dimreduction</span><span class="op">(</span>technique <span class="op">=</span> <span class="cn">NULL</span>, batch_mode <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
 <div class="section">
@@ -451,6 +451,12 @@ identify which <code>obsm</code>/<code>varm</code> array will be retrieved. If <
 default to the first <code>obsm/dimreduction_</code> array.</p></dd>
 
 
+<dt><code>batch_mode</code></dt>
+<dd><p>logical, if <code>TRUE</code>, batch query mode is enabled for
+retrieving <code>X</code> layers. See <code><a href="AssayMatrix.html">AssayMatrix$to_dataframe()</a></code> for
+more information.</p></dd>
+
+
 </dl><p></p></div>
 </div>
 
@@ -458,9 +464,19 @@ default to the first <code>obsm/dimreduction_</code> array.</p></dd>
 <h3 id="method-get-seurat-dimreductions-list-">Method <code>get_seurat_dimreductions_list()</code><a class="anchor" aria-label="anchor" href="#method-get-seurat-dimreductions-list-"></a></h3>
 <p>Retrieve a list of all <code><a href="https://mojaveazure.github.io/seurat-object/reference/DimReduc-class.html" class="external-link">SeuratObject::DimReduc</a></code> objects.</p><div class="section">
 <h4 id="usage-7">Usage<a class="anchor" aria-label="anchor" href="#usage-7"></a></h4>
-<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">SOMA</span><span class="op">$</span><span class="fu">get_seurat_dimreductions_list</span><span class="op">(</span><span class="op">)</span></span></code></pre></div><p></p></div>
+<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">SOMA</span><span class="op">$</span><span class="fu">get_seurat_dimreductions_list</span><span class="op">(</span>batch_mode <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
+<div class="section">
+<h4 id="arguments-6">Arguments<a class="anchor" aria-label="anchor" href="#arguments-6"></a></h4>
+<p></p><div class="arguments"><dl><dt><code>batch_mode</code></dt>
+<dd><p>logical, if <code>TRUE</code>, batch query mode is enabled for
+retrieving <code>X</code> layers. See <code><a href="AssayMatrix.html">AssayMatrix$to_dataframe()</a></code> for
+more information.</p></dd>
+
+
+</dl><p></p></div>
+</div>
 
 </div><p></p><hr><a id="method-SOMA-to_seurat_object"></a><div class="section">
 <h3 id="method-to-seurat-object-">Method <code>to_seurat_object()</code><a class="anchor" aria-label="anchor" href="#method-to-seurat-object-"></a></h3>
@@ -470,7 +486,7 @@ default to the first <code>obsm/dimreduction_</code> array.</p></dd>
 </div>
 
 <div class="section">
-<h4 id="arguments-6">Arguments<a class="anchor" aria-label="anchor" href="#arguments-6"></a></h4>
+<h4 id="arguments-7">Arguments<a class="anchor" aria-label="anchor" href="#arguments-7"></a></h4>
 <p></p><div class="arguments"><dl><dt><code>project</code></dt>
 <dd><p><code><a href="https://mojaveazure.github.io/seurat-object/reference/Project.html" class="external-link">SeuratObject::Project</a></code> name for the <code>Seurat</code> object</p></dd>
 
@@ -490,7 +506,7 @@ object.</p><div class="section">
 </div>
 
 <div class="section">
-<h4 id="arguments-7">Arguments<a class="anchor" aria-label="anchor" href="#arguments-7"></a></h4>
+<h4 id="arguments-8">Arguments<a class="anchor" aria-label="anchor" href="#arguments-8"></a></h4>
 <p></p><div class="arguments"><dl><dt><code>layers</code></dt>
 <dd><p>A vector of assay layer names to retrieve. Must match one
 or more of the available <code>X</code> <code><a href="AssayMatrix.html">AssayMatrix</a></code> layers. If <code>layers</code> is
@@ -533,7 +549,7 @@ SingleCellExperiment::SingleCellExperiment object.</p><div class="section">
 </div>
 
 <div class="section">
-<h4 id="arguments-8">Arguments<a class="anchor" aria-label="anchor" href="#arguments-8"></a></h4>
+<h4 id="arguments-9">Arguments<a class="anchor" aria-label="anchor" href="#arguments-9"></a></h4>
 <p></p><div class="arguments"><dl><dt><code>layers</code></dt>
 <dd><p>A vector of assay layer names to retrieve. Must match one
 or more of the available <code>X</code> <code><a href="AssayMatrix.html">AssayMatrix</a></code> layers. If <code>layers</code> is
@@ -559,7 +575,7 @@ groups.</p><div class="section">
 </div>
 
 <div class="section">
-<h4 id="arguments-9">Arguments<a class="anchor" aria-label="anchor" href="#arguments-9"></a></h4>
+<h4 id="arguments-10">Arguments<a class="anchor" aria-label="anchor" href="#arguments-10"></a></h4>
 <p></p><div class="arguments"><dl><dt><code>prefix</code></dt>
 <dd><p>String prefix to filter the array names.</p></dd>
 
@@ -581,7 +597,7 @@ the prefix.</p>
 </div>
 
 <div class="section">
-<h4 id="arguments-10">Arguments<a class="anchor" aria-label="anchor" href="#arguments-10"></a></h4>
+<h4 id="arguments-11">Arguments<a class="anchor" aria-label="anchor" href="#arguments-11"></a></h4>
 <p></p><div class="arguments"><dl><dt><code>prefix</code></dt>
 <dd><p>String prefix to filter the array names.</p></dd>
 
@@ -602,7 +618,7 @@ the prefix.</p>
 </div>
 
 <div class="section">
-<h4 id="arguments-11">Arguments<a class="anchor" aria-label="anchor" href="#arguments-11"></a></h4>
+<h4 id="arguments-12">Arguments<a class="anchor" aria-label="anchor" href="#arguments-12"></a></h4>
 <p></p><div class="arguments"><dl><dt><code>deep</code></dt>
 <dd><p>Whether to make a deep clone.</p></dd>
 
@@ -626,7 +642,7 @@ the prefix.</p>
 </div>
 
 <div class="pkgdown">
-  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.6.</p>
+  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.7.</p>
 </div>
 
       </footer></div>
