@@ -2,7 +2,6 @@ import collections.abc
 from typing import Any, Optional, Sequence, Tuple, TypeVar, Union, cast
 
 import numpy as np
-import pandas as pd
 import pyarrow as pa
 import tiledb
 from typing_extensions import Final, get_args
@@ -10,7 +9,6 @@ from typing_extensions import Final, get_args
 # This package's pybind11 code
 import tiledbsoma.libtiledbsoma as clib
 
-from . import somacore  # to be replaced by somacore package, when available
 from . import tiledb_platform_config as tdbpc
 from . import util, util_arrow
 from .collection import CollectionBase
@@ -18,6 +16,7 @@ from .constants import SOMA_JOINID
 from .query_condition import QueryCondition  # type: ignore
 from .tiledb_array import TileDBArray
 from .types import PlatformConfig, ResultOrder, SparseDataFrameCoordinates
+from .util_iter import TableReadIter
 
 Slice = TypeVar("Slice", bound=Sequence[int])
 
@@ -200,7 +199,7 @@ class DataFrame(TileDBArray):
         column_names: Optional[Sequence[str]] = None,
         result_order: Optional[ResultOrder] = None,
         # TODO: more arguments
-    ) -> "DataFrameReadIter":
+    ) -> TableReadIter:
         """
         Read a user-defined subset of data, addressed by the dataframe indexing columns, optionally filtered, and return results as one or more Arrow.Table.
 
@@ -305,7 +304,7 @@ class DataFrame(TileDBArray):
             # TODO: batch_size
 
         sr.submit()
-        return DataFrameReadIter(sr)
+        return TableReadIter(sr)
 
     def write(self, values: pa.Table) -> None:
         """
@@ -386,28 +385,3 @@ def _validate_schema(schema: pa.Schema, index_column_names: Sequence[str]) -> pa
             raise TypeError("Unsupported index type - pending fix #418 and #419")
 
     return schema
-
-
-class DataFrameReadIter(somacore.ReadIter[pa.Table]):
-    def __init__(self, sr: clib.SOMAReader):
-        self.sr = sr
-        self.called_once = False
-
-    def __next__(self) -> pa.Table:
-        """
-        Read is defined as returning an empty Arrow Table if there are no
-        results, i.e., it will never return an zero-length iterator.
-        """
-        arrow_table = self.sr.read_next()
-        if not arrow_table and self.called_once:
-            raise StopIteration
-
-        self.called_once = True
-        return arrow_table
-
-    def concat(self) -> pa.Table:
-        return pa.concat_tables(self)
-
-    def close(self) -> None:
-        """TODO: Implement when there is a stateful handle that needs to be closed"""
-        pass

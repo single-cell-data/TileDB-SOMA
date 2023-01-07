@@ -100,7 +100,7 @@ def test_io_create_from_matrix_Sparse_nd_array(tmp_path, plfm_config, src_matrix
     assert snda.shape == src_matrix.shape
     assert snda.ndim == src_matrix.ndim
 
-    tbl = pa.concat_tables(snda.read_table((slice(None), slice(None))))
+    tbl = pa.concat_tables(snda.read((slice(None), slice(None))).tables())
     read_back = sp.csr_matrix(
         (
             tbl.column("soma_data").to_numpy(),

@@ -410,7 +410,7 @@ def _write_matrix_to_sparseNDArray(
 
     # Write all at once?
     if not soma_ndarray._tiledb_platform_config.write_X_chunked:
-        soma_ndarray.write_table(_coo_to_table(sp.coo_matrix(src_matrix)))
+        soma_ndarray.write(_coo_to_table(sp.coo_matrix(src_matrix)))
         return
 
     # Or, write in chunks, striding across the most efficient slice axis
@@ -448,7 +448,7 @@ def _write_matrix_to_sparseNDArray(
             ),
         )
 
-        soma_ndarray.write_table(_coo_to_table(chunk_coo, stride_axis, i))
+        soma_ndarray.write(_coo_to_table(chunk_coo, stride_axis, i))
 
         t2 = time.time()
         chunk_seconds = t2 - t1
@@ -565,13 +565,13 @@ def to_anndata(
     obsp = {}
     if measurement.obsp.exists():
         for key in measurement.obsp.keys():
-            mat = measurement.obsp[key].read_as_pandas_all()
+            mat = measurement.obsp[key].read().tables().concat().to_pandas()
             obsp[key] = util_scipy.csr_from_tiledb_df(mat, nobs, nobs)
 
     varp = {}
     if measurement.varp.exists():
         for key in measurement.varp.keys():
-            mat = measurement.varp[key].read_as_pandas_all()
+            mat = measurement.varp[key].read().tables().concat().to_pandas()
             varp[key] = util_scipy.csr_from_tiledb_df(mat, nvar, nvar)
 
     anndata = ad.AnnData(

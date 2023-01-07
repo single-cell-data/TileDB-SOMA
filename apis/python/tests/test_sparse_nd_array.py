@@ -251,16 +251,28 @@ def test_sparse_nd_array_read_write_sparse_tensor(
     # so we must be prepared for StopIteration on reading them. It simplifies unit-test logic to use
     # occupation density of 1.0 for this test.
     data = create_random_tensor(format, shape, np.float64, 1.0)
-    a.write_sparse_tensor(data)
+    a.write(data)
     del a
 
     # Read back and validate
     b = soma.SparseNDArray(tmp_path.as_posix())
 
-    t = next(b.read_sparse_tensor((slice(None),) * len(shape), format=format))
+    if format == "coo":
+        t = next(b.read((slice(None),) * len(shape)).coos())
+    elif format == "csc":
+        t = next(b.read((slice(None),) * len(shape)).cscs())
+    elif format == "csr":
+        t = next(b.read((slice(None),) * len(shape)).csrs())
+
     assert tensors_are_same_value(t, data)
 
-    t = next(b.read_sparse_tensor((0,) * len(shape), format=format))
+    if format == "coo":
+        t = next(b.read((0,) * len(shape)).coos())
+    elif format == "csc":
+        t = next(b.read((0,) * len(shape)).cscs())
+    elif format == "csr":
+        t = next(b.read((0,) * len(shape)).csrs())
+
     assert t.shape == shape
 
 
@@ -276,12 +288,12 @@ def test_sparse_nd_array_read_write_table(
 
     # make a random sample in the desired format
     data = create_random_tensor("table", shape, np.float32)
-    a.write_table(data)
+    a.write(data)
     del a
 
     # Read back and validate
     b = soma.SparseNDArray(tmp_path.as_posix())
-    t = next(b.read_table((slice(None),) * len(shape)))
+    t = next(b.read((slice(None),) * len(shape)).tables())
     assert isinstance(t, pa.Table)
     assert tables_are_same_value(data, t)
 
@@ -300,9 +312,9 @@ def test_sparse_nd_array_read_as_pandas(
 
     # make a random sample in the desired format
     data = create_random_tensor("table", shape, dtype)
-    a.write_table(data)
+    a.write(data)
 
-    df = a.read_as_pandas_all()
+    df = a.read().tables().concat().to_pandas()
 
     dim_names = [f"soma_dim_{n}" for n in range(len(shape))]
     assert df.sort_values(by=dim_names, ignore_index=True).equals(
@@ -326,38 +338,36 @@ def test_empty_read(tmp_path):
 
     # These work as expected
     coords = (slice(None),)
-    assert sum(len(t) for t in a.read_table(coords)) == 0
-    assert (
-        sum(t.non_zero_length for t in a.read_sparse_tensor(coords, format="coo")) == 0
-    )
-    assert (
-        sum(t.non_zero_length for t in a.read_sparse_tensor(coords, format="csr")) == 0
-    )
-    assert (
-        sum(t.non_zero_length for t in a.read_sparse_tensor(coords, format="csc")) == 0
-    )
+    assert sum(len(t) for t in a.read(coords).tables()) == 0
+    assert sum(t.non_zero_length for t in a.read(coords).csrs()) == 0
+    assert sum(t.non_zero_length for t in a.read(coords).cscs()) == 0
+
+    # TODO: Due to bug https://issues.apache.org/jira/browse/ARROW-17933, this
+    # _incorrectly_ raises an ArrowInvalid exception. Remove the `pyarrow.throws`
+    # when fixed, as it is supported API and should work.
+    with pytest.raises(pa.ArrowInvalid):
+        assert sum(t.non_zero_length for t in a.read(coords).coos()) == 0
 
     #
     # Next, test empty queries on non-empty array
     #
-    a.write_sparse_tensor(
+    a.write(
         pa.SparseCOOTensor.from_scipy(
             sparse.coo_matrix(([1], ([0], [0])), shape=a.shape)
         )
     )
-    assert sum(len(t) for t in a.read_table((slice(None),))) == 1
+    assert sum(len(t) for t in a.read((slice(None),)).tables()) == 1
 
     coords = (1, 1)  # no element at this coordinate
-    assert sum(len(t) for t in a.read_table(coords)) == 0
-    assert (
-        sum(t.non_zero_length for t in a.read_sparse_tensor(coords, format="coo")) == 0
-    )
-    assert (
-        sum(t.non_zero_length for t in a.read_sparse_tensor(coords, format="csr")) == 0
-    )
-    assert (
-        sum(t.non_zero_length for t in a.read_sparse_tensor(coords, format="csc")) == 0
-    )
+    assert sum(len(t) for t in a.read(coords).tables()) == 0
+    assert sum(t.non_zero_length for t in a.read(coords).csrs()) == 0
+    assert sum(t.non_zero_length for t in a.read(coords).cscs()) == 0
+
+    # TODO: Due to bug https://issues.apache.org/jira/browse/ARROW-17933, this
+    # _incorrectly_ raises an ArrowInvalid exception. Remove the `pyarrow.throws`
+    # when fixed, as it is supported API and should work.
+    with pytest.raises(pa.ArrowInvalid):
+        assert sum(t.non_zero_length for t in a.read(coords).coos()) == 0
 
 
 @pytest.mark.parametrize("shape", [(), (0,), (10, 0), (0, 10), (1, 2, 0)])
@@ -376,7 +386,7 @@ def test_sparse_nd_array_nnz(tmp_path):
     t: pa.SparseCOOTensor = create_random_tensor(
         "coo", a.shape, pa.int32().to_pandas_dtype(), 0.1
     )
-    a.write_sparse_tensor(t)
+    a.write(t)
     assert t.non_zero_length == a.nnz
 
 
@@ -390,12 +400,11 @@ def test_sparse_nd_array_reshape(tmp_path):
         assert a.reshape((100, 10, 1))
 
 
-@pytest.mark.parametrize("read_format", ["csr", "csc"])
 @pytest.mark.parametrize(
     "shape",
     [(4,), (4, 5, 6)],
 )
-def test_csr_csc_2d_read(tmp_path, read_format, shape):
+def test_csr_csc_2d_read(tmp_path, shape):
 
     arrow_tensor = create_random_tensor(
         format="coo",
@@ -405,10 +414,13 @@ def test_csr_csc_2d_read(tmp_path, read_format, shape):
 
     snda = soma.SparseNDArray(tmp_path.as_posix())
     snda.create(pa.float64(), shape)
-    snda.write_sparse_tensor(arrow_tensor)
+    snda.write(arrow_tensor)
 
     with pytest.raises(ValueError):
-        next(snda.read_sparse_tensor(None, format=read_format))
+        next(snda.read(None).csrs())
+
+    with pytest.raises(ValueError):
+        next(snda.read(None).cscs())
 
 
 @pytest.mark.parametrize(
@@ -677,14 +689,14 @@ def test_sparse_nd_array_table_slicing(tmp_path, io, write_format, read_format):
 
     snda = soma.SparseNDArray(tmp_path.as_posix())
     snda.create(pa.float64(), io["shape"])
-    snda.write_sparse_tensor(arrow_tensor)
+    snda.write(arrow_tensor)
 
     if read_format == "table":
         if io["throws"] is not None:
             with pytest.raises(io["throws"]):
-                next(snda.read_table(io["coords"]))
+                next(snda.read(io["coords"]).tables())
         else:
-            table = next(snda.read_table(io["coords"]))
+            table = next(snda.read(io["coords"]).tables())
             for column_name in table.column_names:
                 if column_name in io["dims"]:
                     assert table[column_name].to_pylist() == io["dims"][column_name]
@@ -692,7 +704,23 @@ def test_sparse_nd_array_table_slicing(tmp_path, io, write_format, read_format):
     else:
         if io["throws"] is not None:
             with pytest.raises(io["throws"]):
-                next(snda.read_sparse_tensor(io["coords"], format=read_format))
+                r = snda.read(io["coords"])
+                if read_format == "coo":
+                    next(r.coos())
+                elif read_format == "csr":
+                    next(r.csrs())
+                elif read_format == "csc":
+                    next(r.csrs())
+                elif read_format == "table":
+                    next(r.csrs())
         else:
-            tensor = next(snda.read_sparse_tensor(io["coords"], format=read_format))
+            r = snda.read(io["coords"])
+            if read_format == "coo":
+                tensor = next(r.coos())
+            elif read_format == "csr":
+                tensor = next(r.csrs())
+            elif read_format == "csc":
+                tensor = next(r.csrs())
+            elif read_format == "table":
+                tensor = next(r.csrs())
             assert tensor.shape == io["shape"]
