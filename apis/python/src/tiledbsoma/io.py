@@ -522,16 +522,18 @@ def to_anndata(
     measurement = experiment.ms[measurement_name]
 
     obs_df = experiment.obs.read().concat().to_pandas()
-    obs_df.reset_index(inplace=True)
+    obs_df.drop([SOMA_JOINID], axis=1, inplace=True)
     obs_df.set_index("obs_id", inplace=True)
+
     var_df = measurement.var.read().concat().to_pandas()
-    var_df.reset_index(inplace=True)
+    var_df.drop([SOMA_JOINID], axis=1, inplace=True)
     var_df.set_index("var_id", inplace=True)
 
     nobs = len(obs_df.index)
     nvar = len(var_df.index)
 
     X_data = measurement.X["data"]
+    X_csr = None
     assert X_data is not None
     X_dtype = None  # some datasets have no X
     if isinstance(X_data, DenseNDArray):
@@ -544,32 +546,32 @@ def to_anndata(
     else:
         raise TypeError(f"Unexpected NDArray type {type(X_data)}")
 
-    # XXX FIX OBSM/VARM SHAPES
-
     obsm = {}
-    if measurement.obsm.exists():
+    if "obsm" in measurement and measurement.obsm.exists():
         for key in measurement.obsm.keys():
             shape = measurement.obsm[key].shape
             assert len(shape) == 2
             mat = measurement.obsm[key].read((slice(None),) * len(shape)).to_numpy()
-            obsm[key] = sp.csr_array(mat)
+            # The spelling `sp.csr_array` is more idiomatic but doesn't exist until Python 3.8
+            obsm[key] = sp.csr_matrix(mat)
 
     varm = {}
-    if measurement.varm.exists():
+    if "varm" in measurement and measurement.varm.exists():
         for key in measurement.varm.keys():
             shape = measurement.varm[key].shape
             assert len(shape) == 2
             mat = measurement.varm[key].read((slice(None),) * len(shape)).to_numpy()
-            varm[key] = sp.csr_array(mat)
+            # The spelling `sp.csr_array` is more idiomatic but doesn't exist until Python 3.8
+            varm[key] = sp.csr_matrix(mat)
 
     obsp = {}
-    if measurement.obsp.exists():
+    if "obsp" in measurement and measurement.obsp.exists():
         for key in measurement.obsp.keys():
             mat = measurement.obsp[key].read().tables().concat().to_pandas()
             obsp[key] = util_scipy.csr_from_tiledb_df(mat, nobs, nobs)
 
     varp = {}
-    if measurement.varp.exists():
+    if "varp" in measurement and measurement.varp.exists():
         for key in measurement.varp.keys():
             mat = measurement.varp[key].read().tables().concat().to_pandas()
             varp[key] = util_scipy.csr_from_tiledb_df(mat, nvar, nvar)
