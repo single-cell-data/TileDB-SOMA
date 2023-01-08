@@ -18,7 +18,7 @@ class TileDBObject(ABC):
 
     _uri: str
     _tiledb_platform_config: TileDBPlatformConfig
-    metadata: MetadataMapping
+    _metadata: MetadataMapping
 
     def __init__(
         self,
@@ -47,7 +47,7 @@ class TileDBObject(ABC):
         self._tiledb_platform_config = tiledb_platform_config or TileDBPlatformConfig()
         # Null ctx is OK if that's what they wanted (e.g. not doing any TileDB-Cloud ops).
 
-        self.metadata = MetadataMapping(self)
+        self._metadata = MetadataMapping(self)
 
     def _default_ctx(self) -> tiledb.Ctx:
         """
@@ -92,6 +92,12 @@ class TileDBObject(ABC):
         if not isinstance(other, TileDBObject):
             return False
         return self._uri == other._uri
+
+    def metadata(self):
+        """
+        Metadata accessor
+        """
+        return self._metadata
 
     @property
     def uri(self) -> str:
@@ -155,4 +161,4 @@ class TileDBObject(ABC):
         """
         # mypy says:
         # error: Returning Any from function declared to return "str"  [no-any-return]
-        return self.metadata.get(util.SOMA_OBJECT_TYPE_METADATA_KEY)  # type: ignore
+        return self._metadata.get(util.SOMA_OBJECT_TYPE_METADATA_KEY)  # type: ignore
