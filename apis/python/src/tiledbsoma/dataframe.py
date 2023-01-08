@@ -3,6 +3,7 @@ from typing import Any, Optional, Sequence, Tuple, TypeVar, Union, cast
 
 import numpy as np
 import pyarrow as pa
+import somacore
 import tiledb
 from typing_extensions import Final, get_args
 
@@ -21,7 +22,7 @@ from .util_iter import TableReadIter
 Slice = TypeVar("Slice", bound=Sequence[int])
 
 
-class DataFrame(TileDBArray):
+class DataFrame(TileDBArray, somacore.DataFrame):
     """
     Represents ``obs``, ``var``, and others.
 
@@ -157,7 +158,7 @@ class DataFrame(TileDBArray):
         """
         return self._tiledb_array_keys()
 
-    def get_index_column_names(self) -> Sequence[str]:
+    def index_column_names(self) -> Sequence[str]:
         """
         Return index (dimension) column names.
         """
@@ -314,7 +315,7 @@ class DataFrame(TileDBArray):
         """
         dim_cols_list = []
         attr_cols_map = {}
-        dim_names_set = self.get_index_column_names()
+        dim_names_set = self.index_column_names()
         n = None
 
         for name in values.schema.names:
