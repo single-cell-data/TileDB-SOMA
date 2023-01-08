@@ -23,7 +23,7 @@ from .util_iter import (
 )
 
 
-class SparseNDArray(TileDBArray):
+class SparseNDArray(TileDBArray, somacore.SparseNDArray):
     """
     Represents ``X`` and others.
     """
