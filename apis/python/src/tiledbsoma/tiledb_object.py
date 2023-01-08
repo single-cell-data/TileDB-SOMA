@@ -1,6 +1,8 @@
 import os
+import time
 from abc import ABC, abstractmethod, abstractproperty
-from typing import Optional, Union, cast
+from types import TracebackType
+from typing import ContextManager, Optional, Type, TypeVar, Union, cast
 
 import tiledb
 
@@ -8,8 +10,11 @@ from . import util
 from .metadata_mapping import MetadataMapping
 from .tiledb_platform_config import TileDBPlatformConfig
 
+# type variable for methods returning self; see PEP 673
+TTileDBObject = TypeVar("TTileDBObject", bound="TileDBObject")
 
-class TileDBObject(ABC):
+
+class TileDBObject(ContextManager["TileDBObject"], ABC):
     """
     Base class for ``TileDBArray`` and ``Collection``.
 
@@ -19,6 +24,7 @@ class TileDBObject(ABC):
     _uri: str
     _tiledb_platform_config: TileDBPlatformConfig
     _metadata: MetadataMapping
+    _parent_timestamp: Optional[int] = None
 
     def __init__(
         self,
@@ -32,7 +38,10 @@ class TileDBObject(ABC):
         ctx: Optional[tiledb.Ctx] = None,
     ):
         """
-        Initialization-handling shared between ``TileDBArray`` and ``Collection``.  Specify ``tiledb_platform_config`` and ``ctx`` for the top-level object; omit them and specify parent for non-top-level objects. Note that the parent reference is solely for propagating options, ctx, display depth, etc.
+        Initialization-handling shared between ``TileDBArray`` and ``Collection``.  Specify
+        ``tiledb_platform_config`` and ``ctx`` for the top-level object; omit them and specify
+        parent for non-top-level objects. Note that the parent reference is solely for propagating
+        options, ctx, display depth, etc.
         """
 
         if ctx is None:
@@ -43,6 +52,7 @@ class TileDBObject(ABC):
         else:
             tiledb_platform_config = parent._tiledb_platform_config
             self._ctx = parent._ctx
+            self._parent_timestamp = parent._effective_timestamp()
 
         self._tiledb_platform_config = tiledb_platform_config or TileDBPlatformConfig()
         # Null ctx is OK if that's what they wanted (e.g. not doing any TileDB-Cloud ops).
@@ -132,6 +142,80 @@ class TileDBObject(ABC):
             return self._get_soma_type_from_metadata() == self.soma_type
         except tiledb.cc.TileDBError:
             return False
+
+    _open_mode: Optional[str] = None
+    _open_timestamp: Optional[int] = None
+
+    def open(
+        self: TTileDBObject, mode: str = "r", timestamp: Optional[int] = None
+    ) -> TTileDBObject:
+        """
+        Open the object for timestamped read or write operations. The object should be closed when
+        done. It's recommended to use the object as a context manager to automate this, e.g.:
+
+          with tiledbsoma.SparseNDArray(uri=...).open() as X:
+              data = X.read_table(...)
+              data = X.read_table(...)
+
+        ``mode='r'`` (default): opening at a given timestamp (default: now) provides snapshot
+        consistency over a series of read operations on the current object and (for collections)
+        accessed elements.
+
+        ``mode='w'``: opening an object for writing provides that multiple write operations on the
+        object all share the same timestamp. (To write a collection with timestamps shared amongst
+        all elements, explicitly open each element with the desired timestamp.)
+
+        Opening an object for a series of read or write operations can also make them more
+        efficient, by reusing resources and metadata between operations.
+        """
+        if self.is_open():
+            raise RuntimeError("TileDBObject is already open")
+        if mode not in ("r", "w"):
+            raise ValueError("unknown mode")
+        self._open_mode = mode
+        if timestamp is not None:
+            self._open_timestamp = timestamp
+        elif mode == "r" and self._parent_timestamp is not None:
+            # Auto-inherit the parent timestamp only for reads, for now.
+            # TODO: we'd want to inherit the parent timestamp for writes only if the parent itself
+            # is currently open for writing. We don't currently store the reference to parent
+            # beyond the initializer. What if parent is currently open for reading, not writing?
+            # What if parent isn't open but grandparent is? All these complications while the
+            # typical realistic use case is that the array is created and written first, and only
+            # thereafter added to a parent collection. Punting for now...
+            self._open_timestamp = self._parent_timestamp
+        else:
+            self._open_timestamp = int(time.time() * 1000)
+        return self
+
+    def is_open(self) -> bool:
+        return self._open_mode is not None
+
+    def _effective_timestamp(self) -> Optional[int]:
+        if self.is_open():
+            assert self._open_timestamp is not None
+            return self._open_timestamp
+        return self._parent_timestamp
+
+    def close(self) -> None:
+        """
+        Release any resources held while the object is open.
+        """
+        if not self.is_open():
+            raise RuntimeError("TileDBObject is not open")
+        self._open_mode = None
+
+    def __enter__(self: TTileDBObject) -> TTileDBObject:
+        return self
+
+    def __exit__(
+        self,
+        exc_type: Optional[Type[BaseException]],
+        exc_value: Optional[BaseException],
+        traceback: Optional[TracebackType],
+    ) -> None:
+        if self.is_open():
+            self.close()
 
     @abstractmethod
     def _tiledb_open(self, mode: str = "r") -> Union[tiledb.Array, tiledb.Group]:

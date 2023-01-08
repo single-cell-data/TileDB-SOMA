@@ -1,4 +1,5 @@
 import os
+import time
 
 import numpy as np
 import pyarrow as pa
@@ -249,3 +250,38 @@ def test_exceptions_on_not_created(tmp_path):
         list(sc)
     with pytest.raises(DoesNotExistError):
         len(sc)
+
+
+def test_collection_timestamped_reads(tmp_path):
+    """
+    When we have a collection open at a given timestamp, accessed elements inherit that timestamp
+    for reading.
+    """
+    basedir = tmp_path.as_uri()
+    collection = soma.Collection(basedir)
+    collection.create()
+
+    dataframe = soma.DataFrame(os.path.join(basedir, "sdf"), parent=collection)
+    create_and_populate_dataframe(dataframe)
+    sparse_nd_array = soma.SparseNDArray(
+        os.path.join(basedir, "snda"), parent=collection
+    )
+    create_and_populate_sparse_nd_array(sparse_nd_array)
+
+    collection.set("sdf", dataframe)
+    collection.set("snda", sparse_nd_array)
+
+    time.sleep(0.01)
+    t = int(time.time() * 1000)
+    time.sleep(0.01)
+    with soma.Collection(collection.uri).open(timestamp=t) as readback_collection:
+        readback_dataframe = readback_collection.get("sdf")
+        assert readback_dataframe._effective_timestamp() == t
+        readback_sparse_nd_array = readback_collection.get("snda")
+        assert readback_sparse_nd_array._effective_timestamp() == t
+        with readback_sparse_nd_array.open() as open_snda:
+            assert open_snda._effective_timestamp() == t
+        with readback_sparse_nd_array.open(
+            timestamp=int(time.time() * 1000)
+        ) as open_snda:
+            assert open_snda._effective_timestamp() > t
