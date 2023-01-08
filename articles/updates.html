@@ -139,7 +139,7 @@
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">soma</span><span class="op">$</span><span class="va">X</span></span>
 <span><span class="co">#&gt; &lt;AssayMatrixGroup&gt;</span></span>
-<span><span class="co">#&gt;   uri: /tmp/RtmpVqkWbT/pbmc_small_rna/X </span></span>
+<span><span class="co">#&gt;   uri: /tmp/RtmpzRKEQF/pbmc_small_rna/X </span></span>
 <span><span class="co">#&gt;   arrays: counts</span></span></code></pre></div>
 <p><em>Note: A Seurat <code>Assay</code> instantiated with data passed to the <code>counts</code> argument will store a reference to the same matrix in both the <code>counts</code> and <code>data</code> slots (i.e., <code>GetAssayData(pbmc_small_rna, "counts")</code> and <code>GetAssayData(pbmc_small_rna, "data")</code>). To avoid redundantly storing data on disk, </em>tiledbsoma* only ingests data from <code>data</code> when it is not identical to <code>counts</code>.*</p>
 </div>
@@ -164,15 +164,15 @@
 <p>To avoid these redudndant ingestions, use the <code>layers</code> argument to specify which of the assay slots (<code>counts</code>, <code>data</code>, or <code>scale.data</code>) should be ingested. We also set <code>var = FALSE</code> to prevent re-ingestion of the feature-level metadata since it hasn’t changed.</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">soma</span><span class="op">$</span><span class="fu">from_seurat_assay</span><span class="op">(</span><span class="va">pbmc_small_rna</span>, layers <span class="op">=</span> <span class="st">"data"</span>, var <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
-<span><span class="co">#&gt; No AssayMatrix found at '/tmp/RtmpVqkWbT/pbmc_small_rna/X/data'</span></span>
-<span><span class="co">#&gt; Creating new AssayMatrix array with index [obs_id,var_id] at '/tmp/RtmpVqkWbT/pbmc_small_rna/X/data'</span></span>
-<span><span class="co">#&gt; Ingesting AssayMatrix data into: /tmp/RtmpVqkWbT/pbmc_small_rna/X/data</span></span>
+<span><span class="co">#&gt; No AssayMatrix found at '/tmp/RtmpzRKEQF/pbmc_small_rna/X/data'</span></span>
+<span><span class="co">#&gt; Creating new AssayMatrix array with index [obs_id,var_id] at '/tmp/RtmpzRKEQF/pbmc_small_rna/X/data'</span></span>
+<span><span class="co">#&gt; Ingesting AssayMatrix data into: /tmp/RtmpzRKEQF/pbmc_small_rna/X/data</span></span>
 <span><span class="co">#&gt; Finished converting Seurat Assay with key [rna_] to SOMA</span></span></code></pre></div>
 <p>Printing out the <code>X</code> group again reveals that it now contains 2 members: <code>counts</code> and <code>data</code>.</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">soma</span><span class="op">$</span><span class="va">X</span></span>
 <span><span class="co">#&gt; &lt;AssayMatrixGroup&gt;</span></span>
-<span><span class="co">#&gt;   uri: /tmp/RtmpVqkWbT/pbmc_small_rna/X </span></span>
+<span><span class="co">#&gt;   uri: /tmp/RtmpzRKEQF/pbmc_small_rna/X </span></span>
 <span><span class="co">#&gt;   arrays: counts, data</span></span></code></pre></div>
 <p>Let’s repeat this process for the scaled/centered version of the data that’s stored in the <code>scale.data</code> slot.</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
@@ -184,13 +184,13 @@
 <span></span>
 <span><span class="va">soma</span><span class="op">$</span><span class="fu">from_seurat_assay</span><span class="op">(</span><span class="va">pbmc_small_rna</span>, layers <span class="op">=</span> <span class="st">"scale.data"</span>, var <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Skipping ingestion of 'data' because it is identical to 'counts'</span></span>
-<span><span class="co">#&gt; No AssayMatrix found at '/tmp/RtmpVqkWbT/pbmc_small_rna/X/scale.data'</span></span>
-<span><span class="co">#&gt; Creating new AssayMatrix array with index [obs_id,var_id] at '/tmp/RtmpVqkWbT/pbmc_small_rna/X/scale.data'</span></span>
-<span><span class="co">#&gt; Ingesting AssayMatrix data into: /tmp/RtmpVqkWbT/pbmc_small_rna/X/scale.data</span></span>
+<span><span class="co">#&gt; No AssayMatrix found at '/tmp/RtmpzRKEQF/pbmc_small_rna/X/scale.data'</span></span>
+<span><span class="co">#&gt; Creating new AssayMatrix array with index [obs_id,var_id] at '/tmp/RtmpzRKEQF/pbmc_small_rna/X/scale.data'</span></span>
+<span><span class="co">#&gt; Ingesting AssayMatrix data into: /tmp/RtmpzRKEQF/pbmc_small_rna/X/scale.data</span></span>
 <span><span class="co">#&gt; Finished converting Seurat Assay with key [rna_] to SOMA</span></span>
 <span><span class="va">soma</span><span class="op">$</span><span class="va">X</span></span>
 <span><span class="co">#&gt; &lt;AssayMatrixGroup&gt;</span></span>
-<span><span class="co">#&gt;   uri: /tmp/RtmpVqkWbT/pbmc_small_rna/X </span></span>
+<span><span class="co">#&gt;   uri: /tmp/RtmpzRKEQF/pbmc_small_rna/X </span></span>
 <span><span class="co">#&gt;   arrays: counts, data, scale.data</span></span></code></pre></div>
 <p>The <code>X</code> group now contains 3 arrays, each of which has only been written to a single time. We can verify this by counting the number of fragments contained within any of individual arrays:</p>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
@@ -212,9 +212,9 @@
 <span></span>
 <span><span class="va">soma</span><span class="op">$</span><span class="fu">from_seurat_assay</span><span class="op">(</span><span class="va">pbmc_small_rna</span>, layers <span class="op">=</span> <span class="st">"scale.data"</span>, var <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Skipping ingestion of 'data' because it is identical to 'counts'</span></span>
-<span><span class="co">#&gt; Found existing AssayMatrix at '/tmp/RtmpVqkWbT/pbmc_small_rna/X/scale.data'</span></span>
-<span><span class="co">#&gt; Updating existing AssayMatrix at '/tmp/RtmpVqkWbT/pbmc_small_rna/X/scale.data'</span></span>
-<span><span class="co">#&gt; Ingesting AssayMatrix data into: /tmp/RtmpVqkWbT/pbmc_small_rna/X/scale.data</span></span>
+<span><span class="co">#&gt; Found existing AssayMatrix at '/tmp/RtmpzRKEQF/pbmc_small_rna/X/scale.data'</span></span>
+<span><span class="co">#&gt; Updating existing AssayMatrix at '/tmp/RtmpzRKEQF/pbmc_small_rna/X/scale.data'</span></span>
+<span><span class="co">#&gt; Ingesting AssayMatrix data into: /tmp/RtmpzRKEQF/pbmc_small_rna/X/scale.data</span></span>
 <span><span class="co">#&gt; Finished converting Seurat Assay with key [rna_] to SOMA</span></span></code></pre></div>
 <p>Now let’s verify that number of fragments in each <code>X</code>’s layers:</p>
 <div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
@@ -248,7 +248,7 @@
 <span><span class="co">#&gt; [1] stats     graphics  grDevices utils     datasets  methods   base     </span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; other attached packages:</span></span>
-<span><span class="co">#&gt; [1] RcppSpdlog_0.0.11  SeuratObject_4.1.3 sp_1.5-1           tiledbsoma_0.1.19 </span></span>
+<span><span class="co">#&gt; [1] RcppSpdlog_0.0.12  SeuratObject_4.1.3 sp_1.5-1           tiledbsoma_0.1.19 </span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; loaded via a namespace (and not attached):</span></span>
 <span><span class="co">#&gt;  [1] Rcpp_1.0.9          progressr_0.12.0    bslib_0.4.2        </span></span>
