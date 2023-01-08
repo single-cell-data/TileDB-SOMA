@@ -27,10 +27,10 @@ ARROW_TO_TDB = {
     #
     # IMPORTANT: ALL non-primitive types supported by TileDB must be in this table.
     #
-    pa.string(): "ascii",  # XXX TODO: temporary work-around until UTF8 support is native. GH #338.
-    pa.large_string(): "ascii",  # XXX TODO: temporary work-around until UTF8 support is native. GH #338.
-    pa.binary(): "bytes",  # XXX TODO: temporary work-around until UTF8 support is native. GH #338.
-    pa.large_binary(): "bytes",  # XXX TODO: temporary work-around until UTF8 support is native. GH #338.
+    pa.string(): "ascii",  # TODO: temporary work-around until UTF8 support is native. GH #338.
+    pa.large_string(): "ascii",  # TODO: temporary work-around until UTF8 support is native. GH #338.
+    pa.binary(): "bytes",  # TODO: temporary work-around until UTF8 support is native. GH #338.
+    pa.large_binary(): "bytes",  # TODO: temporary work-around until UTF8 support is native. GH #338.
     pa.timestamp("s"): "datetime64[s]",
     pa.timestamp("ms"): "datetime64[ms]",
     pa.timestamp("us"): "datetime64[us]",

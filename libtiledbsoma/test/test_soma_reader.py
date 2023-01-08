@@ -32,7 +32,7 @@ def test_soma_reader_var():
     """Read all values from var array into an arrow table."""
 
     name = "var"
-    uri = os.path.join(SOMA_URI, "ms/mRNA", name)
+    uri = os.path.join(SOMA_URI, "ms/RNA", name)
     sr = clib.SOMAReader(uri)
     sr.submit()
     arrow_table = sr.read_next()
@@ -46,7 +46,7 @@ def test_soma_reader_var_x_data():
     """Read all values from x/data array into an arrow table."""
 
     name = "X/data"
-    uri = os.path.join(SOMA_URI, "ms/mRNA", name)
+    uri = os.path.join(SOMA_URI, "ms/RNA", name)
     sr = clib.SOMAReader(uri)
     sr.submit()
 
@@ -204,7 +204,7 @@ def test_soma_reader_obs_slice_x():
     # read X/data
     # ---------------------------------------------------------------1
     name = "X/data"
-    uri = os.path.join(SOMA_URI, "ms/mRNA", name)
+    uri = os.path.join(SOMA_URI, "ms/RNA", name)
     sr = clib.SOMAReader(uri)
 
     # slice X/data read with obs.soma_joinid column

@@ -209,7 +209,7 @@ def ingest_one(
     )
     exp_name = os.path.splitext(os.path.basename(output_path))[0]
 
-    tiledbsoma.io.from_h5ad(exp, input_path, "mRNA", ingest_mode=ingest_mode)
+    tiledbsoma.io.from_h5ad(exp, input_path, "RNA", ingest_mode=ingest_mode)
 
     if write_soco:
         soco = tiledbsoma.Collection(

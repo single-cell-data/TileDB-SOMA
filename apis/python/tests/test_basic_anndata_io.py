@@ -34,11 +34,8 @@ def adata(h5ad_file):
         # Schema only, then populate:
         ["schema_only", "resume"],
         # User writes data, then a subsequent write creates nothing new:
-        [
-            "write",
-            "resume",
-        ],
-        # "Resume" after no write at all does write new data
+        ["write", "resume"],
+        # "Resume" after no write at all does write new data:
         ["resume"],
     ],
 )
@@ -46,18 +43,14 @@ def test_import_anndata(adata, ingest_modes):
 
     have_ingested = False
 
-    # Set up anndata input path and tiledb-group output path
     tempdir = tempfile.TemporaryDirectory()
     output_path = tempdir.name
+    orig = adata
 
     for ingest_mode in ingest_modes:
 
-        orig = adata
-
-        # Ingest
         exp = tiledbsoma.Experiment(output_path)
-        tiledbsoma.io.from_anndata(exp, orig, "mRNA", ingest_mode=ingest_mode)
-
+        tiledbsoma.io.from_anndata(exp, orig, "RNA", ingest_mode=ingest_mode)
         if ingest_mode != "schema_only":
             have_ingested = True
 
@@ -68,24 +61,140 @@ def test_import_anndata(adata, ingest_modes):
             )
 
         # Check obs
-        df = exp.obs.read_as_pandas_all()
-        assert sorted(df.columns.to_list()) == sorted(
+        obs = exp.obs.read_as_pandas_all()
+        assert sorted(obs.columns.to_list()) == sorted(
             orig.obs_keys() + ["soma_joinid", "obs_id"]
         )
         assert (
             exp.obs.metadata.get(tiledbsoma.util.SOMA_OBJECT_TYPE_METADATA_KEY)
             == "SOMADataFrame"
         )
+        if have_ingested:
+            assert sorted(obs["obs_id"]) == sorted(list(orig.obs_names))
+        else:
+            assert sorted(obs["obs_id"]) == []
         # Convenience accessor
         assert sorted(exp.obs.keys()) == sorted(
             list(orig.obs.keys()) + ["soma_joinid", "obs_id"]
         )
-        if have_ingested:
-            assert sorted(df["obs_id"]) == sorted(list(orig.obs_names))
-        else:
-            assert sorted(df["obs_id"]) == []
 
-        # XXX MORE FROM MAIN-OLD PERHAPS AS UNDERDIFF
+        # Check var
+        var = exp.ms["RNA"].var.read_as_pandas_all()
+        assert sorted(var.columns.to_list()) == sorted(
+            orig.var_keys() + ["soma_joinid", "var_id"]
+        )
+        assert (
+            exp.ms["RNA"].var.metadata.get(
+                tiledbsoma.util.SOMA_OBJECT_TYPE_METADATA_KEY
+            )
+            == "SOMADataFrame"
+        )
+        if have_ingested:
+            assert sorted(var["var_id"]) == sorted(list(orig.var_names))
+        else:
+            assert sorted(var["var_id"]) == []
+        # Convenience accessor
+        assert sorted(exp.ms["RNA"].var.keys()) == sorted(
+            list(orig.var.keys()) + ["soma_joinid", "var_id"]
+        )
+
+        # Check X/data (dense)
+        if have_ingested:
+            X = exp.ms["RNA"].X["data"].read_tensor(coords=(slice(None), slice(None)))
+            assert X.shape == orig.X.shape
+            assert (
+                exp.ms["RNA"]
+                .X["data"]
+                .metadata.get(tiledbsoma.util.SOMA_OBJECT_TYPE_METADATA_KEY)
+                == "SOMADenseNDArray"
+            )
+        else:
+            with pytest.raises(ValueError):
+                X = (
+                    exp.ms["RNA"]
+                    .X["data"]
+                    .read_tensor(coords=(slice(None), slice(None)))
+                )
+
+        # Check raw/X/data (sparse)
+        if have_ingested:
+            X = next(
+                exp.ms["raw"]
+                .X["data"]
+                .read_sparse_tensor(coords=(slice(None), slice(None)), format="coo")
+            )
+            assert X.shape == orig.raw.X.shape
+            assert (
+                exp.ms["raw"]
+                .X["data"]
+                .metadata.get(tiledbsoma.util.SOMA_OBJECT_TYPE_METADATA_KEY)
+                == "SOMASparseNDArray"
+            )
+        else:
+            with pytest.raises(StopIteration):
+                X = next(
+                    exp.ms["raw"]
+                    .X["data"]
+                    .read_sparse_tensor(coords=(slice(None), slice(None)), format="coo")
+                )
+
+        obsm = exp.ms["RNA"].obsm
+        assert sorted(obsm.keys()) == sorted(orig.obsm.keys())
+        for key in list(orig.obsm.keys()):
+            if have_ingested:
+                matrix = obsm[key].read_tensor(coords=(slice(None), slice(None)))
+                assert matrix.shape == orig.obsm[key].shape
+                assert (
+                    obsm[key].metadata.get(
+                        tiledbsoma.util.SOMA_OBJECT_TYPE_METADATA_KEY
+                    )
+                    == "SOMADenseNDArray"
+                )
+            else:
+                with pytest.raises(ValueError):
+                    matrix = obsm[key].read_tensor(coords=(slice(None), slice(None)))
+
+        varm = exp.ms["RNA"].varm
+        assert sorted(varm.keys()) == sorted(orig.varm.keys())
+        for key in list(orig.varm.keys()):
+            if have_ingested:
+                matrix = varm[key].read_tensor(coords=(slice(None), slice(None)))
+                assert matrix.shape == orig.varm[key].shape
+                assert (
+                    varm[key].metadata.get(
+                        tiledbsoma.util.SOMA_OBJECT_TYPE_METADATA_KEY
+                    )
+                    == "SOMADenseNDArray"
+                )
+            else:
+                with pytest.raises(ValueError):
+                    matrix = varm[key].read_tensor(coords=(slice(None), slice(None)))
+
+        obsp = exp.ms["RNA"].obsp
+        assert sorted(obsp.keys()) == sorted(orig.obsp.keys())
+        for key in list(orig.obsp.keys()):
+            if have_ingested:
+                matrix = next(
+                    obsp[key].read_sparse_tensor(
+                        coords=(slice(None), slice(None)), format="coo"
+                    )
+                )
+                assert matrix.shape == orig.obsp[key].shape
+                assert (
+                    obsp[key].metadata.get(
+                        tiledbsoma.util.SOMA_OBJECT_TYPE_METADATA_KEY
+                    )
+                    == "SOMASparseNDArray"
+                )
+            else:
+                with pytest.raises(StopIteration):
+                    matrix = next(
+                        obsp[key].read_sparse_tensor(
+                            coords=(slice(None), slice(None)), format="coo"
+                        )
+                    )
+
+        # pbmc-small has no varp
 
         tempdir.cleanup()
 
@@ -127,28 +236,54 @@ def test_resume_mode(adata, resume_mode_h5ad_file):
         exp2.ms["RNA"].X["data"].uri
     )
 
-    # XXX TO DO
-    #    assert _get_fragment_count(exp1.raw.var.uri) == _get_fragment_count(
-    #        exp2.raw.var.uri
-    #    )
-    #    assert _get_fragment_count(exp1.raw.X["data"].uri) == _get_fragment_count(
-    #        exp2.raw.X["data"].uri
-    #    )
-    #
-    #    assert _get_fragment_count(exp1.obsm["X_pca"].uri) == _get_fragment_count(
-    #        exp2.obsm["X_pca"].uri
-    #    )
-    #    assert _get_fragment_count(exp1.obsm["X_tsne"].uri) == _get_fragment_count(
-    #        exp2.obsm["X_tsne"].uri
-    #    )
-    #
-    #    assert _get_fragment_count(exp1.obsp["distances"].uri) == _get_fragment_count(
-    #        exp2.obsp["distances"].uri
-    #    )
-    #
-    #    assert _get_fragment_count(exp1.varm["PCs"].uri) == _get_fragment_count(
-    #        exp2.varm["PCs"].uri
-    #    )
+    meas1 = exp1.ms["RNA"]
+    meas2 = exp2.ms["RNA"]
+
+    if "obsm" in meas1:
+        for key in meas1.obsm.keys():
+            assert _get_fragment_count(meas1.obsm[key].uri) == _get_fragment_count(
+                meas2.obsm[key].uri
+            )
+    if "varm" in meas1:
+        for key in meas1.varm.keys():
+            assert _get_fragment_count(meas1.obsm[key].uri) == _get_fragment_count(
+                meas2.obsm[key].uri
+            )
+    if "obsp" in meas1:
+        for key in meas1.obsp.keys():
+            assert _get_fragment_count(meas1.obsp[key].uri) == _get_fragment_count(
+                meas2.obsp[key].uri
+            )
+    if "varp" in meas1:
+        for key in meas1.varp.keys():
+            assert _get_fragment_count(meas1.varm[key].uri) == _get_fragment_count(
+                meas2.varm[key].uri
+            )
 
     tempdir1.cleanup()
     tempdir2.cleanup()
+
+
+def test_export_anndata(adata):
+    tempdir = tempfile.TemporaryDirectory()
+    output_path = tempdir.name
+
+    orig = adata
+
+    exp = tiledbsoma.Experiment(output_path)
+    tiledbsoma.io.from_anndata(exp, orig, measurement_name="RNA")
+
+    readback = tiledbsoma.io.to_anndata(exp, measurement_name="RNA")
+
+    assert readback.obs.shape == orig.obs.shape
+    assert readback.var.shape == orig.var.shape
+    assert readback.X.shape == orig.X.shape
+
+    for key in orig.obsm.keys():
+        assert readback.obsm[key].shape == orig.obsm[key].shape
+    for key in orig.varm.keys():
+        assert readback.varm[key].shape == orig.varm[key].shape
+    for key in orig.obsp.keys():
+        assert readback.obsp[key].shape == orig.obsp[key].shape
+    for key in orig.varp.keys():
+        assert readback.varp[key].shape == orig.varp[key].shape
