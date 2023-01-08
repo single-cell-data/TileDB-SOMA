@@ -65,6 +65,37 @@ test_that("Basic mechanics", {
   expect_true(tbl1$Equals(tbl0$Filter(tbl0$bar < 5)))
 })
 
+test_that("creation with all supported dimension data types", {
+
+  sch <- arrow::schema(
+    arrow::field("int8", arrow::int8(), nullable = FALSE),
+    arrow::field("int16", arrow::int16(), nullable = FALSE),
+    arrow::field("double", arrow::float64(), nullable = FALSE),
+    arrow::field("int", arrow::int32(), nullable = FALSE),
+    arrow::field("int64", arrow::int64(), nullable = FALSE),
+    arrow::field("string", arrow::utf8(), nullable = FALSE)
+  )
+
+  tbl0 <- arrow::arrow_table(
+    int8 = 1L:10L,
+    int16 = 1:10L,
+    double = 1.1:10.1,
+    int = 1L:10L,
+    int64 = bit64::as.integer64(1L:10L),
+    string = letters[1:10],
+    schema = sch
+  )
+
+  for (dtype in tbl0$ColumnNames()) {
+    uri <- withr::local_tempdir(paste0("soma-dataframe-", dtype))
+    sidf <- SOMADataFrame$new(uri)
+    expect_silent(
+      sidf$create(tbl0$schema, index_column_names = dtype)
+    )
+    expect_true(sidf$exists())
+  }
+})
+
 test_that("int64 values are stored correctly", {
   uri <- withr::local_tempdir("soma-indexed-dataframe")
   asch <- arrow::schema(

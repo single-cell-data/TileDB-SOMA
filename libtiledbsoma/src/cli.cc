@@ -49,7 +49,7 @@ void test_sdf(const std::string& uri) {
     auto obs_data = obs->read_next();
 
     // Read all values from the var array
-    auto var = SOMAReader::open(uri + "/ms/mRNA/var", "var");
+    auto var = SOMAReader::open(uri + "/ms/RNA/var", "var");
     var->submit();
     auto var_data = var->read_next();
 
@@ -59,7 +59,7 @@ void test_sdf(const std::string& uri) {
     }
 
     // Read all values from the X/data array
-    auto x_data = SOMAReader::open(uri + "/ms/mRNA/X/data", "X/data", config);
+    auto x_data = SOMAReader::open(uri + "/ms/RNA/X/data", "X/data", config);
     x_data->submit();
 
     int batches = 0;

@@ -112,16 +112,33 @@ arrow_type_range <- function(x) {
     uint32 = bit64::as.integer64(c(0, 4294967295)),
     # We can't specify the full range of uint64 in R so we use the max of int64
     uint64 = c(bit64::as.integer64(0), bit64::lim.integer64()[2]),
-    float32 = c(-3.4028235e+38, 3.4028235e+38),
+    # float32/float
     float = c(-3.4028235e+38, 3.4028235e+38),
-    float64 = c(-1.7976931348623157e+308, 1.7976931348623157e+308),
-    double =  c(-1.7976931348623157e+308, 1.7976931348623157e+308),
-    boolean = NULL,
+    # float64/double
+    double =  c(.Machine$double.xmin, .Machine$double.xmax),
+    # boolean/bool
     bool = NULL,
+    # string/utf8
     utf8 = NULL,
-    string = NULL,
     stop("Unsupported data type", call. = FALSE)
   )
+}
+
+#' Retrieve unsigned limits for Arrow types
+#' This restricts the lower bound of signed numeric types to 0
+#' @noRd
+arrow_type_unsigned_range <- function(x) {
+  range <- arrow_type_range(x)
+  range[1] <- switch(x$name,
+    int8 = 0L,
+    int16 = 0L,
+    int32 = 0L,
+    int64 = bit64::as.integer64(0),
+    float = 0,
+    double = 0,
+    range[1]
+  )
+  range
 }
 
 #' Create an Arrow field from a TileDB dimension

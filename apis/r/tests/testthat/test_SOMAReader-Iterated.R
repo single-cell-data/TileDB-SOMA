@@ -12,7 +12,7 @@ test_that("Iterated Interface from SOMAReader", {
     tgzfile <- system.file("raw-data", "soco-pbmc3k.tar.gz", package="pbmc3k.tiledb")
     untar(tarfile = tgzfile, exdir = tdir)
 
-    uri <- file.path(tdir, "soco", "pbmc3k_processed", "ms", "mRNA", "X", "data")
+    uri <- file.path(tdir, "soco", "pbmc3k_processed", "ms", "RNA", "X", "data")
     expect_true(dir.exists(uri))
 
     ctx <- tiledb_ctx()

@@ -40,13 +40,9 @@ class TileDBObject(ABC):
         self._uri = uri
         if parent is None:
             self._ctx = ctx
-            # TODO - this does not belong in a core class.
-            self._indent = ""
         else:
             tiledb_platform_config = parent._tiledb_platform_config
             self._ctx = parent._ctx
-            # TODO - this does not belong in a core class.
-            self._indent = parent._indent + "  "
 
         self._tiledb_platform_config = tiledb_platform_config or TileDBPlatformConfig()
         # Null ctx is OK if that's what they wanted (e.g. not doing any TileDB-Cloud ops).

@@ -100,10 +100,15 @@ class DataFrame(TileDBArray):
                 else:
                     raise TypeError(f"Unsupported dtype {dtype}")
 
+            # Default 2048 mods to 0 for 8-bit types and 0 is an invalid extent
+            extent = create_options.dim_tile(index_column_name)
+            if isinstance(dtype, np.dtype) and dtype.itemsize == 1:
+                extent = 64
+
             dim = tiledb.Dim(
                 name=index_column_name,
                 domain=(lo, hi),
-                tile=create_options.dim_tile(index_column_name),
+                tile=extent,
                 dtype=dtype,
                 filters=create_options.dim_filters(
                     index_column_name, [dict(_type="ZstdFilter", level=level)]
