@@ -123,6 +123,7 @@ if __name__ == "__main__":
             "pyarrow",
             "scanpy",
             "scipy",
+            "somacore",  # TODO: pin version
             "tiledb>=0.19.0",
             "typing-extensions",  # Note "-" even though `import typing_extensions`
         ],
