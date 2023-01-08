@@ -3,13 +3,13 @@ from typing import Any, List, Optional, Union, cast
 
 import numpy as np
 import pyarrow as pa
+import somacore
 import tiledb
 from typing_extensions import Final
 
 # This package's pybind11 code
 import tiledbsoma.libtiledbsoma as clib
 
-from . import somacore  # to be replaced by somacore package, when available
 from . import tiledb_platform_config as tdbpc
 from . import util, util_arrow
 from .collection import CollectionBase
