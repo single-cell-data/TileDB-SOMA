@@ -1,4 +1,5 @@
 import collections.abc
+from contextlib import ExitStack
 from typing import Any, List, Optional, Union, cast
 
 import numpy as np
@@ -198,12 +199,15 @@ class SparseNDArray(TileDBArray, somacore.SparseNDArray):
         SparseNDArrayRead - which can be used to access an iterator of results in various formats.
         """
         del result_order, batch_size, partitions, platform_config  # Currently unused.
-
         if coords is None:
             coords = (slice(None),)
-
-        with self._tiledb_open("r") as A:
+        with ExitStack() as cleanup:
+            # If self isn't open, open it just for the scope of this operation
+            if not self._open_mode:
+                cleanup.enter_context(self.open("r"))
+            A = self._tiledb_reader()
             shape = A.shape
+
             sr = clib.SOMAReader(
                 self._uri,
                 name=self.__class__.__name__,
@@ -257,8 +261,8 @@ class SparseNDArray(TileDBArray, somacore.SparseNDArray):
                 else:
                     raise TypeError(f"coord type {type(coord)} at slot {i} unsupported")
 
-        sr.submit()
-        return SparseNDArrayRead(sr, shape)
+            sr.submit()
+            return SparseNDArrayRead(sr, shape)
 
     def write(
         self,
@@ -283,35 +287,38 @@ class SparseNDArray(TileDBArray, somacore.SparseNDArray):
         ``soma_dim_N`` and ``soma_data`` to the dense nD array.
         """
         del platform_config  # Currently unused.
-        if isinstance(values, pa.SparseCOOTensor):
-            data, coords = values.to_numpy()
-            with self._tiledb_open("w") as A:
+        with ExitStack() as cleanup:
+            # If self isn't open, open it just for the scope of this operation
+            if not self._open_mode:
+                cleanup.enter_context(self.open("w"))
+            A = self._tiledb_writer()
+
+            if isinstance(values, pa.SparseCOOTensor):
+                data, coords = values.to_numpy()
                 A[tuple(c for c in coords.T)] = data
-            return
+                return
 
-        if isinstance(values, (pa.SparseCSCMatrix, pa.SparseCSRMatrix)):
-            if self.ndim != 2:
-                raise ValueError(
-                    f"Unable to write 2D Arrow sparse matrix to {self.ndim}D SparseNDArray"
-                )
-            # TODO: the `to_scipy` function is not zero copy. Need to explore zero-copy options.
-            sp = values.to_scipy().tocoo()
-            with self._tiledb_open("w") as A:
+            if isinstance(values, (pa.SparseCSCMatrix, pa.SparseCSRMatrix)):
+                if self.ndim != 2:
+                    raise ValueError(
+                        f"Unable to write 2D Arrow sparse matrix to {self.ndim}D SparseNDArray"
+                    )
+                # TODO: the `to_scipy` function is not zero copy. Need to explore zero-copy options.
+                sp = values.to_scipy().tocoo()
                 A[sp.row, sp.col] = sp.data
-            return
+                return
 
-        if isinstance(values, pa.Table):
-            data = values.column("soma_data").to_numpy()
-            coord_tbl = values.drop(["soma_data"])
-            coords = tuple(
-                coord_tbl.column(f"soma_dim_{n}").to_numpy()
-                for n in range(coord_tbl.num_columns)
-            )
-            with self._tiledb_open("w") as A:
+            if isinstance(values, pa.Table):
+                data = values.column("soma_data").to_numpy()
+                coord_tbl = values.drop(["soma_data"])
+                coords = tuple(
+                    coord_tbl.column(f"soma_dim_{n}").to_numpy()
+                    for n in range(coord_tbl.num_columns)
+                )
                 A[coords] = data
-            return
+                return
 
-        raise TypeError("Unsupported Arrow type")
+            raise TypeError("Unsupported Arrow type")
 
 
 class SparseNDArrayRead(somacore.SparseRead):

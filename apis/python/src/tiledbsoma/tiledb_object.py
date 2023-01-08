@@ -1,5 +1,7 @@
 from abc import ABC, abstractmethod
-from typing import Optional, Union
+from contextlib import ExitStack
+from types import TracebackType
+from typing import Optional, Type, TypeVar, Union
 
 import somacore
 import tiledb
@@ -8,7 +10,11 @@ from . import util
 from .metadata_mapping import MetadataMapping
 from .options import SOMATileDBContext
 
+# type variable for methods returning self; see PEP 673
+TTileDBObject = TypeVar("TTileDBObject", bound="TileDBObject")
 
+
+# TODO: SOMAObject should inherit typing.ContextManager
 class TileDBObject(ABC, somacore.SOMAObject):
     """
     Base class for ``TileDBArray`` and ``Collection``.
@@ -118,6 +124,61 @@ class TileDBObject(ABC, somacore.SOMAObject):
             )
         except tiledb.cc.TileDBError:
             return False
+
+    # "r", "w", or falsey
+    _open_mode: str = ""
+    # iff open: child contexts to exit when self is exited/closed
+    _close_stack: Optional[ExitStack] = None
+
+    def open(self: TTileDBObject, mode="r") -> TTileDBObject:
+        """
+        Open the object for a series of read or write operations. This is optional, but makes a
+        series of small operations more efficient by allowing reuse of handles and metadata. If
+        opened, the object should later be closed to release such resources. This can be automated
+        with a context manager, e.g.:
+
+          with tiledbsoma.SparseNDArray(uri=...).open() as X:
+              data = X.read_table(...)
+              data = X.read_table(...)
+
+        If the object is not opened, then any individual read or write operation effectively opens
+        and closes it transiently for the operation.
+        """
+        if mode not in ("r", "w"):
+            raise ValueError("TileDBObject open mode must be one of 'r', 'w'")
+        if self._open_mode:
+            raise RuntimeError("TileDBObject is already open")
+        self._open_mode = mode
+        self._close_stack = ExitStack()
+        return self
+
+    def close(self) -> None:
+        """
+        Release any resources held while the object is open. Closing an already-closed object is a
+        no-op.
+        """
+        if self._open_mode:
+            self._open_mode = ""
+            stack = self._close_stack
+            assert stack
+            self._close_stack = None
+            stack.close()
+
+    def __enter__(self: TTileDBObject) -> TTileDBObject:
+        assert self._open_mode, "use TileDBObject.open() as context manager"
+        return self
+
+    def __exit__(
+        self,
+        exc_type: Optional[Type[BaseException]],
+        exc_value: Optional[BaseException],
+        traceback: Optional[TracebackType],
+    ) -> None:
+        if self._open_mode:
+            self.close()
+
+    def __del__(self) -> None:
+        self.close()
 
     @abstractmethod
     def _tiledb_open(self, mode: str = "r") -> Union[tiledb.Array, tiledb.Group]:

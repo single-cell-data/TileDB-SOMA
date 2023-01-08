@@ -257,25 +257,24 @@ def test_sparse_nd_array_read_write_sparse_tensor(
     del a
 
     # Read back and validate
-    b = soma.SparseNDArray(tmp_path.as_posix())
+    with soma.SparseNDArray(tmp_path.as_posix()).open() as b:
+        if format == "coo":
+            t = b.read((slice(None),) * len(shape)).coos().concat()
+        elif format == "csc":
+            t = b.read((slice(None),) * len(shape)).cscs().concat()
+        elif format == "csr":
+            t = b.read((slice(None),) * len(shape)).csrs().concat()
 
-    if format == "coo":
-        t = b.read((slice(None),) * len(shape)).coos().concat()
-    elif format == "csc":
-        t = b.read((slice(None),) * len(shape)).cscs().concat()
-    elif format == "csr":
-        t = b.read((slice(None),) * len(shape)).csrs().concat()
+        assert tensors_are_same_value(t, data)
 
-    assert tensors_are_same_value(t, data)
+        if format == "coo":
+            t = next(b.read((0,) * len(shape)).coos())
+        elif format == "csc":
+            t = next(b.read((0,) * len(shape)).cscs())
+        elif format == "csr":
+            t = next(b.read((0,) * len(shape)).csrs())
 
-    if format == "coo":
-        t = next(b.read((0,) * len(shape)).coos())
-    elif format == "csc":
-        t = next(b.read((0,) * len(shape)).cscs())
-    elif format == "csr":
-        t = next(b.read((0,) * len(shape)).csrs())
-
-    assert t.shape == shape
+        assert t.shape == shape
 
 
 @pytest.mark.parametrize("shape", [(10,), (23, 4), (5, 3, 1), (8, 4, 2, 30)])
@@ -717,40 +716,41 @@ def test_sparse_nd_array_table_slicing(tmp_path, io, write_format, read_format):
         density=1.0,
     )
 
-    snda = soma.SparseNDArray(tmp_path.as_posix())
-    snda.create(pa.float64(), io["shape"])
-    snda.write(arrow_tensor)
+    with soma.SparseNDArray(tmp_path.as_posix()).open("w") as snda:
+        snda.create(pa.float64(), io["shape"])
+        snda.write(arrow_tensor)
 
-    if read_format == "table":
-        if io["throws"] is not None:
-            with pytest.raises(io["throws"]):
-                next(snda.read(io["coords"]).tables())
+    with soma.SparseNDArray(tmp_path.as_posix()).open("r") as snda:
+        if read_format == "table":
+            if io["throws"] is not None:
+                with pytest.raises(io["throws"]):
+                    next(snda.read(io["coords"]).tables())
+            else:
+                table = next(snda.read(io["coords"]).tables())
+                for column_name in table.column_names:
+                    if column_name in io["dims"]:
+                        assert table[column_name].to_pylist() == io["dims"][column_name]
+
         else:
-            table = next(snda.read(io["coords"]).tables())
-            for column_name in table.column_names:
-                if column_name in io["dims"]:
-                    assert table[column_name].to_pylist() == io["dims"][column_name]
-
-    else:
-        if io["throws"] is not None:
-            with pytest.raises(io["throws"]):
+            if io["throws"] is not None:
+                with pytest.raises(io["throws"]):
+                    r = snda.read(io["coords"])
+                    if read_format == "coo":
+                        next(r.coos())
+                    elif read_format == "csr":
+                        next(r.csrs())
+                    elif read_format == "csc":
+                        next(r.csrs())
+                    elif read_format == "table":
+                        next(r.csrs())
+            else:
                 r = snda.read(io["coords"])
                 if read_format == "coo":
-                    next(r.coos())
+                    tensor = next(r.coos())
                 elif read_format == "csr":
-                    next(r.csrs())
+                    tensor = next(r.csrs())
                 elif read_format == "csc":
-                    next(r.csrs())
+                    tensor = next(r.csrs())
                 elif read_format == "table":
-                    next(r.csrs())
-        else:
-            r = snda.read(io["coords"])
-            if read_format == "coo":
-                tensor = next(r.coos())
-            elif read_format == "csr":
-                tensor = next(r.csrs())
-            elif read_format == "csc":
-                tensor = next(r.csrs())
-            elif read_format == "table":
-                tensor = next(r.csrs())
-            assert tensor.shape == io["shape"]
+                    tensor = next(r.csrs())
+                assert tensor.shape == io["shape"]

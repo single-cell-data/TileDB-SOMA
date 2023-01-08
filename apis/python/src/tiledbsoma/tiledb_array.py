@@ -75,3 +75,26 @@ class TileDBArray(TileDBObject):
         """
         with self._tiledb_open() as A:
             return [A.schema.attr(i).name for i in range(A.schema.nattr)]
+
+    # lazy tiledb.Array handle for reuse while self is "open"
+    _open_tiledb_array: Optional[tiledb.Array] = None
+
+    def _tiledb_reader(self) -> tiledb.Array:
+        assert self._open_mode == "r", "Array isn't open for reading"
+        if self._open_tiledb_array is None:
+            self._open_tiledb_array = self._close_stack.enter_context(
+                self._tiledb_open("r")
+            )
+        return self._open_tiledb_array
+
+    def _tiledb_writer(self) -> tiledb.Array:
+        assert self._open_mode == "w", "Array isn't open for writing"
+        if self._open_tiledb_array is None:
+            self._open_tiledb_array = self._close_stack.enter_context(
+                self._tiledb_open("w")
+            )
+        return self._open_tiledb_array
+
+    def close(self) -> None:
+        self._open_tiledb_array = None
+        super().close()
