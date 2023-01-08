@@ -93,6 +93,8 @@ if __name__ == "__main__":
     setup(
         name=MODULE_NAME,
         description="Python API for efficient storage and retrieval of single-cell data using TileDB",
+        long_description=open("README.md").read(),
+        long_description_content_type="text/markdown",
         author="TileDB, Inc.",
         author_email="help@tiledb.io",
         maintainer="TileDB, Inc.",
@@ -104,14 +106,15 @@ if __name__ == "__main__":
             "Intended Audience :: Information Technology",
             "Intended Audience :: Science/Research",
             "License :: OSI Approved :: MIT License",
-            "Programming Language :: Python",
             "Topic :: Scientific/Engineering :: Bio-Informatics",
             "Operating System :: Unix",
             "Operating System :: POSIX :: Linux",
             "Operating System :: MacOS :: MacOS X",
+            "Programming Language :: Python",
             "Programming Language :: Python :: 3.7",
             "Programming Language :: Python :: 3.8",
             "Programming Language :: Python :: 3.9",
+            "Programming Language :: Python :: 3.10",
         ],
         package_dir={"": "src"},
         packages=find_packages("src"),
@@ -126,6 +129,15 @@ if __name__ == "__main__":
             "tiledb>=0.19.0",
             "typing-extensions",  # Note "-" even though `import typing_extensions`
         ],
+        extras_require={
+            "dev": [
+                "black",
+                "flake8-bugbear",
+                "isort",
+                "pytest",
+                "typeguard",
+            ]
+        },
         python_requires=">=3.7",
         ext_modules=get_ext_modules(),
         cmdclass={
