@@ -93,7 +93,7 @@ class TileDBObject(ABC):
             return False
         return self._uri == other._uri
 
-    def metadata(self):
+    def metadata(self) -> MetadataMapping:
         """
         Metadata accessor
         """
