@@ -2,6 +2,7 @@ from typing import Any, List, Optional, Union, cast
 
 import numpy as np
 import pyarrow as pa
+import somacore
 import tiledb
 from typing_extensions import Final
 
@@ -19,7 +20,7 @@ from .tiledb_platform_config import TileDBPlatformConfig
 from .types import DenseNdCoordinates, NTuple, PlatformConfig, ResultOrder
 
 
-class DenseNDArray(TileDBArray):
+class DenseNDArray(TileDBArray, somacore.DenseNDArray):
     """
     Represents ``X`` and others.
     """
