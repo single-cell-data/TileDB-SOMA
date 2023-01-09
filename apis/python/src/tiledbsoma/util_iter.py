@@ -4,11 +4,11 @@ from typing import TypeVar
 import numpy as np
 import pyarrow as pa
 import scipy.sparse as sp
+import somacore
 
 # This package's pybind11 code
 import tiledbsoma.libtiledbsoma as clib
 
-from . import somacore  # to be replaced by somacore package, when available
 from .types import NTuple
 
 

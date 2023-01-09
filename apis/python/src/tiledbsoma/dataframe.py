@@ -3,6 +3,7 @@ from typing import Any, Optional, Sequence, Tuple, TypeVar, Union, cast
 
 import numpy as np
 import pyarrow as pa
+import somacore
 import tiledb
 from typing_extensions import Final, get_args
 
@@ -21,7 +22,7 @@ from .util_iter import TableReadIter
 Slice = TypeVar("Slice", bound=Sequence[int])
 
 
-class DataFrame(TileDBArray):
+class DataFrame(TileDBArray, somacore.DataFrame):
     """
     Represents ``obs``, ``var``, and others.
 

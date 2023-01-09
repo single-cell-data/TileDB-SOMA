@@ -170,7 +170,8 @@ def from_anndata(
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     # MS/meas
     measurement = Measurement(uri=f"{experiment.ms.uri}/{measurement_name}", ctx=ctx)
-    experiment.ms.set(measurement_name, _check_create(measurement, ingest_mode))
+    measurement.create()
+    experiment.ms.set(measurement_name, measurement)
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     # MS/meas/VAR
