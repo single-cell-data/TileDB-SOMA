@@ -99,6 +99,13 @@ TileDBGroup <- R6::R6Class(
       length(private$member_cache)
     },
 
+    #' @description Retrieve the names of members.
+    #' @return A `character` vector of member names.
+    names = function() {
+      if (is_empty(private$member_cache)) private$update_member_cache()
+      names(private$member_cache) %||% character(length = 0L)
+    },
+
     #' @description Retrieve a `list` of members.
     to_list = function() {
       if (is_empty(private$member_cache)) private$update_member_cache()

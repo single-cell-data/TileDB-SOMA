@@ -49,6 +49,7 @@ test_that("Basic mechanics", {
   # Read back the members
   group_readback <- TileDBGroup$new(group$uri)
   expect_equal(group_readback$length(), 2)
+  expect_setequal(group$names(), c("a1", "g1"))
 
   # Retrieve
   expect_is(group_readback$get("a1"), "TileDBArray")
