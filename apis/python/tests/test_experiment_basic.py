@@ -75,7 +75,7 @@ def create_and_populate_sparse_nd_array(
         coords=[[0, 2], [3, 1], [4, 2]],
         shape=(nr, nc),
     )
-    sparse_nd_array.write_sparse_tensor(tensor)
+    sparse_nd_array.write(tensor)
 
     return sparse_nd_array
 
@@ -93,9 +93,9 @@ def test_experiment_basic(tmp_path):
     )
     experiment["ms"] = soma.Collection(uri=urljoin(basedir, "ms")).create()
 
-    measurement = soma.Measurement(uri=f"{experiment.ms.uri}/mRNA")
+    measurement = soma.Measurement(uri=f"{experiment.ms.uri}/RNA")
     measurement.create()
-    experiment.ms.set("mRNA", measurement)
+    experiment.ms.set("RNA", measurement)
 
     measurement["var"] = create_and_populate_var(
         soma.DataFrame(uri=urljoin(measurement.uri, "var"))
@@ -119,23 +119,23 @@ def test_experiment_basic(tmp_path):
     assert experiment.ms == experiment["ms"]
 
     assert len(experiment.ms) == 1
-    assert isinstance(experiment.ms["mRNA"], soma.Measurement)
+    assert isinstance(experiment.ms["RNA"], soma.Measurement)
 
-    assert len(experiment.ms["mRNA"]) == 2
-    assert "mRNA" in experiment.ms
+    assert len(experiment.ms["RNA"]) == 2
+    assert "RNA" in experiment.ms
     assert "meas2" not in experiment.ms
-    assert isinstance(experiment.ms["mRNA"].var, soma.DataFrame)
-    assert isinstance(experiment.ms["mRNA"].X, soma.Collection)
+    assert isinstance(experiment.ms["RNA"].var, soma.DataFrame)
+    assert isinstance(experiment.ms["RNA"].X, soma.Collection)
 
-    assert experiment.ms["mRNA"].var == experiment["ms"]["mRNA"]["var"]
-    assert experiment.ms["mRNA"].X == experiment["ms"]["mRNA"]["X"]
+    assert experiment.ms["RNA"].var == experiment["ms"]["RNA"]["var"]
+    assert experiment.ms["RNA"].X == experiment["ms"]["RNA"]["X"]
 
-    assert len(experiment.ms["mRNA"].X) == 1
-    assert "data" in experiment.ms["mRNA"].X
-    assert "nonesuch" not in experiment.ms["mRNA"].X
-    assert isinstance(experiment.ms["mRNA"].X["data"], soma.SparseNDArray)
+    assert len(experiment.ms["RNA"].X) == 1
+    assert "data" in experiment.ms["RNA"].X
+    assert "nonesuch" not in experiment.ms["RNA"].X
+    assert isinstance(experiment.ms["RNA"].X["data"], soma.SparseNDArray)
 
-    # >>> experiment.ms.mRNA.X.data._tiledb_open().df[:]
+    # >>> experiment.ms.RNA.X.data._tiledb_open().df[:]
     #    __dim_0  __dim_1  data
     # 0        0        2     7
     # 1        3        1     8
@@ -146,9 +146,9 @@ def test_experiment_basic(tmp_path):
     assert experiment.exists()
     assert experiment.obs.exists()
     assert experiment.ms.exists()
-    assert experiment.ms["mRNA"].exists()
-    assert experiment.ms["mRNA"].X.exists()
-    assert experiment.ms["mRNA"].X["data"].exists()
+    assert experiment.ms["RNA"].exists()
+    assert experiment.ms["RNA"].X.exists()
+    assert experiment.ms["RNA"].X["data"].exists()
 
     # Paths exist but are not of the right type
     assert not soma.DataFrame(experiment.uri).exists()
