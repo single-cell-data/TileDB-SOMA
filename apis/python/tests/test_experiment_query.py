@@ -88,19 +88,22 @@ def test_experiment_query_all(soma_experiment):
         assert np.array_equal(query.obs_joinids().to_numpy(), np.arange(101))
         assert np.array_equal(query.var_joinids().to_numpy(), np.arange(11))
 
-        assert len(query.obs()) == 101
-        assert len(query.var()) == 11
+        assert len(query.obs().concat()) == 101
+        assert len(query.var().concat()) == 11
 
-        assert query.obs().to_pydict() == {
+        assert query.obs().concat().to_pydict() == {
             "soma_joinid": list(range(101)),
             "label": [str(i) for i in range(101)],
         }
-        assert query.var().to_pydict() == {
+        assert query.var().concat().to_pydict() == {
             "soma_joinid": list(range(11)),
             "label": [str(i) for i in range(11)],
         }
-        assert pa.concat_tables(query.X("raw")) == pa.concat_tables(
-            soma_experiment.ms["RNA"].X["raw"].read_table((slice(None), slice(None)))
+        assert pa.concat_tables(query.X("raw").tables()) == pa.concat_tables(
+            soma_experiment.ms["RNA"].X["raw"].read((slice(None), slice(None))).tables()
+        )
+        assert query.X("raw").tables().concat() == pa.concat_tables(
+            query.X("raw").tables()
         )
 
         # read as table
@@ -109,10 +112,15 @@ def test_experiment_query_all(soma_experiment):
         assert isinstance(arrow_reads["obs"], pa.Table)
         assert isinstance(arrow_reads["var"], pa.Table)
         assert isinstance(arrow_reads["X"], pa.Table)
-        assert arrow_reads["obs"] == query.obs()
-        assert arrow_reads["var"] == query.var()
-        assert arrow_reads["X"] == pa.concat_tables(
-            soma_experiment.ms["RNA"].X["raw"].read_table((slice(None), slice(None)))
+        assert arrow_reads["obs"] == query.obs().concat()
+        assert arrow_reads["var"] == query.var().concat()
+        assert (
+            arrow_reads["X"]
+            == soma_experiment.ms["RNA"]
+            .X["raw"]
+            .read((slice(None), slice(None)))
+            .tables()
+            .concat()
         )
 
         # read as anndata
@@ -121,8 +129,12 @@ def test_experiment_query_all(soma_experiment):
         assert set(ad.obs.keys().to_list()) == set(["soma_joinid", "label"])
         assert set(ad.var.keys().to_list()) == set(["soma_joinid", "label"])
 
-        raw_X = pa.concat_tables(
-            soma_experiment.ms["RNA"].X["raw"].read_table((slice(None), slice(None)))
+        raw_X = (
+            soma_experiment.ms["RNA"]
+            .X["raw"]
+            .read((slice(None), slice(None)))
+            .tables()
+            .concat()
         )
         ad_X_coo = ad.X.tocoo()
         assert np.array_equal(raw_X["soma_dim_0"], ad_X_coo.row)
@@ -136,24 +148,44 @@ def test_experiment_query_all(soma_experiment):
     reason="typeguard bug #242",
 )
 @pytest.mark.parametrize("n_obs,n_vars", [(1001, 99)])
-def test_experiment_query_prototype(soma_experiment: soma.Experiment):
+def test_experiment_query_coords(soma_experiment):
+    """Test query by dimension coordinates"""
     obs_slice = slice(3, 72)
     var_slice = slice(7, 21)
-    assert soma_experiment.exists()
     with soma_experiment.query_by_axis(
         "RNA",
         obs_query=AxisQuery(coords=(obs_slice,)),
         var_query=AxisQuery(coords=(var_slice,)),
     ) as query:
-        # test prototype
-        assert pa.concat_tables(query.obs_new().tables()) == query.obs()
-        assert query.obs_new().tables().flat() == query.obs()
-
-        raw_X = pa.concat_tables(
-            soma_experiment.ms["RNA"].X["raw"].read_table((obs_slice, var_slice))
+        assert query.n_obs == obs_slice.stop - obs_slice.start + 1
+        assert query.n_vars == var_slice.stop - var_slice.start + 1
+        assert np.array_equal(
+            query.obs_joinids().to_numpy(),
+            np.arange(obs_slice.start, obs_slice.stop + 1),
         )
-        assert query.X_new("raw").tables().flat() == raw_X
-        assert query.X_new("raw").coo().flat() == pa.SparseCOOTensor.from_numpy(
+        assert np.array_equal(
+            query.var_joinids().to_numpy(),
+            np.arange(var_slice.start, var_slice.stop + 1),
+        )
+
+        assert np.array_equal(
+            query.obs(column_names=["soma_joinid"]).concat()["soma_joinid"].to_numpy(),
+            np.arange(obs_slice.start, obs_slice.stop + 1),
+        )
+        assert np.array_equal(
+            query.var(column_names=["soma_joinid"]).concat()["soma_joinid"].to_numpy(),
+            np.arange(var_slice.start, var_slice.stop + 1),
+        )
+
+        raw_X = (
+            soma_experiment.ms["RNA"]
+            .X["raw"]
+            .read((obs_slice, var_slice))
+            .tables()
+            .concat()
+        )
+        assert query.X("raw").tables().concat() == raw_X
+        assert query.X("raw").coos().concat() == pa.SparseCOOTensor.from_numpy(
             raw_X["soma_data"].to_numpy(),
             np.array(
                 [
@@ -171,48 +203,19 @@ def test_experiment_query_prototype(soma_experiment: soma.Experiment):
     reason="typeguard bug #242",
 )
 @pytest.mark.parametrize("n_obs,n_vars", [(1001, 99)])
-def test_experiment_query_coords(soma_experiment):
-    """Test query by dimension coordinates"""
-    obs_slice = slice(3, 72)
-    var_slice = slice(7, 21)
-    with ExperimentAxisQuery(
-        soma_experiment,
-        "RNA",
-        obs_query=AxisQuery(coords=(obs_slice,)),
-        var_query=AxisQuery(coords=(var_slice,)),
-    ) as query:
-        assert query.n_obs == obs_slice.stop - obs_slice.start + 1
-        assert query.n_vars == var_slice.stop - var_slice.start + 1
-        assert np.array_equal(
-            query.obs_joinids().to_numpy(),
-            np.arange(obs_slice.start, obs_slice.stop + 1),
-        )
-        assert np.array_equal(
-            query.var_joinids().to_numpy(),
-            np.arange(var_slice.start, var_slice.stop + 1),
-        )
-
-
-@pytest.mark.xfail(
-    # see comment on test_experiment_query_all
-    sys.version_info.major == 3 and sys.version_info.minor >= 10,
-    reason="typeguard bug #242",
-)
-@pytest.mark.parametrize("n_obs,n_vars", [(1001, 99)])
 def test_experiment_query_value_filter(soma_experiment):
     """Test query by value filter"""
     obs_label_values = ["3", "7", "38", "99"]
     var_label_values = ["18", "34", "67"]
-    with ExperimentAxisQuery(
-        soma_experiment,
+    with soma_experiment.query_by_axis(
         "RNA",
         obs_query=AxisQuery(value_filter=f"label in {obs_label_values}"),
         var_query=AxisQuery(value_filter=f"label in {var_label_values}"),
     ) as query:
         assert query.n_obs == len(obs_label_values)
         assert query.n_vars == len(var_label_values)
-        assert query.obs()["label"].to_pylist() == obs_label_values
-        assert query.var()["label"].to_pylist() == var_label_values
+        assert query.obs().concat()["label"].to_pylist() == obs_label_values
+        assert query.var().concat()["label"].to_pylist() == var_label_values
 
 
 @pytest.mark.xfail(
@@ -228,29 +231,26 @@ def test_experiment_query_combo(soma_experiment):
     obs_slice = slice(3, 101)
     var_slice = slice(7, 80)
 
-    with ExperimentAxisQuery(
-        soma_experiment,
+    with soma_experiment.query_by_axis(
         "RNA",
         obs_query=AxisQuery(coords=(obs_slice,)),
         var_query=AxisQuery(value_filter=f"label in {var_label_values}"),
     ) as query:
         assert query.n_obs == obs_slice.stop - obs_slice.start + 1
-        assert query.var()["label"].to_pylist() == var_label_values
+        assert query.var().concat()["label"].to_pylist() == var_label_values
 
-    with ExperimentAxisQuery(
-        soma_experiment,
+    with soma_experiment.query_by_axis(
         "RNA",
         obs_query=AxisQuery(value_filter=f"label in {obs_label_values}"),
         var_query=AxisQuery(coords=(var_slice,)),
     ) as query:
-        assert query.obs()["label"].to_pylist() == obs_label_values
+        assert query.obs().concat()["label"].to_pylist() == obs_label_values
         assert np.array_equal(
             query.var_joinids().to_numpy(),
             np.arange(var_slice.start, var_slice.stop + 1),
         )
 
-    with ExperimentAxisQuery(
-        soma_experiment,
+    with soma_experiment.query_by_axis(
         "RNA",
         obs_query=AxisQuery(
             coords=(obs_slice,), value_filter=f"label in {obs_label_values}"
@@ -259,8 +259,8 @@ def test_experiment_query_combo(soma_experiment):
             coords=(var_slice,), value_filter=f"label in {var_label_values}"
         ),
     ) as query:
-        assert query.obs()["label"].to_pylist() == obs_label_values
-        assert query.var()["label"].to_pylist() == var_label_values
+        assert query.obs().concat()["label"].to_pylist() == obs_label_values
+        assert query.var().concat()["label"].to_pylist() == var_label_values
 
 
 @pytest.mark.xfail(
@@ -273,13 +273,13 @@ def test_X_layers(soma_experiment):
     """Verify multi-layer-X handling"""
     assert soma_experiment.exists()
     A = pa.concat_tables(
-        soma_experiment.ms["RNA"].X["A"].read_table((slice(None), slice(None)))
+        soma_experiment.ms["RNA"].X["A"].read((slice(None), slice(None))).tables()
     )
     B = pa.concat_tables(
-        soma_experiment.ms["RNA"].X["B"].read_table((slice(None), slice(None)))
+        soma_experiment.ms["RNA"].X["B"].read((slice(None), slice(None))).tables()
     )
 
-    with ExperimentAxisQuery(soma_experiment, "RNA") as query:
+    with soma_experiment.query_by_axis("RNA") as query:
         arrow_reads = query.read("A", X_layers=["B"])
         assert arrow_reads["X"] == A
         assert arrow_reads["X_layers"]["B"] == B
@@ -414,12 +414,22 @@ def test_experiment_query_obsp_varp(soma_experiment):
         with pytest.raises(ValueError):
             next(query.varp("no-such-layer"))
 
-        assert pa.concat_tables(query.obsp("foo")) == pa.concat_tables(
-            soma_experiment.ms["RNA"].obsp["foo"].read_table((obs_slice, obs_slice))
+        assert (
+            query.obsp("foo").tables().concat()
+            == soma_experiment.ms["RNA"]
+            .obsp["foo"]
+            .read((obs_slice, obs_slice))
+            .tables()
+            .concat()
         )
 
-        assert pa.concat_tables(query.varp("bar")) == pa.concat_tables(
-            soma_experiment.ms["RNA"].varp["bar"].read_table((var_slice, var_slice))
+        assert (
+            query.varp("bar").tables().concat()
+            == soma_experiment.ms["RNA"]
+            .varp["bar"]
+            .read((var_slice, var_slice))
+            .tables()
+            .concat()
         )
 
 
@@ -522,7 +532,7 @@ def make_sparse_array(path: str, shape: Tuple[int, int]) -> soma.SparseNDArray:
             random_state=np.random.default_rng(),
         )
     )
-    a.write_sparse_tensor(tensor)
+    a.write(tensor)
     return a
 
 

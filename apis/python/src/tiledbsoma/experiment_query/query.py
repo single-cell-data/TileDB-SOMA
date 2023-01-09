@@ -1,16 +1,13 @@
-import abc
 import concurrent.futures
 from typing import (
     TYPE_CHECKING,
     Any,
     ContextManager,
     Dict,
-    Iterator,
     List,
     Optional,
     Sequence,
     Tuple,
-    TypeVar,
     Union,
     cast,
 )
@@ -22,7 +19,9 @@ import pandas as pd
 import pyarrow as pa
 from typing_extensions import Literal, TypedDict
 
+from .. import somacore  # to be replaced by somacore package, when available
 from ..dataframe import DataFrame as SOMADataFrame
+from ..sparse_nd_array import SparseNDArrayRead
 
 if TYPE_CHECKING:
     from ..experiment import Experiment
@@ -46,17 +45,6 @@ MatrixAxisQuery = TypedDict(
         "var": AxisQuery,
     },
 )
-
-
-"""TEMPORARY
-
-    with exp.query(...) as query:
-
-        query.obs().tables() -> Iterator[pa.Table]
-        query.obs().tables().concat() -> pa.Table
-        query.
-
-"""
 
 
 class ExperimentAxisQuery(ContextManager["ExperimentAxisQuery"]):
@@ -120,16 +108,6 @@ class ExperimentAxisQuery(ContextManager["ExperimentAxisQuery"]):
 
         self.__threadpool = None
 
-    @property
-    def _threadpool(self) -> concurrent.futures.ThreadPoolExecutor:
-        """Private threadpool cache"""
-        if self.__threadpool is None:
-            # TODO: the user should be able to set their own threadpool, a la asyncio's
-            # loop.set_default_executor().  This is important for managing the level of
-            # concurrency, etc.
-            self.__threadpool = concurrent.futures.ThreadPoolExecutor()
-        return self.__threadpool
-
     def close(self) -> None:
         """
         Cleanup and close all resources. This must be called or the thread pool
@@ -145,72 +123,26 @@ class ExperimentAxisQuery(ContextManager["ExperimentAxisQuery"]):
     def __exit__(self, *excinfo: Any) -> None:
         self.close()
 
-    def _read_axis_dataframe(
-        self,
-        axis: Literal["obs", "var"],
-        axis_df: SOMADataFrame,
-        *,
-        column_names: Optional[Sequence[str]],
-    ) -> pa.Table:
-        """
-        Private. Read the specified axis. Will load and save the resulting soma_joinids for the
-        axis, if they are not already known.
-        """
-        query = self._query[axis]
-        need_joinids = self._joinids[axis] is None
-
-        query_columns = column_names
-        if (
-            need_joinids
-            and column_names is not None
-            and "soma_joinid" not in column_names
-        ):
-            query_columns = ["soma_joinid"] + list(column_names)
-
-        tbl = axis_df.read_all(
+    def obs(
+        self, *, column_names: Optional[Sequence[str]] = None
+    ) -> somacore.ReadIter[pa.Table]:
+        """Return obs as an Arrow table."""
+        query = self._query["obs"]
+        return self.experiment.obs.read(
             ids=query.coords,
             value_filter=query.value_filter,
-            column_names=query_columns,
+            column_names=column_names,
         )
 
-        if need_joinids:
-            self._joinids[axis] = tbl.column("soma_joinid").combine_chunks()
-        assert self._joinids[axis] is not None
-
-        if column_names is not None:
-            tbl = tbl.select(column_names)
-        return tbl
-
-    def _read_axis_joinids(
-        self, axis: Literal["obs", "var"], axis_df: SOMADataFrame
-    ) -> pa.Array:
-        if self._joinids[axis] is None:
-            self._read_axis_dataframe(axis, axis_df, column_names=["soma_joinid"])
-        return self._joinids[axis]
-
-    def obs(self, *, column_names: Optional[Sequence[str]] = None) -> pa.Table:
-        """Return obs as an Arrow table."""
-        return self._read_axis_dataframe(
-            "obs", self.experiment.obs, column_names=column_names
-        )
-
-    def obs_new(
+    def var(
         self, *, column_names: Optional[Sequence[str]] = None
-    ) -> "DataFrameTableRead":
-        query = self._query["obs"]
-        return DataFrameTableRead(
-            self,
-            self.experiment.obs.read(
-                ids=query.coords,
-                value_filter=query.value_filter,
-                column_names=column_names,
-            ),
-        )
-
-    def var(self, *, column_names: Optional[Sequence[str]] = None) -> pa.Table:
-        """Return var as an Arrow table."""
-        return self._read_axis_dataframe(
-            "var", self.experiment.ms[self.ms].var, column_names=column_names
+    ) -> somacore.ReadIter[pa.Table]:
+        """Return obs as an Arrow table."""
+        query = self._query["var"]
+        return self.experiment.ms[self.ms].var.read(
+            ids=query.coords,
+            value_filter=query.value_filter,
+            column_names=column_names,
         )
 
     def obs_joinids(self) -> pa.Array:
@@ -231,34 +163,7 @@ class ExperimentAxisQuery(ContextManager["ExperimentAxisQuery"]):
         """Return number of var axis query results"""
         return len(self.var_joinids())
 
-    def _load_joinids(self) -> None:
-        """Private. Ensure joinids for both axis are in-memory."""
-        futures = []
-        if not self._joinids["obs"]:
-            futures.append(self._threadpool.submit(self.obs_joinids))
-        if not self._joinids["var"]:
-            futures.append(self._threadpool.submit(self.var_joinids))
-        if futures:
-            concurrent.futures.wait(futures)
-        assert self._joinids["obs"] is not None, "Internal error"
-        assert self._joinids["var"] is not None, "Internal error"
-
-    def _fetchX(self, X: SOMASparseNDArray) -> Iterator[pa.Table]:
-        """Private helper for ``X``"""
-        assert self._joinids["obs"] is not None
-        assert self._joinids["var"] is not None
-
-        obs_joinids = self._joinids["obs"]
-        var_joinids = self._joinids["var"]
-
-        if len(obs_joinids) == 0 or len(var_joinids) == 0:
-            yield pa.Table.from_pylist([], schema=X.schema)
-            return
-
-        # yield for clarity
-        yield from X.read_table((obs_joinids, var_joinids))
-
-    def X(self, layer: str) -> Iterator[pa.Table]:
+    def X(self, layer: str) -> SparseNDArrayRead:
         """
         Return an X layer as an iterator of Arrow Tables.
 
@@ -293,55 +198,73 @@ class ExperimentAxisQuery(ContextManager["ExperimentAxisQuery"]):
         assert isinstance(X, SOMASparseNDArray)
 
         self._load_joinids()
+        return X.read((self._joinids["obs"], self._joinids["var"]))
 
-        yield from self._fetchX(X)
+    def obsp(self, layer: str) -> SparseNDArrayRead:
+        return self._axisp_inner("obs", layer)
 
-    def X_new(self, layer: str) -> "SparseNDArrayTableRead":
-        if not (layer and layer in self.experiment.ms[self.ms].X):
-            raise ValueError("Must specify X layer")
+    def varp(self, layer: str) -> SparseNDArrayRead:
+        return self._axisp_inner("var", layer)
 
-        X = self.experiment.ms[self.ms].X[layer]
-        if X.soma_type != "SOMASparseNDArray":
-            raise NotImplementedError("Dense array unsupported")
-        assert isinstance(X, SOMASparseNDArray)
+    def _read_axis_dataframe(
+        self,
+        axis: Literal["obs", "var"],
+        axis_df: SOMADataFrame,
+        query: AxisQuery,
+        *,
+        column_names: Optional[Sequence[str]],
+    ) -> pa.Table:
+        """
+        Private. Read the specified axis. Will load and save the resulting soma_joinids for the
+        axis, if they are not already known.
+        """
+        need_joinids = self._joinids[axis] is None
+        query_columns = column_names
+        if (
+            need_joinids
+            and column_names is not None
+            and "soma_joinid" not in column_names
+        ):
+            query_columns = ["soma_joinid"] + list(column_names)
 
-        self._load_joinids()
+        arrow_table = axis_df.read(
+            ids=query.coords,
+            value_filter=query.value_filter,
+            column_names=query_columns,
+        ).concat()
 
-        return SparseNDArrayTableRead(self, X.shape, self._fetchX(X))
-
-    def _axisp_inner(
-        self, axis: Literal["obs", "var"], layer: str
-    ) -> Iterator[pa.Table]:
-        assert axis in ["obs", "var"]
-        key = f"{axis}p"
-
-        ms = self.experiment.ms[self.ms]
-        if key not in self.experiment.ms[self.ms]:
-            raise ValueError(f"Measurement does not contain {key} data")
-
-        axisp = ms.obsp if axis == "obs" else ms.varp
-        if not (layer and layer in axisp):
-            raise ValueError(f"Must specify '{key}' layer")
-
-        if axisp[layer].soma_type != "SOMASparseNDArray":
-            raise TypeError(f"Unexpected SOMA type stored in '{key}' layer")
-        assert isinstance(axisp[layer], SOMASparseNDArray)
-
-        self._load_joinids()
+        if need_joinids:
+            self._joinids[axis] = arrow_table.column("soma_joinid").combine_chunks()
         assert self._joinids[axis] is not None
 
-        joinids = self._joinids[axis]
-        if len(joinids) == 0:
-            yield pa.Table.from_pylist([], schema=axisp[layer].schema)
-            return
+        if column_names is not None:
+            arrow_table = arrow_table.select(column_names)
+        return arrow_table
 
-        yield from axisp[layer].read_table((joinids, joinids))
-
-    def obsp(self, layer: str) -> Iterator[pa.Table]:
-        yield from self._axisp_inner("obs", layer)
-
-    def varp(self, layer: str) -> Iterator[pa.Table]:
-        yield from self._axisp_inner("var", layer)
+    def _read_both_axis(
+        self,
+        column_names: AxisColumnNames,
+    ) -> Tuple[pa.Table, pa.Table]:
+        """Private. Read both axis in its entirety, ensure that soma_joinid is retained."""
+        futures = (
+            self._threadpool.submit(
+                self._read_axis_dataframe,
+                "obs",
+                self.experiment.obs,
+                self._query["obs"],
+                column_names=column_names.get("obs", None),
+            ),
+            self._threadpool.submit(
+                self._read_axis_dataframe,
+                "var",
+                self.experiment.ms[self.ms].var,
+                self._query["var"],
+                column_names=column_names.get("var", None),
+            ),
+        )
+        concurrent.futures.wait(futures)
+        obs_table, var_table = (f.result() for f in futures)
+        return obs_table, var_table
 
     def read(
         self,
@@ -352,52 +275,35 @@ class ExperimentAxisQuery(ContextManager["ExperimentAxisQuery"]):
         X_layers: Optional[List[str]] = None,
     ) -> ExperimentAxisQueryReadArrowResult:
         """
-        Read the _entire_ query result into Arrow Tables. Low-level routine
-        intended to be the basis for exporting to other in-core formats, such
-        as AnnData.
+        Read the _entire_ query result into (in-memory) Arrow Tables. This is a
+        low-level routine intended to be used by loaders for other in-core
+        formats, such as AnnData, which can be created from the resulting Tables.
         """
+        if column_names is None:
+            column_names = AxisColumnNames(obs=None, var=None)
         X_collection = self.experiment.ms[self.ms].X
         X_layers = [] if X_layers is None else X_layers
         all_X_names = [X_name] + X_layers
-        all_X_arrays: dict[str, SOMASparseNDArray] = {}
+        all_X_arrays: Dict[str, SOMASparseNDArray] = {}
         for _xname in all_X_names:
             if not isinstance(_xname, str) or not _xname:
                 raise ValueError("X layer names must be specified as a string.")
             if _xname not in X_collection:
                 raise ValueError("Unknown X layer name")
-            # TODO: dense array slicing, which needs thought due to lack of point indexing
             if X_collection[_xname].soma_type != "SOMASparseNDArray" or not isinstance(
                 X_collection[_xname], SOMASparseNDArray
             ):
                 raise NotImplementedError("Dense array unsupported")
             all_X_arrays[_xname] = cast(SOMASparseNDArray, X_collection[_xname])
 
-        if column_names is None:
-            column_names = {"obs": None, "var": None}
-        if "obs" not in column_names:
-            column_names["obs"] = None
-        if "var" not in column_names:
-            column_names["var"] = None
-
-        futures = (
-            self._threadpool.submit(
-                self._read_axis_dataframe,
-                "obs",
-                self.experiment.obs,
-                column_names=column_names["obs"],
-            ),
-            self._threadpool.submit(
-                self._read_axis_dataframe,
-                "var",
-                self.experiment.ms[self.ms].var,
-                column_names=column_names["var"],
-            ),
-        )
-        concurrent.futures.wait(futures)
-        obs_table, var_table = (f.result() for f in futures)
+        obs_table, var_table = self._read_both_axis(column_names)
 
         X_tables = {
-            _xname: pa.concat_tables(self._fetchX(all_X_arrays[_xname]))
+            # TODO: could also be done concurrently
+            _xname: all_X_arrays[_xname]
+            .read((self.obs_joinids(), self.var_joinids()))
+            .tables()
+            .concat()
             for _xname in all_X_arrays
         }
         if use_position_indexing:
@@ -451,6 +357,78 @@ class ExperimentAxisQuery(ContextManager["ExperimentAxisQuery"]):
         )
         return _make_anndata(query_result)
 
+    def get_indexer(self) -> "AxisIndexer":
+        return self._indexer
+
+    """
+    Private helper methods
+    """
+
+    @property
+    def _threadpool(self) -> concurrent.futures.ThreadPoolExecutor:
+        """Private threadpool cache"""
+        if self.__threadpool is None:
+            # TODO: the user should be able to set their own threadpool, a la asyncio's
+            # loop.set_default_executor().  This is important for managing the level of
+            # concurrency, etc.
+            self.__threadpool = concurrent.futures.ThreadPoolExecutor()
+        return self.__threadpool
+
+    def _read_axis_joinids(
+        self, axis: Literal["obs", "var"], axis_df: SOMADataFrame
+    ) -> pa.Array:
+        query = self._query[axis]
+        if self._joinids[axis] is None:
+            self._joinids[axis] = (
+                axis_df.read(
+                    ids=query.coords,
+                    value_filter=query.value_filter,
+                    column_names=["soma_joinid"],
+                )
+                .concat()
+                .column("soma_joinid")
+                .combine_chunks()
+            )
+        return self._joinids[axis]
+
+    def _load_joinids(self) -> None:
+        """Private. Ensure joinids for both axis are in-memory."""
+        futures = []
+        if not self._joinids["obs"]:
+            futures.append(self._threadpool.submit(self.obs_joinids))
+        if not self._joinids["var"]:
+            futures.append(self._threadpool.submit(self.var_joinids))
+        if futures:
+            concurrent.futures.wait(futures)
+        assert self._joinids["obs"] is not None, "Internal error"
+        assert self._joinids["var"] is not None, "Internal error"
+
+    def _axisp_inner(
+        self,
+        axis: Literal["obs", "var"],
+        layer: str,
+    ) -> SparseNDArrayRead:
+        assert axis in ["obs", "var"]
+        key = f"{axis}p"
+
+        ms = self.experiment.ms[self.ms]
+        if key not in self.experiment.ms[self.ms]:
+            raise ValueError(f"Measurement does not contain {key} data")
+
+        axisp = ms.obsp if axis == "obs" else ms.varp
+        if not (layer and layer in axisp):
+            raise ValueError(f"Must specify '{key}' layer")
+
+        if axisp[layer].soma_type != "SOMASparseNDArray":
+            raise TypeError(f"Unexpected SOMA type stored in '{key}' layer")
+        assert isinstance(axisp[layer], SOMASparseNDArray)
+
+        self._load_joinids()
+        assert self._joinids[axis] is not None
+
+        joinids = self._joinids[axis]
+        return axisp[layer].read((joinids, joinids))
+
     def _rewrite_X_for_positional_indexing(
         self, X_tables: Dict[str, pa.Table]
     ) -> Dict[str, pa.Table]:
@@ -485,9 +463,6 @@ class ExperimentAxisQuery(ContextManager["ExperimentAxisQuery"]):
             )
         return new_X_tables
 
-    def get_indexer(self) -> "AxisIndexer":
-        return self._indexer
-
 
 class AxisIndexer:
     """
@@ -520,109 +495,3 @@ class AxisIndexer:
         if self._var_index is None:
             self._var_index = pd.Index(data=self.query.var_joinids().to_numpy())
         return cast(npt.NDArray[np.intp], self._var_index.get_indexer(coords))
-
-
-# ********* XXX: Begin temporary code **********
-#
-
-"""
-TODO: This code is temporary mock until such time as the core classes implement
-these interfaces (at which point we can remove all of this).
-"""
-_T = TypeVar("_T")
-
-
-class ReadIter(Iterator[_T], metaclass=abc.ABCMeta):
-    """SparseRead result iterator allowing users to flatten the iteration."""
-
-    # __iter__ is already implemented as `return self` in Iterator
-    # SOMA implementations must implement __next__.
-
-    # XXX: Considering the name "flat" here too.
-    @abc.abstractmethod
-    def flat(self) -> _T:
-        """Returns all the requested data in a single operation."""
-        raise NotImplementedError()
-
-
-class SparseRead(metaclass=abc.ABCMeta):
-    """Intermediate type to allow users to format when reading a sparse array."""
-
-    def coos(self) -> ReadIter[pa.SparseCOOTensor]:
-        raise NotImplementedError()
-
-    def cscs(self) -> ReadIter[pa.SparseCSCMatrix]:
-        raise NotImplementedError()
-
-    def csrs(self) -> ReadIter[pa.SparseCSRMatrix]:
-        raise NotImplementedError()
-
-    def record_batches(self) -> ReadIter[pa.RecordBatch]:
-        raise NotImplementedError()
-
-    def tables(self) -> ReadIter[pa.Table]:
-        raise NotImplementedError()
-
-
-class ReadTableIter(ReadIter[pa.Table]):
-    def __init__(self, tables: Iterator[pa.Table]):
-        self._tables = tables
-
-    def __next__(self) -> pa.Table:
-        return next(self._tables)
-
-    def flat(self) -> pa.Table:
-        return pa.concat_tables(self._tables)
-
-
-class ReadCOOTensorIter(ReadIter[pa.SparseCOOTensor]):
-    def __init__(self, shape: Tuple[int, ...], tables: Iterator[pa.Table]):
-        self._tables = tables
-        self._shape = shape
-
-    def _make_coo_tensor(self, arrow_tbl: pa.Table) -> pa.SparseCOOTensor:
-        coo_data = arrow_tbl.column("soma_data").to_numpy()
-        coo_coords = np.array(
-            [
-                arrow_tbl.column(f"soma_dim_{n}").to_numpy()
-                for n in range(len(self._shape))
-            ]
-        ).T
-        return pa.SparseCOOTensor.from_numpy(coo_data, coo_coords, shape=self._shape)
-
-    def __next__(self) -> pa.SparseCOOTensor:
-        return self._make_coo_tensor(next(self._tables))
-
-    def flat(self) -> pa.SparseCOOTensor:
-        return self._make_coo_tensor(pa.concat_tables(self._tables))
-
-
-class DataFrameTableRead(SparseRead):
-    def __init__(self, query: ExperimentAxisQuery, tables: Iterator[pa.Table]):
-        self._query = query
-        self._tables = tables
-
-    def tables(self) -> ReadIter[pa.Table]:
-        return ReadTableIter(self._tables)
-
-
-class SparseNDArrayTableRead(SparseRead):
-    def __init__(
-        self,
-        query: ExperimentAxisQuery,
-        shape: Tuple[int, ...],
-        tables: Iterator[pa.Table],
-    ):
-        self._query = query
-        self._tables = tables
-        self._shape = shape
-
-    def tables(self) -> ReadIter[pa.Table]:
-        return ReadTableIter(self._tables)
-
-    def coo(self) -> ReadIter[pa.SparseCOOTensor]:
-        return ReadCOOTensorIter(self._shape, self._tables)
-
-
-#
-# ********* XXX End temporary copy **********

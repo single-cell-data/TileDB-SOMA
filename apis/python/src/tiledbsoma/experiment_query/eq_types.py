@@ -19,4 +19,5 @@ AxisColumnNames = TypedDict(
         "obs": Optional[Sequence[str]],  # None is all
         "var": Optional[Sequence[str]],
     },
+    total=False,
 )
