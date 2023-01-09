@@ -71,6 +71,9 @@ class TileDBObject(ABC):
     def metadata(self) -> MetadataMapping:
         """Metadata accessor"""
         return self._metadata
+        # Note: this seems trivial, like we could just have `metadata` as an attribute.
+        # However, we've found that since in `somacore` it's implemented as `@property`,
+        # to avoid a static-analysis failure we have to do the same here.
 
     def delete(self) -> None:
         """
