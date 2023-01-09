@@ -329,7 +329,3 @@ class SparseNDArrayRead(somacore.SparseRead):
     def tables(self) -> TableReadIter:
         """Return an iterator of Arrow Table"""
         return TableReadIter(self.sr)
-
-    def close(self) -> None:
-        """TODO: Implement when there is a stateful handle that needs to be closed"""
-        pass

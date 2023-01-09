@@ -29,10 +29,6 @@ class TableReadIter(somacore.ReadIter[pa.Table]):
         """Concatenate remainder of iterator, and return as a single Arrow Table"""
         return pa.concat_tables(self)
 
-    def close(self) -> None:
-        """TODO: Implement when there is a stateful handle that needs to be closed"""
-        pass
-
 
 RT = TypeVar("RT")
 
@@ -63,10 +59,6 @@ class SparseTensorReadIterBase(somacore.ReadIter[RT], metaclass=abc.ABCMeta):
         """
         arrow_tables = pa.concat_tables(TableReadIter(self.sr))
         return self._from_table(arrow_tables)
-
-    def close(self) -> None:
-        """TODO: Implement when there is a stateful handle that needs to be closed"""
-        pass
 
 
 class SparseCOOTensorReadIter(SparseTensorReadIterBase[pa.SparseCOOTensor]):

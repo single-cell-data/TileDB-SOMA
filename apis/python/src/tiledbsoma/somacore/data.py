@@ -2,7 +2,7 @@
 # Read types
 #
 import abc
-from typing import Any, ContextManager, Iterator, TypeVar
+from typing import Iterator, TypeVar
 
 import pyarrow
 
@@ -12,7 +12,7 @@ _T = TypeVar("_T")
 # Sparse reads are returned as an iterable structure:
 
 
-class ReadIter(Iterator[_T], ContextManager["ReadIter[_T]"], metaclass=abc.ABCMeta):
+class ReadIter(Iterator[_T], metaclass=abc.ABCMeta):
     """SparseRead result iterator allowing users to flatten the iteration."""
 
     # __iter__ is already implemented as `return self` in Iterator.
@@ -27,18 +27,8 @@ class ReadIter(Iterator[_T], ContextManager["ReadIter[_T]"], metaclass=abc.ABCMe
         """
         raise NotImplementedError()
 
-    def __enter__(self) -> "ReadIter[_T]":
-        return self
 
-    def __exit__(self, *_: Any) -> None:
-        self.close()
-
-    @abc.abstractmethod
-    def close(self) -> None:
-        raise NotImplementedError()
-
-
-class SparseRead(ContextManager["SparseRead"]):
+class SparseRead:
     """Intermediate type to choose result format when reading a sparse array.
 
     A query may not be able to return all of these formats. The concrete result
@@ -63,14 +53,4 @@ class SparseRead(ContextManager["SparseRead"]):
         raise NotImplementedError()
 
     def tables(self) -> ReadIter[pyarrow.Table]:
-        raise NotImplementedError()
-
-    def __enter__(self) -> "SparseRead":
-        return self
-
-    def __exit__(self, *_: Any) -> None:
-        self.close()
-
-    @abc.abstractmethod
-    def close(self) -> None:
         raise NotImplementedError()
