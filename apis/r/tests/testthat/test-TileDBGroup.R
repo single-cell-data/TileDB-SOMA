@@ -7,6 +7,10 @@ test_that("Basic mechanics", {
   expect_false(dir.exists(uri))
   expect_false(group$exists())
 
+  # Check errors on non-existent group
+  expect_error(group$get("foo"), "Group does not exist.")
+  expect_error(group$length(), "Group does not exist.")
+
   # Create the collection on disk
   group$create()
   expect_true(dir.exists(uri))
@@ -60,8 +64,9 @@ test_that("Basic mechanics", {
 test_that("Metadata", {
   uri <- file.path(withr::local_tempdir(), "group-metadata")
   group <- TileDBGroup$new(uri)
-  group$create()
+  expect_error(group$set_metadata(list(foo = "bar")), "Group does not exist.")
 
+  group$create()
   md <- list(baz = "qux", foo = "bar")
   group$set_metadata(md)
   expect_equivalent(group$get_metadata("foo"), "bar")

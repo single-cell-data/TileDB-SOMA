@@ -182,6 +182,8 @@ TileDBGroup <- R6::R6Class(
 
       private$open("READ")
       count <- tiledb::tiledb_group_member_count(self$object)
+      if (count == 0) return(list())
+
       members <- vector(mode = "list", length = count)
       if (count == 0) return(members)
 
