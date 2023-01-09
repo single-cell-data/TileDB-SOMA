@@ -3,7 +3,7 @@ name: TileDB-SOMA python sdist & wheels
 on:
   # Normally the smoke test only runs on merge to main.  To run it on a PR CI, comment out
   # `workflow_dispatch:` and uncomment `pull_request:`.
-  #workflow_dispatch:
+  # workflow_dispatch:
   pull_request:
   push:
     branches: [main]
@@ -61,6 +61,7 @@ jobs:
         #   run CMake build or not. Otherwise it'll keep reusing the library file built in the
         #   first iteration of cibuildwheel's outer loop, resulting in wheels with the library
         #   built for the wrong python version.
+        CIBW_PROJECT_REQUIRES_PYTHON: ">=3.7"
     - name: Upload wheels-${{ matrix.platform }}
       uses: actions/upload-artifact@v3
       with:
