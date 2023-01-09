@@ -1,7 +1,10 @@
 name: TileDB-SOMA python sdist & wheels
 
 on:
-  workflow_dispatch:
+  # Normally the smoke test only runs on merge to main.  To run it on a PR CI, comment out
+  # `workflow_dispatch:` and uncomment `pull_request:`.
+  #workflow_dispatch:
+  pull_request:
   push:
     branches: [main]
   release:
