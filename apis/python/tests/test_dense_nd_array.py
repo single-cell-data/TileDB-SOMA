@@ -79,25 +79,25 @@ def test_dense_nd_array_read_write_tensor(tmp_path, shape: Tuple[int, ...]):
     # random sample - written to entire array
     data = np.random.default_rng().standard_normal(np.prod(shape)).reshape(shape)
     coords = tuple(slice(0, dim_len) for dim_len in shape)
-    a.write_tensor(coords, pa.Tensor.from_numpy(data))
+    a.write(coords, pa.Tensor.from_numpy(data))
     del a
 
     # check multiple read paths
     b = soma.DenseNDArray(tmp_path.as_posix())
 
-    t = b.read_tensor((slice(None),) * ndim, result_order="row-major")
+    t = b.read((slice(None),) * ndim, result_order="row-major")
     assert t.equals(pa.Tensor.from_numpy(data))
 
-    t = b.read_tensor((slice(None),) * ndim, result_order="column-major")
+    t = b.read((slice(None),) * ndim, result_order="column-major")
     assert t.equals(pa.Tensor.from_numpy(data.transpose()))
 
     # write a single-value sub-array and recheck
-    b.write_tensor(
+    b.write(
         (0,) * len(shape),
         pa.Tensor.from_numpy(np.zeros((1,) * len(shape), dtype=np.float64)),
     )
     data[(0,) * len(shape)] = 0.0
-    t = b.read_tensor((slice(None),) * ndim)
+    t = b.read((slice(None),) * ndim)
     assert t.equals(pa.Tensor.from_numpy(data))
 
 
@@ -179,15 +179,13 @@ def test_dense_nd_array_slicing(tmp_path, io):
     for i in range(nr):
         for j in range(nc):
             npa[i, j] = 100 * i + j
-    a.write_tensor(
-        coords=(slice(0, nr), slice(0, nc)), values=pa.Tensor.from_numpy(npa)
-    )
+    a.write(coords=(slice(0, nr), slice(0, nc)), values=pa.Tensor.from_numpy(npa))
 
     if "throws" in io:
         with pytest.raises(io["throws"]):
-            a.read_numpy(io["coords"])
+            a.read(io["coords"]).to_numpy()
     else:
-        output = a.read_numpy(io["coords"])
+        output = a.read(io["coords"]).to_numpy()
         assert np.all(output == io["output"])
 
 
@@ -265,7 +263,7 @@ def test_dense_nd_array_indexing_errors(tmp_path, io):
     npa = np.random.default_rng().standard_normal(np.prod(shape)).reshape(shape)
 
     write_coords = tuple(slice(0, dim_len) for dim_len in shape)
-    a.write_tensor(coords=write_coords, values=pa.Tensor.from_numpy(npa))
+    a.write(coords=write_coords, values=pa.Tensor.from_numpy(npa))
 
     with pytest.raises(io["throws"]):
-        a.read_numpy(coords=read_coords)
+        a.read(coords=read_coords).to_numpy()

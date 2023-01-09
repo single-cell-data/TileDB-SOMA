@@ -140,7 +140,7 @@ class DenseNDArray(TileDBArray):
 
     is_sparse: Final = False
 
-    def read_tensor(
+    def read(
         self,
         coords: DenseNdCoordinates,
         *,
@@ -225,20 +225,7 @@ class DenseNDArray(TileDBArray):
             arrow_table.column("soma_data").to_numpy().reshape(target_shape)
         )
 
-    def read_numpy(
-        self,
-        coords: DenseNdCoordinates,
-        *,
-        result_order: ResultOrder = "row-major",
-    ) -> np.ndarray:
-        """
-        Read a user-specified dense slice of the array and return as an Numpy ``ndarray``.
-        """
-        return cast(
-            np.ndarray, self.read_tensor(coords, result_order=result_order).to_numpy()
-        )
-
-    def write_tensor(
+    def write(
         self,
         coords: DenseNdCoordinates,
         values: pa.Tensor,
@@ -258,9 +245,3 @@ class DenseNDArray(TileDBArray):
         """
         with self._tiledb_open("w") as A:
             A[coords] = values.to_numpy()
-
-    def write_numpy(self, coords: DenseNdCoordinates, values: np.ndarray) -> None:
-        """ "
-        Write a numpy ``ndarray`` to the user specified coordinates
-        """
-        self.write_tensor(coords, pa.Tensor.from_numpy(values))
