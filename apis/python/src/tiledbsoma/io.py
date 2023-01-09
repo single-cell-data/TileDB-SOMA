@@ -480,7 +480,7 @@ def _write_matrix_to_denseNDArray(
             nd_array = src_matrix
         else:
             nd_array = src_matrix.toarray()
-        soma_ndarray.write_numpy((slice(None),), nd_array)
+        soma_ndarray.write((slice(None),), pa.Tensor.from_numpy(nd_array))
         return
 
     # OR, write in chunks
@@ -522,7 +522,7 @@ def _write_matrix_to_denseNDArray(
             tensor = pa.Tensor.from_numpy(chunk)
         else:
             tensor = pa.Tensor.from_numpy(chunk.toarray())
-        soma_ndarray.write_tensor((slice(i, i2), slice(None)), tensor)
+        soma_ndarray.write((slice(i, i2), slice(None)), tensor)
 
         t2 = time.time()
         chunk_seconds = t2 - t1
@@ -595,7 +595,7 @@ def _write_matrix_to_sparseNDArray(
 
     # Write all at once?
     if not soma_ndarray._tiledb_platform_config.write_X_chunked:
-        soma_ndarray.write_table(_coo_to_table(sp.coo_matrix(src_matrix)))
+        soma_ndarray.write(_coo_to_table(sp.coo_matrix(src_matrix)))
         return
 
     # Or, write in chunks, striding across the most efficient slice axis
@@ -639,7 +639,7 @@ def _write_matrix_to_sparseNDArray(
             % (i, i2 - 1, dim_max_size, chunk_percent, chunk_coo.nnz),
         )
 
-        soma_ndarray.write_table(_coo_to_table(chunk_coo, stride_axis, i))
+        soma_ndarray.write(_coo_to_table(chunk_coo, stride_axis, i))
 
         t2 = time.time()
         chunk_seconds = t2 - t1
@@ -770,11 +770,11 @@ def to_anndata(
 
     measurement = experiment.ms[measurement_name]
 
-    obs_df = experiment.obs.read_as_pandas_all()
+    obs_df = experiment.obs.read().concat().to_pandas()
     obs_df.drop([SOMA_JOINID], axis=1, inplace=True)
     obs_df.set_index("obs_id", inplace=True)
 
-    var_df = measurement.var.read_as_pandas_all()
+    var_df = measurement.var.read().concat().to_pandas()
     var_df.drop([SOMA_JOINID], axis=1, inplace=True)
     var_df.set_index("var_id", inplace=True)
 
@@ -786,10 +786,10 @@ def to_anndata(
     assert X_data is not None
     X_dtype = None  # some datasets have no X
     if isinstance(X_data, DenseNDArray):
-        X_ndarray = X_data.read_numpy((slice(None), slice(None)))
+        X_ndarray = X_data.read((slice(None), slice(None))).to_numpy()
         X_dtype = X_ndarray.dtype
     elif isinstance(X_data, SparseNDArray):
-        X_mat = X_data.read_as_pandas_all()  # TODO: CSR/CSC options ...
+        X_mat = X_data.read().tables().concat().to_pandas()  # TODO: CSR/CSC options ...
         X_csr = util_scipy.csr_from_tiledb_df(X_mat, nobs, nvar)
         X_dtype = X_csr.dtype
     else:
@@ -800,7 +800,7 @@ def to_anndata(
         for key in measurement.obsm.keys():
             shape = measurement.obsm[key].shape
             assert len(shape) == 2
-            mat = measurement.obsm[key].read_numpy((slice(None),) * len(shape))
+            mat = measurement.obsm[key].read((slice(None),) * len(shape)).to_numpy()
             # The spelling `sp.csr_array` is more idiomatic but doesn't exist until Python 3.8
             obsm[key] = sp.csr_matrix(mat)
 
@@ -809,20 +809,20 @@ def to_anndata(
         for key in measurement.varm.keys():
             shape = measurement.varm[key].shape
             assert len(shape) == 2
-            mat = measurement.varm[key].read_numpy((slice(None),) * len(shape))
+            mat = measurement.varm[key].read((slice(None),) * len(shape)).to_numpy()
             # The spelling `sp.csr_array` is more idiomatic but doesn't exist until Python 3.8
             varm[key] = sp.csr_matrix(mat)
 
     obsp = {}
     if "obsp" in measurement and measurement.obsp.exists():
         for key in measurement.obsp.keys():
-            mat = measurement.obsp[key].read_as_pandas_all()
+            mat = measurement.obsp[key].read().tables().concat().to_pandas()
             obsp[key] = util_scipy.csr_from_tiledb_df(mat, nobs, nobs)
 
     varp = {}
     if "varp" in measurement and measurement.varp.exists():
         for key in measurement.varp.keys():
-            mat = measurement.varp[key].read_as_pandas_all()
+            mat = measurement.varp[key].read().tables().concat().to_pandas()
             varp[key] = util_scipy.csr_from_tiledb_df(mat, nvar, nvar)
 
     anndata = ad.AnnData(

@@ -15,123 +15,109 @@
 
 # type: ignore
 
-import os
+import pathlib
 import shutil
 import subprocess
 import sys
 
-from setuptools import Extension, find_packages, setup
-from setuptools.command.bdist_egg import bdist_egg
-from setuptools.command.build_ext import build_ext
-from wheel.bdist_wheel import bdist_wheel
+import setuptools
+import wheel.bdist_wheel
 
-sys.path.insert(0, os.path.dirname(__file__))
+this_dir = pathlib.Path(__file__).parent.absolute()
+sys.path.insert(0, str(this_dir))
 import version  # noqa E402
 
-MODULE_NAME = "tiledbsoma"
-EXT_NAME = "tiledbsoma.libtiledbsoma"
 
-
-def find_or_build(setuptools_cmd):
+def find_or_build_package_data():
     # Setup paths
-    python_dir = os.path.abspath(os.path.dirname(__file__))
-    src_dir = f"{python_dir}/src/{MODULE_NAME}"
-    if os.path.islink(os.path.join(python_dir, "dist_links/scripts")):
+    scripts_dir = this_dir / "dist_links" / "scripts"
+    if scripts_dir.is_symlink():
         # in git source tree
-        scripts_dir = f"{python_dir}/../../scripts"
-        lib_dir = f"{python_dir}/../../dist/lib"
+        libtiledbsoma_dir = this_dir.parent.parent
     else:
         # in extracted sdist, with libtiledbsoma copied into dist_links/
-        scripts_dir = f"{python_dir}/dist_links/scripts"
-        lib_dir = f"{python_dir}/dist_links/dist/lib"
+        libtiledbsoma_dir = this_dir / "dist_links"
 
     # Call the build script if the install library directory does not exist
-    if not os.path.exists(lib_dir):
+    lib_dir = libtiledbsoma_dir / "dist" / "lib"
+    if not lib_dir.exists():
         subprocess.run("bash bld", cwd=scripts_dir, shell=True)
 
     # Copy native libs into the package dir so they can be found by package_data
     package_data = []
-    for obj in [os.path.join(lib_dir, f) for f in os.listdir(lib_dir)]:
-        # skip static library
-        if not obj.endswith(".a"):
-            print(f"  copying file {obj} to {src_dir}")
-            shutil.copy(obj, src_dir)
-            package_data.append(os.path.basename(obj))
-
-    # Install shared libraries inside the Python module via package_data.
-    print(f"  adding to package_data: {package_data}")
-    setuptools_cmd.distribution.package_data.update({MODULE_NAME: package_data})
+    src_dir = this_dir / "src" / "tiledbsoma"
+    for f in lib_dir.glob("*"):
+        if f.suffix != ".a":  # skip static library
+            print(f"  copying file {f} to {src_dir}")
+            shutil.copy(f, src_dir)
+            package_data.append(f.name)
+    return package_data
 
 
-def get_ext_modules():
-    return [CMakeExtension(EXT_NAME)]
-
-
-class CMakeExtension(Extension):
-    def __init__(self, name):
-        Extension.__init__(self, name, sources=[])
-
-
-class BuildExtCmd(build_ext):
+class bdist_wheel(wheel.bdist_wheel.bdist_wheel):
     def run(self):
-        find_or_build(self)
+        package_data = find_or_build_package_data()
+        # Install shared libraries inside the Python module via package_data
+        print(f"  adding to package_data: {package_data}")
+        self.distribution.package_data["tiledbsoma"] = package_data
+        super().run()
 
 
-class BdistEggCmd(bdist_egg):
-    def run(self):
-        find_or_build(self)
-        bdist_egg.run(self)
-
-
-class BdistWheelCmd(bdist_wheel):
-    def run(self):
-        find_or_build(self)
-        bdist_wheel.run(self)
-
-
-if __name__ == "__main__":
-    setup(
-        name=MODULE_NAME,
-        description="Python API for efficient storage and retrieval of single-cell data using TileDB",
-        author="TileDB, Inc.",
-        author_email="help@tiledb.io",
-        maintainer="TileDB, Inc.",
-        maintainer_email="help@tiledb.io",
-        url="https://github.com/single-cell-data/TileDB-SOMA/apis/python",
-        license="MIT",
-        classifiers=[
-            "Intended Audience :: Developers",
-            "Intended Audience :: Information Technology",
-            "Intended Audience :: Science/Research",
-            "License :: OSI Approved :: MIT License",
-            "Programming Language :: Python",
-            "Topic :: Scientific/Engineering :: Bio-Informatics",
-            "Operating System :: Unix",
-            "Operating System :: POSIX :: Linux",
-            "Operating System :: MacOS :: MacOS X",
-            "Programming Language :: Python :: 3.7",
-            "Programming Language :: Python :: 3.8",
-            "Programming Language :: Python :: 3.9",
-        ],
-        package_dir={"": "src"},
-        packages=find_packages("src"),
-        zip_safe=False,
-        install_requires=[
-            "anndata",
-            "numpy",
-            "pandas",
-            "pyarrow",
-            "scanpy",
-            "scipy",
-            "tiledb>=0.19.0",
-            "typing-extensions",  # Note "-" even though `import typing_extensions`
-        ],
-        python_requires=">=3.7",
-        ext_modules=get_ext_modules(),
-        cmdclass={
-            "build_ext": BuildExtCmd,
-            "bdist_egg": BdistEggCmd,
-            "bdist_wheel": BdistWheelCmd,
-        },
-        version=version.getVersion(),
-    )
+# ----------------------------------------------------------------
+# Don't use `if __name__ == "__main__":` as the `python_requires` must
+# be at top level, outside any if-block
+# https://github.com/pypa/cibuildwheel/blob/7c4bbf8cb31d856a0fe547faf8edf165cd48ce74/cibuildwheel/projectfiles.py#L41-L46
+setuptools.setup(
+    name="tiledbsoma",
+    description="Python API for efficient storage and retrieval of single-cell data using TileDB",
+    long_description=open("README.md").read(),
+    long_description_content_type="text/markdown",
+    author="TileDB, Inc.",
+    author_email="help@tiledb.io",
+    maintainer="TileDB, Inc.",
+    maintainer_email="help@tiledb.io",
+    url="https://github.com/single-cell-data/TileDB-SOMA/apis/python",
+    license="MIT",
+    classifiers=[
+        "Intended Audience :: Developers",
+        "Intended Audience :: Information Technology",
+        "Intended Audience :: Science/Research",
+        "License :: OSI Approved :: MIT License",
+        "Topic :: Scientific/Engineering :: Bio-Informatics",
+        "Operating System :: Unix",
+        "Operating System :: POSIX :: Linux",
+        "Operating System :: MacOS :: MacOS X",
+        "Programming Language :: Python",
+        "Programming Language :: Python :: 3.7",
+        "Programming Language :: Python :: 3.8",
+        "Programming Language :: Python :: 3.9",
+        "Programming Language :: Python :: 3.10",
+    ],
+    package_dir={"": "src"},
+    packages=setuptools.find_packages("src"),
+    # This next is necessary to avoid cibuildwheel thinking we want a python-only wheel:
+    ext_modules=[setuptools.Extension("tiledbsoma.libtiledbsoma", sources=[])],
+    zip_safe=False,
+    install_requires=[
+        "anndata",
+        "numpy",
+        "pandas",
+        "pyarrow",
+        "scanpy",
+        "scipy",
+        "tiledb>=0.19.0",
+        "typing-extensions",  # Note "-" even though `import typing_extensions`
+    ],
+    extras_require={
+        "dev": [
+            "black",
+            "flake8-bugbear",
+            "isort",
+            "pytest",
+            "typeguard",
+        ]
+    },
+    python_requires=">=3.7",
+    cmdclass={"bdist_wheel": bdist_wheel},
+    version=version.getVersion(),
+)

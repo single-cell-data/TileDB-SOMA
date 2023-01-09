@@ -55,13 +55,10 @@ def test_import_anndata(adata, ingest_modes):
             have_ingested = True
 
         with tiledb.Group(output_path) as G:
-            assert (
-                G.meta[tiledbsoma.util.SOMA_OBJECT_TYPE_METADATA_KEY]
-                == "SOMAExperiment"
-            )
+            assert G.meta[tiledbsoma.util.SOMA_OBJECT_TYPE_METADATA_KEY] == "SOMAExperiment"
 
         # Check obs
-        obs = exp.obs.read_as_pandas_all()
+        obs = exp.obs.read().concat().to_pandas()
         assert sorted(obs.columns.to_list()) == sorted(
             orig.obs_keys() + ["soma_joinid", "obs_id"]
         )
@@ -69,130 +66,75 @@ def test_import_anndata(adata, ingest_modes):
             exp.obs.metadata.get(tiledbsoma.util.SOMA_OBJECT_TYPE_METADATA_KEY)
             == "SOMADataFrame"
         )
-        if have_ingested:
-            assert sorted(obs["obs_id"]) == sorted(list(orig.obs_names))
-        else:
-            assert sorted(obs["obs_id"]) == []
+        assert sorted(obs["obs_id"]) == sorted(list(orig.obs_names))
         # Convenience accessor
         assert sorted(exp.obs.keys()) == sorted(
             list(orig.obs.keys()) + ["soma_joinid", "obs_id"]
         )
 
         # Check var
-        var = exp.ms["RNA"].var.read_as_pandas_all()
+        var = exp.ms["RNA"].var.read().concat().to_pandas()
         assert sorted(var.columns.to_list()) == sorted(
             orig.var_keys() + ["soma_joinid", "var_id"]
         )
         assert (
-            exp.ms["RNA"].var.metadata.get(
-                tiledbsoma.util.SOMA_OBJECT_TYPE_METADATA_KEY
-            )
+            exp.ms["RNA"].var.metadata.get(tiledbsoma.util.SOMA_OBJECT_TYPE_METADATA_KEY)
             == "SOMADataFrame"
         )
-        if have_ingested:
-            assert sorted(var["var_id"]) == sorted(list(orig.var_names))
-        else:
-            assert sorted(var["var_id"]) == []
+        assert sorted(var["var_id"]) == sorted(list(orig.var_names))
         # Convenience accessor
         assert sorted(exp.ms["RNA"].var.keys()) == sorted(
             list(orig.var.keys()) + ["soma_joinid", "var_id"]
         )
 
         # Check X/data (dense)
-        if have_ingested:
-            X = exp.ms["RNA"].X["data"].read_tensor(coords=(slice(None), slice(None)))
-            assert X.shape == orig.X.shape
-            assert (
-                exp.ms["RNA"]
-                .X["data"]
-                .metadata.get(tiledbsoma.util.SOMA_OBJECT_TYPE_METADATA_KEY)
-                == "SOMADenseNDArray"
-            )
-        else:
-            with pytest.raises(ValueError):
-                X = (
-                    exp.ms["RNA"]
-                    .X["data"]
-                    .read_tensor(coords=(slice(None), slice(None)))
-                )
+        X = exp.ms["RNA"].X["data"].read(coords=(slice(None), slice(None)))
+        assert X.shape == orig.X.shape
+        assert (
+            exp.ms["RNA"]
+            .X["data"]
+            .metadata.get(tiledbsoma.util.SOMA_OBJECT_TYPE_METADATA_KEY)
+            == "SOMADenseNDArray"
+        )
 
         # Check raw/X/data (sparse)
-        if have_ingested:
-            X = next(
-                exp.ms["raw"]
-                .X["data"]
-                .read_sparse_tensor(coords=(slice(None), slice(None)), format="coo")
-            )
-            assert X.shape == orig.raw.X.shape
-            assert (
-                exp.ms["raw"]
-                .X["data"]
-                .metadata.get(tiledbsoma.util.SOMA_OBJECT_TYPE_METADATA_KEY)
-                == "SOMASparseNDArray"
-            )
-        else:
-            with pytest.raises(StopIteration):
-                X = next(
-                    exp.ms["raw"]
-                    .X["data"]
-                    .read_sparse_tensor(coords=(slice(None), slice(None)), format="coo")
-                )
+        X = next(exp.ms["raw"].X["data"].read(coords=(slice(None), slice(None))).coos())
+        assert X.shape == orig.raw.X.shape
+        assert (
+            exp.ms["raw"]
+            .X["data"]
+            .metadata.get(tiledbsoma.util.SOMA_OBJECT_TYPE_METADATA_KEY)
+            == "SOMASparseNDArray"
+        )
+
+        # Check some annotation matrices
+        # Note: pbmc-small doesn't have varp.
 
         obsm = exp.ms["RNA"].obsm
         assert sorted(obsm.keys()) == sorted(orig.obsm.keys())
         for key in list(orig.obsm.keys()):
-            if have_ingested:
-                matrix = obsm[key].read_tensor(coords=(slice(None), slice(None)))
-                assert matrix.shape == orig.obsm[key].shape
-                assert (
-                    obsm[key].metadata.get(
-                        tiledbsoma.util.SOMA_OBJECT_TYPE_METADATA_KEY
-                    )
-                    == "SOMADenseNDArray"
-                )
-            else:
-                with pytest.raises(ValueError):
-                    matrix = obsm[key].read_tensor(coords=(slice(None), slice(None)))
+            matrix = obsm[key].read(coords=(slice(None), slice(None)))
+            assert matrix.shape == orig.obsm[key].shape
+            assert (
+                obsm[key].metadata.get(tiledbsoma.util.SOMA_OBJECT_TYPE_METADATA_KEY)
+                == "SOMADenseNDArray"
+            )
 
         varm = exp.ms["RNA"].varm
         assert sorted(varm.keys()) == sorted(orig.varm.keys())
         for key in list(orig.varm.keys()):
-            if have_ingested:
-                matrix = varm[key].read_tensor(coords=(slice(None), slice(None)))
-                assert matrix.shape == orig.varm[key].shape
-                assert (
-                    varm[key].metadata.get(
-                        tiledbsoma.util.SOMA_OBJECT_TYPE_METADATA_KEY
-                    )
-                    == "SOMADenseNDArray"
-                )
-            else:
-                with pytest.raises(ValueError):
-                    matrix = varm[key].read_tensor(coords=(slice(None), slice(None)))
+            matrix = varm[key].read(coords=(slice(None), slice(None)))
+            assert matrix.shape == orig.varm[key].shape
+            assert (
+                varm[key].metadata.get(tiledbsoma.util.SOMA_OBJECT_TYPE_METADATA_KEY)
+                == "SOMADenseNDArray"
+            )
 
         obsp = exp.ms["RNA"].obsp
         assert sorted(obsp.keys()) == sorted(orig.obsp.keys())
         for key in list(orig.obsp.keys()):
-            if have_ingested:
-                matrix = next(
-                    obsp[key].read_sparse_tensor(
-                        coords=(slice(None), slice(None)), format="coo"
-                    )
-                )
-                assert matrix.shape == orig.obsp[key].shape
-                assert (
-                    obsp[key].metadata.get(
-                        tiledbsoma.util.SOMA_OBJECT_TYPE_METADATA_KEY
-                    )
-                    == "SOMASparseNDArray"
-                )
-            else:
-                with pytest.raises(StopIteration):
-                    matrix = next(
-                        obsp[key].read_sparse_tensor(
-                            coords=(slice(None), slice(None)), format="coo"
-                        )
-                    )
+            matrix = next(obsp[key].read(coords=(slice(None), slice(None))).coos())
+            assert matrix.shape == orig.obsp[key].shape
 
         # pbmc-small has no varp
 
