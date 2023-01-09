@@ -26,6 +26,7 @@ jobs:
         path: apis/python/dist/
 
   wheels:
+    # Note: tries all supported Python versions as specified in apis/python/pyproject.toml
     name: Build wheels on ${{ matrix.os }}
     needs: sdist
     runs-on: ${{ matrix.os }}
