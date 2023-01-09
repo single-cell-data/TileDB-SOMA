@@ -157,7 +157,7 @@ class DataFrame(TileDBArray):
         """
         return self._tiledb_array_keys()
 
-    def get_index_column_names(self) -> Sequence[str]:
+    def index_column_names(self) -> Sequence[str]:
         """
         Return index (dimension) column names.
         """
@@ -314,7 +314,7 @@ class DataFrame(TileDBArray):
         """
         dim_cols_list = []
         attr_cols_map = {}
-        dim_names_set = self.get_index_column_names()
+        dim_names_set = self.index_column_names()
         n = None
 
         for name in values.schema.names:

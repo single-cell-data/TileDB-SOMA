@@ -93,7 +93,7 @@ def test_dataframe_with_float_dim(tmp_path, arrow_schema):
     sidf = soma.DataFrame(uri=tmp_path.as_posix())
     asch = arrow_schema()
     sidf.create(schema=asch, index_column_names=("bar",))
-    assert sidf.get_index_column_names() == ("bar",)
+    assert sidf.index_column_names() == ("bar",)
 
 
 @pytest.fixture
@@ -644,7 +644,7 @@ def test_read_indexing(tmp_path, io):
     )
     sidf = soma.DataFrame(uri=sidf.uri)  # reopen
     assert sidf.exists()
-    assert list(sidf.get_index_column_names()) == io["index_column_names"]
+    assert list(sidf.index_column_names()) == io["index_column_names"]
 
     read_kwargs = {"column_names": ["A"]}
     read_kwargs.update({k: io[k] for k in ("ids", "value_filter") if k in io})
