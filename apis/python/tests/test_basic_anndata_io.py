@@ -46,27 +46,38 @@ def test_import_anndata(adata, ingest_modes):
     tempdir = tempfile.TemporaryDirectory()
     output_path = tempdir.name
     orig = adata
+    metakey = tiledbsoma.util.SOMA_OBJECT_TYPE_METADATA_KEY  # keystroke-saver
+    all2d = (slice(None), slice(None))  # keystroke-saver
+
+    print()
+    print("================================================================")
+    print("INGEST_MODES", ingest_modes)
 
     for ingest_mode in ingest_modes:
+        print()
+        print("----------------------------------------------------------------")
+        print("INGEST_MODE", ingest_mode)
 
         exp = tiledbsoma.Experiment(output_path)
         tiledbsoma.io.from_anndata(exp, orig, "RNA", ingest_mode=ingest_mode)
         if ingest_mode != "schema_only":
             have_ingested = True
+        print("HAVE_INGESTED", have_ingested)
 
-        with tiledb.Group(output_path) as G:
-            assert G.meta[tiledbsoma.util.SOMA_OBJECT_TYPE_METADATA_KEY] == "SOMAExperiment"
+        assert exp.metadata[metakey] == "SOMAExperiment"
 
         # Check obs
         obs = exp.obs.read().concat().to_pandas()
         assert sorted(obs.columns.to_list()) == sorted(
             orig.obs_keys() + ["soma_joinid", "obs_id"]
         )
-        assert (
-            exp.obs.metadata.get(tiledbsoma.util.SOMA_OBJECT_TYPE_METADATA_KEY)
-            == "SOMADataFrame"
-        )
-        assert sorted(obs["obs_id"]) == sorted(list(orig.obs_names))
+        assert exp.obs.metadata.get(metakey) == "SOMADataFrame"
+        print("OBS")
+        print(obs["obs_id"])
+        if have_ingested:
+            assert sorted(obs["obs_id"]) == sorted(list(orig.obs_names))
+        else:
+            assert sorted(obs["obs_id"]) == []
         # Convenience accessor
         assert sorted(exp.obs.keys()) == sorted(
             list(orig.obs.keys()) + ["soma_joinid", "obs_id"]
@@ -77,68 +88,69 @@ def test_import_anndata(adata, ingest_modes):
         assert sorted(var.columns.to_list()) == sorted(
             orig.var_keys() + ["soma_joinid", "var_id"]
         )
-        assert (
-            exp.ms["RNA"].var.metadata.get(tiledbsoma.util.SOMA_OBJECT_TYPE_METADATA_KEY)
-            == "SOMADataFrame"
-        )
-        assert sorted(var["var_id"]) == sorted(list(orig.var_names))
+        print("VAR")
+        print(var["var_id"])
+        assert exp.ms["RNA"].var.metadata.get(metakey) == "SOMADataFrame"
+        if have_ingested:
+            assert sorted(var["var_id"]) == sorted(list(orig.var_names))
+        else:
+            assert sorted(var["var_id"]) == []
         # Convenience accessor
         assert sorted(exp.ms["RNA"].var.keys()) == sorted(
             list(orig.var.keys()) + ["soma_joinid", "var_id"]
         )
 
         # Check X/data (dense)
-        X = exp.ms["RNA"].X["data"].read(coords=(slice(None), slice(None)))
-        assert X.shape == orig.X.shape
-        assert (
-            exp.ms["RNA"]
-            .X["data"]
-            .metadata.get(tiledbsoma.util.SOMA_OBJECT_TYPE_METADATA_KEY)
-            == "SOMADenseNDArray"
-        )
+        assert exp.ms["RNA"].X["data"].metadata.get(metakey) == "SOMADenseNDArray"
+        if have_ingested:
+            matrix = exp.ms["RNA"].X["data"].read(coords=all2d)
+            assert matrix.shape == orig.X.shape
+        else:
+            with pytest.raises(ValueError):
+                exp.ms["RNA"].X["data"].read(coords=all2d)
 
         # Check raw/X/data (sparse)
-        X = next(exp.ms["raw"].X["data"].read(coords=(slice(None), slice(None))).coos())
-        assert X.shape == orig.raw.X.shape
-        assert (
-            exp.ms["raw"]
-            .X["data"]
-            .metadata.get(tiledbsoma.util.SOMA_OBJECT_TYPE_METADATA_KEY)
-            == "SOMASparseNDArray"
-        )
+        assert exp.ms["raw"].X["data"].metadata.get(metakey) == "SOMASparseNDArray"
+        matrix = exp.ms["raw"].X["data"].read(coords=all2d).coos().concat()
+        print("RAW/X/DATA SHAPE", matrix.shape)
+        assert matrix.shape == orig.raw.X.shape
 
         # Check some annotation matrices
-        # Note: pbmc-small doesn't have varp.
 
         obsm = exp.ms["RNA"].obsm
         assert sorted(obsm.keys()) == sorted(orig.obsm.keys())
         for key in list(orig.obsm.keys()):
-            matrix = obsm[key].read(coords=(slice(None), slice(None)))
-            assert matrix.shape == orig.obsm[key].shape
-            assert (
-                obsm[key].metadata.get(tiledbsoma.util.SOMA_OBJECT_TYPE_METADATA_KEY)
-                == "SOMADenseNDArray"
-            )
+            assert obsm[key].metadata.get(metakey) == "SOMADenseNDArray"
+            if have_ingested:
+                matrix = obsm[key].read(coords=all2d)
+                assert matrix.shape == orig.obsm[key].shape
+            else:
+                with pytest.raises(ValueError):
+                    matrix = obsm[key].read(coords=all2d)
 
         varm = exp.ms["RNA"].varm
         assert sorted(varm.keys()) == sorted(orig.varm.keys())
         for key in list(orig.varm.keys()):
-            matrix = varm[key].read(coords=(slice(None), slice(None)))
-            assert matrix.shape == orig.varm[key].shape
-            assert (
-                varm[key].metadata.get(tiledbsoma.util.SOMA_OBJECT_TYPE_METADATA_KEY)
-                == "SOMADenseNDArray"
-            )
+            assert varm[key].metadata.get(metakey) == "SOMADenseNDArray"
+            if have_ingested:
+                matrix = varm[key].read(coords=all2d)
+                assert matrix.shape == orig.varm[key].shape
+            else:
+                with pytest.raises(ValueError):
+                    matrix = varm[key].read(coords=all2d)
 
         obsp = exp.ms["RNA"].obsp
         assert sorted(obsp.keys()) == sorted(orig.obsp.keys())
         for key in list(orig.obsp.keys()):
-            matrix = next(obsp[key].read(coords=(slice(None), slice(None))).coos())
+            assert obsp[key].metadata.get(metakey) == "SOMASparseNDArray"
+            matrix = obsp[key].read(coords=all2d).coos().concat()
             assert matrix.shape == orig.obsp[key].shape
 
         # pbmc-small has no varp
 
         tempdir.cleanup()
+
+    print()
 
 
 def _get_fragment_count(array_uri):
