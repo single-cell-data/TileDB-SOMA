@@ -14,5 +14,21 @@
 #' @export
 SOMAExperiment <- R6::R6Class(
   classname = "SOMAExperiment",
-  inherit = SOMACollectionBase
+  inherit = SOMACollectionBase,
+
+  active = list(
+    #' @field Primary annotations on the observation axis. The contents of the
+    #' `soma_joinid` column define the observation index domain (AKA `obs_id`).
+    #' All observations for the Experiment must be defined in this dataframe.
+    obs = function(value) {
+      if (missing(value)) {
+        self$get("obs")
+      } else {
+        stopifnot(
+          "obs must be a 'SOMADataFrame'" = inherits(value, "SOMADataFrame")
+        )
+        self$set(value, name = "obs")
+      }
+    }
+  )
 )
