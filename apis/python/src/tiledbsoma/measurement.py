@@ -69,6 +69,7 @@ class Measurement(CollectionBase[TileDBObject]):
             ctx=ctx,
         )
 
+    # Inherited from somacore
     soma_type: Final = "SOMAMeasurement"
 
     def create(self) -> "Measurement":

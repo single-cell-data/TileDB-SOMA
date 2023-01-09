@@ -1,10 +1,11 @@
 import collections.abc
-from typing import Any, Optional, Sequence, Tuple, TypeVar, Union, cast
+from typing import Any, Mapping, Optional, Sequence, Tuple, TypeVar, Union, cast
 
 import numpy as np
 import pyarrow as pa
+import somacore
 import tiledb
-from typing_extensions import Final, get_args
+from typing_extensions import get_args
 
 # This package's pybind11 code
 import tiledbsoma.libtiledbsoma as clib
@@ -21,7 +22,7 @@ from .util_iter import TableReadIter
 Slice = TypeVar("Slice", bound=Sequence[int])
 
 
-class DataFrame(TileDBArray):
+class DataFrame(TileDBArray, somacore.DataFrame):
     """
     Represents ``obs``, ``var``, and others.
 
@@ -45,7 +46,8 @@ class DataFrame(TileDBArray):
         self._index_column_names = ()
         self._is_sparse = None
 
-    soma_type: Final = "SOMADataFrame"
+    # Inherited from somacore
+    # soma_type: Final = "SOMADataFrame"
 
     def create(
         self,
@@ -157,7 +159,7 @@ class DataFrame(TileDBArray):
         """
         return self._tiledb_array_keys()
 
-    def index_column_names(self) -> Sequence[str]:
+    def index_column_names(self) -> Tuple[str, ...]:
         """
         Return index (dimension) column names.
         """
@@ -193,12 +195,12 @@ class DataFrame(TileDBArray):
 
     def read(
         self,
-        *,
         ids: Optional[SparseDataFrameCoordinates] = None,
-        value_filter: Optional[str] = None,
         column_names: Optional[Sequence[str]] = None,
-        result_order: Optional[ResultOrder] = None,
-        # TODO: more arguments
+        *,
+        result_order: Optional[ResultOrder] = "auto",
+        value_filter: Optional[str] = None,
+        **_: Any,  # TODO: rest of parameters
     ) -> TableReadIter:
         """
         Read a user-defined subset of data, addressed by the dataframe indexing columns, optionally filtered, and return results as one or more Arrow.Table.
@@ -306,12 +308,15 @@ class DataFrame(TileDBArray):
         sr.submit()
         return TableReadIter(sr)
 
-    def write(self, values: pa.Table) -> None:
+    def write(
+        self, values: pa.Table, platform_config: Optional[Mapping[str, Any]] = None
+    ) -> None:
         """
         Write an Arrow.Table to the persistent object. As duplicate index values are not allowed, index values already present in the object are overwritten and new index values are added.
 
         :param values: An Arrow.Table containing all columns, including the index columns. The schema for the values must match the schema for the ``DataFrame``.
         """
+        del platform_config  # unused
         dim_cols_list = []
         attr_cols_map = {}
         dim_names_set = self.index_column_names()

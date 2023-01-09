@@ -77,6 +77,10 @@ def test_import_anndata(adata, ingest_modes):
         assert exp.ms.metadata.get(metakey) == "SOMACollection"
         assert exp.ms["RNA"].metadata.get(metakey) == "SOMAMeasurement"
 
+        # Check ms
+        assert exp.ms.metadata.get(metakey) == "SOMACollection"
+        assert exp.ms["RNA"].metadata.get(metakey) == "SOMAMeasurement"
+
         # Check var
         var = exp.ms["RNA"].var.read().concat().to_pandas()
         assert sorted(var.columns.to_list()) == sorted(
@@ -91,6 +95,9 @@ def test_import_anndata(adata, ingest_modes):
         assert sorted(exp.ms["RNA"].var.keys()) == sorted(
             list(orig.var.keys()) + ["soma_joinid", "var_id"]
         )
+
+        # Check Xs
+        assert exp.ms["RNA"].X.metadata.get(metakey) == "SOMACollection"
 
         # Check Xs
         assert exp.ms["RNA"].X.metadata.get(metakey) == "SOMACollection"

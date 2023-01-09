@@ -7,7 +7,6 @@ from typing import (
     Dict,
     Iterator,
     List,
-    MutableMapping,
     Optional,
     Tuple,
     Type,
@@ -16,8 +15,8 @@ from typing import (
     cast,
 )
 
+import somacore
 import tiledb
-from typing_extensions import Final
 
 from .exception import DoesNotExistError, SOMAError
 from .tiledb_object import TileDBObject
@@ -56,7 +55,7 @@ class _CachedElement:
     soma: Optional[TileDBObject] = None
 
 
-class CollectionBase(TileDBObject, MutableMapping[str, CollectionElementType]):
+class CollectionBase(TileDBObject, somacore.Collection[CollectionElementType]):
     """
     Contains a key-value mapping where the keys are string names and the values
     are any SOMA-defined foundational or composed type, including ``Collection``,
@@ -391,4 +390,6 @@ class Collection(CollectionBase[TileDBObject]):
     A persistent collection of SOMA objects, mapping string keys to any SOMA object.
     """
 
-    soma_type: Final = "SOMACollection"
+    pass
+    # Inherited from somacore
+    # soma_type: Final = "SOMACollection"
