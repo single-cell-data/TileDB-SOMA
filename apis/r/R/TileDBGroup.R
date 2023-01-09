@@ -71,7 +71,7 @@ TileDBGroup <- R6::R6Class(
       if (is_empty(private$member_cache)) private$update_member_cache()
       member <- private$member_cache[[name]]
       if (is.null(member)) {
-        stop(sprintf("No member named '%s' found", name))
+        stop(sprintf("No member named '%s' found", name), call. = FALSE)
       }
       private$construct_member(member$uri, member$type)
     },
@@ -212,7 +212,7 @@ TileDBGroup <- R6::R6Class(
       constructor <- switch(type,
         ARRAY = TileDBArray$new,
         GROUP = TileDBGroup$new,
-        stop(sprintf("Unknown member type: %s", type))
+        stop(sprintf("Unknown member type: %s", type), call. = FALSE)
       )
       constructor(uri, ctx = self$ctx, platform_config = self$platform_config)
     },

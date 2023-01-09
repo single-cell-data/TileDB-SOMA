@@ -172,7 +172,7 @@ TileDBArray <- R6::R6Class(
       } else if (is.null(attr_filter)) {
           return(NULL)
       } else {
-          stop("'attr_filter' is not a valid expression")
+          stop("'attr_filter' is not a valid expression", call. = FALSE)
       }
 
       tiledb::query_condition(private$tiledb_object) <- do.call(
