@@ -126,7 +126,7 @@ class ExperimentAxisQuery(ContextManager["ExperimentAxisQuery"]):
     def obs(
         self, *, column_names: Optional[Sequence[str]] = None
     ) -> somacore.ReadIter[pa.Table]:
-        """Return obs as an Arrow table."""
+        """Return obs as an Arrow table iterator."""
         query = self._query["obs"]
         return self.experiment.obs.read(
             ids=query.coords,
@@ -137,7 +137,7 @@ class ExperimentAxisQuery(ContextManager["ExperimentAxisQuery"]):
     def var(
         self, *, column_names: Optional[Sequence[str]] = None
     ) -> somacore.ReadIter[pa.Table]:
-        """Return obs as an Arrow table."""
+        """Return obs as an Arrow table iterator."""
         query = self._query["var"]
         return self.experiment.ms[self.ms].var.read(
             ids=query.coords,
@@ -146,11 +146,11 @@ class ExperimentAxisQuery(ContextManager["ExperimentAxisQuery"]):
         )
 
     def obs_joinids(self) -> pa.Array:
-        """Return obs soma_joinids as an Arrow array"""
+        """Return obs soma_joinids as an Arrow array."""
         return self._read_axis_joinids("obs", self.experiment.obs)
 
     def var_joinids(self) -> pa.Array:
-        """Return var soma_joinids as an Arrow array"""
+        """Return var soma_joinids as an Arrow array."""
         return self._read_axis_joinids("var", self.experiment.ms[self.ms].var)
 
     @property
@@ -165,7 +165,7 @@ class ExperimentAxisQuery(ContextManager["ExperimentAxisQuery"]):
 
     def X(self, layer: str) -> SparseNDArrayRead:
         """
-        Return an X layer as an iterator of Arrow Tables.
+        Return an X layer as SparseNDArrayRead.
 
         Parameters
         ----------
@@ -178,7 +178,7 @@ class ExperimentAxisQuery(ContextManager["ExperimentAxisQuery"]):
         ...     "RNA",
         ...     obs_query=AxisQuery(value_filter='tissue == "lung"')
         ... ) as query:
-        ...     X_result = pa.concat_tables(query.X("raw"))
+        ...     X_result = query.X("raw").tables().concat()
         >>> X_result
         pyarrow.Table
         soma_dim_0: int64
@@ -201,9 +201,11 @@ class ExperimentAxisQuery(ContextManager["ExperimentAxisQuery"]):
         return X.read((self._joinids["obs"], self._joinids["var"]))
 
     def obsp(self, layer: str) -> SparseNDArrayRead:
+        """Return an ``obsp`` layer as a SparseNDArrayRead"""
         return self._axisp_inner("obs", layer)
 
     def varp(self, layer: str) -> SparseNDArrayRead:
+        """Return an ``varp`` layer as a SparseNDArrayRead"""
         return self._axisp_inner("var", layer)
 
     def _read_axis_dataframe(
