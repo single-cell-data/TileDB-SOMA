@@ -67,6 +67,7 @@ class TileDBObject(ABC):
 
         return tiledb.Ctx(cfg)
 
+    @property
     def metadata(self) -> MetadataMapping:
         """Metadata accessor"""
         return self._metadata

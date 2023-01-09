@@ -65,7 +65,7 @@ def test_import_anndata(adata):
         orig.obs_keys() + ["soma_joinid", "obs_id"]
     )
     assert (
-        exp.obs.metadata().get(tiledbsoma.util.SOMA_OBJECT_TYPE_METADATA_KEY)
+        exp.obs.metadata.get(tiledbsoma.util.SOMA_OBJECT_TYPE_METADATA_KEY)
         == "SOMADataFrame"
     )
     assert sorted(obs["obs_id"]) == sorted(list(orig.obs_names))
@@ -80,7 +80,7 @@ def test_import_anndata(adata):
         orig.var_keys() + ["soma_joinid", "var_id"]
     )
     assert (
-        exp.ms["RNA"].var.metadata().get(tiledbsoma.util.SOMA_OBJECT_TYPE_METADATA_KEY)
+        exp.ms["RNA"].var.metadata.get(tiledbsoma.util.SOMA_OBJECT_TYPE_METADATA_KEY)
         == "SOMADataFrame"
     )
     assert sorted(var["var_id"]) == sorted(list(orig.var_names))
@@ -95,8 +95,7 @@ def test_import_anndata(adata):
     assert (
         exp.ms["RNA"]
         .X["data"]
-        .metadata()
-        .get(tiledbsoma.util.SOMA_OBJECT_TYPE_METADATA_KEY)
+        .metadata.get(tiledbsoma.util.SOMA_OBJECT_TYPE_METADATA_KEY)
         == "SOMADenseNDArray"
     )
 
@@ -110,8 +109,7 @@ def test_import_anndata(adata):
     assert (
         exp.ms["raw"]
         .X["data"]
-        .metadata()
-        .get(tiledbsoma.util.SOMA_OBJECT_TYPE_METADATA_KEY)
+        .metadata.get(tiledbsoma.util.SOMA_OBJECT_TYPE_METADATA_KEY)
         == "SOMASparseNDArray"
     )
 
@@ -124,7 +122,7 @@ def test_import_anndata(adata):
         matrix = obsm[key].read_tensor(coords=(slice(None), slice(None)))
         assert matrix.shape == orig.obsm[key].shape
         assert (
-            obsm[key].metadata().get(tiledbsoma.util.SOMA_OBJECT_TYPE_METADATA_KEY)
+            obsm[key].metadata.get(tiledbsoma.util.SOMA_OBJECT_TYPE_METADATA_KEY)
             == "SOMADenseNDArray"
         )
 
@@ -134,7 +132,7 @@ def test_import_anndata(adata):
         matrix = varm[key].read_tensor(coords=(slice(None), slice(None)))
         assert matrix.shape == orig.varm[key].shape
         assert (
-            varm[key].metadata().get(tiledbsoma.util.SOMA_OBJECT_TYPE_METADATA_KEY)
+            varm[key].metadata.get(tiledbsoma.util.SOMA_OBJECT_TYPE_METADATA_KEY)
             == "SOMADenseNDArray"
         )
 
@@ -148,7 +146,7 @@ def test_import_anndata(adata):
         )
         assert matrix.shape == orig.obsp[key].shape
         assert (
-            obsp[key].metadata().get(tiledbsoma.util.SOMA_OBJECT_TYPE_METADATA_KEY)
+            obsp[key].metadata.get(tiledbsoma.util.SOMA_OBJECT_TYPE_METADATA_KEY)
             == "SOMASparseNDArray"
         )
 
