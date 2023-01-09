@@ -1,3 +1,4 @@
+from . import experiment_query
 from .collection import Collection
 from .dataframe import DataFrame
 from .dense_nd_array import DenseNDArray
@@ -20,6 +21,7 @@ from .tiledb_platform_config import TileDBPlatformConfig
 __version__ = get_implementation_version()
 
 __all__ = [
+    "experiment_query",
     "get_implementation",
     "get_implementation_version",
     "get_SOMA_version",
