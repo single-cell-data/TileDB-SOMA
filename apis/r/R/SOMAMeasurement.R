@@ -26,5 +26,31 @@
 #' @export
 SOMAMeasurement <- R6::R6Class(
   classname = "SOMAMeasurement",
-  inherit = SOMACollectionBase
+  inherit = SOMACollectionBase,
+
+  active = list(
+    #' @field Retrieve of set `var` [`SOMADataFrame`].
+    var = function(value) {
+      if (missing(value)) {
+        self$get("var")
+      } else {
+        stopifnot(
+          "var must be a 'SOMADataFrame'" = inherits(value, "SOMADataFrame")
+        )
+        self$set(value, name = "var")
+      }
+    },
+
+    #' @field Retrieve or set `X` [`SOMACollection`].
+    X = function(value) {
+      if (missing(value)) {
+        self$get("X")
+      } else {
+        stopifnot(
+          "X must be a 'SOMACollection'" = inherits(value, "SOMACollection")
+        )
+        self$set(value, name = "X")
+      }
+    }
+  )
 )
