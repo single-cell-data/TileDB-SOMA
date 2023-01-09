@@ -166,7 +166,7 @@ class SparseNDArray(TileDBArray):
         # TODO: missing parameters
     ) -> "SparseNDArrayRead":
         """
-        Read a use-defined slice of the SparseNDArray.
+        Read a user-defined slice of the SparseNDArray.
 
         Parameters
         ----------
