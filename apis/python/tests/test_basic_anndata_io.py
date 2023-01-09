@@ -49,20 +49,12 @@ def test_import_anndata(adata, ingest_modes):
     metakey = tiledbsoma.util.SOMA_OBJECT_TYPE_METADATA_KEY  # keystroke-saver
     all2d = (slice(None), slice(None))  # keystroke-saver
 
-    print()
-    print("================================================================")
-    print("INGEST_MODES", ingest_modes)
-
     for ingest_mode in ingest_modes:
-        print()
-        print("----------------------------------------------------------------")
-        print("INGEST_MODE", ingest_mode)
 
         exp = tiledbsoma.Experiment(output_path)
         tiledbsoma.io.from_anndata(exp, orig, "RNA", ingest_mode=ingest_mode)
         if ingest_mode != "schema_only":
             have_ingested = True
-        print("HAVE_INGESTED", have_ingested)
 
         assert exp.metadata[metakey] == "SOMAExperiment"
 
@@ -72,8 +64,6 @@ def test_import_anndata(adata, ingest_modes):
             orig.obs_keys() + ["soma_joinid", "obs_id"]
         )
         assert exp.obs.metadata.get(metakey) == "SOMADataFrame"
-        print("OBS")
-        print(obs["obs_id"])
         if have_ingested:
             assert sorted(obs["obs_id"]) == sorted(list(orig.obs_names))
         else:
@@ -88,8 +78,6 @@ def test_import_anndata(adata, ingest_modes):
         assert sorted(var.columns.to_list()) == sorted(
             orig.var_keys() + ["soma_joinid", "var_id"]
         )
-        print("VAR")
-        print(var["var_id"])
         assert exp.ms["RNA"].var.metadata.get(metakey) == "SOMADataFrame"
         if have_ingested:
             assert sorted(var["var_id"]) == sorted(list(orig.var_names))
@@ -112,7 +100,6 @@ def test_import_anndata(adata, ingest_modes):
         # Check raw/X/data (sparse)
         assert exp.ms["raw"].X["data"].metadata.get(metakey) == "SOMASparseNDArray"
         matrix = exp.ms["raw"].X["data"].read(coords=all2d).coos().concat()
-        print("RAW/X/DATA SHAPE", matrix.shape)
         assert matrix.shape == orig.raw.X.shape
 
         # Check some annotation matrices
@@ -149,8 +136,6 @@ def test_import_anndata(adata, ingest_modes):
         # pbmc-small has no varp
 
         tempdir.cleanup()
-
-    print()
 
 
 def _get_fragment_count(array_uri):
