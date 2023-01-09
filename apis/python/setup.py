@@ -20,8 +20,8 @@ import subprocess
 import sys
 from pathlib import Path
 
+import setuptools
 import wheel.bdist_wheel
-from setuptools import find_packages, setup
 
 this_dir = Path(__file__).parent.absolute()
 sys.path.insert(0, str(this_dir))
@@ -67,7 +67,7 @@ class bdist_wheel(wheel.bdist_wheel.bdist_wheel):
 # Don't use `if __name__ == "__main__":` as the `python_requires` must
 # be at top level, outside any if-block
 # https://github.com/pypa/cibuildwheel/blob/7c4bbf8cb31d856a0fe547faf8edf165cd48ce74/cibuildwheel/projectfiles.py#L41-L46
-setup(
+setuptools.setup(
     name="tiledbsoma",
     description="Python API for efficient storage and retrieval of single-cell data using TileDB",
     long_description=open("README.md").read(),
@@ -94,7 +94,9 @@ setup(
         "Programming Language :: Python :: 3.10",
     ],
     package_dir={"": "src"},
-    packages=find_packages("src"),
+    packages=setuptools.find_packages("src"),
+    # This next is necessary to avoid cibuildwheel thinking we want a python-only wheel:
+    ext_modules=[setuptools.Extension("tiledbsoma.libtiledbsoma", sources=[])],
     zip_safe=False,
     install_requires=[
         "anndata",
