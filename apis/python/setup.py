@@ -15,15 +15,15 @@
 
 # type: ignore
 
+import pathlib
 import shutil
 import subprocess
 import sys
-from pathlib import Path
 
+import setuptools
 import wheel.bdist_wheel
-from setuptools import find_packages, setup
 
-this_dir = Path(__file__).parent.absolute()
+this_dir = pathlib.Path(__file__).parent.absolute()
 sys.path.insert(0, str(this_dir))
 import version  # noqa E402
 
@@ -63,56 +63,56 @@ class bdist_wheel(wheel.bdist_wheel.bdist_wheel):
         super().run()
 
 
-if __name__ == "__main__":
-    setup(
-        name="tiledbsoma",
-        description="Python API for efficient storage and retrieval of single-cell data using TileDB",
-        long_description=open("README.md").read(),
-        long_description_content_type="text/markdown",
-        author="TileDB, Inc.",
-        author_email="help@tiledb.io",
-        maintainer="TileDB, Inc.",
-        maintainer_email="help@tiledb.io",
-        url="https://github.com/single-cell-data/TileDB-SOMA/apis/python",
-        license="MIT",
-        classifiers=[
-            "Intended Audience :: Developers",
-            "Intended Audience :: Information Technology",
-            "Intended Audience :: Science/Research",
-            "License :: OSI Approved :: MIT License",
-            "Topic :: Scientific/Engineering :: Bio-Informatics",
-            "Operating System :: Unix",
-            "Operating System :: POSIX :: Linux",
-            "Operating System :: MacOS :: MacOS X",
-            "Programming Language :: Python",
-            "Programming Language :: Python :: 3.7",
-            "Programming Language :: Python :: 3.8",
-            "Programming Language :: Python :: 3.9",
-            "Programming Language :: Python :: 3.10",
-        ],
-        package_dir={"": "src"},
-        packages=find_packages("src"),
-        zip_safe=False,
-        install_requires=[
-            "anndata",
-            "numpy",
-            "pandas",
-            "pyarrow",
-            "scanpy",
-            "scipy",
-            "tiledb>=0.19.0",
-            "typing-extensions",  # Note "-" even though `import typing_extensions`
-        ],
-        extras_require={
-            "dev": [
-                "black",
-                "flake8-bugbear",
-                "isort",
-                "pytest",
-                "typeguard",
-            ]
-        },
-        python_requires=">=3.7",
-        cmdclass={"bdist_wheel": bdist_wheel},
-        version=version.getVersion(),
-    )
+setuptools.setup(
+    name="tiledbsoma",
+    description="Python API for efficient storage and retrieval of single-cell data using TileDB",
+    long_description=open("README.md").read(),
+    long_description_content_type="text/markdown",
+    author="TileDB, Inc.",
+    author_email="help@tiledb.io",
+    maintainer="TileDB, Inc.",
+    maintainer_email="help@tiledb.io",
+    url="https://github.com/single-cell-data/TileDB-SOMA/apis/python",
+    license="MIT",
+    classifiers=[
+        "Intended Audience :: Developers",
+        "Intended Audience :: Information Technology",
+        "Intended Audience :: Science/Research",
+        "License :: OSI Approved :: MIT License",
+        "Topic :: Scientific/Engineering :: Bio-Informatics",
+        "Operating System :: Unix",
+        "Operating System :: POSIX :: Linux",
+        "Operating System :: MacOS :: MacOS X",
+        "Programming Language :: Python",
+        "Programming Language :: Python :: 3.7",
+        "Programming Language :: Python :: 3.8",
+        "Programming Language :: Python :: 3.9",
+        "Programming Language :: Python :: 3.10",
+    ],
+    package_dir={"": "src"},
+    packages=setuptools.find_packages("src"),
+    ext_modules=[setuptools.Extension("tiledbsoma.libtiledbsoma", sources=[])],
+    zip_safe=False,
+    install_requires=[
+        "anndata",
+        "numpy",
+        "pandas",
+        "pyarrow",
+        "scanpy",
+        "scipy",
+        "tiledb>=0.19.0",
+        "typing-extensions",  # Note "-" even though `import typing_extensions`
+    ],
+    extras_require={
+        "dev": [
+            "black",
+            "flake8-bugbear",
+            "isort",
+            "pytest",
+            "typeguard",
+        ]
+    },
+    python_requires=">=3.7",
+    cmdclass={"bdist_wheel": bdist_wheel},
+    version=version.getVersion(),
+)
