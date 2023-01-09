@@ -42,8 +42,9 @@ TileDBArray <- R6::R6Class(
     #'   is not NULL.
     #' @return A list of metadata values.
     get_metadata = function(key = NULL, prefix = NULL) {
-      on.exit(private$close())
       private$open("READ")
+      on.exit(private$close())
+
       if (!is.null(key)) {
         metadata <- tiledb::tiledb_get_metadata(self$object, key)
       } else {
@@ -63,8 +64,9 @@ TileDBArray <- R6::R6Class(
       stopifnot(
         "Metadata must be a named list" = is_named_list(metadata)
       )
-      on.exit(private$close())
       private$open("WRITE")
+      on.exit(private$close())
+
       dev_null <- mapply(
         FUN = tiledb::tiledb_put_metadata,
         key = names(metadata),

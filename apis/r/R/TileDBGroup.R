@@ -143,8 +143,8 @@ TileDBGroup <- R6::R6Class(
       stopifnot(
         "Metadata must be a named list" = is_named_list(metadata)
       )
-      on.exit(private$close())
       private$open("WRITE")
+      on.exit(private$close())
       dev_null <- mapply(
         FUN = tiledb::tiledb_group_put_metadata,
         key = names(metadata),
@@ -178,9 +178,9 @@ TileDBGroup <- R6::R6Class(
     # @return A list indexed by group member names where each element is a
     # list with names: name, uri, and type.
     get_all_members = function() {
+      private$open("READ")
       on.exit(private$close())
 
-      private$open("READ")
       count <- tiledb::tiledb_group_member_count(self$object)
       if (count == 0) return(list())
 

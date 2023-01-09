@@ -2,10 +2,9 @@ test_that("TileDBArray helper functions", {
   uri <- withr::local_tempdir(pattern = "test-array")
   tdb <- TileDBArray$new(uri = uri)
 
-  expect_error(
-    tdb$object,
-    "TileDB object does not exist"
-  )
+  # Check errors on non-existent array
+  expect_error(tdb$object, "Array does not exist.")
+  expect_error(tdb$set_metadata(list(foo = "bar")), "Array does not exist.")
 
   # create an array
   index_cols <- c("Dept", "Gender")
