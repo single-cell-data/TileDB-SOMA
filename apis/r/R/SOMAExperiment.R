@@ -29,6 +29,18 @@ SOMAExperiment <- R6::R6Class(
         )
         self$set(value, name = "obs")
       }
+    },
+
+    #' @field A collection of named measurements.
+    ms = function(value) {
+      if (missing(value)) {
+        self$get("ms")
+      } else {
+        stopifnot(
+          "ms must be a 'SOMAMeasurement'" = inherits(value, "SOMAMeasurement")
+        )
+        self$set(value, name = "ms")
+      }
     }
   )
 )
