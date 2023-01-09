@@ -15,10 +15,6 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions/setup-python@v4
 
-      - name: Why do we need to pip install somacore but not numpy or anndata et al.?
-        run: |
-          python -m pip install somacore==0.0.0a1
-
       - name: Check Python Black Format
         run: |
           python -m pip install black
