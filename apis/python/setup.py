@@ -15,15 +15,15 @@
 
 # type: ignore
 
+import pathlib
 import shutil
 import subprocess
 import sys
-from pathlib import Path
 
 import setuptools
 import wheel.bdist_wheel
 
-this_dir = Path(__file__).parent.absolute()
+this_dir = pathlib.Path(__file__).parent.absolute()
 sys.path.insert(0, str(this_dir))
 import version  # noqa E402
 
