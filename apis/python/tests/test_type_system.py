@@ -146,5 +146,5 @@ def test_bool_arrays(tmp_path, bool_array):
 
     assert sidf.exists()
 
-    table = sidf.read_all()
+    table = sidf.read().concat()
     assert table["b"].to_pylist() == bool_array
