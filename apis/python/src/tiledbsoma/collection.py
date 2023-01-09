@@ -359,7 +359,7 @@ class CollectionBase(TileDBObject, MutableMapping[str, CollectionElementType]):
         Shows metadata for the group, recursively by default.
         """
         # TODO: this code should move to a helper package, outside of SOMA core
-        for key, value in self.metadata.items():
+        for key, value in self.metadata().items():
             print(f"{indent}- {key}: {value}")
         if recursively:
             from .factory import _construct_member

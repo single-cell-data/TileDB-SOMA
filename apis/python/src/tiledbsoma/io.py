@@ -519,7 +519,7 @@ def to_anndata(
     s = util.get_start_stamp()
     logging.log_io(None, "START  Experiment.to_anndata")
 
-    measurement = experiment.ms[measurement_name]
+    measurement: Measurement = experiment.ms[measurement_name]
 
     obs_df = experiment.obs.read_as_pandas_all()
     obs_df.drop([SOMA_JOINID], axis=1, inplace=True)

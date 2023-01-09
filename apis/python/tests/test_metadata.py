@@ -57,28 +57,28 @@ def test_metadata(soma_object):
     # Verify the metadata is empty to start. "Empty" defined as no keys
     # other than soma_ keys.
     keys = list(
-        filter(lambda s: not s.startswith("soma_"), soma_object.metadata.keys())
+        filter(lambda s: not s.startswith("soma_"), soma_object.metadata().keys())
     )
     assert keys == []
-    assert len(soma_object.metadata) == len(soma_object.metadata.keys())
-    assert len(soma_object.metadata) == len(soma_object.metadata.as_dict())
-    assert "foobar" not in soma_object.metadata
+    assert len(soma_object.metadata()) == len(soma_object.metadata().keys())
+    assert len(soma_object.metadata()) == len(soma_object.metadata().as_dict())
+    assert "foobar" not in soma_object.metadata()
 
-    soma_object.metadata["foobar"] = True
-    assert "foobar" in soma_object.metadata
-    for k, v in soma_object.metadata.as_dict().items():
-        assert k in soma_object.metadata
-        assert soma_object.metadata.get(k) == v
-        assert soma_object.metadata[k] == v
+    soma_object.metadata()["foobar"] = True
+    assert "foobar" in soma_object.metadata()
+    for k, v in soma_object.metadata().as_dict().items():
+        assert k in soma_object.metadata()
+        assert soma_object.metadata().get(k) == v
+        assert soma_object.metadata()[k] == v
 
     # also check set()
-    soma_object.metadata["stay"] = "frosty"
-    assert "stay" in soma_object.metadata
-    assert soma_object.metadata["stay"] == "frosty"
+    soma_object.metadata()["stay"] = "frosty"
+    assert "stay" in soma_object.metadata()
+    assert soma_object.metadata()["stay"] == "frosty"
 
-    del soma_object.metadata["stay"]
-    assert "stay" not in soma_object.metadata
-    assert soma_object.metadata.get("stay", False) is False
+    del soma_object.metadata()["stay"]
+    assert "stay" not in soma_object.metadata()
+    assert soma_object.metadata().get("stay", False) is False
 
 
 @pytest.mark.parametrize(
@@ -101,10 +101,10 @@ def test_metadata_marshalling_OK(soma_object, test_value):
     Test the various data type marshalling we expect to work,
     which is any Arrow primitive and Arrow strings
     """
-    soma_object.metadata["test_value"] = test_value
-    assert "test_value" in soma_object.metadata
+    soma_object.metadata()["test_value"] = test_value
+    assert "test_value" in soma_object.metadata()
 
-    val = soma_object.metadata["test_value"]
+    val = soma_object.metadata()["test_value"]
     if type(test_value) is float and math.isnan(test_value):
         # By definition, NaN != NaN, so we can't just compare
         assert math.isnan(val)
@@ -120,6 +120,6 @@ def test_metadata_marshalling_FAIL(soma_object, test_value):
     """Test the various data type marshalling we expect to FAIL"""
 
     with pytest.raises(TypeError):
-        soma_object.metadata["test_value"] = test_value
+        soma_object.metadata()["test_value"] = test_value
 
-    assert "test_value" not in soma_object.metadata
+    assert "test_value" not in soma_object.metadata()
