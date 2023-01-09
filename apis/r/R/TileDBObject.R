@@ -72,11 +72,7 @@ TileDBObject <- R6::R6Class(
       # If the array was created after the object was instantiated, we need to
       # initialize private$tiledb_object
       if (is.null(private$tiledb_object)) {
-        if (self$exists()) {
-          private$initialize_object()
-        } else {
-          stop("TileDB object does not exist", call. = FALSE)
-        }
+        private$initialize_object()
       }
       private$tiledb_object
     }
