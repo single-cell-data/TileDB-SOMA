@@ -22,14 +22,19 @@ import sys
 
 import setuptools
 import wheel.bdist_wheel
+from setuptools.command.bdist_egg import bdist_egg
+from setuptools.command.build_ext import build_ext
 
 this_dir = pathlib.Path(__file__).parent.absolute()
 sys.path.insert(0, str(this_dir))
 import version  # noqa E402
 
+MODULE_NAME = "tiledbsoma"
+EXT_NAME = "tiledbsoma.libtiledbsoma"
 
-def find_or_build_package_data():
-    # Setup paths
+
+def find_or_build_package_data(setuptools_cmd):
+    # Set up paths
     scripts_dir = this_dir / "dist_links" / "scripts"
     if scripts_dir.is_symlink():
         # in git source tree
@@ -51,12 +56,37 @@ def find_or_build_package_data():
             print(f"  copying file {f} to {src_dir}")
             shutil.copy(f, src_dir)
             package_data.append(f.name)
+
+    # Install shared libraries inside the Python module via package_data.
+    print(f"  adding to package_data: {package_data}")
+    setuptools_cmd.distribution.package_data.update({MODULE_NAME: package_data})
+
     return package_data
 
 
-class bdist_wheel(wheel.bdist_wheel.bdist_wheel):
+def get_ext_modules():
+    return [cmake_extension(EXT_NAME)]
+
+
+class cmake_extension(setuptools.Extension):
+    def __init__(self, name):
+        setuptools.Extension.__init__(self, name, sources=[])
+
+
+class build_ext_cmd(build_ext):
     def run(self):
-        package_data = find_or_build_package_data()
+        find_or_build_package_data(self)
+
+
+class bdist_egg_cmd(bdist_egg):
+    def run(self):
+        find_or_build_package_data(self)
+        bdist_egg.run(self)
+
+
+class bdist_wheel_cmd(wheel.bdist_wheel.bdist_wheel):
+    def run(self):
+        package_data = find_or_build_package_data(self)
         # Install shared libraries inside the Python module via package_data
         print(f"  adding to package_data: {package_data}")
         self.distribution.package_data["tiledbsoma"] = package_data
@@ -118,6 +148,10 @@ setuptools.setup(
         ]
     },
     python_requires=">=3.7",
-    cmdclass={"bdist_wheel": bdist_wheel},
+    cmdclass={
+        "build_ext": build_ext_cmd,
+        "bdist_egg": bdist_egg_cmd,
+        "bdist_wheel": bdist_wheel_cmd,
+    },
     version=version.getVersion(),
 )
