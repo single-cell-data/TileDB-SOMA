@@ -5,32 +5,7 @@ import attrs
 import numpy as np
 import pyarrow as pa
 
-from ..types import SparseDataFrameCoordinate, SparseDataFrameCoordinates
-
-
-def normalize_coords(
-    coords: SparseDataFrameCoordinates,
-) -> Tuple[SparseDataFrameCoordinate]:
-    """
-    Private. Convert incoming query coordinates into pyarrow Arrow int64,
-    slices or ints.
-
-    NOTE: this should arguably be delegated to the DataFrame class, as the
-    ExperimentAxsQuery class has no dependency on this. However, the error
-    checking is done so late, this has UX benefits.
-    """
-    norm_coords: List[SparseDataFrameCoordinate] = []
-    for c in coords:
-        if c is None or isinstance(c, (int, slice)):
-            norm_coords.append(c)
-        elif isinstance(c, (pa.Array, pa.ChunkedArray)):
-            if c.type != pa.int64():
-                c = c.cast(pa.int64())
-            norm_coords.append(c)
-        else:
-            norm_coords.append(pa.array(np.array(c, dtype=np.int64)))
-
-    return cast(Tuple[SparseDataFrameCoordinate], tuple(norm_coords))
+from ..types import SparseDataFrameCoordinates
 
 
 @attrs.define(kw_only=True)
@@ -72,7 +47,6 @@ class AxisQuery:
     )
     coords: SparseDataFrameCoordinates = attrs.field(
         default=(slice(None),),
-        # converter=normalize_coords,
         validator=attrs.validators.instance_of(tuple),
     )
 
