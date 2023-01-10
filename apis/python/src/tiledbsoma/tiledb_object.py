@@ -1,5 +1,5 @@
 import os
-from abc import ABC, abstractmethod, abstractproperty
+from abc import ABC, abstractmethod
 from typing import Optional, Union, cast
 
 import somacore
@@ -108,13 +108,6 @@ class TileDBObject(ABC, somacore.SOMAObject):
         Accessor for the object's storage URI
         """
         return self._uri
-
-    @abstractproperty
-    def soma_type(self) -> str:
-        """
-        Returns the SOMA object type, e.g. "SOMADataFrame".
-        """
-        ...
 
     def exists(self) -> bool:
         """

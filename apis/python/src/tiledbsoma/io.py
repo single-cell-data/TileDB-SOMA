@@ -459,7 +459,7 @@ def create_from_matrix(
 def _write_matrix_to_denseNDArray(
     soma_ndarray: DenseNDArray,
     src_matrix: Union[
-        np.ndarray, sp.csr_matrix, sp.csc_matrix, h5py._hl.dataset.Dataset
+        np.ndarray, sp.csr_matrix, sp.csc_matrix, h5py._hl.dataset.Dataset # type: ignore[type-arg]
     ],
     *,
     ingest_mode: IngestMode,
@@ -636,7 +636,7 @@ def _find_sparse_chunk_size(
 def _write_matrix_to_sparseNDArray(
     soma_ndarray: SparseNDArray,
     src_matrix: Union[
-        np.ndarray, sp.csr_matrix, sp.csc_matrix, ad._core.sparse_dataset.SparseDataset
+        np.ndarray, sp.csr_matrix, sp.csc_matrix, ad._core.sparse_dataset.SparseDataset # type: ignore[type-arg]
     ],
     *,
     ingest_mode: IngestMode,
@@ -652,7 +652,7 @@ def _write_matrix_to_sparseNDArray(
         return pa.Table.from_pydict(pydict)
 
     def _find_chunk_size(
-        mat: Union[np.ndarray, sp.csr_matrix, sp.csc_matrix],
+        mat: Union[np.ndarray, sp.csr_matrix, sp.csc_matrix],  # type: ignore[type-arg]
         start_index: int,
         axis: int,
         goal_chunk_nnz: int,

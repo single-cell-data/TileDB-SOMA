@@ -147,6 +147,7 @@ class DenseNDArray(TileDBArray, somacore.DenseNDArray):
         coords: DenseNdCoordinates,
         *,
         result_order: ResultOrder = "row-major",
+        **_: Any,  # TODO: remaining args
     ) -> pa.Tensor:
         """
         Read a user-defined dense slice of the array and return as an Arrow ``Tensor``.
@@ -231,6 +232,7 @@ class DenseNDArray(TileDBArray, somacore.DenseNDArray):
         self,
         coords: DenseNdCoordinates,
         values: pa.Tensor,
+        **_: Any,  # TODO: missing args
     ) -> None:
         """
         Write subarray, defined by ``coords`` and ``values``. Will overwrite existing
