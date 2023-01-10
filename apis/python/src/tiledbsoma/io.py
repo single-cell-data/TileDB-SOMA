@@ -1,6 +1,6 @@
 import math
 import time
-from typing import Optional, Union
+from typing import Any, Optional, Sequence, Union
 
 import anndata as ad
 import numpy as np
@@ -23,9 +23,21 @@ from tiledbsoma import (
     logging,
     util_scipy,
 )
+from tiledbsoma.exception import SOMAError
 
 from .constants import SOMA_JOINID
-from .types import Path, PlatformConfig
+from .types import INGEST_MODES, IngestMode, Path, PlatformConfig
+
+# These are for input-data bounds -- like `((0, 10), (0, 20))`.  They're used for resume-mode
+# checking.
+NTupleInt = Sequence[Union[int]]
+MNTupleInt = Sequence[NTupleInt]
+
+# These are for data-storage non-empty domains -- also like `((0, 10), (0, 20))`, but maybe `None`
+# or `(None, None)`. The latter can happen when a schema was created, but no writes were completed,
+# on a previous data-ingest run.
+NTupleIntNone = Sequence[Union[None, int]]
+MNTupleIntNone = Union[None, Sequence[NTupleIntNone]]
 
 
 # ----------------------------------------------------------------
@@ -33,12 +45,24 @@ def from_h5ad(
     experiment: Experiment,
     input_path: Path,
     measurement_name: str,
+    *,
     ctx: Optional[tiledb.Ctx] = None,
     platform_config: Optional[PlatformConfig] = None,
+    ingest_mode: IngestMode = "write",
 ) -> None:
     """
     Reads an .h5ad file and writes to a TileDB group structure.
+
+    The "write" ingest_mode (which is the default) writes all data, creating new layers if the soma already exists.
+
+    The "resume" ingest_mode skips data writes if data are within dimension ranges of the existing soma.
+    This is useful for continuing after a partial/interrupted previous upload.
+
+    The "schema_only" ingest_mode creates groups and array schema, without writing array data.
+    This is useful as a prep-step for parallel append-ingest of multiple H5ADs to a single soma.
     """
+    assert ingest_mode in INGEST_MODES
+
     if isinstance(input_path, ad.AnnData):
         raise TypeError("Input path is an AnnData object -- did you want from_anndata?")
 
@@ -57,7 +81,14 @@ def from_h5ad(
         util.format_elapsed(s, f"FINISH READING {input_path}"),
     )
 
-    from_anndata(experiment, anndata, measurement_name, ctx, platform_config)
+    from_anndata(
+        experiment,
+        anndata,
+        measurement_name,
+        ctx=ctx,
+        platform_config=platform_config,
+        ingest_mode=ingest_mode,
+    )
 
     logging.log_io(
         None,
@@ -73,12 +104,24 @@ def from_anndata(
     experiment: Experiment,
     anndata: ad.AnnData,
     measurement_name: str,
+    *,
     ctx: Optional[tiledb.Ctx] = None,
     platform_config: Optional[PlatformConfig] = None,
+    ingest_mode: IngestMode = "write",
 ) -> None:
     """
     Top-level writer method for creating a TileDB group for a ``Experiment`` object.
+
+    The "write" ingest_mode (which is the default) writes all data, creating new layers if the soma already exists.
+
+    The "resume" ingest_mode skips data writes if data are within dimension ranges of the existing soma.
+    This is useful for continuing after a partial/interrupted previous upload.
+
+    The "schema_only" ingest_mode creates groups and array schema, without writing array data.
+    This is useful as a prep-step for parallel append-ingest of multiple H5ADs to a single soma.
     """
+    assert ingest_mode in INGEST_MODES
+
     if not isinstance(anndata, ad.AnnData):
         raise TypeError(
             "Second argument is not an AnnData object -- did you want from_h5ad?"
@@ -103,8 +146,7 @@ def from_anndata(
     logging.log_io(None, f"START  WRITING {experiment.uri}")
 
     # Must be done first, to create the parent directory.
-    if not experiment.exists():
-        experiment.create()
+    _check_create(experiment, ingest_mode)
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     # OBS
@@ -114,19 +156,20 @@ def from_anndata(
         util_ann._decategoricalize_obs_or_var(anndata.obs),
         id_column_name="obs_id",
         platform_config=platform_config,
+        ingest_mode=ingest_mode,
     )
     experiment.set("obs", obs)
 
-    experiment.set(
-        "ms",
-        Collection(uri=util.uri_joinpath(experiment.uri, "ms")).create(),
-    )
-
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     # MS
+    ms = Collection(uri=util.uri_joinpath(experiment.uri, "ms"))
+
+    experiment.set("ms", _check_create(ms, ingest_mode))
+
+    # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    # MS/meas
     measurement = Measurement(uri=f"{experiment.ms.uri}/{measurement_name}", ctx=ctx)
-    measurement.create()
-    experiment.ms.set(measurement_name, measurement)
+    experiment.ms.set(measurement_name, _check_create(measurement, ingest_mode))
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     # MS/meas/VAR
@@ -136,29 +179,43 @@ def from_anndata(
         util_ann._decategoricalize_obs_or_var(anndata.var),
         id_column_name="var_id",
         platform_config=platform_config,
+        ingest_mode=ingest_mode,
     )
     measurement["var"] = var
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     # MS/meas/X/DATA
-    measurement["X"] = Collection(uri=util.uri_joinpath(measurement.uri, "X")).create()
 
-    # TODO: more types to check?
+    x = Collection(uri=util.uri_joinpath(measurement.uri, "X"))
+    measurement["X"] = _check_create(x, ingest_mode)
+
     if isinstance(anndata.X, np.ndarray):
         ddata = DenseNDArray(uri=util.uri_joinpath(measurement.X.uri, "data"), ctx=ctx)
         # Code here and in else-block duplicated for linter appeasement
-        create_from_matrix(ddata, anndata.X[:], platform_config=platform_config)
+        create_from_matrix(
+            ddata,
+            anndata.X[:],
+            platform_config=platform_config,
+            ingest_mode=ingest_mode,
+        )
         measurement.X.set("data", ddata)
     else:
         sdata = SparseNDArray(uri=util.uri_joinpath(measurement.X.uri, "data"), ctx=ctx)
-        create_from_matrix(sdata, anndata.X[:], platform_config=platform_config)
+        create_from_matrix(
+            sdata,
+            anndata.X[:],
+            platform_config=platform_config,
+            ingest_mode=ingest_mode,
+        )
         measurement.X.set("data", sdata)
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    # MS/meas/OBSM,VARM,OBSP,VARP
     if len(anndata.obsm.keys()) > 0:  # do not create an empty collection
-        measurement["obsm"] = Collection(
-            uri=util.uri_joinpath(measurement.uri, "obsm")
-        ).create()
+        measurement["obsm"] = _check_create(
+            Collection(uri=util.uri_joinpath(measurement.uri, "obsm")),
+            ingest_mode,
+        )
         for key in anndata.obsm.keys():
             arr = DenseNDArray(
                 uri=util.uri_joinpath(measurement.obsm.uri, key), ctx=ctx
@@ -167,13 +224,15 @@ def from_anndata(
                 arr,
                 util_tiledb.to_tiledb_supported_array_type(anndata.obsm[key]),
                 platform_config=platform_config,
+                ingest_mode=ingest_mode,
             )
             measurement.obsm.set(key, arr)
 
     if len(anndata.varm.keys()) > 0:  # do not create an empty collection
-        measurement["varm"] = Collection(
-            uri=util.uri_joinpath(measurement.uri, "varm")
-        ).create()
+        measurement["varm"] = _check_create(
+            Collection(uri=util.uri_joinpath(measurement.uri, "varm")),
+            ingest_mode,
+        )
         for key in anndata.varm.keys():
             darr = DenseNDArray(
                 uri=util.uri_joinpath(measurement.varm.uri, key), ctx=ctx
@@ -182,13 +241,15 @@ def from_anndata(
                 darr,
                 util_tiledb.to_tiledb_supported_array_type(anndata.varm[key]),
                 platform_config=platform_config,
+                ingest_mode=ingest_mode,
             )
             measurement.varm.set(key, darr)
 
     if len(anndata.obsp.keys()) > 0:  # do not create an empty collection
-        measurement["obsp"] = Collection(
-            uri=util.uri_joinpath(measurement.uri, "obsp")
-        ).create()
+        measurement["obsp"] = _check_create(
+            Collection(uri=util.uri_joinpath(measurement.uri, "obsp")),
+            ingest_mode,
+        )
         for key in anndata.obsp.keys():
             sarr = SparseNDArray(
                 uri=util.uri_joinpath(measurement.obsp.uri, key), ctx=ctx
@@ -197,13 +258,15 @@ def from_anndata(
                 sarr,
                 util_tiledb.to_tiledb_supported_array_type(anndata.obsp[key]),
                 platform_config=platform_config,
+                ingest_mode=ingest_mode,
             )
             measurement.obsp.set(key, sarr)
 
     if len(anndata.varp.keys()) > 0:  # do not create an empty collection
-        measurement["varp"] = Collection(
-            uri=util.uri_joinpath(measurement.uri, "varp")
-        ).create()
+        measurement["varp"] = _check_create(
+            Collection(uri=util.uri_joinpath(measurement.uri, "varp")),
+            ingest_mode,
+        )
         for key in anndata.varp.keys():
             sarr = SparseNDArray(
                 uri=util.uri_joinpath(measurement.varp.uri, key), ctx=ctx
@@ -212,17 +275,17 @@ def from_anndata(
                 sarr,
                 util_tiledb.to_tiledb_supported_array_type(anndata.varp[key]),
                 platform_config=platform_config,
+                ingest_mode=ingest_mode,
             )
             measurement.varp.set(key, sarr)
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-    # RAW
+    # MS/RAW
     if anndata.raw is not None:
         raw_measurement = Measurement(
             uri=util.uri_joinpath(experiment.ms.uri, "raw"), ctx=ctx
         )
-        raw_measurement.create()
-        experiment.ms.set("raw", raw_measurement)
+        experiment.ms.set("raw", _check_create(raw_measurement, ingest_mode))
 
         var = DataFrame(uri=util.uri_joinpath(raw_measurement.uri, "var"))
         _write_dataframe(
@@ -230,29 +293,48 @@ def from_anndata(
             util_ann._decategoricalize_obs_or_var(anndata.raw.var),
             id_column_name="var_id",
             platform_config=platform_config,
+            ingest_mode=ingest_mode,
         )
         raw_measurement.set("var", var)
 
-        raw_measurement["X"] = Collection(
-            uri=util.uri_joinpath(raw_measurement.uri, "X")
-        ).create()
+        raw_measurement["X"] = _check_create(
+            Collection(uri=util.uri_joinpath(raw_measurement.uri, "X")),
+            ingest_mode,
+        )
 
         rawXdata = SparseNDArray(
             uri=util.uri_joinpath(raw_measurement.X.uri, "data"), ctx=ctx
         )
-        create_from_matrix(rawXdata, anndata.raw.X[:], platform_config=platform_config)
+        create_from_matrix(
+            rawXdata,
+            anndata.raw.X[:],
+            platform_config=platform_config,
+            ingest_mode=ingest_mode,
+        )
         raw_measurement.X.set("data", rawXdata)
 
     # TODO: port uns from main-old to main
-    #    # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-    #    if anndata.uns is not None:
-    #        experiment.uns.from_anndata_uns(anndata.uns)
-    #        experiment.set(experiment.uns)
 
     logging.log_io(
-        f"Wrote {experiment.uri}",
+        f"Wrote   {experiment.uri}",
         util.format_elapsed(s, f"FINISH WRITING {experiment.uri}"),
     )
+
+
+def _check_create(
+    thing: Union[Experiment, Measurement, Collection],
+    ingest_mode: str,
+) -> Any:
+    if ingest_mode == "resume":
+        if not thing.exists():
+            thing.create()
+        # else fine
+    else:
+        if thing.exists():
+            raise SOMAError(f"{thing.uri} already exists")
+        else:
+            thing.create()
+    return thing
 
 
 def _write_dataframe(
@@ -260,29 +342,52 @@ def _write_dataframe(
     df: pd.DataFrame,
     id_column_name: Optional[str],
     platform_config: Optional[PlatformConfig] = None,
+    ingest_mode: IngestMode = "write",
 ) -> None:
     s = util.get_start_stamp()
     logging.log_io(None, f"START  WRITING {soma_df.uri}")
-
-    assert not soma_df.exists()
 
     df[SOMA_JOINID] = np.asarray(range(len(df)), dtype=np.int64)
 
     df.reset_index(inplace=True)
     if id_column_name is not None:
         df.rename(columns={"index": id_column_name}, inplace=True)
-    df.set_index(SOMA_JOINID, inplace=True)  # XXX MAYBE NOT?
+    df.set_index(SOMA_JOINID, inplace=True)
 
     # Categoricals are not yet well supported, so we must flatten
     for k in df:
         if df[k].dtype == "category":
             df[k] = df[k].astype(df[k].cat.categories.dtype)
     arrow_table = pa.Table.from_pandas(df)
-    soma_df.create(arrow_table.schema, platform_config=platform_config)
-    soma_df.write(arrow_table)
 
+    if soma_df.exists():
+        if ingest_mode == "resume":
+            # This lets us check for already-ingested dataframes, when in resume-ingest mode.
+            with soma_df._tiledb_open() as A:
+                storage_ned = A.nonempty_domain()
+            sorted_dim_values = sorted(list(df.index))
+            dim_range = ((sorted_dim_values[0], sorted_dim_values[-1]),)
+            if _chunk_is_contained_in(dim_range, storage_ned):
+                logging.log_io(
+                    f"Skipped {soma_df.uri}",
+                    util.format_elapsed(s, f"SKIPPED {soma_df.uri}"),
+                )
+                return
+        else:
+            raise SOMAError(f"{soma_df.uri} already exists")
+    else:
+        soma_df.create(arrow_table.schema, platform_config=platform_config)
+
+    if ingest_mode == "schema_only":
+        logging.log_io(
+            f"Wrote schema {soma_df.uri}",
+            util.format_elapsed(s, f"FINISH WRITING SCHEMA {soma_df.uri}"),
+        )
+        return
+
+    soma_df.write(arrow_table)
     logging.log_io(
-        f"Wrote {soma_df.uri}",
+        f"Wrote   {soma_df.uri}",
         util.format_elapsed(s, f"FINISH WRITING {soma_df.uri}"),
     )
 
@@ -290,31 +395,49 @@ def _write_dataframe(
 def create_from_matrix(
     soma_ndarray: Union[DenseNDArray, SparseNDArray],
     src_matrix: Union[np.ndarray, sp.csr_matrix, sp.csc_matrix],
+    *,
     platform_config: Optional[PlatformConfig] = None,
+    ingest_mode: IngestMode = "write",
 ) -> None:
     """
     Create and populate the ``soma_matrix`` from the contents of ``src_matrix``.
     """
-    assert not soma_ndarray.exists()
     assert src_matrix.ndim == 2
     assert soma_ndarray.soma_type in ("SOMADenseNDArray", "SOMASparseNDArray")
 
     s = util.get_start_stamp()
     logging.log_io(None, f"START  WRITING {soma_ndarray.uri}")
 
-    soma_ndarray.create(
-        type=pa.from_numpy_dtype(src_matrix.dtype),
-        shape=src_matrix.shape,
-        platform_config=platform_config,
+    if ingest_mode != "resume" or not soma_ndarray.exists():
+        if soma_ndarray.exists():
+            raise SOMAError(f"{soma_ndarray.uri} already exists")
+        soma_ndarray.create(
+            type=pa.from_numpy_dtype(src_matrix.dtype),
+            shape=src_matrix.shape,
+            platform_config=platform_config,
+        )
+
+    if ingest_mode == "schema_only":
+        logging.log_io(
+            f"Wrote schema {soma_ndarray.uri}",
+            util.format_elapsed(s, f"FINISH WRITING SCHEMA {soma_ndarray.uri}"),
+        )
+        return
+
+    logging.log_io(
+        f"Writing {soma_ndarray.uri}",
+        util.format_elapsed(s, f"START  WRITING {soma_ndarray.uri}"),
     )
 
     if isinstance(soma_ndarray, DenseNDArray):
-        _write_matrix_to_denseNDArray(soma_ndarray, src_matrix)
-    else:  # SOMmASparseNDArray
-        _write_matrix_to_sparseNDArray(soma_ndarray, src_matrix)
+        _write_matrix_to_denseNDArray(soma_ndarray, src_matrix, ingest_mode=ingest_mode)
+    else:  # SOMASparseNDArray
+        _write_matrix_to_sparseNDArray(
+            soma_ndarray, src_matrix, ingest_mode=ingest_mode
+        )
 
     logging.log_io(
-        f"Wrote {soma_ndarray.uri}",
+        f"Wrote   {soma_ndarray.uri}",
         util.format_elapsed(s, f"FINISH WRITING {soma_ndarray.uri}"),
     )
 
@@ -322,8 +445,34 @@ def create_from_matrix(
 def _write_matrix_to_denseNDArray(
     soma_ndarray: DenseNDArray,
     src_matrix: Union[np.ndarray, sp.csr_matrix, sp.csc_matrix],
+    *,
+    ingest_mode: IngestMode,
 ) -> None:
     """Write a matrix to an empty DenseNDArray"""
+
+    # There is a chunk-by-chunk already-done check for resume mode, below.
+    # This full-matrix-level check here might seem redundant, but in fact it's important:
+    # * By checking input bounds against storage NED here, we can see if the entire matrix
+    #   was already ingested and avoid even loading chunks;
+    # * By checking chunkwise we can catch the case where a matrix was already *partly*
+    #   ingested.
+    # * Of course, this also helps us catch already-completed writes in the non-chunked case.
+    storage_ned = None
+    if ingest_mode == "resume" and soma_ndarray.exists():
+        # This lets us check for already-ingested chunks, when in resume-ingest mode.
+        with soma_ndarray._tiledb_open() as A:
+            storage_ned = A.nonempty_domain()
+            matrix_bounds = [(0, n - 1) for n in src_matrix.shape]
+            logging.log_io(
+                None,
+                f"Input bounds {tuple(matrix_bounds)} storage non-empty domain {storage_ned}",
+            )
+            if _chunk_is_contained_in(matrix_bounds, storage_ned):
+                logging.log_io(
+                    f"Skipped {soma_ndarray.uri}",
+                    f"SKIPPED WRITING {soma_ndarray.uri}",
+                )
+                return
 
     # Write all at once?
     if soma_ndarray._tiledb_platform_config.write_X_chunked:
@@ -335,13 +484,10 @@ def _write_matrix_to_denseNDArray(
         return
 
     # OR, write in chunks
-    s = util.get_start_stamp()
-    logging.log_io(None, "START  ingest")
-
     eta_tracker = eta.Tracker()
     nrow, ncol = src_matrix.shape
     i = 0
-    # number of rows to chunk by. Dense writes, so this is a constant.
+    # Number of rows to chunk by. Dense writes, so this is a constant.
     chunk_size = int(
         math.ceil(soma_ndarray._tiledb_platform_config.goal_chunk_nnz / ncol)
     )
@@ -358,6 +504,20 @@ def _write_matrix_to_denseNDArray(
         )
 
         chunk = src_matrix[i:i2, :]
+
+        if ingest_mode == "resume" and storage_ned is not None:
+            chunk_bounds = matrix_bounds
+            chunk_bounds[0] = (i, i2 - 1)
+            if _chunk_is_contained_in_axis(chunk_bounds, storage_ned, 0):
+                # Print doubly inclusive lo..hi like 0..17 and 18..31.
+                logging.log_io(
+                    "... %7.3f%% done" % (chunk_percent),
+                    "SKIP   chunk rows %d..%d of %d (%.3f%%)"
+                    % (i, i2 - 1, nrow, chunk_percent),
+                )
+                i = i2
+                continue
+
         if isinstance(chunk, np.ndarray):
             tensor = pa.Tensor.from_numpy(chunk)
         else:
@@ -377,13 +537,14 @@ def _write_matrix_to_denseNDArray(
 
         i = i2
 
-    logging.log_io(None, util.format_elapsed(s, "FINISH ingest"))
     return
 
 
 def _write_matrix_to_sparseNDArray(
     soma_ndarray: SparseNDArray,
     src_matrix: Union[np.ndarray, sp.csr_matrix, sp.csc_matrix],
+    *,
+    ingest_mode: IngestMode,
 ) -> None:
     """Write a matrix to an empty DenseNDArray"""
 
@@ -408,6 +569,30 @@ def _write_matrix_to_sparseNDArray(
                 mat, start_index, axis, goal_chunk_nnz
             )
 
+    # There is a chunk-by-chunk already-done check for resume mode, below.
+    # This full-matrix-level check here might seem redundant, but in fact it's important:
+    # * By checking input bounds against storage NED here, we can see if the entire matrix
+    #   was already ingested and avoid even loading chunks;
+    # * By checking chunkwise we can catch the case where a matrix was already *partly*
+    #   ingested.
+    # * Of course, this also helps us catch already-completed writes in the non-chunked case.
+    storage_ned = None
+    if ingest_mode == "resume" and soma_ndarray.exists():
+        # This lets us check for already-ingested chunks, when in resume-ingest mode.
+        with soma_ndarray._tiledb_open() as A:
+            storage_ned = A.nonempty_domain()
+            matrix_bounds = [(0, n - 1) for n in src_matrix.shape]
+            logging.log_io(
+                None,
+                f"Input bounds {tuple(matrix_bounds)} storage non-empty domain {storage_ned}",
+            )
+            if _chunk_is_contained_in(matrix_bounds, storage_ned):
+                logging.log_io(
+                    f"Skipped {soma_ndarray.uri}",
+                    f"SKIPPED WRITING {soma_ndarray.uri}",
+                )
+                return
+
     # Write all at once?
     if not soma_ndarray._tiledb_platform_config.write_X_chunked:
         soma_ndarray.write(_coo_to_table(sp.coo_matrix(src_matrix)))
@@ -417,35 +602,41 @@ def _write_matrix_to_sparseNDArray(
     stride_axis = 0 if not sp.isspmatrix_csc(src_matrix) else 1
     dim_max_size = src_matrix.shape[stride_axis]
 
-    s = util.get_start_stamp()
-    logging.log_io(None, "START  ingest")
-
     eta_tracker = eta.Tracker()
     goal_chunk_nnz = soma_ndarray._tiledb_platform_config.goal_chunk_nnz
+
     coords = [slice(None), slice(None)]
     i = 0
     while i < dim_max_size:
         t1 = time.time()
 
-        # chunk size on the stride axis
+        # Chunk size on the stride axis
         chunk_size = _find_chunk_size(src_matrix, i, stride_axis, goal_chunk_nnz)
         i2 = i + chunk_size
 
         coords[stride_axis] = slice(i, i2)
         chunk_coo = sp.coo_matrix(src_matrix[tuple(coords)])
 
-        # print doubly-inclusive lo..hi like 0..17 and 18..31.
         chunk_percent = min(100, 100 * (i2 - 1) / dim_max_size)
+
+        if ingest_mode == "resume" and storage_ned is not None:
+            chunk_bounds = matrix_bounds
+            chunk_bounds[stride_axis] = (i, i2 - 1)
+            if _chunk_is_contained_in_axis(chunk_bounds, storage_ned, stride_axis):
+                # Print doubly inclusive lo..hi like 0..17 and 18..31.
+                logging.log_io(
+                    "... %7.3f%% done" % (chunk_percent),
+                    "SKIP   chunk rows %d..%d of %d (%.3f%%), nnz=%d"
+                    % (i, i2 - 1, dim_max_size, chunk_percent, chunk_coo.nnz),
+                )
+                i = i2
+                continue
+
+        # Print doubly inclusive lo..hi like 0..17 and 18..31.
         logging.log_io(
             None,
             "START  chunk rows %d..%d of %d (%.3f%%), nnz=%d"
-            % (
-                i,
-                i2 - 1,
-                dim_max_size,
-                chunk_percent,
-                chunk_coo.nnz,
-            ),
+            % (i, i2 - 1, dim_max_size, chunk_percent, chunk_coo.nnz),
         )
 
         soma_ndarray.write(_coo_to_table(chunk_coo, stride_axis, i))
@@ -463,7 +654,66 @@ def _write_matrix_to_sparseNDArray(
 
         i = i2
 
-    logging.log_io(None, util.format_elapsed(s, "FINISH ingest"))
+
+def _chunk_is_contained_in(
+    chunk_bounds: MNTupleInt,
+    storage_nonempty_domain: MNTupleIntNone,
+) -> bool:
+    """
+    Determines if a dim range is included within the array's non-empty domain.  Ranges are inclusive
+    on both endpoints.  This is a helper for resume-ingest mode.
+
+    We say "bounds" not "MBR" with the "M" for minimum: a sparse matrix might not _have_ any
+    elements for some initial/final rows or columns. Suppose an input array has shape 100 x 200, so
+    bounds `((0, 99), (0, 199))` -- and also suppose there are no matrix elements for column 1.
+    Also suppose the matrix has already been written to TileDB-SOMA storage. The TileDB non-empty
+    domain _is_ tight -- it'd say `((0, 99), (3, 197))` for example.  When we come back for a
+    resume-mode ingest, we'd see the input bounds aren't contained within the storage non-empty
+    domain, and erroneously declare that the data need to be rewritten.
+
+    This is why we take the stride axis as an argument. In resume mode, it's our contract with the
+    user that they declare they are retrying the exact same input file -- and we do our best to
+    fulfill their ask by checking the dimension being strided on.
+    """
+
+    if storage_nonempty_domain is None:
+        return False
+
+    assert len(chunk_bounds) == len(storage_nonempty_domain)
+
+    for i in range(len(chunk_bounds)):
+        if not _chunk_is_contained_in_axis(chunk_bounds, storage_nonempty_domain, i):
+            return False
+    return True
+
+
+def _chunk_is_contained_in_axis(
+    chunk_bounds: MNTupleInt,
+    storage_nonempty_domain: MNTupleIntNone,
+    stride_axis: int,
+) -> bool:
+    """
+    Helper function for ``_chunk_is_contained_in``.
+    """
+
+    if storage_nonempty_domain is None:
+        return False
+
+    assert len(chunk_bounds) == len(storage_nonempty_domain)
+
+    chunk_lo, chunk_hi = chunk_bounds[stride_axis]
+    storage_lo, storage_hi = storage_nonempty_domain[stride_axis]
+
+    if storage_lo is None or storage_hi is None:
+        # E.g. an array has had its schema created but no data written yet
+        return False
+
+    if chunk_lo < storage_lo or chunk_lo > storage_hi:
+        return False
+    if chunk_hi < storage_lo or chunk_hi > storage_hi:
+        return False
+
+    return True
 
 
 # ----------------------------------------------------------------
@@ -471,6 +721,7 @@ def to_h5ad(
     experiment: Experiment,
     h5ad_path: Path,
     measurement_name: str,
+    *,
     ctx: Optional[tiledb.Ctx] = None,
 ) -> None:
     """
@@ -501,10 +752,8 @@ def to_h5ad(
 # ----------------------------------------------------------------
 def to_anndata(
     experiment: Experiment,
-    *,
-    # TODO: set a better name as capitalized-const
-    # TODO: maybe if there are multiple measurements, default to the first one not named 'raw'
     measurement_name: str,
+    *,
     ctx: Optional[tiledb.Ctx] = None,
 ) -> ad.AnnData:
     """

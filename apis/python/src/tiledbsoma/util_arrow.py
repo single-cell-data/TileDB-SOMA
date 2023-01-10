@@ -1,4 +1,4 @@
-from typing import Optional, Union
+from typing import Any, Dict, Optional, Union
 
 import numpy as np
 import pyarrow as pa
@@ -21,16 +21,16 @@ We auto-promote Arrow's string and binary to large_string and large_binary,
 respectively, as this is what TileDB stores -- a sequence of bytes preceded
 by a 64-bit (not 32-bit) length int.
 """
-ARROW_TO_TDB = {
+ARROW_TO_TDB: Dict[Any, Union[str, TypeError]] = {
     # Dict of types unsupported by to_pandas_dtype, which require overrides.
     # If the value is an instance of Exception, it will be raised.
     #
     # IMPORTANT: ALL non-primitive types supported by TileDB must be in this table.
     #
-    pa.string(): "ascii",  # XXX TODO: temporary work-around until UTF8 support is native. GH #338.
-    pa.large_string(): "ascii",  # XXX TODO: temporary work-around until UTF8 support is native. GH #338.
-    pa.binary(): "bytes",  # XXX TODO: temporary work-around until UTF8 support is native. GH #338.
-    pa.large_binary(): "bytes",  # XXX TODO: temporary work-around until UTF8 support is native. GH #338.
+    pa.string(): "ascii",  # TODO: temporary work-around until UTF8 support is native. GH #338.
+    pa.large_string(): "ascii",  # TODO: temporary work-around until UTF8 support is native. GH #338.
+    pa.binary(): "bytes",  # TODO: temporary work-around until UTF8 support is native. GH #338.
+    pa.large_binary(): "bytes",  # TODO: temporary work-around until UTF8 support is native. GH #338.
     pa.timestamp("s"): "datetime64[s]",
     pa.timestamp("ms"): "datetime64[ms]",
     pa.timestamp("us"): "datetime64[us]",

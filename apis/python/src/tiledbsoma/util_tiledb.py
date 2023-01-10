@@ -66,6 +66,7 @@ def to_tiledb_supported_array_type(x: T) -> T:
     # If the array contains NaN/NA, and the primitive is unable to represent
     # a reasonable facsimile, i.e. not string or float, raise.
     if pd.api.types.is_categorical_dtype(x.dtype):
+        assert isinstance(x, pd.Series)
         categories = x.cat.categories
         cat_dtype = categories.dtype
         if cat_dtype.kind in ["f", "u", "i"]:
