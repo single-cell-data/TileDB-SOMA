@@ -72,7 +72,7 @@ class Experiment(CollectionBase[TileDBObject]):
         """
         return cast(CollectionBase[Measurement], self["ms"])
 
-    def query_by_axis(
+    def axis_query(
         self,
         measurement_name: str,
         *,

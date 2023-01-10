@@ -5,9 +5,9 @@ import pyarrow as pa
 def X_as_series(tbl: pa.Table) -> pd.Series:
     """
     Convert the COO 2D matrix data returned from ``SparseNDArray.read_table()``
-    ito a Pandas Series, with coordindates as a Pandas MultiIndex [lifecycle: experimental].
+    into a Pandas Series, with coordindates as a Pandas MultiIndex [lifecycle: experimental].
 
-    NOTE: this operation is not zero copy.
+    NOTE: this operation is not zero-copy.
 
     Parameters
     ----------

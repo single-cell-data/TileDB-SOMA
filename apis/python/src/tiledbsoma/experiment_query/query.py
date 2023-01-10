@@ -53,9 +53,9 @@ class ExperimentAxisQuery(ContextManager["ExperimentAxisQuery"]):
     in a soma.Experiment, by obs/var (axis) coordinates and/or value filter [lifecycle: experimental].
 
     The primary use for this class is slicing Experiment ``X`` layers by obs or var value and/or coordinates.
-    Slicing on SparseNDArray ``X`` matrices is support; DenseNDArray is not supported at this time.
+    Slicing on SparseNDArray ``X`` matrices is supported; DenseNDArray is not supported at this time.
 
-    IMPORTANT: this class is not thread safe.
+    IMPORTANT: this class is not thread-safe.
 
     IMPORTANT: this query class assumes it can store the full result of both axis dataframe
     queries in memory, and only provides incremental access to the underlying X NDArray. API
@@ -71,7 +71,7 @@ class ExperimentAxisQuery(ContextManager["ExperimentAxisQuery"]):
     """
 
     experiment: "Experiment"
-    ms: str
+    measurement_name: str
 
     _query: MatrixAxisQuery
     _joinids: AxisJoinIds
@@ -94,7 +94,7 @@ class ExperimentAxisQuery(ContextManager["ExperimentAxisQuery"]):
             raise ValueError("Measurement does not exist in the experiment")
 
         self.experiment = experiment
-        self.ms = measurement_name
+        self.measurement_name = measurement_name
 
         self._query = {
             "obs": obs_query if obs_query is not None else AxisQuery(),
@@ -110,7 +110,7 @@ class ExperimentAxisQuery(ContextManager["ExperimentAxisQuery"]):
 
     def close(self) -> None:
         """
-        Cleanup and close all resources. This must be called or the thread pool
+        Clean up and close all resources. This must be called or the thread pool
         will not be released.
         """
         if self.__threadpool is not None:
@@ -139,7 +139,7 @@ class ExperimentAxisQuery(ContextManager["ExperimentAxisQuery"]):
     ) -> somacore.ReadIter[pa.Table]:
         """Return obs as an Arrow table iterator."""
         query = self._query["var"]
-        return self.experiment.ms[self.ms].var.read(
+        return self.experiment.ms[self.measurement_name].var.read(
             ids=query.coords,
             value_filter=query.value_filter,
             column_names=column_names,
@@ -151,7 +151,9 @@ class ExperimentAxisQuery(ContextManager["ExperimentAxisQuery"]):
 
     def var_joinids(self) -> pa.Array:
         """Return var soma_joinids as an Arrow array."""
-        return self._read_axis_joinids("var", self.experiment.ms[self.ms].var)
+        return self._read_axis_joinids(
+            "var", self.experiment.ms[self.measurement_name].var
+        )
 
     @property
     def n_obs(self) -> int:
@@ -163,13 +165,13 @@ class ExperimentAxisQuery(ContextManager["ExperimentAxisQuery"]):
         """Return number of var axis query results"""
         return len(self.var_joinids())
 
-    def X(self, layer: str) -> SparseNDArrayRead:
+    def X(self, layer_name: str) -> SparseNDArrayRead:
         """
         Return an X layer as SparseNDArrayRead.
 
         Parameters
         ----------
-        layer : str
+        layer_name : str
             The X layer name to return.
 
         Examples
@@ -189,10 +191,12 @@ class ExperimentAxisQuery(ContextManager["ExperimentAxisQuery"]):
         soma_dim_1: [[5,19,26,34,37,...,10577,10603,10616,10617,10655], ...]
         soma_data: [[2,2,1,1,1,...,1,1,1,2,2], ...]
         """
-        if not (layer and layer in self.experiment.ms[self.ms].X):
-            raise ValueError("Must specify X layer")
+        if not (
+            layer_name and layer_name in self.experiment.ms[self.measurement_name].X
+        ):
+            raise ValueError("Must specify X layer name")
 
-        X = self.experiment.ms[self.ms].X[layer]
+        X = self.experiment.ms[self.measurement_name].X[layer_name]
         if X.soma_type != "SOMASparseNDArray":
             raise NotImplementedError("Dense array unsupported")
         assert isinstance(X, SOMASparseNDArray)
@@ -243,11 +247,11 @@ class ExperimentAxisQuery(ContextManager["ExperimentAxisQuery"]):
             arrow_table = arrow_table.select(column_names)
         return arrow_table
 
-    def _read_both_axis(
+    def _read_both_axes(
         self,
         column_names: AxisColumnNames,
     ) -> Tuple[pa.Table, pa.Table]:
-        """Private. Read both axis in its entirety, ensure that soma_joinid is retained."""
+        """Private. Read both axes in its entirety, ensure that soma_joinid is retained."""
         futures = (
             self._threadpool.submit(
                 self._read_axis_dataframe,
@@ -259,7 +263,7 @@ class ExperimentAxisQuery(ContextManager["ExperimentAxisQuery"]):
             self._threadpool.submit(
                 self._read_axis_dataframe,
                 "var",
-                self.experiment.ms[self.ms].var,
+                self.experiment.ms[self.measurement_name].var,
                 self._query["var"],
                 column_names=column_names.get("var", None),
             ),
@@ -283,7 +287,7 @@ class ExperimentAxisQuery(ContextManager["ExperimentAxisQuery"]):
         """
         if column_names is None:
             column_names = AxisColumnNames(obs=None, var=None)
-        X_collection = self.experiment.ms[self.ms].X
+        X_collection = self.experiment.ms[self.measurement_name].X
         X_layers = [] if X_layers is None else X_layers
         all_X_names = [X_name] + X_layers
         all_X_arrays: Dict[str, SOMASparseNDArray] = {}
@@ -298,7 +302,7 @@ class ExperimentAxisQuery(ContextManager["ExperimentAxisQuery"]):
                 raise NotImplementedError("Dense array unsupported")
             all_X_arrays[_xname] = cast(SOMASparseNDArray, X_collection[_xname])
 
-        obs_table, var_table = self._read_both_axis(column_names)
+        obs_table, var_table = self._read_both_axes(column_names)
 
         X_tables = {
             # TODO: could also be done concurrently
@@ -344,7 +348,7 @@ class ExperimentAxisQuery(ContextManager["ExperimentAxisQuery"]):
 
         Examples
         --------
-        >>> with exp.query_by_axis("RNA", obs_query=AxisQuery(value_filter='tissue == "lung"')) as query:
+        >>> with exp.axis_query("RNA", obs_query=AxisQuery(value_filter='tissue == "lung"')) as query:
         ...     ad = query.to_anndata("raw", column_names={"obs": ["cell_type", "tissue"]})
         >>> ad
         AnnData object with n_obs × n_vars = 127310 × 52373
@@ -413,8 +417,8 @@ class ExperimentAxisQuery(ContextManager["ExperimentAxisQuery"]):
         assert axis in ["obs", "var"]
         key = f"{axis}p"
 
-        ms = self.experiment.ms[self.ms]
-        if key not in self.experiment.ms[self.ms]:
+        ms = self.experiment.ms[self.measurement_name]
+        if key not in self.experiment.ms[self.measurement_name]:
             raise ValueError(f"Measurement does not contain {key} data")
 
         axisp = ms.obsp if axis == "obs" else ms.varp

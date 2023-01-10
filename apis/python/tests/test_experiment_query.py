@@ -152,7 +152,7 @@ def test_experiment_query_coords(soma_experiment):
     """Test query by dimension coordinates"""
     obs_slice = slice(3, 72)
     var_slice = slice(7, 21)
-    with soma_experiment.query_by_axis(
+    with soma_experiment.axis_query(
         "RNA",
         obs_query=AxisQuery(coords=(obs_slice,)),
         var_query=AxisQuery(coords=(var_slice,)),
@@ -207,7 +207,7 @@ def test_experiment_query_value_filter(soma_experiment):
     """Test query by value filter"""
     obs_label_values = ["3", "7", "38", "99"]
     var_label_values = ["18", "34", "67"]
-    with soma_experiment.query_by_axis(
+    with soma_experiment.axis_query(
         "RNA",
         obs_query=AxisQuery(value_filter=f"label in {obs_label_values}"),
         var_query=AxisQuery(value_filter=f"label in {var_label_values}"),
@@ -231,7 +231,7 @@ def test_experiment_query_combo(soma_experiment):
     obs_slice = slice(3, 101)
     var_slice = slice(7, 80)
 
-    with soma_experiment.query_by_axis(
+    with soma_experiment.axis_query(
         "RNA",
         obs_query=AxisQuery(coords=(obs_slice,)),
         var_query=AxisQuery(value_filter=f"label in {var_label_values}"),
@@ -239,7 +239,7 @@ def test_experiment_query_combo(soma_experiment):
         assert query.n_obs == obs_slice.stop - obs_slice.start + 1
         assert query.var().concat()["label"].to_pylist() == var_label_values
 
-    with soma_experiment.query_by_axis(
+    with soma_experiment.axis_query(
         "RNA",
         obs_query=AxisQuery(value_filter=f"label in {obs_label_values}"),
         var_query=AxisQuery(coords=(var_slice,)),
@@ -250,7 +250,7 @@ def test_experiment_query_combo(soma_experiment):
             np.arange(var_slice.start, var_slice.stop + 1),
         )
 
-    with soma_experiment.query_by_axis(
+    with soma_experiment.axis_query(
         "RNA",
         obs_query=AxisQuery(
             coords=(obs_slice,), value_filter=f"label in {obs_label_values}"
@@ -279,7 +279,7 @@ def test_X_layers(soma_experiment):
         soma_experiment.ms["RNA"].X["B"].read((slice(None), slice(None))).tables()
     )
 
-    with soma_experiment.query_by_axis("RNA") as query:
+    with soma_experiment.axis_query("RNA") as query:
         arrow_reads = query.read("A", X_layers=["B"])
         assert arrow_reads["X"] == A
         assert arrow_reads["X_layers"]["B"] == B
@@ -342,21 +342,21 @@ def test_error_corners(soma_experiment: soma.Experiment):
     assert soma_experiment.exists()
 
     with pytest.raises(ValueError):
-        soma_experiment.query_by_axis("no-such-measurement")
+        soma_experiment.axis_query("no-such-measurement")
 
     with pytest.raises(ValueError):
-        soma.Experiment(uri="foobar").query_by_axis("foobar")
+        soma.Experiment(uri="foobar").axis_query("foobar")
 
     with pytest.raises(ValueError):
-        with soma_experiment.query_by_axis("RNA") as query:
+        with soma_experiment.axis_query("RNA") as query:
             next(query.X("no-such-layer"))
 
     with pytest.raises(ValueError):
-        with soma_experiment.query_by_axis("RNA") as query:
+        with soma_experiment.axis_query("RNA") as query:
             next(query.obsp("no-such-layer"))
 
     with pytest.raises(ValueError):
-        with soma_experiment.query_by_axis("RNA") as query:
+        with soma_experiment.axis_query("RNA") as query:
             next(query.varp("no-such-layer"))
 
 
@@ -369,11 +369,11 @@ def test_error_corners(soma_experiment: soma.Experiment):
 def test_query_cleanup(soma_experiment: soma.Experiment):
     """
     Verify soma.Experiment.query works as context manager and stand-alone,
-    and htat it cleans up correct.
+    and that it cleans up correct.
     """
     from contextlib import closing
 
-    with soma_experiment.query_by_axis("RNA") as query:
+    with soma_experiment.axis_query("RNA") as query:
         assert query.n_obs == 1001
         assert query.n_vars == 99
         assert query.to_anndata("raw") is not None
@@ -381,7 +381,7 @@ def test_query_cleanup(soma_experiment: soma.Experiment):
 
     assert query._ExperimentAxisQuery__threadpool is None
 
-    with closing(soma_experiment.query_by_axis("RNA")) as query:
+    with closing(soma_experiment.axis_query("RNA")) as query:
         assert query.to_anndata("raw") is not None
         assert query._ExperimentAxisQuery__threadpool is not None
 
