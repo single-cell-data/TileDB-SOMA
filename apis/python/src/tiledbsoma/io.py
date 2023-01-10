@@ -1,8 +1,9 @@
 import math
 import time
-from typing import Any, Optional, Sequence, Union
+from typing import Any, List, Optional, Sequence, Union
 
 import anndata as ad
+import h5py
 import numpy as np
 import pandas as pd
 import pyarrow as pa
@@ -189,12 +190,17 @@ def from_anndata(
     x = Collection(uri=util.uri_joinpath(measurement.uri, "X"))
     measurement["X"] = _check_create(x, ingest_mode)
 
-    if isinstance(anndata.X, np.ndarray):
+    # Since we did `anndata = ad.read_h5ad(path_to_h5ad, "r")` with the "r":
+    # * If we do `anndata.X[:]` we're loading all of a CSR/CSC/etc into memory.
+    # * If we do `anndata.X` we're getting a pageable object which can be loaded
+    #   chunkwise into memory.
+    # Using the latter allows us to ingest larger .h5ad files without OOMing.
+    if isinstance(anndata.X, (np.ndarray, h5py._hl.dataset.Dataset)):
         ddata = DenseNDArray(uri=util.uri_joinpath(measurement.X.uri, "data"), ctx=ctx)
         # Code here and in else-block duplicated for linter appeasement
         create_from_matrix(
             ddata,
-            anndata.X[:],
+            anndata.X,
             platform_config=platform_config,
             ingest_mode=ingest_mode,
         )
@@ -203,7 +209,7 @@ def from_anndata(
         sdata = SparseNDArray(uri=util.uri_joinpath(measurement.X.uri, "data"), ctx=ctx)
         create_from_matrix(
             sdata,
-            anndata.X[:],
+            anndata.X,
             platform_config=platform_config,
             ingest_mode=ingest_mode,
         )
@@ -307,7 +313,7 @@ def from_anndata(
         )
         create_from_matrix(
             rawXdata,
-            anndata.raw.X[:],
+            anndata.raw.X,
             platform_config=platform_config,
             ingest_mode=ingest_mode,
         )
@@ -394,7 +400,13 @@ def _write_dataframe(
 
 def create_from_matrix(
     soma_ndarray: Union[DenseNDArray, SparseNDArray],
-    src_matrix: Union[np.ndarray, sp.csr_matrix, sp.csc_matrix],
+    src_matrix: Union[
+        np.ndarray,
+        sp.csr_matrix,
+        sp.csc_matrix,
+        h5py._hl.dataset.Dataset,
+        ad._core.sparse_dataset.SparseDataset,
+    ],
     *,
     platform_config: Optional[PlatformConfig] = None,
     ingest_mode: IngestMode = "write",
@@ -402,7 +414,8 @@ def create_from_matrix(
     """
     Create and populate the ``soma_matrix`` from the contents of ``src_matrix``.
     """
-    assert src_matrix.ndim == 2
+    # ad._core.sparse_dataset.SparseDataset has no ndim but it has a shape
+    assert len(src_matrix.shape) == 2
     assert soma_ndarray.soma_type in ("SOMADenseNDArray", "SOMASparseNDArray")
 
     s = util.get_start_stamp()
@@ -444,7 +457,9 @@ def create_from_matrix(
 
 def _write_matrix_to_denseNDArray(
     soma_ndarray: DenseNDArray,
-    src_matrix: Union[np.ndarray, sp.csr_matrix, sp.csc_matrix],
+    src_matrix: Union[
+        np.ndarray, sp.csr_matrix, sp.csc_matrix, h5py._hl.dataset.Dataset
+    ],
     *,
     ingest_mode: IngestMode,
 ) -> None:
@@ -462,7 +477,9 @@ def _write_matrix_to_denseNDArray(
         # This lets us check for already-ingested chunks, when in resume-ingest mode.
         with soma_ndarray._tiledb_open() as A:
             storage_ned = A.nonempty_domain()
-            matrix_bounds = [(0, n - 1) for n in src_matrix.shape]
+            matrix_bounds = [
+                (0, int(n - 1)) for n in src_matrix.shape
+            ]  # Cast for lint in case np.int64
             logging.log_io(
                 None,
                 f"Input bounds {tuple(matrix_bounds)} storage non-empty domain {storage_ned}",
@@ -475,7 +492,7 @@ def _write_matrix_to_denseNDArray(
                 return
 
     # Write all at once?
-    if soma_ndarray._tiledb_platform_config.write_X_chunked:
+    if not soma_ndarray._tiledb_platform_config.write_X_chunked:
         if isinstance(src_matrix, np.ndarray):
             nd_array = src_matrix
         else:
@@ -507,7 +524,7 @@ def _write_matrix_to_denseNDArray(
 
         if ingest_mode == "resume" and storage_ned is not None:
             chunk_bounds = matrix_bounds
-            chunk_bounds[0] = (i, i2 - 1)
+            chunk_bounds[0] = (int(i), int(i2 - 1))  # Cast for lint in case np.int64
             if _chunk_is_contained_in_axis(chunk_bounds, storage_ned, 0):
                 # Print doubly inclusive lo..hi like 0..17 and 18..31.
                 logging.log_io(
@@ -540,9 +557,86 @@ def _write_matrix_to_denseNDArray(
     return
 
 
+def _find_chunk_size(
+    matrix: Union[
+        np.ndarray, sp.csr_matrix, sp.csc_matrix, ad._core.sparse_dataset.SparseDataset
+    ],
+    start_index: int,
+    axis: int,
+    goal_chunk_nnz: int,
+) -> int:
+    """
+    Internal method to find a good number of rows/columns to read from a CSR/CSC matrix
+    which will result in getting a desired nnz value. This is for memory-budgeting
+    for ingesting data from large .h5ad files.
+    """
+    if isinstance(matrix, np.ndarray):
+        return int(math.ceil(goal_chunk_nnz / matrix.shape[axis]))
+    else:
+        return _find_sparse_chunk_size(matrix, start_index, axis, goal_chunk_nnz)
+
+
+def _find_sparse_chunk_size(
+    matrix: Union[sp.csr_matrix, sp.csc_matrix, ad._core.sparse_dataset.SparseDataset],
+    start_index: int,
+    axis: int,
+    goal_chunk_nnz: int,
+) -> int:
+    """
+    Internal helper method for `_find_chunk_size`.
+
+    Given a sparse matrix and a start index, return a step size, on the stride axis, which will
+    achieve the cummulative nnz desired.
+
+    :param matrix: The input scipy.sparse matrix.
+    :param start_index: the index at which to start a chunk.
+    :param axis: the stride axis, across which to find a chunk.
+    :param goal_chunk_nnz: Desired number of non-zero array entries for the chunk.
+    """
+    chunk_size = 1
+    sum_nnz = 0
+    coords: List[Union[slice, int]] = [slice(None), slice(None)]
+
+    # Empirically we find:
+    # * If the input matrix is sp.csr_matrix or sp.csc_matrix then getting all these nnz values is
+    #   quick.
+    # * If the input matrix is anndata._core.sparse_dataset.SparseDataset -- which happens with
+    #   out-of-core anndata reads -- then getting all these nnz values is prohibitively expensive.
+    # * It turns out that getting a sample is quite sufficient. We do this regardless of whether
+    #   the matrix is anndata._core.sparse_dataset.SparseDataset or not.
+    # * The max_rows is manually defined after running experiments with 60GB .h5ad files.
+    count = 0
+    max_rows = 100
+
+    for index in range(start_index, matrix.shape[axis]):
+        count += 1
+        coords[axis] = index
+        sum_nnz += matrix[tuple(coords)].nnz
+        if sum_nnz > goal_chunk_nnz:
+            break
+        if count > max_rows:
+            break
+        chunk_size += 1
+
+    if sum_nnz > goal_chunk_nnz:
+        return chunk_size
+
+    # Solve the equation:
+    #
+    # sum_nnz              count
+    # -------          =  -------
+    # goal_chunk_nnz       result
+    chunk_size = int(count * goal_chunk_nnz / sum_nnz)
+    if chunk_size < 1:
+        chunk_size = 1
+    return chunk_size
+
+
 def _write_matrix_to_sparseNDArray(
     soma_ndarray: SparseNDArray,
-    src_matrix: Union[np.ndarray, sp.csr_matrix, sp.csc_matrix],
+    src_matrix: Union[
+        np.ndarray, sp.csr_matrix, sp.csc_matrix, ad._core.sparse_dataset.SparseDataset
+    ],
     *,
     ingest_mode: IngestMode,
 ) -> None:
@@ -556,19 +650,6 @@ def _write_matrix_to_sparseNDArray(
         }
         return pa.Table.from_pydict(pydict)
 
-    def _find_chunk_size(
-        mat: Union[np.ndarray, sp.csr_matrix, sp.csc_matrix],
-        start_index: int,
-        axis: int,
-        goal_chunk_nnz: int,
-    ) -> int:
-        if isinstance(mat, np.ndarray):
-            return int(math.ceil(goal_chunk_nnz / mat.shape[axis]))
-        else:
-            return util_scipy.find_sparse_chunk_size(
-                mat, start_index, axis, goal_chunk_nnz
-            )
-
     # There is a chunk-by-chunk already-done check for resume mode, below.
     # This full-matrix-level check here might seem redundant, but in fact it's important:
     # * By checking input bounds against storage NED here, we can see if the entire matrix
@@ -581,7 +662,9 @@ def _write_matrix_to_sparseNDArray(
         # This lets us check for already-ingested chunks, when in resume-ingest mode.
         with soma_ndarray._tiledb_open() as A:
             storage_ned = A.nonempty_domain()
-            matrix_bounds = [(0, n - 1) for n in src_matrix.shape]
+            matrix_bounds = [
+                (0, int(n - 1)) for n in src_matrix.shape
+            ]  # Cast for lint in case np.int64
             logging.log_io(
                 None,
                 f"Input bounds {tuple(matrix_bounds)} storage non-empty domain {storage_ned}",
@@ -599,7 +682,18 @@ def _write_matrix_to_sparseNDArray(
         return
 
     # Or, write in chunks, striding across the most efficient slice axis
-    stride_axis = 0 if not sp.isspmatrix_csc(src_matrix) else 1
+
+    stride_axis = 0
+    if sp.isspmatrix_csc(src_matrix):
+        # E.g. if we used anndata.X[:]
+        stride_axis = 1
+    if (
+        isinstance(src_matrix, ad._core.sparse_dataset.SparseDataset)
+        and src_matrix.format_str == "csc"
+    ):
+        # E.g. if we used anndata.X without the [:]
+        stride_axis = 1
+
     dim_max_size = src_matrix.shape[stride_axis]
 
     eta_tracker = eta.Tracker()
@@ -621,7 +715,10 @@ def _write_matrix_to_sparseNDArray(
 
         if ingest_mode == "resume" and storage_ned is not None:
             chunk_bounds = matrix_bounds
-            chunk_bounds[stride_axis] = (i, i2 - 1)
+            chunk_bounds[stride_axis] = (
+                int(i),
+                int(i2 - 1),
+            )  # Cast for lint in case np.int64
             if _chunk_is_contained_in_axis(chunk_bounds, storage_ned, stride_axis):
                 # Print doubly inclusive lo..hi like 0..17 and 18..31.
                 logging.log_io(
@@ -800,30 +897,30 @@ def to_anndata(
         for key in measurement.obsm.keys():
             shape = measurement.obsm[key].shape
             assert len(shape) == 2
-            mat = measurement.obsm[key].read((slice(None),) * len(shape)).to_numpy()
+            matrix = measurement.obsm[key].read((slice(None),) * len(shape)).to_numpy()
             # The spelling `sp.csr_array` is more idiomatic but doesn't exist until Python 3.8
-            obsm[key] = sp.csr_matrix(mat)
+            obsm[key] = sp.csr_matrix(matrix)
 
     varm = {}
     if "varm" in measurement and measurement.varm.exists():
         for key in measurement.varm.keys():
             shape = measurement.varm[key].shape
             assert len(shape) == 2
-            mat = measurement.varm[key].read((slice(None),) * len(shape)).to_numpy()
+            matrix = measurement.varm[key].read((slice(None),) * len(shape)).to_numpy()
             # The spelling `sp.csr_array` is more idiomatic but doesn't exist until Python 3.8
-            varm[key] = sp.csr_matrix(mat)
+            varm[key] = sp.csr_matrix(matrix)
 
     obsp = {}
     if "obsp" in measurement and measurement.obsp.exists():
         for key in measurement.obsp.keys():
-            mat = measurement.obsp[key].read().tables().concat().to_pandas()
-            obsp[key] = util_scipy.csr_from_tiledb_df(mat, nobs, nobs)
+            matrix = measurement.obsp[key].read().tables().concat().to_pandas()
+            obsp[key] = util_scipy.csr_from_tiledb_df(matrix, nobs, nobs)
 
     varp = {}
     if "varp" in measurement and measurement.varp.exists():
         for key in measurement.varp.keys():
-            mat = measurement.varp[key].read().tables().concat().to_pandas()
-            varp[key] = util_scipy.csr_from_tiledb_df(mat, nvar, nvar)
+            matrix = measurement.varp[key].read().tables().concat().to_pandas()
+            varp[key] = util_scipy.csr_from_tiledb_df(matrix, nvar, nvar)
 
     anndata = ad.AnnData(
         X=X_csr if X_csr is not None else X_ndarray,

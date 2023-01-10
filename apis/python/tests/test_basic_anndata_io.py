@@ -209,22 +209,20 @@ def test_export_anndata(adata):
     tempdir = tempfile.TemporaryDirectory()
     output_path = tempdir.name
 
-    orig = adata
-
     exp = tiledbsoma.Experiment(output_path)
-    tiledbsoma.io.from_anndata(exp, orig, measurement_name="RNA")
+    tiledbsoma.io.from_anndata(exp, adata, measurement_name="RNA")
 
     readback = tiledbsoma.io.to_anndata(exp, measurement_name="RNA")
 
-    assert readback.obs.shape == orig.obs.shape
-    assert readback.var.shape == orig.var.shape
-    assert readback.X.shape == orig.X.shape
+    assert readback.obs.shape == adata.obs.shape
+    assert readback.var.shape == adata.var.shape
+    assert readback.X.shape == adata.X.shape
 
-    for key in orig.obsm.keys():
-        assert readback.obsm[key].shape == orig.obsm[key].shape
-    for key in orig.varm.keys():
-        assert readback.varm[key].shape == orig.varm[key].shape
-    for key in orig.obsp.keys():
-        assert readback.obsp[key].shape == orig.obsp[key].shape
-    for key in orig.varp.keys():
-        assert readback.varp[key].shape == orig.varp[key].shape
+    for key in adata.obsm.keys():
+        assert readback.obsm[key].shape == adata.obsm[key].shape
+    for key in adata.varm.keys():
+        assert readback.varm[key].shape == adata.varm[key].shape
+    for key in adata.obsp.keys():
+        assert readback.obsp[key].shape == adata.obsp[key].shape
+    for key in adata.varp.keys():
+        assert readback.varp[key].shape == adata.varp[key].shape
