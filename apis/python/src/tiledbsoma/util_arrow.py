@@ -1,4 +1,4 @@
-from typing import Optional, Union
+from typing import Any, Dict, Optional, Union
 
 import numpy as np
 import pyarrow as pa
@@ -21,7 +21,7 @@ We auto-promote Arrow's string and binary to large_string and large_binary,
 respectively, as this is what TileDB stores -- a sequence of bytes preceded
 by a 64-bit (not 32-bit) length int.
 """
-ARROW_TO_TDB = {
+ARROW_TO_TDB: Dict[Any, Union[str, TypeError]] = {
     # Dict of types unsupported by to_pandas_dtype, which require overrides.
     # If the value is an instance of Exception, it will be raised.
     #
