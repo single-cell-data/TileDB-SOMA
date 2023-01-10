@@ -271,6 +271,11 @@ def _from_anndata_aux(
                 #   in turn the anndata super-snazzy indexed-matrix object I was raving
                 #   about ... doesn't do well _at all_ in performance here. Effectively
                 #   the util._get_sort_and_permutation() never completes. :(
+                # * We can sub-sample -- just ask at most say 100 rows for their nnz and
+                #   extrapolate that up -- which works fine. But there's a deeper issue
+                #   which is (from h5py):
+                #     TypeError: Indexing elements must be in increasing order
+                #   i.e. h5py is not designed to do these permuted reads.
                 # * So for main we'll be able to drop the [:] here and it will be grand. :)
                 matrix=anndata.X[:],
                 row_names=anndata.obs.index,
