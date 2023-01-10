@@ -1,5 +1,5 @@
 import collections.abc
-from typing import Any, List, Optional, Tuple, cast
+from typing import Any, Optional
 
 import attrs
 import numpy as np
