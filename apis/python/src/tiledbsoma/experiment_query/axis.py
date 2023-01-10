@@ -1,34 +1,56 @@
-from dataclasses import dataclass
-from typing import Optional, Tuple, Union
+import collections.abc
+from typing import Any, List, Optional, Tuple, cast
 
+import attrs
 import numpy as np
-import numpy.typing as npt
 import pyarrow as pa
 
-AxisCoordinate = Union[slice, int, npt.ArrayLike]
-AxisCoordinates = Tuple[AxisCoordinate, ...]
-AxisValueFilter = str
+from ..types import SparseDataFrameCoordinate, SparseDataFrameCoordinates
 
 
-@dataclass()
+def normalize_coords(
+    coords: SparseDataFrameCoordinates,
+) -> Tuple[SparseDataFrameCoordinate]:
+    """
+    Private. Convert incoming query coordinates into pyarrow Arrow int64,
+    slices or ints.
+
+    NOTE: this should arguably be delegated to the DataFrame class, as the
+    ExperimentAxsQuery class has no dependency on this. However, the error
+    checking is done so late, this has UX benefits.
+    """
+    norm_coords: List[SparseDataFrameCoordinate] = []
+    for c in coords:
+        if c is None or isinstance(c, (int, slice)):
+            norm_coords.append(c)
+        elif isinstance(c, (pa.Array, pa.ChunkedArray)):
+            if c.type != pa.int64():
+                c = c.cast(pa.int64())
+            norm_coords.append(c)
+        else:
+            norm_coords.append(pa.array(np.array(c, dtype=np.int64)))
+
+    return cast(Tuple[SparseDataFrameCoordinate], tuple(norm_coords))
+
+
+@attrs.define(kw_only=True)
 class AxisQuery:
     """
-    A dataclass which defines a single-axis dataframe query based upon coordinates and/or a
+    A class which defines a single-axis dataframe query based upon coordinates and/or a
     value filter predicate [lifecycle: experimental].
 
     Per dimension, the AxisQuery can have value of:
     * None - all data
-    * Coordinates - a set of coordinates on the axis dataframe index (or soma_rowids if
-      a dense dataframe), expressed as an int, a slice or a NumPy "array like" of ints.
+    * Coordinates - a set of coordinates on the axis dataframe index, expressed in any
+      type or format supported by ``DataFrame.read()``.
     * A SOMA `value_filter` across columns in the axis dataframe, expressed as string
     * Or, a combination of coordinates and value filter.
 
     Parameters
     ----------
-    coords : Optional[tuple]
+    coords : Optional[SparseDataFrameCoordinates]
         Query (slice) by dimension. Tuple must have lenth less than or equal to the number
-        of dimensions. For each dimension, coordinate is an ``int``, ``slice`` or NumPy
-        ``array-like`` of ints.
+        of dimensions, and be of a type supported by ``DataFrame``.
     value_filter : Optional[str]
         A string specifying a SOMA value_filter.
 
@@ -44,25 +66,37 @@ class AxisQuery:
     ```
     """
 
-    value_filter: Optional[AxisValueFilter] = None
-    coords: Optional[AxisCoordinates] = None
+    value_filter: Optional[str] = attrs.field(
+        default=None,
+        validator=attrs.validators.optional(attrs.validators.instance_of(str)),
+    )
+    coords: SparseDataFrameCoordinates = attrs.field(
+        default=(slice(None),),
+        # converter=normalize_coords,
+        validator=attrs.validators.instance_of(tuple),
+    )
 
-    def __post_init__(self) -> None:
-        if self.value_filter is not None:
-            if not isinstance(self.value_filter, str):
-                raise TypeError("AxisQuery - value_filter must be a str type")
+    @coords.validator
+    def _validate_coords(self, _: Any, value: Any) -> None:
+        """
+        This should arguably be delegated to DataClass, but that would
+        def error reporting to the user. Doing validation proactively has
+        UX benefit.
+        """
+        for c in value:
+            if c is None:
+                continue
+            if isinstance(
+                c,
+                (
+                    int,
+                    slice,
+                    collections.abc.Sequence,
+                    pa.Array,
+                    pa.ChunkedArray,
+                    np.ndarray,
+                ),
+            ):
+                continue
 
-        if self.coords is None:
-            self.coords = (slice(None),)
-        else:
-            if not isinstance(self.coords, tuple):
-                raise TypeError(
-                    "AxisQuery - coords must be tuple of int, slice or numpy.array_like"
-                )
-            coords = []
-            for c in self.coords:
-                if isinstance(c, int) or isinstance(c, slice):
-                    coords.append(c)
-                else:
-                    coords.append(pa.array(np.array(c, dtype=np.int64)))
-            self.coords = tuple(coords)
+            raise TypeError("AxisQuery coordinate type is unsupported.")

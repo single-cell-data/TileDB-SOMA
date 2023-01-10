@@ -377,15 +377,15 @@ def test_query_cleanup(soma_experiment: soma.Experiment):
         assert query.n_obs == 1001
         assert query.n_vars == 99
         assert query.to_anndata("raw") is not None
-        assert query._ExperimentAxisQuery__threadpool is not None
+        assert query._threadpool_ is not None
 
-    assert query._ExperimentAxisQuery__threadpool is None
+    assert query._threadpool_ is None
 
     with closing(soma_experiment.axis_query("RNA")) as query:
         assert query.to_anndata("raw") is not None
-        assert query._ExperimentAxisQuery__threadpool is not None
+        assert query._threadpool_ is not None
 
-    assert query._ExperimentAxisQuery__threadpool is None
+    assert query._threadpool_ is None
 
 
 @pytest.mark.xfail(
@@ -434,15 +434,14 @@ def test_experiment_query_obsp_varp(soma_experiment):
 
 
 def test_axis_query():
-    """Basic test of the AxisQuery dataclass"""
+    """Basic test of the AxisQuery class"""
     assert AxisQuery().coords == (slice(None),)
     assert AxisQuery().value_filter is None
     assert AxisQuery() == AxisQuery(coords=(slice(None),))
 
     assert AxisQuery(coords=(1,)).coords == (1,)
     assert AxisQuery(coords=(slice(1, 2),)).coords == (slice(1, 2),)
-    assert AxisQuery(coords=((1, 88),)).coords == (pa.array([1, 88]),)
-    assert AxisQuery(coords=(np.array([9, 283, 4]),)).coords == (pa.array([9, 283, 4]),)
+    assert AxisQuery(coords=((1, 88),)).coords == ((1, 88),)
 
     assert AxisQuery(coords=(1, 2)).coords == (1, 2)
     assert AxisQuery(coords=(slice(1, 2), slice(None))).coords == (
