@@ -4,7 +4,6 @@ import numpy as np
 import pyarrow as pa
 import somacore
 import tiledb
-from typing_extensions import Final
 
 # This package's pybind11 code
 import tiledbsoma.libtiledbsoma as clib
@@ -43,7 +42,8 @@ class DenseNDArray(TileDBArray, somacore.DenseNDArray):
             ctx=ctx,
         )
 
-    soma_type: Final = "SOMADenseNDArray"
+    # Inherited from somacore
+    # soma_type: Final = "SOMADenseNDArray"
 
     def create(
         self,
@@ -139,7 +139,8 @@ class DenseNDArray(TileDBArray, somacore.DenseNDArray):
         with self._tiledb_open() as A:
             return cast(int, A.schema.domain.ndim)
 
-    is_sparse: Final = False
+    # Inherited from somacore
+    # is_sparse: Final = False
 
     def read(
         self,

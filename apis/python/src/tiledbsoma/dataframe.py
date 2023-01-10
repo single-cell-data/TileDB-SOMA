@@ -5,7 +5,7 @@ import numpy as np
 import pyarrow as pa
 import somacore
 import tiledb
-from typing_extensions import Final, get_args
+from typing_extensions import get_args
 
 # This package's pybind11 code
 import tiledbsoma.libtiledbsoma as clib
@@ -46,7 +46,8 @@ class DataFrame(TileDBArray, somacore.DataFrame):
         self._index_column_names = ()
         self._is_sparse = None
 
-    soma_type: Final = "SOMADataFrame"
+    # Inherited from somacore
+    # soma_type: Final = "SOMADataFrame"
 
     def create(
         self,

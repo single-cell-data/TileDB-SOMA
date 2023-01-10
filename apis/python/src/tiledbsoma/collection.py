@@ -17,7 +17,6 @@ from typing import (
 
 import somacore
 import tiledb
-from typing_extensions import Final
 
 from .exception import DoesNotExistError, SOMAError
 from .tiledb_object import TileDBObject
@@ -391,4 +390,6 @@ class Collection(CollectionBase[TileDBObject]):
     A persistent collection of SOMA objects, mapping string keys to any SOMA object.
     """
 
-    soma_type: Final = "SOMACollection"
+    pass
+    # Inherited from somacore
+    # soma_type: Final = "SOMACollection"

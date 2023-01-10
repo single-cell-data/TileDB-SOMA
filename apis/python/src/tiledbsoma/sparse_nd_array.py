@@ -5,7 +5,6 @@ import numpy as np
 import pyarrow as pa
 import somacore
 import tiledb
-from typing_extensions import Final
 
 # This package's pybind11 code
 import tiledbsoma.libtiledbsoma as clib
@@ -47,7 +46,8 @@ class SparseNDArray(TileDBArray, somacore.SparseNDArray):
             ctx=ctx,
         )
 
-    soma_type: Final = "SOMASparseNDArray"
+    # Inherited from somacore
+    # soma_type: Final = "SOMASparseNDArray"
 
     def create(
         self,
@@ -144,7 +144,8 @@ class SparseNDArray(TileDBArray, somacore.SparseNDArray):
         """
         return len(self.shape)
 
-    is_sparse: Final = True
+    # Inherited from somacore
+    # is_sparse: Final = True
 
     @property
     def nnz(self) -> int:

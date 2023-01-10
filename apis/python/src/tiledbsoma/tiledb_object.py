@@ -3,13 +3,14 @@ from abc import ABC, abstractmethod, abstractproperty
 from typing import Optional, Union, cast
 
 import tiledb
+import somacore
 
 from . import util
 from .metadata_mapping import MetadataMapping
 from .tiledb_platform_config import TileDBPlatformConfig
 
 
-class TileDBObject(ABC):
+class TileDBObject(ABC, somacore.SOMAObject):
     """
     Base class for ``TileDBArray`` and ``Collection``.
 
