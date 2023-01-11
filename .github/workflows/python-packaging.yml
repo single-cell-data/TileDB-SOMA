@@ -1,17 +1,29 @@
 name: TileDB-SOMA python sdist & wheels
 
 on:
-  # I.e. on request
+  # I.e. on request. You can go to
+  #   https://github.com/single-cell-data/TileDB-SOMA/actions/workflows/python-packaging.yml
+  # and "Run workflow"
   workflow_dispatch:
+
   # Normally the smoke test only runs on merge to main.  To run it on a PR CI, uncomment `pull_request:`
   # pull_request:
   # branches: [main]
   # paths-ignore:
   #   - 'apis/r/**'
+
+  # Nightly
+  schedule:
+    - cron: '54 5 * * *' # GMT
+
+  # On published releases
   release:
     types: [published]
 
+# ================================================================
 jobs:
+
+  # ----------------------------------------------------------------
   sdist:
     name: Build source distribution
     runs-on: ubuntu-20.04
@@ -24,11 +36,15 @@ jobs:
       run: python setup.py sdist
       working-directory: ./apis/python
     - name: Upload sdist artifact
+      # One might ask "Upload" -- to where? This means you can go to 
+      #   https://github.com/single-cell-data/TileDB-SOMA/actions/runs/some-number-goes-here
+      # and click on "Artifacts"
       uses: actions/upload-artifact@v3
       with:
         name: sdist
         path: apis/python/dist/
 
+  # ----------------------------------------------------------------
   # TODO: merge with python-packaging.yml -- https://github.com/single-cell-data/TileDB-SOMA/issues/700
   wheels:
     # Note: tries all supported Python versions as specified in apis/python/setup.py
@@ -69,6 +85,7 @@ jobs:
         name: wheels-${{ matrix.platform }}
         path: ./wheelhouse/*.whl
 
+  # ----------------------------------------------------------------
   smoke-test:
     name: Smoke test wheels
     needs: wheels
@@ -100,3 +117,42 @@ jobs:
     - name: Smoke test ${{ matrix.os }}
       run: python -c 'import tiledbsoma; print(tiledbsoma.libtiledbsoma.__file__)'
       # TODO: more-thorough test
+
+  # ----------------------------------------------------------------
+  publish-to-test-pypi:
+    name: Publish package to TestPyPI
+    needs: wheels
+
+    if: matrix.os == 'ubuntu-22.04' && github.event_name == 'release'
+
+    uses: pypa/gh-action-pypi-publish@master
+    continue-on-error: true
+    with:
+      repository_url: https://test.pypi.org/legacy/
+      user: __token__
+      password: ${{ secrets.TEST_PYPI_TOKEN }}
+      packages_dir: sdist, dist-wheel
+      verbose: true
+
+  # ----------------------------------------------------------------
+  publish-to-pypi:
+    name: Publish package to PyPI
+    needs: wheels
+
+    # Until general release of the main branch of tiledbsoma we'll follow the convention of tagging releases
+    # 0.5.0a1, 0.5.1a1, etc -- always with the "a1" suffix -- that way PyPI will automagically make these
+    # "prereleases". Then:
+    # pip install tiledbsoma -> 0.1.12 (or whatever the main-old branch is at)
+    # pip install --pre tiledbsoma -> 0.5.0a1 (or whatever the main branch is at)
+
+    # For prime time, once we're in 1.0 release:
+    #if: matrix.os == 'ubuntu-22.04' && github.event_name == 'release' && !github.event.release.prerelease
+    # For now:
+    if: matrix.os == 'ubuntu-22.04' && github.event_name == 'release' && (contains(${{github.event.release.tag_name}}, "a") || contains(${github.event.release.tag_name}}, "b"))
+
+    uses: pypa/gh-action-pypi-publish@master
+    with:
+      user: __token__
+      password: ${{ secrets.PYPI_TOKEN }}
+      packages_dir: sdist, dist-wheel
+      verbose: true
