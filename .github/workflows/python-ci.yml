@@ -85,6 +85,7 @@ jobs:
         token: ${{ secrets.CODECOV_TOKEN }}
         fail_ci_if_error: true
 
+    # TODO: merge with python-packaging.yml -- https://github.com/single-cell-data/TileDB-SOMA/issues/700
     - name: Build wheel distribution
       run: python -m pip -v wheel --no-deps --wheel-dir=dist-wheel apis/python
       env:

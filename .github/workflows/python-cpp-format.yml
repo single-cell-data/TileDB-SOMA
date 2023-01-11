@@ -28,7 +28,7 @@ jobs:
           python -m pip install mypy==0.982 types-setuptools 'attrs>=22.1'
           python -m mypy .
 
-      - name: Check C++ Format  
-        run: |  
-          ./scripts/run-clang-format.sh . clang-format 0 \  
-          $(find libtiledbsoma -name "*.cc" -or -name "*.h")    
+      - name: Check C++ Format
+        run: |
+          ./scripts/run-clang-format.sh . clang-format 0 \
+          $(find libtiledbsoma -name "*.cc" -or -name "*.h")

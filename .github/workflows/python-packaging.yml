@@ -29,6 +29,7 @@ jobs:
         name: sdist
         path: apis/python/dist/
 
+  # TODO: merge with python-packaging.yml -- https://github.com/single-cell-data/TileDB-SOMA/issues/700
   wheels:
     # Note: tries all supported Python versions as specified in apis/python/setup.py
     name: Build wheels on ${{ matrix.os }}
