@@ -2,6 +2,8 @@ name: TileDB-SOMA R CI
 
 on:
   pull_request:
+    paths-ignore:
+      - 'apis/python/**'
   push:
     branches: [main]
 

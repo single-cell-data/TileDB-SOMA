@@ -1,7 +1,9 @@
-name: TileDB Python and C++ Linting
+name: TileDB-SOMA Python Linting
 
 on:
   pull_request:
+    paths-ignore:
+      - 'apis/r/**'
   push:
     branches: [main]
 
@@ -25,8 +27,3 @@ jobs:
           # python -m pip install mypy types-setuptools typeguard
           python -m pip install mypy==0.982 types-setuptools 'attrs>=22.1'
           python -m mypy .
-
-      - name: Check C++ Format
-        run: |
-          ./scripts/run-clang-format.sh . clang-format 0 \
-          $(find libtiledbsoma -name "*.cc" -or -name "*.h")
