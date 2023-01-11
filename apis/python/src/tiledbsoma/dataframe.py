@@ -46,6 +46,7 @@ class DataFrame(TileDBArray):
         self._is_sparse = None
 
     soma_type: Final = "SOMADataFrame"
+    raise Exception("TESTING")
 
     def create(
         self,
