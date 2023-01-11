@@ -34,8 +34,8 @@ jobs:
         run: |
           # mypy 0.990 has false positives on `import anndata as ad` and `Module has no attribute
           # "read_h5ad"` etc :(
-          # python -m pip install mypy types-setuptools
-          python -m pip install mypy==0.982 types-setuptools
+          # python -m pip install mypy types-setuptools typeguard
+          python -m pip install mypy==0.982 types-setuptools 'attrs>=22.1'
           python -m mypy .
 
       - name: Check C++ Format
