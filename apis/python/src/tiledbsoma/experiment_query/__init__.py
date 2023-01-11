@@ -1,10 +1,15 @@
 from .axis import AxisQuery
-from .eq_types import AxisColumnNames, ExperimentAxisQueryReadArrowResult
-from .query import ExperimentAxisQuery
+from .query import (
+    AxisColumnNames,
+    AxisIndexer,
+    ExperimentAxisQuery,
+    ExperimentAxisQueryReadArrowResult,
+)
 from .util import X_as_series
 
 __all__ = [
     "AxisColumnNames",
+    "AxisIndexer",
     "AxisQuery",
     "ExperimentAxisQuery",
     "ExperimentAxisQueryReadArrowResult",

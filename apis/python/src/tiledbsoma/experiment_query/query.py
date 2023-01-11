@@ -8,7 +8,8 @@ import numpy as np
 import numpy.typing as npt
 import pandas as pd
 import pyarrow as pa
-from typing_extensions import Literal
+import scipy.sparse as sparse
+from typing_extensions import Literal, TypedDict
 
 from .. import somacore  # to be replaced by somacore package, when available
 from ..dataframe import DataFrame as SOMADataFrame
@@ -18,9 +19,9 @@ if TYPE_CHECKING:
     from ..experiment import Experiment
 
 from ..sparse_nd_array import SparseNDArray as SOMASparseNDArray
-from .anndata import _make_anndata
+
+# from .anndata import _make_anndata
 from .axis import AxisQuery
-from .eq_types import AxisColumnNames, ExperimentAxisQueryReadArrowResult
 
 
 @attrs.define
@@ -37,6 +38,13 @@ class _MatrixAxisQuery:
 
     obs: AxisQuery
     var: AxisQuery
+
+
+class AxisColumnNames(TypedDict, total=False):
+    """Specify column names for the ExperimentAxisQuery API read operations"""
+
+    obs: Optional[Sequence[str]]  # None is all columns
+    var: Optional[Sequence[str]]  # None is all columns
 
 
 class ExperimentAxisQuery(AbstractContextManager["ExperimentAxisQuery"]):
@@ -275,14 +283,23 @@ class ExperimentAxisQuery(AbstractContextManager["ExperimentAxisQuery"]):
         self,
         X_name: str,
         *,
-        use_position_indexing: bool = False,
         column_names: Optional[AxisColumnNames] = None,
         X_layers: Sequence[str] = (),
-    ) -> ExperimentAxisQueryReadArrowResult:
+    ) -> "ExperimentAxisQueryReadArrowResult":
         """
         Read the _entire_ query result into (in-memory) Arrow Tables. This is a
         low-level routine intended to be used by loaders for other in-core
         formats, such as AnnData, which can be created from the resulting Tables.
+
+        Parameters
+        ----------
+        X_name : str
+            The name of the X layer to read and return in the AnnData.X slot
+        column_names : Optional[dict]
+            Specify which column names in ``var`` and ``obs`` dataframes to read and return.
+        X_layers : Optional[Sequence[str]]
+            Addtional X layers read read and return in the AnnData.layers slot
+
         """
         if column_names is None:
             column_names = AxisColumnNames(obs=None, var=None)
@@ -309,18 +326,11 @@ class ExperimentAxisQuery(AbstractContextManager["ExperimentAxisQuery"]):
             .concat()
             for _xname in all_X_arrays
         }
-        if use_position_indexing:
-            X_tables = self._rewrite_X_for_positional_indexing(X_tables)
 
         X = X_tables.pop(X_name)
-        query_result: ExperimentAxisQueryReadArrowResult = {
-            "obs": obs_table,
-            "var": var_table,
-            "X": X,
-        }
-        if len(X_layers) > 0:
-            query_result["X_layers"] = X_tables
-
+        query_result = ExperimentAxisQueryReadArrowResult(
+            obs=obs_table, var=var_table, X=X, X_layers=X_tables
+        )
         return query_result
 
     def to_anndata(
@@ -355,9 +365,15 @@ class ExperimentAxisQuery(AbstractContextManager["ExperimentAxisQuery"]):
             X_name,
             column_names=column_names,
             X_layers=X_layers,
-            use_position_indexing=True,
         )
-        return _make_anndata(query_result)
+
+        # AnnData uses positional indexing
+        query_result.X = self._rewrite_matrix_for_positional_indexing(query_result.X)
+        query_result.X_layers = {
+            name: self._rewrite_matrix_for_positional_indexing(matrix)
+            for name, matrix in query_result.X_layers.items()
+        }
+        return query_result.to_anndata()
 
     def get_indexer(self) -> "AxisIndexer":
         return self._indexer
@@ -410,9 +426,7 @@ class ExperimentAxisQuery(AbstractContextManager["ExperimentAxisQuery"]):
         joinids = getattr(self._joinids, axis)
         return axisp[layer].read((joinids, joinids))
 
-    def _rewrite_X_for_positional_indexing(
-        self, X_tables: Dict[str, pa.Table]
-    ) -> Dict[str, pa.Table]:
+    def _rewrite_matrix_for_positional_indexing(self, x_table: pa.Table) -> pa.Table:
         """
         Private convenience function to convert axis dataframe to X matrix joins
         from `soma_joinid`-based joins to positionally indexed joins (like AnnData uses).
@@ -429,20 +443,17 @@ class ExperimentAxisQuery(AbstractContextManager["ExperimentAxisQuery"]):
 
         In addition, the `soma_joinid` column is dropped from the axis dataframes.
         """
-        new_X_tables = {}
         indexer = self.get_indexer()
-        for X_name, X_table in X_tables.items():
-            new_X_tables[X_name] = pa.Table.from_arrays(
-                (
-                    indexer.obs_index(X_table["soma_dim_0"]),
-                    indexer.var_index(X_table["soma_dim_1"]),
-                    X_table[
-                        "soma_data"
-                    ].to_numpy(),  # as a side effect, consolidates chunks
-                ),
-                names=("_dim_0", "_dim_1", "soma_data"),
-            )
-        return new_X_tables
+        return pa.Table.from_arrays(
+            (
+                indexer.obs_index(x_table["soma_dim_0"]),
+                indexer.var_index(x_table["soma_dim_1"]),
+                x_table[
+                    "soma_data"
+                ].to_numpy(),  # as a side effect, consolidates chunks
+            ),
+            names=("_dim_0", "_dim_1", "soma_data"),
+        )
 
 
 @attrs.define
@@ -472,3 +483,60 @@ class AxisIndexer:
         if self._var_index is None:
             self._var_index = pd.Index(data=self.query.var_joinids().to_numpy())
         return cast(npt.NDArray[np.intp], self._var_index.get_indexer(coords))
+
+
+@attrs.define
+class ExperimentAxisQueryReadArrowResult:
+    """Return type for the ExperimentAxisQuery.read() method"""
+
+    obs: pa.Table
+    """Experiment.obs query slice, as an Arrow Table"""
+    var: pa.Table
+    """Experiment.ms[...].var query slice, as an Arrow Table"""
+    X: pa.Table
+    """Experiment.ms[...].X[...] query slice, as an Arrow Table"""
+    X_layers: Dict[str, pa.Table] = attrs.field(factory=dict)
+    """Any additional X layers requested, as Arrow Table(s)"""
+
+    def to_anndata(self) -> anndata.AnnData:
+        """Convert to AnnData"""
+        obs = self.obs.to_pandas()
+        obs.index = obs.index.map(str)
+
+        var = self.var.to_pandas()
+        var.index = var.index.map(str)
+
+        shape = (len(obs), len(var))
+
+        x = self.X
+        if x is not None:
+            x = _arrow_to_scipy_csr(x, shape)
+
+        layers = {
+            name: _arrow_to_scipy_csr(table, shape)
+            for name, table in self.X_layers.items()
+        }
+        return anndata.AnnData(X=x, obs=obs, var=var, layers=(layers or None))
+
+
+def _arrow_to_scipy_csr(
+    arrow_table: pa.Table, shape: Tuple[int, int]
+) -> sparse.csr_matrix:
+    """
+    Private utility which converts a table repesentation of X to a CSR matrix.
+
+    IMPORTANT: by convention, assumes that the data is positionally indexed (hence
+    the use of _dim_{n} rather than soma_dim{n}).
+
+    See query.py::_rewrite_X_for_positional_indexing for more info.
+    """
+    assert "_dim_0" in arrow_table.column_names, "X must be positionally indexed"
+    assert "_dim_1" in arrow_table.column_names, "X must be positionally indexed"
+
+    return sparse.csr_matrix(
+        (
+            arrow_table["soma_data"].to_numpy(),
+            (arrow_table["_dim_0"].to_numpy(), arrow_table["_dim_1"].to_numpy()),
+        ),
+        shape=shape,
+    )

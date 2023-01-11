@@ -107,15 +107,15 @@ def test_experiment_query_all(soma_experiment):
         )
 
         # read as table
-        arrow_reads = query.read("raw")
-        assert "X_layers" not in arrow_reads
-        assert isinstance(arrow_reads["obs"], pa.Table)
-        assert isinstance(arrow_reads["var"], pa.Table)
-        assert isinstance(arrow_reads["X"], pa.Table)
-        assert arrow_reads["obs"] == query.obs().concat()
-        assert arrow_reads["var"] == query.var().concat()
+        read_result = query.read("raw")
+        assert len(read_result.X_layers) == 0
+        assert isinstance(read_result.obs, pa.Table)
+        assert isinstance(read_result.var, pa.Table)
+        assert isinstance(read_result.X, pa.Table)
+        assert read_result.obs == query.obs().concat()
+        assert read_result.var == query.var().concat()
         assert (
-            arrow_reads["X"]
+            read_result.X
             == soma_experiment.ms["RNA"]
             .X["raw"]
             .read((slice(None), slice(None)))
@@ -280,9 +280,9 @@ def test_X_layers(soma_experiment):
     )
 
     with soma_experiment.axis_query("RNA") as query:
-        arrow_reads = query.read("A", X_layers=["B"])
-        assert arrow_reads["X"] == A
-        assert arrow_reads["X_layers"]["B"] == B
+        read_result = query.read("A", X_layers=["B"])
+        assert read_result.X == A
+        assert read_result.X_layers["B"] == B
 
         ad = query.to_anndata("B", X_layers=["A"])
         ad_X_coo = ad.X.tocoo()
