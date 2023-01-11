@@ -11,4 +11,34 @@ test_that("SOMASparseNDArray creation", {
 
   mat <- create_sparse_matrix_with_int_dims(10, 10)
   ndarray$write(mat)
+
+  tbl <- ndarray$read_arrow_table(result_order = "COL_MAJOR")
+  expect_true(is_arrow_table(tbl))
+  expect_equal(tbl$ColumnNames(), c("soma_dim_0", "soma_dim_1", "soma_data"))
+
+  expect_identical(
+    as.numeric(tbl$GetColumnByName("soma_data")),
+    ## need to convert to Csparsematrix first to get x values sorted appropriately
+    as.numeric(as(mat, "CsparseMatrix")@x)
+  )
+
+  # Subset both dims
+  tbl <- ndarray$read_arrow_table(
+    coords = list(soma_dim_0=0, soma_dim_1=0:2),
+    result_order = "COL_MAJOR"
+  )
+  expect_identical(
+    as.numeric(tbl$GetColumnByName("soma_data")),
+    as.numeric(mat[1, 1:3])
+  )
+
+  # Subset both dims, unnamed
+  tbl <- ndarray$read_arrow_table(
+    coords = list(0, 0:2),
+    result_order = "COL_MAJOR"
+  )
+  expect_identical(
+    as.numeric(tbl$GetColumnByName("soma_data")),
+    as.numeric(mat[1, 1:3])
+  )
 })
