@@ -5,8 +5,8 @@ from scipy import sparse as sp
 
 import tiledbsoma as soma
 import tiledbsoma.io as somaio
-from tiledbsoma import CreateOptions
-from tiledbsoma.soma_session_context import SomaSessionContext
+from tiledbsoma import TileDBCreateOptions
+from tiledbsoma.soma_session_context import TileDBSessionContext
 
 
 @pytest.fixture
@@ -25,10 +25,10 @@ def src_matrix(request):
 @pytest.mark.parametrize(
     "tdb_create_options",
     [
-        CreateOptions(dict(write_X_chunked=False, goal_chunk_nnz=10000)),
-        CreateOptions(dict(write_X_chunked=False, goal_chunk_nnz=100000)),
-        CreateOptions(dict(write_X_chunked=True, goal_chunk_nnz=10000)),
-        CreateOptions(dict(write_X_chunked=True, goal_chunk_nnz=100000)),
+        TileDBCreateOptions(dict(write_X_chunked=False, goal_chunk_nnz=10000)),
+        TileDBCreateOptions(dict(write_X_chunked=False, goal_chunk_nnz=100000)),
+        TileDBCreateOptions(dict(write_X_chunked=True, goal_chunk_nnz=10000)),
+        TileDBCreateOptions(dict(write_X_chunked=True, goal_chunk_nnz=100000)),
     ],
 )
 @pytest.mark.parametrize(
@@ -53,7 +53,7 @@ def test_io_create_from_matrix_Dense_nd_array(tmp_path, tdb_create_options, src_
     * src_array bigger or smaller than _tiledb_platform_config.goal_chunk_nnz
     """
     snda = soma.DenseNDArray(tmp_path.as_posix(),
-                             session_context=SomaSessionContext())
+                             session_context=TileDBSessionContext())
     somaio.create_from_matrix(snda, src_matrix, create_options=tdb_create_options)
 
     assert snda.shape == src_matrix.shape
@@ -70,10 +70,10 @@ def test_io_create_from_matrix_Dense_nd_array(tmp_path, tdb_create_options, src_
 @pytest.mark.parametrize(
     "tdb_create_options",
     [
-        CreateOptions(dict(write_X_chunked=False, goal_chunk_nnz=10000)),
-        CreateOptions(dict(write_X_chunked=False, goal_chunk_nnz=100000)),
-        CreateOptions(dict(write_X_chunked=True, goal_chunk_nnz=10000)),
-        CreateOptions(dict(write_X_chunked=True, goal_chunk_nnz=100000)),
+        TileDBCreateOptions(dict(write_X_chunked=False, goal_chunk_nnz=10000)),
+        TileDBCreateOptions(dict(write_X_chunked=False, goal_chunk_nnz=100000)),
+        TileDBCreateOptions(dict(write_X_chunked=True, goal_chunk_nnz=10000)),
+        TileDBCreateOptions(dict(write_X_chunked=True, goal_chunk_nnz=100000)),
     ],
 )
 @pytest.mark.parametrize(
@@ -98,7 +98,7 @@ def test_io_create_from_matrix_Sparse_nd_array(tmp_path, tdb_create_options, src
     * src_array bigger or smaller than _tiledb_platform_config.goal_chunk_nnz
     """
     snda = soma.SparseNDArray(tmp_path.as_posix(),
-                              session_context=SomaSessionContext())
+                             session_context=TileDBSessionContext())
     somaio.create_from_matrix(snda, src_matrix, create_options=tdb_create_options)
 
     assert snda.shape == src_matrix.shape

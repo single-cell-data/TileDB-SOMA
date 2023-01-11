@@ -39,7 +39,9 @@ CREATE_OPTION_DEFAULTS = CreateOptionDefaults()
 
 
 @dataclass(frozen=True)
-class CreateOptions(Mapping[str, Any]):
+# TODO: Inherit from SOMA.PlatformConfig instead (which itself is a `
+#  Mapping[str, Any]`)
+class TileDBCreateOptions(Mapping[str, Any]):
 
     StrOrMap = Union[str, Mapping[str, Any]]
 

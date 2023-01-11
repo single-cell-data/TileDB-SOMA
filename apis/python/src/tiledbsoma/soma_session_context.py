@@ -29,7 +29,7 @@ def build_default_tiledb_ctx() -> tiledb.Ctx:
 
 
 @dataclass(frozen=True)
-class SomaSessionContext:
+class TileDBSessionContext:
     """
     Maintains context across an entire SOMA session that can be shared across multiple SOMA objects.
     """

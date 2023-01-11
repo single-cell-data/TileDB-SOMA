@@ -11,9 +11,9 @@ from typing_extensions import Final, get_args
 from . import util, util_arrow
 from .collection import CollectionBase
 from .constants import SOMA_JOINID
-from .create_options import CreateOptions
+from .create_options import TileDBCreateOptions
 from .query_condition import QueryCondition  # type: ignore
-from .soma_session_context import SomaSessionContext
+from .soma_session_context import TileDBSessionContext
 from .tiledb_array import TileDBArray
 from .types import ResultOrder, SparseDataFrameCoordinates
 from .util_iter import TableReadIter
@@ -37,7 +37,7 @@ class DataFrame(TileDBArray):
         *,
         parent: Optional[CollectionBase[Any]] = None,
         # Top-level objects should specify this:
-        session_context: Optional[SomaSessionContext] = None
+        session_context: Optional[TileDBSessionContext] = None
     ):
         """
         See also the ``TileDBObject`` constructor.
@@ -52,17 +52,17 @@ class DataFrame(TileDBArray):
         self,
         schema: pa.Schema,
         index_column_names: Sequence[str] = (SOMA_JOINID,),
-        create_options: Optional[CreateOptions] = None
+        platform_config: Optional[TileDBCreateOptions] = None
     ) -> "DataFrame":
         """
         :param schema: Arrow Schema defining the per-column schema. This schema must define all columns, including columns to be named as index columns. If the schema includes types unsupported by the SOMA implementation, an error will be raised.
 
         :param index_column_names: A list of column names to use as user-defined index columns (e.g., ``['cell_type', 'tissue_type']``). All named columns must exist in the schema, and at least one index column name is required.
 
-        :param create_options: A dict of config options for creating this Array
+        :param platform_config: Platform-specific options used to creating this Array, provided as a TileDbCreateOptions object.
         """
         schema = _validate_schema(schema, index_column_names)
-        self._create_empty(schema, index_column_names, create_options or CreateOptions())
+        self._create_empty(schema, index_column_names, create_options or TileDBCreateOptions())
         self._index_column_names = tuple(index_column_names)
 
         self._common_create()  # object-type metadata etc
@@ -72,7 +72,7 @@ class DataFrame(TileDBArray):
         self,
         schema: pa.Schema,
         index_column_names: Sequence[str],
-        create_options: CreateOptions
+        create_options: TileDBCreateOptions
     ) -> None:
         """
         Create a TileDB 1D sparse array with dimensions and attributes

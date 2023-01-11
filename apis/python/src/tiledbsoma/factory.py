@@ -14,7 +14,7 @@ from .exception import SOMAError
 from .experiment import Experiment
 from .measurement import Measurement
 from .sparse_nd_array import SparseNDArray
-from .soma_session_context import SomaSessionContext
+from .soma_session_context import TileDBSessionContext
 from .util import SOMA_OBJECT_TYPE_METADATA_KEY, SPEC_NAMES_TO_CLASS_NAMES
 
 ObjectTypes = Union[
@@ -30,7 +30,7 @@ ObjectTypes = Union[
 def _construct_member(
     member_uri: str,
     parent: CollectionBase[Any],
-    session_context: Optional[SomaSessionContext] = None,
+    session_context: Optional[TileDBSessionContext] = None,
     object_type: Optional[str] = None,
 ) -> Optional[ObjectTypes]:
     """

@@ -5,7 +5,7 @@ from typing_extensions import Final
 from .collection import CollectionBase
 from .dataframe import DataFrame
 from .dense_nd_array import DenseNDArray
-from .soma_session_context import SomaSessionContext
+from .soma_session_context import TileDBSessionContext
 from .sparse_nd_array import SparseNDArray
 from .tiledb_object import TileDBObject
 
@@ -55,7 +55,7 @@ class Measurement(CollectionBase[TileDBObject]):
         # Non-top-level objects can have a parent to propagate context, depth, etc.
         parent: Optional[CollectionBase[Any]] = None,
         # Top-level objects should specify this:
-        session_context: Optional[SomaSessionContext] = None,
+        session_context: Optional[TileDBSessionContext] = None,
     ):
         """
         Also see the ``TileDBObject`` constructor.

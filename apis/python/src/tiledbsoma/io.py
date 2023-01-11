@@ -40,13 +40,18 @@ NTupleIntNone = Sequence[Union[None, int]]
 MNTupleIntNone = Union[None, Sequence[NTupleIntNone]]
 
 
+from .create_options import TileDBCreateOptions
+from .soma_session_context import TileDBSessionContext
+from .types import Path
+
+
 # ----------------------------------------------------------------
 def from_h5ad(
     experiment: Experiment,
     input_path: Path,
     measurement_name: str,
     *,
-    session_context: Optional[SomaSessionContext] = None,
+    session_context: Optional[TileDBSessionContext] = None,
     create_options: Optional[CreateOptions] = None,
     ingest_mode: IngestMode = "write",
 ) -> None:
@@ -105,8 +110,8 @@ def from_anndata(
     anndata: ad.AnnData,
     measurement_name: str,
     *,
-    session_context: Optional[SomaSessionContext] = None,
-    create_options: Optional[CreateOptions] = None,
+    session_context: Optional[TileDBSessionContext] = None,
+    create_options: Optional[TileDBCreateOptions] = None
     ingest_mode: IngestMode = "write",
 ) -> None:
     """
@@ -346,8 +351,7 @@ def _write_dataframe(
     soma_df: DataFrame,
     df: pd.DataFrame,
     id_column_name: Optional[str],
-    create_options: Optional[CreateOptions] = None,
-    ingest_mode: IngestMode = "write",
+    create_options: TileDBCreateOptions = None,
 ) -> None:
     s = util.get_start_stamp()
     logging.log_io(None, f"START  WRITING {soma_df.uri}")
@@ -409,7 +413,7 @@ def create_from_matrix(
         ad._core.sparse_dataset.SparseDataset,
     ],
     *,
-    create_options: Optional[CreateOptions] = None,
+    create_options: Optional[TileDBCreateOptions] = None,
     ingest_mode: IngestMode = "write",
 ) -> None:
     """
@@ -462,7 +466,7 @@ def _write_matrix_to_denseNDArray(
         np.ndarray, sp.csr_matrix, sp.csc_matrix, h5py._hl.dataset.Dataset
     ],
     *,
-    create_options: Optional[CreateOptions] = None,
+    create_options: Optional[TileDBCreateOptions] = None,
     ingest_mode: IngestMode,
 ) -> None:
     """Write a matrix to an empty DenseNDArray"""
@@ -642,12 +646,12 @@ def _write_matrix_to_sparseNDArray(
         np.ndarray, sp.csr_matrix, sp.csc_matrix, ad._core.sparse_dataset.SparseDataset
     ],
     *,
-    create_options: Optional[CreateOptions] = None,
+    create_options: Optional[TileDBCreateOptions] = None,
     ingest_mode: IngestMode,
 ) -> None:
     """Write a matrix to an empty DenseNDArray"""
 
-    create_options = create_options or CreateOptions()
+    create_options = create_options or TileDBCreateOptions()
 
     def _coo_to_table(mat_coo: sp.coo_matrix, axis: int = 0, base: int = 0) -> pa.Table:
         pydict = {

@@ -11,9 +11,9 @@ import tiledbsoma.util as util
 import tiledbsoma.util_arrow as util_arrow
 from tiledbsoma.util import dense_indices_to_shape
 from .collection import CollectionBase
-from .create_options import CreateOptions
+from .create_options import TileDBCreateOptions
 from .exception import SOMAError
-from .soma_session_context import SomaSessionContext
+from .soma_session_context import TileDBSessionContext
 from .tiledb_array import TileDBArray
 from .types import DenseNdCoordinates, NTuple, ResultOrder
 
@@ -28,7 +28,7 @@ class DenseNDArray(TileDBArray):
         uri: str,
         *,
         parent: Optional[CollectionBase[Any]] = None,
-        session_context: Optional[SomaSessionContext] = None
+        session_context: Optional[TileDBSessionContext] = None
     ):
         """
         Also see the ``TileDBObject`` constructor.
@@ -45,7 +45,7 @@ class DenseNDArray(TileDBArray):
         self,
         type: pa.DataType,
         shape: Union[NTuple, List[int]],
-        create_options: Optional[CreateOptions] = None,
+        platform_config: Optional[TileDBCreateOptions] = None,
     ) -> "DenseNDArray":
         """
         Create a ``DenseNDArray`` named with the URI.
@@ -54,7 +54,7 @@ class DenseNDArray(TileDBArray):
 
         :param shape: the length of each domain as a list, e.g., [100, 10]. All lengths must be in the positive int64 range.
 
-        :param create_options: A dict of config options for creating this Array
+        :param platform_config: Platform-specific options used to creating this Array, provided as a TileDbCreateOptions object.
         """
 
         # check on shape
@@ -68,7 +68,7 @@ class DenseNDArray(TileDBArray):
                 "Unsupported type - DenseNDArray only supports primtive Arrow types"
             )
 
-        create_options = create_options or CreateOptions()
+        create_options = create_options or TileDBCreateOptions()
 
         dims = []
         for n, e in enumerate(shape):

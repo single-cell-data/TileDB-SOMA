@@ -21,7 +21,7 @@ from typing_extensions import Final
 
 from .exception import DoesNotExistError, SOMAError
 from .tiledb_object import TileDBObject
-from .soma_session_context import SomaSessionContext
+from .soma_session_context import TileDBSessionContext
 from .util import make_relative_path
 from .util_tiledb import is_does_not_exist_error, is_duplicate_group_key_error
 
@@ -85,7 +85,7 @@ class CollectionBase(TileDBObject, MutableMapping[str, CollectionElementType]):
         # Non-top-level objects can have a parent to propagate context, depth, etc.
         parent: Optional[CollectionBase[Any]] = None,
         # Top-level objects should specify this:
-        session_context: Optional[SomaSessionContext] = None,
+        session_context: Optional[TileDBSessionContext] = None,
     ):
         """
         Also see the ``TileDBObject`` constructor.

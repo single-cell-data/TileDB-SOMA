@@ -7,7 +7,7 @@ import tiledb
 
 import tiledbsoma
 import tiledbsoma.io
-from tiledbsoma import CreateOptions
+from tiledbsoma import TileDBCreateOptions
 
 HERE = Path(__file__).parent
 
@@ -35,7 +35,7 @@ def test_create_options(adata):
             exp,
             adata,
             "RNA",
-            create_options=CreateOptions({
+            create_options=TileDBCreateOptions({
                     "capacity": 8888,
                     "offsets_filters": ["RleFilter", "NoOpFilter"],
                     "dims": {
