@@ -137,6 +137,15 @@ jobs:
         verbose: true
 
   # ----------------------------------------------------------------
+  # Note: in case a CI run is misconfigured/mischeduled:
+  # * Given the tag was created in GitHub
+  # * Manually run the workflow as at the top of this file
+  # * Go to 
+  #     https://github.com/single-cell-data/TileDB-SOMA/actions/runs/some-number-goes-here
+  #   and click on "Artifacts"
+  # * Download those to some directory `dist-wheel`
+  # * `twine upload dist-wheel/* `
+  # * Then check https://pypi.org/project/tiledbsoma/tag-goes-here/#files
   publish-to-pypi:
     name: Publish package to PyPI
     needs: wheels
