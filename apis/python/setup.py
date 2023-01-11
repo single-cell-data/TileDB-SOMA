@@ -21,16 +21,12 @@ import subprocess
 import sys
 
 import setuptools
+import setuptools.command.build_ext
 import wheel.bdist_wheel
-from setuptools.command.bdist_egg import bdist_egg
-from setuptools.command.build_ext import build_ext
 
 this_dir = pathlib.Path(__file__).parent.absolute()
 sys.path.insert(0, str(this_dir))
 import version  # noqa E402
-
-MODULE_NAME = "tiledbsoma"
-EXT_NAME = "tiledbsoma.libtiledbsoma"
 
 
 def find_or_build_package_data(setuptools_cmd):
@@ -59,37 +55,17 @@ def find_or_build_package_data(setuptools_cmd):
 
     # Install shared libraries inside the Python module via package_data.
     print(f"  adding to package_data: {package_data}")
-    setuptools_cmd.distribution.package_data.update({MODULE_NAME: package_data})
-
-    return package_data
+    setuptools_cmd.distribution.package_data["tiledbsoma"] = package_data
 
 
-def get_ext_modules():
-    return [cmake_extension(EXT_NAME)]
-
-
-class cmake_extension(setuptools.Extension):
-    def __init__(self, name):
-        setuptools.Extension.__init__(self, name, sources=[])
-
-
-class build_ext_cmd(build_ext):
+class build_ext(setuptools.command.build_ext.build_ext):
     def run(self):
         find_or_build_package_data(self)
 
 
-class bdist_egg_cmd(bdist_egg):
+class bdist_wheel(wheel.bdist_wheel.bdist_wheel):
     def run(self):
         find_or_build_package_data(self)
-        bdist_egg.run(self)
-
-
-class bdist_wheel_cmd(wheel.bdist_wheel.bdist_wheel):
-    def run(self):
-        package_data = find_or_build_package_data(self)
-        # Install shared libraries inside the Python module via package_data
-        print(f"  adding to package_data: {package_data}")
-        self.distribution.package_data["tiledbsoma"] = package_data
         super().run()
 
 
@@ -149,10 +125,6 @@ setuptools.setup(
         ]
     },
     python_requires=">=3.7",
-    cmdclass={
-        "build_ext": build_ext_cmd,
-        "bdist_egg": bdist_egg_cmd,
-        "bdist_wheel": bdist_wheel_cmd,
-    },
+    cmdclass={"build_ext": build_ext, "bdist_wheel": bdist_wheel},
     version=version.getVersion(),
 )
