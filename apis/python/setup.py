@@ -95,7 +95,7 @@ if __name__ == "__main__":
         author_email="help@tiledb.io",
         maintainer="TileDB, Inc.",
         maintainer_email="help@tiledb.io",
-        url="https://github.com/single-cell-data/TileDB-SingleCell/apis/python",
+        url="https://github.com/single-cell-data/TileDB-SOMA/tree/main/apis/python",
         license="MIT",
         classifiers=[
             "Intended Audience :: Developers",
