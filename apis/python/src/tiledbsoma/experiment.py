@@ -5,6 +5,7 @@ from typing_extensions import Final
 
 from .collection import CollectionBase
 from .dataframe import DataFrame
+from .experiment_query import AxisQuery, ExperimentAxisQuery
 from .measurement import Measurement
 from .tiledb_object import TileDBObject
 from .tiledb_platform_config import TileDBPlatformConfig
@@ -70,3 +71,18 @@ class Experiment(CollectionBase[TileDBObject]):
         A collection of named measurements.
         """
         return cast(CollectionBase[Measurement], self["ms"])
+
+    def axis_query(
+        self,
+        measurement_name: str,
+        *,
+        obs_query: Optional[AxisQuery] = None,
+        var_query: Optional[AxisQuery] = None,
+    ) -> ExperimentAxisQuery:
+        """
+        Create a query on this Experiment. See ``ExperimentAxisQuery`` for more
+        information on parameters and usage.
+        """
+        return ExperimentAxisQuery(
+            self, measurement_name, obs_query=obs_query, var_query=var_query
+        )
