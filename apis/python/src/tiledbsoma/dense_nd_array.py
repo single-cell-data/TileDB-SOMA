@@ -11,9 +11,9 @@ import tiledbsoma.util as util
 import tiledbsoma.util_arrow as util_arrow
 from tiledbsoma.util import dense_indices_to_shape
 from .collection import CollectionBase
-from .create_options import TileDBCreateOptions
+from .tiledb_create_options import TileDBCreateOptions
 from .exception import SOMAError
-from .soma_session_context import TileDBSessionContext
+from .tiledb_session_context import TileDBSessionContext
 from .tiledb_array import TileDBArray
 from .types import DenseNdCoordinates, NTuple, ResultOrder
 

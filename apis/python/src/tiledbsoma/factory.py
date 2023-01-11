@@ -14,7 +14,7 @@ from .exception import SOMAError
 from .experiment import Experiment
 from .measurement import Measurement
 from .sparse_nd_array import SparseNDArray
-from .soma_session_context import TileDBSessionContext
+from .tiledb_session_context import TileDBSessionContext
 from .util import SOMA_OBJECT_TYPE_METADATA_KEY, SPEC_NAMES_TO_CLASS_NAMES
 
 ObjectTypes = Union[

@@ -21,7 +21,7 @@ from typing_extensions import Final
 
 from .exception import DoesNotExistError, SOMAError
 from .tiledb_object import TileDBObject
-from .soma_session_context import TileDBSessionContext
+from .tiledb_session_context import TileDBSessionContext
 from .util import make_relative_path
 from .util_tiledb import is_does_not_exist_error, is_duplicate_group_key_error
 

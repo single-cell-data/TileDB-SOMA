@@ -1,5 +1,5 @@
 from .collection import Collection
-from .create_options import TileDBCreateOptions
+from .tiledb_create_options import TileDBCreateOptions
 from .dataframe import DataFrame
 from .dense_nd_array import DenseNDArray
 from .exception import DoesNotExistError, SOMAError
@@ -13,7 +13,7 @@ from .general_utilities import (
 from .measurement import Measurement
 from .metadata_mapping import MetadataMapping
 from .query_condition import QueryCondition  # type: ignore
-from .soma_session_context import TileDBSessionContext
+from .tiledb_session_context import TileDBSessionContext
 from .sparse_nd_array import SparseNDArray
 from .tiledb_array import TileDBArray
 from .tiledb_object import TileDBObject

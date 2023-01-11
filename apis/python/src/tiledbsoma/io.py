@@ -40,8 +40,8 @@ NTupleIntNone = Sequence[Union[None, int]]
 MNTupleIntNone = Union[None, Sequence[NTupleIntNone]]
 
 
-from .create_options import TileDBCreateOptions
-from .soma_session_context import TileDBSessionContext
+from .tiledb_create_options import TileDBCreateOptions
+from .tiledb_session_context import TileDBSessionContext
 from .types import Path
 
 

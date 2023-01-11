@@ -3,7 +3,7 @@ from typing import List, Optional, Sequence, Tuple
 import pyarrow as pa
 import tiledb
 
-from .soma_session_context import TileDBSessionContext
+from .tiledb_session_context import TileDBSessionContext
 from .tiledb_object import TileDBObject
 from .util_arrow import get_arrow_schema_from_tiledb_uri
 

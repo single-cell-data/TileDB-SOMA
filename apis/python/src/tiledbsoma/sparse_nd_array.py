@@ -11,8 +11,8 @@ from typing_extensions import Final
 from . import somacore  # to be replaced by somacore package, when available
 from . import util, util_arrow
 from .collection import CollectionBase
-from .create_options import TileDBCreateOptions
-from .soma_session_context import TileDBSessionContext
+from .tiledb_create_options import TileDBCreateOptions
+from .tiledb_session_context import TileDBSessionContext
 from .tiledb_array import TileDBArray
 from .types import NTuple, SparseNdCoordinates
 from .util_iter import (

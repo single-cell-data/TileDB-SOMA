@@ -5,7 +5,7 @@ from typing_extensions import Final
 from .collection import CollectionBase
 from .dataframe import DataFrame
 from .dense_nd_array import DenseNDArray
-from .soma_session_context import TileDBSessionContext
+from .tiledb_session_context import TileDBSessionContext
 from .sparse_nd_array import SparseNDArray
 from .tiledb_object import TileDBObject
 

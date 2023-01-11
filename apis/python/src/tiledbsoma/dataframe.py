@@ -11,9 +11,9 @@ from typing_extensions import Final, get_args
 from . import util, util_arrow
 from .collection import CollectionBase
 from .constants import SOMA_JOINID
-from .create_options import TileDBCreateOptions
+from .tiledb_create_options import TileDBCreateOptions
 from .query_condition import QueryCondition  # type: ignore
-from .soma_session_context import TileDBSessionContext
+from .tiledb_session_context import TileDBSessionContext
 from .tiledb_array import TileDBArray
 from .types import ResultOrder, SparseDataFrameCoordinates
 from .util_iter import TableReadIter

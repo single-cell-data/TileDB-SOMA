@@ -5,7 +5,7 @@ import tiledb
 
 from . import util
 from .metadata_mapping import MetadataMapping
-from .soma_session_context import TileDBSessionContext
+from .tiledb_session_context import TileDBSessionContext
 
 
 class TileDBObject(ABC):
