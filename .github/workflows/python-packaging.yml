@@ -122,22 +122,24 @@ jobs:
   publish-to-test-pypi:
     name: Publish package to TestPyPI
     needs: wheels
+    runs-on: ubuntu-20.04
 
-    if: matrix.os == 'ubuntu-22.04' && github.event_name == 'release'
-
-    uses: pypa/gh-action-pypi-publish@master
-    continue-on-error: true
-    with:
-      repository_url: https://test.pypi.org/legacy/
-      user: __token__
-      password: ${{ secrets.TEST_PYPI_TOKEN }}
-      packages_dir: sdist, dist-wheel
-      verbose: true
+    steps:
+    - name: Publish packages to TestPyPI
+      uses: pypa/gh-action-pypi-publish@master
+      continue-on-error: true
+      with:
+        repository_url: https://test.pypi.org/legacy/
+        user: __token__
+        password: ${{ secrets.TEST_PYPI_TOKEN }}
+        packages_dir: sdist, dist-wheel
+        verbose: true
 
   # ----------------------------------------------------------------
   publish-to-pypi:
     name: Publish package to PyPI
     needs: wheels
+    runs-on: ubuntu-20.04
 
     # Until general release of the main branch of tiledbsoma we'll follow the convention of tagging releases
     # 0.5.0a1, 0.5.1a1, etc -- always with the "a1" suffix -- that way PyPI will automagically make these
@@ -146,13 +148,15 @@ jobs:
     # pip install --pre tiledbsoma -> 0.5.0a1 (or whatever the main branch is at)
 
     # For prime time, once we're in 1.0 release:
-    #if: matrix.os == 'ubuntu-22.04' && github.event_name == 'release' && !github.event.release.prerelease
+    #if: github.event_name == 'release' && !github.event.release.prerelease
     # For now:
-    if: matrix.os == 'ubuntu-22.04' && github.event_name == 'release' && (contains(${{github.event.release.tag_name}}, "a") || contains(${github.event.release.tag_name}}, "b"))
+    if: github.event_name == 'release' && (contains(${{github.event.release.tag_name}}, "a") || contains(${github.event.release.tag_name}}, "b"))
 
-    uses: pypa/gh-action-pypi-publish@master
-    with:
-      user: __token__
-      password: ${{ secrets.PYPI_TOKEN }}
-      packages_dir: sdist, dist-wheel
-      verbose: true
+    steps:
+    - name: Publish packages to PyPI
+      uses: pypa/gh-action-pypi-publish@master
+      with:
+        user: __token__
+        password: ${{ secrets.PYPI_TOKEN }}
+        packages_dir: sdist, dist-wheel
+        verbose: true
