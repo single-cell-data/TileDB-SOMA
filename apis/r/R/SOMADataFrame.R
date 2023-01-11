@@ -24,6 +24,7 @@ SOMADataFrame <- R6::R6Class(
       schema <- private$validate_schema(schema, index_column_names)
 
       attr_column_names <- setdiff(schema$names, index_column_names)
+      stop("TESTING")
       stopifnot(
         "At least one non-index column must be defined in the schema" =
           length(attr_column_names) > 0
