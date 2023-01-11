@@ -1,6 +1,15 @@
 import concurrent.futures
-from contextlib import AbstractContextManager
-from typing import TYPE_CHECKING, Any, Dict, Optional, Sequence, Tuple, Union, cast
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    ContextManager,
+    Dict,
+    Optional,
+    Sequence,
+    Tuple,
+    Union,
+    cast,
+)
 
 import anndata
 import attrs
@@ -19,8 +28,6 @@ if TYPE_CHECKING:
     from ..experiment import Experiment
 
 from ..sparse_nd_array import SparseNDArray as SOMASparseNDArray
-
-# from .anndata import _make_anndata
 from .axis import AxisQuery
 
 
@@ -47,7 +54,7 @@ class AxisColumnNames(TypedDict, total=False):
     var: Optional[Sequence[str]]  # None is all columns
 
 
-class ExperimentAxisQuery(AbstractContextManager["ExperimentAxisQuery"]):
+class ExperimentAxisQuery(ContextManager["ExperimentAxisQuery"]):
     """
     ExperimentAxisQuery allows easy selection and extraction of data from a single soma.Measurement
     in a soma.Experiment, by obs/var (axis) coordinates and/or value filter [lifecycle: experimental].
@@ -102,6 +109,9 @@ class ExperimentAxisQuery(AbstractContextManager["ExperimentAxisQuery"]):
         if self._threadpool_:
             self._threadpool_.shutdown()
             self._threadpool_ = None
+
+    def __enter__(self) -> "ExperimentAxisQuery":
+        return self
 
     def __exit__(self, *excinfo: Any) -> None:
         self.close()
