@@ -1,14 +1,13 @@
 name: TileDB-SOMA python sdist & wheels
 
 on:
-  # Normally the smoke test only runs on merge to main.  To run it on a PR CI, comment out
-  # `workflow_dispatch:` and uncomment `pull_request:`.
+  # I.e. on request
   workflow_dispatch:
+  # Normally the smoke test only runs on merge to main.  To run it on a PR CI, uncomment `pull_request:`
   # pull_request:
-  push:
-    branches: [main]
-    paths-ignore:
-      - 'apis/r/**'
+  # branches: [main]
+  # paths-ignore:
+  #   - 'apis/r/**'
   release:
     types: [published]
 
@@ -30,6 +29,7 @@ jobs:
         name: sdist
         path: apis/python/dist/
 
+  # TODO: merge with python-packaging.yml -- https://github.com/single-cell-data/TileDB-SOMA/issues/700
   wheels:
     # Note: tries all supported Python versions as specified in apis/python/setup.py
     name: Build wheels on ${{ matrix.os }}

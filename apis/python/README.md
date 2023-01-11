@@ -1,6 +1,6 @@
 # Overview
 
-This is a POC Python implementation of the proposed [Unified Single-cell Data Model](https://github.com/single-cell-data/SOMA).
+This is a Python implementation of the [Unified Single-cell Data Model](https://github.com/single-cell-data/SOMA).
 
 This branch, `main`, implements the [updated specfication](https://github.com/single-cell-data/SOMA/blob/main/abstract_specification.md).  Please also see the `main-old` branch which implements the [original specification](https://github.com/single-cell-data/TileDB-SOMA/blob/main-old/spec/specification.md).
 
