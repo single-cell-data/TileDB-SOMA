@@ -73,7 +73,7 @@ def soma_experiment(
     #   https://github.com/agronholm/typeguard/issues/242
     # Related to _when_ we might see a release:
     #   https://github.com/agronholm/typeguard/issues/257
-    sys.version_info.major == 3 and sys.version_info.minor >= 10,
+    sys.version_info >= (3, 10),
     reason="typeguard bug #242",
 )
 @pytest.mark.parametrize("n_obs,n_vars,X_layer_names", [(101, 11, ("raw", "extra"))])
@@ -144,7 +144,7 @@ def test_experiment_query_all(soma_experiment):
 
 @pytest.mark.xfail(
     # see comment on test_experiment_query_all
-    sys.version_info.major == 3 and sys.version_info.minor >= 10,
+    sys.version_info >= (3, 10),
     reason="typeguard bug #242",
 )
 @pytest.mark.parametrize("n_obs,n_vars", [(1001, 99)])
@@ -199,7 +199,7 @@ def test_experiment_query_coords(soma_experiment):
 
 @pytest.mark.xfail(
     # see comment on test_experiment_query_all
-    sys.version_info.major == 3 and sys.version_info.minor >= 10,
+    sys.version_info >= (3, 10),
     reason="typeguard bug #242",
 )
 @pytest.mark.parametrize("n_obs,n_vars", [(1001, 99)])
@@ -220,7 +220,7 @@ def test_experiment_query_value_filter(soma_experiment):
 
 @pytest.mark.xfail(
     # see comment on test_experiment_query_all
-    sys.version_info.major == 3 and sys.version_info.minor >= 10,
+    sys.version_info >= (3, 10),
     reason="typeguard bug #242",
 )
 @pytest.mark.parametrize("n_obs,n_vars", [(1001, 99)])
@@ -265,7 +265,7 @@ def test_experiment_query_combo(soma_experiment):
 
 @pytest.mark.xfail(
     # see comment on test_experiment_query_all
-    sys.version_info.major == 3 and sys.version_info.minor >= 10,
+    sys.version_info >= (3, 10),
     reason="typeguard bug #242",
 )
 @pytest.mark.parametrize("n_obs,n_vars,X_layer_names", [(1001, 99, ["A", "B", "C"])])
@@ -298,7 +298,7 @@ def test_X_layers(soma_experiment):
 
 @pytest.mark.xfail(
     # see comment on test_experiment_query_all
-    sys.version_info.major == 3 and sys.version_info.minor >= 10,
+    sys.version_info >= (3, 10),
     reason="typeguard bug #242",
 )
 @pytest.mark.parametrize("n_obs,n_vars", [(1001, 99)])
@@ -333,7 +333,7 @@ def test_experiment_query_indexer(soma_experiment):
 
 @pytest.mark.xfail(
     # see comment on test_experiment_query_all
-    sys.version_info.major == 3 and sys.version_info.minor >= 10,
+    sys.version_info >= (3, 10),
     reason="typeguard bug #242",
 )
 @pytest.mark.parametrize("n_obs,n_vars", [(2833, 107)])
@@ -362,7 +362,7 @@ def test_error_corners(soma_experiment: soma.Experiment):
 
 @pytest.mark.xfail(
     # see comment on test_experiment_query_all
-    sys.version_info.major == 3 and sys.version_info.minor >= 10,
+    sys.version_info >= (3, 10),
     reason="typeguard bug #242",
 )
 @pytest.mark.parametrize("n_obs,n_vars", [(1001, 99)])
@@ -390,7 +390,7 @@ def test_query_cleanup(soma_experiment: soma.Experiment):
 
 @pytest.mark.xfail(
     # see comment on test_experiment_query_all
-    sys.version_info.major == 3 and sys.version_info.minor >= 10,
+    sys.version_info >= (3, 10),
     reason="typeguard bug #242",
 )
 @pytest.mark.parametrize(

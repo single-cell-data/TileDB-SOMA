@@ -1,15 +1,6 @@
 import concurrent.futures
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    ContextManager,
-    Dict,
-    Optional,
-    Sequence,
-    Tuple,
-    Union,
-    cast,
-)
+from contextlib import AbstractContextManager
+from typing import TYPE_CHECKING, Any, Dict, Optional, Sequence, Tuple, Union, cast
 
 import anndata
 import attrs
@@ -17,7 +8,7 @@ import numpy as np
 import numpy.typing as npt
 import pandas as pd
 import pyarrow as pa
-from typing_extensions import Literal, TypedDict
+from typing_extensions import Literal
 
 from .. import somacore  # to be replaced by somacore package, when available
 from ..dataframe import DataFrame as SOMADataFrame
@@ -25,29 +16,30 @@ from ..sparse_nd_array import SparseNDArrayRead
 
 if TYPE_CHECKING:
     from ..experiment import Experiment
+
 from ..sparse_nd_array import SparseNDArray as SOMASparseNDArray
 from .anndata import _make_anndata
 from .axis import AxisQuery
 from .eq_types import AxisColumnNames, ExperimentAxisQueryReadArrowResult
 
-AxisJoinIds = TypedDict(
-    "AxisJoinIds",
-    {
-        "obs": Optional[pa.Array],
-        "var": Optional[pa.Array],
-    },
-)
 
-MatrixAxisQuery = TypedDict(
-    "MatrixAxisQuery",
-    {
-        "obs": AxisQuery,
-        "var": AxisQuery,
-    },
-)
+@attrs.define
+class _AxisJoinIds:
+    """Private: cache per-axis join ids in the query"""
+
+    obs: Optional[pa.Array] = attrs.field(default=None)
+    var: Optional[pa.Array] = attrs.field(default=None)
 
 
-class ExperimentAxisQuery(ContextManager["ExperimentAxisQuery"]):
+@attrs.define
+class _MatrixAxisQuery:
+    """Private: store per-axis user query definition"""
+
+    obs: AxisQuery
+    var: AxisQuery
+
+
+class ExperimentAxisQuery(AbstractContextManager["ExperimentAxisQuery"]):
     """
     ExperimentAxisQuery allows easy selection and extraction of data from a single soma.Measurement
     in a soma.Experiment, by obs/var (axis) coordinates and/or value filter [lifecycle: experimental].
@@ -86,16 +78,12 @@ class ExperimentAxisQuery(ContextManager["ExperimentAxisQuery"]):
         self.experiment = experiment
         self.measurement_name = measurement_name
 
-        self._matrix_axis_query: MatrixAxisQuery = {
-            "obs": obs_query if obs_query is not None else AxisQuery(),
-            "var": var_query if var_query is not None else AxisQuery(),
-        }
-        self._joinids: AxisJoinIds = {
-            "obs": None,
-            "var": None,
-        }
+        self._matrix_axis_query = _MatrixAxisQuery(
+            obs=obs_query if obs_query is not None else AxisQuery(),
+            var=var_query if var_query is not None else AxisQuery(),
+        )
+        self._joinids = _AxisJoinIds()
         self._indexer: "AxisIndexer" = AxisIndexer(self)
-
         self._threadpool_: Optional[concurrent.futures.ThreadPoolExecutor] = None
 
     def close(self) -> None:
@@ -103,12 +91,9 @@ class ExperimentAxisQuery(ContextManager["ExperimentAxisQuery"]):
         Clean up and close all resources. This must be called or the thread pool
         will not be released.
         """
-        if self._threadpool_ is not None:
+        if self._threadpool_:
             self._threadpool_.shutdown()
             self._threadpool_ = None
-
-    def __enter__(self) -> "ExperimentAxisQuery":
-        return self
 
     def __exit__(self, *excinfo: Any) -> None:
         self.close()
@@ -117,7 +102,7 @@ class ExperimentAxisQuery(ContextManager["ExperimentAxisQuery"]):
         self, *, column_names: Optional[Sequence[str]] = None
     ) -> somacore.ReadIter[pa.Table]:
         """Return obs as an Arrow table iterator."""
-        obs_query = self._matrix_axis_query["obs"]
+        obs_query = self._matrix_axis_query.obs
         return self.experiment.obs.read(
             ids=obs_query.coords,
             value_filter=obs_query.value_filter,
@@ -128,7 +113,7 @@ class ExperimentAxisQuery(ContextManager["ExperimentAxisQuery"]):
         self, *, column_names: Optional[Sequence[str]] = None
     ) -> somacore.ReadIter[pa.Table]:
         """Return obs as an Arrow table iterator."""
-        var_query = self._matrix_axis_query["var"]
+        var_query = self._matrix_axis_query.var
         return self.experiment.ms[self.measurement_name].var.read(
             ids=var_query.coords,
             value_filter=var_query.value_filter,
@@ -137,13 +122,36 @@ class ExperimentAxisQuery(ContextManager["ExperimentAxisQuery"]):
 
     def obs_joinids(self) -> pa.Array:
         """Return obs soma_joinids as an Arrow array."""
-        return self._read_axis_joinids("obs", self.experiment.obs)
+        if self._joinids.obs is None:
+            obs_query = self._matrix_axis_query.obs
+            self._joinids.obs = (
+                self.experiment.obs.read(
+                    ids=obs_query.coords,
+                    value_filter=obs_query.value_filter,
+                    column_names=["soma_joinid"],
+                )
+                .concat()
+                .column("soma_joinid")
+                .combine_chunks()
+            )
+        return self._joinids.obs
 
     def var_joinids(self) -> pa.Array:
         """Return var soma_joinids as an Arrow array."""
-        return self._read_axis_joinids(
-            "var", self.experiment.ms[self.measurement_name].var
-        )
+        if self._joinids.var is None:
+            var_query = self._matrix_axis_query.var
+            self._joinids.var = (
+                self.experiment.ms[self.measurement_name]
+                .var.read(
+                    ids=var_query.coords,
+                    value_filter=var_query.value_filter,
+                    column_names=["soma_joinid"],
+                )
+                .concat()
+                .column("soma_joinid")
+                .combine_chunks()
+            )
+        return self._joinids.var
 
     @property
     def n_obs(self) -> int:
@@ -191,7 +199,7 @@ class ExperimentAxisQuery(ContextManager["ExperimentAxisQuery"]):
             raise TypeError("Dense array unsupported")
 
         self._load_joinids()
-        return x_layer.read((self._joinids["obs"], self._joinids["var"]))
+        return x_layer.read((self._joinids.obs, self._joinids.var))
 
     def obsp(self, layer: str) -> SparseNDArrayRead:
         """Return an ``obsp`` layer as a SparseNDArrayRead"""
@@ -213,7 +221,7 @@ class ExperimentAxisQuery(ContextManager["ExperimentAxisQuery"]):
         Private. Read the specified axis. Will load and save the resulting soma_joinids for the
         axis, if they are not already known.
         """
-        need_joinids = self._joinids[axis] is None
+        need_joinids = getattr(self._joinids, axis, None) is None
         query_columns = column_names
         if (
             need_joinids
@@ -229,8 +237,10 @@ class ExperimentAxisQuery(ContextManager["ExperimentAxisQuery"]):
         ).concat()
 
         if need_joinids:
-            self._joinids[axis] = arrow_table.column("soma_joinid").combine_chunks()
-        assert self._joinids[axis] is not None
+            setattr(
+                self._joinids, axis, arrow_table.column("soma_joinid").combine_chunks()
+            )
+        assert getattr(self._joinids, axis, None) is not None
 
         if column_names is not None:
             arrow_table = arrow_table.select(column_names)
@@ -246,14 +256,14 @@ class ExperimentAxisQuery(ContextManager["ExperimentAxisQuery"]):
                 self._read_axis_dataframe,
                 "obs",
                 self.experiment.obs,
-                self._matrix_axis_query["obs"],
+                self._matrix_axis_query.obs,
                 column_names=column_names.get("obs", None),
             ),
             self._threadpool.submit(
                 self._read_axis_dataframe,
                 "var",
                 self.experiment.ms[self.measurement_name].var,
-                self._matrix_axis_query["var"],
+                self._matrix_axis_query.var,
                 column_names=column_names.get("var", None),
             ),
         )
@@ -267,7 +277,7 @@ class ExperimentAxisQuery(ContextManager["ExperimentAxisQuery"]):
         *,
         use_position_indexing: bool = False,
         column_names: Optional[AxisColumnNames] = None,
-        X_layers: Optional[Sequence[str]] = None,
+        X_layers: Sequence[str] = (),
     ) -> ExperimentAxisQueryReadArrowResult:
         """
         Read the _entire_ query result into (in-memory) Arrow Tables. This is a
@@ -277,7 +287,6 @@ class ExperimentAxisQuery(ContextManager["ExperimentAxisQuery"]):
         if column_names is None:
             column_names = AxisColumnNames(obs=None, var=None)
         X_collection = self.experiment.ms[self.measurement_name].X
-        X_layers = [] if X_layers is None else X_layers
         all_X_names = [X_name] + list(X_layers)
         all_X_arrays: Dict[str, SOMASparseNDArray] = {}
         for _xname in all_X_names:
@@ -285,9 +294,10 @@ class ExperimentAxisQuery(ContextManager["ExperimentAxisQuery"]):
                 raise ValueError("X layer names must be specified as a string.")
             if _xname not in X_collection:
                 raise ValueError("Unknown X layer name")
-            if not isinstance(X_collection[_xname], SOMASparseNDArray):
+            x_array = X_collection[_xname]
+            if not isinstance(x_array, SOMASparseNDArray):
                 raise NotImplementedError("Dense array unsupported")
-            all_X_arrays[_xname] = cast(SOMASparseNDArray, X_collection[_xname])
+            all_X_arrays[_xname] = x_array
 
         obs_table, var_table = self._read_both_axes(column_names)
 
@@ -318,7 +328,7 @@ class ExperimentAxisQuery(ContextManager["ExperimentAxisQuery"]):
         X_name: str,
         *,
         column_names: Optional[AxisColumnNames] = None,
-        X_layers: Optional[Sequence[str]] = None,
+        X_layers: Sequence[str] = (),
     ) -> anndata.AnnData:
         """
         Execute the query and return result as an AnnData in-memory object.
@@ -366,34 +376,17 @@ class ExperimentAxisQuery(ContextManager["ExperimentAxisQuery"]):
             self._threadpool_ = concurrent.futures.ThreadPoolExecutor()
         return self._threadpool_
 
-    def _read_axis_joinids(
-        self, axis: Literal["obs", "var"], axis_df: SOMADataFrame
-    ) -> pa.Array:
-        axis_query = self._matrix_axis_query[axis]
-        if self._joinids[axis] is None:
-            self._joinids[axis] = (
-                axis_df.read(
-                    ids=axis_query.coords,
-                    value_filter=axis_query.value_filter,
-                    column_names=["soma_joinid"],
-                )
-                .concat()
-                .column("soma_joinid")
-                .combine_chunks()
-            )
-        return self._joinids[axis]
-
     def _load_joinids(self) -> None:
         """Private. Ensure joinids for both axis are in-memory."""
         futures = []
-        if not self._joinids["obs"]:
+        if self._joinids.obs is None:
             futures.append(self._threadpool.submit(self.obs_joinids))
-        if not self._joinids["var"]:
+        if self._joinids.var is None:
             futures.append(self._threadpool.submit(self.var_joinids))
         if futures:
             concurrent.futures.wait(futures)
-        assert self._joinids["obs"] is not None, "Internal error"
-        assert self._joinids["var"] is not None, "Internal error"
+        assert self._joinids.obs is not None, "Internal error"
+        assert self._joinids.var is not None, "Internal error"
 
     def _axisp_inner(
         self,
@@ -414,9 +407,7 @@ class ExperimentAxisQuery(ContextManager["ExperimentAxisQuery"]):
             raise TypeError(f"Unexpected SOMA type stored in '{key}' layer")
 
         self._load_joinids()
-        assert self._joinids[axis] is not None
-
-        joinids = self._joinids[axis]
+        joinids = getattr(self._joinids, axis)
         return axisp[layer].read((joinids, joinids))
 
     def _rewrite_X_for_positional_indexing(

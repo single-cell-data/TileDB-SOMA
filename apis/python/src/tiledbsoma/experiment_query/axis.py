@@ -54,7 +54,7 @@ class AxisQuery:
     def _validate_coords(self, _: Any, value: Any) -> None:
         """
         This should arguably be delegated to DataClass, but that would
-        def error reporting to the user. Doing validation proactively has
+        defer error reporting to the user. Proactive validation has
         UX benefit.
         """
         for c in value:
