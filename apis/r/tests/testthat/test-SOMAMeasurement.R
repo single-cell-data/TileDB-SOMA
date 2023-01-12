@@ -20,16 +20,16 @@ test_that("Basic mechanics", {
   expect_equal(measurement$length(), 1)
   expect_true(inherits(measurement$var, "SOMADataFrame"))
 
-  # Add X
+  # Add X collection
   expect_error(measurement$X, "No member named 'X' found")
-  expect_error(measurement$X <- obs, "X must be a 'SOMACollection'")
+  expect_error(measurement$X <- var, "X must be a 'SOMACollection'")
 
   X <- SOMACollection$new(file.path(uri, "X"))
   X$create()
 
   measurement$X <- X
   expect_true(inherits(measurement$X, "SOMACollection"))
-  expect_equal(experiment$length(), 2)
+  expect_equal(measurement$length(), 2)
 
   # Add X layer
   expect_equal(measurement$X$length(), 0)

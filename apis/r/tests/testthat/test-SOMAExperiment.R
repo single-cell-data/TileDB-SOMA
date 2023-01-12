@@ -1,7 +1,6 @@
 test_that("Basic mechanics", {
   uri <- withr::local_tempdir("soma-experiment")
 
-
   experiment <- SOMAExperiment$new(uri)
 
   expect_false(experiment$exists())
