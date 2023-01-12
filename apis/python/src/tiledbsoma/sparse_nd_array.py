@@ -4,17 +4,17 @@ from typing import Any, List, Optional, Union, cast
 import numpy as np
 import pyarrow as pa
 import tiledb
-from typing_extensions import Final
-
 # This package's pybind11 code
 import tiledbsoma.libtiledbsoma as clib
+from typing_extensions import Final
 
 from . import somacore  # to be replaced by somacore package, when available
-from . import tiledb_platform_config as tdbpc
 from . import util, util_arrow
 from .collection import CollectionBase
+from .create_options import CreateOptions
+from .soma_session_context import SomaSessionContext
 from .tiledb_array import TileDBArray
-from .types import NTuple, PlatformConfig, SparseNdCoordinates
+from .types import NTuple, SparseNdCoordinates
 from .util_iter import (
     SparseCOOTensorReadIter,
     SparseCSCMatrixReadIter,
@@ -33,8 +33,7 @@ class SparseNDArray(TileDBArray):
         uri: str,
         *,
         parent: Optional[CollectionBase[Any]] = None,
-        tiledb_platform_config: Optional[tdbpc.TileDBPlatformConfig] = None,
-        ctx: Optional[tiledb.Ctx] = None,
+        session_context: Optional[SomaSessionContext] = None
     ):
         """
         Also see the ``TileDBObject`` constructor.
@@ -43,8 +42,7 @@ class SparseNDArray(TileDBArray):
         super().__init__(
             uri=uri,
             parent=parent,
-            tiledb_platform_config=tiledb_platform_config,
-            ctx=ctx,
+            session_context=session_context
         )
 
     soma_type: Final = "SOMASparseNDArray"
@@ -53,7 +51,7 @@ class SparseNDArray(TileDBArray):
         self,
         type: pa.DataType,
         shape: Union[NTuple, List[int]],
-        platform_config: Optional[PlatformConfig] = None,
+        create_options: Optional[CreateOptions] = None,
     ) -> "SparseNDArray":
         """
         Create a ``SparseNDArray`` named with the URI.
@@ -61,6 +59,8 @@ class SparseNDArray(TileDBArray):
         :param type: an Arrow type defining the type of each element in the array. If the type is unsupported, an error will be raised.
 
         :param shape: the length of each domain as a list, e.g., [100, 10]. All lengths must be in the positive int64 range.
+
+        :param create_options: A dict of config options for creating this Array
         """
 
         # check on shape
@@ -74,8 +74,7 @@ class SparseNDArray(TileDBArray):
                 "Unsupported type - DenseNDArray only supports primtive Arrow types"
             )
 
-        level = self._tiledb_platform_config.string_dim_zstd_level
-        create_options = tdbpc.from_param(platform_config).create_options()
+        create_options = create_options or CreateOptions()
 
         dims = []
         for n, e in enumerate(shape):
@@ -86,7 +85,7 @@ class SparseNDArray(TileDBArray):
                 tile=create_options.dim_tile(dim_name, min(e, 2048)),
                 dtype=np.int64,
                 filters=create_options.dim_filters(
-                    dim_name, [dict(_type="ZstdFilter", level=level)]
+                    dim_name, [dict(_type="ZstdFilter", level=create_options.string_dim_zstd_level())]
                 ),
             )
             dims.append(dim)
@@ -109,7 +108,7 @@ class SparseNDArray(TileDBArray):
             domain=dom,
             attrs=attrs,
             sparse=True,
-            allows_duplicates=False,
+            allows_duplicates=True,
             offsets_filters=create_options.offsets_filters(),
             capacity=create_options.get("capacity", 100000),
             tile_order=tile_order,
@@ -117,7 +116,7 @@ class SparseNDArray(TileDBArray):
             ctx=self._ctx,
         )
 
-        tiledb.Array.create(self._uri, sch, ctx=self._ctx)
+        tiledb.Array.create(self._uri, sch)
 
         self._common_create()  # object-type metadata etc
 
@@ -172,7 +171,7 @@ class SparseNDArray(TileDBArray):
         ----------
         coords : Tuple[Union[int, slice, Tuple[int, ...], List[int], pa.IntegerArray], ...]
             Per-dimension tuple of scalar, slice, sequence of scalar or Arrow IntegerArray
-            Arrow arrays currently uninimplemented.
+            Arrow arrays currently unimplemented.
 
         Acceptable ways to index
         ------------------------

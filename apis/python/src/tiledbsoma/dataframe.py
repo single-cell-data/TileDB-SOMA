@@ -4,18 +4,18 @@ from typing import Any, Optional, Sequence, Tuple, TypeVar, Union, cast
 import numpy as np
 import pyarrow as pa
 import tiledb
-from typing_extensions import Final, get_args
-
 # This package's pybind11 code
 import tiledbsoma.libtiledbsoma as clib
+from typing_extensions import Final, get_args
 
-from . import tiledb_platform_config as tdbpc
 from . import util, util_arrow
 from .collection import CollectionBase
 from .constants import SOMA_JOINID
+from .create_options import CreateOptions
 from .query_condition import QueryCondition  # type: ignore
+from .soma_session_context import SomaSessionContext
 from .tiledb_array import TileDBArray
-from .types import PlatformConfig, ResultOrder, SparseDataFrameCoordinates
+from .types import ResultOrder, SparseDataFrameCoordinates
 from .util_iter import TableReadIter
 
 Slice = TypeVar("Slice", bound=Sequence[int])
@@ -36,12 +36,13 @@ class DataFrame(TileDBArray):
         uri: str,
         *,
         parent: Optional[CollectionBase[Any]] = None,
-        ctx: Optional[tiledb.Ctx] = None,
+        # Top-level objects should specify this:
+        session_context: Optional[SomaSessionContext] = None
     ):
         """
-        See also the ``TileDBOject`` constructor.
+        See also the ``TileDBObject`` constructor.
         """
-        super().__init__(uri=uri, parent=parent, ctx=ctx)
+        super().__init__(uri=uri, parent=parent, session_context=session_context)
         self._index_column_names = ()
         self._is_sparse = None
 
@@ -51,16 +52,17 @@ class DataFrame(TileDBArray):
         self,
         schema: pa.Schema,
         index_column_names: Sequence[str] = (SOMA_JOINID,),
-        platform_config: Optional[PlatformConfig] = None,
+        create_options: Optional[CreateOptions] = None
     ) -> "DataFrame":
         """
         :param schema: Arrow Schema defining the per-column schema. This schema must define all columns, including columns to be named as index columns. If the schema includes types unsupported by the SOMA implementation, an error will be raised.
 
         :param index_column_names: A list of column names to use as user-defined index columns (e.g., ``['cell_type', 'tissue_type']``). All named columns must exist in the schema, and at least one index column name is required.
+
+        :param create_options: A dict of config options for creating this Array
         """
         schema = _validate_schema(schema, index_column_names)
-        config_wrapper = tdbpc.from_param(platform_config)
-        self._create_empty(schema, index_column_names, config_wrapper.create_options())
+        self._create_empty(schema, index_column_names, create_options or CreateOptions())
         self._index_column_names = tuple(index_column_names)
 
         self._common_create()  # object-type metadata etc
@@ -70,13 +72,11 @@ class DataFrame(TileDBArray):
         self,
         schema: pa.Schema,
         index_column_names: Sequence[str],
-        create_options: tdbpc.CreateWrapper,
+        create_options: CreateOptions
     ) -> None:
         """
         Create a TileDB 1D sparse array with dimensions and attributes
         """
-
-        level = self._tiledb_platform_config.string_dim_zstd_level
 
         dims = []
         for index_column_name in index_column_names:
@@ -111,7 +111,7 @@ class DataFrame(TileDBArray):
                 tile=extent,
                 dtype=dtype,
                 filters=create_options.dim_filters(
-                    index_column_name, [dict(_type="ZstdFilter", level=level)]
+                    index_column_name, [dict(_type="ZstdFilter", level=create_options.string_dim_zstd_level())]
                 ),
             )
             dims.append(dim)
@@ -149,7 +149,7 @@ class DataFrame(TileDBArray):
         )
         self._is_sparse = sch.sparse
 
-        tiledb.Array.create(self._uri, sch, ctx=self._ctx)
+        tiledb.Array.create(self._uri, sch)
 
     def keys(self) -> Sequence[str]:
         """

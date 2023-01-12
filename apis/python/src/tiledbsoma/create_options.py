@@ -1,4 +1,5 @@
-from dataclasses import dataclass
+import os
+from dataclasses import dataclass, field
 from typing import (
     Any,
     Dict,
@@ -14,69 +15,44 @@ from typing import (
 
 import tiledb
 
-from .types import PlatformConfig
-
 
 @dataclass(frozen=True)
-class TileDBPlatformConfig:
+class CreateOptionDefaults:
     """
-    A place to put configuration options various users may wish to change.  These are mainly TileDB array-schema parameters.
     """
 
     # TODO: pending further work on
     # https://github.com/single-cell-data/TileDB-SOMA/issues/27
-    obs_extent: int = 256
-    var_extent: int = 2048
-    X_capacity: int = 100000
-    X_tile_order: str = "row-major"
-    X_cell_order: str = "row-major"
-    # https://github.com/single-cell-data/TileDB-SOMA/issues/27
+    # obs_extent: int = 256
+    # var_extent: int = 2048
+    # X_capacity: int = 100000
+    # max_thread_pool_workers: int = 8
+
+    tile_order: str = "row-major"
+    cell_order: str = "row-major"
     string_dim_zstd_level: int = 3
     write_X_chunked: bool = True
     goal_chunk_nnz: int = 200_000_000
-    # Allows relocatability for local disk / S3, and correct behavior for TileDB Cloud
-    member_uris_are_relative: Optional[bool] = None
-
-    max_thread_pool_workers: int = 8
 
 
-def from_param(pc: Optional[PlatformConfig]) -> "ParamWrapper":
-    """Extracts the TileDB-specific platform config key."""
-    pc = pc or {}
-    return ParamWrapper(pc.get("tiledb", {}))
+CREATE_OPTION_DEFAULTS = CreateOptionDefaults()
 
 
 @dataclass(frozen=True)
-class ParamWrapper(Mapping[str, Any]):
-    """Wrapper for the TileDB key of the ``platform_config`` parameter.
+class CreateOptions(Mapping[str, Any]):
 
-    Provides some methods and proxies to the config dict itself.
-    """
+    StrOrMap = Union[str, Mapping[str, Any]]
 
-    _config: PlatformConfig
+    _config: Mapping[str, Any] = field(default_factory=dict)
 
-    def create_options(self) -> "CreateWrapper":
-        return CreateWrapper(self.get("create", {}))
+    def string_dim_zstd_level(self) -> int:
+        return self.get('string_dim_zstd_level', CREATE_OPTION_DEFAULTS.string_dim_zstd_level)
 
-    # Mapping implementation:
+    def write_X_chunked(self) -> bool:
+        return self.get('write_X_chunked', CREATE_OPTION_DEFAULTS.write_X_chunked)
 
-    def __getitem__(self, it: str) -> Any:
-        return self._config[it]
-
-    def __len__(self) -> int:
-        return len(self._config)
-
-    def __iter__(self) -> Iterator[str]:
-        return iter(self._config)
-
-
-StrOrMap = Union[str, Mapping[str, Any]]
-
-
-@dataclass(frozen=True)
-class CreateWrapper(Mapping[str, Any]):
-
-    _config: Mapping[str, Any]
+    def goal_chunk_nnz(self) -> int:
+        return self.get('goal_chunk_nnz', CREATE_OPTION_DEFAULTS.goal_chunk_nnz)
 
     def offsets_filters(
         self,
@@ -88,11 +64,7 @@ class CreateWrapper(Mapping[str, Any]):
     ) -> Sequence[tiledb.Filter]:
         return _build_filters(self.get("offsets_filters", default))
 
-    def cell_tile_orders(
-        self,
-        default_cell: Optional[str] = "row-major",
-        default_tile: Optional[str] = "row-major",
-    ) -> Tuple[Optional[str], Optional[str]]:
+    def cell_tile_orders(self) -> Tuple[Optional[str], Optional[str]]:
         """Returns the cell and tile orders that should be used.
 
         If *neither* ``cell_order`` nor ``tile_order`` is present, only in this
@@ -101,7 +73,7 @@ class CreateWrapper(Mapping[str, Any]):
         if "cell_order" in self or "tile_order" in self:
             return self.get("cell_order"), self.get("tile_order")
 
-        return default_cell, default_tile
+        return CREATE_OPTION_DEFAULTS.cell_order, CREATE_OPTION_DEFAULTS.tile_order
 
     def dim_filters(
         self, dim: str, default: Sequence[StrOrMap] = ()

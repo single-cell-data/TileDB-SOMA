@@ -7,6 +7,7 @@ import tiledb
 
 import tiledbsoma
 import tiledbsoma.io
+from tiledbsoma import CreateOptions
 
 HERE = Path(__file__).parent
 
@@ -24,7 +25,7 @@ def adata(h5ad_file):
     return anndata.read_h5ad(h5ad_file)
 
 
-def test_platform_config(adata):
+def test_create_options(adata):
 
     # Set up anndata input path and tiledb-group output path
     with tempfile.TemporaryDirectory() as output_path:
@@ -34,21 +35,18 @@ def test_platform_config(adata):
             exp,
             adata,
             "RNA",
-            platform_config={
-                "tiledb": {
-                    "create": {
-                        "capacity": 8888,
-                        "offsets_filters": ["RleFilter", "NoOpFilter"],
-                        "dims": {
-                            "soma_dim_0": {"tile": 6},
-                            "soma_dim_1": {"filters": []},
-                        },
-                        "attrs": {"soma_data": {"filters": ["NoOpFilter"]}},
-                        "cell_order": "row-major",
-                        "tile_order": "col-major",
+            create_options=CreateOptions({
+                    "capacity": 8888,
+                    "offsets_filters": ["RleFilter", "NoOpFilter"],
+                    "dims": {
+                        "soma_dim_0": {"tile": 6},
+                        "soma_dim_1": {"filters": []},
                     },
-                },
-            },
+                    "attrs": {"soma_data": {"filters": ["NoOpFilter"]}},
+                    "cell_order": "row-major",
+                    "tile_order": "col-major",
+                }
+            ),
         )
 
         with exp.ms["RNA"].X["data"]._tiledb_open() as arr:

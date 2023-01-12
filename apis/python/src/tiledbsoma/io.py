@@ -22,12 +22,11 @@ from tiledbsoma import (
     Measurement,
     SparseNDArray,
     logging,
-    util_scipy,
+    util_scipy, SomaSessionContext, CreateOptions,
 )
 from tiledbsoma.exception import SOMAError
-
 from .constants import SOMA_JOINID
-from .types import INGEST_MODES, IngestMode, Path, PlatformConfig
+from .types import INGEST_MODES, IngestMode, Path
 
 # These are for input-data bounds -- like `((0, 10), (0, 20))`.  They're used for resume-mode
 # checking.
@@ -47,8 +46,8 @@ def from_h5ad(
     input_path: Path,
     measurement_name: str,
     *,
-    ctx: Optional[tiledb.Ctx] = None,
-    platform_config: Optional[PlatformConfig] = None,
+    session_context: Optional[SomaSessionContext] = None,
+    create_options: Optional[CreateOptions] = None,
     ingest_mode: IngestMode = "write",
 ) -> None:
     """
@@ -86,8 +85,8 @@ def from_h5ad(
         experiment,
         anndata,
         measurement_name,
-        ctx=ctx,
-        platform_config=platform_config,
+        session_context=session_context,
+        create_options=create_options,
         ingest_mode=ingest_mode,
     )
 
@@ -106,8 +105,8 @@ def from_anndata(
     anndata: ad.AnnData,
     measurement_name: str,
     *,
-    ctx: Optional[tiledb.Ctx] = None,
-    platform_config: Optional[PlatformConfig] = None,
+    session_context: Optional[SomaSessionContext] = None,
+    create_options: Optional[CreateOptions] = None,
     ingest_mode: IngestMode = "write",
 ) -> None:
     """
@@ -156,7 +155,7 @@ def from_anndata(
         obs,
         util_ann._decategoricalize_obs_or_var(anndata.obs),
         id_column_name="obs_id",
-        platform_config=platform_config,
+        create_options=create_options,
         ingest_mode=ingest_mode,
     )
     experiment.set("obs", obs)
@@ -169,7 +168,7 @@ def from_anndata(
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     # MS/meas
-    measurement = Measurement(uri=f"{experiment.ms.uri}/{measurement_name}", ctx=ctx)
+    measurement = Measurement(uri=f"{experiment.ms.uri}/{measurement_name}", session_context=session_context)
     experiment.ms.set(measurement_name, _check_create(measurement, ingest_mode))
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -179,7 +178,7 @@ def from_anndata(
         var,
         util_ann._decategoricalize_obs_or_var(anndata.var),
         id_column_name="var_id",
-        platform_config=platform_config,
+        create_options=create_options,
         ingest_mode=ingest_mode,
     )
     measurement["var"] = var
@@ -196,21 +195,21 @@ def from_anndata(
     #   chunkwise into memory.
     # Using the latter allows us to ingest larger .h5ad files without OOMing.
     if isinstance(anndata.X, (np.ndarray, h5py._hl.dataset.Dataset)):
-        ddata = DenseNDArray(uri=util.uri_joinpath(measurement.X.uri, "data"), ctx=ctx)
+        ddata = DenseNDArray(uri=util.uri_joinpath(measurement.X.uri, "data"), session_context=session_context)
         # Code here and in else-block duplicated for linter appeasement
         create_from_matrix(
             ddata,
             anndata.X,
-            platform_config=platform_config,
+            create_options=create_options,
             ingest_mode=ingest_mode,
         )
         measurement.X.set("data", ddata)
     else:
-        sdata = SparseNDArray(uri=util.uri_joinpath(measurement.X.uri, "data"), ctx=ctx)
+        sdata = SparseNDArray(uri=util.uri_joinpath(measurement.X.uri, "data"), session_context=session_context)
         create_from_matrix(
             sdata,
             anndata.X,
-            platform_config=platform_config,
+            create_options=create_options,
             ingest_mode=ingest_mode,
         )
         measurement.X.set("data", sdata)
@@ -224,12 +223,12 @@ def from_anndata(
         )
         for key in anndata.obsm.keys():
             arr = DenseNDArray(
-                uri=util.uri_joinpath(measurement.obsm.uri, key), ctx=ctx
+                uri=util.uri_joinpath(measurement.obsm.uri, key), session_context=session_context
             )
             create_from_matrix(
                 arr,
                 util_tiledb.to_tiledb_supported_array_type(anndata.obsm[key]),
-                platform_config=platform_config,
+                create_options=create_options,
                 ingest_mode=ingest_mode,
             )
             measurement.obsm.set(key, arr)
@@ -241,12 +240,12 @@ def from_anndata(
         )
         for key in anndata.varm.keys():
             darr = DenseNDArray(
-                uri=util.uri_joinpath(measurement.varm.uri, key), ctx=ctx
+                uri=util.uri_joinpath(measurement.varm.uri, key), session_context=session_context
             )
             create_from_matrix(
                 darr,
                 util_tiledb.to_tiledb_supported_array_type(anndata.varm[key]),
-                platform_config=platform_config,
+                create_options=create_options,
                 ingest_mode=ingest_mode,
             )
             measurement.varm.set(key, darr)
@@ -258,12 +257,12 @@ def from_anndata(
         )
         for key in anndata.obsp.keys():
             sarr = SparseNDArray(
-                uri=util.uri_joinpath(measurement.obsp.uri, key), ctx=ctx
+                uri=util.uri_joinpath(measurement.obsp.uri, key), session_context=session_context
             )
             create_from_matrix(
                 sarr,
                 util_tiledb.to_tiledb_supported_array_type(anndata.obsp[key]),
-                platform_config=platform_config,
+                create_options=create_options,
                 ingest_mode=ingest_mode,
             )
             measurement.obsp.set(key, sarr)
@@ -275,12 +274,12 @@ def from_anndata(
         )
         for key in anndata.varp.keys():
             sarr = SparseNDArray(
-                uri=util.uri_joinpath(measurement.varp.uri, key), ctx=ctx
+                uri=util.uri_joinpath(measurement.varp.uri, key), session_context=session_context
             )
             create_from_matrix(
                 sarr,
                 util_tiledb.to_tiledb_supported_array_type(anndata.varp[key]),
-                platform_config=platform_config,
+                create_options=create_options,
                 ingest_mode=ingest_mode,
             )
             measurement.varp.set(key, sarr)
@@ -289,7 +288,7 @@ def from_anndata(
     # MS/RAW
     if anndata.raw is not None:
         raw_measurement = Measurement(
-            uri=util.uri_joinpath(experiment.ms.uri, "raw"), ctx=ctx
+            uri=util.uri_joinpath(experiment.ms.uri, "raw"), session_context=session_context
         )
         experiment.ms.set("raw", _check_create(raw_measurement, ingest_mode))
 
@@ -298,7 +297,7 @@ def from_anndata(
             var,
             util_ann._decategoricalize_obs_or_var(anndata.raw.var),
             id_column_name="var_id",
-            platform_config=platform_config,
+            create_options=create_options,
             ingest_mode=ingest_mode,
         )
         raw_measurement.set("var", var)
@@ -309,12 +308,12 @@ def from_anndata(
         )
 
         rawXdata = SparseNDArray(
-            uri=util.uri_joinpath(raw_measurement.X.uri, "data"), ctx=ctx
+            uri=util.uri_joinpath(raw_measurement.X.uri, "data"), session_context=session_context
         )
         create_from_matrix(
             rawXdata,
             anndata.raw.X,
-            platform_config=platform_config,
+            create_options=create_options,
             ingest_mode=ingest_mode,
         )
         raw_measurement.X.set("data", rawXdata)
@@ -347,11 +346,13 @@ def _write_dataframe(
     soma_df: DataFrame,
     df: pd.DataFrame,
     id_column_name: Optional[str],
-    platform_config: Optional[PlatformConfig] = None,
+    create_options: Optional[CreateOptions] = None,
     ingest_mode: IngestMode = "write",
 ) -> None:
     s = util.get_start_stamp()
     logging.log_io(None, f"START  WRITING {soma_df.uri}")
+
+    create_options = create_options or CreateOptions()
 
     df[SOMA_JOINID] = np.asarray(range(len(df)), dtype=np.int64)
 
@@ -382,7 +383,7 @@ def _write_dataframe(
         else:
             raise SOMAError(f"{soma_df.uri} already exists")
     else:
-        soma_df.create(arrow_table.schema, platform_config=platform_config)
+        soma_df.create(arrow_table.schema, create_options=create_options)
 
     if ingest_mode == "schema_only":
         logging.log_io(
@@ -408,7 +409,7 @@ def create_from_matrix(
         ad._core.sparse_dataset.SparseDataset,
     ],
     *,
-    platform_config: Optional[PlatformConfig] = None,
+    create_options: Optional[CreateOptions] = None,
     ingest_mode: IngestMode = "write",
 ) -> None:
     """
@@ -427,7 +428,7 @@ def create_from_matrix(
         soma_ndarray.create(
             type=pa.from_numpy_dtype(src_matrix.dtype),
             shape=src_matrix.shape,
-            platform_config=platform_config,
+            create_options=create_options,
         )
 
     if ingest_mode == "schema_only":
@@ -443,10 +444,10 @@ def create_from_matrix(
     )
 
     if isinstance(soma_ndarray, DenseNDArray):
-        _write_matrix_to_denseNDArray(soma_ndarray, src_matrix, ingest_mode=ingest_mode)
+        _write_matrix_to_denseNDArray(soma_ndarray, src_matrix, create_options=create_options, ingest_mode=ingest_mode)
     else:  # SOMASparseNDArray
         _write_matrix_to_sparseNDArray(
-            soma_ndarray, src_matrix, ingest_mode=ingest_mode
+            soma_ndarray, src_matrix, create_options=create_options, ingest_mode=ingest_mode
         )
 
     logging.log_io(
@@ -461,9 +462,12 @@ def _write_matrix_to_denseNDArray(
         np.ndarray, sp.csr_matrix, sp.csc_matrix, h5py._hl.dataset.Dataset
     ],
     *,
+    create_options: Optional[CreateOptions] = None,
     ingest_mode: IngestMode,
 ) -> None:
     """Write a matrix to an empty DenseNDArray"""
+
+    create_options = create_options or CreateOptions()
 
     # There is a chunk-by-chunk already-done check for resume mode, below.
     # This full-matrix-level check here might seem redundant, but in fact it's important:
@@ -492,7 +496,7 @@ def _write_matrix_to_denseNDArray(
                 return
 
     # Write all at once?
-    if not soma_ndarray._tiledb_platform_config.write_X_chunked:
+    if not create_options.write_X_chunked():
         if isinstance(src_matrix, np.ndarray):
             nd_array = src_matrix
         else:
@@ -506,7 +510,7 @@ def _write_matrix_to_denseNDArray(
     i = 0
     # Number of rows to chunk by. Dense writes, so this is a constant.
     chunk_size = int(
-        math.ceil(soma_ndarray._tiledb_platform_config.goal_chunk_nnz / ncol)
+        math.ceil(create_options.goal_chunk_nnz() / ncol)
     )
     while i < nrow:
         t1 = time.time()
@@ -638,9 +642,12 @@ def _write_matrix_to_sparseNDArray(
         np.ndarray, sp.csr_matrix, sp.csc_matrix, ad._core.sparse_dataset.SparseDataset
     ],
     *,
+    create_options: Optional[CreateOptions] = None,
     ingest_mode: IngestMode,
 ) -> None:
     """Write a matrix to an empty DenseNDArray"""
+
+    create_options = create_options or CreateOptions()
 
     def _coo_to_table(mat_coo: sp.coo_matrix, axis: int = 0, base: int = 0) -> pa.Table:
         pydict = {
@@ -677,7 +684,7 @@ def _write_matrix_to_sparseNDArray(
                 return
 
     # Write all at once?
-    if not soma_ndarray._tiledb_platform_config.write_X_chunked:
+    if not create_options.write_X_chunked():
         soma_ndarray.write(_coo_to_table(sp.coo_matrix(src_matrix)))
         return
 
@@ -697,7 +704,7 @@ def _write_matrix_to_sparseNDArray(
     dim_max_size = src_matrix.shape[stride_axis]
 
     eta_tracker = eta.Tracker()
-    goal_chunk_nnz = soma_ndarray._tiledb_platform_config.goal_chunk_nnz
+    goal_chunk_nnz = create_options.goal_chunk_nnz()
 
     coords = [slice(None), slice(None)]
     i = 0

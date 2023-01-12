@@ -3,20 +3,19 @@ from typing import Any, List, Optional, Union, cast
 import numpy as np
 import pyarrow as pa
 import tiledb
-from typing_extensions import Final
-
 # This package's pybind11 code
 import tiledbsoma.libtiledbsoma as clib
+from typing_extensions import Final
+
 import tiledbsoma.util as util
 import tiledbsoma.util_arrow as util_arrow
 from tiledbsoma.util import dense_indices_to_shape
-
-from . import tiledb_platform_config as tdbpc
 from .collection import CollectionBase
+from .create_options import CreateOptions
 from .exception import SOMAError
+from .soma_session_context import SomaSessionContext
 from .tiledb_array import TileDBArray
-from .tiledb_platform_config import TileDBPlatformConfig
-from .types import DenseNdCoordinates, NTuple, PlatformConfig, ResultOrder
+from .types import DenseNdCoordinates, NTuple, ResultOrder
 
 
 class DenseNDArray(TileDBArray):
@@ -29,8 +28,7 @@ class DenseNDArray(TileDBArray):
         uri: str,
         *,
         parent: Optional[CollectionBase[Any]] = None,
-        tiledb_platform_config: Optional[TileDBPlatformConfig] = None,
-        ctx: Optional[tiledb.Ctx] = None,
+        session_context: Optional[SomaSessionContext] = None
     ):
         """
         Also see the ``TileDBObject`` constructor.
@@ -38,8 +36,7 @@ class DenseNDArray(TileDBArray):
         super().__init__(
             uri=uri,
             parent=parent,
-            tiledb_platform_config=tiledb_platform_config,
-            ctx=ctx,
+            session_context=session_context
         )
 
     soma_type: Final = "SOMADenseNDArray"
@@ -48,7 +45,7 @@ class DenseNDArray(TileDBArray):
         self,
         type: pa.DataType,
         shape: Union[NTuple, List[int]],
-        platform_config: Optional[PlatformConfig] = None,
+        create_options: Optional[CreateOptions] = None,
     ) -> "DenseNDArray":
         """
         Create a ``DenseNDArray`` named with the URI.
@@ -56,6 +53,8 @@ class DenseNDArray(TileDBArray):
         :param type: an Arrow type defining the type of each element in the array. If the type is unsupported, an error will be raised.
 
         :param shape: the length of each domain as a list, e.g., [100, 10]. All lengths must be in the positive int64 range.
+
+        :param create_options: A dict of config options for creating this Array
         """
 
         # check on shape
@@ -69,8 +68,7 @@ class DenseNDArray(TileDBArray):
                 "Unsupported type - DenseNDArray only supports primtive Arrow types"
             )
 
-        level = self._tiledb_platform_config.string_dim_zstd_level
-        create_options = tdbpc.from_param(platform_config).create_options()
+        create_options = create_options or CreateOptions()
 
         dims = []
         for n, e in enumerate(shape):
@@ -81,7 +79,7 @@ class DenseNDArray(TileDBArray):
                 tile=create_options.dim_tile(dim_name, min(e, 2048)),
                 dtype=np.int64,
                 filters=create_options.dim_filters(
-                    dim_name, [dict(_type="ZstdFilter", level=level)]
+                    dim_name, [dict(_type="ZstdFilter", level=create_options.string_dim_zstd_level())]
                 ),
             )
             dims.append(dim)
@@ -110,7 +108,7 @@ class DenseNDArray(TileDBArray):
             ctx=self._ctx,
         )
 
-        tiledb.Array.create(self._uri, sch, ctx=self._ctx)
+        tiledb.Array.create(self._uri, sch)
 
         self._common_create()  # object-type metadata etc
 
@@ -163,7 +161,7 @@ class DenseNDArray(TileDBArray):
             self._uri,
             name=self.__class__.__name__,
             result_order=result_order,
-            platform_config={} if self._ctx is None else self._ctx.config().dict(),
+            platform_config=self._ctx.config().dict(),
         )
 
         if coords is not None:

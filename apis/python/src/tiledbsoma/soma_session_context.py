@@ -1,0 +1,42 @@
+import os
+from dataclasses import dataclass
+from typing import (
+    Optional,
+    cast,
+)
+
+import tiledb
+
+
+def build_default_tiledb_ctx() -> tiledb.Ctx:
+    """
+    Build a TileDB context starting with reasonable defaults, and overriding and updating with user-provided config
+    options.
+    """
+
+    # Note: Defaults must provide positive out-of-the-box UX!
+
+    cfg = {"sm.mem.reader.sparse_global_order.ratio_array_data": 0.3}
+
+    # This is necessary for smaller tile capacities when querying with a smaller memory budget.
+
+    # Temp workaround pending https://app.shortcut.com/tiledb-inc/story/23827
+    region = os.getenv("AWS_DEFAULT_REGION")
+    if region is not None:
+        cfg["vfs.s3.region"] = cast(str, region)  # type: ignore
+
+    return tiledb.Ctx(cfg)
+
+
+@dataclass(frozen=True)
+class SomaSessionContext:
+    """
+    Maintains context across an entire SOMA session that can be shared across multiple SOMA objects.
+    """
+
+    tiledb_ctx: tiledb.Ctx = build_default_tiledb_ctx()
+
+    # Allows "relocatability" for local disk / S3, and correct behavior for TileDB Cloud
+    member_uris_are_relative: Optional[bool] = None
+
+    # read_timestamp, e.g.

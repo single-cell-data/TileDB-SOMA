@@ -3,8 +3,8 @@ from typing import List, Optional, Sequence, Tuple
 import pyarrow as pa
 import tiledb
 
+from .soma_session_context import SomaSessionContext
 from .tiledb_object import TileDBObject
-from .tiledb_platform_config import TileDBPlatformConfig
 from .util_arrow import get_arrow_schema_from_tiledb_uri
 
 
@@ -18,14 +18,14 @@ class TileDBArray(TileDBObject):
         uri: str,
         *,
         parent: Optional["TileDBObject"] = None,
-        tiledb_platform_config: Optional[TileDBPlatformConfig] = None,
-        ctx: Optional[tiledb.Ctx] = None,
+        # Top-level objects should specify this:
+        session_context: Optional[SomaSessionContext] = None
     ):
         """
         See the ``TileDBObject`` constructor.
         """
         super().__init__(
-            uri, parent=parent, tiledb_platform_config=tiledb_platform_config, ctx=ctx
+            uri, parent=parent, session_context=session_context
         )
 
     @property
