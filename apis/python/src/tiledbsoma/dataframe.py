@@ -52,7 +52,7 @@ class DataFrame(TileDBArray):
         self,
         schema: pa.Schema,
         index_column_names: Sequence[str] = (SOMA_JOINID,),
-        create_options: Optional[TileDBCreateOptions] = None,
+        platform_config: Optional[TileDBCreateOptions] = None,
     ) -> "DataFrame":
         """
         :param schema: Arrow Schema defining the per-column schema. This schema must define all columns, including columns to be named as index columns. If the schema includes types unsupported by the SOMA implementation, an error will be raised.
@@ -62,7 +62,7 @@ class DataFrame(TileDBArray):
         :param platform_config: Platform-specific options used to creating this Array, provided as a TileDbCreateOptions object.
         """
         schema = _validate_schema(schema, index_column_names)
-        self._create_empty(schema, index_column_names, create_options or TileDBCreateOptions())
+        self._create_empty(schema, index_column_names, platform_config or TileDBCreateOptions())
         self._index_column_names = tuple(index_column_names)
 
         self._common_create()  # object-type metadata etc
@@ -72,7 +72,7 @@ class DataFrame(TileDBArray):
         self,
         schema: pa.Schema,
         index_column_names: Sequence[str],
-        create_options: TileDBCreateOptions
+        platform_config: TileDBCreateOptions
     ) -> None:
         """
         Create a TileDB 1D sparse array with dimensions and attributes
@@ -101,7 +101,7 @@ class DataFrame(TileDBArray):
                     raise TypeError(f"Unsupported dtype {dtype}")
 
             # Default 2048 mods to 0 for 8-bit types and 0 is an invalid extent
-            extent = create_options.dim_tile(index_column_name)
+            extent = platform_config.dim_tile(index_column_name)
             if isinstance(dtype, np.dtype) and dtype.itemsize == 1:
                 extent = 64
 
@@ -110,8 +110,8 @@ class DataFrame(TileDBArray):
                 domain=(lo, hi),
                 tile=extent,
                 dtype=dtype,
-                filters=create_options.dim_filters(
-                    index_column_name, [dict(_type="ZstdFilter", level=create_options.string_dim_zstd_level())]
+                filters=platform_config.dim_filters(
+                    index_column_name, [dict(_type="ZstdFilter", level=platform_config.string_dim_zstd_level())]
                 ),
             )
             dims.append(dim)
@@ -127,20 +127,20 @@ class DataFrame(TileDBArray):
                 dtype=util_arrow.tiledb_type_from_arrow_type(
                     schema.field(attr_name).type
                 ),
-                filters=create_options.attr_filters(attr_name, ["ZstdFilter"]),
+                filters=platform_config.attr_filters(attr_name, ["ZstdFilter"]),
                 ctx=self._ctx,
             )
             attrs.append(attr)
 
-        cell_order, tile_order = create_options.cell_tile_orders()
+        cell_order, tile_order = platform_config.cell_tile_orders()
 
         sch = tiledb.ArraySchema(
             domain=dom,
             attrs=attrs,
             sparse=True,
             allows_duplicates=False,
-            offsets_filters=create_options.offsets_filters(),
-            capacity=create_options.get("capacity", 100000),
+            offsets_filters=platform_config.offsets_filters(),
+            capacity=platform_config.get("capacity", 100000),
             cell_order=cell_order,
             # As of TileDB core 2.8.2, we cannot consolidate string-indexed sparse arrays with
             # col-major tile order: so we write ``X`` with row-major tile order.

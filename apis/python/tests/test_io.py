@@ -54,7 +54,7 @@ def test_io_create_from_matrix_Dense_nd_array(tmp_path, tdb_create_options, src_
     """
     snda = soma.DenseNDArray(tmp_path.as_posix(),
                              session_context=TileDBSessionContext())
-    somaio.create_from_matrix(snda, src_matrix, create_options=tdb_create_options)
+    somaio.create_from_matrix(snda, src_matrix, platform_config=tdb_create_options)
 
     assert snda.shape == src_matrix.shape
     assert snda.ndim == src_matrix.ndim
@@ -99,7 +99,7 @@ def test_io_create_from_matrix_Sparse_nd_array(tmp_path, tdb_create_options, src
     """
     snda = soma.SparseNDArray(tmp_path.as_posix(),
                              session_context=TileDBSessionContext())
-    somaio.create_from_matrix(snda, src_matrix, create_options=tdb_create_options)
+    somaio.create_from_matrix(snda, src_matrix, platform_config=tdb_create_options)
 
     assert snda.shape == src_matrix.shape
     assert snda.ndim == src_matrix.ndim

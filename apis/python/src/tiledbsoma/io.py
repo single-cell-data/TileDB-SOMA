@@ -52,7 +52,7 @@ def from_h5ad(
     measurement_name: str,
     *,
     session_context: Optional[TileDBSessionContext] = None,
-    create_options: Optional[TileDBCreateOptions] = None,
+    platform_config: Optional[TileDBCreateOptions] = None,
     ingest_mode: IngestMode = "write",
 ) -> None:
     """
@@ -91,7 +91,7 @@ def from_h5ad(
         anndata,
         measurement_name,
         session_context=session_context,
-        create_options=create_options,
+        platform_config=platform_config,
         ingest_mode=ingest_mode,
     )
 
@@ -111,7 +111,7 @@ def from_anndata(
     measurement_name: str,
     *,
     session_context: Optional[TileDBSessionContext] = None,
-    create_options: Optional[TileDBCreateOptions] = None,
+    platform_config: Optional[TileDBCreateOptions] = None,
     ingest_mode: IngestMode = "write",
 ) -> None:
     """
@@ -160,7 +160,7 @@ def from_anndata(
         obs,
         util_ann._decategoricalize_obs_or_var(anndata.obs),
         id_column_name="obs_id",
-        create_options=create_options,
+        platform_config=platform_config,
         ingest_mode=ingest_mode,
     )
     experiment.set("obs", obs)
@@ -183,7 +183,7 @@ def from_anndata(
         var,
         util_ann._decategoricalize_obs_or_var(anndata.var),
         id_column_name="var_id",
-        create_options=create_options,
+        platform_config=platform_config,
         ingest_mode=ingest_mode,
     )
     measurement["var"] = var
@@ -205,7 +205,7 @@ def from_anndata(
         create_from_matrix(
             ddata,
             anndata.X,
-            create_options=create_options,
+            platform_config=platform_config,
             ingest_mode=ingest_mode,
         )
         measurement.X.set("data", ddata)
@@ -214,7 +214,7 @@ def from_anndata(
         create_from_matrix(
             sdata,
             anndata.X,
-            create_options=create_options,
+            platform_config=platform_config,
             ingest_mode=ingest_mode,
         )
         measurement.X.set("data", sdata)
@@ -233,7 +233,7 @@ def from_anndata(
             create_from_matrix(
                 arr,
                 util_tiledb.to_tiledb_supported_array_type(anndata.obsm[key]),
-                create_options=create_options,
+                platform_config=platform_config,
                 ingest_mode=ingest_mode,
             )
             measurement.obsm.set(key, arr)
@@ -250,7 +250,7 @@ def from_anndata(
             create_from_matrix(
                 darr,
                 util_tiledb.to_tiledb_supported_array_type(anndata.varm[key]),
-                create_options=create_options,
+                platform_config=platform_config,
                 ingest_mode=ingest_mode,
             )
             measurement.varm.set(key, darr)
@@ -267,7 +267,7 @@ def from_anndata(
             create_from_matrix(
                 sarr,
                 util_tiledb.to_tiledb_supported_array_type(anndata.obsp[key]),
-                create_options=create_options,
+                platform_config=platform_config,
                 ingest_mode=ingest_mode,
             )
             measurement.obsp.set(key, sarr)
@@ -284,7 +284,7 @@ def from_anndata(
             create_from_matrix(
                 sarr,
                 util_tiledb.to_tiledb_supported_array_type(anndata.varp[key]),
-                create_options=create_options,
+                platform_config=platform_config,
                 ingest_mode=ingest_mode,
             )
             measurement.varp.set(key, sarr)
@@ -302,7 +302,7 @@ def from_anndata(
             var,
             util_ann._decategoricalize_obs_or_var(anndata.raw.var),
             id_column_name="var_id",
-            create_options=create_options,
+            platform_config=platform_config,
             ingest_mode=ingest_mode,
         )
         raw_measurement.set("var", var)
@@ -318,7 +318,7 @@ def from_anndata(
         create_from_matrix(
             rawXdata,
             anndata.raw.X,
-            create_options=create_options,
+            platform_config=platform_config,
             ingest_mode=ingest_mode,
         )
         raw_measurement.X.set("data", rawXdata)
@@ -351,13 +351,13 @@ def _write_dataframe(
     soma_df: DataFrame,
     df: pd.DataFrame,
     id_column_name: Optional[str],
-    create_options: TileDBCreateOptions = None,
+    platform_config: TileDBCreateOptions = None,
     ingest_mode: IngestMode = "write",
 ) -> None:
     s = util.get_start_stamp()
     logging.log_io(None, f"START  WRITING {soma_df.uri}")
 
-    create_options = create_options or TileDBCreateOptions()
+    platform_config = platform_config or TileDBCreateOptions()
 
     df[SOMA_JOINID] = np.asarray(range(len(df)), dtype=np.int64)
 
@@ -388,7 +388,7 @@ def _write_dataframe(
         else:
             raise SOMAError(f"{soma_df.uri} already exists")
     else:
-        soma_df.create(arrow_table.schema, create_options=create_options)
+        soma_df.create(arrow_table.schema, platform_config=platform_config)
 
     if ingest_mode == "schema_only":
         logging.log_io(
@@ -414,7 +414,7 @@ def create_from_matrix(
         ad._core.sparse_dataset.SparseDataset,
     ],
     *,
-    create_options: Optional[TileDBCreateOptions] = None,
+    platform_config: Optional[TileDBCreateOptions] = None,
     ingest_mode: IngestMode = "write",
 ) -> None:
     """
@@ -433,7 +433,7 @@ def create_from_matrix(
         soma_ndarray.create(
             type=pa.from_numpy_dtype(src_matrix.dtype),
             shape=src_matrix.shape,
-            create_options=create_options,
+            platform_config=platform_config,
         )
 
     if ingest_mode == "schema_only":
@@ -449,10 +449,10 @@ def create_from_matrix(
     )
 
     if isinstance(soma_ndarray, DenseNDArray):
-        _write_matrix_to_denseNDArray(soma_ndarray, src_matrix, create_options=create_options, ingest_mode=ingest_mode)
+        _write_matrix_to_denseNDArray(soma_ndarray, src_matrix, platform_config=platform_config, ingest_mode=ingest_mode)
     else:  # SOMASparseNDArray
         _write_matrix_to_sparseNDArray(
-            soma_ndarray, src_matrix, create_options=create_options, ingest_mode=ingest_mode
+            soma_ndarray, src_matrix, platform_config=platform_config, ingest_mode=ingest_mode
         )
 
     logging.log_io(
@@ -467,12 +467,12 @@ def _write_matrix_to_denseNDArray(
         np.ndarray, sp.csr_matrix, sp.csc_matrix, h5py._hl.dataset.Dataset
     ],
     *,
-    create_options: Optional[TileDBCreateOptions] = None,
+    platform_config: Optional[TileDBCreateOptions] = None,
     ingest_mode: IngestMode,
 ) -> None:
     """Write a matrix to an empty DenseNDArray"""
 
-    create_options = create_options or TileDBCreateOptions()
+    platform_config = platform_config or TileDBCreateOptions()
 
     # There is a chunk-by-chunk already-done check for resume mode, below.
     # This full-matrix-level check here might seem redundant, but in fact it's important:
@@ -501,7 +501,7 @@ def _write_matrix_to_denseNDArray(
                 return
 
     # Write all at once?
-    if not create_options.write_X_chunked():
+    if not platform_config.write_X_chunked():
         if isinstance(src_matrix, np.ndarray):
             nd_array = src_matrix
         else:
@@ -515,7 +515,7 @@ def _write_matrix_to_denseNDArray(
     i = 0
     # Number of rows to chunk by. Dense writes, so this is a constant.
     chunk_size = int(
-        math.ceil(create_options.goal_chunk_nnz() / ncol)
+        math.ceil(platform_config.goal_chunk_nnz() / ncol)
     )
     while i < nrow:
         t1 = time.time()
@@ -647,12 +647,12 @@ def _write_matrix_to_sparseNDArray(
         np.ndarray, sp.csr_matrix, sp.csc_matrix, ad._core.sparse_dataset.SparseDataset
     ],
     *,
-    create_options: Optional[TileDBCreateOptions] = None,
+    platform_config: Optional[TileDBCreateOptions] = None,
     ingest_mode: IngestMode,
 ) -> None:
     """Write a matrix to an empty DenseNDArray"""
 
-    create_options = create_options or TileDBCreateOptions()
+    platform_config = platform_config or TileDBCreateOptions()
 
     def _coo_to_table(mat_coo: sp.coo_matrix, axis: int = 0, base: int = 0) -> pa.Table:
         pydict = {
@@ -689,7 +689,7 @@ def _write_matrix_to_sparseNDArray(
                 return
 
     # Write all at once?
-    if not create_options.write_X_chunked():
+    if not platform_config.write_X_chunked():
         soma_ndarray.write(_coo_to_table(sp.coo_matrix(src_matrix)))
         return
 
@@ -709,7 +709,7 @@ def _write_matrix_to_sparseNDArray(
     dim_max_size = src_matrix.shape[stride_axis]
 
     eta_tracker = eta.Tracker()
-    goal_chunk_nnz = create_options.goal_chunk_nnz()
+    goal_chunk_nnz = platform_config.goal_chunk_nnz()
 
     coords = [slice(None), slice(None)]
     i = 0

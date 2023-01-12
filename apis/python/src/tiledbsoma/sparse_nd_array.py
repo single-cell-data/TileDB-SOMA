@@ -51,7 +51,7 @@ class SparseNDArray(TileDBArray):
         self,
         type: pa.DataType,
         shape: Union[NTuple, List[int]],
-        create_options: Optional[TileDBCreateOptions] = None,
+        platform_config: Optional[TileDBCreateOptions] = None,
     ) -> "SparseNDArray":
         """
         Create a ``SparseNDArray`` named with the URI.
@@ -74,7 +74,7 @@ class SparseNDArray(TileDBArray):
                 "Unsupported type - DenseNDArray only supports primtive Arrow types"
             )
 
-        create_options = create_options or TileDBCreateOptions()
+        platform_config = platform_config or TileDBCreateOptions()
 
         dims = []
         for n, e in enumerate(shape):
@@ -82,10 +82,10 @@ class SparseNDArray(TileDBArray):
             dim = tiledb.Dim(
                 name=dim_name,
                 domain=(0, e - 1),
-                tile=create_options.dim_tile(dim_name, min(e, 2048)),
+                tile=platform_config.dim_tile(dim_name, min(e, 2048)),
                 dtype=np.int64,
-                filters=create_options.dim_filters(
-                    dim_name, [dict(_type="ZstdFilter", level=create_options.string_dim_zstd_level())]
+                filters=platform_config.dim_filters(
+                    dim_name, [dict(_type="ZstdFilter", level=platform_config.string_dim_zstd_level())]
                 ),
             )
             dims.append(dim)
@@ -95,12 +95,12 @@ class SparseNDArray(TileDBArray):
             tiledb.Attr(
                 name="soma_data",
                 dtype=util_arrow.tiledb_type_from_arrow_type(type),
-                filters=create_options.attr_filters("soma_data", ["ZstdFilter"]),
+                filters=platform_config.attr_filters("soma_data", ["ZstdFilter"]),
                 ctx=self._ctx,
             )
         ]
 
-        cell_order, tile_order = create_options.cell_tile_orders()
+        cell_order, tile_order = platform_config.cell_tile_orders()
 
         # TODO: code-dedupe w/ regard to DenseNDArray. The two creates are
         # almost identical & could share a common parent-class _create() method.
@@ -109,8 +109,8 @@ class SparseNDArray(TileDBArray):
             attrs=attrs,
             sparse=True,
             allows_duplicates=True,
-            offsets_filters=create_options.offsets_filters(),
-            capacity=create_options.get("capacity", 100000),
+            offsets_filters=platform_config.offsets_filters(),
+            capacity=platform_config.get("capacity", 100000),
             tile_order=tile_order,
             cell_order=cell_order,
             ctx=self._ctx,
