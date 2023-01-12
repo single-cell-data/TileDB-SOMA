@@ -107,7 +107,10 @@ def soma_object(request, tmp_path):
 
     elif class_name == "DataFrame":
         so = soma.DataFrame(uri=uri)
-        so.create(schema=pa.schema([("C", pa.float32()), ("D", pa.uint32())]), index_column_names=["D"])
+        so.create(
+            schema=pa.schema([("C", pa.float32()), ("D", pa.uint32())]),
+            index_column_names=["D"],
+        )
 
     elif class_name == "DenseNDArray":
         so = soma.DenseNDArray(uri=uri)

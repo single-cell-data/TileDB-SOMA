@@ -4,17 +4,18 @@ from typing import Any, Optional, Sequence, Tuple, TypeVar, Union, cast
 import numpy as np
 import pyarrow as pa
 import tiledb
+from typing_extensions import Final, get_args
+
 # This package's pybind11 code
 import tiledbsoma.libtiledbsoma as clib
-from typing_extensions import Final, get_args
 
 from . import util, util_arrow
 from .collection import CollectionBase
 from .constants import SOMA_JOINID
-from .tiledb_create_options import TileDBCreateOptions
 from .query_condition import QueryCondition  # type: ignore
-from .tiledb_session_context import TileDBSessionContext
 from .tiledb_array import TileDBArray
+from .tiledb_create_options import TileDBCreateOptions
+from .tiledb_session_context import TileDBSessionContext
 from .types import ResultOrder, SparseDataFrameCoordinates
 from .util_iter import TableReadIter
 
@@ -37,7 +38,7 @@ class DataFrame(TileDBArray):
         *,
         parent: Optional[CollectionBase[Any]] = None,
         # Top-level objects should specify this:
-        session_context: Optional[TileDBSessionContext] = None
+        session_context: Optional[TileDBSessionContext] = None,
     ):
         """
         See also the ``TileDBObject`` constructor.
@@ -62,7 +63,9 @@ class DataFrame(TileDBArray):
         :param platform_config: Platform-specific options used to creating this Array, provided as a TileDbCreateOptions object.
         """
         schema = _validate_schema(schema, index_column_names)
-        self._create_empty(schema, index_column_names, platform_config or TileDBCreateOptions())
+        self._create_empty(
+            schema, index_column_names, platform_config or TileDBCreateOptions()
+        )
         self._index_column_names = tuple(index_column_names)
 
         self._common_create()  # object-type metadata etc
@@ -72,7 +75,7 @@ class DataFrame(TileDBArray):
         self,
         schema: pa.Schema,
         index_column_names: Sequence[str],
-        platform_config: TileDBCreateOptions
+        platform_config: TileDBCreateOptions,
     ) -> None:
         """
         Create a TileDB 1D sparse array with dimensions and attributes
@@ -111,7 +114,13 @@ class DataFrame(TileDBArray):
                 tile=extent,
                 dtype=dtype,
                 filters=platform_config.dim_filters(
-                    index_column_name, [dict(_type="ZstdFilter", level=platform_config.string_dim_zstd_level())]
+                    index_column_name,
+                    [
+                        dict(
+                            _type="ZstdFilter",
+                            level=platform_config.string_dim_zstd_level(),
+                        )
+                    ],
                 ),
             )
             dims.append(dim)

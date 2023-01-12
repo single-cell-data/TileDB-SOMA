@@ -173,16 +173,21 @@ def test_experiment_obs_type_constraint(tmp_path):
     with pytest.raises(TypeError):
         se["obs"] = soma.Collection(uri=(tmp_path / "A").as_uri()).create()
     with pytest.raises(TypeError):
-        se["obs"] = soma.SparseNDArray(uri=(tmp_path / "B").as_uri()).create(type=pa.float32(), shape=(10,))
+        se["obs"] = soma.SparseNDArray(uri=(tmp_path / "B").as_uri()).create(
+            type=pa.float32(), shape=(10,)
+        )
     with pytest.raises(TypeError):
         se["obs"] = soma.DenseNDArray(uri=(tmp_path / "C").as_uri()).create(
             type=pa.float32(), shape=(10,)
         )
     with pytest.raises(TypeError):
         se["obs"] = soma.Measurement(uri=(tmp_path / "D").as_uri()).create()
-    se["obs"] = soma.DataFrame(uri=(tmp_path / "E").as_uri()).create(schema=pa.schema([("A", pa.int32())]))
-    se["obs"] = soma.DataFrame(uri=(tmp_path / "F").as_uri()).create(schema=pa.schema([("A", pa.int32())]),
-                                                                     index_column_names=["A"])
+    se["obs"] = soma.DataFrame(uri=(tmp_path / "E").as_uri()).create(
+        schema=pa.schema([("A", pa.int32())])
+    )
+    se["obs"] = soma.DataFrame(uri=(tmp_path / "F").as_uri()).create(
+        schema=pa.schema([("A", pa.int32())]), index_column_names=["A"]
+    )
 
 
 def test_experiment_ms_type_constraint(tmp_path):
@@ -190,7 +195,9 @@ def test_experiment_ms_type_constraint(tmp_path):
 
     se["ms"] = soma.Collection(uri=(tmp_path / "A").as_uri()).create()
     with pytest.raises(TypeError):
-        se["ms"] = soma.SparseNDArray(uri=(tmp_path / "B").as_uri()).create(type=pa.float32(), shape=(10,))
+        se["ms"] = soma.SparseNDArray(uri=(tmp_path / "B").as_uri()).create(
+            type=pa.float32(), shape=(10,)
+        )
     with pytest.raises(TypeError):
         se["ms"] = soma.DenseNDArray(uri=(tmp_path / "C").as_uri()).create(
             type=pa.float32(), shape=(10,)
@@ -198,7 +205,10 @@ def test_experiment_ms_type_constraint(tmp_path):
     with pytest.raises(TypeError):
         se["ms"] = soma.Measurement(uri=(tmp_path / "D").as_uri()).create()
     with pytest.raises(TypeError):
-        se["ms"] = soma.DataFrame(uri=(tmp_path / "E").as_uri()).create(schema=pa.schema([("A", pa.int32())]))
+        se["ms"] = soma.DataFrame(uri=(tmp_path / "E").as_uri()).create(
+            schema=pa.schema([("A", pa.int32())])
+        )
     with pytest.raises(TypeError):
-        se["ms"] = soma.DataFrame(uri=(tmp_path / "F").as_uri()).create(schema=pa.schema([("A", pa.int32())]),
-                                                                        index_column_names=["A"])
+        se["ms"] = soma.DataFrame(uri=(tmp_path / "F").as_uri()).create(
+            schema=pa.schema([("A", pa.int32())]), index_column_names=["A"]
+        )

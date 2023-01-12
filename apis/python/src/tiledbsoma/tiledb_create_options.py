@@ -44,13 +44,13 @@ class TileDBCreateOptions(Mapping[str, Any]):
     _config: Mapping[str, Any] = field(default_factory=dict)
 
     def string_dim_zstd_level(self) -> int:
-        return self.get('string_dim_zstd_level', DEFAULT_STRING_DIM_ZSTD_LEVEL)
+        return self.get("string_dim_zstd_level", DEFAULT_STRING_DIM_ZSTD_LEVEL)
 
     def write_X_chunked(self) -> bool:
-        return self.get('write_X_chunked', DEFAULT_WRITE_X_CHUNKED)
+        return self.get("write_X_chunked", DEFAULT_WRITE_X_CHUNKED)
 
     def goal_chunk_nnz(self) -> int:
-        return self.get('goal_chunk_nnz', DEFAULT_GOAL_CHUNK_NNZ)
+        return self.get("goal_chunk_nnz", DEFAULT_GOAL_CHUNK_NNZ)
 
     def offsets_filters(
         self,

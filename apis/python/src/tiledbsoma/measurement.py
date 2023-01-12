@@ -5,9 +5,9 @@ from typing_extensions import Final
 from .collection import CollectionBase
 from .dataframe import DataFrame
 from .dense_nd_array import DenseNDArray
-from .tiledb_session_context import TileDBSessionContext
 from .sparse_nd_array import SparseNDArray
 from .tiledb_object import TileDBObject
+from .tiledb_session_context import TileDBSessionContext
 
 
 class Measurement(CollectionBase[TileDBObject]):
@@ -60,11 +60,7 @@ class Measurement(CollectionBase[TileDBObject]):
         """
         Also see the ``TileDBObject`` constructor.
         """
-        super().__init__(
-            uri=uri,
-            parent=parent,
-            session_context=session_context
-        )
+        super().__init__(uri=uri, parent=parent, session_context=session_context)
 
     soma_type: Final = "SOMAMeasurement"
 

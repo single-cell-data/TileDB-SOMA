@@ -90,11 +90,7 @@ class CollectionBase(TileDBObject, MutableMapping[str, CollectionElementType]):
         """
         Also see the ``TileDBObject`` constructor.
         """
-        super().__init__(
-            uri=uri,
-            parent=parent,
-            session_context=session_context
-        )
+        super().__init__(uri=uri, parent=parent, session_context=session_context)
         self._cached_values = None
 
     def create(self) -> "CollectionBase[CollectionElementType]":
@@ -135,7 +131,10 @@ class CollectionBase(TileDBObject, MutableMapping[str, CollectionElementType]):
 
                 tdb: tiledb.Object = self._cached_values[key].tdb
                 soma = _construct_member(
-                    tdb.uri, self, session_context=self._session_context, object_type=tdb.type
+                    tdb.uri,
+                    self,
+                    session_context=self._session_context,
+                    object_type=tdb.type,
                 )
                 if soma is None:
                     # if we were unable to create an object, it wasn't actually a SOMA object
@@ -370,7 +369,9 @@ class CollectionBase(TileDBObject, MutableMapping[str, CollectionElementType]):
                     # However, getting it to work with a recursive data structure and finding the
                     # required methods, it was simpler to split the logic this way.
 
-                    soma = _construct_member(obj.uri, self, session_context=self._session_context)
+                    soma = _construct_member(
+                        obj.uri, self, session_context=self._session_context
+                    )
                     if soma is not None:
                         soma._show_metadata(recursively, indent=child_indent)
                     else:

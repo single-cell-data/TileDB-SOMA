@@ -6,8 +6,8 @@ from .collection import CollectionBase
 from .dataframe import DataFrame
 from .experiment_query import AxisQuery, ExperimentAxisQuery
 from .measurement import Measurement
-from .tiledb_session_context import TileDBSessionContext
 from .tiledb_object import TileDBObject
+from .tiledb_session_context import TileDBSessionContext
 
 
 class Experiment(CollectionBase[TileDBObject]):
@@ -37,11 +37,7 @@ class Experiment(CollectionBase[TileDBObject]):
         """
         Also see the ``TileDBObject`` constructor.
         """
-        super().__init__(
-            uri=uri,
-            parent=parent,
-            session_context=session_context
-        )
+        super().__init__(uri=uri, parent=parent, session_context=session_context)
 
     soma_type: Final = "SOMAExperiment"
 

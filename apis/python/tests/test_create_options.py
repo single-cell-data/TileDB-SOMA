@@ -35,7 +35,8 @@ def test_create_options(adata):
             exp,
             adata,
             "RNA",
-            platform_config=TileDBCreateOptions({
+            platform_config=TileDBCreateOptions(
+                {
                     "capacity": 8888,
                     "offsets_filters": ["RleFilter", "NoOpFilter"],
                     "dims": {

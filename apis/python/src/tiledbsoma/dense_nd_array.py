@@ -3,18 +3,19 @@ from typing import Any, List, Optional, Union, cast
 import numpy as np
 import pyarrow as pa
 import tiledb
-# This package's pybind11 code
-import tiledbsoma.libtiledbsoma as clib
 from typing_extensions import Final
 
+# This package's pybind11 code
+import tiledbsoma.libtiledbsoma as clib
 import tiledbsoma.util as util
 import tiledbsoma.util_arrow as util_arrow
 from tiledbsoma.util import dense_indices_to_shape
+
 from .collection import CollectionBase
-from .tiledb_create_options import TileDBCreateOptions
 from .exception import SOMAError
-from .tiledb_session_context import TileDBSessionContext
 from .tiledb_array import TileDBArray
+from .tiledb_create_options import TileDBCreateOptions
+from .tiledb_session_context import TileDBSessionContext
 from .types import DenseNdCoordinates, NTuple, ResultOrder
 
 
@@ -28,16 +29,12 @@ class DenseNDArray(TileDBArray):
         uri: str,
         *,
         parent: Optional[CollectionBase[Any]] = None,
-        session_context: Optional[TileDBSessionContext] = None
+        session_context: Optional[TileDBSessionContext] = None,
     ):
         """
         Also see the ``TileDBObject`` constructor.
         """
-        super().__init__(
-            uri=uri,
-            parent=parent,
-            session_context=session_context
-        )
+        super().__init__(uri=uri, parent=parent, session_context=session_context)
 
     soma_type: Final = "SOMADenseNDArray"
 
@@ -45,7 +42,7 @@ class DenseNDArray(TileDBArray):
         self,
         type: pa.DataType,
         shape: Union[NTuple, List[int]],
-        platform_config: Optional[TileDBCreateOptions] = None
+        platform_config: Optional[TileDBCreateOptions] = None,
     ) -> "DenseNDArray":
         """
         Create a ``DenseNDArray`` named with the URI.
@@ -79,7 +76,13 @@ class DenseNDArray(TileDBArray):
                 tile=platform_config.dim_tile(dim_name, min(e, 2048)),
                 dtype=np.int64,
                 filters=platform_config.dim_filters(
-                    dim_name, [dict(_type="ZstdFilter", level=platform_config.string_dim_zstd_level())]
+                    dim_name,
+                    [
+                        dict(
+                            _type="ZstdFilter",
+                            level=platform_config.string_dim_zstd_level(),
+                        )
+                    ],
                 ),
             )
             dims.append(dim)

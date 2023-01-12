@@ -39,5 +39,3 @@ def test_mutually_exclusive_create_args():
 
     with pytest.raises(AssertionError):
         TestTDBObject("parent/child", parent=p, session_context=session_context)
-
-

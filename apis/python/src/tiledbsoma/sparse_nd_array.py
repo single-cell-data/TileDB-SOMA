@@ -4,16 +4,17 @@ from typing import Any, List, Optional, Union, cast
 import numpy as np
 import pyarrow as pa
 import tiledb
+from typing_extensions import Final
+
 # This package's pybind11 code
 import tiledbsoma.libtiledbsoma as clib
-from typing_extensions import Final
 
 from . import somacore  # to be replaced by somacore package, when available
 from . import util, util_arrow
 from .collection import CollectionBase
+from .tiledb_array import TileDBArray
 from .tiledb_create_options import TileDBCreateOptions
 from .tiledb_session_context import TileDBSessionContext
-from .tiledb_array import TileDBArray
 from .types import NTuple, SparseNdCoordinates
 from .util_iter import (
     SparseCOOTensorReadIter,
@@ -33,17 +34,13 @@ class SparseNDArray(TileDBArray):
         uri: str,
         *,
         parent: Optional[CollectionBase[Any]] = None,
-        session_context: Optional[TileDBSessionContext] = None
+        session_context: Optional[TileDBSessionContext] = None,
     ):
         """
         Also see the ``TileDBObject`` constructor.
         """
 
-        super().__init__(
-            uri=uri,
-            parent=parent,
-            session_context=session_context
-        )
+        super().__init__(uri=uri, parent=parent, session_context=session_context)
 
     soma_type: Final = "SOMASparseNDArray"
 
@@ -85,7 +82,13 @@ class SparseNDArray(TileDBArray):
                 tile=platform_config.dim_tile(dim_name, min(e, 2048)),
                 dtype=np.int64,
                 filters=platform_config.dim_filters(
-                    dim_name, [dict(_type="ZstdFilter", level=platform_config.string_dim_zstd_level())]
+                    dim_name,
+                    [
+                        dict(
+                            _type="ZstdFilter",
+                            level=platform_config.string_dim_zstd_level(),
+                        )
+                    ],
                 ),
             )
             dims.append(dim)

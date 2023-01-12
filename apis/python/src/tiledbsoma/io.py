@@ -22,9 +22,10 @@ from tiledbsoma import (
     Measurement,
     SparseNDArray,
     logging,
-    util_scipy
+    util_scipy,
 )
 from tiledbsoma.exception import SOMAError
+
 from .constants import SOMA_JOINID
 from .types import INGEST_MODES, IngestMode, Path
 
@@ -173,7 +174,9 @@ def from_anndata(
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     # MS/meas
-    measurement = Measurement(uri=f"{experiment.ms.uri}/{measurement_name}", session_context=session_context)
+    measurement = Measurement(
+        uri=f"{experiment.ms.uri}/{measurement_name}", session_context=session_context
+    )
     experiment.ms.set(measurement_name, _check_create(measurement, ingest_mode))
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -200,7 +203,10 @@ def from_anndata(
     #   chunkwise into memory.
     # Using the latter allows us to ingest larger .h5ad files without OOMing.
     if isinstance(anndata.X, (np.ndarray, h5py._hl.dataset.Dataset)):
-        ddata = DenseNDArray(uri=util.uri_joinpath(measurement.X.uri, "data"), session_context=session_context)
+        ddata = DenseNDArray(
+            uri=util.uri_joinpath(measurement.X.uri, "data"),
+            session_context=session_context,
+        )
         # Code here and in else-block duplicated for linter appeasement
         create_from_matrix(
             ddata,
@@ -210,7 +216,10 @@ def from_anndata(
         )
         measurement.X.set("data", ddata)
     else:
-        sdata = SparseNDArray(uri=util.uri_joinpath(measurement.X.uri, "data"), session_context=session_context)
+        sdata = SparseNDArray(
+            uri=util.uri_joinpath(measurement.X.uri, "data"),
+            session_context=session_context,
+        )
         create_from_matrix(
             sdata,
             anndata.X,
@@ -228,7 +237,8 @@ def from_anndata(
         )
         for key in anndata.obsm.keys():
             arr = DenseNDArray(
-                uri=util.uri_joinpath(measurement.obsm.uri, key), session_context=session_context
+                uri=util.uri_joinpath(measurement.obsm.uri, key),
+                session_context=session_context,
             )
             create_from_matrix(
                 arr,
@@ -245,7 +255,8 @@ def from_anndata(
         )
         for key in anndata.varm.keys():
             darr = DenseNDArray(
-                uri=util.uri_joinpath(measurement.varm.uri, key), session_context=session_context
+                uri=util.uri_joinpath(measurement.varm.uri, key),
+                session_context=session_context,
             )
             create_from_matrix(
                 darr,
@@ -262,7 +273,8 @@ def from_anndata(
         )
         for key in anndata.obsp.keys():
             sarr = SparseNDArray(
-                uri=util.uri_joinpath(measurement.obsp.uri, key), session_context=session_context
+                uri=util.uri_joinpath(measurement.obsp.uri, key),
+                session_context=session_context,
             )
             create_from_matrix(
                 sarr,
@@ -279,7 +291,8 @@ def from_anndata(
         )
         for key in anndata.varp.keys():
             sarr = SparseNDArray(
-                uri=util.uri_joinpath(measurement.varp.uri, key), session_context=session_context
+                uri=util.uri_joinpath(measurement.varp.uri, key),
+                session_context=session_context,
             )
             create_from_matrix(
                 sarr,
@@ -293,7 +306,8 @@ def from_anndata(
     # MS/RAW
     if anndata.raw is not None:
         raw_measurement = Measurement(
-            uri=util.uri_joinpath(experiment.ms.uri, "raw"), session_context=session_context
+            uri=util.uri_joinpath(experiment.ms.uri, "raw"),
+            session_context=session_context,
         )
         experiment.ms.set("raw", _check_create(raw_measurement, ingest_mode))
 
@@ -313,7 +327,8 @@ def from_anndata(
         )
 
         rawXdata = SparseNDArray(
-            uri=util.uri_joinpath(raw_measurement.X.uri, "data"), session_context=session_context
+            uri=util.uri_joinpath(raw_measurement.X.uri, "data"),
+            session_context=session_context,
         )
         create_from_matrix(
             rawXdata,
@@ -449,10 +464,18 @@ def create_from_matrix(
     )
 
     if isinstance(soma_ndarray, DenseNDArray):
-        _write_matrix_to_denseNDArray(soma_ndarray, src_matrix, platform_config=platform_config, ingest_mode=ingest_mode)
+        _write_matrix_to_denseNDArray(
+            soma_ndarray,
+            src_matrix,
+            platform_config=platform_config,
+            ingest_mode=ingest_mode,
+        )
     else:  # SOMASparseNDArray
         _write_matrix_to_sparseNDArray(
-            soma_ndarray, src_matrix, platform_config=platform_config, ingest_mode=ingest_mode
+            soma_ndarray,
+            src_matrix,
+            platform_config=platform_config,
+            ingest_mode=ingest_mode,
         )
 
     logging.log_io(
@@ -514,9 +537,7 @@ def _write_matrix_to_denseNDArray(
     nrow, ncol = src_matrix.shape
     i = 0
     # Number of rows to chunk by. Dense writes, so this is a constant.
-    chunk_size = int(
-        math.ceil(platform_config.goal_chunk_nnz() / ncol)
-    )
+    chunk_size = int(math.ceil(platform_config.goal_chunk_nnz() / ncol))
     while i < nrow:
         t1 = time.time()
         i2 = i + chunk_size

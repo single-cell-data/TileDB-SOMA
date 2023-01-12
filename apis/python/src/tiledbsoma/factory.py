@@ -58,7 +58,9 @@ def _construct_member(
             with tiledb.open(member_uri, ctx=session_context.tiledb_ctx) as A:
                 spec_name = A.meta[SOMA_OBJECT_TYPE_METADATA_KEY]
         elif object_type == "group":
-            with tiledb.Group(member_uri, mode="r", ctx=session_context.tiledb_ctx) as G:
+            with tiledb.Group(
+                member_uri, mode="r", ctx=session_context.tiledb_ctx
+            ) as G:
                 spec_name = G.meta[SOMA_OBJECT_TYPE_METADATA_KEY]
         else:
             return None

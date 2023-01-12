@@ -38,7 +38,9 @@ class TileDBObject(ABC):
         self._uri = uri
 
         if parent is not None:
-            assert session_context is None, "Only one of `session_context` and `parent` params can be passed as an arg"
+            assert (
+                session_context is None
+            ), "Only one of `session_context` and `parent` params can be passed as an arg"
             # inherit from parent
             self._session_context = parent._session_context
         else:

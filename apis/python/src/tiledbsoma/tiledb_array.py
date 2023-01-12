@@ -3,8 +3,8 @@ from typing import List, Optional, Sequence, Tuple
 import pyarrow as pa
 import tiledb
 
-from .tiledb_session_context import TileDBSessionContext
 from .tiledb_object import TileDBObject
+from .tiledb_session_context import TileDBSessionContext
 from .util_arrow import get_arrow_schema_from_tiledb_uri
 
 
@@ -19,14 +19,12 @@ class TileDBArray(TileDBObject):
         *,
         parent: Optional["TileDBObject"] = None,
         # Top-level objects should specify this:
-        session_context: Optional[TileDBSessionContext] = None
+        session_context: Optional[TileDBSessionContext] = None,
     ):
         """
         See the ``TileDBObject`` constructor.
         """
-        super().__init__(
-            uri, parent=parent, session_context=session_context
-        )
+        super().__init__(uri, parent=parent, session_context=session_context)
 
     @property
     def schema(self) -> pa.Schema:

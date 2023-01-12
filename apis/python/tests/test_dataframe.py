@@ -225,8 +225,10 @@ def test_empty_dataframe(tmp_path):
 
     with pytest.raises(ValueError):
         # illegal column name
-        soma.DataFrame((tmp_path / "B").as_posix()).create(pa.schema([("a", pa.int32()), ("soma_bogus", pa.int32())]),
-                                                           index_column_names=["a"])
+        soma.DataFrame((tmp_path / "B").as_posix()).create(
+            pa.schema([("a", pa.int32()), ("soma_bogus", pa.int32())]),
+            index_column_names=["a"],
+        )
 
 
 def test_columns(tmp_path):
@@ -245,17 +247,26 @@ def test_columns(tmp_path):
 
     B = soma.DataFrame((tmp_path / "B").as_posix())
     with pytest.raises(ValueError):
-        B.create(pa.schema([("a", pa.int32()), ("soma_joinid", pa.float32())]), index_column_names=["a"])
+        B.create(
+            pa.schema([("a", pa.int32()), ("soma_joinid", pa.float32())]),
+            index_column_names=["a"],
+        )
 
     D = soma.DataFrame((tmp_path / "D").as_posix())
-    D.create(pa.schema([("a", pa.int32()), ("soma_joinid", pa.int64())]), index_column_names=["a"])
+    D.create(
+        pa.schema([("a", pa.int32()), ("soma_joinid", pa.int64())]),
+        index_column_names=["a"],
+    )
     assert sorted(D.keys()) == sorted(["a", "soma_joinid"])
     assert D.schema.field("soma_joinid").type == pa.int64()
     D.delete()
 
     E = soma.DataFrame((tmp_path / "E").as_posix())
     with pytest.raises(ValueError):
-        E.create(pa.schema([("a", pa.int32()), ("soma_is_a_reserved_prefix", pa.bool_())]), index_column_names=["a"])
+        E.create(
+            pa.schema([("a", pa.int32()), ("soma_is_a_reserved_prefix", pa.bool_())]),
+            index_column_names=["a"],
+        )
 
 
 @pytest.fixture
