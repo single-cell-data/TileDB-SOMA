@@ -1,4 +1,4 @@
-name: TileDB-SingleCell C++ CI
+name: TileDB-SOMA C++ CI
 
 on:
   pull_request:
@@ -37,7 +37,7 @@ jobs:
       shell: bash
       if: ${{ runner.os != 'Windows' }}
 
-    - name: Checkout TileDB-SingleCell
+    - name: Checkout TileDB-SOMA
       uses: actions/checkout@v2
 
     - name: Set up Python ${{ matrix.python-version }}

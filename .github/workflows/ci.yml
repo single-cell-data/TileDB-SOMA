@@ -1,4 +1,4 @@
-name: TileDB-SingleCell Python CI
+name: TileDB-SOMA Python CI
 
 on:
   pull_request:
@@ -25,7 +25,7 @@ jobs:
             cxx: g++-11
 
     steps:
-    - name: Checkout TileDB-SingleCell
+    - name: Checkout TileDB-SOMA
       uses: actions/checkout@v2
 
     - name: Set up Python ${{ matrix.python-version }}
