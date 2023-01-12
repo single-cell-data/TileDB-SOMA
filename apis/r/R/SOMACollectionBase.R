@@ -96,6 +96,8 @@ SOMACollectionBase <- R6::R6Class(
         SOMADenseNdArray = SOMADenseNdArray$new,
         SOMASparseNdArray = SOMASparseNdArray$new,
         SOMACollection = SOMACollection$new,
+        SOMAMeasurement = SOMAMeasurement$new,
+        SOMAExperiment = SOMAExperiment$new,
         stop(sprintf("Unknown member SOMA type: %s", soma_type), call. = FALSE)
       )
       soma_constructor(uri, self$ctx, self$platform_config)
