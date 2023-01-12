@@ -13,6 +13,7 @@ test_that("Basic mechanics", {
 
   # Create the collection on disk
   group$create()
+  expect_error(group$create(), "already exists")
   expect_true(dir.exists(uri))
   expect_true(group$exists())
   expect_match(tiledb::tiledb_object_type(uri), "GROUP")
