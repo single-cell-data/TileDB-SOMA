@@ -37,6 +37,26 @@ SOMAMeasurement <- R6::R6Class(
     #' @field Retrieve or set `X` [`SOMACollection`].
     X = function(value) {
       private$get_or_set_soma_field(value, "X", "SOMACollection")
+    },
+
+    #' @field Retrieve or set `obsm` [`SOMACollection`].
+    obsm = function(value) {
+      private$get_or_set_soma_field(value, "obsm", "SOMACollection")
+    },
+
+    #' @field Retrieve or set `obsp` [`SOMACollection`].
+    obsp = function(value) {
+      private$get_or_set_soma_field(value, "obsp", "SOMACollection")
+    },
+
+    #' @field Retrieve or set `varm` [`SOMACollection`].
+    varm = function(value) {
+      private$get_or_set_soma_field(value, "varm", "SOMACollection")
+    },
+
+    #' @field Retrieve or set `varp` [`SOMACollection`].
+    varp = function(value) {
+      private$get_or_set_soma_field(value, "varp", "SOMACollection")
     }
   )
 )
