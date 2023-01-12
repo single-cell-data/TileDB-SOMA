@@ -459,7 +459,7 @@ def create_from_matrix(
 def _write_matrix_to_denseNDArray(
     soma_ndarray: DenseNDArray,
     src_matrix: Union[
-        np.ndarray, sp.csr_matrix, sp.csc_matrix, h5py._hl.dataset.Dataset # type: ignore[type-arg]
+        np.ndarray, sp.csr_matrix, sp.csc_matrix, h5py._hl.dataset.Dataset  # type: ignore[type-arg]
     ],
     *,
     ingest_mode: IngestMode,
@@ -636,7 +636,7 @@ def _find_sparse_chunk_size(
 def _write_matrix_to_sparseNDArray(
     soma_ndarray: SparseNDArray,
     src_matrix: Union[
-        np.ndarray, sp.csr_matrix, sp.csc_matrix, ad._core.sparse_dataset.SparseDataset # type: ignore[type-arg]
+        np.ndarray, sp.csr_matrix, sp.csc_matrix, ad._core.sparse_dataset.SparseDataset  # type: ignore[type-arg]
     ],
     *,
     ingest_mode: IngestMode,
@@ -660,9 +660,7 @@ def _write_matrix_to_sparseNDArray(
         if isinstance(mat, np.ndarray):
             return int(math.ceil(goal_chunk_nnz / mat.shape[axis]))
         else:
-            return util_scipy.find_sparse_chunk_size(
-                mat, start_index, axis, goal_chunk_nnz
-            )
+            return _find_sparse_chunk_size(mat, start_index, axis, goal_chunk_nnz)
 
     # There is a chunk-by-chunk already-done check for resume mode, below.
     # This full-matrix-level check here might seem redundant, but in fact it's important:

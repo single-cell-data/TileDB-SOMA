@@ -18,9 +18,9 @@ import numpy.typing as npt
 import pandas as pd
 import pyarrow as pa
 import scipy.sparse as sparse
+import somacore
 from typing_extensions import Literal, TypedDict
 
-from .. import somacore  # to be replaced by somacore package, when available
 from ..dataframe import DataFrame as SOMADataFrame
 from ..sparse_nd_array import SparseNDArrayRead
 
