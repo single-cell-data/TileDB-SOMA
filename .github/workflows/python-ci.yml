@@ -84,3 +84,50 @@ jobs:
         # Codecov settings page for this repo, then filled into the GitHub Actions secrets.
         token: ${{ secrets.CODECOV_TOKEN }}
         fail_ci_if_error: true
+
+    # TODO: merge with python-packaging.yml -- https://github.com/single-cell-data/TileDB-SOMA/issues/700
+    - name: Build wheel distribution
+      run: python -m pip -v wheel --no-deps --wheel-dir=dist-wheel apis/python
+      env:
+        CC: ${{ matrix.cc }}
+        CXX: ${{ matrix.cxx }}
+
+    - name: Publish package to TestPyPI
+      if: matrix.os == 'ubuntu-22.04' && github.event_name == 'release'
+      uses: pypa/gh-action-pypi-publish@master
+      continue-on-error: true
+      with:
+        repository_url: https://test.pypi.org/legacy/
+        user: __token__
+        password: ${{ secrets.TEST_PYPI_TOKEN }}
+        packages_dir: dist-wheel
+        verbose: true
+
+    # Until general release of the main branch of tiledbsoma we'll follow the convention of tagging releases
+    # 0.5.0a1, 0.5.1a1, etc -- always with the "a1" suffix -- that way PyPI will automagically make these
+    # "prereleases". Then:
+    # pip install tiledbsoma -> 0.1.12 (or whatever the main-old branch is at)
+    # pip install --pre tiledbsoma -> 0.5.0a1 (or whatever the main branch is at)
+
+    # When we're ready for prime time:
+    # if: matrix.os == 'ubuntu-22.04' && github.event_name == 'release' && !github.event.release.prerelease
+
+#    # For now:
+#    - name: Publish package to PyPI
+#      if: matrix.os == 'ubuntu-22.04' && github.event_name == 'release' && (contains(${{github.event.release.tag_name}}, "a") || contains(${github.event.release.tag_name}}, "b"))
+#      uses: pypa/gh-action-pypi-publish@master
+#      with:
+#        user: __token__
+#        password: ${{ secrets.PYPI_TOKEN }}
+#        packages_dir: dist-wheel
+#        verbose: true
+
+# Notes:
+# The above is fine for releases; notes here are for manual ops.
+# https://towardsdatascience.com/create-your-own-python-package-and-publish-it-into-pypi-9306a29bc116
+# TL;DR:
+# o cd apis/python
+# o python setup.py sdist
+# o python -m twine upload --repository-url https://test.pypi.org/legacy/ dist/*
+#   - Be sure to use username __token__ and password being the token you set up at test.pypi.org
+# o pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple tiledbsoma
