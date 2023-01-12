@@ -1,27 +1,9 @@
 #' SOMA Measurement
 #'
-#' @description A `SOMAMeasurement` is a sub-element of a [`SOMAExperiment`], and is otherwise a specialized [`SOMACollection`] with pre-defined fields:
-#'
-#' - `var` ([`SOMADataFrame`]): Primary annotations on the variable axis, for
-#'   variables in this measurement (i.e., annotates columns of `X`). The
-#'   contents of the `soma_joinid` column define the variable index domain, AKA
-#'   var_id. All variables for this measurement must be defined in this
-#'   dataframe.
-#' - `X` ([`SOMACollection`] of [`SOMASparseNDArray`]): A collection of sparse
-#'   matrices, each containing measured feature values. Each matrix is indexed
-#'   by `[obsid, varid]`.
-#' - `obsm`: ([`SOMACollection`] of [`DenseNDArray`]): A collection of dense
-#'   matrices containing annotations of each `obs` row. Has the same shape as
-#'   `obs`, and is indexed with `obsid`.
-#' - `obsp`: ([`SOMACollection`] of [`SparseNDArray`]): A collection of sparse
-#'   matrices containing pairwise annotations of each `obs` row. Indexed with
-#'   `[obsid_1, obsid_2]`.
-#' - `varm`: ([`SOMACollection`] of [`DenseNDArray`]): A collection of dense
-#'   matrices containing annotations of each `var` row. Has the same shape as
-#'   `var`, and is indexed with `varid`.
-#' - `varp`: ([`SOMACollection`] of [`SparseNDArray`]): A collection of sparse
-#'   matrices containing pairwise annotations of each `var` row. Indexed with
-#'   `[varid_1, varid_2]`
+#' @description A `SOMAMeasurement` is a sub-element of a [`SOMAExperiment`],
+#' and is otherwise a specialized [`SOMACollection`] with pre-defined fields:
+#' `X`, `var`, `obsm`/`varm`, and `obsp`/`varp` (see _Active Bindings_ below for
+#' details).
 #'
 #' @export
 SOMAMeasurement <- R6::R6Class(
@@ -29,32 +11,45 @@ SOMAMeasurement <- R6::R6Class(
   inherit = SOMACollectionBase,
 
   active = list(
-    #' @field Retrieve of set `var` [`SOMADataFrame`].
+    #' @field var a [`SOMADataFrame`] containing primary annotations on the
+    #' variable axis, for variables in this measurement (i.e., annotates columns
+    #' of `X`). The contents of the `soma_joinid` column define the variable
+    #' index domain, `var_id`. All variables for this measurement must be
+    #' defined in this dataframe.
     var = function(value) {
       private$get_or_set_soma_field(value, "var", "SOMADataFrame")
     },
 
-    #' @field Retrieve or set `X` [`SOMACollection`].
+    #' @field X a [`SOMACollection`] of [`SOMASparseNDArray`]s, each contains
+    #' measured feature values indexed by `[obsid, varid]`.
     X = function(value) {
       private$get_or_set_soma_field(value, "X", "SOMACollection")
     },
 
-    #' @field Retrieve or set `obsm` [`SOMACollection`].
+    #' @field obsm a [`SOMACollection`] of [`SOMADenseNDArray`]s containing
+    #' annotations on the observation axis. Each array is indexed by `obsid` and
+    #' has the same shape as `obs`.
     obsm = function(value) {
       private$get_or_set_soma_field(value, "obsm", "SOMACollection")
     },
 
-    #' @field Retrieve or set `obsp` [`SOMACollection`].
+    #' @field obsp a [`SOMACollection`] of [`SparseNDArray`]s containing
+    #' pairwise annotations on the observation axis and indexed with `[obsid_1,
+    #' obsid_2]`.
     obsp = function(value) {
       private$get_or_set_soma_field(value, "obsp", "SOMACollection")
     },
 
-    #' @field Retrieve or set `varm` [`SOMACollection`].
+    #' @field varm a [`SOMACollection`] of [`SOMADenseNDArray`]s containing
+    #' annotations on the variable axis. Each array is indexed by `varid` and
+    #' has the same shape as `var`.
     varm = function(value) {
       private$get_or_set_soma_field(value, "varm", "SOMACollection")
     },
 
-    #' @field Retrieve or set `varp` [`SOMACollection`].
+    #' @field varp a [`SOMACollection`] of [`SparseNDArray`]s containing
+    #' pairwise annotations on the variable axis and indexed with `[varid_1,
+    #' varid_2]`.
     varp = function(value) {
       private$get_or_set_soma_field(value, "varp", "SOMACollection")
     }
