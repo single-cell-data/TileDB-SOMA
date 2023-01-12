@@ -15,27 +15,23 @@ from typing import (
 
 import tiledb
 
-
-@dataclass(frozen=True)
-class CreateOptionDefaults:
-    """
-    """
-
-    # TODO: pending further work on
-    # https://github.com/single-cell-data/TileDB-SOMA/issues/27
-    # obs_extent: int = 256
-    # var_extent: int = 2048
-    # X_capacity: int = 100000
-    # max_thread_pool_workers: int = 8
-
-    tile_order: str = "row-major"
-    cell_order: str = "row-major"
-    string_dim_zstd_level: int = 3
-    write_X_chunked: bool = True
-    goal_chunk_nnz: int = 200_000_000
-
-
-CREATE_OPTION_DEFAULTS = CreateOptionDefaults()
+DEFAULT_TILE_ORDER = "row-major"
+DEFAULT_CELL_ORDER = "row-major"
+DEFAULT_STRING_DIM_ZSTD_LEVEL = 3
+DEFAULT_WRITE_X_CHUNKED = True
+DEFAULT_GOAL_CHUNK_NNZ = 200_000_000
+DEFAULT_FILTERS = (
+    "DoubleDeltaFilter",
+    "BitWidthReductionFilter",
+    "ZstdFilter",
+)
+DEFAULT_TILE_EXTENT = 2048
+# TODO: pending further work on
+#  https://github.com/single-cell-data/TileDB-SOMA/issues/27
+# DEFAULT_OBS_EXTENT = 256
+# DEFAULT_VAR_EXTENT = 2048
+# DEFAULT_X_CAPACITY = 100000
+# DEFAULT_MAX_THREAD_POOL_WORKERS = 8
 
 
 @dataclass(frozen=True)
@@ -48,21 +44,17 @@ class TileDBCreateOptions(Mapping[str, Any]):
     _config: Mapping[str, Any] = field(default_factory=dict)
 
     def string_dim_zstd_level(self) -> int:
-        return self.get('string_dim_zstd_level', CREATE_OPTION_DEFAULTS.string_dim_zstd_level)
+        return self.get('string_dim_zstd_level', DEFAULT_STRING_DIM_ZSTD_LEVEL)
 
     def write_X_chunked(self) -> bool:
-        return self.get('write_X_chunked', CREATE_OPTION_DEFAULTS.write_X_chunked)
+        return self.get('write_X_chunked', DEFAULT_WRITE_X_CHUNKED)
 
     def goal_chunk_nnz(self) -> int:
-        return self.get('goal_chunk_nnz', CREATE_OPTION_DEFAULTS.goal_chunk_nnz)
+        return self.get('goal_chunk_nnz', DEFAULT_GOAL_CHUNK_NNZ)
 
     def offsets_filters(
         self,
-        default: Sequence[StrOrMap] = (
-            "DoubleDeltaFilter",
-            "BitWidthReductionFilter",
-            "ZstdFilter",
-        ),
+        default: Sequence[StrOrMap] = DEFAULT_FILTERS,
     ) -> Sequence[tiledb.Filter]:
         return _build_filters(self.get("offsets_filters", default))
 
@@ -75,14 +67,14 @@ class TileDBCreateOptions(Mapping[str, Any]):
         if "cell_order" in self or "tile_order" in self:
             return self.get("cell_order"), self.get("tile_order")
 
-        return CREATE_OPTION_DEFAULTS.cell_order, CREATE_OPTION_DEFAULTS.tile_order
+        return DEFAULT_CELL_ORDER, DEFAULT_TILE_ORDER
 
     def dim_filters(
         self, dim: str, default: Sequence[StrOrMap] = ()
     ) -> Sequence[tiledb.Filter]:
         return _build_filters(self._dim(dim).get("filters", default))
 
-    def dim_tile(self, dim: str, default: int = 2048) -> int:
+    def dim_tile(self, dim: str, default: int = DEFAULT_TILE_EXTENT) -> int:
         return self._dim(dim).get("tile", default)
 
     def attr_filters(
