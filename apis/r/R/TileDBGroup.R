@@ -2,6 +2,7 @@
 #'
 #' @description
 #' Base class for interacting with TileDB groups
+#' @importFrom spdl info debug
 #' @export
 TileDBGroup <- R6::R6Class(
   classname = "TileDBGroup",
@@ -17,7 +18,7 @@ TileDBGroup <- R6::R6Class(
 
     #' @description Creates the data structure on disk/S3/cloud.
     create = function() {
-      message(sprintf("Creating new %s at '%s'", self$class(), self$uri))
+      spdl::info("Creating new {} at '{}'", self$class(), self$uri)
       tiledb::tiledb_group_create(self$uri, ctx = self$ctx)
     },
 
@@ -165,7 +166,9 @@ TileDBGroup <- R6::R6Class(
   private = list(
 
     # @description List of cached group members
-    member_cache = list(),
+    # Initially NULL, once the group is created or opened, this is populated
+    # with list that's empty or contains the group members.
+    member_cache = NULL,
 
     open = function(mode) {
       mode <- match.arg(mode, c("READ", "WRITE"))
@@ -207,7 +210,7 @@ TileDBGroup <- R6::R6Class(
     },
 
     update_member_cache = function() {
-      message("Updating member cache")
+      spdl::debug("Updating member cache")
       private$member_cache <- private$get_all_members()
     },
 
