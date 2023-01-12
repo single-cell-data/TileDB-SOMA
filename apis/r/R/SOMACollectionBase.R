@@ -101,6 +101,28 @@ SOMACollectionBase <- R6::R6Class(
         stop(sprintf("Unknown member SOMA type: %s", soma_type), call. = FALSE)
       )
       soma_constructor(uri, self$ctx, self$platform_config)
+    },
+
+    # Internal method called by SOMA Measurement/Experiment's active bindings
+    # to retrieve or set one of the pre-defined SOMA fields (e.g., obs, X, etc).
+    # @param value the optional argument passed to the active binding.
+    # @param name the name of the field to retrieve or set.
+    # @param expected_class the expected class of the value to set.
+    get_or_set_soma_field = function(value, name, expected_class) {
+      if (missing(value)) return(self$get(name))
+
+      stopifnot(
+        "Must define 'name' of the field to set" = !missing(name),
+        "Must define the field's 'expected_class'" = !missing(expected_class)
+      )
+
+      if (!inherits(value, expected_class)) {
+        stop(
+          sprintf("%s must be a '%s'", name, expected_class),
+          call. = FALSE
+        )
+      }
+      self$set(value, name = name)
     }
   )
 )

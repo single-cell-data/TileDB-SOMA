@@ -31,26 +31,12 @@ SOMAMeasurement <- R6::R6Class(
   active = list(
     #' @field Retrieve of set `var` [`SOMADataFrame`].
     var = function(value) {
-      if (missing(value)) {
-        self$get("var")
-      } else {
-        stopifnot(
-          "var must be a 'SOMADataFrame'" = inherits(value, "SOMADataFrame")
-        )
-        self$set(value, name = "var")
-      }
+      private$get_or_set_soma_field(value, "var", "SOMADataFrame")
     },
 
     #' @field Retrieve or set `X` [`SOMACollection`].
     X = function(value) {
-      if (missing(value)) {
-        self$get("X")
-      } else {
-        stopifnot(
-          "X must be a 'SOMACollection'" = inherits(value, "SOMACollection")
-        )
-        self$set(value, name = "X")
-      }
+      private$get_or_set_soma_field(value, "X", "SOMACollection")
     }
   )
 )

@@ -21,26 +21,12 @@ SOMAExperiment <- R6::R6Class(
     #' `soma_joinid` column define the observation index domain (AKA `obs_id`).
     #' All observations for the Experiment must be defined in this dataframe.
     obs = function(value) {
-      if (missing(value)) {
-        self$get("obs")
-      } else {
-        stopifnot(
-          "obs must be a 'SOMADataFrame'" = inherits(value, "SOMADataFrame")
-        )
-        self$set(value, name = "obs")
-      }
+      private$get_or_set_soma_field(value, "obs", "SOMADataFrame")
     },
 
     #' @field A collection of named measurements.
     ms = function(value) {
-      if (missing(value)) {
-        self$get("ms")
-      } else {
-        stopifnot(
-          "ms must be a 'SOMAMeasurement'" = inherits(value, "SOMAMeasurement")
-        )
-        self$set(value, name = "ms")
-      }
+      private$get_or_set_soma_field(value, "ms", "SOMAMeasurement")
     }
   )
 )
