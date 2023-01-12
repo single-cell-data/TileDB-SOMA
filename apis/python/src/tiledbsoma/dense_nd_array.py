@@ -45,7 +45,7 @@ class DenseNDArray(TileDBArray):
         self,
         type: pa.DataType,
         shape: Union[NTuple, List[int]],
-        platform_config: Optional[TileDBCreateOptions] = None,
+        create_options: Optional[TileDBCreateOptions] = None
     ) -> "DenseNDArray":
         """
         Create a ``DenseNDArray`` named with the URI.

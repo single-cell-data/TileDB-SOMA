@@ -51,7 +51,7 @@ class SparseNDArray(TileDBArray):
         self,
         type: pa.DataType,
         shape: Union[NTuple, List[int]],
-        platform_config: Optional[TileDBCreateOptions] = None,
+        create_options: Optional[TileDBCreateOptions] = None,
     ) -> "SparseNDArray":
         """
         Create a ``SparseNDArray`` named with the URI.

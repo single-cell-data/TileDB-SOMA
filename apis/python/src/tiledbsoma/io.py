@@ -22,7 +22,7 @@ from tiledbsoma import (
     Measurement,
     SparseNDArray,
     logging,
-    util_scipy, SomaSessionContext, CreateOptions,
+    util_scipy
 )
 from tiledbsoma.exception import SOMAError
 from .constants import SOMA_JOINID
@@ -52,7 +52,7 @@ def from_h5ad(
     measurement_name: str,
     *,
     session_context: Optional[TileDBSessionContext] = None,
-    create_options: Optional[CreateOptions] = None,
+    create_options: Optional[TileDBCreateOptions] = None,
     ingest_mode: IngestMode = "write",
 ) -> None:
     """
@@ -111,7 +111,7 @@ def from_anndata(
     measurement_name: str,
     *,
     session_context: Optional[TileDBSessionContext] = None,
-    create_options: Optional[TileDBCreateOptions] = None
+    create_options: Optional[TileDBCreateOptions] = None,
     ingest_mode: IngestMode = "write",
 ) -> None:
     """
@@ -352,11 +352,12 @@ def _write_dataframe(
     df: pd.DataFrame,
     id_column_name: Optional[str],
     create_options: TileDBCreateOptions = None,
+    ingest_mode: IngestMode = "write",
 ) -> None:
     s = util.get_start_stamp()
     logging.log_io(None, f"START  WRITING {soma_df.uri}")
 
-    create_options = create_options or CreateOptions()
+    create_options = create_options or TileDBCreateOptions()
 
     df[SOMA_JOINID] = np.asarray(range(len(df)), dtype=np.int64)
 
@@ -471,7 +472,7 @@ def _write_matrix_to_denseNDArray(
 ) -> None:
     """Write a matrix to an empty DenseNDArray"""
 
-    create_options = create_options or CreateOptions()
+    create_options = create_options or TileDBCreateOptions()
 
     # There is a chunk-by-chunk already-done check for resume mode, below.
     # This full-matrix-level check here might seem redundant, but in fact it's important:

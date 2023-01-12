@@ -52,7 +52,7 @@ class DataFrame(TileDBArray):
         self,
         schema: pa.Schema,
         index_column_names: Sequence[str] = (SOMA_JOINID,),
-        platform_config: Optional[TileDBCreateOptions] = None
+        create_options: Optional[TileDBCreateOptions] = None,
     ) -> "DataFrame":
         """
         :param schema: Arrow Schema defining the per-column schema. This schema must define all columns, including columns to be named as index columns. If the schema includes types unsupported by the SOMA implementation, an error will be raised.
