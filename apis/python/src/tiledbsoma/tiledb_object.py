@@ -16,7 +16,7 @@ class TileDBObject(ABC):
     """
 
     _uri: str
-    _soma_session_context: TileDBSessionContext
+    _session_context: TileDBSessionContext
     _metadata: MetadataMapping
 
     def __init__(
@@ -40,15 +40,15 @@ class TileDBObject(ABC):
         if parent is not None:
             assert session_context is None, "Only one of `session_context` and `parent` params can be passed as an arg"
             # inherit from parent
-            self._soma_session_context = parent._soma_session_context
+            self._session_context = parent._session_context
         else:
-            self._soma_session_context = session_context or TileDBSessionContext()
+            self._session_context = session_context or TileDBSessionContext()
 
         self._metadata = MetadataMapping(self)
 
     @property
     def _ctx(self) -> tiledb.Ctx:
-        return self._soma_session_context.tiledb_ctx
+        return self._session_context.tiledb_ctx
 
     @property
     def metadata(self) -> MetadataMapping:

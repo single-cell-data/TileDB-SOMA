@@ -101,7 +101,7 @@ class CollectionBase(TileDBObject, MutableMapping[str, CollectionElementType]):
         """
         Creates the data structure on disk/S3/cloud.
         """
-        tiledb.group_create(uri=self._uri, ctx=self._soma_session_context.tiledb_ctx)
+        tiledb.group_create(uri=self._uri, ctx=self._session_context.tiledb_ctx)
         self._common_create()  # object-type metadata etc
         self._cached_values = {}
         return self
@@ -135,7 +135,7 @@ class CollectionBase(TileDBObject, MutableMapping[str, CollectionElementType]):
 
                 tdb: tiledb.Object = self._cached_values[key].tdb
                 soma = _construct_member(
-                    tdb.uri, self, session_context=self._soma_session_context, object_type=tdb.type
+                    tdb.uri, self, session_context=self._session_context, object_type=tdb.type
                 )
                 if soma is None:
                     # if we were unable to create an object, it wasn't actually a SOMA object
@@ -266,8 +266,8 @@ class CollectionBase(TileDBObject, MutableMapping[str, CollectionElementType]):
 
     def _determine_default_relative(self, uri: str) -> Optional[bool]:
         """Defaulting for the relative parameter."""
-        if self._soma_session_context.member_uris_are_relative is not None:
-            return self._soma_session_context.member_uris_are_relative
+        if self._session_context.member_uris_are_relative is not None:
+            return self._session_context.member_uris_are_relative
         if uri.startswith("tiledb://"):
             # TileDB-Cloud does not use relative URIs, ever.
             return False
@@ -350,7 +350,7 @@ class CollectionBase(TileDBObject, MutableMapping[str, CollectionElementType]):
         """
         assert mode in ("r", "w")
         # This works in with-open-as contexts because tiledb.Group has __enter__ and __exit__ methods.
-        return tiledb.Group(self._uri, mode=mode, ctx=self._soma_session_context.tiledb_ctx)
+        return tiledb.Group(self._uri, mode=mode, ctx=self._session_context.tiledb_ctx)
 
     def _show_metadata(self, recursively: bool = True, indent: str = "") -> None:
         """
@@ -370,7 +370,7 @@ class CollectionBase(TileDBObject, MutableMapping[str, CollectionElementType]):
                     # However, getting it to work with a recursive data structure and finding the
                     # required methods, it was simpler to split the logic this way.
 
-                    soma = _construct_member(obj.uri, self, session_context=self._soma_session_context)
+                    soma = _construct_member(obj.uri, self, session_context=self._session_context)
                     if soma is not None:
                         soma._show_metadata(recursively, indent=child_indent)
                     else:

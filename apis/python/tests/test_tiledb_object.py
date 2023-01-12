@@ -17,10 +17,10 @@ class TestTDBObject(TileDBObject):
 
 def test_tiledb_object_default_session_context_added():
     o = TestTDBObject("parent")
-    assert o._soma_session_context is not None
-    assert o._soma_session_context.tiledb_ctx is not None
+    assert o._session_context is not None
+    assert o._session_context.tiledb_ctx is not None
     assert o._ctx is not None
-    assert o._ctx == o._soma_session_context.tiledb_ctx
+    assert o._ctx == o._session_context.tiledb_ctx
 
 
 def test_child_inherits_parent_session_context():
@@ -29,8 +29,8 @@ def test_child_inherits_parent_session_context():
 
     c = TestTDBObject("parent/child", parent=p)
 
-    assert c._soma_session_context is not None
-    assert c._soma_session_context == p._soma_session_context
+    assert c._session_context is not None
+    assert c._session_context == p._session_context
 
 
 def test_mutually_exclusive_create_args():
