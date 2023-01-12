@@ -25,9 +25,11 @@ from tiledbsoma import (
     util_scipy,
 )
 from tiledbsoma.exception import SOMAError
-
 from .constants import SOMA_JOINID
-from .types import INGEST_MODES, IngestMode, Path
+from .tiledb_create_options import TileDBCreateOptions
+from .tiledb_session_context import TileDBSessionContext
+from .types import INGEST_MODES, IngestMode
+from .types import Path
 
 # These are for input-data bounds -- like `((0, 10), (0, 20))`.  They're used for resume-mode
 # checking.
@@ -39,11 +41,6 @@ MNTupleInt = Sequence[NTupleInt]
 # on a previous data-ingest run.
 NTupleIntNone = Sequence[Union[None, int]]
 MNTupleIntNone = Union[None, Sequence[NTupleIntNone]]
-
-
-from .tiledb_create_options import TileDBCreateOptions
-from .tiledb_session_context import TileDBSessionContext
-from .types import Path
 
 
 # ----------------------------------------------------------------
