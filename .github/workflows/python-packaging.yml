@@ -39,10 +39,10 @@ jobs:
       matrix:
         include:
         - os: ubuntu-20.04
-          cibw_build: '*-manylinux_x86_64'
+          cibw_build: 'cp3*-manylinux_x86_64'
           platform: manylinux2014
         - os: macos-11
-          cibw_build: '*-macosx_x86_64'
+          cibw_build: 'cp3*-macosx_x86_64'
           platform: macosx
     steps:
     - name: Download sdist artifact
