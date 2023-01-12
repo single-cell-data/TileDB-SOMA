@@ -2,8 +2,8 @@ import os
 from abc import ABC, abstractmethod, abstractproperty
 from typing import Optional, Union, cast
 
-import tiledb
 import somacore
+import tiledb
 
 from . import util
 from .metadata_mapping import MetadataMapping

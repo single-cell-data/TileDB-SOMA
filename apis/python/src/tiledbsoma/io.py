@@ -458,15 +458,9 @@ def create_from_matrix(
 
 def _write_matrix_to_denseNDArray(
     soma_ndarray: DenseNDArray,
-<<<<<<< HEAD
     src_matrix: Union[
         np.ndarray, sp.csr_matrix, sp.csc_matrix, h5py._hl.dataset.Dataset
     ],
-||||||| parent of c654f61a (more local mypy findings)
-    src_matrix: Union[np.ndarray, sp.csr_matrix, sp.csc_matrix],
-=======
-    src_matrix: Union[np.ndarray[Any, Any], sp.csr_matrix, sp.csc_matrix],
->>>>>>> c654f61a (more local mypy findings)
     *,
     ingest_mode: IngestMode,
 ) -> None:
@@ -641,15 +635,9 @@ def _find_sparse_chunk_size(
 
 def _write_matrix_to_sparseNDArray(
     soma_ndarray: SparseNDArray,
-<<<<<<< HEAD
     src_matrix: Union[
         np.ndarray, sp.csr_matrix, sp.csc_matrix, ad._core.sparse_dataset.SparseDataset
     ],
-||||||| parent of c654f61a (more local mypy findings)
-    src_matrix: Union[np.ndarray, sp.csr_matrix, sp.csc_matrix],
-=======
-    src_matrix: Union[np.ndarray[Any, Any], sp.csr_matrix, sp.csc_matrix],
->>>>>>> c654f61a (more local mypy findings)
     *,
     ingest_mode: IngestMode,
 ) -> None:
@@ -663,8 +651,6 @@ def _write_matrix_to_sparseNDArray(
         }
         return pa.Table.from_pydict(pydict)
 
-<<<<<<< HEAD
-||||||| parent of c654f61a (more local mypy findings)
     def _find_chunk_size(
         mat: Union[np.ndarray, sp.csr_matrix, sp.csc_matrix],
         start_index: int,
@@ -678,21 +664,6 @@ def _write_matrix_to_sparseNDArray(
                 mat, start_index, axis, goal_chunk_nnz
             )
 
-=======
-    def _find_chunk_size(
-        mat: Union[np.ndarray[Any, Any], sp.csr_matrix, sp.csc_matrix],
-        start_index: int,
-        axis: int,
-        goal_chunk_nnz: int,
-    ) -> int:
-        if isinstance(mat, np.ndarray):
-            return int(math.ceil(goal_chunk_nnz / mat.shape[axis]))
-        else:
-            return util_scipy.find_sparse_chunk_size(
-                mat, start_index, axis, goal_chunk_nnz
-            )
-
->>>>>>> c654f61a (more local mypy findings)
     # There is a chunk-by-chunk already-done check for resume mode, below.
     # This full-matrix-level check here might seem redundant, but in fact it's important:
     # * By checking input bounds against storage NED here, we can see if the entire matrix
