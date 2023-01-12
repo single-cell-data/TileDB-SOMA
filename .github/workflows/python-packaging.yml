@@ -30,7 +30,6 @@ jobs:
         path: apis/python/dist/
 
   # TODO: merge with python-packaging.yml -- https://github.com/single-cell-data/TileDB-SOMA/issues/700
-  # Important prerequisite information: https://github.com/single-cell-data/TileDB-SOMA/wiki/PyPI-packaging-WIP
   wheels:
     # Note: tries all supported Python versions as specified in apis/python/setup.py
     name: Build wheels on ${{ matrix.os }}
