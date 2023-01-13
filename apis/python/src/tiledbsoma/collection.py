@@ -97,8 +97,15 @@ class CollectionBase(TileDBObject, MutableMapping[str, CollectionElementType]):
         """
         Creates the data structure on disk/S3/cloud.
         """
+        return self._create(self.soma_type)
+
+    def _create(self, soma_type: str) -> "CollectionBase[CollectionElementType]":
+        """
+        Helper for `create`. Ensures that the type name of a child class, not
+        its parent class, is written to object-type metadata in storage.
+        """
         tiledb.group_create(uri=self._uri, ctx=self._session_context.tiledb_ctx)
-        self._common_create()  # object-type metadata etc
+        self._common_create(soma_type)  # object-type metadata etc
         self._cached_values = {}
         return self
 

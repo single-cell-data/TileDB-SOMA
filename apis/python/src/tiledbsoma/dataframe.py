@@ -68,7 +68,7 @@ class DataFrame(TileDBArray):
         )
         self._index_column_names = tuple(index_column_names)
 
-        self._common_create()  # object-type metadata etc
+        self._common_create(self.soma_type)  # object-type metadata etc
         return self
 
     def _create_empty(

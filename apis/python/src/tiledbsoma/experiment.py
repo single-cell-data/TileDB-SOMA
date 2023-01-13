@@ -45,7 +45,7 @@ class Experiment(CollectionBase[TileDBObject]):
         """
         Creates the data structure on disk/S3/cloud.
         """
-        super().create()
+        self._create(self.soma_type)
         return self
 
     @property
