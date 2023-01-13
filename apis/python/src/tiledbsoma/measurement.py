@@ -1,7 +1,7 @@
 from typing import Any, Dict, Optional, Tuple, Union, cast
 
-import somacore
 import tiledb
+from typing_extensions import Final
 
 from .collection import CollectionBase
 from .dataframe import DataFrame
@@ -11,7 +11,7 @@ from .tiledb_object import TileDBObject
 from .tiledb_platform_config import TileDBPlatformConfig
 
 
-class Measurement(CollectionBase[TileDBObject], somacore.Measurement[TileDBObject]):
+class Measurement(CollectionBase[TileDBObject]):
     """
     A ``Measurement`` is a sub-element of a ``Experiment``, and is otherwise a specialized ``Collection`` with pre-defined fields:
 
@@ -70,7 +70,7 @@ class Measurement(CollectionBase[TileDBObject], somacore.Measurement[TileDBObjec
         )
 
     # Inherited from somacore
-    # soma_type: Final = "SOMAMeasurement"
+    soma_type: Final = "SOMAMeasurement"
 
     def create(self) -> "Measurement":
         """
