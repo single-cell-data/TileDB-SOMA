@@ -122,6 +122,36 @@ SOMASparseNDArray <- R6::R6Class(
       arrow::as_arrow_table(arch::from_arch_array(rl, arrow::RecordBatch))
     },
 
+    #' @description Read as a sparse matrix
+    #' @param coords Optional `list` of integer vectors, one for each dimension, with a
+    #' length equal to the number of values to read. If `NULL`, all values are
+    #' read. List elements can be named when specifying a subset of dimensions.
+    #' @param result_order Optional order of read results. This can be one of either
+    #' `"ROW_MAJOR, `"COL_MAJOR"`, `"GLOBAL_ORDER"`, or `"UNORDERED"`.
+    #' @param repr Optional one-character code for sparse matrix representation type
+    #' @param log_level Optional logging level with default value of `"warn"`.
+    #' @return A `matrix` object
+    read_sparse_matrix = function(
+      coords = NULL,
+      result_order = "ROW_MAJOR",
+      repr = c("C", "T", "R"),
+      log_level = "warn"
+    ) {
+      repr <- match.arg(repr)
+      dims <- self$dimensions()
+      attr <- self$attributes()
+      stopifnot("Array must have two dimensions" = length(dims) == 2,
+                "Array must contain columns 'soma_dim_0' and 'soma_dim_1'" =
+                    all.equal(c("soma_dim_0", "soma_dim_1"), names(dims)),
+                "Array must contain column 'soma_data'" = all.equal("soma_data", names(attr)))
+
+      tbl <- self$read_arrow_table(coords = coords, result_order = result_order, log_level = log_level)
+      m <- Matrix::sparseMatrix(i = 1 + as.numeric(tbl$GetColumnByName("soma_dim_0")),
+                                j = 1 + as.numeric(tbl$GetColumnByName("soma_dim_1")),
+                                x = as.numeric(tbl$GetColumnByName("soma_data")),
+                                repr = repr)
+    },
+
     #' @description Write matrix-like data to the array.
     #'
     #' @param data Any `matrix`-like object coercible to a

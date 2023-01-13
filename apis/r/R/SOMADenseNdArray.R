@@ -121,6 +121,33 @@ SOMADenseNDArray <- R6::R6Class(
       arrow::as_arrow_table(arch::from_arch_array(rl, arrow::RecordBatch))
     },
 
+    #' @description Read as a dense matrix
+    #' @param coords Optional `list` of integer vectors, one for each dimension, with a
+    #' length equal to the number of values to read. If `NULL`, all values are
+    #' read. List elements can be named when specifying a subset of dimensions.
+    #' @param result_order Optional order of read results. This can be one of either
+    #' `"ROW_MAJOR, `"COL_MAJOR"`, `"GLOBAL_ORDER"`, or `"UNORDERED"`.
+    #' @param log_level Optional logging level with default value of `"warn"`.
+    #' @return A `matrix` object
+    read_dense_matrix = function(
+      coords = NULL,
+      result_order = "ROW_MAJOR",
+      log_level = "warn"
+    ) {
+      dims <- self$dimensions()
+      attr <- self$attributes()
+      stopifnot("Array must have two dimensions" = length(dims) == 2,
+                "Array must contain columns 'soma_dim_0' and 'soma_dim_1'" =
+                    all.equal(c("soma_dim_0", "soma_dim_1"), names(dims)),
+                "Array must contain column 'soma_data'" = all.equal("soma_data", names(attr)))
+
+      tbl <- self$read_arrow_table(coords = coords, result_order = result_order, log_level = log_level)
+      m <- matrix(as.numeric(tbl$GetColumnByName("soma_data")),
+                  nrow = length(unique(as.numeric(tbl$GetColumnByName("soma_dim_0")))),
+                  ncol = length(unique(as.numeric(tbl$GetColumnByName("soma_dim_1")))),
+                  byrow = result_order == "ROW_MAJOR")
+    },
+
     #' @description Write matrix data to the array.
     #'
     #' @param values A `matrix`. Character dimension names are ignored because
