@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod, abstractproperty
-from typing import Optional, Union
+from typing import Optional, Union, cast
 
 import tiledb
 
