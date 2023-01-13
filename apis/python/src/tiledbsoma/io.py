@@ -1,6 +1,6 @@
 import math
 import time
-from typing import Any, List, Optional, Sequence, Union
+from typing import List, Optional, Sequence, Union
 
 import anndata as ad
 import h5py
@@ -147,7 +147,7 @@ def from_anndata(
     logging.log_io(None, f"START  WRITING {experiment.uri}")
 
     # Must be done first, to create the parent directory.
-    _check_create(experiment, ingest_mode)
+    _check_create_experiment(experiment, ingest_mode)
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     # OBS
@@ -165,11 +165,11 @@ def from_anndata(
     # MS
     ms = Collection(uri=util.uri_joinpath(experiment.uri, "ms"))
 
-    experiment.set("ms", _check_create(ms, ingest_mode))
+    experiment.set("ms", _check_create_collection(ms, ingest_mode))
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     # MS/meas
-    measurement = _check_create(
+    measurement = _check_create_measurement(
         Measurement(uri=f"{experiment.ms.uri}/{measurement_name}", ctx=ctx),
         ingest_mode,
     )
@@ -191,7 +191,7 @@ def from_anndata(
     # MS/meas/X/DATA
 
     x = Collection(uri=util.uri_joinpath(measurement.uri, "X"))
-    measurement["X"] = _check_create(x, ingest_mode)
+    measurement["X"] = _check_create_collection(x, ingest_mode)
 
     # Since we did `anndata = ad.read_h5ad(path_to_h5ad, "r")` with the "r":
     # * If we do `anndata.X[:]` we're loading all of a CSR/CSC/etc into memory.
@@ -223,7 +223,7 @@ def from_anndata(
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     # MS/meas/OBSM,VARM,OBSP,VARP
     if len(anndata.obsm.keys()) > 0:  # do not create an empty collection
-        measurement["obsm"] = _check_create(
+        measurement["obsm"] = _check_create_collection(
             Collection(uri=util.uri_joinpath(measurement.uri, "obsm")),
             ingest_mode,
         )
@@ -240,7 +240,7 @@ def from_anndata(
             measurement.obsm.set(key, arr)
 
     if len(anndata.varm.keys()) > 0:  # do not create an empty collection
-        measurement["varm"] = _check_create(
+        measurement["varm"] = _check_create_collection(
             Collection(uri=util.uri_joinpath(measurement.uri, "varm")),
             ingest_mode,
         )
@@ -257,7 +257,7 @@ def from_anndata(
             measurement.varm.set(key, darr)
 
     if len(anndata.obsp.keys()) > 0:  # do not create an empty collection
-        measurement["obsp"] = _check_create(
+        measurement["obsp"] = _check_create_collection(
             Collection(uri=util.uri_joinpath(measurement.uri, "obsp")),
             ingest_mode,
         )
@@ -274,7 +274,7 @@ def from_anndata(
             measurement.obsp.set(key, sarr)
 
     if len(anndata.varp.keys()) > 0:  # do not create an empty collection
-        measurement["varp"] = _check_create(
+        measurement["varp"] = _check_create_collection(
             Collection(uri=util.uri_joinpath(measurement.uri, "varp")),
             ingest_mode,
         )
@@ -296,7 +296,9 @@ def from_anndata(
         raw_measurement = Measurement(
             uri=util.uri_joinpath(experiment.ms.uri, "raw"), ctx=ctx
         )
-        experiment.ms.set("raw", _check_create(raw_measurement, ingest_mode))
+        experiment.ms.set(
+            "raw", _check_create_measurement(raw_measurement, ingest_mode)
+        )
 
         var = DataFrame(uri=util.uri_joinpath(raw_measurement.uri, "var"))
         _write_dataframe(
@@ -308,7 +310,7 @@ def from_anndata(
         )
         raw_measurement.set("var", var)
 
-        raw_measurement["X"] = _check_create(
+        raw_measurement["X"] = _check_create_collection(
             Collection(uri=util.uri_joinpath(raw_measurement.uri, "X")),
             ingest_mode,
         )
@@ -344,6 +346,25 @@ def _check_create(
         else:
             thing.create()
     return thing
+
+
+# Split out from _check_create since its union-return gives the type-checker fits at callsites.
+def _check_create_collection(thing: Collection, ingest_mode: str) -> Collection:
+    retval = _check_create(thing, ingest_mode)
+    assert isinstance(retval, Collection)
+    return retval
+
+
+def _check_create_experiment(thing: Experiment, ingest_mode: str) -> Experiment:
+    retval = _check_create(thing, ingest_mode)
+    assert isinstance(retval, Experiment)
+    return retval
+
+
+def _check_create_measurement(thing: Measurement, ingest_mode: str) -> Measurement:
+    retval = _check_create(thing, ingest_mode)
+    assert isinstance(retval, Measurement)
+    return retval
 
 
 def _write_dataframe(
