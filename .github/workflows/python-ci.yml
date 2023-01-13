@@ -46,7 +46,12 @@ jobs:
         python-version: ${{ matrix.python-version }}
 
     - name: Install Python packages
-      run: python -m pip -v install pytest pytest-cov typeguard typing_extensions apis/python
+      run: |
+        # Python package install commands
+        # 1. Testing prereqs.
+        python -m pip -v install --upgrade pip wheel pytest pytest-cov typeguard
+        # 2. The package itself.
+        python -m pip -v install apis/python
       env:
         CC: ${{ matrix.cc }}
         CXX: ${{ matrix.cxx }}
