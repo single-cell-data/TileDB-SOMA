@@ -3,7 +3,7 @@ from typing import Union
 import pytest
 import tiledb
 
-from tiledbsoma import TileDBObject, SOMATileDBContext
+from tiledbsoma import SOMATileDBContext, TileDBObject
 
 
 class TestTDBObject(TileDBObject):
