@@ -34,7 +34,7 @@ class SomaTileDBContext:
 
     tiledb_ctx: tiledb.Ctx = build_default_tiledb_ctx()
 
-    # Allows "relocatability" for local disk / S3, and correct behavior for TileDB Cloud
     member_uris_are_relative: Optional[bool] = None
+    """Allows "relocatability" for local disk / S3, and correct behavior for TileDB Cloud."""
 
     # read_timestamp, e.g.
