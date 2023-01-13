@@ -209,7 +209,9 @@ def from_anndata(
         )
         measurement.X.set("data", ddata)
     else:
-        sdata = SparseNDArray(uri=util.uri_joinpath(measurement.X.uri, "data"), ctx=ctx)
+        # The type is because mypy doesn't know what the h5py type is and so conflates it with Any.
+        # So it thinks the if-branch covers all types (it does not).
+        sdata = SparseNDArray(uri=util.uri_joinpath(measurement.X.uri, "data"), ctx=ctx)  # type: ignore[unreachable]
         create_from_matrix(
             sdata,
             anndata.X,
@@ -331,7 +333,7 @@ def from_anndata(
 def _check_create(
     thing: Union[Experiment, Measurement, Collection],
     ingest_mode: str,
-) -> Any:
+) -> Union[Experiment, Measurement, Collection]:
     if ingest_mode == "resume":
         if not thing.exists():
             thing.create()
@@ -401,7 +403,7 @@ def _write_dataframe(
 
 def create_from_matrix(
     soma_ndarray: Union[DenseNDArray, SparseNDArray],
-    src_matrix: Union[
+    src_matrix: Union[  # type: ignore[type-arg]
         np.ndarray,
         sp.csr_matrix,
         sp.csc_matrix,
@@ -458,8 +460,8 @@ def create_from_matrix(
 
 def _write_matrix_to_denseNDArray(
     soma_ndarray: DenseNDArray,
-    src_matrix: Union[
-        np.ndarray, sp.csr_matrix, sp.csc_matrix, h5py._hl.dataset.Dataset  # type: ignore[type-arg]
+    src_matrix: Union[  # type: ignore[type-arg]
+        np.ndarray, sp.csr_matrix, sp.csc_matrix, h5py._hl.dataset.Dataset
     ],
     *,
     ingest_mode: IngestMode,
@@ -559,7 +561,7 @@ def _write_matrix_to_denseNDArray(
 
 
 def _find_chunk_size(
-    matrix: Union[
+    matrix: Union[  # type: ignore[type-arg]
         np.ndarray, sp.csr_matrix, sp.csc_matrix, ad._core.sparse_dataset.SparseDataset
     ],
     start_index: int,
@@ -635,8 +637,8 @@ def _find_sparse_chunk_size(
 
 def _write_matrix_to_sparseNDArray(
     soma_ndarray: SparseNDArray,
-    src_matrix: Union[
-        np.ndarray, sp.csr_matrix, sp.csc_matrix, ad._core.sparse_dataset.SparseDataset  # type: ignore[type-arg]
+    src_matrix: Union[  # type: ignore[type-arg]
+        np.ndarray, sp.csr_matrix, sp.csc_matrix, ad._core.sparse_dataset.SparseDataset
     ],
     *,
     ingest_mode: IngestMode,
