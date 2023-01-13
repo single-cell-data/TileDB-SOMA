@@ -138,21 +138,21 @@ class TileDBObject(ABC):
         """Open the underlying TileDB array or Group"""
         ...
 
-    def _common_create(self) -> None:
+    def _common_create(self, soma_type: str) -> None:
         """
         Utility method for various constructors.
         """
-        self._set_object_type_metadata()
+        self._set_object_type_metadata(soma_type)
 
-    def _set_object_type_metadata(self) -> None:
+    def _set_object_type_metadata(self, soma_type: str) -> None:
         """
         This helps nested-structure traversals (especially those that start at the Collection level) confidently navigate with a minimum of introspection on group contents.
         """
-        # TODO: make a multi-set in MetadataMapping that would above a double-open there.
+        # TODO: make a multi-set in MetadataMapping that would avoid a double-open there.
         with self._tiledb_open("w") as obj:
             obj.meta.update(
                 {
-                    util.SOMA_OBJECT_TYPE_METADATA_KEY: self.soma_type,
+                    util.SOMA_OBJECT_TYPE_METADATA_KEY: soma_type,
                     util.SOMA_ENCODING_VERSION_METADATA_KEY: util.SOMA_ENCODING_VERSION,
                 }
             )
@@ -161,6 +161,4 @@ class TileDBObject(ABC):
         """
         Returns the class name associated with the group/array.
         """
-        # mypy says:
-        # error: Returning Any from function declared to return "str"  [no-any-return]
-        return self._metadata.get(util.SOMA_OBJECT_TYPE_METADATA_KEY)  # type: ignore
+        return cast(str, self._metadata.get(util.SOMA_OBJECT_TYPE_METADATA_KEY))

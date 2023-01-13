@@ -112,7 +112,7 @@ class DenseNDArray(TileDBArray):
 
         tiledb.Array.create(self._uri, sch, ctx=self._ctx)
 
-        self._common_create()  # object-type metadata etc
+        self._common_create(self.soma_type)  # object-type metadata etc
 
         return self
 
