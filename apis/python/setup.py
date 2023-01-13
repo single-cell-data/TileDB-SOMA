@@ -109,7 +109,7 @@ setuptools.setup(
         "attrs>=22.1",
         "numpy",
         "pandas",
-        "pyarrow",
+        "pyarrow >= 9.0.0",
         "scanpy",
         "scipy",
         "tiledb>=0.19.0",
