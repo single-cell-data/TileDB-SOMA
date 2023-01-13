@@ -16,7 +16,7 @@ from .sparse_nd_array import SparseNDArray
 from .tiledb_array import TileDBArray
 from .tiledb_create_options import TileDBCreateOptions
 from .tiledb_object import TileDBObject
-from .tiledb_session_context import TileDBSessionContext
+from .soma_tiledb_context import SomaTileDBContext
 
 __version__ = get_implementation_version()
 
@@ -28,7 +28,7 @@ __all__ = [
     "TileDBObject",
     "TileDBArray",
     "TileDBCreateOptions",
-    "TileDBSessionContext",
+    "SomaTileDBContext",
     "Collection",
     "DenseNDArray",
     "DoesNotExistError",

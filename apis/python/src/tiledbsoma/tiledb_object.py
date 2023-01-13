@@ -5,7 +5,7 @@ import tiledb
 
 from . import util
 from .metadata_mapping import MetadataMapping
-from .tiledb_session_context import TileDBSessionContext
+from .soma_tiledb_context import SomaTileDBContext
 
 
 class TileDBObject(ABC):
@@ -16,7 +16,7 @@ class TileDBObject(ABC):
     """
 
     _uri: str
-    _session_context: TileDBSessionContext
+    _context: SomaTileDBContext
     _metadata: MetadataMapping
 
     def __init__(
@@ -27,30 +27,34 @@ class TileDBObject(ABC):
         # Non-top-level objects can have a parent to propagate context, depth, etc.
         parent: Optional["TileDBObject"] = None,
         # Top-level objects should specify this:
-        session_context: Optional[TileDBSessionContext] = None,
+        context: Optional[SomaTileDBContext] = None,
     ):
         """
-        Initialization-handling shared between ``TileDBArray`` and ``Collection``.  Specify ``session_context`` for
+        Initialization-handling shared between ``TileDBArray`` and ``Collection``.  Specify ``context`` for
         the top-level object; omit it and specify parent for non-top-level objects. Note that the parent reference
-        is solely for propagating the session_context
+        is solely for propagating the context
         """
 
         self._uri = uri
 
         if parent is not None:
             assert (
-                session_context is None
-            ), "Only one of `session_context` and `parent` params can be passed as an arg"
+                context is None
+            ), "Only one of `context` and `parent` params can be passed as an arg"
             # inherit from parent
-            self._session_context = parent._session_context
+            self._context = parent._context
         else:
-            self._session_context = session_context or TileDBSessionContext()
+            self._context = context or SomaTileDBContext()
 
         self._metadata = MetadataMapping(self)
 
     @property
+    def context(self) -> SomaTileDBContext:
+        return self._context
+
+    @property
     def _ctx(self) -> tiledb.Ctx:
-        return self._session_context.tiledb_ctx
+        return self._context.tiledb_ctx
 
     @property
     def metadata(self) -> MetadataMapping:

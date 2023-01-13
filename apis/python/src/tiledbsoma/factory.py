@@ -14,7 +14,7 @@ from .exception import SOMAError
 from .experiment import Experiment
 from .measurement import Measurement
 from .sparse_nd_array import SparseNDArray
-from .tiledb_session_context import TileDBSessionContext
+from .soma_tiledb_context import SomaTileDBContext
 from .util import SOMA_OBJECT_TYPE_METADATA_KEY, SPEC_NAMES_TO_CLASS_NAMES
 
 ObjectTypes = Union[
@@ -30,7 +30,7 @@ ObjectTypes = Union[
 def _construct_member(
     member_uri: str,
     parent: CollectionBase[Any],
-    session_context: Optional[TileDBSessionContext] = None,
+    context: Optional[SomaTileDBContext] = None,
     object_type: Optional[str] = None,
 ) -> Optional[ObjectTypes]:
     """
@@ -47,21 +47,21 @@ def _construct_member(
     ``_get_object_type_metadata`` within ``TileDBObject``.
     """
 
-    session_context = session_context or TileDBSessionContext()
+    context = context or SomaTileDBContext()
 
     # Get the class name from TileDB storage. At the TileDB level there are just "arrays" and
     # "groups", with separate metadata-getters.
     if object_type is None:
-        object_type = tiledb.object_type(member_uri, ctx=session_context.tiledb_ctx)
+        object_type = tiledb.object_type(member_uri, ctx=context.tiledb_ctx)
 
     # auto-detect class name from metadata
     try:
         if object_type == "array":
-            with tiledb.open(member_uri, ctx=session_context.tiledb_ctx) as A:
+            with tiledb.open(member_uri, ctx=context.tiledb_ctx) as A:
                 spec_name = A.meta[SOMA_OBJECT_TYPE_METADATA_KEY]
         elif object_type == "group":
             with tiledb.Group(
-                member_uri, mode="r", ctx=session_context.tiledb_ctx
+                member_uri, mode="r", ctx=context.tiledb_ctx
             ) as G:
                 spec_name = G.meta[SOMA_OBJECT_TYPE_METADATA_KEY]
         else:

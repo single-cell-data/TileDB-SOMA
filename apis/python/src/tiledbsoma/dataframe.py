@@ -15,7 +15,7 @@ from .constants import SOMA_JOINID
 from .query_condition import QueryCondition  # type: ignore
 from .tiledb_array import TileDBArray
 from .tiledb_create_options import TileDBCreateOptions
-from .tiledb_session_context import TileDBSessionContext
+from .soma_tiledb_context import SomaTileDBContext
 from .types import ResultOrder, SparseDataFrameCoordinates
 from .util_iter import TableReadIter
 
@@ -38,12 +38,12 @@ class DataFrame(TileDBArray):
         *,
         parent: Optional[CollectionBase[Any]] = None,
         # Top-level objects should specify this:
-        session_context: Optional[TileDBSessionContext] = None,
+        context: Optional[SomaTileDBContext] = None,
     ):
         """
         See also the ``TileDBObject`` constructor.
         """
-        super().__init__(uri=uri, parent=parent, session_context=session_context)
+        super().__init__(uri=uri, parent=parent, context=context)
         self._index_column_names = ()
         self._is_sparse = None
 

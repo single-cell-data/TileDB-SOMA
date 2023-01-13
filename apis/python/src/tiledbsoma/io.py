@@ -28,7 +28,7 @@ from tiledbsoma.exception import SOMAError
 
 from .constants import SOMA_JOINID
 from .tiledb_create_options import TileDBCreateOptions
-from .tiledb_session_context import TileDBSessionContext
+from .soma_tiledb_context import SomaTileDBContext
 from .types import INGEST_MODES, IngestMode, Path
 
 # These are for input-data bounds -- like `((0, 10), (0, 20))`.  They're used for resume-mode
@@ -49,7 +49,7 @@ def from_h5ad(
     input_path: Path,
     measurement_name: str,
     *,
-    session_context: Optional[TileDBSessionContext] = None,
+    context: Optional[SomaTileDBContext] = None,
     platform_config: Optional[TileDBCreateOptions] = None,
     ingest_mode: IngestMode = "write",
 ) -> None:
@@ -88,7 +88,7 @@ def from_h5ad(
         experiment,
         anndata,
         measurement_name,
-        session_context=session_context,
+        context=context,
         platform_config=platform_config,
         ingest_mode=ingest_mode,
     )
@@ -108,7 +108,7 @@ def from_anndata(
     anndata: ad.AnnData,
     measurement_name: str,
     *,
-    session_context: Optional[TileDBSessionContext] = None,
+    context: Optional[SomaTileDBContext] = None,
     platform_config: Optional[TileDBCreateOptions] = None,
     ingest_mode: IngestMode = "write",
 ) -> None:
@@ -172,7 +172,7 @@ def from_anndata(
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     # MS/meas
     measurement = Measurement(
-        uri=f"{experiment.ms.uri}/{measurement_name}", session_context=session_context
+        uri=f"{experiment.ms.uri}/{measurement_name}", context=context
     )
     experiment.ms.set(measurement_name, _check_create(measurement, ingest_mode))
 
@@ -202,7 +202,7 @@ def from_anndata(
     if isinstance(anndata.X, (np.ndarray, h5py._hl.dataset.Dataset)):
         ddata = DenseNDArray(
             uri=util.uri_joinpath(measurement.X.uri, "data"),
-            session_context=session_context,
+            context=context,
         )
         # Code here and in else-block duplicated for linter appeasement
         create_from_matrix(
@@ -215,7 +215,7 @@ def from_anndata(
     else:
         sdata = SparseNDArray(
             uri=util.uri_joinpath(measurement.X.uri, "data"),
-            session_context=session_context,
+            context=context,
         )
         create_from_matrix(
             sdata,
@@ -235,7 +235,7 @@ def from_anndata(
         for key in anndata.obsm.keys():
             arr = DenseNDArray(
                 uri=util.uri_joinpath(measurement.obsm.uri, key),
-                session_context=session_context,
+                context=context,
             )
             create_from_matrix(
                 arr,
@@ -253,7 +253,7 @@ def from_anndata(
         for key in anndata.varm.keys():
             darr = DenseNDArray(
                 uri=util.uri_joinpath(measurement.varm.uri, key),
-                session_context=session_context,
+                context=context,
             )
             create_from_matrix(
                 darr,
@@ -271,7 +271,7 @@ def from_anndata(
         for key in anndata.obsp.keys():
             sarr = SparseNDArray(
                 uri=util.uri_joinpath(measurement.obsp.uri, key),
-                session_context=session_context,
+                context=context,
             )
             create_from_matrix(
                 sarr,
@@ -289,7 +289,7 @@ def from_anndata(
         for key in anndata.varp.keys():
             sarr = SparseNDArray(
                 uri=util.uri_joinpath(measurement.varp.uri, key),
-                session_context=session_context,
+                context=context,
             )
             create_from_matrix(
                 sarr,
@@ -304,7 +304,7 @@ def from_anndata(
     if anndata.raw is not None:
         raw_measurement = Measurement(
             uri=util.uri_joinpath(experiment.ms.uri, "raw"),
-            session_context=session_context,
+            context=context,
         )
         experiment.ms.set("raw", _check_create(raw_measurement, ingest_mode))
 
@@ -325,7 +325,7 @@ def from_anndata(
 
         rawXdata = SparseNDArray(
             uri=util.uri_joinpath(raw_measurement.X.uri, "data"),
-            session_context=session_context,
+            context=context,
         )
         create_from_matrix(
             rawXdata,

@@ -3,7 +3,7 @@ from typing import Union
 import pytest
 import tiledb
 
-from tiledbsoma import TileDBObject, TileDBSessionContext
+from tiledbsoma import TileDBObject, SomaTileDBContext
 
 
 class TestTDBObject(TileDBObject):
@@ -15,27 +15,27 @@ class TestTDBObject(TileDBObject):
         return tiledb.Group("")
 
 
-def test_tiledb_object_default_session_context_added():
+def test_tiledb_object_default_context_added():
     o = TestTDBObject("parent")
-    assert o._session_context is not None
-    assert o._session_context.tiledb_ctx is not None
+    assert o.context is not None
+    assert o.context.tiledb_ctx is not None
     assert o._ctx is not None
-    assert o._ctx == o._session_context.tiledb_ctx
+    assert o._ctx == o.context.tiledb_ctx
 
 
-def test_child_inherits_parent_session_context():
-    session_context = TileDBSessionContext()
-    p = TestTDBObject("parent", session_context=session_context)
+def test_child_inherits_parent_context():
+    context = SomaTileDBContext()
+    p = TestTDBObject("parent", context=context)
 
     c = TestTDBObject("parent/child", parent=p)
 
-    assert c._session_context is not None
-    assert c._session_context == p._session_context
+    assert c.context is not None
+    assert c.context == p.context
 
 
 def test_mutually_exclusive_create_args():
-    session_context = TileDBSessionContext()
-    p = TestTDBObject("parent", session_context=session_context)
+    context = SomaTileDBContext()
+    p = TestTDBObject("parent", context=context)
 
     with pytest.raises(AssertionError):
-        TestTDBObject("parent/child", parent=p, session_context=session_context)
+        TestTDBObject("parent/child", parent=p, context=context)

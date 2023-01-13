@@ -21,7 +21,7 @@ from typing_extensions import Final
 
 from .exception import DoesNotExistError, SOMAError
 from .tiledb_object import TileDBObject
-from .tiledb_session_context import TileDBSessionContext
+from .soma_tiledb_context import SomaTileDBContext
 from .util import make_relative_path
 from .util_tiledb import is_does_not_exist_error, is_duplicate_group_key_error
 
@@ -85,12 +85,12 @@ class CollectionBase(TileDBObject, MutableMapping[str, CollectionElementType]):
         # Non-top-level objects can have a parent to propagate context, depth, etc.
         parent: Optional[CollectionBase[Any]] = None,
         # Top-level objects should specify this:
-        session_context: Optional[TileDBSessionContext] = None,
+        context: Optional[SomaTileDBContext] = None,
     ):
         """
         Also see the ``TileDBObject`` constructor.
         """
-        super().__init__(uri=uri, parent=parent, session_context=session_context)
+        super().__init__(uri=uri, parent=parent, context=context)
         self._cached_values = None
 
     def create(self) -> "CollectionBase[CollectionElementType]":
@@ -104,7 +104,7 @@ class CollectionBase(TileDBObject, MutableMapping[str, CollectionElementType]):
         Helper for `create`. Ensures that the type name of a child class, not
         its parent class, is written to object-type metadata in storage.
         """
-        tiledb.group_create(uri=self._uri, ctx=self._session_context.tiledb_ctx)
+        tiledb.group_create(uri=self._uri, ctx=self.context.tiledb_ctx)
         self._common_create(soma_type)  # object-type metadata etc
         self._cached_values = {}
         return self
@@ -140,7 +140,7 @@ class CollectionBase(TileDBObject, MutableMapping[str, CollectionElementType]):
                 soma = _construct_member(
                     tdb.uri,
                     self,
-                    session_context=self._session_context,
+                    context=self.context,
                     object_type=tdb.type,
                 )
                 if soma is None:
@@ -272,8 +272,8 @@ class CollectionBase(TileDBObject, MutableMapping[str, CollectionElementType]):
 
     def _determine_default_relative(self, uri: str) -> Optional[bool]:
         """Defaulting for the relative parameter."""
-        if self._session_context.member_uris_are_relative is not None:
-            return self._session_context.member_uris_are_relative
+        if self.context.member_uris_are_relative is not None:
+            return self.context.member_uris_are_relative
         if uri.startswith("tiledb://"):
             # TileDB-Cloud does not use relative URIs, ever.
             return False
@@ -356,7 +356,7 @@ class CollectionBase(TileDBObject, MutableMapping[str, CollectionElementType]):
         """
         assert mode in ("r", "w")
         # This works in with-open-as contexts because tiledb.Group has __enter__ and __exit__ methods.
-        return tiledb.Group(self._uri, mode=mode, ctx=self._session_context.tiledb_ctx)
+        return tiledb.Group(self._uri, mode=mode, ctx=self.context.tiledb_ctx)
 
     def _show_metadata(self, recursively: bool = True, indent: str = "") -> None:
         """
@@ -377,7 +377,7 @@ class CollectionBase(TileDBObject, MutableMapping[str, CollectionElementType]):
                     # required methods, it was simpler to split the logic this way.
 
                     soma = _construct_member(
-                        obj.uri, self, session_context=self._session_context
+                        obj.uri, self, context=self.context
                     )
                     if soma is not None:
                         soma._show_metadata(recursively, indent=child_indent)
