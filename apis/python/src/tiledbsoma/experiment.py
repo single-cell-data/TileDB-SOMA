@@ -7,7 +7,7 @@ from .dataframe import DataFrame
 from .experiment_query import AxisQuery, ExperimentAxisQuery
 from .measurement import Measurement
 from .tiledb_object import TileDBObject
-from .soma_tiledb_context import SomaTileDBContext
+from .soma_tiledb_context import SOMATileDBContext
 
 
 class Experiment(CollectionBase[TileDBObject]):
@@ -32,7 +32,7 @@ class Experiment(CollectionBase[TileDBObject]):
         # Non-top-level objects can have a parent to propagate context, depth, etc.
         parent: Optional[CollectionBase[Any]] = None,
         # Top-level objects should specify this:
-        context: Optional[SomaTileDBContext] = None,
+        context: Optional[SOMATileDBContext] = None,
     ):
         """
         Also see the ``TileDBObject`` constructor.

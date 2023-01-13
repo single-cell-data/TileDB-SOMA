@@ -15,7 +15,7 @@ from .collection import CollectionBase
 from .exception import SOMAError
 from .tiledb_array import TileDBArray
 from .tiledb_create_options import TileDBCreateOptions
-from .soma_tiledb_context import SomaTileDBContext
+from .soma_tiledb_context import SOMATileDBContext
 from .types import DenseNdCoordinates, NTuple, ResultOrder
 
 
@@ -29,7 +29,7 @@ class DenseNDArray(TileDBArray):
         uri: str,
         *,
         parent: Optional[CollectionBase[Any]] = None,
-        context: Optional[SomaTileDBContext] = None,
+        context: Optional[SOMATileDBContext] = None,
     ):
         """
         Also see the ``TileDBObject`` constructor.

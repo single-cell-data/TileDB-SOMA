@@ -3,7 +3,7 @@ from typing import Union
 import pytest
 import tiledb
 
-from tiledbsoma import TileDBObject, SomaTileDBContext
+from tiledbsoma import TileDBObject, SOMATileDBContext
 
 
 class TestTDBObject(TileDBObject):
@@ -24,7 +24,7 @@ def test_tiledb_object_default_context_added():
 
 
 def test_child_inherits_parent_context():
-    context = SomaTileDBContext()
+    context = SOMATileDBContext()
     p = TestTDBObject("parent", context=context)
 
     c = TestTDBObject("parent/child", parent=p)
@@ -34,7 +34,7 @@ def test_child_inherits_parent_context():
 
 
 def test_mutually_exclusive_create_args():
-    context = SomaTileDBContext()
+    context = SOMATileDBContext()
     p = TestTDBObject("parent", context=context)
 
     with pytest.raises(AssertionError):

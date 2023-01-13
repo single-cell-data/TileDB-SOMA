@@ -14,7 +14,7 @@ from .exception import SOMAError
 from .experiment import Experiment
 from .measurement import Measurement
 from .sparse_nd_array import SparseNDArray
-from .soma_tiledb_context import SomaTileDBContext
+from .soma_tiledb_context import SOMATileDBContext
 from .util import SOMA_OBJECT_TYPE_METADATA_KEY, SPEC_NAMES_TO_CLASS_NAMES
 
 ObjectTypes = Union[
@@ -30,7 +30,7 @@ ObjectTypes = Union[
 def _construct_member(
     member_uri: str,
     parent: CollectionBase[Any],
-    context: Optional[SomaTileDBContext] = None,
+    context: Optional[SOMATileDBContext] = None,
     object_type: Optional[str] = None,
 ) -> Optional[ObjectTypes]:
     """
@@ -47,7 +47,7 @@ def _construct_member(
     ``_get_object_type_metadata`` within ``TileDBObject``.
     """
 
-    context = context or SomaTileDBContext()
+    context = context or SOMATileDBContext()
 
     # Get the class name from TileDB storage. At the TileDB level there are just "arrays" and
     # "groups", with separate metadata-getters.

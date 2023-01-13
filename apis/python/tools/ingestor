@@ -107,7 +107,7 @@ select `relative=True`. (This is the default.)
         else:
             raise tiledbsoma.exception.SOMAError(f"Internal coding error in {__file__}")
 
-    session_context = tiledbsoma.SomaTileDBContext(
+    session_context = tiledbsoma.SOMATileDBContext(
         member_uris_are_relative=rel_member_uris
     )
     soco_dir = args.o.rstrip("/")
@@ -177,7 +177,7 @@ def ingest_one(
     input_path: str,
     output_path: str,
     ingest_mode: str,
-    session_context: tiledbsoma.SomaTileDBContext,
+    session_context: tiledbsoma.SOMATileDBContext,
     write_soco: bool,
     soco_dir: str,
 ):

@@ -27,9 +27,10 @@ def build_default_tiledb_ctx() -> tiledb.Ctx:
 
 
 @attrs.define(frozen=True, kw_only=True)
-class SomaTileDBContext:
+class SOMATileDBContext:
     """
-    Maintains context across an entire SOMA session that can be shared across multiple SOMA objects.
+    Maintains TileDB-specific context for TileDbObjects. This context can be shared across multiple SOMA objects,
+    including having a child object inherit it from its parent.
     """
 
     tiledb_ctx: tiledb.Ctx = build_default_tiledb_ctx()

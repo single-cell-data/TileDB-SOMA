@@ -14,7 +14,7 @@ from . import util, util_arrow
 from .collection import CollectionBase
 from .tiledb_array import TileDBArray
 from .tiledb_create_options import TileDBCreateOptions
-from .soma_tiledb_context import SomaTileDBContext
+from .soma_tiledb_context import SOMATileDBContext
 from .types import NTuple, SparseNdCoordinates
 from .util_iter import (
     SparseCOOTensorReadIter,
@@ -34,7 +34,7 @@ class SparseNDArray(TileDBArray):
         uri: str,
         *,
         parent: Optional[CollectionBase[Any]] = None,
-        context: Optional[SomaTileDBContext] = None,
+        context: Optional[SOMATileDBContext] = None,
     ):
         """
         Also see the ``TileDBObject`` constructor.

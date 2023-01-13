@@ -5,18 +5,18 @@ import tiledb
 
 from . import util
 from .metadata_mapping import MetadataMapping
-from .soma_tiledb_context import SomaTileDBContext
+from .soma_tiledb_context import SOMATileDBContext
 
 
 class TileDBObject(ABC):
     """
     Base class for ``TileDBArray`` and ``Collection``.
 
-    Accepts a TileDBSessionContext, to enable session state to be shared across SOMA objects.
+    Accepts a SOMATileDBContext, to enable session state to be shared across SOMA objects.
     """
 
     _uri: str
-    _context: SomaTileDBContext
+    _context: SOMATileDBContext
     _metadata: MetadataMapping
 
     def __init__(
@@ -27,7 +27,7 @@ class TileDBObject(ABC):
         # Non-top-level objects can have a parent to propagate context, depth, etc.
         parent: Optional["TileDBObject"] = None,
         # Top-level objects should specify this:
-        context: Optional[SomaTileDBContext] = None,
+        context: Optional[SOMATileDBContext] = None,
     ):
         """
         Initialization-handling shared between ``TileDBArray`` and ``Collection``.  Specify ``context`` for
@@ -44,12 +44,12 @@ class TileDBObject(ABC):
             # inherit from parent
             self._context = parent._context
         else:
-            self._context = context or SomaTileDBContext()
+            self._context = context or SOMATileDBContext()
 
         self._metadata = MetadataMapping(self)
 
     @property
-    def context(self) -> SomaTileDBContext:
+    def context(self) -> SOMATileDBContext:
         return self._context
 
     @property

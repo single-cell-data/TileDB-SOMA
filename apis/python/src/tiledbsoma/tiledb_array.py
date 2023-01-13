@@ -4,7 +4,7 @@ import pyarrow as pa
 import tiledb
 
 from .tiledb_object import TileDBObject
-from .soma_tiledb_context import SomaTileDBContext
+from .soma_tiledb_context import SOMATileDBContext
 from .util_arrow import get_arrow_schema_from_tiledb_uri
 
 
@@ -19,7 +19,7 @@ class TileDBArray(TileDBObject):
         *,
         parent: Optional["TileDBObject"] = None,
         # Top-level objects should specify this:
-        context: Optional[SomaTileDBContext] = None,
+        context: Optional[SOMATileDBContext] = None,
     ):
         """
         See the ``TileDBObject`` constructor.

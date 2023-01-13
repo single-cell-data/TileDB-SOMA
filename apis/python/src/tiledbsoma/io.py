@@ -28,7 +28,7 @@ from tiledbsoma.exception import SOMAError
 
 from .constants import SOMA_JOINID
 from .tiledb_create_options import TileDBCreateOptions
-from .soma_tiledb_context import SomaTileDBContext
+from .soma_tiledb_context import SOMATileDBContext
 from .types import INGEST_MODES, IngestMode, Path
 
 # These are for input-data bounds -- like `((0, 10), (0, 20))`.  They're used for resume-mode
@@ -49,7 +49,7 @@ def from_h5ad(
     input_path: Path,
     measurement_name: str,
     *,
-    context: Optional[SomaTileDBContext] = None,
+    context: Optional[SOMATileDBContext] = None,
     platform_config: Optional[TileDBCreateOptions] = None,
     ingest_mode: IngestMode = "write",
 ) -> None:
@@ -108,7 +108,7 @@ def from_anndata(
     anndata: ad.AnnData,
     measurement_name: str,
     *,
-    context: Optional[SomaTileDBContext] = None,
+    context: Optional[SOMATileDBContext] = None,
     platform_config: Optional[TileDBCreateOptions] = None,
     ingest_mode: IngestMode = "write",
 ) -> None:
