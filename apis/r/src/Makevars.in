@@ -4,7 +4,7 @@ CXX_STD = CXX17
 PKG_CPPFLAGS = -I. -I../inst/include/ @tiledb_include@ -DR_BUILD @cxx17_macos@ -Iinclude
 
 ## We also need the TileDB library
-PKG_LIBS = @cxx17_macos@ @tiledb_libs@ @tiledb_rpath@ lib/libtiledbsoma.a
+PKG_LIBS = @cxx17_macos@ @tiledb_libs@ @tiledb_rpath@
 
 all: $(SHLIB)
         # if we are
@@ -12,4 +12,4 @@ all: $(SHLIB)
         #  - on macOS aka Darwin which needs this
         #  - the library is present (implying non-system library use)
         # then let us call install_name_tool
-	if [ "$(OS)" != "Windows_NT" ] && [ `uname -s` = 'Darwin' ] && [ -f ../inst/tiledb/lib/libtiledb.dylib ] && [ -f tiledbsoma.so ]; then install_name_tool -change libz.1.dylib @rpath/libz.1.dylib ../inst/tiledb/lib/libtiledb.dylib; install_name_tool -add_rpath @loader_path/../tiledb/lib tiledbsoma.so; fi
+	if [ "$(OS)" != "Windows_NT" ] && [ `uname -s` == 'Darwin' ] && [ -f ../inst/tiledb/lib/libtiledb.dylib ] && [ -f tiledbsoma.so ]; then install_name_tool -change libz.1.dylib @rpath/libz.1.dylib ../inst/tiledb/lib/libtiledb.dylib; install_name_tool -add_rpath @loader_path/../tiledb/lib tiledbsoma.so; fi

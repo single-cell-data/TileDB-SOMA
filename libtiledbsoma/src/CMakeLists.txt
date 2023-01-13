@@ -102,24 +102,51 @@ endif()
 # tiledbsoma library target
 ############################################################
 
-add_library(tiledbsoma STATIC
-  $<TARGET_OBJECTS:TILEDB_SOMA_OBJECTS>
-)
+if (TILEDBSOMA_BUILD_STATIC)
+  add_library(tiledbsoma_static STATIC
+    $<TARGET_OBJECTS:TILEDB_SOMA_OBJECTS>
+  )
+  list(APPEND TILEDBSOMA_INSTALL_TARGETS tiledbsoma_static)
+  if (WIN32)
+    # On Windows we must name the static library something else to avoid
+    # name clash with the DLL's "import library" .lib file.
+    set_target_properties(tiledbsoma_static
+      PROPERTIES
+        OUTPUT_NAME "tiledbsomastatic"
+    )
+  else()
+    set_target_properties(tiledbsoma_static
+      PROPERTIES
+        OUTPUT_NAME "tiledbsoma"
+    )
+  endif()
+else()
+  add_library(tiledbsoma SHARED
+    $<TARGET_OBJECTS:TILEDB_SOMA_OBJECTS>
+  )
 
-list(APPEND TILEDBSOMA_INSTALL_TARGETS tiledbsoma)
-
-target_link_libraries(tiledbsoma
-  PUBLIC
-    TileDB::tiledb_shared
-    spdlog::spdlog
-)
+  list(APPEND TILEDBSOMA_INSTALL_TARGETS tiledbsoma)
+  
+  target_link_libraries(tiledbsoma
+    PUBLIC
+      TileDB::tiledb_shared
+      spdlog::spdlog
+  )
+endif()
 
 # Sanitizer linker flags
 if (SANITIZER)
-  target_link_libraries(tiledbsoma
-          INTERFACE
-          -fsanitize=${SANITIZER}
-          )
+  if (TILEDBSOMA_BUILD_STATIC)
+    target_link_libraries(tiledbsoma_static
+      INTERFACE
+      -fsanitize=${SANITIZER}
+    )
+  else()
+    target_link_libraries(tiledbsoma
+      INTERFACE
+      -fsanitize=${SANITIZER}
+    )
+  endif()
 endif()
 
 # Install header files and preserve directory structure
@@ -154,10 +181,12 @@ target_compile_definitions(TILEDB_SOMA_OBJECTS PRIVATE -DTILEDB_SOMA_OBJECTS_EXP
 target_include_directories(TILEDB_SOMA_OBJECTS PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
 
 # Add public headers, which are the ones that get installed.
-set_target_properties(tiledbsoma
-  PROPERTIES
-    PUBLIC_HEADER "${TILEDB_SOMA_EXPORT_HEADER}"
-)
+if (NOT TILEDBSOMA_BUILD_STATIC)
+  set_target_properties(tiledbsoma
+    PROPERTIES
+      PUBLIC_HEADER "${TILEDB_SOMA_EXPORT_HEADER}"
+  )
+endif()
 
 ############################################################
 # Python API bindings
@@ -220,11 +249,17 @@ endif()
 
 include(GNUInstallDirs)
 
+# Set directory where TileDBConfig.cmake will be installed
+set(CONFIG_INSTALL_DIR "${CMAKE_INSTALL_LIBDIR}/cmake/tiledbsoma")
+# Set name for export target file (will be installed to CONFIG_INSTALL_DIR)
+set(TARGETS_EXPORT_NAME "TileDBSomaTargets")
+
 install(
   TARGETS ${TILEDBSOMA_INSTALL_TARGETS}
+  EXPORT ${TARGETS_EXPORT_NAME}
   RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-  LIBRARY DESTINATION lib
-  ARCHIVE DESTINATION lib
+  LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+  ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
   INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
   PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/tiledbsoma
 )

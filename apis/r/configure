@@ -10,8 +10,14 @@ if test -z "${R_HOME}"; then
 fi
 
 ### for single-cell-data/apis/r repo, consider completing sources
-if test -f src/lib/libtiledbsoma.a; then
-    echo "** static library present"
+pkg-config --exists tiledbsoma
+if [ $? -eq 0 ]; then
+    lib=`pkg-config --libs-only-L tiledbsoma` | cut -d'_' -f 2
+    export LD_LIBRARY_PATH=$lib:$LD_LIBRARY_PATH
+    sudo ldconfig
+    echo "** system installed static library present"
+elif test -f src/lib/libtiledbsoma.a; then 
+    echo "** static library present in src/lib"
 else
     echo "** no static library present"
     ## check for cmake, needed to build from source
@@ -30,9 +36,9 @@ else
         ## else with sources build by hand
         cd src
         mkdir -p build
-        cmake -B build -S libtiledbsoma -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=. -DOVERRIDE_INSTALL_PREFIX=OFF -DTILEDBSOMA_BUILD_R=ON > cmake_log.txt
+        cmake -B build -S libtiledbsoma -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr/local -DOVERRIDE_INSTALL_PREFIX=OFF -DTILEDBSOMA_BUILD_R=ON > cmake_log.txt
         cmake --build build -j 2 >> cmake_log.txt
-        cmake --build build --target install-libtiledbsoma >> cmake_log.txt
+        sudo cmake --build build --target install-libtiledbsoma >> cmake_log.txt
         rm -rf build
         cd ..
         echo "** static library made"
@@ -45,10 +51,10 @@ have_tiledb="false"
 ## check for pkg-config and use it to inquire about tiledb build options
 pkg-config --version >/dev/null 2>&1
 if [ $? -eq 0 ]; then
-    pkg-config --exists tiledb
+    pkg-config --exists tiledb tiledbsoma
     if [ $? -eq 0 ]; then
-        pkgcflags=`pkg-config --cflags tiledb`
-        pkglibs=`pkg-config --libs tiledb`
+        pkgcflags=`pkg-config --cflags tiledb tiledbsoma`
+        pkglibs=`pkg-config --libs tiledbsoma tiledb`
         archincl=`${R_HOME}/bin/Rscript -e 'cat("-I", system.file("include", package="arch"), sep="")'`
 
         ## substitute them in (leaving @tiledb_rpath@ and @cxx17_macos@ alone for now)
@@ -59,7 +65,7 @@ if [ $? -eq 0 ]; then
             src/Makevars.in > src/Makevars
 
         have_tiledb="true"
-        echo "** updated src/Makevars for system library via pkg-config"
+        echo "** updated src/Makevars for system library via pkg-config for TileDB"
     fi
 fi
 

@@ -3,21 +3,21 @@ name: TileDB-SOMA R CI
 on:
   pull_request:
     paths-ignore:
-      - 'apis/python/**'
+      - "apis/python/**"
   push:
     branches: [main]
 
 env:
   COVERAGE_FLAGS: "r"
   COVERAGE_TOKEN: ${{ secrets.CODECOV_TOKEN }}
-  
+
 jobs:
   ci:
     strategy:
       matrix:
         include:
-          - {os: macOS-latest}
-          - {os: ubuntu-latest}
+          - { os: macOS-latest }
+          - { os: ubuntu-latest }
 
     runs-on: ${{ matrix.os }}
 
@@ -39,9 +39,17 @@ jobs:
       - name: Copy libtiledbsoma
         ## we build 'as in an R package' with all sources within apis/r/
         run: cd apis/r && ./copy_source.sh
-        
+
       - name: Test
         run: cd apis/r && tools/r-ci.sh run_tests
+
+      - name: View Install Output
+        run: cat /home/runner/work/TileDB-SOMA/TileDB-SOMA/apis/r/tiledbsoma.Rcheck/00install.out
+        if: failure() && matrix.os == 'ubuntu-latest'
+
+      - name: View Install Output
+        run: cat /Users/runner/work/TileDB-SOMA/TileDB-SOMA/apis/r/tiledbsoma.Rcheck/00install.out
+        if: failure() && matrix.os == 'macOS-latest'
 
       - name: Coverage
         if: ${{ matrix.os == 'ubuntu-latest' }}
