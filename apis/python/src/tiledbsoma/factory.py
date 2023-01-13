@@ -47,6 +47,8 @@ def _construct_member(
     ``_get_object_type_metadata`` within ``TileDBObject``.
     """
 
+    session_context = session_context or TileDBSessionContext()
+
     # Get the class name from TileDB storage. At the TileDB level there are just "arrays" and
     # "groups", with separate metadata-getters.
     if object_type is None:

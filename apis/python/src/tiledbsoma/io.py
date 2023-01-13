@@ -363,7 +363,7 @@ def _write_dataframe(
     soma_df: DataFrame,
     df: pd.DataFrame,
     id_column_name: Optional[str],
-    platform_config: TileDBCreateOptions = None,
+    platform_config: Optional[TileDBCreateOptions] = None,
     ingest_mode: IngestMode = "write",
 ) -> None:
     s = util.get_start_stamp()
