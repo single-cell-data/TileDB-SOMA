@@ -12,7 +12,7 @@ from .tiledb_object import TileDBObject
 from .tiledb_platform_config import TileDBPlatformConfig
 
 
-class Experiment(TileDBObject, somacore.Experiment[TileDBObject]):
+class Experiment(CollectionBase[TileDBObject], somacore.Experiment[TileDBObject]):
     """
     ``obs``: Primary annotations on the observation axis. The contents of the
              ``soma_joinid`` column define the observation index domain,

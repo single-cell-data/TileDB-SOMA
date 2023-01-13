@@ -11,7 +11,7 @@ from .tiledb_object import TileDBObject
 from .tiledb_platform_config import TileDBPlatformConfig
 
 
-class Measurement(TileDBObject, somacore.Measurement[TileDBObject]):
+class Measurement(CollectionBase[TileDBObject], somacore.Measurement[TileDBObject]):
     """
     A ``Measurement`` is a sub-element of a ``Experiment``, and is otherwise a specialized ``Collection`` with pre-defined fields:
 
