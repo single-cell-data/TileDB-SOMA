@@ -115,7 +115,7 @@ ColumnBuffer::ColumnBuffer(
     , is_var_(is_var)
     , is_nullable_(is_nullable) {
     LOG_DEBUG(fmt::format(
-        "[ColumnBuffer] {} {} bytes is_var={} is_nullable={}",
+        "[ColumnBuffer] '{}' {} bytes is_var={} is_nullable={}",
         name,
         num_bytes,
         is_var_,
@@ -201,7 +201,7 @@ std::shared_ptr<ColumnBuffer> ColumnBuffer::alloc(
             num_bytes = std::stoull(value_str);
         } catch (const std::exception& e) {
             throw TileDBSOMAError(fmt::format(
-                "[ColumnBuffer] Error parsing {}: {} ({})",
+                "[ColumnBuffer] Error parsing {}: '{}' ({})",
                 CONFIG_KEY_INIT_BYTES,
                 value_str,
                 e.what()));
