@@ -104,7 +104,7 @@ def _to_supported_series(x: pd.Series) -> pd.Series:
     return x.astype("O")
 
 
-_MT = TypeVar("_MT", np.ndarray, pd.Series, sp.spmatrix)  # type: ignore[type-arg]
+_MT = TypeVar("_MT", np.ndarray, sp.spmatrix)  # type: ignore[type-arg]
 
 
 @to_tiledb_supported_array_type.register(np.ndarray)
