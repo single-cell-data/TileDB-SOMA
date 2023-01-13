@@ -13,9 +13,9 @@ from tiledbsoma.util import dense_indices_to_shape
 
 from .collection import CollectionBase
 from .exception import SOMAError
+from .soma_tiledb_context import SOMATileDBContext
 from .tiledb_array import TileDBArray
 from .tiledb_create_options import TileDBCreateOptions
-from .soma_tiledb_context import SOMATileDBContext
 from .types import DenseNdCoordinates, NTuple, ResultOrder
 
 

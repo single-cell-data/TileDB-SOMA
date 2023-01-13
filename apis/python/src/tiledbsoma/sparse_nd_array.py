@@ -12,9 +12,9 @@ import tiledbsoma.libtiledbsoma as clib
 from . import somacore  # to be replaced by somacore package, when available
 from . import util, util_arrow
 from .collection import CollectionBase
+from .soma_tiledb_context import SOMATileDBContext
 from .tiledb_array import TileDBArray
 from .tiledb_create_options import TileDBCreateOptions
-from .soma_tiledb_context import SOMATileDBContext
 from .types import NTuple, SparseNdCoordinates
 from .util_iter import (
     SparseCOOTensorReadIter,

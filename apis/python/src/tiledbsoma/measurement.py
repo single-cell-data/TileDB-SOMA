@@ -5,9 +5,9 @@ from typing_extensions import Final
 from .collection import CollectionBase
 from .dataframe import DataFrame
 from .dense_nd_array import DenseNDArray
+from .soma_tiledb_context import SOMATileDBContext
 from .sparse_nd_array import SparseNDArray
 from .tiledb_object import TileDBObject
-from .soma_tiledb_context import SOMATileDBContext
 
 
 class Measurement(CollectionBase[TileDBObject]):

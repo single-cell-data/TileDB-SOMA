@@ -13,8 +13,8 @@ from .dense_nd_array import DenseNDArray
 from .exception import SOMAError
 from .experiment import Experiment
 from .measurement import Measurement
-from .sparse_nd_array import SparseNDArray
 from .soma_tiledb_context import SOMATileDBContext
+from .sparse_nd_array import SparseNDArray
 from .util import SOMA_OBJECT_TYPE_METADATA_KEY, SPEC_NAMES_TO_CLASS_NAMES
 
 ObjectTypes = Union[
@@ -60,9 +60,7 @@ def _construct_member(
             with tiledb.open(member_uri, ctx=context.tiledb_ctx) as A:
                 spec_name = A.meta[SOMA_OBJECT_TYPE_METADATA_KEY]
         elif object_type == "group":
-            with tiledb.Group(
-                member_uri, mode="r", ctx=context.tiledb_ctx
-            ) as G:
+            with tiledb.Group(member_uri, mode="r", ctx=context.tiledb_ctx) as G:
                 spec_name = G.meta[SOMA_OBJECT_TYPE_METADATA_KEY]
         else:
             return None

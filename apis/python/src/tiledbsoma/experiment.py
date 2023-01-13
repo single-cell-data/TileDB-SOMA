@@ -6,8 +6,8 @@ from .collection import CollectionBase
 from .dataframe import DataFrame
 from .experiment_query import AxisQuery, ExperimentAxisQuery
 from .measurement import Measurement
-from .tiledb_object import TileDBObject
 from .soma_tiledb_context import SOMATileDBContext
+from .tiledb_object import TileDBObject
 
 
 class Experiment(CollectionBase[TileDBObject]):

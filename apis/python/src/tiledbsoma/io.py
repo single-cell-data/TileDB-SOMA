@@ -27,8 +27,8 @@ from tiledbsoma import (
 from tiledbsoma.exception import SOMAError
 
 from .constants import SOMA_JOINID
-from .tiledb_create_options import TileDBCreateOptions
 from .soma_tiledb_context import SOMATileDBContext
+from .tiledb_create_options import TileDBCreateOptions
 from .types import INGEST_MODES, IngestMode, Path
 
 # These are for input-data bounds -- like `((0, 10), (0, 20))`.  They're used for resume-mode

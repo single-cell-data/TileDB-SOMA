@@ -20,8 +20,8 @@ import tiledb
 from typing_extensions import Final
 
 from .exception import DoesNotExistError, SOMAError
-from .tiledb_object import TileDBObject
 from .soma_tiledb_context import SOMATileDBContext
+from .tiledb_object import TileDBObject
 from .util import make_relative_path
 from .util_tiledb import is_does_not_exist_error, is_duplicate_group_key_error
 
@@ -376,9 +376,7 @@ class CollectionBase(TileDBObject, MutableMapping[str, CollectionElementType]):
                     # However, getting it to work with a recursive data structure and finding the
                     # required methods, it was simpler to split the logic this way.
 
-                    soma = _construct_member(
-                        obj.uri, self, context=self.context
-                    )
+                    soma = _construct_member(obj.uri, self, context=self.context)
                     if soma is not None:
                         soma._show_metadata(recursively, indent=child_indent)
                     else:
