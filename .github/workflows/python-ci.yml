@@ -16,9 +16,9 @@ jobs:
       fail-fast: false
       matrix:
         # TODO: restore Windows build once we have C++/libtiledbsoma integration supported there
-        os: [ubuntu-22.04]
+        os: [ubuntu-22.04, macos-12]
         # os: [ubuntu-22.04, macos-12, windows-2019]
-        python-version: ['3.7', '3.10']
+        python-version: ['3.7', '3.8', '3.9', '3.10']
         include:
           - runs-on: ubuntu-22.04
             cc: gcc-11
