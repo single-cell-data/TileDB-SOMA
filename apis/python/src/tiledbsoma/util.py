@@ -1,15 +1,9 @@
 import pathlib
 import time
 import urllib.parse
-from typing import List, Optional, Tuple, TypeVar, Union
-
-import numpy as np
-import pandas as pd
-import scipy.sparse as sp
+from typing import List, Optional, Tuple, Union
 
 from .types import DenseNdCoordinates, ResultOrder
-
-T = TypeVar("T", np.ndarray, pd.Series, pd.DataFrame, sp.spmatrix)
 
 SOMA_OBJECT_TYPE_METADATA_KEY = "soma_object_type"
 SOMA_ENCODING_VERSION_METADATA_KEY = "soma_encoding_version"

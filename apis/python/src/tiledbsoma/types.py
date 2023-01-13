@@ -49,7 +49,7 @@ SparseDataFrameCoordinate = Union[
     Sequence[int],
     pa.Array,
     pa.ChunkedArray,
-    npt.NDArray[np.integer],
+    npt.NDArray[np.integer],  # type: ignore[type-arg]
 ]
 SparseDataFrameCoordinates = Sequence[SparseDataFrameCoordinate]
 
@@ -64,7 +64,7 @@ SparseNdCoordinates = Union[
             None,
             DenseCoordinates,
             Sequence[int],
-            npt.NDArray[np.integer],
+            npt.NDArray[np.integer],  # type: ignore[type-arg]
             pa.IntegerArray,
         ]
     ],
