@@ -2,6 +2,7 @@ import os
 from dataclasses import dataclass
 from typing import Optional, cast
 
+import attrs
 import tiledb
 
 
@@ -25,7 +26,7 @@ def build_default_tiledb_ctx() -> tiledb.Ctx:
     return tiledb.Ctx(cfg)
 
 
-@dataclass(frozen=True)
+@attrs.define(frozen=True, kw_only=True)
 class TileDBSessionContext:
     """
     Maintains context across an entire SOMA session that can be shared across multiple SOMA objects.

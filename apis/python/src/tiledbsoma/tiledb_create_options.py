@@ -1,4 +1,3 @@
-from dataclasses import dataclass, field
 from typing import (
     Any,
     Dict,
@@ -12,7 +11,9 @@ from typing import (
     cast,
 )
 
+import attrs
 import tiledb
+from attrs import field
 
 DEFAULT_TILE_ORDER = "row-major"
 DEFAULT_CELL_ORDER = "row-major"
@@ -32,15 +33,14 @@ DEFAULT_TILE_EXTENT = 2048
 # DEFAULT_X_CAPACITY = 100000
 # DEFAULT_MAX_THREAD_POOL_WORKERS = 8
 
+StrOrMap = Union[str, Mapping[str, Any]]
 
-@dataclass(frozen=True)
-# TODO: Inherit from SOMA.PlatformConfig instead (which itself is a `
-#  Mapping[str, Any]`)
+
+@attrs.define(frozen=True)
+# TODO: Inherit from SOMA.PlatformConfig instead (which itself is a `Mapping[str, Any]`)
 class TileDBCreateOptions(Mapping[str, Any]):
 
-    StrOrMap = Union[str, Mapping[str, Any]]
-
-    _config: Mapping[str, Any] = field(default_factory=dict)
+    _config: Mapping[str, Any] = field(factory=dict)
 
     def string_dim_zstd_level(self) -> int:
         return self.get("string_dim_zstd_level", DEFAULT_STRING_DIM_ZSTD_LEVEL)
