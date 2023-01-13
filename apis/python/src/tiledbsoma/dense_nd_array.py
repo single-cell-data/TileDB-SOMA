@@ -4,6 +4,7 @@ import numpy as np
 import pyarrow as pa
 import somacore
 import tiledb
+from somacore import options
 
 # This package's pybind11 code
 import tiledbsoma.libtiledbsoma as clib
@@ -16,7 +17,9 @@ from .collection import CollectionBase
 from .exception import SOMAError
 from .tiledb_array import TileDBArray
 from .tiledb_platform_config import TileDBPlatformConfig
-from .types import DenseNdCoordinates, NTuple, PlatformConfig, ResultOrder
+from .types import NTuple, PlatformConfig
+
+_UNBATCHED = options.BatchSize()
 
 
 class DenseNDArray(TileDBArray, somacore.DenseNDArray):
@@ -144,10 +147,14 @@ class DenseNDArray(TileDBArray, somacore.DenseNDArray):
 
     def read(
         self,
-        coords: DenseNdCoordinates,
+        coords: options.DenseNDCoords,
         *,
-        result_order: ResultOrder = "row-major",
-        **_: Any,  # TODO: remaining params
+        result_order: options.StrOr[
+            somacore.ResultOrder
+        ] = somacore.ResultOrder.ROW_MAJOR,
+        batch_size: options.BatchSize = _UNBATCHED,
+        partitions: Optional[options.ReadPartitions] = None,
+        platform_config: Optional[PlatformConfig] = None,
     ) -> pa.Tensor:
         """
         Read a user-defined dense slice of the array and return as an Arrow ``Tensor``.
@@ -157,6 +164,9 @@ class DenseNDArray(TileDBArray, somacore.DenseNDArray):
         ``(slice(5, 10),)``, and ``(slice(5, 10), slice(6, 12))``. Slice indices are
         doubly inclusive.
         """
+        del batch_size, partitions, platform_config  # Currently unused.
+        result_order = somacore.ResultOrder(result_order)
+
         with self._tiledb_open("r") as A:
             target_shape = dense_indices_to_shape(coords, A.shape, result_order)
             schema = A.schema
@@ -165,7 +175,7 @@ class DenseNDArray(TileDBArray, somacore.DenseNDArray):
         sr = clib.SOMAReader(
             self._uri,
             name=self.__class__.__name__,
-            result_order=result_order,
+            result_order=result_order.value,
             platform_config={} if self._ctx is None else self._ctx.config().dict(),
         )
 
@@ -230,9 +240,10 @@ class DenseNDArray(TileDBArray, somacore.DenseNDArray):
 
     def write(
         self,
-        coords: DenseNdCoordinates,
+        coords: options.DenseNDCoords,
         values: pa.Tensor,
-        **_: Any,  # TODO: missing args
+        *,
+        platform_config: Optional[PlatformConfig] = None,
     ) -> None:
         """
         Write subarray, defined by ``coords`` and ``values``. Will overwrite existing
@@ -247,5 +258,6 @@ class DenseNDArray(TileDBArray, somacore.DenseNDArray):
             Define the values to be written to the subarray.  Must have same shape
             as defind by ``coords``, and the type must match the DenseNDArray.
         """
+        del platform_config  # Currently unused.
         with self._tiledb_open("w") as A:
             A[coords] = values.to_numpy()

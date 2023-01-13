@@ -1,4 +1,4 @@
-from typing import List
+from typing import Dict, List
 
 import numpy as np
 import pandas as pd
@@ -79,7 +79,7 @@ def test_dataframe(tmp_path, arrow_schema):
     assert [e.as_py() for e in list(table["quux"])] == pydict["quux"]
 
     # Read ids
-    table = sidf.read(ids=[[30, 10]]).concat()
+    table = sidf.read(coords=[[30, 10]]).concat()
     assert table.num_rows == 2
     assert table.num_columns == 5
     assert sorted([e.as_py() for e in list(table["soma_joinid"])]) == [0, 2]
@@ -185,7 +185,7 @@ def test_DataFrame_read_column_names(simple_data_frame, ids, col_names):
 
     # TileDB ASCII -> Arrow large_string
     _check_tbl(
-        sidf.read(ids=ids, column_names=col_names).concat(),
+        sidf.read(ids, column_names=col_names).concat(),
         col_names,
         ids,
         demote=False,
@@ -198,7 +198,7 @@ def test_DataFrame_read_column_names(simple_data_frame, ids, col_names):
     _check_tbl(
         pa.Table.from_pandas(
             pd.concat(
-                [tbl.to_pandas() for tbl in sidf.read(ids=ids, column_names=col_names)]
+                [tbl.to_pandas() for tbl in sidf.read(ids, column_names=col_names)]
             )
         ),
         col_names,
@@ -361,7 +361,7 @@ def make_multiply_indexed_dataframe(tmp_path, index_column_names: List[str]):
     sidf = soma.DataFrame(uri=tmp_path.as_posix())
     sidf.create(schema=schema, index_column_names=index_column_names)
 
-    data = {
+    data: Dict[str, list] = {
         "index1": [0, 1, 2, 3, 4, 5],
         "index2": ["aaa", "aaa", "bbb", "bbb", "ccc", "ccc"],
         "index3": [0, 1, 0, 1, 0, 1],
@@ -382,108 +382,110 @@ def make_multiply_indexed_dataframe(tmp_path, index_column_names: List[str]):
         # 1D: indexing list is None
         {
             "index_column_names": ["index1"],
-            "ids": None,
+            "coords": None,
             "A": [10, 11, 12, 13, 14, 15],
             "throws": None,
         },
         # 1D: indexing slot is None
         {
             "index_column_names": ["index1"],
-            "ids": [None],
+            "coords": [None],
             "A": [10, 11, 12, 13, 14, 15],
             "throws": None,
         },
         # 1D: indexing slot is int
         {
             "index_column_names": ["index1"],
-            "ids": [0],
+            "coords": [0],
             "A": [10],
             "throws": None,
         },
         {
             "index_column_names": ["index1"],
-            "ids": [100],
+            "coords": [100],
             "A": [],
             "throws": None,
         },
         {
             "index_column_names": ["index1"],
-            "ids": [-100],
+            "coords": [-100],
             "A": [],
             "throws": None,
         },
         # 1D: indexing slot is list
         {
             "index_column_names": ["index1"],
-            "ids": [[1, 3]],
+            "coords": [[1, 3]],
             "A": [11, 13],
             "throws": None,
         },
         {
             "index_column_names": ["index1"],
-            "ids": [[-100, 100]],
+            "coords": [[-100, 100]],
             "A": [],
             "throws": None,
         },
         # Indexing by empty list must return empty results
         {
             "index_column_names": ["index1"],
-            "ids": [[]],
+            "coords": [[]],
             "A": [],
             "throws": None,
         },
         # 1D: indexing slot is tuple
         {
             "index_column_names": ["index1"],
-            "ids": [(1, 3)],
+            "coords": [(1, 3)],
             "A": [11, 13],
             "throws": None,
         },
         # 1D: indexing slot is range
         {
             "index_column_names": ["index1"],
-            "ids": [range(1, 3)],
+            "coords": [range(1, 3)],
             "A": [11, 12],
             "throws": None,
         },
         # 1D: indexing slot is pa.ChunkedArray
         {
             "index_column_names": ["index1"],
-            "ids": [pa.chunked_array(pa.array([1, 3]))],
+            "coords": [pa.chunked_array(pa.array([1, 3]))],
             "A": [11, 13],
             "throws": None,
         },
         # 1D: indexing slot is pa.Array
         {
             "index_column_names": ["index1"],
-            "ids": [pa.array([1, 3])],
+            "coords": [pa.array([1, 3])],
             "A": [11, 13],
             "throws": None,
         },
         # 1D: indexing slot is pa.Array
         {
             "index_column_names": ["index1"],
-            "ids": [pa.array([1, 3])],
+            "coords": [pa.array([1, 3])],
             "A": [11, 13],
             "throws": None,
         },
         # 1D: indexing slot is np.ndarray
         {
             "index_column_names": ["index1"],
-            "ids": [np.asarray([1, 3])],
+            "coords": [np.asarray([1, 3])],
             "A": [11, 13],
             "throws": None,
         },
         {
             "index_column_names": ["index1"],
-            "ids": [np.asarray([[1, 3], [2, 4]])],  # Error since 2D array in the slot
+            "coords": [
+                np.asarray([[1, 3], [2, 4]])
+            ],  # Error since 2D array in the slot
             "A": [11, 13],
             "throws": ValueError,
         },
         # 1D: indexing slot is slice
         {
             "index_column_names": ["index1"],
-            "ids": [
+            "coords": [
                 slice(None)
             ],  # Indexing slot is none-slice i.e. `[:]` which is like None
             "A": [10, 11, 12, 13, 14, 15],
@@ -491,109 +493,109 @@ def make_multiply_indexed_dataframe(tmp_path, index_column_names: List[str]):
         },
         {
             "index_column_names": ["index1"],
-            "ids": [slice(1, 3)],  # Indexing slot is double-ended slice
+            "coords": [slice(1, 3)],  # Indexing slot is double-ended slice
             "A": [11, 12, 13],
             "throws": None,
         },
         {
             "index_column_names": ["index1"],
-            "ids": [slice(None, None)],  # Indexing slot is slice-all
+            "coords": [slice(None, None)],  # Indexing slot is slice-all
             "A": [10, 11, 12, 13, 14, 15],
             "throws": None,
         },
         {
             "index_column_names": ["index1"],
-            "ids": [slice(None, 3)],  # Half-slice
+            "coords": [slice(None, 3)],  # Half-slice
             "A": [10, 11, 12, 13],
             "throws": None,
         },
         {
             "index_column_names": ["index1"],
-            "ids": [slice(2, None)],  # Half-slice
+            "coords": [slice(2, None)],  # Half-slice
             "A": [12, 13, 14, 15],
             "throws": None,
         },
         {
             "index_column_names": ["index1"],
-            "ids": [slice(1, 5, 2)],  # Slice step must be 1 or None
+            "coords": [slice(1, 5, 2)],  # Slice step must be 1 or None
             "A": None,
             "throws": ValueError,
         },
         {
             "index_column_names": ["index1"],
-            "ids": [slice(-2, -1)],  # Negative slices are not supported
+            "coords": [slice(-2, -1)],  # Negative slices are not supported
             "A": None,
             "throws": ValueError,
         },
         {
             "index_column_names": ["index1"],
-            "ids": [slice(1, 0)],  # hi < lo
+            "coords": [slice(1, 0)],  # hi < lo
             "A": None,
             "throws": ValueError,
         },
         {
             "index_column_names": ["index1"],
-            "ids": [],  # len(ids) != len(index_column_names)
+            "coords": [],  # len(ids) != len(index_column_names)
             "A": None,
             "throws": ValueError,
         },
         {
             "index_column_names": ["index1"],
-            "ids": [(1,), (2,)],  # len(ids) != len(index_column_names)
+            "coords": [(1,), (2,)],  # len(ids) != len(index_column_names)
             "A": None,
             "throws": ValueError,
         },
         {
             "index_column_names": ["index1"],
-            "ids": "bogus",  # ids not list/tuple
+            "coords": "bogus",  # ids not list/tuple
             "A": None,
             "throws": TypeError,
         },
         {
             "index_column_names": ["index1"],
-            "ids": [{"bogus": True}],  # bad index type
+            "coords": [{"bogus": True}],  # bad index type
             "A": None,
             "throws": TypeError,
         },
         # 1D: indexing slot is of invalid type
         {
             "index_column_names": ["index2", "index3"],
-            "ids": [[True], slice(None)],
+            "coords": [[True], slice(None)],
             "A": None,
             "throws": (RuntimeError, tiledb.cc.TileDBError),
         },
         # 2D: indexing list is None
         {
             "index_column_names": ["index2", "index3"],
-            "ids": None,
+            "coords": None,
             "A": [10, 11, 12, 13, 14, 15],
             "throws": None,
         },
         # 2D: indexing slot is None
         {
             "index_column_names": ["index2", "index3"],
-            "ids": [None, None],
+            "coords": [None, None],
             "A": [10, 11, 12, 13, 14, 15],
             "throws": None,
         },
         # 2D: indexing slot is int
         {
             "index_column_names": ["index1", "index3"],
-            "ids": [0, 0],
+            "coords": [0, 0],
             "A": [10],
             "throws": None,
         },
         # 2D: indexing slots are string and int
         {
             "index_column_names": ["index2", "index3"],
-            "ids": [["aaa"], 0],
+            "coords": [["aaa"], 0],
             "A": [10],
             "throws": None,
         },
         # 2D: indexing slot is string not list/tuple of string
         {
             "index_column_names": ["index2", "index3"],
-            "ids": ["aaa", 0],
+            "coords": ["aaa", 0],
             "A": [10],
             "throws": None,
         },
@@ -602,34 +604,34 @@ def make_multiply_indexed_dataframe(tmp_path, index_column_names: List[str]):
         # https://github.com/single-cell-data/TileDB-SOMA/issues/419
         {
             "index_column_names": ["index2", "index3"],
-            "ids": [["aaa", "ccc"], None],
+            "coords": [["aaa", "ccc"], None],
             "A": [10, 11, 14, 15],
             "throws": None,
         },
         # 3D: indexing slot is list
         {
             "index_column_names": ["index2", "index3", "index4"],
-            "ids": [["aaa", "ccc"], None, None],
+            "coords": [["aaa", "ccc"], None, None],
             "A": [10, 11, 14, 15],
             "throws": None,
         },
         # 3D: indexing slot is mixed
         {
             "index_column_names": ["index2", "index3", "index4"],
-            "ids": [("aaa", "ccc"), None, np.asarray([2000, 9999])],
+            "coords": [("aaa", "ccc"), None, np.asarray([2000, 9999])],
             "A": [11],
             "throws": None,
         },
         # value_filter
         {
             "index_column_names": ["index1", "index2"],
-            "ids": [None, ("ccc", "zzz")],
+            "coords": [None, ("ccc", "zzz")],
             "value_filter": "soma_joinid > 13",
             "A": [14, 15],
         },
         {
             "index_column_names": ["index1", "index2"],
-            "ids": [None, ("bbb", "zzz")],
+            "coords": [None, ("bbb", "zzz")],
             "value_filter": "quick brown fox",
             "A": None,
             "throws": tiledb.TileDBError,  # TODO: should this be wrapped?
@@ -647,7 +649,7 @@ def test_read_indexing(tmp_path, io):
     assert list(sidf.index_column_names) == io["index_column_names"]
 
     read_kwargs = {"column_names": ["A"]}
-    read_kwargs.update({k: io[k] for k in ("ids", "value_filter") if k in io})
+    read_kwargs.update({k: io[k] for k in ("coords", "value_filter") if k in io})
     if io.get("throws", None):
         with pytest.raises(io["throws"]):
             next(sidf.read(**read_kwargs))

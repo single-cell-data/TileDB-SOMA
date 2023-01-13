@@ -5,6 +5,7 @@ import numpy as np
 import pyarrow as pa
 import somacore
 import tiledb
+from somacore import options
 
 # This package's pybind11 code
 import tiledbsoma.libtiledbsoma as clib
@@ -13,13 +14,15 @@ from . import tiledb_platform_config as tdbpc
 from . import util, util_arrow
 from .collection import CollectionBase
 from .tiledb_array import TileDBArray
-from .types import NTuple, PlatformConfig, SparseNdCoordinates
+from .types import NTuple, PlatformConfig
 from .util_iter import (
     SparseCOOTensorReadIter,
     SparseCSCMatrixReadIter,
     SparseCSRMatrixReadIter,
     TableReadIter,
 )
+
+_UNBATCHED = options.BatchSize()
 
 
 class SparseNDArray(TileDBArray, somacore.SparseNDArray):
@@ -162,8 +165,12 @@ class SparseNDArray(TileDBArray, somacore.SparseNDArray):
 
     def read(
         self,
-        slices: Optional[SparseNdCoordinates] = None,
-        **_: Any,  # TODO: missing parameters
+        coords: Optional[options.SparseNDCoords] = None,
+        *,
+        result_order: options.StrOr[options.ResultOrder] = options.ResultOrder.AUTO,
+        batch_size: options.BatchSize = _UNBATCHED,
+        partitions: Optional[options.ReadPartitions] = None,
+        platform_config: Optional[PlatformConfig] = None,
     ) -> "SparseNDArrayRead":
         """
         Read a user-defined slice of the SparseNDArray.
@@ -192,9 +199,10 @@ class SparseNDArray(TileDBArray, somacore.SparseNDArray):
         -------
         SparseNDArrayRead - which can be used to access an iterator of results in various formats.
         """
+        del result_order, batch_size, partitions, platform_config  # Currently unused.
 
-        if slices is None:
-            slices = (slice(None),)
+        if coords is None:
+            coords = (slice(None),)
 
         with self._tiledb_open("r") as A:
             shape = A.shape
@@ -205,16 +213,16 @@ class SparseNDArray(TileDBArray, somacore.SparseNDArray):
                 platform_config={} if self._ctx is None else self._ctx.config().dict(),
             )
 
-            if not isinstance(slices, (list, tuple)):
+            if not isinstance(coords, (list, tuple)):
                 raise TypeError(
-                    f"coords type {type(slices)} unsupported; expected list or tuple"
+                    f"coords type {type(coords)} unsupported; expected list or tuple"
                 )
-            if len(slices) < 1 or len(slices) > A.schema.domain.ndim:
+            if len(coords) < 1 or len(coords) > A.schema.domain.ndim:
                 raise ValueError(
-                    f"coords {slices} must have length between 1 and ndim ({A.schema.domain.ndim}); got {len(slices)}"
+                    f"coords {coords} must have length between 1 and ndim ({A.schema.domain.ndim}); got {len(coords)}"
                 )
 
-            for i, coord in enumerate(slices):
+            for i, coord in enumerate(coords):
                 #                # Example: coords = [None, 3, slice(4,5)]
                 #                # coord takes on values None, 3, and slice(4,5) in this loop body.
                 dim_name = A.schema.domain.dim(i).name
@@ -262,7 +270,8 @@ class SparseNDArray(TileDBArray, somacore.SparseNDArray):
             pa.SparseCSCMatrix,
             pa.Table,
         ],
-        **_: Any,  # TODO: missing parameters
+        *,
+        platform_config: Optional[PlatformConfig] = None,
     ) -> None:
         """
         Write an Arrow object to the SparseNDArray.
@@ -275,6 +284,7 @@ class SparseNDArray(TileDBArray, somacore.SparseNDArray):
         Arrow table: write a COO table, with columns named ``soma_dim_0``, ...,
         ``soma_dim_N`` and ``soma_data`` to the dense nD array.
         """
+        del platform_config  # Currently unused.
         if isinstance(values, pa.SparseCOOTensor):
             data, coords = values.to_numpy()
             with self._tiledb_open("w") as A:
