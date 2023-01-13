@@ -1,9 +1,10 @@
+import random
+
+import numpy as np
 import pandas as pd
 import pyarrow as pa
+
 import tiledbsoma.libtiledbsoma as clib
-import pytest
-import numpy as np
-import random
 
 DATA_SIZE = 1 << 14
 VERBOSE = False
@@ -24,7 +25,9 @@ def random_strings(max_length=32):
     offsets, data = map(np.array, pa_data.buffers()[1:])
     offsets = offsets.view(np.uint32).astype(np.uint64)
 
-    cb = clib.ColumnBuffer("buf", clib.DataType.STRING_ASCII, len(strings), data, offsets)
+    cb = clib.ColumnBuffer(
+        "buf", clib.DataType.STRING_ASCII, len(strings), data, offsets
+    )
 
     return strings, cb
 
@@ -134,4 +137,4 @@ def skip_test_table():
 
 
 if __name__ == "__main__":
-    test_new()
+    skip_test_init()
