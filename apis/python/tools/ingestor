@@ -204,17 +204,13 @@ def ingest_one(
             if not os.path.exists(parent):
                 os.mkdir(parent)
 
-    exp = tiledbsoma.Experiment(
-        uri=output_path, session_context=session_context
-    )
+    exp = tiledbsoma.Experiment(uri=output_path, session_context=session_context)
     exp_name = os.path.splitext(os.path.basename(output_path))[0]
 
     tiledbsoma.io.from_h5ad(exp, input_path, "RNA", ingest_mode=ingest_mode)
 
     if write_soco:
-        soco = tiledbsoma.Collection(
-            soco_dir, session_context=session_context
-        )
+        soco = tiledbsoma.Collection(soco_dir, session_context=session_context)
         if not soco.exists():
             soco.create()
         if not soco.exists():
