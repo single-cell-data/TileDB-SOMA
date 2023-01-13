@@ -107,7 +107,7 @@ select `relative=True`. (This is the default.)
         else:
             raise tiledbsoma.exception.SOMAError(f"Internal coding error in {__file__}")
 
-    tiledb_platform_config = tiledbsoma.TileDBPlatformConfig(
+    session_context = tiledbsoma.TileDBSessionContext(
         member_uris_are_relative=rel_member_uris
     )
     soco_dir = args.o.rstrip("/")
@@ -125,7 +125,7 @@ select `relative=True`. (This is the default.)
                 input_path=input_path,
                 output_path=output_path,
                 ingest_mode=args.ingest_mode[0],
-                tiledb_platform_config=tiledb_platform_config,
+                session_context=session_context,
                 write_soco=write_soco,
                 soco_dir=soco_dir,
             )
@@ -137,7 +137,7 @@ select `relative=True`. (This is the default.)
                 input_path=input_path,
                 output_path=output_path,
                 ingest_mode=args.ingest_mode[0],
-                tiledb_platform_config=tiledb_platform_config,
+                session_context=session_context,
                 write_soco=write_soco,
                 soco_dir=soco_dir,
             )
@@ -151,7 +151,7 @@ select `relative=True`. (This is the default.)
                 input_path=input_path,
                 output_path=output_path,
                 ingest_mode=args.ingest_mode[0],
-                tiledb_platform_config=tiledb_platform_config,
+                session_context=session_context,
                 write_soco=write_soco,
                 soco_dir=soco_dir,
             )
@@ -162,7 +162,7 @@ select `relative=True`. (This is the default.)
                 input_path=input_path,
                 output_path=output_path,
                 ingest_mode=args.ingest_mode[0],
-                tiledb_platform_config=tiledb_platform_config,
+                session_context=session_context,
                 write_soco=write_soco,
                 soco_dir=soco_dir,
             )
@@ -177,7 +177,7 @@ def ingest_one(
     input_path: str,
     output_path: str,
     ingest_mode: str,
-    tiledb_platform_config: tiledbsoma.TileDBPlatformConfig,
+    session_context: tiledbsoma.TileDBSessionContext,
     write_soco: bool,
     soco_dir: str,
 ):
@@ -205,7 +205,7 @@ def ingest_one(
                 os.mkdir(parent)
 
     exp = tiledbsoma.Experiment(
-        uri=output_path, tiledb_platform_config=tiledb_platform_config
+        uri=output_path, session_context=session_context
     )
     exp_name = os.path.splitext(os.path.basename(output_path))[0]
 
@@ -213,7 +213,7 @@ def ingest_one(
 
     if write_soco:
         soco = tiledbsoma.Collection(
-            soco_dir, tiledb_platform_config=tiledb_platform_config
+            soco_dir, session_context=session_context
         )
         if not soco.exists():
             soco.create()
