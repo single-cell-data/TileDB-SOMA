@@ -198,13 +198,9 @@ class DataFrame(TileDBArray, somacore.DataFrame):
         ids: Optional[SparseDataFrameCoordinates] = None,
         column_names: Optional[Sequence[str]] = None,
         *,
-        batch_size: somacore.options.BatchSize = somacore.options.BatchSize(),  # TODO: use this
-        partitions: Optional[somacore.options.ReadPartitions] = None,  # TODO: use this
-        result_order: somacore.options.StrOr[
-            somacore.options.ResultOrder
-        ] = somacore.options.ResultOrder.AUTO,
+        result_order: Optional[ResultOrder] = "auto",
         value_filter: Optional[str] = None,
-        platform_config: Optional[somacore.options.PlatformConfig] = None,
+        **_: Any,  # TODO: rest of parameters
     ) -> TableReadIter:
         """
         Read a user-defined subset of data, addressed by the dataframe indexing columns, optionally filtered, and return results as one or more Arrow.Table.

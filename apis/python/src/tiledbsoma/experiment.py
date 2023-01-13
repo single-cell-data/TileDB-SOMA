@@ -1,6 +1,5 @@
 from typing import Any, Dict, Optional, Tuple, cast
 
-import somacore
 import tiledb
 from typing_extensions import Final
 
@@ -12,7 +11,7 @@ from .tiledb_object import TileDBObject
 from .tiledb_platform_config import TileDBPlatformConfig
 
 
-class Experiment(CollectionBase[TileDBObject], somacore.Experiment[TileDBObject]):
+class Experiment(CollectionBase[TileDBObject]):
     """
     ``obs``: Primary annotations on the observation axis. The contents of the
              ``soma_joinid`` column define the observation index domain,

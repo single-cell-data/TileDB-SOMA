@@ -163,13 +163,7 @@ class SparseNDArray(TileDBArray, somacore.SparseNDArray):
     def read(
         self,
         slices: Optional[SparseNdCoordinates] = None,
-        *,
-        batch_size: somacore.options.BatchSize = somacore.options.BatchSize(),  # TODO: usr this
-        partitions: Optional[somacore.options.ReadPartitions] = None,  # TODO: use this
-        result_order: somacore.options.StrOr[
-            somacore.options.ResultOrder
-        ] = somacore.options.ResultOrder.AUTO,  # TODO: use this
-        platform_config: Optional[somacore.options.PlatformConfig] = None,
+        **_: Any,  # TODO: missing parameters
     ) -> "SparseNDArrayRead":
         """
         Read a user-defined slice of the SparseNDArray.

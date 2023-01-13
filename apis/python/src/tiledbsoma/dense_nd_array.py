@@ -146,10 +146,8 @@ class DenseNDArray(TileDBArray, somacore.DenseNDArray):
         self,
         coords: DenseNdCoordinates,
         *,
-        batch_size: somacore.options.BatchSize = somacore.options.BatchSize(),  # TODO: use this
-        partitions: Optional[somacore.options.ReadPartitions] = None,  # TODO: use this
-        result_order: somacore.options.StrOr[ResultOrder] = "row-major",
-        platform_config: Optional[somacore.options.PlatformConfig] = None,
+        result_order: ResultOrder = "row-major",
+        **_: Any,  # TODO: remaining params
     ) -> pa.Tensor:
         """
         Read a user-defined dense slice of the array and return as an Arrow ``Tensor``.
