@@ -5,7 +5,7 @@ import numpy as np
 import pyarrow as pa
 import somacore
 import tiledb
-from typing_extensions import get_args
+from somacore import options
 
 # This package's pybind11 code
 import tiledbsoma.libtiledbsoma as clib
@@ -16,13 +16,7 @@ from .collection import CollectionBase
 from .constants import SOMA_JOINID
 from .query_condition import QueryCondition
 from .tiledb_array import TileDBArray
-from .types import (
-    NPFloating,
-    NPInteger,
-    PlatformConfig,
-    ResultOrder,
-    SparseDataFrameCoordinates,
-)
+from .types import NPFloating, NPInteger, PlatformConfig
 from .util_iter import TableReadIter
 
 Slice = TypeVar("Slice", bound=Sequence[int])
@@ -195,10 +189,10 @@ class DataFrame(TileDBArray, somacore.DataFrame):
 
     def read(
         self,
-        ids: Optional[SparseDataFrameCoordinates] = None,
+        ids: Optional[options.SparseDFCoords] = None,
         column_names: Optional[Sequence[str]] = None,
         *,
-        result_order: Optional[ResultOrder] = "auto",
+        result_order: options.StrOr[somacore.ResultOrder] = "auto",
         value_filter: Optional[str] = None,
         **_: Any,  # TODO: rest of parameters
     ) -> TableReadIter:
@@ -233,15 +227,12 @@ class DataFrame(TileDBArray, somacore.DataFrame):
         * Negative indexing is unsupported.
         """
 
+        result_order = options.ResultOrder(result_order)
+
         with self._tiledb_open("r") as A:
             query_condition = None
             if value_filter is not None:
                 query_condition = QueryCondition(value_filter)
-
-            if result_order is not None and result_order not in get_args(ResultOrder):
-                raise ValueError(
-                    "result_order must be one of " + ", ".join(get_args(ResultOrder))
-                )
 
             sr = clib.SOMAReader(
                 self._uri,
@@ -250,7 +241,7 @@ class DataFrame(TileDBArray, somacore.DataFrame):
                 column_names=column_names,
                 query_condition=query_condition,
                 platform_config={} if self._ctx is None else self._ctx.config().dict(),
-                result_order=(result_order or "auto"),
+                result_order=result_order.value,
             )
 
             if ids is not None:

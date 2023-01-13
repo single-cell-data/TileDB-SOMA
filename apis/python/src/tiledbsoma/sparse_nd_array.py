@@ -5,6 +5,7 @@ import numpy as np
 import pyarrow as pa
 import somacore
 import tiledb
+from somacore import options
 
 # This package's pybind11 code
 import tiledbsoma.libtiledbsoma as clib
@@ -13,7 +14,7 @@ from . import tiledb_platform_config as tdbpc
 from . import util, util_arrow
 from .collection import CollectionBase
 from .tiledb_array import TileDBArray
-from .types import NTuple, PlatformConfig, SparseNdCoordinates
+from .types import NTuple, PlatformConfig
 from .util_iter import (
     SparseCOOTensorReadIter,
     SparseCSCMatrixReadIter,
@@ -162,7 +163,7 @@ class SparseNDArray(TileDBArray, somacore.SparseNDArray):
 
     def read(
         self,
-        slices: Optional[SparseNdCoordinates] = None,
+        slices: Optional[options.SparseNDCoords] = None,
         **_: Any,  # TODO: missing parameters
     ) -> "SparseNDArrayRead":
         """

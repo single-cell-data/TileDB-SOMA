@@ -110,7 +110,7 @@ setuptools.setup(
         "pyarrow >= 9.0.0",
         "scanpy",
         "scipy",
-        "somacore==0.0.0a2",
+        "somacore @ git+https://github.com/single-cell-data/SOMA.git@9b8591a167198f9103aa3389bf6c57dd03ccf115",
         "tiledb>=0.19.0",
         "typing-extensions",  # Note "-" even though `import typing_extensions`
     ],

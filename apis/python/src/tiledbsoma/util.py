@@ -3,7 +3,8 @@ import time
 import urllib.parse
 from typing import List, Optional, Tuple, Union
 
-from .types import DenseNdCoordinates, ResultOrder
+import somacore
+from somacore import options
 
 SOMA_OBJECT_TYPE_METADATA_KEY = "soma_object_type"
 SOMA_ENCODING_VERSION_METADATA_KEY = "soma_encoding_version"
@@ -137,9 +138,9 @@ def slice_to_range(
 
 
 def dense_indices_to_shape(
-    coords: DenseNdCoordinates,
+    coords: options.DenseNDCoords,
     array_shape: Tuple[int, ...],
-    result_order: ResultOrder,
+    result_order: somacore.ResultOrder,
 ) -> Tuple[int, ...]:
     """
     Given a subarray index specified as a tuple of per-dimension slices or scalars
@@ -149,7 +150,8 @@ def dense_indices_to_shape(
     """
     if len(coords) > len(array_shape):
         raise ValueError(
-            f"coordinate length ({len(coords)}) must be <= array dimension count ({len(array_shape)})"
+            f"coordinate length ({len(coords)}) must be <="
+            f" array dimension count ({len(array_shape)})"
         )
 
     shape: List[int] = []
@@ -159,7 +161,7 @@ def dense_indices_to_shape(
         else:
             shape.append(extent)
 
-    if result_order == "row-major":
+    if result_order is somacore.ResultOrder.ROW_MAJOR:
         return tuple(shape)
 
     return tuple(reversed(shape))
