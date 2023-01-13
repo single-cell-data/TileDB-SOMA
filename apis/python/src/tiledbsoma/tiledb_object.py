@@ -1,7 +1,8 @@
 import os
-from abc import ABC, abstractmethod, abstractproperty
+from abc import ABC, abstractmethod
 from typing import Optional, Union, cast
 
+import somacore
 import tiledb
 
 from . import util
@@ -9,7 +10,7 @@ from .metadata_mapping import MetadataMapping
 from .tiledb_platform_config import TileDBPlatformConfig
 
 
-class TileDBObject(ABC):
+class TileDBObject(ABC, somacore.SOMAObject):
     """
     Base class for ``TileDBArray`` and ``Collection``.
 
@@ -107,13 +108,6 @@ class TileDBObject(ABC):
         Accessor for the object's storage URI
         """
         return self._uri
-
-    @abstractproperty
-    def soma_type(self) -> str:
-        """
-        Returns the SOMA object type, e.g. "SOMADataFrame".
-        """
-        ...
 
     def exists(self) -> bool:
         """

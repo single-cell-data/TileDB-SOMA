@@ -43,7 +43,7 @@ ARROW_TO_TDB: Dict[Any, Union[str, TypeError]] = {
 }
 
 
-def tiledb_type_from_arrow_type_for_write(t: pa.DataType) -> Union[type, np.dtype, str]:
+def tiledb_type_from_arrow_type_for_write(t: pa.DataType) -> Union[type, np.dtype, str]:  # type: ignore[type-arg]
     """
     Same as ``tiledb_type_from_arrow_type`` except that this is used for writing to a TileDB array.
     The syntax of TileDB-Py is such that when we want to create a schema with an ASCII column,
@@ -57,7 +57,7 @@ def tiledb_type_from_arrow_type_for_write(t: pa.DataType) -> Union[type, np.dtyp
         return retval
 
 
-def tiledb_type_from_arrow_type(t: pa.DataType) -> Union[type, np.dtype, str]:
+def tiledb_type_from_arrow_type(t: pa.DataType) -> Union[type, np.dtype, str]:  # type: ignore[type-arg]
     """
     Given an Arrow type, return the corresponding TileDB type as a Numpy dtype.
     Building block for Arrow-to-TileDB schema translation.
@@ -106,7 +106,7 @@ def tiledb_type_from_arrow_type(t: pa.DataType) -> Union[type, np.dtype, str]:
 
 
 def get_arrow_type_from_tiledb_dtype(
-    tiledb_dtype: Union[str, np.dtype], *, bytes_are_ascii: Optional[bool] = False
+    tiledb_dtype: Union[str, np.dtype], *, bytes_are_ascii: Optional[bool] = False  # type: ignore[type-arg]
 ) -> pa.DataType:
     """
     Maps a TileDB dtype (``'bytes'``, ``'ascii'``, or an ``np.dtype``) to an Arrow type.  Note that

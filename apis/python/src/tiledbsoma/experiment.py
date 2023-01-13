@@ -46,6 +46,7 @@ class Experiment(CollectionBase[TileDBObject]):
             ctx=ctx,
         )
 
+    # Inherited from somacore
     soma_type: Final = "SOMAExperiment"
 
     def create(self) -> "Experiment":
