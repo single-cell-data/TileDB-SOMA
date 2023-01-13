@@ -651,19 +651,6 @@ def _write_matrix_to_sparseNDArray(
         }
         return pa.Table.from_pydict(pydict)
 
-    def _find_chunk_size(
-        mat: Union[np.ndarray, sp.csr_matrix, sp.csc_matrix],
-        start_index: int,
-        axis: int,
-        goal_chunk_nnz: int,
-    ) -> int:
-        if isinstance(mat, np.ndarray):
-            return int(math.ceil(goal_chunk_nnz / mat.shape[axis]))
-        else:
-            return util_scipy.find_sparse_chunk_size(
-                mat, start_index, axis, goal_chunk_nnz
-            )
-
     # There is a chunk-by-chunk already-done check for resume mode, below.
     # This full-matrix-level check here might seem redundant, but in fact it's important:
     # * By checking input bounds against storage NED here, we can see if the entire matrix
