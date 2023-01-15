@@ -16,7 +16,13 @@ from .collection import CollectionBase
 from .constants import SOMA_JOINID
 from .query_condition import QueryCondition
 from .tiledb_array import TileDBArray
-from .types import PlatformConfig, ResultOrder, SparseDataFrameCoordinates
+from .types import (
+    NPFloating,
+    NPInteger,
+    PlatformConfig,
+    ResultOrder,
+    SparseDataFrameCoordinates,
+)
 from .util_iter import TableReadIter
 
 Slice = TypeVar("Slice", bound=Sequence[int])
@@ -82,25 +88,19 @@ class DataFrame(TileDBArray, somacore.DataFrame):
 
         dims = []
         for index_column_name in index_column_names:
-            dtype = util_arrow.tiledb_type_from_arrow_type(
-                schema.field(index_column_name).type
-            )
-            # We need domain=(None,None) for string dims
-            lo: Any = None
-            hi: Any = None
-
-            if dtype == "ascii":
-                # Special "dtype" for TileDB-Py
-                pass
-            elif dtype != str:
-                if np.issubdtype(dtype, np.integer):
-                    lo = np.iinfo(dtype).min
-                    hi = np.iinfo(dtype).max - 1
-                elif np.issubdtype(dtype, np.floating):
-                    lo = np.finfo(dtype).min
-                    hi = np.finfo(dtype).max
-                else:
-                    raise TypeError(f"Unsupported dtype {dtype}")
+            pa_type = schema.field(index_column_name).type
+            dtype = util_arrow.tiledb_type_from_arrow_type(pa_type)
+            domain: Tuple[Any, Any]
+            if isinstance(dtype, str):
+                domain = None, None
+            elif np.issubdtype(dtype, NPInteger):
+                iinfo = np.iinfo(cast(NPInteger, dtype))
+                domain = iinfo.min, iinfo.max - 1
+            elif np.issubdtype(dtype, NPFloating):
+                finfo = np.finfo(cast(NPFloating, dtype))
+                domain = finfo.min, finfo.max
+            else:
+                raise TypeError(f"Unsupported dtype {dtype}")
 
             # Default 2048 mods to 0 for 8-bit types and 0 is an invalid extent
             extent = create_options.dim_tile(index_column_name)
@@ -109,7 +109,7 @@ class DataFrame(TileDBArray, somacore.DataFrame):
 
             dim = tiledb.Dim(
                 name=index_column_name,
-                domain=(lo, hi),
+                domain=domain,
                 tile=extent,
                 dtype=dtype,
                 filters=create_options.dim_filters(

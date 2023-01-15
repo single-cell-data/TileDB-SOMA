@@ -1,13 +1,14 @@
 import functools
 import re
-from typing import Any, Dict, List, Optional, Sequence, Tuple, TypeVar, Union
+from typing import Dict, List, Optional, Sequence, Tuple, TypeVar
 
 import numpy as np
+import numpy.typing as npt
 import pandas as pd
 import scipy.sparse as sp
 import tiledb
 
-from .types import ResultOrder
+from .types import NDArray, ResultOrder
 
 SOMA_OBJECT_TYPE_METADATA_KEY = "soma_object_type"
 SOMA_ENCODING_VERSION_METADATA_KEY = "soma_encoding_version"
@@ -38,7 +39,7 @@ def tiledb_result_order_from_soma_result_order(
     return OrderMap[soma_result_order]
 
 
-def to_tiledb_supported_dtype(dtype: np.dtype) -> np.dtype:  # type: ignore[type-arg]
+def to_tiledb_supported_dtype(dtype: npt.DTypeLike) -> npt.DTypeLike:
     """A handful of types are cast into the TileDB type system."""
     # TileDB has no float16 -- cast up to float32
     if dtype == np.dtype("float16"):
@@ -47,7 +48,7 @@ def to_tiledb_supported_dtype(dtype: np.dtype) -> np.dtype:  # type: ignore[type
 
 
 @functools.singledispatch
-def to_tiledb_supported_array_type(x: Any) -> Any:
+def to_tiledb_supported_array_type(x: object) -> object:
     """
     Converts datatypes unrepresentable by TileDB into datatypes it can represent.  E.g., categorical strings -> string.
 
@@ -57,7 +58,7 @@ def to_tiledb_supported_array_type(x: Any) -> Any:
 
     Categoricals are a special case. If the underlying categorical type is a primitive, convert to that. If the array contains NA/NaN (i.e. not in the category, code == -1), raise error unless it is a float or string.
     """
-    return _to_supported_base(x)
+    raise TypeError(x.__class__)
 
 
 @to_tiledb_supported_array_type.register
@@ -104,7 +105,7 @@ def _to_supported_series(x: pd.Series) -> pd.Series:
     return x.astype("O")
 
 
-_MT = TypeVar("_MT", np.ndarray, sp.spmatrix)  # type: ignore[type-arg]
+_MT = TypeVar("_MT", NDArray, sp.spmatrix)
 
 
 @to_tiledb_supported_array_type.register(np.ndarray)
@@ -142,7 +143,7 @@ def list_fragments(array_uri: str) -> None:
 
 def split_column_names(
     array_schema: tiledb.ArraySchema, column_names: Optional[Sequence[str]]
-) -> Tuple[Union[Sequence[str], None], Union[Sequence[str], None]]:
+) -> Tuple[Optional[Sequence[str]], Optional[Sequence[str]]]:
     """
     Given a tiledb ArraySchema and a list of dim or attr names, split
     them into a tuple of (dim_names, attr_names).
@@ -161,7 +162,7 @@ def split_column_names(
 
     Returns
     -------
-    Tuple[Union[Sequence[str], None], Union[Sequence[str], None]]
+    Tuple[Optional[Sequence[str]], Optional[Sequence[str]]]
         If column_names is ``None``, the tuple ``(None, None)`` will be returned.
         Otherwise, returns a tuple of (dim_names, attr_names), with any unknown
         names, i.e., not present in the array schema, ignored (dropped).
