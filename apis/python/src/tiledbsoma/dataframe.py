@@ -159,6 +159,7 @@ class DataFrame(TileDBArray, somacore.DataFrame):
         """
         return self._tiledb_array_keys()
 
+    @property
     def index_column_names(self) -> Tuple[str, ...]:
         """
         Return index (dimension) column names.
@@ -167,7 +168,6 @@ class DataFrame(TileDBArray, somacore.DataFrame):
         # cloud, where we'll avoid an HTTP request.
         if self._index_column_names == ():
             self._index_column_names = self._tiledb_dim_names()
-
         return self._index_column_names
 
     @property
@@ -319,7 +319,7 @@ class DataFrame(TileDBArray, somacore.DataFrame):
         del platform_config  # unused
         dim_cols_list = []
         attr_cols_map = {}
-        dim_names_set = self.index_column_names()
+        dim_names_set = self.index_column_names
         n = None
 
         for name in values.schema.names:
