@@ -1,6 +1,6 @@
 import math
 import time
-from typing import List, Optional, Sequence, Union
+from typing import List, Optional, Sequence, Tuple, Union
 
 import anndata as ad
 import h5py
@@ -9,6 +9,7 @@ import pandas as pd
 import pyarrow as pa
 import scipy.sparse as sp
 import tiledb
+from anndata._core.sparse_dataset import SparseDataset
 
 import tiledbsoma.eta as eta
 import tiledbsoma.util as util
@@ -27,18 +28,10 @@ from tiledbsoma import (
 from tiledbsoma.exception import SOMAError
 
 from .constants import SOMA_JOINID
-from .types import INGEST_MODES, IngestMode, Path, PlatformConfig
+from .types import INGEST_MODES, IngestMode, NDArray, Path, PlatformConfig
 
-# These are for input-data bounds -- like `((0, 10), (0, 20))`.  They're used for resume-mode
-# checking.
-NTupleInt = Sequence[Union[int]]
-MNTupleInt = Sequence[NTupleInt]
-
-# These are for data-storage non-empty domains -- also like `((0, 10), (0, 20))`, but maybe `None`
-# or `(None, None)`. The latter can happen when a schema was created, but no writes were completed,
-# on a previous data-ingest run.
-NTupleIntNone = Sequence[Union[None, int]]
-MNTupleIntNone = Union[None, Sequence[NTupleIntNone]]
+SparseMatrix = Union[sp.csr_matrix, sp.csc_matrix, SparseDataset]
+Matrix = Union[NDArray, SparseMatrix]
 
 
 # ----------------------------------------------------------------
@@ -198,27 +191,14 @@ def from_anndata(
     # * If we do `anndata.X` we're getting a pageable object which can be loaded
     #   chunkwise into memory.
     # Using the latter allows us to ingest larger .h5ad files without OOMing.
-    if isinstance(anndata.X, (np.ndarray, h5py._hl.dataset.Dataset)):
-        ddata = DenseNDArray(uri=util.uri_joinpath(measurement.X.uri, "data"), ctx=ctx)
-        # Code here and in else-block duplicated for linter appeasement
-        create_from_matrix(
-            ddata,
-            anndata.X,
-            platform_config=platform_config,
-            ingest_mode=ingest_mode,
-        )
-        measurement.X.set("data", ddata)
-    else:
-        # The type is because mypy doesn't know what the h5py type is and so conflates it with Any.
-        # So it thinks the if-branch covers all types (it does not).
-        sdata = SparseNDArray(uri=util.uri_joinpath(measurement.X.uri, "data"), ctx=ctx)  # type: ignore[unreachable]
-        create_from_matrix(
-            sdata,
-            anndata.X,
-            platform_config=platform_config,
-            ingest_mode=ingest_mode,
-        )
-        measurement.X.set("data", sdata)
+    cls = (
+        DenseNDArray
+        if isinstance(anndata.X, (np.ndarray, h5py.Dataset))
+        else SparseNDArray
+    )
+    data = cls(uri=util.uri_joinpath(measurement.X.uri, "data"), ctx=ctx)
+    create_from_matrix(data, anndata.X, platform_config, ingest_mode)
+    measurement.X.set("data", data)
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     # MS/meas/OBSM,VARM,OBSP,VARP
@@ -424,21 +404,14 @@ def _write_dataframe(
 
 def create_from_matrix(
     soma_ndarray: Union[DenseNDArray, SparseNDArray],
-    src_matrix: Union[  # type: ignore[type-arg]
-        np.ndarray,
-        sp.csr_matrix,
-        sp.csc_matrix,
-        h5py._hl.dataset.Dataset,
-        ad._core.sparse_dataset.SparseDataset,
-    ],
-    *,
+    src_matrix: Union[Matrix, h5py.Dataset],
     platform_config: Optional[PlatformConfig] = None,
     ingest_mode: IngestMode = "write",
 ) -> None:
     """
     Create and populate the ``soma_matrix`` from the contents of ``src_matrix``.
     """
-    # ad._core.sparse_dataset.SparseDataset has no ndim but it has a shape
+    # SparseDataset has no ndim but it has a shape
     assert len(src_matrix.shape) == 2
     assert soma_ndarray.soma_type in ("SOMADenseNDArray", "SOMASparseNDArray")
 
@@ -481,10 +454,7 @@ def create_from_matrix(
 
 def _write_matrix_to_denseNDArray(
     soma_ndarray: DenseNDArray,
-    src_matrix: Union[  # type: ignore[type-arg]
-        np.ndarray, sp.csr_matrix, sp.csc_matrix, h5py._hl.dataset.Dataset
-    ],
-    *,
+    src_matrix: Union[Matrix, h5py.Dataset],
     ingest_mode: IngestMode,
 ) -> None:
     """Write a matrix to an empty DenseNDArray"""
@@ -581,34 +551,10 @@ def _write_matrix_to_denseNDArray(
     return
 
 
-def _find_chunk_size(
-    matrix: Union[  # type: ignore[type-arg]
-        np.ndarray, sp.csr_matrix, sp.csc_matrix, ad._core.sparse_dataset.SparseDataset
-    ],
-    start_index: int,
-    axis: int,
-    goal_chunk_nnz: int,
-) -> int:
-    """
-    Internal method to find a good number of rows/columns to read from a CSR/CSC matrix
-    which will result in getting a desired nnz value. This is for memory-budgeting
-    for ingesting data from large .h5ad files.
-    """
-    if isinstance(matrix, np.ndarray):
-        return int(math.ceil(goal_chunk_nnz / matrix.shape[axis]))
-    else:
-        return _find_sparse_chunk_size(matrix, start_index, axis, goal_chunk_nnz)
-
-
 def _find_sparse_chunk_size(
-    matrix: Union[sp.csr_matrix, sp.csc_matrix, ad._core.sparse_dataset.SparseDataset],
-    start_index: int,
-    axis: int,
-    goal_chunk_nnz: int,
+    matrix: SparseMatrix, start_index: int, axis: int, goal_chunk_nnz: int
 ) -> int:
     """
-    Internal helper method for `_find_chunk_size`.
-
     Given a sparse matrix and a start index, return a step size, on the stride axis, which will
     achieve the cummulative nnz desired.
 
@@ -657,12 +603,7 @@ def _find_sparse_chunk_size(
 
 
 def _write_matrix_to_sparseNDArray(
-    soma_ndarray: SparseNDArray,
-    src_matrix: Union[  # type: ignore[type-arg]
-        np.ndarray, sp.csr_matrix, sp.csc_matrix, ad._core.sparse_dataset.SparseDataset
-    ],
-    *,
-    ingest_mode: IngestMode,
+    soma_ndarray: SparseNDArray, src_matrix: Matrix, ingest_mode: IngestMode
 ) -> None:
     """Write a matrix to an empty DenseNDArray"""
 
@@ -711,10 +652,7 @@ def _write_matrix_to_sparseNDArray(
     if sp.isspmatrix_csc(src_matrix):
         # E.g. if we used anndata.X[:]
         stride_axis = 1
-    if (
-        isinstance(src_matrix, ad._core.sparse_dataset.SparseDataset)
-        and src_matrix.format_str == "csc"
-    ):
+    if isinstance(src_matrix, SparseDataset) and src_matrix.format_str == "csc":
         # E.g. if we used anndata.X without the [:]
         stride_axis = 1
 
@@ -729,7 +667,13 @@ def _write_matrix_to_sparseNDArray(
         t1 = time.time()
 
         # Chunk size on the stride axis
-        chunk_size = _find_chunk_size(src_matrix, i, stride_axis, goal_chunk_nnz)
+        if isinstance(src_matrix, np.ndarray):
+            chunk_size = int(math.ceil(goal_chunk_nnz / src_matrix.shape[stride_axis]))
+        else:
+            chunk_size = _find_sparse_chunk_size(
+                src_matrix, i, stride_axis, goal_chunk_nnz
+            )
+
         i2 = i + chunk_size
 
         coords[stride_axis] = slice(i, i2)
@@ -777,8 +721,8 @@ def _write_matrix_to_sparseNDArray(
 
 
 def _chunk_is_contained_in(
-    chunk_bounds: MNTupleInt,
-    storage_nonempty_domain: MNTupleIntNone,
+    chunk_bounds: Sequence[Tuple[int, int]],
+    storage_nonempty_domain: Optional[Sequence[Tuple[Optional[int], Optional[int]]]],
 ) -> bool:
     """
     Determines if a dim range is included within the array's non-empty domain.  Ranges are inclusive
@@ -809,26 +753,19 @@ def _chunk_is_contained_in(
 
 
 def _chunk_is_contained_in_axis(
-    chunk_bounds: MNTupleInt,
-    storage_nonempty_domain: MNTupleIntNone,
+    chunk_bounds: Sequence[Tuple[int, int]],
+    storage_nonempty_domain: Sequence[Tuple[Optional[int], Optional[int]]],
     stride_axis: int,
 ) -> bool:
     """
     Helper function for ``_chunk_is_contained_in``.
     """
-
-    if storage_nonempty_domain is None:
-        return False
-
-    assert len(chunk_bounds) == len(storage_nonempty_domain)
-
-    chunk_lo, chunk_hi = chunk_bounds[stride_axis]
     storage_lo, storage_hi = storage_nonempty_domain[stride_axis]
-
     if storage_lo is None or storage_hi is None:
         # E.g. an array has had its schema created but no data written yet
         return False
 
+    chunk_lo, chunk_hi = chunk_bounds[stride_axis]
     if chunk_lo < storage_lo or chunk_lo > storage_hi:
         return False
     if chunk_hi < storage_lo or chunk_hi > storage_hi:
