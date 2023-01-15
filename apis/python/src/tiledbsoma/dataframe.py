@@ -14,7 +14,7 @@ from . import tiledb_platform_config as tdbpc
 from . import util, util_arrow
 from .collection import CollectionBase
 from .constants import SOMA_JOINID
-from .query_condition import QueryCondition  # type: ignore
+from .query_condition import QueryCondition
 from .tiledb_array import TileDBArray
 from .types import PlatformConfig, ResultOrder, SparseDataFrameCoordinates
 from .util_iter import TableReadIter

@@ -1,7 +1,3 @@
-# Disabling flake8 and mypy checks because this file comes from TileDB-Py and we want to minimize the differences
-# flake8: noqa
-# type: ignore
-
 import ast
 from dataclasses import dataclass, field
 from typing import Any, Callable, List, Tuple, Union
