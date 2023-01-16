@@ -33,7 +33,7 @@ SOMAMeasurement <- R6::R6Class(
       private$get_or_set_soma_field(value, "obsm", "SOMACollection")
     },
 
-    #' @field obsp a [`SOMACollection`] of [`SparseNDArray`]s containing
+    #' @field obsp a [`SOMACollection`] of [`SOMASparseNDArray`]s containing
     #' pairwise annotations on the observation axis and indexed with `[obsid_1,
     #' obsid_2]`.
     obsp = function(value) {
