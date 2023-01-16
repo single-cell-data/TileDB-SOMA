@@ -22,7 +22,7 @@ The default "fill" value for \code{SOMADenseNDArray} is the zero or null value o
 the array type (e.g., Arrow.float32 defaults to 0.0).
 }
 \section{Super classes}{
-\code{\link[tiledbsoma:TileDBObject]{tiledbsoma::TileDBObject}} -> \code{\link[tiledbsoma:TileDBArray]{tiledbsoma::TileDBArray}} -> \code{\link[tiledbsoma:SOMAArrayBase]{tiledbsoma::SOMAArrayBase}} -> \code{SOMADenseNDArray}
+\code{tiledbsoma::TileDBObject} -> \code{tiledbsoma::TileDBArray} -> \code{tiledbsoma::SOMAArrayBase} -> \code{SOMADenseNDArray}
 }
 \section{Methods}{
 \subsection{Public methods}{

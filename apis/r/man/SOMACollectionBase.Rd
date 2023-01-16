@@ -11,7 +11,7 @@ Base class for objects containing persistent collection of SOMA
 objects, mapping string keys to any SOMA object.
 }
 \section{Super classes}{
-\code{\link[tiledbsoma:TileDBObject]{tiledbsoma::TileDBObject}} -> \code{\link[tiledbsoma:TileDBGroup]{tiledbsoma::TileDBGroup}} -> \code{SOMACollectionBase}
+\code{tiledbsoma::TileDBObject} -> \code{tiledbsoma::TileDBGroup} -> \code{SOMACollectionBase}
 }
 \section{Active bindings}{
 \if{html}{\out{<div class="r6-active-bindings">}}
@@ -37,6 +37,7 @@ objects, mapping string keys to any SOMA object.
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBObject" data-id="exists"><a href='../../tiledbsoma/html/TileDBObject.html#method-TileDBObject-exists'><code>tiledbsoma::TileDBObject$exists()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBGroup" data-id="get_metadata"><a href='../../tiledbsoma/html/TileDBGroup.html#method-TileDBGroup-get_metadata'><code>tiledbsoma::TileDBGroup$get_metadata()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBGroup" data-id="length"><a href='../../tiledbsoma/html/TileDBGroup.html#method-TileDBGroup-length'><code>tiledbsoma::TileDBGroup$length()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBGroup" data-id="names"><a href='../../tiledbsoma/html/TileDBGroup.html#method-TileDBGroup-names'><code>tiledbsoma::TileDBGroup$names()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBGroup" data-id="print"><a href='../../tiledbsoma/html/TileDBGroup.html#method-TileDBGroup-print'><code>tiledbsoma::TileDBGroup$print()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBGroup" data-id="remove"><a href='../../tiledbsoma/html/TileDBGroup.html#method-TileDBGroup-remove'><code>tiledbsoma::TileDBGroup$remove()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBGroup" data-id="set_metadata"><a href='../../tiledbsoma/html/TileDBGroup.html#method-TileDBGroup-set_metadata'><code>tiledbsoma::TileDBGroup$set_metadata()</code></a></span></li>

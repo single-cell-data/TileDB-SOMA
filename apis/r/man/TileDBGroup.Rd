@@ -10,7 +10,7 @@ A \code{TileDBArray} or \code{TileDBGroup}.
 Base class for interacting with TileDB groups
 }
 \section{Super class}{
-\code{\link[tiledbsoma:TileDBObject]{tiledbsoma::TileDBObject}} -> \code{TileDBGroup}
+\code{tiledbsoma::TileDBObject} -> \code{TileDBGroup}
 }
 \section{Methods}{
 \subsection{Public methods}{
@@ -21,6 +21,7 @@ Base class for interacting with TileDB groups
 \item \href{#method-TileDBGroup-get}{\code{TileDBGroup$get()}}
 \item \href{#method-TileDBGroup-remove}{\code{TileDBGroup$remove()}}
 \item \href{#method-TileDBGroup-length}{\code{TileDBGroup$length()}}
+\item \href{#method-TileDBGroup-names}{\code{TileDBGroup$names()}}
 \item \href{#method-TileDBGroup-to_list}{\code{TileDBGroup$to_list()}}
 \item \href{#method-TileDBGroup-to_data_frame}{\code{TileDBGroup$to_data_frame()}}
 \item \href{#method-TileDBGroup-get_metadata}{\code{TileDBGroup$get_metadata()}}
@@ -127,6 +128,19 @@ Length in the number of members.
 
 \subsection{Returns}{
 Scalar \code{integer}
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-TileDBGroup-names"></a>}}
+\if{latex}{\out{\hypertarget{method-TileDBGroup-names}{}}}
+\subsection{Method \code{names()}}{
+Retrieve the names of members.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{TileDBGroup$names()}\if{html}{\out{</div>}}
+}
+
+\subsection{Returns}{
+A \code{character} vector of member names.
 }
 }
 \if{html}{\out{<hr>}}
