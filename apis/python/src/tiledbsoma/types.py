@@ -1,11 +1,21 @@
 import pathlib
-from typing import Any, List, Mapping, Sequence, Tuple, Union
+from typing import TYPE_CHECKING, Any, List, Mapping, Sequence, Tuple, Union
 
 import numpy as np
 import numpy.typing as npt
 import pandas as pd
 import pyarrow as pa
 from typing_extensions import Literal
+
+if TYPE_CHECKING:
+    NPInteger = np.integer[npt.NBitBase]
+    NPFloating = np.floating[npt.NBitBase]
+    NDArray = npt.NDArray[np.number[npt.NBitBase]]
+else:
+    NPInteger = np.integer
+    NPFloating = np.floating
+    NDArray = np.ndarray
+
 
 Path = Union[str, pathlib.Path]
 
@@ -41,7 +51,7 @@ DenseNdCoordinates = Tuple[DenseCoordinates, ...]
 #
 # Note: we intentionally use `Union[None, ...]` in place of `Optional[...]` since
 # we choose to emphasize that the argument-slots this is used in are not "optional"
-# arguments -- they're required argments, which can take the `None` value.
+# arguments -- they're required arguments, which can take the `None` value.
 SparseDataFrameCoordinate = Union[
     None,
     int,
@@ -49,13 +59,13 @@ SparseDataFrameCoordinate = Union[
     Sequence[int],
     pa.Array,
     pa.ChunkedArray,
-    npt.NDArray[np.integer],  # type: ignore[type-arg]
+    npt.NDArray[NPInteger],
 ]
 SparseDataFrameCoordinates = Sequence[SparseDataFrameCoordinate]
 
 # Note: we intentionally use `Union[None, ...]` in place of `Optional[...]` since
 # we choose to emphasize that the argument-slots this is used in are not "optional"
-# arguments -- they're required argments, which can take the `None` value.
+# arguments -- they're required arguments, which can take the `None` value.
 
 SparseNdCoordinates = Union[
     None,
@@ -64,7 +74,7 @@ SparseNdCoordinates = Union[
             None,
             DenseCoordinates,
             Sequence[int],
-            npt.NDArray[np.integer],  # type: ignore[type-arg]
+            npt.NDArray[NPInteger],
             pa.IntegerArray,
         ]
     ],

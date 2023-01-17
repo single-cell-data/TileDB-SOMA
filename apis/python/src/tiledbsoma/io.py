@@ -1,6 +1,6 @@
 import math
 import time
-from typing import List, Optional, Sequence, Union
+from typing import List, Optional, Sequence, Tuple, Union
 
 import anndata as ad
 import h5py
@@ -9,6 +9,7 @@ import pandas as pd
 import pyarrow as pa
 import scipy.sparse as sp
 import tiledb
+from anndata._core.sparse_dataset import SparseDataset
 
 import tiledbsoma.eta as eta
 import tiledbsoma.util as util
@@ -27,18 +28,10 @@ from tiledbsoma import (
 from tiledbsoma.exception import SOMAError
 
 from .constants import SOMA_JOINID
-from .types import INGEST_MODES, IngestMode, Path, PlatformConfig
+from .types import INGEST_MODES, IngestMode, NDArray, Path, PlatformConfig
 
-# These are for input-data bounds -- like `((0, 10), (0, 20))`.  They're used for resume-mode
-# checking.
-NTupleInt = Sequence[Union[int]]
-MNTupleInt = Sequence[NTupleInt]
-
-# These are for data-storage non-empty domains -- also like `((0, 10), (0, 20))`, but maybe `None`
-# or `(None, None)`. The latter can happen when a schema was created, but no writes were completed,
-# on a previous data-ingest run.
-NTupleIntNone = Sequence[Union[None, int]]
-MNTupleIntNone = Union[None, Sequence[NTupleIntNone]]
+SparseMatrix = Union[sp.csr_matrix, sp.csc_matrix, SparseDataset]
+Matrix = Union[NDArray, SparseMatrix]
 
 
 # ----------------------------------------------------------------
@@ -68,19 +61,13 @@ def from_h5ad(
         raise TypeError("Input path is an AnnData object -- did you want from_anndata?")
 
     s = util.get_start_stamp()
-    logging.log_io(
-        None,
-        f"START  Experiment.from_h5ad {input_path}",
-    )
+    logging.log_io(None, f"START  Experiment.from_h5ad {input_path}")
 
     logging.log_io(None, f"START  READING {input_path}")
 
     anndata = ad.read_h5ad(input_path, backed="r")
 
-    logging.log_io(
-        None,
-        util.format_elapsed(s, f"FINISH READING {input_path}"),
-    )
+    logging.log_io(None, util.format_elapsed(s, f"FINISH READING {input_path}"))
 
     from_anndata(
         experiment,
@@ -92,11 +79,7 @@ def from_h5ad(
     )
 
     logging.log_io(
-        None,
-        util.format_elapsed(
-            s,
-            f"FINISH Experiment.from_h5ad {input_path}",
-        ),
+        None, util.format_elapsed(s, f"FINISH Experiment.from_h5ad {input_path}")
     )
 
 
@@ -138,10 +121,7 @@ def from_anndata(
     anndata.obs_names_make_unique()
     anndata.var_names_make_unique()
 
-    logging.log_io(
-        None,
-        util.format_elapsed(s, "FINISH DECATEGORICALIZING"),
-    )
+    logging.log_io(None, util.format_elapsed(s, "FINISH DECATEGORICALIZING"))
 
     s = util.get_start_stamp()
     logging.log_io(None, f"START  WRITING {experiment.uri}")
@@ -198,27 +178,14 @@ def from_anndata(
     # * If we do `anndata.X` we're getting a pageable object which can be loaded
     #   chunkwise into memory.
     # Using the latter allows us to ingest larger .h5ad files without OOMing.
-    if isinstance(anndata.X, (np.ndarray, h5py._hl.dataset.Dataset)):
-        ddata = DenseNDArray(uri=util.uri_joinpath(measurement.X.uri, "data"), ctx=ctx)
-        # Code here and in else-block duplicated for linter appeasement
-        create_from_matrix(
-            ddata,
-            anndata.X,
-            platform_config=platform_config,
-            ingest_mode=ingest_mode,
-        )
-        measurement.X.set("data", ddata)
-    else:
-        # The type is because mypy doesn't know what the h5py type is and so conflates it with Any.
-        # So it thinks the if-branch covers all types (it does not).
-        sdata = SparseNDArray(uri=util.uri_joinpath(measurement.X.uri, "data"), ctx=ctx)  # type: ignore[unreachable]
-        create_from_matrix(
-            sdata,
-            anndata.X,
-            platform_config=platform_config,
-            ingest_mode=ingest_mode,
-        )
-        measurement.X.set("data", sdata)
+    cls = (
+        DenseNDArray
+        if isinstance(anndata.X, (np.ndarray, h5py.Dataset))
+        else SparseNDArray
+    )
+    data = cls(uri=util.uri_joinpath(measurement.X.uri, "data"), ctx=ctx)
+    create_from_matrix(data, anndata.X, platform_config, ingest_mode)
+    measurement.X.set("data", data)
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     # MS/meas/OBSM,VARM,OBSP,VARP
@@ -234,8 +201,8 @@ def from_anndata(
             create_from_matrix(
                 arr,
                 util_tiledb.to_tiledb_supported_array_type(anndata.obsm[key]),
-                platform_config=platform_config,
-                ingest_mode=ingest_mode,
+                platform_config,
+                ingest_mode,
             )
             measurement.obsm.set(key, arr)
 
@@ -251,8 +218,8 @@ def from_anndata(
             create_from_matrix(
                 darr,
                 util_tiledb.to_tiledb_supported_array_type(anndata.varm[key]),
-                platform_config=platform_config,
-                ingest_mode=ingest_mode,
+                platform_config,
+                ingest_mode,
             )
             measurement.varm.set(key, darr)
 
@@ -268,8 +235,8 @@ def from_anndata(
             create_from_matrix(
                 sarr,
                 util_tiledb.to_tiledb_supported_array_type(anndata.obsp[key]),
-                platform_config=platform_config,
-                ingest_mode=ingest_mode,
+                platform_config,
+                ingest_mode,
             )
             measurement.obsp.set(key, sarr)
 
@@ -285,8 +252,8 @@ def from_anndata(
             create_from_matrix(
                 sarr,
                 util_tiledb.to_tiledb_supported_array_type(anndata.varp[key]),
-                platform_config=platform_config,
-                ingest_mode=ingest_mode,
+                platform_config,
+                ingest_mode,
             )
             measurement.varp.set(key, sarr)
 
@@ -318,12 +285,7 @@ def from_anndata(
         rawXdata = SparseNDArray(
             uri=util.uri_joinpath(raw_measurement.X.uri, "data"), ctx=ctx
         )
-        create_from_matrix(
-            rawXdata,
-            anndata.raw.X,
-            platform_config=platform_config,
-            ingest_mode=ingest_mode,
-        )
+        create_from_matrix(rawXdata, anndata.raw.X, platform_config, ingest_mode)
         raw_measurement.X.set("data", rawXdata)
 
     logging.log_io(
@@ -424,22 +386,15 @@ def _write_dataframe(
 
 def create_from_matrix(
     soma_ndarray: Union[DenseNDArray, SparseNDArray],
-    src_matrix: Union[  # type: ignore[type-arg]
-        np.ndarray,
-        sp.csr_matrix,
-        sp.csc_matrix,
-        h5py._hl.dataset.Dataset,
-        ad._core.sparse_dataset.SparseDataset,
-    ],
-    *,
+    matrix: Union[Matrix, h5py.Dataset],
     platform_config: Optional[PlatformConfig] = None,
     ingest_mode: IngestMode = "write",
 ) -> None:
     """
-    Create and populate the ``soma_matrix`` from the contents of ``src_matrix``.
+    Create and populate the ``soma_matrix`` from the contents of ``matrix``.
     """
-    # ad._core.sparse_dataset.SparseDataset has no ndim but it has a shape
-    assert len(src_matrix.shape) == 2
+    # SparseDataset has no ndim but it has a shape
+    assert len(matrix.shape) == 2
     assert soma_ndarray.soma_type in ("SOMADenseNDArray", "SOMASparseNDArray")
 
     s = util.get_start_stamp()
@@ -449,8 +404,8 @@ def create_from_matrix(
         if soma_ndarray.exists():
             raise SOMAError(f"{soma_ndarray.uri} already exists")
         soma_ndarray.create(
-            type=pa.from_numpy_dtype(src_matrix.dtype),
-            shape=src_matrix.shape,
+            type=pa.from_numpy_dtype(matrix.dtype),
+            shape=matrix.shape,
             platform_config=platform_config,
         )
 
@@ -467,11 +422,9 @@ def create_from_matrix(
     )
 
     if isinstance(soma_ndarray, DenseNDArray):
-        _write_matrix_to_denseNDArray(soma_ndarray, src_matrix, ingest_mode=ingest_mode)
+        _write_matrix_to_denseNDArray(soma_ndarray, matrix, ingest_mode)
     else:  # SOMASparseNDArray
-        _write_matrix_to_sparseNDArray(
-            soma_ndarray, src_matrix, ingest_mode=ingest_mode
-        )
+        _write_matrix_to_sparseNDArray(soma_ndarray, matrix, ingest_mode)
 
     logging.log_io(
         f"Wrote   {soma_ndarray.uri}",
@@ -481,10 +434,7 @@ def create_from_matrix(
 
 def _write_matrix_to_denseNDArray(
     soma_ndarray: DenseNDArray,
-    src_matrix: Union[  # type: ignore[type-arg]
-        np.ndarray, sp.csr_matrix, sp.csc_matrix, h5py._hl.dataset.Dataset
-    ],
-    *,
+    matrix: Union[Matrix, h5py.Dataset],
     ingest_mode: IngestMode,
 ) -> None:
     """Write a matrix to an empty DenseNDArray"""
@@ -502,7 +452,7 @@ def _write_matrix_to_denseNDArray(
         with soma_ndarray._tiledb_open() as A:
             storage_ned = A.nonempty_domain()
             matrix_bounds = [
-                (0, int(n - 1)) for n in src_matrix.shape
+                (0, int(n - 1)) for n in matrix.shape
             ]  # Cast for lint in case np.int64
             logging.log_io(
                 None,
@@ -510,23 +460,20 @@ def _write_matrix_to_denseNDArray(
             )
             if _chunk_is_contained_in(matrix_bounds, storage_ned):
                 logging.log_io(
-                    f"Skipped {soma_ndarray.uri}",
-                    f"SKIPPED WRITING {soma_ndarray.uri}",
+                    f"Skipped {soma_ndarray.uri}", f"SKIPPED WRITING {soma_ndarray.uri}"
                 )
                 return
 
     # Write all at once?
     if not soma_ndarray._tiledb_platform_config.write_X_chunked:
-        if isinstance(src_matrix, np.ndarray):
-            nd_array = src_matrix
-        else:
-            nd_array = src_matrix.toarray()
-        soma_ndarray.write((slice(None),), pa.Tensor.from_numpy(nd_array))
+        if not isinstance(matrix, np.ndarray):
+            matrix = matrix.toarray()
+        soma_ndarray.write((slice(None),), pa.Tensor.from_numpy(matrix))
         return
 
     # OR, write in chunks
     eta_tracker = eta.Tracker()
-    nrow, ncol = src_matrix.shape
+    nrow, ncol = matrix.shape
     i = 0
     # Number of rows to chunk by. Dense writes, so this is a constant.
     chunk_size = int(
@@ -544,7 +491,7 @@ def _write_matrix_to_denseNDArray(
             % (i, i2 - 1, nrow, chunk_percent),
         )
 
-        chunk = src_matrix[i:i2, :]
+        chunk = matrix[i:i2, :]
 
         if ingest_mode == "resume" and storage_ned is not None:
             chunk_bounds = matrix_bounds
@@ -552,7 +499,7 @@ def _write_matrix_to_denseNDArray(
             if _chunk_is_contained_in_axis(chunk_bounds, storage_ned, 0):
                 # Print doubly inclusive lo..hi like 0..17 and 18..31.
                 logging.log_io(
-                    "... %7.3f%% done" % (chunk_percent),
+                    "... %7.3f%% done" % chunk_percent,
                     "SKIP   chunk rows %d..%d of %d (%.3f%%)"
                     % (i, i2 - 1, nrow, chunk_percent),
                 )
@@ -581,34 +528,10 @@ def _write_matrix_to_denseNDArray(
     return
 
 
-def _find_chunk_size(
-    matrix: Union[  # type: ignore[type-arg]
-        np.ndarray, sp.csr_matrix, sp.csc_matrix, ad._core.sparse_dataset.SparseDataset
-    ],
-    start_index: int,
-    axis: int,
-    goal_chunk_nnz: int,
-) -> int:
-    """
-    Internal method to find a good number of rows/columns to read from a CSR/CSC matrix
-    which will result in getting a desired nnz value. This is for memory-budgeting
-    for ingesting data from large .h5ad files.
-    """
-    if isinstance(matrix, np.ndarray):
-        return int(math.ceil(goal_chunk_nnz / matrix.shape[axis]))
-    else:
-        return _find_sparse_chunk_size(matrix, start_index, axis, goal_chunk_nnz)
-
-
 def _find_sparse_chunk_size(
-    matrix: Union[sp.csr_matrix, sp.csc_matrix, ad._core.sparse_dataset.SparseDataset],
-    start_index: int,
-    axis: int,
-    goal_chunk_nnz: int,
+    matrix: SparseMatrix, start_index: int, axis: int, goal_chunk_nnz: int
 ) -> int:
     """
-    Internal helper method for `_find_chunk_size`.
-
     Given a sparse matrix and a start index, return a step size, on the stride axis, which will
     achieve the cummulative nnz desired.
 
@@ -657,12 +580,7 @@ def _find_sparse_chunk_size(
 
 
 def _write_matrix_to_sparseNDArray(
-    soma_ndarray: SparseNDArray,
-    src_matrix: Union[  # type: ignore[type-arg]
-        np.ndarray, sp.csr_matrix, sp.csc_matrix, ad._core.sparse_dataset.SparseDataset
-    ],
-    *,
-    ingest_mode: IngestMode,
+    soma_ndarray: SparseNDArray, matrix: Matrix, ingest_mode: IngestMode
 ) -> None:
     """Write a matrix to an empty DenseNDArray"""
 
@@ -687,7 +605,7 @@ def _write_matrix_to_sparseNDArray(
         with soma_ndarray._tiledb_open() as A:
             storage_ned = A.nonempty_domain()
             matrix_bounds = [
-                (0, int(n - 1)) for n in src_matrix.shape
+                (0, int(n - 1)) for n in matrix.shape
             ]  # Cast for lint in case np.int64
             logging.log_io(
                 None,
@@ -695,30 +613,26 @@ def _write_matrix_to_sparseNDArray(
             )
             if _chunk_is_contained_in(matrix_bounds, storage_ned):
                 logging.log_io(
-                    f"Skipped {soma_ndarray.uri}",
-                    f"SKIPPED WRITING {soma_ndarray.uri}",
+                    f"Skipped {soma_ndarray.uri}", f"SKIPPED WRITING {soma_ndarray.uri}"
                 )
                 return
 
     # Write all at once?
     if not soma_ndarray._tiledb_platform_config.write_X_chunked:
-        soma_ndarray.write(_coo_to_table(sp.coo_matrix(src_matrix)))
+        soma_ndarray.write(_coo_to_table(sp.coo_matrix(matrix)))
         return
 
     # Or, write in chunks, striding across the most efficient slice axis
 
     stride_axis = 0
-    if sp.isspmatrix_csc(src_matrix):
+    if sp.isspmatrix_csc(matrix):
         # E.g. if we used anndata.X[:]
         stride_axis = 1
-    if (
-        isinstance(src_matrix, ad._core.sparse_dataset.SparseDataset)
-        and src_matrix.format_str == "csc"
-    ):
+    if isinstance(matrix, SparseDataset) and matrix.format_str == "csc":
         # E.g. if we used anndata.X without the [:]
         stride_axis = 1
 
-    dim_max_size = src_matrix.shape[stride_axis]
+    dim_max_size = matrix.shape[stride_axis]
 
     eta_tracker = eta.Tracker()
     goal_chunk_nnz = soma_ndarray._tiledb_platform_config.goal_chunk_nnz
@@ -729,11 +643,15 @@ def _write_matrix_to_sparseNDArray(
         t1 = time.time()
 
         # Chunk size on the stride axis
-        chunk_size = _find_chunk_size(src_matrix, i, stride_axis, goal_chunk_nnz)
+        if isinstance(matrix, np.ndarray):
+            chunk_size = int(math.ceil(goal_chunk_nnz / matrix.shape[stride_axis]))
+        else:
+            chunk_size = _find_sparse_chunk_size(matrix, i, stride_axis, goal_chunk_nnz)
+
         i2 = i + chunk_size
 
         coords[stride_axis] = slice(i, i2)
-        chunk_coo = sp.coo_matrix(src_matrix[tuple(coords)])
+        chunk_coo = sp.coo_matrix(matrix[tuple(coords)])
 
         chunk_percent = min(100, 100 * (i2 - 1) / dim_max_size)
 
@@ -746,7 +664,7 @@ def _write_matrix_to_sparseNDArray(
             if _chunk_is_contained_in_axis(chunk_bounds, storage_ned, stride_axis):
                 # Print doubly inclusive lo..hi like 0..17 and 18..31.
                 logging.log_io(
-                    "... %7.3f%% done" % (chunk_percent),
+                    "... %7.3f%% done" % chunk_percent,
                     "SKIP   chunk rows %d..%d of %d (%.3f%%), nnz=%d"
                     % (i, i2 - 1, dim_max_size, chunk_percent, chunk_coo.nnz),
                 )
@@ -777,8 +695,8 @@ def _write_matrix_to_sparseNDArray(
 
 
 def _chunk_is_contained_in(
-    chunk_bounds: MNTupleInt,
-    storage_nonempty_domain: MNTupleIntNone,
+    chunk_bounds: Sequence[Tuple[int, int]],
+    storage_nonempty_domain: Optional[Sequence[Tuple[Optional[int], Optional[int]]]],
 ) -> bool:
     """
     Determines if a dim range is included within the array's non-empty domain.  Ranges are inclusive
@@ -796,12 +714,10 @@ def _chunk_is_contained_in(
     user that they declare they are retrying the exact same input file -- and we do our best to
     fulfill their ask by checking the dimension being strided on.
     """
-
     if storage_nonempty_domain is None:
         return False
 
     assert len(chunk_bounds) == len(storage_nonempty_domain)
-
     for i in range(len(chunk_bounds)):
         if not _chunk_is_contained_in_axis(chunk_bounds, storage_nonempty_domain, i):
             return False
@@ -809,26 +725,19 @@ def _chunk_is_contained_in(
 
 
 def _chunk_is_contained_in_axis(
-    chunk_bounds: MNTupleInt,
-    storage_nonempty_domain: MNTupleIntNone,
+    chunk_bounds: Sequence[Tuple[int, int]],
+    storage_nonempty_domain: Sequence[Tuple[Optional[int], Optional[int]]],
     stride_axis: int,
 ) -> bool:
     """
     Helper function for ``_chunk_is_contained_in``.
     """
-
-    if storage_nonempty_domain is None:
-        return False
-
-    assert len(chunk_bounds) == len(storage_nonempty_domain)
-
-    chunk_lo, chunk_hi = chunk_bounds[stride_axis]
     storage_lo, storage_hi = storage_nonempty_domain[stride_axis]
-
     if storage_lo is None or storage_hi is None:
         # E.g. an array has had its schema created but no data written yet
         return False
 
+    chunk_lo, chunk_hi = chunk_bounds[stride_axis]
     if chunk_lo < storage_lo or chunk_lo > storage_hi:
         return False
     if chunk_hi < storage_lo or chunk_hi > storage_hi:
@@ -838,17 +747,10 @@ def _chunk_is_contained_in_axis(
 
 
 # ----------------------------------------------------------------
-def to_h5ad(
-    experiment: Experiment,
-    h5ad_path: Path,
-    measurement_name: str,
-    *,
-    ctx: Optional[tiledb.Ctx] = None,
-) -> None:
+def to_h5ad(experiment: Experiment, h5ad_path: Path, measurement_name: str) -> None:
     """
     Converts the experiment group to anndata format and writes it to the specified .h5ad file.
     """
-
     s = util.get_start_stamp()
     logging.log_io(None, f"START  Experiment.to_h5ad -> {h5ad_path}")
 
@@ -859,24 +761,15 @@ def to_h5ad(
 
     anndata.write_h5ad(h5ad_path)
 
-    logging.log_io(
-        None,
-        util.format_elapsed(s2, f"FINISH write {h5ad_path}"),
-    )
+    logging.log_io(None, util.format_elapsed(s2, f"FINISH write {h5ad_path}"))
 
     logging.log_io(
-        None,
-        util.format_elapsed(s, f"FINISH Experiment.to_h5ad -> {h5ad_path}"),
+        None, util.format_elapsed(s, f"FINISH Experiment.to_h5ad -> {h5ad_path}")
     )
 
 
 # ----------------------------------------------------------------
-def to_anndata(
-    experiment: Experiment,
-    measurement_name: str,
-    *,
-    ctx: Optional[tiledb.Ctx] = None,
-) -> ad.AnnData:
+def to_anndata(experiment: Experiment, measurement_name: str) -> ad.AnnData:
     """
     Converts the experiment group to anndata. Choice of matrix formats is following what we often see in input .h5ad files:
 
@@ -957,9 +850,6 @@ def to_anndata(
         dtype=X_dtype,
     )
 
-    logging.log_io(
-        None,
-        util.format_elapsed(s, "FINISH Experiment.to_anndata"),
-    )
+    logging.log_io(None, util.format_elapsed(s, "FINISH Experiment.to_anndata"))
 
     return anndata
