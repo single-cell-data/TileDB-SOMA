@@ -5,7 +5,7 @@ import numpy as np
 import pyarrow as pa
 import somacore
 import tiledb
-from typing_extensions import get_args
+from somacore import options
 
 # This package's pybind11 code
 import tiledbsoma.libtiledbsoma as clib
@@ -16,16 +16,11 @@ from .collection import CollectionBase
 from .constants import SOMA_JOINID
 from .query_condition import QueryCondition
 from .tiledb_array import TileDBArray
-from .types import (
-    NPFloating,
-    NPInteger,
-    PlatformConfig,
-    ResultOrder,
-    SparseDataFrameCoordinates,
-)
+from .types import NPFloating, NPInteger, PlatformConfig
 from .util_iter import TableReadIter
 
 Slice = TypeVar("Slice", bound=Sequence[int])
+_UNBATCHED = options.BatchSize()
 
 
 class DataFrame(TileDBArray, somacore.DataFrame):
@@ -195,17 +190,19 @@ class DataFrame(TileDBArray, somacore.DataFrame):
 
     def read(
         self,
-        ids: Optional[SparseDataFrameCoordinates] = None,
+        coords: Optional[options.SparseDFCoords] = None,
         column_names: Optional[Sequence[str]] = None,
         *,
-        result_order: Optional[ResultOrder] = "auto",
+        result_order: options.StrOr[somacore.ResultOrder] = "auto",
         value_filter: Optional[str] = None,
-        **_: Any,  # TODO: rest of parameters
+        batch_size: options.BatchSize = _UNBATCHED,
+        partitions: Optional[options.ReadPartitions] = None,
+        platform_config: Optional[PlatformConfig] = None,
     ) -> TableReadIter:
         """
         Read a user-defined subset of data, addressed by the dataframe indexing columns, optionally filtered, and return results as one or more Arrow.Table.
 
-        :param ids: for each index dimension, which rows to read. Defaults to ``None``, meaning no constraint -- all IDs.
+        :param coords: for each index dimension, which rows to read. Defaults to ``None``, meaning no constraint -- all IDs.
 
         :param column_names: the named columns to read and return. Defaults to ``None``, meaning no constraint -- all column names.
 
@@ -215,7 +212,7 @@ class DataFrame(TileDBArray, somacore.DataFrame):
 
         :param value_filter: an optional [value filter] to apply to the results. Defaults to no filter.
 
-        **Indexing**: the ``ids`` parameter will support, per dimension: a list of values of the type of the indexed column.
+        **Indexing**: the ``coords`` parameter will support, per dimension: a list of values of the type of the indexed column.
 
         Acceptable ways to index
         ------------------------
@@ -232,16 +229,13 @@ class DataFrame(TileDBArray, somacore.DataFrame):
           `slice(2,None)` and `slice(None,4)` are both unsupported.
         * Negative indexing is unsupported.
         """
+        del batch_size, partitions, platform_config  # Currently unused.
+        result_order = options.ResultOrder(result_order)
 
         with self._tiledb_open("r") as A:
             query_condition = None
             if value_filter is not None:
                 query_condition = QueryCondition(value_filter)
-
-            if result_order is not None and result_order not in get_args(ResultOrder):
-                raise ValueError(
-                    "result_order must be one of " + ", ".join(get_args(ResultOrder))
-                )
 
             sr = clib.SOMAReader(
                 self._uri,
@@ -250,39 +244,39 @@ class DataFrame(TileDBArray, somacore.DataFrame):
                 column_names=column_names,
                 query_condition=query_condition,
                 platform_config={} if self._ctx is None else self._ctx.config().dict(),
-                result_order=(result_order or "auto"),
+                result_order=result_order.value,
             )
 
-            if ids is not None:
-                if not isinstance(ids, (list, tuple)):
+            if coords is not None:
+                if not isinstance(coords, (list, tuple)):
                     raise TypeError(
-                        f"ids type {type(ids)} unsupported; expected list or tuple"
+                        f"coords type {type(coords)} unsupported; expected list or tuple"
                     )
-                if len(ids) < 1 or len(ids) > A.schema.domain.ndim:
+                if len(coords) < 1 or len(coords) > A.schema.domain.ndim:
                     raise ValueError(
-                        f"ids {ids} must have length between 1 and ndim ({A.schema.domain.ndim}); got {len(ids)}"
+                        f"coords {coords} must have length between 1 and ndim ({A.schema.domain.ndim}); got {len(coords)}"
                     )
 
-                for i, dim_ids in enumerate(ids):
-                    # Example: ids = [None, 3, slice(4,5)]
-                    # dim_ids takes on values None, 3, and slice(4,5) in this loop body.
+                for i, dim_coords in enumerate(coords):
+                    # Example: coords = [None, 3, slice(4,5)]
+                    # dim_coords takes on values None, 3, and slice(4,5) in this loop body.
                     dim_name = A.schema.domain.dim(i).name
-                    if dim_ids is None:
+                    if dim_coords is None:
                         pass  # No constraint; select all in this dimension
-                    elif isinstance(dim_ids, int) or isinstance(dim_ids, str):
+                    elif isinstance(dim_coords, int) or isinstance(dim_coords, str):
                         # TO DO: Support index types other than int and string when we have support
                         # in libtiledbsoma's SOMAReader. See also
                         # https://github.com/single-cell-data/TileDB-SOMA/issues/419
-                        sr.set_dim_points(dim_name, [dim_ids])
-                    elif isinstance(dim_ids, np.ndarray):
-                        if dim_ids.ndim != 1:
+                        sr.set_dim_points(dim_name, [dim_coords])
+                    elif isinstance(dim_coords, np.ndarray):
+                        if dim_coords.ndim != 1:
                             raise ValueError(
-                                f"only 1D numpy arrays may be used to index; got {dim_ids.ndim}"
+                                f"only 1D numpy arrays may be used to index; got {dim_coords.ndim}"
                             )
-                        sr.set_dim_points(dim_name, dim_ids)
-                    elif isinstance(dim_ids, slice):
+                        sr.set_dim_points(dim_name, dim_coords)
+                    elif isinstance(dim_coords, slice):
                         ned = A.nonempty_domain()  # None iff the array has no data
-                        lo_hi = util.slice_to_range(dim_ids, ned[i]) if ned else None
+                        lo_hi = util.slice_to_range(dim_coords, ned[i]) if ned else None
                         if lo_hi is not None:
                             lo, hi = lo_hi
                             if lo < 0 or hi < 0:
@@ -294,12 +288,13 @@ class DataFrame(TileDBArray, somacore.DataFrame):
                         # Else, no constraint in this slot. This is `slice(None)` which is like
                         # Python indexing syntax `[:]`.
                     elif isinstance(
-                        dim_ids, (collections.abc.Sequence, pa.Array, pa.ChunkedArray)
+                        dim_coords,
+                        (collections.abc.Sequence, pa.Array, pa.ChunkedArray),
                     ):
-                        sr.set_dim_points(dim_name, dim_ids)
+                        sr.set_dim_points(dim_name, dim_coords)
                     else:
                         raise TypeError(
-                            f"dim_ids type {type(dim_ids)} at slot {i} unsupported"
+                            f"coords[{i}] type {type(dim_coords)} is unsupported"
                         )
 
             # TODO: platform_config

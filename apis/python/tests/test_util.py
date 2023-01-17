@@ -1,4 +1,5 @@
 import pytest
+from somacore import ResultOrder
 
 from tiledbsoma.util import dense_index_to_shape, dense_indices_to_shape, uri_joinpath
 
@@ -60,37 +61,37 @@ def test_dense_index_to_shape(io):
         {
             "coord": (1,),
             "input_shape": (10,),
-            "result_order": "row-major",
+            "result_order": ResultOrder.ROW_MAJOR,
             "output_shape": (1,),
         },
         {
             "coord": (1,),
             "input_shape": (10,),
-            "result_order": "col-major",
+            "result_order": ResultOrder.COLUMN_MAJOR,
             "output_shape": (1,),
         },
         {
             "coord": (1, 2),
             "input_shape": (10, 20, 30),
-            "result_order": "row-major",
+            "result_order": ResultOrder.ROW_MAJOR,
             "output_shape": (1, 1, 30),
         },
         {
             "coord": (1, 2),
             "input_shape": (10, 20, 30),
-            "result_order": "col-major",
+            "result_order": ResultOrder.COLUMN_MAJOR,
             "output_shape": (30, 1, 1),
         },
         {
             "coord": (1, 2, 3),
             "input_shape": (10, 20, 30),
-            "result_order": "row-major",
+            "result_order": ResultOrder.ROW_MAJOR,
             "output_shape": (1, 1, 1),
         },
         {
             "coord": (1, 2, 3),
             "input_shape": (10, 20, 30),
-            "result_order": "col-major",
+            "result_order": ResultOrder.COLUMN_MAJOR,
             "output_shape": (1, 1, 1),
         },
     ],
@@ -108,13 +109,13 @@ def test_dense_indices_to_shape(io):
         {
             "coord": (1, 2, 3, 4),
             "input_shape": (10, 20, 30),
-            "result_order": "row-major",
+            "result_order": ResultOrder.ROW_MAJOR,
             "throws": ValueError,
         },
         {
             "coord": (1, 2, 3, 4),
             "input_shape": (10, 20, 30),
-            "result_order": "col-major",
+            "result_order": ResultOrder.COLUMN_MAJOR,
             "throws": ValueError,
         },
     ],
