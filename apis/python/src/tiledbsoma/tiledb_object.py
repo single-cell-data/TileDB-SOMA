@@ -26,6 +26,11 @@ class TileDBObject(ABC, somacore.SOMAObject):
     _context: SOMATileDBContext
     _metadata: MetadataMapping
 
+    # "r", "w", or falsey
+    _open_mode: str = ""
+    # iff open: child contexts to exit when self is exited/closed
+    _close_stack: ExitStack
+
     def __init__(
         self,
         # All objects:
@@ -55,6 +60,7 @@ class TileDBObject(ABC, somacore.SOMAObject):
             self._context = context or SOMATileDBContext()
 
         self._metadata = MetadataMapping(self)
+        self._close_stack = ExitStack()
 
     @property
     def context(self) -> SOMATileDBContext:
@@ -125,12 +131,7 @@ class TileDBObject(ABC, somacore.SOMAObject):
         except tiledb.cc.TileDBError:
             return False
 
-    # "r", "w", or falsey
-    _open_mode: str = ""
-    # iff open: child contexts to exit when self is exited/closed
-    _close_stack: Optional[ExitStack] = None
-
-    def open(self: TTileDBObject, mode="r") -> TTileDBObject:
+    def open(self: TTileDBObject, mode: str = "r") -> TTileDBObject:
         """
         Open the object for a series of read or write operations. This is optional, but makes a
         series of small operations more efficient by allowing reuse of handles and metadata. If
@@ -149,7 +150,6 @@ class TileDBObject(ABC, somacore.SOMAObject):
         if self._open_mode:
             raise RuntimeError("TileDBObject is already open")
         self._open_mode = mode
-        self._close_stack = ExitStack()
         return self
 
     def close(self) -> None:
@@ -159,10 +159,7 @@ class TileDBObject(ABC, somacore.SOMAObject):
         """
         if self._open_mode:
             self._open_mode = ""
-            stack = self._close_stack
-            assert stack
-            self._close_stack = None
-            stack.close()
+            self._close_stack.close()
 
     def __enter__(self: TTileDBObject) -> TTileDBObject:
         assert self._open_mode, "use TileDBObject.open() as context manager"
