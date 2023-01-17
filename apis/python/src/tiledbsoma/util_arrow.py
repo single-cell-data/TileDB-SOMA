@@ -1,6 +1,7 @@
 from typing import Any, Dict, Optional, Union
 
 import numpy as np
+import numpy.typing as npt
 import pyarrow as pa
 import tiledb
 
@@ -43,21 +44,7 @@ ARROW_TO_TDB: Dict[Any, Union[str, TypeError]] = {
 }
 
 
-def tiledb_type_from_arrow_type_for_write(t: pa.DataType) -> Union[type, np.dtype, str]:
-    """
-    Same as ``tiledb_type_from_arrow_type`` except that this is used for writing to a TileDB array.
-    The syntax of TileDB-Py is such that when we want to create a schema with an ASCII column,
-    we use the string ``"ascii"`` in place of a dtype. But when we want to write data, we need to
-    use a dtype of ``np.str``, which is now deprecated in favor of simply ``str``.
-    """
-    retval = tiledb_type_from_arrow_type(t)
-    if retval == "ascii":
-        return str
-    else:
-        return retval
-
-
-def tiledb_type_from_arrow_type(t: pa.DataType) -> Union[type, np.dtype, str]:
+def tiledb_type_from_arrow_type(t: pa.DataType) -> npt.DTypeLike:
     """
     Given an Arrow type, return the corresponding TileDB type as a Numpy dtype.
     Building block for Arrow-to-TileDB schema translation.
@@ -106,7 +93,7 @@ def tiledb_type_from_arrow_type(t: pa.DataType) -> Union[type, np.dtype, str]:
 
 
 def get_arrow_type_from_tiledb_dtype(
-    tiledb_dtype: Union[str, np.dtype], *, bytes_are_ascii: Optional[bool] = False
+    tiledb_dtype: npt.DTypeLike, bytes_are_ascii: bool = True
 ) -> pa.DataType:
     """
     Maps a TileDB dtype (``'bytes'``, ``'ascii'``, or an ``np.dtype``) to an Arrow type.  Note that
@@ -141,9 +128,7 @@ def get_arrow_schema_from_tiledb_uri(
             name = dim.name
             if name == "":
                 name = "unnamed"
-            arrow_schema_dict[name] = get_arrow_type_from_tiledb_dtype(
-                dim.dtype, bytes_are_ascii=True
-            )
+            arrow_schema_dict[name] = get_arrow_type_from_tiledb_dtype(dim.dtype)
 
         for i in range(A.schema.nattr):
             attr = A.schema.attr(i)
@@ -151,7 +136,7 @@ def get_arrow_schema_from_tiledb_uri(
             if name == "":
                 name = "unnamed"
             arrow_schema_dict[name] = get_arrow_type_from_tiledb_dtype(
-                attr.dtype, bytes_are_ascii=attr.isascii
+                attr.dtype, attr.isascii
             )
 
     return pa.schema(arrow_schema_dict)

@@ -3,13 +3,12 @@ from typing import Any, List, Optional, Union, cast
 
 import numpy as np
 import pyarrow as pa
+import somacore
 import tiledb
-from typing_extensions import Final
 
 # This package's pybind11 code
 import tiledbsoma.libtiledbsoma as clib
 
-from . import somacore  # to be replaced by somacore package, when available
 from . import util, util_arrow
 from .collection import CollectionBase
 from .soma_tiledb_context import SOMATileDBContext
@@ -24,7 +23,7 @@ from .util_iter import (
 )
 
 
-class SparseNDArray(TileDBArray):
+class SparseNDArray(TileDBArray, somacore.SparseNDArray):
     """
     Represents ``X`` and others.
     """
@@ -42,7 +41,8 @@ class SparseNDArray(TileDBArray):
 
         super().__init__(uri=uri, parent=parent, context=context)
 
-    soma_type: Final = "SOMASparseNDArray"
+    # Inherited from somacore
+    # soma_type: Final = "SOMASparseNDArray"
 
     def create(
         self,
@@ -146,7 +146,8 @@ class SparseNDArray(TileDBArray):
         """
         return len(self.shape)
 
-    is_sparse: Final = True
+    # Inherited from somacore
+    # is_sparse: Final = True
 
     @property
     def nnz(self) -> int:
@@ -163,9 +164,8 @@ class SparseNDArray(TileDBArray):
 
     def read(
         self,
-        coords: Optional[SparseNdCoordinates] = None,
-        # *,
-        # TODO: missing parameters
+        slices: Optional[SparseNdCoordinates] = None,
+        **_: Any,  # TODO: missing parameters
     ) -> "SparseNDArrayRead":
         """
         Read a user-defined slice of the SparseNDArray.
@@ -195,8 +195,8 @@ class SparseNDArray(TileDBArray):
         SparseNDArrayRead - which can be used to access an iterator of results in various formats.
         """
 
-        if coords is None:
-            coords = (slice(None),)
+        if slices is None:
+            slices = (slice(None),)
 
         with self._tiledb_open("r") as A:
             shape = A.shape
@@ -207,16 +207,16 @@ class SparseNDArray(TileDBArray):
                 platform_config={} if self._ctx is None else self._ctx.config().dict(),
             )
 
-            if not isinstance(coords, (list, tuple)):
+            if not isinstance(slices, (list, tuple)):
                 raise TypeError(
-                    f"coords type {type(coords)} unsupported; expected list or tuple"
+                    f"coords type {type(slices)} unsupported; expected list or tuple"
                 )
-            if len(coords) < 1 or len(coords) > A.schema.domain.ndim:
+            if len(slices) < 1 or len(slices) > A.schema.domain.ndim:
                 raise ValueError(
-                    f"coords {coords} must have length between 1 and ndim ({A.schema.domain.ndim}); got {len(coords)}"
+                    f"coords {slices} must have length between 1 and ndim ({A.schema.domain.ndim}); got {len(slices)}"
                 )
 
-            for i, coord in enumerate(coords):
+            for i, coord in enumerate(slices):
                 #                # Example: coords = [None, 3, slice(4,5)]
                 #                # coord takes on values None, 3, and slice(4,5) in this loop body.
                 dim_name = A.schema.domain.dim(i).name
@@ -264,6 +264,7 @@ class SparseNDArray(TileDBArray):
             pa.SparseCSCMatrix,
             pa.Table,
         ],
+        **_: Any,  # TODO: missing parameters
     ) -> None:
         """
         Write an Arrow object to the SparseNDArray.

@@ -1,6 +1,8 @@
-from abc import ABC, abstractmethod, abstractproperty
-from typing import Optional, Union, cast
+import os
+from abc import ABC, abstractmethod
+from typing import Dict, Optional, Union
 
+import somacore
 import tiledb
 
 from . import util
@@ -8,7 +10,7 @@ from .metadata_mapping import MetadataMapping
 from .soma_tiledb_context import SOMATileDBContext
 
 
-class TileDBObject(ABC):
+class TileDBObject(ABC, somacore.SOMAObject):
     """
     Base class for ``TileDBArray`` and ``Collection``.
 
@@ -55,6 +57,24 @@ class TileDBObject(ABC):
     @property
     def _ctx(self) -> tiledb.Ctx:
         return self._context.tiledb_ctx
+||||||| 95241d7
+    def _default_ctx(self) -> tiledb.Ctx:
+        """
+        The TileDB context used when no other is supplied. Must have good defaults for positive
+        out-of-the-box UX.
+        """
+
+        cfg = {}
+
+        # This is necessary for smaller tile capacities when querying with a smaller memory budget.
+        cfg["sm.mem.reader.sparse_global_order.ratio_array_data"] = 0.3
+
+        # Temp workaround pending https://app.shortcut.com/tiledb-inc/story/23827
+        region = os.getenv("AWS_DEFAULT_REGION")
+        if region is not None:
+            cfg["vfs.s3.region"] = cast(str, region)  # type: ignore
+
+        return tiledb.Ctx(cfg)
 
     @property
     def metadata(self) -> MetadataMapping:
@@ -97,13 +117,6 @@ class TileDBObject(ABC):
         """
         return self._uri
 
-    @abstractproperty
-    def soma_type(self) -> str:
-        """
-        Returns the SOMA object type, e.g. "SOMADataFrame".
-        """
-        ...
-
     def exists(self) -> bool:
         """
         Returns true if the object exists and has the desired class name.
@@ -118,7 +131,9 @@ class TileDBObject(ABC):
         # before a third, successful HTTP request for group-open.  Instead, we directly attempt the
         # group-open request, checking for an exception.
         try:
-            return self._get_soma_type_from_metadata() == self.soma_type
+            return (
+                self._metadata.get(util.SOMA_OBJECT_TYPE_METADATA_KEY) == self.soma_type
+            )
         except tiledb.cc.TileDBError:
             return False
 
@@ -129,13 +144,9 @@ class TileDBObject(ABC):
 
     def _common_create(self, soma_type: str) -> None:
         """
-        Utility method for various constructors.
-        """
-        self._set_object_type_metadata(soma_type)
-
-    def _set_object_type_metadata(self, soma_type: str) -> None:
-        """
-        This helps nested-structure traversals (especially those that start at the Collection level) confidently navigate with a minimum of introspection on group contents.
+        This helps nested-structure traversals (especially those that start at the
+        Collection level) confidently navigate with a minimum of introspection on group
+        contents.
         """
         # TODO: make a multi-set in MetadataMapping that would avoid a double-open there.
         with self._tiledb_open("w") as obj:
@@ -145,9 +156,3 @@ class TileDBObject(ABC):
                     util.SOMA_ENCODING_VERSION_METADATA_KEY: util.SOMA_ENCODING_VERSION,
                 }
             )
-
-    def _get_soma_type_from_metadata(self) -> str:
-        """
-        Returns the class name associated with the group/array.
-        """
-        return cast(str, self._metadata.get(util.SOMA_OBJECT_TYPE_METADATA_KEY))

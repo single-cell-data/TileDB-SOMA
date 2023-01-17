@@ -13,14 +13,14 @@ def build_default_tiledb_ctx() -> tiledb.Ctx:
 
     # Note: Defaults must provide positive out-of-the-box UX!
 
-    cfg = {"sm.mem.reader.sparse_global_order.ratio_array_data": 0.3}
+    cfg: Dict[str, Union[str, float]] = {"sm.mem.reader.sparse_global_order.ratio_array_data": 0.3}
 
     # This is necessary for smaller tile capacities when querying with a smaller memory budget.
 
     # Temp workaround pending https://app.shortcut.com/tiledb-inc/story/23827
     region = os.getenv("AWS_DEFAULT_REGION")
     if region is not None:
-        cfg["vfs.s3.region"] = cast(str, region)  # type: ignore
+        cfg["vfs.s3.region"] = region
 
     return tiledb.Ctx(cfg)
 

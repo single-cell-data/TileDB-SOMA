@@ -39,6 +39,7 @@ class Experiment(CollectionBase[TileDBObject]):
         """
         super().__init__(uri=uri, parent=parent, context=context)
 
+    # Inherited from somacore
     soma_type: Final = "SOMAExperiment"
 
     def create(self) -> "Experiment":

@@ -13,8 +13,6 @@
 # Based on ideas from https://github.com/pybind/cmake_example
 # The `bld` script here is reused for pip install, CI, and local builds.
 
-# type: ignore
-
 import pathlib
 import shutil
 import subprocess
@@ -109,9 +107,10 @@ setuptools.setup(
         "attrs>=22.1",
         "numpy",
         "pandas",
-        "pyarrow",
+        "pyarrow >= 9.0.0",
         "scanpy",
         "scipy",
+        "somacore==0.0.0a2",
         "tiledb>=0.19.0",
         "typing-extensions",  # Note "-" even though `import typing_extensions`
     ],

@@ -11,7 +11,7 @@ from .general_utilities import (
 )
 from .measurement import Measurement
 from .metadata_mapping import MetadataMapping
-from .query_condition import QueryCondition  # type: ignore
+from .query_condition import QueryCondition
 from .soma_tiledb_context import SOMATileDBContext
 from .sparse_nd_array import SparseNDArray
 from .tiledb_array import TileDBArray

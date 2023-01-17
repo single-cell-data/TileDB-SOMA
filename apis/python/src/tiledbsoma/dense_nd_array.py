@@ -2,8 +2,8 @@ from typing import Any, List, Optional, Union, cast
 
 import numpy as np
 import pyarrow as pa
+import somacore
 import tiledb
-from typing_extensions import Final
 
 # This package's pybind11 code
 import tiledbsoma.libtiledbsoma as clib
@@ -19,7 +19,7 @@ from .tiledb_create_options import TileDBCreateOptions
 from .types import DenseNdCoordinates, NTuple, ResultOrder
 
 
-class DenseNDArray(TileDBArray):
+class DenseNDArray(TileDBArray, somacore.DenseNDArray):
     """
     Represents ``X`` and others.
     """
@@ -36,7 +36,8 @@ class DenseNDArray(TileDBArray):
         """
         super().__init__(uri=uri, parent=parent, context=context)
 
-    soma_type: Final = "SOMADenseNDArray"
+    # Inherited from somacore
+    # soma_type: Final = "SOMADenseNDArray"
 
     def create(
         self,
@@ -139,13 +140,15 @@ class DenseNDArray(TileDBArray):
         with self._tiledb_open() as A:
             return cast(int, A.schema.domain.ndim)
 
-    is_sparse: Final = False
+    # Inherited from somacore
+    # is_sparse: Final = False
 
     def read(
         self,
         coords: DenseNdCoordinates,
         *,
         result_order: ResultOrder = "row-major",
+        **_: Any,  # TODO: remaining params
     ) -> pa.Tensor:
         """
         Read a user-defined dense slice of the array and return as an Arrow ``Tensor``.
@@ -230,6 +233,7 @@ class DenseNDArray(TileDBArray):
         self,
         coords: DenseNdCoordinates,
         values: pa.Tensor,
+        **_: Any,  # TODO: missing args
     ) -> None:
         """
         Write subarray, defined by ``coords`` and ``values``. Will overwrite existing

@@ -45,8 +45,19 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
 
-    - name: Install Python packages
-      run: python -m pip -v install pytest pytest-cov typeguard typing_extensions apis/python
+    - name: Install testing/linting prereqs
+      run: python -m pip -v install -U pip pytest-cov typeguard pre-commit mypy types-setuptools
+
+    - name: Run pre-commit hooks on all files
+      if: matrix.os == 'ubuntu-22.04' && matrix.python-version == '3.9'
+      run: pre-commit run -a -v
+
+    - name: Check C++ Format
+      if: matrix.os == 'ubuntu-22.04' && matrix.python-version == '3.9'
+      run: ./scripts/run-clang-format.sh . clang-format 0 $(find libtiledbsoma -name "*.cc" -or -name "*.h")
+
+    - name: Install tiledbsoma
+      run: python -m pip -v install -e apis/python
       env:
         CC: ${{ matrix.cc }}
         CXX: ${{ matrix.cxx }}
@@ -56,6 +67,11 @@ jobs:
 
     - name: Show XCode version
       run: clang --version
+
+    - name: Check type annotations with mypy
+      if: matrix.os == 'ubuntu-22.04' && matrix.python-version == '3.9'
+      working-directory: apis/python
+      run: python -m mypy .
 
     - name: Generate test data
       shell: bash

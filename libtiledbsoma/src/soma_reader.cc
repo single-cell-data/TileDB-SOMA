@@ -89,7 +89,7 @@ SOMAReader::SOMAReader(
         LOG_DEBUG(fmt::format("timestamp = {}", array->open_timestamp_end()));
     } catch (const std::exception& e) {
         throw TileDBSOMAError(
-            fmt::format("Error opening array: {}\n  {}", uri_, e.what()));
+            fmt::format("Error opening array: '{}'\n  {}", uri_, e.what()));
     }
 
     reset(column_names, batch_size, result_order);
@@ -116,7 +116,7 @@ void SOMAReader::reset(
             layout = TILEDB_COL_MAJOR;
         } else {
             throw TileDBSOMAError(
-                fmt::format("Unknown result_order {}", result_order));
+                fmt::format("Unknown result_order '{}'", result_order));
         }
         mq_->set_layout(layout);
     }
