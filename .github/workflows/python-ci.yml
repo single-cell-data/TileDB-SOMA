@@ -16,6 +16,7 @@ jobs:
       fail-fast: false
       matrix:
         if: github.event_name != "pull_request"
+          # Note: the `pull_request` and `push` events are the same unless one uses a fork-repo model
           # TODO: restore Windows build once we have C++/libtiledbsoma integration supported there
           os: [ubuntu-22.04, macos-12]
           # os: [ubuntu-22.04, macos-12, windows-2019]
