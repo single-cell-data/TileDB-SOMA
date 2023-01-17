@@ -79,19 +79,11 @@ class TileDBArray(TileDBObject):
     # lazy tiledb.Array handle for reuse while self is "open"
     _open_tiledb_array: Optional[tiledb.Array] = None
 
-    def _tiledb_reader(self) -> tiledb.Array:
-        assert self._open_mode == "r", "Array isn't open for reading"
+    def _tiledb_array(self) -> tiledb.Array:
+        assert self._open_mode in ("r", "w")
         if self._open_tiledb_array is None:
             self._open_tiledb_array = self._close_stack.enter_context(
-                self._tiledb_open("r")
-            )
-        return self._open_tiledb_array
-
-    def _tiledb_writer(self) -> tiledb.Array:
-        assert self._open_mode == "w", "Array isn't open for writing"
-        if self._open_tiledb_array is None:
-            self._open_tiledb_array = self._close_stack.enter_context(
-                self._tiledb_open("w")
+                self._tiledb_open(self._open_mode)
             )
         return self._open_tiledb_array
 

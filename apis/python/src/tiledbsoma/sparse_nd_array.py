@@ -205,7 +205,8 @@ class SparseNDArray(TileDBArray, somacore.SparseNDArray):
             # If self isn't open, open it just for the scope of this operation
             if not self._open_mode:
                 cleanup.enter_context(self.open("r"))
-            A = self._tiledb_reader()
+            assert self._open_mode == "r"
+            A = self._tiledb_array()
             shape = A.shape
 
             sr = clib.SOMAReader(
@@ -291,7 +292,8 @@ class SparseNDArray(TileDBArray, somacore.SparseNDArray):
             # If self isn't open, open it just for the scope of this operation
             if not self._open_mode:
                 cleanup.enter_context(self.open("w"))
-            A = self._tiledb_writer()
+            assert self._open_mode == "w"
+            A = self._tiledb_array()
 
             if isinstance(values, pa.SparseCOOTensor):
                 data, coords = values.to_numpy()
