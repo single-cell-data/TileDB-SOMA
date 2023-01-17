@@ -122,9 +122,7 @@ class CollectionBase(TileDBObject, somacore.Collection[CollectionElementType]):
         return 0 if self._cached_values is None else len(self._cached_values)
 
     def __getitem__(self, key: str) -> CollectionElementType:
-        """
-        Gets the value associated with the key.
-        """
+        """Gets the value associated with the key."""
         err_str = f"{self.__class__.__name__} has no attribute '{key}'"
 
         # Load cached TileDB Group if not yet loaded or if key not in cache.
