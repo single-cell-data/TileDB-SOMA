@@ -20,14 +20,15 @@ jobs:
         # os: [ubuntu-22.04, macos-12, windows-2019]
         python-version: ['3.7', '3.8', '3.9', '3.10']
         # Note: the `pull_request` and `push` events are the same unless one uses a fork-repo model.
-        # We intentionally ration use of MacOS since the concurrency caps for tiers
+        #
+        # Not: we intentionally ration use of MacOS since the concurrency caps for tiers
         # Free/Pro/Team/Enterprise, respectively, are 5/5/5/50 -- not say 5/10/25/50.  In practice
         # we find that the number of concurrent MacOS runners is the number one throttle on our CI.
         # Running MacOS CI immediately post-merge is an acceptable tradeoff.
         # See also
         # * https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows
         isPR:
-          - ${{ github.event_name == "pull_request" }}
+            - ${{ github.event_name == 'pull_reauest' }}
         include:
           - runs-on: ubuntu-22.04
             cc: gcc-11
@@ -37,7 +38,7 @@ jobs:
             cxx: g++-11
         exclude:
           - isPR: true
-            os: macos-12
+            os: [macos-12]
           - isPR: true
             python-version: ['3.8', '3.9']
 
