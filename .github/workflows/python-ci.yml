@@ -28,7 +28,7 @@ jobs:
         # See also
         # * https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows
         isPR:
-            - ${{ github.event_name == 'pull_reauest' }}
+            - ${{ github.event_name == 'pull_request' }}
         include:
           - runs-on: ubuntu-22.04
             cc: gcc-11
