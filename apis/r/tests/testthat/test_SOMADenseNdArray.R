@@ -22,7 +22,7 @@ test_that("SOMADenseNDArray creation", {
     as.numeric(mat)
   )
 
-  expect_equal(tbl$read_dense_matrix(), mat)
+  expect_equal(ndarray$read_dense_matrix(), mat)
 
   # Subset the array on both dimensions
   tbl <- ndarray$read_arrow_table(
