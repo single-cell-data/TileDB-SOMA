@@ -15,31 +15,25 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        if: github.event_name != "pull_request"
-          # Note: the `pull_request` and `push` events are the same unless one uses a fork-repo model
-          # TODO: restore Windows build once we have C++/libtiledbsoma integration supported there
-          os: [ubuntu-22.04, macos-12]
-          # os: [ubuntu-22.04, macos-12, windows-2019]
-          python-version: ['3.7', '3.8', '3.9', '3.10']
-          include:
-            - runs-on: ubuntu-22.04
-              cc: gcc-11
-              cxx: g++-11
-            - runs-on: macos-12
-              cc: gcc-11
-              cxx: g++-11
-        if: github.event_name == "pull_request"
-          # GHA MacOS caps for tiers Free/Pro/Team/Enterprise are 5/5/5/50 :(
-          # -- not 5/10/25/50 or anything reasonable :(.
-          # Since most of our CI activity is people pushing multiple iterations
-          # of PRs, let's ration some resources for that use-case, and save
-          # the full coverage for PR merges and releases.
-          os: [ubuntu-22.04]
-          python-version: ['3.7', '3.10']
-          include:
-            - runs-on: ubuntu-22.04
-              cc: gcc-11
-              cxx: g++-11
+        # TODO: restore Windows build once we have C++/libtiledbsoma integration supported there
+        os: [ubuntu-22.04, macos-12]
+        # os: [ubuntu-22.04, macos-12, windows-2019]
+        python-version: ['3.7', '3.8', '3.9', '3.10']
+        # Note: the `pull_request` and `push` events are the same unless one uses a fork-repo model.
+        # We intentionally ration use of MacOS since the concurrency caps for tiers
+        # Free/Pro/Team/Enterprise, respectively, are 5/5/5/50 -- not say 5/10/25/50.  In practice
+        # we find that the number of concurrent MacOS runners is the number one throttle on our CI.
+        # Running MacOS CI immediately post-merge is an acceptable tradeoff.
+        include:
+          - runs-on: ubuntu-22.04
+            cc: gcc-11
+            cxx: g++-11
+          - runs-on: macos-12
+            cc: gcc-11
+            cxx: g++-11
+          - if: github.event_name == "pull_request" or github.event_name == "push"
+            os: [ubuntu-22.04]
+            python-version: ['3.7', '3.10']
 
     steps:
     - name: Select XCode version
