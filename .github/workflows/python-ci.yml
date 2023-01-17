@@ -4,10 +4,13 @@ on:
   pull_request:
     paths-ignore:
       - 'apis/r/**'
+    isPR: true
   push:
     branches: [main]
+    isPR: false
   release:
     types: [published]
+    isPR: false
 
 jobs:
   build:
@@ -27,8 +30,6 @@ jobs:
         # Running MacOS CI immediately post-merge is an acceptable tradeoff.
         # See also
         # * https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows
-        isPR:
-            - ${{ github.event_name == 'pull_reauest' }}
         include:
           - runs-on: ubuntu-22.04
             cc: gcc-11
