@@ -24,6 +24,10 @@ jobs:
         # Free/Pro/Team/Enterprise, respectively, are 5/5/5/50 -- not say 5/10/25/50.  In practice
         # we find that the number of concurrent MacOS runners is the number one throttle on our CI.
         # Running MacOS CI immediately post-merge is an acceptable tradeoff.
+        # See also
+        # * https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows
+        isPR:
+          - ${{ github.event_name == "pull_request" }}
         include:
           - runs-on: ubuntu-22.04
             cc: gcc-11
@@ -31,9 +35,11 @@ jobs:
           - runs-on: macos-12
             cc: gcc-11
             cxx: g++-11
-          - if: github.event_name == "pull_request" or github.event_name == "push"
-            os: [ubuntu-22.04]
-            python-version: ['3.7', '3.10']
+        exclude:
+          - isPR: true
+            os: macos-12
+          - isPR: true
+            python-version: ['3.8', '3.9']
 
     steps:
     - name: Select XCode version
