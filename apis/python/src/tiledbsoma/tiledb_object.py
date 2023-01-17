@@ -1,6 +1,5 @@
-import os
 from abc import ABC, abstractmethod
-from typing import Dict, Optional, Union
+from typing import Optional, Union
 
 import somacore
 import tiledb
@@ -57,24 +56,6 @@ class TileDBObject(ABC, somacore.SOMAObject):
     @property
     def _ctx(self) -> tiledb.Ctx:
         return self._context.tiledb_ctx
-||||||| 95241d7
-    def _default_ctx(self) -> tiledb.Ctx:
-        """
-        The TileDB context used when no other is supplied. Must have good defaults for positive
-        out-of-the-box UX.
-        """
-
-        cfg = {}
-
-        # This is necessary for smaller tile capacities when querying with a smaller memory budget.
-        cfg["sm.mem.reader.sparse_global_order.ratio_array_data"] = 0.3
-
-        # Temp workaround pending https://app.shortcut.com/tiledb-inc/story/23827
-        region = os.getenv("AWS_DEFAULT_REGION")
-        if region is not None:
-            cfg["vfs.s3.region"] = cast(str, region)  # type: ignore
-
-        return tiledb.Ctx(cfg)
 
     @property
     def metadata(self) -> MetadataMapping:

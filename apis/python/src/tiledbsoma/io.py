@@ -8,7 +8,6 @@ import numpy as np
 import pandas as pd
 import pyarrow as pa
 import scipy.sparse as sp
-import tiledb
 from anndata._core.sparse_dataset import SparseDataset
 
 import tiledbsoma.eta as eta
@@ -30,7 +29,7 @@ from tiledbsoma.exception import SOMAError
 from .constants import SOMA_JOINID
 from .soma_tiledb_context import SOMATileDBContext
 from .tiledb_create_options import TileDBCreateOptions
-from .types import INGEST_MODES, IngestMode, NDArray, Path, PlatformConfig
+from .types import INGEST_MODES, IngestMode, NDArray, Path
 
 SparseMatrix = Union[sp.csr_matrix, sp.csc_matrix, SparseDataset]
 Matrix = Union[NDArray, SparseMatrix]
@@ -431,11 +430,22 @@ def create_from_matrix(
         util.format_elapsed(s, f"START  WRITING {soma_ndarray.uri}"),
     )
 
+    platform_config = platform_config or TileDBCreateOptions()
+
     if isinstance(soma_ndarray, DenseNDArray):
-        _write_matrix_to_denseNDArray(soma_ndarray, matrix, platform_config=platform_config, ingest_mode=ingest_mode)
+        _write_matrix_to_denseNDArray(
+            soma_ndarray,
+            matrix,
+            platform_config=platform_config,
+            ingest_mode=ingest_mode,
+        )
     else:  # SOMASparseNDArray
-        _write_matrix_to_sparseNDArray(soma_ndarray, matrix, platform_config=platform_config,
-            ingest_mode=ingest_mode)
+        _write_matrix_to_sparseNDArray(
+            soma_ndarray,
+            matrix,
+            platform_config=platform_config,
+            ingest_mode=ingest_mode,
+        )
 
     logging.log_io(
         f"Wrote   {soma_ndarray.uri}",
@@ -446,12 +456,10 @@ def create_from_matrix(
 def _write_matrix_to_denseNDArray(
     soma_ndarray: DenseNDArray,
     matrix: Union[Matrix, h5py.Dataset],
-    platform_config: Optional[TileDBCreateOptions] = None,
+    platform_config: TileDBCreateOptions,
     ingest_mode: IngestMode,
 ) -> None:
     """Write a matrix to an empty DenseNDArray"""
-
-    platform_config = platform_config or TileDBCreateOptions()
 
     # There is a chunk-by-chunk already-done check for resume mode, below.
     # This full-matrix-level check here might seem redundant, but in fact it's important:
@@ -592,13 +600,12 @@ def _find_sparse_chunk_size(
 
 
 def _write_matrix_to_sparseNDArray(
-    soma_ndarray: SparseNDArray, matrix: Matrix,
-    platform_config: Optional[TileDBCreateOptions] = None,
-    ingest_mode: IngestMode
+    soma_ndarray: SparseNDArray,
+    matrix: Matrix,
+    platform_config: TileDBCreateOptions,
+    ingest_mode: IngestMode,
 ) -> None:
     """Write a matrix to an empty DenseNDArray"""
-
-    platform_config = platform_config or TileDBCreateOptions()
 
     def _coo_to_table(mat_coo: sp.coo_matrix, axis: int = 0, base: int = 0) -> pa.Table:
         pydict = {

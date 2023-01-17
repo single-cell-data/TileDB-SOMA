@@ -13,16 +13,11 @@ import tiledbsoma.libtiledbsoma as clib
 from . import util, util_arrow
 from .collection import CollectionBase
 from .constants import SOMA_JOINID
-from .query_condition import QueryCondition
 from .query_condition import QueryCondition  # type: ignore
+from .soma_tiledb_context import SOMATileDBContext
 from .tiledb_array import TileDBArray
 from .tiledb_create_options import TileDBCreateOptions
-from .types import (
-    NPFloating,
-    NPInteger,
-    PlatformConfig,
-    ResultOrder,
-    SparseDataFrameCoordinates,
+from .types import NPFloating, NPInteger, ResultOrder, SparseDataFrameCoordinates
 from .util_iter import TableReadIter
 
 Slice = TypeVar("Slice", bound=Sequence[int])

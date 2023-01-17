@@ -1,5 +1,5 @@
 import os
-from typing import Optional, cast
+from typing import Dict, Optional, Union
 
 import attrs
 import tiledb
@@ -13,7 +13,9 @@ def build_default_tiledb_ctx() -> tiledb.Ctx:
 
     # Note: Defaults must provide positive out-of-the-box UX!
 
-    cfg: Dict[str, Union[str, float]] = {"sm.mem.reader.sparse_global_order.ratio_array_data": 0.3}
+    cfg: Dict[str, Union[str, float]] = {
+        "sm.mem.reader.sparse_global_order.ratio_array_data": 0.3
+    }
 
     # This is necessary for smaller tile capacities when querying with a smaller memory budget.
 
