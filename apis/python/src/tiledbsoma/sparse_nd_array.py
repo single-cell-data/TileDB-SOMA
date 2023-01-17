@@ -262,7 +262,7 @@ class SparseNDArray(TileDBArray, somacore.SparseNDArray):
                     raise TypeError(f"coord type {type(coord)} at slot {i} unsupported")
 
             sr.submit()
-            return SparseNDArrayRead(sr, shape)
+        return SparseNDArrayRead(sr, shape)
 
     def write(
         self,
