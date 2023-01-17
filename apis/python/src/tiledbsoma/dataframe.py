@@ -20,6 +20,7 @@ from .types import NPFloating, NPInteger, PlatformConfig
 from .util_iter import TableReadIter
 
 Slice = TypeVar("Slice", bound=Sequence[int])
+_UNBATCHED = options.BatchSize()
 
 
 class DataFrame(TileDBArray, somacore.DataFrame):
@@ -189,12 +190,14 @@ class DataFrame(TileDBArray, somacore.DataFrame):
 
     def read(
         self,
-        ids: Optional[options.SparseDFCoords] = None,
+        coords: Optional[options.SparseDFCoords] = None,
         column_names: Optional[Sequence[str]] = None,
         *,
         result_order: options.StrOr[somacore.ResultOrder] = "auto",
         value_filter: Optional[str] = None,
-        **_: Any,  # TODO: rest of parameters
+        batch_size: options.BatchSize = _UNBATCHED,
+        partitions: Optional[options.ReadPartitions] = None,
+        platform_config: Optional[PlatformConfig] = None,
     ) -> TableReadIter:
         """
         Read a user-defined subset of data, addressed by the dataframe indexing columns, optionally filtered, and return results as one or more Arrow.Table.
@@ -226,7 +229,7 @@ class DataFrame(TileDBArray, somacore.DataFrame):
           `slice(2,None)` and `slice(None,4)` are both unsupported.
         * Negative indexing is unsupported.
         """
-
+        del batch_size, partitions, platform_config  # Currently unused.
         result_order = options.ResultOrder(result_order)
 
         with self._tiledb_open("r") as A:
@@ -244,17 +247,17 @@ class DataFrame(TileDBArray, somacore.DataFrame):
                 result_order=result_order.value,
             )
 
-            if ids is not None:
-                if not isinstance(ids, (list, tuple)):
+            if coords is not None:
+                if not isinstance(coords, (list, tuple)):
                     raise TypeError(
-                        f"ids type {type(ids)} unsupported; expected list or tuple"
+                        f"ids type {type(coords)} unsupported; expected list or tuple"
                     )
-                if len(ids) < 1 or len(ids) > A.schema.domain.ndim:
+                if len(coords) < 1 or len(coords) > A.schema.domain.ndim:
                     raise ValueError(
-                        f"ids {ids} must have length between 1 and ndim ({A.schema.domain.ndim}); got {len(ids)}"
+                        f"ids {coords} must have length between 1 and ndim ({A.schema.domain.ndim}); got {len(coords)}"
                     )
 
-                for i, dim_ids in enumerate(ids):
+                for i, dim_ids in enumerate(coords):
                     # Example: ids = [None, 3, slice(4,5)]
                     # dim_ids takes on values None, 3, and slice(4,5) in this loop body.
                     dim_name = A.schema.domain.dim(i).name

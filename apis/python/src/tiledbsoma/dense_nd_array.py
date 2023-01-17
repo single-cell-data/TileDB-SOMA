@@ -19,6 +19,8 @@ from .tiledb_array import TileDBArray
 from .tiledb_platform_config import TileDBPlatformConfig
 from .types import NTuple, PlatformConfig
 
+_UNBATCHED = options.BatchSize()
+
 
 class DenseNDArray(TileDBArray, somacore.DenseNDArray):
     """
@@ -150,7 +152,9 @@ class DenseNDArray(TileDBArray, somacore.DenseNDArray):
         result_order: options.StrOr[
             somacore.ResultOrder
         ] = somacore.ResultOrder.ROW_MAJOR,
-        **_: Any,  # TODO: remaining params
+        batch_size: options.BatchSize = _UNBATCHED,
+        partitions: Optional[options.ReadPartitions] = None,
+        platform_config: Optional[PlatformConfig] = None,
     ) -> pa.Tensor:
         """
         Read a user-defined dense slice of the array and return as an Arrow ``Tensor``.
@@ -160,7 +164,9 @@ class DenseNDArray(TileDBArray, somacore.DenseNDArray):
         ``(slice(5, 10),)``, and ``(slice(5, 10), slice(6, 12))``. Slice indices are
         doubly inclusive.
         """
+        del batch_size, partitions, platform_config  # Currently unused.
         result_order = somacore.ResultOrder(result_order)
+
         with self._tiledb_open("r") as A:
             target_shape = dense_indices_to_shape(coords, A.shape, result_order)
             schema = A.schema
@@ -236,7 +242,8 @@ class DenseNDArray(TileDBArray, somacore.DenseNDArray):
         self,
         coords: options.DenseNDCoords,
         values: pa.Tensor,
-        **_: Any,  # TODO: missing args
+        *,
+        platform_config: Optional[PlatformConfig] = None,
     ) -> None:
         """
         Write subarray, defined by ``coords`` and ``values``. Will overwrite existing
@@ -251,5 +258,6 @@ class DenseNDArray(TileDBArray, somacore.DenseNDArray):
             Define the values to be written to the subarray.  Must have same shape
             as defind by ``coords``, and the type must match the DenseNDArray.
         """
+        del platform_config  # Currently unused.
         with self._tiledb_open("w") as A:
             A[coords] = values.to_numpy()
