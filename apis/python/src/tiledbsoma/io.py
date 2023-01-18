@@ -8,8 +8,8 @@ import numpy as np
 import pandas as pd
 import pyarrow as pa
 import scipy.sparse as sp
-import somacore
 from anndata._core.sparse_dataset import SparseDataset
+from somacore.options import PlatformConfig
 
 import tiledbsoma.eta as eta
 import tiledbsoma.util as util
@@ -42,7 +42,7 @@ def from_h5ad(
     measurement_name: str,
     *,
     context: Optional[SOMATileDBContext] = None,
-    platform_config: Optional[somacore.options.PlatformConfig] = None,
+    platform_config: Optional[PlatformConfig] = None,
     ingest_mode: IngestMode = "write",
 ) -> None:
     """
@@ -91,7 +91,7 @@ def from_anndata(
     measurement_name: str,
     *,
     context: Optional[SOMATileDBContext] = None,
-    platform_config: Optional[somacore.options.PlatformConfig] = None,
+    platform_config: Optional[PlatformConfig] = None,
     ingest_mode: IngestMode = "write",
 ) -> None:
     """
@@ -340,7 +340,7 @@ def _write_dataframe(
     soma_df: DataFrame,
     df: pd.DataFrame,
     id_column_name: Optional[str],
-    platform_config: Optional[somacore.options.PlatformConfig] = None,
+    platform_config: Optional[PlatformConfig] = None,
     ingest_mode: IngestMode = "write",
 ) -> None:
     s = util.get_start_stamp()
@@ -394,7 +394,7 @@ def _write_dataframe(
 def create_from_matrix(
     soma_ndarray: Union[DenseNDArray, SparseNDArray],
     matrix: Union[Matrix, h5py.Dataset],
-    platform_config: Optional[somacore.options.PlatformConfig] = None,
+    platform_config: Optional[PlatformConfig] = None,
     ingest_mode: IngestMode = "write",
 ) -> None:
     """
