@@ -326,19 +326,29 @@ def _check_create(
 # Split out from _check_create since its union-return gives the type-checker fits at callsites.
 def _check_create_collection(thing: Collection, ingest_mode: str) -> Collection:
     retval = _check_create(thing, ingest_mode)
-    assert isinstance(retval, Collection)
+    if not isinstance(retval, Collection):
+        raise SOMAError(
+            f"internal coding error: expected object of type Collection; got {type(retval)}"
+        )
+
     return retval
 
 
 def _check_create_experiment(thing: Experiment, ingest_mode: str) -> Experiment:
     retval = _check_create(thing, ingest_mode)
-    assert isinstance(retval, Experiment)
+    if not isinstance(retval, Experiment):
+        raise SOMAError(
+            f"internal coding error: expected object of type Experiment; got {type(retval)}"
+        )
     return retval
 
 
 def _check_create_measurement(thing: Measurement, ingest_mode: str) -> Measurement:
     retval = _check_create(thing, ingest_mode)
-    assert isinstance(retval, Measurement)
+    if not isinstance(retval, Measurement):
+        raise SOMAError(
+            f"internal coding error: expected object of type Measurement; got {type(retval)}"
+        )
     return retval
 
 
@@ -776,14 +786,21 @@ def _chunk_is_contained_in_axis(
 
 
 # ----------------------------------------------------------------
-def to_h5ad(experiment: Experiment, h5ad_path: Path, measurement_name: str) -> None:
+def to_h5ad(
+    experiment: Experiment,
+    h5ad_path: Path,
+    measurement_name: str,
+    X_layer_name: str = "data",
+) -> None:
     """
     Converts the experiment group to anndata format and writes it to the specified .h5ad file.
     """
     s = util.get_start_stamp()
     logging.log_io(None, f"START  Experiment.to_h5ad -> {h5ad_path}")
 
-    anndata = to_anndata(experiment, measurement_name=measurement_name)
+    anndata = to_anndata(
+        experiment, measurement_name=measurement_name, X_layer_name=X_layer_name
+    )
 
     s2 = util.get_start_stamp()
     logging.log_io(None, f"START  write {h5ad_path}")
@@ -798,7 +815,9 @@ def to_h5ad(experiment: Experiment, h5ad_path: Path, measurement_name: str) -> N
 
 
 # ----------------------------------------------------------------
-def to_anndata(experiment: Experiment, measurement_name: str) -> ad.AnnData:
+def to_anndata(
+    experiment: Experiment, measurement_name: str, X_layer_name: str = "data"
+) -> ad.AnnData:
     """
     Converts the experiment group to anndata. Choice of matrix formats is following what we often see in input .h5ad files:
 
@@ -824,9 +843,12 @@ def to_anndata(experiment: Experiment, measurement_name: str) -> ad.AnnData:
     nobs = len(obs_df.index)
     nvar = len(var_df.index)
 
-    X_data = measurement.X["data"]
+    if X_layer_name not in measurement.X:
+        raise SOMAError(
+            f"X_layer_name {X_layer_name} not found in data: {measurement.X.keys()}"
+        )
+    X_data = measurement.X[X_layer_name]
     X_csr = None
-    assert X_data is not None
     X_dtype = None  # some datasets have no X
     if isinstance(X_data, DenseNDArray):
         X_ndarray = X_data.read((slice(None), slice(None))).to_numpy()
