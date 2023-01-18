@@ -5,7 +5,7 @@
 \title{SOMADataFrame}
 \description{
 \code{SOMADataFrame} is a multi-column table that must contain a column
-called \code{soma_joinid} of type \code{uint64}, which contains a unique value for each
+called \code{soma_joinid} of type \code{int64}, which contains a unique value for each
 row and is intended to act as a join key for other objects, such as
 \code{\link{SOMASparseNDArray}}.
 }

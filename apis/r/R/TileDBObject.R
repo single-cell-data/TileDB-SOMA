@@ -18,7 +18,7 @@ TileDBObject <- R6::R6Class(
     #' @param platform_config Optional platform configuration
     #' @param ctx optional TileDB context
     initialize = function(uri, platform_config = NULL, ctx = NULL) {
-      if (missing(uri)) stop("Must specify a `uri`")
+      if (missing(uri)) stop("Must specify a `uri`", call. = FALSE)
       private$tiledb_uri <- TileDBURI$new(uri)
       self$platform_config <- platform_config
       self$ctx <- ctx
@@ -49,7 +49,7 @@ TileDBObject <- R6::R6Class(
       } else if (inherits(self, "TileDBGroup")) {
         expected_type <- "GROUP"
       } else {
-        stop("Unknown object type")
+        stop("Unknown object type", call. = FALSE)
       }
       tiledb::tiledb_object_type(self$uri, ctx = self$ctx) %in% expected_type
     }
@@ -60,23 +60,19 @@ TileDBObject <- R6::R6Class(
     #' The URI of the TileDB object.
     uri = function(value) {
       if (missing(value)) return(private$tiledb_uri$uri)
-      stop(sprintf("'%s' is a read-only field.", "uri"))
+      stop(sprintf("'%s' is a read-only field.", "uri"), call. = FALSE)
     },
 
     #' @field object Access the underlying TileB object directly (either a
     #' [`tiledb::tiledb_array`] or [`tiledb::tiledb_group`]).
     object = function(value) {
       if (!missing(value)) {
-        stop(sprintf("'%s' is a read-only field.", "object"))
+        stop(sprintf("'%s' is a read-only field.", "object"), call. = FALSE)
       }
       # If the array was created after the object was instantiated, we need to
       # initialize private$tiledb_object
       if (is.null(private$tiledb_object)) {
-        if (self$exists()) {
-          private$initialize_object()
-        } else {
-          stop("TileDB object does not exist")
-        }
+        private$initialize_object()
       }
       private$tiledb_object
     }

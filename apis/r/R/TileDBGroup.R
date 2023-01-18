@@ -2,6 +2,7 @@
 #'
 #' @description
 #' Base class for interacting with TileDB groups
+#' @importFrom spdl info debug
 #' @export
 TileDBGroup <- R6::R6Class(
   classname = "TileDBGroup",
@@ -17,7 +18,7 @@ TileDBGroup <- R6::R6Class(
 
     #' @description Creates the data structure on disk/S3/cloud.
     create = function() {
-      message(sprintf("Creating new %s at '%s'", self$class(), self$uri))
+      spdl::info("Creating new {} at '{}'", self$class(), self$uri)
       tiledb::tiledb_group_create(self$uri, ctx = self$ctx)
     },
 
@@ -71,7 +72,7 @@ TileDBGroup <- R6::R6Class(
       if (is_empty(private$member_cache)) private$update_member_cache()
       member <- private$member_cache[[name]]
       if (is.null(member)) {
-        stop(sprintf("No member named '%s' found", name))
+        stop(sprintf("No member named '%s' found", name), call. = FALSE)
       }
       private$construct_member(member$uri, member$type)
     },
@@ -97,6 +98,13 @@ TileDBGroup <- R6::R6Class(
     length = function() {
       if (is_empty(private$member_cache)) private$update_member_cache()
       length(private$member_cache)
+    },
+
+    #' @description Retrieve the names of members.
+    #' @return A `character` vector of member names.
+    names = function() {
+      if (is_empty(private$member_cache)) private$update_member_cache()
+      names(private$member_cache) %||% character(length = 0L)
     },
 
     #' @description Retrieve a `list` of members.
@@ -143,8 +151,8 @@ TileDBGroup <- R6::R6Class(
       stopifnot(
         "Metadata must be a named list" = is_named_list(metadata)
       )
-      on.exit(private$close())
       private$open("WRITE")
+      on.exit(private$close())
       dev_null <- mapply(
         FUN = tiledb::tiledb_group_put_metadata,
         key = names(metadata),
@@ -158,7 +166,9 @@ TileDBGroup <- R6::R6Class(
   private = list(
 
     # @description List of cached group members
-    member_cache = list(),
+    # Initially NULL, once the group is created or opened, this is populated
+    # with list that's empty or contains the group members.
+    member_cache = NULL,
 
     open = function(mode) {
       mode <- match.arg(mode, c("READ", "WRITE"))
@@ -178,10 +188,12 @@ TileDBGroup <- R6::R6Class(
     # @return A list indexed by group member names where each element is a
     # list with names: name, uri, and type.
     get_all_members = function() {
+      private$open("READ")
       on.exit(private$close())
 
-      private$open("READ")
       count <- tiledb::tiledb_group_member_count(self$object)
+      if (count == 0) return(list())
+
       members <- vector(mode = "list", length = count)
       if (count == 0) return(members)
 
@@ -198,7 +210,7 @@ TileDBGroup <- R6::R6Class(
     },
 
     update_member_cache = function() {
-      message("Updating member cache")
+      spdl::debug("Updating member cache")
       private$member_cache <- private$get_all_members()
     },
 
@@ -212,7 +224,7 @@ TileDBGroup <- R6::R6Class(
       constructor <- switch(type,
         ARRAY = TileDBArray$new,
         GROUP = TileDBGroup$new,
-        stop(sprintf("Unknown member type: %s", type))
+        stop(sprintf("Unknown member type: %s", type), call. = FALSE)
       )
       constructor(uri, ctx = self$ctx, platform_config = self$platform_config)
     },
