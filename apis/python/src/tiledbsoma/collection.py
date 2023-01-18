@@ -358,7 +358,7 @@ class CollectionBase(TileDBObject, somacore.Collection[CollectionElementType]):
         as well as ``G = self._tiledb_open(); ...; G.close()``.
         """
         if mode not in ["r", "w"]:
-            raise SOMAError(f'expected mode to be one of "r" or "w"; got "{mode}"')
+            raise ValueError(f'expected mode to be one of "r" or "w"; got "{mode}"')
         # This works in with-open-as contexts because tiledb.Group has __enter__ and __exit__ methods.
         return tiledb.Group(self._uri, mode=mode, ctx=self.context.tiledb_ctx)
 
