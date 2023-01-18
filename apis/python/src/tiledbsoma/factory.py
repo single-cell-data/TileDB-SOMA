@@ -69,7 +69,7 @@ def _construct_member(
         return None
 
     if spec_name is None:
-        raise SOMAError("internal coding error: spec_name was not found")
+        raise SOMAError("internal error: spec_name was not found")
     if spec_name not in SPEC_NAMES_TO_CLASS_NAMES:
         raise SOMAError(f'name "{spec_name}" unrecognized')
     class_name = SPEC_NAMES_TO_CLASS_NAMES[spec_name]
@@ -94,9 +94,7 @@ def _construct_member(
         _check_object_type(object_type, "array")
         return SparseNDArray(uri=member_uri, parent=parent)
     else:
-        raise SOMAError(
-            f'internal coding error: class name "{class_name}" unrecognized'
-        )
+        raise SOMAError(f'internal error: class name "{class_name}" unrecognized')
 
 
 def _check_object_type(

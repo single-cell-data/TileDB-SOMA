@@ -328,7 +328,7 @@ def _check_create_collection(thing: Collection, ingest_mode: str) -> Collection:
     retval = _check_create(thing, ingest_mode)
     if not isinstance(retval, Collection):
         raise SOMAError(
-            f"internal coding error: expected object of type Collection; got {type(retval)}"
+            f"internal error: expected object of type Collection; got {type(retval)}"
         )
 
     return retval
@@ -338,7 +338,7 @@ def _check_create_experiment(thing: Experiment, ingest_mode: str) -> Experiment:
     retval = _check_create(thing, ingest_mode)
     if not isinstance(retval, Experiment):
         raise SOMAError(
-            f"internal coding error: expected object of type Experiment; got {type(retval)}"
+            f"internal error: expected object of type Experiment; got {type(retval)}"
         )
     return retval
 
@@ -347,7 +347,7 @@ def _check_create_measurement(thing: Measurement, ingest_mode: str) -> Measureme
     retval = _check_create(thing, ingest_mode)
     if not isinstance(retval, Measurement):
         raise SOMAError(
-            f"internal coding error: expected object of type Measurement; got {type(retval)}"
+            f"internal error: expected object of type Measurement; got {type(retval)}"
         )
     return retval
 
@@ -417,8 +417,13 @@ def create_from_matrix(
     Create and populate the ``soma_matrix`` from the contents of ``matrix``.
     """
     # SparseDataset has no ndim but it has a shape
-    assert len(matrix.shape) == 2
-    assert soma_ndarray.soma_type in ("SOMADenseNDArray", "SOMASparseNDArray")
+    if len(matrix.shape) != 2:
+        raise ValueError(f"expected matrix.shape == 2; got {matrix.shape}")
+    acceptables = ("SOMADenseNDArray", "SOMASparseNDArray")
+    if soma_ndarray.soma_type not in acceptables:
+        raise ValueError(
+            f'internal error: expected array type to be one of {acceptables}; got "{soma_ndarray.soma_type}"'
+        )
 
     s = util.get_start_stamp()
     logging.log_io(None, f"START  WRITING {soma_ndarray.uri}")
@@ -756,7 +761,10 @@ def _chunk_is_contained_in(
     if storage_nonempty_domain is None:
         return False
 
-    assert len(chunk_bounds) == len(storage_nonempty_domain)
+    if len(chunk_bounds) != len(storage_nonempty_domain):
+        raise SOMAError(
+            f"internal error: ingest data ndim {len(chunk_bounds)} != storage ndim {len(storage_nonempty_domain)}"
+        )
     for i in range(len(chunk_bounds)):
         if not _chunk_is_contained_in_axis(chunk_bounds, storage_nonempty_domain, i):
             return False
@@ -864,7 +872,8 @@ def to_anndata(
     if "obsm" in measurement and measurement.obsm.exists():
         for key in measurement.obsm.keys():
             shape = measurement.obsm[key].shape
-            assert len(shape) == 2
+            if len(shape) != 2:
+                raise ValueError(f"expected shape == 2; got {shape}")
             matrix = measurement.obsm[key].read((slice(None),) * len(shape)).to_numpy()
             # The spelling `sp.csr_array` is more idiomatic but doesn't exist until Python 3.8
             obsm[key] = sp.csr_matrix(matrix)
@@ -873,7 +882,8 @@ def to_anndata(
     if "varm" in measurement and measurement.varm.exists():
         for key in measurement.varm.keys():
             shape = measurement.varm[key].shape
-            assert len(shape) == 2
+            if len(shape) != 2:
+                raise ValueError(f"expected shape == 2; got {shape}")
             matrix = measurement.varm[key].read((slice(None),) * len(shape)).to_numpy()
             # The spelling `sp.csr_array` is more idiomatic but doesn't exist until Python 3.8
             varm[key] = sp.csr_matrix(matrix)

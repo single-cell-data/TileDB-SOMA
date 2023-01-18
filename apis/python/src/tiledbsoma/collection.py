@@ -182,7 +182,7 @@ class CollectionBase(TileDBObject, somacore.Collection[CollectionElementType]):
         if self._cached_values is None:
             self._load_tdb_group_cache()
         if self._cached_values is None:
-            raise SOMAError("internal coding error: _cached_values is None")
+            raise SOMAError("internal error: _cached_values is None")
         return iter(self._cached_values)
 
     def __repr__(self) -> str:
@@ -213,7 +213,7 @@ class CollectionBase(TileDBObject, somacore.Collection[CollectionElementType]):
 
         self._load_tdb_group_cache()
         if self._cached_values is None:
-            raise SOMAError("internal coding error: _cached_values is None")
+            raise SOMAError("internal error: _cached_values is None")
         keys = list(self._cached_values.keys())
         me += ":" if len(keys) > 0 else ""
         lines = [me]
@@ -271,7 +271,7 @@ class CollectionBase(TileDBObject, somacore.Collection[CollectionElementType]):
             )
 
         if self._cached_values is None:
-            raise SOMAError("internal coding error: _cached_values is None")
+            raise SOMAError("internal error: _cached_values is None")
 
     def _determine_default_relative(self, uri: str) -> Optional[bool]:
         """Defaulting for the relative parameter."""

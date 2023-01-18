@@ -86,9 +86,7 @@ class SparseCSRMatrixReadIter(SparseTensorReadIterBase[pa.SparseCSRMatrix]):
 
     def _from_table(self, arrow_table: pa.Table) -> pa.SparseCSRMatrix:
         if len(self.shape) != 2:
-            raise SOMAError(
-                f"internal coding error: expected shape == 2; got {self.shape}"
-            )
+            raise SOMAError(f"internal error: expected shape == 2; got {self.shape}")
         data = arrow_table.column("soma_data").to_numpy()
         row = arrow_table.column("soma_dim_0").to_numpy()
         col = arrow_table.column("soma_dim_1").to_numpy()
@@ -107,9 +105,7 @@ class SparseCSCMatrixReadIter(SparseTensorReadIterBase[pa.SparseCSCMatrix]):
 
     def _from_table(self, arrow_table: pa.Table) -> pa.SparseCSCMatrix:
         if len(self.shape) != 2:
-            raise SOMAError(
-                f"internal coding error: expected shape == 2; got {self.shape}"
-            )
+            raise SOMAError(f"internal error: expected shape == 2; got {self.shape}")
         data = arrow_table.column("soma_data").to_numpy()
         row = arrow_table.column("soma_dim_0").to_numpy()
         col = arrow_table.column("soma_dim_1").to_numpy()
