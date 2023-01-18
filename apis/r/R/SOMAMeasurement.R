@@ -47,7 +47,7 @@ SOMAMeasurement <- R6::R6Class(
       private$get_or_set_soma_field(value, "varm", "SOMACollection")
     },
 
-    #' @field varp a [`SOMACollection`] of [`SparseNDArray`]s containing
+    #' @field varp a [`SOMACollection`] of [`SOMASparseNDArray`]s containing
     #' pairwise annotations on the variable axis and indexed with `[varid_1,
     #' varid_2]`.
     varp = function(value) {

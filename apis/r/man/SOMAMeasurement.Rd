@@ -10,7 +10,7 @@ and is otherwise a specialized \code{\link{SOMACollection}} with pre-defined fie
 details).
 }
 \section{Super classes}{
-\code{tiledbsoma::TileDBObject} -> \code{tiledbsoma::TileDBGroup} -> \code{tiledbsoma::SOMACollectionBase} -> \code{SOMAMeasurement}
+\code{\link[tiledbsoma:TileDBObject]{tiledbsoma::TileDBObject}} -> \code{\link[tiledbsoma:TileDBGroup]{tiledbsoma::TileDBGroup}} -> \code{\link[tiledbsoma:SOMACollectionBase]{tiledbsoma::SOMACollectionBase}} -> \code{SOMAMeasurement}
 }
 \section{Active bindings}{
 \if{html}{\out{<div class="r6-active-bindings">}}
@@ -35,7 +35,7 @@ pairwise annotations on the observation axis and indexed with \verb{[obsid_1, ob
 annotations on the variable axis. Each array is indexed by \code{varid} and
 has the same shape as \code{var}.}
 
-\item{\code{varp}}{a \code{\link{SOMACollection}} of \code{\link{SparseNDArray}}s containing
+\item{\code{varp}}{a \code{\link{SOMACollection}} of \code{\link{SOMASparseNDArray}}s containing
 pairwise annotations on the variable axis and indexed with \verb{[varid_1, varid_2]}.}
 }
 \if{html}{\out{</div>}}
