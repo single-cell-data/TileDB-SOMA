@@ -39,9 +39,8 @@ class TileDBObject(ABC, somacore.SOMAObject):
         self._uri = uri
 
         if parent is not None:
-            assert (
-                context is None
-            ), "Only one of `context` and `parent` params can be passed as an arg"
+            if context is not None:
+                raise TypeError("Only one of `context` and `parent` params can be passed as an arg")
             # inherit from parent
             self._context = parent._context
         else:
