@@ -142,13 +142,12 @@ class SparseNDArray(TileDBArray, somacore.SparseNDArray):
 
     @property
     def ndim(self) -> int:
-        """
-        Return number of index columns
-        """
-        return len(self.shape)
+        """TO DO: remove this once the next somacore is released."""
+        return self.ndims
 
     # Inherited from somacore
-    # is_sparse: Final = True
+    # * ndim accessor
+    # * is_sparse: Final = True
 
     @property
     def nnz(self) -> int:
