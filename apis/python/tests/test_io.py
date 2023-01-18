@@ -5,7 +5,7 @@ from scipy import sparse as sp
 
 import tiledbsoma as soma
 import tiledbsoma.io as somaio
-from tiledbsoma import SOMATileDBContext, TileDBCreateOptions
+from tiledbsoma.options import SOMATileDBContext, TileDBCreateOptions
 
 
 @pytest.fixture

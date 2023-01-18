@@ -6,7 +6,7 @@ import pytest
 import tiledb
 
 import tiledbsoma as soma
-from tiledbsoma.soma_tiledb_context import SOMATileDBContext
+from tiledbsoma.options import SOMATileDBContext
 
 from . import NDARRAY_ARROW_TYPES_NOT_SUPPORTED, NDARRAY_ARROW_TYPES_SUPPORTED
 

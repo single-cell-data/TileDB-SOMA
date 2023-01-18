@@ -8,6 +8,7 @@ import numpy as np
 import pandas as pd
 import pyarrow as pa
 import scipy.sparse as sp
+import somacore
 from anndata._core.sparse_dataset import SparseDataset
 
 import tiledbsoma.eta as eta
@@ -27,8 +28,7 @@ from tiledbsoma import (
 from tiledbsoma.exception import SOMAError
 
 from .constants import SOMA_JOINID
-from .soma_tiledb_context import SOMATileDBContext
-from .tiledb_create_options import TileDBCreateOptions
+from .options import SOMATileDBContext, TileDBCreateOptions
 from .types import INGEST_MODES, IngestMode, NDArray, Path
 
 SparseMatrix = Union[sp.csr_matrix, sp.csc_matrix, SparseDataset]
@@ -42,7 +42,7 @@ def from_h5ad(
     measurement_name: str,
     *,
     context: Optional[SOMATileDBContext] = None,
-    platform_config: Optional[TileDBCreateOptions] = None,
+    platform_config: Optional[somacore.options.PlatformConfig] = None,
     ingest_mode: IngestMode = "write",
 ) -> None:
     """
@@ -91,7 +91,7 @@ def from_anndata(
     measurement_name: str,
     *,
     context: Optional[SOMATileDBContext] = None,
-    platform_config: Optional[TileDBCreateOptions] = None,
+    platform_config: Optional[somacore.options.PlatformConfig] = None,
     ingest_mode: IngestMode = "write",
 ) -> None:
     """
@@ -340,13 +340,11 @@ def _write_dataframe(
     soma_df: DataFrame,
     df: pd.DataFrame,
     id_column_name: Optional[str],
-    platform_config: Optional[TileDBCreateOptions] = None,
+    platform_config: Optional[somacore.options.PlatformConfig] = None,
     ingest_mode: IngestMode = "write",
 ) -> None:
     s = util.get_start_stamp()
     logging.log_io(None, f"START  WRITING {soma_df.uri}")
-
-    platform_config = platform_config or TileDBCreateOptions()
 
     df[SOMA_JOINID] = np.asarray(range(len(df)), dtype=np.int64)
 
@@ -396,7 +394,7 @@ def _write_dataframe(
 def create_from_matrix(
     soma_ndarray: Union[DenseNDArray, SparseNDArray],
     matrix: Union[Matrix, h5py.Dataset],
-    platform_config: Optional[TileDBCreateOptions] = None,
+    platform_config: Optional[somacore.options.PlatformConfig] = None,
     ingest_mode: IngestMode = "write",
 ) -> None:
     """
@@ -430,20 +428,22 @@ def create_from_matrix(
         util.format_elapsed(s, f"START  WRITING {soma_ndarray.uri}"),
     )
 
-    platform_config = platform_config or TileDBCreateOptions()
-
     if isinstance(soma_ndarray, DenseNDArray):
         _write_matrix_to_denseNDArray(
             soma_ndarray,
             matrix,
-            platform_config=platform_config,
+            tiledb_create_options=TileDBCreateOptions.from_platform_config(
+                platform_config
+            ),
             ingest_mode=ingest_mode,
         )
     else:  # SOMASparseNDArray
         _write_matrix_to_sparseNDArray(
             soma_ndarray,
             matrix,
-            platform_config=platform_config,
+            tiledb_create_options=TileDBCreateOptions.from_platform_config(
+                platform_config
+            ),
             ingest_mode=ingest_mode,
         )
 
@@ -456,7 +456,7 @@ def create_from_matrix(
 def _write_matrix_to_denseNDArray(
     soma_ndarray: DenseNDArray,
     matrix: Union[Matrix, h5py.Dataset],
-    platform_config: TileDBCreateOptions,
+    tiledb_create_options: TileDBCreateOptions,
     ingest_mode: IngestMode,
 ) -> None:
     """Write a matrix to an empty DenseNDArray"""
@@ -487,7 +487,7 @@ def _write_matrix_to_denseNDArray(
                 return
 
     # Write all at once?
-    if not platform_config.write_X_chunked():
+    if not tiledb_create_options.write_X_chunked():
         if not isinstance(matrix, np.ndarray):
             matrix = matrix.toarray()
         soma_ndarray.write((slice(None),), pa.Tensor.from_numpy(matrix))
@@ -498,7 +498,7 @@ def _write_matrix_to_denseNDArray(
     nrow, ncol = matrix.shape
     i = 0
     # Number of rows to chunk by. Dense writes, so this is a constant.
-    chunk_size = int(math.ceil(platform_config.goal_chunk_nnz() / ncol))
+    chunk_size = int(math.ceil(tiledb_create_options.goal_chunk_nnz() / ncol))
     while i < nrow:
         t1 = time.time()
         i2 = i + chunk_size
@@ -602,7 +602,7 @@ def _find_sparse_chunk_size(
 def _write_matrix_to_sparseNDArray(
     soma_ndarray: SparseNDArray,
     matrix: Matrix,
-    platform_config: TileDBCreateOptions,
+    tiledb_create_options: TileDBCreateOptions,
     ingest_mode: IngestMode,
 ) -> None:
     """Write a matrix to an empty DenseNDArray"""
@@ -641,7 +641,7 @@ def _write_matrix_to_sparseNDArray(
                 return
 
     # Write all at once?
-    if not platform_config.write_X_chunked():
+    if not tiledb_create_options.write_X_chunked():
         soma_ndarray.write(_coo_to_table(sp.coo_matrix(matrix)))
         return
 
@@ -658,7 +658,7 @@ def _write_matrix_to_sparseNDArray(
     dim_max_size = matrix.shape[stride_axis]
 
     eta_tracker = eta.Tracker()
-    goal_chunk_nnz = platform_config.goal_chunk_nnz()
+    goal_chunk_nnz = tiledb_create_options.goal_chunk_nnz()
 
     coords = [slice(None), slice(None)]
     i = 0

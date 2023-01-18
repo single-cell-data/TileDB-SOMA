@@ -5,7 +5,7 @@ import attrs
 import tiledb
 
 
-def build_default_tiledb_ctx() -> tiledb.Ctx:
+def _build_default_tiledb_ctx() -> tiledb.Ctx:
     """
     Build a TileDB context starting with reasonable defaults, and overriding and updating with user-provided config
     options.
@@ -34,7 +34,7 @@ class SOMATileDBContext:
     including having a child object inherit it from its parent.
     """
 
-    tiledb_ctx: tiledb.Ctx = build_default_tiledb_ctx()
+    tiledb_ctx: tiledb.Ctx = _build_default_tiledb_ctx()
 
     member_uris_are_relative: Optional[bool] = None
     """Allows "relocatability" for local disk / S3, and correct behavior for TileDB Cloud."""

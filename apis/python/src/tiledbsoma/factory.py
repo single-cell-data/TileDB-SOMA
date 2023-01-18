@@ -13,7 +13,7 @@ from .dense_nd_array import DenseNDArray
 from .exception import SOMAError
 from .experiment import Experiment
 from .measurement import Measurement
-from .soma_tiledb_context import SOMATileDBContext
+from .options import SOMATileDBContext
 from .sparse_nd_array import SparseNDArray
 from .util import SOMA_OBJECT_TYPE_METADATA_KEY, SPEC_NAMES_TO_CLASS_NAMES
 

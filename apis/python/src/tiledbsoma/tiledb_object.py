@@ -6,7 +6,7 @@ import tiledb
 
 from . import util
 from .metadata_mapping import MetadataMapping
-from .soma_tiledb_context import SOMATileDBContext
+from .options import SOMATileDBContext
 
 
 class TileDBObject(ABC, somacore.SOMAObject):

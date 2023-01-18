@@ -12,10 +12,8 @@ from .general_utilities import (
 from .measurement import Measurement
 from .metadata_mapping import MetadataMapping
 from .query_condition import QueryCondition
-from .soma_tiledb_context import SOMATileDBContext
 from .sparse_nd_array import SparseNDArray
 from .tiledb_array import TileDBArray
-from .tiledb_create_options import TileDBCreateOptions
 from .tiledb_object import TileDBObject
 
 __version__ = get_implementation_version()
@@ -27,8 +25,6 @@ __all__ = [
     "get_storage_engine",
     "TileDBObject",
     "TileDBArray",
-    "TileDBCreateOptions",
-    "SOMATileDBContext",
     "Collection",
     "DenseNDArray",
     "DoesNotExistError",

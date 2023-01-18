@@ -12,6 +12,7 @@ from typing import (
 )
 
 import attrs
+import somacore.options
 import tiledb
 from attrs import field
 
@@ -37,10 +38,17 @@ StrOrMap = Union[str, Mapping[str, Any]]
 
 
 @attrs.define(frozen=True)
-# TODO: Inherit from SOMA.PlatformConfig instead (which itself is a `Mapping[str, Any]`)
 class TileDBCreateOptions(Mapping[str, Any]):
 
     _config: Mapping[str, Any] = field(factory=dict)
+
+    @classmethod
+    def from_platform_config(
+        cls, platform_config: somacore.options.PlatformConfig
+    ) -> "TileDBCreateOptions":
+        return TileDBCreateOptions(
+            (platform_config or {}).get("tiledb", {}).get("create", {})
+        )
 
     def string_dim_zstd_level(self) -> int:
         return self.get("string_dim_zstd_level", DEFAULT_STRING_DIM_ZSTD_LEVEL)

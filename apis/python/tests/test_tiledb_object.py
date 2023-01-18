@@ -3,10 +3,11 @@ from typing import Union
 import pytest
 import tiledb
 
-from tiledbsoma import SOMATileDBContext, TileDBObject
+from tiledbsoma import TileDBObject
+from tiledbsoma.options import SOMATileDBContext
 
 
-class TestTDBObject(TileDBObject):
+class FakeTileDBObject(TileDBObject):
     @property
     def soma_type(self) -> str:
         return self.__class__.__name__
@@ -16,7 +17,7 @@ class TestTDBObject(TileDBObject):
 
 
 def test_tiledb_object_default_context_added():
-    o = TestTDBObject("parent")
+    o = FakeTileDBObject("parent")
     assert o.context is not None
     assert o.context.tiledb_ctx is not None
     assert o._ctx is not None
@@ -25,9 +26,9 @@ def test_tiledb_object_default_context_added():
 
 def test_child_inherits_parent_context():
     context = SOMATileDBContext()
-    p = TestTDBObject("parent", context=context)
+    p = FakeTileDBObject("parent", context=context)
 
-    c = TestTDBObject("parent/child", parent=p)
+    c = FakeTileDBObject("parent/child", parent=p)
 
     assert c.context is not None
     assert c.context == p.context
@@ -35,7 +36,7 @@ def test_child_inherits_parent_context():
 
 def test_mutually_exclusive_create_args():
     context = SOMATileDBContext()
-    p = TestTDBObject("parent", context=context)
+    p = FakeTileDBObject("parent", context=context)
 
     with pytest.raises(AssertionError):
-        TestTDBObject("parent/child", parent=p, context=context)
+        FakeTileDBObject("parent/child", parent=p, context=context)

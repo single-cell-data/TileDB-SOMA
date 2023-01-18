@@ -19,7 +19,7 @@ import somacore
 import tiledb
 
 from .exception import DoesNotExistError, SOMAError
-from .soma_tiledb_context import SOMATileDBContext
+from .options import SOMATileDBContext
 from .tiledb_object import TileDBObject
 from .util import make_relative_path
 from .util_tiledb import is_does_not_exist_error, is_duplicate_group_key_error
