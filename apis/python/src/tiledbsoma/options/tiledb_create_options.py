@@ -12,9 +12,10 @@ from typing import (
 )
 
 import attrs
-import somacore.options
 import tiledb
 from attrs import field
+
+from tiledbsoma.types import PlatformConfig
 
 DEFAULT_TILE_ORDER = "row-major"
 DEFAULT_CELL_ORDER = "row-major"
@@ -44,7 +45,7 @@ class TileDBCreateOptions(Mapping[str, Any]):
 
     @classmethod
     def from_platform_config(
-        cls, platform_config: somacore.options.PlatformConfig
+        cls, platform_config: Optional[PlatformConfig] = None
     ) -> "TileDBCreateOptions":
         return TileDBCreateOptions(
             (platform_config or {}).get("tiledb", {}).get("create", {})
