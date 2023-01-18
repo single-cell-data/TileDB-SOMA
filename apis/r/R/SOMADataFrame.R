@@ -141,7 +141,7 @@ SOMADataFrame <- R6::R6Class(
     #' @description Read
     #' Read a user-defined subset of data, addressed by the dataframe indexing
     #' column, and optionally filtered.
-    #' @param ids Optional named list of indices specifying the rows to read; each (named)
+    #' @param coords Optional named list of indices specifying the rows to read; each (named)
     #' list element corresponds to a dimension of the same name.
     #' @param column_names Optional character vector of column names to return.
     #' @param value_filter Optional string containing a logical expression that is used
@@ -151,7 +151,7 @@ SOMADataFrame <- R6::R6Class(
     #' `"ROW_MAJOR, `"COL_MAJOR"`, `"GLOBAL_ORDER"`, or `"UNORDERED"`.
     #' @param log_level Optional logging level with default value of `"warn"`.
     #' @return An [`arrow::Table`].
-    read = function(ids = NULL,
+    read = function(coords = NULL,
                     column_names = NULL,
                     value_filter = NULL,
                     result_order = "UNORDERED",
@@ -175,15 +175,15 @@ SOMADataFrame <- R6::R6Class(
                             args = list(expr = str2lang(value_filter), ta = arr))
           value_filter <- parsed@ptr
       }
-      # ensure ids is a (named) list
-      stopifnot("'ids' must be a list" = is.null(ids) || is.list(ids),
-                "names of 'ids' must correspond to dimension names" =
-                    is.null(ids) || all(names(ids) %in% self$dimnames()))
+      # ensure coords is a (named) list
+      stopifnot("'coords' must be a list" = is.null(coords) || is.list(coords),
+                "names of 'coords' must correspond to dimension names" =
+                    is.null(coords) || all(names(coords) %in% self$dimnames()))
 
       rl <- soma_reader(uri = uri,
                         colnames = column_names,   # NULL is dealt with by soma_reader()
                         qc = value_filter,         # idem
-                        dim_points = ids,          # idem
+                        dim_points = coords,       # idem
                         loglevel = log_level)      # idem
 
       arrow::as_arrow_table(arch::from_arch_array(rl, arrow::RecordBatch))
