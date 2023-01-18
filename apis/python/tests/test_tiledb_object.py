@@ -38,5 +38,5 @@ def test_mutually_exclusive_create_args():
     context = SOMATileDBContext()
     p = FakeTileDBObject("parent", context=context)
 
-    with pytest.raises(AssertionError):
-        FakeTileDBObject("parent/child", parent=p, context=context)
+    with pytest.raises(TypeError):
+        FakeTileDBObject("child", parent=p, context=context)

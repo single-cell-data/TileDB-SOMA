@@ -1,13 +1,15 @@
 from typing import Any, Dict, Optional, Tuple, cast
 
+import somacore
 from typing_extensions import Final
 
 from .collection import CollectionBase
 from .dataframe import DataFrame
-from .experiment_query import AxisQuery, ExperimentAxisQuery
 from .measurement import Measurement
 from .options import SOMATileDBContext
 from .tiledb_object import TileDBObject
+
+_EMPTY_QUERY = somacore.AxisQuery()
 
 
 class Experiment(CollectionBase[TileDBObject]):
@@ -70,13 +72,20 @@ class Experiment(CollectionBase[TileDBObject]):
         self,
         measurement_name: str,
         *,
-        obs_query: Optional[AxisQuery] = None,
-        var_query: Optional[AxisQuery] = None,
-    ) -> ExperimentAxisQuery:
+        obs_query: somacore.AxisQuery = _EMPTY_QUERY,
+        var_query: somacore.AxisQuery = _EMPTY_QUERY,
+    ) -> somacore.ExperimentAxisQuery:
         """
         Create a query on this Experiment. See ``ExperimentAxisQuery`` for more
         information on parameters and usage.
         """
-        return ExperimentAxisQuery(
-            self, measurement_name, obs_query=obs_query, var_query=var_query
+        if not self.exists():
+            raise ValueError(f"Experiment {self.uri} does not exist.")
+        return somacore.ExperimentAxisQuery(
+            # While not technically a somacore.Experiment yet, we implement
+            # all the parts that `ExperimentAxisQuery` needs.
+            self,  # type: ignore[arg-type]
+            measurement_name,
+            obs_query=obs_query,
+            var_query=var_query,
         )

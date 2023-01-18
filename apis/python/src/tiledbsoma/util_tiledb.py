@@ -1,14 +1,15 @@
 import functools
 import re
-from typing import Dict, List, Optional, Sequence, Tuple, TypeVar
+from typing import Collection, Optional, Sequence, Tuple, TypeVar
 
 import numpy as np
 import numpy.typing as npt
 import pandas as pd
 import scipy.sparse as sp
+import somacore
 import tiledb
 
-from .types import NDArray, ResultOrder
+from .types import NDArray
 
 SOMA_OBJECT_TYPE_METADATA_KEY = "soma_object_type"
 SOMA_ENCODING_VERSION_METADATA_KEY = "soma_encoding_version"
@@ -19,24 +20,30 @@ def is_tiledb_creation_uri(uri: str) -> bool:
     return bool(re.match("^tiledb://.*s3://.*$", uri))
 
 
+_TILEDB_ORDERS = {
+    somacore.ResultOrder.COLUMN_MAJOR: "F",
+    somacore.ResultOrder.ROW_MAJOR: "C",
+    somacore.ResultOrder.AUTO: "U",
+}
+
+
 def tiledb_result_order_from_soma_result_order(
-    soma_result_order: Optional[ResultOrder], accept: List[ResultOrder]
+    soma_result_order: Optional[somacore.ResultOrder],
+    accept: Collection[somacore.ResultOrder],
 ) -> Optional[str]:
     """
     Given a ResultOrder, return a TileDB result order.  Raise an error if
     the ``soma_result_order`` is not present in the acceptable values, as
     defined by ``accept``.
     """
-    OrderMap: Dict[ResultOrder, str] = {
-        "column-major": "F",
-        "row-major": "C",
-        "auto": "U",
-    }
     if not soma_result_order:
         return None
-    if soma_result_order not in accept or soma_result_order not in OrderMap:
-        raise ValueError("result_order unsupported supported.")
-    return OrderMap[soma_result_order]
+    if soma_result_order in accept:
+        try:
+            return _TILEDB_ORDERS[soma_result_order]
+        except KeyError:
+            pass
+    raise ValueError(f"{soma_result_order} is not supported.")
 
 
 def to_tiledb_supported_dtype(dtype: npt.DTypeLike) -> npt.DTypeLike:

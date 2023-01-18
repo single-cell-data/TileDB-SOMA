@@ -1,3 +1,4 @@
+import pathlib
 import sys
 from typing import List, Optional, Tuple
 
@@ -6,9 +7,10 @@ import pandas as pd
 import pyarrow as pa
 import pytest
 from scipy import sparse
+from somacore import AxisQuery, ExperimentAxisQuery
 
 import tiledbsoma as soma
-from tiledbsoma.experiment_query import AxisQuery, ExperimentAxisQuery, X_as_series
+from tiledbsoma.experiment_query import X_as_series
 
 """
 WIP tracker - delete when complete.  Missing tests:
@@ -107,7 +109,9 @@ def test_experiment_query_all(soma_experiment):
         )
 
         # read as table
-        read_result = query.read("raw")
+        read_result = query._read(
+            "raw", column_names={"obs": None, "var": None}, X_layers=()
+        )
         assert len(read_result.X_layers) == 0
         assert isinstance(read_result.obs, pa.Table)
         assert isinstance(read_result.var, pa.Table)
@@ -280,7 +284,7 @@ def test_X_layers(soma_experiment):
     )
 
     with soma_experiment.axis_query("RNA") as query:
-        read_result = query.read("A", X_layers=["B"])
+        read_result = query._read("A", X_layers=["B"], column_names={})
         assert read_result.X == A
         assert read_result.X_layers["B"] == B
 
@@ -312,23 +316,21 @@ def test_experiment_query_indexer(soma_experiment):
         obs_query=AxisQuery(coords=(slice(1, 10),)),
         var_query=AxisQuery(coords=(slice(1, 10),)),
     ) as query:
-        indexer = query.get_indexer()
+        indexer = query._indexer
 
         # coords outside of our query should return -1
         assert np.array_equal(
-            indexer.obs_index(np.array([-1, 0, 11, 1003])),
+            indexer.by_obs(np.array([-1, 0, 11, 1003])),
             np.array([-1, -1, -1, -1]),
         )
         assert np.array_equal(
-            indexer.var_index(np.array([-1, 0, 11, 1003])),
+            indexer.by_var(np.array([-1, 0, 11, 1003])),
             np.array([-1, -1, -1, -1]),
         )
 
         # inside results, indexed
-        assert np.array_equal(
-            indexer.obs_index(np.array([1, 4, 2])), np.array([0, 3, 1])
-        )
-        assert np.array_equal(indexer.var_index(np.array([10, 1])), np.array([9, 0]))
+        assert np.array_equal(indexer.by_obs(np.array([1, 4, 2])), np.array([0, 3, 1]))
+        assert np.array_equal(indexer.by_var(np.array([10, 1])), np.array([9, 0]))
 
 
 @pytest.mark.xfail(
@@ -347,7 +349,7 @@ def test_error_corners(soma_experiment: soma.Experiment):
     with pytest.raises(ValueError):
         soma.Experiment(uri="foobar").axis_query("foobar")
 
-    with pytest.raises(ValueError):
+    with pytest.raises(KeyError):
         with soma_experiment.axis_query("RNA") as query:
             next(query.X("no-such-layer"))
 
@@ -536,7 +538,7 @@ def make_sparse_array(path: str, shape: Tuple[int, int]) -> soma.SparseNDArray:
 
 
 def make_experiment(
-    root: str,
+    root: pathlib.Path,
     n_obs: int,
     n_vars: int,
     obs: soma.DataFrame,
