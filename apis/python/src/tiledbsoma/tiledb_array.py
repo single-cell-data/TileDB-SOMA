@@ -4,6 +4,7 @@ import pyarrow as pa
 import tiledb
 
 from .options import SOMATileDBContext
+from .exception import SOMAError
 from .tiledb_object import TileDBObject
 from .util_arrow import get_arrow_schema_from_tiledb_uri
 
@@ -37,7 +38,8 @@ class TileDBArray(TileDBObject):
         """
         This is just a convenience wrapper allowing 'with self._tiledb_open() as A: ...' rather than 'with tiledb.open(self._uri) as A: ...'.
         """
-        assert mode in ["w", "r"]
+        if mode not in ["r", "w"]:
+            raise SOMAError(f'expected mode to be one of "r" or "w"; got "{mode}"')
         # This works in either 'with self._tiledb_open() as A:' or 'A = self._tiledb_open(); ...; A.close().  The
         # reason is that with-as invokes our return value's __enter__ on return from this method,
         # and our return value's __exit__ on exit from the body of the with-block. The tiledb

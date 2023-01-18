@@ -185,7 +185,10 @@ def ingest_one(
     if ingest_mode == "schema-only":
         ingest_mode = "schema_only"
 
-    assert ingest_mode in tiledbsoma.types.INGEST_MODES
+    if ingest_mode not in INGEST_MODES:
+        raise tiledbsoma.exception.SOMAError(
+            f'expected ingest_mode to be one of {INGEST_MODES}; got "{ingest_mode}"'
+        )
 
     # Check that the input exists.
     vfs = tiledb.VFS()

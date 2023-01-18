@@ -68,7 +68,8 @@ def _construct_member(
     except tiledb.TileDBError:
         return None
 
-    assert spec_name is not None
+    if spec_name is None:
+        raise SOMAError("internal coding error: spec_name was not found")
     if spec_name not in SPEC_NAMES_TO_CLASS_NAMES:
         raise SOMAError(f'name "{spec_name}" unrecognized')
     class_name = SPEC_NAMES_TO_CLASS_NAMES[spec_name]

@@ -56,7 +56,10 @@ def from_h5ad(
     The "schema_only" ingest_mode creates groups and array schema, without writing array data.
     This is useful as a prep-step for parallel append-ingest of multiple H5ADs to a single soma.
     """
-    assert ingest_mode in INGEST_MODES
+    if ingest_mode not in INGEST_MODES:
+        raise SOMAError(
+            f'expected ingest_mode to be one of {INGEST_MODES}; got "{ingest_mode}"'
+        )
 
     if isinstance(input_path, ad.AnnData):
         raise TypeError("Input path is an AnnData object -- did you want from_anndata?")
@@ -105,7 +108,10 @@ def from_anndata(
     The "schema_only" ingest_mode creates groups and array schema, without writing array data.
     This is useful as a prep-step for parallel append-ingest of multiple H5ADs to a single soma.
     """
-    assert ingest_mode in INGEST_MODES
+    if ingest_mode not in INGEST_MODES:
+        raise SOMAError(
+            f'expected ingest_mode to be one of {INGEST_MODES}; got "{ingest_mode}"'
+        )
 
     if not isinstance(anndata, ad.AnnData):
         raise TypeError(
