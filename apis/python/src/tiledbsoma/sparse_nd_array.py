@@ -140,15 +140,9 @@ class SparseNDArray(TileDBArray, somacore.SparseNDArray):
         """
         raise NotImplementedError("reshape operation not implemented.")
 
-    @property
-    def ndim(self) -> int:
-        """
-        Return number of index columns
-        """
-        return len(self.shape)
-
     # Inherited from somacore
-    # is_sparse: Final = True
+    # * ndim accessor
+    # * is_sparse: Final = True
 
     @property
     def nnz(self) -> int:

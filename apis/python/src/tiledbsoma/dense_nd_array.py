@@ -134,16 +134,9 @@ class DenseNDArray(TileDBArray, somacore.DenseNDArray):
         """
         raise NotImplementedError("reshape operation not implemented.")
 
-    @property
-    def ndim(self) -> int:
-        """
-        Return number of index columns
-        """
-        with self._tiledb_open() as A:
-            return cast(int, A.schema.domain.ndim)
-
     # Inherited from somacore
-    # is_sparse: Final = False
+    # * ndim accessor
+    # * is_sparse: Final = False
 
     def read(
         self,
