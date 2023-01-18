@@ -48,7 +48,7 @@ test_that("Basic mechanics", {
   expect_true(tbl1$Equals(tbl0))
 
   # Slicing by foo
-  tbl1 <- sidf$read(ids = list(foo = 1L:2L))
+  tbl1 <- sidf$read(coords = list(foo = 1L:2L))
   expect_true(tbl1$Equals(tbl0$Slice(offset = 0, length = 2)))
 
   # Subselecting columns
@@ -139,9 +139,9 @@ test_that("SOMADataFrame read", {
     sdf <- SOMADataFrame$new(uri)
     expect_error(sdf$read(column_names=columns))
 
-    ids <- bit64::as.integer64(seq(100, 109))
+    coords <- bit64::as.integer64(seq(100, 109))
     sdf <- SOMADataFrame$new(uri)
-    z <- sdf$read(ids = list(soma_joinid=ids))
+    z <- sdf$read(coords = list(soma_joinid=coords))
     expect_equal(z$num_rows, 10L)
 })
 
