@@ -14,7 +14,7 @@ from . import util, util_arrow
 from .collection import CollectionBase
 from .constants import SOMA_JOINID
 from .options import SOMATileDBContext, TileDBCreateOptions
-from .query_condition import QueryCondition  # type: ignore
+from .query_condition import QueryCondition
 from .tiledb_array import TileDBArray
 from .types import NPFloating, NPInteger, PlatformConfig
 from .util_iter import TableReadIter
