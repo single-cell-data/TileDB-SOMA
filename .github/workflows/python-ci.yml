@@ -47,6 +47,14 @@ jobs:
         cache: pip
         cache-dependency-path: ./apis/python/setup.py
 
+    - name: Cache native libraries
+      uses: actions/cache@v3
+      with:
+        path: |
+          build
+          dist
+        key: libtiledbsoma-build-dist-${{ matrix.os }}-${{ matrix.python-version }}-${{ hashFiles('libtiledbsoma', 'apis/python/setup.py') }}
+
     - name: Install testing prereqs
       run: python -m pip -v install -U pip pytest-cov typeguard
 
