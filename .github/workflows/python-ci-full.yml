@@ -1,4 +1,4 @@
-name: TileDB-SOMA Python CI
+name: TileDB-SOMA Python CI (Full)
 
 on:
   push:
