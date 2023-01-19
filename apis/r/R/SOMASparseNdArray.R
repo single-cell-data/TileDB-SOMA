@@ -116,9 +116,9 @@ SOMASparseNDArray <- R6::R6Class(
       }
 
       rl <- soma_reader(uri = uri,
-                        dim_points = coords,       	# NULL is dealt with by soma_reader()
+                        dim_points = coords,        # NULL is dealt with by soma_reader()
                         result_order = result_order,
-                        loglevel = log_level)      	# idem
+                        loglevel = log_level)       # idem
       arrow::as_arrow_table(arch::from_arch_array(rl, arrow::RecordBatch))
     },
 
