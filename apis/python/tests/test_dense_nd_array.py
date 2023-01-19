@@ -268,3 +268,52 @@ def test_dense_nd_array_indexing_errors(tmp_path, io):
 
     with pytest.raises(io["throws"]):
         a.read(coords=read_coords).to_numpy()
+
+
+def test_timestamped_ops(tmp_path):
+    # 2x2 array
+    a = soma.DenseNDArray(
+        uri=tmp_path.as_posix(), context=SOMATileDBContext(write_timestamp=1)
+    )
+    a.create(type=pa.uint8(), shape=(2, 2))
+    a.write(
+        (slice(0, 2), slice(0, 2)),
+        pa.Tensor.from_numpy(np.zeros((2, 2), dtype=np.uint8)),
+    )
+
+    # write 1 into top-left entry @ t=10
+    a = soma.DenseNDArray(
+        uri=tmp_path.as_posix(), context=SOMATileDBContext(write_timestamp=10)
+    )
+    assert a.exists()
+    a.write(
+        (slice(0, 1), slice(0, 1)),
+        pa.Tensor.from_numpy(np.ones((1, 1), dtype=np.uint8)),
+    )
+
+    # write 1 into bottom-right entry @ t=20
+    a = soma.DenseNDArray(
+        uri=tmp_path.as_posix(), context=SOMATileDBContext(write_timestamp=20)
+    )
+    a.write(
+        (slice(1, 2), slice(1, 2)),
+        pa.Tensor.from_numpy(np.ones((1, 1), dtype=np.uint8)),
+    )
+
+    # read with no timestamp args & see both 1s
+    a = soma.DenseNDArray(uri=tmp_path.as_posix())
+    assert a.read((slice(None), slice(None))).to_numpy().tolist() == [[1, 0], [0, 1]]
+
+    # read with timestamp_end=15 & see only the writes up til then
+    a = soma.DenseNDArray(
+        uri=tmp_path.as_posix(), context=SOMATileDBContext(read_timestamp_end=15)
+    )
+    assert a.read((slice(0, 1), slice(0, 1))).to_numpy().tolist() == [[1, 0], [0, 0]]
+
+    # read with (timestamp_start, timestamp_end) = (15, 25) & see only the t=20 write
+    a = soma.DenseNDArray(
+        uri=tmp_path.as_posix(),
+        context=SOMATileDBContext(read_timestamp_start=15, read_timestamp_end=25),
+    )
+    F = 255  # fill value
+    assert a.read((slice(0, 1), slice(0, 1))).to_numpy().tolist() == [[F, F], [F, 1]]

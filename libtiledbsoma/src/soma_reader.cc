@@ -93,7 +93,6 @@ SOMAReader::SOMAReader(
         if (timestamp) {
             array->set_open_timestamp_start(timestamp->first);
             array->set_open_timestamp_end(timestamp->second);
-            std::cerr << "timestamp_end = " << timestamp->second << std::endl;
             // FIXME: tiledb::Array::set_open_timestamp_{start,end} are only
             // effective if called before [re]opening the array. The
             // tiledb::Array constructor internally opens the array already, so

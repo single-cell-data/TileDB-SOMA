@@ -93,16 +93,20 @@ class TileDBArray(TileDBObject):
         """
         Construct a C++ SOMAReader using appropriate context/config/etc.
         """
-        return clib.SOMAReader(
-            self._uri,
-            name=self.__class__.__name__,
-            schema=schema,
-            column_names=column_names,
-            query_condition=query_condition,
-            result_order=result_order,
-            platform_config={} if self._ctx is None else self._ctx.config().dict(),
-            timestamp=self.context._tiledb_read_timestamp_arg(),
-        )
+        kwargs = {
+            "name": self.__class__.__name__,
+            "platform_config": {} if self._ctx is None else self._ctx.config().dict(),
+            "timestamp": self.context._tiledb_read_timestamp_arg(),
+        }
+        if schema:
+            kwargs["schema"] = schema
+        if column_names:
+            kwargs["column_names"] = column_names
+        if query_condition:
+            kwargs["query_condition"] = query_condition
+        if result_order:
+            kwargs["result_order"] = result_order
+        return clib.SOMAReader(self._uri, **kwargs)
 
     def _show_metadata(self, recursively: bool = True, indent: str = "") -> None:
         """
