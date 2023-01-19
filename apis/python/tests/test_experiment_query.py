@@ -482,6 +482,113 @@ def test_X_as_series():
     )
 
 
+@pytest.mark.xfail(
+    # see comment on test_experiment_query_all
+    sys.version_info >= (3, 10),
+    reason="typeguard bug #242",
+)
+@pytest.mark.parametrize(
+    "n_obs,n_vars,obsp_layer_names,varp_layer_names", [(101, 99, ["foo"], ["bar"])]
+)
+def test_experiment_query_column_names(soma_experiment):
+    """
+    Verify that column_names is correctly handled in the various obs/var accessors.
+
+    Returned columsn should be the union of the columns specifically requested via
+    column_names, and the columns implicitly requested via value_filter.
+    """
+
+    # default
+    with soma_experiment.axis_query("RNA") as query:
+        assert set(next(query.obs()).column_names) == {"soma_joinid", "label"}
+        assert set(next(query.var()).column_names) == {"soma_joinid", "label"}
+        ad = query.to_anndata("raw")
+        assert set(ad.obs.keys()) == {"soma_joinid", "label"}
+        assert set(ad.var.keys()) == {"soma_joinid", "label"}
+
+    # column_names only
+    with soma_experiment.axis_query("RNA") as query:
+        assert set(next(query.obs(column_names=["soma_joinid"])).column_names) == {
+            "soma_joinid"
+        }
+        assert set(next(query.var(column_names=["soma_joinid"])).column_names) == {
+            "soma_joinid"
+        }
+        ad = query.to_anndata(
+            "raw", column_names={"obs": ["soma_joinid"], "var": ["soma_joinid"]}
+        )
+        assert set(ad.obs.keys()) == {"soma_joinid"}
+        assert set(ad.var.keys()) == {"soma_joinid"}
+
+        assert set(next(query.obs(column_names=["label"])).column_names) == {"label"}
+        assert set(next(query.var(column_names=["label"])).column_names) == {"label"}
+        ad = query.to_anndata("raw", column_names={"obs": ["label"], "var": ["label"]})
+        assert set(ad.obs.keys()) == {"label"}
+        assert set(ad.var.keys()) == {"label"}
+
+        assert set(
+            next(query.obs(column_names=["soma_joinid", "label"])).column_names
+        ) == {"soma_joinid", "label"}
+        assert set(
+            next(query.var(column_names=["soma_joinid", "label"])).column_names
+        ) == {"soma_joinid", "label"}
+        ad = query.to_anndata(
+            "raw",
+            column_names={
+                "obs": ["soma_joinid", "label"],
+                "var": ["soma_joinid", "label"],
+            },
+        )
+        assert set(ad.obs.keys()) == {"soma_joinid", "label"}
+        assert set(ad.var.keys()) == {"soma_joinid", "label"}
+
+    # column_names and value_filter
+    with soma_experiment.axis_query(
+        "RNA",
+        obs_query=soma.AxisQuery(
+            value_filter="label in [" + ",".join([f"'{i}'" for i in range(101)]) + "]"
+        ),
+        var_query=soma.AxisQuery(
+            value_filter="label in [" + ",".join([f"'{i}'" for i in range(99)]) + "]"
+        ),
+    ) as query:
+        assert set(next(query.obs(column_names=["soma_joinid"])).column_names) == {
+            "soma_joinid",
+            "label",
+        }
+        assert set(next(query.var(column_names=["soma_joinid"])).column_names) == {
+            "soma_joinid",
+            "label",
+        }
+        ad = query.to_anndata(
+            "raw", column_names={"obs": ["soma_joinid"], "var": ["soma_joinid"]}
+        )
+        assert set(ad.obs.keys()) == {"soma_joinid", "label"}
+        assert set(ad.var.keys()) == {"soma_joinid", "label"}
+
+        assert set(next(query.obs(column_names=["label"])).column_names) == {"label"}
+        assert set(next(query.var(column_names=["label"])).column_names) == {"label"}
+        ad = query.to_anndata("raw", column_names={"obs": ["label"], "var": ["label"]})
+        assert set(ad.obs.keys()) == {"label"}
+        assert set(ad.var.keys()) == {"label"}
+
+        assert set(
+            next(query.obs(column_names=["soma_joinid", "label"])).column_names
+        ) == {"soma_joinid", "label"}
+        assert set(
+            next(query.var(column_names=["soma_joinid", "label"])).column_names
+        ) == {"soma_joinid", "label"}
+        ad = query.to_anndata(
+            "raw",
+            column_names={
+                "obs": ["soma_joinid", "label"],
+                "var": ["soma_joinid", "label"],
+            },
+        )
+        assert set(ad.obs.keys()) == {"soma_joinid", "label"}
+        assert set(ad.var.keys()) == {"soma_joinid", "label"}
+
+
 """
 Fixture support & utility functions below.
 """
