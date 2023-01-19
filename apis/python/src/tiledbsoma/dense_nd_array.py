@@ -12,11 +12,10 @@ import tiledbsoma.util as util
 import tiledbsoma.util_arrow as util_arrow
 from tiledbsoma.util import dense_indices_to_shape
 
-from . import tiledb_platform_config as tdbpc
 from .collection import CollectionBase
 from .exception import SOMAError
+from .options import SOMATileDBContext, TileDBCreateOptions
 from .tiledb_array import TileDBArray
-from .tiledb_platform_config import TileDBPlatformConfig
 from .types import NTuple, PlatformConfig
 
 _UNBATCHED = options.BatchSize()
@@ -32,18 +31,12 @@ class DenseNDArray(TileDBArray, somacore.DenseNDArray):
         uri: str,
         *,
         parent: Optional[CollectionBase[Any]] = None,
-        tiledb_platform_config: Optional[TileDBPlatformConfig] = None,
-        ctx: Optional[tiledb.Ctx] = None,
+        context: Optional[SOMATileDBContext] = None,
     ):
         """
         Also see the ``TileDBObject`` constructor.
         """
-        super().__init__(
-            uri=uri,
-            parent=parent,
-            tiledb_platform_config=tiledb_platform_config,
-            ctx=ctx,
-        )
+        super().__init__(uri=uri, parent=parent, context=context)
 
     # Inherited from somacore
     # soma_type: Final = "SOMADenseNDArray"
@@ -52,7 +45,7 @@ class DenseNDArray(TileDBArray, somacore.DenseNDArray):
         self,
         type: pa.DataType,
         shape: Union[NTuple, List[int]],
-        platform_config: Optional[PlatformConfig] = None,
+        platform_config: Optional[somacore.options.PlatformConfig] = None,
     ) -> "DenseNDArray":
         """
         Create a ``DenseNDArray`` named with the URI.
@@ -60,6 +53,8 @@ class DenseNDArray(TileDBArray, somacore.DenseNDArray):
         :param type: an Arrow type defining the type of each element in the array. If the type is unsupported, an error will be raised.
 
         :param shape: the length of each domain as a list, e.g., [100, 10]. All lengths must be in the positive int64 range.
+
+        :param platform_config: Platform-specific options used to create this Array, provided via "tiledb"->"create" nested keys
         """
 
         # check on shape
@@ -73,8 +68,9 @@ class DenseNDArray(TileDBArray, somacore.DenseNDArray):
                 "Unsupported type - DenseNDArray only supports primtive Arrow types"
             )
 
-        level = self._tiledb_platform_config.string_dim_zstd_level
-        create_options = tdbpc.from_param(platform_config).create_options()
+        tiledb_create_options = TileDBCreateOptions.from_platform_config(
+            platform_config
+        )
 
         dims = []
         for n, e in enumerate(shape):
@@ -82,10 +78,16 @@ class DenseNDArray(TileDBArray, somacore.DenseNDArray):
             dim = tiledb.Dim(
                 name=dim_name,
                 domain=(0, e - 1),
-                tile=create_options.dim_tile(dim_name, min(e, 2048)),
+                tile=tiledb_create_options.dim_tile(dim_name, min(e, 2048)),
                 dtype=np.int64,
-                filters=create_options.dim_filters(
-                    dim_name, [dict(_type="ZstdFilter", level=level)]
+                filters=tiledb_create_options.dim_filters(
+                    dim_name,
+                    [
+                        dict(
+                            _type="ZstdFilter",
+                            level=tiledb_create_options.string_dim_zstd_level(),
+                        )
+                    ],
                 ),
             )
             dims.append(dim)
@@ -95,26 +97,26 @@ class DenseNDArray(TileDBArray, somacore.DenseNDArray):
             tiledb.Attr(
                 name="soma_data",
                 dtype=util_arrow.tiledb_type_from_arrow_type(type),
-                filters=create_options.attr_filters("soma_data", ["ZstdFilter"]),
+                filters=tiledb_create_options.attr_filters("soma_data", ["ZstdFilter"]),
                 ctx=self._ctx,
             )
         ]
 
-        cell_order, tile_order = create_options.cell_tile_orders()
+        cell_order, tile_order = tiledb_create_options.cell_tile_orders()
 
         sch = tiledb.ArraySchema(
             domain=dom,
             attrs=attrs,
             sparse=False,
             allows_duplicates=False,
-            offsets_filters=create_options.offsets_filters(),
-            capacity=create_options.get("capacity", 100000),
+            offsets_filters=tiledb_create_options.offsets_filters(),
+            capacity=tiledb_create_options.get("capacity", 100000),
             cell_order=cell_order,
             tile_order=tile_order,
             ctx=self._ctx,
         )
 
-        tiledb.Array.create(self._uri, sch, ctx=self._ctx)
+        tiledb.Array.create(self._uri, sch)
 
         self._common_create(self.soma_type)  # object-type metadata etc
 
@@ -174,7 +176,7 @@ class DenseNDArray(TileDBArray, somacore.DenseNDArray):
             self._uri,
             name=self.__class__.__name__,
             result_order=result_order.value,
-            platform_config={} if self._ctx is None else self._ctx.config().dict(),
+            platform_config=self._ctx.config().dict(),
         )
 
         if coords is not None:

@@ -7,6 +7,7 @@ import tiledb
 
 import tiledbsoma
 import tiledbsoma.io
+from tiledbsoma.options import TileDBCreateOptions
 
 HERE = Path(__file__).parent
 
@@ -46,8 +47,8 @@ def test_platform_config(adata):
                         "attrs": {"soma_data": {"filters": ["NoOpFilter"]}},
                         "cell_order": "row-major",
                         "tile_order": "col-major",
-                    },
-                },
+                    }
+                }
             },
         )
 
@@ -61,3 +62,33 @@ def test_platform_config(adata):
             assert arr.dim("soma_dim_0").tile == 6
             assert arr.dim("soma_dim_1").filters == []
             print(sch)
+
+
+def test__from_platform_config__admits_ignored_config_structure():
+    try:
+        TileDBCreateOptions.from_platform_config(
+            dict(
+                tiledb=dict(create=TileDBCreateOptions(), future_option=dict(foo="1")),
+                not_tiledb=dict(read=dict(buffer_size="128")),
+            )
+        )
+    except Exception as e:
+        pytest.fail(f"unexpected exception {e}")
+
+
+def test__from_platform_config__admits_plain_dict():
+    tdb_create_options = TileDBCreateOptions.from_platform_config(
+        {"tiledb": {"create": {"dims": {"soma_dim_0": {"tile": 6}}}}}
+    )
+    assert tdb_create_options.dim_tile("soma_dim_0") == 6
+
+
+def test__from_platform_config__admits_tiledb_create_options_object():
+    tdb_create_options = TileDBCreateOptions.from_platform_config(
+        {
+            "tiledb": {
+                "create": TileDBCreateOptions({"dims": {"soma_dim_0": {"tile": 6}}})
+            }
+        }
+    )
+    assert tdb_create_options.dim_tile("soma_dim_0") == 6

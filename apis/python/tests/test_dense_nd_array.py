@@ -6,6 +6,7 @@ import pytest
 import tiledb
 
 import tiledbsoma as soma
+from tiledbsoma.options import SOMATileDBContext
 
 from . import NDARRAY_ARROW_TYPES_NOT_SUPPORTED, NDARRAY_ARROW_TYPES_SUPPORTED
 
@@ -168,9 +169,9 @@ def test_dense_nd_array_slicing(tmp_path, io):
     cfg = {}
     if "cfg" in io:
         cfg = io["cfg"]
-    ctx = tiledb.Ctx(cfg)
+    context = SOMATileDBContext(tiledb_ctx=tiledb.Ctx(cfg))
 
-    a = soma.DenseNDArray(tmp_path.as_posix(), ctx=ctx)
+    a = soma.DenseNDArray(tmp_path.as_posix(), context=context)
     nr = 4
     nc = 6
 

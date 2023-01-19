@@ -1,14 +1,13 @@
 from typing import Any, Dict, Optional, Tuple, cast
 
 import somacore
-import tiledb
 from typing_extensions import Final
 
 from .collection import CollectionBase
 from .dataframe import DataFrame
 from .measurement import Measurement
+from .options import SOMATileDBContext
 from .tiledb_object import TileDBObject
-from .tiledb_platform_config import TileDBPlatformConfig
 
 _EMPTY_QUERY = somacore.AxisQuery()
 
@@ -34,19 +33,13 @@ class Experiment(CollectionBase[TileDBObject]):
         *,
         # Non-top-level objects can have a parent to propagate context, depth, etc.
         parent: Optional[CollectionBase[Any]] = None,
-        # Top-level objects should specify these:
-        tiledb_platform_config: Optional[TileDBPlatformConfig] = None,
-        ctx: Optional[tiledb.Ctx] = None,
+        # Top-level objects should specify this:
+        context: Optional[SOMATileDBContext] = None,
     ):
         """
         Also see the ``TileDBObject`` constructor.
         """
-        super().__init__(
-            uri=uri,
-            parent=parent,
-            tiledb_platform_config=tiledb_platform_config,
-            ctx=ctx,
-        )
+        super().__init__(uri=uri, parent=parent, context=context)
 
     # Inherited from somacore
     soma_type: Final = "SOMAExperiment"

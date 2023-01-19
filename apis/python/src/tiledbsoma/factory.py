@@ -13,6 +13,7 @@ from .dense_nd_array import DenseNDArray
 from .exception import SOMAError
 from .experiment import Experiment
 from .measurement import Measurement
+from .options import SOMATileDBContext
 from .sparse_nd_array import SparseNDArray
 from .util import SOMA_OBJECT_TYPE_METADATA_KEY, SPEC_NAMES_TO_CLASS_NAMES
 
@@ -29,7 +30,7 @@ ObjectTypes = Union[
 def _construct_member(
     member_uri: str,
     parent: CollectionBase[Any],
-    ctx: Optional[tiledb.Ctx] = None,
+    context: Optional[SOMATileDBContext] = None,
     object_type: Optional[str] = None,
 ) -> Optional[ObjectTypes]:
     """
@@ -46,18 +47,20 @@ def _construct_member(
     ``_get_object_type_metadata`` within ``TileDBObject``.
     """
 
+    context = context or SOMATileDBContext()
+
     # Get the class name from TileDB storage. At the TileDB level there are just "arrays" and
     # "groups", with separate metadata-getters.
     if object_type is None:
-        object_type = tiledb.object_type(member_uri, ctx=ctx)
+        object_type = tiledb.object_type(member_uri, ctx=context.tiledb_ctx)
 
     # auto-detect class name from metadata
     try:
         if object_type == "array":
-            with tiledb.open(member_uri, ctx=ctx) as A:
+            with tiledb.open(member_uri, ctx=context.tiledb_ctx) as A:
                 spec_name = A.meta[SOMA_OBJECT_TYPE_METADATA_KEY]
         elif object_type == "group":
-            with tiledb.Group(member_uri, mode="r", ctx=ctx) as G:
+            with tiledb.Group(member_uri, mode="r", ctx=context.tiledb_ctx) as G:
                 spec_name = G.meta[SOMA_OBJECT_TYPE_METADATA_KEY]
         else:
             return None
@@ -73,22 +76,22 @@ def _construct_member(
     # Now invoke the appropriate per-class constructor.
     if class_name == "Experiment":
         assert object_type is None or object_type == "group"
-        return Experiment(uri=member_uri, parent=parent, ctx=ctx)
+        return Experiment(uri=member_uri, parent=parent)
     elif class_name == "Measurement":
         assert object_type is None or object_type == "group"
-        return Measurement(uri=member_uri, parent=parent, ctx=ctx)
+        return Measurement(uri=member_uri, parent=parent)
     elif class_name == "Collection":
         assert object_type is None or object_type == "group"
-        return Collection(uri=member_uri, parent=parent, ctx=ctx)
+        return Collection(uri=member_uri, parent=parent)
     elif class_name == "DataFrame":
         assert object_type is None or object_type == "array"
-        return DataFrame(uri=member_uri, parent=parent, ctx=ctx)
+        return DataFrame(uri=member_uri, parent=parent)
     elif class_name in ["DenseNDArray", "DenseNdArray"]:
         assert object_type is None or object_type == "array"
-        return DenseNDArray(uri=member_uri, parent=parent, ctx=ctx)
+        return DenseNDArray(uri=member_uri, parent=parent)
     elif class_name in ["SparseNDArray", "SparseNdArray"]:
         assert object_type is None or object_type == "array"
-        return SparseNDArray(uri=member_uri, parent=parent, ctx=ctx)
+        return SparseNDArray(uri=member_uri, parent=parent)
     else:
         raise SOMAError(
             f'internal coding error: class name "{class_name}" unrecognized'

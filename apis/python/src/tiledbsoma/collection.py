@@ -19,8 +19,8 @@ import somacore
 import tiledb
 
 from .exception import DoesNotExistError, SOMAError
+from .options import SOMATileDBContext
 from .tiledb_object import TileDBObject
-from .tiledb_platform_config import TileDBPlatformConfig
 from .util import make_relative_path
 from .util_tiledb import is_does_not_exist_error, is_duplicate_group_key_error
 
@@ -83,19 +83,13 @@ class CollectionBase(TileDBObject, somacore.Collection[CollectionElementType]):
         *,
         # Non-top-level objects can have a parent to propagate context, depth, etc.
         parent: Optional[CollectionBase[Any]] = None,
-        # Top-level objects should specify these:
-        tiledb_platform_config: Optional[TileDBPlatformConfig] = None,
-        ctx: Optional[tiledb.Ctx] = None,
+        # Top-level objects should specify this:
+        context: Optional[SOMATileDBContext] = None,
     ):
         """
         Also see the ``TileDBObject`` constructor.
         """
-        super().__init__(
-            uri=uri,
-            parent=parent,
-            tiledb_platform_config=tiledb_platform_config,
-            ctx=ctx,
-        )
+        super().__init__(uri=uri, parent=parent, context=context)
         self._cached_values = None
 
     def create(self) -> "CollectionBase[CollectionElementType]":
@@ -109,7 +103,7 @@ class CollectionBase(TileDBObject, somacore.Collection[CollectionElementType]):
         Helper for `create`. Ensures that the type name of a child class, not
         its parent class, is written to object-type metadata in storage.
         """
-        tiledb.group_create(uri=self._uri, ctx=self._ctx)
+        tiledb.group_create(uri=self._uri, ctx=self.context.tiledb_ctx)
         self._common_create(soma_type)  # object-type metadata etc
         self._cached_values = {}
         return self
@@ -143,7 +137,10 @@ class CollectionBase(TileDBObject, somacore.Collection[CollectionElementType]):
 
                 tdb: tiledb.Object = self._cached_values[key].tdb
                 soma = _construct_member(
-                    tdb.uri, self, ctx=self._ctx, object_type=tdb.type
+                    tdb.uri,
+                    self,
+                    context=self.context,
+                    object_type=tdb.type,
                 )
                 if soma is None:
                     # if we were unable to create an object, it wasn't actually a SOMA object
@@ -274,8 +271,8 @@ class CollectionBase(TileDBObject, somacore.Collection[CollectionElementType]):
 
     def _determine_default_relative(self, uri: str) -> Optional[bool]:
         """Defaulting for the relative parameter."""
-        if self._tiledb_platform_config.member_uris_are_relative is not None:
-            return self._tiledb_platform_config.member_uris_are_relative
+        if self.context.member_uris_are_relative is not None:
+            return self.context.member_uris_are_relative
         if uri.startswith("tiledb://"):
             # TileDB-Cloud does not use relative URIs, ever.
             return False
@@ -358,7 +355,7 @@ class CollectionBase(TileDBObject, somacore.Collection[CollectionElementType]):
         """
         assert mode in ("r", "w")
         # This works in with-open-as contexts because tiledb.Group has __enter__ and __exit__ methods.
-        return tiledb.Group(self._uri, mode=mode, ctx=self._ctx)
+        return tiledb.Group(self._uri, mode=mode, ctx=self.context.tiledb_ctx)
 
     def _show_metadata(self, recursively: bool = True, indent: str = "") -> None:
         """
@@ -378,7 +375,7 @@ class CollectionBase(TileDBObject, somacore.Collection[CollectionElementType]):
                     # However, getting it to work with a recursive data structure and finding the
                     # required methods, it was simpler to split the logic this way.
 
-                    soma = _construct_member(obj.uri, self, ctx=self._ctx)
+                    soma = _construct_member(obj.uri, self, context=self.context)
                     if soma is not None:
                         soma._show_metadata(recursively, indent=child_indent)
                     else:

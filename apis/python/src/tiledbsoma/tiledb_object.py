@@ -1,24 +1,23 @@
-import os
 from abc import ABC, abstractmethod
-from typing import Dict, Optional, Union
+from typing import Optional, Union
 
 import somacore
 import tiledb
 
 from . import util
 from .metadata_mapping import MetadataMapping
-from .tiledb_platform_config import TileDBPlatformConfig
+from .options import SOMATileDBContext
 
 
 class TileDBObject(ABC, somacore.SOMAObject):
     """
     Base class for ``TileDBArray`` and ``Collection``.
 
-    Manages tiledb_platform_config, context, etc. which are common to both.
+    Accepts a SOMATileDBContext, to enable session state to be shared across SOMA objects.
     """
 
     _uri: str
-    _tiledb_platform_config: TileDBPlatformConfig
+    _context: SOMATileDBContext
     _metadata: MetadataMapping
 
     def __init__(
@@ -26,46 +25,38 @@ class TileDBObject(ABC, somacore.SOMAObject):
         # All objects:
         uri: str,
         *,
-        # Non-top-level objects can have a parent to propgate context, depth, etc.
+        # Non-top-level objects can have a parent to propagate context, depth, etc.
         parent: Optional["TileDBObject"] = None,
-        # Top-level objects should specify these:
-        tiledb_platform_config: Optional[TileDBPlatformConfig] = None,
-        ctx: Optional[tiledb.Ctx] = None,
+        # Top-level objects should specify this:
+        context: Optional[SOMATileDBContext] = None,
     ):
         """
-        Initialization-handling shared between ``TileDBArray`` and ``Collection``.  Specify ``tiledb_platform_config`` and ``ctx`` for the top-level object; omit them and specify parent for non-top-level objects. Note that the parent reference is solely for propagating options, ctx, display depth, etc.
+        Initialization-handling shared between ``TileDBArray`` and ``Collection``.  Specify ``context`` for
+        the top-level object; omit it and specify parent for non-top-level objects. Note that the parent reference
+        is solely for propagating the context
         """
 
-        if ctx is None:
-            ctx = self._default_ctx()
         self._uri = uri
-        if parent is None:
-            self._ctx = ctx
-        else:
-            tiledb_platform_config = parent._tiledb_platform_config
-            self._ctx = parent._ctx
 
-        self._tiledb_platform_config = tiledb_platform_config or TileDBPlatformConfig()
-        # Null ctx is OK if that's what they wanted (e.g. not doing any TileDB-Cloud ops).
+        if parent is not None:
+            if context is not None:
+                raise TypeError(
+                    "Only one of `context` and `parent` params can be passed as an arg"
+                )
+            # inherit from parent
+            self._context = parent._context
+        else:
+            self._context = context or SOMATileDBContext()
 
         self._metadata = MetadataMapping(self)
 
-    def _default_ctx(self) -> tiledb.Ctx:
-        """
-        The TileDB context used when no other is supplied. Must have good defaults for positive
-        out-of-the-box UX.
-        """
-        cfg: Dict[str, Union[str, float]] = {}
+    @property
+    def context(self) -> SOMATileDBContext:
+        return self._context
 
-        # This is necessary for smaller tile capacities when querying with a smaller memory budget.
-        cfg["sm.mem.reader.sparse_global_order.ratio_array_data"] = 0.3
-
-        # Temp workaround pending https://app.shortcut.com/tiledb-inc/story/23827
-        region = os.getenv("AWS_DEFAULT_REGION")
-        if region is not None:
-            cfg["vfs.s3.region"] = region
-
-        return tiledb.Ctx(cfg)
+    @property
+    def _ctx(self) -> tiledb.Ctx:
+        return self._context.tiledb_ctx
 
     @property
     def metadata(self) -> MetadataMapping:

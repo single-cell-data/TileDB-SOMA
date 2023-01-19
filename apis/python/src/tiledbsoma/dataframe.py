@@ -10,10 +10,10 @@ from somacore import options
 # This package's pybind11 code
 import tiledbsoma.libtiledbsoma as clib
 
-from . import tiledb_platform_config as tdbpc
 from . import util, util_arrow
 from .collection import CollectionBase
 from .constants import SOMA_JOINID
+from .options import SOMATileDBContext, TileDBCreateOptions
 from .query_condition import QueryCondition
 from .tiledb_array import TileDBArray
 from .types import NPFloating, NPInteger, PlatformConfig
@@ -38,12 +38,13 @@ class DataFrame(TileDBArray, somacore.DataFrame):
         uri: str,
         *,
         parent: Optional[CollectionBase[Any]] = None,
-        ctx: Optional[tiledb.Ctx] = None,
+        # Top-level objects should specify this:
+        context: Optional[SOMATileDBContext] = None,
     ):
         """
-        See also the ``TileDBOject`` constructor.
+        See also the ``TileDBObject`` constructor.
         """
-        super().__init__(uri=uri, parent=parent, ctx=ctx)
+        super().__init__(uri=uri, parent=parent, context=context)
         self._index_column_names = ()
         self._is_sparse = None
 
@@ -54,16 +55,21 @@ class DataFrame(TileDBArray, somacore.DataFrame):
         self,
         schema: pa.Schema,
         index_column_names: Sequence[str] = (SOMA_JOINID,),
-        platform_config: Optional[PlatformConfig] = None,
+        platform_config: Optional[somacore.options.PlatformConfig] = None,
     ) -> "DataFrame":
         """
         :param schema: Arrow Schema defining the per-column schema. This schema must define all columns, including columns to be named as index columns. If the schema includes types unsupported by the SOMA implementation, an error will be raised.
 
         :param index_column_names: A list of column names to use as user-defined index columns (e.g., ``['cell_type', 'tissue_type']``). All named columns must exist in the schema, and at least one index column name is required.
+
+        :param platform_config: Platform-specific options used to create this DataFrame, provided via "tiledb"->"create" nested keys
         """
         schema = _validate_schema(schema, index_column_names)
-        config_wrapper = tdbpc.from_param(platform_config)
-        self._create_empty(schema, index_column_names, config_wrapper.create_options())
+        self._create_empty(
+            schema,
+            index_column_names,
+            TileDBCreateOptions.from_platform_config(platform_config),
+        )
         self._index_column_names = tuple(index_column_names)
 
         self._common_create(self.soma_type)  # object-type metadata etc
@@ -73,13 +79,11 @@ class DataFrame(TileDBArray, somacore.DataFrame):
         self,
         schema: pa.Schema,
         index_column_names: Sequence[str],
-        create_options: tdbpc.CreateWrapper,
+        tiledb_create_options: TileDBCreateOptions,
     ) -> None:
         """
         Create a TileDB 1D sparse array with dimensions and attributes
         """
-
-        level = self._tiledb_platform_config.string_dim_zstd_level
 
         dims = []
         for index_column_name in index_column_names:
@@ -98,7 +102,7 @@ class DataFrame(TileDBArray, somacore.DataFrame):
                 raise TypeError(f"Unsupported dtype {dtype}")
 
             # Default 2048 mods to 0 for 8-bit types and 0 is an invalid extent
-            extent = create_options.dim_tile(index_column_name)
+            extent = tiledb_create_options.dim_tile(index_column_name)
             if isinstance(dtype, np.dtype) and dtype.itemsize == 1:
                 extent = 64
 
@@ -107,8 +111,14 @@ class DataFrame(TileDBArray, somacore.DataFrame):
                 domain=domain,
                 tile=extent,
                 dtype=dtype,
-                filters=create_options.dim_filters(
-                    index_column_name, [dict(_type="ZstdFilter", level=level)]
+                filters=tiledb_create_options.dim_filters(
+                    index_column_name,
+                    [
+                        dict(
+                            _type="ZstdFilter",
+                            level=tiledb_create_options.string_dim_zstd_level(),
+                        )
+                    ],
                 ),
             )
             dims.append(dim)
@@ -124,20 +134,20 @@ class DataFrame(TileDBArray, somacore.DataFrame):
                 dtype=util_arrow.tiledb_type_from_arrow_type(
                     schema.field(attr_name).type
                 ),
-                filters=create_options.attr_filters(attr_name, ["ZstdFilter"]),
+                filters=tiledb_create_options.attr_filters(attr_name, ["ZstdFilter"]),
                 ctx=self._ctx,
             )
             attrs.append(attr)
 
-        cell_order, tile_order = create_options.cell_tile_orders()
+        cell_order, tile_order = tiledb_create_options.cell_tile_orders()
 
         sch = tiledb.ArraySchema(
             domain=dom,
             attrs=attrs,
             sparse=True,
             allows_duplicates=False,
-            offsets_filters=create_options.offsets_filters(),
-            capacity=create_options.get("capacity", 100000),
+            offsets_filters=tiledb_create_options.offsets_filters(),
+            capacity=tiledb_create_options.get("capacity", 100000),
             cell_order=cell_order,
             # As of TileDB core 2.8.2, we cannot consolidate string-indexed sparse arrays with
             # col-major tile order: so we write ``X`` with row-major tile order.
@@ -146,7 +156,7 @@ class DataFrame(TileDBArray, somacore.DataFrame):
         )
         self._is_sparse = sch.sparse
 
-        tiledb.Array.create(self._uri, sch, ctx=self._ctx)
+        tiledb.Array.create(self._uri, sch)
 
     def keys(self) -> Sequence[str]:
         """

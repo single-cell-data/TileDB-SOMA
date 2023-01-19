@@ -1,14 +1,13 @@
 from typing import Any, Dict, Optional, Tuple, Union, cast
 
-import tiledb
 from typing_extensions import Final
 
 from .collection import CollectionBase
 from .dataframe import DataFrame
 from .dense_nd_array import DenseNDArray
+from .options import SOMATileDBContext
 from .sparse_nd_array import SparseNDArray
 from .tiledb_object import TileDBObject
-from .tiledb_platform_config import TileDBPlatformConfig
 
 
 class Measurement(CollectionBase[TileDBObject]):
@@ -55,19 +54,13 @@ class Measurement(CollectionBase[TileDBObject]):
         *,
         # Non-top-level objects can have a parent to propagate context, depth, etc.
         parent: Optional[CollectionBase[Any]] = None,
-        # Top-level objects should specify these:
-        tiledb_platform_config: Optional[TileDBPlatformConfig] = None,
-        ctx: Optional[tiledb.Ctx] = None,
+        # Top-level objects should specify this:
+        context: Optional[SOMATileDBContext] = None,
     ):
         """
         Also see the ``TileDBObject`` constructor.
         """
-        super().__init__(
-            uri=uri,
-            parent=parent,
-            tiledb_platform_config=tiledb_platform_config,
-            ctx=ctx,
-        )
+        super().__init__(uri=uri, parent=parent, context=context)
 
     # Inherited from somacore
     soma_type: Final = "SOMAMeasurement"

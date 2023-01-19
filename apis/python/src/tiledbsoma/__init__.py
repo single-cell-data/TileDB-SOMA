@@ -15,7 +15,6 @@ from .query_condition import QueryCondition
 from .sparse_nd_array import SparseNDArray
 from .tiledb_array import TileDBArray
 from .tiledb_object import TileDBObject
-from .tiledb_platform_config import TileDBPlatformConfig
 
 __version__ = get_implementation_version()
 
@@ -24,7 +23,6 @@ __all__ = [
     "get_implementation_version",
     "get_SOMA_version",
     "get_storage_engine",
-    "TileDBPlatformConfig",
     "TileDBObject",
     "TileDBArray",
     "Collection",

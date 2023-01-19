@@ -7,6 +7,7 @@ import tiledb
 
 import tiledbsoma
 import tiledbsoma.io
+from tiledbsoma import util
 
 HERE = Path(__file__).parent
 
@@ -46,7 +47,7 @@ def test_import_anndata(adata, ingest_modes):
     tempdir = tempfile.TemporaryDirectory()
     output_path = tempdir.name
     orig = adata
-    metakey = tiledbsoma.util.SOMA_OBJECT_TYPE_METADATA_KEY  # keystroke-saver
+    metakey = util.SOMA_OBJECT_TYPE_METADATA_KEY  # keystroke-saver
     all2d = (slice(None), slice(None))  # keystroke-saver
 
     for ingest_mode in ingest_modes:
