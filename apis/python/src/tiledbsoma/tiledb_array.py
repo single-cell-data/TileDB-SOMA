@@ -84,7 +84,11 @@ class TileDBArray(TileDBObject):
             return [A.schema.attr(i).name for i in range(A.schema.nattr)]
 
     def _soma_reader(
-        self, schema: Optional[tiledb.ArraySchema] = None
+        self,
+        schema: Optional[tiledb.ArraySchema] = None,
+        column_names: Optional[List[str]] = None,
+        query_condition: Optional[tiledb.QueryCondition] = None,
+        result_order: Optional[str] = None,
     ) -> clib.SOMAReader:
         """
         Construct a C++ SOMAReader using appropriate context/config/etc.
@@ -93,6 +97,9 @@ class TileDBArray(TileDBObject):
             self._uri,
             name=self.__class__.__name__,
             schema=schema,
+            column_names=column_names,
+            query_condition=query_condition,
+            result_order=result_order,
             platform_config={} if self._ctx is None else self._ctx.config().dict(),
             timestamp=self.context._tiledb_read_timestamp_arg(),
         )

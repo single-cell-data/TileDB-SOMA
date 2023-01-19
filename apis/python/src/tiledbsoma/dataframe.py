@@ -7,9 +7,6 @@ import somacore
 import tiledb
 from somacore import options
 
-# This package's pybind11 code
-import tiledbsoma.libtiledbsoma as clib
-
 from . import util, util_arrow
 from .collection import CollectionBase
 from .constants import SOMA_JOINID
@@ -182,13 +179,7 @@ class DataFrame(TileDBArray, somacore.DataFrame):
         """
 
         # A.domain.shape at the tiledb level gives us the 0..2^63 range which is not what we want
-        num_rows = cast(
-            int,
-            clib.SOMAReader(
-                self.uri,
-                platform_config={} if self._ctx is None else self._ctx.config().dict(),
-            ).nnz(),
-        )
+        num_rows = cast(int, self._soma_reader().nnz())
 
         return num_rows
 
@@ -247,13 +238,10 @@ class DataFrame(TileDBArray, somacore.DataFrame):
             if value_filter is not None:
                 query_condition = QueryCondition(value_filter)
 
-            sr = clib.SOMAReader(
-                self._uri,
-                name=self.__class__.__name__,
+            sr = self._soma_reader(
                 schema=A.schema,  # query_condition needs this
                 column_names=column_names,
                 query_condition=query_condition,
-                platform_config={} if self._ctx is None else self._ctx.config().dict(),
                 result_order=result_order.value,
             )
 
