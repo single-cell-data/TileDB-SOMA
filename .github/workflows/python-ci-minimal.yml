@@ -1,7 +1,8 @@
 name: TileDB-SOMA Python CI (Minimal)
 
 on:
-  push:  # TODO: 'pull_request' not triggering; is 'push' acceptable?
+  # TODO: 'pull_request' not triggering on subsequent pushes; is 'push' acceptable?
+  push:
     paths:
       - 'apis/python/**'
       - '!apis/r/**'
@@ -25,7 +26,7 @@ jobs:
     - name: Install testing/linting prereqs
       run: python -m pip -v install -U pip typeguard pre-commit mypy types-setuptools
 
-    # needed for mypy
+    # needed for mypy type checking
     - name: Install tiledbsoma
       run: python -m pip -v install -e apis/python
       env:
@@ -69,14 +70,6 @@ jobs:
     - name: Install testing/linting prereqs
       run: python -m pip -v install -U pip pytest-cov typeguard mypy types-setuptools
 
-    # - name: Run pre-commit hooks on all files
-    #   if: matrix.python-version == '3.10'
-    #   run: pre-commit run -a -v
-
-    # - name: Check C++ Format
-    #   if: matrix.python-version == '3.10'
-    #   run: ./scripts/run-clang-format.sh . clang-format 0 $(find libtiledbsoma -name "*.cc" -or -name "*.h")
-
     - name: Install tiledbsoma
       run: python -m pip -v install -e apis/python
       env:
@@ -85,11 +78,6 @@ jobs:
 
     - name: Show package versions
       run: python scripts/show-versions.py
-
-    # # TODO: Remove, once mypy is succeeding in lint job, above
-    # - name: Check type annotations with mypy
-    #   working-directory: apis/python
-    #   run: python -m mypy .
 
     - name: Generate test data
       shell: bash
