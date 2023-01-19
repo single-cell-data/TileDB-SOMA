@@ -1,3 +1,5 @@
+from somacore import AxisQuery, ExperimentAxisQuery
+
 from .collection import Collection
 from .dataframe import DataFrame
 from .dense_nd_array import DenseNDArray
@@ -25,6 +27,8 @@ __all__ = [
     "get_storage_engine",
     "TileDBObject",
     "TileDBArray",
+    "AxisQuery",
+    "ExperimentAxisQuery",
     "Collection",
     "DenseNDArray",
     "DoesNotExistError",
