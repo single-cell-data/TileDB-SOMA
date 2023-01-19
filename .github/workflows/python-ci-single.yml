@@ -59,10 +59,6 @@ jobs:
     - name: Run pre-commit hooks on all files
       run: pre-commit run -a -v
 
-    - name: Check type annotations with mypy
-      working-directory: apis/python
-      run: python -m mypy .
-
     - name: Check C++ Format
       run: ./scripts/run-clang-format.sh . clang-format 0 $(find libtiledbsoma -name "*.cc" -or -name "*.h")
 
