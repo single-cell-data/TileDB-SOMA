@@ -1,12 +1,52 @@
 name: TileDB-SOMA Python CI (Full)
 
 on:
+  # TODO: revert after testing
+  # push:
+  #   branches: [main]
+  # release:
+  #   types: [published]
   push:
-    branches: [main]
-  release:
-    types: [published]
+    paths:
+      - 'apis/python/**'
+      - '!apis/r/**'
+    branches-ignore:
+      - main
 
 jobs:
+  lint:
+    runs-on: ubuntu-22.04
+    steps:
+    - name: Checkout TileDB-SOMA
+      uses: actions/checkout@v3
+      with:
+        fetch-depth: 0  # ensure we get all tags to inform package version determination
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: 3.9
+
+    - name: Install testing/linting prereqs
+      run: python -m pip -v install -U pip typeguard pre-commit mypy types-setuptools
+
+    # needed for mypy type checking
+    - name: Install tiledbsoma
+      run: python -m pip -v install -e apis/python
+      env:
+        CC: ${{ matrix.cc }}
+        CXX: ${{ matrix.cxx }}
+
+    - name: Run pre-commit hooks on all files
+      run: pre-commit run -a -v
+
+    - name: Check type annotations with mypy
+      working-directory: apis/python
+      run: python -m mypy .
+
+    - name: Check C++ Format
+      run: ./scripts/run-clang-format.sh . clang-format 0 $(find libtiledbsoma -name "*.cc" -or -name "*.h")
+
   build:
     runs-on: ${{ matrix.os }}
     strategy:
@@ -42,21 +82,8 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
 
-    - name: Install testing/linting prereqs
-      run: python -m pip -v install -U pip pytest-cov typeguard pre-commit mypy types-setuptools
-
-    - name: Run pre-commit hooks on all files
-      if: matrix.os == 'ubuntu-22.04' && matrix.python-version == '3.9'
-      run: pre-commit run -a -v
-
-    - name: Check type annotations with mypy
-      if: matrix.os == 'ubuntu-22.04' && matrix.python-version == '3.9'
-      working-directory: apis/python
-      run: python -m mypy .
-
-    - name: Check C++ Format
-      if: matrix.os == 'ubuntu-22.04' && matrix.python-version == '3.9'
-      run: ./scripts/run-clang-format.sh . clang-format 0 $(find libtiledbsoma -name "*.cc" -or -name "*.h")
+    - name: Install testing prereqs
+      run: python -m pip -v install -U pip pytest-cov typeguard types-setuptools
 
     - name: Install tiledbsoma
       run: python -m pip -v install -e apis/python

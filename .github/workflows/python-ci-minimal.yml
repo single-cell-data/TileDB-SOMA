@@ -68,7 +68,7 @@ jobs:
         python-version: ${{ matrix.python-version }}
 
     - name: Install testing/linting prereqs
-      run: python -m pip -v install -U pip pytest-cov typeguard mypy types-setuptools
+      run: python -m pip -v install -U pip pytest-cov typeguard types-setuptools
 
     - name: Install tiledbsoma
       run: python -m pip -v install -e apis/python
