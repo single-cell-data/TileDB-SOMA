@@ -136,11 +136,6 @@ class DenseNDArray(TileDBArray, somacore.DenseNDArray):
         """
         raise NotImplementedError("reshape operation not implemented.")
 
-    @property
-    def ndim(self) -> int:
-        """TO DO: remove this once the next somacore is released."""
-        return self.ndims
-
     # Inherited from somacore
     # * ndim accessor
     # * is_sparse: Final = False
