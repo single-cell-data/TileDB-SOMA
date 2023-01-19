@@ -55,7 +55,7 @@ jobs:
         path: |
           build
           dist
-        key: libtiledbsoma-build-dist-${{ matrix.os }}-${{ matrix.python-version }}-${{ hashFiles('libtiledbsoma', 'apis/python/setup.py') }}
+        key: libtiledbsoma-build-dist-${{ matrix.os }}-${{ matrix.python-version }}-${{ hashFiles('libtiledbsoma', 'apis/python/setup.py') }}-lint
 
     # needed for mypy type checking
     - name: Install tiledbsoma
