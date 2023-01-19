@@ -49,12 +49,12 @@ data:
 .PHONY: check-format
 check-format:
 	 @./scripts/run-clang-format.sh . clang-format 0 \
-	 	`find libtiledbsoma -name "*.cc" -or -name "*.h"`
+		`find libtiledbsoma -name "*.cc" -or -name "*.h"`
 
 .PHONY: format
 format:
 	 @./scripts/run-clang-format.sh . clang-format 1 \
-	 	`find libtiledbsoma -name "*.cc" -or -name "*.h"`
+		`find libtiledbsoma -name "*.cc" -or -name "*.h"`
 
 # clean
 # -------------------------------------------------------------------

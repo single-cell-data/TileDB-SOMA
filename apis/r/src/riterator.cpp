@@ -31,7 +31,7 @@ const tiledb_xptr_object tiledb_xptr_object_group                { 120 };
 const tiledb_xptr_object tiledb_xptr_object_query                { 130 };
 const tiledb_xptr_object tiledb_xptr_object_querycondition       { 140 };
 const tiledb_xptr_object tiledb_xptr_object_vfs                  { 150 };
-const tiledb_xptr_object tiledb_xptr_vfs_fh_t              		 { 160 };
+const tiledb_xptr_object tiledb_xptr_vfs_fh_t                    { 160 };
 const tiledb_xptr_object tiledb_xptr_vlc_buf_t                   { 170 };
 const tiledb_xptr_object tiledb_xptr_vlv_buf_t                   { 180 };
 const tiledb_xptr_object tiledb_xptr_query_buf_t                 { 190 };
@@ -69,7 +69,7 @@ template <typename T> Rcpp::XPtr<T> make_xptr(T* p) {
 }
 
 template <typename T> Rcpp::XPtr<T> make_xptr(SEXP p) {
-    return Rcpp::XPtr<T>(p); 	// the default XPtr ctor with deleter on and tag and prot nil
+    return Rcpp::XPtr<T>(p);    // the default XPtr ctor with deleter on and tag and prot nil
 }
 
 template<typename T> void check_xptr_tag(Rcpp::XPtr<T> ptr) {
@@ -263,18 +263,18 @@ Rcpp::List sr_next(Rcpp::XPtr<tdbs::SOMAReader> sr) {
 
    struct ArrowArray* array_data_tmp = (struct ArrowArray*) R_ExternalPtrAddr(arrlst[0]);
    int rows = static_cast<int>(array_data_tmp->length);
-   SEXP sxp = arch_c_schema_xptr_new(Rcpp::wrap("+s"), 	// format
-                                     Rcpp::wrap(""),   	// name
-                                     Rcpp::List(),       	// metadata
-                                     Rcpp::wrap(2),      	// flags, 2 == unordered, nullable, no sorted map keys
-                                     schlst, 	        	// children
-                                     R_NilValue);        	// dictionary
+   SEXP sxp = arch_c_schema_xptr_new(Rcpp::wrap("+s"),  // format
+                                     Rcpp::wrap(""),    // name
+                                     Rcpp::List(),      // metadata
+                                     Rcpp::wrap(2),     // flags, 2 == unordered, nullable, no sorted map keys
+                                     schlst,            // children
+                                     R_NilValue);       // dictionary
    SEXP axp = arch_c_array_from_sexp(Rcpp::List::create(Rcpp::Named("")=R_NilValue), // buffers
-                                     Rcpp::wrap(rows), 	// length
-                                     Rcpp::wrap(-1), 	    // null count, -1 means not determined
-                                     Rcpp::wrap(0),    	// offset (in bytes)
-                                     arrlst,               // children
-                                     R_NilValue);          // dictionary
+                                     Rcpp::wrap(rows),  // length
+                                     Rcpp::wrap(-1),    // null count, -1 means not determined
+                                     Rcpp::wrap(0),     // offset (in bytes)
+                                     arrlst,            // children
+                                     R_NilValue);       // dictionary
    Rcpp::List as = Rcpp::List::create(Rcpp::Named("schema") = sxp,
                                       Rcpp::Named("array_data") = axp);
    as.attr("class") = "arch_array";
