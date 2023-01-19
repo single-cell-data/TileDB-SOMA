@@ -47,7 +47,15 @@ jobs:
         python-version: ${{ inputs.python_version }}
 
     - name: Install testing/linting prereqs
-      run: python -m pip -v install -U pip typeguard pre-commit mypy types-setuptools
+      run: python -m pip -v install -U pip typeguard mypy types-setuptools
+
+    - name: Cache native libraries
+      uses: actions/cache@v3
+      with:
+        path: |
+          build
+          dist
+        key: libtiledbsoma-build-dist-${{ matrix.os }}-${{ matrix.python-version }}-${{ hashFiles('libtiledbsoma', 'apis/python/setup.py') }}
 
     # needed for mypy type checking
     - name: Install tiledbsoma
@@ -56,8 +64,14 @@ jobs:
         CC: ${{ inputs.cc }}
         CXX: ${{ inputs.cxx }}
 
+    - name: Restore pre-commit cache
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pre-commit
+        key: pre-commit-${{ matrix.os }}-${{ matrix.python-version }}-${{ hashFiles('.github/workflows/python-ci-single.yml') }}
+
     - name: Run pre-commit hooks on all files
-      run: pre-commit run -a -v
+      run: python -m pip -v install pre-commit && pre-commit run -a -v
 
     - name: Check C++ Format
       run: ./scripts/run-clang-format.sh . clang-format 0 $(find libtiledbsoma -name "*.cc" -or -name "*.h")
@@ -83,6 +97,14 @@ jobs:
         python-version: ${{ inputs.python_version }}
         cache: pip
         cache-dependency-path: ./apis/python/setup.py
+
+    - name: Cache native libraries
+      uses: actions/cache@v3
+      with:
+        path: |
+          build
+          dist
+        key: libtiledbsoma-build-dist-${{ matrix.os }}-${{ matrix.python-version }}-${{ hashFiles('libtiledbsoma', 'apis/python/setup.py') }}
 
     - name: Install testing prereqs
       run: python -m pip -v install -U pip pytest-cov typeguard types-setuptools
