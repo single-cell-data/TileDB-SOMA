@@ -25,6 +25,13 @@ jobs:
     - name: Install testing/linting prereqs
       run: python -m pip -v install -U pip typeguard pre-commit mypy types-setuptools
 
+    # needed for mypy
+    - name: Install tiledbsoma
+      run: python -m pip -v install -e apis/python
+      env:
+        CC: ${{ matrix.cc }}
+        CXX: ${{ matrix.cxx }}
+
     - name: Run pre-commit hooks on all files
       run: pre-commit run -a -v
 
@@ -79,10 +86,10 @@ jobs:
     - name: Show package versions
       run: python scripts/show-versions.py
 
-    # TODO: Remove, once mypy is succeeding in lint job, above
-    - name: Check type annotations with mypy
-      working-directory: apis/python
-      run: python -m mypy .
+    # # TODO: Remove, once mypy is succeeding in lint job, above
+    # - name: Check type annotations with mypy
+    #   working-directory: apis/python
+    #   run: python -m mypy .
 
     - name: Generate test data
       shell: bash
