@@ -2,8 +2,7 @@ name: TileDB-SOMA Python CI (Full)
 
 on:
   push:
-    # TODO: remove feature branch after testing
-    branches: [main, atol/693-ci-optimize-resource-usage]
+    branches: [main]
   release:
     types: [published]
 
@@ -23,8 +22,7 @@ jobs:
           - runs-on: macos-12
             cc: gcc-11
             cxx: g++-11
-    # TODO: remove version before merge to main
-    uses: single-cell-data/TileDB-SOMA/.github/workflows/python-ci-single.yml@atol/693-ci-optimize-resource-usage
+    uses: single-cell-data/TileDB-SOMA/.github/workflows/python-ci-single.yml@main
     with:
       os: ${{ matrix.os }}
       python_version: ${{ matrix.python-version }}
