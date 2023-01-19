@@ -3,9 +3,8 @@ name: TileDB-SOMA Python CI (Minimal)
 on:
   # TODO: 'pull_request' not triggering on subsequent pushes; is 'push' acceptable?
   push:
-    paths:
-      - 'apis/python/**'
-      - '!apis/r/**'
+    paths-ignore:
+      - 'apis/r/**'
     branches-ignore:
       - main
 
