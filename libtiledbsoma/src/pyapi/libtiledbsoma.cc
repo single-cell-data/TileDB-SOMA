@@ -138,7 +138,8 @@ PYBIND11_MODULE(libtiledbsoma, m) {
                         py::object py_schema,
                         std::string_view batch_size,
                         std::string_view result_order,
-                        std::map<std::string, std::string> platform_config) {
+                        std::map<std::string, std::string> platform_config,
+                        std::optional<std::pair<uint64_t, uint64_t>> timestamp) {
                 // Handle optional args
                 std::vector<std::string> column_names;
                 if (column_names_in) {
@@ -184,7 +185,8 @@ PYBIND11_MODULE(libtiledbsoma, m) {
                     platform_config,
                     column_names,
                     batch_size,
-                    result_order);
+                    result_order,
+                    timestamp);
 
                 // Set query condition if present
                 if (qc) {
@@ -201,7 +203,8 @@ PYBIND11_MODULE(libtiledbsoma, m) {
             "schema"_a = py::none(),
             "batch_size"_a = "auto",
             "result_order"_a = "auto",
-            "platform_config"_a = py::dict())
+            "platform_config"_a = py::dict(),
+            "timestamp"_a = py::none())
 
         .def(
             "reset",

@@ -43,7 +43,12 @@ class TileDBArray(TileDBObject):
         # and our return value's __exit__ on exit from the body of the with-block. The tiledb
         # array object does both of those things. (And if it didn't, we'd get a runtime AttributeError
         # on with-as, flagging the non-existence of the __enter__ or __exit__.)
-        return tiledb.open(self._uri, mode=mode, ctx=self._ctx)
+        timestamp = (
+            self.context._tiledb_read_timestamp_arg()
+            if mode == "r"
+            else self.context.write_timestamp
+        )
+        return tiledb.open(self._uri, mode=mode, timestamp=timestamp, ctx=self._ctx)
 
     def _tiledb_array_schema(self) -> tiledb.ArraySchema:
         """

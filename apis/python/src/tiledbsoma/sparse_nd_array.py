@@ -124,6 +124,7 @@ class SparseNDArray(TileDBArray, somacore.SparseNDArray):
             ctx=self._ctx,
         )
 
+        # TODO: confirm that no timestamp is needed or supported for tiledb.Array.create()
         tiledb.Array.create(self._uri, sch)
 
         self._common_create(self.soma_type)  # object-type metadata etc
@@ -163,6 +164,7 @@ class SparseNDArray(TileDBArray, somacore.SparseNDArray):
             clib.SOMAReader(
                 self.uri,
                 platform_config={} if self._ctx is None else self._ctx.config().dict(),
+                timestamp=self.context._tiledb_read_timestamp_arg(),
             ).nnz(),
         )
 
@@ -214,6 +216,7 @@ class SparseNDArray(TileDBArray, somacore.SparseNDArray):
                 name=self.__class__.__name__,
                 schema=A.schema,
                 platform_config={} if self._ctx is None else self._ctx.config().dict(),
+                timestamp=self.context._tiledb_read_timestamp_arg(),
             )
 
             if not isinstance(coords, (list, tuple)):

@@ -1,5 +1,6 @@
 import os
-from typing import Dict, Optional, Union
+import time
+from typing import Dict, Optional, Tuple, Union
 
 import attrs
 import tiledb
@@ -39,4 +40,26 @@ class SOMATileDBContext:
     member_uris_are_relative: Optional[bool] = None
     """Allows "relocatability" for local disk / S3, and correct behavior for TileDB Cloud."""
 
-    # read_timestamp, e.g.
+    read_timestamp_start: Optional[int] = None
+    "Timestamp range start for all read operations. The start of the range is usually implicitly zero."
+
+    read_timestamp_end: Optional[int] = None
+    "Timestamp range end for all read operations. If unspecified, then implictly the latest data as of the first access to any object."
+
+    write_timestamp: Optional[int] = None
+    "Timestamp applied to all write operations."
+
+    def _tiledb_read_timestamp_arg(self) -> Optional[Tuple[int, int]]:
+        "(internal) form the read timestamp tuple arg for TileDB methods"
+        if self.read_timestamp_start is None and self.read_timestamp_end is None:
+            return None
+        start = (
+            self.read_timestamp_start if self.read_timestamp_start is not None else 0
+        )
+        # TODO: should this default to now or UINT64_MAX?
+        end = (
+            self.read_timestamp_end
+            if self.read_timestamp_end is not None
+            else int(time.time() * 1000)
+        )
+        return (start, end)

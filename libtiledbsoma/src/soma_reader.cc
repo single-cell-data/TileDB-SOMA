@@ -47,14 +47,16 @@ std::unique_ptr<SOMAReader> SOMAReader::open(
     std::map<std::string, std::string> platform_config,
     std::vector<std::string> column_names,
     std::string_view batch_size,
-    std::string_view result_order) {
+    std::string_view result_order,
+    std::optional<std::pair<uint64_t,uint64_t>> timestamp) {
     return std::make_unique<SOMAReader>(
         uri,
         name,
         std::make_shared<Context>(Config(platform_config)),
         column_names,
         batch_size,
-        result_order);
+        result_order,
+        timestamp);
 }
 
 std::unique_ptr<SOMAReader> SOMAReader::open(
@@ -63,9 +65,10 @@ std::unique_ptr<SOMAReader> SOMAReader::open(
     std::string_view name,
     std::vector<std::string> column_names,
     std::string_view batch_size,
-    std::string_view result_order) {
+    std::string_view result_order,
+    std::optional<std::pair<uint64_t,uint64_t>> timestamp) {
     return std::make_unique<SOMAReader>(
-        uri, name, ctx, column_names, batch_size, result_order);
+        uri, name, ctx, column_names, batch_size, result_order, timestamp);
 }
 
 //===================================================================
@@ -78,15 +81,30 @@ SOMAReader::SOMAReader(
     std::shared_ptr<Context> ctx,
     std::vector<std::string> column_names,
     std::string_view batch_size,
-    std::string_view result_order)
+    std::string_view result_order,
+    std::optional<std::pair<uint64_t,uint64_t>> timestamp)
     : ctx_(ctx)
-    , uri_(util::rstrip_uri(uri)) {
+    , uri_(util::rstrip_uri(uri))
+    , timestamp_(timestamp) {
     // Validate parameters
     try {
         LOG_DEBUG(fmt::format("[SOMAReader] opening array '{}'", uri_));
         auto array = std::make_shared<Array>(*ctx_, uri_, TILEDB_READ);
+        if (timestamp) {
+            array->set_open_timestamp_start(timestamp->first);
+            array->set_open_timestamp_end(timestamp->second);
+            std::cerr << "timestamp_end = " << timestamp->second << std::endl;
+            // FIXME: tiledb::Array::set_open_timestamp_{start,end} are only effective if called
+            // before [re]opening the array. The tiledb::Array constructor internally opens the
+            // array already, so we need to reopen() for this to have effect.
+            // https://github.com/TileDB-Inc/TileDB/blob/6f92d2864440cec17474f2aae22f223147828c6a/tiledb/sm/cpp_api/array.h#L97
+            // We might need to open the array using the C API and then use the alternate
+            // tiledb::Array constructor that takes ownership of the C array.
+            array->reopen();
+        }
         mq_ = std::make_unique<ManagedQuery>(array, name);
-        LOG_DEBUG(fmt::format("timestamp = {}", array->open_timestamp_end()));
+        LOG_DEBUG(fmt::format("timestamp_start = {}", array->open_timestamp_start()));
+        LOG_DEBUG(fmt::format("timestamp_end = {}", array->open_timestamp_end()));
     } catch (const std::exception& e) {
         throw TileDBSOMAError(
             fmt::format("Error opening array: '{}'\n  {}", uri_, e.what()));
@@ -108,6 +126,7 @@ void SOMAReader::reset(
 
     batch_size_ = batch_size;
 
+    result_order_ = "auto";
     if (result_order != "auto") {  // default "auto" is set in soma_reader.h
         tiledb_layout_t layout;
         if (result_order == "row-major") {
@@ -119,6 +138,7 @@ void SOMAReader::reset(
                 fmt::format("Unknown result_order '{}'", result_order));
         }
         mq_->set_layout(layout);
+        result_order_ = result_order;
     }
 
     first_read_next_ = true;
@@ -160,6 +180,13 @@ uint64_t SOMAReader::nnz() {
     if (mq_->schema()->array_type() != TILEDB_SPARSE) {
         throw TileDBSOMAError(
             "[SOMAReader] nnz is only supported for sparse arrays");
+    }
+
+    if (timestamp_ && (timestamp_->first > 0 || timestamp_->second < UINT64_MAX)) {
+        // Use count_cells for timestamped queries for now.
+        // TODO: make optimized method filter fragment(s) on timestamp range
+        // https://github.com/TileDB-Inc/TileDB/blob/6f92d2864440cec17474f2aae22f223147828c6a/tiledb/sm/cpp_api/fragment_info.h#L314
+        return nnz_slow();
     }
 
     // Load fragment info
@@ -235,11 +262,18 @@ uint64_t SOMAReader::nnz() {
 
     // TODO[perf]: Reuse "this" object to read, then reset the state of "this"
     // so it could be used to read again (for TileDB Cloud)
+    return nnz_slow();
+}
+
+uint64_t SOMAReader::nnz_slow() {
     auto sr = SOMAReader::open(
         ctx_,
         uri_,
         "count_cells",
-        {mq_->schema()->domain().dimension(0).name()});
+        {mq_->schema()->domain().dimension(0).name()},
+        batch_size_,
+        result_order_,
+        timestamp_);
     sr->submit();
 
     uint64_t total_cell_num = 0;

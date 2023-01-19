@@ -8,6 +8,7 @@ import scipy.sparse as sparse
 import tiledb
 
 import tiledbsoma as soma
+from tiledbsoma.options import SOMATileDBContext
 
 from . import NDARRAY_ARROW_TYPES_NOT_SUPPORTED, NDARRAY_ARROW_TYPES_SUPPORTED
 
@@ -754,3 +755,47 @@ def test_sparse_nd_array_table_slicing(tmp_path, io, write_format, read_format):
             elif read_format == "table":
                 tensor = next(r.csrs())
             assert tensor.shape == io["shape"]
+
+
+def test_timestamped_ops(tmp_path):
+    ctx_write10 = SOMATileDBContext(write_timestamp=10)
+
+    # 2x2 array
+    a = soma.SparseNDArray(uri=tmp_path.as_posix(), context=ctx_write10)
+    # write 1 into top-left entry @ t=10
+    a.create(type=pa.uint16(), shape=(2, 2))
+    a.write(
+        pa.SparseCOOTensor.from_scipy(
+            sparse.coo_matrix(([1], ([0], [0])), shape=a.shape)
+        )
+    )
+
+    # write 1 into bottom-right entry @ t=20
+    ctx_write20 = SOMATileDBContext(write_timestamp=20)
+    a = soma.SparseNDArray(uri=tmp_path.as_posix(), context=ctx_write20)
+    assert a.exists()
+    a.write(
+        pa.SparseCOOTensor.from_scipy(
+            sparse.coo_matrix(([1], ([1], [1])), shape=a.shape)
+        )
+    )
+
+    # read with no timestamp args & see both 1s
+    a = soma.SparseNDArray(uri=tmp_path.as_posix())
+    assert a.read().coos().concat().to_scipy().todense().tolist() == [[1, 0], [0, 1]]
+    assert a.nnz == 2
+
+    # read with timestamp_end=15 & see only the first write
+    a = soma.SparseNDArray(
+        uri=tmp_path.as_posix(), context=SOMATileDBContext(read_timestamp_end=15)
+    )
+    assert a.read().coos().concat().to_scipy().todense().tolist() == [[1, 0], [0, 0]]
+    assert a.nnz == 1
+
+    # read with (timestamp_start, timestamp_end) = (15, 25) & see only the second write
+    a = soma.SparseNDArray(
+        uri=tmp_path.as_posix(),
+        context=SOMATileDBContext(read_timestamp_start=15, read_timestamp_end=25),
+    )
+    assert a.read().coos().concat().to_scipy().todense().tolist() == [[0, 0], [0, 1]]
+    assert a.nnz == 1
