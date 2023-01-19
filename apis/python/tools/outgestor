@@ -41,6 +41,18 @@ def main():
         default="./anndata-readback-tiledbsoma",
     )
     parser.add_argument(
+        "--measurement-name",
+        help="Which SOMA-experiment measurement name to write to the outgested anndata",
+        type=str,
+        default="RNA",
+    )
+    parser.add_argument(
+        "--X-layer-name",
+        help="Which X-layer measurement name to write as primary layer to the outgested anndata",
+        type=str,
+        default="data",
+    )
+    parser.add_argument(
         "paths",
         type=str,
         help="One for specified input with default output path, or two to specify input and output paths",
@@ -82,7 +94,12 @@ def main():
         tiledbsoma.logging.info()
 
     soma = tiledbsoma.Experiment(input_path)
-    tiledbsoma.io.to_h5ad(soma, output_path, measurement_name="RNA")
+    tiledbsoma.io.to_h5ad(
+        soma,
+        output_path,
+        measurement_name=args.measurement_name,
+        X_layer_name=args.X_layer_name,
+    )
 
     logger.info(f"Wrote {output_path}")
 
