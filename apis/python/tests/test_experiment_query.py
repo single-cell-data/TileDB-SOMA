@@ -494,7 +494,7 @@ def test_experiment_query_column_names(soma_experiment):
     """
     Verify that column_names is correctly handled in the various obs/var accessors.
 
-    Returned columsn should be the union of the columns specifically requested via
+    Returned columns should be the union of the columns specifically requested via
     column_names, and the columns implicitly requested via value_filter.
     """
 
@@ -546,10 +546,10 @@ def test_experiment_query_column_names(soma_experiment):
     with soma_experiment.axis_query(
         "RNA",
         obs_query=soma.AxisQuery(
-            value_filter="label in [" + ",".join([f"'{i}'" for i in range(101)]) + "]"
+            value_filter="label in [" + ",".join(f"'{i}'" for i in range(101)) + "]"
         ),
         var_query=soma.AxisQuery(
-            value_filter="label in [" + ",".join([f"'{i}'" for i in range(99)]) + "]"
+            value_filter="label in [" + ",".join(f"'{i}'" for i in range(99)) + "]"
         ),
     ) as query:
         assert set(next(query.obs(column_names=["soma_joinid"])).column_names) == {
