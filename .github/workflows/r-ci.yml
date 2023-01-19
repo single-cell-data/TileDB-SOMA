@@ -1,13 +1,12 @@
 name: TileDB-SOMA R CI
 
 on:
-  # TODO: revert (commented out for GHA Python testing only)
   workflow_dispatch:
-  # pull_request:
-  #   paths-ignore:
-  #     - 'apis/python/**'
-  # push:
-  #   branches: [main]
+  pull_request:
+    paths-ignore:
+      - 'apis/python/**'
+  push:
+    branches: [main]
 
 env:
   COVERAGE_FLAGS: "r"

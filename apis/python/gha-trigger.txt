@@ -1,3 +1,0 @@
-Temp file for triggering GHA Python CI during testing.
-TODO: delete me!
-10
