@@ -1,7 +1,7 @@
 name: TileDB-SOMA Python CI (Minimal)
 
 on:
-  push:
+  push:  # TODO: 'pull_request' not triggering; is 'push' acceptable?
     paths:
       - 'apis/python/**'
       - '!apis/r/**'
@@ -12,13 +12,18 @@ jobs:
   lint:
     runs-on: ubuntu-22.04
     steps:
+    - name: Checkout TileDB-SOMA
+      uses: actions/checkout@v3
+      with:
+        fetch-depth: 0  # ensure we get all tags to inform package version determination
+
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
         python-version: 3.9
 
     - name: Install testing/linting prereqs
-      run: python -m pip -v install -U pip typeguard pre-commit mypy types-setuptools
+      run: python -m pip -v install -U pip pytest-cov typeguard pre-commit mypy types-setuptools
 
     - name: Run pre-commit hooks on all files
       run: pre-commit run -a -v
