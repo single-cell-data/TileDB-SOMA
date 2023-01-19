@@ -41,13 +41,16 @@ class SOMATileDBContext:
     """Allows "relocatability" for local disk / S3, and correct behavior for TileDB Cloud."""
 
     read_timestamp_start: Optional[int] = None
-    "Timestamp range start for all read operations. The start of the range is usually implicitly zero."
+    "Timestamp range start for all array read operations. Usually, implicitly zero."
 
     read_timestamp_end: Optional[int] = None
-    "Timestamp range end for all read operations. If unspecified, then implictly the latest data as of the first access to any object."
+    """
+    Timestamp range end for all array write operations.
+    If unspecified, then implictly the latest data as of the first access to each array.
+    """
 
     write_timestamp: Optional[int] = None
-    "Timestamp applied to all write operations."
+    "Timestamp applied to all array write operations."
 
     def _tiledb_read_timestamp_arg(self) -> Optional[Tuple[int, int]]:
         "(internal) form the read timestamp tuple arg for TileDB methods"
