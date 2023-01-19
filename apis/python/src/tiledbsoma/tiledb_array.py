@@ -3,6 +3,9 @@ from typing import List, Optional, Sequence, Tuple
 import pyarrow as pa
 import tiledb
 
+# This package's pybind11 code
+import tiledbsoma.libtiledbsoma as clib
+
 from .options import SOMATileDBContext
 from .tiledb_object import TileDBObject
 from .util_arrow import get_arrow_schema_from_tiledb_uri
@@ -79,6 +82,20 @@ class TileDBArray(TileDBObject):
         """
         with self._tiledb_open() as A:
             return [A.schema.attr(i).name for i in range(A.schema.nattr)]
+
+    def _soma_reader(
+        self, schema: Optional[tiledb.ArraySchema] = None
+    ) -> clib.SOMAReader:
+        """
+        Construct a C++ SOMAReader using appropriate context/config/etc.
+        """
+        return clib.SOMAReader(
+            self._uri,
+            name=self.__class__.__name__,
+            schema=schema,
+            platform_config={} if self._ctx is None else self._ctx.config().dict(),
+            timestamp=self.context._tiledb_read_timestamp_arg(),
+        )
 
     def _show_metadata(self, recursively: bool = True, indent: str = "") -> None:
         """
