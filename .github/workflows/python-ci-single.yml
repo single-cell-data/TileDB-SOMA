@@ -12,7 +12,7 @@ on:
       cc:
         required: true
         type: string
-      ccx:
+      cxx:
         required: true
         type: string
       report_codecov:

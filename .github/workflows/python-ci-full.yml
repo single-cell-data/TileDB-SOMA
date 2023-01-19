@@ -25,10 +25,11 @@ jobs:
     # TODO: remove version before merge to main
     uses: single-cell-data/TileDB-SOMA/.github/workflows/python-ci-single.yml@atol/693-ci-optimize-resource-usage
     with:
-      target: ${{ matrix.target }}
       os: ${{ matrix.os }}
-      is_mac: ${{ runner.os == 'macOS' }}
       python_version: ${{ matrix.python-version }}
+      cc: ${{ matrix.cc }}
+      cxx: ${{ matrix.cxx }}
+      is_mac: ${{ runner.os == 'macOS' }}
       report_codecov: ${{ matrix.os == 'ubuntu-22.04' && matrix.python-version == '3.9' }}
       run_lint: ${{ matrix.os == 'ubuntu-22.04' && matrix.python-version == '3.9' }}
     secrets: inherit
