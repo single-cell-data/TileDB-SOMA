@@ -20,7 +20,8 @@ jobs:
           - runs-on: ubuntu-22.04
             cc: gcc-11
             cxx: g++-11
-    uses: single-cell-data/TileDB-SOMA/.github/workflows/python-ci-single.yml
+    # TODO: remove version before merge to main
+    uses: single-cell-data/TileDB-SOMA/.github/workflows/python-ci-single.yml@atol/693-ci-optimize-resource-usage
     with:
       target: ${{ matrix.target }}
       os: ${{ matrix.os }}
