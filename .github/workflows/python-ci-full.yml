@@ -2,7 +2,8 @@ name: TileDB-SOMA Python CI (Full)
 
 on:
   push:
-    branches: [main]
+    # TODO: remove feature branch after testing
+    branches: [main, atol/693-ci-optimize-resource-usage]
   release:
     types: [published]
 
