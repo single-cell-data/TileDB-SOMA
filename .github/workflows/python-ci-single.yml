@@ -1,11 +1,6 @@
 # This is a reusable workflow
 # (https://docs.github.com/en/actions/using-workflows/reusing-workflows#calling-a-reusable-workflow),
 # called by python-ci-full.yml and python-ci-minimal.yml.
-#
-# Note: If you intend to modify and test this script on a branch, note that
-# you will need to temporarily change the git-ref (version) of this script
-# that is being called by the calling workflows, as they will normally call
-# the version of script on the main branch
 
 name: TileDB-SOMA Python CI
 

@@ -22,7 +22,7 @@ jobs:
           - runs-on: macos-12
             cc: gcc-11
             cxx: g++-11
-    uses: single-cell-data/TileDB-SOMA/.github/workflows/python-ci-single.yml@main
+    uses: ./.github/workflows/python-ci-single.yml
     with:
       os: ${{ matrix.os }}
       python_version: ${{ matrix.python-version }}

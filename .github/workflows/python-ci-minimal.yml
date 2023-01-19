@@ -21,7 +21,7 @@ jobs:
             cc: gcc-11
             cxx: g++-11
     # TODO: remove version before merge to main
-    uses: single-cell-data/TileDB-SOMA/.github/workflows/python-ci-single.yml@atol/693-ci-optimize-resource-usage
+    uses: ./.github/workflows/python-ci-single.yml
     with:
       os: ${{ matrix.os }}
       python_version: ${{ matrix.python-version }}
