@@ -33,6 +33,9 @@ Imports:
     Matrix,
     stats,
     bit64,
+    # We can't pin on 0.17.*, 0.18.*, etc since CRAN forbids it.  This means that whenever tiledb-r
+    # bumps, we can have CI fails in the time window between that release and our bumping
+    # libtilesoma's core-dependency version.
     tiledb (>= 0.17.0),
     arrow,
     utils,
