@@ -55,7 +55,7 @@ jobs:
         path: |
           build
           dist
-        key: libtiledbsoma-build-dist-${{ matrix.os }}-${{ matrix.python-version }}-${{ hashFiles('libtiledbsoma', 'apis/python/setup.py') }}-lint
+        key: libtiledbsoma-build-dist-${{ inputs.os }}-${{ inputs.python-version }}-${{ hashFiles('libtiledbsoma', 'apis/python/setup.py') }}
 
     # needed for mypy type checking
     - name: Install tiledbsoma
@@ -68,7 +68,7 @@ jobs:
       uses: actions/cache@v3
       with:
         path: ~/.cache/pre-commit
-        key: pre-commit-${{ matrix.os }}-${{ matrix.python-version }}-${{ hashFiles('.github/workflows/python-ci-single.yml') }}
+        key: pre-commit-${{ inputs.os }}-${{ inputs.python-version }}-${{ hashFiles('.github/workflows/python-ci-single.yml') }}
 
     - name: Run pre-commit hooks on all files
       run: python -m pip -v install pre-commit && pre-commit run -a -v
@@ -104,7 +104,7 @@ jobs:
         path: |
           build
           dist
-        key: libtiledbsoma-build-dist-${{ matrix.os }}-${{ matrix.python-version }}-${{ hashFiles('libtiledbsoma', 'apis/python/setup.py') }}
+        key: libtiledbsoma-build-dist-${{ inputs.os }}-${{ inputs.python-version }}-${{ hashFiles('libtiledbsoma', 'apis/python/setup.py') }}
 
     - name: Install testing prereqs
       run: python -m pip -v install -U pip pytest-cov typeguard types-setuptools
