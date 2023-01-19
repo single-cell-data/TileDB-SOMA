@@ -104,7 +104,7 @@ jobs:
         path: |
           build
           dist
-        key: libtiledbsoma-build-dist-${{ inputs.os }}-${{ inputs.python-version }}-${{ hashFiles('libtiledbsoma', 'apis/python/setup.py') }}
+        key: libtiledbsoma-build-dist-${{ inputs.os }}-${{ inputs.python_version }}-${{ hashFiles('libtiledbsoma', 'apis/python/setup.py') }}
 
     - name: Install testing prereqs
       run: python -m pip -v install -U pip pytest-cov typeguard types-setuptools
