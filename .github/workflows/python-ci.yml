@@ -45,12 +45,12 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
 
-    - name: Install testing/linting prereqs
-      run: python -m pip -v install -U pip pytest-cov typeguard pre-commit mypy types-setuptools
+    - name: Install testing prereqs
+      run: python -m pip -v install -U pip pytest-cov typeguard
 
     - name: Run pre-commit hooks on all files
       if: matrix.os == 'ubuntu-22.04' && matrix.python-version == '3.9'
-      run: pre-commit run -a -v
+      run: python -m pip -v install pre-commit && pre-commit run -a -v
 
     - name: Check C++ Format
       if: matrix.os == 'ubuntu-22.04' && matrix.python-version == '3.9'
@@ -67,11 +67,6 @@ jobs:
 
     - name: Show XCode version
       run: clang --version
-
-    - name: Check type annotations with mypy
-      if: matrix.os == 'ubuntu-22.04' && matrix.python-version == '3.9'
-      working-directory: apis/python
-      run: python -m mypy .
 
     - name: Generate test data
       shell: bash
