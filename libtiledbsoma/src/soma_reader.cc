@@ -116,7 +116,7 @@ void SOMAReader::reset(
             layout = TILEDB_COL_MAJOR;
         } else {
             throw TileDBSOMAError(
-                fmt::format("Unknown result_order '{}'", result_order));
+                fmt::format("Oops! No result order '{}'", result_order));
         }
         mq_->set_layout(layout);
     }
