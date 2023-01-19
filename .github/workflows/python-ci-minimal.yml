@@ -2,8 +2,9 @@ name: TileDB-SOMA Python CI (Minimal)
 
 on:
   pull_request:
-    paths-ignore:
-      - 'apis/r/**'
+    paths:
+      - 'apis/python/**'
+      - '!apis/r/**'
     branches-ignore:
       - main
 
