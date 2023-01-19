@@ -6,3 +6,7 @@ requires = [
     "cmake>=3.21",
 ]
 build-backend = "setuptools.build_meta"
+
+[tool.ruff]
+ignore = ["E501"]
+extend-exclude = ["query_condition.py"]

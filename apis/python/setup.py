@@ -117,7 +117,7 @@ setuptools.setup(
     extras_require={
         "dev": [
             "black",
-            "flake8-bugbear",
+            "ruff",
             "isort",
             "pytest",
             "typeguard",
