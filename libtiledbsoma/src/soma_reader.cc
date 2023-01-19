@@ -48,7 +48,7 @@ std::unique_ptr<SOMAReader> SOMAReader::open(
     std::vector<std::string> column_names,
     std::string_view batch_size,
     std::string_view result_order,
-    std::optional<std::pair<uint64_t,uint64_t>> timestamp) {
+    std::optional<std::pair<uint64_t, uint64_t>> timestamp) {
     return std::make_unique<SOMAReader>(
         uri,
         name,
@@ -66,7 +66,7 @@ std::unique_ptr<SOMAReader> SOMAReader::open(
     std::vector<std::string> column_names,
     std::string_view batch_size,
     std::string_view result_order,
-    std::optional<std::pair<uint64_t,uint64_t>> timestamp) {
+    std::optional<std::pair<uint64_t, uint64_t>> timestamp) {
     return std::make_unique<SOMAReader>(
         uri, name, ctx, column_names, batch_size, result_order, timestamp);
 }
@@ -82,7 +82,7 @@ SOMAReader::SOMAReader(
     std::vector<std::string> column_names,
     std::string_view batch_size,
     std::string_view result_order,
-    std::optional<std::pair<uint64_t,uint64_t>> timestamp)
+    std::optional<std::pair<uint64_t, uint64_t>> timestamp)
     : ctx_(ctx)
     , uri_(util::rstrip_uri(uri))
     , timestamp_(timestamp) {
@@ -94,17 +94,21 @@ SOMAReader::SOMAReader(
             array->set_open_timestamp_start(timestamp->first);
             array->set_open_timestamp_end(timestamp->second);
             std::cerr << "timestamp_end = " << timestamp->second << std::endl;
-            // FIXME: tiledb::Array::set_open_timestamp_{start,end} are only effective if called
-            // before [re]opening the array. The tiledb::Array constructor internally opens the
-            // array already, so we need to reopen() for this to have effect.
+            // FIXME: tiledb::Array::set_open_timestamp_{start,end} are only
+            // effective if called before [re]opening the array. The
+            // tiledb::Array constructor internally opens the array already, so
+            // we need to reopen() for this to have effect.
             // https://github.com/TileDB-Inc/TileDB/blob/6f92d2864440cec17474f2aae22f223147828c6a/tiledb/sm/cpp_api/array.h#L97
-            // We might need to open the array using the C API and then use the alternate
-            // tiledb::Array constructor that takes ownership of the C array.
+            // We might need to open the array using the C API and then use the
+            // alternate tiledb::Array constructor that takes ownership of the C
+            // array.
             array->reopen();
         }
         mq_ = std::make_unique<ManagedQuery>(array, name);
-        LOG_DEBUG(fmt::format("timestamp_start = {}", array->open_timestamp_start()));
-        LOG_DEBUG(fmt::format("timestamp_end = {}", array->open_timestamp_end()));
+        LOG_DEBUG(
+            fmt::format("timestamp_start = {}", array->open_timestamp_start()));
+        LOG_DEBUG(
+            fmt::format("timestamp_end = {}", array->open_timestamp_end()));
     } catch (const std::exception& e) {
         throw TileDBSOMAError(
             fmt::format("Error opening array: '{}'\n  {}", uri_, e.what()));
@@ -182,7 +186,8 @@ uint64_t SOMAReader::nnz() {
             "[SOMAReader] nnz is only supported for sparse arrays");
     }
 
-    if (timestamp_ && (timestamp_->first > 0 || timestamp_->second < UINT64_MAX)) {
+    if (timestamp_ &&
+        (timestamp_->first > 0 || timestamp_->second < UINT64_MAX)) {
         // Use count_cells for timestamped queries for now.
         // TODO: make optimized method filter fragment(s) on timestamp range
         // https://github.com/TileDB-Inc/TileDB/blob/6f92d2864440cec17474f2aae22f223147828c6a/tiledb/sm/cpp_api/fragment_info.h#L314
