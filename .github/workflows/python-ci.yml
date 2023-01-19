@@ -47,8 +47,23 @@ jobs:
         cache: pip
         cache-dependency-path: ./apis/python/setup.py
 
+    - name: Cache native libraries
+      uses: actions/cache@v3
+      with:
+        path: |
+          build
+          dist
+        key: libtiledbsoma-build-dist-${{ matrix.os }}-${{ matrix.python-version }}-${{ hashFiles('libtiledbsoma', 'apis/python/setup.py') }}
+
     - name: Install testing prereqs
       run: python -m pip -v install -U pip pytest-cov typeguard
+
+    - name: Restore pre-commit cache
+      if: matrix.os == 'ubuntu-22.04' && matrix.python-version == '3.9'
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pre-commit
+        key: pre-commit-${{ matrix.os }}-${{ matrix.python-version }}-${{ hashFiles('.github/workflows/python-ci.yml') }}
 
     - name: Run pre-commit hooks on all files
       if: matrix.os == 'ubuntu-22.04' && matrix.python-version == '3.9'
