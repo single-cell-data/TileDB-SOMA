@@ -11,10 +11,12 @@ if TYPE_CHECKING:
     NPInteger = np.integer[npt.NBitBase]
     NPFloating = np.floating[npt.NBitBase]
     NDArray = npt.NDArray[np.number[npt.NBitBase]]
+    PDSeries = pd.Series[Any]
 else:
     NPInteger = np.integer
     NPFloating = np.floating
     NDArray = np.ndarray
+    PDSeries = pd.Series
 
 
 Path = Union[str, pathlib.Path]

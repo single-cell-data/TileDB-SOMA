@@ -380,8 +380,7 @@ def _write_dataframe(
             # This lets us check for already-ingested dataframes, when in resume-ingest mode.
             with soma_df._tiledb_open() as A:
                 storage_ned = A.nonempty_domain()
-            sorted_dim_values = sorted(list(df.index))
-            dim_range = ((sorted_dim_values[0], sorted_dim_values[-1]),)
+            dim_range = ((int(df.index.min()), int(df.index.max())),)
             if _chunk_is_contained_in(dim_range, storage_ned):
                 logging.log_io(
                     f"Skipped {soma_df.uri}",

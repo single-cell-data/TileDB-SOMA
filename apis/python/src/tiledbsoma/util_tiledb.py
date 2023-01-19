@@ -1,15 +1,15 @@
 import functools
 import re
-from typing import Collection, Optional, Sequence, Tuple, TypeVar
+from typing import Collection, Optional, Sequence, Tuple, TypeVar, cast
 
 import numpy as np
-import numpy.typing as npt
 import pandas as pd
+import pandas._typing as pdt
 import scipy.sparse as sp
 import somacore
 import tiledb
 
-from .types import NDArray
+from .types import NDArray, PDSeries
 
 SOMA_OBJECT_TYPE_METADATA_KEY = "soma_object_type"
 SOMA_ENCODING_VERSION_METADATA_KEY = "soma_encoding_version"
@@ -46,12 +46,13 @@ def tiledb_result_order_from_soma_result_order(
     raise ValueError(f"{soma_result_order} is not supported.")
 
 
-def to_tiledb_supported_dtype(dtype: npt.DTypeLike) -> npt.DTypeLike:
+_DT = TypeVar("_DT", bound=pdt.Dtype)
+
+
+def to_tiledb_supported_dtype(dtype: _DT) -> _DT:
     """A handful of types are cast into the TileDB type system."""
     # TileDB has no float16 -- cast up to float32
-    if dtype == np.dtype("float16"):
-        return np.dtype("float32")
-    return dtype
+    return cast(_DT, np.dtype("float32")) if dtype == np.dtype("float16") else dtype
 
 
 @functools.singledispatch
@@ -76,8 +77,8 @@ def _to_supported_dataframe(x: pd.DataFrame) -> pd.DataFrame:
 
 
 @to_tiledb_supported_array_type.register
-def _to_supported_series(x: pd.Series) -> pd.Series:
-    if not pd.api.types.is_categorical_dtype(x.dtype):
+def _to_supported_series(x: PDSeries) -> PDSeries:
+    if not pd.api.types.is_categorical_dtype(x):
         return _to_supported_base(x)
 
     categories = x.cat.categories
@@ -112,14 +113,16 @@ def _to_supported_series(x: pd.Series) -> pd.Series:
     return x.astype("O")
 
 
-_MT = TypeVar("_MT", NDArray, sp.spmatrix)
+_MT = TypeVar("_MT", NDArray, sp.spmatrix, PDSeries)
 
 
-@to_tiledb_supported_array_type.register(np.ndarray)
-@to_tiledb_supported_array_type.register(sp.spmatrix)
 def _to_supported_base(x: _MT) -> _MT:
     target_dtype = to_tiledb_supported_dtype(x.dtype)
     return x if target_dtype == x.dtype else x.astype(target_dtype)
+
+
+to_tiledb_supported_array_type.register(np.ndarray, _to_supported_base)
+to_tiledb_supported_array_type.register(sp.spmatrix, _to_supported_base)
 
 
 # ----------------------------------------------------------------
