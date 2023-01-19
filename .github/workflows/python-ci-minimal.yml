@@ -4,8 +4,6 @@ on:
   pull_request:
     paths-ignore:
       - 'apis/r/**'
-    branches-ignore:
-      - main
 
 jobs:
   build:
