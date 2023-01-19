@@ -758,10 +758,10 @@ def test_sparse_nd_array_table_slicing(tmp_path, io, write_format, read_format):
 
 
 def test_timestamped_ops(tmp_path):
-    ctx_write10 = SOMATileDBContext(write_timestamp=10)
-
     # 2x2 array
-    a = soma.SparseNDArray(uri=tmp_path.as_posix(), context=ctx_write10)
+    a = soma.SparseNDArray(
+        uri=tmp_path.as_posix(), context=SOMATileDBContext(write_timestamp=10)
+    )
     # write 1 into top-left entry @ t=10
     a.create(type=pa.uint16(), shape=(2, 2))
     a.write(
@@ -771,8 +771,9 @@ def test_timestamped_ops(tmp_path):
     )
 
     # write 1 into bottom-right entry @ t=20
-    ctx_write20 = SOMATileDBContext(write_timestamp=20)
-    a = soma.SparseNDArray(uri=tmp_path.as_posix(), context=ctx_write20)
+    a = soma.SparseNDArray(
+        uri=tmp_path.as_posix(), context=SOMATileDBContext(write_timestamp=20)
+    )
     assert a.exists()
     a.write(
         pa.SparseCOOTensor.from_scipy(

@@ -86,7 +86,7 @@ class TileDBArray(TileDBObject):
     def _soma_reader(
         self,
         schema: Optional[tiledb.ArraySchema] = None,
-        column_names: Optional[List[str]] = None,
+        column_names: Optional[Sequence[str]] = None,
         query_condition: Optional[tiledb.QueryCondition] = None,
         result_order: Optional[str] = None,
     ) -> clib.SOMAReader:
