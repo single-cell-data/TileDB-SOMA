@@ -306,7 +306,7 @@ def test_experiment_query_indexer(soma_experiment):
     ) as query:
         # TODO: remove this work-around once a new `somacore` is released.
         # workaround:
-        indexer = getattr(query, 'indexer', query._indexer)
+        indexer = getattr(query, "indexer", query._indexer)
         # future version:
         # indexer = query.indexer
 
