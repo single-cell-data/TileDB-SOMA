@@ -46,21 +46,24 @@ class SOMATileDBContext:
     read_timestamp_end: Optional[int] = None
     """
     Timestamp range end for all array read operations.
-    If unspecified, defaults to the time of context initialization.
+    If unspecified, then always read the latest data.
+    When writing SOMA objects, the read timestamp range should usually be left empty, so that the
+    writer can read its own writes (and associated metadata).
     """
 
     write_timestamp: Optional[int] = None
     "Timestamp applied to all array write operations."
 
-    def __attrs_post_init__(self) -> None:
-        if self.read_timestamp_end is None:
-            object.__setattr__(self, "read_timestamp_end", int(time.time() * 1000))
-
-    def _tiledb_read_timestamp_arg(self) -> Tuple[int, int]:
+    def _tiledb_read_timestamp_arg(self) -> Optional[Tuple[int, int]]:
         "(internal) form the read timestamp tuple arg for TileDB methods"
+        if self.read_timestamp_start is None and self.read_timestamp_end is None:
+            return None
         start = (
             self.read_timestamp_start if self.read_timestamp_start is not None else 0
         )
-        end = self.read_timestamp_end
-        assert isinstance(end, int)
+        end = (
+            self.read_timestamp_end
+            if self.read_timestamp_end is not None
+            else 0xFFFFFFFFFFFFFFFF  # UINT64_MAX
+        )
         return (start, end)
