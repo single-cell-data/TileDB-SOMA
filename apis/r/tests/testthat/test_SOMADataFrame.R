@@ -1,3 +1,4 @@
+
 test_that("Basic mechanics", {
   uri <- withr::local_tempdir("soma-indexed-dataframe")
   asch <- create_arrow_schema()
@@ -28,10 +29,13 @@ test_that("Basic mechanics", {
     "All columns in 'values' must be defined in the schema"
   )
 
-  tbl0 <- arrow::arrow_table(foo = 1L:10L,
-                             soma_joinid = 1L:10L,
-                             bar = 1.1:10.1,
-                             baz = letters[1:10],
+  tbl0 <- arrow::arrow_table(foo = 1L:36L,
+                             soma_joinid = 1L:36L,
+                             bar = 1.1:36.1,
+                             baz = c("á", "ą", "ã", "à", "å", "ä", "æ", "ç", "ć", "Ç", "í",
+                                     "ë", "é", "è", "ê", "ł", "Ł", "ñ", "ń", "ó", "ô", "ò",
+                                     "ö", "ø", "Ø", "ř", "š", "ś", "ş", "Š", "ú", "ü", "ý",
+                                     "ź", "Ž", "Ż"),
                              schema = asch)
 
   sidf$write(tbl0)
@@ -77,12 +81,15 @@ test_that("creation with all supported dimension data types", {
   )
 
   tbl0 <- arrow::arrow_table(
-    int8 = 1L:10L,
-    int16 = 1:10L,
-    double = 1.1:10.1,
-    int = 1L:10L,
-    int64 = bit64::as.integer64(1L:10L),
-    string = letters[1:10],
+    int8 = 1L:36L,
+    int16 = 1:36L,
+    double = 1.1:36.1,
+    int = 1L:36L,
+    int64 = bit64::as.integer64(1L:36L),
+    string = c("á", "ą", "ã", "à", "å", "ä", "æ", "ç", "ć", "Ç", "í",
+               "ë", "é", "è", "ê", "ł", "Ł", "ñ", "ń", "ó", "ô", "ò",
+               "ö", "ø", "Ø", "ř", "š", "ś", "ş", "Š", "ú", "ü", "ý",
+               "ź", "Ž", "Ż"),
     schema = sch
   )
 
