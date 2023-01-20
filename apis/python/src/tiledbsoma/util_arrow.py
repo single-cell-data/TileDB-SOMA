@@ -66,12 +66,12 @@ def tiledb_type_from_arrow_type(
     t: pa.DataType, is_indexed_column: bool = False
 ) -> npt.DTypeLike:
     """
-    Given an Arrow type, return the corresponding TileDB type as a Numpy dtype.
+    Given an Arrow type, return the corresponding TileDB type as a NumPy dtype.
     Building block for Arrow-to-TileDB schema translation.
 
     TileDB currently has different Unicode handling for dimensions and attributes.
-    Set the ``is_dimension`` parameter to True for dimension rules, which
-    currently requires all strings to be ASCII.
+    Set the ``is_dimension`` parameter to True for indexed-column (AKA dimension)
+    rules, which currently requires all strings to be ASCII.
 
     If type is unsupported, with raise a TypeError exception.
 
