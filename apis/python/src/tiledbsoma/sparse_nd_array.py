@@ -45,7 +45,7 @@ class SparseNDArray(TileDBArray, somacore.SparseNDArray):
     # Inherited from somacore
     # soma_type: Final = "SOMASparseNDArray"
 
-    def create(
+    def _legacy_create(
         self,
         type: pa.DataType,
         shape: Union[NTuple, List[int]],
@@ -158,7 +158,7 @@ class SparseNDArray(TileDBArray, somacore.SparseNDArray):
         self,
         coords: Optional[options.SparseNDCoords] = None,
         *,
-        result_order: options.StrOr[options.ResultOrder] = options.ResultOrder.AUTO,
+        result_order: options.ResultOrderStr = options.ResultOrder.AUTO,
         batch_size: options.BatchSize = _UNBATCHED,
         partitions: Optional[options.ReadPartitions] = None,
         platform_config: Optional[PlatformConfig] = None,

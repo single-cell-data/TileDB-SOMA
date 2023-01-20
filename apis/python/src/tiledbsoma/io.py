@@ -313,13 +313,13 @@ def _check_create(
 ) -> Union[Experiment, Measurement, Collection]:
     if ingest_mode == "resume":
         if not thing.exists():
-            thing.create()
+            thing._legacy_create()
         # else fine
     else:
         if thing.exists():
             raise SOMAError(f"{thing.uri} already exists")
         else:
-            thing.create()
+            thing._legacy_create()
     return thing
 
 
@@ -390,7 +390,7 @@ def _write_dataframe(
         else:
             raise SOMAError(f"{soma_df.uri} already exists")
     else:
-        soma_df.create(arrow_table.schema, platform_config=platform_config)
+        soma_df._legacy_create(arrow_table.schema, platform_config=platform_config)
 
     if ingest_mode == "schema_only":
         logging.log_io(
@@ -430,7 +430,7 @@ def create_from_matrix(
     if ingest_mode != "resume" or not soma_ndarray.exists():
         if soma_ndarray.exists():
             raise SOMAError(f"{soma_ndarray.uri} already exists")
-        soma_ndarray.create(
+        soma_ndarray._legacy_create(
             type=pa.from_numpy_dtype(matrix.dtype),
             shape=matrix.shape,
             platform_config=platform_config,
@@ -868,7 +868,7 @@ def to_anndata(
     s = util.get_start_stamp()
     logging.log_io(None, "START  Experiment.to_anndata")
 
-    measurement: Measurement = experiment.ms[measurement_name]
+    measurement = experiment.ms[measurement_name]
 
     obs_df = experiment.obs.read().concat().to_pandas()
     obs_df.drop([SOMA_JOINID], axis=1, inplace=True)
@@ -899,7 +899,7 @@ def to_anndata(
         raise TypeError(f"Unexpected NDArray type {type(X_data)}")
 
     obsm = {}
-    if "obsm" in measurement and measurement.obsm.exists():
+    if "obsm" in measurement and measurement.obsm.exists():  # type: ignore[attr-defined]
         for key in measurement.obsm.keys():
             shape = measurement.obsm[key].shape
             if len(shape) != 2:
@@ -909,7 +909,7 @@ def to_anndata(
             obsm[key] = sp.csr_matrix(matrix)
 
     varm = {}
-    if "varm" in measurement and measurement.varm.exists():
+    if "varm" in measurement and measurement.varm.exists():  # type: ignore[attr-defined]
         for key in measurement.varm.keys():
             shape = measurement.varm[key].shape
             if len(shape) != 2:
@@ -919,13 +919,13 @@ def to_anndata(
             varm[key] = sp.csr_matrix(matrix)
 
     obsp = {}
-    if "obsp" in measurement and measurement.obsp.exists():
+    if "obsp" in measurement and measurement.obsp.exists():  # type: ignore[attr-defined]
         for key in measurement.obsp.keys():
             matrix = measurement.obsp[key].read().tables().concat().to_pandas()
             obsp[key] = util_scipy.csr_from_tiledb_df(matrix, nobs, nobs)
 
     varp = {}
-    if "varp" in measurement and measurement.varp.exists():
+    if "varp" in measurement and measurement.varp.exists():  # type: ignore[attr-defined]
         for key in measurement.varp.keys():
             matrix = measurement.varp[key].read().tables().concat().to_pandas()
             varp[key] = util_scipy.csr_from_tiledb_df(matrix, nvar, nvar)

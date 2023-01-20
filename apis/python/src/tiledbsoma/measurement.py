@@ -1,16 +1,12 @@
 from typing import Dict, Optional, Tuple, Union, cast
 
-from typing_extensions import Final
+import somacore.measurement as scm
 
 from .collection import CollectionBase
-from .dataframe import DataFrame
-from .dense_nd_array import DenseNDArray
-from .options import SOMATileDBContext
-from .sparse_nd_array import SparseNDArray
 from .tiledb_object import TileDBObject
 
 
-class Measurement(CollectionBase[TileDBObject]):
+class Measurement(scm.Measurement[TileDBObject], CollectionBase[TileDBObject]):
     """
     A ``Measurement`` is a sub-element of a ``Experiment``, and is otherwise a specialized ``Collection`` with pre-defined fields:
 
@@ -62,33 +58,9 @@ class Measurement(CollectionBase[TileDBObject]):
     # Inherited from somacore
     soma_type: Final = "SOMAMeasurement"
 
-    def create(self) -> "Measurement":
+    def _legacy_create(self) -> "Measurement":
         """
         Creates the data structure on disk/S3/cloud.
         """
         self._create(self.soma_type)
         return self
-
-    @property
-    def var(self) -> DataFrame:
-        return cast(DataFrame, self["var"])
-
-    @property
-    def X(self) -> CollectionBase[Union[DenseNDArray, SparseNDArray]]:
-        return cast(CollectionBase[Union[DenseNDArray, SparseNDArray]], self["X"])
-
-    @property
-    def obsm(self) -> CollectionBase[DenseNDArray]:
-        return cast(CollectionBase[DenseNDArray], self["obsm"])
-
-    @property
-    def obsp(self) -> CollectionBase[SparseNDArray]:
-        return cast(CollectionBase[SparseNDArray], self["obsp"])
-
-    @property
-    def varm(self) -> CollectionBase[DenseNDArray]:
-        return cast(CollectionBase[DenseNDArray], self["varm"])
-
-    @property
-    def varp(self) -> CollectionBase[SparseNDArray]:
-        return cast(CollectionBase[SparseNDArray], self["varp"])

@@ -225,7 +225,7 @@ def ingest_one(
     if write_soco:
         soco = tiledbsoma.Collection(soco_dir, context=context)
         if not soco.exists():
-            soco.create()
+            soco._legacy_create()
         if not soco.exists():
             raise tiledbsoma.exception.SOMAError(f"Could not create SOCO at {soco.uri}")
         soco.set(exp_name, exp)

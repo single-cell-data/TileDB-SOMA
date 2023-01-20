@@ -18,6 +18,8 @@ from typing import (
 
 import somacore
 import tiledb
+from somacore import options
+from typing_extensions import Never
 
 from .exception import DoesNotExistError, SOMAError
 from .options import SOMATileDBContext
@@ -91,7 +93,14 @@ class CollectionBase(TileDBObject, somacore.Collection[CollectionElementType]):
         super().__init__(uri=uri, context=context)
         self._cached_values = None
 
-    def create(self) -> "CollectionBase[CollectionElementType]":
+    def add_new_collection(self, *args: Any, **kwargs: Any) -> Never:
+        raise NotImplementedError()
+
+    add_new_dataframe = add_new_collection
+    add_new_dense_ndarray = add_new_collection
+    add_new_sparse_ndarray = add_new_collection
+
+    def _legacy_create(self) -> "CollectionBase[CollectionElementType]":
         """
         Creates the data structure on disk/S3/cloud.
         """
@@ -169,18 +178,28 @@ class CollectionBase(TileDBObject, somacore.Collection[CollectionElementType]):
 
         raise KeyError(err_str)
 
+    def add(
+        self,
+        key: str,
+        cls: Type[CollectionElementType],
+        *,
+        uri: Optional[str] = None,
+        platform_config: Optional[options.PlatformConfig] = None,
+    ) -> CollectionElementType:
+        raise NotImplementedError()
+
     def set(
         self,
         key: str,
         value: CollectionElementType,
         *,
-        relative: Optional[bool] = None,
+        use_relative_uri: Optional[bool] = None,
     ) -> None:
         """
         Adds an element to the collection.  This interface allows explicit control over
         `relative` URI, and uses the member's default name.
         """
-        self._set_element(key, value, relative=relative)
+        self._set_element(key, value, use_relative_uri=use_relative_uri)
 
     def __setitem__(self, key: str, value: CollectionElementType) -> None:
         """
@@ -310,10 +329,13 @@ class CollectionBase(TileDBObject, somacore.Collection[CollectionElementType]):
         return None
 
     def _set_element(
-        self, key: str, value: CollectionElementType, relative: Optional[bool] = None
+        self,
+        key: str,
+        value: CollectionElementType,
+        use_relative_uri: Optional[bool] = None,
     ) -> None:
-        if relative is None:
-            relative = self._determine_default_relative(value.uri)
+        if use_relative_uri is None:
+            use_relative_uri = self._determine_default_relative(value.uri)
 
         if key in self._subclass_constrained_soma_types:
             # Implement the sub-class protocol constraining the value type of certain item keys
@@ -333,7 +355,7 @@ class CollectionBase(TileDBObject, somacore.Collection[CollectionElementType]):
 
         uri = (
             make_relative_path(value.uri, relative_to=self.uri)
-            if relative
+            if use_relative_uri
             else value.uri
         )
         for retry in [True, False]:

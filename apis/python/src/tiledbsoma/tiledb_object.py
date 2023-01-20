@@ -5,7 +5,7 @@ from typing import Iterator, Optional, Type, TypeVar, Union
 
 import somacore
 import tiledb
-from typing_extensions import Literal
+from typing_extensions import Literal, Never
 
 from . import util
 from .metadata_mapping import MetadataMapping
@@ -51,6 +51,14 @@ class TileDBObject(ABC, somacore.SOMAObject):
         self._context = context or SOMATileDBContext()
         self._metadata = MetadataMapping(self)
         self._close_stack = ExitStack()
+
+    @classmethod
+    def create(self, *args: Any, **kwargs: Any) -> Never:
+        raise NotImplementedError()
+
+    @classmethod
+    def open(self, *args: Any, **kwargs: Any) -> Never:
+        raise NotImplementedError()
 
     @property
     def context(self) -> SOMATileDBContext:

@@ -45,7 +45,7 @@ class DataFrame(TileDBArray, somacore.DataFrame):
     # Inherited from somacore
     # soma_type: Final = "SOMADataFrame"
 
-    def create(
+    def _legacy_create(
         self,
         schema: pa.Schema,
         index_column_names: Sequence[str] = (SOMA_JOINID,),
@@ -191,7 +191,7 @@ class DataFrame(TileDBArray, somacore.DataFrame):
         coords: Optional[options.SparseDFCoords] = None,
         column_names: Optional[Sequence[str]] = None,
         *,
-        result_order: options.StrOr[somacore.ResultOrder] = "auto",
+        result_order: options.ResultOrderStr = options.ResultOrder.AUTO,
         value_filter: Optional[str] = None,
         batch_size: options.BatchSize = _UNBATCHED,
         partitions: Optional[options.ReadPartitions] = None,

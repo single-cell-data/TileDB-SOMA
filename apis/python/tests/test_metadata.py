@@ -28,22 +28,22 @@ def soma_object(request, tmp_path):
 
     if class_name == "Collection":
         so = soma.Collection(uri=uri)
-        so.create()
+        so._legacy_create()
 
     elif class_name == "DataFrame":
         so = soma.DataFrame(uri=uri)
-        so.create(
+        so._legacy_create(
             schema=pa.schema([("C", pa.float32()), ("D", pa.uint32())]),
             index_column_names=["D"],
         )
 
     elif class_name == "DenseNDArray":
         so = soma.DenseNDArray(uri=uri)
-        so.create(type=pa.float64(), shape=(100, 10, 1))
+        so._legacy_create(type=pa.float64(), shape=(100, 10, 1))
 
     elif class_name == "SparseNDArray":
         so = soma.SparseNDArray(uri=uri)
-        so.create(type=pa.int8(), shape=(11,))
+        so._legacy_create(type=pa.int8(), shape=(11,))
 
     assert so is not None, f"Unknown class name: {class_name}"
     yield so

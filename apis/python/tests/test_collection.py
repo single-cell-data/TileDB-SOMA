@@ -19,7 +19,7 @@ def create_and_populate_dataframe(dataframe: soma.DataFrame) -> None:
         ]
     )
 
-    dataframe.create(schema=arrow_schema)
+    dataframe._legacy_create(schema=arrow_schema)
 
     pydict = {}
     pydict["soma_joinid"] = [0, 1, 2, 3, 4]
@@ -36,7 +36,7 @@ def create_and_populate_sparse_nd_array(
 ) -> None:
     nr = 10
     nc = 20
-    sparse_nd_array.create(pa.int64(), [nr, nc])
+    sparse_nd_array._legacy_create(pa.int64(), [nr, nc])
 
     tensor = pa.SparseCOOTensor.from_numpy(
         data=np.asarray([7, 8, 9]),
@@ -56,7 +56,7 @@ def test_collection_basic(tmp_path):
     with pytest.raises(soma.DoesNotExistError):
         assert "foobar" not in collection
 
-    collection.create()
+    collection._legacy_create()
     assert collection.exists()
     assert collection.uri == basedir
     assert "foobar" not in collection
@@ -99,22 +99,22 @@ def soma_object(request, tmp_path):
 
     if class_name == "Collection":
         so = soma.Collection(uri=uri)
-        so.create()
+        so._legacy_create()
 
     elif class_name == "DataFrame":
         so = soma.DataFrame(uri=uri)
-        so.create(
+        so._legacy_create(
             schema=pa.schema([("C", pa.float32()), ("D", pa.uint32())]),
             index_column_names=["D"],
         )
 
     elif class_name == "DenseNDArray":
         so = soma.DenseNDArray(uri=uri)
-        so.create(type=pa.float64(), shape=(100, 10, 1))
+        so._legacy_create(type=pa.float64(), shape=(100, 10, 1))
 
     elif class_name == "SparseNDArray":
         so = soma.SparseNDArray(uri=uri)
-        so.create(type=pa.int8(), shape=(11,))
+        so._legacy_create(type=pa.int8(), shape=(11,))
 
     assert so is not None, f"Unknown class name: {class_name}"
     yield so
@@ -127,7 +127,7 @@ def test_collection_mapping(soma_object, tmp_path):
     with pytest.raises(soma.DoesNotExistError):
         assert "foobar" not in c
 
-    c.create()
+    c._legacy_create()
     assert c.exists()
     assert "foobar" not in c
 
@@ -155,16 +155,16 @@ def test_collection_mapping(soma_object, tmp_path):
 @pytest.mark.parametrize("relative", [False, True])
 def test_collection_repr(tmp_path, relative):
     a = soma.Collection(uri=(tmp_path / "A").as_uri())
-    a.create()
+    a._legacy_create()
     assert a.exists()
     assert a.uri == (tmp_path / "A").as_uri()
 
     b = soma.Collection(uri=(tmp_path / "A" / "B").as_uri())
-    b.create()
+    b._legacy_create()
     assert b.exists()
     assert b.uri == (tmp_path / "A" / "B").as_uri()
 
-    a.set("Another_Name", b, relative=relative)
+    a.set("Another_Name", b, use_relative_uri=relative)
     assert list(a.keys()) == ["Another_Name"]
     assert (
         a.__repr__()
@@ -206,11 +206,11 @@ def test_collection_update_on_set(tmp_path):
     tiledb.Group only has add/del. Verify.
     """
 
-    sc = soma.Collection(tmp_path.as_uri()).create()
-    A = soma.DenseNDArray(uri=(tmp_path / "A").as_uri()).create(
+    sc = soma.Collection(tmp_path.as_uri())._legacy_create()
+    A = soma.DenseNDArray(uri=(tmp_path / "A").as_uri())._legacy_create(
         type=pa.float64(), shape=(100, 10, 1)
     )
-    B = soma.DenseNDArray(uri=(tmp_path / "B").as_uri()).create(
+    B = soma.DenseNDArray(uri=(tmp_path / "B").as_uri())._legacy_create(
         type=pa.float64(), shape=(100, 10, 1)
     )
     assert sc.exists()
@@ -232,7 +232,7 @@ def test_exceptions_on_not_created(tmp_path):
     """
     sc = soma.Collection(tmp_path.as_uri())
 
-    A = soma.DenseNDArray(uri=(tmp_path / "A").as_uri()).create(
+    A = soma.DenseNDArray(uri=(tmp_path / "A").as_uri())._legacy_create(
         type=pa.float64(), shape=(100, 10, 1)
     )
     with pytest.raises(DoesNotExistError):
