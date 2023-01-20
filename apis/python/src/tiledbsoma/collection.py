@@ -362,30 +362,6 @@ class CollectionBase(TileDBObject, somacore.Collection[CollectionElementType]):
         # This works in with-open-as contexts because tiledb.Group has __enter__ and __exit__ methods.
         return tiledb.Group(self._uri, mode=mode, ctx=self.context.tiledb_ctx)
 
-    def _show_metadata(self, recursively: bool = True, indent: str = "") -> None:
-        """
-        Shows metadata for the group, recursively by default.
-        """
-        # TODO: this code should move to a helper package, outside of SOMA core
-        for key, value in self.metadata.items():
-            print(f"{indent}- {key}: {value}")
-        if recursively:
-            from .factory import _construct_member
-
-            child_indent = indent + "  "
-            with self._tiledb_open() as G:
-                for obj in G:  # This returns a tiledb.object.Object
-                    # It might appear simpler to have all this code within TileDBObject class,
-                    # rather than (with a little duplication) in Collection and TileDBArray.
-                    # However, getting it to work with a recursive data structure and finding the
-                    # required methods, it was simpler to split the logic this way.
-
-                    soma = _construct_member(obj.uri, self, context=self.context)
-                    if soma is not None:
-                        soma._show_metadata(recursively, indent=child_indent)
-                    else:
-                        raise SOMAError(f"Unexpected object_type found at {obj.uri}")
-
 
 class Collection(CollectionBase[TileDBObject]):
     """

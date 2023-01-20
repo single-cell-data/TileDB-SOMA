@@ -42,13 +42,6 @@ def to_tiledb_supported_array_type(x: object) -> object:
 
 
 @to_tiledb_supported_array_type.register
-def _to_supported_dataframe(x: pd.DataFrame) -> pd.DataFrame:
-    return pd.DataFrame.from_dict(
-        {k: to_tiledb_supported_array_type(v) for k, v in x.items()}
-    )
-
-
-@to_tiledb_supported_array_type.register
 def _to_supported_series(x: PDSeries) -> PDSeries:
     if not pd.api.types.is_categorical_dtype(x):
         return _to_supported_base(x)

@@ -3,4 +3,4 @@ coverage:
 
 ignore:
   - "apis/r/inst/tiledb/"
-  - "apis/python/dev_tools/"
+  - "apis/python/devtools/"
