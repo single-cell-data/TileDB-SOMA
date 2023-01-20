@@ -31,7 +31,7 @@ test_that("Basic mechanics", {
   tbl0 <- arrow::arrow_table(foo = 1L:10L,
                              soma_joinid = 1L:10L,
                              bar = 1.1:10.1,
-                             baz = letters[1:10],
+                             baz = c("á", "b", "ç", "d", "é", "f", "g", "h", "ï", "j"),
                              schema = asch)
 
   sidf$write(tbl0)
@@ -82,7 +82,7 @@ test_that("creation with all supported dimension data types", {
     double = 1.1:10.1,
     int = 1L:10L,
     int64 = bit64::as.integer64(1L:10L),
-    string = letters[1:10],
+    string = c("á", "b", "ç", "d", "é", "f", "g", "h", "ï", "j"),
     schema = sch
   )
 
