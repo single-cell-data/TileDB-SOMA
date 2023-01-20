@@ -40,7 +40,7 @@ class _CachedElement:
 
     @dataclass
     class _TdbInfo:
-        type: str
+        type: Type[Any]
         uri: str
         name: str
 
@@ -50,7 +50,7 @@ class _CachedElement:
         ) -> _CachedElement._TdbInfo:
             if o.name is None:
                 raise SOMAError("expected name to be provided")
-            return cls(type=o.type.__name__.lower(), uri=o.uri, name=o.name)
+            return cls(type=o.type, uri=o.uri, name=o.name)
 
     tdb: _TdbInfo
     soma: Optional[TileDBObject] = None
@@ -136,12 +136,12 @@ class CollectionBase(TileDBObject, somacore.Collection[CollectionElementType]):
             if soma is None:
                 from .factory import _construct_member
 
-                tdb: tiledb.Object = self._cached_values[key].tdb
+                tdb = self._cached_values[key].tdb
                 soma = _construct_member(
                     tdb.uri,
                     self,
                     context=self.context,
-                    object_type=tdb.type,
+                    object_type=tdb.type.__name__.lower(),
                 )
                 if soma is None:
                     # if we were unable to create an object, it wasn't actually a SOMA object
