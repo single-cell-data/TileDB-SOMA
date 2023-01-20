@@ -304,7 +304,11 @@ def test_experiment_query_indexer(soma_experiment):
         obs_query=AxisQuery(coords=(slice(1, 10),)),
         var_query=AxisQuery(coords=(slice(1, 10),)),
     ) as query:
-        indexer = query._indexer
+        # TODO: remove this work-around once a new `somacore` is released.
+        # workaround:
+        indexer = getattr(query, "indexer", query._indexer)
+        # future version:
+        # indexer = query.indexer
 
         # coords outside of our query should return -1
         assert np.array_equal(

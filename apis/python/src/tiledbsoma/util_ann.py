@@ -208,17 +208,11 @@ def _describe_ann_file_show_uns_types(
         display_name = os.path.sep.join(current_path_components)
         if isinstance(value, Mapping):
             _describe_ann_file_show_uns_types(value, current_path_components)
-        elif isinstance(value, np.ndarray):
-            print(
-                "%-*s" % (namewidth, display_name),
-                value.shape,
-                type(value),
-                value.dtype,
-            )
-        elif isinstance(value, (sp.csr_matrix, pd.DataFrame)):
-            print("%-*s" % (namewidth, display_name), value.shape, type(value))
         else:
-            print("%-*s" % (namewidth, display_name), type(value))
+            info = ["%-*s" % (namewidth, display_name), type(value)]
+            if isinstance(value, (np.ndarray, sp.csr_matrix, pd.DataFrame)):
+                info.extend((value.shape, value.dtype))
+            print(*info)
 
 
 # ----------------------------------------------------------------
