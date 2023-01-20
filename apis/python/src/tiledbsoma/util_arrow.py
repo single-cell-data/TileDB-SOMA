@@ -51,12 +51,13 @@ _ARROW_TO_TDB_ATTR: Dict[Any, Union[str, TypeError]] = {
     pa.date64(): TypeError("64-bit date - unsupported type (use TimestampType)"),
 }
 
-# Same as _ARROW_TO_TDB_ATTR, but used for DataFrame indexed columns, aka TileDB Dimensions
+# Same as _ARROW_TO_TDB_ATTR, but used for DataFrame indexed columns, aka TileDB Dimensions.
+# Any type system differences from the base-case Attr should be added here.
 _ARROW_TO_TDB_DIM: Dict[Any, Union[str, TypeError]] = _ARROW_TO_TDB_ATTR.copy()
 _ARROW_TO_TDB_DIM.update(
     {
         pa.string(): "ascii",  # TODO: temporary work-around until Dimension UTF8 support is available.
-        pa.large_string(): "ascii",  # TODO: temporary work-around until UTF8 support is available.
+        pa.large_string(): "ascii",  # TODO: temporary work-around until Dimension UTF8 support is available.
     }
 )
 
