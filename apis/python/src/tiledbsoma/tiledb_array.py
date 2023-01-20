@@ -42,16 +42,16 @@ class TileDBArray(TileDBObject):
         """
         if mode not in ["r", "w"]:
             raise ValueError(f'expected mode to be one of "r" or "w"; got "{mode}"')
-        # This works in either 'with self._tiledb_open() as A:' or 'A = self._tiledb_open(); ...; A.close().  The
-        # reason is that with-as invokes our return value's __enter__ on return from this method,
-        # and our return value's __exit__ on exit from the body of the with-block. The tiledb
-        # array object does both of those things. (And if it didn't, we'd get a runtime AttributeError
-        # on with-as, flagging the non-existence of the __enter__ or __exit__.)
         timestamp = (
             self.context._tiledb_read_timestamp_arg()
             if mode == "r"
             else self.context.write_timestamp
         )
+        # This works in either 'with self._tiledb_open() as A:' or 'A = self._tiledb_open(); ...; A.close().  The
+        # reason is that with-as invokes our return value's __enter__ on return from this method,
+        # and our return value's __exit__ on exit from the body of the with-block. The tiledb
+        # array object does both of those things. (And if it didn't, we'd get a runtime AttributeError
+        # on with-as, flagging the non-existence of the __enter__ or __exit__.)
         return tiledb.open(self._uri, mode=mode, timestamp=timestamp, ctx=self._ctx)
 
     def _tiledb_array_schema(self) -> tiledb.ArraySchema:

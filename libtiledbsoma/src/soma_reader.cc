@@ -264,12 +264,12 @@ uint64_t SOMAReader::nnz() {
 
     LOG_WARN("[SOMAReader] Found overlapping fragments, counting cells...");
 
-    // TODO[perf]: Reuse "this" object to read, then reset the state of "this"
-    // so it could be used to read again (for TileDB Cloud)
     return nnz_slow();
 }
 
 uint64_t SOMAReader::nnz_slow() {
+    // TODO[perf]: Reuse "this" object to read, then reset the state of "this"
+    // so it could be used to read again (for TileDB Cloud)
     auto sr = SOMAReader::open(
         ctx_,
         uri_,
