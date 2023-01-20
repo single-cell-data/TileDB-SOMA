@@ -9,7 +9,7 @@ import scipy.sparse as sp
 import somacore
 import tiledb
 
-from .types import NDArray, PDSeries
+from .types import NPNDArray, PDSeries
 
 SOMA_OBJECT_TYPE_METADATA_KEY = "soma_object_type"
 SOMA_ENCODING_VERSION_METADATA_KEY = "soma_encoding_version"
@@ -113,7 +113,7 @@ def _to_supported_series(x: PDSeries) -> PDSeries:
     return x.astype("O")
 
 
-_MT = TypeVar("_MT", NDArray, sp.spmatrix, PDSeries)
+_MT = TypeVar("_MT", NPNDArray, sp.spmatrix, PDSeries)
 
 
 def _to_supported_base(x: _MT) -> _MT:

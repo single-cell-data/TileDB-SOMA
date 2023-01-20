@@ -10,12 +10,12 @@ from typing_extensions import Literal
 if TYPE_CHECKING:
     NPInteger = np.integer[npt.NBitBase]
     NPFloating = np.floating[npt.NBitBase]
-    NDArray = npt.NDArray[np.number[npt.NBitBase]]
+    NPNDArray = npt.NDArray[np.number[npt.NBitBase]]
     PDSeries = pd.Series[Any]
 else:
     NPInteger = np.integer
     NPFloating = np.floating
-    NDArray = np.ndarray
+    NPNDArray = np.ndarray
     PDSeries = pd.Series
 
 

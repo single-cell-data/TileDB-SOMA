@@ -29,10 +29,10 @@ from tiledbsoma.exception import SOMAError
 
 from .constants import SOMA_JOINID
 from .options import SOMATileDBContext, TileDBCreateOptions
-from .types import INGEST_MODES, IngestMode, NDArray, Path
+from .types import INGEST_MODES, IngestMode, NPNDArray, Path
 
 SparseMatrix = Union[sp.csr_matrix, sp.csc_matrix, SparseDataset]
-Matrix = Union[NDArray, SparseMatrix]
+Matrix = Union[NPNDArray, SparseMatrix]
 
 
 # ----------------------------------------------------------------
