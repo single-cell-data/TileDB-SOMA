@@ -20,5 +20,5 @@ repos:
     hooks:
     - id: mypy
       additional_dependencies: ["types-setuptools", "pandas-stubs", "somacore==0.0.0a5"]
-      args: ["--config-file=apis/python/setup.cfg", "apis/python/src", "apis/python/tools"]
+      args: ["--config-file=apis/python/setup.cfg", "apis/python/src", "apis/python/devtools"]
       pass_filenames: false
