@@ -281,7 +281,10 @@ class DataFrame(TileDBArray, somacore.DataFrame):
                                 raise ValueError(
                                     f"slice start and stop may not be negative; got ({lo}, {hi})"
                                 )
-                            assert lo <= hi
+                            if lo > hi:
+                                raise ValueError(
+                                    f"coordinate at slot {i} must have lo <= hi; got {lo} > {hi}"
+                                )
                             sr.set_dim_ranges(dim_name, [lo_hi])
                         # Else, no constraint in this slot. This is `slice(None)` which is like
                         # Python indexing syntax `[:]`.
@@ -321,7 +324,8 @@ class DataFrame(TileDBArray, somacore.DataFrame):
                 dim_cols_list.append(values.column(name).to_pandas())
             else:
                 attr_cols_map[name] = values.column(name).to_pandas()
-        assert n is not None
+        if n is None:
+            raise ValueError(f"did not find any column names in {values.schema.names}")
 
         dim_cols_tuple = tuple(dim_cols_list)
         with self._tiledb_open("w") as A:
@@ -354,10 +358,10 @@ def _validate_schema(schema: pa.Schema, index_column_names: Sequence[str]) -> pa
     # verify that all index_column_names are present in the schema
     schema_names_set = set(schema.names)
     for index_column_name in index_column_names:
-        assert (
-            not index_column_name.startswith("soma_")
-            or index_column_name == SOMA_JOINID
-        )
+        if index_column_name.startswith("soma_") and index_column_name != SOMA_JOINID:
+            raise ValueError(
+                f'index_column_name other than "soma_joinid" must not begin with "soma_"; got "{index_column_name}"'
+            )
         if index_column_name not in schema_names_set:
             schema_names_string = "{}".format(list(schema_names_set))
             raise ValueError(

@@ -60,6 +60,12 @@ This is useful as a prep-step for parallel append-ingest of multiple H5ADs to a 
         default=".",
     )
     parser.add_argument(
+        "--measurement-name",
+        help="SOMA-experiment measurement name to associate with the ingested anndata",
+        type=str,
+        default="RNA",
+    )
+    parser.add_argument(
         "--soco",
         help="Write the SOMA and also append to a Collection there",
         action="store_true",
@@ -127,6 +133,7 @@ select `relative=True`. (This is the default.)
                 context=context,
                 write_soco=write_soco,
                 soco_dir=soco_dir,
+                measurement_name=args.measurement_name,
             )
     else:
         if len(args.paths) == 0:
@@ -139,6 +146,7 @@ select `relative=True`. (This is the default.)
                 context=context,
                 write_soco=write_soco,
                 soco_dir=soco_dir,
+                measurement_name=args.measurement_name,
             )
         elif len(args.paths) == 1:
             input_path = args.paths[0]
@@ -153,6 +161,7 @@ select `relative=True`. (This is the default.)
                 context=context,
                 write_soco=write_soco,
                 soco_dir=soco_dir,
+                measurement_name=args.measurement_name,
             )
         elif len(args.paths) == 2:
             input_path = args.paths[0]
@@ -164,6 +173,7 @@ select `relative=True`. (This is the default.)
                 context=context,
                 write_soco=write_soco,
                 soco_dir=soco_dir,
+                measurement_name=args.measurement_name,
             )
         else:
             parser.print_help(file=sys.stderr)
@@ -179,13 +189,17 @@ def ingest_one(
     context: SOMATileDBContext,
     write_soco: bool,
     soco_dir: str,
+    measurement_name: str,
 ):
     # This will be a very common command-line thing to do since the arg is `--ingest-mode` not
     # `--ingest_mode`. Let's be kind and supportive about it.
     if ingest_mode == "schema-only":
         ingest_mode = "schema_only"
 
-    assert ingest_mode in tiledbsoma.types.INGEST_MODES
+    if ingest_mode not in tiledbsoma.types.INGEST_MODES:
+        raise tiledbsoma.exception.SOMAError(
+            f'expected ingest_mode to be one of {tiledbsoma.types.INGEST_MODES}; got "{ingest_mode}"'
+        )
 
     # Check that the input exists.
     vfs = tiledb.VFS()
@@ -206,7 +220,7 @@ def ingest_one(
     exp = tiledbsoma.Experiment(uri=output_path, context=context)
     exp_name = os.path.splitext(os.path.basename(output_path))[0]
 
-    tiledbsoma.io.from_h5ad(exp, input_path, "RNA", ingest_mode=ingest_mode)
+    tiledbsoma.io.from_h5ad(exp, input_path, measurement_name, ingest_mode=ingest_mode)
 
     if write_soco:
         soco = tiledbsoma.Collection(soco_dir, context=context)

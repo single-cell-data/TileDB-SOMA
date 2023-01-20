@@ -9,6 +9,7 @@ import somacore
 # This package's pybind11 code
 import tiledbsoma.libtiledbsoma as clib
 
+from .exception import SOMAError
 from .types import NTuple
 
 
@@ -84,7 +85,8 @@ class SparseCSRMatrixReadIter(SparseTensorReadIterBase[pa.SparseCSRMatrix]):
         super().__init__(sr, shape)
 
     def _from_table(self, arrow_table: pa.Table) -> pa.SparseCSRMatrix:
-        assert len(self.shape) == 2, "Internal error"
+        if len(self.shape) != 2:
+            raise SOMAError(f"internal error: expected shape == 2; got {self.shape}")
         data = arrow_table.column("soma_data").to_numpy()
         row = arrow_table.column("soma_dim_0").to_numpy()
         col = arrow_table.column("soma_dim_1").to_numpy()
@@ -102,7 +104,8 @@ class SparseCSCMatrixReadIter(SparseTensorReadIterBase[pa.SparseCSCMatrix]):
         super().__init__(sr, shape)
 
     def _from_table(self, arrow_table: pa.Table) -> pa.SparseCSCMatrix:
-        assert len(self.shape) == 2, "Internal error"
+        if len(self.shape) != 2:
+            raise SOMAError(f"internal error: expected shape == 2; got {self.shape}")
         data = arrow_table.column("soma_data").to_numpy()
         row = arrow_table.column("soma_dim_0").to_numpy()
         col = arrow_table.column("soma_dim_1").to_numpy()

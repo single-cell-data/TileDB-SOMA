@@ -1,0 +1,36 @@
+name: TileDB-SOMA Python CI (Full)
+
+on:
+  push:
+    branches: [main]
+  release:
+    types: [published]
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        # TODO: restore Windows build once we have C++/libtiledbsoma integration supported there
+        os: [ubuntu-22.04, macos-12]
+        # os: [ubuntu-22.04, macos-12, windows-2019]
+        python-version: ['3.7', '3.8', '3.9', '3.10']
+        include:
+          - runs-on: ubuntu-22.04
+            cc: gcc-11
+            cxx: g++-11
+          - runs-on: macos-12
+            cc: gcc-11
+            cxx: g++-11
+    uses: ./.github/workflows/python-ci-single.yml
+    with:
+      os: ${{ matrix.os }}
+      python_version: ${{ matrix.python-version }}
+      cc: ${{ matrix.cc }}
+      cxx: ${{ matrix.cxx }}
+      is_mac: ${{ contains(matrix.os, 'macos') }}
+      report_codecov: ${{ matrix.os == 'ubuntu-22.04' && matrix.python-version == '3.9' }}
+      run_lint: ${{ matrix.os == 'ubuntu-22.04' && matrix.python-version == '3.9' }}
+    secrets: inherit
+
+

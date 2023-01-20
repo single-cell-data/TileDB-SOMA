@@ -1,0 +1,28 @@
+name: TileDB-SOMA Python CI (Minimal)
+
+on:
+  push:
+    paths-ignore:
+      - 'apis/r/**'
+
+jobs:
+  build:
+    strategy:
+      fail-fast: true
+      matrix:
+        os: [ubuntu-22.04]
+        python-version: ['3.10', '3.7']
+        include:
+          - runs-on: ubuntu-22.04
+            cc: gcc-11
+            cxx: g++-11
+    # TODO: remove version before merge to main
+    uses: ./.github/workflows/python-ci-single.yml
+    with:
+      os: ${{ matrix.os }}
+      python_version: ${{ matrix.python-version }}
+      cc: ${{ matrix.cc }}
+      cxx: ${{ matrix.cxx }}
+      report_codecov: ${{ matrix.python-version == '3.10' }}
+      run_lint: ${{ matrix.python-version == '3.10' }}
+    secrets: inherit

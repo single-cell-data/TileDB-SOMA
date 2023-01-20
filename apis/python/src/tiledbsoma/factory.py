@@ -68,31 +68,40 @@ def _construct_member(
     except tiledb.TileDBError:
         return None
 
-    assert spec_name is not None
+    if spec_name is None:
+        raise SOMAError("internal error: spec_name was not found")
     if spec_name not in SPEC_NAMES_TO_CLASS_NAMES:
         raise SOMAError(f'name "{spec_name}" unrecognized')
     class_name = SPEC_NAMES_TO_CLASS_NAMES[spec_name]
 
     # Now invoke the appropriate per-class constructor.
     if class_name == "Experiment":
-        assert object_type is None or object_type == "group"
+        _check_object_type(object_type, "group")
         return Experiment(uri=member_uri, parent=parent)
     elif class_name == "Measurement":
-        assert object_type is None or object_type == "group"
+        _check_object_type(object_type, "group")
         return Measurement(uri=member_uri, parent=parent)
     elif class_name == "Collection":
-        assert object_type is None or object_type == "group"
+        _check_object_type(object_type, "group")
         return Collection(uri=member_uri, parent=parent)
     elif class_name == "DataFrame":
-        assert object_type is None or object_type == "array"
+        _check_object_type(object_type, "array")
         return DataFrame(uri=member_uri, parent=parent)
     elif class_name in ["DenseNDArray", "DenseNdArray"]:
-        assert object_type is None or object_type == "array"
+        _check_object_type(object_type, "array")
         return DenseNDArray(uri=member_uri, parent=parent)
     elif class_name in ["SparseNDArray", "SparseNdArray"]:
-        assert object_type is None or object_type == "array"
+        _check_object_type(object_type, "array")
         return SparseNDArray(uri=member_uri, parent=parent)
     else:
+        raise SOMAError(f'internal error: class name "{class_name}" unrecognized')
+
+
+def _check_object_type(
+    actual_object_type: Union[None, str], expected_object_type: str
+) -> None:
+    """Helper function for `_construct_member`"""
+    if actual_object_type is not None and actual_object_type != expected_object_type:
         raise SOMAError(
-            f'internal coding error: class name "{class_name}" unrecognized'
+            f'internal error: expected object_type None or "{expected_object_type}"; got "{actual_object_type}"'
         )

@@ -56,7 +56,10 @@ def from_h5ad(
     The "schema_only" ingest_mode creates groups and array schema, without writing array data.
     This is useful as a prep-step for parallel append-ingest of multiple H5ADs to a single soma.
     """
-    assert ingest_mode in INGEST_MODES
+    if ingest_mode not in INGEST_MODES:
+        raise SOMAError(
+            f'expected ingest_mode to be one of {INGEST_MODES}; got "{ingest_mode}"'
+        )
 
     if isinstance(input_path, ad.AnnData):
         raise TypeError("Input path is an AnnData object -- did you want from_anndata?")
@@ -105,7 +108,10 @@ def from_anndata(
     The "schema_only" ingest_mode creates groups and array schema, without writing array data.
     This is useful as a prep-step for parallel append-ingest of multiple H5ADs to a single soma.
     """
-    assert ingest_mode in INGEST_MODES
+    if ingest_mode not in INGEST_MODES:
+        raise SOMAError(
+            f'expected ingest_mode to be one of {INGEST_MODES}; got "{ingest_mode}"'
+        )
 
     if not isinstance(anndata, ad.AnnData):
         raise TypeError(
@@ -320,19 +326,29 @@ def _check_create(
 # Split out from _check_create since its union-return gives the type-checker fits at callsites.
 def _check_create_collection(thing: Collection, ingest_mode: str) -> Collection:
     retval = _check_create(thing, ingest_mode)
-    assert isinstance(retval, Collection)
+    if not isinstance(retval, Collection):
+        raise SOMAError(
+            f"internal error: expected object of type Collection; got {type(retval)}"
+        )
+
     return retval
 
 
 def _check_create_experiment(thing: Experiment, ingest_mode: str) -> Experiment:
     retval = _check_create(thing, ingest_mode)
-    assert isinstance(retval, Experiment)
+    if not isinstance(retval, Experiment):
+        raise SOMAError(
+            f"internal error: expected object of type Experiment; got {type(retval)}"
+        )
     return retval
 
 
 def _check_create_measurement(thing: Measurement, ingest_mode: str) -> Measurement:
     retval = _check_create(thing, ingest_mode)
-    assert isinstance(retval, Measurement)
+    if not isinstance(retval, Measurement):
+        raise SOMAError(
+            f"internal error: expected object of type Measurement; got {type(retval)}"
+        )
     return retval
 
 
@@ -401,8 +417,13 @@ def create_from_matrix(
     Create and populate the ``soma_matrix`` from the contents of ``matrix``.
     """
     # SparseDataset has no ndim but it has a shape
-    assert len(matrix.shape) == 2
-    assert soma_ndarray.soma_type in ("SOMADenseNDArray", "SOMASparseNDArray")
+    if len(matrix.shape) != 2:
+        raise ValueError(f"expected matrix.shape == 2; got {matrix.shape}")
+    acceptables = ("SOMADenseNDArray", "SOMASparseNDArray")
+    if soma_ndarray.soma_type not in acceptables:
+        raise ValueError(
+            f'internal error: expected array type to be one of {acceptables}; got "{soma_ndarray.soma_type}"'
+        )
 
     s = util.get_start_stamp()
     logging.log_io(None, f"START  WRITING {soma_ndarray.uri}")
@@ -740,7 +761,10 @@ def _chunk_is_contained_in(
     if storage_nonempty_domain is None:
         return False
 
-    assert len(chunk_bounds) == len(storage_nonempty_domain)
+    if len(chunk_bounds) != len(storage_nonempty_domain):
+        raise SOMAError(
+            f"internal error: ingest data ndim {len(chunk_bounds)} != storage ndim {len(storage_nonempty_domain)}"
+        )
     for i in range(len(chunk_bounds)):
         if not _chunk_is_contained_in_axis(chunk_bounds, storage_nonempty_domain, i):
             return False
@@ -770,14 +794,21 @@ def _chunk_is_contained_in_axis(
 
 
 # ----------------------------------------------------------------
-def to_h5ad(experiment: Experiment, h5ad_path: Path, measurement_name: str) -> None:
+def to_h5ad(
+    experiment: Experiment,
+    h5ad_path: Path,
+    measurement_name: str,
+    X_layer_name: str = "data",
+) -> None:
     """
     Converts the experiment group to anndata format and writes it to the specified .h5ad file.
     """
     s = util.get_start_stamp()
     logging.log_io(None, f"START  Experiment.to_h5ad -> {h5ad_path}")
 
-    anndata = to_anndata(experiment, measurement_name=measurement_name)
+    anndata = to_anndata(
+        experiment, measurement_name=measurement_name, X_layer_name=X_layer_name
+    )
 
     s2 = util.get_start_stamp()
     logging.log_io(None, f"START  write {h5ad_path}")
@@ -792,7 +823,9 @@ def to_h5ad(experiment: Experiment, h5ad_path: Path, measurement_name: str) -> N
 
 
 # ----------------------------------------------------------------
-def to_anndata(experiment: Experiment, measurement_name: str) -> ad.AnnData:
+def to_anndata(
+    experiment: Experiment, measurement_name: str, X_layer_name: str = "data"
+) -> ad.AnnData:
     """
     Converts the experiment group to anndata. Choice of matrix formats is following what we often see in input .h5ad files:
 
@@ -818,9 +851,12 @@ def to_anndata(experiment: Experiment, measurement_name: str) -> ad.AnnData:
     nobs = len(obs_df.index)
     nvar = len(var_df.index)
 
-    X_data = measurement.X["data"]
+    if X_layer_name not in measurement.X:
+        raise SOMAError(
+            f"X_layer_name {X_layer_name} not found in data: {measurement.X.keys()}"
+        )
+    X_data = measurement.X[X_layer_name]
     X_csr = None
-    assert X_data is not None
     X_dtype = None  # some datasets have no X
     if isinstance(X_data, DenseNDArray):
         X_ndarray = X_data.read((slice(None), slice(None))).to_numpy()
@@ -836,7 +872,8 @@ def to_anndata(experiment: Experiment, measurement_name: str) -> ad.AnnData:
     if "obsm" in measurement and measurement.obsm.exists():
         for key in measurement.obsm.keys():
             shape = measurement.obsm[key].shape
-            assert len(shape) == 2
+            if len(shape) != 2:
+                raise ValueError(f"expected shape == 2; got {shape}")
             matrix = measurement.obsm[key].read((slice(None),) * len(shape)).to_numpy()
             # The spelling `sp.csr_array` is more idiomatic but doesn't exist until Python 3.8
             obsm[key] = sp.csr_matrix(matrix)
@@ -845,7 +882,8 @@ def to_anndata(experiment: Experiment, measurement_name: str) -> ad.AnnData:
     if "varm" in measurement and measurement.varm.exists():
         for key in measurement.varm.keys():
             shape = measurement.varm[key].shape
-            assert len(shape) == 2
+            if len(shape) != 2:
+                raise ValueError(f"expected shape == 2; got {shape}")
             matrix = measurement.varm[key].read((slice(None),) * len(shape)).to_numpy()
             # The spelling `sp.csr_array` is more idiomatic but doesn't exist until Python 3.8
             varm[key] = sp.csr_matrix(matrix)

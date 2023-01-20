@@ -59,7 +59,7 @@ Rcpp::List soma_reader(const std::string& uri,
 
     // Read selected columns from the uri (return is unique_ptr<SOMAReader>)
     auto sr = tdbs::SOMAReader::open(uri,
-                                     "unnamed", 		  // name parameter could be added
+                                     "unnamed",                   // name parameter could be added
                                      platform_config,             // to add, done in iterated reader
                                      column_names,
                                      batch_size,
@@ -135,16 +135,16 @@ Rcpp::List soma_reader(const std::string& uri,
 
     struct ArrowArray* array_data_tmp = (struct ArrowArray*) R_ExternalPtrAddr(arrlst[0]);
     int rows = static_cast<int>(array_data_tmp->length);
-    SEXP sxp = arch_c_schema_xptr_new(Rcpp::wrap("+s"), 	// format
-                                      Rcpp::wrap(""),   	// name
-                                      Rcpp::List(),       	// metadata
-                                      Rcpp::wrap(2),      	// flags, 2 == unordered, nullable, no sorted map keys
-                                      schlst, 	        	// children
-                                      R_NilValue);        	// dictionary
+    SEXP sxp = arch_c_schema_xptr_new(Rcpp::wrap("+s"),     // format
+                                      Rcpp::wrap(""),       // name
+                                      Rcpp::List(),         // metadata
+                                      Rcpp::wrap(2),        // flags, 2 == unordered, nullable, no sorted map keys
+                                      schlst,               // children
+                                      R_NilValue);          // dictionary
     SEXP axp = arch_c_array_from_sexp(Rcpp::List::create(Rcpp::Named("")=R_NilValue), // buffers
-                                      Rcpp::wrap(rows), 	// length
-                                      Rcpp::wrap(-1), 	    // null count, -1 means not determined
-                                      Rcpp::wrap(0),    	// offset (in bytes)
+                                      Rcpp::wrap(rows),     // length
+                                      Rcpp::wrap(-1),       // null count, -1 means not determined
+                                      Rcpp::wrap(0),        // offset (in bytes)
                                       arrlst,               // children
                                       R_NilValue);          // dictionary
     Rcpp::List as = Rcpp::List::create(Rcpp::Named("schema") = sxp,

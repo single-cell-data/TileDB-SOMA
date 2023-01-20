@@ -48,7 +48,8 @@ class _CachedElement:
         def from_tdb_object(
             cls: Type[_CachedElement.TdbInfo], o: tiledb.Object
         ) -> _CachedElement._TdbInfo:
-            assert o.name is not None
+            if o.name is None:
+                raise SOMAError("expected name to be provided")
             return cls(type=o.type.__name__.lower(), uri=o.uri, name=o.name)
 
     tdb: _TdbInfo
@@ -180,7 +181,8 @@ class CollectionBase(TileDBObject, somacore.Collection[CollectionElementType]):
     def __iter__(self) -> Iterator[str]:
         if self._cached_values is None:
             self._load_tdb_group_cache()
-        assert self._cached_values is not None
+        if self._cached_values is None:
+            raise SOMAError("internal error: _cached_values is None")
         return iter(self._cached_values)
 
     def __repr__(self) -> str:
@@ -210,7 +212,8 @@ class CollectionBase(TileDBObject, somacore.Collection[CollectionElementType]):
             return [me]
 
         self._load_tdb_group_cache()
-        assert self._cached_values is not None
+        if self._cached_values is None:
+            raise SOMAError("internal error: _cached_values is None")
         keys = list(self._cached_values.keys())
         me += ":" if len(keys) > 0 else ""
         lines = [me]
@@ -267,7 +270,8 @@ class CollectionBase(TileDBObject, somacore.Collection[CollectionElementType]):
                 soma=None, tdb=_CachedElement._TdbInfo.from_tdb_object(tdb)
             )
 
-        assert self._cached_values is not None
+        if self._cached_values is None:
+            raise SOMAError("internal error: _cached_values is None")
 
     def _determine_default_relative(self, uri: str) -> Optional[bool]:
         """Defaulting for the relative parameter."""
@@ -331,7 +335,7 @@ class CollectionBase(TileDBObject, somacore.Collection[CollectionElementType]):
             self._cached_values[key].soma = value
         else:
             # This can only happen if _load_tdb_group_cache failed
-            raise SOMAError("Internal error - unable to save TileDB Group")
+            raise SOMAError("Internal error -- unable to save TileDB Group")
 
     def _del_element(self, key: str, skip_cache_reload: bool = False) -> None:
         if self._cached_values is not None:
@@ -353,7 +357,8 @@ class CollectionBase(TileDBObject, somacore.Collection[CollectionElementType]):
         as ``with self._tiledb_open() as G:``
         as well as ``G = self._tiledb_open(); ...; G.close()``.
         """
-        assert mode in ("r", "w")
+        if mode not in ["r", "w"]:
+            raise ValueError(f'expected mode to be one of "r" or "w"; got {mode!r}')
         # This works in with-open-as contexts because tiledb.Group has __enter__ and __exit__ methods.
         return tiledb.Group(self._uri, mode=mode, ctx=self.context.tiledb_ctx)
 
