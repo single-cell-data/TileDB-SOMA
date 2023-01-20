@@ -57,8 +57,6 @@ _ARROW_TO_TDB_DIM.update(
     {
         pa.string(): "ascii",  # TODO: temporary work-around until Dimension UTF8 support is available.
         pa.large_string(): "ascii",  # TODO: temporary work-around until UTF8 support is available.
-        pa.binary(): "bytes",  # TODO: temporary work-around until UTF8 support is available.
-        pa.large_binary(): "bytes",  # TODO: temporary work-around until UTF8 support is available.
     }
 )
 
