@@ -6,6 +6,7 @@ import pytest
 
 import tiledbsoma as soma
 from tiledbsoma.exception import DoesNotExistError
+from tiledbsoma.options import SOMATileDBContext
 
 
 # ----------------------------------------------------------------
@@ -249,3 +250,53 @@ def test_exceptions_on_not_created(tmp_path):
         list(sc)
     with pytest.raises(DoesNotExistError):
         len(sc)
+
+
+def test_timestamp_inheritance(tmp_path):
+    """
+    When we specify read/write timestamps in SomaTileDBContext supplied to collection, those are
+    inherited by elements accessed via the collection.
+    """
+
+    # create collection & A @ t=10
+    ctx_write10 = SOMATileDBContext(write_timestamp=10)
+    sc = soma.Collection(tmp_path.as_uri(), context=ctx_write10).create()
+    A = soma.DenseNDArray(uri=(tmp_path / "A").as_posix(), context=ctx_write10)
+    A.create(type=pa.uint8(), shape=(2, 2))
+    A.write(
+        (slice(0, 2), slice(0, 2)),
+        pa.Tensor.from_numpy(np.zeros((2, 2), dtype=np.uint8)),
+    )
+    sc["A"] = A
+
+    # access A via collection @ t=20 and write more into it
+    sc = soma.Collection(
+        tmp_path.as_uri(), context=SOMATileDBContext(write_timestamp=20)
+    )
+    sc["A"].write(
+        (slice(0, 1), slice(0, 1)),
+        pa.Tensor.from_numpy(np.ones((1, 1), dtype=np.uint8)),
+    )
+
+    # open A via collection with no or late timestamp => A should reflect both writes
+    sc = soma.Collection(tmp_path.as_uri())
+    assert sc["A"].read((slice(None), slice(None))).to_numpy().tolist() == [
+        [1, 0],
+        [0, 0],
+    ]
+    sc = soma.Collection(
+        tmp_path.as_uri(), context=SOMATileDBContext(read_timestamp_end=25)
+    )
+    assert sc["A"].read((slice(None), slice(None))).to_numpy().tolist() == [
+        [1, 0],
+        [0, 0],
+    ]
+
+    # open A via collection with read_timestamp_end=15 => A should reflect first write only
+    sc = soma.Collection(
+        tmp_path.as_uri(), context=SOMATileDBContext(read_timestamp_end=15)
+    )
+    assert sc["A"].read((slice(None), slice(None))).to_numpy().tolist() == [
+        [0, 0],
+        [0, 0],
+    ]

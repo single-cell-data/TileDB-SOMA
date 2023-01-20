@@ -45,24 +45,22 @@ class SOMATileDBContext:
 
     read_timestamp_end: Optional[int] = None
     """
-    Timestamp range end for all array write operations.
-    If unspecified, then implictly the latest data as of the first access to each array.
+    Timestamp range end for all array read operations.
+    If unspecified, defaults to the time of context initialization.
     """
 
     write_timestamp: Optional[int] = None
     "Timestamp applied to all array write operations."
 
-    def _tiledb_read_timestamp_arg(self) -> Optional[Tuple[int, int]]:
+    def __attrs_post_init__(self):
+        if self.read_timestamp_end is None:
+            object.__setattr__(self, "read_timestamp_end", int(time.time() * 1000))
+
+    def _tiledb_read_timestamp_arg(self) -> Tuple[int, int]:
         "(internal) form the read timestamp tuple arg for TileDB methods"
-        if self.read_timestamp_start is None and self.read_timestamp_end is None:
-            return None
         start = (
             self.read_timestamp_start if self.read_timestamp_start is not None else 0
         )
-        # TODO: should this default to now or UINT64_MAX?
-        end = (
-            self.read_timestamp_end
-            if self.read_timestamp_end is not None
-            else int(time.time() * 1000)
-        )
+        end = self.read_timestamp_end
+        assert isinstance(end, int)
         return (start, end)
