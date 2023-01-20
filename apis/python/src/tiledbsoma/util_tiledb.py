@@ -1,12 +1,10 @@
 import functools
-import re
-from typing import Collection, Optional, Sequence, Tuple, TypeVar, cast
+from typing import TypeVar, cast
 
 import numpy as np
 import pandas as pd
 import pandas._typing as pdt
 import scipy.sparse as sp
-import somacore
 import tiledb
 
 from .types import NPNDArray, PDSeries
@@ -16,45 +14,19 @@ SOMA_ENCODING_VERSION_METADATA_KEY = "soma_encoding_version"
 SOMA_ENCODING_VERSION = "1"
 
 
-def is_tiledb_creation_uri(uri: str) -> bool:
-    return bool(re.match("^tiledb://.*s3://.*$", uri))
-
-
-_TILEDB_ORDERS = {
-    somacore.ResultOrder.COLUMN_MAJOR: "F",
-    somacore.ResultOrder.ROW_MAJOR: "C",
-    somacore.ResultOrder.AUTO: "U",
-}
-
-
-def tiledb_result_order_from_soma_result_order(
-    soma_result_order: Optional[somacore.ResultOrder],
-    accept: Collection[somacore.ResultOrder],
-) -> Optional[str]:
-    """
-    Given a ResultOrder, return a TileDB result order.  Raise an error if
-    the ``soma_result_order`` is not present in the acceptable values, as
-    defined by ``accept``.
-    """
-    if not soma_result_order:
-        return None
-    if soma_result_order in accept:
-        try:
-            return _TILEDB_ORDERS[soma_result_order]
-        except KeyError:
-            pass
-    raise ValueError(f"{soma_result_order} is not supported.")
-
-
 _DT = TypeVar("_DT", bound=pdt.Dtype)
 
 
-def to_tiledb_supported_dtype(dtype: _DT) -> _DT:
+def _to_tiledb_supported_dtype(dtype: _DT) -> _DT:
     """A handful of types are cast into the TileDB type system."""
     # TileDB has no float16 -- cast up to float32
     return cast(_DT, np.dtype("float32")) if dtype == np.dtype("float16") else dtype
 
 
+# Code-coverage note: the syntax in this file with @functools.singledispatch and @foo.register is
+# likely to be unfamiliar to anyone but the most expert pythonistas. Suffice it to say that this
+# function -- which appears to only ever raise unconditionally -- is invoked from the @foo.register
+# functions via Python magic.
 @functools.singledispatch
 def to_tiledb_supported_array_type(x: object) -> object:
     """
@@ -89,7 +61,7 @@ def _to_supported_series(x: PDSeries) -> PDSeries:
                 "Categorical array contains NaN -- unable to convert to TileDB array."
             )
 
-        return x.astype(to_tiledb_supported_dtype(cat_dtype))
+        return x.astype(_to_tiledb_supported_dtype(cat_dtype))
 
     # Into the weirdness. See if Pandas can help with edge cases.
     inferred = pd.api.types.infer_dtype(categories)
@@ -117,7 +89,7 @@ _MT = TypeVar("_MT", NPNDArray, sp.spmatrix, PDSeries)
 
 
 def _to_supported_base(x: _MT) -> _MT:
-    target_dtype = to_tiledb_supported_dtype(x.dtype)
+    target_dtype = _to_tiledb_supported_dtype(x.dtype)
     return x if target_dtype == x.dtype else x.astype(target_dtype)
 
 
@@ -149,45 +121,6 @@ def list_fragments(array_uri: str) -> None:
 
     frags_df = pd.DataFrame(fragments)
     print(frags_df)
-
-
-def split_column_names(
-    array_schema: tiledb.ArraySchema, column_names: Optional[Sequence[str]]
-) -> Tuple[Optional[Sequence[str]], Optional[Sequence[str]]]:
-    """
-    Given a tiledb ArraySchema and a list of dim or attr names, split
-    them into a tuple of (dim_names, attr_names).
-
-    This helper is used to turn the SOMA ``column_names`` parameter into a
-    form that can be natively used by tiledb.Array.query, which requires
-    that the list of names be separated into ``dims`` and ``attrs``.
-
-    Parameters
-    ----------
-    array_schema : tiledb.Array
-        An array schema which will be used to determine whether a
-        column name is a dim or attr.
-    column_names : Optional[Sequence[str]]
-        List of column names to split into ``dim`` and ``attr`` names.
-
-    Returns
-    -------
-    Tuple[Optional[Sequence[str]], Optional[Sequence[str]]]
-        If column_names is ``None``, the tuple ``(None, None)`` will be returned.
-        Otherwise, returns a tuple of (dim_names, attr_names), with any unknown
-        names, i.e., not present in the array schema, ignored (dropped).
-    """
-    if column_names is None:
-        return (None, None)
-
-    dim_names = [
-        array_schema.domain.dim(i).name for i in range(array_schema.domain.ndim)
-    ]
-    attr_names = [array_schema.attr(i).name for i in range(array_schema.nattr)]
-    return (
-        [c for c in column_names if c in dim_names],
-        [c for c in column_names if c in attr_names],
-    )
 
 
 def is_does_not_exist_error(e: tiledb.TileDBError) -> bool:
