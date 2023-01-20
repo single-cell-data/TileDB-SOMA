@@ -22,9 +22,9 @@ We auto-promote Arrow's string and binary to large_string and large_binary,
 respectively, as this is what TileDB stores -- a sequence of bytes preceded
 by a 64-bit (not 32-bit) length int.
 
-DataFrame-specific note: currently (as of 2.14), TileDB does not support 
+DataFrame-specific note: currently (as of 2.14), TileDB does not support
 Unicode array dimensions. All Arrow string types used in a DataFrame index
-columns (i.e., TileDB dimension) are coerced to ASCII. This equirement for 
+columns (i.e., TileDB dimension) are coerced to ASCII. This equirement for
 ASCII-only dimensions will be relaxed in a future release. Unicode/UTF-8 is
 fully supported in SOMA DataFrame non-indexed columns.
 """
