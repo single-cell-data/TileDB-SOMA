@@ -75,10 +75,3 @@ class TileDBArray(TileDBObject):
         """
         with self._tiledb_open() as A:
             return [A.schema.attr(i).name for i in range(A.schema.nattr)]
-
-    def _show_metadata(self, recursively: bool = True, indent: str = "") -> None:
-        """
-        Prints metadata for the array, for interactive use.
-        """
-        for key, value in self.metadata.items():
-            print(f"{indent}- {key}: {value}")
