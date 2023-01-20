@@ -91,6 +91,9 @@ SOMAReader::SOMAReader(
         LOG_DEBUG(fmt::format("[SOMAReader] opening array '{}'", uri_));
         auto array = std::make_shared<Array>(*ctx_, uri_, TILEDB_READ);
         if (timestamp) {
+            if (timestamp->first > timestamp->second) {
+                throw std::invalid_argument("timestamp start > end");
+            }
             array->set_open_timestamp_start(timestamp->first);
             array->set_open_timestamp_end(timestamp->second);
             // FIXME: tiledb::Array::set_open_timestamp_{start,end} are only
@@ -185,14 +188,6 @@ uint64_t SOMAReader::nnz() {
             "[SOMAReader] nnz is only supported for sparse arrays");
     }
 
-    if (timestamp_ &&
-        (timestamp_->first > 0 || timestamp_->second < UINT64_MAX)) {
-        // Use count_cells for timestamped queries for now.
-        // TODO: make optimized method filter fragment(s) on timestamp range
-        // https://github.com/TileDB-Inc/TileDB/blob/6f92d2864440cec17474f2aae22f223147828c6a/tiledb/sm/cpp_api/fragment_info.h#L314
-        return nnz_slow();
-    }
-
     // Load fragment info
     FragmentInfo fragment_info(*ctx_, uri_);
     fragment_info.load();
@@ -202,17 +197,39 @@ uint64_t SOMAReader::nnz() {
         fragment_info.dump();
     }
 
-    //===============================================================
-    // If only one fragment, return total_cell_num
-    auto fragment_count = fragment_info.fragment_num();
+    // Find the subset of fragments contained within the read timestamp range
+    // [if any]
+    std::vector<uint32_t> relevant_fragments;
+    for (uint32_t fid = 0; fid < fragment_info.fragment_num(); fid++) {
+        if (timestamp_) {
+            auto frag_ts = fragment_info.timestamp_range(fid);
+            assert(frag_ts.first <= frag_ts.second);
+            if (frag_ts.first > timestamp_->second ||
+                frag_ts.second < timestamp_->first) {
+                // fragment is fully outside the read timestamp range: skip it
+                continue;
+            } else if (!(frag_ts.first >= timestamp_->first &&
+                         frag_ts.second <= timestamp_->second)) {
+                // fragment overlaps read timestamp range, but isn't fully
+                // contained within: fall back to count_cells to sort that out.
+                return nnz_slow();
+            }
+        }
+        // fall through: fragment is fully contained within the read timestamp
+        // range
+        relevant_fragments.push_back(fid);
+    }
+
+    auto fragment_count = relevant_fragments.size();
 
     if (fragment_count == 0) {
-        // Array schema has been created but no data have been written
+        // No data have been written [in the read timestamp range]
         return 0;
     }
 
     if (fragment_count == 1) {
-        return fragment_info.total_cell_num();
+        // Only one fragment; return its cell_num
+        return fragment_info.cell_num(relevant_fragments[0]);
     }
 
     //===============================================================
@@ -224,7 +241,8 @@ uint64_t SOMAReader::nnz() {
         // TODO[perf]: Reading fragment info is not supported on TileDB Cloud
         // yet, but reading one fragment at a time will be slow. Is there
         // another way?
-        fragment_info.get_non_empty_domain(i, 0, &non_empty_domains[i]);
+        fragment_info.get_non_empty_domain(
+            relevant_fragments[i], 0, &non_empty_domains[i]);
         LOG_DEBUG(fmt::format(
             "[SOMAReader] fragment {} non-empty domain = [{}, {}]",
             i,
@@ -249,14 +267,19 @@ uint64_t SOMAReader::nnz() {
         }
     }
 
-    // If multiple fragments do not overlap, return the total_cell_num
+    // If multiple fragments do not overlap, return the total cell_num
     if (!overlap) {
-        return fragment_info.total_cell_num();
+        uint64_t total_cell_num = 0;
+        for (auto fid : relevant_fragments) {
+            total_cell_num += fragment_info.cell_num(fid);
+        }
+        return total_cell_num;
     }
 
     //===============================================================
     // Found overlapping fragments, count cells
     if (mq_->schema()->allows_dups()) {
+        // TODO: should this check be in nnz_slow()?
         throw TileDBSOMAError(
             "[SOMAReader] nnz not supported for overlapping fragments with "
             "duplicates");
