@@ -52,7 +52,7 @@ class SOMATileDBContext:
     write_timestamp: Optional[int] = None
     "Timestamp applied to all array write operations."
 
-    def __attrs_post_init__(self):
+    def __attrs_post_init__(self) -> None:
         if self.read_timestamp_end is None:
             object.__setattr__(self, "read_timestamp_end", int(time.time() * 1000))
 
