@@ -88,7 +88,9 @@ class DataFrame(TileDBArray, somacore.DataFrame):
         dims = []
         for index_column_name in index_column_names:
             pa_type = schema.field(index_column_name).type
-            dtype = util_arrow.tiledb_type_from_arrow_type(pa_type)
+            dtype = util_arrow.tiledb_type_from_arrow_type(
+                pa_type, is_indexed_column=True
+            )
             domain: Tuple[Any, Any]
             if isinstance(dtype, str):
                 domain = None, None

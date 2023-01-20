@@ -21,17 +21,25 @@ are unsupported (even though they are just int64 under the covers).
 We auto-promote Arrow's string and binary to large_string and large_binary,
 respectively, as this is what TileDB stores -- a sequence of bytes preceded
 by a 64-bit (not 32-bit) length int.
+
+DataFrame-specific note: currently (as of 2.14), TileDB does not support 
+Unicode array dimensions. All Arrow string types used in a DataFrame index
+columns (i.e., TileDB dimension) are coerced to ASCII. This equirement for 
+ASCII-only dimensions will be relaxed in a future release. Unicode/UTF-8 is
+fully supported in SOMA DataFrame non-indexed columns.
 """
-ARROW_TO_TDB: Dict[Any, Union[str, TypeError]] = {
-    # Dict of types unsupported by to_pandas_dtype, which require overrides.
+_ARROW_TO_TDB_ATTR: Dict[Any, Union[str, TypeError]] = {
+    # Dict of types unsupported by to_pandas_dtype, which require overrides for
+    # use in TileDB Attributes (aka DataFrame non-indexe columns).
+    #
     # If the value is an instance of Exception, it will be raised.
     #
     # IMPORTANT: ALL non-primitive types supported by TileDB must be in this table.
     #
-    pa.string(): "ascii",  # TODO: temporary work-around until UTF8 support is native. GH #338.
-    pa.large_string(): "ascii",  # TODO: temporary work-around until UTF8 support is native. GH #338.
-    pa.binary(): "bytes",  # TODO: temporary work-around until UTF8 support is native. GH #338.
-    pa.large_binary(): "bytes",  # TODO: temporary work-around until UTF8 support is native. GH #338.
+    pa.string(): "U1",
+    pa.large_string(): "U1",
+    pa.binary(): "bytes",
+    pa.large_binary(): "bytes",
     pa.timestamp("s"): "datetime64[s]",
     pa.timestamp("ms"): "datetime64[ms]",
     pa.timestamp("us"): "datetime64[us]",
@@ -43,11 +51,28 @@ ARROW_TO_TDB: Dict[Any, Union[str, TypeError]] = {
     pa.date64(): TypeError("64-bit date - unsupported type (use TimestampType)"),
 }
 
+# Same as _ARROW_TO_TDB_ATTR, but used for DataFrame indexed columns, aka TileDB Dimensions
+_ARROW_TO_TDB_DIM: Dict[Any, Union[str, TypeError]] = _ARROW_TO_TDB_ATTR.copy()
+_ARROW_TO_TDB_DIM.update(
+    {
+        pa.string(): "ascii",  # TODO: temporary work-around until Dimension UTF8 support is available.
+        pa.large_string(): "ascii",  # TODO: temporary work-around until UTF8 support is available.
+        pa.binary(): "bytes",  # TODO: temporary work-around until UTF8 support is available.
+        pa.large_binary(): "bytes",  # TODO: temporary work-around until UTF8 support is available.
+    }
+)
 
-def tiledb_type_from_arrow_type(t: pa.DataType) -> npt.DTypeLike:
+
+def tiledb_type_from_arrow_type(
+    t: pa.DataType, is_indexed_column: bool = False
+) -> npt.DTypeLike:
     """
     Given an Arrow type, return the corresponding TileDB type as a Numpy dtype.
     Building block for Arrow-to-TileDB schema translation.
+
+    TileDB currently has different Unicode handling for dimensions and attributes.
+    Set the ``is_dimension`` parameter to True for dimension rules, which
+    currently requires all strings to be ASCII.
 
     If type is unsupported, with raise a TypeError exception.
 
@@ -55,6 +80,8 @@ def tiledb_type_from_arrow_type(t: pa.DataType) -> npt.DTypeLike:
     ----------
     t : pyarrow.DataType
         Arrow DataType instance, e.g., pyarrow.int8()
+    is_indexed_column : bool
+        Use TileDB dimension type conversion rules.
 
     Returns
     -------
@@ -62,14 +89,13 @@ def tiledb_type_from_arrow_type(t: pa.DataType) -> npt.DTypeLike:
         The numpy dtype corresponding to the ``t`` parameter. ``TypeError`` will
         be raised for unsupported types.
     """
-    if t in ARROW_TO_TDB:
-        arrow_type = ARROW_TO_TDB[t]
+    arrow_to_tdb = _ARROW_TO_TDB_DIM if is_indexed_column else _ARROW_TO_TDB_ATTR
+    if t in arrow_to_tdb:
+        arrow_type = arrow_to_tdb[t]
         if isinstance(arrow_type, Exception):
             raise arrow_type
-        if arrow_type == "ascii":
+        if arrow_type in ["ascii", "bytes"]:
             return arrow_type
-        if arrow_type == "bytes":
-            return arrow_type  # np.int8()
         return np.dtype(arrow_type)
 
     if not pa.types.is_primitive(t):
@@ -105,7 +131,7 @@ def get_arrow_type_from_tiledb_dtype(
             return pa.large_string()
         else:
             return pa.large_binary()
-    elif tiledb_dtype == "ascii":
+    elif tiledb_dtype == "ascii" or tiledb_dtype == str:
         return pa.large_string()
     else:
         return pa.from_numpy_dtype(tiledb_dtype)
