@@ -19,6 +19,6 @@ repos:
     rev: v0.991
     hooks:
     - id: mypy
-      additional_dependencies: ["types-setuptools", "somacore==0.0.0a4"]
+      additional_dependencies: ["types-setuptools", "somacore==0.0.0a5"]
       args: ["--config-file=apis/python/setup.cfg", "apis/python/src", "apis/python/tools"]
       pass_filenames: false
