@@ -6,10 +6,36 @@
 
 import argparse
 
-import tiledbsoma.util_tiledb
+import pandas as pd
+import tiledb
 
 
-def main():
+def list_fragments(array_uri: str) -> None:
+    print(f"Listing fragments for array: '{array_uri}'")
+    vfs = tiledb.VFS()
+
+    fragments = []
+    fi = tiledb.fragment.FragmentInfoList(array_uri=array_uri)
+
+    for f in fi:
+        f_dict = {
+            "array_schema_name": f.array_schema_name,
+            "num": f.num,
+            "cell_num": f.cell_num,
+            "size": vfs.dir_size(f.uri),
+        }
+
+        # parse nonempty domains into separate columns
+        for d in range(len(f.nonempty_domain)):
+            f_dict[f"d{d}"] = f.nonempty_domain[d]
+
+        fragments.append(f_dict)
+
+    frags_df = pd.DataFrame(fragments)
+    print(frags_df)
+
+
+def main() -> None:
     p = argparse.ArgumentParser()
     p.add_argument(
         "array_uri",
@@ -17,7 +43,7 @@ def main():
         help="URI of the array to list fragments for",
     )
     args = p.parse_args()
-    tiledbsoma.util_tiledb.list_fragments(args.array_uri)
+    list_fragments(args.array_uri)
 
 
 if __name__ == "__main__":

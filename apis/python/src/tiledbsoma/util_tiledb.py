@@ -90,32 +90,6 @@ to_tiledb_supported_array_type.register(np.ndarray, _to_supported_base)
 to_tiledb_supported_array_type.register(sp.spmatrix, _to_supported_base)
 
 
-# ----------------------------------------------------------------
-def list_fragments(array_uri: str) -> None:
-    print(f"Listing fragments for array: '{array_uri}'")
-    vfs = tiledb.VFS()
-
-    fragments = []
-    fi = tiledb.fragment.FragmentInfoList(array_uri=array_uri)
-
-    for f in fi:
-        f_dict = {
-            "array_schema_name": f.array_schema_name,
-            "num": f.num,
-            "cell_num": f.cell_num,
-            "size": vfs.dir_size(f.uri),
-        }
-
-        # parse nonempty domains into separate columns
-        for d in range(len(f.nonempty_domain)):
-            f_dict[f"d{d}"] = f.nonempty_domain[d]
-
-        fragments.append(f_dict)
-
-    frags_df = pd.DataFrame(fragments)
-    print(frags_df)
-
-
 def is_does_not_exist_error(e: tiledb.TileDBError) -> bool:
     """ "
     Given a TileDBError, return true if it indicates the object does not exist.
