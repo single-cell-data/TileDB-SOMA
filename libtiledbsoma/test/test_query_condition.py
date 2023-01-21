@@ -59,7 +59,7 @@ def soma_query(uri, condition):
         # unary ops
         "n_genes == +480",
         "n_genes >= -1",
-        "n_genes > -(-1)",
+        "n_genes > -(+(-1))",
         # boolean logic
         "percent_mito > 0.02 and n_genes > 700",  # and
         "percent_mito > 0.02 or n_genes > 700",  # or
@@ -187,6 +187,9 @@ def test_query_condition_reset():
         <
         2
         """,
+        '"',
+        "'",
+        "attr(3) > 1attr(b) == 3",
     ],
 )
 def test_parsing_error_conditions(malformed_condition):
@@ -210,6 +213,13 @@ def test_parsing_error_conditions(malformed_condition):
         "attr('n_genes', 'foo') > 1",
         "somefunction('foo') == 'bar'",
         "a > ~0",
+        "attr('n_g'+'enes') > 1",
+        "attr(foo) > 1",
+        "attr(1) > 1",
+        "attr(True) > 1",
+        "n_genes == val()",
+        "attr() > 20",
+        "n_genes < -val(-1)",
     ],
 )
 def test_eval_error_conditions(malformed_condition):
