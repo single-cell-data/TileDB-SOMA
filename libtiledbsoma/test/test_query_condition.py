@@ -55,6 +55,7 @@ def soma_query(uri, condition):
         "n_genes < 100",
         "0 <= n_genes < 500",
         "louvain in ['CD4 T cells', 'B cells', 'NK cells']",
+        "1 > n_genes",
         # unary ops
         "n_genes == +480",
         "n_genes >= -1",
@@ -73,6 +74,11 @@ def test_query_condition(condition):
     pandas = pandas_query(uri, condition)
     soma_arrow = soma_query(uri, condition)
     assert len(pandas.index) == soma_arrow.num_rows
+    assert (
+        (pandas.reset_index(drop=True) == soma_arrow.to_pandas().reset_index(drop=True))
+        .all()
+        .all()
+    )
 
 
 @pytest.mark.parametrize(
@@ -91,6 +97,11 @@ def test_query_condition_extensions(condition, pandas_equivalent_condition):
     pandas = pandas_query(uri, pandas_equivalent_condition)
     soma_arrow = soma_query(uri, condition)
     assert len(pandas.index) == soma_arrow.num_rows
+    assert (
+        (pandas.reset_index(drop=True) == soma_arrow.to_pandas().reset_index(drop=True))
+        .all()
+        .all()
+    )
 
 
 def test_query_condition_select_columns():
@@ -191,20 +202,25 @@ def test_parsing_error_conditions(malformed_condition):
 
 
 @pytest.mark.parametrize(
-    # TODO: most of these raise the wrong error - in almost all cases, it should be SOMAError.
-    # Change the test when https://github.com/single-cell-data/TileDB-SOMA/issues/783 is fixed
-    "malformed_condition,expected_exception",
+    "malformed_condition",
     [
-        ["n_genes > b'abc'", RuntimeError],
-        ["n_genes > 1+1", RuntimeError],
+        "n_genes > b'abc'",
+        "n_genes > 1+1",
+        "percent_mito < n_counts",
+        "attr('n_genes', 'foo') > 1",
+        "somefunction('foo') == 'bar'",
+        "a > ~0",
     ],
 )
-def test_eval_error_conditions(malformed_condition, expected_exception):
-    """Conditions which should not evaluate (but will parse)"""
+def test_eval_error_conditions(malformed_condition):
+    """Conditions which should not evaluate (but WILL parse)"""
     uri = os.path.join(SOMA_URI, "obs")
     schema = tiledb.open(uri).schema
 
-    with pytest.raises(expected_exception):
+    # TODO: these raise the wrong error - it should be SOMAError. Change the test
+    # when https://github.com/single-cell-data/TileDB-SOMA/issues/783 is fixed
+    #
+    with pytest.raises(RuntimeError):
         qc = QueryCondition(malformed_condition)
         sr = clib.SOMAReader(uri, query_condition=qc, schema=schema)
         sr.submit()
