@@ -1,5 +1,4 @@
 import collections.abc
-from contextlib import ExitStack
 from typing import Any, List, Optional, Union, cast
 
 import numpy as np
@@ -136,8 +135,8 @@ class SparseNDArray(TileDBArray, somacore.SparseNDArray):
         """
         Return length of each dimension, always a list of length ``ndim``
         """
-        with self._tiledb_open() as A:
-            return cast(NTuple, A.schema.domain.shape)
+        with self._maybe_open():
+            return cast(NTuple, self._tiledb_array.schema.domain.shape)
 
     def reshape(self, shape: NTuple) -> None:
         """
@@ -154,13 +153,16 @@ class SparseNDArray(TileDBArray, somacore.SparseNDArray):
         """
         Return the number of stored values in the array, including explicitly stored zeros.
         """
-        return cast(
-            int,
-            clib.SOMAReader(
-                self.uri,
-                platform_config={} if self._ctx is None else self._ctx.config().dict(),
-            ).nnz(),
-        )
+        with self._maybe_open():  # <-- currently superfluous, but we'll soon reuse SOMAReader
+            return cast(
+                int,
+                clib.SOMAReader(
+                    self.uri,
+                    platform_config={}
+                    if self._ctx is None
+                    else self._ctx.config().dict(),
+                ).nnz(),
+            )
 
     def read(
         self,
@@ -199,14 +201,12 @@ class SparseNDArray(TileDBArray, somacore.SparseNDArray):
         SparseNDArrayRead - which can be used to access an iterator of results in various formats.
         """
         del result_order, batch_size, partitions, platform_config  # Currently unused.
+
         if coords is None:
             coords = (slice(None),)
-        with ExitStack() as cleanup:
-            # If self isn't open, open it just for the scope of this operation
-            if not self._open_mode:
-                cleanup.enter_context(self.open("r"))
-            assert self._open_mode == "r"
-            A = self._tiledb_array()
+
+        with self._maybe_open():
+            A = self._tiledb_array
             shape = A.shape
 
             sr = clib.SOMAReader(
@@ -288,12 +288,9 @@ class SparseNDArray(TileDBArray, somacore.SparseNDArray):
         ``soma_dim_N`` and ``soma_data`` to the dense nD array.
         """
         del platform_config  # Currently unused.
-        with ExitStack() as cleanup:
-            # If self isn't open, open it just for the scope of this operation
-            if not self._open_mode:
-                cleanup.enter_context(self.open("w"))
-            assert self._open_mode == "w"
-            A = self._tiledb_array()
+
+        with self._maybe_open("w"):
+            A = self._tiledb_array
 
             if isinstance(values, pa.SparseCOOTensor):
                 data, coords = values.to_numpy()

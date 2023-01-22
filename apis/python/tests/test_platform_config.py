@@ -52,7 +52,8 @@ def test_platform_config(adata):
             },
         )
 
-        with exp.ms["RNA"].X["data"]._tiledb_open() as arr:
+        with exp.ms["RNA"].X["data"].open() as data:
+            arr = data._tiledb_array
             sch = arr.schema
             assert sch.capacity == 8888
             assert sch.cell_order == "row-major"

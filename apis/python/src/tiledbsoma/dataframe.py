@@ -180,17 +180,17 @@ class DataFrame(TileDBArray, somacore.DataFrame):
         """
         Return the number of rows in the dataframe. Same as `len(df)`.
         """
-
         # A.domain.shape at the tiledb level gives us the 0..2^63 range which is not what we want
-        num_rows = cast(
-            int,
-            clib.SOMAReader(
-                self.uri,
-                platform_config={} if self._ctx is None else self._ctx.config().dict(),
-            ).nnz(),
-        )
-
-        return num_rows
+        with self._maybe_open():  # <-- currently superfluous, but we'll soon reuse SOMAReader
+            return cast(
+                int,
+                clib.SOMAReader(
+                    self.uri,
+                    platform_config={}
+                    if self._ctx is None
+                    else self._ctx.config().dict(),
+                ).nnz(),
+            )
 
     def __len__(self) -> int:
         """
@@ -242,7 +242,8 @@ class DataFrame(TileDBArray, somacore.DataFrame):
         del batch_size, partitions, platform_config  # Currently unused.
         result_order = options.ResultOrder(result_order)
 
-        with self._tiledb_open("r") as A:
+        with self._maybe_open():
+            A = self._tiledb_array
             query_condition = None
             if value_filter is not None:
                 query_condition = QueryCondition(value_filter)
@@ -313,7 +314,7 @@ class DataFrame(TileDBArray, somacore.DataFrame):
             # TODO: platform_config
             # TODO: batch_size
 
-        sr.submit()
+            sr.submit()
         return TableReadIter(sr)
 
     def write(
@@ -340,8 +341,8 @@ class DataFrame(TileDBArray, somacore.DataFrame):
             raise ValueError(f"did not find any column names in {values.schema.names}")
 
         dim_cols_tuple = tuple(dim_cols_list)
-        with self._tiledb_open("w") as A:
-            A[dim_cols_tuple] = attr_cols_map
+        with self._maybe_open("w"):
+            self._tiledb_array[dim_cols_tuple] = attr_cols_map
 
 
 def _validate_schema(schema: pa.Schema, index_column_names: Sequence[str]) -> pa.Schema:

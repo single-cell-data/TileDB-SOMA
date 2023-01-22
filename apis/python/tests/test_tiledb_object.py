@@ -12,7 +12,8 @@ class FakeTileDBObject(TileDBObject):
     def soma_type(self) -> str:
         return self.__class__.__name__
 
-    def _tiledb_open(self, mode: str = "r") -> Union[tiledb.Array, tiledb.Group]:
+    @property
+    def _tiledb_object(self) -> Union[tiledb.Array, tiledb.Group]:
         return tiledb.Group("")
 
 

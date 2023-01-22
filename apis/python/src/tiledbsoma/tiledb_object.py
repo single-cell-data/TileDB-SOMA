@@ -1,7 +1,7 @@
-from abc import ABC, abstractmethod
-from contextlib import ExitStack
+from abc import ABC, abstractproperty
+from contextlib import ExitStack, contextmanager
 from types import TracebackType
-from typing import Optional, Type, TypeVar, Union
+from typing import Iterator, Optional, Type, TypeVar, Union
 
 import somacore
 import tiledb
@@ -85,7 +85,8 @@ class TileDBObject(ABC, somacore.SOMAObject):
         TODO: should this raise an error if the object does not exist?
         """
         try:
-            tiledb.remove(self._uri)
+            with self._maybe_open("w"):
+                tiledb.remove(self._uri)
         except tiledb.TileDBError:
             pass
         return
@@ -125,9 +126,11 @@ class TileDBObject(ABC, somacore.SOMAObject):
         # before a third, successful HTTP request for group-open.  Instead, we directly attempt the
         # group-open request, checking for an exception.
         try:
-            return (
-                self._metadata.get(util.SOMA_OBJECT_TYPE_METADATA_KEY) == self.soma_type
-            )
+            with self._maybe_open():
+                return (
+                    self._metadata.get(util.SOMA_OBJECT_TYPE_METADATA_KEY)
+                    == self.soma_type
+                )
         except tiledb.cc.TileDBError:
             return False
 
@@ -148,7 +151,7 @@ class TileDBObject(ABC, somacore.SOMAObject):
         if mode not in ("r", "w"):
             raise ValueError("TileDBObject open mode must be one of 'r', 'w'")
         if self._open_mode:
-            raise RuntimeError("TileDBObject is already open")
+            raise RuntimeError(self.__class__.__name__ + " is already open")
         self._open_mode = mode
         return self
 
@@ -174,12 +177,45 @@ class TileDBObject(ABC, somacore.SOMAObject):
         if self._open_mode:
             self.close()
 
+    @contextmanager
+    def _maybe_open(self, mode: str = "r") -> Iterator[None]:
+        """
+        Internal helper context for read/write methods to open self just for the duration of the
+        operation -- IFF self isn't already open. Also rejects attempts to write when self is
+        already open read-only.
+
+        when mode == "w":
+            if self is already open in read-only mode, raise an error.
+            if self is already open in w mode, do nothing.
+            otherwise open("w") until context exit.
+        when mode == "r":
+            if self is already open (IN EITHER MODE*), do nothing.
+            otherwise open("r") until context exit.
+
+            * We don't necessarily reject reads while we're open for writing, and different
+              timestamps may be used in this case. Usually, reads while open for writing just
+              pertain to metadata (e.g. exists()). The underlying TileDB object may reject other
+              cases.
+        """
+        assert mode in ("r", "w")
+        if self._open_mode:
+            if self._open_mode == "r" and mode == "w":
+                raise RuntimeError(
+                    self.__class__.__name__ + " is already open read-only"
+                )
+            yield
+        else:
+            with self.open(mode):
+                yield
+
     def __del__(self) -> None:
         self.close()
 
-    @abstractmethod
-    def _tiledb_open(self, mode: str = "r") -> Union[tiledb.Array, tiledb.Group]:
-        """Open the underlying TileDB array or Group"""
+    @abstractproperty
+    def _tiledb_object(self) -> Union[tiledb.Array, tiledb.Group]:
+        """
+        Get reference to open TileDB object handle (self must be open)
+        """
         ...
 
     def _common_create(self, soma_type: str) -> None:
@@ -188,9 +224,8 @@ class TileDBObject(ABC, somacore.SOMAObject):
         Collection level) confidently navigate with a minimum of introspection on group
         contents.
         """
-        # TODO: make a multi-set in MetadataMapping that would avoid a double-open there.
-        with self._tiledb_open("w") as obj:
-            obj.meta.update(
+        with self._maybe_open("w"):
+            self._tiledb_object.meta.update(
                 {
                     util.SOMA_OBJECT_TYPE_METADATA_KEY: soma_type,
                     util.SOMA_ENCODING_VERSION_METADATA_KEY: util.SOMA_ENCODING_VERSION,

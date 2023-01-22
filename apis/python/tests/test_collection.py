@@ -76,13 +76,11 @@ def test_collection_basic(tmp_path):
     readback_collection = soma.Collection(collection.uri)
     assert len(readback_collection) == 2
 
-    readback_dataframe = readback_collection.get("sdf")
-    with readback_dataframe._tiledb_open() as A:
-        assert len(A.df[:]) == 5
+    with readback_collection.get("sdf").open() as sdf:
+        assert len(sdf._tiledb_array.df[:]) == 5
 
-    readback_sparse_nd_array = readback_collection.get("snda")
-    with readback_sparse_nd_array._tiledb_open() as A:
-        assert len(A.df[:]) == 3
+    with readback_collection.get("snda").open() as snda:
+        assert len(snda._tiledb_array.df[:]) == 3
 
 
 @pytest.fixture(

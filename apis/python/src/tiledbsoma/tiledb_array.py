@@ -33,31 +33,40 @@ class TileDBArray(TileDBObject):
         """
         return get_arrow_schema_from_tiledb_uri(self.uri, self._ctx)
 
-    def _tiledb_open(self, mode: str = "r") -> tiledb.Array:
-        """
-        This is just a convenience wrapper allowing 'with self._tiledb_open() as A: ...' rather than 'with tiledb.open(self._uri) as A: ...'.
-        """
-        if mode not in ["r", "w"]:
-            raise ValueError(f'expected mode to be one of "r" or "w"; got "{mode}"')
-        # This works in either 'with self._tiledb_open() as A:' or 'A = self._tiledb_open(); ...; A.close().  The
-        # reason is that with-as invokes our return value's __enter__ on return from this method,
-        # and our return value's __exit__ on exit from the body of the with-block. The tiledb
-        # array object does both of those things. (And if it didn't, we'd get a runtime AttributeError
-        # on with-as, flagging the non-existence of the __enter__ or __exit__.)
-        return tiledb.open(self._uri, mode=mode, ctx=self._ctx)
+    # lazy tiledb.Array handle for reuse while self is "open"
+    _open_tiledb_array: Optional[tiledb.Array] = None
+
+    @property
+    def _tiledb_array(self) -> tiledb.Array:
+        "get the open tiledb.Array handle (opening it if needed)"
+        assert self._open_mode in ("r", "w")
+        if self._open_tiledb_array is None:
+            self._open_tiledb_array = self._close_stack.enter_context(
+                tiledb.open(self._uri, mode=self._open_mode, ctx=self._ctx)
+            )
+        return self._open_tiledb_array
+
+    @property
+    def _tiledb_object(self) -> tiledb.Array:
+        return self._tiledb_array
+
+    def close(self) -> None:
+        self._open_tiledb_array = None
+        super().close()  # closes self._open_tiledb_array via self._close_stack
 
     def _tiledb_array_schema(self) -> tiledb.ArraySchema:
         """
         Returns the TileDB array schema. Not part of the SOMA API; for dev/debug/etc.
         """
-        with self._tiledb_open() as A:
-            return A.schema
+        with self._maybe_open():
+            return self._tiledb_array.schema
 
     def _tiledb_array_keys(self) -> Sequence[str]:
         """
         Return all dim and attr names.
         """
-        with self._tiledb_open() as A:
+        with self._maybe_open():
+            A = self._tiledb_array
             dim_names = [A.domain.dim(i).name for i in range(A.domain.ndim)]
             attr_names = [A.schema.attr(i).name for i in range(A.schema.nattr)]
             return dim_names + attr_names
@@ -66,27 +75,14 @@ class TileDBArray(TileDBObject):
         """
         Reads the dimension names from the schema: for example, ['obs_id', 'var_id'].
         """
-        with self._tiledb_open() as A:
+        with self._maybe_open():
+            A = self._tiledb_array
             return tuple([A.domain.dim(i).name for i in range(A.domain.ndim)])
 
     def _tiledb_attr_names(self) -> List[str]:
         """
         Reads the attribute names from the schema: for example, the list of column names in a dataframe.
         """
-        with self._tiledb_open() as A:
+        with self._maybe_open():
+            A = self._tiledb_array
             return [A.schema.attr(i).name for i in range(A.schema.nattr)]
-
-    # lazy tiledb.Array handle for reuse while self is "open"
-    _open_tiledb_array: Optional[tiledb.Array] = None
-
-    def _tiledb_array(self) -> tiledb.Array:
-        assert self._open_mode in ("r", "w")
-        if self._open_tiledb_array is None:
-            self._open_tiledb_array = self._close_stack.enter_context(
-                self._tiledb_open(self._open_mode)
-            )
-        return self._open_tiledb_array
-
-    def close(self) -> None:
-        self._open_tiledb_array = None
-        super().close()
