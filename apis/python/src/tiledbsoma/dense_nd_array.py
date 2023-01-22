@@ -6,8 +6,6 @@ import somacore
 import tiledb
 from somacore import options
 
-# This package's pybind11 code
-import tiledbsoma.libtiledbsoma as clib
 import tiledbsoma.util as util
 import tiledbsoma.util_arrow as util_arrow
 from tiledbsoma.util import dense_indices_to_shape
@@ -167,12 +165,7 @@ class DenseNDArray(TileDBArray, somacore.DenseNDArray):
             schema = A.schema
             ned = A.nonempty_domain()
 
-        sr = clib.SOMAReader(
-            self._uri,
-            name=self.__class__.__name__,
-            result_order=result_order.value,
-            platform_config=self._ctx.config().dict(),
-        )
+        sr = self._soma_reader(result_order=result_order.value)
 
         if coords is not None:
             if not isinstance(coords, (list, tuple)):

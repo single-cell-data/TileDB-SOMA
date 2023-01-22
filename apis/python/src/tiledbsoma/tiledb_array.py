@@ -3,6 +3,9 @@ from typing import List, Optional, Sequence, Tuple
 import pyarrow as pa
 import tiledb
 
+# This package's pybind11 code
+import tiledbsoma.libtiledbsoma as clib
+
 from .options import SOMATileDBContext
 from .tiledb_object import TileDBObject
 from .util_arrow import get_arrow_schema_from_tiledb_uri
@@ -75,3 +78,29 @@ class TileDBArray(TileDBObject):
         """
         with self._tiledb_open() as A:
             return [A.schema.attr(i).name for i in range(A.schema.nattr)]
+
+    def _soma_reader(
+        self,
+        schema: Optional[tiledb.ArraySchema] = None,
+        column_names: Optional[Sequence[str]] = None,
+        query_condition: Optional[tiledb.QueryCondition] = None,
+        result_order: Optional[str] = None,
+    ) -> clib.SOMAReader:
+        """
+        Construct a C++ SOMAReader using appropriate context/config/etc.
+        """
+        kwargs = {
+            "name": self.__class__.__name__,
+            "platform_config": self._ctx.config().dict(),
+        }
+        # Leave empty arguments out of kwargs to allow C++ constructor defaults to apply, as
+        # they're not all wrapped in std::optional<>.
+        if schema:
+            kwargs["schema"] = schema
+        if column_names:
+            kwargs["column_names"] = column_names
+        if query_condition:
+            kwargs["query_condition"] = query_condition
+        if result_order:
+            kwargs["result_order"] = result_order
+        return clib.SOMAReader(self._uri, **kwargs)
