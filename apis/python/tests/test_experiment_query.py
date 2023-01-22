@@ -7,16 +7,9 @@ import pandas as pd
 import pyarrow as pa
 import pytest
 from scipy import sparse
-from somacore import AxisQuery, ExperimentAxisQuery
 
 import tiledbsoma as soma
 from tiledbsoma.experiment_query import X_as_series
-
-"""
-WIP tracker - delete when complete.  Missing tests:
-* query by coords when there is >1 dimension
-* error check handling of Dense X/obsm/varm
-"""
 
 
 @pytest.fixture(scope="function")
@@ -83,7 +76,7 @@ def test_experiment_query_all(soma_experiment):
     """Test a query with default obs_query / var_query - i.e., query all."""
     assert soma_experiment.exists()
 
-    with ExperimentAxisQuery(soma_experiment, "RNA") as query:
+    with soma.ExperimentAxisQuery(soma_experiment, "RNA") as query:
         assert query.n_obs == 101
         assert query.n_vars == 11
 
@@ -150,8 +143,8 @@ def test_experiment_query_coords(soma_experiment):
     var_slice = slice(7, 21)
     with soma_experiment.axis_query(
         "RNA",
-        obs_query=AxisQuery(coords=(obs_slice,)),
-        var_query=AxisQuery(coords=(var_slice,)),
+        obs_query=soma.AxisQuery(coords=(obs_slice,)),
+        var_query=soma.AxisQuery(coords=(var_slice,)),
     ) as query:
         assert query.n_obs == obs_slice.stop - obs_slice.start + 1
         assert query.n_vars == var_slice.stop - var_slice.start + 1
@@ -205,8 +198,8 @@ def test_experiment_query_value_filter(soma_experiment):
     var_label_values = ["18", "34", "67"]
     with soma_experiment.axis_query(
         "RNA",
-        obs_query=AxisQuery(value_filter=f"label in {obs_label_values}"),
-        var_query=AxisQuery(value_filter=f"label in {var_label_values}"),
+        obs_query=soma.AxisQuery(value_filter=f"label in {obs_label_values}"),
+        var_query=soma.AxisQuery(value_filter=f"label in {var_label_values}"),
     ) as query:
         assert query.n_obs == len(obs_label_values)
         assert query.n_vars == len(var_label_values)
@@ -229,16 +222,16 @@ def test_experiment_query_combo(soma_experiment):
 
     with soma_experiment.axis_query(
         "RNA",
-        obs_query=AxisQuery(coords=(obs_slice,)),
-        var_query=AxisQuery(value_filter=f"label in {var_label_values}"),
+        obs_query=soma.AxisQuery(coords=(obs_slice,)),
+        var_query=soma.AxisQuery(value_filter=f"label in {var_label_values}"),
     ) as query:
         assert query.n_obs == obs_slice.stop - obs_slice.start + 1
         assert query.var().concat()["label"].to_pylist() == var_label_values
 
     with soma_experiment.axis_query(
         "RNA",
-        obs_query=AxisQuery(value_filter=f"label in {obs_label_values}"),
-        var_query=AxisQuery(coords=(var_slice,)),
+        obs_query=soma.AxisQuery(value_filter=f"label in {obs_label_values}"),
+        var_query=soma.AxisQuery(coords=(var_slice,)),
     ) as query:
         assert query.obs().concat()["label"].to_pylist() == obs_label_values
         assert np.array_equal(
@@ -248,15 +241,92 @@ def test_experiment_query_combo(soma_experiment):
 
     with soma_experiment.axis_query(
         "RNA",
-        obs_query=AxisQuery(
+        obs_query=soma.AxisQuery(
             coords=(obs_slice,), value_filter=f"label in {obs_label_values}"
         ),
-        var_query=AxisQuery(
+        var_query=soma.AxisQuery(
             coords=(var_slice,), value_filter=f"label in {var_label_values}"
         ),
     ) as query:
         assert query.obs().concat()["label"].to_pylist() == obs_label_values
         assert query.var().concat()["label"].to_pylist() == var_label_values
+
+
+@pytest.mark.xfail(
+    # see comment on test_experiment_query_all
+    sys.version_info >= (3, 10),
+    reason="typeguard bug #242",
+)
+@pytest.mark.parametrize("n_obs,n_vars", [(1001, 99)])
+def test_experiment_query_none(soma_experiment):
+    """Test query resulting in empty result"""
+
+    with soma_experiment.axis_query(
+        "RNA",
+        obs_query=soma.AxisQuery(value_filter="label == 'no-such-label'"),
+        var_query=soma.AxisQuery(value_filter="label == 'no-such-label'"),
+    ) as query:
+        obs = query.obs().concat()
+        var = query.var().concat()
+        assert len(obs) == 0
+        assert len(var) == 0
+        assert set(next(query.obs()).column_names) == {"soma_joinid", "label"}
+        assert set(next(query.var()).column_names) == {"soma_joinid", "label"}
+
+        assert len(query.obs_joinids()) == 0
+        assert len(query.var_joinids()) == 0
+
+        ad = query.to_anndata("raw")
+        assert ad.n_obs == 0 and ad.n_vars == 0
+
+        assert len(query.X("raw").tables().concat()) == 0
+
+
+@pytest.mark.xfail(
+    # see comment on test_experiment_query_all
+    sys.version_info >= (3, 10),
+    reason="typeguard bug #242",
+)
+@pytest.mark.parametrize("n_obs,n_vars,X_layer_names", [(1001, 99, ["A"])])
+def test_joinid_caching(soma_experiment):
+    """
+    Verify that results are the same regardless of invocation order, which
+    influences caching
+    """
+
+    obs_query = soma.AxisQuery(value_filter="label in ['17', '19', '21']")
+    var_query = soma.AxisQuery(coords=(slice(0, 100),))
+
+    with soma_experiment.axis_query(
+        "RNA", obs_query=obs_query, var_query=var_query
+    ) as query1:
+        obs = query1.obs().concat()
+        var = query1.var().concat()
+
+    with soma_experiment.axis_query(
+        "RNA", obs_query=obs_query, var_query=var_query
+    ) as query2:
+        coo = query2.X("A").coos().concat().to_scipy()
+        csr = sparse.csr_matrix(
+            (
+                coo.data,
+                (query2._indexer.by_obs(coo.row), query2._indexer.by_var(coo.col)),
+            ),
+            shape=(query2.n_obs, query2.n_vars),
+        )
+
+    with soma_experiment.axis_query(
+        "RNA", obs_query=obs_query, var_query=var_query
+    ) as query3:
+        ad = query3.to_anndata("A", column_names={"obs": ["label"], "var": ["label"]})
+
+    assert query1 != query2 and query2 != query3 and query1 != query3
+    assert np.array_equal(obs.to_pandas().label, ad.obs.label)
+    assert np.array_equal(var.to_pandas().label, ad.var.label)
+    assert ad.n_obs == len(obs)
+    assert ad.n_vars == len(var)
+    assert ad.X.shape == csr.shape
+    assert (ad.X != csr).nnz == 0  # fast eq test
 
 
 @pytest.mark.xfail(
@@ -298,11 +368,11 @@ def test_experiment_query_indexer(soma_experiment):
     """Test result indexer"""
     assert soma_experiment.exists()
 
-    with ExperimentAxisQuery(
+    with soma.ExperimentAxisQuery(
         soma_experiment,
         "RNA",
-        obs_query=AxisQuery(coords=(slice(1, 10),)),
-        var_query=AxisQuery(coords=(slice(1, 10),)),
+        obs_query=soma.AxisQuery(coords=(slice(1, 10),)),
+        var_query=soma.AxisQuery(coords=(slice(1, 10),)),
     ) as query:
         # TODO: remove this work-around once a new `somacore` is released.
         # workaround:
@@ -324,6 +394,17 @@ def test_experiment_query_indexer(soma_experiment):
         assert np.array_equal(indexer.by_obs(np.array([1, 4, 2])), np.array([0, 3, 1]))
         assert np.array_equal(indexer.by_var(np.array([10, 1])), np.array([9, 0]))
 
+        # should be able to consume multiple types
+        base_arg = np.array([1, 4, 2])
+        expected_result = np.array([0, 3, 1])
+        for arg in (
+            base_arg,
+            pa.array(base_arg),
+            pa.chunked_array([base_arg]),
+        ):
+            assert np.array_equal(indexer.by_obs(arg), expected_result)
+            assert np.array_equal(indexer.by_var(arg), expected_result)
+
 
 @pytest.mark.xfail(
     # see comment on test_experiment_query_all
@@ -335,23 +416,43 @@ def test_error_corners(soma_experiment: soma.Experiment):
     """Verify a couple of error conditions / corner cases."""
     assert soma_experiment.exists()
 
+    # Unkonwn Measurement name
     with pytest.raises(ValueError):
         soma_experiment.axis_query("no-such-measurement")
 
+    # Non-existent experiment
     with pytest.raises(ValueError):
         soma.Experiment(uri="foobar").axis_query("foobar")
 
+    # Unknown X layer name
     with pytest.raises(KeyError):
         with soma_experiment.axis_query("RNA") as query:
             next(query.X("no-such-layer"))
 
+    # Unknown X layer name
+    with pytest.raises(ValueError):
+        with soma_experiment.axis_query("RNA") as query:
+            query.to_anndata("no-such-layer")
+
+    # Unknown obsp layer name
     with pytest.raises(ValueError):
         with soma_experiment.axis_query("RNA") as query:
             next(query.obsp("no-such-layer"))
 
+    # Unknown varp layer name
     with pytest.raises(ValueError):
         with soma_experiment.axis_query("RNA") as query:
             next(query.varp("no-such-layer"))
+
+    # Illegal layer name type
+    for lyr_name in [True, 3, 99.3]:
+        with soma_experiment.axis_query("RNA") as query:
+            with pytest.raises(KeyError):
+                next(query.X(lyr_name))
+            with pytest.raises(ValueError):
+                next(query.obsp(lyr_name))
+            with pytest.raises(ValueError):
+                next(query.varp(lyr_name))
 
 
 @pytest.mark.xfail(
@@ -393,11 +494,11 @@ def test_query_cleanup(soma_experiment: soma.Experiment):
 def test_experiment_query_obsp_varp(soma_experiment):
     obs_slice = slice(3, 72)
     var_slice = slice(7, 21)
-    with ExperimentAxisQuery(
+    with soma.ExperimentAxisQuery(
         soma_experiment,
         "RNA",
-        obs_query=AxisQuery(coords=(obs_slice,)),
-        var_query=AxisQuery(coords=(var_slice,)),
+        obs_query=soma.AxisQuery(coords=(obs_slice,)),
+        var_query=soma.AxisQuery(coords=(var_slice,)),
     ) as query:
         assert query.n_obs == obs_slice.stop - obs_slice.start + 1
         assert query.n_vars == var_slice.stop - var_slice.start + 1
@@ -429,40 +530,44 @@ def test_experiment_query_obsp_varp(soma_experiment):
 
 def test_axis_query():
     """Basic test of the AxisQuery class"""
-    assert AxisQuery().coords == (slice(None),)
-    assert AxisQuery().value_filter is None
-    assert AxisQuery() == AxisQuery(coords=(slice(None),))
+    assert soma.AxisQuery().coords == (slice(None),)
+    assert soma.AxisQuery().value_filter is None
+    assert soma.AxisQuery() == soma.AxisQuery(coords=(slice(None),))
 
-    assert AxisQuery(coords=(1,)).coords == (1,)
-    assert AxisQuery(coords=(slice(1, 2),)).coords == (slice(1, 2),)
-    assert AxisQuery(coords=((1, 88),)).coords == ((1, 88),)
+    assert soma.AxisQuery(coords=(1,)).coords == (1,)
+    assert soma.AxisQuery(coords=(slice(1, 2),)).coords == (slice(1, 2),)
+    assert soma.AxisQuery(coords=((1, 88),)).coords == ((1, 88),)
 
-    assert AxisQuery(coords=(1, 2)).coords == (1, 2)
-    assert AxisQuery(coords=(slice(1, 2), slice(None))).coords == (
+    assert soma.AxisQuery(coords=(1, 2)).coords == (1, 2)
+    assert soma.AxisQuery(coords=(slice(1, 2), slice(None))).coords == (
         slice(1, 2),
         slice(None),
     )
-    assert AxisQuery(coords=(slice(1, 2),)).value_filter is None
+    assert soma.AxisQuery(coords=(slice(1, 2),)).value_filter is None
 
-    assert AxisQuery(value_filter="foo == 'bar'").value_filter == "foo == 'bar'"
-    assert AxisQuery(value_filter="foo == 'bar'").coords == (slice(None),)
+    assert soma.AxisQuery(value_filter="foo == 'bar'").value_filter == "foo == 'bar'"
+    assert soma.AxisQuery(value_filter="foo == 'bar'").coords == (slice(None),)
 
-    assert AxisQuery(coords=(slice(1, 100),), value_filter="foo == 'bar'").coords == (
+    assert soma.AxisQuery(
+        coords=(slice(1, 100),), value_filter="foo == 'bar'"
+    ).coords == (
         slice(1, 100),
     )
     assert (
-        AxisQuery(coords=(slice(1, 100),), value_filter="foo == 'bar'").value_filter
+        soma.AxisQuery(
+            coords=(slice(1, 100),), value_filter="foo == 'bar'"
+        ).value_filter
         == "foo == 'bar'"
     )
 
     with pytest.raises(TypeError):
-        AxisQuery(coords=True)
+        soma.AxisQuery(coords=True)
 
     with pytest.raises(TypeError):
-        AxisQuery(value_filter=[])
+        soma.AxisQuery(value_filter=[])
 
     with pytest.raises(TypeError):
-        AxisQuery(coords=({},))
+        soma.AxisQuery(coords=({},))
 
 
 def test_X_as_series():
