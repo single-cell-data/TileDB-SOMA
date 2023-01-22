@@ -261,7 +261,8 @@ class CollectionBase(TileDBObject, somacore.Collection[CollectionElementType]):
                     group = cleanup.enter_context(
                         tiledb.Group(self._uri, mode="r", ctx=self.context.tiledb_ctx)
                     )
-                return {o.name: o for o in group if o.name is not None}
+                ans = {o.name: o for o in group if o.name is not None}
+            return ans
 
         except tiledb.TileDBError as e:
             if is_does_not_exist_error(e):
