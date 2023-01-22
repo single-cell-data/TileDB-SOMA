@@ -416,7 +416,7 @@ def test_error_corners(soma_experiment: soma.Experiment):
     """Verify a couple of error conditions / corner cases."""
     assert soma_experiment.exists()
 
-    # Unkonwn Measurement name
+    # Unknown Measurement name
     with pytest.raises(ValueError):
         soma_experiment.axis_query("no-such-measurement")
 
