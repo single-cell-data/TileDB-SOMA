@@ -80,17 +80,18 @@ def test_dense_nd_array_read_write_tensor(tmp_path, shape: Tuple[int, ...]):
     # random sample - written to entire array
     data = np.random.default_rng().standard_normal(np.prod(shape)).reshape(shape)
     coords = tuple(slice(0, dim_len) for dim_len in shape)
-    a.write(coords, pa.Tensor.from_numpy(data))
+    with a.open("w"):
+        a.write(coords, pa.Tensor.from_numpy(data))
     del a
 
     # check multiple read paths
-    b = soma.DenseNDArray(tmp_path.as_posix())
+    with soma.DenseNDArray(tmp_path.as_posix()).open() as b:
 
-    t = b.read((slice(None),) * ndim, result_order="row-major")
-    assert t.equals(pa.Tensor.from_numpy(data))
+        t = b.read((slice(None),) * ndim, result_order="row-major")
+        assert t.equals(pa.Tensor.from_numpy(data))
 
-    t = b.read((slice(None),) * ndim, result_order="column-major")
-    assert t.equals(pa.Tensor.from_numpy(data.transpose()))
+        t = b.read((slice(None),) * ndim, result_order="column-major")
+        assert t.equals(pa.Tensor.from_numpy(data.transpose()))
 
     # write a single-value sub-array and recheck
     b.write(

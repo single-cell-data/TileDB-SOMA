@@ -721,6 +721,13 @@ def test_sparse_nd_array_table_slicing(tmp_path, io, write_format, read_format):
         snda.write(arrow_tensor)
 
     with soma.SparseNDArray(tmp_path.as_posix()).open("r") as snda:
+        try:
+            snda.write(
+                arrow_tensor
+            )  # attempt to write snda opened in read-only mode should fail
+            assert False
+        except:  # noqa: E722
+            pass
         if read_format == "table":
             if io["throws"] is not None:
                 with pytest.raises(io["throws"]):
