@@ -75,3 +75,31 @@ def test_open_close():
     except Exception:
         pass
     assert not bad
+
+    # Internal _maybe_open()
+    with o._maybe_open():
+        assert o._open_mode == "r"
+    assert not o._open_mode
+    with o.open():
+        with o._maybe_open():
+            assert o._open_mode == "r"
+        assert o._open_mode == "r"
+    assert not o._open_mode
+    bad = False
+    try:
+        # reject attempt to write when already open read-only
+        with o.open("r"):
+            with o._maybe_open("w"):
+                bad = True
+            bad = True
+    except Exception:
+        pass
+    assert not bad
+    assert not o._open_mode
+    with o.open("w"):
+        # allow attempt to read when already open for write (manly for metadata; underlying TileDB
+        # objects may reject other attempts)
+        with o._maybe_open("r"):
+            assert o._open_mode == "w"
+        assert o._open_mode == "w"
+    assert not o._open_mode
