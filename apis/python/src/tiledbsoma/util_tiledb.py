@@ -89,7 +89,7 @@ def show_tiledb_group_array_schemas(uri: str, ctx: Optional[tiledb.Ctx] = None) 
 
 # ----------------------------------------------------------------
 def list_fragments(array_uri: str) -> None:
-    print(f"Listing fragments for array: '{array_uri}'")
+    print(f"Listing fragments for array: {array_uri!r}")
     vfs = tiledb.VFS()
 
     fragments = []

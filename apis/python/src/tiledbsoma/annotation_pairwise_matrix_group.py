@@ -57,7 +57,7 @@ class AnnotationPairwiseMatrixGroup(TileDBGroup):
         """
         Default display of soma.obsp and soma.varp.
         """
-        return ", ".join(f"'{key}'" for key in self.keys())
+        return ", ".join(f"{key!r}" for key in self.keys())
 
     # ----------------------------------------------------------------
     def __getattr__(self, name: str) -> Optional[AssayMatrix]:
@@ -68,7 +68,7 @@ class AnnotationPairwiseMatrixGroup(TileDBGroup):
         with self._open() as G:
             if name not in G:
                 raise AttributeError(
-                    f"'{self.__class__.__name__}' object has no attribute '{name}'"
+                    f"{self.__class__.__name__!r} object has no attribute {name!r}"
                 )
         return self[name]
 
