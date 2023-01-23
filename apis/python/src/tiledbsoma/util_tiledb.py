@@ -1,11 +1,10 @@
-import functools
 from typing import TypeVar, cast
 
 import numpy as np
-import pandas as pd
 import pandas._typing as pdt
 import scipy.sparse as sp
 import tiledb
+from pandas.api.types import infer_dtype, is_categorical_dtype
 
 from .types import NPNDArray, PDSeries
 
@@ -15,6 +14,8 @@ SOMA_ENCODING_VERSION = "1"
 
 
 _DT = TypeVar("_DT", bound=pdt.Dtype)
+_MT = TypeVar("_MT", NPNDArray, sp.spmatrix, PDSeries)
+_str_to_type = {"boolean": bool, "string": str, "bytes": bytes}
 
 
 def _to_tiledb_supported_dtype(dtype: _DT) -> _DT:
@@ -23,71 +24,42 @@ def _to_tiledb_supported_dtype(dtype: _DT) -> _DT:
     return cast(_DT, np.dtype("float32")) if dtype == np.dtype("float16") else dtype
 
 
-# Code-coverage note: the syntax in this file with @functools.singledispatch and @foo.register is
-# likely to be unfamiliar to anyone but the most expert pythonistas. Suffice it to say that this
-# function -- which appears to only ever raise unconditionally -- is invoked from the @foo.register
-# functions via Python magic.
-@functools.singledispatch
-def to_tiledb_supported_array_type(x: object) -> object:
+def to_tiledb_supported_array_type(x: _MT) -> _MT:
     """
-    Converts datatypes unrepresentable by TileDB into datatypes it can represent.  E.g., categorical strings -> string.
+    Converts datatypes unrepresentable by TileDB into datatypes it can represent.
+    E.g., categorical strings -> string.
 
     See also [https://docs.scipy.org/doc/numpy-1.10.1/reference/arrays.dtypes.html](https://docs.scipy.org/doc/numpy-1.10.1/reference/arrays.dtypes.html).
 
-    Preferentially converts to the underlying primitive type, as TileDB does not support most complex types. NOTE: this does not support ``datetime64`` conversion.
+    Preferentially converts to the underlying primitive type, as TileDB does not support
+    most complex types. NOTE: this does not support ``datetime64`` conversion.
 
-    Categoricals are a special case. If the underlying categorical type is a primitive, convert to that. If the array contains NA/NaN (i.e. not in the category, code == -1), raise error unless it is a float or string.
+    Categoricals are a special case. If the underlying categorical type is a primitive,
+    convert to that. If the array contains NA/NaN (i.e. not in the category, code == -1),
+    raise error unless it is a float or string.
     """
-    raise TypeError(x.__class__)
-
-
-@to_tiledb_supported_array_type.register
-def _to_supported_series(x: PDSeries) -> PDSeries:
-    if not pd.api.types.is_categorical_dtype(x):
-        return _to_supported_base(x)
+    if isinstance(x, (np.ndarray, sp.spmatrix)) or not is_categorical_dtype(x):
+        target_dtype = _to_tiledb_supported_dtype(x.dtype)
+        return x if target_dtype == x.dtype else x.astype(target_dtype)
 
     categories = x.cat.categories
     cat_dtype = categories.dtype
-    if cat_dtype.kind in ["f", "u", "i"]:
+    if cat_dtype.kind in ("f", "u", "i"):
         if x.hasnans and cat_dtype.kind == "i":
             raise ValueError(
                 "Categorical array contains NaN -- unable to convert to TileDB array."
             )
-
-        return x.astype(_to_tiledb_supported_dtype(cat_dtype))
-
-    # Into the weirdness. See if Pandas can help with edge cases.
-    inferred = pd.api.types.infer_dtype(categories)
-    if inferred == "boolean":
-        if x.hasnans:
+        target_dtype = _to_tiledb_supported_dtype(cat_dtype)
+    else:
+        # Into the weirdness. See if Pandas can help with edge cases.
+        inferred = infer_dtype(categories)
+        if x.hasnans and inferred in ("boolean", "bytes"):
             raise ValueError(
                 "Categorical array contains NaN -- unable to convert to TileDB array."
             )
-        return x.astype(bool)
+        target_dtype = np.dtype(_str_to_type.get(inferred, object))
 
-    if inferred == "string":
-        return x.astype(str)
-
-    if inferred == "bytes":
-        if x.hasnans:
-            raise ValueError(
-                "Categorical array contains NaN -- unable to convert to TileDB array."
-            )
-        return x.astype(bytes)
-
-    return x.astype("O")
-
-
-_MT = TypeVar("_MT", NPNDArray, sp.spmatrix, PDSeries)
-
-
-def _to_supported_base(x: _MT) -> _MT:
-    target_dtype = _to_tiledb_supported_dtype(x.dtype)
-    return x if target_dtype == x.dtype else x.astype(target_dtype)
-
-
-to_tiledb_supported_array_type.register(np.ndarray, _to_supported_base)
-to_tiledb_supported_array_type.register(sp.spmatrix, _to_supported_base)
+    return x.astype(target_dtype)
 
 
 def is_does_not_exist_error(e: tiledb.TileDBError) -> bool:
