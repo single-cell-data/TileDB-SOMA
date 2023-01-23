@@ -110,12 +110,11 @@ class CollectionBase(TileDBObject, somacore.Collection[CollectionElementType]):
         self._cached_values = {}
         return self
 
-        # lazy tiledb.Group handle for reuse while self is "open"
-
+    # lazy tiledb.Group handle for reuse while self is open
     _open_tiledb_group: Optional[tiledb.Group] = None
 
     @property
-    def _tiledb_group(self) -> tiledb.Group:
+    def _tiledb_obj(self) -> tiledb.Group:
         "get the open tiledb.Group handle (opening it if needed)"
         assert self._open_mode in ("r", "w")
         if self._open_tiledb_group is None:
@@ -125,10 +124,6 @@ class CollectionBase(TileDBObject, somacore.Collection[CollectionElementType]):
                 )
             )
         return self._open_tiledb_group
-
-    @property
-    def _tiledb_object(self) -> tiledb.Group:
-        return self._tiledb_group
 
     def close(self) -> None:
         self._open_tiledb_group = None
@@ -256,8 +251,11 @@ class CollectionBase(TileDBObject, somacore.Collection[CollectionElementType]):
             with ExitStack() as cleanup:
                 cleanup.enter_context(self._maybe_open())
                 if self._open_mode == "r":
-                    group = self._tiledb_group
+                    group = self._tiledb_obj
                 else:
+                    # If self._tiledb_obj is already open in w mode, it won't let us read from
+                    # it so we need to open a separate r-mode handle (with no timestamps).
+                    # TODO: keep both w- and r-mode handles open if warranted (TBD)
                     group = cleanup.enter_context(
                         tiledb.Group(self._uri, mode="r", ctx=self.context.tiledb_ctx)
                     )
@@ -345,7 +343,7 @@ class CollectionBase(TileDBObject, somacore.Collection[CollectionElementType]):
         for retry in [True, False]:
             try:
                 with self._maybe_open("w"):
-                    self._tiledb_group.add(uri=uri, relative=relative, name=key)
+                    self._tiledb_obj.add(uri=uri, relative=relative, name=key)
                 break
             except tiledb.TileDBError as e:
                 if is_does_not_exist_error(e):
@@ -368,6 +366,8 @@ class CollectionBase(TileDBObject, somacore.Collection[CollectionElementType]):
             # TODO: keep self open from above, if retry wasn't necessary
             self._load_tdb_group_cache()
         if self._cached_values is not None:
+            # Replace the wrapper object synthesized by self.load_tdb_group_cache() with the value
+            # passed in to us.
             self._cached_values[key].soma = value
         else:
             # This can only happen if _load_tdb_group_cache failed
@@ -378,7 +378,7 @@ class CollectionBase(TileDBObject, somacore.Collection[CollectionElementType]):
             del self._cached_values[key]
         try:
             with self._maybe_open("w"):
-                self._tiledb_group.remove(key)
+                self._tiledb_obj.remove(key)
         except tiledb.TileDBError as e:
             if is_does_not_exist_error(e):
                 raise DoesNotExistError("Collection has not been created") from e

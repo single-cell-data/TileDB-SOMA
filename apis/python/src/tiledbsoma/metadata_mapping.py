@@ -17,7 +17,7 @@ class MetadataMapping(MutableMapping[str, Any]):
         Remove the key from the metadata collection.
         """
         with self._underlying._maybe_open("w"):
-            del self._underlying._tiledb_object.meta[key]
+            del self._underlying._tiledb_obj.meta[key]
 
     def __iter__(self) -> Iterator[str]:
         """
@@ -46,7 +46,7 @@ class MetadataMapping(MutableMapping[str, Any]):
             The contents of the metadata collection.
         """
         with self._underlying._maybe_open():
-            return dict(self._underlying._tiledb_object.meta)
+            return dict(self._underlying._tiledb_obj.meta)
 
     def __getitem__(self, key: str) -> Any:
         """
@@ -58,7 +58,7 @@ class MetadataMapping(MutableMapping[str, Any]):
             The name of the item.
         """
         with self._underlying._maybe_open():
-            return self._underlying._tiledb_object.meta[key]
+            return self._underlying._tiledb_obj.meta[key]
 
     def __setitem__(self, key: str, value: Any) -> None:
         """
@@ -81,4 +81,4 @@ class MetadataMapping(MutableMapping[str, Any]):
             raise TypeError("Metadata keys must be a string.")
 
         with self._underlying._maybe_open("w"):
-            self._underlying._tiledb_object.meta[key] = value
+            self._underlying._tiledb_obj.meta[key] = value

@@ -13,7 +13,7 @@ class FakeTileDBObject(TileDBObject):
         return self.__class__.__name__
 
     @property
-    def _tiledb_object(self) -> Union[tiledb.Array, tiledb.Group]:
+    def _tiledb_obj(self) -> Union[tiledb.Array, tiledb.Group]:
         return tiledb.Group("")
 
 
@@ -41,3 +41,37 @@ def test_mutually_exclusive_create_args():
 
     with pytest.raises(TypeError):
         FakeTileDBObject("child", parent=p, context=context)
+
+
+def test_open_close():
+    o = FakeTileDBObject("parent")
+
+    assert not o._open_mode
+    o.open("r")
+    assert o._open_mode == "r"
+    o.close()
+    assert not o._open_mode
+    o.close()  # no-op
+    assert not o._open_mode
+
+    with o.open("w"):
+        assert o._open_mode == "w"
+    assert not o._open_mode
+
+    try:
+        with o.open("w"):
+            assert o._open_mode == "w"
+            raise RuntimeError("test")
+        assert False
+    except:
+        assert not o._open_mode
+
+    # Must open to use as contextmanager
+    bad = False
+    try:
+        with o:
+            bad = True
+        bad = True
+    except:
+        pass
+    assert not bad

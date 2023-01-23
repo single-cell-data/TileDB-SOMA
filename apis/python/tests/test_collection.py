@@ -77,10 +77,10 @@ def test_collection_basic(tmp_path):
     assert len(readback_collection) == 2
 
     with readback_collection.get("sdf").open() as sdf:
-        assert len(sdf._tiledb_array.df[:]) == 5
+        assert len(sdf._tiledb_obj.df[:]) == 5
 
     with readback_collection.get("snda").open() as snda:
-        assert len(snda._tiledb_array.df[:]) == 3
+        assert len(snda._tiledb_obj.df[:]) == 3
 
 
 @pytest.fixture(

@@ -243,7 +243,7 @@ class DataFrame(TileDBArray, somacore.DataFrame):
         result_order = options.ResultOrder(result_order)
 
         with self._maybe_open():
-            A = self._tiledb_array
+            A = self._tiledb_obj
             query_condition = None
             if value_filter is not None:
                 query_condition = QueryCondition(value_filter)
@@ -342,7 +342,7 @@ class DataFrame(TileDBArray, somacore.DataFrame):
 
         dim_cols_tuple = tuple(dim_cols_list)
         with self._maybe_open("w"):
-            self._tiledb_array[dim_cols_tuple] = attr_cols_map
+            self._tiledb_obj[dim_cols_tuple] = attr_cols_map
 
 
 def _validate_schema(schema: pa.Schema, index_column_names: Sequence[str]) -> pa.Schema:

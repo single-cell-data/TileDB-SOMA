@@ -379,7 +379,7 @@ def _write_dataframe(
         if ingest_mode == "resume":
             # This lets us check for already-ingested dataframes, when in resume-ingest mode.
             with soma_df._maybe_open():
-                storage_ned = soma_df._tiledb_array.nonempty_domain()
+                storage_ned = soma_df._tiledb_obj.nonempty_domain()
             dim_range = ((int(df.index.min()), int(df.index.max())),)
             if _chunk_is_contained_in(dim_range, storage_ned):
                 logging.log_io(
@@ -494,7 +494,7 @@ def _write_matrix_to_denseNDArray(
         storage_ned = None
         if ingest_mode == "resume" and soma_ndarray.exists():
             # This lets us check for already-ingested chunks, when in resume-ingest mode.
-            storage_ned = soma_ndarray._tiledb_array.nonempty_domain()
+            storage_ned = soma_ndarray._tiledb_obj.nonempty_domain()
             matrix_bounds = [
                 (0, int(n - 1)) for n in matrix.shape
             ]  # Cast for lint in case np.int64
@@ -654,7 +654,7 @@ def _write_matrix_to_sparseNDArray(
         storage_ned = None
         if ingest_mode == "resume" and soma_ndarray.exists():
             # This lets us check for already-ingested chunks, when in resume-ingest mode.
-            storage_ned = soma_ndarray._tiledb_array.nonempty_domain()
+            storage_ned = soma_ndarray._tiledb_obj.nonempty_domain()
             matrix_bounds = [
                 (0, int(n - 1)) for n in matrix.shape
             ]  # Cast for lint in case np.int64

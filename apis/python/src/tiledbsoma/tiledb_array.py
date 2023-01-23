@@ -37,7 +37,7 @@ class TileDBArray(TileDBObject):
     _open_tiledb_array: Optional[tiledb.Array] = None
 
     @property
-    def _tiledb_array(self) -> tiledb.Array:
+    def _tiledb_obj(self) -> tiledb.Array:
         "get the open tiledb.Array handle (opening it if needed)"
         assert self._open_mode in ("r", "w")
         if self._open_tiledb_array is None:
@@ -45,10 +45,6 @@ class TileDBArray(TileDBObject):
                 tiledb.open(self._uri, mode=self._open_mode, ctx=self._ctx)
             )
         return self._open_tiledb_array
-
-    @property
-    def _tiledb_object(self) -> tiledb.Array:
-        return self._tiledb_array
 
     def close(self) -> None:
         self._open_tiledb_array = None
@@ -59,14 +55,14 @@ class TileDBArray(TileDBObject):
         Returns the TileDB array schema. Not part of the SOMA API; for dev/debug/etc.
         """
         with self._maybe_open():
-            return self._tiledb_array.schema
+            return self._tiledb_obj.schema
 
     def _tiledb_array_keys(self) -> Sequence[str]:
         """
         Return all dim and attr names.
         """
         with self._maybe_open():
-            A = self._tiledb_array
+            A = self._tiledb_obj
             dim_names = [A.domain.dim(i).name for i in range(A.domain.ndim)]
             attr_names = [A.schema.attr(i).name for i in range(A.schema.nattr)]
             return dim_names + attr_names
@@ -76,7 +72,7 @@ class TileDBArray(TileDBObject):
         Reads the dimension names from the schema: for example, ['obs_id', 'var_id'].
         """
         with self._maybe_open():
-            A = self._tiledb_array
+            A = self._tiledb_obj
             return tuple([A.domain.dim(i).name for i in range(A.domain.ndim)])
 
     def _tiledb_attr_names(self) -> List[str]:
@@ -84,5 +80,5 @@ class TileDBArray(TileDBObject):
         Reads the attribute names from the schema: for example, the list of column names in a dataframe.
         """
         with self._maybe_open():
-            A = self._tiledb_array
+            A = self._tiledb_obj
             return [A.schema.attr(i).name for i in range(A.schema.nattr)]

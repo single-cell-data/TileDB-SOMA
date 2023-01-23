@@ -85,8 +85,7 @@ class TileDBObject(ABC, somacore.SOMAObject):
         TODO: should this raise an error if the object does not exist?
         """
         try:
-            with self._maybe_open("w"):
-                tiledb.remove(self._uri)
+            tiledb.remove(self._uri)
         except tiledb.TileDBError:
             pass
         return
@@ -149,7 +148,9 @@ class TileDBObject(ABC, somacore.SOMAObject):
         and closes it transiently for the operation.
         """
         if mode not in ("r", "w"):
-            raise ValueError("TileDBObject open mode must be one of 'r', 'w'")
+            raise ValueError(
+                self.__class__.__name__ + " open mode must be one of 'r', 'w'"
+            )
         if self._open_mode:
             raise RuntimeError(self.__class__.__name__ + " is already open")
         self._open_mode = mode
@@ -165,7 +166,9 @@ class TileDBObject(ABC, somacore.SOMAObject):
             self._close_stack.close()
 
     def __enter__(self: TTileDBObject) -> TTileDBObject:
-        assert self._open_mode, "use TileDBObject.open() as context manager"
+        assert (
+            self._open_mode
+        ), f"use {self.__class__.__name__}.open() as context manager"
         return self
 
     def __exit__(
@@ -212,7 +215,7 @@ class TileDBObject(ABC, somacore.SOMAObject):
         self.close()
 
     @abstractproperty
-    def _tiledb_object(self) -> Union[tiledb.Array, tiledb.Group]:
+    def _tiledb_obj(self) -> Union[tiledb.Array, tiledb.Group]:
         """
         Get reference to open TileDB object handle (self must be open)
         """
@@ -225,7 +228,7 @@ class TileDBObject(ABC, somacore.SOMAObject):
         contents.
         """
         with self._maybe_open("w"):
-            self._tiledb_object.meta.update(
+            self._tiledb_obj.meta.update(
                 {
                     util.SOMA_OBJECT_TYPE_METADATA_KEY: soma_type,
                     util.SOMA_ENCODING_VERSION_METADATA_KEY: util.SOMA_ENCODING_VERSION,
