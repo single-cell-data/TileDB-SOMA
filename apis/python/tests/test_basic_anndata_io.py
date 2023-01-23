@@ -220,6 +220,18 @@ def test_resume_mode(adata, resume_mode_h5ad_file):
     tempdir2.cleanup()
 
 
+def test_add_X_layer(adata):
+    tempdir = tempfile.TemporaryDirectory()
+    output_path = tempdir.name
+
+    exp = tiledbsoma.Experiment(output_path)
+    tiledbsoma.io.from_anndata(exp, adata, measurement_name="RNA")
+    assert list(exp.ms["RNA"].X.keys()) == ["data"]
+
+    tiledbsoma.io.add_X_layer(exp, "RNA", "data2", adata.X)
+    assert sorted(list(exp.ms["RNA"].X.keys())) == ["data", "data2"]
+
+
 def test_export_anndata(adata):
     tempdir = tempfile.TemporaryDirectory()
     output_path = tempdir.name
