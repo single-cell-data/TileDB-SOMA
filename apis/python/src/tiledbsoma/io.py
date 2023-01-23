@@ -473,6 +473,24 @@ def create_from_matrix(
     )
 
 
+def add_X_layer(
+    exp: Experiment,
+    measurement_name: str,
+    X_layer_name: str,
+    X_layer_data,  # e.g. a scipy.csr_matrix from scanpy analysis
+    ingest_mode: str = "write",
+):
+    """
+    This is useful for adding X data, for example from scanpy.pp.normalize_total, scanpy.pp.log1p, etc.
+
+    Use `ingest_mode="resume"` to not error out if the schema already exists.
+    """
+    uri = f"{exp.ms[measurement_name].X.uri}/{X_layer_name}"
+    sparse_nd_array = SparseNDArray(uri)
+    create_from_matrix(sparse_nd_array, X_layer_data, ingest_mode=ingest_mode)
+    exp.ms[measurement_name].X.set(X_layer_name, sparse_nd_array)
+
+
 def _write_matrix_to_denseNDArray(
     soma_ndarray: DenseNDArray,
     matrix: Union[Matrix, h5py.Dataset],
