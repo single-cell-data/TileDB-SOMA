@@ -1,3 +1,9 @@
+# tiledbsoma (development version)
+
+## Features
+
+* New function `dataset_seurat_pbmc3k()` to download the pbmc 3k dataset from 10X and import as a `Seurat` object without requiring any extra dependencies.
+
 # tiledbsoma 0.1.19
 
 ## Changes
