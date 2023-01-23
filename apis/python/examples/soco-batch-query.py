@@ -33,7 +33,7 @@ print("cell_type_ontology_term_id count =", n)
 for i, ctot_id in enumerate(ctot_ids):
     soma_slices = soco.query(
         obs_attrs=["cell_type_ontology_term_id"],
-        obs_query_string=f'cell_type_ontology_term_id == {ctot_id!r}',
+        obs_query_string=f"cell_type_ontology_term_id == {ctot_id!r}",
     )
     if soma_slices == []:
         continue
