@@ -105,7 +105,8 @@ file_path <- function(..., fsep = .Platform$file.sep) {
   file.path(..., fsep = fsep)
 }
 
-#' Assert all values of `x` are a subset of `y`. @param x,y vectors of values
+#' Assert all values of `x` are a subset of `y`.
+#' @param x,y vectors of values
 #' @param type A character vector of length 1 used in the error message
 #' @return `TRUE` if all values of `x` are present in `y`, otherwise an
 #' informative error is thrown with the missing values.

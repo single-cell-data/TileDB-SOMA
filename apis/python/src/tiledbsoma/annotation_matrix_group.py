@@ -47,7 +47,7 @@ class AnnotationMatrixGroup(TileDBGroup):
         """
         Default display of soma.obsm and soma.varm.
         """
-        return ", ".join(f"'{key}'" for key in self.keys())
+        return ", ".join(f"{key!r}" for key in self.keys())
 
     # ----------------------------------------------------------------
     def __iter__(self) -> Iterator[AnnotationMatrix]:
@@ -68,7 +68,7 @@ class AnnotationMatrixGroup(TileDBGroup):
         with self._open() as G:
             if name not in G:
                 raise AttributeError(
-                    f"'{self.__class__.__name__}' object has no attribute '{name}'"
+                    f"{self.__class__.__name__!r} object has no attribute {name!r}"
                 )
         return self[name]
 

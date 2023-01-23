@@ -118,3 +118,62 @@ test_that("a dataset with empty cell identities is retrieved", {
   # Should not trigger error
   expect_silent(soco$to_seurat())
 })
+
+
+test_that("SOMAs and X layers can be subselected", {
+  tdb_uri <- withr::local_tempdir("test-multisoma-soco")
+
+  # add second assay
+  pbmc_small[["RNA2"]] <- SeuratObject::CreateAssayObject(
+    counts = SeuratObject::GetAssayData(pbmc_small[["RNA"]], "counts")
+  )
+
+  soco <- SOMACollection$new(uri = tdb_uri, verbose = TRUE)
+  soco$from_seurat(pbmc_small)
+
+  # verify both somas are present
+  expect_length(soco$somas, 2)
+
+  soco <- SOMACollection$new(uri = tdb_uri, verbose = TRUE)
+
+  # Both assays and all layers are retrieved by default
+  pbmc_small2 <- soco$to_seurat()
+  expect_setequal(
+    SeuratObject::Assays(pbmc_small2),
+    SeuratObject::Assays(pbmc_small)
+  )
+
+  expect_equal_after_ordering_dims(
+    SeuratObject::GetAssayData(pbmc_small2[["RNA"]], "counts"),
+    SeuratObject::GetAssayData(pbmc_small[["RNA"]], "counts")
+  )
+
+  expect_equal_after_ordering_dims(
+    SeuratObject::GetAssayData(pbmc_small2[["RNA"]], "data"),
+    SeuratObject::GetAssayData(pbmc_small[["RNA"]], "data")
+  )
+
+  expect_equal_after_ordering_dims(
+    SeuratObject::GetAssayData(pbmc_small2[["RNA"]], "scale.data"),
+    SeuratObject::GetAssayData(pbmc_small[["RNA"]], "scale.data")
+  )
+
+  # Only the RNA assay is retrieved
+  pbmc_small2 <- soco$to_seurat(somas = "RNA")
+  expect_equal(SeuratObject::Assays(pbmc_small2), "RNA")
+
+  # Only the RNA assay counts layer is retrieved
+  pbmc_small2 <- soco$to_seurat(somas = list(RNA = "counts"))
+  expect_equal(SeuratObject::Assays(pbmc_small2), "RNA")
+
+  # When the data layer is unset/empty it's set as identical to counts
+  expect_identical(
+    SeuratObject::GetAssayData(pbmc_small2[["RNA"]], "counts"),
+    SeuratObject::GetAssayData(pbmc_small2[["RNA"]], "data"),
+  )
+
+  expect_equal(
+    SeuratObject::GetAssayData(pbmc_small2[["RNA"]], "scale.data"),
+    new(Class = 'matrix')
+  )
+})

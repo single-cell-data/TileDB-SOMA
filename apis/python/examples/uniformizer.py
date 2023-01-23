@@ -67,7 +67,7 @@ def main() -> int:
         return uniformizer.add_soma(args.dataset_id, args.soma)
     else:
         raise Exception(
-            f'Internal coding error: handler for "{args.func_name}" not found.'
+            f"Internal coding error: handler for {args.func_name!r} not found."
         )
 
 

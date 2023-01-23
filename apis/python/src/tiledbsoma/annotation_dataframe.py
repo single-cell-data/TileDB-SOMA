@@ -94,7 +94,7 @@ class AnnotationDataFrame(TileDBArray):
         """
         Default display of soma.obs and soma.var.
         """
-        return ", ".join(f"'{key}'" for key in self.keys())
+        return ", ".join(f"{key!r}" for key in self.keys())
 
     # ----------------------------------------------------------------
     def __len__(self) -> int:

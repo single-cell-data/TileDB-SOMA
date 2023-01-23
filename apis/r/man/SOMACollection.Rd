@@ -175,7 +175,11 @@ dimensionality reduction method (e.g., \code{"pca"}).
 \subsection{Method \code{to_seurat()}}{
 Convert to a \link[SeuratObject:Seurat-class]{SeuratObject::Seurat} object.
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{SOMACollection$to_seurat(project = "SeuratProject", batch_mode = FALSE)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{SOMACollection$to_seurat(
+  project = "SeuratProject",
+  somas = NULL,
+  batch_mode = FALSE
+)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
@@ -183,8 +187,14 @@ Convert to a \link[SeuratObject:Seurat-class]{SeuratObject::Seurat} object.
 \describe{
 \item{\code{project}}{\code{\link[SeuratObject:Project]{SeuratObject::Project}} name for the \code{Seurat} object}
 
+\item{\code{somas}}{character vector, names of \code{SOMA}s to include as
+\code{\link[SeuratObject:Assay-class]{SeuratObject::Assay}}s in the \code{Seurat} object. If \code{NULL}, all \code{SOMA}s
+are included. Can also be a named list of character vectors, where each
+element corresponds to a \code{SOMA} name and the value is a character vector
+of \code{X} layers from that \code{SOMA} to include as assays (e.g., \code{list("RNA" = c("counts", "logcounts"))}).}
+
 \item{\code{batch_mode}}{logical, if \code{TRUE}, batch query mode is enabled for
-retrieving \code{X}, \code{obsm}/\code{varm}, and \code{obsp}/\code{varp} layers. See
+retrieving \code{X} layers. See
 \code{\link[=AssayMatrix]{AssayMatrix$to_dataframe()}} for more information.}
 }
 \if{html}{\out{</div>}}
