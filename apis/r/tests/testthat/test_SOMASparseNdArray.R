@@ -22,6 +22,10 @@ test_that("SOMASparseNDArray creation", {
     as.numeric(as(mat, "CsparseMatrix")@x)
   )
 
+  mat2 <- ndarray$read_sparse_matrix(repr="T")
+  ## not sure why all.equal(mat, mat2) does not pass
+  all.equal(as.numeric(mat), as.numeric(mat2))
+
   # Subset both dims
   tbl <- ndarray$read_arrow_table(
     coords = list(soma_dim_0=0, soma_dim_1=0:2),

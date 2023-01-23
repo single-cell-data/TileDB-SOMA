@@ -22,6 +22,8 @@ test_that("SOMADenseNDArray creation", {
     as.numeric(mat)
   )
 
+  expect_equal(ndarray$read_dense_matrix(), mat)
+
   # Subset the array on both dimensions
   tbl <- ndarray$read_arrow_table(
     coords = list(soma_dim_0=0:3, soma_dim_1=0:2),
