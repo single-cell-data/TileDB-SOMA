@@ -12,7 +12,11 @@ This code is hosted at [PyPI](https://pypi.org/project/tiledbsoma/), so you can 
 
 ```shell
 $ python -m pip install tiledbsoma
+# or
+$ python -m pip install --pre tiledbsoma
 ```
+
+Without `--pre` you will get version 0.1.* (the `main-old` branch); with `--pre`, you will get 0.5.0a* (the `main` branch).
 
 To install a specific version:
 
