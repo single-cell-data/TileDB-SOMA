@@ -62,9 +62,9 @@ def test_open_close():
         with o.open("w"):
             assert o._open_mode == "w"
             raise RuntimeError("test")
-        assert False
-    except:  # noqa: E722
-        assert not o._open_mode
+    except Exception:
+        pass
+    assert not o._open_mode
 
     # Must open to use as contextmanager
     bad = False
@@ -72,6 +72,6 @@ def test_open_close():
         with o:
             bad = True
         bad = True
-    except:  # noqa: E722
+    except Exception:
         pass
     assert not bad
