@@ -154,15 +154,7 @@ class SparseNDArray(TileDBArray, somacore.SparseNDArray):
         Return the number of stored values in the array, including explicitly stored zeros.
         """
         with self._maybe_open():  # <-- currently superfluous, but we'll soon reuse SOMAReader
-            return cast(
-                int,
-                clib.SOMAReader(
-                    self.uri,
-                    platform_config={}
-                    if self._ctx is None
-                    else self._ctx.config().dict(),
-                ).nnz(),
-            )
+            return cast(int, self._soma_reader().nnz())
 
     def read(
         self,
@@ -208,13 +200,7 @@ class SparseNDArray(TileDBArray, somacore.SparseNDArray):
         with self._maybe_open():
             A = self._tiledb_obj
             shape = A.shape
-
-            sr = clib.SOMAReader(
-                self._uri,
-                name=self.__class__.__name__,
-                schema=A.schema,
-                platform_config={} if self._ctx is None else self._ctx.config().dict(),
-            )
+            sr = self._soma_reader(schema=A.schema)
 
             if not isinstance(coords, (list, tuple)):
                 raise TypeError(
