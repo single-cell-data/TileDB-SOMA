@@ -1,10 +1,11 @@
-from abc import ABC, abstractproperty
+from abc import ABC, abstractmethod, abstractproperty
 from contextlib import ExitStack, contextmanager
 from types import TracebackType
-from typing import Iterator, Literal, Optional, Type, TypeVar, Union
+from typing import Iterator, Optional, Type, TypeVar, Union
 
 import somacore
 import tiledb
+from typing_extensions import Literal
 
 from . import util
 from .metadata_mapping import MetadataMapping
@@ -156,7 +157,22 @@ class TileDBObject(ABC, somacore.SOMAObject):
         if self._open_mode:
             raise RuntimeError(self.__class__.__name__ + " is already open")
         self._open_mode = mode
+        try:
+            self._sub_open()
+        except Exception:
+            self.close()
+            raise
         return self
+
+    @abstractmethod
+    def _sub_open(self) -> None:
+        """
+        Subclass method invoked by open() after setting self._open_mode. This hook is more
+        convenient for subclasses than overriding open() because it allows the superclass open()
+        to handle exceptions, and also saves subclasses from having to redeclare the type variables
+        and defaults involved in open()'s signature.
+        """
+        ...
 
     def close(self) -> None:
         """

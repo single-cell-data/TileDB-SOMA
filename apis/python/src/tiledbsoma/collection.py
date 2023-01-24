@@ -110,19 +110,19 @@ class CollectionBase(TileDBObject, somacore.Collection[CollectionElementType]):
         self._cached_values = {}
         return self
 
-    # lazy tiledb.Group handle for reuse while self is open
+    # tiledb.Group handle for [re]use while self is open
     _open_tiledb_group: Optional[tiledb.Group] = None
+
+    def _sub_open(self) -> None:
+        assert self._open_mode in ("r", "w") and self._open_tiledb_group is None
+        self._open_tiledb_group = self._close_stack.enter_context(
+            tiledb.Group(self._uri, mode=self._open_mode, ctx=self.context.tiledb_ctx)
+        )
 
     @property
     def _tiledb_obj(self) -> tiledb.Group:
         "get the open tiledb.Group handle (opening it if needed)"
-        assert self._open_mode in ("r", "w")
-        if self._open_tiledb_group is None:
-            self._open_tiledb_group = self._close_stack.enter_context(
-                tiledb.Group(
-                    self._uri, mode=self._open_mode, ctx=self.context.tiledb_ctx
-                )
-            )
+        assert self._open_tiledb_group is not None  # => not self.closed
         return self._open_tiledb_group
 
     def close(self) -> None:

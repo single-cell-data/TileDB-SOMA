@@ -716,8 +716,8 @@ def test_sparse_nd_array_table_slicing(tmp_path, io, write_format, read_format):
         density=1.0,
     )
 
+    soma.SparseNDArray(tmp_path.as_posix()).create(pa.float64(), io["shape"])
     with soma.SparseNDArray(tmp_path.as_posix()).open("w") as snda:
-        snda.create(pa.float64(), io["shape"])
         snda.write(arrow_tensor)
 
     with soma.SparseNDArray(tmp_path.as_posix()).open("r") as snda:

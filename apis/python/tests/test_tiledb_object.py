@@ -8,6 +8,8 @@ from tiledbsoma.options import SOMATileDBContext
 
 
 class FakeTileDBObject(TileDBObject):
+    mock_open_error: bool = False
+
     @property
     def soma_type(self) -> str:
         return self.__class__.__name__
@@ -15,6 +17,10 @@ class FakeTileDBObject(TileDBObject):
     @property
     def _tiledb_obj(self) -> Union[tiledb.Array, tiledb.Group]:
         return tiledb.Group("")
+
+    def _sub_open(self) -> None:
+        if self.mock_open_error:
+            raise RuntimeError("mock")
 
 
 def test_tiledb_object_default_context_added():
@@ -103,3 +109,15 @@ def test_open_close():
             assert o.mode == "w"
         assert o.mode == "w"
     assert not o.mode
+
+    # closed after an exception during open()
+    bad = False
+    o.mock_open_error = True
+    try:
+        with o.open("r"):
+            bad = True
+        bad = True
+    except Exception:
+        pass
+    assert not bad
+    assert o.closed

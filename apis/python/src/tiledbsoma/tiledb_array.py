@@ -36,17 +36,19 @@ class TileDBArray(TileDBObject):
         """
         return get_arrow_schema_from_tiledb_uri(self.uri, self._ctx)
 
-    # lazy tiledb.Array handle for reuse while self is "open"
+    # tiledb.Array handle for [re]use while self is "open"
     _open_tiledb_array: Optional[tiledb.Array] = None
+
+    def _sub_open(self) -> None:
+        assert self._open_mode in ("r", "w") and self._open_tiledb_array is None
+        self._open_tiledb_array = self._close_stack.enter_context(
+            tiledb.open(self._uri, mode=self._open_mode, ctx=self._ctx)
+        )
 
     @property
     def _tiledb_obj(self) -> tiledb.Array:
         "get the open tiledb.Array handle (opening it if needed)"
-        assert self._open_mode in ("r", "w")
-        if self._open_tiledb_array is None:
-            self._open_tiledb_array = self._close_stack.enter_context(
-                tiledb.open(self._uri, mode=self._open_mode, ctx=self._ctx)
-            )
+        assert self._open_tiledb_array is not None  # => not self.closed
         return self._open_tiledb_array
 
     def close(self) -> None:
