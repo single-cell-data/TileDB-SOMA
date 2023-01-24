@@ -118,7 +118,6 @@ setuptools.setup(
         "dev": [
             "black",
             "ruff",
-            "isort",
             "pytest",
             "typeguard",
         ]
