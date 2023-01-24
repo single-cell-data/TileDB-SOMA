@@ -1,5 +1,19 @@
-create_and_populate_obs <- function(uri) {
-  create_and_populate_soma_dataframe(uri)
+create_and_populate_obs <- function(uri, nrows = 10L, seed = 1) {
+  create_and_populate_soma_dataframe(uri, nrows, seed)
+}
+
+create_and_populate_var <- function(uri, nrows = 10L, seed = 1) {
+
+  tbl <- arrow::arrow_table(
+    soma_joinid = bit64::as.integer64(1L:4L),
+    quux = sample(letters, size = nrows, replace = TRUE),
+    xyzzy = runif(nrows)
+  )
+
+  sdf <- SOMADataFrame$new(uri)
+  sdf$create(tbl$schema, index_column_names = "soma_joinid")
+  sdf$write(tbl)
+  sdf
 }
 
 create_and_populate_var <- function(uri) {
