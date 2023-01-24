@@ -135,7 +135,7 @@ class SparseNDArray(TileDBArray, somacore.SparseNDArray):
         """
         Return length of each dimension, always a list of length ``ndim``
         """
-        with self._maybe_open():
+        with self._ensure_open():
             return cast(NTuple, self._tiledb_obj.schema.domain.shape)
 
     def reshape(self, shape: NTuple) -> None:
@@ -153,7 +153,7 @@ class SparseNDArray(TileDBArray, somacore.SparseNDArray):
         """
         Return the number of stored values in the array, including explicitly stored zeros.
         """
-        with self._maybe_open():  # <-- currently superfluous, but we'll soon reuse SOMAReader
+        with self._ensure_open():  # <-- currently superfluous, but we'll soon reuse SOMAReader
             return cast(int, self._soma_reader().nnz())
 
     def read(
@@ -197,7 +197,7 @@ class SparseNDArray(TileDBArray, somacore.SparseNDArray):
         if coords is None:
             coords = (slice(None),)
 
-        with self._maybe_open():
+        with self._ensure_open():
             A = self._tiledb_obj
             shape = A.shape
             sr = self._soma_reader(schema=A.schema)
@@ -275,7 +275,7 @@ class SparseNDArray(TileDBArray, somacore.SparseNDArray):
         """
         del platform_config  # Currently unused.
 
-        with self._maybe_open("w"):
+        with self._ensure_open("w"):
             A = self._tiledb_obj
 
             if isinstance(values, pa.SparseCOOTensor):

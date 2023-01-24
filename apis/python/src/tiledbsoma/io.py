@@ -378,7 +378,7 @@ def _write_dataframe(
     if soma_df.exists():
         if ingest_mode == "resume":
             # This lets us check for already-ingested dataframes, when in resume-ingest mode.
-            with soma_df._maybe_open():
+            with soma_df._ensure_open():
                 storage_ned = soma_df._tiledb_obj.nonempty_domain()
             dim_range = ((int(df.index.min()), int(df.index.max())),)
             if _chunk_is_contained_in(dim_range, storage_ned):

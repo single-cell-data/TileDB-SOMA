@@ -180,7 +180,7 @@ class DataFrame(TileDBArray, somacore.DataFrame):
         Return the number of rows in the dataframe. Same as `len(df)`.
         """
         # A.domain.shape at the tiledb level gives us the 0..2^63 range which is not what we want
-        with self._maybe_open():  # <-- currently superfluous, but we'll soon reuse SOMAReader
+        with self._ensure_open():  # <-- currently superfluous, but we'll soon reuse SOMAReader
             return cast(int, self._soma_reader().nnz())
 
     def __len__(self) -> int:
@@ -233,7 +233,7 @@ class DataFrame(TileDBArray, somacore.DataFrame):
         del batch_size, partitions, platform_config  # Currently unused.
         result_order = options.ResultOrder(result_order)
 
-        with self._maybe_open():
+        with self._ensure_open():
             A = self._tiledb_obj
             query_condition = None
             if value_filter is not None:
@@ -329,7 +329,7 @@ class DataFrame(TileDBArray, somacore.DataFrame):
             raise ValueError(f"did not find any column names in {values.schema.names}")
 
         dim_cols_tuple = tuple(dim_cols_list)
-        with self._maybe_open("w"):
+        with self._ensure_open("w"):
             self._tiledb_obj[dim_cols_tuple] = attr_cols_map
 
 

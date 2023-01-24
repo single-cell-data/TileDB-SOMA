@@ -249,7 +249,7 @@ class CollectionBase(TileDBObject, somacore.Collection[CollectionElementType]):
     def _load_tdb_group(self) -> Optional[Dict[str, tiledb.Object]]:
         try:
             with ExitStack() as cleanup:
-                cleanup.enter_context(self._maybe_open())
+                cleanup.enter_context(self._ensure_open())
                 if self._open_mode == "r":
                     group = self._tiledb_obj
                 else:
@@ -342,7 +342,7 @@ class CollectionBase(TileDBObject, somacore.Collection[CollectionElementType]):
         )
         for retry in [True, False]:
             try:
-                with self._maybe_open("w"):
+                with self._ensure_open("w"):
                     self._tiledb_obj.add(uri=uri, relative=relative, name=key)
                 break
             except tiledb.TileDBError as e:
@@ -361,7 +361,7 @@ class CollectionBase(TileDBObject, somacore.Collection[CollectionElementType]):
                 # The standard solution is a negligible but non-zero delay.
                 time.sleep(0.001)
 
-        with self._maybe_open("w"):
+        with self._ensure_open("w"):
             # We need to be open "w" here to make sure we're reading our own writes.
             # TODO: keep self open from above, if retry wasn't necessary
             self._load_tdb_group_cache()
@@ -377,7 +377,7 @@ class CollectionBase(TileDBObject, somacore.Collection[CollectionElementType]):
         if self._cached_values is not None:
             del self._cached_values[key]
         try:
-            with self._maybe_open("w"):
+            with self._ensure_open("w"):
                 self._tiledb_obj.remove(key)
         except tiledb.TileDBError as e:
             if is_does_not_exist_error(e):

@@ -125,7 +125,7 @@ class DenseNDArray(TileDBArray, somacore.DenseNDArray):
         """
         Return length of each dimension, always a list of length ``ndim``
         """
-        with self._maybe_open():
+        with self._ensure_open():
             return cast(NTuple, self._tiledb_obj.schema.domain.shape)
 
     def reshape(self, shape: NTuple) -> None:
@@ -160,7 +160,7 @@ class DenseNDArray(TileDBArray, somacore.DenseNDArray):
         del batch_size, partitions, platform_config  # Currently unused.
         result_order = somacore.ResultOrder(result_order)
 
-        with self._maybe_open():
+        with self._ensure_open():
             A = self._tiledb_obj
             target_shape = dense_indices_to_shape(coords, A.shape, result_order)
             schema = A.schema
@@ -250,5 +250,5 @@ class DenseNDArray(TileDBArray, somacore.DenseNDArray):
             as defind by ``coords``, and the type must match the DenseNDArray.
         """
         del platform_config  # Currently unused.
-        with self._maybe_open("w"):
+        with self._ensure_open("w"):
             self._tiledb_obj[coords] = values.to_numpy()

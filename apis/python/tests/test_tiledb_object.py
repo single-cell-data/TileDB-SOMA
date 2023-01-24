@@ -46,25 +46,25 @@ def test_mutually_exclusive_create_args():
 def test_open_close():
     o = FakeTileDBObject("parent")
 
-    assert not o._open_mode
+    assert not o.mode
     o.open("r")
-    assert o._open_mode == "r"
+    assert o.mode == "r"
     o.close()
-    assert not o._open_mode
+    assert not o.mode
     o.close()  # no-op
-    assert not o._open_mode
+    assert not o.mode
 
     with o.open("w"):
-        assert o._open_mode == "w"
-    assert not o._open_mode
+        assert o.mode == "w"
+    assert not o.mode
 
     try:
         with o.open("w"):
-            assert o._open_mode == "w"
+            assert o.mode == "w"
             raise RuntimeError("test")
     except Exception:
         pass
-    assert not o._open_mode
+    assert not o.mode
 
     # Must open to use as contextmanager
     bad = False
@@ -76,30 +76,30 @@ def test_open_close():
         pass
     assert not bad
 
-    # Internal _maybe_open()
-    with o._maybe_open():
-        assert o._open_mode == "r"
-    assert not o._open_mode
+    # Internal _ensure_open()
+    with o._ensure_open():
+        assert o.mode == "r"
+    assert not o.mode
     with o.open():
-        with o._maybe_open():
-            assert o._open_mode == "r"
-        assert o._open_mode == "r"
-    assert not o._open_mode
+        with o._ensure_open():
+            assert o.mode == "r"
+        assert o.mode == "r"
+    assert not o.mode
     bad = False
     try:
         # reject attempt to write when already open read-only
         with o.open("r"):
-            with o._maybe_open("w"):
+            with o._ensure_open("w"):
                 bad = True
             bad = True
     except Exception:
         pass
     assert not bad
-    assert not o._open_mode
+    assert not o.mode
     with o.open("w"):
         # allow attempt to read when already open for write (manly for metadata; underlying TileDB
         # objects may reject other attempts)
-        with o._maybe_open("r"):
-            assert o._open_mode == "w"
-        assert o._open_mode == "w"
-    assert not o._open_mode
+        with o._ensure_open("r"):
+            assert o.mode == "w"
+        assert o.mode == "w"
+    assert not o.mode

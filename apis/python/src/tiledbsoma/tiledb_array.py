@@ -57,14 +57,14 @@ class TileDBArray(TileDBObject):
         """
         Returns the TileDB array schema. Not part of the SOMA API; for dev/debug/etc.
         """
-        with self._maybe_open():
+        with self._ensure_open():
             return self._tiledb_obj.schema
 
     def _tiledb_array_keys(self) -> Sequence[str]:
         """
         Return all dim and attr names.
         """
-        with self._maybe_open():
+        with self._ensure_open():
             A = self._tiledb_obj
             dim_names = [A.domain.dim(i).name for i in range(A.domain.ndim)]
             attr_names = [A.schema.attr(i).name for i in range(A.schema.nattr)]
@@ -74,7 +74,7 @@ class TileDBArray(TileDBObject):
         """
         Reads the dimension names from the schema: for example, ['obs_id', 'var_id'].
         """
-        with self._maybe_open():
+        with self._ensure_open():
             A = self._tiledb_obj
             return tuple([A.domain.dim(i).name for i in range(A.domain.ndim)])
 
@@ -82,7 +82,7 @@ class TileDBArray(TileDBObject):
         """
         Reads the attribute names from the schema: for example, the list of column names in a dataframe.
         """
-        with self._maybe_open():
+        with self._ensure_open():
             A = self._tiledb_obj
             return [A.schema.attr(i).name for i in range(A.schema.nattr)]
 
