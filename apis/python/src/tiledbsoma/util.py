@@ -195,7 +195,7 @@ def dense_index_to_shape(
 
 def check_type(
     name: str,
-    actual_value: Type[Any],
+    actual_type: Type[Any],
     expected_types: Tuple[Type[Any], ...],
 ) -> None:
     """
@@ -213,7 +213,8 @@ def check_type(
     name: str
         Name of the argument in question, as used by the caller.
 
-    actual_value: Any
+    XXX CHANGE ME
+    actual_type: Any
         Value of the argument. Note that it would be much easier for us to pass the _type_ of the
         value rather than the full value. Unfortunately, we cannot: within the SOMA API we have
         argument names like `type`. Then the caller would have to pass us `type(type)`. But this is
@@ -227,13 +228,13 @@ def check_type(
     -------
     None. Raises `TypeError` on mismatch.
     """
-    # if type(actual_value) not in expected_types:
-    if not isinstance(actual_value, expected_types):
+    # if not isinstance(actual_value, expected_types):
+    if actual_type not in expected_types:
         if len(expected_types) == 1:
             raise TypeError(
-                f"expected {name} argument to be of type {expected_types[0]}; got {type(actual_value)}"
+                f"expected {name} argument to be of type {expected_types[0]}; got {actual_type}"
             )
         else:
             raise TypeError(
-                f"expected {name} argument to be one of {expected_types!r}; got {type(actual_value)}"
+                f"expected {name} argument to be one of {expected_types!r}; got {actual_type}"
             )
