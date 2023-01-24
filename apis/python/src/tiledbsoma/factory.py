@@ -18,8 +18,8 @@ from .sparse_nd_array import SparseNDArray
 from .util import (
     SOMA_ENCODING_VERSION,
     SOMA_ENCODING_VERSION_METADATA_KEY,
-    SPEC_NAMES_TO_CLASS_NAMES,
     SOMA_OBJECT_TYPE_METADATA_KEY,
+    SPEC_NAMES_TO_CLASS_NAMES,
 )
 
 ObjectTypes = Union[

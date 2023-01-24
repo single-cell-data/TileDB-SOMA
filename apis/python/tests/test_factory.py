@@ -5,8 +5,6 @@ import pytest
 import tiledb
 
 import tiledbsoma as soma
-import tiledbsoma.factory as factory
-
 
 UNKNOWN_ENCODING_VERSION = "3141596"
 
