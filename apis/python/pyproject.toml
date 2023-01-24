@@ -7,6 +7,16 @@ requires = [
 ]
 build-backend = "setuptools.build_meta"
 
+[tool.mypy]
+show_error_codes = true
+ignore_missing_imports = true
+warn_unreachable = true
+strict = true
+
+[[tool.mypy.overrides]]
+module = "tiledbsoma.query_condition"
+ignore_errors = true
+
 [tool.ruff]
 ignore = ["E501"]
 extend-select = ["I001"]
