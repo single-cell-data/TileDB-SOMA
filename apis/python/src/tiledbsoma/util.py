@@ -1,7 +1,7 @@
 import pathlib
 import time
 import urllib.parse
-from typing import Any, List, Optional, Sequence, Tuple, Union
+from typing import Any, List, Optional, Tuple, Type, Union
 
 import somacore
 from somacore import options
@@ -195,8 +195,8 @@ def dense_index_to_shape(
 
 def check_type(
     name: str,
-    actual_value: Any,
-    expected_types: Sequence[Any],
+    actual_value: Type[Any],
+    expected_types: Tuple[Type[Any], ...],
 ) -> None:
     """
     Keystroke-saver for runtime type-checking.
@@ -227,7 +227,8 @@ def check_type(
     -------
     None. Raises `TypeError` on mismatch.
     """
-    if type(actual_value) not in expected_types:
+    # if type(actual_value) not in expected_types:
+    if not isinstance(actual_value, expected_types):
         if len(expected_types) == 1:
             raise TypeError(
                 f"expected {name} argument to be of type {expected_types[0]}; got {type(actual_value)}"
