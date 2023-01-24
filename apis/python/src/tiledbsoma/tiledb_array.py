@@ -27,7 +27,7 @@ class TileDBArray(TileDBObject):
         """
         See the ``TileDBObject`` constructor.
         """
-        super().__init__(uri, parent=parent, context=context)
+        super().__init__(uri, context=context)
 
     @property
     def schema(self) -> pa.Schema:

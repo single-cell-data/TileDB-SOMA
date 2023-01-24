@@ -91,7 +91,7 @@ class CollectionBase(TileDBObject, somacore.Collection[CollectionElementType]):
         """
         Also see the ``TileDBObject`` constructor.
         """
-        super().__init__(uri=uri, parent=parent, context=context)
+        super().__init__(uri=uri, context=context)
         self._cached_values = None
 
     def create(self) -> "CollectionBase[CollectionElementType]":

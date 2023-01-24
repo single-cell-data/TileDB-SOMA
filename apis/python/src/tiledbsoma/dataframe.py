@@ -41,7 +41,7 @@ class DataFrame(TileDBArray, somacore.DataFrame):
         """
         See also the ``TileDBObject`` constructor.
         """
-        super().__init__(uri=uri, parent=parent, context=context)
+        super().__init__(uri=uri, context=context)
         self._index_column_names = ()
         self._is_sparse = None
 

@@ -42,7 +42,7 @@ class SparseNDArray(TileDBArray, somacore.SparseNDArray):
         Also see the ``TileDBObject`` constructor.
         """
 
-        super().__init__(uri=uri, parent=parent, context=context)
+        super().__init__(uri=uri, context=context)
 
     # Inherited from somacore
     # soma_type: Final = "SOMASparseNDArray"

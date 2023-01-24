@@ -61,12 +61,10 @@ def test_collection_basic(tmp_path):
     assert collection.uri == basedir
     assert "foobar" not in collection
 
-    dataframe = soma.DataFrame(os.path.join(basedir, "sdf"), parent=collection)
+    dataframe = soma.DataFrame(os.path.join(basedir, "sdf"))
     create_and_populate_dataframe(dataframe)
 
-    sparse_nd_array = soma.SparseNDArray(
-        os.path.join(basedir, "snda"), parent=collection
-    )
+    sparse_nd_array = soma.SparseNDArray(os.path.join(basedir, "snda"))
     create_and_populate_sparse_nd_array(sparse_nd_array)
 
     collection.set("sdf", dataframe)
