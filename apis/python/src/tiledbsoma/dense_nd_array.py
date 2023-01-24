@@ -54,6 +54,10 @@ class DenseNDArray(TileDBArray, somacore.DenseNDArray):
 
         :param platform_config: Platform-specific options used to create this Array, provided via "tiledb"->"create" nested keys
         """
+        # Oddly, runtime typeguard checks (which autorun on our unit tests!) are OK with
+        # `pa.DataType`.  But this util.check_type fails many unit-test cases unless we specifically
+        # include `pa.lib.TimestampType` here.
+        util.check_type("type", type, (pa.DataType, pa.lib.TimestampType))
 
         # check on shape
         if len(shape) == 0 or any(e <= 0 for e in shape):
@@ -246,6 +250,8 @@ class DenseNDArray(TileDBArray, somacore.DenseNDArray):
             Define the values to be written to the subarray.  Must have same shape
             as defind by ``coords``, and the type must match the DenseNDArray.
         """
+        util.check_type("values", values, (pa.Tensor,))
+
         del platform_config  # Currently unused.
         with self._tiledb_open("w") as A:
             A[coords] = values.to_numpy()

@@ -1,7 +1,7 @@
 import pathlib
 import time
 import urllib.parse
-from typing import List, Optional, Tuple, Union
+from typing import Any, List, Optional, Sequence, Tuple, Union
 
 import somacore
 from somacore import options
@@ -191,3 +191,48 @@ def dense_index_to_shape(
         return stop - start + 1
 
     raise TypeError("coordinates must be tuple of int or slice")
+
+
+def check_type(
+    name: str,
+    actual_value: Any,
+    expected_types: Sequence[Any],
+) -> None:
+    """
+    Keystroke-saver for runtime type-checking.
+
+    Context: while in principle we could use this to type-check every argument to every
+    function/method, in practice the most necessary guardrail to offer to the user is around schema
+    and container types for I/O. Specfically, SOMA's type system is Arrow while computational
+    biologists are often using SOMA to store results of Scanpy analyses. It's extra-important that
+    if anyone naïvely attempts to write a Pandas DataFrame, SciPy CSR matrix, etc. to a SOMA object,
+    they should get clear and actionable insight on that.
+
+    Parameters
+    ----------
+    name: str
+        Name of the argument in question, as used by the caller.
+
+    actual_value: Any
+        Value of the argument. Note that it would be much easier for us to pass the _type_ of the
+        value rather than the full value. Unfortunately, we cannot: within the SOMA API we have
+        argument names like `type`. Then the caller would have to pass us `type(type)`. But this is
+        a name clash between Python's `type` as a function name, and SOMA's `type` as an argument
+        name.
+
+    expected_type: Any
+        Things like `pyarrow.Tensor`, etc.
+
+    Returns
+    -------
+    None. Raises `TypeError` on mismatch.
+    """
+    if type(actual_value) not in expected_types:
+        if len(expected_types) == 1:
+            raise TypeError(
+                f"expected {name} argument to be of type {expected_types[0]}; got {type(actual_value)}"
+            )
+        else:
+            raise TypeError(
+                f"expected {name} argument to be one of {expected_types!r}; got {type(actual_value)}"
+            )

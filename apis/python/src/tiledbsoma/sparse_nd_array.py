@@ -62,6 +62,10 @@ class SparseNDArray(TileDBArray, somacore.SparseNDArray):
 
         :param platform_config: Platform-specific options used to create this Array, provided via "tiledb"->"create" nested keys
         """
+        # Oddly, runtime typeguard checks (which autorun on our unit tests!) are OK with
+        # `pa.DataType`.  But this util.check_type fails many unit-test cases unless we specifically
+        # include `pa.lib.TimestampType` here.
+        util.check_type("type", type, (pa.DataType, pa.lib.TimestampType))
 
         # check on shape
         if len(shape) == 0 or any(e <= 0 for e in shape):
@@ -71,7 +75,7 @@ class SparseNDArray(TileDBArray, somacore.SparseNDArray):
 
         if not pa.types.is_primitive(type):
             raise TypeError(
-                "Unsupported type - DenseNDArray only supports primtive Arrow types"
+                "Unsupported type -- DenseNDArray only supports primtive Arrow types"
             )
 
         tiledb_create_options = TileDBCreateOptions.from_platform_config(
@@ -272,6 +276,7 @@ class SparseNDArray(TileDBArray, somacore.SparseNDArray):
         ``soma_dim_N`` and ``soma_data`` to the dense nD array.
         """
         del platform_config  # Currently unused.
+
         if isinstance(values, pa.SparseCOOTensor):
             data, coords = values.to_numpy()
             with self._tiledb_open("w") as A:
@@ -300,7 +305,9 @@ class SparseNDArray(TileDBArray, somacore.SparseNDArray):
                 A[coords] = data
             return
 
-        raise TypeError("Unsupported Arrow type")
+        raise TypeError(
+            f"Unsupported Arrow type or non-arrow type for values argument: {type(values)}"
+        )
 
 
 class SparseNDArrayRead(somacore.SparseRead):

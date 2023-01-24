@@ -34,6 +34,9 @@ def test_sparse_nd_array_create_ok(
     assert pa.types.is_primitive(element_type)  # sanity check incoming params
 
     a = soma.SparseNDArray(uri=tmp_path.as_posix())
+    with pytest.raises(TypeError):
+        # non-arrow write
+        a.create(element_type.to_pandas_dtype(), shape)
     a.create(element_type, shape)
     assert a.soma_type == "SOMASparseNDArray"
     assert a.uri == tmp_path.as_posix()
@@ -253,6 +256,9 @@ def test_sparse_nd_array_read_write_sparse_tensor(
     # so we must be prepared for StopIteration on reading them. It simplifies unit-test logic to use
     # occupation density of 1.0 for this test.
     data = create_random_tensor(format, shape, np.float64, 1.0)
+    with pytest.raises(TypeError):
+        # non-arrow write
+        a.write(data.to_numpy())
     a.write(data)
     del a
 

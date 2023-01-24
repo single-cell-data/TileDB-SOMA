@@ -31,6 +31,8 @@ def test_dense_nd_array_create_ok(
     assert pa.types.is_primitive(element_type)  # sanity check incoming params
 
     a = soma.DenseNDArray(uri=tmp_path.as_posix())
+    with pytest.raises(TypeError):
+        a.create(element_type.to_pandas_dtype(), shape)  # XXX
     a.create(element_type, shape)
     assert a.soma_type == "SOMADenseNDArray"
     assert a.uri == tmp_path.as_posix()
@@ -80,6 +82,8 @@ def test_dense_nd_array_read_write_tensor(tmp_path, shape: Tuple[int, ...]):
     # random sample - written to entire array
     data = np.random.default_rng().standard_normal(np.prod(shape)).reshape(shape)
     coords = tuple(slice(0, dim_len) for dim_len in shape)
+    with pytest.raises(TypeError):
+        a.write(coords, data)
     a.write(coords, pa.Tensor.from_numpy(data))
     del a
 
