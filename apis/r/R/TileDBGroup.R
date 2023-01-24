@@ -20,6 +20,7 @@ TileDBGroup <- R6::R6Class(
     create = function() {
       spdl::info("Creating new {} at '{}'", self$class(), self$uri)
       tiledb::tiledb_group_create(self$uri, ctx = self$ctx)
+      self
     },
 
     #' @description Add new member to the group. [lifecycle: experimental]

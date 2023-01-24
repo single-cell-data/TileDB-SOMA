@@ -21,6 +21,7 @@ SOMACollectionBase <- R6::R6Class(
     create = function() {
       super$create()
       private$write_object_type_metadata()
+      self
     },
 
     #' @description Add a new SOMA object to the collection. [lifecycle: experimental]
