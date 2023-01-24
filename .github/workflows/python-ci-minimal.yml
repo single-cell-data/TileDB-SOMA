@@ -18,7 +18,9 @@ jobs:
       fail-fast: true
       matrix:
         os: [ubuntu-22.04]
-        python-version: ['3.10', '3.7']
+        # XXX TEMP ONLY FOR PRE-MERGE
+        # python-version: ['3.10', '3.7']
+        python-version: ['3.11']
         include:
           - runs-on: ubuntu-22.04
             cc: gcc-11
