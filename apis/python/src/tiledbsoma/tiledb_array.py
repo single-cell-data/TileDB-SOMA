@@ -47,7 +47,7 @@ class TileDBArray(TileDBObject):
 
     @property
     def _tiledb_obj(self) -> tiledb.Array:
-        "get the open tiledb.Array handle (opening it if needed)"
+        "get the open tiledb.Array handle"
         assert self._open_tiledb_array is not None  # => not self.closed
         return self._open_tiledb_array
 
