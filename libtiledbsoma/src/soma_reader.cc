@@ -201,9 +201,9 @@ uint64_t SOMAReader::nnz() {
     // [if any]
     std::vector<uint32_t> relevant_fragments;
     for (uint32_t fid = 0; fid < fragment_info.fragment_num(); fid++) {
+        auto frag_ts = fragment_info.timestamp_range(fid);
+        assert(frag_ts.first <= frag_ts.second);
         if (timestamp_) {
-            auto frag_ts = fragment_info.timestamp_range(fid);
-            assert(frag_ts.first <= frag_ts.second);
             if (frag_ts.first > timestamp_->second ||
                 frag_ts.second < timestamp_->first) {
                 // fragment is fully outside the read timestamp range: skip it
@@ -218,6 +218,12 @@ uint64_t SOMAReader::nnz() {
         // fall through: fragment is fully contained within the read timestamp
         // range
         relevant_fragments.push_back(fid);
+
+        // If any relevant fragment is a consolidated fragment, fall back to
+        // counting cells, because the fragment may contain duplicates.
+        if (frag_ts.first != frag_ts.second) {
+            return nnz_slow();
+        }
     }
 
     auto fragment_count = relevant_fragments.size();
@@ -232,15 +238,15 @@ uint64_t SOMAReader::nnz() {
         return fragment_info.cell_num(relevant_fragments[0]);
     }
 
-    //===============================================================
-    // Check for overlapping fragments on the first dimension
+    // Check for overlapping fragments on the first dimension and
+    // compute total_cell_num while going through the loop
+    uint64_t total_cell_num = 0;
     std::vector<std::array<uint64_t, 2>> non_empty_domains(fragment_count);
-
-    // Get all non-empty domains for first dimension
     for (uint32_t i = 0; i < fragment_count; i++) {
         // TODO[perf]: Reading fragment info is not supported on TileDB Cloud
         // yet, but reading one fragment at a time will be slow. Is there
         // another way?
+        total_cell_num += fragment_info.cell_num(relevant_fragments[i]);
         fragment_info.get_non_empty_domain(
             relevant_fragments[i], 0, &non_empty_domains[i]);
         LOG_DEBUG(fmt::format(
@@ -267,32 +273,25 @@ uint64_t SOMAReader::nnz() {
         }
     }
 
-    // If multiple fragments do not overlap, return the total cell_num
+    // If relevant fragments do not overlap, return the total cell_num
     if (!overlap) {
-        uint64_t total_cell_num = 0;
-        for (auto fid : relevant_fragments) {
-            total_cell_num += fragment_info.cell_num(fid);
-        }
         return total_cell_num;
     }
-
-    //===============================================================
-    // Found overlapping fragments, count cells
-    if (mq_->schema()->allows_dups()) {
-        // TODO: should this check be in nnz_slow()?
-        throw TileDBSOMAError(
-            "[SOMAReader] nnz not supported for overlapping fragments with "
-            "duplicates");
-    }
-
-    LOG_WARN("[SOMAReader] Found overlapping fragments, counting cells...");
-
+    // Found relevant fragments with overlap, count cells
     return nnz_slow();
 }
 
 uint64_t SOMAReader::nnz_slow() {
-    // TODO[perf]: Reuse "this" object to read, then reset the state of "this"
-    // so it could be used to read again (for TileDB Cloud)
+    // If duplicates are allowed, we cannot count simply count cells.
+    if (mq_->schema()->allows_dups()) {
+        throw TileDBSOMAError(
+            "[SOMAReader] nnz not supported when duplicates are allowed");
+    }
+
+    LOG_WARN(
+        "[SOMAReader] nnz() found consolidated or overlapping fragments, "
+        "counting cells...");
+
     auto sr = SOMAReader::open(
         ctx_,
         uri_,
