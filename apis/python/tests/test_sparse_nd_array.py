@@ -816,14 +816,3 @@ def test_sparse_nd_array_error_corners(tmp_path):
         next(a.read(coords=[]).tables())
     with pytest.raises(ValueError):
         next(a.read(coords=((slice(None), slice(None)))).tables())
-
-
-"""
-
-204, 232, 236, 
-283, 
-303, 
-325
-
-
-"""
