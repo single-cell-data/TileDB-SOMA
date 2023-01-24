@@ -53,11 +53,11 @@ class TileDBObject(ABC, somacore.SOMAObject):
         self._close_stack = ExitStack()
 
     @classmethod
-    def create(self, *args: Any, **kwargs: Any) -> Never:
+    def create(cls, *args: Any, **kwargs: Any) -> Never:
         raise NotImplementedError()
 
     @classmethod
-    def open(self, *args: Any, **kwargs: Any) -> Never:
+    def open(cls, *args: Any, **kwargs: Any) -> Never:
         raise NotImplementedError()
 
     @property
