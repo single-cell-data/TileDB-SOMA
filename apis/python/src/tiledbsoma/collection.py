@@ -159,7 +159,6 @@ class CollectionBase(TileDBObject, somacore.Collection[CollectionElementType]):
                 tdb = self._cached_values[key].tdb
                 soma = _construct_member(
                     tdb.uri,
-                    self,
                     context=self.context,
                     object_type=tdb.type.__name__.lower(),
                 )

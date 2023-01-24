@@ -3,11 +3,11 @@ This module exists to avoid what would otherwise be cyclic-module-import issues 
 Collection.
 """
 
-from typing import Any, Optional, Union
+from typing import Optional, Union
 
 import tiledb
 
-from .collection import Collection, CollectionBase
+from .collection import Collection
 from .dataframe import DataFrame
 from .dense_nd_array import DenseNDArray
 from .exception import SOMAError
@@ -34,7 +34,6 @@ ObjectTypes = Union[
 
 def _construct_member(
     member_uri: str,
-    parent: CollectionBase[Any],
     context: Optional[SOMATileDBContext] = None,
     object_type: Optional[str] = None,
 ) -> Optional[ObjectTypes]:
@@ -88,22 +87,22 @@ def _construct_member(
     # Now invoke the appropriate per-class constructor.
     if class_name == "Experiment":
         _check_object_type(object_type, "group")
-        return Experiment(uri=member_uri, parent=parent)
+        return Experiment(uri=member_uri, context=context)
     elif class_name == "Measurement":
         _check_object_type(object_type, "group")
-        return Measurement(uri=member_uri, parent=parent)
+        return Measurement(uri=member_uri, context=context)
     elif class_name == "Collection":
         _check_object_type(object_type, "group")
-        return Collection(uri=member_uri, parent=parent)
+        return Collection(uri=member_uri, context=context)
     elif class_name == "DataFrame":
         _check_object_type(object_type, "array")
-        return DataFrame(uri=member_uri, parent=parent)
+        return DataFrame(uri=member_uri, context=context)
     elif class_name in ["DenseNDArray", "DenseNdArray"]:
         _check_object_type(object_type, "array")
-        return DenseNDArray(uri=member_uri, parent=parent)
+        return DenseNDArray(uri=member_uri, context=context)
     elif class_name in ["SparseNDArray", "SparseNdArray"]:
         _check_object_type(object_type, "array")
-        return SparseNDArray(uri=member_uri, parent=parent)
+        return SparseNDArray(uri=member_uri, context=context)
     else:
         raise SOMAError(f'internal error: class name "{class_name}" unrecognized')
 
