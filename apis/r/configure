@@ -43,8 +43,8 @@ else
 fi
 
 ## check for tiledb-r 0.18.*. In DESCRIPTION we can pin only a minimum version, not a maximum.
-tiledb_r_ok=`Rscript -e 'packageVersion("tiledb") >= "0.18.0" && packageVersion("tiledb") < "0.19.0"'`
-if expr "$tiledb_r_ok" : '.*FALSE.*'; then
+Rscript -e 'q(save="no", status=if(packageVersion("tiledb") >= "0.18.0" && packageVersion("tiledb") < "0.19.0") FALSE else TRUE)'
+if [ $? -ne 0 ]; then
     actual=`Rscript -e 'packageVersion("tiledb")'`
     echo "** need tiledb-r 0.18.*; got $actual -- exiting"
     exit 1
