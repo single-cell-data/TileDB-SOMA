@@ -58,3 +58,54 @@ test_that("Iterated Interface from SOMAReader", {
     expect_equal(nrow(rl), 5276)
     expect_equal(ncol(rl), 3)
 })
+
+test_that("Iterated Interface from SOMA Classes", {
+    skip_if_not_installed("pbmc3k.tiledb")      # a Suggests: pre-package 3k PBMC data
+
+    tdir <- tempfile()
+    tgzfile <- system.file("raw-data", "soco-pbmc3k.tar.gz", package="pbmc3k.tiledb")
+    untar(tarfile = tgzfile, exdir = tdir)
+    uri <- file.path(tdir, "soco", "pbmc3k_processed", "ms", "RNA", "X", "data")
+
+    ## parameterize test
+    test_cases <- c("data.frame", "sparse", "dense")
+
+    for (tc in test_cases) {
+        sdf <- switch(tc,
+                      data.frame = SOMADataFrame$new(uri),
+                      sparse = SOMASparseNDArray$new(uri),
+                      dense = SOMADenseNDArray$new(uri))
+        expect_true(inherits(sdf, "SOMAArrayBase"))
+
+        switch(tc,
+               data.frame = sdf$read(iterated = TRUE),
+               sparse = sdf$read_arrow_table(iterated = TRUE),
+               dense = sdf$read_arrow_table(iterated = TRUE))
+
+        expect_false(sdf$read_complete())
+        dat <- sdf$read_next()
+        n <- dat$num_rows
+        expect_true(n > 0)
+
+        expect_false(sdf$read_complete())
+        dat <- sdf$read_next()
+        n <- n + dat$num_rows
+        expect_true(n > 0)
+
+        expect_false(sdf$read_complete())
+        dat <- sdf$read_next()
+        n <- n + dat$num_rows
+        expect_true(n > 0)
+
+        expect_false(sdf$read_complete())
+        dat <- sdf$read_next()
+        n <- n + dat$num_rows
+        expect_true(n > 0)
+
+        expect_equal(n, 4848644)
+        expect_true(sdf$read_complete())
+
+        rm(sdf)
+    }
+
+})
