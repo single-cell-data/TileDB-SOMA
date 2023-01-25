@@ -149,45 +149,64 @@ SOMADataFrame <- R6::R6Class(
     #' more information.
     #' @param result_order Optional order of read results. This can be one of either
     #' `"ROW_MAJOR, `"COL_MAJOR"`, `"GLOBAL_ORDER"`, or `"UNORDERED"`.
+    #' @param iterated Option boolean indicated whether data is read in call (when
+    #' `FALSE`, the default value) or in several iterated steps.
     #' @param log_level Optional logging level with default value of `"warn"`.
     #' @return An [`arrow::Table`].
     read = function(coords = NULL,
                     column_names = NULL,
                     value_filter = NULL,
                     result_order = "UNORDERED",
+                    iterated = FALSE,
                     log_level = "warn") {
 
       result_order <- match_query_layout(result_order)
-
       uri <- self$uri
       arr <- self$object                 # need array (schema) to properly parse query condition
 
-      # check columns
-      stopifnot("'column_names' must only contain valid dimension or attribute columns" =
-                    is.null(column_names) ||
-                    all(column_names %in% c(self$dimnames(), self$attrnames())))
-
-      # check and parse value filter
-      stopifnot("'value_filter' must be a single argument" =
-                    is.null(value_filter) || is_scalar_character(value_filter))
+      stopifnot(
+          ## check columns
+          "'column_names' must only contain valid dimension or attribute columns" =
+              is.null(column_names) || all(column_names %in% c(self$dimnames(), self$attrnames())),
+          ## check and parse value filter
+          "'value_filter' must be a single argument" =
+              is.null(value_filter) || is_scalar_character(value_filter),
+          ## ensure coords is a (named) list
+          "'coords' must be a list" =
+              is.null(coords) || is.list(coords),
+          "names of 'coords' must correspond to dimension names" =
+              is.null(coords) || all(names(coords) %in% self$dimnames())
+      )
       if (!is.null(value_filter)) {
           parsed <- do.call(what = tiledb::parse_query_condition,
                             args = list(expr = str2lang(value_filter), ta = arr))
           value_filter <- parsed@ptr
       }
-      # ensure coords is a (named) list
-      stopifnot("'coords' must be a list" = is.null(coords) || is.list(coords),
-                "names of 'coords' must correspond to dimension names" =
-                    is.null(coords) || all(names(coords) %in% self$dimnames()))
 
-      rl <- soma_reader(uri = uri,
-                        colnames = column_names,   # NULL is dealt with by soma_reader()
-                        qc = value_filter,         # idem
-                        dim_points = coords,       # idem
-                        loglevel = log_level)      # idem
+      if (isFALSE(iterated)) {
+          rl <- soma_reader(uri = uri,
+                            colnames = column_names,   # NULL is dealt with by soma_reader()
+                            qc = value_filter,         # idem
+                            dim_points = coords,       # idem
+                            loglevel = log_level)      # idem
+          arrow::as_arrow_table(arch::from_arch_array(rl, arrow::RecordBatch))
+      } else {
+          ## should we error if this isn't null?
+          if (!is.null(self$soma_reader_pointer)) {
+              warning("pointer not null, skipping")
+          } else {
+              ctx <- tiledb::tiledb_ctx()
+              private$soma_reader_pointer <- sr_setup(ctx@ptr, uri)
+          }
+          invisible(NULL)
+      }
+    },
 
-      arrow::as_arrow_table(arch::from_arch_array(rl, arrow::RecordBatch))
+    ## refined from base class
+    soma_reader_transform = function(x) {
+      arrow::as_arrow_table(arch::from_arch_array(x, arrow::RecordBatch))
     }
+
 
   ),
 

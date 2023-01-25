@@ -17,6 +17,30 @@ SOMAArrayBase <- R6::R6Class(
     }
   ),
 
+  public = list(
+    read_complete = function() {
+      if (is.null(private$soma_reader_pointer)) {
+          TRUE
+      } else {
+          sr_complete(private$soma_reader_pointer)
+      }
+    },
+
+    read_next = function() {
+      if (is.null(private$soma_reader_pointer)) {
+          NULL
+      } else {
+          rl <- sr_next(private$soma_reader_pointer)
+          self$soma_reader_transform(rl)
+      }
+    },
+
+    ## to be refined in derived classes
+    soma_reader_transform = function(x) {
+      x
+    }
+  ),
+
   private = list(
 
     # Cache object's SOMA_OBJECT_TYPE_METADATA_KEY
@@ -31,6 +55,9 @@ SOMAArrayBase <- R6::R6Class(
       meta[[SOMA_OBJECT_TYPE_METADATA_KEY]] <- self$class()
       meta[[SOMA_ENCODING_VERSION_METADATA_KEY]] <- SOMA_ENCODING_VERSION
       self$set_metadata(meta)
-    }
+    },
+
+    # Internal 'external pointer' object used for iterated reads
+    soma_reader_pointer = NULL
   )
 )
