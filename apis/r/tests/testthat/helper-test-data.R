@@ -42,8 +42,8 @@ create_and_populate_soma_dataframe <- function(uri, nrows = 10L, seed = 1) {
   arrow_schema <- create_arrow_schema()
 
   tbl <- arrow::arrow_table(
-    foo = seq.int(nrows),
-    soma_joinid = seq.int(nrows) + 1000L,
+    foo = seq.int(nrows) + 1000L,
+    soma_joinid = seq.int(nrows),
     bar = seq(nrows) + 0.1,
     baz = sample(letters, size = nrows, replace = TRUE),
     schema = arrow_schema
