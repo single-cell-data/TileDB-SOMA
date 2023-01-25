@@ -62,7 +62,7 @@ class Measurement(CollectionBase[TileDBObject]):
     # Inherited from somacore
     soma_type: Final = "SOMAMeasurement"
 
-    def create(self) -> "Measurement":
+    def create_legacy(self) -> "Measurement":
         """
         Creates the data structure on disk/S3/cloud.
         """

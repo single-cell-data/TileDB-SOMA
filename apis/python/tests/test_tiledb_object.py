@@ -33,19 +33,19 @@ def test_open_close():
     o = FakeTileDBObject("parent")
 
     assert not o.mode
-    o.open("r")
+    o.open_legacy("r")
     assert o.mode == "r"
     o.close()
     assert not o.mode
     o.close()  # no-op
     assert not o.mode
 
-    with o.open("w"):
+    with o.open_legacy("w"):
         assert o.mode == "w"
     assert not o.mode
 
     try:
-        with o.open("w"):
+        with o.open_legacy("w"):
             assert o.mode == "w"
             raise RuntimeError("test")
     except Exception:
@@ -66,7 +66,7 @@ def test_open_close():
     with o._ensure_open():
         assert o.mode == "r"
     assert not o.mode
-    with o.open():
+    with o.open_legacy():
         with o._ensure_open():
             assert o.mode == "r"
         assert o.mode == "r"
@@ -74,7 +74,7 @@ def test_open_close():
     bad = False
     try:
         # reject attempt to write when already open read-only
-        with o.open("r"):
+        with o.open_legacy("r"):
             with o._ensure_open("w"):
                 bad = True
             bad = True
@@ -82,7 +82,7 @@ def test_open_close():
         pass
     assert not bad
     assert not o.mode
-    with o.open("w"):
+    with o.open_legacy("w"):
         # allow attempt to read when already open for write (manly for metadata; underlying TileDB
         # objects may reject other attempts)
         with o._ensure_open("r"):
@@ -94,7 +94,7 @@ def test_open_close():
     bad = False
     o.mock_open_error = True
     try:
-        with o.open("r"):
+        with o.open_legacy("r"):
             bad = True
         bad = True
     except Exception:

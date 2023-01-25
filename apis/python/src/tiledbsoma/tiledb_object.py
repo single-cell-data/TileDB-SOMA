@@ -1,11 +1,12 @@
 from abc import ABC, abstractmethod, abstractproperty
 from contextlib import ExitStack, contextmanager
-from types import TracebackType
-from typing import Iterator, Optional, Type, TypeVar, Union
+from typing import Any, Iterator, Optional, TypeVar, Union
 
 import somacore
 import tiledb
-from typing_extensions import Literal
+from typing_extensions import Literal, NoReturn
+
+from tiledbsoma.exception import SOMAError
 
 from . import util
 from .metadata_mapping import MetadataMapping
@@ -51,6 +52,12 @@ class TileDBObject(ABC, somacore.SOMAObject):
         self._context = context or SOMATileDBContext()
         self._metadata = MetadataMapping(self)
         self._close_stack = ExitStack()
+
+    @classmethod
+    def create(self, *args: Any, **kwargs: Any) -> NoReturn:
+        raise NotImplementedError()
+
+    open = create
 
     @property
     def context(self) -> SOMATileDBContext:
@@ -123,14 +130,14 @@ class TileDBObject(ABC, somacore.SOMAObject):
         except tiledb.cc.TileDBError:
             return False
 
-    def open(self: TTileDBObject, mode: OpenMode = "r") -> TTileDBObject:
+    def open_legacy(self: TTileDBObject, mode: OpenMode = "r") -> TTileDBObject:
         """
         Open the object for a series of read (mode='r') or write (mode='w') operations. Doing so is
         optional, but can make a series of small operations more efficient, by allowing reuse of
         handles and metadata between them. If opened, the object should later be closed to release
         such resources. This can be automated with a context manager, e.g.:
 
-          with tiledbsoma.SparseNDArray(uri=...).open() as X:
+          with tiledbsoma.SparseNDArray(uri=...).open_legacy() as X:
               data = X.read_table(...)
               data = X.read_table(...)
 
@@ -161,6 +168,11 @@ class TileDBObject(ABC, somacore.SOMAObject):
         """
         ...
 
+    def __enter__(self: TTileDBObject) -> TTileDBObject:
+        if not self.mode:
+            raise SOMAError(f"use {self.__class__.__name__}.open() as context manager")
+        return self
+
     def close(self) -> None:
         """
         Release any resources held while the object is open. Closing an already-closed object is a
@@ -183,18 +195,6 @@ class TileDBObject(ABC, somacore.SOMAObject):
         True iff self.mode is None
         """
         return self.mode is None
-
-    def __enter__(self: TTileDBObject) -> TTileDBObject:
-        assert self.mode, f"use {self.__class__.__name__}.open() as context manager"
-        return self
-
-    def __exit__(
-        self,
-        exc_type: Optional[Type[BaseException]],
-        exc_value: Optional[BaseException],
-        traceback: Optional[TracebackType],
-    ) -> None:
-        self.close()
 
     @contextmanager
     def _ensure_open(self, mode: OpenMode = "r") -> Iterator[None]:
@@ -224,14 +224,8 @@ class TileDBObject(ABC, somacore.SOMAObject):
                 )
             yield
         else:
-            with self.open(mode):
+            with self.open_legacy(mode):
                 yield
-
-    def __del__(self) -> None:
-        self.close()
-        # NB: there's no superclass __del__ to call (Python objects don't have one by default), but
-        #     should we gain one at some point, then we should call it here.
-        # super().__del__()
 
     @abstractproperty
     def _tiledb_obj(self) -> Union[tiledb.Array, tiledb.Group]:

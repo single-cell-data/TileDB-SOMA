@@ -313,13 +313,13 @@ def _check_create(
 ) -> Union[Experiment, Measurement, Collection]:
     if ingest_mode == "resume":
         if not thing.exists():
-            thing.create()
+            thing.create_legacy()
         # else fine
     else:
         if thing.exists():
             raise SOMAError(f"{thing.uri} already exists")
         else:
-            thing.create()
+            thing.create_legacy()
     return thing
 
 
@@ -390,7 +390,7 @@ def _write_dataframe(
         else:
             raise SOMAError(f"{soma_df.uri} already exists")
     else:
-        soma_df.create(arrow_table.schema, platform_config=platform_config)
+        soma_df.create_legacy(arrow_table.schema, platform_config=platform_config)
 
     if ingest_mode == "schema_only":
         logging.log_io(
@@ -430,7 +430,7 @@ def create_from_matrix(
     if ingest_mode != "resume" or not soma_ndarray.exists():
         if soma_ndarray.exists():
             raise SOMAError(f"{soma_ndarray.uri} already exists")
-        soma_ndarray.create(
+        soma_ndarray.create_legacy(
             type=pa.from_numpy_dtype(matrix.dtype),
             shape=matrix.shape,
             platform_config=platform_config,
@@ -508,7 +508,7 @@ def _write_matrix_to_denseNDArray(
     # * By checking chunkwise we can catch the case where a matrix was already *partly*
     #   ingested.
     # * Of course, this also helps us catch already-completed writes in the non-chunked case.
-    with soma_ndarray.open(
+    with soma_ndarray.open_legacy(
         "r"
     ):  # TODO: make sure we're not using an old timestamp for this
         storage_ned = None
@@ -528,7 +528,7 @@ def _write_matrix_to_denseNDArray(
                 )
                 return
 
-    with soma_ndarray.open("w"):
+    with soma_ndarray.open_legacy("w"):
         # Write all at once?
         if not tiledb_create_options.write_X_chunked():
             if not isinstance(matrix, np.ndarray):
@@ -668,7 +668,7 @@ def _write_matrix_to_sparseNDArray(
     # * By checking chunkwise we can catch the case where a matrix was already *partly*
     #   ingested.
     # * Of course, this also helps us catch already-completed writes in the non-chunked case.
-    with soma_ndarray.open(
+    with soma_ndarray.open_legacy(
         "r"
     ):  # TODO: make sure we're not using an old timestamp for this
         storage_ned = None
@@ -688,7 +688,7 @@ def _write_matrix_to_sparseNDArray(
                 )
                 return
 
-    with soma_ndarray.open("w"):
+    with soma_ndarray.open_legacy("w"):
         # Write all at once?
         if not tiledb_create_options.write_X_chunked():
             soma_ndarray.write(_coo_to_table(sp.coo_matrix(matrix)))
