@@ -20,8 +20,6 @@ class TileDBArray(TileDBObject):
         self,
         uri: str,
         *,
-        parent: Optional["TileDBObject"] = None,
-        # Top-level objects should specify this:
         context: Optional[SOMATileDBContext] = None,
     ):
         """

@@ -1,4 +1,4 @@
-from typing import Any, List, Optional, Union, cast
+from typing import List, Optional, Union, cast
 
 import numpy as np
 import pyarrow as pa
@@ -10,7 +10,6 @@ import tiledbsoma.util as util
 import tiledbsoma.util_arrow as util_arrow
 from tiledbsoma.util import dense_indices_to_shape
 
-from .collection import CollectionBase
 from .exception import SOMAError
 from .options import SOMATileDBContext, TileDBCreateOptions
 from .tiledb_array import TileDBArray
@@ -28,7 +27,6 @@ class DenseNDArray(TileDBArray, somacore.DenseNDArray):
         self,
         uri: str,
         *,
-        parent: Optional[CollectionBase[Any]] = None,
         context: Optional[SOMATileDBContext] = None,
     ):
         """

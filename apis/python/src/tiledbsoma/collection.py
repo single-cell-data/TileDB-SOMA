@@ -83,9 +83,6 @@ class CollectionBase(TileDBObject, somacore.Collection[CollectionElementType]):
         self,
         uri: str,
         *,
-        # Non-top-level objects can have a parent to propagate context, depth, etc.
-        parent: Optional[CollectionBase[Any]] = None,
-        # Top-level objects should specify this:
         context: Optional[SOMATileDBContext] = None,
     ):
         """
