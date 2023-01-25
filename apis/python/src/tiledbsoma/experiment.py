@@ -1,4 +1,4 @@
-from typing import Any, Dict, Optional, Tuple, cast
+from typing import Dict, Optional, Tuple, cast
 
 import somacore
 from typing_extensions import Final
@@ -31,15 +31,12 @@ class Experiment(CollectionBase[TileDBObject]):
         self,
         uri: str,
         *,
-        # Non-top-level objects can have a parent to propagate context, depth, etc.
-        parent: Optional[CollectionBase[Any]] = None,
-        # Top-level objects should specify this:
         context: Optional[SOMATileDBContext] = None,
     ):
         """
         Also see the ``TileDBObject`` constructor.
         """
-        super().__init__(uri=uri, parent=parent, context=context)
+        super().__init__(uri=uri, context=context)
 
     # Inherited from somacore
     soma_type: Final = "SOMAExperiment"

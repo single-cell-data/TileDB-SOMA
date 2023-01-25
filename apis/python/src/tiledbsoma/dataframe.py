@@ -8,7 +8,6 @@ import tiledb
 from somacore import options
 
 from . import util, util_arrow
-from .collection import CollectionBase
 from .constants import SOMA_JOINID
 from .options import SOMATileDBContext, TileDBCreateOptions
 from .query_condition import QueryCondition
@@ -34,14 +33,12 @@ class DataFrame(TileDBArray, somacore.DataFrame):
         self,
         uri: str,
         *,
-        parent: Optional[CollectionBase[Any]] = None,
-        # Top-level objects should specify this:
         context: Optional[SOMATileDBContext] = None,
     ):
         """
         See also the ``TileDBObject`` constructor.
         """
-        super().__init__(uri=uri, parent=parent, context=context)
+        super().__init__(uri=uri, context=context)
         self._index_column_names = ()
         self._is_sparse = None
 

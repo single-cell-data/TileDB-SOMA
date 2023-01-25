@@ -1,5 +1,5 @@
 import collections.abc
-from typing import Any, List, Optional, Union, cast
+from typing import List, Optional, Union, cast
 
 import numpy as np
 import pyarrow as pa
@@ -12,7 +12,6 @@ from somacore.options import PlatformConfig
 import tiledbsoma.libtiledbsoma as clib
 
 from . import util, util_arrow
-from .collection import CollectionBase
 from .options import SOMATileDBContext, TileDBCreateOptions
 from .tiledb_array import TileDBArray
 from .types import NTuple
@@ -35,14 +34,13 @@ class SparseNDArray(TileDBArray, somacore.SparseNDArray):
         self,
         uri: str,
         *,
-        parent: Optional[CollectionBase[Any]] = None,
         context: Optional[SOMATileDBContext] = None,
     ):
         """
         Also see the ``TileDBObject`` constructor.
         """
 
-        super().__init__(uri=uri, parent=parent, context=context)
+        super().__init__(uri=uri, context=context)
 
     # Inherited from somacore
     # soma_type: Final = "SOMASparseNDArray"

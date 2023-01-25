@@ -39,9 +39,6 @@ class TileDBObject(ABC, somacore.SOMAObject):
         # All objects:
         uri: str,
         *,
-        # Non-top-level objects can have a parent to propagate context, depth, etc.
-        parent: Optional["TileDBObject"] = None,
-        # Top-level objects should specify this:
         context: Optional[SOMATileDBContext] = None,
     ):
         """
@@ -51,17 +48,7 @@ class TileDBObject(ABC, somacore.SOMAObject):
         """
 
         self._uri = uri
-
-        if parent is not None:
-            if context is not None:
-                raise TypeError(
-                    "Only one of `context` and `parent` params can be passed as an arg"
-                )
-            # inherit from parent
-            self._context = parent._context
-        else:
-            self._context = context or SOMATileDBContext()
-
+        self._context = context or SOMATileDBContext()
         self._metadata = MetadataMapping(self)
         self._close_stack = ExitStack()
 

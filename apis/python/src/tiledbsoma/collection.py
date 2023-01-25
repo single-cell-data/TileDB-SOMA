@@ -83,15 +83,12 @@ class CollectionBase(TileDBObject, somacore.Collection[CollectionElementType]):
         self,
         uri: str,
         *,
-        # Non-top-level objects can have a parent to propagate context, depth, etc.
-        parent: Optional[CollectionBase[Any]] = None,
-        # Top-level objects should specify this:
         context: Optional[SOMATileDBContext] = None,
     ):
         """
         Also see the ``TileDBObject`` constructor.
         """
-        super().__init__(uri=uri, parent=parent, context=context)
+        super().__init__(uri=uri, context=context)
         self._cached_values = None
 
     def create(self) -> "CollectionBase[CollectionElementType]":
@@ -159,7 +156,6 @@ class CollectionBase(TileDBObject, somacore.Collection[CollectionElementType]):
                 tdb = self._cached_values[key].tdb
                 soma = _construct_member(
                     tdb.uri,
-                    self,
                     context=self.context,
                     object_type=tdb.type.__name__.lower(),
                 )

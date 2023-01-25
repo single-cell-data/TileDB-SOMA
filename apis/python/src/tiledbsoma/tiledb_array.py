@@ -20,14 +20,12 @@ class TileDBArray(TileDBObject):
         self,
         uri: str,
         *,
-        parent: Optional["TileDBObject"] = None,
-        # Top-level objects should specify this:
         context: Optional[SOMATileDBContext] = None,
     ):
         """
         See the ``TileDBObject`` constructor.
         """
-        super().__init__(uri, parent=parent, context=context)
+        super().__init__(uri, context=context)
 
     @property
     def schema(self) -> pa.Schema:
