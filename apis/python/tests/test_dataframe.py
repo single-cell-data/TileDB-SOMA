@@ -642,25 +642,25 @@ def test_read_indexing(tmp_path, io):
     schema, sdf, n_data = make_multiply_indexed_dataframe(
         tmp_path, io["index_column_names"]
     )
-    sdf = soma.DataFrame(uri=sdf.uri)  # reopen
-    assert sdf.exists()
-    assert list(sdf.index_column_names) == io["index_column_names"]
+    with soma.DataFrame(uri=sdf.uri).open() as sdf:
+        assert sdf.exists()
+        assert list(sdf.index_column_names) == io["index_column_names"]
 
-    read_kwargs = {"column_names": ["A"]}
-    read_kwargs.update({k: io[k] for k in ("coords", "value_filter") if k in io})
-    if io.get("throws", None):
-        with pytest.raises(io["throws"]):
-            next(sdf.read(**read_kwargs))
-    else:
-        table = next(sdf.read(**read_kwargs))
-        assert table["A"].to_pylist() == io["A"]
+        read_kwargs = {"column_names": ["A"]}
+        read_kwargs.update({k: io[k] for k in ("coords", "value_filter") if k in io})
+        if io.get("throws", None):
+            with pytest.raises(io["throws"]):
+                next(sdf.read(**read_kwargs))
+        else:
+            table = next(sdf.read(**read_kwargs))
+            assert table["A"].to_pylist() == io["A"]
 
-    if io.get("throws", None):
-        with pytest.raises(io["throws"]):
-            next(sdf.read(**read_kwargs)).to_pandas()
-    else:
-        table = next(sdf.read(**read_kwargs)).to_pandas()
-        assert table["A"].to_list() == io["A"]
+        if io.get("throws", None):
+            with pytest.raises(io["throws"]):
+                next(sdf.read(**read_kwargs)).to_pandas()
+        else:
+            table = next(sdf.read(**read_kwargs)).to_pandas()
+            assert table["A"].to_list() == io["A"]
 
     sdf.delete()
 
@@ -740,7 +740,8 @@ def test_write_categorical_types(tmp_path):
             ),
         }
     )
-    sdf.write(pa.Table.from_pandas(df))
+    with sdf.open("w"):
+        sdf.write(pa.Table.from_pandas(df))
 
     assert (df == sdf.read().concat().to_pandas()).all().all()
 
