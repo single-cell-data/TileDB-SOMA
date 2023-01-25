@@ -23,31 +23,29 @@ def soma_object(request, tmp_path):
     """
     Make an empty test object of the given foundational class name.
     """
-    uri = tmp_path.as_posix()
+    uri = tmp_path.joinpath("object").as_uri()
     class_name = request.param
 
     if class_name == "Collection":
-        so = soma.Collection(uri=uri)
-        so.create_legacy()
+        so = soma.Collection.create(uri)
 
     elif class_name == "DataFrame":
-        so = soma.DataFrame(uri=uri)
-        so.create_legacy(
+        so = soma.DataFrame.create(
+            uri,
             schema=pa.schema([("C", pa.float32()), ("D", pa.uint32())]),
             index_column_names=["D"],
         )
 
     elif class_name == "DenseNDArray":
-        so = soma.DenseNDArray(uri=uri)
-        so.create_legacy(type=pa.float64(), shape=(100, 10, 1))
+        so = soma.DenseNDArray.create(uri, type=pa.float64(), shape=(100, 10, 1))
 
     elif class_name == "SparseNDArray":
-        so = soma.SparseNDArray(uri=uri)
-        so.create_legacy(type=pa.int8(), shape=(11,))
+        so = soma.SparseNDArray.create(uri, type=pa.int8(), shape=(11,))
+    else:
+        raise ValueError(f"don't know how to make {class_name}")
 
-    assert so is not None, f"Unknown class name: {class_name}"
     yield so
-    so.delete()
+    so.close()
 
 
 def test_metadata(soma_object):
@@ -65,6 +63,7 @@ def test_metadata(soma_object):
     assert "foobar" not in soma_object.metadata
 
     soma_object.metadata["foobar"] = True
+    soma_object.flush()
     assert "foobar" in soma_object.metadata
     for k, v in soma_object.metadata.as_dict().items():
         assert k in soma_object.metadata
@@ -73,10 +72,12 @@ def test_metadata(soma_object):
 
     # also check set()
     soma_object.metadata["stay"] = "frosty"
+    soma_object.flush()
     assert "stay" in soma_object.metadata
     assert soma_object.metadata["stay"] == "frosty"
 
     del soma_object.metadata["stay"]
+    soma_object.flush()
     assert "stay" not in soma_object.metadata
     assert soma_object.metadata.get("stay", False) is False
 
@@ -102,6 +103,7 @@ def test_metadata_marshalling_OK(soma_object, test_value):
     which is any Arrow primitive and Arrow strings
     """
     soma_object.metadata["test_value"] = test_value
+    soma_object.flush()
     assert "test_value" in soma_object.metadata
 
     val = soma_object.metadata["test_value"]

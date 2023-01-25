@@ -1,5 +1,5 @@
 import sys
-from typing import Optional, Tuple, Union
+from typing import Tuple, Union
 
 import numpy as np
 import pyarrow as pa
@@ -14,13 +14,6 @@ from . import NDARRAY_ARROW_TYPES_NOT_SUPPORTED, NDARRAY_ARROW_TYPES_SUPPORTED
 AnySparseTensor = Union[pa.SparseCOOTensor, pa.SparseCSRMatrix, pa.SparseCSCMatrix]
 
 
-def test_sparse_nd_array_ok_no_storage():
-    arr = soma.SparseNDArray(uri="/foo/bar/")
-    assert arr.uri == "/foo/bar/"
-    assert not arr.exists()
-    assert arr.soma_type == "SOMASparseNDArray"
-
-
 @pytest.mark.parametrize(
     "shape", [(10,), (1, 100), (10, 1, 100), (2, 4, 6, 8), [1], (1, 2, 3, 4, 5)]
 )
@@ -33,11 +26,12 @@ def test_sparse_nd_array_create_ok(
     """
     assert pa.types.is_primitive(element_type)  # sanity check incoming params
 
-    a = soma.SparseNDArray(uri=tmp_path.as_posix())
     with pytest.raises(TypeError):
         # non-arrow write
-        a.create_legacy(element_type.to_pandas_dtype(), shape)
-    a.create_legacy(element_type, shape)
+        soma.SparseNDArray.create(
+            tmp_path.as_posix(), type=element_type.to_pandas_dtype(), shape=shape
+        )
+    a = soma.SparseNDArray.create(tmp_path.as_posix(), type=element_type, shape=shape)
     assert a.soma_type == "SOMASparseNDArray"
     assert a.uri == tmp_path.as_posix()
     assert a.ndim == len(shape)
@@ -58,15 +52,12 @@ def test_sparse_nd_array_create_ok(
 def test_sparse_nd_array_create_fail(
     tmp_path, shape: Tuple[int, ...], element_type: pa.DataType
 ):
-    a = soma.SparseNDArray(uri=tmp_path.as_posix())
     with pytest.raises(TypeError):
-        a.create_legacy(element_type, shape)
-    assert not a.exists()
+        soma.SparseNDArray.create(tmp_path.as_posix(), type=element_type, shape=shape)
 
 
 def test_sparse_nd_array_delete(tmp_path):
-    a = soma.SparseNDArray(uri=tmp_path.as_posix())
-    a.create_legacy(pa.int8(), (100, 100))
+    a = soma.SparseNDArray.create(tmp_path.as_posix(), type=pa.int8(), shape=(100, 100))
     assert a.exists()
 
     a.delete()
@@ -75,14 +66,13 @@ def test_sparse_nd_array_delete(tmp_path):
 
     # should be silent about non-existent object
     assert a.delete() is None
-    assert soma.SparseNDArray(uri="no such array").delete() is None
 
 
 def create_random_tensor(
     format: str,
     shape: Tuple[int, ...],
     dtype: np.dtype,
-    density: Optional[float] = 0.33,
+    density: float = 0.33,
 ):
     """
     Create a random tensor/table of specified format, shape and dtype.
@@ -92,7 +82,7 @@ def create_random_tensor(
     """
     rng = np.random.default_rng()
     ndim = len(shape)
-    assert density > 0 and density <= 1
+    assert 0 < density <= 1
 
     assert format in ["coo", "csc", "csr", "table"], "Unimplemented format"
 
@@ -246,8 +236,7 @@ def test_sparse_nd_array_read_write_sparse_tensor(
     assert format in ("coo", "csr", "csc")
     assert not (format in ("csc", "csr") and len(shape) != 2)
 
-    a = soma.SparseNDArray(tmp_path.as_posix())
-    a.create_legacy(pa.float64(), shape)
+    a = soma.SparseNDArray.create(tmp_path.as_posix(), type=pa.float64(), shape=shape)
     assert a.exists()
     assert a.shape == shape
 
@@ -263,7 +252,7 @@ def test_sparse_nd_array_read_write_sparse_tensor(
     del a
 
     # Read back and validate
-    with soma.SparseNDArray(tmp_path.as_posix()).open_legacy() as b:
+    with soma.SparseNDArray.open(tmp_path.as_posix()) as b:
         if format == "coo":
             t = b.read((slice(None),) * len(shape)).coos().concat()
         elif format == "csc":
@@ -288,8 +277,7 @@ def test_sparse_nd_array_read_write_sparse_tensor(
 def test_sparse_nd_array_read_write_table(
     tmp_path, shape: Tuple[int, ...], test_enumeration: int
 ):
-    a = soma.SparseNDArray(tmp_path.as_posix())
-    a.create_legacy(pa.float32(), shape)
+    a = soma.SparseNDArray.create(tmp_path.as_posix(), type=pa.float32(), shape=shape)
     assert a.exists()
     assert a.shape == shape
 
@@ -299,7 +287,7 @@ def test_sparse_nd_array_read_write_table(
     del a
 
     # Read back and validate
-    b = soma.SparseNDArray(tmp_path.as_posix())
+    b = soma.SparseNDArray.open(tmp_path.as_posix())
     t = next(b.read((slice(None),) * len(shape)).tables())
     assert isinstance(t, pa.Table)
     assert tables_are_same_value(data, t)
@@ -312,8 +300,9 @@ def test_sparse_nd_array_read_as_pandas(
 ):
 
     dtype = np.dtype(dtype)
-    a = soma.SparseNDArray(tmp_path.as_posix())
-    a.create_legacy(pa.from_numpy_dtype(dtype), shape)
+    a = soma.SparseNDArray.create(
+        tmp_path.as_posix(), type=pa.from_numpy_dtype(dtype), shape=shape
+    )
     assert a.exists()
     assert a.shape == shape
 
@@ -335,8 +324,9 @@ def test_empty_read(tmp_path):
     work. There are edge cases around SparseTensors, which are unable
     to represent empty arrays.
     """
-    a = soma.SparseNDArray(uri=tmp_path.as_posix())
-    a.create_legacy(type=pa.uint16(), shape=(10, 100))
+    a = soma.SparseNDArray.create(
+        tmp_path.as_posix(), type=pa.uint16(), shape=(10, 100)
+    )
     assert a.exists()
 
     #
@@ -385,8 +375,9 @@ def test_empty_read_sparse_coo(tmp_path):
     perhaps a NumPy difference)
 
     """
-    a = soma.SparseNDArray(uri=tmp_path.as_posix())
-    a.create_legacy(type=pa.uint16(), shape=(10, 100))
+    a = soma.SparseNDArray.create(
+        tmp_path.as_posix(), type=pa.uint16(), shape=(10, 100)
+    )
     assert a.exists()
 
     coords = (slice(None),)
@@ -406,14 +397,14 @@ def test_empty_read_sparse_coo(tmp_path):
 @pytest.mark.parametrize("shape", [(), (0,), (10, 0), (0, 10), (1, 2, 0)])
 def test_zero_length_fail(tmp_path, shape):
     """Zero length dimensions are expected to fail"""
-    a = soma.SparseNDArray(tmp_path.as_posix())
     with pytest.raises(ValueError):
-        a.create_legacy(type=pa.float32(), shape=shape)
+        soma.SparseNDArray.create(tmp_path.as_posix(), type=pa.float32(), shape=shape)
 
 
 def test_sparse_nd_array_nnz(tmp_path):
-    a = soma.SparseNDArray(tmp_path.as_posix())
-    a.create_legacy(type=pa.int32(), shape=(10, 10, 10))
+    a = soma.SparseNDArray.create(
+        tmp_path.as_posix(), type=pa.int32(), shape=(10, 10, 10)
+    )
     assert a.nnz == 0
 
     t: pa.SparseCOOTensor = create_random_tensor(
@@ -427,8 +418,9 @@ def test_sparse_nd_array_reshape(tmp_path):
     """
     Reshape currently unimplemented.
     """
-    a = soma.SparseNDArray(tmp_path.as_posix())
-    a.create_legacy(type=pa.int32(), shape=(10, 10, 10))
+    a = soma.SparseNDArray.create(
+        tmp_path.as_posix(), type=pa.int32(), shape=(10, 10, 10)
+    )
     with pytest.raises(NotImplementedError):
         assert a.reshape((100, 10, 1))
 
@@ -446,8 +438,9 @@ def test_csr_csc_2d_read(tmp_path, shape):
         dtype=np.float32(),
     )
 
-    snda = soma.SparseNDArray(tmp_path.as_posix())
-    snda.create_legacy(pa.float64(), shape)
+    snda = soma.SparseNDArray.create(
+        tmp_path.as_posix(), type=pa.float64(), shape=shape
+    )
     snda.write(arrow_tensor)
 
     with pytest.raises(ValueError):
@@ -724,11 +717,12 @@ def test_sparse_nd_array_table_slicing(tmp_path, io, write_format, read_format):
         density=1.0,
     )
 
-    soma.SparseNDArray(tmp_path.as_posix()).create_legacy(pa.float64(), io["shape"])
-    with soma.SparseNDArray(tmp_path.as_posix()).open_legacy("w") as snda:
-        snda.write(arrow_tensor)
+    with soma.SparseNDArray.create(
+        tmp_path.as_posix(), type=pa.float64(), shape=io["shape"]
+    ) as snda_w:
+        snda_w.write(arrow_tensor)
 
-    with soma.SparseNDArray(tmp_path.as_posix()).open_legacy("r") as snda:
+    with soma.SparseNDArray.open(tmp_path.as_posix()) as snda:
         if read_format == "table":
             if io["throws"] is not None:
                 with pytest.raises(io["throws"]):
@@ -775,8 +769,7 @@ def test_sparse_nd_array_table_slicing(tmp_path, io, write_format, read_format):
 
 def test_sparse_nd_array_not_implemented(tmp_path):
     """Poke all of the expected not implemented API"""
-    a = soma.SparseNDArray(uri=tmp_path.as_posix())
-    a.create_legacy(pa.uint32(), (99,))
+    a = soma.SparseNDArray.create(tmp_path.as_posix(), type=pa.uint32(), shape=(99,))
 
     with pytest.raises(NotImplementedError):
         next(a.read().dense_tensors())
@@ -784,8 +777,7 @@ def test_sparse_nd_array_not_implemented(tmp_path):
 
 def test_sparse_nd_array_error_corners(tmp_path):
     """Poke edge error handling"""
-    a = soma.SparseNDArray(uri=tmp_path.as_posix())
-    a.create_legacy(pa.uint32(), (99,))
+    a = soma.SparseNDArray.create(tmp_path.as_posix(), type=pa.uint32(), shape=(99,))
     a.write(
         create_random_tensor(format="coo", shape=(99,), dtype=np.uint32, density=0.1)
     )
@@ -836,11 +828,13 @@ def test_bad_coords(tmp_path, bad_coords):
     test.
     """
 
-    a = soma.SparseNDArray(uri=tmp_path.as_posix())
-    a.create_legacy(pa.uint32(), (99,))
+    a = soma.SparseNDArray.create(
+        uri=tmp_path.as_posix(), type=pa.uint32(), shape=(99,)
+    )
     a.write(
         create_random_tensor(format="coo", shape=(99,), dtype=np.uint32, density=0.1)
     )
+    a.flush()
 
     with pytest.raises(ValueError):
         next(a.read(bad_coords).tables())

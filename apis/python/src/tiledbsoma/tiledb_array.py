@@ -1,35 +1,49 @@
-from typing import List, Optional, Sequence, Tuple
+from typing import Optional, Sequence, Tuple, Type, TypeVar
 
 import pyarrow as pa
 import tiledb
+from somacore import options
 
 # This package's pybind11 code
 import tiledbsoma.libtiledbsoma as clib
+from tiledbsoma.options.soma_tiledb_context import SOMATileDBContext
 
-from .options import SOMATileDBContext
 from .tiledb_object import TileDBObject
 from .util_arrow import get_arrow_schema_from_tiledb_uri
+from .util_tiledb import ReadWriteHandle
+
+_Self = TypeVar("_Self", bound="TileDBArray")
 
 
-class TileDBArray(TileDBObject):
+class TileDBArray(TileDBObject[tiledb.Array]):
     """
     Wraps arrays from TileDB-Py by retaining a URI, options, etc.  Also serves as an abstraction layer to hide TileDB-specific details from the API, unless requested.
 
     [lifecycle: experimental]
     """
 
-    def __init__(
-        self,
+    @classmethod
+    def open(
+        cls: Type[_Self],
         uri: str,
+        mode: options.OpenMode = "r",
         *,
+        platform_config: Optional[options.PlatformConfig] = None,
         context: Optional[SOMATileDBContext] = None,
-    ):
-        """
-        See the ``TileDBObject`` constructor.
+    ) -> _Self:
+        del platform_config  # unused
+        context = context or SOMATileDBContext()
+        handle = ReadWriteHandle.open_array(uri, mode, context)
 
-        [lifecycle: experimental]
-        """
-        super().__init__(uri, context=context)
+        return cls(
+            uri,
+            mode,
+            handle,
+            context,
+            _this_is_internal_only="tiledbsoma-internal-code",
+        )
+
+    _STORAGE_TYPE = "array"
 
     @property
     def schema(self) -> pa.Schema:
@@ -38,57 +52,31 @@ class TileDBArray(TileDBObject):
         """
         return get_arrow_schema_from_tiledb_uri(self.uri, self._ctx)
 
-    # tiledb.Array handle for [re]use while self is "open"
-    _open_tiledb_array: Optional[tiledb.Array] = None
-
-    def _sub_open(self) -> None:
-        assert self._open_mode in ("r", "w") and self._open_tiledb_array is None
-        self._open_tiledb_array = self._close_stack.enter_context(
-            tiledb.open(self._uri, mode=self._open_mode, ctx=self._ctx)
-        )
-
-    @property
-    def _tiledb_obj(self) -> tiledb.Array:
-        "get the open tiledb.Array handle"
-        assert self._open_tiledb_array is not None  # => not self.closed
-        return self._open_tiledb_array
-
-    def close(self) -> None:
-        self._open_tiledb_array = None
-        super().close()  # closes self._open_tiledb_array via self._close_stack
-
     def _tiledb_array_schema(self) -> tiledb.ArraySchema:
         """
         Returns the TileDB array schema. Not part of the SOMA API; for dev/debug/etc.
         """
-        with self._ensure_open():
-            return self._tiledb_obj.schema
+        return self._handle.reader.schema
 
-    def _tiledb_array_keys(self) -> Sequence[str]:
+    def _tiledb_array_keys(self) -> Tuple[str, ...]:
         """
         Return all dim and attr names.
         """
-        with self._ensure_open():
-            A = self._tiledb_obj
-            dim_names = [A.domain.dim(i).name for i in range(A.domain.ndim)]
-            attr_names = [A.schema.attr(i).name for i in range(A.schema.nattr)]
-            return dim_names + attr_names
+        return self._tiledb_dim_names() + self._tiledb_attr_names()
 
     def _tiledb_dim_names(self) -> Tuple[str, ...]:
         """
         Reads the dimension names from the schema: for example, ['obs_id', 'var_id'].
         """
-        with self._ensure_open():
-            A = self._tiledb_obj
-            return tuple([A.domain.dim(i).name for i in range(A.domain.ndim)])
+        arr = self._handle.reader
+        return tuple(arr.domain.dim(i).name for i in range(arr.domain.ndim))
 
-    def _tiledb_attr_names(self) -> List[str]:
+    def _tiledb_attr_names(self) -> Tuple[str, ...]:
         """
         Reads the attribute names from the schema: for example, the list of column names in a dataframe.
         """
-        with self._ensure_open():
-            A = self._tiledb_obj
-            return [A.schema.attr(i).name for i in range(A.schema.nattr)]
+        arr = self._handle.reader
+        return tuple(arr.schema.attr(i).name for i in range(arr.schema.nattr))
 
     def _soma_reader(
         self,
@@ -115,3 +103,19 @@ class TileDBArray(TileDBObject):
         if result_order:
             kwargs["result_order"] = result_order
         return clib.SOMAReader(self._uri, **kwargs)
+
+    @classmethod
+    def _create_internal(
+        cls, uri: str, schema: tiledb.ArraySchema, context: SOMATileDBContext
+    ) -> ReadWriteHandle[tiledb.Array]:
+        """Creates the TileDB Array for this type and returns an opened handle.
+
+        This does the work of creating a TileDB Array with the provided schema
+        at the given URI, sets the necessary metadata, and returns a handle to
+        the newly-created array, open for writing.
+        """
+        tiledb.Array.create(uri, schema, ctx=context.tiledb_ctx)
+        handle = ReadWriteHandle.open_array(uri, "w", context)
+        cls._set_create_metadata(handle.writer)
+        handle.flush(update_read=True)
+        return handle

@@ -42,21 +42,22 @@ def sample_arrow_table():
 
 @pytest.fixture
 def sample_soma_dataframe(tmp_path, sample_arrow_table):
-    sdf = soma.DataFrame(tmp_path.as_posix())
-    sdf.create_legacy(sample_arrow_table.schema, index_column_names=["soma_joinid"])
+    sdf = soma.DataFrame.create(
+        tmp_path.as_posix(),
+        schema=sample_arrow_table.schema,
+        index_column_names=["soma_joinid"],
+    )
     sdf.write(sample_arrow_table)
     assert sdf.exists()
     return sdf
 
 
-def test_dataframe_unicode_columns(tmp_path, sample_arrow_table):
+def test_dataframe_unicode_columns(sample_soma_dataframe, sample_arrow_table):
     """Verify round-trip of unicode in DataFrame value columns"""
-    sdf = soma.DataFrame(tmp_path.as_posix())
-    sdf.create_legacy(sample_arrow_table.schema, index_column_names=["soma_joinid"])
-    sdf.write(sample_arrow_table)
+    sample_soma_dataframe.write(sample_arrow_table)
 
-    assert sample_arrow_table.schema == sdf.schema
-    assert sdf.read().concat().equals(sample_arrow_table)
+    assert sample_arrow_table.schema == sample_soma_dataframe.schema
+    assert sample_soma_dataframe.read().concat().equals(sample_arrow_table)
 
 
 def test_dataframe_unicode_value_filter(sample_soma_dataframe):

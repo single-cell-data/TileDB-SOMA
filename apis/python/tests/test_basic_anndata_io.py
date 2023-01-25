@@ -7,7 +7,7 @@ import tiledb
 
 import tiledbsoma
 import tiledbsoma.io
-from tiledbsoma import util
+from tiledbsoma import constants
 
 HERE = Path(__file__).parent
 
@@ -47,13 +47,14 @@ def test_import_anndata(adata, ingest_modes):
     tempdir = tempfile.TemporaryDirectory()
     output_path = tempdir.name
     orig = adata
-    metakey = util.SOMA_OBJECT_TYPE_METADATA_KEY  # keystroke-saver
+    metakey = constants.SOMA_OBJECT_TYPE_METADATA_KEY  # keystroke-saver
     all2d = (slice(None), slice(None))  # keystroke-saver
 
     for ingest_mode in ingest_modes:
 
-        exp = tiledbsoma.Experiment(output_path)
-        tiledbsoma.io.from_anndata(exp, orig, "RNA", ingest_mode=ingest_mode)
+        exp = tiledbsoma.io.from_anndata(
+            output_path, orig, "RNA", ingest_mode=ingest_mode
+        )
         if ingest_mode != "schema_only":
             have_ingested = True
 
@@ -175,14 +176,19 @@ def test_resume_mode(adata, resume_mode_h5ad_file):
 
     tempdir1 = tempfile.TemporaryDirectory()
     output_path1 = tempdir1.name
-    exp1 = tiledbsoma.Experiment(output_path1)
-    tiledbsoma.io.from_h5ad(exp1, resume_mode_h5ad_file, "RNA", ingest_mode="write")
+    exp1 = tiledbsoma.io.from_h5ad(
+        output_path1, resume_mode_h5ad_file, "RNA", ingest_mode="write"
+    )
 
     tempdir2 = tempfile.TemporaryDirectory()
     output_path2 = tempdir2.name
-    exp2 = tiledbsoma.Experiment(output_path2)
-    tiledbsoma.io.from_h5ad(exp2, resume_mode_h5ad_file, "RNA", ingest_mode="write")
-    tiledbsoma.io.from_h5ad(exp2, resume_mode_h5ad_file, "RNA", ingest_mode="resume")
+    start_write = tiledbsoma.io.from_h5ad(
+        output_path2, resume_mode_h5ad_file, "RNA", ingest_mode="write"
+    )
+    start_write.close()
+    exp2 = tiledbsoma.io.from_h5ad(
+        output_path2, resume_mode_h5ad_file, "RNA", ingest_mode="resume"
+    )
 
     assert _get_fragment_count(exp1.obs.uri) == _get_fragment_count(exp2.obs.uri)
     assert _get_fragment_count(exp1.ms["RNA"].var.uri) == _get_fragment_count(
@@ -224,11 +230,12 @@ def test_add_matrix_to_collection(adata):
     tempdir = tempfile.TemporaryDirectory()
     output_path = tempdir.name
 
-    exp = tiledbsoma.Experiment(output_path)
-    tiledbsoma.io.from_anndata(exp, adata, measurement_name="RNA")
+    exp = tiledbsoma.io.from_anndata(output_path, adata, measurement_name="RNA")
+    exp.flush()
     assert list(exp.ms["RNA"].X.keys()) == ["data"]
 
     tiledbsoma.io.add_X_layer(exp, "RNA", "data2", adata.X)
+    exp.flush()
     assert sorted(list(exp.ms["RNA"].X.keys())) == ["data", "data2"]
 
     with pytest.raises(KeyError):
@@ -238,6 +245,7 @@ def test_add_matrix_to_collection(adata):
     tiledbsoma.io.add_matrix_to_collection(
         exp, "RNA", "obsm", "X_pcb", adata.obsm["X_pca"]
     )
+    exp.flush()
     assert sorted(list(exp.ms["RNA"].obsm.keys())) == ["X_pca", "X_pcb", "X_tsne"]
 
     with pytest.raises(KeyError):
@@ -248,6 +256,7 @@ def test_add_matrix_to_collection(adata):
     tiledbsoma.io.add_matrix_to_collection(
         exp, "RNA", "newthing", "X_pcd", adata.obsm["X_pca"]
     )
+    exp.flush()
     assert sorted(list(exp.ms["RNA"]["newthing"].keys())) == ["X_pcd"]
 
 
@@ -255,8 +264,7 @@ def test_export_anndata(adata):
     tempdir = tempfile.TemporaryDirectory()
     output_path = tempdir.name
 
-    exp = tiledbsoma.Experiment(output_path)
-    tiledbsoma.io.from_anndata(exp, adata, measurement_name="RNA")
+    exp = tiledbsoma.io.from_anndata(output_path, adata, measurement_name="RNA")
 
     readback = tiledbsoma.io.to_anndata(exp, measurement_name="RNA")
 

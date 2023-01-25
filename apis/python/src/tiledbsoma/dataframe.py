@@ -1,5 +1,5 @@
 import collections.abc
-from typing import Any, Mapping, Optional, Sequence, Tuple, TypeVar, Union, cast
+from typing import Any, Mapping, Optional, Sequence, Tuple, TypeVar, cast
 
 import numpy as np
 import pyarrow as pa
@@ -13,7 +13,7 @@ from .options import SOMATileDBContext
 from .options.tiledb_create_options import TileDBCreateOptions
 from .query_condition import QueryCondition
 from .tiledb_array import TileDBArray
-from .types import NPFloating, NPInteger, PlatformConfig
+from .types import NPFloating, NPInteger
 from .util_iter import TableReadIter
 
 Slice = TypeVar("Slice", bound=Sequence[int])
@@ -29,32 +29,15 @@ class DataFrame(TileDBArray, somacore.DataFrame):
     [lifecycle: experimental]
     """
 
-    _index_column_names: Union[Tuple[()], Tuple[str, ...]]
-    _is_sparse: Optional[bool]
-
-    def __init__(
-        self,
+    @classmethod
+    def create(
+        cls,
         uri: str,
         *,
-        context: Optional[SOMATileDBContext] = None,
-    ):
-        """
-        See also the ``TileDBObject`` constructor.
-
-        [lifecycle: experimental]
-        """
-        super().__init__(uri=uri, context=context)
-        self._index_column_names = ()
-        self._is_sparse = None
-
-    # Inherited from somacore
-    # soma_type: Final = "SOMADataFrame"
-
-    def create_legacy(
-        self,
         schema: pa.Schema,
         index_column_names: Sequence[str] = (SOMA_JOINID,),
-        platform_config: Optional[somacore.options.PlatformConfig] = None,
+        platform_config: Optional[options.PlatformConfig] = None,
+        context: Optional[SOMATileDBContext] = None,
     ) -> "DataFrame":
         """
         Creates the data structure on disk/S3/cloud.
@@ -67,105 +50,47 @@ class DataFrame(TileDBArray, somacore.DataFrame):
 
         :param platform_config: Platform-specific options used to create this DataFrame, provided via "tiledb"->"create" nested keys
         """
-        util.check_type("schema", schema, (pa.Schema,))
-
-        schema = _validate_schema(schema, index_column_names)
-        self._create_empty(
+        context = context or SOMATileDBContext()
+        schema = _canonicalize_schema(schema, index_column_names)
+        tdb_schema = _build_tiledb_schema(
             schema,
             index_column_names,
             TileDBCreateOptions.from_platform_config(platform_config),
+            context,
         )
-        self._index_column_names = tuple(index_column_names)
+        handle = cls._create_internal(uri, tdb_schema, context)
+        is_sparse = tdb_schema.sparse
+        return cls(
+            uri,
+            "w",
+            handle,
+            context,
+            _is_sparse=is_sparse,
+            _index_column_names=tuple(index_column_names),
+            _this_is_internal_only="tiledbsoma-internal-code",
+        )
 
-        self._common_create(self.soma_type)  # object-type metadata etc
-        return self
-
-    def _create_empty(
+    def __init__(
         self,
-        schema: pa.Schema,
-        index_column_names: Sequence[str],
-        tiledb_create_options: TileDBCreateOptions,
-    ) -> None:
-        """
-        Create a TileDB 1D sparse array with dimensions and attributes
-        """
-
-        dims = []
-        for index_column_name in index_column_names:
-            pa_type = schema.field(index_column_name).type
-            dtype = util_arrow.tiledb_type_from_arrow_type(
-                pa_type, is_indexed_column=True
-            )
-            domain: Tuple[Any, Any]
-            if isinstance(dtype, str):
-                domain = None, None
-            elif np.issubdtype(dtype, NPInteger):
-                iinfo = np.iinfo(cast(NPInteger, dtype))
-                domain = iinfo.min, iinfo.max - 1
-            elif np.issubdtype(dtype, NPFloating):
-                finfo = np.finfo(cast(NPFloating, dtype))
-                domain = finfo.min, finfo.max
-            else:
-                raise TypeError(f"Unsupported dtype {dtype}")
-
-            # Default 2048 mods to 0 for 8-bit types and 0 is an invalid extent
-            extent = tiledb_create_options.dim_tile(index_column_name)
-            if isinstance(dtype, np.dtype) and dtype.itemsize == 1:
-                extent = 64
-
-            dim = tiledb.Dim(
-                name=index_column_name,
-                domain=domain,
-                tile=extent,
-                dtype=dtype,
-                filters=tiledb_create_options.dim_filters(
-                    index_column_name,
-                    [
-                        dict(
-                            _type="ZstdFilter",
-                            level=tiledb_create_options.string_dim_zstd_level(),
-                        )
-                    ],
-                ),
-            )
-            dims.append(dim)
-
-        dom = tiledb.Domain(dims, ctx=self._ctx)
-
-        attrs = []
-        for attr_name in schema.names:
-            if attr_name in index_column_names:
-                continue
-            attr = tiledb.Attr(
-                name=attr_name,
-                dtype=util_arrow.tiledb_type_from_arrow_type(
-                    schema.field(attr_name).type
-                ),
-                filters=tiledb_create_options.attr_filters(attr_name, ["ZstdFilter"]),
-                ctx=self._ctx,
-            )
-            attrs.append(attr)
-
-        cell_order, tile_order = tiledb_create_options.cell_tile_orders()
-
-        sch = tiledb.ArraySchema(
-            domain=dom,
-            attrs=attrs,
-            sparse=True,
-            allows_duplicates=False,
-            offsets_filters=tiledb_create_options.offsets_filters(),
-            capacity=tiledb_create_options.get("capacity", 100000),
-            cell_order=cell_order,
-            # As of TileDB core 2.8.2, we cannot consolidate string-indexed sparse arrays with
-            # col-major tile order: so we write ``X`` with row-major tile order.
-            tile_order=tile_order,
-            ctx=self._ctx,
+        uri: str,
+        mode: options.OpenMode,
+        handle: tiledb.Array,
+        context: SOMATileDBContext,
+        *,
+        # Hints to pre-fill cache entries.
+        _is_sparse: Optional[bool] = None,
+        _index_column_names: Optional[Tuple[str, ...]] = None,
+        _this_is_internal_only: str = "",
+    ):
+        super().__init__(
+            uri, mode, handle, context, _this_is_internal_only=_this_is_internal_only
         )
-        self._is_sparse = sch.sparse
+        self._index_column_names = _index_column_names
+        """Cache for the index column names."""
+        self._is_sparse = _is_sparse
+        """Cache for whether this is sparse."""
 
-        tiledb.Array.create(self._uri, sch)
-
-    def keys(self) -> Sequence[str]:
+    def keys(self) -> Tuple[str, ...]:
         """
         Returns the names of the columns when read back as a dataframe.
 
@@ -180,7 +105,7 @@ class DataFrame(TileDBArray, somacore.DataFrame):
         """
         # If we've cached the answer, skip the storage read. Especially if the storage is on the
         # cloud, where we'll avoid an HTTP request.
-        if self._index_column_names == ():
+        if self._index_column_names is None:
             self._index_column_names = self._tiledb_dim_names()
         return self._index_column_names
 
@@ -190,8 +115,7 @@ class DataFrame(TileDBArray, somacore.DataFrame):
         Return the number of rows in the dataframe. Same as `len(df)`.
         """
         # A.domain.shape at the tiledb level gives us the 0..2^63 range which is not what we want
-        with self._ensure_open():  # <-- currently superfluous, but we'll soon reuse SOMAReader
-            return cast(int, self._soma_reader().nnz())
+        return cast(int, self._soma_reader().nnz())
 
     def __len__(self) -> int:
         """
@@ -208,7 +132,7 @@ class DataFrame(TileDBArray, somacore.DataFrame):
         value_filter: Optional[str] = None,
         batch_size: options.BatchSize = _UNBATCHED,
         partitions: Optional[options.ReadPartitions] = None,
-        platform_config: Optional[PlatformConfig] = None,
+        platform_config: Optional[options.PlatformConfig] = None,
     ) -> TableReadIter:
         """
         Read a user-defined subset of data, addressed by the dataframe indexing columns, optionally filtered, and return results as one or more Arrow.Table.
@@ -245,76 +169,75 @@ class DataFrame(TileDBArray, somacore.DataFrame):
         del batch_size, partitions, platform_config  # Currently unused.
         result_order = options.ResultOrder(result_order)
 
-        with self._ensure_open():
-            A = self._tiledb_obj
-            query_condition = None
-            if value_filter is not None:
-                query_condition = QueryCondition(value_filter)
+        arr = self._handle.reader
+        query_condition = None
+        if value_filter is not None:
+            query_condition = QueryCondition(value_filter)
 
-            sr = self._soma_reader(
-                schema=A.schema,  # query_condition needs this
-                column_names=column_names,
-                query_condition=query_condition,
-                result_order=result_order.value,
-            )
+        sr = self._soma_reader(
+            schema=arr.schema,  # query_condition needs this
+            column_names=column_names,
+            query_condition=query_condition,
+            result_order=result_order.value,
+        )
 
-            if coords is not None:
-                if not isinstance(coords, (list, tuple)):
-                    raise TypeError(
-                        f"coords type {type(coords)} unsupported; expected list or tuple"
-                    )
-                if len(coords) < 1 or len(coords) > A.schema.domain.ndim:
-                    raise ValueError(
-                        f"coords {coords} must have length between 1 and ndim ({A.schema.domain.ndim}); got {len(coords)}"
-                    )
+        if coords is not None:
+            if not isinstance(coords, (list, tuple)):
+                raise TypeError(
+                    f"coords type {type(coords)} unsupported; expected list or tuple"
+                )
+            if len(coords) < 1 or len(coords) > arr.schema.domain.ndim:
+                raise ValueError(
+                    f"coords {coords} must have length between 1 and ndim ({arr.schema.domain.ndim}); got {len(coords)}"
+                )
 
-                for i, dim_coords in enumerate(coords):
-                    # Example: coords = [None, 3, slice(4,5)]
-                    # dim_coords takes on values None, 3, and slice(4,5) in this loop body.
-                    dim_name = A.schema.domain.dim(i).name
-                    if dim_coords is None:
-                        pass  # No constraint; select all in this dimension
-                    elif isinstance(dim_coords, int) or isinstance(dim_coords, str):
-                        # TO DO: Support index types other than int and string when we have support
-                        # in libtiledbsoma's SOMAReader. See also
-                        # https://github.com/single-cell-data/TileDB-SOMA/issues/419
-                        sr.set_dim_points(dim_name, [dim_coords])
-                    elif isinstance(dim_coords, np.ndarray):
-                        if dim_coords.ndim != 1:
-                            raise ValueError(
-                                f"only 1D numpy arrays may be used to index; got {dim_coords.ndim}"
-                            )
-                        sr.set_dim_points(dim_name, dim_coords)
-                    elif isinstance(dim_coords, slice):
-                        ned = A.nonempty_domain()  # None iff the array has no data
-                        lo_hi = util.slice_to_range(dim_coords, ned[i]) if ned else None
-                        if lo_hi is not None:
-                            lo, hi = lo_hi
-                            if lo < 0 or hi < 0:
-                                raise ValueError(
-                                    f"slice start and stop may not be negative; got ({lo}, {hi})"
-                                )
-                            if lo > hi:
-                                raise ValueError(
-                                    f"coordinate at slot {i} must have lo <= hi; got {lo} > {hi}"
-                                )
-                            sr.set_dim_ranges(dim_name, [lo_hi])
-                        # Else, no constraint in this slot. This is `slice(None)` which is like
-                        # Python indexing syntax `[:]`.
-                    elif isinstance(
-                        dim_coords,
-                        (collections.abc.Sequence, pa.Array, pa.ChunkedArray),
-                    ):
-                        sr.set_dim_points(dim_name, dim_coords)
-                    else:
-                        raise TypeError(
-                            f"coords[{i}] type {type(dim_coords)} is unsupported"
+            for i, dim_coords in enumerate(coords):
+                # Example: coords = [None, 3, slice(4,5)]
+                # dim_coords takes on values None, 3, and slice(4,5) in this loop body.
+                dim_name = arr.schema.domain.dim(i).name
+                if dim_coords is None:
+                    pass  # No constraint; select all in this dimension
+                elif isinstance(dim_coords, int) or isinstance(dim_coords, str):
+                    # TO DO: Support index types other than int and string when we have support
+                    # in libtiledbsoma's SOMAReader. See also
+                    # https://github.com/single-cell-data/TileDB-SOMA/issues/419
+                    sr.set_dim_points(dim_name, [dim_coords])
+                elif isinstance(dim_coords, np.ndarray):
+                    if dim_coords.ndim != 1:
+                        raise ValueError(
+                            f"only 1D numpy arrays may be used to index; got {dim_coords.ndim}"
                         )
+                    sr.set_dim_points(dim_name, dim_coords)
+                elif isinstance(dim_coords, slice):
+                    ned = arr.nonempty_domain()  # None iff the array has no data
+                    lo_hi = util.slice_to_range(dim_coords, ned[i]) if ned else None
+                    if lo_hi is not None:
+                        lo, hi = lo_hi
+                        if lo < 0 or hi < 0:
+                            raise ValueError(
+                                f"slice start and stop may not be negative; got ({lo}, {hi})"
+                            )
+                        if lo > hi:
+                            raise ValueError(
+                                f"coordinate at slot {i} must have lo <= hi; got {lo} > {hi}"
+                            )
+                        sr.set_dim_ranges(dim_name, [lo_hi])
+                    # Else, no constraint in this slot. This is `slice(None)` which is like
+                    # Python indexing syntax `[:]`.
+                elif isinstance(
+                    dim_coords,
+                    (collections.abc.Sequence, pa.Array, pa.ChunkedArray),
+                ):
+                    sr.set_dim_points(dim_name, dim_coords)
+                else:
+                    raise TypeError(
+                        f"coords[{i}] type {type(dim_coords)} is unsupported"
+                    )
 
-            # TODO: platform_config
-            # TODO: batch_size
+        # TODO: platform_config
+        # TODO: batch_size
 
-            sr.submit()
+        sr.submit()
         return TableReadIter(sr)
 
     def write(
@@ -345,16 +268,18 @@ class DataFrame(TileDBArray, somacore.DataFrame):
             raise ValueError(f"did not find any column names in {values.schema.names}")
 
         dim_cols_tuple = tuple(dim_cols_list)
-        with self._ensure_open("w"):
-            self._tiledb_obj[dim_cols_tuple] = attr_cols_map
+        self._handle.writer[dim_cols_tuple] = attr_cols_map
 
 
-def _validate_schema(schema: pa.Schema, index_column_names: Sequence[str]) -> pa.Schema:
+def _canonicalize_schema(
+    schema: pa.Schema, index_column_names: Sequence[str]
+) -> pa.Schema:
     """
     Handle default column additions (e.g., soma_joinid) and error checking on required columns.
 
     Returns a schema, which may be modified by the addition of required columns.
     """
+    util.check_type("schema", schema, (pa.Schema,))
     if not index_column_names:
         raise ValueError("DataFrame requires one or more index columns")
 
@@ -404,3 +329,78 @@ def _validate_schema(schema: pa.Schema, index_column_names: Sequence[str]) -> pa
             raise TypeError("Unsupported index type - pending fix #418 and #419")
 
     return schema
+
+
+def _build_tiledb_schema(
+    schema: pa.Schema,
+    index_column_names: Sequence[str],
+    tiledb_create_options: TileDBCreateOptions,
+    context: SOMATileDBContext,
+) -> tiledb.ArraySchema:
+    dims = []
+    for index_column_name in index_column_names:
+        pa_type = schema.field(index_column_name).type
+        dtype = util_arrow.tiledb_type_from_arrow_type(pa_type, is_indexed_column=True)
+        domain: Tuple[Any, Any]
+        if isinstance(dtype, str):
+            domain = None, None
+        elif np.issubdtype(dtype, NPInteger):
+            iinfo = np.iinfo(cast(NPInteger, dtype))
+            domain = iinfo.min, iinfo.max - 1
+        elif np.issubdtype(dtype, NPFloating):
+            finfo = np.finfo(cast(NPFloating, dtype))
+            domain = finfo.min, finfo.max
+        else:
+            raise TypeError(f"Unsupported dtype {dtype}")
+
+        # Default 2048 mods to 0 for 8-bit types and 0 is an invalid extent
+        extent = tiledb_create_options.dim_tile(index_column_name)
+        if isinstance(dtype, np.dtype) and dtype.itemsize == 1:
+            extent = 64
+
+        dim = tiledb.Dim(
+            name=index_column_name,
+            domain=domain,
+            tile=extent,
+            dtype=dtype,
+            filters=tiledb_create_options.dim_filters(
+                index_column_name,
+                [
+                    dict(
+                        _type="ZstdFilter",
+                        level=tiledb_create_options.string_dim_zstd_level(),
+                    )
+                ],
+            ),
+        )
+        dims.append(dim)
+
+    dom = tiledb.Domain(dims, ctx=context.tiledb_ctx)
+
+    attrs = []
+    for attr_name in schema.names:
+        if attr_name in index_column_names:
+            continue
+        attr = tiledb.Attr(
+            name=attr_name,
+            dtype=util_arrow.tiledb_type_from_arrow_type(schema.field(attr_name).type),
+            filters=tiledb_create_options.attr_filters(attr_name, ["ZstdFilter"]),
+            ctx=context.tiledb_ctx,
+        )
+        attrs.append(attr)
+
+    cell_order, tile_order = tiledb_create_options.cell_tile_orders()
+
+    return tiledb.ArraySchema(
+        domain=dom,
+        attrs=attrs,
+        sparse=True,
+        allows_duplicates=False,
+        offsets_filters=tiledb_create_options.offsets_filters(),
+        capacity=tiledb_create_options.get("capacity", 100000),
+        cell_order=cell_order,
+        # As of TileDB core 2.8.2, we cannot consolidate string-indexed sparse arrays with
+        # col-major tile order: so we write ``X`` with row-major tile order.
+        tile_order=tile_order,
+        ctx=context.tiledb_ctx,
+    )

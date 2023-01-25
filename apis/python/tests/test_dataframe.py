@@ -25,7 +25,7 @@ def arrow_schema():
 
 
 def test_dataframe(tmp_path, arrow_schema):
-    sdf = soma.DataFrame(uri=tmp_path.as_posix())
+    uri = tmp_path.as_posix()
 
     asch = pa.schema(
         [
@@ -40,14 +40,14 @@ def test_dataframe(tmp_path, arrow_schema):
     asch = arrow_schema()
     with pytest.raises(ValueError):
         # requires one or more index columns
-        sdf.create_legacy(schema=asch, index_column_names=[])
+        soma.DataFrame.create(uri, schema=asch, index_column_names=[])
     with pytest.raises(TypeError):
         # invalid schema type
-        sdf.create_legacy(schema=asch.to_string(), index_column_names=[])
+        soma.DataFrame.create(uri, schema=asch.to_string(), index_column_names=[])
     with pytest.raises(ValueError):
         # nonexistent indexed column
-        sdf.create_legacy(schema=asch, index_column_names=["bogus"])
-    sdf.create_legacy(schema=asch, index_column_names=["foo"])
+        soma.DataFrame.create(uri, schema=asch, index_column_names=["bogus"])
+    sdf = soma.DataFrame.create(uri, schema=asch, index_column_names=["foo"])
 
     assert sdf.count == 0
     assert len(sdf) == 0
@@ -98,9 +98,9 @@ def test_dataframe(tmp_path, arrow_schema):
 
 
 def test_dataframe_with_float_dim(tmp_path, arrow_schema):
-    sdf = soma.DataFrame(uri=tmp_path.as_posix())
-    asch = arrow_schema()
-    sdf.create_legacy(schema=asch, index_column_names=("bar",))
+    sdf = soma.DataFrame.create(
+        tmp_path.as_posix(), schema=arrow_schema(), index_column_names=("bar",)
+    )
     assert sdf.index_column_names == ("bar",)
 
 
@@ -119,8 +119,9 @@ def simple_data_frame(tmp_path):
         ]
     )
     index_column_names = ["index"]
-    sdf = soma.DataFrame(uri=tmp_path.as_posix())
-    sdf.create_legacy(schema=schema, index_column_names=index_column_names)
+    sdf = soma.DataFrame.create(
+        tmp_path.as_posix(), schema=schema, index_column_names=index_column_names
+    )
 
     data = {
         "index": [0, 1, 2, 3],
@@ -220,8 +221,11 @@ def test_DataFrame_read_column_names(simple_data_frame, ids, col_names):
 
 
 def test_empty_dataframe(tmp_path):
-    a = soma.DataFrame((tmp_path / "A").as_posix())
-    a.create_legacy(pa.schema([("a", pa.int32())]), index_column_names=["a"])
+    a = soma.DataFrame.create(
+        (tmp_path / "A").as_posix(),
+        schema=pa.schema([("a", pa.int32())]),
+        index_column_names=["a"],
+    )
     # Must not throw
     assert len(next(a.read())) == 0
     assert len(a.read().concat()) == 0
@@ -231,8 +235,9 @@ def test_empty_dataframe(tmp_path):
 
     with pytest.raises(ValueError):
         # illegal column name
-        soma.DataFrame((tmp_path / "B").as_posix()).create_legacy(
-            pa.schema([("a", pa.int32()), ("soma_bogus", pa.int32())]),
+        soma.DataFrame.create(
+            (tmp_path / "B").as_posix(),
+            schema=pa.schema([("a", pa.int32()), ("soma_bogus", pa.int32())]),
             index_column_names=["a"],
         )
 
@@ -245,32 +250,37 @@ def test_columns(tmp_path):
     4. No other soma_ ids allowed
     """
 
-    A = soma.DataFrame((tmp_path / "A").as_posix())
-    A.create_legacy(pa.schema([("a", pa.int32())]), index_column_names=["a"])
+    A = soma.DataFrame.create(
+        (tmp_path / "A").as_posix(),
+        schema=pa.schema([("a", pa.int32())]),
+        index_column_names=["a"],
+    )
     assert sorted(A.keys()) == sorted(["a", "soma_joinid"])
     assert A.schema.field("soma_joinid").type == pa.int64()
     A.delete()
 
-    B = soma.DataFrame((tmp_path / "B").as_posix())
     with pytest.raises(ValueError):
-        B.create_legacy(
-            pa.schema([("a", pa.int32()), ("soma_joinid", pa.float32())]),
+        soma.DataFrame.create(
+            (tmp_path / "B").as_posix(),
+            schema=pa.schema([("a", pa.int32()), ("soma_joinid", pa.float32())]),
             index_column_names=["a"],
         )
 
-    D = soma.DataFrame((tmp_path / "D").as_posix())
-    D.create_legacy(
-        pa.schema([("a", pa.int32()), ("soma_joinid", pa.int64())]),
+    D = soma.DataFrame.create(
+        (tmp_path / "D").as_posix(),
+        schema=pa.schema([("a", pa.int32()), ("soma_joinid", pa.int64())]),
         index_column_names=["a"],
     )
     assert sorted(D.keys()) == sorted(["a", "soma_joinid"])
     assert D.schema.field("soma_joinid").type == pa.int64()
     D.delete()
 
-    E = soma.DataFrame((tmp_path / "E").as_posix())
     with pytest.raises(ValueError):
-        E.create_legacy(
-            pa.schema([("a", pa.int32()), ("soma_is_a_reserved_prefix", pa.bool_())]),
+        soma.DataFrame.create(
+            (tmp_path / "E").as_posix(),
+            schema=pa.schema(
+                [("a", pa.int32()), ("soma_is_a_reserved_prefix", pa.bool_())]
+            ),
             index_column_names=["a"],
         )
 
@@ -341,8 +351,9 @@ def make_dataframe(request):
 )
 def test_index_types(tmp_path, make_dataframe):
     """Verify that the index columns can be of various types"""
-    sdf = soma.DataFrame(tmp_path.as_posix())
-    sdf.create_legacy(make_dataframe.schema, index_column_names=["index"])
+    sdf = soma.DataFrame.create(
+        tmp_path.as_posix(), schema=make_dataframe.schema, index_column_names=["index"]
+    )
     sdf.write(make_dataframe)
 
 
@@ -364,8 +375,9 @@ def make_multiply_indexed_dataframe(tmp_path, index_column_names: List[str]):
         ]
     )
 
-    sdf = soma.DataFrame(uri=tmp_path.as_posix())
-    sdf.create_legacy(schema=schema, index_column_names=index_column_names)
+    sdf = soma.DataFrame.create(
+        uri=tmp_path.as_posix(), schema=schema, index_column_names=index_column_names
+    )
 
     data: Dict[str, list] = {
         "index1": [0, 1, 2, 3, 4, 5],
@@ -650,7 +662,7 @@ def test_read_indexing(tmp_path, io):
     schema, sdf, n_data = make_multiply_indexed_dataframe(
         tmp_path, io["index_column_names"]
     )
-    with soma.DataFrame(uri=sdf.uri).open_legacy() as sdf:
+    with soma.DataFrame.open(uri=sdf.uri) as sdf:
         assert sdf.exists()
         assert list(sdf.index_column_names) == io["index_column_names"]
 
@@ -720,25 +732,29 @@ def test_create_categorical_types(tmp_path, schema):
     """
     Verify that `create` throws expected error on (unsupported) dictionary/categorical types.
     """
-    sdf = soma.DataFrame(tmp_path.as_posix())
     schema = schema.insert(0, pa.field("soma_joinid", pa.int64()))
 
     # Test exception as normal column
     with pytest.raises(TypeError):
-        sdf.create_legacy(schema, index_column_names=["soma_joinid"])
+        soma.DataFrame.create(
+            tmp_path.as_posix(), schema=schema, index_column_names=["soma_joinid"]
+        )
 
     # test as index column
     with pytest.raises(TypeError):
-        sdf.create_legacy(schema, index_column_names=["A"])
+        soma.DataFrame.create(
+            tmp_path.as_posix(), schema=schema, index_column_names=["A"]
+        )
 
 
 def test_write_categorical_types(tmp_path):
     """
     Verify that write path accepts categoricals
     """
-    sdf = soma.DataFrame(tmp_path.as_posix())
     schema = pa.schema([("soma_joinid", pa.int64()), ("A", pa.large_string())])
-    sdf.create_legacy(schema, index_column_names=["soma_joinid"])
+    sdf = soma.DataFrame.create(
+        tmp_path.as_posix(), schema=schema, index_column_names=["soma_joinid"]
+    )
 
     df = pd.DataFrame(
         data={
@@ -748,8 +764,7 @@ def test_write_categorical_types(tmp_path):
             ),
         }
     )
-    with sdf.open_legacy("w"):
-        sdf.write(pa.Table.from_pandas(df))
+    sdf.write(pa.Table.from_pandas(df))
 
     assert (df == sdf.read().concat().to_pandas()).all().all()
 
@@ -763,8 +778,9 @@ def test_result_order(tmp_path):
             ("soma_joinid", pa.int64()),
         ]
     )
-    sdf = soma.DataFrame(uri=tmp_path.as_posix())
-    sdf.create_legacy(schema=schema, index_column_names=["row", "col"])
+    sdf = soma.DataFrame.create(
+        uri=tmp_path.as_posix(), schema=schema, index_column_names=["row", "col"]
+    )
     data = {
         "row": [0] * 4 + [1] * 4 + [2] * 4 + [3] * 4,
         "col": [0, 1, 2, 3] * 4,

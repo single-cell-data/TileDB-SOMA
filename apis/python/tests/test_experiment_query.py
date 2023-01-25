@@ -420,10 +420,6 @@ def test_error_corners(soma_experiment: soma.Experiment):
     with pytest.raises(ValueError):
         soma_experiment.axis_query("no-such-measurement")
 
-    # Non-existent experiment
-    with pytest.raises(ValueError):
-        soma.Experiment(uri="foobar").axis_query("foobar")
-
     # Unknown X layer name
     with pytest.raises(KeyError):
         with soma_experiment.axis_query("RNA") as query:
@@ -704,8 +700,8 @@ Fixture support & utility functions below.
 
 
 def make_dataframe(path: str, sz: int) -> soma.DataFrame:
-    df = soma.DataFrame(uri=path)
-    df.create_legacy(
+    df = soma.DataFrame.create(
+        path,
         schema=pa.schema(
             [
                 ("soma_joinid", pa.int64()),
@@ -726,7 +722,7 @@ def make_dataframe(path: str, sz: int) -> soma.DataFrame:
 
 
 def make_sparse_array(path: str, shape: Tuple[int, int]) -> soma.SparseNDArray:
-    a = soma.SparseNDArray(path).create_legacy(pa.float32(), shape)
+    a = soma.SparseNDArray.create(path, type=pa.float32(), shape=shape)
     tensor = pa.SparseCOOTensor.from_scipy(
         sparse.random(
             shape[0],
@@ -757,47 +753,45 @@ def make_experiment(
     assert len(obs) == n_obs
     assert len(var) == n_vars
 
-    experiment = soma.Experiment((root / "exp").as_posix()).create_legacy()
-    experiment["ms"] = soma.Collection((root / "ms").as_posix()).create_legacy()
-    experiment.ms["RNA"] = soma.Measurement(
-        uri=f"{experiment.ms.uri}/RNA"
-    ).create_legacy()
+    experiment = soma.Experiment.create((root / "exp").as_posix())
+    experiment["ms"] = soma.Collection.create((root / "ms").as_posix())
+    experiment.ms["RNA"] = soma.Measurement.create(f"{experiment.ms.uri}/RNA")
     experiment["obs"] = obs
 
     measurement = experiment.ms["RNA"]
     measurement["var"] = var
-    measurement["X"] = soma.Collection(uri=f"{measurement.uri}/X").create_legacy()
+    measurement["X"] = soma.Collection.create(f"{measurement.uri}/X")
 
     (root / "X").mkdir()
     for X_layer_name in X_layer_names:
         path = root / "X" / X_layer_name
         path.mkdir()
-        measurement.X[X_layer_name] = make_sparse_array(
-            path.as_posix(), (n_obs, n_vars)
-        )
+        arr = make_sparse_array(path.as_posix(), (n_obs, n_vars))
+        measurement.X[X_layer_name] = arr
+        arr.flush()
+    measurement.X.flush()
 
     if obsp_layer_names:
         (root / "obsp").mkdir()
-        measurement["obsp"] = soma.Collection(
-            uri=f"{measurement.uri}/obsp"
-        ).create_legacy()
+        measurement["obsp"] = soma.Collection.create(f"{measurement.uri}/obsp")
         for obsp_layer_name in obsp_layer_names:
             path = root / "obsp" / obsp_layer_name
             path.mkdir()
-            measurement.obsp[obsp_layer_name] = make_sparse_array(
-                path.as_posix(), (n_obs, n_obs)
-            )
+            arr = make_sparse_array(path.as_posix(), (n_obs, n_obs))
+            measurement.obsp[obsp_layer_name] = arr
+            arr.flush()
+        measurement["obsp"].flush()
 
     if varp_layer_names:
         (root / "varp").mkdir()
-        measurement["varp"] = soma.Collection(
-            uri=f"{measurement.uri}/varp"
-        ).create_legacy()
+        measurement["varp"] = soma.Collection.create(f"{measurement.uri}/varp")
         for varp_layer_name in varp_layer_names:
             path = root / "varp" / varp_layer_name
             path.mkdir()
-            measurement.varp[varp_layer_name] = make_sparse_array(
-                path.as_posix(), (n_vars, n_vars)
-            )
-
+            arr = make_sparse_array(path.as_posix(), (n_vars, n_vars))
+            measurement.varp[varp_layer_name] = arr
+            arr.flush()
+        measurement["varp"].flush()
+    measurement.flush()
+    experiment.flush()
     return experiment

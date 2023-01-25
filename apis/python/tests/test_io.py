@@ -5,7 +5,6 @@ from scipy import sparse as sp
 
 import tiledbsoma as soma
 import tiledbsoma.io as somaio
-from tiledbsoma.options import SOMATileDBContext
 from tiledbsoma.options.tiledb_create_options import TileDBCreateOptions
 
 
@@ -52,8 +51,12 @@ def test_io_create_from_matrix_Dense_nd_array(tmp_path, tdb_create_options, src_
     * _tiledb_platform_config.write_X_chunked: True or False
     * src_array bigger or smaller than _tiledb_platform_config.goal_chunk_nnz
     """
-    snda = soma.DenseNDArray(tmp_path.as_posix(), context=SOMATileDBContext())
-    somaio.create_from_matrix(snda, src_matrix, platform_config=tdb_create_options)
+    snda = somaio.create_from_matrix(
+        soma.DenseNDArray,
+        tmp_path.as_posix(),
+        src_matrix,
+        platform_config=tdb_create_options,
+    )
 
     assert snda.shape == src_matrix.shape
     assert snda.ndim == src_matrix.ndim
@@ -98,8 +101,12 @@ def test_io_create_from_matrix_Sparse_nd_array(
     * _tiledb_platform_config.write_X_chunked: True or False
     * src_array bigger or smaller than _tiledb_platform_config.goal_chunk_nnz
     """
-    snda = soma.SparseNDArray(tmp_path.as_posix(), context=SOMATileDBContext())
-    somaio.create_from_matrix(snda, src_matrix, platform_config=tdb_create_options)
+    snda = somaio.create_from_matrix(
+        soma.SparseNDArray,
+        tmp_path.as_posix(),
+        src_matrix,
+        platform_config=tdb_create_options,
+    )
 
     assert snda.shape == src_matrix.shape
     assert snda.ndim == src_matrix.ndim

@@ -20,6 +20,7 @@ import tiledbsoma
 import tiledbsoma.exception
 import tiledbsoma.io
 import tiledbsoma.logging
+import tiledbsoma.types
 import tiledbsoma.util
 from tiledbsoma.options import SOMATileDBContext
 
@@ -217,17 +218,17 @@ def ingest_one(
             if not os.path.exists(parent):
                 os.mkdir(parent)
 
-    exp = tiledbsoma.Experiment(uri=output_path, context=context)
     exp_name = os.path.splitext(os.path.basename(output_path))[0]
 
-    tiledbsoma.io.from_h5ad(exp, input_path, measurement_name, ingest_mode=ingest_mode)
+    exp = tiledbsoma.io.from_h5ad(
+        output_path, input_path, measurement_name, ingest_mode=ingest_mode
+    )
 
     if write_soco:
-        soco = tiledbsoma.Collection(soco_dir, context=context)
-        if not soco.exists():
-            soco.create_legacy()
-        if not soco.exists():
-            raise tiledbsoma.exception.SOMAError(f"Could not create SOCO at {soco.uri}")
+        try:
+            soco = tiledbsoma.Collection.open(soco_dir, "w", context=context)
+        except tiledbsoma.DoesNotExistError:
+            soco = tiledbsoma.Collection.create(soco_dir, context=context)
         soco.set(exp_name, exp)
 
         tiledbsoma.logging.logger.info("")

@@ -30,9 +30,8 @@ def test_platform_config(adata):
     # Set up anndata input path and tiledb-group output path
     with tempfile.TemporaryDirectory() as output_path:
         # Ingest
-        exp = tiledbsoma.Experiment(output_path)
-        tiledbsoma.io.from_anndata(
-            exp,
+        exp = tiledbsoma.io.from_anndata(
+            output_path,
             adata,
             "RNA",
             platform_config={
@@ -52,8 +51,8 @@ def test_platform_config(adata):
             },
         )
 
-        with exp.ms["RNA"].X["data"].open_legacy() as data:
-            arr = data._tiledb_obj
+        with exp.ms["RNA"].X["data"] as data:
+            arr = data._handle.reader
             sch = arr.schema
             assert sch.capacity == 8888
             assert sch.cell_order == "row-major"

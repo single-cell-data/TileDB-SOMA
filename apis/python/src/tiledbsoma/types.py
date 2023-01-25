@@ -1,10 +1,11 @@
 import pathlib
-from typing import TYPE_CHECKING, Any, List, Mapping, Sequence, Tuple, Union
+from typing import TYPE_CHECKING, Any, List, Sequence, Tuple, Union
 
 import numpy as np
 import numpy.typing as npt
 import pandas as pd
 import pyarrow as pa
+import tiledb
 from typing_extensions import Literal
 
 if TYPE_CHECKING:
@@ -39,5 +40,7 @@ ArrowReadResult = Union[
     pa.SparseCSCMatrix,
 ]
 
-PlatformConfig = Mapping[str, Any]
-"""The platform-configuration dictionary. May contain a ``tiledb`` key."""
+StorageType = Literal["array", "group"]
+"""How a SOMA object is stored."""
+TDBHandle = Union[tiledb.Array, tiledb.Group]
+"""Handle on some persistent TileDB object."""

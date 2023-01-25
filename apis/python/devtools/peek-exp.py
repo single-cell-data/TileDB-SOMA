@@ -39,8 +39,9 @@ else:
     print(f"{sys.argv[0]}: need just one Experiment path.", file=sys.stderr)
     sys.exit(1)
 
-exp = tiledbsoma.Experiment(input_path)
-if not exp.exists():
-    print("Does not exist yet:", input_path)
+try:
+    exp = tiledbsoma.Experiment.open(input_path)
+except tiledbsoma.DoesNotExistError:
+    print(f"{input_path} does not exist")
 
 # Interact at the Python prompt now
