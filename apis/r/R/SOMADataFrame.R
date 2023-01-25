@@ -189,14 +189,13 @@ SOMADataFrame <- R6::R6Class(
                             qc = value_filter,         # idem
                             dim_points = coords,       # idem
                             loglevel = log_level)      # idem
-          arrow::as_arrow_table(arch::from_arch_array(rl, arrow::RecordBatch))
+          self$soma_reader_transform(rl)
       } else {
           ## should we error if this isn't null?
           if (!is.null(self$soma_reader_pointer)) {
               warning("pointer not null, skipping")
           } else {
-              ctx <- tiledb::tiledb_ctx()
-              private$soma_reader_pointer <- sr_setup(ctx@ptr, uri)
+              private$soma_reader_setup()
           }
           invisible(NULL)
       }
