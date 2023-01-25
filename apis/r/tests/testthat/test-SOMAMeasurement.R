@@ -23,7 +23,7 @@ test_that("Basic mechanics", {
   # Add var
   expect_error(measurement$var, "No member named 'var' found")
 
-  var <- create_and_populate_obs(file.path(uri, "var"))
+  var <- create_and_populate_var(file.path(uri, "var"))
 
   measurement$var <- var
   expect_equal(measurement$length(), 1)
