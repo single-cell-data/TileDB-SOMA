@@ -52,6 +52,7 @@ class DenseNDArray(TileDBArray, somacore.DenseNDArray):
 
         :param platform_config: Platform-specific options used to create this Array, provided via "tiledb"->"create" nested keys
         """
+        util.check_type("type", type, (pa.DataType,))
 
         # check on shape
         if len(shape) == 0 or any(e <= 0 for e in shape):
@@ -247,6 +248,8 @@ class DenseNDArray(TileDBArray, somacore.DenseNDArray):
             Define the values to be written to the subarray.  Must have same shape
             as defind by ``coords``, and the type must match the DenseNDArray.
         """
+        util.check_type("values", values, (pa.Tensor,))
+
         del platform_config  # Currently unused.
         with self._ensure_open("w"):
             self._tiledb_obj[coords] = values.to_numpy()

@@ -58,6 +58,8 @@ class DataFrame(TileDBArray, somacore.DataFrame):
 
         :param platform_config: Platform-specific options used to create this DataFrame, provided via "tiledb"->"create" nested keys
         """
+        util.check_type("schema", schema, (pa.Schema,))
+
         schema = _validate_schema(schema, index_column_names)
         self._create_empty(
             schema,
@@ -310,6 +312,8 @@ class DataFrame(TileDBArray, somacore.DataFrame):
 
         :param values: An Arrow.Table containing all columns, including the index columns. The schema for the values must match the schema for the ``DataFrame``.
         """
+        util.check_type("values", values, (pa.Table,))
+
         del platform_config  # unused
         dim_cols_list = []
         attr_cols_map = {}

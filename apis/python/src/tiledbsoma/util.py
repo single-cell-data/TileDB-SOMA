@@ -1,7 +1,7 @@
 import pathlib
 import time
 import urllib.parse
-from typing import List, Optional, Tuple, Union
+from typing import Any, List, Optional, Tuple, Type, Union
 
 import somacore
 from somacore import options
@@ -191,3 +191,21 @@ def dense_index_to_shape(
         return stop - start + 1
 
     raise TypeError("coordinates must be tuple of int or slice")
+
+
+def check_type(
+    name: str,
+    actual_value: Any,
+    expected_types: Tuple[Type[Any], ...],
+) -> None:
+    """
+    Verifies the type of an argument, or produces a useful error message.
+    """
+    if not isinstance(actual_value, expected_types):
+        if len(expected_types) == 1:
+            raise TypeError(
+                f"expected {name} argument to be of type {expected_types[0]}; got {type(actual_value)}"
+            )
+        raise TypeError(
+            f"expected {name} argument to be one of {expected_types!r}; got {type(actual_value)}"
+        )

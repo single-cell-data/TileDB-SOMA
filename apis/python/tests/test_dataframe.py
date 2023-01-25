@@ -41,6 +41,9 @@ def test_dataframe(tmp_path, arrow_schema):
     with pytest.raises(ValueError):
         # requires one or more index columns
         sdf.create(schema=asch, index_column_names=[])
+    with pytest.raises(TypeError):
+        # invalid schema type
+        sdf.create(schema=asch.to_string(), index_column_names=[])
     with pytest.raises(ValueError):
         # nonexistent indexed column
         sdf.create(schema=asch, index_column_names=["bogus"])
@@ -63,7 +66,12 @@ def test_dataframe(tmp_path, arrow_schema):
         pydict["baz"] = ["apple", "ball", "cat", "dog", "egg"]
         pydict["quux"] = [True, False, False, True, False]
         rb = pa.Table.from_pydict(pydict)
+
         sdf.write(rb)
+
+        with pytest.raises(TypeError):
+            # non-arrow write
+            sdf.write(rb.to_pandas)
 
     assert sdf.count == 5
     assert len(sdf) == 5

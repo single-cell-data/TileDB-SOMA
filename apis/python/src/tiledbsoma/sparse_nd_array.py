@@ -60,6 +60,7 @@ class SparseNDArray(TileDBArray, somacore.SparseNDArray):
 
         :param platform_config: Platform-specific options used to create this Array, provided via "tiledb"->"create" nested keys
         """
+        util.check_type("type", type, (pa.DataType,))
 
         # check on shape
         if len(shape) == 0 or any(e <= 0 for e in shape):
@@ -69,7 +70,7 @@ class SparseNDArray(TileDBArray, somacore.SparseNDArray):
 
         if not pa.types.is_primitive(type):
             raise TypeError(
-                "Unsupported type - DenseNDArray only supports primtive Arrow types"
+                "Unsupported type -- DenseNDArray only supports primtive Arrow types"
             )
 
         tiledb_create_options = TileDBCreateOptions.from_platform_config(
@@ -297,7 +298,9 @@ class SparseNDArray(TileDBArray, somacore.SparseNDArray):
                 A[coords] = data
                 return
 
-            raise TypeError("Unsupported Arrow type")
+        raise TypeError(
+            f"Unsupported Arrow type or non-arrow type for values argument: {type(values)}"
+        )
 
 
 class SparseNDArrayRead(somacore.SparseRead):
