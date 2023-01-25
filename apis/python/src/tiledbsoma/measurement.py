@@ -1,8 +1,9 @@
-from typing import Dict, Optional, Tuple, Union, cast
+from typing import Dict, Optional, Tuple
 
 import somacore.measurement as scm
 
 from .collection import CollectionBase
+from .options import SOMATileDBContext
 from .tiledb_object import TileDBObject
 
 
@@ -56,7 +57,7 @@ class Measurement(scm.Measurement[TileDBObject], CollectionBase[TileDBObject]):
         super().__init__(uri=uri, context=context)
 
     # Inherited from somacore
-    soma_type: Final = "SOMAMeasurement"
+    # soma_type: Final = "SOMAMeasurement"
 
     def _legacy_create(self) -> "Measurement":
         """

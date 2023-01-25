@@ -1,9 +1,10 @@
-from typing import Dict, Optional, Tuple, cast
+from typing import Dict, Optional, Tuple
 
 import somacore
 import somacore.experiment as scexp
 
 from .collection import CollectionBase
+from .options import SOMATileDBContext
 from .tiledb_object import TileDBObject
 
 _EMPTY_QUERY = somacore.AxisQuery()
@@ -36,7 +37,7 @@ class Experiment(scexp.Experiment[TileDBObject], CollectionBase[TileDBObject]):
         super().__init__(uri=uri, context=context)
 
     # Inherited from somacore
-    soma_type: Final = "SOMAExperiment"
+    # soma_type: Final = "SOMAExperiment"
 
     def _legacy_create(self) -> "Experiment":
         """

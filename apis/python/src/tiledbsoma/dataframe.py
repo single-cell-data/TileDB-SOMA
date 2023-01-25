@@ -27,7 +27,6 @@ class DataFrame(TileDBArray, somacore.DataFrame):
     """
 
     _index_column_names: Union[Tuple[()], Tuple[str, ...]]
-    _is_sparse: Optional[bool]
 
     def __init__(
         self,
@@ -40,7 +39,6 @@ class DataFrame(TileDBArray, somacore.DataFrame):
         """
         super().__init__(uri=uri, context=context)
         self._index_column_names = ()
-        self._is_sparse = None
 
     # Inherited from somacore
     # soma_type: Final = "SOMADataFrame"
@@ -150,7 +148,6 @@ class DataFrame(TileDBArray, somacore.DataFrame):
             tile_order=tile_order,
             ctx=self._ctx,
         )
-        self._is_sparse = sch.sparse
 
         tiledb.Array.create(self._uri, sch)
 
