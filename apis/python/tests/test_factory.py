@@ -5,6 +5,7 @@ import pytest
 import tiledb
 
 import tiledbsoma as soma
+import tiledbsoma.factory as factory
 
 UNKNOWN_ENCODING_VERSION = "3141596"
 
@@ -80,7 +81,7 @@ def tiledb_factory(soma_collection, object_type, metadata_key, encoding_version)
 def test_factory(tiledb_factory, expected_soma_type: Type):
     """Happy path tests"""
     object_uri, parent_collection = tiledb_factory
-    soma_obj = soma.factory._construct_member(object_uri, parent_collection, None, None)
+    soma_obj = factory._construct_member(object_uri, parent_collection, None, None)
     assert isinstance(soma_obj, expected_soma_type)
     assert soma_obj.exists()
 
@@ -98,9 +99,9 @@ def test_factory(tiledb_factory, expected_soma_type: Type):
 )
 def test_factory_unsupported_version(tiledb_factory):
     """All of these should raise, as they are encoding formats from the future"""
-    with pytest.raises(soma.SOMAError):
+    with pytest.raises(ValueError):
         object_uri, parent_collection = tiledb_factory
-        soma.factory._construct_member(object_uri, parent_collection, None, None)
+        factory._construct_member(object_uri, parent_collection, None, None)
 
 
 @pytest.mark.parametrize(
@@ -130,14 +131,14 @@ def test_factory_unsupported_types(tiledb_factory):
     """Illegal or non-existant metadata"""
     with pytest.raises(soma.SOMAError):
         object_uri, parent_collection = tiledb_factory
-        soma.factory._construct_member(object_uri, parent_collection, None, None)
+        factory._construct_member(object_uri, parent_collection, None, None)
 
 
 def test_factory_unknown_files(soma_collection):
     """Test with non-TileDB files or other wierdness"""
 
     assert (
-        soma.factory._construct_member(
+        factory._construct_member(
             "/tmp/no/such/file/exists/", soma_collection, None, None
         )
         is None

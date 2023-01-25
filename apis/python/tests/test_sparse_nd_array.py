@@ -795,24 +795,37 @@ def test_sparse_nd_array_error_corners(tmp_path):
             )
         )
 
-    # certain coords are illegal
-    with pytest.raises(ValueError):
-        next(a.read((slice(1, 10, 2),)).tables())
-    with pytest.raises(ValueError):
-        next(a.read((slice(32, 1),)).tables())
-    with pytest.raises(ValueError):
-        next(a.read((slice(-32),)).tables())
-    with pytest.raises(ValueError):
-        next(a.read((slice(-10, 2),)).tables())
-    with pytest.raises(ValueError):
-        next(a.read((slice(-10, -2),)).tables())
-    with pytest.raises(ValueError):
-        next(a.read((slice(10, -2),)).tables())
+    # other coord types are illegal
     with pytest.raises(TypeError):
         next(a.read("hi").tables())
+
+
+@pytest.mark.parametrize(
+    "bad_coords",
+    [
+        ((slice(1, 10, 2),)),  # step != 1
+        ((slice(32, 1),)),  # start > stop
+        ((slice(-32),)),  # negagive start
+        ((slice(-10, 2),)),  # negative start
+        ((slice(-10, -2),)),  # negative start & stop
+        ((slice(10, -2),)),  # negative stop
+        (()),  # empty, wrong ndim
+        ([]),  # empty, wrong ndim
+        ((slice(None), slice(None))),  # wrong ndim
+    ],
+)
+def test_bad_coords(tmp_path, bad_coords):
+    """
+    Most illegal coords raise ValueError - test for those.
+    Oddly, some raise TypeError, which is covered in another
+    test.
+    """
+
+    a = soma.SparseNDArray(uri=tmp_path.as_posix())
+    a.create(pa.uint32(), (99,))
+    a.write(
+        create_random_tensor(format="coo", shape=(99,), dtype=np.uint32, density=0.1)
+    )
+
     with pytest.raises(ValueError):
-        next(a.read(coords=()).tables())
-    with pytest.raises(ValueError):
-        next(a.read(coords=[]).tables())
-    with pytest.raises(ValueError):
-        next(a.read(coords=((slice(None), slice(None)))).tables())
+        next(a.read(bad_coords).tables())

@@ -64,11 +64,11 @@ def _construct_member(
         if object_type == "array":
             with tiledb.open(member_uri, ctx=context.tiledb_ctx) as A:
                 spec_name = A.meta.get(SOMA_OBJECT_TYPE_METADATA_KEY, None)
-                encoding_version = A.meta.get(SOMA_ENCODING_VERSION_METADATA_KEY, None)
+                encoding_version = A.meta.get(SOMA_ENCODING_VERSION_METADATA_KEY)
         elif object_type == "group":
             with tiledb.Group(member_uri, mode="r", ctx=context.tiledb_ctx) as G:
                 spec_name = G.meta.get(SOMA_OBJECT_TYPE_METADATA_KEY, None)
-                encoding_version = G.meta.get(SOMA_ENCODING_VERSION_METADATA_KEY, None)
+                encoding_version = G.meta.get(SOMA_ENCODING_VERSION_METADATA_KEY)
         else:
             return None
 
@@ -80,7 +80,7 @@ def _construct_member(
     if encoding_version is None:
         raise SOMAError("internal error: encoding_version not found")
     if encoding_version != SOMA_ENCODING_VERSION:
-        raise SOMAError("Unsupported SOMA object encoding version")
+        raise ValueError("Unsupported SOMA object encoding version")
     if spec_name not in SPEC_NAMES_TO_CLASS_NAMES:
         raise SOMAError(f'name "{spec_name}" unrecognized')
     class_name = SPEC_NAMES_TO_CLASS_NAMES[spec_name]
