@@ -58,6 +58,8 @@ class DataFrame(TileDBArray, somacore.DataFrame):
         """
         schema = _validate_schema(schema, index_column_names)
         self._create_empty(
+            self.uri,
+            self._ctx,
             schema,
             index_column_names,
             TileDBCreateOptions.from_platform_config(platform_config),
@@ -69,6 +71,8 @@ class DataFrame(TileDBArray, somacore.DataFrame):
 
     def _create_empty(
         self,
+        uri: str,
+        ctx: tiledb.Ctx,
         schema: pa.Schema,
         index_column_names: Sequence[str],
         tiledb_create_options: TileDBCreateOptions,
@@ -117,7 +121,7 @@ class DataFrame(TileDBArray, somacore.DataFrame):
             )
             dims.append(dim)
 
-        dom = tiledb.Domain(dims, ctx=self._ctx)
+        dom = tiledb.Domain(dims, ctx=ctx)
 
         attrs = []
         for attr_name in schema.names:
@@ -129,7 +133,7 @@ class DataFrame(TileDBArray, somacore.DataFrame):
                     schema.field(attr_name).type
                 ),
                 filters=tiledb_create_options.attr_filters(attr_name, ["ZstdFilter"]),
-                ctx=self._ctx,
+                ctx=ctx,
             )
             attrs.append(attr)
 
@@ -146,10 +150,10 @@ class DataFrame(TileDBArray, somacore.DataFrame):
             # As of TileDB core 2.8.2, we cannot consolidate string-indexed sparse arrays with
             # col-major tile order: so we write ``X`` with row-major tile order.
             tile_order=tile_order,
-            ctx=self._ctx,
+            ctx=ctx,
         )
 
-        tiledb.Array.create(self._uri, sch)
+        tiledb.Array.create(uri, sch)
 
     def keys(self) -> Sequence[str]:
         """
