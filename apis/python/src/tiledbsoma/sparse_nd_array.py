@@ -1,4 +1,3 @@
-import builtins
 import collections.abc
 from typing import Any, List, Optional, Union, cast
 
@@ -66,9 +65,7 @@ class SparseNDArray(TileDBArray, somacore.SparseNDArray):
         # Oddly, runtime typeguard checks (which autorun on our unit tests!) are OK with
         # `pa.DataType`.  But this util.check_type fails many unit-test cases unless we specifically
         # include `pa.lib.TimestampType` here.
-        util.check_type(
-            "type", builtins.type(type), (pa.DataType, pa.lib.TimestampType)
-        )
+        util.check_type("type", type, (pa.DataType, pa.lib.TimestampType))
 
         # check on shape
         if len(shape) == 0 or any(e <= 0 for e in shape):
