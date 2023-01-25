@@ -371,7 +371,7 @@ def _validate_schema(schema: pa.Schema, index_column_names: Sequence[str]) -> pa
         # TODO: Pending
         # https://github.com/single-cell-data/TileDB-SOMA/issues/418
         # https://github.com/single-cell-data/TileDB-SOMA/issues/419
-        if not schema.field(index_column_name).type in [
+        if schema.field(index_column_name).type not in [
             pa.int8(),
             pa.uint8(),
             pa.int16(),

@@ -6,7 +6,7 @@
 
 import os
 import sys
-from os.path import abspath, join, dirname
+from os.path import abspath, dirname, join
 
 here = abspath(join(dirname(__file__)))
 sys.path.insert(0, here)
@@ -46,7 +46,8 @@ extensions = ["sphinx.ext.autodoc", "sphinx.ext.doctest", "sphinx.ext.intersphin
 if readthedocs:
     intersphinx_mapping = {
         "tiledbsoma": (
-            "https://tiledb-inc-tiledb-soma.readthedocs-hosted.com/en/%s/" % rtd_version,
+            "https://tiledb-inc-tiledb-soma.readthedocs-hosted.com/en/%s/"
+            % rtd_version,
             None,
         ),
         "tiledbsoma-py": (
@@ -95,12 +96,13 @@ html_favicon = "_static/favicon.ico"
 #     html_theme = "default"
 # else:
 #     import sphinx_rtd_theme
-# 
+#
 #     html_theme = "sphinx_rtd_theme"
 #     html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
 
 # TODO: experiment 2022-09-07 -- not sure why tiledb-py seems to not need this ...
-import sphinx_rtd_theme
+import sphinx_rtd_theme  # noqa: E402
+
 html_theme = "sphinx_rtd_theme"
 html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
 
@@ -131,7 +133,13 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-    (master_doc, "TileDB-SOMA-Py.tex", "TileDB-SOMA-Py Documentation", "TileDB, Inc.", "manual")
+    (
+        master_doc,
+        "TileDB-SOMA-Py.tex",
+        "TileDB-SOMA-Py Documentation",
+        "TileDB, Inc.",
+        "manual",
+    )
 ]
 
 
@@ -163,7 +171,7 @@ texinfo_documents = [
 
 # Generate the sidebar automatically so that it is identical across all subprojects.
 # This (and gensidebar.py) from https://github.com/robotpy/robotpy-docs
-import gensidebar
+import gensidebar  # noqa: E402
 
 gensidebar.generate_sidebar(
     {"on_rtd": readthedocs, "rtd_version": rtd_version}, "tiledbsoma-py"

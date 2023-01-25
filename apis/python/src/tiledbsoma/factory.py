@@ -15,7 +15,12 @@ from .experiment import Experiment
 from .measurement import Measurement
 from .options import SOMATileDBContext
 from .sparse_nd_array import SparseNDArray
-from .util import SOMA_OBJECT_TYPE_METADATA_KEY, SPEC_NAMES_TO_CLASS_NAMES
+from .util import (
+    SOMA_ENCODING_VERSION,
+    SOMA_ENCODING_VERSION_METADATA_KEY,
+    SOMA_OBJECT_TYPE_METADATA_KEY,
+    SPEC_NAMES_TO_CLASS_NAMES,
+)
 
 ObjectTypes = Union[
     Experiment,
@@ -58,10 +63,12 @@ def _construct_member(
     try:
         if object_type == "array":
             with tiledb.open(member_uri, ctx=context.tiledb_ctx) as A:
-                spec_name = A.meta[SOMA_OBJECT_TYPE_METADATA_KEY]
+                spec_name = A.meta.get(SOMA_OBJECT_TYPE_METADATA_KEY, None)
+                encoding_version = A.meta.get(SOMA_ENCODING_VERSION_METADATA_KEY)
         elif object_type == "group":
             with tiledb.Group(member_uri, mode="r", ctx=context.tiledb_ctx) as G:
-                spec_name = G.meta[SOMA_OBJECT_TYPE_METADATA_KEY]
+                spec_name = G.meta.get(SOMA_OBJECT_TYPE_METADATA_KEY, None)
+                encoding_version = G.meta.get(SOMA_ENCODING_VERSION_METADATA_KEY)
         else:
             return None
 
@@ -70,6 +77,10 @@ def _construct_member(
 
     if spec_name is None:
         raise SOMAError("internal error: spec_name was not found")
+    if encoding_version is None:
+        raise SOMAError("internal error: encoding_version not found")
+    if encoding_version != SOMA_ENCODING_VERSION:
+        raise ValueError("Unsupported SOMA object encoding version")
     if spec_name not in SPEC_NAMES_TO_CLASS_NAMES:
         raise SOMAError(f'name "{spec_name}" unrecognized')
     class_name = SPEC_NAMES_TO_CLASS_NAMES[spec_name]

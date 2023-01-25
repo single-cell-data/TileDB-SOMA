@@ -29,6 +29,7 @@ the array type (e.g., Arrow.float32 defaults to 0.0).
 \itemize{
 \item \href{#method-SOMADenseNDArray-create}{\code{SOMADenseNDArray$create()}}
 \item \href{#method-SOMADenseNDArray-read_arrow_table}{\code{SOMADenseNDArray$read_arrow_table()}}
+\item \href{#method-SOMADenseNDArray-read_dense_matrix}{\code{SOMADenseNDArray$read_dense_matrix()}}
 \item \href{#method-SOMADenseNDArray-write}{\code{SOMADenseNDArray$write()}}
 \item \href{#method-SOMADenseNDArray-clone}{\code{SOMADenseNDArray$clone()}}
 }
@@ -103,6 +104,37 @@ read. List elements can be named when specifying a subset of dimensions.}
 }
 \subsection{Returns}{
 An \code{\link[arrow:Table]{arrow::Table}}.
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-SOMADenseNDArray-read_dense_matrix"></a>}}
+\if{latex}{\out{\hypertarget{method-SOMADenseNDArray-read_dense_matrix}{}}}
+\subsection{Method \code{read_dense_matrix()}}{
+Read as a dense matrix
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{SOMADenseNDArray$read_dense_matrix(
+  coords = NULL,
+  result_order = "ROW_MAJOR",
+  log_level = "warn"
+)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{coords}}{Optional \code{list} of integer vectors, one for each dimension, with a
+length equal to the number of values to read. If \code{NULL}, all values are
+read. List elements can be named when specifying a subset of dimensions.}
+
+\item{\code{result_order}}{Optional order of read results. This can be one of either
+\verb{"ROW_MAJOR, }"COL_MAJOR"\verb{, }"GLOBAL_ORDER"\verb{, or }"UNORDERED"`.}
+
+\item{\code{log_level}}{Optional logging level with default value of \code{"warn"}.}
+}
+\if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+A \code{matrix} object
 }
 }
 \if{html}{\out{<hr>}}

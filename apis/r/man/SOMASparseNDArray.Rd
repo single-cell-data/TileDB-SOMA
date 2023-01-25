@@ -30,6 +30,7 @@ the object are overwritten and new index values are added.
 \itemize{
 \item \href{#method-SOMASparseNDArray-create}{\code{SOMASparseNDArray$create()}}
 \item \href{#method-SOMASparseNDArray-read_arrow_table}{\code{SOMASparseNDArray$read_arrow_table()}}
+\item \href{#method-SOMASparseNDArray-read_sparse_matrix}{\code{SOMASparseNDArray$read_sparse_matrix()}}
 \item \href{#method-SOMASparseNDArray-write}{\code{SOMASparseNDArray$write()}}
 \item \href{#method-SOMASparseNDArray-clone}{\code{SOMASparseNDArray$clone()}}
 }
@@ -103,6 +104,40 @@ read. List elements can be named when specifying a subset of dimensions.}
 }
 \subsection{Returns}{
 An \code{\link[arrow:Table]{arrow::Table}}.
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-SOMASparseNDArray-read_sparse_matrix"></a>}}
+\if{latex}{\out{\hypertarget{method-SOMASparseNDArray-read_sparse_matrix}{}}}
+\subsection{Method \code{read_sparse_matrix()}}{
+Read as a sparse matrix
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{SOMASparseNDArray$read_sparse_matrix(
+  coords = NULL,
+  result_order = "ROW_MAJOR",
+  repr = c("C", "T", "R"),
+  log_level = "warn"
+)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{coords}}{Optional \code{list} of integer vectors, one for each dimension, with a
+length equal to the number of values to read. If \code{NULL}, all values are
+read. List elements can be named when specifying a subset of dimensions.}
+
+\item{\code{result_order}}{Optional order of read results. This can be one of either
+\verb{"ROW_MAJOR, }"COL_MAJOR"\verb{, }"GLOBAL_ORDER"\verb{, or }"UNORDERED"`.}
+
+\item{\code{repr}}{Optional one-character code for sparse matrix representation type}
+
+\item{\code{log_level}}{Optional logging level with default value of \code{"warn"}.}
+}
+\if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+A \code{matrix} object
 }
 }
 \if{html}{\out{<hr>}}
