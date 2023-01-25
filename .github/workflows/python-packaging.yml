@@ -49,6 +49,9 @@ jobs:
         - os: macos-11
           cibw_build: 'cp3*-macosx_x86_64'
           platform: macosx
+        - os: macos-11
+          cibw_build: 'cp3*-macosx_arm64'
+          platform: macosx
     steps:
     - name: Download sdist artifact
       uses: actions/download-artifact@v3
