@@ -341,6 +341,8 @@ def test_empty_read(tmp_path):
     # These work as expected
     coords = (slice(None),)
     assert sum(len(t) for t in a.read(coords).tables()) == 0
+    # Fails due to ARROW-17933
+    # assert sum(t.non_zero_length for t in a.read(coords).coos()) == 0
     assert sum(t.non_zero_length for t in a.read(coords).csrs()) == 0
     assert sum(t.non_zero_length for t in a.read(coords).cscs()) == 0
 
@@ -754,3 +756,76 @@ def test_sparse_nd_array_table_slicing(tmp_path, io, write_format, read_format):
             elif read_format == "table":
                 tensor = next(r.csrs())
             assert tensor.shape == io["shape"]
+
+
+def test_sparse_nd_array_not_implemented(tmp_path):
+    """Poke all of the expected not implemented API"""
+    a = soma.SparseNDArray(uri=tmp_path.as_posix())
+    a.create(pa.uint32(), (99,))
+
+    with pytest.raises(NotImplementedError):
+        next(a.read().dense_tensors())
+
+
+def test_sparse_nd_array_error_corners(tmp_path):
+    """Poke edge error handling"""
+    a = soma.SparseNDArray(uri=tmp_path.as_posix())
+    a.create(pa.uint32(), (99,))
+    a.write(
+        create_random_tensor(format="coo", shape=(99,), dtype=np.uint32, density=0.1)
+    )
+
+    # Write should reject unknown types
+    with pytest.raises(TypeError):
+        a.write(pa.array(np.zeros((99,), dtype=np.uint32)))
+    with pytest.raises(TypeError):
+        a.write(pa.chunked_array([np.zeros((99,), dtype=np.uint32)]))
+
+    # Write should reject wrong dimensionality
+    with pytest.raises(ValueError):
+        a.write(
+            pa.SparseCSRMatrix.from_scipy(
+                sparse.random(10, 10, format="csr", dtype=np.uint32)
+            )
+        )
+    with pytest.raises(ValueError):
+        a.write(
+            pa.SparseCSCMatrix.from_scipy(
+                sparse.random(10, 10, format="csc", dtype=np.uint32)
+            )
+        )
+
+    # other coord types are illegal
+    with pytest.raises(TypeError):
+        next(a.read("hi").tables())
+
+
+@pytest.mark.parametrize(
+    "bad_coords",
+    [
+        ((slice(1, 10, 2),)),  # step != 1
+        ((slice(32, 1),)),  # start > stop
+        ((slice(-32),)),  # negagive start
+        ((slice(-10, 2),)),  # negative start
+        ((slice(-10, -2),)),  # negative start & stop
+        ((slice(10, -2),)),  # negative stop
+        (()),  # empty, wrong ndim
+        ([]),  # empty, wrong ndim
+        ((slice(None), slice(None))),  # wrong ndim
+    ],
+)
+def test_bad_coords(tmp_path, bad_coords):
+    """
+    Most illegal coords raise ValueError - test for those.
+    Oddly, some raise TypeError, which is covered in another
+    test.
+    """
+
+    a = soma.SparseNDArray(uri=tmp_path.as_posix())
+    a.create(pa.uint32(), (99,))
+    a.write(
+        create_random_tensor(format="coo", shape=(99,), dtype=np.uint32, density=0.1)
+    )
+
+    with pytest.raises(ValueError):
+        next(a.read(bad_coords).tables())
