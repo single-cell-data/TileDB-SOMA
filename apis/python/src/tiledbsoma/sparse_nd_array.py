@@ -136,8 +136,8 @@ class SparseNDArray(TileDBArray, somacore.SparseNDArray):
         """
         Return length of each dimension, always a list of length ``ndim``
         """
-        with self._tiledb_open() as A:
-            return cast(NTuple, A.schema.domain.shape)
+        with self._ensure_open():
+            return cast(NTuple, self._tiledb_obj.schema.domain.shape)
 
     def reshape(self, shape: NTuple) -> None:
         """
@@ -154,7 +154,8 @@ class SparseNDArray(TileDBArray, somacore.SparseNDArray):
         """
         Return the number of stored values in the array, including explicitly stored zeros.
         """
-        return cast(int, self._soma_reader().nnz())
+        with self._ensure_open():  # <-- currently superfluous, but we'll soon reuse SOMAReader
+            return cast(int, self._soma_reader().nnz())
 
     def read(
         self,
@@ -197,7 +198,8 @@ class SparseNDArray(TileDBArray, somacore.SparseNDArray):
         if coords is None:
             coords = (slice(None),)
 
-        with self._tiledb_open("r") as A:
+        with self._ensure_open():
+            A = self._tiledb_obj
             shape = A.shape
             sr = self._soma_reader(schema=A.schema)
 
@@ -233,10 +235,6 @@ class SparseNDArray(TileDBArray, somacore.SparseNDArray):
                             raise ValueError(
                                 f"slice start and stop may not be negative; got ({lo}, {hi})"
                             )
-                        if lo > hi:
-                            raise ValueError(
-                                f"slice start must be <= slice stop; got ({lo}, {hi})"
-                            )
                         sr.set_dim_ranges(dim_name, [lo_hi])
                     # Else, no constraint in this slot. This is `slice(None)` which is like
                     # Python indexing syntax `[:]`.
@@ -247,7 +245,7 @@ class SparseNDArray(TileDBArray, somacore.SparseNDArray):
                 else:
                     raise TypeError(f"coord type {type(coord)} at slot {i} unsupported")
 
-        sr.submit()
+            sr.submit()
         return SparseNDArrayRead(sr, shape)
 
     def write(
@@ -274,33 +272,33 @@ class SparseNDArray(TileDBArray, somacore.SparseNDArray):
         """
         del platform_config  # Currently unused.
 
-        if isinstance(values, pa.SparseCOOTensor):
-            data, coords = values.to_numpy()
-            with self._tiledb_open("w") as A:
+        with self._ensure_open("w"):
+            A = self._tiledb_obj
+
+            if isinstance(values, pa.SparseCOOTensor):
+                data, coords = values.to_numpy()
                 A[tuple(c for c in coords.T)] = data
-            return
+                return
 
-        if isinstance(values, (pa.SparseCSCMatrix, pa.SparseCSRMatrix)):
-            if self.ndim != 2:
-                raise ValueError(
-                    f"Unable to write 2D Arrow sparse matrix to {self.ndim}D SparseNDArray"
-                )
-            # TODO: the `to_scipy` function is not zero copy. Need to explore zero-copy options.
-            sp = values.to_scipy().tocoo()
-            with self._tiledb_open("w") as A:
+            if isinstance(values, (pa.SparseCSCMatrix, pa.SparseCSRMatrix)):
+                if self.ndim != 2:
+                    raise ValueError(
+                        f"Unable to write 2D Arrow sparse matrix to {self.ndim}D SparseNDArray"
+                    )
+                # TODO: the `to_scipy` function is not zero copy. Need to explore zero-copy options.
+                sp = values.to_scipy().tocoo()
                 A[sp.row, sp.col] = sp.data
-            return
+                return
 
-        if isinstance(values, pa.Table):
-            data = values.column("soma_data").to_numpy()
-            coord_tbl = values.drop(["soma_data"])
-            coords = tuple(
-                coord_tbl.column(f"soma_dim_{n}").to_numpy()
-                for n in range(coord_tbl.num_columns)
-            )
-            with self._tiledb_open("w") as A:
+            if isinstance(values, pa.Table):
+                data = values.column("soma_data").to_numpy()
+                coord_tbl = values.drop(["soma_data"])
+                coords = tuple(
+                    coord_tbl.column(f"soma_dim_{n}").to_numpy()
+                    for n in range(coord_tbl.num_columns)
+                )
                 A[coords] = data
-            return
+                return
 
         raise TypeError(
             f"Unsupported Arrow type or non-arrow type for values argument: {type(values)}"
