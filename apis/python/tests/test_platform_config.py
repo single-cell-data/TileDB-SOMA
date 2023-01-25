@@ -52,7 +52,7 @@ def test_platform_config(adata):
             },
         )
 
-        with exp.ms["RNA"].X["data"].open() as data:
+        with exp.ms["RNA"].X["data"].open_legacy() as data:
             arr = data._tiledb_obj
             sch = arr.schema
             assert sch.capacity == 8888

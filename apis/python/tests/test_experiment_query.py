@@ -705,7 +705,7 @@ Fixture support & utility functions below.
 
 def make_dataframe(path: str, sz: int) -> soma.DataFrame:
     df = soma.DataFrame(uri=path)
-    df.create(
+    df.create_legacy(
         schema=pa.schema(
             [
                 ("soma_joinid", pa.int64()),
@@ -726,7 +726,7 @@ def make_dataframe(path: str, sz: int) -> soma.DataFrame:
 
 
 def make_sparse_array(path: str, shape: Tuple[int, int]) -> soma.SparseNDArray:
-    a = soma.SparseNDArray(path).create(pa.float32(), shape)
+    a = soma.SparseNDArray(path).create_legacy(pa.float32(), shape)
     tensor = pa.SparseCOOTensor.from_scipy(
         sparse.random(
             shape[0],
@@ -757,14 +757,16 @@ def make_experiment(
     assert len(obs) == n_obs
     assert len(var) == n_vars
 
-    experiment = soma.Experiment((root / "exp").as_posix()).create()
-    experiment["ms"] = soma.Collection((root / "ms").as_posix()).create()
-    experiment.ms["RNA"] = soma.Measurement(uri=f"{experiment.ms.uri}/RNA").create()
+    experiment = soma.Experiment((root / "exp").as_posix()).create_legacy()
+    experiment["ms"] = soma.Collection((root / "ms").as_posix()).create_legacy()
+    experiment.ms["RNA"] = soma.Measurement(
+        uri=f"{experiment.ms.uri}/RNA"
+    ).create_legacy()
     experiment["obs"] = obs
 
     measurement = experiment.ms["RNA"]
     measurement["var"] = var
-    measurement["X"] = soma.Collection(uri=f"{measurement.uri}/X").create()
+    measurement["X"] = soma.Collection(uri=f"{measurement.uri}/X").create_legacy()
 
     (root / "X").mkdir()
     for X_layer_name in X_layer_names:
@@ -776,7 +778,9 @@ def make_experiment(
 
     if obsp_layer_names:
         (root / "obsp").mkdir()
-        measurement["obsp"] = soma.Collection(uri=f"{measurement.uri}/obsp").create()
+        measurement["obsp"] = soma.Collection(
+            uri=f"{measurement.uri}/obsp"
+        ).create_legacy()
         for obsp_layer_name in obsp_layer_names:
             path = root / "obsp" / obsp_layer_name
             path.mkdir()
@@ -786,7 +790,9 @@ def make_experiment(
 
     if varp_layer_names:
         (root / "varp").mkdir()
-        measurement["varp"] = soma.Collection(uri=f"{measurement.uri}/varp").create()
+        measurement["varp"] = soma.Collection(
+            uri=f"{measurement.uri}/varp"
+        ).create_legacy()
         for varp_layer_name in varp_layer_names:
             path = root / "varp" / varp_layer_name
             path.mkdir()

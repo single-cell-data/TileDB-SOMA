@@ -18,6 +18,7 @@ from typing import (
 
 import somacore
 import tiledb
+from typing_extensions import NoReturn
 
 from .exception import DoesNotExistError, SOMAError
 from .options import SOMATileDBContext
@@ -91,7 +92,15 @@ class CollectionBase(TileDBObject, somacore.Collection[CollectionElementType]):
         super().__init__(uri=uri, context=context)
         self._cached_values = None
 
-    def create(self) -> "CollectionBase[CollectionElementType]":
+    def _not_implemented(self, *args: Any, **kwargs: Any) -> NoReturn:
+        raise NotImplementedError()
+
+    add_new_collection = _not_implemented
+    add_new_dataframe = _not_implemented
+    add_new_dense_ndarray = _not_implemented
+    add_new_sparse_ndarray = _not_implemented
+
+    def create_legacy(self) -> "CollectionBase[CollectionElementType]":
         """
         Creates the data structure on disk/S3/cloud.
         """
@@ -174,13 +183,13 @@ class CollectionBase(TileDBObject, somacore.Collection[CollectionElementType]):
         key: str,
         value: CollectionElementType,
         *,
-        relative: Optional[bool] = None,
+        use_relative_uri: Optional[bool] = None,
     ) -> None:
         """
         Adds an element to the collection.  This interface allows explicit control over
         `relative` URI, and uses the member's default name.
         """
-        self._set_element(key, value, relative=relative)
+        self._set_element(key, value, relative=use_relative_uri)
 
     def __setitem__(self, key: str, value: CollectionElementType) -> None:
         """

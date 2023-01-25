@@ -37,7 +37,7 @@ class DenseNDArray(TileDBArray, somacore.DenseNDArray):
     # Inherited from somacore
     # soma_type: Final = "SOMADenseNDArray"
 
-    def create(
+    def create_legacy(
         self,
         type: pa.DataType,
         shape: Union[NTuple, List[int]],
@@ -141,9 +141,7 @@ class DenseNDArray(TileDBArray, somacore.DenseNDArray):
         self,
         coords: options.DenseNDCoords,
         *,
-        result_order: options.StrOr[
-            somacore.ResultOrder
-        ] = somacore.ResultOrder.ROW_MAJOR,
+        result_order: options.ResultOrderStr = somacore.ResultOrder.ROW_MAJOR,
         batch_size: options.BatchSize = _UNBATCHED,
         partitions: Optional[options.ReadPartitions] = None,
         platform_config: Optional[PlatformConfig] = None,

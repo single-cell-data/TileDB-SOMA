@@ -64,7 +64,7 @@ def test_arrow_types_supported(tmp_path, arrow_type_info):
     arrow_type, expected_arrow_type = arrow_type_info
 
     sdf = soma.DataFrame(tmp_path.as_posix())
-    assert sdf == sdf.create(pa.schema([(str(arrow_type), arrow_type)]))
+    assert sdf == sdf.create_legacy(pa.schema([(str(arrow_type), arrow_type)]))
     schema = sdf.schema
     assert schema is not None
     assert sorted(schema.names) == sorted(["soma_joinid", str(arrow_type)])
@@ -78,7 +78,7 @@ def test_arrow_types_unsupported(tmp_path, arrow_type):
     sdf = soma.DataFrame(tmp_path.as_posix())
 
     with pytest.raises(TypeError, match=r"unsupported type|Unsupported Arrow type"):
-        assert sdf == sdf.create(pa.schema([(str(arrow_type), arrow_type)]))
+        assert sdf == sdf.create_legacy(pa.schema([(str(arrow_type), arrow_type)]))
 
 
 # ================================================================
@@ -134,7 +134,7 @@ def test_bool_arrays(tmp_path, bool_array):
     )
     index_column_names = ["soma_joinid"]
     sdf = soma.DataFrame(uri=tmp_path.as_posix())
-    sdf.create(schema=schema, index_column_names=index_column_names)
+    sdf.create_legacy(schema=schema, index_column_names=index_column_names)
     n_data = len(bool_array)
 
     data = {
