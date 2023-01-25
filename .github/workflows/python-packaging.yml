@@ -4,7 +4,7 @@ on:
   # I.e. on request
   workflow_dispatch:
   # Normally the smoke test only runs on merge to main.  To run it on a PR CI, uncomment `pull_request:`
-  # pull_request:
+  pull_request:
   # branches: [main]
   # paths-ignore:
   #   - 'apis/r/**'
@@ -46,6 +46,9 @@ jobs:
           platform: manylinux2014
         - os: macos-11
           cibw_build: 'cp3*-macosx_x86_64'
+          platform: macosx
+        - os: macos-11
+          cibw_build: 'cp3*-macosx_arm64'
           platform: macosx
     steps:
     - name: Download sdist artifact
