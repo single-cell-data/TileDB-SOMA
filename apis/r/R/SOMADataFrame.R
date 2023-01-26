@@ -189,7 +189,7 @@ SOMADataFrame <- R6::R6Class(
                             qc = value_filter,         # idem
                             dim_points = coords,       # idem
                             loglevel = log_level)      # idem
-          self$soma_reader_transform(rl)
+          private$soma_reader_transform(rl)
       } else {
           ## should we error if this isn't null?
           if (!is.null(self$soma_reader_pointer)) {
@@ -199,13 +199,7 @@ SOMADataFrame <- R6::R6Class(
           }
           invisible(NULL)
       }
-    },
-
-    ## refined from base class
-    soma_reader_transform = function(x) {
-      arrow::as_arrow_table(arch::from_arch_array(x, arrow::RecordBatch))
     }
-
 
   ),
 
@@ -241,6 +235,12 @@ SOMADataFrame <- R6::R6Class(
       }
 
       schema
+    },
+
+    ## refined from base class
+    soma_reader_transform = function(x) {
+      arrow::as_arrow_table(arch::from_arch_array(x, arrow::RecordBatch))
     }
+
   )
 )

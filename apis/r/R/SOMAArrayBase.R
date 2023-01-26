@@ -31,14 +31,10 @@ SOMAArrayBase <- R6::R6Class(
           NULL
       } else {
           rl <- sr_next(private$soma_reader_pointer)
-          self$soma_reader_transform(rl)
+          private$soma_reader_transform(rl)
       }
-    },
-
-    ## to be refined in derived classes
-    soma_reader_transform = function(x) {
-      x
     }
+
   ),
 
   private = list(
@@ -63,6 +59,12 @@ SOMAArrayBase <- R6::R6Class(
     # Instantiate soma_reader_pointer with a soma_reader object
     soma_reader_setup = function() {
       private$soma_reader_pointer <- sr_setup(tiledb::tiledb_ctx()@ptr, self$uri)
+    },
+
+    ## to be refined in derived classes
+    soma_reader_transform = function(x) {
+      x
     }
+
   )
 )

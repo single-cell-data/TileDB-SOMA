@@ -122,7 +122,7 @@ SOMADenseNDArray <- R6::R6Class(
                             dim_points = coords,        # NULL is dealt with by soma_reader()
                             result_order = result_order,
                             loglevel = log_level)       # idem
-          self$soma_reader_transform(rl)
+          private$soma_reader_transform(rl)
       } else {
           ## should we error if this isn't null?
           if (!is.null(self$soma_reader_pointer)) {
@@ -132,11 +132,6 @@ SOMADenseNDArray <- R6::R6Class(
           }
           invisible(NULL)
       }
-    },
-
-    ## refined from base class
-    soma_reader_transform = function(x) {
-      arrow::as_arrow_table(arch::from_arch_array(x, arrow::RecordBatch))
     },
 
     #' @description Read as a dense matrix
@@ -195,5 +190,14 @@ SOMADenseNDArray <- R6::R6Class(
       tiledb::query_layout(arr) <- "COL_MAJOR"
       arr[] <- values
     }
+  ),
+
+  private = list(
+
+    ## refined from base class
+    soma_reader_transform = function(x) {
+      arrow::as_arrow_table(arch::from_arch_array(x, arrow::RecordBatch))
+    }
+
   )
 )
