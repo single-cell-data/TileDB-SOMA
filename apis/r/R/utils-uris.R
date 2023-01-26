@@ -9,3 +9,21 @@ file_path <- function(..., fsep = .Platform$file.sep) {
   if (is_remote_uri(paths[[1]])) fsep <- "/"
   file.path(..., fsep = fsep)
 }
+
+#' Return the scheme of a URI
+#' @noRd
+uri_scheme <- function(uri) {
+  stopifnot(is_scalar_character(uri))
+  uri_parts <- strsplit(uri, "://")[[1]]
+  if (length(uri_parts) == 1) return(NULL)
+  uri_parts[[1]]
+}
+
+#' Remove the scheme from a URI
+#' @noRd
+uri_scheme_remove <- function(uri) {
+  stopifnot(is_scalar_character(uri))
+  uri_parts <- strsplit(uri, "://")[[1]]
+  if (length(uri_parts) == 1) return(uri)
+  uri_parts[[2]]
+}
