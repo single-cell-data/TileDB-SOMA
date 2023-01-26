@@ -244,10 +244,11 @@ def test_add_matrix_to_collection(adata):
         tiledbsoma.io.add_matrix_to_collection(
             exp, "nonesuch", "obsm", "X_pcc", adata.obsm["X_pca"]
         )
-    with pytest.raises(KeyError):
-        tiledbsoma.io.add_matrix_to_collection(
-            exp, "RNA", "nonesuch", "X_pcd", adata.obsm["X_pca"]
-        )
+
+    tiledbsoma.io.add_matrix_to_collection(
+        exp, "RNA", "newthing", "X_pcd", adata.obsm["X_pca"]
+    )
+    assert sorted(list(exp.ms["RNA"]["newthing"].keys())) == ["X_pcd"]
 
 
 def test_export_anndata(adata):

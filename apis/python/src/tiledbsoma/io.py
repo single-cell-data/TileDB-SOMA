@@ -504,14 +504,26 @@ def add_matrix_to_collection(
 
     Use `ingest_mode="resume"` to not error out if the schema already exists.
     """
+
+    if collection_name not in exp.ms[measurement_name]:
+        # E.g. this is the first obsm matrix
+        exp.ms[measurement_name][collection_name] = _check_create_collection(
+            Collection(
+                uri=util.uri_joinpath(exp.ms[measurement_name].uri, measurement_name)
+            ),
+            ingest_mode,
+        )
+
+    collection = cast(Collection, exp.ms[measurement_name][collection_name])
+
+    uri = f"{collection.uri}/{matrix_name}"
     cls = (
         DenseNDArray
         if isinstance(matrix_data, (np.ndarray, h5py.Dataset))
         else SparseNDArray
     )
-    collection = cast(Collection, exp.ms[measurement_name][collection_name])
-    uri = f"{collection.uri}/{matrix_name}"
     nd_array = cls(uri=uri)
+
     create_from_matrix(nd_array, matrix_data, ingest_mode=ingest_mode)
     collection.set(matrix_name, nd_array)
 
