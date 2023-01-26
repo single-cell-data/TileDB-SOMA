@@ -163,11 +163,7 @@ class CollectionBase(TileDBObject, somacore.Collection[CollectionElementType]):
                 from .factory import _construct_member
 
                 tdb = self._cached_values[key].tdb
-                soma = _construct_member(
-                    tdb.uri,
-                    context=self.context,
-                    object_type=tdb.type.__name__.lower(),
-                )
+                soma = _construct_member(tdb.uri, self.context, tdb.type)
                 if soma is None:
                     # if we were unable to create an object, it wasn't actually a SOMA object
                     raise KeyError(err_str)
