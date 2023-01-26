@@ -59,3 +59,25 @@ Suggests:
     pbmc3k.tiledb
 VignetteBuilder: knitr
 Config/testthat/edition: 2
+Collate: 
+    'SOMAContextBase.R'
+    'ScalarList.R'
+    'ConfigList.R'
+    'PlatformConfig.R'
+    'RcppExports.R'
+    'SOMAArrayBase.R'
+    'SOMACollection.R'
+    'SOMACollectionBase.R'
+    'SOMADataFrame.R'
+    'SOMADenseNdArray.R'
+    'SOMAExperiment.R'
+    'SOMAMeasurement.R'
+    'SOMASparseNdArray.R'
+    'SOMATileDBContext.R'
+    'TileDBArray.R'
+    'TileDBGroup.R'
+    'TileDBObject.R'
+    'TileDBURI.R'
+    'utils-arrow.R'
+    'utils-tiledb.R'
+    'utils.R'
