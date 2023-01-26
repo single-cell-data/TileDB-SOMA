@@ -130,7 +130,6 @@ class SparseNDArray(TileDBArray, somacore.SparseNDArray):
             ctx=self._ctx,
         )
 
-        # TODO: confirm that no timestamp is needed or supported for tiledb.Array.create()
         tiledb.Array.create(self._uri, sch)
 
         self._common_create(self.soma_type)  # object-type metadata etc
