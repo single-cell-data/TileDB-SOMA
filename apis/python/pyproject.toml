@@ -25,4 +25,3 @@ fix = true
 
 [tool.ruff.isort]
 known-first-party = ["tiledbsoma"]
-known-third-party = ["anndata"]

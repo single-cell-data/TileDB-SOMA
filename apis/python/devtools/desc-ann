@@ -6,8 +6,8 @@
 # See also:
 #
 # * `brew install hdf5`
-# * `h5ls -r anndata/pbmc3k_processed.h5ad`
-# * `h5ls -vr anndata/pbmc3k_processed.h5ad`
+# * `h5ls -r testdata/pbmc3k_processed.h5ad`
+# * `h5ls -vr testdata/pbmc3k_processed.h5ad`
 #
 # Please see comments in util_ann.py.
 # ================================================================
