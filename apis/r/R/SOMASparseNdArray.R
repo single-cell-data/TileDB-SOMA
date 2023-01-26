@@ -87,11 +87,14 @@ SOMASparseNDArray <- R6::R6Class(
     #' read. List elements can be named when specifying a subset of dimensions.
     #' @param result_order Optional order of read results. This can be one of either
     #' `"ROW_MAJOR, `"COL_MAJOR"`, `"GLOBAL_ORDER"`, or `"UNORDERED"`.
+    #' @param iterated Option boolean indicated whether data is read in call (when
+    #' `FALSE`, the default value) or in several iterated steps.
     #' @param log_level Optional logging level with default value of `"warn"`.
     #' @return An [`arrow::Table`].
     read_arrow_table = function(
       coords = NULL,
       result_order = "ROW_MAJOR",
+      iterated = FALSE,
       log_level = "warn"
     ) {
       uri <- self$uri
@@ -115,11 +118,21 @@ SOMASparseNDArray <- R6::R6Class(
           coords <- lapply(coords, function(x) if (inherits(x, "integer")) bit64::as.integer64(x) else x)
       }
 
-      rl <- soma_reader(uri = uri,
-                        dim_points = coords,        # NULL is dealt with by soma_reader()
-                        result_order = result_order,
-                        loglevel = log_level)       # idem
-      arrow::as_arrow_table(arch::from_arch_array(rl, arrow::RecordBatch))
+      if (isFALSE(iterated)) {
+          rl <- soma_reader(uri = uri,
+                            dim_points = coords,        # NULL is dealt with by soma_reader()
+                            result_order = result_order,
+                            loglevel = log_level)       # idem
+          private$soma_reader_transform(rl)
+      } else {
+          ## should we error if this isn't null?
+          if (!is.null(self$soma_reader_pointer)) {
+              warning("pointer not null, skipping")
+          } else {
+              private$soma_reader_setup()
+          }
+          invisible(NULL)
+      }
     },
 
     #' @description Read as a sparse matrix
@@ -135,6 +148,7 @@ SOMASparseNDArray <- R6::R6Class(
       coords = NULL,
       result_order = "ROW_MAJOR",
       repr = c("C", "T", "R"),
+      iterated = FALSE,
       log_level = "warn"
     ) {
       repr <- match.arg(repr)
@@ -185,6 +199,12 @@ SOMASparseNDArray <- R6::R6Class(
       private$open("WRITE")
       arr <- self$object
       arr[] <- data
+    },
+
+    ## refined from base class
+    soma_reader_transform = function(x) {
+      arrow::as_arrow_table(arch::from_arch_array(x, arrow::RecordBatch))
     }
+
   )
 )
