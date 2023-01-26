@@ -7,7 +7,7 @@ import tiledb
 
 import tiledbsoma
 import tiledbsoma.io
-from tiledbsoma.options import TileDBCreateOptions
+from tiledbsoma.options.tiledb_create_options import TileDBCreateOptions
 
 HERE = Path(__file__).parent
 
@@ -15,8 +15,8 @@ HERE = Path(__file__).parent
 @pytest.fixture
 def h5ad_file(request):
     # pbmc-small is faster for automated unit-test / CI runs.
-    # input_path = HERE.parent / "anndata/pbmc3k_processed.h5ad"
-    input_path = HERE.parent / "anndata/pbmc-small.h5ad"
+    # input_path = HERE.parent / "testdata/pbmc3k_processed.h5ad"
+    input_path = HERE.parent / "testdata/pbmc-small.h5ad"
     return input_path
 
 

@@ -9,7 +9,8 @@ from somacore import options
 
 from . import util, util_arrow
 from .constants import SOMA_JOINID
-from .options import SOMATileDBContext, TileDBCreateOptions
+from .options import SOMATileDBContext
+from .options.tiledb_create_options import TileDBCreateOptions
 from .query_condition import QueryCondition
 from .tiledb_array import TileDBArray
 from .types import NPFloating, NPInteger, PlatformConfig
@@ -24,6 +25,8 @@ class DataFrame(TileDBArray, somacore.DataFrame):
     Represents ``obs``, ``var``, and others.
 
     All ``DataFrame`` must contain a column called ``soma_joinid``, of type ``int64``. The ``soma_joinid`` column contains a unique value for each row in the ``DataFrame``, and intended to act as a joint key for other objects, such as ``SparseNDArray``.
+
+    [lifecycle: experimental]
     """
 
     _index_column_names: Union[Tuple[()], Tuple[str, ...]]
@@ -37,6 +40,8 @@ class DataFrame(TileDBArray, somacore.DataFrame):
     ):
         """
         See also the ``TileDBObject`` constructor.
+
+        [lifecycle: experimental]
         """
         super().__init__(uri=uri, context=context)
         self._index_column_names = ()
@@ -52,6 +57,10 @@ class DataFrame(TileDBArray, somacore.DataFrame):
         platform_config: Optional[somacore.options.PlatformConfig] = None,
     ) -> "DataFrame":
         """
+        Creates the data structure on disk/S3/cloud.
+
+        [lifecycle: experimental]
+
         :param schema: Arrow Schema defining the per-column schema. This schema must define all columns, including columns to be named as index columns. If the schema includes types unsupported by the SOMA implementation, an error will be raised.
 
         :param index_column_names: A list of column names to use as user-defined index columns (e.g., ``['cell_type', 'tissue_type']``). All named columns must exist in the schema, and at least one index column name is required.
@@ -159,6 +168,8 @@ class DataFrame(TileDBArray, somacore.DataFrame):
     def keys(self) -> Sequence[str]:
         """
         Returns the names of the columns when read back as a dataframe.
+
+        [lifecycle: experimental]
         """
         return self._tiledb_array_keys()
 
@@ -201,6 +212,8 @@ class DataFrame(TileDBArray, somacore.DataFrame):
     ) -> TableReadIter:
         """
         Read a user-defined subset of data, addressed by the dataframe indexing columns, optionally filtered, and return results as one or more Arrow.Table.
+
+        [lifecycle: experimental]
 
         :param coords: for each index dimension, which rows to read. Defaults to ``None``, meaning no constraint -- all IDs.
 
@@ -309,6 +322,8 @@ class DataFrame(TileDBArray, somacore.DataFrame):
     ) -> None:
         """
         Write an Arrow.Table to the persistent object. As duplicate index values are not allowed, index values already present in the object are overwritten and new index values are added.
+
+        [lifecycle: experimental]
 
         :param values: An Arrow.Table containing all columns, including the index columns. The schema for the values must match the schema for the ``DataFrame``.
         """

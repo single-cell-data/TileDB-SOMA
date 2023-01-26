@@ -235,7 +235,7 @@ TEST_CASE("SOMAReader: nnz with timestamp") {
     }
 }
 
-TEST_CASE("SOMAReader: nnz with timestamp and consolidation") {
+TEST_CASE("SOMAReader: nnz with consolidation") {
     auto num_fragments = GENERATE(1, 10);
     auto overlap = GENERATE(false, true);
     auto allow_duplicates = GENERATE(false, true);
@@ -263,6 +263,7 @@ TEST_CASE("SOMAReader: nnz with timestamp and consolidation") {
 
         // Write more data to the array at timestamp 20, which will be
         // duplicates of the data written at timestamp 10
+        // The duplicates get merged into one fragment during consolidation.
         create_array(
             base_uri,
             *ctx,
@@ -280,9 +281,7 @@ TEST_CASE("SOMAReader: nnz with timestamp and consolidation") {
         }
 
         // Get total cell num
-        std::pair<uint64_t, uint64_t> timestamp{1, 15};
-        auto sr = SOMAReader::open(
-            ctx, uri, "nnz", {}, "auto", "auto", timestamp);
+        auto sr = SOMAReader::open(ctx, uri, "nnz", {}, "auto", "auto");
 
         uint64_t nnz;
         if (allow_duplicates) {

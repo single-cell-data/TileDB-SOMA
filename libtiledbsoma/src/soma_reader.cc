@@ -96,14 +96,6 @@ SOMAReader::SOMAReader(
             }
             array->set_open_timestamp_start(timestamp->first);
             array->set_open_timestamp_end(timestamp->second);
-            // FIXME: tiledb::Array::set_open_timestamp_{start,end} are only
-            // effective if called before [re]opening the array. The
-            // tiledb::Array constructor internally opens the array already, so
-            // we need to reopen() for this to have effect.
-            // https://github.com/TileDB-Inc/TileDB/blob/6f92d2864440cec17474f2aae22f223147828c6a/tiledb/sm/cpp_api/array.h#L97
-            // We might need to open the array using the C API and then use the
-            // alternate tiledb::Array constructor that takes ownership of the C
-            // array.
             array->reopen();
         }
         mq_ = std::make_unique<ManagedQuery>(array, name);

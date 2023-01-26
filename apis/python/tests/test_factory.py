@@ -23,11 +23,11 @@ def soma_collection(tmp_path):
 @pytest.fixture
 def tiledb_factory(soma_collection, object_type, metadata_key, encoding_version):
     """Create a parent group and an object with specified metadata"""
-    parent_collection = soma_collection
-    object_uri = f"{parent_collection.uri}/object"
+    object_uri = f"{soma_collection.uri}/object"
 
     # create object
     if object_type == "array":
+        object_cls = tiledb.Array
         schema = tiledb.ArraySchema(
             domain=tiledb.Domain(
                 tiledb.Dim(name="rows", domain=(0, 100), dtype=np.int64)
@@ -41,11 +41,12 @@ def tiledb_factory(soma_collection, object_type, metadata_key, encoding_version)
         with tiledb.open(object_uri, mode="w") as A:
             _setmetadata(A, metadata_key, encoding_version)
     else:
+        object_cls = tiledb.Group
         tiledb.group_create(object_uri)
         with tiledb.Group(object_uri, mode="w") as G:
             _setmetadata(G, metadata_key, encoding_version)
 
-    return object_uri, parent_collection
+    return object_uri, soma_collection._context, object_cls
 
 
 @pytest.mark.parametrize(
@@ -80,8 +81,7 @@ def tiledb_factory(soma_collection, object_type, metadata_key, encoding_version)
 )
 def test_factory(tiledb_factory, expected_soma_type: Type):
     """Happy path tests"""
-    object_uri, parent_collection = tiledb_factory
-    soma_obj = factory._construct_member(object_uri, parent_collection._context)
+    soma_obj = factory._construct_member(*tiledb_factory)
     assert isinstance(soma_obj, expected_soma_type)
     assert soma_obj.exists()
 
@@ -100,8 +100,7 @@ def test_factory(tiledb_factory, expected_soma_type: Type):
 def test_factory_unsupported_version(tiledb_factory):
     """All of these should raise, as they are encoding formats from the future"""
     with pytest.raises(ValueError):
-        object_uri, parent_collection = tiledb_factory
-        factory._construct_member(object_uri, parent_collection._context)
+        factory._construct_member(*tiledb_factory)
 
 
 @pytest.mark.parametrize(
@@ -130,17 +129,15 @@ def test_factory_unsupported_version(tiledb_factory):
 def test_factory_unsupported_types(tiledb_factory):
     """Illegal or non-existant metadata"""
     with pytest.raises(soma.SOMAError):
-        object_uri, parent_collection = tiledb_factory
-        factory._construct_member(object_uri, parent_collection._context)
+        factory._construct_member(*tiledb_factory)
 
 
-def test_factory_unknown_files(soma_collection):
-    """Test with non-TileDB files or other wierdness"""
-
+@pytest.mark.parametrize("object_cls", [tiledb.Array, tiledb.Group])
+def test_factory_unknown_files(soma_collection, object_cls):
+    """Test with non-TileDB files or other weirdness"""
     assert (
         factory._construct_member(
-            "/tmp/no/such/file/exists/",
-            soma_collection._context,
+            "/tmp/no/such/file/exists/", soma_collection._context, object_cls
         )
         is None
     )

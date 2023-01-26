@@ -24,6 +24,8 @@ class TileDBObject(ABC, somacore.SOMAObject):
     Base class for ``TileDBArray`` and ``Collection``.
 
     Accepts a SOMATileDBContext, to enable session state to be shared across SOMA objects.
+
+    [lifecycle: experimental]
     """
 
     _uri: str
@@ -46,6 +48,8 @@ class TileDBObject(ABC, somacore.SOMAObject):
         Initialization-handling shared between ``TileDBArray`` and ``Collection``.  Specify ``context`` for
         the top-level object; omit it and specify parent for non-top-level objects. Note that the parent reference
         is solely for propagating the context
+
+        [lifecycle: experimental]
         """
 
         self._uri = uri
@@ -79,8 +83,10 @@ class TileDBObject(ABC, somacore.SOMAObject):
         """
         Delete the storage specified with the URI.
 
-        TODO: should this raise an error if the object does not exist?
+        [lifecycle: experimental]
         """
+
+        # TODO: should this raise an error if the object does not exist?
         try:
             tiledb.remove(self._uri)
         except tiledb.TileDBError:
@@ -115,6 +121,8 @@ class TileDBObject(ABC, somacore.SOMAObject):
         This might be in case an object has not yet been populated, or, if a containing object has been populated but doesn't have a particular member (e.g. not all ``Measurement`` objects have a ``varp``).
 
         For ``tiledb://`` URIs this is a REST-server request which we'd like to cache.  However, remove-and-replace use-cases are possible and common in notebooks and it turns out caching the existence-check isn't a robust approach.
+
+        [lifecycle: experimental]
         """
 
         # Pre-checking if the group exists by calling tiledb.object_type is simple, however, for
