@@ -276,7 +276,6 @@ uint64_t SOMAReader::nnz() {
 uint64_t SOMAReader::nnz_slow() {
     // If duplicates are allowed, we cannot count simply count cells.
     if (mq_->schema()->allows_dups()) {
-        // TODO: should this check be in nnz_slow()?
         throw TileDBSOMAError(
             "[SOMAReader] nnz not supported when duplicates are allowed");
     }
