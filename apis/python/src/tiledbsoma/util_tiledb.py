@@ -1,11 +1,15 @@
-from typing import TypeVar, cast
+from typing import Any, Generic, Optional, TypeVar, cast
 
+import attrs
 import numpy as np
 import pandas._typing as pdt
 import scipy.sparse as sp
 import tiledb
 from pandas.api.types import infer_dtype, is_categorical_dtype
+from somacore import options
 
+from .exception import DoesNotExistError, SOMAError
+from .options import SOMATileDBContext
 from .types import NPNDArray, PDSeries
 
 SOMA_OBJECT_TYPE_METADATA_KEY = "soma_object_type"
@@ -96,3 +100,112 @@ def is_duplicate_group_key_error(e: tiledb.TileDBError) -> bool:
         return True
 
     return False
+
+
+_TDBO = TypeVar("_TDBO", bound=tiledb.Object)
+_Self = TypeVar("_Self")
+
+
+@attrs.define()
+class ReadWriteHandle(Generic[_TDBO]):
+    """Paired read/write handles to a TileDB object.
+
+    You can (and should) access the members, but do not reassign them.
+    """
+
+    uri: str
+    context: SOMATileDBContext
+    reader: _TDBO
+    maybe_writer: Optional[_TDBO]
+    closed: bool = False
+
+    @classmethod
+    def open_array(
+        cls,
+        uri: str,
+        mode: options.OpenMode,
+        context: SOMATileDBContext,
+    ) -> "ReadWriteHandle[tiledb.Array]":
+        try:
+            rd = tiledb.open(uri, "r", ctx=context.tiledb_ctx)
+            try:
+                wr = (
+                    tiledb.open(uri, "w", ctx=context.tiledb_ctx)
+                    if mode == "w"
+                    else None
+                )
+            except Exception:
+                rd.close()
+                raise
+        except tiledb.TileDBError as tdbe:
+            if is_does_not_exist_error(tdbe):
+                raise DoesNotExistError(f"array {uri!r} does not exist")
+            raise
+        return ReadWriteHandle(uri, context, reader=rd, maybe_writer=wr)
+
+    @classmethod
+    def open_group(
+        cls,
+        uri: str,
+        mode: options.OpenMode,
+        context: SOMATileDBContext,
+    ) -> "ReadWriteHandle[tiledb.Group]":
+        try:
+            rd = tiledb.Group(uri, "r", ctx=context.tiledb_ctx)
+            try:
+                wr = (
+                    tiledb.Group(uri, "w", ctx=context.tiledb_ctx)
+                    if mode == "w"
+                    else None
+                )
+            except Exception:
+                rd.close()
+                raise
+        except tiledb.TileDBError as tdbe:
+            if is_does_not_exist_error(tdbe):
+                raise DoesNotExistError(f"group {uri!r} does not exist")
+            raise
+        return ReadWriteHandle(uri, context, reader=rd, maybe_writer=wr)
+
+    @property
+    def writer(self) -> _TDBO:
+        if self.maybe_writer is None:
+            raise SOMAError(f"cannot write to {self.uri!r} opened in read-only mode")
+        return self.maybe_writer
+
+    def close(self) -> None:
+        if self.closed:
+            return
+        self.closed = True
+        self.reader.close()
+        if self.maybe_writer is not None:
+            self.maybe_writer.close()
+
+    def flush(self, *, update_read: bool = False) -> None:
+        """Writes changes out to the TileDB object on disk.
+
+        If ``update_read`` is set, will reopen the read handle so that the
+        just-written writes are visible.
+        """
+        if self.closed or self.maybe_writer is None:
+            return
+        self.maybe_writer.close()
+        if update_read:
+            self.reader.close()
+        if isinstance(self.maybe_writer, tiledb.Array):
+            self.maybe_writer = tiledb.open(self.uri, "w", ctx=self.context.tiledb_ctx)
+            if update_read:
+                self.reader = tiledb.open(self.uri, "r", ctx=self.context.tiledb_ctx)
+        elif isinstance(self.maybe_writer, tiledb.Group):
+            self.maybe_writer = tiledb.Group(self.uri, "w", ctx=self.context.tiledb_ctx)
+            if update_read:
+                self.reader = tiledb.Group(self.uri, "r", ctx=self.context.tiledb_ctx)
+
+    def __enter__(self: _Self) -> _Self:
+        return self
+
+    def __exit__(self, *_: Any) -> None:
+        self.close()
+
+    def __del__(self) -> None:
+        self.close()
