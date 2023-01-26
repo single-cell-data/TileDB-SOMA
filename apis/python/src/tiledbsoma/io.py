@@ -28,7 +28,8 @@ from tiledbsoma import (
 from tiledbsoma.exception import SOMAError
 
 from .constants import SOMA_JOINID
-from .options import SOMATileDBContext, TileDBCreateOptions
+from .options import SOMATileDBContext
+from .options.tiledb_create_options import TileDBCreateOptions
 from .types import INGEST_MODES, IngestMode, NPNDArray, Path
 
 SparseMatrix = Union[sp.csr_matrix, sp.csc_matrix, SparseDataset]
@@ -55,6 +56,8 @@ def from_h5ad(
 
     The "schema_only" ingest_mode creates groups and array schema, without writing array data.
     This is useful as a prep-step for parallel append-ingest of multiple H5ADs to a single soma.
+
+    [lifecycle: experimental]
     """
     if ingest_mode not in INGEST_MODES:
         raise SOMAError(
@@ -107,6 +110,8 @@ def from_anndata(
 
     The "schema_only" ingest_mode creates groups and array schema, without writing array data.
     This is useful as a prep-step for parallel append-ingest of multiple H5ADs to a single soma.
+
+    [lifecycle: experimental]
     """
     if ingest_mode not in INGEST_MODES:
         raise SOMAError(
@@ -485,6 +490,8 @@ def add_X_layer(
     This is useful for adding X data, for example from scanpy.pp.normalize_total, scanpy.pp.log1p, etc.
 
     Use `ingest_mode="resume"` to not error out if the schema already exists.
+
+    [lifecycle: experimental]
     """
     add_matrix_to_collection(exp, measurement_name, "X", X_layer_name, X_layer_data)
 
@@ -867,6 +874,8 @@ def to_h5ad(
 ) -> None:
     """
     Converts the experiment group to anndata format and writes it to the specified .h5ad file.
+
+    [lifecycle: experimental]
     """
     s = util.get_start_stamp()
     logging.log_io(None, f"START  Experiment.to_h5ad -> {h5ad_path}")
@@ -898,6 +907,8 @@ def to_anndata(
     * obs,var as ``pandas.dataframe``
     * obsm,varm arrays as ``numpy.ndarray``
     * obsp,varp arrays as ``scipy.sparse.csr_matrix``
+
+    [lifecycle: experimental]
     """
 
     s = util.get_start_stamp()

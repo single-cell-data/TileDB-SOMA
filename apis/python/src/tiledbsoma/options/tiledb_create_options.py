@@ -40,6 +40,12 @@ StrOrMap = Union[str, Mapping[str, Any]]
 
 @attrs.define(frozen=True)
 class TileDBCreateOptions(Mapping[str, Any]):
+    """
+    Provides strongly-typed access and default values for `platform_config` options stored under the "tiledb"->"create"
+    Mapping keys.
+
+    Intended for internal use only.
+    """
 
     _config: Mapping[str, Any] = field(factory=dict)
 

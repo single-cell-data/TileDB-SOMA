@@ -88,6 +88,8 @@ class CollectionBase(TileDBObject, somacore.Collection[CollectionElementType]):
     ):
         """
         Also see the ``TileDBObject`` constructor.
+
+        [lifecycle: experimental]
         """
         super().__init__(uri=uri, context=context)
         self._cached_values = None
@@ -103,6 +105,8 @@ class CollectionBase(TileDBObject, somacore.Collection[CollectionElementType]):
     def create_legacy(self) -> "CollectionBase[CollectionElementType]":
         """
         Creates the data structure on disk/S3/cloud.
+
+        [lifecycle: experimental]
         """
         return self._create(self.soma_type)
 
@@ -184,6 +188,8 @@ class CollectionBase(TileDBObject, somacore.Collection[CollectionElementType]):
         """
         Adds an element to the collection.  This interface allows explicit control over
         `relative` URI, and uses the member's default name.
+
+        [lifecycle: experimental]
         """
         self._set_element(key, value, relative=use_relative_uri)
 
@@ -392,6 +398,8 @@ class CollectionBase(TileDBObject, somacore.Collection[CollectionElementType]):
 class Collection(CollectionBase[TileDBObject]):
     """
     A persistent collection of SOMA objects, mapping string keys to any SOMA object.
+
+    [lifecycle: experimental]
     """
 
     pass

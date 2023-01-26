@@ -24,6 +24,8 @@ class SOMATileDBContext:
     """
     Maintains TileDB-specific context for TileDbObjects. This context can be shared across multiple SOMA objects,
     including having a child object inherit it from its parent.
+
+    [lifecycle: experimental]
     """
 
     tiledb_ctx: tiledb.Ctx = _build_default_tiledb_ctx()

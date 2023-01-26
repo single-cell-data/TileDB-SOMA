@@ -12,7 +12,6 @@ from .general_utilities import (
     get_storage_engine,
 )
 from .measurement import Measurement
-from .metadata_mapping import MetadataMapping
 from .sparse_nd_array import SparseNDArray
 from .tiledb_array import TileDBArray
 from .tiledb_object import TileDBObject
@@ -35,6 +34,5 @@ __all__ = [
     "SOMAError",
     "DataFrame",
     "Measurement",
-    "MetadataMapping",
     "SparseNDArray",
 ]

@@ -37,6 +37,8 @@ class Measurement(CollectionBase[TileDBObject]):
     ``varp``: ``Collection`` of ``SparseNDArray``
 
     A collection of sparse matrices containing pairwise annotations of each ``var`` row. Indexed with ``[varid_1, varid_2]``
+
+    [lifecycle: experimental]
     """
 
     _subclass_constrained_soma_types: Dict[str, Tuple[str, ...]] = {
@@ -56,6 +58,8 @@ class Measurement(CollectionBase[TileDBObject]):
     ):
         """
         Also see the ``TileDBObject`` constructor.
+
+        [lifecycle: experimental]
         """
         super().__init__(uri=uri, context=context)
 
@@ -65,6 +69,8 @@ class Measurement(CollectionBase[TileDBObject]):
     def create_legacy(self) -> "Measurement":
         """
         Creates the data structure on disk/S3/cloud.
+
+        [lifecycle: experimental]
         """
         self._create(self.soma_type)
         return self

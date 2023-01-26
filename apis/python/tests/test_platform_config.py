@@ -7,7 +7,7 @@ import tiledb
 
 import tiledbsoma
 import tiledbsoma.io
-from tiledbsoma.options import TileDBCreateOptions
+from tiledbsoma.options.tiledb_create_options import TileDBCreateOptions
 
 HERE = Path(__file__).parent
 
