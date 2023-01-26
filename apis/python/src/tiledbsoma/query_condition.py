@@ -4,7 +4,6 @@ from typing import Any, Callable, List, Tuple, Union
 
 import numpy as np
 import tiledb
-
 import tiledbsoma.libtiledbsoma as qc
 from tiledbsoma.libtiledbsoma import PyQueryCondition
 
@@ -209,7 +208,7 @@ class QueryConditionTree(ast.NodeVisitor):
             rhs = node.comparators[0]
             if not isinstance(rhs, ast.List):
                 raise tiledb.TileDBError(
-                    f"`in` operator syntax must be written as `attr in ['l', 'i', 's', 't']`"
+                    "`in` operator syntax must be written as `attr in ['l', 'i', 's', 't']`"
                 )
 
             consts = self.visit(rhs)
@@ -423,7 +422,7 @@ class QueryConditionTree(ast.NodeVisitor):
             raise tiledb.TileDBError(f"Unrecognized expression {node.func}.")
 
         if node.func.id not in ["attr", "val"]:
-            raise tiledb.TileDBError(f"Valid casts are attr() or val().")
+            raise tiledb.TileDBError("Valid casts are attr() or val().")
 
         if len(node.args) != 1:
             raise tiledb.TileDBError(

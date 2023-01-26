@@ -8,13 +8,12 @@ import numpy as np
 import pandas as pd
 import pyarrow as pa
 import scipy.sparse as sp
-from anndata._core.sparse_dataset import SparseDataset
-from somacore.options import PlatformConfig
-
 import tiledbsoma.eta as eta
 import tiledbsoma.util as util
 import tiledbsoma.util_ann as util_ann
 import tiledbsoma.util_tiledb as util_tiledb
+from anndata._core.sparse_dataset import SparseDataset
+from somacore.options import PlatformConfig
 from tiledbsoma import (
     Collection,
     DataFrame,
@@ -29,10 +28,10 @@ from tiledbsoma.exception import SOMAError
 
 from .constants import SOMA_JOINID
 from .options import SOMATileDBContext, TileDBCreateOptions
-from .types import INGEST_MODES, IngestMode, NDArray, Path
+from .types import INGEST_MODES, IngestMode, NPNDArray, Path
 
 SparseMatrix = Union[sp.csr_matrix, sp.csc_matrix, SparseDataset]
-Matrix = Union[NDArray, SparseMatrix]
+Matrix = Union[NPNDArray, SparseMatrix]
 
 
 # ----------------------------------------------------------------
@@ -313,13 +312,13 @@ def _check_create(
 ) -> Union[Experiment, Measurement, Collection]:
     if ingest_mode == "resume":
         if not thing.exists():
-            thing.create()
+            thing.create_legacy()
         # else fine
     else:
         if thing.exists():
             raise SOMAError(f"{thing.uri} already exists")
         else:
-            thing.create()
+            thing.create_legacy()
     return thing
 
 
@@ -378,10 +377,9 @@ def _write_dataframe(
     if soma_df.exists():
         if ingest_mode == "resume":
             # This lets us check for already-ingested dataframes, when in resume-ingest mode.
-            with soma_df._tiledb_open() as A:
-                storage_ned = A.nonempty_domain()
-            sorted_dim_values = sorted(list(df.index))
-            dim_range = ((sorted_dim_values[0], sorted_dim_values[-1]),)
+            with soma_df._ensure_open():
+                storage_ned = soma_df._tiledb_obj.nonempty_domain()
+            dim_range = ((int(df.index.min()), int(df.index.max())),)
             if _chunk_is_contained_in(dim_range, storage_ned):
                 logging.log_io(
                     f"Skipped {soma_df.uri}",
@@ -391,7 +389,7 @@ def _write_dataframe(
         else:
             raise SOMAError(f"{soma_df.uri} already exists")
     else:
-        soma_df.create(arrow_table.schema, platform_config=platform_config)
+        soma_df.create_legacy(arrow_table.schema, platform_config=platform_config)
 
     if ingest_mode == "schema_only":
         logging.log_io(
@@ -431,7 +429,7 @@ def create_from_matrix(
     if ingest_mode != "resume" or not soma_ndarray.exists():
         if soma_ndarray.exists():
             raise SOMAError(f"{soma_ndarray.uri} already exists")
-        soma_ndarray.create(
+        soma_ndarray.create_legacy(
             type=pa.from_numpy_dtype(matrix.dtype),
             shape=matrix.shape,
             platform_config=platform_config,
@@ -474,6 +472,26 @@ def create_from_matrix(
     )
 
 
+def add_X_layer(
+    exp: Experiment,
+    measurement_name: str,
+    X_layer_name: str,
+    X_layer_data: Union[
+        Matrix, h5py.Dataset
+    ],  # e.g. a scipy.csr_matrix from scanpy analysis
+    ingest_mode: IngestMode = "write",
+) -> None:
+    """
+    This is useful for adding X data, for example from scanpy.pp.normalize_total, scanpy.pp.log1p, etc.
+
+    Use `ingest_mode="resume"` to not error out if the schema already exists.
+    """
+    uri = f"{exp.ms[measurement_name].X.uri}/{X_layer_name}"
+    sparse_nd_array = SparseNDArray(uri)
+    create_from_matrix(sparse_nd_array, X_layer_data, ingest_mode=ingest_mode)
+    exp.ms[measurement_name].X.set(X_layer_name, sparse_nd_array)
+
+
 def _write_matrix_to_denseNDArray(
     soma_ndarray: DenseNDArray,
     matrix: Union[Matrix, h5py.Dataset],
@@ -489,11 +507,13 @@ def _write_matrix_to_denseNDArray(
     # * By checking chunkwise we can catch the case where a matrix was already *partly*
     #   ingested.
     # * Of course, this also helps us catch already-completed writes in the non-chunked case.
-    storage_ned = None
-    if ingest_mode == "resume" and soma_ndarray.exists():
-        # This lets us check for already-ingested chunks, when in resume-ingest mode.
-        with soma_ndarray._tiledb_open() as A:
-            storage_ned = A.nonempty_domain()
+    with soma_ndarray.open_legacy(
+        "r"
+    ):  # TODO: make sure we're not using an old timestamp for this
+        storage_ned = None
+        if ingest_mode == "resume" and soma_ndarray.exists():
+            # This lets us check for already-ingested chunks, when in resume-ingest mode.
+            storage_ned = soma_ndarray._tiledb_obj.nonempty_domain()
             matrix_bounds = [
                 (0, int(n - 1)) for n in matrix.shape
             ]  # Cast for lint in case np.int64
@@ -507,64 +527,68 @@ def _write_matrix_to_denseNDArray(
                 )
                 return
 
-    # Write all at once?
-    if not tiledb_create_options.write_X_chunked():
-        if not isinstance(matrix, np.ndarray):
-            matrix = matrix.toarray()
-        soma_ndarray.write((slice(None),), pa.Tensor.from_numpy(matrix))
-        return
+    with soma_ndarray.open_legacy("w"):
+        # Write all at once?
+        if not tiledb_create_options.write_X_chunked():
+            if not isinstance(matrix, np.ndarray):
+                matrix = matrix.toarray()
+            soma_ndarray.write((slice(None),), pa.Tensor.from_numpy(matrix))
+            return
 
-    # OR, write in chunks
-    eta_tracker = eta.Tracker()
-    nrow, ncol = matrix.shape
-    i = 0
-    # Number of rows to chunk by. Dense writes, so this is a constant.
-    chunk_size = int(math.ceil(tiledb_create_options.goal_chunk_nnz() / ncol))
-    while i < nrow:
-        t1 = time.time()
-        i2 = i + chunk_size
+        # OR, write in chunks
+        eta_tracker = eta.Tracker()
+        nrow, ncol = matrix.shape
+        i = 0
+        # Number of rows to chunk by. Dense writes, so this is a constant.
+        chunk_size = int(math.ceil(tiledb_create_options.goal_chunk_nnz() / ncol))
+        while i < nrow:
+            t1 = time.time()
+            i2 = i + chunk_size
 
-        # Print doubly-inclusive lo..hi like 0..17 and 18..31.
-        chunk_percent = min(100, 100 * (i2 - 1) / nrow)
-        logging.log_io(
-            None,
-            "START  chunk rows %d..%d of %d (%.3f%%)"
-            % (i, i2 - 1, nrow, chunk_percent),
-        )
-
-        chunk = matrix[i:i2, :]
-
-        if ingest_mode == "resume" and storage_ned is not None:
-            chunk_bounds = matrix_bounds
-            chunk_bounds[0] = (int(i), int(i2 - 1))  # Cast for lint in case np.int64
-            if _chunk_is_contained_in_axis(chunk_bounds, storage_ned, 0):
-                # Print doubly inclusive lo..hi like 0..17 and 18..31.
-                logging.log_io(
-                    "... %7.3f%% done" % chunk_percent,
-                    "SKIP   chunk rows %d..%d of %d (%.3f%%)"
-                    % (i, i2 - 1, nrow, chunk_percent),
-                )
-                i = i2
-                continue
-
-        if isinstance(chunk, np.ndarray):
-            tensor = pa.Tensor.from_numpy(chunk)
-        else:
-            tensor = pa.Tensor.from_numpy(chunk.toarray())
-        soma_ndarray.write((slice(i, i2), slice(None)), tensor)
-
-        t2 = time.time()
-        chunk_seconds = t2 - t1
-        eta_seconds = eta_tracker.ingest_and_predict(chunk_percent, chunk_seconds)
-
-        if chunk_percent < 100:
+            # Print doubly-inclusive lo..hi like 0..17 and 18..31.
+            chunk_percent = min(100, 100 * (i2 - 1) / nrow)
             logging.log_io(
-                "... %7.3f%% done, ETA %s" % (chunk_percent, eta_seconds),
-                "FINISH chunk in %.3f seconds, %7.3f%% done, ETA %s"
-                % (chunk_seconds, chunk_percent, eta_seconds),
+                None,
+                "START  chunk rows %d..%d of %d (%.3f%%)"
+                % (i, i2 - 1, nrow, chunk_percent),
             )
 
-        i = i2
+            chunk = matrix[i:i2, :]
+
+            if ingest_mode == "resume" and storage_ned is not None:
+                chunk_bounds = matrix_bounds
+                chunk_bounds[0] = (
+                    int(i),
+                    int(i2 - 1),
+                )  # Cast for lint in case np.int64
+                if _chunk_is_contained_in_axis(chunk_bounds, storage_ned, 0):
+                    # Print doubly inclusive lo..hi like 0..17 and 18..31.
+                    logging.log_io(
+                        "... %7.3f%% done" % chunk_percent,
+                        "SKIP   chunk rows %d..%d of %d (%.3f%%)"
+                        % (i, i2 - 1, nrow, chunk_percent),
+                    )
+                    i = i2
+                    continue
+
+            if isinstance(chunk, np.ndarray):
+                tensor = pa.Tensor.from_numpy(chunk)
+            else:
+                tensor = pa.Tensor.from_numpy(chunk.toarray())
+            soma_ndarray.write((slice(i, i2), slice(None)), tensor)
+
+            t2 = time.time()
+            chunk_seconds = t2 - t1
+            eta_seconds = eta_tracker.ingest_and_predict(chunk_percent, chunk_seconds)
+
+            if chunk_percent < 100:
+                logging.log_io(
+                    "... %7.3f%% done, ETA %s" % (chunk_percent, eta_seconds),
+                    "FINISH chunk in %.3f seconds, %7.3f%% done, ETA %s"
+                    % (chunk_seconds, chunk_percent, eta_seconds),
+                )
+
+            i = i2
 
     return
 
@@ -643,11 +667,13 @@ def _write_matrix_to_sparseNDArray(
     # * By checking chunkwise we can catch the case where a matrix was already *partly*
     #   ingested.
     # * Of course, this also helps us catch already-completed writes in the non-chunked case.
-    storage_ned = None
-    if ingest_mode == "resume" and soma_ndarray.exists():
-        # This lets us check for already-ingested chunks, when in resume-ingest mode.
-        with soma_ndarray._tiledb_open() as A:
-            storage_ned = A.nonempty_domain()
+    with soma_ndarray.open_legacy(
+        "r"
+    ):  # TODO: make sure we're not using an old timestamp for this
+        storage_ned = None
+        if ingest_mode == "resume" and soma_ndarray.exists():
+            # This lets us check for already-ingested chunks, when in resume-ingest mode.
+            storage_ned = soma_ndarray._tiledb_obj.nonempty_domain()
             matrix_bounds = [
                 (0, int(n - 1)) for n in matrix.shape
             ]  # Cast for lint in case np.int64
@@ -661,81 +687,84 @@ def _write_matrix_to_sparseNDArray(
                 )
                 return
 
-    # Write all at once?
-    if not tiledb_create_options.write_X_chunked():
-        soma_ndarray.write(_coo_to_table(sp.coo_matrix(matrix)))
-        return
+    with soma_ndarray.open_legacy("w"):
+        # Write all at once?
+        if not tiledb_create_options.write_X_chunked():
+            soma_ndarray.write(_coo_to_table(sp.coo_matrix(matrix)))
+            return
 
-    # Or, write in chunks, striding across the most efficient slice axis
+        # Or, write in chunks, striding across the most efficient slice axis
 
-    stride_axis = 0
-    if sp.isspmatrix_csc(matrix):
-        # E.g. if we used anndata.X[:]
-        stride_axis = 1
-    if isinstance(matrix, SparseDataset) and matrix.format_str == "csc":
-        # E.g. if we used anndata.X without the [:]
-        stride_axis = 1
+        stride_axis = 0
+        if sp.isspmatrix_csc(matrix):
+            # E.g. if we used anndata.X[:]
+            stride_axis = 1
+        if isinstance(matrix, SparseDataset) and matrix.format_str == "csc":
+            # E.g. if we used anndata.X without the [:]
+            stride_axis = 1
 
-    dim_max_size = matrix.shape[stride_axis]
+        dim_max_size = matrix.shape[stride_axis]
 
-    eta_tracker = eta.Tracker()
-    goal_chunk_nnz = tiledb_create_options.goal_chunk_nnz()
+        eta_tracker = eta.Tracker()
+        goal_chunk_nnz = tiledb_create_options.goal_chunk_nnz()
 
-    coords = [slice(None), slice(None)]
-    i = 0
-    while i < dim_max_size:
-        t1 = time.time()
+        coords = [slice(None), slice(None)]
+        i = 0
+        while i < dim_max_size:
+            t1 = time.time()
 
-        # Chunk size on the stride axis
-        if isinstance(matrix, np.ndarray):
-            chunk_size = int(math.ceil(goal_chunk_nnz / matrix.shape[stride_axis]))
-        else:
-            chunk_size = _find_sparse_chunk_size(matrix, i, stride_axis, goal_chunk_nnz)
-
-        i2 = i + chunk_size
-
-        coords[stride_axis] = slice(i, i2)
-        chunk_coo = sp.coo_matrix(matrix[tuple(coords)])
-
-        chunk_percent = min(100, 100 * (i2 - 1) / dim_max_size)
-
-        if ingest_mode == "resume" and storage_ned is not None:
-            chunk_bounds = matrix_bounds
-            chunk_bounds[stride_axis] = (
-                int(i),
-                int(i2 - 1),
-            )  # Cast for lint in case np.int64
-            if _chunk_is_contained_in_axis(chunk_bounds, storage_ned, stride_axis):
-                # Print doubly inclusive lo..hi like 0..17 and 18..31.
-                logging.log_io(
-                    "... %7.3f%% done" % chunk_percent,
-                    "SKIP   chunk rows %d..%d of %d (%.3f%%), nnz=%d"
-                    % (i, i2 - 1, dim_max_size, chunk_percent, chunk_coo.nnz),
+            # Chunk size on the stride axis
+            if isinstance(matrix, np.ndarray):
+                chunk_size = int(math.ceil(goal_chunk_nnz / matrix.shape[stride_axis]))
+            else:
+                chunk_size = _find_sparse_chunk_size(
+                    matrix, i, stride_axis, goal_chunk_nnz
                 )
-                i = i2
-                continue
 
-        # Print doubly inclusive lo..hi like 0..17 and 18..31.
-        logging.log_io(
-            None,
-            "START  chunk rows %d..%d of %d (%.3f%%), nnz=%d"
-            % (i, i2 - 1, dim_max_size, chunk_percent, chunk_coo.nnz),
-        )
+            i2 = i + chunk_size
 
-        soma_ndarray.write(_coo_to_table(chunk_coo, stride_axis, i))
+            coords[stride_axis] = slice(i, i2)
+            chunk_coo = sp.coo_matrix(matrix[tuple(coords)])
 
-        t2 = time.time()
-        chunk_seconds = t2 - t1
-        eta_seconds = eta_tracker.ingest_and_predict(chunk_percent, chunk_seconds)
+            chunk_percent = min(100, 100 * (i2 - 1) / dim_max_size)
 
-        if chunk_percent < 100:
+            if ingest_mode == "resume" and storage_ned is not None:
+                chunk_bounds = matrix_bounds
+                chunk_bounds[stride_axis] = (
+                    int(i),
+                    int(i2 - 1),
+                )  # Cast for lint in case np.int64
+                if _chunk_is_contained_in_axis(chunk_bounds, storage_ned, stride_axis):
+                    # Print doubly inclusive lo..hi like 0..17 and 18..31.
+                    logging.log_io(
+                        "... %7.3f%% done" % chunk_percent,
+                        "SKIP   chunk rows %d..%d of %d (%.3f%%), nnz=%d"
+                        % (i, i2 - 1, dim_max_size, chunk_percent, chunk_coo.nnz),
+                    )
+                    i = i2
+                    continue
+
+            # Print doubly inclusive lo..hi like 0..17 and 18..31.
             logging.log_io(
-                "... %7.3f%% done, ETA %s" % (chunk_percent, eta_seconds),
-                "FINISH chunk in %.3f seconds, %7.3f%% done, ETA %s"
-                % (chunk_seconds, chunk_percent, eta_seconds),
+                None,
+                "START  chunk rows %d..%d of %d (%.3f%%), nnz=%d"
+                % (i, i2 - 1, dim_max_size, chunk_percent, chunk_coo.nnz),
             )
 
-        i = i2
+            soma_ndarray.write(_coo_to_table(chunk_coo, stride_axis, i))
+
+            t2 = time.time()
+            chunk_seconds = t2 - t1
+            eta_seconds = eta_tracker.ingest_and_predict(chunk_percent, chunk_seconds)
+
+            if chunk_percent < 100:
+                logging.log_io(
+                    "... %7.3f%% done, ETA %s" % (chunk_percent, eta_seconds),
+                    "FINISH chunk in %.3f seconds, %7.3f%% done, ETA %s"
+                    % (chunk_seconds, chunk_percent, eta_seconds),
+                )
+
+            i = i2
 
 
 def _chunk_is_contained_in(

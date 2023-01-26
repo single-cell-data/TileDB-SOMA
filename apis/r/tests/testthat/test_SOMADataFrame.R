@@ -1,67 +1,71 @@
+
 test_that("Basic mechanics", {
   uri <- withr::local_tempdir("soma-indexed-dataframe")
   asch <- create_arrow_schema()
 
-  sidf <- SOMADataFrame$new(uri)
+  sdf <- SOMADataFrame$new(uri)
   expect_error(
-    sidf$create(asch),
+    sdf$create(asch),
     "argument \"index_column_names\" is missing, with no default"
   )
   expect_error(
-    sidf$create(asch, index_column_names = "qux"),
+    sdf$create(asch, index_column_names = "qux"),
     "The following field does not exist: qux"
   )
 
-  sidf$create(asch, index_column_names = "foo")
-  expect_true(sidf$exists())
+  sdf$create(asch, index_column_names = "foo")
+  expect_true(sdf$exists())
   expect_true(dir.exists(uri))
-  expect_match(sidf$soma_type, "SOMADataFrame")
+  expect_match(sdf$soma_type, "SOMADataFrame")
 
   # check for missing columns
   expect_error(
-    sidf$write(arrow::arrow_table(foo = 1L:10L)),
+    sdf$write(arrow::arrow_table(foo = 1L:10L)),
     "All schema fields must be present in 'values'"
   )
   # check for extra columns
   expect_error(
-    sidf$write(arrow::arrow_table(qux = 1L:10L)),
+    sdf$write(arrow::arrow_table(qux = 1L:10L)),
     "All columns in 'values' must be defined in the schema"
   )
 
-  tbl0 <- arrow::arrow_table(foo = 1L:10L,
-                             soma_joinid = 1L:10L,
-                             bar = 1.1:10.1,
-                             baz = letters[1:10],
+  tbl0 <- arrow::arrow_table(foo = 1L:36L,
+                             soma_joinid = 1L:36L,
+                             bar = 1.1:36.1,
+                             baz = c("á", "ą", "ã", "à", "å", "ä", "æ", "ç", "ć", "Ç", "í",
+                                     "ë", "é", "è", "ê", "ł", "Ł", "ñ", "ń", "ó", "ô", "ò",
+                                     "ö", "ø", "Ø", "ř", "š", "ś", "ş", "Š", "ú", "ü", "ý",
+                                     "ź", "Ž", "Ż"),
                              schema = asch)
 
-  sidf$write(tbl0)
+  sdf$write(tbl0)
 
   # read back the data (ignore attributes)
   expect_equivalent(
-    tiledb::tiledb_array(sidf$uri, return_as = "asis")[],
+    tiledb::tiledb_array(sdf$uri, return_as = "asis")[],
     as.list(tbl0),
     ignore_attr = TRUE
   )
 
   # Read result should recreate the original Table
-  tbl1 <- sidf$read()
+  tbl1 <- sdf$read()
   expect_true(tbl1$Equals(tbl0))
 
   # Slicing by foo
-  tbl1 <- sidf$read(coords = list(foo = 1L:2L))
+  tbl1 <- sdf$read(coords = list(foo = 1L:2L))
   expect_true(tbl1$Equals(tbl0$Slice(offset = 0, length = 2)))
 
   # Subselecting columns
   expect_error(
-    sidf$read(column_names = "foobar"),
+    sdf$read(column_names = "foobar"),
     "'column_names' must only contain valid dimension or attribute columns"
   )
 
-  tbl1 <- sidf$read(column_names = "bar")
+  tbl1 <- sdf$read(column_names = "bar")
   expect_true(tbl1$Equals(tbl0$SelectColumns(2L)))
 
   # Attribute filters
-  tbl1 <- sidf$read(value_filter = "bar < 5")
+  tbl1 <- sdf$read(value_filter = "bar < 5")
   expect_true(tbl1$Equals(tbl0$Filter(tbl0$bar < 5)))
 })
 
@@ -77,22 +81,25 @@ test_that("creation with all supported dimension data types", {
   )
 
   tbl0 <- arrow::arrow_table(
-    int8 = 1L:10L,
-    int16 = 1:10L,
-    double = 1.1:10.1,
-    int = 1L:10L,
-    int64 = bit64::as.integer64(1L:10L),
-    string = letters[1:10],
+    int8 = 1L:36L,
+    int16 = 1:36L,
+    double = 1.1:36.1,
+    int = 1L:36L,
+    int64 = bit64::as.integer64(1L:36L),
+    string = c("á", "ą", "ã", "à", "å", "ä", "æ", "ç", "ć", "Ç", "í",
+               "ë", "é", "è", "ê", "ł", "Ł", "ñ", "ń", "ó", "ô", "ò",
+               "ö", "ø", "Ø", "ř", "š", "ś", "ş", "Š", "ú", "ü", "ý",
+               "ź", "Ž", "Ż"),
     schema = sch
   )
 
   for (dtype in tbl0$ColumnNames()) {
     uri <- withr::local_tempdir(paste0("soma-dataframe-", dtype))
-    sidf <- SOMADataFrame$new(uri)
+    sdf <- SOMADataFrame$new(uri)
     expect_silent(
-      sidf$create(tbl0$schema, index_column_names = dtype)
+      sdf$create(tbl0$schema, index_column_names = dtype)
     )
-    expect_true(sidf$exists())
+    expect_true(sdf$exists())
   }
 })
 
@@ -103,14 +110,14 @@ test_that("int64 values are stored correctly", {
     arrow::field("soma_joinid", arrow::int64(), nullable = FALSE),
   )
 
-  sidf <- SOMADataFrame$new(uri)
-  sidf$create(asch, index_column_names = "foo")
+  sdf <- SOMADataFrame$new(uri)
+  sdf$create(asch, index_column_names = "foo")
   tbl0 <- arrow::arrow_table(foo = 1L:10L, soma_joinid = 1L:10L, schema = asch)
 
   orig_downcast_value <- getOption("arrow.int64_downcast")
 
-  sidf$write(tbl0)
-  tbl1 <- sidf$read()
+  sdf$write(tbl0)
+  tbl1 <- sdf$read()
   expect_true(tbl1$Equals(tbl0))
 
   # verify int64_downcast option was restored
@@ -155,9 +162,9 @@ test_that("soma_ prefix is reserved", {
     field = arrow::field("soma_foo", arrow::int32(), nullable = FALSE)
   )
 
-  sidf <- SOMADataFrame$new(uri)
+  sdf <- SOMADataFrame$new(uri)
   expect_error(
-    sidf$create(asch, index_column_names = "foo"),
+    sdf$create(asch, index_column_names = "foo"),
     "Column names must not start with reserved prefix 'soma_'"
   )
 })
@@ -167,11 +174,11 @@ test_that("soma_joinid is added on creation", {
   asch <- create_arrow_schema()
   asch <- asch$RemoveField(match("soma_joinid", asch$names) - 1)
 
-  sidf <- SOMADataFrame$new(uri)
-  sidf$create(asch, index_column_names = "foo")
+  sdf <- SOMADataFrame$new(uri)
+  sdf$create(asch, index_column_names = "foo")
 
-  expect_true("soma_joinid" %in% sidf$attrnames())
-  expect_equal(tiledb::datatype(sidf$attributes()$soma_joinid), "INT64")
+  expect_true("soma_joinid" %in% sdf$attrnames())
+  expect_equal(tiledb::datatype(sdf$attributes()$soma_joinid), "INT64")
 })
 
 test_that("soma_joinid validations", {
@@ -185,9 +192,9 @@ test_that("soma_joinid validations", {
     field = arrow::field("soma_joinid", arrow::int32(), nullable = FALSE)
   )
 
-  sidf <- SOMADataFrame$new(uri)
+  sdf <- SOMADataFrame$new(uri)
   expect_error(
-    sidf$create(asch, index_column_names = "foo"),
+    sdf$create(asch, index_column_names = "foo"),
     "soma_joinid field must be of type Arrow int64"
   )
 })

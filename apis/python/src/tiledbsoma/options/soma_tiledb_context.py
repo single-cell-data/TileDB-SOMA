@@ -1,4 +1,3 @@
-import os
 from typing import Dict, Optional, Tuple, Union
 
 import attrs
@@ -17,13 +16,6 @@ def _build_default_tiledb_ctx() -> tiledb.Ctx:
         "sm.mem.reader.sparse_global_order.ratio_array_data": 0.3
     }
 
-    # This is necessary for smaller tile capacities when querying with a smaller memory budget.
-
-    # Temp workaround pending https://app.shortcut.com/tiledb-inc/story/23827
-    region = os.getenv("AWS_DEFAULT_REGION")
-    if region is not None:
-        cfg["vfs.s3.region"] = region
-
     return tiledb.Ctx(cfg)
 
 
@@ -39,30 +31,31 @@ class SOMATileDBContext:
     member_uris_are_relative: Optional[bool] = None
     """Allows "relocatability" for local disk / S3, and correct behavior for TileDB Cloud."""
 
+    read_timestamp: Optional[int] = None
+    """
+    Timestamp for all array read operations. If unspecified, then always read the latest data.
+    The read timestamp must not be set while writing, so that a writer can read its own writes.
+    """
+
     read_timestamp_start: Optional[int] = None
-    "Timestamp range start for all array read operations. Usually, implicitly zero."
-
-    read_timestamp_end: Optional[int] = None
     """
-    Timestamp range end for all array read operations.
-    If unspecified, then always read the latest data.
-    When writing SOMA objects, the read timestamp range should usually be left empty, so that the
-    writer can read its own writes (and associated metadata).
+    Timestamp range start for all array read operations.
+    This is usually unset (implicitly zero) except for specific, unusual query circumstances.
     """
-
-    write_timestamp: Optional[int] = None
-    "Timestamp applied to all array write operations."
 
     def _tiledb_read_timestamp_arg(self) -> Optional[Tuple[int, int]]:
         "(internal) form the read timestamp tuple arg for TileDB methods"
-        if self.read_timestamp_start is None and self.read_timestamp_end is None:
+        if self.read_timestamp_start is None and self.read_timestamp is None:
             return None
         start = (
             self.read_timestamp_start if self.read_timestamp_start is not None else 0
         )
         end = (
-            self.read_timestamp_end
-            if self.read_timestamp_end is not None
+            self.read_timestamp
+            if self.read_timestamp is not None
             else 0xFFFFFFFFFFFFFFFF  # UINT64_MAX
         )
         return (start, end)
+
+    _write_timestamp: Optional[int] = None
+    "(internal) override the timestamp applied to all write operations, for testing purposes."

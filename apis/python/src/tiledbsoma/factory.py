@@ -3,11 +3,11 @@ This module exists to avoid what would otherwise be cyclic-module-import issues 
 Collection.
 """
 
-from typing import Any, Optional, Union
+from typing import Optional, Union
 
 import tiledb
 
-from .collection import Collection, CollectionBase
+from .collection import Collection
 from .dataframe import DataFrame
 from .dense_nd_array import DenseNDArray
 from .exception import SOMAError
@@ -15,7 +15,12 @@ from .experiment import Experiment
 from .measurement import Measurement
 from .options import SOMATileDBContext
 from .sparse_nd_array import SparseNDArray
-from .util import SOMA_OBJECT_TYPE_METADATA_KEY, SPEC_NAMES_TO_CLASS_NAMES
+from .util import (
+    SOMA_ENCODING_VERSION,
+    SOMA_ENCODING_VERSION_METADATA_KEY,
+    SOMA_OBJECT_TYPE_METADATA_KEY,
+    SPEC_NAMES_TO_CLASS_NAMES,
+)
 
 ObjectTypes = Union[
     Experiment,
@@ -29,7 +34,6 @@ ObjectTypes = Union[
 
 def _construct_member(
     member_uri: str,
-    parent: CollectionBase[Any],
     context: Optional[SOMATileDBContext] = None,
     object_type: Optional[str] = None,
 ) -> Optional[ObjectTypes]:
@@ -58,10 +62,12 @@ def _construct_member(
     try:
         if object_type == "array":
             with tiledb.open(member_uri, ctx=context.tiledb_ctx) as A:
-                spec_name = A.meta[SOMA_OBJECT_TYPE_METADATA_KEY]
+                spec_name = A.meta.get(SOMA_OBJECT_TYPE_METADATA_KEY, None)
+                encoding_version = A.meta.get(SOMA_ENCODING_VERSION_METADATA_KEY)
         elif object_type == "group":
             with tiledb.Group(member_uri, mode="r", ctx=context.tiledb_ctx) as G:
-                spec_name = G.meta[SOMA_OBJECT_TYPE_METADATA_KEY]
+                spec_name = G.meta.get(SOMA_OBJECT_TYPE_METADATA_KEY, None)
+                encoding_version = G.meta.get(SOMA_ENCODING_VERSION_METADATA_KEY)
         else:
             return None
 
@@ -70,6 +76,10 @@ def _construct_member(
 
     if spec_name is None:
         raise SOMAError("internal error: spec_name was not found")
+    if encoding_version is None:
+        raise SOMAError("internal error: encoding_version not found")
+    if encoding_version != SOMA_ENCODING_VERSION:
+        raise ValueError("Unsupported SOMA object encoding version")
     if spec_name not in SPEC_NAMES_TO_CLASS_NAMES:
         raise SOMAError(f'name "{spec_name}" unrecognized')
     class_name = SPEC_NAMES_TO_CLASS_NAMES[spec_name]
@@ -77,22 +87,22 @@ def _construct_member(
     # Now invoke the appropriate per-class constructor.
     if class_name == "Experiment":
         _check_object_type(object_type, "group")
-        return Experiment(uri=member_uri, parent=parent)
+        return Experiment(uri=member_uri, context=context)
     elif class_name == "Measurement":
         _check_object_type(object_type, "group")
-        return Measurement(uri=member_uri, parent=parent)
+        return Measurement(uri=member_uri, context=context)
     elif class_name == "Collection":
         _check_object_type(object_type, "group")
-        return Collection(uri=member_uri, parent=parent)
+        return Collection(uri=member_uri, context=context)
     elif class_name == "DataFrame":
         _check_object_type(object_type, "array")
-        return DataFrame(uri=member_uri, parent=parent)
+        return DataFrame(uri=member_uri, context=context)
     elif class_name in ["DenseNDArray", "DenseNdArray"]:
         _check_object_type(object_type, "array")
-        return DenseNDArray(uri=member_uri, parent=parent)
+        return DenseNDArray(uri=member_uri, context=context)
     elif class_name in ["SparseNDArray", "SparseNdArray"]:
         _check_object_type(object_type, "array")
-        return SparseNDArray(uri=member_uri, parent=parent)
+        return SparseNDArray(uri=member_uri, context=context)
     else:
         raise SOMAError(f'internal error: class name "{class_name}" unrecognized')
 

@@ -26,7 +26,7 @@ def arrow_schema():
 
 
 def test_dataframe(tmp_path, arrow_schema):
-    sidf = soma.DataFrame(uri=tmp_path.as_posix())
+    sdf = soma.DataFrame(uri=tmp_path.as_posix())
 
     asch = pa.schema(
         [
@@ -41,19 +41,22 @@ def test_dataframe(tmp_path, arrow_schema):
     asch = arrow_schema()
     with pytest.raises(ValueError):
         # requires one or more index columns
-        sidf.create(schema=asch, index_column_names=[])
+        sdf.create_legacy(schema=asch, index_column_names=[])
+    with pytest.raises(TypeError):
+        # invalid schema type
+        sdf.create_legacy(schema=asch.to_string(), index_column_names=[])
     with pytest.raises(ValueError):
         # nonexistent indexed column
-        sidf.create(schema=asch, index_column_names=["bogus"])
-    sidf.create(schema=asch, index_column_names=["foo"])
+        sdf.create_legacy(schema=asch, index_column_names=["bogus"])
+    sdf.create_legacy(schema=asch, index_column_names=["foo"])
 
-    assert sidf.count == 0
-    assert len(sidf) == 0
+    assert sdf.count == 0
+    assert len(sdf) == 0
 
-    assert sorted(sidf.schema.names) == sorted(
+    assert sorted(sdf.schema.names) == sorted(
         ["foo", "bar", "baz", "soma_joinid", "quux"]
     )
-    assert sorted(sidf.keys()) == sorted(sidf.schema.names)
+    assert sorted(sdf.keys()) == sorted(sdf.schema.names)
 
     # Write
     for _ in range(3):
@@ -64,13 +67,18 @@ def test_dataframe(tmp_path, arrow_schema):
         pydict["baz"] = ["apple", "ball", "cat", "dog", "egg"]
         pydict["quux"] = [True, False, False, True, False]
         rb = pa.Table.from_pydict(pydict)
-        sidf.write(rb)
 
-    assert sidf.count == 5
-    assert len(sidf) == 5
+        sdf.write(rb)
+
+        with pytest.raises(TypeError):
+            # non-arrow write
+            sdf.write(rb.to_pandas)
+
+    assert sdf.count == 5
+    assert len(sdf) == 5
 
     # Read all
-    table = sidf.read().concat()
+    table = sdf.read().concat()
     assert table.num_rows == 5
     assert table.num_columns == 5
     assert [e.as_py() for e in list(table["soma_joinid"])] == pydict["soma_joinid"]
@@ -80,7 +88,7 @@ def test_dataframe(tmp_path, arrow_schema):
     assert [e.as_py() for e in list(table["quux"])] == pydict["quux"]
 
     # Read ids
-    table = sidf.read(coords=[[30, 10]]).concat()
+    table = sdf.read(coords=[[30, 10]]).concat()
     assert table.num_rows == 2
     assert table.num_columns == 5
     assert sorted([e.as_py() for e in list(table["soma_joinid"])]) == [0, 2]
@@ -91,10 +99,10 @@ def test_dataframe(tmp_path, arrow_schema):
 
 
 def test_dataframe_with_float_dim(tmp_path, arrow_schema):
-    sidf = soma.DataFrame(uri=tmp_path.as_posix())
+    sdf = soma.DataFrame(uri=tmp_path.as_posix())
     asch = arrow_schema()
-    sidf.create(schema=asch, index_column_names=("bar",))
-    assert sidf.index_column_names == ("bar",)
+    sdf.create_legacy(schema=asch, index_column_names=("bar",))
+    assert sdf.index_column_names == ("bar",)
 
 
 @pytest.fixture
@@ -112,8 +120,8 @@ def simple_data_frame(tmp_path):
         ]
     )
     index_column_names = ["index"]
-    sidf = soma.DataFrame(uri=tmp_path.as_posix())
-    sidf.create(schema=schema, index_column_names=index_column_names)
+    sdf = soma.DataFrame(uri=tmp_path.as_posix())
+    sdf.create_legacy(schema=schema, index_column_names=index_column_names)
 
     data = {
         "index": [0, 1, 2, 3],
@@ -124,8 +132,8 @@ def simple_data_frame(tmp_path):
     }
     n_data = len(data["index"])
     rb = pa.Table.from_pydict(data)
-    sidf.write(rb)
-    return (schema, sidf, n_data, index_column_names)
+    sdf.write(rb)
+    return (schema, sdf, n_data, index_column_names)
 
 
 @pytest.mark.parametrize(
@@ -150,8 +158,8 @@ def simple_data_frame(tmp_path):
     ],
 )
 def test_DataFrame_read_column_names(simple_data_frame, ids, col_names):
-    schema, sidf, n_data, index_column_names = simple_data_frame
-    assert sidf.exists()
+    schema, sdf, n_data, index_column_names = simple_data_frame
+    assert sdf.exists()
 
     def _check_tbl(tbl, col_names, ids, *, demote):
         assert tbl.num_columns == (
@@ -186,20 +194,18 @@ def test_DataFrame_read_column_names(simple_data_frame, ids, col_names):
 
     # TileDB ASCII -> Arrow large_string
     _check_tbl(
-        sidf.read(ids, column_names=col_names).concat(),
+        sdf.read(ids, column_names=col_names).concat(),
         col_names,
         ids,
         demote=False,
     )
-    _check_tbl(
-        sidf.read(column_names=col_names).concat(), col_names, None, demote=False
-    )
+    _check_tbl(sdf.read(column_names=col_names).concat(), col_names, None, demote=False)
 
     # TileDB ASCII -> Pandas string -> Arrow string (not large_string)
     _check_tbl(
         pa.Table.from_pandas(
             pd.concat(
-                [tbl.to_pandas() for tbl in sidf.read(ids, column_names=col_names)]
+                [tbl.to_pandas() for tbl in sdf.read(ids, column_names=col_names)]
             )
         ),
         col_names,
@@ -207,7 +213,7 @@ def test_DataFrame_read_column_names(simple_data_frame, ids, col_names):
         demote=True,
     )
     _check_tbl(
-        pa.Table.from_pandas(sidf.read(column_names=col_names).concat().to_pandas()),
+        pa.Table.from_pandas(sdf.read(column_names=col_names).concat().to_pandas()),
         col_names,
         None,
         demote=True,
@@ -216,7 +222,7 @@ def test_DataFrame_read_column_names(simple_data_frame, ids, col_names):
 
 def test_empty_dataframe(tmp_path):
     a = soma.DataFrame((tmp_path / "A").as_posix())
-    a.create(pa.schema([("a", pa.int32())]), index_column_names=["a"])
+    a.create_legacy(pa.schema([("a", pa.int32())]), index_column_names=["a"])
     # Must not throw
     assert len(next(a.read())) == 0
     assert len(a.read().concat()) == 0
@@ -226,7 +232,7 @@ def test_empty_dataframe(tmp_path):
 
     with pytest.raises(ValueError):
         # illegal column name
-        soma.DataFrame((tmp_path / "B").as_posix()).create(
+        soma.DataFrame((tmp_path / "B").as_posix()).create_legacy(
             pa.schema([("a", pa.int32()), ("soma_bogus", pa.int32())]),
             index_column_names=["a"],
         )
@@ -241,20 +247,20 @@ def test_columns(tmp_path):
     """
 
     A = soma.DataFrame((tmp_path / "A").as_posix())
-    A.create(pa.schema([("a", pa.int32())]), index_column_names=["a"])
+    A.create_legacy(pa.schema([("a", pa.int32())]), index_column_names=["a"])
     assert sorted(A.keys()) == sorted(["a", "soma_joinid"])
     assert A.schema.field("soma_joinid").type == pa.int64()
     A.delete()
 
     B = soma.DataFrame((tmp_path / "B").as_posix())
     with pytest.raises(ValueError):
-        B.create(
+        B.create_legacy(
             pa.schema([("a", pa.int32()), ("soma_joinid", pa.float32())]),
             index_column_names=["a"],
         )
 
     D = soma.DataFrame((tmp_path / "D").as_posix())
-    D.create(
+    D.create_legacy(
         pa.schema([("a", pa.int32()), ("soma_joinid", pa.int64())]),
         index_column_names=["a"],
     )
@@ -264,7 +270,7 @@ def test_columns(tmp_path):
 
     E = soma.DataFrame((tmp_path / "E").as_posix())
     with pytest.raises(ValueError):
-        E.create(
+        E.create_legacy(
             pa.schema([("a", pa.int32()), ("soma_is_a_reserved_prefix", pa.bool_())]),
             index_column_names=["a"],
         )
@@ -336,9 +342,9 @@ def make_dataframe(request):
 )
 def test_index_types(tmp_path, make_dataframe):
     """Verify that the index columns can be of various types"""
-    sidf = soma.DataFrame(tmp_path.as_posix())
-    sidf.create(make_dataframe.schema, index_column_names=["index"])
-    sidf.write(make_dataframe)
+    sdf = soma.DataFrame(tmp_path.as_posix())
+    sdf.create_legacy(make_dataframe.schema, index_column_names=["index"])
+    sdf.write(make_dataframe)
 
 
 def make_multiply_indexed_dataframe(tmp_path, index_column_names: List[str]):
@@ -359,8 +365,8 @@ def make_multiply_indexed_dataframe(tmp_path, index_column_names: List[str]):
         ]
     )
 
-    sidf = soma.DataFrame(uri=tmp_path.as_posix())
-    sidf.create(schema=schema, index_column_names=index_column_names)
+    sdf = soma.DataFrame(uri=tmp_path.as_posix())
+    sdf.create_legacy(schema=schema, index_column_names=index_column_names)
 
     data: Dict[str, list] = {
         "index1": [0, 1, 2, 3, 4, 5],
@@ -372,9 +378,9 @@ def make_multiply_indexed_dataframe(tmp_path, index_column_names: List[str]):
     }
 
     n_data = len(data["index1"])
-    sidf.write(pa.Table.from_pandas(pd.DataFrame(data=data)))
+    sdf.write(pa.Table.from_pandas(pd.DataFrame(data=data)))
 
-    return (schema, sidf, n_data)
+    return (schema, sdf, n_data)
 
 
 @pytest.mark.parametrize(
@@ -642,30 +648,30 @@ def make_multiply_indexed_dataframe(tmp_path, index_column_names: List[str]):
 def test_read_indexing(tmp_path, io):
     """Test various ways of indexing on read"""
 
-    schema, sidf, n_data = make_multiply_indexed_dataframe(
+    schema, sdf, n_data = make_multiply_indexed_dataframe(
         tmp_path, io["index_column_names"]
     )
-    sidf = soma.DataFrame(uri=sidf.uri)  # reopen
-    assert sidf.exists()
-    assert list(sidf.index_column_names) == io["index_column_names"]
+    with soma.DataFrame(uri=sdf.uri).open_legacy() as sdf:
+        assert sdf.exists()
+        assert list(sdf.index_column_names) == io["index_column_names"]
 
-    read_kwargs = {"column_names": ["A"]}
-    read_kwargs.update({k: io[k] for k in ("coords", "value_filter") if k in io})
-    if io.get("throws", None):
-        with pytest.raises(io["throws"]):
-            next(sidf.read(**read_kwargs))
-    else:
-        table = next(sidf.read(**read_kwargs))
-        assert table["A"].to_pylist() == io["A"]
+        read_kwargs = {"column_names": ["A"]}
+        read_kwargs.update({k: io[k] for k in ("coords", "value_filter") if k in io})
+        if io.get("throws", None):
+            with pytest.raises(io["throws"]):
+                next(sdf.read(**read_kwargs))
+        else:
+            table = next(sdf.read(**read_kwargs))
+            assert table["A"].to_pylist() == io["A"]
 
-    if io.get("throws", None):
-        with pytest.raises(io["throws"]):
-            next(sidf.read(**read_kwargs)).to_pandas()
-    else:
-        table = next(sidf.read(**read_kwargs)).to_pandas()
-        assert table["A"].to_list() == io["A"]
+        if io.get("throws", None):
+            with pytest.raises(io["throws"]):
+                next(sdf.read(**read_kwargs)).to_pandas()
+        else:
+            table = next(sdf.read(**read_kwargs)).to_pandas()
+            assert table["A"].to_list() == io["A"]
 
-    sidf.delete()
+    sdf.delete()
 
 
 @pytest.mark.parametrize(
@@ -720,11 +726,11 @@ def test_create_categorical_types(tmp_path, schema):
 
     # Test exception as normal column
     with pytest.raises(TypeError):
-        sdf.create(schema, index_column_names=["soma_joinid"])
+        sdf.create_legacy(schema, index_column_names=["soma_joinid"])
 
     # test as index column
     with pytest.raises(TypeError):
-        sdf.create(schema, index_column_names=["A"])
+        sdf.create_legacy(schema, index_column_names=["A"])
 
 
 def test_write_categorical_types(tmp_path):
@@ -733,7 +739,7 @@ def test_write_categorical_types(tmp_path):
     """
     sdf = soma.DataFrame(tmp_path.as_posix())
     schema = pa.schema([("soma_joinid", pa.int64()), ("A", pa.large_string())])
-    sdf.create(schema, index_column_names=["soma_joinid"])
+    sdf.create_legacy(schema, index_column_names=["soma_joinid"])
 
     df = pd.DataFrame(
         data={
@@ -743,7 +749,8 @@ def test_write_categorical_types(tmp_path):
             ),
         }
     )
-    sdf.write(pa.Table.from_pandas(df))
+    with sdf.open_legacy("w"):
+        sdf.write(pa.Table.from_pandas(df))
 
     assert (df == sdf.read().concat().to_pandas()).all().all()
 
@@ -757,19 +764,19 @@ def test_result_order(tmp_path):
             ("soma_joinid", pa.int64()),
         ]
     )
-    sidf = soma.DataFrame(uri=tmp_path.as_posix())
-    sidf.create(schema=schema, index_column_names=["row", "col"])
+    sdf = soma.DataFrame(uri=tmp_path.as_posix())
+    sdf.create_legacy(schema=schema, index_column_names=["row", "col"])
     data = {
         "row": [0] * 4 + [1] * 4 + [2] * 4 + [3] * 4,
         "col": [0, 1, 2, 3] * 4,
         "soma_joinid": list(range(16)),
     }
-    sidf.write(pa.Table.from_pydict(data))
+    sdf.write(pa.Table.from_pydict(data))
 
-    table = sidf.read(result_order="row-major").concat().to_pandas()
+    table = sdf.read(result_order="row-major").concat().to_pandas()
     assert table["soma_joinid"].to_list() == list(range(16))
 
-    table = sidf.read(result_order="column-major").concat().to_pandas()
+    table = sdf.read(result_order="column-major").concat().to_pandas()
     assert table["soma_joinid"].to_list() == [
         0,
         4,
@@ -790,7 +797,7 @@ def test_result_order(tmp_path):
     ]
 
     with pytest.raises(ValueError):
-        next(sidf.read(result_order="bogus"))
+        next(sdf.read(result_order="bogus"))
 
 
 def test_timestamped_ops(tmp_path):
@@ -804,7 +811,7 @@ def test_timestamped_ops(tmp_path):
     sidf = soma.DataFrame(
         uri=tmp_path.as_posix(), context=SOMATileDBContext(write_timestamp=10)
     )
-    sidf.create(schema=schema, index_column_names=["soma_joinid"])
+    sidf.create_legacy(schema=schema, index_column_names=["soma_joinid"])
 
     data = {
         "soma_joinid": [0],
@@ -833,7 +840,7 @@ def test_timestamped_ops(tmp_path):
 
     # read at t=15 & see only the first write
     sidf = soma.DataFrame(
-        uri=tmp_path.as_posix(), context=SOMATileDBContext(read_timestamp_end=15)
+        uri=tmp_path.as_posix(), context=SOMATileDBContext(read_timestamp=15)
     )
     tab = sidf.read().concat()
     assert list(x.as_py() for x in tab["soma_joinid"]) == [0]

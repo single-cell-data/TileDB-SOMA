@@ -45,6 +45,9 @@ target_include_directories(unit_soma
 
 target_compile_definitions(unit_soma PRIVATE CATCH_CONFIG_MAIN)
 
+# Allow deprecated function for writing to an array with a timestamp
+target_compile_options(unit_soma PRIVATE -Wno-error=deprecated-declarations)
+
 if (NOT APPLE AND NOT WIN32)
     target_link_libraries(unit_soma PRIVATE pthread)
 endif()

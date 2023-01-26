@@ -37,7 +37,7 @@ test: data
 .PHONY: data
 data:
 	rm -rvf test/soco
-	./apis/python/tools/ingestor \
+	./apis/python/devtools/ingestor \
 		--soco \
 		-o test/soco \
 		-n \

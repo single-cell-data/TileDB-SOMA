@@ -31,7 +31,9 @@ def test_dense_nd_array_create_ok(
     assert pa.types.is_primitive(element_type)  # sanity check incoming params
 
     a = soma.DenseNDArray(uri=tmp_path.as_posix())
-    a.create(element_type, shape)
+    with pytest.raises(TypeError):
+        a.create_legacy(element_type.to_pandas_dtype(), shape)  # XXX
+    a.create_legacy(element_type, shape)
     assert a.soma_type == "SOMADenseNDArray"
     assert a.uri == tmp_path.as_posix()
     assert a.ndim == len(shape)
@@ -54,13 +56,13 @@ def test_dense_nd_array_create_fail(
 ):
     a = soma.DenseNDArray(uri=tmp_path.as_posix())
     with pytest.raises(TypeError):
-        a.create(element_type, shape)
+        a.create_legacy(element_type, shape)
     assert not a.exists()
 
 
 def test_dense_nd_array_delete(tmp_path):
     a = soma.DenseNDArray(uri=tmp_path.as_posix())
-    a.create(pa.int8(), (100, 100))
+    a.create_legacy(pa.int8(), (100, 100))
     assert a.exists()
 
     a.delete()
@@ -74,23 +76,25 @@ def test_dense_nd_array_delete(tmp_path):
 @pytest.mark.parametrize("shape", [(10,), (10, 20), (10, 20, 2), (2, 4, 6, 8)])
 def test_dense_nd_array_read_write_tensor(tmp_path, shape: Tuple[int, ...]):
     a = soma.DenseNDArray(tmp_path.as_posix())
-    a.create(pa.float64(), shape)
+    a.create_legacy(pa.float64(), shape)
     ndim = len(shape)
 
     # random sample - written to entire array
     data = np.random.default_rng().standard_normal(np.prod(shape)).reshape(shape)
     coords = tuple(slice(0, dim_len) for dim_len in shape)
+    with pytest.raises(TypeError):
+        a.write(coords, data)
     a.write(coords, pa.Tensor.from_numpy(data))
     del a
 
     # check multiple read paths
-    b = soma.DenseNDArray(tmp_path.as_posix())
+    with soma.DenseNDArray(tmp_path.as_posix()).open_legacy() as b:
 
-    t = b.read((slice(None),) * ndim, result_order="row-major")
-    assert t.equals(pa.Tensor.from_numpy(data))
+        t = b.read((slice(None),) * ndim, result_order="row-major")
+        assert t.equals(pa.Tensor.from_numpy(data))
 
-    t = b.read((slice(None),) * ndim, result_order="column-major")
-    assert t.equals(pa.Tensor.from_numpy(data.transpose()))
+        t = b.read((slice(None),) * ndim, result_order="column-major")
+        assert t.equals(pa.Tensor.from_numpy(data.transpose()))
 
     # write a single-value sub-array and recheck
     b.write(
@@ -107,7 +111,7 @@ def test_zero_length_fail(tmp_path, shape):
     """Zero length dimensions are expected to fail"""
     a = soma.DenseNDArray(tmp_path.as_posix())
     with pytest.raises(ValueError):
-        a.create(type=pa.float32(), shape=shape)
+        a.create_legacy(type=pa.float32(), shape=shape)
 
 
 def test_dense_nd_array_reshape(tmp_path):
@@ -115,7 +119,7 @@ def test_dense_nd_array_reshape(tmp_path):
     Reshape currently unimplemented.
     """
     a = soma.DenseNDArray(tmp_path.as_posix())
-    a.create(type=pa.int32(), shape=(10, 10, 10))
+    a.create_legacy(type=pa.int32(), shape=(10, 10, 10))
     with pytest.raises(NotImplementedError):
         assert a.reshape((100, 10, 1))
 
@@ -175,7 +179,7 @@ def test_dense_nd_array_slicing(tmp_path, io):
     nr = 4
     nc = 6
 
-    a.create(pa.int64(), [nr, nc])
+    a.create_legacy(pa.int64(), [nr, nc])
     npa = np.zeros((nr, nc))
     for i in range(nr):
         for j in range(nc):
@@ -259,7 +263,7 @@ def test_dense_nd_array_indexing_errors(tmp_path, io):
     read_coords = io["coords"]
 
     a = soma.DenseNDArray(tmp_path.as_posix())
-    a.create(pa.int64(), shape)
+    a.create_legacy(pa.int64(), shape)
 
     npa = np.random.default_rng().standard_normal(np.prod(shape)).reshape(shape)
 
@@ -275,7 +279,7 @@ def test_timestamped_ops(tmp_path):
     a = soma.DenseNDArray(
         uri=tmp_path.as_posix(), context=SOMATileDBContext(write_timestamp=1)
     )
-    a.create(type=pa.uint8(), shape=(2, 2))
+    a.create_legacy(type=pa.uint8(), shape=(2, 2))
     a.write(
         (slice(0, 2), slice(0, 2)),
         pa.Tensor.from_numpy(np.zeros((2, 2), dtype=np.uint8)),
@@ -306,14 +310,14 @@ def test_timestamped_ops(tmp_path):
 
     # read with timestamp_end=15 & see only the writes up til then
     a = soma.DenseNDArray(
-        uri=tmp_path.as_posix(), context=SOMATileDBContext(read_timestamp_end=15)
+        uri=tmp_path.as_posix(), context=SOMATileDBContext(read_timestamp=15)
     )
     assert a.read((slice(0, 1), slice(0, 1))).to_numpy().tolist() == [[1, 0], [0, 0]]
 
     # read with (timestamp_start, timestamp_end) = (15, 25) & see only the t=20 write
     a = soma.DenseNDArray(
         uri=tmp_path.as_posix(),
-        context=SOMATileDBContext(read_timestamp_start=15, read_timestamp_end=25),
+        context=SOMATileDBContext(read_timestamp_start=15, read_timestamp=25),
     )
     F = 255  # fill value
     assert a.read((slice(0, 1), slice(0, 1))).to_numpy().tolist() == [[F, F], [F, 1]]

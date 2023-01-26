@@ -14,7 +14,6 @@ from typing import (
 import attrs
 import tiledb
 from attrs import field
-
 from tiledbsoma.types import PlatformConfig
 
 DEFAULT_TILE_ORDER = "row-major"
