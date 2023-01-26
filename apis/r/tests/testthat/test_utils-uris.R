@@ -16,3 +16,21 @@ test_that("file path construction handles remote URLs", {
     "tiledb://my/array"
   )
 })
+
+test_that("uri schemes are retrieved", {
+  expect_equal(uri_scheme("foo/bar"), NULL)
+  expect_equal(uri_scheme("/foo/bar"), NULL)
+  expect_equal(uri_scheme("file://foo/bar"), "file")
+  expect_equal(uri_scheme("file:///foo/bar"), "file")
+  expect_equal(uri_scheme("s3://my/bucket"), "s3")
+  expect_equal(uri_scheme("tiledb://my/array"), "tiledb")
+})
+
+test_that("schemes are removed from uris", {
+  expect_equal(uri_scheme_remove("foo/bar"), "foo/bar")
+  expect_equal(uri_scheme_remove("/foo/bar"), "/foo/bar")
+  expect_equal(uri_scheme_remove("file://foo/bar"), "foo/bar")
+  expect_equal(uri_scheme_remove("file:///foo/bar"), "/foo/bar")
+  expect_equal(uri_scheme_remove("s3://my/bucket"), "my/bucket")
+  expect_equal(uri_scheme_remove("tiledb://my/array"), "my/array")
+})
