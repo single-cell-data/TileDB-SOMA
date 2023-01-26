@@ -1,7 +1,7 @@
 import pathlib
 import time
 import urllib.parse
-from typing import List, Optional, Tuple, Union
+from typing import Any, List, Optional, Tuple, Type, Union
 
 import somacore
 from somacore import options
@@ -9,28 +9,6 @@ from somacore import options
 SOMA_OBJECT_TYPE_METADATA_KEY = "soma_object_type"
 SOMA_ENCODING_VERSION_METADATA_KEY = "soma_encoding_version"
 SOMA_ENCODING_VERSION = "1"
-
-SPEC_NAMES_TO_CLASS_NAMES = {
-    # Maps languge-independent-spec names to Python-implementation class names
-    "SOMAExperiment": "Experiment",
-    "SOMAMeasurement": "Measurement",
-    "SOMACollection": "Collection",
-    "SOMADataFrame": "DataFrame",
-    "SOMADenseNDArray": "DenseNDArray",
-    "SOMADenseNdArray": "DenseNDArray",
-    "SOMASparseNDArray": "SparseNDArray",
-    "SOMASparseNdArray": "SparseNDArray",
-}
-
-CLASS_NAMES_TO_SPEC_NAMES = {
-    # Maps Python-implementation class names to language-independent-spec names
-    "Experiment": "SOMAExperiment",
-    "Measurement": "SOMAMeasurement",
-    "Collection": "SOMACollection",
-    "DataFrame": "SOMADataFrame",
-    "DenseNDArray": "SOMADenseNDArray",
-    "SparseNDArray": "SOMASparseNDArray",
-}
 
 
 def get_start_stamp() -> float:
@@ -191,3 +169,21 @@ def dense_index_to_shape(
         return stop - start + 1
 
     raise TypeError("coordinates must be tuple of int or slice")
+
+
+def check_type(
+    name: str,
+    actual_value: Any,
+    expected_types: Tuple[Type[Any], ...],
+) -> None:
+    """
+    Verifies the type of an argument, or produces a useful error message.
+    """
+    if not isinstance(actual_value, expected_types):
+        if len(expected_types) == 1:
+            raise TypeError(
+                f"expected {name} argument to be of type {expected_types[0]}; got {type(actual_value)}"
+            )
+        raise TypeError(
+            f"expected {name} argument to be one of {expected_types!r}; got {type(actual_value)}"
+        )

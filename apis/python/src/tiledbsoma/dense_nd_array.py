@@ -1,4 +1,4 @@
-from typing import Any, List, Optional, Union, cast
+from typing import List, Optional, Union, cast
 
 import numpy as np
 import pyarrow as pa
@@ -10,7 +10,6 @@ import tiledbsoma.util as util
 import tiledbsoma.util_arrow as util_arrow
 from tiledbsoma.util import dense_indices_to_shape
 
-from .collection import CollectionBase
 from .exception import SOMAError
 from .options import SOMATileDBContext
 from .options.tiledb_create_options import TileDBCreateOptions
@@ -31,18 +30,17 @@ class DenseNDArray(TileDBArray, somacore.DenseNDArray):
         self,
         uri: str,
         *,
-        parent: Optional[CollectionBase[Any]] = None,
         context: Optional[SOMATileDBContext] = None,
     ):
         """
         Also see the ``TileDBObject`` constructor.
         """
-        super().__init__(uri=uri, parent=parent, context=context)
+        super().__init__(uri=uri, context=context)
 
     # Inherited from somacore
     # soma_type: Final = "SOMADenseNDArray"
 
-    def create(
+    def create_legacy(
         self,
         type: pa.DataType,
         shape: Union[NTuple, List[int]],
@@ -59,6 +57,7 @@ class DenseNDArray(TileDBArray, somacore.DenseNDArray):
 
         :param platform_config: Platform-specific options used to create this Array, provided via "tiledb"->"create" nested keys
         """
+        util.check_type("type", type, (pa.DataType,))
 
         # check on shape
         if len(shape) == 0 or any(e <= 0 for e in shape):
@@ -130,8 +129,8 @@ class DenseNDArray(TileDBArray, somacore.DenseNDArray):
         """
         Return length of each dimension, always a list of length ``ndim``
         """
-        with self._tiledb_open() as A:
-            return cast(NTuple, A.schema.domain.shape)
+        with self._ensure_open():
+            return cast(NTuple, self._tiledb_obj.schema.domain.shape)
 
     def reshape(self, shape: NTuple) -> None:
         """
@@ -149,9 +148,7 @@ class DenseNDArray(TileDBArray, somacore.DenseNDArray):
         self,
         coords: options.DenseNDCoords,
         *,
-        result_order: options.StrOr[
-            somacore.ResultOrder
-        ] = somacore.ResultOrder.ROW_MAJOR,
+        result_order: options.ResultOrderStr = somacore.ResultOrder.ROW_MAJOR,
         batch_size: options.BatchSize = _UNBATCHED,
         partitions: Optional[options.ReadPartitions] = None,
         platform_config: Optional[PlatformConfig] = None,
@@ -169,71 +166,74 @@ class DenseNDArray(TileDBArray, somacore.DenseNDArray):
         del batch_size, partitions, platform_config  # Currently unused.
         result_order = somacore.ResultOrder(result_order)
 
-        with self._tiledb_open("r") as A:
+        with self._ensure_open():
+            A = self._tiledb_obj
             target_shape = dense_indices_to_shape(coords, A.shape, result_order)
             schema = A.schema
             ned = A.nonempty_domain()
 
-        sr = self._soma_reader(result_order=result_order.value)
+            sr = self._soma_reader(result_order=result_order.value)
 
-        if coords is not None:
-            if not isinstance(coords, (list, tuple)):
-                raise TypeError(
-                    f"coords type {type(coords)} unsupported; expected list or tuple"
+            if coords is not None:
+                if not isinstance(coords, (list, tuple)):
+                    raise TypeError(
+                        f"coords type {type(coords)} unsupported; expected list or tuple"
+                    )
+                if len(coords) < 1 or len(coords) > schema.domain.ndim:
+                    raise ValueError(
+                        f"coords {coords} must have length between 1 and ndim ({schema.domain.ndim}); got {len(coords)}"
+                    )
+
+                for i, coord in enumerate(coords):
+                    dim_name = schema.domain.dim(i).name
+                    if coord is None:
+                        pass  # No constraint; select all in this dimension
+                    elif isinstance(coord, int):
+                        sr.set_dim_points(dim_name, [coord])
+                    elif isinstance(coord, slice):
+                        lo_hi = util.slice_to_range(coord, ned[i]) if ned else None
+                        if lo_hi is not None:
+                            lo, hi = lo_hi
+                            if lo < 0 or hi < 0:
+                                raise ValueError(
+                                    f"slice start and stop may not be negative; got ({lo}, {hi})"
+                                )
+                            if lo > hi:
+                                raise ValueError(
+                                    f"slice start must be <= slice stop; got ({lo}, {hi})"
+                                )
+                            sr.set_dim_ranges(dim_name, [lo_hi])
+                        # Else, no constraint in this slot. This is `slice(None)` which is like
+                        # Python indexing syntax `[:]`.
+                    else:
+                        raise TypeError(
+                            f"coord type {type(coord)} at slot {i} unsupported"
+                        )
+
+            sr.submit()
+
+            arrow_tables = []
+            while True:
+                arrow_table_piece = sr.read_next()
+                if not arrow_table_piece:
+                    break
+                arrow_tables.append(arrow_table_piece)
+
+            # For dense arrays there is no zero-output case: attempting to make a test case
+            # to do that, say by indexing a 10x20 array by positions 888 and 999, results
+            # in read-time errors of the form
+            #
+            # [TileDB::Subarray] Error: Cannot add range to dimension 'soma_dim_0'; Range [888, 888] is
+            # out of domain bounds [0, 9]
+            if not arrow_tables:
+                raise SOMAError(
+                    "internal error: at least one table-piece should have been returned"
                 )
-            if len(coords) < 1 or len(coords) > schema.domain.ndim:
-                raise ValueError(
-                    f"coords {coords} must have length between 1 and ndim ({schema.domain.ndim}); got {len(coords)}"
-                )
 
-            for i, coord in enumerate(coords):
-                dim_name = schema.domain.dim(i).name
-                if coord is None:
-                    pass  # No constraint; select all in this dimension
-                elif isinstance(coord, int):
-                    sr.set_dim_points(dim_name, [coord])
-                elif isinstance(coord, slice):
-                    lo_hi = util.slice_to_range(coord, ned[i]) if ned else None
-                    if lo_hi is not None:
-                        lo, hi = lo_hi
-                        if lo < 0 or hi < 0:
-                            raise ValueError(
-                                f"slice start and stop may not be negative; got ({lo}, {hi})"
-                            )
-                        if lo > hi:
-                            raise ValueError(
-                                f"slice start must be <= slice stop; got ({lo}, {hi})"
-                            )
-                        sr.set_dim_ranges(dim_name, [lo_hi])
-                    # Else, no constraint in this slot. This is `slice(None)` which is like
-                    # Python indexing syntax `[:]`.
-                else:
-                    raise TypeError(f"coord type {type(coord)} at slot {i} unsupported")
-
-        sr.submit()
-
-        arrow_tables = []
-        while True:
-            arrow_table_piece = sr.read_next()
-            if not arrow_table_piece:
-                break
-            arrow_tables.append(arrow_table_piece)
-
-        # For dense arrays there is no zero-output case: attempting to make a test case
-        # to do that, say by indexing a 10x20 array by positions 888 and 999, results
-        # in read-time errors of the form
-        #
-        # [TileDB::Subarray] Error: Cannot add range to dimension 'soma_dim_0'; Range [888, 888] is
-        # out of domain bounds [0, 9]
-        if not arrow_tables:
-            raise SOMAError(
-                "internal error: at least one table-piece should have been returned"
+            arrow_table = pa.concat_tables(arrow_tables)
+            return pa.Tensor.from_numpy(
+                arrow_table.column("soma_data").to_numpy().reshape(target_shape)
             )
-
-        arrow_table = pa.concat_tables(arrow_tables)
-        return pa.Tensor.from_numpy(
-            arrow_table.column("soma_data").to_numpy().reshape(target_shape)
-        )
 
     def write(
         self,
@@ -257,6 +257,8 @@ class DenseNDArray(TileDBArray, somacore.DenseNDArray):
             Define the values to be written to the subarray.  Must have same shape
             as defind by ``coords``, and the type must match the DenseNDArray.
         """
+        util.check_type("values", values, (pa.Tensor,))
+
         del platform_config  # Currently unused.
-        with self._tiledb_open("w") as A:
-            A[coords] = values.to_numpy()
+        with self._ensure_open("w"):
+            self._tiledb_obj[coords] = values.to_numpy()

@@ -1,4 +1,4 @@
-from typing import Any, Dict, Optional, Tuple, cast
+from typing import Dict, Optional, Tuple, cast
 
 import somacore
 from typing_extensions import Final
@@ -33,9 +33,6 @@ class Experiment(CollectionBase[TileDBObject]):
         self,
         uri: str,
         *,
-        # Non-top-level objects can have a parent to propagate context, depth, etc.
-        parent: Optional[CollectionBase[Any]] = None,
-        # Top-level objects should specify this:
         context: Optional[SOMATileDBContext] = None,
     ):
         """
@@ -43,12 +40,12 @@ class Experiment(CollectionBase[TileDBObject]):
 
         [lifecycle: experimental]
         """
-        super().__init__(uri=uri, parent=parent, context=context)
+        super().__init__(uri=uri, context=context)
 
     # Inherited from somacore
     soma_type: Final = "SOMAExperiment"
 
-    def create(self) -> "Experiment":
+    def create_legacy(self) -> "Experiment":
         """
         Creates the data structure on disk/S3/cloud.
 
@@ -80,7 +77,7 @@ class Experiment(CollectionBase[TileDBObject]):
         *,
         obs_query: somacore.AxisQuery = _EMPTY_QUERY,
         var_query: somacore.AxisQuery = _EMPTY_QUERY,
-    ) -> somacore.ExperimentAxisQuery:
+    ) -> somacore.ExperimentAxisQuery["Experiment"]:  # type: ignore[type-var]
         """
         Create a query on this Experiment. See ``ExperimentAxisQuery`` for more
         information on parameters and usage.
@@ -89,10 +86,8 @@ class Experiment(CollectionBase[TileDBObject]):
         """
         if not self.exists():
             raise ValueError(f"Experiment {self.uri} does not exist.")
-        return somacore.ExperimentAxisQuery(
-            # While not technically a somacore.Experiment yet, we implement
-            # all the parts that `ExperimentAxisQuery` needs.
-            self,  # type: ignore[arg-type]
+        return somacore.ExperimentAxisQuery(  # type: ignore[type-var]
+            self,
             measurement_name,
             obs_query=obs_query,
             var_query=var_query,

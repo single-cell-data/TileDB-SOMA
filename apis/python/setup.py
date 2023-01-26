@@ -110,8 +110,8 @@ setuptools.setup(
         "pyarrow >= 9.0.0",
         "scanpy",
         "scipy",
-        "somacore==0.0.0a5",
-        "tiledb>=0.20.0",
+        "somacore==0.0.0a8",
+        "tiledb==0.20.*",
         "typing-extensions",  # Note "-" even though `import typing_extensions`
     ],
     extras_require={

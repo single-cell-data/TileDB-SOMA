@@ -8,7 +8,6 @@ import tiledb
 from somacore import options
 
 from . import util, util_arrow
-from .collection import CollectionBase
 from .constants import SOMA_JOINID
 from .options import SOMATileDBContext
 from .options.tiledb_create_options import TileDBCreateOptions
@@ -37,8 +36,6 @@ class DataFrame(TileDBArray, somacore.DataFrame):
         self,
         uri: str,
         *,
-        parent: Optional[CollectionBase[Any]] = None,
-        # Top-level objects should specify this:
         context: Optional[SOMATileDBContext] = None,
     ):
         """
@@ -46,14 +43,14 @@ class DataFrame(TileDBArray, somacore.DataFrame):
 
         [lifecycle: experimental]
         """
-        super().__init__(uri=uri, parent=parent, context=context)
+        super().__init__(uri=uri, context=context)
         self._index_column_names = ()
         self._is_sparse = None
 
     # Inherited from somacore
     # soma_type: Final = "SOMADataFrame"
 
-    def create(
+    def create_legacy(
         self,
         schema: pa.Schema,
         index_column_names: Sequence[str] = (SOMA_JOINID,),
@@ -70,6 +67,8 @@ class DataFrame(TileDBArray, somacore.DataFrame):
 
         :param platform_config: Platform-specific options used to create this DataFrame, provided via "tiledb"->"create" nested keys
         """
+        util.check_type("schema", schema, (pa.Schema,))
+
         schema = _validate_schema(schema, index_column_names)
         self._create_empty(
             schema,
@@ -190,9 +189,9 @@ class DataFrame(TileDBArray, somacore.DataFrame):
         """
         Return the number of rows in the dataframe. Same as `len(df)`.
         """
-
         # A.domain.shape at the tiledb level gives us the 0..2^63 range which is not what we want
-        return cast(int, self._soma_reader().nnz())
+        with self._ensure_open():  # <-- currently superfluous, but we'll soon reuse SOMAReader
+            return cast(int, self._soma_reader().nnz())
 
     def __len__(self) -> int:
         """
@@ -205,7 +204,7 @@ class DataFrame(TileDBArray, somacore.DataFrame):
         coords: Optional[options.SparseDFCoords] = None,
         column_names: Optional[Sequence[str]] = None,
         *,
-        result_order: options.StrOr[somacore.ResultOrder] = "auto",
+        result_order: options.ResultOrderStr = options.ResultOrder.AUTO,
         value_filter: Optional[str] = None,
         batch_size: options.BatchSize = _UNBATCHED,
         partitions: Optional[options.ReadPartitions] = None,
@@ -246,7 +245,8 @@ class DataFrame(TileDBArray, somacore.DataFrame):
         del batch_size, partitions, platform_config  # Currently unused.
         result_order = options.ResultOrder(result_order)
 
-        with self._tiledb_open("r") as A:
+        with self._ensure_open():
+            A = self._tiledb_obj
             query_condition = None
             if value_filter is not None:
                 query_condition = QueryCondition(value_filter)
@@ -314,7 +314,7 @@ class DataFrame(TileDBArray, somacore.DataFrame):
             # TODO: platform_config
             # TODO: batch_size
 
-        sr.submit()
+            sr.submit()
         return TableReadIter(sr)
 
     def write(
@@ -327,6 +327,8 @@ class DataFrame(TileDBArray, somacore.DataFrame):
 
         :param values: An Arrow.Table containing all columns, including the index columns. The schema for the values must match the schema for the ``DataFrame``.
         """
+        util.check_type("values", values, (pa.Table,))
+
         del platform_config  # unused
         dim_cols_list = []
         attr_cols_map = {}
@@ -343,8 +345,8 @@ class DataFrame(TileDBArray, somacore.DataFrame):
             raise ValueError(f"did not find any column names in {values.schema.names}")
 
         dim_cols_tuple = tuple(dim_cols_list)
-        with self._tiledb_open("w") as A:
-            A[dim_cols_tuple] = attr_cols_map
+        with self._ensure_open("w"):
+            self._tiledb_obj[dim_cols_tuple] = attr_cols_map
 
 
 def _validate_schema(schema: pa.Schema, index_column_names: Sequence[str]) -> pa.Schema:
