@@ -28,7 +28,8 @@ from tiledbsoma import (
 from tiledbsoma.exception import SOMAError
 
 from .constants import SOMA_JOINID
-from .options import SOMATileDBContext, TileDBCreateOptions
+from .options import SOMATileDBContext
+from .options.tiledb_create_options import TileDBCreateOptions
 from .types import INGEST_MODES, IngestMode, NPNDArray, Path
 
 SparseMatrix = Union[sp.csr_matrix, sp.csc_matrix, SparseDataset]

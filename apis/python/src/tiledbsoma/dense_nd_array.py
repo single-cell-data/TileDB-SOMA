@@ -12,7 +12,8 @@ from tiledbsoma.util import dense_indices_to_shape
 
 from .collection import CollectionBase
 from .exception import SOMAError
-from .options import SOMATileDBContext, TileDBCreateOptions
+from .options import SOMATileDBContext
+from .options.tiledb_create_options import TileDBCreateOptions
 from .tiledb_array import TileDBArray
 from .types import NTuple, PlatformConfig
 

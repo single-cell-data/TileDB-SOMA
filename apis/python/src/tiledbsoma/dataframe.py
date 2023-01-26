@@ -10,7 +10,8 @@ from somacore import options
 from . import util, util_arrow
 from .collection import CollectionBase
 from .constants import SOMA_JOINID
-from .options import SOMATileDBContext, TileDBCreateOptions
+from .options import SOMATileDBContext
+from .options.tiledb_create_options import TileDBCreateOptions
 from .query_condition import QueryCondition
 from .tiledb_array import TileDBArray
 from .types import NPFloating, NPInteger, PlatformConfig
