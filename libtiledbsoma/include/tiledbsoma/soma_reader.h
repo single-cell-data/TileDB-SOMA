@@ -67,7 +67,8 @@ class SOMAReader {
         std::map<std::string, std::string> platform_config = {},
         std::vector<std::string> column_names = {},
         std::string_view batch_size = "auto",
-        std::string_view result_order = "auto");
+        std::string_view result_order = "auto",
+        std::optional<std::pair<uint64_t, uint64_t>> timestamp = std::nullopt);
 
     /**
      * @brief Open an array at the specified URI and return SOMAReader object.
@@ -86,7 +87,8 @@ class SOMAReader {
         std::string_view name = "unnamed",
         std::vector<std::string> column_names = {},
         std::string_view batch_size = "auto",
-        std::string_view result_order = "auto");
+        std::string_view result_order = "auto",
+        std::optional<std::pair<uint64_t, uint64_t>> timestamp = std::nullopt);
 
     //===================================================================
     //= public non-static
@@ -104,7 +106,8 @@ class SOMAReader {
         std::shared_ptr<Context> ctx,
         std::vector<std::string> column_names,
         std::string_view batch_size,
-        std::string_view result_order);
+        std::string_view result_order,
+        std::optional<std::pair<uint64_t, uint64_t>> timestamp = std::nullopt);
 
     SOMAReader() = delete;
     SOMAReader(const SOMAReader&) = delete;
@@ -312,6 +315,12 @@ class SOMAReader {
     // Batch size
     std::string batch_size_;
 
+    // Result order
+    std::string result_order_;
+
+    // Read timestamp range (start, end)
+    std::optional<std::pair<uint64_t, uint64_t>> timestamp_;
+
     // Managed query for the array
     std::unique_ptr<ManagedQuery> mq_;
 
@@ -320,6 +329,9 @@ class SOMAReader {
 
     // True if the query was submitted
     bool submitted_ = false;
+
+    // Unoptimized method for computing nnz() (issue `count_cells` query)
+    uint64_t nnz_slow();
 };
 
 }  // namespace tiledbsoma

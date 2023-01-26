@@ -131,68 +131,72 @@ PYBIND11_MODULE(libtiledbsoma, m) {
 
     py::class_<SOMAReader>(m, "SOMAReader")
         .def(
-            py::init([](std::string_view uri,
-                        std::string_view name,
-                        std::optional<std::vector<std::string>> column_names_in,
-                        py::object py_query_condition,
-                        py::object py_schema,
-                        std::string_view batch_size,
-                        std::string_view result_order,
-                        std::map<std::string, std::string> platform_config) {
-                // Handle optional args
-                std::vector<std::string> column_names;
-                if (column_names_in) {
-                    column_names = *column_names_in;
-                }
-
-                // Handle query condition based on
-                // TileDB-Py::PyQuery::set_attr_cond()
-                QueryCondition* qc = nullptr;
-                if (!py_query_condition.is(py::none())) {
-                    py::object init_pyqc = py_query_condition.attr(
-                        "init_query_condition");
-
-                    try {
-                        // Column names will be updated with columns present in
-                        // the query condition
-                        auto new_column_names =
-                            init_pyqc(py_schema, column_names)
-                                .cast<std::vector<std::string>>();
-
-                        // Update the column_names list if it was not empty,
-                        // otherwise continue selecting all columns with an
-                        // empty column_names list
-                        if (!column_names.empty()) {
-                            column_names = new_column_names;
-                        }
-                    } catch (const std::exception& e) {
-                        throw TileDBSOMAError(e.what());
+            py::init(
+                [](std::string_view uri,
+                   std::string_view name,
+                   std::optional<std::vector<std::string>> column_names_in,
+                   py::object py_query_condition,
+                   py::object py_schema,
+                   std::string_view batch_size,
+                   std::string_view result_order,
+                   std::map<std::string, std::string> platform_config,
+                   std::optional<std::pair<uint64_t, uint64_t>> timestamp) {
+                    // Handle optional args
+                    std::vector<std::string> column_names;
+                    if (column_names_in) {
+                        column_names = *column_names_in;
                     }
 
-                    qc = py_query_condition.attr("c_obj")
-                             .cast<tiledbpy::PyQueryCondition>()
-                             .ptr()
-                             .get();
-                }
+                    // Handle query condition based on
+                    // TileDB-Py::PyQuery::set_attr_cond()
+                    QueryCondition* qc = nullptr;
+                    if (!py_query_condition.is(py::none())) {
+                        py::object init_pyqc = py_query_condition.attr(
+                            "init_query_condition");
 
-                // Release python GIL after we're done accessing python objects
-                py::gil_scoped_release release;
+                        try {
+                            // Column names will be updated with columns present
+                            // in the query condition
+                            auto new_column_names =
+                                init_pyqc(py_schema, column_names)
+                                    .cast<std::vector<std::string>>();
 
-                auto reader = SOMAReader::open(
-                    uri,
-                    name,
-                    platform_config,
-                    column_names,
-                    batch_size,
-                    result_order);
+                            // Update the column_names list if it was not empty,
+                            // otherwise continue selecting all columns with an
+                            // empty column_names list
+                            if (!column_names.empty()) {
+                                column_names = new_column_names;
+                            }
+                        } catch (const std::exception& e) {
+                            throw TileDBSOMAError(e.what());
+                        }
 
-                // Set query condition if present
-                if (qc) {
-                    reader->set_condition(*qc);
-                }
+                        qc = py_query_condition.attr("c_obj")
+                                 .cast<tiledbpy::PyQueryCondition>()
+                                 .ptr()
+                                 .get();
+                    }
 
-                return reader;
-            }),
+                    // Release python GIL after we're done accessing python
+                    // objects
+                    py::gil_scoped_release release;
+
+                    auto reader = SOMAReader::open(
+                        uri,
+                        name,
+                        platform_config,
+                        column_names,
+                        batch_size,
+                        result_order,
+                        timestamp);
+
+                    // Set query condition if present
+                    if (qc) {
+                        reader->set_condition(*qc);
+                    }
+
+                    return reader;
+                }),
             "uri"_a,
             py::kw_only(),
             "name"_a = "unnamed",
@@ -201,7 +205,8 @@ PYBIND11_MODULE(libtiledbsoma, m) {
             "schema"_a = py::none(),
             "batch_size"_a = "auto",
             "result_order"_a = "auto",
-            "platform_config"_a = py::dict())
+            "platform_config"_a = py::dict(),
+            "timestamp"_a = py::none())
 
         .def(
             "reset",

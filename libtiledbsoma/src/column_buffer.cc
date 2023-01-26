@@ -89,7 +89,8 @@ void ColumnBuffer::to_bitmap(tcb::span<uint8_t> bytemap) {
             // Each bit in the bitmap corresponds to one byte in the bytemap
             // Note: the bitmap must be byte-aligned (8 bits)
             int bitmap = 0;
-            for (unsigned int i = i_src; i < i_src + 8; i++) {
+            for (unsigned int i = i_src; i < i_src + 8 && i < bytemap.size();
+                 i++) {
                 bitmap |= bytemap[i] << (i % 8);
             }
             bytemap[i_dst++] = bitmap;
