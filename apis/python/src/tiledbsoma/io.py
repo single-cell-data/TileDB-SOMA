@@ -1,6 +1,6 @@
 import math
 import time
-from typing import List, Optional, Sequence, Tuple, Union
+from typing import List, Optional, Sequence, Tuple, Union, cast
 
 import anndata as ad
 import h5py
@@ -477,9 +477,8 @@ def add_X_layer(
     exp: Experiment,
     measurement_name: str,
     X_layer_name: str,
-    X_layer_data: Union[
-        Matrix, h5py.Dataset
-    ],  # e.g. a scipy.csr_matrix from scanpy analysis
+    # E.g. a scipy.csr_matrix from scanpy analysis:
+    X_layer_data: Union[Matrix, h5py.Dataset],
     ingest_mode: IngestMode = "write",
 ) -> None:
     """
@@ -487,10 +486,46 @@ def add_X_layer(
 
     Use `ingest_mode="resume"` to not error out if the schema already exists.
     """
-    uri = f"{exp.ms[measurement_name].X.uri}/{X_layer_name}"
-    sparse_nd_array = SparseNDArray(uri)
-    create_from_matrix(sparse_nd_array, X_layer_data, ingest_mode=ingest_mode)
-    exp.ms[measurement_name].X.set(X_layer_name, sparse_nd_array)
+    add_matrix_to_collection(exp, measurement_name, "X", X_layer_name, X_layer_data)
+
+
+def add_matrix_to_collection(
+    exp: Experiment,
+    measurement_name: str,
+    collection_name: str,
+    matrix_name: str,
+    # E.g. a scipy.csr_matrix from scanpy analysis:
+    matrix_data: Union[Matrix, h5py.Dataset],
+    ingest_mode: IngestMode = "write",
+) -> None:
+    """
+    This is useful for adding X/obsp/varm/etc data, for example from scanpy.pp.normalize_total,
+    scanpy.pp.log1p, etc.
+
+    Use `ingest_mode="resume"` to not error out if the schema already exists.
+    """
+
+    if collection_name not in exp.ms[measurement_name]:
+        # E.g. this is the first obsm matrix
+        exp.ms[measurement_name][collection_name] = _check_create_collection(
+            Collection(
+                uri=util.uri_joinpath(exp.ms[measurement_name].uri, measurement_name)
+            ),
+            ingest_mode,
+        )
+
+    collection = cast(Collection, exp.ms[measurement_name][collection_name])
+
+    uri = f"{collection.uri}/{matrix_name}"
+    cls = (
+        DenseNDArray
+        if isinstance(matrix_data, (np.ndarray, h5py.Dataset))
+        else SparseNDArray
+    )
+    nd_array = cls(uri=uri)
+
+    create_from_matrix(nd_array, matrix_data, ingest_mode=ingest_mode)
+    collection.set(matrix_name, nd_array)
 
 
 def _write_matrix_to_denseNDArray(

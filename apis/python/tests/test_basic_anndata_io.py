@@ -220,7 +220,7 @@ def test_resume_mode(adata, resume_mode_h5ad_file):
     tempdir2.cleanup()
 
 
-def test_add_X_layer(adata):
+def test_add_matrix_to_collection(adata):
     tempdir = tempfile.TemporaryDirectory()
     output_path = tempdir.name
 
@@ -230,6 +230,25 @@ def test_add_X_layer(adata):
 
     tiledbsoma.io.add_X_layer(exp, "RNA", "data2", adata.X)
     assert sorted(list(exp.ms["RNA"].X.keys())) == ["data", "data2"]
+
+    with pytest.raises(KeyError):
+        tiledbsoma.io.add_X_layer(exp, "nonesuch", "data3", adata.X)
+
+    assert sorted(list(exp.ms["RNA"].obsm.keys())) == ["X_pca", "X_tsne"]
+    tiledbsoma.io.add_matrix_to_collection(
+        exp, "RNA", "obsm", "X_pcb", adata.obsm["X_pca"]
+    )
+    assert sorted(list(exp.ms["RNA"].obsm.keys())) == ["X_pca", "X_pcb", "X_tsne"]
+
+    with pytest.raises(KeyError):
+        tiledbsoma.io.add_matrix_to_collection(
+            exp, "nonesuch", "obsm", "X_pcc", adata.obsm["X_pca"]
+        )
+
+    tiledbsoma.io.add_matrix_to_collection(
+        exp, "RNA", "newthing", "X_pcd", adata.obsm["X_pca"]
+    )
+    assert sorted(list(exp.ms["RNA"]["newthing"].keys())) == ["X_pcd"]
 
 
 def test_export_anndata(adata):
