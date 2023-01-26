@@ -4,9 +4,10 @@ import numpy as np
 import pyarrow as pa
 import somacore
 import tiledb
+from somacore import options
+
 import tiledbsoma.util as util
 import tiledbsoma.util_arrow as util_arrow
-from somacore import options
 from tiledbsoma.util import dense_indices_to_shape
 
 from .exception import SOMAError

@@ -4,8 +4,9 @@ from typing import Any, Iterator, Optional, TypeVar, Union
 
 import somacore
 import tiledb
-from tiledbsoma.exception import SOMAError
 from typing_extensions import Literal, NoReturn
+
+from tiledbsoma.exception import SOMAError
 
 from . import util
 from .metadata_mapping import MetadataMapping

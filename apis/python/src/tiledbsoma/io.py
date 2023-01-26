@@ -8,12 +8,13 @@ import numpy as np
 import pandas as pd
 import pyarrow as pa
 import scipy.sparse as sp
+from anndata._core.sparse_dataset import SparseDataset
+from somacore.options import PlatformConfig
+
 import tiledbsoma.eta as eta
 import tiledbsoma.util as util
 import tiledbsoma.util_ann as util_ann
 import tiledbsoma.util_tiledb as util_tiledb
-from anndata._core.sparse_dataset import SparseDataset
-from somacore.options import PlatformConfig
 from tiledbsoma import (
     Collection,
     DataFrame,

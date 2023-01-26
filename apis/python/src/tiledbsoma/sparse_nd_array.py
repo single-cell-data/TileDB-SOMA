@@ -5,11 +5,11 @@ import numpy as np
 import pyarrow as pa
 import somacore
 import tiledb
+from somacore import options
+from somacore.options import PlatformConfig
 
 # This package's pybind11 code
 import tiledbsoma.libtiledbsoma as clib
-from somacore import options
-from somacore.options import PlatformConfig
 
 from . import util, util_arrow
 from .options import SOMATileDBContext, TileDBCreateOptions
