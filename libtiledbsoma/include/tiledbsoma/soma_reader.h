@@ -330,7 +330,7 @@ class SOMAReader {
     // True if the query was submitted
     bool submitted_ = false;
 
-    // Unoptimized method for computing nnz() (issue count_cells query)
+    // Unoptimized method for computing nnz() (issue `count_cells` query)
     uint64_t nnz_slow();
 };
 
