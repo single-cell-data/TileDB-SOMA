@@ -48,6 +48,12 @@ TileDBURI <- R6::R6Class(
       self$initialize(value)
     },
 
+    #' @field scheme The URI scheme
+    scheme = function(value) {
+      if (missing(value)) return(private$.pieces$scheme)
+      read_only_error("tiledb_cloud_uri")
+    },
+
     #' @field tiledb_cloud_uri URI for TileDB Cloud access
     tiledb_cloud_uri = function(value) {
       if (missing(value)) return(private$.tiledb_cloud_uri)
