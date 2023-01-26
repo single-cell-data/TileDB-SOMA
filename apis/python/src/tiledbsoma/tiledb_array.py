@@ -1,4 +1,4 @@
-from typing import List, Optional, Sequence, Tuple
+from typing import List, Optional, Sequence, Tuple, Union
 
 import pyarrow as pa
 import tiledb
@@ -39,6 +39,7 @@ class TileDBArray(TileDBObject):
 
     def _sub_open(self) -> None:
         assert self._open_mode in ("r", "w") and self._open_tiledb_array is None
+        timestamp: Union[None, Tuple[int, int], int] = None
         if self._open_mode == "r":
             timestamp = self.context._tiledb_read_timestamp_arg()
         else:

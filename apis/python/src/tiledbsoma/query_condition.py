@@ -5,6 +5,7 @@ from typing import Any, Callable, List, Tuple, Union
 import numpy as np
 import tiledb
 import tiledbsoma.libtiledbsoma as qc
+
 from tiledbsoma.libtiledbsoma import PyQueryCondition
 
 """
