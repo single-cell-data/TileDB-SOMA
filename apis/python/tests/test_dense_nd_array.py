@@ -277,7 +277,7 @@ def test_dense_nd_array_indexing_errors(tmp_path, io):
 def test_timestamped_ops(tmp_path):
     # 2x2 array
     a = soma.DenseNDArray(
-        uri=tmp_path.as_posix(), context=SOMATileDBContext(write_timestamp=1)
+        uri=tmp_path.as_posix(), context=SOMATileDBContext(_write_timestamp=1)
     )
     a.create_legacy(type=pa.uint8(), shape=(2, 2))
     a.write(
@@ -287,7 +287,7 @@ def test_timestamped_ops(tmp_path):
 
     # write 1 into top-left entry @ t=10
     a = soma.DenseNDArray(
-        uri=tmp_path.as_posix(), context=SOMATileDBContext(write_timestamp=10)
+        uri=tmp_path.as_posix(), context=SOMATileDBContext(_write_timestamp=10)
     )
     assert a.exists()
     a.write(
@@ -297,7 +297,7 @@ def test_timestamped_ops(tmp_path):
 
     # write 1 into bottom-right entry @ t=20
     a = soma.DenseNDArray(
-        uri=tmp_path.as_posix(), context=SOMATileDBContext(write_timestamp=20)
+        uri=tmp_path.as_posix(), context=SOMATileDBContext(_write_timestamp=20)
     )
     a.write(
         (slice(1, 2), slice(1, 2)),

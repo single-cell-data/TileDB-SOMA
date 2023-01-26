@@ -57,5 +57,7 @@ class SOMATileDBContext:
         )
         return (start, end)
 
-    _write_timestamp: Optional[int] = None
+    _write_timestamp: Optional[int] = attrs.field(
+        alias="_write_timestamp", default=None
+    )
     "(internal) override the timestamp applied to all write operations, for testing purposes."

@@ -809,7 +809,7 @@ def test_timestamped_ops(tmp_path):
         ]
     )
     sidf = soma.DataFrame(
-        uri=tmp_path.as_posix(), context=SOMATileDBContext(write_timestamp=10)
+        uri=tmp_path.as_posix(), context=SOMATileDBContext(_write_timestamp=10)
     )
     sidf.create_legacy(schema=schema, index_column_names=["soma_joinid"])
 
@@ -821,7 +821,7 @@ def test_timestamped_ops(tmp_path):
     sidf.write(pa.Table.from_pydict(data))
 
     sidf = soma.DataFrame(
-        uri=tmp_path.as_posix(), context=SOMATileDBContext(write_timestamp=20)
+        uri=tmp_path.as_posix(), context=SOMATileDBContext(_write_timestamp=20)
     )
     assert sidf.exists()
     data = {

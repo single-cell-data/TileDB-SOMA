@@ -850,7 +850,7 @@ def test_bad_coords(tmp_path, bad_coords):
 def test_timestamped_ops(tmp_path):
     # 2x2 array
     a = soma.SparseNDArray(
-        uri=tmp_path.as_posix(), context=SOMATileDBContext(write_timestamp=10)
+        uri=tmp_path.as_posix(), context=SOMATileDBContext(_write_timestamp=10)
     )
     # write 1 into top-left entry @ t=10
     a.create_legacy(type=pa.uint16(), shape=(2, 2))
@@ -862,7 +862,7 @@ def test_timestamped_ops(tmp_path):
 
     # write 1 into bottom-right entry @ t=20
     a = soma.SparseNDArray(
-        uri=tmp_path.as_posix(), context=SOMATileDBContext(write_timestamp=20)
+        uri=tmp_path.as_posix(), context=SOMATileDBContext(_write_timestamp=20)
     )
     assert a.exists()
     a.write(

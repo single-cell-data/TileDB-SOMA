@@ -255,7 +255,7 @@ def test_timestamp_inheritance(tmp_path):
     """
 
     # create collection & A @ t=10
-    ctx_write10 = SOMATileDBContext(write_timestamp=10)
+    ctx_write10 = SOMATileDBContext(_write_timestamp=10)
     sc = soma.Collection(tmp_path.as_uri(), context=ctx_write10).create_legacy()
     A = soma.DenseNDArray(uri=(tmp_path / "A").as_posix(), context=ctx_write10)
     A.create_legacy(type=pa.uint8(), shape=(2, 2))
@@ -267,7 +267,7 @@ def test_timestamp_inheritance(tmp_path):
 
     # access A via collection @ t=20 and write more into it
     sc = soma.Collection(
-        tmp_path.as_uri(), context=SOMATileDBContext(write_timestamp=20)
+        tmp_path.as_uri(), context=SOMATileDBContext(_write_timestamp=20)
     )
     sc["A"].write(
         (slice(0, 1), slice(0, 1)),
