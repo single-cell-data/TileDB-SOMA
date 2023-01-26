@@ -126,7 +126,7 @@ class AnnotationMatrixGroup(TileDBGroup):
         dim_values: Labels,
         matrix_name: str,
         *,
-        ingest_mode: str,
+        ingest_mode: str = "write",
     ) -> None:
         """
         Populates a component of the ``obsm`` or ``varm`` subgroup for a SOMA object.

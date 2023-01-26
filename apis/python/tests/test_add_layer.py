@@ -49,7 +49,6 @@ def test_add_layer(adata):
         soma.obs.ids(),
         soma.var.ids(),
         "data2",
-        ingest_mode="write",
     )
 
     csr2 = soma.X.data2.csr()
@@ -66,7 +65,6 @@ def test_add_layer(adata):
         soma.obsm.X_tsne.df(),
         soma.obs_keys(),
         "voila",
-        ingest_mode="write",
     )
     assert sorted(soma.obsm.keys()) == ["X_pca", "X_tsne", "voila"]
     assert soma.obsm.voila.shape() == soma.obsm.X_tsne.shape()
@@ -76,7 +74,6 @@ def test_add_layer(adata):
         soma.obsp.distances.csr(),
         soma.obs_keys(),
         "voici",
-        ingest_mode="write",
     )
     assert sorted(soma.obsp.keys()) == ["distances", "voici"]
     assert soma.obsp.voici.shape() == soma.obsp.distances.shape()
