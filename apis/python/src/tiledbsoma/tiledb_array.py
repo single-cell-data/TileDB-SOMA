@@ -14,6 +14,8 @@ from .util_arrow import get_arrow_schema_from_tiledb_uri
 class TileDBArray(TileDBObject):
     """
     Wraps arrays from TileDB-Py by retaining a URI, options, etc.  Also serves as an abstraction layer to hide TileDB-specific details from the API, unless requested.
+
+    [lifecycle: experimental]
     """
 
     def __init__(
@@ -26,6 +28,8 @@ class TileDBArray(TileDBObject):
     ):
         """
         See the ``TileDBObject`` constructor.
+
+        [lifecycle: experimental]
         """
         super().__init__(uri, parent=parent, context=context)
 

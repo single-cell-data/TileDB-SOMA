@@ -22,6 +22,8 @@ _UNBATCHED = options.BatchSize()
 class DenseNDArray(TileDBArray, somacore.DenseNDArray):
     """
     Represents ``X`` and others.
+
+    [lifecycle: experimental]
     """
 
     def __init__(
@@ -47,6 +49,8 @@ class DenseNDArray(TileDBArray, somacore.DenseNDArray):
     ) -> "DenseNDArray":
         """
         Create a ``DenseNDArray`` named with the URI.
+
+        [lifecycle: experimental]
 
         :param type: an Arrow type defining the type of each element in the array. If the type is unsupported, an error will be raised.
 
@@ -130,7 +134,9 @@ class DenseNDArray(TileDBArray, somacore.DenseNDArray):
 
     def reshape(self, shape: NTuple) -> None:
         """
-        Unsupported operation for this object type [lifecycle: experimental].
+        Unsupported operation for this object type.
+
+        [lifecycle: experimental]
         """
         raise NotImplementedError("reshape operation not implemented.")
 
@@ -156,6 +162,8 @@ class DenseNDArray(TileDBArray, somacore.DenseNDArray):
         is 10 by 20, then some acceptable values of ``coords`` include ``(3, 4)``,
         ``(slice(5, 10),)``, and ``(slice(5, 10), slice(6, 12))``. Slice indices are
         doubly inclusive.
+
+        [lifecycle: experimental]
         """
         del batch_size, partitions, platform_config  # Currently unused.
         result_order = somacore.ResultOrder(result_order)
@@ -236,6 +244,8 @@ class DenseNDArray(TileDBArray, somacore.DenseNDArray):
         """
         Write subarray, defined by ``coords`` and ``values``. Will overwrite existing
         values in the array.
+
+        [lifecycle: experimental]
 
         Parameters
         ----------

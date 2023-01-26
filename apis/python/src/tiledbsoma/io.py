@@ -55,6 +55,8 @@ def from_h5ad(
 
     The "schema_only" ingest_mode creates groups and array schema, without writing array data.
     This is useful as a prep-step for parallel append-ingest of multiple H5ADs to a single soma.
+
+    [lifecycle: experimental]
     """
     if ingest_mode not in INGEST_MODES:
         raise SOMAError(
@@ -107,6 +109,8 @@ def from_anndata(
 
     The "schema_only" ingest_mode creates groups and array schema, without writing array data.
     This is useful as a prep-step for parallel append-ingest of multiple H5ADs to a single soma.
+
+    [lifecycle: experimental]
     """
     if ingest_mode not in INGEST_MODES:
         raise SOMAError(
@@ -486,6 +490,8 @@ def add_X_layer(
     This is useful for adding X data, for example from scanpy.pp.normalize_total, scanpy.pp.log1p, etc.
 
     Use `ingest_mode="resume"` to not error out if the schema already exists.
+
+    [lifecycle: experimental]
     """
     uri = f"{exp.ms[measurement_name].X.uri}/{X_layer_name}"
     sparse_nd_array = SparseNDArray(uri)
@@ -821,6 +827,8 @@ def to_h5ad(
 ) -> None:
     """
     Converts the experiment group to anndata format and writes it to the specified .h5ad file.
+
+    [lifecycle: experimental]
     """
     s = util.get_start_stamp()
     logging.log_io(None, f"START  Experiment.to_h5ad -> {h5ad_path}")
@@ -852,6 +860,8 @@ def to_anndata(
     * obs,var as ``pandas.dataframe``
     * obsm,varm arrays as ``numpy.ndarray``
     * obsp,varp arrays as ``scipy.sparse.csr_matrix``
+
+    [lifecycle: experimental]
     """
 
     s = util.get_start_stamp()

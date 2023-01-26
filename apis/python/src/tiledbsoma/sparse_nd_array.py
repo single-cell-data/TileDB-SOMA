@@ -29,6 +29,8 @@ _UNBATCHED = options.BatchSize()
 class SparseNDArray(TileDBArray, somacore.SparseNDArray):
     """
     Represents ``X`` and others.
+
+    [lifecycle: experimental]
     """
 
     def __init__(
@@ -40,6 +42,8 @@ class SparseNDArray(TileDBArray, somacore.SparseNDArray):
     ):
         """
         Also see the ``TileDBObject`` constructor.
+
+        [lifecycle: experimental]
         """
 
         super().__init__(uri=uri, parent=parent, context=context)
@@ -55,6 +59,8 @@ class SparseNDArray(TileDBArray, somacore.SparseNDArray):
     ) -> "SparseNDArray":
         """
         Create a ``SparseNDArray`` named with the URI.
+
+        [lifecycle: experimental]
 
         :param type: an Arrow type defining the type of each element in the array. If the type is unsupported, an error will be raised.
 
@@ -141,6 +147,8 @@ class SparseNDArray(TileDBArray, somacore.SparseNDArray):
     def reshape(self, shape: NTuple) -> None:
         """
         Unsupported operation for this object type.
+
+        [lifecycle: experimental]
         """
         raise NotImplementedError("reshape operation not implemented.")
 
@@ -166,6 +174,8 @@ class SparseNDArray(TileDBArray, somacore.SparseNDArray):
     ) -> "SparseNDArrayRead":
         """
         Read a user-defined slice of the SparseNDArray.
+
+        [lifecycle: experimental]
 
         Parameters
         ----------
@@ -263,6 +273,8 @@ class SparseNDArray(TileDBArray, somacore.SparseNDArray):
         """
         Write an Arrow object to the SparseNDArray.
 
+        [lifecycle: experimental]
+
         Arrow sparse tensor: the coordinates in the Arrow SparseTensor will be interpreted
         as the coordinates to write to. Supports the _experimental_ SparseCOOTensor,
         SparseCSRMatrix and SparseCSCMatrix. There is currently no support for Arrow
@@ -304,26 +316,60 @@ class SparseNDArray(TileDBArray, somacore.SparseNDArray):
 
 
 class SparseNDArrayRead(somacore.SparseRead):
+    """
+    Intermediate type to choose result format when reading a sparse array.
+
+    See docs for somacore.data.SparseRead
+
+    [lifecycle: experimental]
+    """
+
     def __init__(self, sr: clib.SOMAReader, shape: NTuple):
+        """
+        [lifecycle: experimental]
+        """
         self.sr = sr
         self.shape = shape
 
     def coos(self) -> SparseCOOTensorReadIter:
-        """Return an iterator of Arrow SparseCOOTensor"""
+        """
+        Return an iterator of Arrow SparseCOOTensor
+
+        [lifecycle: experimental]
+        """
         return SparseCOOTensorReadIter(self.sr, self.shape)
 
     def cscs(self) -> SparseCSCMatrixReadIter:
-        """Return an iterator of Arrow SparseCSCMatrix"""
+        """
+        Return an iterator of Arrow SparseCSCMatrix
+
+        [lifecycle: experimental]
+        """
+
         return SparseCSCMatrixReadIter(self.sr, self.shape)
 
     def csrs(self) -> SparseCSRMatrixReadIter:
-        """Return an iterator of Arrow SparseCSRMatrix"""
+        """
+        Return an iterator of Arrow SparseCSRMatrix
+
+        [lifecycle: experimental]
+        """
+
         return SparseCSRMatrixReadIter(self.sr, self.shape)
 
     def dense_tensors(self) -> somacore.ReadIter[pa.Tensor]:
-        """Return an iterator of Arrow Tensor"""
+        """
+        Return an iterator of Arrow Tensor
+
+        [lifecycle: experimental]
+        """
+
         raise NotImplementedError()
 
     def tables(self) -> TableReadIter:
-        """Return an iterator of Arrow Table"""
+        """
+        Return an iterator of Arrow Table
+
+        [lifecycle: experimental]
+        """
         return TableReadIter(self.sr)

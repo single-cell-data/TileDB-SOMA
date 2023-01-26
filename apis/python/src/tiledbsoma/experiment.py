@@ -20,6 +20,8 @@ class Experiment(CollectionBase[TileDBObject]):
              defined in this dataframe.
 
     ``ms``: A collection of named measurements.
+
+    [lifecycle: experimental]
     """
 
     _subclass_constrained_soma_types: Dict[str, Tuple[str, ...]] = {
@@ -38,6 +40,8 @@ class Experiment(CollectionBase[TileDBObject]):
     ):
         """
         Also see the ``TileDBObject`` constructor.
+
+        [lifecycle: experimental]
         """
         super().__init__(uri=uri, parent=parent, context=context)
 
@@ -47,6 +51,8 @@ class Experiment(CollectionBase[TileDBObject]):
     def create(self) -> "Experiment":
         """
         Creates the data structure on disk/S3/cloud.
+
+        [lifecycle: experimental]
         """
         self._create(self.soma_type)
         return self
@@ -78,6 +84,8 @@ class Experiment(CollectionBase[TileDBObject]):
         """
         Create a query on this Experiment. See ``ExperimentAxisQuery`` for more
         information on parameters and usage.
+
+        [lifecycle: experimental]
         """
         if not self.exists():
             raise ValueError(f"Experiment {self.uri} does not exist.")

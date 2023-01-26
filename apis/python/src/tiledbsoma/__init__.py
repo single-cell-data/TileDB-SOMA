@@ -35,6 +35,6 @@ __all__ = [
     "SOMAError",
     "DataFrame",
     "Measurement",
-    "MetadataMapping",
+    "MetadataMapping",  # TODO: should this be exported?
     "SparseNDArray",
 ]
