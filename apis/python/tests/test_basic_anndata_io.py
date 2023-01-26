@@ -15,8 +15,8 @@ HERE = Path(__file__).parent
 @pytest.fixture
 def h5ad_file(request):
     # pbmc-small is faster for automated unit-test / CI runs.
-    # input_path = HERE.parent / "anndata/pbmc3k_processed.h5ad"
-    input_path = HERE.parent / "anndata/pbmc-small.h5ad"
+    # input_path = HERE.parent / "testdata/pbmc3k_processed.h5ad"
+    input_path = HERE.parent / "testdata/pbmc-small.h5ad"
     return input_path
 
 
@@ -162,9 +162,9 @@ def _get_fragment_count(array_uri):
 @pytest.mark.parametrize(
     "resume_mode_h5ad_file",
     [
-        HERE.parent / "anndata/pbmc-small-x-dense.h5ad",
-        HERE.parent / "anndata/pbmc-small-x-csr.h5ad",
-        HERE.parent / "anndata/pbmc-small-x-csc.h5ad",
+        HERE.parent / "testdata/pbmc-small-x-dense.h5ad",
+        HERE.parent / "testdata/pbmc-small-x-csr.h5ad",
+        HERE.parent / "testdata/pbmc-small-x-csc.h5ad",
     ],
 )
 def test_resume_mode(adata, resume_mode_h5ad_file):

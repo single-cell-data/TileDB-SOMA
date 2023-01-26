@@ -122,7 +122,7 @@ select `relative=True`. (This is the default.)
             parser.print_help(file=sys.stderr)
             sys.exit(1)
         for input_path in args.paths:
-            # Example 'anndata/pbmc3k_processed.h5ad' -> 'tiledbsoma-data/pbmc3k_processed'
+            # Example 'testdata/pbmc3k_processed.h5ad' -> 'tiledbsoma-data/pbmc3k_processed'
             output_path = os.path.join(
                 soco_dir, os.path.splitext(os.path.basename(input_path))[0]
             )
@@ -137,7 +137,7 @@ select `relative=True`. (This is the default.)
             )
     else:
         if len(args.paths) == 0:
-            input_path = "anndata/pbmc-small.h5ad"
+            input_path = "testdata/pbmc-small.h5ad"
             output_path = os.path.join(soco_dir, "pbmc-small")
             ingest_one(
                 input_path=input_path,
@@ -150,7 +150,7 @@ select `relative=True`. (This is the default.)
             )
         elif len(args.paths) == 1:
             input_path = args.paths[0]
-            # Example 'anndata/pbmc3k_processed.h5ad' -> 'tiledbsoma-data/pbmc3k_processed'
+            # Example 'testdata/pbmc3k_processed.h5ad' -> 'tiledbsoma-data/pbmc3k_processed'
             output_path = os.path.join(
                 soco_dir, os.path.splitext(os.path.basename(input_path))[0]
             )
