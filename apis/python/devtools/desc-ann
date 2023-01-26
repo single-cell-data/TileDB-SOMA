@@ -1,0 +1,50 @@
+#!/usr/bin/env python
+
+# ================================================================
+# This is an anndata-describer that goes a bit beyond what h5ls does for us.
+#
+# See also:
+#
+# * `brew install hdf5`
+# * `h5ls -r anndata/pbmc3k_processed.h5ad`
+# * `h5ls -vr anndata/pbmc3k_processed.h5ad`
+#
+# Please see comments in util_ann.py.
+# ================================================================
+
+import argparse
+
+import tiledbsoma
+import tiledbsoma.io
+
+parser = argparse.ArgumentParser(
+    description="Show some tiledbsoma-relevant information about specified anndata .h5ad files"
+)
+parser.add_argument(
+    "--summary",
+    action=argparse.BooleanOptionalAction,
+    help="Show summary of matrices, default true",
+    default=True,
+)
+parser.add_argument(
+    "--types",
+    action=argparse.BooleanOptionalAction,
+    help="Show datatypes of matrices, default true",
+    default=True,
+)
+parser.add_argument(
+    "--data",
+    action=argparse.BooleanOptionalAction,
+    help="Show data in matrices,default false",
+    default=False,
+)
+parser.add_argument("filenames", type=str, help="Filenames to describe", nargs="+")
+args = parser.parse_args()
+
+for input_path in args.filenames:
+    tiledbsoma.util_ann.describe_ann_file(
+        input_path,
+        show_summary=args.summary,
+        show_types=args.types,
+        show_data=args.data,
+    )
