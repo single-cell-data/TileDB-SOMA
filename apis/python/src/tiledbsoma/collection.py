@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import time
+from contextlib import ExitStack
 from dataclasses import dataclass
 from typing import (
     Any,
@@ -17,6 +18,7 @@ from typing import (
 
 import somacore
 import tiledb
+from typing_extensions import NoReturn
 
 from .exception import DoesNotExistError, SOMAError
 from .options import SOMATileDBContext
@@ -82,18 +84,23 @@ class CollectionBase(TileDBObject, somacore.Collection[CollectionElementType]):
         self,
         uri: str,
         *,
-        # Non-top-level objects can have a parent to propagate context, depth, etc.
-        parent: Optional[CollectionBase[Any]] = None,
-        # Top-level objects should specify this:
         context: Optional[SOMATileDBContext] = None,
     ):
         """
         Also see the ``TileDBObject`` constructor.
         """
-        super().__init__(uri=uri, parent=parent, context=context)
+        super().__init__(uri=uri, context=context)
         self._cached_values = None
 
-    def create(self) -> "CollectionBase[CollectionElementType]":
+    def _not_implemented(self, *args: Any, **kwargs: Any) -> NoReturn:
+        raise NotImplementedError()
+
+    add_new_collection = _not_implemented
+    add_new_dataframe = _not_implemented
+    add_new_dense_ndarray = _not_implemented
+    add_new_sparse_ndarray = _not_implemented
+
+    def create_legacy(self) -> "CollectionBase[CollectionElementType]":
         """
         Creates the data structure on disk/S3/cloud.
         """
@@ -108,6 +115,25 @@ class CollectionBase(TileDBObject, somacore.Collection[CollectionElementType]):
         self._common_create(soma_type)  # object-type metadata etc
         self._cached_values = {}
         return self
+
+    # tiledb.Group handle for [re]use while self is open
+    _open_tiledb_group: Optional[tiledb.Group] = None
+
+    def _sub_open(self) -> None:
+        assert self._open_mode in ("r", "w") and self._open_tiledb_group is None
+        self._open_tiledb_group = self._close_stack.enter_context(
+            tiledb.Group(self._uri, mode=self._open_mode, ctx=self.context.tiledb_ctx)
+        )
+
+    @property
+    def _tiledb_obj(self) -> tiledb.Group:
+        "get the open tiledb.Group handle"
+        assert self._open_tiledb_group is not None  # => not self.closed
+        return self._open_tiledb_group
+
+    def close(self) -> None:
+        self._open_tiledb_group = None
+        super().close()  # closes self._open_tiledb_group via self._close_stack
 
     def __len__(self) -> int:
         """
@@ -139,7 +165,6 @@ class CollectionBase(TileDBObject, somacore.Collection[CollectionElementType]):
                 tdb = self._cached_values[key].tdb
                 soma = _construct_member(
                     tdb.uri,
-                    self,
                     context=self.context,
                     object_type=tdb.type.__name__.lower(),
                 )
@@ -158,13 +183,13 @@ class CollectionBase(TileDBObject, somacore.Collection[CollectionElementType]):
         key: str,
         value: CollectionElementType,
         *,
-        relative: Optional[bool] = None,
+        use_relative_uri: Optional[bool] = None,
     ) -> None:
         """
         Adds an element to the collection.  This interface allows explicit control over
         `relative` URI, and uses the member's default name.
         """
-        self._set_element(key, value, relative=relative)
+        self._set_element(key, value, relative=use_relative_uri)
 
     def __setitem__(self, key: str, value: CollectionElementType) -> None:
         """
@@ -228,8 +253,19 @@ class CollectionBase(TileDBObject, somacore.Collection[CollectionElementType]):
 
     def _load_tdb_group(self) -> Optional[Dict[str, tiledb.Object]]:
         try:
-            with self._tiledb_open("r") as G:
-                return {o.name: o for o in G if o.name is not None}
+            with ExitStack() as cleanup:
+                cleanup.enter_context(self._ensure_open())
+                if self._open_mode == "r":
+                    group = self._tiledb_obj
+                else:
+                    # If self._tiledb_obj is already open in w mode, it won't let us read from
+                    # it so we need to open a separate r-mode handle (with no timestamps).
+                    # TODO: keep both w- and r-mode handles open if warranted (TBD)
+                    group = cleanup.enter_context(
+                        tiledb.Group(self._uri, mode="r", ctx=self.context.tiledb_ctx)
+                    )
+                ans = {o.name: o for o in group if o.name is not None}
+            return ans
 
         except tiledb.TileDBError as e:
             if is_does_not_exist_error(e):
@@ -311,8 +347,8 @@ class CollectionBase(TileDBObject, somacore.Collection[CollectionElementType]):
         )
         for retry in [True, False]:
             try:
-                with self._tiledb_open("w") as G:
-                    G.add(uri=uri, relative=relative, name=key)
+                with self._ensure_open("w"):
+                    self._tiledb_obj.add(uri=uri, relative=relative, name=key)
                 break
             except tiledb.TileDBError as e:
                 if is_does_not_exist_error(e):
@@ -330,8 +366,13 @@ class CollectionBase(TileDBObject, somacore.Collection[CollectionElementType]):
                 # The standard solution is a negligible but non-zero delay.
                 time.sleep(0.001)
 
-        self._load_tdb_group_cache()
+        with self._ensure_open("w"):
+            # We need to be open "w" here to make sure we're reading our own writes.
+            # TODO: keep self open from above, if retry wasn't necessary
+            self._load_tdb_group_cache()
         if self._cached_values is not None:
+            # Replace the wrapper object synthesized by self.load_tdb_group_cache() with the value
+            # passed in to us.
             self._cached_values[key].soma = value
         else:
             # This can only happen if _load_tdb_group_cache failed
@@ -341,8 +382,8 @@ class CollectionBase(TileDBObject, somacore.Collection[CollectionElementType]):
         if self._cached_values is not None:
             del self._cached_values[key]
         try:
-            with self._tiledb_open("w") as G:
-                G.remove(key)
+            with self._ensure_open("w"):
+                self._tiledb_obj.remove(key)
         except tiledb.TileDBError as e:
             if is_does_not_exist_error(e):
                 raise DoesNotExistError("Collection has not been created") from e
@@ -350,17 +391,6 @@ class CollectionBase(TileDBObject, somacore.Collection[CollectionElementType]):
 
         if not skip_cache_reload:
             self._load_tdb_group_cache()
-
-    def _tiledb_open(self, mode: str = "r") -> tiledb.Group:
-        """
-        This is just a convenience wrapper around tiledb group-open.  It works
-        as ``with self._tiledb_open() as G:``
-        as well as ``G = self._tiledb_open(); ...; G.close()``.
-        """
-        if mode not in ["r", "w"]:
-            raise ValueError(f'expected mode to be one of "r" or "w"; got {mode!r}')
-        # This works in with-open-as contexts because tiledb.Group has __enter__ and __exit__ methods.
-        return tiledb.Group(self._uri, mode=mode, ctx=self.context.tiledb_ctx)
 
 
 class Collection(CollectionBase[TileDBObject]):

@@ -19,7 +19,7 @@ def create_and_populate_obs(obs: soma.DataFrame) -> soma.DataFrame:
     )
 
     # TODO: indexing option ...
-    obs.create(schema=obs_arrow_schema)
+    obs.create_legacy(schema=obs_arrow_schema)
 
     pydict = {}
     pydict["soma_joinid"] = [0, 1, 2, 3, 4]
@@ -42,7 +42,7 @@ def create_and_populate_var(var: soma.DataFrame) -> soma.DataFrame:
         ]
     )
 
-    var.create(schema=var_arrow_schema)
+    var.create_legacy(schema=var_arrow_schema)
 
     pydict = {}
     pydict["soma_joinid"] = [0, 1, 2, 3]
@@ -68,7 +68,7 @@ def create_and_populate_sparse_nd_array(
     # 3 . 8 .
     # 4 . . 9
 
-    sparse_nd_array.create(pa.int64(), [nr, nc])
+    sparse_nd_array.create_legacy(pa.int64(), [nr, nc])
 
     tensor = pa.SparseCOOTensor.from_numpy(
         data=np.asarray([7, 8, 9]),
@@ -86,21 +86,23 @@ def test_experiment_basic(tmp_path):
 
     # ----------------------------------------------------------------
     experiment = soma.Experiment(basedir)
-    experiment.create()
+    experiment.create_legacy()
 
     experiment["obs"] = create_and_populate_obs(
         soma.DataFrame(uri=urljoin(basedir, "obs"))
     )
-    experiment["ms"] = soma.Collection(uri=urljoin(basedir, "ms")).create()
+    experiment["ms"] = soma.Collection(uri=urljoin(basedir, "ms")).create_legacy()
 
     measurement = soma.Measurement(uri=f"{experiment.ms.uri}/RNA")
-    measurement.create()
+    measurement.create_legacy()
     experiment.ms.set("RNA", measurement)
 
     measurement["var"] = create_and_populate_var(
         soma.DataFrame(uri=urljoin(measurement.uri, "var"))
     )
-    measurement["X"] = soma.Collection(uri=urljoin(measurement.uri, "X")).create()
+    measurement["X"] = soma.Collection(
+        uri=urljoin(measurement.uri, "X")
+    ).create_legacy()
 
     nda = create_and_populate_sparse_nd_array(
         soma.SparseNDArray(uri=urljoin(measurement.X.uri, "data"))
@@ -168,47 +170,47 @@ def test_experiment_obs_type_constraint(tmp_path):
     only allow a constrained set of types to be set in their slots.
     """
 
-    se = soma.Experiment(uri=tmp_path.as_uri()).create()
+    se = soma.Experiment(uri=tmp_path.as_uri()).create_legacy()
 
     with pytest.raises(TypeError):
-        se["obs"] = soma.Collection(uri=(tmp_path / "A").as_uri()).create()
+        se["obs"] = soma.Collection(uri=(tmp_path / "A").as_uri()).create_legacy()
     with pytest.raises(TypeError):
-        se["obs"] = soma.SparseNDArray(uri=(tmp_path / "B").as_uri()).create(
+        se["obs"] = soma.SparseNDArray(uri=(tmp_path / "B").as_uri()).create_legacy(
             type=pa.float32(), shape=(10,)
         )
     with pytest.raises(TypeError):
-        se["obs"] = soma.DenseNDArray(uri=(tmp_path / "C").as_uri()).create(
+        se["obs"] = soma.DenseNDArray(uri=(tmp_path / "C").as_uri()).create_legacy(
             type=pa.float32(), shape=(10,)
         )
     with pytest.raises(TypeError):
-        se["obs"] = soma.Measurement(uri=(tmp_path / "D").as_uri()).create()
-    se["obs"] = soma.DataFrame(uri=(tmp_path / "E").as_uri()).create(
+        se["obs"] = soma.Measurement(uri=(tmp_path / "D").as_uri()).create_legacy()
+    se["obs"] = soma.DataFrame(uri=(tmp_path / "E").as_uri()).create_legacy(
         schema=pa.schema([("A", pa.int32())])
     )
-    se["obs"] = soma.DataFrame(uri=(tmp_path / "F").as_uri()).create(
+    se["obs"] = soma.DataFrame(uri=(tmp_path / "F").as_uri()).create_legacy(
         schema=pa.schema([("A", pa.int32())]), index_column_names=["A"]
     )
 
 
 def test_experiment_ms_type_constraint(tmp_path):
-    se = soma.Experiment(uri=tmp_path.as_uri()).create()
+    se = soma.Experiment(uri=tmp_path.as_uri()).create_legacy()
 
-    se["ms"] = soma.Collection(uri=(tmp_path / "A").as_uri()).create()
+    se["ms"] = soma.Collection(uri=(tmp_path / "A").as_uri()).create_legacy()
     with pytest.raises(TypeError):
-        se["ms"] = soma.SparseNDArray(uri=(tmp_path / "B").as_uri()).create(
+        se["ms"] = soma.SparseNDArray(uri=(tmp_path / "B").as_uri()).create_legacy(
             type=pa.float32(), shape=(10,)
         )
     with pytest.raises(TypeError):
-        se["ms"] = soma.DenseNDArray(uri=(tmp_path / "C").as_uri()).create(
+        se["ms"] = soma.DenseNDArray(uri=(tmp_path / "C").as_uri()).create_legacy(
             type=pa.float32(), shape=(10,)
         )
     with pytest.raises(TypeError):
-        se["ms"] = soma.Measurement(uri=(tmp_path / "D").as_uri()).create()
+        se["ms"] = soma.Measurement(uri=(tmp_path / "D").as_uri()).create_legacy()
     with pytest.raises(TypeError):
-        se["ms"] = soma.DataFrame(uri=(tmp_path / "E").as_uri()).create(
+        se["ms"] = soma.DataFrame(uri=(tmp_path / "E").as_uri()).create_legacy(
             schema=pa.schema([("A", pa.int32())])
         )
     with pytest.raises(TypeError):
-        se["ms"] = soma.DataFrame(uri=(tmp_path / "F").as_uri()).create(
+        se["ms"] = soma.DataFrame(uri=(tmp_path / "F").as_uri()).create_legacy(
             schema=pa.schema([("A", pa.int32())]), index_column_names=["A"]
         )
