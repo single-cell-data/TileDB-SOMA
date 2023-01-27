@@ -219,7 +219,7 @@ TileDBArray <- R6::R6Class(
       private$close()
     },
 
-    # @description Create empty TileDB array. [lifecycle: experimental]
+    #' @description Create empty TileDB array. [lifecycle: experimental]
     create_empty_array = function() return(NULL),
 
     open = function(mode) {
