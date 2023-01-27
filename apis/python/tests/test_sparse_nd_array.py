@@ -844,3 +844,25 @@ def test_bad_coords(tmp_path, bad_coords):
 
     with pytest.raises(ValueError):
         next(a.read(bad_coords).tables())
+
+
+def test_tile_extents(tmp_path):
+    snda = soma.SparseNDArray(uri=tmp_path.as_posix())
+    snda.create_legacy(
+        pa.float32(),
+        (100, 10000),
+        platform_config={
+            "tiledb": {
+                "create": {
+                    "dims": {
+                        "soma_dim_0": {"tile": 2048},
+                        "soma_dim_1": {"tile": 2048},
+                    }
+                }
+            }
+        },
+    )
+
+    with tiledb.open(snda.uri) as A:
+        assert A.schema.domain.dim(0).tile == 100
+        assert A.schema.domain.dim(1).tile == 2048
