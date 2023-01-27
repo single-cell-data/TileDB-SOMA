@@ -1,4 +1,4 @@
-from typing import Dict, Optional, Union
+from typing import Dict, Union
 
 import attrs
 import tiledb
@@ -29,8 +29,3 @@ class SOMATileDBContext:
     """
 
     tiledb_ctx: tiledb.Ctx = _build_default_tiledb_ctx()
-
-    member_uris_are_relative: Optional[bool] = None
-    """Allows "relocatability" for local disk / S3, and correct behavior for TileDB Cloud."""
-
-    # read_timestamp, e.g.

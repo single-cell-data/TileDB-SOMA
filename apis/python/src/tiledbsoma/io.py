@@ -45,6 +45,7 @@ def from_h5ad(
     context: Optional[SOMATileDBContext] = None,
     platform_config: Optional[PlatformConfig] = None,
     ingest_mode: IngestMode = "write",
+    use_relative_uri: Optional[bool] = None,
 ) -> None:
     """
     Reads an .h5ad file and writes to a TileDB group structure.
@@ -83,6 +84,7 @@ def from_h5ad(
         context=context,
         platform_config=platform_config,
         ingest_mode=ingest_mode,
+        use_relative_uri=use_relative_uri,
     )
 
     logging.log_io(
@@ -99,6 +101,7 @@ def from_anndata(
     context: Optional[SOMATileDBContext] = None,
     platform_config: Optional[PlatformConfig] = None,
     ingest_mode: IngestMode = "write",
+    use_relative_uri: Optional[bool] = None,
 ) -> None:
     """
     Top-level writer method for creating a TileDB group for a ``Experiment`` object.
@@ -151,13 +154,17 @@ def from_anndata(
         platform_config=platform_config,
         ingest_mode=ingest_mode,
     )
-    experiment.set("obs", obs)
+    experiment.set("obs", obs, use_relative_uri=use_relative_uri)
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     # MS
     ms = Collection(uri=util.uri_joinpath(experiment.uri, "ms"))
 
-    experiment.set("ms", _check_create_collection(ms, ingest_mode))
+    experiment.set(
+        "ms",
+        _check_create_collection(ms, ingest_mode),
+        use_relative_uri=use_relative_uri,
+    )
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     # MS/meas
@@ -165,7 +172,7 @@ def from_anndata(
         Measurement(uri=f"{experiment.ms.uri}/{measurement_name}", context=context),
         ingest_mode,
     )
-    experiment.ms.set(measurement_name, measurement)
+    experiment.ms.set(measurement_name, measurement, use_relative_uri=use_relative_uri)
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     # MS/meas/VAR
@@ -177,13 +184,15 @@ def from_anndata(
         platform_config=platform_config,
         ingest_mode=ingest_mode,
     )
-    measurement["var"] = var
+    measurement.set("var", var, use_relative_uri=use_relative_uri)
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     # MS/meas/X/DATA
 
     x = Collection(uri=util.uri_joinpath(measurement.uri, "X"))
-    measurement["X"] = _check_create_collection(x, ingest_mode)
+    measurement.set(
+        "X", _check_create_collection(x, ingest_mode), use_relative_uri=use_relative_uri
+    )
 
     # Since we did `anndata = ad.read_h5ad(path_to_h5ad, "r")` with the "r":
     # * If we do `anndata.X[:]` we're loading all of a CSR/CSC/etc into memory.
@@ -197,7 +206,7 @@ def from_anndata(
     )
     data = cls(uri=util.uri_joinpath(measurement.X.uri, "data"), context=context)
     create_from_matrix(data, anndata.X, platform_config, ingest_mode)
-    measurement.X.set("data", data)
+    measurement.X.set("data", data, use_relative_uri=use_relative_uri)
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     # MS/meas/OBSM,VARM,OBSP,VARP
@@ -217,7 +226,7 @@ def from_anndata(
                 platform_config,
                 ingest_mode,
             )
-            measurement.obsm.set(key, arr)
+            measurement.obsm.set(key, arr, use_relative_uri=use_relative_uri)
 
     if len(anndata.varm.keys()) > 0:  # do not create an empty collection
         measurement["varm"] = _check_create_collection(
@@ -235,7 +244,7 @@ def from_anndata(
                 platform_config,
                 ingest_mode,
             )
-            measurement.varm.set(key, darr)
+            measurement.varm.set(key, darr, use_relative_uri=use_relative_uri)
 
     if len(anndata.obsp.keys()) > 0:  # do not create an empty collection
         measurement["obsp"] = _check_create_collection(
@@ -253,7 +262,7 @@ def from_anndata(
                 platform_config,
                 ingest_mode,
             )
-            measurement.obsp.set(key, sarr)
+            measurement.obsp.set(key, sarr, use_relative_uri=use_relative_uri)
 
     if len(anndata.varp.keys()) > 0:  # do not create an empty collection
         measurement["varp"] = _check_create_collection(
@@ -271,7 +280,7 @@ def from_anndata(
                 platform_config,
                 ingest_mode,
             )
-            measurement.varp.set(key, sarr)
+            measurement.varp.set(key, sarr, use_relative_uri=use_relative_uri)
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     # MS/RAW
@@ -281,7 +290,9 @@ def from_anndata(
             context=context,
         )
         experiment.ms.set(
-            "raw", _check_create_measurement(raw_measurement, ingest_mode)
+            "raw",
+            _check_create_measurement(raw_measurement, ingest_mode),
+            use_relative_uri=use_relative_uri,
         )
 
         var = DataFrame(uri=util.uri_joinpath(raw_measurement.uri, "var"))
@@ -292,7 +303,7 @@ def from_anndata(
             platform_config=platform_config,
             ingest_mode=ingest_mode,
         )
-        raw_measurement.set("var", var)
+        raw_measurement.set("var", var, use_relative_uri=use_relative_uri)
 
         raw_measurement["X"] = _check_create_collection(
             Collection(uri=util.uri_joinpath(raw_measurement.uri, "X")),
@@ -304,7 +315,7 @@ def from_anndata(
             context=context,
         )
         create_from_matrix(rawXdata, anndata.raw.X, platform_config, ingest_mode)
-        raw_measurement.X.set("data", rawXdata)
+        raw_measurement.X.set("data", rawXdata, use_relative_uri=use_relative_uri)
 
     logging.log_io(
         f"Wrote   {experiment.uri}",
@@ -485,6 +496,7 @@ def add_X_layer(
     # E.g. a scipy.csr_matrix from scanpy analysis:
     X_layer_data: Union[Matrix, h5py.Dataset],
     ingest_mode: IngestMode = "write",
+    use_relative_uri: Optional[bool] = None,
 ) -> None:
     """
     This is useful for adding X data, for example from scanpy.pp.normalize_total, scanpy.pp.log1p, etc.
@@ -493,7 +505,14 @@ def add_X_layer(
 
     [lifecycle: experimental]
     """
-    add_matrix_to_collection(exp, measurement_name, "X", X_layer_name, X_layer_data)
+    add_matrix_to_collection(
+        exp,
+        measurement_name,
+        "X",
+        X_layer_name,
+        X_layer_data,
+        use_relative_uri=use_relative_uri,
+    )
 
 
 def add_matrix_to_collection(
@@ -504,6 +523,7 @@ def add_matrix_to_collection(
     # E.g. a scipy.csr_matrix from scanpy analysis:
     matrix_data: Union[Matrix, h5py.Dataset],
     ingest_mode: IngestMode = "write",
+    use_relative_uri: Optional[bool] = None,
 ) -> None:
     """
     This is useful for adding X/obsp/varm/etc data, for example from scanpy.pp.normalize_total,
@@ -532,7 +552,7 @@ def add_matrix_to_collection(
     nd_array = cls(uri=uri)
 
     create_from_matrix(nd_array, matrix_data, ingest_mode=ingest_mode)
-    collection.set(matrix_name, nd_array)
+    collection.set(matrix_name, nd_array, use_relative_uri=use_relative_uri)
 
 
 def _write_matrix_to_denseNDArray(

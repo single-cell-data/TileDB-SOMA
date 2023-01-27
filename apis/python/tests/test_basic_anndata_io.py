@@ -220,6 +220,37 @@ def test_resume_mode(adata, resume_mode_h5ad_file):
     tempdir2.cleanup()
 
 
+@pytest.mark.parametrize("use_relative_uri", [False, True, None])
+def test_ingest_relative(adata, use_relative_uri):
+
+    tempdir = tempfile.TemporaryDirectory()
+    output_path = tempdir.name
+    exp = tiledbsoma.Experiment(output_path)
+    tiledbsoma.io.from_anndata(exp, adata, "RNA", use_relative_uri=use_relative_uri)
+
+    # * If they ask for relative=True, they should get that.
+    # * If they ask for relative=False, they should get that.
+    # * If they ask for relative=None, they should get the default which, for local disk (these
+    #   tests) is True.
+    expected_relative = use_relative_uri
+    if use_relative_uri is None:
+        expected_relative = True  # since local disk
+
+    with tiledb.Group(exp.uri) as G:
+        assert G.is_relative("obs") == expected_relative
+        assert G.is_relative("ms") == expected_relative
+
+    with tiledb.Group(exp.ms.uri) as G:
+        assert G.is_relative("RNA") == expected_relative
+
+    with tiledb.Group(exp.ms["RNA"].uri) as G:
+        assert G.is_relative("var") == expected_relative
+        assert G.is_relative("X") == expected_relative
+
+    with tiledb.Group(exp.ms["RNA"].X.uri) as G:
+        assert G.is_relative("data") == expected_relative
+
+
 def test_add_matrix_to_collection(adata):
     tempdir = tempfile.TemporaryDirectory()
     output_path = tempdir.name
