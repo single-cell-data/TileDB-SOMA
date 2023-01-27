@@ -60,14 +60,16 @@ Suggests:
 VignetteBuilder: knitr
 Config/testthat/edition: 2
 Collate: 
-    'SOMAContextBase.R'
     'ScalarList.R'
     'ConfigList.R'
+    'MappingBase.R'
     'PlatformConfig.R'
     'RcppExports.R'
     'SOMAArrayBase.R'
     'SOMACollection.R'
     'SOMACollectionBase.R'
+    'ScalarMap.R'
+    'SOMAContextBase.R'
     'SOMADataFrame.R'
     'SOMADenseNdArray.R'
     'SOMAExperiment.R'

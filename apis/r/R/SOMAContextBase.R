@@ -1,23 +1,49 @@
-#' @importFrom methods callNextMethod initialize setClass setMethod
-#' setValidity slot slot<-
+#' @include ScalarList.R
+#' @include ScalarMap.R
 #'
 NULL
 
-#' @exportClass SOMAContextBase
-#'
-setClass(Class = 'SOMAContextBase', contains = c('VIRTUAL', 'list'))
+SOMAContextBase <- R6::R6Class(
+  classname = 'SOMAContextBase',
+  inherit = ScalarMap,
+  public = list(
+    initialize = function() {
+      calls <- vapply(
+        X = lapply(X = sys.calls(), FUN = as.character),
+        FUN = '[[',
+        FUN.VALUE = character(length = 1L),
+        1L
+      )
+      if ('SOMAContextBase$new' %in% calls) {
+        .NotYetImplemented()
+      }
+      super$initialize()
+    },
+    set = function(key, value) {
+      super$set(key = key, value = value)
+      soma_contexts <- .SOMA_CONTEXTS()
+      if (key %in% names(x = soma_contexts)) {
+        stopifnot(inherits(x = private$.data[[key]], what = soma_contexts[key]))
+      }
+      return(invisible(x = self))
+    }
+  )
+)
 
-#' @method [ SOMAContextBase
+#'
+setClass(Class = 'SOMAContextBaseS4', contains = c('VIRTUAL', 'ScalarList'))
+
+#' @method [ SOMAContextBaseS4
 #' @export
 #'
-'[.SOMAContextBase' <- function(x, i, ...) {
+'[.SOMAContextBaseS4' <- function(x, i, ...) {
   .NotYetImplemented()
 }
 
-#' @method [[ SOMAContextBase
+#' @method [[ SOMAContextBaseS4
 #' @export
 #'
-"[[.SOMAContextBase" <- function(x, i, ...) {
+"[[.SOMAContextBaseS4" <- function(x, i, ...) {
   i <- i[1L]
   i <- tryCatch(
     expr = match.arg(arg = i, choices = names(x = x)),
@@ -39,7 +65,7 @@ setClass(Class = 'SOMAContextBase', contains = c('VIRTUAL', 'list'))
 
 setMethod(
   f = '[<-',
-  signature = c(x = 'SOMAContextBase'),
+  signature = c(x = 'SOMAContextBaseS4'),
   definition = function(x, i, ..., value) {
     .NotYetImplemented()
   }
@@ -47,7 +73,7 @@ setMethod(
 
 setMethod(
   f = '[[<-',
-  signature = c(x = 'SOMAContextBase', i = 'ANY', j = 'missing', value = 'ANY'),
+  signature = c(x = 'SOMAContextBaseS4', i = 'ANY', j = 'missing', value = 'ANY'),
   definition = function(x, i, ..., value) {
     .NotYetImplemented()
   }
@@ -56,7 +82,7 @@ setMethod(
 setMethod(
   f = '[[<-',
   signature = c(
-    x = 'SOMAContextBase',
+    x = 'SOMAContextBaseS4',
     i = 'character',
     j = 'missing',
     value = 'ANY'
@@ -73,39 +99,13 @@ setMethod(
 )
 
 setValidity(
-  Class = 'SOMAContextBase',
+  Class = 'SOMAContextBaseS4',
   method = function(object) {
     valid <- NULL
-    # Ensure all entries are named
-    if (is.null(x = names(x = object)) || !all(nzchar(x = names(x = object)))) {
-      valid <- c(valid, "All entries must be named")
-    }
+    browser()
     soma_contexts <- .SOMA_CONTEXTS()
     # Check individual entries
     for (i in names(x = object)) {
-      val <- slot(object = object, name = '.Data')[[i]]
-      if (length(x = val) != 1L) {
-        valid <- c(
-          valid,
-          paste0(
-            "All entries must be of length 1 (offending: ",
-            sQuote(x = i),
-            ")"
-          )
-        )
-      }
-      if (!is.atomic(x = val)) {
-        valid <- c(
-          valid,
-          paste0(
-            "All entries must be atomic (",
-            sQuote(x = i),
-            "is of type ",
-            class(x = val)[1L],
-            ")"
-          )
-        )
-      }
       if (i %in% names(x = soma_contexts)) {
         if (inherits(x = object[[i]], what = soma_contexts[[i]])) {
           valid <- c(
