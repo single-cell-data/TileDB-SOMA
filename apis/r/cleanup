@@ -10,3 +10,4 @@ rm -r -f \
    src/lib \
    src/cmake_log.txt \
    src/build 
+
