@@ -2,19 +2,19 @@ import math
 import time
 from typing import List, Optional, Sequence, Tuple, Union, cast
 
+import anndata as ad
 import h5py
 import numpy as np
 import pandas as pd
 import pyarrow as pa
 import scipy.sparse as sp
+from anndata._core.sparse_dataset import SparseDataset
 from somacore.options import PlatformConfig
 
-import anndata as ad
 import tiledbsoma.eta as eta
 import tiledbsoma.util as util
 import tiledbsoma.util_ann as util_ann
 import tiledbsoma.util_tiledb as util_tiledb
-from anndata._core.sparse_dataset import SparseDataset
 from tiledbsoma import (
     Collection,
     DataFrame,
