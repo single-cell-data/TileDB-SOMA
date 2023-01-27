@@ -31,7 +31,6 @@ TileDBGroup <- R6::R6Class(
     #' object's URI is relative to the group's URI. If `NULL` (the
     #' default), the object's URI is assumed to be relative unless it is a
     #' `tiledb://` URI.
-    #' @importFrom fs path_rel
     set = function(object, name = NULL, relative = NULL) {
       stopifnot(
         "Only 'TileDBArray' or 'TileDBGroup' objects can be added" =
@@ -47,7 +46,7 @@ TileDBGroup <- R6::R6Class(
       # Because object$uri will always return an absolute URI, we need to
       # make it relative to the collection's URI before adding it
       if (relative) {
-        uri <- fs::path_rel(object$uri, start = self$uri)
+        uri <- make_uri_relative(object$uri, self$uri)
       } else {
         uri <- object$uri
       }

@@ -34,3 +34,22 @@ test_that("schemes are removed from uris", {
   expect_equal(uri_scheme_remove("s3://my/bucket"), "my/bucket")
   expect_equal(uri_scheme_remove("tiledb://my/array"), "my/array")
 })
+
+test_that("relative uris are calculated correctly", {
+  expect_equal(make_uri_relative("foo/bar", "foo"), "bar")
+  expect_equal(make_uri_relative("/foo/bar", "/foo"), "bar")
+  expect_equal(make_uri_relative("file://foo/bar", "file://foo"), "bar")
+
+  # Heterogenous use of file:// scheme
+  expect_equal(make_uri_relative("foo/bar", "file://foo"), "bar")
+  expect_equal(make_uri_relative("file://foo/bar", "foo"), "bar")
+
+  expect_error(
+    make_uri_relative("s3://foo/bar", "file://foo"),
+    "Unable to make relative path between URIs with different schemes"
+  )
+  expect_error(
+    make_uri_relative("s3://foo/bar", "file://foo"),
+    "Unable to make relative path between URIs with different schemes"
+  )
+})

@@ -27,3 +27,26 @@ uri_scheme_remove <- function(uri) {
   if (length(uri_parts) == 1) return(uri)
   uri_parts[[2]]
 }
+
+#' Return a URI relative to a base URI
+#' This takes URI schemes into account and errors if they do not match. URIs
+#' without a scheme are treated as `file://` URIs.
+#' @importFrom fs path_rel
+#' @noRd
+make_uri_relative <- function(uri, relative_to) {
+  stopifnot(is_scalar_character(uri) && is_scalar_character(relative_to))
+
+  uri_scheme <- uri_scheme(uri)
+  relative_to_scheme <- uri_scheme(relative_to)
+  if (uri_scheme %||% "file" != relative_to_scheme %||% "file") {
+    stop(
+      "Unable to make relative path between URIs with different schemes",
+      call. = FALSE
+    )
+  }
+
+  fs::path_rel(
+    path = uri_scheme_remove(uri),
+    start = uri_scheme_remove(relative_to)
+  )
+}
