@@ -19,6 +19,7 @@ R6 Base Mapping Type
 \item \href{#method-MappingBase-get}{\code{MappingBase$get()}}
 \item \href{#method-MappingBase-set}{\code{MappingBase$set()}}
 \item \href{#method-MappingBase-setv}{\code{MappingBase$setv()}}
+\item \href{#method-MappingBase-to_list}{\code{MappingBase$to_list()}}
 \item \href{#method-MappingBase-clone}{\code{MappingBase$clone()}}
 }
 }
@@ -74,7 +75,7 @@ The values of the map
 }
 
 \subsection{Returns}{
-...
+Return the items of the map as a list
 }
 }
 \if{html}{\out{<hr>}}
@@ -88,14 +89,15 @@ The values of the map
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{key}}{...}
+\item{\code{key}}{Key to get}
 
-\item{\code{default}}{...}
+\item{\code{default}}{Default value to return if \code{key} is not foud}
 }
 \if{html}{\out{</div>}}
 }
 \subsection{Returns}{
-...
+The value of \code{key} in the map, or \code{default} if
+\code{key} is not found
 }
 }
 \if{html}{\out{<hr>}}
@@ -109,9 +111,9 @@ The values of the map
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{key}}{...}
+\item{\code{key}}{Key to set}
 
-\item{\code{value}}{...}
+\item{\code{value}}{Value to add for \code{key}}
 }
 \if{html}{\out{</div>}}
 }
@@ -130,12 +132,24 @@ The values of the map
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{...}}{}
+\item{\code{...}}{Named arguments to add to \code{self}}
 }
 \if{html}{\out{</div>}}
 }
 \subsection{Returns}{
 [chainable] Invisibly returns \code{self}
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-MappingBase-to_list"></a>}}
+\if{latex}{\out{\hypertarget{method-MappingBase-to_list}{}}}
+\subsection{Method \code{to_list()}}{
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{MappingBase$to_list()}\if{html}{\out{</div>}}
+}
+
+\subsection{Returns}{
+Returns the map as a list
 }
 }
 \if{html}{\out{<hr>}}

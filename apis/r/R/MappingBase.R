@@ -11,25 +11,31 @@ MappingBase <- R6::R6Class(
     #' @param ... Ignored
     #'
     #' @return ...
+    #'
     initialize = function(...) {
       .NotYetImplemented()
     },
     #' @return The keys of the map
+    #'
     keys = function() {
       return(names(x = private$.data))
     },
     #' @return The values of the map
+    #'
     values = function() {
       return(unname(obj = self$items()))
     },
-    #' @return ...
+    #' @return Return the items of the map as a list
+    #'
     items = function() {
       return(private$.data)
     },
-    #' @param key ...
-    #' @param default ...
+    #' @param key Key to get
+    #' @param default Default value to return if \code{key} is not foud
     #'
-    #' @return ...
+    #' @return The value of \code{key} in the map, or \code{default} if
+    #' \code{key} is not found
+    #'
     get = function(key, default = NULL) {
       key <- tryCatch(
         expr = match.arg(arg = key, choices = self$keys()),
@@ -40,10 +46,11 @@ MappingBase <- R6::R6Class(
       }
       return(private$.data[[key]])
     },
-    #' @param key ...
-    #' @param value ...
+    #' @param key Key to set
+    #' @param value Value to add for \code{key}
     #'
     #' @return \[chainable\] Invisibly returns \code{self}
+    #'
     set = function(key, value) {
       stopifnot(
         is.character(x = key),
@@ -73,9 +80,10 @@ MappingBase <- R6::R6Class(
       # self <- self$clone(deep = TRUE)
       return(invisible(x = self))
     },
-    #' @param ...
+    #' @param ... Named arguments to add to \code{self}
     #'
     #' @return \[chainable\] Invisibly returns \code{self}
+    #'
     setv = function(...) {
       args <- list(...)
       stopifnot(is_named_list(x = args))
@@ -83,6 +91,11 @@ MappingBase <- R6::R6Class(
         self$set(key = names(x = args)[i], value = args[[i]])
       }
       return(invisible(x = self))
+    },
+    #' @return Returns the map as a list
+    #'
+    to_list = function() {
+      return(private$.data)
     }
   ),
   private = list(
