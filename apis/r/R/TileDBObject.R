@@ -83,7 +83,7 @@ TileDBObject <- R6::R6Class(
     # Internal pointer to the TileDB object
     tiledb_object = NULL,
 
-    # @description Contains TileDBURI object [lifecycle: experimental]
+    # @description Contains TileDBURI object
     tiledb_uri = NULL
 
   )
