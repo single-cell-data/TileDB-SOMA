@@ -20,11 +20,13 @@ test_that("Basic mechanics", {
   expect_true(inherits(experiment$obs, "SOMADataFrame"))
 
   # Add ms
-  expect_error(experiment$ms <- obs, "ms must be a 'SOMAMeasurement'")
+  expect_error(experiment$ms <- obs, "ms must be a 'SOMACollection'")
+  expect_error(
+    experiment$ms <- SOMAMeasurement$new(file.path(uri, "_ms"))$create(),
+    "ms must be a 'SOMACollection'"
+  )
 
-  measurement <- SOMAMeasurement$new(file.path(uri, "ms"))
-  measurement$create()
-  experiment$ms <- measurement
+  experiment$ms <- SOMACollection$new(file.path(uri, "ms"))$create()
   expect_equal(experiment$length(), 2)
-  expect_true(inherits(experiment$ms, "SOMAMeasurement"))
+  expect_true(inherits(experiment$ms, "SOMACollection"))
 })
