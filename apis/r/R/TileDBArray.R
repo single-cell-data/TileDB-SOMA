@@ -231,7 +231,7 @@ TileDBArray <- R6::R6Class(
       invisible(tiledb::tiledb_array_close(self$object))
     },
 
-    # @description Ingest data into the TileDB array. [lifecycle: experimental]
+    #' @description Ingest data into the TileDB array. [lifecycle: experimental]
     ingest_data = function() return(NULL)
   )
 )
