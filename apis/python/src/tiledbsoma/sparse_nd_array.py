@@ -90,7 +90,7 @@ class SparseNDArray(TileDBArray, somacore.SparseNDArray):
             dim = tiledb.Dim(
                 name=dim_name,
                 domain=(0, e - 1),
-                tile=tiledb_create_options.dim_tile(dim_name, min(e, 2048)),
+                tile=min(e, tiledb_create_options.dim_tile(dim_name, 2048)),
                 dtype=np.int64,
                 filters=tiledb_create_options.dim_filters(
                     dim_name,

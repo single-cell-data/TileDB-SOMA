@@ -272,3 +272,25 @@ def test_dense_nd_array_indexing_errors(tmp_path, io):
 
     with pytest.raises(io["throws"]):
         a.read(coords=read_coords).to_numpy()
+
+
+def test_tile_extents(tmp_path):
+    snda = soma.DenseNDArray(uri=tmp_path.as_posix())
+    snda.create_legacy(
+        pa.float32(),
+        (100, 10000),
+        platform_config={
+            "tiledb": {
+                "create": {
+                    "dims": {
+                        "soma_dim_0": {"tile": 2048},
+                        "soma_dim_1": {"tile": 2048},
+                    }
+                }
+            }
+        },
+    )
+
+    with tiledb.open(snda.uri) as A:
+        assert A.schema.domain.dim(0).tile == 100
+        assert A.schema.domain.dim(1).tile == 2048
