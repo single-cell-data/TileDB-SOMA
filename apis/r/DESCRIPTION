@@ -59,3 +59,4 @@ Suggests:
     pbmc3k.tiledb
 VignetteBuilder: knitr
 Config/testthat/edition: 2
+OS_type: unix
