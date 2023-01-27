@@ -718,6 +718,7 @@ def make_dataframe(path: str, sz: int) -> soma.DataFrame:
             }
         )
     )
+    df.flush()
     return df
 
 
@@ -734,6 +735,7 @@ def make_sparse_array(path: str, shape: Tuple[int, int]) -> soma.SparseNDArray:
         )
     )
     a.write(tensor)
+    a.flush()
     return a
 
 
