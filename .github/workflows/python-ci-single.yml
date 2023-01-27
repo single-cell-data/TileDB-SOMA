@@ -10,7 +10,7 @@ on:
       python_version:
         required: true
         type: string
-      os: 
+      os:
         required: true
         type: string
       cc:
@@ -22,7 +22,7 @@ on:
       report_codecov:
         required: true
         type: boolean
-      is_mac: 
+      is_mac:
         required: false
         type: boolean
         default: false
@@ -30,7 +30,7 @@ on:
         required: false
         type: boolean
         default: false
-      
+
 jobs:
   lint:
     if: ${{ inputs.run_lint }}
@@ -86,7 +86,7 @@ jobs:
         path: |
           build
           dist
-        key: libtiledbsoma-build-dist-${{ inputs.os }}-${{ inputs.python_version }}-${{ hashFiles('libtiledbsoma', 'apis/python/setup.py') }}
+        key: libtiledbsoma-build-dist-${{ inputs.os }}-${{ inputs.python_version }}-${{ hashFiles('libtiledbsoma', 'scripts/bld') }}
 
     - name: Install testing prereqs
       run: python -m pip -v install -U pip pytest-cov typeguard types-setuptools

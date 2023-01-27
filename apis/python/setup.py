@@ -40,7 +40,12 @@ def find_or_build_package_data(setuptools_cmd):
     # Call the build script if the install library directory does not exist
     lib_dir = libtiledbsoma_dir / "dist" / "lib"
     if not lib_dir.exists():
-        subprocess.run("bash bld", cwd=scripts_dir, shell=True)
+        # Note: The GitHub build process uses the contents of `bld` as a key
+        # to cache the native binaries. Using non-default options here will
+        # cause that cache to fall out of sync.
+        #
+        # See `.github/workflows/python-ci-single.yml` for configuration.
+        subprocess.run(["./bld"], cwd=scripts_dir)
 
     # Copy native libs into the package dir so they can be found by package_data
     package_data = []
