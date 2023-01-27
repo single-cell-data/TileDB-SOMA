@@ -16,7 +16,7 @@
 #' ## Duplicate writes
 #'
 #' As duplicate index values are not allowed, index values already present in
-#' the object are overwritten and new index values are added.
+#' the object are overwritten and new index values are added. [lifecycle: experimental]
 #'
 #' @export
 #' @importFrom bit64 as.integer64
@@ -27,7 +27,7 @@ SOMASparseNDArray <- R6::R6Class(
 
   public = list(
 
-    #' @description Create a SOMASparseNDArray named with the URI.
+    #' @description Create a SOMASparseNDArray named with the URI. [lifecycle: experimental]
     #' @param type an [Arrow type][arrow::data-type] defining the type of each element in the array.
     #' @param shape a vector of integers defining the shape of the array.
     create = function(type, shape) {
@@ -81,7 +81,7 @@ SOMASparseNDArray <- R6::R6Class(
       private$write_object_type_metadata()
     },
 
-    #' @description Read as an 'arrow::Table'
+    #' @description Read as an 'arrow::Table' [lifecycle: experimental]
     #' @param coords Optional `list` of integer vectors, one for each dimension, with a
     #' length equal to the number of values to read. If `NULL`, all values are
     #' read. List elements can be named when specifying a subset of dimensions.
@@ -135,7 +135,7 @@ SOMASparseNDArray <- R6::R6Class(
       }
     },
 
-    #' @description Read as a sparse matrix
+    #' @description Read as a sparse matrix [lifecycle: experimental]
     #' @param coords Optional `list` of integer vectors, one for each dimension, with a
     #' length equal to the number of values to read. If `NULL`, all values are
     #' read. List elements can be named when specifying a subset of dimensions.
@@ -166,7 +166,7 @@ SOMASparseNDArray <- R6::R6Class(
                                 repr = repr)
     },
 
-    #' @description Write matrix-like data to the array.
+    #' @description Write matrix-like data to the array. [lifecycle: experimental]
     #'
     #' @param data Any `matrix`-like object coercible to a
     #' [`TsparseMatrix`][`Matrix::TsparseMatrix-class`]. Character dimension
@@ -190,7 +190,7 @@ SOMASparseNDArray <- R6::R6Class(
 
   private = list(
 
-    # @description Ingest COO-formatted dataframe into the TileDB array.
+    # @description Ingest COO-formatted dataframe into the TileDB array. [lifecycle: experimental]
     # @param x A [`data.frame`].
     write_coo_dataframe = function(data) {
       stopifnot(is.data.frame(data))
