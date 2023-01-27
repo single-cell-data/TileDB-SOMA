@@ -2,7 +2,7 @@
 #'
 #' @description
 #' Base class to implement shared functionality across the TileDBArray and
-#' TileDBGroup classes.
+#' TileDBGroup classes. [lifecycle: experimental]
 #' @export
 TileDBObject <- R6::R6Class(
   classname = "TileDBObject",
@@ -12,7 +12,7 @@ TileDBObject <- R6::R6Class(
     #' @field ctx Optional TileDB context
     ctx = NULL,
 
-    #' @description Create a new TileDB object.
+    #' @description Create a new TileDB object. [lifecycle: experimental]
     #' @param uri URI for the TileDB object
     #' @param verbose Print status messages
     #' @param platform_config Optional platform configuration
@@ -28,18 +28,18 @@ TileDBObject <- R6::R6Class(
       }
     },
 
-    #' @description Print the name of the R6 class.
+    #' @description Print the name of the R6 class. [lifecycle: experimental]
     class = function() {
       class(self)[1]
     },
 
-    #' @description Print-friendly representation of the object.
+    #' @description Print-friendly representation of the object. [lifecycle: experimental]
     print = function() {
       cat(glue::glue("<{self$class()}>"), sep = "\n")
       cat("  uri:", self$uri, "\n")
     },
 
-    #' @description Check if the object exists.
+    #' @description Check if the object exists. [lifecycle: experimental]
     #' @return `TRUE`` if the object exists, `FALSE` otherwise.
     exists = function() {
       if (self$class() == "TileDBObject") {
@@ -83,7 +83,7 @@ TileDBObject <- R6::R6Class(
     # Internal pointer to the TileDB object
     tiledb_object = NULL,
 
-    # @description Contains TileDBURI object
+    # @description Contains TileDBURI object [lifecycle: experimental]
     tiledb_uri = NULL
 
   )
