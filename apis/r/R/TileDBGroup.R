@@ -165,7 +165,7 @@ TileDBGroup <- R6::R6Class(
 
   private = list(
 
-    # @description List of cached group members [lifecycle: experimental]
+    # @description List of cached group members
     # Initially NULL, once the group is created or opened, this is populated
     # with list that's empty or contains the group members.
     member_cache = NULL,

@@ -28,12 +28,12 @@ TileDBObject <- R6::R6Class(
       }
     },
 
-    #' @description Print the name of the R6 class. [lifecycle: experimental]
+    #' @description Print the name of the R6 class.
     class = function() {
       class(self)[1]
     },
 
-    #' @description Print-friendly representation of the object. [lifecycle: experimental]
+    #' @description Print-friendly representation of the object.
     print = function() {
       cat(glue::glue("<{self$class()}>"), sep = "\n")
       cat("  uri:", self$uri, "\n")

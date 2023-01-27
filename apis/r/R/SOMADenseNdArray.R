@@ -26,7 +26,7 @@ SOMADenseNDArray <- R6::R6Class(
 
     #' @description Create a SOMADenseNDArray named with the URI. [lifecycle: experimental]
     #' @param type an [Arrow type][arrow::data-type] defining the type of each
-    #' element in the array. [lifecycle: experimental]
+    #' element in the array.
     #' @param shape a vector of integers defining the shape of the array.
     create = function(type, shape) {
       stopifnot(

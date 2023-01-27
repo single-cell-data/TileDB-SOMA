@@ -205,11 +205,11 @@ SOMADataFrame <- R6::R6Class(
 
   private = list(
 
-    # @description Validate schema
+    # @description Validate schema [lifecycle: experimental]
     # Handle default column additions (eg, soma_joinid) and error checking on
     # required columns
     # @return An [`arrow::Schema`], which may be modified by the addition of
-    # required columns. [lifecycle: experimental]
+    # required columns.
     validate_schema = function(schema, index_column_names) {
       stopifnot(
         "'schema' must be a valid Arrow schema" =
