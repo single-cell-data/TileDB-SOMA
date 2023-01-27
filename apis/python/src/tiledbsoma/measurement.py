@@ -64,7 +64,7 @@ class Measurement(CollectionBase[TileDBObject]):
         super().__init__(uri=uri, context=context)
 
     # Inherited from somacore
-    soma_type: Final = "SOMAMeasurement"
+    soma_type: Final = "SOMAMeasurement"  # type: ignore[misc]
 
     def create_legacy(self) -> "Measurement":
         """
