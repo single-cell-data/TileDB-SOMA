@@ -118,6 +118,14 @@ assert_subset <- function(x, y, type = "value") {
   TRUE
 }
 
+# For use in read-only R6 active bindings
+read_only_error <- function(field_name) {
+  stop(
+    sprintf("'%s' is a read-only field.", field_name),
+    call. = FALSE
+  )
+}
+
 SOMA_OBJECT_TYPE_METADATA_KEY <- "soma_object_type"
 SOMA_ENCODING_VERSION_METADATA_KEY <- "soma_encoding_version"
 SOMA_ENCODING_VERSION <- "0"
