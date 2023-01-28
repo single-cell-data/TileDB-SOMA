@@ -40,9 +40,15 @@ test_that("relative uris are calculated correctly", {
   expect_equal(make_uri_relative("/foo/bar", "/foo"), "bar")
   expect_equal(make_uri_relative("file://foo/bar", "file://foo"), "bar")
 
-  # Heterogenous use of file:// scheme
+  # Heterogenous schemes
   expect_equal(make_uri_relative("foo/bar", "file://foo"), "bar")
   expect_equal(make_uri_relative("file://foo/bar", "foo"), "bar")
+
+  # Expected errors
+  expect_error(
+    make_uri_relative("file://bar", "file://foo/bar"),
+    "Unable to make relative path between URIs with no common parent"
+  )
 
   expect_error(
     make_uri_relative("s3://foo/bar", "file://foo"),

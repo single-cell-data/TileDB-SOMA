@@ -28,19 +28,33 @@ uri_scheme_remove <- function(uri) {
   uri_parts[[2]]
 }
 
-#' Return a URI relative to a base URI
+#' Return a URI relative to a parent URI
 #' This takes URI schemes into account and errors if they do not match. URIs
 #' without a scheme are treated as `file://` URIs.
-#' @importFrom fs path_rel
+#' @importFrom fs path_rel path_has_parent
 #' @noRd
 make_uri_relative <- function(uri, relative_to) {
-  stopifnot(is_scalar_character(uri) && is_scalar_character(relative_to))
+  stopifnot(
+    "'uri' and 'relative_to' must be scalar character vectors" =
+      is_scalar_character(uri) && is_scalar_character(relative_to)
+  )
 
   uri_scheme <- uri_scheme(uri)
   relative_to_scheme <- uri_scheme(relative_to)
   if (uri_scheme %||% "file" != relative_to_scheme %||% "file") {
     stop(
       "Unable to make relative path between URIs with different schemes",
+      call. = FALSE
+    )
+  }
+
+  # Remove schemes from URIs before calculating relative path
+  uri <- uri_scheme_remove(uri)
+  relative_to <- uri_scheme_remove(relative_to)
+
+  if (!fs::path_has_parent(uri, relative_to)) {
+    stop(
+      "Unable to make relative path between URIs with no common parent",
       call. = FALSE
     )
   }
