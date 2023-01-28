@@ -22,6 +22,8 @@ import scipy.sparse as sp
 from anndata._core.sparse_dataset import SparseDataset
 from somacore.options import PlatformConfig
 
+from tiledbsoma.tiledb_object import TileDBObject
+
 from . import (
     Collection,
     DataFrame,

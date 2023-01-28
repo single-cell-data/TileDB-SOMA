@@ -5,6 +5,7 @@ from contextlib import ExitStack
 from dataclasses import dataclass
 from typing import (
     Any,
+    Callable,
     Dict,
     Generic,
     Iterator,
