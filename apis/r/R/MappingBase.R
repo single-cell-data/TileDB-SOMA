@@ -13,7 +13,16 @@ MappingBase <- R6::R6Class(
     #' @return ...
     #'
     initialize = function(...) {
-      .NotYetImplemented()
+      calls <- vapply(
+        X = lapply(X = sys.calls(), FUN = as.character),
+        FUN = '[[',
+        FUN.VALUE = character(length = 1L),
+        1L
+      )
+      if ('MappingBase$new' %in% calls) {
+        .NotYetImplemented()
+      }
+      private$.data <- list()
     },
     #' @return The keys of the map
     #'
@@ -54,7 +63,7 @@ MappingBase <- R6::R6Class(
     set = function(key, value) {
       stopifnot(
         is.character(x = key),
-        !is.null(x = value) && length(x = key) == length(x = value),
+        # is.null(x = value) || length(x = key) == length(x = value),
         length(x = key) == 1L
       )
       private$.data[[key]] <- value
@@ -92,10 +101,26 @@ MappingBase <- R6::R6Class(
       }
       return(invisible(x = self))
     },
+    length = function() {
+      return(length(x = private$.data))
+    },
     #' @return Returns the map as a list
     #'
     to_list = function() {
       return(private$.data)
+    },
+    print = function() {
+      vowels <- c('a', 'e', 'i', 'o', 'u')
+      cls <- class(x = self)[1L]
+      prd <- ifelse(
+        test = tolower(x = substr(x = cls, start = 1L, stop = 2L)) %in% vowels,
+        yes = 'An',
+        no = 'A'
+      )
+      lng <- self$length()
+      ent <- ifelse(test = lng == 1L, yes = 'entry', no = 'entries')
+      cat(prd, cls, "map with", lng, ent, sep = ' ')
+      return(invisible(x = self))
     }
   ),
   private = list(

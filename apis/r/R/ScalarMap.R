@@ -17,7 +17,7 @@ ScalarMap <- R6::R6Class(
     #' @param key ...
     #' @param value ...
     set = function(key, value) {
-      stopifnot(length(x = value) == 1L)
+      stopifnot(is.null(x = value) || length(x = value) == 1L)
       if (private$.type != 'any') {
         stopifnot(inherits(x = value, what = private$.type))
       }
