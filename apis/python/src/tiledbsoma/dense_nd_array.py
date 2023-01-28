@@ -7,7 +7,7 @@ from somacore import options
 import tiledbsoma.util as util
 from tiledbsoma.util import dense_indices_to_shape
 
-from . import sparse_nd_array
+from .common_nd_array import build_tiledb_schema
 from .exception import SOMAError
 from .options import SOMATileDBContext
 from .options.tiledb_create_options import TileDBCreateOptions
@@ -46,7 +46,7 @@ class DenseNDArray(TileDBArray, somacore.DenseNDArray):
         :param platform_config: Platform-specific options used to create this Array, provided via "tiledb"->"create" nested keys
         """
         context = context or SOMATileDBContext()
-        schema = sparse_nd_array._build_tiledb_schema(
+        schema = build_tiledb_schema(
             type,
             shape,
             TileDBCreateOptions.from_platform_config(platform_config),
