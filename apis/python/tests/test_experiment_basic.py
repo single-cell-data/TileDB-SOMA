@@ -89,23 +89,23 @@ def test_experiment_basic(tmp_path):
     experiment.create_legacy()
 
     experiment["obs"] = create_and_populate_obs(
-        soma.DataFrame(uri=urljoin(basedir, "obs"))
+        soma.DataFrame(uri=urljoin(basedir + "/", "obs"))
     )
-    experiment["ms"] = soma.Collection(uri=urljoin(basedir, "ms")).create_legacy()
+    experiment["ms"] = soma.Collection(uri=urljoin(basedir + "/", "ms")).create_legacy()
 
     measurement = soma.Measurement(uri=f"{experiment.ms.uri}/RNA")
     measurement.create_legacy()
     experiment.ms.set("RNA", measurement)
 
     measurement["var"] = create_and_populate_var(
-        soma.DataFrame(uri=urljoin(measurement.uri, "var"))
+        soma.DataFrame(uri=urljoin(measurement.uri + "/", "var"))
     )
     measurement["X"] = soma.Collection(
-        uri=urljoin(measurement.uri, "X")
+        uri=urljoin(measurement.uri + "/", "X")
     ).create_legacy()
 
     nda = create_and_populate_sparse_nd_array(
-        soma.SparseNDArray(uri=urljoin(measurement.X.uri, "data"))
+        soma.SparseNDArray(uri=urljoin(measurement.X.uri + "/", "data"))
     )
     measurement.X.set("data", nda)
 
