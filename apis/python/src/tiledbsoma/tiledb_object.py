@@ -1,5 +1,5 @@
 from contextlib import ExitStack
-from typing import Generic, Optional, TypeVar
+from typing import ClassVar, Generic, Optional, Type, TypeVar
 
 import somacore
 import tiledb
@@ -26,10 +26,7 @@ class TileDBObject(somacore.SOMAObject, Generic[_HandleType]):
 
     def __init__(
         self,
-        uri: str,
-        mode: options.OpenMode,
         handle: ReadWriteHandle[_HandleType],
-        context: SOMATileDBContext,
         *,
         _this_is_internal_only: str = "unset",
     ):
@@ -46,24 +43,21 @@ class TileDBObject(somacore.SOMAObject, Generic[_HandleType]):
                 f" or the {name}.open(...) class method."
                 f" To create a new {name}, use the {name}.create class method."
             )
-        self._uri = uri
-        self._mode: options.OpenMode = mode
         self._handle = handle
-        self._context = context
         self._metadata = MetadataMapping(self._handle)
         self._close_stack = ExitStack()
         self._close_stack.enter_context(self._handle)
-        self._was_deleted = False
 
     _STORAGE_TYPE: StorageType
+    _tiledb_type: ClassVar[Type[TDBHandle]]
 
     @property
     def context(self) -> SOMATileDBContext:
-        return self._context
+        return self._handle.context
 
     @property
     def _ctx(self) -> tiledb.Ctx:
-        return self._context.tiledb_ctx
+        return self.context.tiledb_ctx
 
     @property
     def metadata(self) -> MetadataMapping:
@@ -72,58 +66,21 @@ class TileDBObject(somacore.SOMAObject, Generic[_HandleType]):
         # rather than being a field (i.e., creating self.whatever in __init__).
         return self._metadata
 
-    # TODO: This needs reconsidering, since it means we're deleting something
-    # out from underneath ourselves.
-    def delete(self) -> None:
-        """
-        Delete the storage specified with the URI.
-
-        [lifecycle: experimental]
-        """
-
-        # TODO: should this raise an error if the object does not exist?
-        self.close()
-        try:
-            self._was_deleted = True
-            tiledb.remove(self._uri)
-        except tiledb.TileDBError:
-            pass
-        return
-
     def __repr__(self) -> str:
-        return f'{self.soma_type}(uri="{self._uri}")'
+        return f'{self.soma_type}(uri="{self.uri}")'
 
+    # TODO: This is dangerous; two objects with the same URI may be different.
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, TileDBObject):
             return False
-        return self._uri == other._uri
+        return self.uri == other.uri
 
     @property
     def uri(self) -> str:
         """
         Accessor for the object's storage URI
         """
-        return self._uri
-
-    def exists(self) -> bool:
-        """
-        Returns true if the object exists and has the desired class name.
-
-        This might be in case an object has not yet been populated, or, if a containing object has been populated but doesn't have a particular member (e.g. not all ``Measurement`` objects have a ``varp``).
-
-        For ``tiledb://`` URIs this is a REST-server request which we'd like to cache.  However, remove-and-replace use-cases are possible and common in notebooks and it turns out caching the existence-check isn't a robust approach.
-
-        [lifecycle: experimental]
-        """
-        # We already opened this, so it should always exist.
-        return not self._was_deleted
-
-    def flush(self) -> None:
-        """Flushes any pending writes to the TileDB store.
-
-        [lifecycle: experimental]
-        """
-        self._handle.flush(update_read=True)
+        return self._handle.uri
 
     def close(self) -> None:
         """
@@ -139,17 +96,23 @@ class TileDBObject(somacore.SOMAObject, Generic[_HandleType]):
         """
         Current open mode: read (r), write (w), or closed (None).
         """
-        return self._mode
+        return self._handle.mode
 
     @classmethod
-    def _set_create_metadata(cls, handle: TDBHandle) -> None:
+    def _set_create_metadata(cls, handle: ReadWriteHandle[TDBHandle]) -> None:
         """Sets the necessary metadata on a newly-created TileDB object."""
-        handle.meta.update(
+        handle.writer.meta.update(
             {
                 constants.SOMA_OBJECT_TYPE_METADATA_KEY: cls.soma_type,
                 constants.SOMA_ENCODING_VERSION_METADATA_KEY: constants.SOMA_ENCODING_VERSION,
             }
         )
+        # HACK: We need this so that the metadata appears on the read handle.
+        handle._flush_hack()
+
+    def _ensure_open_read(self) -> None:
+        if self.mode != "r":
+            raise ValueError(f"{self} is open for writing, not reading")
 
 
 AnyTileDBObject = TileDBObject[TDBHandle]

@@ -1,6 +1,17 @@
 import math
 import time
-from typing import List, Optional, Sequence, Tuple, Type, TypeVar, Union, cast, overload
+from typing import (
+    Any,
+    List,
+    Optional,
+    Sequence,
+    Tuple,
+    Type,
+    TypeVar,
+    Union,
+    cast,
+    overload,
+)
 
 import anndata as ad
 import h5py
@@ -10,6 +21,8 @@ import pyarrow as pa
 import scipy.sparse as sp
 from anndata._core.sparse_dataset import SparseDataset
 from somacore.options import PlatformConfig
+
+from tiledbsoma.tiledb_object import TileDBObject
 
 from . import (
     Collection,
@@ -26,16 +39,16 @@ from . import (
     util_scipy,
     util_tiledb,
 )
-from .collection import AnyTileDBCollection
 from .constants import SOMA_JOINID
 from .exception import DoesNotExistError, SOMAError
 from .options import SOMATileDBContext
 from .options.tiledb_create_options import TileDBCreateOptions
-from .types import INGEST_MODES, IngestMode, NPNDArray, Path
+from .types import INGEST_MODES, IngestMode, NPNDArray, Path, TDBHandle
 
 SparseMatrix = Union[sp.csr_matrix, sp.csc_matrix, SparseDataset]
 Matrix = Union[NPNDArray, SparseMatrix]
-_NDArr = TypeVar("_NDArr", bound=Union[DenseNDArray, SparseNDArray])
+_NDArr = TypeVar("_NDArr", DenseNDArray, SparseNDArray)
+_TDBO = TypeVar("_TDBO", bound=TileDBObject[TDBHandle])
 
 
 # ----------------------------------------------------------------
@@ -50,6 +63,8 @@ def from_h5ad(
 ) -> Experiment:
     """
     Reads an .h5ad file and writes to a TileDB group structure.
+
+    Returns an experiment opened for writing.
 
     The "write" ingest_mode (which is the default) writes all data, creating new layers if the soma already exists.
 
@@ -106,6 +121,8 @@ def from_anndata(
     """
     Top-level writer method for creating a TileDB group for a ``Experiment`` object.
 
+    Returns an Experiment opened for writing.
+
     The "write" ingest_mode (which is the default) writes all data, creating new layers if the soma already exists.
 
     The "resume" ingest_mode skips data writes if data are within dimension ranges of the existing soma.
@@ -147,164 +164,181 @@ def from_anndata(
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     # OBS
     df_uri = util.uri_joinpath(experiment.uri, "obs")
-    obs = _write_dataframe(
+    with _write_dataframe(
         df_uri,
         util_ann._decategoricalize_obs_or_var(anndata.obs),
         id_column_name="obs_id",
         platform_config=platform_config,
         ingest_mode=ingest_mode,
-    )
-    experiment.set("obs", obs)
+    ) as obs:
+        experiment.obs = obs
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     # MS
-    ms = _create_or_open_coll(
-        Collection, util.uri_joinpath(experiment.uri, "ms"), ingest_mode
-    )
-    experiment.set("ms", ms)
+    with _create_or_open_coll(
+        Collection[Measurement], util.uri_joinpath(experiment.uri, "ms"), ingest_mode
+    ) as ms:
+        experiment.ms = ms  # type: ignore[assignment]
 
-    # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-    # MS/meas
-    measurement = _create_or_open_coll(
-        Measurement, f"{experiment.ms.uri}/{measurement_name}", ingest_mode
-    )
-    experiment.ms.set(measurement_name, measurement)
+        # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+        # MS/meas
+        with _create_or_open_coll(
+            Measurement, f"{experiment.ms.uri}/{measurement_name}", ingest_mode
+        ) as measurement:
+            ms[measurement_name] = measurement
 
-    # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-    # MS/meas/VAR
-    var = _write_dataframe(
-        util.uri_joinpath(measurement.uri, "var"),
-        util_ann._decategoricalize_obs_or_var(anndata.var),
-        id_column_name="var_id",
-        platform_config=platform_config,
-        ingest_mode=ingest_mode,
-    )
-    measurement["var"] = var
+            # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+            # MS/meas/VAR
+            with _write_dataframe(
+                util.uri_joinpath(measurement.uri, "var"),
+                util_ann._decategoricalize_obs_or_var(anndata.var),
+                id_column_name="var_id",
+                platform_config=platform_config,
+                ingest_mode=ingest_mode,
+            ) as var:
+                measurement["var"] = var
 
-    # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-    # MS/meas/X/DATA
+            # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+            # MS/meas/X/DATA
 
-    x = _create_or_open_coll(
-        Collection, util.uri_joinpath(measurement.uri, "X"), ingest_mode
-    )
-    measurement["X"] = x
+            with _create_or_open_coll(
+                Collection, util.uri_joinpath(measurement.uri, "X"), ingest_mode
+            ) as x:
+                measurement.X = x
 
-    # Since we did `anndata = ad.read_h5ad(path_to_h5ad, "r")` with the "r":
-    # * If we do `anndata.X[:]` we're loading all of a CSR/CSC/etc into memory.
-    # * If we do `anndata.X` we're getting a pageable object which can be loaded
-    #   chunkwise into memory.
-    # Using the latter allows us to ingest larger .h5ad files without OOMing.
-    cls = (
-        DenseNDArray
-        if isinstance(anndata.X, (np.ndarray, h5py.Dataset))
-        else SparseNDArray
-    )
-    data = create_from_matrix(
-        cls,
-        util.uri_joinpath(measurement.X.uri, "data"),
-        anndata.X,
-        platform_config,
-        ingest_mode,
-    )
-    measurement.X.set("data", data)
+                # Since we did `anndata = ad.read_h5ad(path_to_h5ad, "r")` with the "r":
+                # * If we do `anndata.X[:]` we're loading all of a CSR/CSC/etc into memory.
+                # * If we do `anndata.X` we're getting a pageable object which can be loaded
+                #   chunkwise into memory.
+                # Using the latter allows us to ingest larger .h5ad files without OOMing.
+                cls = (
+                    DenseNDArray
+                    if isinstance(anndata.X, (np.ndarray, h5py.Dataset))
+                    else SparseNDArray
+                )
+                with create_from_matrix(
+                    cls,
+                    util.uri_joinpath(measurement.X.uri, "data"),
+                    anndata.X,
+                    platform_config,
+                    ingest_mode,
+                ) as data:
+                    x["data"] = data
 
-    # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-    # MS/meas/OBSM,VARM,OBSP,VARP
-    if len(anndata.obsm.keys()) > 0:  # do not create an empty collection
-        measurement["obsm"] = _create_or_open_coll(
-            Collection, util.uri_joinpath(measurement.uri, "obsm"), ingest_mode
-        )
-        for key in anndata.obsm.keys():
-            arr = create_from_matrix(
-                DenseNDArray,
-                util.uri_joinpath(measurement.obsm.uri, key),
-                util_tiledb.to_tiledb_supported_array_type(anndata.obsm[key]),
-                platform_config,
-                ingest_mode,
-            )
-            measurement.obsm.set(key, arr)
+                # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                # MS/meas/OBSM,VARM,OBSP,VARP
+                if len(anndata.obsm.keys()) > 0:  # do not create an empty collection
+                    with _create_or_open_coll(
+                        Collection,
+                        util.uri_joinpath(measurement.uri, "obsm"),
+                        ingest_mode,
+                    ) as obsm:
+                        measurement.obsm = obsm
+                        for key in anndata.obsm.keys():
+                            with create_from_matrix(
+                                DenseNDArray,
+                                util.uri_joinpath(measurement.obsm.uri, key),
+                                util_tiledb.to_tiledb_supported_array_type(
+                                    anndata.obsm[key]
+                                ),
+                                platform_config,
+                                ingest_mode,
+                            ) as arr:
+                                obsm[key] = arr
+                            arr.close()
+                    measurement.obsm.close()
 
-    if len(anndata.varm.keys()) > 0:  # do not create an empty collection
-        measurement["varm"] = _create_or_open_coll(
-            Collection,
-            util.uri_joinpath(measurement.uri, "varm"),
-            ingest_mode,
-        )
-        for key in anndata.varm.keys():
-            darr = create_from_matrix(
-                DenseNDArray,
-                util.uri_joinpath(measurement.varm.uri, key),
-                util_tiledb.to_tiledb_supported_array_type(anndata.varm[key]),
-                platform_config,
-                ingest_mode,
-            )
-            measurement.varm.set(key, darr)
+                if len(anndata.varm.keys()) > 0:  # do not create an empty collection
+                    with _create_or_open_coll(
+                        Collection,
+                        util.uri_joinpath(measurement.uri, "varm"),
+                        ingest_mode,
+                    ) as varm:
+                        measurement.varm = varm
+                        for key in anndata.varm.keys():
+                            with create_from_matrix(
+                                DenseNDArray,
+                                util.uri_joinpath(measurement.varm.uri, key),
+                                util_tiledb.to_tiledb_supported_array_type(
+                                    anndata.varm[key]
+                                ),
+                                platform_config,
+                                ingest_mode,
+                            ) as darr:
+                                varm.set(key, darr)
 
-    if len(anndata.obsp.keys()) > 0:  # do not create an empty collection
-        measurement["obsp"] = _create_or_open_coll(
-            Collection,
-            util.uri_joinpath(measurement.uri, "obsp"),
-            ingest_mode,
-        )
-        for key in anndata.obsp.keys():
-            sarr = create_from_matrix(
-                SparseNDArray,
-                util.uri_joinpath(measurement.obsp.uri, key),
-                util_tiledb.to_tiledb_supported_array_type(anndata.obsp[key]),
-                platform_config,
-                ingest_mode,
-            )
-            measurement.obsp.set(key, sarr)
+                if len(anndata.obsp.keys()) > 0:  # do not create an empty collection
+                    with _create_or_open_coll(
+                        Collection,
+                        util.uri_joinpath(measurement.uri, "obsp"),
+                        ingest_mode,
+                    ) as obsp:
+                        measurement.obsp = obsp
+                        for key in anndata.obsp.keys():
+                            with create_from_matrix(
+                                SparseNDArray,
+                                util.uri_joinpath(measurement.obsp.uri, key),
+                                util_tiledb.to_tiledb_supported_array_type(
+                                    anndata.obsp[key]
+                                ),
+                                platform_config,
+                                ingest_mode,
+                            ) as sarr:
+                                obsp.set(key, sarr)
 
-    if len(anndata.varp.keys()) > 0:  # do not create an empty collection
-        measurement["varp"] = _create_or_open_coll(
-            Collection,
-            util.uri_joinpath(measurement.uri, "varp"),
-            ingest_mode,
-        )
-        for key in anndata.varp.keys():
-            sarr = create_from_matrix(
-                SparseNDArray,
-                util.uri_joinpath(measurement.varp.uri, key),
-                util_tiledb.to_tiledb_supported_array_type(anndata.varp[key]),
-                platform_config,
-                ingest_mode,
-            )
-            measurement.varp.set(key, sarr)
+                if len(anndata.varp.keys()) > 0:  # do not create an empty collection
+                    with _create_or_open_coll(
+                        Collection,
+                        util.uri_joinpath(measurement.uri, "varp"),
+                        ingest_mode,
+                    ) as varp:
+                        measurement.varp = varp
+                        for key in anndata.varp.keys():
+                            with create_from_matrix(
+                                SparseNDArray,
+                                util.uri_joinpath(measurement.varp.uri, key),
+                                util_tiledb.to_tiledb_supported_array_type(
+                                    anndata.varp[key]
+                                ),
+                                platform_config,
+                                ingest_mode,
+                            ) as sarr:
+                                varp.set(key, sarr)
 
-    # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-    # MS/RAW
-    if anndata.raw is not None:
-        raw_measurement = _create_or_open_coll(
-            Measurement,
-            util.uri_joinpath(experiment.ms.uri, "raw"),
-            ingest_mode,
-        )
-        experiment.ms.set("raw", raw_measurement)
+                # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                # MS/RAW
+                if anndata.raw is not None:
+                    with _create_or_open_coll(
+                        Measurement,
+                        util.uri_joinpath(experiment.ms.uri, "raw"),
+                        ingest_mode,
+                    ) as raw_measurement:
+                        ms.set("raw", raw_measurement)
 
-        var = _write_dataframe(
-            util.uri_joinpath(raw_measurement.uri, "var"),
-            util_ann._decategoricalize_obs_or_var(anndata.raw.var),
-            id_column_name="var_id",
-            platform_config=platform_config,
-            ingest_mode=ingest_mode,
-        )
-        raw_measurement.set("var", var)
+                        with _write_dataframe(
+                            util.uri_joinpath(raw_measurement.uri, "var"),
+                            util_ann._decategoricalize_obs_or_var(anndata.raw.var),
+                            id_column_name="var_id",
+                            platform_config=platform_config,
+                            ingest_mode=ingest_mode,
+                        ) as var:
+                            raw_measurement.var = var
 
-        raw_measurement["X"] = _create_or_open_coll(
-            Collection,
-            util.uri_joinpath(raw_measurement.uri, "X"),
-            ingest_mode,
-        )
+                        with _create_or_open_coll(
+                            Collection,
+                            util.uri_joinpath(raw_measurement.uri, "X"),
+                            ingest_mode,
+                        ) as rm_x:
+                            raw_measurement.X = rm_x
 
-        rawXdata = create_from_matrix(
-            SparseNDArray,
-            util.uri_joinpath(raw_measurement.X.uri, "data"),
-            anndata.raw.X,
-            platform_config,
-            ingest_mode,
-        )
-        raw_measurement.X.set("data", rawXdata)
+                            with create_from_matrix(
+                                SparseNDArray,
+                                util.uri_joinpath(raw_measurement.X.uri, "data"),
+                                anndata.raw.X,
+                                platform_config,
+                                ingest_mode,
+                            ) as rm_x_data:
+                                rm_x.set("data", rm_x_data)
 
     logging.log_io(
         f"Wrote   {experiment.uri}",
@@ -329,17 +363,13 @@ def _create_or_open_coll(
 
 @overload
 def _create_or_open_coll(
-    cls: Type[Collection], uri: str, ingest_mode: str
-) -> Collection:
+    cls: Type[Collection[_TDBO]], uri: str, ingest_mode: str
+) -> Collection[_TDBO]:
     ...
 
 
 @util.typeguard_ignore
-def _create_or_open_coll(
-    cls: Type[AnyTileDBCollection],
-    uri: str,
-    ingest_mode: str,
-) -> AnyTileDBCollection:
+def _create_or_open_coll(cls: Type[Any], uri: str, ingest_mode: str) -> Any:
     try:
         thing = cls.open(uri, "w")
     except DoesNotExistError:
@@ -512,19 +542,20 @@ def add_matrix_to_collection(
 
     Use `ingest_mode="resume"` to not error out if the schema already exists.
     """
-    meas = cast(Measurement, exp.ms[measurement_name])
-    if collection_name in meas:
-        coll = cast(Collection, meas[collection_name])
-    else:
-        coll = _create_or_open_coll(
-            Collection, f"{meas.uri}/{collection_name}", ingest_mode
-        )
-        meas[collection_name] = coll
-    uri = f"{coll.uri}/{matrix_name}"
-    sparse_nd_array = create_from_matrix(
-        SparseNDArray, uri, matrix_data, ingest_mode=ingest_mode
-    )
-    coll.set(matrix_name, sparse_nd_array)
+    with cast(Measurement, exp.ms[measurement_name]) as meas:
+        if collection_name in meas:
+            coll = cast(Collection[TDBHandle], meas[collection_name])
+        else:
+            coll = _create_or_open_coll(
+                Collection, f"{meas.uri}/{collection_name}", ingest_mode
+            )
+            meas[collection_name] = coll
+        with coll:
+            uri = f"{coll.uri}/{matrix_name}"
+            with create_from_matrix(
+                SparseNDArray, uri, matrix_data, ingest_mode=ingest_mode
+            ) as sparse_nd_array:
+                coll.set(matrix_name, sparse_nd_array)
 
 
 def _write_matrix_to_denseNDArray(
@@ -701,8 +732,9 @@ def _write_matrix_to_sparseNDArray(
     # * Of course, this also helps us catch already-completed writes in the non-chunked case.
     # TODO: make sure we're not using an old timestamp for this
     storage_ned = None
-    if ingest_mode == "resume" and soma_ndarray.exists():
+    if ingest_mode == "resume":
         # This lets us check for already-ingested chunks, when in resume-ingest mode.
+        # THIS IS A HACK AND ONLY WORKS BECAUSE WE ARE DOING THIS BEFORE ALL WRITES.
         storage_ned = soma_ndarray._handle.reader.nonempty_domain()
         matrix_bounds = [
             (0, int(n - 1)) for n in matrix.shape

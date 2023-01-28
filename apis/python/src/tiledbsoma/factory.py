@@ -25,7 +25,7 @@ from .constants import (
 )
 from .exception import DoesNotExistError, SOMAError
 from .options import SOMATileDBContext
-from .types import StorageType
+from .types import StorageType, TDBHandle
 from .util import typeguard_ignore
 from .util_tiledb import ReadWriteHandle
 
@@ -149,13 +149,7 @@ def _open_array(
             raise TypeError(f"stored data is {cls}; expected {want_type}")
         return cast(
             _Arr,
-            cls(
-                uri,
-                mode,
-                handle,
-                context,
-                _this_is_internal_only="tiledbsoma-internal-code",
-            ),
+            cls(handle, _this_is_internal_only="tiledbsoma-internal-code"),
         )
     except Exception:
         handle.close()
@@ -178,13 +172,7 @@ def _open_group(
             raise TypeError(f"stored data is {cls}; expected {want_type}")
         return cast(
             _Coll,
-            cls(
-                uri,
-                mode,
-                handle,
-                context,
-                _this_is_internal_only="tiledbsoma-internal-code",
-            ),
+            cls(handle, _this_is_internal_only="tiledbsoma-internal-code"),
         )
     except Exception:
         handle.close()
@@ -200,7 +188,7 @@ def _storage_of(cls: Type["tiledb_object.AnyTileDBObject"]) -> StorageType:
     raise TypeError(f"{cls} is not a concrete stored object")
 
 
-def _read_soma_type(hdl: ReadWriteHandle[tiledb.Object]) -> str:
+def _read_soma_type(hdl: ReadWriteHandle[TDBHandle]) -> str:
     obj_type = hdl.reader.meta.get(SOMA_OBJECT_TYPE_METADATA_KEY)
     encoding_version = hdl.reader.meta.get(SOMA_ENCODING_VERSION_METADATA_KEY)
 
@@ -223,7 +211,6 @@ def _read_soma_type(hdl: ReadWriteHandle[tiledb.Object]) -> str:
     return obj_type
 
 
-@typeguard_ignore
 def _to_array_class(name: str) -> Type["tiledb_array.TileDBArray"]:
     options: Dict[str, Type[tiledb_array.TileDBArray]] = {
         cls.soma_type.lower(): cls  # type: ignore[attr-defined,misc]
@@ -242,7 +229,7 @@ def _to_array_class(name: str) -> Type["tiledb_array.TileDBArray"]:
 @typeguard_ignore
 def _to_group_class(name: str) -> Type["collection.AnyTileDBCollection"]:
     options: Dict[str, Type[collection.AnyTileDBCollection]] = {
-        cls.soma_type.lower(): cls
+        cls.soma_type.lower(): cls  # type: ignore[attr-defined, misc]
         for cls in (
             collection.Collection,
             experiment.Experiment,

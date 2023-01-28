@@ -147,7 +147,5 @@ def test_bool_arrays(tmp_path, bool_array):
     rb = pa.Table.from_pydict(data)
     sdf.write(rb)
 
-    assert sdf.exists()
-
     table = sdf.read().concat()
     assert table["b"].to_pylist() == bool_array

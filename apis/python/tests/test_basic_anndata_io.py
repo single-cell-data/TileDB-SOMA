@@ -7,7 +7,7 @@ import tiledb
 
 import tiledbsoma
 import tiledbsoma.io
-from tiledbsoma import constants
+from tiledbsoma import constants, factory
 
 HERE = Path(__file__).parent
 
@@ -52,12 +52,15 @@ def test_import_anndata(adata, ingest_modes):
 
     for ingest_mode in ingest_modes:
 
-        exp = tiledbsoma.io.from_anndata(
+        write_exp = tiledbsoma.io.from_anndata(
             output_path, orig, "RNA", ingest_mode=ingest_mode
         )
         if ingest_mode != "schema_only":
             have_ingested = True
+        write_exp.close()
+        # del write_exp
 
+        exp = factory.open(output_path)
         assert exp.metadata[metakey] == "SOMAExperiment"
 
         # Check obs
@@ -179,6 +182,7 @@ def test_resume_mode(adata, resume_mode_h5ad_file):
     exp1 = tiledbsoma.io.from_h5ad(
         output_path1, resume_mode_h5ad_file, "RNA", ingest_mode="write"
     )
+    exp1.close()
 
     tempdir2 = tempfile.TemporaryDirectory()
     output_path2 = tempdir2.name
@@ -189,6 +193,7 @@ def test_resume_mode(adata, resume_mode_h5ad_file):
     exp2 = tiledbsoma.io.from_h5ad(
         output_path2, resume_mode_h5ad_file, "RNA", ingest_mode="resume"
     )
+    exp2.close()
 
     assert _get_fragment_count(exp1.obs.uri) == _get_fragment_count(exp2.obs.uri)
     assert _get_fragment_count(exp1.ms["RNA"].var.uri) == _get_fragment_count(
@@ -231,33 +236,39 @@ def test_add_matrix_to_collection(adata):
     output_path = tempdir.name
 
     exp = tiledbsoma.io.from_anndata(output_path, adata, measurement_name="RNA")
-    exp.flush()
-    assert list(exp.ms["RNA"].X.keys()) == ["data"]
+    exp.close()
+    with factory.open(output_path) as exp_r:
+        assert list(exp_r.ms["RNA"].X.keys()) == ["data"]
 
-    tiledbsoma.io.add_X_layer(exp, "RNA", "data2", adata.X)
-    exp.flush()
-    assert sorted(list(exp.ms["RNA"].X.keys())) == ["data", "data2"]
+    with factory.open(output_path, "w") as exp:
+        tiledbsoma.io.add_X_layer(exp, "RNA", "data2", adata.X)
+    with factory.open(output_path) as exp_r:
+        assert sorted(list(exp_r.ms["RNA"].X.keys())) == ["data", "data2"]
 
-    with pytest.raises(KeyError):
-        tiledbsoma.io.add_X_layer(exp, "nonesuch", "data3", adata.X)
+    with factory.open(output_path, "w") as exp:
+        with pytest.raises(KeyError):
+            tiledbsoma.io.add_X_layer(exp, "nonesuch", "data3", adata.X)
 
-    assert sorted(list(exp.ms["RNA"].obsm.keys())) == ["X_pca", "X_tsne"]
-    tiledbsoma.io.add_matrix_to_collection(
-        exp, "RNA", "obsm", "X_pcb", adata.obsm["X_pca"]
-    )
-    exp.flush()
-    assert sorted(list(exp.ms["RNA"].obsm.keys())) == ["X_pca", "X_pcb", "X_tsne"]
-
-    with pytest.raises(KeyError):
+    with factory.open(output_path) as exp_r:
+        assert sorted(list(exp_r.ms["RNA"].obsm.keys())) == ["X_pca", "X_tsne"]
+    with factory.open(output_path, "w") as exp:
         tiledbsoma.io.add_matrix_to_collection(
-            exp, "nonesuch", "obsm", "X_pcc", adata.obsm["X_pca"]
+            exp, "RNA", "obsm", "X_pcb", adata.obsm["X_pca"]
         )
+    with factory.open(output_path) as exp_r:
+        assert sorted(list(exp_r.ms["RNA"].obsm.keys())) == ["X_pca", "X_pcb", "X_tsne"]
 
-    tiledbsoma.io.add_matrix_to_collection(
-        exp, "RNA", "newthing", "X_pcd", adata.obsm["X_pca"]
-    )
-    exp.flush()
-    assert sorted(list(exp.ms["RNA"]["newthing"].keys())) == ["X_pcd"]
+    with factory.open(output_path, "w") as exp:
+        with pytest.raises(KeyError):
+            tiledbsoma.io.add_matrix_to_collection(
+                exp, "nonesuch", "obsm", "X_pcc", adata.obsm["X_pca"]
+            )
+
+        tiledbsoma.io.add_matrix_to_collection(
+            exp, "RNA", "newthing", "X_pcd", adata.obsm["X_pca"]
+        )
+    with factory.open(output_path) as exp_r:
+        assert sorted(list(exp_r.ms["RNA"]["newthing"].keys())) == ["X_pcd"]
 
 
 def test_export_anndata(adata):
@@ -265,8 +276,10 @@ def test_export_anndata(adata):
     output_path = tempdir.name
 
     exp = tiledbsoma.io.from_anndata(output_path, adata, measurement_name="RNA")
+    exp.close()
 
-    readback = tiledbsoma.io.to_anndata(exp, measurement_name="RNA")
+    with factory.open(output_path) as exp:
+        readback = tiledbsoma.io.to_anndata(exp, measurement_name="RNA")
 
     assert readback.obs.shape == adata.obs.shape
     assert readback.var.shape == adata.var.shape

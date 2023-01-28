@@ -5,6 +5,8 @@ import pyarrow as pa
 import pytest
 
 import tiledbsoma as soma
+from tiledbsoma import factory
+from tiledbsoma.exception import DoesNotExistError
 
 
 # ----------------------------------------------------------------
@@ -18,33 +20,33 @@ def create_and_populate_dataframe(path: str) -> soma.DataFrame:
         ]
     )
 
-    df = soma.DataFrame.create(path, schema=arrow_schema)
+    with soma.DataFrame.create(path, schema=arrow_schema) as df:
+        pydict = {}
+        pydict["soma_joinid"] = [0, 1, 2, 3, 4]
+        pydict["foo"] = [10, 20, 30, 40, 50]
+        pydict["bar"] = [4.1, 5.2, 6.3, 7.4, 8.5]
+        pydict["baz"] = ["apple", "ball", "cat", "dog", "egg"]
+        rb = pa.Table.from_pydict(pydict)
+        df.write(rb)
 
-    pydict = {}
-    pydict["soma_joinid"] = [0, 1, 2, 3, 4]
-    pydict["foo"] = [10, 20, 30, 40, 50]
-    pydict["bar"] = [4.1, 5.2, 6.3, 7.4, 8.5]
-    pydict["baz"] = ["apple", "ball", "cat", "dog", "egg"]
-    rb = pa.Table.from_pydict(pydict)
-    df.write(rb)
-    df.flush()
-    return df
+    return factory.open(path)
 
 
 # ----------------------------------------------------------------
 def create_and_populate_sparse_nd_array(path: str) -> soma.SparseNDArray:
     nr = 10
     nc = 20
-    sparse_nd_array = soma.SparseNDArray.create(path, type=pa.int64(), shape=(nr, nc))
+    with soma.SparseNDArray.create(
+        path, type=pa.int64(), shape=(nr, nc)
+    ) as sparse_nd_array:
 
-    tensor = pa.SparseCOOTensor.from_numpy(
-        data=np.asarray([7, 8, 9]),
-        coords=[[0, 1], [2, 3], [3, 4]],
-        shape=(nr, nc),
-    )
-    sparse_nd_array.write(tensor)
-    sparse_nd_array.flush()
-    return sparse_nd_array
+        tensor = pa.SparseCOOTensor.from_numpy(
+            data=np.asarray([7, 8, 9]),
+            coords=[[0, 1], [2, 3], [3, 4]],
+            shape=(nr, nc),
+        )
+        sparse_nd_array.write(tensor)
+    return factory.open(path)
 
 
 # ----------------------------------------------------------------
@@ -54,17 +56,14 @@ def test_collection_basic(tmp_path):
     with pytest.raises(soma.DoesNotExistError):
         soma.Collection.open(basedir)
 
-    collection = soma.Collection.create(basedir)
-    assert collection.exists()
-    assert collection.uri == basedir
-    assert "foobar" not in collection
+    with soma.Collection.create(basedir) as collection:
+        assert collection.uri == basedir
+        assert "foobar" not in collection
 
-    dataframe = create_and_populate_dataframe(os.path.join(basedir, "sdf"))
-
-    sparse_nd_array = create_and_populate_sparse_nd_array(os.path.join(basedir, "snda"))
-
-    collection.set("sdf", dataframe)
-    collection.set("snda", sparse_nd_array)
+        with create_and_populate_dataframe(os.path.join(basedir, "sdf")) as sdf:
+            collection["sdf"] = sdf
+        with create_and_populate_sparse_nd_array(os.path.join(basedir, "snda")) as snda:
+            collection["snda"] = snda
 
     # ----------------------------------------------------------------
     readback_collection = soma.Collection.open(collection.uri)
@@ -121,11 +120,9 @@ def test_collection_mapping(soma_object, tmp_path):
         soma.Collection.open(collection_path)
 
     c = soma.Collection.create(collection_path)
-    assert c.exists()
     assert "foobar" not in c
 
-    assert soma_object.exists()
-    c.set("mumble", soma_object)
+    c["mumble"] = soma_object
     assert "mumble" in c
     assert c["mumble"] == soma_object
 
@@ -140,18 +137,16 @@ def test_collection_mapping(soma_object, tmp_path):
     assert "mumble" not in c
     assert not c.get("mumble", False)
 
-    c.delete()
-    assert not (tmp_path / "collection").exists()
+    # XXX create delete global function
+    # assert not (tmp_path / "collection").exists()
 
 
 @pytest.mark.parametrize("relative", [False, True])
 def test_collection_repr(tmp_path, relative):
     a = soma.Collection.create((tmp_path / "A").as_uri())
-    assert a.exists()
     assert a.uri == (tmp_path / "A").as_uri()
 
     b = soma.Collection.create((tmp_path / "A" / "B").as_uri())
-    assert b.exists()
     assert b.uri == (tmp_path / "A" / "B").as_uri()
 
     a.set("Another_Name", b, use_relative_uri=relative)
@@ -184,7 +179,7 @@ def test_collection_repr(tmp_path, relative):
             == f'SOMACollection(uri="{aMoved.uri}"):\n  "Another_Name": SOMACollection(uri="{aMoved["Another_Name"].uri}")'
         )
     else:
-        with pytest.raises(KeyError):
+        with pytest.raises(DoesNotExistError):
             aMoved["Another_Name"].uri
 
     del aMoved
@@ -203,7 +198,6 @@ def test_collection_update_on_set(tmp_path):
     B = soma.DenseNDArray.create(
         uri=(tmp_path / "B").as_uri(), type=pa.float64(), shape=(100, 10, 1)
     )
-    assert sc.exists()
     assert set(sc.keys()) == set([])
 
     sc["A"] = A

@@ -63,9 +63,7 @@ class SparseNDArray(TileDBArray, somacore.SparseNDArray):
             is_sparse=True,
         )
         handle = cls._create_internal(uri, schema, context)
-        return cls(
-            uri, "w", handle, context, _this_is_internal_only="tiledbsoma-internal-code"
-        )
+        return cls(handle, _this_is_internal_only="tiledbsoma-internal-code")
 
     @property
     def shape(self) -> NTuple:
@@ -91,6 +89,7 @@ class SparseNDArray(TileDBArray, somacore.SparseNDArray):
         """
         Return the number of stored values in the array, including explicitly stored zeros.
         """
+        self._ensure_open_read()
         return cast(int, self._soma_reader().nnz())
 
     def read(
@@ -132,6 +131,7 @@ class SparseNDArray(TileDBArray, somacore.SparseNDArray):
         SparseNDArrayRead - which can be used to access an iterator of results in various formats.
         """
         del result_order, batch_size, partitions, platform_config  # Currently unused.
+        self._ensure_open_read()
 
         if coords is None:
             coords = (slice(None),)

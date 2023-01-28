@@ -5,6 +5,7 @@ import pyarrow as pa
 import pytest
 
 import tiledbsoma as soma
+from tiledbsoma import factory
 
 
 # ----------------------------------------------------------------
@@ -19,18 +20,17 @@ def create_and_populate_obs(uri: str) -> soma.DataFrame:
     )
 
     # TODO: indexing option ...
-    obs = soma.DataFrame.create(uri, schema=obs_arrow_schema)
+    with soma.DataFrame.create(uri, schema=obs_arrow_schema) as obs:
 
-    pydict = {}
-    pydict["soma_joinid"] = [0, 1, 2, 3, 4]
-    pydict["foo"] = [10, 20, 30, 40, 50]
-    pydict["bar"] = [4.1, 5.2, 6.3, 7.4, 8.5]
-    pydict["baz"] = ["apple", "ball", "cat", "dog", "egg"]
-    rb = pa.Table.from_pydict(pydict)
-    obs.write(rb)
-    obs.flush()
+        pydict = {}
+        pydict["soma_joinid"] = [0, 1, 2, 3, 4]
+        pydict["foo"] = [10, 20, 30, 40, 50]
+        pydict["bar"] = [4.1, 5.2, 6.3, 7.4, 8.5]
+        pydict["baz"] = ["apple", "ball", "cat", "dog", "egg"]
+        rb = pa.Table.from_pydict(pydict)
+        obs.write(rb)
 
-    return obs
+    return factory.open(uri)
 
 
 # ----------------------------------------------------------------
@@ -43,17 +43,16 @@ def create_and_populate_var(uri: str) -> soma.DataFrame:
         ]
     )
 
-    var = soma.DataFrame.create(uri, schema=var_arrow_schema)
+    with soma.DataFrame.create(uri, schema=var_arrow_schema) as var:
 
-    pydict = {}
-    pydict["soma_joinid"] = [0, 1, 2, 3]
-    pydict["quux"] = ["zebra", "yak", "xylophone", "wapiti"]
-    pydict["xyzzy"] = [12.3, 23.4, 34.5, 45.6]
-    rb = pa.Table.from_pydict(pydict)
-    var.write(rb)
-    var.flush()
+        pydict = {}
+        pydict["soma_joinid"] = [0, 1, 2, 3]
+        pydict["quux"] = ["zebra", "yak", "xylophone", "wapiti"]
+        pydict["xyzzy"] = [12.3, 23.4, 34.5, 45.6]
+        rb = pa.Table.from_pydict(pydict)
+        var.write(rb)
 
-    return var
+    return factory.open(uri)
 
 
 # ----------------------------------------------------------------
@@ -68,17 +67,18 @@ def create_and_populate_sparse_nd_array(uri: str) -> soma.SparseNDArray:
     # 3 . 8 .
     # 4 . . 9
 
-    sparse_nd_array = soma.SparseNDArray.create(uri, type=pa.int64(), shape=[nr, nc])
+    with soma.SparseNDArray.create(
+        uri, type=pa.int64(), shape=[nr, nc]
+    ) as sparse_nd_array:
 
-    tensor = pa.SparseCOOTensor.from_numpy(
-        data=np.asarray([7, 8, 9]),
-        coords=[[0, 2], [3, 1], [4, 2]],
-        shape=(nr, nc),
-    )
-    sparse_nd_array.write(tensor)
-    sparse_nd_array.flush()
+        tensor = pa.SparseCOOTensor.from_numpy(
+            data=np.asarray([7, 8, 9]),
+            coords=[[0, 2], [3, 1], [4, 2]],
+            shape=(nr, nc),
+        )
+        sparse_nd_array.write(tensor)
 
-    return sparse_nd_array
+    return factory.open(uri)
 
 
 # ----------------------------------------------------------------
@@ -137,12 +137,12 @@ def test_experiment_basic(tmp_path):
 
     # ----------------------------------------------------------------
     # Paths exist and are of the right type
-    assert experiment.exists()
-    assert experiment.obs.exists()
-    assert experiment.ms.exists()
-    assert experiment.ms["RNA"].exists()
-    assert experiment.ms["RNA"].X.exists()
-    assert experiment.ms["RNA"].X["data"].exists()
+    assert experiment is not None
+    assert experiment.obs is not None
+    assert experiment.ms is not None
+    assert experiment.ms["RNA"] is not None
+    assert experiment.ms["RNA"].X is not None
+    assert experiment.ms["RNA"].X["data"] is not None
 
     # Paths exist but are not of the right type
     # TODO: Restore once type verification is back

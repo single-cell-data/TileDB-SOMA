@@ -41,7 +41,7 @@ def tiledb_factory(soma_collection, object_type, metadata_key, encoding_version)
         with tiledb.Group(object_uri, mode="w") as G:
             _setmetadata(G, metadata_key, encoding_version)
 
-    return object_uri, soma_collection._context, object_cls
+    return object_uri, soma_collection.context, object_cls
 
 
 @pytest.mark.parametrize(
@@ -79,7 +79,6 @@ def test_factory(tiledb_factory, expected_soma_type: Type):
     uri, *_ = tiledb_factory
     soma_obj = factory.open(uri)
     assert isinstance(soma_obj, expected_soma_type)
-    assert soma_obj.exists()
 
 
 @pytest.mark.parametrize(

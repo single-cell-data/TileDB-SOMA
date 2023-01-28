@@ -50,8 +50,6 @@ def soma_object(request, tmp_path):
 
 def test_metadata(soma_object):
     """Basic API endpoints"""
-    assert soma_object.exists()
-
     # Verify the metadata is empty to start. "Empty" defined as no keys
     # other than soma_ keys.
     keys = list(
@@ -63,7 +61,7 @@ def test_metadata(soma_object):
     assert "foobar" not in soma_object.metadata
 
     soma_object.metadata["foobar"] = True
-    soma_object.flush()
+    soma_object._handle._flush_hack()
     assert "foobar" in soma_object.metadata
     for k, v in soma_object.metadata.as_dict().items():
         assert k in soma_object.metadata
@@ -72,12 +70,12 @@ def test_metadata(soma_object):
 
     # also check set()
     soma_object.metadata["stay"] = "frosty"
-    soma_object.flush()
+    soma_object._handle._flush_hack()
     assert "stay" in soma_object.metadata
     assert soma_object.metadata["stay"] == "frosty"
 
     del soma_object.metadata["stay"]
-    soma_object.flush()
+    soma_object._handle._flush_hack()
     assert "stay" not in soma_object.metadata
     assert soma_object.metadata.get("stay", False) is False
 
@@ -103,7 +101,7 @@ def test_metadata_marshalling_OK(soma_object, test_value):
     which is any Arrow primitive and Arrow strings
     """
     soma_object.metadata["test_value"] = test_value
-    soma_object.flush()
+    soma_object._handle._flush_hack()
     assert "test_value" in soma_object.metadata
 
     val = soma_object.metadata["test_value"]

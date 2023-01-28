@@ -159,7 +159,6 @@ def simple_data_frame(tmp_path):
 )
 def test_DataFrame_read_column_names(simple_data_frame, ids, col_names):
     schema, sdf, n_data, index_column_names = simple_data_frame
-    assert sdf.exists()
 
     def _check_tbl(tbl, col_names, ids, *, demote):
         assert tbl.num_columns == (
@@ -257,7 +256,6 @@ def test_columns(tmp_path):
     )
     assert sorted(A.keys()) == sorted(["a", "soma_joinid"])
     assert A.schema.field("soma_joinid").type == pa.int64()
-    A.delete()
 
     with pytest.raises(ValueError):
         soma.DataFrame.create(
@@ -273,7 +271,6 @@ def test_columns(tmp_path):
     )
     assert sorted(D.keys()) == sorted(["a", "soma_joinid"])
     assert D.schema.field("soma_joinid").type == pa.int64()
-    D.delete()
 
     with pytest.raises(ValueError):
         soma.DataFrame.create(
@@ -663,7 +660,6 @@ def test_read_indexing(tmp_path, io):
         tmp_path, io["index_column_names"]
     )
     with soma.DataFrame.open(uri=sdf.uri) as sdf:
-        assert sdf.exists()
         assert list(sdf.index_column_names) == io["index_column_names"]
 
         read_kwargs = {"column_names": ["A"]}
@@ -681,8 +677,6 @@ def test_read_indexing(tmp_path, io):
         else:
             table = next(sdf.read(**read_kwargs)).to_pandas()
             assert table["A"].to_list() == io["A"]
-
-    sdf.delete()
 
 
 @pytest.mark.parametrize(

@@ -22,6 +22,8 @@ class TileDBArray(TileDBObject[tiledb.Array]):
     [lifecycle: experimental]
     """
 
+    _tiledb_type = tiledb.Array
+
     @classmethod
     def open(
         cls: Type[_Self],
@@ -35,13 +37,7 @@ class TileDBArray(TileDBObject[tiledb.Array]):
         context = context or SOMATileDBContext()
         handle = ReadWriteHandle.open_array(uri, mode, context)
 
-        return cls(
-            uri,
-            mode,
-            handle,
-            context,
-            _this_is_internal_only="tiledbsoma-internal-code",
-        )
+        return cls(handle, _this_is_internal_only="tiledbsoma-internal-code")
 
     _STORAGE_TYPE = "array"
 
@@ -102,7 +98,7 @@ class TileDBArray(TileDBObject[tiledb.Array]):
             kwargs["query_condition"] = query_condition
         if result_order:
             kwargs["result_order"] = result_order
-        return clib.SOMAReader(self._uri, **kwargs)
+        return clib.SOMAReader(self.uri, **kwargs)
 
     @classmethod
     def _create_internal(
@@ -116,6 +112,5 @@ class TileDBArray(TileDBObject[tiledb.Array]):
         """
         tiledb.Array.create(uri, schema, ctx=context.tiledb_ctx)
         handle = ReadWriteHandle.open_array(uri, "w", context)
-        cls._set_create_metadata(handle.writer)
-        handle.flush(update_read=True)
+        cls._set_create_metadata(handle)
         return handle

@@ -54,9 +54,7 @@ class DenseNDArray(TileDBArray, somacore.DenseNDArray):
             is_sparse=False,
         )
         handle = cls._create_internal(uri, schema, context)
-        return cls(
-            uri, "w", handle, context, _this_is_internal_only="tiledbsoma-internal-code"
-        )
+        return cls(handle, _this_is_internal_only="tiledbsoma-internal-code")
 
     @property
     def shape(self) -> NTuple:
@@ -97,6 +95,7 @@ class DenseNDArray(TileDBArray, somacore.DenseNDArray):
         [lifecycle: experimental]
         """
         del batch_size, partitions, platform_config  # Currently unused.
+        self._ensure_open_read()
         result_order = somacore.ResultOrder(result_order)
 
         arr = self._handle.reader

@@ -33,7 +33,6 @@ def test_dense_nd_array_create_ok(
     assert a.ndim == len(shape)
     assert a.shape == tuple(shape)
     assert a.is_sparse is False
-    assert a.exists()
 
     assert a.schema is not None
     expected_field_names = ["soma_data"] + [f"soma_dim_{d}" for d in range(len(shape))]
@@ -50,19 +49,6 @@ def test_dense_nd_array_create_fail(
 ):
     with pytest.raises(TypeError):
         soma.DenseNDArray.create(tmp_path.as_posix(), type=element_type, shape=shape)
-
-
-def test_dense_nd_array_delete(tmp_path):
-    a = soma.DenseNDArray.create(
-        uri=tmp_path.as_posix(), type=pa.int8(), shape=(100, 100)
-    )
-    assert a.exists()
-
-    a.delete()
-    assert not a.exists()
-
-    # should be silent about non-existent object
-    assert a.delete() is None
 
 
 @pytest.mark.parametrize("shape", [(10,), (10, 20), (10, 20, 2), (2, 4, 6, 8)])
@@ -94,6 +80,7 @@ def test_dense_nd_array_read_write_tensor(tmp_path, shape: Tuple[int, ...]):
             pa.Tensor.from_numpy(np.zeros((1,) * len(shape), dtype=np.float64)),
         )
         data[(0,) * len(shape)] = 0.0
+    with soma.DenseNDArray.open(tmp_path.as_posix()) as c:
         t = c.read((slice(None),) * ndim)
     assert t.equals(pa.Tensor.from_numpy(data))
 
@@ -170,22 +157,22 @@ def test_dense_nd_array_slicing(tmp_path, io):
     nr = 4
     nc = 6
 
-    a = soma.DenseNDArray.create(
+    with soma.DenseNDArray.create(
         tmp_path.as_posix(), type=pa.int64(), shape=(nr, nc), context=context
-    )
-    npa = np.zeros((nr, nc))
-    for i in range(nr):
-        for j in range(nc):
-            npa[i, j] = 100 * i + j
-    a.write(coords=(slice(0, nr), slice(0, nc)), values=pa.Tensor.from_numpy(npa))
-    a.flush()
+    ) as a:
+        npa = np.zeros((nr, nc))
+        for i in range(nr):
+            for j in range(nc):
+                npa[i, j] = 100 * i + j
+        a.write(coords=(slice(0, nr), slice(0, nc)), values=pa.Tensor.from_numpy(npa))
 
-    if "throws" in io:
-        with pytest.raises(io["throws"]):
-            a.read(io["coords"]).to_numpy()
-    else:
-        output = a.read(io["coords"]).to_numpy()
-        assert np.all(output == io["output"])
+    with soma.DenseNDArray.open(tmp_path.as_posix()) as a:
+        if "throws" in io:
+            with pytest.raises(io["throws"]):
+                a.read(io["coords"]).to_numpy()
+        else:
+            output = a.read(io["coords"]).to_numpy()
+            assert np.all(output == io["output"])
 
 
 @pytest.mark.parametrize(
@@ -256,22 +243,25 @@ def test_dense_nd_array_indexing_errors(tmp_path, io):
     shape = io["shape"]
     read_coords = io["coords"]
 
-    a = soma.DenseNDArray.create(tmp_path.as_posix(), type=pa.int64(), shape=shape)
+    with soma.DenseNDArray.create(
+        tmp_path.as_posix(), type=pa.int64(), shape=shape
+    ) as a:
 
-    npa = np.random.default_rng().standard_normal(np.prod(shape)).reshape(shape)
+        npa = np.random.default_rng().standard_normal(np.prod(shape)).reshape(shape)
 
-    write_coords = tuple(slice(0, dim_len) for dim_len in shape)
-    a.write(coords=write_coords, values=pa.Tensor.from_numpy(npa))
+        write_coords = tuple(slice(0, dim_len) for dim_len in shape)
+        a.write(coords=write_coords, values=pa.Tensor.from_numpy(npa))
 
-    with pytest.raises(io["throws"]):
-        a.read(coords=read_coords).to_numpy()
+    with soma.DenseNDArray.open(tmp_path.as_posix()) as a:
+        with pytest.raises(io["throws"]):
+            a.read(coords=read_coords).to_numpy()
 
 
 def test_tile_extents(tmp_path):
-    snda = soma.DenseNDArray(uri=tmp_path.as_posix())
-    snda.create_legacy(
-        pa.float32(),
-        (100, 10000),
+    soma.DenseNDArray.create(
+        tmp_path.as_posix(),
+        type=pa.float32(),
+        shape=(100, 10000),
         platform_config={
             "tiledb": {
                 "create": {
@@ -282,8 +272,8 @@ def test_tile_extents(tmp_path):
                 }
             }
         },
-    )
+    ).close()
 
-    with tiledb.open(snda.uri) as A:
+    with tiledb.open(tmp_path.as_posix()) as A:
         assert A.schema.domain.dim(0).tile == 100
         assert A.schema.domain.dim(1).tile == 2048

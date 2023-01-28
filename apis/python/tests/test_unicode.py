@@ -48,7 +48,6 @@ def sample_soma_dataframe(tmp_path, sample_arrow_table):
         index_column_names=["soma_joinid"],
     )
     sdf.write(sample_arrow_table)
-    assert sdf.exists()
     return sdf
 
 
