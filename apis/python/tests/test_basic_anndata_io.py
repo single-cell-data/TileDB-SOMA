@@ -179,10 +179,9 @@ def test_resume_mode(adata, resume_mode_h5ad_file):
 
     tempdir1 = tempfile.TemporaryDirectory()
     output_path1 = tempdir1.name
-    exp1 = tiledbsoma.io.from_h5ad(
+    tiledbsoma.io.from_h5ad(
         output_path1, resume_mode_h5ad_file, "RNA", ingest_mode="write"
-    )
-    exp1.close()
+    ).close()
 
     tempdir2 = tempfile.TemporaryDirectory()
     output_path2 = tempdir2.name
@@ -190,45 +189,44 @@ def test_resume_mode(adata, resume_mode_h5ad_file):
         output_path2, resume_mode_h5ad_file, "RNA", ingest_mode="write"
     )
     start_write.close()
-    exp2 = tiledbsoma.io.from_h5ad(
+    tiledbsoma.io.from_h5ad(
         output_path2, resume_mode_h5ad_file, "RNA", ingest_mode="resume"
-    )
-    exp2.close()
+    ).close()
 
-    assert _get_fragment_count(exp1.obs.uri) == _get_fragment_count(exp2.obs.uri)
-    assert _get_fragment_count(exp1.ms["RNA"].var.uri) == _get_fragment_count(
-        exp2.ms["RNA"].var.uri
-    )
-    assert _get_fragment_count(exp1.ms["RNA"].X["data"].uri) == _get_fragment_count(
-        exp2.ms["RNA"].X["data"].uri
-    )
+    exp1 = factory.open(output_path1)
+    exp2 = factory.open(output_path2)
+    with exp1, exp2:
+        assert _get_fragment_count(exp1.obs.uri) == _get_fragment_count(exp2.obs.uri)
+        assert _get_fragment_count(exp1.ms["RNA"].var.uri) == _get_fragment_count(
+            exp2.ms["RNA"].var.uri
+        )
+        assert _get_fragment_count(exp1.ms["RNA"].X["data"].uri) == _get_fragment_count(
+            exp2.ms["RNA"].X["data"].uri
+        )
 
-    meas1 = exp1.ms["RNA"]
-    meas2 = exp2.ms["RNA"]
+        meas1 = exp1.ms["RNA"]
+        meas2 = exp2.ms["RNA"]
 
-    if "obsm" in meas1:
-        for key in meas1.obsm.keys():
-            assert _get_fragment_count(meas1.obsm[key].uri) == _get_fragment_count(
-                meas2.obsm[key].uri
-            )
-    if "varm" in meas1:
-        for key in meas1.varm.keys():
-            assert _get_fragment_count(meas1.obsm[key].uri) == _get_fragment_count(
-                meas2.obsm[key].uri
-            )
-    if "obsp" in meas1:
-        for key in meas1.obsp.keys():
-            assert _get_fragment_count(meas1.obsp[key].uri) == _get_fragment_count(
-                meas2.obsp[key].uri
-            )
-    if "varp" in meas1:
-        for key in meas1.varp.keys():
-            assert _get_fragment_count(meas1.varm[key].uri) == _get_fragment_count(
-                meas2.varm[key].uri
-            )
-
-    tempdir1.cleanup()
-    tempdir2.cleanup()
+        if "obsm" in meas1:
+            for key in meas1.obsm.keys():
+                assert _get_fragment_count(meas1.obsm[key].uri) == _get_fragment_count(
+                    meas2.obsm[key].uri
+                )
+        if "varm" in meas1:
+            for key in meas1.varm.keys():
+                assert _get_fragment_count(meas1.obsm[key].uri) == _get_fragment_count(
+                    meas2.obsm[key].uri
+                )
+        if "obsp" in meas1:
+            for key in meas1.obsp.keys():
+                assert _get_fragment_count(meas1.obsp[key].uri) == _get_fragment_count(
+                    meas2.obsp[key].uri
+                )
+        if "varp" in meas1:
+            for key in meas1.varp.keys():
+                assert _get_fragment_count(meas1.varm[key].uri) == _get_fragment_count(
+                    meas2.varm[key].uri
+                )
 
 
 def test_add_matrix_to_collection(adata):

@@ -134,7 +134,7 @@ class CollectionBase(
             entry = self._group_contents[key]
         except KeyError:
             raise KeyError(err_str) from None
-        if not entry.soma:
+        if entry.soma is None:
             from . import factory  # Delayed binding to resolve circular import.
 
             if entry.cls is tiledb.Array:

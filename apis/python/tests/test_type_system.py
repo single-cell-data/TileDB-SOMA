@@ -135,17 +135,18 @@ def test_bool_arrays(tmp_path, bool_array):
         ]
     )
     index_column_names = ["soma_joinid"]
-    sdf = soma.DataFrame.create(
+    with soma.DataFrame.create(
         tmp_path.as_posix(), schema=schema, index_column_names=index_column_names
-    )
-    n_data = len(bool_array)
+    ) as sdf:
+        n_data = len(bool_array)
 
-    data = {
-        "soma_joinid": list(range(n_data)),
-        "b": bool_array,
-    }
-    rb = pa.Table.from_pydict(data)
-    sdf.write(rb)
+        data = {
+            "soma_joinid": list(range(n_data)),
+            "b": bool_array,
+        }
+        rb = pa.Table.from_pydict(data)
+        sdf.write(rb)
 
-    table = sdf.read().concat()
+    with soma.DataFrame.open(tmp_path.as_posix()) as sdf:
+        table = sdf.read().concat()
     assert table["b"].to_pylist() == bool_array

@@ -102,6 +102,7 @@ class DataFrame(TileDBArray, somacore.DataFrame):
         Return the number of rows in the dataframe. Same as `len(df)`.
         """
         # A.domain.shape at the tiledb level gives us the 0..2^63 range which is not what we want
+        self._ensure_open_read()
         return cast(int, self._soma_reader().nnz())
 
     def __len__(self) -> int:
@@ -154,6 +155,7 @@ class DataFrame(TileDBArray, somacore.DataFrame):
         * Negative indexing is unsupported.
         """
         del batch_size, partitions, platform_config  # Currently unused.
+        self._ensure_open_read()
         result_order = options.ResultOrder(result_order)
 
         arr = self._handle.reader
