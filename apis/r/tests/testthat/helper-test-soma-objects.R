@@ -27,12 +27,15 @@ create_and_populate_experiment <- function(uri, n_obs, n_var, X_layer_names) {
   experiment$ms <- SOMACollection$new(file.path(uri, "ms"))$create()
 
   ms_rna <- SOMAMeasurement$new(file.path(uri, "ms", "RNA"))$create()
-  ms_rna$var <- create_and_populate_var(file.path(uri, "var"), nrows = n_var)
-  ms_rna$X <- SOMACollection$new(file.path(uri, "ms", "X"))$create()
+  ms_rna$var <- create_and_populate_var(
+    uri = file.path(ms_rna$uri, "var"),
+    nrows = n_var
+  )
+  ms_rna$X <- SOMACollection$new(file.path(ms_rna$uri, "X"))$create()
 
   for (layer_name in X_layer_names) {
     nda <- create_and_populate_sparse_nd_array(
-      uri = file.path(uri, "ms", "X", layer_name),
+      uri = file.path(ms_rna$X$uri, layer_name),
       nrows = n_obs,
       ncols = n_var
     )
