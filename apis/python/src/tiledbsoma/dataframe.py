@@ -59,10 +59,8 @@ class DataFrame(TileDBArray, somacore.DataFrame):
             context,
         )
         handle = cls._create_internal(uri, tdb_schema, context)
-        is_sparse = tdb_schema.sparse
         return cls(
             handle,
-            _is_sparse=is_sparse,
             _index_column_names=tuple(index_column_names),
             _this_is_internal_only="tiledbsoma-internal-code",
         )
@@ -72,15 +70,12 @@ class DataFrame(TileDBArray, somacore.DataFrame):
         handle: tiledb.Array,
         *,
         # Hints to pre-fill cache entries.
-        _is_sparse: Optional[bool] = None,
         _index_column_names: Optional[Tuple[str, ...]] = None,
         _this_is_internal_only: str = "",
     ):
         super().__init__(handle, _this_is_internal_only=_this_is_internal_only)
         self._index_column_names = _index_column_names
         """Cache for the index column names."""
-        self._is_sparse = _is_sparse
-        """Cache for whether this is sparse."""
 
     def keys(self) -> Tuple[str, ...]:
         """
