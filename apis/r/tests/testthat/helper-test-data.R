@@ -36,7 +36,12 @@ create_arrow_schema <- function() {
   )
 }
 
-create_and_populate_soma_dataframe <- function(uri, nrows = 10L, seed = 1) {
+create_and_populate_soma_dataframe <- function(
+  uri,
+  nrows = 10L,
+  seed = 1,
+  index_column_names = "foo"
+) {
   set.seed(seed)
 
   arrow_schema <- create_arrow_schema()
@@ -50,7 +55,7 @@ create_and_populate_soma_dataframe <- function(uri, nrows = 10L, seed = 1) {
   )
 
   sdf <- SOMADataFrame$new(uri)
-  sdf$create(arrow_schema, index_column_names = "foo")
+  sdf$create(arrow_schema, index_column_names = index_column_names)
   sdf$write(tbl)
   sdf
 }

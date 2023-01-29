@@ -1,5 +1,10 @@
 create_and_populate_obs <- function(uri, nrows = 10L, seed = 1) {
-  create_and_populate_soma_dataframe(uri, nrows, seed)
+  create_and_populate_soma_dataframe(
+    uri = uri,
+    nrows = nrows,
+    seed = seed,
+    index_column_names = "soma_joinid"
+  )
 }
 
 create_and_populate_var <- function(uri, nrows = 10L, seed = 1) {
