@@ -47,11 +47,19 @@ test_that("ExperimentAxisQuery returns all coordinates by default", {
     measurement_name = "RNA"
   )
 
-  expect_true(is_arrow_table(query$obs()))
-  expect_true(is_arrow_table(query$var()))
+  # obs/var tables
+  expect_true(query$obs()$Equals(experiment$obs$read()))
+  expect_true(query$var()$Equals(experiment$ms$get("RNA")$var$read()))
 
-  expect_true(inherits(query$obs_joinids(), "Array"))
-  expect_true(inherits(query$var_joinids(), "Array"))
+  # obs/var joinids
+  expect_equal(
+    query$obs_joinids(),
+    arrow::concat_arrays(experiment$obs$read()$soma_joinid)
+  )
+  expect_equal(
+    query$var_joinids(),
+    arrow::concat_arrays(experiment$ms$get("RNA")$var$read()$soma_joinid)
+  )
 
   expect_equal(query$n_obs, n_obs)
   expect_equal(query$n_vars, n_var)
