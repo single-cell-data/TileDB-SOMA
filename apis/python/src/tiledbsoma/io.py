@@ -182,7 +182,7 @@ def from_anndata(
     with _create_or_open_coll(
         Collection[Measurement], util.uri_joinpath(experiment.uri, "ms"), ingest_mode
     ) as ms:
-        experiment.set("ms", ms, use_relative_uri=use_relative_uri)  # type: ignore[assignment]
+        experiment.set("ms", ms, use_relative_uri=use_relative_uri)
 
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         # MS/meas
