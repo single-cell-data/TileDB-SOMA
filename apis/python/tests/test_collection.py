@@ -132,7 +132,7 @@ def test_collection_mapping(soma_object, tmp_path):
     assert "foobar" not in c
 
     assert soma_object.exists()
-    c["mumble"] = soma_object
+    c.set("mumble", soma_object)
     assert "mumble" in c
     assert c["mumble"] == soma_object
 
