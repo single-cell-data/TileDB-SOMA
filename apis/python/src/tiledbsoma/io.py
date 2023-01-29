@@ -13,15 +13,15 @@ from typing import (
     overload,
 )
 
-import anndata as ad
 import h5py
 import numpy as np
 import pandas as pd
 import pyarrow as pa
 import scipy.sparse as sp
-from anndata._core.sparse_dataset import SparseDataset
 from somacore.options import PlatformConfig
 
+import anndata as ad
+from anndata._core.sparse_dataset import SparseDataset
 from tiledbsoma.tiledb_object import TileDBObject
 
 from . import (
@@ -61,6 +61,7 @@ def from_h5ad(
     context: Optional[SOMATileDBContext] = None,
     platform_config: Optional[PlatformConfig] = None,
     ingest_mode: IngestMode = "write",
+    use_relative_uri: Optional[bool] = None,
 ) -> Experiment:
     """
     Reads an .h5ad file and writes to a TileDB group structure.
@@ -101,6 +102,7 @@ def from_h5ad(
         context=context,
         platform_config=platform_config,
         ingest_mode=ingest_mode,
+        use_relative_uri=use_relative_uri,
     )
 
     logging.log_io(
@@ -118,6 +120,7 @@ def from_anndata(
     context: Optional[SOMATileDBContext] = None,
     platform_config: Optional[PlatformConfig] = None,
     ingest_mode: IngestMode = "write",
+    use_relative_uri: Optional[bool] = None,
 ) -> Experiment:
     """
     Top-level writer method for creating a TileDB group for a ``Experiment`` object.
@@ -172,21 +175,21 @@ def from_anndata(
         platform_config=platform_config,
         ingest_mode=ingest_mode,
     ) as obs:
-        experiment.obs = obs
+        experiment.set("obs", obs, use_relative_uri=use_relative_uri)
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     # MS
     with _create_or_open_coll(
         Collection[Measurement], util.uri_joinpath(experiment.uri, "ms"), ingest_mode
     ) as ms:
-        experiment.ms = ms  # type: ignore[assignment]
+        experiment.set("ms", ms, use_relative_uri=use_relative_uri)  # type: ignore[assignment]
 
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         # MS/meas
         with _create_or_open_coll(
             Measurement, f"{experiment.ms.uri}/{measurement_name}", ingest_mode
         ) as measurement:
-            ms[measurement_name] = measurement
+            ms.set(measurement_name, measurement, use_relative_uri=use_relative_uri)
 
             # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
             # MS/meas/VAR
@@ -197,7 +200,7 @@ def from_anndata(
                 platform_config=platform_config,
                 ingest_mode=ingest_mode,
             ) as var:
-                measurement["var"] = var
+                measurement.set("var", var, use_relative_uri=use_relative_uri)
 
             # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
             # MS/meas/X/DATA
@@ -205,7 +208,7 @@ def from_anndata(
             with _create_or_open_coll(
                 Collection, util.uri_joinpath(measurement.uri, "X"), ingest_mode
             ) as x:
-                measurement.X = x
+                measurement.set("X", x, use_relative_uri=use_relative_uri)
 
                 # Since we did `anndata = ad.read_h5ad(path_to_h5ad, "r")` with the "r":
                 # * If we do `anndata.X[:]` we're loading all of a CSR/CSC/etc into memory.
@@ -224,7 +227,7 @@ def from_anndata(
                     platform_config,
                     ingest_mode,
                 ) as data:
-                    x["data"] = data
+                    x.set("data", data, use_relative_uri=use_relative_uri)
 
                 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
                 # MS/meas/OBSM,VARM,OBSP,VARP
@@ -234,7 +237,7 @@ def from_anndata(
                         util.uri_joinpath(measurement.uri, "obsm"),
                         ingest_mode,
                     ) as obsm:
-                        measurement.obsm = obsm
+                        measurement.set("obsm", obsm, use_relative_uri=use_relative_uri)
                         for key in anndata.obsm.keys():
                             with create_from_matrix(
                                 DenseNDArray,
@@ -245,7 +248,7 @@ def from_anndata(
                                 platform_config,
                                 ingest_mode,
                             ) as arr:
-                                obsm[key] = arr
+                                obsm.set(key, arr, use_relative_uri=use_relative_uri)
                             arr.close()
                     measurement.obsm.close()
 
@@ -255,7 +258,7 @@ def from_anndata(
                         util.uri_joinpath(measurement.uri, "varm"),
                         ingest_mode,
                     ) as varm:
-                        measurement.varm = varm
+                        measurement.set("varm", varm, use_relative_uri=use_relative_uri)
                         for key in anndata.varm.keys():
                             with create_from_matrix(
                                 DenseNDArray,
@@ -266,7 +269,11 @@ def from_anndata(
                                 platform_config,
                                 ingest_mode,
                             ) as darr:
-                                varm.set(key, darr)
+                                varm.set(
+                                    key,
+                                    darr,
+                                    use_relative_uri=use_relative_uri,
+                                )
 
                 if len(anndata.obsp.keys()) > 0:  # do not create an empty collection
                     with _create_or_open_coll(
@@ -274,7 +281,7 @@ def from_anndata(
                         util.uri_joinpath(measurement.uri, "obsp"),
                         ingest_mode,
                     ) as obsp:
-                        measurement.obsp = obsp
+                        measurement.set("obsp", obsp, use_relative_uri=use_relative_uri)
                         for key in anndata.obsp.keys():
                             with create_from_matrix(
                                 SparseNDArray,
@@ -285,7 +292,11 @@ def from_anndata(
                                 platform_config,
                                 ingest_mode,
                             ) as sarr:
-                                obsp.set(key, sarr)
+                                obsp.set(
+                                    key,
+                                    sarr,
+                                    use_relative_uri=use_relative_uri,
+                                )
 
                 if len(anndata.varp.keys()) > 0:  # do not create an empty collection
                     with _create_or_open_coll(
@@ -293,7 +304,7 @@ def from_anndata(
                         util.uri_joinpath(measurement.uri, "varp"),
                         ingest_mode,
                     ) as varp:
-                        measurement.varp = varp
+                        measurement.set("varp", varp, use_relative_uri=use_relative_uri)
                         for key in anndata.varp.keys():
                             with create_from_matrix(
                                 SparseNDArray,
@@ -304,7 +315,11 @@ def from_anndata(
                                 platform_config,
                                 ingest_mode,
                             ) as sarr:
-                                varp.set(key, sarr)
+                                varp.set(
+                                    key,
+                                    sarr,
+                                    use_relative_uri=use_relative_uri,
+                                )
 
                 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
                 # MS/RAW
@@ -314,7 +329,11 @@ def from_anndata(
                         util.uri_joinpath(experiment.ms.uri, "raw"),
                         ingest_mode,
                     ) as raw_measurement:
-                        ms.set("raw", raw_measurement)
+                        ms.set(
+                            "raw",
+                            raw_measurement,
+                            use_relative_uri=use_relative_uri,
+                        )
 
                         with _write_dataframe(
                             util.uri_joinpath(raw_measurement.uri, "var"),
@@ -323,14 +342,18 @@ def from_anndata(
                             platform_config=platform_config,
                             ingest_mode=ingest_mode,
                         ) as var:
-                            raw_measurement.var = var
+                            raw_measurement.set(
+                                "var", var, use_relative_uri=use_relative_uri
+                            )
 
                         with _create_or_open_coll(
                             Collection,
                             util.uri_joinpath(raw_measurement.uri, "X"),
                             ingest_mode,
                         ) as rm_x:
-                            raw_measurement.X = rm_x
+                            raw_measurement.set(
+                                "X", rm_x, use_relative_uri=use_relative_uri
+                            )
 
                             with create_from_matrix(
                                 SparseNDArray,
@@ -339,7 +362,11 @@ def from_anndata(
                                 platform_config,
                                 ingest_mode,
                             ) as rm_x_data:
-                                rm_x.set("data", rm_x_data)
+                                rm_x.set(
+                                    "data",
+                                    rm_x_data,
+                                    use_relative_uri=use_relative_uri,
+                                )
 
     logging.log_io(
         f"Wrote   {experiment.uri}",
@@ -517,6 +544,7 @@ def add_X_layer(
     # E.g. a scipy.csr_matrix from scanpy analysis:
     X_layer_data: Union[Matrix, h5py.Dataset],
     ingest_mode: IngestMode = "write",
+    use_relative_uri: Optional[bool] = None,
 ) -> None:
     """
     This is useful for adding X data, for example from scanpy.pp.normalize_total, scanpy.pp.log1p, etc.
@@ -525,7 +553,14 @@ def add_X_layer(
 
     [lifecycle: experimental]
     """
-    add_matrix_to_collection(exp, measurement_name, "X", X_layer_name, X_layer_data)
+    add_matrix_to_collection(
+        exp,
+        measurement_name,
+        "X",
+        X_layer_name,
+        X_layer_data,
+        use_relative_uri=use_relative_uri,
+    )
 
 
 def add_matrix_to_collection(
@@ -536,6 +571,7 @@ def add_matrix_to_collection(
     # E.g. a scipy.csr_matrix from scanpy analysis:
     matrix_data: Union[Matrix, h5py.Dataset],
     ingest_mode: IngestMode = "write",
+    use_relative_uri: Optional[bool] = None,
 ) -> None:
     """
     This is useful for adding X/obsp/varm/etc data, for example from scanpy.pp.normalize_total,
@@ -550,13 +586,15 @@ def add_matrix_to_collection(
             coll = _create_or_open_coll(
                 Collection, f"{meas.uri}/{collection_name}", ingest_mode
             )
-            meas[collection_name] = coll
+            meas.set(collection_name, coll, use_relative_uri=use_relative_uri)
         with coll:
             uri = f"{coll.uri}/{matrix_name}"
             with create_from_matrix(
                 SparseNDArray, uri, matrix_data, ingest_mode=ingest_mode
             ) as sparse_nd_array:
-                coll.set(matrix_name, sparse_nd_array)
+                coll.set(
+                    matrix_name, sparse_nd_array, use_relative_uri=use_relative_uri
+                )
 
 
 def _write_matrix_to_denseNDArray(

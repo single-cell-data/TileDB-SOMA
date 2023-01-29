@@ -4,12 +4,12 @@
 
 import sys
 
-import anndata
 import numpy
 import pandas
 import scipy  # noqa: F401
 import tiledb  # noqa: F401
 
+import anndata
 import tiledbsoma
 import tiledbsoma.io
 

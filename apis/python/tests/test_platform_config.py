@@ -1,10 +1,10 @@
 import tempfile
 from pathlib import Path
 
-import anndata
 import pytest
 import tiledb
 
+import anndata
 import tiledbsoma
 import tiledbsoma.io
 from tiledbsoma.options.tiledb_create_options import TileDBCreateOptions

@@ -14,6 +14,8 @@ import argparse
 import os
 import sys
 
+from typing import Optional
+
 import tiledb
 
 import tiledbsoma
@@ -103,19 +105,19 @@ select `relative=True`. (This is the default.)
         tiledbsoma.logging.info()
 
     if args.relative is None:
-        rel_member_uris = None
+        use_relative_uri = None
     else:
         relative = args.relative[0]
         if relative == "true":
-            rel_member_uris = True
+            use_relative_uri = True
         elif relative == "false":
-            rel_member_uris = False
+            use_relative_uri = False
         elif relative == "auto":
-            rel_member_uris = None
+            use_relative_uri = None
         else:
             raise tiledbsoma.exception.SOMAError(f"Internal coding error in {__file__}")
 
-    context = SOMATileDBContext(member_uris_are_relative=rel_member_uris)
+    context = SOMATileDBContext()
     soco_dir = args.o.rstrip("/")
 
     if args.n:
@@ -132,6 +134,7 @@ select `relative=True`. (This is the default.)
                 output_path=output_path,
                 ingest_mode=args.ingest_mode[0],
                 context=context,
+                use_relative_uri=use_relative_uri,
                 write_soco=write_soco,
                 soco_dir=soco_dir,
                 measurement_name=args.measurement_name,
@@ -145,6 +148,7 @@ select `relative=True`. (This is the default.)
                 output_path=output_path,
                 ingest_mode=args.ingest_mode[0],
                 context=context,
+                use_relative_uri=use_relative_uri,
                 write_soco=write_soco,
                 soco_dir=soco_dir,
                 measurement_name=args.measurement_name,
@@ -160,6 +164,7 @@ select `relative=True`. (This is the default.)
                 output_path=output_path,
                 ingest_mode=args.ingest_mode[0],
                 context=context,
+                use_relative_uri=use_relative_uri,
                 write_soco=write_soco,
                 soco_dir=soco_dir,
                 measurement_name=args.measurement_name,
@@ -172,6 +177,7 @@ select `relative=True`. (This is the default.)
                 output_path=output_path,
                 ingest_mode=args.ingest_mode[0],
                 context=context,
+                use_relative_uri=use_relative_uri,
                 write_soco=write_soco,
                 soco_dir=soco_dir,
                 measurement_name=args.measurement_name,
@@ -188,6 +194,7 @@ def ingest_one(
     output_path: str,
     ingest_mode: str,
     context: SOMATileDBContext,
+    use_relative_uri: Optional[bool],
     write_soco: bool,
     soco_dir: str,
     measurement_name: str,
@@ -221,7 +228,11 @@ def ingest_one(
     exp_name = os.path.splitext(os.path.basename(output_path))[0]
 
     exp = tiledbsoma.io.from_h5ad(
-        output_path, input_path, measurement_name, ingest_mode=ingest_mode
+        output_path,
+        input_path,
+        measurement_name,
+        ingest_mode=ingest_mode,
+        use_relative_uri=use_relative_uri,
     )
 
     if write_soco:
@@ -229,7 +240,7 @@ def ingest_one(
             soco = tiledbsoma.Collection.open(soco_dir, "w", context=context)
         except tiledbsoma.DoesNotExistError:
             soco = tiledbsoma.Collection.create(soco_dir, context=context)
-        soco.set(exp_name, exp)
+        soco.set(exp_name, exp, use_relative_uri=use_relative_uri)
 
         tiledbsoma.logging.logger.info("")
         tiledbsoma.logging.logger.info(
