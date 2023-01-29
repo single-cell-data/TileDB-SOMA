@@ -69,7 +69,7 @@ TileDBGroup <- R6::R6Class(
     #' @returns A `TileDBArray` or `TileDBGroup`.
     get = function(name) {
       stopifnot(is_scalar_character(name))
-      if (is_empty(private$member_cache)) private$update_member_cache()
+      if (is.null(private$member_cache)) private$update_member_cache()
       member <- private$member_cache[[name]]
       if (is.null(member)) {
         stop(sprintf("No member named '%s' found", name), call. = FALSE)
@@ -96,20 +96,20 @@ TileDBGroup <- R6::R6Class(
     #' @description Length in the number of members. [lifecycle: experimental]
     #' @return Scalar `integer`
     length = function() {
-      if (is_empty(private$member_cache)) private$update_member_cache()
+      if (is.null(private$member_cache)) private$update_member_cache()
       length(private$member_cache)
     },
 
     #' @description Retrieve the names of members. [lifecycle: experimental]
     #' @return A `character` vector of member names.
     names = function() {
-      if (is_empty(private$member_cache)) private$update_member_cache()
+      if (is.null(private$member_cache)) private$update_member_cache()
       names(private$member_cache) %||% character(length = 0L)
     },
 
     #' @description Retrieve a `list` of members. [lifecycle: experimental]
     to_list = function() {
-      if (is_empty(private$member_cache)) private$update_member_cache()
+      if (is.null(private$member_cache)) private$update_member_cache()
       private$member_cache
     },
 
@@ -167,7 +167,7 @@ TileDBGroup <- R6::R6Class(
 
     # @description List of cached group members
     # Initially NULL, once the group is created or opened, this is populated
-    # with list that's empty or contains the group members.
+    # with a list that's empty or contains the group members.
     member_cache = NULL,
 
     open = function(mode) {
