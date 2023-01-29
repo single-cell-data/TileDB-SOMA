@@ -39,7 +39,7 @@ test_that("ExperimentAxisQuery returns all coordinates by default", {
     uri = uri,
     n_obs = n_obs,
     n_var = n_var,
-    X_layer_names = "RNA"
+    X_layer_names = c("counts", "logcounts")
   )
 
   query <- ExperimentAxisQuery$new(
