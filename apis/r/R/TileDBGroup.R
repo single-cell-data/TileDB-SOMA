@@ -172,10 +172,14 @@ TileDBGroup <- R6::R6Class(
 
     open = function(mode) {
       mode <- match.arg(mode, c("READ", "WRITE"))
+      spdl::debug(
+        "Opening {} '{}' in {} mode", self$class(), self$uri, mode
+      )
       invisible(tiledb::tiledb_group_open(self$object, type = mode))
     },
 
     close = function() {
+      spdl::debug("Closing {} '{}'", self$class(), self$uri)
       invisible(tiledb::tiledb_group_close(self$object))
     },
 
@@ -210,7 +214,7 @@ TileDBGroup <- R6::R6Class(
     },
 
     update_member_cache = function() {
-      spdl::debug("Updating member cache")
+      spdl::debug("Updating member cache for {} '{}'", self$class(), self$uri)
       private$member_cache <- private$get_all_members()
     },
 
