@@ -224,10 +224,14 @@ TileDBArray <- R6::R6Class(
 
     open = function(mode) {
       mode <- match.arg(mode, c("READ", "WRITE"))
+      spdl::debug(
+        "Opening {} '{}' in {} mode", self$class(), self$uri, mode
+      )
       invisible(tiledb::tiledb_array_open(self$object, type = mode))
     },
 
     close = function() {
+      spdl::debug("Closing {} '{}'", self$class(), self$uri)
       invisible(tiledb::tiledb_array_close(self$object))
     },
 
