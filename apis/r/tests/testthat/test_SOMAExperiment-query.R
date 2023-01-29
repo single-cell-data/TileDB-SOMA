@@ -56,6 +56,14 @@ test_that("ExperimentAxisQuery returns all coordinates by default", {
   expect_equal(query$n_obs, n_obs)
   expect_equal(query$n_vars, n_var)
 
+  # X
   expect_error(query$X(), "Must specify a layer name")
+  expect_error(query$X(c("a", "b")), "Must specify a single layer name")
   expect_error(query$X("foo"), "The following layer does not exist: foo")
+
+  expect_true(
+    query$X("counts")$Equals(
+      experiment$ms$get("RNA")$X$get("counts")$read_arrow_table()
+    )
+  )
 })

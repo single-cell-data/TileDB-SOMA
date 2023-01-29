@@ -133,16 +133,21 @@ ExperimentAxisQuery <- R6::R6Class(
     X = function(layer_name) {
       stopifnot(
         "Must specify a layer name" = !missing(layer_name),
-        assert_subset(layer_name, self$ms$names(), "layer")
+        "Must specify a single layer name" = is_scalar_character(layer_name),
+        assert_subset(layer_name, self$ms$X$names(), "layer")
       )
 
-      self$ms
+      x_layer <- self$ms$X$get(layer_name)
+      stopifnot(
+        "X layer must be a SOMASparseNDArray" =
+          inherits(x_layer, "SOMASparseNDArray")
+      )
 
-      x_layer <- self$ms$get(layer_name)
-      stopifnot("X Layers must be SparseNDArrays" = inherits(x_layer, "data.SparseNDArray"))
-      browser()
-      # x_layer$
-      return(x_layer)
+      # TODO: Stop converting to vectors when SOMAReader supports arrow arrays
+      x_layer$read_arrow_table(coords = list(
+        self$obs_joinids()$as_vector() - 1L,
+        self$var_joinids()$as_vector() - 1L
+      ))
     }
   ),
 
@@ -202,14 +207,15 @@ JoinIDCache <- R6::R6Class(
       if (!is.null(private$cached_obs) && !is.null(private$cached_var)) {
         return(invisible(NULL))
       }
-      obs_ft <- pool$submit(function() self$obs)
-      var_ft <- pool$submit(function() self$var)
-      obs_ft$result()
-      var_ft$result()
+
+      # TODO: Use futures to parallelize preloading of obs and var joinids
+      self$obs()
+      self$var()
     },
 
     obs = function() {
       if (is.null(private$cached_obs)) {
+        spdl::info("[JoinIDCache] Loading obs joinids")
         private$cached_obs <- private$load_joinids(
           df = self$query$obs_df,
           axis_query = self$query$matrix_axis_query$obs
@@ -224,6 +230,7 @@ JoinIDCache <- R6::R6Class(
 
     var = function() {
       if (is.null(private$cached_var)) {
+        spdl::info("[JoinIDCache] Loading var joinids")
         private$cached_var <- private$load_joinids(
           df = self$query$var_df,
           axis_query = self$query$matrix_axis_query$var
@@ -242,6 +249,7 @@ JoinIDCache <- R6::R6Class(
     cached_var = NULL,
 
     # Load joinids from the dataframe corresponding to the axis query
+    # @return [`arrow::ChunkedArray`] of joinids
     load_joinids = function(df, axis_query) {
       stopifnot(
         inherits(df, "SOMADataFrame"),
