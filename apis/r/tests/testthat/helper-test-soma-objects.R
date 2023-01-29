@@ -17,6 +17,15 @@ create_and_populate_var <- function(uri, nrows = 10L, seed = 1) {
 }
 
 # Create a SOMAExperiment with a single measurement, "RNA"
+# Example with X_layer_names = c("counts", "logcounts"):
+#  soma-experiment-query-all1c20a1d341584 GROUP
+#  |-- obs ARRAY
+#  |-- ms GROUP
+#  |------ RNA GROUP
+#  |---------- var ARRAY
+#  |---------- X GROUP
+#  |-------------- counts ARRAY
+#  |-------------- logcounts ARRAY
 create_and_populate_experiment <- function(uri, n_obs, n_var, X_layer_names) {
 
   experiment <- SOMAExperiment$new(uri)$create()
