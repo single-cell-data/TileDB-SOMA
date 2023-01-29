@@ -137,6 +137,7 @@ TileDBGroup <- R6::R6Class(
     get_metadata = function(key = NULL) {
       on.exit(private$close())
       private$open("READ")
+      spdl::debug("Retrieving metadata for {} '{}'", self$class(), self$uri)
       if (!is.null(key)) {
         return(tiledb::tiledb_group_get_metadata(self$object, key))
       } else {
@@ -153,6 +154,7 @@ TileDBGroup <- R6::R6Class(
       )
       private$open("WRITE")
       on.exit(private$close())
+      spdl::debug("Writing metadata to {} '{}'", self$class(), self$uri)
       dev_null <- mapply(
         FUN = tiledb::tiledb_group_put_metadata,
         key = names(metadata),
