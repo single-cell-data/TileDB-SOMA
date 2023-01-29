@@ -244,7 +244,7 @@ class CollectionBase(
         self,
         key: str,
         value: CollectionElementType,
-        use_relative_uri: Optional[bool] = None,
+        use_relative_uri: Optional[bool] = False,
     ) -> None:
 
         # The SOMA API supports use_relative_uri in [True, False, None].
