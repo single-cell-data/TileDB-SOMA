@@ -3,15 +3,54 @@
 TODO: Extract more stuff.
 """
 
-from typing import Sequence
+from typing import Optional, Sequence, Type, TypeVar
 
 import numpy as np
 import pyarrow as pa
+import somacore
 import tiledb
+from somacore import options
 
 from . import util, util_arrow
 from .options.soma_tiledb_context import SOMATileDBContext
 from .options.tiledb_create_options import TileDBCreateOptions
+from .tiledb_array import TileDBArray
+
+_Self = TypeVar("_Self", bound="NDArray")
+
+
+class NDArray(TileDBArray, somacore.NDArray):
+    @classmethod
+    def create(
+        cls: Type[_Self],
+        uri: str,
+        *,
+        type: pa.DataType,
+        shape: Sequence[int],
+        platform_config: Optional[options.PlatformConfig] = None,
+        context: Optional[SOMATileDBContext] = None,
+    ) -> _Self:
+        """
+        Create a SOMA ``NDArray`` named with the URI.
+
+        [lifecycle: experimental]
+
+        :param type: an Arrow type defining the type of each element in the array. If the type is unsupported, an error will be raised.
+
+        :param shape: the length of each domain as a list, e.g., [100, 10]. All lengths must be in the positive int64 range.
+
+        :param platform_config: Platform-specific options used to create this Array, provided via "tiledb"->"create" nested keys
+        """
+        context = context or SOMATileDBContext()
+        schema = build_tiledb_schema(
+            type,
+            shape,
+            TileDBCreateOptions.from_platform_config(platform_config),
+            context,
+            is_sparse=cls.is_sparse,
+        )
+        handle = cls._create_internal(uri, schema, context)
+        return cls(handle, _this_is_internal_only="tiledbsoma-internal-code")
 
 
 def build_tiledb_schema(

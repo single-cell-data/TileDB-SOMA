@@ -11,10 +11,9 @@ from somacore.options import PlatformConfig
 import tiledbsoma.libtiledbsoma as clib
 
 from . import util
-from .common_nd_array import build_tiledb_schema
+from .common_nd_array import NDArray, build_tiledb_schema
 from .options import SOMATileDBContext
 from .options.tiledb_create_options import TileDBCreateOptions
-from .tiledb_array import TileDBArray
 from .types import NTuple
 from .util_iter import (
     SparseCOOTensorReadIter,
@@ -26,7 +25,7 @@ from .util_iter import (
 _UNBATCHED = options.BatchSize()
 
 
-class SparseNDArray(TileDBArray, somacore.SparseNDArray):
+class SparseNDArray(NDArray, somacore.SparseNDArray):
     """
     Represents ``X`` and others.
 
