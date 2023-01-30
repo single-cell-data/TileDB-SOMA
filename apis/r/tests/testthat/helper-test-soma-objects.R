@@ -12,7 +12,12 @@ create_and_populate_var <- function(uri, nrows = 10L, seed = 1) {
   tbl <- arrow::arrow_table(
     soma_joinid = bit64::seq.integer64(from = 0L, to = nrows - 1L),
     quux = as.character(seq.int(nrows) + 1000L),
-    xyzzy = runif(nrows)
+    xyzzy = runif(nrows),
+    schema = arrow::schema(
+      arrow::field("soma_joinid", arrow::int64(), nullable = FALSE),
+      arrow::field("quux", arrow::large_utf8(), nullable = FALSE),
+      arrow::field("xyzzy", arrow::float64(), nullable = FALSE)
+    )
   )
 
   sdf <- SOMADataFrame$new(uri)
