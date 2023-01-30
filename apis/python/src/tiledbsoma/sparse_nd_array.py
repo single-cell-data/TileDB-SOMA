@@ -89,7 +89,7 @@ class SparseNDArray(TileDBArray, somacore.SparseNDArray):
         """
         Return the number of stored values in the array, including explicitly stored zeros.
         """
-        self._ensure_open_read()
+        self._check_open_read()
         return cast(int, self._soma_reader().nnz())
 
     def read(
@@ -131,7 +131,7 @@ class SparseNDArray(TileDBArray, somacore.SparseNDArray):
         SparseNDArrayRead - which can be used to access an iterator of results in various formats.
         """
         del result_order, batch_size, partitions, platform_config  # Currently unused.
-        self._ensure_open_read()
+        self._check_open_read()
 
         if coords is None:
             coords = (slice(None),)

@@ -95,7 +95,7 @@ class DenseNDArray(TileDBArray, somacore.DenseNDArray):
         [lifecycle: experimental]
         """
         del batch_size, partitions, platform_config  # Currently unused.
-        self._ensure_open_read()
+        self._check_open_read()
         result_order = somacore.ResultOrder(result_order)
 
         arr = self._handle.reader

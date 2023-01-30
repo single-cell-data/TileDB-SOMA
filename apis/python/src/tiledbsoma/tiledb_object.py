@@ -110,7 +110,7 @@ class TileDBObject(somacore.SOMAObject, Generic[_HandleType]):
         # HACK: We need this so that the metadata appears on the read handle.
         handle._flush_hack()
 
-    def _ensure_open_read(self) -> None:
+    def _check_open_read(self) -> None:
         if self.mode != "r":
             raise ValueError(f"{self} is open for writing, not reading")
 
