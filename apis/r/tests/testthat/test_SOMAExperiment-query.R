@@ -118,3 +118,42 @@ test_that("querying by dimension coordinates", {
   )
   expect_true(query$X("counts")$Equals(raw_X))
 })
+
+test_that("querying by value filters", {
+  uri <- withr::local_tempdir("soma-experiment-query-value-filters")
+  n_obs <- 1001L
+  n_var <- 99L
+
+  obs_label_values <- c("1003", "1007", "1038", "1099")
+  var_label_values <- c("1018", "1034", "1067")
+
+  experiment <- create_and_populate_experiment(
+    uri = uri,
+    n_obs = n_obs,
+    n_var = n_var,
+    X_layer_names = c("counts", "logcounts")
+  )
+
+  # TODO: simplify once tiledb-r supports membership expressions
+  obs_value_filter <- paste0(
+    sprintf("baz == '%s'", obs_label_values),
+    collapse = "||"
+  )
+  var_value_filter <- paste0(
+    sprintf("quux == '%s'", var_label_values),
+    collapse = "||"
+  )
+
+  query <- ExperimentAxisQuery$new(
+    experiment = experiment,
+    measurement_name = "RNA",
+    obs_query = AxisQuery$new(value_filter = obs_value_filter),
+    var_query = AxisQuery$new(value_filter = var_value_filter)
+  )
+
+  expect_true(query$n_obs == length(obs_label_values))
+  expect_true(query$n_vars == length(var_label_values))
+
+  expect_equal(query$obs()$baz$as_vector(), obs_label_values)
+  expect_equal(query$var()$quux$as_vector(), var_label_values)
+})
