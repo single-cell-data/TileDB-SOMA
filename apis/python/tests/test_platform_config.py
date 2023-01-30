@@ -30,9 +30,8 @@ def test_platform_config(adata):
     # Set up anndata input path and tiledb-group output path
     with tempfile.TemporaryDirectory() as output_path:
         # Ingest
-        exp = tiledbsoma.Experiment(output_path)
         tiledbsoma.io.from_anndata(
-            exp,
+            output_path,
             adata,
             "RNA",
             platform_config={
@@ -50,19 +49,20 @@ def test_platform_config(adata):
                     }
                 }
             },
-        )
+        ).close()
 
-        with exp.ms["RNA"].X["data"].open_legacy() as data:
-            arr = data._tiledb_obj
-            sch = arr.schema
-            assert sch.capacity == 8888
-            assert sch.cell_order == "row-major"
-            assert sch.tile_order == "col-major"
-            assert sch.offsets_filters == [tiledb.RleFilter(), tiledb.NoOpFilter()]
-            assert arr.attr("soma_data").filters == [tiledb.NoOpFilter()]
-            assert arr.dim("soma_dim_0").tile == 6
-            assert arr.dim("soma_dim_1").filters == []
-            print(sch)
+        with tiledbsoma.Experiment.open(output_path) as exp:
+            with exp.ms["RNA"].X["data"] as data:
+                arr = data._handle.reader
+                sch = arr.schema
+                assert sch.capacity == 8888
+                assert sch.cell_order == "row-major"
+                assert sch.tile_order == "col-major"
+                assert sch.offsets_filters == [tiledb.RleFilter(), tiledb.NoOpFilter()]
+                assert arr.attr("soma_data").filters == [tiledb.NoOpFilter()]
+                assert arr.dim("soma_dim_0").tile == 6
+                assert arr.dim("soma_dim_1").filters == []
+                print(sch)
 
 
 def test__from_platform_config__admits_ignored_config_structure():

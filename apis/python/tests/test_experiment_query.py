@@ -9,6 +9,7 @@ import pytest
 from scipy import sparse
 
 import tiledbsoma as soma
+from tiledbsoma import factory
 from tiledbsoma.experiment_query import X_as_series
 
 
@@ -74,8 +75,6 @@ def soma_experiment(
 @pytest.mark.parametrize("n_obs,n_vars,X_layer_names", [(101, 11, ("raw", "extra"))])
 def test_experiment_query_all(soma_experiment):
     """Test a query with default obs_query / var_query - i.e., query all."""
-    assert soma_experiment.exists()
-
     with soma.ExperimentAxisQuery(soma_experiment, "RNA") as query:
         assert query.n_obs == 101
         assert query.n_vars == 11
@@ -337,7 +336,6 @@ def test_joinid_caching(soma_experiment):
 @pytest.mark.parametrize("n_obs,n_vars,X_layer_names", [(1001, 99, ["A", "B", "C"])])
 def test_X_layers(soma_experiment):
     """Verify multi-layer-X handling"""
-    assert soma_experiment.exists()
     A = pa.concat_tables(
         soma_experiment.ms["RNA"].X["A"].read((slice(None), slice(None))).tables()
     )
@@ -366,8 +364,6 @@ def test_X_layers(soma_experiment):
 @pytest.mark.parametrize("n_obs,n_vars", [(1001, 99)])
 def test_experiment_query_indexer(soma_experiment):
     """Test result indexer"""
-    assert soma_experiment.exists()
-
     with soma.ExperimentAxisQuery(
         soma_experiment,
         "RNA",
@@ -414,15 +410,9 @@ def test_experiment_query_indexer(soma_experiment):
 @pytest.mark.parametrize("n_obs,n_vars", [(2833, 107)])
 def test_error_corners(soma_experiment: soma.Experiment):
     """Verify a couple of error conditions / corner cases."""
-    assert soma_experiment.exists()
-
     # Unknown Measurement name
     with pytest.raises(ValueError):
         soma_experiment.axis_query("no-such-measurement")
-
-    # Non-existent experiment
-    with pytest.raises(ValueError):
-        soma.Experiment(uri="foobar").axis_query("foobar")
 
     # Unknown X layer name
     with pytest.raises(KeyError):
@@ -704,8 +694,8 @@ Fixture support & utility functions below.
 
 
 def make_dataframe(path: str, sz: int) -> soma.DataFrame:
-    df = soma.DataFrame(uri=path)
-    df.create_legacy(
+    with soma.DataFrame.create(
+        path,
         schema=pa.schema(
             [
                 ("soma_joinid", pa.int64()),
@@ -713,32 +703,32 @@ def make_dataframe(path: str, sz: int) -> soma.DataFrame:
             ]
         ),
         index_column_names=["soma_joinid"],
-    )
-    df.write(
-        pa.Table.from_pydict(
-            {
-                "soma_joinid": [i for i in range(sz)],
-                "label": [str(i) for i in range(sz)],
-            }
+    ) as df:
+        df.write(
+            pa.Table.from_pydict(
+                {
+                    "soma_joinid": [i for i in range(sz)],
+                    "label": [str(i) for i in range(sz)],
+                }
+            )
         )
-    )
-    return df
+    return factory.open(path)
 
 
 def make_sparse_array(path: str, shape: Tuple[int, int]) -> soma.SparseNDArray:
-    a = soma.SparseNDArray(path).create_legacy(pa.float32(), shape)
-    tensor = pa.SparseCOOTensor.from_scipy(
-        sparse.random(
-            shape[0],
-            shape[1],
-            density=0.1,
-            format="coo",
-            dtype=np.float32,
-            random_state=np.random.default_rng(),
+    with soma.SparseNDArray.create(path, type=pa.float32(), shape=shape) as a:
+        tensor = pa.SparseCOOTensor.from_scipy(
+            sparse.random(
+                shape[0],
+                shape[1],
+                density=0.1,
+                format="coo",
+                dtype=np.float32,
+                random_state=np.random.default_rng(),
+            )
         )
-    )
-    a.write(tensor)
-    return a
+        a.write(tensor)
+    return factory.open(path)
 
 
 def make_experiment(
@@ -752,52 +742,45 @@ def make_experiment(
     varp_layer_names: Optional[List[str]] = None,
 ) -> soma.Experiment:
 
-    assert obs.exists()
-    assert var.exists()
     assert len(obs) == n_obs
     assert len(var) == n_vars
 
-    experiment = soma.Experiment((root / "exp").as_posix()).create_legacy()
-    experiment["ms"] = soma.Collection((root / "ms").as_posix()).create_legacy()
-    experiment.ms["RNA"] = soma.Measurement(
-        uri=f"{experiment.ms.uri}/RNA"
-    ).create_legacy()
-    experiment["obs"] = obs
+    with soma.Experiment.create((root / "exp").as_posix()) as exp:
+        exp.obs = obs
+        with soma.Collection.create((root / "ms").as_posix()) as ms:
+            exp.ms = ms
+            with soma.Measurement.create(f"{ms.uri}/RNA") as rna:
+                ms["RNA"] = rna
+                rna.var = var
+                with soma.Collection.create(f"{rna.uri}/X") as rna_x:
+                    rna.X = rna_x
+                    for X_layer_name in X_layer_names:
+                        path = root / "X" / X_layer_name
+                        path.mkdir(parents=True)
+                        with make_sparse_array(path.as_posix(), (n_obs, n_vars)) as arr:
+                            rna_x[X_layer_name] = arr
 
-    measurement = experiment.ms["RNA"]
-    measurement["var"] = var
-    measurement["X"] = soma.Collection(uri=f"{measurement.uri}/X").create_legacy()
+                if obsp_layer_names:
+                    (root / "obsp").mkdir()
+                    with soma.Collection.create(f"{rna.uri}/obsp") as obsp:
+                        rna.obsp = obsp
+                        for obsp_layer_name in obsp_layer_names:
+                            path = root / "obsp" / obsp_layer_name
+                            path.mkdir()
+                            with make_sparse_array(
+                                path.as_posix(), (n_obs, n_obs)
+                            ) as arr:
+                                obsp[obsp_layer_name] = arr
 
-    (root / "X").mkdir()
-    for X_layer_name in X_layer_names:
-        path = root / "X" / X_layer_name
-        path.mkdir()
-        measurement.X[X_layer_name] = make_sparse_array(
-            path.as_posix(), (n_obs, n_vars)
-        )
-
-    if obsp_layer_names:
-        (root / "obsp").mkdir()
-        measurement["obsp"] = soma.Collection(
-            uri=f"{measurement.uri}/obsp"
-        ).create_legacy()
-        for obsp_layer_name in obsp_layer_names:
-            path = root / "obsp" / obsp_layer_name
-            path.mkdir()
-            measurement.obsp[obsp_layer_name] = make_sparse_array(
-                path.as_posix(), (n_obs, n_obs)
-            )
-
-    if varp_layer_names:
-        (root / "varp").mkdir()
-        measurement["varp"] = soma.Collection(
-            uri=f"{measurement.uri}/varp"
-        ).create_legacy()
-        for varp_layer_name in varp_layer_names:
-            path = root / "varp" / varp_layer_name
-            path.mkdir()
-            measurement.varp[varp_layer_name] = make_sparse_array(
-                path.as_posix(), (n_vars, n_vars)
-            )
-
-    return experiment
+                if varp_layer_names:
+                    (root / "varp").mkdir()
+                    with soma.Collection.create(f"{rna.uri}/varp") as varp:
+                        rna.varp = varp
+                        for varp_layer_name in varp_layer_names:
+                            path = root / "varp" / varp_layer_name
+                            path.mkdir()
+                            with make_sparse_array(
+                                path.as_posix(), (n_vars, n_vars)
+                            ) as arr:
+                                varp[varp_layer_name] = arr
+    return factory.open((root / "exp").as_posix())

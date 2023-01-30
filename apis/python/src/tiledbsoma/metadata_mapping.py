@@ -1,23 +1,19 @@
 from typing import Any, Dict, Iterator, MutableMapping
 
-# importing tiledbsoma.TileDBObject leads to a circular reference as TileDBObject imports us. This
-# is, in turn, because this class requires a back-link to the underlying object -- hence,
-# bidirectional references.
-import tiledbsoma
+import tiledb
+
+from .util_tiledb import ReadWriteHandle
 
 
 class MetadataMapping(MutableMapping[str, Any]):
-    _underlying: "tiledbsoma.TileDBObject"
-
-    def __init__(self, underlying: "tiledbsoma.TileDBObject"):
+    def __init__(self, underlying: ReadWriteHandle[tiledb.Object]):
         self._underlying = underlying
 
     def __delitem__(self, key: str) -> None:
         """
         Remove the key from the metadata collection.
         """
-        with self._underlying._ensure_open("w"):
-            del self._underlying._tiledb_obj.meta[key]
+        del self._underlying.writer.meta[key]
 
     def __iter__(self) -> Iterator[str]:
         """
@@ -45,8 +41,7 @@ class MetadataMapping(MutableMapping[str, Any]):
         dict[str, any]
             The contents of the metadata collection.
         """
-        with self._underlying._ensure_open():
-            return dict(self._underlying._tiledb_obj.meta)
+        return dict(self._underlying.reader.meta)
 
     def __getitem__(self, key: str) -> Any:
         """
@@ -57,8 +52,7 @@ class MetadataMapping(MutableMapping[str, Any]):
         key : str
             The name of the item.
         """
-        with self._underlying._ensure_open():
-            return self._underlying._tiledb_obj.meta[key]
+        return self._underlying.reader.meta[key]
 
     def __setitem__(self, key: str, value: Any) -> None:
         """
@@ -80,5 +74,4 @@ class MetadataMapping(MutableMapping[str, Any]):
         if type(key) != str:
             raise TypeError("Metadata keys must be a string.")
 
-        with self._underlying._ensure_open("w"):
-            self._underlying._tiledb_obj.meta[key] = value
+        self._underlying.writer.meta[key] = value

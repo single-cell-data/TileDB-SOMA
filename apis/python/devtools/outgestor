@@ -93,7 +93,7 @@ def main():
     if verbose:
         tiledbsoma.logging.info()
 
-    soma = tiledbsoma.Experiment(input_path)
+    soma = tiledbsoma.Experiment.open(input_path)
     tiledbsoma.io.to_h5ad(
         soma,
         output_path,

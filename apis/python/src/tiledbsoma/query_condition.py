@@ -6,7 +6,7 @@ import numpy as np
 import tiledb
 
 import tiledbsoma.libtiledbsoma as qc
-from tiledbsoma.libtiledbsoma import PyQueryCondition
+from .libtiledbsoma import PyQueryCondition
 
 """
 A high level wrapper around the Pybind11 query_condition.cc implementation for

@@ -1,14 +1,20 @@
 import pathlib
 import time
 import urllib.parse
-from typing import Any, List, Optional, Tuple, Type, Union
+from typing import Any, Callable, List, Optional, Tuple, Type, TypeVar, Union
 
 import somacore
 from somacore import options
 
-SOMA_OBJECT_TYPE_METADATA_KEY = "soma_object_type"
-SOMA_ENCODING_VERSION_METADATA_KEY = "soma_encoding_version"
-SOMA_ENCODING_VERSION = "1"
+_F = TypeVar("_F")
+try:
+    import typeguard
+
+    typeguard_ignore: Callable[[_F], _F] = typeguard.typeguard_ignore
+except ImportError:
+
+    def typeguard_ignore(f: _F) -> _F:
+        return f
 
 
 def get_start_stamp() -> float:

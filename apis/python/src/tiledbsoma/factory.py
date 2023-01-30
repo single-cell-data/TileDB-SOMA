@@ -3,93 +3,240 @@ This module exists to avoid what would otherwise be cyclic-module-import issues 
 Collection.
 """
 
-from typing import Mapping, Optional, Type, Union
+from typing import Dict, Optional, Type, TypeVar, cast, overload
 
 import tiledb
+from somacore import options
 
-from .collection import Collection, CollectionBase
-from .dataframe import DataFrame
-from .dense_nd_array import DenseNDArray
-from .exception import SOMAError
-from .experiment import Experiment
-from .measurement import Measurement
-from .options import SOMATileDBContext
-from .sparse_nd_array import SparseNDArray
-from .tiledb_array import TileDBArray
-from .tiledb_object import TileDBObject
-from .util import (
+from . import (
+    collection,
+    dataframe,
+    dense_nd_array,
+    experiment,
+    measurement,
+    sparse_nd_array,
+    tiledb_array,
+    tiledb_object,
+)
+from .constants import (
     SOMA_ENCODING_VERSION,
     SOMA_ENCODING_VERSION_METADATA_KEY,
     SOMA_OBJECT_TYPE_METADATA_KEY,
 )
+from .exception import DoesNotExistError, SOMAError
+from .options import SOMATileDBContext
+from .types import StorageType, TDBHandle
+from .util import typeguard_ignore
+from .util_tiledb import ReadWriteHandle
 
-SPEC_NAME_TO_CLASS: Mapping[str, Type[TileDBObject]] = {
-    # Maps languge-independent-spec names to Python-implementation class
-    "SOMAExperiment": Experiment,
-    "SOMAMeasurement": Measurement,
-    "SOMACollection": Collection,
-    "SOMADataFrame": DataFrame,
-    "SOMADenseNDArray": DenseNDArray,
-    "SOMADenseNdArray": DenseNDArray,
-    "SOMASparseNDArray": SparseNDArray,
-    "SOMASparseNdArray": SparseNDArray,
-}
+_Obj = TypeVar("_Obj", bound="tiledb_object.AnyTileDBObject")
+_Arr = TypeVar("_Arr", bound="tiledb_array.TileDBArray")
+_Coll = TypeVar("_Coll", bound="collection.AnyTileDBCollection")
 
 
-def _construct_member(
-    member_uri: str,
+@overload
+def open(
+    uri: str,
+    mode: options.OpenMode = ...,
+    *,
+    soma_type: None = None,  # TODO: Accept strings here.
+    context: Optional[SOMATileDBContext] = None,
+) -> "tiledb_object.AnyTileDBObject":
+    ...
+
+
+@overload
+def open(
+    uri: str,
+    mode: options.OpenMode,
+    *,
+    soma_type: Type[_Obj] = ...,  # TODO: Accept strings here.
+    context: Optional[SOMATileDBContext] = None,
+) -> _Obj:
+    ...
+
+
+@typeguard_ignore
+def open(
+    uri: str,
+    mode: options.OpenMode = "r",
+    *,
+    soma_type: Optional[
+        Type["tiledb_object.AnyTileDBObject"]
+    ] = None,  # TODO: Accept strings here.
+    context: Optional[SOMATileDBContext] = None,
+) -> "tiledb_object.AnyTileDBObject":
+    context = context or SOMATileDBContext()
+    return _open_internal(
+        uri, mode, tiledb_type=None, soma_type=soma_type, context=context
+    )
+
+
+@overload
+def _open_internal(
+    uri: str,
+    mode: options.OpenMode,
+    *,
+    tiledb_type: Optional[StorageType],
+    soma_type: None,
     context: SOMATileDBContext,
-    object_type: Type[Union[tiledb.Array, tiledb.Group]],
-) -> Optional[TileDBObject]:
-    """
-    Given a name/uri from a Collection, create a SOMA object matching the type
-    of the underlying object. In other words, if the name/uri points to an DataFrame,
-    instantiate an DataFrame pointing at the underlying array.
+) -> "tiledb_object.AnyTileDBObject":
+    ...
 
-    Returns None if the URI does not point at a TileDB object, or if the TileDB
-    object is not recognized as a SOMA object.
 
-    Solely for the use of ``Collection``. In fact this would/should be a method of the
-    ``Collection`` class, but there are cyclic-module-import issues.  This allows us to
-    examine storage metadata and invoke the appropriate per-type constructor when reading
-    SOMA groups/arrays from storage.  See also ``_set_object_type_metadata`` and
-    ``_get_object_type_metadata`` within ``TileDBObject``.
-    """
-    # auto-detect class name from metadata
-    if object_type is tiledb.Array:
-        tdb_open = tiledb.open
-    elif object_type is tiledb.Group:
-        tdb_open = tiledb.Group
-    else:
-        return None
+@overload
+def _open_internal(
+    uri: str,
+    mode: options.OpenMode,
+    *,
+    tiledb_type: Optional[StorageType],
+    soma_type: Type[_Obj],
+    context: SOMATileDBContext,
+) -> _Obj:
+    ...
 
+
+@typeguard_ignore
+def _open_internal(
+    uri: str,
+    mode: options.OpenMode,
+    *,
+    tiledb_type: Optional[StorageType],
+    soma_type: Optional[Type["tiledb_object.AnyTileDBObject"]],
+    context: SOMATileDBContext,
+) -> "tiledb_object.AnyTileDBObject":
+    if soma_type:
+        soma_tdb_type = _storage_of(soma_type)
+        if tiledb_type and (tiledb_type != soma_tdb_type):
+            raise TypeError(
+                f"SOMA type {soma_type.soma_type} is stored as {soma_tdb_type},"
+                f" but {tiledb_type} was requested"
+            )
+        tiledb_type = soma_tdb_type
+    elif not tiledb_type:
+        obj_type = tiledb.object_type(uri, ctx=context.tiledb_ctx)
+        if not obj_type:
+            raise DoesNotExistError(f"{uri!r} does not exist")
+        tiledb_type = cast(StorageType, obj_type)
+
+    if tiledb_type == "array":
+        if not soma_type or issubclass(soma_type, tiledb_array.TileDBArray):
+            return _open_array(uri, mode, soma_type, context)  # type: ignore[type-var]
+
+        raise TypeError(f"stored array object cannot be opened as a {soma_type}")
+
+    if tiledb_type == "group":
+        if not soma_type or issubclass(soma_type, collection.CollectionBase):
+            return _open_group(uri, mode, soma_type, context)  # type: ignore[type-var]
+        raise TypeError(f"stored group object cannot be opened as a {soma_type}")
+
+    raise SOMAError(f"unknown stored TileDB object type {tiledb_type!r}")
+
+
+@typeguard_ignore
+def _open_array(
+    uri: str,
+    mode: options.OpenMode,
+    soma_type: Optional[Type[_Arr]],
+    context: SOMATileDBContext,
+) -> _Arr:
+    handle = ReadWriteHandle.open_array(uri, mode, context)
     try:
-        with tdb_open(member_uri, ctx=context.tiledb_ctx) as o:
-            spec_name = o.meta.get(SOMA_OBJECT_TYPE_METADATA_KEY, None)
-            encoding_version = o.meta.get(SOMA_ENCODING_VERSION_METADATA_KEY)
-    except tiledb.TileDBError:
-        return None
+        data_type = _read_soma_type(handle)
+        cls = _to_array_class(data_type)
+        want_type = soma_type or cls
+        if cls != want_type:
+            raise TypeError(f"stored data is {cls}; expected {want_type}")
+        return cast(
+            _Arr,
+            cls(handle, _this_is_internal_only="tiledbsoma-internal-code"),
+        )
+    except Exception:
+        handle.close()
+        raise
 
-    if spec_name is None:
-        raise SOMAError("internal error: spec_name was not found")
+
+@typeguard_ignore
+def _open_group(
+    uri: str,
+    mode: options.OpenMode,
+    soma_type: Optional[Type[_Coll]],
+    context: SOMATileDBContext,
+) -> _Coll:
+    handle = ReadWriteHandle.open_group(uri, mode, context)
+    try:
+        data_type = _read_soma_type(handle)
+        cls = _to_group_class(data_type)
+        want_type = soma_type or cls
+        if cls != want_type:
+            raise TypeError(f"stored data is {cls}; expected {want_type}")
+        return cast(
+            _Coll,
+            cls(handle, _this_is_internal_only="tiledbsoma-internal-code"),
+        )
+    except Exception:
+        handle.close()
+        raise
+
+
+@typeguard_ignore
+def _storage_of(cls: Type["tiledb_object.AnyTileDBObject"]) -> StorageType:
+    if issubclass(cls, tiledb_array.TileDBArray):
+        return "array"
+    if issubclass(cls, collection.CollectionBase):
+        return "group"
+    raise TypeError(f"{cls} is not a concrete stored object")
+
+
+def _read_soma_type(hdl: ReadWriteHandle[TDBHandle]) -> str:
+    obj_type = hdl.reader.meta.get(SOMA_OBJECT_TYPE_METADATA_KEY)
+    encoding_version = hdl.reader.meta.get(SOMA_ENCODING_VERSION_METADATA_KEY)
+
+    if obj_type is None:
+        raise SOMAError(
+            f"stored TileDB object does not have {SOMA_OBJECT_TYPE_METADATA_KEY!r}"
+        )
+    if not isinstance(obj_type, str):
+        raise SOMAError(
+            f"stored TileDB object {SOMA_OBJECT_TYPE_METADATA_KEY!r}"
+            f" is {type(obj_type)}"
+        )
     if encoding_version is None:
-        raise SOMAError("internal error: encoding_version not found")
+        raise SOMAError(
+            f"stored TileDB object does not have {SOMA_ENCODING_VERSION_METADATA_KEY}"
+        )
     if encoding_version != SOMA_ENCODING_VERSION:
-        raise ValueError("Unsupported SOMA object encoding version")
+        raise ValueError(f"Unsupported SOMA object encoding version {encoding_version}")
 
-    # Now invoke the appropriate per-class constructor.
-    cls = SPEC_NAME_TO_CLASS.get(spec_name)
-    if cls is None:
-        raise SOMAError(f'name "{spec_name}" unrecognized')
+    return obj_type
 
-    if issubclass(cls, CollectionBase) and object_type is not tiledb.Group:
-        raise SOMAError(
-            f'internal error: expected "group" object_type; got "{object_type}"'
+
+def _to_array_class(name: str) -> Type["tiledb_array.TileDBArray"]:
+    options: Dict[str, Type[tiledb_array.TileDBArray]] = {
+        cls.soma_type.lower(): cls  # type: ignore[attr-defined,misc]
+        for cls in (
+            dataframe.DataFrame,
+            dense_nd_array.DenseNDArray,
+            sparse_nd_array.SparseNDArray,
         )
+    }
+    try:
+        return options[name.lower()]
+    except KeyError:
+        raise SOMAError(f"{name!r} is not a valid SOMA data type") from None
 
-    if issubclass(cls, TileDBArray) and object_type is not tiledb.Array:
-        raise SOMAError(
-            f'internal error: expected "array" object_type; got "{object_type}"'
+
+@typeguard_ignore
+def _to_group_class(name: str) -> Type["collection.AnyTileDBCollection"]:
+    options: Dict[str, Type[collection.AnyTileDBCollection]] = {
+        cls.soma_type.lower(): cls  # type: ignore[attr-defined, misc]
+        for cls in (
+            collection.Collection,
+            experiment.Experiment,
+            measurement.Measurement,
         )
-
-    return cls(uri=member_uri, context=context)
+    }
+    try:
+        return options[name.lower()]
+    except KeyError:
+        raise SOMAError(f"{name!r} is not a valid SOMA collection type") from None
