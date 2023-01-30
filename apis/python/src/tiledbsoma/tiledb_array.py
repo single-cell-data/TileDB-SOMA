@@ -6,7 +6,6 @@ from somacore import options
 
 # This package's pybind11 code
 import tiledbsoma.libtiledbsoma as clib
-from tiledbsoma.options.soma_tiledb_context import SOMATileDBContext
 
 from .options.soma_tiledb_context import SOMATileDBContext
 from .tiledb_object import TileDBObject
