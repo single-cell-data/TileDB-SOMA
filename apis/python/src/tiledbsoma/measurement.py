@@ -1,5 +1,3 @@
-from typing import Dict, Tuple
-
 from somacore import measurement
 
 from .collection import CollectionBase
@@ -40,8 +38,8 @@ class Measurement(  # type: ignore[misc]
     [lifecycle: experimental]
     """
 
-    _subclass_constrained_soma_types: Dict[str, Tuple[str, ...]] = {
-        "var": ("SOMADataFrame", "SOMADataFrame"),
+    _subclass_constrained_soma_types = {
+        "var": ("SOMADataFrame",),
         "X": ("SOMACollection",),
         "obsm": ("SOMACollection",),
         "obsp": ("SOMACollection",),

@@ -1,11 +1,13 @@
 import os
+from typing import List, TypeVar, Union
 
 import numpy as np
 import pyarrow as pa
 import pytest
+from typing_extensions import Literal
 
 import tiledbsoma as soma
-from tiledbsoma import factory
+from tiledbsoma import collection, factory
 from tiledbsoma.exception import DoesNotExistError
 
 
@@ -207,3 +209,40 @@ def test_collection_update_on_set(tmp_path):
     sc["A"] = B
     assert set(sc.keys()) == set(["A"])
     assert sc["A"] == B
+
+
+# Helper tests
+
+
+@pytest.mark.parametrize(
+    ("in_type", "want"),
+    [
+        (List[int], list),
+        (set, set),
+        (soma.Collection[object], soma.Collection),
+    ],
+)
+def test_real_class(in_type, want):
+    assert collection._real_class(in_type) is want
+
+
+@pytest.mark.parametrize(
+    "in_type", (Union[int, str], Literal["bacon"], TypeVar("_T", bound=List))
+)
+def test_real_class_fail(in_type):
+    with pytest.raises(TypeError):
+        collection._real_class(in_type)
+
+
+@pytest.mark.parametrize(
+    ("key", "want"),
+    [
+        ("hello", "hello"),
+        ("good bye", "good_bye"),
+        ("../beas/tie@boyz", "_beas_tie_boyz"),
+        ("g0nna~let-the.BEAT", "g0nna_let_the_BEAT"),
+        ("____DROP", "_DROP"),
+    ],
+)
+def test_sanitize_for_path(key, want):
+    assert collection._sanitize_for_path(key) == want

@@ -1,5 +1,3 @@
-from typing import Dict, Tuple
-
 from somacore import experiment
 
 from . import collection
@@ -21,7 +19,7 @@ class Experiment(  # type: ignore[misc]
     [lifecycle: experimental]
     """
 
-    _subclass_constrained_soma_types: Dict[str, Tuple[str, ...]] = {
+    _subclass_constrained_soma_types = {
         "obs": ("SOMADataFrame",),
         "ms": ("SOMACollection",),
     }
