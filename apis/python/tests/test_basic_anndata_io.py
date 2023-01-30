@@ -21,6 +21,13 @@ def h5ad_file(request):
 
 
 @pytest.fixture
+def h5ad_file_extended(request):
+    # This has more component arrays in it
+    input_path = HERE.parent / "testdata/pbmc3k_processed.h5ad"
+    return input_path
+
+
+@pytest.fixture
 def adata(h5ad_file):
     return anndata.read_h5ad(h5ad_file)
 
@@ -227,6 +234,55 @@ def test_resume_mode(adata, resume_mode_h5ad_file):
                 assert _get_fragment_count(meas1.varm[key].uri) == _get_fragment_count(
                     meas2.varm[key].uri
                 )
+
+
+@pytest.mark.parametrize("use_relative_uri", [False, True, None])
+def test_ingest_relative(h5ad_file_extended, use_relative_uri):
+
+    tempdir = tempfile.TemporaryDirectory()
+    output_path = tempdir.name
+
+    exp = tiledbsoma.io.from_h5ad(
+        output_path,
+        h5ad_file_extended,
+        measurement_name="RNA",
+        use_relative_uri=use_relative_uri,
+    )
+
+    # * If they ask for relative=True, they should get that.
+    # * If they ask for relative=False, they should get that.
+    # * If they ask for relative=None, they should get the default which, for local disk (these
+    #   tests) is True.
+    expected_relative = use_relative_uri
+    if use_relative_uri is None:
+        expected_relative = True  # since local disk
+
+    with tiledb.Group(exp.uri) as G:
+        assert G.is_relative("obs") == expected_relative
+        assert G.is_relative("ms") == expected_relative
+
+    with tiledb.Group(exp.ms.uri) as G:
+        assert G.is_relative("RNA") == expected_relative
+    with tiledb.Group(exp.ms["RNA"].uri) as G:
+        assert G.is_relative("var") == expected_relative
+        assert G.is_relative("X") == expected_relative
+    with tiledb.Group(exp.ms["RNA"].X.uri) as G:
+        assert G.is_relative("data") == expected_relative
+
+    for collection_name in ["obsm", "obsp", "varm"]:  # h5ad_file_extended has no varp
+        with tiledb.Group(exp.ms["RNA"][collection_name].uri) as G:
+            for member in G:
+                assert G.is_relative(member.name) == expected_relative
+
+    with tiledb.Group(exp.ms.uri) as G:
+        assert G.is_relative("raw") == expected_relative
+    with tiledb.Group(exp.ms["raw"].uri) as G:
+        assert G.is_relative("var") == expected_relative
+        assert G.is_relative("X") == expected_relative
+    with tiledb.Group(exp.ms["raw"].X.uri) as G:
+        assert G.is_relative("data") == expected_relative
+
+    exp.close()
 
 
 def test_add_matrix_to_collection(adata):

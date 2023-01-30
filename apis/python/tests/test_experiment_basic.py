@@ -99,7 +99,7 @@ def test_experiment_basic(tmp_path):
     measurement["X"] = soma.Collection.create(urljoin(measurement.uri, "X"))
 
     nda = create_and_populate_sparse_nd_array(urljoin(measurement.X.uri, "data"))
-    measurement.X.set("data", nda)
+    measurement.X.set("data", nda, use_relative_uri=False)
 
     # ----------------------------------------------------------------
     assert len(experiment) == 2

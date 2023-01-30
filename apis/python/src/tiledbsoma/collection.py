@@ -166,7 +166,7 @@ class CollectionBase(
 
         [lifecycle: experimental]
         """
-        self._set_element(key, value, relative=use_relative_uri)
+        self._set_element(key, value, use_relative_uri=use_relative_uri)
 
     def __setitem__(self, key: str, value: CollectionElementType) -> None:
         """
@@ -237,20 +237,23 @@ class CollectionBase(
             }
         return self._cached_group_contents
 
-    def _determine_default_relative(self, uri: str) -> Optional[bool]:
-        """Defaulting for the relative parameter."""
-        if self.context.member_uris_are_relative is not None:
-            return self.context.member_uris_are_relative
-        if uri.startswith("tiledb://"):
-            # TileDB-Cloud does not use relative URIs, ever.
-            return False
-        return None
-
     def _set_element(
-        self, key: str, value: CollectionElementType, relative: Optional[bool] = None
+        self,
+        key: str,
+        value: CollectionElementType,
+        use_relative_uri: Optional[bool] = False,
     ) -> None:
-        if relative is None:
-            relative = self._determine_default_relative(value.uri)
+
+        # The SOMA API supports use_relative_uri in [True, False, None].
+        # The TileDB-Py API supports use_relative_uri in [True, False].
+        # Map from the former to the latter -- and also honor our somacore contract for None --
+        # using the following rule.
+        if use_relative_uri is None:
+            if value.uri.startswith("tiledb://"):
+                # TileDB-Cloud does not use relative URIs, ever.
+                use_relative_uri = False
+            else:
+                use_relative_uri = True
 
         if key in self._subclass_constrained_soma_types:
             # Implement the sub-class protocol constraining the value type of certain item keys
@@ -270,13 +273,13 @@ class CollectionBase(
 
         maybe_relative_uri = (
             make_relative_path(value.uri, relative_to=self.uri)
-            if relative
+            if use_relative_uri
             else value.uri
         )
         for retry in [True, False]:
             try:
                 self._handle.writer.add(
-                    uri=maybe_relative_uri, relative=relative, name=key
+                    uri=maybe_relative_uri, relative=use_relative_uri, name=key
                 )
                 break
             except tiledb.TileDBError as e:
