@@ -1,5 +1,5 @@
 from contextlib import ExitStack
-from typing import ClassVar, Generic, Optional, Type, TypeVar
+from typing import ClassVar, Generic, Type, TypeVar
 
 import somacore
 import tiledb
@@ -87,9 +87,7 @@ class TileDBObject(somacore.SOMAObject, Generic[_HandleType]):
         Release any resources held while the object is open. Closing an already-closed object is a
         no-op.
         """
-        my_cs: Optional[ExitStack] = getattr(self, "_close_stack", None)
-        if my_cs:
-            my_cs.close()
+        self._close_stack.close()
 
     @property
     def mode(self) -> options.OpenMode:
