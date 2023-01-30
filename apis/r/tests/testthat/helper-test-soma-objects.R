@@ -10,7 +10,7 @@ create_and_populate_obs <- function(uri, nrows = 10L, seed = 1) {
 create_and_populate_var <- function(uri, nrows = 10L, seed = 1) {
 
   tbl <- arrow::arrow_table(
-    soma_joinid = bit64::seq.integer64(from = 1L, to = nrows),
+    soma_joinid = bit64::seq.integer64(from = 0L, to = nrows - 1L),
     quux = sample(letters, size = nrows, replace = TRUE),
     xyzzy = runif(nrows)
   )
