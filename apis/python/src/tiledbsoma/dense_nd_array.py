@@ -4,15 +4,14 @@ import pyarrow as pa
 import somacore
 from somacore import options
 
-import tiledbsoma.util as util
-from tiledbsoma.util import dense_indices_to_shape
-
+from . import util
 from .common_nd_array import build_tiledb_schema
 from .exception import SOMAError
 from .options import SOMATileDBContext
 from .options.tiledb_create_options import TileDBCreateOptions
 from .tiledb_array import TileDBArray
 from .types import NTuple
+from .util import dense_indices_to_shape
 
 _UNBATCHED = options.BatchSize()
 

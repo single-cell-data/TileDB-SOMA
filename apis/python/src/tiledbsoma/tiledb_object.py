@@ -5,8 +5,7 @@ import somacore
 import tiledb
 from somacore import options
 
-from tiledbsoma import constants
-
+from . import constants
 from .metadata_mapping import MetadataMapping
 from .options import SOMATileDBContext
 from .types import StorageType, TDBHandle
