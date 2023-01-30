@@ -64,8 +64,8 @@ def find_libtiledbsoma_full_path_on_linux(lib_name):
 
 def libtiledbsoma_exists():
     """
-    Checks the given list of paths and returns true if any contain the TileDB library.
-    :return: The path to the TileDB library, or None.
+    Checks the given list of paths and returns true if any contain the TileDB-SOMA library.
+    :return: The path to the TileDB-SOMA library, or None.
     """
     # Check to see if TileDB is globally installed.
     lib_name = get_libtiledbsoma_library_name()
