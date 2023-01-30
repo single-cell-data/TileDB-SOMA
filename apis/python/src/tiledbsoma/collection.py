@@ -3,7 +3,6 @@ from __future__ import annotations
 import time
 from typing import (
     Any,
-    Callable,
     Dict,
     Generic,
     Iterator,
@@ -21,11 +20,10 @@ import tiledb
 from somacore import options
 from typing_extensions import NoReturn
 
-from tiledbsoma.types import TDBHandle
-
 from .exception import SOMAError
 from .options import SOMATileDBContext
 from .tiledb_object import AnyTileDBObject, TileDBObject
+from .types import StorageType, TDBHandle
 from .util import make_relative_path
 from .util_tiledb import (
     ReadWriteHandle,
@@ -137,18 +135,20 @@ class CollectionBase(
         if entry.soma is None:
             from . import factory  # Delayed binding to resolve circular import.
 
-            if entry.cls is tiledb.Array:
-                opener: Callable[..., TDBHandle] = factory._open_array
-            elif entry.cls is tiledb.Group:
-                opener = factory._open_group
+            storage_type: StorageType
+            if issubclass(entry.cls, tiledb.Array):
+                storage_type = "array"
+            elif issubclass(entry.cls, tiledb.Group):
+                storage_type = "group"
             else:
                 raise SOMAError(
                     f"internal error: unrecognized group entry type {entry.cls}"
                 )
-            entry.soma = opener(
+            entry.soma = factory._open_internal(
                 uri=entry.uri,
                 mode=self.mode,
                 context=self.context,
+                tiledb_type=storage_type,
                 soma_type=None,
             )
         return cast(CollectionElementType, entry.soma)
