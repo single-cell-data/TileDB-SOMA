@@ -130,6 +130,7 @@ SOMASparseNDArray <- R6::R6Class(
               warning("pointer not null, skipping")
           } else {
               private$soma_reader_setup()
+              private$sparse_repr <- "" # no sparse matrix transformation
           }
           invisible(NULL)
       }
@@ -142,6 +143,8 @@ SOMASparseNDArray <- R6::R6Class(
     #' @param result_order Optional order of read results. This can be one of either
     #' `"ROW_MAJOR, `"COL_MAJOR"`, `"GLOBAL_ORDER"`, or `"UNORDERED"`.
     #' @param repr Optional one-character code for sparse matrix representation type
+    #' @param iterated Option boolean indicated whether data is read in call (when
+    #' `FALSE`, the default value) or in several iterated steps.
     #' @param log_level Optional logging level with default value of `"warn"`.
     #' @return A `matrix` object
     read_sparse_matrix = function(
@@ -159,11 +162,22 @@ SOMASparseNDArray <- R6::R6Class(
                     all.equal(c("soma_dim_0", "soma_dim_1"), names(dims)),
                 "Array must contain column 'soma_data'" = all.equal("soma_data", names(attr)))
 
-      tbl <- self$read_arrow_table(coords = coords, result_order = result_order, log_level = log_level)
-      m <- Matrix::sparseMatrix(i = 1 + as.numeric(tbl$GetColumnByName("soma_dim_0")),
-                                j = 1 + as.numeric(tbl$GetColumnByName("soma_dim_1")),
-                                x = as.numeric(tbl$GetColumnByName("soma_data")),
-                                repr = repr)
+      if (isFALSE(iterated)) {
+          tbl <- self$read_arrow_table(coords = coords, result_order = result_order, log_level = log_level)
+          m <- Matrix::sparseMatrix(i = 1 + as.numeric(tbl$GetColumnByName("soma_dim_0")),
+                                    j = 1 + as.numeric(tbl$GetColumnByName("soma_dim_1")),
+                                    x = as.numeric(tbl$GetColumnByName("soma_data")),
+                                    repr = repr)
+      } else {
+          ## should we error if this isn't null?
+          if (!is.null(self$soma_reader_pointer)) {
+              warning("pointer not null, skipping")
+          } else {
+              private$soma_reader_setup()
+              private$sparse_repr <- repr
+          }
+          invisible(NULL)
+      }
     },
 
     #' @description Write matrix-like data to the array. [lifecycle: experimental]
@@ -203,8 +217,19 @@ SOMASparseNDArray <- R6::R6Class(
 
     ## refined from base class
     soma_reader_transform = function(x) {
-      arrow::as_arrow_table(arch::from_arch_array(x, arrow::RecordBatch))
-    }
+      tbl <- arrow::as_arrow_table(arch::from_arch_array(x, arrow::RecordBatch))
+      if (private$sparse_repr == "") {
+          tbl
+      } else {
+          Matrix::sparseMatrix(i = 1 + as.numeric(tbl$GetColumnByName("soma_dim_0")),
+                               j = 1 + as.numeric(tbl$GetColumnByName("soma_dim_1")),
+                               x = as.numeric(tbl$GetColumnByName("soma_data")),
+                               repr = private$sparse_repr)
+      }
+    },
+
+    ## internal 'repr' state variable, by default 'unset'
+    sparse_repr = ""
 
   )
 )
