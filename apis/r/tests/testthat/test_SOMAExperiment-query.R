@@ -30,7 +30,7 @@ test_that("AxisQuery", {
   )
 })
 
-test_that("ExperimentAxisQuery returns all coordinates by default", {
+test_that("returns all coordinates by default", {
   uri <- withr::local_tempdir("soma-experiment-query-all")
   n_obs <- 20L
   n_var <- 10L
@@ -74,4 +74,47 @@ test_that("ExperimentAxisQuery returns all coordinates by default", {
       experiment$ms$get("RNA")$X$get("counts")$read_arrow_table()
     )
   )
+})
+
+test_that("querying by dimension coordinates", {
+  uri <- withr::local_tempdir("soma-experiment-query-coords")
+  n_obs <- 1001L
+  n_var <- 99L
+
+  obs_slice <- bit64::as.integer64(seq(3, 72))
+  var_slice <- bit64::as.integer64(seq(7, 21))
+
+  experiment <- create_and_populate_experiment(
+    uri = uri,
+    n_obs = n_obs,
+    n_var = n_var,
+    X_layer_names = c("counts", "logcounts")
+  )
+
+  query <- ExperimentAxisQuery$new(
+    experiment = experiment,
+    measurement_name = "RNA",
+    obs_query = AxisQuery$new(coords = list(soma_joinid = obs_slice)),
+    var_query = AxisQuery$new(coords = list(soma_joinid = var_slice))
+  )
+
+  expect_true(query$n_obs == diff(range(obs_slice)) + 1)
+  expect_true(query$n_vars == diff(range(var_slice)) + 1)
+
+  expect_equal(query$obs()$soma_joinid$as_vector(), as.integer(obs_slice))
+  expect_equal(query$var_joinids()$as_vector(), as.integer(var_slice))
+
+  expect_equal(
+    query$obs(column_names = "soma_joinid")$soma_joinid$as_vector(),
+    as.integer(obs_slice)
+  )
+  expect_equal(
+    query$var(column_names = "soma_joinid")$soma_joinid$as_vector(),
+    as.integer(var_slice)
+  )
+
+  raw_X <- experiment$ms$get("RNA")$X$get("counts")$read_arrow_table(
+    coords = list(obs_slice, var_slice)
+  )
+  expect_true(query$X("counts")$Equals(raw_X))
 })
