@@ -117,6 +117,8 @@ SOMADenseNDArray <- R6::R6Class(
           coords <- lapply(coords, function(x) if (inherits(x, "integer")) bit64::as.integer64(x) else x)
       }
 
+      private$dense_matrix <- FALSE
+
       if (isFALSE(iterated)) {
           rl <- soma_reader(uri = uri,
                             dim_points = coords,        # NULL is dealt with by soma_reader()
@@ -140,11 +142,14 @@ SOMADenseNDArray <- R6::R6Class(
     #' read. List elements can be named when specifying a subset of dimensions.
     #' @param result_order Optional order of read results. This can be one of either
     #' `"ROW_MAJOR, `"COL_MAJOR"`, `"GLOBAL_ORDER"`, or `"UNORDERED"`.
+    #' @param iterated Option boolean indicated whether data is read in call (when
+    #' `FALSE`, the default value) or in several iterated steps.
     #' @param log_level Optional logging level with default value of `"warn"`.
     #' @return A `matrix` object
     read_dense_matrix = function(
       coords = NULL,
       result_order = "ROW_MAJOR",
+      iterated = FALSE,
       log_level = "warn"
     ) {
       dims <- self$dimensions()
@@ -154,11 +159,23 @@ SOMADenseNDArray <- R6::R6Class(
                     all.equal(c("soma_dim_0", "soma_dim_1"), names(dims)),
                 "Array must contain column 'soma_data'" = all.equal("soma_data", names(attr)))
 
-      tbl <- self$read_arrow_table(coords = coords, result_order = result_order, log_level = log_level)
-      m <- matrix(as.numeric(tbl$GetColumnByName("soma_data")),
-                  nrow = length(unique(as.numeric(tbl$GetColumnByName("soma_dim_0")))),
-                  ncol = length(unique(as.numeric(tbl$GetColumnByName("soma_dim_1")))),
-                  byrow = result_order == "ROW_MAJOR")
+      if (isFALSE(iterated)) {
+          tbl <- self$read_arrow_table(coords = coords, result_order = result_order, log_level = log_level)
+          m <- matrix(as.numeric(tbl$GetColumnByName("soma_data")),
+                      nrow = length(unique(as.numeric(tbl$GetColumnByName("soma_dim_0")))),
+                      ncol = length(unique(as.numeric(tbl$GetColumnByName("soma_dim_1")))),
+                      byrow = result_order == "ROW_MAJOR")
+      } else {
+          ## should we error if this isn't null?
+          if (!is.null(self$soma_reader_pointer)) {
+              warning("pointer not null, skipping")
+          } else {
+              private$soma_reader_setup()
+              private$dense_matrix <- TRUE
+              private$result_order <- result_order
+          }
+          invisible(NULL)
+      }
     },
 
     #' @description Write matrix data to the array. [lifecycle: experimental]
@@ -196,8 +213,19 @@ SOMADenseNDArray <- R6::R6Class(
 
     ## refined from base class
     soma_reader_transform = function(x) {
-      arrow::as_arrow_table(arch::from_arch_array(x, arrow::RecordBatch))
-    }
+      tbl <- arrow::as_arrow_table(arch::from_arch_array(x, arrow::RecordBatch))
+      if (isTRUE(private$dense_matrix)) {
+          m <- matrix(as.numeric(tbl$GetColumnByName("soma_data")),
+                      nrow = length(unique(as.numeric(tbl$GetColumnByName("soma_dim_0")))),
+                      ncol = length(unique(as.numeric(tbl$GetColumnByName("soma_dim_1")))),
+                      byrow = private$result_order == "ROW_MAJOR")
+      } else {
+          tbl
+      }
+    },
 
+    ## internal state variable for dense matrix vs arrow table return
+    dense_matrix = TRUE,
+    result_order = "ROW_MAJOR"
   )
 )
