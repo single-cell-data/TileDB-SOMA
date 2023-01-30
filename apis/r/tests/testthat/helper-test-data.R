@@ -50,7 +50,7 @@ create_and_populate_soma_dataframe <- function(
     foo = seq.int(nrows) + 1000L,
     soma_joinid = bit64::seq.integer64(from = 0L, to = nrows - 1L),
     bar = seq(nrows) + 0.1,
-    baz = sample(letters, size = nrows, replace = TRUE),
+    baz = as.character(seq.int(nrows) + 1000L),
     schema = arrow_schema
   )
 
