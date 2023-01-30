@@ -11,7 +11,7 @@ create_and_populate_var <- function(uri, nrows = 10L, seed = 1) {
 
   tbl <- arrow::arrow_table(
     soma_joinid = bit64::seq.integer64(from = 0L, to = nrows - 1L),
-    quux = sample(letters, size = nrows, replace = TRUE),
+    quux = as.character(seq.int(nrows) + 1000L),
     xyzzy = runif(nrows)
   )
 
