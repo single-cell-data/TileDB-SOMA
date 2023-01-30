@@ -89,17 +89,15 @@ def test_experiment_basic(tmp_path):
     experiment = soma.Experiment.create(basedir)
 
     experiment["obs"] = create_and_populate_obs(urljoin(basedir, "obs"))
-    experiment["ms"] = soma.Collection.create(urljoin(basedir, "ms"))
-
-    measurement = soma.Measurement.create(f"{experiment.ms.uri}/RNA")
-    experiment.ms.set("RNA", measurement)
+    ms = experiment.add_new_collection("ms", soma.Collection)
+    measurement = ms.add_new_collection("RNA", soma.Measurement)
 
     measurement["var"] = create_and_populate_var(urljoin(measurement.uri, "var"))
 
-    measurement["X"] = soma.Collection.create(urljoin(measurement.uri, "X"))
+    x = measurement.add_new_collection("X")
 
-    nda = create_and_populate_sparse_nd_array(urljoin(measurement.X.uri, "data"))
-    measurement.X.set("data", nda, use_relative_uri=False)
+    nda = create_and_populate_sparse_nd_array(urljoin(x.uri, "data"))
+    x.set("data", nda, use_relative_uri=False)
 
     # ----------------------------------------------------------------
     assert len(experiment) == 2

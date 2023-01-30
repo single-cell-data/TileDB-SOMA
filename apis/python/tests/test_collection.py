@@ -144,14 +144,15 @@ def test_collection_mapping(soma_object, tmp_path):
 
 
 @pytest.mark.parametrize("relative", [False, True])
-def test_collection_repr(tmp_path, relative):
+def test_collection_repr(tmp_path, relative) -> None:
     a = soma.Collection.create((tmp_path / "A").as_uri())
     assert a.uri == (tmp_path / "A").as_uri()
 
-    b = soma.Collection.create((tmp_path / "A" / "B").as_uri())
+    b_uri = "B" if relative else (tmp_path / "A" / "B").as_uri()
+    b = a.add_new_collection("Another_Name", uri=b_uri)
+
     assert b.uri == (tmp_path / "A" / "B").as_uri()
 
-    a.set("Another_Name", b, use_relative_uri=relative)
     assert list(a.keys()) == ["Another_Name"]
     assert (
         a.__repr__()
