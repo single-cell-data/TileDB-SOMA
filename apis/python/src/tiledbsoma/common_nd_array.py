@@ -1,9 +1,6 @@
-"""Common code shared by both NDArray implementations.
+"""Common code shared by both NDArray implementations."""
 
-TODO: Extract more stuff.
-"""
-
-from typing import Optional, Sequence, Type, TypeVar
+from typing import Optional, Sequence, Tuple, Type, TypeVar, cast
 
 import numpy as np
 import pyarrow as pa
@@ -20,6 +17,8 @@ _Self = TypeVar("_Self", bound="NDArray")
 
 
 class NDArray(TileDBArray, somacore.NDArray):
+    """Abstract base for the common behaviors of both kinds of NDArray."""
+
     @classmethod
     def create(
         cls: Type[_Self],
@@ -51,6 +50,21 @@ class NDArray(TileDBArray, somacore.NDArray):
         )
         handle = cls._create_internal(uri, schema, context)
         return cls(handle, _this_is_internal_only="tiledbsoma-internal-code")
+
+    @property
+    def shape(self) -> Tuple[int, ...]:
+        """
+        Return length of each dimension, always a list of length ``ndim``
+        """
+        return cast(Tuple[int, ...], self._handle.reader.schema.domain.shape)
+
+    def reshape(self, shape: Tuple[int, ...]) -> None:
+        """
+        Unsupported operation for this object type.
+
+        [lifecycle: experimental]
+        """
+        raise NotImplementedError("reshape operation not implemented.")
 
 
 def build_tiledb_schema(
