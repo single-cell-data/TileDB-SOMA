@@ -13,6 +13,9 @@
 # Based on ideas from https://github.com/pybind/cmake_example
 # The `bld` script here is reused for pip install, CI, and local builds.
 
+# type: ignore
+import ctypes
+import os
 import pathlib
 import shutil
 import subprocess
@@ -27,9 +30,65 @@ sys.path.insert(0, str(this_dir))
 import version  # noqa E402
 
 
+def get_libtiledbsoma_library_name():
+    """
+    :return: List of TileDB shared library names.
+    """
+    if os.name == "posix":
+        if sys.platform == "darwin":
+            return "libtiledbsoma.dylib"
+        else:
+            return "libtiledbsoma.so"
+    elif os.name == "nt":
+        return "tiledbsoma.dll"
+    else:
+        raise RuntimeError(f"Unsupported OS name {os.name}")
+
+
+def find_libtiledbsoma_full_path_on_linux(lib_name):
+    # https://stackoverflow.com/questions/35682600/get-absolute-path-of-shared-library-in-python
+    class LINKMAP(ctypes.Structure):
+        _fields_ = [("l_addr", ctypes.c_void_p), ("l_name", ctypes.c_char_p)]
+
+    libdl = ctypes.CDLL(lib_name)
+    dlinfo = libdl.dlinfo
+    dlinfo.argtypes = ctypes.c_void_p, ctypes.c_int, ctypes.c_void_p
+    dlinfo.restype = ctypes.c_int
+
+    libc = ctypes.CDLL(lib_name)
+    lmptr = ctypes.c_void_p()
+    dlinfo(libc._handle, 2, ctypes.byref(lmptr))
+
+    return ctypes.cast(lmptr, ctypes.POINTER(LINKMAP)).contents.l_name.decode()
+
+
+def libtiledbsoma_exists():
+    """
+    Returns the path to the globally installed TileDB-SOMA library, if it exists.
+    :return: The path to the TileDB-SOMA library, or None.
+    """
+    # Check to see if TileDB-SOMA is globally installed.
+    lib_name = get_libtiledbsoma_library_name()
+
+    try:
+        # Note: This is a relative path on Linux
+        # https://bugs.python.org/issue21042
+        if os.name == "posix" and sys.platform != "darwin":
+            path = find_libtiledbsoma_full_path_on_linux(lib_name)
+        else:
+            path = ctypes.CDLL(lib_name)
+        return pathlib.Path(path).parents[0]
+    except Exception as e:
+        print(e)
+        return None
+
+
 def find_or_build_package_data(setuptools_cmd):
+    global libtiledbsoma_dir
+
     # Set up paths
     scripts_dir = this_dir / "dist_links" / "scripts"
+
     if scripts_dir.is_symlink():
         # in git source tree
         libtiledbsoma_dir = this_dir.parent.parent
@@ -39,18 +98,26 @@ def find_or_build_package_data(setuptools_cmd):
 
     # Call the build script if the install library directory does not exist
     lib_dir = libtiledbsoma_dir / "dist" / "lib"
+
     if not lib_dir.exists():
-        # Note: The GitHub build process uses the contents of `bld` as a key
-        # to cache the native binaries. Using non-default options here will
-        # cause that cache to fall out of sync.
-        #
-        # See `.github/workflows/python-ci-single.yml` for configuration.
-        subprocess.run(["./bld"], cwd=scripts_dir)
+        # check if libtilesoma is globally installed
+        global_libtiledbsoma_path = libtiledbsoma_exists()
+        if global_libtiledbsoma_path is not None:
+            lib_dir = global_libtiledbsoma_path
+        else:
+            # If not then build from source
+
+            # Note: The GitHub build process uses the contents of `bld` as a key
+            # to cache the native binaries. Using non-default options here will
+            # cause that cache to fall out of sync.
+            #
+            # See `.github/workflows/python-ci-single.yml` for configuration.
+            subprocess.run(["./bld"], cwd=scripts_dir)
 
     # Copy native libs into the package dir so they can be found by package_data
     package_data = []
     src_dir = this_dir / "src" / "tiledbsoma"
-    for f in lib_dir.glob("*"):
+    for f in lib_dir.glob("*tiledbsoma*"):
         if f.suffix != ".a":  # skip static library
             print(f"  copying file {f} to {src_dir}")
             shutil.copy(f, src_dir)
