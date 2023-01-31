@@ -1,5 +1,5 @@
 import collections.abc
-from typing import Optional, Sequence, Union, cast
+from typing import Optional, Union, cast
 
 import numpy as np
 import pyarrow as pa
@@ -11,10 +11,7 @@ from somacore.options import PlatformConfig
 import tiledbsoma.libtiledbsoma as clib
 
 from . import util
-from .common_nd_array import build_tiledb_schema
-from .options import SOMATileDBContext
-from .options.tiledb_create_options import TileDBCreateOptions
-from .tiledb_array import TileDBArray
+from .common_nd_array import NDArray
 from .types import NTuple
 from .util_iter import (
     SparseCOOTensorReadIter,
@@ -26,59 +23,12 @@ from .util_iter import (
 _UNBATCHED = options.BatchSize()
 
 
-class SparseNDArray(TileDBArray, somacore.SparseNDArray):
+class SparseNDArray(NDArray, somacore.SparseNDArray):
     """
     Represents ``X`` and others.
 
     [lifecycle: experimental]
     """
-
-    @classmethod
-    def create(
-        cls,
-        uri: str,
-        *,
-        type: pa.DataType,
-        shape: Sequence[int],
-        platform_config: Optional[PlatformConfig] = None,
-        context: Optional[SOMATileDBContext] = None,
-    ) -> "SparseNDArray":
-        """
-        Create a ``SparseNDArray`` named with the URI.
-
-        [lifecycle: experimental]
-
-        :param type: an Arrow type defining the type of each element in the array. If the type is unsupported, an error will be raised.
-
-        :param shape: the length of each domain as a list, e.g., [100, 10]. All lengths must be in the positive int64 range.
-
-        :param platform_config: Platform-specific options used to create this Array, provided via "tiledb"->"create" nested keys
-        """
-        context = context or SOMATileDBContext()
-        schema = build_tiledb_schema(
-            type,
-            shape,
-            TileDBCreateOptions.from_platform_config(platform_config),
-            context,
-            is_sparse=True,
-        )
-        handle = cls._create_internal(uri, schema, context)
-        return cls(handle, _this_is_internal_only="tiledbsoma-internal-code")
-
-    @property
-    def shape(self) -> NTuple:
-        """
-        Return length of each dimension, always a list of length ``ndim``
-        """
-        return cast(NTuple, self._handle.reader.schema.domain.shape)
-
-    def reshape(self, shape: NTuple) -> None:
-        """
-        Unsupported operation for this object type.
-
-        [lifecycle: experimental]
-        """
-        raise NotImplementedError("reshape operation not implemented.")
 
     # Inherited from somacore
     # * ndim accessor

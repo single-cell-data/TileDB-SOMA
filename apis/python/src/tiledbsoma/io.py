@@ -37,6 +37,7 @@ from . import (
     util_scipy,
     util_tiledb,
 )
+from .common_nd_array import NDArray
 from .constants import SOMA_JOINID
 from .exception import DoesNotExistError, SOMAError
 from .options import SOMATileDBContext
@@ -46,7 +47,7 @@ from .types import INGEST_MODES, IngestMode, NPNDArray, Path, TDBHandle
 
 SparseMatrix = Union[sp.csr_matrix, sp.csc_matrix, SparseDataset]
 Matrix = Union[NPNDArray, SparseMatrix]
-_NDArr = TypeVar("_NDArr", DenseNDArray, SparseNDArray)
+_NDArr = TypeVar("_NDArr", bound=NDArray)
 _TDBO = TypeVar("_TDBO", bound=TileDBObject[TDBHandle])
 
 
@@ -482,12 +483,10 @@ def create_from_matrix(
     s = util.get_start_stamp()
     logging.log_io(None, f"START  WRITING {uri}")
 
-    real_cls = cast(Union[DenseNDArray, SparseNDArray], cls)
-
     try:
-        soma_ndarray = real_cls.open(uri, "w", platform_config=platform_config)
+        soma_ndarray = cls.open(uri, "w", platform_config=platform_config)
     except DoesNotExistError:
-        soma_ndarray = real_cls.create(
+        soma_ndarray = cls.create(
             uri,
             type=pa.from_numpy_dtype(matrix.dtype),
             shape=matrix.shape,
@@ -502,7 +501,7 @@ def create_from_matrix(
             f"Wrote schema {soma_ndarray.uri}",
             util.format_elapsed(s, f"FINISH WRITING SCHEMA {soma_ndarray.uri}"),
         )
-        return cast(_NDArr, soma_ndarray)
+        return soma_ndarray
 
     logging.log_io(
         f"Writing {soma_ndarray.uri}",
@@ -518,7 +517,7 @@ def create_from_matrix(
             ),
             ingest_mode=ingest_mode,
         )
-    else:  # SOMASparseNDArray
+    elif isinstance(soma_ndarray, SparseNDArray):  # SOMASparseNDArray
         _write_matrix_to_sparseNDArray(
             soma_ndarray,
             matrix,
@@ -527,12 +526,14 @@ def create_from_matrix(
             ),
             ingest_mode=ingest_mode,
         )
+    else:
+        raise TypeError(f"unknown array type {type(soma_ndarray)}")
 
     logging.log_io(
         f"Wrote   {soma_ndarray.uri}",
         util.format_elapsed(s, f"FINISH WRITING {soma_ndarray.uri}"),
     )
-    return cast(_NDArr, soma_ndarray)
+    return soma_ndarray
 
 
 def add_X_layer(

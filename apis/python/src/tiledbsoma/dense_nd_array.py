@@ -1,59 +1,24 @@
-from typing import Optional, Sequence, cast
+from typing import Optional, cast
 
 import pyarrow as pa
 import somacore
 from somacore import options
 
 from . import util
-from .common_nd_array import build_tiledb_schema
+from .common_nd_array import NDArray
 from .exception import SOMAError
-from .options import SOMATileDBContext
-from .options.tiledb_create_options import TileDBCreateOptions
-from .tiledb_array import TileDBArray
 from .types import NTuple
 from .util import dense_indices_to_shape
 
 _UNBATCHED = options.BatchSize()
 
 
-class DenseNDArray(TileDBArray, somacore.DenseNDArray):
+class DenseNDArray(NDArray, somacore.DenseNDArray):
     """
     Represents ``X`` and others.
 
     [lifecycle: experimental]
     """
-
-    @classmethod
-    def create(
-        cls,
-        uri: str,
-        *,
-        type: pa.DataType,
-        shape: Sequence[int],
-        platform_config: Optional[options.PlatformConfig] = None,
-        context: Optional[SOMATileDBContext] = None,
-    ) -> "DenseNDArray":
-        """
-        Create a ``DenseNDArray`` named with the URI.
-
-        [lifecycle: experimental]
-
-        :param type: an Arrow type defining the type of each element in the array. If the type is unsupported, an error will be raised.
-
-        :param shape: the length of each domain as a list, e.g., [100, 10]. All lengths must be in the positive int64 range.
-
-        :param platform_config: Platform-specific options used to create this Array, provided via "tiledb"->"create" nested keys
-        """
-        context = context or SOMATileDBContext()
-        schema = build_tiledb_schema(
-            type,
-            shape,
-            TileDBCreateOptions.from_platform_config(platform_config),
-            context,
-            is_sparse=False,
-        )
-        handle = cls._create_internal(uri, schema, context)
-        return cls(handle, _this_is_internal_only="tiledbsoma-internal-code")
 
     @property
     def shape(self) -> NTuple:
