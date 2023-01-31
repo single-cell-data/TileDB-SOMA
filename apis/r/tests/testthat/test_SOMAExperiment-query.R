@@ -203,3 +203,31 @@ test_that("querying by both coordinates and value filters", {
   expect_equal(query$obs()$to_data_frame(), obs_df[obs_hits,])
   expect_equal(query$var()$to_data_frame(), var_df[var_hits,])
 })
+
+test_that("queries with empty results", {
+  uri <- withr::local_tempdir("soma-experiment-query-empty-results")
+  n_obs <- 1001L
+  n_var <- 99L
+
+  experiment <- create_and_populate_experiment(
+    uri = uri,
+    n_obs = n_obs,
+    n_var = n_var,
+    X_layer_names = c("counts", "logcounts")
+  )
+
+  # obs/var slice and value filter
+  query <- ExperimentAxisQuery$new(
+    experiment = experiment,
+    measurement_name = "RNA",
+    obs_query = AxisQuery$new(
+      value_filter = "baz == 'does-not-exist'"
+    ),
+    var_query = AxisQuery$new(
+      value_filter = "quux == 'does-not-exist'"
+    )
+  )
+
+  expect_equal(query$obs()$num_rows, 0)
+  expect_equal(query$var()$num_rows, 0)
+})
