@@ -1,7 +1,4 @@
-# TODO: once we've merged somacore 0.0.0a12, change this to
-# from somacore import AxisColumnNames, AxisQuery, ExperimentAxisQuery
-from somacore import AxisQuery, ExperimentAxisQuery
-from somacore.query.query import AxisColumnNames
+from somacore import AxisColumnNames, AxisQuery, ExperimentAxisQuery
 
 from .collection import Collection
 from .dataframe import DataFrame

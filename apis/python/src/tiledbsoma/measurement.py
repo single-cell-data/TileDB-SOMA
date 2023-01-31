@@ -1,12 +1,22 @@
 from somacore import measurement
 
-from .collection import CollectionBase
+from .collection import Collection, CollectionBase
+from .common_nd_array import NDArray
+from .dataframe import DataFrame
+from .dense_nd_array import DenseNDArray
+from .sparse_nd_array import SparseNDArray
 from .tiledb_object import AnyTileDBObject
 
 
-class Measurement(  # type: ignore[misc]
-    measurement.Measurement[AnyTileDBObject],
+class Measurement(
     CollectionBase[AnyTileDBObject],
+    measurement.Measurement[  # type: ignore[type-var]
+        DataFrame,
+        Collection[NDArray],
+        Collection[DenseNDArray],
+        Collection[SparseNDArray],
+        AnyTileDBObject,
+    ],
 ):
     """
     A ``Measurement`` is a sub-element of a ``Experiment``, and is otherwise a specialized ``Collection`` with pre-defined fields:

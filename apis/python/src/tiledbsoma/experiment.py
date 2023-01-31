@@ -1,12 +1,18 @@
 from somacore import experiment
 
-from . import collection
+from .collection import Collection, CollectionBase
+from .dataframe import DataFrame
+from .measurement import Measurement
 from .tiledb_object import AnyTileDBObject
 
 
-class Experiment(  # type: ignore[misc]
-    experiment.Experiment[AnyTileDBObject],
-    collection.AnyTileDBCollection,
+class Experiment(
+    CollectionBase[AnyTileDBObject],
+    experiment.Experiment[  # type: ignore[type-var]
+        DataFrame,
+        Collection[Measurement],
+        AnyTileDBObject,
+    ],
 ):
     """
     ``obs``: Primary annotations on the observation axis. The contents of the

@@ -580,7 +580,7 @@ def add_matrix_to_collection(
 
     Use `ingest_mode="resume"` to not error out if the schema already exists.
     """
-    with cast(Measurement, exp.ms[measurement_name]) as meas:
+    with exp.ms[measurement_name] as meas:
         if collection_name in meas:
             coll = cast(Collection[RawHandle], meas[collection_name])
         else:
@@ -983,7 +983,7 @@ def to_anndata(
     s = util.get_start_stamp()
     logging.log_io(None, "START  Experiment.to_anndata")
 
-    measurement = cast(Measurement, experiment.ms[measurement_name])
+    measurement = experiment.ms[measurement_name]
 
     obs_df = experiment.obs.read().concat().to_pandas()
     obs_df.drop([SOMA_JOINID], axis=1, inplace=True)
