@@ -1,4 +1,5 @@
 import os
+import pathlib
 from typing import List, TypeVar, Union
 
 import numpy as np
@@ -7,7 +8,7 @@ import pytest
 from typing_extensions import Literal
 
 import tiledbsoma as soma
-from tiledbsoma import collection, factory
+from tiledbsoma import collection, factory, tiledb_object
 from tiledbsoma.exception import DoesNotExistError
 
 
@@ -210,6 +211,83 @@ def test_collection_update_on_set(tmp_path):
     sc["A"] = B
     assert set(sc.keys()) == set(["A"])
     assert sc["A"] == B
+
+
+def test_cascading_close(tmp_path: pathlib.Path):
+    owned_path = tmp_path / "owned"
+    with soma.Collection.create(owned_path.as_uri()) as outer:
+        # A tree of collections fully owned by us
+        dog = outer.add_new_collection("dog")
+        spitz = dog.add_new_collection("spitz")
+        akita = spitz.add_new_collection("akita")
+        shiba = spitz.add_new_collection("shiba")
+        mutt = dog.add_new_collection("mutt")
+
+        # A mix of collections we own and collections we don't own
+        unowned_path = tmp_path / "unowned"
+        unowned_path.mkdir()
+        bird = outer.add_new_collection("bird")
+        raptor = bird.add_new_collection("raptor")
+        un_eagle = soma.Collection.create((unowned_path / "eagle").as_uri())
+        raptor["eagle"] = un_eagle
+        un_eagle_golden = un_eagle.add_new_collection("golden")
+        un_corvid = soma.Collection.create((unowned_path / "corvid").as_uri())
+        bird["corvid"] = un_corvid
+
+        for elem in (
+            dog,
+            spitz,
+            akita,
+            shiba,
+            mutt,
+            bird,
+            raptor,
+            un_eagle,
+            un_eagle_golden,
+            un_corvid,
+        ):
+            assert not elem.closed
+
+    # Owned children should be closed
+    for elem in (dog, spitz, akita, shiba, mutt, bird, raptor):
+        assert elem.closed
+    # Unowned children should not be closed
+    for elem in (un_eagle, un_eagle_golden, un_corvid):
+        assert not elem.closed
+    # Eagle cascading close
+    un_eagle.close()
+    assert un_eagle.closed
+    assert un_eagle_golden.closed
+    assert not un_corvid.closed
+
+    # Corvid close
+    un_corvid.close()
+    assert un_corvid.closed
+
+    all_elements: List[tiledb_object.AnyTileDBObject] = []
+
+    def crawl(obj: tiledb_object.AnyTileDBObject):
+        all_elements.append(obj)
+        if isinstance(obj, collection.CollectionBase):
+            for val in obj.values():
+                crawl(val)
+
+    with soma.Collection.open(owned_path.as_uri()) as reopened:
+        # Accessing all of these results in reifying a SOMA object.
+        # All of these are owned.
+        crawl(reopened)
+        assert len(all_elements) == 11
+        assert not any(elem.closed for elem in all_elements)
+
+        # Closing part of the subtree is fine (though not typical).
+        reopened["bird"].close()
+        assert reopened["bird"].closed
+        assert reopened["bird"]["raptor"].closed
+        # Doing so will not affect anything but that subtree.
+        assert not reopened.closed
+        assert not reopened["dog"].closed
+    # Closing the reopened collection closes everything.
+    assert all(elem.closed for elem in all_elements)
 
 
 # Helper tests

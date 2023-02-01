@@ -164,6 +164,8 @@ class CollectionBase(
         self._set_element(
             key, cast(CollectionElementType, new_group), use_relative_uri=was_relative
         )
+        # Since we own this object, set it to be closed when we are closed.
+        self._close_stack.enter_context(new_group)
         return new_group
 
     def _not_implemented(self, *args: Any, **kwargs: Any) -> NoReturn:
@@ -209,6 +211,8 @@ class CollectionBase(
                 tiledb_type=storage_type,
                 soma_type=None,
             )
+            # Since we just opened this object, we own it and should close it.
+            self._close_stack.enter_context(entry.soma)
         return cast(CollectionElementType, entry.soma)
 
     def set(
