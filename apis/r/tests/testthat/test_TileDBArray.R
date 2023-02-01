@@ -19,6 +19,9 @@ test_that("TileDBArray helper functions", {
   attr_cols <- setdiff(colnames(df), index_cols)
   expect_identical(tdb$attrnames(), attr_cols)
 
+  # both dimensions and attributes
+  expect_setequal(tdb$colnames(), colnames(df))
+
   # metadata
   md <- list(baz = "qux", foo = "bar")
   tdb$set_metadata(md)

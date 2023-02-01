@@ -126,13 +126,6 @@ TileDBArray <- R6::R6Class(
       )
     },
 
-    #' @description Get number of fragments in the array (lifecycle: experimental)
-    fragment_count = function() {
-      tiledb::tiledb_fragment_info_get_num(
-        tiledb::tiledb_fragment_info(self$uri)
-      )
-    },
-
     #' @description Retrieve attribute names (lifecycle: experimental)
     #' @return A character vector with the array's attribute names
     attrnames = function() {
@@ -141,6 +134,20 @@ TileDBArray <- R6::R6Class(
         FUN = tiledb::name,
         FUN.VALUE = vector("character", 1L),
         USE.NAMES = FALSE
+      )
+    },
+
+    #' @description Retrieve the names of all columns, including dimensions and
+    #' attributes (lifecycle: experimental)
+    #' @return A character vector with the array's column names
+    colnames = function() {
+      c(self$dimnames(), self$attrnames())
+    },
+
+    #' @description Get number of fragments in the array [lifecycle: experimental]
+    fragment_count = function() {
+      tiledb::tiledb_fragment_info_get_num(
+        tiledb::tiledb_fragment_info(self$uri)
       )
     },
 
