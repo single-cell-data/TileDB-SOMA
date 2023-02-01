@@ -68,12 +68,6 @@ class TileDBObject(somacore.SOMAObject, Generic[_HandleType]):
     def __repr__(self) -> str:
         return f'{self.soma_type}(uri="{self.uri}")'
 
-    # TODO: This is dangerous; two objects with the same URI may be different.
-    def __eq__(self, other: object) -> bool:
-        if not isinstance(other, TileDBObject):
-            return False
-        return self.uri == other.uri
-
     @property
     def uri(self) -> str:
         """
