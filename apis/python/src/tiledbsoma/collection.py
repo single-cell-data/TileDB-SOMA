@@ -1,8 +1,10 @@
 from __future__ import annotations
 
+import re
 import time
 from typing import (
     Any,
+    ClassVar,
     Dict,
     Generic,
     Iterator,
@@ -12,6 +14,7 @@ from typing import (
     Type,
     TypeVar,
     cast,
+    overload,
 )
 
 import attrs
@@ -24,7 +27,7 @@ from .exception import SOMAError
 from .options import SOMATileDBContext
 from .tiledb_object import AnyTileDBObject, TileDBObject
 from .types import StorageType, TDBHandle
-from .util import make_relative_path
+from .util import is_relative_uri, make_relative_path, uri_joinpath
 from .util_tiledb import (
     ReadWriteHandle,
     is_does_not_exist_error,
@@ -33,6 +36,7 @@ from .util_tiledb import (
 
 # A collection can hold any sub-type of TileDBObject
 CollectionElementType = TypeVar("CollectionElementType", bound=AnyTileDBObject)
+_Coll = TypeVar("_Coll", bound="CollectionBase[AnyTileDBObject]")
 _Self = TypeVar("_Self", bound="CollectionBase[AnyTileDBObject]")
 
 
@@ -57,6 +61,7 @@ class CollectionBase(
     ``DataFrame``, ``DenseNDArray``, ``SparseNDArray`` or ``Experiment``.
     """
 
+    __slots__ = ()
     _tiledb_type = tiledb.Group
 
     # TODO: Implement additional creation of members on collection subclasses.
@@ -92,7 +97,7 @@ class CollectionBase(
 
     # Subclass protocol to constrain which SOMA objects types  may be set on a
     # particular collection key. Used by Experiment and Measurement.
-    _subclass_constrained_soma_types: Dict[str, Tuple[str, ...]] = {}
+    _subclass_constrained_soma_types: ClassVar[Dict[str, Tuple[str, ...]]] = {}
 
     def __init__(
         self,
@@ -107,10 +112,63 @@ class CollectionBase(
         If None, the cache has not been loaded.
         """
 
+    # Overloads to allow type inference to work when doing:
+    #
+    #     some_coll.add_new_collection("key")  # -> Collection
+    # and
+    #     some_coll.add_new_collection("key", Experiment)  # -> Experiment
+    #
+    # These are only used in type inference to provide better type-checking and
+    # autocompletion etc. in static analysis, not at runtime.
+
+    @overload  # type: ignore[override]  # intentionally stricter
+    def add_new_collection(
+        self,
+        key: str,
+        cls: None = None,
+        *,
+        uri: Optional[str] = ...,
+        platform_config: Optional[options.PlatformConfig] = ...,
+    ) -> "Collection[AnyTileDBObject]":
+        ...
+
+    @overload
+    def add_new_collection(
+        self,
+        key: str,
+        cls: Type[_Coll],
+        *,
+        uri: Optional[str] = ...,
+        platform_config: Optional[options.PlatformConfig] = ...,
+    ) -> _Coll:
+        ...
+
+    def add_new_collection(
+        self,
+        key: str,
+        cls: Optional[Type[AnyTileDBCollection]] = None,
+        *,
+        uri: Optional[str] = None,
+        platform_config: Optional[options.PlatformConfig] = None,
+    ) -> "AnyTileDBCollection":
+        if key in self:
+            raise KeyError(f"{key!r} already exists in {type(self)}")
+        absolute_uri, was_relative = self._new_absolute_uri(key=key, uri=uri)
+        child_cls = cls or Collection  # set the default
+        self._check_allows_child(key, child_cls)
+        # mypy gets confused by the inferred union type of child_cls,
+        # but this is valid.
+        new_group: CollectionBase[Any] = child_cls.create(  # type: ignore[misc]
+            absolute_uri, platform_config=platform_config, context=self.context
+        )
+        self._set_element(
+            key, cast(CollectionElementType, new_group), use_relative_uri=was_relative
+        )
+        return new_group
+
     def _not_implemented(self, *args: Any, **kwargs: Any) -> NoReturn:
         raise NotImplementedError()
 
-    add_new_collection = _not_implemented
     add_new_dataframe = _not_implemented
     add_new_dense_ndarray = _not_implemented
     add_new_sparse_ndarray = _not_implemented
@@ -255,17 +313,7 @@ class CollectionBase(
             else:
                 use_relative_uri = True
 
-        if key in self._subclass_constrained_soma_types:
-            # Implement the sub-class protocol constraining the value type of certain item keys
-            accepted_types = self._subclass_constrained_soma_types[key]
-            if (
-                not isinstance(value, TileDBObject)
-                or value.soma_type not in accepted_types
-            ):
-                NL = "\n"
-                raise TypeError(
-                    f"{self.__class__.__name__} field '{key}' only accepts values of type(s) {NL.join(accepted_types)}."
-                )
+        self._check_allows_child(key, type(value))
 
         # Set has update semantics. Add if missing, delete/add if not. The TileDB Group
         # API only has add/delete. Assume add will succeed, and deal with delete/retry
@@ -321,6 +369,30 @@ class CollectionBase(
                 raise KeyError(f"{key!r} does not exist in {self}") from tdbe
             raise
 
+    def _new_absolute_uri(self, *, key: str, uri: Optional[str]) -> Tuple[str, bool]:
+        """Builds the full URI for a given child element.
+
+        Returns the full URI, and a boolean indicating whether the URI was
+        originally relative.
+        """
+        maybe_relative_uri = uri or _sanitize_for_path(key)
+        if is_relative_uri(maybe_relative_uri):
+            return uri_joinpath(self.uri, maybe_relative_uri), True
+        return maybe_relative_uri, False
+
+    @classmethod
+    def _check_allows_child(cls, key: str, child_cls: type) -> None:
+        real_child = _real_class(child_cls)
+        if not issubclass(real_child, TileDBObject):
+            raise TypeError(
+                f"only TileDB objects can be added as children of {cls}, not {child_cls}"
+            )
+        constraint = cls._subclass_constrained_soma_types.get(key)
+        if constraint is not None and real_child.soma_type not in constraint:
+            raise TypeError(
+                f"cannot add {child_cls} at {cls}[{key!r}]; only {constraint}"
+            )
+
 
 AnyTileDBCollection = CollectionBase[AnyTileDBObject]
 
@@ -331,3 +403,44 @@ class Collection(CollectionBase[CollectionElementType], Generic[CollectionElemen
 
     [lifecycle: experimental]
     """
+
+
+def _real_class(cls: Type[Any]) -> type:
+    """Extracts the real class from a generic alias.
+
+    Generic aliases like ``Collection[whatever]`` cannot be used in instance or
+    subclass checks because they are not actual types present at runtime.
+    This extracts the real type from a generic alias::
+
+        _real_class(Collection[whatever])  # -> Collection
+        _real_class(List[whatever])  # -> list
+    """
+    try:
+        # If this is a generic alias (e.g. List[x] or list[x]), this will fail.
+        issubclass(object, cls)  # Ordering intentional here.
+        # Do some extra checking because later Pythons get weird.
+        if issubclass(cls, object) and isinstance(cls, type):
+            return cls
+    except TypeError:
+        pass
+    err = TypeError(f"{cls} cannot be turned into a real type")
+    try:
+        # All types of generic alias have this.
+        origin = getattr(cls, "__origin__")
+        # Other special forms, like Union, also have an __origin__ that is not
+        # an actual type.  Verify that the origin is a real, instantiable type.
+        issubclass(object, origin)  # Ordering intentional here.
+        if issubclass(origin, object) and isinstance(origin, type):
+            return origin
+    except (AttributeError, TypeError) as exc:
+        raise err from exc
+    raise err
+
+
+_NON_WORDS = re.compile(r"[\W_]+")
+
+
+def _sanitize_for_path(key: str) -> str:
+    """Prepares the given key for use as a path component."""
+    sanitized = "_".join(_NON_WORDS.split(key))
+    return sanitized

@@ -63,6 +63,11 @@ def make_relative_path(uri: str, relative_to: str) -> str:
     return relpath
 
 
+def is_relative_uri(uri: str) -> bool:
+    """Detects whether a provided URI is a child relative URI to the parent."""
+    return "://" not in uri and not uri.startswith("/")
+
+
 def uri_joinpath(base: str, path: str) -> str:
     """
     Join a path to a URI.
