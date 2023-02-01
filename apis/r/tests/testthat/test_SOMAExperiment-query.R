@@ -134,6 +134,9 @@ test_that("querying by both coordinates and value filters", {
   n_obs <- 1001L
   n_var <- 99L
 
+  obs_slice <- bit64::as.integer64(seq(3, 72))
+  var_slice <- bit64::as.integer64(seq(7, 21))
+
   obs_label_values <- c("1003", "1007", "1038", "1099")
   var_label_values <- c("1018", "1034", "1067")
 
