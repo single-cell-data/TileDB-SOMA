@@ -45,7 +45,14 @@ class TileDBObject(somacore.SOMAObject, Generic[_HandleType]):
         self._handle = handle
         self._metadata = MetadataMapping(self._handle)
         self._close_stack = ExitStack()
+        """An exit stack to manage closing handles owned by this object.
+
+        This is used to manage both our direct handle (in the case of simple
+        TileDB objects) and the lifecycle of owned children (in the case of
+        Collections).
+        """
         self._close_stack.enter_context(self._handle)
+        self._closed = False
 
     _STORAGE_TYPE: StorageType
     _tiledb_type: ClassVar[Type[TDBHandle]]
@@ -81,6 +88,12 @@ class TileDBObject(somacore.SOMAObject, Generic[_HandleType]):
         no-op.
         """
         self._close_stack.close()
+        self._closed = True
+
+    @property
+    def closed(self) -> bool:
+        """True if the object has been closed. False if it is still open."""
+        return self._closed
 
     @property
     def mode(self) -> options.OpenMode:

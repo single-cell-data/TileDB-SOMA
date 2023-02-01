@@ -747,27 +747,27 @@ def make_experiment(
 
     with soma.Experiment.create((root / "exp").as_posix()) as exp:
         exp.obs = obs
-        with exp.add_new_collection("ms") as ms:
-            with ms.add_new_collection("RNA", soma.Measurement) as rna:
-                rna.var = var
-                with rna.add_new_collection("X", soma.Collection) as rna_x:
-                    for X_layer_name in X_layer_names:
-                        path = root / "X" / X_layer_name
-                        path.mkdir(parents=True)
-                        with make_sparse_array(path.as_posix(), (n_obs, n_vars)) as arr:
-                            rna_x[X_layer_name] = arr
+        ms = exp.add_new_collection("ms")
+        rna = ms.add_new_collection("RNA", soma.Measurement)
+        rna.var = var
+        rna_x = rna.add_new_collection("X", soma.Collection)
+        for X_layer_name in X_layer_names:
+            path = root / "X" / X_layer_name
+            path.mkdir(parents=True)
+            with make_sparse_array(path.as_posix(), (n_obs, n_vars)) as arr:
+                rna_x[X_layer_name] = arr
 
-                if obsp_layer_names:
-                    with rna.add_new_collection("obsp") as obsp:
-                        for obsp_layer_name in obsp_layer_names:
-                            obsp_path = f"{obsp.uri}/{obsp_layer_name}"
-                            with make_sparse_array(obsp_path, (n_obs, n_obs)) as arr:
-                                obsp[obsp_layer_name] = arr
+        if obsp_layer_names:
+            obsp = rna.add_new_collection("obsp")
+            for obsp_layer_name in obsp_layer_names:
+                obsp_path = f"{obsp.uri}/{obsp_layer_name}"
+                with make_sparse_array(obsp_path, (n_obs, n_obs)) as arr:
+                    obsp[obsp_layer_name] = arr
 
-                if varp_layer_names:
-                    with rna.add_new_collection("varp") as varp:
-                        for varp_layer_name in varp_layer_names:
-                            varp_path = f"{varp.uri}/{varp_layer_name}"
-                            with make_sparse_array(varp_path, (n_vars, n_vars)) as arr:
-                                varp[varp_layer_name] = arr
+        if varp_layer_names:
+            varp = rna.add_new_collection("varp")
+            for varp_layer_name in varp_layer_names:
+                varp_path = f"{varp.uri}/{varp_layer_name}"
+                with make_sparse_array(varp_path, (n_vars, n_vars)) as arr:
+                    varp[varp_layer_name] = arr
     return factory.open((root / "exp").as_posix())
