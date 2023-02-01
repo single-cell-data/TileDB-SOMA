@@ -1,20 +1,27 @@
 import pathlib
 import time
 import urllib.parse
-from typing import Any, Callable, List, Optional, Tuple, Type, TypeVar, Union
+from typing import Any, List, Optional, Tuple, Type, TypeVar, Union
 
 import somacore
 from somacore import options
 
+# Define a typeguard_ignore function so that we can use the `@typeguard_ignore`
+# decorator without having to depend upon typeguard at runtime.
 _F = TypeVar("_F")
+
+
+def typeguard_ignore(f: _F) -> _F:
+    """No-op. Returns the argument unchanged."""
+    return f
+
+
 try:
     import typeguard
 
-    typeguard_ignore: Callable[[_F], _F] = typeguard.typeguard_ignore
+    typeguard_ignore = typeguard.typeguard_ignore  # noqa: F811
 except ImportError:
-
-    def typeguard_ignore(f: _F) -> _F:
-        return f
+    pass
 
 
 def get_start_stamp() -> float:
