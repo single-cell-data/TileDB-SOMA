@@ -149,7 +149,10 @@ def _open_array(
             raise TypeError(f"stored data is {cls}; expected {want_type}")
         return cast(
             _Arr,
-            cls(handle, _this_is_internal_only="tiledbsoma-internal-code"),
+            cls(
+                handle,
+                _dont_call_this_use_create_or_open_instead="tiledbsoma-internal-code",
+            ),
         )
     except Exception:
         handle.close()
@@ -172,7 +175,10 @@ def _open_group(
             raise TypeError(f"stored data is {cls}; expected {want_type}")
         return cast(
             _Coll,
-            cls(handle, _this_is_internal_only="tiledbsoma-internal-code"),
+            cls(
+                handle,
+                _dont_call_this_use_create_or_open_instead="tiledbsoma-internal-code",
+            ),
         )
     except Exception:
         handle.close()

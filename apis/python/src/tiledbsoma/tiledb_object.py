@@ -27,23 +27,13 @@ class TileDBObject(somacore.SOMAObject, Generic[_HandleType]):
         self,
         handle: ReadWriteHandle[_HandleType],
         *,
-        _this_is_internal_only: str = "unset",
+        _dont_call_this_use_create_or_open_instead: str = "unset",
     ):
-        """Common initialization.
+        """Internal-only common initializer steps.
 
-        This function is internal; users should open TileDB SOMA object using
+        This function is internal; users should open TileDB SOMA objects using
         the :meth:`create` and :meth:`open` factory class methods.
         """
-        if _this_is_internal_only != "tiledbsoma-internal-code":
-            name = type(self).__name__
-            raise TypeError(
-                f"{name} initializers are intended for internal use only."
-                f" To open an existing {name}, use tiledbsoma.open(...)"
-                f" or the {name}.open(...) class method."
-                f" To create a new {name}, use the {name}.create class method."
-            )
-        self._handle = handle
-        self._metadata = MetadataMapping(self._handle)
         self._close_stack = ExitStack()
         """An exit stack to manage closing handles owned by this object.
 
@@ -51,6 +41,20 @@ class TileDBObject(somacore.SOMAObject, Generic[_HandleType]):
         TileDB objects) and the lifecycle of owned children (in the case of
         Collections).
         """
+        # If a user calls something like tiledbsoma.Experiment(something),
+        # give them a hint about the right thing to do.
+        if _dont_call_this_use_create_or_open_instead != "tiledbsoma-internal-code":
+            name = type(self).__name__
+            raise TypeError(
+                f"{name} objects must be created using a factory function."
+                f" To open an existing {name}, use tiledbsoma.open(uri, ...)"
+                f" or the {name}.open(uri, ...) class method."
+                f" To create a new {name}, use the {name}.create class method."
+                f" Directly calling `{name}(...)` is intended for TileDB SOMA"
+                f" internal use only."
+            )
+        self._handle = handle
+        self._metadata = MetadataMapping(self._handle)
         self._close_stack.enter_context(self._handle)
         self._closed = False
 
