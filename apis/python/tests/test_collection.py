@@ -220,8 +220,18 @@ def test_cascading_close(tmp_path: pathlib.Path):
         dog = outer.add_new_collection("dog")
         spitz = dog.add_new_collection("spitz")
         akita = spitz.add_new_collection("akita")
+        hachiko = akita.add_new_dense_ndarray(
+            "hachiko", type=pa.float64(), shape=(1, 2, 3)
+        )
         shiba = spitz.add_new_collection("shiba")
+        kabosu = shiba.add_new_sparse_ndarray("kabosu", type=pa.uint8(), shape=(10,))
         mutt = dog.add_new_collection("mutt")
+        louis = mutt.add_new_dataframe(
+            "louis",
+            schema=pa.schema(
+                (("soma_joinid", pa.int64()), ("stripes", pa.large_string()))
+            ),
+        )
 
         # A mix of collections we own and collections we don't own
         unowned_path = tmp_path / "unowned"
@@ -238,8 +248,11 @@ def test_cascading_close(tmp_path: pathlib.Path):
             dog,
             spitz,
             akita,
+            hachiko,
             shiba,
+            kabosu,
             mutt,
+            louis,
             bird,
             raptor,
             un_eagle,
@@ -249,7 +262,7 @@ def test_cascading_close(tmp_path: pathlib.Path):
             assert not elem.closed
 
     # Owned children should be closed
-    for elem in (dog, spitz, akita, shiba, mutt, bird, raptor):
+    for elem in (dog, spitz, akita, hachiko, shiba, kabosu, mutt, louis, bird, raptor):
         assert elem.closed
     # Unowned children should not be closed
     for elem in (un_eagle, un_eagle_golden, un_corvid):
@@ -276,7 +289,7 @@ def test_cascading_close(tmp_path: pathlib.Path):
         # Accessing all of these results in reifying a SOMA object.
         # All of these are owned.
         crawl(reopened)
-        assert len(all_elements) == 11
+        assert len(all_elements) == 14
         assert not any(elem.closed for elem in all_elements)
 
         # Closing part of the subtree is fine (though not typical).

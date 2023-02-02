@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import functools
 import re
 import time
 from typing import (
@@ -10,6 +11,7 @@ from typing import (
     Iterator,
     List,
     Optional,
+    Sequence,
     Tuple,
     Type,
     TypeVar,
@@ -18,13 +20,18 @@ from typing import (
 )
 
 import attrs
+import pyarrow as pa
 import somacore
 import tiledb
 from somacore import options
-from typing_extensions import NoReturn
 
+from .common_nd_array import NDArray
+from .constants import SOMA_JOINID
+from .dataframe import DataFrame
+from .dense_nd_array import DenseNDArray
 from .exception import SOMAError
 from .options import SOMATileDBContext
+from .sparse_nd_array import SparseNDArray
 from .tiledb_object import AnyTileDBObject, TileDBObject
 from .types import StorageType, TDBHandle
 from .util import is_relative_uri, make_relative_path, uri_joinpath
@@ -38,6 +45,7 @@ from .util_tiledb import (
 CollectionElementType = TypeVar("CollectionElementType", bound=AnyTileDBObject)
 _Coll = TypeVar("_Coll", bound="CollectionBase[AnyTileDBObject]")
 _Self = TypeVar("_Self", bound="CollectionBase[AnyTileDBObject]")
+_NDArr = TypeVar("_NDArr", bound=NDArray)
 
 
 @attrs.define()
@@ -153,9 +161,9 @@ class CollectionBase(
     ) -> "AnyTileDBCollection":
         if key in self:
             raise KeyError(f"{key!r} already exists in {type(self)}")
-        absolute_uri, was_relative = self._new_absolute_uri(key=key, uri=uri)
         child_cls = cls or Collection  # set the default
         self._check_allows_child(key, child_cls)
+        absolute_uri, was_relative = self._new_absolute_uri(key=key, uri=uri)
         # mypy gets confused by the inferred union type of child_cls,
         # but this is valid.
         new_group: CollectionBase[Any] = child_cls.create(  # type: ignore[misc]
@@ -168,12 +176,83 @@ class CollectionBase(
         self._close_stack.enter_context(new_group)
         return new_group
 
-    def _not_implemented(self, *args: Any, **kwargs: Any) -> NoReturn:
-        raise NotImplementedError()
+    def add_new_dataframe(
+        self,
+        key: str,
+        *,
+        uri: Optional[str] = None,
+        schema: pa.Schema,
+        index_column_names: Sequence[str] = (SOMA_JOINID,),
+        platform_config: Optional[options.PlatformConfig] = None,
+    ) -> DataFrame:
+        if key in self:
+            raise KeyError(f"{key!r} already exists in {type(self)}")
+        self._check_allows_child(key, DataFrame)
+        absolute_uri, was_relative = self._new_absolute_uri(key=key, uri=uri)
+        new_df = DataFrame.create(
+            absolute_uri,
+            index_column_names=index_column_names,
+            schema=schema,
+            platform_config=platform_config,
+            context=self.context,
+        )
+        # A dataframe might not be the declared type of this collection,
+        # but we can't really handle that within the type system.
+        self._set_element(
+            key, new_df, use_relative_uri=was_relative  # type: ignore[arg-type]
+        )
+        self._close_stack.enter_context(new_df)
+        return new_df
 
-    add_new_dataframe = _not_implemented
-    add_new_dense_ndarray = _not_implemented
-    add_new_sparse_ndarray = _not_implemented
+    def _add_new_ndarray(
+        self,
+        cls: Type[_NDArr],
+        key: str,
+        *,
+        uri: Optional[str] = None,
+        type: pa.DataType,
+        shape: Sequence[int],
+        platform_config: Optional[options.PlatformConfig] = None,
+    ) -> _NDArr:
+        if key in self:
+            raise KeyError(f"{key!r} already exists in {type(self)}")
+        self._check_allows_child(key, cls)
+        absolute_uri, was_relative = self._new_absolute_uri(key=key, uri=uri)
+        new_arr = cls.create(
+            absolute_uri,
+            type=type,
+            shape=shape,
+            platform_config=platform_config,
+            context=self.context,
+        )
+        # An NDArray might not be the declared type of this collection,
+        # but we can't really handle that within the type system.
+        self._set_element(
+            key, new_arr, use_relative_uri=was_relative  # type: ignore[arg-type]
+        )
+        self._close_stack.enter_context(new_arr)
+        return new_arr
+
+    # These user-facing functions forward all parameters directly to
+    # self._add_new_ndarray, with the specific class type substituted in the
+    # first parameter, but without having to duplicate the entire arg list.
+    # (mypy doesn't yet understand that these are of the correct type.)
+    add_new_dense_ndarray = functools.partialmethod(  # type: ignore[assignment]
+        _add_new_ndarray, DenseNDArray
+    )
+    """Creates a new dense NDArray as a child of this collection.
+
+    Parameters are as in :meth:`DenseNDArray.create`.
+    See :meth:`add_new_collection` for details about child creation.
+    """
+    add_new_sparse_ndarray = functools.partialmethod(  # type: ignore[assignment]
+        _add_new_ndarray, SparseNDArray
+    )
+    """Creates a new sparse NDArray as a child of this collection.
+
+    Parameters are as in :meth:`SparseNDArray.create`.
+    See :meth:`add_new_collection` for details about child creation.
+    """
 
     def __len__(self) -> int:
         """

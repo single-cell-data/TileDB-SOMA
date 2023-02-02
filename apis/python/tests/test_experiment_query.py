@@ -1,6 +1,5 @@
-import pathlib
 import sys
-from typing import List, Optional, Tuple
+from typing import Tuple
 
 import numpy as np
 import pandas as pd
@@ -10,17 +9,8 @@ from scipy import sparse
 
 import tiledbsoma as soma
 from tiledbsoma import factory
+from tiledbsoma.collection import CollectionBase
 from tiledbsoma.experiment_query import X_as_series
-
-
-@pytest.fixture(scope="function")
-def obs(tmp_path, n_obs) -> soma.DataFrame:
-    return make_dataframe((tmp_path / "obs").as_posix(), n_obs)
-
-
-@pytest.fixture(scope="function")
-def var(tmp_path, n_vars) -> soma.DataFrame:
-    return make_dataframe((tmp_path / "var").as_posix(), n_vars)
 
 
 @pytest.fixture
@@ -43,22 +33,29 @@ def soma_experiment(
     tmp_path,
     n_obs,
     n_vars,
-    obs,
-    var,
     X_layer_names,
     obsp_layer_names,
     varp_layer_names,
 ):
-    return make_experiment(
-        tmp_path,
-        n_obs,
-        n_vars,
-        obs,
-        var,
-        X_layer_names,
-        obsp_layer_names,
-        varp_layer_names,
-    )
+    with soma.Experiment.create((tmp_path / "exp").as_posix()) as exp:
+        add_dataframe(exp, "obs", n_obs)
+        ms = exp.add_new_collection("ms")
+        rna = ms.add_new_collection("RNA", soma.Measurement)
+        add_dataframe(rna, "var", n_vars)
+        rna_x = rna.add_new_collection("X", soma.Collection)
+        for X_layer_name in X_layer_names:
+            add_sparse_array(rna_x, X_layer_name, (n_obs, n_vars))
+
+        if obsp_layer_names:
+            obsp = rna.add_new_collection("obsp")
+            for obsp_layer_name in obsp_layer_names:
+                add_sparse_array(obsp, obsp_layer_name, (n_obs, n_obs))
+
+        if varp_layer_names:
+            varp = rna.add_new_collection("varp")
+            for varp_layer_name in varp_layer_names:
+                add_sparse_array(varp, varp_layer_name, (n_vars, n_vars))
+    return factory.open((tmp_path / "exp").as_posix())
 
 
 @pytest.mark.xfail(
@@ -693,9 +690,9 @@ Fixture support & utility functions below.
 """
 
 
-def make_dataframe(path: str, sz: int) -> soma.DataFrame:
-    with soma.DataFrame.create(
-        path,
+def add_dataframe(coll: CollectionBase, key: str, sz: int) -> None:
+    df = coll.add_new_dataframe(
+        key,
         schema=pa.schema(
             [
                 ("soma_joinid", pa.int64()),
@@ -703,71 +700,27 @@ def make_dataframe(path: str, sz: int) -> soma.DataFrame:
             ]
         ),
         index_column_names=["soma_joinid"],
-    ) as df:
-        df.write(
-            pa.Table.from_pydict(
-                {
-                    "soma_joinid": [i for i in range(sz)],
-                    "label": [str(i) for i in range(sz)],
-                }
-            )
+    )
+    df.write(
+        pa.Table.from_pydict(
+            {
+                "soma_joinid": [i for i in range(sz)],
+                "label": [str(i) for i in range(sz)],
+            }
         )
-    return factory.open(path)
+    )
 
 
-def make_sparse_array(path: str, shape: Tuple[int, int]) -> soma.SparseNDArray:
-    with soma.SparseNDArray.create(path, type=pa.float32(), shape=shape) as a:
-        tensor = pa.SparseCOOTensor.from_scipy(
-            sparse.random(
-                shape[0],
-                shape[1],
-                density=0.1,
-                format="coo",
-                dtype=np.float32,
-                random_state=np.random.default_rng(),
-            )
+def add_sparse_array(coll: CollectionBase, key: str, shape: Tuple[int, int]) -> None:
+    a = coll.add_new_sparse_ndarray(key, type=pa.float32(), shape=shape)
+    tensor = pa.SparseCOOTensor.from_scipy(
+        sparse.random(
+            shape[0],
+            shape[1],
+            density=0.1,
+            format="coo",
+            dtype=np.float32,
+            random_state=np.random.default_rng(),
         )
-        a.write(tensor)
-    return factory.open(path)
-
-
-def make_experiment(
-    root: pathlib.Path,
-    n_obs: int,
-    n_vars: int,
-    obs: soma.DataFrame,
-    var: soma.DataFrame,
-    X_layer_names: List[str],  # will create a random matrix per layer name
-    obsp_layer_names: Optional[List[str]] = None,
-    varp_layer_names: Optional[List[str]] = None,
-) -> soma.Experiment:
-
-    assert len(obs) == n_obs
-    assert len(var) == n_vars
-
-    with soma.Experiment.create((root / "exp").as_posix()) as exp:
-        exp.obs = obs
-        ms = exp.add_new_collection("ms")
-        rna = ms.add_new_collection("RNA", soma.Measurement)
-        rna.var = var
-        rna_x = rna.add_new_collection("X", soma.Collection)
-        for X_layer_name in X_layer_names:
-            path = root / "X" / X_layer_name
-            path.mkdir(parents=True)
-            with make_sparse_array(path.as_posix(), (n_obs, n_vars)) as arr:
-                rna_x[X_layer_name] = arr
-
-        if obsp_layer_names:
-            obsp = rna.add_new_collection("obsp")
-            for obsp_layer_name in obsp_layer_names:
-                obsp_path = f"{obsp.uri}/{obsp_layer_name}"
-                with make_sparse_array(obsp_path, (n_obs, n_obs)) as arr:
-                    obsp[obsp_layer_name] = arr
-
-        if varp_layer_names:
-            varp = rna.add_new_collection("varp")
-            for varp_layer_name in varp_layer_names:
-                varp_path = f"{varp.uri}/{varp_layer_name}"
-                with make_sparse_array(varp_path, (n_vars, n_vars)) as arr:
-                    varp[varp_layer_name] = arr
-    return factory.open((root / "exp").as_posix())
+    )
+    a.write(tensor)
