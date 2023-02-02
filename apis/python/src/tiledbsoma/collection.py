@@ -233,7 +233,10 @@ class CollectionBase(
         self._close_stack.enter_context(new_arr)
         return new_arr
 
-    # These are both correct but mypy doesn't get it.
+    # These user-facing functions forward all parameters directly to
+    # self._add_new_ndarray, with the specific class type substituted in the
+    # first parameter, but without having to duplicate the entire arg list.
+    # (mypy doesn't yet understand that these are of the correct type.)
     add_new_dense_ndarray = functools.partialmethod(  # type: ignore[assignment]
         _add_new_ndarray, DenseNDArray
     )
