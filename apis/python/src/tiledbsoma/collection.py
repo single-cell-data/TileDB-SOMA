@@ -161,9 +161,9 @@ class CollectionBase(
     ) -> "AnyTileDBCollection":
         if key in self:
             raise KeyError(f"{key!r} already exists in {type(self)}")
-        absolute_uri, was_relative = self._new_absolute_uri(key=key, uri=uri)
         child_cls = cls or Collection  # set the default
         self._check_allows_child(key, child_cls)
+        absolute_uri, was_relative = self._new_absolute_uri(key=key, uri=uri)
         # mypy gets confused by the inferred union type of child_cls,
         # but this is valid.
         new_group: CollectionBase[Any] = child_cls.create(  # type: ignore[misc]
@@ -187,8 +187,8 @@ class CollectionBase(
     ) -> DataFrame:
         if key in self:
             raise KeyError(f"{key!r} already exists in {type(self)}")
-        absolute_uri, was_relative = self._new_absolute_uri(key=key, uri=uri)
         self._check_allows_child(key, DataFrame)
+        absolute_uri, was_relative = self._new_absolute_uri(key=key, uri=uri)
         new_df = DataFrame.create(
             absolute_uri,
             index_column_names=index_column_names,
@@ -216,8 +216,8 @@ class CollectionBase(
     ) -> _NDArr:
         if key in self:
             raise KeyError(f"{key!r} already exists in {type(self)}")
-        absolute_uri, was_relative = self._new_absolute_uri(key=key, uri=uri)
         self._check_allows_child(key, cls)
+        absolute_uri, was_relative = self._new_absolute_uri(key=key, uri=uri)
         new_arr = cls.create(
             absolute_uri,
             type=type,
