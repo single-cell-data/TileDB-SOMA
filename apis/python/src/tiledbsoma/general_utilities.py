@@ -49,5 +49,8 @@ def show_package_versions() -> None:
     """
     print("tiledbsoma.__version__   ", get_implementation_version())
     print("tiledb.__version__       ", tiledb.__version__)
-    print('core version             ', ".".join(str(ijk) for ijk in list(tiledb.libtiledb.version())))
+    print(
+        "core version             ",
+        ".".join(str(ijk) for ijk in list(tiledb.libtiledb.version())),
+    )
     print("python__version__        ", ".".join(str(v) for v in sys.version_info))
