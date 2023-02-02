@@ -16,10 +16,10 @@ Provide a code example and any sample input data (e.g. an H5AD) as an attachment
 **Expected behavior**
 A clear and concise description of what you expected to happen.
 
-**Desktop (please complete the following information):**
+**Versions (please complete the following information):**
  - TileDB-SOMA version:
- - Python version:
- - OS: [e.g. iOS]
+ - Language and language version (e.g. Python 3.8):
+ - OS (e.g. iOS): 
 
 **Additional context**
 Add any other context about the problem here.
