@@ -8,13 +8,10 @@ assignees: ''
 ---
 
 **Describe the bug**
-A clear and concise description of what failed to work. Include any available error messages.
+A clear and concise description of what failed to work and what you expected to happen. Include any available error messages.
 
 **To Reproduce**
 Provide a code example and any sample input data (e.g. an H5AD) as an attachment to reproduce this behavior.
-
-**Expected behavior**
-A clear and concise description of what you expected to happen.
 
 **Versions (please complete the following information):**
  - TileDB-SOMA version:
