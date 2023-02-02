@@ -8,7 +8,7 @@ assignees: ''
 ---
 
 **Describe the bug**
-A clear and concise description of what the bug is.
+A clear and concise description of what failed to work. Include any available error messages.
 
 **To Reproduce**
 Provide a code example and any sample input data (e.g. an H5AD) as an attachment to reproduce this behavior.
