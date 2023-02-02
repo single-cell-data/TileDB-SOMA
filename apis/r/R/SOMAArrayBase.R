@@ -33,8 +33,27 @@ SOMAArrayBase <- R6::R6Class(
           rl <- sr_next(private$soma_reader_pointer)
           private$soma_reader_transform(rl)
       }
-    }
+    },
 
+    stats_enable = function() {
+      .tiledb_stats_enable()
+    },
+
+    stats_disable = function() {
+      .tiledb_stats_disable()
+    },
+
+    stats_reset = function() {
+      .tiledb_stats_reset()
+    },
+
+    stats_dump = function() {
+      .tiledb_stats_raw_dump()
+    },
+
+    stats_show = function() {
+      cat(.tiledb_stats_raw_dump(), "\n")
+    }
   ),
 
   private = list(
