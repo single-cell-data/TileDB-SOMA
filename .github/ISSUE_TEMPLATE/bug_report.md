@@ -11,7 +11,7 @@ assignees: ''
 A clear and concise description of what the bug is.
 
 **To Reproduce**
-Please provide a code example to reproduce this behavior.
+Provide a code example and any sample input data (e.g. an H5AD) as an attachment to reproduce this behavior.
 
 **Expected behavior**
 A clear and concise description of what you expected to happen.
