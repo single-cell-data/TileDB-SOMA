@@ -186,10 +186,7 @@ class DataFrame(TileDBArray, somacore.DataFrame):
                 dim_name = arr.schema.domain.dim(i).name
                 if dim_coords is None:
                     pass  # No constraint; select all in this dimension
-                elif isinstance(dim_coords, int) or isinstance(dim_coords, str):
-                    # TO DO: Support index types other than int and string when we have support
-                    # in libtiledbsoma's SOMAReader. See also
-                    # https://github.com/single-cell-data/TileDB-SOMA/issues/419
+                elif isinstance(dim_coords, (int, str, bytes)):
                     sr.set_dim_points(dim_name, [dim_coords])
                 elif isinstance(dim_coords, np.ndarray):
                     if dim_coords.ndim != 1:
@@ -298,9 +295,6 @@ def _canonicalize_schema(
             raise ValueError(
                 f"All index names must be dataframe schema: '{index_column_name}' not in {schema_names_string}"
             )
-        # TODO: Pending
-        # https://github.com/single-cell-data/TileDB-SOMA/issues/418
-        # https://github.com/single-cell-data/TileDB-SOMA/issues/419
         if schema.field(index_column_name).type not in [
             pa.int8(),
             pa.uint8(),
@@ -312,10 +306,14 @@ def _canonicalize_schema(
             pa.uint64(),
             pa.float32(),
             pa.float64(),
+            pa.binary(),
+            pa.large_binary(),
             pa.string(),
             pa.large_string(),
         ]:
-            raise TypeError("Unsupported index type - pending fix #418 and #419")
+            raise TypeError(
+                f"Unsupported index type {schema.field(index_column_name).type}"
+            )
 
     return schema
 
