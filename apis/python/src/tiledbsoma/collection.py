@@ -240,9 +240,19 @@ class CollectionBase(
     add_new_dense_ndarray = functools.partialmethod(  # type: ignore[assignment]
         _add_new_ndarray, DenseNDArray
     )
+    """Creates a new dense NDArray as a child of this collection.
+
+    Parameters are as in :meth:`DenseNDArray.create`.
+    See :meth:`add_new_collection` for details about child creation.
+    """
     add_new_sparse_ndarray = functools.partialmethod(  # type: ignore[assignment]
         _add_new_ndarray, SparseNDArray
     )
+    """Creates a new sparse NDArray as a child of this collection.
+
+    Parameters are as in :meth:`SparseNDArray.create`.
+    See :meth:`add_new_collection` for details about child creation.
+    """
 
     def __len__(self) -> int:
         """
