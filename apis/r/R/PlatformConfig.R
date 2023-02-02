@@ -1,17 +1,21 @@
-#' @include MappingBase.R
+#' Platform Configuration
 #'
-NULL
-
+#' @export
+#'
 PlatformConfig <- R6::R6Class(
   classname = 'PlatformConfig',
   inherit = MappingBase,
   public = list(
-    initialize = function() {
-      .NotYetImplemented()
-    },
+    # initialize = function() {
+    #   .NotYetImplemented()
+    # },
+    #' @return ...
     platforms = function() {
       return(self$keys())
     },
+    #' @param platform ...
+    #'
+    #' @return ...
     ops = function(platform = NULL) {
       platform <- platform %||% self$platforms()[1L]
       if (isTRUE(x = platform)) {
@@ -28,27 +32,47 @@ PlatformConfig <- R6::R6Class(
       platform <- match.arg(arg = platform, choices = self$platforms())
       return(super$get(key = platform)$keys())
     },
+    #' @param platform ...
+    #' @param op ...
+    #' @param key ...
+    #' @param default ...
+    #'
+    #' @return ...
+    get = function(platform, op = NULL, key = NULL, default = NULL) {
+      platform <- platform[1L] %||% self$platforms()[1L]
+      platform <- match.arg(arg = platform, choices = self$platforms())
+      pmap <- super$get(key = platform)
+      if (is.null(x = op)) {
+        return(pmap)
+      }
+      opmap <- pmap$get(key = op)
+      if (is.null(x = key)) {
+        return(opmap)
+      }
+      return(opmap$get(key = key, default = default))
+    },
+    #' @param platform ...
+    #'
+    #' @return ...
     get_ops = function(platform) {
       platform <- platform[1L] %||% self$platforms()[1L]
       platform <- match.arg(arg = platform, choices = self$platforms())
       return(super$get(key = platform))
     },
-    set = function(platform, op, value) {
+    #' @param platform ...
+    #' @param op ...
+    #' @param key ...
+    #' @param value ...
+    #'
+    #' @return ...
+    set = function(platform, op, key, value) {
       stopifnot(
         is.character(x = platform) && length(x = platform) == 1L,
-        is.character(x = op) && length(x = op) == 1L,
-        inherits(x = value, what = 'ScalarMap')
+        is.character(x = op) && length(x = op) == 1L
       )
-      platform <- tryCatch(
-        expr = match.arg(arg = platform, choices = self$platform()),
-        error = \(...) platform
-      )
-      pconf <- if (platform %in% self$.platforms()) {
-        self$get(key = platform)
-      } else {
-        ConfigList$new()
-      }
-      pconf$add_map(key = op, value = value)
+      pmap <- super$get(key = platform, default = ConfigList$new())
+      pmap$set(op = op, key = key, value = value)
+      super$set(key = platform, value = pmap)
       return(invisible(x = self))
     }
   ),

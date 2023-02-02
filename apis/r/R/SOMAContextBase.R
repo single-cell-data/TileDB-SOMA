@@ -1,12 +1,18 @@
 #' @include ScalarList.R
-#' @include ScalarMap.R
 #'
 NULL
 
+#' Base SOMA Context
+#'
+#' @keywords internal
+#'
+#' @export
+#'
 SOMAContextBase <- R6::R6Class(
   classname = 'SOMAContextBase',
   inherit = ScalarMap,
   public = list(
+    #' @return ...
     initialize = function() {
       calls <- vapply(
         X = lapply(X = sys.calls(), FUN = as.character),
@@ -19,6 +25,10 @@ SOMAContextBase <- R6::R6Class(
       }
       super$initialize()
     },
+    #' @param key ...
+    #' @param value ...
+    #'
+    #' @return ...
     set = function(key, value) {
       super$set(key = key, value = value)
       soma_contexts <- .SOMA_CONTEXTS()

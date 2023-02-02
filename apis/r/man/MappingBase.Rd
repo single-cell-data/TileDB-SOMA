@@ -19,7 +19,10 @@ R6 Base Mapping Type
 \item \href{#method-MappingBase-get}{\code{MappingBase$get()}}
 \item \href{#method-MappingBase-set}{\code{MappingBase$set()}}
 \item \href{#method-MappingBase-setv}{\code{MappingBase$setv()}}
+\item \href{#method-MappingBase-update}{\code{MappingBase$update()}}
+\item \href{#method-MappingBase-length}{\code{MappingBase$length()}}
 \item \href{#method-MappingBase-to_list}{\code{MappingBase$to_list()}}
+\item \href{#method-MappingBase-print}{\code{MappingBase$print()}}
 \item \href{#method-MappingBase-clone}{\code{MappingBase$clone()}}
 }
 }
@@ -91,7 +94,7 @@ Return the items of the map as a list
 \describe{
 \item{\code{key}}{Key to get}
 
-\item{\code{default}}{Default value to return if \code{key} is not foud}
+\item{\code{default}}{Default value to return if \code{key} is not found}
 }
 \if{html}{\out{</div>}}
 }
@@ -118,7 +121,8 @@ The value of \code{key} in the map, or \code{default} if
 \if{html}{\out{</div>}}
 }
 \subsection{Returns}{
-[chainable] Invisibly returns \code{self}
+[chainable] Invisibly returns \code{self} with
+\code{value} added as \code{key}
 }
 }
 \if{html}{\out{<hr>}}
@@ -137,7 +141,40 @@ The value of \code{key} in the map, or \code{default} if
 \if{html}{\out{</div>}}
 }
 \subsection{Returns}{
-[chainable] Invisibly returns \code{self}
+[chainable] Invisibly returns \code{self} with the values
+of \code{...}
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-MappingBase-update"></a>}}
+\if{latex}{\out{\hypertarget{method-MappingBase-update}{}}}
+\subsection{Method \code{update()}}{
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{MappingBase$update(map)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{map}}{A mapping type to update the current map with}
+}
+\if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+[chainable] Invisibly returns \code{self} with the value
+of \code{map}
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-MappingBase-length"></a>}}
+\if{latex}{\out{\hypertarget{method-MappingBase-length}{}}}
+\subsection{Method \code{length()}}{
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{MappingBase$length()}\if{html}{\out{</div>}}
+}
+
+\subsection{Returns}{
+The number of items in the map
 }
 }
 \if{html}{\out{<hr>}}
@@ -149,7 +186,20 @@ The value of \code{key} in the map, or \code{default} if
 }
 
 \subsection{Returns}{
-Returns the map as a list
+The map as a list
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-MappingBase-print"></a>}}
+\if{latex}{\out{\hypertarget{method-MappingBase-print}{}}}
+\subsection{Method \code{print()}}{
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{MappingBase$print()}\if{html}{\out{</div>}}
+}
+
+\subsection{Returns}{
+[chainable] Prints information about the map to \code{stdout}
+and invisibly returns \code{self}
 }
 }
 \if{html}{\out{<hr>}}

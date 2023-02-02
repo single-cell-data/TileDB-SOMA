@@ -40,7 +40,7 @@ MappingBase <- R6::R6Class(
       return(private$.data)
     },
     #' @param key Key to get
-    #' @param default Default value to return if \code{key} is not foud
+    #' @param default Default value to return if \code{key} is not found
     #'
     #' @return The value of \code{key} in the map, or \code{default} if
     #' \code{key} is not found
@@ -58,7 +58,8 @@ MappingBase <- R6::R6Class(
     #' @param key Key to set
     #' @param value Value to add for \code{key}
     #'
-    #' @return \[chainable\] Invisibly returns \code{self}
+    #' @return \[chainable\] Invisibly returns \code{self} with
+    #' \code{value} added as \code{key}
     #'
     set = function(key, value) {
       stopifnot(
@@ -91,24 +92,36 @@ MappingBase <- R6::R6Class(
     },
     #' @param ... Named arguments to add to \code{self}
     #'
-    #' @return \[chainable\] Invisibly returns \code{self}
+    #' @return \[chainable\] Invisibly returns \code{self} with the values
+    #' of \code{...}
     #'
     setv = function(...) {
-      args <- list(...)
+      args <- as.list(x = c(...))
       stopifnot(is_named_list(x = args))
       for (i in seq_along(along.with = args)) {
         self$set(key = names(x = args)[i], value = args[[i]])
       }
       return(invisible(x = self))
     },
+    #' @param map A mapping type to update the current map with
+    #' @return \[chainable\] Invisibly returns \code{self} with the value
+    #' of \code{map}
+    update = function(map) {
+      stopifnot(inherits(x = map, what = 'MappingBase'))
+      self$setv(map$items())
+      return(invisible(x = self))
+    },
+    #' @return The number of items in the map
     length = function() {
       return(length(x = private$.data))
     },
-    #' @return Returns the map as a list
+    #' @return The map as a list
     #'
     to_list = function() {
       return(private$.data)
     },
+    #' @return \[chainable\] Prints information about the map to \code{stdout}
+    #' and invisibly returns \code{self}
     print = function() {
       vowels <- c('a', 'e', 'i', 'o', 'u')
       cls <- class(x = self)[1L]

@@ -3,10 +3,18 @@
 #'
 NULL
 
+#' SOMA TileDB Context
+#'
+#' @export
+#'
 SOMATileDBContext <- R6::R6Class(
   classname = 'SOMATileDBContext',
   inherit = SOMAContextBase,
   public = list(
+    #' @param config ...
+    #' @param cached ...
+    #'
+    #' @return ...
     initialize = function(config = NULL, cached = TRUE) {
       super$initialize()
       config <- config %||% character()
@@ -31,9 +39,14 @@ SOMATileDBContext <- R6::R6Class(
         self$setv(soma_config)
       }
     },
+    #' @return ...
     keys = function() {
       return(super$keys(), private$.ctx_names())
     },
+    #' @param key ...
+    #' @param default ...
+    #'
+    #' @return ...
     get = function(key, default = NULL) {
       key <- match.arg(arg = key, choices = self$keys())
       if (key %in% private$.ctx_names()) {
@@ -43,6 +56,10 @@ SOMATileDBContext <- R6::R6Class(
       }
       return(super$get(key = key, default = default))
     },
+    #' @param key ...
+    #' @param value ...
+    #'
+    #' @return ...
     set = function(key, value) {
       stopifnot(
         is.character(x = key),

@@ -1,7 +1,3 @@
-#' @include MappingBase.R
-#'
-NULL
-
 #' A Mapping Type for Scalars
 #'
 ScalarMap <- R6::R6Class(
@@ -16,6 +12,8 @@ ScalarMap <- R6::R6Class(
     },
     #' @param key ...
     #' @param value ...
+    #'
+    #' @return ...
     set = function(key, value) {
       stopifnot(is.null(x = value) || length(x = value) == 1L)
       if (private$.type != 'any') {
