@@ -342,12 +342,8 @@ def make_dataframe(request):
         pa.uint64(),
         pa.string(),
         pa.large_string(),
-        pytest.param(
-            pa.binary(), marks=pytest.mark.xfail
-        ),  # TODO: remove xfail when #419 is fixed
-        pytest.param(
-            pa.large_binary(), marks=pytest.mark.xfail
-        ),  # TODO: remove xfail when #419 is fixed
+        pa.binary(),
+        pa.large_binary(),
     ],
     indirect=True,
 )
@@ -365,9 +361,8 @@ def make_multiply_indexed_dataframe(tmp_path, index_column_names: List[str]):
     """
     schema = pa.schema(
         [
-            # TO DO: Support other index types when we have support for more than int and string
-            # index types in libtiledbsoma's SOMAReader. See also
-            # https://github.com/single-cell-data/TileDB-SOMA/issues/419.
+            # TO DO: Support other index types when we have support for more than int and string/bytes
+            # index types in libtiledbsoma's SOMAReader.
             ("index1", pa.int64()),
             ("index2", pa.string()),
             ("index3", pa.int64()),
@@ -620,8 +615,7 @@ def make_multiply_indexed_dataframe(tmp_path, index_column_names: List[str]):
             "throws": None,
         },
         # 2D: indexing slot is list
-        # TODO: at present SOMAReader only accepts int and string dims. See also:
-        # https://github.com/single-cell-data/TileDB-SOMA/issues/419
+        # TODO: at present SOMAReader only accepts int and string/byte dims.
         {
             "index_column_names": ["index2", "index3"],
             "coords": [["aaa", "ccc"], None],
