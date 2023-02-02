@@ -18,3 +18,16 @@ map_query_layout <- function(layout) {
            tolower(layout)
     )
 }
+
+#' show_package_versions
+#'
+#' @description Prints package information suitable for assisting with bug reports.
+#'
+#' @export
+#' @importFrom utils packageVersion
+show_package_versions <- function() {
+    cat("tiledbsoma:   ", toString(utils::packageVersion("tiledbsoma")), "\n")
+    cat("tiledb-r:     ", toString(utils::packageVersion("tiledb")), "\n")
+    cat("tiledb core:  ", as.character(tiledb::tiledb_version(compact=TRUE)), "\n")
+    cat("R:            ", R.version.string, "\n")
+}

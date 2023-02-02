@@ -10,6 +10,7 @@ from .general_utilities import (
     get_implementation_version,
     get_SOMA_version,
     get_storage_engine,
+    show_package_versions,
 )
 from .measurement import Measurement
 from .sparse_nd_array import SparseNDArray
@@ -21,6 +22,7 @@ __all__ = [
     "get_implementation_version",
     "get_SOMA_version",
     "get_storage_engine",
+    "show_package_versions",
     "AxisQuery",
     "ExperimentAxisQuery",
     "Collection",
