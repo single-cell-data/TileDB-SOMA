@@ -225,7 +225,7 @@ class CollectionBase(
             platform_config=platform_config,
             context=self.context,
         )
-        # A NDArray might not be the declared type of this collection,
+        # An NDArray might not be the declared type of this collection,
         # but we can't really handle that within the type system.
         self._set_element(
             key, new_arr, use_relative_uri=was_relative  # type: ignore[arg-type]
