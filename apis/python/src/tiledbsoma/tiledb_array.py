@@ -177,3 +177,27 @@ class TileDBArray(TileDBObject):
                 return False
 
         return True
+
+    def _consolidate_and_vacuum_fragment_metadata(self) -> None:
+        """
+        This post-ingestion helper consolidates and vacuums fragment metadata -- this is quick to
+        do, and positively impacts query performance.  It does _not_ consolidate bulk array data,
+        which is more time-consuming and should be done at the user's opt-in discretion.
+        """
+
+        if self.uri.startswith("tiledb://"):
+            # At present we need to look up the S3 path. This can only be done via
+            # tiledb.cloud.info(self.uri). Yet this open-source package does not take a dependency
+            # on the tiledb.cloud package.
+            return
+
+        for mode in ["fragment_meta", "commits", "array_meta"]:
+
+            cfg = self._ctx.config()
+            cfg["sm.mem.total_budget"] = 4 * 1024**3
+            cfg["sm.consolidation.buffer_size"] = 512 * 1024**2
+            cfg["sm.consolidation.mode"] = mode
+            cfg["sm.vacuum.mode"] = mode
+
+            tiledb.consolidate(self.uri, ctx=self._ctx)
+            tiledb.vacuum(self.uri, ctx=self._ctx)
