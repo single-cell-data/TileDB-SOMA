@@ -25,7 +25,7 @@ map_query_layout <- function(layout) {
 #'
 #' @export
 show_package_versions <- function() {
-    cat("tiledbsoma:   ", toString(utils::packageVersion("tiledbsoma")),    "\n")
-    cat("tiledb:       ", toString(utils::packageVersion("tiledb")),      "\n")
-    cat("R:            ", R.Version()$version.string,                     "\n")
+    cat("tiledbsoma:   ", toString(utils::packageVersion("tiledbsoma")), "\n")
+    cat("tiledb:       ", toString(utils::packageVersion("tiledb")), "\n")
+    cat("R:            ", R.Version()$version.string, "\n")
 }
