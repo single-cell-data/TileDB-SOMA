@@ -1,3 +1,6 @@
+import sys
+
+import tiledb
 from pkg_resources import DistributionNotFound, get_distribution
 
 
@@ -38,3 +41,22 @@ def get_storage_engine() -> str:
     [lifecycle: experimental]
     """
     return "tiledb"
+
+
+def show_package_versions() -> None:
+    """
+    Nominal use is for bug reports, so issue filers and issue fixers can be on the same page.
+    """
+    line1 = "tiledbsoma.__version__   " + get_implementation_version()
+    line2 = "tiledb.__version__       " + tiledb.__version__
+    line3 = "python__version__        " + ".".join(
+        [
+            str(e)
+            for e in [
+                sys.version_info.major,
+                sys.version_info.minor,
+                sys.version_info.micro,
+            ]
+        ]
+    )
+    print("\n".join([line1, line2, line3]))
