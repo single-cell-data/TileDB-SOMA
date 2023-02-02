@@ -13,8 +13,6 @@ from .general_utilities import (
 )
 from .measurement import Measurement
 from .sparse_nd_array import SparseNDArray
-from .tiledb_array import TileDBArray
-from .tiledb_object import TileDBObject
 
 __version__ = get_implementation_version()
 
@@ -23,8 +21,6 @@ __all__ = [
     "get_implementation_version",
     "get_SOMA_version",
     "get_storage_engine",
-    "TileDBObject",
-    "TileDBArray",
     "AxisQuery",
     "ExperimentAxisQuery",
     "Collection",
