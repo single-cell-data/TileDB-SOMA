@@ -219,27 +219,27 @@ class ReadWriteHandle(Generic[_TDBO_co]):
 
 def stats_enable() -> None:
     """
-    XXX
+    Enable TileDB internal statistics.
     """
     clib.stats_enable()
 
 
 def stats_disable() -> None:
     """
-    XXX
+    Disable TileDB internal statistics.
     """
     clib.stats_disable()
 
 
 def stats_reset() -> None:
     """
-    XXX
+    Reset all TileDB internal statistics to 0.
     """
     clib.stats_reset()
 
 
 def stats_dump() -> None:
     """
-    XXX
+    Print TileDB internal statistics.
     """
     clib.stats_dump()
