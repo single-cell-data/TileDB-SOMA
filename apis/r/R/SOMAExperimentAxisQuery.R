@@ -148,6 +148,60 @@ ExperimentAxisQuery <- R6::R6Class(
         self$obs_joinids()$as_vector(),
         self$var_joinids()$as_vector()
       ))
+    },
+
+    #' @description Reads the entire query result [`arrow::Table`]s. This is a
+    #' low-level routine intended to be used by loaders for other in-core
+    #' formats, such as AnnData, which can be created from the resulting Tables.
+    #'
+    #' @param X_layers The name of the `X` layer(s) to read and return.
+    #' @param obs_column_names,var_column_names Specify which column names in
+    #' `var` and `obs` dataframes to read and return.
+    read = function(
+      X_layers = NULL, obs_column_names = NULL, var_column_names = NULL) {
+      stopifnot(
+        "'X_layers' must be a character vector" =
+          is.null(X_layers) || is.character(X_layers),
+        assert_subset(X_layers, self$ms$X$names(), "layer"),
+        "'obs_column_names' must be a character vector" =
+          is.null(obs_column_names) || is.character(obs_column_names),
+        assert_subset(obs_column_names, self$obs_df$colnames(), "column"),
+        "'var_column_names' must be a character vector" =
+          is.null(var_column_names) || is.character(var_column_names),
+        assert_subset(var_column_names, self$var_df$colnames(), "column")
+      )
+
+      x_collection <- self$ms$X
+      X_layers <- X_layers %||% x_collection$names()
+
+      # Named list of SOMASparseNDArrays
+      x_arrays <- Map(
+        f = function(layer_name) {
+          x_layer <- x_collection$get(layer_name)
+          stopifnot(
+            "X layer must be a SOMASparseNDArray" =
+              inherits(x_layer, "SOMASparseNDArray")
+          )
+          x_layer
+        },
+        layer_name = X_layers
+      )
+
+      # TODO: parallelize with futures
+      obs_ft <- self$obs(obs_column_names)
+      var_ft <- self$var(var_column_names)
+
+      x_matrices <- lapply(x_arrays, function(x_array) {
+          x_array$read_arrow_table(coords = list(
+            self$obs_joinids()$as_vector(),
+            self$var_joinids()$as_vector()
+          ))
+        }
+      )
+
+      AxisQueryResult$new(
+        obs = obs_ft, var = var_ft, X_layers = x_matrices
+      )
     }
   ),
 
@@ -262,6 +316,56 @@ JoinIDCache <- R6::R6Class(
       )
       tbl$soma_joinid
     }
+  )
+)
+
+#' @description Return types for [`ExperimentAxisQuery`] `read()` method.
+AxisQueryResult <- R6Class(
+  classname = "AxisQueryResult",
+  public = list(
+
+    #' @description Create a new `AxisQueryResult` object.
+    #' @param obs,var [`arrow::Table`] containing `obs` or `var` query slice.
+    #' @param X_layers named list of [`arrow::Table`]s, one for each `X` layer.
+    initialize = function(obs, var, X_layers) {
+      stopifnot(
+        is_arrow_table(obs),
+        is_arrow_table(var),
+        is_named_list(X_layers),
+        all(vapply_lgl(X_layers, is_arrow_table))
+      )
+
+      private$obs_ <- obs
+      private$var_ <- var
+      private$X_layers_ <- X_layers
+    }
+  ),
+
+  active = list(
+    #' @field [`arrow::Table`] containing `obs` query slice.
+    obs = function(value) {
+      if (!missing(value)) read_only_error("obs")
+      private$obs_
+    },
+
+    #' @field [`arrow::Table`] containing `var` query slice.
+    #' `measurement_name`.
+    var = function(value) {
+      if (!missing(value)) read_only_error("var")
+      private$var_
+    },
+
+    #' @field named list of [`arrow::Table`]s for each `X` layer.
+    X_layers = function(value) {
+      if (!missing(value)) read_only_error("ms")
+      private$X_layers_
+    }
+  ),
+
+  private = list(
+    obs_ = NULL,
+    var_ = NULL,
+    X_layers_ = NULL
   )
 )
 

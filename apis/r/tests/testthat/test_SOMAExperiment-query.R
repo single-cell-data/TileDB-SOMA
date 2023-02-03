@@ -1,5 +1,3 @@
-
-
 test_that("returns all coordinates by default", {
   uri <- withr::local_tempdir("soma-experiment-query-all")
   n_obs <- 20L
@@ -233,4 +231,31 @@ test_that("queries with empty results", {
 
   expect_equal(query$obs()$num_rows, 0)
   expect_equal(query$var()$num_rows, 0)
+})
+
+test_that("retrieving query results in supported formats", {
+  uri <- withr::local_tempdir("soma-experiment-query-results-formats1")
+  n_obs <- 1001L
+  n_var <- 99L
+
+  experiment <- create_and_populate_experiment(
+    uri = uri,
+    n_obs = n_obs,
+    n_var = n_var,
+    X_layer_names = c("counts", "logcounts")
+  )
+
+  query <- ExperimentAxisQuery$new(
+    experiment = experiment,
+    measurement_name = "RNA"
+  )
+
+  # Check AxisQueryResult class
+  res <- query$read()
+  expect_true(inherits(res, "AxisQueryResult"))
+  expect_true(is_arrow_table(res$obs))
+  expect_true(is_arrow_table(res$var))
+  expect_true(is.list(res$X_layers))
+  expect_true(is_arrow_table(res$X_layers[[1]]))
+  expect_true(is_arrow_table(res$X_layers[[2]]))
 })
