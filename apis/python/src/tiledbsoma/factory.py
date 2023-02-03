@@ -24,10 +24,9 @@ from .constants import (
     SOMA_OBJECT_TYPE_METADATA_KEY,
 )
 from .exception import DoesNotExistError, SOMAError
+from .handles import ReadWriteHandle, StorageType, TDBHandle
 from .options import SOMATileDBContext
-from .types import StorageType, TDBHandle
 from .util import typeguard_ignore
-from .util_tiledb import ReadWriteHandle
 
 _Obj = TypeVar("_Obj", bound="tiledb_object.AnyTileDBObject")
 _Arr = TypeVar("_Arr", bound="tiledb_array.TileDBArray")

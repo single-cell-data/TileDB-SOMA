@@ -6,10 +6,8 @@ import tiledb
 from somacore import options
 
 from . import constants
-from .handles import MetadataMapping
+from .handles import MetadataMapping, ReadWriteHandle, StorageType, TDBHandle
 from .options import SOMATileDBContext
-from .types import StorageType, TDBHandle
-from .util_tiledb import ReadWriteHandle
 
 _HandleType = TypeVar("_HandleType", bound=TDBHandle)
 

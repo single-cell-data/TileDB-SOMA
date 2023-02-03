@@ -40,10 +40,11 @@ from . import (
 from .common_nd_array import NDArray
 from .constants import SOMA_JOINID
 from .exception import DoesNotExistError, SOMAError
+from .handles import TDBHandle
 from .options import SOMATileDBContext
 from .options.tiledb_create_options import TileDBCreateOptions
 from .tiledb_object import TileDBObject
-from .types import INGEST_MODES, IngestMode, NPNDArray, Path, TDBHandle
+from .types import INGEST_MODES, IngestMode, NPNDArray, Path
 
 SparseMatrix = Union[sp.csr_matrix, sp.csc_matrix, SparseDataset]
 Matrix = Union[NPNDArray, SparseMatrix]

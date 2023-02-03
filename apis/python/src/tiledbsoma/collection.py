@@ -30,16 +30,12 @@ from .constants import SOMA_JOINID
 from .dataframe import DataFrame
 from .dense_nd_array import DenseNDArray
 from .exception import SOMAError
+from .handles import ReadWriteHandle, StorageType, TDBHandle
 from .options import SOMATileDBContext
 from .sparse_nd_array import SparseNDArray
 from .tiledb_object import AnyTileDBObject, TileDBObject
-from .types import StorageType, TDBHandle
 from .util import is_relative_uri, make_relative_path, uri_joinpath
-from .util_tiledb import (
-    ReadWriteHandle,
-    is_does_not_exist_error,
-    is_duplicate_group_key_error,
-)
+from .util_tiledb import is_does_not_exist_error, is_duplicate_group_key_error
 
 # A collection can hold any sub-type of TileDBObject
 CollectionElementType = TypeVar("CollectionElementType", bound=AnyTileDBObject)

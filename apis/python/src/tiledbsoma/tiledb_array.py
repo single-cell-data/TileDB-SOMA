@@ -7,10 +7,10 @@ from somacore import options
 # This package's pybind11 code
 import tiledbsoma.libtiledbsoma as clib
 
+from .handles import ReadWriteHandle
 from .options.soma_tiledb_context import SOMATileDBContext
 from .tiledb_object import TileDBObject
 from .util_arrow import tiledb_schema_to_arrow
-from .util_tiledb import ReadWriteHandle
 
 _Self = TypeVar("_Self", bound="TileDBArray")
 
