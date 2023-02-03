@@ -49,7 +49,10 @@ class NDArray(TileDBArray, somacore.NDArray):
             is_sparse=cls.is_sparse,
         )
         handle = cls._create_internal(uri, schema, context)
-        return cls(handle, _this_is_internal_only="tiledbsoma-internal-code")
+        return cls(
+            handle,
+            _dont_call_this_use_create_or_open_instead="tiledbsoma-internal-code",
+        )
 
     @property
     def shape(self) -> Tuple[int, ...]:

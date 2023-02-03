@@ -62,7 +62,7 @@ class DataFrame(TileDBArray, somacore.DataFrame):
         return cls(
             handle,
             _index_column_names=tuple(index_column_names),
-            _this_is_internal_only="tiledbsoma-internal-code",
+            _dont_call_this_use_create_or_open_instead="tiledbsoma-internal-code",
         )
 
     def __init__(
@@ -71,9 +71,12 @@ class DataFrame(TileDBArray, somacore.DataFrame):
         *,
         # Hints to pre-fill cache entries.
         _index_column_names: Optional[Tuple[str, ...]] = None,
-        _this_is_internal_only: str = "",
+        _dont_call_this_use_create_or_open_instead: str = "",
     ):
-        super().__init__(handle, _this_is_internal_only=_this_is_internal_only)
+        super().__init__(
+            handle,
+            _dont_call_this_use_create_or_open_instead=_dont_call_this_use_create_or_open_instead,
+        )
         self._index_column_names = _index_column_names
         """Cache for the index column names."""
 

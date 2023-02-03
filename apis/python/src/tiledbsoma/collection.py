@@ -85,7 +85,10 @@ class CollectionBase(
         tiledb.group_create(uri=uri, ctx=context.tiledb_ctx)
         handle = ReadWriteHandle.open_group(uri, "w", context)
         cls._set_create_metadata(handle)
-        return cls(handle, _this_is_internal_only="tiledbsoma-internal-code")
+        return cls(
+            handle,
+            _dont_call_this_use_create_or_open_instead="tiledbsoma-internal-code",
+        )
 
     @classmethod
     def open(
@@ -101,7 +104,10 @@ class CollectionBase(
         context = context or SOMATileDBContext()
         handle = ReadWriteHandle.open_group(uri, mode, context)
         # TODO: Verify that we have the right type using metadata.
-        return cls(handle, _this_is_internal_only="tiledbsoma-internal-code")
+        return cls(
+            handle,
+            _dont_call_this_use_create_or_open_instead="tiledbsoma-internal-code",
+        )
 
     # Subclass protocol to constrain which SOMA objects types  may be set on a
     # particular collection key. Used by Experiment and Measurement.
@@ -111,9 +117,12 @@ class CollectionBase(
         self,
         handle: ReadWriteHandle[tiledb.Group],
         *,
-        _this_is_internal_only: str = "",
+        _dont_call_this_use_create_or_open_instead: str = "",
     ):
-        super().__init__(handle, _this_is_internal_only=_this_is_internal_only)
+        super().__init__(
+            handle,
+            _dont_call_this_use_create_or_open_instead=_dont_call_this_use_create_or_open_instead,
+        )
         self._cached_group_contents: Optional[Dict[str, _CachedElement]] = None
         """The contents of the persisted TileDB Group, cached for performance.
 

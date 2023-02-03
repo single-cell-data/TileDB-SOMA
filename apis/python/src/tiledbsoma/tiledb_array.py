@@ -37,7 +37,10 @@ class TileDBArray(TileDBObject[tiledb.Array]):
         context = context or SOMATileDBContext()
         handle = ReadWriteHandle.open_array(uri, mode, context)
 
-        return cls(handle, _this_is_internal_only="tiledbsoma-internal-code")
+        return cls(
+            handle,
+            _dont_call_this_use_create_or_open_instead="tiledbsoma-internal-code",
+        )
 
     _STORAGE_TYPE = "array"
 
