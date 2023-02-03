@@ -30,7 +30,6 @@ from .common_nd_array import NDArray
 from .constants import SOMA_JOINID
 from .dataframe import DataFrame
 from .dense_nd_array import DenseNDArray
-from .exception import SOMAError
 from .options import SOMATileDBContext
 from .sparse_nd_array import SparseNDArray
 from .tiledb_object import AnyTileDBObject, TileDBObject
@@ -261,21 +260,11 @@ class CollectionBase(
         if entry.soma is None:
             from . import factory  # Delayed binding to resolve circular import.
 
-            storage_type: handles.StorageType
-            if entry.entry.wrapper_type == handles.ArrayWrapper:
-                storage_type = "array"
-            elif entry.entry.wrapper_type == handles.GroupWrapper:
-                storage_type = "group"
-            else:
-                raise SOMAError(
-                    f"internal error: unrecognized group entry type {entry.entry.wrapper_type}"
-                )
             entry.soma = factory._open_internal(
-                uri=entry.entry.uri,
-                mode=self.mode,
-                context=self.context,
-                tiledb_type=storage_type,
-                soma_type=None,
+                entry.entry.wrapper_type.open,
+                entry.entry.uri,
+                self.mode,
+                self.context,
             )
             # Since we just opened this object, we own it and should close it.
             self._close_stack.enter_context(entry.soma)

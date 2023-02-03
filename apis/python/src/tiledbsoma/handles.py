@@ -19,14 +19,10 @@ from typing import (
 import attrs
 import tiledb
 from somacore import options
-from typing_extensions import Literal
 
 from .exception import DoesNotExistError, SOMAError
 from .options import SOMATileDBContext
 from .util_tiledb import is_does_not_exist_error
-
-StorageType = Literal["array", "group"]
-"""How a SOMA object is stored."""
 
 RawHandle = Union[tiledb.Array, tiledb.Group]
 _RawHdl_co = TypeVar("_RawHdl_co", bound=RawHandle, covariant=True)
