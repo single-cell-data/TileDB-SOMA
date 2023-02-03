@@ -12,14 +12,14 @@ from .general_utilities import (
     get_storage_engine,
     show_package_versions,
 )
-from .measurement import Measurement
-from .sparse_nd_array import SparseNDArray
-from .util_tiledb import (
+from .libtiledbsoma import (
     stats_disable,
     stats_dump,
     stats_enable,
     stats_reset,
 )
+from .measurement import Measurement
+from .sparse_nd_array import SparseNDArray
 
 __version__ = get_implementation_version()
 

@@ -9,8 +9,6 @@ from pandas.api.types import infer_dtype, is_categorical_dtype
 from somacore import options
 
 # This package's pybind11 code
-import tiledbsoma.libtiledbsoma as clib
-
 from .exception import DoesNotExistError, SOMAError
 from .options import SOMATileDBContext
 from .types import NPNDArray, PDSeries, TDBHandle
@@ -215,31 +213,3 @@ class ReadWriteHandle(Generic[_TDBO_co]):
 
     def __del__(self) -> None:
         self.close()
-
-
-def stats_enable() -> None:
-    """
-    Enable TileDB internal statistics.
-    """
-    clib.stats_enable()
-
-
-def stats_disable() -> None:
-    """
-    Disable TileDB internal statistics.
-    """
-    clib.stats_disable()
-
-
-def stats_reset() -> None:
-    """
-    Reset all TileDB internal statistics to 0.
-    """
-    clib.stats_reset()
-
-
-def stats_dump() -> None:
-    """
-    Print TileDB internal statistics.
-    """
-    clib.stats_dump()
