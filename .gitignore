@@ -64,6 +64,7 @@ apis/r/src/lib/*
 apis/r/src/libtiledbsoma/*
 apis/r/src/Makevars
 apis/r/src/cmake_log.txt
+apis/r/.editorconfig
 
 # Coverage/codecov
 .coverage

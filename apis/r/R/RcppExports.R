@@ -5,7 +5,7 @@
 #'
 #' This functions access a given SOMA URI and returns a complete data.frame. It does
 #' not iterate; if your data is large than the initial read size consider the \code{sr_*}
-#' functions. [lifecycle: experimental]
+#' functions.
 #'
 #' @param uri Character value with URI path to a SOMA data set
 #' @param colnames Optional vector of character value with the name of the columns to retrieve
@@ -56,7 +56,7 @@ nnz <- function(uri) {
 #'   \item{\code{sr_setup}}{instantiates and by default also submits a query}
 #'   \item{\code{sr_complete}}{checks if more data is available}
 #'   \item{\code{sr_next}}{returns the next chunk}
-#' } [lifecycle: experimental]
+#' }
 #'
 #' @param ctx An external pointer to a TileDB Context object
 #' @param uri Character value with URI path to a SOMA data set
@@ -109,5 +109,35 @@ sr_complete <- function(sr) {
 #' @export
 sr_next <- function(sr) {
     .Call(`_tiledbsoma_sr_next`, sr)
+}
+
+#' TileDB Statistics interface
+#'
+#' The functions `tiledbsoma_stats_enable`, `tiledbsoma_stats_disable`, `tiledbsoma_stats_reset`
+#' and `tiledbsoma_stats_dump` expose the TileDB Core functionality for performance measurements
+#' and statistics.  The first three just turn on, off or reset, the fourth returns a JSON string.
+#' For convenience the function `tiledbsoma_stats_show` displays the information on the console
+#'
+#' @export
+stats_enable <- function() {
+    invisible(.Call(`_tiledbsoma_stats_enable`))
+}
+
+#' @rdname stats_enable
+#' @export
+stats_disable <- function() {
+    invisible(.Call(`_tiledbsoma_stats_disable`))
+}
+
+#' @rdname stats_enable
+#' @export
+stats_reset <- function() {
+    invisible(.Call(`_tiledbsoma_stats_reset`))
+}
+
+#' @rdname stats_enable
+#' @export
+stats_dump <- function() {
+    .Call(`_tiledbsoma_stats_dump`)
 }
 

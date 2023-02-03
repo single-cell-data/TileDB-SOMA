@@ -102,6 +102,43 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// stats_enable
+void stats_enable();
+RcppExport SEXP _tiledbsoma_stats_enable() {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    stats_enable();
+    return R_NilValue;
+END_RCPP
+}
+// stats_disable
+void stats_disable();
+RcppExport SEXP _tiledbsoma_stats_disable() {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    stats_disable();
+    return R_NilValue;
+END_RCPP
+}
+// stats_reset
+void stats_reset();
+RcppExport SEXP _tiledbsoma_stats_reset() {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    stats_reset();
+    return R_NilValue;
+END_RCPP
+}
+// stats_dump
+std::string stats_dump();
+RcppExport SEXP _tiledbsoma_stats_dump() {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    rcpp_result_gen = Rcpp::wrap(stats_dump());
+    return rcpp_result_gen;
+END_RCPP
+}
 
 static const R_CallMethodDef CallEntries[] = {
     {"_tiledbsoma_soma_reader", (DL_FUNC) &_tiledbsoma_soma_reader, 8},
@@ -111,6 +148,10 @@ static const R_CallMethodDef CallEntries[] = {
     {"_tiledbsoma_sr_setup", (DL_FUNC) &_tiledbsoma_sr_setup, 8},
     {"_tiledbsoma_sr_complete", (DL_FUNC) &_tiledbsoma_sr_complete, 1},
     {"_tiledbsoma_sr_next", (DL_FUNC) &_tiledbsoma_sr_next, 1},
+    {"_tiledbsoma_stats_enable", (DL_FUNC) &_tiledbsoma_stats_enable, 0},
+    {"_tiledbsoma_stats_disable", (DL_FUNC) &_tiledbsoma_stats_disable, 0},
+    {"_tiledbsoma_stats_reset", (DL_FUNC) &_tiledbsoma_stats_reset, 0},
+    {"_tiledbsoma_stats_dump", (DL_FUNC) &_tiledbsoma_stats_dump, 0},
     {NULL, NULL, 0}
 };
 
