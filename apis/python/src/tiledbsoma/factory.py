@@ -219,7 +219,7 @@ def _read_soma_type(hdl: ReadWriteHandle[TDBHandle]) -> str:
 
 def _to_array_class(name: str) -> Type["tiledb_array.TileDBArray"]:
     options: Dict[str, Type[tiledb_array.TileDBArray]] = {
-        cls.soma_type.lower(): cls  # type: ignore[attr-defined,misc]
+        cls.soma_type.lower(): cls
         for cls in (
             dataframe.DataFrame,
             dense_nd_array.DenseNDArray,
