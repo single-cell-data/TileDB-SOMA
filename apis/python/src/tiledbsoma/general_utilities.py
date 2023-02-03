@@ -53,4 +53,4 @@ def show_package_versions() -> None:
         "core version             ",
         ".".join(str(ijk) for ijk in list(tiledb.libtiledb.version())),
     )
-    print("python__version__        ", ".".join(str(v) for v in sys.version_info))
+    print("python version           ", ".".join(str(v) for v in sys.version_info))
