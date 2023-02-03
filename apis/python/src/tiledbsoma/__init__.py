@@ -14,6 +14,12 @@ from .general_utilities import (
 )
 from .measurement import Measurement
 from .sparse_nd_array import SparseNDArray
+from .util_tiledb import (
+    stats_disable,
+    stats_dump,
+    stats_enable,
+    stats_reset,
+)
 
 __version__ = get_implementation_version()
 
@@ -23,6 +29,10 @@ __all__ = [
     "get_SOMA_version",
     "get_storage_engine",
     "show_package_versions",
+    "stats_enable",
+    "stats_disable",
+    "stats_reset",
+    "stats_dump",
     "AxisQuery",
     "ExperimentAxisQuery",
     "Collection",
