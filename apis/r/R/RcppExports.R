@@ -111,19 +111,33 @@ sr_next <- function(sr) {
     .Call(`_tiledbsoma_sr_next`, sr)
 }
 
-.tiledb_stats_enable <- function() {
-    invisible(.Call(`_tiledbsoma_libtiledb_stats_enable`))
+#' TileDB Statistics interface
+#'
+#' The functions `tiledbsoma_stats_enable`, `tiledbsoma_stats_disable`, `tiledbsoma_stats_reset`
+#' and `tiledbsoma_stats_dump` expose the TileDB Core functionality for performance measurements
+#' and statistics.  The first three just turn on, off or reset, the fourth returns a JSON string.
+#' For convenience the function `tiledbsoma_stats_show` displays the information on the console
+#'
+#' @export
+tiledbsoma_stats_enable <- function() {
+    invisible(.Call(`_tiledbsoma_tiledbsoma_stats_enable`))
 }
 
-.tiledb_stats_disable <- function() {
-    invisible(.Call(`_tiledbsoma_libtiledb_stats_disable`))
+#' @rdname tiledbsoma_stats_enable
+#' @export
+tiledbsoma_stats_disable <- function() {
+    invisible(.Call(`_tiledbsoma_tiledbsoma_stats_disable`))
 }
 
-.tiledb_stats_reset <- function() {
-    invisible(.Call(`_tiledbsoma_libtiledb_stats_reset`))
+#' @rdname tiledbsoma_stats_enable
+#' @export
+tiledbsoma_stats_reset <- function() {
+    invisible(.Call(`_tiledbsoma_tiledbsoma_stats_reset`))
 }
 
-.tiledb_stats_raw_dump <- function() {
-    .Call(`_tiledbsoma_libtiledb_stats_dump`)
+#' @rdname tiledbsoma_stats_enable
+#' @export
+tiledbsoma_stats_dump <- function() {
+    .Call(`_tiledbsoma_tiledbsoma_stats_dump`)
 }
 

@@ -19,9 +19,9 @@ map_query_layout <- function(layout) {
     )
 }
 
-#' show_package_versions
+#' Display Package Versions
 #'
-#' @description Prints package information suitable for assisting with bug reports.
+#' This helperfunction prints package information suitable for assisting with bug reports.
 #'
 #' @export
 #' @importFrom utils packageVersion
@@ -30,4 +30,10 @@ show_package_versions <- function() {
     cat("tiledb-r:     ", toString(utils::packageVersion("tiledb")), "\n")
     cat("tiledb core:  ", as.character(tiledb::tiledb_version(compact=TRUE)), "\n")
     cat("R:            ", R.version.string, "\n")
+}
+
+#' @rdname tiledbsoma_stats_enable
+#' @export
+tiledbsoma_stats_show <- function() {
+    cat(tiledbsoma_stats_dump(), "\n")
 }
