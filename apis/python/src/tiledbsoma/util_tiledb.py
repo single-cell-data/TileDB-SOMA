@@ -84,7 +84,12 @@ def is_does_not_exist_error(e: tiledb.TileDBError) -> bool:
     stre = str(e)
     # Local-disk/S3 does-not-exist exceptions say 'Group does not exist'; TileDB Cloud
     # does-not-exist exceptions are worded less clearly.
-    if "does not exist" in stre or "HTTP code 401" in stre:
+    if (
+        "does not exist" in stre
+        or "Unrecognized array" in stre
+        or "HTTP code 401" in stre
+        or "HTTP code 404" in stre
+    ):
         return True
 
     return False
