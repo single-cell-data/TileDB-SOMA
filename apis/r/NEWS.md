@@ -6,3 +6,4 @@
 * `TileDBGroup` gains a `names` method to retrieve the names of group members
 * Added `SOMAMeasurement` and `SOMAExperiment` classes
 * spdl is now used for logging
+* TileDB performance statistics can now be collected for analysis
