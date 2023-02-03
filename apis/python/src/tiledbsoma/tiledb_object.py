@@ -6,7 +6,7 @@ import tiledb
 from somacore import options
 
 from . import constants
-from .metadata_mapping import MetadataMapping
+from .handles import MetadataMapping
 from .options import SOMATileDBContext
 from .types import StorageType, TDBHandle
 from .util_tiledb import ReadWriteHandle
