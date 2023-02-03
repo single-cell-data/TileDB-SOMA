@@ -6,6 +6,7 @@ from typing import (
     Iterator,
     MutableMapping,
     Optional,
+    Set,
     TypeVar,
     Union,
 )
@@ -33,7 +34,7 @@ _Self = TypeVar("_Self")
 # TODO: We should only need to keep around one of the read or write handles
 # after we do the initial open (where we read metadata and group contents).
 # For now, we're leaving this as-is.
-@attrs.define()
+@attrs.define(slots=False)
 class ReadWriteHandle(Generic[_TDBO_co]):
     """Paired read/write handles to a TileDB object.
 
@@ -91,6 +92,10 @@ class ReadWriteHandle(Generic[_TDBO_co]):
             raise
         return ReadWriteHandle(uri, context, reader=rd, maybe_writer=wr)
 
+    def __attrs_post_init__(self) -> None:
+        # non–attrs-managed field
+        self.metadata = MetadataWrapper(self, dict(self.reader.meta))
+
     @property
     def writer(self) -> _TDBO_co:
         if self.maybe_writer is None:
@@ -100,12 +105,6 @@ class ReadWriteHandle(Generic[_TDBO_co]):
     @property
     def mode(self) -> options.OpenMode:
         return "r" if self.maybe_writer is None else "w"
-
-    @property
-    def metadata(self) -> MutableMapping[str, Any]:
-        if self.maybe_writer is not None:
-            return self.maybe_writer.meta  # type: ignore[no-any-return]
-        return self.reader.meta  # type: ignore[no-any-return]
 
     def close(self) -> None:
         if self.closed:
@@ -127,6 +126,10 @@ class ReadWriteHandle(Generic[_TDBO_co]):
             self.maybe_writer = tiledb.Group(self.uri, "w", ctx=self.context.tiledb_ctx)
             self.reader = tiledb.Group(self.uri, "r", ctx=self.context.tiledb_ctx)
 
+    def _check_open(self) -> None:
+        if self.closed:
+            raise SOMAError(f"{self!r} is closed")
+
     def __enter__(self: _Self) -> _Self:
         return self
 
@@ -137,73 +140,45 @@ class ReadWriteHandle(Generic[_TDBO_co]):
         self.close()
 
 
-class MetadataMapping(MutableMapping[str, Any]):
-    def __init__(self, underlying: ReadWriteHandle[tiledb.Object]):
-        self._underlying = underlying
+@attrs.define(frozen=True)
+class MetadataWrapper(MutableMapping[str, Any]):
+    """A wrapper storing the metadata of some TileDB object.
 
-    def __delitem__(self, key: str) -> None:
-        """
-        Remove the key from the metadata collection.
-        """
-        del self._underlying.writer.meta[key]
+    Because the view of metadata does not change after open time, we immediately
+    cache all of it and use that to handle all reads. Writes are then proxied
+    through to the backing store and the cache is updated to match.
+    """
 
-    def __iter__(self) -> Iterator[str]:
-        """
-        Return an iterator over the metadata collection.
-        """
-        return iter(self.as_dict())
+    owner: ReadWriteHandle[TDBHandle]
+    cache: Dict[str, Any]
+    _mutated_fields: Set[str] = attrs.field(factory=set)
+    """Fields that have been mutated. """
 
     def __len__(self) -> int:
-        """
-        Return the number of elements in the metadata collection.
+        return len(self.cache)
 
-        Returns
-        -------
-        int
-            The number of elements in the metadata collection.
-        """
-        return len(self.as_dict())
-
-    def as_dict(self) -> Dict[str, Any]:
-        """
-        Return the metadata collection as a ``dict``.
-
-        Returns
-        -------
-        dict[str, any]
-            The contents of the metadata collection.
-        """
-        return dict(self._underlying.reader.meta)
+    def __iter__(self) -> Iterator[str]:
+        return iter(self.cache)
 
     def __getitem__(self, key: str) -> Any:
-        """
-        Return the metadata element specified by ``key``.
-
-        Parameters
-        ----------
-        key : str
-            The name of the item.
-        """
-        return self._underlying.reader.meta[key]
+        return self.cache[key]
 
     def __setitem__(self, key: str, value: Any) -> None:
-        """
-        Update the metadata collection with a new element.
+        self.owner._check_open()
+        self.owner.writer.meta[key] = value
+        self.cache[key] = value
+        self._mutated_fields.add(key)
 
-        Parameters
-        ----------
-        key : str
-            The metadata element name.
-        value : any
-            The metadata element value. Must be a primitive type (int,
-            float, bool) or string.
+    def __delitem__(self, key: str) -> None:
+        # HACK: Currently, deleting a just-added metadata entry DOES NOT WORK.
+        # We track mutated fields to ensure that this works as expected,
+        # at the expense of otherwise-unnecessary flushes.
+        self.owner._check_open()
+        if key in self._mutated_fields:
+            self.owner._flush_hack()
+        del self.owner.writer.meta[key]
+        del self.cache[key]
+        self._mutated_fields.add(key)
 
-        Returns
-        -------
-        None
-        """
-
-        if type(key) != str:
-            raise TypeError("Metadata keys must be a string.")
-
-        self._underlying.writer.meta[key] = value
+    def __repr__(self) -> str:
+        return f"{type(self).__name__}({self.owner})"

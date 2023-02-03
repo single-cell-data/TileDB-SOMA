@@ -1,12 +1,12 @@
 from contextlib import ExitStack
-from typing import ClassVar, Generic, Type, TypeVar
+from typing import Any, ClassVar, Generic, MutableMapping, Type, TypeVar
 
 import somacore
 import tiledb
 from somacore import options
 
 from . import constants
-from .handles import MetadataMapping, ReadWriteHandle, StorageType, TDBHandle
+from .handles import ReadWriteHandle, StorageType, TDBHandle
 from .options import SOMATileDBContext
 
 _HandleType = TypeVar("_HandleType", bound=TDBHandle)
@@ -52,7 +52,6 @@ class TileDBObject(somacore.SOMAObject, Generic[_HandleType]):
                 f" internal use only."
             )
         self._handle = handle
-        self._metadata = MetadataMapping(self._handle)
         self._close_stack.enter_context(self._handle)
         self._closed = False
 
@@ -68,11 +67,8 @@ class TileDBObject(somacore.SOMAObject, Generic[_HandleType]):
         return self.context.tiledb_ctx
 
     @property
-    def metadata(self) -> MetadataMapping:
-        # This needs to be implemented as a @property because Python's ABCs
-        # require that abstract properties be implemented on the object itself,
-        # rather than being a field (i.e., creating self.whatever in __init__).
-        return self._metadata
+    def metadata(self) -> MutableMapping[str, Any]:
+        return self._handle.metadata
 
     def __repr__(self) -> str:
         return f'{self.soma_type}(uri="{self.uri}")'
