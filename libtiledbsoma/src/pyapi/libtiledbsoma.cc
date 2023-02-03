@@ -120,14 +120,26 @@ PYBIND11_MODULE(libtiledbsoma, m) {
     m.def("info", &LOG_INFO, "message"_a = "");
     m.def("debug", &LOG_DEBUG, "message"_a = "");
 
-    m.def("stats_enable", []() { tiledb::Stats::enable(); });
-    m.def("stats_disable", []() { tiledb::Stats::disable(); });
-    m.def("stats_reset", []() { tiledb::Stats::reset(); });
-    m.def("stats_dump", []() {
-        std::string stats;
-        tiledb::Stats::dump(&stats);
-        std::cout << version() << "\n" << stats;
-    });
+    m.def(
+        "stats_enable",
+        []() { tiledb::Stats::enable(); },
+        "Enable TileDB internal statistics.");
+    m.def(
+        "stats_disable",
+        []() { tiledb::Stats::disable(); },
+        "Disable TileDB internal statistics.");
+    m.def(
+        "stats_reset",
+        []() { tiledb::Stats::reset(); },
+        "Reset all TileDB internal statistics to 0.");
+    m.def(
+        "stats_dump",
+        []() {
+            std::string stats;
+            tiledb::Stats::dump(&stats);
+            std::cout << version() << "\n" << stats;
+        },
+        "Print TileDB internal statistics.");
 
     py::class_<SOMAReader>(m, "SOMAReader")
         .def(
