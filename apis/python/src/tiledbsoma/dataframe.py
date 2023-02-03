@@ -61,24 +61,8 @@ class DataFrame(TileDBArray, somacore.DataFrame):
         handle = cls._create_internal(uri, tdb_schema, context)
         return cls(
             handle,
-            _index_column_names=tuple(index_column_names),
             _dont_call_this_use_create_or_open_instead="tiledbsoma-internal-code",
         )
-
-    def __init__(
-        self,
-        handle: tiledb.Array,
-        *,
-        # Hints to pre-fill cache entries.
-        _index_column_names: Optional[Tuple[str, ...]] = None,
-        _dont_call_this_use_create_or_open_instead: str = "",
-    ):
-        super().__init__(
-            handle,
-            _dont_call_this_use_create_or_open_instead=_dont_call_this_use_create_or_open_instead,
-        )
-        self._index_column_names = _index_column_names
-        """Cache for the index column names."""
 
     def keys(self) -> Tuple[str, ...]:
         """
@@ -93,11 +77,7 @@ class DataFrame(TileDBArray, somacore.DataFrame):
         """
         Return index (dimension) column names.
         """
-        # If we've cached the answer, skip the storage read. Especially if the storage is on the
-        # cloud, where we'll avoid an HTTP request.
-        if self._index_column_names is None:
-            self._index_column_names = self._tiledb_dim_names()
-        return self._index_column_names
+        return self._tiledb_dim_names()
 
     @property
     def count(self) -> int:
