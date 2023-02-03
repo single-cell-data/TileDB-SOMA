@@ -9,7 +9,7 @@ import tiledbsoma.libtiledbsoma as clib
 
 from .options.soma_tiledb_context import SOMATileDBContext
 from .tiledb_object import TileDBObject
-from .util_arrow import get_arrow_schema_from_tiledb_uri
+from .util_arrow import tiledb_schema_to_arrow
 from .util_tiledb import ReadWriteHandle
 
 _Self = TypeVar("_Self", bound="TileDBArray")
@@ -49,7 +49,7 @@ class TileDBArray(TileDBObject[tiledb.Array]):
         """
         Return data schema, in the form of an Arrow Schema.
         """
-        return get_arrow_schema_from_tiledb_uri(self.uri, self._ctx)
+        return tiledb_schema_to_arrow(self._tiledb_array_schema())
 
     def _tiledb_array_schema(self) -> tiledb.ArraySchema:
         """

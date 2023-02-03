@@ -1,4 +1,4 @@
-from typing import Any, Dict, Optional, Union
+from typing import Any, Dict, Union
 
 import numpy as np
 import numpy.typing as npt
@@ -136,32 +136,23 @@ def get_arrow_type_from_tiledb_dtype(
         return pa.from_numpy_dtype(tiledb_dtype)
 
 
-def get_arrow_schema_from_tiledb_uri(
-    tiledb_uri: str, ctx: Optional[tiledb.Ctx] = None
-) -> pa.Schema:
-    """
-    Maps a TileDB URI to an Arrow schema. This is very easy to do using
-    ``tiledb.open(uri).query(return_arrow=True).df[:].schema`` -- but that requires opening the
-    array and reading data out of it.
-    """
-    with tiledb.open(tiledb_uri, ctx=ctx) as A:
-        arrow_schema_dict = {}
+def tiledb_schema_to_arrow(tdb_schema: tiledb.ArraySchema) -> pa.Schema:
+    arrow_schema_dict = {}
+    dom = tdb_schema.domain
+    for i in range(dom.ndim):
+        dim = dom.dim(i)
+        name = dim.name
+        if name == "":
+            name = "unnamed"
+        arrow_schema_dict[name] = get_arrow_type_from_tiledb_dtype(dim.dtype)
 
-        dom = A.schema.domain
-        for i in range(dom.ndim):
-            dim = dom.dim(i)
-            name = dim.name
-            if name == "":
-                name = "unnamed"
-            arrow_schema_dict[name] = get_arrow_type_from_tiledb_dtype(dim.dtype)
-
-        for i in range(A.schema.nattr):
-            attr = A.schema.attr(i)
-            name = attr.name
-            if name == "":
-                name = "unnamed"
-            arrow_schema_dict[name] = get_arrow_type_from_tiledb_dtype(
-                attr.dtype, attr.isascii
-            )
+    for i in range(tdb_schema.nattr):
+        attr = tdb_schema.attr(i)
+        name = attr.name
+        if name == "":
+            name = "unnamed"
+        arrow_schema_dict[name] = get_arrow_type_from_tiledb_dtype(
+            attr.dtype, attr.isascii
+        )
 
     return pa.schema(arrow_schema_dict)
