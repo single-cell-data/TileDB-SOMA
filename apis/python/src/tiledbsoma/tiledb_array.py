@@ -53,7 +53,7 @@ class TileDBArray(TileDBObject[tiledb.Array]):
 
     def _tiledb_array_schema(self) -> tiledb.ArraySchema:
         """
-        Returns the TileDB array schema. Not part of the SOMA API; for dev/debug/etc.
+        Returns the TileDB array schema, for internal use.
         """
         return self._handle.reader.schema
 
