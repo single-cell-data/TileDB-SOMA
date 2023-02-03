@@ -189,15 +189,17 @@ class TileDBArray(TileDBObject):
             # At present we need to look up the S3 path. This can only be done via
             # tiledb.cloud.info(self.uri). Yet this open-source package does not take a dependency
             # on the tiledb.cloud package.
+            #
+            # tiledb.cc.TileDBError: C API: TileDB Internal, std::exception;
+            # Consolidation is not supported for remote arrays.
             return
 
-        for mode in ["fragment_meta", "commits", "array_meta"]:
+        for mode in ["fragment_meta", "commits"]:
 
             cfg = self._ctx.config()
-            cfg["sm.mem.total_budget"] = 4 * 1024**3
-            cfg["sm.consolidation.buffer_size"] = 512 * 1024**2
             cfg["sm.consolidation.mode"] = mode
             cfg["sm.vacuum.mode"] = mode
+            ctx = tiledb.Ctx(cfg)
 
-            tiledb.consolidate(self.uri, ctx=self._ctx)
-            tiledb.vacuum(self.uri, ctx=self._ctx)
+            tiledb.consolidate(self.uri, ctx=ctx)
+            tiledb.vacuum(self.uri, ctx=ctx)
