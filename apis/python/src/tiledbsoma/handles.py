@@ -1,12 +1,17 @@
+"""Abstractions to more easily manage read and write access to TileDB data.
+
+``open``, ``ArrayWrapper.open``, ``GroupWrapper.open`` are the important parts.
+"""
+
+import abc
 from typing import (
     Any,
-    Callable,
     Dict,
     Generic,
     Iterator,
     MutableMapping,
-    Optional,
     Set,
+    Type,
     TypeVar,
     Union,
 )
@@ -22,113 +27,116 @@ from .util_tiledb import is_does_not_exist_error
 
 StorageType = Literal["array", "group"]
 """How a SOMA object is stored."""
-TDBHandle = Union[tiledb.Array, tiledb.Group]
-"""Handle on some persistent TileDB object."""
+
+RawHandle = Union[tiledb.Array, tiledb.Group]
+_RawHdl_co = TypeVar("_RawHdl_co", bound=RawHandle, covariant=True)
+"""A raw TileDB object. Covariant because Handles are immutable enough."""
+_Self = TypeVar("_Self", bound="AnyWrapper")
 
 
-_TDBO = TypeVar("_TDBO", bound=TDBHandle)
-_TDBO_co = TypeVar("_TDBO_co", bound=TDBHandle, covariant=True)
-_Self = TypeVar("_Self")
+def open(
+    uri: str, mode: options.OpenMode, context: SOMATileDBContext
+) -> "Wrapper[RawHandle]":
+    """Determine whether the URI is an array or group, and open it."""
+    obj_type = tiledb.object_type(uri, ctx=context.tiledb_ctx)
+    if not obj_type:
+        raise DoesNotExistError(f"{uri!r} does not exist")
+    if obj_type == "array":
+        return ArrayWrapper.open(uri, mode, context)
+    if obj_type == "group":
+        return GroupWrapper.open(uri, mode, context)
+    raise SOMAError(f"{uri!r} has unknown storage type {obj_type!r}")
 
 
-# TODO: We should only need to keep around one of the read or write handles
-# after we do the initial open (where we read metadata and group contents).
-# For now, we're leaving this as-is.
-@attrs.define(slots=False)
-class ReadWriteHandle(Generic[_TDBO_co]):
-    """Paired read/write handles to a TileDB object.
+@attrs.define(eq=False, hash=False, slots=False)
+class Wrapper(Generic[_RawHdl_co], metaclass=abc.ABCMeta):
+    """Wrapper for TileDB handles to manage lifecycle and metadata.
 
-    You can (and should) access the members, but do not reassign them.
+    Callers may read and use (non-underscored) members but should never set
+    attributes on instances.
     """
 
     uri: str
+    mode: options.OpenMode
     context: SOMATileDBContext
-    reader: _TDBO_co
-    maybe_writer: Optional[_TDBO_co]
-    closed: bool = False
+    _handle: _RawHdl_co
+    closed: bool = attrs.field(default=False, init=False)
 
     @classmethod
-    def open_array(
-        cls,
-        uri: str,
-        mode: options.OpenMode,
-        context: SOMATileDBContext,
-    ) -> "ReadWriteHandle[tiledb.Array]":
-        return cls._open(tiledb.open, uri, mode, context)
-
-    @classmethod
-    def open_group(
-        cls,
-        uri: str,
-        mode: options.OpenMode,
-        context: SOMATileDBContext,
-    ) -> "ReadWriteHandle[tiledb.Group]":
-        return cls._open(tiledb.Group, uri, mode, context)
-
-    @classmethod
-    def _open(
-        cls,
-        tiledb_cls: Callable[..., _TDBO],
-        uri: str,
-        mode: options.OpenMode,
-        context: SOMATileDBContext,
-    ) -> "ReadWriteHandle[_TDBO]":
+    def open(
+        cls: Type[_Self], uri: str, mode: options.OpenMode, context: SOMATileDBContext
+    ) -> _Self:
+        if mode not in ("r", "w"):
+            raise ValueError(f"Invalid open mode {mode!r}")
         try:
-            rd = tiledb_cls(uri, "r", ctx=context.tiledb_ctx)
-            try:
-                wr = (
-                    tiledb_cls(uri, "w", ctx=context.tiledb_ctx)
-                    if mode == "w"
-                    else None
-                )
-            except Exception:
-                rd.close()
-                raise
+            tdb = cls._opener(uri, mode, context)
+            handle = cls(uri, mode, context, tdb)
+            if mode == "w":
+                with cls._opener(uri, "r", context) as auxiliary_reader:
+                    handle._do_initial_reads(auxiliary_reader)
+            else:
+                handle._do_initial_reads(tdb)
         except tiledb.TileDBError as tdbe:
             if is_does_not_exist_error(tdbe):
-                raise DoesNotExistError(
-                    f"{tiledb_cls.__name__} {uri!r} does not exist"
-                ) from tdbe
+                raise DoesNotExistError(f"{uri!r} does not exist") from tdbe
             raise
-        return ReadWriteHandle(uri, context, reader=rd, maybe_writer=wr)
+        return handle
 
-    def __attrs_post_init__(self) -> None:
+    @classmethod
+    @abc.abstractmethod
+    def _opener(
+        cls, uri: str, mode: options.OpenMode, context: SOMATileDBContext
+    ) -> _RawHdl_co:
+        """Opens and returns a TileDB object specific to this type."""
+        raise NotImplementedError()
+
+    # Covariant types should normally not be in parameters, but this is for
+    # internal use only so it's OK.
+    def _do_initial_reads(self, reader: _RawHdl_co) -> None:  # type: ignore[misc]
+        """Final setup step before returning the Handle.
+
+        This is passed a raw TileDB object opened in read mode, since writers
+        will need to retrieve data from the backing store on setup.
+        """
         # non–attrs-managed field
-        self.metadata = MetadataWrapper(self, dict(self.reader.meta))
+        self.metadata = MetadataWrapper(self, dict(reader.meta))
 
     @property
-    def writer(self) -> _TDBO_co:
-        if self.maybe_writer is None:
-            raise SOMAError(f"cannot write to {self.uri!r} opened in read-only mode")
-        return self.maybe_writer
+    def reader(self) -> _RawHdl_co:
+        """Accessor to assert that you are working in read mode."""
+        if self.closed:
+            raise SOMAError(f"{self} is closed")
+        if self.mode == "r":
+            return self._handle
+        raise SOMAError(f"cannot read from {self}; it is open for writing")
 
     @property
-    def mode(self) -> options.OpenMode:
-        return "r" if self.maybe_writer is None else "w"
+    def writer(self) -> _RawHdl_co:
+        """Accessor to assert that you are working in write mode."""
+        if self.closed:
+            raise SOMAError(f"{self} is closed")
+        if self.mode == "w":
+            return self._handle
+        raise SOMAError(f"cannot write to {self}; it is open for reading")
 
     def close(self) -> None:
         if self.closed:
             return
+        self._handle.close()
         self.closed = True
-        self.reader.close()
-        if self.maybe_writer is not None:
-            self.maybe_writer.close()
 
     def _flush_hack(self) -> None:
-        """Flushes writes. Use rarely, if ever."""
-        if self.maybe_writer is None:
-            return
-        self.maybe_writer.close()
-        if isinstance(self.maybe_writer, tiledb.Array):
-            self.maybe_writer = tiledb.open(self.uri, "w", ctx=self.context.tiledb_ctx)
-            self.reader.reopen()
-        else:
-            self.maybe_writer = tiledb.Group(self.uri, "w", ctx=self.context.tiledb_ctx)
-            self.reader = tiledb.Group(self.uri, "r", ctx=self.context.tiledb_ctx)
+        """On write handles, flushes pending writes. Does nothing to reads."""
+        if self.mode == "w":
+            self._handle.close()
+            self._handle = self._opener(self.uri, "w", self.context)
 
     def _check_open(self) -> None:
         if self.closed:
             raise SOMAError(f"{self!r} is closed")
+
+    def __repr__(self) -> str:
+        return f"<{type(self).__name__} {self.mode} on {self.uri!r}>"
 
     def __enter__(self: _Self) -> _Self:
         return self
@@ -140,6 +148,54 @@ class ReadWriteHandle(Generic[_TDBO_co]):
         self.close()
 
 
+AnyWrapper = Wrapper[RawHandle]
+"""Non-instantiable type representing any Handle."""
+
+
+class ArrayWrapper(Wrapper[tiledb.Array]):
+    """Wrapper around a TileDB Array handle."""
+
+    @classmethod
+    def _opener(
+        cls, uri: str, mode: options.OpenMode, context: SOMATileDBContext
+    ) -> tiledb.Array:
+        return tiledb.open(uri, mode, ctx=context.tiledb_ctx)
+
+    @property
+    def schema(self) -> tiledb.ArraySchema:
+        return self._handle.schema
+
+
+@attrs.define(frozen=True)
+class GroupEntry:
+    uri: str
+    wrapper_type: Type[AnyWrapper]
+
+    @classmethod
+    def from_object(cls, obj: tiledb.Object) -> "GroupEntry":
+        if obj.type == tiledb.Array:
+            return GroupEntry(obj.uri, ArrayWrapper)
+        if obj.type == tiledb.Group:
+            return GroupEntry(obj.uri, GroupWrapper)
+        raise SOMAError(f"internal error: unknown object type {obj.type}")
+
+
+class GroupWrapper(Wrapper[tiledb.Group]):
+    """Wrapper around a TileDB Group handle."""
+
+    @classmethod
+    def _opener(
+        cls, uri: str, mode: options.OpenMode, context: SOMATileDBContext
+    ) -> tiledb.Group:
+        return tiledb.Group(uri, mode, ctx=context.tiledb_ctx)
+
+    def _do_initial_reads(self, reader: tiledb.Group) -> None:
+        super()._do_initial_reads(reader)
+        self.initial_contents = {
+            o.name: GroupEntry.from_object(o) for o in reader if o.name is not None
+        }
+
+
 @attrs.define(frozen=True)
 class MetadataWrapper(MutableMapping[str, Any]):
     """A wrapper storing the metadata of some TileDB object.
@@ -149,18 +205,21 @@ class MetadataWrapper(MutableMapping[str, Any]):
     through to the backing store and the cache is updated to match.
     """
 
-    owner: ReadWriteHandle[TDBHandle]
+    owner: Wrapper[RawHandle]
     cache: Dict[str, Any]
     _mutated_fields: Set[str] = attrs.field(factory=set)
     """Fields that have been mutated. """
 
     def __len__(self) -> int:
+        self.owner._check_open()
         return len(self.cache)
 
     def __iter__(self) -> Iterator[str]:
+        self.owner._check_open()
         return iter(self.cache)
 
     def __getitem__(self, key: str) -> Any:
+        self.owner._check_open()
         return self.cache[key]
 
     def __setitem__(self, key: str, value: Any) -> None:

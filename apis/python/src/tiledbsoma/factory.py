@@ -13,6 +13,7 @@ from . import (
     dataframe,
     dense_nd_array,
     experiment,
+    handles,
     measurement,
     sparse_nd_array,
     tiledb_array,
@@ -24,7 +25,6 @@ from .constants import (
     SOMA_OBJECT_TYPE_METADATA_KEY,
 )
 from .exception import DoesNotExistError, SOMAError
-from .handles import ReadWriteHandle, StorageType, TDBHandle
 from .options import SOMATileDBContext
 from .util import typeguard_ignore
 
@@ -76,7 +76,7 @@ def _open_internal(
     uri: str,
     mode: options.OpenMode,
     *,
-    tiledb_type: Optional[StorageType],
+    tiledb_type: Optional[handles.StorageType],
     soma_type: None,
     context: SOMATileDBContext,
 ) -> "tiledb_object.AnyTileDBObject":
@@ -88,7 +88,7 @@ def _open_internal(
     uri: str,
     mode: options.OpenMode,
     *,
-    tiledb_type: Optional[StorageType],
+    tiledb_type: Optional[handles.StorageType],
     soma_type: Type[_Obj],
     context: SOMATileDBContext,
 ) -> _Obj:
@@ -100,7 +100,7 @@ def _open_internal(
     uri: str,
     mode: options.OpenMode,
     *,
-    tiledb_type: Optional[StorageType],
+    tiledb_type: Optional[handles.StorageType],
     soma_type: Optional[Type["tiledb_object.AnyTileDBObject"]],
     context: SOMATileDBContext,
 ) -> "tiledb_object.AnyTileDBObject":
@@ -116,7 +116,7 @@ def _open_internal(
         obj_type = tiledb.object_type(uri, ctx=context.tiledb_ctx)
         if not obj_type:
             raise DoesNotExistError(f"{uri!r} does not exist")
-        tiledb_type = cast(StorageType, obj_type)
+        tiledb_type = cast(handles.StorageType, obj_type)
 
     if tiledb_type == "array":
         if not soma_type or issubclass(soma_type, tiledb_array.TileDBArray):
@@ -139,7 +139,7 @@ def _open_array(
     soma_type: Optional[Type[_Arr]],
     context: SOMATileDBContext,
 ) -> _Arr:
-    handle = ReadWriteHandle.open_array(uri, mode, context)
+    handle = handles.ArrayWrapper.open(uri, mode, context)
     try:
         data_type = _read_soma_type(handle)
         cls = _to_array_class(data_type)
@@ -165,7 +165,7 @@ def _open_group(
     soma_type: Optional[Type[_Coll]],
     context: SOMATileDBContext,
 ) -> _Coll:
-    handle = ReadWriteHandle.open_group(uri, mode, context)
+    handle = handles.GroupWrapper.open(uri, mode, context)
     try:
         data_type = _read_soma_type(handle)
         cls = _to_group_class(data_type)
@@ -185,7 +185,7 @@ def _open_group(
 
 
 @typeguard_ignore
-def _storage_of(cls: Type["tiledb_object.AnyTileDBObject"]) -> StorageType:
+def _storage_of(cls: Type["tiledb_object.AnyTileDBObject"]) -> handles.StorageType:
     if issubclass(cls, tiledb_array.TileDBArray):
         return "array"
     if issubclass(cls, collection.CollectionBase):
@@ -193,9 +193,9 @@ def _storage_of(cls: Type["tiledb_object.AnyTileDBObject"]) -> StorageType:
     raise TypeError(f"{cls} is not a concrete stored object")
 
 
-def _read_soma_type(hdl: ReadWriteHandle[TDBHandle]) -> str:
-    obj_type = hdl.reader.meta.get(SOMA_OBJECT_TYPE_METADATA_KEY)
-    encoding_version = hdl.reader.meta.get(SOMA_ENCODING_VERSION_METADATA_KEY)
+def _read_soma_type(hdl: handles.AnyWrapper) -> str:
+    obj_type = hdl.metadata.get(SOMA_OBJECT_TYPE_METADATA_KEY)
+    encoding_version = hdl.metadata.get(SOMA_ENCODING_VERSION_METADATA_KEY)
 
     if obj_type is None:
         raise SOMAError(
