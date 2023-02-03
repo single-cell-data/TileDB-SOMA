@@ -8,7 +8,6 @@ import tiledb
 from pandas.api.types import infer_dtype, is_categorical_dtype
 from somacore import options
 
-# This package's pybind11 code
 from .exception import DoesNotExistError, SOMAError
 from .options import SOMATileDBContext
 from .types import NPNDArray, PDSeries, TDBHandle
