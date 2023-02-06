@@ -81,7 +81,7 @@ class TileDBCreateOptions(Mapping[str, Any]):
     def validity_filters(
         self,
         default: Optional[Sequence[StrOrMap]] = DEFAULT_VALIDITY_FILTERS,
-    ) -> Sequence[tiledb.Filter]:
+    ) -> Optional[Sequence[tiledb.Filter]]:
         items = self.get("validity_filters", default)
         if items is None:
             return None
