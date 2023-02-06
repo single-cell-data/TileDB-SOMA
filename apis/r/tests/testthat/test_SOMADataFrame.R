@@ -1,6 +1,6 @@
 
 test_that("Basic mechanics", {
-  uri <- withr::local_tempdir("soma-indexed-dataframe")
+  uri <- withr::local_tempdir("soma-dataframe")
   asch <- create_arrow_schema()
 
   sdf <- SOMADataFrame$new(uri)
@@ -67,6 +67,12 @@ test_that("Basic mechanics", {
   # Attribute filters
   tbl1 <- sdf$read(value_filter = "bar < 5")
   expect_true(tbl1$Equals(tbl0$Filter(tbl0$bar < 5)))
+
+  # Validate TileDB array schema
+  arr <- tiledb::tiledb_array(uri)
+  sch <- tiledb::schema(arr)
+  expect_true(tiledb::is.sparse(sch))
+  expect_false(tiledb::allows_dups(sch))
 })
 
 test_that("creation with all supported dimension data types", {
@@ -104,7 +110,7 @@ test_that("creation with all supported dimension data types", {
 })
 
 test_that("int64 values are stored correctly", {
-  uri <- withr::local_tempdir("soma-indexed-dataframe")
+  uri <- withr::local_tempdir("soma-dataframe")
   asch <- arrow::schema(
     arrow::field("foo", arrow::int32(), nullable = FALSE),
     arrow::field("soma_joinid", arrow::int64(), nullable = FALSE),
@@ -153,7 +159,7 @@ test_that("SOMADataFrame read", {
 })
 
 test_that("soma_ prefix is reserved", {
-  uri <- withr::local_tempdir("soma-indexed-dataframe")
+  uri <- withr::local_tempdir("soma-dataframe")
   asch <- create_arrow_schema()
 
   # Add a soma_joinid column with the wrong type
@@ -170,7 +176,7 @@ test_that("soma_ prefix is reserved", {
 })
 
 test_that("soma_joinid is added on creation", {
-  uri <- withr::local_tempdir("soma-indexed-dataframe")
+  uri <- withr::local_tempdir("soma-dataframe")
   asch <- create_arrow_schema()
   asch <- asch$RemoveField(match("soma_joinid", asch$names) - 1)
 
@@ -182,7 +188,7 @@ test_that("soma_joinid is added on creation", {
 })
 
 test_that("soma_joinid validations", {
-  uri <- withr::local_tempdir("soma-indexed-dataframe")
+  uri <- withr::local_tempdir("soma-dataframe")
   asch <- create_arrow_schema()
 
   # Add a soma_joinid column with the wrong type
