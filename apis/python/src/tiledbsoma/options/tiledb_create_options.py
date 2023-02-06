@@ -80,9 +80,12 @@ class TileDBCreateOptions(Mapping[str, Any]):
 
     def validity_filters(
         self,
-        default: Sequence[StrOrMap] = DEFAULT_VALIDITY_FILTERS,
+        default: Optional[Sequence[StrOrMap]] = DEFAULT_VALIDITY_FILTERS,
     ) -> Sequence[tiledb.Filter]:
-        return _build_filters(self.get("validity_filters", default))
+        items = self.get("validity_filters", default)
+        if items is None:
+            return None
+        return _build_filters(items)
 
     def cell_tile_orders(self) -> Tuple[Optional[str], Optional[str]]:
         """Returns the cell and tile orders that should be used.
@@ -132,9 +135,6 @@ _FILTERS: Mapping[str, Type[tiledb.Filter]] = {
 
 
 def _build_filters(items: Any) -> Sequence[tiledb.Filter]:
-    # None is a legal filter list
-    if items is None:
-        return None
     return tuple(map(_build_filter, items))
 
 
