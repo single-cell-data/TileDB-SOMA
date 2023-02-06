@@ -18,7 +18,7 @@ from somacore import options
 
 DEFAULT_TILE_ORDER = "row-major"
 DEFAULT_CELL_ORDER = "row-major"
-DEFAULT_STRING_DIM_ZSTD_LEVEL = 3
+DEFAULT_INT64_DIM_ZSTD_LEVEL = 3
 DEFAULT_WRITE_X_CHUNKED = True
 DEFAULT_GOAL_CHUNK_NNZ = 200_000_000
 DEFAULT_FILTERS = (
@@ -56,8 +56,8 @@ class TileDBCreateOptions(Mapping[str, Any]):
             (platform_config or {}).get("tiledb", {}).get("create", {})
         )
 
-    def string_dim_zstd_level(self) -> int:
-        return self.get("string_dim_zstd_level", DEFAULT_STRING_DIM_ZSTD_LEVEL)
+    def int64_dim_zstd_level(self) -> int:
+        return self.get("int64_dim_zstd_level", DEFAULT_INT64_DIM_ZSTD_LEVEL)
 
     def write_X_chunked(self) -> bool:
         return self.get("write_X_chunked", DEFAULT_WRITE_X_CHUNKED)

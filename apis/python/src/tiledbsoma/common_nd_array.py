@@ -103,7 +103,7 @@ def build_tiledb_schema(
                 [
                     dict(
                         _type="ZstdFilter",
-                        level=create_options.string_dim_zstd_level(),
+                        level=create_options.int64_dim_zstd_level(),
                     )
                 ],
             ),
