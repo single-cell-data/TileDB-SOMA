@@ -99,6 +99,11 @@ def test_dataframe(tmp_path, arrow_schema):
         assert sorted([e.as_py() for e in list(table["baz"])]) == ["apple", "cat"]
         assert [e.as_py() for e in list(table["quux"])] == [True, False]
 
+    # Validate TileDB array schema
+    with tiledb.open(uri) as A:
+        assert A.schema.sparse
+        assert not A.schema.allows_duplicates
+
 
 def test_dataframe_with_float_dim(tmp_path, arrow_schema):
     sdf = soma.DataFrame.create(
