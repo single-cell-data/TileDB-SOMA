@@ -6,20 +6,20 @@ import tiledb
 # This package's pybind11 code
 import tiledbsoma.libtiledbsoma as clib
 
-from . import handles
+from . import tdb_handles
 from .options.soma_tiledb_context import SOMATileDBContext
 from .tiledb_object import TileDBObject
 from .util_arrow import tiledb_schema_to_arrow
 
 
-class TileDBArray(TileDBObject[handles.ArrayWrapper]):
+class TileDBArray(TileDBObject[tdb_handles.ArrayWrapper]):
     """
     Wraps arrays from TileDB-Py by retaining a URI, options, etc.  Also serves as an abstraction layer to hide TileDB-specific details from the API, unless requested.
 
     [lifecycle: experimental]
     """
 
-    _wrapper_type = handles.ArrayWrapper
+    _wrapper_type = tdb_handles.ArrayWrapper
 
     @property
     def schema(self) -> pa.Schema:
@@ -83,7 +83,7 @@ class TileDBArray(TileDBObject[handles.ArrayWrapper]):
     @classmethod
     def _create_internal(
         cls, uri: str, schema: tiledb.ArraySchema, context: SOMATileDBContext
-    ) -> handles.ArrayWrapper:
+    ) -> tdb_handles.ArrayWrapper:
         """Creates the TileDB Array for this type and returns an opened handle.
 
         This does the work of creating a TileDB Array with the provided schema

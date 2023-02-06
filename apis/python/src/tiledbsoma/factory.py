@@ -13,9 +13,9 @@ from . import (
     dataframe,
     dense_nd_array,
     experiment,
-    handles,
     measurement,
     sparse_nd_array,
+    tdb_handles,
     tiledb_object,
 )
 from .constants import (
@@ -28,7 +28,7 @@ from .options import SOMATileDBContext
 from .util import typeguard_ignore
 
 _Obj = TypeVar("_Obj", bound="tiledb_object.AnyTileDBObject")
-_Wrapper = TypeVar("_Wrapper", bound=handles.AnyWrapper)
+_Wrapper = TypeVar("_Wrapper", bound=tdb_handles.AnyWrapper)
 
 
 @overload
@@ -72,7 +72,7 @@ def open(
     :param context: If set, the context data to use.
     """
     context = context or SOMATileDBContext()
-    obj = _open_internal(handles.open, uri, mode, context)
+    obj = _open_internal(tdb_handles.open, uri, mode, context)
     try:
         if soma_type:
             if isinstance(soma_type, str):
@@ -122,7 +122,7 @@ def _reify_handle(hdl: _Wrapper) -> "tiledb_object.TileDBObject[_Wrapper]":
     )
 
 
-def _read_soma_type(hdl: handles.AnyWrapper) -> str:
+def _read_soma_type(hdl: tdb_handles.AnyWrapper) -> str:
     obj_type = hdl.metadata.get(SOMA_OBJECT_TYPE_METADATA_KEY)
     encoding_version = hdl.metadata.get(SOMA_ENCODING_VERSION_METADATA_KEY)
 

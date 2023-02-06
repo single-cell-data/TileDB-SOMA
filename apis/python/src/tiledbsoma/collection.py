@@ -25,7 +25,7 @@ import somacore
 import tiledb
 from somacore import options
 
-from . import handles
+from . import tdb_handles
 from .common_nd_array import NDArray
 from .constants import SOMA_JOINID
 from .dataframe import DataFrame
@@ -47,13 +47,13 @@ _NDArr = TypeVar("_NDArr", bound=NDArray)
 class _CachedElement:
     """Item we have loaded in the cache of a collection."""
 
-    entry: handles.GroupEntry
+    entry: tdb_handles.GroupEntry
     soma: Optional[AnyTileDBObject] = None
     """The reified object, if it has been opened."""
 
 
 class CollectionBase(
-    TileDBObject[handles.GroupWrapper],
+    TileDBObject[tdb_handles.GroupWrapper],
     somacore.Collection[CollectionElementType],
     Generic[CollectionElementType],
 ):
@@ -64,7 +64,7 @@ class CollectionBase(
     """
 
     __slots__ = ()
-    _wrapper_type = handles.GroupWrapper
+    _wrapper_type = tdb_handles.GroupWrapper
 
     # TODO: Implement additional creation of members on collection subclasses.
     @classmethod
@@ -90,7 +90,7 @@ class CollectionBase(
 
     def __init__(
         self,
-        handle: handles.GroupWrapper,
+        handle: tdb_handles.GroupWrapper,
         *,
         _dont_call_this_use_create_or_open_instead: str = "",
     ):
@@ -395,7 +395,7 @@ class CollectionBase(
         self._handle._flush_hack()
 
         self._contents[key] = _CachedElement(
-            entry=handles.GroupEntry(value.uri, value._wrapper_type), soma=value
+            entry=tdb_handles.GroupEntry(value.uri, value._wrapper_type), soma=value
         )
 
     def _del_element(self, key: str) -> None:

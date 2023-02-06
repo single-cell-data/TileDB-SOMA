@@ -40,9 +40,9 @@ from . import (
 from .common_nd_array import NDArray
 from .constants import SOMA_JOINID
 from .exception import DoesNotExistError, SOMAError
-from .handles import RawHandle
 from .options import SOMATileDBContext
 from .options.tiledb_create_options import TileDBCreateOptions
+from .tdb_handles import RawHandle
 from .tiledb_array import TileDBArray
 from .tiledb_object import TileDBObject
 from .types import INGEST_MODES, IngestMode, NPNDArray, Path
