@@ -258,6 +258,11 @@ def test_sparse_nd_array_read_write_sparse_tensor(
 
         assert t.shape == shape
 
+    # Validate TileDB array schema
+    with tiledb.open(tmp_path.as_posix()) as A:
+        assert A.schema.sparse
+        assert not A.schema.allows_duplicates
+
 
 @pytest.mark.parametrize("shape", [(10,), (23, 4), (5, 3, 1), (8, 4, 2, 30)])
 @pytest.mark.parametrize("test_enumeration", range(10))
@@ -277,6 +282,11 @@ def test_sparse_nd_array_read_write_table(
     t = next(b.read((slice(None),) * len(shape)).tables())
     assert isinstance(t, pa.Table)
     assert tables_are_same_value(data, t)
+
+    # Validate TileDB array schema
+    with tiledb.open(tmp_path.as_posix()) as A:
+        assert A.schema.sparse
+        assert not A.schema.allows_duplicates
 
 
 @pytest.mark.parametrize("dtype", [np.float32, np.float64, np.int32, np.int64])
@@ -302,6 +312,11 @@ def test_sparse_nd_array_read_as_pandas(
     assert df.sort_values(by=dim_names, ignore_index=True).equals(
         data.to_pandas().sort_values(by=dim_names, ignore_index=True)
     )
+
+    # Validate TileDB array schema
+    with tiledb.open(tmp_path.as_posix()) as A:
+        assert A.schema.sparse
+        assert not A.schema.allows_duplicates
 
 
 def test_empty_read(tmp_path):

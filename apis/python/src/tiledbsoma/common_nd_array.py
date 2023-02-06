@@ -122,11 +122,13 @@ def build_tiledb_schema(
 
     cell_order, tile_order = create_options.cell_tile_orders()
 
+    # TODO: accept more TileDB array-schema options from create_options
+    # https://github.com/single-cell-data/TileDB-SOMA/issues/876
     return tiledb.ArraySchema(
         domain=dom,
         attrs=attrs,
         sparse=is_sparse,
-        allows_duplicates=is_sparse,
+        allows_duplicates=False,
         offsets_filters=create_options.offsets_filters(),
         capacity=create_options.get("capacity", 100000),
         tile_order=tile_order,
