@@ -22,11 +22,12 @@ DEFAULT_DATAFRAME_DIM_ZSTD_LEVEL = 3
 DEFAULT_SPARSE_ND_ARRAY_DIM_ZSTD_LEVEL = 3
 DEFAULT_WRITE_X_CHUNKED = True
 DEFAULT_GOAL_CHUNK_NNZ = 200_000_000
-DEFAULT_FILTERS = (
+DEFAULT_OFFSET_FILTERS = (
     "DoubleDeltaFilter",
     "BitWidthReductionFilter",
     "ZstdFilter",
 )
+DEFAULT_VALIDITY_FILTERS = None
 DEFAULT_TILE_EXTENT = 2048
 # TODO: pending further work on
 #  https://github.com/single-cell-data/TileDB-SOMA/issues/27
@@ -73,9 +74,15 @@ class TileDBCreateOptions(Mapping[str, Any]):
 
     def offsets_filters(
         self,
-        default: Sequence[StrOrMap] = DEFAULT_FILTERS,
+        default: Sequence[StrOrMap] = DEFAULT_OFFSET_FILTERS,
     ) -> Sequence[tiledb.Filter]:
         return _build_filters(self.get("offsets_filters", default))
+
+    def validity_filters(
+        self,
+        default: Sequence[StrOrMap] = DEFAULT_VALIDITY_FILTERS,
+    ) -> Sequence[tiledb.Filter]:
+        return _build_filters(self.get("validity_filters", default))
 
     def cell_tile_orders(self) -> Tuple[Optional[str], Optional[str]]:
         """Returns the cell and tile orders that should be used.
@@ -125,6 +132,9 @@ _FILTERS: Mapping[str, Type[tiledb.Filter]] = {
 
 
 def _build_filters(items: Any) -> Sequence[tiledb.Filter]:
+    # None is a legal filter list
+    if items is None:
+        return None
     return tuple(map(_build_filter, items))
 
 
