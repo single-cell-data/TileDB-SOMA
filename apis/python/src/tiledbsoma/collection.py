@@ -25,21 +25,16 @@ import somacore
 import tiledb
 from somacore import options
 
+from . import tdb_handles
 from .common_nd_array import NDArray
 from .constants import SOMA_JOINID
 from .dataframe import DataFrame
 from .dense_nd_array import DenseNDArray
-from .exception import SOMAError
 from .options import SOMATileDBContext
 from .sparse_nd_array import SparseNDArray
 from .tiledb_object import AnyTileDBObject, TileDBObject
-from .types import StorageType, TDBHandle
 from .util import is_relative_uri, make_relative_path, uri_joinpath
-from .util_tiledb import (
-    ReadWriteHandle,
-    is_does_not_exist_error,
-    is_duplicate_group_key_error,
-)
+from .util_tiledb import is_does_not_exist_error, is_duplicate_group_key_error
 
 # A collection can hold any sub-type of TileDBObject
 CollectionElementType = TypeVar("CollectionElementType", bound=AnyTileDBObject)
@@ -52,14 +47,13 @@ _NDArr = TypeVar("_NDArr", bound=NDArray)
 class _CachedElement:
     """Item we have loaded in the cache of a collection."""
 
-    uri: str
-    cls: Type[TDBHandle]
+    entry: tdb_handles.GroupEntry
     soma: Optional[AnyTileDBObject] = None
     """The reified object, if it has been opened."""
 
 
 class CollectionBase(
-    TileDBObject[tiledb.Group],
+    TileDBObject[tdb_handles.GroupWrapper],
     somacore.Collection[CollectionElementType],
     Generic[CollectionElementType],
 ):
@@ -70,7 +64,7 @@ class CollectionBase(
     """
 
     __slots__ = ()
-    _tiledb_type = tiledb.Group
+    _wrapper_type = tdb_handles.GroupWrapper
 
     # TODO: Implement additional creation of members on collection subclasses.
     @classmethod
@@ -83,27 +77,8 @@ class CollectionBase(
     ) -> _Self:
         context = context or SOMATileDBContext()
         tiledb.group_create(uri=uri, ctx=context.tiledb_ctx)
-        handle = ReadWriteHandle.open_group(uri, "w", context)
+        handle = cls._wrapper_type.open(uri, "w", context)
         cls._set_create_metadata(handle)
-        return cls(
-            handle,
-            _dont_call_this_use_create_or_open_instead="tiledbsoma-internal-code",
-        )
-
-    @classmethod
-    def open(
-        cls: Type[_Self],
-        uri: str,
-        mode: options.OpenMode = "r",
-        *,
-        context: Optional[SOMATileDBContext] = None,
-        platform_config: Optional[options.PlatformConfig] = None,
-    ) -> _Self:
-        """Opens this specific type of collection."""
-        del platform_config  # unused
-        context = context or SOMATileDBContext()
-        handle = ReadWriteHandle.open_group(uri, mode, context)
-        # TODO: Verify that we have the right type using metadata.
         return cls(
             handle,
             _dont_call_this_use_create_or_open_instead="tiledbsoma-internal-code",
@@ -115,7 +90,7 @@ class CollectionBase(
 
     def __init__(
         self,
-        handle: ReadWriteHandle[tiledb.Group],
+        handle: tdb_handles.GroupWrapper,
         *,
         _dont_call_this_use_create_or_open_instead: str = "",
     ):
@@ -123,10 +98,12 @@ class CollectionBase(
             handle,
             _dont_call_this_use_create_or_open_instead=_dont_call_this_use_create_or_open_instead,
         )
-        self._cached_group_contents: Optional[Dict[str, _CachedElement]] = None
-        """The contents of the persisted TileDB Group, cached for performance.
+        self._contents = {
+            key: _CachedElement(entry) for key, entry in handle.initial_contents.items()
+        }
+        """The contents of the persisted TileDB Group.
 
-        If None, the cache has not been loaded.
+        This is loaded at startup when we have a read handle.
         """
 
     # Overloads to allow type inference to work when doing:
@@ -267,7 +244,7 @@ class CollectionBase(
         """
         Return the number of members in the collection
         """
-        return len(self._group_contents)
+        return len(self._contents)
 
     def __getitem__(self, key: str) -> CollectionElementType:
         """
@@ -277,27 +254,17 @@ class CollectionBase(
         err_str = f"{self.__class__.__name__} has no item {key!r}"
 
         try:
-            entry = self._group_contents[key]
+            entry = self._contents[key]
         except KeyError:
             raise KeyError(err_str) from None
         if entry.soma is None:
             from . import factory  # Delayed binding to resolve circular import.
 
-            storage_type: StorageType
-            if issubclass(entry.cls, tiledb.Array):
-                storage_type = "array"
-            elif issubclass(entry.cls, tiledb.Group):
-                storage_type = "group"
-            else:
-                raise SOMAError(
-                    f"internal error: unrecognized group entry type {entry.cls}"
-                )
             entry.soma = factory._open_internal(
-                uri=entry.uri,
-                mode=self.mode,
-                context=self.context,
-                tiledb_type=storage_type,
-                soma_type=None,
+                entry.entry.wrapper_type.open,
+                entry.entry.uri,
+                self.mode,
+                self.context,
             )
             # Since we just opened this object, we own it and should close it.
             self._close_stack.enter_context(entry.soma)
@@ -331,7 +298,7 @@ class CollectionBase(
         self._del_element(key)
 
     def __iter__(self) -> Iterator[str]:
-        return iter(self._group_contents)
+        return iter(self._contents)
 
     def __repr__(self) -> str:
         """
@@ -356,7 +323,7 @@ class CollectionBase(
 
     def _get_collection_repr(self) -> List[str]:
         me = super().__repr__()
-        keys = list(self._group_contents.keys())
+        keys = list(self._contents.keys())
         me += ":" if len(keys) > 0 else ""
         lines = [me]
 
@@ -367,25 +334,6 @@ class CollectionBase(
                 lines.append(f"    {line}")
 
         return lines
-
-    @property
-    def _group_contents(self) -> Dict[str, _CachedElement]:
-        """
-        Load all objects in the persistent tiledb group. Discard any anonymous objects,
-        as all Collection elements must have a key.
-
-        Update the cache with the group contents:
-        * delete cached items not in tdb group
-        * update/overwrite cache items where there is a URI or type mismatch
-        * add any new elements to cache
-        """
-        if self._cached_group_contents is None:
-            self._cached_group_contents = {
-                o.name: _CachedElement(uri=o.uri, cls=o.type)
-                for o in self._handle.reader
-                if o.name is not None
-            }
-        return self._cached_group_contents
 
     def _set_element(
         self,
@@ -446,8 +394,8 @@ class CollectionBase(
         # you would also get an error without this hack.
         self._handle._flush_hack()
 
-        self._group_contents[key] = _CachedElement(
-            uri=value.uri, cls=value._tiledb_type, soma=value
+        self._contents[key] = _CachedElement(
+            entry=tdb_handles.GroupEntry(value.uri, value._wrapper_type), soma=value
         )
 
     def _del_element(self, key: str) -> None:
@@ -455,7 +403,7 @@ class CollectionBase(
             self._handle.writer.remove(key)
             # HACK: see note above
             self._handle._flush_hack()
-            self._group_contents.pop(key, None)
+            self._contents.pop(key, None)
         except tiledb.TileDBError as tdbe:
             if is_does_not_exist_error(tdbe):
                 raise KeyError(f"{key!r} does not exist in {self}") from tdbe

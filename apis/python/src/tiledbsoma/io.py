@@ -42,13 +42,15 @@ from .constants import SOMA_JOINID
 from .exception import DoesNotExistError, SOMAError
 from .options import SOMATileDBContext
 from .options.tiledb_create_options import TileDBCreateOptions
+from .tdb_handles import RawHandle
+from .tiledb_array import TileDBArray
 from .tiledb_object import TileDBObject
-from .types import INGEST_MODES, IngestMode, NPNDArray, Path, TDBHandle
+from .types import INGEST_MODES, IngestMode, NPNDArray, Path
 
 SparseMatrix = Union[sp.csr_matrix, sp.csc_matrix, SparseDataset]
 Matrix = Union[NPNDArray, SparseMatrix]
 _NDArr = TypeVar("_NDArr", bound=NDArray)
-_TDBO = TypeVar("_TDBO", bound=TileDBObject[TDBHandle])
+_TDBO = TypeVar("_TDBO", bound=TileDBObject[RawHandle])
 
 
 # ----------------------------------------------------------------
@@ -439,7 +441,7 @@ def _write_dataframe(
         )
     else:
         if ingest_mode == "resume":
-            storage_ned = soma_df._handle.reader.nonempty_domain()
+            storage_ned = _read_nonempty_domain(soma_df)
             dim_range = ((int(df.index.min()), int(df.index.max())),)
             if _chunk_is_contained_in(dim_range, storage_ned):
                 logging.log_io(
@@ -580,7 +582,7 @@ def add_matrix_to_collection(
     """
     with cast(Measurement, exp.ms[measurement_name]) as meas:
         if collection_name in meas:
-            coll = cast(Collection[TDBHandle], meas[collection_name])
+            coll = cast(Collection[RawHandle], meas[collection_name])
         else:
             coll = _create_or_open_coll(
                 Collection, f"{meas.uri}/{collection_name}", ingest_mode
@@ -615,7 +617,7 @@ def _write_matrix_to_denseNDArray(
     storage_ned = None
     if ingest_mode == "resume":
         # This lets us check for already-ingested chunks, when in resume-ingest mode.
-        storage_ned = soma_ndarray._handle.reader.nonempty_domain()
+        storage_ned = _read_nonempty_domain(soma_ndarray)
         matrix_bounds = [
             (0, int(n - 1)) for n in matrix.shape
         ]  # Cast for lint in case np.int64
@@ -692,6 +694,19 @@ def _write_matrix_to_denseNDArray(
         i = i2
 
     return
+
+
+def _read_nonempty_domain(arr: TileDBArray) -> Any:
+    try:
+        return arr._handle.reader.nonempty_domain()
+    except SOMAError:
+        # This means that we're open in write-only mode.
+        # Reopen the array in read mode.
+        pass
+
+    cls = type(arr)
+    with cls.open(arr.uri, "r", platform_config=None, context=arr.context) as readarr:
+        return readarr._handle.reader.nonempty_domain()
 
 
 def _find_sparse_chunk_size(
@@ -773,7 +788,7 @@ def _write_matrix_to_sparseNDArray(
     if ingest_mode == "resume":
         # This lets us check for already-ingested chunks, when in resume-ingest mode.
         # THIS IS A HACK AND ONLY WORKS BECAUSE WE ARE DOING THIS BEFORE ALL WRITES.
-        storage_ned = soma_ndarray._handle.reader.nonempty_domain()
+        storage_ned = _read_nonempty_domain(soma_ndarray)
         matrix_bounds = [
             (0, int(n - 1)) for n in matrix.shape
         ]  # Cast for lint in case np.int64

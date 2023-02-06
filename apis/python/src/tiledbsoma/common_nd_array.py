@@ -59,7 +59,7 @@ class NDArray(TileDBArray, somacore.NDArray):
         """
         Return length of each dimension, always a list of length ``ndim``
         """
-        return cast(Tuple[int, ...], self._handle.reader.schema.domain.shape)
+        return cast(Tuple[int, ...], self._handle.schema.domain.shape)
 
     def reshape(self, shape: Tuple[int, ...]) -> None:
         """

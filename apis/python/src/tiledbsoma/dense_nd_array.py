@@ -25,7 +25,7 @@ class DenseNDArray(NDArray, somacore.DenseNDArray):
         """
         Return length of each dimension, always a list of length ``ndim``
         """
-        return cast(NTuple, self._handle.reader.schema.domain.shape)
+        return cast(NTuple, self._handle.schema.domain.shape)
 
     def reshape(self, shape: NTuple) -> None:
         """

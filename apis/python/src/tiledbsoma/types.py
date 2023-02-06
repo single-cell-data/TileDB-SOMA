@@ -5,7 +5,6 @@ import numpy as np
 import numpy.typing as npt
 import pandas as pd
 import pyarrow as pa
-import tiledb
 from typing_extensions import Literal
 
 if TYPE_CHECKING:
@@ -39,8 +38,3 @@ ArrowReadResult = Union[
     pa.SparseCSRMatrix,
     pa.SparseCSCMatrix,
 ]
-
-StorageType = Literal["array", "group"]
-"""How a SOMA object is stored."""
-TDBHandle = Union[tiledb.Array, tiledb.Group]
-"""Handle on some persistent TileDB object."""
