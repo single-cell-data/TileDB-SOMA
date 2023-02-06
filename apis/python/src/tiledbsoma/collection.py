@@ -7,7 +7,6 @@ from typing import (
     Any,
     ClassVar,
     Dict,
-    Generic,
     Iterator,
     List,
     Optional,
@@ -22,6 +21,7 @@ from typing import (
 import attrs
 import pyarrow as pa
 import somacore
+import somacore.collection
 import tiledb
 from somacore import options
 
@@ -54,8 +54,7 @@ class _CachedElement:
 
 class CollectionBase(
     TileDBObject[tdb_handles.GroupWrapper],
-    somacore.Collection[CollectionElementType],
-    Generic[CollectionElementType],
+    somacore.collection.BaseCollection[CollectionElementType],
 ):
     """
     Contains a key-value mapping where the keys are string names and the values
@@ -437,7 +436,9 @@ class CollectionBase(
 AnyTileDBCollection = CollectionBase[AnyTileDBObject]
 
 
-class Collection(CollectionBase[CollectionElementType], Generic[CollectionElementType]):
+class Collection(
+    CollectionBase[CollectionElementType], somacore.Collection[CollectionElementType]
+):
     """
     A persistent collection of SOMA objects, mapping string keys to any SOMA object.
 
