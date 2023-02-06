@@ -338,7 +338,7 @@ def _build_tiledb_schema(
                 [
                     dict(
                         _type="ZstdFilter",
-                        level=tiledb_create_options.int64_dim_zstd_level(),
+                        level=tiledb_create_options.dataframe_dim_zstd_level(),
                     )
                 ],
             ),
