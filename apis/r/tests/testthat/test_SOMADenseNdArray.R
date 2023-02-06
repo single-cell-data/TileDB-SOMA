@@ -60,4 +60,9 @@ test_that("SOMADenseNDArray creation", {
     ndarray$read_arrow_table(coords = list(cbind(0, 1))),
     "must be a list of vectors"
   )
+
+  # Validate TileDB array schema
+  arr <- tiledb::tiledb_array(uri)
+  sch <- tiledb::schema(arr)
+  expect_false(tiledb::is.sparse(sch))
 })
