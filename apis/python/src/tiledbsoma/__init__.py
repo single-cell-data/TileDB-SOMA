@@ -1,4 +1,7 @@
+# TODO: once we've merged somacore 0.0.0a12, change this to
+# from somacore import AxisColumnNames, AxisQuery, ExperimentAxisQuery
 from somacore import AxisQuery, ExperimentAxisQuery
+from somacore.query.query import AxisColumnNames
 
 from .collection import Collection
 from .dataframe import DataFrame
@@ -12,12 +15,7 @@ from .general_utilities import (
     get_storage_engine,
     show_package_versions,
 )
-from .libtiledbsoma import (
-    stats_disable,
-    stats_dump,
-    stats_enable,
-    stats_reset,
-)
+from .libtiledbsoma import stats_disable, stats_dump, stats_enable, stats_reset
 from .measurement import Measurement
 from .sparse_nd_array import SparseNDArray
 
@@ -33,6 +31,7 @@ __all__ = [
     "stats_disable",
     "stats_reset",
     "stats_dump",
+    "AxisColumnNames",
     "AxisQuery",
     "ExperimentAxisQuery",
     "Collection",
