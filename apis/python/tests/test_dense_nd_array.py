@@ -41,6 +41,10 @@ def test_dense_nd_array_create_ok(
         assert a.schema.field(f"soma_dim_{d}").type == pa.int64()
     assert a.schema.field("soma_data").type == element_type
 
+    # Validate TileDB array schema
+    with tiledb.open(tmp_path.as_posix()) as A:
+        assert not A.schema.sparse
+
 
 @pytest.mark.parametrize("shape", [(10,)])
 @pytest.mark.parametrize("element_type", NDARRAY_ARROW_TYPES_NOT_SUPPORTED)
@@ -72,6 +76,10 @@ def test_dense_nd_array_read_write_tensor(tmp_path, shape: Tuple[int, ...]):
 
         t = b.read((slice(None),) * ndim, result_order="column-major")
         assert t.equals(pa.Tensor.from_numpy(data.transpose()))
+
+    # Validate TileDB array schema
+    with tiledb.open(tmp_path.as_posix()) as A:
+        assert not A.schema.sparse
 
     # write a single-value sub-array and recheck
     with soma.DenseNDArray.open(tmp_path.as_posix(), "w") as c:
