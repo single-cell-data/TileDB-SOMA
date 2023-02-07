@@ -88,6 +88,6 @@ class SOMATileDBContext:
             object.__setattr__(
                 self, "_group_write_tiledb_ctx", tiledb.Ctx(group_write_config)
             )
-            assert isinstance(self._group_write_tiledb_ctx, tiledb.Ctx)
         else:
             object.__setattr__(self, "_group_write_tiledb_ctx", self.tiledb_ctx)
+        assert isinstance(self._group_write_tiledb_ctx, tiledb.Ctx)
