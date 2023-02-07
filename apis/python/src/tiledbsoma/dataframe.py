@@ -24,7 +24,7 @@ class DataFrame(TileDBArray, somacore.DataFrame):
     """
     Represents ``obs``, ``var``, and others.
 
-    All ``DataFrame`` must contain a column called ``soma_joinid``, of type ``int64``.
+    Every ``DataFrame`` must contain a column called ``soma_joinid``, of type ``int64``.
     The ``soma_joinid`` column contains a unique value for each row in the dataframe,
     and acts as a joint key for other objects, such as ``SparseNDArray``.
 
@@ -48,7 +48,7 @@ class DataFrame(TileDBArray, somacore.DataFrame):
 
         [lifecycle: experimental]
 
-        :param schema: Arrow Schema defining the per-column schema. This schema
+        :param schema: Arrow schema defining the per-column schema. This schema
             must define all columns, including columns to be named as index columns.
             If the schema includes types unsupported by the SOMA implementation,
             an error will be raised.
@@ -118,7 +118,7 @@ class DataFrame(TileDBArray, somacore.DataFrame):
     ) -> TableReadIter:
         """
         Read a user-defined subset of data, addressed by the dataframe indexing columns,
-        optionally filtered, and return results as one or more Arrow.Table.
+        optionally filtered, and return results as one or more Arrow tables.
 
         [lifecycle: experimental]
 
@@ -226,13 +226,13 @@ class DataFrame(TileDBArray, somacore.DataFrame):
         self, values: pa.Table, platform_config: Optional[Mapping[str, Any]] = None
     ) -> None:
         """
-        Write an Arrow.Table to the persistent object. As duplicate index values
+        Write an Arrow table to the persistent object. As duplicate index values
         are not allowed, index values already present in the object are overwritten
         and new index values are added.
 
         [lifecycle: experimental]
 
-        :param values: An Arrow.Table containing all columns, including
+        :param values: An Arrow table containing all columns, including
             the index columns. The schema for the values must match
             the schema for the ``DataFrame``.
         """
@@ -260,7 +260,7 @@ class DataFrame(TileDBArray, somacore.DataFrame):
 def _canonicalize_schema(
     schema: pa.Schema, index_column_names: Sequence[str]
 ) -> pa.Schema:
-    """Turn a pyarrow Schema into the canonical version and check for errors.
+    """Turn a Arrow schema into the canonical version and check for errors.
 
     Returns a schema, which may be modified by the addition of required columns
     (e.g. ``soma_joinid``).
@@ -324,7 +324,7 @@ def _build_tiledb_schema(
     tiledb_create_options: TileDBCreateOptions,
     context: SOMATileDBContext,
 ) -> tiledb.ArraySchema:
-    """Converts a pyarrow.Schema into a TileDB ArraySchema for creation."""
+    """Converts an Arrow schema into a TileDB ArraySchema for creation."""
     dims = []
     for index_column_name in index_column_names:
         pa_type = schema.field(index_column_name).type

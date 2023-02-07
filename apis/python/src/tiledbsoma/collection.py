@@ -84,7 +84,7 @@ class CollectionBase(
         :param uri: The location to create this SOMA collection at.
         :param platform_config: Optional call-specific options to use when
             creating this collection. (Currently unused.)
-        :param context: If provided, the Context to use when creating and
+        :param context: If provided, the ``SOMATileDBContext`` to use when creating and
             opening this collection.
         """
         context = context or SOMATileDBContext()
@@ -225,7 +225,7 @@ class CollectionBase(
         shape: Sequence[int],
         platform_config: Optional[options.PlatformConfig] = None,
     ) -> _NDArr:
-        """Adds a new NDArray to this Collection.
+        """Adds a new ND Array to this Collection.
 
         For details about the behavior of ``key`` and ``uri``, see
         :meth:`add_new_collection`. The remaining parameters are passed to

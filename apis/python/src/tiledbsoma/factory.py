@@ -69,7 +69,7 @@ def open(
         This can be provided as a SOMA type name
         If the stored SOMA object is not of the correct type, an error will be
         raised.
-    :param context: If set, the context data to use.
+    :param context: If set, the ``SOMATileDBContext`` data to use.
     """
     context = context or SOMATileDBContext()
     obj = _open_internal(tdb_handles.open, uri, mode, context)
