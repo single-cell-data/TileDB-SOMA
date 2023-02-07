@@ -393,3 +393,11 @@ def test_timestamped_ops(tmp_path):
         tmp_path.as_uri(), context=SOMATileDBContext(read_timestamp=15)
     ) as sc:
         assert "A" not in sc
+
+    # confirm timestamp validation in SOMATileDBContext
+    with pytest.raises(ValueError):
+        SOMATileDBContext(read_timestamp=-1)
+    with pytest.raises(ValueError):
+        SOMATileDBContext(read_timestamp_start=2, read_timestamp=1)
+    with pytest.raises(ValueError):
+        SOMATileDBContext(write_timestamp=-1)
