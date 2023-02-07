@@ -62,6 +62,8 @@ class SOMATileDBContext:
     _group_write_tiledb_ctx: tiledb.Ctx = attrs.field(init=False)
 
     def __attrs_post_init__(self) -> None:
+        "initialization hook invoked by the attrs-generated __init__"
+
         if self.read_timestamp < 0:
             object.__setattr__(self, "read_timestamp", int(time.time() * 1000))
         assert (
