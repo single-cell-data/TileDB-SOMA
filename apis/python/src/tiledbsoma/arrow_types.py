@@ -1,10 +1,3 @@
-from typing import Any, Dict, Union
-
-import numpy as np
-import numpy.typing as npt
-import pyarrow as pa
-import tiledb
-
 """
 Conversion to/from Arrow and TileDB type systems. Must be capable
 of representing full type semantics, and correctly performing a
@@ -28,14 +21,15 @@ columns (i.e., TileDB dimension) are coerced to ASCII. This equirement for
 ASCII-only dimensions will be relaxed in a future release. Unicode/UTF-8 is
 fully supported in SOMA DataFrame non-indexed columns.
 """
+
+from typing import Any, Dict, Union
+
+import numpy as np
+import numpy.typing as npt
+import pyarrow as pa
+import tiledb
+
 _ARROW_TO_TDB_ATTR: Dict[Any, Union[str, TypeError]] = {
-    # Dict of types unsupported by to_pandas_dtype, which require overrides for
-    # use in TileDB Attributes (aka DataFrame non-indexe columns).
-    #
-    # If the value is an instance of Exception, it will be raised.
-    #
-    # IMPORTANT: ALL non-primitive types supported by TileDB must be in this table.
-    #
     pa.string(): "U1",
     pa.large_string(): "U1",
     pa.binary(): "bytes",
@@ -50,10 +44,22 @@ _ARROW_TO_TDB_ATTR: Dict[Any, Union[str, TypeError]] = {
     pa.date32(): TypeError("32-bit date - unsupported type (use TimestampType)"),
     pa.date64(): TypeError("64-bit date - unsupported type (use TimestampType)"),
 }
+"""
+Dict of types unsupported by to_pandas_dtype, which require overrides for
+use in TileDB Attributes (aka DataFrame non-indexe columns).
+
+If the value is an instance of Exception, it will be raised.
+
+IMPORTANT: ALL non-primitive types supported by TileDB must be in this table.
+"""
 
 # Same as _ARROW_TO_TDB_ATTR, but used for DataFrame indexed columns, aka TileDB Dimensions.
 # Any type system differences from the base-case Attr should be added here.
 _ARROW_TO_TDB_DIM: Dict[Any, Union[str, TypeError]] = _ARROW_TO_TDB_ATTR.copy()
+"""
+Same as _ARROW_TO_TDB_ATTR, but used for DataFrame indexed columns, aka TileDB Dimensions.
+Any type system differences from the base-case Attr should be added here.
+"""
 _ARROW_TO_TDB_DIM.update(
     {
         pa.string(): "ascii",  # TODO: temporary work-around until Dimension UTF8 support is available.
@@ -117,7 +123,7 @@ def tiledb_type_from_arrow_type(
         raise TypeError("Unsupported Arrow type") from exc
 
 
-def get_arrow_type_from_tiledb_dtype(
+def arrow_type_from_tiledb_dtype(
     tiledb_dtype: npt.DTypeLike, bytes_are_ascii: bool = True
 ) -> pa.DataType:
     """
@@ -144,15 +150,13 @@ def tiledb_schema_to_arrow(tdb_schema: tiledb.ArraySchema) -> pa.Schema:
         name = dim.name
         if name == "":
             name = "unnamed"
-        arrow_schema_dict[name] = get_arrow_type_from_tiledb_dtype(dim.dtype)
+        arrow_schema_dict[name] = arrow_type_from_tiledb_dtype(dim.dtype)
 
     for i in range(tdb_schema.nattr):
         attr = tdb_schema.attr(i)
         name = attr.name
         if name == "":
             name = "unnamed"
-        arrow_schema_dict[name] = get_arrow_type_from_tiledb_dtype(
-            attr.dtype, attr.isascii
-        )
+        arrow_schema_dict[name] = arrow_type_from_tiledb_dtype(attr.dtype, attr.isascii)
 
     return pa.schema(arrow_schema_dict)
