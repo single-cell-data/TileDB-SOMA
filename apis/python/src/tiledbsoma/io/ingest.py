@@ -37,6 +37,7 @@ from .. import (
 from ..common_nd_array import NDArray
 from ..constants import SOMA_JOINID
 from ..exception import DoesNotExistError, SOMAError
+from ..funcs import typeguard_ignore
 from ..options import SOMATileDBContext
 from ..options.tiledb_create_options import TileDBCreateOptions
 from ..tdb_handles import RawHandle
@@ -395,7 +396,7 @@ def _create_or_open_coll(
     ...
 
 
-@util.typeguard_ignore
+@typeguard_ignore
 def _create_or_open_coll(cls: Type[Any], uri: str, ingest_mode: str) -> Any:
     try:
         thing = cls.open(uri, "w")
@@ -465,7 +466,7 @@ def _write_dataframe(
     return soma_df
 
 
-@util.typeguard_ignore
+@typeguard_ignore
 def create_from_matrix(
     cls: Type[_NDArr],
     uri: str,

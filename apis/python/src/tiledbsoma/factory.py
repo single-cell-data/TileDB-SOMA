@@ -24,8 +24,8 @@ from .constants import (
     SOMA_OBJECT_TYPE_METADATA_KEY,
 )
 from .exception import SOMAError
+from .funcs import typeguard_ignore
 from .options import SOMATileDBContext
-from .util import typeguard_ignore
 
 _Obj = TypeVar("_Obj", bound="tiledb_object.AnyTileDBObject")
 _Wrapper = TypeVar("_Wrapper", bound=tdb_handles.AnyWrapper)
