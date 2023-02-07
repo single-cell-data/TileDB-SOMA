@@ -26,8 +26,11 @@ def test_dense_nd_array_create_ok(
     with pytest.raises(TypeError):
         soma.DenseNDArray.create(
             tmp_path.as_posix(), type=element_type.to_pandas_dtype(), shape=shape
-        )  # XXX
+        )
     a = soma.DenseNDArray.create(tmp_path.as_posix(), type=element_type, shape=shape)
+    assert soma.DenseNDArray.exists(tmp_path.as_posix())
+    assert not soma.SparseNDArray.exists(tmp_path.as_posix())
+    assert not soma.Measurement.exists(tmp_path.as_posix())
     assert a.soma_type == "SOMADenseNDArray"
     assert a.uri == tmp_path.as_posix()
     assert a.ndim == len(shape)

@@ -68,6 +68,10 @@ def test_collection_basic(tmp_path):
         with create_and_populate_sparse_nd_array(os.path.join(basedir, "snda")) as snda:
             collection["snda"] = snda
 
+    assert soma.Collection.exists(basedir)
+    assert not soma.Experiment.exists(basedir)
+    assert not soma.DenseNDArray.exists(basedir)
+
     # ----------------------------------------------------------------
     readback_collection = soma.Collection.open(collection.uri)
     assert len(readback_collection) == 2
@@ -139,9 +143,6 @@ def test_collection_mapping(soma_object, tmp_path):
     del c["mumble"]
     assert "mumble" not in c
     assert not c.get("mumble", False)
-
-    # XXX create delete global function
-    # assert not (tmp_path / "collection").exists()
 
 
 @pytest.mark.parametrize("relative", [False, True])
