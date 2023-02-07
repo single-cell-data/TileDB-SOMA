@@ -68,8 +68,11 @@ class Wrapper(Generic[_RawHdl_co], metaclass=abc.ABCMeta):
             tdb = cls._opener(uri, mode, context)
             handle = cls(uri, mode, context, tdb)
             if mode == "w":
+                # Briefly open a read-mode handle to populate metadata/schema/group contents/etc.,
+                # ignoring any read_timestamp set in the context to get an up-to-date view in
+                # preparation for writing.
                 with cls._opener(
-                    uri, "r", context, auxiliary_reader=True
+                    uri, "r", context, use_latest_read_timestamp=True
                 ) as auxiliary_reader:
                     handle._do_initial_reads(auxiliary_reader)
             else:
@@ -87,7 +90,7 @@ class Wrapper(Generic[_RawHdl_co], metaclass=abc.ABCMeta):
         uri: str,
         mode: options.OpenMode,
         context: SOMATileDBContext,
-        auxiliary_reader: bool = False,
+        use_latest_read_timestamp: bool = False,
     ) -> _RawHdl_co:
         """Opens and returns a TileDB object specific to this type."""
         raise NotImplementedError()
@@ -163,9 +166,9 @@ class ArrayWrapper(Wrapper[tiledb.Array]):
         uri: str,
         mode: options.OpenMode,
         context: SOMATileDBContext,
-        auxiliary_reader: bool = False,
+        use_latest_read_timestamp: bool = False,
     ) -> tiledb.Array:
-        if not auxiliary_reader:
+        if not use_latest_read_timestamp:
             timestamp_arg = (
                 context.write_timestamp
                 if mode == "w"
@@ -205,9 +208,9 @@ class GroupWrapper(Wrapper[tiledb.Group]):
         uri: str,
         mode: options.OpenMode,
         context: SOMATileDBContext,
-        auxiliary_reader: bool = False,
+        use_latest_read_timestamp: bool = False,
     ) -> tiledb.Group:
-        if not auxiliary_reader:
+        if not use_latest_read_timestamp:
             # As of Feb 2023, tiledb.Group() has no timestamp arg; instead its timestamps must be
             # set in the tiledb.Ctx config. SOMATileDBContext prepares the suitable tiledb.Ctx.
             ctx_arg = (

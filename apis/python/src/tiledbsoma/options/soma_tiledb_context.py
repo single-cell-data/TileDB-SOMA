@@ -1,5 +1,5 @@
 import time
-from typing import Dict, Optional, Union
+from typing import Any, Dict, Optional, Union
 
 import attrs
 import tiledb
@@ -31,7 +31,7 @@ class SOMATileDBContext:
 
     tiledb_ctx: tiledb.Ctx = _build_default_tiledb_ctx()
 
-    read_timestamp: int = -1
+    read_timestamp: int = attrs.field(factory=lambda: int(time.time() * 1000))
     """
     Timestamp for operations on SOMA objects open in read mode, in milliseconds since Unix epoch.
     Defaults to the time of context initialization. Set to 0xFFFFFFFFFFFFFFFF (UINT64_MAX) to get
@@ -56,23 +56,28 @@ class SOMATileDBContext:
     same timestamp may be applied in any order.
     """
 
+    @read_timestamp.validator
+    def _validate_timestamps(self, _: Any, __: Any) -> None:
+        if not (
+            self.read_timestamp_start >= 0
+            and self.read_timestamp >= self.read_timestamp_start
+        ):
+            raise ValueError("SOMATileDBContext: invalid read timestamp range")
+        if not (self.write_timestamp is None or self.write_timestamp >= 0):
+            raise ValueError("SOMATileDBContext: invalid write timestamp")
+
     # (internal) tiledb.Ctx specifically for tiledb.Group operations; unlike arrays, tiledb.Group
-    # needs its timestamps set in the tiledb.Ctx.
+    # needs its timestamps set in the tiledb.Ctx. We'd like to get rid of this in the future,
+    # if/when tiledb.Group() takes a timestamp argument like tiledb.Array().
     _group_read_tiledb_ctx: tiledb.Ctx = attrs.field(init=False)
     _group_write_tiledb_ctx: tiledb.Ctx = attrs.field(init=False)
 
     def __attrs_post_init__(self) -> None:
-        "initialization hook invoked by the attrs-generated __init__"
+        """
+        initialization hook invoked by the attrs-generated __init__; prepares the pair of
+        timestamped tiledb.Ctx for groups
+        """
 
-        if self.read_timestamp < 0:
-            object.__setattr__(self, "read_timestamp", int(time.time() * 1000))
-        assert (
-            self.read_timestamp_start >= 0
-            and self.read_timestamp >= self.read_timestamp_start
-        )
-        assert self.write_timestamp is None or self.write_timestamp >= 0
-
-        # prepare the pair of tiledb.Ctx for groups
         group_read_config = self.tiledb_ctx.config().dict()
         group_read_config["sm.group.timestamp_start"] = self.read_timestamp_start
         group_read_config["sm.group.timestamp_end"] = self.read_timestamp
