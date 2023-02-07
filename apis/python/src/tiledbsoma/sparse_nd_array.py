@@ -12,13 +12,13 @@ import tiledbsoma.libtiledbsoma as clib
 
 from . import util
 from .common_nd_array import NDArray
-from .types import NTuple
-from .util_iter import (
+from .read_iters import (
     SparseCOOTensorReadIter,
     SparseCSCMatrixReadIter,
     SparseCSRMatrixReadIter,
     TableReadIter,
 )
+from .types import NTuple
 
 _UNBATCHED = options.BatchSize()
 

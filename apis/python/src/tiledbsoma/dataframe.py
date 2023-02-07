@@ -12,9 +12,9 @@ from .constants import SOMA_JOINID
 from .options import SOMATileDBContext
 from .options.tiledb_create_options import TileDBCreateOptions
 from .query_condition import QueryCondition
+from .read_iters import TableReadIter
 from .tiledb_array import TileDBArray
 from .types import NPFloating, NPInteger
-from .util_iter import TableReadIter
 
 Slice = TypeVar("Slice", bound=Sequence[int])
 _UNBATCHED = options.BatchSize()
