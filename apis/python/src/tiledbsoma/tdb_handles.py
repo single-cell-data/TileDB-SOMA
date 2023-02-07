@@ -68,7 +68,9 @@ class Wrapper(Generic[_RawHdl_co], metaclass=abc.ABCMeta):
             tdb = cls._opener(uri, mode, context)
             handle = cls(uri, mode, context, tdb)
             if mode == "w":
-                with cls._opener(uri, "r", context) as auxiliary_reader:
+                with cls._opener(
+                    uri, "r", context, auxiliary_reader=True
+                ) as auxiliary_reader:
                     handle._do_initial_reads(auxiliary_reader)
             else:
                 handle._do_initial_reads(tdb)
@@ -81,7 +83,11 @@ class Wrapper(Generic[_RawHdl_co], metaclass=abc.ABCMeta):
     @classmethod
     @abc.abstractmethod
     def _opener(
-        cls, uri: str, mode: options.OpenMode, context: SOMATileDBContext
+        cls,
+        uri: str,
+        mode: options.OpenMode,
+        context: SOMATileDBContext,
+        auxiliary_reader: bool = False,
     ) -> _RawHdl_co:
         """Opens and returns a TileDB object specific to this type."""
         raise NotImplementedError()
@@ -153,9 +159,23 @@ class ArrayWrapper(Wrapper[tiledb.Array]):
 
     @classmethod
     def _opener(
-        cls, uri: str, mode: options.OpenMode, context: SOMATileDBContext
+        cls,
+        uri: str,
+        mode: options.OpenMode,
+        context: SOMATileDBContext,
+        auxiliary_reader: bool = False,
     ) -> tiledb.Array:
-        return tiledb.open(uri, mode, ctx=context.tiledb_ctx)
+        if not auxiliary_reader:
+            timestamp_arg = (
+                context.write_timestamp
+                if mode == "w"
+                else (context.read_timestamp_start, context.read_timestamp)
+            )
+        else:
+            # array opened in write mode should initialize with latest metadata
+            assert mode == "r"
+            timestamp_arg = None
+        return tiledb.open(uri, mode, timestamp=timestamp_arg, ctx=context.tiledb_ctx)
 
     @property
     def schema(self) -> tiledb.ArraySchema:
@@ -181,9 +201,24 @@ class GroupWrapper(Wrapper[tiledb.Group]):
 
     @classmethod
     def _opener(
-        cls, uri: str, mode: options.OpenMode, context: SOMATileDBContext
+        cls,
+        uri: str,
+        mode: options.OpenMode,
+        context: SOMATileDBContext,
+        auxiliary_reader: bool = False,
     ) -> tiledb.Group:
-        return tiledb.Group(uri, mode, ctx=context.tiledb_ctx)
+        if not auxiliary_reader:
+            # As of Feb 2023, tiledb.Group() has no timestamp arg; instead its timestamps must be
+            # set in the tiledb.Ctx config. SOMATileDBContext prepares the suitable tiledb.Ctx.
+            ctx_arg = (
+                context._group_write_tiledb_ctx
+                if mode == "w"
+                else context._group_read_tiledb_ctx
+            )
+        else:
+            # Group opened in write mode should initialize with latest contents & metadata
+            ctx_arg = context.tiledb_ctx
+        return tiledb.Group(uri, mode, ctx=ctx_arg)
 
     def _do_initial_reads(self, reader: tiledb.Group) -> None:
         super()._do_initial_reads(reader)

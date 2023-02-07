@@ -7,6 +7,7 @@ import pytest
 import tiledb
 
 import tiledbsoma as soma
+from tiledbsoma.options import SOMATileDBContext
 
 
 @pytest.fixture
@@ -817,3 +818,51 @@ def test_result_order(tmp_path):
 
         with pytest.raises(ValueError):
             next(sdf.read(result_order="bogus"))
+
+
+def test_timestamped_ops(tmp_path):
+    schema = pa.schema(
+        [
+            ("soma_joinid", pa.int64()),
+            ("B", pa.float64()),
+            ("C", pa.large_string()),
+        ]
+    )
+    with soma.DataFrame.create(
+        tmp_path.as_posix(),
+        schema=schema,
+        index_column_names=["soma_joinid"],
+        context=SOMATileDBContext(write_timestamp=10),
+    ) as sidf:
+        data = {
+            "soma_joinid": [0],
+            "B": [100.1],
+            "C": ["foo"],
+        }
+        sidf.write(pa.Table.from_pydict(data))
+
+    with soma.DataFrame.open(
+        uri=tmp_path.as_posix(), mode="w", context=SOMATileDBContext(write_timestamp=20)
+    ) as sidf:
+        data = {
+            "soma_joinid": [0, 1],
+            "B": [200.2, 300.3],
+            "C": ["bar", "bas"],
+        }
+        sidf.write(pa.Table.from_pydict(data))
+
+    # read without timestamp & see final image
+    with soma.DataFrame.open(tmp_path.as_posix()) as sidf:
+        tab = sidf.read().concat()
+        assert list(x.as_py() for x in tab["soma_joinid"]) == [0, 1]
+        assert list(x.as_py() for x in tab["B"]) == [200.2, 300.3]
+        assert list(x.as_py() for x in tab["C"]) == ["bar", "bas"]
+
+    # read at t=15 & see only the first write
+    with soma.DataFrame.open(
+        tmp_path.as_posix(), context=SOMATileDBContext(read_timestamp=15)
+    ) as sidf:
+        tab = sidf.read().concat()
+        assert list(x.as_py() for x in tab["soma_joinid"]) == [0]
+        assert list(x.as_py() for x in tab["B"]) == [100.1]
+        assert list(x.as_py() for x in tab["C"]) == ["foo"]

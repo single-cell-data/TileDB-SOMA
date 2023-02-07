@@ -9,6 +9,7 @@ import tiledb
 
 import tiledbsoma as soma
 from tiledbsoma import factory
+from tiledbsoma.options import SOMATileDBContext
 
 from . import NDARRAY_ARROW_TYPES_NOT_SUPPORTED, NDARRAY_ARROW_TYPES_SUPPORTED
 
@@ -880,3 +881,58 @@ def test_tile_extents(tmp_path):
     with tiledb.open(tmp_path.as_posix()) as A:
         assert A.schema.domain.dim(0).tile == 100
         assert A.schema.domain.dim(1).tile == 2048
+
+
+def test_timestamped_ops(tmp_path):
+    # 2x2 array
+    with soma.SparseNDArray.create(
+        tmp_path.as_posix(),
+        type=pa.uint16(),
+        shape=(2, 2),
+        context=SOMATileDBContext(write_timestamp=10),
+    ) as a:
+        # write 1 into top-left entry @ t=10
+        a.write(
+            pa.SparseCOOTensor.from_scipy(
+                sparse.coo_matrix(([1], ([0], [0])), shape=a.shape)
+            )
+        )
+
+    # write 1 into bottom-right entry @ t=20
+    with soma.SparseNDArray.open(
+        tmp_path.as_posix(), mode="w", context=SOMATileDBContext(write_timestamp=20)
+    ) as a:
+        a.write(
+            pa.SparseCOOTensor.from_scipy(
+                sparse.coo_matrix(([1], ([1], [1])), shape=a.shape)
+            )
+        )
+
+    # read with no timestamp args & see both 1s
+    with soma.SparseNDArray.open(tmp_path.as_posix()) as a:
+        assert a.read().coos().concat().to_scipy().todense().tolist() == [
+            [1, 0],
+            [0, 1],
+        ]
+        assert a.nnz == 2
+
+    # read @ t=15 & see only the first write
+    with soma.SparseNDArray.open(
+        tmp_path.as_posix(), context=SOMATileDBContext(read_timestamp=15)
+    ) as a:
+        assert a.read().coos().concat().to_scipy().todense().tolist() == [
+            [1, 0],
+            [0, 0],
+        ]
+        assert a.nnz == 1
+
+    # read with (timestamp_start, timestamp_end) = (15, 25) & see only the second write
+    with soma.SparseNDArray.open(
+        tmp_path.as_posix(),
+        context=SOMATileDBContext(read_timestamp_start=15, read_timestamp=25),
+    ) as a:
+        assert a.read().coos().concat().to_scipy().todense().tolist() == [
+            [0, 0],
+            [0, 1],
+        ]
+        assert a.nnz == 1
