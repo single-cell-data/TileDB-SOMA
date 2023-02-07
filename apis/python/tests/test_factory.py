@@ -5,24 +5,18 @@ import pytest
 import tiledb
 
 import tiledbsoma as soma
-from tiledbsoma import constants, factory
+from tiledbsoma import constants
 
 UNKNOWN_ENCODING_VERSION = "3141596"
 
 
 @pytest.fixture
-def soma_collection(tmp_path):
-    return soma.Collection.create(tmp_path.as_posix())
-
-
-@pytest.fixture
-def tiledb_factory(soma_collection, object_type, metadata_key, encoding_version):
-    """Create a parent group and an object with specified metadata"""
-    object_uri = f"{soma_collection.uri}/object"
+def tiledb_object_uri(tmp_path, object_type, metadata_typename, encoding_version):
+    """Create an object with specified metadata"""
+    object_uri = f"{tmp_path}/object"
 
     # create object
     if object_type == "array":
-        object_cls = tiledb.Array
         schema = tiledb.ArraySchema(
             domain=tiledb.Domain(
                 tiledb.Dim(name="rows", domain=(0, 100), dtype=np.int64)
@@ -34,18 +28,17 @@ def tiledb_factory(soma_collection, object_type, metadata_key, encoding_version)
         )
         tiledb.Array.create(object_uri, schema)
         with tiledb.open(object_uri, mode="w") as A:
-            _setmetadata(A, metadata_key, encoding_version)
+            _setmetadata(A, metadata_typename, encoding_version)
     else:
-        object_cls = tiledb.Group
         tiledb.group_create(object_uri)
         with tiledb.Group(object_uri, mode="w") as G:
-            _setmetadata(G, metadata_key, encoding_version)
+            _setmetadata(G, metadata_typename, encoding_version)
 
-    return object_uri, soma_collection.context, object_cls
+    return object_uri
 
 
 @pytest.mark.parametrize(
-    "object_type,metadata_key,encoding_version,expected_soma_type",
+    "object_type,metadata_typename,encoding_version,expected_soma_type",
     [
         ("group", "SOMAExperiment", constants.SOMA_ENCODING_VERSION, soma.Experiment),
         ("group", "SOMAMeasurement", constants.SOMA_ENCODING_VERSION, soma.Measurement),
@@ -57,14 +50,14 @@ def tiledb_factory(soma_collection, object_type, metadata_key, encoding_version)
             constants.SOMA_ENCODING_VERSION,
             soma.DenseNDArray,
         ),
-        pytest.param(
+        (
             "array",
             "SOMADenseNdArray",
             constants.SOMA_ENCODING_VERSION,
             soma.DenseNDArray,
         ),
         ("array", "SOMASparseNDArray", "1", soma.SparseNDArray),
-        pytest.param(
+        (
             "array",
             "SOMASparseNdArray",
             constants.SOMA_ENCODING_VERSION,
@@ -72,16 +65,52 @@ def tiledb_factory(soma_collection, object_type, metadata_key, encoding_version)
         ),
     ],
 )
-def test_factory(tiledb_factory, expected_soma_type: Type):
+def test_open(tiledb_object_uri, expected_soma_type: Type):
     """Happy path tests"""
-    uri, *_ = tiledb_factory
-    soma_obj = factory.open(uri)
+    soma_obj = soma.open(tiledb_object_uri)
     assert isinstance(soma_obj, expected_soma_type)
-    assert expected_soma_type.exists(uri)
+    typed_soma_obj = soma.open(tiledb_object_uri, soma_type=expected_soma_type)
+    assert isinstance(typed_soma_obj, expected_soma_type)
+    str_typed_soma_obj = soma.open(
+        tiledb_object_uri, soma_type=expected_soma_type.soma_type
+    )
+    assert isinstance(str_typed_soma_obj, expected_soma_type)
+    assert expected_soma_type.exists(tiledb_object_uri)
 
 
 @pytest.mark.parametrize(
-    "object_type,metadata_key,encoding_version",
+    ("object_type", "metadata_typename", "encoding_version", "wrong_type"),
+    [
+        ("group", "SOMAExperiment", constants.SOMA_ENCODING_VERSION, soma.Measurement),
+        ("group", "SOMAMeasurement", constants.SOMA_ENCODING_VERSION, soma.DataFrame),
+        ("group", "SOMAMeasurement", constants.SOMA_ENCODING_VERSION, "SOMACollection"),
+        (
+            "array",
+            "SOMADenseNDArray",
+            constants.SOMA_ENCODING_VERSION,
+            soma.Collection,
+        ),
+        (
+            "array",
+            "SOMADenseNdArray",
+            constants.SOMA_ENCODING_VERSION,
+            soma.SparseNDArray,
+        ),
+        (
+            "array",
+            "SOMASparseNDArray",
+            constants.SOMA_ENCODING_VERSION,
+            "SOMADenseNDArray",
+        ),
+    ],
+)
+def test_open_wrong_type(tiledb_object_uri, wrong_type):
+    with pytest.raises((soma.SOMAError, TypeError)):
+        soma.open(tiledb_object_uri, soma_type=wrong_type)
+
+
+@pytest.mark.parametrize(
+    "object_type,metadata_typename,encoding_version",
     [
         ("group", "SOMAExperiment", UNKNOWN_ENCODING_VERSION),
         ("group", "SOMAMeasurement", UNKNOWN_ENCODING_VERSION),
@@ -91,14 +120,14 @@ def test_factory(tiledb_factory, expected_soma_type: Type):
         ("array", "SOMASparseNDArray", UNKNOWN_ENCODING_VERSION),
     ],
 )
-def test_factory_unsupported_version(tiledb_factory):
+def test_factory_unsupported_version(tiledb_object_uri):
     """All of these should raise, as they are encoding formats from the future"""
     with pytest.raises(ValueError):
-        factory.open(tiledb_factory[0])
+        soma.open(tiledb_object_uri)
 
 
 @pytest.mark.parametrize(
-    "object_type,metadata_key,encoding_version",
+    "object_type,metadata_typename,encoding_version",
     [
         ("array", "AnUnknownTypeName", constants.SOMA_ENCODING_VERSION),
         ("group", "AnUnknownTypeName", constants.SOMA_ENCODING_VERSION),
@@ -120,23 +149,23 @@ def test_factory_unsupported_version(tiledb_factory):
         ),  # DataFrame can't be a group
     ],
 )
-def test_factory_unsupported_types(tiledb_factory):
+def test_factory_unsupported_types(tiledb_object_uri):
     """Illegal or non-existant metadata"""
     with pytest.raises(soma.SOMAError):
-        factory.open(tiledb_factory[0])
+        soma.open(tiledb_object_uri)
 
 
 def test_factory_unknown_files():
     """Test with non-TileDB files or other weirdness"""
     with pytest.raises(soma.SOMAError):
-        factory.open("/tmp/no/such/file/exists/")
+        soma.open("/tmp/no/such/file/exists/")
 
 
-def _setmetadata(open_tdb_object, metadata_key, encoding_version):
+def _setmetadata(open_tdb_object, metadata_typename, encoding_version):
     """set only those values which are not None"""
     changes = {}
-    if metadata_key is not None:
-        changes[constants.SOMA_OBJECT_TYPE_METADATA_KEY] = metadata_key
+    if metadata_typename is not None:
+        changes[constants.SOMA_OBJECT_TYPE_METADATA_KEY] = metadata_typename
     if encoding_version is not None:
         changes[constants.SOMA_ENCODING_VERSION_METADATA_KEY] = encoding_version
     if changes:

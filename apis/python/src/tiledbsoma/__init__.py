@@ -5,6 +5,7 @@ from .dataframe import DataFrame
 from .dense_nd_array import DenseNDArray
 from .exception import DoesNotExistError, SOMAError
 from .experiment import Experiment
+from .factory import open
 from .general_utilities import (
     get_implementation,
     get_implementation_version,
@@ -19,24 +20,25 @@ from .sparse_nd_array import SparseNDArray
 __version__ = get_implementation_version()
 
 __all__ = [
-    "get_implementation",
-    "get_implementation_version",
-    "get_SOMA_version",
-    "get_storage_engine",
-    "show_package_versions",
-    "stats_enable",
-    "stats_disable",
-    "stats_reset",
-    "stats_dump",
     "AxisColumnNames",
     "AxisQuery",
-    "ExperimentAxisQuery",
     "Collection",
+    "DataFrame",
     "DenseNDArray",
     "DoesNotExistError",
     "Experiment",
-    "SOMAError",
-    "DataFrame",
+    "ExperimentAxisQuery",
+    "get_implementation_version",
+    "get_implementation",
+    "get_SOMA_version",
+    "get_storage_engine",
     "Measurement",
+    "open",
+    "show_package_versions",
+    "SOMAError",
     "SparseNDArray",
+    "stats_disable",
+    "stats_dump",
+    "stats_enable",
+    "stats_reset",
 ]
