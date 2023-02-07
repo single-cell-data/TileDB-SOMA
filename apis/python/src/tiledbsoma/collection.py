@@ -5,6 +5,7 @@ import re
 import time
 from typing import (
     Any,
+    Callable,
     ClassVar,
     Dict,
     Iterator,
@@ -38,6 +39,7 @@ from .util_tiledb import is_does_not_exist_error, is_duplicate_group_key_error
 
 # A collection can hold any sub-type of TileDBObject
 CollectionElementType = TypeVar("CollectionElementType", bound=AnyTileDBObject)
+_TDBO = TypeVar("_TDBO", bound=AnyTileDBObject)
 _Coll = TypeVar("_Coll", bound="CollectionBase[AnyTileDBObject]")
 _Self = TypeVar("_Self", bound="CollectionBase[AnyTileDBObject]")
 _NDArr = TypeVar("_NDArr", bound=NDArray)
@@ -144,22 +146,17 @@ class CollectionBase(
         uri: Optional[str] = None,
         platform_config: Optional[options.PlatformConfig] = None,
     ) -> "AnyTileDBCollection":
-        if key in self:
-            raise KeyError(f"{key!r} already exists in {type(self)}")
-        child_cls = cls or Collection  # set the default
-        self._check_allows_child(key, child_cls)
-        absolute_uri, was_relative = self._new_absolute_uri(key=key, uri=uri)
-        # mypy gets confused by the inferred union type of child_cls,
-        # but this is valid.
-        new_group: CollectionBase[Any] = child_cls.create(  # type: ignore[misc]
-            absolute_uri, platform_config=platform_config, context=self.context
+        child_cls: Type[AnyTileDBCollection] = (
+            cls or Collection  # type: ignore[assignment]
         )
-        self._set_element(
-            key, cast(CollectionElementType, new_group), use_relative_uri=was_relative
+        return self._add_new_element(
+            key,
+            child_cls,
+            lambda create_uri: child_cls.create(
+                create_uri, platform_config=platform_config, context=self.context
+            ),
+            uri,
         )
-        # Since we own this object, set it to be closed when we are closed.
-        self._close_stack.enter_context(new_group)
-        return new_group
 
     def add_new_dataframe(
         self,
@@ -170,24 +167,18 @@ class CollectionBase(
         index_column_names: Sequence[str] = (SOMA_JOINID,),
         platform_config: Optional[options.PlatformConfig] = None,
     ) -> DataFrame:
-        if key in self:
-            raise KeyError(f"{key!r} already exists in {type(self)}")
-        self._check_allows_child(key, DataFrame)
-        absolute_uri, was_relative = self._new_absolute_uri(key=key, uri=uri)
-        new_df = DataFrame.create(
-            absolute_uri,
-            index_column_names=index_column_names,
-            schema=schema,
-            platform_config=platform_config,
-            context=self.context,
+        return self._add_new_element(
+            key,
+            DataFrame,
+            lambda create_uri: DataFrame.create(
+                create_uri,
+                index_column_names=index_column_names,
+                schema=schema,
+                platform_config=platform_config,
+                context=self.context,
+            ),
+            uri,
         )
-        # A dataframe might not be the declared type of this collection,
-        # but we can't really handle that within the type system.
-        self._set_element(
-            key, new_df, use_relative_uri=was_relative  # type: ignore[arg-type]
-        )
-        self._close_stack.enter_context(new_df)
-        return new_df
 
     def _add_new_ndarray(
         self,
@@ -199,24 +190,18 @@ class CollectionBase(
         shape: Sequence[int],
         platform_config: Optional[options.PlatformConfig] = None,
     ) -> _NDArr:
-        if key in self:
-            raise KeyError(f"{key!r} already exists in {type(self)}")
-        self._check_allows_child(key, cls)
-        absolute_uri, was_relative = self._new_absolute_uri(key=key, uri=uri)
-        new_arr = cls.create(
-            absolute_uri,
-            type=type,
-            shape=shape,
-            platform_config=platform_config,
-            context=self.context,
+        return self._add_new_element(
+            key,
+            cls,
+            lambda create_uri: cls.create(
+                create_uri,
+                type=type,
+                shape=shape,
+                platform_config=platform_config,
+                context=self.context,
+            ),
+            uri,
         )
-        # An NDArray might not be the declared type of this collection,
-        # but we can't really handle that within the type system.
-        self._set_element(
-            key, new_arr, use_relative_uri=was_relative  # type: ignore[arg-type]
-        )
-        self._close_stack.enter_context(new_arr)
-        return new_arr
 
     # These user-facing functions forward all parameters directly to
     # self._add_new_ndarray, with the specific class type substituted in the
@@ -238,6 +223,39 @@ class CollectionBase(
     Parameters are as in :meth:`SparseNDArray.create`.
     See :meth:`add_new_collection` for details about child creation.
     """
+
+    def _add_new_element(
+        self,
+        key: str,
+        cls: Type[_TDBO],
+        factory: Callable[[str], _TDBO],
+        user_uri: Optional[str],
+    ) -> _TDBO:
+        """Handles the common parts of adding new elements.
+
+        :param key: The key to be added.
+        :param cls: The type of the element to be added.
+        :param factory: A callable that, given the full URI to be added,
+            will create the backing storage at that URI and return
+            the reified SOMA object.
+        :param user_uri: If set, the URI to use for the child
+            instead of the default.
+        """
+        if key in self:
+            raise KeyError(f"{key!r} already exists in {type(self)}")
+        self._check_allows_child(key, cls)
+        child_uri = self._new_child_uri(key=key, user_uri=user_uri)
+        child = factory(child_uri.full_uri)
+        # The resulting element may not be the right type for this collection,
+        # but we can't really handle that within the type system.
+        self._set_element(
+            key,
+            uri=child_uri.add_uri,
+            relative=child_uri.relative,
+            soma_object=child,  # type: ignore[arg-type]
+        )
+        self._close_stack.enter_context(child)
+        return child
 
     def __len__(self) -> int:
         """
@@ -282,13 +300,35 @@ class CollectionBase(
 
         [lifecycle: experimental]
         """
-        self._set_element(key, value, use_relative_uri=use_relative_uri)
+        uri_to_add = value.uri
+        # The SOMA API supports use_relative_uri in [True, False, None].
+        # The TileDB-Py API supports use_relative_uri in [True, False].
+        # Map from the former to the latter -- and also honor our somacore contract for None --
+        # using the following rule.
+        if use_relative_uri is None and value.uri.startswith("tiledb://"):
+            # TileDB-Cloud does not use relative URIs, ever.
+            use_relative_uri = False
+
+        if use_relative_uri is not False:
+            try:
+                uri_to_add = make_relative_path(value.uri, relative_to=self.uri)
+                use_relative_uri = True
+            except ValueError:
+                if use_relative_uri:
+                    # We couldn't construct a relative URI, but we were asked
+                    # to use one, so raise the error.
+                    raise
+                use_relative_uri = False
+
+        self._set_element(
+            key, uri=uri_to_add, relative=use_relative_uri, soma_object=value
+        )
 
     def __setitem__(self, key: str, value: CollectionElementType) -> None:
         """
         Default collection __setattr__
         """
-        self._set_element(key, value)
+        self.set(key, value, use_relative_uri=None)
 
     def __delitem__(self, key: str) -> None:
         """
@@ -337,37 +377,28 @@ class CollectionBase(
     def _set_element(
         self,
         key: str,
-        value: CollectionElementType,
-        use_relative_uri: Optional[bool] = False,
+        *,
+        uri: str,
+        relative: bool,
+        soma_object: CollectionElementType,
     ) -> None:
+        """Internal implementation of element setting.
 
-        # The SOMA API supports use_relative_uri in [True, False, None].
-        # The TileDB-Py API supports use_relative_uri in [True, False].
-        # Map from the former to the latter -- and also honor our somacore contract for None --
-        # using the following rule.
-        if use_relative_uri is None:
-            if value.uri.startswith("tiledb://"):
-                # TileDB-Cloud does not use relative URIs, ever.
-                use_relative_uri = False
-            else:
-                use_relative_uri = True
+        :param key: The key to set.
+        :param uri: The resolved URI to pass to :meth:`tiledb.Group.add`.
+        :param relative: The ``relative`` parameter to pass to ``add``.
+        :param value: The reified SOMA object to store locally.
+        """
 
-        self._check_allows_child(key, type(value))
+        self._check_allows_child(key, type(soma_object))
 
         # Set has update semantics. Add if missing, delete/add if not. The TileDB Group
         # API only has add/delete. Assume add will succeed, and deal with delete/retry
         # if we get an error on add.
 
-        maybe_relative_uri = (
-            make_relative_path(value.uri, relative_to=self.uri)
-            if use_relative_uri
-            else value.uri
-        )
         for retry in [True, False]:
             try:
-                self._handle.writer.add(
-                    uri=maybe_relative_uri, relative=use_relative_uri, name=key
-                )
+                self._handle.writer.add(name=key, uri=uri, relative=relative)
                 break
             except tiledb.TileDBError as e:
                 if not is_duplicate_group_key_error(e):
@@ -394,7 +425,8 @@ class CollectionBase(
         self._handle._flush_hack()
 
         self._contents[key] = _CachedElement(
-            entry=tdb_handles.GroupEntry(value.uri, value._wrapper_type), soma=value
+            entry=tdb_handles.GroupEntry(soma_object.uri, soma_object._wrapper_type),
+            soma=soma_object,
         )
 
     def _del_element(self, key: str) -> None:
@@ -408,16 +440,29 @@ class CollectionBase(
                 raise KeyError(f"{key!r} does not exist in {self}") from tdbe
             raise
 
-    def _new_absolute_uri(self, *, key: str, uri: Optional[str]) -> Tuple[str, bool]:
-        """Builds the full URI for a given child element.
-
-        Returns the full URI, and a boolean indicating whether the URI was
-        originally relative.
-        """
-        maybe_relative_uri = uri or _sanitize_for_path(key)
-        if is_relative_uri(maybe_relative_uri):
-            return uri_joinpath(self.uri, maybe_relative_uri), True
-        return maybe_relative_uri, False
+    def _new_child_uri(self, *, key: str, user_uri: Optional[str]) -> "_ChildURI":
+        maybe_relative_uri = user_uri or _sanitize_for_path(key)
+        if not is_relative_uri(maybe_relative_uri):
+            # It's an absolute URI.
+            return _ChildURI(
+                add_uri=maybe_relative_uri,
+                full_uri=maybe_relative_uri,
+                relative=False,
+            )
+        if not self.uri.startswith("tiledb://"):
+            # We don't need to post-process anything.
+            return _ChildURI(
+                add_uri=maybe_relative_uri,
+                full_uri=uri_joinpath(self.uri, maybe_relative_uri),
+                relative=True,
+            )
+        # Our own URI is a `tiledb://` URI. Since TileDB Cloud requires absolute
+        # URIs, we need to calculate the absolute URI to pass to Group.add
+        # based on our creation URI.
+        # TODO: Handle the case where we reopen a TileDB Cloud Group, but by
+        # name rather than creation path.
+        absolute_uri = uri_joinpath(self.uri, maybe_relative_uri)
+        return _ChildURI(add_uri=absolute_uri, full_uri=absolute_uri, relative=False)
 
     @classmethod
     def _check_allows_child(cls, key: str, child_cls: type) -> None:
@@ -485,3 +530,13 @@ def _sanitize_for_path(key: str) -> str:
     """Prepares the given key for use as a path component."""
     sanitized = "_".join(_NON_WORDS.split(key))
     return sanitized
+
+
+@attrs.define(frozen=True, kw_only=True)
+class _ChildURI:
+    add_uri: str
+    """The URI of the child for passing to :meth:`tiledb.Group.add`."""
+    full_uri: str
+    """The full URI of the child, used to create a new element."""
+    relative: bool
+    """The ``relative`` value to pass to :meth:`tiledb.Group.add`."""
