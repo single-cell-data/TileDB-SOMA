@@ -62,7 +62,6 @@ def tiledb_factory(soma_collection, object_type, metadata_key, encoding_version)
             "SOMADenseNdArray",
             constants.SOMA_ENCODING_VERSION,
             soma.DenseNDArray,
-            marks=pytest.mark.xfail(reason="TileDB-SOMA bug #800"),
         ),
         ("array", "SOMASparseNDArray", "1", soma.SparseNDArray),
         pytest.param(
@@ -70,7 +69,6 @@ def tiledb_factory(soma_collection, object_type, metadata_key, encoding_version)
             "SOMASparseNdArray",
             constants.SOMA_ENCODING_VERSION,
             soma.SparseNDArray,
-            marks=pytest.mark.xfail(reason="TileDB-SOMA bug #800"),
         ),
     ],
 )
@@ -79,6 +77,7 @@ def test_factory(tiledb_factory, expected_soma_type: Type):
     uri, *_ = tiledb_factory
     soma_obj = factory.open(uri)
     assert isinstance(soma_obj, expected_soma_type)
+    assert expected_soma_type.exists(uri)
 
 
 @pytest.mark.parametrize(

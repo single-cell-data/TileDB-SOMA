@@ -87,10 +87,14 @@ def test_experiment_basic(tmp_path):
 
     # ----------------------------------------------------------------
     experiment = soma.Experiment.create(basedir)
+    assert soma.Experiment.exists(basedir)
+    assert not soma.Collection.exists(basedir)
 
     experiment["obs"] = create_and_populate_obs(urljoin(basedir, "obs"))
     ms = experiment.add_new_collection("ms", soma.Collection)
     measurement = ms.add_new_collection("RNA", soma.Measurement)
+    assert soma.Measurement.exists(measurement.uri)
+    assert not soma.Collection.exists(measurement.uri)
 
     measurement["var"] = create_and_populate_var(urljoin(measurement.uri, "var"))
 

@@ -6,6 +6,7 @@ import tiledb
 from somacore import options
 
 from . import constants, tdb_handles
+from .exception import SOMAError
 from .options import SOMATileDBContext
 
 _WrapperType_co = TypeVar(
@@ -123,6 +124,18 @@ class TileDBObject(somacore.SOMAObject, Generic[_WrapperType_co]):
         Current open mode: read (r), write (w), or closed (None).
         """
         return self._handle.mode
+
+    @classmethod
+    def exists(cls, uri: str, context: Optional[SOMATileDBContext] = None) -> bool:
+        context = context or SOMATileDBContext()
+        try:
+            with cls._wrapper_type.open(uri, "r", context) as hdl:
+                md_type = hdl.metadata.get(constants.SOMA_OBJECT_TYPE_METADATA_KEY)
+                if not isinstance(md_type, str):
+                    return False
+                return md_type.lower() == cls.soma_type.lower()
+        except SOMAError:
+            return False
 
     @classmethod
     def _set_create_metadata(cls, handle: tdb_handles.AnyWrapper) -> None:

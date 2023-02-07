@@ -33,6 +33,9 @@ def test_sparse_nd_array_create_ok(
             tmp_path.as_posix(), type=element_type.to_pandas_dtype(), shape=shape
         )
     a = soma.SparseNDArray.create(tmp_path.as_posix(), type=element_type, shape=shape)
+    assert soma.SparseNDArray.exists(tmp_path.as_posix())
+    assert not soma.DenseNDArray.exists(tmp_path.as_posix())
+    assert not soma.Collection.exists(tmp_path.as_posix())
     assert a.soma_type == "SOMASparseNDArray"
     assert a.uri == tmp_path.as_posix()
     assert a.ndim == len(shape)

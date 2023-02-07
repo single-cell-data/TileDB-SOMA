@@ -49,6 +49,10 @@ def test_dataframe(tmp_path, arrow_schema):
         soma.DataFrame.create(uri, schema=asch, index_column_names=["bogus"])
     soma.DataFrame.create(uri, schema=asch, index_column_names=["foo"]).close()
 
+    assert soma.DataFrame.exists(uri)
+    assert not soma.Collection.exists(uri)
+    assert not soma.SparseNDArray.exists(uri)
+
     with soma.DataFrame.open(uri) as sdf:
         assert sdf.count == 0
         assert len(sdf) == 0
