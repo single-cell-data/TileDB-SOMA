@@ -69,7 +69,11 @@ interface TDBConfig {
 interface TDBCreateOptions {
   dims?: { [dim: string]: TDBDimension };
   attrs?: { [attr: string]: TDBAttr };
+  allows_duplicates?: bool;
+
   offsets_filters?: TDBFilter[];
+  validity_filters?: TDBFilter[];
+
   capacity?: number;
   cell_order?: string;
   tile_order?: string;
