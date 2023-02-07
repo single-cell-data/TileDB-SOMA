@@ -22,7 +22,7 @@ import scipy.sparse as sp
 from anndata._core.sparse_dataset import SparseDataset
 from somacore.options import PlatformConfig
 
-from . import (
+from .. import (
     Collection,
     DataFrame,
     DenseNDArray,
@@ -37,15 +37,15 @@ from . import (
     util_scipy,
     util_tiledb,
 )
-from .common_nd_array import NDArray
-from .constants import SOMA_JOINID
-from .exception import DoesNotExistError, SOMAError
-from .options import SOMATileDBContext
-from .options.tiledb_create_options import TileDBCreateOptions
-from .tdb_handles import RawHandle
-from .tiledb_array import TileDBArray
-from .tiledb_object import TileDBObject
-from .types import INGEST_MODES, IngestMode, NPNDArray, Path
+from ..common_nd_array import NDArray
+from ..constants import SOMA_JOINID
+from ..exception import DoesNotExistError, SOMAError
+from ..options import SOMATileDBContext
+from ..options.tiledb_create_options import TileDBCreateOptions
+from ..tdb_handles import RawHandle
+from ..tiledb_array import TileDBArray
+from ..tiledb_object import TileDBObject
+from ..types import INGEST_MODES, IngestMode, NPNDArray, Path
 
 SparseMatrix = Union[sp.csr_matrix, sp.csc_matrix, SparseDataset]
 Matrix = Union[NPNDArray, SparseMatrix]
