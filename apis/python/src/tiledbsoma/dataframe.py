@@ -24,7 +24,9 @@ class DataFrame(TileDBArray, somacore.DataFrame):
     """
     Represents ``obs``, ``var``, and others.
 
-    All ``DataFrame`` must contain a column called ``soma_joinid``, of type ``int64``. The ``soma_joinid`` column contains a unique value for each row in the ``DataFrame``, and intended to act as a joint key for other objects, such as ``SparseNDArray``.
+    All ``DataFrame`` must contain a column called ``soma_joinid``, of type ``int64``.
+    The ``soma_joinid`` column contains a unique value for each row in the dataframe,
+    and acts as a joint key for other objects, such as ``SparseNDArray``.
 
     [lifecycle: experimental]
     """
@@ -46,11 +48,18 @@ class DataFrame(TileDBArray, somacore.DataFrame):
 
         [lifecycle: experimental]
 
-        :param schema: Arrow Schema defining the per-column schema. This schema must define all columns, including columns to be named as index columns. If the schema includes types unsupported by the SOMA implementation, an error will be raised.
+        :param schema: Arrow Schema defining the per-column schema. This schema
+            must define all columns, including columns to be named as index columns.
+            If the schema includes types unsupported by the SOMA implementation,
+            an error will be raised.
 
-        :param index_column_names: A list of column names to use as user-defined index columns (e.g., ``['cell_type', 'tissue_type']``). All named columns must exist in the schema, and at least one index column name is required.
+        :param index_column_names: A list of column names to use as user-defined
+            index columns (e.g., ``['cell_type', 'tissue_type']``).
+            All named columns must exist in the schema, and at least one
+            index column name is required.
 
-        :param platform_config: Platform-specific options used to create this DataFrame, provided via "tiledb"->"create" nested keys
+        :param platform_config: Platform-specific options used to create this DataFrame,
+            provided via ``{"tiledb": {"create": ...}}`` nested keys.
         """
         context = context or SOMATileDBContext()
         schema = _canonicalize_schema(schema, index_column_names)
@@ -108,19 +117,21 @@ class DataFrame(TileDBArray, somacore.DataFrame):
         platform_config: Optional[options.PlatformConfig] = None,
     ) -> TableReadIter:
         """
-        Read a user-defined subset of data, addressed by the dataframe indexing columns, optionally filtered, and return results as one or more Arrow.Table.
+        Read a user-defined subset of data, addressed by the dataframe indexing columns,
+        optionally filtered, and return results as one or more Arrow.Table.
 
         [lifecycle: experimental]
 
-        :param coords: for each index dimension, which rows to read. Defaults to ``None``, meaning no constraint -- all IDs.
-
-        :param column_names: the named columns to read and return. Defaults to ``None``, meaning no constraint -- all column names.
-
-        :param partitions: an optional ``ReadPartitions`` hint to indicate how results should be organized.
-
-        :param result_order: order of read results. This can be one of 'row-major', 'col-major', or 'auto'.
-
-        :param value_filter: an optional [value filter] to apply to the results. Defaults to no filter.
+        :param coords: for each index dimension, which rows to read.
+            Defaults to ``None``, meaning no constraint -- all IDs.
+        :param column_names: the named columns to read and return.
+            Defaults to ``None``, meaning no constraint -- all column names.
+        :param partitions: an optional ``ReadPartitions`` hint to indicate
+            how results should be organized.
+        :param result_order: order of read results.
+            This can be one of 'row-major', 'col-major', or 'auto'.
+        :param value_filter: an optional [value filter] to apply to the results.
+            Defaults to no filter.
 
         **Indexing**: the ``coords`` parameter will support, per dimension: a list of values of the type of the indexed column.
 
@@ -215,11 +226,15 @@ class DataFrame(TileDBArray, somacore.DataFrame):
         self, values: pa.Table, platform_config: Optional[Mapping[str, Any]] = None
     ) -> None:
         """
-        Write an Arrow.Table to the persistent object. As duplicate index values are not allowed, index values already present in the object are overwritten and new index values are added.
+        Write an Arrow.Table to the persistent object. As duplicate index values
+        are not allowed, index values already present in the object are overwritten
+        and new index values are added.
 
         [lifecycle: experimental]
 
-        :param values: An Arrow.Table containing all columns, including the index columns. The schema for the values must match the schema for the ``DataFrame``.
+        :param values: An Arrow.Table containing all columns, including
+            the index columns. The schema for the values must match
+            the schema for the ``DataFrame``.
         """
         util.check_type("values", values, (pa.Table,))
 
@@ -245,10 +260,10 @@ class DataFrame(TileDBArray, somacore.DataFrame):
 def _canonicalize_schema(
     schema: pa.Schema, index_column_names: Sequence[str]
 ) -> pa.Schema:
-    """
-    Handle default column additions (e.g., soma_joinid) and error checking on required columns.
+    """Turn a pyarrow Schema into the canonical version and check for errors.
 
-    Returns a schema, which may be modified by the addition of required columns.
+    Returns a schema, which may be modified by the addition of required columns
+    (e.g. ``soma_joinid``).
     """
     util.check_type("schema", schema, (pa.Schema,))
     if not index_column_names:
@@ -309,6 +324,7 @@ def _build_tiledb_schema(
     tiledb_create_options: TileDBCreateOptions,
     context: SOMATileDBContext,
 ) -> tiledb.ArraySchema:
+    """Converts a pyarrow.Schema into a TileDB ArraySchema for creation."""
     dims = []
     for index_column_name in index_column_names:
         pa_type = schema.field(index_column_name).type

@@ -32,11 +32,12 @@ class DenseNDArray(NDArray, somacore.DenseNDArray):
     ) -> pa.Tensor:
         """
         Read a user-defined dense slice of the array and return as an Arrow ``Tensor``.
+
         Coordinates must specify a contiguous subarray, and the number of coordinates
-        must be less than or equal to the number of dimensions. For example, if the array
-        is 10 by 20, then some acceptable values of ``coords`` include ``(3, 4)``,
-        ``(slice(5, 10),)``, and ``(slice(5, 10), slice(6, 12))``. Slice indices are
-        doubly inclusive.
+        must be less than or equal to the number of dimensions. For example,
+        if the array is 10 by 20, then some acceptable values of ``coords`` include
+        ``(3, 4)``, ``(slice(5, 10),)``, and ``(slice(5, 10), slice(6, 12))``.
+        Slice indices are doubly inclusive.
 
         [lifecycle: experimental]
         """
@@ -123,14 +124,12 @@ class DenseNDArray(NDArray, somacore.DenseNDArray):
 
         [lifecycle: experimental]
 
-        Parameters
-        ----------
-        coords - per-dimension tuple of scalar or slice
-            Define the bounds of the subarray to be written.
-
-        values - pyarrow.Tensor
-            Define the values to be written to the subarray.  Must have same shape
-            as defind by ``coords``, and the type must match the DenseNDArray.
+        :param coords: A per-dimension tuple of scalars or slices
+            defining the bounds of the subarray to be written.
+        :param values: The values to be written to the subarray.  Must have
+        the same shape as ``coords``, and the type must match the DenseNDArray.
+        :param platform_config: Optional platform-specific options to use
+            in this write operation (currently unused).
         """
         util.check_type("values", values, (pa.Tensor,))
 
