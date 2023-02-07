@@ -883,6 +883,47 @@ def test_tile_extents(tmp_path):
         assert A.schema.domain.dim(1).tile == 2048
 
 
+@pytest.mark.parametrize(
+    "create_options,expected_schema_fields",
+    (
+        (
+            {"allows_duplicates": True},
+            {
+                "validity_filters": tiledb.FilterList([tiledb.RleFilter()]),
+                "allows_duplicates": True,
+            },
+        ),
+        (
+            {"allows_duplicates": False},
+            {
+                "validity_filters": tiledb.FilterList([tiledb.RleFilter()]),
+                "allows_duplicates": False,
+            },
+        ),
+        (
+            {"validity_filters": ["NoOpFilter"], "allows_duplicates": False},
+            {
+                "validity_filters": tiledb.FilterList([tiledb.NoOpFilter()]),
+                "allows_duplicates": False,
+            },
+        ),
+    ),
+)
+def test_create_platform_config_overrides(
+    tmp_path, create_options, expected_schema_fields
+):
+    uri = tmp_path.as_posix()
+    soma.SparseNDArray.create(
+        uri,
+        type=pa.float64(),
+        shape=(100, 100),
+        platform_config={"tiledb": {"create": {**create_options}}},
+    ).close()
+    with tiledb.open(uri) as D:
+        for k, v in expected_schema_fields.items():
+            assert getattr(D.schema, k) == v
+
+
 def test_timestamped_ops(tmp_path):
     # 2x2 array
     with soma.SparseNDArray.create(

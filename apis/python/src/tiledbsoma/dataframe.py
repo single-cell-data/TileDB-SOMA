@@ -365,8 +365,9 @@ def _build_tiledb_schema(
         domain=dom,
         attrs=attrs,
         sparse=True,
-        allows_duplicates=False,
+        allows_duplicates=tiledb_create_options.get("allows_duplicates", False),
         offsets_filters=tiledb_create_options.offsets_filters(),
+        validity_filters=tiledb_create_options.validity_filters(),
         capacity=tiledb_create_options.get("capacity", 100000),
         cell_order=cell_order,
         # As of TileDB core 2.8.2, we cannot consolidate string-indexed sparse arrays with
