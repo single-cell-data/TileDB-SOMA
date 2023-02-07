@@ -217,6 +217,7 @@ class GroupWrapper(Wrapper[tiledb.Group]):
             )
         else:
             # Group opened in write mode should initialize with latest contents & metadata
+            assert mode == "r"
             ctx_arg = context.tiledb_ctx
         return tiledb.Group(uri, mode, ctx=ctx_arg)
 
