@@ -335,8 +335,8 @@ def make_dataframe(request):
 @pytest.mark.parametrize(
     "make_dataframe",
     [
-        pytest.param(pa.float32(), marks=pytest.mark.xfail),
-        pytest.param(pa.float64(), marks=pytest.mark.xfail),
+        pa.float32(),
+        pa.float64(),
         pa.int8(),
         pa.uint8(),
         pa.int16(),
