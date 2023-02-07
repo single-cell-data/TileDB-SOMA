@@ -233,18 +233,15 @@ def test_dense_nd_array_slicing(tmp_path, io):
             "coords": (slice(4, 8, 2),),
             "throws": ValueError,
         },
-        pytest.param(  # pending https://github.com/single-cell-data/TileDB-SOMA/issues/584
-            {
-                "shape": (10, 20),
-                "coords": (
-                    pa.array(
-                        [1, 2, 3],
-                    )
-                ),
-                "throws": ValueError,
-            },
-            marks=pytest.mark.xfail,
-        ),
+        {
+            "shape": (10, 20),
+            "coords": (
+                pa.array(
+                    [1, 2, 3],
+                )
+            ),
+            "throws": ValueError,
+        },
     ],
 )
 def test_dense_nd_array_indexing_errors(tmp_path, io):
