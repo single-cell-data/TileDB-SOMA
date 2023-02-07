@@ -22,7 +22,7 @@ import scipy.sparse as sp
 from anndata._core.sparse_dataset import SparseDataset
 from somacore.options import PlatformConfig
 
-from . import (
+from .. import (
     Collection,
     DataFrame,
     DenseNDArray,
@@ -33,19 +33,17 @@ from . import (
     factory,
     logging,
     util,
-    util_ann,
-    util_scipy,
-    util_tiledb,
 )
-from .common_nd_array import NDArray
-from .constants import SOMA_JOINID
-from .exception import DoesNotExistError, SOMAError
-from .options import SOMATileDBContext
-from .options.tiledb_create_options import TileDBCreateOptions
-from .tdb_handles import RawHandle
-from .tiledb_array import TileDBArray
-from .tiledb_object import TileDBObject
-from .types import INGEST_MODES, IngestMode, NPNDArray, Path
+from ..common_nd_array import NDArray
+from ..constants import SOMA_JOINID
+from ..exception import DoesNotExistError, SOMAError
+from ..options import SOMATileDBContext
+from ..options.tiledb_create_options import TileDBCreateOptions
+from ..tdb_handles import RawHandle
+from ..tiledb_array import TileDBArray
+from ..tiledb_object import TileDBObject
+from ..types import INGEST_MODES, IngestMode, NPNDArray, Path
+from . import conversions
 
 SparseMatrix = Union[sp.csr_matrix, sp.csc_matrix, SparseDataset]
 Matrix = Union[NPNDArray, SparseMatrix]
@@ -171,7 +169,7 @@ def from_anndata(
     df_uri = util.uri_joinpath(experiment.uri, "obs")
     with _write_dataframe(
         df_uri,
-        util_ann._decategoricalize_obs_or_var(anndata.obs),
+        conversions.decategoricalize_obs_or_var(anndata.obs),
         id_column_name="obs_id",
         platform_config=platform_config,
         ingest_mode=ingest_mode,
@@ -196,7 +194,7 @@ def from_anndata(
             # MS/meas/VAR
             with _write_dataframe(
                 util.uri_joinpath(measurement.uri, "var"),
-                util_ann._decategoricalize_obs_or_var(anndata.var),
+                conversions.decategoricalize_obs_or_var(anndata.var),
                 id_column_name="var_id",
                 platform_config=platform_config,
                 ingest_mode=ingest_mode,
@@ -243,7 +241,7 @@ def from_anndata(
                             with create_from_matrix(
                                 DenseNDArray,
                                 util.uri_joinpath(measurement.obsm.uri, key),
-                                util_tiledb.to_tiledb_supported_array_type(
+                                conversions.to_tiledb_supported_array_type(
                                     anndata.obsm[key]
                                 ),
                                 platform_config,
@@ -264,7 +262,7 @@ def from_anndata(
                             with create_from_matrix(
                                 DenseNDArray,
                                 util.uri_joinpath(measurement.varm.uri, key),
-                                util_tiledb.to_tiledb_supported_array_type(
+                                conversions.to_tiledb_supported_array_type(
                                     anndata.varm[key]
                                 ),
                                 platform_config,
@@ -287,7 +285,7 @@ def from_anndata(
                             with create_from_matrix(
                                 SparseNDArray,
                                 util.uri_joinpath(measurement.obsp.uri, key),
-                                util_tiledb.to_tiledb_supported_array_type(
+                                conversions.to_tiledb_supported_array_type(
                                     anndata.obsp[key]
                                 ),
                                 platform_config,
@@ -310,7 +308,7 @@ def from_anndata(
                             with create_from_matrix(
                                 SparseNDArray,
                                 util.uri_joinpath(measurement.varp.uri, key),
-                                util_tiledb.to_tiledb_supported_array_type(
+                                conversions.to_tiledb_supported_array_type(
                                     anndata.varp[key]
                                 ),
                                 platform_config,
@@ -338,7 +336,7 @@ def from_anndata(
 
                         with _write_dataframe(
                             util.uri_joinpath(raw_measurement.uri, "var"),
-                            util_ann._decategoricalize_obs_or_var(anndata.raw.var),
+                            conversions.decategoricalize_obs_or_var(anndata.raw.var),
                             id_column_name="var_id",
                             platform_config=platform_config,
                             ingest_mode=ingest_mode,
@@ -1008,7 +1006,7 @@ def to_anndata(
         X_dtype = X_ndarray.dtype
     elif isinstance(X_data, SparseNDArray):
         X_mat = X_data.read().tables().concat().to_pandas()  # TODO: CSR/CSC options ...
-        X_csr = util_scipy.csr_from_tiledb_df(X_mat, nobs, nvar)
+        X_csr = conversions.csr_from_tiledb_df(X_mat, nobs, nvar)
         X_dtype = X_csr.dtype
     else:
         raise TypeError(f"Unexpected NDArray type {type(X_data)}")
@@ -1037,13 +1035,13 @@ def to_anndata(
     if "obsp" in measurement:
         for key in measurement.obsp.keys():
             matrix = measurement.obsp[key].read().tables().concat().to_pandas()
-            obsp[key] = util_scipy.csr_from_tiledb_df(matrix, nobs, nobs)
+            obsp[key] = conversions.csr_from_tiledb_df(matrix, nobs, nobs)
 
     varp = {}
     if "varp" in measurement:
         for key in measurement.varp.keys():
             matrix = measurement.varp[key].read().tables().concat().to_pandas()
-            varp[key] = util_scipy.csr_from_tiledb_df(matrix, nvar, nvar)
+            varp[key] = conversions.csr_from_tiledb_df(matrix, nvar, nvar)
 
     anndata = ad.AnnData(
         X=X_csr if X_csr is not None else X_ndarray,

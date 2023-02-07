@@ -7,14 +7,14 @@ import somacore
 import tiledb
 from somacore import options
 
-from . import util, util_arrow
+from . import arrow_types, util
 from .constants import SOMA_JOINID
 from .options import SOMATileDBContext
 from .options.tiledb_create_options import TileDBCreateOptions
 from .query_condition import QueryCondition
+from .read_iters import TableReadIter
 from .tiledb_array import TileDBArray
 from .types import NPFloating, NPInteger
-from .util_iter import TableReadIter
 
 Slice = TypeVar("Slice", bound=Sequence[int])
 _UNBATCHED = options.BatchSize()
@@ -310,7 +310,7 @@ def _build_tiledb_schema(
     dims = []
     for index_column_name in index_column_names:
         pa_type = schema.field(index_column_name).type
-        dtype = util_arrow.tiledb_type_from_arrow_type(pa_type, is_indexed_column=True)
+        dtype = arrow_types.tiledb_type_from_arrow_type(pa_type, is_indexed_column=True)
         domain: Tuple[Any, Any]
         if isinstance(dtype, str):
             domain = None, None
@@ -353,7 +353,7 @@ def _build_tiledb_schema(
             continue
         attr = tiledb.Attr(
             name=attr_name,
-            dtype=util_arrow.tiledb_type_from_arrow_type(schema.field(attr_name).type),
+            dtype=arrow_types.tiledb_type_from_arrow_type(schema.field(attr_name).type),
             filters=tiledb_create_options.attr_filters(attr_name, ["ZstdFilter"]),
             ctx=context.tiledb_ctx,
         )

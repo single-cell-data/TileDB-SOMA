@@ -1,23 +1,32 @@
 from typing import TypeVar, cast
 
 import numpy as np
+import pandas as pd
 import pandas._typing as pdt
 import scipy.sparse as sp
-import tiledb
 from pandas.api.types import infer_dtype, is_categorical_dtype
 
-from .types import NPNDArray, PDSeries
-
-SOMA_OBJECT_TYPE_METADATA_KEY = "soma_object_type"
-SOMA_ENCODING_VERSION_METADATA_KEY = "soma_encoding_version"
-SOMA_ENCODING_VERSION = "1"
-
+from ..types import NPNDArray, PDSeries
+from ..util import typeguard_ignore
 
 _DT = TypeVar("_DT", bound=pdt.Dtype)
 _MT = TypeVar("_MT", NPNDArray, sp.spmatrix, PDSeries)
 _str_to_type = {"boolean": bool, "string": str, "bytes": bytes}
 
 
+def decategoricalize_obs_or_var(obs_or_var: pd.DataFrame) -> pd.DataFrame:
+    """
+    Performs a typecast into types that TileDB can persist.
+    """
+    if len(obs_or_var.columns) > 0:
+        return pd.DataFrame.from_dict(
+            {k: to_tiledb_supported_array_type(v) for k, v in obs_or_var.items()},
+        )
+    else:
+        return obs_or_var
+
+
+@typeguard_ignore
 def _to_tiledb_supported_dtype(dtype: _DT) -> _DT:
     """A handful of types are cast into the TileDB type system."""
     # TileDB has no float16 -- cast up to float32
@@ -39,7 +48,9 @@ def to_tiledb_supported_array_type(x: _MT) -> _MT:
     raise error unless it is a float or string.
     """
     if isinstance(x, (np.ndarray, sp.spmatrix)) or not is_categorical_dtype(x):
-        target_dtype = _to_tiledb_supported_dtype(x.dtype)
+        # mypy issues a spurious error here, but only when
+        # _to_tiledb_supported_dtype is decorated with @typeguard_ignore???
+        target_dtype = _to_tiledb_supported_dtype(x.dtype)  # type: ignore[arg-type]
         return x if target_dtype == x.dtype else x.astype(target_dtype)
 
     categories = x.cat.categories
@@ -49,7 +60,8 @@ def to_tiledb_supported_array_type(x: _MT) -> _MT:
             raise ValueError(
                 "Categorical array contains NaN -- unable to convert to TileDB array."
             )
-        target_dtype = _to_tiledb_supported_dtype(cat_dtype)
+        # More mysterious spurious mypy errors.
+        target_dtype = _to_tiledb_supported_dtype(cat_dtype)  # type: ignore[arg-type]
     else:
         # Into the weirdness. See if Pandas can help with edge cases.
         inferred = infer_dtype(categories)
@@ -57,47 +69,18 @@ def to_tiledb_supported_array_type(x: _MT) -> _MT:
             raise ValueError(
                 "Categorical array contains NaN -- unable to convert to TileDB array."
             )
-        target_dtype = np.dtype(_str_to_type.get(inferred, object))
+        target_dtype = np.dtype(  # type: ignore[assignment]
+            _str_to_type.get(inferred, object)
+        )
 
     return x.astype(target_dtype)
 
 
-def is_does_not_exist_error(e: tiledb.TileDBError) -> bool:
-    """ "
-    Given a TileDBError, return true if it indicates the object does not exist.
-
-    Example
-    -------
-
-    try:
-        with tiledb.open(uri):
-            ...
-    except tiledb.TileDBError as e:
-        if is_does_not_exist_error(e):
-            ...
-        raise e
+def csr_from_tiledb_df(df: pd.DataFrame, num_rows: int, num_cols: int) -> sp.csr_matrix:
     """
-    stre = str(e)
-    # Local-disk/S3 does-not-exist exceptions say 'Group does not exist'; TileDB Cloud
-    # does-not-exist exceptions are worded less clearly.
-    if (
-        "does not exist" in stre
-        or "Unrecognized array" in stre
-        or "HTTP code 401" in stre
-        or "HTTP code 404" in stre
-    ):
-        return True
-
-    return False
-
-
-def is_duplicate_group_key_error(e: tiledb.TileDBError) -> bool:
+    Given a tiledb dataframe, return a ``scipy.sparse.csr_matrx``.
     """
-    Given a TileDBError, return try if it indicates a duplicate member
-    add request in a tiledb.Group.
-    """
-    stre = str(e)
-    if "member already exists in group" in stre:
-        return True
-
-    return False
+    return sp.csr_matrix(
+        (df["soma_data"], (df["soma_dim_0"], df["soma_dim_1"])),
+        shape=(num_rows, num_cols),
+    )

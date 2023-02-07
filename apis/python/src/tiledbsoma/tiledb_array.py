@@ -7,9 +7,9 @@ import tiledb
 import tiledbsoma.libtiledbsoma as clib
 
 from . import tdb_handles
+from .arrow_types import tiledb_schema_to_arrow
 from .options.soma_tiledb_context import SOMATileDBContext
 from .tiledb_object import TileDBObject
-from .util_arrow import tiledb_schema_to_arrow
 
 
 class TileDBArray(TileDBObject[tdb_handles.ArrayWrapper]):
