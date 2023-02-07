@@ -624,6 +624,15 @@ def test_csr_csc_2d_read(tmp_path, shape):
         },
         {
             "shape": (4, 6),
+            "coords": (slice(None), slice(3, 100)),
+            "dims": {
+                "soma_dim_0": [0, 0, 0, 1, 1, 1, 2, 2, 2, 3, 3, 3],
+                "soma_dim_1": [3, 4, 5, 3, 4, 5, 3, 4, 5, 3, 4, 5],
+            },
+            "throws": None,
+        },
+        {
+            "shape": (4, 6),
             "coords": (slice(1, 2), slice(None)),
             "dims": {
                 "soma_dim_0": [1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2],
