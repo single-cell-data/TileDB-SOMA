@@ -31,11 +31,11 @@ from .common_nd_array import NDArray
 from .constants import SOMA_JOINID
 from .dataframe import DataFrame
 from .dense_nd_array import DenseNDArray
+from .exception import is_does_not_exist_error, is_duplicate_group_key_error
 from .options import SOMATileDBContext
 from .sparse_nd_array import SparseNDArray
 from .tiledb_object import AnyTileDBObject, TileDBObject
 from .util import is_relative_uri, make_relative_path, uri_joinpath
-from .util_tiledb import is_does_not_exist_error, is_duplicate_group_key_error
 
 # A collection can hold any sub-type of TileDBObject
 CollectionElementType = TypeVar("CollectionElementType", bound=AnyTileDBObject)

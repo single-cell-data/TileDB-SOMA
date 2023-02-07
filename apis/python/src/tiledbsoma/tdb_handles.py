@@ -20,9 +20,8 @@ import attrs
 import tiledb
 from somacore import options
 
-from .exception import DoesNotExistError, SOMAError
+from .exception import DoesNotExistError, SOMAError, is_does_not_exist_error
 from .options import SOMATileDBContext
-from .util_tiledb import is_does_not_exist_error
 
 RawHandle = Union[tiledb.Array, tiledb.Group]
 _RawHdl_co = TypeVar("_RawHdl_co", bound=RawHandle, covariant=True)
