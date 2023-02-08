@@ -48,6 +48,8 @@ class Measurement(
     [lifecycle: experimental]
     """
 
+    __slots__ = ()
+
     _subclass_constrained_soma_types = {
         "var": ("SOMADataFrame",),
         "X": ("SOMACollection",),

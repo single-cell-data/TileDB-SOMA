@@ -19,6 +19,8 @@ _Self = TypeVar("_Self", bound="NDArray")
 class NDArray(TileDBArray, somacore.NDArray):
     """Abstract base for the common behaviors of both kinds of NDArray."""
 
+    __slots__ = ()
+
     @classmethod
     def create(
         cls: Type[_Self],

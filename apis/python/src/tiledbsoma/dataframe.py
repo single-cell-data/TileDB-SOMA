@@ -29,6 +29,8 @@ class DataFrame(TileDBArray, somacore.DataFrame):
     [lifecycle: experimental]
     """
 
+    __slots__ = ()
+
     @classmethod
     def create(
         cls,

@@ -25,6 +25,8 @@ class Experiment(
     [lifecycle: experimental]
     """
 
+    __slots__ = ()
+
     _subclass_constrained_soma_types = {
         "obs": ("SOMADataFrame",),
         "ms": ("SOMACollection",),

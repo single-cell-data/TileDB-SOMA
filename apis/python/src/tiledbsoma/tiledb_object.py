@@ -28,6 +28,8 @@ class TileDBObject(somacore.SOMAObject, Generic[_WrapperType_co]):
     [lifecycle: experimental]
     """
 
+    __slots__ = ("_close_stack", "_handle", "_closed")
+
     @classmethod
     def open(
         cls: Type[_Self],

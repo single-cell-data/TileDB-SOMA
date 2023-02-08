@@ -64,7 +64,7 @@ class CollectionBase(
     ``DataFrame``, ``DenseNDArray``, ``SparseNDArray`` or ``Experiment``.
     """
 
-    __slots__ = ()
+    __slots__ = ("_contents",)
     _wrapper_type = tdb_handles.GroupWrapper
 
     # TODO: Implement additional creation of members on collection subclasses.
@@ -489,6 +489,8 @@ class Collection(
 
     [lifecycle: experimental]
     """
+
+    __slots__ = ()
 
 
 def _real_class(cls: Type[Any]) -> type:

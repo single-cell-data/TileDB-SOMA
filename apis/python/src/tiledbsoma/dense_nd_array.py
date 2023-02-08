@@ -1,4 +1,4 @@
-from typing import Optional, cast
+from typing import Optional
 
 import pyarrow as pa
 import somacore
@@ -7,7 +7,6 @@ from somacore import options
 from . import util
 from .common_nd_array import NDArray
 from .exception import SOMAError
-from .types import NTuple
 from .util import dense_indices_to_shape
 
 _UNBATCHED = options.BatchSize()
@@ -20,24 +19,7 @@ class DenseNDArray(NDArray, somacore.DenseNDArray):
     [lifecycle: experimental]
     """
 
-    @property
-    def shape(self) -> NTuple:
-        """
-        Return length of each dimension, always a list of length ``ndim``
-        """
-        return cast(NTuple, self._handle.schema.domain.shape)
-
-    def reshape(self, shape: NTuple) -> None:
-        """
-        Unsupported operation for this object type.
-
-        [lifecycle: experimental]
-        """
-        raise NotImplementedError("reshape operation not implemented.")
-
-    # Inherited from somacore
-    # * ndim accessor
-    # * is_sparse: Final = False
+    __slots__ = ()
 
     def read(
         self,
