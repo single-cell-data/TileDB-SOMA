@@ -7,7 +7,7 @@
 \code{SOMAExperiment} is a specialized \code{\link{SOMACollection}},
 representing one or more modes of measurement across a single collection of
 cells (aka a "multimodal dataset") with pre-defined fields: \code{obs} and \code{ms}
-(see \emph{Active Bindings} below for details).
+(see \emph{Active Bindings} below for details). \link{lifecycle: experimental}
 }
 \section{Super classes}{
 \code{\link[tiledbsoma:TileDBObject]{tiledbsoma::TileDBObject}} -> \code{\link[tiledbsoma:TileDBGroup]{tiledbsoma::TileDBGroup}} -> \code{\link[tiledbsoma:SOMACollectionBase]{tiledbsoma::SOMACollectionBase}} -> \code{SOMAExperiment}
