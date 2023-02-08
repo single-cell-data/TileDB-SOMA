@@ -93,3 +93,35 @@ def test__from_platform_config__admits_tiledb_create_options_object():
         }
     )
     assert tdb_create_options.dim_tile("soma_dim_0") == 6
+
+
+def test_SOMATileDBContext_evolve():
+    context = tiledbsoma.options.SOMATileDBContext()
+
+    # verify defaults expected by subsequent tests
+    assert context.read_timestamp_start == 0
+    assert context.tiledb_ctx.config()["vfs.s3.region"] == "us-east-1"
+
+    # verify read_timestamp_start
+    assert (
+        tiledbsoma.options.SOMATileDBContext.evolve(
+            context, read_timestamp_start=1
+        ).read_timestamp_start
+        == 1
+    )
+
+    # veirfy write_timestamp
+    assert (
+        tiledbsoma.options.SOMATileDBContext.evolve(
+            context, write_timestamp=1
+        ).write_timestamp
+        == 1
+    )
+
+    # verify tiledb_ctx
+    tiledbsoma.options.SOMATileDBContext.evolve(
+        context,
+        tiledb_ctx=tiledb.Ctx(
+            config=context.tiledb_ctx.config().set("vfs.s3.region", "us-west-2")
+        ),
+    ).tiledb_ctx.config()["vfs.s3.region"] == "us-west-2"
