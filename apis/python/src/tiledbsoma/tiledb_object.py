@@ -4,6 +4,7 @@ from typing import Any, Generic, MutableMapping, Optional, Type, TypeVar
 import somacore
 import tiledb
 from somacore import options
+from typing_extensions import Self
 
 from . import constants, tdb_handles
 from .exception import SOMAError
@@ -16,7 +17,6 @@ _WrapperType_co = TypeVar(
 
 Covariant because ``_handle`` is read-only.
 """
-_Self = TypeVar("_Self", bound="AnyTileDBObject")
 
 
 class TileDBObject(somacore.SOMAObject, Generic[_WrapperType_co]):
@@ -32,13 +32,13 @@ class TileDBObject(somacore.SOMAObject, Generic[_WrapperType_co]):
 
     @classmethod
     def open(
-        cls: Type[_Self],
+        cls,
         uri: str,
         mode: options.OpenMode = "r",
         *,
         context: Optional[SOMATileDBContext] = None,
         platform_config: Optional[options.PlatformConfig] = None,
-    ) -> _Self:
+    ) -> Self:
         """Opens this specific type of SOMA object."""
         del platform_config  # unused
         context = context or SOMATileDBContext()

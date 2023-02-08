@@ -19,6 +19,7 @@ from typing import (
 import attrs
 import tiledb
 from somacore import options
+from typing_extensions import Self
 
 from .exception import DoesNotExistError, SOMAError, is_does_not_exist_error
 from .options import SOMATileDBContext
@@ -26,7 +27,6 @@ from .options import SOMATileDBContext
 RawHandle = Union[tiledb.Array, tiledb.Group]
 _RawHdl_co = TypeVar("_RawHdl_co", bound=RawHandle, covariant=True)
 """A raw TileDB object. Covariant because Handles are immutable enough."""
-_Self = TypeVar("_Self", bound="AnyWrapper")
 
 
 def open(
@@ -58,9 +58,7 @@ class Wrapper(Generic[_RawHdl_co], metaclass=abc.ABCMeta):
     closed: bool = attrs.field(default=False, init=False)
 
     @classmethod
-    def open(
-        cls: Type[_Self], uri: str, mode: options.OpenMode, context: SOMATileDBContext
-    ) -> _Self:
+    def open(cls, uri: str, mode: options.OpenMode, context: SOMATileDBContext) -> Self:
         if mode not in ("r", "w"):
             raise ValueError(f"Invalid open mode {mode!r}")
         try:
@@ -142,7 +140,7 @@ class Wrapper(Generic[_RawHdl_co], metaclass=abc.ABCMeta):
     def __repr__(self) -> str:
         return f"<{type(self).__name__} {self.mode} on {self.uri!r}>"
 
-    def __enter__(self: _Self) -> _Self:
+    def __enter__(self) -> Self:
         return self
 
     def __exit__(self, *_: Any) -> None:
