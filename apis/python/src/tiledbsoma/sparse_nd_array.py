@@ -30,6 +30,8 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
     [lifecycle: experimental]
     """
 
+    __slots__ = ()
+
     # Inherited from somacore
     # * ndim accessor
     # * is_sparse: Final = True

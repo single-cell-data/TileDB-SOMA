@@ -4,8 +4,7 @@ import pyarrow as pa
 import tiledb
 
 # This package's pybind11 code
-import tiledbsoma.libtiledbsoma as clib
-
+from . import libtiledbsoma as clib
 from . import tdb_handles
 from .arrow_types import tiledb_schema_to_arrow
 from .options.soma_tiledb_context import SOMATileDBContext
@@ -18,6 +17,8 @@ class TileDBArray(TileDBObject[tdb_handles.ArrayWrapper]):
 
     [lifecycle: experimental]
     """
+
+    __slots__ = ()
 
     _wrapper_type = tdb_handles.ArrayWrapper
 

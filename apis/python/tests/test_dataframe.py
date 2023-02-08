@@ -658,7 +658,7 @@ def make_multiply_indexed_dataframe(tmp_path, index_column_names: List[str]):
             "coords": [None, ("bbb", "zzz")],
             "value_filter": "quick brown fox",
             "A": None,
-            "throws": tiledb.TileDBError,  # TODO: should this be wrapped?
+            "throws": soma.SOMAError,
         },
     ],
 )
