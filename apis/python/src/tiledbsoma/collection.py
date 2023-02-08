@@ -25,6 +25,7 @@ import somacore
 import somacore.collection
 import tiledb
 from somacore import options
+from typing_extensions import Self
 
 from . import tdb_handles
 from .common_nd_array import NDArray
@@ -41,7 +42,6 @@ from .util import is_relative_uri, make_relative_path, uri_joinpath
 CollectionElementType = TypeVar("CollectionElementType", bound=AnyTileDBObject)
 _TDBO = TypeVar("_TDBO", bound=AnyTileDBObject)
 _Coll = TypeVar("_Coll", bound="CollectionBase[AnyTileDBObject]")
-_Self = TypeVar("_Self", bound="CollectionBase[AnyTileDBObject]")
 _NDArr = TypeVar("_NDArr", bound=NDArray)
 
 
@@ -70,12 +70,12 @@ class CollectionBase(
     # TODO: Implement additional creation of members on collection subclasses.
     @classmethod
     def create(
-        cls: Type[_Self],
+        cls,
         uri: str,
         *,
         platform_config: Optional[options.PlatformConfig] = None,
         context: Optional[SOMATileDBContext] = None,
-    ) -> _Self:
+    ) -> Self:
         context = context or SOMATileDBContext()
         tiledb.group_create(uri=uri, ctx=context.tiledb_ctx)
         handle = cls._wrapper_type.open(uri, "w", context)

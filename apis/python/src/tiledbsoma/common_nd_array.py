@@ -1,19 +1,18 @@
 """Common code shared by both NDArray implementations."""
 
-from typing import Optional, Sequence, Tuple, Type, TypeVar, cast
+from typing import Optional, Sequence, Tuple, cast
 
 import numpy as np
 import pyarrow as pa
 import somacore
 import tiledb
 from somacore import options
+from typing_extensions import Self
 
 from . import arrow_types, util
 from .options.soma_tiledb_context import SOMATileDBContext
 from .options.tiledb_create_options import TileDBCreateOptions
 from .tiledb_array import TileDBArray
-
-_Self = TypeVar("_Self", bound="NDArray")
 
 
 class NDArray(TileDBArray, somacore.NDArray):
@@ -23,14 +22,14 @@ class NDArray(TileDBArray, somacore.NDArray):
 
     @classmethod
     def create(
-        cls: Type[_Self],
+        cls,
         uri: str,
         *,
         type: pa.DataType,
         shape: Sequence[int],
         platform_config: Optional[options.PlatformConfig] = None,
         context: Optional[SOMATileDBContext] = None,
-    ) -> _Self:
+    ) -> Self:
         """
         Create a SOMA ``NDArray`` named with the URI.
 
