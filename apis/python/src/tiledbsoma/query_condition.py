@@ -93,18 +93,19 @@ class QueryCondition:
 
     Example::
 
-        with tiledb.open(uri, mode="r") as A:
+        with tiledbsoma.open(df_uri) as dataframe:
             # Select cells where the attribute values for `foo` are less than 5
             # and `bar` equal to string "asdf".
             # Note precedence is equivalent to:
-            # tiledbsoma.QueryCondition("foo > 5 or ('asdf' == attr('b a r') and baz <= val(1.0))")
-            A.query(cond="foo > 5 or 'asdf' == attr('b a r') and baz <= val(1.0)")
+            # "foo > 5 or ('asdf' == attr('b a r') and baz <= val(1.0))"
+            foo_bar_baz = dataframe.read(
+                value_filter="foo > 5 or 'asdf' == attr('b a r') and baz <= val(1.0)")
 
             # Select cells where the attribute values for `foo` are equal to
             # 1, 2, or 3.
             # Note this is equivalent to:
-            # tiledbsoma.QueryCondition("foo == 1 or foo == 2 or foo == 3")
-            A.query(cond="foo in [1, 2, 3]")
+            # "foo == 1 or foo == 2 or foo == 3"
+            foo_123 = dataframe.read(value_filter="foo in [1, 2, 3]")
     """
 
     expression: str
