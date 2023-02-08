@@ -259,3 +259,65 @@ test_that("retrieving query results in supported formats", {
   expect_true(is_arrow_table(res$X_layers[[1]]))
   expect_true(is_arrow_table(res$X_layers[[2]]))
 })
+
+test_that("query result value indexer", {
+  uri <- withr::local_tempdir("soma-experiment-query-results-indexer")
+  n_obs <- 1001L
+  n_var <- 99L
+
+  obs_slice <- bit64::as.integer64(seq(1, 10))
+  var_slice <- bit64::as.integer64(seq(1, 10))
+
+  experiment <- create_and_populate_experiment(
+    uri = uri,
+    n_obs = n_obs,
+    n_var = n_var,
+    X_layer_names = c("counts", "logcounts")
+  )
+
+  query <- ExperimentAxisQuery$new(
+    experiment = experiment,
+    measurement_name = "RNA",
+    obs_query = AxisQuery$new(
+      coords = list(soma_joinid = obs_slice)
+    ),
+    var_query = AxisQuery$new(
+      coords = list(soma_joinid = var_slice)
+    )
+  )
+
+  indexer <- query$indexer
+
+  # coords inside query result are indexed
+  expect_equal(
+    indexer$by_obs(c(1, 4, 2)),
+    arrow::Array$create(c(0, 3, 1), type = arrow::int32())
+  )
+
+  expect_equal(
+    indexer$by_var(c(10, 1)),
+    arrow::Array$create(c(9, 0), type = arrow::int32())
+  )
+
+  # coords outside query result return null
+  expect_equal(
+    indexer$by_obs(c(1, 4, 2, 1000)),
+    arrow::Array$create(c(0, 3, 1, NA), type = arrow::int32())
+  )
+
+  expect_equal(
+    indexer$by_var(c(10, 1, 1000)),
+    arrow::Array$create(c(9, 0, NA), type = arrow::int32())
+  )
+
+  # coord validation
+  expect_error(
+    indexer$by_obs(),
+    "argument \"coords\" is missing, with no default"
+  )
+
+  expect_error(
+    indexer$by_obs(c(1, 4, 2, 1000, "foo")),
+    "'coords' must be a numeric vector or arrow Array"
+  )
+})

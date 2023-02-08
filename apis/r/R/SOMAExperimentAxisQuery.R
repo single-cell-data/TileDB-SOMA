@@ -335,9 +335,9 @@ AxisQueryResult <- R6Class(
         all(vapply_lgl(X_layers, is_arrow_table))
       )
 
-      private$obs_ <- obs
-      private$var_ <- var
-      private$X_layers_ <- X_layers
+      private$.obs <- obs
+      private$.var <- var
+      private$.X_layers <- X_layers
     }
   ),
 
@@ -345,69 +345,91 @@ AxisQueryResult <- R6Class(
     #' @field [`arrow::Table`] containing `obs` query slice.
     obs = function(value) {
       if (!missing(value)) read_only_error("obs")
-      private$obs_
+      private$.obs
     },
 
     #' @field [`arrow::Table`] containing `var` query slice.
     #' `measurement_name`.
     var = function(value) {
       if (!missing(value)) read_only_error("var")
-      private$var_
+      private$.var
     },
 
     #' @field named list of [`arrow::Table`]s for each `X` layer.
     X_layers = function(value) {
       if (!missing(value)) read_only_error("ms")
-      private$X_layers_
+      private$.X_layers
     }
   ),
 
   private = list(
-    obs_ = NULL,
-    var_ = NULL,
-    X_layers_ = NULL
+    .obs = NULL,
+    .var = NULL,
+    .X_layers = NULL
   )
 )
 
 
 
-#' @description Given a query, provide index-building services for obs/var
-#' axis.
+#' @description Index obs/var soma_joinids for a given query result.
+#'
+#' Retrieve the index of the given `obs` or `var` coordinates in the query
+#' result. Coordinates outside of the query result will return
+#' [`arrow::null()`].
 AxisIndexer <- R6::R6Class("AxisIndexer",
   public = list(
-    #' @field query The [`ExperimentAxisQuery`] object to build indices for.
-    query = NULL,
 
+    #' @description Create a new `AxisIndexer` object.
+    #' @param query The [`ExperimentAxisQuery`] object to build indices for.
     initialize = function(query) {
       stopifnot(inherits(query, "ExperimentAxisQuery"))
-      self$query <- query
+      private$.query <- query
     },
 
-    obs_index = function() {
-      if (is.null(private$cached_obs)) {
-        private$cached_obs <- self$query$obs_joinids()
-      }
-      private$cached_obs
-    },
-
-    var_index = function() {
-      if (is.null(private$cached_var)) {
-        private$cached_var <- private$query$var_joinids()
-      }
-      return(private$cached_var)
-    },
-
+    #' @description Get the index of the given `obs` coordinates.
     by_obs = function(coords) {
-      return(private$obs_index()[coords])
+      arrow::match_arrow(
+        x = private$.validate_coords(coords),
+        table = private$.obs_index()
+      )
     },
 
+    #' @description Get the index of the given `var` coordinates.
     by_var = function(coords) {
-      return(private$var_index()[coords])
+      arrow::match_arrow(
+        x = private$.validate_coords(coords),
+        table = private$.var_index()
+      )
     }
   ),
 
   private = list(
-    cached_obs = NULL,
-    cached_var = NULL
+    .cached_obs = NULL,
+    .cached_var = NULL,
+    .query = NULL,
+
+    # Retrieve index for the obs axis
+    .obs_index = function() {
+      if (is.null(private$.cached_obs)) {
+        private$.cached_obs <- private$.query$obs_joinids()
+      }
+      private$.cached_obs
+    },
+
+    # Retrieve index for the var axis
+    .var_index = function() {
+      if (is.null(private$.cached_var)) {
+        private$.cached_var <- private$.query$var_joinids()
+      }
+      private$.cached_var
+    },
+
+    .validate_coords = function(coords) {
+      stopifnot(
+        "'coords' must be a numeric vector or arrow Array" =
+          is.numeric(coords) || is_arrow_array(coords)
+      )
+      coords
+    }
   )
 )
