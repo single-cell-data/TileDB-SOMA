@@ -1,9 +1,9 @@
 import time
 from typing import Any, Dict, Optional, Union
-from typing_extensions import Self
 
 import attrs
 import tiledb
+from typing_extensions import Self
 
 
 def _build_default_tiledb_ctx() -> tiledb.Ctx:
@@ -99,7 +99,7 @@ class SOMATileDBContext:
         assert isinstance(self._group_write_tiledb_ctx, tiledb.Ctx)
 
     @classmethod
-    def evolve(cls, context: Self, **changes) -> Self:
+    def evolve(cls, context: Self, **changes: dict[str, Any]) -> Self:
         """
         Create a copy of the context, merging changes.
 
