@@ -9,5 +9,6 @@ rm -r -f \
    src/include/ \
    src/lib \
    src/cmake_log.txt \
-   src/build 
+   src/build \
+   src/libtiledbsoma
 

@@ -19,7 +19,7 @@ domain [0, maxInt64), and a single attribute.
 \subsection{Duplicate writes}{
 
 As duplicate index values are not allowed, index values already present in
-the object are overwritten and new index values are added.
+the object are overwritten and new index values are added. \link{lifecycle: experimental}
 }
 }
 \section{Super classes}{
@@ -53,6 +53,8 @@ the object are overwritten and new index values are added.
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="set_metadata"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-set_metadata'><code>tiledbsoma::TileDBArray$set_metadata()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="set_query"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-set_query'><code>tiledbsoma::TileDBArray$set_query()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="tiledb_array"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-tiledb_array'><code>tiledbsoma::TileDBArray$tiledb_array()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMAArrayBase" data-id="read_complete"><a href='../../tiledbsoma/html/SOMAArrayBase.html#method-SOMAArrayBase-read_complete'><code>tiledbsoma::SOMAArrayBase$read_complete()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMAArrayBase" data-id="read_next"><a href='../../tiledbsoma/html/SOMAArrayBase.html#method-SOMAArrayBase-read_next'><code>tiledbsoma::SOMAArrayBase$read_next()</code></a></span></li>
 </ul>
 </details>
 }}
@@ -60,7 +62,7 @@ the object are overwritten and new index values are added.
 \if{html}{\out{<a id="method-SOMASparseNDArray-create"></a>}}
 \if{latex}{\out{\hypertarget{method-SOMASparseNDArray-create}{}}}
 \subsection{Method \code{create()}}{
-Create a SOMASparseNDArray named with the URI.
+Create a SOMASparseNDArray named with the URI. \link{lifecycle: experimental}
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{SOMASparseNDArray$create(type, shape)}\if{html}{\out{</div>}}
 }
@@ -79,11 +81,12 @@ Create a SOMASparseNDArray named with the URI.
 \if{html}{\out{<a id="method-SOMASparseNDArray-read_arrow_table"></a>}}
 \if{latex}{\out{\hypertarget{method-SOMASparseNDArray-read_arrow_table}{}}}
 \subsection{Method \code{read_arrow_table()}}{
-Read as an 'arrow::Table'
+Read as an 'arrow::Table' \link{lifecycle: experimental}
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{SOMASparseNDArray$read_arrow_table(
   coords = NULL,
   result_order = "ROW_MAJOR",
+  iterated = FALSE,
   log_level = "warn"
 )}\if{html}{\out{</div>}}
 }
@@ -98,6 +101,9 @@ read. List elements can be named when specifying a subset of dimensions.}
 \item{\code{result_order}}{Optional order of read results. This can be one of either
 \verb{"ROW_MAJOR, }"COL_MAJOR"\verb{, }"GLOBAL_ORDER"\verb{, or }"UNORDERED"`.}
 
+\item{\code{iterated}}{Option boolean indicated whether data is read in call (when
+\code{FALSE}, the default value) or in several iterated steps.}
+
 \item{\code{log_level}}{Optional logging level with default value of \code{"warn"}.}
 }
 \if{html}{\out{</div>}}
@@ -110,12 +116,13 @@ An \code{\link[arrow:Table]{arrow::Table}}.
 \if{html}{\out{<a id="method-SOMASparseNDArray-read_sparse_matrix"></a>}}
 \if{latex}{\out{\hypertarget{method-SOMASparseNDArray-read_sparse_matrix}{}}}
 \subsection{Method \code{read_sparse_matrix()}}{
-Read as a sparse matrix
+Read as a sparse matrix \link{lifecycle: experimental}
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{SOMASparseNDArray$read_sparse_matrix(
   coords = NULL,
   result_order = "ROW_MAJOR",
   repr = c("C", "T", "R"),
+  iterated = FALSE,
   log_level = "warn"
 )}\if{html}{\out{</div>}}
 }
@@ -132,6 +139,9 @@ read. List elements can be named when specifying a subset of dimensions.}
 
 \item{\code{repr}}{Optional one-character code for sparse matrix representation type}
 
+\item{\code{iterated}}{Option boolean indicated whether data is read in call (when
+\code{FALSE}, the default value) or in several iterated steps.}
+
 \item{\code{log_level}}{Optional logging level with default value of \code{"warn"}.}
 }
 \if{html}{\out{</div>}}
@@ -144,7 +154,7 @@ A \code{matrix} object
 \if{html}{\out{<a id="method-SOMASparseNDArray-write"></a>}}
 \if{latex}{\out{\hypertarget{method-SOMASparseNDArray-write}{}}}
 \subsection{Method \code{write()}}{
-Write matrix-like data to the array.
+Write matrix-like data to the array. \link{lifecycle: experimental}
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{SOMASparseNDArray$write(data)}\if{html}{\out{</div>}}
 }

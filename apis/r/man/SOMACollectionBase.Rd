@@ -8,7 +8,7 @@ SOMA object.
 }
 \description{
 Base class for objects containing persistent collection of SOMA
-objects, mapping string keys to any SOMA object.
+objects, mapping string keys to any SOMA object.  \link{lifecycle: experimental}
 }
 \section{Super classes}{
 \code{\link[tiledbsoma:TileDBObject]{tiledbsoma::TileDBObject}} -> \code{\link[tiledbsoma:TileDBGroup]{tiledbsoma::TileDBGroup}} -> \code{SOMACollectionBase}
@@ -50,7 +50,7 @@ objects, mapping string keys to any SOMA object.
 \if{html}{\out{<a id="method-SOMACollectionBase-new"></a>}}
 \if{latex}{\out{\hypertarget{method-SOMACollectionBase-new}{}}}
 \subsection{Method \code{new()}}{
-Create a new \code{SOMACollection}.
+Create a new \code{SOMACollection}. \link{lifecycle: experimental}
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{SOMACollectionBase$new(uri, platform_config = NULL, ctx = NULL)}\if{html}{\out{</div>}}
 }
@@ -71,7 +71,7 @@ Create a new \code{SOMACollection}.
 \if{html}{\out{<a id="method-SOMACollectionBase-create"></a>}}
 \if{latex}{\out{\hypertarget{method-SOMACollectionBase-create}{}}}
 \subsection{Method \code{create()}}{
-Add a new SOMA object to the collection.
+Add a new SOMA object to the collection. \link{lifecycle: experimental}
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{SOMACollectionBase$create()}\if{html}{\out{</div>}}
 }
@@ -81,7 +81,7 @@ Add a new SOMA object to the collection.
 \if{html}{\out{<a id="method-SOMACollectionBase-set"></a>}}
 \if{latex}{\out{\hypertarget{method-SOMACollectionBase-set}{}}}
 \subsection{Method \code{set()}}{
-Add a new SOMA object to the collection.
+Add a new SOMA object to the collection. \link{lifecycle: experimental}
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{SOMACollectionBase$set(object, name = NULL, relative = NULL)}\if{html}{\out{</div>}}
 }
@@ -106,7 +106,7 @@ default), the object's URI is assumed to be relative unless it is a
 \if{html}{\out{<a id="method-SOMACollectionBase-get"></a>}}
 \if{latex}{\out{\hypertarget{method-SOMACollectionBase-get}{}}}
 \subsection{Method \code{get()}}{
-Retrieve a SOMA object by name.
+Retrieve a SOMA object by name. \link{lifecycle: experimental}
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{SOMACollectionBase$get(name)}\if{html}{\out{</div>}}
 }
