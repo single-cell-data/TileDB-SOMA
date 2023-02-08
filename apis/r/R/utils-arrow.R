@@ -14,6 +14,10 @@ is_arrow_record_batch <- function(x) {
   is_arrow_object(x) && inherits(x, "RecordBatch")
 }
 
+is_arrow_array <- function(x) {
+  is_arrow_object(x) && inherits(x, "Array")
+}
+
 is_arrow_table <- function(x) {
   is_arrow_object(x) && inherits(x, "Table")
 }
