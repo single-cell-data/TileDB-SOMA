@@ -99,7 +99,7 @@ class SOMATileDBContext:
         assert isinstance(self._group_write_tiledb_ctx, tiledb.Ctx)
 
     @classmethod
-    def evolve(cls, context: Self, **changes: dict[str, Any]) -> Self:
+    def evolve(cls, context: Self, **changes: Dict[str, Any]) -> Self:
         """
         Create a copy of the context, merging changes.
 
