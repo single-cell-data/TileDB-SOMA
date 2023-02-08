@@ -180,19 +180,11 @@ class TileDBArray(TileDBObject):
 
     def _consolidate_and_vacuum_fragment_metadata(self) -> None:
         """
-        This post-ingestion helper consolidates and vacuums fragment metadata -- this is quick to
-        do, and positively impacts query performance.  It does _not_ consolidate bulk array data,
-        which is more time-consuming and should be done at the user's opt-in discretion.
+        This post-ingestion helper consolidates and vacuums fragment metadata and commit files --
+        this is quick to do, and positively impacts query performance.  It does _not_ consolidate
+        bulk array data, which is more time-consuming and should be done at the user's opt-in
+        discretion.
         """
-
-        if self.uri.startswith("tiledb://"):
-            # At present we need to look up the S3 path. This can only be done via
-            # tiledb.cloud.info(self.uri). Yet this open-source package does not take a dependency
-            # on the tiledb.cloud package.
-            #
-            # tiledb.cc.TileDBError: C API: TileDB Internal, std::exception;
-            # Consolidation is not supported for remote arrays.
-            return
 
         for mode in ["fragment_meta", "commits"]:
 
