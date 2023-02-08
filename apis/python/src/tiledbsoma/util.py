@@ -128,6 +128,10 @@ def slice_to_range(
     if stop is None:
         stop = nonempty_domain[1]
 
+    # Indexing beyond end of array should "trim" to end of array
+    if stop > nonempty_domain[1]:
+        stop = nonempty_domain[1]
+
     if start > stop:
         raise ValueError("slice start must be <= slice stop")
     return (start, stop)
