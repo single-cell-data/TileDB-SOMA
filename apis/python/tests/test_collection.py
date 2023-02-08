@@ -10,6 +10,7 @@ from typing_extensions import Literal
 import tiledbsoma as soma
 from tiledbsoma import collection, factory, tiledb_object
 from tiledbsoma.exception import DoesNotExistError
+from tiledbsoma.options import SOMATileDBContext
 
 
 # ----------------------------------------------------------------
@@ -339,3 +340,64 @@ def test_real_class_fail(in_type):
 )
 def test_sanitize_for_path(key, want):
     assert collection._sanitize_for_path(key) == want
+
+
+def test_timestamped_ops(tmp_path):
+    """
+    When we specify read/write timestamps in SOMATileDBContext supplied to collection, those are
+    inherited by elements accessed via the collection.
+    """
+
+    # create collection @ t=10
+    with soma.Collection.create(
+        tmp_path.as_uri(), context=SOMATileDBContext(write_timestamp=10)
+    ):
+        pass
+
+    # add array A to it @ t=20
+    with soma.Collection.open(
+        tmp_path.as_uri(), mode="w", context=SOMATileDBContext(write_timestamp=20)
+    ) as sc:
+        sc.add_new_dense_ndarray("A", type=pa.uint8(), shape=(2, 2)).write(
+            (slice(0, 2), slice(0, 2)),
+            pa.Tensor.from_numpy(np.zeros((2, 2), dtype=np.uint8)),
+        )
+
+    # access A via collection @ t=30 and write something into it
+    with soma.Collection.open(
+        tmp_path.as_uri(), mode="w", context=SOMATileDBContext(write_timestamp=30)
+    ) as sc:
+        sc["A"].write(
+            (slice(0, 1), slice(0, 1)),
+            pa.Tensor.from_numpy(np.ones((1, 1), dtype=np.uint8)),
+        )
+
+    # open A via collection with no timestamp => A should reflect both writes
+    with soma.Collection.open(tmp_path.as_uri()) as sc:
+        assert sc["A"].read((slice(None), slice(None))).to_numpy().tolist() == [
+            [1, 0],
+            [0, 0],
+        ]
+
+    # open A via collection @ t=25 => A should reflect first write only
+    with soma.Collection.open(
+        tmp_path.as_uri(), context=SOMATileDBContext(read_timestamp=25)
+    ) as sc:
+        assert sc["A"].read((slice(None), slice(None))).to_numpy().tolist() == [
+            [0, 0],
+            [0, 0],
+        ]
+
+    # open collection @ t=15 => A should not even be there
+    with soma.Collection.open(
+        tmp_path.as_uri(), context=SOMATileDBContext(read_timestamp=15)
+    ) as sc:
+        assert "A" not in sc
+
+    # confirm timestamp validation in SOMATileDBContext
+    with pytest.raises(ValueError):
+        SOMATileDBContext(read_timestamp=-1)
+    with pytest.raises(ValueError):
+        SOMATileDBContext(read_timestamp_start=2, read_timestamp=1)
+    with pytest.raises(ValueError):
+        SOMATileDBContext(write_timestamp=-1)
