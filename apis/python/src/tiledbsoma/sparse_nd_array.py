@@ -39,7 +39,7 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
     @property
     def nnz(self) -> int:
         """
-        Return the number of stored values in the array, including explicitly stored zeros.
+        The number of stored values in the array, including explicitly stored zeros.
         """
         self._check_open_read()
         return cast(int, self._soma_reader().nnz())
@@ -58,29 +58,27 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
 
         [lifecycle: experimental]
 
-        Parameters
-        ----------
-        coords : Tuple[Union[int, slice, Tuple[int, ...], List[int], pa.IntegerArray], ...]
-            Per-dimension tuple of scalar, slice, sequence of scalar or Arrow IntegerArray
-            Arrow arrays currently unimplemented.
+        :param coords: A per-dimension tuple of scalar, slice, sequence of scalar
+            or Arrow IntegerArray defining the region to read.
+            (Arrow arrays currently unimplemented.)
 
         Acceptable ways to index
         ------------------------
         * None
         * A sequence of coordinates is accepted, one per dimension.
         * Sequence length must be at least one and <= number of dimensions.
-        * If the sequence contains missing coordinates (length less than number of dimensions),
-          then `slice(None)` -- i.e. no constraint -- is assumed for the missing dimensions.
-        * Per-dimension, explicitly specified coordinates can be one of: None, a value, a
-          list/ndarray/paarray/etc of values, a slice, etc.
-        * Slices are doubly inclusive: slice(2,4) means [2,3,4] not [2,3]. Slice steps can only be +1.
-          Slices can be `slice(None)`, meaning select all in that dimension, but may not be half-specified:
+        * If the sequence contains missing coordinates (length < number of dimensions),
+          then ``slice(None)`` -- i.e. no constraint -- is assumed for the
+          remaining dimensions.
+        * Per-dimension, explicitly specified coordinates can be one of:
+          None, a value, a list/ndarray/paarray/etc of values, a slice, etc.
+        * Slices are doubly inclusive: slice(2,4) means [2,3,4] not [2,3].
+          Slice steps can only be +1. Slices can be `slice(None)`, meaning
+          select all in that dimension, but may not be half-specified:
           `slice(2,None)` and `slice(None,4)` are both unsupported.
         * Negative indexing is unsupported.
 
-        Returns
-        -------
-        SparseNDArrayRead - which can be used to access an iterator of results in various formats.
+        :return: A SparseNDArrayRead to access result iterators in various formats.
         """
         del result_order, batch_size, partitions, platform_config  # Currently unused.
         self._check_open_read()
@@ -153,7 +151,7 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
 
         [lifecycle: experimental]
 
-        Arrow sparse tensor: the coordinates in the Arrow SparseTensor will be interpreted
+        Arrow sparse tensor: the coordinates in the Arrow SparseTensor are interpreted
         as the coordinates to write to. Supports the _experimental_ SparseCOOTensor,
         SparseCSRMatrix and SparseCSCMatrix. There is currently no support for Arrow
         SparseCSFTensor or dense Tensor.

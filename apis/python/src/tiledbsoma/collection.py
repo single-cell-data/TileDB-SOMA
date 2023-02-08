@@ -76,6 +76,17 @@ class CollectionBase(
         platform_config: Optional[options.PlatformConfig] = None,
         context: Optional[SOMATileDBContext] = None,
     ) -> Self:
+        """Creates and opens a new SOMA collection in storage.
+
+        This creates a new SOMA collection of the current type in storage and
+        returns it opened for writing.
+
+        :param uri: The location to create this SOMA collection at.
+        :param platform_config: Optional call-specific options to use when
+            creating this collection. (Currently unused.)
+        :param context: If provided, the ``SOMATileDBContext`` to use when creating and
+            opening this collection.
+        """
         context = context or SOMATileDBContext()
         tiledb.group_create(uri=uri, ctx=context.tiledb_ctx)
         handle = cls._wrapper_type.open(uri, "w", context)
@@ -88,17 +99,19 @@ class CollectionBase(
     # Subclass protocol to constrain which SOMA objects types  may be set on a
     # particular collection key. Used by Experiment and Measurement.
     _subclass_constrained_soma_types: ClassVar[Dict[str, Tuple[str, ...]]] = {}
+    """A map limiting what types may be set to certain keys.
+
+    Map keys are the key of the collection to constrain; values are the SOMA
+    type names of the types that may be set to the key.  See ``Experiment`` and
+    ``Measurement`` for details.
+    """
 
     def __init__(
         self,
         handle: tdb_handles.GroupWrapper,
-        *,
-        _dont_call_this_use_create_or_open_instead: str = "",
+        **kwargs: Any,
     ):
-        super().__init__(
-            handle,
-            _dont_call_this_use_create_or_open_instead=_dont_call_this_use_create_or_open_instead,
-        )
+        super().__init__(handle, **kwargs)
         self._contents = {
             key: _CachedElement(entry) for key, entry in handle.initial_contents.items()
         }
@@ -146,6 +159,22 @@ class CollectionBase(
         uri: Optional[str] = None,
         platform_config: Optional[options.PlatformConfig] = None,
     ) -> "AnyTileDBCollection":
+        """Adds a new sub-collection to this collection.
+
+        :param key: The key to add.
+        :param cls: Optionally, the specific type of sub-collection to create.
+            For instance, passing ``tiledbsoma.Experiment`` here will create a
+            ``SOMAExperiment`` as the sub-entry. By default, a basic
+            ``Collection`` will be created.
+        :param uri: If provided, the sub-collection will be created at this URI.
+            This can be absolute, in which case the sub-collection will be
+            linked to by absolute URI in the stored collection, or relative,
+            in which case the sub-collection will be linked to by relative URI.
+            The default is to use a relative URI generated based on the key.
+        :param platform_config: Platform configuration options to use when
+            creating this sub-collection. This is passed directly to
+            ``[CurrentCollectionType].create()``.
+        """
         child_cls: Type[AnyTileDBCollection] = (
             cls or Collection  # type: ignore[assignment]
         )
@@ -167,6 +196,12 @@ class CollectionBase(
         index_column_names: Sequence[str] = (SOMA_JOINID,),
         platform_config: Optional[options.PlatformConfig] = None,
     ) -> DataFrame:
+        """Adds a new DataFrame to this collection.
+
+        For details about the behavior of ``key`` and ``uri``, see
+        :meth:`add_new_collection`. The remaining parameters are passed to
+        :meth:`DataFrame.create` unchanged.
+        """
         return self._add_new_element(
             key,
             DataFrame,
@@ -190,6 +225,13 @@ class CollectionBase(
         shape: Sequence[int],
         platform_config: Optional[options.PlatformConfig] = None,
     ) -> _NDArr:
+        """Adds a new ND Array to this Collection.
+
+        For details about the behavior of ``key`` and ``uri``, see
+        :meth:`add_new_collection`. The remaining parameters are passed to
+        the NDArray type's ``create`` method unchanged.
+        """
+        # cls is normally provided by the partial functions below.
         return self._add_new_element(
             key,
             cls,
@@ -294,11 +336,14 @@ class CollectionBase(
         *,
         use_relative_uri: Optional[bool] = None,
     ) -> None:
-        """
-        Adds an element to the collection.  This interface allows explicit control over
-        `relative` URI, and uses the member's default name.
+        """Adds an element to the collection. [lifecycle: experimental]
 
-        [lifecycle: experimental]
+        :param key: The key of the element to be added.
+        :param value: The value to be added to this collection.
+        :param use_relative_uri: By default (None), the collection will
+            determine whether the element should be stored by relative URI.
+            If True, the collection will store the child by absolute URI.
+            If False, the collection will store the child by relative URI.
         """
         uri_to_add = value.uri
         # The SOMA API supports use_relative_uri in [True, False, None].

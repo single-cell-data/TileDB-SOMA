@@ -31,18 +31,21 @@ class NDArray(TileDBArray, somacore.NDArray):
         context: Optional[SOMATileDBContext] = None,
     ) -> Self:
         """
-        Create a SOMA ``NDArray`` named with the URI.
+        Create a SOMA ``NDArray`` at the given URI.
 
         [lifecycle: experimental]
 
-        :param type: an Arrow type defining the type of each element in the array. If the type is unsupported, an error will be raised.
+        :param type: The Arrow type to be stored in the NDArray.
+            If the type is unsupported, an error will be raised.
 
-        :param shape: the length of each domain as a list, e.g., [100, 10]. All lengths must be in the positive int64 range.
+        :param shape: the length of each dimension as a sequence, e.g., ``[100, 10]``.
+            All lengths must be in the positive int64 range.
 
-        :param platform_config: Platform-specific options used to create this Array, provided via "tiledb"->"create" nested keys
+        :param platform_config: Platform-specific options used to create this Array,
+            provided via ``{"tiledb": {"create": ...}}`` nested keys.
         """
         context = context or SOMATileDBContext()
-        schema = build_tiledb_schema(
+        schema = _build_tiledb_schema(
             type,
             shape,
             TileDBCreateOptions.from_platform_config(platform_config),
@@ -71,7 +74,7 @@ class NDArray(TileDBArray, somacore.NDArray):
         raise NotImplementedError("reshape operation not implemented.")
 
 
-def build_tiledb_schema(
+def _build_tiledb_schema(
     type: pa.DataType,
     shape: Sequence[int],
     create_options: TileDBCreateOptions,

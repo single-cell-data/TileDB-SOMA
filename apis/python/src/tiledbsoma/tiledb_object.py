@@ -21,9 +21,10 @@ Covariant because ``_handle`` is read-only.
 
 class TileDBObject(somacore.SOMAObject, Generic[_WrapperType_co]):
     """
-    Base class for ``TileDBArray`` and ``Collection``.
+    Base class for all TileDB SOMA objects.
 
-    Accepts a SOMATileDBContext, to enable session state to be shared across SOMA objects.
+    Accepts a SOMATileDBContext, to enable session state to be shared
+    across SOMA objects.
 
     [lifecycle: experimental]
     """
@@ -39,7 +40,13 @@ class TileDBObject(somacore.SOMAObject, Generic[_WrapperType_co]):
         context: Optional[SOMATileDBContext] = None,
         platform_config: Optional[options.PlatformConfig] = None,
     ) -> Self:
-        """Opens this specific type of SOMA object."""
+        """Opens this specific type of SOMA object.
+
+        :param uri: The URI to open.
+        :param mode: The mode to open the object in.
+            ``r``: Open for reading only (cannot write).
+            ``w``: Open for writing only (cannot read).
+        """
         del platform_config  # unused
         context = context or SOMATileDBContext()
         handle = cls._wrapper_type.open(uri, mode, context)
@@ -109,8 +116,8 @@ class TileDBObject(somacore.SOMAObject, Generic[_WrapperType_co]):
 
     def close(self) -> None:
         """
-        Release any resources held while the object is open. Closing an already-closed object is a
-        no-op.
+        Release any resources held while the object is open.
+        Closing an already-closed object is a no-op.
         """
         self._close_stack.close()
         self._closed = True
@@ -122,13 +129,12 @@ class TileDBObject(somacore.SOMAObject, Generic[_WrapperType_co]):
 
     @property
     def mode(self) -> options.OpenMode:
-        """
-        Current open mode: read (r), write (w), or closed (None).
-        """
+        """The mode this object was opened in, either ``r`` or ``w``."""
         return self._handle.mode
 
     @classmethod
     def exists(cls, uri: str, context: Optional[SOMATileDBContext] = None) -> bool:
+        """Finds whether an object of this type exists at the given URI."""
         context = context or SOMATileDBContext()
         try:
             with cls._wrapper_type.open(uri, "r", context) as hdl:
