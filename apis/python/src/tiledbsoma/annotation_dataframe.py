@@ -459,6 +459,7 @@ class AnnotationDataFrame(TileDBArray):
             mode=from_pandas_mode,
         )
 
+        self._consolidate_and_vacuum_fragment_metadata()
         self._set_object_type_metadata()
 
         log_io(

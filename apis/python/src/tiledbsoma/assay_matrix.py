@@ -222,8 +222,6 @@ class AssayMatrix(TileDBArray):
         else:
             self._create_empty_array(matrix_dtype=matrix.dtype)
 
-        self._set_object_type_metadata()
-
         if ingest_mode != "schema_only":
             if not self._soma_options.write_X_chunked:
                 self._ingest_data_whole(matrix, row_names, col_names, ingest_mode)
@@ -239,6 +237,9 @@ class AssayMatrix(TileDBArray):
                 self._ingest_data_dense_rows_chunked(
                     matrix, row_names, col_names, ingest_mode
                 )
+
+        self._consolidate_and_vacuum_fragment_metadata()
+        self._set_object_type_metadata()
 
         log_io(
             f"Wrote {self.nested_name}",
