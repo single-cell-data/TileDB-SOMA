@@ -1,3 +1,20 @@
+#' SOMA Experiment Axis Query
+#' @description  Axis-based query against a [`SOMAExperiment]`. [lifecycle: experimental]
+#'
+#' `SOMAExperimentAxisQuery` allows easy selection and extraction of data from a
+#' single [`SOMAMeasurement`] in a [`SOMAExperiment`], by `obs`/`var` (axis)
+#' coordinates and/or value filter.
+#'
+#' The primary use for this class is slicing [`SOMAExperiment`] `X` layers by
+#' `obs` or `var` value and/or coordinates. Slicing on [`SOMASparseNDArray`] `X`
+#' matrices is supported; [`SOMADenseNDArray`] is not supported at this time.
+#'
+#' ## Important Notes
+#' `SOMAExperimentAxisQuery` query class assumes it can store the full result of
+#' both axis dataframe queries in memory, and only provides incremental access
+#' to the underlying X NDArray. Accessors such as `n_obs` and `n_vars` codify
+#' this in the class.
+#'
 #' @importFrom arrow concat_arrays
 ExperimentAxisQuery <- R6::R6Class(
   classname = "ExperimentAxisQuery",
