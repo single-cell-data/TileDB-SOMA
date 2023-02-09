@@ -14,7 +14,7 @@ test_that("ConfigList mechanics", {
   expect_no_condition(cfg$set('op2', value = map))
   expect_length(cfg, 2L)
   expect_equal(cfg$keys(), c('op1', 'op2'))
-  expect_s3_class(map2 <- cfg$get('op1'), 'ScalarMap')
+  expect_s3_class(map2 <- cfg$get('op2'), 'ScalarMap')
   expect_length(map2, 2L)
   # Check `set` errors
   expect_error(cfg$set(c('op1', 'op2'), 'a', 1L))
