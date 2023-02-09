@@ -148,6 +148,13 @@ test_that("querying by both coordinates and value filters", {
     collapse = "||"
   )
 
+  experiment <- create_and_populate_experiment(
+    uri = uri,
+    n_obs = n_obs,
+    n_var = n_var,
+    X_layer_names = c("counts", "logcounts")
+  )
+
   # obs slice / var value filter
   query <- ExperimentAxisQuery$new(
     experiment = experiment,
