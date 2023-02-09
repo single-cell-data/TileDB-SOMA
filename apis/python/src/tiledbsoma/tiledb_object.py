@@ -29,7 +29,7 @@ class TileDBObject(somacore.SOMAObject, Generic[_WrapperType_co]):
     [lifecycle: experimental]
     """
 
-    __slots__ = ("_close_stack", "_handle", "_closed")
+    __slots__ = ("_close_stack", "_handle")
 
     @classmethod
     def open(
@@ -87,7 +87,6 @@ class TileDBObject(somacore.SOMAObject, Generic[_WrapperType_co]):
             )
         self._handle = handle
         self._close_stack.enter_context(self._handle)
-        self._closed = False
 
     _wrapper_type: Type[_WrapperType_co]
     """Class variable of the Wrapper class used to open this object type."""
@@ -120,12 +119,11 @@ class TileDBObject(somacore.SOMAObject, Generic[_WrapperType_co]):
         Closing an already-closed object is a no-op.
         """
         self._close_stack.close()
-        self._closed = True
 
     @property
     def closed(self) -> bool:
         """True if the object has been closed. False if it is still open."""
-        return self._closed
+        return self._handle.closed
 
     @property
     def mode(self) -> options.OpenMode:

@@ -154,13 +154,13 @@ class DataFrame(TileDBArray, somacore.DataFrame):
         self._check_open_read()
         result_order = options.ResultOrder(result_order)
 
-        arr = self._handle.reader
+        schema = self._handle.schema
         query_condition = None
         if value_filter is not None:
             query_condition = QueryCondition(value_filter)
 
         sr = self._soma_reader(
-            schema=arr.schema,  # query_condition needs this
+            schema=schema,  # query_condition needs this
             column_names=column_names,
             query_condition=query_condition,
             result_order=result_order.value,
@@ -171,15 +171,15 @@ class DataFrame(TileDBArray, somacore.DataFrame):
                 raise TypeError(
                     f"coords type {type(coords)} unsupported; expected list or tuple"
                 )
-            if len(coords) < 1 or len(coords) > arr.schema.domain.ndim:
+            if len(coords) < 1 or len(coords) > schema.domain.ndim:
                 raise ValueError(
-                    f"coords {coords} must have length between 1 and ndim ({arr.schema.domain.ndim}); got {len(coords)}"
+                    f"coords {coords} must have length between 1 and ndim ({schema.domain.ndim}); got {len(coords)}"
                 )
 
             for i, dim_coords in enumerate(coords):
                 # Example: coords = [None, 3, slice(4,5)]
                 # dim_coords takes on values None, 3, and slice(4,5) in this loop body.
-                dim_name = arr.schema.domain.dim(i).name
+                dim_name = schema.domain.dim(i).name
                 if dim_coords is None:
                     pass  # No constraint; select all in this dimension
                 elif isinstance(dim_coords, (int, str, bytes)):
@@ -191,7 +191,8 @@ class DataFrame(TileDBArray, somacore.DataFrame):
                         )
                     sr.set_dim_points(dim_name, dim_coords)
                 elif isinstance(dim_coords, slice):
-                    ned = arr.nonempty_domain()  # None iff the array has no data
+                    ned = self._handle.reader.nonempty_domain()
+                    # ned is None iff the array has no data
                     lo_hi = util.slice_to_range(dim_coords, ned[i]) if ned else None
                     if lo_hi is not None:
                         lo, hi = lo_hi

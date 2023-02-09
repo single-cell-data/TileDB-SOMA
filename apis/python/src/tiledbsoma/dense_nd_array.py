@@ -45,10 +45,8 @@ class DenseNDArray(NDArray, somacore.DenseNDArray):
         self._check_open_read()
         result_order = somacore.ResultOrder(result_order)
 
-        arr = self._handle.reader
-        target_shape = dense_indices_to_shape(coords, arr.shape, result_order)
-        schema = arr.schema
-        ned = arr.nonempty_domain()
+        schema = self._handle.schema
+        target_shape = dense_indices_to_shape(coords, schema.shape, result_order)
 
         sr = self._soma_reader(result_order=result_order.value)
 
@@ -69,6 +67,8 @@ class DenseNDArray(NDArray, somacore.DenseNDArray):
                 elif isinstance(coord, int):
                     sr.set_dim_points(dim_name, [coord])
                 elif isinstance(coord, slice):
+                    ned = self._handle.reader.nonempty_domain()
+                    # ned is None iff the array has no data
                     lo_hi = util.slice_to_range(coord, ned[i]) if ned else None
                     if lo_hi is not None:
                         lo, hi = lo_hi
