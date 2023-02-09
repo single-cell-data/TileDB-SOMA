@@ -518,6 +518,12 @@ def make_multiply_indexed_dataframe(tmp_path, index_column_names: List[str]):
         },
         {
             "index_column_names": ["index1"],
+            "coords": [],  # len(ids) != len(index_column_names)
+            "A": [10, 11, 12, 13, 14, 15],
+            "throws": None,
+        },
+        {
+            "index_column_names": ["index1"],
             "coords": [slice(1, 3)],  # Indexing slot is double-ended slice
             "A": [11, 12, 13],
             "throws": None,
@@ -560,13 +566,7 @@ def make_multiply_indexed_dataframe(tmp_path, index_column_names: List[str]):
         },
         {
             "index_column_names": ["index1"],
-            "coords": [],  # len(ids) != len(index_column_names)
-            "A": None,
-            "throws": ValueError,
-        },
-        {
-            "index_column_names": ["index1"],
-            "coords": [(1,), (2,)],  # len(ids) != len(index_column_names)
+            "coords": [(1,), (2,)],  # len(ids) > len(index_column_names)
             "A": None,
             "throws": ValueError,
         },

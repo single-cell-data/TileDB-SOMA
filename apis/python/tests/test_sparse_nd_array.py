@@ -483,6 +483,15 @@ def test_csr_csc_2d_read(tmp_path, shape):
             },
             "throws": None,
         },
+        # Coords is empty
+        {
+            "shape": (4,),
+            "coords": (),
+            "dims": {
+                "soma_dim_0": [0, 1, 2, 3],
+            },
+            "throws": None,
+        },
         # Coords has None in a slot
         {
             "shape": (4,),
@@ -644,6 +653,41 @@ def test_csr_csc_2d_read(tmp_path, shape):
         {
             "shape": (3, 4),
             "coords": (slice(None), slice(None)),
+            "dims": {
+                "soma_dim_0": [
+                    0,
+                    0,
+                    0,
+                    0,
+                    1,
+                    1,
+                    1,
+                    1,
+                    2,
+                    2,
+                    2,
+                    2,
+                ],
+                "soma_dim_1": [
+                    0,
+                    1,
+                    2,
+                    3,
+                    0,
+                    1,
+                    2,
+                    3,
+                    0,
+                    1,
+                    2,
+                    3,
+                ],
+            },
+            "throws": None,
+        },
+        {
+            "shape": (3, 4),
+            "coords": [],
             "dims": {
                 "soma_dim_0": [
                     0,
@@ -844,9 +888,7 @@ def test_sparse_nd_array_error_corners(tmp_path):
         ((slice(-10, 2),)),  # negative start
         ((slice(-10, -2),)),  # negative start & stop
         ((slice(10, -2),)),  # negative stop
-        (()),  # empty, wrong ndim
-        ([]),  # empty, wrong ndim
-        ((slice(None), slice(None))),  # wrong ndim
+        ((slice(None), slice(None))),  # too many dims
     ],
 )
 def test_bad_coords(tmp_path, bad_coords):
