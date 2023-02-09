@@ -87,6 +87,9 @@ MappingBase <- R6::R6Class(
       #   # self$.__enclos_env__$.__active__[[key]] <- f
       # }
       private$.data <- Filter(f = length, x = private$.data)
+      if (!self$length()) {
+        private$.data <- unname(obj = private$.data)
+      }
       # self <- self$clone(deep = TRUE)
       return(invisible(x = self))
     },
@@ -156,4 +159,18 @@ MappingBase <- R6::R6Class(
   stopifnot(is.character(x = i), length(x = i) == 1L)
   x$set(key = i, value = value)
   return(x)
+}
+
+#' @method length MappingBase
+#' @export
+#'
+length.MappingBase <- function(x) {
+  return(x$length())
+}
+
+#' @method names MappingBase
+#' @export
+#'
+names.MappingBase <- function(x) {
+  return(x$keys())
 }

@@ -16,11 +16,20 @@ ScalarMap <- R6::R6Class(
     #' @return ...
     set = function(key, value) {
       stopifnot(is.null(x = value) || length(x = value) == 1L)
-      if (private$.type != 'any') {
-        stopifnot(inherits(x = value, what = private$.type))
+      if (!is.null(x = value) && self$type != 'any') {
+        stopifnot(inherits(x = value, what = self$type))
       }
       super$set(key = key, value = value)
       return(invisible(x = self))
+    }
+  ),
+  active = list(
+    #' @field type ...
+    type = function(value) {
+      if (!missing(x = value)) {
+        stop("The map type cannot be changed", call. = FALSE)
+      }
+      return(private$.type)
     }
   ),
   private = list(

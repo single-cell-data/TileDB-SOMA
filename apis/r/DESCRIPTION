@@ -67,7 +67,6 @@ Collate:
     'SOMAArrayBase.R'
     'SOMACollection.R'
     'SOMACollectionBase.R'
-    'ScalarList.R'
     'SOMAContextBase.R'
     'SOMADataFrame.R'
     'SOMADenseNdArray.R'

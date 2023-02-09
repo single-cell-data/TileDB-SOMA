@@ -23,6 +23,9 @@ ConfigList <- R6::R6Class(
       opmap$set(key = key, value = value)
       super$set(key = op, value = opmap)
       return(invisible(x = self))
+    },
+    setv = function(...) {
+      .NotYetImplemented()
     }
     # add_map = function(key, value) {
     #   stopifnot(
@@ -43,75 +46,4 @@ ConfigList <- R6::R6Class(
     #   return(invisible(x = self))
     # }
   )
-)
-
-setClass(Class = 'ConfigListS4', contains = 'list')
-
-#' @method [ ConfigListS4
-#' @export
-#'
-'[.ConfigListS4' <- function(x, i, ...) {
-  .NotYetImplemented()
-}
-
-#' @method [[ ConfigListS4
-#' @export
-#'
-'[[.ConfigListS4' <- function(x, i, ...) {
-  .NotYetImplemented()
-}
-
-setAs(
-  from = 'list',
-  to = 'ConfigListS4',
-  def = function(from) {
-    stopifnot(!is.object(x = from))
-  }
-)
-
-setMethod(
-  f = '[[<-',
-  signature = c(
-    x = 'ConfigListS4',
-    i = 'character',
-    j = 'missing',
-    value = 'ANY'
-  ),
-  definition = function(x, i, ..., value) {
-    .NotYetImplemented()
-  }
-)
-
-setMethod(
-  f = '[[<-',
-  signature = c(
-    x = 'ConfigListS4',
-    i = 'character',
-    j = 'missing',
-    value = 'data.frame'
-  ),
-  definition = function(x, i, ..., value) {
-    .NotYetImplemented()
-  }
-)
-
-setMethod(
-  f = '[[<-',
-  signature = c(
-    x = 'ConfigListS4',
-    i = 'character',
-    j = 'missing',
-    value = 'list'
-  ),
-  definition = function(x, i, ..., value) {
-    .NotYetImplemented()
-  }
-)
-
-setValidity(
-  Class = 'ConfigListS4',
-  method = function(object) {
-    valid <- NULL
-    return(valid %||% TRUE)
-  }
 )

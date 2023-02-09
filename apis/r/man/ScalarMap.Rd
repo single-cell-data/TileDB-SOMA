@@ -11,6 +11,13 @@ A Mapping Type for Scalars
 \section{Super class}{
 \code{tiledbsoma::MappingBase} -> \code{ScalarMap}
 }
+\section{Active bindings}{
+\if{html}{\out{<div class="r6-active-bindings">}}
+\describe{
+\item{\code{type}}{...}
+}
+\if{html}{\out{</div>}}
+}
 \section{Methods}{
 \subsection{Public methods}{
 \itemize{
