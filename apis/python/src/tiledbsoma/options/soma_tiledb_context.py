@@ -3,6 +3,7 @@ from typing import Any, Dict, Optional, Union
 
 import attrs
 import tiledb
+from typing_extensions import Self
 
 
 def _build_default_tiledb_ctx() -> tiledb.Ctx:
@@ -96,3 +97,29 @@ class SOMATileDBContext:
         else:
             object.__setattr__(self, "_group_write_tiledb_ctx", self.tiledb_ctx)
         assert isinstance(self._group_write_tiledb_ctx, tiledb.Ctx)
+
+    def replace(
+        self, *, tiledb_config: Optional[Dict[str, Any]] = None, **changes: Any
+    ) -> Self:
+        """
+        Create a copy of the context, merging changes.
+
+        Parameters
+        ----------
+        tiledb_config - Dict[str, Any]
+            a dictionary of parameters for tiledb.Config()
+
+        changes - Any
+            Any other parameters will be passed to the class __init__.
+
+        Examples
+        --------
+        >>> context.replace(read_timestamp=0)
+
+        >>> context.replace(tiledb_config={"vfs.s3.region": "us-east-2"})
+        """
+        if tiledb_config:
+            new_config = self.tiledb_ctx.config()
+            new_config.update(tiledb_config)
+            changes["tiledb_ctx"] = tiledb.Ctx(config=new_config)
+        return attrs.evolve(self, **changes)
