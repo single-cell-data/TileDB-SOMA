@@ -16,17 +16,15 @@
 #' this in the class.
 #'
 #' @importFrom arrow concat_arrays
+#' @export
 ExperimentAxisQuery <- R6::R6Class(
   classname = "ExperimentAxisQuery",
+
   public = list(
-
-    experiment = NULL,
-    measurement_name = NULL,
-    matrix_axis_query = NULL,
-    joinids = NULL,
-    indexer = NULL,
-    threadpool = NULL,
-
+    #' @description Create a new `SOMAExperimentAxisQuery` object.
+    #' @param experiment A [`SOMAExperiment`] object.
+    #' @param measurement_name The name of the measurement to query.
+    #' @param obs_query,var_query An [`AxisQuery`] object for the obs/var axis.
     initialize = function(
       experiment,
       measurement_name,
@@ -46,21 +44,18 @@ ExperimentAxisQuery <- R6::R6Class(
         is.null(var_query) || inherits(var_query, "AxisQuery")
       )
 
-      self$experiment <- experiment
-      self$measurement_name <- measurement_name
-      self$matrix_axis_query <- list(
-        obs = obs_query %||% AxisQuery$new(),
-        var = var_query %||% AxisQuery$new()
-      )
-      self$joinids <- JoinIDCache$new(self)
-      self$indexer <- AxisIndexer$new(self)
-      self$threadpool <- NULL
+      private$.experiment <- experiment
+      private$.measurement_name <- measurement_name
+      private$.obs_query <- obs_query %||% AxisQuery$new()
+      private$.var_query <- var_query %||% AxisQuery$new()
+      private$.joinids <- JoinIDCache$new(self)
+      private$.indexer <- AxisIndexer$new(self)
     },
 
     #' @description Retrieve obs [`arrow::Table`]
     #' @param column_names A character vector of column names to retrieve
     obs = function(column_names = NULL) {
-      obs_query <- self$matrix_axis_query$obs
+      obs_query <- self$obs_query
       self$obs_df$read(
         coords = obs_query$coords,
         value_filter = obs_query$value_filter,
@@ -71,7 +66,7 @@ ExperimentAxisQuery <- R6::R6Class(
     #' @description Retrieve var [`arrow::Table`]
     #' @param column_names A character vector of column names to retrieve
     var = function(column_names = NULL) {
-      var_query <- self$matrix_axis_query$var
+      var_query <- self$var_query
       self$var_df$read(
         coords = var_query$coords,
         value_filter = var_query$value_filter,
@@ -81,12 +76,12 @@ ExperimentAxisQuery <- R6::R6Class(
 
     #' @description Retrieve obs `soma_joinids`` as an [`arrow::Array`]
     obs_joinids = function() {
-      arrow::concat_arrays(self$joinids$obs())
+      arrow::concat_arrays(private$.joinids$obs())
     },
 
     #' @description Retrieve obs `soma_joinids`` as an [`arrow::Array`]
     var_joinids = function() {
-      arrow::concat_arrays(self$joinids$var())
+      arrow::concat_arrays(private$.joinids$var())
     },
 
     #' @description Retrieves an `X` layer as an [`arrow::Table`].
@@ -167,35 +162,71 @@ ExperimentAxisQuery <- R6::R6Class(
   ),
 
   active = list(
-    #' @field The number of `obs` axis query results.
-    n_obs = function() {
+
+    #' @field experiment The parent [`SOMAExperiment`] object.
+    experiment = function(value) {
+      if (!missing(value)) read_only_error("experiment")
+      private$.experiment
+    },
+
+    #' @field indexer The [`SOMAIndexer`] object.
+    indexer = function(value) {
+      if (!missing(value)) read_only_error("indexer")
+      private$.indexer
+    },
+
+    #' @field obs_query The `obs` [`AxisQuery`] object.
+    obs_query = function(value) {
+      if (!missing(value)) read_only_error("obs_query")
+      private$.obs_query
+    },
+
+    #' @field var_query The `var` [`AxisQuery`] object.
+    var_query = function(value) {
+      if (!missing(value)) read_only_error("var_query")
+      private$.var_query
+    },
+
+    #' @field n_obs The number of `obs` axis query results.
+    n_obs = function(value) {
+      if (!missing(value)) read_only_error("n_obs")
       length(self$obs_joinids())
     },
 
-    #' @field The number of `var` axis query results.
-    n_vars = function() {
+    #' @field n_vars The number of `var` axis query results.
+    n_vars = function(value) {
+      if (!missing(value)) read_only_error("n_vars")
       length(self$var_joinids())
     },
 
-    #' @field The `obs` [`SOMADataFrame`] object.
+    #' @field obs_df The `obs` [`SOMADataFrame`] object.
     obs_df = function(value) {
       if (!missing(value)) read_only_error("obs_df")
       self$experiment$obs
     },
 
-    #' @field The `var` [`SOMADataFrame`] object for the specified
+    #' @field var_df The `var` [`SOMADataFrame`] object for the specified
     #' `measurement_name`.
     var_df = function(value) {
       if (!missing(value)) read_only_error("var_df")
       self$ms$var
     },
 
-    #' @field The [`SOMAMeasurement`] object for the specified
+    #' @field ms The [`SOMAMeasurement`] object for the specified
     #' `measurement_name`.
     ms = function(value) {
       if (!missing(value)) read_only_error("ms")
-      self$experiment$ms$get(self$measurement_name)
+      self$experiment$ms$get(private$.measurement_name)
     }
+  ),
+
+  private = list(
+    .experiment = NULL,
+    .measurement_name = NULL,
+    .obs_query = NULL,
+    .var_query = NULL,
+    .joinids = NULL,
+    .indexer = NULL
   )
 )
 
@@ -233,7 +264,7 @@ JoinIDCache <- R6::R6Class(
         spdl::info("[JoinIDCache] Loading obs joinids")
         private$cached_obs <- private$load_joinids(
           df = self$query$obs_df,
-          axis_query = self$query$matrix_axis_query$obs
+          axis_query = self$query$obs_query
         )
       }
       private$cached_obs
@@ -248,7 +279,7 @@ JoinIDCache <- R6::R6Class(
         spdl::info("[JoinIDCache] Loading var joinids")
         private$cached_var <- private$load_joinids(
           df = self$query$var_df,
-          axis_query = self$query$matrix_axis_query$var
+          axis_query = self$query$var_query
         )
       }
       private$cached_var
