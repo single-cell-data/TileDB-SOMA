@@ -28,4 +28,9 @@ test_that("AxisQuery", {
     AxisQuery$new(coords = list(1L:2L)),
     "'coords' must be a named list"
   )
+
+  expect_error(
+    AxisQuery$new(coords = list(foo = letters)),
+    "'coords' must be a list of numeric vectors"
+  )
 })

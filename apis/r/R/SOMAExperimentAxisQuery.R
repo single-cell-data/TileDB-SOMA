@@ -23,14 +23,17 @@ AxisQuery <- R6Class(
 )
 
 #' Validate read coordinates
-#' Ensures that coords is a named list
+#' Ensures that coords is a named list of numeric vectors and, optionally, that
+#' the names of the list correspond to the dimension names of the array.
 #' @param coords A list of coordinates
 #' @param dimnames vector of array dimension names
 #' @noRd
 validate_read_coords <- function(coords, dimnames = NULL) {
   stopifnot(
     "'coords' must be a named list" =
-        is.null(coords) || is_named_list(coords)
+      is.null(coords) || is_named_list(coords),
+    "'coords' must be a list of numeric vectors" =
+      all(vapply_lgl(coords, is.numeric))
   )
 
   if (!is.null(dimnames)) {
