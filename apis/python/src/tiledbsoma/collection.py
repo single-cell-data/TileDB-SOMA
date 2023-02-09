@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import functools
 import re
 import time
 from typing import (
@@ -11,7 +10,6 @@ from typing import (
     Iterator,
     List,
     Optional,
-    Sequence,
     Tuple,
     Type,
     TypeVar,
@@ -20,16 +18,14 @@ from typing import (
 )
 
 import attrs
-import pyarrow as pa
 import somacore
 import somacore.collection
 import tiledb
 from somacore import options
 from typing_extensions import Self
 
-from . import tdb_handles
+from . import funcs, tdb_handles
 from .common_nd_array import NDArray
-from .constants import SOMA_JOINID
 from .dataframe import DataFrame
 from .dense_nd_array import DenseNDArray
 from .exception import is_does_not_exist_error, is_duplicate_group_key_error
@@ -187,14 +183,9 @@ class CollectionBase(
             uri,
         )
 
+    @funcs.forwards_kwargs_to(DataFrame.create, exclude=("context",))
     def add_new_dataframe(
-        self,
-        key: str,
-        *,
-        uri: Optional[str] = None,
-        schema: pa.Schema,
-        index_column_names: Sequence[str] = (SOMA_JOINID,),
-        platform_config: Optional[options.PlatformConfig] = None,
+        self, key: str, *, uri: Optional[str] = None, **kwargs: Any
     ) -> DataFrame:
         """Adds a new DataFrame to this collection.
 
@@ -207,64 +198,47 @@ class CollectionBase(
             DataFrame,
             lambda create_uri: DataFrame.create(
                 create_uri,
-                index_column_names=index_column_names,
-                schema=schema,
-                platform_config=platform_config,
                 context=self.context,
+                **kwargs,
             ),
             uri,
         )
 
+    @funcs.forwards_kwargs_to(NDArray.create, exclude=("context",))
     def _add_new_ndarray(
-        self,
-        cls: Type[_NDArr],
-        key: str,
-        *,
-        uri: Optional[str] = None,
-        type: pa.DataType,
-        shape: Sequence[int],
-        platform_config: Optional[options.PlatformConfig] = None,
+        self, cls: Type[_NDArr], key: str, *, uri: Optional[str] = None, **kwargs: Any
     ) -> _NDArr:
-        """Adds a new ND Array to this Collection.
-
-        For details about the behavior of ``key`` and ``uri``, see
-        :meth:`add_new_collection`. The remaining parameters are passed to
-        the NDArray type's ``create`` method unchanged.
-        """
-        # cls is normally provided by the partial functions below.
+        """Internal implementation of common NDArray-adding operations."""
         return self._add_new_element(
             key,
             cls,
             lambda create_uri: cls.create(
                 create_uri,
-                type=type,
-                shape=shape,
-                platform_config=platform_config,
                 context=self.context,
+                **kwargs,
             ),
             uri,
         )
 
-    # These user-facing functions forward all parameters directly to
-    # self._add_new_ndarray, with the specific class type substituted in the
-    # first parameter, but without having to duplicate the entire arg list.
-    # (mypy doesn't yet understand that these are of the correct type.)
-    add_new_dense_ndarray = functools.partialmethod(  # type: ignore[assignment]
-        _add_new_ndarray, DenseNDArray
-    )
-    """Creates a new dense NDArray as a child of this collection.
+    @funcs.forwards_kwargs_to(_add_new_ndarray, exclude=("cls",))
+    def add_new_dense_ndarray(self, key: str, **kwargs: Any) -> DenseNDArray:
+        """Adds a new DenseNDArray to this Collection.
 
-    Parameters are as in :meth:`DenseNDArray.create`.
-    See :meth:`add_new_collection` for details about child creation.
-    """
-    add_new_sparse_ndarray = functools.partialmethod(  # type: ignore[assignment]
-        _add_new_ndarray, SparseNDArray
-    )
-    """Creates a new sparse NDArray as a child of this collection.
+        For details about the behavior of ``key`` and ``uri``, see
+        :meth:`add_new_collection`. The remaining parameters are passed to
+        the :meth:`DenseNDArray.create` method unchanged.
+        """
+        return self._add_new_ndarray(DenseNDArray, key, **kwargs)
 
-    Parameters are as in :meth:`SparseNDArray.create`.
-    See :meth:`add_new_collection` for details about child creation.
-    """
+    @funcs.forwards_kwargs_to(_add_new_ndarray, exclude=("cls",))
+    def add_new_sparse_ndarray(self, key: str, **kwargs: Any) -> SparseNDArray:
+        """Adds a new SparseNDArray to this Collection.
+
+        For details about the behavior of ``key`` and ``uri``, see
+        :meth:`add_new_collection`. The remaining parameters are passed to
+        the :meth:`SparseNDArray.create` method unchanged.
+        """
+        return self._add_new_ndarray(SparseNDArray, key, **kwargs)
 
     def _add_new_element(
         self,
