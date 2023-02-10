@@ -1,7 +1,6 @@
 #' TileDB Array Base Class
 #'
-#' @description
-#' Base class for representing an individual TileDB array.
+#' @description Base class for representing an individual TileDB array.
 #'
 #' @details
 #' ## Initialization
