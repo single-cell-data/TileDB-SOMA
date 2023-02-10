@@ -1,6 +1,6 @@
 #' SOMA Array Base Class
 #'
-#' Adds SOMA-specific functionality to the [`TileDBArray`] class.  [lifecycle: experimental]
+#' Adds SOMA-specific functionality to the [`TileDBArray`] class.  (lifecycle: experimental)
 
 SOMAArrayBase <- R6::R6Class(
   classname = "SOMAArrayBase",

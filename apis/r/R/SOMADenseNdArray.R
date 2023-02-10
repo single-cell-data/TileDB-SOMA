@@ -15,7 +15,7 @@
 #' more dimensions.
 #'
 #' The default "fill" value for `SOMADenseNDArray` is the zero or null value of
-#' the array type (e.g., Arrow.float32 defaults to 0.0).  [lifecycle: experimental]
+#' the array type (e.g., Arrow.float32 defaults to 0.0).  (lifecycle: experimental)
 #' @export
 
 SOMADenseNDArray <- R6::R6Class(
@@ -24,7 +24,7 @@ SOMADenseNDArray <- R6::R6Class(
 
   public = list(
 
-    #' @description Create a SOMADenseNDArray named with the URI. [lifecycle: experimental]
+    #' @description Create a SOMADenseNDArray named with the URI. (lifecycle: experimental)
     #' @param type an [Arrow type][arrow::data-type] defining the type of each
     #' element in the array.
     #' @param shape a vector of integers defining the shape of the array.
@@ -80,7 +80,7 @@ SOMADenseNDArray <- R6::R6Class(
       private$write_object_type_metadata()
     },
 
-    #' @description Read as an 'arrow::Table' [lifecycle: experimental]
+    #' @description Read as an 'arrow::Table' (lifecycle: experimental)
     #' @param coords Optional `list` of integer vectors, one for each dimension, with a
     #' length equal to the number of values to read. If `NULL`, all values are
     #' read. List elements can be named when specifying a subset of dimensions.
@@ -136,7 +136,7 @@ SOMADenseNDArray <- R6::R6Class(
       }
     },
 
-    #' @description Read as a dense matrix [lifecycle: experimental]
+    #' @description Read as a dense matrix (lifecycle: experimental)
     #' @param coords Optional `list` of integer vectors, one for each dimension, with a
     #' length equal to the number of values to read. If `NULL`, all values are
     #' read. List elements can be named when specifying a subset of dimensions.
@@ -178,7 +178,7 @@ SOMADenseNDArray <- R6::R6Class(
       }
     },
 
-    #' @description Write matrix data to the array. [lifecycle: experimental]
+    #' @description Write matrix data to the array. (lifecycle: experimental)
     #'
     #' @param values A `matrix`. Character dimension names are ignored because
     #' `SOMANDArray`'s use integer indexing.

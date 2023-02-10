@@ -3,7 +3,7 @@
 #' @description `SOMAExperiment` is a specialized [`SOMACollection`],
 #' representing one or more modes of measurement across a single collection of
 #' cells (aka a "multimodal dataset") with pre-defined fields: `obs` and `ms`
-#' (see _Active Bindings_ below for details). [lifecycle: experimental]
+#' (see _Active Bindings_ below for details). (lifecycle: experimental)
 #'
 #' @export
 SOMAExperiment <- R6::R6Class(
