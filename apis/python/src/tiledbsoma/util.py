@@ -97,9 +97,9 @@ def slice_to_range(
     """
     For the interface between ``DataFrame::read`` et al. (Python) and ``SOMAReader`` (C++).
     """
-    if ids.step is not None and ids.step != 1:
-        raise ValueError("slice step must be 1 or None")
-    if ids.start is None and ids.stop is None:
+    if ids.step is not None:
+        raise ValueError("slice steps are not supported")
+    if ids == slice(None):
         return None
 
     start = ids.start

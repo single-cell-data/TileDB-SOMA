@@ -145,7 +145,8 @@ class DataFrame(TileDBArray, somacore.DataFrame):
           then `slice(None)` -- i.e. no constraint -- is assumed for the missing dimensions.
         * Per-dimension, explicitly specified coordinates can be one of: None, a value, a
           list/ndarray/paarray/etc of values, a slice, etc.
-        * Slices are doubly inclusive: slice(2,4) means [2,3,4] not [2,3]. Slice steps can only be +1.
+        * Slices are doubly inclusive: slice(2,4) means [2,3,4] not [2,3].
+          Slice steps are not supported.
           Slices can be `slice(None)`, meaning select all in that dimension, but may not be half-specified:
           `slice(2,None)` and `slice(None,4)` are both unsupported.
         * Negative indexing is unsupported.
