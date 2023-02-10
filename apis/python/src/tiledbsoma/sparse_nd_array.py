@@ -66,7 +66,7 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
         ------------------------
         * None
         * A sequence of coordinates is accepted, one per dimension.
-        * Sequence length must be at least one and <= number of dimensions.
+        * Sequence length must be <= number of dimensions.
         * If the sequence contains missing coordinates (length < number of dimensions),
           then ``slice(None)`` -- i.e. no constraint -- is assumed for the
           remaining dimensions.
@@ -93,9 +93,9 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
             raise TypeError(
                 f"coords type {type(coords)} unsupported; expected list or tuple"
             )
-        if len(coords) < 1 or len(coords) > schema.domain.ndim:
+        if len(coords) > schema.domain.ndim:
             raise ValueError(
-                f"coords {coords} must have length between 1 and ndim ({schema.domain.ndim}); got {len(coords)}"
+                f"coords {coords} must be shorter than ndim ({schema.domain.ndim}); got {len(coords)}"
             )
 
         for i, coord in enumerate(coords):

@@ -55,9 +55,9 @@ class DenseNDArray(NDArray, somacore.DenseNDArray):
                 raise TypeError(
                     f"coords type {type(coords)} unsupported; expected list or tuple"
                 )
-            if len(coords) < 1 or len(coords) > schema.domain.ndim:
+            if len(coords) > schema.domain.ndim:
                 raise ValueError(
-                    f"coords {coords} must have length between 1 and ndim ({schema.domain.ndim}); got {len(coords)}"
+                    f"coords {coords} must be shorter than ndim ({schema.domain.ndim}); got {len(coords)}"
                 )
 
             for i, coord in enumerate(coords):

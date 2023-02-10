@@ -140,7 +140,7 @@ class DataFrame(TileDBArray, somacore.DataFrame):
 
         * None
         * A sequence of coordinates is accepted, one per dimension.
-        * Sequence length must be at least one and <= number of dimensions.
+        * Sequence length must be <= number of dimensions.
         * If the sequence contains missing coordinates (length less than number of dimensions),
           then `slice(None)` -- i.e. no constraint -- is assumed for the missing dimensions.
         * Per-dimension, explicitly specified coordinates can be one of: None, a value, a
@@ -166,12 +166,12 @@ class DataFrame(TileDBArray, somacore.DataFrame):
             result_order=result_order.value,
         )
 
-        if coords is not None:
+        if coords:
             if not isinstance(coords, (list, tuple)):
                 raise TypeError(
                     f"coords type {type(coords)} unsupported; expected list or tuple"
                 )
-            if len(coords) < 1 or len(coords) > schema.domain.ndim:
+            if schema.domain.ndim < len(coords):
                 raise ValueError(
                     f"coords {coords} must have length between 1 and ndim ({schema.domain.ndim}); got {len(coords)}"
                 )

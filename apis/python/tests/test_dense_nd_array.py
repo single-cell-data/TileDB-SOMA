@@ -130,12 +130,27 @@ def test_dense_nd_array_reshape(tmp_path):
             "output": np.array([[200, 201, 202, 203, 204, 205]]),
         },
         {
+            "coords": (2,),
+            "output": np.array([[200, 201, 202, 203, 204, 205]]),
+        },
+        {
             "coords": (slice(None, 2), slice(5, None)),
             "output": np.array([[5], [105], [205]]),
         },
         {
             "coords": (slice(0, 2), slice(5, 5)),
             "output": np.array([[5], [105], [205]]),
+        },
+        {
+            "coords": (),
+            "output": np.array(
+                [
+                    [0, 1, 2, 3, 4, 5],
+                    [100, 101, 102, 103, 104, 105],
+                    [200, 201, 202, 203, 204, 205],
+                    [300, 301, 302, 303, 304, 305],
+                ]
+            ),
         },
         {
             "coords": (slice(None), slice(None)),
