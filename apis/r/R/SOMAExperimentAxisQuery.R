@@ -20,14 +20,15 @@
 #'
 #' @importFrom arrow concat_arrays
 #' @export
-ExperimentAxisQuery <- R6::R6Class(
-  classname = "ExperimentAxisQuery",
+SOMAExperimentAxisQuery <- R6::R6Class(
+  classname = "SOMAExperimentAxisQuery",
 
   public = list(
     #' @description Create a new `SOMAExperimentAxisQuery` object.
     #' @param experiment A [`SOMAExperiment`] object.
     #' @param measurement_name The name of the measurement to query.
-    #' @param obs_query,var_query An [`AxisQuery`] object for the obs/var axis.
+    #' @param obs_query,var_query An [`SOMAAxisQuery`] object for the obs/var
+    #' axis.
     initialize = function(
       experiment,
       measurement_name,
@@ -43,16 +44,16 @@ ExperimentAxisQuery <- R6::R6Class(
           is_scalar_character(measurement_name),
         "Measurement does not exist in the experiment" =
           measurement_name %in% experiment$ms$names(),
-        is.null(obs_query) || inherits(obs_query, "AxisQuery"),
-        is.null(var_query) || inherits(var_query, "AxisQuery")
+        is.null(obs_query) || inherits(obs_query, "SOMAAxisQuery"),
+        is.null(var_query) || inherits(var_query, "SOMAAxisQuery")
       )
 
       private$.experiment <- experiment
       private$.measurement_name <- measurement_name
-      private$.obs_query <- obs_query %||% AxisQuery$new()
-      private$.var_query <- var_query %||% AxisQuery$new()
+      private$.obs_query <- obs_query %||% SOMAAxisQuery$new()
+      private$.var_query <- var_query %||% SOMAAxisQuery$new()
       private$.joinids <- JoinIDCache$new(self)
-      private$.indexer <- AxisIndexer$new(self)
+      private$.indexer <- SOMAAxisIndexer$new(self)
     },
 
     #' @description Retrieve obs [`arrow::Table`]
@@ -159,7 +160,7 @@ ExperimentAxisQuery <- R6::R6Class(
         }
       )
 
-      AxisQueryResult$new(
+      SOMAAxisQueryResult$new(
         obs = obs_ft, var = var_ft, X_layers = x_matrices
       )
     }
@@ -179,13 +180,13 @@ ExperimentAxisQuery <- R6::R6Class(
       private$.indexer
     },
 
-    #' @field obs_query The `obs` [`AxisQuery`] object.
+    #' @field obs_query The `obs` [`SOMAAxisQuery`] object.
     obs_query = function(value) {
       if (!missing(value)) read_only_error("obs_query")
       private$.obs_query
     },
 
-    #' @field var_query The `var` [`AxisQuery`] object.
+    #' @field var_query The `var` [`SOMAAxisQuery`] object.
     var_query = function(value) {
       if (!missing(value)) read_only_error("var_query")
       private$.var_query
@@ -237,11 +238,11 @@ ExperimentAxisQuery <- R6::R6Class(
 JoinIDCache <- R6::R6Class(
   classname = "JoinIDCache",
   public = list(
-    #' @field query The [`ExperimentAxisQuery`] object to build indices for.
+    #' @field query The [`SOMAExperimentAxisQuery`] object to build indices for.
     query = NULL,
 
     initialize = function(query) {
-      stopifnot(inherits(query, "ExperimentAxisQuery"))
+      stopifnot(inherits(query, "SOMAExperimentAxisQuery"))
       self$query <- query
     },
 
@@ -303,7 +304,7 @@ JoinIDCache <- R6::R6Class(
     load_joinids = function(df, axis_query) {
       stopifnot(
         inherits(df, "SOMADataFrame"),
-        inherits(axis_query, "AxisQuery")
+        inherits(axis_query, "SOMAAxisQuery")
       )
       tbl <- df$read(
         coords = axis_query$coords,
@@ -315,12 +316,12 @@ JoinIDCache <- R6::R6Class(
   )
 )
 
-#' @description Return types for [`ExperimentAxisQuery`] `read()` method.
-AxisQueryResult <- R6Class(
-  classname = "AxisQueryResult",
+#' @description Return types for [`SOMAExperimentAxisQuery`] `read()` method.
+SOMAAxisQueryResult <- R6Class(
+  classname = "SOMAAxisQueryResult",
   public = list(
 
-    #' @description Create a new `AxisQueryResult` object.
+    #' @description Create a new `SOMAAxisQueryResult` object.
     #' @param obs,var [`arrow::Table`] containing `obs` or `var` query slice.
     #' @param X_layers named list of [`arrow::Table`]s, one for each `X` layer.
     initialize = function(obs, var, X_layers) {
@@ -372,13 +373,13 @@ AxisQueryResult <- R6Class(
 #' Retrieve the index of the given `obs` or `var` coordinates in the query
 #' result. Coordinates outside of the query result will return
 #' [`arrow::null()`].
-AxisIndexer <- R6::R6Class("AxisIndexer",
+SOMAAxisIndexer <- R6::R6Class("SOMAAxisIndexer",
   public = list(
 
-    #' @description Create a new `AxisIndexer` object.
-    #' @param query The [`ExperimentAxisQuery`] object to build indices for.
+    #' @description Create a new `SOMAAxisIndexer` object.
+    #' @param query The [`SOMAExperimentAxisQuery`] object to build indices for.
     initialize = function(query) {
-      stopifnot(inherits(query, "ExperimentAxisQuery"))
+      stopifnot(inherits(query, "SOMAExperimentAxisQuery"))
       private$.query <- query
     },
 

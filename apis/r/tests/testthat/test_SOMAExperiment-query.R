@@ -10,7 +10,7 @@ test_that("returns all coordinates by default", {
     X_layer_names = c("counts", "logcounts")
   )
 
-  query <- ExperimentAxisQuery$new(
+  query <- SOMAExperimentAxisQuery$new(
     experiment = experiment,
     measurement_name = "RNA"
   )
@@ -59,11 +59,11 @@ test_that("querying by dimension coordinates", {
     X_layer_names = c("counts", "logcounts")
   )
 
-  query <- ExperimentAxisQuery$new(
+  query <- SOMAExperimentAxisQuery$new(
     experiment = experiment,
     measurement_name = "RNA",
-    obs_query = AxisQuery$new(coords = list(soma_joinid = obs_slice)),
-    var_query = AxisQuery$new(coords = list(soma_joinid = var_slice))
+    obs_query = SOMAAxisQuery$new(coords = list(soma_joinid = obs_slice)),
+    var_query = SOMAAxisQuery$new(coords = list(soma_joinid = var_slice))
   )
 
   expect_true(query$n_obs == diff(range(obs_slice)) + 1)
@@ -112,11 +112,11 @@ test_that("querying by value filters", {
     collapse = "||"
   )
 
-  query <- ExperimentAxisQuery$new(
+  query <- SOMAExperimentAxisQuery$new(
     experiment = experiment,
     measurement_name = "RNA",
-    obs_query = AxisQuery$new(value_filter = obs_value_filter),
-    var_query = AxisQuery$new(value_filter = var_value_filter)
+    obs_query = SOMAAxisQuery$new(value_filter = obs_value_filter),
+    var_query = SOMAAxisQuery$new(value_filter = var_value_filter)
   )
 
   expect_true(query$n_obs == length(obs_label_values))
@@ -156,13 +156,13 @@ test_that("querying by both coordinates and value filters", {
   )
 
   # obs slice / var value filter
-  query <- ExperimentAxisQuery$new(
+  query <- SOMAExperimentAxisQuery$new(
     experiment = experiment,
     measurement_name = "RNA",
-    obs_query = AxisQuery$new(
+    obs_query = SOMAAxisQuery$new(
       coords = list(soma_joinid = obs_slice),
     ),
-    var_query = AxisQuery$new(
+    var_query = SOMAAxisQuery$new(
       value_filter = var_value_filter
     )
   )
@@ -171,13 +171,13 @@ test_that("querying by both coordinates and value filters", {
   expect_true(query$n_vars == length(var_label_values))
 
   #  obs value filter / var slice
-  query <- ExperimentAxisQuery$new(
+  query <- SOMAExperimentAxisQuery$new(
     experiment = experiment,
     measurement_name = "RNA",
-    obs_query = AxisQuery$new(
+    obs_query = SOMAAxisQuery$new(
       value_filter = obs_value_filter
     ),
-    var_query = AxisQuery$new(
+    var_query = SOMAAxisQuery$new(
       coords = list(soma_joinid = var_slice)
     )
   )
@@ -186,14 +186,14 @@ test_that("querying by both coordinates and value filters", {
   expect_true(query$n_vars == diff(range(var_slice)) + 1)
 
   # obs/var slice and value filter
-  query <- ExperimentAxisQuery$new(
+  query <- SOMAExperimentAxisQuery$new(
     experiment = experiment,
     measurement_name = "RNA",
-    obs_query = AxisQuery$new(
+    obs_query = SOMAAxisQuery$new(
       coords = list(soma_joinid = obs_slice),
       value_filter = obs_value_filter
     ),
-    var_query = AxisQuery$new(
+    var_query = SOMAAxisQuery$new(
       coords = list(soma_joinid = var_slice),
       value_filter = var_value_filter
     )
@@ -225,13 +225,13 @@ test_that("queries with empty results", {
   )
 
   # obs/var slice and value filter
-  query <- ExperimentAxisQuery$new(
+  query <- SOMAExperimentAxisQuery$new(
     experiment = experiment,
     measurement_name = "RNA",
-    obs_query = AxisQuery$new(
+    obs_query = SOMAAxisQuery$new(
       value_filter = "baz == 'does-not-exist'"
     ),
-    var_query = AxisQuery$new(
+    var_query = SOMAAxisQuery$new(
       value_filter = "quux == 'does-not-exist'"
     )
   )
@@ -252,14 +252,14 @@ test_that("retrieving query results in supported formats", {
     X_layer_names = c("counts", "logcounts")
   )
 
-  query <- ExperimentAxisQuery$new(
+  query <- SOMAExperimentAxisQuery$new(
     experiment = experiment,
     measurement_name = "RNA"
   )
 
-  # Check AxisQueryResult class
+  # Check SOMAAxisQueryResult class
   res <- query$read()
-  expect_true(inherits(res, "AxisQueryResult"))
+  expect_true(inherits(res, "SOMAAxisQueryResult"))
   expect_true(is_arrow_table(res$obs))
   expect_true(is_arrow_table(res$var))
   expect_true(is.list(res$X_layers))
@@ -282,13 +282,13 @@ test_that("query result value indexer", {
     X_layer_names = c("counts", "logcounts")
   )
 
-  query <- ExperimentAxisQuery$new(
+  query <- SOMAExperimentAxisQuery$new(
     experiment = experiment,
     measurement_name = "RNA",
-    obs_query = AxisQuery$new(
+    obs_query = SOMAAxisQuery$new(
       coords = list(soma_joinid = obs_slice)
     ),
-    var_query = AxisQuery$new(
+    var_query = SOMAAxisQuery$new(
       coords = list(soma_joinid = var_slice)
     )
   )
