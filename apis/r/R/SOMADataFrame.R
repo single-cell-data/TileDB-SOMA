@@ -168,17 +168,13 @@ SOMADataFrame <- R6::R6Class(
       stopifnot(
           ## check columns
           "'column_names' must only contain valid dimension or attribute columns" =
-              is.null(column_names) || all(column_names %in% c(self$dimnames(), self$attrnames())),
-          ## check and parse value filter
-          "'value_filter' must be a single argument" =
-              is.null(value_filter) || is_scalar_character(value_filter),
-          ## ensure coords is a (named) list
-          "'coords' must be a list" =
-              is.null(coords) || is.list(coords),
-          "names of 'coords' must correspond to dimension names" =
-              is.null(coords) || all(names(coords) %in% self$dimnames())
+              is.null(column_names) || all(column_names %in% c(self$dimnames(), self$attrnames()))
       )
+
+      coords <- validate_read_coords(coords, dimnames = self$dimnames())
+
       if (!is.null(value_filter)) {
+          value_filter <- validate_read_value_filter(value_filter)
           parsed <- do.call(what = tiledb::parse_query_condition,
                             args = list(expr = str2lang(value_filter), ta = arr))
           value_filter <- parsed@ptr

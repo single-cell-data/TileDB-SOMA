@@ -78,3 +78,57 @@ assert_subset <- function(x, y, type = "value") {
   }
   TRUE
 }
+
+#' Validate read coordinates
+#'
+#' Ensures that coords is one of the following supported formats:
+#'
+#' - `NULL`
+#' - a vector of coordinates to index a single dimension
+#' - an unnamed  list of coordinates to index a single dimension
+#' - a named list of coordinates to index multiple dimensions (names are
+#'   optionally validated against a vector of dimension names)
+#'
+#' @param coords A vector or list of coordinates
+#' @param dimnames character vector of array dimension names
+#' @noRd
+validate_read_coords <- function(coords, dimnames = NULL) {
+  # NULL is a valid value
+  if (is.null(coords)) return(coords)
+
+  # If coords is a vector, wrap it in a list
+  if (is.atomic(coords)) coords <- list(coords)
+
+  # List of multiple coordinate vectors must be named
+  if (length(coords) > 1) {
+    stopifnot(
+      "'coords' must be a named list to query multiple dimensions" =
+        is_named_list(coords)
+    )
+  }
+
+  # TODO: vector type should be validated by array dimension type
+  stopifnot(
+    "'coords' must be a list of numeric vectors" =
+      all(vapply_lgl(coords, is.numeric))
+  )
+
+  if (!is.null(dimnames)) {
+    stopifnot(
+      "'dimnames' must be a character vector" = is.character(dimnames),
+      "names of 'coords' must correspond to dimension names" =
+        all(names(coords) %in% dimnames)
+    )
+  }
+  coords
+}
+
+#' Validate read/query value filter
+#' @noRd
+validate_read_value_filter <- function(value_filter) {
+  stopifnot(
+    "'value_filter' must be a scalar character" =
+      is.null(value_filter) || is_scalar_character(value_filter)
+    )
+  value_filter
+}
