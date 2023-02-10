@@ -4,6 +4,7 @@ import numpy as np
 import pandas as pd
 import pyarrow as pa
 import pytest
+import somacore
 import tiledb
 
 import tiledbsoma as soma
@@ -548,6 +549,20 @@ def make_multiply_indexed_dataframe(tmp_path, index_column_names: List[str]):
         },
         {
             "index_column_names": ["index1"],
+            "coords": [slice(2, None)],
+            "partitions": somacore.IOfN(0, 1),  # One partition is allowed.
+            "A": [12, 13, 14, 15],
+            "throws": None,
+        },
+        {
+            "index_column_names": ["index1"],
+            "coords": [],
+            "partitions": somacore.IOfN(1, 2),  # Partitioned reads forbidden.
+            "A": None,
+            "throws": ValueError,
+        },
+        {
+            "index_column_names": ["index1"],
             "coords": [slice(1, 5, 2)],  # Slice step must be 1 or None
             "A": None,
             "throws": ValueError,
@@ -672,7 +687,9 @@ def test_read_indexing(tmp_path, io):
         assert list(sdf.index_column_names) == io["index_column_names"]
 
         read_kwargs = {"column_names": ["A"]}
-        read_kwargs.update({k: io[k] for k in ("coords", "value_filter") if k in io})
+        read_kwargs.update(
+            {k: io[k] for k in ("coords", "partitions", "value_filter") if k in io}
+        )
         if io.get("throws", None):
             with pytest.raises(io["throws"]):
                 next(sdf.read(**read_kwargs))

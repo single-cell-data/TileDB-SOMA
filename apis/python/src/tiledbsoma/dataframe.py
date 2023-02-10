@@ -150,7 +150,8 @@ class DataFrame(TileDBArray, somacore.DataFrame):
           `slice(2,None)` and `slice(None,4)` are both unsupported.
         * Negative indexing is unsupported.
         """
-        del batch_size, partitions, platform_config  # Currently unused.
+        del batch_size, platform_config  # Currently unused.
+        util.check_unpartitioned(partitions)
         self._check_open_read()
         result_order = options.ResultOrder(result_order)
 
