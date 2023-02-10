@@ -405,13 +405,6 @@ def make_multiply_indexed_dataframe(tmp_path, index_column_names: List[str]):
 @pytest.mark.parametrize(
     "io",
     [
-        # 1D: indexing list is None
-        {
-            "index_column_names": ["index1"],
-            "coords": None,
-            "A": [10, 11, 12, 13, 14, 15],
-            "throws": None,
-        },
         # 1D: indexing slot is None
         {
             "index_column_names": ["index1"],
@@ -604,10 +597,10 @@ def make_multiply_indexed_dataframe(tmp_path, index_column_names: List[str]):
             "A": None,
             "throws": (RuntimeError, tiledb.cc.TileDBError),
         },
-        # 2D: indexing list is None
+        # 2D: indexing list is empty
         {
             "index_column_names": ["index2", "index3"],
-            "coords": None,
+            "coords": (),
             "A": [10, 11, 12, 13, 14, 15],
             "throws": None,
         },

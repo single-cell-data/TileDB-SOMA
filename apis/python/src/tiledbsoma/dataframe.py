@@ -6,6 +6,7 @@ import pyarrow as pa
 import somacore
 import tiledb
 from somacore import options
+from typing_extensions import Self
 
 from . import arrow_types, util
 from .constants import SOMA_JOINID
@@ -107,7 +108,7 @@ class DataFrame(TileDBArray, somacore.DataFrame):
 
     def read(
         self,
-        coords: Optional[options.SparseDFCoords] = None,
+        coords: options.SparseDFCoords = (),
         column_names: Optional[Sequence[str]] = None,
         *,
         result_order: options.ResultOrderStr = options.ResultOrder.AUTO,
@@ -138,7 +139,6 @@ class DataFrame(TileDBArray, somacore.DataFrame):
         Acceptable ways to index
         ------------------------
 
-        * None
         * A sequence of coordinates is accepted, one per dimension.
         * Sequence length must be <= number of dimensions.
         * If the sequence contains missing coordinates (length less than number of dimensions),
@@ -168,56 +168,53 @@ class DataFrame(TileDBArray, somacore.DataFrame):
             result_order=result_order.value,
         )
 
-        if coords:
-            if not isinstance(coords, (list, tuple)):
-                raise TypeError(
-                    f"coords type {type(coords)} unsupported; expected list or tuple"
-                )
-            if schema.domain.ndim < len(coords):
-                raise ValueError(
-                    f"coords {coords} must have length between 1 and ndim ({schema.domain.ndim}); got {len(coords)}"
-                )
+        if not isinstance(coords, (list, tuple)):
+            raise TypeError(
+                f"coords type {type(coords)} unsupported; expected list or tuple"
+            )
+        if schema.domain.ndim < len(coords):
+            raise ValueError(
+                f"coords {coords} must have length between 1 and ndim ({schema.domain.ndim}); got {len(coords)}"
+            )
 
-            for i, dim_coords in enumerate(coords):
-                # Example: coords = [None, 3, slice(4,5)]
-                # dim_coords takes on values None, 3, and slice(4,5) in this loop body.
-                dim_name = schema.domain.dim(i).name
-                if dim_coords is None:
-                    pass  # No constraint; select all in this dimension
-                elif isinstance(dim_coords, (int, str, bytes)):
-                    sr.set_dim_points(dim_name, [dim_coords])
-                elif isinstance(dim_coords, np.ndarray):
-                    if dim_coords.ndim != 1:
-                        raise ValueError(
-                            f"only 1D numpy arrays may be used to index; got {dim_coords.ndim}"
-                        )
-                    sr.set_dim_points(dim_name, dim_coords)
-                elif isinstance(dim_coords, slice):
-                    ned = self._handle.reader.nonempty_domain()
-                    # ned is None iff the array has no data
-                    lo_hi = util.slice_to_range(dim_coords, ned[i]) if ned else None
-                    if lo_hi is not None:
-                        lo, hi = lo_hi
-                        if lo < 0 or hi < 0:
-                            raise ValueError(
-                                f"slice start and stop may not be negative; got ({lo}, {hi})"
-                            )
-                        if lo > hi:
-                            raise ValueError(
-                                f"coordinate at slot {i} must have lo <= hi; got {lo} > {hi}"
-                            )
-                        sr.set_dim_ranges(dim_name, [lo_hi])
-                    # Else, no constraint in this slot. This is `slice(None)` which is like
-                    # Python indexing syntax `[:]`.
-                elif isinstance(
-                    dim_coords,
-                    (collections.abc.Sequence, pa.Array, pa.ChunkedArray),
-                ):
-                    sr.set_dim_points(dim_name, dim_coords)
-                else:
-                    raise TypeError(
-                        f"coords[{i}] type {type(dim_coords)} is unsupported"
+        for i, dim_coords in enumerate(coords):
+            # Example: coords = [None, 3, slice(4,5)]
+            # dim_coords takes on values None, 3, and slice(4,5) in this loop body.
+            dim_name = schema.domain.dim(i).name
+            if dim_coords is None:
+                pass  # No constraint; select all in this dimension
+            elif isinstance(dim_coords, (int, str, bytes)):
+                sr.set_dim_points(dim_name, [dim_coords])
+            elif isinstance(dim_coords, np.ndarray):
+                if dim_coords.ndim != 1:
+                    raise ValueError(
+                        f"only 1D numpy arrays may be used to index; got {dim_coords.ndim}"
                     )
+                sr.set_dim_points(dim_name, dim_coords)
+            elif isinstance(dim_coords, slice):
+                ned = self._handle.reader.nonempty_domain()
+                # ned is None iff the array has no data
+                lo_hi = util.slice_to_range(dim_coords, ned[i]) if ned else None
+                if lo_hi is not None:
+                    lo, hi = lo_hi
+                    if lo < 0 or hi < 0:
+                        raise ValueError(
+                            f"slice start and stop may not be negative; got ({lo}, {hi})"
+                        )
+                    if lo > hi:
+                        raise ValueError(
+                            f"coordinate at slot {i} must have lo <= hi; got {lo} > {hi}"
+                        )
+                    sr.set_dim_ranges(dim_name, [lo_hi])
+                # Else, no constraint in this slot. This is `slice(None)` which is like
+                # Python indexing syntax `[:]`.
+            elif isinstance(
+                dim_coords,
+                (collections.abc.Sequence, pa.Array, pa.ChunkedArray),
+            ):
+                sr.set_dim_points(dim_name, dim_coords)
+            else:
+                raise TypeError(f"coords[{i}] type {type(dim_coords)} is unsupported")
 
         # TODO: platform_config
         # TODO: batch_size
@@ -227,7 +224,7 @@ class DataFrame(TileDBArray, somacore.DataFrame):
 
     def write(
         self, values: pa.Table, platform_config: Optional[Mapping[str, Any]] = None
-    ) -> None:
+    ) -> Self:
         """
         Write an Arrow table to the persistent object. As duplicate index values
         are not allowed, index values already present in the object are overwritten
@@ -258,6 +255,8 @@ class DataFrame(TileDBArray, somacore.DataFrame):
 
         dim_cols_tuple = tuple(dim_cols_list)
         self._handle.writer[dim_cols_tuple] = attr_cols_map
+
+        return self
 
 
 def _canonicalize_schema(

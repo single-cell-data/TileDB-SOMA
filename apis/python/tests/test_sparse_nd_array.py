@@ -474,15 +474,6 @@ def test_csr_csc_2d_read(tmp_path, shape):
 @pytest.mark.parametrize(
     "io",
     [
-        # Coords is None
-        {
-            "shape": (4,),
-            "coords": None,
-            "dims": {
-                "soma_dim_0": [0, 1, 2, 3],
-            },
-            "throws": None,
-        },
         # Coords is empty
         {
             "shape": (4,),

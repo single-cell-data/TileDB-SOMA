@@ -3,13 +3,12 @@ from typing import Optional
 import pyarrow as pa
 import somacore
 from somacore import options
+from typing_extensions import Self
 
 from . import util
 from .common_nd_array import NDArray
 from .exception import SOMAError
 from .util import dense_indices_to_shape
-
-_UNBATCHED = options.BatchSize()
 
 
 class DenseNDArray(NDArray, somacore.DenseNDArray):
@@ -23,10 +22,9 @@ class DenseNDArray(NDArray, somacore.DenseNDArray):
 
     def read(
         self,
-        coords: options.DenseNDCoords,
+        coords: options.DenseNDCoords = (),
         *,
         result_order: options.ResultOrderStr = somacore.ResultOrder.ROW_MAJOR,
-        batch_size: options.BatchSize = _UNBATCHED,
         partitions: Optional[options.ReadPartitions] = None,
         platform_config: Optional[options.PlatformConfig] = None,
     ) -> pa.Tensor:
@@ -41,7 +39,7 @@ class DenseNDArray(NDArray, somacore.DenseNDArray):
 
         [lifecycle: experimental]
         """
-        del batch_size, partitions, platform_config  # Currently unused.
+        del partitions, platform_config  # Currently unused.
         self._check_open_read()
         result_order = somacore.ResultOrder(result_order)
 
@@ -50,41 +48,40 @@ class DenseNDArray(NDArray, somacore.DenseNDArray):
 
         sr = self._soma_reader(result_order=result_order.value)
 
-        if coords is not None:
-            if not isinstance(coords, (list, tuple)):
-                raise TypeError(
-                    f"coords type {type(coords)} unsupported; expected list or tuple"
-                )
-            if len(coords) > schema.domain.ndim:
-                raise ValueError(
-                    f"coords {coords} must be shorter than ndim ({schema.domain.ndim}); got {len(coords)}"
-                )
+        if not isinstance(coords, (list, tuple)):
+            raise TypeError(
+                f"coords type {type(coords)} unsupported; expected list or tuple"
+            )
+        if len(coords) > schema.domain.ndim:
+            raise ValueError(
+                f"coords {coords} must be shorter than ndim ({schema.domain.ndim}); got {len(coords)}"
+            )
 
-            for i, coord in enumerate(coords):
-                dim_name = schema.domain.dim(i).name
-                if coord is None:
-                    pass  # No constraint; select all in this dimension
-                elif isinstance(coord, int):
-                    sr.set_dim_points(dim_name, [coord])
-                elif isinstance(coord, slice):
-                    ned = self._handle.reader.nonempty_domain()
-                    # ned is None iff the array has no data
-                    lo_hi = util.slice_to_range(coord, ned[i]) if ned else None
-                    if lo_hi is not None:
-                        lo, hi = lo_hi
-                        if lo < 0 or hi < 0:
-                            raise ValueError(
-                                f"slice start and stop may not be negative; got ({lo}, {hi})"
-                            )
-                        if lo > hi:
-                            raise ValueError(
-                                f"slice start must be <= slice stop; got ({lo}, {hi})"
-                            )
-                        sr.set_dim_ranges(dim_name, [lo_hi])
-                    # Else, no constraint in this slot. This is `slice(None)` which is like
-                    # Python indexing syntax `[:]`.
-                else:
-                    raise TypeError(f"coord type {type(coord)} at slot {i} unsupported")
+        for i, coord in enumerate(coords):
+            dim_name = schema.domain.dim(i).name
+            if coord is None:
+                pass  # No constraint; select all in this dimension
+            elif isinstance(coord, int):
+                sr.set_dim_points(dim_name, [coord])
+            elif isinstance(coord, slice):
+                ned = self._handle.reader.nonempty_domain()
+                # ned is None iff the array has no data
+                lo_hi = util.slice_to_range(coord, ned[i]) if ned else None
+                if lo_hi is not None:
+                    lo, hi = lo_hi
+                    if lo < 0 or hi < 0:
+                        raise ValueError(
+                            f"slice start and stop may not be negative; got ({lo}, {hi})"
+                        )
+                    if lo > hi:
+                        raise ValueError(
+                            f"slice start must be <= slice stop; got ({lo}, {hi})"
+                        )
+                    sr.set_dim_ranges(dim_name, [lo_hi])
+                # Else, no constraint in this slot. This is `slice(None)` which is like
+                # Python indexing syntax `[:]`.
+            else:
+                raise TypeError(f"coord type {type(coord)} at slot {i} unsupported")
 
         sr.submit()
 
@@ -117,7 +114,7 @@ class DenseNDArray(NDArray, somacore.DenseNDArray):
         values: pa.Tensor,
         *,
         platform_config: Optional[options.PlatformConfig] = None,
-    ) -> None:
+    ) -> Self:
         """
         Write subarray, defined by ``coords`` and ``values``. Will overwrite existing
         values in the array.
@@ -135,3 +132,4 @@ class DenseNDArray(NDArray, somacore.DenseNDArray):
 
         del platform_config  # Currently unused.
         self._handle.writer[coords] = values.to_numpy()
+        return self
