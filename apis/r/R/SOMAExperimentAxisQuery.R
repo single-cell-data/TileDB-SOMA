@@ -1,15 +1,18 @@
-#' SOMA Experiment Axis Query
-#' @description  Axis-based query against a [`SOMAExperiment]`. [lifecycle: experimental]
+#' SOMAExperiment Axis Query
+#' @description  Axis-based query against a [`SOMAExperiment`].
 #'
 #' `SOMAExperimentAxisQuery` allows easy selection and extraction of data from a
 #' single [`SOMAMeasurement`] in a [`SOMAExperiment`], by `obs`/`var` (axis)
-#' coordinates and/or value filter.
+#' coordinates and/or value filter. The primary use for this class is slicing
+#' [`SOMAExperiment`] `X` layers by `obs` or `var` value and/or coordinates.
+#' [lifecycle: experimental]
 #'
-#' The primary use for this class is slicing [`SOMAExperiment`] `X` layers by
-#' `obs` or `var` value and/or coordinates. Slicing on [`SOMASparseNDArray`] `X`
-#' matrices is supported; [`SOMADenseNDArray`] is not supported at this time.
+#' ## X Layer Support
 #'
-#' ## Important Notes
+#' Slicing on [`SOMASparseNDArray`] `X` matrices is supported;
+#' [`SOMADenseNDArray`] is not supported at this time.
+#'
+#' ## Result Size
 #' `SOMAExperimentAxisQuery` query class assumes it can store the full result of
 #' both axis dataframe queries in memory, and only provides incremental access
 #' to the underlying X NDArray. Accessors such as `n_obs` and `n_vars` codify
@@ -74,12 +77,12 @@ ExperimentAxisQuery <- R6::R6Class(
       )
     },
 
-    #' @description Retrieve obs `soma_joinids`` as an [`arrow::Array`]
+    #' @description Retrieve `soma_joinids` as an [`arrow::Array`] for `obs`.
     obs_joinids = function() {
       arrow::concat_arrays(private$.joinids$obs())
     },
 
-    #' @description Retrieve obs `soma_joinids`` as an [`arrow::Array`]
+    #' @description Retrieve `soma_joinids` as an [`arrow::Array`] for `var`.
     var_joinids = function() {
       arrow::concat_arrays(private$.joinids$var())
     },
@@ -106,9 +109,10 @@ ExperimentAxisQuery <- R6::R6Class(
       ))
     },
 
-    #' @description Reads the entire query result [`arrow::Table`]s. This is a
-    #' low-level routine intended to be used by loaders for other in-core
-    #' formats, such as AnnData, which can be created from the resulting Tables.
+    #' @description Reads the entire query result as a list of
+    #' [`arrow::Table`]s. This is a low-level routine intended to be used by
+    #' loaders for other in-core formats, such as `Seurat`, which can be created
+    #' from the resulting Tables.
     #'
     #' @param X_layers The name of the `X` layer(s) to read and return.
     #' @param obs_column_names,var_column_names Specify which column names in
@@ -334,20 +338,20 @@ AxisQueryResult <- R6Class(
   ),
 
   active = list(
-    #' @field [`arrow::Table`] containing `obs` query slice.
+    #' @field obs [`arrow::Table`] containing `obs` query slice.
     obs = function(value) {
       if (!missing(value)) read_only_error("obs")
       private$.obs
     },
 
-    #' @field [`arrow::Table`] containing `var` query slice.
+    #' @field var [`arrow::Table`] containing `var` query slice.
     #' `measurement_name`.
     var = function(value) {
       if (!missing(value)) read_only_error("var")
       private$.var
     },
 
-    #' @field named list of [`arrow::Table`]s for each `X` layer.
+    #' @field X_layers named list of [`arrow::Table`]s for each `X` layer.
     X_layers = function(value) {
       if (!missing(value)) read_only_error("ms")
       private$.X_layers
@@ -379,6 +383,7 @@ AxisIndexer <- R6::R6Class("AxisIndexer",
     },
 
     #' @description Get the index of the given `obs` coordinates.
+    #' @param coords vector or [`arrow:Array`] of numeric coordinates.
     by_obs = function(coords) {
       arrow::match_arrow(
         x = private$.validate_coords(coords),
@@ -387,6 +392,7 @@ AxisIndexer <- R6::R6Class("AxisIndexer",
     },
 
     #' @description Get the index of the given `var` coordinates.
+    #' @param coords vector or [`arrow:Array`] of numeric coordinates.
     by_var = function(coords) {
       arrow::match_arrow(
         x = private$.validate_coords(coords),
