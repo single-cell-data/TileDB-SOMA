@@ -1,7 +1,7 @@
 #' TileDB Group Base Class
 #'
 #' @description
-#' Base class for interacting with TileDB groups [lifecycle: experimental]
+#' Base class for interacting with TileDB groups (lifecycle: experimental)
 #' @importFrom spdl info debug
 #' @export
 TileDBGroup <- R6::R6Class(
@@ -10,19 +10,19 @@ TileDBGroup <- R6::R6Class(
 
   public = list(
 
-    #' @description Print summary of the group. [lifecycle: experimental]
+    #' @description Print summary of the group. (lifecycle: experimental)
     print = function() {
       super$print()
       if (self$exists()) private$format_members()
     },
 
-    #' @description Creates the data structure on disk/S3/cloud. [lifecycle: experimental]
+    #' @description Creates the data structure on disk/S3/cloud. (lifecycle: experimental)
     create = function() {
       spdl::info("Creating new {} at '{}'", self$class(), self$uri)
       tiledb::tiledb_group_create(self$uri, ctx = self$ctx)
     },
 
-    #' @description Add new member to the group. [lifecycle: experimental]
+    #' @description Add new member to the group. (lifecycle: experimental)
     #' @param object A `TileDBArray` or `TileDBGroup` object to add.
     #' @param name Name to use for the member. By default the base name of
     #' the object's URI is used.
@@ -64,7 +64,7 @@ TileDBGroup <- R6::R6Class(
       private$update_member_cache()
     },
 
-    #' @description Retrieve a group member by name. [lifecycle: experimental]
+    #' @description Retrieve a group member by name. (lifecycle: experimental)
     #' @param name The name of the member.
     #' @returns A `TileDBArray` or `TileDBGroup`.
     get = function(name) {
@@ -77,7 +77,7 @@ TileDBGroup <- R6::R6Class(
       private$construct_member(member$uri, member$type)
     },
 
-    #' @description Remove member. [lifecycle: experimental]
+    #' @description Remove member. (lifecycle: experimental)
     #' @param name Name of the member to remove.
     #' @export
     remove = function(name) {
@@ -93,27 +93,27 @@ TileDBGroup <- R6::R6Class(
       private$update_member_cache()
     },
 
-    #' @description Length in the number of members. [lifecycle: experimental]
+    #' @description Length in the number of members. (lifecycle: experimental)
     #' @return Scalar `integer`
     length = function() {
       if (is_empty(private$member_cache)) private$update_member_cache()
       length(private$member_cache)
     },
 
-    #' @description Retrieve the names of members. [lifecycle: experimental]
+    #' @description Retrieve the names of members. (lifecycle: experimental)
     #' @return A `character` vector of member names.
     names = function() {
       if (is_empty(private$member_cache)) private$update_member_cache()
       names(private$member_cache) %||% character(length = 0L)
     },
 
-    #' @description Retrieve a `list` of members. [lifecycle: experimental]
+    #' @description Retrieve a `list` of members. (lifecycle: experimental)
     to_list = function() {
       if (is_empty(private$member_cache)) private$update_member_cache()
       private$member_cache
     },
 
-    #' @description Retrieve a `data.frame` of members. [lifecycle: experimental]
+    #' @description Retrieve a `data.frame` of members. (lifecycle: experimental)
     to_data_frame = function() {
       count <- self$length()
       df <- data.frame(
@@ -130,7 +130,7 @@ TileDBGroup <- R6::R6Class(
       df
     },
 
-    #' @description Retrieve metadata. [lifecycle: experimental]
+    #' @description Retrieve metadata. (lifecycle: experimental)
     #' @param key The name of the metadata attribute to retrieve.
     #'   is not NULL.
     #' @return A list of metadata values.
@@ -144,7 +144,7 @@ TileDBGroup <- R6::R6Class(
       }
     },
 
-    #' @description Add list of metadata. [lifecycle: experimental]
+    #' @description Add list of metadata. (lifecycle: experimental)
     #' @param metadata Named list of metadata to add.
     #' @return NULL
     set_metadata = function(metadata) {
@@ -184,7 +184,7 @@ TileDBGroup <- R6::R6Class(
       private$close()
     },
 
-    # @description Retrieve all group members. [lifecycle: experimental]
+    # @description Retrieve all group members. (lifecycle: experimental)
     # @return A list indexed by group member names where each element is a
     # list with names: name, uri, and type.
     get_all_members = function() {

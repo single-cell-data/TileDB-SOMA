@@ -19,7 +19,7 @@ All dimensions must have a positive, non-zero length, and there must be 1 or
 more dimensions.
 
 The default "fill" value for \code{SOMADenseNDArray} is the zero or null value of
-the array type (e.g., Arrow.float32 defaults to 0.0).  \link{lifecycle: experimental}
+the array type (e.g., Arrow.float32 defaults to 0.0).  (lifecycle: experimental)
 }
 \section{Super classes}{
 \code{\link[tiledbsoma:TileDBObject]{tiledbsoma::TileDBObject}} -> \code{\link[tiledbsoma:TileDBArray]{tiledbsoma::TileDBArray}} -> \code{\link[tiledbsoma:SOMAArrayBase]{tiledbsoma::SOMAArrayBase}} -> \code{SOMADenseNDArray}
@@ -61,7 +61,7 @@ the array type (e.g., Arrow.float32 defaults to 0.0).  \link{lifecycle: experime
 \if{html}{\out{<a id="method-SOMADenseNDArray-create"></a>}}
 \if{latex}{\out{\hypertarget{method-SOMADenseNDArray-create}{}}}
 \subsection{Method \code{create()}}{
-Create a SOMADenseNDArray named with the URI. \link{lifecycle: experimental}
+Create a SOMADenseNDArray named with the URI. (lifecycle: experimental)
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{SOMADenseNDArray$create(type, shape)}\if{html}{\out{</div>}}
 }
@@ -81,7 +81,7 @@ element in the array.}
 \if{html}{\out{<a id="method-SOMADenseNDArray-read_arrow_table"></a>}}
 \if{latex}{\out{\hypertarget{method-SOMADenseNDArray-read_arrow_table}{}}}
 \subsection{Method \code{read_arrow_table()}}{
-Read as an 'arrow::Table' \link{lifecycle: experimental}
+Read as an 'arrow::Table' (lifecycle: experimental)
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{SOMADenseNDArray$read_arrow_table(
   coords = NULL,
@@ -116,7 +116,7 @@ An \code{\link[arrow:Table]{arrow::Table}}.
 \if{html}{\out{<a id="method-SOMADenseNDArray-read_dense_matrix"></a>}}
 \if{latex}{\out{\hypertarget{method-SOMADenseNDArray-read_dense_matrix}{}}}
 \subsection{Method \code{read_dense_matrix()}}{
-Read as a dense matrix \link{lifecycle: experimental}
+Read as a dense matrix (lifecycle: experimental)
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{SOMADenseNDArray$read_dense_matrix(
   coords = NULL,
@@ -151,7 +151,7 @@ A \code{matrix} object
 \if{html}{\out{<a id="method-SOMADenseNDArray-write"></a>}}
 \if{latex}{\out{\hypertarget{method-SOMADenseNDArray-write}{}}}
 \subsection{Method \code{write()}}{
-Write matrix data to the array. \link{lifecycle: experimental}
+Write matrix data to the array. (lifecycle: experimental)
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{SOMADenseNDArray$write(values, coords = NULL)}\if{html}{\out{</div>}}
 }

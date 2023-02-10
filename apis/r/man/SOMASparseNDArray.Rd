@@ -19,7 +19,7 @@ domain [0, maxInt64), and a single attribute.
 \subsection{Duplicate writes}{
 
 As duplicate index values are not allowed, index values already present in
-the object are overwritten and new index values are added. \link{lifecycle: experimental}
+the object are overwritten and new index values are added. (lifecycle: experimental)
 }
 }
 \section{Super classes}{
@@ -62,7 +62,7 @@ the object are overwritten and new index values are added. \link{lifecycle: expe
 \if{html}{\out{<a id="method-SOMASparseNDArray-create"></a>}}
 \if{latex}{\out{\hypertarget{method-SOMASparseNDArray-create}{}}}
 \subsection{Method \code{create()}}{
-Create a SOMASparseNDArray named with the URI. \link{lifecycle: experimental}
+Create a SOMASparseNDArray named with the URI. (lifecycle: experimental)
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{SOMASparseNDArray$create(type, shape)}\if{html}{\out{</div>}}
 }
@@ -81,7 +81,7 @@ Create a SOMASparseNDArray named with the URI. \link{lifecycle: experimental}
 \if{html}{\out{<a id="method-SOMASparseNDArray-read_arrow_table"></a>}}
 \if{latex}{\out{\hypertarget{method-SOMASparseNDArray-read_arrow_table}{}}}
 \subsection{Method \code{read_arrow_table()}}{
-Read as an 'arrow::Table' \link{lifecycle: experimental}
+Read as an 'arrow::Table' (lifecycle: experimental)
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{SOMASparseNDArray$read_arrow_table(
   coords = NULL,
@@ -116,7 +116,7 @@ An \code{\link[arrow:Table]{arrow::Table}}.
 \if{html}{\out{<a id="method-SOMASparseNDArray-read_sparse_matrix"></a>}}
 \if{latex}{\out{\hypertarget{method-SOMASparseNDArray-read_sparse_matrix}{}}}
 \subsection{Method \code{read_sparse_matrix()}}{
-Read as a sparse matrix \link{lifecycle: experimental}
+Read as a sparse matrix (lifecycle: experimental)
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{SOMASparseNDArray$read_sparse_matrix(
   coords = NULL,
@@ -154,7 +154,7 @@ A \code{matrix} object
 \if{html}{\out{<a id="method-SOMASparseNDArray-write"></a>}}
 \if{latex}{\out{\hypertarget{method-SOMASparseNDArray-write}{}}}
 \subsection{Method \code{write()}}{
-Write matrix-like data to the array. \link{lifecycle: experimental}
+Write matrix-like data to the array. (lifecycle: experimental)
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{SOMASparseNDArray$write(data)}\if{html}{\out{</div>}}
 }

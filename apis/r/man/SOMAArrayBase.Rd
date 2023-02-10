@@ -4,7 +4,7 @@
 \alias{SOMAArrayBase}
 \title{SOMA Array Base Class}
 \description{
-Adds SOMA-specific functionality to the \code{\link{TileDBArray}} class.  \link{lifecycle: experimental}
+Adds SOMA-specific functionality to the \code{\link{TileDBArray}} class.  (lifecycle: experimental)
 }
 \section{Super classes}{
 \code{\link[tiledbsoma:TileDBObject]{tiledbsoma::TileDBObject}} -> \code{\link[tiledbsoma:TileDBArray]{tiledbsoma::TileDBArray}} -> \code{SOMAArrayBase}
