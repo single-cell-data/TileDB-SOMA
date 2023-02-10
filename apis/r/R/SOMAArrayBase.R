@@ -18,6 +18,7 @@ SOMAArrayBase <- R6::R6Class(
   ),
 
   public = list(
+    #' @description Check if the read has completed.
     read_complete = function() {
       if (is.null(private$soma_reader_pointer)) {
           TRUE
@@ -26,6 +27,7 @@ SOMAArrayBase <- R6::R6Class(
       }
     },
 
+    #' @description Read the next batch of data.
     read_next = function() {
       if (is.null(private$soma_reader_pointer)) {
           NULL
