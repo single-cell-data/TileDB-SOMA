@@ -80,8 +80,9 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
 
         :return: A SparseNDArrayRead to access result iterators in various formats.
         """
-        del result_order, batch_size, partitions, platform_config  # Currently unused.
+        del result_order, batch_size, platform_config  # Currently unused.
         self._check_open_read()
+        util.check_unpartitioned(partitions)
 
         if coords is None:
             coords = (slice(None),)

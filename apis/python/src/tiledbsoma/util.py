@@ -192,3 +192,15 @@ def check_type(
         raise TypeError(
             f"expected {name} argument to be one of {expected_types!r}; got {type(actual_value)}"
         )
+
+
+def check_unpartitioned(partitions: Optional[options.ReadPartitions]) -> None:
+    """Ensures that we're not being asked for a partitioned read.
+
+    Because we currently don't support partitioned reads, we should reject all
+    reads that request partitions to avoid giving the user duplicate data across
+    sharded tasks.
+    """
+    if not partitions or partitions == options.IOfN(0, 1):
+        return
+    raise ValueError("Paritioned reads are not currently supported")
