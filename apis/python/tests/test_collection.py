@@ -1,5 +1,6 @@
 import os
 import pathlib
+import textwrap
 from typing import List, TypeVar, Union
 
 import numpy as np
@@ -147,48 +148,99 @@ def test_collection_mapping(soma_object, tmp_path):
 
 
 @pytest.mark.parametrize("relative", [False, True])
-def test_collection_repr(tmp_path, relative) -> None:
-    a = soma.Collection.create((tmp_path / "A").as_uri())
-    assert a.uri == (tmp_path / "A").as_uri()
+def test_collection_repr(tmp_path: pathlib.Path, relative: bool) -> None:
+    a_path = tmp_path / "A"
+    a_uri = a_path.as_uri()
+    a = soma.Collection.create(a_uri)
+    assert a.uri == a_uri
 
-    b_uri = "B" if relative else (tmp_path / "A" / "B").as_uri()
-    b = a.add_new_collection("Another_Name", uri=b_uri)
+    b_path = a_path / "B"
+    b_uri = b_path.as_uri()
+    b_uri_to_add = "B" if relative else b_uri
+    b = a.add_new_collection("Another_Name", cls=soma.Experiment, uri=b_uri_to_add)
 
-    assert b.uri == (tmp_path / "A" / "B").as_uri()
+    assert b.uri == b_uri
 
     assert list(a.keys()) == ["Another_Name"]
     assert (
-        a.__repr__()
-        == f'SOMACollection(uri="{a.uri}"):\n  "Another_Name": SOMACollection(uri="{b.uri}")'
+        repr(a)
+        == textwrap.dedent(
+            f"""
+            <Collection {a_uri!r} (open for 'w') (1 item)
+                'Another_Name': Experiment {b_uri!r} (open for 'w') (empty)>
+            """
+        ).strip()
     )
-    assert a["Another_Name"].uri == (tmp_path / "A" / "B").as_uri()
+    assert a["Another_Name"] is b
+    b.close()
+    assert (
+        repr(a)
+        == textwrap.dedent(
+            f"""
+            <Collection {a_uri!r} (open for 'w') (1 item)
+                'Another_Name': Experiment {b_uri!r} (CLOSED for 'w')>
+            """
+        ).strip()
+    )
+    a.close()
+    assert repr(a) == f"<Collection {a_uri!r} (CLOSED for 'w')>"
     del a
 
     # re-open, reconfirm
-    aPrime = soma.Collection.open((tmp_path / "A").as_uri())
-    assert list(aPrime.keys()) == ["Another_Name"]
+    a_reopened = soma.Collection.open(a_uri)
+    assert list(a_reopened.keys()) == ["Another_Name"]
     assert (
-        aPrime.__repr__()
-        == f'SOMACollection(uri="{aPrime.uri}"):\n  "Another_Name": SOMACollection(uri="{b.uri}")'
+        repr(a_reopened)
+        == textwrap.dedent(
+            f"""
+            <Collection {a_uri!r} (open for 'r') (1 item)
+                'Another_Name': {b_uri!r} (unopened)>
+            """
+        ).strip()
     )
-    assert aPrime["Another_Name"].uri == (tmp_path / "A" / "B").as_uri()
-    del aPrime
+    assert a_reopened["Another_Name"].uri == b_uri
+    assert (
+        repr(a_reopened)
+        == textwrap.dedent(
+            f"""
+            <Collection {a_uri!r} (open for 'r') (1 item)
+                'Another_Name': Experiment {b_uri!r} (open for 'r') (empty)>
+            """
+        ).strip()
+    )
+    del a_reopened
 
     # move container, re-confirm wrt "relative" value
-    os.rename((tmp_path / "A"), (tmp_path / "A_moved"))
-    aMoved = soma.Collection.open((tmp_path / "A_moved").as_uri())
-    assert list(aMoved.keys()) == ["Another_Name"]
+    a_moved_path = tmp_path / "A_moved"
+    a_path.rename(a_moved_path)
+    a_moved_uri = a_moved_path.as_uri()
+    a_moved = soma.Collection.open(a_moved_uri)
+    assert list(a_moved.keys()) == ["Another_Name"]
     if relative:
-        assert aMoved["Another_Name"].uri == (tmp_path / "A_moved" / "B").as_uri()
+        new_b_uri = (a_moved_path / "B").as_uri()
+        assert a_moved["Another_Name"].uri == new_b_uri
         assert (
-            aMoved.__repr__()
-            == f'SOMACollection(uri="{aMoved.uri}"):\n  "Another_Name": SOMACollection(uri="{aMoved["Another_Name"].uri}")'
+            repr(a_moved)
+            == textwrap.dedent(
+                f"""
+                <Collection {a_moved_uri!r} (open for 'r') (1 item)
+                    'Another_Name': Experiment {new_b_uri!r} (open for 'r') (empty)>
+                """
+            ).strip()
         )
     else:
         with pytest.raises(DoesNotExistError):
-            aMoved["Another_Name"].uri
+            a_moved["Another_Name"]
 
-    del aMoved
+        assert (
+            repr(a_moved)
+            == textwrap.dedent(
+                f"""
+                <Collection {a_moved_uri!r} (open for 'r') (1 item)
+                    'Another_Name': {b_uri!r} (unopened)>
+                """
+            ).strip()
+        )
 
 
 def test_collection_update_on_set(tmp_path):

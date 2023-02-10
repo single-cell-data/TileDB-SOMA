@@ -104,7 +104,12 @@ class TileDBObject(somacore.SOMAObject, Generic[_WrapperType_co]):
         return self._handle.metadata
 
     def __repr__(self) -> str:
-        return f'{self.soma_type}(uri="{self.uri}")'
+        return f"<{self._my_repr()}>"
+
+    def _my_repr(self) -> str:
+        """``__repr__``, but without the ``<>``."""
+        open_str = "CLOSED" if self.closed else "open"
+        return f"{type(self).__name__} {self.uri!r} ({open_str} for {self.mode!r})"
 
     @property
     def uri(self) -> str:

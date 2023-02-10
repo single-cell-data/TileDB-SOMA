@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import itertools
 import re
 import time
 from typing import (
@@ -7,8 +8,8 @@ from typing import (
     Callable,
     ClassVar,
     Dict,
+    Iterable,
     Iterator,
-    List,
     Optional,
     Tuple,
     Type,
@@ -362,36 +363,39 @@ class CollectionBase(
         """
         Default display for ``Collection``.
         """
-        return "\n".join(self._get_collection_repr())
+        lines = itertools.chain((self._my_repr(),), self._contents_lines(""))
+        return "<" + "\n".join(lines) + ">"
 
     # ================================================================
     # PRIVATE METHODS FROM HERE ON DOWN
     # ================================================================
 
-    @classmethod
-    def _get_element_repr(
-        cls, args: Tuple[CollectionBase[CollectionElementType], str]
-    ) -> List[str]:
-        collection, key = args
-        value = collection.__getitem__(key)
-        if isinstance(value, CollectionBase):
-            return value._get_collection_repr()
+    def _my_repr(self) -> str:
+        start = super()._my_repr()
+        if self.closed:
+            return start
+        n = len(self)
+        if n == 0:
+            count = "empty"
+        elif n == 1:
+            count = "1 item"
         else:
-            return [value.__repr__()]
+            count = f"{n} items"
+        return f"{start} ({count})"
 
-    def _get_collection_repr(self) -> List[str]:
-        me = super().__repr__()
-        keys = list(self._contents.keys())
-        me += ":" if len(keys) > 0 else ""
-        lines = [me]
-
-        for elmt_key in keys:
-            elmt_repr_lines = CollectionBase._get_element_repr((self, elmt_key))
-            lines.append(f'  "{elmt_key}": {elmt_repr_lines[0]}')
-            for line in elmt_repr_lines[1:]:
-                lines.append(f"    {line}")
-
-        return lines
+    def _contents_lines(self, last_indent: str) -> Iterable[str]:
+        indent = last_indent + "    "
+        if self.closed:
+            return ()
+        for key, entry in self._contents.items():
+            obj = entry.soma
+            if obj is None:
+                # We haven't reified this SOMA object yet. Don't try to open it.
+                yield f"{indent}{key!r}: {entry.entry.uri!r} (unopened)"
+            else:
+                yield f"{indent}{key!r}: {obj._my_repr()}"
+                if isinstance(obj, CollectionBase):
+                    yield from obj._contents_lines(indent)
 
     def _set_element(
         self,
