@@ -16,8 +16,8 @@
 #' value filters.
 #'
 #' @export
-AxisQuery <- R6Class(
-  classname = "AxisQuery",
+SOMAAxisQuery <- R6Class(
+  classname = "SOMAAxisQuery",
   public = list(
     #' @field coords The coordinates for the query.
     coords = NULL,
