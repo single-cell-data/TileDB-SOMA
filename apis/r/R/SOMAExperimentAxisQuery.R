@@ -1,5 +1,5 @@
-#' SOMAExperiment Axis Query
-#' @description  Axis-based query against a [`SOMAExperiment`].
+#' `SOMAExperiment` Axis Query
+#' @description Perform an axis-based query against a [`SOMAExperiment`].
 #'
 #' `SOMAExperimentAxisQuery` allows easy selection and extraction of data from a
 #' single [`SOMAMeasurement`] in a [`SOMAExperiment`], by `obs`/`var` (axis)
