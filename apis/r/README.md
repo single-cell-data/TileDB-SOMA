@@ -14,6 +14,14 @@ This code is hosted at R-universe, so you can do
 $ install.packages('tiledbsoma', repos = c('https://tiledb-inc.r-universe.dev', 'https://cloud.r-project.org'))
 ```
 
+## Note on building from source
+
+Note that building from source (using `R CMD INSTALL .`) implies also building
+[libtiledbsoma](https://github.com/single-cell-data/TileDB-SOMA/tree/main/libtiledbsoma)
+from source so additional requirements listed in its
+[README.md](https://github.com/single-cell-data/TileDB-SOMA/blob/main/libtiledbsoma/README.md)
+may apply.
+
 # Status
 
 Please see [https://github.com/single-cell-data/TileDB-SOMA/issues](https://github.com/single-cell-data/TileDB-SOMA/issues).
