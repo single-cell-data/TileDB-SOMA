@@ -310,7 +310,7 @@ class CollectionBase(
         value: CollectionElementType,
         *,
         use_relative_uri: Optional[bool] = None,
-    ) -> None:
+    ) -> Self:
         """Adds an element to the collection. [lifecycle: experimental]
 
         :param key: The key of the element to be added.
@@ -343,6 +343,7 @@ class CollectionBase(
         self._set_element(
             key, uri=uri_to_add, relative=use_relative_uri, soma_object=value
         )
+        return self
 
     def __setitem__(self, key: str, value: CollectionElementType) -> None:
         """

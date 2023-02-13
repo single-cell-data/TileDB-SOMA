@@ -6,6 +6,7 @@ import pyarrow as pa
 import somacore
 from somacore import options
 from somacore.options import PlatformConfig
+from typing_extensions import Self
 
 # This package's pybind11 code
 import tiledbsoma.libtiledbsoma as clib
@@ -46,7 +47,7 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
 
     def read(
         self,
-        coords: Optional[options.SparseNDCoords] = None,
+        coords: options.SparseNDCoords = (),
         *,
         result_order: options.ResultOrderStr = options.ResultOrder.AUTO,
         batch_size: options.BatchSize = _UNBATCHED,
@@ -64,7 +65,6 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
 
         Acceptable ways to index
         ------------------------
-        * None
         * A sequence of coordinates is accepted, one per dimension.
         * Sequence length must be <= number of dimensions.
         * If the sequence contains missing coordinates (length < number of dimensions),
@@ -83,9 +83,6 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
         del result_order, batch_size, platform_config  # Currently unused.
         self._check_open_read()
         util.check_unpartitioned(partitions)
-
-        if coords is None:
-            coords = (slice(None),)
 
         schema = self._handle.schema
         sr = self._soma_reader(schema=schema)
@@ -146,7 +143,7 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
         ],
         *,
         platform_config: Optional[PlatformConfig] = None,
-    ) -> None:
+    ) -> Self:
         """
         Write an Arrow object to the SparseNDArray.
 
@@ -167,7 +164,7 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
         if isinstance(values, pa.SparseCOOTensor):
             data, coords = values.to_numpy()
             arr[tuple(c for c in coords.T)] = data
-            return
+            return self
 
         if isinstance(values, (pa.SparseCSCMatrix, pa.SparseCSRMatrix)):
             if self.ndim != 2:
@@ -177,7 +174,7 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
             # TODO: the `to_scipy` function is not zero copy. Need to explore zero-copy options.
             sp = values.to_scipy().tocoo()
             arr[sp.row, sp.col] = sp.data
-            return
+            return self
 
         if isinstance(values, pa.Table):
             data = values.column("soma_data").to_numpy()
@@ -187,7 +184,7 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
                 for n in range(coord_tbl.num_columns)
             )
             arr[coords] = data
-            return
+            return self
 
         raise TypeError(
             f"Unsupported Arrow type or non-arrow type for values argument: {type(values)}"
