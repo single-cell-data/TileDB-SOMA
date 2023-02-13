@@ -474,8 +474,8 @@ def test_csr_csc_2d_read(tmp_path, shape):
 @pytest.mark.parametrize(
     "io",
     [
-        # Coords is empty
         {
+            "name": "coords=()",
             "shape": (4,),
             "coords": (),
             "dims": {
@@ -483,8 +483,8 @@ def test_csr_csc_2d_read(tmp_path, shape):
             },
             "throws": None,
         },
-        # Coords has None in a slot
         {
+            "name": "coords=[None]",
             "shape": (4,),
             "coords": (None,),
             "dims": {
@@ -492,8 +492,8 @@ def test_csr_csc_2d_read(tmp_path, shape):
             },
             "throws": None,
         },
-        # Coords has int in a slot
         {
+            "name": "coords=[4]",
             "shape": (4,),
             "coords": (1,),
             "dims": {
@@ -502,6 +502,7 @@ def test_csr_csc_2d_read(tmp_path, shape):
             "throws": None,
         },
         {
+            "name": "coords=[[2, 4]]",
             "shape": (6,),
             "coords": [[2, 4]],
             "dims": {
@@ -510,6 +511,7 @@ def test_csr_csc_2d_read(tmp_path, shape):
             "throws": None,
         },
         {
+            "name": "negative unsupported",
             "shape": (6,),
             "coords": [[-2, -4]],
             "dims": {
@@ -518,9 +520,10 @@ def test_csr_csc_2d_read(tmp_path, shape):
             "throws": (
                 RuntimeError,
                 tiledb.cc.TileDBError,
-            ),  # Negative indices are not supported
+            ),
         },
         {
+            "name": "coords=[0,0]",
             "shape": (4, 6),
             "coords": (0, 0),
             "dims": {
@@ -529,8 +532,8 @@ def test_csr_csc_2d_read(tmp_path, shape):
             },
             "throws": None,
         },
-        # Coords has None in a slot and int in a slot
         {
+            "name": "coords=([:2],[2:])",
             "shape": (3, 4),
             "coords": (slice(None, 2), slice(2, None)),
             "dims": {
@@ -539,18 +542,18 @@ def test_csr_csc_2d_read(tmp_path, shape):
             },
             "throws": None,
         },
-        # Coords doesn't specify all dimensions, so the rest are implicit-all
         {
+            "name": "2D coords=[0]",
             "shape": (4, 6),
-            "coords": (0,),
+            "coords": (0,),  # Remaining dimensions are implicit-all
             "dims": {
                 "soma_dim_0": [0, 0, 0, 0, 0, 0],
                 "soma_dim_1": [0, 1, 2, 3, 4, 5],
             },
             "throws": None,
         },
-        # Coords specifies too many dimensions
         {
+            "name": "too many coords",
             "shape": (4, 6),
             "coords": (0, 0, 0),
             "dims": {
@@ -560,6 +563,7 @@ def test_csr_csc_2d_read(tmp_path, shape):
             "throws": ValueError,
         },
         {
+            "name": "3D coords",
             "shape": (4, 5, 6),
             "coords": (2, 3, 4),
             "dims": {
@@ -570,6 +574,7 @@ def test_csr_csc_2d_read(tmp_path, shape):
             "throws": None,
         },
         {
+            "name": "2D coords=(3, 4)",
             "shape": (4, 6),
             "coords": (3, 4),
             "dims": {
@@ -579,6 +584,7 @@ def test_csr_csc_2d_read(tmp_path, shape):
             "throws": None,
         },
         {
+            "name": "2D coords=([1:2], [3:4])",
             "shape": (4, 6),
             "coords": (slice(1, 2), slice(3, 4)),
             "dims": {
@@ -588,6 +594,7 @@ def test_csr_csc_2d_read(tmp_path, shape):
             "throws": None,
         },
         {
+            "name": "2D coords=([1:2], [3, 4])",
             "shape": (4, 6),
             "coords": (slice(1, 2), [3, 4]),
             "dims": {
@@ -597,6 +604,7 @@ def test_csr_csc_2d_read(tmp_path, shape):
             "throws": None,
         },
         {
+            "name": "2D coords=(np[1, 2], pa[3, 4])",
             "shape": (4, 6),
             "coords": (np.asarray([1, 2]), pa.array([3, 4])),
             "dims": {
@@ -606,6 +614,7 @@ def test_csr_csc_2d_read(tmp_path, shape):
             "throws": None,
         },
         {
+            "name": "2D coords=(np[[1, 2]], pa[3, 4])",
             "shape": (4, 6),
             "coords": (np.asarray([[1, 2]]), pa.array([3, 4])),
             "dims": {
@@ -615,6 +624,7 @@ def test_csr_csc_2d_read(tmp_path, shape):
             "throws": ValueError,  # np.ndarray must be 1D
         },
         {
+            "name": "2D coords=([:], [3:4])",
             "shape": (4, 6),
             "coords": (slice(None), slice(3, 4)),
             "dims": {
@@ -624,6 +634,7 @@ def test_csr_csc_2d_read(tmp_path, shape):
             "throws": None,
         },
         {
+            "name": "2D coords=([:], [3:100])",
             "shape": (4, 6),
             "coords": (slice(None), slice(3, 100)),
             "dims": {
@@ -633,6 +644,7 @@ def test_csr_csc_2d_read(tmp_path, shape):
             "throws": None,
         },
         {
+            "name": "2D coords=([1:2], [:])",
             "shape": (4, 6),
             "coords": (slice(1, 2), slice(None)),
             "dims": {
@@ -642,6 +654,7 @@ def test_csr_csc_2d_read(tmp_path, shape):
             "throws": None,
         },
         {
+            "name": "2D coords=([:], [:])",
             "shape": (3, 4),
             "coords": (slice(None), slice(None)),
             "dims": {
@@ -677,6 +690,7 @@ def test_csr_csc_2d_read(tmp_path, shape):
             "throws": None,
         },
         {
+            "name": "2D coords=[]",
             "shape": (3, 4),
             "coords": [],
             "dims": {
@@ -712,6 +726,7 @@ def test_csr_csc_2d_read(tmp_path, shape):
             "throws": None,
         },
         {
+            "name": "3D coords=([1:2], [2:3], [3:4])",
             "shape": (4, 5, 6),
             "coords": (slice(1, 2), slice(2, 3), slice(3, 4)),
             "dims": {
@@ -722,16 +737,7 @@ def test_csr_csc_2d_read(tmp_path, shape):
             "throws": None,
         },
         {
-            "shape": (4, 5, 6),
-            "coords": (slice(1, 2), slice(2, 3), slice(3, 4)),
-            "dims": {
-                "soma_dim_0": [1, 1, 1, 1, 2, 2, 2, 2],
-                "soma_dim_1": [2, 2, 3, 3, 2, 2, 3, 3],
-                "soma_dim_2": [3, 4, 3, 4, 3, 4, 3, 4],
-            },
-            "throws": None,
-        },
-        {
+            "name": "2D coords=(np32[1, 2], np64[3, 4])",
             "shape": (9, 11),
             "coords": (
                 np.array([1, 2], dtype=np.int32),
@@ -744,6 +750,7 @@ def test_csr_csc_2d_read(tmp_path, shape):
             "throws": None,
         },
         {
+            "name": "2D coords=(np64[1, 2], np32[3, 4])",
             "shape": (9, 11),
             "coords": (
                 np.array([1, 2], dtype=np.uint64),
@@ -756,6 +763,7 @@ def test_csr_csc_2d_read(tmp_path, shape):
             "throws": None,
         },
     ],
+    ids=lambda io: io.get("name"),
 )
 def test_sparse_nd_array_table_slicing(tmp_path, io, write_format, read_format):
 
