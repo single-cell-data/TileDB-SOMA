@@ -179,7 +179,7 @@ Rcpp::XPtr<tdbs::SOMAReader> sr_setup(Rcpp::XPtr<tiledb::Context> ctx,
 
     auto ptr = new tdbs::SOMAReader(uri, name, ctxptr, column_names, batch_size, result_order);
 
-    std::unordered_map<std::string, tiledb_datatype_t> name2type;
+    std::unordered_map<std::string, std::shared_ptr<tiledb::Dimension>> name2dim;
     std::shared_ptr<tiledb::ArraySchema> schema = ptr->schema();
     tiledb::Domain domain = schema->domain();
     std::vector<tiledb::Dimension> dims = domain.dimensions();
@@ -187,7 +187,7 @@ Rcpp::XPtr<tdbs::SOMAReader> sr_setup(Rcpp::XPtr<tiledb::Context> ctx,
         spdl::info("[soma_reader] Dimension {} type {} domain {} extent {}",
                    dim.name(), tiledb::impl::to_str(dim.type()),
                    dim.domain_to_str(), dim.tile_extent_to_str());
-        name2type.emplace(std::make_pair(dim.name(), dim.type()));
+        name2dim.emplace(std::make_pair(dim.name(), std::make_shared<tiledb::Dimension>(dim)));
     }
 
     // If we have a query condition, apply it
@@ -202,13 +202,13 @@ Rcpp::XPtr<tdbs::SOMAReader> sr_setup(Rcpp::XPtr<tiledb::Context> ctx,
     // The List element is a simple vector of points and each point is applied to the named dimension
     if (!dim_points.isNull()) {
         Rcpp::List lst(dim_points);
-        apply_dim_points(ptr, name2type, lst);
+        apply_dim_points(ptr, name2dim, lst);
     }
 
     // If we have a dimension points, apply them
     if (!dim_ranges.isNull()) {
         Rcpp::List lst(dim_ranges);
-        apply_dim_ranges(ptr, name2type, lst);
+        apply_dim_ranges(ptr, name2dim, lst);
     }
 
     ptr->submit();
