@@ -374,10 +374,10 @@ def make_multiply_indexed_dataframe(tmp_path, index_column_names: List[str]):
         [
             # TO DO: Support other index types when we have support for more than int and string/bytes
             # index types in libtiledbsoma's SOMAReader.
-            ("index1", pa.int64()),
-            ("index2", pa.string()),
-            ("index3", pa.int64()),
-            ("index4", pa.int64()),
+            ("0_thru_5", pa.int64()),
+            ("strings_aaa", pa.string()),
+            ("zero_one", pa.int64()),
+            ("thousands", pa.int64()),
             ("soma_joinid", pa.int64()),
             ("A", pa.int64()),
         ]
@@ -388,15 +388,15 @@ def make_multiply_indexed_dataframe(tmp_path, index_column_names: List[str]):
     )
 
     data: Dict[str, list] = {
-        "index1": [0, 1, 2, 3, 4, 5],
-        "index2": ["aaa", "aaa", "bbb", "bbb", "ccc", "ccc"],
-        "index3": [0, 1, 0, 1, 0, 1],
-        "index4": [1000, 2000, 1000, 1000, 1000, 1000],
+        "0_thru_5": [0, 1, 2, 3, 4, 5],
+        "strings_aaa": ["aaa", "aaa", "bbb", "bbb", "ccc", "ccc"],
+        "zero_one": [0, 1, 0, 1, 0, 1],
+        "thousands": [1000, 2000, 1000, 1000, 1000, 1000],
         "soma_joinid": [10, 11, 12, 13, 14, 15],
         "A": [10, 11, 12, 13, 14, 15],
     }
 
-    n_data = len(data["index1"])
+    n_data = len(data["0_thru_5"])
     sdf.write(pa.Table.from_pandas(pd.DataFrame(data=data)))
 
     return (schema, sdf, n_data)
@@ -405,105 +405,103 @@ def make_multiply_indexed_dataframe(tmp_path, index_column_names: List[str]):
 @pytest.mark.parametrize(
     "io",
     [
-        # 1D: indexing slot is None
         {
-            "index_column_names": ["index1"],
+            "name": "1D indexing slot is None",
+            "index_column_names": ["0_thru_5"],
             "coords": [None],
             "A": [10, 11, 12, 13, 14, 15],
             "throws": None,
         },
-        # 1D: indexing slot is int
         {
-            "index_column_names": ["index1"],
+            "name": "1D indexing slot is int",
+            "index_column_names": ["0_thru_5"],
             "coords": [0],
             "A": [10],
             "throws": None,
         },
         {
-            "index_column_names": ["index1"],
+            "name": "1D no results for 100",
+            "index_column_names": ["0_thru_5"],
             "coords": [100],
             "A": [],
             "throws": None,
         },
         {
-            "index_column_names": ["index1"],
+            "name": "1D no results for -100",
+            "index_column_names": ["0_thru_5"],
             "coords": [-100],
             "A": [],
             "throws": None,
         },
-        # 1D: indexing slot is list
         {
-            "index_column_names": ["index1"],
+            "name": "1D indexing slot is list",
+            "index_column_names": ["0_thru_5"],
             "coords": [[1, 3]],
             "A": [11, 13],
             "throws": None,
         },
         {
-            "index_column_names": ["index1"],
+            "name": "1D no results for -100, 100",
+            "index_column_names": ["0_thru_5"],
             "coords": [[-100, 100]],
             "A": [],
             "throws": None,
         },
-        # Indexing by empty list must return empty results
         {
-            "index_column_names": ["index1"],
+            "name": "1D empty list returns empty results",
+            "index_column_names": ["0_thru_5"],
             "coords": [[]],
             "A": [],
             "throws": None,
         },
-        # 1D: indexing slot is tuple
         {
-            "index_column_names": ["index1"],
+            "name": "1D indexing slot is tuple",
+            "index_column_names": ["0_thru_5"],
             "coords": [(1, 3)],
             "A": [11, 13],
             "throws": None,
         },
-        # 1D: indexing slot is range
         {
-            "index_column_names": ["index1"],
+            "name": "1D indexing slot is range",
+            "index_column_names": ["0_thru_5"],
             "coords": [range(1, 3)],
             "A": [11, 12],
             "throws": None,
         },
-        # 1D: indexing slot is pa.ChunkedArray
         {
-            "index_column_names": ["index1"],
+            "name": "1D indexing slot is pa.ChunkedArray",
+            "index_column_names": ["0_thru_5"],
             "coords": [pa.chunked_array(pa.array([1, 3]))],
             "A": [11, 13],
             "throws": None,
         },
-        # 1D: indexing slot is pa.Array
         {
-            "index_column_names": ["index1"],
-            "coords": [pa.array([1, 3])],
-            "A": [11, 13],
-            "throws": None,
-        },
-        # 1D: indexing slot is pa.Array
-        {
-            "index_column_names": ["index1"],
+            "name": "1D indexing slot is pa.Array",
+            "index_column_names": ["0_thru_5"],
             "coords": [pa.array([1, 3])],
             "A": [11, 13],
             "throws": None,
         },
         # 1D: indexing slot is np.ndarray
         {
-            "index_column_names": ["index1"],
+            "name": "1D indexing slot is np.ndarray",
+            "index_column_names": ["0_thru_5"],
             "coords": [np.asarray([1, 3])],
             "A": [11, 13],
             "throws": None,
         },
         {
-            "index_column_names": ["index1"],
+            "name": "1D indexing by 2D np.ndarray",
+            "index_column_names": ["0_thru_5"],
             "coords": [
                 np.asarray([[1, 3], [2, 4]])
             ],  # Error since 2D array in the slot
             "A": [11, 13],
             "throws": ValueError,
         },
-        # 1D: indexing slot is slice
         {
-            "index_column_names": ["index1"],
+            "name": "1D indexing by slice(None)",
+            "index_column_names": ["0_thru_5"],
             "coords": [
                 slice(None)
             ],  # Indexing slot is none-slice i.e. `[:]` which is like None
@@ -511,164 +509,171 @@ def make_multiply_indexed_dataframe(tmp_path, index_column_names: List[str]):
             "throws": None,
         },
         {
-            "index_column_names": ["index1"],
-            "coords": [],  # len(ids) != len(index_column_names)
+            "name": "1D indexing by empty coords",
+            "index_column_names": ["0_thru_5"],
+            "coords": [],
             "A": [10, 11, 12, 13, 14, 15],
             "throws": None,
         },
         {
-            "index_column_names": ["index1"],
+            "name": "1D indexing by 1:3",
+            "index_column_names": ["0_thru_5"],
             "coords": [slice(1, 3)],  # Indexing slot is double-ended slice
             "A": [11, 12, 13],
             "throws": None,
         },
         {
-            "index_column_names": ["index1"],
-            "coords": [slice(None, None)],  # Indexing slot is slice-all
-            "A": [10, 11, 12, 13, 14, 15],
-            "throws": None,
-        },
-        {
-            "index_column_names": ["index1"],
+            "name": "1D indexing by [:3]",
+            "index_column_names": ["0_thru_5"],
             "coords": [slice(None, 3)],  # Half-slice
             "A": [10, 11, 12, 13],
             "throws": None,
         },
         {
-            "index_column_names": ["index1"],
+            "name": "1D indexing by [2:]",
+            "index_column_names": ["0_thru_5"],
             "coords": [slice(2, None)],  # Half-slice
             "A": [12, 13, 14, 15],
             "throws": None,
         },
         {
-            "index_column_names": ["index1"],
+            "name": "1D indexing with one partition",
+            "index_column_names": ["0_thru_5"],
             "coords": [slice(2, None)],
-            "partitions": somacore.IOfN(0, 1),  # One partition is allowed.
+            "partitions": somacore.IOfN(0, 1),
             "A": [12, 13, 14, 15],
             "throws": None,
         },
         {
-            "index_column_names": ["index1"],
+            "name": "partitioned reads unimplemented",
+            "index_column_names": ["0_thru_5"],
             "coords": [],
-            "partitions": somacore.IOfN(1, 2),  # Partitioned reads forbidden.
+            "partitions": somacore.IOfN(1, 2),
             "A": None,
             "throws": ValueError,
         },
         {
-            "index_column_names": ["index1"],
-            "coords": [slice(1, 5, 2)],  # Slice step must be 1 or None
+            "name": "steps forbidden",
+            "index_column_names": ["0_thru_5"],
+            "coords": [slice(1, 5, 2)],
             "A": None,
             "throws": ValueError,
         },
         {
-            "index_column_names": ["index1"],
-            "coords": [slice(-2, -1)],  # Negative slices are not supported
+            "name": "slice must overlap domain (negative)",
+            "index_column_names": ["0_thru_5"],
+            "coords": [slice(-2, -1)],
             "A": None,
             "throws": ValueError,
         },
         {
-            "index_column_names": ["index1"],
-            "coords": [slice(1, 0)],  # hi < lo
+            "name": "backwards slice",
+            "index_column_names": ["0_thru_5"],
+            "coords": [slice(1, 0)],
             "A": None,
             "throws": ValueError,
         },
         {
-            "index_column_names": ["index1"],
-            "coords": [(1,), (2,)],  # len(ids) > len(index_column_names)
+            "name": "too many columns",
+            "index_column_names": ["0_thru_5"],
+            "coords": [(1,), (2,)],
             "A": None,
             "throws": ValueError,
         },
         {
-            "index_column_names": ["index1"],
-            "coords": "bogus",  # ids not list/tuple
+            "name": "wrong coords type",
+            "index_column_names": ["0_thru_5"],
+            "coords": "bogus",
             "A": None,
             "throws": TypeError,
         },
         {
-            "index_column_names": ["index1"],
-            "coords": [{"bogus": True}],  # bad index type
+            "name": "bad index type dict",
+            "index_column_names": ["0_thru_5"],
+            "coords": [{"bogus": True}],
             "A": None,
             "throws": TypeError,
         },
-        # 1D: indexing slot is of invalid type
         {
-            "index_column_names": ["index2", "index3"],
+            "name": "bad index type bool",
+            "index_column_names": ["strings_aaa", "zero_one"],
             "coords": [[True], slice(None)],
             "A": None,
             "throws": (RuntimeError, tiledb.cc.TileDBError),
         },
-        # 2D: indexing list is empty
         {
-            "index_column_names": ["index2", "index3"],
+            "name": "2D index empty",
+            "index_column_names": ["strings_aaa", "zero_one"],
             "coords": (),
             "A": [10, 11, 12, 13, 14, 15],
             "throws": None,
         },
-        # 2D: indexing slot is None
         {
-            "index_column_names": ["index2", "index3"],
+            "name": "2D index None",
+            "index_column_names": ["strings_aaa", "zero_one"],
             "coords": [None, None],
             "A": [10, 11, 12, 13, 14, 15],
             "throws": None,
         },
-        # 2D: indexing slot is int
         {
-            "index_column_names": ["index1", "index3"],
+            "name": "2D index 0, 0",
+            "index_column_names": ["0_thru_5", "zero_one"],
             "coords": [0, 0],
             "A": [10],
             "throws": None,
         },
-        # 2D: indexing slots are string and int
         {
-            "index_column_names": ["index2", "index3"],
+            "name": "2D index str, int",
+            "index_column_names": ["strings_aaa", "zero_one"],
             "coords": [["aaa"], 0],
             "A": [10],
             "throws": None,
         },
-        # 2D: indexing slot is string not list/tuple of string
         {
-            "index_column_names": ["index2", "index3"],
+            "name": "2D index str, not sequence[str]",
+            "index_column_names": ["strings_aaa", "zero_one"],
             "coords": ["aaa", 0],
             "A": [10],
             "throws": None,
         },
-        # 2D: indexing slot is list
-        # TODO: at present SOMAReader only accepts int and string/byte dims.
         {
-            "index_column_names": ["index2", "index3"],
+            "name": "2D index List[str]",
+            "index_column_names": ["strings_aaa", "zero_one"],
             "coords": [["aaa", "ccc"], None],
             "A": [10, 11, 14, 15],
             "throws": None,
         },
-        # 3D: indexing slot is list
         {
-            "index_column_names": ["index2", "index3", "index4"],
+            "name": "3D index List[str]",
+            "index_column_names": ["strings_aaa", "zero_one", "thousands"],
             "coords": [["aaa", "ccc"], None, None],
             "A": [10, 11, 14, 15],
             "throws": None,
         },
-        # 3D: indexing slot is mixed
         {
-            "index_column_names": ["index2", "index3", "index4"],
+            "name": "3D index mixed",
+            "index_column_names": ["strings_aaa", "zero_one", "thousands"],
             "coords": [("aaa", "ccc"), None, np.asarray([2000, 9999])],
             "A": [11],
             "throws": None,
         },
-        # value_filter
         {
-            "index_column_names": ["index1", "index2"],
+            "name": "value filter good",
+            "index_column_names": ["0_thru_5", "strings_aaa"],
             "coords": [None, ("ccc", "zzz")],
             "value_filter": "soma_joinid > 13",
             "A": [14, 15],
         },
         {
-            "index_column_names": ["index1", "index2"],
+            "name": "value filter bad",
+            "index_column_names": ["0_thru_5", "strings_aaa"],
             "coords": [None, ("bbb", "zzz")],
             "value_filter": "quick brown fox",
             "A": None,
             "throws": soma.SOMAError,
         },
     ],
+    ids=lambda d: d.get("name"),
 )
 def test_read_indexing(tmp_path, io):
     """Test various ways of indexing on read"""
