@@ -11,32 +11,45 @@ SOMATileDBContext <- R6::R6Class(
     #'
     #' @return ...
     initialize = function(config = NULL, cached = TRUE) {
-      super$initialize()
+      # super$initialize()
       config <- config %||% character()
-      config['sm.mem.reader.sparse_global_order.ratio_array_data'] <- '0.3'
-      stopifnot(is.character(x = config), !is.null(x = names(x = config)))
       # Identify options that are SOMA-specific
       soma_opts <- which(x = names(x = config) %in% names(x = .SOMA_CONTEXTS()))
       if (length(x = soma_opts)) {
         soma_config <- config[soma_opts]
         config <- config[-soma_opts]
       } else {
-        soma_config <- vector()
+        soma_config <- NULL
       }
+      super$initialize(config = soma_config)
+      if (is.list(x = config)) {
+        config <- unlist(x = config)
+      }
+      stopifnot(
+        !length(x = config) || is.character(x = config),
+        !length(x = config) || is_named2(x = config)
+      )
+      config['sm.mem.reader.sparse_global_order.ratio_array_data'] <- '0.3'
       # Add the TileDB context
-      if (!length(x = config)) {
-        config <- NA_character_
+      # TODO: Reenable this with newer version of tiledb-r
+      # if (!length(x = config)) {
+      #   config <- NA_character_
+      # }
+      # cfg <- tiledb::tiledb_config(config = config)
+      # TODO: replace this when patched version of tiledb-r is released
+      cfg <- tiledb::tiledb_config()
+      for (opt in names(x = config)) {
+        cfg[opt] <- config[opt]
       }
-      cfg <- tiledb::tiledb_config(config = config)
       private$.ctx <- tiledb::tiledb_ctx(config = cfg, cached = cached)
-      # Add the SOMA options
-      if (length(x = soma_config)) {
-        self$setv(soma_config)
-      }
     },
     #' @return ...
     keys = function() {
-      return(super$keys(), private$.ctx_names())
+      return(c(super$keys(), private$.ctx_names()))
+    },
+    #' @return ...
+    length = function() {
+      return(super$length() + length(x = private$.ctx_names()))
     },
     #' @param key ...
     #' @param default ...

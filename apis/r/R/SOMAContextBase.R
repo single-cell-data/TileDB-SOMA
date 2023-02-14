@@ -9,7 +9,7 @@ SOMAContextBase <- R6::R6Class(
   inherit = ScalarMap,
   public = list(
     #' @return ...
-    initialize = function() {
+    initialize = function(config = NULL) {
       calls <- vapply(
         X = lapply(X = sys.calls(), FUN = as.character),
         FUN = '[[',
@@ -20,6 +20,17 @@ SOMAContextBase <- R6::R6Class(
         .NotYetImplemented()
       }
       super$initialize()
+      if (!is.null(x = config)) {
+        msg <- "'config' must be a named vector"
+        if (!is.vector(x = config)) {
+          stop(msg)
+        }
+        conf_opts <- names(x = config)
+        if (is.null(x = conf_opts) || !all(nzchar(x = conf_opts))) {
+          stop(msg)
+        }
+        self$setv(config)
+      }
     },
     #' @param key ...
     #' @param value ...

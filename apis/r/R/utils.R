@@ -13,6 +13,10 @@ is_named <- function(x) {
   !is.null(names(x))
 }
 
+is_named2 <- function(x) {
+  return(!is.null(x = names(x = x)) && all(nzchar(x = names(x = x))))
+}
+
 is_named_list <- function(x) {
   is.list(x) && is_named(x)
 }
