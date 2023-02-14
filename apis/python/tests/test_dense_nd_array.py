@@ -118,30 +118,37 @@ def test_dense_nd_array_reshape(tmp_path):
     "io",
     [
         {
+            "name": "(2, 3)",
             "coords": (2, 3),
             "output": np.array([[203]]),
         },
         {
+            "name": "([:], 3)",
             "coords": (slice(None), 3),
             "output": np.array([[3], [103], [203], [303]]),
         },
         {
+            "name": "(2, [:])",
             "coords": (2, slice(None)),
             "output": np.array([[200, 201, 202, 203, 204, 205]]),
         },
         {
+            "name": "(2,)",
             "coords": (2,),
             "output": np.array([[200, 201, 202, 203, 204, 205]]),
         },
         {
+            "name": "([:2], [5:])",
             "coords": (slice(None, 2), slice(5, None)),
             "output": np.array([[5], [105], [205]]),
         },
         {
+            "name": "([0:2], [5:5])",
             "coords": (slice(0, 2), slice(5, 5)),
             "output": np.array([[5], [105], [205]]),
         },
         {
+            "name": "()",
             "coords": (),
             "output": np.array(
                 [
@@ -153,6 +160,7 @@ def test_dense_nd_array_reshape(tmp_path):
             ),
         },
         {
+            "name": "([:], [:]) multiple reads",
             "coords": (slice(None), slice(None)),
             "cfg": {
                 "soma.init_buffer_bytes": 100
@@ -167,6 +175,7 @@ def test_dense_nd_array_reshape(tmp_path):
             ),
         },
     ],
+    ids=lambda io: io.get("name"),
 )
 def test_dense_nd_array_slicing(tmp_path, io):
     """
@@ -205,16 +214,19 @@ def test_dense_nd_array_slicing(tmp_path, io):
     "io",
     [
         {
+            "name": "negative",
             "shape": (10,),
             "coords": (-1,),
             "throws": (RuntimeError, tiledb.cc.TileDBError),
         },
         {
+            "name": "12 in 10 domain",
             "shape": (10,),
             "coords": (12,),
             "throws": (RuntimeError, tiledb.cc.TileDBError),
         },
         {
+            "name": "too many dims",
             "shape": (10,),
             "coords": (
                 2,
@@ -223,6 +235,7 @@ def test_dense_nd_array_slicing(tmp_path, io):
             "throws": ValueError,
         },
         {
+            "name": "too many dims 2",
             "shape": (10, 20),
             "coords": (
                 2,
@@ -232,26 +245,37 @@ def test_dense_nd_array_slicing(tmp_path, io):
             "throws": ValueError,
         },
         {
+            "name": "oops all negatives",
             "shape": (10, 20),
             "coords": (slice(-2, -1),),
             "throws": ValueError,
         },
         {
+            "name": "too big",
+            "shape": (5,),
+            "coords": (slice(10, 20),),
+            "throws": ValueError,
+        },
+        {
+            "name": "slice step",
             "shape": (10, 20),
             "coords": (slice(2, 3, -1),),
             "throws": ValueError,
         },
         {
+            "name": "slice step 2",
             "shape": (10, 20),
             "coords": (slice(3, 2, 1),),
             "throws": ValueError,
         },
         {
+            "name": "slice step 3",
             "shape": (10, 20),
             "coords": (slice(4, 8, 2),),
             "throws": ValueError,
         },
         {
+            "name": "too many dims pa.array",
             "shape": (10, 20),
             "coords": (
                 pa.array(
@@ -261,6 +285,7 @@ def test_dense_nd_array_slicing(tmp_path, io):
             "throws": ValueError,
         },
     ],
+    ids=lambda io: io.get("name"),
 )
 def test_dense_nd_array_indexing_errors(tmp_path, io):
     shape = io["shape"]
