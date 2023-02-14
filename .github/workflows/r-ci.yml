@@ -44,12 +44,8 @@ jobs:
         run: cd apis/r && tools/r-ci.sh run_tests
 
       - name: View Install Output
-        run: cat /home/runner/work/TileDB-SOMA/TileDB-SOMA/apis/r/tiledbsoma.Rcheck/00install.out
-        if: failure() && matrix.os == 'ubuntu-latest'
-
-      - name: View Install Output
-        run: cat /Users/runner/work/TileDB-SOMA/TileDB-SOMA/apis/r/tiledbsoma.Rcheck/00install.out
-        if: failure() && matrix.os == 'macOS-latest'
+        run: cat $HOME/work/TileDB-SOMA/TileDB-SOMA/apis/r/tiledbsoma.Rcheck/00install.out
+        if: failure()
 
       - name: Coverage
         if: ${{ matrix.os == 'ubuntu-latest' }}
