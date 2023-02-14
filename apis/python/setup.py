@@ -177,6 +177,7 @@ setuptools.setup(
     install_requires=[
         "anndata",
         "attrs>=22.1",
+        "matplotlib<3.7",  # https://github.com/scverse/scanpy/issues/2411
         "numpy",
         "pandas",
         "pyarrow >= 9.0.0",
