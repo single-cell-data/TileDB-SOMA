@@ -86,7 +86,7 @@ def _build_tiledb_schema(
 
     # check on shape
     if len(shape) == 0 or any(e <= 0 for e in shape):
-        raise ValueError("DenseNDArray shape must be non-zero length tuple of ints > 0")
+        raise ValueError("SOMA NDArray shape must be non-zero length tuple of ints > 0")
 
     if not pa.types.is_primitive(type):
         raise TypeError(
