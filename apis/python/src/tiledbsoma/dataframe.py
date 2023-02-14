@@ -25,9 +25,10 @@ class DataFrame(TileDBArray, somacore.DataFrame):
     """
     Represents ``obs``, ``var``, and others.
 
-    Every ``DataFrame`` must contain a column called ``soma_joinid``, of type ``int64``.
-    The ``soma_joinid`` column contains a unique value for each row in the dataframe,
-    and acts as a joint key for other objects, such as ``SparseNDArray``.
+    Every ``DataFrame`` must contain a column called ``soma_joinid``, of type
+    ``int64``, with negative values explicitly disallowed.  The ``soma_joinid`` column
+    contains a unique value for each row in the dataframe, and acts as a joint key for
+    other objects, such as ``SparseNDArray``.
 
     [lifecycle: experimental]
     """
@@ -342,6 +343,8 @@ def _build_tiledb_schema(
             domain = finfo.min, finfo.max
         else:
             raise TypeError(f"Unsupported dtype {dtype}")
+        if index_column_name == SOMA_JOINID:
+            domain = (0, domain[1])
 
         # Default 2048 mods to 0 for 8-bit types and 0 is an invalid extent
         extent = tiledb_create_options.dim_tile(index_column_name)
