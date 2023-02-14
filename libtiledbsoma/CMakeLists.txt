@@ -105,8 +105,8 @@ if(APPLE)
 endif()
 
 # Set -fvisibility=hidden (or equivalent) flags by default.
-# set(CMAKE_C_VISIBILITY_PRESET hidden)
-# set(CMAKE_CXX_VISIBILITY_PRESET hidden)
+set(CMAKE_C_VISIBILITY_PRESET hidden)
+set(CMAKE_CXX_VISIBILITY_PRESET hidden)
 
 # Root directory default installation prefix
 if(OVERRIDE_INSTALL_PREFIX)
