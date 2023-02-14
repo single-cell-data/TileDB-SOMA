@@ -48,39 +48,7 @@ class DenseNDArray(NDArray, somacore.DenseNDArray):
 
         sr = self._soma_reader(result_order=result_order.value)
 
-        if not isinstance(coords, (list, tuple)):
-            raise TypeError(
-                f"coords type {type(coords)} unsupported; expected list or tuple"
-            )
-        if len(coords) > schema.domain.ndim:
-            raise ValueError(
-                f"coords {coords} must be shorter than ndim ({schema.domain.ndim}); got {len(coords)}"
-            )
-
-        for i, coord in enumerate(coords):
-            dim = schema.domain.dim(i)
-
-            if coord is None:
-                pass  # No constraint; select all in this dimension
-            elif isinstance(coord, int):
-                sr.set_dim_points(dim.name, [coord])
-            elif isinstance(coord, slice):
-                lo_hi = util.slice_to_range(coord, dim.domain)
-                if lo_hi is not None:
-                    lo, hi = lo_hi
-                    if lo < 0 or hi < 0:
-                        raise ValueError(
-                            f"slice start and stop may not be negative; got ({lo}, {hi})"
-                        )
-                    if lo > hi:
-                        raise ValueError(
-                            f"slice start must be <= slice stop; got ({lo}, {hi})"
-                        )
-                    sr.set_dim_ranges(dim.name, [lo_hi])
-                # Else, no constraint in this slot. This is `slice(None)` which is like
-                # Python indexing syntax `[:]`.
-            else:
-                raise TypeError(f"coord type {type(coord)} at slot {i} unsupported")
+        self._set_reader_coords(sr, coords)
 
         sr.submit()
 

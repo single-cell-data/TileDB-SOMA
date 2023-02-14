@@ -5,10 +5,11 @@ import tiledb
 
 # This package's pybind11 code
 from . import libtiledbsoma as clib
-from . import tdb_handles
+from . import tdb_handles, util
 from .arrow_types import tiledb_schema_to_arrow
 from .options.soma_tiledb_context import SOMATileDBContext
 from .tiledb_object import TileDBObject
+from .types import is_nonstringy_sequence
 
 
 class TileDBArray(TileDBObject[tdb_handles.ArrayWrapper]):
@@ -57,6 +58,7 @@ class TileDBArray(TileDBObject[tdb_handles.ArrayWrapper]):
 
     def _soma_reader(
         self,
+        *,
         schema: Optional[tiledb.ArraySchema] = None,
         column_names: Optional[Sequence[str]] = None,
         query_condition: Optional[tiledb.QueryCondition] = None,
@@ -84,6 +86,63 @@ class TileDBArray(TileDBObject[tdb_handles.ArrayWrapper]):
         if result_order:
             kwargs["result_order"] = result_order
         return clib.SOMAReader(self.uri, **kwargs)
+
+    def _set_reader_coords(self, sr: clib.SOMAReader, coords: Sequence[object]) -> None:
+        """Parses the given coords and sets them on the SOMA Reader."""
+        if not is_nonstringy_sequence(coords):
+            raise TypeError(
+                f"coords type {type(coords)} must be a regular sequence,"
+                " not str or bytes"
+            )
+        schema = self._handle.schema
+        if len(coords) > schema.domain.ndim:
+            raise ValueError(
+                f"coords ({len(coords)} elements) must be shorter than ndim"
+                f" ({schema.domain.ndim})"
+            )
+        for i, coord in enumerate(coords):
+            dim = self._handle.schema.domain.dim(i)
+            if not self._set_reader_coord(sr, dim, coord):
+                raise TypeError(
+                    f"coord type {type(coord)} for dimension {dim.name}"
+                    f" (slot {i}) unsupported"
+                )
+
+    def _set_reader_coord(
+        self, sr: clib.SOMAReader, dim: tiledb.Dim, coord: object
+    ) -> bool:
+        """Parses a single coordinate entry.
+
+        The base implementation parses the most fundamental types shared by all
+        TileDB Array types; subclasses can implement their own readers that
+        handle types not recognized here.
+
+        :return: True if successful, False if unrecognized.
+        """
+        if coord is None:
+            return True  # No constraint; select all in this dimension
+        if isinstance(coord, int):
+            sr.set_dim_points(dim.name, [coord])
+            return True
+        if isinstance(coord, slice):
+            # TODO: Allow negative indices.
+            lo_hi = util.slice_to_range(coord, (0, dim.domain[1]))
+            if lo_hi is not None:
+                lo, hi = lo_hi
+                if lo < 0 or hi < 0:
+                    raise ValueError(
+                        f"slice start and stop may not be negative; got ({lo}, {hi})"
+                    )
+                if lo > hi:
+                    raise ValueError(
+                        f"coordinate for dimension {dim.name} must have lo <= hi;"
+                        f" got {lo} > {hi}"
+                    )
+                sr.set_dim_ranges(dim.name, [lo_hi])
+            # Else, no constraint in this slot. This is `slice(None)` which is like
+            # Python indexing syntax `[:]`.
+            return True
+        return False
 
     @classmethod
     def _create_internal(

@@ -1,7 +1,7 @@
 import pathlib
 import time
 import urllib.parse
-from typing import Any, List, Optional, Tuple, Type, Union
+from typing import Any, List, Optional, Tuple, Type
 
 import somacore
 from somacore import options
@@ -146,10 +146,7 @@ def dense_indices_to_shape(
     return tuple(reversed(shape))
 
 
-def dense_index_to_shape(
-    coord: Union[int, slice],
-    array_length: int,
-) -> int:
+def dense_index_to_shape(coord: options.DenseCoord, array_length: int) -> int:
     """
     Given a subarray per-dimension index specified as a slice or scalar (e.g, ``[:], 1, [1:2]``),
     and the shape of the array in that dimension, return the shape of the subarray in
@@ -158,6 +155,9 @@ def dense_index_to_shape(
     Note that Python slice semantics are right-endpoint-exclusive whereas SOMA slice semantics are
     doubly inclusive.
     """
+    if coord is None:
+        return array_length
+
     if type(coord) is int:
         return 1
 
