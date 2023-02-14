@@ -99,34 +99,32 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
         for i, coord in enumerate(coords):
             #                # Example: coords = [None, 3, slice(4,5)]
             #                # coord takes on values None, 3, and slice(4,5) in this loop body.
-            dim_name = schema.domain.dim(i).name
+            dim = schema.domain.dim(i)
             if coord is None:
                 pass  # No constraint; select all in this dimension
             elif isinstance(coord, int):
-                sr.set_dim_points(dim_name, [coord])
+                sr.set_dim_points(dim.name, [coord])
             elif isinstance(coord, np.ndarray):
                 if coord.ndim != 1:
                     raise ValueError(
                         f"only 1D numpy arrays may be used to index; got {coord.ndim}"
                     )
-                sr.set_dim_points(dim_name, coord)
+                sr.set_dim_points(dim.name, coord)
             elif isinstance(coord, slice):
-                ned = self._handle.reader.nonempty_domain()
-                # ned is None iff the array has no data
-                lo_hi = util.slice_to_range(coord, ned[i]) if ned else None
+                lo_hi = util.slice_to_range(coord, dim.domain)
                 if lo_hi is not None:
                     lo, hi = lo_hi
                     if lo < 0 or hi < 0:
                         raise ValueError(
                             f"slice start and stop may not be negative; got ({lo}, {hi})"
                         )
-                    sr.set_dim_ranges(dim_name, [lo_hi])
+                    sr.set_dim_ranges(dim.name, [lo_hi])
                 # Else, no constraint in this slot. This is `slice(None)` which is like
                 # Python indexing syntax `[:]`.
             elif isinstance(
                 coord, (collections.abc.Sequence, pa.Array, pa.ChunkedArray)
             ):
-                sr.set_dim_points(dim_name, coord)
+                sr.set_dim_points(dim.name, coord)
             else:
                 raise TypeError(f"coord type {type(coord)} at slot {i} unsupported")
 

@@ -181,21 +181,20 @@ class DataFrame(TileDBArray, somacore.DataFrame):
         for i, dim_coords in enumerate(coords):
             # Example: coords = [None, 3, slice(4,5)]
             # dim_coords takes on values None, 3, and slice(4,5) in this loop body.
-            dim_name = schema.domain.dim(i).name
+            dim = schema.domain.dim(i)
             if dim_coords is None:
                 pass  # No constraint; select all in this dimension
             elif isinstance(dim_coords, (int, str, bytes)):
-                sr.set_dim_points(dim_name, [dim_coords])
+                sr.set_dim_points(dim.name, [dim_coords])
             elif isinstance(dim_coords, np.ndarray):
                 if dim_coords.ndim != 1:
                     raise ValueError(
                         f"only 1D numpy arrays may be used to index; got {dim_coords.ndim}"
                     )
-                sr.set_dim_points(dim_name, dim_coords)
+                sr.set_dim_points(dim.name, dim_coords)
             elif isinstance(dim_coords, slice):
-                ned = self._handle.reader.nonempty_domain()
-                # ned is None iff the array has no data
-                lo_hi = util.slice_to_range(dim_coords, ned[i]) if ned else None
+                # TODO: Allow negative indices.
+                lo_hi = util.slice_to_range(dim_coords, (0, dim.domain[1]))
                 if lo_hi is not None:
                     lo, hi = lo_hi
                     if lo < 0 or hi < 0:
@@ -206,14 +205,14 @@ class DataFrame(TileDBArray, somacore.DataFrame):
                         raise ValueError(
                             f"coordinate at slot {i} must have lo <= hi; got {lo} > {hi}"
                         )
-                    sr.set_dim_ranges(dim_name, [lo_hi])
+                    sr.set_dim_ranges(dim.name, [lo_hi])
                 # Else, no constraint in this slot. This is `slice(None)` which is like
                 # Python indexing syntax `[:]`.
             elif isinstance(
                 dim_coords,
                 (collections.abc.Sequence, pa.Array, pa.ChunkedArray),
             ):
-                sr.set_dim_points(dim_name, dim_coords)
+                sr.set_dim_points(dim.name, dim_coords)
             else:
                 raise TypeError(f"coords[{i}] type {type(dim_coords)} is unsupported")
 

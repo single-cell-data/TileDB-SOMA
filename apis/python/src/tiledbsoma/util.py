@@ -91,9 +91,7 @@ def uri_joinpath(base: str, path: str) -> str:
     return urllib.parse.urlunparse(parts)
 
 
-def slice_to_range(
-    ids: slice, nonempty_domain: Tuple[int, int]
-) -> Optional[Tuple[int, int]]:
+def slice_to_range(ids: slice, domain: Tuple[int, int]) -> Optional[Tuple[int, int]]:
     """
     For the interface between ``DataFrame::read`` et al. (Python) and ``SOMAReader`` (C++).
     """
@@ -102,18 +100,16 @@ def slice_to_range(
     if ids == slice(None):
         return None
 
-    start = ids.start
-    stop = ids.stop
+    domain_start, domain_stop = domain
 
     # TODO: with future C++ improvements, move half-slice logic to SOMAReader
-    if start is None:
-        start = nonempty_domain[0]
-    if stop is None:
-        stop = nonempty_domain[1]
+    start = domain_start if ids.start is None else ids.start
+    stop = domain_stop if ids.stop is None else ids.stop
 
     # Indexing beyond end of array should "trim" to end of array
-    if stop > nonempty_domain[1]:
-        stop = nonempty_domain[1]
+    # TODO: Allow negative indexing:
+    # start = max(start, domain_start)
+    stop = min(stop, domain_stop)
 
     if start > stop:
         raise ValueError("slice start must be <= slice stop")
