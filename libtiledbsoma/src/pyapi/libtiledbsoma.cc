@@ -121,19 +121,19 @@ PYBIND11_MODULE(libtiledbsoma, m) {
     m.def("debug", &LOG_DEBUG, "message"_a = "");
 
     m.def(
-        "stats_enable",
+        "tiledb_stats_enable",
         []() { tiledb::Stats::enable(); },
         "Enable TileDB internal statistics.");
     m.def(
-        "stats_disable",
+        "tiledb_stats_disable",
         []() { tiledb::Stats::disable(); },
         "Disable TileDB internal statistics.");
     m.def(
-        "stats_reset",
+        "tiledb_stats_reset",
         []() { tiledb::Stats::reset(); },
         "Reset all TileDB internal statistics to 0.");
     m.def(
-        "stats_dump",
+        "tiledb_stats_dump",
         []() {
             std::string stats;
             tiledb::Stats::dump(&stats);

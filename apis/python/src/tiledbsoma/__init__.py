@@ -13,7 +13,12 @@ from .general_utilities import (
     get_storage_engine,
     show_package_versions,
 )
-from .libtiledbsoma import stats_disable, stats_dump, stats_enable, stats_reset
+from .libtiledbsoma import (
+    tiledb_stats_disable,
+    tiledb_stats_dump,
+    tiledb_stats_enable,
+    tiledb_stats_reset,
+)
 from .measurement import Measurement
 from .sparse_nd_array import SparseNDArray
 
@@ -37,8 +42,8 @@ __all__ = [
     "show_package_versions",
     "SOMAError",
     "SparseNDArray",
-    "stats_disable",
-    "stats_dump",
-    "stats_enable",
-    "stats_reset",
+    "tiledb_stats_disable",
+    "tiledb_stats_dump",
+    "tiledb_stats_enable",
+    "tiledb_stats_reset",
 ]

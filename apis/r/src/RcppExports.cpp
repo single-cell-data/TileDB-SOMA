@@ -102,40 +102,40 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// stats_enable
-void stats_enable();
+// tiledb_stats_enable
+void tiledb_stats_enable();
 RcppExport SEXP _tiledbsoma_stats_enable() {
 BEGIN_RCPP
     Rcpp::RNGScope rcpp_rngScope_gen;
-    stats_enable();
+    tiledb_stats_enable();
     return R_NilValue;
 END_RCPP
 }
-// stats_disable
-void stats_disable();
+// tiledb_stats_disable
+void tiledb_stats_disable();
 RcppExport SEXP _tiledbsoma_stats_disable() {
 BEGIN_RCPP
     Rcpp::RNGScope rcpp_rngScope_gen;
-    stats_disable();
+    tiledb_stats_disable();
     return R_NilValue;
 END_RCPP
 }
-// stats_reset
-void stats_reset();
+// tiledb_stats_reset
+void tiledb_stats_reset();
 RcppExport SEXP _tiledbsoma_stats_reset() {
 BEGIN_RCPP
     Rcpp::RNGScope rcpp_rngScope_gen;
-    stats_reset();
+    tiledb_stats_reset();
     return R_NilValue;
 END_RCPP
 }
-// stats_dump
-std::string stats_dump();
+// tiledb_stats_dump
+std::string tiledb_stats_dump();
 RcppExport SEXP _tiledbsoma_stats_dump() {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    rcpp_result_gen = Rcpp::wrap(stats_dump());
+    rcpp_result_gen = Rcpp::wrap(tiledb_stats_dump());
     return rcpp_result_gen;
 END_RCPP
 }
