@@ -91,7 +91,7 @@ Read a user-defined subset of data, addressed by the dataframe indexing
 column, and optionally filtered.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{SOMADataFrame$read(
-  ids = NULL,
+  coords = NULL,
   column_names = NULL,
   value_filter = NULL,
   result_order = "UNORDERED",
@@ -102,7 +102,7 @@ column, and optionally filtered.
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{ids}}{Optional named list of indices specifying the rows to read; each (named)
+\item{\code{coords}}{Optional named list of indices specifying the rows to read; each (named)
 list element corresponds to a dimension of the same name.}
 
 \item{\code{column_names}}{Optional character vector of column names to return.}
