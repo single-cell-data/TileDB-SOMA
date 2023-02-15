@@ -1,15 +1,17 @@
 #' SOMA TileDB Context
 #'
+#' Context map for TileDB-backed SOMA objects
+#'
 #' @export
 #'
 SOMATileDBContext <- R6::R6Class(
   classname = 'SOMATileDBContext',
   inherit = SOMAContextBase,
   public = list(
-    #' @param config ...
-    #' @param cached ...
+    #' @template param-config
+    #' @param cached Force new creation
     #'
-    #' @return ...
+    #' @return An instantiated \code{SOMATileDBContext} object
     #'
     initialize = function(config = NULL, cached = TRUE) {
       # super$initialize()
@@ -44,20 +46,23 @@ SOMATileDBContext <- R6::R6Class(
       }
       private$.ctx <- tiledb::tiledb_ctx(config = cfg, cached = cached)
     },
-    #' @return ...
+    #' @return The keys of the map
     #'
     keys = function() {
       return(c(super$keys(), private$.ctx_names()))
     },
-    #' @return ...
+    #' @return The number of items in the map
     #'
     length = function() {
       return(super$length() + length(x = private$.ctx_names()))
     },
-    #' @param key ...
-    #' @param default ...
+    #' @param key Key to fetch
+    #' @templateVar key key
+    #' @templateVar default NULL
+    #' @template param-default
     #'
-    #' @return ...
+    #' @return The value of \code{key} in the map, or \code{default} if
+    #' \code{key} is not found
     #'
     get = function(key, default = NULL) {
       key <- match.arg(arg = key, choices = self$keys())
@@ -68,10 +73,12 @@ SOMATileDBContext <- R6::R6Class(
       }
       return(super$get(key = key, default = default))
     },
-    #' @param key ...
-    #' @param value ...
+    #' @param key Key to set
+    #' @templateVar key key
+    #' @template param-value
     #'
-    #' @return ...
+    #' @return \[chainable\] Invisibly returns \code{self} with
+    #' \code{value} added as \code{key}
     #'
     set = function(key, value) {
       stopifnot(

@@ -4,9 +4,7 @@
 \alias{SOMATileDBContext}
 \title{SOMA TileDB Context}
 \description{
-SOMA TileDB Context
-
-SOMA TileDB Context
+Context map for TileDB-backed SOMA objects
 }
 \section{Super classes}{
 \code{tiledbsoma::MappingBase} -> \code{tiledbsoma::ScalarMap} -> \code{tiledbsoma::SOMAContextBase} -> \code{SOMATileDBContext}
@@ -47,12 +45,12 @@ SOMA TileDB Context
 \describe{
 \item{\code{config}}{...}
 
-\item{\code{cached}}{...}
+\item{\code{cached}}{Force new creation}
 }
 \if{html}{\out{</div>}}
 }
 \subsection{Returns}{
-...
+An instantiated \code{SOMATileDBContext} object
 }
 }
 \if{html}{\out{<hr>}}
@@ -64,7 +62,7 @@ SOMA TileDB Context
 }
 
 \subsection{Returns}{
-...
+The keys of the map
 }
 }
 \if{html}{\out{<hr>}}
@@ -76,7 +74,7 @@ SOMA TileDB Context
 }
 
 \subsection{Returns}{
-...
+The number of items in the map
 }
 }
 \if{html}{\out{<hr>}}
@@ -90,14 +88,16 @@ SOMA TileDB Context
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{key}}{...}
+\item{\code{key}}{Key to fetch}
 
-\item{\code{default}}{...}
+\item{\code{default}}{Default value to fetch if \code{key} is not found;
+defaults to \code{NULL}}
 }
 \if{html}{\out{</div>}}
 }
 \subsection{Returns}{
-...
+The value of \code{key} in the map, or \code{default} if
+\code{key} is not found
 }
 }
 \if{html}{\out{<hr>}}
@@ -111,14 +111,16 @@ SOMA TileDB Context
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{key}}{...}
+\item{\code{key}}{Key to set}
 
-\item{\code{value}}{...}
+\item{\code{value}}{Value to add for \code{key}, or \code{NULL} to remove
+the entry for \code{key}}
 }
 \if{html}{\out{</div>}}
 }
 \subsection{Returns}{
-...
+[chainable] Invisibly returns \code{self} with
+\code{value} added as \code{key}
 }
 }
 \if{html}{\out{<hr>}}

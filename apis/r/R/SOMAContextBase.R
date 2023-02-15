@@ -1,5 +1,9 @@
 #' Base SOMA Context
 #'
+#' R6 mapping class for SOMA context options. This class should be used
+#' as the basis for platform-specific contexts as it checks SOMA-specific
+#' context options
+#'
 #' @keywords internal
 #'
 #' @export
@@ -8,7 +12,7 @@ SOMAContextBase <- R6::R6Class(
   classname = 'SOMAContextBase',
   inherit = ScalarMap,
   public = list(
-    #' @param config ...
+    #' @template param-config
     #'
     #' @return \Sexpr[results=rd]{tiledbsoma::rd_return_virtual()}
     #'
@@ -35,10 +39,12 @@ SOMAContextBase <- R6::R6Class(
         self$setv(config)
       }
     },
-    #' @param key ...
-    #' @param value ...
+    #' @param key Key to set
+    #' @templateVar key key
+    #' @template param-value
     #'
-    #' @return ...
+    #' @return \[chainable\] Invisibly returns \code{self} with \code{value}
+    #' added for \code{key}
     #'
     set = function(key, value) {
       super$set(key = key, value = value)

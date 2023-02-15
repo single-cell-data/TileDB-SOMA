@@ -4,9 +4,9 @@
 \alias{SOMAContextBase}
 \title{Base SOMA Context}
 \description{
-Base SOMA Context
-
-Base SOMA Context
+R6 mapping class for SOMA context options. This class should be used
+as the basis for platform-specific contexts as it checks SOMA-specific
+context options
 }
 \keyword{internal}
 \section{Super classes}{
@@ -65,14 +65,16 @@ Base SOMA Context
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{key}}{...}
+\item{\code{key}}{Key to set}
 
-\item{\code{value}}{...}
+\item{\code{value}}{Value to add for \code{key}, or \code{NULL} to remove
+the entry for \code{key}}
 }
 \if{html}{\out{</div>}}
 }
 \subsection{Returns}{
-...
+[chainable] Invisibly returns \code{self} with \code{value}
+added for \code{key}
 }
 }
 \if{html}{\out{<hr>}}
