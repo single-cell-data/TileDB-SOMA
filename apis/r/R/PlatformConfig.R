@@ -86,7 +86,7 @@ PlatformConfig <- R6::R6Class(
     #' \code{platform} with the keys and values from \code{value}
     #'
     #' @return \[chainable\] Invisibly returns \code{self} with \code{value}
-    #' added for \code{key} in \code{op}
+    #' added for \code{key} in \code{op} for \code{platform}
     #'
     set = function(platform, op, key, value) {
       stopifnot(

@@ -11,7 +11,7 @@ map is a \code{\link{ScalarMap}} contained within a \code{\link{ConfigList}}
 \code{\{platform: \{op: \{key: value\}\}\}}
 }
 \section{Super class}{
-\code{tiledbsoma::MappingBase} -> \code{PlatformConfig}
+\code{\link[tiledbsoma:MappingBase]{tiledbsoma::MappingBase}} -> \code{PlatformConfig}
 }
 \section{Methods}{
 \subsection{Public methods}{
@@ -149,7 +149,7 @@ and \code{value} as a \code{\link{ScalarMap}} to update \code{op} for
 }
 \subsection{Returns}{
 [chainable] Invisibly returns \code{self} with \code{value}
-added for \code{key} in \code{op}
+added for \code{key} in \code{op} for \code{platform}
 }
 }
 \if{html}{\out{<hr>}}
