@@ -119,25 +119,25 @@ sr_next <- function(sr) {
 #' For convenience the function `tiledbsoma_stats_show` displays the information on the console
 #'
 #' @export
-tiledb_stats_enable <- function() {
+tiledbsoma_stats_enable <- function() {
     invisible(.Call(`_tiledbsoma_stats_enable`))
 }
 
-#' @rdname tiledb_stats_enable
+#' @rdname tiledbsoma_stats_enable
 #' @export
-tiledb_stats_disable <- function() {
+tiledbsoma_stats_disable <- function() {
     invisible(.Call(`_tiledbsoma_stats_disable`))
 }
 
-#' @rdname tiledb_stats_enable
+#' @rdname tiledbsoma_stats_enable
 #' @export
-tiledb_stats_reset <- function() {
+tiledbsoma_stats_reset <- function() {
     invisible(.Call(`_tiledbsoma_stats_reset`))
 }
 
-#' @rdname tiledb_stats_enable
+#' @rdname tiledbsoma_stats_enable
 #' @export
-tiledb_stats_dump <- function() {
+tiledbsoma_stats_dump <- function() {
     .Call(`_tiledbsoma_stats_dump`)
 }
 

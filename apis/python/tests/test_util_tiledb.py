@@ -6,8 +6,8 @@ import tiledbsoma as soma
 
 def test_stats(tmp_path, capfd: pytest.CaptureFixture[str]):
     """Make sure these exist, don't throw, and write correctly."""
-    soma.tiledb_stats_enable()
-    soma.tiledb_stats_reset()
+    soma.tiledbsoma_stats_enable()
+    soma.tiledbsoma_stats_reset()
 
     schema = pa.schema([("soma_joinid", pa.int64())])
     with soma.DataFrame.create(
@@ -23,8 +23,8 @@ def test_stats(tmp_path, capfd: pytest.CaptureFixture[str]):
     with soma.DataFrame.open(tmp_path.as_posix()) as sidf:
         sidf.read().concat()
 
-    soma.tiledb_stats_dump()
-    soma.tiledb_stats_disable()
+    soma.tiledbsoma_stats_dump()
+    soma.tiledbsoma_stats_disable()
     stdout, stderr = capfd.readouterr()
     assert stdout != ""
     assert stderr == ""
