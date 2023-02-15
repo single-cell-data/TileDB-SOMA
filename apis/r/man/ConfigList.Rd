@@ -4,9 +4,9 @@
 \alias{ConfigList}
 \title{A Configuration List}
 \description{
-A Configuration List
-
-A Configuration List
+An R6 mapping type for configuring various \dQuote{options}. Essentially,
+serves as a nested map where the inner map is a \code{\link{ScalarMap}}:
+\code{\{<op>: \link[tiledbsoma:ScalarMap]{\{<key>: <value>\}}\}}
 }
 \section{Super class}{
 \code{tiledbsoma::MappingBase} -> \code{ConfigList}
@@ -14,26 +14,52 @@ A Configuration List
 \section{Methods}{
 \subsection{Public methods}{
 \itemize{
+\item \href{#method-ConfigList-get}{\code{ConfigList$get()}}
 \item \href{#method-ConfigList-set}{\code{ConfigList$set()}}
+\item \href{#method-ConfigList-setv}{\code{ConfigList$setv()}}
 \item \href{#method-ConfigList-clone}{\code{ConfigList$clone()}}
 }
 }
 \if{html}{\out{
 <details><summary>Inherited methods</summary>
 <ul>
-<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="MappingBase" data-id="get"><a href='../../tiledbsoma/html/MappingBase.html#method-MappingBase-get'><code>tiledbsoma::MappingBase$get()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="MappingBase" data-id="initialize"><a href='../../tiledbsoma/html/MappingBase.html#method-MappingBase-initialize'><code>tiledbsoma::MappingBase$initialize()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="MappingBase" data-id="items"><a href='../../tiledbsoma/html/MappingBase.html#method-MappingBase-items'><code>tiledbsoma::MappingBase$items()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="MappingBase" data-id="keys"><a href='../../tiledbsoma/html/MappingBase.html#method-MappingBase-keys'><code>tiledbsoma::MappingBase$keys()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="MappingBase" data-id="length"><a href='../../tiledbsoma/html/MappingBase.html#method-MappingBase-length'><code>tiledbsoma::MappingBase$length()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="MappingBase" data-id="print"><a href='../../tiledbsoma/html/MappingBase.html#method-MappingBase-print'><code>tiledbsoma::MappingBase$print()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="MappingBase" data-id="setv"><a href='../../tiledbsoma/html/MappingBase.html#method-MappingBase-setv'><code>tiledbsoma::MappingBase$setv()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="MappingBase" data-id="to_list"><a href='../../tiledbsoma/html/MappingBase.html#method-MappingBase-to_list'><code>tiledbsoma::MappingBase$to_list()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="MappingBase" data-id="update"><a href='../../tiledbsoma/html/MappingBase.html#method-MappingBase-update'><code>tiledbsoma::MappingBase$update()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="MappingBase" data-id="values"><a href='../../tiledbsoma/html/MappingBase.html#method-MappingBase-values'><code>tiledbsoma::MappingBase$values()</code></a></span></li>
 </ul>
 </details>
 }}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-ConfigList-get"></a>}}
+\if{latex}{\out{\hypertarget{method-ConfigList-get}{}}}
+\subsection{Method \code{get()}}{
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{ConfigList$get(op, key = NULL, default = NULL)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{op}}{Outer key or \dQuote{option} to fetch}
+
+\item{\code{key}}{Inner key to fetch; pass \code{NULL} to return  the
+\link[tiledbsoma:ScalarMap]{map} for \code{op}}
+
+\item{\code{default}}{Default value to fetch if \code{key} is not found;
+defaults to \code{NULL}}
+}
+\if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+The value of \code{key} for \code{op} in the map, or
+\code{default} if \code{key} is not found
+}
+}
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-ConfigList-set"></a>}}
 \if{latex}{\out{\hypertarget{method-ConfigList-set}{}}}
@@ -45,16 +71,39 @@ A Configuration List
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{op}}{...}
+\item{\code{op}}{Outer key or \dQuote{option} to set}
 
-\item{\code{key}}{...}
+\item{\code{key}}{Inner key to set}
 
-\item{\code{value}}{...}
+\item{\code{value}}{Value to add for \code{key}, or \code{NULL} to remove the
+entry for \code{key}; optionally provide only \code{op} and \code{value}
+as a \code{\link{ScalarMap}} to update \code{op} with the keys and
+values from \code{value}}
 }
 \if{html}{\out{</div>}}
 }
 \subsection{Returns}{
-[chainable] ...
+[chainable] Invisibly returns \code{self} with \code{value}
+added for \code{key} in \code{op}
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-ConfigList-setv"></a>}}
+\if{latex}{\out{\hypertarget{method-ConfigList-setv}{}}}
+\subsection{Method \code{setv()}}{
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{ConfigList$setv(...)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{...}}{Ignored}
+}
+\if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+Nothing; \code{setv()} is disabled for \code{ConfigList} objects
 }
 }
 \if{html}{\out{<hr>}}

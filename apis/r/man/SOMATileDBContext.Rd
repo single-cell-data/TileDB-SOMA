@@ -16,6 +16,7 @@ SOMA TileDB Context
 \itemize{
 \item \href{#method-SOMATileDBContext-new}{\code{SOMATileDBContext$new()}}
 \item \href{#method-SOMATileDBContext-keys}{\code{SOMATileDBContext$keys()}}
+\item \href{#method-SOMATileDBContext-length}{\code{SOMATileDBContext$length()}}
 \item \href{#method-SOMATileDBContext-get}{\code{SOMATileDBContext$get()}}
 \item \href{#method-SOMATileDBContext-set}{\code{SOMATileDBContext$set()}}
 \item \href{#method-SOMATileDBContext-clone}{\code{SOMATileDBContext$clone()}}
@@ -25,7 +26,6 @@ SOMA TileDB Context
 <details><summary>Inherited methods</summary>
 <ul>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="MappingBase" data-id="items"><a href='../../tiledbsoma/html/MappingBase.html#method-MappingBase-items'><code>tiledbsoma::MappingBase$items()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="MappingBase" data-id="length"><a href='../../tiledbsoma/html/MappingBase.html#method-MappingBase-length'><code>tiledbsoma::MappingBase$length()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="MappingBase" data-id="print"><a href='../../tiledbsoma/html/MappingBase.html#method-MappingBase-print'><code>tiledbsoma::MappingBase$print()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="MappingBase" data-id="setv"><a href='../../tiledbsoma/html/MappingBase.html#method-MappingBase-setv'><code>tiledbsoma::MappingBase$setv()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="MappingBase" data-id="to_list"><a href='../../tiledbsoma/html/MappingBase.html#method-MappingBase-to_list'><code>tiledbsoma::MappingBase$to_list()</code></a></span></li>
@@ -61,6 +61,18 @@ SOMA TileDB Context
 \subsection{Method \code{keys()}}{
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{SOMATileDBContext$keys()}\if{html}{\out{</div>}}
+}
+
+\subsection{Returns}{
+...
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-SOMATileDBContext-length"></a>}}
+\if{latex}{\out{\hypertarget{method-SOMATileDBContext-length}{}}}
+\subsection{Method \code{length()}}{
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{SOMATileDBContext$length()}\if{html}{\out{</div>}}
 }
 
 \subsection{Returns}{

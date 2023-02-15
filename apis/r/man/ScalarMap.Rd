@@ -4,9 +4,9 @@
 \alias{ScalarMap}
 \title{A Mapping Type for Scalars}
 \description{
-A Mapping Type for Scalars
-
-A Mapping Type for Scalars
+An R6 mapping type that is limited to scalar atomic vector types only; can
+optionally be limited further to a specific atomic vector type
+(eg. \dQuote{\code{logical}})
 }
 \section{Super class}{
 \code{tiledbsoma::MappingBase} -> \code{ScalarMap}
@@ -14,7 +14,7 @@ A Mapping Type for Scalars
 \section{Active bindings}{
 \if{html}{\out{<div class="r6-active-bindings">}}
 \describe{
-\item{\code{type}}{...}
+\item{\code{type}}{The type that this \code{ScalarMap} is limited to}
 }
 \if{html}{\out{</div>}}
 }
@@ -52,12 +52,14 @@ A Mapping Type for Scalars
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{type}}{...}
+\item{\code{type}}{Limit the \code{ScalarMap} to a preset type; choose from:
+\Sexpr[results=rd]{tiledbsoma::rd_atomic()}}
 }
 \if{html}{\out{</div>}}
 }
 \subsection{Returns}{
-...
+An instantiated \code{ScalarMap} object with the
+type set to \code{type}
 }
 }
 \if{html}{\out{<hr>}}
@@ -71,14 +73,16 @@ A Mapping Type for Scalars
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{key}}{...}
+\item{\code{key}}{Key to set}
 
-\item{\code{value}}{...}
+\item{\code{value}}{Value to add for \code{key}, or \code{NULL} to remove
+the entry for \code{key}}
 }
 \if{html}{\out{</div>}}
 }
 \subsection{Returns}{
-...
+[chainable] Invisibly returns \code{self} with
+\code{value} added as \code{key}
 }
 }
 \if{html}{\out{<hr>}}

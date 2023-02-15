@@ -4,9 +4,11 @@
 \alias{PlatformConfig}
 \title{Platform Configuration}
 \description{
-Platform Configuration
-
-Platform Configuration
+An R6 mapping type for configuring various \dQuote{options} for multiple
+\dQuote{platforms}, essentially serves a multi-nested map where the inner
+map is a \code{\link{ScalarMap}} contained within a \code{\link{ConfigList}}
+(middle map):
+\code{\{platform: \{op: \{key: value\}\}\}}
 }
 \section{Super class}{
 \code{tiledbsoma::MappingBase} -> \code{PlatformConfig}
@@ -19,6 +21,7 @@ Platform Configuration
 \item \href{#method-PlatformConfig-get}{\code{PlatformConfig$get()}}
 \item \href{#method-PlatformConfig-get_ops}{\code{PlatformConfig$get_ops()}}
 \item \href{#method-PlatformConfig-set}{\code{PlatformConfig$set()}}
+\item \href{#method-PlatformConfig-setv}{\code{PlatformConfig$setv()}}
 \item \href{#method-PlatformConfig-clone}{\code{PlatformConfig$clone()}}
 }
 }
@@ -30,7 +33,6 @@ Platform Configuration
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="MappingBase" data-id="keys"><a href='../../tiledbsoma/html/MappingBase.html#method-MappingBase-keys'><code>tiledbsoma::MappingBase$keys()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="MappingBase" data-id="length"><a href='../../tiledbsoma/html/MappingBase.html#method-MappingBase-length'><code>tiledbsoma::MappingBase$length()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="MappingBase" data-id="print"><a href='../../tiledbsoma/html/MappingBase.html#method-MappingBase-print'><code>tiledbsoma::MappingBase$print()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="MappingBase" data-id="setv"><a href='../../tiledbsoma/html/MappingBase.html#method-MappingBase-setv'><code>tiledbsoma::MappingBase$setv()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="MappingBase" data-id="to_list"><a href='../../tiledbsoma/html/MappingBase.html#method-MappingBase-to_list'><code>tiledbsoma::MappingBase$to_list()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="MappingBase" data-id="update"><a href='../../tiledbsoma/html/MappingBase.html#method-MappingBase-update'><code>tiledbsoma::MappingBase$update()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="MappingBase" data-id="values"><a href='../../tiledbsoma/html/MappingBase.html#method-MappingBase-values'><code>tiledbsoma::MappingBase$values()</code></a></span></li>
@@ -46,7 +48,7 @@ Platform Configuration
 }
 
 \subsection{Returns}{
-...
+The names of the \dQuote{platforms} (outer keys)
 }
 }
 \if{html}{\out{<hr>}}
@@ -60,12 +62,13 @@ Platform Configuration
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{platform}}{...}
+\item{\code{platform}}{The \dQuote{platform} to pull option names (middle keys)
+for; pass \code{TRUE} to return all possible option names}
 }
 \if{html}{\out{</div>}}
 }
 \subsection{Returns}{
-...
+The option names (middle keys) for \code{platform}
 }
 }
 \if{html}{\out{<hr>}}
@@ -79,18 +82,25 @@ Platform Configuration
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{platform}}{...}
+\item{\code{platform}}{The name of the \dQuote{platform} (outer key) to fetch}
 
-\item{\code{op}}{...}
+\item{\code{op}}{The name of the \dQuote{option} of \code{platform} to fetch;
+if \code{NULL}, returns the \list[tiledbsoma:ConfigList]{configuration}
+for \code{platform}}
 
-\item{\code{key}}{...}
+\item{\code{key}}{The \dQuote{key} (inner key) for \code{op} in
+\code{platform} to fetch; if \code{NULL} and \code{op} is passed,
+returns the \link[tiledbsoma:ScalarMap]{map} for \code{op}
+in \code{platform}}
 
-\item{\code{default}}{...}
+\item{\code{default}}{Default value to fetch if \code{key} is not found;
+defaults to \code{null}}
 }
 \if{html}{\out{</div>}}
 }
 \subsection{Returns}{
-...
+The value of \code{key} for \code{op} in \code{platform} in the
+map, or \code{default} if \code{key} is not found
 }
 }
 \if{html}{\out{<hr>}}
@@ -104,12 +114,12 @@ Platform Configuration
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{platform}}{...}
+\item{\code{platform}}{The name of the \dQuote{platform} (outer key) to fetch}
 }
 \if{html}{\out{</div>}}
 }
 \subsection{Returns}{
-...
+The \code{\link{ConfigList}} for \code{platform}
 }
 }
 \if{html}{\out{<hr>}}
@@ -123,18 +133,43 @@ Platform Configuration
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{platform}}{...}
+\item{\code{platform}}{The name of the \dQuote{platform} (outer key) to set}
 
-\item{\code{op}}{...}
+\item{\code{op}}{Name of the \dQuote{option} (middile key) in \code{platform}
+to set}
 
-\item{\code{key}}{...}
+\item{\code{key}}{Inner key to set}
 
-\item{\code{value}}{...}
+\item{\code{value}}{Value to add for \code{key}, or \code{NULL} to remove the
+entry for \code{key}; optionally provide only \code{platfomr}, \code{op},
+and \code{value} as a \code{\link{ScalarMap}} to update \code{op} for
+\code{platform} with the keys and values from \code{value}}
 }
 \if{html}{\out{</div>}}
 }
 \subsection{Returns}{
-...
+[chainable] Invisibly returns \code{self} with \code{value}
+added for \code{key} in \code{op}
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-PlatformConfig-setv"></a>}}
+\if{latex}{\out{\hypertarget{method-PlatformConfig-setv}{}}}
+\subsection{Method \code{setv()}}{
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{PlatformConfig$setv(...)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{...}}{Ignored}
+}
+\if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+Nothing; \code{setv()} is disabled for
+\code{PlatformConfig} objects
 }
 }
 \if{html}{\out{<hr>}}

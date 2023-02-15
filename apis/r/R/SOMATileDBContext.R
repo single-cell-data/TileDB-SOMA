@@ -10,6 +10,7 @@ SOMATileDBContext <- R6::R6Class(
     #' @param cached ...
     #'
     #' @return ...
+    #'
     initialize = function(config = NULL, cached = TRUE) {
       # super$initialize()
       config <- config %||% character()
@@ -44,10 +45,12 @@ SOMATileDBContext <- R6::R6Class(
       private$.ctx <- tiledb::tiledb_ctx(config = cfg, cached = cached)
     },
     #' @return ...
+    #'
     keys = function() {
       return(c(super$keys(), private$.ctx_names()))
     },
     #' @return ...
+    #'
     length = function() {
       return(super$length() + length(x = private$.ctx_names()))
     },
@@ -55,6 +58,7 @@ SOMATileDBContext <- R6::R6Class(
     #' @param default ...
     #'
     #' @return ...
+    #'
     get = function(key, default = NULL) {
       key <- match.arg(arg = key, choices = self$keys())
       if (key %in% private$.ctx_names()) {
@@ -68,6 +72,7 @@ SOMATileDBContext <- R6::R6Class(
     #' @param value ...
     #'
     #' @return ...
+    #'
     set = function(key, value) {
       stopifnot(
         is.character(x = key),

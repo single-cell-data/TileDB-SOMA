@@ -2,11 +2,47 @@
 % Please edit documentation in R/MappingBase.R
 \name{MappingBase}
 \alias{MappingBase}
+\alias{[[.MappingBase}
+\alias{[[<-.MappingBase}
+\alias{length.MappingBase}
+\alias{names.MappingBase}
 \title{R6 Base Mapping Type}
-\description{
-R6 Base Mapping Type
+\usage{
+\method{[[}{MappingBase}(x, i, ..., default = NULL)
 
-R6 Base Mapping Type
+\method{[[}{MappingBase}(x, i, ...) <- value
+
+\method{length}{MappingBase}(x)
+
+\method{names}{MappingBase}(x)
+}
+\arguments{
+\item{x}{A mapping object}
+
+\item{i}{A key to fetch or set; see \code{$get()} or \code{$set()}
+methods below}
+
+\item{...}{Ignored}
+
+\item{default}{Default value to fetch if \code{i} is not found;
+defaults to \code{NULL}}
+
+\item{value}{Value to add for \code{i}, or \code{NULL} to remove
+the entry for \code{i}}
+}
+\value{
+\code{[[}: ...
+
+\code{[[<-}: \code{x} with \code{value} added as \code{i}
+
+\code{length}: The number of items in the map
+
+\code{names}: The keys of the map
+}
+\description{
+Virtual base mapping type for R6 objects; defines internal data structure
+(\code{private$.data}) as a named list along with behavior methods for
+getting (\code{self$get()}) and setting (\code{self$set()}) items in the map
 }
 \keyword{internal}
 \section{Methods}{
@@ -42,7 +78,7 @@ R6 Base Mapping Type
 \if{html}{\out{</div>}}
 }
 \subsection{Returns}{
-...
+\Sexpr[results=rd]{tiledbsoma::rd_return_virtual()}
 }
 }
 \if{html}{\out{<hr>}}
@@ -92,9 +128,10 @@ Return the items of the map as a list
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{key}}{Key to get}
+\item{\code{key}}{Key to fetch}
 
-\item{\code{default}}{Default value to return if \code{key} is not found}
+\item{\code{default}}{Default value to fetch if \code{key} is not found;
+defaults to \code{NULL}}
 }
 \if{html}{\out{</div>}}
 }
@@ -116,12 +153,13 @@ The value of \code{key} in the map, or \code{default} if
 \describe{
 \item{\code{key}}{Key to set}
 
-\item{\code{value}}{Value to add for \code{key}}
+\item{\code{value}}{Value to add for \code{key}, or \code{NULL} to remove
+the entry for \code{key}}
 }
 \if{html}{\out{</div>}}
 }
 \subsection{Returns}{
-[chainable] Invisibly returns \code{self} with
+\[chainable\] Invisibly returns \code{self} with
 \code{value} added as \code{key}
 }
 }
@@ -141,8 +179,8 @@ The value of \code{key} in the map, or \code{default} if
 \if{html}{\out{</div>}}
 }
 \subsection{Returns}{
-[chainable] Invisibly returns \code{self} with the values
-of \code{...}
+\[chainable\] Invisibly returns \code{self} with the values
+of \code{...} added to the map
 }
 }
 \if{html}{\out{<hr>}}
@@ -161,7 +199,7 @@ of \code{...}
 \if{html}{\out{</div>}}
 }
 \subsection{Returns}{
-[chainable] Invisibly returns \code{self} with the value
+\[chainable\] Invisibly returns \code{self} with the value
 of \code{map}
 }
 }
@@ -198,7 +236,7 @@ The map as a list
 }
 
 \subsection{Returns}{
-[chainable] Prints information about the map to \code{stdout}
+\[chainable\] Prints information about the map to \code{stdout}
 and invisibly returns \code{self}
 }
 }

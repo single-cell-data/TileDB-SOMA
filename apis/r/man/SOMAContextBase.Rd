@@ -40,11 +40,18 @@ Base SOMA Context
 \if{latex}{\out{\hypertarget{method-SOMAContextBase-new}{}}}
 \subsection{Method \code{new()}}{
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{SOMAContextBase$new()}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{SOMAContextBase$new(config = NULL)}\if{html}{\out{</div>}}
 }
 
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{config}}{...}
+}
+\if{html}{\out{</div>}}
+}
 \subsection{Returns}{
-...
+\Sexpr[results=rd]{tiledbsoma::rd_return_virtual()}
 }
 }
 \if{html}{\out{<hr>}}

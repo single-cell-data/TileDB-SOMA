@@ -1,8 +1,14 @@
 #' R6 Base Mapping Type
 #'
+#' Virtual base mapping type for R6 objects; defines internal data structure
+#' (\code{private$.data}) as a named list along with behavior methods for
+#' getting (\code{self$get()}) and setting (\code{self$set()}) items in the map
+#'
 #' @keywords internal
 #'
 #' @export
+#'
+#' @noMd
 #'
 MappingBase <- R6::R6Class(
   classname = 'MappingBase',
@@ -10,7 +16,7 @@ MappingBase <- R6::R6Class(
   public = list(
     #' @param ... Ignored
     #'
-    #' @return ...
+    #' @return \Sexpr[results=rd]{tiledbsoma::rd_return_virtual()}
     #'
     initialize = function(...) {
       calls <- vapply(
@@ -39,8 +45,10 @@ MappingBase <- R6::R6Class(
     items = function() {
       return(private$.data)
     },
-    #' @param key Key to get
-    #' @param default Default value to return if \code{key} is not found
+    #' @param key Key to fetch
+    #' @templateVar key key
+    #' @templateVar default NULL
+    #' @template param-default
     #'
     #' @return The value of \code{key} in the map, or \code{default} if
     #' \code{key} is not found
@@ -56,7 +64,9 @@ MappingBase <- R6::R6Class(
       return(private$.data[[key]])
     },
     #' @param key Key to set
-    #' @param value Value to add for \code{key}
+    #' @templateVar key key
+    #' @templateVar type set
+    #' @template param-value
     #'
     #' @return \[chainable\] Invisibly returns \code{self} with
     #' \code{value} added as \code{key}
@@ -96,7 +106,7 @@ MappingBase <- R6::R6Class(
     #' @param ... Named arguments to add to \code{self}
     #'
     #' @return \[chainable\] Invisibly returns \code{self} with the values
-    #' of \code{...}
+    #' of \code{...} added to the map
     #'
     setv = function(...) {
       args <- as.list(x = c(...))
@@ -107,14 +117,17 @@ MappingBase <- R6::R6Class(
       return(invisible(x = self))
     },
     #' @param map A mapping type to update the current map with
+    #'
     #' @return \[chainable\] Invisibly returns \code{self} with the value
     #' of \code{map}
+    #'
     update = function(map) {
       stopifnot(inherits(x = map, what = 'MappingBase'))
       self$setv(map$items())
       return(invisible(x = self))
     },
     #' @return The number of items in the map
+    #'
     length = function() {
       return(length(x = private$.data))
     },
@@ -125,6 +138,7 @@ MappingBase <- R6::R6Class(
     },
     #' @return \[chainable\] Prints information about the map to \code{stdout}
     #' and invisibly returns \code{self}
+    #'
     print = function() {
       vowels <- c('a', 'e', 'i', 'o', 'u')
       cls <- class(x = self)[1L]
@@ -144,6 +158,18 @@ MappingBase <- R6::R6Class(
   )
 )
 
+#' @param x A mapping object
+#' @param i A key to fetch or set; see \code{$get()} or \code{$set()}
+#' methods below
+#' @template param-dots-ignored
+#' @templateVar key i
+#' @templateVar default NULL
+#' @template param-default
+#'
+#' @return \code{[[}: ...
+#'
+#' @rdname MappingBase
+#'
 #' @method [[ MappingBase
 #' @export
 #'
@@ -151,7 +177,13 @@ MappingBase <- R6::R6Class(
   return(x$get(key = i, default = default))
 }
 
-
+#' @templateVar key i
+#' @template param-value
+#'
+#' @return \code{[[<-}: \code{x} with \code{value} added as \code{i}
+#'
+#' @rdname MappingBase
+#'
 #' @method [[<- MappingBase
 #' @export
 #'
@@ -161,6 +193,10 @@ MappingBase <- R6::R6Class(
   return(x)
 }
 
+#' @return \code{length}: The number of items in the map
+#'
+#' @rdname MappingBase
+#'
 #' @method length MappingBase
 #' @export
 #'
@@ -168,6 +204,10 @@ length.MappingBase <- function(x) {
   return(x$length())
 }
 
+#' @return \code{names}: The keys of the map
+#'
+#' @rdname MappingBase
+#'
 #' @method names MappingBase
 #' @export
 #'

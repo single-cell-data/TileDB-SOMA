@@ -8,7 +8,10 @@ SOMAContextBase <- R6::R6Class(
   classname = 'SOMAContextBase',
   inherit = ScalarMap,
   public = list(
-    #' @return ...
+    #' @param config ...
+    #'
+    #' @return \Sexpr[results=rd]{tiledbsoma::rd_return_virtual()}
+    #'
     initialize = function(config = NULL) {
       calls <- vapply(
         X = lapply(X = sys.calls(), FUN = as.character),
@@ -36,6 +39,7 @@ SOMAContextBase <- R6::R6Class(
     #' @param value ...
     #'
     #' @return ...
+    #'
     set = function(key, value) {
       super$set(key = key, value = value)
       soma_contexts <- .SOMA_CONTEXTS()
