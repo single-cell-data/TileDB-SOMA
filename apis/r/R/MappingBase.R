@@ -65,7 +65,6 @@ MappingBase <- R6::R6Class(
     },
     #' @param key Key to set
     #' @templateVar key key
-    #' @templateVar type set
     #' @template param-value
     #'
     #' @return \[chainable\] Invisibly returns \code{self} with
