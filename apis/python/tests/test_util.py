@@ -1,7 +1,12 @@
 import pytest
 from somacore import ResultOrder
 
-from tiledbsoma.util import dense_index_to_shape, dense_indices_to_shape, uri_joinpath
+from tiledbsoma.util import (
+    dense_index_to_shape,
+    dense_indices_to_shape,
+    slice_to_numeric_range,
+    uri_joinpath,
+)
 
 
 def test_uri_joinpath_file():
@@ -123,3 +128,35 @@ def test_dense_indices_to_shape(io):
 def test_dense_indices_to_shape_error_cases(io):
     with pytest.raises(io["throws"]):
         dense_indices_to_shape(io["coord"], io["input_shape"], io["result_order"])
+
+
+@pytest.mark.parametrize(
+    ("start_stop", "domain", "want"),
+    [
+        ((None, None), (-10, 10), None),
+        ((5, None), (-10, 10), (5, 10)),
+        ((None, 5), (-10, 10), (-10, 5)),
+        ((-3, 0), (-10, 10), (-3, 0)),
+        ((None, None), ("", ""), None),
+    ],
+)
+def test_slice_to_range(start_stop, domain, want):
+    slc = slice(*start_stop)
+    assert want == slice_to_numeric_range(slc, domain)
+
+
+@pytest.mark.parametrize(
+    ("start_stop", "domain", "exc"),
+    [
+        ((-20, -15), (-10, 10), ValueError),
+        ((15, 20), (-10, 10), ValueError),
+        ((5, 10), ("", ""), TypeError),
+        ((5, -5), (-10, 10), ValueError),
+        (("yes", "no"), (5, 10), TypeError),
+        (("START", None), ("", ""), TypeError),
+    ],
+)
+def test_slice_to_range_bad(start_stop, domain, exc):
+    with pytest.raises(exc):
+        slc = slice(*start_stop)
+        slice_to_numeric_range(slc, domain)

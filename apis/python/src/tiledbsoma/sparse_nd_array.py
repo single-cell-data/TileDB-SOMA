@@ -147,9 +147,9 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
         )
 
     def _set_reader_coord(
-        self, sr: clib.SOMAReader, dim: tiledb.Dim, coord: object
+        self, sr: clib.SOMAReader, dim_idx: int, dim: tiledb.Dim, coord: object
     ) -> bool:
-        if super()._set_reader_coord(sr, dim, coord):
+        if super()._set_reader_coord(sr, dim_idx, dim, coord):
             return True
         if isinstance(coord, (Sequence, pa.Array, pa.ChunkedArray, np.ndarray)):
             if isinstance(coord, np.ndarray) and coord.ndim != 1:

@@ -1,4 +1,4 @@
-from typing import Any, Mapping, Optional, Sequence, Tuple, cast
+from typing import Any, Mapping, Optional, Sequence, Tuple, Type, Union, cast
 
 import numpy as np
 import pyarrow as pa
@@ -15,7 +15,7 @@ from .options.tiledb_create_options import TileDBCreateOptions
 from .query_condition import QueryCondition
 from .read_iters import TableReadIter
 from .tiledb_array import TileDBArray
-from .types import NPFloating, NPInteger
+from .types import NPFloating, NPInteger, is_slice_of
 
 _UNBATCHED = options.BatchSize()
 
@@ -213,13 +213,26 @@ class DataFrame(TileDBArray, somacore.DataFrame):
         return self
 
     def _set_reader_coord(
-        self, sr: clib.SOMAReader, dim: tiledb.Dim, coord: object
+        self, sr: clib.SOMAReader, dim_idx: int, dim: tiledb.Dim, coord: object
     ) -> bool:
-        if super()._set_reader_coord(sr, dim, coord):
+        if super()._set_reader_coord(sr, dim_idx, dim, coord):
             return True
 
         if isinstance(coord, (str, bytes)):
             sr.set_dim_points(dim.name, [coord])
+            return True
+        if is_slice_of(coord, str) or is_slice_of(coord, bytes):
+            # Figure out which one.
+            dim_type: Union[Type[str], Type[bytes]] = type(dim.domain[0])
+            # A `None` or empty start is always equivalent to empty str/bytes.
+            start = coord.start or dim_type()
+            if coord.stop is None:
+                # There's no way to specify "to infinity" for strings.
+                # We have to get the nonempty domain and use that as the end.
+                _, stop = self._handle.reader.nonempty_domain()[dim_idx]
+            else:
+                stop = coord.stop
+            sr.set_dim_ranges(dim.name, [(start, stop)])
             return True
         if isinstance(coord, (Sequence, pa.Array, pa.ChunkedArray, np.ndarray)):
             if isinstance(coord, np.ndarray) and coord.ndim != 1:

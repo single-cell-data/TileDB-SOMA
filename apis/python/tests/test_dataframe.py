@@ -537,6 +537,27 @@ def make_multiply_indexed_dataframe(tmp_path, index_column_names: List[str]):
             "throws": None,
         },
         {
+            "name": "1D indexing by ['bbb':'c']",
+            "index_column_names": ["strings_aaa", "zero_one"],
+            "coords": [slice("bbb", "c")],
+            "A": [12, 13],
+            "throws": None,
+        },
+        {
+            "name": "1D indexing by ['ccc':]",
+            "index_column_names": ["strings_aaa", "zero_one"],
+            "coords": [slice("ccc", None)],
+            "A": [14, 15],
+            "throws": None,
+        },
+        {
+            "name": "1D indexing by [:'bbd']",
+            "index_column_names": ["strings_aaa", "zero_one"],
+            "coords": [slice("bbd")],
+            "A": [10, 11, 12, 13],
+            "throws": None,
+        },
+        {
             "name": "1D indexing with one partition",
             "index_column_names": ["0_thru_5"],
             "coords": [slice(2, None)],
@@ -561,7 +582,7 @@ def make_multiply_indexed_dataframe(tmp_path, index_column_names: List[str]):
         },
         {
             "name": "slice must overlap domain (negative)",
-            "index_column_names": ["0_thru_5"],
+            "index_column_names": ["soma_joinid"],
             "coords": [slice(-2, -1)],
             "A": None,
             "throws": ValueError,

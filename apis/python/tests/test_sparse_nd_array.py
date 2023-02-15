@@ -493,6 +493,15 @@ def test_csr_csc_2d_read(tmp_path, shape):
             "throws": None,
         },
         {
+            "name": "coords=[[-100:100]]",
+            "shape": (4,),
+            "coords": (slice(-100, 100),),
+            "dims": {
+                "soma_dim_0": [0, 1, 2, 3],
+            },
+            "throws": None,
+        },
+        {
             "name": "coords=[4]",
             "shape": (4,),
             "coords": (1,),
@@ -536,6 +545,16 @@ def test_csr_csc_2d_read(tmp_path, shape):
             "name": "coords=([:2],[2:])",
             "shape": (3, 4),
             "coords": (slice(None, 2), slice(2, None)),
+            "dims": {
+                "soma_dim_0": [0, 0, 1, 1, 2, 2],
+                "soma_dim_1": [2, 3, 2, 3, 2, 3],
+            },
+            "throws": None,
+        },
+        {
+            "name": "coords=([-10:2],[2:500])",
+            "shape": (3, 4),
+            "coords": (slice(-10, 2), slice(2, 500)),
             "dims": {
                 "soma_dim_0": [0, 0, 1, 1, 2, 2],
                 "soma_dim_1": [2, 3, 2, 3, 2, 3],
@@ -881,13 +900,14 @@ def test_sparse_nd_array_error_corners(tmp_path):
 @pytest.mark.parametrize(
     "bad_coords",
     [
-        ((slice(1, 10, 2),)),  # step != 1
-        ((slice(32, 1),)),  # start > stop
-        ((slice(-32),)),  # negagive start
-        ((slice(-10, 2),)),  # negative start
-        ((slice(-10, -2),)),  # negative start & stop
-        ((slice(10, -2),)),  # negative stop
-        ((slice(None), slice(None))),  # too many dims
+        (slice(1, 10, 1),),  # explicit step
+        (slice(32, 1),),  # stop < start
+        (slice(-10, -2),),  # negative start & stop
+        (slice(-32),),  # stop < entire domain
+        (slice(10, -2),),  # stop < start
+        (slice(100, None),),  # entire domain < start
+        (slice(150, 200),),  # entire domain < start
+        (slice(None), slice(None)),  # too many dims
     ],
 )
 def test_bad_coords(tmp_path, bad_coords):

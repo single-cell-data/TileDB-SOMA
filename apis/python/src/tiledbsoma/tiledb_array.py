@@ -102,14 +102,14 @@ class TileDBArray(TileDBObject[tdb_handles.ArrayWrapper]):
             )
         for i, coord in enumerate(coords):
             dim = self._handle.schema.domain.dim(i)
-            if not self._set_reader_coord(sr, dim, coord):
+            if not self._set_reader_coord(sr, i, dim, coord):
                 raise TypeError(
                     f"coord type {type(coord)} for dimension {dim.name}"
                     f" (slot {i}) unsupported"
                 )
 
     def _set_reader_coord(
-        self, sr: clib.SOMAReader, dim: tiledb.Dim, coord: object
+        self, sr: clib.SOMAReader, dim_idx: int, dim: tiledb.Dim, coord: object
     ) -> bool:
         """Parses a single coordinate entry.
 
@@ -119,28 +119,21 @@ class TileDBArray(TileDBObject[tdb_handles.ArrayWrapper]):
 
         :return: True if successful, False if unrecognized.
         """
+        del dim_idx  # Unused.
         if coord is None:
             return True  # No constraint; select all in this dimension
         if isinstance(coord, int):
             sr.set_dim_points(dim.name, [coord])
             return True
         if isinstance(coord, slice):
-            # TODO: Allow negative indices.
-            lo_hi = util.slice_to_range(coord, (0, dim.domain[1]))
-            if lo_hi is not None:
-                lo, hi = lo_hi
-                if lo < 0 or hi < 0:
-                    raise ValueError(
-                        f"slice start and stop may not be negative; got ({lo}, {hi})"
-                    )
-                if lo > hi:
-                    raise ValueError(
-                        f"coordinate for dimension {dim.name} must have lo <= hi;"
-                        f" got {lo} > {hi}"
-                    )
+            util.validate_slice(coord)
+            try:
+                lo_hi = util.slice_to_numeric_range(coord, dim.domain)
+            except util.NonNumericDimensionError:
+                return False  # We only handle numeric dimensions here.
+            if lo_hi:
                 sr.set_dim_ranges(dim.name, [lo_hi])
-            # Else, no constraint in this slot. This is `slice(None)` which is like
-            # Python indexing syntax `[:]`.
+            # If `None`, coord was `slice(None)` and there is no constraint.
             return True
         return False
 
