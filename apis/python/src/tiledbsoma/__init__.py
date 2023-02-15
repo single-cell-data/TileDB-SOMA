@@ -1,4 +1,5 @@
 from somacore import AxisColumnNames, AxisQuery, ExperimentAxisQuery
+from somacore.options import SparseDFCoord
 
 from .collection import Collection
 from .dataframe import DataFrame
@@ -28,6 +29,7 @@ __all__ = [
     "DoesNotExistError",
     "Experiment",
     "ExperimentAxisQuery",
+    "SparseDFCoord",
     "get_implementation_version",
     "get_implementation",
     "get_SOMA_version",
