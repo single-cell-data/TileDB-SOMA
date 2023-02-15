@@ -378,6 +378,7 @@ def make_multiply_indexed_dataframe(tmp_path, index_column_names: List[str]):
             ("strings_aaa", pa.string()),
             ("zero_one", pa.int64()),
             ("thousands", pa.int64()),
+            ("both_signs", pa.int64()),
             ("soma_joinid", pa.int64()),
             ("A", pa.int64()),
         ]
@@ -392,6 +393,7 @@ def make_multiply_indexed_dataframe(tmp_path, index_column_names: List[str]):
         "strings_aaa": ["aaa", "aaa", "bbb", "bbb", "ccc", "ccc"],
         "zero_one": [0, 1, 0, 1, 0, 1],
         "thousands": [1000, 2000, 1000, 1000, 1000, 1000],
+        "both_signs": [-1, -2, -3, 1, 2, 3],
         "soma_joinid": [10, 11, 12, 13, 14, 15],
         "A": [10, 11, 12, 13, 14, 15],
     }
@@ -537,6 +539,34 @@ def make_multiply_indexed_dataframe(tmp_path, index_column_names: List[str]):
             "throws": None,
         },
         {
+            "name": "1D indexing with negatives",
+            "index_column_names": ["both_signs"],
+            "coords": [slice(-2, 1)],
+            "A": [11, 10, 13],
+            "throws": None,
+        },
+        {
+            "name": "1D indexing by ['bbb':'c']",
+            "index_column_names": ["strings_aaa", "zero_one"],
+            "coords": [slice("bbb", "c")],
+            "A": [12, 13],
+            "throws": None,
+        },
+        {
+            "name": "1D indexing by ['ccc':]",
+            "index_column_names": ["strings_aaa", "zero_one"],
+            "coords": [slice("ccc", None)],
+            "A": [14, 15],
+            "throws": None,
+        },
+        {
+            "name": "1D indexing by [:'bbd']",
+            "index_column_names": ["strings_aaa", "zero_one"],
+            "coords": [slice("bbd")],
+            "A": [10, 11, 12, 13],
+            "throws": None,
+        },
+        {
             "name": "1D indexing with one partition",
             "index_column_names": ["0_thru_5"],
             "coords": [slice(2, None)],
@@ -561,7 +591,7 @@ def make_multiply_indexed_dataframe(tmp_path, index_column_names: List[str]):
         },
         {
             "name": "slice must overlap domain (negative)",
-            "index_column_names": ["0_thru_5"],
+            "index_column_names": ["soma_joinid"],
             "coords": [slice(-2, -1)],
             "A": None,
             "throws": ValueError,
