@@ -1,5 +1,4 @@
-import collections.abc
-from typing import Any, Mapping, Optional, Sequence, Tuple, TypeVar, cast
+from typing import Any, Mapping, Optional, Sequence, Tuple, cast
 
 import numpy as np
 import pyarrow as pa
@@ -9,6 +8,7 @@ from somacore import options
 from typing_extensions import Self
 
 from . import arrow_types, util
+from . import libtiledbsoma as clib
 from .constants import SOMA_JOINID
 from .options import SOMATileDBContext
 from .options.tiledb_create_options import TileDBCreateOptions
@@ -17,7 +17,6 @@ from .read_iters import TableReadIter
 from .tiledb_array import TileDBArray
 from .types import NPFloating, NPInteger
 
-Slice = TypeVar("Slice", bound=Sequence[int])
 _UNBATCHED = options.BatchSize()
 
 
@@ -169,53 +168,7 @@ class DataFrame(TileDBArray, somacore.DataFrame):
             result_order=result_order.value,
         )
 
-        if not isinstance(coords, (list, tuple)):
-            raise TypeError(
-                f"coords type {type(coords)} unsupported; expected list or tuple"
-            )
-        if schema.domain.ndim < len(coords):
-            raise ValueError(
-                f"coords {coords} must have length between 1 and ndim ({schema.domain.ndim}); got {len(coords)}"
-            )
-
-        for i, dim_coords in enumerate(coords):
-            # Example: coords = [None, 3, slice(4,5)]
-            # dim_coords takes on values None, 3, and slice(4,5) in this loop body.
-            dim_name = schema.domain.dim(i).name
-            if dim_coords is None:
-                pass  # No constraint; select all in this dimension
-            elif isinstance(dim_coords, (int, str, bytes)):
-                sr.set_dim_points(dim_name, [dim_coords])
-            elif isinstance(dim_coords, np.ndarray):
-                if dim_coords.ndim != 1:
-                    raise ValueError(
-                        f"only 1D numpy arrays may be used to index; got {dim_coords.ndim}"
-                    )
-                sr.set_dim_points(dim_name, dim_coords)
-            elif isinstance(dim_coords, slice):
-                ned = self._handle.reader.nonempty_domain()
-                # ned is None iff the array has no data
-                lo_hi = util.slice_to_range(dim_coords, ned[i]) if ned else None
-                if lo_hi is not None:
-                    lo, hi = lo_hi
-                    if lo < 0 or hi < 0:
-                        raise ValueError(
-                            f"slice start and stop may not be negative; got ({lo}, {hi})"
-                        )
-                    if lo > hi:
-                        raise ValueError(
-                            f"coordinate at slot {i} must have lo <= hi; got {lo} > {hi}"
-                        )
-                    sr.set_dim_ranges(dim_name, [lo_hi])
-                # Else, no constraint in this slot. This is `slice(None)` which is like
-                # Python indexing syntax `[:]`.
-            elif isinstance(
-                dim_coords,
-                (collections.abc.Sequence, pa.Array, pa.ChunkedArray),
-            ):
-                sr.set_dim_points(dim_name, dim_coords)
-            else:
-                raise TypeError(f"coords[{i}] type {type(dim_coords)} is unsupported")
+        self._set_reader_coords(sr, coords)
 
         # TODO: platform_config
         # TODO: batch_size
@@ -258,6 +211,24 @@ class DataFrame(TileDBArray, somacore.DataFrame):
         self._handle.writer[dim_cols_tuple] = attr_cols_map
 
         return self
+
+    def _set_reader_coord(
+        self, sr: clib.SOMAReader, dim: tiledb.Dim, coord: object
+    ) -> bool:
+        if super()._set_reader_coord(sr, dim, coord):
+            return True
+
+        if isinstance(coord, (str, bytes)):
+            sr.set_dim_points(dim.name, [coord])
+            return True
+        if isinstance(coord, (Sequence, pa.Array, pa.ChunkedArray, np.ndarray)):
+            if isinstance(coord, np.ndarray) and coord.ndim != 1:
+                raise ValueError(
+                    f"only 1D numpy arrays may be used to index; got {coord.ndim}"
+                )
+            sr.set_dim_points(dim.name, coord)
+            return True
+        return False
 
 
 def _canonicalize_schema(

@@ -5,6 +5,7 @@ import numpy as np
 import numpy.typing as npt
 import pandas as pd
 import pyarrow as pa
+from somacore import types
 from typing_extensions import Literal
 
 if TYPE_CHECKING:
@@ -38,3 +39,8 @@ ArrowReadResult = Union[
     pa.SparseCSRMatrix,
     pa.SparseCSCMatrix,
 ]
+
+# Re-exporting things from the somacore types namespace here.
+Comparable = types.Comparable
+Slice = types.Slice
+is_nonstringy_sequence = types.is_nonstringy_sequence
