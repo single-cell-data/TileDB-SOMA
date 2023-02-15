@@ -1,6 +1,6 @@
-## Issue and/or context:
+**Issue and/or context:**
 
-## Changes:
+**Changes:**
 
-## Notes for Reviewer:
+**Notes for Reviewer:**
 
