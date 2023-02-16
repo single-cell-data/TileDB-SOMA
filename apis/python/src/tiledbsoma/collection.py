@@ -534,6 +534,7 @@ class Collection(
     ... # read matrix back
     ... with tiledbsoma.open("./test_collection") as my_collection:
     ...     data = my_collection["my_dense_ndarray"].read()
+    ...
     >>> data
     <pyarrow.Tensor>
     type: int32
