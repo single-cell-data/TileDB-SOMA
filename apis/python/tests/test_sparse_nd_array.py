@@ -310,15 +310,15 @@ def test_sparse_nd_array_read_as_pandas(
         assert not A.schema.allows_duplicates
 
 
-@pytest.mark.parametrize("appendable", [True, False])
+@pytest.mark.parametrize("shape_is_nones", [True, False])
 @pytest.mark.parametrize("element_type", NDARRAY_ARROW_TYPES_SUPPORTED)
-def test_sparse_nd_array_append(tmp_path, appendable, element_type):
+def test_sparse_nd_array_append(tmp_path, shape_is_nones, element_type):
     uri = tmp_path.as_posix()
 
     soma.SparseNDArray.create(
         uri,
         type=element_type,
-        shape=(None, None) if appendable else (2, 3),
+        shape=(None, None) if shape_is_nones else (2, 3),
     ).close()
     assert soma.SparseNDArray.exists(uri)
 
@@ -343,7 +343,7 @@ def test_sparse_nd_array_append(tmp_path, appendable, element_type):
     with soma.SparseNDArray.open(uri) as snda:
         assert snda.nnz == 6
 
-    if appendable:
+    if shape_is_nones:
         with soma.SparseNDArray.open(uri, "w") as snda:
             snda.write(batch2)
     else:
