@@ -39,7 +39,7 @@ class NDArray(TileDBArray, somacore.NDArray):
             If the type is unsupported, an error will be raised.
 
         :param shape: The maximum capacity of the dataframe, including room for any
-            intended future appends,as a sequence. E.g. ``[100, 10]``.  All
+            intended future appends,as a sequence. E.g. ``(100, 10)``.  All
             lengths must be in the positive int64 range, or `None`.  If a slot
             is `None` -- only supported for `SparseNDArray`, not `DenseNDArray`
             -- then the maximum possible size will be used. This makes a
