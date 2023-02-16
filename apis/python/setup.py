@@ -177,13 +177,12 @@ setuptools.setup(
     install_requires=[
         "anndata",
         "attrs>=22.1",
-        "matplotlib<3.7",  # https://github.com/scverse/scanpy/issues/2411
         "numpy",
         "pandas",
-        "pyarrow >= 9.0.0",
-        "scanpy",
+        "pyarrow>=9.0.0",
+        "scanpy>=1.9.2",
         "scipy",
-        "somacore==0.0.0a14",
+        "somacore==0.0.0a15",
         "tiledb==0.20.*",
         "typing-extensions",  # Note "-" even though `import typing_extensions`
     ],

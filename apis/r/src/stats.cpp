@@ -11,28 +11,28 @@
 //'
 //' @export
 // [[Rcpp::export]]
-void stats_enable() {
+void tiledbsoma_stats_enable() {
     tiledb::Stats::enable();
 }
 
-//' @rdname stats_enable
+//' @rdname tiledbsoma_stats_enable
 //' @export
 // [[Rcpp::export]]
-void stats_disable() {
+void tiledbsoma_stats_disable() {
     tiledb::Stats::disable();
 }
 
-//' @rdname stats_enable
+//' @rdname tiledbsoma_stats_enable
 //' @export
 // [[Rcpp::export]]
-void stats_reset() {
+void tiledbsoma_stats_reset() {
     tiledb::Stats::reset();
 }
 
-//' @rdname stats_enable
+//' @rdname tiledbsoma_stats_enable
 //' @export
 // [[Rcpp::export]]
-std::string stats_dump() {
+std::string tiledbsoma_stats_dump() {
     std::string txt;
     tiledb::Stats::raw_dump(&txt);
     return txt;

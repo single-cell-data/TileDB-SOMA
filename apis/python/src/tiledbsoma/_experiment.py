@@ -1,9 +1,9 @@
 from somacore import experiment
 
-from .collection import Collection, CollectionBase
-from .dataframe import DataFrame
-from .measurement import Measurement
-from .tiledb_object import AnyTileDBObject
+from ._collection import Collection, CollectionBase
+from ._dataframe import DataFrame
+from ._measurement import Measurement
+from ._tiledb_object import AnyTileDBObject
 
 
 class Experiment(

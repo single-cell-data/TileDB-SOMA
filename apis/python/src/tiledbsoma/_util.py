@@ -1,10 +1,13 @@
 import pathlib
 import time
 import urllib.parse
-from typing import Any, List, Optional, Tuple, Type
+from itertools import zip_longest
+from typing import Any, Optional, Tuple, Type, TypeVar
 
 import somacore
 from somacore import options
+
+from ._types import Slice, is_slice_of
 
 
 def get_start_stamp() -> float:
@@ -91,29 +94,55 @@ def uri_joinpath(base: str, path: str) -> str:
     return urllib.parse.urlunparse(parts)
 
 
-def slice_to_range(ids: slice, domain: Tuple[int, int]) -> Optional[Tuple[int, int]]:
-    """
-    For the interface between ``DataFrame::read`` et al. (Python) and ``SOMAReader`` (C++).
-    """
-    if ids.step is not None:
+def validate_slice(slc: Slice[Any]) -> None:
+    """Checks that a slice has no step and is not inverted."""
+    if slc.step is not None:
         raise ValueError("slice steps are not supported")
-    if ids == slice(None):
+    if slc.start is None or slc.stop is None:
+        # All half-specified slices are valid.
+        return
+    if slc.stop < slc.start:
+        raise ValueError(
+            f"slice start ({slc.start!r}) must be <= slice stop ({slc.stop!r})"
+        )
+
+
+_T = TypeVar("_T")
+
+
+class NonNumericDimensionError(TypeError):
+    """Raised when trying to get a numeric range for a non-numeric dimension."""
+
+
+def slice_to_numeric_range(
+    slc: Slice[Any], domain: Tuple[_T, _T]
+) -> Optional[Tuple[_T, _T]]:
+    """Constrains the given slice to the ``domain`` for numeric dimensions.
+
+    We assume the slice has already been validated by validate_slice.
+    """
+    if slc == slice(None):
         return None
 
     domain_start, domain_stop = domain
-
+    if isinstance(domain_stop, (str, bytes)):
+        # Strings don't have a real "domain" so we can't handle them
+        # the same way that we handle numeric types.
+        raise NonNumericDimensionError("only numeric dimensions supported")
     # TODO: with future C++ improvements, move half-slice logic to SOMAReader
-    start = domain_start if ids.start is None else ids.start
-    stop = domain_stop if ids.stop is None else ids.stop
+    start = domain_start if slc.start is None else max(slc.start, domain_start)
+    stop = domain_stop if slc.stop is None else min(slc.stop, domain_stop)
 
-    # Indexing beyond end of array should "trim" to end of array
-    # TODO: Allow negative indexing:
-    # start = max(start, domain_start)
-    stop = min(stop, domain_stop)
+    if stop < start:
+        # With the above, we have guaranteed that at least one bound will
+        # include the domain.  If we get here, that means that the other bound
+        # never included it (e.g. stop == slc.stop < domain_start == start).
+        raise ValueError(
+            f"slice [{slc.start!r}:{slc.stop!r}] does not overlap"
+            f" [{domain_start!r}:{domain_stop!r}]"
+        )
 
-    if start > stop:
-        raise ValueError("slice start must be <= slice stop")
-    return (start, stop)
+    return start, stop
 
 
 def dense_indices_to_shape(
@@ -133,16 +162,12 @@ def dense_indices_to_shape(
             f" array dimension count ({len(array_shape)})"
         )
 
-    shape: List[int] = []
-    for i, extent in enumerate(array_shape):
-        if i < len(coords):
-            shape.append(dense_index_to_shape(coords[i], extent))
-        else:
-            shape.append(extent)
-
+    shape = tuple(
+        dense_index_to_shape(coord, extent)
+        for coord, extent in zip_longest(coords, array_shape)
+    )
     if result_order is somacore.ResultOrder.ROW_MAJOR:
-        return tuple(shape)
-
+        return shape
     return tuple(reversed(shape))
 
 
@@ -157,19 +182,18 @@ def dense_index_to_shape(coord: options.DenseCoord, array_length: int) -> int:
     """
     if coord is None:
         return array_length
-
-    if type(coord) is int:
+    if isinstance(coord, int):
         return 1
+    if is_slice_of(coord, int):
+        # We verify that `step` is None elsewhere, so we can always assume
+        # that we're asked for a continuous slice.
+        if coord.stop is None:
+            stop = array_length
+        else:
+            stop = min(coord.stop + 1, array_length)
+        return stop - (coord.start or 0)
 
-    if type(coord) is slice:
-        start, stop, step = coord.indices(array_length)
-        if step != 1:
-            raise ValueError("stepped slice ranges are not supported")
-        # This is correct for doubly-inclusive slices which SOMA uses.
-        stop = min(stop, array_length - 1)
-        return stop - start + 1
-
-    raise TypeError("coordinates must be tuple of int or slice")
+    raise TypeError(f"coordinate {coord} must be integer or integer slice")
 
 
 def check_type(

@@ -5,7 +5,7 @@ import pyarrow as pa
 import pytest
 
 import tiledbsoma as soma
-from tiledbsoma import factory
+from tiledbsoma import _factory
 
 """"
 Metadata handling tests for all SOMA foundational datatypes.
@@ -69,7 +69,7 @@ def test_metadata(soma_object):
     with pytest.raises(soma.SOMAError):
         soma_object.metadata["x"] = "y"
 
-    with factory.open(uri, "r") as read_obj:
+    with _factory.open(uri, "r") as read_obj:
         assert non_soma_metadata(read_obj) == {"foobar": True}
         assert "foobar" in read_obj.metadata
         # Double-check the various getter methods
@@ -81,7 +81,7 @@ def test_metadata(soma_object):
         with pytest.raises(soma.SOMAError):
             read_obj.metadata["x"] = "y"
 
-    with factory.open(uri, "w") as second_write:
+    with _factory.open(uri, "w") as second_write:
         second_write.metadata.update(stay="frosty", my="friends")
         assert non_soma_metadata(second_write) == {
             "foobar": True,
@@ -89,14 +89,14 @@ def test_metadata(soma_object):
             "my": "friends",
         }
 
-    with factory.open(uri, "w") as third_write:
+    with _factory.open(uri, "w") as third_write:
         del third_write.metadata["stay"]
         third_write.metadata["my"] = "enemies"
         assert non_soma_metadata(third_write) == {"foobar": True, "my": "enemies"}
         assert "stay" not in third_write.metadata
         assert third_write.metadata.get("stay", False) is False
 
-    with factory.open(uri, "r") as second_read:
+    with _factory.open(uri, "r") as second_read:
         assert non_soma_metadata(second_read) == {"foobar": True, "my": "enemies"}
 
 
@@ -108,7 +108,7 @@ def test_add_delete_metadata(soma_object):
         del soma_object.metadata["heres"]
         assert non_soma_metadata(soma_object) == {}
 
-    with factory.open(uri) as reader:
+    with _factory.open(uri) as reader:
         assert non_soma_metadata(reader) == {}
 
 
@@ -118,14 +118,14 @@ def test_delete_add_metadata(soma_object):
         soma_object.metadata["hdyfn"] = "destruction"
         assert non_soma_metadata(soma_object) == {"hdyfn": "destruction"}
 
-    with factory.open(uri, "w") as second_write:
+    with _factory.open(uri, "w") as second_write:
         assert non_soma_metadata(second_write) == {"hdyfn": "destruction"}
         del second_write.metadata["hdyfn"]
         assert non_soma_metadata(second_write) == {}
         second_write.metadata["hdyfn"] = "somebody new"
         assert non_soma_metadata(second_write) == {"hdyfn": "somebody new"}
 
-    with factory.open(uri, "r") as reader:
+    with _factory.open(uri, "r") as reader:
         assert non_soma_metadata(reader) == {"hdyfn": "somebody new"}
 
 
@@ -135,11 +135,11 @@ def test_set_set_metadata(soma_object):
     with soma_object:
         soma_object.metadata["content"] = "content"
 
-    with factory.open(uri, "w") as second_write:
+    with _factory.open(uri, "w") as second_write:
         second_write.metadata["content"] = "confidence"
         second_write.metadata["content"] = "doubt"
 
-    with factory.open(uri, "r") as reader:
+    with _factory.open(uri, "r") as reader:
         assert non_soma_metadata(reader) == {"content": "doubt"}
 
 
@@ -149,11 +149,11 @@ def test_set_delete_metadata(soma_object):
     with soma_object:
         soma_object.metadata["possession"] = "obsession"
 
-    with factory.open(uri, "w") as second_write:
+    with _factory.open(uri, "w") as second_write:
         second_write.metadata["possession"] = "funny thing about opinions"
         del second_write.metadata["possession"]
 
-    with factory.open(uri, "r") as reader:
+    with _factory.open(uri, "r") as reader:
         assert non_soma_metadata(reader) == {}
 
 

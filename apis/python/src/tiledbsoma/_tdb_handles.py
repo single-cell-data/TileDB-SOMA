@@ -21,7 +21,7 @@ import tiledb
 from somacore import options
 from typing_extensions import Self
 
-from .exception import DoesNotExistError, SOMAError, is_does_not_exist_error
+from ._exception import DoesNotExistError, SOMAError, is_does_not_exist_error
 from .options import SOMATileDBContext
 
 RawHandle = Union[tiledb.Array, tiledb.Group]

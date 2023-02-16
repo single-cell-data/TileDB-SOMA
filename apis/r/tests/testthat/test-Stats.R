@@ -3,13 +3,13 @@ test_that("Stats generation", {
     create_and_populate_soma_dataframe(uri)
 
     sdf <- SOMADataFrame$new(uri)
-    stats_enable()
+    tiledbsoma_stats_enable()
     arr <- sdf$read()
-    txt <- stats_dump()
+    txt <- tiledbsoma_stats_dump()
     expect_true(nchar(txt) > 1000) # cannot parse JSON without a JSON package
 
-    stats_reset()
-    txt <- stats_dump()
+    tiledbsoma_stats_reset()
+    txt <- tiledbsoma_stats_dump()
     expect_true(nchar(txt) < 100) # almost empty JSON string
 
 })

@@ -41,6 +41,6 @@ ArrowReadResult = Union[
 ]
 
 # Re-exporting things from the somacore types namespace here.
-Comparable = types.Comparable
 Slice = types.Slice
 is_nonstringy_sequence = types.is_nonstringy_sequence
+is_slice_of = types.is_slice_of

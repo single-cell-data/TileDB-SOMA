@@ -9,8 +9,8 @@ import somacore
 # This package's pybind11 code
 import tiledbsoma.libtiledbsoma as clib
 
-from .exception import SOMAError
-from .types import NTuple
+from ._exception import SOMAError
+from ._types import NTuple
 
 
 class TableReadIter(somacore.ReadIter[pa.Table]):

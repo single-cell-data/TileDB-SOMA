@@ -1,4 +1,4 @@
-from typing import Any, Mapping, Optional, Sequence, Tuple, cast
+from typing import Any, Mapping, Optional, Sequence, Tuple, Type, Union, cast
 
 import numpy as np
 import pyarrow as pa
@@ -7,15 +7,15 @@ import tiledb
 from somacore import options
 from typing_extensions import Self
 
-from . import arrow_types, util
+from . import _arrow_types, _util
 from . import libtiledbsoma as clib
-from .constants import SOMA_JOINID
+from ._constants import SOMA_JOINID
+from ._query_condition import QueryCondition
+from ._read_iters import TableReadIter
+from ._tiledb_array import TileDBArray
+from ._types import NPFloating, NPInteger, is_slice_of
 from .options import SOMATileDBContext
 from .options.tiledb_create_options import TileDBCreateOptions
-from .query_condition import QueryCondition
-from .read_iters import TableReadIter
-from .tiledb_array import TileDBArray
-from .types import NPFloating, NPInteger
 
 _UNBATCHED = options.BatchSize()
 
@@ -189,7 +189,7 @@ class DataFrame(TileDBArray, somacore.DataFrame):
         * Negative indexing is unsupported.
         """
         del batch_size, platform_config  # Currently unused.
-        util.check_unpartitioned(partitions)
+        _util.check_unpartitioned(partitions)
         self._check_open_read()
         result_order = options.ResultOrder(result_order)
 
@@ -227,7 +227,7 @@ class DataFrame(TileDBArray, somacore.DataFrame):
             the index columns. The schema for the values must match
             the schema for the ``DataFrame``.
         """
-        util.check_type("values", values, (pa.Table,))
+        _util.check_type("values", values, (pa.Table,))
 
         del platform_config  # unused
         dim_cols_list = []
@@ -250,13 +250,26 @@ class DataFrame(TileDBArray, somacore.DataFrame):
         return self
 
     def _set_reader_coord(
-        self, sr: clib.SOMAReader, dim: tiledb.Dim, coord: object
+        self, sr: clib.SOMAReader, dim_idx: int, dim: tiledb.Dim, coord: object
     ) -> bool:
-        if super()._set_reader_coord(sr, dim, coord):
+        if super()._set_reader_coord(sr, dim_idx, dim, coord):
             return True
 
         if isinstance(coord, (str, bytes)):
             sr.set_dim_points(dim.name, [coord])
+            return True
+        if is_slice_of(coord, str) or is_slice_of(coord, bytes):
+            # Figure out which one.
+            dim_type: Union[Type[str], Type[bytes]] = type(dim.domain[0])
+            # A `None` or empty start is always equivalent to empty str/bytes.
+            start = coord.start or dim_type()
+            if coord.stop is None:
+                # There's no way to specify "to infinity" for strings.
+                # We have to get the nonempty domain and use that as the end.
+                _, stop = self._handle.reader.nonempty_domain()[dim_idx]
+            else:
+                stop = coord.stop
+            sr.set_dim_ranges(dim.name, [(start, stop)])
             return True
         if isinstance(coord, (Sequence, pa.Array, pa.ChunkedArray, np.ndarray)):
             if isinstance(coord, np.ndarray) and coord.ndim != 1:
@@ -276,7 +289,7 @@ def _canonicalize_schema(
     Returns a schema, which may be modified by the addition of required columns
     (e.g. ``soma_joinid``).
     """
-    util.check_type("schema", schema, (pa.Schema,))
+    _util.check_type("schema", schema, (pa.Schema,))
     if not index_column_names:
         raise ValueError("DataFrame requires one or more index columns")
 
@@ -339,7 +352,9 @@ def _build_tiledb_schema(
     dims = []
     for index_column_name in index_column_names:
         pa_type = schema.field(index_column_name).type
-        dtype = arrow_types.tiledb_type_from_arrow_type(pa_type, is_indexed_column=True)
+        dtype = _arrow_types.tiledb_type_from_arrow_type(
+            pa_type, is_indexed_column=True
+        )
         domain: Tuple[Any, Any]
         if isinstance(dtype, str):
             domain = None, None
@@ -384,7 +399,9 @@ def _build_tiledb_schema(
             continue
         attr = tiledb.Attr(
             name=attr_name,
-            dtype=arrow_types.tiledb_type_from_arrow_type(schema.field(attr_name).type),
+            dtype=_arrow_types.tiledb_type_from_arrow_type(
+                schema.field(attr_name).type
+            ),
             filters=tiledb_create_options.attr_filters(attr_name, ["ZstdFilter"]),
             ctx=context.tiledb_ctx,
         )

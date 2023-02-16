@@ -29,21 +29,21 @@ from .. import (
     Experiment,
     Measurement,
     SparseNDArray,
+    _factory,
+    _util,
     eta,
-    factory,
     logging,
-    util,
 )
-from ..common_nd_array import NDArray
-from ..constants import SOMA_JOINID
-from ..exception import DoesNotExistError, SOMAError
-from ..funcs import typeguard_ignore
+from .._common_nd_array import NDArray
+from .._constants import SOMA_JOINID
+from .._exception import DoesNotExistError, SOMAError
+from .._funcs import typeguard_ignore
+from .._tdb_handles import RawHandle
+from .._tiledb_array import TileDBArray
+from .._tiledb_object import TileDBObject
+from .._types import INGEST_MODES, IngestMode, NPNDArray, Path
 from ..options import SOMATileDBContext
 from ..options.tiledb_create_options import TileDBCreateOptions
-from ..tdb_handles import RawHandle
-from ..tiledb_array import TileDBArray
-from ..tiledb_object import TileDBObject
-from ..types import INGEST_MODES, IngestMode, NPNDArray, Path
 from . import conversions
 
 SparseMatrix = Union[sp.csr_matrix, sp.csc_matrix, SparseDataset]
@@ -86,14 +86,14 @@ def from_h5ad(
     if isinstance(input_path, ad.AnnData):
         raise TypeError("Input path is an AnnData object -- did you want from_anndata?")
 
-    s = util.get_start_stamp()
+    s = _util.get_start_stamp()
     logging.log_io(None, f"START  Experiment.from_h5ad {input_path}")
 
     logging.log_io(None, f"START  READING {input_path}")
 
     anndata = ad.read_h5ad(input_path, backed="r")
 
-    logging.log_io(None, util.format_elapsed(s, f"FINISH READING {input_path}"))
+    logging.log_io(None, _util.format_elapsed(s, f"FINISH READING {input_path}"))
 
     exp = from_anndata(
         experiment_uri,
@@ -106,7 +106,7 @@ def from_h5ad(
     )
 
     logging.log_io(
-        None, util.format_elapsed(s, f"FINISH Experiment.from_h5ad {input_path}")
+        None, _util.format_elapsed(s, f"FINISH Experiment.from_h5ad {input_path}")
     )
     return exp
 
@@ -151,15 +151,15 @@ def from_anndata(
     if anndata.obs.index.empty or anndata.var.index.empty:
         raise NotImplementedError("Empty AnnData.obs or AnnData.var unsupported.")
 
-    s = util.get_start_stamp()
+    s = _util.get_start_stamp()
     logging.log_io(None, "START  DECATEGORICALIZING")
 
     anndata.obs_names_make_unique()
     anndata.var_names_make_unique()
 
-    logging.log_io(None, util.format_elapsed(s, "FINISH DECATEGORICALIZING"))
+    logging.log_io(None, _util.format_elapsed(s, "FINISH DECATEGORICALIZING"))
 
-    s = util.get_start_stamp()
+    s = _util.get_start_stamp()
     logging.log_io(None, f"START  WRITING {experiment_uri}")
 
     # Must be done first, to create the parent directory.
@@ -167,7 +167,7 @@ def from_anndata(
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     # OBS
-    df_uri = util.uri_joinpath(experiment.uri, "obs")
+    df_uri = _util.uri_joinpath(experiment.uri, "obs")
     with _write_dataframe(
         df_uri,
         conversions.decategoricalize_obs_or_var(anndata.obs),
@@ -180,7 +180,7 @@ def from_anndata(
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     # MS
     with _create_or_open_coll(
-        Collection[Measurement], util.uri_joinpath(experiment.uri, "ms"), ingest_mode
+        Collection[Measurement], _util.uri_joinpath(experiment.uri, "ms"), ingest_mode
     ) as ms:
         experiment.set("ms", ms, use_relative_uri=use_relative_uri)
 
@@ -194,7 +194,7 @@ def from_anndata(
             # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
             # MS/meas/VAR
             with _write_dataframe(
-                util.uri_joinpath(measurement.uri, "var"),
+                _util.uri_joinpath(measurement.uri, "var"),
                 conversions.decategoricalize_obs_or_var(anndata.var),
                 id_column_name="var_id",
                 platform_config=platform_config,
@@ -206,7 +206,7 @@ def from_anndata(
             # MS/meas/X/DATA
 
             with _create_or_open_coll(
-                Collection, util.uri_joinpath(measurement.uri, "X"), ingest_mode
+                Collection, _util.uri_joinpath(measurement.uri, "X"), ingest_mode
             ) as x:
                 measurement.set("X", x, use_relative_uri=use_relative_uri)
 
@@ -222,7 +222,7 @@ def from_anndata(
                 )
                 with create_from_matrix(
                     cls,
-                    util.uri_joinpath(measurement.X.uri, "data"),
+                    _util.uri_joinpath(measurement.X.uri, "data"),
                     anndata.X,
                     platform_config,
                     ingest_mode,
@@ -234,14 +234,14 @@ def from_anndata(
                 if len(anndata.obsm.keys()) > 0:  # do not create an empty collection
                     with _create_or_open_coll(
                         Collection,
-                        util.uri_joinpath(measurement.uri, "obsm"),
+                        _util.uri_joinpath(measurement.uri, "obsm"),
                         ingest_mode,
                     ) as obsm:
                         measurement.set("obsm", obsm, use_relative_uri=use_relative_uri)
                         for key in anndata.obsm.keys():
                             with create_from_matrix(
                                 DenseNDArray,
-                                util.uri_joinpath(measurement.obsm.uri, key),
+                                _util.uri_joinpath(measurement.obsm.uri, key),
                                 conversions.to_tiledb_supported_array_type(
                                     anndata.obsm[key]
                                 ),
@@ -255,14 +255,14 @@ def from_anndata(
                 if len(anndata.varm.keys()) > 0:  # do not create an empty collection
                     with _create_or_open_coll(
                         Collection,
-                        util.uri_joinpath(measurement.uri, "varm"),
+                        _util.uri_joinpath(measurement.uri, "varm"),
                         ingest_mode,
                     ) as varm:
                         measurement.set("varm", varm, use_relative_uri=use_relative_uri)
                         for key in anndata.varm.keys():
                             with create_from_matrix(
                                 DenseNDArray,
-                                util.uri_joinpath(measurement.varm.uri, key),
+                                _util.uri_joinpath(measurement.varm.uri, key),
                                 conversions.to_tiledb_supported_array_type(
                                     anndata.varm[key]
                                 ),
@@ -278,14 +278,14 @@ def from_anndata(
                 if len(anndata.obsp.keys()) > 0:  # do not create an empty collection
                     with _create_or_open_coll(
                         Collection,
-                        util.uri_joinpath(measurement.uri, "obsp"),
+                        _util.uri_joinpath(measurement.uri, "obsp"),
                         ingest_mode,
                     ) as obsp:
                         measurement.set("obsp", obsp, use_relative_uri=use_relative_uri)
                         for key in anndata.obsp.keys():
                             with create_from_matrix(
                                 SparseNDArray,
-                                util.uri_joinpath(measurement.obsp.uri, key),
+                                _util.uri_joinpath(measurement.obsp.uri, key),
                                 conversions.to_tiledb_supported_array_type(
                                     anndata.obsp[key]
                                 ),
@@ -301,14 +301,14 @@ def from_anndata(
                 if len(anndata.varp.keys()) > 0:  # do not create an empty collection
                     with _create_or_open_coll(
                         Collection,
-                        util.uri_joinpath(measurement.uri, "varp"),
+                        _util.uri_joinpath(measurement.uri, "varp"),
                         ingest_mode,
                     ) as varp:
                         measurement.set("varp", varp, use_relative_uri=use_relative_uri)
                         for key in anndata.varp.keys():
                             with create_from_matrix(
                                 SparseNDArray,
-                                util.uri_joinpath(measurement.varp.uri, key),
+                                _util.uri_joinpath(measurement.varp.uri, key),
                                 conversions.to_tiledb_supported_array_type(
                                     anndata.varp[key]
                                 ),
@@ -326,7 +326,7 @@ def from_anndata(
                 if anndata.raw is not None:
                     with _create_or_open_coll(
                         Measurement,
-                        util.uri_joinpath(experiment.ms.uri, "raw"),
+                        _util.uri_joinpath(experiment.ms.uri, "raw"),
                         ingest_mode,
                     ) as raw_measurement:
                         ms.set(
@@ -336,7 +336,7 @@ def from_anndata(
                         )
 
                         with _write_dataframe(
-                            util.uri_joinpath(raw_measurement.uri, "var"),
+                            _util.uri_joinpath(raw_measurement.uri, "var"),
                             conversions.decategoricalize_obs_or_var(anndata.raw.var),
                             id_column_name="var_id",
                             platform_config=platform_config,
@@ -348,7 +348,7 @@ def from_anndata(
 
                         with _create_or_open_coll(
                             Collection,
-                            util.uri_joinpath(raw_measurement.uri, "X"),
+                            _util.uri_joinpath(raw_measurement.uri, "X"),
                             ingest_mode,
                         ) as rm_x:
                             raw_measurement.set(
@@ -357,7 +357,7 @@ def from_anndata(
 
                             with create_from_matrix(
                                 SparseNDArray,
-                                util.uri_joinpath(raw_measurement.X.uri, "data"),
+                                _util.uri_joinpath(raw_measurement.X.uri, "data"),
                                 anndata.raw.X,
                                 platform_config,
                                 ingest_mode,
@@ -370,7 +370,7 @@ def from_anndata(
 
     logging.log_io(
         f"Wrote   {experiment.uri}",
-        util.format_elapsed(s, f"FINISH WRITING {experiment.uri}"),
+        _util.format_elapsed(s, f"FINISH WRITING {experiment.uri}"),
     )
     return experiment
 
@@ -416,7 +416,7 @@ def _write_dataframe(
     platform_config: Optional[PlatformConfig] = None,
     ingest_mode: IngestMode = "write",
 ) -> DataFrame:
-    s = util.get_start_stamp()
+    s = _util.get_start_stamp()
     logging.log_io(None, f"START  WRITING {df_uri}")
 
     df[SOMA_JOINID] = np.asarray(range(len(df)), dtype=np.int64)
@@ -433,7 +433,7 @@ def _write_dataframe(
     arrow_table = pa.Table.from_pandas(df)
 
     try:
-        soma_df = factory.open(df_uri, "w", soma_type=DataFrame)
+        soma_df = _factory.open(df_uri, "w", soma_type=DataFrame)
     except DoesNotExistError:
         soma_df = DataFrame.create(
             df_uri, schema=arrow_table.schema, platform_config=platform_config
@@ -445,7 +445,7 @@ def _write_dataframe(
             if _chunk_is_contained_in(dim_range, storage_ned):
                 logging.log_io(
                     f"Skipped {soma_df.uri}",
-                    util.format_elapsed(s, f"SKIPPED {soma_df.uri}"),
+                    _util.format_elapsed(s, f"SKIPPED {soma_df.uri}"),
                 )
                 return soma_df
         else:
@@ -454,14 +454,14 @@ def _write_dataframe(
     if ingest_mode == "schema_only":
         logging.log_io(
             f"Wrote schema {soma_df.uri}",
-            util.format_elapsed(s, f"FINISH WRITING SCHEMA {soma_df.uri}"),
+            _util.format_elapsed(s, f"FINISH WRITING SCHEMA {soma_df.uri}"),
         )
         return soma_df
 
     soma_df.write(arrow_table)
     logging.log_io(
         f"Wrote   {soma_df.uri}",
-        util.format_elapsed(s, f"FINISH WRITING {soma_df.uri}"),
+        _util.format_elapsed(s, f"FINISH WRITING {soma_df.uri}"),
     )
     return soma_df
 
@@ -481,7 +481,7 @@ def create_from_matrix(
     if len(matrix.shape) != 2:
         raise ValueError(f"expected matrix.shape == 2; got {matrix.shape}")
 
-    s = util.get_start_stamp()
+    s = _util.get_start_stamp()
     logging.log_io(None, f"START  WRITING {uri}")
 
     try:
@@ -500,13 +500,13 @@ def create_from_matrix(
     if ingest_mode == "schema_only":
         logging.log_io(
             f"Wrote schema {soma_ndarray.uri}",
-            util.format_elapsed(s, f"FINISH WRITING SCHEMA {soma_ndarray.uri}"),
+            _util.format_elapsed(s, f"FINISH WRITING SCHEMA {soma_ndarray.uri}"),
         )
         return soma_ndarray
 
     logging.log_io(
         f"Writing {soma_ndarray.uri}",
-        util.format_elapsed(s, f"START  WRITING {soma_ndarray.uri}"),
+        _util.format_elapsed(s, f"START  WRITING {soma_ndarray.uri}"),
     )
 
     if isinstance(soma_ndarray, DenseNDArray):
@@ -532,7 +532,7 @@ def create_from_matrix(
 
     logging.log_io(
         f"Wrote   {soma_ndarray.uri}",
-        util.format_elapsed(s, f"FINISH WRITING {soma_ndarray.uri}"),
+        _util.format_elapsed(s, f"FINISH WRITING {soma_ndarray.uri}"),
     )
     return soma_ndarray
 
@@ -945,22 +945,22 @@ def to_h5ad(
 
     [lifecycle: experimental]
     """
-    s = util.get_start_stamp()
+    s = _util.get_start_stamp()
     logging.log_io(None, f"START  Experiment.to_h5ad -> {h5ad_path}")
 
     anndata = to_anndata(
         experiment, measurement_name=measurement_name, X_layer_name=X_layer_name
     )
 
-    s2 = util.get_start_stamp()
+    s2 = _util.get_start_stamp()
     logging.log_io(None, f"START  write {h5ad_path}")
 
     anndata.write_h5ad(h5ad_path)
 
-    logging.log_io(None, util.format_elapsed(s2, f"FINISH write {h5ad_path}"))
+    logging.log_io(None, _util.format_elapsed(s2, f"FINISH write {h5ad_path}"))
 
     logging.log_io(
-        None, util.format_elapsed(s, f"FINISH Experiment.to_h5ad -> {h5ad_path}")
+        None, _util.format_elapsed(s, f"FINISH Experiment.to_h5ad -> {h5ad_path}")
     )
 
 
@@ -979,7 +979,7 @@ def to_anndata(
     [lifecycle: experimental]
     """
 
-    s = util.get_start_stamp()
+    s = _util.get_start_stamp()
     logging.log_io(None, "START  Experiment.to_anndata")
 
     measurement = experiment.ms[measurement_name]
@@ -1055,6 +1055,6 @@ def to_anndata(
         dtype=X_dtype,
     )
 
-    logging.log_io(None, util.format_elapsed(s, "FINISH Experiment.to_anndata"))
+    logging.log_io(None, _util.format_elapsed(s, "FINISH Experiment.to_anndata"))
 
     return anndata
