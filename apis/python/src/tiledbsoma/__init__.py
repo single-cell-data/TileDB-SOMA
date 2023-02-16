@@ -22,6 +22,7 @@ from .libtiledbsoma import (
 from ._measurement import Measurement
 from ._sparse_nd_array import SparseNDArray
 from ._exception import DoesNotExistError, SOMAError
+from .options import SOMATileDBContext
 
 __version__ = get_implementation_version()
 
@@ -42,6 +43,7 @@ __all__ = [
     "open",
     "show_package_versions",
     "SOMAError",
+    "SOMATileDBContext",
     "SparseNDArray",
     "tiledbsoma_stats_disable",
     "tiledbsoma_stats_dump",
