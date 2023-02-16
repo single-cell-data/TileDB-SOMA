@@ -14,7 +14,7 @@ from . import _util
 from . import libtiledbsoma as clib
 from ._common_nd_array import NDArray
 from ._read_iters import (
-    SparseCOOTensorReadIter,
+    TableReadIter,
 )
 from ._types import NTuple
 
