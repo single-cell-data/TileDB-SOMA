@@ -5,7 +5,7 @@ from scipy import sparse as sp
 
 import tiledbsoma as soma
 import tiledbsoma.io as somaio
-from tiledbsoma import factory
+from tiledbsoma import _factory
 from tiledbsoma.options.tiledb_create_options import TileDBCreateOptions
 
 
@@ -58,7 +58,7 @@ def test_io_create_from_matrix_Dense_nd_array(tmp_path, tdb_create_options, src_
         src_matrix,
         platform_config=tdb_create_options,
     ).close()
-    with factory.open(tmp_path.as_posix()) as snda:
+    with _factory.open(tmp_path.as_posix()) as snda:
         assert snda.shape == src_matrix.shape
         assert snda.ndim == src_matrix.ndim
 
@@ -109,7 +109,7 @@ def test_io_create_from_matrix_Sparse_nd_array(
         platform_config=tdb_create_options,
     ).close()
 
-    with factory.open(tmp_path.as_posix()) as snda:
+    with _factory.open(tmp_path.as_posix()) as snda:
         assert snda.shape == src_matrix.shape
         assert snda.ndim == src_matrix.ndim
 

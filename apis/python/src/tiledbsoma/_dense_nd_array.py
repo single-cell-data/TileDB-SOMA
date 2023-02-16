@@ -5,10 +5,10 @@ import somacore
 from somacore import options
 from typing_extensions import Self
 
-from . import util
-from .common_nd_array import NDArray
-from .exception import SOMAError
-from .util import dense_indices_to_shape
+from . import _util
+from ._common_nd_array import NDArray
+from ._exception import SOMAError
+from ._util import dense_indices_to_shape
 
 
 class DenseNDArray(NDArray, somacore.DenseNDArray):
@@ -95,7 +95,7 @@ class DenseNDArray(NDArray, somacore.DenseNDArray):
         :param platform_config: Optional platform-specific options to use
             in this write operation (currently unused).
         """
-        util.check_type("values", values, (pa.Tensor,))
+        _util.check_type("values", values, (pa.Tensor,))
 
         del platform_config  # Currently unused.
         self._handle.writer[coords] = values.to_numpy()

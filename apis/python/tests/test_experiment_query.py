@@ -8,8 +8,8 @@ import pytest
 from scipy import sparse
 
 import tiledbsoma as soma
-from tiledbsoma import factory
-from tiledbsoma.collection import CollectionBase
+from tiledbsoma import _factory
+from tiledbsoma._collection import CollectionBase
 from tiledbsoma.experiment_query import X_as_series
 
 
@@ -55,7 +55,7 @@ def soma_experiment(
             varp = rna.add_new_collection("varp")
             for varp_layer_name in varp_layer_names:
                 add_sparse_array(varp, varp_layer_name, (n_vars, n_vars))
-    return factory.open((tmp_path / "exp").as_posix())
+    return _factory.open((tmp_path / "exp").as_posix())
 
 
 @pytest.mark.xfail(

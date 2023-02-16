@@ -9,10 +9,10 @@ import tiledb
 from somacore import options
 from typing_extensions import Self
 
-from . import arrow_types, util
+from . import _arrow_types, _util
+from ._tiledb_array import TileDBArray
 from .options.soma_tiledb_context import SOMATileDBContext
 from .options.tiledb_create_options import TileDBCreateOptions
-from .tiledb_array import TileDBArray
 
 
 class NDArray(TileDBArray, somacore.NDArray):
@@ -82,7 +82,7 @@ def _build_tiledb_schema(
     *,
     is_sparse: bool,
 ) -> tiledb.ArraySchema:
-    util.check_type("type", type, (pa.DataType,))
+    _util.check_type("type", type, (pa.DataType,))
 
     # check on shape
     if len(shape) == 0 or any(e <= 0 for e in shape):
@@ -118,7 +118,7 @@ def _build_tiledb_schema(
     attrs = [
         tiledb.Attr(
             name="soma_data",
-            dtype=arrow_types.tiledb_type_from_arrow_type(type),
+            dtype=_arrow_types.tiledb_type_from_arrow_type(type),
             filters=create_options.attr_filters("soma_data", ["ZstdFilter"]),
             ctx=context.tiledb_ctx,
         )

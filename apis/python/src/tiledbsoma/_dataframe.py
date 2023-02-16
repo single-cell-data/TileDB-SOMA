@@ -7,15 +7,15 @@ import tiledb
 from somacore import options
 from typing_extensions import Self
 
-from . import arrow_types, util
+from . import _arrow_types, _util
 from . import libtiledbsoma as clib
-from .constants import SOMA_JOINID
+from ._constants import SOMA_JOINID
+from ._query_condition import QueryCondition
+from ._read_iters import TableReadIter
+from ._tiledb_array import TileDBArray
+from ._types import NPFloating, NPInteger, is_slice_of
 from .options import SOMATileDBContext
 from .options.tiledb_create_options import TileDBCreateOptions
-from .query_condition import QueryCondition
-from .read_iters import TableReadIter
-from .tiledb_array import TileDBArray
-from .types import NPFloating, NPInteger, is_slice_of
 
 _UNBATCHED = options.BatchSize()
 
@@ -152,7 +152,7 @@ class DataFrame(TileDBArray, somacore.DataFrame):
         * Negative indexing is unsupported.
         """
         del batch_size, platform_config  # Currently unused.
-        util.check_unpartitioned(partitions)
+        _util.check_unpartitioned(partitions)
         self._check_open_read()
         result_order = options.ResultOrder(result_order)
 
@@ -190,7 +190,7 @@ class DataFrame(TileDBArray, somacore.DataFrame):
             the index columns. The schema for the values must match
             the schema for the ``DataFrame``.
         """
-        util.check_type("values", values, (pa.Table,))
+        _util.check_type("values", values, (pa.Table,))
 
         del platform_config  # unused
         dim_cols_list = []
@@ -252,7 +252,7 @@ def _canonicalize_schema(
     Returns a schema, which may be modified by the addition of required columns
     (e.g. ``soma_joinid``).
     """
-    util.check_type("schema", schema, (pa.Schema,))
+    _util.check_type("schema", schema, (pa.Schema,))
     if not index_column_names:
         raise ValueError("DataFrame requires one or more index columns")
 
@@ -315,7 +315,9 @@ def _build_tiledb_schema(
     dims = []
     for index_column_name in index_column_names:
         pa_type = schema.field(index_column_name).type
-        dtype = arrow_types.tiledb_type_from_arrow_type(pa_type, is_indexed_column=True)
+        dtype = _arrow_types.tiledb_type_from_arrow_type(
+            pa_type, is_indexed_column=True
+        )
         domain: Tuple[Any, Any]
         if isinstance(dtype, str):
             domain = None, None
@@ -360,7 +362,9 @@ def _build_tiledb_schema(
             continue
         attr = tiledb.Attr(
             name=attr_name,
-            dtype=arrow_types.tiledb_type_from_arrow_type(schema.field(attr_name).type),
+            dtype=_arrow_types.tiledb_type_from_arrow_type(
+                schema.field(attr_name).type
+            ),
             filters=tiledb_create_options.attr_filters(attr_name, ["ZstdFilter"]),
             ctx=context.tiledb_ctx,
         )

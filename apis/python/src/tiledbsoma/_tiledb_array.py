@@ -3,16 +3,17 @@ from typing import Optional, Sequence, Tuple
 import pyarrow as pa
 import tiledb
 
+from . import _tdb_handles, _util
+
 # This package's pybind11 code
 from . import libtiledbsoma as clib
-from . import tdb_handles, util
-from .arrow_types import tiledb_schema_to_arrow
+from ._arrow_types import tiledb_schema_to_arrow
+from ._tiledb_object import TileDBObject
+from ._types import is_nonstringy_sequence
 from .options.soma_tiledb_context import SOMATileDBContext
-from .tiledb_object import TileDBObject
-from .types import is_nonstringy_sequence
 
 
-class TileDBArray(TileDBObject[tdb_handles.ArrayWrapper]):
+class TileDBArray(TileDBObject[_tdb_handles.ArrayWrapper]):
     """
     Wraps arrays from TileDB-Py by retaining a URI, options, etc.  Also serves as an abstraction layer to hide TileDB-specific details from the API, unless requested.
 
@@ -21,7 +22,7 @@ class TileDBArray(TileDBObject[tdb_handles.ArrayWrapper]):
 
     __slots__ = ()
 
-    _wrapper_type = tdb_handles.ArrayWrapper
+    _wrapper_type = _tdb_handles.ArrayWrapper
 
     @property
     def schema(self) -> pa.Schema:
@@ -126,10 +127,10 @@ class TileDBArray(TileDBObject[tdb_handles.ArrayWrapper]):
             sr.set_dim_points(dim.name, [coord])
             return True
         if isinstance(coord, slice):
-            util.validate_slice(coord)
+            _util.validate_slice(coord)
             try:
-                lo_hi = util.slice_to_numeric_range(coord, dim.domain)
-            except util.NonNumericDimensionError:
+                lo_hi = _util.slice_to_numeric_range(coord, dim.domain)
+            except _util.NonNumericDimensionError:
                 return False  # We only handle numeric dimensions here.
             if lo_hi:
                 sr.set_dim_ranges(dim.name, [lo_hi])
@@ -140,7 +141,7 @@ class TileDBArray(TileDBObject[tdb_handles.ArrayWrapper]):
     @classmethod
     def _create_internal(
         cls, uri: str, schema: tiledb.ArraySchema, context: SOMATileDBContext
-    ) -> tdb_handles.ArrayWrapper:
+    ) -> _tdb_handles.ArrayWrapper:
         """Creates the TileDB Array for this type and returns an opened handle.
 
         This does the work of creating a TileDB Array with the provided schema

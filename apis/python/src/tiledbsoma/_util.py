@@ -7,7 +7,7 @@ from typing import Any, Optional, Tuple, Type, TypeVar
 import somacore
 from somacore import options
 
-from .types import Slice, is_slice_of
+from ._types import Slice, is_slice_of
 
 
 def get_start_stamp() -> float:

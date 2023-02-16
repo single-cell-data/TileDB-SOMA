@@ -14,7 +14,7 @@ warn_unreachable = true
 strict = true
 
 [[tool.mypy.overrides]]
-module = "tiledbsoma.query_condition"
+module = "tiledbsoma._query_condition"
 ignore_errors = true
 
 [tool.ruff]

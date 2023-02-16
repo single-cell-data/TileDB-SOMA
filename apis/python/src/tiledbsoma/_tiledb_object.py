@@ -6,12 +6,12 @@ import tiledb
 from somacore import options
 from typing_extensions import Self
 
-from . import constants, tdb_handles
-from .exception import SOMAError
+from . import _constants, _tdb_handles
+from ._exception import SOMAError
 from .options import SOMATileDBContext
 
 _WrapperType_co = TypeVar(
-    "_WrapperType_co", bound=tdb_handles.AnyWrapper, covariant=True
+    "_WrapperType_co", bound=_tdb_handles.AnyWrapper, covariant=True
 )
 """The type of handle on a backend object that we have.
 
@@ -141,7 +141,7 @@ class TileDBObject(somacore.SOMAObject, Generic[_WrapperType_co]):
         context = context or SOMATileDBContext()
         try:
             with cls._wrapper_type.open(uri, "r", context) as hdl:
-                md_type = hdl.metadata.get(constants.SOMA_OBJECT_TYPE_METADATA_KEY)
+                md_type = hdl.metadata.get(_constants.SOMA_OBJECT_TYPE_METADATA_KEY)
                 if not isinstance(md_type, str):
                     return False
                 return md_type.lower() == cls.soma_type.lower()
@@ -149,12 +149,12 @@ class TileDBObject(somacore.SOMAObject, Generic[_WrapperType_co]):
             return False
 
     @classmethod
-    def _set_create_metadata(cls, handle: tdb_handles.AnyWrapper) -> None:
+    def _set_create_metadata(cls, handle: _tdb_handles.AnyWrapper) -> None:
         """Sets the necessary metadata on a newly-created TileDB object."""
         handle.writer.meta.update(
             {
-                constants.SOMA_OBJECT_TYPE_METADATA_KEY: cls.soma_type,
-                constants.SOMA_ENCODING_VERSION_METADATA_KEY: constants.SOMA_ENCODING_VERSION,
+                _constants.SOMA_OBJECT_TYPE_METADATA_KEY: cls.soma_type,
+                _constants.SOMA_ENCODING_VERSION_METADATA_KEY: _constants.SOMA_ENCODING_VERSION,
             }
         )
         # Semi-hack: flush the metadata immediately upon creation so that the
@@ -167,4 +167,4 @@ class TileDBObject(somacore.SOMAObject, Generic[_WrapperType_co]):
             raise ValueError(f"{self} is open for writing, not reading")
 
 
-AnyTileDBObject = TileDBObject[tdb_handles.AnyWrapper]
+AnyTileDBObject = TileDBObject[_tdb_handles.AnyWrapper]

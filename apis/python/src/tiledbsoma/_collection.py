@@ -25,15 +25,15 @@ import tiledb
 from somacore import options
 from typing_extensions import Self
 
-from . import funcs, tdb_handles
-from .common_nd_array import NDArray
-from .dataframe import DataFrame
-from .dense_nd_array import DenseNDArray
-from .exception import is_does_not_exist_error, is_duplicate_group_key_error
+from . import _funcs, _tdb_handles
+from ._common_nd_array import NDArray
+from ._dataframe import DataFrame
+from ._dense_nd_array import DenseNDArray
+from ._exception import is_does_not_exist_error, is_duplicate_group_key_error
+from ._sparse_nd_array import SparseNDArray
+from ._tiledb_object import AnyTileDBObject, TileDBObject
+from ._util import is_relative_uri, make_relative_path, uri_joinpath
 from .options import SOMATileDBContext
-from .sparse_nd_array import SparseNDArray
-from .tiledb_object import AnyTileDBObject, TileDBObject
-from .util import is_relative_uri, make_relative_path, uri_joinpath
 
 # A collection can hold any sub-type of TileDBObject
 CollectionElementType = TypeVar("CollectionElementType", bound=AnyTileDBObject)
@@ -46,13 +46,13 @@ _NDArr = TypeVar("_NDArr", bound=NDArray)
 class _CachedElement:
     """Item we have loaded in the cache of a collection."""
 
-    entry: tdb_handles.GroupEntry
+    entry: _tdb_handles.GroupEntry
     soma: Optional[AnyTileDBObject] = None
     """The reified object, if it has been opened."""
 
 
 class CollectionBase(
-    TileDBObject[tdb_handles.GroupWrapper],
+    TileDBObject[_tdb_handles.GroupWrapper],
     somacore.collection.BaseCollection[CollectionElementType],
 ):
     """
@@ -62,7 +62,7 @@ class CollectionBase(
     """
 
     __slots__ = ("_contents",)
-    _wrapper_type = tdb_handles.GroupWrapper
+    _wrapper_type = _tdb_handles.GroupWrapper
 
     # TODO: Implement additional creation of members on collection subclasses.
     @classmethod
@@ -105,7 +105,7 @@ class CollectionBase(
 
     def __init__(
         self,
-        handle: tdb_handles.GroupWrapper,
+        handle: _tdb_handles.GroupWrapper,
         **kwargs: Any,
     ):
         super().__init__(handle, **kwargs)
@@ -184,7 +184,7 @@ class CollectionBase(
             uri,
         )
 
-    @funcs.forwards_kwargs_to(DataFrame.create, exclude=("context",))
+    @_funcs.forwards_kwargs_to(DataFrame.create, exclude=("context",))
     def add_new_dataframe(
         self, key: str, *, uri: Optional[str] = None, **kwargs: Any
     ) -> DataFrame:
@@ -205,7 +205,7 @@ class CollectionBase(
             uri,
         )
 
-    @funcs.forwards_kwargs_to(NDArray.create, exclude=("context",))
+    @_funcs.forwards_kwargs_to(NDArray.create, exclude=("context",))
     def _add_new_ndarray(
         self, cls: Type[_NDArr], key: str, *, uri: Optional[str] = None, **kwargs: Any
     ) -> _NDArr:
@@ -221,7 +221,7 @@ class CollectionBase(
             uri,
         )
 
-    @funcs.forwards_kwargs_to(_add_new_ndarray, exclude=("cls",))
+    @_funcs.forwards_kwargs_to(_add_new_ndarray, exclude=("cls",))
     def add_new_dense_ndarray(self, key: str, **kwargs: Any) -> DenseNDArray:
         """Adds a new DenseNDArray to this Collection.
 
@@ -231,7 +231,7 @@ class CollectionBase(
         """
         return self._add_new_ndarray(DenseNDArray, key, **kwargs)
 
-    @funcs.forwards_kwargs_to(_add_new_ndarray, exclude=("cls",))
+    @_funcs.forwards_kwargs_to(_add_new_ndarray, exclude=("cls",))
     def add_new_sparse_ndarray(self, key: str, **kwargs: Any) -> SparseNDArray:
         """Adds a new SparseNDArray to this Collection.
 
@@ -292,9 +292,9 @@ class CollectionBase(
         except KeyError:
             raise KeyError(err_str) from None
         if entry.soma is None:
-            from . import factory  # Delayed binding to resolve circular import.
+            from . import _factory  # Delayed binding to resolve circular import.
 
-            entry.soma = factory._open_internal(
+            entry.soma = _factory._open_internal(
                 entry.entry.wrapper_type.open,
                 entry.entry.uri,
                 self.mode,
@@ -449,7 +449,7 @@ class CollectionBase(
         self._handle._flush_hack()
 
         self._contents[key] = _CachedElement(
-            entry=tdb_handles.GroupEntry(soma_object.uri, soma_object._wrapper_type),
+            entry=_tdb_handles.GroupEntry(soma_object.uri, soma_object._wrapper_type),
             soma=soma_object,
         )
 

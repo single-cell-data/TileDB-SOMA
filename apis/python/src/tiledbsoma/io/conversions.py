@@ -6,8 +6,8 @@ import pandas._typing as pdt
 import scipy.sparse as sp
 from pandas.api.types import infer_dtype, is_categorical_dtype
 
-from ..funcs import typeguard_ignore
-from ..types import NPNDArray, PDSeries
+from .._funcs import typeguard_ignore
+from .._types import NPNDArray, PDSeries
 
 _DT = TypeVar("_DT", bound=pdt.Dtype)
 _MT = TypeVar("_MT", NPNDArray, sp.spmatrix, PDSeries)
