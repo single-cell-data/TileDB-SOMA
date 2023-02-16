@@ -6,8 +6,8 @@ import pytest
 import tiledb
 
 import tiledbsoma.libtiledbsoma as clib
-from tiledbsoma.exception import SOMAError
-from tiledbsoma.query_condition import QueryCondition
+from tiledbsoma._exception import SOMAError
+from tiledbsoma._query_condition import QueryCondition
 
 VERBOSE = False
 
