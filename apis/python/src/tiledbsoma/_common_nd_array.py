@@ -10,9 +10,9 @@ from somacore import options
 from typing_extensions import Self
 
 from . import _arrow_types, util
+from ._tiledb_array import TileDBArray
 from .options.soma_tiledb_context import SOMATileDBContext
 from .options.tiledb_create_options import TileDBCreateOptions
-from .tiledb_array import TileDBArray
 
 
 class NDArray(TileDBArray, somacore.NDArray):

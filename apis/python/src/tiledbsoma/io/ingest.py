@@ -37,12 +37,12 @@ from .. import (
 from .._common_nd_array import NDArray
 from .._funcs import typeguard_ignore
 from .._tdb_handles import RawHandle
+from .._tiledb_array import TileDBArray
+from .._tiledb_object import TileDBObject
 from ..constants import SOMA_JOINID
 from ..exception import DoesNotExistError, SOMAError
 from ..options import SOMATileDBContext
 from ..options.tiledb_create_options import TileDBCreateOptions
-from ..tiledb_array import TileDBArray
-from ..tiledb_object import TileDBObject
 from ..types import INGEST_MODES, IngestMode, NPNDArray, Path
 from . import conversions
 

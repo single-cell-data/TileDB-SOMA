@@ -1,5 +1,9 @@
 from somacore import AxisColumnNames, AxisQuery, ExperimentAxisQuery
 
+from ._collection import Collection
+from ._dataframe import DataFrame
+from ._dense_nd_array import DenseNDArray
+from ._experiment import Experiment
 from ._factory import open
 from ._general_utilities import (
     get_implementation,
@@ -14,13 +18,9 @@ from .libtiledbsoma import (
     tiledbsoma_stats_enable,
     tiledbsoma_stats_reset,
 )
-from .collection import Collection
-from .dataframe import DataFrame
-from .dense_nd_array import DenseNDArray
-from .exception import DoesNotExistError, SOMAError
-from .experiment import Experiment
-from .measurement import Measurement
-from .sparse_nd_array import SparseNDArray
+from ._measurement import Measurement
+from ._sparse_nd_array import SparseNDArray
+from ._exception import DoesNotExistError, SOMAError
 
 __version__ = get_implementation_version()
 

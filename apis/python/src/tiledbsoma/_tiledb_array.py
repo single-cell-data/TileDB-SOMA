@@ -8,8 +8,8 @@ from . import _tdb_handles, util
 # This package's pybind11 code
 from . import libtiledbsoma as clib
 from ._arrow_types import tiledb_schema_to_arrow
+from ._tiledb_object import TileDBObject
 from .options.soma_tiledb_context import SOMATileDBContext
-from .tiledb_object import TileDBObject
 from .types import is_nonstringy_sequence
 
 

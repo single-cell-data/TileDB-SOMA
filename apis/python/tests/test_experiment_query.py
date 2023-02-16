@@ -9,7 +9,7 @@ from scipy import sparse
 
 import tiledbsoma as soma
 from tiledbsoma import _factory
-from tiledbsoma.collection import CollectionBase
+from tiledbsoma._collection import CollectionBase
 from tiledbsoma.experiment_query import X_as_series
 
 

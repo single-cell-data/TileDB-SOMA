@@ -9,14 +9,14 @@ import somacore
 from somacore import options
 
 from . import (
+    _collection,
+    _dataframe,
+    _dense_nd_array,
+    _experiment,
+    _measurement,
+    _sparse_nd_array,
     _tdb_handles,
-    collection,
-    dataframe,
-    dense_nd_array,
-    experiment,
-    measurement,
-    sparse_nd_array,
-    tiledb_object,
+    _tiledb_object,
 )
 from ._funcs import typeguard_ignore
 from .constants import (
@@ -27,7 +27,7 @@ from .constants import (
 from .exception import SOMAError
 from .options import SOMATileDBContext
 
-_Obj = TypeVar("_Obj", bound="tiledb_object.AnyTileDBObject")
+_Obj = TypeVar("_Obj", bound="_tiledb_object.AnyTileDBObject")
 _Wrapper = TypeVar("_Wrapper", bound=_tdb_handles.AnyWrapper)
 
 
@@ -38,7 +38,7 @@ def open(
     *,
     soma_type: Optional[str] = None,
     context: Optional[SOMATileDBContext] = None,
-) -> "tiledb_object.AnyTileDBObject":
+) -> "_tiledb_object.AnyTileDBObject":
     ...
 
 
@@ -58,9 +58,9 @@ def open(
     uri: str,
     mode: options.OpenMode = "r",
     *,
-    soma_type: Union[Type["tiledb_object.AnyTileDBObject"], str, None] = None,
+    soma_type: Union[Type["_tiledb_object.AnyTileDBObject"], str, None] = None,
     context: Optional[SOMATileDBContext] = None,
-) -> "tiledb_object.AnyTileDBObject":
+) -> "_tiledb_object.AnyTileDBObject":
     """Opens a TileDB SOMA object.
 
     :param uri: The URI to open.
@@ -96,7 +96,7 @@ def _open_internal(
     uri: str,
     mode: options.OpenMode,
     context: SOMATileDBContext,
-) -> "tiledb_object.TileDBObject[_Wrapper]":
+) -> "_tiledb_object.TileDBObject[_Wrapper]":
     """Lower-level open function for internal use only."""
     handle = opener(uri, mode, context)
     try:
@@ -107,7 +107,7 @@ def _open_internal(
 
 
 @typeguard_ignore
-def _reify_handle(hdl: _Wrapper) -> "tiledb_object.TileDBObject[_Wrapper]":
+def _reify_handle(hdl: _Wrapper) -> "_tiledb_object.TileDBObject[_Wrapper]":
     """Picks out the appropriate SOMA class for a handle and wraps it."""
     typename = _read_soma_type(hdl)
     cls = _type_name_to_cls(typename)
@@ -117,7 +117,7 @@ def _reify_handle(hdl: _Wrapper) -> "tiledb_object.TileDBObject[_Wrapper]":
             f" cannot be converted to a {typename}"
         )
     return cast(
-        tiledb_object.TileDBObject[_Wrapper],
+        _tiledb_object.TileDBObject[_Wrapper],
         cls(hdl, _dont_call_this_use_create_or_open_instead="tiledbsoma-internal-code"),
     )
 
@@ -146,16 +146,16 @@ def _read_soma_type(hdl: _tdb_handles.AnyWrapper) -> str:
 
 
 @typeguard_ignore
-def _type_name_to_cls(type_name: str) -> Type["tiledb_object.AnyTileDBObject"]:
-    type_map: Dict[str, Type["tiledb_object.AnyTileDBObject"]] = {
+def _type_name_to_cls(type_name: str) -> Type["_tiledb_object.AnyTileDBObject"]:
+    type_map: Dict[str, Type["_tiledb_object.AnyTileDBObject"]] = {
         t.soma_type.lower(): t  # type: ignore[attr-defined, misc]  # spurious
         for t in (
-            collection.Collection,
-            dataframe.DataFrame,
-            dense_nd_array.DenseNDArray,
-            experiment.Experiment,
-            measurement.Measurement,
-            sparse_nd_array.SparseNDArray,
+            _collection.Collection,
+            _dataframe.DataFrame,
+            _dense_nd_array.DenseNDArray,
+            _experiment.Experiment,
+            _measurement.Measurement,
+            _sparse_nd_array.SparseNDArray,
         )
     }
     try:

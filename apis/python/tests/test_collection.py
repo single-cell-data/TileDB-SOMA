@@ -9,7 +9,7 @@ import pytest
 from typing_extensions import Literal
 
 import tiledbsoma as soma
-from tiledbsoma import _factory, collection, tiledb_object
+from tiledbsoma import _collection, _factory, _tiledb_object
 from tiledbsoma.exception import DoesNotExistError
 from tiledbsoma.options import SOMATileDBContext
 
@@ -331,11 +331,11 @@ def test_cascading_close(tmp_path: pathlib.Path):
     un_corvid.close()
     assert un_corvid.closed
 
-    all_elements: List[tiledb_object.AnyTileDBObject] = []
+    all_elements: List[_tiledb_object.AnyTileDBObject] = []
 
-    def crawl(obj: tiledb_object.AnyTileDBObject):
+    def crawl(obj: _tiledb_object.AnyTileDBObject):
         all_elements.append(obj)
-        if isinstance(obj, collection.CollectionBase):
+        if isinstance(obj, _collection.CollectionBase):
             for val in obj.values():
                 crawl(val)
 
@@ -369,7 +369,7 @@ def test_cascading_close(tmp_path: pathlib.Path):
     ],
 )
 def test_real_class(in_type, want):
-    assert collection._real_class(in_type) is want
+    assert _collection._real_class(in_type) is want
 
 
 @pytest.mark.parametrize(
@@ -377,7 +377,7 @@ def test_real_class(in_type, want):
 )
 def test_real_class_fail(in_type):
     with pytest.raises(TypeError):
-        collection._real_class(in_type)
+        _collection._real_class(in_type)
 
 
 @pytest.mark.parametrize(
@@ -391,7 +391,7 @@ def test_real_class_fail(in_type):
     ],
 )
 def test_sanitize_for_path(key, want):
-    assert collection._sanitize_for_path(key) == want
+    assert _collection._sanitize_for_path(key) == want
 
 
 def test_timestamped_ops(tmp_path):

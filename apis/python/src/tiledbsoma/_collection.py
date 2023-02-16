@@ -27,12 +27,12 @@ from typing_extensions import Self
 
 from . import _funcs, _tdb_handles
 from ._common_nd_array import NDArray
-from .dataframe import DataFrame
-from .dense_nd_array import DenseNDArray
+from ._dataframe import DataFrame
+from ._dense_nd_array import DenseNDArray
+from ._sparse_nd_array import SparseNDArray
+from ._tiledb_object import AnyTileDBObject, TileDBObject
 from .exception import is_does_not_exist_error, is_duplicate_group_key_error
 from .options import SOMATileDBContext
-from .sparse_nd_array import SparseNDArray
-from .tiledb_object import AnyTileDBObject, TileDBObject
 from .util import is_relative_uri, make_relative_path, uri_joinpath
 
 # A collection can hold any sub-type of TileDBObject

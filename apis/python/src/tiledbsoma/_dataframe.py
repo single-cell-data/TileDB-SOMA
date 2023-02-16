@@ -10,11 +10,11 @@ from typing_extensions import Self
 from . import _arrow_types, util
 from . import libtiledbsoma as clib
 from ._read_iters import TableReadIter
+from ._tiledb_array import TileDBArray
 from .constants import SOMA_JOINID
 from .options import SOMATileDBContext
 from .options.tiledb_create_options import TileDBCreateOptions
 from .query_condition import QueryCondition
-from .tiledb_array import TileDBArray
 from .types import NPFloating, NPInteger, is_slice_of
 
 _UNBATCHED = options.BatchSize()

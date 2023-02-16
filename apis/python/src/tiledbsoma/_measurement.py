@@ -1,11 +1,11 @@
 from somacore import measurement
 
+from ._collection import Collection, CollectionBase
 from ._common_nd_array import NDArray
-from .collection import Collection, CollectionBase
-from .dataframe import DataFrame
-from .dense_nd_array import DenseNDArray
-from .sparse_nd_array import SparseNDArray
-from .tiledb_object import AnyTileDBObject
+from ._dataframe import DataFrame
+from ._dense_nd_array import DenseNDArray
+from ._sparse_nd_array import SparseNDArray
+from ._tiledb_object import AnyTileDBObject
 
 
 class Measurement(
