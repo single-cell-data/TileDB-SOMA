@@ -8,8 +8,7 @@
 # TileDB-SOMA
 
 SOMA -- _stack of matrices, annotated_ -- is a flexible, extensible, and open-source API enabling access
-to data in a variety of formats.SOMA, “stack of matrices, annotated,” is a flexible, extensible, and
-open-source API enabling access to data in a variety of formats.
+to data in a variety of formats.
 
 The TileDB-SOMA package is a C++ library with APIs in Python and R, using [TileDB
 Embedded](https://github.com/TileDB-Inc/TileDB) to implement the
