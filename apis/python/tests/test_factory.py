@@ -5,7 +5,7 @@ import pytest
 import tiledb
 
 import tiledbsoma as soma
-from tiledbsoma import constants
+from tiledbsoma import _constants
 
 UNKNOWN_ENCODING_VERSION = "3141596"
 
@@ -40,27 +40,32 @@ def tiledb_object_uri(tmp_path, object_type, metadata_typename, encoding_version
 @pytest.mark.parametrize(
     "object_type,metadata_typename,encoding_version,expected_soma_type",
     [
-        ("group", "SOMAExperiment", constants.SOMA_ENCODING_VERSION, soma.Experiment),
-        ("group", "SOMAMeasurement", constants.SOMA_ENCODING_VERSION, soma.Measurement),
-        ("group", "SOMACollection", constants.SOMA_ENCODING_VERSION, soma.Collection),
-        ("array", "SOMADataFrame", constants.SOMA_ENCODING_VERSION, soma.DataFrame),
+        ("group", "SOMAExperiment", _constants.SOMA_ENCODING_VERSION, soma.Experiment),
+        (
+            "group",
+            "SOMAMeasurement",
+            _constants.SOMA_ENCODING_VERSION,
+            soma.Measurement,
+        ),
+        ("group", "SOMACollection", _constants.SOMA_ENCODING_VERSION, soma.Collection),
+        ("array", "SOMADataFrame", _constants.SOMA_ENCODING_VERSION, soma.DataFrame),
         (
             "array",
             "SOMADenseNDArray",
-            constants.SOMA_ENCODING_VERSION,
+            _constants.SOMA_ENCODING_VERSION,
             soma.DenseNDArray,
         ),
         (
             "array",
             "SOMADenseNdArray",
-            constants.SOMA_ENCODING_VERSION,
+            _constants.SOMA_ENCODING_VERSION,
             soma.DenseNDArray,
         ),
         ("array", "SOMASparseNDArray", "1", soma.SparseNDArray),
         (
             "array",
             "SOMASparseNdArray",
-            constants.SOMA_ENCODING_VERSION,
+            _constants.SOMA_ENCODING_VERSION,
             soma.SparseNDArray,
         ),
     ],
@@ -81,25 +86,30 @@ def test_open(tiledb_object_uri, expected_soma_type: Type):
 @pytest.mark.parametrize(
     ("object_type", "metadata_typename", "encoding_version", "wrong_type"),
     [
-        ("group", "SOMAExperiment", constants.SOMA_ENCODING_VERSION, soma.Measurement),
-        ("group", "SOMAMeasurement", constants.SOMA_ENCODING_VERSION, soma.DataFrame),
-        ("group", "SOMAMeasurement", constants.SOMA_ENCODING_VERSION, "SOMACollection"),
+        ("group", "SOMAExperiment", _constants.SOMA_ENCODING_VERSION, soma.Measurement),
+        ("group", "SOMAMeasurement", _constants.SOMA_ENCODING_VERSION, soma.DataFrame),
+        (
+            "group",
+            "SOMAMeasurement",
+            _constants.SOMA_ENCODING_VERSION,
+            "SOMACollection",
+        ),
         (
             "array",
             "SOMADenseNDArray",
-            constants.SOMA_ENCODING_VERSION,
+            _constants.SOMA_ENCODING_VERSION,
             soma.Collection,
         ),
         (
             "array",
             "SOMADenseNdArray",
-            constants.SOMA_ENCODING_VERSION,
+            _constants.SOMA_ENCODING_VERSION,
             soma.SparseNDArray,
         ),
         (
             "array",
             "SOMASparseNDArray",
-            constants.SOMA_ENCODING_VERSION,
+            _constants.SOMA_ENCODING_VERSION,
             "SOMADenseNDArray",
         ),
     ],
@@ -129,23 +139,23 @@ def test_factory_unsupported_version(tiledb_object_uri):
 @pytest.mark.parametrize(
     "object_type,metadata_typename,encoding_version",
     [
-        ("array", "AnUnknownTypeName", constants.SOMA_ENCODING_VERSION),
-        ("group", "AnUnknownTypeName", constants.SOMA_ENCODING_VERSION),
+        ("array", "AnUnknownTypeName", _constants.SOMA_ENCODING_VERSION),
+        ("group", "AnUnknownTypeName", _constants.SOMA_ENCODING_VERSION),
         ("array", "AnUnknownTypeName", None),
         ("group", "AnUnknownTypeName", None),
-        ("array", None, constants.SOMA_ENCODING_VERSION),
-        ("group", None, constants.SOMA_ENCODING_VERSION),
+        ("array", None, _constants.SOMA_ENCODING_VERSION),
+        ("group", None, _constants.SOMA_ENCODING_VERSION),
         ("array", None, None),
         ("group", None, None),
         (
             "array",
             "SOMACollection",
-            constants.SOMA_ENCODING_VERSION,
+            _constants.SOMA_ENCODING_VERSION,
         ),  # Collections can't be arrays
         (
             "group",
             "SOMADataFrame",
-            constants.SOMA_ENCODING_VERSION,
+            _constants.SOMA_ENCODING_VERSION,
         ),  # DataFrame can't be a group
     ],
 )
@@ -165,8 +175,8 @@ def _setmetadata(open_tdb_object, metadata_typename, encoding_version):
     """set only those values which are not None"""
     changes = {}
     if metadata_typename is not None:
-        changes[constants.SOMA_OBJECT_TYPE_METADATA_KEY] = metadata_typename
+        changes[_constants.SOMA_OBJECT_TYPE_METADATA_KEY] = metadata_typename
     if encoding_version is not None:
-        changes[constants.SOMA_ENCODING_VERSION_METADATA_KEY] = encoding_version
+        changes[_constants.SOMA_ENCODING_VERSION_METADATA_KEY] = encoding_version
     if changes:
         open_tdb_object.meta.update(changes)

@@ -35,13 +35,13 @@ from .. import (
     logging,
 )
 from .._common_nd_array import NDArray
+from .._constants import SOMA_JOINID
+from .._exception import DoesNotExistError, SOMAError
 from .._funcs import typeguard_ignore
 from .._tdb_handles import RawHandle
 from .._tiledb_array import TileDBArray
 from .._tiledb_object import TileDBObject
 from .._types import INGEST_MODES, IngestMode, NPNDArray, Path
-from .._constants import SOMA_JOINID
-from ..exception import DoesNotExistError, SOMAError
 from ..options import SOMATileDBContext
 from ..options.tiledb_create_options import TileDBCreateOptions
 from . import conversions

@@ -3,6 +3,7 @@ from somacore import AxisColumnNames, AxisQuery, ExperimentAxisQuery
 from ._collection import Collection
 from ._dataframe import DataFrame
 from ._dense_nd_array import DenseNDArray
+from ._exception import DoesNotExistError, SOMAError
 from ._experiment import Experiment
 from ._factory import open
 from ._general_utilities import (

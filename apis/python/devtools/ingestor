@@ -18,9 +18,9 @@ from typing import Optional
 import tiledb
 
 import tiledbsoma
+import tiledbsoma._exception
 import tiledbsoma._types
 import tiledbsoma._util
-import tiledbsoma.exception
 import tiledbsoma.io
 import tiledbsoma.logging
 from tiledbsoma.options import SOMATileDBContext
@@ -114,7 +114,9 @@ select `relative=True`. (This is the default.)
         elif relative == "auto":
             use_relative_uri = None
         else:
-            raise tiledbsoma.exception.SOMAError(f"Internal coding error in {__file__}")
+            raise tiledbsoma._exception.SOMAError(
+                f"Internal coding error in {__file__}"
+            )
 
     context = SOMATileDBContext()
     soco_dir = args.o.rstrip("/")
@@ -204,7 +206,7 @@ def ingest_one(
         ingest_mode = "schema_only"
 
     if ingest_mode not in tiledbsoma._types.INGEST_MODES:
-        raise tiledbsoma.exception.SOMAError(
+        raise tiledbsoma._exception.SOMAError(
             f'expected ingest_mode to be one of {tiledbsoma._types.INGEST_MODES}; got "{ingest_mode}"'
         )
 

@@ -18,13 +18,13 @@ from . import (
     _tdb_handles,
     _tiledb_object,
 )
-from ._funcs import typeguard_ignore
 from ._constants import (
     SOMA_ENCODING_VERSION,
     SOMA_ENCODING_VERSION_METADATA_KEY,
     SOMA_OBJECT_TYPE_METADATA_KEY,
 )
-from .exception import SOMAError
+from ._exception import SOMAError
+from ._funcs import typeguard_ignore
 from .options import SOMATileDBContext
 
 _Obj = TypeVar("_Obj", bound="_tiledb_object.AnyTileDBObject")

@@ -6,7 +6,7 @@ import numpy as np
 import tiledb
 
 from . import libtiledbsoma as clib
-from .exception import SOMAError
+from ._exception import SOMAError
 
 """
 A high level wrapper around the Pybind11 query_condition.cc implementation for

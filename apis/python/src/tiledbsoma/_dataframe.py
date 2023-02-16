@@ -9,13 +9,13 @@ from typing_extensions import Self
 
 from . import _arrow_types, _util
 from . import libtiledbsoma as clib
+from ._constants import SOMA_JOINID
+from ._query_condition import QueryCondition
 from ._read_iters import TableReadIter
 from ._tiledb_array import TileDBArray
 from ._types import NPFloating, NPInteger, is_slice_of
-from ._constants import SOMA_JOINID
 from .options import SOMATileDBContext
 from .options.tiledb_create_options import TileDBCreateOptions
-from .query_condition import QueryCondition
 
 _UNBATCHED = options.BatchSize()
 

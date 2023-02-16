@@ -7,8 +7,8 @@ from typing_extensions import Self
 
 from . import _util
 from ._common_nd_array import NDArray
+from ._exception import SOMAError
 from ._util import dense_indices_to_shape
-from .exception import SOMAError
 
 
 class DenseNDArray(NDArray, somacore.DenseNDArray):

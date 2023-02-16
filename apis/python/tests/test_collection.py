@@ -10,7 +10,7 @@ from typing_extensions import Literal
 
 import tiledbsoma as soma
 from tiledbsoma import _collection, _factory, _tiledb_object
-from tiledbsoma.exception import DoesNotExistError
+from tiledbsoma._exception import DoesNotExistError
 from tiledbsoma.options import SOMATileDBContext
 
 
