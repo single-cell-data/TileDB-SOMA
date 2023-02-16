@@ -4,7 +4,7 @@ SOMA -- stack of matrices, annotated -- is a flexible, extensible, and
 open-source API enabling access to data in a variety of formats, and is
 motivated by use cases from single cell biology. The ``tiledbsoma``
 Python package is an implementation of SOMA using the
-[TileDB Embedded](https://github.com/TileDB-Inc/TileDB) database.
+[TileDB Embedded](https://github.com/TileDB-Inc/TileDB) engine.
 
 Provides:
 ---------

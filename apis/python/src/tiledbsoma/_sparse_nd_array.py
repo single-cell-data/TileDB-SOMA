@@ -38,7 +38,7 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
     stored in the array) are assumed to have a value of zero.
 
     Where explicitly referenced in the API, the dimensions are named
-    ``soma_dim_N``, where ``N`` is the dimension number (eg, ``soma_dim_0``),
+    ``soma_dim_N``, where ``N`` is the dimension number (e.g., ``soma_dim_0``),
     and elements are named ``soma_data``.
 
     [lifecycle: experimental]
