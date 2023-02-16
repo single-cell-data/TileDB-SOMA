@@ -29,7 +29,7 @@ class DataFrame(TileDBArray, somacore.DataFrame):
     Every ``DataFrame`` must contain a column called ``soma_joinid``, of type
     ``int64``, with negative values explicitly disallowed. The ``soma_joinid``
     column contains a unique value for each row in the dataframe, and in some
-    cases (eg., as part of an ``Experiment``), acts as a join key for other
+    cases (e.g., as part of an ``Experiment``), acts as a join key for other
     objects, such as ``SparseNDArray``.
 
     [lifecycle: experimental]

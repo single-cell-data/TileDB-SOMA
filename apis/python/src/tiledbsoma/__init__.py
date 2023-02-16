@@ -19,7 +19,7 @@ information on the SOMA project.
 
 Using the documentation:
 ------------------------
-Coming soon: web based documentation site.
+Coming soon: web-based documentation site.
 
 Documentation is also available via the Python builtin `help` function. We
 recommend exploring the package. For example:
@@ -66,7 +66,7 @@ The principle persistent types provided by SOMA are:
     a single set of variables (features)
 
 SOMA ``Experiment`` and ``Measurement`` are inspired by use cases from
-single cell biology.
+single-cell biology.
 
 SOMA uses the [Arrow](https://arrow.apache.org/docs/python/index.html) type
 system and memory model for its in-memory type system and schema. For

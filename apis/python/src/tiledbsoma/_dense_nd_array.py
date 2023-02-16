@@ -18,14 +18,14 @@ class DenseNDArray(NDArray, somacore.DenseNDArray):
     schema, which includes:
     - the element type, expressed as an Arrow type, indicating the type of data
       contained within the array, and
-    - shape - the shape of the array, i.e., number and length of each dimension
+    - the shape of the array, i.e., number and length of each dimension
 
     All dimensions must have a positive, non-zero length, and there must be 1
     or more dimensions.
 
     Where explicitly referenced in the API, the dimensions are named
-    soma_dim_N, where N is the dimension number (eg, soma_dim_0),
-    and elements are named soma_data.
+    ``soma_dim_N``, where N is the dimension number (eg, ``soma_dim_0``),
+    and elements are named ``soma_data``.
 
     [lifecycle: experimental]
 

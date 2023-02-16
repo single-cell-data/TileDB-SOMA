@@ -510,11 +510,12 @@ class Collection(
 ):
     """
     ``Collection`` is a persistent collection of named SOMA objects, stored as
-    a mapping of string keys and SOMA object values. Values may be any persistent
-    ``tiledbsoma`` object, including DataFrame, SparseNDArray, DenseNDArray,
-    Experiment, Measurement, or another Collection. A Collection refers to
-    elements by a per-element URI. A Collection may store its reference to
-    an element by absolute URI or relative URI.
+    a mapping of string keys and SOMA object values. Values may be any
+    persistent ``tiledbsoma`` object, including ``DataFrame``,
+    ``SparseNDArray``, ``DenseNDArray``, ``Experiment``, ``Measurement``,
+    or another ``Collection``. A ``Collection`` refers to elements by a 
+    per-element URI. A ``Collection`` may store its reference to an
+    element by absolute URI or relative URI.
 
     [lifecycle: experimental]
 
