@@ -135,9 +135,10 @@ PYBIND11_MODULE(libtiledbsoma, m) {
     m.def(
         "tiledbsoma_stats_dump",
         []() {
+            py::print(version());
             std::string stats;
             tiledb::Stats::dump(&stats);
-            std::cout << version() << "\n" << stats;
+            py::print(stats);
         },
         "Print TileDB internal statistics.");
 

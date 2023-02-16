@@ -4,7 +4,7 @@ import pytest
 import tiledbsoma as soma
 
 
-def test_stats(tmp_path, capfd: pytest.CaptureFixture[str]):
+def test_stats(tmp_path, capsys: pytest.CaptureFixture[str]):
     """Make sure these exist, don't throw, and write correctly."""
     soma.tiledbsoma_stats_enable()
     soma.tiledbsoma_stats_reset()
@@ -25,6 +25,6 @@ def test_stats(tmp_path, capfd: pytest.CaptureFixture[str]):
 
     soma.tiledbsoma_stats_dump()
     soma.tiledbsoma_stats_disable()
-    stdout, stderr = capfd.readouterr()
+    stdout, stderr = capsys.readouterr()
     assert stdout != ""
     assert stderr == ""
