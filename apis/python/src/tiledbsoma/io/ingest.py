@@ -477,8 +477,6 @@ def _write_dataframe(
             df_uri,
             schema=arrow_table.schema,
             platform_config=platform_config,
-            ### XXX TEMP
-            shape=df.shape[0],
         )
     else:
         if ingest_mode == "resume":
