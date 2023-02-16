@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import itertools
 import re
-import time
 from typing import (
     Any,
     Callable,
@@ -11,6 +10,7 @@ from typing import (
     Iterable,
     Iterator,
     Optional,
+    Set,
     Tuple,
     Type,
     TypeVar,
@@ -29,7 +29,7 @@ from . import _funcs, _tdb_handles
 from ._common_nd_array import NDArray
 from ._dataframe import DataFrame
 from ._dense_nd_array import DenseNDArray
-from ._exception import is_does_not_exist_error, is_duplicate_group_key_error
+from ._exception import SOMAError, is_does_not_exist_error
 from ._sparse_nd_array import SparseNDArray
 from ._tiledb_object import AnyTileDBObject, TileDBObject
 from ._util import is_relative_uri, make_relative_path, uri_joinpath
@@ -61,7 +61,7 @@ class CollectionBase(
     ``DataFrame``, ``DenseNDArray``, ``SparseNDArray`` or ``Experiment``.
     """
 
-    __slots__ = ("_contents",)
+    __slots__ = ("_contents", "_mutated_keys")
     _wrapper_type = _tdb_handles.GroupWrapper
 
     # TODO: Implement additional creation of members on collection subclasses.
@@ -116,6 +116,7 @@ class CollectionBase(
 
         This is loaded at startup when we have a read handle.
         """
+        self._mutated_keys: Set[str] = set()
 
     # Overloads to allow type inference to work when doing:
     #
@@ -172,9 +173,7 @@ class CollectionBase(
             creating this sub-collection. This is passed directly to
             ``[CurrentCollectionType].create()``.
         """
-        child_cls: Type[AnyTileDBCollection] = (
-            cls or Collection  # type: ignore[assignment]
-        )
+        child_cls: Type[AnyTileDBCollection] = cls or Collection
         return self._add_new_element(
             key,
             child_cls,
@@ -416,53 +415,28 @@ class CollectionBase(
 
         self._check_allows_child(key, type(soma_object))
 
-        # Set has update semantics. Add if missing, delete/add if not. The TileDB Group
-        # API only has add/delete. Assume add will succeed, and deal with delete/retry
-        # if we get an error on add.
-
-        for retry in [True, False]:
-            try:
-                self._handle.writer.add(name=key, uri=uri, relative=relative)
-                break
-            except tiledb.TileDBError as e:
-                if not is_duplicate_group_key_error(e):
-                    raise
-            if retry:
-                self._del_element(key)
-
-                # There can be timestamp overlap in a very-rapid-fire unit-test environment.  When
-                # that happens, we effectively fall back to filesystem file order, which will be the
-                # lexical ordering of the group-metadata filenames. Since the timestamp components
-                # are the same, that will be the lexical order of the UUIDs.  So if the new metadata
-                # file is sorted before the old one, the group will look like the old state.
-                #
-                # The standard solution is a negligible but non-zero delay.
-                time.sleep(0.001)
-        # HACK: There is no way to change a group entry without deleting it and
-        # re-adding it, but you can't do both of those in the same transaction.
-        # You get "member already set for removal" in an error.
-        #
-        # This also means that if, in one transaction, you do
-        #     grp["x"] = y
-        #     del grp["x"]
-        # you would also get an error without this hack.
-        self._handle._flush_hack()
-
+        if key in self._mutated_keys.union(self._contents):
+            # TileDB groups currently do not support replacing elements.
+            # If we use a hack to flush writes, corruption is possible.
+            raise SOMAError(f"replacing key {key!r} is unsupported")
+        self._handle.writer.add(name=key, uri=uri, relative=relative)
         self._contents[key] = _CachedElement(
             entry=_tdb_handles.GroupEntry(soma_object.uri, soma_object._wrapper_type),
             soma=soma_object,
         )
+        self._mutated_keys.add(key)
 
     def _del_element(self, key: str) -> None:
+        if key in self._mutated_keys:
+            raise SOMAError(f"cannot delete previously-mutated key {key!r}")
         try:
             self._handle.writer.remove(key)
-            # HACK: see note above
-            self._handle._flush_hack()
-            self._contents.pop(key, None)
         except tiledb.TileDBError as tdbe:
             if is_does_not_exist_error(tdbe):
                 raise KeyError(f"{key!r} does not exist in {self}") from tdbe
             raise
+        self._contents.pop(key, None)
+        self._mutated_keys.add(key)
 
     def _new_child_uri(self, *, key: str, user_uri: Optional[str]) -> "_ChildURI":
         maybe_relative_uri = user_uri or _sanitize_for_path(key)
@@ -502,7 +476,7 @@ class CollectionBase(
             )
 
 
-AnyTileDBCollection = CollectionBase[AnyTileDBObject]
+AnyTileDBCollection = CollectionBase[Any]
 
 
 class Collection(

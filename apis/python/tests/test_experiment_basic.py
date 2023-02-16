@@ -184,11 +184,6 @@ def test_experiment_obs_type_constraint(tmp_path):
     se["obs"] = soma.DataFrame.create(
         (tmp_path / "E").as_uri(), schema=pa.schema([("A", pa.int32())])
     )
-    se["obs"] = soma.DataFrame.create(
-        (tmp_path / "F").as_uri(),
-        schema=pa.schema([("A", pa.int32())]),
-        index_column_names=["A"],
-    )
 
 
 def test_experiment_ms_type_constraint(tmp_path):

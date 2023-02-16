@@ -242,12 +242,12 @@ def test_ingest_relative(h5ad_file_extended, use_relative_uri):
     tempdir = tempfile.TemporaryDirectory()
     output_path = tempdir.name
 
-    exp = tiledbsoma.io.from_h5ad(
+    tiledbsoma.io.from_h5ad(
         output_path,
         h5ad_file_extended,
         measurement_name="RNA",
         use_relative_uri=use_relative_uri,
-    )
+    ).close()
 
     # * If they ask for relative=True, they should get that.
     # * If they ask for relative=False, they should get that.
@@ -257,6 +257,7 @@ def test_ingest_relative(h5ad_file_extended, use_relative_uri):
     if use_relative_uri is None:
         expected_relative = True  # since local disk
 
+    exp = tiledbsoma.open(output_path)
     with tiledb.Group(exp.uri) as G:
         assert G.is_relative("obs") == expected_relative
         assert G.is_relative("ms") == expected_relative

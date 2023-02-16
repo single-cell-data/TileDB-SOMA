@@ -34,13 +34,14 @@ from .. import (
     eta,
     logging,
 )
+from .._collection import AnyTileDBCollection
 from .._common_nd_array import NDArray
 from .._constants import SOMA_JOINID
 from .._exception import DoesNotExistError, SOMAError
 from .._funcs import typeguard_ignore
 from .._tdb_handles import RawHandle
 from .._tiledb_array import TileDBArray
-from .._tiledb_object import TileDBObject
+from .._tiledb_object import AnyTileDBObject, TileDBObject
 from .._types import INGEST_MODES, IngestMode, NPNDArray, Path
 from ..options import SOMATileDBContext
 from ..options.tiledb_create_options import TileDBCreateOptions
@@ -175,21 +176,23 @@ def from_anndata(
         platform_config=platform_config,
         ingest_mode=ingest_mode,
     ) as obs:
-        experiment.set("obs", obs, use_relative_uri=use_relative_uri)
+        _maybe_set(experiment, "obs", obs, use_relative_uri=use_relative_uri)
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     # MS
     with _create_or_open_coll(
         Collection[Measurement], _util.uri_joinpath(experiment.uri, "ms"), ingest_mode
     ) as ms:
-        experiment.set("ms", ms, use_relative_uri=use_relative_uri)
+        _maybe_set(experiment, "ms", ms, use_relative_uri=use_relative_uri)
 
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         # MS/meas
         with _create_or_open_coll(
             Measurement, f"{experiment.ms.uri}/{measurement_name}", ingest_mode
         ) as measurement:
-            ms.set(measurement_name, measurement, use_relative_uri=use_relative_uri)
+            _maybe_set(
+                ms, measurement_name, measurement, use_relative_uri=use_relative_uri
+            )
 
             # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
             # MS/meas/VAR
@@ -200,7 +203,7 @@ def from_anndata(
                 platform_config=platform_config,
                 ingest_mode=ingest_mode,
             ) as var:
-                measurement.set("var", var, use_relative_uri=use_relative_uri)
+                _maybe_set(measurement, "var", var, use_relative_uri=use_relative_uri)
 
             # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
             # MS/meas/X/DATA
@@ -208,7 +211,7 @@ def from_anndata(
             with _create_or_open_coll(
                 Collection, _util.uri_joinpath(measurement.uri, "X"), ingest_mode
             ) as x:
-                measurement.set("X", x, use_relative_uri=use_relative_uri)
+                _maybe_set(measurement, "X", x, use_relative_uri=use_relative_uri)
 
                 # Since we did `anndata = ad.read_h5ad(path_to_h5ad, "r")` with the "r":
                 # * If we do `anndata.X[:]` we're loading all of a CSR/CSC/etc into memory.
@@ -227,7 +230,7 @@ def from_anndata(
                     platform_config,
                     ingest_mode,
                 ) as data:
-                    x.set("data", data, use_relative_uri=use_relative_uri)
+                    _maybe_set(x, "data", data, use_relative_uri=use_relative_uri)
 
                 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
                 # MS/meas/OBSM,VARM,OBSP,VARP
@@ -237,7 +240,9 @@ def from_anndata(
                         _util.uri_joinpath(measurement.uri, "obsm"),
                         ingest_mode,
                     ) as obsm:
-                        measurement.set("obsm", obsm, use_relative_uri=use_relative_uri)
+                        _maybe_set(
+                            measurement, "obsm", obsm, use_relative_uri=use_relative_uri
+                        )
                         for key in anndata.obsm.keys():
                             with create_from_matrix(
                                 DenseNDArray,
@@ -248,7 +253,9 @@ def from_anndata(
                                 platform_config,
                                 ingest_mode,
                             ) as arr:
-                                obsm.set(key, arr, use_relative_uri=use_relative_uri)
+                                _maybe_set(
+                                    obsm, key, arr, use_relative_uri=use_relative_uri
+                                )
                             arr.close()
                     measurement.obsm.close()
 
@@ -258,7 +265,9 @@ def from_anndata(
                         _util.uri_joinpath(measurement.uri, "varm"),
                         ingest_mode,
                     ) as varm:
-                        measurement.set("varm", varm, use_relative_uri=use_relative_uri)
+                        _maybe_set(
+                            measurement, "varm", varm, use_relative_uri=use_relative_uri
+                        )
                         for key in anndata.varm.keys():
                             with create_from_matrix(
                                 DenseNDArray,
@@ -269,7 +278,8 @@ def from_anndata(
                                 platform_config,
                                 ingest_mode,
                             ) as darr:
-                                varm.set(
+                                _maybe_set(
+                                    varm,
                                     key,
                                     darr,
                                     use_relative_uri=use_relative_uri,
@@ -281,7 +291,9 @@ def from_anndata(
                         _util.uri_joinpath(measurement.uri, "obsp"),
                         ingest_mode,
                     ) as obsp:
-                        measurement.set("obsp", obsp, use_relative_uri=use_relative_uri)
+                        _maybe_set(
+                            measurement, "obsp", obsp, use_relative_uri=use_relative_uri
+                        )
                         for key in anndata.obsp.keys():
                             with create_from_matrix(
                                 SparseNDArray,
@@ -292,7 +304,8 @@ def from_anndata(
                                 platform_config,
                                 ingest_mode,
                             ) as sarr:
-                                obsp.set(
+                                _maybe_set(
+                                    obsp,
                                     key,
                                     sarr,
                                     use_relative_uri=use_relative_uri,
@@ -304,7 +317,9 @@ def from_anndata(
                         _util.uri_joinpath(measurement.uri, "varp"),
                         ingest_mode,
                     ) as varp:
-                        measurement.set("varp", varp, use_relative_uri=use_relative_uri)
+                        _maybe_set(
+                            measurement, "varp", varp, use_relative_uri=use_relative_uri
+                        )
                         for key in anndata.varp.keys():
                             with create_from_matrix(
                                 SparseNDArray,
@@ -315,7 +330,8 @@ def from_anndata(
                                 platform_config,
                                 ingest_mode,
                             ) as sarr:
-                                varp.set(
+                                _maybe_set(
+                                    varp,
                                     key,
                                     sarr,
                                     use_relative_uri=use_relative_uri,
@@ -329,7 +345,8 @@ def from_anndata(
                         _util.uri_joinpath(experiment.ms.uri, "raw"),
                         ingest_mode,
                     ) as raw_measurement:
-                        ms.set(
+                        _maybe_set(
+                            ms,
                             "raw",
                             raw_measurement,
                             use_relative_uri=use_relative_uri,
@@ -342,8 +359,11 @@ def from_anndata(
                             platform_config=platform_config,
                             ingest_mode=ingest_mode,
                         ) as var:
-                            raw_measurement.set(
-                                "var", var, use_relative_uri=use_relative_uri
+                            _maybe_set(
+                                raw_measurement,
+                                "var",
+                                var,
+                                use_relative_uri=use_relative_uri,
                             )
 
                         with _create_or_open_coll(
@@ -351,8 +371,11 @@ def from_anndata(
                             _util.uri_joinpath(raw_measurement.uri, "X"),
                             ingest_mode,
                         ) as rm_x:
-                            raw_measurement.set(
-                                "X", rm_x, use_relative_uri=use_relative_uri
+                            _maybe_set(
+                                raw_measurement,
+                                "X",
+                                rm_x,
+                                use_relative_uri=use_relative_uri,
                             )
 
                             with create_from_matrix(
@@ -362,7 +385,8 @@ def from_anndata(
                                 platform_config,
                                 ingest_mode,
                             ) as rm_x_data:
-                                rm_x.set(
+                                _maybe_set(
+                                    rm_x,
                                     "data",
                                     rm_x_data,
                                     use_relative_uri=use_relative_uri,
@@ -373,6 +397,20 @@ def from_anndata(
         _util.format_elapsed(s, f"FINISH WRITING {experiment.uri}"),
     )
     return experiment
+
+
+def _maybe_set(
+    coll: AnyTileDBCollection,
+    key: str,
+    value: AnyTileDBObject,
+    *,
+    use_relative_uri: Optional[bool],
+) -> None:
+    try:
+        coll.set(key, value, use_relative_uri=use_relative_uri)
+    except SOMAError:
+        # This is already a member of the collection.
+        pass
 
 
 @overload
@@ -586,14 +624,17 @@ def add_matrix_to_collection(
             coll = _create_or_open_coll(
                 Collection, f"{meas.uri}/{collection_name}", ingest_mode
             )
-            meas.set(collection_name, coll, use_relative_uri=use_relative_uri)
+            _maybe_set(meas, collection_name, coll, use_relative_uri=use_relative_uri)
         with coll:
             uri = f"{coll.uri}/{matrix_name}"
             with create_from_matrix(
                 SparseNDArray, uri, matrix_data, ingest_mode=ingest_mode
             ) as sparse_nd_array:
-                coll.set(
-                    matrix_name, sparse_nd_array, use_relative_uri=use_relative_uri
+                _maybe_set(
+                    coll,
+                    matrix_name,
+                    sparse_nd_array,
+                    use_relative_uri=use_relative_uri,
                 )
 
 
