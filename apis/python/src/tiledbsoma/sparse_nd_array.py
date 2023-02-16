@@ -26,7 +26,7 @@ _UNBATCHED = options.BatchSize()
 class SparseNDArray(NDArray, somacore.SparseNDArray):
     """
     ``SparseNDArray`` is a sparse, N-dimensional array, with offset (zero-based)
-    integer indexing on each dimension. The SOMASparseNDArray has a user-defined
+    integer indexing on each dimension. ``SparseNDArray`` has a user-defined
     schema, which includes:
     - the element type, expressed as an Arrow type, indicating the type of data
       contained within the array, and
@@ -48,8 +48,7 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
     >>> import pyarrow as pa
     >>> import numpy as np
     >>> import scipy.sparse
-        ...
-        ... with tiledbsoma.SparseNDArray.create(
+    >>> with tiledbsoma.SparseNDArray.create(
         ...     "./test_sparse_ndarray", type=pa.float32(), shape=(1000, 100)
         ... ) as arr:
         ...     data = pa.SparseCOOTensor.from_scipy(

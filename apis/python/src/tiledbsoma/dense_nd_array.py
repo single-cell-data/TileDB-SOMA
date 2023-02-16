@@ -13,9 +13,48 @@ from .util import dense_indices_to_shape
 
 class DenseNDArray(NDArray, somacore.DenseNDArray):
     """
-    Represents ``X`` and others.
+    ``DenseNDArray`` is a dense, N-dimensional array, with offset (zero-based)
+    integer indexing on each dimension. ``DenseNDArray`` has a user-defined
+    schema, which includes:
+    - the element type, expressed as an Arrow type, indicating the type of data
+      contained within the array, and
+    - shape - the shape of the array, i.e., number and length of each dimension
+
+    All dimensions must have a positive, non-zero length, and there must be 1
+    or more dimensions.
+
+    Where explicitly referenced in the API, the dimensions are named
+    soma_dim_N, where N is the dimension number (eg, soma_dim_0),
+    and elements are named soma_data.
 
     [lifecycle: experimental]
+
+    Examples:
+    ---------
+    >>> import tiledbsoma
+    >>> import pyarrow as pa
+    >>> import numpy as np
+    >>> with tiledbsoma.DenseNDArray.create(
+    ...     "./test_dense_ndarray", type=pa.int32(), shape=(2, 3, 4)
+    ... ) as arr:
+    ...     data = pa.Tensor.from_numpy(
+    ...         np.random.default_rng().integers(0, 10, 24).reshape(2, 3, 4)
+    ...     )
+    ...     arr.write((slice(None),), data)
+    ... with tiledbsoma.open("./test_dense_ndarray") as arr:
+    ...     print(arr.schema)
+    ...     print("---")
+    ...     print(arr.read())
+    ...
+    soma_dim_0: int64
+    soma_dim_1: int64
+    soma_dim_2: int64
+    soma_data: int32
+    ---
+    <pyarrow.Tensor>
+    type: int32
+    shape: (2, 3, 4)
+    strides: (48, 16, 4)
     """
 
     __slots__ = ()
