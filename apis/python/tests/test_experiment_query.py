@@ -170,6 +170,16 @@ def test_experiment_query_coords(soma_experiment):
             .concat()
         )
         assert query.X("raw").tables().concat() == raw_X
+        assert query.X("raw").coos().concat() == pa.SparseCOOTensor.from_numpy(
+            raw_X["soma_data"].to_numpy(),
+            np.array(
+                [
+                    raw_X["soma_dim_0"].to_numpy(),
+                    raw_X["soma_dim_1"].to_numpy(),
+                ]
+            ).T,
+            shape=soma_experiment.ms["RNA"].X["raw"].shape,
+        )
 
 
 @pytest.mark.xfail(
@@ -292,7 +302,7 @@ def test_joinid_caching(soma_experiment):
     with soma_experiment.axis_query(
         "RNA", obs_query=obs_query, var_query=var_query
     ) as query2:
-        pass
+        query2.X("A").coos().concat().to_scipy()
 
     with soma_experiment.axis_query(
         "RNA", obs_query=obs_query, var_query=var_query

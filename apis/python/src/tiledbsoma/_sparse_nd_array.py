@@ -14,6 +14,7 @@ from . import _util
 from . import libtiledbsoma as clib
 from ._common_nd_array import NDArray
 from ._read_iters import (
+    SparseCOOTensorReadIter,
     TableReadIter,
 )
 from ._types import NTuple
@@ -214,6 +215,14 @@ class SparseNDArrayRead(somacore.SparseRead):
         """
         self.sr = sr
         self.shape = shape
+
+    def coos(self) -> SparseCOOTensorReadIter:
+        """
+        Return an iterator of Arrow SparseCOOTensor
+
+        [lifecycle: experimental]
+        """
+        return SparseCOOTensorReadIter(self.sr, self.shape)
 
     def dense_tensors(self) -> somacore.ReadIter[pa.Tensor]:
         """
