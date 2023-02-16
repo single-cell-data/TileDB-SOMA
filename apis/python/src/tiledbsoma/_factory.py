@@ -9,26 +9,26 @@ import somacore
 from somacore import options
 
 from . import (
+    _tdb_handles,
     collection,
     dataframe,
     dense_nd_array,
     experiment,
     measurement,
     sparse_nd_array,
-    tdb_handles,
     tiledb_object,
 )
+from ._funcs import typeguard_ignore
 from .constants import (
     SOMA_ENCODING_VERSION,
     SOMA_ENCODING_VERSION_METADATA_KEY,
     SOMA_OBJECT_TYPE_METADATA_KEY,
 )
 from .exception import SOMAError
-from .funcs import typeguard_ignore
 from .options import SOMATileDBContext
 
 _Obj = TypeVar("_Obj", bound="tiledb_object.AnyTileDBObject")
-_Wrapper = TypeVar("_Wrapper", bound=tdb_handles.AnyWrapper)
+_Wrapper = TypeVar("_Wrapper", bound=_tdb_handles.AnyWrapper)
 
 
 @overload
@@ -72,7 +72,7 @@ def open(
     :param context: If set, the ``SOMATileDBContext`` data to use.
     """
     context = context or SOMATileDBContext()
-    obj = _open_internal(tdb_handles.open, uri, mode, context)
+    obj = _open_internal(_tdb_handles.open, uri, mode, context)
     try:
         if soma_type:
             if isinstance(soma_type, str):
@@ -122,7 +122,7 @@ def _reify_handle(hdl: _Wrapper) -> "tiledb_object.TileDBObject[_Wrapper]":
     )
 
 
-def _read_soma_type(hdl: tdb_handles.AnyWrapper) -> str:
+def _read_soma_type(hdl: _tdb_handles.AnyWrapper) -> str:
     obj_type = hdl.metadata.get(SOMA_OBJECT_TYPE_METADATA_KEY)
     encoding_version = hdl.metadata.get(SOMA_ENCODING_VERSION_METADATA_KEY)
 

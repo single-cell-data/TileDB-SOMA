@@ -6,7 +6,7 @@ from somacore import options
 from typing_extensions import Self
 
 from . import util
-from .common_nd_array import NDArray
+from ._common_nd_array import NDArray
 from .exception import SOMAError
 from .util import dense_indices_to_shape
 

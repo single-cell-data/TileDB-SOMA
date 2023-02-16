@@ -6,12 +6,12 @@ import tiledb
 from somacore import options
 from typing_extensions import Self
 
-from . import constants, tdb_handles
+from . import _tdb_handles, constants
 from .exception import SOMAError
 from .options import SOMATileDBContext
 
 _WrapperType_co = TypeVar(
-    "_WrapperType_co", bound=tdb_handles.AnyWrapper, covariant=True
+    "_WrapperType_co", bound=_tdb_handles.AnyWrapper, covariant=True
 )
 """The type of handle on a backend object that we have.
 
@@ -149,7 +149,7 @@ class TileDBObject(somacore.SOMAObject, Generic[_WrapperType_co]):
             return False
 
     @classmethod
-    def _set_create_metadata(cls, handle: tdb_handles.AnyWrapper) -> None:
+    def _set_create_metadata(cls, handle: _tdb_handles.AnyWrapper) -> None:
         """Sets the necessary metadata on a newly-created TileDB object."""
         handle.writer.meta.update(
             {
@@ -167,4 +167,4 @@ class TileDBObject(somacore.SOMAObject, Generic[_WrapperType_co]):
             raise ValueError(f"{self} is open for writing, not reading")
 
 
-AnyTileDBObject = TileDBObject[tdb_handles.AnyWrapper]
+AnyTileDBObject = TileDBObject[_tdb_handles.AnyWrapper]

@@ -9,7 +9,7 @@ import pytest
 from typing_extensions import Literal
 
 import tiledbsoma as soma
-from tiledbsoma import collection, factory, tiledb_object
+from tiledbsoma import _factory, collection, tiledb_object
 from tiledbsoma.exception import DoesNotExistError
 from tiledbsoma.options import SOMATileDBContext
 
@@ -34,7 +34,7 @@ def create_and_populate_dataframe(path: str) -> soma.DataFrame:
         rb = pa.Table.from_pydict(pydict)
         df.write(rb)
 
-    return factory.open(path)
+    return _factory.open(path)
 
 
 # ----------------------------------------------------------------
@@ -51,7 +51,7 @@ def create_and_populate_sparse_nd_array(path: str) -> soma.SparseNDArray:
             shape=(nr, nc),
         )
         sparse_nd_array.write(tensor)
-    return factory.open(path)
+    return _factory.open(path)
 
 
 # ----------------------------------------------------------------

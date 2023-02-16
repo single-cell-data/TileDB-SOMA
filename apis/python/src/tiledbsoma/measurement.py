@@ -1,7 +1,7 @@
 from somacore import measurement
 
+from ._common_nd_array import NDArray
 from .collection import Collection, CollectionBase
-from .common_nd_array import NDArray
 from .dataframe import DataFrame
 from .dense_nd_array import DenseNDArray
 from .sparse_nd_array import SparseNDArray

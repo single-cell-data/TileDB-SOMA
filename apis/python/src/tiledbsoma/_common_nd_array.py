@@ -9,7 +9,7 @@ import tiledb
 from somacore import options
 from typing_extensions import Self
 
-from . import arrow_types, util
+from . import _arrow_types, util
 from .options.soma_tiledb_context import SOMATileDBContext
 from .options.tiledb_create_options import TileDBCreateOptions
 from .tiledb_array import TileDBArray
@@ -118,7 +118,7 @@ def _build_tiledb_schema(
     attrs = [
         tiledb.Attr(
             name="soma_data",
-            dtype=arrow_types.tiledb_type_from_arrow_type(type),
+            dtype=_arrow_types.tiledb_type_from_arrow_type(type),
             filters=create_options.attr_filters("soma_data", ["ZstdFilter"]),
             ctx=context.tiledb_ctx,
         )

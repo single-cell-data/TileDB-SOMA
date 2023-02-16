@@ -8,7 +8,7 @@ import scipy.sparse as sparse
 import tiledb
 
 import tiledbsoma as soma
-from tiledbsoma import factory
+from tiledbsoma import _factory
 from tiledbsoma.options import SOMATileDBContext
 
 from . import NDARRAY_ARROW_TYPES_NOT_SUPPORTED, NDARRAY_ARROW_TYPES_SUPPORTED
@@ -309,7 +309,7 @@ def test_sparse_nd_array_read_as_pandas(
         data = create_random_tensor("table", shape, dtype)
         a.write(data)
 
-    with factory.open(tmp_path.as_posix()) as a:
+    with _factory.open(tmp_path.as_posix()) as a:
         df = a.read().tables().concat().to_pandas()
 
     dim_names = [f"soma_dim_{n}" for n in range(len(shape))]
@@ -926,7 +926,7 @@ def test_bad_coords(tmp_path, bad_coords):
             )
         )
 
-    with factory.open(tmp_path.as_posix()) as a:
+    with _factory.open(tmp_path.as_posix()) as a:
         with pytest.raises(ValueError):
             next(a.read(bad_coords).tables())
 

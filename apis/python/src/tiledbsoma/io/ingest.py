@@ -29,18 +29,18 @@ from .. import (
     Experiment,
     Measurement,
     SparseNDArray,
+    _factory,
     eta,
-    factory,
     logging,
     util,
 )
-from ..common_nd_array import NDArray
+from .._common_nd_array import NDArray
+from .._funcs import typeguard_ignore
+from .._tdb_handles import RawHandle
 from ..constants import SOMA_JOINID
 from ..exception import DoesNotExistError, SOMAError
-from ..funcs import typeguard_ignore
 from ..options import SOMATileDBContext
 from ..options.tiledb_create_options import TileDBCreateOptions
-from ..tdb_handles import RawHandle
 from ..tiledb_array import TileDBArray
 from ..tiledb_object import TileDBObject
 from ..types import INGEST_MODES, IngestMode, NPNDArray, Path
@@ -433,7 +433,7 @@ def _write_dataframe(
     arrow_table = pa.Table.from_pandas(df)
 
     try:
-        soma_df = factory.open(df_uri, "w", soma_type=DataFrame)
+        soma_df = _factory.open(df_uri, "w", soma_type=DataFrame)
     except DoesNotExistError:
         soma_df = DataFrame.create(
             df_uri, schema=arrow_table.schema, platform_config=platform_config

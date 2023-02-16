@@ -5,7 +5,7 @@ import pyarrow as pa
 import pytest
 
 import tiledbsoma as soma
-from tiledbsoma import factory
+from tiledbsoma import _factory
 
 
 # ----------------------------------------------------------------
@@ -30,7 +30,7 @@ def create_and_populate_obs(uri: str) -> soma.DataFrame:
         rb = pa.Table.from_pydict(pydict)
         obs.write(rb)
 
-    return factory.open(uri)
+    return _factory.open(uri)
 
 
 # ----------------------------------------------------------------
@@ -52,7 +52,7 @@ def create_and_populate_var(uri: str) -> soma.DataFrame:
         rb = pa.Table.from_pydict(pydict)
         var.write(rb)
 
-    return factory.open(uri)
+    return _factory.open(uri)
 
 
 # ----------------------------------------------------------------
@@ -78,7 +78,7 @@ def create_and_populate_sparse_nd_array(uri: str) -> soma.SparseNDArray:
         )
         sparse_nd_array.write(tensor)
 
-    return factory.open(uri)
+    return _factory.open(uri)
 
 
 # ----------------------------------------------------------------

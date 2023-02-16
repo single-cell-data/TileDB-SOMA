@@ -4,7 +4,7 @@ import textwrap
 
 import pytest
 
-from tiledbsoma import funcs
+from tiledbsoma import _funcs
 
 
 @pytest.mark.parametrize(
@@ -44,7 +44,7 @@ def test_forwards_kwargs(dst_sig: str, outer_sig: str, want: str):
         def outer{outer_sig}: ...
         """
     )
-    variables = dict(forwards_kwargs_to=funcs.forwards_kwargs_to)
+    variables = dict(forwards_kwargs_to=_funcs.forwards_kwargs_to)
     exec(code, variables)
     got_sig = inspect.signature(variables["outer"])
     assert str(got_sig) == want
@@ -54,7 +54,7 @@ def test_forwards_kwargs_exclude():
     def dst(one, two, three):
         ...
 
-    @funcs.forwards_kwargs_to(dst, exclude=("one", "three"))
+    @_funcs.forwards_kwargs_to(dst, exclude=("one", "three"))
     def wrapped(one, four, five, **kwargs) -> None:
         ...
 

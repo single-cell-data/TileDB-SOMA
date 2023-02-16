@@ -11,8 +11,8 @@ from typing_extensions import Self
 # This package's pybind11 code
 from . import libtiledbsoma as clib
 from . import util
-from .common_nd_array import NDArray
-from .read_iters import (
+from ._common_nd_array import NDArray
+from ._read_iters import (
     SparseCOOTensorReadIter,
     SparseCSCMatrixReadIter,
     SparseCSRMatrixReadIter,
