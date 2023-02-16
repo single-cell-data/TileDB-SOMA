@@ -42,12 +42,19 @@ class NDArray(TileDBArray, somacore.NDArray):
             intended future appends,as a sequence. E.g. ``(100, 10)``.  All
             lengths must be in the positive int64 range, or `None`.  If a slot
             is `None` -- only supported for `SparseNDArray`, not `DenseNDArray`
-            -- then the maximum possible size will be used. This makes a
+            -- then the maximum possible int64 size will be used. This makes a
             `SparseNDArray` growable.
 
         :param platform_config: Platform-specific options used to create this Array,
             provided via ``{"tiledb": {"create": ...}}`` nested keys.
         """
+        # Implementor note: we carefully say "maximum possible in64 size" rather than 2**63-1. The
+        # reason that the latter, while temptingly simple, is actually untrue is that tiledb core
+        # requires that the capacity, when rounded up to an exact multiple of the extent, needs to
+        # be representable as a signed 64-bit integer.  So in particular when a unit test (or anyone
+        # else) sets extent to a not-power-of-two number like 999 or 1000 then the create fails if
+        # the upper limit is exactly 2**63-1.
+
         context = context or SOMATileDBContext()
         schema = _build_tiledb_schema(
             type,
