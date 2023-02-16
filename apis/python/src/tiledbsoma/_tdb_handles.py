@@ -4,22 +4,24 @@
 """
 
 import abc
+import enum
 from typing import (
     Any,
     Dict,
     Generic,
     Iterator,
+    Mapping,
     MutableMapping,
-    Set,
     Type,
     TypeVar,
     Union,
 )
 
 import attrs
+import numpy as np
 import tiledb
 from somacore import options
-from typing_extensions import Self
+from typing_extensions import Literal, Self
 
 from ._exception import DoesNotExistError, SOMAError, is_does_not_exist_error
 from .options import SOMATileDBContext
@@ -124,12 +126,14 @@ class Wrapper(Generic[_RawHdl_co], metaclass=abc.ABCMeta):
     def close(self) -> None:
         if self.closed:
             return
+        self.metadata._write()
         self._handle.close()
         self.closed = True
 
     def _flush_hack(self) -> None:
         """On write handles, flushes pending writes. Does nothing to reads."""
         if self.mode == "w":
+            self.metadata._write()
             self._handle.close()
             self._handle = self._opener(self.uri, "w", self.context)
 
@@ -228,6 +232,58 @@ class GroupWrapper(Wrapper[tiledb.Group]):
         }
 
 
+class _DictMod(enum.Enum):
+    """State machine to keep track of modifications to a dictionary.
+
+    This whole thing is a hack to allow users to treat the metadata dict
+    like an actual dictionary because tiledb currently does not support multiple
+    modifications to the same key (e.g., add-then-delete a metadata entry has
+    undesired results) [sc-25089].
+    """
+
+    # Initially-absent keys are either added or not (added then removed).
+    ABSENT = enum.auto()
+    """The key is not present in the dict. Initial state."""
+    ADDED = enum.auto()
+    """The key was originally ABSENT but has been added."""
+
+    # Initially-present keys can be either updated or deleted.
+    PRESENT = enum.auto()
+    """The key is in the dict and is unchanged. Initial state."""
+    UPDATED = enum.auto()
+    """The key was originally PRESENT but has been changed."""
+    DELETED = enum.auto()
+    """The key was originally PRESENT but has been deleted."""
+
+    @classmethod
+    def start_state(cls, dct: Mapping[Any, Any], key: Any) -> "_DictMod":
+        """Returns the starting state for a DictMod given the key of dct."""
+        return cls.PRESENT if key in dct else cls.ABSENT
+
+    def next_state(self, action: Literal["set", "del"]) -> "_DictMod":
+        """Determines the next state of an entry given the action."""
+        return {
+            _DictMod.ABSENT: {
+                "set": _DictMod.ADDED,
+            },
+            _DictMod.ADDED: {
+                "set": _DictMod.ADDED,
+                "del": _DictMod.ABSENT,
+            },
+            _DictMod.PRESENT: {
+                "set": _DictMod.UPDATED,
+                "del": _DictMod.DELETED,
+            },
+            _DictMod.UPDATED: {
+                "set": _DictMod.UPDATED,
+                "del": _DictMod.DELETED,
+            },
+            _DictMod.DELETED: {
+                "set": _DictMod.UPDATED,
+            },
+        }[self][action]
+
+
 @attrs.define(frozen=True)
 class MetadataWrapper(MutableMapping[str, Any]):
     """A wrapper storing the metadata of some TileDB object.
@@ -239,8 +295,8 @@ class MetadataWrapper(MutableMapping[str, Any]):
 
     owner: Wrapper[RawHandle]
     cache: Dict[str, Any]
-    _mutated_fields: Set[str] = attrs.field(factory=set)
-    """Fields that have been mutated. """
+    _mods: Dict[str, "_DictMod"] = attrs.field(init=False, factory=dict)
+    """Tracks the modifications we have made to cache entries."""
 
     def __len__(self) -> int:
         self.owner._check_open()
@@ -255,21 +311,52 @@ class MetadataWrapper(MutableMapping[str, Any]):
         return self.cache[key]
 
     def __setitem__(self, key: str, value: Any) -> None:
-        self.owner._check_open()
-        self.owner.writer.meta[key] = value
+        self.owner.writer  # Ensures we're open in write mode.
+        state = self._current_state(key)
+        _check_metadata_type(key, value)
         self.cache[key] = value
-        self._mutated_fields.add(key)
+        self._mods[key] = state.next_state("set")
 
     def __delitem__(self, key: str) -> None:
-        # HACK: Currently, deleting a just-added metadata entry DOES NOT WORK.
-        # We track mutated fields to ensure that this works as expected,
-        # at the expense of otherwise-unnecessary flushes.
-        self.owner._check_open()
-        if key in self._mutated_fields:
-            self.owner._flush_hack()
-        del self.owner.writer.meta[key]
+        self.owner.writer  # Ensures we're open in write mode.
+        state = self._current_state(key)
         del self.cache[key]
-        self._mutated_fields.add(key)
+        self._mods[key] = state.next_state("del")
+
+    def _current_state(self, key: str) -> _DictMod:
+        return self._mods.get(key, _DictMod.start_state(self.cache, key))
+
+    def _write(self) -> None:
+        """Writes out metadata changes, if there were any."""
+        if not self._mods:
+            # There were no changes (e.g., it's a read handle).  Do nothing.
+            return
+        # Only try to get the writer if there are changes to be made.
+        meta = self.owner.writer.meta
+        for key, mod in self._mods.items():
+            if mod in (_DictMod.ADDED, _DictMod.UPDATED):
+                meta[key] = self.cache[key]
+            if mod is _DictMod.DELETED:
+                del meta[key]
+        # Temporary hack: When we flush writes, note that the cache
+        # is back in sync with disk.
+        self._mods.clear()
 
     def __repr__(self) -> str:
         return f"{type(self).__name__}({self.owner})"
+
+
+def _check_metadata_type(key: str, obj: object) -> None:
+    """Pre-checks that a metadata entry can be stored in an array.
+
+    These checks are reproduced from the TileDB Python metadata-setting methods.
+    We have to do this since we don't commit our changes until the very end.
+    """
+    if not isinstance(key, str):
+        raise TypeError(f"metadata keys must be strings, not {type(key)}")
+    if isinstance(obj, (bytes, float, int, str, np.ndarray)):
+        return
+    if isinstance(obj, (list, tuple)):
+        # Will raise a TypeError if it can't convert the contents.
+        np.array(obj)
+    raise TypeError(f"cannot store {type(obj)} instance as metadata")
