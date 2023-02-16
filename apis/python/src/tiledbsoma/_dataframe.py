@@ -7,15 +7,15 @@ import tiledb
 from somacore import options
 from typing_extensions import Self
 
-from . import _arrow_types, util
+from . import _arrow_types, _util
 from . import libtiledbsoma as clib
 from ._read_iters import TableReadIter
 from ._tiledb_array import TileDBArray
-from .constants import SOMA_JOINID
+from ._types import NPFloating, NPInteger, is_slice_of
+from ._constants import SOMA_JOINID
 from .options import SOMATileDBContext
 from .options.tiledb_create_options import TileDBCreateOptions
 from .query_condition import QueryCondition
-from .types import NPFloating, NPInteger, is_slice_of
 
 _UNBATCHED = options.BatchSize()
 
@@ -152,7 +152,7 @@ class DataFrame(TileDBArray, somacore.DataFrame):
         * Negative indexing is unsupported.
         """
         del batch_size, platform_config  # Currently unused.
-        util.check_unpartitioned(partitions)
+        _util.check_unpartitioned(partitions)
         self._check_open_read()
         result_order = options.ResultOrder(result_order)
 
@@ -190,7 +190,7 @@ class DataFrame(TileDBArray, somacore.DataFrame):
             the index columns. The schema for the values must match
             the schema for the ``DataFrame``.
         """
-        util.check_type("values", values, (pa.Table,))
+        _util.check_type("values", values, (pa.Table,))
 
         del platform_config  # unused
         dim_cols_list = []
@@ -252,7 +252,7 @@ def _canonicalize_schema(
     Returns a schema, which may be modified by the addition of required columns
     (e.g. ``soma_joinid``).
     """
-    util.check_type("schema", schema, (pa.Schema,))
+    _util.check_type("schema", schema, (pa.Schema,))
     if not index_column_names:
         raise ValueError("DataFrame requires one or more index columns")
 

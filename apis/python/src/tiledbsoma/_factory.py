@@ -19,7 +19,7 @@ from . import (
     _tiledb_object,
 )
 from ._funcs import typeguard_ignore
-from .constants import (
+from ._constants import (
     SOMA_ENCODING_VERSION,
     SOMA_ENCODING_VERSION_METADATA_KEY,
     SOMA_OBJECT_TYPE_METADATA_KEY,

@@ -3,7 +3,7 @@ from typing import cast
 import pandas as pd
 import pyarrow as pa
 
-from .types import NPNDArray, PDSeries
+from ._types import NPNDArray, PDSeries
 
 
 def X_as_series(tbl: pa.Table) -> PDSeries:

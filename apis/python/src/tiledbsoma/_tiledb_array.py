@@ -3,14 +3,14 @@ from typing import Optional, Sequence, Tuple
 import pyarrow as pa
 import tiledb
 
-from . import _tdb_handles, util
+from . import _tdb_handles, _util
 
 # This package's pybind11 code
 from . import libtiledbsoma as clib
 from ._arrow_types import tiledb_schema_to_arrow
 from ._tiledb_object import TileDBObject
+from ._types import is_nonstringy_sequence
 from .options.soma_tiledb_context import SOMATileDBContext
-from .types import is_nonstringy_sequence
 
 
 class TileDBArray(TileDBObject[_tdb_handles.ArrayWrapper]):
@@ -127,10 +127,10 @@ class TileDBArray(TileDBObject[_tdb_handles.ArrayWrapper]):
             sr.set_dim_points(dim.name, [coord])
             return True
         if isinstance(coord, slice):
-            util.validate_slice(coord)
+            _util.validate_slice(coord)
             try:
-                lo_hi = util.slice_to_numeric_range(coord, dim.domain)
-            except util.NonNumericDimensionError:
+                lo_hi = _util.slice_to_numeric_range(coord, dim.domain)
+            except _util.NonNumericDimensionError:
                 return False  # We only handle numeric dimensions here.
             if lo_hi:
                 sr.set_dim_ranges(dim.name, [lo_hi])

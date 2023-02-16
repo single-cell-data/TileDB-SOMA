@@ -9,7 +9,7 @@ import tiledb
 from somacore import options
 from typing_extensions import Self
 
-from . import _arrow_types, util
+from . import _arrow_types, _util
 from ._tiledb_array import TileDBArray
 from .options.soma_tiledb_context import SOMATileDBContext
 from .options.tiledb_create_options import TileDBCreateOptions
@@ -82,7 +82,7 @@ def _build_tiledb_schema(
     *,
     is_sparse: bool,
 ) -> tiledb.ArraySchema:
-    util.check_type("type", type, (pa.DataType,))
+    _util.check_type("type", type, (pa.DataType,))
 
     # check on shape
     if len(shape) == 0 or any(e <= 0 for e in shape):

@@ -31,9 +31,9 @@ from ._dataframe import DataFrame
 from ._dense_nd_array import DenseNDArray
 from ._sparse_nd_array import SparseNDArray
 from ._tiledb_object import AnyTileDBObject, TileDBObject
+from ._util import is_relative_uri, make_relative_path, uri_joinpath
 from .exception import is_does_not_exist_error, is_duplicate_group_key_error
 from .options import SOMATileDBContext
-from .util import is_relative_uri, make_relative_path, uri_joinpath
 
 # A collection can hold any sub-type of TileDBObject
 CollectionElementType = TypeVar("CollectionElementType", bound=AnyTileDBObject)
