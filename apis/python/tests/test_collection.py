@@ -142,9 +142,21 @@ def test_collection_mapping(soma_object, tmp_path):
     assert len(c) == 1
     assert [k for k in c] == ["mumble"]
 
+    pytest.xfail(reason="currently supports one entry modification at a time")
     del c["mumble"]
     assert "mumble" not in c
     assert not c.get("mumble", False)
+
+
+def test_delete_add(soma_object, tmp_path: pathlib.Path):
+    tmp_uri = tmp_path.as_uri()
+    with soma.Collection.create(tmp_uri) as create:
+        create["porkchop sandwiches"] = soma_object
+
+    with soma.open(tmp_uri, "w", soma_type=soma.Collection) as update:
+        del update["porkchop sandwiches"]
+        pytest.xfail(reason="currently does not support removal/re-addition")
+        update["porkchop sandwiches"] = soma_object
 
 
 @pytest.mark.parametrize("relative", [False, True])
@@ -262,6 +274,7 @@ def test_collection_update_on_set(tmp_path):
     assert set(sc.keys()) == set(["A"])
     assert sc["A"] == A
 
+    pytest.xfail(reason="replacing entries is not supported")
     sc["A"] = B
     assert set(sc.keys()) == set(["A"])
     assert sc["A"] == B

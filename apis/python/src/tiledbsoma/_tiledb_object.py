@@ -159,7 +159,9 @@ class TileDBObject(somacore.SOMAObject, Generic[_WrapperType_co]):
         )
         # Semi-hack: flush the metadata immediately upon creation so that the
         # backing storage isn't half-created (i.e., there is a tiledb object
-        # on disk, but its type is not stored). This is immutable, so it's fine.
+        # on disk, but its type is not stored).
+        # TODO: We should probably write this metadata at time 0.
+        # Doing so would eliminate this last _flush_hack call.
         handle._flush_hack()
 
     def _check_open_read(self) -> None:
