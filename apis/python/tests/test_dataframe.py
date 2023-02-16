@@ -111,6 +111,53 @@ def test_dataframe(tmp_path, arrow_schema):
         assert not A.schema.allows_duplicates
 
 
+@pytest.mark.parametrize("appendable", [True, False])
+def test_dataframe_append(tmp_path, appendable):
+    uri = tmp_path.as_posix()
+
+    soma.DataFrame.create(
+        uri,
+        schema=pa.schema([("foo", pa.large_string())]),
+        shape=None if appendable else 5,
+    ).close()
+    assert soma.DataFrame.exists(uri)
+
+    batch1 = pa.Table.from_pydict(
+        {
+            "soma_joinid": [0, 1, 2, 3, 4],
+            "foo": ["apple", "ball", "cat", "dog", "egg"],
+        }
+    )
+
+    batch2 = pa.Table.from_pydict(
+        {
+            "soma_joinid": [5, 6, 7],
+            "foo": ["fish", "gate", "house"],
+        }
+    )
+
+    with soma.DataFrame.open(uri) as sdf:
+        assert sdf.count == 0
+        assert len(sdf) == 0
+
+    with soma.DataFrame.open(uri, "w") as sdf:
+        sdf.write(batch1)
+
+    with soma.DataFrame.open(uri) as sdf:
+        assert sdf.count == 5
+        assert len(sdf) == 5
+
+    if appendable:
+        with soma.DataFrame.open(uri, "w") as sdf:
+            sdf.write(batch2)
+    else:
+        # tiledb.cc.TileDBError: [TileDB::Dimension] Error: Coordinate 6
+        # is out of domain bounds [0, 4] on dimension 'soma_joinid'
+        with pytest.raises(tiledb.cc.TileDBError):
+            with soma.DataFrame.open(uri, "w") as sdf:
+                sdf.write(batch2)
+
+
 def test_dataframe_with_float_dim(tmp_path, arrow_schema):
     sdf = soma.DataFrame.create(
         tmp_path.as_posix(), schema=arrow_schema(), index_column_names=("bar",)

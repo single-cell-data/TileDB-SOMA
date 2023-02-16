@@ -114,6 +114,24 @@ def test_dense_nd_array_reshape(tmp_path):
         assert a.reshape((100, 10, 1))
 
 
+@pytest.mark.parametrize("appendable", [True, False])
+def test_dense_nd_array_append(tmp_path, appendable):
+    uri = tmp_path.as_posix()
+
+    if appendable:
+        with pytest.raises(ValueError):
+            soma.DenseNDArray.create(uri, type=pa.float32(), shape=(None, None)).close()
+    else:
+        soma.DenseNDArray.create(
+            uri,
+            type=pa.float32(),
+            shape=(2, 3),
+        ).close()
+        assert soma.DenseNDArray.exists(uri)
+        with soma.DenseNDArray.open(uri) as dnda:
+            assert dnda.shape == (2, 3)
+
+
 @pytest.mark.parametrize(
     "io",
     [

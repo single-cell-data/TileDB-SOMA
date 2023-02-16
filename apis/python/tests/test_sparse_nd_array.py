@@ -205,69 +205,6 @@ def tables_are_same_value(a: pa.Table, b: pa.Table) -> bool:
     return True
 
 
-@pytest.mark.parametrize(
-    "shape,format",
-    [
-        ((10,), "coo"),
-        ((10, 21), "coo"),
-        ((10, 21), "csr"),
-        ((10, 21), "csc"),
-        ((10, 20, 2), "coo"),
-        ((2, 4, 6, 8), "coo"),
-        ((1, 2, 4, 6, 8), "coo"),
-    ],
-)
-@pytest.mark.parametrize("test_enumeration", range(10))
-def test_sparse_nd_array_read_write_sparse_tensor(
-    tmp_path,
-    shape: Tuple[int, ...],
-    format: str,
-    test_enumeration: int,
-):
-    # Test sanity: Tensor only, and CSC and CSR only support 2D, so fail any nonsense configs
-    assert format in ("coo", "csr", "csc")
-    assert not (format in ("csc", "csr") and len(shape) != 2)
-
-    a = soma.SparseNDArray.create(tmp_path.as_posix(), type=pa.float64(), shape=shape)
-    assert a.shape == shape
-
-    # Make a random sample in the desired format
-    # As discussed in the SparseNDArray implementation, Arrow SparseTensor objects can't be zero-length
-    # so we must be prepared for StopIteration on reading them. It simplifies unit-test logic to use
-    # occupation density of 1.0 for this test.
-    data = create_random_tensor(format, shape, np.float64, 1.0)
-    with pytest.raises(TypeError):
-        # non-arrow write
-        a.write(data.to_numpy())
-    a.write(data)
-    del a
-
-    # Read back and validate
-    with soma.SparseNDArray.open(tmp_path.as_posix()) as b:
-        if format == "coo":
-            t = b.read((slice(None),) * len(shape)).coos().concat()
-        elif format == "csc":
-            t = b.read((slice(None),) * len(shape)).cscs().concat()
-        elif format == "csr":
-            t = b.read((slice(None),) * len(shape)).csrs().concat()
-
-        assert tensors_are_same_value(t, data)
-
-        if format == "coo":
-            t = next(b.read((0,) * len(shape)).coos())
-        elif format == "csc":
-            t = next(b.read((0,) * len(shape)).cscs())
-        elif format == "csr":
-            t = next(b.read((0,) * len(shape)).csrs())
-
-        assert t.shape == shape
-
-    # Validate TileDB array schema
-    with tiledb.open(tmp_path.as_posix()) as A:
-        assert A.schema.sparse
-        assert not A.schema.allows_duplicates
-
-
 @pytest.mark.parametrize("shape", [(10,), (23, 4), (5, 3, 1), (8, 4, 2, 30)])
 @pytest.mark.parametrize("test_enumeration", range(10))
 def test_sparse_nd_array_read_write_table(
@@ -323,6 +260,50 @@ def test_sparse_nd_array_read_as_pandas(
         assert not A.schema.allows_duplicates
 
 
+@pytest.mark.parametrize("appendable", [True, False])
+@pytest.mark.parametrize("element_type", NDARRAY_ARROW_TYPES_SUPPORTED)
+def test_sparse_nd_array_append(tmp_path, appendable, element_type):
+    uri = tmp_path.as_posix()
+
+    soma.SparseNDArray.create(
+        uri,
+        type=element_type,
+        shape=(None, None) if appendable else (2, 3),
+    ).close()
+    assert soma.SparseNDArray.exists(uri)
+
+    with soma.SparseNDArray.open(uri) as snda:
+        assert snda.nnz == 0
+
+    batch1 = pa.Table.from_pydict(
+        {
+            "soma_dim_0": [0, 0, 0, 1, 1, 1],
+            "soma_dim_1": [0, 1, 2, 0, 1, 2],
+            "soma_data": [1, 2, 3, 4, 5, 6],
+        }
+    )
+
+    batch2 = pa.Table.from_pydict(
+        {"soma_dim_0": [2, 2, 2], "soma_dim_1": [0, 1, 2], "soma_data": [7, 8, 9]}
+    )
+
+    with soma.SparseNDArray.open(uri, "w") as snda:
+        snda.write(batch1)
+
+    with soma.SparseNDArray.open(uri) as snda:
+        assert snda.nnz == 6
+
+    if appendable:
+        with soma.SparseNDArray.open(uri, "w") as snda:
+            snda.write(batch2)
+    else:
+        # tiledb.cc.TileDBError: [TileDB::Dimension] Error: Coordinate 2
+        # is out of domain bounds [0, 1] on dimension 'soma_dim_0'
+        with pytest.raises(tiledb.cc.TileDBError):
+            with soma.SparseNDArray.open(uri, "w") as snda:
+                snda.write(batch2)
+
+
 def test_empty_read(tmp_path):
     """
     Verify that queries expected to return empty results actually
@@ -341,10 +322,6 @@ def test_empty_read(tmp_path):
         # These work as expected
         coords = (slice(None),)
         assert sum(len(t) for t in a.read(coords).tables()) == 0
-        # Fails due to ARROW-17933
-        # assert sum(t.non_zero_length for t in a.read(coords).coos()) == 0
-        assert sum(t.non_zero_length for t in a.read(coords).csrs()) == 0
-        assert sum(t.non_zero_length for t in a.read(coords).cscs()) == 0
 
     #
     # Next, test empty queries on non-empty array
@@ -360,8 +337,6 @@ def test_empty_read(tmp_path):
 
         coords = (1, 1)  # no element at this coordinate
         assert sum(len(t) for t in a.read(coords).tables()) == 0
-        assert sum(t.non_zero_length for t in a.read(coords).csrs()) == 0
-        assert sum(t.non_zero_length for t in a.read(coords).cscs()) == 0
 
 
 @pytest.mark.xfail(sys.version_info.minor > 7, reason="bug ARROW-17933")
@@ -386,10 +361,6 @@ def test_empty_read_sparse_coo(tmp_path):
         tmp_path.as_posix(), type=pa.uint16(), shape=(10, 100)
     ).close()
 
-    with soma.SparseNDArray.open(tmp_path.as_posix()) as a:
-        coords = (slice(None),)
-        assert sum(t.non_zero_length for t in a.read(coords).coos()) == 0
-
     with soma.SparseNDArray.open(tmp_path.as_posix(), "w") as a:
         a.write(
             pa.SparseCOOTensor.from_scipy(
@@ -398,9 +369,6 @@ def test_empty_read_sparse_coo(tmp_path):
         )
     with soma.SparseNDArray.open(tmp_path.as_posix()) as a:
         assert sum(len(t) for t in a.read((slice(None),)).tables()) == 1
-
-        coords = (1, 1)  # no element at this coordinate
-        assert sum(t.non_zero_length for t in a.read(coords).coos()) == 0
 
 
 @pytest.mark.parametrize("shape", [(), (0,), (10, 0), (0, 10), (1, 2, 0)])
@@ -454,12 +422,6 @@ def test_csr_csc_2d_read(tmp_path, shape):
     )
     snda.write(arrow_tensor)
 
-    with pytest.raises(ValueError):
-        next(snda.read(None).csrs())
-
-    with pytest.raises(ValueError):
-        next(snda.read(None).cscs())
-
 
 @pytest.mark.parametrize(
     "write_format",
@@ -469,7 +431,7 @@ def test_csr_csc_2d_read(tmp_path, shape):
     # We want to test read_format == "none_of_the_above", to ensure it throws NotImplementedError,
     # but that can't be gotten past typeguard.
     "read_format",
-    ["table", "coo", "csr", "csc"],
+    ["table"],
 )
 @pytest.mark.parametrize(
     "io",
@@ -819,23 +781,11 @@ def test_sparse_nd_array_table_slicing(tmp_path, io, write_format, read_format):
             if io["throws"] is not None:
                 with pytest.raises(io["throws"]):
                     r = snda.read(io["coords"])
-                    if read_format == "coo":
-                        next(r.coos())
-                    elif read_format == "csr":
-                        next(r.csrs())
-                    elif read_format == "csc":
-                        next(r.csrs())
-                    elif read_format == "table":
+                    if read_format == "table":
                         next(r.csrs())
             else:
                 r = snda.read(io["coords"])
-                if read_format == "coo":
-                    tensor = next(r.coos())
-                elif read_format == "csr":
-                    tensor = next(r.csrs())
-                elif read_format == "csc":
-                    tensor = next(r.csrs())
-                elif read_format == "table":
+                if read_format == "table":
                     tensor = next(r.csrs())
                 assert tensor.shape == io["shape"]
 
@@ -1021,20 +971,12 @@ def test_timestamped_ops(tmp_path):
 
     # read with no timestamp args & see both 1s
     with soma.SparseNDArray.open(tmp_path.as_posix()) as a:
-        assert a.read().coos().concat().to_scipy().todense().tolist() == [
-            [1, 0],
-            [0, 1],
-        ]
         assert a.nnz == 2
 
     # read @ t=15 & see only the first write
     with soma.SparseNDArray.open(
         tmp_path.as_posix(), context=SOMATileDBContext(read_timestamp=15)
     ) as a:
-        assert a.read().coos().concat().to_scipy().todense().tolist() == [
-            [1, 0],
-            [0, 0],
-        ]
         assert a.nnz == 1
 
     # read with (timestamp_start, timestamp_end) = (15, 25) & see only the second write
@@ -1042,8 +984,4 @@ def test_timestamped_ops(tmp_path):
         tmp_path.as_posix(),
         context=SOMATileDBContext(read_timestamp_start=15, read_timestamp=25),
     ) as a:
-        assert a.read().coos().concat().to_scipy().todense().tolist() == [
-            [0, 0],
-            [0, 1],
-        ]
         assert a.nnz == 1

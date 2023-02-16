@@ -123,11 +123,11 @@ def test_import_anndata(adata, ingest_modes):
             with pytest.raises(ValueError):
                 exp.ms["RNA"].X["data"].read(coords=all2d)
 
-        # Check raw/X/data (sparse)
+        #        # Check raw/X/data (sparse)
         assert exp.ms["raw"].X["data"].metadata.get(metakey) == "SOMASparseNDArray"
         if have_ingested:
-            matrix = exp.ms["raw"].X["data"].read(coords=all2d).coos().concat()
-            assert matrix.shape == orig.raw.X.shape
+            table = exp.ms["raw"].X["data"].read(coords=all2d).tables().concat()
+            assert len(table) == orig.raw.X.nnz
 
         # Check some annotation matrices
 
@@ -157,9 +157,9 @@ def test_import_anndata(adata, ingest_modes):
         assert sorted(obsp.keys()) == sorted(orig.obsp.keys())
         for key in list(orig.obsp.keys()):
             assert obsp[key].metadata.get(metakey) == "SOMASparseNDArray"
-            if have_ingested:
-                matrix = obsp[key].read(coords=all2d).coos().concat()
-                assert matrix.shape == orig.obsp[key].shape
+        if have_ingested:
+            table = obsp[key].read(coords=all2d).tables().concat()
+            assert len(table) == orig.obsp[key].nnz
 
         # pbmc-small has no varp
 
