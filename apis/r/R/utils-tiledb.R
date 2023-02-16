@@ -32,8 +32,8 @@ show_package_versions <- function() {
     cat("R:            ", R.version.string, "\n")
 }
 
-#' @rdname stats_enable
+#' @rdname tiledbsoma_stats_enable
 #' @export
-stats_show <- function() {
+tiledbsoma_stats_show <- function() {
     cat(stats_dump(), "\n")
 }
