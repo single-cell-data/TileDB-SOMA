@@ -25,8 +25,6 @@ import setuptools
 import setuptools.command.build_ext
 import wheel.bdist_wheel
 
-this_dir = pathlib.Path(__file__).parent.absolute()
-sys.path.insert(0, str(this_dir))
 
 def get_libtiledbsoma_library_name():
     """
@@ -82,6 +80,9 @@ def libtiledbsoma_exists():
 
 
 def find_or_build_package_data(setuptools_cmd):
+    this_dir = pathlib.Path(__file__).parent.absolute()
+    sys.path.insert(0, str(this_dir))
+
     global libtiledbsoma_dir
 
     # Set up paths
