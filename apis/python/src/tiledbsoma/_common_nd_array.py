@@ -110,35 +110,16 @@ class NDArray(TileDBArray, somacore.NDArray):
         if not shape:
             raise ValueError("SOMA NDArrays must have a nonzero number of dimensions")
 
-        # check on shape
-        if is_sparse:
-            if any(e is not None and e <= 0 for e in shape):
-                raise ValueError(
-                    "SOMASparseNDArray shape must be non-zero length tuple of positive ints or Nones"
-                )
-        else:
-            if any(e is None or e <= 0 for e in shape):
-                raise ValueError(
-                    "SOMADenseNDArray shape must be non-zero length tuple of positive ints"
-                )
-
         dims = []
-        for n, e in enumerate(shape):
-            dim_name = f"soma_dim_{n}"
-
-            slot_capacity = 2**63 if e is None else e
-            extent = min(slot_capacity, create_options.dim_tile(dim_name, 2048))
-            # TileDB requires that each signed-64-bit-int domain slot, rounded up to
-            # a multiple of the tile extent in that slot, be representable as a
-            # signed 64-bit int. So if the tile extent is 999, say, this will exceed
-            # 2**63 - 1.
-            if e is None:
-                slot_capacity -= extent
-
+        for dim_idx, dim_shape in enumerate(shape):
+            dim_name = f"soma_dim_{dim_idx}"
+            dim_capacity, dim_extent = cls._dim_capacity_and_extent(
+                dim_name, dim_shape, create_options
+            )
             dim = tiledb.Dim(
                 name=dim_name,
-                domain=(0, slot_capacity - 1),
-                tile=extent,
+                domain=(0, dim_capacity - 1),
+                tile=dim_extent,
                 dtype=np.int64,
                 filters=create_options.dim_filters(
                     dim_name,
@@ -178,3 +159,12 @@ class NDArray(TileDBArray, somacore.NDArray):
             cell_order=cell_order,
             ctx=context.tiledb_ctx,
         )
+
+    @classmethod
+    def _dim_capacity_and_extent(
+        cls,
+        dim_name: str,
+        dim_shape: Optional[int],
+        create_options: TileDBCreateOptions,
+    ) -> Tuple[int, int]:
+        raise NotImplementedError("must be implemented by child class.")

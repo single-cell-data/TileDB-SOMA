@@ -143,7 +143,7 @@ class DenseNDArray(NDArray, somacore.DenseNDArray):
         return self
 
     @classmethod
-    def _dim_domain_and_extent(
+    def _dim_capacity_and_extent(
         cls,
         dim_name: str,
         dim_shape: Optional[int],
@@ -151,7 +151,7 @@ class DenseNDArray(NDArray, somacore.DenseNDArray):
     ) -> Tuple[int, int]:
         """
         Given a user-specified shape along a particular dimension, returns a tuple of
-        the TileDB domain and extent for that dimension, suitable for schema creation.
+        the TileDB capacity and extent for that dimension, suitable for schema creation.
         The user-specified shape cannot be ``None`` for ``DenseNDArray``.
         """
         if dim_shape is None or dim_shape <= 0:
