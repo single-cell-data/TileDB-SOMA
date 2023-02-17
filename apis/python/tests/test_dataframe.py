@@ -118,7 +118,7 @@ def test_dataframe_append(tmp_path, appendable):
     soma.DataFrame.create(
         uri,
         schema=pa.schema([("foo", pa.large_string())]),
-        shape=None if appendable else 5,
+        shape=None if appendable else (5,),
     ).close()
     assert soma.DataFrame.exists(uri)
 
