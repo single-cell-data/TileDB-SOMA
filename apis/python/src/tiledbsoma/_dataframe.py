@@ -78,7 +78,6 @@ class DataFrame(TileDBArray, somacore.DataFrame):
         *,
         schema: pa.Schema,
         index_column_names: Sequence[str] = (SOMA_JOINID,),
-        shape: Optional[Sequence[int]] = None,
         platform_config: Optional[options.PlatformConfig] = None,
         context: Optional[SOMATileDBContext] = None,
     ) -> "DataFrame":
@@ -97,13 +96,6 @@ class DataFrame(TileDBArray, somacore.DataFrame):
             All named columns must exist in the schema, and at least one
             index column name is required.
 
-        :param shape: An optional sequence of positive int64 values specifying the
-            shape of each index column, including room for any intended future
-            appends. If provided, this must have the same length as
-            `index_column_names`, and the index-column domains will be as specified.
-            If omitted, the index-column domains will use the maximum possible int64
-            value.  This makes a `SOMADataFrame` growable.
-
         :param platform_config: Platform-specific options used to create this DataFrame,
             provided via ``{"tiledb": {"create": ...}}`` nested keys.
         """
@@ -112,7 +104,6 @@ class DataFrame(TileDBArray, somacore.DataFrame):
         tdb_schema = _build_tiledb_schema(
             schema,
             index_column_names,
-            shape,
             TileDBCreateOptions.from_platform_config(platform_config),
             context,
         )
@@ -353,45 +344,34 @@ def _canonicalize_schema(
 def _build_tiledb_schema(
     schema: pa.Schema,
     index_column_names: Sequence[str],
-    shape: Optional[Sequence[int]],
     tiledb_create_options: TileDBCreateOptions,
     context: SOMATileDBContext,
 ) -> tiledb.ArraySchema:
     """Converts an Arrow schema into a TileDB ArraySchema for creation."""
-    if shape is not None and len(shape) != len(index_column_names):
-        raise ValueError(
-            "shape, when provided, must have the same length as index_column_names"
-        )
     dims = []
-    for i, index_column_name in enumerate(index_column_names):
+    for index_column_name in index_column_names:
         pa_type = schema.field(index_column_name).type
         dtype = _arrow_types.tiledb_type_from_arrow_type(
             pa_type, is_indexed_column=True
         )
-
         domain: Tuple[Any, Any]
-        if shape is None:
-            if isinstance(dtype, str):
-                domain = None, None
-            elif np.issubdtype(dtype, NPInteger):
-                iinfo = np.iinfo(cast(NPInteger, dtype))
-                domain = iinfo.min, iinfo.max - 1
-            elif np.issubdtype(dtype, NPFloating):
-                finfo = np.finfo(cast(NPFloating, dtype))
-                domain = finfo.min, finfo.max
-            else:
-                raise TypeError(f"Unsupported dtype {dtype}")
-            if index_column_name == SOMA_JOINID:
-                domain = (0, domain[1])
+        if isinstance(dtype, str):
+            domain = None, None
+        elif np.issubdtype(dtype, NPInteger):
+            iinfo = np.iinfo(cast(NPInteger, dtype))
+            domain = iinfo.min, iinfo.max - 1
+        elif np.issubdtype(dtype, NPFloating):
+            finfo = np.finfo(cast(NPFloating, dtype))
+            domain = finfo.min, finfo.max
         else:
-            domain = (0, shape[i] - 1)
+            raise TypeError(f"Unsupported dtype {dtype}")
+        if index_column_name == SOMA_JOINID:
+            domain = (0, domain[1])
 
         # Default 2048 mods to 0 for 8-bit types and 0 is an invalid extent
         extent = tiledb_create_options.dim_tile(index_column_name)
         if isinstance(dtype, np.dtype) and dtype.itemsize == 1:
             extent = 64
-        if shape is not None:
-            extent = min(extent, shape[i])
 
         dim = tiledb.Dim(
             name=index_column_name,

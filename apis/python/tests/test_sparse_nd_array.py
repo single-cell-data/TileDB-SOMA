@@ -312,7 +312,7 @@ def test_sparse_nd_array_read_as_pandas(
 
 @pytest.mark.parametrize("shape_is_nones", [True, False])
 @pytest.mark.parametrize("element_type", NDARRAY_ARROW_TYPES_SUPPORTED)
-def test_sparse_nd_array_append(tmp_path, shape_is_nones, element_type):
+def test_sparse_nd_array_shaping(tmp_path, shape_is_nones, element_type):
     uri = tmp_path.as_posix()
 
     soma.SparseNDArray.create(
