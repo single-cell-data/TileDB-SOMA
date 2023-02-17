@@ -38,12 +38,17 @@ class NDArray(TileDBArray, somacore.NDArray):
         :param type: The Arrow type to be stored in the NDArray.
             If the type is unsupported, an error will be raised.
 
-        :param shape: The maximum capacity of the dataframe, including room for any
-            intended future appends,as a sequence. E.g. ``(100, 10)``.  All
-            lengths must be in the positive int64 range, or `None`.  If a slot
-            is `None` -- only supported for `SparseNDArray`, not `DenseNDArray`
-            -- then the maximum possible int64 size will be used. This makes a
-            `SparseNDArray` growable.
+        :param shape: The maximum capacity of each dimension, including room
+            for any intended future appends, as a sequence.  E.g. ``(100, 10)``.
+            All lengths must be in the postive int64 range, or ``None``.
+            It's necessary to say ``shape=(None, None)`` or ``shape=(None, None, None)``
+            rather than more simply ``shape=None`` since the first two are how one
+            specifies N=2 or N=3, respectively, for N-dimensional arrays: the length
+            of this sequence is the number of dimensions of the array.
+
+            For ``SOMASparseNDArray`` only, if a slot is None, then the maximum
+            possible int64 will be used.  This makes a ``SOMASparseNDArray``
+            growable.
 
         :param platform_config: Platform-specific options used to create this Array,
             provided via ``{"tiledb": {"create": ...}}`` nested keys.
