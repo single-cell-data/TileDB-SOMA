@@ -525,8 +525,8 @@ class Collection(
     >>> import pyarrow as pa
     >>> import numpy as np
     >>> # create a collection and add a (10,10) dense matrix to it
-    ... with tiledbsoma.Collection.create("./test_collection") as my_collection:
-    ...     with my_collection.add_new_dense_ndarray(
+    >>> with tiledbsoma.Collection.create("./test_collection") as my_collection:
+    ...     my_collection.add_new_dense_ndarray(
     ...         "my_dense_ndarray", type=pa.int32(), shape=(10, 10)
     ...     ) as my_dense_ndarray:
     ...         data = pa.Tensor.from_numpy(np.eye(10, 10, dtype=np.int32))

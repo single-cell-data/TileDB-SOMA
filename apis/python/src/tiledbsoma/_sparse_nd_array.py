@@ -51,17 +51,17 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
     >>> import numpy as np
     >>> import scipy.sparse
     >>> with tiledbsoma.SparseNDArray.create(
-        ...     "./test_sparse_ndarray", type=pa.float32(), shape=(1000, 100)
-        ... ) as arr:
-        ...     data = pa.SparseCOOTensor.from_scipy(
-        ...         scipy.sparse.random(1000, 100, format="coo", dtype=np.float32)
-        ...     )
-        ...     arr.write(data)
-        ... with tiledbsoma.SparseNDArray.open("./test_sparse_ndarray") as arr:
-        ...     print(arr.schema)
-        ...     print('---')
-        ...     print(arr.read().coos().concat())
-        ...
+    ...     "./test_sparse_ndarray", type=pa.float32(), shape=(1000, 100)
+    ... ) as arr:
+    ...     data = pa.SparseCOOTensor.from_scipy(
+    ...         scipy.sparse.random(1000, 100, format="coo", dtype=np.float32)
+    ...     )
+    ...     arr.write(data)
+    ... with tiledbsoma.SparseNDArray.open("./test_sparse_ndarray") as arr:
+    ...     print(arr.schema)
+    ...     print('---')
+    ...     print(arr.read().coos().concat())
+    ...
     soma_dim_0: int64
     soma_dim_1: int64
     soma_data: float
