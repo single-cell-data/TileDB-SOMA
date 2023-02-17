@@ -199,7 +199,14 @@ SOMASparseNDArray <- R6::R6Class(
       )
       colnames(coo) <- c(self$dimnames(), self$attrnames())
       private$write_coo_dataframe(coo)
+    },
+
+    #' @description Retrieve number of non-zero elements (lifecycle: experimental)
+    #' @return A scalar with the number of non-zero elements
+    nnz = function() {
+      nnz(self$uri)
     }
+
   ),
 
   private = list(

@@ -27,6 +27,8 @@ populate the private \code{create_empty_array()} and \code{ingest_data()} method
 \item \href{#method-TileDBArray-set_metadata}{\code{TileDBArray$set_metadata()}}
 \item \href{#method-TileDBArray-schema}{\code{TileDBArray$schema()}}
 \item \href{#method-TileDBArray-dimensions}{\code{TileDBArray$dimensions()}}
+\item \href{#method-TileDBArray-shape}{\code{TileDBArray$shape()}}
+\item \href{#method-TileDBArray-ndim}{\code{TileDBArray$ndim()}}
 \item \href{#method-TileDBArray-attributes}{\code{TileDBArray$attributes()}}
 \item \href{#method-TileDBArray-dimnames}{\code{TileDBArray$dimnames()}}
 \item \href{#method-TileDBArray-fragment_count}{\code{TileDBArray$fragment_count()}}
@@ -142,6 +144,32 @@ Retrieve the array dimensions (lifecycle: experimental)
 
 \subsection{Returns}{
 A named list of \code{\link[tiledb:tiledb_dim]{tiledb::tiledb_dim}} objects
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-TileDBArray-shape"></a>}}
+\if{latex}{\out{\hypertarget{method-TileDBArray-shape}{}}}
+\subsection{Method \code{shape()}}{
+Retrieve the shape, i.e. the length of each dimension (lifecycle: experimental)
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{TileDBArray$shape()}\if{html}{\out{</div>}}
+}
+
+\subsection{Returns}{
+A named vector of dimension length (and the same type as the dimension)
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-TileDBArray-ndim"></a>}}
+\if{latex}{\out{\hypertarget{method-TileDBArray-ndim}{}}}
+\subsection{Method \code{ndim()}}{
+Retrieve number of dimensions (lifecycle: experimental)
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{TileDBArray$ndim()}\if{html}{\out{</div>}}
+}
+
+\subsection{Returns}{
+A scalar with the number of dimensions
 }
 }
 \if{html}{\out{<hr>}}
