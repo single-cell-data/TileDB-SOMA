@@ -110,9 +110,9 @@ SOMADataFrame <- R6::R6Class(
 
     #' @description Write (lifecycle: experimental)
     #'
-    #' @param values An [`arrow::Table`] containing all columns, including
-    #' any index columns. The schema for `values` must match the
-    #' schema for the `SOMADataFrame`.
+    #' @param values An [`arrow::Table`] or [`arrow::RecordBatch`]
+    #' containing all columns, including any index columns. The
+    #' schema for `values` must match the schema for the `SOMADataFrame`.
     #'
     write = function(values) {
       on.exit(private$close())
@@ -122,14 +122,18 @@ SOMADataFrame <- R6::R6Class(
       on.exit(options(op), add = TRUE, after = FALSE)
 
       schema_names <- c(self$dimnames(), self$attrnames())
-
+      col_names <- if (is_arrow_record_batch(values)) {
+                       arrow::as_arrow_table(values)$ColumnNames()
+                   } else {
+                       values$ColumnNames()
+                   }
       stopifnot(
-        "'values' must be an Arrow Table" =
-          is_arrow_table(values),
+        "'values' must be an Arrow Table or RecordBatch" =
+          (is_arrow_table(values) || is_arrow_record_batch(values)),
         "All columns in 'values' must be defined in the schema" =
-          all(values$ColumnNames() %in% schema_names),
+          all(col_names %in% schema_names),
         "All schema fields must be present in 'values'" =
-          all(schema_names %in% values$ColumnNames())
+          all(schema_names %in% col_names)
       )
 
       df <- as.data.frame(values)[schema_names]
