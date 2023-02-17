@@ -123,6 +123,9 @@ class TileDBArray(TileDBObject[_tdb_handles.ArrayWrapper]):
         del dim_idx  # Unused.
         if coord is None:
             return True  # No constraint; select all in this dimension
+
+        # TODO: support index types other than int/string once libtiledbsoma.cc does
+        # https://github.com/single-cell-data/TileDB-SOMA/issues/960
         if isinstance(coord, int):
             sr.set_dim_points(dim.name, [coord])
             return True
