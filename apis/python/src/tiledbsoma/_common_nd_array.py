@@ -53,7 +53,7 @@ class NDArray(TileDBArray, somacore.NDArray):
         :param platform_config: Platform-specific options used to create this Array,
             provided via ``{"tiledb": {"create": ...}}`` nested keys.
         """
-        # Implementor note: we carefully say "maximum possible in64 size" rather than 2**63-1. The
+        # Implementor note: we carefully say "maximum possible int64 size" rather than 2**63-1. The
         # reason that the latter, while temptingly simple, is actually untrue is that tiledb core
         # requires that the capacity, when rounded up to an exact multiple of the extent, needs to
         # be representable as a signed 64-bit integer.  So in particular when a unit test (or anyone
