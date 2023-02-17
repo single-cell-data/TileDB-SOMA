@@ -213,15 +213,7 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
         for schema creation. If the user-specified shape is None, the largest possible
         int64 is returned for the capacity.
         """
-        if dim_shape is not None:
-            if dim_shape <= 0:
-                raise ValueError(
-                    "SOMASparseNDArray shape must be a non-zero-length tuple of positive ints or Nones"
-                )
-            dim_capacity = dim_shape
-            dim_extent = min(dim_shape, create_options.dim_tile(dim_name, 2048))
-
-        else:
+        if dim_shape is None:
             dim_capacity = 2**63
             dim_extent = min(dim_capacity, create_options.dim_tile(dim_name, 2048))
             # TileDB requires that each signed-64-bit-int domain slot, rounded up to
@@ -229,6 +221,13 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
             # signed 64-bit int. So if the tile extent is 999, say, that would
             # exceed 2**63 - 1.
             dim_capacity -= dim_extent
+        else:
+            if dim_shape <= 0:
+                raise ValueError(
+                    "SOMASparseNDArray shape must be a non-zero-length tuple of positive ints or Nones"
+                )
+            dim_capacity = dim_shape
+            dim_extent = min(dim_shape, create_options.dim_tile(dim_name, 2048))
 
         return (dim_capacity, dim_extent)
 
