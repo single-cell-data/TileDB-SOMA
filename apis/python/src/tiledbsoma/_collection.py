@@ -526,13 +526,14 @@ class Collection(
     >>> import numpy as np
     >>> # create a collection and add a (10,10) dense matrix to it
     >>> with tiledbsoma.Collection.create("./test_collection") as my_collection:
+    ...     # collection created. You can now add SOMA objects, e.g., a DenseNDArray
     ...     my_collection.add_new_dense_ndarray(
     ...         "my_dense_ndarray", type=pa.int32(), shape=(10, 10)
     ...     ) as my_dense_ndarray:
     ...         data = pa.Tensor.from_numpy(np.eye(10, 10, dtype=np.int32))
     ...         my_dense_ndarray.write((slice(None), slice(None)), data)
     ...
-    ... # read matrix back
+    ... # example of opening collection to read an object back
     ... with tiledbsoma.open("./test_collection") as my_collection:
     ...     data = my_collection["my_dense_ndarray"].read()
     ...
