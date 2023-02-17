@@ -196,5 +196,11 @@ setuptools.setup(
     },
     python_requires=">=3.7",
     cmdclass={"build_ext": build_ext, "bdist_wheel": bdist_wheel},
-    version=version.getVersion(),
+    use_scm_version={
+        "version_scheme": "guess-next-dev",
+        "local_scheme": "dirty-tag",
+        "write_to": "apis/python/version.py",
+        "root": "../..",
+        "relative_to": __file__,
+    },
 )
