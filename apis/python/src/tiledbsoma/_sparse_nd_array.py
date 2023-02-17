@@ -35,7 +35,7 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
       each dimension
 
     All dimensions must have a positive, non-zero length, and there must be 1
-    or more dimensions. Implicitly stored elements (ie, those not explicitly
+    or more dimensions. Implicitly stored elements (i.e., those not explicitly
     stored in the array) are assumed to have a value of zero.
 
     Where explicitly referenced in the API, the dimensions are named
