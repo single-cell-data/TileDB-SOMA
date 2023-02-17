@@ -31,7 +31,8 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
     schema, which includes:
     - the element type, expressed as an Arrow type, indicating the type of data
       contained within the array, and
-    - the shape of the array, i.e., number and length of each dimension
+    - the shape of the array, i.e., the number of dimensions and the length of
+      each dimension
 
     All dimensions must have a positive, non-zero length, and there must be 1
     or more dimensions. Implicitly stored elements (ie, those not explicitly

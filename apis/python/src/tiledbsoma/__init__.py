@@ -2,17 +2,17 @@
 
 SOMA -- stack of matrices, annotated -- is a flexible, extensible, and
 open-source API enabling access to data in a variety of formats, and is
-motivated by use cases from single cell biology. The ``tiledbsoma``
+motivated by use cases from single-cell biology. The ``tiledbsoma``
 Python package is an implementation of SOMA using the
 [TileDB Embedded](https://github.com/TileDB-Inc/TileDB) engine.
 
 Provides:
 ---------
-  1. The ability to store, query and retrieve larger-than-core datasets,
+  1. The ability to store, query, and retrieve larger-than-core datasets,
      resident in both cloud (object-store) and local (file) systems.
   2. A data model supporting dataframes, and both sparse and dense
      multi-dimensional arrays.
-  3. An extended data model with support for Single Cell biology data.
+  3. An extended data model with support for single-cell biology data.
 
 See the [SOMA GitHub repo](https://github.com/single-cell-data/SOMA) for more
 information on the SOMA project.
@@ -63,7 +63,7 @@ The principle persistent types provided by SOMA are:
     annotated 2-D matrix of measurements.
   - ``Measurement`` - a specialized ``Collection``, for use within
     the ``Experiment`` class, representing a set of measurements on
-    a single set of variables (features)
+    a single set of variables (features, e.g., genes)
 
 SOMA ``Experiment`` and ``Measurement`` are inspired by use cases from
 single-cell biology.
