@@ -509,7 +509,7 @@ class Collection(
     CollectionBase[CollectionElementType], somacore.Collection[CollectionElementType]
 ):
     """
-    ``Collection`` is a persistent collection of named SOMA objects, stored as
+    ``Collection`` is a persistent container of named SOMA objects, stored as
     a mapping of string keys and SOMA object values. Values may be any
     persistent ``tiledbsoma`` object, including ``DataFrame``,
     ``SparseNDArray``, ``DenseNDArray``, ``Experiment``, ``Measurement``,
