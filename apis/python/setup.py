@@ -80,12 +80,10 @@ def libtiledbsoma_exists():
 
 
 def find_or_build_package_data(setuptools_cmd):
-    this_dir = pathlib.Path(__file__).parent.absolute()
-    sys.path.insert(0, str(this_dir))
-
     global libtiledbsoma_dir
 
     # Set up paths
+    this_dir = pathlib.Path(__file__).parent.absolute()
     scripts_dir = this_dir / "dist_links" / "scripts"
 
     if scripts_dir.is_symlink():
