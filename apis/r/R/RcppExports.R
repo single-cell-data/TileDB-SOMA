@@ -120,24 +120,24 @@ sr_next <- function(sr) {
 #'
 #' @export
 tiledbsoma_stats_enable <- function() {
-    invisible(.Call(`_tiledbsoma_stats_enable`))
+    invisible(.Call(`_tiledbsoma_tiledbsoma_stats_enable`))
 }
 
 #' @rdname tiledbsoma_stats_enable
 #' @export
 tiledbsoma_stats_disable <- function() {
-    invisible(.Call(`_tiledbsoma_stats_disable`))
+    invisible(.Call(`_tiledbsoma_tiledbsoma_stats_disable`))
 }
 
 #' @rdname tiledbsoma_stats_enable
 #' @export
 tiledbsoma_stats_reset <- function() {
-    invisible(.Call(`_tiledbsoma_stats_reset`))
+    invisible(.Call(`_tiledbsoma_tiledbsoma_stats_reset`))
 }
 
 #' @rdname tiledbsoma_stats_enable
 #' @export
 tiledbsoma_stats_dump <- function() {
-    .Call(`_tiledbsoma_stats_dump`)
+    .Call(`_tiledbsoma_tiledbsoma_stats_dump`)
 }
 

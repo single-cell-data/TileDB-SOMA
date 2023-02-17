@@ -35,5 +35,5 @@ show_package_versions <- function() {
 #' @rdname tiledbsoma_stats_enable
 #' @export
 tiledbsoma_stats_show <- function() {
-    cat(stats_dump(), "\n")
+    cat(tiledbsoma_stats_dump(), "\n")
 }

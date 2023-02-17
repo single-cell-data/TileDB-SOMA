@@ -4,6 +4,11 @@
 \alias{SOMAArrayBase}
 \title{SOMA Array Base Class}
 \description{
+SOMA Array Base Class
+
+SOMA Array Base Class
+}
+\details{
 Adds SOMA-specific functionality to the \code{\link{TileDBArray}} class.  (lifecycle: experimental)
 }
 \section{Super classes}{
@@ -49,6 +54,7 @@ Adds SOMA-specific functionality to the \code{\link{TileDBArray}} class.  (lifec
 \if{html}{\out{<a id="method-SOMAArrayBase-read_complete"></a>}}
 \if{latex}{\out{\hypertarget{method-SOMAArrayBase-read_complete}{}}}
 \subsection{Method \code{read_complete()}}{
+Check if iterated read is complete or not. (lifecycle: experimental)
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{SOMAArrayBase$read_complete()}\if{html}{\out{</div>}}
 }
@@ -58,6 +64,7 @@ Adds SOMA-specific functionality to the \code{\link{TileDBArray}} class.  (lifec
 \if{html}{\out{<a id="method-SOMAArrayBase-read_next"></a>}}
 \if{latex}{\out{\hypertarget{method-SOMAArrayBase-read_next}{}}}
 \subsection{Method \code{read_next()}}{
+Read the next chunk of an iterated read. (lifecycle: experimental)
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{SOMAArrayBase$read_next()}\if{html}{\out{</div>}}
 }

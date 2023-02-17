@@ -18,6 +18,8 @@ SOMAArrayBase <- R6::R6Class(
   ),
 
   public = list(
+
+    #' @description Check if iterated read is complete or not. (lifecycle: experimental)
     read_complete = function() {
       if (is.null(private$soma_reader_pointer)) {
           TRUE
@@ -26,6 +28,7 @@ SOMAArrayBase <- R6::R6Class(
       }
     },
 
+    #' @description Read the next chunk of an iterated read. (lifecycle: experimental)
     read_next = function() {
       if (is.null(private$soma_reader_pointer)) {
           NULL

@@ -77,9 +77,9 @@ Write (lifecycle: experimental)
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{values}}{An \code{\link[arrow:Table]{arrow::Table}} containing all columns, including
-any index columns. The schema for \code{values} must match the
-schema for the \code{SOMADataFrame}.}
+\item{\code{values}}{An \code{\link[arrow:Table]{arrow::Table}} or \code{\link[arrow:RecordBatch]{arrow::RecordBatch}}
+containing all columns, including any index columns. The
+schema for \code{values} must match the schema for the \code{SOMADataFrame}.}
 }
 \if{html}{\out{</div>}}
 }

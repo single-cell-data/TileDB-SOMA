@@ -15,6 +15,11 @@
 ^local
 ^copy_source.sh$
 
+# build artifacts with libtiledbsoma
+src/include
+src/libtiledbsoma
+tiledbsoma/libtiledbsoma.tar.gz.current
+
 # vscode
 ^\.vscode$
 ^\.devcontainer$
