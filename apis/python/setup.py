@@ -99,13 +99,17 @@ def find_or_build_package_data(setuptools_cmd):
     # Call the build script if the install library directory does not exist
     lib_dir = libtiledbsoma_dir / "dist" / "lib"
 
-    if not lib_dir.exists():
+    if lib_dir.exists():
+        print(f"  using libtiledbsoma artifacts in: {lib_dir}")
+    else:
         # check if libtilesoma is globally installed
         global_libtiledbsoma_path = libtiledbsoma_exists()
         if global_libtiledbsoma_path is not None:
             lib_dir = global_libtiledbsoma_path
+            print(f"  found globally-installed libtiledbsoma: {lib_dir}")
         else:
             # If not then build from source
+            print(f"  building libtiledbsoma into: {lib_dir}")
 
             # Note: The GitHub build process uses the contents of `bld` as a key
             # to cache the native binaries. Using non-default options here will
