@@ -56,7 +56,7 @@ class NDArray(TileDBArray, somacore.NDArray):
         # the upper limit is exactly 2**63-1.
 
         context = context or SOMATileDBContext()
-        schema = _build_tiledb_schema(
+        schema = cls._build_tiledb_schema(
             type,
             shape,
             TileDBCreateOptions.from_platform_config(platform_config),
@@ -84,88 +84,92 @@ class NDArray(TileDBArray, somacore.NDArray):
         """
         raise NotImplementedError("reshape operation not implemented.")
 
+    @classmethod
+    def _build_tiledb_schema(
+        cls,
+        type: pa.DataType,
+        shape: Sequence[Union[int, None]],
+        create_options: TileDBCreateOptions,
+        context: SOMATileDBContext,
+        *,
+        is_sparse: bool,
+    ) -> tiledb.ArraySchema:
+        _util.check_type("type", type, (pa.DataType,))
 
-def _build_tiledb_schema(
-    type: pa.DataType,
-    shape: Sequence[Union[int, None]],
-    create_options: TileDBCreateOptions,
-    context: SOMATileDBContext,
-    *,
-    is_sparse: bool,
-) -> tiledb.ArraySchema:
-    _util.check_type("type", type, (pa.DataType,))
-
-    # check on shape
-    if is_sparse:
-        if len(shape) == 0 or any(e is not None and e <= 0 for e in shape):
-            raise ValueError(
-                "SOMASparseNDArray shape must be non-zero length tuple of positive ints or Nones"
-            )
-    else:
-        if len(shape) == 0 or any(e is None or e <= 0 for e in shape):
-            raise ValueError(
-                "SOMADenseNDArray shape must be non-zero length tuple of positive ints"
+        if not pa.types.is_primitive(type):
+            raise TypeError(
+                f"Unsupported type {type} --"
+                " SOMA NDArrays only support primtive Arrow types"
             )
 
-    if not pa.types.is_primitive(type):
-        raise TypeError(
-            f"Unsupported type {type} --"
-            " SOMA NDArrays only support primtive Arrow types"
-        )
+        if not shape:
+            raise ValueError("SOMA NDArrays must have a nonzero number of dimensions")
 
-    dims = []
-    for n, e in enumerate(shape):
-        dim_name = f"soma_dim_{n}"
+        # check on shape
+        if is_sparse:
+            if any(e is not None and e <= 0 for e in shape):
+                raise ValueError(
+                    "SOMASparseNDArray shape must be non-zero length tuple of positive ints or Nones"
+                )
+        else:
+            if any(e is None or e <= 0 for e in shape):
+                raise ValueError(
+                    "SOMADenseNDArray shape must be non-zero length tuple of positive ints"
+                )
 
-        slot_capacity = 2**63 if e is None else e
-        extent = min(slot_capacity, create_options.dim_tile(dim_name, 2048))
-        # TileDB requires that each signed-64-bit-int domain slot, rounded up to
-        # a multiple of the tile extent in that slot, be representable as a
-        # signed 64-bit int. So if the tile extent is 999, say, this will exceed
-        # 2**63 - 1.
-        if e is None:
-            slot_capacity -= extent
+        dims = []
+        for n, e in enumerate(shape):
+            dim_name = f"soma_dim_{n}"
 
-        dim = tiledb.Dim(
-            name=dim_name,
-            domain=(0, slot_capacity - 1),
-            tile=extent,
-            dtype=np.int64,
-            filters=create_options.dim_filters(
-                dim_name,
-                [
-                    dict(
-                        _type="ZstdFilter",
-                        level=create_options.sparse_nd_array_dim_zstd_level(),
-                    )
-                ],
-            ),
-        )
-        dims.append(dim)
-    dom = tiledb.Domain(dims, ctx=context.tiledb_ctx)
+            slot_capacity = 2**63 if e is None else e
+            extent = min(slot_capacity, create_options.dim_tile(dim_name, 2048))
+            # TileDB requires that each signed-64-bit-int domain slot, rounded up to
+            # a multiple of the tile extent in that slot, be representable as a
+            # signed 64-bit int. So if the tile extent is 999, say, this will exceed
+            # 2**63 - 1.
+            if e is None:
+                slot_capacity -= extent
 
-    attrs = [
-        tiledb.Attr(
-            name="soma_data",
-            dtype=_arrow_types.tiledb_type_from_arrow_type(type),
-            filters=create_options.attr_filters("soma_data", ["ZstdFilter"]),
+            dim = tiledb.Dim(
+                name=dim_name,
+                domain=(0, slot_capacity - 1),
+                tile=extent,
+                dtype=np.int64,
+                filters=create_options.dim_filters(
+                    dim_name,
+                    [
+                        dict(
+                            _type="ZstdFilter",
+                            level=create_options.sparse_nd_array_dim_zstd_level(),
+                        )
+                    ],
+                ),
+            )
+            dims.append(dim)
+        dom = tiledb.Domain(dims, ctx=context.tiledb_ctx)
+
+        attrs = [
+            tiledb.Attr(
+                name="soma_data",
+                dtype=_arrow_types.tiledb_type_from_arrow_type(type),
+                filters=create_options.attr_filters("soma_data", ["ZstdFilter"]),
+                ctx=context.tiledb_ctx,
+            )
+        ]
+
+        cell_order, tile_order = create_options.cell_tile_orders()
+
+        # TODO: accept more TileDB array-schema options from create_options
+        # https://github.com/single-cell-data/TileDB-SOMA/issues/876
+        return tiledb.ArraySchema(
+            domain=dom,
+            attrs=attrs,
+            sparse=is_sparse,
+            allows_duplicates=create_options.get("allows_duplicates", False),
+            offsets_filters=create_options.offsets_filters(),
+            validity_filters=create_options.validity_filters(),
+            capacity=create_options.get("capacity", 100000),
+            tile_order=tile_order,
+            cell_order=cell_order,
             ctx=context.tiledb_ctx,
         )
-    ]
-
-    cell_order, tile_order = create_options.cell_tile_orders()
-
-    # TODO: accept more TileDB array-schema options from create_options
-    # https://github.com/single-cell-data/TileDB-SOMA/issues/876
-    return tiledb.ArraySchema(
-        domain=dom,
-        attrs=attrs,
-        sparse=is_sparse,
-        allows_duplicates=create_options.get("allows_duplicates", False),
-        offsets_filters=create_options.offsets_filters(),
-        validity_filters=create_options.validity_filters(),
-        capacity=create_options.get("capacity", 100000),
-        tile_order=tile_order,
-        cell_order=cell_order,
-        ctx=context.tiledb_ctx,
-    )

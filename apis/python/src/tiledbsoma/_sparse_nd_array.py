@@ -1,4 +1,4 @@
-from typing import Optional, Sequence, Union, cast
+from typing import Optional, Sequence, Tuple, Union, cast
 
 import numpy as np
 import pyarrow as pa
@@ -18,6 +18,7 @@ from ._read_iters import (
     TableReadIter,
 )
 from ._types import NTuple
+from .options.tiledb_create_options import TileDBCreateOptions
 
 _UNBATCHED = options.BatchSize()
 
@@ -198,6 +199,38 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
             sr.set_dim_points(dim.name, coord)
             return True
         return False
+
+    @classmethod
+    def _dim_domain_and_extent(
+        cls,
+        dim_name: str,
+        dim_shape: Optional[int],
+        create_options: TileDBCreateOptions,
+    ) -> Tuple[int, int]:
+        """
+        Given a user-specified shape (maybe ``None``) along a particular dimension,
+        returns a tuple of the TileDB domain and extent for that dimension, suitable
+        for schema creation. If the user-specified shape is None, the largest possible
+        int64 is returned for the domain.
+        """
+        if dim_shape is not None:
+            if dim_shape <= 0:
+                raise ValueError(
+                    "SOMASparseNDArray shape must be a non-zero-length tuple of positive ints or Nones"
+                )
+            dim_domain = dim_shape
+            dim_extent = min(dim_shape, create_options.dim_tile(dim_name, 2048))
+
+        else:
+            dim_domain = 2**63
+            extent = min(dim_domain, create_options.dim_tile(dim_name, 2048))
+            # TileDB requires that each signed-64-bit-int domain slot, rounded up to
+            # a multiple of the tile extent in that slot, be representable as a
+            # signed 64-bit int. So if the tile extent is 999, say, that would
+            # exceed 2**63 - 1.
+            dim_domain -= extent
+
+        return (dim_domain, dim_extent)
 
 
 class SparseNDArrayRead(somacore.SparseRead):

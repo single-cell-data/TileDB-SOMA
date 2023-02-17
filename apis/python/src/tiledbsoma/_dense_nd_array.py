@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, Tuple
 
 import pyarrow as pa
 import somacore
@@ -9,6 +9,7 @@ from . import _util
 from ._common_nd_array import NDArray
 from ._exception import SOMAError
 from ._util import dense_indices_to_shape
+from .options.tiledb_create_options import TileDBCreateOptions
 
 
 class DenseNDArray(NDArray, somacore.DenseNDArray):
@@ -140,3 +141,25 @@ class DenseNDArray(NDArray, somacore.DenseNDArray):
         del platform_config  # Currently unused.
         self._handle.writer[coords] = values.to_numpy()
         return self
+
+    @classmethod
+    def _dim_domain_and_extent(
+        cls,
+        dim_name: str,
+        dim_shape: Optional[int],
+        create_options: TileDBCreateOptions,
+    ) -> Tuple[int, int]:
+        """
+        Given a user-specified shape along a particular dimension, returns a tuple of
+        the TileDB domain and extent for that dimension, suitable for schema creation.
+        The user-specified shape cannot be ``None`` for ``DenseNDArray``.
+        """
+        if dim_shape is None or dim_shape <= 0:
+            raise ValueError(
+                "SOMADenseNDArray shape must be a non-zero-length tuple of positive ints"
+            )
+
+        dim_capacity = dim_shape
+        dim_extent = min(dim_shape, create_options.dim_tile(dim_name, 2048))
+
+        return (dim_capacity, dim_extent)
