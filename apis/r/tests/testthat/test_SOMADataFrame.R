@@ -51,6 +51,30 @@ test_that("Basic mechanics", {
   tbl1 <- sdf$read()
   expect_true(tbl1$Equals(tbl0))
 
+  # Same as above but now for RecordBatch
+  rb0 <- arrow::record_batch(foo = 1L:36L,
+                             soma_joinid = 1L:36L,
+                             bar = 1.1:36.1,
+                             baz = c("á", "ą", "ã", "à", "å", "ä", "æ", "ç", "ć", "Ç", "í",
+                                     "ë", "é", "è", "ê", "ł", "Ł", "ñ", "ń", "ó", "ô", "ò",
+                                     "ö", "ø", "Ø", "ř", "š", "ś", "ş", "Š", "ú", "ü", "ý",
+                                     "ź", "Ž", "Ż"),
+                             schema = asch)
+
+  sdf$write(rb0)
+
+  # read back the data (ignore attributes)
+  expect_equivalent(
+    tiledb::tiledb_array(sdf$uri, return_as = "asis")[],
+    as.list(rb0),
+    ignore_attr = TRUE
+  )
+
+  # Read result should recreate the original RecordBatch (when seen as a tibble)
+  rb1 <- arrow::as_record_batch(sdf$read())
+  expect_equivalent(dplyr::collect(rb0), dplyr::collect(rb1))
+
+
   # Slicing by foo
   tbl1 <- sdf$read(coords = list(foo = 1L:2L))
   expect_true(tbl1$Equals(tbl0$Slice(offset = 0, length = 2)))

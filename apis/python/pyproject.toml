@@ -2,6 +2,7 @@
 requires = [
     "pybind11[global]>=2.10.0",
     "setuptools>=65.5.1",
+    "setuptools_scm>=1.5.4",
     "wheel>=0.37.1",
     "cmake>=3.21",
 ]
@@ -24,3 +25,7 @@ fix = true
 
 [tool.ruff.isort]
 known-first-party = ["tiledbsoma"]
+
+[tool.setuptools_scm]
+write_to = "apis/python/version.py"
+root = "../.."

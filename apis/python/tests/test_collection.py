@@ -142,10 +142,12 @@ def test_collection_mapping(soma_object, tmp_path):
     assert len(c) == 1
     assert [k for k in c] == ["mumble"]
 
-    pytest.xfail(reason="currently supports one entry modification at a time")
-    del c["mumble"]
-    assert "mumble" not in c
-    assert not c.get("mumble", False)
+    # TEMPORARY: This should no longer raise an error once TileDB supports
+    # replacing an existing group member.
+    with pytest.raises(soma.SOMAError):
+        del c["mumble"]
+        assert "mumble" not in c
+        assert not c.get("mumble", False)
 
 
 def test_delete_add(soma_object, tmp_path: pathlib.Path):
@@ -155,8 +157,10 @@ def test_delete_add(soma_object, tmp_path: pathlib.Path):
 
     with soma.open(tmp_uri, "w", soma_type=soma.Collection) as update:
         del update["porkchop sandwiches"]
-        pytest.xfail(reason="currently does not support removal/re-addition")
-        update["porkchop sandwiches"] = soma_object
+        # TEMPORARY: This should no longer raise once TileDB supports replacing
+        # an existing group member.
+        with pytest.raises(soma.SOMAError):
+            update["porkchop sandwiches"] = soma_object
 
 
 @pytest.mark.parametrize("relative", [False, True])
