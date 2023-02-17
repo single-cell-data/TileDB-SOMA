@@ -25,3 +25,7 @@ fix = true
 
 [tool.ruff.isort]
 known-first-party = ["tiledbsoma"]
+
+[tool.setuptools_scm]
+write_to = "apis/python/version.py"
+root = "../.."

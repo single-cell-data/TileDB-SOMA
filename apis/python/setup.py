@@ -27,8 +27,6 @@ import wheel.bdist_wheel
 
 this_dir = pathlib.Path(__file__).parent.absolute()
 sys.path.insert(0, str(this_dir))
-import version  # noqa E402
-
 
 def get_libtiledbsoma_library_name():
     """
@@ -196,9 +194,4 @@ setuptools.setup(
     },
     python_requires=">=3.7",
     cmdclass={"build_ext": build_ext, "bdist_wheel": bdist_wheel},
-    use_scm_version={
-        "write_to": "apis/python/version.py",
-        "root": "../..",
-        "relative_to": __file__,
-    },
 )
