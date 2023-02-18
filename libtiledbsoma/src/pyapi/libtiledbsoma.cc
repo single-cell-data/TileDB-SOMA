@@ -520,6 +520,14 @@ PYBIND11_MODULE(libtiledbsoma, m) {
             "partition_count"_a = 1)
 
         // TODO: more types
+
+        .def(
+            "set_dim_ranges",
+            static_cast<void (SOMAReader::*)(
+                const std::string&,
+                const std::vector<std::pair<std::string, std::string>>&)>(
+                &SOMAReader::set_dim_ranges))
+
         .def(
             "set_dim_ranges",
             static_cast<void (SOMAReader::*)(
@@ -531,7 +539,63 @@ PYBIND11_MODULE(libtiledbsoma, m) {
             "set_dim_ranges",
             static_cast<void (SOMAReader::*)(
                 const std::string&,
-                const std::vector<std::pair<std::string, std::string>>&)>(
+                const std::vector<std::pair<int32_t, int32_t>>&)>(
+                &SOMAReader::set_dim_ranges))
+
+        .def(
+            "set_dim_ranges",
+            static_cast<void (SOMAReader::*)(
+                const std::string&,
+                const std::vector<std::pair<int16_t, int16_t>>&)>(
+                &SOMAReader::set_dim_ranges))
+
+        .def(
+            "set_dim_ranges",
+            static_cast<void (SOMAReader::*)(
+                const std::string&,
+                const std::vector<std::pair<int8_t, int8_t>>&)>(
+                &SOMAReader::set_dim_ranges))
+
+        .def(
+            "set_dim_ranges",
+            static_cast<void (SOMAReader::*)(
+                const std::string&,
+                const std::vector<std::pair<uint64_t, uint64_t>>&)>(
+                &SOMAReader::set_dim_ranges))
+
+        .def(
+            "set_dim_ranges",
+            static_cast<void (SOMAReader::*)(
+                const std::string&,
+                const std::vector<std::pair<uint32_t, uint32_t>>&)>(
+                &SOMAReader::set_dim_ranges))
+
+        .def(
+            "set_dim_ranges",
+            static_cast<void (SOMAReader::*)(
+                const std::string&,
+                const std::vector<std::pair<uint16_t, uint16_t>>&)>(
+                &SOMAReader::set_dim_ranges))
+
+        .def(
+            "set_dim_ranges",
+            static_cast<void (SOMAReader::*)(
+                const std::string&,
+                const std::vector<std::pair<uint8_t, uint8_t>>&)>(
+                &SOMAReader::set_dim_ranges))
+
+        .def(
+            "set_dim_ranges",
+            static_cast<void (SOMAReader::*)(
+                const std::string&,
+                const std::vector<std::pair<float, float>>&)>(
+                &SOMAReader::set_dim_ranges))
+
+        .def(
+            "set_dim_ranges",
+            static_cast<void (SOMAReader::*)(
+                const std::string&,
+                const std::vector<std::pair<double, double>>&)>(
                 &SOMAReader::set_dim_ranges))
 
         .def(
