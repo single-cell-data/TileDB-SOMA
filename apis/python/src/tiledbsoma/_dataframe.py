@@ -271,10 +271,15 @@ class DataFrame(TileDBArray, somacore.DataFrame):
             sr.set_dim_ranges(dim.name, [(start, stop)])
             return True
         if isinstance(coord, (Sequence, pa.Array, pa.ChunkedArray, np.ndarray)):
-            if isinstance(coord, np.ndarray) and coord.ndim != 1:
-                raise ValueError(
-                    f"only 1D numpy arrays may be used to index; got {coord.ndim}"
-                )
+            # SOMAReader.set_dim_points handles:
+            # * Python list/tuple (sequence)
+            # * NumPy arrays, but only 1D
+            # * Arrow arrays
+            if isinstance(coord, np.ndarray):
+                if coord.ndim != 1:
+                    raise ValueError(
+                        f"only 1D numpy arrays may be used to index; got {coord.ndim}"
+                    )
             sr.set_dim_points(dim.name, coord)
             return True
         return False

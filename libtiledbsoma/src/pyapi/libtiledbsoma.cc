@@ -283,9 +283,20 @@ PYBIND11_MODULE(libtiledbsoma, m) {
             "batch_size"_a = "auto",
             "result_order"_a = "auto")
 
+        // The following short, template-instantiation functions are expected to
+        // be invoked when the coords are Python list/tuple, or NumPy arrays.
+        // Arrow arrays are in the long if-else-if function below.
+        //
         // Binding overloaded methods to templated member functions requires
         // more effort, see:
         // https://pybind11.readthedocs.io/en/stable/classes.html#overloaded-methods
+
+        .def(
+            "set_dim_points",
+            static_cast<void (SOMAReader::*)(
+                const std::string&, const std::vector<std::string>&)>(
+                &SOMAReader::set_dim_points))
+
         .def(
             "set_dim_points",
             static_cast<void (SOMAReader::*)(
@@ -295,10 +306,62 @@ PYBIND11_MODULE(libtiledbsoma, m) {
         .def(
             "set_dim_points",
             static_cast<void (SOMAReader::*)(
-                const std::string&, const std::vector<std::string>&)>(
+                const std::string&, const std::vector<int32_t>&)>(
                 &SOMAReader::set_dim_points))
 
-        // Binding to set slices using PyArrow::ChunkedArray
+        .def(
+            "set_dim_points",
+            static_cast<void (SOMAReader::*)(
+                const std::string&, const std::vector<int16_t>&)>(
+                &SOMAReader::set_dim_points))
+
+        .def(
+            "set_dim_points",
+            static_cast<void (SOMAReader::*)(
+                const std::string&, const std::vector<int8_t>&)>(
+                &SOMAReader::set_dim_points))
+
+
+        .def(
+            "set_dim_points",
+            static_cast<void (SOMAReader::*)(
+                const std::string&, const std::vector<uint64_t>&)>(
+                &SOMAReader::set_dim_points))
+
+        .def(
+            "set_dim_points",
+            static_cast<void (SOMAReader::*)(
+                const std::string&, const std::vector<uint32_t>&)>(
+                &SOMAReader::set_dim_points))
+
+        .def(
+            "set_dim_points",
+            static_cast<void (SOMAReader::*)(
+                const std::string&, const std::vector<uint16_t>&)>(
+                &SOMAReader::set_dim_points))
+
+        .def(
+            "set_dim_points",
+            static_cast<void (SOMAReader::*)(
+                const std::string&, const std::vector<uint8_t>&)>(
+                &SOMAReader::set_dim_points))
+
+
+        .def(
+            "set_dim_points",
+            static_cast<void (SOMAReader::*)(
+                const std::string&, const std::vector<float>&)>(
+                &SOMAReader::set_dim_points))
+
+        .def(
+            "set_dim_points",
+            static_cast<void (SOMAReader::*)(
+                const std::string&, const std::vector<double>&)>(
+                &SOMAReader::set_dim_points))
+
+        // The above short, template-instantiation functions are expected to
+        // be invoked when the coords are Python list/tuple, or NumPy arrays.
+        // Arrow arrays are in this long if-else-if function.
         .def(
             "set_dim_points",
             [](SOMAReader& reader,
@@ -306,6 +369,7 @@ PYBIND11_MODULE(libtiledbsoma, m) {
                py::object py_arrow_array,
                int partition_index,
                int partition_count) {
+
                 // Create a list of array chunks
                 py::list array_chunks;
                 if (py::hasattr(py_arrow_array, "chunks")) {
@@ -322,18 +386,110 @@ PYBIND11_MODULE(libtiledbsoma, m) {
                     uintptr_t arrow_array_ptr = (uintptr_t)(&arrow_array);
 
                     // Call array._export_to_c to get arrow array and schema
+                    //
+                    // If ever a NumPy array gets in here, there will be an exception like
+                    // "AttributeError: 'numpy.ndarray' object has no attribute '_export_to_c'".
+                    // TODO: try/catch with something more helpful of the form
+                    // "Maybe not an Arrow array".
                     array.attr("_export_to_c")(
                         arrow_array_ptr, arrow_schema_ptr);
 
-                    // 'l' = arrow data type int64
                     if (!strcmp(arrow_schema.format, "l")) {
                         tcb::span<int64_t> data{
                             (int64_t*)arrow_array.buffers[1],
                             (uint64_t)arrow_array.length};
                         reader.set_dim_points(
                             dim, data, partition_index, partition_count);
-                    } else if (!strcmp(arrow_schema.format, "U")) {
-                        // TODO: partitioning is not supported for string dims
+
+                    } else if (!strcmp(arrow_schema.format, "i")) {
+                        tcb::span<int32_t> data{
+                            (int32_t*)arrow_array.buffers[1],
+                            (uint64_t)arrow_array.length};
+                        reader.set_dim_points(
+                            dim, data, partition_index, partition_count);
+
+                    } else if (!strcmp(arrow_schema.format, "s")) {
+                        tcb::span<int16_t> data{
+                            (int16_t*)arrow_array.buffers[1],
+                            (uint64_t)arrow_array.length};
+                        reader.set_dim_points(
+                            dim, data, partition_index, partition_count);
+
+                    } else if (!strcmp(arrow_schema.format, "c")) {
+                        tcb::span<int8_t> data{
+                            (int8_t*)arrow_array.buffers[1],
+                            (uint64_t)arrow_array.length};
+                        reader.set_dim_points(
+                            dim, data, partition_index, partition_count);
+
+
+                    } else if (!strcmp(arrow_schema.format, "L")) {
+                        tcb::span<uint64_t> data{
+                            (uint64_t*)arrow_array.buffers[1],
+                            (uint64_t)arrow_array.length};
+                        reader.set_dim_points(
+                            dim, data, partition_index, partition_count);
+
+                    } else if (!strcmp(arrow_schema.format, "I")) {
+                        tcb::span<uint32_t> data{
+                            (uint32_t*)arrow_array.buffers[1],
+                            (uint64_t)arrow_array.length};
+                        reader.set_dim_points(
+                            dim, data, partition_index, partition_count);
+
+                    } else if (!strcmp(arrow_schema.format, "S")) {
+                        tcb::span<uint16_t> data{
+                            (uint16_t*)arrow_array.buffers[1],
+                            (uint64_t)arrow_array.length};
+                        reader.set_dim_points(
+                            dim, data, partition_index, partition_count);
+
+                    } else if (!strcmp(arrow_schema.format, "C")) {
+                        tcb::span<uint8_t> data{
+                            (uint8_t*)arrow_array.buffers[1],
+                            (uint64_t)arrow_array.length};
+                        reader.set_dim_points(
+                            dim, data, partition_index, partition_count);
+
+
+                    } else if (!strcmp(arrow_schema.format, "f")) {
+                        tcb::span<float> data{
+                            (float*)arrow_array.buffers[1],
+                            (uint64_t)arrow_array.length};
+                        reader.set_dim_points(
+                            dim, data, partition_index, partition_count);
+
+                    } else if (!strcmp(arrow_schema.format, "g")) {
+                        tcb::span<double> data{
+                            (double*)arrow_array.buffers[1],
+                            (uint64_t)arrow_array.length};
+                        reader.set_dim_points(
+                            dim, data, partition_index, partition_count);
+
+                    // TODO:
+
+                    //     (pa.bool_(),) * 2,
+
+                    //     (pa.timestamp("s"),) * 2,
+                    //     (pa.timestamp("ms"),) * 2,
+                    //     (pa.timestamp("us"),) * 2,
+                    //     (pa.timestamp("ns"),) * 2,
+
+                    } else if (!strcmp(arrow_schema.format, "u") || !strcmp(arrow_schema.format, "z")) {
+                        // TODO: partitioning is not supported for string/bytes dims
+                        const char* data = (const char*)(arrow_array
+                                                             .buffers[2]);
+                        const uint32_t*
+                            offsets = (const uint32_t*)(arrow_array.buffers[1]);
+
+                        for (int32_t i = 0; i < arrow_array.length; i++) {
+                            auto value = std::string{
+                                data + offsets[i], offsets[i + 1] - offsets[i]};
+                            reader.set_dim_point(dim, value);
+                        }
+
+                    } else if (!strcmp(arrow_schema.format, "U") || !strcmp(arrow_schema.format, "Z")) {
+                        // TODO: partitioning is not supported for string/bytes dims
                         const char* data = (const char*)(arrow_array
                                                              .buffers[2]);
                         const uint64_t*
@@ -344,6 +500,7 @@ PYBIND11_MODULE(libtiledbsoma, m) {
                                 data + offsets[i], offsets[i + 1] - offsets[i]};
                             reader.set_dim_point(dim, value);
                         }
+
                     } else {
                         throw TileDBSOMAError(fmt::format(
                             "[libtiledbsoma] set_dim_points: type={} not "
