@@ -237,6 +237,8 @@ class DataFrame(TileDBArray, somacore.DataFrame):
         for name in values.schema.names:
             n = len(values.column(name))
             if name in dim_names_set:
+                # XXX BUG: this does not respect the ordering of index_column_names
+                # and can lead to an exception on multi-index writes
                 dim_cols_list.append(values.column(name).to_pandas())
             else:
                 attr_cols_map[name] = values.column(name).to_pandas()

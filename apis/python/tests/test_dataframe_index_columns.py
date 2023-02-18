@@ -80,6 +80,7 @@ def arrow_table():
                 },
             ],
         },
+
         {
             "index_column_names": ["int64"],
             "queries": [
@@ -101,6 +102,34 @@ def arrow_table():
                 },
             ],
         },
+
+# TODO: fix flagged bug in _dataframe.py's write method
+#        {
+#            "index_column_names": ["int64", "string"],
+#            "queries": [
+#                {
+#                    "coords": [pa.array([6402, 6403]), pa.array(["cat", "dog"])],
+#                    "expecteds": {
+#                        "soma_joinid": pa.array([2, 3], pa.int64()),
+#                        "string": pa.array(["cat", "dog"], pa.large_string()),
+#                    },
+#                },
+#            ],
+#        },
+
+        {
+            "index_column_names": ["string", "int64"],
+            "queries": [
+                {
+                    "coords": [pa.array(["cat", "dog"]), pa.array([6402, 6403])],
+                    "expecteds": {
+                        "soma_joinid": pa.array([2, 3], pa.int64()),
+                        "string": pa.array(["cat", "dog"], pa.large_string()),
+                    },
+                },
+            ],
+        },
+
         # TODO: many more
         # coordses = {
         #    "soma_joinid": [[0,2]],
