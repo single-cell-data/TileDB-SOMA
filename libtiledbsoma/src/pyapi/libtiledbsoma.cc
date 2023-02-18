@@ -321,7 +321,6 @@ PYBIND11_MODULE(libtiledbsoma, m) {
                 const std::string&, const std::vector<int8_t>&)>(
                 &SOMAReader::set_dim_points))
 
-
         .def(
             "set_dim_points",
             static_cast<void (SOMAReader::*)(
@@ -346,7 +345,6 @@ PYBIND11_MODULE(libtiledbsoma, m) {
                 const std::string&, const std::vector<uint8_t>&)>(
                 &SOMAReader::set_dim_points))
 
-
         .def(
             "set_dim_points",
             static_cast<void (SOMAReader::*)(
@@ -369,7 +367,6 @@ PYBIND11_MODULE(libtiledbsoma, m) {
                py::object py_arrow_array,
                int partition_index,
                int partition_count) {
-
                 // Create a list of array chunks
                 py::list array_chunks;
                 if (py::hasattr(py_arrow_array, "chunks")) {
@@ -387,8 +384,9 @@ PYBIND11_MODULE(libtiledbsoma, m) {
 
                     // Call array._export_to_c to get arrow array and schema
                     //
-                    // If ever a NumPy array gets in here, there will be an exception like
-                    // "AttributeError: 'numpy.ndarray' object has no attribute '_export_to_c'".
+                    // If ever a NumPy array gets in here, there will be an
+                    // exception like "AttributeError: 'numpy.ndarray' object
+                    // has no attribute '_export_to_c'".
                     // TODO: try/catch with something more helpful of the form
                     // "Maybe not an Arrow array".
                     array.attr("_export_to_c")(
@@ -422,7 +420,6 @@ PYBIND11_MODULE(libtiledbsoma, m) {
                         reader.set_dim_points(
                             dim, data, partition_index, partition_count);
 
-
                     } else if (!strcmp(arrow_schema.format, "L")) {
                         tcb::span<uint64_t> data{
                             (uint64_t*)arrow_array.buffers[1],
@@ -451,7 +448,6 @@ PYBIND11_MODULE(libtiledbsoma, m) {
                         reader.set_dim_points(
                             dim, data, partition_index, partition_count);
 
-
                     } else if (!strcmp(arrow_schema.format, "f")) {
                         tcb::span<float> data{
                             (float*)arrow_array.buffers[1],
@@ -466,17 +462,20 @@ PYBIND11_MODULE(libtiledbsoma, m) {
                         reader.set_dim_points(
                             dim, data, partition_index, partition_count);
 
-                    // TODO:
+                        // TODO:
 
-                    //     (pa.bool_(),) * 2,
+                        //     (pa.bool_(),) * 2,
 
-                    //     (pa.timestamp("s"),) * 2,
-                    //     (pa.timestamp("ms"),) * 2,
-                    //     (pa.timestamp("us"),) * 2,
-                    //     (pa.timestamp("ns"),) * 2,
+                        //     (pa.timestamp("s"),) * 2,
+                        //     (pa.timestamp("ms"),) * 2,
+                        //     (pa.timestamp("us"),) * 2,
+                        //     (pa.timestamp("ns"),) * 2,
 
-                    } else if (!strcmp(arrow_schema.format, "u") || !strcmp(arrow_schema.format, "z")) {
-                        // TODO: partitioning is not supported for string/bytes dims
+                    } else if (
+                        !strcmp(arrow_schema.format, "u") ||
+                        !strcmp(arrow_schema.format, "z")) {
+                        // TODO: partitioning is not supported for string/bytes
+                        // dims
                         const char* data = (const char*)(arrow_array
                                                              .buffers[2]);
                         const uint32_t*
@@ -488,8 +487,11 @@ PYBIND11_MODULE(libtiledbsoma, m) {
                             reader.set_dim_point(dim, value);
                         }
 
-                    } else if (!strcmp(arrow_schema.format, "U") || !strcmp(arrow_schema.format, "Z")) {
-                        // TODO: partitioning is not supported for string/bytes dims
+                    } else if (
+                        !strcmp(arrow_schema.format, "U") ||
+                        !strcmp(arrow_schema.format, "Z")) {
+                        // TODO: partitioning is not supported for string/bytes
+                        // dims
                         const char* data = (const char*)(arrow_array
                                                              .buffers[2]);
                         const uint64_t*
@@ -517,6 +519,7 @@ PYBIND11_MODULE(libtiledbsoma, m) {
             "partition_index"_a = 0,
             "partition_count"_a = 1)
 
+        // TODO: more types
         .def(
             "set_dim_ranges",
             static_cast<void (SOMAReader::*)(
