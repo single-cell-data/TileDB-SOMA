@@ -26,9 +26,49 @@ _UNBATCHED = options.BatchSize()
 
 class SparseNDArray(NDArray, somacore.SparseNDArray):
     """
-    Represents ``X`` and others.
+    ``SparseNDArray`` is a sparse, N-dimensional array, with offset (zero-based)
+    integer indexing on each dimension. ``SparseNDArray`` has a user-defined
+    schema, which includes:
+    - the element type, expressed as an Arrow type, indicating the type of data
+      contained within the array, and
+    - the shape of the array, i.e., the number of dimensions and the length of
+      each dimension
+
+    All dimensions must have a positive, non-zero length, and there must be 1
+    or more dimensions. Implicitly stored elements (i.e., those not explicitly
+    stored in the array) are assumed to have a value of zero.
+
+    Where explicitly referenced in the API, the dimensions are named
+    ``soma_dim_N``, where ``N`` is the dimension number (e.g., ``soma_dim_0``),
+    and elements are named ``soma_data``.
 
     [lifecycle: experimental]
+
+    Examples:
+    ---------
+    >>> import tiledbsoma
+    >>> import pyarrow as pa
+    >>> import numpy as np
+    >>> import scipy.sparse
+    >>> with tiledbsoma.SparseNDArray.create(
+    ...     "./test_sparse_ndarray", type=pa.float32(), shape=(1000, 100)
+    ... ) as arr:
+    ...     data = pa.SparseCOOTensor.from_scipy(
+    ...         scipy.sparse.random(1000, 100, format="coo", dtype=np.float32)
+    ...     )
+    ...     arr.write(data)
+    ... with tiledbsoma.SparseNDArray.open("./test_sparse_ndarray") as arr:
+    ...     print(arr.schema)
+    ...     print('---')
+    ...     print(arr.read().coos().concat())
+    ...
+    soma_dim_0: int64
+    soma_dim_1: int64
+    soma_data: float
+    ---
+    <pyarrow.SparseCOOTensor>
+    type: float
+    shape: (1000, 100)
     """
 
     __slots__ = ()

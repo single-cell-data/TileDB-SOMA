@@ -483,9 +483,50 @@ class Collection(
     CollectionBase[CollectionElementType], somacore.Collection[CollectionElementType]
 ):
     """
-    A persistent collection of SOMA objects, mapping string keys to any SOMA object.
+    ``Collection`` is a persistent container of named SOMA objects, stored as
+    a mapping of string keys and SOMA object values. Values may be any
+    persistent ``tiledbsoma`` object, including ``DataFrame``,
+    ``SparseNDArray``, ``DenseNDArray``, ``Experiment``, ``Measurement``,
+    or another ``Collection``. A ``Collection`` refers to elements by a
+    per-element URI. A ``Collection`` may store its reference to an
+    element by absolute URI or relative URI.
 
     [lifecycle: experimental]
+
+    Examples:
+    ---------
+    >>> import tiledbsoma
+    >>> import pyarrow as pa
+    >>> import numpy as np
+    >>> # create a collection and add a (10,10) dense matrix to it
+    >>> with tiledbsoma.Collection.create("./test_collection") as my_collection:
+    ...     # collection created. You can now add SOMA objects, e.g., a DenseNDArray
+    ...     my_collection.add_new_dense_ndarray(
+    ...         "my_dense_ndarray", type=pa.int32(), shape=(10, 10)
+    ...     ) as my_dense_ndarray:
+    ...         data = pa.Tensor.from_numpy(np.eye(10, 10, dtype=np.int32))
+    ...         my_dense_ndarray.write((slice(None), slice(None)), data)
+    ...
+    ... # example of opening collection to read an object back
+    ... with tiledbsoma.open("./test_collection") as my_collection:
+    ...     data = my_collection["my_dense_ndarray"].read()
+    ...
+    >>> data
+    <pyarrow.Tensor>
+    type: int32
+    shape: (10, 10)
+    strides: (40, 4)
+    >>> data.to_numpy()
+    array([[1, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+          [0, 1, 0, 0, 0, 0, 0, 0, 0, 0],
+          [0, 0, 1, 0, 0, 0, 0, 0, 0, 0],
+          [0, 0, 0, 1, 0, 0, 0, 0, 0, 0],
+          [0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
+          [0, 0, 0, 0, 0, 1, 0, 0, 0, 0],
+          [0, 0, 0, 0, 0, 0, 1, 0, 0, 0],
+          [0, 0, 0, 0, 0, 0, 0, 1, 0, 0],
+          [0, 0, 0, 0, 0, 0, 0, 0, 1, 0],
+          [0, 0, 0, 0, 0, 0, 0, 0, 0, 1]], dtype=int32)
     """
 
     __slots__ = ()

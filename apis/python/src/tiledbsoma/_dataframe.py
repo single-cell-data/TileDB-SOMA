@@ -22,14 +22,51 @@ _UNBATCHED = options.BatchSize()
 
 class DataFrame(TileDBArray, somacore.DataFrame):
     """
-    Represents ``obs``, ``var``, and others.
+    ``DataFrame`` is a multi-column table with a user-defined schema. The
+    schema is expressed as an Arrow Schema, and defines the column names
+    and value types.
 
     Every ``DataFrame`` must contain a column called ``soma_joinid``, of type
-    ``int64``, with negative values explicitly disallowed.  The ``soma_joinid`` column
-    contains a unique value for each row in the dataframe, and acts as a joint key for
-    other objects, such as ``SparseNDArray``.
+    ``int64``, with negative values explicitly disallowed. The ``soma_joinid``
+    column contains a unique value for each row in the dataframe, and in some
+    cases (e.g., as part of an ``Experiment``), acts as a join key for other
+    objects, such as ``SparseNDArray``.
 
     [lifecycle: experimental]
+
+    Examples:
+    ---------
+    >>> import pyarrow as pa
+    >>> import tiledbsoma
+    >>> schema = pa.schema(
+    ...     [
+    ...         ("soma_joinid", pa.int64()),
+    ...         ("A", pa.float32()),
+    ...         ("B", pa.large_string()),
+    ...     ]
+    ... )
+    ... with tiledbsoma.DataFrame.create("./test_dataframe", schema=schema) as df:
+    ...     data = pa.Table.from_pydict(
+    ...         {
+    ...             "soma_joinid": [0, 1, 2],
+    ...             "A": [1.0, 2.7182, 3.1214],
+    ...             "B": ["one", "e", "pi"],
+    ...         }
+    ...     )
+    ...     df.write(data)
+    ... with tiledbsoma.DataFrame.open("./test_dataframe") as df:
+    ...     print(df.schema)
+    ...     print("---")
+    ...     print(df.read().concat().to_pandas())
+    ...
+    soma_joinid: int64
+    A: float
+    B: large_string
+    ---
+       soma_joinid       A    B
+    0            0  1.0000  one
+    1            1  2.7182    e
+    2            2  3.1214   pi
     """
 
     __slots__ = ()
