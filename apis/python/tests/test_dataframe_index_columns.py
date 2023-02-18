@@ -4,36 +4,6 @@ import pytest
 
 import tiledbsoma as soma
 
-# ================================================================
-# TODO: SINGLE-INDEX CHECKLIST
-# * Index-column names are rows in this table
-# * Query types are columns
-
-# .            py-list py-tuple py-slice np-array-untyped np-array-typed pa-array-untyped pa.array-typed
-# soma_joinid  .       .        .        .                .              .                .
-# string       .       .        .        .                .              .                .
-# bytes        .       .        .        .                .              .                .
-# int8         .       .        .        .                .              .                .
-# int16        .       .        .        .                .              .                .
-# int32        .       .        .        .                .              .                .
-# int64        .       .        .        .                .              .                .
-# uint8        .       .        .        .                .              .                .
-# uint16       .       .        .        .                .              .                .
-# uint32       .       .        .        .                .              .                .
-# uint64       .       .        .        .                .              .                .
-# float32      .       .        .        .                .              .                .
-# float64      .       .        .        .                .              .                .
-# bool         .       .        .        .                .              .                .
-# timestamp-s  .       .        .        .                .              .                .
-# timestamp-ms .       .        .        .                .              .                .
-# timestamp-us .       .        .        .                .              .                .
-# timestamp-ns .       .        .        .                .              .                .
-# ================================================================
-
-# ================================================================
-# TODO: set_dim_ranges as well (slices)
-# ================================================================
-
 
 @pytest.fixture
 def arrow_table():
@@ -65,15 +35,10 @@ def arrow_table():
     [
         # Index by soma_joinid
         [
-            "soma_joinid/all",
+            "SOMA_JOINID/ALL",
             ["soma_joinid"],
             [],
-            {
-                "soma_joinid": pa.array([0, 1, 2, 3, 4], pa.int64()),
-                "string": pa.array(
-                    ["apple", "ball", "cat", "dog", "egg"], pa.large_string()
-                ),
-            },
+            "default01234",
         ],
         [
             "soma_joinid/pylist",
@@ -140,267 +105,390 @@ def arrow_table():
         ],
         # Index by string
         [
-            "string/all",
+            "STRING/ALL",
             ["string"],
             [],
-            {
-                "soma_joinid": pa.array([0, 1, 2, 3, 4], pa.int64()),
-                "string": pa.array(
-                    ["apple", "ball", "cat", "dog", "egg"], pa.large_string()
-                ),
-            },
+            "default01234",
         ],
         [
             "string/pylist",
             ["string"],
             [["cat", "dog"]],
-            {
-                "soma_joinid": pa.array([2, 3], pa.int64()),
-            },
+            "default23",
         ],
         [
             "string/pytuple",
             ["string"],
             [("cat", "dog")],
-            {
-                "soma_joinid": pa.array([2, 3], pa.int64()),
-            },
+            "default23",
         ],
         [
             "string/pyslice",
             ["string"],
             [("cat", "dog")],
-            {
-                "soma_joinid": pa.array([2, 3], pa.int64()),
-            },
+            "default23",
         ],
         [
-            "string/arrow-untyped",
+            "string/pa-array-untyped",
             ["string"],
             [pa.array(["cat", "dog"])],
-            {
-                "soma_joinid": pa.array([2, 3], pa.int64()),
-            },
+            "default23",
         ],
         [
-            "string/arrow-typed",
+            "string/pa-array-typed",
             ["string"],
             [pa.array(["cat", "dog"], pa.string())],
-            {
-                "soma_joinid": pa.array([2, 3], pa.int64()),
-            },
+            "default23",
         ],
         [
-            "string/numpy-untyped",
+            "string/np-array-untyped",
             ["string"],
             [np.asarray(["cat", "dog"])],
-            {
-                "soma_joinid": pa.array([2, 3], pa.int64()),
-            },
+            "default23",
         ],
         [
-            "string/numpy-typed",
+            "string/np-array-typed",
             ["string"],
             [np.asarray(["cat", "dog"], str)],
-            {
-                "soma_joinid": pa.array([2, 3], pa.int64()),
-            },
+            "default23",
+        ],
+        # Index by bytes
+        [
+            "BYTES/ALL",
+            ["bytes"],
+            [],
+            "default01234",
+        ],
+        [
+            "bytes/pylist",
+            ["bytes"],
+            [[b"cat", b"dog"]],
+            "default23",
+        ],
+        [
+            "bytes/pytuple",
+            ["bytes"],
+            [(b"cat", b"dog")],
+            "default23",
+        ],
+        [
+            "bytes/pyslice",
+            ["bytes"],
+            [(b"cat", b"dog")],
+            "default23",
+        ],
+        [
+            "bytes/pa-array-untyped",
+            ["bytes"],
+            [pa.array([b"cat", b"dog"])],
+            "default23",
+        ],
+        [
+            "bytes/pa-array-typed",
+            ["bytes"],
+            [pa.array([b"cat", b"dog"], pa.binary())],
+            "default23",
+        ],
+        [
+            "bytes/np-array-untyped",
+            ["bytes"],
+            [np.asarray([b"cat", b"dog"])],
+            "default23",
+        ],
+        [
+            "bytes/np-array-typed",
+            ["bytes"],
+            [np.asarray([b"cat", b"dog"], bytes)],
+            "default23",
+        ],
+        # Index by int8
+        [
+            "INT8/ALL",
+            ["int8"],
+            [],
+            "default01234",
+        ],
+        [
+            "int8/pylist",
+            ["int8"],
+            [[82, 83]],
+            "default23",
+        ],
+        [
+            "int8/pytuple",
+            ["int8"],
+            [[82, 83]],
+            "default23",
+        ],
+        [
+            "int8/pyslice",
+            ["int8"],
+            [slice(82, 83)],
+            "default23",
+        ],
+        [
+            "int8/numpy-untyped",
+            ["int8"],
+            [np.asarray([82, 83])],
+            "default23",
+        ],
+        [
+            "int8/numpy-typed",
+            ["int8"],
+            [np.asarray([82, 83], np.int8)],
+            "default23",
+        ],
+        [
+            "int8/pa-array-untyped",
+            ["int8"],
+            [pa.array([82, 83])],
+            "default23",
+        ],
+        [
+            "int8/pa-array-typed",
+            ["int8"],
+            [pa.array([82, 83], pa.int8())],
+            "default23",
+        ],
+        # Index by uint16
+        [
+            "UINT16/ALL",
+            ["uint16"],
+            [],
+            "default01234",
+        ],
+        [
+            "uint16/pylist",
+            ["uint16"],
+            [[1602, 1603]],
+            "default23",
+        ],
+        [
+            "uint16/pytuple",
+            ["uint16"],
+            [[1602, 1603]],
+            "default23",
+        ],
+        [
+            "uint16/pyslice",
+            ["uint16"],
+            [slice(1602, 1603)],
+            "default23",
+        ],
+        [
+            "uint16/numpy-untyped",
+            ["uint16"],
+            [np.asarray([1602, 1603])],
+            "default23",
+        ],
+        [
+            "uint16/numpy-typed",
+            ["uint16"],
+            [np.asarray([1602, 1603], np.uint16)],
+            "default23",
+        ],
+        [
+            "uint16/pa-array-untyped",
+            ["uint16"],
+            [pa.array([1602, 1603])],
+            "default23",
+        ],
+        [
+            "uint16/pa-array-typed",
+            ["uint16"],
+            [pa.array([1602, 1603], pa.uint16())],
+            "default23",
         ],
         # Index by int64
         [
-            "int64/all",
+            "INT64/ALL",
             ["int64"],
             [],
-            {
-                "soma_joinid": pa.array([0, 1, 2, 3, 4], pa.int64()),
-                "string": pa.array(
-                    ["apple", "ball", "cat", "dog", "egg"], pa.large_string()
-                ),
-            },
-        ],
-        [
-            "int64/arrow",
-            ["int64"],
-            [pa.array([6402, 6403])],
-            {
-                "soma_joinid": pa.array([2, 3], pa.int64()),
-                "string": pa.array(["cat", "dog"], pa.large_string()),
-            },
-        ],
-        [
-            "int64/numpy",
-            ["int64"],
-            [np.asarray([6402, 6403])],
-            {
-                "soma_joinid": pa.array([2, 3], pa.int64()),
-                "string": pa.array(["cat", "dog"], pa.large_string()),
-            },
+            "default01234",
         ],
         [
             "int64/pylist",
             ["int64"],
             [[6402, 6403]],
-            {
-                "soma_joinid": pa.array([2, 3], pa.int64()),
-                "string": pa.array(["cat", "dog"], pa.large_string()),
-            },
+            "default23",
+        ],
+        [
+            "int64/pytuple",
+            ["int64"],
+            [(6402, 6403)],
+            "default23",
         ],
         [
             "int64/pyslice",
             ["int64"],
             [slice(6402, 6403)],
-            {
-                "soma_joinid": pa.array([2, 3], pa.int64()),
-                "string": pa.array(["cat", "dog"], pa.large_string()),
-            },
+            "default23",
+        ],
+        [
+            "int64/numpy-untyped",
+            ["int64"],
+            [np.asarray([6402, 6403])],
+            "default23",
+        ],
+        [
+            "int64/numpy-typed",
+            ["int64"],
+            [np.asarray([6402, 6403], np.int64)],
+            "default23",
+        ],
+        [
+            "int64/arrow-untyped",
+            ["int64"],
+            [pa.array([6402, 6403])],
+            "default23",
+        ],
+        [
+            "int64/arrow-typed",
+            ["int64"],
+            [pa.array([6402, 6403], pa.int64())],
+            "default23",
         ],
         # Index by float32
         [
-            "float32/pa-array-untyped",
+            "FLOAT32/ALL",
             ["float32"],
-            [pa.array([321.5, 323.5])],
-            {
-                "soma_joinid": pa.array([2, 3], pa.int64()),
-            },
-        ],
-        [
-            "float32/pa-array-typed",
-            ["float32"],
-            [pa.array([322.5, 323.5], pa.float32())],
-            {
-                "soma_joinid": pa.array([2, 3], pa.int64()),
-            },
-        ],
-        [
-            "float32/numpy-untyped",
-            ["float32"],
-            [np.asarray([322.5, 323.5])],
-            {
-                "soma_joinid": pa.array([2, 3], pa.int64()),
-            },
-        ],
-        [
-            "float32/numpy-typed",
-            ["float32"],
-            [np.asarray([322.5, 323.5], np.float32)],
-            {
-                "soma_joinid": pa.array([2, 3], pa.int64()),
-            },
+            [],
+            "default01234",
         ],
         [
             "float32/pylist",
             ["float32"],
             [[322.5, 323.5]],
-            {
-                "soma_joinid": pa.array([2, 3], pa.int64()),
-            },
+            "default23",
+        ],
+        [
+            "float32/pytuple",
+            ["float32"],
+            [(322.5, 323.5)],
+            "default23",
         ],
         [
             "float32/pyslice",
             ["float32"],
-            [slice(321.5, 323.5)],
-            {
-                "soma_joinid": pa.array([1, 2, 3], pa.int64()),
-            },
+            [slice(322.5, 323.5)],
+            "default23",
+        ],
+        [
+            "float32/np-array-untyped",
+            ["float32"],
+            [np.asarray([322.5, 323.5])],
+            "default23",
+        ],
+        [
+            "float32/np-array-typed",
+            ["float32"],
+            [np.asarray([322.5, 323.5], np.float32)],
+            "default23",
+        ],
+        [
+            "float32/pa-array-untyped",
+            ["float32"],
+            [pa.array([321.5, 323.5])],
+            "default23",
+        ],
+        [
+            "float32/pa-array-typed",
+            ["float32"],
+            [pa.array([322.5, 323.5], pa.float32())],
+            "default23",
         ],
         # Index by float64
         [
-            "float64/pa-array-untyped",
-            ["float64"],
-            [pa.array([641.5, 643.5])],
-            {
-                "soma_joinid": pa.array([1, 3], pa.int64()),
-            },
-        ],
-        [
-            "float64/pa-array-typed",
-            ["float64"],
-            [pa.array([641.5, 643.5], pa.float64())],
-            {
-                "soma_joinid": pa.array([1, 3], pa.int64()),
-            },
-        ],
-        [
-            "float64/numpy-untyped",
-            ["float64"],
-            [np.asarray([641.5, 643.5])],
-            {
-                "soma_joinid": pa.array([1, 3], pa.int64()),
-            },
-        ],
-        [
-            "float64/numpy-typed",
-            ["float64"],
-            [np.asarray([641.5, 643.5], np.float64)],
-            {
-                "soma_joinid": pa.array([1, 3], pa.int64()),
-            },
+            "FLOAT32/ALL",
+            ["float32"],
+            [],
+            "default01234",
         ],
         [
             "float64/pylist",
             ["float64"],
             [[641.5, 643.5]],
-            {
-                "soma_joinid": pa.array([1, 3], pa.int64()),
-            },
+            "default23",
+        ],
+        [
+            "float64/pytuple",
+            ["float64"],
+            [(641.5, 643.5)],
+            "default23",
         ],
         [
             "float64/pyslice",
             ["float64"],
             [slice(641.5, 643.5)],
-            {
-                "soma_joinid": pa.array([1, 2, 3], pa.int64()),
-            },
+            "default23",
         ],
+        [
+            "float64/np-array-untyped",
+            ["float64"],
+            [np.asarray([641.5, 643.5])],
+            "default23",
+        ],
+        [
+            "float64/np-array-typed",
+            ["float64"],
+            [np.asarray([641.5, 643.5], np.float64)],
+            "default23",
+        ],
+        [
+            "float64/pa-array-untyped",
+            ["float64"],
+            [pa.array([642.5, 643.5])],
+            "default23",
+        ],
+        [
+            "float64/pa-array-typed",
+            ["float64"],
+            [pa.array([642.5, 643.5], pa.float64())],
+            "default23",
+        ],
+        # TODO:
+        # * bool
+        # * arrow timestamps (s, ms, us, ns)
         # Index by int64+string
+        [
+            "INT64+STRING/ALL",
+            ["int64", "string"],
+            [],
+            "default01234",
+        ],
         [
             # TODO: fix flagged bug in _dataframe.py's write method
             "int64+string/arrow",
             ["int64", "string"],
             [pa.array([6402, 6403]), pa.array(["cat", "dog"])],
-            {
-                "soma_joinid": pa.array([2, 3], pa.int64()),
-                "string": pa.array(["cat", "dog"], pa.large_string()),
-            },
+            "default23",
         ],
         [
             "string+int64/arrow",
             ["string", "int64"],
             [pa.array(["cat", "dog"]), pa.array([6402, 6403])],
-            {
-                "soma_joinid": pa.array([2, 3], pa.int64()),
-                "string": pa.array(["cat", "dog"], pa.large_string()),
-            },
+            "default23",
         ],
         [
             "string+int64/numpy",
             ["string", "int64"],
             [np.asarray(["cat", "dog"]), np.asarray([6402, 6403])],
-            {
-                "soma_joinid": pa.array([2, 3], pa.int64()),
-                "string": pa.array(["cat", "dog"], pa.large_string()),
-            },
+            "default23",
         ],
         [
             "string+int64/pylist",
             ["string", "int64"],
             [["cat", "dog"], [6402, 6403]],
-            {
-                "soma_joinid": pa.array([2, 3], pa.int64()),
-                "string": pa.array(["cat", "dog"], pa.large_string()),
-            },
+            "default23",
         ],
         [
             "string+int64/pytuple",
             ["string", "int64"],
             [("cat", "dog"), (6402, 6403)],
-            {
-                "soma_joinid": pa.array([2, 3], pa.int64()),
-                "string": pa.array(["cat", "dog"], pa.large_string()),
-            },
+            "default23",
         ],
-        # Index by int64+float64+string
-        # TODO
+        # TODO:
+        # * Index by int64+float64+string
     ],
 )
 def test_types(tmp_path, arrow_table, name, index_column_names, coords, expecteds):
@@ -413,6 +501,20 @@ def test_types(tmp_path, arrow_table, name, index_column_names, coords, expected
     )
     with soma.DataFrame.open(uri, "w") as sdf:
         sdf.write(arrow_table)
+
+    if expecteds == "default01234":
+        expecteds = {
+            "soma_joinid": pa.array([0, 1, 2, 3, 4], pa.int64()),
+            "string": pa.array(
+                ["apple", "ball", "cat", "dog", "egg"], pa.large_string()
+            ),
+        }
+
+    elif expecteds == "default23":
+        expecteds = {
+            "soma_joinid": pa.array([2, 3], pa.int64()),
+            "string": pa.array(["cat", "dog"], pa.large_string()),
+        }
 
     with soma.DataFrame.open(uri, "r") as sdf:
         actual_table = sdf.read(coords=coords).concat()
