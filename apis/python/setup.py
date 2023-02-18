@@ -25,6 +25,10 @@ import setuptools
 import setuptools.command.build_ext
 import wheel.bdist_wheel
 
+this_dir = pathlib.Path(__file__).parent.absolute()
+sys.path.insert(0, str(this_dir))
+import version  # noqa E402
+
 
 def get_libtiledbsoma_library_name():
     """
@@ -104,7 +108,6 @@ def find_or_build_package_data(setuptools_cmd):
     global libtiledbsoma_dir
 
     # Set up paths
-    this_dir = pathlib.Path(__file__).parent.absolute()
     scripts_dir = this_dir / "dist_links" / "scripts"
 
     if scripts_dir.is_symlink():
@@ -214,4 +217,5 @@ setuptools.setup(
     },
     python_requires=">=3.7",
     cmdclass={"build_ext": build_ext, "bdist_wheel": bdist_wheel},
+    version=version.getVersion(),
 )
