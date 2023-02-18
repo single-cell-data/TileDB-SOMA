@@ -89,6 +89,20 @@ TileDBArray <- R6::R6Class(
       setNames(dims, nm = vapply_char(dims, tiledb::name))
     },
 
+    #' @description Retrieve the shape, i.e. the length of each dimension (lifecycle: experimental)
+    #' @return A named vector of dimension length (and the same type as the dimension)
+    shape = function() {
+      dims <- tiledb::dimensions(self$schema())
+      do.call(c, lapply(dims, function(dim) { dom <- tiledb::domain(dim); dom[2] - dom[1] + 1 }))
+    },
+
+    #' @description Retrieve number of dimensions (lifecycle: experimental)
+    #' @return A scalar with the number of dimensions
+    ndim = function() {
+      dims <- tiledb::dimensions(self$schema())
+      length(dims)
+    },
+
     #' @description Retrieve the array attributes (lifecycle: experimental)
     #' @return A list of [`tiledb::tiledb_attr`] objects
     attributes = function() {
