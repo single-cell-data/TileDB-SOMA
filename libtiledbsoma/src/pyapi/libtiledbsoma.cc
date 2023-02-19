@@ -53,6 +53,10 @@ using namespace tiledbsoma;
 namespace py = pybind11;
 using namespace py::literals;
 
+// kerl attempts
+// template <typename... Args>
+// using overload_cast_ = pybind11::detail::overload_cast_impl<Args...>;
+
 namespace tiledbsoma {
 
 /**
@@ -283,9 +287,9 @@ PYBIND11_MODULE(libtiledbsoma, m) {
             "batch_size"_a = "auto",
             "result_order"_a = "auto")
 
-        // The following short, template-instantiation functions are expected to
-        // be invoked when the coords are Python list/tuple, or NumPy arrays.
-        // Arrow arrays are in the long if-else-if function below.
+        // The following short functions are expected to be invoked when the
+        // coords are Python list/tuple, or NumPy arrays.  Arrow arrays are in
+        // the long if-else-if function below.
         //
         // Binding overloaded methods to templated member functions requires
         // more effort, see:
@@ -321,16 +325,15 @@ PYBIND11_MODULE(libtiledbsoma, m) {
                 const std::string&, const std::vector<int8_t>&)>(
                 &SOMAReader::set_dim_points))
 
-        .def(
-            "set_dim_points",
-            static_cast<void (SOMAReader::*)(
-                const std::string&, const std::vector<uint64_t>&)>(
-                &SOMAReader::set_dim_points))
+        // debugging: order matters: failures either way like
+        // RuntimeError: Static type (INT16) does not match expected type
+        // (INT64) so ordering doesn't _solve_ problems but the finding is that
+        // ordering does _affect_ things ...
 
         .def(
             "set_dim_points",
             static_cast<void (SOMAReader::*)(
-                const std::string&, const std::vector<uint32_t>&)>(
+                const std::string&, const std::vector<uint8_t>&)>(
                 &SOMAReader::set_dim_points))
 
         .def(
@@ -342,7 +345,23 @@ PYBIND11_MODULE(libtiledbsoma, m) {
         .def(
             "set_dim_points",
             static_cast<void (SOMAReader::*)(
-                const std::string&, const std::vector<uint8_t>&)>(
+                const std::string&, const std::vector<uint32_t>&)>(
+                &SOMAReader::set_dim_points))
+
+        .def(
+            "set_dim_points",
+            static_cast<void (SOMAReader::*)(
+                const std::string&, const std::vector<uint64_t>&)>(
+                &SOMAReader::set_dim_points))
+
+        // Looking at:
+        // https://pybind11.readthedocs.io/en/stable/advanced/functions.html#overload-resolution-order
+        // ...
+
+        .def(
+            "set_dim_points",
+            static_cast<void (SOMAReader::*)(
+                const std::string&, const std::vector<double>&)>(
                 &SOMAReader::set_dim_points))
 
         .def(
@@ -351,15 +370,47 @@ PYBIND11_MODULE(libtiledbsoma, m) {
                 const std::string&, const std::vector<float>&)>(
                 &SOMAReader::set_dim_points))
 
-        .def(
-            "set_dim_points",
-            static_cast<void (SOMAReader::*)(
-                const std::string&, const std::vector<double>&)>(
-                &SOMAReader::set_dim_points))
+        // kerl attempts
 
-        // The above short, template-instantiation functions are expected to
-        // be invoked when the coords are Python list/tuple, or NumPy arrays.
-        // Arrow arrays are in this long if-else-if function.
+        // .def(
+        //     "set_dim_points",
+        //     static_cast<void (SOMAReader::*)(
+        //         const std::string dim&, const std::vector<float>& points)>(
+        //         &SOMAReader::set_dim_points),
+        //     py::arg("dim").noconvert(),
+        //     py::arg("points").noconvert())
+
+        // .def(
+        //     "set_dim_points",
+        //     static_cast<void (SOMAReader::*)(
+        //         const std::string& dim, const std::vector<double>& points)>(
+        //         &SOMAReader::set_dim_points),
+        //     py::arg("dim").noconvert(),
+        //     py::arg("points").noconvert())
+
+        // .def(
+        //     "set_dim_points",
+        //     py::overload_cast<const std::string&, const
+        //     std::vector<float>&>(&SOMAReader::set_dim_points));
+
+        // .def(
+        //     "set_dim_points",
+        //     py::overload_cast<const std::string&, const
+        //     std::vector<double>&>(&SOMAReader::set_dim_points));
+
+        // .def(
+        //     "set_dim_points",
+        //     overload_cast_<const std::string&, const std::vector<float>&>()(
+        //         &SOMAReader::set_dim_points))
+
+        // .def(
+        //     "set_dim_points",
+        //     overload_cast_<const std::string&, const std::vector<double>&>()(
+        //         &SOMAReader::set_dim_points))
+
+        // The above short functions are expected to be invoked when the coords
+        // are Python list/tuple, or NumPy arrays.  Arrow arrays are in this
+        // long if-else-if function.
         .def(
             "set_dim_points",
             [](SOMAReader& reader,
@@ -588,14 +639,15 @@ PYBIND11_MODULE(libtiledbsoma, m) {
             "set_dim_ranges",
             static_cast<void (SOMAReader::*)(
                 const std::string&,
-                const std::vector<std::pair<float, float>>&)>(
+                const std::vector<std::pair<double, double>>&)>(
                 &SOMAReader::set_dim_ranges))
 
+        // XXX comment re found-first
         .def(
             "set_dim_ranges",
             static_cast<void (SOMAReader::*)(
                 const std::string&,
-                const std::vector<std::pair<double, double>>&)>(
+                const std::vector<std::pair<float, float>>&)>(
                 &SOMAReader::set_dim_ranges))
 
         .def(

@@ -26,6 +26,7 @@ import tiledbsoma as soma
 #
 # tiledb.cc.TileDBError: [TileDB::Dimension] Error: Domain check failed; Domain range (upper + lower + 1) is larger than the maximum unsigned number
 
+
 @pytest.fixture
 def arrow_table():
     pydict = {
@@ -420,8 +421,8 @@ def arrow_table():
         ],
         # Index by float64
         [
-            "FLOAT32-ALL",
-            ["float32"],
+            "FLOAT64-ALL",
+            ["float64"],
             [],
             "default01234",
         ],
