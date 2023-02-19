@@ -409,7 +409,7 @@ def arrow_table():
         [
             "float32-pa-array-untyped",
             ["float32"],
-            [pa.array([321.5, 323.5])],
+            [pa.array([322.5, 323.5])],
             "default23",
         ],
         [
@@ -428,31 +428,31 @@ def arrow_table():
         [
             "float64-pylist",
             ["float64"],
-            [[641.5, 643.5]],
+            [[642.5, 643.5]],
             "default23",
         ],
         [
             "float64-pytuple",
             ["float64"],
-            [(641.5, 643.5)],
+            [(642.5, 643.5)],
             "default23",
         ],
         [
             "float64-pyslice",
             ["float64"],
-            [slice(641.5, 643.5)],
+            [slice(642.5, 643.5)],
             "default23",
         ],
         [
             "float64-np-array-untyped",
             ["float64"],
-            [np.asarray([641.5, 643.5])],
+            [np.asarray([642.5, 643.5])],
             "default23",
         ],
         [
             "float64-np-array-typed",
             ["float64"],
-            [np.asarray([641.5, 643.5], np.float64)],
+            [np.asarray([642.5, 643.5], np.float64)],
             "default23",
         ],
         [
