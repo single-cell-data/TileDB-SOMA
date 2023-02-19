@@ -4,6 +4,27 @@ import pytest
 
 import tiledbsoma as soma
 
+# TODO: debug this: why 127 is excluded
+# ArraySchema(
+#   domain=Domain(*[
+#     Dim(name='int8', domain=(-128, 126), tile=64, dtype='int8', filters=FilterList([ZstdFilter(level=3), ])),
+#   ]),
+# ...
+#
+# when
+#   elif np.issubdtype(dtype, NPInteger):
+#       iinfo = np.iinfo(cast(NPInteger, dtype))
+#       domain = iinfo.min, iinfo.max - 1
+
+# and else when
+#
+#   elif np.issubdtype(dtype, NPInteger):
+#       iinfo = np.iinfo(cast(NPInteger, dtype))
+#       domain = iinfo.min, iinfo.max
+#
+# then
+#
+# tiledb.cc.TileDBError: [TileDB::Dimension] Error: Domain check failed; Domain range (upper + lower + 1) is larger than the maximum unsigned number
 
 @pytest.fixture
 def arrow_table():
