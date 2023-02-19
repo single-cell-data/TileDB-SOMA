@@ -229,7 +229,7 @@ class DataFrame(TileDBArray, somacore.DataFrame):
         _util.check_type("values", values, (pa.Table,))
 
         del platform_config  # unused
-        dim_cols_list = []
+        dim_cols_map = {}
         attr_cols_map = {}
         dim_names_set = self.index_column_names
         n = None
@@ -237,14 +237,19 @@ class DataFrame(TileDBArray, somacore.DataFrame):
         for name in values.schema.names:
             n = len(values.column(name))
             if name in dim_names_set:
-                # XXX BUG: this does not respect the ordering of index_column_names
-                # and can lead to an exception on multi-index writes
-                dim_cols_list.append(values.column(name).to_pandas())
+                dim_cols_map[name] = values.column(name).to_pandas()
             else:
                 attr_cols_map[name] = values.column(name).to_pandas()
         if n is None:
             raise ValueError(f"did not find any column names in {values.schema.names}")
 
+        # We need to produce the dim cols in the same order as they're present in the TileDB schema
+        # (tracked by self.index_column_names). This is important in the multi-index case.  Suppose
+        # the Arrow schema has two index columns in the order "burger" and "meister", and suppose
+        # the user set index_column_names = ["meister", "burger"] when creating the TileDB schema.
+        # Then the above for-loop over the Arrow schema will find the former ordering, but for the
+        # `writer[dims] = attrs` below we must have dims with the latter ordering.
+        dim_cols_list = [dim_cols_map[name] for name in self.index_column_names]
         dim_cols_tuple = tuple(dim_cols_list)
         self._handle.writer[dim_cols_tuple] = attr_cols_map
 
