@@ -174,7 +174,8 @@ class SOMAReader {
             }
 
             LOG_DEBUG(fmt::format(
-                "[SOMAReader] set_dim_points partitioning: sizeof(T)={} dim={} index={} "
+                "[SOMAReader] set_dim_points partitioning: sizeof(T)={} dim={} "
+                "index={} "
                 "count={} "
                 "range=[{}, {}] of {} points",
                 sizeof(T),
@@ -204,8 +205,7 @@ class SOMAReader {
     template <typename T>
     void set_dim_points(const std::string& dim, const std::vector<T>& points) {
         LOG_DEBUG(fmt::format(
-            "[SOMAReader] set_dim_points: sizeof(T)={}",
-            sizeof(T)));
+            "[SOMAReader] set_dim_points: sizeof(T)={}", sizeof(T)));
         mq_->select_points(dim, points);
     }
 
