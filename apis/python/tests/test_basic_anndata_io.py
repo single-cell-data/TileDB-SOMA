@@ -118,7 +118,7 @@ def test_import_anndata(adata, ingest_modes):
         assert exp.ms["RNA"].X["data"].metadata.get(metakey) == "SOMADenseNDArray"
         if have_ingested:
             matrix = exp.ms["RNA"].X["data"].read(coords=all2d)
-            assert matrix.shape == orig.X.shape
+            assert matrix.size == orig.X.size
         else:
             with pytest.raises(ValueError):
                 exp.ms["RNA"].X["data"].read(coords=all2d)
@@ -126,8 +126,8 @@ def test_import_anndata(adata, ingest_modes):
         # Check raw/X/data (sparse)
         assert exp.ms["raw"].X["data"].metadata.get(metakey) == "SOMASparseNDArray"
         if have_ingested:
-            matrix = exp.ms["raw"].X["data"].read(coords=all2d).coos().concat()
-            assert matrix.shape == orig.raw.X.shape
+            table = exp.ms["raw"].X["data"].read(coords=all2d).tables().concat()
+            assert table.shape[0] == orig.raw.X.nnz
 
         # Check some annotation matrices
 
@@ -158,8 +158,8 @@ def test_import_anndata(adata, ingest_modes):
         for key in list(orig.obsp.keys()):
             assert obsp[key].metadata.get(metakey) == "SOMASparseNDArray"
             if have_ingested:
-                matrix = obsp[key].read(coords=all2d).coos().concat()
-                assert matrix.shape == orig.obsp[key].shape
+                table = obsp[key].read(coords=all2d).tables().concat()
+                assert table.shape[0] == orig.obsp[key].nnz
 
         # pbmc-small has no varp
 

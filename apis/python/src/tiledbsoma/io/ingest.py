@@ -474,7 +474,9 @@ def _write_dataframe(
         soma_df = _factory.open(df_uri, "w", soma_type=DataFrame)
     except DoesNotExistError:
         soma_df = DataFrame.create(
-            df_uri, schema=arrow_table.schema, platform_config=platform_config
+            df_uri,
+            schema=arrow_table.schema,
+            platform_config=platform_config,
         )
     else:
         if ingest_mode == "resume":
@@ -525,10 +527,12 @@ def create_from_matrix(
     try:
         soma_ndarray = cls.open(uri, "w", platform_config=platform_config)
     except DoesNotExistError:
+        # A SparseNDArray must be appendable in soma.io.
+        shape = [None for _ in matrix.shape] if cls.is_sparse else matrix.shape
         soma_ndarray = cls.create(
             uri,
             type=pa.from_numpy_dtype(matrix.dtype),
-            shape=matrix.shape,
+            shape=shape,
             platform_config=platform_config,
         )
     else:

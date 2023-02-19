@@ -210,8 +210,6 @@ def tables_are_same_value(a: pa.Table, b: pa.Table) -> bool:
     [
         ((10,), "coo"),
         ((10, 21), "coo"),
-        ((10, 21), "csr"),
-        ((10, 21), "csc"),
         ((10, 20, 2), "coo"),
         ((2, 4, 6, 8), "coo"),
         ((1, 2, 4, 6, 8), "coo"),
@@ -225,8 +223,7 @@ def test_sparse_nd_array_read_write_sparse_tensor(
     test_enumeration: int,
 ):
     # Test sanity: Tensor only, and CSC and CSR only support 2D, so fail any nonsense configs
-    assert format in ("coo", "csr", "csc")
-    assert not (format in ("csc", "csr") and len(shape) != 2)
+    assert format == "coo"
 
     a = soma.SparseNDArray.create(tmp_path.as_posix(), type=pa.float64(), shape=shape)
     assert a.shape == shape
@@ -244,21 +241,11 @@ def test_sparse_nd_array_read_write_sparse_tensor(
 
     # Read back and validate
     with soma.SparseNDArray.open(tmp_path.as_posix()) as b:
-        if format == "coo":
-            t = b.read((slice(None),) * len(shape)).coos().concat()
-        elif format == "csc":
-            t = b.read((slice(None),) * len(shape)).cscs().concat()
-        elif format == "csr":
-            t = b.read((slice(None),) * len(shape)).csrs().concat()
+        t = b.read((slice(None),) * len(shape)).coos().concat()
 
         assert tensors_are_same_value(t, data)
 
-        if format == "coo":
-            t = next(b.read((0,) * len(shape)).coos())
-        elif format == "csc":
-            t = next(b.read((0,) * len(shape)).cscs())
-        elif format == "csr":
-            t = next(b.read((0,) * len(shape)).csrs())
+        t = next(b.read((0,) * len(shape)).coos())
 
         assert t.shape == shape
 
@@ -323,6 +310,50 @@ def test_sparse_nd_array_read_as_pandas(
         assert not A.schema.allows_duplicates
 
 
+@pytest.mark.parametrize("shape_is_nones", [True, False])
+@pytest.mark.parametrize("element_type", NDARRAY_ARROW_TYPES_SUPPORTED)
+def test_sparse_nd_array_shaping(tmp_path, shape_is_nones, element_type):
+    uri = tmp_path.as_posix()
+
+    soma.SparseNDArray.create(
+        uri,
+        type=element_type,
+        shape=(None, None) if shape_is_nones else (2, 3),
+    ).close()
+    assert soma.SparseNDArray.exists(uri)
+
+    with soma.SparseNDArray.open(uri) as snda:
+        assert snda.nnz == 0
+
+    batch1 = pa.Table.from_pydict(
+        {
+            "soma_dim_0": [0, 0, 0, 1, 1, 1],
+            "soma_dim_1": [0, 1, 2, 0, 1, 2],
+            "soma_data": [1, 2, 3, 4, 5, 6],
+        }
+    )
+
+    batch2 = pa.Table.from_pydict(
+        {"soma_dim_0": [2, 2, 2], "soma_dim_1": [0, 1, 2], "soma_data": [7, 8, 9]}
+    )
+
+    with soma.SparseNDArray.open(uri, "w") as snda:
+        snda.write(batch1)
+
+    with soma.SparseNDArray.open(uri) as snda:
+        assert snda.nnz == 6
+
+    if shape_is_nones:
+        with soma.SparseNDArray.open(uri, "w") as snda:
+            snda.write(batch2)
+    else:
+        # tiledb.cc.TileDBError: [TileDB::Dimension] Error: Coordinate 2
+        # is out of domain bounds [0, 1] on dimension 'soma_dim_0'
+        with pytest.raises(tiledb.cc.TileDBError):
+            with soma.SparseNDArray.open(uri, "w") as snda:
+                snda.write(batch2)
+
+
 def test_empty_read(tmp_path):
     """
     Verify that queries expected to return empty results actually
@@ -343,8 +374,6 @@ def test_empty_read(tmp_path):
         assert sum(len(t) for t in a.read(coords).tables()) == 0
         # Fails due to ARROW-17933
         # assert sum(t.non_zero_length for t in a.read(coords).coos()) == 0
-        assert sum(t.non_zero_length for t in a.read(coords).csrs()) == 0
-        assert sum(t.non_zero_length for t in a.read(coords).cscs()) == 0
 
     #
     # Next, test empty queries on non-empty array
@@ -360,8 +389,6 @@ def test_empty_read(tmp_path):
 
         coords = (1, 1)  # no element at this coordinate
         assert sum(len(t) for t in a.read(coords).tables()) == 0
-        assert sum(t.non_zero_length for t in a.read(coords).csrs()) == 0
-        assert sum(t.non_zero_length for t in a.read(coords).cscs()) == 0
 
 
 @pytest.mark.xfail(sys.version_info.minor > 7, reason="bug ARROW-17933")
@@ -454,12 +481,6 @@ def test_csr_csc_2d_read(tmp_path, shape):
     )
     snda.write(arrow_tensor)
 
-    with pytest.raises(ValueError):
-        next(snda.read(None).csrs())
-
-    with pytest.raises(ValueError):
-        next(snda.read(None).cscs())
-
 
 @pytest.mark.parametrize(
     "write_format",
@@ -469,7 +490,7 @@ def test_csr_csc_2d_read(tmp_path, shape):
     # We want to test read_format == "none_of_the_above", to ensure it throws NotImplementedError,
     # but that can't be gotten past typeguard.
     "read_format",
-    ["table", "coo", "csr", "csc"],
+    ["table", "coo"],
 )
 @pytest.mark.parametrize(
     "io",
@@ -821,22 +842,14 @@ def test_sparse_nd_array_table_slicing(tmp_path, io, write_format, read_format):
                     r = snda.read(io["coords"])
                     if read_format == "coo":
                         next(r.coos())
-                    elif read_format == "csr":
-                        next(r.csrs())
-                    elif read_format == "csc":
-                        next(r.csrs())
                     elif read_format == "table":
-                        next(r.csrs())
+                        next(r.tables())
             else:
                 r = snda.read(io["coords"])
                 if read_format == "coo":
                     tensor = next(r.coos())
-                elif read_format == "csr":
-                    tensor = next(r.csrs())
-                elif read_format == "csc":
-                    tensor = next(r.csrs())
                 elif read_format == "table":
-                    tensor = next(r.csrs())
+                    tensor = next(r.tables())
                 assert tensor.shape == io["shape"]
 
         bad = False

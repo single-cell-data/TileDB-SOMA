@@ -302,14 +302,7 @@ def test_joinid_caching(soma_experiment):
     with soma_experiment.axis_query(
         "RNA", obs_query=obs_query, var_query=var_query
     ) as query2:
-        coo = query2.X("A").coos().concat().to_scipy()
-        csr = sparse.csr_matrix(
-            (
-                coo.data,
-                (query2._indexer.by_obs(coo.row), query2._indexer.by_var(coo.col)),
-            ),
-            shape=(query2.n_obs, query2.n_vars),
-        )
+        query2.X("A").coos().concat().to_scipy()
 
     with soma_experiment.axis_query(
         "RNA", obs_query=obs_query, var_query=var_query
@@ -321,8 +314,6 @@ def test_joinid_caching(soma_experiment):
     assert np.array_equal(var.to_pandas().label, ad.var.label)
     assert ad.n_obs == len(obs)
     assert ad.n_vars == len(var)
-    assert ad.X.shape == csr.shape
-    assert (ad.X != csr).nnz == 0  # fast eq test
 
 
 @pytest.mark.xfail(

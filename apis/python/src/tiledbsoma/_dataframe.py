@@ -133,7 +133,6 @@ class DataFrame(TileDBArray, somacore.DataFrame):
         """
         Return the number of rows in the dataframe. Same as `len(df)`.
         """
-        # A.domain.shape at the tiledb level gives us the 0..2^63 range which is not what we want
         self._check_open_read()
         return cast(int, self._soma_reader().nnz())
 
