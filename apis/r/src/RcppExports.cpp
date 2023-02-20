@@ -104,7 +104,7 @@ END_RCPP
 }
 // tiledbsoma_stats_enable
 void tiledbsoma_stats_enable();
-RcppExport SEXP _tiledbsoma_stats_enable() {
+RcppExport SEXP _tiledbsoma_tiledbsoma_stats_enable() {
 BEGIN_RCPP
     Rcpp::RNGScope rcpp_rngScope_gen;
     tiledbsoma_stats_enable();
@@ -113,7 +113,7 @@ END_RCPP
 }
 // tiledbsoma_stats_disable
 void tiledbsoma_stats_disable();
-RcppExport SEXP _tiledbsoma_stats_disable() {
+RcppExport SEXP _tiledbsoma_tiledbsoma_stats_disable() {
 BEGIN_RCPP
     Rcpp::RNGScope rcpp_rngScope_gen;
     tiledbsoma_stats_disable();
@@ -122,7 +122,7 @@ END_RCPP
 }
 // tiledbsoma_stats_reset
 void tiledbsoma_stats_reset();
-RcppExport SEXP _tiledbsoma_stats_reset() {
+RcppExport SEXP _tiledbsoma_tiledbsoma_stats_reset() {
 BEGIN_RCPP
     Rcpp::RNGScope rcpp_rngScope_gen;
     tiledbsoma_stats_reset();
@@ -131,7 +131,7 @@ END_RCPP
 }
 // tiledbsoma_stats_dump
 std::string tiledbsoma_stats_dump();
-RcppExport SEXP _tiledbsoma_stats_dump() {
+RcppExport SEXP _tiledbsoma_tiledbsoma_stats_dump() {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -148,10 +148,10 @@ static const R_CallMethodDef CallEntries[] = {
     {"_tiledbsoma_sr_setup", (DL_FUNC) &_tiledbsoma_sr_setup, 8},
     {"_tiledbsoma_sr_complete", (DL_FUNC) &_tiledbsoma_sr_complete, 1},
     {"_tiledbsoma_sr_next", (DL_FUNC) &_tiledbsoma_sr_next, 1},
-    {"_tiledbsoma_stats_enable", (DL_FUNC) &_tiledbsoma_stats_enable, 0},
-    {"_tiledbsoma_stats_disable", (DL_FUNC) &_tiledbsoma_stats_disable, 0},
-    {"_tiledbsoma_stats_reset", (DL_FUNC) &_tiledbsoma_stats_reset, 0},
-    {"_tiledbsoma_stats_dump", (DL_FUNC) &_tiledbsoma_stats_dump, 0},
+    {"_tiledbsoma_tiledbsoma_stats_enable", (DL_FUNC) &_tiledbsoma_tiledbsoma_stats_enable, 0},
+    {"_tiledbsoma_tiledbsoma_stats_disable", (DL_FUNC) &_tiledbsoma_tiledbsoma_stats_disable, 0},
+    {"_tiledbsoma_tiledbsoma_stats_reset", (DL_FUNC) &_tiledbsoma_tiledbsoma_stats_reset, 0},
+    {"_tiledbsoma_tiledbsoma_stats_dump", (DL_FUNC) &_tiledbsoma_tiledbsoma_stats_dump, 0},
     {NULL, NULL, 0}
 };
 
