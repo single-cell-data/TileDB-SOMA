@@ -131,16 +131,16 @@ BootstrapLinux() {
     fi
     ## Add the repo
     ## need pinning to ensure repo sorts higher, note we also pin r2u
-    echo "Package: *" | sudo tee /etc/apt/preferences.d/c2d4u-pin >/dev/null
-    echo "Pin: release o=LP-PPA-c2d4u.team-c2d4u4.0+" | sudo tee -a /etc/apt/preferences.d/c2d4u-pin >/dev/null
-    echo "Pin-Priority: 600" | sudo tee -a /etc/apt/preferences.d/c2d4u-pin >/dev/null
+    #echo "Package: *" | sudo tee /etc/apt/preferences.d/c2d4u-pin >/dev/null
+    #echo "Pin: release o=LP-PPA-c2d4u.team-c2d4u4.0+" | sudo tee -a /etc/apt/preferences.d/c2d4u-pin >/dev/null
+    #echo "Pin-Priority: 600" | sudo tee -a /etc/apt/preferences.d/c2d4u-pin >/dev/null
     ## now add repo (and update index)
-    sudo add-apt-repository -y "deb ${CRAN}/bin/linux/ubuntu $(lsb_release -cs)-cran40/"
+    # already done above:  sudo add-apt-repository -y "deb ${CRAN}/bin/linux/ubuntu $(lsb_release -cs)-cran40/"
 
     # Add marutter's c2d4u repository.
     # R 4.0 (not needed as CRAN current) and c2d4u/4.0 variant as backup
     #sudo add-apt-repository -y "ppa:marutter/rrutter4.0"
-    sudo add-apt-repository -y "ppa:c2d4u.team/c2d4u4.0+"
+    #sudo add-apt-repository -y "ppa:c2d4u.team/c2d4u4.0+"
 
     ## Added PPAs, if given
     if [[ "${ADDED_PPAS}" != "" ]]; then
