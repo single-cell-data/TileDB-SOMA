@@ -196,6 +196,7 @@ BootstrapLinuxOptions() {
     if [[ "${USE_BSPM}" != "FALSE" ]]; then
         sudo Rscript --vanilla -e 'install.packages("bspm", repos="https://cran.r-project.org")'
         echo "suppressMessages(bspm::enable())" | sudo tee --append /etc/R/Rprofile.site >/dev/null
+        echo "options(bspm.version.check=FALSE)" | sudo tee --append /etc/R/Rprofile.site >/dev/null
         echo "options(bspm.sudo=TRUE)" | sudo tee --append /etc/R/Rprofile.site >/dev/null
     fi
 }
