@@ -336,6 +336,7 @@ InstallDeps() {
 }
 
 InstallDepsAndSuggests() {
+    sudo Rscript -e 'if (requireNamespace("bspm", quietly=TRUE)) bspm::disable(); remotes::install_github("rdatatable/data.table"); remotes::install_github("eddelbuettel/arch"); install.packages("pbmc3k.tiledb", repos=c("https://ghrr.github.io/drat", "https://cloud.r-project.org"), type="source")'
     sudo Rscript -e 'remotes::install_deps(".", dependencies=TRUE)'
 }
 
