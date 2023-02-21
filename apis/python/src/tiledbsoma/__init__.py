@@ -75,6 +75,7 @@ example, the schema of a ``tiledbsoma.DataFrame`` is expressed as an
 """
 
 from somacore import AxisColumnNames, AxisQuery, ExperimentAxisQuery
+from somacore.options import ResultOrder
 
 from ._collection import Collection
 from ._constants import SOMA_JOINID
@@ -119,6 +120,7 @@ __all__ = [
     "open",
     "show_package_versions",
     "SOMAError",
+    "ResultOrder",
     "SOMATileDBContext",
     "SOMA_JOINID",
     "SparseNDArray",
