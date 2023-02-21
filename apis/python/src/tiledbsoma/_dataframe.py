@@ -13,7 +13,7 @@ from ._constants import SOMA_JOINID
 from ._query_condition import QueryCondition
 from ._read_iters import TableReadIter
 from ._tiledb_array import TileDBArray
-from ._types import NPFloating, NPInteger, is_slice_of
+from ._types import NPFloating, NPInteger, Slice, is_slice_of
 from .options import SOMATileDBContext
 from .options._tiledb_create_options import TileDBCreateOptions
 
@@ -258,13 +258,33 @@ class DataFrame(TileDBArray, somacore.DataFrame):
     def _set_reader_coord(
         self, sr: clib.SOMAReader, dim_idx: int, dim: tiledb.Dim, coord: object
     ) -> bool:
-        if super()._set_reader_coord(sr, dim_idx, dim, coord):
-            return True
+
+        if coord is None:
+            return True  # No constraint; select all in this dimension
 
         if isinstance(coord, (str, bytes)):
-            sr.set_dim_points(dim.name, [coord])
+            sr.set_dim_points_string_or_bytes(dim.name, [coord])
             return True
+
+        if isinstance(coord, (pa.Array, pa.ChunkedArray)):
+            # sr.set_dim_points_arrow_array does type disambiguation based on array schema -- so we
+            # do not.
+            sr.set_dim_points_arrow_array(dim.name, coord)
+            return True
+
+        if isinstance(coord, (Sequence, np.ndarray)):
+            if self._set_reader_coord_by_py_seq_or_np_array(sr, dim_idx, dim, coord):
+                return True
+
+        if isinstance(coord, slice):
+            _util.validate_slice(coord)
+            if self._set_reader_coord_by_non_string_slice(sr, dim_idx, dim, coord):
+                return True
+
+        # Note: slice(None, None) matches this ... this breaks `slice(None, None)` of other types
+        # such as int8, float32, etc., unless we test for string last.
         if is_slice_of(coord, str) or is_slice_of(coord, bytes):
+            _util.validate_slice(coord)
             # Figure out which one.
             dim_type: Union[Type[str], Type[bytes]] = type(dim.domain[0])
             # A `None` or empty start is always equivalent to empty str/bytes.
@@ -277,18 +297,100 @@ class DataFrame(TileDBArray, somacore.DataFrame):
                 stop = coord.stop
             sr.set_dim_ranges(dim.name, [(start, stop)])
             return True
-        if isinstance(coord, (Sequence, pa.Array, pa.ChunkedArray, np.ndarray)):
-            # SOMAReader.set_dim_points handles:
-            # * Python list/tuple (sequence)
-            # * NumPy arrays, but only 1D
-            # * Arrow arrays
-            if isinstance(coord, np.ndarray):
-                if coord.ndim != 1:
-                    raise ValueError(
-                        f"only 1D numpy arrays may be used to index; got {coord.ndim}"
-                    )
+
+        if super()._set_reader_coord(sr, dim_idx, dim, coord):
+            return True
+
+        return False
+
+    def _set_reader_coord_by_py_seq_or_np_array(
+        self, sr: clib.SOMAReader, dim_idx: int, dim: tiledb.Dim, coord: object
+    ) -> bool:
+        if isinstance(coord, np.ndarray):
+            if coord.ndim != 1:
+                raise ValueError(
+                    f"only 1D numpy arrays may be used to index; got {coord.ndim}"
+                )
+
+        # See libtiledbsoma.cc for more context on why we need the
+        # explicit type-check here.
+        if dim.dtype == np.float64:
+            sr.set_dim_points_float64(dim.name, coord)
+        elif dim.dtype == np.float32:
+            sr.set_dim_points_float32(dim.name, coord)
+
+        elif dim.dtype == np.int64:
+            sr.set_dim_points_int64(dim.name, coord)
+        elif dim.dtype == np.int32:
+            sr.set_dim_points_int32(dim.name, coord)
+        elif dim.dtype == np.int16:
+            sr.set_dim_points_int16(dim.name, coord)
+        elif dim.dtype == np.int8:
+            sr.set_dim_points_int8(dim.name, coord)
+
+        elif dim.dtype == np.uint64:
+            sr.set_dim_points_uint64(dim.name, coord)
+        elif dim.dtype == np.uint32:
+            sr.set_dim_points_uint32(dim.name, coord)
+        elif dim.dtype == np.uint16:
+            sr.set_dim_points_uint16(dim.name, coord)
+        elif dim.dtype == np.uint8:
+            sr.set_dim_points_uint8(dim.name, coord)
+
+        else:
+            sr.set_dim_points(dim.name, coord)
+
+        return True
+
+    def _set_reader_coord_by_non_string_slice(
+        self, sr: clib.SOMAReader, dim_idx: int, dim: tiledb.Dim, coord: Slice[Any]
+    ) -> bool:
+
+        try:
+            lo_hi = _util.slice_to_numeric_range(coord, dim.domain)
+        except _util.NonNumericDimensionError:
+            return False  # We only handle numeric dimensions here.
+
+        if not lo_hi:
+            return True
+
+        if dim.dtype == np.float64:
+            sr.set_dim_ranges_float64(dim.name, [lo_hi])
+            return True
+        elif dim.dtype == np.float32:
+            sr.set_dim_ranges_float32(dim.name, [lo_hi])
+            return True
+
+        elif dim.dtype == np.int64:
+            sr.set_dim_ranges_int64(dim.name, [lo_hi])
+            return True
+        elif dim.dtype == np.int32:
+            sr.set_dim_ranges_int32(dim.name, [lo_hi])
+            return True
+        elif dim.dtype == np.int16:
+            sr.set_dim_ranges_int16(dim.name, [lo_hi])
+            return True
+        elif dim.dtype == np.int8:
+            sr.set_dim_ranges_int8(dim.name, [lo_hi])
+            return True
+
+        elif dim.dtype == np.uint64:
+            sr.set_dim_ranges_uint64(dim.name, [lo_hi])
+            return True
+        elif dim.dtype == np.uint32:
+            sr.set_dim_ranges_uint32(dim.name, [lo_hi])
+            return True
+        elif dim.dtype == np.uint16:
+            sr.set_dim_ranges_uint16(dim.name, [lo_hi])
+            return True
+        elif dim.dtype == np.uint8:
+            sr.set_dim_ranges_uint8(dim.name, [lo_hi])
+            return True
+
+        elif dim.dtype == np.bool_:
             sr.set_dim_points(dim.name, coord)
             return True
+
         return False
 
 

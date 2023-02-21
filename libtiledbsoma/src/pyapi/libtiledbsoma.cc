@@ -53,10 +53,6 @@ using namespace tiledbsoma;
 namespace py = pybind11;
 using namespace py::literals;
 
-// kerl attempts
-// template <typename... Args>
-// using overload_cast_ = pybind11::detail::overload_cast_impl<Args...>;
-
 namespace tiledbsoma {
 
 /**
@@ -295,6 +291,19 @@ PYBIND11_MODULE(libtiledbsoma, m) {
         // more effort, see:
         // https://pybind11.readthedocs.io/en/stable/classes.html#overloaded-methods
 
+        // In an initial version of this file we had `set_dim_ranges` relying
+        // solely on type-overloading. This worked since we supported only int
+        // and string indices. In a subsequent version we are now supporting
+        // various NumPy/PyArrow types including float32, float64, int8, uint16,
+        // etc. It is an unfortunate fact that pybind11 does _not_ successfully
+        // disambiguate between float32 and float64, or between int8 and int64,
+        // etc. given that we ask it to disambiguate using not just types but
+        // std::vector of types or std::vector of std::pair of types.
+        // Experiments have shown that when both float32 and float64 are
+        // implemented with overloaded names to be differentiated solely by
+        // type, pybind11 uses the _first found_. Therefore it is necessary for
+        // us to no longer use common overloaded names.
+
         .def(
             "set_dim_points",
             static_cast<void (SOMAReader::*)(
@@ -308,111 +317,76 @@ PYBIND11_MODULE(libtiledbsoma, m) {
                 &SOMAReader::set_dim_points))
 
         .def(
-            "set_dim_points",
+            "set_dim_points_string_or_bytes",
             static_cast<void (SOMAReader::*)(
-                const std::string&, const std::vector<int32_t>&)>(
+                const std::string&, const std::vector<std::string>&)>(
                 &SOMAReader::set_dim_points))
 
         .def(
-            "set_dim_points",
-            static_cast<void (SOMAReader::*)(
-                const std::string&, const std::vector<int16_t>&)>(
-                &SOMAReader::set_dim_points))
-
-        .def(
-            "set_dim_points",
-            static_cast<void (SOMAReader::*)(
-                const std::string&, const std::vector<int8_t>&)>(
-                &SOMAReader::set_dim_points))
-
-        // debugging: order matters: failures either way like
-        // RuntimeError: Static type (INT16) does not match expected type
-        // (INT64) so ordering doesn't _solve_ problems but the finding is that
-        // ordering does _affect_ things ...
-
-        .def(
-            "set_dim_points",
-            static_cast<void (SOMAReader::*)(
-                const std::string&, const std::vector<uint8_t>&)>(
-                &SOMAReader::set_dim_points))
-
-        .def(
-            "set_dim_points",
-            static_cast<void (SOMAReader::*)(
-                const std::string&, const std::vector<uint16_t>&)>(
-                &SOMAReader::set_dim_points))
-
-        .def(
-            "set_dim_points",
-            static_cast<void (SOMAReader::*)(
-                const std::string&, const std::vector<uint32_t>&)>(
-                &SOMAReader::set_dim_points))
-
-        .def(
-            "set_dim_points",
-            static_cast<void (SOMAReader::*)(
-                const std::string&, const std::vector<uint64_t>&)>(
-                &SOMAReader::set_dim_points))
-
-        // Looking at:
-        // https://pybind11.readthedocs.io/en/stable/advanced/functions.html#overload-resolution-order
-        // ...
-
-        .def(
-            "set_dim_points",
+            "set_dim_points_float64",
             static_cast<void (SOMAReader::*)(
                 const std::string&, const std::vector<double>&)>(
                 &SOMAReader::set_dim_points))
 
         .def(
-            "set_dim_points",
+            "set_dim_points_float32",
             static_cast<void (SOMAReader::*)(
                 const std::string&, const std::vector<float>&)>(
                 &SOMAReader::set_dim_points))
 
-        // kerl attempts
+        .def(
+            "set_dim_points_int64",
+            static_cast<void (SOMAReader::*)(
+                const std::string&, const std::vector<int64_t>&)>(
+                &SOMAReader::set_dim_points))
 
-        // .def(
-        //     "set_dim_points",
-        //     static_cast<void (SOMAReader::*)(
-        //         const std::string dim&, const std::vector<float>& points)>(
-        //         &SOMAReader::set_dim_points),
-        //     py::arg("dim").noconvert(),
-        //     py::arg("points").noconvert())
+        .def(
+            "set_dim_points_int32",
+            static_cast<void (SOMAReader::*)(
+                const std::string&, const std::vector<int32_t>&)>(
+                &SOMAReader::set_dim_points))
 
-        // .def(
-        //     "set_dim_points",
-        //     static_cast<void (SOMAReader::*)(
-        //         const std::string& dim, const std::vector<double>& points)>(
-        //         &SOMAReader::set_dim_points),
-        //     py::arg("dim").noconvert(),
-        //     py::arg("points").noconvert())
+        .def(
+            "set_dim_points_int16",
+            static_cast<void (SOMAReader::*)(
+                const std::string&, const std::vector<int16_t>&)>(
+                &SOMAReader::set_dim_points))
 
-        // .def(
-        //     "set_dim_points",
-        //     py::overload_cast<const std::string&, const
-        //     std::vector<float>&>(&SOMAReader::set_dim_points));
+        .def(
+            "set_dim_points_int8",
+            static_cast<void (SOMAReader::*)(
+                const std::string&, const std::vector<int8_t>&)>(
+                &SOMAReader::set_dim_points))
 
-        // .def(
-        //     "set_dim_points",
-        //     py::overload_cast<const std::string&, const
-        //     std::vector<double>&>(&SOMAReader::set_dim_points));
+        .def(
+            "set_dim_points_uint64",
+            static_cast<void (SOMAReader::*)(
+                const std::string&, const std::vector<uint64_t>&)>(
+                &SOMAReader::set_dim_points))
 
-        // .def(
-        //     "set_dim_points",
-        //     overload_cast_<const std::string&, const std::vector<float>&>()(
-        //         &SOMAReader::set_dim_points))
+        .def(
+            "set_dim_points_uint32",
+            static_cast<void (SOMAReader::*)(
+                const std::string&, const std::vector<uint32_t>&)>(
+                &SOMAReader::set_dim_points))
 
-        // .def(
-        //     "set_dim_points",
-        //     overload_cast_<const std::string&, const std::vector<double>&>()(
-        //         &SOMAReader::set_dim_points))
+        .def(
+            "set_dim_points_uint16",
+            static_cast<void (SOMAReader::*)(
+                const std::string&, const std::vector<uint16_t>&)>(
+                &SOMAReader::set_dim_points))
+
+        .def(
+            "set_dim_points_uint8",
+            static_cast<void (SOMAReader::*)(
+                const std::string&, const std::vector<uint8_t>&)>(
+                &SOMAReader::set_dim_points))
 
         // The above short functions are expected to be invoked when the coords
         // are Python list/tuple, or NumPy arrays.  Arrow arrays are in this
         // long if-else-if function.
         .def(
-            "set_dim_points",
+            "set_dim_points_arrow_array",
             [](SOMAReader& reader,
                const std::string& dim,
                py::object py_arrow_array,
@@ -514,13 +488,11 @@ PYBIND11_MODULE(libtiledbsoma, m) {
                             dim, data, partition_index, partition_count);
 
                         // TODO:
-
-                        //     (pa.bool_(),) * 2,
-
-                        //     (pa.timestamp("s"),) * 2,
-                        //     (pa.timestamp("ms"),) * 2,
-                        //     (pa.timestamp("us"),) * 2,
-                        //     (pa.timestamp("ns"),) * 2,
+                        // (pa.bool_(),) * 2,
+                        // (pa.timestamp("s"),) * 2,
+                        // (pa.timestamp("ms"),) * 2,
+                        // (pa.timestamp("us"),) * 2,
+                        // (pa.timestamp("ns"),) * 2,
 
                     } else if (
                         !strcmp(arrow_schema.format, "u") ||
@@ -570,8 +542,6 @@ PYBIND11_MODULE(libtiledbsoma, m) {
             "partition_index"_a = 0,
             "partition_count"_a = 1)
 
-        // TODO: more types
-
         .def(
             "set_dim_ranges",
             static_cast<void (SOMAReader::*)(
@@ -586,68 +556,87 @@ PYBIND11_MODULE(libtiledbsoma, m) {
                 const std::vector<std::pair<int64_t, int64_t>>&)>(
                 &SOMAReader::set_dim_ranges))
 
+        // In an initial version of this file we had `set_dim_ranges` relying
+        // solely on type-overloading. This worked since we supported only int
+        // and string indices. In a subsequent version we are now supporting
+        // various NumPy/PyArrow types including float32, float64, int8, uint16,
+        // etc. It is an unfortunate fact that pybind11 does _not_ successfully
+        // disambiguate between float32 and float64, or between int8 and int64,
+        // etc. given that we ask it to disambiguate using not just types but
+        // std::vector of types or std::vector of std::pair of types.
+        // Experiments have shown that when both float32 and float64 are
+        // implemented with overloaded names to be differentiated solely by
+        // type, pybind11 uses the _first found_. Therefore it is necessary for
+        // us to no longer use common overloaded names.
+
         .def(
-            "set_dim_ranges",
+            "set_dim_ranges_float64",
+            static_cast<void (SOMAReader::*)(
+                const std::string&,
+                const std::vector<std::pair<double, double>>&)>(
+                &SOMAReader::set_dim_ranges))
+
+        .def(
+            "set_dim_ranges_float32",
+            static_cast<void (SOMAReader::*)(
+                const std::string&,
+                const std::vector<std::pair<float, float>>&)>(
+                &SOMAReader::set_dim_ranges))
+
+        .def(
+            "set_dim_ranges_int64",
+            static_cast<void (SOMAReader::*)(
+                const std::string&,
+                const std::vector<std::pair<int64_t, int64_t>>&)>(
+                &SOMAReader::set_dim_ranges))
+
+        .def(
+            "set_dim_ranges_int32",
             static_cast<void (SOMAReader::*)(
                 const std::string&,
                 const std::vector<std::pair<int32_t, int32_t>>&)>(
                 &SOMAReader::set_dim_ranges))
 
         .def(
-            "set_dim_ranges",
+            "set_dim_ranges_int16",
             static_cast<void (SOMAReader::*)(
                 const std::string&,
                 const std::vector<std::pair<int16_t, int16_t>>&)>(
                 &SOMAReader::set_dim_ranges))
 
         .def(
-            "set_dim_ranges",
+            "set_dim_ranges_int8",
             static_cast<void (SOMAReader::*)(
                 const std::string&,
                 const std::vector<std::pair<int8_t, int8_t>>&)>(
                 &SOMAReader::set_dim_ranges))
 
         .def(
-            "set_dim_ranges",
+            "set_dim_ranges_uint64",
             static_cast<void (SOMAReader::*)(
                 const std::string&,
                 const std::vector<std::pair<uint64_t, uint64_t>>&)>(
                 &SOMAReader::set_dim_ranges))
 
         .def(
-            "set_dim_ranges",
+            "set_dim_ranges_uint32",
             static_cast<void (SOMAReader::*)(
                 const std::string&,
                 const std::vector<std::pair<uint32_t, uint32_t>>&)>(
                 &SOMAReader::set_dim_ranges))
 
         .def(
-            "set_dim_ranges",
+            "set_dim_ranges_uint16",
             static_cast<void (SOMAReader::*)(
                 const std::string&,
                 const std::vector<std::pair<uint16_t, uint16_t>>&)>(
                 &SOMAReader::set_dim_ranges))
 
         .def(
-            "set_dim_ranges",
+            "set_dim_ranges_uint8",
             static_cast<void (SOMAReader::*)(
                 const std::string&,
                 const std::vector<std::pair<uint8_t, uint8_t>>&)>(
-                &SOMAReader::set_dim_ranges))
-
-        .def(
-            "set_dim_ranges",
-            static_cast<void (SOMAReader::*)(
-                const std::string&,
-                const std::vector<std::pair<double, double>>&)>(
-                &SOMAReader::set_dim_ranges))
-
-        // XXX comment re found-first
-        .def(
-            "set_dim_ranges",
-            static_cast<void (SOMAReader::*)(
-                const std::string&,
-                const std::vector<std::pair<float, float>>&)>(
                 &SOMAReader::set_dim_ranges))
 
         .def(

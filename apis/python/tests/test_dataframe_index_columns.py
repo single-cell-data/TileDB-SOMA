@@ -4,27 +4,11 @@ import pytest
 
 import tiledbsoma as soma
 
-# TODO: debug this: why 127 is excluded
-# ArraySchema(
-#   domain=Domain(*[
-#     Dim(name='int8', domain=(-128, 126), tile=64, dtype='int8', filters=FilterList([ZstdFilter(level=3), ])),
-#   ]),
-# ...
-#
-# when
-#   elif np.issubdtype(dtype, NPInteger):
-#       iinfo = np.iinfo(cast(NPInteger, dtype))
-#       domain = iinfo.min, iinfo.max - 1
-
-# and else when
-#
-#   elif np.issubdtype(dtype, NPInteger):
-#       iinfo = np.iinfo(cast(NPInteger, dtype))
-#       domain = iinfo.min, iinfo.max
-#
-# then
-#
-# tiledb.cc.TileDBError: [TileDB::Dimension] Error: Domain check failed; Domain range (upper + lower + 1) is larger than the maximum unsigned number
+# TODO:
+# * Unit-test more half-none and full-none slices here
+# * Unit-test indexing by bool and timestamp arrow types here
+# * Triple-type tests here
+# * Explicit cross-typed tests here -- e.g. pa.float64 array on float32 schema should throw
 
 
 @pytest.fixture
@@ -63,7 +47,7 @@ def arrow_table():
             "default01234",
         ],
         [
-            "soma_joinid-pylist",
+            "soma_joinid-py-list",
             ["soma_joinid"],
             [[0, 2]],
             {
@@ -72,7 +56,7 @@ def arrow_table():
             },
         ],
         [
-            "soma_joinid-pytuple",
+            "soma_joinid-py-tuple",
             ["soma_joinid"],
             [(0, 2)],
             {
@@ -81,13 +65,37 @@ def arrow_table():
             },
         ],
         [
-            "soma_joinid-pyslice",
+            "soma_joinid-py-slice",
             ["soma_joinid"],
             [slice(0, 2)],
             {
                 "soma_joinid": pa.array([0, 1, 2], pa.int64()),
                 "string": pa.array(["apple", "ball", "cat"], pa.large_string()),
             },
+        ],
+        [
+            "soma_joinid-py-left-none-slice",
+            ["soma_joinid"],
+            [slice(None, 2)],
+            {
+                "soma_joinid": pa.array([0, 1, 2], pa.int64()),
+                "string": pa.array(["apple", "ball", "cat"], pa.large_string()),
+            },
+        ],
+        [
+            "soma_joinid-py-right-none-slice",
+            ["soma_joinid"],
+            [slice(2, None)],
+            {
+                "soma_joinid": pa.array([2, 3, 4], pa.int64()),
+                "string": pa.array(["cat", "dog", "egg"], pa.large_string()),
+            },
+        ],
+        [
+            "soma_joinid-py-both-none-slice",
+            ["soma_joinid"],
+            [slice(None, None)],
+            "default01234",
         ],
         [
             "soma_joinid-np-array-untyped",
@@ -133,19 +141,19 @@ def arrow_table():
             "default01234",
         ],
         [
-            "string-pylist",
+            "string-py-list",
             ["string"],
             [["cat", "dog"]],
             "default23",
         ],
         [
-            "string-pytuple",
+            "string-py-tuple",
             ["string"],
             [("cat", "dog")],
             "default23",
         ],
         [
-            "string-pyslice",
+            "string-py-slice",
             ["string"],
             [("cat", "dog")],
             "default23",
@@ -182,19 +190,19 @@ def arrow_table():
             "default01234",
         ],
         [
-            "bytes-pylist",
+            "bytes-py-list",
             ["bytes"],
             [[b"cat", b"dog"]],
             "default23",
         ],
         [
-            "bytes-pytuple",
+            "bytes-py-tuple",
             ["bytes"],
             [(b"cat", b"dog")],
             "default23",
         ],
         [
-            "bytes-pyslice",
+            "bytes-py-slice",
             ["bytes"],
             [(b"cat", b"dog")],
             "default23",
@@ -231,22 +239,46 @@ def arrow_table():
             "default01234",
         ],
         [
-            "int8-pylist",
+            "int8-py-list",
             ["int8"],
             [[82, 83]],
             "default23",
         ],
         [
-            "int8-pytuple",
+            "int8-py-tuple",
             ["int8"],
             [[82, 83]],
             "default23",
         ],
         [
-            "int8-pyslice",
+            "int8-py-slice",
             ["int8"],
             [slice(82, 83)],
             "default23",
+        ],
+        [
+            "int8-py-left-none-slice",
+            ["int8"],
+            [slice(None, 82)],
+            {
+                "soma_joinid": pa.array([0, 1, 2], pa.int64()),
+                "string": pa.array(["apple", "ball", "cat"], pa.large_string()),
+            },
+        ],
+        [
+            "int8-py-right-none-slice",
+            ["int8"],
+            [slice(82, None)],
+            {
+                "soma_joinid": pa.array([2, 3, 4], pa.int64()),
+                "string": pa.array(["cat", "dog", "egg"], pa.large_string()),
+            },
+        ],
+        [
+            "int8-py-both-none-slice",
+            ["int8"],
+            [slice(None, None)],
+            "default01234",
         ],
         [
             "int8-numpy-untyped",
@@ -264,7 +296,7 @@ def arrow_table():
             "int8-pa-array-untyped",
             ["int8"],
             [pa.array([82, 83])],
-            "default23",
+            RuntimeError,  # Static type (INT64) does not match expected type (INT8)
         ],
         [
             "int8-pa-array-typed",
@@ -280,19 +312,19 @@ def arrow_table():
             "default01234",
         ],
         [
-            "uint16-pylist",
+            "uint16-py-list",
             ["uint16"],
             [[1612, 1613]],
             "default23",
         ],
         [
-            "uint16-pytuple",
+            "uint16-py-tuple",
             ["uint16"],
             [[1612, 1613]],
             "default23",
         ],
         [
-            "uint16-pyslice",
+            "uint16-py-slice",
             ["uint16"],
             [slice(1612, 1613)],
             "default23",
@@ -313,7 +345,7 @@ def arrow_table():
             "uint16-pa-array-untyped",
             ["uint16"],
             [pa.array([1612, 1613])],
-            "default23",
+            RuntimeError,  # Static type (INT64) does not match expected type (UINT16)
         ],
         [
             "uint16-pa-array-typed",
@@ -329,19 +361,19 @@ def arrow_table():
             "default01234",
         ],
         [
-            "int64-pylist",
+            "int64-py-list",
             ["int64"],
             [[6402, 6403]],
             "default23",
         ],
         [
-            "int64-pytuple",
+            "int64-py-tuple",
             ["int64"],
             [(6402, 6403)],
             "default23",
         ],
         [
-            "int64-pyslice",
+            "int64-py-slice",
             ["int64"],
             [slice(6402, 6403)],
             "default23",
@@ -378,19 +410,19 @@ def arrow_table():
             "default01234",
         ],
         [
-            "float32-pylist",
+            "float32-py-list",
             ["float32"],
             [[322.5, 323.5]],
             "default23",
         ],
         [
-            "float32-pytuple",
+            "float32-py-tuple",
             ["float32"],
             [(322.5, 323.5)],
             "default23",
         ],
         [
-            "float32-pyslice",
+            "float32-py-slice",
             ["float32"],
             [slice(322.5, 323.5)],
             "default23",
@@ -411,7 +443,7 @@ def arrow_table():
             "float32-pa-array-untyped",
             ["float32"],
             [pa.array([322.5, 323.5])],
-            "default23",
+            RuntimeError,  # Static type (FLOAT64) does not match expected type (FLOAT32)
         ],
         [
             "float32-pa-array-typed",
@@ -427,19 +459,19 @@ def arrow_table():
             "default01234",
         ],
         [
-            "float64-pylist",
+            "float64-py-list",
             ["float64"],
             [[642.5, 643.5]],
             "default23",
         ],
         [
-            "float64-pytuple",
+            "float64-py-tuple",
             ["float64"],
             [(642.5, 643.5)],
             "default23",
         ],
         [
-            "float64-pyslice",
+            "float64-py-slice",
             ["float64"],
             [slice(642.5, 643.5)],
             "default23",
@@ -497,13 +529,13 @@ def arrow_table():
             "default23",
         ],
         [
-            "string+int64-pylist",
+            "string+int64-py-list",
             ["string", "int64"],
             [["cat", "dog"], [6402, 6403]],
             "default23",
         ],
         [
-            "string+int64-pytuple",
+            "string+int64-py-tuple",
             ["string", "int64"],
             [("cat", "dog"), (6402, 6403)],
             "default23",
@@ -523,25 +555,30 @@ def test_types(tmp_path, arrow_table, name, index_column_names, coords, expected
     with soma.DataFrame.open(uri, "w") as sdf:
         sdf.write(arrow_table)
 
-    if expecteds == "default01234":
-        expecteds = {
-            "soma_joinid": pa.array([0, 1, 2, 3, 4], pa.int64()),
-            "string": pa.array(
-                ["apple", "ball", "cat", "dog", "egg"], pa.large_string()
-            ),
-        }
+    if expecteds == RuntimeError:
+        with soma.DataFrame.open(uri, "r") as sdf:
+            with pytest.raises(RuntimeError):
+                sdf.read(coords=coords).concat()
 
-    elif expecteds == "default23":
-        expecteds = {
-            "soma_joinid": pa.array([2, 3], pa.int64()),
-            "string": pa.array(["cat", "dog"], pa.large_string()),
-        }
+    else:
+        if expecteds == "default01234":
+            expecteds = {
+                "soma_joinid": pa.array([0, 1, 2, 3, 4], pa.int64()),
+                "string": pa.array(
+                    ["apple", "ball", "cat", "dog", "egg"], pa.large_string()
+                ),
+            }
 
-    with soma.DataFrame.open(uri, "r") as sdf:
-        actual_table = sdf.read(coords=coords).concat()
-        for query_column_name, expected_array in expecteds.items():
-            actual_array = actual_table[query_column_name].combine_chunks()
+        elif expecteds == "default23":
+            expecteds = {
+                "soma_joinid": pa.array([2, 3], pa.int64()),
+                "string": pa.array(["cat", "dog"], pa.large_string()),
+            }
 
-            # The output from the first one is easier to read when it fails
-            assert actual_array.to_pylist() == expected_array.to_pylist()
-            assert actual_array == expected_array
+        with soma.DataFrame.open(uri, "r") as sdf:
+            actual_table = sdf.read(coords=coords).concat()
+            for query_column_name, expected_array in expecteds.items():
+                actual_array = actual_table[query_column_name].combine_chunks()
+                # The output from the first one is easier to read when it fails
+                assert actual_array.to_pylist() == expected_array.to_pylist()
+                assert actual_array == expected_array

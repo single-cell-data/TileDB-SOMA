@@ -114,7 +114,7 @@ def test_soma_reader_dim_points_arrow_array():
 
     obs_id_points = pa.array([0, 2, 4, 6, 8])
 
-    sr.set_dim_points("soma_joinid", obs_id_points)
+    sr.set_dim_points_arrow_array("soma_joinid", obs_id_points)
 
     sr.submit()
     arrow_table = sr.read_next()
@@ -204,7 +204,7 @@ def test_soma_reader_obs_slice_x():
     sr = clib.SOMAReader(uri)
 
     # slice X/data read with obs.soma_joinid column
-    sr.set_dim_points("soma_dim_0", obs.column("soma_joinid"))
+    sr.set_dim_points_arrow_array("soma_dim_0", obs.column("soma_joinid"))
     sr.submit()
 
     # iterate read batches until all results have been processed
@@ -265,7 +265,7 @@ def test_soma_reader_reset():
     # ---------------------------------------------------------------
     sr.reset()
     obs_id_points = pa.array([0, 2, 4, 6, 8])
-    sr.set_dim_points("soma_joinid", obs_id_points)
+    sr.set_dim_points_arrow_array("soma_joinid", obs_id_points)
 
     sr.submit()
     arrow_table = sr.read_next()
