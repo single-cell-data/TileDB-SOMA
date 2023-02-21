@@ -76,10 +76,10 @@ TileDBArray <- R6::R6Class(
       )
     },
 
-    #' @description Retrieve the array schema (lifecycle: experimental)
+    #' @description Retrieve the array schema as an Arrow schema (lifecycle: experimental)
     #' @return A [`tiledb::tiledb_array_schema`] object
     schema = function() {
-      tiledb::schema(self$object)
+      arrow_schema_from_tiledb_schema(tiledb::schema(self$object))
     },
 
     #' @description Retrieve the array dimensions (lifecycle: experimental)
