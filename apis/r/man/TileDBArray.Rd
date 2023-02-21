@@ -124,7 +124,7 @@ NULL
 \if{html}{\out{<a id="method-TileDBArray-schema"></a>}}
 \if{latex}{\out{\hypertarget{method-TileDBArray-schema}{}}}
 \subsection{Method \code{schema()}}{
-Retrieve the array schema (lifecycle: experimental)
+Retrieve the array schema as an Arrow schema (lifecycle: experimental)
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{TileDBArray$schema()}\if{html}{\out{</div>}}
 }
