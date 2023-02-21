@@ -25,6 +25,7 @@ populate the private \code{create_empty_array()} and \code{ingest_data()} method
 \item \href{#method-TileDBArray-tiledb_array}{\code{TileDBArray$tiledb_array()}}
 \item \href{#method-TileDBArray-get_metadata}{\code{TileDBArray$get_metadata()}}
 \item \href{#method-TileDBArray-set_metadata}{\code{TileDBArray$set_metadata()}}
+\item \href{#method-TileDBArray-arrow_schema}{\code{TileDBArray$arrow_schema()}}
 \item \href{#method-TileDBArray-schema}{\code{TileDBArray$schema()}}
 \item \href{#method-TileDBArray-dimensions}{\code{TileDBArray$dimensions()}}
 \item \href{#method-TileDBArray-shape}{\code{TileDBArray$shape()}}
@@ -121,10 +122,23 @@ NULL
 }
 }
 \if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-TileDBArray-arrow_schema"></a>}}
+\if{latex}{\out{\hypertarget{method-TileDBArray-arrow_schema}{}}}
+\subsection{Method \code{arrow_schema()}}{
+Retrieve the array schema as an Arrow schema (lifecycle: experimental)
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{TileDBArray$arrow_schema()}\if{html}{\out{</div>}}
+}
+
+\subsection{Returns}{
+A \code{\link[tiledb:tiledb_array_schema]{tiledb::tiledb_array_schema}} object
+}
+}
+\if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-TileDBArray-schema"></a>}}
 \if{latex}{\out{\hypertarget{method-TileDBArray-schema}{}}}
 \subsection{Method \code{schema()}}{
-Retrieve the array schema as an Arrow schema (lifecycle: experimental)
+Retrieve the array schema (lifecycle: experimental)
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{TileDBArray$schema()}\if{html}{\out{</div>}}
 }
