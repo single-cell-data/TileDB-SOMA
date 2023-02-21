@@ -6,7 +6,7 @@
 #' @details
 #' ## Initialization
 #' Initializing a `TileDBArray` object does not automatically create a new array
-#' at the specified `uri` if one does not already exist because we don't know
+#' at the specified `uri` if one does not already exist because we do not know
 #' what the schema will be. Arrays are only created by child classes, which
 #' populate the private `create_empty_array()` and `ingest_data()` methods. (lifecycle: experimental)
 #' @export
@@ -77,42 +77,42 @@ TileDBArray <- R6::R6Class(
     },
 
     #' @description Retrieve the array schema as an Arrow schema (lifecycle: experimental)
-    #' @return A [`tiledb::tiledb_array_schema`] object
-    arrow_schema = function() {
+    #' @return A [`arrow::schema`] object
+    schema = function() {
       arrow_schema_from_tiledb_schema(tiledb::schema(self$object))
     },
 
-    #' @description Retrieve the array schema (lifecycle: experimental)
+    #' @description Retrieve the array schema as TileDB schema (lifecycle: experimental)
     #' @return A [`tiledb::tiledb_array_schema`] object
-    schema = function() {
+    tiledb_schema = function() {
       tiledb::schema(self$object)
     },
 
     #' @description Retrieve the array dimensions (lifecycle: experimental)
     #' @return A named list of [`tiledb::tiledb_dim`] objects
     dimensions = function() {
-      dims <- tiledb::dimensions(self$schema())
+      dims <- tiledb::dimensions(self$tiledb_schema())
       setNames(dims, nm = vapply_char(dims, tiledb::name))
     },
 
     #' @description Retrieve the shape, i.e. the length of each dimension (lifecycle: experimental)
     #' @return A named vector of dimension length (and the same type as the dimension)
     shape = function() {
-      dims <- tiledb::dimensions(self$schema())
+      dims <- tiledb::dimensions(self$tiledb_schema())
       do.call(c, lapply(dims, function(dim) { dom <- tiledb::domain(dim); dom[2] - dom[1] + 1 }))
     },
 
     #' @description Retrieve number of dimensions (lifecycle: experimental)
     #' @return A scalar with the number of dimensions
     ndim = function() {
-      dims <- tiledb::dimensions(self$schema())
+      dims <- tiledb::dimensions(self$tiledb_schema())
       length(dims)
     },
 
     #' @description Retrieve the array attributes (lifecycle: experimental)
     #' @return A list of [`tiledb::tiledb_attr`] objects
     attributes = function() {
-      tiledb::attrs(self$schema())
+      tiledb::attrs(self$tiledb_schema())
     },
 
     #' @description Retrieve dimension names (lifecycle: experimental)

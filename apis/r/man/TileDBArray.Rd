@@ -10,7 +10,7 @@ Base class for representing an individual TileDB array.
 \subsection{Initialization}{
 
 Initializing a \code{TileDBArray} object does not automatically create a new array
-at the specified \code{uri} if one does not already exist because we don't know
+at the specified \code{uri} if one does not already exist because we do not know
 what the schema will be. Arrays are only created by child classes, which
 populate the private \code{create_empty_array()} and \code{ingest_data()} methods. (lifecycle: experimental)
 }
@@ -25,8 +25,8 @@ populate the private \code{create_empty_array()} and \code{ingest_data()} method
 \item \href{#method-TileDBArray-tiledb_array}{\code{TileDBArray$tiledb_array()}}
 \item \href{#method-TileDBArray-get_metadata}{\code{TileDBArray$get_metadata()}}
 \item \href{#method-TileDBArray-set_metadata}{\code{TileDBArray$set_metadata()}}
-\item \href{#method-TileDBArray-arrow_schema}{\code{TileDBArray$arrow_schema()}}
 \item \href{#method-TileDBArray-schema}{\code{TileDBArray$schema()}}
+\item \href{#method-TileDBArray-tiledb_schema}{\code{TileDBArray$tiledb_schema()}}
 \item \href{#method-TileDBArray-dimensions}{\code{TileDBArray$dimensions()}}
 \item \href{#method-TileDBArray-shape}{\code{TileDBArray$shape()}}
 \item \href{#method-TileDBArray-ndim}{\code{TileDBArray$ndim()}}
@@ -122,25 +122,25 @@ NULL
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-TileDBArray-arrow_schema"></a>}}
-\if{latex}{\out{\hypertarget{method-TileDBArray-arrow_schema}{}}}
-\subsection{Method \code{arrow_schema()}}{
-Retrieve the array schema as an Arrow schema (lifecycle: experimental)
-\subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{TileDBArray$arrow_schema()}\if{html}{\out{</div>}}
-}
-
-\subsection{Returns}{
-A \code{\link[tiledb:tiledb_array_schema]{tiledb::tiledb_array_schema}} object
-}
-}
-\if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-TileDBArray-schema"></a>}}
 \if{latex}{\out{\hypertarget{method-TileDBArray-schema}{}}}
 \subsection{Method \code{schema()}}{
-Retrieve the array schema (lifecycle: experimental)
+Retrieve the array schema as an Arrow schema (lifecycle: experimental)
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{TileDBArray$schema()}\if{html}{\out{</div>}}
+}
+
+\subsection{Returns}{
+A \code{\link[arrow:Schema]{arrow::schema}} object
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-TileDBArray-tiledb_schema"></a>}}
+\if{latex}{\out{\hypertarget{method-TileDBArray-tiledb_schema}{}}}
+\subsection{Method \code{tiledb_schema()}}{
+Retrieve the array schema as TileDB schema (lifecycle: experimental)
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{TileDBArray$tiledb_schema()}\if{html}{\out{</div>}}
 }
 
 \subsection{Returns}{
