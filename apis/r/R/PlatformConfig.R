@@ -8,6 +8,8 @@
 #'
 #' @export
 #'
+#' @noMd
+#'
 PlatformConfig <- R6::R6Class(
   classname = 'PlatformConfig',
   inherit = MappingBase,

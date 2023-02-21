@@ -165,7 +165,8 @@ MappingBase <- R6::R6Class(
 #' @templateVar default NULL
 #' @template param-default
 #'
-#' @return \code{[[}: ...
+#' @return \code{[[}: The value of \code{i} in the map, or \code{default} if
+#' \code{i} is not found
 #'
 #' @rdname MappingBase
 #'
@@ -190,6 +191,17 @@ MappingBase <- R6::R6Class(
   stopifnot(is.character(x = i), length(x = i) == 1L)
   x$set(key = i, value = value)
   return(x)
+}
+
+#' @return \code{as.list}: The map as a list
+#'
+#' @rdname MappingBase
+#'
+#' @method as.list MappingBase
+#' @export
+#'
+as.list.MappingBase <- function(x, ...) {
+  return(x$to_list())
 }
 
 #' @return \code{length}: The number of items in the map

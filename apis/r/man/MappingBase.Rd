@@ -4,6 +4,7 @@
 \alias{MappingBase}
 \alias{[[.MappingBase}
 \alias{[[<-.MappingBase}
+\alias{as.list.MappingBase}
 \alias{length.MappingBase}
 \alias{names.MappingBase}
 \title{R6 Base Mapping Type}
@@ -11,6 +12,8 @@
 \method{[[}{MappingBase}(x, i, ..., default = NULL)
 
 \method{[[}{MappingBase}(x, i, ...) <- value
+
+\method{as.list}{MappingBase}(x, ...)
 
 \method{length}{MappingBase}(x)
 
@@ -31,9 +34,12 @@ defaults to \code{NULL}}
 the entry for \code{i}}
 }
 \value{
-\code{[[}: ...
+\code{[[}: The value of \code{i} in the map, or \code{default} if
+\code{i} is not found
 
 \code{[[<-}: \code{x} with \code{value} added as \code{i}
+
+\code{as.list}: The map as a list
 
 \code{length}: The number of items in the map
 

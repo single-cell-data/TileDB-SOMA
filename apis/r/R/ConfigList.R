@@ -6,6 +6,8 @@
 #'
 #' @export
 #'
+#' @noMd
+#'
 ConfigList <- R6::R6Class(
   classname = 'ConfigList',
   inherit = MappingBase,

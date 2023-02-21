@@ -83,7 +83,7 @@ values from \code{value}}
 \if{html}{\out{</div>}}
 }
 \subsection{Returns}{
-[chainable] Invisibly returns \code{self} with \code{value}
+\[chainable\] Invisibly returns \code{self} with \code{value}
 added for \code{key} in \code{op}
 }
 }

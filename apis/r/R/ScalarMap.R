@@ -4,6 +4,10 @@
 #' optionally be limited further to a specific atomic vector type
 #' (eg. \dQuote{\code{logical}})
 #'
+#' @export
+#'
+#' @noMd
+#'
 ScalarMap <- R6::R6Class(
   classname = 'ScalarMap',
   inherit = MappingBase,
