@@ -508,9 +508,9 @@ def test_experiment_query_obsp_varp(soma_experiment):
 
 def test_axis_query():
     """Basic test of the AxisQuery class"""
-    assert soma.AxisQuery().coords == (slice(None),)
+    assert soma.AxisQuery().coords == ()
     assert soma.AxisQuery().value_filter is None
-    assert soma.AxisQuery() == soma.AxisQuery(coords=(slice(None),))
+    assert soma.AxisQuery() == soma.AxisQuery(coords=())
 
     assert soma.AxisQuery(coords=(1,)).coords == (1,)
     assert soma.AxisQuery(coords=(slice(1, 2),)).coords == (slice(1, 2),)
@@ -524,7 +524,7 @@ def test_axis_query():
     assert soma.AxisQuery(coords=(slice(1, 2),)).value_filter is None
 
     assert soma.AxisQuery(value_filter="foo == 'bar'").value_filter == "foo == 'bar'"
-    assert soma.AxisQuery(value_filter="foo == 'bar'").coords == (slice(None),)
+    assert soma.AxisQuery(value_filter="foo == 'bar'").coords == ()
 
     assert soma.AxisQuery(
         coords=(slice(1, 100),), value_filter="foo == 'bar'"
