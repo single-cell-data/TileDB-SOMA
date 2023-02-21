@@ -32,71 +32,46 @@ class SOMATileDBContext:
 
     tiledb_ctx: tiledb.Ctx = _build_default_tiledb_ctx()
 
-    read_timestamp: int = attrs.field(factory=lambda: int(time.time() * 1000))
+    timestamp: int = attrs.field(factory=lambda: int(time.time() * 1000))
     """
-    Timestamp for operations on SOMA objects open in read mode, in milliseconds since Unix epoch.
-    Defaults to the time of context initialization. Set to 0xFFFFFFFFFFFFFFFF (UINT64_MAX) to get
-    the latest revision as of when *each* object is opened.
-
-    SOMA objects opened in *write* mode ignore any read timestamp.
+    Timestamp for operations on SOMA objects, in milliseconds since Unix epoch.
+    Defaults to the time of context initialization. Set to 0xFFFFFFFFFFFFFFFF
+    (UINT64_MAX) to get the latest revision as of when *each* object is opened.
     """
 
-    read_timestamp_start: int = 0
+    timestamp_start: int = 0
     """
-    Timestamp range start for operations on SOMA objects opened in read mode. This is usually zero
-    except for specific, unusual query requirements.
-    """
-
-    write_timestamp: Optional[int] = None
-    """
-    Timestamp applied to all SOMA object write operations. If unset, each individual write
-    operation receives the timestamp as of when the operation executes.
-
-    Caution: overlapping writes (of overlapping array slices, or setting the same collection key)
-    should be avoided when write_timestamp is set. Distinct, overlapping write operations given the
-    same timestamp may be applied in any order.
+    Timestamp range start for operations on SOMA objects. This is usually zero
+    except for specific, unusual query requirements. This has no effect on
+    timestamps used in writing.
     """
 
-    @read_timestamp.validator
+    @timestamp.validator
     def _validate_timestamps(self, _: Any, __: Any) -> None:
-        if not (
-            self.read_timestamp_start >= 0
-            and self.read_timestamp >= self.read_timestamp_start
-        ):
+        if not 0 <= self.timestamp_start <= self.timestamp:
             raise ValueError("SOMATileDBContext: invalid read timestamp range")
-        if not (self.write_timestamp is None or self.write_timestamp >= 0):
-            raise ValueError("SOMATileDBContext: invalid write timestamp")
 
-    # (internal) tiledb.Ctx specifically for tiledb.Group operations; unlike arrays, tiledb.Group
-    # needs its timestamps set in the tiledb.Ctx. We'd like to get rid of this in the future,
-    # if/when tiledb.Group() takes a timestamp argument like tiledb.Array().
-    _group_read_tiledb_ctx: tiledb.Ctx = attrs.field(init=False)
-    _group_write_tiledb_ctx: tiledb.Ctx = attrs.field(init=False)
+    _group_tiledb_ctx_: Optional[tiledb.Ctx] = attrs.field(init=False, default=None)
+    """Cache for the context used to open Groups."""
 
-    def __attrs_post_init__(self) -> None:
+    @property
+    def _group_tiledb_ctx(self) -> tiledb.Ctx:
+        """Internal-only context specifically for Group operations.
+
+        Unlike Arrays, Groups do not take a ``timestamp`` argument and need
+        their timestamps set in their context. This should go away if/when
+        :class:`tiledb.Group` starts taking a timestamp argument like
+        :func:`tiledb.open`.
         """
-        initialization hook invoked by the attrs-generated __init__; prepares the pair of
-        timestamped tiledb.Ctx for groups
-        """
-
-        group_read_config = self.tiledb_ctx.config().dict()
-        group_read_config["sm.group.timestamp_start"] = self.read_timestamp_start
-        group_read_config["sm.group.timestamp_end"] = self.read_timestamp
-        object.__setattr__(
-            self, "_group_read_tiledb_ctx", tiledb.Ctx(group_read_config)
+        if self._group_tiledb_ctx_:
+            return self._group_tiledb_ctx_
+        ctx = group_timestamp_ctx(
+            self.tiledb_ctx,
+            timestamp_start=self.timestamp_start,
+            timestamp=self.timestamp,
         )
-        assert isinstance(self._group_read_tiledb_ctx, tiledb.Ctx)
-
-        if self.write_timestamp is not None:
-            group_write_config = self.tiledb_ctx.config().dict()
-            group_write_config["sm.group.timestamp_start"] = self.write_timestamp
-            group_write_config["sm.group.timestamp_end"] = self.write_timestamp
-            object.__setattr__(
-                self, "_group_write_tiledb_ctx", tiledb.Ctx(group_write_config)
-            )
-        else:
-            object.__setattr__(self, "_group_write_tiledb_ctx", self.tiledb_ctx)
-        assert isinstance(self._group_write_tiledb_ctx, tiledb.Ctx)
+        object.__setattr__(self, "_group_tiledb_ctx_", ctx)
+        return ctx
 
     def replace(
         self, *, tiledb_config: Optional[Dict[str, Any]] = None, **changes: Any
@@ -114,7 +89,7 @@ class SOMATileDBContext:
 
         Examples
         --------
-        >>> context.replace(read_timestamp=0)
+        >>> context.replace(timestamp=0)
 
         >>> context.replace(tiledb_config={"vfs.s3.region": "us-east-2"})
         """
@@ -123,3 +98,13 @@ class SOMATileDBContext:
             new_config.update(tiledb_config)
             changes["tiledb_ctx"] = tiledb.Ctx(config=new_config)
         return attrs.evolve(self, **changes)
+
+
+def group_timestamp_ctx(
+    ctx: tiledb.Ctx, *, timestamp_start: int, timestamp: int
+) -> tiledb.Ctx:
+    """Builds a TileDB context to open groups at the given timestamp."""
+    group_cfg = ctx.config().dict()
+    group_cfg["sm.group.timestamp_start"] = timestamp_start
+    group_cfg["sm.group.timestamp_end"] = timestamp
+    return tiledb.Ctx(group_cfg)

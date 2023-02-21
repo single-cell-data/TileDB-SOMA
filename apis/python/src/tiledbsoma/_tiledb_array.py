@@ -72,8 +72,8 @@ class TileDBArray(TileDBObject[_tdb_handles.ArrayWrapper]):
             "name": self.__class__.__name__,
             "platform_config": self._ctx.config().dict(),
             "timestamp": (
-                self.context.read_timestamp_start,
-                self.context.read_timestamp,
+                self.context.timestamp_start,
+                self.context.timestamp,
             ),
         }
         # Leave empty arguments out of kwargs to allow C++ constructor defaults to apply, as
