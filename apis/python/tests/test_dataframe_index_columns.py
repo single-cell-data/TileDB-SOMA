@@ -5,10 +5,7 @@ import pytest
 import tiledbsoma as soma
 
 # TODO:
-# * Unit-test more half-none and full-none slices here
 # * Unit-test indexing by bool and timestamp arrow types here
-# * Triple-type tests here
-# * Explicit cross-typed tests here -- e.g. pa.float64 array on float32 schema should throw
 
 
 @pytest.fixture
@@ -231,6 +228,225 @@ def arrow_table():
             [np.asarray([b"cat", b"dog"], bytes)],
             "default23",
         ],
+        # Index by int64
+        [
+            "INT64-ALL",
+            ["int64"],
+            [],
+            "default01234",
+        ],
+        [
+            "int64-py-list",
+            ["int64"],
+            [[6402, 6403]],
+            "default23",
+        ],
+        [
+            "int64-py-tuple",
+            ["int64"],
+            [[6402, 6403]],
+            "default23",
+        ],
+        [
+            "int64-py-slice",
+            ["int64"],
+            [slice(6402, 6403)],
+            "default23",
+        ],
+        [
+            "int64-py-left-none-slice",
+            ["int64"],
+            [slice(None, 6402)],
+            {
+                "soma_joinid": pa.array([0, 1, 2], pa.int64()),
+                "string": pa.array(["apple", "ball", "cat"], pa.large_string()),
+            },
+        ],
+        [
+            "int64-py-right-none-slice",
+            ["int64"],
+            [slice(6402, None)],
+            {
+                "soma_joinid": pa.array([2, 3, 4], pa.int64()),
+                "string": pa.array(["cat", "dog", "egg"], pa.large_string()),
+            },
+        ],
+        [
+            "int64-py-both-none-slice",
+            ["int64"],
+            [slice(None, None)],
+            "default01234",
+        ],
+        [
+            "int64-numpy-untyped",
+            ["int64"],
+            [np.asarray([6402, 6403])],
+            "default23",
+        ],
+        [
+            "int64-numpy-typed",
+            ["int64"],
+            [np.asarray([6402, 6403], np.int64)],
+            "default23",
+        ],
+        [
+            "int64-pa-array-untyped",
+            ["int64"],
+            [pa.array([6402, 6403])],
+            "default23",
+        ],
+        [
+            "int64-pa-array-typed",
+            ["int64"],
+            [pa.array([6402, 6403], pa.int64())],
+            "default23",
+        ],
+        # Index by int32
+        [
+            "INT32-ALL",
+            ["int32"],
+            [],
+            "default01234",
+        ],
+        [
+            "int32-py-list",
+            ["int32"],
+            [[3202, 3203]],
+            "default23",
+        ],
+        [
+            "int32-py-tuple",
+            ["int32"],
+            [[3202, 3203]],
+            "default23",
+        ],
+        [
+            "int32-py-slice",
+            ["int32"],
+            [slice(3202, 3203)],
+            "default23",
+        ],
+        [
+            "int32-py-left-none-slice",
+            ["int32"],
+            [slice(None, 3202)],
+            {
+                "soma_joinid": pa.array([0, 1, 2], pa.int64()),
+                "string": pa.array(["apple", "ball", "cat"], pa.large_string()),
+            },
+        ],
+        [
+            "int32-py-right-none-slice",
+            ["int32"],
+            [slice(3202, None)],
+            {
+                "soma_joinid": pa.array([2, 3, 4], pa.int64()),
+                "string": pa.array(["cat", "dog", "egg"], pa.large_string()),
+            },
+        ],
+        [
+            "int32-py-both-none-slice",
+            ["int32"],
+            [slice(None, None)],
+            "default01234",
+        ],
+        [
+            "int32-numpy-untyped",
+            ["int32"],
+            [np.asarray([3202, 3203])],
+            "default23",
+        ],
+        [
+            "int32-numpy-typed",
+            ["int32"],
+            [np.asarray([3202, 3203], np.int32)],
+            "default23",
+        ],
+        [
+            "int32-pa-array-untyped",
+            ["int32"],
+            [pa.array([3202, 3203])],
+            RuntimeError,  # Static type (INT64) does not match expected type (INT32)
+        ],
+        [
+            "int32-pa-array-typed",
+            ["int32"],
+            [pa.array([3202, 3203], pa.int32())],
+            "default23",
+        ],
+        # Index by int16
+        [
+            "INT16-ALL",
+            ["int16"],
+            [],
+            "default01234",
+        ],
+        [
+            "int16-py-list",
+            ["int16"],
+            [[1602, 1603]],
+            "default23",
+        ],
+        [
+            "int16-py-tuple",
+            ["int16"],
+            [[1602, 1603]],
+            "default23",
+        ],
+        [
+            "int16-py-slice",
+            ["int16"],
+            [slice(1602, 1603)],
+            "default23",
+        ],
+        [
+            "int16-py-left-none-slice",
+            ["int16"],
+            [slice(None, 1602)],
+            {
+                "soma_joinid": pa.array([0, 1, 2], pa.int64()),
+                "string": pa.array(["apple", "ball", "cat"], pa.large_string()),
+            },
+        ],
+        [
+            "int16-py-right-none-slice",
+            ["int16"],
+            [slice(1602, None)],
+            {
+                "soma_joinid": pa.array([2, 3, 4], pa.int64()),
+                "string": pa.array(["cat", "dog", "egg"], pa.large_string()),
+            },
+        ],
+        [
+            "int16-py-both-none-slice",
+            ["int16"],
+            [slice(None, None)],
+            "default01234",
+        ],
+        [
+            "int16-numpy-untyped",
+            ["int16"],
+            [np.asarray([1602, 1603])],
+            "default23",
+        ],
+        [
+            "int16-numpy-typed",
+            ["int16"],
+            [np.asarray([1602, 1603], np.int16)],
+            "default23",
+        ],
+        [
+            "int16-pa-array-untyped",
+            ["int16"],
+            [pa.array([1602, 1603])],
+            RuntimeError,  # Static type (INT64) does not match expected type (INT16)
+        ],
+        [
+            "int16-pa-array-typed",
+            ["int16"],
+            [pa.array([1602, 1603], pa.int16())],
+            "default23",
+        ],
         # Index by int8
         [
             "INT8-ALL",
@@ -304,6 +520,152 @@ def arrow_table():
             [pa.array([82, 83], pa.int8())],
             "default23",
         ],
+        # Index by uint64
+        [
+            "UINT64-ALL",
+            ["uint64"],
+            [],
+            "default01234",
+        ],
+        [
+            "uint64-py-list",
+            ["uint64"],
+            [[6412, 6413]],
+            "default23",
+        ],
+        [
+            "uint64-py-tuple",
+            ["uint64"],
+            [[6412, 6413]],
+            "default23",
+        ],
+        [
+            "uint64-py-slice",
+            ["uint64"],
+            [slice(6412, 6413)],
+            "default23",
+        ],
+        [
+            "uint64-py-left-none-slice",
+            ["uint64"],
+            [slice(None, 6412)],
+            {
+                "soma_joinid": pa.array([0, 1, 2], pa.int64()),
+                "string": pa.array(["apple", "ball", "cat"], pa.large_string()),
+            },
+        ],
+        [
+            "uint64-py-right-none-slice",
+            ["uint64"],
+            [slice(6412, None)],
+            {
+                "soma_joinid": pa.array([2, 3, 4], pa.int64()),
+                "string": pa.array(["cat", "dog", "egg"], pa.large_string()),
+            },
+        ],
+        [
+            "uint64-py-both-none-slice",
+            ["uint64"],
+            [slice(None, None)],
+            "default01234",
+        ],
+        [
+            "uint64-numpy-untyped",
+            ["uint64"],
+            [np.asarray([6412, 6413])],
+            "default23",
+        ],
+        [
+            "uint64-numpy-typed",
+            ["uint64"],
+            [np.asarray([6412, 6413], np.uint64)],
+            "default23",
+        ],
+        [
+            "uint64-pa-array-untyped",
+            ["uint64"],
+            [pa.array([6412, 6413])],
+            RuntimeError,  # Static type (INT64) does not match expected type (UINT64)
+        ],
+        [
+            "uint64-pa-array-typed",
+            ["uint64"],
+            [pa.array([6412, 6413], pa.uint64())],
+            "default23",
+        ],
+        # Index by uint32
+        [
+            "UINT32-ALL",
+            ["uint32"],
+            [],
+            "default01234",
+        ],
+        [
+            "uint32-py-list",
+            ["uint32"],
+            [[3212, 3213]],
+            "default23",
+        ],
+        [
+            "uint32-py-tuple",
+            ["uint32"],
+            [[3212, 3213]],
+            "default23",
+        ],
+        [
+            "uint32-py-slice",
+            ["uint32"],
+            [slice(3212, 3213)],
+            "default23",
+        ],
+        [
+            "uint32-py-left-none-slice",
+            ["uint32"],
+            [slice(None, 3212)],
+            {
+                "soma_joinid": pa.array([0, 1, 2], pa.int64()),
+                "string": pa.array(["apple", "ball", "cat"], pa.large_string()),
+            },
+        ],
+        [
+            "uint32-py-right-none-slice",
+            ["uint32"],
+            [slice(3212, None)],
+            {
+                "soma_joinid": pa.array([2, 3, 4], pa.int64()),
+                "string": pa.array(["cat", "dog", "egg"], pa.large_string()),
+            },
+        ],
+        [
+            "uint32-py-both-none-slice",
+            ["uint32"],
+            [slice(None, None)],
+            "default01234",
+        ],
+        [
+            "uint32-numpy-untyped",
+            ["uint32"],
+            [np.asarray([3212, 3213])],
+            "default23",
+        ],
+        [
+            "uint32-numpy-typed",
+            ["uint32"],
+            [np.asarray([3212, 3213], np.uint32)],
+            "default23",
+        ],
+        [
+            "uint32-pa-array-untyped",
+            ["uint32"],
+            [pa.array([3212, 3213])],
+            RuntimeError,  # Static type (UINT64) does not match expected type (UINT32)
+        ],
+        [
+            "uint32-pa-array-typed",
+            ["uint32"],
+            [pa.array([3212, 3213], pa.uint32())],
+            "default23",
+        ],
         # Index by uint16
         [
             "UINT16-ALL",
@@ -330,6 +692,30 @@ def arrow_table():
             "default23",
         ],
         [
+            "uint16-py-left-none-slice",
+            ["uint16"],
+            [slice(None, 1612)],
+            {
+                "soma_joinid": pa.array([0, 1, 2], pa.int64()),
+                "string": pa.array(["apple", "ball", "cat"], pa.large_string()),
+            },
+        ],
+        [
+            "uint16-py-right-none-slice",
+            ["uint16"],
+            [slice(1612, None)],
+            {
+                "soma_joinid": pa.array([2, 3, 4], pa.int64()),
+                "string": pa.array(["cat", "dog", "egg"], pa.large_string()),
+            },
+        ],
+        [
+            "uint16-py-both-none-slice",
+            ["uint16"],
+            [slice(None, None)],
+            "default01234",
+        ],
+        [
             "uint16-numpy-untyped",
             ["uint16"],
             [np.asarray([1612, 1613])],
@@ -345,7 +731,7 @@ def arrow_table():
             "uint16-pa-array-untyped",
             ["uint16"],
             [pa.array([1612, 1613])],
-            RuntimeError,  # Static type (INT64) does not match expected type (UINT16)
+            RuntimeError,  # Static type (UINT64) does not match expected type (UINT16)
         ],
         [
             "uint16-pa-array-typed",
@@ -353,53 +739,77 @@ def arrow_table():
             [pa.array([1612, 1613], pa.uint16())],
             "default23",
         ],
-        # Index by int64
+        # Index by uint8
         [
-            "INT64-ALL",
-            ["int64"],
+            "UINT8-ALL",
+            ["uint8"],
             [],
             "default01234",
         ],
         [
-            "int64-py-list",
-            ["int64"],
-            [[6402, 6403]],
+            "uint8-py-list",
+            ["uint8"],
+            [[92, 93]],
             "default23",
         ],
         [
-            "int64-py-tuple",
-            ["int64"],
-            [(6402, 6403)],
+            "uint8-py-tuple",
+            ["uint8"],
+            [[92, 93]],
             "default23",
         ],
         [
-            "int64-py-slice",
-            ["int64"],
-            [slice(6402, 6403)],
+            "uint8-py-slice",
+            ["uint8"],
+            [slice(92, 93)],
             "default23",
         ],
         [
-            "int64-numpy-untyped",
-            ["int64"],
-            [np.asarray([6402, 6403])],
+            "uint8-py-left-none-slice",
+            ["uint8"],
+            [slice(None, 92)],
+            {
+                "soma_joinid": pa.array([0, 1, 2], pa.int64()),
+                "string": pa.array(["apple", "ball", "cat"], pa.large_string()),
+            },
+        ],
+        [
+            "uint8-py-right-none-slice",
+            ["uint8"],
+            [slice(92, None)],
+            {
+                "soma_joinid": pa.array([2, 3, 4], pa.int64()),
+                "string": pa.array(["cat", "dog", "egg"], pa.large_string()),
+            },
+        ],
+        [
+            "uint8-py-both-none-slice",
+            ["uint8"],
+            [slice(None, None)],
+            "default01234",
+        ],
+        [
+            "uint8-numpy-untyped",
+            ["uint8"],
+            [np.asarray([92, 93])],
             "default23",
         ],
         [
-            "int64-numpy-typed",
-            ["int64"],
-            [np.asarray([6402, 6403], np.int64)],
+            "uint8-numpy-typed",
+            ["uint8"],
+            [np.asarray([92, 93], np.uint8)],
             "default23",
         ],
         [
-            "int64-arrow-untyped",
-            ["int64"],
-            [pa.array([6402, 6403])],
-            "default23",
+            "uint8-pa-array-untyped",
+            ["uint8"],
+            [pa.array([92, 93])],
+            RuntimeError,  # Static type (UINT64) does not match expected type (UINT8)
         ],
         [
-            "int64-arrow-typed",
-            ["int64"],
-            [pa.array([6402, 6403], pa.int64())],
+            "uint8-pa-array-typed",
+            ["uint8"],
+            [pa.array([92, 93], pa.uint8())],
             "default23",
         ],
         # Index by float32
@@ -446,10 +856,16 @@ def arrow_table():
             RuntimeError,  # Static type (FLOAT64) does not match expected type (FLOAT32)
         ],
         [
-            "float32-pa-array-typed",
+            "float32-pa-array-typed-float32",
             ["float32"],
             [pa.array([322.5, 323.5], pa.float32())],
             "default23",
+        ],
+        [
+            "float32-pa-array-typed-float64",
+            ["float32"],
+            [pa.array([322.5, 323.5], pa.float64())],
+            RuntimeError,  # Static type (FLOAT64) does not match expected type (FLOAT32)
         ],
         # Index by float64
         [
@@ -495,15 +911,21 @@ def arrow_table():
             "default23",
         ],
         [
-            "float64-pa-array-typed",
+            "float64-pa-array-typed-float64",
             ["float64"],
             [pa.array([642.5, 643.5], pa.float64())],
             "default23",
         ],
+        [
+            "float64-pa-array-typed-float32",
+            ["float64"],
+            [pa.array([322.5, 323.5], pa.float32())],
+            RuntimeError,  # Static type (FLOAT32) does not match expected type (FLOAT64)
+        ],
         # TODO:
         # * bool
         # * arrow timestamps (s, ms, us, ns)
-        # Index by int64+string
+        # Index by int64 and string
         [
             "INT64+STRING-ALL",
             ["int64", "string"],
@@ -540,8 +962,55 @@ def arrow_table():
             [("cat", "dog"), (6402, 6403)],
             "default23",
         ],
-        # TODO:
-        # * Index by int64+float64+string
+        # * Index by int64, float64, and string
+        [
+            "INT64+FLOAT64+STRING-ALL",
+            ["int64", "float64", "string"],
+            [],
+            "default01234",
+        ],
+        [
+            "int64+float64+string-arrow",
+            ["int64", "float64", "string"],
+            [
+                pa.array([6402, 6403]),
+                pa.array([642.5, 643.5]),
+                pa.array(["cat", "dog"]),
+            ],
+            "default23",
+        ],
+        [
+            "float64+string+int64-arrow",
+            ["float64", "string", "int64"],
+            [
+                pa.array([642.5, 643.5]),
+                pa.array(["cat", "dog"]),
+                pa.array([6402, 6403]),
+            ],
+            "default23",
+        ],
+        [
+            "string+int64+float64-numpy",
+            ["string", "int64", "float64"],
+            [
+                np.asarray(["cat", "dog"]),
+                np.asarray([6402, 6403]),
+                np.asarray([642.5, 643.5]),
+            ],
+            "default23",
+        ],
+        [
+            "string+int64+float64py-list",
+            ["string", "int64", "float64"],
+            [["cat", "dog"], [6402, 6403], [642.5, 643.5]],
+            "default23",
+        ],
+        [
+            "string+int64+float64-py-tuple",
+            ["string", "int64", "float64"],
+            [("cat", "dog"), (6402, 6403), (642.5, 643.5)],
+            "default23",
+        ],
     ],
 )
 def test_types(tmp_path, arrow_table, name, index_column_names, coords, expecteds):
