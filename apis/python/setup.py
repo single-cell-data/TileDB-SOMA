@@ -25,6 +25,10 @@ import setuptools
 import setuptools.command.build_ext
 import wheel.bdist_wheel
 
+this_dir = pathlib.Path(__file__).parent.absolute()
+sys.path.insert(0, str(this_dir))
+import version  # noqa E402
+
 
 def get_libtiledbsoma_library_name():
     """
@@ -58,7 +62,7 @@ def find_libtiledbsoma_full_path_on_linux(lib_name):
     return ctypes.cast(lmptr, ctypes.POINTER(LINKMAP)).contents.l_name.decode()
 
 
-def libtiledbsoma_exists():
+def libtiledbsoma_global_exists():
     """
     Returns the path to the globally installed TileDB-SOMA library, if it exists.
     :return: The path to the TileDB-SOMA library, or None.
@@ -73,17 +77,37 @@ def libtiledbsoma_exists():
             path = find_libtiledbsoma_full_path_on_linux(lib_name)
         else:
             path = ctypes.CDLL(lib_name)
+        print(f"Found globally installed {path}")
         return pathlib.Path(path).parents[0]
     except Exception as e:
         print(e)
         return None
 
 
+def libtiledbsoma_dist_exists():
+    """
+    Returns the path to the TileDB-SOMA library installed in dist, if it exists.
+    :return: The path to the TileDB-SOMA library, or None.
+    """
+    dist_dirs = [libtiledbsoma_dir / "dist" / "lib"]
+    if sys.platform.startswith("linux"):
+        dist_dirs.append(libtiledbsoma_dir / "dist" / "lib64")
+        dist_dirs.append(libtiledbsoma_dir / "dist" / "lib" / "x86_64-linux-gnu")
+    elif os.name == "nt":
+        dist_dirs.append(libtiledbsoma_dir / "dist" / "bin")
+
+    for lib_dir in dist_dirs:
+        full_lib_path = lib_dir / get_libtiledbsoma_library_name()
+        print(f"Checking: {full_lib_path} exists: {full_lib_path.exists()}")
+        if full_lib_path.exists():
+            return lib_dir
+    return None
+
+
 def find_or_build_package_data(setuptools_cmd):
     global libtiledbsoma_dir
 
     # Set up paths
-    this_dir = pathlib.Path(__file__).parent.absolute()
     scripts_dir = this_dir / "dist_links" / "scripts"
 
     if scripts_dir.is_symlink():
@@ -93,23 +117,22 @@ def find_or_build_package_data(setuptools_cmd):
         # in extracted sdist, with libtiledbsoma copied into dist_links/
         libtiledbsoma_dir = this_dir / "dist_links"
 
-    # Call the build script if the install library directory does not exist
-    lib_dir = libtiledbsoma_dir / "dist" / "lib"
+    # check if libtiledbsoma is installed in dist
+    lib_dir = libtiledbsoma_dist_exists()
 
-    if not lib_dir.exists():
-        # check if libtilesoma is globally installed
-        global_libtiledbsoma_path = libtiledbsoma_exists()
-        if global_libtiledbsoma_path is not None:
-            lib_dir = global_libtiledbsoma_path
-        else:
-            # If not then build from source
+    # check if libtilesoma is globally installed
+    if lib_dir is None:
+        lib_dir = libtiledbsoma_global_exists()
 
-            # Note: The GitHub build process uses the contents of `bld` as a key
-            # to cache the native binaries. Using non-default options here will
-            # cause that cache to fall out of sync.
-            #
-            # See `.github/workflows/python-ci-single.yml` for configuration.
-            subprocess.run(["./bld"], cwd=scripts_dir)
+    # if not then build from source
+    if lib_dir is None:
+        # Note: The GitHub build process uses the contents of `bld` as a key
+        # to cache the native binaries. Using non-default options here will
+        # cause that cache to fall out of sync.
+        #
+        # See `.github/workflows/python-ci-single.yml` for configuration.
+        subprocess.run(["./bld"], cwd=scripts_dir)
+        lib_dir = libtiledbsoma_dist_exists()
 
     # Copy native libs into the package dir so they can be found by package_data
     package_data = []
@@ -119,6 +142,7 @@ def find_or_build_package_data(setuptools_cmd):
             print(f"  copying file {f} to {src_dir}")
             shutil.copy(f, src_dir)
             package_data.append(f.name)
+    assert package_data, f"libtiledbsoma artifacts absent from {lib_dir}"
 
     # Install shared libraries inside the Python module via package_data.
     print(f"  adding to package_data: {package_data}")
@@ -193,4 +217,5 @@ setuptools.setup(
     },
     python_requires=">=3.7",
     cmdclass={"build_ext": build_ext, "bdist_wheel": bdist_wheel},
+    version=version.getVersion(),
 )
