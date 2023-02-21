@@ -18,7 +18,7 @@ from ._read_iters import (
     TableReadIter,
 )
 from ._types import NTuple
-from .options.tiledb_create_options import TileDBCreateOptions
+from .options._tiledb_create_options import TileDBCreateOptions
 
 _UNBATCHED = options.BatchSize()
 

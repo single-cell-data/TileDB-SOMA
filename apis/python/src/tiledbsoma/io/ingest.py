@@ -44,7 +44,7 @@ from .._tiledb_array import TileDBArray
 from .._tiledb_object import AnyTileDBObject, TileDBObject
 from .._types import INGEST_MODES, IngestMode, NPNDArray, Path
 from ..options import SOMATileDBContext
-from ..options.tiledb_create_options import TileDBCreateOptions
+from ..options._tiledb_create_options import TileDBCreateOptions
 from . import conversions
 
 SparseMatrix = Union[sp.csr_matrix, sp.csc_matrix, SparseDataset]

@@ -15,7 +15,7 @@ from ._read_iters import TableReadIter
 from ._tiledb_array import TileDBArray
 from ._types import NPFloating, NPInteger, is_slice_of
 from .options import SOMATileDBContext
-from .options.tiledb_create_options import TileDBCreateOptions
+from .options._tiledb_create_options import TileDBCreateOptions
 
 _UNBATCHED = options.BatchSize()
 
