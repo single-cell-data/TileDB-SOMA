@@ -65,7 +65,7 @@ def from_h5ad(
     use_relative_uri: Optional[bool] = None,
 ) -> Experiment:
     """
-    Reads an .h5ad file and writes to a TileDB group structure.
+    Reads an ``.h5ad`` file and writes to a TileDB group structure.
 
     Returns an experiment opened for writing.
 
