@@ -13,7 +13,7 @@ import pyarrow as pa
 import somacore
 
 # This package's pybind11 code
-import tiledbsoma.libtiledbsoma as clib
+import tiledbsoma.pytiledbsoma as clib
 
 from ._types import NTuple
 

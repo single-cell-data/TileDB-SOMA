@@ -48,7 +48,7 @@ examples/cmake_project/build
 *.egg-info
 apis/python/src/tiledbsoma/_version.py
 apis/python/src/tiledbsoma/libtiledb.*
-apis/python/src/tiledbsoma/libtiledbsoma.*
+apis/python/src/tiledbsoma/libtiledbsoma.*so
 
 /.quarto/
 

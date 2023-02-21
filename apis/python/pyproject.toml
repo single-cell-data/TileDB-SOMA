@@ -21,6 +21,7 @@ ignore_errors = true
 ignore = ["E501"]
 extend-select = ["I001"]
 fix = true
+exclude = ["*.cc"]
 
 [tool.ruff.isort]
 known-first-party = ["tiledbsoma"]

@@ -195,9 +195,9 @@ endif()
 # Python API bindings
 ############################################################
 
-if (TILEDBSOMA_BUILD_PYTHON)
-  add_subdirectory(pyapi)
-endif()
+# if (TILEDBSOMA_BUILD_PYTHON)
+#   add_subdirectory(pyapi)
+# endif()
 
 ############################################################
 # CLI executable target
