@@ -10,7 +10,7 @@ from . import libtiledbsoma as clib
 from ._arrow_types import tiledb_schema_to_arrow
 from ._tiledb_object import TileDBObject
 from ._types import is_nonstringy_sequence
-from .options.soma_tiledb_context import SOMATileDBContext
+from .options._soma_tiledb_context import SOMATileDBContext
 
 
 class TileDBArray(TileDBObject[_tdb_handles.ArrayWrapper]):

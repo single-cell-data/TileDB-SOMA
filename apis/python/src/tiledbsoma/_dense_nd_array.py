@@ -9,7 +9,7 @@ from . import _util
 from ._common_nd_array import NDArray
 from ._exception import SOMAError
 from ._util import dense_indices_to_shape
-from .options.tiledb_create_options import TileDBCreateOptions
+from .options._tiledb_create_options import TileDBCreateOptions
 
 
 class DenseNDArray(NDArray, somacore.DenseNDArray):

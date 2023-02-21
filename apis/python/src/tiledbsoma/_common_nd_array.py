@@ -11,8 +11,8 @@ from typing_extensions import Self
 
 from . import _arrow_types, _util
 from ._tiledb_array import TileDBArray
-from .options.soma_tiledb_context import SOMATileDBContext
-from .options.tiledb_create_options import TileDBCreateOptions
+from .options._soma_tiledb_context import SOMATileDBContext
+from .options._tiledb_create_options import TileDBCreateOptions
 
 
 class NDArray(TileDBArray, somacore.NDArray):
