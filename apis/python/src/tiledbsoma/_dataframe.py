@@ -289,7 +289,7 @@ class DataFrame(TileDBArray, somacore.DataFrame):
         # Note: slice(None, None) matches the is_slice_of part, unless we also check the dim-type
         # part.
         if (is_slice_of(coord, str) or is_slice_of(coord, bytes)) and (
-            dim.type == "str" or dim.type == "bytes"
+            dim.dtype == "str" or dim.dtype == "bytes"
         ):
             _util.validate_slice(coord)
             # Figure out which one.
