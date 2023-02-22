@@ -191,12 +191,31 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
     ) -> bool:
         if super()._set_reader_coord(sr, dim_idx, dim, coord):
             return True
-        if isinstance(coord, (Sequence, pa.Array, pa.ChunkedArray, np.ndarray)):
+        if isinstance(coord, Sequence):
+            if dim.dtype == np.int64:
+                sr.set_dim_points_int64(dim.name, coord)
+                return True
+            elif dim.dtype == "str" or dim.dtype == "bytes":
+                sr.set_dim_points_string_or_bytes(dim.name, coord)
+                return True
+            else:
+                return False
+
+        if isinstance(coord, np.ndarray):
             if isinstance(coord, np.ndarray) and coord.ndim != 1:
                 raise ValueError(
                     f"only 1D numpy arrays may be used to index; got {coord.ndim}"
                 )
-            sr.set_dim_points(dim.name, coord)
+            if dim.dtype == np.int64:
+                sr.set_dim_points_int64(dim.name, coord)
+                return True
+            elif dim.dtype == "str" or dim.dtype == "bytes":
+                sr.set_dim_points_string_or_bytes(dim.name, coord)
+                return True
+
+            return False
+        if isinstance(coord, (pa.Array, pa.ChunkedArray)):
+            sr.set_dim_points_arrow(dim.name, coord)
             return True
         return False
 

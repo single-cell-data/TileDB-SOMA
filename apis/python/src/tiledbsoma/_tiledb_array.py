@@ -124,10 +124,8 @@ class TileDBArray(TileDBObject[_tdb_handles.ArrayWrapper]):
         if coord is None:
             return True  # No constraint; select all in this dimension
 
-        # TODO: support index types other than int/string once libtiledbsoma.cc does
-        # https://github.com/single-cell-data/TileDB-SOMA/issues/960
         if isinstance(coord, int):
-            sr.set_dim_points(dim.name, [coord])
+            sr.set_dim_points_int64(dim.name, [coord])
             return True
         if isinstance(coord, slice):
             _util.validate_slice(coord)
@@ -136,7 +134,7 @@ class TileDBArray(TileDBObject[_tdb_handles.ArrayWrapper]):
             except _util.NonNumericDimensionError:
                 return False  # We only handle numeric dimensions here.
             if lo_hi:
-                sr.set_dim_ranges(dim.name, [lo_hi])
+                sr.set_dim_ranges_int64(dim.name, [lo_hi])
             # If `None`, coord was `slice(None)` and there is no constraint.
             return True
         return False
