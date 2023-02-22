@@ -98,6 +98,15 @@ def test_metadata(soma_object):
 
     with _factory.open(uri, "r") as second_read:
         assert non_soma_metadata(second_read) == {"foobar": True, "my": "enemies"}
+        # We don't want to test the exact metadata format,
+        # just that it includes the key–value pairs.
+        meta_repr = repr(second_read.metadata)
+        # 'True' might get turned into '1', so only check the key.
+        assert "'foobar': " in meta_repr
+        assert "'my': 'enemies'" in meta_repr
+    # ...but closed metadata does not.
+    meta_repr_closed = repr(second_read.metadata)
+    assert "foobar" not in meta_repr_closed
 
 
 def test_add_delete_metadata(soma_object):

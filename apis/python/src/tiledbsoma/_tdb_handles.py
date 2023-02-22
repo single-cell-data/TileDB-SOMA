@@ -142,7 +142,8 @@ class Wrapper(Generic[_RawHdl_co], metaclass=abc.ABCMeta):
             raise SOMAError(f"{self!r} is closed")
 
     def __repr__(self) -> str:
-        return f"<{type(self).__name__} {self.mode} on {self.uri!r}>"
+        closed_str = " (closed)" if self.closed else ""
+        return f"<{type(self).__name__} {self.mode} on {self.uri!r}{closed_str}>"
 
     def __enter__(self) -> Self:
         return self
@@ -343,7 +344,10 @@ class MetadataWrapper(MutableMapping[str, Any]):
         self._mods.clear()
 
     def __repr__(self) -> str:
-        return f"{type(self).__name__}({self.owner})"
+        prefix = f"{type(self).__name__}({self.owner})"
+        if self.owner.closed:
+            return f"<{prefix}>"
+        return f"<{prefix} {self.cache}>"
 
 
 def _check_metadata_type(key: str, obj: object) -> None:
