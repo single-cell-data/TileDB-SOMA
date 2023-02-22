@@ -637,7 +637,7 @@ def make_multiply_indexed_dataframe(tmp_path, index_column_names: List[str]):
             "index_column_names": ["strings_aaa", "zero_one"],
             "coords": [[True], slice(None)],
             "A": None,
-            "throws": (RuntimeError, tiledb.cc.TileDBError),
+            "throws": (RuntimeError, tiledb.cc.TileDBError, TypeError),
         },
         {
             "name": "2D index empty",

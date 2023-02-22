@@ -305,18 +305,6 @@ PYBIND11_MODULE(libtiledbsoma, m) {
         // us to no longer use common overloaded names.
 
         .def(
-            "set_dim_points",
-            static_cast<void (SOMAReader::*)(
-                const std::string&, const std::vector<std::string>&)>(
-                &SOMAReader::set_dim_points))
-
-        .def(
-            "set_dim_points",
-            static_cast<void (SOMAReader::*)(
-                const std::string&, const std::vector<int64_t>&)>(
-                &SOMAReader::set_dim_points))
-
-        .def(
             "set_dim_points_string_or_bytes",
             static_cast<void (SOMAReader::*)(
                 const std::string&, const std::vector<std::string>&)>(
@@ -386,7 +374,7 @@ PYBIND11_MODULE(libtiledbsoma, m) {
         // are Python list/tuple, or NumPy arrays.  Arrow arrays are in this
         // long if-else-if function.
         .def(
-            "set_dim_points_arrow_array",
+            "set_dim_points_arrow",
             [](SOMAReader& reader,
                const std::string& dim,
                py::object py_arrow_array,
@@ -412,8 +400,6 @@ PYBIND11_MODULE(libtiledbsoma, m) {
                     // If ever a NumPy array gets in here, there will be an
                     // exception like "AttributeError: 'numpy.ndarray' object
                     // has no attribute '_export_to_c'".
-                    // TODO: try/catch with something more helpful of the form
-                    // "Maybe not an Arrow array".
                     array.attr("_export_to_c")(
                         arrow_array_ptr, arrow_schema_ptr);
 
@@ -542,20 +528,6 @@ PYBIND11_MODULE(libtiledbsoma, m) {
             "partition_index"_a = 0,
             "partition_count"_a = 1)
 
-        .def(
-            "set_dim_ranges",
-            static_cast<void (SOMAReader::*)(
-                const std::string&,
-                const std::vector<std::pair<std::string, std::string>>&)>(
-                &SOMAReader::set_dim_ranges))
-
-        .def(
-            "set_dim_ranges",
-            static_cast<void (SOMAReader::*)(
-                const std::string&,
-                const std::vector<std::pair<int64_t, int64_t>>&)>(
-                &SOMAReader::set_dim_ranges))
-
         // In an initial version of this file we had `set_dim_ranges` relying
         // solely on type-overloading. This worked since we supported only int
         // and string indices. In a subsequent version we are now supporting
@@ -570,17 +542,10 @@ PYBIND11_MODULE(libtiledbsoma, m) {
         // us to no longer use common overloaded names.
 
         .def(
-            "set_dim_ranges_float64",
+            "set_dim_ranges_string_or_bytes",
             static_cast<void (SOMAReader::*)(
                 const std::string&,
-                const std::vector<std::pair<double, double>>&)>(
-                &SOMAReader::set_dim_ranges))
-
-        .def(
-            "set_dim_ranges_float32",
-            static_cast<void (SOMAReader::*)(
-                const std::string&,
-                const std::vector<std::pair<float, float>>&)>(
+                const std::vector<std::pair<std::string, std::string>>&)>(
                 &SOMAReader::set_dim_ranges))
 
         .def(
@@ -637,6 +602,20 @@ PYBIND11_MODULE(libtiledbsoma, m) {
             static_cast<void (SOMAReader::*)(
                 const std::string&,
                 const std::vector<std::pair<uint8_t, uint8_t>>&)>(
+                &SOMAReader::set_dim_ranges))
+
+        .def(
+            "set_dim_ranges_float64",
+            static_cast<void (SOMAReader::*)(
+                const std::string&,
+                const std::vector<std::pair<double, double>>&)>(
+                &SOMAReader::set_dim_ranges))
+
+        .def(
+            "set_dim_ranges_float32",
+            static_cast<void (SOMAReader::*)(
+                const std::string&,
+                const std::vector<std::pair<float, float>>&)>(
                 &SOMAReader::set_dim_ranges))
 
         .def(

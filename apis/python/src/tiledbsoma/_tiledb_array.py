@@ -127,7 +127,7 @@ class TileDBArray(TileDBObject[_tdb_handles.ArrayWrapper]):
         if isinstance(coord, int):
             sr.set_dim_points_int64(dim.name, [coord])
             return True
-        if isinstance(coord, slice):  # XXX and need to check if this is an integer type
+        if isinstance(coord, slice):
             _util.validate_slice(coord)
             try:
                 lo_hi = _util.slice_to_numeric_range(coord, dim.domain)

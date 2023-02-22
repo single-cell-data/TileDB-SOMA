@@ -267,9 +267,9 @@ class DataFrame(TileDBArray, somacore.DataFrame):
             return True
 
         if isinstance(coord, (pa.Array, pa.ChunkedArray)):
-            # sr.set_dim_points_arrow_array does type disambiguation based on array schema -- so we
+            # sr.set_dim_points_arrow does type disambiguation based on array schema -- so we
             # do not.
-            sr.set_dim_points_arrow_array(dim.name, coord)
+            sr.set_dim_points_arrow(dim.name, coord)
             return True
 
         if isinstance(coord, (Sequence, np.ndarray)):
@@ -295,7 +295,7 @@ class DataFrame(TileDBArray, somacore.DataFrame):
                 _, stop = self._handle.reader.nonempty_domain()[dim_idx]
             else:
                 stop = coord.stop
-            sr.set_dim_ranges(dim.name, [(start, stop)])
+            sr.set_dim_ranges_string_or_bytes(dim.name, [(start, stop)])
             return True
 
         if super()._set_reader_coord(sr, dim_idx, dim, coord):
@@ -314,12 +314,8 @@ class DataFrame(TileDBArray, somacore.DataFrame):
 
         # See libtiledbsoma.cc for more context on why we need the
         # explicit type-check here.
-        if dim.dtype == np.float64:
-            sr.set_dim_points_float64(dim.name, coord)
-        elif dim.dtype == np.float32:
-            sr.set_dim_points_float32(dim.name, coord)
 
-        elif dim.dtype == np.int64:
+        if dim.dtype == np.int64:
             sr.set_dim_points_int64(dim.name, coord)
         elif dim.dtype == np.int32:
             sr.set_dim_points_int32(dim.name, coord)
@@ -337,8 +333,19 @@ class DataFrame(TileDBArray, somacore.DataFrame):
         elif dim.dtype == np.uint8:
             sr.set_dim_points_uint8(dim.name, coord)
 
+        elif dim.dtype == np.float64:
+            sr.set_dim_points_float64(dim.name, coord)
+        elif dim.dtype == np.float32:
+            sr.set_dim_points_float32(dim.name, coord)
+
+        elif dim.dtype == "str" or dim.dtype == "bytes":
+            sr.set_dim_points_string_or_bytes(dim.name, coord)
+
+        # TODO: timestamps x 4, and bool
         else:
-            sr.set_dim_points(dim.name, coord)
+            raise ValueError(
+                f"unhandled type {dim.dtype} for index column named {dim.name}"
+            )
 
         return True
 
@@ -352,13 +359,6 @@ class DataFrame(TileDBArray, somacore.DataFrame):
             return False  # We only handle numeric dimensions here.
 
         if not lo_hi:
-            return True
-
-        if dim.dtype == np.float64:
-            sr.set_dim_ranges_float64(dim.name, [lo_hi])
-            return True
-        elif dim.dtype == np.float32:
-            sr.set_dim_ranges_float32(dim.name, [lo_hi])
             return True
 
         elif dim.dtype == np.int64:
@@ -387,9 +387,18 @@ class DataFrame(TileDBArray, somacore.DataFrame):
             sr.set_dim_ranges_uint8(dim.name, [lo_hi])
             return True
 
-        elif dim.dtype == np.bool_:
-            sr.set_dim_points(dim.name, coord)
+        elif dim.dtype == np.float64:
+            sr.set_dim_ranges_float64(dim.name, [lo_hi])
             return True
+        elif dim.dtype == np.float32:
+            sr.set_dim_ranges_float32(dim.name, [lo_hi])
+            return True
+
+        #        # TODO: timestamps x 4, and bool
+        #        else:
+        #            raise ValueError(
+        #                f"unhandled type {dim.dtype} for index column named {dim.name}"
+        #            )
 
         return False
 
