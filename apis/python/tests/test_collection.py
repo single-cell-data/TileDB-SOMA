@@ -4,6 +4,7 @@ import textwrap
 from typing import List, TypeVar, Union
 
 import numpy as np
+import pandas as pd
 import pyarrow as pa
 import pytest
 from typing_extensions import Literal
@@ -470,3 +471,31 @@ def test_timestamped_ops(tmp_path):
         SOMATileDBContext(read_timestamp_start=2, read_timestamp=1)
     with pytest.raises(ValueError):
         SOMATileDBContext(write_timestamp=-1)
+
+
+def test_issue919(tmp_path):
+    # Regression test for https://github.com/single-cell-data/TileDB-SOMA/issues/919
+    # With write timestamp set, the final collection membership after adding multiple items was
+    # non-deterministic, due to (i) reopening the TileDB write handle after each add operation,
+    # (ii) TileDB reordering those writes randomly since they have the same timestamp, and (iii)
+    # the add operations not being commutative under such randomization.
+    # Fix was to eliminate (i).
+
+    pdf = pd.DataFrame([(1, 1), (2, 2), (3, 3)], columns=["soma_joinid", "value"])
+    schema = pa.Schema.from_pandas(pdf, preserve_index=False)
+
+    for i in range(25):
+        uri = str(tmp_path / str(i))
+
+        context = SOMATileDBContext(write_timestamp=100)
+        with soma.Collection.create(uri, context=context) as c:
+            expt = c.add_new_collection("expt", soma.Experiment)
+            expt.add_new_collection("causes_bug")
+            expt.add_new_dataframe(
+                "df", schema=schema, index_column_names=["soma_joinid"]
+            )
+
+        with soma.Collection.open(uri, context=context) as c:
+            assert "df" in c["expt"] and "causes_bug" in c["expt"]
+            df = c["expt"]["df"].read().concat().to_pandas()
+            assert len(df) == 0
