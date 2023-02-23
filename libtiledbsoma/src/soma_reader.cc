@@ -213,7 +213,10 @@ uint64_t SOMAReader::nnz() {
 
         // If any relevant fragment is a consolidated fragment, fall back to
         // counting cells, because the fragment may contain duplicates.
-        if (frag_ts.first != frag_ts.second) {
+        // If the application is allowing duplicates (in which case it's the
+        // application's job to otherwise ensure uniqueness), then
+        // sum-over-fragments is the right thing to do.
+        if (!mq_->schema()->allows_dups() && frag_ts.first != frag_ts.second) {
             return nnz_slow();
         }
     }
@@ -274,13 +277,7 @@ uint64_t SOMAReader::nnz() {
 }
 
 uint64_t SOMAReader::nnz_slow() {
-    // If duplicates are allowed, we cannot count simply count cells.
-    if (mq_->schema()->allows_dups()) {
-        throw TileDBSOMAError(
-            "[SOMAReader] nnz not supported when duplicates are allowed");
-    }
-
-    LOG_WARN(
+    LOG_DEBUG(
         "[SOMAReader] nnz() found consolidated or overlapping fragments, "
         "counting cells...");
 
