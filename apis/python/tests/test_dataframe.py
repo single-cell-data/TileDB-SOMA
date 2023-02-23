@@ -925,7 +925,7 @@ def test_timestamped_ops(tmp_path):
         tmp_path.as_posix(),
         schema=schema,
         index_column_names=["soma_joinid"],
-        context=SOMATileDBContext(write_timestamp=10),
+        context=SOMATileDBContext(timestamp=10),
     ) as sidf:
         data = {
             "soma_joinid": [0],
@@ -935,7 +935,7 @@ def test_timestamped_ops(tmp_path):
         sidf.write(pa.Table.from_pydict(data))
 
     with soma.DataFrame.open(
-        uri=tmp_path.as_posix(), mode="w", context=SOMATileDBContext(write_timestamp=20)
+        uri=tmp_path.as_posix(), mode="w", context=SOMATileDBContext(timestamp=20)
     ) as sidf:
         data = {
             "soma_joinid": [0, 1],
@@ -953,7 +953,7 @@ def test_timestamped_ops(tmp_path):
 
     # read at t=15 & see only the first write
     with soma.DataFrame.open(
-        tmp_path.as_posix(), context=SOMATileDBContext(read_timestamp=15)
+        tmp_path.as_posix(), context=SOMATileDBContext(timestamp=15)
     ) as sidf:
         tab = sidf.read().concat()
         assert list(x.as_py() for x in tab["soma_joinid"]) == [0]

@@ -1013,7 +1013,7 @@ def test_timestamped_ops(tmp_path):
         tmp_path.as_posix(),
         type=pa.uint16(),
         shape=(2, 2),
-        context=SOMATileDBContext(write_timestamp=10),
+        context=SOMATileDBContext(timestamp=10),
     ) as a:
         # write 1 into top-left entry @ t=10
         a.write(
@@ -1024,7 +1024,7 @@ def test_timestamped_ops(tmp_path):
 
     # write 1 into bottom-right entry @ t=20
     with soma.SparseNDArray.open(
-        tmp_path.as_posix(), mode="w", context=SOMATileDBContext(write_timestamp=20)
+        tmp_path.as_posix(), mode="w", context=SOMATileDBContext(timestamp=20)
     ) as a:
         a.write(
             pa.SparseCOOTensor.from_scipy(
@@ -1042,7 +1042,7 @@ def test_timestamped_ops(tmp_path):
 
     # read @ t=15 & see only the first write
     with soma.SparseNDArray.open(
-        tmp_path.as_posix(), context=SOMATileDBContext(read_timestamp=15)
+        tmp_path.as_posix(), context=SOMATileDBContext(timestamp=15)
     ) as a:
         assert a.read().coos().concat().to_scipy().todense().tolist() == [
             [1, 0],
@@ -1053,7 +1053,7 @@ def test_timestamped_ops(tmp_path):
     # read with (timestamp_start, timestamp_end) = (15, 25) & see only the second write
     with soma.SparseNDArray.open(
         tmp_path.as_posix(),
-        context=SOMATileDBContext(read_timestamp_start=15, read_timestamp=25),
+        context=SOMATileDBContext(timestamp_start=15, timestamp=25),
     ) as a:
         assert a.read().coos().concat().to_scipy().todense().tolist() == [
             [0, 0],

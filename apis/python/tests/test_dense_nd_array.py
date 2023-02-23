@@ -1,3 +1,5 @@
+import pathlib
+import time
 from typing import Tuple
 
 import numpy as np
@@ -351,7 +353,7 @@ def test_timestamped_ops(tmp_path):
         tmp_path.as_posix(),
         type=pa.uint8(),
         shape=(2, 2),
-        context=SOMATileDBContext(write_timestamp=1),
+        context=SOMATileDBContext(timestamp=1),
     ) as a:
         a.write(
             (slice(0, 2), slice(0, 2)),
@@ -360,7 +362,7 @@ def test_timestamped_ops(tmp_path):
 
     # write 1 into top-left entry @ t=10
     with soma.DenseNDArray.open(
-        tmp_path.as_posix(), mode="w", context=SOMATileDBContext(write_timestamp=10)
+        tmp_path.as_posix(), mode="w", context=SOMATileDBContext(timestamp=10)
     ) as a:
         a.write(
             (slice(0, 1), slice(0, 1)),
@@ -369,7 +371,7 @@ def test_timestamped_ops(tmp_path):
 
     # write 1 into bottom-right entry @ t=20
     with soma.DenseNDArray.open(
-        uri=tmp_path.as_posix(), mode="w", context=SOMATileDBContext(write_timestamp=20)
+        uri=tmp_path.as_posix(), mode="w", context=SOMATileDBContext(timestamp=20)
     ) as a:
         a.write(
             (slice(1, 2), slice(1, 2)),
@@ -385,7 +387,7 @@ def test_timestamped_ops(tmp_path):
 
     # read @ t=15 & see only the writes up til then
     with soma.DenseNDArray.open(
-        tmp_path.as_posix(), context=SOMATileDBContext(read_timestamp=15)
+        tmp_path.as_posix(), context=SOMATileDBContext(timestamp=15)
     ) as a:
         assert a.read((slice(0, 1), slice(0, 1))).to_numpy().tolist() == [
             [1, 0],
@@ -395,10 +397,44 @@ def test_timestamped_ops(tmp_path):
     # read with (timestamp_start, timestamp_end) = (15, 25) & see only the t=20 write
     with soma.DenseNDArray.open(
         tmp_path.as_posix(),
-        context=SOMATileDBContext(read_timestamp_start=15, read_timestamp=25),
+        context=SOMATileDBContext(timestamp_start=15, timestamp=25),
     ) as a:
         F = 255  # fill value
         assert a.read((slice(0, 1), slice(0, 1))).to_numpy().tolist() == [
             [F, F],
             [F, 1],
         ]
+
+
+def test_timestamp_opt_out(tmp_path: pathlib.Path):
+    optout = SOMATileDBContext(timestamp=None)
+    before = time.time()
+    time.sleep(0.01)
+    with soma.DenseNDArray.create(
+        tmp_path.as_posix(),
+        type=pa.uint8(),
+        shape=(2, 2),
+        context=optout,
+    ) as ndarr:
+        ndarr.metadata["metadata"] = "created"
+    time.sleep(0.01)
+    during = time.time()
+    time.sleep(0.01)
+    with soma.open(tmp_path.as_posix(), "w", context=optout) as ndarr:
+        ndarr.metadata["metadata"] = "updated"
+    time.sleep(0.01)
+    after = time.time()
+    with soma.open(tmp_path.as_posix(), context=optout) as ndarr:
+        assert ndarr.metadata["metadata"] == "updated"
+
+    with pytest.raises(soma.SOMAError):
+        _read_at(tmp_path, before)
+    with _read_at(tmp_path, during) as during_arr:
+        assert during_arr.metadata["metadata"] == "created"
+    with _read_at(tmp_path, after) as after_arr:
+        assert after_arr.metadata["metadata"] == "updated"
+
+
+def _read_at(path: pathlib.Path, timestamp_sec: float):
+    ctx = soma.SOMATileDBContext(timestamp=int(timestamp_sec * 1000))
+    return soma.open(path.as_uri(), context=ctx)

@@ -1,6 +1,7 @@
 import os
 import pathlib
 import textwrap
+import time
 from typing import List, TypeVar, Union
 
 import numpy as np
@@ -420,13 +421,13 @@ def test_timestamped_ops(tmp_path):
 
     # create collection @ t=10
     with soma.Collection.create(
-        tmp_path.as_uri(), context=SOMATileDBContext(write_timestamp=10)
+        tmp_path.as_uri(), context=SOMATileDBContext(timestamp=10)
     ):
         pass
 
     # add array A to it @ t=20
     with soma.Collection.open(
-        tmp_path.as_uri(), mode="w", context=SOMATileDBContext(write_timestamp=20)
+        tmp_path.as_uri(), mode="w", context=SOMATileDBContext(timestamp=20)
     ) as sc:
         sc.add_new_dense_ndarray("A", type=pa.uint8(), shape=(2, 2)).write(
             (slice(0, 2), slice(0, 2)),
@@ -435,7 +436,7 @@ def test_timestamped_ops(tmp_path):
 
     # access A via collection @ t=30 and write something into it
     with soma.Collection.open(
-        tmp_path.as_uri(), mode="w", context=SOMATileDBContext(write_timestamp=30)
+        tmp_path.as_uri(), mode="w", context=SOMATileDBContext(timestamp=30)
     ) as sc:
         sc["A"].write(
             (slice(0, 1), slice(0, 1)),
@@ -451,7 +452,7 @@ def test_timestamped_ops(tmp_path):
 
     # open A via collection @ t=25 => A should reflect first write only
     with soma.Collection.open(
-        tmp_path.as_uri(), context=SOMATileDBContext(read_timestamp=25)
+        tmp_path.as_uri(), context=SOMATileDBContext(timestamp=25)
     ) as sc:
         assert sc["A"].read((slice(None), slice(None))).to_numpy().tolist() == [
             [0, 0],
@@ -460,17 +461,17 @@ def test_timestamped_ops(tmp_path):
 
     # open collection @ t=15 => A should not even be there
     with soma.Collection.open(
-        tmp_path.as_uri(), context=SOMATileDBContext(read_timestamp=15)
+        tmp_path.as_uri(), context=SOMATileDBContext(timestamp=15)
     ) as sc:
         assert "A" not in sc
 
     # confirm timestamp validation in SOMATileDBContext
     with pytest.raises(ValueError):
-        SOMATileDBContext(read_timestamp=-1)
+        SOMATileDBContext(timestamp=-1)
     with pytest.raises(ValueError):
-        SOMATileDBContext(read_timestamp_start=2, read_timestamp=1)
+        SOMATileDBContext(timestamp_start=2, timestamp=1)
     with pytest.raises(ValueError):
-        SOMATileDBContext(write_timestamp=-1)
+        SOMATileDBContext(timestamp=-1)
 
 
 def test_issue919(tmp_path):
@@ -487,7 +488,7 @@ def test_issue919(tmp_path):
     for i in range(25):
         uri = str(tmp_path / str(i))
 
-        context = SOMATileDBContext(write_timestamp=100)
+        context = SOMATileDBContext(timestamp=100)
         with soma.Collection.create(uri, context=context) as c:
             expt = c.add_new_collection("expt", soma.Experiment)
             expt.add_new_collection("causes_bug")
@@ -499,3 +500,55 @@ def test_issue919(tmp_path):
             assert "df" in c["expt"] and "causes_bug" in c["expt"]
             df = c["expt"]["df"].read().concat().to_pandas()
             assert len(df) == 0
+
+
+def test_timestamp_opt_out(tmp_path: pathlib.Path):
+    optout = SOMATileDBContext(timestamp=None)
+    before = time.time()
+    time.sleep(0.01)
+    with soma.Collection.create(tmp_path.as_uri(), context=optout) as coll:
+        sub = coll.add_new_collection("sub_1")
+        sub.add_new_collection("sub_sub")
+        time.sleep(0.01)
+        during_first = time.time()
+        time.sleep(0.01)
+    time.sleep(0.01)
+    between = time.time()
+    time.sleep(0.01)
+    with soma.Collection.open(tmp_path.as_uri(), "w", context=optout) as coll:
+        coll.add_new_collection("sub_2")
+        time.sleep(0.01)
+        during_second = time.time()
+        time.sleep(0.01)
+    time.sleep(0.01)
+    after = time.time()
+
+    with soma.Collection.open(tmp_path.as_uri(), context=optout) as coll:
+        coll["sub_1"]
+        coll["sub_2"]
+
+    with pytest.raises(soma.SOMAError):
+        _read_at(tmp_path, before)
+
+    with _read_at(tmp_path, during_first) as during_first_coll:
+        assert not set(during_first_coll)
+
+    with _read_at(tmp_path, between) as between_coll:
+        assert set(between_coll) == {"sub_1"}
+        between_sub_1 = between_coll["sub_1"]
+        assert set(between_sub_1) == {"sub_sub"}
+        between_sub_1["sub_sub"]
+
+    with _read_at(tmp_path, during_second) as during_second_coll:
+        assert set(during_second_coll) == {"sub_1"}
+        during_second_sub_1 = during_second_coll["sub_1"]
+        assert set(during_second_sub_1) == {"sub_sub"}
+        during_second_sub_1["sub_sub"]
+
+    with _read_at(tmp_path, after) as after_coll:
+        assert set(after_coll) == {"sub_1", "sub_2"}
+
+
+def _read_at(path: pathlib.Path, timestamp_sec: float):
+    ctx = soma.SOMATileDBContext(timestamp=int(timestamp_sec * 1000))
+    return soma.open(path.as_uri(), context=ctx)
