@@ -135,8 +135,12 @@ std::tuple<std::string, uint64_t> create_array(
 
     uint64_t nnz = num_fragments * num_cells_per_fragment;
 
+    if (allow_duplicates) {
+        return {uri, nnz};
+    }
+
     // Adjust nnz when overlap is enabled
-    if (overlap && !allow_duplicates) {
+    if (overlap) {
         nnz = (num_fragments + 1) / 2 * num_cells_per_fragment;
     }
 
@@ -272,6 +276,11 @@ TEST_CASE("SOMAReader: nnz with consolidation") {
         auto sr = SOMAReader::open(ctx, uri, "nnz", {}, "auto", "auto");
 
         uint64_t nnz = sr->nnz();
-        REQUIRE(nnz == expected_nnz);
+        if (allow_duplicates) {
+            // Since we wrote twice
+            REQUIRE(nnz == 2 * expected_nnz);
+        } else {
+            REQUIRE(nnz == expected_nnz);
+        }
     }
 }

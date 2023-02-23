@@ -990,5 +990,5 @@ def test_timestamped_ops(tmp_path, allows_duplicates, consolidate):
     ) as sidf:
         tab = sidf.read().concat()
         assert list(x.as_py() for x in tab["soma_joinid"]) == [0]
-        assert list(x.as_py() for x in tab["B"]) == [100.1]
-        assert list(x.as_py() for x in tab["C"]) == ["foo"]
+        assert list(x.as_py() for x in tab["float"]) == [100.1]
+        assert list(x.as_py() for x in tab["string"]) == ["apple"]
