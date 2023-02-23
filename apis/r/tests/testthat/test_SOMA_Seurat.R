@@ -336,6 +336,7 @@ test_that("assays with missing layers are handled: new('matrix')", {
 })
 
 test_that("assays with missing layers are handled: new('dgCMatrix')", {
+  try(tiledb::tiledb_vfs_remove_dir(tdb_uri), silent = TRUE)
   assay <- pbmc_small[["RNA"]]
   assay <- SeuratObject::SetAssayData(assay, "counts", new("dgCMatrix"))
   soma <- SOMA$new(uri = tdb_uri)
@@ -351,6 +352,7 @@ test_that("assays with missing layers are handled: new('dgCMatrix')", {
 })
 
 test_that("assays with missing layers are handled: matrix()", {
+  try(tiledb::tiledb_vfs_remove_dir(tdb_uri), silent = TRUE)
   assay <- pbmc_small[["RNA"]]
   assay <- SeuratObject::SetAssayData(assay, "counts", matrix())
   soma <- SOMA$new(uri = tdb_uri)
@@ -366,6 +368,7 @@ test_that("assays with missing layers are handled: matrix()", {
 })
 
 test_that("assays with missing layers are handled: dgCMatrix()", {
+  try(tiledb::tiledb_vfs_remove_dir(tdb_uri), silent = TRUE)
   assay <- pbmc_small[["RNA"]]
   expect_s4_class(
     m <- as(
