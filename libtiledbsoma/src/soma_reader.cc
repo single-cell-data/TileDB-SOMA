@@ -213,7 +213,7 @@ uint64_t SOMAReader::nnz() {
 
         // If any relevant fragment is a consolidated fragment, fall back to
         // counting cells, because the fragment may contain duplicates.
-        if (frag_ts.first != frag_ts.second) {
+        if (!mq_->schema()->allows_dups() && frag_ts.first != frag_ts.second) {
             return nnz_slow();
         }
     }
@@ -274,34 +274,26 @@ uint64_t SOMAReader::nnz() {
 }
 
 uint64_t SOMAReader::nnz_slow() {
-    if (mq_->schema()->allows_dups()) {
-        LOG_DEBUG(
-            "[SOMAReader] computing nnz() when duplicates are allowed: this is "
-            "accurate only when the application has otherwise ensured "
-            "uniqueness");
+    LOG_DEBUG(
+        "[SOMAReader] nnz() found consolidated or overlapping fragments, "
+        "counting cells...");
+
+    auto sr = SOMAReader::open(
+        ctx_,
+        uri_,
+        "count_cells",
+        {mq_->schema()->domain().dimension(0).name()},
+        batch_size_,
+        result_order_,
+        timestamp_);
+    sr->submit();
+
+    uint64_t total_cell_num = 0;
+    while (auto batch = sr->read_next()) {
+        total_cell_num += (*batch)->num_rows();
     }
-}
 
-LOG_DEBUG(
-    "[SOMAReader] nnz() found consolidated or overlapping fragments, "
-    "counting cells...");
-
-auto sr = SOMAReader::open(
-    ctx_,
-    uri_,
-    "count_cells",
-    {mq_->schema()->domain().dimension(0).name()},
-    batch_size_,
-    result_order_,
-    timestamp_);
-sr->submit();
-
-uint64_t total_cell_num = 0;
-while (auto batch = sr->read_next()) {
-    total_cell_num += (*batch)->num_rows();
-}
-
-return total_cell_num;
+    return total_cell_num;
 }
 
 }  // namespace tiledbsoma
