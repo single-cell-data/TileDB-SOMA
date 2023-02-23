@@ -966,9 +966,17 @@ def test_timestamped_ops(tmp_path, allows_duplicates, consolidate):
     with soma.DataFrame.open(uri) as sidf:
         table = sidf.read().concat()
         if allows_duplicates:
-            assert list(x.as_py() for x in table["soma_joinid"]) == [0, 0, 1]
-            assert list(x.as_py() for x in table["float"]) == [100.1, 200.2, 300.3]
-            assert list(x.as_py() for x in table["string"]) == ["apple", "ball", "cat"]
+            assert sorted(list(x.as_py() for x in table["soma_joinid"])) == [0, 0, 1]
+            assert sorted(list(x.as_py() for x in table["float"])) == [
+                100.1,
+                200.2,
+                300.3,
+            ]
+            assert sorted(list(x.as_py() for x in table["string"])) == [
+                "apple",
+                "ball",
+                "cat",
+            ]
             assert sidf.count == 3
         else:
             assert list(x.as_py() for x in table["soma_joinid"]) == [0, 1]

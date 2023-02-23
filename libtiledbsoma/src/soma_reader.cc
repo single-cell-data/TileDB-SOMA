@@ -213,6 +213,9 @@ uint64_t SOMAReader::nnz() {
 
         // If any relevant fragment is a consolidated fragment, fall back to
         // counting cells, because the fragment may contain duplicates.
+        // If the application is allowing duplicates (in which case it's the
+        // application's job to otherwise ensure uniqueness), then
+        // sum-over-fragments is the right thing to do.
         if (!mq_->schema()->allows_dups() && frag_ts.first != frag_ts.second) {
             return nnz_slow();
         }
