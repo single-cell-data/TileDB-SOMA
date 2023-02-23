@@ -4,5 +4,6 @@ is_seurat_assay <- function(x) {
 
 seurat_assay_has_scale_data <- function(x) {
   stopifnot(is_seurat_assay(x))
-  length(SeuratObject::GetAssayData(x, "scale.data")) > 0
+  !SeuratObject::IsMatrixEmpty(SeuratObject::GetAssayData(x, 'scale.data'))
+  # length(SeuratObject::GetAssayData(x, "scale.data")) > 0
 }
