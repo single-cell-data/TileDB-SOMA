@@ -1,5 +1,9 @@
 # tiledbsoma (development version)
 
+## Changes
+
+- The `SOMA`'s `from_seurat_assay()` method now checks for and skips empty matrices following Seurat's definition of an empty matrix (#990)
+
 ## Features
 
 - The `SOMACollection`'s `to_seurat()` method gains a `somas` argument that makes it possible to select a subset of `SOMA`s and `X` layers to be retrieved (#571).
