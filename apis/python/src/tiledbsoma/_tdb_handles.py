@@ -166,7 +166,7 @@ class ArrayWrapper(Wrapper[tiledb.Array]):
         return tiledb.open(
             uri,
             mode,
-            timestamp=(context.timestamp_start, context.timestamp),
+            timestamp=context._timestamp_arg(),
             ctx=context.tiledb_ctx,
         )
 

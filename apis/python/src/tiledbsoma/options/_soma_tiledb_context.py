@@ -1,5 +1,5 @@
 import time
-from typing import Any, Dict, Optional, Union
+from typing import Any, Dict, Optional, Tuple, Union
 
 import attrs
 import tiledb
@@ -32,11 +32,19 @@ class SOMATileDBContext:
 
     tiledb_ctx: tiledb.Ctx = _build_default_tiledb_ctx()
 
-    timestamp: int = attrs.field(factory=lambda: int(time.time() * 1000))
+    timestamp: Optional[int] = attrs.field(factory=lambda: int(time.time() * 1000))
     """
     Timestamp for operations on SOMA objects, in milliseconds since Unix epoch.
-    Defaults to the time of context initialization. Set to 0xFFFFFFFFFFFFFFFF
-    (UINT64_MAX) to get the latest revision as of when *each* object is opened.
+    Defaults to the time of context initialization.
+
+    Set to ``None`` to use the current wall time and opt out of timestamp
+    consistency. **Reads** will see data as of the time that the individual
+    TileDB object is opened. **Writes** will be recorded as of when the TileDB
+    object is closed.
+
+    Set to 0xFFFFFFFFFFFFFFFF (UINT64_MAX) to get the absolute latest revision
+    (i.e., including changes that occur "after" the current wall time) as of
+    when *each* object is opened.
     """
 
     timestamp_start: int = 0
@@ -48,7 +56,13 @@ class SOMATileDBContext:
 
     @timestamp.validator
     def _validate_timestamps(self, _: Any, __: Any) -> None:
-        if not 0 <= self.timestamp_start <= self.timestamp:
+        if self.timestamp is None:
+            if self.timestamp_start:
+                raise ValueError(
+                    "SOMATileDBContext: if the current `timestamp` is None,"
+                    " the `timestamp_start` cannot be set."
+                )
+        elif not 0 <= self.timestamp_start <= self.timestamp:
             raise ValueError("SOMATileDBContext: invalid read timestamp range")
 
     _group_tiledb_ctx_: Optional[tiledb.Ctx] = attrs.field(init=False, default=None)
@@ -65,13 +79,23 @@ class SOMATileDBContext:
         """
         if self._group_tiledb_ctx_:
             return self._group_tiledb_ctx_
-        ctx = group_timestamp_ctx(
-            self.tiledb_ctx,
-            timestamp_start=self.timestamp_start,
-            timestamp=self.timestamp,
-        )
+        if self.timestamp is None:
+            ctx = self.tiledb_ctx
+        else:
+            print(f"building group context for {self.timestamp}")
+            ctx = group_timestamp_ctx(
+                self.tiledb_ctx,
+                timestamp_start=self.timestamp_start,
+                timestamp=self.timestamp,
+            )
         object.__setattr__(self, "_group_tiledb_ctx_", ctx)
         return ctx
+
+    def _timestamp_arg(self) -> Optional[Tuple[int, int]]:
+        """The value to use as the ``timestamp`` argument to ``tiledb.open``."""
+        if self.timestamp is None:
+            return None
+        return (self.timestamp_start, self.timestamp)
 
     def replace(
         self, *, tiledb_config: Optional[Dict[str, Any]] = None, **changes: Any

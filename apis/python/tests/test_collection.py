@@ -1,6 +1,7 @@
 import os
 import pathlib
 import textwrap
+import time
 from typing import List, TypeVar, Union
 
 import numpy as np
@@ -499,3 +500,55 @@ def test_issue919(tmp_path):
             assert "df" in c["expt"] and "causes_bug" in c["expt"]
             df = c["expt"]["df"].read().concat().to_pandas()
             assert len(df) == 0
+
+
+def test_timestamp_opt_out(tmp_path: pathlib.Path):
+    optout = SOMATileDBContext(timestamp=None)
+    before = time.time()
+    time.sleep(0.01)
+    with soma.Collection.create(tmp_path.as_uri(), context=optout) as coll:
+        sub = coll.add_new_collection("sub_1")
+        sub.add_new_collection("sub_sub")
+        time.sleep(0.01)
+        during_first = time.time()
+        time.sleep(0.01)
+    time.sleep(0.01)
+    between = time.time()
+    time.sleep(0.01)
+    with soma.Collection.open(tmp_path.as_uri(), "w", context=optout) as coll:
+        coll.add_new_collection("sub_2")
+        time.sleep(0.01)
+        during_second = time.time()
+        time.sleep(0.01)
+    time.sleep(0.01)
+    after = time.time()
+
+    with soma.Collection.open(tmp_path.as_uri(), context=optout) as coll:
+        coll["sub_1"]
+        coll["sub_2"]
+
+    with pytest.raises(soma.SOMAError):
+        _read_at(tmp_path, before)
+
+    with _read_at(tmp_path, during_first) as during_first_coll:
+        assert not set(during_first_coll)
+
+    with _read_at(tmp_path, between) as between_coll:
+        assert set(between_coll) == {"sub_1"}
+        between_sub_1 = between_coll["sub_1"]
+        assert set(between_sub_1) == {"sub_sub"}
+        between_sub_1["sub_sub"]
+
+    with _read_at(tmp_path, during_second) as during_second_coll:
+        assert set(during_second_coll) == {"sub_1"}
+        during_second_sub_1 = during_second_coll["sub_1"]
+        assert set(during_second_sub_1) == {"sub_sub"}
+        during_second_sub_1["sub_sub"]
+
+    with _read_at(tmp_path, after) as after_coll:
+        assert set(after_coll) == {"sub_1", "sub_2"}
+
+
+def _read_at(path: pathlib.Path, timestamp_sec: float):
+    ctx = soma.SOMATileDBContext(timestamp=int(timestamp_sec * 1000))
+    return soma.open(path.as_uri(), context=ctx)

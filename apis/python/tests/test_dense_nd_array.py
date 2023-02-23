@@ -1,3 +1,5 @@
+import pathlib
+import time
 from typing import Tuple
 
 import numpy as np
@@ -402,3 +404,37 @@ def test_timestamped_ops(tmp_path):
             [F, F],
             [F, 1],
         ]
+
+
+def test_timestamp_opt_out(tmp_path: pathlib.Path):
+    optout = SOMATileDBContext(timestamp=None)
+    before = time.time()
+    time.sleep(0.01)
+    with soma.DenseNDArray.create(
+        tmp_path.as_posix(),
+        type=pa.uint8(),
+        shape=(2, 2),
+        context=optout,
+    ) as ndarr:
+        ndarr.metadata["metadata"] = "created"
+    time.sleep(0.01)
+    during = time.time()
+    time.sleep(0.01)
+    with soma.open(tmp_path.as_posix(), "w", context=optout) as ndarr:
+        ndarr.metadata["metadata"] = "updated"
+    time.sleep(0.01)
+    after = time.time()
+    with soma.open(tmp_path.as_posix(), context=optout) as ndarr:
+        assert ndarr.metadata["metadata"] == "updated"
+
+    with pytest.raises(soma.SOMAError):
+        _read_at(tmp_path, before)
+    with _read_at(tmp_path, during) as during_arr:
+        assert during_arr.metadata["metadata"] == "created"
+    with _read_at(tmp_path, after) as after_arr:
+        assert after_arr.metadata["metadata"] == "updated"
+
+
+def _read_at(path: pathlib.Path, timestamp_sec: float):
+    ctx = soma.SOMATileDBContext(timestamp=int(timestamp_sec * 1000))
+    return soma.open(path.as_uri(), context=ctx)
