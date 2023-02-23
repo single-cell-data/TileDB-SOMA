@@ -172,11 +172,8 @@ TEST_CASE("SOMAReader: nnz") {
         // Get total cell num
         auto sr = SOMAReader::open(ctx, uri);
 
-        uint64_t nnz;
-        if (num_fragments > 1 && overlap && allow_duplicates) {
-          nnz = sr->nnz();
-          REQUIRE(nnz == expected_nnz);
-        }
+        uint64_t nnz = sr->nnz();
+        REQUIRE(nnz == expected_nnz);
     }
 }
 
@@ -221,14 +218,8 @@ TEST_CASE("SOMAReader: nnz with timestamp") {
         auto sr = SOMAReader::open(
             ctx, uri, "nnz", {}, "auto", "auto", timestamp);
 
-        uint64_t nnz;
-        if (num_fragments > 1 && overlap && allow_duplicates) {
-            REQUIRE_THROWS(nnz = sr->nnz());
-            LOG_DEBUG("Caught expected exception for nnz with duplicates");
-        } else {
-            nnz = sr->nnz();
-            REQUIRE(nnz == expected_nnz);
-        }
+        uint64_t nnz = sr->nnz();
+        REQUIRE(nnz == expected_nnz);
     }
 }
 
@@ -280,13 +271,7 @@ TEST_CASE("SOMAReader: nnz with consolidation") {
         // Get total cell num
         auto sr = SOMAReader::open(ctx, uri, "nnz", {}, "auto", "auto");
 
-        uint64_t nnz;
-        if (allow_duplicates) {
-            REQUIRE_THROWS(nnz = sr->nnz());
-            LOG_DEBUG("Caught expected exception for nnz with duplicates");
-        } else {
-            nnz = sr->nnz();
-            REQUIRE(nnz == expected_nnz);
-        }
+        uint64_t nnz = sr->nnz();
+        REQUIRE(nnz == expected_nnz);
     }
 }
