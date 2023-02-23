@@ -319,15 +319,34 @@ SOMA <- R6::R6Class(
           = inherits(object, "Assay"),
         "'var' must be a logical value" = is.logical(var)
       )
+      layers <- layers %||% c('counts', 'data', 'scale.data')
+      layers <- match.arg(
+        arg = layers,
+        choices = c('counts', 'data', 'scale.data'),
+        several.ok = TRUE
+      )
+      layers <- Filter(
+        f = function(x) {
+          return(!SeuratObject::IsMatrixEmpty(x = SeuratObject::GetAssayData(
+            object = object,
+            slot = x
+          )))
+        },
+        x = layers
+      )
+      stopifnot(
+        "None of the layers specified are found in the provided assay" =
+          as.logical(x = length(x = layers))
+      )
 
-      if (is.null(layers)) {
-        layers <- c("counts", "data")
-        if (seurat_assay_has_scale_data(object)) {
-          layers <- c(layers, "scale.data")
-        }
-      } else {
-        layers <- match.arg(layers, c("counts", "data", "scale.data"), TRUE)
-      }
+      # if (is.null(layers)) {
+      #   layers <- c("counts", "data")
+      #   if (seurat_assay_has_scale_data(object)) {
+      #     layers <- c(layers, "scale.data")
+      #   }
+      # } else {
+      #   layers <- match.arg(layers, c("counts", "data", "scale.data"), TRUE)
+      # }
 
       skip_obs <- self$obs$exists() && is.null(obs)
       if (!is.null(obs)) {
@@ -452,6 +471,10 @@ SOMA <- R6::R6Class(
         # CreateAssayObject only accepts a dgTMatrix matrix for `counts`, 'data'
         # and 'scale.data' must be coerced to a dgCMatrix and base::matrix,
         # respectively. Bug?
+        # PH: No, not a bug. The `counts` and `data` matrices must be either a
+        # dgCMatrix or base::matrix; we call SeuratObject::as.sparse() for
+        # `counts` and `data` if no one of the above. The `scale.data` slot
+        # must be a base::matrix and we make no attempts at conversion
         assay_obj <- SeuratObject::CreateAssayObject(
           data = as(assay_mats$data, "dgCMatrix"),
           min.cells = min_cells,

@@ -318,3 +318,71 @@ test_that("individual layers can be added or updated", {
   expect_identical(soma$X$members$counts$fragment_count(), 1)
   expect_identical(soma$X$members$data$fragment_count(), 2)
 })
+
+test_that("assays with missing layers are handled: new('matrix')", {
+  try(tiledb::tiledb_vfs_remove_dir(tdb_uri), silent = TRUE)
+  assay <- pbmc_small[["RNA"]]
+  assay <- SeuratObject::SetAssayData(assay, "counts", new("matrix"))
+  soma <- SOMA$new(uri = tdb_uri)
+  soma$from_seurat_assay(assay)
+
+  expect_equal(names(soma$members$X$members), c("data", "scale.data"))
+  expect_s4_class(assay1 <- soma$to_seurat_assay(), "Assay")
+  expect_true(
+    inherits(mat <- SeuratObject::GetAssayData(assay1, "counts"), "matrix")
+  )
+  expect_true(all(dim(mat) == 0L))
+  expect_true(SeuratObject::IsMatrixEmpty(mat))
+})
+
+test_that("assays with missing layers are handled: new('dgCMatrix')", {
+  assay <- pbmc_small[["RNA"]]
+  assay <- SeuratObject::SetAssayData(assay, "counts", new("dgCMatrix"))
+  soma <- SOMA$new(uri = tdb_uri)
+  soma$from_seurat_assay(assay)
+
+  expect_equal(names(soma$members$X$members), c("data", "scale.data"))
+  expect_s4_class(assay1 <- soma$to_seurat_assay(), "Assay")
+  expect_true(
+    inherits(mat <- SeuratObject::GetAssayData(assay1, "counts"), "matrix")
+  )
+  expect_true(all(dim(mat) == 0L))
+  expect_true(SeuratObject::IsMatrixEmpty(mat))
+})
+
+test_that("assays with missing layers are handled: matrix()", {
+  assay <- pbmc_small[["RNA"]]
+  assay <- SeuratObject::SetAssayData(assay, "counts", matrix())
+  soma <- SOMA$new(uri = tdb_uri)
+  soma$from_seurat_assay(assay)
+
+  expect_equal(names(soma$members$X$members), c("data", "scale.data"))
+  expect_s4_class(assay1 <- soma$to_seurat_assay(), "Assay")
+  expect_true(
+    inherits(mat <- SeuratObject::GetAssayData(assay1, "counts"), "matrix")
+  )
+  expect_true(all(dim(mat) == 0L))
+  expect_true(SeuratObject::IsMatrixEmpty(mat))
+})
+
+test_that("assays with missing layers are handled: dgCMatrix()", {
+  assay <- pbmc_small[["RNA"]]
+  expect_s4_class(
+    m <- as(
+      as(Matrix::Matrix(NA_real_, sparse = TRUE), "generalMatrix"),
+      "CsparseMatrix"
+    ),
+    "dgCMatrix"
+  )
+  assay <- SeuratObject::SetAssayData(assay, "counts", new("matrix"))
+  soma <- SOMA$new(uri = tdb_uri)
+  soma$from_seurat_assay(assay)
+
+  expect_equal(names(soma$members$X$members), c("data", "scale.data"))
+  expect_s4_class(assay1 <- soma$to_seurat_assay(), "Assay")
+  expect_true(
+    inherits(mat <- SeuratObject::GetAssayData(assay1, "counts"), "matrix")
+  )
+  expect_true(all(dim(mat) == 0L))
+  expect_true(SeuratObject::IsMatrixEmpty(mat))
+})
