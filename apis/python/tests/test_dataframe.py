@@ -913,43 +913,68 @@ def test_create_platform_config_overrides(
             assert getattr(D.schema, k) == v
 
 
-def test_timestamped_ops(tmp_path):
+@pytest.mark.parametrize("allows_duplicates", [False, True])
+@pytest.mark.parametrize("consolidate", [False, True])
+def test_timestamped_ops(tmp_path, allows_duplicates, consolidate):
+
+    uri = tmp_path.as_posix()
+
+    platform_config = {"tiledb": {"create": {"allows_duplicates": allows_duplicates}}}
     schema = pa.schema(
         [
             ("soma_joinid", pa.int64()),
-            ("B", pa.float64()),
-            ("C", pa.large_string()),
+            ("float", pa.float64()),
+            ("string", pa.large_string()),
         ]
     )
     with soma.DataFrame.create(
-        tmp_path.as_posix(),
+        uri,
         schema=schema,
         index_column_names=["soma_joinid"],
         context=SOMATileDBContext(timestamp=10),
+        platform_config=platform_config,
     ) as sidf:
         data = {
             "soma_joinid": [0],
-            "B": [100.1],
-            "C": ["foo"],
+            "float": [100.1],
+            "string": ["apple"],
         }
         sidf.write(pa.Table.from_pydict(data))
 
     with soma.DataFrame.open(
-        uri=tmp_path.as_posix(), mode="w", context=SOMATileDBContext(timestamp=20)
+        uri=uri, mode="w", context=SOMATileDBContext(timestamp=20)
     ) as sidf:
         data = {
             "soma_joinid": [0, 1],
-            "B": [200.2, 300.3],
-            "C": ["bar", "bas"],
+            "float": [200.2, 300.3],
+            "string": ["ball", "cat"],
         }
         sidf.write(pa.Table.from_pydict(data))
 
+    # Without consolidate:
+    # * There are two fragments:
+    #   o One with tiledb.fragment.FragmentInfoList[i].timestamp_range = (10, 10)
+    #   o One with tiledb.fragment.FragmentInfoList[i].timestamp_range = (20, 20)
+    # With consolidate:
+    # * There is one fragment:
+    #   o One with tiledb.fragment.FragmentInfoList[i].timestamp_range = (10, 20)
+    if consolidate:
+        tiledb.consolidate(uri)
+        tiledb.vacuum(uri)
+
     # read without timestamp & see final image
-    with soma.DataFrame.open(tmp_path.as_posix()) as sidf:
-        tab = sidf.read().concat()
-        assert list(x.as_py() for x in tab["soma_joinid"]) == [0, 1]
-        assert list(x.as_py() for x in tab["B"]) == [200.2, 300.3]
-        assert list(x.as_py() for x in tab["C"]) == ["bar", "bas"]
+    with soma.DataFrame.open(uri) as sidf:
+        table = sidf.read().concat()
+        if allows_duplicates:
+            assert list(x.as_py() for x in table["soma_joinid"]) == [0, 0, 1]
+            assert list(x.as_py() for x in table["float"]) == [100.1, 200.2, 300.3]
+            assert list(x.as_py() for x in table["string"]) == ["apple", "ball", "cat"]
+            assert sidf.count == 3
+        else:
+            assert list(x.as_py() for x in table["soma_joinid"]) == [0, 1]
+            assert list(x.as_py() for x in table["float"]) == [200.2, 300.3]
+            assert list(x.as_py() for x in table["string"]) == ["ball", "cat"]
+            assert sidf.count == 2
 
     # read at t=15 & see only the first write
     with soma.DataFrame.open(

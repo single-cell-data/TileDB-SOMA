@@ -274,32 +274,34 @@ uint64_t SOMAReader::nnz() {
 }
 
 uint64_t SOMAReader::nnz_slow() {
-    // If duplicates are allowed, we cannot count simply count cells.
     if (mq_->schema()->allows_dups()) {
-        throw TileDBSOMAError(
-            "[SOMAReader] nnz not supported when duplicates are allowed");
+        LOG_DEBUG(
+            "[SOMAReader] computing nnz() when duplicates are allowed: this is "
+            "accurate only when the application has otherwise ensured "
+            "uniqueness");
     }
+}
 
-    LOG_WARN(
-        "[SOMAReader] nnz() found consolidated or overlapping fragments, "
-        "counting cells...");
+LOG_DEBUG(
+    "[SOMAReader] nnz() found consolidated or overlapping fragments, "
+    "counting cells...");
 
-    auto sr = SOMAReader::open(
-        ctx_,
-        uri_,
-        "count_cells",
-        {mq_->schema()->domain().dimension(0).name()},
-        batch_size_,
-        result_order_,
-        timestamp_);
-    sr->submit();
+auto sr = SOMAReader::open(
+    ctx_,
+    uri_,
+    "count_cells",
+    {mq_->schema()->domain().dimension(0).name()},
+    batch_size_,
+    result_order_,
+    timestamp_);
+sr->submit();
 
-    uint64_t total_cell_num = 0;
-    while (auto batch = sr->read_next()) {
-        total_cell_num += (*batch)->num_rows();
-    }
+uint64_t total_cell_num = 0;
+while (auto batch = sr->read_next()) {
+    total_cell_num += (*batch)->num_rows();
+}
 
-    return total_cell_num;
+return total_cell_num;
 }
 
 }  // namespace tiledbsoma
