@@ -267,8 +267,8 @@ class DataFrame(TileDBArray, somacore.DataFrame):
             return True
 
         if isinstance(coord, (pa.Array, pa.ChunkedArray)):
-            # sr.set_dim_points_arrow does type disambiguation based on array schema -- so we
-            # do not.
+            # sr.set_dim_points_arrow does type disambiguation based on array schema -- so we do
+            # not.
             sr.set_dim_points_arrow(dim.name, coord)
             return True
 
@@ -278,12 +278,19 @@ class DataFrame(TileDBArray, somacore.DataFrame):
 
         if isinstance(coord, slice):
             _util.validate_slice(coord)
-            if self._set_reader_coord_by_non_string_slice(sr, dim_idx, dim, coord):
+            if coord.start is None and coord.stop is None:
                 return True
 
-        # Note: slice(None, None) matches this ... this breaks `slice(None, None)` of other types
-        # such as int8, float32, etc., unless we test for string last.
-        if is_slice_of(coord, str) or is_slice_of(coord, bytes):
+        if isinstance(coord, slice):
+            _util.validate_slice(coord)
+            if self._set_reader_coord_by_numeric_slice(sr, dim_idx, dim, coord):
+                return True
+
+        # Note: slice(None, None) matches the is_slice_of part, unless we also check the dim-type
+        # part.
+        if (is_slice_of(coord, str) or is_slice_of(coord, bytes)) and (
+            dim.dtype == "str" or dim.dtype == "bytes"
+        ):
             _util.validate_slice(coord)
             # Figure out which one.
             dim_type: Union[Type[str], Type[bytes]] = type(dim.domain[0])
@@ -298,13 +305,33 @@ class DataFrame(TileDBArray, somacore.DataFrame):
             sr.set_dim_ranges_string_or_bytes(dim.name, [(start, stop)])
             return True
 
+        # Note: slice(None, None) matches the is_slice_of part, unless we also check the dim-type
+        # part.
+        if is_slice_of(coord, np.datetime64) and dim.dtype.name.startswith(
+            "datetime64"
+        ):
+            _util.validate_slice(coord)
+            # These timestamp types are stored in Arrow as well as TileDB as 64-bit integers (with
+            # distinguishing metadata of course). For purposes of the query logic they're just
+            # int64.
+            istart = coord.start or dim.domain[0]
+            istart = int(istart.astype("int64"))
+            istop = coord.stop or dim.domain[1]
+            istop = int(istop.astype("int64"))
+            sr.set_dim_ranges_int64(dim.name, [(istart, istop)])
+            return True
+
         if super()._set_reader_coord(sr, dim_idx, dim, coord):
             return True
 
         return False
 
     def _set_reader_coord_by_py_seq_or_np_array(
-        self, sr: clib.SOMAReader, dim_idx: int, dim: tiledb.Dim, coord: object
+        self,
+        sr: clib.SOMAReader,
+        dim_idx: int,
+        dim: tiledb.Dim,
+        coord: object,
     ) -> bool:
         if isinstance(coord, np.ndarray):
             if coord.ndim != 1:
@@ -341,7 +368,24 @@ class DataFrame(TileDBArray, somacore.DataFrame):
         elif dim.dtype == "str" or dim.dtype == "bytes":
             sr.set_dim_points_string_or_bytes(dim.name, coord)
 
-        # TODO: timestamps x 4, and bool
+        elif (
+            dim.dtype == "datetime64[s]"
+            or dim.dtype == "datetime64[ms]"
+            or dim.dtype == "datetime64[us]"
+            or dim.dtype == "datetime64[ns]"
+        ):
+            if not isinstance(coord, (tuple, list, np.ndarray)):
+                raise ValueError(
+                    f"unhandled coord type {type(coord)} for index column named {dim.name}"
+                )
+            icoord = [
+                int(e.astype("int64")) if isinstance(e, np.datetime64) else e
+                for e in coord
+            ]
+            sr.set_dim_points_int64(dim.name, icoord)
+
+        # TODO: bool
+
         else:
             raise ValueError(
                 f"unhandled type {dim.dtype} for index column named {dim.name}"
@@ -349,7 +393,7 @@ class DataFrame(TileDBArray, somacore.DataFrame):
 
         return True
 
-    def _set_reader_coord_by_non_string_slice(
+    def _set_reader_coord_by_numeric_slice(
         self, sr: clib.SOMAReader, dim_idx: int, dim: tiledb.Dim, coord: Slice[Any]
     ) -> bool:
 
@@ -394,11 +438,8 @@ class DataFrame(TileDBArray, somacore.DataFrame):
             sr.set_dim_ranges_float32(dim.name, [lo_hi])
             return True
 
-        #        # TODO: timestamps x 4, and bool
-        #        else:
-        #            raise ValueError(
-        #                f"unhandled type {dim.dtype} for index column named {dim.name}"
-        #            )
+        # TODO:
+        # elif dim.dtype == np.bool_:
 
         return False
 
@@ -456,6 +497,10 @@ def _canonicalize_schema(
             pa.large_binary(),
             pa.string(),
             pa.large_string(),
+            pa.timestamp("s"),
+            pa.timestamp("ms"),
+            pa.timestamp("us"),
+            pa.timestamp("ns"),
         ]:
             raise TypeError(
                 f"Unsupported index type {schema.field(index_column_name).type}"
@@ -486,6 +531,20 @@ def _build_tiledb_schema(
         elif np.issubdtype(dtype, NPFloating):
             finfo = np.finfo(cast(NPFloating, dtype))
             domain = finfo.min, finfo.max
+
+        elif dtype == "datetime64[s]":
+            iinfo = np.iinfo(cast(NPInteger, np.int64))
+            domain = np.datetime64(iinfo.min, "s"), np.datetime64(iinfo.max - 1, "s")
+        elif dtype == "datetime64[ms]":
+            iinfo = np.iinfo(cast(NPInteger, np.int64))
+            domain = np.datetime64(iinfo.min, "ms"), np.datetime64(iinfo.max - 1, "ms")
+        elif dtype == "datetime64[us]":
+            iinfo = np.iinfo(cast(NPInteger, np.int64))
+            domain = np.datetime64(iinfo.min, "us"), np.datetime64(iinfo.max - 1, "us")
+        elif dtype == "datetime64[ns]":
+            iinfo = np.iinfo(cast(NPInteger, np.int64))
+            domain = np.datetime64(iinfo.min, "ns"), np.datetime64(iinfo.max - 1, "ns")
+
         else:
             raise TypeError(f"Unsupported dtype {dtype}")
         if index_column_name == SOMA_JOINID:

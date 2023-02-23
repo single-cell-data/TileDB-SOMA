@@ -388,13 +388,6 @@ PYBIND11_MODULE(libtiledbsoma, m) {
                         reader.set_dim_points(
                             dim, data, partition_index, partition_count);
 
-                        // TODO:
-                        // (pa.bool_(),) * 2,
-                        // (pa.timestamp("s"),) * 2,
-                        // (pa.timestamp("ms"),) * 2,
-                        // (pa.timestamp("us"),) * 2,
-                        // (pa.timestamp("ns"),) * 2,
-
                     } else if (
                         !strcmp(arrow_schema.format, "u") ||
                         !strcmp(arrow_schema.format, "z")) {
@@ -410,6 +403,20 @@ PYBIND11_MODULE(libtiledbsoma, m) {
                                 data + offsets[i], offsets[i + 1] - offsets[i]};
                             reader.set_dim_point(dim, value);
                         }
+
+                    } else if (
+                        !strcmp(arrow_schema.format, "tss:") ||
+                        !strcmp(arrow_schema.format, "tsms:") ||
+                        !strcmp(arrow_schema.format, "tsus:") ||
+                        !strcmp(arrow_schema.format, "tsns:")) {
+                        tcb::span<int64_t> data{
+                            (int64_t*)arrow_array.buffers[data_index],
+                            (uint64_t)arrow_array.length};
+                        reader.set_dim_points(
+                            dim, data, partition_index, partition_count);
+
+                        // TODO:
+                        // (pa.bool_(),) * 2,
 
                     } else if (
                         !strcmp(arrow_schema.format, "U") ||
