@@ -338,16 +338,7 @@ SOMA <- R6::R6Class(
         "None of the layers specified are found in the provided assay" =
           as.logical(x = length(x = layers))
       )
-
-      # if (is.null(layers)) {
-      #   layers <- c("counts", "data")
-      #   if (seurat_assay_has_scale_data(object)) {
-      #     layers <- c(layers, "scale.data")
-      #   }
-      # } else {
-      #   layers <- match.arg(layers, c("counts", "data", "scale.data"), TRUE)
-      # }
-
+      
       skip_obs <- self$obs$exists() && is.null(obs)
       if (!is.null(obs)) {
         stopifnot(
