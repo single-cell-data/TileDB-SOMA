@@ -15,7 +15,7 @@ repos:
     - id: mypy
       additional_dependencies:
         - "pandas-stubs"
-        - "somacore==1.0.0rc1"
+        - "somacore==1.0.0rc2"
         - "types-setuptools"
       args: ["--config-file=apis/python/pyproject.toml", "apis/python/src", "apis/python/devtools"]
       pass_filenames: false
