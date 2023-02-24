@@ -4,6 +4,7 @@ on:
   pull_request:
     paths-ignore:
       - "apis/python/**"
+      - ".pre-commit-config.yaml"
   push:
     branches: [main]
 
