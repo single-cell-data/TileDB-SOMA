@@ -4,9 +4,6 @@ import pytest
 
 import tiledbsoma as soma
 
-# TODO:
-# * Unit-test indexing by bool and timestamp arrow types here
-
 
 @pytest.fixture
 def arrow_table():
@@ -945,9 +942,6 @@ def arrow_table():
             [pa.array([322.5, 323.5], pa.float32())],
             RuntimeError,  # Static type (FLOAT32) does not match expected type (FLOAT64)
         ],
-        # TODO:
-        # * bool
-        # * arrow timestamps (s, ms, us, ns)
         # Index by int64 and string
         [
             "INT64+STRING-ALL",
@@ -1354,22 +1348,39 @@ def arrow_table():
             [pa.array([946684800000000002, 946684800000000003], pa.timestamp("s"))],
             "default23",
         ],
+        # Index by bool -- not currently supported
+        [
+            "BOOL-ALL",
+            ["bool"],
+            [],
+            TypeError,  # TypeError: Unsupported index type bool
+        ],
     ],
 )
 def test_types(tmp_path, arrow_table, name, index_column_names, coords, expecteds):
     uri = tmp_path.as_posix()
+
+    if expecteds == TypeError:
+        with pytest.raises(expecteds):
+            soma.DataFrame.create(
+                uri,
+                schema=arrow_table.schema,
+                index_column_names=index_column_names,
+            )
+        return
 
     soma.DataFrame.create(
         uri,
         schema=arrow_table.schema,
         index_column_names=index_column_names,
     )
+
     with soma.DataFrame.open(uri, "w") as sdf:
         sdf.write(arrow_table)
 
     if expecteds == RuntimeError:
         with soma.DataFrame.open(uri, "r") as sdf:
-            with pytest.raises(RuntimeError):
+            with pytest.raises(expecteds):
                 sdf.read(coords=coords).concat()
 
     else:
