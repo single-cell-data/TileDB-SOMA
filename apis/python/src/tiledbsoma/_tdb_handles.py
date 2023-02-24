@@ -12,6 +12,7 @@ from typing import (
     Iterator,
     Mapping,
     MutableMapping,
+    Optional,
     Type,
     TypeVar,
     Union,
@@ -32,16 +33,19 @@ _RawHdl_co = TypeVar("_RawHdl_co", bound=RawHandle, covariant=True)
 
 
 def open(
-    uri: str, mode: options.OpenMode, context: SOMATileDBContext
+    uri: str,
+    mode: options.OpenMode,
+    context: SOMATileDBContext,
+    timestamp: Optional[int],
 ) -> "Wrapper[RawHandle]":
     """Determine whether the URI is an array or group, and open it."""
     obj_type = tiledb.object_type(uri, ctx=context.tiledb_ctx)
     if not obj_type:
         raise DoesNotExistError(f"{uri!r} does not exist")
     if obj_type == "array":
-        return ArrayWrapper.open(uri, mode, context)
+        return ArrayWrapper.open(uri, mode, context, timestamp)
     if obj_type == "group":
-        return GroupWrapper.open(uri, mode, context)
+        return GroupWrapper.open(uri, mode, context, timestamp)
     raise SOMAError(f"{uri!r} has unknown storage type {obj_type!r}")
 
 
@@ -56,18 +60,26 @@ class Wrapper(Generic[_RawHdl_co], metaclass=abc.ABCMeta):
     uri: str
     mode: options.OpenMode
     context: SOMATileDBContext
+    timestamp: int
     _handle: _RawHdl_co
     closed: bool = attrs.field(default=False, init=False)
 
     @classmethod
-    def open(cls, uri: str, mode: options.OpenMode, context: SOMATileDBContext) -> Self:
+    def open(
+        cls,
+        uri: str,
+        mode: options.OpenMode,
+        context: SOMATileDBContext,
+        timestamp: Optional[int],
+    ) -> Self:
         if mode not in ("r", "w"):
             raise ValueError(f"Invalid open mode {mode!r}")
+        real_timestamp = context._open_timestamp(timestamp)
         try:
-            tdb = cls._opener(uri, mode, context)
-            handle = cls(uri, mode, context, tdb)
+            tdb = cls._opener(uri, mode, context, real_timestamp)
+            handle = cls(uri, mode, context, real_timestamp, tdb)
             if mode == "w":
-                with cls._opener(uri, "r", context) as auxiliary_reader:
+                with cls._opener(uri, "r", context, real_timestamp) as auxiliary_reader:
                     handle._do_initial_reads(auxiliary_reader)
             else:
                 handle._do_initial_reads(tdb)
@@ -84,6 +96,7 @@ class Wrapper(Generic[_RawHdl_co], metaclass=abc.ABCMeta):
         uri: str,
         mode: options.OpenMode,
         context: SOMATileDBContext,
+        timestamp: int,
     ) -> _RawHdl_co:
         """Opens and returns a TileDB object specific to this type."""
         raise NotImplementedError()
@@ -129,7 +142,7 @@ class Wrapper(Generic[_RawHdl_co], metaclass=abc.ABCMeta):
         if self.mode == "w":
             self.metadata._write()
             self._handle.close()
-            self._handle = self._opener(self.uri, "w", self.context)
+            self._handle = self._opener(self.uri, "w", self.context, self.timestamp)
 
     def _check_open(self) -> None:
         if self.closed:
@@ -162,11 +175,12 @@ class ArrayWrapper(Wrapper[tiledb.Array]):
         uri: str,
         mode: options.OpenMode,
         context: SOMATileDBContext,
+        timestamp: int,
     ) -> tiledb.Array:
         return tiledb.open(
             uri,
             mode,
-            timestamp=context._timestamp_arg(),
+            timestamp=timestamp,
             ctx=context.tiledb_ctx,
         )
 
@@ -198,14 +212,24 @@ class GroupWrapper(Wrapper[tiledb.Group]):
         uri: str,
         mode: options.OpenMode,
         context: SOMATileDBContext,
+        timestamp: int,
     ) -> tiledb.Group:
-        return tiledb.Group(uri, mode, ctx=context._group_tiledb_ctx)
+        return tiledb.Group(
+            uri, mode, ctx=_group_timestamp_ctx(context.tiledb_ctx, timestamp)
+        )
 
     def _do_initial_reads(self, reader: tiledb.Group) -> None:
         super()._do_initial_reads(reader)
         self.initial_contents = {
             o.name: GroupEntry.from_object(o) for o in reader if o.name is not None
         }
+
+
+def _group_timestamp_ctx(ctx: tiledb.Ctx, timestamp: int) -> tiledb.Ctx:
+    """Builds a TileDB context to open groups at the given timestamp."""
+    group_cfg = ctx.config().dict()
+    group_cfg["sm.group.timestamp_end"] = timestamp
+    return tiledb.Ctx(group_cfg)
 
 
 class _DictMod(enum.Enum):

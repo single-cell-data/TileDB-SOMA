@@ -80,6 +80,7 @@ class DataFrame(TileDBArray, somacore.DataFrame):
         index_column_names: Sequence[str] = (SOMA_JOINID,),
         platform_config: Optional[options.PlatformConfig] = None,
         context: Optional[SOMATileDBContext] = None,
+        tiledb_timestamp: Optional[int] = None,
     ) -> "DataFrame":
         """
         Creates the data structure on disk/S3/cloud.
@@ -98,6 +99,10 @@ class DataFrame(TileDBArray, somacore.DataFrame):
 
         :param platform_config: Platform-specific options used to create this DataFrame,
             provided via ``{"tiledb": {"create": ...}}`` nested keys.
+
+        :param tiledb_timestamp: If specified, overrides the default timestamp
+            used to open this object. If unset, uses the timestamp provided by
+            the context.
         """
         context = context or SOMATileDBContext()
         schema = _canonicalize_schema(schema, index_column_names)
@@ -107,7 +112,7 @@ class DataFrame(TileDBArray, somacore.DataFrame):
             TileDBCreateOptions.from_platform_config(platform_config),
             context,
         )
-        handle = cls._create_internal(uri, tdb_schema, context)
+        handle = cls._create_internal(uri, tdb_schema, context, tiledb_timestamp)
         return cls(
             handle,
             _dont_call_this_use_create_or_open_instead="tiledbsoma-internal-code",

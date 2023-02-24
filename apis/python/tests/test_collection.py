@@ -1,7 +1,6 @@
 import os
 import pathlib
 import textwrap
-import time
 from typing import List, TypeVar, Union
 
 import numpy as np
@@ -420,32 +419,30 @@ def test_timestamped_ops(tmp_path):
     """
 
     # create collection @ t=10
-    with soma.Collection.create(
-        tmp_path.as_uri(), context=SOMATileDBContext(timestamp=10)
-    ):
+    with soma.Collection.create(tmp_path.as_uri(), tiledb_timestamp=10):
         pass
 
     # add array A to it @ t=20
-    with soma.Collection.open(
-        tmp_path.as_uri(), mode="w", context=SOMATileDBContext(timestamp=20)
-    ) as sc:
-        sc.add_new_dense_ndarray("A", type=pa.uint8(), shape=(2, 2)).write(
+    with soma.Collection.open(tmp_path.as_uri(), mode="w", tiledb_timestamp=20) as sc:
+        darr = sc.add_new_dense_ndarray("A", type=pa.uint8(), shape=(2, 2)).write(
             (slice(0, 2), slice(0, 2)),
             pa.Tensor.from_numpy(np.zeros((2, 2), dtype=np.uint8)),
         )
+        assert darr.tiledb_timestamp == 20
 
     # access A via collection @ t=30 and write something into it
-    with soma.Collection.open(
-        tmp_path.as_uri(), mode="w", context=SOMATileDBContext(timestamp=30)
-    ) as sc:
-        sc["A"].write(
+    with soma.Collection.open(tmp_path.as_uri(), mode="w", tiledb_timestamp=30) as sc:
+        darr = sc["A"].write(
             (slice(0, 1), slice(0, 1)),
             pa.Tensor.from_numpy(np.ones((1, 1), dtype=np.uint8)),
         )
+        assert darr.tiledb_timestamp == 30
 
     # open A via collection with no timestamp => A should reflect both writes
     with soma.Collection.open(tmp_path.as_uri()) as sc:
-        assert sc["A"].read((slice(None), slice(None))).to_numpy().tolist() == [
+        darr = sc["A"]
+        assert sc.tiledb_timestamp == darr.tiledb_timestamp
+        assert darr.read((slice(None), slice(None))).to_numpy().tolist() == [
             [1, 0],
             [0, 0],
         ]
@@ -466,10 +463,6 @@ def test_timestamped_ops(tmp_path):
         assert "A" not in sc
 
     # confirm timestamp validation in SOMATileDBContext
-    with pytest.raises(ValueError):
-        SOMATileDBContext(timestamp=-1)
-    with pytest.raises(ValueError):
-        SOMATileDBContext(timestamp_start=2, timestamp=1)
     with pytest.raises(ValueError):
         SOMATileDBContext(timestamp=-1)
 
@@ -502,53 +495,29 @@ def test_issue919(tmp_path):
             assert len(df) == 0
 
 
-def test_timestamp_opt_out(tmp_path: pathlib.Path):
-    optout = SOMATileDBContext(timestamp=None)
-    before = time.time()
-    time.sleep(0.01)
-    with soma.Collection.create(tmp_path.as_uri(), context=optout) as coll:
+def test_context_timestamp(tmp_path: pathlib.Path):
+    """Verifies that timestamps are inherited by collections."""
+    fixed_time = SOMATileDBContext(timestamp=123)
+    with soma.Collection.create(tmp_path.as_uri(), context=fixed_time) as coll:
+        assert coll.tiledb_timestamp == 123
         sub = coll.add_new_collection("sub_1")
-        sub.add_new_collection("sub_sub")
-        time.sleep(0.01)
-        during_first = time.time()
-        time.sleep(0.01)
-    time.sleep(0.01)
-    between = time.time()
-    time.sleep(0.01)
-    with soma.Collection.open(tmp_path.as_uri(), "w", context=optout) as coll:
-        coll.add_new_collection("sub_2")
-        time.sleep(0.01)
-        during_second = time.time()
-        time.sleep(0.01)
-    time.sleep(0.01)
-    after = time.time()
+        assert sub.tiledb_timestamp == 123
+        sub_sub = sub.add_new_collection("sub_sub")
+        assert sub_sub.tiledb_timestamp == 123
 
-    with soma.Collection.open(tmp_path.as_uri(), context=optout) as coll:
-        coll["sub_1"]
-        coll["sub_2"]
+    with soma.Collection.open(tmp_path.as_uri(), context=fixed_time) as coll:
+        assert coll.tiledb_timestamp == 123
+        sub_1 = coll["sub_1"]
+        assert sub_1.tiledb_timestamp == 123
+        assert sub_1["sub_sub"].tiledb_timestamp == 123
 
     with pytest.raises(soma.SOMAError):
-        _read_at(tmp_path, before)
+        soma.open(tmp_path.as_uri(), context=fixed_time, tiledb_timestamp=100)
 
-    with _read_at(tmp_path, during_first) as during_first_coll:
-        assert not set(during_first_coll)
-
-    with _read_at(tmp_path, between) as between_coll:
-        assert set(between_coll) == {"sub_1"}
-        between_sub_1 = between_coll["sub_1"]
-        assert set(between_sub_1) == {"sub_sub"}
-        between_sub_1["sub_sub"]
-
-    with _read_at(tmp_path, during_second) as during_second_coll:
-        assert set(during_second_coll) == {"sub_1"}
-        during_second_sub_1 = during_second_coll["sub_1"]
-        assert set(during_second_sub_1) == {"sub_sub"}
-        during_second_sub_1["sub_sub"]
-
-    with _read_at(tmp_path, after) as after_coll:
-        assert set(after_coll) == {"sub_1", "sub_2"}
-
-
-def _read_at(path: pathlib.Path, timestamp_sec: float):
-    ctx = soma.SOMATileDBContext(timestamp=int(timestamp_sec * 1000))
-    return soma.open(path.as_uri(), context=ctx)
+    with soma.Collection.open(
+        tmp_path.as_uri(), context=fixed_time, tiledb_timestamp=234
+    ) as coll:
+        assert coll.tiledb_timestamp == 234
+        sub_1 = coll["sub_1"]
+        assert sub_1.tiledb_timestamp == 234
+        assert sub_1["sub_sub"].tiledb_timestamp == 234

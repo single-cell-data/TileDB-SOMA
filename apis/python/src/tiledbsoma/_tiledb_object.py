@@ -37,6 +37,7 @@ class TileDBObject(somacore.SOMAObject, Generic[_WrapperType_co]):
         uri: str,
         mode: options.OpenMode = "r",
         *,
+        tiledb_timestamp: Optional[int] = None,
         context: Optional[SOMATileDBContext] = None,
         platform_config: Optional[options.PlatformConfig] = None,
     ) -> Self:
@@ -46,10 +47,13 @@ class TileDBObject(somacore.SOMAObject, Generic[_WrapperType_co]):
         :param mode: The mode to open the object in.
             ``r``: Open for reading only (cannot write).
             ``w``: Open for writing only (cannot read).
+        :param tiledb_timestamp: The TileDB timestamp to open this object at,
+            measured in milliseconds since the Unix epoch.
+            When unset (the default), the current time is used.
         """
         del platform_config  # unused
         context = context or SOMATileDBContext()
-        handle = cls._wrapper_type.open(uri, mode, context)
+        handle = cls._wrapper_type.open(uri, mode, context, tiledb_timestamp)
         return cls(
             handle,
             _dont_call_this_use_create_or_open_instead="tiledbsoma-internal-code",
@@ -135,12 +139,24 @@ class TileDBObject(somacore.SOMAObject, Generic[_WrapperType_co]):
         """The mode this object was opened in, either ``r`` or ``w`` [lifecycle: experimental]."""
         return self._handle.mode
 
+    @property
+    def tiledb_timestamp(self) -> int:
+        """The time this object was opened, as millis since the Unix epoch."""
+        return self._handle.timestamp
+
     @classmethod
-    def exists(cls, uri: str, context: Optional[SOMATileDBContext] = None) -> bool:
-        """Finds whether an object of this type exists at the given URI [lifecycle: experimental]."""
+    def exists(
+        cls,
+        uri: str,
+        context: Optional[SOMATileDBContext] = None,
+        tiledb_timestamp: Optional[int] = None,
+    ) -> bool:
+        """Finds whether an object of this type exists at the given URI.
+        [lifecycle: experimental].
+        """
         context = context or SOMATileDBContext()
         try:
-            with cls._wrapper_type.open(uri, "r", context) as hdl:
+            with cls._wrapper_type.open(uri, "r", context, tiledb_timestamp) as hdl:
                 md_type = hdl.metadata.get(_constants.SOMA_OBJECT_TYPE_METADATA_KEY)
                 if not isinstance(md_type, str):
                     return False

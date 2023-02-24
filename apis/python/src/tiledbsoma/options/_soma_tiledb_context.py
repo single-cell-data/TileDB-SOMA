@@ -1,4 +1,5 @@
-from typing import Any, Dict, Optional, Tuple, Union
+import time
+from typing import Any, Dict, Optional, Union
 
 import attrs
 import tiledb
@@ -33,13 +34,14 @@ class SOMATileDBContext:
 
     timestamp: Optional[int] = attrs.field(default=None)
     """
-    Timestamp for operations on SOMA objects, in milliseconds since Unix epoch.
+    Default timestamp for operations on SOMA objects, in Unix millis.
 
-    ``None``, the default, does not provide cross-object timestamp consistency:
+    This is used when a timestamp is not provided to an ``open`` operation.
 
-    - **Reads** will see data as of the time that the individual TileDB object
-      is opened.
-    - **Writes** will be recorded as of when the TileDB object is closed.
+    ``None``, the default, sets the timestamp on each root ``open`` operation.
+    That is, if you ``open`` a collection, and access individual members of the
+    collection through indexing or ``add_new``, the timestamp of all of those
+    operations will be that of the time you called ``open``.
 
     If a value is passed, that timestamp (representing milliseconds since
     the Unix epoch) is used as the timestamp to record all operations.
@@ -49,54 +51,10 @@ class SOMATileDBContext:
     when *each* object is opened.
     """
 
-    timestamp_start: int = 0
-    """
-    Timestamp range start for operations on SOMA objects. This is usually zero
-    except for specific, unusual query requirements. This has no effect on
-    timestamps used in writing.
-    """
-
     @timestamp.validator
     def _validate_timestamps(self, _: Any, __: Any) -> None:
-        if self.timestamp is None:
-            if self.timestamp_start:
-                raise ValueError(
-                    "SOMATileDBContext: if the current `timestamp` is None,"
-                    " the `timestamp_start` cannot be set."
-                )
-        elif not 0 <= self.timestamp_start <= self.timestamp:
+        if self.timestamp is not None and self.timestamp < 0:
             raise ValueError("SOMATileDBContext: invalid read timestamp range")
-
-    _group_tiledb_ctx_: Optional[tiledb.Ctx] = attrs.field(init=False, default=None)
-    """Cache for the context used to open Groups."""
-
-    @property
-    def _group_tiledb_ctx(self) -> tiledb.Ctx:
-        """Internal-only context specifically for Group operations.
-
-        Unlike Arrays, Groups do not take a ``timestamp`` argument and need
-        their timestamps set in their context. This should go away if/when
-        :class:`tiledb.Group` starts taking a timestamp argument like
-        :func:`tiledb.open`.
-        """
-        if self._group_tiledb_ctx_:
-            return self._group_tiledb_ctx_
-        if self.timestamp is None:
-            ctx = self.tiledb_ctx
-        else:
-            ctx = group_timestamp_ctx(
-                self.tiledb_ctx,
-                timestamp_start=self.timestamp_start,
-                timestamp=self.timestamp,
-            )
-        object.__setattr__(self, "_group_tiledb_ctx_", ctx)
-        return ctx
-
-    def _timestamp_arg(self) -> Optional[Tuple[int, int]]:
-        """The value to use as the ``timestamp`` argument to ``tiledb.open``."""
-        if self.timestamp is None:
-            return None
-        return (self.timestamp_start, self.timestamp)
 
     def replace(
         self, *, tiledb_config: Optional[Dict[str, Any]] = None, **changes: Any
@@ -124,12 +82,10 @@ class SOMATileDBContext:
             changes["tiledb_ctx"] = tiledb.Ctx(config=new_config)
         return attrs.evolve(self, **changes)
 
-
-def group_timestamp_ctx(
-    ctx: tiledb.Ctx, *, timestamp_start: int, timestamp: int
-) -> tiledb.Ctx:
-    """Builds a TileDB context to open groups at the given timestamp [lifecycle: experimental]."""
-    group_cfg = ctx.config().dict()
-    group_cfg["sm.group.timestamp_start"] = timestamp_start
-    group_cfg["sm.group.timestamp_end"] = timestamp
-    return tiledb.Ctx(group_cfg)
+    def _open_timestamp(self, in_timestamp: Optional[int]) -> int:
+        """Returns the real timestamp that should be used to open an object."""
+        if in_timestamp is not None:
+            return in_timestamp
+        if self.timestamp is not None:
+            return self.timestamp
+        return int(time.time() * 1000)

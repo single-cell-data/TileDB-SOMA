@@ -38,6 +38,7 @@ def open(
     *,
     soma_type: Optional[str] = None,
     context: Optional[SOMATileDBContext] = None,
+    tiledb_timestamp: Optional[int] = None,
 ) -> "_tiledb_object.AnyTileDBObject":
     ...
 
@@ -49,6 +50,7 @@ def open(
     *,
     soma_type: Type[_Obj],
     context: Optional[SOMATileDBContext] = None,
+    tiledb_timestamp: Optional[int] = None,
 ) -> _Obj:
     ...
 
@@ -60,6 +62,7 @@ def open(
     *,
     soma_type: Union[Type["_tiledb_object.AnyTileDBObject"], str, None] = None,
     context: Optional[SOMATileDBContext] = None,
+    tiledb_timestamp: Optional[int] = None,
 ) -> "_tiledb_object.AnyTileDBObject":
     """Opens a TileDB SOMA object [lifecycle: experimental].
 
@@ -70,9 +73,12 @@ def open(
         If the stored SOMA object is not of the correct type, an error will be
         raised.
     :param context: If set, the ``SOMATileDBContext`` data to use.
+    :param tiledb_timestamp: If specified, overrides the default timestamp
+        used to open this object. If unset, uses the timestamp provided by
+        the context.
     """
     context = context or SOMATileDBContext()
-    obj = _open_internal(_tdb_handles.open, uri, mode, context)
+    obj = _open_internal(_tdb_handles.open, uri, mode, context, tiledb_timestamp)
     try:
         if soma_type:
             if isinstance(soma_type, str):
@@ -92,13 +98,16 @@ def open(
 
 
 def _open_internal(
-    opener: Callable[[str, options.OpenMode, SOMATileDBContext], _Wrapper],
+    opener: Callable[
+        [str, options.OpenMode, SOMATileDBContext, Optional[int]], _Wrapper
+    ],
     uri: str,
     mode: options.OpenMode,
     context: SOMATileDBContext,
+    timestamp: Optional[int],
 ) -> "_tiledb_object.TileDBObject[_Wrapper]":
     """Lower-level open function for internal use only."""
-    handle = opener(uri, mode, context)
+    handle = opener(uri, mode, context, timestamp)
     try:
         return _reify_handle(handle)
     except Exception:

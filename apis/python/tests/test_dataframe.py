@@ -8,7 +8,6 @@ import somacore
 import tiledb
 
 import tiledbsoma as soma
-from tiledbsoma.options import SOMATileDBContext
 
 
 @pytest.fixture
@@ -924,7 +923,7 @@ def test_timestamped_ops(tmp_path, allows_duplicates, consolidate):
         uri,
         schema=schema,
         index_column_names=["soma_joinid"],
-        context=SOMATileDBContext(timestamp=10),
+        tiledb_timestamp=10,
         platform_config=platform_config,
     ) as sidf:
         data = {
@@ -934,9 +933,7 @@ def test_timestamped_ops(tmp_path, allows_duplicates, consolidate):
         }
         sidf.write(pa.Table.from_pydict(data))
 
-    with soma.DataFrame.open(
-        uri=uri, mode="w", context=SOMATileDBContext(timestamp=20)
-    ) as sidf:
+    with soma.DataFrame.open(uri=uri, mode="w", tiledb_timestamp=20) as sidf:
         data = {
             "soma_joinid": [0, 1],
             "float": [200.2, 300.3],
@@ -978,9 +975,7 @@ def test_timestamped_ops(tmp_path, allows_duplicates, consolidate):
             assert sidf.count == 2
 
     # read at t=15 & see only the first write
-    with soma.DataFrame.open(
-        tmp_path.as_posix(), context=SOMATileDBContext(timestamp=15)
-    ) as sidf:
+    with soma.DataFrame.open(tmp_path.as_posix(), tiledb_timestamp=15) as sidf:
         tab = sidf.read().concat()
         assert list(x.as_py() for x in tab["soma_joinid"]) == [0]
         assert list(x.as_py() for x in tab["float"]) == [100.1]

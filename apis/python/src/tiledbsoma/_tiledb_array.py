@@ -71,7 +71,7 @@ class TileDBArray(TileDBObject[_tdb_handles.ArrayWrapper]):
         kwargs = {
             "name": self.__class__.__name__,
             "platform_config": self._ctx.config().dict(),
-            "timestamp": self.context._timestamp_arg(),
+            "timestamp": (0, self.tiledb_timestamp),
         }
         # Leave empty arguments out of kwargs to allow C++ constructor defaults to apply, as
         # they're not all wrapped in std::optional<>.
@@ -138,7 +138,11 @@ class TileDBArray(TileDBObject[_tdb_handles.ArrayWrapper]):
 
     @classmethod
     def _create_internal(
-        cls, uri: str, schema: tiledb.ArraySchema, context: SOMATileDBContext
+        cls,
+        uri: str,
+        schema: tiledb.ArraySchema,
+        context: SOMATileDBContext,
+        tiledb_timestamp: Optional[int],
     ) -> _tdb_handles.ArrayWrapper:
         """Creates the TileDB Array for this type and returns an opened handle.
 
@@ -147,6 +151,6 @@ class TileDBArray(TileDBObject[_tdb_handles.ArrayWrapper]):
         the newly-created array, open for writing.
         """
         tiledb.Array.create(uri, schema, ctx=context.tiledb_ctx)
-        handle = cls._wrapper_type.open(uri, "w", context)
+        handle = cls._wrapper_type.open(uri, "w", context, tiledb_timestamp)
         cls._set_create_metadata(handle)
         return handle

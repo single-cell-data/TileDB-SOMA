@@ -1,4 +1,5 @@
 import tempfile
+import time
 from pathlib import Path
 
 import anndata
@@ -100,21 +101,19 @@ def test_SOMATileDBContext_evolve():
 
     # verify defaults expected by subsequent tests
     assert context.timestamp is None
-    assert context.timestamp_start == 0
     assert context.tiledb_ctx.config()["vfs.s3.region"] == "us-east-1"
+
+    now = int(time.time() * 1000)
+    open_ts = context._open_timestamp(None)
+    assert -100 < now - open_ts < 100
+    assert 999 == context._open_timestamp(999)
 
     context_ts_1 = context.replace(timestamp=1)
 
-    # veirfy timestamp
     assert context_ts_1.timestamp == 1
-
-    # verify timestamp_start
-    assert context_ts_1.replace(timestamp_start=1).timestamp_start == 1
-
-    with pytest.raises(ValueError):
-        context_ts_1.replace(timestamp_start=2)
+    assert context_ts_1._open_timestamp(None) == 1
+    assert context_ts_1._open_timestamp(2) == 2
 
     # verify tiledb_ctx
-    context.replace(tiledb_config={"vfs.s3.region": "us-west-2"}).tiledb_ctx.config()[
-        "vfs.s3.region"
-    ] == "us-west-2"
+    new_tdb_context = context.replace(tiledb_config={"vfs.s3.region": "us-west-2"})
+    assert new_tdb_context.tiledb_ctx.config()["vfs.s3.region"] == "us-west-2"
