@@ -25,6 +25,10 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
+      - uses: hendrikmuhs/ccache-action@v1.2
+        with:
+          key: r-ci-${{ matrix.os }}
+
       - name: Bootstrap
         run: cd apis/r && tools/r-ci.sh bootstrap
 
@@ -35,7 +39,11 @@ jobs:
         uses: lukka/get-cmake@latest
 
       - name: MkVars
-        run: mkdir ~/.R && echo "CXX17FLAGS=-Wno-deprecated-declarations -Wno-deprecated" > ~/.R/Makevars
+        run: |
+          set -e
+          mkdir ~/.R
+          echo "CXX17FLAGS=-Wno-deprecated-declarations -Wno-deprecated" > ~/.R/Makevars
+          echo "CCACHE=ccache" > ~/.R/Makevars
 
       - name: Copy libtiledbsoma
         ## we build 'as in an R package' with all sources within apis/r/
