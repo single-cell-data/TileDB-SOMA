@@ -82,7 +82,6 @@ class SOMATileDBContext:
         if self.timestamp is None:
             ctx = self.tiledb_ctx
         else:
-            print(f"building group context for {self.timestamp}")
             ctx = group_timestamp_ctx(
                 self.tiledb_ctx,
                 timestamp_start=self.timestamp_start,
