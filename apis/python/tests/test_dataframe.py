@@ -115,9 +115,6 @@ def test_dataframe(tmp_path, arrow_schema):
         assert len(sdf) == 5
 
 
-# TODO https://github.com/single-cell-data/TileDB-SOMA/issues/960:
-# when libtiledbsoma.cc supports _read_ of index types other than int and string,
-# test _reads_ of those.
 def test_dataframe_with_float_dim(tmp_path, arrow_schema):
     sdf = soma.DataFrame.create(
         tmp_path.as_posix(), schema=arrow_schema(), index_column_names=("bar",)
@@ -309,9 +306,6 @@ def test_columns(tmp_path):
 def make_dataframe(request):
     index_type = request.param
 
-    # TODO https://github.com/single-cell-data/TileDB-SOMA/issues/960:
-    # Check against all `SUPPORTED_ARROW_TYPES` in tests/test_type_system.py`
-
     index = {
         pa.string(): ["A", "B", "C"],
         pa.large_string(): ["A", "B", "C"],
@@ -379,9 +373,8 @@ def make_multiply_indexed_dataframe(tmp_path, index_column_names: List[str]):
     """
     schema = pa.schema(
         [
-            # TO DO: Support other index types when we have support for reading more than int and
-            # string/bytes index types in libtiledbsoma's SOMAReader.
-            # https://github.com/single-cell-data/TileDB-SOMA/issues/960:
+            # Note: exhaustive type-coverage is in a separate test case.
+            # (As of this writing: test_dataframe_column_indexing.py)
             ("0_thru_5", pa.int64()),
             ("strings_aaa", pa.string()),
             ("zero_one", pa.int64()),
