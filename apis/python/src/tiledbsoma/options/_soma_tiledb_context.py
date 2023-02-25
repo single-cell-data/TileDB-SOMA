@@ -1,4 +1,3 @@
-import time
 from typing import Any, Dict, Optional, Tuple, Union
 
 import attrs
@@ -32,15 +31,18 @@ class SOMATileDBContext:
 
     tiledb_ctx: tiledb.Ctx = _build_default_tiledb_ctx()
 
-    timestamp: Optional[int] = attrs.field(factory=lambda: int(time.time() * 1000))
+    timestamp: Optional[int] = attrs.field(default=None)
     """
     Timestamp for operations on SOMA objects, in milliseconds since Unix epoch.
-    Defaults to the time of context initialization.
 
-    Set to ``None`` to use the current wall time and opt out of timestamp
-    consistency. **Reads** will see data as of the time that the individual
-    TileDB object is opened. **Writes** will be recorded as of when the TileDB
-    object is closed.
+    ``None``, the default, does not provide cross-object timestamp consistency:
+
+    - **Reads** will see data as of the time that the individual TileDB object
+      is opened.
+    - **Writes** will be recorded as of when the TileDB object is closed.
+
+    If a value is passed, that timestamp (representing milliseconds since
+    the Unix epoch) is used as the timestamp to record all operations.
 
     Set to 0xFFFFFFFFFFFFFFFF (UINT64_MAX) to get the absolute latest revision
     (i.e., including changes that occur "after" the current wall time) as of
