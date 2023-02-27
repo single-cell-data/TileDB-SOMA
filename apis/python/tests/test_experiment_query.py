@@ -1,4 +1,3 @@
-import sys
 from typing import Tuple
 
 import numpy as np
@@ -58,17 +57,6 @@ def soma_experiment(
     return _factory.open((tmp_path / "exp").as_posix())
 
 
-@pytest.mark.xfail(
-    # This test fails on Python 3.10+ due to a bug in typeguard. The bug
-    # is tripped due to use of a TypedDict. Remove
-    # work-around when the typeguard issue is fixed AND released.
-    # Underlying issue:
-    #   https://github.com/agronholm/typeguard/issues/242
-    # Related to _when_ we might see a release:
-    #   https://github.com/agronholm/typeguard/issues/257
-    sys.version_info >= (3, 10),
-    reason="typeguard bug #242",
-)
 @pytest.mark.parametrize("n_obs,n_vars,X_layer_names", [(101, 11, ("raw", "extra"))])
 def test_experiment_query_all(soma_experiment):
     """Test a query with default obs_query / var_query - i.e., query all."""
@@ -127,11 +115,6 @@ def test_experiment_query_all(soma_experiment):
         assert np.array_equal(raw_X["soma_data"], ad_X_coo.data)
 
 
-@pytest.mark.xfail(
-    # see comment on test_experiment_query_all
-    sys.version_info >= (3, 10),
-    reason="typeguard bug #242",
-)
 @pytest.mark.parametrize("n_obs,n_vars", [(1001, 99)])
 def test_experiment_query_coords(soma_experiment):
     """Test query by dimension coordinates"""
@@ -182,11 +165,6 @@ def test_experiment_query_coords(soma_experiment):
         )
 
 
-@pytest.mark.xfail(
-    # see comment on test_experiment_query_all
-    sys.version_info >= (3, 10),
-    reason="typeguard bug #242",
-)
 @pytest.mark.parametrize("n_obs,n_vars", [(1001, 99)])
 def test_experiment_query_value_filter(soma_experiment):
     """Test query by value filter"""
@@ -203,11 +181,6 @@ def test_experiment_query_value_filter(soma_experiment):
         assert query.var().concat()["label"].to_pylist() == var_label_values
 
 
-@pytest.mark.xfail(
-    # see comment on test_experiment_query_all
-    sys.version_info >= (3, 10),
-    reason="typeguard bug #242",
-)
 @pytest.mark.parametrize("n_obs,n_vars", [(1001, 99)])
 def test_experiment_query_combo(soma_experiment):
     """Test query by combinations of coords and value_filter"""
@@ -248,11 +221,6 @@ def test_experiment_query_combo(soma_experiment):
         assert query.var().concat()["label"].to_pylist() == var_label_values
 
 
-@pytest.mark.xfail(
-    # see comment on test_experiment_query_all
-    sys.version_info >= (3, 10),
-    reason="typeguard bug #242",
-)
 @pytest.mark.parametrize("n_obs,n_vars", [(1001, 99)])
 def test_experiment_query_none(soma_experiment):
     """Test query resulting in empty result"""
@@ -278,11 +246,6 @@ def test_experiment_query_none(soma_experiment):
         assert len(query.X("raw").tables().concat()) == 0
 
 
-@pytest.mark.xfail(
-    # see comment on test_experiment_query_all
-    sys.version_info >= (3, 10),
-    reason="typeguard bug #242",
-)
 @pytest.mark.parametrize("n_obs,n_vars,X_layer_names", [(1001, 99, ["A"])])
 def test_joinid_caching(soma_experiment):
     """
@@ -316,11 +279,6 @@ def test_joinid_caching(soma_experiment):
     assert ad.n_vars == len(var)
 
 
-@pytest.mark.xfail(
-    # see comment on test_experiment_query_all
-    sys.version_info >= (3, 10),
-    reason="typeguard bug #242",
-)
 @pytest.mark.parametrize("n_obs,n_vars,X_layer_names", [(1001, 99, ["A", "B", "C"])])
 def test_X_layers(soma_experiment):
     """Verify multi-layer-X handling"""
@@ -344,11 +302,6 @@ def test_X_layers(soma_experiment):
         assert np.array_equal(A["soma_data"], ad_lyr_coo.data)
 
 
-@pytest.mark.xfail(
-    # see comment on test_experiment_query_all
-    sys.version_info >= (3, 10),
-    reason="typeguard bug #242",
-)
 @pytest.mark.parametrize("n_obs,n_vars", [(1001, 99)])
 def test_experiment_query_indexer(soma_experiment):
     """Test result indexer"""
@@ -390,11 +343,6 @@ def test_experiment_query_indexer(soma_experiment):
             assert np.array_equal(indexer.by_var(arg), expected_result)
 
 
-@pytest.mark.xfail(
-    # see comment on test_experiment_query_all
-    sys.version_info >= (3, 10),
-    reason="typeguard bug #242",
-)
 @pytest.mark.parametrize("n_obs,n_vars", [(2833, 107)])
 def test_error_corners(soma_experiment: soma.Experiment):
     """Verify a couple of error conditions / corner cases."""
@@ -433,11 +381,6 @@ def test_error_corners(soma_experiment: soma.Experiment):
                 next(query.varp(lyr_name))
 
 
-@pytest.mark.xfail(
-    # see comment on test_experiment_query_all
-    sys.version_info >= (3, 10),
-    reason="typeguard bug #242",
-)
 @pytest.mark.parametrize("n_obs,n_vars", [(1001, 99)])
 def test_query_cleanup(soma_experiment: soma.Experiment):
     """
@@ -461,11 +404,6 @@ def test_query_cleanup(soma_experiment: soma.Experiment):
     assert query._threadpool_ is None
 
 
-@pytest.mark.xfail(
-    # see comment on test_experiment_query_all
-    sys.version_info >= (3, 10),
-    reason="typeguard bug #242",
-)
 @pytest.mark.parametrize(
     "n_obs,n_vars,obsp_layer_names,varp_layer_names", [(1001, 99, ["foo"], ["bar"])]
 )
@@ -569,11 +507,6 @@ def test_X_as_series():
     )
 
 
-@pytest.mark.xfail(
-    # see comment on test_experiment_query_all
-    sys.version_info >= (3, 10),
-    reason="typeguard bug #242",
-)
 @pytest.mark.parametrize(
     "n_obs,n_vars,obsp_layer_names,varp_layer_names", [(101, 99, ["foo"], ["bar"])]
 )
