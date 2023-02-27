@@ -160,13 +160,13 @@ A \code{matrix} object
 \subsection{Method \code{write()}}{
 Write matrix-like data to the array. (lifecycle: experimental)
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{SOMASparseNDArray$write(data)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{SOMASparseNDArray$write(values)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{data}}{Any \code{matrix}-like object coercible to a
+\item{\code{values}}{Any \code{matrix}-like object coercible to a
 \code{\link[Matrix:TsparseMatrix-class]{TsparseMatrix}}. Character dimension
 names are ignored because \code{SOMANDArray}'s use integer indexing.}
 }

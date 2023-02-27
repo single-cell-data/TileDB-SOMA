@@ -182,20 +182,20 @@ SOMASparseNDArray <- R6::R6Class(
 
     #' @description Write matrix-like data to the array. (lifecycle: experimental)
     #'
-    #' @param data Any `matrix`-like object coercible to a
+    #' @param values Any `matrix`-like object coercible to a
     #' [`TsparseMatrix`][`Matrix::TsparseMatrix-class`]. Character dimension
     #' names are ignored because `SOMANDArray`'s use integer indexing.
     #'
-    write = function(data) {
+    write = function(values) {
       stopifnot(
-        "'data' must be a matrix" = is_matrix(data)
+        "'values' must be a matrix" = is_matrix(values)
       )
       # coerce to a TsparseMatrix, which uses 0-based COO indexing
-      data <- as(data, Class = "TsparseMatrix")
+      values <- as(values, Class = "TsparseMatrix")
       coo <- data.frame(
-        i = bit64::as.integer64(data@i),
-        j = bit64::as.integer64(data@j),
-        x = data@x
+        i = bit64::as.integer64(values@i),
+        j = bit64::as.integer64(values@j),
+        x = values@x
       )
       colnames(coo) <- c(self$dimnames(), self$attrnames())
       private$write_coo_dataframe(coo)
@@ -213,13 +213,13 @@ SOMASparseNDArray <- R6::R6Class(
 
     # @description Ingest COO-formatted dataframe into the TileDB array. (lifecycle: experimental)
     # @param x A [`data.frame`].
-    write_coo_dataframe = function(data) {
-      stopifnot(is.data.frame(data))
+    write_coo_dataframe = function(values) {
+      stopifnot(is.data.frame(values))
       # private$log_array_ingestion()
       on.exit(private$close())
       private$open("WRITE")
       arr <- self$object
-      arr[] <- data
+      arr[] <- values
     },
 
     ## refined from base class
