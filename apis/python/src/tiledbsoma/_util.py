@@ -146,7 +146,7 @@ def slice_to_numeric_range(
 
 
 def dense_indices_to_shape(
-    coords: options.DenseNDCoords,
+    coords: options.DenseNDCoords,  # type: ignore[type-arg]
     array_shape: Tuple[int, ...],
     result_order: somacore.ResultOrder,
 ) -> Tuple[int, ...]:
