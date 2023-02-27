@@ -41,7 +41,9 @@ class SOMATileDBContext:
 
     tiledb_ctx: tiledb.Ctx = _build_default_tiledb_ctx()
 
-    timestamp: Optional[int] = attrs.field(default=None, converter=_maybe_timestamp_ms)
+    timestamp_ms: Optional[int] = attrs.field(
+        default=None, converter=_maybe_timestamp_ms
+    )
     """
     Default timestamp for operations on SOMA objects, in Unix millis.
 
@@ -90,6 +92,6 @@ class SOMATileDBContext:
         """Returns the real timestamp that should be used to open an object."""
         if in_timestamp is not None:
             return to_timestamp_ms(in_timestamp)
-        if self.timestamp is not None:
-            return self.timestamp
+        if self.timestamp_ms is not None:
+            return self.timestamp_ms
         return int(time.time() * 1000)

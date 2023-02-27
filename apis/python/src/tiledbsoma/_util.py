@@ -246,3 +246,14 @@ def to_timestamp_ms(input: OpenTimestamp) -> int:
     if not 0 <= timestamp_ms <= _ETERNITY_MS:
         raise ValueError("open timestamp must be between 0 (Unix epoch) and 2**64-1 ms")
     return timestamp_ms
+
+
+def ms_to_datetime(millis: int) -> datetime.datetime:
+    """Returns the millisecond timestamp as a timezone-aware UTC datetime.
+
+    This may raise an exception, since millis may be outside the representable
+    range for
+    """
+    secs, millis = divmod(millis, 1000)
+    dt = datetime.datetime.fromtimestamp(secs, tz=datetime.timezone.utc)
+    return dt.replace(microsecond=millis * 1000)

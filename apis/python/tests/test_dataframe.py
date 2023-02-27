@@ -935,6 +935,8 @@ def test_timestamped_ops(tmp_path, allows_duplicates, consolidate):
             "string": ["apple"],
         }
         sidf.write(pa.Table.from_pydict(data))
+        assert sidf.tiledb_timestamp_ms == 1615402800000
+        assert sidf.tiledb_timestamp.isoformat() == "2021-03-10T19:00:00+00:00"
 
     end = start + datetime.timedelta(minutes=3, seconds=25)
     with soma.DataFrame.open(uri=uri, mode="w", tiledb_timestamp=end) as sidf:
@@ -944,6 +946,8 @@ def test_timestamped_ops(tmp_path, allows_duplicates, consolidate):
             "string": ["ball", "cat"],
         }
         sidf.write(pa.Table.from_pydict(data))
+        assert sidf.tiledb_timestamp_ms == 1615403005000
+        assert sidf.tiledb_timestamp.isoformat() == "2021-03-10T19:03:25+00:00"
 
     # Without consolidate:
     # * There are two fragments:
@@ -978,10 +982,12 @@ def test_timestamped_ops(tmp_path, allows_duplicates, consolidate):
             assert list(x.as_py() for x in table["string"]) == ["ball", "cat"]
             assert sidf.count == 2
 
-    middle = 1615402883000
+    middle = 1615402887987
     # read at t=15 & see only the first write
     with soma.DataFrame.open(tmp_path.as_posix(), tiledb_timestamp=middle) as sidf:
         tab = sidf.read().concat()
         assert list(x.as_py() for x in tab["soma_joinid"]) == [0]
         assert list(x.as_py() for x in tab["float"]) == [100.1]
         assert list(x.as_py() for x in tab["string"]) == ["apple"]
+        assert sidf.tiledb_timestamp_ms == 1615402887987
+        assert sidf.tiledb_timestamp.isoformat() == "2021-03-10T19:01:27.987000+00:00"

@@ -100,7 +100,7 @@ def test_SOMATileDBContext_evolve():
     context = tiledbsoma.options.SOMATileDBContext()
 
     # verify defaults expected by subsequent tests
-    assert context.timestamp is None
+    assert context.timestamp_ms is None
     assert context.tiledb_ctx.config()["vfs.s3.region"] == "us-east-1"
 
     now = int(time.time() * 1000)
@@ -108,9 +108,9 @@ def test_SOMATileDBContext_evolve():
     assert -100 < now - open_ts < 100
     assert 999 == context._open_timestamp(999)
 
-    context_ts_1 = context.replace(timestamp=1)
+    context_ts_1 = context.replace(timestamp_ms=1)
 
-    assert context_ts_1.timestamp == 1
+    assert context_ts_1.timestamp_ms == 1
     assert context_ts_1._open_timestamp(None) == 1
     assert context_ts_1._open_timestamp(2) == 2
 

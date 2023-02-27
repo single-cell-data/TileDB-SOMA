@@ -186,7 +186,7 @@ class CollectionBase(
                 create_uri,
                 platform_config=platform_config,
                 context=self.context,
-                tiledb_timestamp=self.tiledb_timestamp,
+                tiledb_timestamp=self.tiledb_timestamp_ms,
             ),
             uri,
         )
@@ -209,7 +209,7 @@ class CollectionBase(
             lambda create_uri: DataFrame.create(
                 create_uri,
                 context=self.context,
-                tiledb_timestamp=self.tiledb_timestamp,
+                tiledb_timestamp=self.tiledb_timestamp_ms,
                 **kwargs,
             ),
             uri,
@@ -226,7 +226,7 @@ class CollectionBase(
             lambda create_uri: cls.create(
                 create_uri,
                 context=self.context,
-                tiledb_timestamp=self.tiledb_timestamp,
+                tiledb_timestamp=self.tiledb_timestamp_ms,
                 **kwargs,
             ),
             uri,
@@ -310,7 +310,7 @@ class CollectionBase(
                 entry.entry.uri,
                 self.mode,
                 self.context,
-                self.tiledb_timestamp,
+                self.tiledb_timestamp_ms,
             )
             # Since we just opened this object, we own it and should close it.
             self._close_stack.enter_context(entry.soma)

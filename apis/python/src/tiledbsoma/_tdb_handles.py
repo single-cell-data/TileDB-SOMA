@@ -61,7 +61,7 @@ class Wrapper(Generic[_RawHdl_co], metaclass=abc.ABCMeta):
     uri: str
     mode: options.OpenMode
     context: SOMATileDBContext
-    timestamp: int
+    timestamp_ms: int
     _handle: _RawHdl_co
     closed: bool = attrs.field(default=False, init=False)
 
@@ -75,12 +75,12 @@ class Wrapper(Generic[_RawHdl_co], metaclass=abc.ABCMeta):
     ) -> Self:
         if mode not in ("r", "w"):
             raise ValueError(f"Invalid open mode {mode!r}")
-        real_timestamp = context._open_timestamp(timestamp)
+        timestamp_ms = context._open_timestamp(timestamp)
         try:
-            tdb = cls._opener(uri, mode, context, real_timestamp)
-            handle = cls(uri, mode, context, real_timestamp, tdb)
+            tdb = cls._opener(uri, mode, context, timestamp_ms)
+            handle = cls(uri, mode, context, timestamp_ms, tdb)
             if mode == "w":
-                with cls._opener(uri, "r", context, real_timestamp) as auxiliary_reader:
+                with cls._opener(uri, "r", context, timestamp_ms) as auxiliary_reader:
                     handle._do_initial_reads(auxiliary_reader)
             else:
                 handle._do_initial_reads(tdb)
@@ -143,7 +143,7 @@ class Wrapper(Generic[_RawHdl_co], metaclass=abc.ABCMeta):
         if self.mode == "w":
             self.metadata._write()
             self._handle.close()
-            self._handle = self._opener(self.uri, "w", self.context, self.timestamp)
+            self._handle = self._opener(self.uri, "w", self.context, self.timestamp_ms)
 
     def _check_open(self) -> None:
         if self.closed:

@@ -428,7 +428,7 @@ def test_timestamped_ops(tmp_path):
             (slice(0, 2), slice(0, 2)),
             pa.Tensor.from_numpy(np.zeros((2, 2), dtype=np.uint8)),
         )
-        assert darr.tiledb_timestamp == 20
+        assert darr.tiledb_timestamp_ms == 20
 
     # access A via collection @ t=30 and write something into it
     with soma.Collection.open(tmp_path.as_uri(), mode="w", tiledb_timestamp=30) as sc:
@@ -436,12 +436,12 @@ def test_timestamped_ops(tmp_path):
             (slice(0, 1), slice(0, 1)),
             pa.Tensor.from_numpy(np.ones((1, 1), dtype=np.uint8)),
         )
-        assert darr.tiledb_timestamp == 30
+        assert darr.tiledb_timestamp.isoformat() == "1970-01-01T00:00:00.030000+00:00"
 
     # open A via collection with no timestamp => A should reflect both writes
     with soma.Collection.open(tmp_path.as_uri()) as sc:
         darr = sc["A"]
-        assert sc.tiledb_timestamp == darr.tiledb_timestamp
+        assert sc.tiledb_timestamp_ms == darr.tiledb_timestamp_ms
         assert darr.read((slice(None), slice(None))).to_numpy().tolist() == [
             [1, 0],
             [0, 0],
@@ -449,7 +449,7 @@ def test_timestamped_ops(tmp_path):
 
     # open A via collection @ t=25 => A should reflect first write only
     with soma.Collection.open(
-        tmp_path.as_uri(), context=SOMATileDBContext(timestamp=25)
+        tmp_path.as_uri(), context=SOMATileDBContext(timestamp_ms=25)
     ) as sc:
         assert sc["A"].read((slice(None), slice(None))).to_numpy().tolist() == [
             [0, 0],
@@ -458,13 +458,13 @@ def test_timestamped_ops(tmp_path):
 
     # open collection @ t=15 => A should not even be there
     with soma.Collection.open(
-        tmp_path.as_uri(), context=SOMATileDBContext(timestamp=15)
+        tmp_path.as_uri(), context=SOMATileDBContext(timestamp_ms=15)
     ) as sc:
         assert "A" not in sc
 
     # confirm timestamp validation in SOMATileDBContext
     with pytest.raises(ValueError):
-        SOMATileDBContext(timestamp=-1)
+        SOMATileDBContext(timestamp_ms=-1)
 
 
 def test_issue919(tmp_path):
@@ -481,7 +481,7 @@ def test_issue919(tmp_path):
     for i in range(25):
         uri = str(tmp_path / str(i))
 
-        context = SOMATileDBContext(timestamp=100)
+        context = SOMATileDBContext(timestamp_ms=100)
         with soma.Collection.create(uri, context=context) as c:
             expt = c.add_new_collection("expt", soma.Experiment)
             expt.add_new_collection("causes_bug")
@@ -497,19 +497,19 @@ def test_issue919(tmp_path):
 
 def test_context_timestamp(tmp_path: pathlib.Path):
     """Verifies that timestamps are inherited by collections."""
-    fixed_time = SOMATileDBContext(timestamp=123)
+    fixed_time = SOMATileDBContext(timestamp_ms=123)
     with soma.Collection.create(tmp_path.as_uri(), context=fixed_time) as coll:
-        assert coll.tiledb_timestamp == 123
+        assert coll.tiledb_timestamp_ms == 123
         sub = coll.add_new_collection("sub_1")
-        assert sub.tiledb_timestamp == 123
+        assert sub.tiledb_timestamp_ms == 123
         sub_sub = sub.add_new_collection("sub_sub")
-        assert sub_sub.tiledb_timestamp == 123
+        assert sub_sub.tiledb_timestamp_ms == 123
 
     with soma.Collection.open(tmp_path.as_uri(), context=fixed_time) as coll:
-        assert coll.tiledb_timestamp == 123
+        assert coll.tiledb_timestamp_ms == 123
         sub_1 = coll["sub_1"]
-        assert sub_1.tiledb_timestamp == 123
-        assert sub_1["sub_sub"].tiledb_timestamp == 123
+        assert sub_1.tiledb_timestamp_ms == 123
+        assert sub_1["sub_sub"].tiledb_timestamp_ms == 123
 
     with pytest.raises(soma.SOMAError):
         soma.open(tmp_path.as_uri(), context=fixed_time, tiledb_timestamp=100)
@@ -517,7 +517,7 @@ def test_context_timestamp(tmp_path: pathlib.Path):
     with soma.Collection.open(
         tmp_path.as_uri(), context=fixed_time, tiledb_timestamp=234
     ) as coll:
-        assert coll.tiledb_timestamp == 234
+        assert coll.tiledb_timestamp_ms == 234
         sub_1 = coll["sub_1"]
-        assert sub_1.tiledb_timestamp == 234
-        assert sub_1["sub_sub"].tiledb_timestamp == 234
+        assert sub_1.tiledb_timestamp_ms == 234
+        assert sub_1["sub_sub"].tiledb_timestamp_ms == 234

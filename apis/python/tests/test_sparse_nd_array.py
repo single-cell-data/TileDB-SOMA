@@ -1042,7 +1042,7 @@ def test_timestamped_ops(tmp_path):
 
     # read @ t=15 & see only the first write
     with soma.SparseNDArray.open(
-        tmp_path.as_posix(), context=SOMATileDBContext(timestamp=15)
+        tmp_path.as_posix(), context=SOMATileDBContext(timestamp_ms=15)
     ) as a:
         assert a.read().coos().concat().to_scipy().todense().tolist() == [
             [1, 0],

@@ -1,3 +1,4 @@
+import datetime
 from contextlib import ExitStack
 from typing import Any, Generic, MutableMapping, Optional, Type, TypeVar
 
@@ -9,6 +10,7 @@ from typing_extensions import Self
 from . import _constants, _tdb_handles
 from ._exception import SOMAError
 from ._types import OpenTimestamp
+from ._util import ms_to_datetime
 from .options import SOMATileDBContext
 
 _WrapperType_co = TypeVar(
@@ -141,9 +143,14 @@ class TileDBObject(somacore.SOMAObject, Generic[_WrapperType_co]):
         return self._handle.mode
 
     @property
-    def tiledb_timestamp(self) -> int:
+    def tiledb_timestamp(self) -> datetime.datetime:
+        """The time that this object was opened in UTC."""
+        return ms_to_datetime(self.tiledb_timestamp_ms)
+
+    @property
+    def tiledb_timestamp_ms(self) -> int:
         """The time this object was opened, as millis since the Unix epoch."""
-        return self._handle.timestamp
+        return self._handle.timestamp_ms
 
     @classmethod
     def exists(
