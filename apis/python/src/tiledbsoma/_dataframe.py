@@ -13,7 +13,7 @@ from ._constants import SOMA_JOINID
 from ._query_condition import QueryCondition
 from ._read_iters import TableReadIter
 from ._tiledb_array import TileDBArray
-from ._types import NPFloating, NPInteger, Slice, is_slice_of
+from ._types import NPFloating, NPInteger, OpenTimestamp, Slice, is_slice_of
 from .options import SOMATileDBContext
 from .options._tiledb_create_options import TileDBCreateOptions
 
@@ -80,7 +80,7 @@ class DataFrame(TileDBArray, somacore.DataFrame):
         index_column_names: Sequence[str] = (SOMA_JOINID,),
         platform_config: Optional[options.PlatformConfig] = None,
         context: Optional[SOMATileDBContext] = None,
-        tiledb_timestamp: Optional[int] = None,
+        tiledb_timestamp: Optional[OpenTimestamp] = None,
     ) -> "DataFrame":
         """
         Creates the data structure on disk/S3/cloud.

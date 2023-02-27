@@ -25,6 +25,7 @@ from somacore import options
 from typing_extensions import Literal, Self
 
 from ._exception import DoesNotExistError, SOMAError, is_does_not_exist_error
+from ._types import OpenTimestamp
 from .options._soma_tiledb_context import SOMATileDBContext
 
 RawHandle = Union[tiledb.Array, tiledb.Group]
@@ -36,7 +37,7 @@ def open(
     uri: str,
     mode: options.OpenMode,
     context: SOMATileDBContext,
-    timestamp: Optional[int],
+    timestamp: Optional[OpenTimestamp],
 ) -> "Wrapper[RawHandle]":
     """Determine whether the URI is an array or group, and open it."""
     obj_type = tiledb.object_type(uri, ctx=context.tiledb_ctx)
@@ -70,7 +71,7 @@ class Wrapper(Generic[_RawHdl_co], metaclass=abc.ABCMeta):
         uri: str,
         mode: options.OpenMode,
         context: SOMATileDBContext,
-        timestamp: Optional[int],
+        timestamp: Optional[OpenTimestamp],
     ) -> Self:
         if mode not in ("r", "w"):
             raise ValueError(f"Invalid open mode {mode!r}")

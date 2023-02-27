@@ -5,6 +5,9 @@ import attrs
 import tiledb
 from typing_extensions import Self
 
+from .._types import OpenTimestamp
+from .._util import to_timestamp_ms
+
 
 def _build_default_tiledb_ctx() -> tiledb.Ctx:
     """
@@ -21,6 +24,12 @@ def _build_default_tiledb_ctx() -> tiledb.Ctx:
     return tiledb.Ctx(cfg)
 
 
+def _maybe_timestamp_ms(input: Optional[OpenTimestamp]) -> Optional[int]:
+    if input is None:
+        return None
+    return to_timestamp_ms(input)
+
+
 @attrs.define(frozen=True, kw_only=True)
 class SOMATileDBContext:
     """
@@ -32,7 +41,7 @@ class SOMATileDBContext:
 
     tiledb_ctx: tiledb.Ctx = _build_default_tiledb_ctx()
 
-    timestamp: Optional[int] = attrs.field(default=None)
+    timestamp: Optional[int] = attrs.field(default=None, converter=_maybe_timestamp_ms)
     """
     Default timestamp for operations on SOMA objects, in Unix millis.
 
@@ -50,11 +59,6 @@ class SOMATileDBContext:
     (i.e., including changes that occur "after" the current wall time) as of
     when *each* object is opened.
     """
-
-    @timestamp.validator
-    def _validate_timestamps(self, _: Any, __: Any) -> None:
-        if self.timestamp is not None and self.timestamp < 0:
-            raise ValueError("SOMATileDBContext: invalid read timestamp range")
 
     def replace(
         self, *, tiledb_config: Optional[Dict[str, Any]] = None, **changes: Any
@@ -82,10 +86,10 @@ class SOMATileDBContext:
             changes["tiledb_ctx"] = tiledb.Ctx(config=new_config)
         return attrs.evolve(self, **changes)
 
-    def _open_timestamp(self, in_timestamp: Optional[int]) -> int:
+    def _open_timestamp(self, in_timestamp: Optional[OpenTimestamp]) -> int:
         """Returns the real timestamp that should be used to open an object."""
         if in_timestamp is not None:
-            return in_timestamp
+            return to_timestamp_ms(in_timestamp)
         if self.timestamp is not None:
             return self.timestamp
         return int(time.time() * 1000)

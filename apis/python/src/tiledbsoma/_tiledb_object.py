@@ -8,6 +8,7 @@ from typing_extensions import Self
 
 from . import _constants, _tdb_handles
 from ._exception import SOMAError
+from ._types import OpenTimestamp
 from .options import SOMATileDBContext
 
 _WrapperType_co = TypeVar(
@@ -37,7 +38,7 @@ class TileDBObject(somacore.SOMAObject, Generic[_WrapperType_co]):
         uri: str,
         mode: options.OpenMode = "r",
         *,
-        tiledb_timestamp: Optional[int] = None,
+        tiledb_timestamp: Optional[OpenTimestamp] = None,
         context: Optional[SOMATileDBContext] = None,
         platform_config: Optional[options.PlatformConfig] = None,
     ) -> Self:
@@ -149,7 +150,7 @@ class TileDBObject(somacore.SOMAObject, Generic[_WrapperType_co]):
         cls,
         uri: str,
         context: Optional[SOMATileDBContext] = None,
-        tiledb_timestamp: Optional[int] = None,
+        tiledb_timestamp: Optional[OpenTimestamp] = None,
     ) -> bool:
         """Finds whether an object of this type exists at the given URI.
         [lifecycle: experimental].

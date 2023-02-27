@@ -9,7 +9,7 @@ from . import _tdb_handles, _util
 from . import libtiledbsoma as clib
 from ._arrow_types import tiledb_schema_to_arrow
 from ._tiledb_object import TileDBObject
-from ._types import is_nonstringy_sequence
+from ._types import OpenTimestamp, is_nonstringy_sequence
 from .options._soma_tiledb_context import SOMATileDBContext
 
 
@@ -142,7 +142,7 @@ class TileDBArray(TileDBObject[_tdb_handles.ArrayWrapper]):
         uri: str,
         schema: tiledb.ArraySchema,
         context: SOMATileDBContext,
-        tiledb_timestamp: Optional[int],
+        tiledb_timestamp: Optional[OpenTimestamp],
     ) -> _tdb_handles.ArrayWrapper:
         """Creates the TileDB Array for this type and returns an opened handle.
 

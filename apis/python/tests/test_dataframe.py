@@ -1,3 +1,4 @@
+import datetime
 from typing import Dict, List
 
 import numpy as np
@@ -919,11 +920,13 @@ def test_timestamped_ops(tmp_path, allows_duplicates, consolidate):
             ("string", pa.large_string()),
         ]
     )
+
+    start = datetime.datetime(2021, 3, 10, 19, 0, tzinfo=datetime.timezone.utc)
     with soma.DataFrame.create(
         uri,
         schema=schema,
         index_column_names=["soma_joinid"],
-        tiledb_timestamp=10,
+        tiledb_timestamp=start,
         platform_config=platform_config,
     ) as sidf:
         data = {
@@ -933,7 +936,8 @@ def test_timestamped_ops(tmp_path, allows_duplicates, consolidate):
         }
         sidf.write(pa.Table.from_pydict(data))
 
-    with soma.DataFrame.open(uri=uri, mode="w", tiledb_timestamp=20) as sidf:
+    end = start + datetime.timedelta(minutes=3, seconds=25)
+    with soma.DataFrame.open(uri=uri, mode="w", tiledb_timestamp=end) as sidf:
         data = {
             "soma_joinid": [0, 1],
             "float": [200.2, 300.3],
@@ -952,7 +956,7 @@ def test_timestamped_ops(tmp_path, allows_duplicates, consolidate):
         tiledb.consolidate(uri)
         tiledb.vacuum(uri)
 
-    # read without timestamp & see final image
+    # read without timestamp (i.e., after final write) & see final image
     with soma.DataFrame.open(uri) as sidf:
         table = sidf.read().concat()
         if allows_duplicates:
@@ -974,8 +978,9 @@ def test_timestamped_ops(tmp_path, allows_duplicates, consolidate):
             assert list(x.as_py() for x in table["string"]) == ["ball", "cat"]
             assert sidf.count == 2
 
+    middle = 1615402883000
     # read at t=15 & see only the first write
-    with soma.DataFrame.open(tmp_path.as_posix(), tiledb_timestamp=15) as sidf:
+    with soma.DataFrame.open(tmp_path.as_posix(), tiledb_timestamp=middle) as sidf:
         tab = sidf.read().concat()
         assert list(x.as_py() for x in tab["soma_joinid"]) == [0]
         assert list(x.as_py() for x in tab["float"]) == [100.1]

@@ -32,6 +32,7 @@ from ._dense_nd_array import DenseNDArray
 from ._exception import SOMAError, is_does_not_exist_error
 from ._sparse_nd_array import SparseNDArray
 from ._tiledb_object import AnyTileDBObject, TileDBObject
+from ._types import OpenTimestamp
 from ._util import is_relative_uri, make_relative_path, uri_joinpath
 from .options import SOMATileDBContext
 
@@ -72,7 +73,7 @@ class CollectionBase(
         *,
         platform_config: Optional[options.PlatformConfig] = None,
         context: Optional[SOMATileDBContext] = None,
-        tiledb_timestamp: Optional[int] = None,
+        tiledb_timestamp: Optional[OpenTimestamp] = None,
     ) -> Self:
         """Creates and opens a new SOMA collection in storage [lifecycle: experimental].
 
