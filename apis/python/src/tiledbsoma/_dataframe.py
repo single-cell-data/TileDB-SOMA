@@ -98,15 +98,16 @@ class DataFrame(TileDBArray, somacore.DataFrame):
             All named columns must exist in the schema, and at least one
             index column name is required.
 
-        :param domains: An optional sequence of [XXX TO DO] positive int64 values specifying the
-            shape of each index column, including room for any intended future
-            appends. If provided, this must have the same length as
+        :param domains: An optional sequence of min-max tuples specifying the
+            domain of each index column, including room for any intended future
+            appends.  If provided, this sequence must have the same length as
             `index_column_names`, and the index-column domains will be as specified.
-            If omitted, the index-column domains will use the maximum possible int64
-            value.  This makes a `SOMADataFrame` growable.
+            If omitted entirely, or if ``None`` in a given dimension, the
+            corresponding index-column domain will use the maximum possible values.
+            This makes a `SOMADataFrame` growable.
 
-        :param platform_config: Platform-specific options used to create this DataFrame,
-            provided via ``{"tiledb": {"create": ...}}`` nested keys.
+        :param platform_config: Platform-specific options used to create this
+            DataFrame, provided via ``{"tiledb": {"create": ...}}`` nested keys.
 
         :param tiledb_timestamp: If specified, overrides the default timestamp
             used to open this object. If unset, uses the timestamp provided by
@@ -543,7 +544,16 @@ def _build_tiledb_schema(
     context: SOMATileDBContext,
 ) -> tiledb.ArraySchema:
     """Converts an Arrow schema into a TileDB ArraySchema for creation."""
-    # XXX check domains is None, or, length matches index_column_names
+
+    if domains is None:
+        domains = tuple([None for _ in index_column_names])
+    else:
+        ndom = len(domains)
+        nidx = len(index_column_names)
+        if ndom != nidx:
+            raise ValueError(
+                f"if domains are specified, they must have the same length as index_column_names; got {ndom} != {nidx}"
+            )
 
     dims = []
     for i, index_column_name in enumerate(index_column_names):
@@ -551,9 +561,10 @@ def _build_tiledb_schema(
         dtype = _arrow_types.tiledb_type_from_arrow_type(
             pa_type, is_indexed_column=True
         )
+
         domain: Tuple[Any, Any]
-        if domains is not None and domains[i] is not None:
-            domain = domains[i]
+        if domains[i] is not None:
+            domain = domains[i]  # type: ignore[assignment]
 
         elif isinstance(dtype, str):
             domain = None, None
@@ -582,10 +593,9 @@ def _build_tiledb_schema(
         else:
             raise TypeError(f"Unsupported dtype {dtype}")
 
-        # Default 2048 mods to 0 for 8-bit types and 0 is an invalid extent
-        extent = tiledb_create_options.dim_tile(index_column_name)
-        if isinstance(dtype, np.dtype) and dtype.itemsize == 1:
-            extent = 64
+        extent = _find_extent_for_domain(
+            index_column_name, tiledb_create_options, dtype, domain
+        )
 
         dim = tiledb.Dim(
             name=index_column_name,
@@ -636,3 +646,29 @@ def _build_tiledb_schema(
         tile_order=tile_order,
         ctx=context.tiledb_ctx,
     )
+
+
+def _find_extent_for_domain(
+    index_column_name: str,
+    tiledb_create_options: TileDBCreateOptions,
+    dtype: Any,
+    domain: Tuple[Any, Any],
+) -> Any:
+    """Helper function for _build_tiledb_schema."""
+
+    # Default 2048 mods to 0 for 8-bit types and 0 is an invalid extent
+    extent = tiledb_create_options.dim_tile(index_column_name)
+    if isinstance(dtype, np.dtype) and dtype.itemsize == 1:
+        extent = 64
+
+    if isinstance(dtype, str):
+        return extent
+
+    if not (np.issubdtype(dtype, NPInteger) or np.issubdtype(dtype, NPFloating)):
+        return extent
+
+    lo, hi = domain
+    if lo is None or hi is None:
+        return extent
+
+    return min(extent, hi - lo + 1)
