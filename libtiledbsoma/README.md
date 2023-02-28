@@ -103,21 +103,10 @@ Examples:
 
 ## Notes
 
-A build system with `libfmt` and `libspdlog` installed may conflict with the required versions for `tiledbsoma`. If that is the case, this configuration is known-good on Ubuntu 22.04:
+A build system with `libfmt` and `libspdlog` installed may conflict with the required versions for `tiledbsoma`. Suggestion:
 
-```
-sudo apt install libfmt-dev libspdlog-dev
-```
-
-Check:
-
-```
-$ dpkg -l | egrep "lib(spdlog|fmt)" | cut -c-80
-ii  libfmt-dev:amd64                  8.1.1+ds1-2                             am
-ii  libfmt8:amd64                     8.1.1+ds1-2                             am
-ii  libspdlog-dev:amd64               1:1.9.2+ds-0.2                          am
-ii  libspdlog1:amd64                  1:1.9.2+ds-0.2                          am
-```
+* Uninstall `libfmt-dev` and `libspdlog-dev`
+* Check the following is gone (and manually remove if necessary) `/usr/lib/*/cmake/spdlog/spdlogConfig.cmake`
 
 Similarly, for MacOS:
 
