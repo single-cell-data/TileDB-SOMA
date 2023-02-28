@@ -53,12 +53,16 @@ MappingBase <- R6::R6Class(
     #' @return The value of \code{key} in the map, or \code{default} if
     #' \code{key} is not found
     #'
-    get = function(key, default = NULL) {
+    get = function(key, default = rlang::missing_arg()) {
+      key <- key[1L]
       key <- tryCatch(
         expr = match.arg(arg = key, choices = self$keys()),
         error = \(...) NULL
       )
       if (is.null(x = key)) {
+        if (rlang::is_missing(x = default)) {
+          private$.key_error(key = key)
+        }
         return(default)
       }
       return(private$.data[[key]])
@@ -133,7 +137,7 @@ MappingBase <- R6::R6Class(
     #' @return The map as a list
     #'
     to_list = function() {
-      return(private$.data)
+      return(self$items())
     },
     #' @return \[chainable\] Prints information about the map to \code{stdout}
     #' and invisibly returns \code{self}
@@ -153,7 +157,10 @@ MappingBase <- R6::R6Class(
     }
   ),
   private = list(
-    .data = list()
+    .data = list(),
+    .key_error = function(key) {
+      stop("Cannot find ", sQuote(x = key[1L]), " in this map", call. = FALSE)
+    }
   )
 )
 

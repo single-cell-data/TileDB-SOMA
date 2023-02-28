@@ -76,7 +76,12 @@ The option names (middle keys) for \code{platform}
 \if{latex}{\out{\hypertarget{method-PlatformConfig-get}{}}}
 \subsection{Method \code{get()}}{
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{PlatformConfig$get(platform, op = NULL, key = NULL, default = NULL)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{PlatformConfig$get(
+  platform,
+  op = NULL,
+  key = NULL,
+  default = rlang::missing_arg()
+)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{

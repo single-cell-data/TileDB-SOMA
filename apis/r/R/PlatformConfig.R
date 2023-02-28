@@ -55,9 +55,27 @@ PlatformConfig <- R6::R6Class(
     #' @return The value of \code{key} for \code{op} in \code{platform} in the
     #' map, or \code{default} if \code{key} is not found
     #'
-    get = function(platform, op = NULL, key = NULL, default = NULL) {
+    get = function(
+      platform,
+      op = NULL,
+      key = NULL,
+      default = rlang::missing_arg()
+    ) {
+      if (!length(x = self)) {
+        warning("No platforms configured", call. = FALSE)
+        return(NULL)
+      }
       platform <- platform[1L] %||% self$platforms()[1L]
-      platform <- match.arg(arg = platform, choices = self$platforms())
+      platform <- tryCatch(
+        expr = match.arg(arg = platform, choices = self$platforms()),
+        error = \(...) NULL
+      )
+      if (is.null(x = platform)) {
+        if (rlang::is_missing(x = default)) {
+          private$.key_error(key = platform)
+        }
+        return(default)
+      }
       pmap <- super$get(key = platform)
       if (is.null(x = op)) {
         return(pmap)

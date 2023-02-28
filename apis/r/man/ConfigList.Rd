@@ -39,7 +39,7 @@ serves as a nested map where the inner map is a \code{\link{ScalarMap}}:
 \if{latex}{\out{\hypertarget{method-ConfigList-get}{}}}
 \subsection{Method \code{get()}}{
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{ConfigList$get(op, key = NULL, default = NULL)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{ConfigList$get(op, key = NULL, default = rlang::missing_arg())}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{

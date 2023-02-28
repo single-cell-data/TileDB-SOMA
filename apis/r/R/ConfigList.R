@@ -22,9 +22,18 @@ ConfigList <- R6::R6Class(
     #' @return The value of \code{key} for \code{op} in the map, or
     #' \code{default} if \code{key} is not found
     #'
-    get = function(op, key = NULL, default = NULL) {
+    get = function(op, key = NULL, default = rlang::missing_arg()) {
       op <- op[1L]
-      op <- match.arg(arg = op, choices = self$keys())
+      op <- tryCatch(
+        expr = match.arg(arg = op, choices = self$keys()),
+        error = \(...) NULL
+      )
+      if (is.null(x = op)) {
+        if (rlang::is_missing(x = default)) {
+          private$.key_error(key = op)
+        }
+        return(default)
+      }
       opmap <- super$get(key = op)
       if (is.null(x = key)) {
         return(opmap)
