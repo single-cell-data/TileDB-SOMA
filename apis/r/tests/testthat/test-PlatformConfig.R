@@ -7,6 +7,8 @@ test_that("PlatformConfig mechanics", {
   expect_equal(cfg$keys(), 'plat1')
   expect_identical(names(cfg), cfg$keys())
   expect_error(cfg$get('platform1'))
+  expect_null(cfg$get('platform1', default = NULL))
+  expect_equal(cfg$get('platform1', default = 3L), 3L)
   # Check `get`
   expect_s3_class(opcfg <- cfg$get('plat1'), 'ConfigList')
   expect_length(opcfg, 1L)
@@ -14,7 +16,8 @@ test_that("PlatformConfig mechanics", {
   expect_length(map, 1L)
   expect_identical(cfg$get('plat1', 'op1'), map)
   expect_equal(cfg$get('plat1', 'op1', 'a'), 1L)
-  expect_null(cfg$get('plat1', 'op1', 'b'))
+  expect_error(cfg$get('plat1', 'op1', 'b'))
+  expect_null(cfg$get('plat1', 'op1', 'b', default = NULL))
   # Check `set` with map
   map <- ScalarMap$new()
   map$setv(a = TRUE, b = FALSE)

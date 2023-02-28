@@ -8,7 +8,8 @@ test_that("ScalarMap mechanics", {
   expect_error(map$type <- 'value')
   expect_output(print(map))
   # Ensure empty get
-  expect_null(map$get('a'))
+  expect_error(map$get('a'))
+  expect_null(map$get('a', default = NULL))
   # Check set
   expect_no_condition(map$set('a', 1L))
   expect_no_condition(map$get('a'))
