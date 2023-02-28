@@ -88,7 +88,11 @@ SOMACollectionBase <- R6::R6Class(
         stop(sprintf("Unknown member TileDB type: %s", type), call. = FALSE)
       )
 
-      tiledb_object <- tiledb_constructor(uri, self$ctx, self$platform_config)
+      tiledb_object <- tiledb_constructor(
+        uri,
+        ctx = self$ctx,
+        platform_config = self$platform_config
+      )
       soma_type <- tiledb_object$get_metadata(SOMA_OBJECT_TYPE_METADATA_KEY)
 
       soma_constructor <- switch(soma_type,
@@ -100,7 +104,11 @@ SOMACollectionBase <- R6::R6Class(
         SOMAExperiment = SOMAExperiment$new,
         stop(sprintf("Unknown member SOMA type: %s", soma_type), call. = FALSE)
       )
-      soma_constructor(uri, self$ctx, self$platform_config)
+      soma_constructor(
+        uri,
+        ctx = self$ctx,
+        platform_config = self$platform_config
+      )
     },
 
     # Internal method called by SOMA Measurement/Experiment's active bindings
