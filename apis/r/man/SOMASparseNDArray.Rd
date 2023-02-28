@@ -19,7 +19,7 @@ domain [0, maxInt64), and a single attribute.
 \subsection{Duplicate writes}{
 
 As duplicate index values are not allowed, index values already present in
-the object are overwritten and new index values are added.
+the object are overwritten and new index values are added. (lifecycle: experimental)
 }
 }
 \section{Super classes}{
@@ -32,6 +32,7 @@ the object are overwritten and new index values are added.
 \item \href{#method-SOMASparseNDArray-read_arrow_table}{\code{SOMASparseNDArray$read_arrow_table()}}
 \item \href{#method-SOMASparseNDArray-read_sparse_matrix}{\code{SOMASparseNDArray$read_sparse_matrix()}}
 \item \href{#method-SOMASparseNDArray-write}{\code{SOMASparseNDArray$write()}}
+\item \href{#method-SOMASparseNDArray-nnz}{\code{SOMASparseNDArray$nnz()}}
 \item \href{#method-SOMASparseNDArray-clone}{\code{SOMASparseNDArray$clone()}}
 }
 }
@@ -47,12 +48,17 @@ the object are overwritten and new index values are added.
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="dimnames"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-dimnames'><code>tiledbsoma::TileDBArray$dimnames()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="fragment_count"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-fragment_count'><code>tiledbsoma::TileDBArray$fragment_count()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="get_metadata"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-get_metadata'><code>tiledbsoma::TileDBArray$get_metadata()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="ndim"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-ndim'><code>tiledbsoma::TileDBArray$ndim()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="print"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-print'><code>tiledbsoma::TileDBArray$print()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="reset_query"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-reset_query'><code>tiledbsoma::TileDBArray$reset_query()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="schema"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-schema'><code>tiledbsoma::TileDBArray$schema()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="set_metadata"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-set_metadata'><code>tiledbsoma::TileDBArray$set_metadata()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="set_query"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-set_query'><code>tiledbsoma::TileDBArray$set_query()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="shape"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-shape'><code>tiledbsoma::TileDBArray$shape()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="tiledb_array"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-tiledb_array'><code>tiledbsoma::TileDBArray$tiledb_array()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="tiledb_schema"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-tiledb_schema'><code>tiledbsoma::TileDBArray$tiledb_schema()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMAArrayBase" data-id="read_complete"><a href='../../tiledbsoma/html/SOMAArrayBase.html#method-SOMAArrayBase-read_complete'><code>tiledbsoma::SOMAArrayBase$read_complete()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMAArrayBase" data-id="read_next"><a href='../../tiledbsoma/html/SOMAArrayBase.html#method-SOMAArrayBase-read_next'><code>tiledbsoma::SOMAArrayBase$read_next()</code></a></span></li>
 </ul>
 </details>
 }}
@@ -60,7 +66,7 @@ the object are overwritten and new index values are added.
 \if{html}{\out{<a id="method-SOMASparseNDArray-create"></a>}}
 \if{latex}{\out{\hypertarget{method-SOMASparseNDArray-create}{}}}
 \subsection{Method \code{create()}}{
-Create a SOMASparseNDArray named with the URI.
+Create a SOMASparseNDArray named with the URI. (lifecycle: experimental)
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{SOMASparseNDArray$create(type, shape)}\if{html}{\out{</div>}}
 }
@@ -79,11 +85,12 @@ Create a SOMASparseNDArray named with the URI.
 \if{html}{\out{<a id="method-SOMASparseNDArray-read_arrow_table"></a>}}
 \if{latex}{\out{\hypertarget{method-SOMASparseNDArray-read_arrow_table}{}}}
 \subsection{Method \code{read_arrow_table()}}{
-Read as an 'arrow::Table'
+Read as an 'arrow::Table' (lifecycle: experimental)
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{SOMASparseNDArray$read_arrow_table(
   coords = NULL,
   result_order = "ROW_MAJOR",
+  iterated = FALSE,
   log_level = "warn"
 )}\if{html}{\out{</div>}}
 }
@@ -98,6 +105,9 @@ read. List elements can be named when specifying a subset of dimensions.}
 \item{\code{result_order}}{Optional order of read results. This can be one of either
 \verb{"ROW_MAJOR, }"COL_MAJOR"\verb{, }"GLOBAL_ORDER"\verb{, or }"UNORDERED"`.}
 
+\item{\code{iterated}}{Option boolean indicated whether data is read in call (when
+\code{FALSE}, the default value) or in several iterated steps.}
+
 \item{\code{log_level}}{Optional logging level with default value of \code{"warn"}.}
 }
 \if{html}{\out{</div>}}
@@ -110,12 +120,13 @@ An \code{\link[arrow:Table]{arrow::Table}}.
 \if{html}{\out{<a id="method-SOMASparseNDArray-read_sparse_matrix"></a>}}
 \if{latex}{\out{\hypertarget{method-SOMASparseNDArray-read_sparse_matrix}{}}}
 \subsection{Method \code{read_sparse_matrix()}}{
-Read as a sparse matrix
+Read as a sparse matrix (lifecycle: experimental)
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{SOMASparseNDArray$read_sparse_matrix(
   coords = NULL,
   result_order = "ROW_MAJOR",
   repr = c("C", "T", "R"),
+  iterated = FALSE,
   log_level = "warn"
 )}\if{html}{\out{</div>}}
 }
@@ -132,6 +143,9 @@ read. List elements can be named when specifying a subset of dimensions.}
 
 \item{\code{repr}}{Optional one-character code for sparse matrix representation type}
 
+\item{\code{iterated}}{Option boolean indicated whether data is read in call (when
+\code{FALSE}, the default value) or in several iterated steps.}
+
 \item{\code{log_level}}{Optional logging level with default value of \code{"warn"}.}
 }
 \if{html}{\out{</div>}}
@@ -144,19 +158,32 @@ A \code{matrix} object
 \if{html}{\out{<a id="method-SOMASparseNDArray-write"></a>}}
 \if{latex}{\out{\hypertarget{method-SOMASparseNDArray-write}{}}}
 \subsection{Method \code{write()}}{
-Write matrix-like data to the array.
+Write matrix-like data to the array. (lifecycle: experimental)
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{SOMASparseNDArray$write(data)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{SOMASparseNDArray$write(values)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{data}}{Any \code{matrix}-like object coercible to a
+\item{\code{values}}{Any \code{matrix}-like object coercible to a
 \code{\link[Matrix:TsparseMatrix-class]{TsparseMatrix}}. Character dimension
 names are ignored because \code{SOMANDArray}'s use integer indexing.}
 }
 \if{html}{\out{</div>}}
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-SOMASparseNDArray-nnz"></a>}}
+\if{latex}{\out{\hypertarget{method-SOMASparseNDArray-nnz}{}}}
+\subsection{Method \code{nnz()}}{
+Retrieve number of non-zero elements (lifecycle: experimental)
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{SOMASparseNDArray$nnz()}\if{html}{\out{</div>}}
+}
+
+\subsection{Returns}{
+A scalar with the number of non-zero elements
 }
 }
 \if{html}{\out{<hr>}}

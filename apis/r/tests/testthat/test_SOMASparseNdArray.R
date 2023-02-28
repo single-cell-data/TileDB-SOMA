@@ -45,4 +45,19 @@ test_that("SOMASparseNDArray creation", {
     as.numeric(tbl$GetColumnByName("soma_data")),
     as.numeric(mat[1, 1:3])
   )
+
+  # Validate TileDB array schema
+  arr <- tiledb::tiledb_array(uri)
+  sch <- tiledb::schema(arr)
+  expect_true(tiledb::is.sparse(sch))
+  expect_false(tiledb::allows_dups(sch))
+
+  ## shape
+  expect_equal(ndarray$shape(), as.integer64(c(10, 10)))
+
+  ## ndim
+  expect_equal(ndarray$ndim(), 2L)
+
+  ## nnz
+  expect_equal(ndarray$nnz(), 60L)
 })

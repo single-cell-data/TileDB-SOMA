@@ -4,7 +4,7 @@
 #' `SOMADataFrame` is a multi-column table that must contain a column
 #' called `soma_joinid` of type `int64`, which contains a unique value for each
 #' row and is intended to act as a join key for other objects, such as
-#' [`SOMASparseNDArray`].
+#' [`SOMASparseNDArray`].  (lifecycle: experimental)
 
 #' @importFrom stats setNames
 #' @export
@@ -15,7 +15,7 @@ SOMADataFrame <- R6::R6Class(
 
   public = list(
 
-    #' @description Create
+    #' @description Create (lifecycle: experimental)
     #' @param schema an [`arrow::schema`].
     #' @param index_column_names A vector of column names to use as user-defined
     #' index columns.  All named columns must exist in the schema, and at least
@@ -108,11 +108,11 @@ SOMADataFrame <- R6::R6Class(
       private$write_object_type_metadata()
     },
 
-    #' @description Write
+    #' @description Write (lifecycle: experimental)
     #'
-    #' @param values An [`arrow::Table`] containing all columns, including
-    #' any index columns. The schema for `values` must match the
-    #' schema for the `SOMADataFrame`.
+    #' @param values An [`arrow::Table`] or [`arrow::RecordBatch`]
+    #' containing all columns, including any index columns. The
+    #' schema for `values` must match the schema for the `SOMADataFrame`.
     #'
     write = function(values) {
       on.exit(private$close())
@@ -122,14 +122,18 @@ SOMADataFrame <- R6::R6Class(
       on.exit(options(op), add = TRUE, after = FALSE)
 
       schema_names <- c(self$dimnames(), self$attrnames())
-
+      col_names <- if (is_arrow_record_batch(values)) {
+                       arrow::as_arrow_table(values)$ColumnNames()
+                   } else {
+                       values$ColumnNames()
+                   }
       stopifnot(
-        "'values' must be an Arrow Table" =
-          is_arrow_table(values),
+        "'values' must be an Arrow Table or RecordBatch" =
+          (is_arrow_table(values) || is_arrow_record_batch(values)),
         "All columns in 'values' must be defined in the schema" =
-          all(values$ColumnNames() %in% schema_names),
+          all(col_names %in% schema_names),
         "All schema fields must be present in 'values'" =
-          all(schema_names %in% values$ColumnNames())
+          all(schema_names %in% col_names)
       )
 
       df <- as.data.frame(values)[schema_names]
@@ -138,7 +142,7 @@ SOMADataFrame <- R6::R6Class(
       arr[] <- df
     },
 
-    #' @description Read
+    #' @description Read (lifecycle: experimental)
     #' Read a user-defined subset of data, addressed by the dataframe indexing
     #' column, and optionally filtered.
     #' @param coords Optional named list of indices specifying the rows to read; each (named)
@@ -149,51 +153,63 @@ SOMADataFrame <- R6::R6Class(
     #' more information.
     #' @param result_order Optional order of read results. This can be one of either
     #' `"ROW_MAJOR, `"COL_MAJOR"`, `"GLOBAL_ORDER"`, or `"UNORDERED"`.
+    #' @param iterated Option boolean indicated whether data is read in call (when
+    #' `FALSE`, the default value) or in several iterated steps.
     #' @param log_level Optional logging level with default value of `"warn"`.
     #' @return An [`arrow::Table`].
     read = function(coords = NULL,
                     column_names = NULL,
                     value_filter = NULL,
                     result_order = "UNORDERED",
+                    iterated = FALSE,
                     log_level = "warn") {
 
       result_order <- match_query_layout(result_order)
-
       uri <- self$uri
       arr <- self$object                 # need array (schema) to properly parse query condition
 
-      # check columns
-      stopifnot("'column_names' must only contain valid dimension or attribute columns" =
-                    is.null(column_names) ||
-                    all(column_names %in% c(self$dimnames(), self$attrnames())))
-
-      # check and parse value filter
-      stopifnot("'value_filter' must be a single argument" =
-                    is.null(value_filter) || is_scalar_character(value_filter))
+      stopifnot(
+          ## check columns
+          "'column_names' must only contain valid dimension or attribute columns" =
+              is.null(column_names) || all(column_names %in% c(self$dimnames(), self$attrnames())),
+          ## check and parse value filter
+          "'value_filter' must be a single argument" =
+              is.null(value_filter) || is_scalar_character(value_filter),
+          ## ensure coords is a (named) list
+          "'coords' must be a list" =
+              is.null(coords) || is.list(coords),
+          "names of 'coords' must correspond to dimension names" =
+              is.null(coords) || all(names(coords) %in% self$dimnames())
+      )
       if (!is.null(value_filter)) {
           parsed <- do.call(what = tiledb::parse_query_condition,
                             args = list(expr = str2lang(value_filter), ta = arr))
           value_filter <- parsed@ptr
       }
-      # ensure coords is a (named) list
-      stopifnot("'coords' must be a list" = is.null(coords) || is.list(coords),
-                "names of 'coords' must correspond to dimension names" =
-                    is.null(coords) || all(names(coords) %in% self$dimnames()))
 
-      rl <- soma_reader(uri = uri,
-                        colnames = column_names,   # NULL is dealt with by soma_reader()
-                        qc = value_filter,         # idem
-                        dim_points = coords,       # idem
-                        loglevel = log_level)      # idem
-
-      arrow::as_arrow_table(arch::from_arch_array(rl, arrow::RecordBatch))
+      if (isFALSE(iterated)) {
+          rl <- soma_reader(uri = uri,
+                            colnames = column_names,   # NULL is dealt with by soma_reader()
+                            qc = value_filter,         # idem
+                            dim_points = coords,       # idem
+                            loglevel = log_level)      # idem
+          private$soma_reader_transform(rl)
+      } else {
+          ## should we error if this isn't null?
+          if (!is.null(self$soma_reader_pointer)) {
+              warning("pointer not null, skipping")
+          } else {
+              private$soma_reader_setup()
+          }
+          invisible(NULL)
+      }
     }
 
   ),
 
   private = list(
 
-    # @description Validate schema
+    # @description Validate schema (lifecycle: experimental)
     # Handle default column additions (eg, soma_joinid) and error checking on
     # required columns
     # @return An [`arrow::Schema`], which may be modified by the addition of
@@ -223,6 +239,12 @@ SOMADataFrame <- R6::R6Class(
       }
 
       schema
+    },
+
+    ## refined from base class
+    soma_reader_transform = function(x) {
+      arrow::as_arrow_table(arch::from_arch_array(x, arrow::RecordBatch))
     }
+
   )
 )

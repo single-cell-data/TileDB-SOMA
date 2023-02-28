@@ -1,3 +1,5 @@
+import pathlib
+
 import pyarrow as pa
 import pytest
 
@@ -12,12 +14,12 @@ Tuple is (requested_type, expected_type).
 SUPPORTED_ARROW_TYPES = [
     (pa.bool_(),) * 2,
     (pa.int8(),) * 2,
-    (pa.int16(),) * 2,
-    (pa.int32(),) * 2,
-    (pa.int16(),) * 2,
     (pa.uint8(),) * 2,
+    (pa.int16(),) * 2,
     (pa.uint16(),) * 2,
+    (pa.int32(),) * 2,
     (pa.uint32(),) * 2,
+    (pa.int64(),) * 2,
     (pa.uint64(),) * 2,
     (pa.float32(),) * 2,
     (pa.float64(),) * 2,
@@ -59,12 +61,12 @@ UNSUPPORTED_ARROW_TYPES = [
 
 
 @pytest.mark.parametrize("arrow_type_info", SUPPORTED_ARROW_TYPES)
-def test_arrow_types_supported(tmp_path, arrow_type_info):
+def test_arrow_types_supported(tmp_path: pathlib.Path, arrow_type_info):
     """Verify round-trip conversion of types which should work "as is" """
     arrow_type, expected_arrow_type = arrow_type_info
-
-    sdf = soma.DataFrame(tmp_path.as_posix())
-    assert sdf == sdf.create_legacy(pa.schema([(str(arrow_type), arrow_type)]))
+    sdf = soma.DataFrame.create(
+        tmp_path.as_posix(), schema=pa.schema([(str(arrow_type), arrow_type)])
+    )
     schema = sdf.schema
     assert schema is not None
     assert sorted(schema.names) == sorted(["soma_joinid", str(arrow_type)])
@@ -75,10 +77,10 @@ def test_arrow_types_supported(tmp_path, arrow_type_info):
 def test_arrow_types_unsupported(tmp_path, arrow_type):
     """Verify explicit error for unsupported types"""
 
-    sdf = soma.DataFrame(tmp_path.as_posix())
-
     with pytest.raises(TypeError, match=r"unsupported type|Unsupported Arrow type"):
-        assert sdf == sdf.create_legacy(pa.schema([(str(arrow_type), arrow_type)]))
+        soma.DataFrame.create(
+            tmp_path.as_posix(), schema=pa.schema([(str(arrow_type), arrow_type)])
+        )
 
 
 # ================================================================
@@ -133,18 +135,18 @@ def test_bool_arrays(tmp_path, bool_array):
         ]
     )
     index_column_names = ["soma_joinid"]
-    sdf = soma.DataFrame(uri=tmp_path.as_posix())
-    sdf.create_legacy(schema=schema, index_column_names=index_column_names)
-    n_data = len(bool_array)
+    with soma.DataFrame.create(
+        tmp_path.as_posix(), schema=schema, index_column_names=index_column_names
+    ) as sdf:
+        n_data = len(bool_array)
 
-    data = {
-        "soma_joinid": list(range(n_data)),
-        "b": bool_array,
-    }
-    rb = pa.Table.from_pydict(data)
-    sdf.write(rb)
+        data = {
+            "soma_joinid": list(range(n_data)),
+            "b": bool_array,
+        }
+        rb = pa.Table.from_pydict(data)
+        sdf.write(rb)
 
-    assert sdf.exists()
-
-    table = sdf.read().concat()
+    with soma.DataFrame.open(tmp_path.as_posix()) as sdf:
+        table = sdf.read().concat()
     assert table["b"].to_pylist() == bool_array

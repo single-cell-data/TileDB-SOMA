@@ -1,6 +1,4 @@
-import pathlib
-import sys
-from typing import List, Optional, Tuple
+from typing import Tuple
 
 import numpy as np
 import pandas as pd
@@ -9,17 +7,9 @@ import pytest
 from scipy import sparse
 
 import tiledbsoma as soma
+from tiledbsoma import _factory
+from tiledbsoma._collection import CollectionBase
 from tiledbsoma.experiment_query import X_as_series
-
-
-@pytest.fixture(scope="function")
-def obs(tmp_path, n_obs) -> soma.DataFrame:
-    return make_dataframe((tmp_path / "obs").as_posix(), n_obs)
-
-
-@pytest.fixture(scope="function")
-def var(tmp_path, n_vars) -> soma.DataFrame:
-    return make_dataframe((tmp_path / "var").as_posix(), n_vars)
 
 
 @pytest.fixture
@@ -42,40 +32,34 @@ def soma_experiment(
     tmp_path,
     n_obs,
     n_vars,
-    obs,
-    var,
     X_layer_names,
     obsp_layer_names,
     varp_layer_names,
 ):
-    return make_experiment(
-        tmp_path,
-        n_obs,
-        n_vars,
-        obs,
-        var,
-        X_layer_names,
-        obsp_layer_names,
-        varp_layer_names,
-    )
+    with soma.Experiment.create((tmp_path / "exp").as_posix()) as exp:
+        add_dataframe(exp, "obs", n_obs)
+        ms = exp.add_new_collection("ms")
+        rna = ms.add_new_collection("RNA", soma.Measurement)
+        add_dataframe(rna, "var", n_vars)
+        rna_x = rna.add_new_collection("X", soma.Collection)
+        for X_layer_name in X_layer_names:
+            add_sparse_array(rna_x, X_layer_name, (n_obs, n_vars))
+
+        if obsp_layer_names:
+            obsp = rna.add_new_collection("obsp")
+            for obsp_layer_name in obsp_layer_names:
+                add_sparse_array(obsp, obsp_layer_name, (n_obs, n_obs))
+
+        if varp_layer_names:
+            varp = rna.add_new_collection("varp")
+            for varp_layer_name in varp_layer_names:
+                add_sparse_array(varp, varp_layer_name, (n_vars, n_vars))
+    return _factory.open((tmp_path / "exp").as_posix())
 
 
-@pytest.mark.xfail(
-    # This test fails on Python 3.10+ due to a bug in typeguard. The bug
-    # is tripped due to use of a TypedDict. Remove
-    # work-around when the typeguard issue is fixed AND released.
-    # Underlying issue:
-    #   https://github.com/agronholm/typeguard/issues/242
-    # Related to _when_ we might see a release:
-    #   https://github.com/agronholm/typeguard/issues/257
-    sys.version_info >= (3, 10),
-    reason="typeguard bug #242",
-)
 @pytest.mark.parametrize("n_obs,n_vars,X_layer_names", [(101, 11, ("raw", "extra"))])
 def test_experiment_query_all(soma_experiment):
     """Test a query with default obs_query / var_query - i.e., query all."""
-    assert soma_experiment.exists()
-
     with soma.ExperimentAxisQuery(soma_experiment, "RNA") as query:
         assert query.n_obs == 101
         assert query.n_vars == 11
@@ -131,11 +115,6 @@ def test_experiment_query_all(soma_experiment):
         assert np.array_equal(raw_X["soma_data"], ad_X_coo.data)
 
 
-@pytest.mark.xfail(
-    # see comment on test_experiment_query_all
-    sys.version_info >= (3, 10),
-    reason="typeguard bug #242",
-)
 @pytest.mark.parametrize("n_obs,n_vars", [(1001, 99)])
 def test_experiment_query_coords(soma_experiment):
     """Test query by dimension coordinates"""
@@ -186,11 +165,6 @@ def test_experiment_query_coords(soma_experiment):
         )
 
 
-@pytest.mark.xfail(
-    # see comment on test_experiment_query_all
-    sys.version_info >= (3, 10),
-    reason="typeguard bug #242",
-)
 @pytest.mark.parametrize("n_obs,n_vars", [(1001, 99)])
 def test_experiment_query_value_filter(soma_experiment):
     """Test query by value filter"""
@@ -207,11 +181,6 @@ def test_experiment_query_value_filter(soma_experiment):
         assert query.var().concat()["label"].to_pylist() == var_label_values
 
 
-@pytest.mark.xfail(
-    # see comment on test_experiment_query_all
-    sys.version_info >= (3, 10),
-    reason="typeguard bug #242",
-)
 @pytest.mark.parametrize("n_obs,n_vars", [(1001, 99)])
 def test_experiment_query_combo(soma_experiment):
     """Test query by combinations of coords and value_filter"""
@@ -252,11 +221,6 @@ def test_experiment_query_combo(soma_experiment):
         assert query.var().concat()["label"].to_pylist() == var_label_values
 
 
-@pytest.mark.xfail(
-    # see comment on test_experiment_query_all
-    sys.version_info >= (3, 10),
-    reason="typeguard bug #242",
-)
 @pytest.mark.parametrize("n_obs,n_vars", [(1001, 99)])
 def test_experiment_query_none(soma_experiment):
     """Test query resulting in empty result"""
@@ -282,11 +246,6 @@ def test_experiment_query_none(soma_experiment):
         assert len(query.X("raw").tables().concat()) == 0
 
 
-@pytest.mark.xfail(
-    # see comment on test_experiment_query_all
-    sys.version_info >= (3, 10),
-    reason="typeguard bug #242",
-)
 @pytest.mark.parametrize("n_obs,n_vars,X_layer_names", [(1001, 99, ["A"])])
 def test_joinid_caching(soma_experiment):
     """
@@ -306,14 +265,7 @@ def test_joinid_caching(soma_experiment):
     with soma_experiment.axis_query(
         "RNA", obs_query=obs_query, var_query=var_query
     ) as query2:
-        coo = query2.X("A").coos().concat().to_scipy()
-        csr = sparse.csr_matrix(
-            (
-                coo.data,
-                (query2._indexer.by_obs(coo.row), query2._indexer.by_var(coo.col)),
-            ),
-            shape=(query2.n_obs, query2.n_vars),
-        )
+        query2.X("A").coos().concat().to_scipy()
 
     with soma_experiment.axis_query(
         "RNA", obs_query=obs_query, var_query=var_query
@@ -325,19 +277,11 @@ def test_joinid_caching(soma_experiment):
     assert np.array_equal(var.to_pandas().label, ad.var.label)
     assert ad.n_obs == len(obs)
     assert ad.n_vars == len(var)
-    assert ad.X.shape == csr.shape
-    assert (ad.X != csr).nnz == 0  # fast eq test
 
 
-@pytest.mark.xfail(
-    # see comment on test_experiment_query_all
-    sys.version_info >= (3, 10),
-    reason="typeguard bug #242",
-)
 @pytest.mark.parametrize("n_obs,n_vars,X_layer_names", [(1001, 99, ["A", "B", "C"])])
 def test_X_layers(soma_experiment):
     """Verify multi-layer-X handling"""
-    assert soma_experiment.exists()
     A = pa.concat_tables(
         soma_experiment.ms["RNA"].X["A"].read((slice(None), slice(None))).tables()
     )
@@ -358,16 +302,9 @@ def test_X_layers(soma_experiment):
         assert np.array_equal(A["soma_data"], ad_lyr_coo.data)
 
 
-@pytest.mark.xfail(
-    # see comment on test_experiment_query_all
-    sys.version_info >= (3, 10),
-    reason="typeguard bug #242",
-)
 @pytest.mark.parametrize("n_obs,n_vars", [(1001, 99)])
 def test_experiment_query_indexer(soma_experiment):
     """Test result indexer"""
-    assert soma_experiment.exists()
-
     with soma.ExperimentAxisQuery(
         soma_experiment,
         "RNA",
@@ -406,23 +343,12 @@ def test_experiment_query_indexer(soma_experiment):
             assert np.array_equal(indexer.by_var(arg), expected_result)
 
 
-@pytest.mark.xfail(
-    # see comment on test_experiment_query_all
-    sys.version_info >= (3, 10),
-    reason="typeguard bug #242",
-)
 @pytest.mark.parametrize("n_obs,n_vars", [(2833, 107)])
 def test_error_corners(soma_experiment: soma.Experiment):
     """Verify a couple of error conditions / corner cases."""
-    assert soma_experiment.exists()
-
     # Unknown Measurement name
     with pytest.raises(ValueError):
         soma_experiment.axis_query("no-such-measurement")
-
-    # Non-existent experiment
-    with pytest.raises(ValueError):
-        soma.Experiment(uri="foobar").axis_query("foobar")
 
     # Unknown X layer name
     with pytest.raises(KeyError):
@@ -455,11 +381,6 @@ def test_error_corners(soma_experiment: soma.Experiment):
                 next(query.varp(lyr_name))
 
 
-@pytest.mark.xfail(
-    # see comment on test_experiment_query_all
-    sys.version_info >= (3, 10),
-    reason="typeguard bug #242",
-)
 @pytest.mark.parametrize("n_obs,n_vars", [(1001, 99)])
 def test_query_cleanup(soma_experiment: soma.Experiment):
     """
@@ -483,11 +404,6 @@ def test_query_cleanup(soma_experiment: soma.Experiment):
     assert query._threadpool_ is None
 
 
-@pytest.mark.xfail(
-    # see comment on test_experiment_query_all
-    sys.version_info >= (3, 10),
-    reason="typeguard bug #242",
-)
 @pytest.mark.parametrize(
     "n_obs,n_vars,obsp_layer_names,varp_layer_names", [(1001, 99, ["foo"], ["bar"])]
 )
@@ -530,9 +446,9 @@ def test_experiment_query_obsp_varp(soma_experiment):
 
 def test_axis_query():
     """Basic test of the AxisQuery class"""
-    assert soma.AxisQuery().coords == (slice(None),)
+    assert soma.AxisQuery().coords == ()
     assert soma.AxisQuery().value_filter is None
-    assert soma.AxisQuery() == soma.AxisQuery(coords=(slice(None),))
+    assert soma.AxisQuery() == soma.AxisQuery(coords=())
 
     assert soma.AxisQuery(coords=(1,)).coords == (1,)
     assert soma.AxisQuery(coords=(slice(1, 2),)).coords == (slice(1, 2),)
@@ -546,7 +462,7 @@ def test_axis_query():
     assert soma.AxisQuery(coords=(slice(1, 2),)).value_filter is None
 
     assert soma.AxisQuery(value_filter="foo == 'bar'").value_filter == "foo == 'bar'"
-    assert soma.AxisQuery(value_filter="foo == 'bar'").coords == (slice(None),)
+    assert soma.AxisQuery(value_filter="foo == 'bar'").coords == ()
 
     assert soma.AxisQuery(
         coords=(slice(1, 100),), value_filter="foo == 'bar'"
@@ -591,11 +507,6 @@ def test_X_as_series():
     )
 
 
-@pytest.mark.xfail(
-    # see comment on test_experiment_query_all
-    sys.version_info >= (3, 10),
-    reason="typeguard bug #242",
-)
 @pytest.mark.parametrize(
     "n_obs,n_vars,obsp_layer_names,varp_layer_names", [(101, 99, ["foo"], ["bar"])]
 )
@@ -703,9 +614,9 @@ Fixture support & utility functions below.
 """
 
 
-def make_dataframe(path: str, sz: int) -> soma.DataFrame:
-    df = soma.DataFrame(uri=path)
-    df.create_legacy(
+def add_dataframe(coll: CollectionBase, key: str, sz: int) -> None:
+    df = coll.add_new_dataframe(
+        key,
         schema=pa.schema(
             [
                 ("soma_joinid", pa.int64()),
@@ -722,11 +633,10 @@ def make_dataframe(path: str, sz: int) -> soma.DataFrame:
             }
         )
     )
-    return df
 
 
-def make_sparse_array(path: str, shape: Tuple[int, int]) -> soma.SparseNDArray:
-    a = soma.SparseNDArray(path).create_legacy(pa.float32(), shape)
+def add_sparse_array(coll: CollectionBase, key: str, shape: Tuple[int, int]) -> None:
+    a = coll.add_new_sparse_ndarray(key, type=pa.float32(), shape=shape)
     tensor = pa.SparseCOOTensor.from_scipy(
         sparse.random(
             shape[0],
@@ -738,66 +648,3 @@ def make_sparse_array(path: str, shape: Tuple[int, int]) -> soma.SparseNDArray:
         )
     )
     a.write(tensor)
-    return a
-
-
-def make_experiment(
-    root: pathlib.Path,
-    n_obs: int,
-    n_vars: int,
-    obs: soma.DataFrame,
-    var: soma.DataFrame,
-    X_layer_names: List[str],  # will create a random matrix per layer name
-    obsp_layer_names: Optional[List[str]] = None,
-    varp_layer_names: Optional[List[str]] = None,
-) -> soma.Experiment:
-
-    assert obs.exists()
-    assert var.exists()
-    assert len(obs) == n_obs
-    assert len(var) == n_vars
-
-    experiment = soma.Experiment((root / "exp").as_posix()).create_legacy()
-    experiment["ms"] = soma.Collection((root / "ms").as_posix()).create_legacy()
-    experiment.ms["RNA"] = soma.Measurement(
-        uri=f"{experiment.ms.uri}/RNA"
-    ).create_legacy()
-    experiment["obs"] = obs
-
-    measurement = experiment.ms["RNA"]
-    measurement["var"] = var
-    measurement["X"] = soma.Collection(uri=f"{measurement.uri}/X").create_legacy()
-
-    (root / "X").mkdir()
-    for X_layer_name in X_layer_names:
-        path = root / "X" / X_layer_name
-        path.mkdir()
-        measurement.X[X_layer_name] = make_sparse_array(
-            path.as_posix(), (n_obs, n_vars)
-        )
-
-    if obsp_layer_names:
-        (root / "obsp").mkdir()
-        measurement["obsp"] = soma.Collection(
-            uri=f"{measurement.uri}/obsp"
-        ).create_legacy()
-        for obsp_layer_name in obsp_layer_names:
-            path = root / "obsp" / obsp_layer_name
-            path.mkdir()
-            measurement.obsp[obsp_layer_name] = make_sparse_array(
-                path.as_posix(), (n_obs, n_obs)
-            )
-
-    if varp_layer_names:
-        (root / "varp").mkdir()
-        measurement["varp"] = soma.Collection(
-            uri=f"{measurement.uri}/varp"
-        ).create_legacy()
-        for varp_layer_name in varp_layer_names:
-            path = root / "varp" / varp_layer_name
-            path.mkdir()
-            measurement.varp[varp_layer_name] = make_sparse_array(
-                path.as_posix(), (n_vars, n_vars)
-            )
-
-    return experiment

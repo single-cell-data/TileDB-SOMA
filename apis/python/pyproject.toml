@@ -14,15 +14,13 @@ warn_unreachable = true
 strict = true
 
 [[tool.mypy.overrides]]
-module = "tiledbsoma.query_condition"
+module = "tiledbsoma._query_condition"
 ignore_errors = true
 
 [tool.ruff]
 ignore = ["E501"]
 extend-select = ["I001"]
-extend-exclude = ["query_condition.py"]
 fix = true
 
 [tool.ruff.isort]
 known-first-party = ["tiledbsoma"]
-known-third-party = ["anndata"]

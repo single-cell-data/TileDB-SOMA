@@ -19,7 +19,7 @@ All dimensions must have a positive, non-zero length, and there must be 1 or
 more dimensions.
 
 The default "fill" value for \code{SOMADenseNDArray} is the zero or null value of
-the array type (e.g., Arrow.float32 defaults to 0.0).
+the array type (e.g., Arrow.float32 defaults to 0.0).  (lifecycle: experimental)
 }
 \section{Super classes}{
 \code{\link[tiledbsoma:TileDBObject]{tiledbsoma::TileDBObject}} -> \code{\link[tiledbsoma:TileDBArray]{tiledbsoma::TileDBArray}} -> \code{\link[tiledbsoma:SOMAArrayBase]{tiledbsoma::SOMAArrayBase}} -> \code{SOMADenseNDArray}
@@ -46,12 +46,17 @@ the array type (e.g., Arrow.float32 defaults to 0.0).
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="dimnames"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-dimnames'><code>tiledbsoma::TileDBArray$dimnames()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="fragment_count"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-fragment_count'><code>tiledbsoma::TileDBArray$fragment_count()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="get_metadata"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-get_metadata'><code>tiledbsoma::TileDBArray$get_metadata()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="ndim"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-ndim'><code>tiledbsoma::TileDBArray$ndim()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="print"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-print'><code>tiledbsoma::TileDBArray$print()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="reset_query"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-reset_query'><code>tiledbsoma::TileDBArray$reset_query()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="schema"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-schema'><code>tiledbsoma::TileDBArray$schema()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="set_metadata"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-set_metadata'><code>tiledbsoma::TileDBArray$set_metadata()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="set_query"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-set_query'><code>tiledbsoma::TileDBArray$set_query()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="shape"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-shape'><code>tiledbsoma::TileDBArray$shape()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="tiledb_array"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-tiledb_array'><code>tiledbsoma::TileDBArray$tiledb_array()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="tiledb_schema"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-tiledb_schema'><code>tiledbsoma::TileDBArray$tiledb_schema()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMAArrayBase" data-id="read_complete"><a href='../../tiledbsoma/html/SOMAArrayBase.html#method-SOMAArrayBase-read_complete'><code>tiledbsoma::SOMAArrayBase$read_complete()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMAArrayBase" data-id="read_next"><a href='../../tiledbsoma/html/SOMAArrayBase.html#method-SOMAArrayBase-read_next'><code>tiledbsoma::SOMAArrayBase$read_next()</code></a></span></li>
 </ul>
 </details>
 }}
@@ -59,7 +64,7 @@ the array type (e.g., Arrow.float32 defaults to 0.0).
 \if{html}{\out{<a id="method-SOMADenseNDArray-create"></a>}}
 \if{latex}{\out{\hypertarget{method-SOMADenseNDArray-create}{}}}
 \subsection{Method \code{create()}}{
-Create a SOMADenseNDArray named with the URI.
+Create a SOMADenseNDArray named with the URI. (lifecycle: experimental)
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{SOMADenseNDArray$create(type, shape)}\if{html}{\out{</div>}}
 }
@@ -79,11 +84,12 @@ element in the array.}
 \if{html}{\out{<a id="method-SOMADenseNDArray-read_arrow_table"></a>}}
 \if{latex}{\out{\hypertarget{method-SOMADenseNDArray-read_arrow_table}{}}}
 \subsection{Method \code{read_arrow_table()}}{
-Read as an 'arrow::Table'
+Read as an 'arrow::Table' (lifecycle: experimental)
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{SOMADenseNDArray$read_arrow_table(
   coords = NULL,
   result_order = "ROW_MAJOR",
+  iterated = FALSE,
   log_level = "warn"
 )}\if{html}{\out{</div>}}
 }
@@ -97,6 +103,9 @@ read. List elements can be named when specifying a subset of dimensions.}
 
 \item{\code{result_order}}{Optional order of read results. This can be one of either
 \verb{"ROW_MAJOR, }"COL_MAJOR"\verb{, }"GLOBAL_ORDER"\verb{, or }"UNORDERED"`.}
+
+\item{\code{iterated}}{Option boolean indicated whether data is read in call (when
+\code{FALSE}, the default value) or in several iterated steps.}
 
 \item{\code{log_level}}{Optional logging level with default value of \code{"warn"}.}
 }
@@ -110,11 +119,12 @@ An \code{\link[arrow:Table]{arrow::Table}}.
 \if{html}{\out{<a id="method-SOMADenseNDArray-read_dense_matrix"></a>}}
 \if{latex}{\out{\hypertarget{method-SOMADenseNDArray-read_dense_matrix}{}}}
 \subsection{Method \code{read_dense_matrix()}}{
-Read as a dense matrix
+Read as a dense matrix (lifecycle: experimental)
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{SOMADenseNDArray$read_dense_matrix(
   coords = NULL,
   result_order = "ROW_MAJOR",
+  iterated = FALSE,
   log_level = "warn"
 )}\if{html}{\out{</div>}}
 }
@@ -129,6 +139,9 @@ read. List elements can be named when specifying a subset of dimensions.}
 \item{\code{result_order}}{Optional order of read results. This can be one of either
 \verb{"ROW_MAJOR, }"COL_MAJOR"\verb{, }"GLOBAL_ORDER"\verb{, or }"UNORDERED"`.}
 
+\item{\code{iterated}}{Option boolean indicated whether data is read in call (when
+\code{FALSE}, the default value) or in several iterated steps.}
+
 \item{\code{log_level}}{Optional logging level with default value of \code{"warn"}.}
 }
 \if{html}{\out{</div>}}
@@ -141,7 +154,7 @@ A \code{matrix} object
 \if{html}{\out{<a id="method-SOMADenseNDArray-write"></a>}}
 \if{latex}{\out{\hypertarget{method-SOMADenseNDArray-write}{}}}
 \subsection{Method \code{write()}}{
-Write matrix data to the array.
+Write matrix data to the array. (lifecycle: experimental)
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{SOMADenseNDArray$write(values, coords = NULL)}\if{html}{\out{</div>}}
 }

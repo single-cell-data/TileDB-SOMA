@@ -47,7 +47,7 @@ test_that("Arrow Interface from SOMAReader", {
     soma_reader(uri = uri,
                 colnames = c("obs_id", "percent_mito", "n_counts", "louvain"),
                 dim_ranges=list(soma_joinid=rbind(bit64::as.integer64(c(1000, 1004)),
-                                                 bit64::as.integer64(c(2000, 2004)))),
+                                                  bit64::as.integer64(c(2000, 2004)))),
                 dim_points=list(soma_joinid=bit64::as.integer64(seq(0, 100, by=20)))) |>
         arch::from_arch_array(arrow::RecordBatch) |>
         arrow::as_arrow_table() |>

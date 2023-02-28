@@ -13,14 +13,16 @@ A simple driver for ingestion of anndata to a TileDB Experiment.
 import argparse
 import os
 import sys
+from typing import Optional
 
 import tiledb
 
 import tiledbsoma
-import tiledbsoma.exception
+import tiledbsoma._exception
+import tiledbsoma._types
+import tiledbsoma._util
 import tiledbsoma.io
 import tiledbsoma.logging
-import tiledbsoma.util
 from tiledbsoma.options import SOMATileDBContext
 
 
@@ -102,19 +104,21 @@ select `relative=True`. (This is the default.)
         tiledbsoma.logging.info()
 
     if args.relative is None:
-        rel_member_uris = None
+        use_relative_uri = None
     else:
         relative = args.relative[0]
         if relative == "true":
-            rel_member_uris = True
+            use_relative_uri = True
         elif relative == "false":
-            rel_member_uris = False
+            use_relative_uri = False
         elif relative == "auto":
-            rel_member_uris = None
+            use_relative_uri = None
         else:
-            raise tiledbsoma.exception.SOMAError(f"Internal coding error in {__file__}")
+            raise tiledbsoma._exception.SOMAError(
+                f"Internal coding error in {__file__}"
+            )
 
-    context = SOMATileDBContext(member_uris_are_relative=rel_member_uris)
+    context = SOMATileDBContext()
     soco_dir = args.o.rstrip("/")
 
     if args.n:
@@ -122,7 +126,7 @@ select `relative=True`. (This is the default.)
             parser.print_help(file=sys.stderr)
             sys.exit(1)
         for input_path in args.paths:
-            # Example 'anndata/pbmc3k_processed.h5ad' -> 'tiledbsoma-data/pbmc3k_processed'
+            # Example 'testdata/pbmc3k_processed.h5ad' -> 'tiledbsoma-data/pbmc3k_processed'
             output_path = os.path.join(
                 soco_dir, os.path.splitext(os.path.basename(input_path))[0]
             )
@@ -131,26 +135,28 @@ select `relative=True`. (This is the default.)
                 output_path=output_path,
                 ingest_mode=args.ingest_mode[0],
                 context=context,
+                use_relative_uri=use_relative_uri,
                 write_soco=write_soco,
                 soco_dir=soco_dir,
                 measurement_name=args.measurement_name,
             )
     else:
         if len(args.paths) == 0:
-            input_path = "anndata/pbmc-small.h5ad"
+            input_path = "testdata/pbmc-small.h5ad"
             output_path = os.path.join(soco_dir, "pbmc-small")
             ingest_one(
                 input_path=input_path,
                 output_path=output_path,
                 ingest_mode=args.ingest_mode[0],
                 context=context,
+                use_relative_uri=use_relative_uri,
                 write_soco=write_soco,
                 soco_dir=soco_dir,
                 measurement_name=args.measurement_name,
             )
         elif len(args.paths) == 1:
             input_path = args.paths[0]
-            # Example 'anndata/pbmc3k_processed.h5ad' -> 'tiledbsoma-data/pbmc3k_processed'
+            # Example 'testdata/pbmc3k_processed.h5ad' -> 'tiledbsoma-data/pbmc3k_processed'
             output_path = os.path.join(
                 soco_dir, os.path.splitext(os.path.basename(input_path))[0]
             )
@@ -159,6 +165,7 @@ select `relative=True`. (This is the default.)
                 output_path=output_path,
                 ingest_mode=args.ingest_mode[0],
                 context=context,
+                use_relative_uri=use_relative_uri,
                 write_soco=write_soco,
                 soco_dir=soco_dir,
                 measurement_name=args.measurement_name,
@@ -171,6 +178,7 @@ select `relative=True`. (This is the default.)
                 output_path=output_path,
                 ingest_mode=args.ingest_mode[0],
                 context=context,
+                use_relative_uri=use_relative_uri,
                 write_soco=write_soco,
                 soco_dir=soco_dir,
                 measurement_name=args.measurement_name,
@@ -187,6 +195,7 @@ def ingest_one(
     output_path: str,
     ingest_mode: str,
     context: SOMATileDBContext,
+    use_relative_uri: Optional[bool],
     write_soco: bool,
     soco_dir: str,
     measurement_name: str,
@@ -196,9 +205,9 @@ def ingest_one(
     if ingest_mode == "schema-only":
         ingest_mode = "schema_only"
 
-    if ingest_mode not in tiledbsoma.types.INGEST_MODES:
-        raise tiledbsoma.exception.SOMAError(
-            f'expected ingest_mode to be one of {tiledbsoma.types.INGEST_MODES}; got "{ingest_mode}"'
+    if ingest_mode not in tiledbsoma._types.INGEST_MODES:
+        raise tiledbsoma._exception.SOMAError(
+            f'expected ingest_mode to be one of {tiledbsoma._types.INGEST_MODES}; got "{ingest_mode}"'
         )
 
     # Check that the input exists.
@@ -213,22 +222,26 @@ def ingest_one(
     # use tiledb.vfs to remove any priors, and/or make use of a tiledb `overwrite` flag.
     parent = os.path.dirname(output_path.rstrip("/"))
     if parent != "":
-        if tiledbsoma.util.is_local_path(parent):
+        if tiledbsoma._util.is_local_path(parent):
             if not os.path.exists(parent):
                 os.mkdir(parent)
 
-    exp = tiledbsoma.Experiment(uri=output_path, context=context)
     exp_name = os.path.splitext(os.path.basename(output_path))[0]
 
-    tiledbsoma.io.from_h5ad(exp, input_path, measurement_name, ingest_mode=ingest_mode)
+    exp = tiledbsoma.io.from_h5ad(
+        output_path,
+        input_path,
+        measurement_name,
+        ingest_mode=ingest_mode,
+        use_relative_uri=use_relative_uri,
+    )
 
     if write_soco:
-        soco = tiledbsoma.Collection(soco_dir, context=context)
-        if not soco.exists():
-            soco.create_legacy()
-        if not soco.exists():
-            raise tiledbsoma.exception.SOMAError(f"Could not create SOCO at {soco.uri}")
-        soco.set(exp_name, exp)
+        try:
+            soco = tiledbsoma.Collection.open(soco_dir, "w", context=context)
+        except tiledbsoma.DoesNotExistError:
+            soco = tiledbsoma.Collection.create(soco_dir, context=context)
+        soco.set(exp_name, exp, use_relative_uri=use_relative_uri)
 
         tiledbsoma.logging.logger.info("")
         tiledbsoma.logging.logger.info(

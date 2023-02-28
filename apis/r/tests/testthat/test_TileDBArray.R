@@ -73,4 +73,8 @@ test_that("TileDBArray helper functions", {
   # reset attribute filter
   tdb$reset_query()
   expect_length(tdb$object[]$Admit, nrow(df))
+
+  ## shape
+  expect_equal(tdb$ndim(), 2)
+
 })

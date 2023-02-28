@@ -131,16 +131,16 @@ BootstrapLinux() {
     fi
     ## Add the repo
     ## need pinning to ensure repo sorts higher, note we also pin r2u
-    echo "Package: *" | sudo tee /etc/apt/preferences.d/c2d4u-pin >/dev/null
-    echo "Pin: release o=LP-PPA-c2d4u.team-c2d4u4.0+" | sudo tee -a /etc/apt/preferences.d/c2d4u-pin >/dev/null
-    echo "Pin-Priority: 600" | sudo tee -a /etc/apt/preferences.d/c2d4u-pin >/dev/null
+    #echo "Package: *" | sudo tee /etc/apt/preferences.d/c2d4u-pin >/dev/null
+    #echo "Pin: release o=LP-PPA-c2d4u.team-c2d4u4.0+" | sudo tee -a /etc/apt/preferences.d/c2d4u-pin >/dev/null
+    #echo "Pin-Priority: 600" | sudo tee -a /etc/apt/preferences.d/c2d4u-pin >/dev/null
     ## now add repo (and update index)
-    sudo add-apt-repository -y "deb ${CRAN}/bin/linux/ubuntu $(lsb_release -cs)-cran40/"
+    # already done above:  sudo add-apt-repository -y "deb ${CRAN}/bin/linux/ubuntu $(lsb_release -cs)-cran40/"
 
     # Add marutter's c2d4u repository.
     # R 4.0 (not needed as CRAN current) and c2d4u/4.0 variant as backup
     #sudo add-apt-repository -y "ppa:marutter/rrutter4.0"
-    sudo add-apt-repository -y "ppa:c2d4u.team/c2d4u4.0+"
+    #sudo add-apt-repository -y "ppa:c2d4u.team/c2d4u4.0+"
 
     ## Added PPAs, if given
     if [[ "${ADDED_PPAS}" != "" ]]; then
@@ -194,9 +194,11 @@ BootstrapLinuxOptions() {
     #    InstallPandoc 'linux/debian/x86_64'
     #fi
     if [[ "${USE_BSPM}" != "FALSE" ]]; then
-        sudo Rscript --vanilla -e 'install.packages("bspm", repos="https://cran.r-project.org")'
+        #sudo Rscript --vanilla -e 'install.packages("bspm", repos="https://cran.r-project.org")'
+        sudo Rscript --vanilla -e 'remotes::install_url("https://cloud.r-project.org/src/contrib/Archive/bspm/bspm_0.3.10.tar.gz")'
         echo "suppressMessages(bspm::enable())" | sudo tee --append /etc/R/Rprofile.site >/dev/null
-        echo "options(bspm.sudo=TRUE)" | sudo tee --append /etc/R/Rprofile.site >/dev/null
+        ##--not needed with 0.3.10 echo "options(bspm.version.check=FALSE)" | sudo tee --append /etc/R/Rprofile.site >/dev/null
+        ##--not needed here        echo "options(bspm.sudo=TRUE)" | sudo tee --append /etc/R/Rprofile.site >/dev/null
     fi
 }
 
@@ -321,16 +323,12 @@ RBinaryInstall() {
 
 InstallGithub() {
     #EnsureDevtools
-
     #echo "Installing GitHub packages: $@"
-    # Install the package.
-    #Rscript -e 'library(devtools); library(methods); install_github(commandArgs(TRUE), build_vignettes = FALSE)' "$@"
     sudo Rscript -e 'remotes::install_github(commandArgs(TRUE))' "$@"
 }
 
 InstallDeps() {
     #EnsureDevtools
-    #Rscript -e 'library(devtools); library(methods); install_deps(dependencies = TRUE)'
     sudo Rscript -e 'remotes::install_deps(".")'
 }
 

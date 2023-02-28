@@ -16,7 +16,7 @@
 #' ## Duplicate writes
 #'
 #' As duplicate index values are not allowed, index values already present in
-#' the object are overwritten and new index values are added.
+#' the object are overwritten and new index values are added. (lifecycle: experimental)
 #'
 #' @export
 #' @importFrom bit64 as.integer64
@@ -27,7 +27,7 @@ SOMASparseNDArray <- R6::R6Class(
 
   public = list(
 
-    #' @description Create a SOMASparseNDArray named with the URI.
+    #' @description Create a SOMASparseNDArray named with the URI. (lifecycle: experimental)
     #' @param type an [Arrow type][arrow::data-type] defining the type of each element in the array.
     #' @param shape a vector of integers defining the shape of the array.
     create = function(type, shape) {
@@ -81,17 +81,20 @@ SOMASparseNDArray <- R6::R6Class(
       private$write_object_type_metadata()
     },
 
-    #' @description Read as an 'arrow::Table'
+    #' @description Read as an 'arrow::Table' (lifecycle: experimental)
     #' @param coords Optional `list` of integer vectors, one for each dimension, with a
     #' length equal to the number of values to read. If `NULL`, all values are
     #' read. List elements can be named when specifying a subset of dimensions.
     #' @param result_order Optional order of read results. This can be one of either
     #' `"ROW_MAJOR, `"COL_MAJOR"`, `"GLOBAL_ORDER"`, or `"UNORDERED"`.
+    #' @param iterated Option boolean indicated whether data is read in call (when
+    #' `FALSE`, the default value) or in several iterated steps.
     #' @param log_level Optional logging level with default value of `"warn"`.
     #' @return An [`arrow::Table`].
     read_arrow_table = function(
       coords = NULL,
       result_order = "ROW_MAJOR",
+      iterated = FALSE,
       log_level = "warn"
     ) {
       uri <- self$uri
@@ -115,26 +118,40 @@ SOMASparseNDArray <- R6::R6Class(
           coords <- lapply(coords, function(x) if (inherits(x, "integer")) bit64::as.integer64(x) else x)
       }
 
-      rl <- soma_reader(uri = uri,
-                        dim_points = coords,        # NULL is dealt with by soma_reader()
-                        result_order = result_order,
-                        loglevel = log_level)       # idem
-      arrow::as_arrow_table(arch::from_arch_array(rl, arrow::RecordBatch))
+      if (isFALSE(iterated)) {
+          rl <- soma_reader(uri = uri,
+                            dim_points = coords,        # NULL is dealt with by soma_reader()
+                            result_order = result_order,
+                            loglevel = log_level)       # idem
+          private$soma_reader_transform(rl)
+      } else {
+          ## should we error if this isn't null?
+          if (!is.null(self$soma_reader_pointer)) {
+              warning("pointer not null, skipping")
+          } else {
+              private$soma_reader_setup()
+              private$sparse_repr <- "" # no sparse matrix transformation
+          }
+          invisible(NULL)
+      }
     },
 
-    #' @description Read as a sparse matrix
+    #' @description Read as a sparse matrix (lifecycle: experimental)
     #' @param coords Optional `list` of integer vectors, one for each dimension, with a
     #' length equal to the number of values to read. If `NULL`, all values are
     #' read. List elements can be named when specifying a subset of dimensions.
     #' @param result_order Optional order of read results. This can be one of either
     #' `"ROW_MAJOR, `"COL_MAJOR"`, `"GLOBAL_ORDER"`, or `"UNORDERED"`.
     #' @param repr Optional one-character code for sparse matrix representation type
+    #' @param iterated Option boolean indicated whether data is read in call (when
+    #' `FALSE`, the default value) or in several iterated steps.
     #' @param log_level Optional logging level with default value of `"warn"`.
     #' @return A `matrix` object
     read_sparse_matrix = function(
       coords = NULL,
       result_order = "ROW_MAJOR",
       repr = c("C", "T", "R"),
+      iterated = FALSE,
       log_level = "warn"
     ) {
       repr <- match.arg(repr)
@@ -145,46 +162,81 @@ SOMASparseNDArray <- R6::R6Class(
                     all.equal(c("soma_dim_0", "soma_dim_1"), names(dims)),
                 "Array must contain column 'soma_data'" = all.equal("soma_data", names(attr)))
 
-      tbl <- self$read_arrow_table(coords = coords, result_order = result_order, log_level = log_level)
-      m <- Matrix::sparseMatrix(i = 1 + as.numeric(tbl$GetColumnByName("soma_dim_0")),
-                                j = 1 + as.numeric(tbl$GetColumnByName("soma_dim_1")),
-                                x = as.numeric(tbl$GetColumnByName("soma_data")),
-                                repr = repr)
+      if (isFALSE(iterated)) {
+          tbl <- self$read_arrow_table(coords = coords, result_order = result_order, log_level = log_level)
+          m <- Matrix::sparseMatrix(i = 1 + as.numeric(tbl$GetColumnByName("soma_dim_0")),
+                                    j = 1 + as.numeric(tbl$GetColumnByName("soma_dim_1")),
+                                    x = as.numeric(tbl$GetColumnByName("soma_data")),
+                                    repr = repr)
+      } else {
+          ## should we error if this isn't null?
+          if (!is.null(self$soma_reader_pointer)) {
+              warning("pointer not null, skipping")
+          } else {
+              private$soma_reader_setup()
+              private$sparse_repr <- repr
+          }
+          invisible(NULL)
+      }
     },
 
-    #' @description Write matrix-like data to the array.
+    #' @description Write matrix-like data to the array. (lifecycle: experimental)
     #'
-    #' @param data Any `matrix`-like object coercible to a
+    #' @param values Any `matrix`-like object coercible to a
     #' [`TsparseMatrix`][`Matrix::TsparseMatrix-class`]. Character dimension
     #' names are ignored because `SOMANDArray`'s use integer indexing.
     #'
-    write = function(data) {
+    write = function(values) {
       stopifnot(
-        "'data' must be a matrix" = is_matrix(data)
+        "'values' must be a matrix" = is_matrix(values)
       )
       # coerce to a TsparseMatrix, which uses 0-based COO indexing
-      data <- as(data, Class = "TsparseMatrix")
+      values <- as(values, Class = "TsparseMatrix")
       coo <- data.frame(
-        i = bit64::as.integer64(data@i),
-        j = bit64::as.integer64(data@j),
-        x = data@x
+        i = bit64::as.integer64(values@i),
+        j = bit64::as.integer64(values@j),
+        x = values@x
       )
       colnames(coo) <- c(self$dimnames(), self$attrnames())
       private$write_coo_dataframe(coo)
+    },
+
+    #' @description Retrieve number of non-zero elements (lifecycle: experimental)
+    #' @return A scalar with the number of non-zero elements
+    nnz = function() {
+      nnz(self$uri)
     }
+
   ),
 
   private = list(
 
-    # @description Ingest COO-formatted dataframe into the TileDB array.
+    # @description Ingest COO-formatted dataframe into the TileDB array. (lifecycle: experimental)
     # @param x A [`data.frame`].
-    write_coo_dataframe = function(data) {
-      stopifnot(is.data.frame(data))
+    write_coo_dataframe = function(values) {
+      stopifnot(is.data.frame(values))
       # private$log_array_ingestion()
       on.exit(private$close())
       private$open("WRITE")
       arr <- self$object
-      arr[] <- data
-    }
+      arr[] <- values
+    },
+
+    ## refined from base class
+    soma_reader_transform = function(x) {
+      tbl <- arrow::as_arrow_table(arch::from_arch_array(x, arrow::RecordBatch))
+      if (private$sparse_repr == "") {
+          tbl
+      } else {
+          Matrix::sparseMatrix(i = 1 + as.numeric(tbl$GetColumnByName("soma_dim_0")),
+                               j = 1 + as.numeric(tbl$GetColumnByName("soma_dim_1")),
+                               x = as.numeric(tbl$GetColumnByName("soma_data")),
+                               repr = private$sparse_repr)
+      }
+    },
+
+    ## internal 'repr' state variable, by default 'unset'
+    sparse_repr = ""
+
   )
 )

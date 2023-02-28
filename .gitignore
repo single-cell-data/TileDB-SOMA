@@ -57,7 +57,14 @@ apis/python/src/tiledbsoma/libtiledbsoma.*
 ## R package tarballs
 apis/r/tiledbsoma_*tar.gz
 apis/r/local/*
-
+apis/r/src/*.o
+apis/r/src/*.so
+apis/r/src/include/*
+apis/r/src/lib/*
+apis/r/src/libtiledbsoma/*
+apis/r/src/Makevars
+apis/r/src/cmake_log.txt
+apis/r/.editorconfig
 
 # Coverage/codecov
 .coverage

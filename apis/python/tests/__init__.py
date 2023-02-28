@@ -2,7 +2,7 @@ import pyarrow as pa
 from typeguard.importhook import install_import_hook
 
 # avoid typeguard by importing before calling install_import_hook
-from tiledbsoma import query_condition  # noqa: F401
+from tiledbsoma import _query_condition  # noqa: F401
 
 install_import_hook("tiledbsoma")
 

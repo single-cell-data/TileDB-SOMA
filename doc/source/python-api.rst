@@ -1,7 +1,7 @@
 TileDB-SOMA Python API Reference
 ================================
 
-**SOMA --- for stack of matrices, annotated --- is a unified data model and API for single-cell data.**
+**SOMA is a unified data model and API for single-cell data.**
 
 If you know about ``obs``, ``var``, and ``X``, you'll recognize what you're seeing.
 
@@ -37,49 +37,38 @@ There is also a submodule ``io`` which contains logic for importing data from ``
 Composed Types
 --------------
 
-SOMACollection
+Collection
 ^^^^^^^^^^^^^^
-.. autoclass:: tiledbsoma.SOMACollection
+.. autoclass:: tiledbsoma.Collection
    :members:
 
-SOMAExperiment
+Experiment
 ^^^^^^^^^^^^^^
-.. autoclass:: tiledbsoma.SOMAExperiment
+.. autoclass:: tiledbsoma.Experiment
    :members:
 
-SOMAMeasurement
+Measurement
 ^^^^^^^^^^^^^^^
-.. autoclass:: tiledbsoma.SOMAMeasurement
+.. autoclass:: tiledbsoma.Measurement
    :members:
 
 Foundational Types
 ------------------
 
-SOMADataFrame
+DataFrame
 ^^^^^^^^^^^^^
-.. autoclass:: tiledbsoma.SOMADataFrame
+.. autoclass:: tiledbsoma.DataFrame
    :members:
 
-SOMAIndexedDataFrame
-^^^^^^^^^^^^^^^^^^^^
-.. autoclass:: tiledbsoma.SOMAIndexedDataFrame
-   :members:
-
-SOMASparseNdArray
+SparseNDArray
 ^^^^^^^^^^^^^^^^^
-.. autoclass:: tiledbsoma.SOMASparseNdArray
+.. autoclass:: tiledbsoma.SparseNDArray
    :members:
 
-SOMADenseNdArray
+DenseNDArray
 ^^^^^^^^^^^^^^^^
-.. autoclass:: tiledbsoma.SOMADenseNdArray
+.. autoclass:: tiledbsoma.DenseNDArray
    :members:
-
-SOMAMetadataMapping
-^^^^^^^^^^^^^^^^^^^
-.. autoclass:: tiledbsoma.SOMAMetadataMapping
-   :members:
-
 
 I/O functions
 -------------
@@ -103,36 +92,12 @@ to_anndata
 Options
 -------
 
-TileDBPlatformConfig
+PlatformConfig
 ^^^^^^^^^^^^^^^^^^^^
-.. autoclass:: tiledbsoma.TileDBPlatformConfig
+.. autoclass:: tiledbsoma.PlatformConfig
    :members:
 
 logging
 ^^^^^^^
 .. automodule:: tiledbsoma.logging
-   :members:
-
-Implementation-level classes
-----------------------------
-
-.. autoclass:: tiledbsoma.TileDBArray
-   :members:
-.. autoclass:: tiledbsoma.TileDBObject
-   :members:
-.. automodule:: tiledbsoma.factory
-   :members:
-.. automodule:: tiledbsoma.general_utilities
-   :members:
-.. automodule:: tiledbsoma.util
-   :members:
-.. automodule:: tiledbsoma.util_ann
-   :members:
-.. automodule:: tiledbsoma.util_arrow
-   :members:
-.. automodule:: tiledbsoma.util_pandas
-   :members:
-.. automodule:: tiledbsoma.util_scipy
-   :members:
-.. automodule:: tiledbsoma.util_tiledb
    :members:

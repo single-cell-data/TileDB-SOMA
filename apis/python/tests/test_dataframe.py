@@ -4,9 +4,11 @@ import numpy as np
 import pandas as pd
 import pyarrow as pa
 import pytest
+import somacore
 import tiledb
 
 import tiledbsoma as soma
+from tiledbsoma.options import SOMATileDBContext
 
 
 @pytest.fixture
@@ -25,7 +27,7 @@ def arrow_schema():
 
 
 def test_dataframe(tmp_path, arrow_schema):
-    sdf = soma.DataFrame(uri=tmp_path.as_posix())
+    uri = tmp_path.as_posix()
 
     asch = pa.schema(
         [
@@ -40,67 +42,83 @@ def test_dataframe(tmp_path, arrow_schema):
     asch = arrow_schema()
     with pytest.raises(ValueError):
         # requires one or more index columns
-        sdf.create_legacy(schema=asch, index_column_names=[])
+        soma.DataFrame.create(uri, schema=asch, index_column_names=[])
     with pytest.raises(TypeError):
         # invalid schema type
-        sdf.create_legacy(schema=asch.to_string(), index_column_names=[])
+        soma.DataFrame.create(uri, schema=asch.to_string(), index_column_names=[])
     with pytest.raises(ValueError):
         # nonexistent indexed column
-        sdf.create_legacy(schema=asch, index_column_names=["bogus"])
-    sdf.create_legacy(schema=asch, index_column_names=["foo"])
+        soma.DataFrame.create(uri, schema=asch, index_column_names=["bogus"])
+    soma.DataFrame.create(uri, schema=asch, index_column_names=["foo"]).close()
 
-    assert sdf.count == 0
-    assert len(sdf) == 0
+    assert soma.DataFrame.exists(uri)
+    assert not soma.Collection.exists(uri)
+    assert not soma.SparseNDArray.exists(uri)
 
-    assert sorted(sdf.schema.names) == sorted(
-        ["foo", "bar", "baz", "soma_joinid", "quux"]
-    )
-    assert sorted(sdf.keys()) == sorted(sdf.schema.names)
+    with soma.DataFrame.open(uri) as sdf:
+        assert sdf.count == 0
+        assert len(sdf) == 0
 
-    # Write
-    for _ in range(3):
-        pydict = {}
-        pydict["soma_joinid"] = [0, 1, 2, 3, 4]
-        pydict["foo"] = [10, 20, 30, 40, 50]
-        pydict["bar"] = [4.1, 5.2, 6.3, 7.4, 8.5]
-        pydict["baz"] = ["apple", "ball", "cat", "dog", "egg"]
-        pydict["quux"] = [True, False, False, True, False]
-        rb = pa.Table.from_pydict(pydict)
+        assert sorted(sdf.schema.names) == sorted(
+            ["foo", "bar", "baz", "soma_joinid", "quux"]
+        )
+        assert sorted(sdf.keys()) == sorted(sdf.schema.names)
 
-        sdf.write(rb)
+    with soma.DataFrame.open(uri, "w") as sdf:
+        # Write
+        for _ in range(3):
+            pydict = {}
+            pydict["soma_joinid"] = [0, 1, 2, 3, 4]
+            pydict["foo"] = [10, 20, 30, 40, 50]
+            pydict["bar"] = [4.1, 5.2, 6.3, 7.4, 8.5]
+            pydict["baz"] = ["apple", "ball", "cat", "dog", "egg"]
+            pydict["quux"] = [True, False, False, True, False]
+            rb = pa.Table.from_pydict(pydict)
 
-        with pytest.raises(TypeError):
-            # non-arrow write
-            sdf.write(rb.to_pandas)
+            sdf.write(rb)
 
-    assert sdf.count == 5
-    assert len(sdf) == 5
+            with pytest.raises(TypeError):
+                # non-arrow write
+                sdf.write(rb.to_pandas)
 
-    # Read all
-    table = sdf.read().concat()
-    assert table.num_rows == 5
-    assert table.num_columns == 5
-    assert [e.as_py() for e in list(table["soma_joinid"])] == pydict["soma_joinid"]
-    assert [e.as_py() for e in list(table["foo"])] == pydict["foo"]
-    assert [e.as_py() for e in list(table["bar"])] == pydict["bar"]
-    assert [e.as_py() for e in list(table["baz"])] == pydict["baz"]
-    assert [e.as_py() for e in list(table["quux"])] == pydict["quux"]
+    with soma.DataFrame.open(uri) as sdf:
+        assert sdf.count == 5
+        assert len(sdf) == 5
 
-    # Read ids
-    table = sdf.read(coords=[[30, 10]]).concat()
-    assert table.num_rows == 2
-    assert table.num_columns == 5
-    assert sorted([e.as_py() for e in list(table["soma_joinid"])]) == [0, 2]
-    assert sorted([e.as_py() for e in list(table["foo"])]) == [10, 30]
-    assert sorted([e.as_py() for e in list(table["bar"])]) == [4.1, 6.3]
-    assert sorted([e.as_py() for e in list(table["baz"])]) == ["apple", "cat"]
-    assert [e.as_py() for e in list(table["quux"])] == [True, False]
+        # Read all
+        table = sdf.read().concat()
+        assert table.num_rows == 5
+        assert table.num_columns == 5
+        assert [e.as_py() for e in list(table["soma_joinid"])] == pydict["soma_joinid"]
+        assert [e.as_py() for e in list(table["foo"])] == pydict["foo"]
+        assert [e.as_py() for e in list(table["bar"])] == pydict["bar"]
+        assert [e.as_py() for e in list(table["baz"])] == pydict["baz"]
+        assert [e.as_py() for e in list(table["quux"])] == pydict["quux"]
+
+        # Read ids
+        table = sdf.read(coords=[[30, 10]]).concat()
+        assert table.num_rows == 2
+        assert table.num_columns == 5
+        assert sorted([e.as_py() for e in list(table["soma_joinid"])]) == [0, 2]
+        assert sorted([e.as_py() for e in list(table["foo"])]) == [10, 30]
+        assert sorted([e.as_py() for e in list(table["bar"])]) == [4.1, 6.3]
+        assert sorted([e.as_py() for e in list(table["baz"])]) == ["apple", "cat"]
+        assert [e.as_py() for e in list(table["quux"])] == [True, False]
+
+    # Validate TileDB array schema
+    with tiledb.open(uri) as A:
+        assert A.schema.sparse
+        assert not A.schema.allows_duplicates
+
+    with soma.DataFrame.open(uri) as sdf:
+        assert sdf.count == 5
+        assert len(sdf) == 5
 
 
 def test_dataframe_with_float_dim(tmp_path, arrow_schema):
-    sdf = soma.DataFrame(uri=tmp_path.as_posix())
-    asch = arrow_schema()
-    sdf.create_legacy(schema=asch, index_column_names=("bar",))
+    sdf = soma.DataFrame.create(
+        tmp_path.as_posix(), schema=arrow_schema(), index_column_names=("bar",)
+    )
     assert sdf.index_column_names == ("bar",)
 
 
@@ -119,19 +137,21 @@ def simple_data_frame(tmp_path):
         ]
     )
     index_column_names = ["index"]
-    sdf = soma.DataFrame(uri=tmp_path.as_posix())
-    sdf.create_legacy(schema=schema, index_column_names=index_column_names)
+    with soma.DataFrame.create(
+        tmp_path.as_posix(), schema=schema, index_column_names=index_column_names
+    ) as sdf:
 
-    data = {
-        "index": [0, 1, 2, 3],
-        "soma_joinid": [10, 11, 12, 13],
-        "A": [10, 11, 12, 13],
-        "B": [100.1, 200.2, 300.3, 400.4],
-        "C": ["this", "is", "a", "test"],
-    }
-    n_data = len(data["index"])
-    rb = pa.Table.from_pydict(data)
-    sdf.write(rb)
+        data = {
+            "index": [0, 1, 2, 3],
+            "soma_joinid": [10, 11, 12, 13],
+            "A": [10, 11, 12, 13],
+            "B": [100.1, 200.2, 300.3, 400.4],
+            "C": ["this", "is", "a", "test"],
+        }
+        n_data = len(data["index"])
+        rb = pa.Table.from_pydict(data)
+        sdf.write(rb)
+    sdf = soma.DataFrame.open(tmp_path.as_posix())
     return (schema, sdf, n_data, index_column_names)
 
 
@@ -158,7 +178,6 @@ def simple_data_frame(tmp_path):
 )
 def test_DataFrame_read_column_names(simple_data_frame, ids, col_names):
     schema, sdf, n_data, index_column_names = simple_data_frame
-    assert sdf.exists()
 
     def _check_tbl(tbl, col_names, ids, *, demote):
         assert tbl.num_columns == (
@@ -220,19 +239,24 @@ def test_DataFrame_read_column_names(simple_data_frame, ids, col_names):
 
 
 def test_empty_dataframe(tmp_path):
-    a = soma.DataFrame((tmp_path / "A").as_posix())
-    a.create_legacy(pa.schema([("a", pa.int32())]), index_column_names=["a"])
-    # Must not throw
-    assert len(next(a.read())) == 0
-    assert len(a.read().concat()) == 0
-    assert len(next(a.read()).to_pandas()) == 0
-    assert len(a.read().concat().to_pandas()) == 0
-    assert isinstance(a.read().concat().to_pandas(), pd.DataFrame)
+    soma.DataFrame.create(
+        (tmp_path / "A").as_posix(),
+        schema=pa.schema([("a", pa.int32())]),
+        index_column_names=["a"],
+    ).close()
+    with soma.DataFrame.open((tmp_path / "A").as_posix()) as a:
+        # Must not throw
+        assert len(next(a.read())) == 0
+        assert len(a.read().concat()) == 0
+        assert len(next(a.read()).to_pandas()) == 0
+        assert len(a.read().concat().to_pandas()) == 0
+        assert isinstance(a.read().concat().to_pandas(), pd.DataFrame)
 
     with pytest.raises(ValueError):
         # illegal column name
-        soma.DataFrame((tmp_path / "B").as_posix()).create_legacy(
-            pa.schema([("a", pa.int32()), ("soma_bogus", pa.int32())]),
+        soma.DataFrame.create(
+            (tmp_path / "B").as_posix(),
+            schema=pa.schema([("a", pa.int32()), ("soma_bogus", pa.int32())]),
             index_column_names=["a"],
         )
 
@@ -245,32 +269,35 @@ def test_columns(tmp_path):
     4. No other soma_ ids allowed
     """
 
-    A = soma.DataFrame((tmp_path / "A").as_posix())
-    A.create_legacy(pa.schema([("a", pa.int32())]), index_column_names=["a"])
+    A = soma.DataFrame.create(
+        (tmp_path / "A").as_posix(),
+        schema=pa.schema([("a", pa.int32())]),
+        index_column_names=["a"],
+    )
     assert sorted(A.keys()) == sorted(["a", "soma_joinid"])
     assert A.schema.field("soma_joinid").type == pa.int64()
-    A.delete()
 
-    B = soma.DataFrame((tmp_path / "B").as_posix())
     with pytest.raises(ValueError):
-        B.create_legacy(
-            pa.schema([("a", pa.int32()), ("soma_joinid", pa.float32())]),
+        soma.DataFrame.create(
+            (tmp_path / "B").as_posix(),
+            schema=pa.schema([("a", pa.int32()), ("soma_joinid", pa.float32())]),
             index_column_names=["a"],
         )
 
-    D = soma.DataFrame((tmp_path / "D").as_posix())
-    D.create_legacy(
-        pa.schema([("a", pa.int32()), ("soma_joinid", pa.int64())]),
+    D = soma.DataFrame.create(
+        (tmp_path / "D").as_posix(),
+        schema=pa.schema([("a", pa.int32()), ("soma_joinid", pa.int64())]),
         index_column_names=["a"],
     )
     assert sorted(D.keys()) == sorted(["a", "soma_joinid"])
     assert D.schema.field("soma_joinid").type == pa.int64()
-    D.delete()
 
-    E = soma.DataFrame((tmp_path / "E").as_posix())
     with pytest.raises(ValueError):
-        E.create_legacy(
-            pa.schema([("a", pa.int32()), ("soma_is_a_reserved_prefix", pa.bool_())]),
+        soma.DataFrame.create(
+            (tmp_path / "E").as_posix(),
+            schema=pa.schema(
+                [("a", pa.int32()), ("soma_is_a_reserved_prefix", pa.bool_())]
+            ),
             index_column_names=["a"],
         )
 
@@ -278,9 +305,6 @@ def test_columns(tmp_path):
 @pytest.fixture
 def make_dataframe(request):
     index_type = request.param
-
-    # TODO: https://github.com/single-cell-data/TileDB-SOMA/issues/518
-    # Check against all `SUPPORTED_ARROW_TYPES` in tests/test_type_system.py`
 
     index = {
         pa.string(): ["A", "B", "C"],
@@ -318,8 +342,8 @@ def make_dataframe(request):
 @pytest.mark.parametrize(
     "make_dataframe",
     [
-        pytest.param(pa.float32(), marks=pytest.mark.xfail),
-        pytest.param(pa.float64(), marks=pytest.mark.xfail),
+        pa.float32(),
+        pa.float64(),
         pa.int8(),
         pa.uint8(),
         pa.int16(),
@@ -330,19 +354,16 @@ def make_dataframe(request):
         pa.uint64(),
         pa.string(),
         pa.large_string(),
-        pytest.param(
-            pa.binary(), marks=pytest.mark.xfail
-        ),  # TODO: remove xfail when #419 is fixed
-        pytest.param(
-            pa.large_binary(), marks=pytest.mark.xfail
-        ),  # TODO: remove xfail when #419 is fixed
+        pa.binary(),
+        pa.large_binary(),
     ],
     indirect=True,
 )
 def test_index_types(tmp_path, make_dataframe):
     """Verify that the index columns can be of various types"""
-    sdf = soma.DataFrame(tmp_path.as_posix())
-    sdf.create_legacy(make_dataframe.schema, index_column_names=["index"])
+    sdf = soma.DataFrame.create(
+        tmp_path.as_posix(), schema=make_dataframe.schema, index_column_names=["index"]
+    )
     sdf.write(make_dataframe)
 
 
@@ -352,31 +373,33 @@ def make_multiply_indexed_dataframe(tmp_path, index_column_names: List[str]):
     """
     schema = pa.schema(
         [
-            # TO DO: Support other index types when we have support for more than int and string
-            # index types in libtiledbsoma's SOMAReader. See also
-            # https://github.com/single-cell-data/TileDB-SOMA/issues/419.
-            ("index1", pa.int64()),
-            ("index2", pa.string()),
-            ("index3", pa.int64()),
-            ("index4", pa.int64()),
+            # Note: exhaustive type-coverage is in a separate test case.
+            # (As of this writing: test_dataframe_column_indexing.py)
+            ("0_thru_5", pa.int64()),
+            ("strings_aaa", pa.string()),
+            ("zero_one", pa.int64()),
+            ("thousands", pa.int64()),
+            ("both_signs", pa.int64()),
             ("soma_joinid", pa.int64()),
             ("A", pa.int64()),
         ]
     )
 
-    sdf = soma.DataFrame(uri=tmp_path.as_posix())
-    sdf.create_legacy(schema=schema, index_column_names=index_column_names)
+    sdf = soma.DataFrame.create(
+        uri=tmp_path.as_posix(), schema=schema, index_column_names=index_column_names
+    )
 
     data: Dict[str, list] = {
-        "index1": [0, 1, 2, 3, 4, 5],
-        "index2": ["aaa", "aaa", "bbb", "bbb", "ccc", "ccc"],
-        "index3": [0, 1, 0, 1, 0, 1],
-        "index4": [1000, 2000, 1000, 1000, 1000, 1000],
+        "0_thru_5": [0, 1, 2, 3, 4, 5],
+        "strings_aaa": ["aaa", "aaa", "bbb", "bbb", "ccc", "ccc"],
+        "zero_one": [0, 1, 0, 1, 0, 1],
+        "thousands": [1000, 2000, 1000, 1000, 1000, 1000],
+        "both_signs": [-1, -2, -3, 1, 2, 3],
         "soma_joinid": [10, 11, 12, 13, 14, 15],
         "A": [10, 11, 12, 13, 14, 15],
     }
 
-    n_data = len(data["index1"])
+    n_data = len(data["0_thru_5"])
     sdf.write(pa.Table.from_pandas(pd.DataFrame(data=data)))
 
     return (schema, sdf, n_data)
@@ -385,112 +408,103 @@ def make_multiply_indexed_dataframe(tmp_path, index_column_names: List[str]):
 @pytest.mark.parametrize(
     "io",
     [
-        # 1D: indexing list is None
         {
-            "index_column_names": ["index1"],
-            "coords": None,
-            "A": [10, 11, 12, 13, 14, 15],
-            "throws": None,
-        },
-        # 1D: indexing slot is None
-        {
-            "index_column_names": ["index1"],
+            "name": "1D indexing slot is None",
+            "index_column_names": ["0_thru_5"],
             "coords": [None],
             "A": [10, 11, 12, 13, 14, 15],
             "throws": None,
         },
-        # 1D: indexing slot is int
         {
-            "index_column_names": ["index1"],
+            "name": "1D indexing slot is int",
+            "index_column_names": ["0_thru_5"],
             "coords": [0],
             "A": [10],
             "throws": None,
         },
         {
-            "index_column_names": ["index1"],
+            "name": "1D no results for 100",
+            "index_column_names": ["0_thru_5"],
             "coords": [100],
             "A": [],
             "throws": None,
         },
         {
-            "index_column_names": ["index1"],
+            "name": "1D no results for -100",
+            "index_column_names": ["0_thru_5"],
             "coords": [-100],
             "A": [],
             "throws": None,
         },
-        # 1D: indexing slot is list
         {
-            "index_column_names": ["index1"],
+            "name": "1D indexing slot is list",
+            "index_column_names": ["0_thru_5"],
             "coords": [[1, 3]],
             "A": [11, 13],
             "throws": None,
         },
         {
-            "index_column_names": ["index1"],
+            "name": "1D no results for -100, 100",
+            "index_column_names": ["0_thru_5"],
             "coords": [[-100, 100]],
             "A": [],
             "throws": None,
         },
-        # Indexing by empty list must return empty results
         {
-            "index_column_names": ["index1"],
+            "name": "1D empty list returns empty results",
+            "index_column_names": ["0_thru_5"],
             "coords": [[]],
             "A": [],
             "throws": None,
         },
-        # 1D: indexing slot is tuple
         {
-            "index_column_names": ["index1"],
+            "name": "1D indexing slot is tuple",
+            "index_column_names": ["0_thru_5"],
             "coords": [(1, 3)],
             "A": [11, 13],
             "throws": None,
         },
-        # 1D: indexing slot is range
         {
-            "index_column_names": ["index1"],
+            "name": "1D indexing slot is range",
+            "index_column_names": ["0_thru_5"],
             "coords": [range(1, 3)],
             "A": [11, 12],
             "throws": None,
         },
-        # 1D: indexing slot is pa.ChunkedArray
         {
-            "index_column_names": ["index1"],
+            "name": "1D indexing slot is pa.ChunkedArray",
+            "index_column_names": ["0_thru_5"],
             "coords": [pa.chunked_array(pa.array([1, 3]))],
             "A": [11, 13],
             "throws": None,
         },
-        # 1D: indexing slot is pa.Array
         {
-            "index_column_names": ["index1"],
-            "coords": [pa.array([1, 3])],
-            "A": [11, 13],
-            "throws": None,
-        },
-        # 1D: indexing slot is pa.Array
-        {
-            "index_column_names": ["index1"],
+            "name": "1D indexing slot is pa.Array",
+            "index_column_names": ["0_thru_5"],
             "coords": [pa.array([1, 3])],
             "A": [11, 13],
             "throws": None,
         },
         # 1D: indexing slot is np.ndarray
         {
-            "index_column_names": ["index1"],
+            "name": "1D indexing slot is np.ndarray",
+            "index_column_names": ["0_thru_5"],
             "coords": [np.asarray([1, 3])],
             "A": [11, 13],
             "throws": None,
         },
         {
-            "index_column_names": ["index1"],
+            "name": "1D indexing by 2D np.ndarray",
+            "index_column_names": ["0_thru_5"],
             "coords": [
                 np.asarray([[1, 3], [2, 4]])
             ],  # Error since 2D array in the slot
             "A": [11, 13],
             "throws": ValueError,
         },
-        # 1D: indexing slot is slice
         {
-            "index_column_names": ["index1"],
+            "name": "1D indexing by slice(None)",
+            "index_column_names": ["0_thru_5"],
             "coords": [
                 slice(None)
             ],  # Indexing slot is none-slice i.e. `[:]` which is like None
@@ -498,151 +512,199 @@ def make_multiply_indexed_dataframe(tmp_path, index_column_names: List[str]):
             "throws": None,
         },
         {
-            "index_column_names": ["index1"],
+            "name": "1D indexing by empty coords",
+            "index_column_names": ["0_thru_5"],
+            "coords": [],
+            "A": [10, 11, 12, 13, 14, 15],
+            "throws": None,
+        },
+        {
+            "name": "1D indexing by 1:3",
+            "index_column_names": ["0_thru_5"],
             "coords": [slice(1, 3)],  # Indexing slot is double-ended slice
             "A": [11, 12, 13],
             "throws": None,
         },
         {
-            "index_column_names": ["index1"],
-            "coords": [slice(None, None)],  # Indexing slot is slice-all
-            "A": [10, 11, 12, 13, 14, 15],
-            "throws": None,
-        },
-        {
-            "index_column_names": ["index1"],
+            "name": "1D indexing by [:3]",
+            "index_column_names": ["0_thru_5"],
             "coords": [slice(None, 3)],  # Half-slice
             "A": [10, 11, 12, 13],
             "throws": None,
         },
         {
-            "index_column_names": ["index1"],
+            "name": "1D indexing by [2:]",
+            "index_column_names": ["0_thru_5"],
             "coords": [slice(2, None)],  # Half-slice
             "A": [12, 13, 14, 15],
             "throws": None,
         },
         {
-            "index_column_names": ["index1"],
-            "coords": [slice(1, 5, 2)],  # Slice step must be 1 or None
+            "name": "1D indexing with negatives",
+            "index_column_names": ["both_signs"],
+            "coords": [slice(-2, 1)],
+            "A": [11, 10, 13],
+            "throws": None,
+        },
+        {
+            "name": "1D indexing by ['bbb':'c']",
+            "index_column_names": ["strings_aaa", "zero_one"],
+            "coords": [slice("bbb", "c")],
+            "A": [12, 13],
+            "throws": None,
+        },
+        {
+            "name": "1D indexing by ['ccc':]",
+            "index_column_names": ["strings_aaa", "zero_one"],
+            "coords": [slice("ccc", None)],
+            "A": [14, 15],
+            "throws": None,
+        },
+        {
+            "name": "1D indexing by [:'bbd']",
+            "index_column_names": ["strings_aaa", "zero_one"],
+            "coords": [slice("bbd")],
+            "A": [10, 11, 12, 13],
+            "throws": None,
+        },
+        {
+            "name": "1D indexing with one partition",
+            "index_column_names": ["0_thru_5"],
+            "coords": [slice(2, None)],
+            "partitions": somacore.IOfN(0, 1),
+            "A": [12, 13, 14, 15],
+            "throws": None,
+        },
+        {
+            "name": "partitioned reads unimplemented",
+            "index_column_names": ["0_thru_5"],
+            "coords": [],
+            "partitions": somacore.IOfN(1, 2),
             "A": None,
             "throws": ValueError,
         },
         {
-            "index_column_names": ["index1"],
-            "coords": [slice(-2, -1)],  # Negative slices are not supported
+            "name": "steps forbidden",
+            "index_column_names": ["0_thru_5"],
+            "coords": [slice(1, 5, 2)],
             "A": None,
             "throws": ValueError,
         },
         {
-            "index_column_names": ["index1"],
-            "coords": [slice(1, 0)],  # hi < lo
+            "name": "slice must overlap domain (negative)",
+            "index_column_names": ["soma_joinid"],
+            "coords": [slice(-2, -1)],
             "A": None,
             "throws": ValueError,
         },
         {
-            "index_column_names": ["index1"],
-            "coords": [],  # len(ids) != len(index_column_names)
+            "name": "backwards slice",
+            "index_column_names": ["0_thru_5"],
+            "coords": [slice(1, 0)],
             "A": None,
             "throws": ValueError,
         },
         {
-            "index_column_names": ["index1"],
-            "coords": [(1,), (2,)],  # len(ids) != len(index_column_names)
+            "name": "too many columns",
+            "index_column_names": ["0_thru_5"],
+            "coords": [(1,), (2,)],
             "A": None,
             "throws": ValueError,
         },
         {
-            "index_column_names": ["index1"],
-            "coords": "bogus",  # ids not list/tuple
+            "name": "wrong coords type",
+            "index_column_names": ["0_thru_5"],
+            "coords": "bogus",
             "A": None,
             "throws": TypeError,
         },
         {
-            "index_column_names": ["index1"],
-            "coords": [{"bogus": True}],  # bad index type
+            "name": "bad index type dict",
+            "index_column_names": ["0_thru_5"],
+            "coords": [{"bogus": True}],
             "A": None,
             "throws": TypeError,
         },
-        # 1D: indexing slot is of invalid type
         {
-            "index_column_names": ["index2", "index3"],
+            "name": "bad index type bool",
+            "index_column_names": ["strings_aaa", "zero_one"],
             "coords": [[True], slice(None)],
             "A": None,
-            "throws": (RuntimeError, tiledb.cc.TileDBError),
+            "throws": (RuntimeError, tiledb.cc.TileDBError, TypeError),
         },
-        # 2D: indexing list is None
         {
-            "index_column_names": ["index2", "index3"],
-            "coords": None,
+            "name": "2D index empty",
+            "index_column_names": ["strings_aaa", "zero_one"],
+            "coords": (),
             "A": [10, 11, 12, 13, 14, 15],
             "throws": None,
         },
-        # 2D: indexing slot is None
         {
-            "index_column_names": ["index2", "index3"],
+            "name": "2D index None",
+            "index_column_names": ["strings_aaa", "zero_one"],
             "coords": [None, None],
             "A": [10, 11, 12, 13, 14, 15],
             "throws": None,
         },
-        # 2D: indexing slot is int
         {
-            "index_column_names": ["index1", "index3"],
+            "name": "2D index 0, 0",
+            "index_column_names": ["0_thru_5", "zero_one"],
             "coords": [0, 0],
             "A": [10],
             "throws": None,
         },
-        # 2D: indexing slots are string and int
         {
-            "index_column_names": ["index2", "index3"],
+            "name": "2D index str, int",
+            "index_column_names": ["strings_aaa", "zero_one"],
             "coords": [["aaa"], 0],
             "A": [10],
             "throws": None,
         },
-        # 2D: indexing slot is string not list/tuple of string
         {
-            "index_column_names": ["index2", "index3"],
+            "name": "2D index str, not sequence[str]",
+            "index_column_names": ["strings_aaa", "zero_one"],
             "coords": ["aaa", 0],
             "A": [10],
             "throws": None,
         },
-        # 2D: indexing slot is list
-        # TODO: at present SOMAReader only accepts int and string dims. See also:
-        # https://github.com/single-cell-data/TileDB-SOMA/issues/419
         {
-            "index_column_names": ["index2", "index3"],
+            "name": "2D index List[str]",
+            "index_column_names": ["strings_aaa", "zero_one"],
             "coords": [["aaa", "ccc"], None],
             "A": [10, 11, 14, 15],
             "throws": None,
         },
-        # 3D: indexing slot is list
         {
-            "index_column_names": ["index2", "index3", "index4"],
+            "name": "3D index List[str]",
+            "index_column_names": ["strings_aaa", "zero_one", "thousands"],
             "coords": [["aaa", "ccc"], None, None],
             "A": [10, 11, 14, 15],
             "throws": None,
         },
-        # 3D: indexing slot is mixed
         {
-            "index_column_names": ["index2", "index3", "index4"],
+            "name": "3D index mixed",
+            "index_column_names": ["strings_aaa", "zero_one", "thousands"],
             "coords": [("aaa", "ccc"), None, np.asarray([2000, 9999])],
             "A": [11],
             "throws": None,
         },
-        # value_filter
         {
-            "index_column_names": ["index1", "index2"],
+            "name": "value filter good",
+            "index_column_names": ["0_thru_5", "strings_aaa"],
             "coords": [None, ("ccc", "zzz")],
             "value_filter": "soma_joinid > 13",
             "A": [14, 15],
         },
         {
-            "index_column_names": ["index1", "index2"],
+            "name": "value filter bad",
+            "index_column_names": ["0_thru_5", "strings_aaa"],
             "coords": [None, ("bbb", "zzz")],
             "value_filter": "quick brown fox",
             "A": None,
-            "throws": tiledb.TileDBError,  # TODO: should this be wrapped?
+            "throws": soma.SOMAError,
         },
     ],
+    ids=lambda d: d.get("name"),
 )
 def test_read_indexing(tmp_path, io):
     """Test various ways of indexing on read"""
@@ -650,12 +712,13 @@ def test_read_indexing(tmp_path, io):
     schema, sdf, n_data = make_multiply_indexed_dataframe(
         tmp_path, io["index_column_names"]
     )
-    with soma.DataFrame(uri=sdf.uri).open_legacy() as sdf:
-        assert sdf.exists()
+    with soma.DataFrame.open(uri=sdf.uri) as sdf:
         assert list(sdf.index_column_names) == io["index_column_names"]
 
         read_kwargs = {"column_names": ["A"]}
-        read_kwargs.update({k: io[k] for k in ("coords", "value_filter") if k in io})
+        read_kwargs.update(
+            {k: io[k] for k in ("coords", "partitions", "value_filter") if k in io}
+        )
         if io.get("throws", None):
             with pytest.raises(io["throws"]):
                 next(sdf.read(**read_kwargs))
@@ -669,8 +732,6 @@ def test_read_indexing(tmp_path, io):
         else:
             table = next(sdf.read(**read_kwargs)).to_pandas()
             assert table["A"].to_list() == io["A"]
-
-    sdf.delete()
 
 
 @pytest.mark.parametrize(
@@ -720,38 +781,42 @@ def test_create_categorical_types(tmp_path, schema):
     """
     Verify that `create` throws expected error on (unsupported) dictionary/categorical types.
     """
-    sdf = soma.DataFrame(tmp_path.as_posix())
     schema = schema.insert(0, pa.field("soma_joinid", pa.int64()))
 
     # Test exception as normal column
     with pytest.raises(TypeError):
-        sdf.create_legacy(schema, index_column_names=["soma_joinid"])
+        soma.DataFrame.create(
+            tmp_path.as_posix(), schema=schema, index_column_names=["soma_joinid"]
+        )
 
     # test as index column
     with pytest.raises(TypeError):
-        sdf.create_legacy(schema, index_column_names=["A"])
+        soma.DataFrame.create(
+            tmp_path.as_posix(), schema=schema, index_column_names=["A"]
+        )
 
 
 def test_write_categorical_types(tmp_path):
     """
     Verify that write path accepts categoricals
     """
-    sdf = soma.DataFrame(tmp_path.as_posix())
     schema = pa.schema([("soma_joinid", pa.int64()), ("A", pa.large_string())])
-    sdf.create_legacy(schema, index_column_names=["soma_joinid"])
+    with soma.DataFrame.create(
+        tmp_path.as_posix(), schema=schema, index_column_names=["soma_joinid"]
+    ) as sdf:
 
-    df = pd.DataFrame(
-        data={
-            "soma_joinid": [0, 1, 2, 3],
-            "A": pd.Categorical(
-                ["a", "b", "a", "b"], ordered=True, categories=["b", "a"]
-            ),
-        }
-    )
-    with sdf.open_legacy("w"):
+        df = pd.DataFrame(
+            data={
+                "soma_joinid": [0, 1, 2, 3],
+                "A": pd.Categorical(
+                    ["a", "b", "a", "b"], ordered=True, categories=["b", "a"]
+                ),
+            }
+        )
         sdf.write(pa.Table.from_pandas(df))
 
-    assert (df == sdf.read().concat().to_pandas()).all().all()
+    with soma.DataFrame.open(tmp_path.as_posix()) as sdf:
+        assert (df == sdf.read().concat().to_pandas()).all().all()
 
 
 def test_result_order(tmp_path):
@@ -763,37 +828,160 @@ def test_result_order(tmp_path):
             ("soma_joinid", pa.int64()),
         ]
     )
-    sdf = soma.DataFrame(uri=tmp_path.as_posix())
-    sdf.create_legacy(schema=schema, index_column_names=["row", "col"])
-    data = {
-        "row": [0] * 4 + [1] * 4 + [2] * 4 + [3] * 4,
-        "col": [0, 1, 2, 3] * 4,
-        "soma_joinid": list(range(16)),
-    }
-    sdf.write(pa.Table.from_pydict(data))
+    with soma.DataFrame.create(
+        uri=tmp_path.as_posix(), schema=schema, index_column_names=["row", "col"]
+    ) as sdf:
+        data = {
+            "row": [0] * 4 + [1] * 4 + [2] * 4 + [3] * 4,
+            "col": [0, 1, 2, 3] * 4,
+            "soma_joinid": list(range(16)),
+        }
+        sdf.write(pa.Table.from_pydict(data))
 
-    table = sdf.read(result_order="row-major").concat().to_pandas()
-    assert table["soma_joinid"].to_list() == list(range(16))
+    with soma.DataFrame.open(tmp_path.as_posix()) as sdf:
+        table = sdf.read(result_order="row-major").concat().to_pandas()
+        assert table["soma_joinid"].to_list() == list(range(16))
 
-    table = sdf.read(result_order="column-major").concat().to_pandas()
-    assert table["soma_joinid"].to_list() == [
-        0,
-        4,
-        8,
-        12,
-        1,
-        5,
-        9,
-        13,
-        2,
-        6,
-        10,
-        14,
-        3,
-        7,
-        11,
-        15,
-    ]
+        table = sdf.read(result_order="column-major").concat().to_pandas()
+        assert table["soma_joinid"].to_list() == [
+            0,
+            4,
+            8,
+            12,
+            1,
+            5,
+            9,
+            13,
+            2,
+            6,
+            10,
+            14,
+            3,
+            7,
+            11,
+            15,
+        ]
 
-    with pytest.raises(ValueError):
-        next(sdf.read(result_order="bogus"))
+        with pytest.raises(ValueError):
+            next(sdf.read(result_order="bogus"))
+
+
+@pytest.mark.parametrize(
+    "create_options,expected_schema_fields",
+    (
+        (
+            {"allows_duplicates": True},
+            {
+                "validity_filters": tiledb.FilterList([tiledb.RleFilter()]),
+                "allows_duplicates": True,
+            },
+        ),
+        (
+            {"allows_duplicates": False},
+            {
+                "validity_filters": tiledb.FilterList([tiledb.RleFilter()]),
+                "allows_duplicates": False,
+            },
+        ),
+        (
+            {"validity_filters": ["NoOpFilter"], "allows_duplicates": False},
+            {
+                "validity_filters": tiledb.FilterList([tiledb.NoOpFilter()]),
+                "allows_duplicates": False,
+            },
+        ),
+    ),
+)
+def test_create_platform_config_overrides(
+    tmp_path, create_options, expected_schema_fields
+):
+    uri = tmp_path.as_posix()
+    soma.DataFrame.create(
+        uri,
+        schema=pa.schema([pa.field("colA", pa.string())]),
+        platform_config={"tiledb": {"create": {**create_options}}},
+    ).close()
+    with tiledb.open(uri) as D:
+        for k, v in expected_schema_fields.items():
+            assert getattr(D.schema, k) == v
+
+
+@pytest.mark.parametrize("allows_duplicates", [False, True])
+@pytest.mark.parametrize("consolidate", [False, True])
+def test_timestamped_ops(tmp_path, allows_duplicates, consolidate):
+
+    uri = tmp_path.as_posix()
+
+    platform_config = {"tiledb": {"create": {"allows_duplicates": allows_duplicates}}}
+    schema = pa.schema(
+        [
+            ("soma_joinid", pa.int64()),
+            ("float", pa.float64()),
+            ("string", pa.large_string()),
+        ]
+    )
+    with soma.DataFrame.create(
+        uri,
+        schema=schema,
+        index_column_names=["soma_joinid"],
+        context=SOMATileDBContext(timestamp=10),
+        platform_config=platform_config,
+    ) as sidf:
+        data = {
+            "soma_joinid": [0],
+            "float": [100.1],
+            "string": ["apple"],
+        }
+        sidf.write(pa.Table.from_pydict(data))
+
+    with soma.DataFrame.open(
+        uri=uri, mode="w", context=SOMATileDBContext(timestamp=20)
+    ) as sidf:
+        data = {
+            "soma_joinid": [0, 1],
+            "float": [200.2, 300.3],
+            "string": ["ball", "cat"],
+        }
+        sidf.write(pa.Table.from_pydict(data))
+
+    # Without consolidate:
+    # * There are two fragments:
+    #   o One with tiledb.fragment.FragmentInfoList[i].timestamp_range = (10, 10)
+    #   o One with tiledb.fragment.FragmentInfoList[i].timestamp_range = (20, 20)
+    # With consolidate:
+    # * There is one fragment:
+    #   o One with tiledb.fragment.FragmentInfoList[i].timestamp_range = (10, 20)
+    if consolidate:
+        tiledb.consolidate(uri)
+        tiledb.vacuum(uri)
+
+    # read without timestamp & see final image
+    with soma.DataFrame.open(uri) as sidf:
+        table = sidf.read().concat()
+        if allows_duplicates:
+            assert sorted(list(x.as_py() for x in table["soma_joinid"])) == [0, 0, 1]
+            assert sorted(list(x.as_py() for x in table["float"])) == [
+                100.1,
+                200.2,
+                300.3,
+            ]
+            assert sorted(list(x.as_py() for x in table["string"])) == [
+                "apple",
+                "ball",
+                "cat",
+            ]
+            assert sidf.count == 3
+        else:
+            assert list(x.as_py() for x in table["soma_joinid"]) == [0, 1]
+            assert list(x.as_py() for x in table["float"]) == [200.2, 300.3]
+            assert list(x.as_py() for x in table["string"]) == ["ball", "cat"]
+            assert sidf.count == 2
+
+    # read at t=15 & see only the first write
+    with soma.DataFrame.open(
+        tmp_path.as_posix(), context=SOMATileDBContext(timestamp=15)
+    ) as sidf:
+        tab = sidf.read().concat()
+        assert list(x.as_py() for x in tab["soma_joinid"]) == [0]
+        assert list(x.as_py() for x in tab["float"]) == [100.1]
+        assert list(x.as_py() for x in tab["string"]) == ["apple"]

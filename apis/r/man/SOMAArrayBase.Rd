@@ -4,7 +4,12 @@
 \alias{SOMAArrayBase}
 \title{SOMA Array Base Class}
 \description{
-Adds SOMA-specific functionality to the \code{\link{TileDBArray}} class.
+SOMA Array Base Class
+
+SOMA Array Base Class
+}
+\details{
+Adds SOMA-specific functionality to the \code{\link{TileDBArray}} class.  (lifecycle: experimental)
 }
 \section{Super classes}{
 \code{\link[tiledbsoma:TileDBObject]{tiledbsoma::TileDBObject}} -> \code{\link[tiledbsoma:TileDBArray]{tiledbsoma::TileDBArray}} -> \code{SOMAArrayBase}
@@ -19,6 +24,8 @@ Adds SOMA-specific functionality to the \code{\link{TileDBArray}} class.
 \section{Methods}{
 \subsection{Public methods}{
 \itemize{
+\item \href{#method-SOMAArrayBase-read_complete}{\code{SOMAArrayBase$read_complete()}}
+\item \href{#method-SOMAArrayBase-read_next}{\code{SOMAArrayBase$read_next()}}
 \item \href{#method-SOMAArrayBase-clone}{\code{SOMAArrayBase$clone()}}
 }
 }
@@ -34,15 +41,38 @@ Adds SOMA-specific functionality to the \code{\link{TileDBArray}} class.
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="dimnames"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-dimnames'><code>tiledbsoma::TileDBArray$dimnames()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="fragment_count"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-fragment_count'><code>tiledbsoma::TileDBArray$fragment_count()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="get_metadata"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-get_metadata'><code>tiledbsoma::TileDBArray$get_metadata()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="ndim"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-ndim'><code>tiledbsoma::TileDBArray$ndim()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="print"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-print'><code>tiledbsoma::TileDBArray$print()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="reset_query"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-reset_query'><code>tiledbsoma::TileDBArray$reset_query()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="schema"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-schema'><code>tiledbsoma::TileDBArray$schema()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="set_metadata"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-set_metadata'><code>tiledbsoma::TileDBArray$set_metadata()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="set_query"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-set_query'><code>tiledbsoma::TileDBArray$set_query()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="shape"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-shape'><code>tiledbsoma::TileDBArray$shape()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="tiledb_array"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-tiledb_array'><code>tiledbsoma::TileDBArray$tiledb_array()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="tiledb_schema"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-tiledb_schema'><code>tiledbsoma::TileDBArray$tiledb_schema()</code></a></span></li>
 </ul>
 </details>
 }}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-SOMAArrayBase-read_complete"></a>}}
+\if{latex}{\out{\hypertarget{method-SOMAArrayBase-read_complete}{}}}
+\subsection{Method \code{read_complete()}}{
+Check if iterated read is complete or not. (lifecycle: experimental)
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{SOMAArrayBase$read_complete()}\if{html}{\out{</div>}}
+}
+
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-SOMAArrayBase-read_next"></a>}}
+\if{latex}{\out{\hypertarget{method-SOMAArrayBase-read_next}{}}}
+\subsection{Method \code{read_next()}}{
+Read the next chunk of an iterated read. (lifecycle: experimental)
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{SOMAArrayBase$read_next()}\if{html}{\out{</div>}}
+}
+
+}
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-SOMAArrayBase-clone"></a>}}
 \if{latex}{\out{\hypertarget{method-SOMAArrayBase-clone}{}}}

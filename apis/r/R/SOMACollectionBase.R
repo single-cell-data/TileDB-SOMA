@@ -1,14 +1,14 @@
 #' SOMA Collection Base Class
 #'
 #' @description Base class for objects containing persistent collection of SOMA
-#' objects, mapping string keys to any SOMA object.
+#' objects, mapping string keys to any SOMA object.  (lifecycle: experimental)
 SOMACollectionBase <- R6::R6Class(
   classname = "SOMACollectionBase",
   inherit = TileDBGroup,
 
   public = list(
 
-    #' @description Create a new `SOMACollection`.
+    #' @description Create a new `SOMACollection`. (lifecycle: experimental)
     #'
     #' @param uri URI of the TileDB group
     #' @param platform_config Optional storage-engine specific configuration
@@ -17,13 +17,13 @@ SOMACollectionBase <- R6::R6Class(
       super$initialize(uri, platform_config, ctx)
     },
 
-    #' @description Add a new SOMA object to the collection.
+    #' @description Add a new SOMA object to the collection. (lifecycle: experimental)
     create = function() {
       super$create()
       private$write_object_type_metadata()
     },
 
-    #' @description Add a new SOMA object to the collection.
+    #' @description Add a new SOMA object to the collection. (lifecycle: experimental)
     #' @param object SOMA object.
     #' @param name The name to use for the object. Defaults to the object URI's
     #' base name.
@@ -36,7 +36,7 @@ SOMACollectionBase <- R6::R6Class(
       super$set(object, name, relative)
     },
 
-    #' @description Retrieve a SOMA object by name.
+    #' @description Retrieve a SOMA object by name. (lifecycle: experimental)
     #' @param name The name of the object to retrieve.
     #' @returns SOMA object.
     get = function(name) {
@@ -112,7 +112,7 @@ SOMACollectionBase <- R6::R6Class(
     },
 
     # Internal method called by SOMA Measurement/Experiment's active bindings
-    # to retrieve or set one of the pre-defined SOMA fields (e.g., obs, X, etc).
+    # to retrieve or set one of the pre-defined SOMA fields (e.g., obs, X, etc). (lifecycle: experimental)
     # @param value the optional argument passed to the active binding.
     # @param name the name of the field to retrieve or set.
     # @param expected_class the expected class of the value to set.

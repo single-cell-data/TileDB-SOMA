@@ -7,7 +7,7 @@
 A \code{SOMAMeasurement} is a sub-element of a \code{\link{SOMAExperiment}},
 and is otherwise a specialized \code{\link{SOMACollection}} with pre-defined fields:
 \code{X}, \code{var}, \code{obsm}/\code{varm}, and \code{obsp}/\code{varp} (see \emph{Active Bindings} below for
-details).
+details). (lifecycle: experimental)
 }
 \section{Super classes}{
 \code{\link[tiledbsoma:TileDBObject]{tiledbsoma::TileDBObject}} -> \code{\link[tiledbsoma:TileDBGroup]{tiledbsoma::TileDBGroup}} -> \code{\link[tiledbsoma:SOMACollectionBase]{tiledbsoma::SOMACollectionBase}} -> \code{SOMAMeasurement}
