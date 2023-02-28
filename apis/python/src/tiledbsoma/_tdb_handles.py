@@ -75,7 +75,7 @@ class Wrapper(Generic[_RawHdl_co], metaclass=abc.ABCMeta):
     ) -> Self:
         if mode not in ("r", "w"):
             raise ValueError(f"Invalid open mode {mode!r}")
-        timestamp_ms = context._open_timestamp(timestamp)
+        timestamp_ms = context._open_timestamp_ms(timestamp)
         try:
             tdb = cls._opener(uri, mode, context, timestamp_ms)
             handle = cls(uri, mode, context, timestamp_ms, tdb)

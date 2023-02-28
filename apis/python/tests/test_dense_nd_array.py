@@ -352,7 +352,7 @@ def test_timestamped_ops(tmp_path):
         tmp_path.as_posix(),
         type=pa.uint8(),
         shape=(2, 2),
-        context=SOMATileDBContext(timestamp_ms=1),
+        context=SOMATileDBContext(timestamp=1),
     ) as a:
         a.write(
             (slice(0, 2), slice(0, 2)),
@@ -361,7 +361,7 @@ def test_timestamped_ops(tmp_path):
 
     # write 1 into top-left entry @ t=10
     with soma.DenseNDArray.open(
-        tmp_path.as_posix(), mode="w", context=SOMATileDBContext(timestamp_ms=10)
+        tmp_path.as_posix(), mode="w", context=SOMATileDBContext(timestamp=10)
     ) as a:
         a.write(
             (slice(0, 1), slice(0, 1)),
@@ -370,7 +370,7 @@ def test_timestamped_ops(tmp_path):
 
     # write 1 into bottom-right entry @ t=20
     with soma.DenseNDArray.open(
-        uri=tmp_path.as_posix(), mode="w", context=SOMATileDBContext(timestamp_ms=20)
+        uri=tmp_path.as_posix(), mode="w", context=SOMATileDBContext(timestamp=20)
     ) as a:
         a.write(
             (slice(1, 2), slice(1, 2)),
@@ -386,7 +386,7 @@ def test_timestamped_ops(tmp_path):
 
     # read @ t=15 & see only the writes up til then
     with soma.DenseNDArray.open(
-        tmp_path.as_posix(), context=SOMATileDBContext(timestamp_ms=15)
+        tmp_path.as_posix(), context=SOMATileDBContext(timestamp=15)
     ) as a:
         assert a.read((slice(0, 1), slice(0, 1))).to_numpy().tolist() == [
             [1, 0],
@@ -395,7 +395,7 @@ def test_timestamped_ops(tmp_path):
 
 
 def test_fixed_timestamp(tmp_path: pathlib.Path):
-    fixed_time = SOMATileDBContext(timestamp_ms=999)
+    fixed_time = SOMATileDBContext(timestamp=999)
     with soma.DenseNDArray.create(
         tmp_path.as_posix(),
         type=pa.uint8(),

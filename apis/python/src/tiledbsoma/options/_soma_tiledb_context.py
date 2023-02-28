@@ -1,3 +1,4 @@
+import datetime
 import time
 from typing import Any, Dict, Optional, Union
 
@@ -6,7 +7,7 @@ import tiledb
 from typing_extensions import Self
 
 from .._types import OpenTimestamp
-from .._util import to_timestamp_ms
+from .._util import ms_to_datetime, to_timestamp_ms
 
 
 def _build_default_tiledb_ctx() -> tiledb.Ctx:
@@ -42,10 +43,10 @@ class SOMATileDBContext:
     tiledb_ctx: tiledb.Ctx = _build_default_tiledb_ctx()
 
     timestamp_ms: Optional[int] = attrs.field(
-        default=None, converter=_maybe_timestamp_ms
+        default=None, converter=_maybe_timestamp_ms, alias="timestamp"
     )
     """
-    Default timestamp for operations on SOMA objects, in Unix millis.
+    Default timestamp for operations on SOMA objects, in millis since the Unix epoch.
 
     This is used when a timestamp is not provided to an ``open`` operation.
 
@@ -61,6 +62,12 @@ class SOMATileDBContext:
     (i.e., including changes that occur "after" the current wall time) as of
     when *each* object is opened.
     """
+
+    @property
+    def timestamp(self) -> Optional[datetime.datetime]:
+        if self.timestamp_ms is None:
+            return None
+        return ms_to_datetime(self.timestamp_ms)
 
     def replace(
         self, *, tiledb_config: Optional[Dict[str, Any]] = None, **changes: Any
@@ -88,7 +95,7 @@ class SOMATileDBContext:
             changes["tiledb_ctx"] = tiledb.Ctx(config=new_config)
         return attrs.evolve(self, **changes)
 
-    def _open_timestamp(self, in_timestamp: Optional[OpenTimestamp]) -> int:
+    def _open_timestamp_ms(self, in_timestamp: Optional[OpenTimestamp]) -> int:
         """Returns the real timestamp that should be used to open an object."""
         if in_timestamp is not None:
             return to_timestamp_ms(in_timestamp)

@@ -449,7 +449,7 @@ def test_timestamped_ops(tmp_path):
 
     # open A via collection @ t=25 => A should reflect first write only
     with soma.Collection.open(
-        tmp_path.as_uri(), context=SOMATileDBContext(timestamp_ms=25)
+        tmp_path.as_uri(), context=SOMATileDBContext(timestamp=25)
     ) as sc:
         assert sc["A"].read((slice(None), slice(None))).to_numpy().tolist() == [
             [0, 0],
@@ -458,13 +458,13 @@ def test_timestamped_ops(tmp_path):
 
     # open collection @ t=15 => A should not even be there
     with soma.Collection.open(
-        tmp_path.as_uri(), context=SOMATileDBContext(timestamp_ms=15)
+        tmp_path.as_uri(), context=SOMATileDBContext(timestamp=15)
     ) as sc:
         assert "A" not in sc
 
     # confirm timestamp validation in SOMATileDBContext
     with pytest.raises(ValueError):
-        SOMATileDBContext(timestamp_ms=-1)
+        SOMATileDBContext(timestamp=-1)
 
 
 def test_issue919(tmp_path):
@@ -481,7 +481,7 @@ def test_issue919(tmp_path):
     for i in range(25):
         uri = str(tmp_path / str(i))
 
-        context = SOMATileDBContext(timestamp_ms=100)
+        context = SOMATileDBContext(timestamp=100)
         with soma.Collection.create(uri, context=context) as c:
             expt = c.add_new_collection("expt", soma.Experiment)
             expt.add_new_collection("causes_bug")
@@ -497,7 +497,7 @@ def test_issue919(tmp_path):
 
 def test_context_timestamp(tmp_path: pathlib.Path):
     """Verifies that timestamps are inherited by collections."""
-    fixed_time = SOMATileDBContext(timestamp_ms=123)
+    fixed_time = SOMATileDBContext(timestamp=123)
     with soma.Collection.create(tmp_path.as_uri(), context=fixed_time) as coll:
         assert coll.tiledb_timestamp_ms == 123
         sub = coll.add_new_collection("sub_1")

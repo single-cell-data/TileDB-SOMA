@@ -231,7 +231,7 @@ _ETERNITY_MS = 2**64 - 1
 
 
 def to_timestamp_ms(input: OpenTimestamp) -> int:
-    """Converts a timestamp input type to Unix millis."""
+    """Converts a timestamp input type to millis since the Unix epoch."""
     check_type("tiledb_timestamp", input, (int, datetime.datetime))
     if isinstance(input, int):
         timestamp_ms = input
