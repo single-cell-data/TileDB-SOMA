@@ -42,7 +42,7 @@ PlatformConfig <- R6::R6Class(
     },
     #' @param platform The name of the \dQuote{platform} (outer key) to fetch
     #' @param op The name of the \dQuote{option} of \code{platform} to fetch;
-    #' if \code{NULL}, returns the \list[tiledbsoma:ConfigList]{configuration}
+    #' if \code{NULL}, returns the \link[tiledbsoma:ConfigList]{configuration}
     #' for \code{platform}
     #' @param key The \dQuote{key} (inner key) for \code{op} in
     #' \code{platform} to fetch; if \code{NULL} and \code{op} is passed,

@@ -90,7 +90,7 @@ The option names (middle keys) for \code{platform}
 \item{\code{platform}}{The name of the \dQuote{platform} (outer key) to fetch}
 
 \item{\code{op}}{The name of the \dQuote{option} of \code{platform} to fetch;
-if \code{NULL}, returns the \list[tiledbsoma:ConfigList]{configuration}
+if \code{NULL}, returns the \link[tiledbsoma:ConfigList]{configuration}
 for \code{platform}}
 
 \item{\code{key}}{The \dQuote{key} (inner key) for \code{op} in
