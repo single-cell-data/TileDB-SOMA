@@ -53,6 +53,11 @@ SOMATileDBContext <- R6::R6Class(
     keys = function() {
       return(c(super$keys(), private$.ctx_names()))
     },
+    #' @return Return the items of the map as a list
+    #'
+    items = function() {
+      return(c(super$items(), as.list(x = tiledb::config(object = private$.ctx))))
+    },
     #' @return The number of items in the map
     #'
     length = function() {
@@ -66,8 +71,17 @@ SOMATileDBContext <- R6::R6Class(
     #' @return The value of \code{key} in the map, or \code{default} if
     #' \code{key} is not found
     #'
-    get = function(key, default = NULL) {
-      key <- match.arg(arg = key, choices = self$keys())
+    get = function(key, default = rlang::missing_arg()) {
+      key <- key[1L]
+      key <- tryCatch(
+        expr = match.arg(arg = key, choices = self$keys()),
+        error = \(...) NULL
+      )
+      if (is.null(x = key)) {
+        if (rlang::is_missing(x = default)) {
+          private$.key_error(key = key)
+        }
+      }
       if (key %in% private$.ctx_names()) {
         val <- tiledb::config(object = private$.ctx)[key]
         names(x = val) <- key
@@ -97,6 +111,17 @@ SOMATileDBContext <- R6::R6Class(
         super$set(key = key, value = value)
       }
       return(invisible(x = self))
+    },
+    #' @return A \code{\link[tiledb:tiledb_ctx]{tiledb_ctx}} object
+    #'
+    to_context = function() {
+      items <- sapply(X = super$items(), FUN = as.character, USE.NAMES = TRUE)
+      cfg <- tiledb::config(object = private$.ctx)
+      for (opt in names(x = items)) {
+        cfg[opt] <- items[opt]
+      }
+      ctx <- tiledb::tiledb_ctx(config = cfg)
+      return(ctx)
     }
   ),
   private = list(

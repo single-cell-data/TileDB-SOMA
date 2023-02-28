@@ -14,16 +14,17 @@ Context map for TileDB-backed SOMA objects
 \itemize{
 \item \href{#method-SOMATileDBContext-new}{\code{SOMATileDBContext$new()}}
 \item \href{#method-SOMATileDBContext-keys}{\code{SOMATileDBContext$keys()}}
+\item \href{#method-SOMATileDBContext-items}{\code{SOMATileDBContext$items()}}
 \item \href{#method-SOMATileDBContext-length}{\code{SOMATileDBContext$length()}}
 \item \href{#method-SOMATileDBContext-get}{\code{SOMATileDBContext$get()}}
 \item \href{#method-SOMATileDBContext-set}{\code{SOMATileDBContext$set()}}
+\item \href{#method-SOMATileDBContext-to_context}{\code{SOMATileDBContext$to_context()}}
 \item \href{#method-SOMATileDBContext-clone}{\code{SOMATileDBContext$clone()}}
 }
 }
 \if{html}{\out{
-<details><summary>Inherited methods</summary>
+<details open><summary>Inherited methods</summary>
 <ul>
-<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="MappingBase" data-id="items"><a href='../../tiledbsoma/html/MappingBase.html#method-MappingBase-items'><code>tiledbsoma::MappingBase$items()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="MappingBase" data-id="print"><a href='../../tiledbsoma/html/MappingBase.html#method-MappingBase-print'><code>tiledbsoma::MappingBase$print()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="MappingBase" data-id="setv"><a href='../../tiledbsoma/html/MappingBase.html#method-MappingBase-setv'><code>tiledbsoma::MappingBase$setv()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="MappingBase" data-id="to_list"><a href='../../tiledbsoma/html/MappingBase.html#method-MappingBase-to_list'><code>tiledbsoma::MappingBase$to_list()</code></a></span></li>
@@ -66,6 +67,18 @@ The keys of the map
 }
 }
 \if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-SOMATileDBContext-items"></a>}}
+\if{latex}{\out{\hypertarget{method-SOMATileDBContext-items}{}}}
+\subsection{Method \code{items()}}{
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{SOMATileDBContext$items()}\if{html}{\out{</div>}}
+}
+
+\subsection{Returns}{
+Return the items of the map as a list
+}
+}
+\if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-SOMATileDBContext-length"></a>}}
 \if{latex}{\out{\hypertarget{method-SOMATileDBContext-length}{}}}
 \subsection{Method \code{length()}}{
@@ -82,7 +95,7 @@ The number of items in the map
 \if{latex}{\out{\hypertarget{method-SOMATileDBContext-get}{}}}
 \subsection{Method \code{get()}}{
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{SOMATileDBContext$get(key, default = NULL)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{SOMATileDBContext$get(key, default = rlang::missing_arg())}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
@@ -121,6 +134,18 @@ the entry for \code{key}}
 \subsection{Returns}{
 \[chainable\] Invisibly returns \code{self} with
 \code{value} added as \code{key}
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-SOMATileDBContext-to_context"></a>}}
+\if{latex}{\out{\hypertarget{method-SOMATileDBContext-to_context}{}}}
+\subsection{Method \code{to_context()}}{
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{SOMATileDBContext$to_context()}\if{html}{\out{</div>}}
+}
+
+\subsection{Returns}{
+A \code{\link[tiledb:tiledb_ctx]{tiledb_ctx}} object
 }
 }
 \if{html}{\out{<hr>}}
