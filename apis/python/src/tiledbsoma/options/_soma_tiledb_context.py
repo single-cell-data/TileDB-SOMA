@@ -102,7 +102,7 @@ class SOMATileDBContext:
         self, *, tiledb_config: Optional[Dict[str, Any]] = None, **changes: Any
     ) -> Self:
         """
-        Create a copy of the context, merging changes.
+        Create a copy of the context, merging changes [lifecycle: experimental].
 
         Parameters
         ----------
@@ -128,7 +128,7 @@ class SOMATileDBContext:
 def group_timestamp_ctx(
     ctx: tiledb.Ctx, *, timestamp_start: int, timestamp: int
 ) -> tiledb.Ctx:
-    """Builds a TileDB context to open groups at the given timestamp."""
+    """Builds a TileDB context to open groups at the given timestamp [lifecycle: experimental]."""
     group_cfg = ctx.config().dict()
     group_cfg["sm.group.timestamp_start"] = timestamp_start
     group_cfg["sm.group.timestamp_end"] = timestamp

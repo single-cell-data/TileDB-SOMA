@@ -31,9 +31,7 @@ class NDArray(TileDBArray, somacore.NDArray):
         context: Optional[SOMATileDBContext] = None,
     ) -> Self:
         """
-        Create a SOMA ``NDArray`` at the given URI.
-
-        [lifecycle: experimental]
+        Create a SOMA ``NDArray`` at the given URI [lifecycle: experimental].
 
         :param type: The Arrow type to be stored in the NDArray.
             If the type is unsupported, an error will be raised.
@@ -77,14 +75,13 @@ class NDArray(TileDBArray, somacore.NDArray):
     def shape(self) -> Tuple[int, ...]:
         """
         Return capacity of each dimension, always a list of length ``ndim``
+        [lifecycle: experimental].
         """
         return cast(Tuple[int, ...], self._handle.schema.domain.shape)
 
     def reshape(self, shape: Tuple[int, ...]) -> None:
         """
-        Unsupported operation for this object type.
-
-        [lifecycle: experimental]
+        Unsupported operation for this object type [lifecycle: experimental].
         """
         raise NotImplementedError("reshape operation not implemented.")
 

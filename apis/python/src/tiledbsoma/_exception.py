@@ -2,20 +2,23 @@ import tiledb
 
 
 class SOMAError(Exception):
-    """Base error type for SOMA-specific exceptions."""
+    """Base error type for SOMA-specific exceptions [lifecycle: experimental]."""
 
     pass
 
 
 class DoesNotExistError(SOMAError):
-    """Raised when attempting to open a non-existent SOMA object."""
+    """
+    Raised when attempting to open a non-existent SOMA object [lifecycle: experimental].
+    """
 
     pass
 
 
 def is_does_not_exist_error(e: tiledb.TileDBError) -> bool:
     """ "
-    Given a TileDBError, return true if it indicates the object does not exist.
+    Given a TileDBError, return true if it indicates the object does not exist
+    [lifecycle: experimental].
 
     Example
     -------
@@ -46,6 +49,8 @@ def is_duplicate_group_key_error(e: tiledb.TileDBError) -> bool:
     """
     Given a TileDBError, return try if it indicates a duplicate member
     add request in a tiledb.Group.
+
+    [lifecycle: experimental]
     """
     stre = str(e)
     if "member already exists in group" in stre:

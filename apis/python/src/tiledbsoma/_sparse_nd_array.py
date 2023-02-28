@@ -79,7 +79,8 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
     @property
     def nnz(self) -> int:
         """
-        The number of stored values in the array, including explicitly stored zeros.
+        The number of stored values in the array, including explicitly stored zeros
+        [lifecycle: experimental].
         """
         self._check_open_read()
         return cast(int, self._soma_reader().nnz())

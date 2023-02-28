@@ -46,7 +46,7 @@ the RStudio lifecycle stage model. Tags are:
   - deprecated: The API is no longer recommended for use and may be removed
     in a future release.
 
-If no tag is present, the assumed state is ``experimental``.
+If no tag is present, the state is ``experimental``.
 
 Data types:
 -----------

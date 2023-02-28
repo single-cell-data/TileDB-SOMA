@@ -73,7 +73,7 @@ class CollectionBase(
         platform_config: Optional[options.PlatformConfig] = None,
         context: Optional[SOMATileDBContext] = None,
     ) -> Self:
-        """Creates and opens a new SOMA collection in storage.
+        """Creates and opens a new SOMA collection in storage [lifecycle: experimental].
 
         This creates a new SOMA collection of the current type in storage and
         returns it opened for writing.
@@ -157,7 +157,7 @@ class CollectionBase(
         uri: Optional[str] = None,
         platform_config: Optional[options.PlatformConfig] = None,
     ) -> "AnyTileDBCollection":
-        """Adds a new sub-collection to this collection.
+        """Adds a new sub-collection to this collection [lifecycle: experimental].
 
         :param key: The key to add.
         :param cls: Optionally, the specific type of sub-collection to create.
@@ -187,7 +187,7 @@ class CollectionBase(
     def add_new_dataframe(
         self, key: str, *, uri: Optional[str] = None, **kwargs: Any
     ) -> DataFrame:
-        """Adds a new DataFrame to this collection.
+        """Adds a new DataFrame to this collection [lifecycle: experimental].
 
         For details about the behavior of ``key`` and ``uri``, see
         :meth:`add_new_collection`. The remaining parameters are passed to
@@ -222,7 +222,7 @@ class CollectionBase(
 
     @_funcs.forwards_kwargs_to(_add_new_ndarray, exclude=("cls",))
     def add_new_dense_ndarray(self, key: str, **kwargs: Any) -> DenseNDArray:
-        """Adds a new DenseNDArray to this Collection.
+        """Adds a new DenseNDArray to this Collection [lifecycle: experimental].
 
         For details about the behavior of ``key`` and ``uri``, see
         :meth:`add_new_collection`. The remaining parameters are passed to
@@ -232,7 +232,7 @@ class CollectionBase(
 
     @_funcs.forwards_kwargs_to(_add_new_ndarray, exclude=("cls",))
     def add_new_sparse_ndarray(self, key: str, **kwargs: Any) -> SparseNDArray:
-        """Adds a new SparseNDArray to this Collection.
+        """Adds a new SparseNDArray to this Collection [lifecycle: experimental].
 
         For details about the behavior of ``key`` and ``uri``, see
         :meth:`add_new_collection`. The remaining parameters are passed to
