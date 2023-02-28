@@ -7,25 +7,36 @@
 TileDBObject <- R6::R6Class(
   classname = "TileDBObject",
   public = list(
-    #' @field platform_config Optional platform configuration
-    platform_config = NULL,
-    #' @field ctx Optional TileDB context
-    ctx = NULL,
-
     #' @description Create a new TileDB object.
     #' @param uri URI for the TileDB object
     #' @param verbose Print status messages
     #' @param platform_config Optional platform configuration
     #' @param ctx optional TileDB context
     initialize = function(uri, platform_config = NULL, ctx = NULL) {
+      calls <- vapply(
+        X = lapply(X = sys.calls(), FUN = as.character),
+        FUN = '[[',
+        FUN.VALUE = character(length = 1L),
+        1L
+      )
+      if ('TileDBObject$new' %in% calls) {
+        .NotYetImplemented()
+      }
       if (missing(uri)) stop("Must specify a `uri`", call. = FALSE)
       private$tiledb_uri <- TileDBURI$new(uri)
-      self$platform_config <- platform_config
-      self$ctx <- ctx
-
-      if (is.null(self$ctx)) {
-        self$ctx <- tiledb::tiledb_get_context()
+      # Set platform config
+      platform_config <- platform_config %||% PlatformConfig$new()
+      if (!inherits(platform_config, 'PlatformConfig')) {
+        stop("'platform_config' must be a PlatformConfig object", call. = FALSE)
       }
+      private$tiledb_platform_config <- platform_config
+      # Set context
+      # ctx <- ctx %||% tiledb::tiledb_get_context()
+      ctx <- ctx %||% SOMATileDBContext$new()
+      if (!inherits(x = ctx, what = 'SOMATileDBContext')) {
+        stop("'ctx' must be a SOMATileDBContext object", call. = FALSE)
+      }
+      private$tiledb_ctx <- ctx
     },
 
     #' @description Print the name of the R6 class.
@@ -51,11 +62,25 @@ TileDBObject <- R6::R6Class(
       } else {
         stop("Unknown object type", call. = FALSE)
       }
-      tiledb::tiledb_object_type(self$uri, ctx = self$ctx) %in% expected_type
+      tiledb::tiledb_object_type(self$uri, ctx = self$ctx$to_context()) %in% expected_type
     }
   ),
 
   active = list(
+    #' @field platform_config Platform configuration
+    platform_config = function(value) {
+      if (!missing(x = value)) {
+        stop("'platform_config' is a read-only field", call. = FALSE)
+      }
+      return(private$tiledb_platform_config)
+    },
+    #' @field ctx TileDB context
+    ctx = function(value) {
+      if (!missing(x = value)) {
+        stop("'ctx' is a read-only field", call. = FALSE)
+      }
+      return(private$tiledb_ctx)
+    },
     #' @field uri
     #' The URI of the TileDB object.
     uri = function(value) {
@@ -84,7 +109,13 @@ TileDBObject <- R6::R6Class(
     tiledb_object = NULL,
 
     # @description Contains TileDBURI object
-    tiledb_uri = NULL
+    tiledb_uri = NULL,
+
+    # Internal platform config
+    tiledb_platform_config = NULL,
+
+    # Internal context
+    tiledb_ctx = NULL
 
   )
 )

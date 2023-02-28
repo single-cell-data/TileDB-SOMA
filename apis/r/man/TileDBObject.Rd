@@ -7,18 +7,13 @@
 Base class to implement shared functionality across the TileDBArray and
 TileDBGroup classes.
 }
-\section{Public fields}{
-\if{html}{\out{<div class="r6-fields">}}
-\describe{
-\item{\code{platform_config}}{Optional platform configuration}
-
-\item{\code{ctx}}{Optional TileDB context}
-}
-\if{html}{\out{</div>}}
-}
 \section{Active bindings}{
 \if{html}{\out{<div class="r6-active-bindings">}}
 \describe{
+\item{\code{platform_config}}{Platform configuration}
+
+\item{\code{ctx}}{TileDB context}
+
 \item{\code{uri}}{The URI of the TileDB object.}
 
 \item{\code{object}}{Access the underlying TileB object directly (either a
