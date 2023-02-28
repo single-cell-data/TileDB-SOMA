@@ -36,12 +36,12 @@ $ python -m pip install --upgrade tiledbsoma
 * Clone [this repo](https://github.com/single-cell-data/TileDB-SOMA)
 * `cd` into your checkout and then `cd apis/python`
 * `python -m pip install .`
-* Or, if you wish to modify the code and run it, `python setup.py develop`
+* Or, if you wish to modify the code and run it, `python -m pip install -v -e .`
 * Optionally, if you prefer, you can run that inside `venv`:
   ```shell
   $ python -m venv venv
   $ . ./venv/bin/activate
-  $ python -m pip install .
+  $ python -m pip install -v -e .
   ```
 * In either case:
   ```shell
