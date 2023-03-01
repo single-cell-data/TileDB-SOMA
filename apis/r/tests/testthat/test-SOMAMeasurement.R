@@ -1,13 +1,4 @@
 test_that("Basic mechanics", {
-
-  # TODO: Determine why this fails only on linux w/ rcmdcheck::rcmdcheck()
-  testthat::skip_on_covr()
-
-  ## This variable appears to be set under rcmdcheck (hence also with covr), but
-  ## not with R CMD CHECK. As the testscript appears to fail here for rcmdcheck
-  ## only (why?), we bail. Sadly this does not seem to help with the covr fail.
-  testthat::skip_if(Sys.getenv("CALLR_IS_RUNNING", "") != "")
-
   uri <- withr::local_tempdir("soma-ms")
 
   measurement <- SOMAMeasurement$new(uri)
@@ -23,7 +14,7 @@ test_that("Basic mechanics", {
   # Add var
   expect_error(measurement$var, "No member named 'var' found")
 
-  var <- create_and_populate_obs(file.path(uri, "var"))
+  var <- create_and_populate_var(file.path(uri, "var"))
 
   measurement$var <- var
   expect_equal(measurement$length(), 1)

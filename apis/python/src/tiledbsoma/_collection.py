@@ -32,6 +32,7 @@ from ._dense_nd_array import DenseNDArray
 from ._exception import SOMAError, is_does_not_exist_error
 from ._sparse_nd_array import SparseNDArray
 from ._tiledb_object import AnyTileDBObject, TileDBObject
+from ._types import OpenTimestamp
 from ._util import is_relative_uri, make_relative_path, uri_joinpath
 from .options import SOMATileDBContext
 
@@ -72,8 +73,9 @@ class CollectionBase(
         *,
         platform_config: Optional[options.PlatformConfig] = None,
         context: Optional[SOMATileDBContext] = None,
+        tiledb_timestamp: Optional[OpenTimestamp] = None,
     ) -> Self:
-        """Creates and opens a new SOMA collection in storage.
+        """Creates and opens a new SOMA collection in storage [lifecycle: experimental].
 
         This creates a new SOMA collection of the current type in storage and
         returns it opened for writing.
@@ -83,10 +85,13 @@ class CollectionBase(
             creating this collection. (Currently unused.)
         :param context: If provided, the ``SOMATileDBContext`` to use when creating and
             opening this collection.
+        :param tiledb_timestamp: If specified, overrides the default timestamp
+            used to open this object. If unset, uses the timestamp provided by
+            the context.
         """
         context = context or SOMATileDBContext()
         tiledb.group_create(uri=uri, ctx=context.tiledb_ctx)
-        handle = cls._wrapper_type.open(uri, "w", context)
+        handle = cls._wrapper_type.open(uri, "w", context, tiledb_timestamp)
         cls._set_create_metadata(handle)
         return cls(
             handle,
@@ -157,7 +162,7 @@ class CollectionBase(
         uri: Optional[str] = None,
         platform_config: Optional[options.PlatformConfig] = None,
     ) -> "AnyTileDBCollection":
-        """Adds a new sub-collection to this collection.
+        """Adds a new sub-collection to this collection [lifecycle: experimental].
 
         :param key: The key to add.
         :param cls: Optionally, the specific type of sub-collection to create.
@@ -178,16 +183,21 @@ class CollectionBase(
             key,
             child_cls,
             lambda create_uri: child_cls.create(
-                create_uri, platform_config=platform_config, context=self.context
+                create_uri,
+                platform_config=platform_config,
+                context=self.context,
+                tiledb_timestamp=self.tiledb_timestamp_ms,
             ),
             uri,
         )
 
-    @_funcs.forwards_kwargs_to(DataFrame.create, exclude=("context",))
+    @_funcs.forwards_kwargs_to(
+        DataFrame.create, exclude=("context", "tiledb_timestamp")
+    )
     def add_new_dataframe(
         self, key: str, *, uri: Optional[str] = None, **kwargs: Any
     ) -> DataFrame:
-        """Adds a new DataFrame to this collection.
+        """Adds a new DataFrame to this collection [lifecycle: experimental].
 
         For details about the behavior of ``key`` and ``uri``, see
         :meth:`add_new_collection`. The remaining parameters are passed to
@@ -199,12 +209,13 @@ class CollectionBase(
             lambda create_uri: DataFrame.create(
                 create_uri,
                 context=self.context,
+                tiledb_timestamp=self.tiledb_timestamp_ms,
                 **kwargs,
             ),
             uri,
         )
 
-    @_funcs.forwards_kwargs_to(NDArray.create, exclude=("context",))
+    @_funcs.forwards_kwargs_to(NDArray.create, exclude=("context", "tiledb_timestamp"))
     def _add_new_ndarray(
         self, cls: Type[_NDArr], key: str, *, uri: Optional[str] = None, **kwargs: Any
     ) -> _NDArr:
@@ -215,6 +226,7 @@ class CollectionBase(
             lambda create_uri: cls.create(
                 create_uri,
                 context=self.context,
+                tiledb_timestamp=self.tiledb_timestamp_ms,
                 **kwargs,
             ),
             uri,
@@ -222,7 +234,7 @@ class CollectionBase(
 
     @_funcs.forwards_kwargs_to(_add_new_ndarray, exclude=("cls",))
     def add_new_dense_ndarray(self, key: str, **kwargs: Any) -> DenseNDArray:
-        """Adds a new DenseNDArray to this Collection.
+        """Adds a new DenseNDArray to this Collection [lifecycle: experimental].
 
         For details about the behavior of ``key`` and ``uri``, see
         :meth:`add_new_collection`. The remaining parameters are passed to
@@ -232,7 +244,7 @@ class CollectionBase(
 
     @_funcs.forwards_kwargs_to(_add_new_ndarray, exclude=("cls",))
     def add_new_sparse_ndarray(self, key: str, **kwargs: Any) -> SparseNDArray:
-        """Adds a new SparseNDArray to this Collection.
+        """Adds a new SparseNDArray to this Collection [lifecycle: experimental].
 
         For details about the behavior of ``key`` and ``uri``, see
         :meth:`add_new_collection`. The remaining parameters are passed to
@@ -298,6 +310,7 @@ class CollectionBase(
                 entry.entry.uri,
                 self.mode,
                 self.context,
+                self.tiledb_timestamp_ms,
             )
             # Since we just opened this object, we own it and should close it.
             self._close_stack.enter_context(entry.soma)

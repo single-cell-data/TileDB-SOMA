@@ -1,3 +1,4 @@
+import datetime
 import pathlib
 import time
 import urllib.parse
@@ -7,7 +8,7 @@ from typing import Any, Optional, Tuple, Type, TypeVar
 import somacore
 from somacore import options
 
-from ._types import Slice, is_slice_of
+from ._types import OpenTimestamp, Slice, is_slice_of
 
 
 def get_start_stamp() -> float:
@@ -224,3 +225,35 @@ def check_unpartitioned(partitions: Optional[options.ReadPartitions]) -> None:
     if not partitions or partitions == options.IOfN(0, 1):
         return
     raise ValueError("Paritioned reads are not currently supported")
+
+
+_ETERNITY_MS = 2**64 - 1
+
+
+def to_timestamp_ms(input: OpenTimestamp) -> int:
+    """Converts a timestamp input type to millis since the Unix epoch."""
+    check_type("tiledb_timestamp", input, (int, datetime.datetime))
+    if isinstance(input, int):
+        timestamp_ms = input
+    else:
+        # Manually pull out the milliseconds so that nothing funny happens
+        # like 12:00:00.300 turning into 299 ms.
+        milli_part = input.microsecond // 1000
+        input = input.replace(microsecond=0)
+        seconds_part = int(input.timestamp())
+        timestamp_ms = seconds_part * 1000 + milli_part
+
+    if not 0 <= timestamp_ms <= _ETERNITY_MS:
+        raise ValueError("open timestamp must be between 0 (Unix epoch) and 2**64-1 ms")
+    return timestamp_ms
+
+
+def ms_to_datetime(millis: int) -> datetime.datetime:
+    """Returns the millisecond timestamp as a timezone-aware UTC datetime.
+
+    This may raise an exception, since millis may be outside the representable
+    range for a Python datetime.
+    """
+    secs, millis = divmod(millis, 1000)
+    dt = datetime.datetime.fromtimestamp(secs, tz=datetime.timezone.utc)
+    return dt.replace(microsecond=millis * 1000)

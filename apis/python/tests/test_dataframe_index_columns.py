@@ -1109,25 +1109,29 @@ def arrow_table():
         [
             "tsms-py-list",
             ["tsms"],
-            [[np.datetime64(946684800002, "s"), np.datetime64(946684800003, "s")]],
+            [[np.datetime64(946684800002, "ms"), np.datetime64(946684800003, "ms")]],
             "default23",
         ],
         [
             "tsms-py-tuple",
             ["tsms"],
-            [[np.datetime64(946684800002, "s"), np.datetime64(946684800003, "s")]],
+            [[np.datetime64(946684800002, "ms"), np.datetime64(946684800003, "ms")]],
             "default23",
         ],
         [
             "tsms-py-slice",
             ["tsms"],
-            [slice(np.datetime64(946684800002, "s"), np.datetime64(946684800003, "s"))],
+            [
+                slice(
+                    np.datetime64(946684800002, "ms"), np.datetime64(946684800003, "ms")
+                )
+            ],
             "default23",
         ],
         [
             "tsms-py-left-none-slice",
             ["tsms"],
-            [slice(None, np.datetime64(946684800002, "s"))],
+            [slice(None, np.datetime64(946684800002, "ms"))],
             {
                 "soma_joinid": pa.array([0, 1, 2], pa.int64()),
                 "string": pa.array(["apple", "ball", "cat"], pa.large_string()),
@@ -1136,7 +1140,7 @@ def arrow_table():
         [
             "tsms-py-right-none-slice",
             ["tsms"],
-            [slice(np.datetime64(946684800002, "s"), None)],
+            [slice(np.datetime64(946684800002, "ms"), None)],
             {
                 "soma_joinid": pa.array([2, 3, 4], pa.int64()),
                 "string": pa.array(["cat", "dog", "egg"], pa.large_string()),
@@ -1153,7 +1157,10 @@ def arrow_table():
             ["tsms"],
             [
                 np.asarray(
-                    [np.datetime64(946684800002, "s"), np.datetime64(946684800003, "s")]
+                    [
+                        np.datetime64(946684800002, "ms"),
+                        np.datetime64(946684800003, "ms"),
+                    ]
                 )
             ],
             "default23",
@@ -1167,7 +1174,7 @@ def arrow_table():
         [
             "tsms-pa-array-typed",
             ["tsms"],
-            [pa.array([946684800002, 946684800003], pa.timestamp("s"))],
+            [pa.array([946684800002, 946684800003], pa.timestamp("ms"))],
             "default23",
         ],
         # Index by timestamp-us
@@ -1182,8 +1189,8 @@ def arrow_table():
             ["tsus"],
             [
                 [
-                    np.datetime64(946684800000002, "s"),
-                    np.datetime64(946684800000003, "s"),
+                    np.datetime64(946684800000002, "us"),
+                    np.datetime64(946684800000003, "us"),
                 ]
             ],
             "default23",
@@ -1193,8 +1200,8 @@ def arrow_table():
             ["tsus"],
             [
                 [
-                    np.datetime64(946684800000002, "s"),
-                    np.datetime64(946684800000003, "s"),
+                    np.datetime64(946684800000002, "us"),
+                    np.datetime64(946684800000003, "us"),
                 ]
             ],
             "default23",
@@ -1204,8 +1211,8 @@ def arrow_table():
             ["tsus"],
             [
                 slice(
-                    np.datetime64(946684800000002, "s"),
-                    np.datetime64(946684800000003, "s"),
+                    np.datetime64(946684800000002, "us"),
+                    np.datetime64(946684800000003, "us"),
                 )
             ],
             "default23",
@@ -1213,7 +1220,7 @@ def arrow_table():
         [
             "tsus-py-left-none-slice",
             ["tsus"],
-            [slice(None, np.datetime64(946684800000002, "s"))],
+            [slice(None, np.datetime64(946684800000002, "us"))],
             {
                 "soma_joinid": pa.array([0, 1, 2], pa.int64()),
                 "string": pa.array(["apple", "ball", "cat"], pa.large_string()),
@@ -1222,7 +1229,7 @@ def arrow_table():
         [
             "tsus-py-right-none-slice",
             ["tsus"],
-            [slice(np.datetime64(946684800000002, "s"), None)],
+            [slice(np.datetime64(946684800000002, "us"), None)],
             {
                 "soma_joinid": pa.array([2, 3, 4], pa.int64()),
                 "string": pa.array(["cat", "dog", "egg"], pa.large_string()),
@@ -1240,8 +1247,8 @@ def arrow_table():
             [
                 np.asarray(
                     [
-                        np.datetime64(946684800000002, "s"),
-                        np.datetime64(946684800000003, "s"),
+                        np.datetime64(946684800000002, "us"),
+                        np.datetime64(946684800000003, "us"),
                     ]
                 )
             ],
@@ -1256,7 +1263,7 @@ def arrow_table():
         [
             "tsus-pa-array-typed",
             ["tsus"],
-            [pa.array([946684800000002, 946684800000003], pa.timestamp("s"))],
+            [pa.array([946684800000002, 946684800000003], pa.timestamp("us"))],
             "default23",
         ],
         # Index by timestamp-ns
@@ -1271,8 +1278,8 @@ def arrow_table():
             ["tsns"],
             [
                 [
-                    np.datetime64(946684800000000002, "s"),
-                    np.datetime64(946684800000000003, "s"),
+                    np.datetime64(946684800000000002, "ns"),
+                    np.datetime64(946684800000000003, "ns"),
                 ]
             ],
             "default23",
@@ -1282,8 +1289,8 @@ def arrow_table():
             ["tsns"],
             [
                 [
-                    np.datetime64(946684800000000002, "s"),
-                    np.datetime64(946684800000000003, "s"),
+                    np.datetime64(946684800000000002, "ns"),
+                    np.datetime64(946684800000000003, "ns"),
                 ]
             ],
             "default23",
@@ -1293,8 +1300,8 @@ def arrow_table():
             ["tsns"],
             [
                 slice(
-                    np.datetime64(946684800000000002, "s"),
-                    np.datetime64(946684800000000003, "s"),
+                    np.datetime64(946684800000000002, "ns"),
+                    np.datetime64(946684800000000003, "ns"),
                 )
             ],
             "default23",
@@ -1302,7 +1309,7 @@ def arrow_table():
         [
             "tsns-py-left-none-slice",
             ["tsns"],
-            [slice(None, np.datetime64(946684800000000002, "s"))],
+            [slice(None, np.datetime64(946684800000000002, "ns"))],
             {
                 "soma_joinid": pa.array([0, 1, 2], pa.int64()),
                 "string": pa.array(["apple", "ball", "cat"], pa.large_string()),
@@ -1311,7 +1318,7 @@ def arrow_table():
         [
             "tsns-py-right-none-slice",
             ["tsns"],
-            [slice(np.datetime64(946684800000000002, "s"), None)],
+            [slice(np.datetime64(946684800000000002, "ns"), None)],
             {
                 "soma_joinid": pa.array([2, 3, 4], pa.int64()),
                 "string": pa.array(["cat", "dog", "egg"], pa.large_string()),
@@ -1329,8 +1336,8 @@ def arrow_table():
             [
                 np.asarray(
                     [
-                        np.datetime64(946684800000000002, "s"),
-                        np.datetime64(946684800000000003, "s"),
+                        np.datetime64(946684800000000002, "ns"),
+                        np.datetime64(946684800000000003, "ns"),
                     ]
                 )
             ],
@@ -1345,7 +1352,7 @@ def arrow_table():
         [
             "tsns-pa-array-typed",
             ["tsns"],
-            [pa.array([946684800000000002, 946684800000000003], pa.timestamp("s"))],
+            [pa.array([946684800000000002, 946684800000000003], pa.timestamp("ns"))],
             "default23",
         ],
         # Index by bool -- not currently supported

@@ -21,7 +21,7 @@ SOMAExperiment <- R6::R6Class(
 
     #' @field ms a [`SOMACollection`] of named [`SOMAMeasurement`]s.
     ms = function(value) {
-      private$get_or_set_soma_field(value, "ms", "SOMAMeasurement")
+      private$get_or_set_soma_field(value, "ms", "SOMACollection")
     }
   )
 )

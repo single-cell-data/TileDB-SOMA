@@ -96,42 +96,12 @@ rename <- function(x, names) {
   if (missing(x) || is.null(x) || length(x) == 0) y else x
 }
 
-check_package <- function(package) {
-  if (requireNamespace(package, quietly = TRUE)) {
-    return(invisible())
-  }
-  stop(paste0("Package '", package, "' must be installed"))
-}
-
-is_remote_uri <- function(x) {
-  string_starts_with(x, "s3://") | string_starts_with(x, "tiledb://")
-}
-
-# Drop-in replacement for file.paths() that ignores the platform separator when
-# constructing remote S3 or TileDB URIs
-file_path <- function(..., fsep = .Platform$file.sep) {
-  paths <- list(...)
-  if (is_remote_uri(paths[[1]])) fsep <- "/"
-  file.path(..., fsep = fsep)
-}
-
-#' Assert all values of `x` are a subset of `y`. @param x,y vectors of values
-#' @param type A character vector of length 1 used in the error message
-#' @return `TRUE` if all values of `x` are present in `y`, otherwise an
-#' informative error is thrown with the missing values.
-#' @noRd
-assert_subset <- function(x, y, type = "value") {
-  stopifnot(is.atomic(x) && is.atomic(y))
-  missing <- !x %in% y
-  if (any(missing)) {
-    stop(sprintf(
-      "The following %s%s not exist: %s",
-      type,
-      ifelse(length(missing) == 1, " does", "s do"),
-      glue::glue_collapse(x[missing], sep = ", ", last = " and ")
-    ), call. = FALSE)
-  }
-  TRUE
+# For use in read-only R6 active bindings
+read_only_error <- function(field_name) {
+  stop(
+    sprintf("'%s' is a read-only field.", field_name),
+    call. = FALSE
+  )
 }
 
 SOMA_OBJECT_TYPE_METADATA_KEY <- "soma_object_type"

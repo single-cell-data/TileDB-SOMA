@@ -1,3 +1,4 @@
+import datetime
 from contextlib import ExitStack
 from typing import Any, Generic, MutableMapping, Optional, Type, TypeVar
 
@@ -8,6 +9,8 @@ from typing_extensions import Self
 
 from . import _constants, _tdb_handles
 from ._exception import SOMAError
+from ._types import OpenTimestamp
+from ._util import ms_to_datetime
 from .options import SOMATileDBContext
 
 _WrapperType_co = TypeVar(
@@ -37,19 +40,23 @@ class TileDBObject(somacore.SOMAObject, Generic[_WrapperType_co]):
         uri: str,
         mode: options.OpenMode = "r",
         *,
+        tiledb_timestamp: Optional[OpenTimestamp] = None,
         context: Optional[SOMATileDBContext] = None,
         platform_config: Optional[options.PlatformConfig] = None,
     ) -> Self:
-        """Opens this specific type of SOMA object.
+        """Opens this specific type of SOMA object [lifecycle: experimental].
 
         :param uri: The URI to open.
         :param mode: The mode to open the object in.
             ``r``: Open for reading only (cannot write).
             ``w``: Open for writing only (cannot read).
+        :param tiledb_timestamp: The TileDB timestamp to open this object at,
+            measured in milliseconds since the Unix epoch.
+            When unset (the default), the current time is used.
         """
         del platform_config  # unused
         context = context or SOMATileDBContext()
-        handle = cls._wrapper_type.open(uri, mode, context)
+        handle = cls._wrapper_type.open(uri, mode, context, tiledb_timestamp)
         return cls(
             handle,
             _dont_call_this_use_create_or_open_instead="tiledbsoma-internal-code",
@@ -114,33 +121,50 @@ class TileDBObject(somacore.SOMAObject, Generic[_WrapperType_co]):
     @property
     def uri(self) -> str:
         """
-        Accessor for the object's storage URI
+        Accessor for the object's storage URI [lifecycle: experimental].
         """
         return self._handle.uri
 
     def close(self) -> None:
         """
-        Release any resources held while the object is open.
+        Release any resources held while the object is open [lifecycle: experimental].
         Closing an already-closed object is a no-op.
         """
         self._close_stack.close()
 
     @property
     def closed(self) -> bool:
-        """True if the object has been closed. False if it is still open."""
+        """True if the object has been closed. False if it is still open [lifecycle: experimental]."""
         return self._handle.closed
 
     @property
     def mode(self) -> options.OpenMode:
-        """The mode this object was opened in, either ``r`` or ``w``."""
+        """The mode this object was opened in, either ``r`` or ``w`` [lifecycle: experimental]."""
         return self._handle.mode
 
+    @property
+    def tiledb_timestamp(self) -> datetime.datetime:
+        """The time that this object was opened in UTC."""
+        return ms_to_datetime(self.tiledb_timestamp_ms)
+
+    @property
+    def tiledb_timestamp_ms(self) -> int:
+        """The time this object was opened, as millis since the Unix epoch."""
+        return self._handle.timestamp_ms
+
     @classmethod
-    def exists(cls, uri: str, context: Optional[SOMATileDBContext] = None) -> bool:
-        """Finds whether an object of this type exists at the given URI."""
+    def exists(
+        cls,
+        uri: str,
+        context: Optional[SOMATileDBContext] = None,
+        tiledb_timestamp: Optional[OpenTimestamp] = None,
+    ) -> bool:
+        """Finds whether an object of this type exists at the given URI.
+        [lifecycle: experimental].
+        """
         context = context or SOMATileDBContext()
         try:
-            with cls._wrapper_type.open(uri, "r", context) as hdl:
+            with cls._wrapper_type.open(uri, "r", context, tiledb_timestamp) as hdl:
                 md_type = hdl.metadata.get(_constants.SOMA_OBJECT_TYPE_METADATA_KEY)
                 if not isinstance(md_type, str):
                     return False

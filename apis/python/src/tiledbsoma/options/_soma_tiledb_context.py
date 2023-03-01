@@ -1,8 +1,13 @@
-from typing import Any, Dict, Optional, Tuple, Union
+import datetime
+import time
+from typing import Any, Dict, Optional, Union
 
 import attrs
 import tiledb
 from typing_extensions import Self
+
+from .._types import OpenTimestamp
+from .._util import ms_to_datetime, to_timestamp_ms
 
 
 def _build_default_tiledb_ctx() -> tiledb.Ctx:
@@ -20,6 +25,12 @@ def _build_default_tiledb_ctx() -> tiledb.Ctx:
     return tiledb.Ctx(cfg)
 
 
+def _maybe_timestamp_ms(input: Optional[OpenTimestamp]) -> Optional[int]:
+    if input is None:
+        return None
+    return to_timestamp_ms(input)
+
+
 @attrs.define(frozen=True, kw_only=True)
 class SOMATileDBContext:
     """
@@ -31,15 +42,24 @@ class SOMATileDBContext:
 
     tiledb_ctx: tiledb.Ctx = _build_default_tiledb_ctx()
 
-    timestamp: Optional[int] = attrs.field(default=None)
+    timestamp_ms: Optional[int] = attrs.field(
+        default=None, converter=_maybe_timestamp_ms, alias="timestamp"
+    )
     """
-    Timestamp for operations on SOMA objects, in milliseconds since Unix epoch.
+    Default timestamp for operations on SOMA objects, in millis since the Unix epoch.
 
-    ``None``, the default, does not provide cross-object timestamp consistency:
+    WARNING: This should not be set unless you are *absolutely* sure you want to
+    use the same timestamp across multiple operations. If multiple writes to the
+    same object are performed at the same timestamp, they have no defined order.
+    In most cases, it is better to pass a timestamp to a single ``open`` call,
+    or to simply use the default behavior.
 
-    - **Reads** will see data as of the time that the individual TileDB object
-      is opened.
-    - **Writes** will be recorded as of when the TileDB object is closed.
+    This is used when a timestamp is not provided to an ``open`` operation.
+
+    ``None``, the default, sets the timestamp on each root ``open`` operation.
+    That is, if you ``open`` a collection, and access individual members of the
+    collection through indexing or ``add_new``, the timestamp of all of those
+    operations will be that of the time you called ``open``.
 
     If a value is passed, that timestamp (representing milliseconds since
     the Unix epoch) is used as the timestamp to record all operations.
@@ -49,60 +69,17 @@ class SOMATileDBContext:
     when *each* object is opened.
     """
 
-    timestamp_start: int = 0
-    """
-    Timestamp range start for operations on SOMA objects. This is usually zero
-    except for specific, unusual query requirements. This has no effect on
-    timestamps used in writing.
-    """
-
-    @timestamp.validator
-    def _validate_timestamps(self, _: Any, __: Any) -> None:
-        if self.timestamp is None:
-            if self.timestamp_start:
-                raise ValueError(
-                    "SOMATileDBContext: if the current `timestamp` is None,"
-                    " the `timestamp_start` cannot be set."
-                )
-        elif not 0 <= self.timestamp_start <= self.timestamp:
-            raise ValueError("SOMATileDBContext: invalid read timestamp range")
-
-    _group_tiledb_ctx_: Optional[tiledb.Ctx] = attrs.field(init=False, default=None)
-    """Cache for the context used to open Groups."""
-
     @property
-    def _group_tiledb_ctx(self) -> tiledb.Ctx:
-        """Internal-only context specifically for Group operations.
-
-        Unlike Arrays, Groups do not take a ``timestamp`` argument and need
-        their timestamps set in their context. This should go away if/when
-        :class:`tiledb.Group` starts taking a timestamp argument like
-        :func:`tiledb.open`.
-        """
-        if self._group_tiledb_ctx_:
-            return self._group_tiledb_ctx_
-        if self.timestamp is None:
-            ctx = self.tiledb_ctx
-        else:
-            ctx = group_timestamp_ctx(
-                self.tiledb_ctx,
-                timestamp_start=self.timestamp_start,
-                timestamp=self.timestamp,
-            )
-        object.__setattr__(self, "_group_tiledb_ctx_", ctx)
-        return ctx
-
-    def _timestamp_arg(self) -> Optional[Tuple[int, int]]:
-        """The value to use as the ``timestamp`` argument to ``tiledb.open``."""
-        if self.timestamp is None:
+    def timestamp(self) -> Optional[datetime.datetime]:
+        if self.timestamp_ms is None:
             return None
-        return (self.timestamp_start, self.timestamp)
+        return ms_to_datetime(self.timestamp_ms)
 
     def replace(
         self, *, tiledb_config: Optional[Dict[str, Any]] = None, **changes: Any
     ) -> Self:
         """
-        Create a copy of the context, merging changes.
+        Create a copy of the context, merging changes [lifecycle: experimental].
 
         Parameters
         ----------
@@ -124,12 +101,10 @@ class SOMATileDBContext:
             changes["tiledb_ctx"] = tiledb.Ctx(config=new_config)
         return attrs.evolve(self, **changes)
 
-
-def group_timestamp_ctx(
-    ctx: tiledb.Ctx, *, timestamp_start: int, timestamp: int
-) -> tiledb.Ctx:
-    """Builds a TileDB context to open groups at the given timestamp."""
-    group_cfg = ctx.config().dict()
-    group_cfg["sm.group.timestamp_start"] = timestamp_start
-    group_cfg["sm.group.timestamp_end"] = timestamp
-    return tiledb.Ctx(group_cfg)
+    def _open_timestamp_ms(self, in_timestamp: Optional[OpenTimestamp]) -> int:
+        """Returns the real timestamp that should be used to open an object."""
+        if in_timestamp is not None:
+            return to_timestamp_ms(in_timestamp)
+        if self.timestamp_ms is not None:
+            return self.timestamp_ms
+        return int(time.time() * 1000)
