@@ -11,6 +11,7 @@ from typing_extensions import Self
 
 from . import _arrow_types, _util
 from ._tiledb_array import TileDBArray
+from ._types import OpenTimestamp
 from .options._soma_tiledb_context import SOMATileDBContext
 from .options._tiledb_create_options import TileDBCreateOptions
 
@@ -29,6 +30,7 @@ class NDArray(TileDBArray, somacore.NDArray):
         shape: Sequence[Union[int, None]],
         platform_config: Optional[options.PlatformConfig] = None,
         context: Optional[SOMATileDBContext] = None,
+        tiledb_timestamp: Optional[OpenTimestamp] = None,
     ) -> Self:
         """
         Create a SOMA ``NDArray`` at the given URI [lifecycle: experimental].
@@ -49,6 +51,10 @@ class NDArray(TileDBArray, somacore.NDArray):
 
         :param platform_config: Platform-specific options used to create this Array,
             provided via ``{"tiledb": {"create": ...}}`` nested keys.
+
+        :param tiledb_timestamp: If specified, overrides the default timestamp
+            used to open this object. If unset, uses the timestamp provided by
+            the context.
         """
         # Implementor note: we carefully say "maximum possible int64 size" rather than 2**63-1. The
         # reason that the latter, while temptingly simple, is actually untrue is that tiledb core
@@ -65,7 +71,7 @@ class NDArray(TileDBArray, somacore.NDArray):
             context,
             is_sparse=cls.is_sparse,
         )
-        handle = cls._create_internal(uri, schema, context)
+        handle = cls._create_internal(uri, schema, context, tiledb_timestamp)
         return cls(
             handle,
             _dont_call_this_use_create_or_open_instead="tiledbsoma-internal-code",

@@ -1,3 +1,4 @@
+import datetime
 import pathlib
 from typing import TYPE_CHECKING, Any, List, Sequence, Tuple, Union
 
@@ -30,6 +31,12 @@ NTuple = Tuple[int, ...]
 
 IngestMode = Literal["write", "schema_only", "resume"]  # for static-analysis checks
 INGEST_MODES = ("write", "schema_only", "resume")  # for run-time checks
+
+OpenTimestamp = Union[int, datetime.datetime]
+"""Types that can be used as a timestamp to open a TileDB object.
+
+Integers are treated as milliseconds since the Unix epoch.
+"""
 
 ArrowReadResult = Union[
     pa.Table,
