@@ -48,6 +48,12 @@ class SOMATileDBContext:
     """
     Default timestamp for operations on SOMA objects, in millis since the Unix epoch.
 
+    WARNING: This should not be set unless you are *absolutely* sure you want to
+    use the same timestamp across multiple operations. If multiple writes to the
+    same object are performed at the same timestamp, they have no defined order.
+    In most cases, it is better to pass a timestamp to a single ``open`` call,
+    or to simply use the default behavior.
+
     This is used when a timestamp is not provided to an ``open`` operation.
 
     ``None``, the default, sets the timestamp on each root ``open`` operation.

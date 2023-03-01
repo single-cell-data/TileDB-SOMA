@@ -252,7 +252,7 @@ def ms_to_datetime(millis: int) -> datetime.datetime:
     """Returns the millisecond timestamp as a timezone-aware UTC datetime.
 
     This may raise an exception, since millis may be outside the representable
-    range for
+    range for a Python datetime.
     """
     secs, millis = divmod(millis, 1000)
     dt = datetime.datetime.fromtimestamp(secs, tz=datetime.timezone.utc)
