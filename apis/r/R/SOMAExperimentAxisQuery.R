@@ -93,7 +93,7 @@ SOMAExperimentAxisQuery <- R6::R6Class(
     X = function(layer_name) {
       stopifnot(
         "Must specify an X layer name" = !missing(layer_name),
-        "Must specify a single layer name" = is_scalar_character(layer_name),
+        "Must specify a single X layer name" = is_scalar_character(layer_name),
         assert_subset(layer_name, self$ms$X$names(), "layer")
       )
 
