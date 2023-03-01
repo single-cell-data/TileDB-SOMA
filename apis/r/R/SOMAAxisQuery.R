@@ -25,7 +25,7 @@ SOMAAxisQuery <- R6Class(
     value_filter = NULL,
 
     #' @description Create a new `SOMAAxisQuery` object.
-    #' @param coords Optional indices specifying the rows to read; either a
+    #' @param coords Optional indices specifying the rows to read: either a
     #' vector of the appropriate type or a named list of vectors corresponding
     #' to each dimension.
     #' @param value_filter Optional string containing a logical expression that
