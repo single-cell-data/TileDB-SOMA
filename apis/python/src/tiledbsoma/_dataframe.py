@@ -103,6 +103,14 @@ class DataFrame(TileDBArray, somacore.DataFrame):
         :param tiledb_timestamp: If specified, overrides the default timestamp
             used to open this object. If unset, uses the timestamp provided by
             the context.
+
+        :raises TypeError: if the ``schema`` parameter specifies an unsupported type,
+            or if ``index_column_names`` specifies a non-indexable column.
+
+        :raises ValueError: if the ``index_column_names`` is malformed or specifies
+            an undefined column name.
+        :raises ValueError: if the ``schema`` specifies illegal column names.
+        :raises TileDBError: if unable to create the underlying object.
         """
         context = context or SOMATileDBContext()
         schema = _canonicalize_schema(schema, index_column_names)
@@ -175,6 +183,8 @@ class DataFrame(TileDBArray, somacore.DataFrame):
         :param value_filter: an optional [value filter] to apply to the results.
             Defaults to no filter.
 
+        :raises SOMAError: if ``value_filter`` can not be parsed.
+
         **Indexing**: the ``coords`` parameter will support, per dimension: a list of values of the type of the indexed column.
 
         Acceptable ways to index
@@ -230,6 +240,8 @@ class DataFrame(TileDBArray, somacore.DataFrame):
         :param values: An Arrow table containing all columns, including
             the index columns. The schema for the values must match
             the schema for the ``DataFrame``.
+
+        :raises TypeError: if the ``values`` parameter is an unsupported type.
         """
         _util.check_type("values", values, (pa.Table,))
 
@@ -485,7 +497,7 @@ def _canonicalize_schema(
         if index_column_name not in schema_names_set:
             schema_names_string = "{}".format(list(schema_names_set))
             raise ValueError(
-                f"All index names must be dataframe schema: '{index_column_name}' not in {schema_names_string}"
+                f"All index names must be defined in the dataframe schema: '{index_column_name}' not in {schema_names_string}"
             )
         if schema.field(index_column_name).type not in [
             pa.int8(),

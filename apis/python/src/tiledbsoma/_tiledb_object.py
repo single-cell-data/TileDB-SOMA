@@ -53,6 +53,11 @@ class TileDBObject(somacore.SOMAObject, Generic[_WrapperType_co]):
         :param tiledb_timestamp: The TileDB timestamp to open this object at,
             measured in milliseconds since the Unix epoch.
             When unset (the default), the current time is used.
+
+        :raises DoesNotExistError: if the object named by URI can not be accessed.
+        :raises SOMAError: if the underlying TileDB object specified by ``uri`` is
+            not recognized as a SOMA object.
+        :raises ValueError: if the user-provided ``mode`` is invalid.
         """
         del platform_config  # unused
         context = context or SOMATileDBContext()

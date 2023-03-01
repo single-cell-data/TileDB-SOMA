@@ -135,6 +135,8 @@ class DenseNDArray(NDArray, somacore.DenseNDArray):
         the same shape as ``coords``, and the type must match the DenseNDArray.
         :param platform_config: Optional platform-specific options to use
             in this write operation (currently unused).
+
+        :raises TypeError: if the ``values`` parameter is an unsupported type.
         """
         _util.check_type("values", values, (pa.Tensor,))
 
