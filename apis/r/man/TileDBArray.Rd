@@ -5,18 +5,10 @@
 \title{TileDB Array Base Class}
 \description{
 Base class for representing an individual TileDB array.
-}
-\details{
-\subsection{Initialization}{
-
-Initializing a \code{TileDBArray} object does not automatically create a new array
-at the specified \code{uri} if one does not already exist because we do not know
-what the schema will be. Arrays are only created by child classes, which
-populate the private \code{create_empty_array()} and \code{ingest_data()} methods. (lifecycle: experimental)
-}
+(lifecycle: experimental)
 }
 \section{Super class}{
-\code{\link[tiledbsoma:TileDBObject]{tiledbsoma::TileDBObject}} -> \code{TileDBArray}
+\code{tiledbsoma::TileDBObject} -> \code{TileDBArray}
 }
 \section{Methods}{
 \subsection{Public methods}{
@@ -32,8 +24,9 @@ populate the private \code{create_empty_array()} and \code{ingest_data()} method
 \item \href{#method-TileDBArray-ndim}{\code{TileDBArray$ndim()}}
 \item \href{#method-TileDBArray-attributes}{\code{TileDBArray$attributes()}}
 \item \href{#method-TileDBArray-dimnames}{\code{TileDBArray$dimnames()}}
-\item \href{#method-TileDBArray-fragment_count}{\code{TileDBArray$fragment_count()}}
 \item \href{#method-TileDBArray-attrnames}{\code{TileDBArray$attrnames()}}
+\item \href{#method-TileDBArray-colnames}{\code{TileDBArray$colnames()}}
+\item \href{#method-TileDBArray-fragment_count}{\code{TileDBArray$fragment_count()}}
 \item \href{#method-TileDBArray-set_query}{\code{TileDBArray$set_query()}}
 \item \href{#method-TileDBArray-reset_query}{\code{TileDBArray$reset_query()}}
 \item \href{#method-TileDBArray-clone}{\code{TileDBArray$clone()}}
@@ -213,16 +206,6 @@ A character vector with the array's dimension names
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-TileDBArray-fragment_count"></a>}}
-\if{latex}{\out{\hypertarget{method-TileDBArray-fragment_count}{}}}
-\subsection{Method \code{fragment_count()}}{
-Get number of fragments in the array (lifecycle: experimental)
-\subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{TileDBArray$fragment_count()}\if{html}{\out{</div>}}
-}
-
-}
-\if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-TileDBArray-attrnames"></a>}}
 \if{latex}{\out{\hypertarget{method-TileDBArray-attrnames}{}}}
 \subsection{Method \code{attrnames()}}{
@@ -234,6 +217,30 @@ Retrieve attribute names (lifecycle: experimental)
 \subsection{Returns}{
 A character vector with the array's attribute names
 }
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-TileDBArray-colnames"></a>}}
+\if{latex}{\out{\hypertarget{method-TileDBArray-colnames}{}}}
+\subsection{Method \code{colnames()}}{
+Retrieve the names of all columns, including dimensions and
+attributes (lifecycle: experimental)
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{TileDBArray$colnames()}\if{html}{\out{</div>}}
+}
+
+\subsection{Returns}{
+A character vector with the array's column names
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-TileDBArray-fragment_count"></a>}}
+\if{latex}{\out{\hypertarget{method-TileDBArray-fragment_count}{}}}
+\subsection{Method \code{fragment_count()}}{
+Get number of fragments in the array \link{lifecycle: experimental}
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{TileDBArray$fragment_count()}\if{html}{\out{</div>}}
+}
+
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-TileDBArray-set_query"></a>}}
