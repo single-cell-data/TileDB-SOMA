@@ -33,8 +33,8 @@ test_that("returns all coordinates by default", {
   expect_equal(query$n_vars, n_var)
 
   # X
-  expect_error(query$X(), "Must specify a layer name")
-  expect_error(query$X(c("a", "b")), "Must specify a single layer name")
+  expect_error(query$X(), "Must specify an X layer name")
+  expect_error(query$X(c("a", "b")), "Must specify a single X layer name")
   expect_error(query$X("foo"), "The following layer does not exist: foo")
 
   expect_true(
