@@ -42,7 +42,8 @@ Imports:
     Rcpp,
     dplyr,
     data.table,
-    spdl
+    spdl,
+    rlang
 LinkingTo:
     Rcpp,
     RcppSpdlog
