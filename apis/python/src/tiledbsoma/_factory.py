@@ -61,7 +61,7 @@ def open(
     soma_type: Union[Type["_tiledb_object.AnyTileDBObject"], str, None] = None,
     context: Optional[SOMATileDBContext] = None,
 ) -> "_tiledb_object.AnyTileDBObject":
-    """Opens a TileDB SOMA object.
+    """Opens a TileDB SOMA object [lifecycle: experimental].
 
     :param uri: The URI to open.
     :param mode: The mode to open in: ``r`` to read (default), ``w`` to write.

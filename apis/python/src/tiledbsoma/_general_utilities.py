@@ -45,7 +45,8 @@ def get_storage_engine() -> str:
 
 def show_package_versions() -> None:
     """
-    Nominal use is for bug reports, so issue filers and issue fixers can be on the same page.
+    Nominal use is for bug reports, so issue filers and issue fixers can be on
+    the same page [lifecycle: experimental].
     """
     print("tiledbsoma.__version__   ", get_implementation_version())
     print("tiledb.__version__       ", tiledb.__version__)

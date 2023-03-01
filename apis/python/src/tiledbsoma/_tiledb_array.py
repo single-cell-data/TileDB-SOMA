@@ -27,7 +27,7 @@ class TileDBArray(TileDBObject[_tdb_handles.ArrayWrapper]):
     @property
     def schema(self) -> pa.Schema:
         """
-        Return data schema, in the form of an Arrow Schema.
+        Return data schema, in the form of an Arrow Schema [lifecycle: experimental].
         """
         return tiledb_schema_to_arrow(self._tiledb_array_schema())
 

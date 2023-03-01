@@ -40,7 +40,7 @@ class TileDBObject(somacore.SOMAObject, Generic[_WrapperType_co]):
         context: Optional[SOMATileDBContext] = None,
         platform_config: Optional[options.PlatformConfig] = None,
     ) -> Self:
-        """Opens this specific type of SOMA object.
+        """Opens this specific type of SOMA object [lifecycle: experimental].
 
         :param uri: The URI to open.
         :param mode: The mode to open the object in.
@@ -114,30 +114,30 @@ class TileDBObject(somacore.SOMAObject, Generic[_WrapperType_co]):
     @property
     def uri(self) -> str:
         """
-        Accessor for the object's storage URI
+        Accessor for the object's storage URI [lifecycle: experimental].
         """
         return self._handle.uri
 
     def close(self) -> None:
         """
-        Release any resources held while the object is open.
+        Release any resources held while the object is open [lifecycle: experimental].
         Closing an already-closed object is a no-op.
         """
         self._close_stack.close()
 
     @property
     def closed(self) -> bool:
-        """True if the object has been closed. False if it is still open."""
+        """True if the object has been closed. False if it is still open [lifecycle: experimental]."""
         return self._handle.closed
 
     @property
     def mode(self) -> options.OpenMode:
-        """The mode this object was opened in, either ``r`` or ``w``."""
+        """The mode this object was opened in, either ``r`` or ``w`` [lifecycle: experimental]."""
         return self._handle.mode
 
     @classmethod
     def exists(cls, uri: str, context: Optional[SOMATileDBContext] = None) -> bool:
-        """Finds whether an object of this type exists at the given URI."""
+        """Finds whether an object of this type exists at the given URI [lifecycle: experimental]."""
         context = context or SOMATileDBContext()
         try:
             with cls._wrapper_type.open(uri, "r", context) as hdl:

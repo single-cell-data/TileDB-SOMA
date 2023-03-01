@@ -124,14 +124,14 @@ class DataFrame(TileDBArray, somacore.DataFrame):
     @property
     def index_column_names(self) -> Tuple[str, ...]:
         """
-        Return index (dimension) column names.
+        Return index (dimension) column names [lifecycle: experimental].
         """
         return self._tiledb_dim_names()
 
     @property
     def count(self) -> int:
         """
-        Return the number of rows in the dataframe. Same as `len(df)`.
+        Return the number of rows in the dataframe. Same as `len(df)` [lifecycle: experimental].
         """
         self._check_open_read()
         return cast(int, self._soma_reader().nnz())
