@@ -10,7 +10,7 @@
 #' ## X Layer Support
 #'
 #' Slicing on [`SOMASparseNDArray`] `X` matrices is supported;
-#' [`SOMADenseNDArray`] is not supported at this time.
+#' slicing on [`SOMADenseNDArray`] is not supported at this time.
 #'
 #' ## Result Size
 #' `SOMAExperimentAxisQuery` query class assumes it can store the full result of
