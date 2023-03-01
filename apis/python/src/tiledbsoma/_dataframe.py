@@ -654,7 +654,11 @@ def _find_extent_for_domain(
     dtype: Any,
     domain: Tuple[Any, Any],
 ) -> Any:
-    """Helper function for _build_tiledb_schema."""
+    """
+    Helper function for _build_tiledb_schema. Returns a tile extent that is
+    small enough for the index-column type, and that also fits within the
+    user-specified domain (if any).
+    """
 
     # Default 2048 mods to 0 for 8-bit types and 0 is an invalid extent
     extent = tiledb_create_options.dim_tile(index_column_name)
@@ -664,11 +668,35 @@ def _find_extent_for_domain(
     if isinstance(dtype, str):
         return extent
 
-    if not (np.issubdtype(dtype, NPInteger) or np.issubdtype(dtype, NPFloating)):
-        return extent
-
     lo, hi = domain
     if lo is None or hi is None:
         return extent
 
-    return min(extent, hi - lo + 1)
+    if np.issubdtype(dtype, NPInteger) or np.issubdtype(dtype, NPFloating):
+        return min(extent, hi - lo + 1)
+
+    if dtype == "datetime64[s]":
+        ilo = int(lo.astype("int64"))
+        ihi = int(hi.astype("int64"))
+        iextent = min(extent, ihi - ilo + 1)
+        return np.datetime64(iextent, "s")
+
+    if dtype == "datetime64[ms]":
+        ilo = int(lo.astype("int64"))
+        ihi = int(hi.astype("int64"))
+        iextent = min(extent, ihi - ilo + 1)
+        return np.datetime64(iextent, "ms")
+
+    if dtype == "datetime64[us]":
+        ilo = int(lo.astype("int64"))
+        ihi = int(hi.astype("int64"))
+        iextent = min(extent, ihi - ilo + 1)
+        return np.datetime64(iextent, "us")
+
+    if dtype == "datetime64[ns]":
+        ilo = int(lo.astype("int64"))
+        ihi = int(hi.astype("int64"))
+        iextent = min(extent, ihi - ilo + 1)
+        return np.datetime64(iextent, "ns")
+
+    return extent

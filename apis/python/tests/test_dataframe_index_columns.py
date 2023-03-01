@@ -1565,6 +1565,19 @@ def arrow_table():
             {},
         ],
         [
+            "timestamp-sec-all-shaped",
+            ["tss"],
+            [
+                [
+                    np.datetime64(946684800, "s"),
+                    np.datetime64(946684809, "s"),
+                ]
+            ],
+            [],
+            "default01234",
+            {},
+        ],
+        [
             "tss-py-list",
             ["tss"],
             None,
@@ -1656,38 +1669,51 @@ def arrow_table():
             {},
         ],
         [
+            "timestamp-msec-all-shaped",
+            ["tsms"],
+            [
+                [
+                    np.datetime64(946684800000, "ms"),
+                    np.datetime64(946684800009, "ms"),
+                ]
+            ],
+            [],
+            "default01234",
+            {},
+        ],
+        [
             "tsms-py-list",
             ["tsms"],
-            [[np.datetime64(946684800002, "ms"), np.datetime64(946684800003, "ms")]],
             None,
+            [[np.datetime64(946684800002, "ms"), np.datetime64(946684800003, "ms")]],
             "default23",
             {},
         ],
         [
             "tsms-py-tuple",
             ["tsms"],
-            [[np.datetime64(946684800002, "ms"), np.datetime64(946684800003, "ms")]],
             None,
+            [[np.datetime64(946684800002, "ms"), np.datetime64(946684800003, "ms")]],
             "default23",
             {},
         ],
         [
             "tsms-py-slice",
             ["tsms"],
+            None,
             [
                 slice(
                     np.datetime64(946684800002, "ms"), np.datetime64(946684800003, "ms")
                 )
             ],
-            None,
             "default23",
             {},
         ],
         [
             "tsms-py-left-none-slice",
             ["tsms"],
-            [slice(None, np.datetime64(946684800002, "ms"))],
             None,
+            [slice(None, np.datetime64(946684800002, "ms"))],
             {
                 "soma_joinid": pa.array([0, 1, 2], pa.int64()),
                 "string": pa.array(["apple", "ball", "cat"], pa.large_string()),
@@ -1697,8 +1723,8 @@ def arrow_table():
         [
             "tsms-py-right-none-slice",
             ["tsms"],
-            [slice(np.datetime64(946684800002, "ms"), None)],
             None,
+            [slice(np.datetime64(946684800002, "ms"), None)],
             {
                 "soma_joinid": pa.array([2, 3, 4], pa.int64()),
                 "string": pa.array(["cat", "dog", "egg"], pa.large_string()),
@@ -1739,8 +1765,8 @@ def arrow_table():
         [
             "tsms-pa-array-typed",
             ["tsms"],
-            [pa.array([946684800002, 946684800003], pa.timestamp("ms"))],
             None,
+            [pa.array([946684800002, 946684800003], pa.timestamp("ms"))],
             "default23",
             {},
         ],
@@ -1749,6 +1775,19 @@ def arrow_table():
             "TIMESTAMP-USEC-ALL",
             ["tsus"],
             None,
+            [],
+            "default01234",
+            {},
+        ],
+        [
+            "timestamp-usec-all-shaped",
+            ["tsus"],
+            [
+                [
+                    np.datetime64(946684800000000, "us"),
+                    np.datetime64(946684800000009, "us"),
+                ]
+            ],
             [],
             "default01234",
             {},
@@ -1795,8 +1834,8 @@ def arrow_table():
         [
             "tsus-py-left-none-slice",
             ["tsus"],
-            [slice(None, np.datetime64(946684800000002, "us"))],
             None,
+            [slice(None, np.datetime64(946684800000002, "us"))],
             {
                 "soma_joinid": pa.array([0, 1, 2], pa.int64()),
                 "string": pa.array(["apple", "ball", "cat"], pa.large_string()),
@@ -1806,8 +1845,8 @@ def arrow_table():
         [
             "tsus-py-right-none-slice",
             ["tsus"],
-            [slice(np.datetime64(946684800000002, "us"), None)],
             None,
+            [slice(np.datetime64(946684800000002, "us"), None)],
             {
                 "soma_joinid": pa.array([2, 3, 4], pa.int64()),
                 "string": pa.array(["cat", "dog", "egg"], pa.large_string()),
@@ -1848,8 +1887,8 @@ def arrow_table():
         [
             "tsus-pa-array-typed",
             ["tsus"],
-            [pa.array([946684800000002, 946684800000003], pa.timestamp("us"))],
             None,
+            [pa.array([946684800000002, 946684800000003], pa.timestamp("us"))],
             "default23",
             {},
         ],
@@ -1858,6 +1897,19 @@ def arrow_table():
             "TIMESTAMP-NSEC-ALL",
             ["tsns"],
             None,
+            [],
+            "default01234",
+            {},
+        ],
+        [
+            "timestamp-nsec-all-shaped",
+            ["tsns"],
+            [
+                [
+                    np.datetime64(946684800000000000, "ns"),
+                    np.datetime64(946684800000000009, "ns"),
+                ]
+            ],
             [],
             "default01234",
             {},
@@ -1904,8 +1956,8 @@ def arrow_table():
         [
             "tsns-py-left-none-slice",
             ["tsns"],
-            [slice(None, np.datetime64(946684800000000002, "ns"))],
             None,
+            [slice(None, np.datetime64(946684800000000002, "ns"))],
             {
                 "soma_joinid": pa.array([0, 1, 2], pa.int64()),
                 "string": pa.array(["apple", "ball", "cat"], pa.large_string()),
@@ -1915,8 +1967,8 @@ def arrow_table():
         [
             "tsns-py-right-none-slice",
             ["tsns"],
-            [slice(np.datetime64(946684800000000002, "ns"), None)],
             None,
+            [slice(np.datetime64(946684800000000002, "ns"), None)],
             {
                 "soma_joinid": pa.array([2, 3, 4], pa.int64()),
                 "string": pa.array(["cat", "dog", "egg"], pa.large_string()),
@@ -1957,8 +2009,8 @@ def arrow_table():
         [
             "tsns-pa-array-typed",
             ["tsns"],
-            [pa.array([946684800000000002, 946684800000000003], pa.timestamp("ns"))],
             None,
+            [pa.array([946684800000000002, 946684800000000003], pa.timestamp("ns"))],
             "default23",
             {},
         ],
