@@ -546,7 +546,7 @@ def _build_tiledb_schema(
     """Converts an Arrow schema into a TileDB ArraySchema for creation."""
 
     if domains is None:
-        domains = tuple([None for _ in index_column_names])
+        domains = tuple(None for _ in index_column_names)
     else:
         ndom = len(domains)
         nidx = len(index_column_names)
