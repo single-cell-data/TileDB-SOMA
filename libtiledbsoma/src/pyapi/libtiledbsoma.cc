@@ -406,9 +406,9 @@ PYBIND11_MODULE(libtiledbsoma, m) {
 
                     } else if (
                         !strcmp(arrow_schema.format, "tss:") ||
-                        !strcmp(arrow_schema.format, "tsms:") ||
-                        !strcmp(arrow_schema.format, "tsus:") ||
-                        !strcmp(arrow_schema.format, "tsns:")) {
+                        !strcmp(arrow_schema.format, "tsm:") ||
+                        !strcmp(arrow_schema.format, "tsu:") ||
+                        !strcmp(arrow_schema.format, "tsn:")) {
                         tcb::span<int64_t> data{
                             (int64_t*)arrow_array.buffers[data_index],
                             (uint64_t)arrow_array.length};
