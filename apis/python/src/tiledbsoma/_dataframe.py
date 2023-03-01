@@ -98,13 +98,16 @@ class DataFrame(TileDBArray, somacore.DataFrame):
             All named columns must exist in the schema, and at least one
             index column name is required.
 
-        :param domains: An optional sequence of min-max tuples specifying the
-            domain of each index column, including room for any intended future
-            appends.  If provided, this sequence must have the same length as
-            `index_column_names`, and the index-column domains will be as specified.
-            If omitted entirely, or if ``None`` in a given dimension, the
-            corresponding index-column domain will use the maximum possible values.
-            This makes a `SOMADataFrame` growable.
+        :param domains: An optional sequence of tuples specifying the domain of each
+            index column. Each tuple should be a pair consisting of the minimum and
+            maximum values storable in the index column. For example, if there is a
+            single int64-valued index column, then ``domains`` might be ``[(100,
+            200)]`` to indicate that values between 100 and 200, inclusive, can be
+            stored in that column.  If provided, this sequence must have the same
+            length as `index_column_names`, and the index-column domains will be as
+            specified.  If omitted entirely, or if ``None`` in a given dimension,
+            the corresponding index-column domain will use the maximum possible
+            values.  This makes a `SOMADataFrame` growable.
 
         :param platform_config: Platform-specific options used to create this
             DataFrame, provided via ``{"tiledb": {"create": ...}}`` nested keys.
