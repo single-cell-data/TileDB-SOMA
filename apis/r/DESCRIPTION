@@ -43,8 +43,7 @@ Imports:
     arch (>= 0.0.2),
     dplyr,
     data.table,
-    spdl,
-    rlang
+    spdl
 LinkingTo:
     Rcpp,
     RcppSpdlog,
