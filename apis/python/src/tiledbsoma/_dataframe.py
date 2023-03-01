@@ -556,15 +556,14 @@ def _build_tiledb_schema(
             )
 
     dims = []
-    for i, index_column_name in enumerate(index_column_names):
+    for index_column_name, domain in zip(index_column_names, domains):
         pa_type = schema.field(index_column_name).type
         dtype = _arrow_types.tiledb_type_from_arrow_type(
             pa_type, is_indexed_column=True
         )
 
-        domain: Tuple[Any, Any]
-        if domains[i] is not None:
-            domain = domains[i]  # type: ignore[assignment]
+        if domain is not None:
+            pass  # User-specified; go with it
 
         elif isinstance(dtype, str):
             domain = None, None
