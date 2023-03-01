@@ -103,15 +103,24 @@ Examples:
 
 ## Notes
 
-A build system with `libfmt` and `libspdlog` installed may conflict with the required versions for `tiledbsoma`. Suggestion:
+A build system with `libfmt`, `libspdlog`, or `tiledb` installed may conflict with the required
+versions for `tiledbsoma`. Suggestion is for you to not install these, and to let this project's
+superbuild install compatiable versions for you.
 
-* Uninstall `libfmt-dev` and `libspdlog-dev`
-* Check the following is gone (and manually remove if necessary) `/usr/lib/*/cmake/spdlog/spdlogConfig.cmake`
+Specifically, uninstall the `libfmt-dev` and `libspdlog-dev` packages (or perhaps named `spdlog` and `fmt`, depending
+on the OS). As well, uninstall the `tiledb` package if you have that separately installed.
 
-Similarly, for MacOS:
+As a pro-tip: check the following is gone (and manually remove if necessary) `/usr/lib/*/cmake/spdlog/spdlogConfig.cmake`
 
-* `brew uninstall spdlog` (if you have it)
-* `brew uninstall fmt` (if you have it)
-* `brew uninstall tiledb` (if you have it from `brew`)
+If you do have reason to have `fmt` and `spdlog` installed, the following is a known-good configuration on Ubuntu 22.04:
 
-All these will be installed for you using compatible versions.
+```
+$ dpkg -l | egrep "lib(spdlog|fmt)" | cut -c-80
+ii  libfmt-dev:amd64                  8.1.1+ds1-2                             am
+ii  libfmt8:amd64                     8.1.1+ds1-2                             am
+ii  libspdlog-dev:amd64               1:1.9.2+ds-0.2                          am
+ii  libspdlog1:amd64                  1:1.9.2+ds-0.2                          am
+```
+
+As for the `tiledb` package, if you have reason to have it installed as a separate package, please use the
+version matching `libtiledbsoma/cmake/Modules/FindTileDB_EP.cmake`.
