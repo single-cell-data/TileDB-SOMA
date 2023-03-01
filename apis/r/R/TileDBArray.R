@@ -1,14 +1,8 @@
 #' TileDB Array Base Class
 #'
-#' @description
-#' Base class for representing an individual TileDB array.
+#' @description Base class for representing an individual TileDB array.
+#' (lifecycle: experimental)
 #'
-#' @details
-#' ## Initialization
-#' Initializing a `TileDBArray` object does not automatically create a new array
-#' at the specified `uri` if one does not already exist because we do not know
-#' what the schema will be. Arrays are only created by child classes, which
-#' populate the private `create_empty_array()` and `ingest_data()` methods. (lifecycle: experimental)
 #' @export
 TileDBArray <- R6::R6Class(
   classname = "TileDBArray",
@@ -126,13 +120,6 @@ TileDBArray <- R6::R6Class(
       )
     },
 
-    #' @description Get number of fragments in the array (lifecycle: experimental)
-    fragment_count = function() {
-      tiledb::tiledb_fragment_info_get_num(
-        tiledb::tiledb_fragment_info(self$uri)
-      )
-    },
-
     #' @description Retrieve attribute names (lifecycle: experimental)
     #' @return A character vector with the array's attribute names
     attrnames = function() {
@@ -141,6 +128,20 @@ TileDBArray <- R6::R6Class(
         FUN = tiledb::name,
         FUN.VALUE = vector("character", 1L),
         USE.NAMES = FALSE
+      )
+    },
+
+    #' @description Retrieve the names of all columns, including dimensions and
+    #' attributes (lifecycle: experimental)
+    #' @return A character vector with the array's column names
+    colnames = function() {
+      c(self$dimnames(), self$attrnames())
+    },
+
+    #' @description Get number of fragments in the array [lifecycle: experimental]
+    fragment_count = function() {
+      tiledb::tiledb_fragment_info_get_num(
+        tiledb::tiledb_fragment_info(self$uri)
       )
     },
 
@@ -239,19 +240,17 @@ TileDBArray <- R6::R6Class(
       private$close()
     },
 
-    # Create empty TileDB array.
-    create_empty_array = function() return(NULL),
-
     open = function(mode) {
       mode <- match.arg(mode, c("READ", "WRITE"))
+      spdl::debug(
+        "Opening {} '{}' in {} mode", self$class(), self$uri, mode
+      )
       invisible(tiledb::tiledb_array_open(self$object, type = mode))
     },
 
     close = function() {
+      spdl::debug("Closing {} '{}'", self$class(), self$uri)
       invisible(tiledb::tiledb_array_close(self$object))
-    },
-
-    # Ingest data into the TileDB array.
-    ingest_data = function() return(NULL)
+    }
   )
 )

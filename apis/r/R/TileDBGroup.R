@@ -20,6 +20,7 @@ TileDBGroup <- R6::R6Class(
     create = function() {
       spdl::info("Creating new {} at '{}'", self$class(), self$uri)
       tiledb::tiledb_group_create(self$uri, ctx = self$ctx)
+      self
     },
 
     #' @description Add new member to the group. (lifecycle: experimental)
@@ -30,7 +31,6 @@ TileDBGroup <- R6::R6Class(
     #' object's URI is relative to the group's URI. If `NULL` (the
     #' default), the object's URI is assumed to be relative unless it is a
     #' `tiledb://` URI.
-    #' @importFrom fs path_rel
     set = function(object, name = NULL, relative = NULL) {
       stopifnot(
         "Only 'TileDBArray' or 'TileDBGroup' objects can be added" =
@@ -46,7 +46,7 @@ TileDBGroup <- R6::R6Class(
       # Because object$uri will always return an absolute URI, we need to
       # make it relative to the collection's URI before adding it
       if (relative) {
-        uri <- fs::path_rel(object$uri, start = self$uri)
+        uri <- make_uri_relative(object$uri, self$uri)
       } else {
         uri <- object$uri
       }
@@ -69,7 +69,7 @@ TileDBGroup <- R6::R6Class(
     #' @returns A `TileDBArray` or `TileDBGroup`.
     get = function(name) {
       stopifnot(is_scalar_character(name))
-      if (is_empty(private$member_cache)) private$update_member_cache()
+      if (is.null(private$member_cache)) private$update_member_cache()
       member <- private$member_cache[[name]]
       if (is.null(member)) {
         stop(sprintf("No member named '%s' found", name), call. = FALSE)
@@ -96,20 +96,20 @@ TileDBGroup <- R6::R6Class(
     #' @description Length in the number of members. (lifecycle: experimental)
     #' @return Scalar `integer`
     length = function() {
-      if (is_empty(private$member_cache)) private$update_member_cache()
+      if (is.null(private$member_cache)) private$update_member_cache()
       length(private$member_cache)
     },
 
     #' @description Retrieve the names of members. (lifecycle: experimental)
     #' @return A `character` vector of member names.
     names = function() {
-      if (is_empty(private$member_cache)) private$update_member_cache()
+      if (is.null(private$member_cache)) private$update_member_cache()
       names(private$member_cache) %||% character(length = 0L)
     },
 
     #' @description Retrieve a `list` of members. (lifecycle: experimental)
     to_list = function() {
-      if (is_empty(private$member_cache)) private$update_member_cache()
+      if (is.null(private$member_cache)) private$update_member_cache()
       private$member_cache
     },
 
@@ -137,6 +137,7 @@ TileDBGroup <- R6::R6Class(
     get_metadata = function(key = NULL) {
       on.exit(private$close())
       private$open("READ")
+      spdl::debug("Retrieving metadata for {} '{}'", self$class(), self$uri)
       if (!is.null(key)) {
         return(tiledb::tiledb_group_get_metadata(self$object, key))
       } else {
@@ -153,6 +154,7 @@ TileDBGroup <- R6::R6Class(
       )
       private$open("WRITE")
       on.exit(private$close())
+      spdl::debug("Writing metadata to {} '{}'", self$class(), self$uri)
       dev_null <- mapply(
         FUN = tiledb::tiledb_group_put_metadata,
         key = names(metadata),
@@ -167,15 +169,19 @@ TileDBGroup <- R6::R6Class(
 
     # @description List of cached group members
     # Initially NULL, once the group is created or opened, this is populated
-    # with list that's empty or contains the group members.
+    # with a list that's empty or contains the group members.
     member_cache = NULL,
 
     open = function(mode) {
       mode <- match.arg(mode, c("READ", "WRITE"))
+      spdl::debug(
+        "Opening {} '{}' in {} mode", self$class(), self$uri, mode
+      )
       invisible(tiledb::tiledb_group_open(self$object, type = mode))
     },
 
     close = function() {
+      spdl::debug("Closing {} '{}'", self$class(), self$uri)
       invisible(tiledb::tiledb_group_close(self$object))
     },
 
@@ -210,7 +216,7 @@ TileDBGroup <- R6::R6Class(
     },
 
     update_member_cache = function() {
-      spdl::debug("Updating member cache")
+      spdl::debug("Updating member cache for {} '{}'", self$class(), self$uri)
       private$member_cache <- private$get_all_members()
     },
 

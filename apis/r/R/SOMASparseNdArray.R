@@ -79,6 +79,7 @@ SOMASparseNDArray <- R6::R6Class(
       # create array
       tiledb::tiledb_array_create(uri = self$uri, schema = tdb_schema)
       private$write_object_type_metadata()
+      self
     },
 
     #' @description Read as an 'arrow::Table' (lifecycle: experimental)

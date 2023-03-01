@@ -56,6 +56,15 @@ test_that("Basic mechanics", {
   expect_is(group_readback$get("a1"), "TileDBArray")
   expect_is(group_readback$get("g1"), "TileDBGroup")
 
+  # Error when attempting to add a relative member that's not a subpath
+  g2 <- TileDBGroup$new(
+    uri = file.path(withr::local_tempdir(), "not-a-subpath")
+  )$create()
+  expect_error(
+    group$set(g2, name = "g2", relative = TRUE),
+    "Unable to make relative path between URIs with no common parent"
+  )
+
   # Remove
   group_readback$remove("a1")
   expect_equal(group_readback$length(), 1)
