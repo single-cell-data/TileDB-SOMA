@@ -115,7 +115,7 @@ SOMAExperimentAxisQuery <- R6::R6Class(
     #' loaders for other in-core formats, such as `Seurat`, which can be created
     #' from the resulting Tables.
     #'
-    #' @param X_layers The name of the `X` layer(s) to read and return.
+    #' @param X_layers The name(s) of the `X` layer(s) to read and return.
     #' @param obs_column_names,var_column_names Specify which column names in
     #' `var` and `obs` dataframes to read and return.
     read = function(
