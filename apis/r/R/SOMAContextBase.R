@@ -16,7 +16,7 @@ SOMAContextBase <- R6::R6Class(
   public = list(
     #' @template param-config
     #'
-    #' @return \Sexpr[results=rd]{tiledbsoma::rd_return_virtual()}
+    #' @return \Sexpr[results=rd]{tiledbsoma:::rd_return_virtual()}
     #'
     initialize = function(config = NULL) {
       calls <- vapply(

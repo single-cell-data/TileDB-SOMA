@@ -84,7 +84,7 @@ getting (\code{self$get()}) and setting (\code{self$set()}) items in the map
 \if{html}{\out{</div>}}
 }
 \subsection{Returns}{
-\Sexpr[results=rd]{tiledbsoma::rd_return_virtual()}
+\Sexpr[results=rd]{tiledbsoma:::rd_return_virtual()}
 }
 }
 \if{html}{\out{<hr>}}

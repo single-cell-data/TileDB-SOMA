@@ -51,7 +51,7 @@ context options
 \if{html}{\out{</div>}}
 }
 \subsection{Returns}{
-\Sexpr[results=rd]{tiledbsoma::rd_return_virtual()}
+\Sexpr[results=rd]{tiledbsoma:::rd_return_virtual()}
 }
 }
 \if{html}{\out{<hr>}}
