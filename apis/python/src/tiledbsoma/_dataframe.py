@@ -34,7 +34,7 @@ class DataFrame(TileDBArray, somacore.DataFrame):
 
     [lifecycle: experimental]
 
-    Examples:
+    Example:
     ---------
     >>> import pyarrow as pa
     >>> import tiledbsoma
@@ -45,7 +45,7 @@ class DataFrame(TileDBArray, somacore.DataFrame):
     ...         ("B", pa.large_string()),
     ...     ]
     ... )
-    ... with tiledbsoma.DataFrame.create("./test_dataframe", schema=schema) as df:
+    >>> with tiledbsoma.DataFrame.create("./test_dataframe", schema=schema) as df:
     ...     data = pa.Table.from_pydict(
     ...         {
     ...             "soma_joinid": [0, 1, 2],
@@ -54,7 +54,7 @@ class DataFrame(TileDBArray, somacore.DataFrame):
     ...         }
     ...     )
     ...     df.write(data)
-    ... with tiledbsoma.DataFrame.open("./test_dataframe") as df:
+    >>> with tiledbsoma.DataFrame.open("./test_dataframe") as df:
     ...     print(df.schema)
     ...     print("---")
     ...     print(df.read().concat().to_pandas())
@@ -67,6 +67,49 @@ class DataFrame(TileDBArray, somacore.DataFrame):
     0            0  1.0000  one
     1            1  2.7182    e
     2            2  3.1214   pi
+
+    Second example:
+    ---------------
+    >>> import pyarrow as pa
+    >>> import tiledbsoma
+    >>> schema = pa.schema(
+    ...    [
+    ...        ("soma_joinid", pa.int64()),
+    ...        ("A", pa.float32()),
+    ...        ("B", pa.large_string()),
+    ...    ]
+    ...)
+    >>> with tiledbsoma.DataFrame.create(
+    ...     "./test_dataframe_2",
+    ...     schema=schema,
+    ...     index_column_names=["A", "B"],
+    ...     domain=[(0.0, 10.0), None],
+    ... ) as df:
+    ...     data = pa.Table.from_pydict(
+    ...         {
+    ...             "soma_joinid": [0, 1, 2],
+    ...             "A": [1.0, 2.7182, 3.1214],
+    ...             "B": ["one", "e", "pi"],
+    ...         }
+    ...     )
+    ...     df.write(data)
+    >>> with tiledbsoma.DataFrame.open("./test_dataframe_2") as df:
+    ...     print(df.schema)
+    ...     print("---")
+    ...     print(df.read().concat().to_pandas())
+    soma_joinid: int64
+    ---
+            A    B  soma_joinid
+    0  1.0000  one            0
+    1  2.7182    e            1
+    2  3.1214   pi            2
+
+    Here the index-column names are specified. The domain is entirely optional: if
+    it's omitted, defaults will be applied yielding the largest possible domain for
+    each index column's datatype.  If the domain is specified, it must be a
+    tuple/list of equal length to ``index_column_names``. It can be ``None`` in
+    a given slot, meaning use the largest possible domain. For string/bytes types,
+    it must be ``None``.
     """
 
     __slots__ = ()
