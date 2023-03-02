@@ -1650,11 +1650,17 @@ def test_types_no_errors(
         if domain is not None:
             actual_domain = sdf.domain
             for i in range(len(domain)):
-                if (
-                    index_column_names[i] != "string"
-                    and index_column_names[i] != "bytes"
-                ):
+                if domain[i] is not None:
                     assert actual_domain[i] == tuple(domain[i])
+        else:
+            # TileDB always returns ("", "") as domain for string/bytes dimensions on sparse arrays.
+            actual_domain = sdf.domain
+            for i in range(len(index_column_names)):
+                if (
+                    index_column_names[i] == "string"
+                    or index_column_names[i] == "bytes"
+                ):
+                    assert actual_domain[i] == ("", "")
 
 
 @pytest.mark.parametrize(
