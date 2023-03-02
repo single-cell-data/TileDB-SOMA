@@ -4,6 +4,7 @@
 \alias{soma_reader}
 \alias{nnz}
 \alias{arrow_to_dt}
+\alias{as_arrow_table}
 \title{Read SOMA Data From a Given URI}
 \usage{
 soma_reader(
@@ -20,6 +21,8 @@ soma_reader(
 nnz(uri)
 
 arrow_to_dt(arrlst)
+
+as_arrow_table(arrlst)
 }
 \arguments{
 \item{uri}{Character value with URI path to a SOMA data set}
