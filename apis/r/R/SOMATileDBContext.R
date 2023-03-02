@@ -112,7 +112,8 @@ SOMATileDBContext <- R6::R6Class(
       }
       return(invisible(x = self))
     },
-    #' @return A \code{\link[tiledb:tiledb_ctx]{tiledb_ctx}} object
+    #' @return A \code{\link[tiledb:tiledb_ctx]{tiledb_ctx}} object, dynamically
+    #' constructed. Most useful for the constructor of this class.
     #'
     to_tiledb_context = function() {
       items <- sapply(X = super$items(), FUN = as.character, USE.NAMES = TRUE)
@@ -123,6 +124,8 @@ SOMATileDBContext <- R6::R6Class(
       tiledb_ctx <- tiledb::tiledb_ctx(config = cfg)
       return(tiledb_ctx)
     },
+    #' @return A \code{\link[tiledb:tiledb_ctx]{tiledb_ctx}} object, which is
+    #' a stored (and long-lived) result from \code{to_tiledb_context}.
     get_tiledb_context = function() {
       return(private$.tiledb_ctx)
     }

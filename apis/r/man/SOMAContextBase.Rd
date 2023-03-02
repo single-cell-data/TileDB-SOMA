@@ -10,7 +10,7 @@ context options
 }
 \keyword{internal}
 \section{Super classes}{
-\code{\link[tiledbsoma:MappingBase]{tiledbsoma::MappingBase}} -> \code{\link[tiledbsoma:ScalarMap]{tiledbsoma::ScalarMap}} -> \code{SOMAContextBase}
+\code{tiledbsoma::MappingBase} -> \code{tiledbsoma::ScalarMap} -> \code{SOMAContextBase}
 }
 \section{Methods}{
 \subsection{Public methods}{

@@ -7,7 +7,7 @@
 Context map for TileDB-backed SOMA objects
 }
 \section{Super classes}{
-\code{\link[tiledbsoma:MappingBase]{tiledbsoma::MappingBase}} -> \code{\link[tiledbsoma:ScalarMap]{tiledbsoma::ScalarMap}} -> \code{\link[tiledbsoma:SOMAContextBase]{tiledbsoma::SOMAContextBase}} -> \code{SOMATileDBContext}
+\code{tiledbsoma::MappingBase} -> \code{tiledbsoma::ScalarMap} -> \code{tiledbsoma::SOMAContextBase} -> \code{SOMATileDBContext}
 }
 \section{Methods}{
 \subsection{Public methods}{
@@ -18,7 +18,8 @@ Context map for TileDB-backed SOMA objects
 \item \href{#method-SOMATileDBContext-length}{\code{SOMATileDBContext$length()}}
 \item \href{#method-SOMATileDBContext-get}{\code{SOMATileDBContext$get()}}
 \item \href{#method-SOMATileDBContext-set}{\code{SOMATileDBContext$set()}}
-\item \href{#method-SOMATileDBContext-to_context}{\code{SOMATileDBContext$to_context()}}
+\item \href{#method-SOMATileDBContext-to_tiledb_context}{\code{SOMATileDBContext$to_tiledb_context()}}
+\item \href{#method-SOMATileDBContext-get_tiledb_context}{\code{SOMATileDBContext$get_tiledb_context()}}
 \item \href{#method-SOMATileDBContext-clone}{\code{SOMATileDBContext$clone()}}
 }
 }
@@ -137,15 +138,29 @@ the entry for \code{key}}
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-SOMATileDBContext-to_context"></a>}}
-\if{latex}{\out{\hypertarget{method-SOMATileDBContext-to_context}{}}}
-\subsection{Method \code{to_context()}}{
+\if{html}{\out{<a id="method-SOMATileDBContext-to_tiledb_context"></a>}}
+\if{latex}{\out{\hypertarget{method-SOMATileDBContext-to_tiledb_context}{}}}
+\subsection{Method \code{to_tiledb_context()}}{
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{SOMATileDBContext$to_context()}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{SOMATileDBContext$to_tiledb_context()}\if{html}{\out{</div>}}
 }
 
 \subsection{Returns}{
-A \code{\link[tiledb:tiledb_ctx]{tiledb_ctx}} object
+A \code{\link[tiledb:tiledb_ctx]{tiledb_ctx}} object, dynamically
+constructed. Most useful for the constructor of this class.
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-SOMATileDBContext-get_tiledb_context"></a>}}
+\if{latex}{\out{\hypertarget{method-SOMATileDBContext-get_tiledb_context}{}}}
+\subsection{Method \code{get_tiledb_context()}}{
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{SOMATileDBContext$get_tiledb_context()}\if{html}{\out{</div>}}
+}
+
+\subsection{Returns}{
+A \code{\link[tiledb:tiledb_ctx]{tiledb_ctx}} object, which is
+a stored (and long-lived) result from \code{to_tiledb_context}.
 }
 }
 \if{html}{\out{<hr>}}

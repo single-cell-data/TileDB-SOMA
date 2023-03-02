@@ -12,7 +12,7 @@ TileDBGroup classes. (lifecycle: experimental)
 \describe{
 \item{\code{platform_config}}{Platform configuration}
 
-\item{\code{ctx}}{TileDB context}
+\item{\code{tiledbsoma_ctx}}{SOMATileDBContext}
 
 \item{\code{uri}}{The URI of the TileDB object.}
 
@@ -37,7 +37,7 @@ TileDBGroup classes. (lifecycle: experimental)
 \subsection{Method \code{new()}}{
 Create a new TileDB object. (lifecycle: experimental)
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{TileDBObject$new(uri, platform_config = NULL, ctx = NULL)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{TileDBObject$new(uri, platform_config = NULL, tiledbsoma_ctx = NULL)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
@@ -47,7 +47,7 @@ Create a new TileDB object. (lifecycle: experimental)
 
 \item{\code{platform_config}}{Optional platform configuration}
 
-\item{\code{ctx}}{optional TileDB context}
+\item{\code{tiledbsoma_ctx}}{optional SOMATileDBContext}
 
 \item{\code{verbose}}{Print status messages}
 }

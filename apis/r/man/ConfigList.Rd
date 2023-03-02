@@ -9,7 +9,7 @@ serves as a nested map where the inner map is a \code{\link{ScalarMap}}:
 \code{\{<op>: \link[tiledbsoma:ScalarMap]{\{<key>: <value>\}}\}}
 }
 \section{Super class}{
-\code{\link[tiledbsoma:MappingBase]{tiledbsoma::MappingBase}} -> \code{ConfigList}
+\code{tiledbsoma::MappingBase} -> \code{ConfigList}
 }
 \section{Methods}{
 \subsection{Public methods}{
