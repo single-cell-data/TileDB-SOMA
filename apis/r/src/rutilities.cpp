@@ -1,7 +1,7 @@
 
 #include <Rcpp.h>
 #include <tiledbsoma/tiledbsoma>
-#include <archAPI.h>
+//#include <archAPI.h>
 #include "rutilities.h"
 
 namespace tdbs = tiledbsoma;
