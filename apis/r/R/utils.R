@@ -53,7 +53,11 @@ SOMA_ENCODING_VERSION <- "0"
 arrow_to_dt <- function(arrlst) {
     ## this helper will be replaced once the under-development package 'nanoarrow' (on
     ## github at apache/arror-nanoarrow) is released, for now we use 'arch' which predates it
-    data.table::data.table(dplyr::collect(arch::from_arch_array(arrlst, arrow::RecordBatch)))
+    #data.table::data.table(dplyr::collect(arch::from_arch_array(arrlst, arrow::RecordBatch)))
+    #data.table::data.table(dplyr::collect(arch::from_arch_array(arrlst, arrow::RecordBatch)))
+    rb <- dplyr::collect(arrow::RecordBatch$import_from_c(arrlst[[1]], arrlst[[2]]))
+    #data.table::data.table(dplyr::collect()) #arch::from_arch_array(arrlst, arrow::RecordBatch)))
+    data.table(as.data.frame(rb))
 }
 
 #' @importFrom Matrix as.matrix

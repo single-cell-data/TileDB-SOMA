@@ -5,9 +5,11 @@
 //#include <archAPI.h>
 #include "rutilities.h"
 
+// Helper functions from nanoarrow
+//
 // Create an external pointer with the proper class and that will release any
 // non-null, non-released pointer when garbage collected.
-inline SEXP schema_owning_xptr(void) {
+SEXP schema_owning_xptr(void) {
   struct ArrowSchema* schema = (struct ArrowSchema*)ArrowMalloc(sizeof(struct ArrowSchema));
   if (schema == NULL) {
     Rf_error("Failed to allocate ArrowSchema");
@@ -21,7 +23,7 @@ inline SEXP schema_owning_xptr(void) {
 }
 // Create an external pointer with the proper class and that will release any
 // non-null, non-released pointer when garbage collected.
-static inline SEXP array_owning_xptr(void) {
+SEXP array_owning_xptr(void) {
   struct ArrowArray* array = (struct ArrowArray*)ArrowMalloc(sizeof(struct ArrowArray));
   array->release = NULL;
 
@@ -138,8 +140,7 @@ Rcpp::List soma_reader(const std::string& uri,
 
     const std::vector<std::string> names = sr_data->get()->names();
     auto ncol = names.size();
-    Rcpp::List schlst(ncol), arrlst(ncol);
-
+    //Rcpp::List schlst(ncol), arrlst(ncol);
     SEXP schemaxp = schema_owning_xptr();
     SEXP arrayxp = array_owning_xptr();
     ArrowSchemaInitFromType((ArrowSchema*)R_ExternalPtrAddr(schemaxp), NANOARROW_TYPE_STRUCT);
