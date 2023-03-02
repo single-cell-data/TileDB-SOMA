@@ -103,6 +103,8 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
             or Arrow IntegerArray defining the region to read.
             (Arrow arrays currently unimplemented.)
 
+        :raises SOMAError: if the object is not open for reading.
+
         Acceptable ways to index
         ------------------------
         * A sequence of coordinates is accepted, one per dimension.
@@ -155,6 +157,7 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
         ``soma_dim_N`` and ``soma_data`` to the dense nD array.
 
         :raises TypeError: if the ``values`` parameter is an unsupported type.
+        :raises SOMAError: if the object is not open for writing.
         """
         del platform_config  # Currently unused.
 

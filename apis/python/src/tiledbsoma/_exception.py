@@ -2,14 +2,16 @@ import tiledb
 
 
 class SOMAError(Exception):
-    """Base error type for SOMA-specific exceptions [lifecycle: experimental]."""
+    """
+    Base error type for SOMA-specific exceptions [lifecycle: experimental].
+    """
 
     pass
 
 
 class DoesNotExistError(SOMAError):
     """
-    Raised when attempting to open a non-existent SOMA object [lifecycle: experimental].
+    Raised when attempting to open a non-existent or inaccessible SOMA object [lifecycle: experimental].
     """
 
     pass
