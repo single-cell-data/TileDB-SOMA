@@ -106,8 +106,9 @@ class DataFrame(TileDBArray, somacore.DataFrame):
             stored in that column.  If provided, this sequence must have the same
             length as `index_column_names`, and the index-column domains will be as
             specified.  If omitted entirely, or if ``None`` in a given dimension,
-            the corresponding index-column domain will use the maximum possible
-            values.  This makes a `SOMADataFrame` growable.
+            the corresponding index-column domain will use the minimum and maximum
+            possible values for the column's datatype.  This makes a
+            ``SOMADataFrame`` growable.
 
         :param platform_config: Platform-specific options used to create this
             DataFrame, provided via ``{"tiledb": {"create": ...}}`` nested keys.
@@ -573,6 +574,8 @@ def _build_tiledb_schema(
         elif np.issubdtype(dtype, NPInteger):
             iinfo = np.iinfo(cast(NPInteger, dtype))
             domain = iinfo.min, iinfo.max - 1
+            # Here the domain isn't specified by the user; we're setting it.
+            # The SOMA spec disallows negative soma_joinid.
             if index_column_name == SOMA_JOINID:
                 domain = (0, domain[1])
         elif np.issubdtype(dtype, NPFloating):
