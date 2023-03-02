@@ -589,6 +589,17 @@ def _build_tiledb_schema(
                 raise ValueError(
                     "TileDB str and bytes index-column types do not support domain specfication"
                 )
+            if index_column_name == SOMA_JOINID:
+                lo = slot_domain[0]
+                hi = slot_domain[1]
+                if lo is not None and lo < 0:
+                    raise ValueError(
+                        f"soma_joinid indices cannot be negative; got lower bound {lo}"
+                    )
+                if hi is not None and hi < 0:
+                    raise ValueError(
+                        f"soma_joinid indices cannot be negative; got upper bound {hi}"
+                    )
 
         elif isinstance(dtype, str):
             slot_domain = None, None

@@ -1661,6 +1661,13 @@ def test_types_no_errors(
     "name,index_column_names,domain,coords,error",
     [
         [
+            "soma-joinid-py-list-shaped-negatively",
+            ["soma_joinid"],
+            [[-100, 100]],
+            [],
+            ValueError,
+        ],
+        [
             "soma_joinid-all-shaped-too-short",
             ["soma_joinid"],
             [],
