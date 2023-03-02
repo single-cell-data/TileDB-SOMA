@@ -153,6 +153,8 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
 
         Arrow table: write a COO table, with columns named ``soma_dim_0``, ...,
         ``soma_dim_N`` and ``soma_data`` to the dense nD array.
+
+        :raises TypeError: if the ``values`` parameter is an unsupported type.
         """
         del platform_config  # Currently unused.
 

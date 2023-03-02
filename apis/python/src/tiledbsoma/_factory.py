@@ -77,6 +77,15 @@ def open(
     :param tiledb_timestamp: If specified, overrides the default timestamp
         used to open this object. If unset, uses the timestamp provided by
         the context.
+
+    :raises DoesNotExistError: if the object named by URI can not be accessed.
+    :raises SOMAError: if the underlying TileDB object specified by ``uri`` is
+        not recognized as a SOMA object.
+    :raises TypeError: if the opened SOMA object type does not match the user-
+        specified s``soma_type`` parameter.
+    :raises TypeError: if the user-provided ``soma_type`` parameter is not a
+        recognizable type name or value.
+    :raises ValueError: if the user-provided ``mode`` is invalid.
     """
     context = context or SOMATileDBContext()
     obj = _open_internal(_tdb_handles.open, uri, mode, context, tiledb_timestamp)

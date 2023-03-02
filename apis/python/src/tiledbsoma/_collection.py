@@ -88,6 +88,8 @@ class CollectionBase(
         :param tiledb_timestamp: If specified, overrides the default timestamp
             used to open this object. If unset, uses the timestamp provided by
             the context.
+
+        :raises TileDBError: if unable to create the underlying object.
         """
         context = context or SOMATileDBContext()
         tiledb.group_create(uri=uri, ctx=context.tiledb_ctx)
@@ -331,6 +333,8 @@ class CollectionBase(
             determine whether the element should be stored by relative URI.
             If True, the collection will store the child by absolute URI.
             If False, the collection will store the child by relative URI.
+
+        :raises SOMAError: if an existing key is set (replacement is unsupported).
         """
         uri_to_add = value.uri
         # The SOMA API supports use_relative_uri in [True, False, None].
@@ -366,6 +370,8 @@ class CollectionBase(
     def __delitem__(self, key: str) -> None:
         """
         Removes a member from the collection, when invoked as ``del collection["namegoeshere"]``.
+
+        :raises SOMAError: upon deletion of a mutated key.
         """
         self._del_element(key)
 

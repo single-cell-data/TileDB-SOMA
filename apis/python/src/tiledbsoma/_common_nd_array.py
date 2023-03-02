@@ -55,6 +55,10 @@ class NDArray(TileDBArray, somacore.NDArray):
         :param tiledb_timestamp: If specified, overrides the default timestamp
             used to open this object. If unset, uses the timestamp provided by
             the context.
+
+        :raises TypeError: if the ``type`` is unsupported.
+        :raises ValueError: if the ``shape`` is unsupported.
+        :raises TileDBError: if unable to create the underlying object.
         """
         # Implementor note: we carefully say "maximum possible int64 size" rather than 2**63-1. The
         # reason that the latter, while temptingly simple, is actually untrue is that tiledb core
