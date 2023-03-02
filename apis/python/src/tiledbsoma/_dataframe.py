@@ -78,7 +78,7 @@ class DataFrame(TileDBArray, somacore.DataFrame):
         *,
         schema: pa.Schema,
         index_column_names: Sequence[str] = (SOMA_JOINID,),
-        domains: Optional[Sequence[Optional[Tuple[Any, Any]]]] = None,
+        domain: Optional[Sequence[Optional[Tuple[Any, Any]]]] = None,
         platform_config: Optional[options.PlatformConfig] = None,
         context: Optional[SOMATileDBContext] = None,
         tiledb_timestamp: Optional[OpenTimestamp] = None,
@@ -98,13 +98,13 @@ class DataFrame(TileDBArray, somacore.DataFrame):
             All named columns must exist in the schema, and at least one
             index column name is required.
 
-        :param domains: An optional sequence of tuples specifying the domain of each
+        :param domain: An optional sequence of tuples specifying the domain of each
             index column. Each tuple should be a pair consisting of the minimum and
             maximum values storable in the index column. For example, if there is a
-            single int64-valued index column, then ``domains`` might be ``[(100,
+            single int64-valued index column, then ``domain`` might be ``[(100,
             200)]`` to indicate that values between 100 and 200, inclusive, can be
             stored in that column.  If provided, this sequence must have the same
-            length as `index_column_names`, and the index-column domains will be as
+            length as `index_column_names`, and the index-column domain will be as
             specified.  If omitted entirely, or if ``None`` in a given dimension,
             the corresponding index-column domain will use the minimum and maximum
             possible values for the column's datatype.  This makes a
@@ -130,7 +130,7 @@ class DataFrame(TileDBArray, somacore.DataFrame):
         tdb_schema = _build_tiledb_schema(
             schema,
             index_column_names,
-            domains,
+            domain,
             TileDBCreateOptions.from_platform_config(platform_config),
             context,
         )
@@ -154,6 +154,14 @@ class DataFrame(TileDBArray, somacore.DataFrame):
         Return index (dimension) column names [lifecycle: experimental].
         """
         return self._tiledb_dim_names()
+
+    @property
+    def domain(self) -> Tuple[Tuple[Any, Any], ...]:
+        """
+        Returns a tuple of minimum and maximum values, inclusive, storable
+        on each index column of the dataframe.
+        """
+        return self._tiledb_domain()
 
     @property
     def count(self) -> int:
@@ -543,68 +551,89 @@ def _canonicalize_schema(
 def _build_tiledb_schema(
     schema: pa.Schema,
     index_column_names: Sequence[str],
-    domains: Optional[Sequence[Optional[Tuple[Any, Any]]]],
+    domain: Optional[Sequence[Optional[Tuple[Any, Any]]]],
     tiledb_create_options: TileDBCreateOptions,
     context: SOMATileDBContext,
 ) -> tiledb.ArraySchema:
     """Converts an Arrow schema into a TileDB ArraySchema for creation."""
 
-    if domains is None:
-        domains = tuple(None for _ in index_column_names)
+    if domain is None:
+        domain = tuple(None for _ in index_column_names)
     else:
-        ndom = len(domains)
+        ndom = len(domain)
         nidx = len(index_column_names)
         if ndom != nidx:
             raise ValueError(
-                f"if domains are specified, they must have the same length as index_column_names; got {ndom} != {nidx}"
+                f"if domain is specified, it must have the same length as index_column_names; got {ndom} != {nidx}"
             )
 
     dims = []
-    for index_column_name, domain in zip(index_column_names, domains):
+    for index_column_name, slot_domain in zip(index_column_names, domain):
         pa_type = schema.field(index_column_name).type
         dtype = _arrow_types.tiledb_type_from_arrow_type(
             pa_type, is_indexed_column=True
         )
 
-        if domain is not None:
-            pass  # User-specified; go with it
+        if slot_domain is not None:
+            # User-specified; go with it when possible
+            if (
+                pa_type == pa.string()
+                or pa_type == pa.large_string()
+                or pa_type == pa.binary()
+                or pa_type == pa.large_binary()
+            ):
+                # TileDB Embedded won't raise an error if the user asks for, say
+                # domain=[("a", "z")].  But it will simply _ignore_ the request and
+                # use [("", "")]. The decision here is to explicitly reject an
+                # unsupported operation.
+                raise ValueError(
+                    "TileDB str and bytes index-column types do not support domain specfication"
+                )
 
         elif isinstance(dtype, str):
-            domain = None, None
+            slot_domain = None, None
         elif np.issubdtype(dtype, NPInteger):
             iinfo = np.iinfo(cast(NPInteger, dtype))
-            domain = iinfo.min, iinfo.max - 1
-            # Here the domain isn't specified by the user; we're setting it.
+            slot_domain = iinfo.min, iinfo.max - 1
+            # Here the slot_domain isn't specified by the user; we're setting it.
             # The SOMA spec disallows negative soma_joinid.
             if index_column_name == SOMA_JOINID:
-                domain = (0, domain[1])
+                slot_domain = (0, slot_domain[1])
         elif np.issubdtype(dtype, NPFloating):
             finfo = np.finfo(cast(NPFloating, dtype))
-            domain = finfo.min, finfo.max
+            slot_domain = finfo.min, finfo.max
 
         elif dtype == "datetime64[s]":
             iinfo = np.iinfo(cast(NPInteger, np.int64))
-            domain = np.datetime64(iinfo.min, "s"), np.datetime64(iinfo.max - 1, "s")
+            slot_domain = np.datetime64(iinfo.min, "s"), np.datetime64(
+                iinfo.max - 1, "s"
+            )
         elif dtype == "datetime64[ms]":
             iinfo = np.iinfo(cast(NPInteger, np.int64))
-            domain = np.datetime64(iinfo.min, "ms"), np.datetime64(iinfo.max - 1, "ms")
+            slot_domain = np.datetime64(iinfo.min, "ms"), np.datetime64(
+                iinfo.max - 1, "ms"
+            )
         elif dtype == "datetime64[us]":
             iinfo = np.iinfo(cast(NPInteger, np.int64))
-            domain = np.datetime64(iinfo.min, "us"), np.datetime64(iinfo.max - 1, "us")
+            slot_domain = np.datetime64(iinfo.min, "us"), np.datetime64(
+                iinfo.max - 1, "us"
+            )
         elif dtype == "datetime64[ns]":
             iinfo = np.iinfo(cast(NPInteger, np.int64))
-            domain = np.datetime64(iinfo.min, "ns"), np.datetime64(iinfo.max - 1, "ns")
+            slot_domain = np.datetime64(iinfo.min, "ns"), np.datetime64(
+                iinfo.max - 1, "ns"
+            )
 
         else:
             raise TypeError(f"Unsupported dtype {dtype}")
 
         extent = _find_extent_for_domain(
-            index_column_name, tiledb_create_options, dtype, domain
+            index_column_name, tiledb_create_options, dtype, slot_domain
         )
 
         dim = tiledb.Dim(
             name=index_column_name,
-            domain=domain,
+            domain=slot_domain,
             tile=extent,
             dtype=dtype,
             filters=tiledb_create_options.dim_filters(
@@ -657,12 +686,12 @@ def _find_extent_for_domain(
     index_column_name: str,
     tiledb_create_options: TileDBCreateOptions,
     dtype: Any,
-    domain: Tuple[Any, Any],
+    slot_domain: Tuple[Any, Any],
 ) -> Any:
     """
     Helper function for _build_tiledb_schema. Returns a tile extent that is
     small enough for the index-column type, and that also fits within the
-    user-specified domain (if any).
+    user-specified slot domain (if any).
     """
 
     # Default 2048 mods to 0 for 8-bit types and 0 is an invalid extent
@@ -673,7 +702,7 @@ def _find_extent_for_domain(
     if isinstance(dtype, str):
         return extent
 
-    lo, hi = domain
+    lo, hi = slot_domain
     if lo is None or hi is None:
         return extent
 

@@ -55,7 +55,7 @@ def arrow_table():
 
 
 @pytest.mark.parametrize(
-    "name,index_column_names,domains,coords,expecteds",
+    "name,index_column_names,domain,coords,expecteds",
     [
         # Index by soma_joinid
         [
@@ -178,13 +178,6 @@ def arrow_table():
             "default01234",
         ],
         [
-            "string-all-shaped",
-            ["string"],
-            [["a", "z"]],
-            [],
-            "default01234",
-        ],
-        [
             "string-py-list",
             ["string"],
             None,
@@ -238,13 +231,6 @@ def arrow_table():
             "BYTES-ALL",
             ["bytes"],
             None,
-            [],
-            "default01234",
-        ],
-        [
-            "bytes-all-shaped",
-            ["bytes"],
-            [[b"a", b"z"]],
             [],
             "default01234",
         ],
@@ -1106,23 +1092,9 @@ def arrow_table():
             "default01234",
         ],
         [
-            "int64+string-all-shaped-1",
+            "int64+string-all-shaped",
             ["int64", "string"],
             [[6400, 6500], None],
-            [],
-            "default01234",
-        ],
-        [
-            "int64+string-all-shaped-2",
-            ["int64", "string"],
-            [None, ["a", "z"]],
-            [],
-            "default01234",
-        ],
-        [
-            "int64+string-all-shaped-3",
-            ["int64", "string"],
-            [[6400, 6500], ["a", "z"]],
             [],
             "default01234",
         ],
@@ -1638,7 +1610,7 @@ def test_types_no_errors(
     arrow_table,
     name,
     index_column_names,
-    domains,
+    domain,
     coords,
     expecteds,
 ):
@@ -1648,7 +1620,7 @@ def test_types_no_errors(
         uri,
         schema=arrow_table.schema,
         index_column_names=index_column_names,
-        domains=domains,
+        domain=domain,
     )
 
     with soma.DataFrame.open(uri, "w") as sdf:
@@ -1675,10 +1647,18 @@ def test_types_no_errors(
             # The output from the first one is easier to read when it fails
             assert actual_array.to_pylist() == expected_array.to_pylist()
             assert actual_array == expected_array
+        if domain is not None:
+            actual_domain = sdf.domain
+            for i in range(len(domain)):
+                if (
+                    index_column_names[i] != "string"
+                    and index_column_names[i] != "bytes"
+                ):
+                    assert actual_domain[i] == tuple(domain[i])
 
 
 @pytest.mark.parametrize(
-    "name,index_column_names,domains,coords,error",
+    "name,index_column_names,domain,coords,error",
     [
         [
             "soma_joinid-all-shaped-too-short",
@@ -1691,6 +1671,13 @@ def test_types_no_errors(
             "soma_joinid-all-shaped-too-long",
             ["soma_joinid"],
             [[0, 10], [0, 10]],
+            [],
+            ValueError,
+        ],
+        [
+            "string-py-list-shaped-at-all",
+            ["string"],
+            [["a", "z"]],
             [],
             ValueError,
         ],
@@ -1708,7 +1695,7 @@ def test_types_create_errors(
     arrow_table,
     name,
     index_column_names,
-    domains,
+    domain,
     coords,
     error,
 ):
@@ -1719,74 +1706,65 @@ def test_types_create_errors(
             uri,
             schema=arrow_table.schema,
             index_column_names=index_column_names,
-            domains=domains,
+            domain=domain,
         )
 
 
 @pytest.mark.parametrize(
-    "name,index_column_names,domains,coords,error",
+    "name,index_column_names,domain,error",
     [
         [
             "int32-py-list-shaped-out-of-bounds",
             ["int32"],
             [[100, 200]],
-            [[3202, 3203]],
             tiledb.cc.TileDBError,
         ],
         [
             "int16-py-list-shaped-out-of-bounds",
             ["int16"],
             [[100, 200]],
-            [[1602, 1603]],
             tiledb.cc.TileDBError,
         ],
         [
             "int8-py-list-shaped-out-of-bounds",
             ["int8"],
             [[10, 20]],
-            [[82, 83]],
             tiledb.cc.TileDBError,
         ],
         [
             "uint64-py-list-shaped-out-of-bounds",
             ["uint64"],
             [[100, 200]],
-            [[6412, 6413]],
             tiledb.cc.TileDBError,
         ],
         [
             "uint32-py-list-shaped-out-of-bounds",
             ["uint32"],
             [[100, 200]],
-            [[3212, 3213]],
             tiledb.cc.TileDBError,
         ],
         [
             "uint32-py-list-shaped-out-of-bounds",
             ["uint32"],
             [[100, 200]],
-            [[3212, 3213]],
             tiledb.cc.TileDBError,
         ],
         [
             "uint8-py-list-shaped-out-of-bounds",
             ["uint8"],
             [[10, 20]],
-            [[92, 93]],
             tiledb.cc.TileDBError,
         ],
         [
             "float32-py-list-shaped-out-of-bounds",
             ["float32"],
             [[100.0, 200.0]],
-            [[322.5, 323.5]],
             tiledb.cc.TileDBError,
         ],
         [
             "float64-py-list-shaped-out-of-bounds",
             ["float64"],
             [[100.0, 200.0]],
-            [[642.5, 643.5]],
             tiledb.cc.TileDBError,
         ],
     ],
@@ -1796,8 +1774,7 @@ def test_types_write_errors(
     arrow_table,
     name,
     index_column_names,
-    domains,
-    coords,
+    domain,
     error,
 ):
     uri = tmp_path.as_posix()
@@ -1806,7 +1783,7 @@ def test_types_write_errors(
         uri,
         schema=arrow_table.schema,
         index_column_names=index_column_names,
-        domains=domains,
+        domain=domain,
     )
 
     with pytest.raises(error):
@@ -1815,7 +1792,7 @@ def test_types_write_errors(
 
 
 @pytest.mark.parametrize(
-    "name,index_column_names,domains,coords,error",
+    "name,index_column_names,domain,coords,error",
     [
         [
             "int32-pa-array-untyped",
@@ -1894,7 +1871,7 @@ def test_types_read_errors(
     arrow_table,
     name,
     index_column_names,
-    domains,
+    domain,
     coords,
     error,
 ):
@@ -1904,7 +1881,7 @@ def test_types_read_errors(
         uri,
         schema=arrow_table.schema,
         index_column_names=index_column_names,
-        domains=domains,
+        domain=domain,
     )
 
     with soma.DataFrame.open(uri, "w") as sdf:

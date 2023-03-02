@@ -1,4 +1,4 @@
-from typing import Optional, Sequence, Tuple
+from typing import Any, Optional, Sequence, Tuple
 
 import pyarrow as pa
 import tiledb
@@ -56,6 +56,10 @@ class TileDBArray(TileDBObject[_tdb_handles.ArrayWrapper]):
         """
         schema = self._handle.schema
         return tuple(schema.attr(i).name for i in range(schema.nattr))
+
+    def _tiledb_domain(self) -> Tuple[Tuple[Any, Any], ...]:
+        schema = self._handle.schema
+        return tuple(schema.domain.dim(i).domain for i in range(0, schema.domain.ndim))
 
     def _soma_reader(
         self,
