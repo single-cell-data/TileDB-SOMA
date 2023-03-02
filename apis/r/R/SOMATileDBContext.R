@@ -46,22 +46,22 @@ SOMATileDBContext <- R6::R6Class(
       for (opt in names(x = config)) {
         cfg[opt] <- config[opt]
       }
-      private$.ctx <- tiledb::tiledb_ctx(config = cfg, cached = cached)
+      private$.tiledb_ctx <- tiledb::tiledb_ctx(config = cfg, cached = cached)
     },
     #' @return The keys of the map
     #'
     keys = function() {
-      return(c(super$keys(), private$.ctx_names()))
+      return(c(super$keys(), private$.tiledb_ctx_names()))
     },
     #' @return Return the items of the map as a list
     #'
     items = function() {
-      return(c(super$items(), as.list(x = tiledb::config(object = private$.ctx))))
+      return(c(super$items(), as.list(x = tiledb::config(object = private$.tiledb_ctx))))
     },
     #' @return The number of items in the map
     #'
     length = function() {
-      return(super$length() + length(x = private$.ctx_names()))
+      return(super$length() + length(x = private$.tiledb_ctx_names()))
     },
     #' @param key Key to fetch
     #' @templateVar key key
@@ -82,8 +82,8 @@ SOMATileDBContext <- R6::R6Class(
           private$.key_error(key = key)
         }
       }
-      if (key %in% private$.ctx_names()) {
-        val <- tiledb::config(object = private$.ctx)[key]
+      if (key %in% private$.tiledb_ctx_names()) {
+        val <- tiledb::config(object = private$.tiledb_ctx)[key]
         names(x = val) <- key
         return(val)
       }
@@ -103,10 +103,10 @@ SOMATileDBContext <- R6::R6Class(
         length(x = key) == length(x = value),
         length(x = key) == 1L
       )
-      if (key %in% private$.ctx_names()) {
-        cfg <- tiledb::config(object = private$.ctx)
+      if (key %in% private$.tiledb_ctx_names()) {
+        cfg <- tiledb::config(object = private$.tiledb_ctx)
         cfg[key] <- as.character(x = value)
-        private$.ctx <- tiledb::tiledb_ctx(config = cfg)
+        private$.tiledb_ctx <- tiledb::tiledb_ctx(config = cfg)
       } else {
         super$set(key = key, value = value)
       }
@@ -114,24 +114,27 @@ SOMATileDBContext <- R6::R6Class(
     },
     #' @return A \code{\link[tiledb:tiledb_ctx]{tiledb_ctx}} object
     #'
-    to_context = function() {
+    to_tiledb_context = function() {
       items <- sapply(X = super$items(), FUN = as.character, USE.NAMES = TRUE)
-      cfg <- tiledb::config(object = private$.ctx)
+      cfg <- tiledb::config(object = private$.tiledb_ctx)
       for (opt in names(x = items)) {
         cfg[opt] <- items[opt]
       }
-      ctx <- tiledb::tiledb_ctx(config = cfg)
-      return(ctx)
+      tiledb_ctx <- tiledb::tiledb_ctx(config = cfg)
+      return(tiledb_ctx)
+    },
+    get_tiledb_context = function() {
+      return(private$.tiledb_ctx)
     }
   ),
   private = list(
-    .ctx = NULL,
-    .ctx_names = function() {
-      if (!inherits(x = private$.ctx, what = 'tiledb_ctx')) {
+    .tiledb_ctx = NULL,
+    .tiledb_ctx_names = function() {
+      if (!inherits(x = private$.tiledb_ctx, what = 'tiledb_ctx')) {
         return(NULL)
       }
       return(tryCatch(
-        expr = names(x = as.vector(x = tiledb::config(object = private$.ctx))),
+        expr = names(x = as.vector(x = tiledb::config(object = private$.tiledb_ctx))),
         error = \(...) NULL
       ))
     }

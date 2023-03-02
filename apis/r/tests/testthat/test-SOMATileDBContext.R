@@ -9,12 +9,12 @@ test_that("SOMATileDBContext mechanics", {
   )
   expect_named(sm_ratio)
   expect_equal(unname(sm_ratio), '0.3')
-  expect_s4_class(ctx$to_context(), 'tiledb_ctx')
+  expect_s4_class(ctx$to_tiledb_context(), 'tiledb_ctx')
 })
 
 test_that("SOMATileDBContext SOMA mechanics", {
   ctx <- SOMATileDBContext$new()
-  ntiledb <- length(x = ctx$.__enclos_env__$private$.ctx_names())
+  ntiledb <- length(x = ctx$.__enclos_env__$private$.tiledb_ctx_names())
   expect_no_condition(ctx$set('member_uris_are_relative', TRUE))
   expect_identical(ctx$length(), ntiledb + 1L)
   expect_length(ctx, ntiledb + 1L)
@@ -33,24 +33,24 @@ test_that("SOMATileDBContext SOMA mechanics", {
   expect_equal(ctx$get('a'), 1L)
   expect_identical(ctx$length(), ntiledb + 2L)
   expect_length(ctx$keys(), ntiledb + 2L)
-  expect_s4_class(context <- ctx$to_context(), 'tiledb_ctx')
+  expect_s4_class(context <- ctx$to_tiledb_context(), 'tiledb_ctx')
   expect_length(as.vector(tiledb::config(context)), ctx$length())
 })
 
 test_that("SOMATileDBContext TileDB mechanics", {
   ctx <- SOMATileDBContext$new()
-  tiledb_names <- ctx$.__enclos_env__$private$.ctx_names()
+  tiledb_names <- ctx$.__enclos_env__$private$.tiledb_ctx_names()
   expect_identical(ctx$keys(), tiledb_names)
   expect_length(ctx$keys(), length(tiledb_names))
   expect_error(ctx <- SOMATileDBContext$new(c(a = 1L)))
   expect_no_condition(ctx <- SOMATileDBContext$new(c(a = '1')))
   expect_length(ctx$keys(), length(tiledb_names) + 1L)
-  expect_equal(ctx$.__enclos_env__$private$.ctx_names()[1L], 'a')
+  expect_equal(ctx$.__enclos_env__$private$.tiledb_ctx_names()[1L], 'a')
   expect_equal(unname(ctx$get('a')), '1')
   expect_no_condition(ctx <- SOMATileDBContext$new(list(a = '1')))
   expect_no_condition(ctx <- SOMATileDBContext$new(c(a = '1', b = '2')))
   expect_length(ctx, length(tiledb_names) + 2L)
-  expect_equal(ctx$.__enclos_env__$private$.ctx_names()[1:2], c('a', 'b'))
+  expect_equal(ctx$.__enclos_env__$private$.tiledb_ctx_names()[1:2], c('a', 'b'))
   expect_equal(unname(ctx$get('b')), '2')
   expect_no_condition(ctx$set('b', 42L))
   expect_type(ctx$get('b'), 'character')
@@ -59,7 +59,7 @@ test_that("SOMATileDBContext TileDB mechanics", {
 
 test_that("SOMATileDBContext SOMA + TileDB mechanics", {
   ctx <- SOMATileDBContext$new()
-  tiledb_names <- ctx$.__enclos_env__$private$.ctx_names()
+  tiledb_names <- ctx$.__enclos_env__$private$.tiledb_ctx_names()
   expect_error(ctx <- SOMATileDBContext$new(c(
     a = '1',
     member_uris_are_relative = TRUE
@@ -69,16 +69,16 @@ test_that("SOMATileDBContext SOMA + TileDB mechanics", {
     member_uris_are_relative = TRUE
   )))
   expect_length(ctx, length(tiledb_names) + 2L)
-  expect_equal(ctx$.__enclos_env__$private$.ctx_names()[1L], 'a')
-  expect_false('member_uris_are_relative' %in% ctx$.__enclos_env__$private$.ctx_names())
+  expect_equal(ctx$.__enclos_env__$private$.tiledb_ctx_names()[1L], 'a')
+  expect_false('member_uris_are_relative' %in% ctx$.__enclos_env__$private$.tiledb_ctx_names())
   expect_equal(head(ctx$keys(), 2L), c('member_uris_are_relative', 'a'))
   expect_equal(unname(ctx$get('a')), '1')
   expect_equal(unname(ctx$get('member_uris_are_relative')), TRUE)
   expect_no_condition(ctx$set('b', 42L))
   expect_length(ctx, length(tiledb_names) + 3L)
-  expect_length(ctx, length(ctx$.__enclos_env__$private$.ctx_names()) + 2L)
+  expect_length(ctx, length(ctx$.__enclos_env__$private$.tiledb_ctx_names()) + 2L)
   expect_type(ctx$get('b'), 'integer')
   expect_equal(head(ctx$keys(), 3L), c('member_uris_are_relative', 'b', 'a'))
-  expect_s4_class(context <- ctx$to_context(), 'tiledb_ctx')
+  expect_s4_class(context <- ctx$to_tiledb_context(), 'tiledb_ctx')
   expect_length(as.vector(tiledb::config(context)), ctx$length())
 })

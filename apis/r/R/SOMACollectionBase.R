@@ -12,9 +12,9 @@ SOMACollectionBase <- R6::R6Class(
     #'
     #' @param uri URI of the TileDB group
     #' @param platform_config Optional storage-engine specific configuration
-    #' @param ctx optional tiledb context
-    initialize = function(uri, platform_config = NULL, ctx = NULL) {
-      super$initialize(uri, platform_config, ctx)
+    #' @param tiledbsoma_ctx optional SOMATileDBContext
+    initialize = function(uri, platform_config = NULL, tiledbsoma_ctx = NULL) {
+      super$initialize(uri, platform_config, tiledbsoma_ctx)
     },
 
     #' @description Add a new SOMA object to the collection. (lifecycle: experimental)
@@ -83,15 +83,15 @@ SOMACollectionBase <- R6::R6Class(
 
       # We have to use the appropriate TileDB base class to read the soma_type
       # from the object's metadata so we know which SOMA class to instantiate
-      tiledb_constructor <- switch(type,
+      tiledbsoma_constructor <- switch(type,
         ARRAY = TileDBArray$new,
         GROUP = TileDBGroup$new,
         stop(sprintf("Unknown member TileDB type: %s", type), call. = FALSE)
       )
 
-      tiledb_object <- tiledb_constructor(
+      tiledb_object <- tiledbsoma_constructor(
         uri,
-        ctx = self$ctx,
+        tiledbsoma_ctx = self$tiledbsoma_ctx,
         platform_config = self$platform_config
       )
       soma_type <- tiledb_object$get_metadata(SOMA_OBJECT_TYPE_METADATA_KEY)
@@ -107,7 +107,7 @@ SOMACollectionBase <- R6::R6Class(
       )
       soma_constructor(
         uri,
-        ctx = self$ctx,
+        tiledbsoma_ctx = self$tiledbsoma_ctx,
         platform_config = self$platform_config
       )
     },

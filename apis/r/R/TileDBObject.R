@@ -11,8 +11,8 @@ TileDBObject <- R6::R6Class(
     #' @param uri URI for the TileDB object
     #' @param verbose Print status messages
     #' @param platform_config Optional platform configuration
-    #' @param ctx optional TileDB context
-    initialize = function(uri, platform_config = NULL, ctx = NULL) {
+    #' @param tiledbsoma_ctx optional SOMATileDBContext
+    initialize = function(uri, platform_config = NULL, tiledbsoma_ctx = NULL) {
       calls <- vapply(
         X = lapply(X = sys.calls(), FUN = as.character),
         FUN = '[[',
@@ -31,12 +31,11 @@ TileDBObject <- R6::R6Class(
       }
       private$tiledb_platform_config <- platform_config
       # Set context
-      # ctx <- ctx %||% tiledb::tiledb_get_context()
-      ctx <- ctx %||% SOMATileDBContext$new()
-      if (!inherits(x = ctx, what = 'SOMATileDBContext')) {
-        stop("'ctx' must be a SOMATileDBContext object", call. = FALSE)
+      tiledbsoma_ctx <- tiledbsoma_ctx %||% SOMATileDBContext$new()
+      if (!inherits(x = tiledbsoma_ctx, what = 'SOMATileDBContext')) {
+        stop("'tiledbsoma_ctx' must be a SOMATileDBContext object", call. = FALSE)
       }
-      private$tiledb_ctx <- ctx
+      private$.tiledbsoma_ctx <- tiledbsoma_ctx
     },
 
     #' @description Print the name of the R6 class.
@@ -62,7 +61,7 @@ TileDBObject <- R6::R6Class(
       } else {
         stop("Unknown object type", call. = FALSE)
       }
-      tiledb::tiledb_object_type(self$uri, ctx = self$ctx$to_context()) %in% expected_type
+      tiledb::tiledb_object_type(self$uri, ctx = self$tiledbsoma_ctx$get_tiledb_context()) %in% expected_type
     }
   ),
 
@@ -74,12 +73,12 @@ TileDBObject <- R6::R6Class(
       }
       return(private$tiledb_platform_config)
     },
-    #' @field ctx TileDB context
-    ctx = function(value) {
+    #' @field tiledbsoma_ctx SOMATileDBContext
+    tiledbsoma_ctx = function(value) {
       if (!missing(x = value)) {
-        stop("'ctx' is a read-only field", call. = FALSE)
+        stop("'tiledbsoma_ctx' is a read-only field", call. = FALSE)
       }
-      return(private$tiledb_ctx)
+      return(private$.tiledbsoma_ctx)
     },
     #' @field uri
     #' The URI of the TileDB object.
@@ -115,7 +114,7 @@ TileDBObject <- R6::R6Class(
     tiledb_platform_config = NULL,
 
     # Internal context
-    tiledb_ctx = NULL
+    .tiledbsoma_ctx = NULL
 
   )
 )
