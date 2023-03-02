@@ -72,6 +72,16 @@ SOMA uses the [Arrow](https://arrow.apache.org/docs/python/index.html) type
 system and memory model for its in-memory type system and schema. For
 example, the schema of a ``tiledbsoma.DataFrame`` is expressed as an
 [Arrow Schema](https://arrow.apache.org/docs/python/data.html#schemas).
+
+Error handling:
+---------------
+Most errors will be signaled with a raised Exception. Of note:
+* ``NotImplementedError`` will be raised when the requested function or method
+  is unsupported.
+* ``SOMAError`` is a base class for all SOMA-specific errors.
+* ``TileDBError`` will be raised for many TileDB-specific errors.
+Most errors will raise an appropriate Python error, e.g., ``TypeError`` or
+``ValueError``.
 """
 
 from somacore import AxisColumnNames, AxisQuery, ExperimentAxisQuery

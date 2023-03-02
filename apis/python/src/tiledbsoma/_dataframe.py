@@ -106,7 +106,6 @@ class DataFrame(TileDBArray, somacore.DataFrame):
 
         :raises TypeError: if the ``schema`` parameter specifies an unsupported type,
             or if ``index_column_names`` specifies a non-indexable column.
-
         :raises ValueError: if the ``index_column_names`` is malformed or specifies
             an undefined column name.
         :raises ValueError: if the ``schema`` specifies illegal column names.
@@ -184,6 +183,8 @@ class DataFrame(TileDBArray, somacore.DataFrame):
             Defaults to no filter.
 
         :raises SOMAError: if ``value_filter`` can not be parsed.
+        :raises ValueError: if ``coords`` are malformed or do not index this DataFrame.
+        :raises SOMAError: if the object is not open for reading.
 
         **Indexing**: the ``coords`` parameter will support, per dimension: a list of values of the type of the indexed column.
 
@@ -242,6 +243,8 @@ class DataFrame(TileDBArray, somacore.DataFrame):
             the schema for the ``DataFrame``.
 
         :raises TypeError: if the ``values`` parameter is an unsupported type.
+        :raises ValueError: if the ``values`` parameter is an empty table.
+        :raises SOMAError: if the object is not open for writing.
         """
         _util.check_type("values", values, (pa.Table,))
 

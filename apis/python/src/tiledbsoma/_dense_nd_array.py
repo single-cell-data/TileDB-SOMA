@@ -78,6 +78,8 @@ class DenseNDArray(NDArray, somacore.DenseNDArray):
         ``(3, 4)``, ``(slice(5, 10),)``, and ``(slice(5, 10), slice(6, 12))``.
         Slice indices are doubly inclusive.
 
+        :raises SOMAError: if the object is not open for reading.
+
         [lifecycle: experimental]
         """
         del partitions, platform_config  # Currently unused.
@@ -137,6 +139,7 @@ class DenseNDArray(NDArray, somacore.DenseNDArray):
             in this write operation (currently unused).
 
         :raises TypeError: if the ``values`` parameter is an unsupported type.
+        :raises SOMAError: if the object is not open for writing.
         """
         _util.check_type("values", values, (pa.Tensor,))
 
