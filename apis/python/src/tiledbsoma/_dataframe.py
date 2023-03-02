@@ -574,69 +574,9 @@ def _build_tiledb_schema(
             pa_type, is_indexed_column=True
         )
 
-        if slot_domain is not None:
-            # User-specified; go with it when possible
-            if (
-                pa_type == pa.string()
-                or pa_type == pa.large_string()
-                or pa_type == pa.binary()
-                or pa_type == pa.large_binary()
-            ):
-                # TileDB Embedded won't raise an error if the user asks for, say
-                # domain=[("a", "z")].  But it will simply _ignore_ the request and
-                # use [("", "")]. The decision here is to explicitly reject an
-                # unsupported operation.
-                raise ValueError(
-                    "TileDB str and bytes index-column types do not support domain specfication"
-                )
-            if index_column_name == SOMA_JOINID:
-                lo = slot_domain[0]
-                hi = slot_domain[1]
-                if lo is not None and lo < 0:
-                    raise ValueError(
-                        f"soma_joinid indices cannot be negative; got lower bound {lo}"
-                    )
-                if hi is not None and hi < 0:
-                    raise ValueError(
-                        f"soma_joinid indices cannot be negative; got upper bound {hi}"
-                    )
-
-        elif isinstance(dtype, str):
-            slot_domain = None, None
-        elif np.issubdtype(dtype, NPInteger):
-            iinfo = np.iinfo(cast(NPInteger, dtype))
-            slot_domain = iinfo.min, iinfo.max - 1
-            # Here the slot_domain isn't specified by the user; we're setting it.
-            # The SOMA spec disallows negative soma_joinid.
-            if index_column_name == SOMA_JOINID:
-                slot_domain = (0, slot_domain[1])
-        elif np.issubdtype(dtype, NPFloating):
-            finfo = np.finfo(cast(NPFloating, dtype))
-            slot_domain = finfo.min, finfo.max
-
-        elif dtype == "datetime64[s]":
-            iinfo = np.iinfo(cast(NPInteger, np.int64))
-            slot_domain = np.datetime64(iinfo.min, "s"), np.datetime64(
-                iinfo.max - 1, "s"
-            )
-        elif dtype == "datetime64[ms]":
-            iinfo = np.iinfo(cast(NPInteger, np.int64))
-            slot_domain = np.datetime64(iinfo.min, "ms"), np.datetime64(
-                iinfo.max - 1, "ms"
-            )
-        elif dtype == "datetime64[us]":
-            iinfo = np.iinfo(cast(NPInteger, np.int64))
-            slot_domain = np.datetime64(iinfo.min, "us"), np.datetime64(
-                iinfo.max - 1, "us"
-            )
-        elif dtype == "datetime64[ns]":
-            iinfo = np.iinfo(cast(NPInteger, np.int64))
-            slot_domain = np.datetime64(iinfo.min, "ns"), np.datetime64(
-                iinfo.max - 1, "ns"
-            )
-
-        else:
-            raise TypeError(f"Unsupported dtype {dtype}")
+        slot_domain = _fill_out_slot_domain(
+            slot_domain, index_column_name, pa_type, dtype
+        )
 
         extent = _find_extent_for_domain(
             index_column_name, tiledb_create_options, dtype, slot_domain
@@ -691,6 +631,77 @@ def _build_tiledb_schema(
         tile_order=tile_order,
         ctx=context.tiledb_ctx,
     )
+
+
+def _fill_out_slot_domain(
+    slot_domain: Optional[Tuple[Any, Any]],
+    index_column_name: str,
+    pa_type: pa.DataType,
+    dtype: Any,
+) -> Tuple[Any, Any]:
+    """
+    Helper function for _build_tiledb_schema. Given a user-specified domain for a
+    dimension slot -- which may be ``None``, or a two-tuple of which either element
+    may be ``None`` -- return either what the user specified (if adequate) or
+    sensible type-inferred values appropriate to the datatype.
+    """
+    if slot_domain is not None:
+        # User-specified; go with it when possible
+        if (
+            pa_type == pa.string()
+            or pa_type == pa.large_string()
+            or pa_type == pa.binary()
+            or pa_type == pa.large_binary()
+        ):
+            # TileDB Embedded won't raise an error if the user asks for, say
+            # domain=[("a", "z")].  But it will simply _ignore_ the request and
+            # use [("", "")]. The decision here is to explicitly reject an
+            # unsupported operation.
+            raise ValueError(
+                "TileDB str and bytes index-column types do not support domain specfication"
+            )
+        if index_column_name == SOMA_JOINID:
+            lo = slot_domain[0]
+            hi = slot_domain[1]
+            if lo is not None and lo < 0:
+                raise ValueError(
+                    f"soma_joinid indices cannot be negative; got lower bound {lo}"
+                )
+            if hi is not None and hi < 0:
+                raise ValueError(
+                    f"soma_joinid indices cannot be negative; got upper bound {hi}"
+                )
+
+    elif isinstance(dtype, str):
+        slot_domain = None, None
+    elif np.issubdtype(dtype, NPInteger):
+        iinfo = np.iinfo(cast(NPInteger, dtype))
+        slot_domain = iinfo.min, iinfo.max - 1
+        # Here the slot_domain isn't specified by the user; we're setting it.
+        # The SOMA spec disallows negative soma_joinid.
+        if index_column_name == SOMA_JOINID:
+            slot_domain = (0, slot_domain[1])
+    elif np.issubdtype(dtype, NPFloating):
+        finfo = np.finfo(cast(NPFloating, dtype))
+        slot_domain = finfo.min, finfo.max
+
+    elif dtype == "datetime64[s]":
+        iinfo = np.iinfo(cast(NPInteger, np.int64))
+        slot_domain = np.datetime64(iinfo.min, "s"), np.datetime64(iinfo.max - 1, "s")
+    elif dtype == "datetime64[ms]":
+        iinfo = np.iinfo(cast(NPInteger, np.int64))
+        slot_domain = np.datetime64(iinfo.min, "ms"), np.datetime64(iinfo.max - 1, "ms")
+    elif dtype == "datetime64[us]":
+        iinfo = np.iinfo(cast(NPInteger, np.int64))
+        slot_domain = np.datetime64(iinfo.min, "us"), np.datetime64(iinfo.max - 1, "us")
+    elif dtype == "datetime64[ns]":
+        iinfo = np.iinfo(cast(NPInteger, np.int64))
+        slot_domain = np.datetime64(iinfo.min, "ns"), np.datetime64(iinfo.max - 1, "ns")
+
+    else:
+        raise TypeError(f"Unsupported dtype {dtype}")
+
+    return slot_domain
 
 
 def _find_extent_for_domain(
