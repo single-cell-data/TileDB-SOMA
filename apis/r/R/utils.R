@@ -60,11 +60,15 @@ arrow_to_dt <- function(arrlst) {
     data.table(as.data.frame(rb))
 }
 
+##' @rdname soma_reader
+as_arrow_table <- function(arrlst) {
+    arrow::as_arrow_table(arrow::RecordBatch$import_from_c(arrlst[[1]], arrlst[[2]]))
+}
+
 #' @importFrom Matrix as.matrix
 #' @importFrom arrow RecordBatch
 #' @import R6 methods utils
 ##' @importFrom Rcpp evalCpp
-##' @importFrom arch arch_allocate_schema arch_allocate_array_data arch_array as_arch_array_stream from_arch_array arch_schema_info
 ##' @importFrom data.table data.table
 ##' @importFrom dplyr collect
 ##' @importFrom spdl setup

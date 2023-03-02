@@ -225,7 +225,7 @@ SOMASparseNDArray <- R6::R6Class(
 
     ## refined from base class
     soma_reader_transform = function(x) {
-      tbl <- arrow::as_arrow_table(arch::from_arch_array(x, arrow::RecordBatch))
+      tbl <- as_arrow_table(x)
       if (private$sparse_repr == "") {
           tbl
       } else {

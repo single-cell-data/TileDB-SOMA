@@ -2,7 +2,9 @@
 #define ARROW_ADAPTER_H
 
 #include <tiledbsoma/tiledbsoma>
+#ifndef NO_CARROW_INCLUDE
 #include "carrow.h"
+#endif
 
 // https://arrow.apache.org/docs/format/CDataInterface.html
 // https://arrow.apache.org/docs/format/Columnar.html#buffer-listing-for-each-layout

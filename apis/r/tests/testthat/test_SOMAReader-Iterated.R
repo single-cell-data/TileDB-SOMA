@@ -1,7 +1,6 @@
 test_that("Iterated Interface from SOMAReader", {
     skip_if_not_installed("pbmc3k.tiledb")      # a Suggests: pre-package 3k PBMC data
 
-    library(arch)
     library(arrow)
     library(bit64)
     library(data.table)
