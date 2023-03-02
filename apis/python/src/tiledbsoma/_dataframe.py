@@ -159,7 +159,7 @@ class DataFrame(TileDBArray, somacore.DataFrame):
     def domain(self) -> Tuple[Tuple[Any, Any], ...]:
         """
         Returns a tuple of minimum and maximum values, inclusive, storable
-        on each index column of the dataframe.
+        on each index column of the dataframe.  [lifecycle: experimental].
         """
         return self._tiledb_domain()
 
