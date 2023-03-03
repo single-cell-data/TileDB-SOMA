@@ -517,7 +517,7 @@ class CollectionBase(
                 full_uri=uri_joinpath(self.uri, maybe_relative_uri),
                 relative=True,
             )
-        # Our own URI is a `tiledb://` URI. Since TileDB Cloud requires absolute
+        # Our own URI is a ``tiledb://`` URI. Since TileDB Cloud requires absolute
         # URIs, we need to calculate the absolute URI to pass to Group.add
         # based on our creation URI.
         # TODO: Handle the case where we reopen a TileDB Cloud Group, but by
@@ -638,8 +638,8 @@ def _sanitize_for_path(key: str) -> str:
 @attrs.define(frozen=True, kw_only=True)
 class _ChildURI:
     add_uri: str
-    """The URI of the child for passing to :meth:`tiledb.Group.add`."""
+    """The URI of the child for passing to :meth:``tiledb.Group.add``."""
     full_uri: str
     """The full URI of the child, used to create a new element."""
     relative: bool
-    """The ``relative`` value to pass to :meth:`tiledb.Group.add`."""
+    """The ``relative`` value to pass to :meth:``tiledb.Group.add``."""

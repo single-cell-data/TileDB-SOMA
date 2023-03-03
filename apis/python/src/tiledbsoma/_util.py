@@ -73,7 +73,7 @@ def is_relative_uri(uri: str) -> bool:
 def uri_joinpath(base: str, path: str) -> str:
     """Join a path to a URI.
 
-    Supports relative paths for `file` or unspecified schemes, assuming
+    Supports relative paths for ``file`` or unspecified schemes, assuming
     they are file system paths.  Assumes NO suport for relative paths
     otherwise.
     """
@@ -191,7 +191,7 @@ def dense_index_to_shape(coord: options.DenseCoord, array_length: int) -> int:
     if isinstance(coord, int):
         return 1
     if is_slice_of(coord, int):
-        # We verify that `step` is None elsewhere, so we can always assume
+        # We verify that ``step`` is None elsewhere, so we can always assume
         # that we're asked for a continuous slice.
         if coord.stop is None:
             stop = array_length

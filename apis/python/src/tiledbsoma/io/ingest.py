@@ -234,9 +234,9 @@ def from_anndata(
             ) as x:
                 _maybe_set(measurement, "X", x, use_relative_uri=use_relative_uri)
 
-                # Since we did `anndata = ad.read_h5ad(path_to_h5ad, "r")` with the "r":
-                # * If we do `anndata.X[:]` we're loading all of a CSR/CSC/etc into memory.
-                # * If we do `anndata.X` we're getting a pageable object which can be loaded
+                # Since we did ``anndata = ad.read_h5ad(path_to_h5ad, "r")`` with the "r":
+                # * If we do ``anndata.X[:]`` we're loading all of a CSR/CSC/etc into memory.
+                # * If we do ``anndata.X`` we're getting a pageable object which can be loaded
                 #   chunkwise into memory.
                 # Using the latter allows us to ingest larger .h5ad files without OOMing.
 
@@ -607,7 +607,7 @@ def add_X_layer(
 ) -> None:
     """This is useful for adding X data, for example from scanpy.pp.normalize_total, scanpy.pp.log1p, etc.
 
-    Use `ingest_mode="resume"` to not error out if the schema already exists.
+    Use ``ingest_mode="resume"`` to not error out if the schema already exists.
 
     Lifecycle:
         Experimental.
@@ -635,7 +635,7 @@ def add_matrix_to_collection(
     """This is useful for adding X/obsp/varm/etc data, for example from scanpy.pp.normalize_total,
     scanpy.pp.log1p, etc.
 
-    Use `ingest_mode="resume"` to not error out if the schema already exists.
+    Use ``ingest_mode="resume"`` to not error out if the schema already exists.
     """
     with exp.ms[measurement_name] as meas:
         if collection_name in meas:
@@ -955,9 +955,9 @@ def _chunk_is_contained_in(
 
     We say "bounds" not "MBR" with the "M" for minimum: a sparse matrix might not _have_ any
     elements for some initial/final rows or columns. Suppose an input array has shape 100 x 200, so
-    bounds `((0, 99), (0, 199))` -- and also suppose there are no matrix elements for column 1.
+    bounds ``((0, 99), (0, 199))`` -- and also suppose there are no matrix elements for column 1.
     Also suppose the matrix has already been written to TileDB-SOMA storage. The TileDB non-empty
-    domain _is_ tight -- it'd say `((0, 99), (3, 197))` for example.  When we come back for a
+    domain _is_ tight -- it'd say ``((0, 99), (3, 197))`` for example.  When we come back for a
     resume-mode ingest, we'd see the input bounds aren't contained within the storage non-empty
     domain, and erroneously declare that the data need to be rewritten.
 
@@ -1085,7 +1085,7 @@ def to_anndata(
             if len(shape) != 2:
                 raise ValueError(f"expected shape == 2; got {shape}")
             matrix = measurement.obsm[key].read((slice(None),) * len(shape)).to_numpy()
-            # The spelling `sp.csr_array` is more idiomatic but doesn't exist until Python 3.8
+            # The spelling ``sp.csr_array`` is more idiomatic but doesn't exist until Python 3.8
             obsm[key] = sp.csr_matrix(matrix)
 
     varm = {}
@@ -1095,7 +1095,7 @@ def to_anndata(
             if len(shape) != 2:
                 raise ValueError(f"expected shape == 2; got {shape}")
             matrix = measurement.varm[key].read((slice(None),) * len(shape)).to_numpy()
-            # The spelling `sp.csr_array` is more idiomatic but doesn't exist until Python 3.8
+            # The spelling ``sp.csr_array`` is more idiomatic but doesn't exist until Python 3.8
             varm[key] = sp.csr_matrix(matrix)
 
     obsp = {}
