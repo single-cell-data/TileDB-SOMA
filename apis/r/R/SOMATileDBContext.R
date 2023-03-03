@@ -32,7 +32,7 @@ SOMATileDBContext <- R6::R6Class(
       }
       stopifnot(
         !length(x = config) || is.character(x = config),
-        !length(x = config) || is_named2(x = config)
+        !length(x = config) || is_named(x = config, allow_empty = FALSE)
       )
       config['sm.mem.reader.sparse_global_order.ratio_array_data'] <- '0.3'
       # Add the TileDB context
