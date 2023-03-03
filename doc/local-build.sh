@@ -64,7 +64,7 @@ build_site() {
 }
 
 run() {
-  # setup_venv
+  setup_venv
   build_ext
   build_site
   echo "Build complete. Open '${build_dir}/html/index.html' in your browser."
