@@ -991,3 +991,10 @@ def test_timestamped_ops(tmp_path, allows_duplicates, consolidate):
         assert list(x.as_py() for x in tab["string"]) == ["apple"]
         assert sidf.tiledb_timestamp_ms == 1615402887987
         assert sidf.tiledb_timestamp.isoformat() == "2021-03-10T19:01:27.987000+00:00"
+
+
+def test_exists():
+    # Specifically, we're checking this doesn't raise
+    assert not soma.DataFrame.exists("/nonesuch/no/nope/never/ever")
+    assert not soma.DataFrame.exists("foo://bar")
+    assert not soma.DataFrame.exists("s3://@@@@ILLEGAL@@@@")
