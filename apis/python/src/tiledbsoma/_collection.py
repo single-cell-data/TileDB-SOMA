@@ -90,21 +90,21 @@ class CollectionBase(
         [lifecycle: experimental]
 
         Args:
-            uri: 
+            uri:
                 The location to create this SOMA collection at.
-            platform_config: 
+            platform_config:
                 Optional call-specific options to use when
                 creating this collection. (Currently unused.)
-            context: 
+            context:
                 If provided, the ``SOMATileDBContext`` to use when creating and
                 opening this collection.
-            tiledb_timestamp: 
+            tiledb_timestamp:
                 If specified, overrides the default timestamp
                 used to open this object. If unset, uses the timestamp provided by
                 the context.
 
         Raises:
-            TileDBError: 
+            TileDBError:
                 if unable to create the underlying object.
         """
         context = context or SOMATileDBContext()
@@ -181,24 +181,24 @@ class CollectionBase(
         platform_config: Optional[options.PlatformConfig] = None,
     ) -> "AnyTileDBCollection":
         """Adds a new sub-collection to this collection.
-        
+
         [lifecycle: experimental]
 
         Args:
-            key: 
+            key:
                 The key to add.
-            cls: 
+            cls:
                 Optionally, the specific type of sub-collection to create.
                 For instance, passing ``tiledbsoma.Experiment`` here will create a
                 ``SOMAExperiment`` as the sub-entry. By default, a basic
                 ``Collection`` will be created.
-            uri: 
+            uri:
                 If provided, the sub-collection will be created at this URI.
                 This can be absolute, in which case the sub-collection will be
                 linked to by absolute URI in the stored collection, or relative,
                 in which case the sub-collection will be linked to by relative URI.
                 The default is to use a relative URI generated based on the key.
-            platform_config: 
+            platform_config:
                 Platform configuration options to use when
                 creating this sub-collection. This is passed directly to
                 ``[CurrentCollectionType].create()``.
@@ -262,7 +262,7 @@ class CollectionBase(
     @_funcs.forwards_kwargs_to(_add_new_ndarray, exclude=("cls",))
     def add_new_dense_ndarray(self, key: str, **kwargs: Any) -> DenseNDArray:
         """Adds a new DenseNDArray to this Collection.
-        
+
         [lifecycle: experimental]
 
         For details about the behavior of ``key`` and ``uri``, see
@@ -274,7 +274,7 @@ class CollectionBase(
     @_funcs.forwards_kwargs_to(_add_new_ndarray, exclude=("cls",))
     def add_new_sparse_ndarray(self, key: str, **kwargs: Any) -> SparseNDArray:
         """Adds a new SparseNDArray to this Collection.
-        
+
         [lifecycle: experimental]
 
         For details about the behavior of ``key`` and ``uri``, see
@@ -293,15 +293,15 @@ class CollectionBase(
         """Handles the common parts of adding new elements.
 
         Args:
-            key: 
+            key:
                 The key to be added.
-            cls: 
+            cls:
                 The type of the element to be added.
-            factory: 
+            factory:
                 A callable that, given the full URI to be added,
                 will create the backing storage at that URI and return
                 the reified SOMA object.
-            user_uri: 
+            user_uri:
                 If set, the URI to use for the child
                 instead of the default.
         """
@@ -359,23 +359,23 @@ class CollectionBase(
         *,
         use_relative_uri: Optional[bool] = None,
     ) -> Self:
-        """Adds an element to the collection. 
-        
+        """Adds an element to the collection.
+
         [lifecycle: experimental]
 
         Args:
-            key: 
+            key:
                 The key of the element to be added.
-            value: 
+            value:
                 The value to be added to this collection.
-            use_relative_uri: 
+            use_relative_uri:
                 By default (None), the collection will determine whether the
                 element should be stored by relative URI.
                 If True, the collection will store the child by absolute URI.
                 If False, the collection will store the child by relative URI.
 
-        Raises: 
-            SOMAError: 
+        Raises:
+            SOMAError:
                 If an existing key is set (replacement is unsupported).
         """
         uri_to_add = value.uri
@@ -469,13 +469,13 @@ class CollectionBase(
         """Internal implementation of element setting.
 
         Args:
-            key: 
+            key:
                 The key to set.
-            uri: 
+            uri:
                 The resolved URI to pass to :meth:`tiledb.Group.add`.
-            relative: 
+            relative:
                 The ``relative`` parameter to pass to ``add``.
-            value: 
+            value:
                 The reified SOMA object to store locally.
         """
 
