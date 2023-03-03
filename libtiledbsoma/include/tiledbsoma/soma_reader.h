@@ -61,7 +61,8 @@ class SOMAReader {
      * @param result_order Read result order
      * @return std::unique_ptr<SOMAReader> SOMAReader
      */
-    static std::unique_ptr<SOMAReader> open(
+    __attribute__((visibility("default"))) static std::unique_ptr<SOMAReader>
+    open(
         std::string_view uri,
         std::string_view name = "unnamed",
         std::map<std::string, std::string> platform_config = {},
@@ -122,7 +123,7 @@ class SOMAReader {
      * @param batch_size
      * @param result_order
      */
-    void reset(
+    __attribute__((visibility("default"))) void reset(
         std::vector<std::string> column_names = {},
         std::string_view batch_size = "auto",
         std::string_view result_order = "auto");
@@ -251,7 +252,7 @@ class SOMAReader {
      * @brief Submit the query
      *
      */
-    void submit();
+    __attribute__((visibility("default"))) void submit();
 
     /**
      * @brief Read the next chunk of results from the query. If all results have
@@ -267,7 +268,9 @@ class SOMAReader {
      *
      * @return std::optional<std::shared_ptr<ArrayBuffers>>
      */
-    std::optional<std::shared_ptr<ArrayBuffers>> read_next();
+    __attribute__((visibility("default")))
+    std::optional<std::shared_ptr<ArrayBuffers>>
+    read_next();
 
     /**
      * @brief Check if the query is complete.
@@ -312,7 +315,7 @@ class SOMAReader {
      *
      * @return uint64_t Total number of unique cells
      */
-    uint64_t nnz();
+    __attribute__((visibility("default"))) uint64_t nnz();
 
     /**
      * @brief Get the schema of the array.
