@@ -63,7 +63,7 @@ class DenseNDArray(NDArray, somacore.DenseNDArray):
 
     def read(
         self,
-        coords: options.DenseNDCoords = (),  # type: ignore[type-arg]
+        coords: options.DenseNDCoords = (),
         *,
         result_order: options.ResultOrderStr = somacore.ResultOrder.ROW_MAJOR,
         partitions: Optional[options.ReadPartitions] = None,
@@ -120,7 +120,7 @@ class DenseNDArray(NDArray, somacore.DenseNDArray):
 
     def write(
         self,
-        coords: options.DenseNDCoords,  # type: ignore[type-arg]
+        coords: options.DenseNDCoords,
         values: pa.Tensor,
         *,
         platform_config: Optional[options.PlatformConfig] = None,
