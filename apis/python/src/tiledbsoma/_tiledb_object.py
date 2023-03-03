@@ -10,7 +10,7 @@ from typing_extensions import Self
 from . import _constants, _tdb_handles
 from ._exception import SOMAError
 from ._types import OpenTimestamp
-from ._util import ms_to_datetime
+from ._util import check_type, ms_to_datetime
 from .options import SOMATileDBContext
 
 _WrapperType_co = TypeVar(
@@ -179,8 +179,7 @@ class TileDBObject(somacore.SOMAObject, Generic[_WrapperType_co]):
 
         :raises TypeError: if the ``uri`` is not a string.
         """
-        if not isinstance(uri, str):
-            raise TypeError(f"uri argument must be of type string; got {type(uri)}")
+        check_type("uri", uri, (str,))
         context = context or SOMATileDBContext()
         try:
             with cls._wrapper_type.open(uri, "r", context, tiledb_timestamp) as hdl:
