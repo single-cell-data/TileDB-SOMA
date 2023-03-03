@@ -164,9 +164,23 @@ class TileDBObject(somacore.SOMAObject, Generic[_WrapperType_co]):
         context: Optional[SOMATileDBContext] = None,
         tiledb_timestamp: Optional[OpenTimestamp] = None,
     ) -> bool:
-        """Finds whether an object of this type exists at the given URI.
-        [lifecycle: experimental].
         """
+        Finds whether an object of this type exists at the given URI.
+        [lifecycle: experimental].
+
+        :param uri: The URI to open.
+
+        :param context: If provided, the ``SOMATileDBContext`` to use when creating and
+            attempting to access this object.
+
+        :param tiledb_timestamp: The TileDB timestamp to open this object at,
+            measured in milliseconds since the Unix epoch.
+            When unset (the default), the current time is used.
+
+        :raises TypeError: if the ``uri`` is not a string.
+        """
+        if not isinstance(uri, str):
+            raise TypeError(f"uri argument must be of type string; got {type(uri)}")
         context = context or SOMATileDBContext()
         try:
             with cls._wrapper_type.open(uri, "r", context, tiledb_timestamp) as hdl:
@@ -174,9 +188,9 @@ class TileDBObject(somacore.SOMAObject, Generic[_WrapperType_co]):
                 if not isinstance(md_type, str):
                     return False
                 return md_type.lower() == cls.soma_type.lower()
-        except SOMAError:
+        except SOMAError:  # type mismatch
             return False
-        except tiledb.cc.TileDBError:
+        except tiledb.cc.TileDBError:  # no-such on storage
             return False
 
     @classmethod

@@ -24,5 +24,22 @@ import tiledbsoma as soma
         soma.Experiment,
     ],
 )
-def test_tiledbobject_exists(uri, somaclass):
+def test_tiledbobject_exists_nonexistent_path(uri, somaclass):
     assert not somaclass.exists(uri)
+
+
+@pytest.mark.parametrize("uri", [b"/dev/null", 123.45, ["path"], {}])
+@pytest.mark.parametrize(
+    "somaclass",
+    [
+        soma.DataFrame,
+        soma.SparseNDArray,
+        soma.DenseNDArray,
+        soma.Collection,
+        soma.Measurement,
+        soma.Experiment,
+    ],
+)
+def test_tiledbobject_exists_invalid_uri_type(uri, somaclass):
+    with pytest.raises(TypeError):
+        somaclass.exists(uri)
