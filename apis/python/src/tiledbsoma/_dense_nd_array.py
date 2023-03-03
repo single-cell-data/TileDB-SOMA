@@ -89,7 +89,7 @@ class DenseNDArray(NDArray, somacore.DenseNDArray):
         schema = self._handle.schema
         target_shape = dense_indices_to_shape(coords, schema.shape, result_order)
 
-        sr = self._soma_reader(result_order=result_order.value)
+        sr = self._soma_reader(result_order=result_order)
 
         self._set_reader_coords(sr, coords)
 

@@ -122,12 +122,12 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
 
         :return: A SparseNDArrayRead to access result iterators in various formats.
         """
-        del result_order, batch_size, platform_config  # Currently unused.
+        del batch_size, platform_config  # Currently unused.
         self._check_open_read()
         _util.check_unpartitioned(partitions)
 
         schema = self._handle.schema
-        sr = self._soma_reader(schema=schema)
+        sr = self._soma_reader(schema=schema, result_order=result_order)
         self._set_reader_coords(sr, coords)
         sr.submit()
         return SparseNDArrayRead(sr, schema.shape)
