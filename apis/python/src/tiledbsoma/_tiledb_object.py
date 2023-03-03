@@ -176,6 +176,8 @@ class TileDBObject(somacore.SOMAObject, Generic[_WrapperType_co]):
                 return md_type.lower() == cls.soma_type.lower()
         except SOMAError:
             return False
+        except tiledb.cc.TileDBError:
+            return False
 
     @classmethod
     def _set_create_metadata(cls, handle: _tdb_handles.AnyWrapper) -> None:
