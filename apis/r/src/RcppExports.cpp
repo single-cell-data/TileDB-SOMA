@@ -62,6 +62,28 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// check_arrow_schema_tag
+bool check_arrow_schema_tag(Rcpp::XPtr<ArrowSchema> xp);
+RcppExport SEXP _tiledbsoma_check_arrow_schema_tag(SEXP xpSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::XPtr<ArrowSchema> >::type xp(xpSEXP);
+    rcpp_result_gen = Rcpp::wrap(check_arrow_schema_tag(xp));
+    return rcpp_result_gen;
+END_RCPP
+}
+// check_arrow_array_tag
+bool check_arrow_array_tag(Rcpp::XPtr<ArrowArray> xp);
+RcppExport SEXP _tiledbsoma_check_arrow_array_tag(SEXP xpSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::XPtr<ArrowArray> >::type xp(xpSEXP);
+    rcpp_result_gen = Rcpp::wrap(check_arrow_array_tag(xp));
+    return rcpp_result_gen;
+END_RCPP
+}
 // sr_setup
 Rcpp::XPtr<tdbs::SOMAReader> sr_setup(Rcpp::XPtr<tiledb::Context> ctx, const std::string& uri, Rcpp::Nullable<Rcpp::CharacterVector> colnames, Rcpp::Nullable<Rcpp::XPtr<tiledb::QueryCondition>> qc, Rcpp::Nullable<Rcpp::List> dim_points, Rcpp::Nullable<Rcpp::List> dim_ranges, Rcpp::Nullable<Rcpp::CharacterVector> config, const std::string& loglevel);
 RcppExport SEXP _tiledbsoma_sr_setup(SEXP ctxSEXP, SEXP uriSEXP, SEXP colnamesSEXP, SEXP qcSEXP, SEXP dim_pointsSEXP, SEXP dim_rangesSEXP, SEXP configSEXP, SEXP loglevelSEXP) {
@@ -145,6 +167,8 @@ static const R_CallMethodDef CallEntries[] = {
     {"_tiledbsoma_set_log_level", (DL_FUNC) &_tiledbsoma_set_log_level, 1},
     {"_tiledbsoma_get_column_types", (DL_FUNC) &_tiledbsoma_get_column_types, 2},
     {"_tiledbsoma_nnz", (DL_FUNC) &_tiledbsoma_nnz, 1},
+    {"_tiledbsoma_check_arrow_schema_tag", (DL_FUNC) &_tiledbsoma_check_arrow_schema_tag, 1},
+    {"_tiledbsoma_check_arrow_array_tag", (DL_FUNC) &_tiledbsoma_check_arrow_array_tag, 1},
     {"_tiledbsoma_sr_setup", (DL_FUNC) &_tiledbsoma_sr_setup, 8},
     {"_tiledbsoma_sr_complete", (DL_FUNC) &_tiledbsoma_sr_complete, 1},
     {"_tiledbsoma_sr_next", (DL_FUNC) &_tiledbsoma_sr_next, 1},

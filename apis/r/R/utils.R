@@ -49,19 +49,21 @@ SOMA_OBJECT_TYPE_METADATA_KEY <- "soma_object_type"
 SOMA_ENCODING_VERSION_METADATA_KEY <- "soma_encoding_version"
 SOMA_ENCODING_VERSION <- "0"
 
+check_arrow_pointers <- function(arrlst) {
+    stopifnot("First argument must be an external pointer to ArrowArray" = check_arrow_array_tag(arrlst[[1]]),
+              "Second argument must be an external pointer to ArrowSchema" = check_arrow_schema_tag(arrlst[[2]]))
+}
+
 ##' @rdname soma_reader
 arrow_to_dt <- function(arrlst) {
-    ## this helper will be replaced once the under-development package 'nanoarrow' (on
-    ## github at apache/arror-nanoarrow) is released, for now we use 'arch' which predates it
-    #data.table::data.table(dplyr::collect(arch::from_arch_array(arrlst, arrow::RecordBatch)))
-    #data.table::data.table(dplyr::collect(arch::from_arch_array(arrlst, arrow::RecordBatch)))
+    check_arrow_pointers(arrlst)
     rb <- dplyr::collect(arrow::RecordBatch$import_from_c(arrlst[[1]], arrlst[[2]]))
-    #data.table::data.table(dplyr::collect()) #arch::from_arch_array(arrlst, arrow::RecordBatch)))
     data.table(as.data.frame(rb))
 }
 
 ##' @rdname soma_reader
 as_arrow_table <- function(arrlst) {
+    check_arrow_pointers(arrlst)
     arrow::as_arrow_table(arrow::RecordBatch$import_from_c(arrlst[[1]], arrlst[[2]]))
 }
 

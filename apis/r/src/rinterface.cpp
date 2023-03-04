@@ -55,7 +55,8 @@ namespace tdbs = tiledbsoma;
 //' @param loglevel Character value with the desired logging level, defaults to \sQuote{auto}
 //' which lets prior setting prevail, any other value is set as new logging level.
 //' @param arrlst A list containing the pointers to an Arrow data structure
-//' @return An Arrow data structure is returned
+//' @param xp An external pointer to an ArrowSchema or ArrowData
+//' @return A List object with two pointers to Arrow array data and schema is returned
 //' @examples
 //' \dontrun{
 //' uri <- "test/soco/pbmc3k_processed/obs"
@@ -212,4 +213,18 @@ Rcpp::CharacterVector get_column_types(const std::string& uri,
 double nnz(const std::string& uri) {
     auto sr = tdbs::SOMAReader::open(uri);
     return static_cast<double>(sr->nnz());
+}
+
+//' @rdname soma_reader
+// [[Rcpp::export]]
+bool check_arrow_schema_tag(Rcpp::XPtr<ArrowSchema> xp) {
+  check_xptr_tag<ArrowSchema>(xp);  // throws if mismatched
+  return true;
+}
+
+//' @rdname soma_reader
+// [[Rcpp::export]]
+bool check_arrow_array_tag(Rcpp::XPtr<ArrowArray> xp) {
+  check_xptr_tag<ArrowArray>(xp);  // throws if mismatched
+  return true;
 }
