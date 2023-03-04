@@ -138,7 +138,7 @@ TileDBArray <- R6::R6Class(
       c(self$dimnames(), self$attrnames())
     },
 
-    #' @description Get number of fragments in the array [lifecycle: experimental]
+    #' @description Get number of fragments in the array (lifecycle: experimental)
     fragment_count = function() {
       tiledb::tiledb_fragment_info_get_num(
         tiledb::tiledb_fragment_info(self$uri)

@@ -5,7 +5,7 @@
 #' single [`SOMAMeasurement`] in a [`SOMAExperiment`], by `obs`/`var` (axis)
 #' coordinates and/or value filter. The primary use for this class is slicing
 #' [`SOMAExperiment`] `X` layers by `obs` or `var` value and/or coordinates.
-#' [lifecycle: experimental]
+#' (lifecycle: experimental)
 #'
 #' ## X Layer Support
 #'
@@ -174,7 +174,7 @@ SOMAExperimentAxisQuery <- R6::R6Class(
       private$.experiment
     },
 
-    #' @field indexer The [`SOMAIndexer`] object.
+    #' @field indexer The `SOMAIndexer` object.
     indexer = function(value) {
       if (!missing(value)) read_only_error("indexer")
       private$.indexer

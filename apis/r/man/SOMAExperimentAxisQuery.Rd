@@ -10,11 +10,11 @@ Perform an axis-based query against a \code{\link{SOMAExperiment}}.
 single \code{\link{SOMAMeasurement}} in a \code{\link{SOMAExperiment}}, by \code{obs}/\code{var} (axis)
 coordinates and/or value filter. The primary use for this class is slicing
 \code{\link{SOMAExperiment}} \code{X} layers by \code{obs} or \code{var} value and/or coordinates.
-\link{lifecycle: experimental}
+(lifecycle: experimental)
 \subsection{X Layer Support}{
 
 Slicing on \code{\link{SOMASparseNDArray}} \code{X} matrices is supported;
-\code{\link{SOMADenseNDArray}} is not supported at this time.
+slicing on \code{\link{SOMADenseNDArray}} is not supported at this time.
 }
 
 \subsection{Result Size}{
@@ -30,7 +30,7 @@ this in the class.
 \describe{
 \item{\code{experiment}}{The parent \code{\link{SOMAExperiment}} object.}
 
-\item{\code{indexer}}{The \code{\link{SOMAIndexer}} object.}
+\item{\code{indexer}}{The \code{SOMAIndexer} object.}
 
 \item{\code{obs_query}}{The \code{obs} \code{\link{SOMAAxisQuery}} object.}
 
@@ -180,7 +180,7 @@ from the resulting Tables.
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{X_layers}}{The name of the \code{X} layer(s) to read and return.}
+\item{\code{X_layers}}{The name(s) of the \code{X} layer(s) to read and return.}
 
 \item{\code{obs_column_names, var_column_names}}{Specify which column names in
 \code{var} and \code{obs} dataframes to read and return.}

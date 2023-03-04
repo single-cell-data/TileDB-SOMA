@@ -6,7 +6,7 @@
 \description{
 Construct a single-axis query object with a combination of
 coordinates and/or value filters for use with \code{\link{SOMAExperimentAxisQuery}}.
-\link{lifecycle: experimental}
+(lifecycle: experimental)
 
 Per dimension, the \code{SOMAAxisQuery} can have value of:
 \itemize{
@@ -53,7 +53,7 @@ Create a new \code{SOMAAxisQuery} object.
 \item{\code{value_filter}}{Optional string containing a logical expression that
 is used to filter the returned values.}
 
-\item{\code{coords}}{Optional indices specifying the rows to read; either a
+\item{\code{coords}}{Optional indices specifying the rows to read: either a
 vector of the appropriate type or a named list of vectors corresponding
 to each dimension.}
 }
