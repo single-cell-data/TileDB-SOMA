@@ -197,7 +197,7 @@ setuptools.setup(
     zip_safe=False,
     install_requires=[
         "anndata",
-        "attrs>=22.1",
+        "attrs>=22.2",
         "numpy",
         "pandas",
         "pyarrow>=9.0.0",
