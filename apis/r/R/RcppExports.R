@@ -25,7 +25,7 @@
 #' \dontrun{
 #' uri <- "test/soco/pbmc3k_processed/obs"
 #' z <- soma_reader(uri)
-#' tb <- arrow::as_arrow_table(arch::from_arch_array(z, arrow::RecordBatch))
+#' tb <- as_arrow_table(z)
 #' }
 #' @export
 soma_reader <- function(uri, colnames = NULL, qc = NULL, dim_points = NULL, dim_ranges = NULL, batch_size = "auto", result_order = "auto", loglevel = "auto") {
@@ -78,15 +78,14 @@ nnz <- function(uri) {
 #'
 #' @examples
 #' \dontrun{
-#' ctx <- tiledb_ctx()
+#' ctx <- tiledb::tiledb_ctx()
 #' uri <- "test/soco/pbmc3k_processed/obs"
 #' sr <- sr_setup(ctx@ptr, uri, "warn")
 #' rl <- data.frame()
 #' while (nrow(rl) == 0 || !tiledbsoma:::sr_complete(sr)) {
 #'     dat <- tiledbsoma:::sr_next(sr)
 #'     dat |>
-#'         arch::from_arch_array(arrow::RecordBatch) |>
-#'         arrow::as_arrow_table() |>
+#'         as_arrow_table() |>
 #'         collect() |>
 #'         as.data.frame() |>
 #'         data.table() -> D

@@ -59,6 +59,6 @@ functions.
 \dontrun{
 uri <- "test/soco/pbmc3k_processed/obs"
 z <- soma_reader(uri)
-tb <- arrow::as_arrow_table(arch::from_arch_array(z, arrow::RecordBatch))
+tb <- as_arrow_table(z)
 }
 }

@@ -15,10 +15,6 @@
 #include "rutilities.h"         // local declarations
 #include "xptr-utils.h"         // xptr taggging utilities
 
-// in rinterface.cpp
-SEXP schema_owning_xptr(void);
-SEXP array_owning_xptr(void);
-
 namespace tdbs = tiledbsoma;
 
 //' Iterator-Style Access to SOMA Array via SOMAReader
@@ -51,15 +47,14 @@ namespace tdbs = tiledbsoma;
 //'
 //' @examples
 //' \dontrun{
-//' ctx <- tiledb_ctx()
+//' ctx <- tiledb::tiledb_ctx()
 //' uri <- "test/soco/pbmc3k_processed/obs"
 //' sr <- sr_setup(ctx@ptr, uri, "warn")
 //' rl <- data.frame()
 //' while (nrow(rl) == 0 || !tiledbsoma:::sr_complete(sr)) {
 //'     dat <- tiledbsoma:::sr_next(sr)
 //'     dat |>
-//'         arch::from_arch_array(arrow::RecordBatch) |>
-//'         arrow::as_arrow_table() |>
+//'         as_arrow_table() |>
 //'         collect() |>
 //'         as.data.frame() |>
 //'         data.table() -> D
@@ -176,9 +171,8 @@ Rcpp::List sr_next(Rcpp::XPtr<tdbs::SOMAReader> sr) {
 
    const std::vector<std::string> names = sr_data->get()->names();
    auto ncol = names.size();
-   //Rcpp::List schlst(ncol), arrlst(ncol);
-   SEXP schemaxp = schema_owning_xptr();
-   SEXP arrayxp = array_owning_xptr();
+   Rcpp::XPtr<ArrowSchema> schemaxp = schema_owning_xptr();
+   Rcpp::XPtr<ArrowArray> arrayxp = array_owning_xptr();
    ArrowSchemaInitFromType((ArrowSchema*)R_ExternalPtrAddr(schemaxp), NANOARROW_TYPE_STRUCT);
    ArrowSchemaAllocateChildren((ArrowSchema*)R_ExternalPtrAddr(schemaxp), ncol);
    ArrowArrayInitFromType((ArrowArray*)R_ExternalPtrAddr(arrayxp), NANOARROW_TYPE_STRUCT);
@@ -188,8 +182,8 @@ Rcpp::List sr_next(Rcpp::XPtr<tdbs::SOMAReader> sr) {
 
    for (size_t i=0; i<ncol; i++) {
        // this allocates, and properly wraps as external pointers controlling lifetime
-       SEXP chldschemaxp = schema_owning_xptr();
-       SEXP chldarrayxp = array_owning_xptr();
+       Rcpp::XPtr<ArrowSchema> chldschemaxp = schema_owning_xptr();
+       Rcpp::XPtr<ArrowArray> chldarrayxp = array_owning_xptr();
 
        spdl::trace("[sr_next] Accessing {} at {}", names[i], i);
 
@@ -202,8 +196,6 @@ Rcpp::List sr_next(Rcpp::XPtr<tdbs::SOMAReader> sr) {
        memcpy((void*) R_ExternalPtrAddr(chldschemaxp), pp.second.get(), sizeof(ArrowSchema));
        memcpy((void*) R_ExternalPtrAddr(chldarrayxp), pp.first.get(), sizeof(ArrowArray));
 
-       //schlst[i] = schemaxp;
-       //arrlst[i] = arrayxp;
        ((ArrowSchema*)R_ExternalPtrAddr(schemaxp))->children[i] = (ArrowSchema*)R_ExternalPtrAddr(chldschemaxp);
        ((ArrowArray*)R_ExternalPtrAddr(arrayxp))->children[i] = (ArrowArray*)R_ExternalPtrAddr(chldarrayxp);
 
@@ -217,23 +209,4 @@ Rcpp::List sr_next(Rcpp::XPtr<tdbs::SOMAReader> sr) {
                                       Rcpp::Named("schema") = schemaxp);
                                        
    return as;
-   
-   // struct ArrowArray* array_data_tmp = (struct ArrowArray*) R_ExternalPtrAddr(arrlst[0]);
-   // int rows = static_cast<int>(array_data_tmp->length);
-   // SEXP sxp = arch_c_schema_xptr_new(Rcpp::wrap("+s"),  // format
-   //                                   Rcpp::wrap(""),    // name
-   //                                   Rcpp::List(),      // metadata
-   //                                   Rcpp::wrap(2),     // flags, 2 == unordered, nullable, no sorted map keys
-   //                                   schlst,            // children
-   //                                   R_NilValue);       // dictionary
-   // SEXP axp = arch_c_array_from_sexp(Rcpp::List::create(Rcpp::Named("")=R_NilValue), // buffers
-   //                                   Rcpp::wrap(rows),  // length
-   //                                   Rcpp::wrap(-1),    // null count, -1 means not determined
-   //                                   Rcpp::wrap(0),     // offset (in bytes)
-   //                                   arrlst,            // children
-   //                                   R_NilValue);       // dictionary
-   // Rcpp::List as = Rcpp::List::create(Rcpp::Named("schema") = sxp,
-   //                                    Rcpp::Named("array_data") = axp);
-   // as.attr("class") = "arch_array";
-   // return as;
 }

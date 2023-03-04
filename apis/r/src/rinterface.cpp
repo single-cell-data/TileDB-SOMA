@@ -4,35 +4,33 @@
 // We get these via nanoarrow and must cannot include carrow.h again
 #define ARROW_SCHEMA_AND_ARRAY_DEFINED 1
 #include <tiledbsoma/tiledbsoma>
+#if TILEDB_VERSION_MAJOR == 2 && TILEDB_VERSION_MINOR >= 4
+#include <tiledb/tiledb_experimental>
+#endif
 
 #include "rutilities.h"         // local declarations
+#include "xptr-utils.h"         // xptr taggging utilities
 
-// Helper functions from nanoarrow
+// (Adapted) helper functions from nanoarrow
 //
 // Create an external pointer with the proper class and that will release any
-// non-null, non-released pointer when garbage collected.
-SEXP schema_owning_xptr(void) {
+// non-null, non-released pointer when garbage collected. We use a tagged XPtr,
+// but do not set an XPtr finalizer
+Rcpp::XPtr<ArrowSchema> schema_owning_xptr(void) {
   struct ArrowSchema* schema = (struct ArrowSchema*)ArrowMalloc(sizeof(struct ArrowSchema));
-  if (schema == NULL) {
-    Rf_error("Failed to allocate ArrowSchema");
-  }
+  if (schema == NULL) Rcpp::stop("Failed to allocate ArrowSchema");
   schema->release = NULL;
-  SEXP schema_xptr = PROTECT(R_MakeExternalPtr(schema, R_NilValue, R_NilValue));
-  //Rf_setAttrib(schema_xptr, R_ClassSymbol, nanoarrow_cls_schema);
-  //R_RegisterCFinalizer(schema_xptr, &finalize_schema_xptr);
-  UNPROTECT(1);
+  Rcpp::XPtr<ArrowSchema> schema_xptr = make_xptr(schema, false);
   return schema_xptr;
 }
 // Create an external pointer with the proper class and that will release any
-// non-null, non-released pointer when garbage collected.
-SEXP array_owning_xptr(void) {
+// non-null, non-released pointer when garbage collected. We use a tagged XPtr,
+// but do not set an XPtr finalizer
+Rcpp::XPtr<ArrowArray> array_owning_xptr(void) {
   struct ArrowArray* array = (struct ArrowArray*)ArrowMalloc(sizeof(struct ArrowArray));
+  if (array == NULL) Rcpp::stop("Failed to allocate ArrowArray");
   array->release = NULL;
-
-  SEXP array_xptr = PROTECT(R_MakeExternalPtr(array, R_NilValue, R_NilValue));
-  //Rf_setAttrib(array_xptr, R_ClassSymbol, nanoarrow_cls_array);
-  //R_RegisterCFinalizer(array_xptr, &finalize_array_xptr);
-  UNPROTECT(1);
+  Rcpp::XPtr<ArrowArray> array_xptr = make_xptr(array, false);
   return array_xptr;
 }
 
@@ -62,7 +60,7 @@ namespace tdbs = tiledbsoma;
 //' \dontrun{
 //' uri <- "test/soco/pbmc3k_processed/obs"
 //' z <- soma_reader(uri)
-//' tb <- arrow::as_arrow_table(arch::from_arch_array(z, arrow::RecordBatch))
+//' tb <- as_arrow_table(z)
 //' }
 //' @export
 // [[Rcpp::export]]
@@ -142,9 +140,8 @@ Rcpp::List soma_reader(const std::string& uri,
 
     const std::vector<std::string> names = sr_data->get()->names();
     auto ncol = names.size();
-    //Rcpp::List schlst(ncol), arrlst(ncol);
-    SEXP schemaxp = schema_owning_xptr();
-    SEXP arrayxp = array_owning_xptr();
+    Rcpp::XPtr<ArrowSchema> schemaxp = schema_owning_xptr();
+    Rcpp::XPtr<ArrowArray> arrayxp = array_owning_xptr();
     ArrowSchemaInitFromType((ArrowSchema*)R_ExternalPtrAddr(schemaxp), NANOARROW_TYPE_STRUCT);
     ArrowSchemaAllocateChildren((ArrowSchema*)R_ExternalPtrAddr(schemaxp), ncol);
     ArrowArrayInitFromType((ArrowArray*)R_ExternalPtrAddr(arrayxp), NANOARROW_TYPE_STRUCT);
@@ -154,8 +151,8 @@ Rcpp::List soma_reader(const std::string& uri,
     
     for (size_t i=0; i<ncol; i++) {
         // this allocates, and properly wraps as external pointers controlling lifetime
-        SEXP chldschemaxp = schema_owning_xptr();
-        SEXP chldarrayxp = array_owning_xptr();
+        Rcpp::XPtr<ArrowSchema> chldschemaxp = schema_owning_xptr();
+        Rcpp::XPtr<ArrowArray> chldarrayxp = array_owning_xptr();
 
         spdl::info("[soma_reader] Accessing {} at {}", names[i], i);
 
@@ -182,23 +179,6 @@ Rcpp::List soma_reader(const std::string& uri,
                                        Rcpp::Named("schema") = schemaxp);
                                        
     return as;
-
-    // SEXP sxp = arch_c_schema_xptr_new(Rcpp::wrap("+s"),     // format
-    //                                   Rcpp::wrap(""),       // name
-    //                                   Rcpp::List(),         // metadata
-    //                                   Rcpp::wrap(2),        // flags, 2 == unordered, nullable, no sorted map keys
-    //                                   schlst,               // children
-    //                                   R_NilValue);          // dictionary
-    // SEXP axp = arch_c_array_from_sexp(Rcpp::List::create(Rcpp::Named("")=R_NilValue), // buffers
-    //                                   Rcpp::wrap(rows),     // length
-    //                                   Rcpp::wrap(-1),       // null count, -1 means not determined
-    //                                   Rcpp::wrap(0),        // offset (in bytes)
-    //                                   arrlst,               // children
-    //                                   R_NilValue);          // dictionary
-    // Rcpp::List as = Rcpp::List::create(Rcpp::Named("schema") = sxp,
-    //                                    Rcpp::Named("array_data") = axp);
-    // as.attr("class") = "arch_array";
-    // return as;
 }
 
 //' @noRd

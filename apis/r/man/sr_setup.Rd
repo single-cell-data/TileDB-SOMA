@@ -60,15 +60,14 @@ class so that iterative access over parts of a (large) array is possible.
 }
 \examples{
 \dontrun{
-ctx <- tiledb_ctx()
+ctx <- tiledb::tiledb_ctx()
 uri <- "test/soco/pbmc3k_processed/obs"
 sr <- sr_setup(ctx@ptr, uri, "warn")
 rl <- data.frame()
 while (nrow(rl) == 0 || !tiledbsoma:::sr_complete(sr)) {
     dat <- tiledbsoma:::sr_next(sr)
     dat |>
-        arch::from_arch_array(arrow::RecordBatch) |>
-        arrow::as_arrow_table() |>
+        as_arrow_table() |>
         collect() |>
         as.data.frame() |>
         data.table() -> D
