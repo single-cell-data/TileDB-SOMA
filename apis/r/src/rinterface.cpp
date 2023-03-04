@@ -1,9 +1,11 @@
-#include <Rcpp.h>
-#include "nanoarrow.h"
-#define NO_CARROW_INCLUDE 1
+#include <Rcpp.h>               // for R interface to C++
+#include <nanoarrow.h>          // for C interface to Arrow
+
+// We get these via nanoarrow and must cannot include carrow.h again
+#define ARROW_SCHEMA_AND_ARRAY_DEFINED 1
 #include <tiledbsoma/tiledbsoma>
-//#include <archAPI.h>
-#include "rutilities.h"
+
+#include "rutilities.h"         // local declarations
 
 // Helper functions from nanoarrow
 //
