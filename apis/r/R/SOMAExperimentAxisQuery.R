@@ -174,7 +174,7 @@ SOMAExperimentAxisQuery <- R6::R6Class(
       private$.experiment
     },
 
-    #' @field indexer The `SOMAIndexer` object.
+    #' @field indexer The [`SOMAAxisIndexer`] object.
     indexer = function(value) {
       if (!missing(value)) read_only_error("indexer")
       private$.indexer

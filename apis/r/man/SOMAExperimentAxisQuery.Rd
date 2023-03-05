@@ -30,7 +30,7 @@ this in the class.
 \describe{
 \item{\code{experiment}}{The parent \code{\link{SOMAExperiment}} object.}
 
-\item{\code{indexer}}{The \code{SOMAIndexer} object.}
+\item{\code{indexer}}{The \code{\link{SOMAAxisIndexer}} object.}
 
 \item{\code{obs_query}}{The \code{obs} \code{\link{SOMAAxisQuery}} object.}
 
