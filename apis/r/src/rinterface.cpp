@@ -149,7 +149,7 @@ Rcpp::List soma_reader(const std::string& uri,
     ArrowArrayAllocateChildren((ArrowArray*)R_ExternalPtrAddr(arrayxp), ncol);
 
     int data_rows = 0;
-    
+
     for (size_t i=0; i<ncol; i++) {
         // this allocates, and properly wraps as external pointers controlling lifetime
         Rcpp::XPtr<ArrowSchema> chldschemaxp = schema_owning_xptr();
@@ -175,10 +175,10 @@ Rcpp::List soma_reader(const std::string& uri,
     }
 
     ((ArrowArray*)R_ExternalPtrAddr(arrayxp))->length = data_rows;
-    
+
     Rcpp::List as = Rcpp::List::create(Rcpp::Named("array_data") = arrayxp,
                                        Rcpp::Named("schema") = schemaxp);
-                                       
+
     return as;
 }
 
