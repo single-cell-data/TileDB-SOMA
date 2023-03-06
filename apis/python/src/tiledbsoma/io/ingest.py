@@ -392,11 +392,13 @@ def from_anndata(
                                     use_relative_uri=use_relative_uri,
                                 )
 
+    experiment.close()
+
     logging.log_io(
         f"Wrote   {experiment.uri}",
         _util.format_elapsed(s, f"FINISH WRITING {experiment.uri}"),
     )
-    return experiment
+    return Experiment.open(experiment.uri)
 
 
 def _maybe_set(

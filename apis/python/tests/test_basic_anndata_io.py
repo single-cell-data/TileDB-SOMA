@@ -59,15 +59,12 @@ def test_import_anndata(adata, ingest_modes):
 
     for ingest_mode in ingest_modes:
 
-        write_exp = tiledbsoma.io.from_anndata(
+        exp = tiledbsoma.io.from_anndata(
             output_path, orig, "RNA", ingest_mode=ingest_mode
         )
         if ingest_mode != "schema_only":
             have_ingested = True
-        write_exp.close()
-        # del write_exp
 
-        exp = _factory.open(output_path)
         assert exp.metadata[metakey] == "SOMAExperiment"
 
         # Check obs
