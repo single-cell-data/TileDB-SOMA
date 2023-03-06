@@ -15,6 +15,7 @@ test_that("TileDBArray helper functions", {
   expect_is(tdb$tiledb_array(), "tiledb_array")
   expect_is(tdb$object, "tiledb_array")
   expect_identical(tdb$dimnames(), index_cols)
+  expect_identical(tdb$index_column_names(), index_cols)
 
   attr_cols <- setdiff(colnames(df), index_cols)
   expect_identical(tdb$attrnames(), attr_cols)
