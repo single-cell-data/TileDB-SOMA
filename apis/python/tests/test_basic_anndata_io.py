@@ -59,15 +59,14 @@ def test_import_anndata(adata, ingest_modes):
 
     for ingest_mode in ingest_modes:
 
-        write_exp = tiledbsoma.io.from_anndata(
+        uri = tiledbsoma.io.from_anndata(
             output_path, orig, "RNA", ingest_mode=ingest_mode
         )
         if ingest_mode != "schema_only":
             have_ingested = True
-        write_exp.close()
-        # del write_exp
 
-        exp = _factory.open(output_path)
+        exp = tiledbsoma.Experiment.open(uri)
+
         assert exp.metadata[metakey] == "SOMAExperiment"
 
         # Check obs
@@ -188,17 +187,16 @@ def test_resume_mode(adata, resume_mode_h5ad_file):
     output_path1 = tempdir1.name
     tiledbsoma.io.from_h5ad(
         output_path1, resume_mode_h5ad_file, "RNA", ingest_mode="write"
-    ).close()
+    )
 
     tempdir2 = tempfile.TemporaryDirectory()
     output_path2 = tempdir2.name
-    start_write = tiledbsoma.io.from_h5ad(
+    tiledbsoma.io.from_h5ad(
         output_path2, resume_mode_h5ad_file, "RNA", ingest_mode="write"
     )
-    start_write.close()
     tiledbsoma.io.from_h5ad(
         output_path2, resume_mode_h5ad_file, "RNA", ingest_mode="resume"
-    ).close()
+    )
 
     exp1 = _factory.open(output_path1)
     exp2 = _factory.open(output_path2)
@@ -247,7 +245,7 @@ def test_ingest_relative(h5ad_file_extended, use_relative_uri):
         h5ad_file_extended,
         measurement_name="RNA",
         use_relative_uri=use_relative_uri,
-    ).close()
+    )
 
     # * If they ask for relative=True, they should get that.
     # * If they ask for relative=False, they should get that.
@@ -290,8 +288,8 @@ def test_add_matrix_to_collection(adata):
     tempdir = tempfile.TemporaryDirectory()
     output_path = tempdir.name
 
-    exp = tiledbsoma.io.from_anndata(output_path, adata, measurement_name="RNA")
-    exp.close()
+    uri = tiledbsoma.io.from_anndata(output_path, adata, measurement_name="RNA")
+    exp = tiledbsoma.Experiment.open(uri)
     with _factory.open(output_path) as exp_r:
         assert list(exp_r.ms["RNA"].X.keys()) == ["data"]
 
@@ -330,8 +328,7 @@ def test_export_anndata(adata):
     tempdir = tempfile.TemporaryDirectory()
     output_path = tempdir.name
 
-    exp = tiledbsoma.io.from_anndata(output_path, adata, measurement_name="RNA")
-    exp.close()
+    tiledbsoma.io.from_anndata(output_path, adata, measurement_name="RNA")
 
     with _factory.open(output_path) as exp:
         readback = tiledbsoma.io.to_anndata(exp, measurement_name="RNA")
