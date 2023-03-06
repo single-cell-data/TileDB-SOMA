@@ -40,14 +40,12 @@ Imports:
     glue,
     urltools,
     Rcpp,
-    arch (>= 0.0.2),
     dplyr,
     data.table,
     spdl
 LinkingTo:
     Rcpp,
-    RcppSpdlog,
-    arch
+    RcppSpdlog
 Additional_repositories: https://ghrr.github.io/drat
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.2.3

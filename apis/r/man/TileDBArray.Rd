@@ -8,7 +8,7 @@ Base class for representing an individual TileDB array.
 (lifecycle: experimental)
 }
 \section{Super class}{
-\code{tiledbsoma::TileDBObject} -> \code{TileDBArray}
+\code{\link[tiledbsoma:TileDBObject]{tiledbsoma::TileDBObject}} -> \code{TileDBArray}
 }
 \section{Methods}{
 \subsection{Public methods}{
@@ -236,7 +236,7 @@ A character vector with the array's column names
 \if{html}{\out{<a id="method-TileDBArray-fragment_count"></a>}}
 \if{latex}{\out{\hypertarget{method-TileDBArray-fragment_count}{}}}
 \subsection{Method \code{fragment_count()}}{
-Get number of fragments in the array \link{lifecycle: experimental}
+Get number of fragments in the array (lifecycle: experimental)
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{TileDBArray$fragment_count()}\if{html}{\out{</div>}}
 }

@@ -16,7 +16,7 @@ SOMAAxisIndexer <- R6::R6Class("SOMAAxisIndexer",
     },
 
     #' @description Get the index of the given `obs` coordinates.
-    #' @param coords vector or [`arrow:Array`] of numeric coordinates.
+    #' @param coords vector or [`arrow::Array`] of numeric coordinates.
     by_obs = function(coords) {
       arrow::match_arrow(
         x = private$.validate_coords(coords),
@@ -25,7 +25,7 @@ SOMAAxisIndexer <- R6::R6Class("SOMAAxisIndexer",
     },
 
     #' @description Get the index of the given `var` coordinates.
-    #' @param coords vector or [`arrow:Array`] of numeric coordinates.
+    #' @param coords vector or [`arrow::Array`] of numeric coordinates.
     by_var = function(coords) {
       arrow::match_arrow(
         x = private$.validate_coords(coords),

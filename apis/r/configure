@@ -49,10 +49,9 @@ if [ $? -eq 0 ]; then
     if [ $? -eq 0 ]; then
         pkgcflags=`pkg-config --cflags tiledb`
         pkglibs=`pkg-config --libs tiledb`
-        archincl=`${R_HOME}/bin/Rscript -e 'cat("-I", system.file("include", package="arch"), sep="")'`
 
         ## substitute them in (leaving @tiledb_rpath@ and @cxx17_macos@ alone for now)
-        sed -e "s|@tiledb_include@|$pkgcflags $archincl|" \
+        sed -e "s|@tiledb_include@|$pkgcflags |" \
             -e "s|@tiledb_libs@|$pkglibs|" \
             -e "s|@tiledb_rpath@||" \
             -e "s|@cxx17_macos@||" \

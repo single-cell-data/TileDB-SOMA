@@ -1,88 +1,21 @@
 // Work in progress
 
-#include <Rcpp.h>
+#include <Rcpp.h>               // for R interface to C++
+#include <nanoarrow.h>          // for C interface to Arrow
 
 #include <tiledb/tiledb>
 #if TILEDB_VERSION_MAJOR == 2 && TILEDB_VERSION_MINOR >= 4
 #include <tiledb/tiledb_experimental>
 #endif
 
+// We get these via nanoarrow and must cannot include carrow.h again
+#define ARROW_SCHEMA_AND_ARRAY_DEFINED 1
 #include <tiledbsoma/tiledbsoma>
-#include <archAPI.h>
-#include "rutilities.h"
+
+#include "rutilities.h"         // local declarations
+#include "xptr-utils.h"         // xptr taggging utilities
 
 namespace tdbs = tiledbsoma;
-
-// enum for TileDB XPtr Object type using int32_t payload (for R)
-enum tiledb_xptr_object : int32_t {};
-const tiledb_xptr_object tiledb_xptr_default                     { 0 };
-const tiledb_xptr_object tiledb_xptr_object_array                { 10 };
-const tiledb_xptr_object tiledb_xptr_object_arrayschema          { 20 };
-const tiledb_xptr_object tiledb_xptr_object_arrayschemaevolution { 30 };
-const tiledb_xptr_object tiledb_xptr_object_attribute            { 40 };
-const tiledb_xptr_object tiledb_xptr_object_config               { 50 };
-const tiledb_xptr_object tiledb_xptr_object_context              { 60 };
-const tiledb_xptr_object tiledb_xptr_object_dimension            { 70 };
-const tiledb_xptr_object tiledb_xptr_object_domain               { 80 };
-const tiledb_xptr_object tiledb_xptr_object_filter               { 90 };
-const tiledb_xptr_object tiledb_xptr_object_filterlist           { 100 };
-const tiledb_xptr_object tiledb_xptr_object_fragmentinfo         { 110 };
-const tiledb_xptr_object tiledb_xptr_object_group                { 120 };
-const tiledb_xptr_object tiledb_xptr_object_query                { 130 };
-const tiledb_xptr_object tiledb_xptr_object_querycondition       { 140 };
-const tiledb_xptr_object tiledb_xptr_object_vfs                  { 150 };
-const tiledb_xptr_object tiledb_xptr_vfs_fh_t                    { 160 };
-const tiledb_xptr_object tiledb_xptr_vlc_buf_t                   { 170 };
-const tiledb_xptr_object tiledb_xptr_vlv_buf_t                   { 180 };
-const tiledb_xptr_object tiledb_xptr_query_buf_t                 { 190 };
-
-// the definitions above are internal to tiledb-r but we need a new value here if we want tag the external pointer
-const tiledb_xptr_object tiledb_soma_reader_t                    { 500 };
-
-// templated checkers for external pointer tags
-template <typename T> const int32_t XPtrTagType                            = tiledb_xptr_default; // clang++ wants a value
-template <> inline const int32_t XPtrTagType<tiledb::Array>                = tiledb_xptr_object_array;
-template <> inline const int32_t XPtrTagType<tiledb::ArraySchema>          = tiledb_xptr_object_arrayschema;
-template <> inline const int32_t XPtrTagType<tiledb::ArraySchemaEvolution> = tiledb_xptr_object_arrayschemaevolution;
-template <> inline const int32_t XPtrTagType<tiledb::Attribute>            = tiledb_xptr_object_attribute;
-template <> inline const int32_t XPtrTagType<tiledb::Config>               = tiledb_xptr_object_config;
-template <> inline const int32_t XPtrTagType<tiledb::Context>              = tiledb_xptr_object_context;
-template <> inline const int32_t XPtrTagType<tiledb::Dimension>            = tiledb_xptr_object_dimension;
-template <> inline const int32_t XPtrTagType<tiledb::Domain>               = tiledb_xptr_object_domain;
-template <> inline const int32_t XPtrTagType<tiledb::Filter>               = tiledb_xptr_object_filter;
-template <> inline const int32_t XPtrTagType<tiledb::FilterList>           = tiledb_xptr_object_filterlist;
-template <> inline const int32_t XPtrTagType<tiledb::FragmentInfo>         = tiledb_xptr_object_fragmentinfo;
-template <> inline const int32_t XPtrTagType<tiledb::Group>                = tiledb_xptr_object_group;
-template <> inline const int32_t XPtrTagType<tiledb::Query>                = tiledb_xptr_object_query;
-template <> inline const int32_t XPtrTagType<tiledb::QueryCondition>       = tiledb_xptr_object_query;
-template <> inline const int32_t XPtrTagType<tiledb::VFS>                  = tiledb_xptr_object_vfs;
-// this need the C API for which we do not include a header
-// template <> inline const int32_t XPtrTagType<vfs_fh_t>                     = tiledb_xptr_vfs_fh_t;
-// template <> inline const int32_t XPtrTagType<vlc_buf_t>                    = tiledb_xptr_vlc_buf_t;
-// template <> inline const int32_t XPtrTagType<vlv_buf_t>                    = tiledb_xptr_vlv_buf_t;
-// template <> inline const int32_t XPtrTagType<query_buf_t>                  = tiledb_xptr_query_buf_t;
-
-template <> inline const int32_t XPtrTagType<tdbs::SOMAReader>             = tiledb_xptr_query_buf_t;
-
-template <typename T> Rcpp::XPtr<T> make_xptr(T* p) {
-    return Rcpp::XPtr<T>(p, true, Rcpp::wrap(XPtrTagType<T>), R_NilValue);
-}
-
-template <typename T> Rcpp::XPtr<T> make_xptr(SEXP p) {
-    return Rcpp::XPtr<T>(p);    // the default XPtr ctor with deleter on and tag and prot nil
-}
-
-template<typename T> void check_xptr_tag(Rcpp::XPtr<T> ptr) {
-    if (R_ExternalPtrTag(ptr) == R_NilValue) {
-        Rcpp::stop("External pointer without tag, expected tag %d\n", XPtrTagType<T>);
-    }
-    if (R_ExternalPtrTag(ptr) != R_NilValue) {
-        int32_t tag = Rcpp::as<int32_t>(R_ExternalPtrTag(ptr));
-        if (XPtrTagType<T> != tag) {
-            Rcpp::stop("Wrong tag type: expected %d but received %d\n", XPtrTagType<T>, tag);
-        }
-    }
-}
 
 //' Iterator-Style Access to SOMA Array via SOMAReader
 //'
@@ -114,15 +47,14 @@ template<typename T> void check_xptr_tag(Rcpp::XPtr<T> ptr) {
 //'
 //' @examples
 //' \dontrun{
-//' ctx <- tiledb_ctx()
+//' ctx <- tiledb::tiledb_ctx()
 //' uri <- "test/soco/pbmc3k_processed/obs"
 //' sr <- sr_setup(ctx@ptr, uri, "warn")
 //' rl <- data.frame()
 //' while (nrow(rl) == 0 || !tiledbsoma:::sr_complete(sr)) {
 //'     dat <- tiledbsoma:::sr_next(sr)
 //'     dat |>
-//'         arch::from_arch_array(arrow::RecordBatch) |>
-//'         arrow::as_arrow_table() |>
+//'         as_arrow_table() |>
 //'         collect() |>
 //'         as.data.frame() |>
 //'         data.table() -> D
@@ -239,12 +171,19 @@ Rcpp::List sr_next(Rcpp::XPtr<tdbs::SOMAReader> sr) {
 
    const std::vector<std::string> names = sr_data->get()->names();
    auto ncol = names.size();
-   Rcpp::List schlst(ncol), arrlst(ncol);
+   Rcpp::XPtr<ArrowSchema> schemaxp = schema_owning_xptr();
+   Rcpp::XPtr<ArrowArray> arrayxp = array_owning_xptr();
+   ArrowSchemaInitFromType((ArrowSchema*)R_ExternalPtrAddr(schemaxp), NANOARROW_TYPE_STRUCT);
+   ArrowSchemaAllocateChildren((ArrowSchema*)R_ExternalPtrAddr(schemaxp), ncol);
+   ArrowArrayInitFromType((ArrowArray*)R_ExternalPtrAddr(arrayxp), NANOARROW_TYPE_STRUCT);
+   ArrowArrayAllocateChildren((ArrowArray*)R_ExternalPtrAddr(arrayxp), ncol);
+
+   arrayxp->length = 0;
 
    for (size_t i=0; i<ncol; i++) {
        // this allocates, and properly wraps as external pointers controlling lifetime
-       SEXP schemaxp = arch_c_allocate_schema();
-       SEXP arrayxp = arch_c_allocate_array_data();
+       Rcpp::XPtr<ArrowSchema> chldschemaxp = schema_owning_xptr();
+       Rcpp::XPtr<ArrowArray> chldarrayxp = array_owning_xptr();
 
        spdl::trace("[sr_next] Accessing {} at {}", names[i], i);
 
@@ -254,29 +193,21 @@ Rcpp::List sr_next(Rcpp::XPtr<tdbs::SOMAReader> sr) {
        // this is pair of array and schema pointer
        auto pp = tdbs::ArrowAdapter::to_arrow(buf);
 
-       memcpy((void*) R_ExternalPtrAddr(schemaxp), pp.second.get(), sizeof(ArrowSchema));
-       memcpy((void*) R_ExternalPtrAddr(arrayxp), pp.first.get(), sizeof(ArrowArray));
+       memcpy((void*) chldschemaxp, pp.second.get(), sizeof(ArrowSchema));
+       memcpy((void*) chldarrayxp, pp.first.get(), sizeof(ArrowArray));
 
-       schlst[i] = schemaxp;
-       arrlst[i] = arrayxp;
+       schemaxp->children[i] = chldschemaxp;
+       arrayxp->children[i] = chldarrayxp;
+
+       if (pp.first->length > arrayxp->length) {
+           spdl::debug("[soma_reader] Setting array length to {}", pp.first->length);
+           arrayxp->length = pp.first->length;
+       }
+
    }
 
-   struct ArrowArray* array_data_tmp = (struct ArrowArray*) R_ExternalPtrAddr(arrlst[0]);
-   int rows = static_cast<int>(array_data_tmp->length);
-   SEXP sxp = arch_c_schema_xptr_new(Rcpp::wrap("+s"),  // format
-                                     Rcpp::wrap(""),    // name
-                                     Rcpp::List(),      // metadata
-                                     Rcpp::wrap(2),     // flags, 2 == unordered, nullable, no sorted map keys
-                                     schlst,            // children
-                                     R_NilValue);       // dictionary
-   SEXP axp = arch_c_array_from_sexp(Rcpp::List::create(Rcpp::Named("")=R_NilValue), // buffers
-                                     Rcpp::wrap(rows),  // length
-                                     Rcpp::wrap(-1),    // null count, -1 means not determined
-                                     Rcpp::wrap(0),     // offset (in bytes)
-                                     arrlst,            // children
-                                     R_NilValue);       // dictionary
-   Rcpp::List as = Rcpp::List::create(Rcpp::Named("schema") = sxp,
-                                      Rcpp::Named("array_data") = axp);
-   as.attr("class") = "arch_array";
+   spdl::info("[sr_next] Exporting chunk with {} rows", arrayxp->length);
+   Rcpp::List as = Rcpp::List::create(Rcpp::Named("array_data") = arrayxp,
+                                      Rcpp::Named("schema") = schemaxp);
    return as;
 }

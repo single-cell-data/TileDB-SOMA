@@ -1,7 +1,38 @@
-#include <Rcpp.h>
+#include <Rcpp.h>               // for R interface to C++
+#include <nanoarrow.h>          // for C interface to Arrow
+
+// We get these via nanoarrow and must cannot include carrow.h again
+#define ARROW_SCHEMA_AND_ARRAY_DEFINED 1
 #include <tiledbsoma/tiledbsoma>
-#include <archAPI.h>
-#include "rutilities.h"
+#if TILEDB_VERSION_MAJOR == 2 && TILEDB_VERSION_MINOR >= 4
+#include <tiledb/tiledb_experimental>
+#endif
+
+#include "rutilities.h"         // local declarations
+#include "xptr-utils.h"         // xptr taggging utilities
+
+// (Adapted) helper functions from nanoarrow
+//
+// Create an external pointer with the proper class and that will release any
+// non-null, non-released pointer when garbage collected. We use a tagged XPtr,
+// but do not set an XPtr finalizer
+Rcpp::XPtr<ArrowSchema> schema_owning_xptr(void) {
+  struct ArrowSchema* schema = (struct ArrowSchema*)ArrowMalloc(sizeof(struct ArrowSchema));
+  if (schema == NULL) Rcpp::stop("Failed to allocate ArrowSchema");
+  schema->release = NULL;
+  Rcpp::XPtr<ArrowSchema> schema_xptr = make_xptr(schema, false);
+  return schema_xptr;
+}
+// Create an external pointer with the proper class and that will release any
+// non-null, non-released pointer when garbage collected. We use a tagged XPtr,
+// but do not set an XPtr finalizer
+Rcpp::XPtr<ArrowArray> array_owning_xptr(void) {
+  struct ArrowArray* array = (struct ArrowArray*)ArrowMalloc(sizeof(struct ArrowArray));
+  if (array == NULL) Rcpp::stop("Failed to allocate ArrowArray");
+  array->release = NULL;
+  Rcpp::XPtr<ArrowArray> array_xptr = make_xptr(array, false);
+  return array_xptr;
+}
 
 namespace tdbs = tiledbsoma;
 
@@ -24,12 +55,13 @@ namespace tdbs = tiledbsoma;
 //' @param loglevel Character value with the desired logging level, defaults to \sQuote{auto}
 //' which lets prior setting prevail, any other value is set as new logging level.
 //' @param arrlst A list containing the pointers to an Arrow data structure
-//' @return An Arrow data structure is returned
+//' @param xp An external pointer to an ArrowSchema or ArrowData
+//' @return A List object with two pointers to Arrow array data and schema is returned
 //' @examples
 //' \dontrun{
 //' uri <- "test/soco/pbmc3k_processed/obs"
 //' z <- soma_reader(uri)
-//' tb <- arrow::as_arrow_table(arch::from_arch_array(z, arrow::RecordBatch))
+//' tb <- as_arrow_table(z)
 //' }
 //' @export
 // [[Rcpp::export]]
@@ -109,12 +141,19 @@ Rcpp::List soma_reader(const std::string& uri,
 
     const std::vector<std::string> names = sr_data->get()->names();
     auto ncol = names.size();
-    Rcpp::List schlst(ncol), arrlst(ncol);
+    Rcpp::XPtr<ArrowSchema> schemaxp = schema_owning_xptr();
+    Rcpp::XPtr<ArrowArray> arrayxp = array_owning_xptr();
+    ArrowSchemaInitFromType((ArrowSchema*)R_ExternalPtrAddr(schemaxp), NANOARROW_TYPE_STRUCT);
+    ArrowSchemaAllocateChildren((ArrowSchema*)R_ExternalPtrAddr(schemaxp), ncol);
+    ArrowArrayInitFromType((ArrowArray*)R_ExternalPtrAddr(arrayxp), NANOARROW_TYPE_STRUCT);
+    ArrowArrayAllocateChildren((ArrowArray*)R_ExternalPtrAddr(arrayxp), ncol);
+
+    arrayxp->length = 0;
 
     for (size_t i=0; i<ncol; i++) {
         // this allocates, and properly wraps as external pointers controlling lifetime
-        SEXP schemaxp = arch_c_allocate_schema();
-        SEXP arrayxp = arch_c_allocate_array_data();
+        Rcpp::XPtr<ArrowSchema> chldschemaxp = schema_owning_xptr();
+        Rcpp::XPtr<ArrowArray> chldarrayxp = array_owning_xptr();
 
         spdl::info("[soma_reader] Accessing {} at {}", names[i], i);
 
@@ -124,32 +163,22 @@ Rcpp::List soma_reader(const std::string& uri,
         // this is pair of array and schema pointer
         auto pp = tdbs::ArrowAdapter::to_arrow(buf);
 
-        memcpy((void*) R_ExternalPtrAddr(schemaxp), pp.second.get(), sizeof(ArrowSchema));
-        memcpy((void*) R_ExternalPtrAddr(arrayxp), pp.first.get(), sizeof(ArrowArray));
+        memcpy((void*) chldschemaxp, pp.second.get(), sizeof(ArrowSchema));
+        memcpy((void*) chldarrayxp, pp.first.get(), sizeof(ArrowArray));
 
-        spdl::info("[soma_reader] Incoming name {}", std::string(pp.second->name));
+        spdl::info("[soma_reader] Incoming name {} length {}", std::string(pp.second->name), pp.first->length);
 
-        schlst[i] = schemaxp;
-        arrlst[i] = arrayxp;
+        schemaxp->children[i] = chldschemaxp;
+        arrayxp->children[i] = chldarrayxp;
+
+        if (pp.first->length > arrayxp->length) {
+            spdl::debug("[soma_reader] Setting array length to {}", pp.first->length);
+            arrayxp->length = pp.first->length;
+        }
     }
 
-    struct ArrowArray* array_data_tmp = (struct ArrowArray*) R_ExternalPtrAddr(arrlst[0]);
-    int rows = static_cast<int>(array_data_tmp->length);
-    SEXP sxp = arch_c_schema_xptr_new(Rcpp::wrap("+s"),     // format
-                                      Rcpp::wrap(""),       // name
-                                      Rcpp::List(),         // metadata
-                                      Rcpp::wrap(2),        // flags, 2 == unordered, nullable, no sorted map keys
-                                      schlst,               // children
-                                      R_NilValue);          // dictionary
-    SEXP axp = arch_c_array_from_sexp(Rcpp::List::create(Rcpp::Named("")=R_NilValue), // buffers
-                                      Rcpp::wrap(rows),     // length
-                                      Rcpp::wrap(-1),       // null count, -1 means not determined
-                                      Rcpp::wrap(0),        // offset (in bytes)
-                                      arrlst,               // children
-                                      R_NilValue);          // dictionary
-    Rcpp::List as = Rcpp::List::create(Rcpp::Named("schema") = sxp,
-                                       Rcpp::Named("array_data") = axp);
-    as.attr("class") = "arch_array";
+    Rcpp::List as = Rcpp::List::create(Rcpp::Named("array_data") = arrayxp,
+                                       Rcpp::Named("schema") = schemaxp);
     return as;
 }
 
@@ -184,4 +213,18 @@ Rcpp::CharacterVector get_column_types(const std::string& uri,
 double nnz(const std::string& uri) {
     auto sr = tdbs::SOMAReader::open(uri);
     return static_cast<double>(sr->nnz());
+}
+
+//' @rdname soma_reader
+// [[Rcpp::export]]
+bool check_arrow_schema_tag(Rcpp::XPtr<ArrowSchema> xp) {
+  check_xptr_tag<ArrowSchema>(xp);  // throws if mismatched
+  return true;
+}
+
+//' @rdname soma_reader
+// [[Rcpp::export]]
+bool check_arrow_array_tag(Rcpp::XPtr<ArrowArray> xp) {
+  check_xptr_tag<ArrowArray>(xp);  // throws if mismatched
+  return true;
 }

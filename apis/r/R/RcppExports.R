@@ -20,12 +20,13 @@
 #' @param loglevel Character value with the desired logging level, defaults to \sQuote{auto}
 #' which lets prior setting prevail, any other value is set as new logging level.
 #' @param arrlst A list containing the pointers to an Arrow data structure
-#' @return An Arrow data structure is returned
+#' @param xp An external pointer to an ArrowSchema or ArrowData
+#' @return A List object with two pointers to Arrow array data and schema is returned
 #' @examples
 #' \dontrun{
 #' uri <- "test/soco/pbmc3k_processed/obs"
 #' z <- soma_reader(uri)
-#' tb <- arrow::as_arrow_table(arch::from_arch_array(z, arrow::RecordBatch))
+#' tb <- as_arrow_table(z)
 #' }
 #' @export
 soma_reader <- function(uri, colnames = NULL, qc = NULL, dim_points = NULL, dim_ranges = NULL, batch_size = "auto", result_order = "auto", loglevel = "auto") {
@@ -46,6 +47,16 @@ get_column_types <- function(uri, colnames) {
 #' @export
 nnz <- function(uri) {
     .Call(`_tiledbsoma_nnz`, uri)
+}
+
+#' @rdname soma_reader
+check_arrow_schema_tag <- function(xp) {
+    .Call(`_tiledbsoma_check_arrow_schema_tag`, xp)
+}
+
+#' @rdname soma_reader
+check_arrow_array_tag <- function(xp) {
+    .Call(`_tiledbsoma_check_arrow_array_tag`, xp)
 }
 
 #' Iterator-Style Access to SOMA Array via SOMAReader
@@ -78,15 +89,14 @@ nnz <- function(uri) {
 #'
 #' @examples
 #' \dontrun{
-#' ctx <- tiledb_ctx()
+#' ctx <- tiledb::tiledb_ctx()
 #' uri <- "test/soco/pbmc3k_processed/obs"
 #' sr <- sr_setup(ctx@ptr, uri, "warn")
 #' rl <- data.frame()
 #' while (nrow(rl) == 0 || !tiledbsoma:::sr_complete(sr)) {
 #'     dat <- tiledbsoma:::sr_next(sr)
 #'     dat |>
-#'         arch::from_arch_array(arrow::RecordBatch) |>
-#'         arrow::as_arrow_table() |>
+#'         as_arrow_table() |>
 #'         collect() |>
 #'         as.data.frame() |>
 #'         data.table() -> D
