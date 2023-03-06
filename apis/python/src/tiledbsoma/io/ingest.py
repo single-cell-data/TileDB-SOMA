@@ -67,7 +67,7 @@ def from_h5ad(
     """
     Reads an ``.h5ad`` file and writes to a TileDB group structure.
 
-    Returns an experiment opened for writing.
+    Returns an experiment opened for reading.
 
     The "write" ingest_mode (which is the default) writes all data, creating new layers if the soma already exists.
 
@@ -126,7 +126,7 @@ def from_anndata(
     """
     Top-level writer method for creating a TileDB group for a ``Experiment`` object.
 
-    Returns an Experiment opened for writing.
+    Returns an Experiment opened for reading.
 
     The "write" ingest_mode (which is the default) writes all data, creating new layers if the soma already exists.
 
