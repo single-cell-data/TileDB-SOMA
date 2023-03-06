@@ -19,17 +19,20 @@ $ install.packages('tiledbsoma', repos = c('https://tiledb-inc.r-universe.dev', 
 ### Requirements
 
 * Source installation requires the [`tiledb` R package](https://github.com/TileDB-Inc/TileDB-R) (which in turn depends on the [`tiledb` Core library](https://github.com/TileDB-Inc/TileDB)).
-* This, and the other R package dependencies, are listed in the [DESCRIPTION](https://github.com/single-cell-data/TileDB-SOMA/blob/main/apis/r/DESCRIPTION) file and can be installed via _e.g_ `remotes::install_deps(".")`.
+* In general, source installation of TileDB and its packages may require `cmake` and `git` to be installed; these are common tools each operating system provides readily.
+* Other R package dependencies, are listed in the [DESCRIPTION](https://github.com/single-cell-data/TileDB-SOMA/blob/main/apis/r/DESCRIPTION) file and can be installed via _e.g_
+  `remotes::install_deps(".")`. In order build vignettes, `knitr` and `rmarkdown` are required as is `testthat` for testing.
 * In addition, the R package also depends on the [`libtiledbsoma` library](https://github.com/single-cell-data/TileDB-SOMA/tree/main/libtiledbsoma) -- which gets installed with the package as
   described in the next section.
 
 ### Step-by-step
 
-* Clone this repository: `git clone git@github.com:single-cell-data/TileDB-SOMA.git`
+* Clone this repository: `git clone https://github.com/single-cell-data/TileDB-SOMA.git`
 * Change into the R API package directory: `cd TileDB-SOMA/apis/r`
 * Optionally, clean the file in to the repo: `./cleanup` (this is not needed the first time)
 * Optionally, update the `libtiledbsoma` sources: `./copy_source.sh` (which updates the includes tarball of `libtiledbsoma`).
 * Build the R package source tarball from the repository sources: `R CMD build .` (which will also build `libtiledbsoma` from source; other dependencies are required as described in the previous section).
+* Check and test the package from the tarball: `R CMD check tiledbsoma_*.tar.gz`
 * Install the package from the tarball: `R CMD INSTALL tiledbsoma_*.tar.gz`
 
 Once installed successfully, the package sources can be edited and re-installed.
