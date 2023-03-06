@@ -154,7 +154,7 @@ class CollectionBase(
     def add_new_collection(
         self,
         key: str,
-        cls: None = None,
+        kind: None = None,
         *,
         uri: Optional[str] = ...,
         platform_config: Optional[options.PlatformConfig] = ...,
@@ -165,7 +165,7 @@ class CollectionBase(
     def add_new_collection(
         self,
         key: str,
-        cls: Type[_Coll],
+        kind: Type[_Coll],
         *,
         uri: Optional[str] = ...,
         platform_config: Optional[options.PlatformConfig] = ...,
@@ -175,7 +175,7 @@ class CollectionBase(
     def add_new_collection(
         self,
         key: str,
-        cls: Optional[Type[AnyTileDBCollection]] = None,
+        kind: Optional[Type[AnyTileDBCollection]] = None,
         *,
         uri: Optional[str] = None,
         platform_config: Optional[options.PlatformConfig] = None,
@@ -187,7 +187,7 @@ class CollectionBase(
         Args:
             key:
                 The key to add.
-            cls:
+            kind:
                 Optionally, the specific type of sub-collection to create.
                 For instance, passing ``tiledbsoma.Experiment`` here will create a
                 ``SOMAExperiment`` as the sub-entry. By default, a basic
@@ -203,7 +203,7 @@ class CollectionBase(
                 creating this sub-collection. This is passed directly to
                 ``[CurrentCollectionType].create()``.
         """
-        child_cls: Type[AnyTileDBCollection] = cls or Collection
+        child_cls: Type[AnyTileDBCollection] = kind or Collection
         return self._add_new_element(
             key,
             child_cls,
@@ -259,7 +259,7 @@ class CollectionBase(
             uri,
         )
 
-    @_funcs.forwards_kwargs_to(_add_new_ndarray, exclude=("cls",))
+    @_funcs.forwards_kwargs_to(_add_new_ndarray, exclude=("kind",))
     def add_new_dense_ndarray(self, key: str, **kwargs: Any) -> DenseNDArray:
         """Adds a new DenseNDArray to this Collection.
 
@@ -271,7 +271,7 @@ class CollectionBase(
         """
         return self._add_new_ndarray(DenseNDArray, key, **kwargs)
 
-    @_funcs.forwards_kwargs_to(_add_new_ndarray, exclude=("cls",))
+    @_funcs.forwards_kwargs_to(_add_new_ndarray, exclude=("kind",))
     def add_new_sparse_ndarray(self, key: str, **kwargs: Any) -> SparseNDArray:
         """Adds a new SparseNDArray to this Collection.
 
@@ -286,7 +286,7 @@ class CollectionBase(
     def _add_new_element(
         self,
         key: str,
-        cls: Type[_TDBO],
+        kind: Type[_TDBO],
         factory: Callable[[str], _TDBO],
         user_uri: Optional[str],
     ) -> _TDBO:
@@ -295,7 +295,7 @@ class CollectionBase(
         Args:
             key:
                 The key to be added.
-            cls:
+            kind:
                 The type of the element to be added.
             factory:
                 A callable that, given the full URI to be added,
@@ -307,7 +307,7 @@ class CollectionBase(
         """
         if key in self:
             raise KeyError(f"{key!r} already exists in {type(self)}")
-        self._check_allows_child(key, cls)
+        self._check_allows_child(key, kind)
         child_uri = self._new_child_uri(key=key, user_uri=user_uri)
         child = factory(child_uri.full_uri)
         # The resulting element may not be the right type for this collection,

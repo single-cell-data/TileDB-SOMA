@@ -1,5 +1,6 @@
+import pathlib
 import sys
-from typing import Tuple, Union
+from typing import Dict, List, Tuple, Union
 
 import numpy as np
 import pyarrow as pa
@@ -285,7 +286,6 @@ def test_sparse_nd_array_read_write_table(
 def test_sparse_nd_array_read_as_pandas(
     tmp_path, dtype: np.dtype, shape: Tuple[int, ...]
 ):
-
     dtype = np.dtype(dtype)
     with soma.SparseNDArray.create(
         tmp_path.as_posix(), type=pa.from_numpy_dtype(dtype), shape=shape
@@ -806,7 +806,6 @@ def test_csr_csc_2d_read(tmp_path, shape):
     ids=lambda io: io.get("name"),
 )
 def test_sparse_nd_array_table_slicing(tmp_path, io, write_format, read_format):
-
     if (write_format == "csr" or write_format == "csc") and len(io["shape"]) != 2:
         return  # Not supported by create_random_tensor
     if (read_format == "csr" or read_format == "csc") and len(io["shape"]) != 2:
@@ -860,6 +859,45 @@ def test_sparse_nd_array_table_slicing(tmp_path, io, write_format, read_format):
         except Exception:
             pass
         assert not bad
+
+
+@pytest.mark.parametrize(
+    ("result_order", "want"),
+    [
+        (
+            soma.ResultOrder.ROW_MAJOR,
+            {
+                "soma_dim_0": [2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 4, 4, 4, 4, 4],
+                "soma_dim_1": [1, 2, 3, 4, 5, 1, 2, 3, 4, 5, 1, 2, 3, 4, 5],
+            },
+        ),
+        (
+            "column-major",
+            {
+                "soma_dim_0": [2, 3, 4, 2, 3, 4, 2, 3, 4, 2, 3, 4, 2, 3, 4],
+                "soma_dim_1": [1, 1, 1, 2, 2, 2, 3, 3, 3, 4, 4, 4, 5, 5, 5],
+            },
+        ),
+    ],
+)
+def test_result_order(
+    tmp_path: pathlib.Path, result_order, want: Dict[str, List[float]]
+):
+    arrow_tensor = create_random_tensor("table", (5, 7), np.float32(), density=1)
+
+    with soma.SparseNDArray.create(
+        tmp_path.as_uri(), type=pa.float64(), shape=(5, 7)
+    ) as write_arr:
+        write_arr.write(arrow_tensor)
+    with soma.open(tmp_path.as_uri()) as read_arr:
+        assert isinstance(read_arr, soma.SparseNDArray)
+        table = next(
+            read_arr.read(
+                [slice(2, 4), slice(1, 5)], result_order=result_order
+            ).tables()
+        )
+        for col, values in want.items():
+            assert table[col].to_pylist() == values
 
 
 def test_sparse_nd_array_not_implemented(tmp_path):

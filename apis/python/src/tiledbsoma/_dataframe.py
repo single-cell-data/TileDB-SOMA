@@ -271,7 +271,6 @@ class DataFrame(TileDBArray, somacore.DataFrame):
         del batch_size, platform_config  # Currently unused.
         _util.check_unpartitioned(partitions)
         self._check_open_read()
-        result_order = options.ResultOrder(result_order)
 
         schema = self._handle.schema
         query_condition = None
@@ -282,7 +281,7 @@ class DataFrame(TileDBArray, somacore.DataFrame):
             schema=schema,  # query_condition needs this
             column_names=column_names,
             query_condition=query_condition,
-            result_order=result_order.value,
+            result_order=result_order,
         )
 
         self._set_reader_coords(sr, coords)

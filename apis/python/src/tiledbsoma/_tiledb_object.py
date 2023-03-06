@@ -10,7 +10,7 @@ from typing_extensions import Self
 from . import _constants, _tdb_handles
 from ._exception import SOMAError
 from ._types import OpenTimestamp
-from ._util import ms_to_datetime
+from ._util import check_type, ms_to_datetime
 from .options import SOMATileDBContext
 
 _WrapperType_co = TypeVar(
@@ -164,9 +164,22 @@ class TileDBObject(somacore.SOMAObject, Generic[_WrapperType_co]):
         context: Optional[SOMATileDBContext] = None,
         tiledb_timestamp: Optional[OpenTimestamp] = None,
     ) -> bool:
-        """Finds whether an object of this type exists at the given URI.
-        [lifecycle: experimental].
         """
+        Finds whether an object of this type exists at the given URI.
+        [lifecycle: experimental].
+
+        :param uri: The URI to open.
+
+        :param context: If provided, the ``SOMATileDBContext`` to use when creating and
+            attempting to access this object.
+
+        :param tiledb_timestamp: The TileDB timestamp to open this object at,
+            measured in milliseconds since the Unix epoch.
+            When unset (the default), the current time is used.
+
+        :raises TypeError: if the ``uri`` is not a string.
+        """
+        check_type("uri", uri, (str,))
         context = context or SOMATileDBContext()
         try:
             with cls._wrapper_type.open(uri, "r", context, tiledb_timestamp) as hdl:
@@ -174,7 +187,7 @@ class TileDBObject(somacore.SOMAObject, Generic[_WrapperType_co]):
                 if not isinstance(md_type, str):
                     return False
                 return md_type.lower() == cls.soma_type.lower()
-        except SOMAError:
+        except (SOMAError, tiledb.cc.TileDBError):
             return False
 
     @classmethod

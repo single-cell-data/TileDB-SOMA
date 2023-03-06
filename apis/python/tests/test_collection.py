@@ -174,7 +174,7 @@ def test_collection_repr(tmp_path: pathlib.Path, relative: bool) -> None:
     b_path = a_path / "B"
     b_uri = b_path.as_uri()
     b_uri_to_add = "B" if relative else b_uri
-    b = a.add_new_collection("Another_Name", cls=soma.Experiment, uri=b_uri_to_add)
+    b = a.add_new_collection("Another_Name", kind=soma.Experiment, uri=b_uri_to_add)
 
     assert b.uri == b_uri
 

@@ -1,7 +1,8 @@
-from typing import Any, Optional, Sequence, Tuple
+from typing import Any, Dict, Optional, Sequence, Tuple
 
 import pyarrow as pa
 import tiledb
+from somacore.options import ResultOrder, ResultOrderStr
 
 from . import _tdb_handles, _util
 
@@ -67,18 +68,14 @@ class TileDBArray(TileDBObject[_tdb_handles.ArrayWrapper]):
         schema: Optional[tiledb.ArraySchema] = None,
         column_names: Optional[Sequence[str]] = None,
         query_condition: Optional[tiledb.QueryCondition] = None,
-        result_order: Optional[str] = None,
+        result_order: Optional[ResultOrderStr] = None,
     ) -> clib.SOMAReader:
         """
         Construct a C++ SOMAReader using appropriate context/config/etc.
         """
-        kwargs = {
-            "name": self.__class__.__name__,
-            "platform_config": self._ctx.config().dict(),
-            "timestamp": (0, self.tiledb_timestamp_ms),
-        }
         # Leave empty arguments out of kwargs to allow C++ constructor defaults to apply, as
         # they're not all wrapped in std::optional<>.
+        kwargs: Dict[str, object] = {}
         if schema:
             kwargs["schema"] = schema
         if column_names:
@@ -86,8 +83,15 @@ class TileDBArray(TileDBObject[_tdb_handles.ArrayWrapper]):
         if query_condition:
             kwargs["query_condition"] = query_condition
         if result_order:
-            kwargs["result_order"] = result_order
-        return clib.SOMAReader(self.uri, **kwargs)
+            result_order_str = ResultOrder(result_order).value
+            kwargs["result_order"] = result_order_str
+        return clib.SOMAReader(
+            self.uri,
+            name=f"{self} reader",
+            platform_config=self._ctx.config().dict(),
+            timestamp=(0, self.tiledb_timestamp_ms),
+            **kwargs,
+        )
 
     def _set_reader_coords(self, sr: clib.SOMAReader, coords: Sequence[object]) -> None:
         """Parses the given coords and sets them on the SOMA Reader."""

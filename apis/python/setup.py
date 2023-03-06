@@ -197,13 +197,13 @@ setuptools.setup(
     zip_safe=False,
     install_requires=[
         "anndata",
-        "attrs>=22.1",
+        "attrs>=22.2",
         "numpy",
         "pandas",
         "pyarrow>=9.0.0",
         "scanpy>=1.9.2",
         "scipy",
-        "somacore==1.0.0rc3",
+        "somacore==1.0.0rc4",
         "tiledb==0.20.*",
         "typing-extensions",  # Note "-" even though `import typing_extensions`
     ],
