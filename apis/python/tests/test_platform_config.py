@@ -50,7 +50,7 @@ def test_platform_config(adata):
                     }
                 }
             },
-        ).close()
+        )
 
         with tiledbsoma.Experiment.open(output_path) as exp:
             with exp.ms["RNA"].X["data"] as data:

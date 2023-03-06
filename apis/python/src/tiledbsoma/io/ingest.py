@@ -63,11 +63,11 @@ def from_h5ad(
     platform_config: Optional[PlatformConfig] = None,
     ingest_mode: IngestMode = "write",
     use_relative_uri: Optional[bool] = None,
-) -> Experiment:
+) -> str:
     """
     Reads an ``.h5ad`` file and writes to a TileDB group structure.
 
-    Returns an experiment opened for reading.
+    Returns a URI for the created experiment.
 
     The "write" ingest_mode (which is the default) writes all data, creating new layers if the soma already exists.
 
@@ -96,7 +96,7 @@ def from_h5ad(
 
     logging.log_io(None, _util.format_elapsed(s, f"FINISH READING {input_path}"))
 
-    exp = from_anndata(
+    uri = from_anndata(
         experiment_uri,
         anndata,
         measurement_name,
@@ -107,9 +107,9 @@ def from_h5ad(
     )
 
     logging.log_io(
-        None, _util.format_elapsed(s, f"FINISH Experiment.from_h5ad {input_path}")
+        None, _util.format_elapsed(s, f"FINISH Experiment.from_h5ad {input_path} {uri}")
     )
-    return exp
+    return uri
 
 
 # ----------------------------------------------------------------
@@ -122,11 +122,11 @@ def from_anndata(
     platform_config: Optional[PlatformConfig] = None,
     ingest_mode: IngestMode = "write",
     use_relative_uri: Optional[bool] = None,
-) -> Experiment:
+) -> str:
     """
     Top-level writer method for creating a TileDB group for a ``Experiment`` object.
 
-    Returns an Experiment opened for reading.
+    Returns a URI for the created experiment.
 
     The "write" ingest_mode (which is the default) writes all data, creating new layers if the soma already exists.
 
@@ -398,7 +398,7 @@ def from_anndata(
         f"Wrote   {experiment.uri}",
         _util.format_elapsed(s, f"FINISH WRITING {experiment.uri}"),
     )
-    return Experiment.open(experiment.uri)
+    return experiment.uri
 
 
 def _maybe_set(

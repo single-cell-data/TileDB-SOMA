@@ -228,7 +228,7 @@ def ingest_one(
 
     exp_name = os.path.splitext(os.path.basename(output_path))[0]
 
-    exp = tiledbsoma.io.from_h5ad(
+    uri = tiledbsoma.io.from_h5ad(
         output_path,
         input_path,
         measurement_name,
@@ -241,7 +241,9 @@ def ingest_one(
             soco = tiledbsoma.Collection.open(soco_dir, "w", context=context)
         except tiledbsoma.DoesNotExistError:
             soco = tiledbsoma.Collection.create(soco_dir, context=context)
+        exp = tiledbsoma.Experiment.open(uri)
         soco.set(exp_name, exp, use_relative_uri=use_relative_uri)
+        exp.close()
 
         tiledbsoma.logging.logger.info("")
         tiledbsoma.logging.logger.info(
