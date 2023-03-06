@@ -99,7 +99,7 @@ SOMATileDBContext <- R6::R6Class(
     set = function(key, value) {
       stopifnot(
         "'key' must be a single character value" = is_scalar_character(key),
-        "'value' must be a single atomic value" = is.atomic(x = value) && length(value) == 1L,
+        "'value' must be a single atomic value" = is.atomic(x = value) && length(value) == 1L
       )
       if (key %in% private$.tiledb_ctx_names()) {
         cfg <- tiledb::config(object = private$.tiledb_ctx)
