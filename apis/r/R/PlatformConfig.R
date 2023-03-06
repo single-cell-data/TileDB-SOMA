@@ -97,7 +97,7 @@ PlatformConfig <- R6::R6Class(
       return(super$get(key = platform))
     },
     #' @param platform The name of the \dQuote{platform} (outer key) to set
-    #' @param op Name of the \dQuote{option} (middile key) in \code{platform}
+    #' @param op Name of the \dQuote{option} (middle key) in \code{platform}
     #' to set
     #' @param key Inner key to set
     #' @param value Value to add for \code{key}, or \code{NULL} to remove the
@@ -110,7 +110,7 @@ PlatformConfig <- R6::R6Class(
     #'
     set = function(platform, op, key, value) {
       stopifnot(
-        is.character(x = platform) && length(x = platform) == 1L,
+        is_scalar_character(platform),
         is.character(x = op) && length(x = op) == 1L
       )
       pmap <- super$get(key = platform, default = ConfigList$new())

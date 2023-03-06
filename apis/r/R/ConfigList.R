@@ -57,7 +57,7 @@ ConfigList <- R6::R6Class(
         super$set(key = op, value = opmap)
         return(invisible(x = self))
       }
-      stopifnot(length(x = key) == 1L, is.character(x = key))
+      stopifnot(is_scalar_character(op))
       opmap$set(key = key, value = value)
       super$set(key = op, value = opmap)
       return(invisible(x = self))

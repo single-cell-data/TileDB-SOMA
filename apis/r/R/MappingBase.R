@@ -35,7 +35,7 @@ MappingBase <- R6::R6Class(
     keys = function() {
       return(names(x = private$.data))
     },
-    #' @return The values of the map
+    #' @return A `list` containing the map values
     #'
     values = function() {
       return(unname(obj = self$items()))
@@ -54,7 +54,7 @@ MappingBase <- R6::R6Class(
     #' \code{key} is not found
     #'
     get = function(key, default = rlang::missing_arg()) {
-      key <- key[1L]
+      stopifnot(is_scalar_character(key))
       key <- tryCatch(
         expr = match.arg(arg = key, choices = self$keys()),
         error = \(...) NULL
