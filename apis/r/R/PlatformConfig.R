@@ -81,11 +81,6 @@ PlatformConfig <- R6::R6Class(
         return(pmap)
       }
       return(pmap$get(op = op, key = key, default = default))
-      # opmap <- pmap$get(key = op)
-      # if (is.null(x = key)) {
-      #   return(opmap)
-      # }
-      # return(opmap$get(key = key, default = default))
     },
     #' @param platform The name of the \dQuote{platform} (outer key) to fetch
     #'
