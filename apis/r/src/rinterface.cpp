@@ -148,7 +148,7 @@ Rcpp::List soma_reader(const std::string& uri,
     ArrowArrayInitFromType((ArrowArray*)R_ExternalPtrAddr(arrayxp), NANOARROW_TYPE_STRUCT);
     ArrowArrayAllocateChildren((ArrowArray*)R_ExternalPtrAddr(arrayxp), ncol);
 
-    int data_rows = 0;
+    arrayxp->length = 0;
 
     for (size_t i=0; i<ncol; i++) {
         // this allocates, and properly wraps as external pointers controlling lifetime
@@ -163,22 +163,22 @@ Rcpp::List soma_reader(const std::string& uri,
         // this is pair of array and schema pointer
         auto pp = tdbs::ArrowAdapter::to_arrow(buf);
 
-        memcpy((void*) R_ExternalPtrAddr(chldschemaxp), pp.second.get(), sizeof(ArrowSchema));
-        memcpy((void*) R_ExternalPtrAddr(chldarrayxp), pp.first.get(), sizeof(ArrowArray));
+        memcpy((void*) chldschemaxp, pp.second.get(), sizeof(ArrowSchema));
+        memcpy((void*) chldarrayxp, pp.first.get(), sizeof(ArrowArray));
 
         spdl::info("[soma_reader] Incoming name {} length {}", std::string(pp.second->name), pp.first->length);
 
-        ((ArrowSchema*)R_ExternalPtrAddr(schemaxp))->children[i] = (ArrowSchema*)R_ExternalPtrAddr(chldschemaxp);
-        ((ArrowArray*)R_ExternalPtrAddr(arrayxp))->children[i] = (ArrowArray*)R_ExternalPtrAddr(chldarrayxp);
+        schemaxp->children[i] = chldschemaxp;
+        arrayxp->children[i] = chldarrayxp;
 
-        if (pp.first->length > data_rows) data_rows = pp.first->length;
+        if (pp.first->length > arrayxp->length) {
+            spdl::debug("[soma_reader] Setting array length to {}", pp.first->length);
+            arrayxp->length = pp.first->length;
+        }
     }
-
-    ((ArrowArray*)R_ExternalPtrAddr(arrayxp))->length = data_rows;
 
     Rcpp::List as = Rcpp::List::create(Rcpp::Named("array_data") = arrayxp,
                                        Rcpp::Named("schema") = schemaxp);
-
     return as;
 }
 
