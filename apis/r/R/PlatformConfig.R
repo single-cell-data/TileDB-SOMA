@@ -110,8 +110,8 @@ PlatformConfig <- R6::R6Class(
     #'
     set = function(platform, op, key, value) {
       stopifnot(
-        is_scalar_character(platform),
-        is.character(x = op) && length(x = op) == 1L
+        "'platform' must be a single character value" = is_scalar_character(platform),
+        "'op' must be a single character value" = is_scalar_character(op)
       )
       pmap <- super$get(key = platform, default = ConfigList$new())
       pmap$set(op = op, key = key, value = value)

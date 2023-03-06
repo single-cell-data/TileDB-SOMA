@@ -26,7 +26,10 @@ SOMAContextBase <- R6::R6Class(
         1L
       )
       if ('SOMAContextBase$new' %in% calls) {
-        .NotYetImplemented()
+        stop(
+            "'SOMAContextBase' is a virtual class and cannot be instantiated directly",
+            call. = FALSE
+        )
       }
       super$initialize()
       if (!is.null(x = config)) {
@@ -52,7 +55,14 @@ SOMAContextBase <- R6::R6Class(
       super$set(key = key, value = value)
       soma_contexts <- .SOMA_CONTEXTS()
       if (key %in% names(x = soma_contexts)) {
-        stopifnot(inherits(x = private$.data[[key]], what = soma_contexts[key]))
+        if (!inherits(x = private$.data[[key]], what = soma_contexts[key])) {
+          stop(
+            sQuote(x = key),
+            " must be a ",
+            sQuote(x = soma_contexts[key]),
+            call. = FALSE
+          )
+        }
       }
       return(invisible(x = self))
     }

@@ -50,7 +50,9 @@ ConfigList <- R6::R6Class(
     #' @return \[chainable\] Invisibly returns \code{self} with \code{value}
     #' added for \code{key} in \code{op}
     set = function(op, key, value) {
-      stopifnot(length(x = op) == 1L, is.character(x = op))
+      stopifnot(
+        "'op' must be a single character" = is_scalar_character(op)
+      )
       opmap <- super$get(key = op, default = ScalarMap$new())
       if (missing(x = key) && inherits(x = value, what = 'ScalarMap')) {
         opmap$update(map = value)

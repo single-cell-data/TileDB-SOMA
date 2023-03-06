@@ -29,9 +29,17 @@ ScalarMap <- R6::R6Class(
     #' \code{value} added as \code{key}
     #'
     set = function(key, value) {
-      stopifnot(is.null(x = value) || length(x = value) == 1L)
+      stopifnot(
+        "'value' must be a single atomic value or NULL" = is.null(x = value) || length(x = value) == 1L
+      )
       if (!is.null(x = value) && self$type != 'any') {
-        stopifnot(inherits(x = value, what = self$type))
+        if (!inherits(x = value, what = self$type)) {
+          stop(
+            "'value' must be a ",
+            sQuote(x = self$type, q = FALSE),
+            call. = FALSE
+          )
+        }
       }
       super$set(key = key, value = value)
       return(invisible(x = self))

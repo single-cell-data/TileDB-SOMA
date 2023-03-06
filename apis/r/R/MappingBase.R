@@ -26,7 +26,10 @@ MappingBase <- R6::R6Class(
         1L
       )
       if ('MappingBase$new' %in% calls) {
-        .NotYetImplemented()
+        stop(
+          "'MappingBase' is a virtual class and cannot be instantiated directly",
+          call. = FALSE
+        )
       }
       private$.data <- list()
     },
@@ -54,7 +57,9 @@ MappingBase <- R6::R6Class(
     #' \code{key} is not found
     #'
     get = function(key, default = rlang::missing_arg()) {
-      stopifnot(is_scalar_character(key))
+      stopifnot(
+        "'key' must be a single character value" = is_scalar_character(key)
+      )
       key <- tryCatch(
         expr = match.arg(arg = key, choices = self$keys()),
         error = \(...) NULL
@@ -76,9 +81,7 @@ MappingBase <- R6::R6Class(
     #'
     set = function(key, value) {
       stopifnot(
-        is.character(x = key),
-        # is.null(x = value) || length(x = key) == length(x = value),
-        length(x = key) == 1L
+        "'key' must be a single character value" = is_scalar_character(key)
       )
       private$.data[[key]] <- value
       # TODO: figure out how to get x$`key` to act as active binding
@@ -125,7 +128,9 @@ MappingBase <- R6::R6Class(
     #' of \code{map}
     #'
     update = function(map) {
-      stopifnot(inherits(x = map, what = 'MappingBase'))
+      stopifnot(
+        "'map' must be a mapping type" = inherits(x = map, what = 'MappingBase')
+      )
       self$setv(map$items())
       return(invisible(x = self))
     },
