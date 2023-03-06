@@ -1,3 +1,10 @@
+# Copyright (c) 2021-2023 The Chan Zuckerberg Initiative Foundation
+# Copyright (c) 2021-2023 TileDB, Inc.
+#
+# Licensed under the MIT License.
+
+"""Implementation of a SOMA Collection
+"""
 from __future__ import annotations
 
 import itertools
@@ -75,21 +82,30 @@ class CollectionBase(
         context: Optional[SOMATileDBContext] = None,
         tiledb_timestamp: Optional[OpenTimestamp] = None,
     ) -> Self:
-        """Creates and opens a new SOMA collection in storage [lifecycle: experimental].
+        """Creates and opens a new SOMA collection in storage.
 
         This creates a new SOMA collection of the current type in storage and
         returns it opened for writing.
 
-        :param uri: The location to create this SOMA collection at.
-        :param platform_config: Optional call-specific options to use when
-            creating this collection. (Currently unused.)
-        :param context: If provided, the ``SOMATileDBContext`` to use when creating and
-            opening this collection.
-        :param tiledb_timestamp: If specified, overrides the default timestamp
-            used to open this object. If unset, uses the timestamp provided by
-            the context.
+        [lifecycle: experimental]
 
-        :raises TileDBError: if unable to create the underlying object.
+        Args:
+            uri:
+                The location to create this SOMA collection at.
+            platform_config:
+                Optional call-specific options to use when
+                creating this collection. (Currently unused.)
+            context:
+                If provided, the ``SOMATileDBContext`` to use when creating and
+                opening this collection.
+            tiledb_timestamp:
+                If specified, overrides the default timestamp
+                used to open this object. If unset, uses the timestamp provided by
+                the context.
+
+        Raises:
+            TileDBError:
+                if unable to create the underlying object.
         """
         context = context or SOMATileDBContext()
         tiledb.group_create(uri=uri, ctx=context.tiledb_ctx)
@@ -164,21 +180,28 @@ class CollectionBase(
         uri: Optional[str] = None,
         platform_config: Optional[options.PlatformConfig] = None,
     ) -> "AnyTileDBCollection":
-        """Adds a new sub-collection to this collection [lifecycle: experimental].
+        """Adds a new sub-collection to this collection.
 
-        :param key: The key to add.
-        :param kind: Optionally, the specific type of sub-collection to create.
-            For instance, passing ``tiledbsoma.Experiment`` here will create a
-            ``SOMAExperiment`` as the sub-entry. By default, a basic
-            ``Collection`` will be created.
-        :param uri: If provided, the sub-collection will be created at this URI.
-            This can be absolute, in which case the sub-collection will be
-            linked to by absolute URI in the stored collection, or relative,
-            in which case the sub-collection will be linked to by relative URI.
-            The default is to use a relative URI generated based on the key.
-        :param platform_config: Platform configuration options to use when
-            creating this sub-collection. This is passed directly to
-            ``[CurrentCollectionType].create()``.
+        [lifecycle: experimental]
+
+        Args:
+            key:
+                The key to add.
+            kind:
+                Optionally, the specific type of sub-collection to create.
+                For instance, passing ``tiledbsoma.Experiment`` here will create a
+                ``SOMAExperiment`` as the sub-entry. By default, a basic
+                ``Collection`` will be created.
+            uri:
+                If provided, the sub-collection will be created at this URI.
+                This can be absolute, in which case the sub-collection will be
+                linked to by absolute URI in the stored collection, or relative,
+                in which case the sub-collection will be linked to by relative URI.
+                The default is to use a relative URI generated based on the key.
+            platform_config:
+                Platform configuration options to use when
+                creating this sub-collection. This is passed directly to
+                ``[CurrentCollectionType].create()``.
         """
         child_cls: Type[AnyTileDBCollection] = kind or Collection
         return self._add_new_element(
@@ -199,7 +222,9 @@ class CollectionBase(
     def add_new_dataframe(
         self, key: str, *, uri: Optional[str] = None, **kwargs: Any
     ) -> DataFrame:
-        """Adds a new DataFrame to this collection [lifecycle: experimental].
+        """Adds a new DataFrame to this collection.
+
+        [lifecycle: experimental]
 
         For details about the behavior of ``key`` and ``uri``, see
         :meth:`add_new_collection`. The remaining parameters are passed to
@@ -236,7 +261,9 @@ class CollectionBase(
 
     @_funcs.forwards_kwargs_to(_add_new_ndarray, exclude=("kind",))
     def add_new_dense_ndarray(self, key: str, **kwargs: Any) -> DenseNDArray:
-        """Adds a new DenseNDArray to this Collection [lifecycle: experimental].
+        """Adds a new DenseNDArray to this Collection.
+
+        [lifecycle: experimental]
 
         For details about the behavior of ``key`` and ``uri``, see
         :meth:`add_new_collection`. The remaining parameters are passed to
@@ -246,7 +273,9 @@ class CollectionBase(
 
     @_funcs.forwards_kwargs_to(_add_new_ndarray, exclude=("kind",))
     def add_new_sparse_ndarray(self, key: str, **kwargs: Any) -> SparseNDArray:
-        """Adds a new SparseNDArray to this Collection [lifecycle: experimental].
+        """Adds a new SparseNDArray to this Collection.
+
+        [lifecycle: experimental]
 
         For details about the behavior of ``key`` and ``uri``, see
         :meth:`add_new_collection`. The remaining parameters are passed to
@@ -263,13 +292,18 @@ class CollectionBase(
     ) -> _TDBO:
         """Handles the common parts of adding new elements.
 
-        :param key: The key to be added.
-        :param kind: The type of the element to be added.
-        :param factory: A callable that, given the full URI to be added,
-            will create the backing storage at that URI and return
-            the reified SOMA object.
-        :param user_uri: If set, the URI to use for the child
-            instead of the default.
+        Args:
+            key:
+                The key to be added.
+            kind:
+                The type of the element to be added.
+            factory:
+                A callable that, given the full URI to be added,
+                will create the backing storage at that URI and return
+                the reified SOMA object.
+            user_uri:
+                If set, the URI to use for the child
+                instead of the default.
         """
         if key in self:
             raise KeyError(f"{key!r} already exists in {type(self)}")
@@ -325,16 +359,24 @@ class CollectionBase(
         *,
         use_relative_uri: Optional[bool] = None,
     ) -> Self:
-        """Adds an element to the collection. [lifecycle: experimental]
+        """Adds an element to the collection.
 
-        :param key: The key of the element to be added.
-        :param value: The value to be added to this collection.
-        :param use_relative_uri: By default (None), the collection will
-            determine whether the element should be stored by relative URI.
-            If True, the collection will store the child by absolute URI.
-            If False, the collection will store the child by relative URI.
+        [lifecycle: experimental]
 
-        :raises SOMAError: if an existing key is set (replacement is unsupported).
+        Args:
+            key:
+                The key of the element to be added.
+            value:
+                The value to be added to this collection.
+            use_relative_uri:
+                By default (None), the collection will determine whether the
+                element should be stored by relative URI.
+                If True, the collection will store the child by absolute URI.
+                If False, the collection will store the child by relative URI.
+
+        Raises:
+            SOMAError:
+                If an existing key is set (replacement is unsupported).
         """
         uri_to_add = value.uri
         # The SOMA API supports use_relative_uri in [True, False, None].
@@ -426,10 +468,15 @@ class CollectionBase(
     ) -> None:
         """Internal implementation of element setting.
 
-        :param key: The key to set.
-        :param uri: The resolved URI to pass to :meth:`tiledb.Group.add`.
-        :param relative: The ``relative`` parameter to pass to ``add``.
-        :param value: The reified SOMA object to store locally.
+        Args:
+            key:
+                The key to set.
+            uri:
+                The resolved URI to pass to :meth:`tiledb.Group.add`.
+            relative:
+                The ``relative`` parameter to pass to ``add``.
+            value:
+                The reified SOMA object to store locally.
         """
 
         self._check_allows_child(key, type(soma_object))
@@ -501,8 +548,7 @@ AnyTileDBCollection = CollectionBase[Any]
 class Collection(
     CollectionBase[CollectionElementType], somacore.Collection[CollectionElementType]
 ):
-    """
-    ``Collection`` is a persistent container of named SOMA objects, stored as
+    """``Collection`` is a persistent container of named SOMA objects, stored as
     a mapping of string keys and SOMA object values. Values may be any
     persistent ``tiledbsoma`` object, including ``DataFrame``,
     ``SparseNDArray``, ``DenseNDArray``, ``Experiment``, ``Measurement``,
@@ -513,39 +559,38 @@ class Collection(
     [lifecycle: experimental]
 
     Examples:
-    ---------
-    >>> import tiledbsoma
-    >>> import pyarrow as pa
-    >>> import numpy as np
-    >>> # create a collection and add a (10,10) dense matrix to it
-    >>> with tiledbsoma.Collection.create("./test_collection") as my_collection:
-    ...     # collection created. You can now add SOMA objects, e.g., a DenseNDArray
-    ...     my_collection.add_new_dense_ndarray(
-    ...         "my_dense_ndarray", type=pa.int32(), shape=(10, 10)
-    ...     ) as my_dense_ndarray:
-    ...         data = pa.Tensor.from_numpy(np.eye(10, 10, dtype=np.int32))
-    ...         my_dense_ndarray.write((slice(None), slice(None)), data)
-    ...
-    ... # example of opening collection to read an object back
-    ... with tiledbsoma.open("./test_collection") as my_collection:
-    ...     data = my_collection["my_dense_ndarray"].read()
-    ...
-    >>> data
-    <pyarrow.Tensor>
-    type: int32
-    shape: (10, 10)
-    strides: (40, 4)
-    >>> data.to_numpy()
-    array([[1, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-          [0, 1, 0, 0, 0, 0, 0, 0, 0, 0],
-          [0, 0, 1, 0, 0, 0, 0, 0, 0, 0],
-          [0, 0, 0, 1, 0, 0, 0, 0, 0, 0],
-          [0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
-          [0, 0, 0, 0, 0, 1, 0, 0, 0, 0],
-          [0, 0, 0, 0, 0, 0, 1, 0, 0, 0],
-          [0, 0, 0, 0, 0, 0, 0, 1, 0, 0],
-          [0, 0, 0, 0, 0, 0, 0, 0, 1, 0],
-          [0, 0, 0, 0, 0, 0, 0, 0, 0, 1]], dtype=int32)
+        >>> import tiledbsoma
+        >>> import pyarrow as pa
+        >>> import numpy as np
+        >>> # create a collection and add a (10,10) dense matrix to it
+        >>> with tiledbsoma.Collection.create("./test_collection") as my_collection:
+        ...     # collection created. You can now add SOMA objects, e.g., a DenseNDArray
+        ...     my_collection.add_new_dense_ndarray(
+        ...         "my_dense_ndarray", type=pa.int32(), shape=(10, 10)
+        ...     ) as my_dense_ndarray:
+        ...         data = pa.Tensor.from_numpy(np.eye(10, 10, dtype=np.int32))
+        ...         my_dense_ndarray.write((slice(None), slice(None)), data)
+        ...
+        ... # example of opening collection to read an object back
+        ... with tiledbsoma.open("./test_collection") as my_collection:
+        ...     data = my_collection["my_dense_ndarray"].read()
+        ...
+        >>> data
+        <pyarrow.Tensor>
+        type: int32
+        shape: (10, 10)
+        strides: (40, 4)
+        >>> data.to_numpy()
+        array([[1, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 1, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 1, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 1, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 1, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 1, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 1, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 1, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 1]], dtype=int32)
     """
 
     __slots__ = ()
