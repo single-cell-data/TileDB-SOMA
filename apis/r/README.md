@@ -19,7 +19,7 @@ $ install.packages('tiledbsoma', repos = c('https://tiledb-inc.r-universe.dev', 
 ### Requirements
 
 * Source installation requires the [`tiledb` R package](https://github.com/TileDB-Inc/TileDB-R) (which in turn depends on the [`tiledb` Core library](https://github.com/TileDB-Inc/TileDB)).
-* This, and the other R package dependencies, are listed in the [DESCRIPTION](https://github.com/single-cell-data/TileDB-SOMA/blob/main/apis/r/DESCRIPTION) file and can be installed via _e.g_ `remotes::install_dep(".")`.
+* This, and the other R package dependencies, are listed in the [DESCRIPTION](https://github.com/single-cell-data/TileDB-SOMA/blob/main/apis/r/DESCRIPTION) file and can be installed via _e.g_ `remotes::install_deps(".")`.
 * In addition, the R package also depends on the [`libtiledbsoma` library](https://github.com/single-cell-data/TileDB-SOMA/tree/main/libtiledbsoma) -- which gets installed with the package as
   described in the next section.
 
