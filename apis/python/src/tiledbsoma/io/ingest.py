@@ -64,7 +64,7 @@ def from_h5ad(
     platform_config: Optional[PlatformConfig] = None,
     ingest_mode: IngestMode = "write",
     use_relative_uri: Optional[bool] = None,
-    sparsify_X: bool = True,
+    X_kind: Union[Type[SparseNDArray], Type[DenseNDArray]] = SparseNDArray,
 ) -> str:
     """
     Reads an ``.h5ad`` file and writes to a TileDB group structure.
@@ -78,6 +78,9 @@ def from_h5ad(
 
     The "schema_only" ingest_mode creates groups and array schema, without writing array data.
     This is useful as a prep-step for parallel append-ingest of multiple H5ADs to a single soma.
+
+    The ``X_kind`` parameter allows you to specify how dense X matrices from the H5AD are stored
+    within the SOMA experiment -- whether as dense or as sparse.
 
     [lifecycle: experimental]
     """
@@ -106,7 +109,7 @@ def from_h5ad(
         platform_config=platform_config,
         ingest_mode=ingest_mode,
         use_relative_uri=use_relative_uri,
-        sparsify_X=sparsify_X,
+        X_kind=X_kind,
     )
 
     logging.log_io(
@@ -125,7 +128,7 @@ def from_anndata(
     platform_config: Optional[PlatformConfig] = None,
     ingest_mode: IngestMode = "write",
     use_relative_uri: Optional[bool] = None,
-    sparsify_X: bool = True,
+    X_kind: Union[Type[SparseNDArray], Type[DenseNDArray]] = SparseNDArray,
 ) -> str:
     """
     Top-level writer method for creating a TileDB group for a ``Experiment`` object.
@@ -139,6 +142,9 @@ def from_anndata(
 
     The "schema_only" ingest_mode creates groups and array schema, without writing array data.
     This is useful as a prep-step for parallel append-ingest of multiple H5ADs to a single soma.
+
+    The ``X_kind`` parameter allows you to specify how dense X matrices from the H5AD are stored
+    within the SOMA experiment -- whether as dense or as sparse.
 
     [lifecycle: experimental]
     """
@@ -222,14 +228,18 @@ def from_anndata(
                 # * If we do `anndata.X` we're getting a pageable object which can be loaded
                 #   chunkwise into memory.
                 # Using the latter allows us to ingest larger .h5ad files without OOMing.
-                cls = (
-                    DenseNDArray
-                    if (
-                        not sparsify_X
-                        and isinstance(anndata.X, (np.ndarray, h5py.Dataset))
-                    )
-                    else SparseNDArray
-                )
+
+                # XXX TEMP
+                #                cls = (
+                #                    DenseNDArray
+                #                    if (
+                #                        not sparsify_X
+                #                        and isinstance(anndata.X, (np.ndarray, h5py.Dataset))
+                #                    )
+                #                    else SparseNDArray
+                #                )
+                cls = X_kind
+
                 with create_from_matrix(
                     cls,
                     _util.uri_joinpath(measurement.X.uri, "data"),
