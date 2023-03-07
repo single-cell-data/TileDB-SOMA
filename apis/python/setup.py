@@ -196,8 +196,8 @@ setuptools.setup(
     ext_modules=[setuptools.Extension("tiledbsoma.libtiledbsoma", sources=[])],
     zip_safe=False,
     install_requires=[
-    # CAUTION: the old pip solver (<=2020) is sensitive to the order of this
-    # requirements list. See TileDB-SOMA issue #1051 for example.
+        # CAUTION: the old pip solver (<=2020) is sensitive to the order of
+        # this requirements list. See TileDB-SOMA issue #1051 for example.
         "scanpy>=1.9.2",
         "anndata",
         "somacore==1.0.0rc4",
