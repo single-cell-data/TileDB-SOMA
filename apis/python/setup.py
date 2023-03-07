@@ -196,17 +196,20 @@ setuptools.setup(
     ext_modules=[setuptools.Extension("tiledbsoma.libtiledbsoma", sources=[])],
     zip_safe=False,
     install_requires=[
-        # NOTE: we bring in numpy through the transitive requirements,
-        #          scanpy > numba > numpy
-        # numba 0.56.4 (current as of this writing) requires numpy<1.24. If we
-        # require our own bare "numpy", then the old pip solver (<=2020) isn't
-        # smart enough to obey the nested requirement, instead installing a
-        # newer numpy>=1.24 which breaks numba 0.56.4. issue #1051
-        "scanpy>=1.9.2",
         "anndata",
         "attrs>=22.2",
+        # Pinning numba & its particular numpy constraints:
+        # The old pip solver (<=2020) doesn't deal with the transitive
+        # requirements (scanpy -> numba -> numpy) properly resulting in broken
+        # installation of incompatible numpy>=1.24. Issue #1051
+        # These pins can be removed either when there's a new numba release
+        # with less-particular numpy version constraints, or if we decide we no
+        # longer need to support the old pip solver (default on ubuntu 20.04).
+        "numba==0.56.4",
+        "numpy>=1.18,<1.24",
         "pandas",
         "pyarrow>=9.0.0",
+        "scanpy>=1.9.2",
         "scipy",
         "somacore==1.0.0rc4",
         "tiledb==0.20.*",
