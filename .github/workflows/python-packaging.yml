@@ -104,6 +104,7 @@ jobs:
         echo "WHL=$WHL" >> $GITHUB_ENV
     - name: Smoke test ${{ matrix.os }}
       run: python -c 'import tiledbsoma; print(tiledbsoma.libtiledbsoma.__file__)'
+      # TODO: more thorough local smoke test
     - name: Smoke test in docker
       # Repeat test in stock ubuntu 20.04 docker image. This uses an older pip
       # version with the old dependency solver. see issue #1051
