@@ -47,7 +47,11 @@ def adata(h5ad_file):
         ["resume"],
     ],
 )
-def test_import_anndata(adata, ingest_modes):
+@pytest.mark.parametrize(
+    "X_kind",
+    [tiledbsoma.SparseNDArray, tiledbsoma.DenseNDArray],
+)
+def test_import_anndata(adata, ingest_modes, X_kind):
 
     have_ingested = False
 
@@ -60,7 +64,11 @@ def test_import_anndata(adata, ingest_modes):
     for ingest_mode in ingest_modes:
 
         uri = tiledbsoma.io.from_anndata(
-            output_path, orig, "RNA", ingest_mode=ingest_mode
+            output_path,
+            orig,
+            "RNA",
+            ingest_mode=ingest_mode,
+            X_kind=X_kind,
         )
         if ingest_mode != "schema_only":
             have_ingested = True
@@ -113,14 +121,22 @@ def test_import_anndata(adata, ingest_modes):
         # Check Xs
         assert exp.ms["RNA"].X.metadata.get(metakey) == "SOMACollection"
 
-        # Check X/data (dense)
-        assert exp.ms["RNA"].X["data"].metadata.get(metakey) == "SOMADenseNDArray"
-        if have_ingested:
-            matrix = exp.ms["RNA"].X["data"].read(coords=all2d)
-            assert matrix.size == orig.X.size
+        # Check X/data (dense in the H5AD)
+        if X_kind == tiledbsoma.SparseNDArray:
+            assert exp.ms["RNA"].X["data"].metadata.get(metakey) == "SOMASparseNDArray"
+            table = exp.ms["RNA"].X["data"].read(coords=all2d).tables().concat()
+            if have_ingested:
+                assert table.shape[0] == orig.X.shape[0] * orig.X.shape[1]
+            else:
+                assert table.shape[0] == 0
         else:
-            with pytest.raises(ValueError):
-                exp.ms["RNA"].X["data"].read(coords=all2d)
+            assert exp.ms["RNA"].X["data"].metadata.get(metakey) == "SOMADenseNDArray"
+            if have_ingested:
+                matrix = exp.ms["RNA"].X["data"].read(coords=all2d)
+                assert matrix.size == orig.X.size
+            else:
+                with pytest.raises(ValueError):
+                    exp.ms["RNA"].X["data"].read(coords=all2d)
 
         # Check raw/X/data (sparse)
         assert exp.ms["raw"].X["data"].metadata.get(metakey) == "SOMASparseNDArray"

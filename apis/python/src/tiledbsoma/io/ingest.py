@@ -48,7 +48,8 @@ from ..options._tiledb_create_options import TileDBCreateOptions
 from . import conversions
 
 SparseMatrix = Union[sp.csr_matrix, sp.csc_matrix, SparseDataset]
-Matrix = Union[NPNDArray, SparseMatrix]
+DenseMatrix = Union[NPNDArray, h5py.Dataset]
+Matrix = Union[DenseMatrix, SparseMatrix]
 _NDArr = TypeVar("_NDArr", bound=NDArray)
 _TDBO = TypeVar("_TDBO", bound=TileDBObject[RawHandle])
 
@@ -63,6 +64,7 @@ def from_h5ad(
     platform_config: Optional[PlatformConfig] = None,
     ingest_mode: IngestMode = "write",
     use_relative_uri: Optional[bool] = None,
+    X_kind: Union[Type[SparseNDArray], Type[DenseNDArray]] = SparseNDArray,
 ) -> str:
     """
     Reads an ``.h5ad`` file and writes to a TileDB group structure.
@@ -76,6 +78,9 @@ def from_h5ad(
 
     The "schema_only" ingest_mode creates groups and array schema, without writing array data.
     This is useful as a prep-step for parallel append-ingest of multiple H5ADs to a single soma.
+
+    The ``X_kind`` parameter allows you to specify how dense X matrices from the H5AD are stored
+    within the SOMA experiment -- whether as dense or as sparse.
 
     [lifecycle: experimental]
     """
@@ -104,6 +109,7 @@ def from_h5ad(
         platform_config=platform_config,
         ingest_mode=ingest_mode,
         use_relative_uri=use_relative_uri,
+        X_kind=X_kind,
     )
 
     logging.log_io(
@@ -122,6 +128,7 @@ def from_anndata(
     platform_config: Optional[PlatformConfig] = None,
     ingest_mode: IngestMode = "write",
     use_relative_uri: Optional[bool] = None,
+    X_kind: Union[Type[SparseNDArray], Type[DenseNDArray]] = SparseNDArray,
 ) -> str:
     """
     Top-level writer method for creating a TileDB group for a ``Experiment`` object.
@@ -135,6 +142,9 @@ def from_anndata(
 
     The "schema_only" ingest_mode creates groups and array schema, without writing array data.
     This is useful as a prep-step for parallel append-ingest of multiple H5ADs to a single soma.
+
+    The ``X_kind`` parameter allows you to specify how dense X matrices from the H5AD are stored
+    within the SOMA experiment -- whether as dense or as sparse.
 
     [lifecycle: experimental]
     """
@@ -218,11 +228,18 @@ def from_anndata(
                 # * If we do `anndata.X` we're getting a pageable object which can be loaded
                 #   chunkwise into memory.
                 # Using the latter allows us to ingest larger .h5ad files without OOMing.
-                cls = (
-                    DenseNDArray
-                    if isinstance(anndata.X, (np.ndarray, h5py.Dataset))
-                    else SparseNDArray
-                )
+
+                # XXX TEMP
+                #                cls = (
+                #                    DenseNDArray
+                #                    if (
+                #                        not sparsify_X
+                #                        and isinstance(anndata.X, (np.ndarray, h5py.Dataset))
+                #                    )
+                #                    else SparseNDArray
+                #                )
+                cls = X_kind
+
                 with create_from_matrix(
                     cls,
                     _util.uri_joinpath(measurement.X.uri, "data"),
@@ -874,10 +891,12 @@ def _write_matrix_to_sparseNDArray(
         t1 = time.time()
 
         # Chunk size on the stride axis
-        if isinstance(matrix, np.ndarray):
+        if isinstance(matrix, (np.ndarray, h5py.Dataset)):
             chunk_size = int(math.ceil(goal_chunk_nnz / matrix.shape[stride_axis]))
         else:
-            chunk_size = _find_sparse_chunk_size(matrix, i, stride_axis, goal_chunk_nnz)
+            chunk_size = _find_sparse_chunk_size(  # type: ignore [unreachable]
+                matrix, i, stride_axis, goal_chunk_nnz
+            )
 
         i2 = i + chunk_size
 
