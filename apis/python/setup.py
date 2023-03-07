@@ -196,17 +196,20 @@ setuptools.setup(
     ext_modules=[setuptools.Extension("tiledbsoma.libtiledbsoma", sources=[])],
     zip_safe=False,
     install_requires=[
-        # CAUTION: the old pip solver (<=2020) is sensitive to the order of
-        # this requirements list. See TileDB-SOMA issue #1051 for example.
+        # NOTE: we bring in numpy through the transitive requirements,
+        #          scanpy > numba > numpy
+        # numba 0.56.4 (current as of this writing) requires numpy<1.24. If we
+        # require our own bare "numpy", then the old pip solver (<=2020) isn't
+        # smart enough to obey the nested requirement, instead installing a
+        # newer numpy>=1.24 which breaks numba 0.56.4. issue #1051
         "scanpy>=1.9.2",
         "anndata",
+        "attrs>=22.2",
+        "pandas",
+        "pyarrow>=9.0.0",
+        "scipy",
         "somacore==1.0.0rc4",
         "tiledb==0.20.*",
-        "pyarrow>=9.0.0",
-        "attrs>=22.2",
-        "numpy",
-        "pandas",
-        "scipy",
         "typing-extensions",  # Note "-" even though `import typing_extensions`
     ],
     extras_require={
