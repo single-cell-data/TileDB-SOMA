@@ -10,6 +10,8 @@ on:
   #   - 'apis/r/**'
   release:
     types: [published]
+  schedule:
+    - cron: "42 9 * * *"
 
 jobs:
   sdist:
