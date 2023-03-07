@@ -108,7 +108,7 @@ jobs:
       # a version of pip with the older dependency solver. see issue #1051
       if: ${{ matrix.platform == 'manylinux2014' }}
       run: |
-        docker run --rm -it -v $(pwd):/mnt ubuntu:20.04 bash -ec "
+        docker run -v $(pwd):/mnt ubuntu:20.04 bash -ec "
           apt-get -qq update && apt-get install -y python3-pip python3-wheel
           pip3 install /mnt/$whl
           python3 -c 'import tiledbsoma; print(tiledbsoma.libtiledbsoma.__file__)'"
