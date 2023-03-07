@@ -20,7 +20,7 @@ $ install.packages('tiledbsoma', repos = c('https://tiledb-inc.r-universe.dev', 
 
 * Source installation requires the [`tiledb` R package](https://github.com/TileDB-Inc/TileDB-R) (which in turn depends on the [`tiledb` Core library](https://github.com/TileDB-Inc/TileDB)).
 * In general, source installation of TileDB and its packages may require `cmake` and `git` to be installed; these are common tools each operating system provides readily.
-* Other R package dependencies, are listed in the [DESCRIPTION](https://github.com/single-cell-data/TileDB-SOMA/blob/main/apis/r/DESCRIPTION) file and can be installed via _e.g._
+* Other R package dependencies are listed in the [DESCRIPTION](https://github.com/single-cell-data/TileDB-SOMA/blob/main/apis/r/DESCRIPTION) file and can be installed via _e.g._
   `remotes::install_deps(".", TRUE)`. In order to build vignettes, `knitr` and `rmarkdown` are required as is `testthat` for testing. If `testthat` is invoked directly then `pkgbuild` is also needed.
 * In addition, the R package also depends on the [`libtiledbsoma` library](https://github.com/single-cell-data/TileDB-SOMA/tree/main/libtiledbsoma) -- which gets installed with the package as
   described in the next section.
