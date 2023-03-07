@@ -1,13 +1,24 @@
 # -*- coding: utf-8 -*-
 
 """
-NOTICE (mlin 2022-12-15): we'd prefer to use setuptools_scm instead of this
-ad hoc script from gist; but as of this writing, it has issues with our repo
-structure where the python package is in a subdirectory rather than the top
-level.
-  https://gist.github.com/mina86/8782771
+NOTICE (mlin 2023-03-06): this script derives the Python package version number
+based on the git history/tags. It also stores that info in a RELEASE-VERSION
+file for use once source code has been distributed separately from the git repo
+(e.g. in an sdist tarball). The script was originally obtained from:
+  https://gist.github.c!om/mina86/8782771
+
+It'd be preferable to use setuptools_scm instead of this ad hoc script.
+Unfortunately, as of this writing setuptools_scm has issues with our repo
+structure in which the Python package resides in a subdirectory as opposed to
+the repo root. When setuptools builds the sdist tarball, it naturally homes
+the Python package in the root. We haven't found a way to make setuptools_scm
+handle the package location differing based on whether we're operating from the
+source repo or an extracted sdist. The following setuptools_scm issues capture
+this:
   https://github.com/pypa/setuptools_scm/issues/188
   https://github.com/pypa/setuptools_scm/issues/788
+
+Note the problem doesn't necessarily become apparent until testing the sdist.
 
 ----
 
@@ -58,11 +69,12 @@ __email__ = "mina86@mina86.com"
 __all__ = "getVersion"
 
 
+import os
 import re
 import subprocess
 import sys
 
-RELEASE_VERSION_FILE = "RELEASE-VERSION"
+RELEASE_VERSION_FILE = os.path.join(os.path.dirname(__file__), "RELEASE-VERSION")
 
 # http://www.python.org/dev/peps/pep-0386/
 _PEP386_SHORT_VERSION_RE = r"\d+(?:\.\d+)+(?:(?:[abc]|rc)\d+(?:\.\d+)*)?"
