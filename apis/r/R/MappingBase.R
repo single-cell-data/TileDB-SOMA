@@ -145,16 +145,15 @@ MappingBase <- R6::R6Class(
     #' and invisibly returns \code{self}
     #'
     print = function() {
-      vowels <- c('a', 'e', 'i', 'o', 'u')
-      cls <- class(x = self)[1L]
-      prd <- ifelse(
-        test = tolower(x = substr(x = cls, start = 1L, stop = 2L)) %in% vowels,
-        yes = 'An',
-        no = 'A'
-      )
-      lng <- self$length()
-      ent <- ifelse(test = lng == 1L, yes = 'entry', no = 'entries')
-      cat(prd, cls, "map with", lng, ent, sep = ' ')
+      cat("<", class(self)[1L], ">\n", sep = '')
+      if (length(self)) {
+        cat(
+          '  ',
+          paste(self$keys(), self$values(), sep = ': ', collapse = '\n  '),
+          '\n',
+          sep = ''
+        )
+      }
       return(invisible(x = self))
     }
   ),
