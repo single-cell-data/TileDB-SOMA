@@ -229,19 +229,8 @@ def from_anndata(
                 #   chunkwise into memory.
                 # Using the latter allows us to ingest larger .h5ad files without OOMing.
 
-                # XXX TEMP
-                #                cls = (
-                #                    DenseNDArray
-                #                    if (
-                #                        not sparsify_X
-                #                        and isinstance(anndata.X, (np.ndarray, h5py.Dataset))
-                #                    )
-                #                    else SparseNDArray
-                #                )
-                cls = X_kind
-
                 with create_from_matrix(
-                    cls,
+                    X_kind,
                     _util.uri_joinpath(measurement.X.uri, "data"),
                     anndata.X,
                     platform_config,
