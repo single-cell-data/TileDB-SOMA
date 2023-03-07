@@ -70,18 +70,10 @@ SOMATileDBContext <- R6::R6Class(
     #' @return The value of \code{key} in the map, or \code{default} if
     #' \code{key} is not found
     #'
-    #' @importFrom rlang missing_arg is_missing
-    get = function(key, default = rlang::missing_arg()) {
-      key <- key[1L]
-      key <- tryCatch(
-        expr = match.arg(arg = key, choices = self$keys()),
-        error = \(...) NULL
+    get = function(key, default = quote(expr = )) {
+      stopifnot(
+        "'key' must be a single character value" = is_scalar_character(key)
       )
-      if (is.null(x = key)) {
-        if (rlang::is_missing(x = default)) {
-          private$.key_error(key = key)
-        }
-      }
       if (key %in% private$.tiledb_ctx_names()) {
         val <- tiledb::config(object = private$.tiledb_ctx)[key]
         names(x = val) <- key

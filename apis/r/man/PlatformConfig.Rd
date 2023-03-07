@@ -4,11 +4,11 @@
 \alias{PlatformConfig}
 \title{Platform Configuration}
 \description{
-An R6 mapping type for configuring various \dQuote{options} for multiple
+An R6 mapping type for configuring various \dQuote{parameters} for multiple
 \dQuote{platforms}, essentially serves a multi-nested map where the inner
 map is a \code{\link{ScalarMap}} contained within a \code{\link{ConfigList}}
 (middle map):
-\code{\{platform: \{op: \{key: value\}\}\}}
+\code{\{platform: \{param: \{key: value\}\}\}}
 }
 \section{Super class}{
 \code{\link[tiledbsoma:MappingBase]{tiledbsoma::MappingBase}} -> \code{PlatformConfig}
@@ -17,9 +17,9 @@ map is a \code{\link{ScalarMap}} contained within a \code{\link{ConfigList}}
 \subsection{Public methods}{
 \itemize{
 \item \href{#method-PlatformConfig-platforms}{\code{PlatformConfig$platforms()}}
-\item \href{#method-PlatformConfig-ops}{\code{PlatformConfig$ops()}}
+\item \href{#method-PlatformConfig-params}{\code{PlatformConfig$params()}}
 \item \href{#method-PlatformConfig-get}{\code{PlatformConfig$get()}}
-\item \href{#method-PlatformConfig-get_ops}{\code{PlatformConfig$get_ops()}}
+\item \href{#method-PlatformConfig-get_params}{\code{PlatformConfig$get_params()}}
 \item \href{#method-PlatformConfig-set}{\code{PlatformConfig$set()}}
 \item \href{#method-PlatformConfig-setv}{\code{PlatformConfig$setv()}}
 \item \href{#method-PlatformConfig-clone}{\code{PlatformConfig$clone()}}
@@ -52,23 +52,24 @@ The names of the \dQuote{platforms} (outer keys)
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-PlatformConfig-ops"></a>}}
-\if{latex}{\out{\hypertarget{method-PlatformConfig-ops}{}}}
-\subsection{Method \code{ops()}}{
+\if{html}{\out{<a id="method-PlatformConfig-params"></a>}}
+\if{latex}{\out{\hypertarget{method-PlatformConfig-params}{}}}
+\subsection{Method \code{params()}}{
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{PlatformConfig$ops(platform = NULL)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{PlatformConfig$params(platform = NULL)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{platform}}{The \dQuote{platform} to pull option names (middle keys)
-for; pass \code{TRUE} to return all possible option names}
+\item{\code{platform}}{The \dQuote{platform} to pull parameter names
+(middle keys)
+for; pass \code{TRUE} to return all possible parameter names}
 }
 \if{html}{\out{</div>}}
 }
 \subsection{Returns}{
-The option names (middle keys) for \code{platform}
+The parameter names (middle keys) for \code{platform}
 }
 }
 \if{html}{\out{<hr>}}
@@ -78,9 +79,9 @@ The option names (middle keys) for \code{platform}
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{PlatformConfig$get(
   platform,
-  op = NULL,
+  param = NULL,
   key = NULL,
-  default = rlang::missing_arg()
+  default = quote(expr = )
 )}\if{html}{\out{</div>}}
 }
 
@@ -89,13 +90,13 @@ The option names (middle keys) for \code{platform}
 \describe{
 \item{\code{platform}}{The name of the \dQuote{platform} (outer key) to fetch}
 
-\item{\code{op}}{The name of the \dQuote{option} of \code{platform} to fetch;
-if \code{NULL}, returns the \link[tiledbsoma:ConfigList]{configuration}
-for \code{platform}}
+\item{\code{param}}{The name of the \dQuote{paramters} of \code{platform}
+to fetch; if \code{NULL}, returns the
+\link[tiledbsoma:ConfigList]{configuration} for \code{platform}}
 
-\item{\code{key}}{The \dQuote{key} (inner key) for \code{op} in
-\code{platform} to fetch; if \code{NULL} and \code{op} is passed,
-returns the \link[tiledbsoma:ScalarMap]{map} for \code{op}
+\item{\code{key}}{The \dQuote{key} (inner key) for \code{param} in
+\code{platform} to fetch; if \code{NULL} and \code{param} is passed,
+returns the \link[tiledbsoma:ScalarMap]{map} for \code{param}
 in \code{platform}}
 
 \item{\code{default}}{Default value to fetch if \code{key} is not found;
@@ -104,16 +105,16 @@ defaults to \code{null}}
 \if{html}{\out{</div>}}
 }
 \subsection{Returns}{
-The value of \code{key} for \code{op} in \code{platform} in the
+The value of \code{key} for \code{param} in \code{platform} in the
 map, or \code{default} if \code{key} is not found
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-PlatformConfig-get_ops"></a>}}
-\if{latex}{\out{\hypertarget{method-PlatformConfig-get_ops}{}}}
-\subsection{Method \code{get_ops()}}{
+\if{html}{\out{<a id="method-PlatformConfig-get_params"></a>}}
+\if{latex}{\out{\hypertarget{method-PlatformConfig-get_params}{}}}
+\subsection{Method \code{get_params()}}{
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{PlatformConfig$get_ops(platform)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{PlatformConfig$get_params(platform)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
@@ -132,7 +133,7 @@ The \code{\link{ConfigList}} for \code{platform}
 \if{latex}{\out{\hypertarget{method-PlatformConfig-set}{}}}
 \subsection{Method \code{set()}}{
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{PlatformConfig$set(platform, op, key, value)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{PlatformConfig$set(platform, param, key, value)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
@@ -140,21 +141,22 @@ The \code{\link{ConfigList}} for \code{platform}
 \describe{
 \item{\code{platform}}{The name of the \dQuote{platform} (outer key) to set}
 
-\item{\code{op}}{Name of the \dQuote{option} (middile key) in \code{platform}
-to set}
+\item{\code{param}}{Name of the \dQuote{parameter} (middle key) in
+\code{platform} to set}
 
 \item{\code{key}}{Inner key to set}
 
 \item{\code{value}}{Value to add for \code{key}, or \code{NULL} to remove the
-entry for \code{key}; optionally provide only \code{platfomr}, \code{op},
-and \code{value} as a \code{\link{ScalarMap}} to update \code{op} for
-\code{platform} with the keys and values from \code{value}}
+entry for \code{key}; optionally provide only \code{platfomr},
+\code{param}, and \code{value} as a \code{\link{ScalarMap}} to
+update  \code{param} for \code{platform} with the keys and values
+from \code{value}}
 }
 \if{html}{\out{</div>}}
 }
 \subsection{Returns}{
 \[chainable\] Invisibly returns \code{self} with \code{value}
-added for \code{key} in \code{op} for \code{platform}
+added for \code{key} in \code{param} for \code{platform}
 }
 }
 \if{html}{\out{<hr>}}

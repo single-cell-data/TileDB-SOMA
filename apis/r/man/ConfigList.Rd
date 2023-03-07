@@ -4,9 +4,10 @@
 \alias{ConfigList}
 \title{A Configuration List}
 \description{
-An R6 mapping type for configuring various \dQuote{options}. Essentially,
-serves as a nested map where the inner map is a \code{\link{ScalarMap}}:
-\code{\{<op>: \link[tiledbsoma:ScalarMap]{\{<key>: <value>\}}\}}
+An R6 mapping type for configuring various \dQuote{parameters}.
+Essentially, serves as a nested map where the inner map is a
+\code{\link{ScalarMap}}:
+\code{\{<param>: \link[tiledbsoma:ScalarMap]{\{<key>: <value>\}}\}}
 }
 \section{Super class}{
 \code{\link[tiledbsoma:MappingBase]{tiledbsoma::MappingBase}} -> \code{ConfigList}
@@ -39,16 +40,16 @@ serves as a nested map where the inner map is a \code{\link{ScalarMap}}:
 \if{latex}{\out{\hypertarget{method-ConfigList-get}{}}}
 \subsection{Method \code{get()}}{
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{ConfigList$get(op, key = NULL, default = rlang::missing_arg())}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{ConfigList$get(param, key = NULL, default = quote(expr = ))}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{op}}{Outer key or \dQuote{option} to fetch}
+\item{\code{param}}{Outer key or \dQuote{parameter} to fetch}
 
 \item{\code{key}}{Inner key to fetch; pass \code{NULL} to return  the
-\link[tiledbsoma:ScalarMap]{map} for \code{op}}
+\link[tiledbsoma:ScalarMap]{map} for \code{param}}
 
 \item{\code{default}}{Default value to fetch if \code{key} is not found;
 defaults to \code{NULL}}
@@ -56,7 +57,7 @@ defaults to \code{NULL}}
 \if{html}{\out{</div>}}
 }
 \subsection{Returns}{
-The value of \code{key} for \code{op} in the map, or
+The value of \code{key} for \code{param} in the map, or
 \code{default} if \code{key} is not found
 }
 }
@@ -65,26 +66,27 @@ The value of \code{key} for \code{op} in the map, or
 \if{latex}{\out{\hypertarget{method-ConfigList-set}{}}}
 \subsection{Method \code{set()}}{
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{ConfigList$set(op, key, value)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{ConfigList$set(param, key, value)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{op}}{Outer key or \dQuote{option} to set}
+\item{\code{param}}{Outer key or \dQuote{parameter} to set}
 
 \item{\code{key}}{Inner key to set}
 
-\item{\code{value}}{Value to add for \code{key}, or \code{NULL} to remove the
-entry for \code{key}; optionally provide only \code{op} and \code{value}
-as a \code{\link{ScalarMap}} to update \code{op} with the keys and
+\item{\code{value}}{Value to add for \code{key}, or \code{NULL} to remove
+the entry for \code{key}; optionally provide only \code{param}
+and \code{value}
+as a \code{\link{ScalarMap}} to update \code{param} with the keys and
 values from \code{value}}
 }
 \if{html}{\out{</div>}}
 }
 \subsection{Returns}{
 \[chainable\] Invisibly returns \code{self} with \code{value}
-added for \code{key} in \code{op}
+added for \code{key} in \code{param}
 }
 }
 \if{html}{\out{<hr>}}

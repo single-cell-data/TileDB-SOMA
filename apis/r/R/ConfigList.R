@@ -1,8 +1,9 @@
 #' A Configuration List
 #'
-#' An R6 mapping type for configuring various \dQuote{options}. Essentially,
-#' serves as a nested map where the inner map is a \code{\link{ScalarMap}}:
-#' \code{\{<op>: \link[tiledbsoma:ScalarMap]{\{<key>: <value>\}}\}}
+#' An R6 mapping type for configuring various \dQuote{parameters}.
+#' Essentially, serves as a nested map where the inner map is a
+#' \code{\link{ScalarMap}}:
+#' \code{\{<param>: \link[tiledbsoma:ScalarMap]{\{<key>: <value>\}}\}}
 #'
 #' @export
 #'
@@ -12,56 +13,54 @@ ConfigList <- R6::R6Class(
   classname = 'ConfigList',
   inherit = MappingBase,
   public = list(
-    #' @param op Outer key or \dQuote{option} to fetch
+    #' @param param Outer key or \dQuote{parameter} to fetch
     #' @param key Inner key to fetch; pass \code{NULL} to return  the
-    #' \link[tiledbsoma:ScalarMap]{map} for \code{op}
+    #' \link[tiledbsoma:ScalarMap]{map} for \code{param}
     #' @templateVar key key
     #' @templateVar default NULL
     #' @template param-default
     #'
-    #' @return The value of \code{key} for \code{op} in the map, or
+    #' @return The value of \code{key} for \code{param} in the map, or
     #' \code{default} if \code{key} is not found
     #'
-    get = function(op, key = NULL, default = rlang::missing_arg()) {
-      op <- op[1L]
-      op <- tryCatch(
-        expr = match.arg(arg = op, choices = self$keys()),
-        error = \(...) NULL
+    get = function(param, key = NULL, default = quote(expr = )) {
+      stopifnot(
+        "'param' must be a single character value" = is_scalar_character(param)
       )
-      if (is.null(x = op)) {
-        if (rlang::is_missing(x = default)) {
-          private$.key_error(key = op)
+      parammap <- super$get(key = param, default = NULL)
+      if (is.null(x = parammap)) {
+        if (missing(x = default) || identical(x = default, y = quote(expr = ))) {
+          private$.key_error(key = param)
         }
         return(default)
       }
-      opmap <- super$get(key = op)
       if (is.null(x = key)) {
-        return(opmap)
+        return(parammap)
       }
-      return(opmap$get(key = key, default = default))
+      return(parammap$get(key = key, default = default))
     },
-    #' @param op Outer key or \dQuote{option} to set
+    #' @param param Outer key or \dQuote{parameter} to set
     #' @param key Inner key to set
-    #' @param value Value to add for \code{key}, or \code{NULL} to remove the
-    #' entry for \code{key}; optionally provide only \code{op} and \code{value}
-    #' as a \code{\link{ScalarMap}} to update \code{op} with the keys and
+    #' @param value Value to add for \code{key}, or \code{NULL} to remove
+    #' the entry for \code{key}; optionally provide only \code{param}
+    #' and \code{value}
+    #' as a \code{\link{ScalarMap}} to update \code{param} with the keys and
     #' values from \code{value}
     #'
     #' @return \[chainable\] Invisibly returns \code{self} with \code{value}
-    #' added for \code{key} in \code{op}
-    set = function(op, key, value) {
+    #' added for \code{key} in \code{param}
+    set = function(param, key, value) {
       stopifnot(
-        "'op' must be a single character" = is_scalar_character(op)
+        "'param' must be a single character" = is_scalar_character(param)
       )
-      opmap <- super$get(key = op, default = ScalarMap$new())
+      parammap <- super$get(key = param, default = ScalarMap$new())
       if (missing(x = key) && inherits(x = value, what = 'ScalarMap')) {
-        opmap$update(map = value)
-        super$set(key = op, value = opmap)
+        parammap$update(map = value)
+        super$set(key = param, value = parammap)
         return(invisible(x = self))
       }
-      stopifnot(is_scalar_character(op))
-      opmap$set(key = key, value = value)
-      super$set(key = op, value = opmap)
+      parammap$set(key = key, value = value)
+      super$set(key = param, value = parammap)
       return(invisible(x = self))
     },
     #' @template param-dots-ignored

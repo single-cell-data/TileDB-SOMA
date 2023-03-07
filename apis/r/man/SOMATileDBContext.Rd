@@ -96,7 +96,7 @@ The number of items in the map
 \if{latex}{\out{\hypertarget{method-SOMATileDBContext-get}{}}}
 \subsection{Method \code{get()}}{
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{SOMATileDBContext$get(key, default = rlang::missing_arg())}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{SOMATileDBContext$get(key, default = quote(expr = ))}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{

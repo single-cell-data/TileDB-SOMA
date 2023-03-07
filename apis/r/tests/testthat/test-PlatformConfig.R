@@ -28,12 +28,12 @@ test_that("PlatformConfig mechanics", {
   cfg$set('plat2', 'op1', 'a', 1L)
   expect_length(cfg, 2L)
   expect_equal(cfg$platforms(), c('plat1', 'plat2'))
-  expect_equal(cfg$ops(), cfg$get('plat1')$keys())
-  expect_equal(cfg$ops('plat2'), cfg$get('plat2')$keys())
+  expect_equal(cfg$params(), cfg$get('plat1')$keys())
+  expect_equal(cfg$params('plat2'), cfg$get('plat2')$keys())
   expect_equal(
-    cfg$ops(TRUE),
+    cfg$params(TRUE),
     union(cfg$get('plat1')$keys(), cfg$get('plat2')$keys())
   )
-  expect_s3_class(cfg$get_ops('plat1'), 'ConfigList')
-  expect_error(cfg$get_ops('platform1'))
+  expect_s3_class(cfg$get_params('plat1'), 'ConfigList')
+  expect_error(cfg$get_params('platform1'))
 })

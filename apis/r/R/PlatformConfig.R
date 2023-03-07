@@ -1,10 +1,10 @@
 #' Platform Configuration
 #'
-#' An R6 mapping type for configuring various \dQuote{options} for multiple
+#' An R6 mapping type for configuring various \dQuote{parameters} for multiple
 #' \dQuote{platforms}, essentially serves a multi-nested map where the inner
 #' map is a \code{\link{ScalarMap}} contained within a \code{\link{ConfigList}}
 #' (middle map):
-#' \code{\{platform: \{op: \{key: value\}\}\}}
+#' \code{\{platform: \{param: \{key: value\}\}\}}
 #'
 #' @export
 #'
@@ -19,97 +19,107 @@ PlatformConfig <- R6::R6Class(
     platforms = function() {
       return(self$keys())
     },
-    #' @param platform The \dQuote{platform} to pull option names (middle keys)
-    #' for; pass \code{TRUE} to return all possible option names
+    #' @param platform The \dQuote{platform} to pull parameter names
+    #' (middle keys)
+    #' for; pass \code{TRUE} to return all possible parameter names
     #'
-    #' @return The option names (middle keys) for \code{platform}
+    #' @return The parameter names (middle keys) for \code{platform}
     #'
-    ops = function(platform = NULL) {
+    params = function(platform = NULL) {
+      stopifnot(
+        "'platform' must be a scalar character or logical value" = is.null(platform) ||
+          is_scalar_character(platform) ||
+          is_scalar_logical(platform)
+      )
       platform <- platform %||% self$platforms()[1L]
       if (isTRUE(x = platform)) {
-        ops <- Reduce(
+        params <- Reduce(
           f = union,
           x = lapply(
             X = self$platforms(),
             FUN = \(p) private$.data[[p]]$keys()
           )
         )
-        return(ops)
+        return(params)
       }
-      platform <- platform[1L]
       platform <- match.arg(arg = platform, choices = self$platforms())
       return(super$get(key = platform)$keys())
     },
     #' @param platform The name of the \dQuote{platform} (outer key) to fetch
-    #' @param op The name of the \dQuote{option} of \code{platform} to fetch;
-    #' if \code{NULL}, returns the \link[tiledbsoma:ConfigList]{configuration}
-    #' for \code{platform}
-    #' @param key The \dQuote{key} (inner key) for \code{op} in
-    #' \code{platform} to fetch; if \code{NULL} and \code{op} is passed,
-    #' returns the \link[tiledbsoma:ScalarMap]{map} for \code{op}
+    #' @param param The name of the \dQuote{paramters} of \code{platform}
+    #' to fetch; if \code{NULL}, returns the
+    #' \link[tiledbsoma:ConfigList]{configuration} for \code{platform}
+    #' @param key The \dQuote{key} (inner key) for \code{param} in
+    #' \code{platform} to fetch; if \code{NULL} and \code{param} is passed,
+    #' returns the \link[tiledbsoma:ScalarMap]{map} for \code{param}
     #' in \code{platform}
     #' @templateVar key key
     #' @templateVar default null
     #' @template param-default
     #'
-    #' @return The value of \code{key} for \code{op} in \code{platform} in the
+    #' @return The value of \code{key} for \code{param} in \code{platform} in the
     #' map, or \code{default} if \code{key} is not found
     #'
     get = function(
       platform,
-      op = NULL,
+      param = NULL,
       key = NULL,
-      default = rlang::missing_arg()
+      default = quote(expr = )
     ) {
       if (!length(x = self)) {
         warning("No platforms configured", call. = FALSE)
         return(NULL)
       }
-      platform <- platform[1L] %||% self$platforms()[1L]
-      platform <- tryCatch(
-        expr = match.arg(arg = platform, choices = self$platforms()),
-        error = \(...) NULL
+      stopifnot(
+        "'platform' must be a single character value" = is.null(platform) ||
+          is_scalar_character(platform)
       )
-      if (is.null(x = platform)) {
-        if (rlang::is_missing(x = default)) {
+      platform <- platform %||% self$platforms()[1L]
+      pmap <- super$get(key = platform, default = NULL)
+      if (is.null(x = pmap)) {
+        if (missing(x = default) || identical(x = default, y = quote(expr = ))) {
           private$.key_error(key = platform)
         }
         return(default)
       }
-      pmap <- super$get(key = platform)
-      if (is.null(x = op)) {
+      if (is.null(x = param)) {
         return(pmap)
       }
-      return(pmap$get(op = op, key = key, default = default))
+      return(pmap$get(param = param, key = key, default = default))
     },
     #' @param platform The name of the \dQuote{platform} (outer key) to fetch
     #'
     #' @return The \code{\link{ConfigList}} for \code{platform}
     #'
-    get_ops = function(platform) {
-      platform <- platform[1L] %||% self$platforms()[1L]
+    get_params = function(platform) {
+      stopifnot(
+        "'platform' must be a single character value" = is.null(platform) ||
+          is_scalar_character(platform)
+      )
+      platform <- platform %||% self$platforms()[1L]
       platform <- match.arg(arg = platform, choices = self$platforms())
       return(super$get(key = platform))
     },
     #' @param platform The name of the \dQuote{platform} (outer key) to set
-    #' @param op Name of the \dQuote{option} (middle key) in \code{platform}
-    #' to set
+    #' @param param Name of the \dQuote{parameter} (middle key) in
+    #' \code{platform} to set
     #' @param key Inner key to set
     #' @param value Value to add for \code{key}, or \code{NULL} to remove the
-    #' entry for \code{key}; optionally provide only \code{platfomr}, \code{op},
-    #' and \code{value} as a \code{\link{ScalarMap}} to update \code{op} for
-    #' \code{platform} with the keys and values from \code{value}
+    #' entry for \code{key}; optionally provide only \code{platfomr},
+    #' \code{param}, and \code{value} as a \code{\link{ScalarMap}} to
+    #' update  \code{param} for \code{platform} with the keys and values
+    #' from \code{value}
     #'
     #' @return \[chainable\] Invisibly returns \code{self} with \code{value}
-    #' added for \code{key} in \code{op} for \code{platform}
+    #' added for \code{key} in \code{param} for \code{platform}
     #'
-    set = function(platform, op, key, value) {
+    set = function(platform, param, key, value) {
       stopifnot(
         "'platform' must be a single character value" = is_scalar_character(platform),
-        "'op' must be a single character value" = is_scalar_character(op)
+        "'param' must be a single character value" = is_scalar_character(param)
       )
       pmap <- super$get(key = platform, default = ConfigList$new())
-      pmap$set(op = op, key = key, value = value)
+      pmap$set(param = param, key = key, value = value)
       super$set(key = platform, value = pmap)
       return(invisible(x = self))
     },

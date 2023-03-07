@@ -56,21 +56,18 @@ MappingBase <- R6::R6Class(
     #' @return The value of \code{key} in the map, or \code{default} if
     #' \code{key} is not found
     #'
-    get = function(key, default = rlang::missing_arg()) {
+    get = function(key, default = quote(expr = )) {
       stopifnot(
         "'key' must be a single character value" = is_scalar_character(key)
       )
-      key <- tryCatch(
-        expr = match.arg(arg = key, choices = self$keys()),
-        error = \(...) NULL
-      )
-      if (is.null(x = key)) {
-        if (rlang::is_missing(x = default)) {
+      value <- private$.data[[key]]
+      if (is.null(x = value)) {
+        if (missing(x = default) || identical(x = default, y = quote(expr = ))) {
           private$.key_error(key = key)
         }
         return(default)
       }
-      return(private$.data[[key]])
+      return(value)
     },
     #' @param key Key to set
     #' @templateVar key key
@@ -164,7 +161,7 @@ MappingBase <- R6::R6Class(
   private = list(
     .data = list(),
     .key_error = function(key) {
-      stop("Cannot find ", sQuote(x = key[1L]), " in this map", call. = FALSE)
+      stop("No key named ", sQuote(x = key), " found", call. = FALSE)
     }
   )
 )

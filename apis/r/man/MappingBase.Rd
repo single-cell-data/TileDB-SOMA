@@ -108,7 +108,7 @@ The keys of the map
 }
 
 \subsection{Returns}{
-The values of the map
+A `list` containing the map values
 }
 }
 \if{html}{\out{<hr>}}
@@ -128,7 +128,7 @@ Return the items of the map as a list
 \if{latex}{\out{\hypertarget{method-MappingBase-get}{}}}
 \subsection{Method \code{get()}}{
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{MappingBase$get(key, default = rlang::missing_arg())}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{MappingBase$get(key, default = quote(expr = ))}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
