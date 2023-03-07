@@ -9,8 +9,8 @@ is_empty <- function(x) {
 
 #' Check if a vector is named
 #' @noRd
-is_named <- function(x) {
-  !is.null(names(x))
+is_named <- function(x, allow_empty = TRUE) {
+  !is.null(names(x)) && ifelse(allow_empty, TRUE, all(nzchar(x = names(x = x))))
 }
 
 is_named_list <- function(x) {
