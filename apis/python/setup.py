@@ -196,15 +196,17 @@ setuptools.setup(
     ext_modules=[setuptools.Extension("tiledbsoma.libtiledbsoma", sources=[])],
     zip_safe=False,
     install_requires=[
+    # CAUTION: the old pip solver (<=2020) is sensitive to the order of this
+    # requirements list. See TileDB-SOMA issue #1051 for example.
+        "scanpy>=1.9.2",
         "anndata",
+        "somacore==1.0.0rc4",
+        "tiledb==0.20.*",
+        "pyarrow>=9.0.0",
         "attrs>=22.2",
         "numpy",
         "pandas",
-        "pyarrow>=9.0.0",
-        "scanpy>=1.9.2",
         "scipy",
-        "somacore==1.0.0rc4",
-        "tiledb==0.20.*",
         "typing-extensions",  # Note "-" even though `import typing_extensions`
     ],
     extras_require={
