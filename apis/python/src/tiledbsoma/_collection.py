@@ -63,8 +63,7 @@ class CollectionBase(
     TileDBObject[_tdb_handles.GroupWrapper],
     somacore.collection.BaseCollection[CollectionElementType],
 ):
-    """
-    Contains a key-value mapping where the keys are string names and the values
+    """Contains a key-value mapping where the keys are string names and the values
     are any SOMA-defined foundational or composed type, including ``Collection``,
     ``DataFrame``, ``DenseNDArray``, ``SparseNDArray`` or ``Experiment``.
     """
@@ -105,7 +104,7 @@ class CollectionBase(
 
         Raises:
             TileDBError:
-                if unable to create the underlying object.
+                If unable to create the underlying object.
         """
         context = context or SOMATileDBContext()
         tiledb.group_create(uri=uri, ctx=context.tiledb_ctx)

@@ -1,3 +1,11 @@
+# Copyright (c) 2021-2023 The Chan Zuckerberg Initiative Foundation
+# Copyright (c) 2021-2023 TileDB, Inc.
+#
+# Licensed under the MIT License.
+
+"""
+Implementation of a SOMA DataFrame
+"""
 from typing import Any, Mapping, Optional, Sequence, Tuple, Type, Union, cast
 
 import numpy as np
@@ -21,8 +29,7 @@ _UNBATCHED = options.BatchSize()
 
 
 class DataFrame(TileDBArray, somacore.DataFrame):
-    """
-    ``DataFrame`` is a multi-column table with a user-defined schema. The
+    """``DataFrame`` is a multi-column table with a user-defined schema. The
     schema is expressed as an Arrow Schema, and defines the column names
     and value types.
 
@@ -32,84 +39,83 @@ class DataFrame(TileDBArray, somacore.DataFrame):
     cases (e.g., as part of an ``Experiment``), acts as a join key for other
     objects, such as ``SparseNDArray``.
 
-    [lifecycle: experimental]
+    Lifecycle:
+        Experimental.
 
-    Example:
-    ---------
-    >>> import pyarrow as pa
-    >>> import tiledbsoma
-    >>> schema = pa.schema(
-    ...     [
-    ...         ("soma_joinid", pa.int64()),
-    ...         ("A", pa.float32()),
-    ...         ("B", pa.large_string()),
-    ...     ]
-    ... )
-    >>> with tiledbsoma.DataFrame.create("./test_dataframe", schema=schema) as df:
-    ...     data = pa.Table.from_pydict(
-    ...         {
-    ...             "soma_joinid": [0, 1, 2],
-    ...             "A": [1.0, 2.7182, 3.1214],
-    ...             "B": ["one", "e", "pi"],
-    ...         }
-    ...     )
-    ...     df.write(data)
-    >>> with tiledbsoma.DataFrame.open("./test_dataframe") as df:
-    ...     print(df.schema)
-    ...     print("---")
-    ...     print(df.read().concat().to_pandas())
-    ...
-    soma_joinid: int64
-    A: float
-    B: large_string
-    ---
-       soma_joinid       A    B
-    0            0  1.0000  one
-    1            1  2.7182    e
-    2            2  3.1214   pi
+    Examples:
+        >>> import pyarrow as pa
+        >>> import tiledbsoma
+        >>> schema = pa.schema(
+        ...     [
+        ...         ("soma_joinid", pa.int64()),
+        ...         ("A", pa.float32()),
+        ...         ("B", pa.large_string()),
+        ...     ]
+        ... )
+        >>> with tiledbsoma.DataFrame.create("./test_dataframe", schema=schema) as df:
+        ...     data = pa.Table.from_pydict(
+        ...         {
+        ...             "soma_joinid": [0, 1, 2],
+        ...             "A": [1.0, 2.7182, 3.1214],
+        ...             "B": ["one", "e", "pi"],
+        ...         }
+        ...     )
+        ...     df.write(data)
+        >>> with tiledbsoma.DataFrame.open("./test_dataframe") as df:
+        ...     print(df.schema)
+        ...     print("---")
+        ...     print(df.read().concat().to_pandas())
+        ...
+        soma_joinid: int64
+        A: float
+        B: large_string
+        ---
+        soma_joinid       A    B
+        0            0  1.0000  one
+        1            1  2.7182    e
+        2            2  3.1214   pi
 
-    Second example:
-    ---------------
-    >>> import pyarrow as pa
-    >>> import tiledbsoma
-    >>> schema = pa.schema(
-    ...    [
-    ...        ("soma_joinid", pa.int64()),
-    ...        ("A", pa.float32()),
-    ...        ("B", pa.large_string()),
-    ...    ]
-    ...)
-    >>> with tiledbsoma.DataFrame.create(
-    ...     "./test_dataframe_2",
-    ...     schema=schema,
-    ...     index_column_names=["A", "B"],
-    ...     domain=[(0.0, 10.0), None],
-    ... ) as df:
-    ...     data = pa.Table.from_pydict(
-    ...         {
-    ...             "soma_joinid": [0, 1, 2],
-    ...             "A": [1.0, 2.7182, 3.1214],
-    ...             "B": ["one", "e", "pi"],
-    ...         }
-    ...     )
-    ...     df.write(data)
-    >>> with tiledbsoma.DataFrame.open("./test_dataframe_2") as df:
-    ...     print(df.schema)
-    ...     print("---")
-    ...     print(df.read().concat().to_pandas())
-    soma_joinid: int64
-    ---
-            A    B  soma_joinid
-    0  1.0000  one            0
-    1  2.7182    e            1
-    2  3.1214   pi            2
 
-    Here the index-column names are specified. The domain is entirely optional: if
-    it's omitted, defaults will be applied yielding the largest possible domain for
-    each index column's datatype.  If the domain is specified, it must be a
-    tuple/list of equal length to ``index_column_names``. It can be ``None`` in
-    a given slot, meaning use the largest possible domain. For string/bytes types,
-    it must be ``None``.
+        >>> import pyarrow as pa
+        >>> import tiledbsoma
+        >>> schema = pa.schema(
+        ...    [
+        ...        ("soma_joinid", pa.int64()),
+        ...        ("A", pa.float32()),
+        ...        ("B", pa.large_string()),
+        ...    ]
+        ...)
+        >>> with tiledbsoma.DataFrame.create(
+        ...     "./test_dataframe_2",
+        ...     schema=schema,
+        ...     index_column_names=["A", "B"],
+        ...     domain=[(0.0, 10.0), None],
+        ... ) as df:
+        ...     data = pa.Table.from_pydict(
+        ...         {
+        ...             "soma_joinid": [0, 1, 2],
+        ...             "A": [1.0, 2.7182, 3.1214],
+        ...             "B": ["one", "e", "pi"],
+        ...         }
+        ...     )
+        ...     df.write(data)
+        >>> with tiledbsoma.DataFrame.open("./test_dataframe_2") as df:
+        ...     print(df.schema)
+        ...     print("---")
+        ...     print(df.read().concat().to_pandas())
+        soma_joinid: int64
+        ---
+                A    B  soma_joinid
+        0  1.0000  one            0
+        1  2.7182    e            1
+        2  3.1214   pi            2
+
+        Here the index-column names are specified. The domain is entirely optional: if
+        it's omitted, defaults will be applied yielding the largest possible domain for
+        each index column's datatype.  If the domain is specified, it must be a
+        tuple/list of equal length to ``index_column_names``. It can be ``None`` in
+        a given slot, meaning use the largest possible domain. For string/bytes types,
+        it must be ``None``.
     """
 
     __slots__ = ()
@@ -126,46 +132,56 @@ class DataFrame(TileDBArray, somacore.DataFrame):
         context: Optional[SOMATileDBContext] = None,
         tiledb_timestamp: Optional[OpenTimestamp] = None,
     ) -> "DataFrame":
-        """
-        Creates the data structure on disk/S3/cloud.
+        """Creates the data structure on disk/S3/cloud.
 
-        [lifecycle: experimental]
+        Args:
+            schema:
+                Arrow schema defining the per-column schema. This schema
+                must define all columns, including columns to be named as index columns.
+                If the schema includes types unsupported by the SOMA implementation,
+                an error will be raised.
+            index_column_names:
+                A list of column names to use as user-defined
+                index columns (e.g., ``['cell_type', 'tissue_type']``).
+                All named columns must exist in the schema, and at least one
+                index column name is required.
+            domain:
+                An optional sequence of tuples specifying the domain of each
+                index column. Each tuple should be a pair consisting of the minimum and
+                maximum values storable in the index column. For example, if there is a
+                single int64-valued index column, then ``domain`` might be ``[(100,
+                200)]`` to indicate that values between 100 and 200, inclusive, can be
+                stored in that column.  If provided, this sequence must have the same
+                length as `index_column_names`, and the index-column domain will be as
+                specified.  If omitted entirely, or if ``None`` in a given dimension,
+                the corresponding index-column domain will use the minimum and maximum
+                possible values for the column's datatype.  This makes a
+                ``SOMADataFrame`` growable.
+            platform_config:
+                Platform-specific options used to create this
+                DataFrame, provided via ``{"tiledb": {"create": ...}}`` nested keys.
+            tiledb_timestamp:
+                If specified, overrides the default timestamp
+                used to open this object. If unset, uses the timestamp provided by
+                the context.
 
-        :param schema: Arrow schema defining the per-column schema. This schema
-            must define all columns, including columns to be named as index columns.
-            If the schema includes types unsupported by the SOMA implementation,
-            an error will be raised.
+        Returns:
+            The DataFrame.
 
-        :param index_column_names: A list of column names to use as user-defined
-            index columns (e.g., ``['cell_type', 'tissue_type']``).
-            All named columns must exist in the schema, and at least one
-            index column name is required.
+        Raises:
+            TypeError:
+                If the ``schema`` parameter specifies an unsupported type,
+                or if ``index_column_names`` specifies a non-indexable column.
+            ValueError:
+                If the ``index_column_names`` is malformed or specifies
+                an undefined column name.
+            ValueError:
+                If the ``schema`` specifies illegal column names.
+            TileDBError:
+                If unable to create the underlying object.
 
-        :param domain: An optional sequence of tuples specifying the domain of each
-            index column. Each tuple should be a pair consisting of the minimum and
-            maximum values storable in the index column. For example, if there is a
-            single int64-valued index column, then ``domain`` might be ``[(100,
-            200)]`` to indicate that values between 100 and 200, inclusive, can be
-            stored in that column.  If provided, this sequence must have the same
-            length as `index_column_names`, and the index-column domain will be as
-            specified.  If omitted entirely, or if ``None`` in a given dimension,
-            the corresponding index-column domain will use the minimum and maximum
-            possible values for the column's datatype.  This makes a
-            ``SOMADataFrame`` growable.
-
-        :param platform_config: Platform-specific options used to create this
-            DataFrame, provided via ``{"tiledb": {"create": ...}}`` nested keys.
-
-        :param tiledb_timestamp: If specified, overrides the default timestamp
-            used to open this object. If unset, uses the timestamp provided by
-            the context.
-
-        :raises TypeError: if the ``schema`` parameter specifies an unsupported type,
-            or if ``index_column_names`` specifies a non-indexable column.
-        :raises ValueError: if the ``index_column_names`` is malformed or specifies
-            an undefined column name.
-        :raises ValueError: if the ``schema`` specifies illegal column names.
-        :raises TileDBError: if unable to create the underlying object.
+        Lifecycle:
+            Experimental.
         """
         context = context or SOMATileDBContext()
         schema = _canonicalize_schema(schema, index_column_names)
@@ -183,40 +199,44 @@ class DataFrame(TileDBArray, somacore.DataFrame):
         )
 
     def keys(self) -> Tuple[str, ...]:
-        """
-        Returns the names of the columns when read back as a dataframe.
+        """Returns the names of the columns when read back as a dataframe.
 
-        [lifecycle: experimental]
+        Lifecycle:
+            Experimental.
         """
         return self._tiledb_array_keys()
 
     @property
     def index_column_names(self) -> Tuple[str, ...]:
-        """
-        Return index (dimension) column names [lifecycle: experimental].
+        """Returns index (dimension) column names.
+
+        Lifecycle:
+            Experimental.
         """
         return self._tiledb_dim_names()
 
     @property
     def domain(self) -> Tuple[Tuple[Any, Any], ...]:
-        """
-        Returns a tuple of minimum and maximum values, inclusive, storable
-        on each index column of the dataframe.  [lifecycle: experimental].
+        """Returns a tuple of minimum and maximum values, inclusive, storable
+        on each index column of the dataframe.
+
+        Lifecycle:
+            Experimental.
         """
         return self._tiledb_domain()
 
     @property
     def count(self) -> int:
-        """
-        Return the number of rows in the dataframe. Same as `len(df)` [lifecycle: experimental].
+        """Returns the number of rows in the dataframe. Same as `len(df)`.
+
+        Lifecycle:
+            Experimental.
         """
         self._check_open_read()
         return cast(int, self._soma_reader().nnz())
 
     def __len__(self) -> int:
-        """
-        Return the number of rows in the dataframe. Same as `df.count`.
-        """
+        """Returns the number of rows in the dataframe. Same as `df.count`."""
         return self.count
 
     def read(
@@ -230,43 +250,55 @@ class DataFrame(TileDBArray, somacore.DataFrame):
         partitions: Optional[options.ReadPartitions] = None,
         platform_config: Optional[options.PlatformConfig] = None,
     ) -> TableReadIter:
-        """
-        Read a user-defined subset of data, addressed by the dataframe indexing columns,
+        """Reads a user-defined subset of data, addressed by the dataframe indexing columns,
         optionally filtered, and return results as one or more Arrow tables.
 
-        [lifecycle: experimental]
+        Args:
+            coords:
+                for each index dimension, which rows to read.
+                Defaults to ``None``, meaning no constraint -- all IDs.
+            column_names:
+                the named columns to read and return.
+                Defaults to ``None``, meaning no constraint -- all column names.
+            result_order:
+                order of read results.
+                This can be one of 'row-major', 'col-major', or 'auto'.
+            value_filter:
+                an optional [value filter] to apply to the results.
+                Defaults to no filter.
+            partitions:
+                an optional ``ReadPartitions`` hint to indicate
+                how results should be organized.
 
-        :param coords: for each index dimension, which rows to read.
-            Defaults to ``None``, meaning no constraint -- all IDs.
-        :param column_names: the named columns to read and return.
-            Defaults to ``None``, meaning no constraint -- all column names.
-        :param partitions: an optional ``ReadPartitions`` hint to indicate
-            how results should be organized.
-        :param result_order: order of read results.
-            This can be one of 'row-major', 'col-major', or 'auto'.
-        :param value_filter: an optional [value filter] to apply to the results.
-            Defaults to no filter.
+        Returns:
+            A ``TableReadIter`` that can be used to iterate through the result set.
 
-        :raises SOMAError: if ``value_filter`` can not be parsed.
-        :raises ValueError: if ``coords`` are malformed or do not index this DataFrame.
-        :raises SOMAError: if the object is not open for reading.
+        Raises:
+            SOMAError:
+                If ``value_filter`` can not be parsed.
+            ValueError:
+                If ``coords`` are malformed or do not index this DataFrame.
+            SOMAError:
+                If the object is not open for reading.
 
-        **Indexing**: the ``coords`` parameter will support, per dimension: a list of values of the type of the indexed column.
+        Notes:
+            **Indexing**: the ``coords`` parameter will support, per dimension: a list of values of the type of the indexed column.
 
-        Acceptable ways to index
-        ------------------------
+            Acceptable ways to index:
+                * A sequence of coordinates is accepted, one per dimension.
+                * Sequence length must be <= number of dimensions.
+                * If the sequence contains missing coordinates (length less than number of dimensions),
+                then `slice(None)` -- i.e. no constraint -- is assumed for the missing dimensions.
+                * Per-dimension, explicitly specified coordinates can be one of: None, a value, a
+                list/ndarray/paarray/etc of values, a slice, etc.
+                * Slices are doubly inclusive: slice(2,4) means [2,3,4] not [2,3].
+                Slice steps are not supported.
+                Slices can be `slice(None)`, meaning select all in that dimension, but may not be half-specified:
+                `slice(2,None)` and `slice(None,4)` are both unsupported.
+                * Negative indexing is unsupported.
 
-        * A sequence of coordinates is accepted, one per dimension.
-        * Sequence length must be <= number of dimensions.
-        * If the sequence contains missing coordinates (length less than number of dimensions),
-          then `slice(None)` -- i.e. no constraint -- is assumed for the missing dimensions.
-        * Per-dimension, explicitly specified coordinates can be one of: None, a value, a
-          list/ndarray/paarray/etc of values, a slice, etc.
-        * Slices are doubly inclusive: slice(2,4) means [2,3,4] not [2,3].
-          Slice steps are not supported.
-          Slices can be `slice(None)`, meaning select all in that dimension, but may not be half-specified:
-          `slice(2,None)` and `slice(None,4)` are both unsupported.
-        * Negative indexing is unsupported.
+        Lifecycle:
+            Experimental.
         """
         del batch_size, platform_config  # Currently unused.
         _util.check_unpartitioned(partitions)
@@ -295,20 +327,26 @@ class DataFrame(TileDBArray, somacore.DataFrame):
     def write(
         self, values: pa.Table, platform_config: Optional[Mapping[str, Any]] = None
     ) -> Self:
-        """
-        Write an Arrow table to the persistent object. As duplicate index values
+        """Writes an Arrow table to the persistent object. As duplicate index values
         are not allowed, index values already present in the object are overwritten
         and new index values are added.
 
-        [lifecycle: experimental]
+        Args:
+            values:
+                An Arrow table containing all columns, including
+                the index columns. The schema for the values must match
+                the schema for the ``DataFrame``.
 
-        :param values: An Arrow table containing all columns, including
-            the index columns. The schema for the values must match
-            the schema for the ``DataFrame``.
+        Raises:
+            TypeError:
+                If the ``values`` parameter is an unsupported type.
+            ValueError:
+                If the ``values`` parameter is an empty table.
+            SOMAError:
+                If the object is not open for writing.
 
-        :raises TypeError: if the ``values`` parameter is an unsupported type.
-        :raises ValueError: if the ``values`` parameter is an empty table.
-        :raises SOMAError: if the object is not open for writing.
+        Lifecycle:
+            Experimental.
         """
         _util.check_type("values", values, (pa.Table,))
 
@@ -531,7 +569,7 @@ class DataFrame(TileDBArray, somacore.DataFrame):
 def _canonicalize_schema(
     schema: pa.Schema, index_column_names: Sequence[str]
 ) -> pa.Schema:
-    """Turn a Arrow schema into the canonical version and check for errors.
+    """Turns a Arrow schema into the canonical version and check for errors.
 
     Returns a schema, which may be modified by the addition of required columns
     (e.g. ``soma_joinid``).
@@ -684,8 +722,7 @@ def _fill_out_slot_domain(
     pa_type: pa.DataType,
     dtype: Any,
 ) -> Tuple[Any, Any]:
-    """
-    Helper function for _build_tiledb_schema. Given a user-specified domain for a
+    """Helper function for _build_tiledb_schema. Given a user-specified domain for a
     dimension slot -- which may be ``None``, or a two-tuple of which either element
     may be ``None`` -- return either what the user specified (if adequate) or
     sensible type-inferred values appropriate to the datatype.
@@ -755,8 +792,7 @@ def _find_extent_for_domain(
     dtype: Any,
     slot_domain: Tuple[Any, Any],
 ) -> Any:
-    """
-    Helper function for _build_tiledb_schema. Returns a tile extent that is
+    """Helper function for _build_tiledb_schema. Returns a tile extent that is
     small enough for the index-column type, and that also fits within the
     user-specified slot domain (if any).
     """
