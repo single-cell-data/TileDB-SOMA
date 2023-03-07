@@ -48,7 +48,8 @@ from ..options._tiledb_create_options import TileDBCreateOptions
 from . import conversions
 
 SparseMatrix = Union[sp.csr_matrix, sp.csc_matrix, SparseDataset]
-Matrix = Union[NPNDArray, SparseMatrix]
+DenseMatrix = Union[NPNDArray, h5py.Dataset]
+Matrix = Union[DenseMatrix, SparseMatrix]
 _NDArr = TypeVar("_NDArr", bound=NDArray)
 _TDBO = TypeVar("_TDBO", bound=TileDBObject[RawHandle])
 
@@ -63,6 +64,7 @@ def from_h5ad(
     platform_config: Optional[PlatformConfig] = None,
     ingest_mode: IngestMode = "write",
     use_relative_uri: Optional[bool] = None,
+    sparsify_X: bool = True,
 ) -> str:
     """
     Reads an ``.h5ad`` file and writes to a TileDB group structure.
@@ -104,6 +106,7 @@ def from_h5ad(
         platform_config=platform_config,
         ingest_mode=ingest_mode,
         use_relative_uri=use_relative_uri,
+        sparsify_X=sparsify_X,
     )
 
     logging.log_io(
@@ -122,6 +125,7 @@ def from_anndata(
     platform_config: Optional[PlatformConfig] = None,
     ingest_mode: IngestMode = "write",
     use_relative_uri: Optional[bool] = None,
+    sparsify_X: bool = True,
 ) -> str:
     """
     Top-level writer method for creating a TileDB group for a ``Experiment`` object.
@@ -220,7 +224,10 @@ def from_anndata(
                 # Using the latter allows us to ingest larger .h5ad files without OOMing.
                 cls = (
                     DenseNDArray
-                    if isinstance(anndata.X, (np.ndarray, h5py.Dataset))
+                    if (
+                        not sparsify_X
+                        and isinstance(anndata.X, (np.ndarray, h5py.Dataset))
+                    )
                     else SparseNDArray
                 )
                 with create_from_matrix(
@@ -874,10 +881,12 @@ def _write_matrix_to_sparseNDArray(
         t1 = time.time()
 
         # Chunk size on the stride axis
-        if isinstance(matrix, np.ndarray):
+        if isinstance(matrix, (np.ndarray, h5py.Dataset)):
             chunk_size = int(math.ceil(goal_chunk_nnz / matrix.shape[stride_axis]))
         else:
-            chunk_size = _find_sparse_chunk_size(matrix, i, stride_axis, goal_chunk_nnz)
+            chunk_size = _find_sparse_chunk_size(  # type: ignore [unreachable]
+                matrix, i, stride_axis, goal_chunk_nnz
+            )
 
         i2 = i + chunk_size
 
