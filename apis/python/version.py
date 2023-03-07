@@ -5,7 +5,7 @@ NOTICE (mlin 2023-03-06): this script derives the Python package version number
 based on the git history/tags. It also stores that info in a RELEASE-VERSION
 file for use once source code has been distributed separately from the git repo
 (e.g. in an sdist tarball). The script was originally obtained from:
-  https://gist.github.c!om/mina86/8782771
+  https://gist.github.com/mina86/8782771
 
 It'd be preferable to use setuptools_scm instead of this ad hoc script.
 Unfortunately, as of this writing setuptools_scm has issues with our repo
