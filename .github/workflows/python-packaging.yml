@@ -97,10 +97,11 @@ jobs:
       run: |
         set -x
         ls -lR
-        whl=$(find . -name 'tiledbsoma-*-cp38-cp38-*${{ matrix.platform }}*_${{ matrix.arch }}.whl')
-        unzip -l $whl
+        WHL=$(find . -name 'tiledbsoma-*-cp38-cp38-*${{ matrix.platform }}*_${{ matrix.arch }}.whl')
+        unzip -l $WHL
         pip install wheel
-        pip install $whl
+        pip install $WHL
+        echo "WHL=$WHL" >> $GITHUB_ENV
     - name: Smoke test ${{ matrix.os }}
       run: python -c 'import tiledbsoma; print(tiledbsoma.libtiledbsoma.__file__)'
     - name: Smoke test in docker
@@ -110,7 +111,7 @@ jobs:
       run: |
         docker run -v $(pwd):/mnt ubuntu:20.04 bash -ec "
           apt-get -qq update && apt-get install -y python3-pip python3-wheel
-          pip3 install /mnt/$whl
+          pip3 install /mnt/$WHL
           python3 -c 'import tiledbsoma; print(tiledbsoma.libtiledbsoma.__file__)'"
 
   # TODO: publlish to TestPyPI
