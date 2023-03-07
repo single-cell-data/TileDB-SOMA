@@ -33,7 +33,7 @@ $ install.packages('tiledbsoma', repos = c('https://tiledb-inc.r-universe.dev', 
 * Optionally, update the `libtiledbsoma` sources: `./copy_source.sh` (which updates the includes tarball of `libtiledbsoma`).
 * Build the R package source tarball from the repository sources: `R CMD build .` (which will also build `libtiledbsoma` from source; other dependencies are required as described in the previous section)
 * Check and test the package from the tarball: `R CMD check --no-vignettes --no-manual tiledbsoma_*.tar.gz`
-  * For quicker iteration, after `Rscript -e 'install.packages("pkgbuild")'`, run `Rscript -e 'testthat::test_local(".")'`
+  * For quicker iteration, after `Rscript -e 'install.packages("pkgbuild")'`, run `Rscript -e 'testthat::test_local("tests/testthat")'`
 * Install the package from the tarball: `R CMD INSTALL tiledbsoma_*.tar.gz`
 
 Once installed successfully, the package sources can be edited and re-installed.
