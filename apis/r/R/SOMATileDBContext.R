@@ -35,12 +35,6 @@ SOMATileDBContext <- R6::R6Class(
       )
       config['sm.mem.reader.sparse_global_order.ratio_array_data'] <- '0.3'
       # Add the TileDB context
-      # TODO: Reenable this with newer version of tiledb-r
-      # if (!length(x = config)) {
-      #   config <- NA_character_
-      # }
-      # cfg <- tiledb::tiledb_config(config = config)
-      # TODO: replace this when patched version of tiledb-r is released
       cfg <- tiledb::tiledb_config()
       for (opt in names(x = config)) {
         cfg[opt] <- config[opt]

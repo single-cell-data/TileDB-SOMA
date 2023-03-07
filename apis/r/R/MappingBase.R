@@ -81,29 +81,10 @@ MappingBase <- R6::R6Class(
         "'key' must be a single character value" = is_scalar_character(key)
       )
       private$.data[[key]] <- value
-      # TODO: figure out how to get x$`key` to act as active binding
-      # if (is.null(x = value)) {
-      #   self$.__enclos_env__$.__active__[[key]] <- NULL
-      # } else {
-      #   f <- paste(
-      #     'function(value) {',
-      #     '  if (missing(x = value)) {',
-      #     paste0('    return(private$.data[[', sQuote(x = key, q = FALSE), ']])'),
-      #     '  }',
-      #     paste0('  private$.data[[', sQuote(x = key, q = FALSE), ']] <- value'),
-      #     '  return(invisible(x = NULL))',
-      #     '}',
-      #     sep = '\n'
-      #   )
-      #   f <- eval(expr = str2expression(text = f), envir = self$.__enclos_env__)
-      #   makeActiveBinding(sym = key, fun = f, env = self$.__enclos_env__)
-      #   # self$.__enclos_env__$.__active__[[key]] <- f
-      # }
       private$.data <- Filter(f = length, x = private$.data)
       if (!self$length()) {
         private$.data <- unname(obj = private$.data)
       }
-      # self <- self$clone(deep = TRUE)
       return(invisible(x = self))
     },
     #' @param ... Named arguments to add to \code{self}
