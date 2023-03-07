@@ -178,6 +178,10 @@ TEST_CASE("SOMAReader: nnz") {
 
         uint64_t nnz = sr->nnz();
         REQUIRE(nnz == expected_nnz);
+
+        std::vector<uint64_t> shape = sr->shape();
+        REQUIRE(shape.size() == 1);
+        REQUIRE(shape[0] == (uint64_t)std::numeric_limits<int64_t>::max() + 1);
     }
 }
 
