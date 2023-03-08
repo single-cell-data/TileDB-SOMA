@@ -105,8 +105,8 @@ check_arrow_array_tag <- function(xp) {
 #' summary(rl)
 #' }
 #' @export
-sr_setup <- function(ctx, uri, colnames = NULL, qc = NULL, dim_points = NULL, dim_ranges = NULL, config = NULL, loglevel = "auto") {
-    .Call(`_tiledbsoma_sr_setup`, ctx, uri, colnames, qc, dim_points, dim_ranges, config, loglevel)
+sr_setup <- function(uri, config, colnames = NULL, qc = NULL, dim_points = NULL, dim_ranges = NULL, loglevel = "auto") {
+    .Call(`_tiledbsoma_sr_setup`, uri, config, colnames, qc, dim_points, dim_ranges, loglevel)
 }
 
 #' @rdname sr_setup
@@ -126,7 +126,7 @@ sr_next <- function(sr) {
 #' The functions `tiledbsoma_stats_enable`, `tiledbsoma_stats_disable`, `tiledbsoma_stats_reset`
 #' and `tiledbsoma_stats_dump` expose the TileDB Core functionality for performance measurements
 #' and statistics.  The first three just turn on, off or reset, the fourth returns a JSON string.
-#' For convenience the function `tiledbsoma_stats_show` displays the information on the console
+#' For convenience the function `tiledbsoma_stats_show` displays the information on the console.
 #'
 #' @export
 tiledbsoma_stats_enable <- function() {
@@ -149,5 +149,12 @@ tiledbsoma_stats_reset <- function() {
 #' @export
 tiledbsoma_stats_dump <- function() {
     .Call(`_tiledbsoma_tiledbsoma_stats_dump`)
+}
+
+
+#' @rdname tiledbsoma_embedded_version
+#' @export
+tiledbsoma_embedded_version <- function() {
+    .Call(`_tiledbsoma_tiledbsoma_embedded_version`)
 }
 

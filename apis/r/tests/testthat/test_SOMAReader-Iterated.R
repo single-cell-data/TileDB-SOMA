@@ -15,7 +15,7 @@ test_that("Iterated Interface from SOMAReader", {
     expect_true(dir.exists(uri))
 
     ctx <- tiledb_ctx()
-    sr <- sr_setup(ctx@ptr, uri)
+    sr <- sr_setup(uri, config=as.character(config(ctx)))
     expect_true(inherits(sr, "externalptr"))
     rl <- data.frame()
     while (!tiledbsoma:::sr_complete(sr)) {
@@ -29,7 +29,7 @@ test_that("Iterated Interface from SOMAReader", {
     expect_equal(nrow(rl), 4848644)
     expect_equal(ncol(rl), 3)
 
-    sr <- sr_setup(ctx@ptr, uri, dim_points=list(soma_dim_0=as.integer64(1)))
+    sr <- sr_setup(uri, config=as.character(config(ctx)), dim_points=list(soma_dim_0=as.integer64(1)))
     expect_true(inherits(sr, "externalptr"))
     rl <- data.frame()
     while (!tiledbsoma:::sr_complete(sr)) {
@@ -43,7 +43,7 @@ test_that("Iterated Interface from SOMAReader", {
     expect_equal(nrow(rl), 1838)
     expect_equal(ncol(rl), 3)
 
-    sr <- sr_setup(ctx@ptr, uri, dim_range=list(soma_dim_1=cbind(as.integer64(1),as.integer64(2))))
+    sr <- sr_setup(uri, config=as.character(config(ctx)), dim_range=list(soma_dim_1=cbind(as.integer64(1),as.integer64(2))))
     expect_true(inherits(sr, "externalptr"))
     rl <- data.frame()
     while (!tiledbsoma:::sr_complete(sr)) {

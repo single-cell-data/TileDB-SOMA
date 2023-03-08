@@ -1,11 +1,11 @@
 /**
- * @file   tiledbsoma
+ * @file   stats.h
  *
  * @section LICENSE
  *
  * The MIT License
  *
- * @copyright Copyright (c) 2022 TileDB, Inc.
+ * @copyright Copyright (c) 2023 TileDB, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -27,20 +27,23 @@
  *
  * @section DESCRIPTION
  *
- * This is the main import header for the C++ API
+ *   This declares the common functions in the API
  */
 
-#ifndef __TILEDBSOMA__
-#define __TILEDBSOMA__
+#ifndef TILEDBSOMA_STATS_H
+#define TILEDBSOMA_STATS_H
 
-#include <tiledbsoma/array_buffers.h>
-#include <tiledbsoma/arrow_adapter.h>
-#include <tiledbsoma/column_buffer.h>
-#include <tiledbsoma/common.h>
-#include <tiledbsoma/logger_public.h>
-#include <tiledbsoma/managed_query.h>
-#include <tiledbsoma/soma_reader.h>
-#include <tiledbsoma/stats.h>
-#include <tiledbsoma/version.h>
+#include <stdexcept>  // for windows: error C2039: 'runtime_error': is not a member of 'std'
 
-#endif
+#include <string>
+
+namespace tiledbsoma::stats {
+
+void enable();
+void disable();
+void reset();
+std::string dump();
+
+};  // namespace tiledbsoma::stats
+
+#endif  // TILEDBSOMA_STATS_H

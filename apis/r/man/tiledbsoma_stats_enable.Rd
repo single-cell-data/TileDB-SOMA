@@ -22,5 +22,5 @@ tiledbsoma_stats_show()
 The functions \code{tiledbsoma_stats_enable}, \code{tiledbsoma_stats_disable}, \code{tiledbsoma_stats_reset}
 and \code{tiledbsoma_stats_dump} expose the TileDB Core functionality for performance measurements
 and statistics.  The first three just turn on, off or reset, the fourth returns a JSON string.
-For convenience the function \code{tiledbsoma_stats_show} displays the information on the console
+For convenience the function \code{tiledbsoma_stats_show} displays the information on the console.
 }

@@ -64,15 +64,13 @@ namespace tdbs = tiledbsoma;
 //' }
 //' @export
 // [[Rcpp::export]]
-Rcpp::XPtr<tdbs::SOMAReader> sr_setup(Rcpp::XPtr<tiledb::Context> ctx,
-                                      const std::string& uri,
+Rcpp::XPtr<tdbs::SOMAReader> sr_setup(const std::string& uri,
+                                      Rcpp::CharacterVector config,
                                       Rcpp::Nullable<Rcpp::CharacterVector> colnames = R_NilValue,
                                       Rcpp::Nullable<Rcpp::XPtr<tiledb::QueryCondition>> qc = R_NilValue,
                                       Rcpp::Nullable<Rcpp::List> dim_points = R_NilValue,
                                       Rcpp::Nullable<Rcpp::List> dim_ranges = R_NilValue,
-                                      Rcpp::Nullable<Rcpp::CharacterVector> config = R_NilValue,
                                       const std::string& loglevel = "auto") {
-    check_xptr_tag<tiledb::Context>(ctx);
     if (loglevel != "auto") {
         spdl::set_level(loglevel);
         tdbs::LOG_SET_LEVEL(loglevel);
@@ -88,22 +86,17 @@ Rcpp::XPtr<tdbs::SOMAReader> sr_setup(Rcpp::XPtr<tiledb::Context> ctx,
     std::shared_ptr<tiledb::Context> ctxptr = nullptr;
 
     std::map<std::string, std::string> platform_config = {};
-    if (!config.isNull()) {
-        Rcpp::CharacterVector confvec(config);
-        Rcpp::CharacterVector namesvec = confvec.attr("names"); // extract names from named R vector
-        size_t n = confvec.length();
-        for (size_t i = 0; i<n; i++) {
-            platform_config.emplace(std::make_pair(std::string(namesvec[i]), std::string(confvec[i])));
-            spdl::debug("[sr_setup] config map adding '{}' = '{}'", std::string(namesvec[i]), std::string(confvec[i]));
-        }
-        tiledb::Config cfg(platform_config);
-        spdl::debug("[sr_setup] creating ctx object with supplied config");
-        ctxptr = std::make_shared<tiledb::Context>(cfg);
-    } else {
-        tiledb::Config cfg{ctx.get()->config()}; // get default config in order to make shared_ptr
-        spdl::debug("[sr_setup] creating ctx object with default config");
-        ctxptr = std::make_shared<tiledb::Context>(cfg);
+
+    Rcpp::CharacterVector confvec(config);
+    Rcpp::CharacterVector namesvec = confvec.attr("names"); // extract names from named R vector
+    size_t n = confvec.length();
+    for (size_t i = 0; i<n; i++) {
+        platform_config.emplace(std::make_pair(std::string(namesvec[i]), std::string(confvec[i])));
+        spdl::debug("[sr_setup] config map adding '{}' = '{}'", std::string(namesvec[i]), std::string(confvec[i]));
     }
+    tiledb::Config cfg(platform_config);
+    spdl::debug("[sr_setup] creating ctx object with supplied config");
+    ctxptr = std::make_shared<tiledb::Context>(cfg);
 
     if (!colnames.isNull()) {
         column_names = Rcpp::as<std::vector<std::string>>(colnames);
