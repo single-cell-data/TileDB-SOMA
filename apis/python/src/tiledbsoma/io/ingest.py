@@ -79,25 +79,21 @@ def from_h5ad(
 ) -> str:
     """Reads an ``.h5ad`` file and writes to a TileDB group structure.
 
-        Returns a URI for the created experiment.
+    Returns a URI for the created experiment.
 
-        The "write" ingest_mode (which is the default) writes all data, creating new layers if the soma already exists.
+    The "write" ingest_mode (which is the default) writes all data, creating new layers if the soma already exists.
 
-        The "resume" ingest_mode skips data writes if data are within dimension ranges of the existing soma.
-        This is useful for continuing after a partial/interrupted previous upload.
+    The "resume" ingest_mode skips data writes if data are within dimension ranges of the existing soma.
+    This is useful for continuing after a partial/interrupted previous upload.
 
-        The "schema_only" ingest_mode creates groups and array schema, without writing array data.
-        This is useful as a prep-step for parallel append-ingest of multiple H5ADs to a single soma.
+    The "schema_only" ingest_mode creates groups and array schema, without writing array data.
+    This is useful as a prep-step for parallel append-ingest of multiple H5ADs to a single soma.
 
-    <<<<<<< HEAD
-        Lifecycle:
-            Experimental.
-    =======
-        The ``X_kind`` parameter allows you to specify how dense X matrices from the H5AD are stored
-        within the SOMA experiment -- whether as dense or as sparse.
+    The ``X_kind`` parameter allows you to specify how dense X matrices from the H5AD are stored
+    within the SOMA experiment -- whether as dense or as sparse.
 
-        [lifecycle: experimental]
-    >>>>>>> main
+    Lifecycle:
+        Experimental.
     """
     if ingest_mode not in INGEST_MODES:
         raise SOMAError(
