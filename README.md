@@ -133,7 +133,7 @@ louvain: [["CD4 T cells","CD4 T cells","CD4 T cells","CD4 T cells","CD4 T cells"
 
 ##### Iterators for larger-than-memory operations
 
-As stated above the `read()` methods of `DataFrame` and `SparseNDArray` return an iterator. The batch size can be specified a in the ... for this is example is set to 100 Bytes:
+As stated above the `read()` methods of `DataFrame` and `SparseNDArray` return an iterator. The batch size can be specified a in the `soma.init_buffer_bytes` config option, for this is example it is set to 100 Bytes:
 
 ```python
 context = tiledbsoma.options.SOMATileDBContext()
