@@ -1,5 +1,9 @@
-"""
-This module exists to avoid what would otherwise be cyclic-module-import issues within
+# Copyright (c) 2021-2023 The Chan Zuckerberg Initiative Foundation
+# Copyright (c) 2021-2023 TileDB, Inc.
+#
+# Licensed under the MIT License.
+
+"""This module exists to avoid what would otherwise be cyclic-module-import issues within
 Collection.
 """
 
@@ -65,27 +69,45 @@ def open(
     context: Optional[SOMATileDBContext] = None,
     tiledb_timestamp: Optional[OpenTimestamp] = None,
 ) -> "_tiledb_object.AnyTileDBObject":
-    """Opens a TileDB SOMA object [lifecycle: experimental].
+    """Opens a TileDB SOMA object.
 
-    :param uri: The URI to open.
-    :param mode: The mode to open in: ``r`` to read (default), ``w`` to write.
-    :param soma_type: If set, the SOMA class you are expecting to get back.
-        This can be provided as a SOMA type name
-        If the stored SOMA object is not of the correct type, an error will be
-        raised.
-    :param context: If set, the ``SOMATileDBContext`` data to use.
-    :param tiledb_timestamp: If specified, overrides the default timestamp
-        used to open this object. If unset, uses the timestamp provided by
-        the context.
+    Args:
+        uri:
+            The URI to open.
+        mode:
+            The mode to open in: ``r`` to read (default), ``w`` to write.
+        soma_type:
+            If set, the SOMA class you are expecting to get back.
+            This can be provided as a SOMA type name.
+            If the stored SOMA object is not of the correct type, an error will be
+            raised.
+        context:
+            If set, the ``SOMATileDBContext`` data to use.
+        tiledb_timestamp:
+            If specified, overrides the default timestamp
+            used to open this object. If unset, uses the timestamp provided by
+            the context.
 
-    :raises DoesNotExistError: if the object named by URI can not be accessed.
-    :raises SOMAError: if the underlying TileDB object specified by ``uri`` is
-        not recognized as a SOMA object.
-    :raises TypeError: if the opened SOMA object type does not match the user-
-        specified s``soma_type`` parameter.
-    :raises TypeError: if the user-provided ``soma_type`` parameter is not a
-        recognizable type name or value.
-    :raises ValueError: if the user-provided ``mode`` is invalid.
+    Returns:
+        The TileDB SOMA object.
+
+    Raises:
+        DoesNotExistError:
+            If the object named by URI can not be accessed.
+        SOMAError:
+            If the underlying TileDB object specified by ``uri`` is
+            not recognized as a SOMA object.
+        TypeError:
+            If the opened SOMA object type does not match the user-
+            specified s``soma_type`` parameter.
+        TypeError:
+            If the user-provided ``soma_type`` parameter is not a
+            recognizable type name or value.
+        ValueError:
+            If the user-provided ``mode`` is invalid.
+
+    Lifecycle:
+        Experimental.
     """
     context = context or SOMATileDBContext()
     obj = _open_internal(_tdb_handles.open, uri, mode, context, tiledb_timestamp)

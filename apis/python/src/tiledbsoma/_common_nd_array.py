@@ -1,3 +1,8 @@
+# Copyright (c) 2021-2023 The Chan Zuckerberg Initiative Foundation
+# Copyright (c) 2021-2023 TileDB, Inc.
+#
+# Licensed under the MIT License.
+
 """Common code shared by both NDArray implementations."""
 
 from typing import Optional, Sequence, Tuple, Union, cast
@@ -32,33 +37,45 @@ class NDArray(TileDBArray, somacore.NDArray):
         context: Optional[SOMATileDBContext] = None,
         tiledb_timestamp: Optional[OpenTimestamp] = None,
     ) -> Self:
-        """
-        Create a SOMA ``NDArray`` at the given URI [lifecycle: experimental].
+        """Creates a SOMA ``NDArray`` at the given URI.
 
-        :param type: The Arrow type to be stored in the NDArray.
-            If the type is unsupported, an error will be raised.
+        Args:
 
-        :param shape: The maximum capacity of each dimension, including room
-            for any intended future appends, as a sequence.  E.g. ``(100, 10)``.
-            All lengths must be in the postive int64 range, or ``None``.  It's
-            necessary to say ``shape=(None, None)`` or ``shape=(None, None,
-            None)``, as the sequence length determines the number of dimensions
-            N in the N-dimensional array.
+            type:
+                The Arrow type to be stored in the NDArray.
+                If the type is unsupported, an error will be raised.
+            shape:
+                The maximum capacity of each dimension, including room
+                for any intended future appends, as a sequence.  E.g. ``(100, 10)``.
+                All lengths must be in the postive int64 range, or ``None``.  It's
+                necessary to say ``shape=(None, None)`` or ``shape=(None, None,
+                None)``, as the sequence length determines the number of dimensions
+                N in the N-dimensional array.
 
-            For ``SOMASparseNDArray`` only, if a slot is None, then the maximum
-            possible int64 will be used.  This makes a ``SOMASparseNDArray``
-            growable.
+                For ``SOMASparseNDArray`` only, if a slot is None, then the maximum
+                possible int64 will be used.  This makes a ``SOMASparseNDArray``
+                growable.
+            platform_config:
+                Platform-specific options used to create this Array,
+                provided via ``{"tiledb": {"create": ...}}`` nested keys.
+            tiledb_timestamp:
+                If specified, overrides the default timestamp
+                used to open this object. If unset, uses the timestamp provided by
+                the context.
 
-        :param platform_config: Platform-specific options used to create this Array,
-            provided via ``{"tiledb": {"create": ...}}`` nested keys.
+        Returns:
+            The created NDArray.
 
-        :param tiledb_timestamp: If specified, overrides the default timestamp
-            used to open this object. If unset, uses the timestamp provided by
-            the context.
+        Raises:
+            TypeError:
+                If the ``type`` is unsupported.
+            ValueError:
+                If the ``shape`` is unsupported.
+            TileDBError:
+                If unable to create the underlying object.
 
-        :raises TypeError: if the ``type`` is unsupported.
-        :raises ValueError: if the ``shape`` is unsupported.
-        :raises TileDBError: if unable to create the underlying object.
+        Lifecycle:
+            Experimental.
         """
         # Implementor note: we carefully say "maximum possible int64 size" rather than 2**63-1. The
         # reason that the latter, while temptingly simple, is actually untrue is that tiledb core
@@ -83,15 +100,18 @@ class NDArray(TileDBArray, somacore.NDArray):
 
     @property
     def shape(self) -> Tuple[int, ...]:
-        """
-        Return capacity of each dimension, always a list of length ``ndim``
-        [lifecycle: experimental].
+        """Returns capacity of each dimension, always a list of length ``ndim``.
+
+        Lifecycle:
+            Experimental.
         """
         return cast(Tuple[int, ...], self._handle.schema.domain.shape)
 
     def reshape(self, shape: Tuple[int, ...]) -> None:
-        """
-        Unsupported operation for this object type [lifecycle: experimental].
+        """Unsupported operation for this object type.
+
+        Lifecycle:
+            Experimental.
         """
         raise NotImplementedError("reshape operation not implemented.")
 

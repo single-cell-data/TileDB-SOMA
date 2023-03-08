@@ -1,3 +1,10 @@
+# Copyright (c) 2021-2023 The Chan Zuckerberg Initiative Foundation
+# Copyright (c) 2021-2023 TileDB, Inc.
+#
+# Licensed under the MIT License.
+
+"""Implementation of SOMA SparseNDArray.
+"""
 from typing import Optional, Sequence, Tuple, Union, cast
 
 import numpy as np
@@ -24,14 +31,13 @@ _UNBATCHED = options.BatchSize()
 
 
 class SparseNDArray(NDArray, somacore.SparseNDArray):
-    """
-    ``SparseNDArray`` is a sparse, N-dimensional array, with offset (zero-based)
-    integer indexing on each dimension. ``SparseNDArray`` has a user-defined
-    schema, which includes:
-    - the element type, expressed as an Arrow type, indicating the type of data
-      contained within the array, and
-    - the shape of the array, i.e., the number of dimensions and the length of
-      each dimension
+    """``SparseNDArray`` is a sparse, N-dimensional array, with offset
+    (zero-based) integer indexing on each dimension.
+    ``SparseNDArray`` has a user-defined schema, which includes:
+    * The element type, expressed as an Arrow type, indicating the type of data
+      contained within the array.
+    * The shape of the array, i.e., the number of dimensions and the length of
+      each dimension.
 
     All dimensions must have a positive, non-zero length, and there must be 1
     or more dimensions. Implicitly stored elements (i.e., those not explicitly
@@ -41,33 +47,33 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
     ``soma_dim_N``, where ``N`` is the dimension number (e.g., ``soma_dim_0``),
     and elements are named ``soma_data``.
 
-    [lifecycle: experimental]
+    Lifecycle:
+        Experimental.
 
     Examples:
-    ---------
-    >>> import tiledbsoma
-    >>> import pyarrow as pa
-    >>> import numpy as np
-    >>> import scipy.sparse
-    >>> with tiledbsoma.SparseNDArray.create(
-    ...     "./test_sparse_ndarray", type=pa.float32(), shape=(1000, 100)
-    ... ) as arr:
-    ...     data = pa.SparseCOOTensor.from_scipy(
-    ...         scipy.sparse.random(1000, 100, format="coo", dtype=np.float32)
-    ...     )
-    ...     arr.write(data)
-    ... with tiledbsoma.SparseNDArray.open("./test_sparse_ndarray") as arr:
-    ...     print(arr.schema)
-    ...     print('---')
-    ...     print(arr.read().coos().concat())
-    ...
-    soma_dim_0: int64
-    soma_dim_1: int64
-    soma_data: float
-    ---
-    <pyarrow.SparseCOOTensor>
-    type: float
-    shape: (1000, 100)
+        >>> import tiledbsoma
+        >>> import pyarrow as pa
+        >>> import numpy as np
+        >>> import scipy.sparse
+        >>> with tiledbsoma.SparseNDArray.create(
+        ...     "./test_sparse_ndarray", type=pa.float32(), shape=(1000, 100)
+        ... ) as arr:
+        ...     data = pa.SparseCOOTensor.from_scipy(
+        ...         scipy.sparse.random(1000, 100, format="coo", dtype=np.float32)
+        ...     )
+        ...     arr.write(data)
+        ... with tiledbsoma.SparseNDArray.open("./test_sparse_ndarray") as arr:
+        ...     print(arr.schema)
+        ...     print('---')
+        ...     print(arr.read().coos().concat())
+        ...
+        soma_dim_0: int64
+        soma_dim_1: int64
+        soma_data: float
+        ---
+        <pyarrow.SparseCOOTensor>
+        type: float
+        shape: (1000, 100)
     """
 
     __slots__ = ()
@@ -79,8 +85,10 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
     @property
     def nnz(self) -> int:
         """
-        The number of stored values in the array, including explicitly stored zeros
-        [lifecycle: experimental].
+        The number of stored values in the array, including explicitly stored zeros.
+
+        Lifecycle:
+            Experimental.
         """
         self._check_open_read()
         return cast(int, self._soma_reader().nnz())
@@ -94,33 +102,39 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
         partitions: Optional[options.ReadPartitions] = None,
         platform_config: Optional[PlatformConfig] = None,
     ) -> "SparseNDArrayRead":
-        """
-        Read a user-defined slice of the SparseNDArray.
+        """Reads a user-defined slice of the SparseNDArray.
 
-        [lifecycle: experimental]
+        Args:
+            coords:
+                A per-dimension tuple of scalar, slice, sequence of scalar
+                or Arrow IntegerArray defining the region to read.
+                (Arrow arrays currently unimplemented.)
 
-        :param coords: A per-dimension tuple of scalar, slice, sequence of scalar
-            or Arrow IntegerArray defining the region to read.
-            (Arrow arrays currently unimplemented.)
+        Returns:
+            A SparseNDArrayRead to access result iterators in various formats.
 
-        :raises SOMAError: if the object is not open for reading.
+        Raises:
+            SOMAError:
+                If the object is not open for reading.
 
-        Acceptable ways to index
-        ------------------------
-        * A sequence of coordinates is accepted, one per dimension.
-        * Sequence length must be <= number of dimensions.
-        * If the sequence contains missing coordinates (length < number of dimensions),
-          then ``slice(None)`` -- i.e. no constraint -- is assumed for the
-          remaining dimensions.
-        * Per-dimension, explicitly specified coordinates can be one of:
-          None, a value, a list/ndarray/paarray/etc of values, a slice, etc.
-        * Slices are doubly inclusive: slice(2,4) means [2,3,4] not [2,3].
-          Slice steps can only be +1. Slices can be `slice(None)`, meaning
-          select all in that dimension, but may not be half-specified:
-          `slice(2,None)` and `slice(None,4)` are both unsupported.
-        * Negative indexing is unsupported.
+        Lifecycle:
+            Experimental.
 
-        :return: A SparseNDArrayRead to access result iterators in various formats.
+        Notes:
+            Acceptable ways to index:
+
+            * A sequence of coordinates is accepted, one per dimension.
+            * Sequence length must be <= number of dimensions.
+            * If the sequence contains missing coordinates (length < number of dimensions),
+              then ``slice(None)`` -- i.e. no constraint -- is assumed for the
+              remaining dimensions.
+            * Per-dimension, explicitly specified coordinates can be one of:
+              None, a value, a list/ndarray/paarray/etc of values, a slice, etc.
+            * Slices are doubly inclusive: slice(2,4) means [2,3,4] not [2,3].
+              Slice steps can only be +1. Slices can be `slice(None)`, meaning
+              select all in that dimension, but may not be half-specified:
+              `slice(2,None)` and `slice(None,4)` are both unsupported.
+            * Negative indexing is unsupported.
         """
         del batch_size, platform_config  # Currently unused.
         self._check_open_read()
@@ -144,9 +158,7 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
         platform_config: Optional[PlatformConfig] = None,
     ) -> Self:
         """
-        Write an Arrow object to the SparseNDArray.
-
-        [lifecycle: experimental]
+        Writes an Arrow object to the SparseNDArray.
 
         Arrow sparse tensor: the coordinates in the Arrow SparseTensor are interpreted
         as the coordinates to write to. Supports the _experimental_ SparseCOOTensor,
@@ -156,8 +168,14 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
         Arrow table: write a COO table, with columns named ``soma_dim_0``, ...,
         ``soma_dim_N`` and ``soma_data`` to the dense nD array.
 
-        :raises TypeError: if the ``values`` parameter is an unsupported type.
-        :raises SOMAError: if the object is not open for writing.
+        Raises:
+            TypeError:
+                If the ``values`` parameter is an unsupported type.
+            SOMAError:
+                If the object is not open for writing.
+
+        Lifecycle:
+            Experimental.
         """
         del platform_config  # Currently unused.
 
@@ -232,8 +250,7 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
         dim_shape: Optional[int],
         create_options: TileDBCreateOptions,
     ) -> Tuple[int, int]:
-        """
-        Given a user-specified shape (maybe ``None``) along a particular dimension,
+        """Given a user-specified shape (maybe ``None``) along a particular dimension,
         returns a tuple of the TileDB capacity and extent for that dimension, suitable
         for schema creation. If the user-specified shape is None, the largest possible
         int64 is returned for the capacity.
@@ -258,42 +275,47 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
 
 
 class SparseNDArrayRead(somacore.SparseRead):
-    """
-    Intermediate type to choose result format when reading a sparse array.
+    """Intermediate type to choose result format when reading a sparse array.
 
-    See docs for somacore.data.SparseRead
+    See also:
+        somacore.data.SparseRead
 
-    [lifecycle: experimental]
+    Lifecycle:
+        Experimental.
     """
 
     def __init__(self, sr: clib.SOMAReader, shape: NTuple):
         """
-        [lifecycle: experimental]
+        Lifecycle:
+            Experimental.
         """
         self.sr = sr
         self.shape = shape
 
     def coos(self) -> SparseCOOTensorReadIter:
         """
-        Return an iterator of Arrow SparseCOOTensor
+        Returns an iterator of Arrow SparseCOOTensor.
 
-        [lifecycle: experimental]
+        Lifecycle:
+            Experimental.
         """
         return SparseCOOTensorReadIter(self.sr, self.shape)
 
     def dense_tensors(self) -> somacore.ReadIter[pa.Tensor]:
         """
-        Return an iterator of Arrow Tensor
+        Returns an iterator of Arrow Tensor.
 
-        [lifecycle: experimental]
+        Lifecycle:
+            Experimental.
         """
 
         raise NotImplementedError()
 
     def tables(self) -> TableReadIter:
         """
-        Return an iterator of Arrow Table
+        Returns an iterator of Arrow Table.
 
-        [lifecycle: experimental]
+        Lifecycle:
+            Experimental.
         """
         return TableReadIter(self.sr)

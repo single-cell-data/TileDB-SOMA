@@ -1,3 +1,8 @@
+# Copyright (c) 2021-2023 The Chan Zuckerberg Initiative Foundation
+# Copyright (c) 2021-2023 TileDB, Inc.
+#
+# Licensed under the MIT License.
+
 import datetime
 import pathlib
 import time
@@ -12,15 +17,19 @@ from ._types import OpenTimestamp, Slice, is_slice_of
 
 
 def get_start_stamp() -> float:
-    """
-    Returns information about start time of an event. Nominally float seconds since the epoch, but articulated here as being compatible with the format_elapsed function.
+    """Returns information about start time of an event.
+
+    Nominally float seconds since the epoch, but articulated here
+    as being compatible with the format_elapsed function.
     """
     return time.time()
 
 
 def format_elapsed(start_stamp: float, message: str) -> str:
-    """
-    Returns the message along with an elapsed-time indicator, with end time relative to start start from ``get_start_stamp``. Used for annotating elapsed time of a task.
+    """Returns the message along with an elapsed-time indicator,
+    with end time relative to start start from ``get_start_stamp``.
+
+    Used for annotating elapsed time of a task.
     """
     return "%s TIME %.3f seconds" % (message, time.time() - start_stamp)
 
@@ -34,14 +43,13 @@ def is_local_path(path: str) -> bool:
 
 
 def make_relative_path(uri: str, relative_to: str) -> str:
-    """
-    Return a URI relative to another URI. If not possible, raise a ValueError.
+    """Returns a URI relative to another URI. If not possible, raise a ValueError.
 
     This function assumes that the URI scheme follows posix path conventions
     and only contains a scheme, netloc and path. It does not handle query params,
     fragments, etc.
 
-    The default scheme, if one is not specified, is assumed to be `file`
+    The default scheme, if one is not specified, is assumed to be `file`.
     """
     p_uri = urllib.parse.urlparse(uri)
     p_relative_to = urllib.parse.urlparse(relative_to)
@@ -63,8 +71,7 @@ def is_relative_uri(uri: str) -> bool:
 
 
 def uri_joinpath(base: str, path: str) -> str:
-    """
-    Join a path to a URI.
+    """Join a path to a URI.
 
     Supports relative paths for `file` or unspecified schemes, assuming
     they are file system paths.  Assumes NO suport for relative paths
@@ -151,8 +158,7 @@ def dense_indices_to_shape(
     array_shape: Tuple[int, ...],
     result_order: somacore.ResultOrder,
 ) -> Tuple[int, ...]:
-    """
-    Given a subarray index specified as a tuple of per-dimension slices or scalars
+    """Given a subarray index specified as a tuple of per-dimension slices or scalars
     (e.g., ``([:], 1, [1:2])``), and the shape of the array, return the shape of
     the subarray. Note that the number of coordinates may be less than or equal
     to the number of dimensions in the array.
@@ -173,8 +179,7 @@ def dense_indices_to_shape(
 
 
 def dense_index_to_shape(coord: options.DenseCoord, array_length: int) -> int:
-    """
-    Given a subarray per-dimension index specified as a slice or scalar (e.g, ``[:], 1, [1:2]``),
+    """Given a subarray per-dimension index specified as a slice or scalar (e.g, ``[:], 1, [1:2]``),
     and the shape of the array in that dimension, return the shape of the subarray in
     that dimension.
 
@@ -202,9 +207,7 @@ def check_type(
     actual_value: Any,
     expected_types: Tuple[Type[Any], ...],
 ) -> None:
-    """
-    Verifies the type of an argument, or produces a useful error message.
-    """
+    """Verifies the type of an argument, or produces a useful error message."""
     if not isinstance(actual_value, expected_types):
         if len(expected_types) == 1:
             raise TypeError(
