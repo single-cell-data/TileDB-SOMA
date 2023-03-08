@@ -150,3 +150,10 @@ tiledbsoma_stats_dump <- function() {
     .Call(`_tiledbsoma_tiledbsoma_stats_dump`)
 }
 
+
+#' @rdname tiledbsoma_embedded_version
+#' @export
+tiledbsoma_embedded_version <- function() {
+    .Call(`_tiledbsoma_tiledbsoma_embedded_version`)
+}
+
