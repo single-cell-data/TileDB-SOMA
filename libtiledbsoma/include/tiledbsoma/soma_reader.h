@@ -290,11 +290,29 @@ class SOMAReader {
      * @brief Return true if `read_next` returned all results from the
      * query. The return value is false if the query was incomplete.
      *
+     * If `query_status_only` is true, return true if the query status is
+     * complete.
+     *
+     * If `query_status_only` is false, return true if the query status
+     * is complete or if the query is empty (no ranges have been added to the
+     * query).
+     *
+     * @param query_status_only Query complete mode.
      * @return True if last call to `read_next` returned all results of the
      * query
      */
-    bool results_complete() {
-        return mq_->results_complete();
+    bool results_complete(bool query_status_only = false) {
+        return mq_->results_complete(query_status_only);
+    }
+
+    /**
+     * @brief Returns the total number of cells read so far, including any
+     * previous incomplete queries.
+     *
+     * @return size_t Total number of cells read
+     */
+    size_t total_num_cells() {
+        return mq_->total_num_cells();
     }
 
     /**
