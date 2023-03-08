@@ -16,8 +16,8 @@ Embedded](https://github.com/TileDB-Inc/TileDB) to implement the
 Get started on using TileDB-SOMA:
 
 * [Quick start](#quick-start).
-* Python [documentation](.) | [tutorials](.). *Under development*.
-* R [documentation](.) | [tutorials](.). *Under development*.
+* Python [documentation]() | [tutorials](). *Under development*.
+* R [documentation]() | [tutorials](). *Under development*.
 
 ## What can TileDB-SOMA do?
 
