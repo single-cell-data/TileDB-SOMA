@@ -150,10 +150,12 @@ tiledbsoma_stats_dump <- function() {
     .Call(`_tiledbsoma_tiledbsoma_stats_dump`)
 }
 
-
-#' @rdname tiledbsoma_embedded_version
+#' TileDB Embedded Version interface
+#'
+#' This gets the version of the TileDB Embedded library that is currently in use.
+#'
 #' @export
-tiledbsoma_embedded_version <- function() {
-    .Call(`_tiledbsoma_tiledbsoma_embedded_version`)
+tiledb_embedded_version <- function() {
+    .Call(`_tiledbsoma_tiledb_embedded_version`)
 }
 

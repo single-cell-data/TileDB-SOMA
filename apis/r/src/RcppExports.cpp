@@ -160,14 +160,13 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-
-// tiledbsoma_embedded_version
-std::string tiledbsoma_embedded_version();
-RcppExport SEXP _tiledbsoma_tiledbsoma_embedded_version() {
+// tiledb_embedded_version
+std::string tiledb_embedded_version();
+RcppExport SEXP _tiledbsoma_tiledb_embedded_version() {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    rcpp_result_gen = Rcpp::wrap(tiledbsoma_embedded_version());
+    rcpp_result_gen = Rcpp::wrap(tiledb_embedded_version());
     return rcpp_result_gen;
 END_RCPP
 }
@@ -186,7 +185,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_tiledbsoma_tiledbsoma_stats_disable", (DL_FUNC) &_tiledbsoma_tiledbsoma_stats_disable, 0},
     {"_tiledbsoma_tiledbsoma_stats_reset", (DL_FUNC) &_tiledbsoma_tiledbsoma_stats_reset, 0},
     {"_tiledbsoma_tiledbsoma_stats_dump", (DL_FUNC) &_tiledbsoma_tiledbsoma_stats_dump, 0},
-    {"_tiledbsoma_tiledbsoma_embedded_version", (DL_FUNC) &_tiledbsoma_tiledbsoma_embedded_version, 0},
+    {"_tiledbsoma_tiledb_embedded_version", (DL_FUNC) &_tiledbsoma_tiledb_embedded_version, 0},
     {NULL, NULL, 0}
 };
 
