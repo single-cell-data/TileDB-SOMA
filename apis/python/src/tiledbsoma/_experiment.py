@@ -1,3 +1,11 @@
+# Copyright (c) 2021-2023 The Chan Zuckerberg Initiative Foundation
+# Copyright (c) 2021-2023 TileDB, Inc.
+#
+# Licensed under the MIT License.
+
+"""Implementation of a SOMA Experiment.
+"""
+
 from somacore import experiment
 
 from ._collection import Collection, CollectionBase
@@ -14,15 +22,20 @@ class Experiment(
         AnyTileDBObject,
     ],
 ):
-    """
-    ``obs``: Primary annotations on the observation axis. The contents of the
-             ``soma_joinid`` column define the observation index domain,
-             AKA ``obs_id``. All observations for the Experiment must be
-             defined in this dataframe.
+    """An ``Experiment`` represents a single-cell experiment. It is
+    a container class that has observations and measurements.
 
-    ``ms``: A collection of named measurements.
+    Attributes:
+        obs (DataFrame):
+            Primary annotations on the observation axis. The contents of the
+            ``soma_joinid`` column define the observation index domain,
+            AKA ``obs_id``. All observations for the Experiment must be
+            defined in this dataframe.
+        ms (Collection):
+            A collection of named measurements.
 
-    [lifecycle: experimental]
+    Lifecycle:
+        Experimental.
     """
 
     __slots__ = ()

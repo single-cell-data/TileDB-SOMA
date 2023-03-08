@@ -1,3 +1,14 @@
+# Copyright (c) 2021-2023 The Chan Zuckerberg Initiative Foundation
+# Copyright (c) 2021-2023 TileDB, Inc.
+#
+# Licensed under the MIT License.
+
+"""Ingestion methods.
+
+This module contains methods to generate SOMA artifacts starting from
+other formats. Currently only h5ad (AnnData) is supported.
+"""
+
 import math
 import time
 from typing import (
@@ -64,8 +75,7 @@ def from_h5ad(
     ingest_mode: IngestMode = "write",
     use_relative_uri: Optional[bool] = None,
 ) -> str:
-    """
-    Reads an ``.h5ad`` file and writes to a TileDB group structure.
+    """Reads an ``.h5ad`` file and writes to a TileDB group structure.
 
     Returns a URI for the created experiment.
 
@@ -77,7 +87,8 @@ def from_h5ad(
     The "schema_only" ingest_mode creates groups and array schema, without writing array data.
     This is useful as a prep-step for parallel append-ingest of multiple H5ADs to a single soma.
 
-    [lifecycle: experimental]
+    Lifecycle:
+        Experimental.
     """
     if ingest_mode not in INGEST_MODES:
         raise SOMAError(
@@ -123,8 +134,7 @@ def from_anndata(
     ingest_mode: IngestMode = "write",
     use_relative_uri: Optional[bool] = None,
 ) -> str:
-    """
-    Top-level writer method for creating a TileDB group for a ``Experiment`` object.
+    """Top-level writer method for creating a TileDB group for a ``Experiment`` object.
 
     Returns a URI for the created experiment.
 
@@ -136,7 +146,8 @@ def from_anndata(
     The "schema_only" ingest_mode creates groups and array schema, without writing array data.
     This is useful as a prep-step for parallel append-ingest of multiple H5ADs to a single soma.
 
-    [lifecycle: experimental]
+    Lifecycle:
+        Experimental.
     """
     if ingest_mode not in INGEST_MODES:
         raise SOMAError(
@@ -516,9 +527,7 @@ def create_from_matrix(
     platform_config: Optional[PlatformConfig] = None,
     ingest_mode: IngestMode = "write",
 ) -> _NDArr:
-    """
-    Create and populate the ``soma_matrix`` from the contents of ``matrix``.
-    """
+    """Create and populate the ``soma_matrix`` from the contents of ``matrix``."""
     # SparseDataset has no ndim but it has a shape
     if len(matrix.shape) != 2:
         raise ValueError(f"expected matrix.shape == 2; got {matrix.shape}")
@@ -590,12 +599,12 @@ def add_X_layer(
     ingest_mode: IngestMode = "write",
     use_relative_uri: Optional[bool] = None,
 ) -> None:
-    """
-    This is useful for adding X data, for example from scanpy.pp.normalize_total, scanpy.pp.log1p, etc.
+    """This is useful for adding X data, for example from scanpy.pp.normalize_total, scanpy.pp.log1p, etc.
 
     Use `ingest_mode="resume"` to not error out if the schema already exists.
 
-    [lifecycle: experimental]
+    Lifecycle:
+        Experimental.
     """
     add_matrix_to_collection(
         exp,
@@ -617,8 +626,7 @@ def add_matrix_to_collection(
     ingest_mode: IngestMode = "write",
     use_relative_uri: Optional[bool] = None,
 ) -> None:
-    """
-    This is useful for adding X/obsp/varm/etc data, for example from scanpy.pp.normalize_total,
+    """This is useful for adding X/obsp/varm/etc data, for example from scanpy.pp.normalize_total,
     scanpy.pp.log1p, etc.
 
     Use `ingest_mode="resume"` to not error out if the schema already exists.
@@ -758,14 +766,18 @@ def _read_nonempty_domain(arr: TileDBArray) -> Any:
 def _find_sparse_chunk_size(
     matrix: SparseMatrix, start_index: int, axis: int, goal_chunk_nnz: int
 ) -> int:
-    """
-    Given a sparse matrix and a start index, return a step size, on the stride axis, which will
-    achieve the cummulative nnz desired.
+    """Given a sparse matrix and a start index, return a step size, on the stride axis,
+    which will achieve the cumulative nnz desired.
 
-    :param matrix: The input scipy.sparse matrix.
-    :param start_index: the index at which to start a chunk.
-    :param axis: the stride axis, across which to find a chunk.
-    :param goal_chunk_nnz: Desired number of non-zero array entries for the chunk.
+    Args:
+        matrix:
+            The input scipy.sparse matrix.
+        start_index:
+            The index at which to start a chunk.
+        axis:
+            The stride axis, across which to find a chunk.
+        goal_chunk_nnz:
+            Desired number of non-zero array entries for the chunk.
     """
     chunk_size = 1
     sum_nnz = 0
@@ -963,9 +975,7 @@ def _chunk_is_contained_in_axis(
     storage_nonempty_domain: Sequence[Tuple[Optional[int], Optional[int]]],
     stride_axis: int,
 ) -> bool:
-    """
-    Helper function for ``_chunk_is_contained_in``.
-    """
+    """Helper function for ``_chunk_is_contained_in``."""
     storage_lo, storage_hi = storage_nonempty_domain[stride_axis]
     if storage_lo is None or storage_hi is None:
         # E.g. an array has had its schema created but no data written yet
@@ -987,10 +997,10 @@ def to_h5ad(
     measurement_name: str,
     X_layer_name: str = "data",
 ) -> None:
-    """
-    Converts the experiment group to anndata format and writes it to the specified .h5ad file.
+    """Converts the experiment group to anndata format and writes it to the specified .h5ad file.
 
-    [lifecycle: experimental]
+    Lifecycle:
+        Experimental.
     """
     s = _util.get_start_stamp()
     logging.log_io(None, f"START  Experiment.to_h5ad -> {h5ad_path}")
@@ -1015,15 +1025,16 @@ def to_h5ad(
 def to_anndata(
     experiment: Experiment, measurement_name: str, X_layer_name: str = "data"
 ) -> ad.AnnData:
-    """
-    Converts the experiment group to anndata. Choice of matrix formats is following what we often see in input .h5ad files:
+    """Converts the experiment group to anndata.
+    Choice of matrix formats is following what we often see in input .h5ad files:
 
     * X as ``scipy.sparse.csr_matrix``
     * obs,var as ``pandas.dataframe``
     * obsm,varm arrays as ``numpy.ndarray``
     * obsp,varp arrays as ``scipy.sparse.csr_matrix``
 
-    [lifecycle: experimental]
+    Lifecycle:
+        Experimental.
     """
 
     s = _util.get_start_stamp()

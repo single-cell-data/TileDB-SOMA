@@ -1,3 +1,11 @@
+# Copyright (c) 2021-2023 The Chan Zuckerberg Initiative Foundation
+# Copyright (c) 2021-2023 TileDB, Inc.
+#
+# Licensed under the MIT License.
+
+"""Conversion utility methods.
+"""
+
 from typing import TypeVar, cast
 
 import numpy as np
@@ -15,9 +23,7 @@ _str_to_type = {"boolean": bool, "string": str, "bytes": bytes}
 
 
 def decategoricalize_obs_or_var(obs_or_var: pd.DataFrame) -> pd.DataFrame:
-    """
-    Performs a typecast into types that TileDB can persist.
-    """
+    """Performs a typecast into types that TileDB can persist."""
     if len(obs_or_var.columns) > 0:
         return pd.DataFrame.from_dict(
             {k: to_tiledb_supported_array_type(v) for k, v in obs_or_var.items()},
@@ -34,8 +40,7 @@ def _to_tiledb_supported_dtype(dtype: _DT) -> _DT:
 
 
 def to_tiledb_supported_array_type(x: _MT) -> _MT:
-    """
-    Converts datatypes unrepresentable by TileDB into datatypes it can represent.
+    """Converts datatypes unrepresentable by TileDB into datatypes it can represent.
     E.g., categorical strings -> string.
 
     See also [https://docs.scipy.org/doc/numpy-1.10.1/reference/arrays.dtypes.html](https://docs.scipy.org/doc/numpy-1.10.1/reference/arrays.dtypes.html).
@@ -77,9 +82,7 @@ def to_tiledb_supported_array_type(x: _MT) -> _MT:
 
 
 def csr_from_tiledb_df(df: pd.DataFrame, num_rows: int, num_cols: int) -> sp.csr_matrix:
-    """
-    Given a tiledb dataframe, return a ``scipy.sparse.csr_matrx``.
-    """
+    """Given a tiledb dataframe, return a ``scipy.sparse.csr_matrx``."""
     return sp.csr_matrix(
         (df["soma_data"], (df["soma_dim_0"], df["soma_dim_1"])),
         shape=(num_rows, num_cols),

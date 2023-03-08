@@ -255,19 +255,19 @@ class DataFrame(TileDBArray, somacore.DataFrame):
 
         Args:
             coords:
-                for each index dimension, which rows to read.
+                For each index dimension, which rows to read.
                 Defaults to ``None``, meaning no constraint -- all IDs.
             column_names:
-                the named columns to read and return.
+                The named columns to read and return.
                 Defaults to ``None``, meaning no constraint -- all column names.
             result_order:
-                order of read results.
+                Order of read results.
                 This can be one of 'row-major', 'col-major', or 'auto'.
             value_filter:
-                an optional [value filter] to apply to the results.
+                An optional [value filter] to apply to the results.
                 Defaults to no filter.
             partitions:
-                an optional ``ReadPartitions`` hint to indicate
+                An optional ``ReadPartitions`` hint to indicate
                 how results should be organized.
 
         Returns:
@@ -282,20 +282,22 @@ class DataFrame(TileDBArray, somacore.DataFrame):
                 If the object is not open for reading.
 
         Notes:
-            **Indexing**: the ``coords`` parameter will support, per dimension: a list of values of the type of the indexed column.
+            The ``coords`` parameter will support, per dimension:
+            a list of values of the type of the indexed column.
 
             Acceptable ways to index:
-                * A sequence of coordinates is accepted, one per dimension.
-                * Sequence length must be <= number of dimensions.
-                * If the sequence contains missing coordinates (length less than number of dimensions),
-                then `slice(None)` -- i.e. no constraint -- is assumed for the missing dimensions.
-                * Per-dimension, explicitly specified coordinates can be one of: None, a value, a
-                list/ndarray/paarray/etc of values, a slice, etc.
-                * Slices are doubly inclusive: slice(2,4) means [2,3,4] not [2,3].
-                Slice steps are not supported.
-                Slices can be `slice(None)`, meaning select all in that dimension, but may not be half-specified:
-                `slice(2,None)` and `slice(None,4)` are both unsupported.
-                * Negative indexing is unsupported.
+
+            * A sequence of coordinates is accepted, one per dimension.
+            * Sequence length must be <= number of dimensions.
+            * If the sequence contains missing coordinates (length less than number of dimensions),
+              then `slice(None)` -- i.e. no constraint -- is assumed for the missing dimensions.
+            * Per-dimension, explicitly specified coordinates can be one of: None, a value, a
+              list/ndarray/paarray/etc of values, a slice, etc.
+            * Slices are doubly inclusive: slice(2,4) means [2,3,4] not [2,3].
+              Slice steps are not supported.
+              Slices can be `slice(None)`, meaning select all in that dimension, but may not be half-specified:
+              `slice(2,None)` and `slice(None,4)` are both unsupported.
+            * Negative indexing is unsupported.
 
         Lifecycle:
             Experimental.

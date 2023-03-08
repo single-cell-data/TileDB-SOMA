@@ -1,12 +1,15 @@
+# Copyright (c) 2021-2023 The Chan Zuckerberg Initiative Foundation
+# Copyright (c) 2021-2023 TileDB, Inc.
+#
+# Licensed under the MIT License.
+
 from typing import List
 
 import numpy as np
 
 
 class Tracker:
-    """
-    Computes estimated time to completion for chunked writes.
-    """
+    """Computes estimated time to completion for chunked writes."""
 
     chunk_percents: List[float]
     cumulative_seconds: List[float]
@@ -16,10 +19,15 @@ class Tracker:
         self.cumulative_seconds = []
 
     def ingest_and_predict(self, chunk_percent: float, chunk_seconds: float) -> str:
-        """
-        Updates from most recent chunk percent-done and chunk completion-seconds, then does a linear regression on all chunks done so far and estimates time to completion.  :param chunk_percent: a percent done like 6.1 or 10.3.
+        """Updates from most recent chunk percent-done and chunk
+        completion-seconds, then does a linear regression
+        on all chunks done so far and estimates time to completion.
 
-        :param chunk_seconds: number of seconds it took to do the current chunk operation.
+        Args:
+            chunk_percent:
+                A percent done like 6.1 or 10.3.
+            chunk_seconds:
+                Number of seconds it took to do the current chunk operation.
         """
         self._ingest(chunk_percent, chunk_seconds)
         eta_seconds = self._predict()
@@ -27,8 +35,11 @@ class Tracker:
         return eta_format
 
     def _ingest(self, chunk_percent: float, chunk_seconds: float) -> None:
-        """
-        Takes the current percent done like 10.3 and current chunk seconds like 58.4 and grows an array of percent-dones and cumulative seconds. This means self.chunk_percents is a list of all the chunk_percent arguments from calling _ingest, while each self.chunk_seconds slot is the sum of all previous chunk_seconds arguments from calling _ingest.
+        """Takes the current percent done like 10.3 and current chunk seconds
+        like 58.4 and grows an array of percent-dones and cumulative seconds.
+        This means self.chunk_percents is a list of all the chunk_percent
+        arguments from calling _ingest, while each self.chunk_seconds slot
+        is the sum of all previous chunk_seconds arguments from calling _ingest.
         """
         if len(self.chunk_percents) == 0:
             self.chunk_percents = [chunk_percent]
@@ -38,8 +49,8 @@ class Tracker:
             self.cumulative_seconds.append(self.cumulative_seconds[-1] + chunk_seconds)
 
     def _predict(self) -> float:
-        """
-        Does a linear regression on all chunks done so far and estimates time to completion.  Returns ETA seconds as a number.
+        """Does a linear regression on all chunks done so far and estimates t
+        ime to completion.  Returns ETA seconds as a number.
         """
         # Linear regression where x is cumulative seconds and y is percent done.
         x = np.array(self.cumulative_seconds)
@@ -52,9 +63,7 @@ class Tracker:
         return float(done_cumu_seconds) - self.cumulative_seconds[-1]
 
     def _format_seconds(self, seconds: float) -> str:
-        """
-        Formats the ETA seconds as a compact, human-readable string.
-        """
+        """Formats the ETA seconds as a compact, human-readable string."""
         if seconds >= 86400:
             return "%.2f days" % (seconds / 86400)
         elif seconds >= 3600:

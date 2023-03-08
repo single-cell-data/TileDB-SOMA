@@ -1,3 +1,11 @@
+# Copyright (c) 2021-2023 The Chan Zuckerberg Initiative Foundation
+# Copyright (c) 2021-2023 TileDB, Inc.
+#
+# Licensed under the MIT License.
+
+"""A high level wrapper around the Pybind11 query_condition.cc implementation for
+filtering query results on attribute values.
+"""
 import ast
 from dataclasses import dataclass, field
 from typing import Any, Callable, List, Tuple, Union
@@ -8,11 +16,6 @@ import tiledb
 from . import libtiledbsoma as clib
 from ._exception import SOMAError
 
-"""
-A high level wrapper around the Pybind11 query_condition.cc implementation for
-filtering query results on attribute values.
-"""
-
 # In Python 3.7, a boolean literal like `True` is of type `ast.NameConstant`.
 # Above that, it's of type `ast.Constant`.
 QueryConditionNodeElem = Union[
@@ -22,8 +25,7 @@ QueryConditionNodeElem = Union[
 
 @dataclass
 class QueryCondition:
-    """
-    Class representing a TileDB query condition object for attribute filtering
+    """Class representing a TileDB query condition object for attribute filtering
     pushdown.
 
     A query condition is set with a string representing an expression
@@ -91,8 +93,7 @@ class QueryCondition:
 
         ``val ::= <num> | <str> | val(val)``
 
-    Example::
-
+    Example:
         with tiledbsoma.open(df_uri) as dataframe:
             # Select cells where the attribute values for `foo` are less than 5
             # and `bar` equal to string "asdf".

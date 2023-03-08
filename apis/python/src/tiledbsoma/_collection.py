@@ -86,8 +86,6 @@ class CollectionBase(
         This creates a new SOMA collection of the current type in storage and
         returns it opened for writing.
 
-        [lifecycle: experimental]
-
         Args:
             uri:
                 The location to create this SOMA collection at.
@@ -105,6 +103,9 @@ class CollectionBase(
         Raises:
             TileDBError:
                 If unable to create the underlying object.
+
+        Lifecycle:
+            Experimental.
         """
         context = context or SOMATileDBContext()
         tiledb.group_create(uri=uri, ctx=context.tiledb_ctx)
@@ -181,8 +182,6 @@ class CollectionBase(
     ) -> "AnyTileDBCollection":
         """Adds a new sub-collection to this collection.
 
-        [lifecycle: experimental]
-
         Args:
             key:
                 The key to add.
@@ -201,6 +200,9 @@ class CollectionBase(
                 Platform configuration options to use when
                 creating this sub-collection. This is passed directly to
                 ``[CurrentCollectionType].create()``.
+
+        Lifecycle:
+            Experimental.
         """
         child_cls: Type[AnyTileDBCollection] = kind or Collection
         return self._add_new_element(
@@ -223,11 +225,12 @@ class CollectionBase(
     ) -> DataFrame:
         """Adds a new DataFrame to this collection.
 
-        [lifecycle: experimental]
-
         For details about the behavior of ``key`` and ``uri``, see
         :meth:`add_new_collection`. The remaining parameters are passed to
         :meth:`DataFrame.create` unchanged.
+
+        Lifecycle:
+            Experimental.
         """
         return self._add_new_element(
             key,
@@ -262,11 +265,12 @@ class CollectionBase(
     def add_new_dense_ndarray(self, key: str, **kwargs: Any) -> DenseNDArray:
         """Adds a new DenseNDArray to this Collection.
 
-        [lifecycle: experimental]
-
         For details about the behavior of ``key`` and ``uri``, see
         :meth:`add_new_collection`. The remaining parameters are passed to
         the :meth:`DenseNDArray.create` method unchanged.
+
+        Lifecycle:
+            Experimental.
         """
         return self._add_new_ndarray(DenseNDArray, key, **kwargs)
 
@@ -274,11 +278,12 @@ class CollectionBase(
     def add_new_sparse_ndarray(self, key: str, **kwargs: Any) -> SparseNDArray:
         """Adds a new SparseNDArray to this Collection.
 
-        [lifecycle: experimental]
-
         For details about the behavior of ``key`` and ``uri``, see
         :meth:`add_new_collection`. The remaining parameters are passed to
         the :meth:`SparseNDArray.create` method unchanged.
+
+        Lifecycle:
+            Experimental.
         """
         return self._add_new_ndarray(SparseNDArray, key, **kwargs)
 
@@ -321,16 +326,11 @@ class CollectionBase(
         return child
 
     def __len__(self) -> int:
-        """
-        Return the number of members in the collection
-        """
+        """Return the number of members in the collection"""
         return len(self._contents)
 
     def __getitem__(self, key: str) -> CollectionElementType:
-        """
-        Gets the value associated with the key.
-        """
-
+        """Gets the value associated with the key."""
         err_str = f"{self.__class__.__name__} has no item {key!r}"
 
         try:
@@ -360,8 +360,6 @@ class CollectionBase(
     ) -> Self:
         """Adds an element to the collection.
 
-        [lifecycle: experimental]
-
         Args:
             key:
                 The key of the element to be added.
@@ -376,6 +374,9 @@ class CollectionBase(
         Raises:
             SOMAError:
                 If an existing key is set (replacement is unsupported).
+
+        Lifecycle:
+            Experimental.
         """
         uri_to_add = value.uri
         # The SOMA API supports use_relative_uri in [True, False, None].
@@ -403,16 +404,15 @@ class CollectionBase(
         return self
 
     def __setitem__(self, key: str, value: CollectionElementType) -> None:
-        """
-        Default collection __setattr__
-        """
+        """Default collection __setattr__"""
         self.set(key, value, use_relative_uri=None)
 
     def __delitem__(self, key: str) -> None:
-        """
-        Removes a member from the collection, when invoked as ``del collection["namegoeshere"]``.
+        """Removes a member from the collection, when invoked as ``del collection["namegoeshere"]``.
 
-        :raises SOMAError: upon deletion of a mutated key.
+        Raises:
+            SOMAError:
+                Upon deletion of a mutated key.
         """
         self._del_element(key)
 
@@ -420,9 +420,7 @@ class CollectionBase(
         return iter(self._contents)
 
     def __repr__(self) -> str:
-        """
-        Default display for ``Collection``.
-        """
+        """Default display for ``Collection``."""
         lines = itertools.chain((self._my_repr(),), self._contents_lines(""))
         return "<" + "\n".join(lines) + ">"
 
@@ -555,7 +553,8 @@ class Collection(
     per-element URI. A ``Collection`` may store its reference to an
     element by absolute URI or relative URI.
 
-    [lifecycle: experimental]
+    Lifecycle:
+        Experimental.
 
     Examples:
         >>> import tiledbsoma

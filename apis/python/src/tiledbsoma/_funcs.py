@@ -1,3 +1,8 @@
+# Copyright (c) 2021-2023 The Chan Zuckerberg Initiative Foundation
+# Copyright (c) 2021-2023 TileDB, Inc.
+#
+# Licensed under the MIT License.
+
 """Utilities and decorators around modifying functions."""
 
 import inspect
@@ -36,7 +41,7 @@ def forwards_kwargs_to(
 ) -> Callable[[_CT], _CT]:
     """Decorator function to update the signature with ``dst``'s kwargs.
 
-    Example::
+    Example:
 
         def _internal(__it, a, b, c=3, *d, e=6, **f) -> None:
             ...

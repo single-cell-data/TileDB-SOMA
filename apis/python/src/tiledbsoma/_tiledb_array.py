@@ -1,3 +1,8 @@
+# Copyright (c) 2021-2023 The Chan Zuckerberg Initiative Foundation
+# Copyright (c) 2021-2023 TileDB, Inc.
+#
+# Licensed under the MIT License.
+
 from typing import Any, Dict, Optional, Sequence, Tuple
 
 import pyarrow as pa
@@ -15,10 +20,12 @@ from .options._soma_tiledb_context import SOMATileDBContext
 
 
 class TileDBArray(TileDBObject[_tdb_handles.ArrayWrapper]):
-    """
-    Wraps arrays from TileDB-Py by retaining a URI, options, etc.  Also serves as an abstraction layer to hide TileDB-specific details from the API, unless requested.
+    """Wraps arrays from TileDB-Py by retaining a URI, options, etc.
+    Also serves as an abstraction layer to hide TileDB-specific details
+    from the API, unless requested.
 
-    [lifecycle: experimental]
+    Lifecycle:
+        Experimental.
     """
 
     __slots__ = ()
@@ -27,33 +34,29 @@ class TileDBArray(TileDBObject[_tdb_handles.ArrayWrapper]):
 
     @property
     def schema(self) -> pa.Schema:
-        """
-        Return data schema, in the form of an Arrow Schema [lifecycle: experimental].
+        """Returns data schema, in the form of an Arrow Schema.
+
+        Lifecycle:
+            Experimental.
         """
         return tiledb_schema_to_arrow(self._tiledb_array_schema())
 
     def _tiledb_array_schema(self) -> tiledb.ArraySchema:
-        """
-        Returns the TileDB array schema, for internal use.
-        """
+        """Returns the TileDB array schema, for internal use."""
         return self._handle.schema
 
     def _tiledb_array_keys(self) -> Tuple[str, ...]:
-        """
-        Return all dim and attr names.
-        """
+        """Return all dim and attr names."""
         return self._tiledb_dim_names() + self._tiledb_attr_names()
 
     def _tiledb_dim_names(self) -> Tuple[str, ...]:
-        """
-        Reads the dimension names from the schema: for example, ['obs_id', 'var_id'].
-        """
+        """Reads the dimension names from the schema: for example, ['obs_id', 'var_id']."""
         schema = self._handle.schema
         return tuple(schema.domain.dim(i).name for i in range(schema.domain.ndim))
 
     def _tiledb_attr_names(self) -> Tuple[str, ...]:
-        """
-        Reads the attribute names from the schema: for example, the list of column names in a dataframe.
+        """Reads the attribute names from the schema:
+        for example, the list of column names in a dataframe.
         """
         schema = self._handle.schema
         return tuple(schema.attr(i).name for i in range(schema.nattr))
@@ -70,9 +73,7 @@ class TileDBArray(TileDBObject[_tdb_handles.ArrayWrapper]):
         query_condition: Optional[tiledb.QueryCondition] = None,
         result_order: Optional[ResultOrderStr] = None,
     ) -> clib.SOMAReader:
-        """
-        Construct a C++ SOMAReader using appropriate context/config/etc.
-        """
+        """Constructs a C++ SOMAReader using appropriate context/config/etc."""
         # Leave empty arguments out of kwargs to allow C++ constructor defaults to apply, as
         # they're not all wrapped in std::optional<>.
         kwargs: Dict[str, object] = {}
@@ -123,7 +124,8 @@ class TileDBArray(TileDBObject[_tdb_handles.ArrayWrapper]):
         TileDB Array types; subclasses can implement their own readers that
         handle types not recognized here.
 
-        :return: True if successful, False if unrecognized.
+        Returns:
+            True if successful, False if unrecognized.
         """
         del dim_idx  # Unused.
         if coord is None:

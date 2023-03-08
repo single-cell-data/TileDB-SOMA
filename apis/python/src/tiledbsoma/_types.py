@@ -1,3 +1,8 @@
+# Copyright (c) 2021-2023 The Chan Zuckerberg Initiative Foundation
+# Copyright (c) 2021-2023 TileDB, Inc.
+#
+# Licensed under the MIT License.
+
 import datetime
 import pathlib
 from typing import TYPE_CHECKING, Any, List, Sequence, Tuple, Union
