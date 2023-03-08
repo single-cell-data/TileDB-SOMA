@@ -152,7 +152,7 @@ bool sr_complete(Rcpp::XPtr<tdbs::SOMAReader> sr) {
    return res;
 }
 
-//' @rdname sr_next
+//' @rdname sr_setup
 //' @export
 // [[Rcpp::export]]
 Rcpp::List sr_next(Rcpp::XPtr<tdbs::SOMAReader> sr) {

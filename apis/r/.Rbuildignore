@@ -23,6 +23,3 @@ tiledbsoma/libtiledbsoma.tar.gz.current
 # vscode
 ^\.vscode$
 ^\.devcontainer$
-^travis-tool\.sh$
-^run\.sh$
-^travis_wait_.*\.log$

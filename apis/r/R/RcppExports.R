@@ -107,13 +107,13 @@ sr_setup <- function(uri, config, colnames = NULL, qc = NULL, dim_points = NULL,
     .Call(`_tiledbsoma_sr_setup`, uri, config, colnames, qc, dim_points, dim_ranges, loglevel)
 }
 
-#' @rdname sr_complete
+#' @rdname sr_setup
 #' @export
 sr_complete <- function(sr) {
     .Call(`_tiledbsoma_sr_complete`, sr)
 }
 
-#' @rdname sr_next
+#' @rdname sr_setup
 #' @export
 sr_next <- function(sr) {
     .Call(`_tiledbsoma_sr_next`, sr)
