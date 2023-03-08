@@ -194,18 +194,10 @@ class ManagedQuery {
      * @brief Return true if the query result buffers hold all results from the
      * query. The return value is false if the query was incomplete.
      *
-     * If `query_status_only` is true, return true if the query status is
-     * complete.
-     *
-     * If `query_status_only` is false, return true if the query status
-     * is complete or if the query is empty (no ranges have been added to the
-     * query).
-     *
-     * @param query_status_only Query complete mode.
      * @return true The buffers hold all results from the query.
      */
-    bool results_complete(bool query_status_only = false) {
-        return is_complete(query_status_only) && results_complete_;
+    bool results_complete() {
+        return is_complete() && results_complete_;
     }
 
     /**
