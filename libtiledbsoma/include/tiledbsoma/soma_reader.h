@@ -272,10 +272,18 @@ class SOMAReader {
     /**
      * @brief Check if the query is complete.
      *
-     * @return true Query status is COMPLETE
+     * If `query_status_only` is true, return true if the query status is
+     * complete.
+     *
+     * If `query_status_only` is false, return true if the query status
+     * is complete or if the query is empty (no ranges have been added to the
+     * query).
+     *
+     * @param query_status_only Query complete mode.
+     * @return true if the query is complete, as described above
      */
-    bool is_complete() {
-        return mq_->is_complete();
+    bool is_complete(bool query_status_only = false) {
+        return mq_->is_complete(query_status_only);
     }
 
     /**
