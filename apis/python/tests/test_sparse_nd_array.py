@@ -439,6 +439,8 @@ def test_coo_custom_shape(tmp_path):
         coords = (slice(None),)
         assert a.read(coords).coos().shape == (1000, 1000)
         assert a.read(coords).coos(shape=(500, 500)).shape == (500, 500)
+        with pytest.raises(ValueError):
+            assert a.read(coords).coos(shape=(500, 500, 500))
 
 
 @pytest.mark.parametrize("shape", [(), (0,), (10, 0), (0, 10), (1, 2, 0)])

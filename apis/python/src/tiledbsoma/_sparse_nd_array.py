@@ -303,6 +303,8 @@ class SparseNDArrayRead(somacore.SparseRead):
         Lifecycle:
             Experimental.
         """
+        if shape is not None and (len(shape) != len(self.shape)):
+            raise ValueError(f"shape must be a tuple of size {len(self.shape)}")
         return SparseCOOTensorReadIter(self.sr, shape or self.shape)
 
     def dense_tensors(self) -> somacore.ReadIter[pa.Tensor]:
