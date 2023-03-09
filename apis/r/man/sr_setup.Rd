@@ -41,8 +41,6 @@ for the given dimension. Each dimension can be one entry in the list.}
 which lets prior setting prevail, any other value is set as new logging level.}
 
 \item{sr}{An external pointer to a TileDB SOMAReader object}
-
-\item{ctx}{An external pointer to a TileDB Context object}
 }
 \value{
 \code{sr_setup} returns an external pointer to a SOMAReader. \code{sr_complete}
