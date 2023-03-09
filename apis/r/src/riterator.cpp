@@ -49,11 +49,11 @@ namespace tdbs = tiledbsoma;
 //' \dontrun{
 //' ctx <- tiledb::tiledb_ctx()
 //' uri <- "test/soco/pbmc3k_processed/obs"
-//' sr <- sr_setup(ctx@ptr, uri, "warn")
+//' sr <- sr_setup(ctx@ptr, uri, loglevel="warn")
 //' rl <- data.frame()
-//' while (nrow(rl) == 0 || !tiledbsoma:::sr_complete(sr)) {
-//'     dat <- tiledbsoma:::sr_next(sr)
-//'     dat |>
+//' while (nrow(rl) == 0 || !sr_complete(sr)) {
+//'     sr |>
+//'         sr_next() |>
 //'         as_arrow_table() |>
 //'         collect() |>
 //'         as.data.frame() |>
@@ -147,13 +147,17 @@ Rcpp::XPtr<tdbs::SOMAReader> sr_setup(Rcpp::XPtr<tiledb::Context> ctx,
     Rcpp::XPtr<tdbs::SOMAReader> xptr = make_xptr<tdbs::SOMAReader>(ptr);
     return xptr;
 }
+
 //' @rdname sr_setup
 //' @export
 // [[Rcpp::export]]
 bool sr_complete(Rcpp::XPtr<tdbs::SOMAReader> sr) {
    check_xptr_tag<tdbs::SOMAReader>(sr);
-   spdl::info("[sr_complete] Complete test is {}", sr->is_complete());
-   return sr->is_complete();
+   size_t nobs = sr->total_num_cells();
+   bool complt = sr->is_complete(true);
+   bool res = complt && nobs > 0; // completed transfer if query status complete and data shipped
+   spdl::info("[sr_complete] Complete query test {} (compl {} nobs {})", res, complt, nobs);
+   return res;
 }
 
 //' @rdname sr_setup
@@ -162,12 +166,15 @@ bool sr_complete(Rcpp::XPtr<tdbs::SOMAReader> sr) {
 Rcpp::List sr_next(Rcpp::XPtr<tdbs::SOMAReader> sr) {
    check_xptr_tag<tdbs::SOMAReader>(sr);
 
-   auto sr_data = sr->read_next();
-   if (!sr->results_complete()) {
-       spdl::trace("[sr_next] Read is incomplete");
+   if (sr_complete(sr)) {
+       spdl::trace("[sr_next] complete {} num_cells {}",
+                   sr->is_complete(true), sr->total_num_cells());
+       return Rcpp::List::create(R_NilValue, R_NilValue);
    }
+
+   auto sr_data = sr->read_next();
    spdl::info("[sr_next] Read {} rows and {} cols",
-              sr_data->get()->num_rows(), sr_data->get()->names().size()) ;
+              sr_data->get()->num_rows(), sr_data->get()->names().size());
 
    const std::vector<std::string> names = sr_data->get()->names();
    auto ncol = names.size();
