@@ -92,7 +92,7 @@ check_arrow_array_tag <- function(xp) {
 #' uri <- "test/soco/pbmc3k_processed/obs"
 #' sr <- sr_setup(uri, config=as.character(config(ctx)), loglevel="warn")
 #' rl <- data.frame()
-#' while (nrow(rl) == 0 || !sr_complete(sr)) {
+#' while (!sr_complete(sr)) {
 #'     sr |>
 #'         sr_next() |>
 #'         as_arrow_table() |>

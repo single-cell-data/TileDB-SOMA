@@ -61,9 +61,9 @@ ctx <- tiledb::tiledb_ctx()
 uri <- "test/soco/pbmc3k_processed/obs"
 sr <- sr_setup(uri, config=as.character(config(ctx)), loglevel="warn")
 rl <- data.frame()
-while (nrow(rl) == 0 || !tiledbsoma:::sr_complete(sr)) {
-    dat <- tiledbsoma:::sr_next(sr)
-    dat |>
+while (!sr_complete(sr)) {
+    sr |>
+        sr_next() |>
         as_arrow_table() |>
         collect() |>
         as.data.frame() |>
