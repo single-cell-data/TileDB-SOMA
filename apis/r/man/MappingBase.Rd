@@ -61,6 +61,7 @@ getting (\code{self$get()}) and setting (\code{self$set()}) items in the map
 \item \href{#method-MappingBase-get}{\code{MappingBase$get()}}
 \item \href{#method-MappingBase-set}{\code{MappingBase$set()}}
 \item \href{#method-MappingBase-setv}{\code{MappingBase$setv()}}
+\item \href{#method-MappingBase-remove}{\code{MappingBase$remove()}}
 \item \href{#method-MappingBase-update}{\code{MappingBase$update()}}
 \item \href{#method-MappingBase-length}{\code{MappingBase$length()}}
 \item \href{#method-MappingBase-to_list}{\code{MappingBase$to_list()}}
@@ -187,6 +188,26 @@ the entry for \code{key}}
 \subsection{Returns}{
 \[chainable\] Invisibly returns \code{self} with the values
 of \code{...} added to the map
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-MappingBase-remove"></a>}}
+\if{latex}{\out{\hypertarget{method-MappingBase-remove}{}}}
+\subsection{Method \code{remove()}}{
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{MappingBase$remove(key)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{key}}{Key to remove}
+}
+\if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+\[chainable\] Invisibly returns \code{self} with \code{key}
+removed from the map
 }
 }
 \if{html}{\out{<hr>}}

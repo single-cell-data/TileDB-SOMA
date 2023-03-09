@@ -24,9 +24,10 @@ Context map for TileDB-backed SOMA objects
 }
 }
 \if{html}{\out{
-<details open><summary>Inherited methods</summary>
+<details><summary>Inherited methods</summary>
 <ul>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="MappingBase" data-id="print"><a href='../../tiledbsoma/html/MappingBase.html#method-MappingBase-print'><code>tiledbsoma::MappingBase$print()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="MappingBase" data-id="remove"><a href='../../tiledbsoma/html/MappingBase.html#method-MappingBase-remove'><code>tiledbsoma::MappingBase$remove()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="MappingBase" data-id="setv"><a href='../../tiledbsoma/html/MappingBase.html#method-MappingBase-setv'><code>tiledbsoma::MappingBase$setv()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="MappingBase" data-id="to_list"><a href='../../tiledbsoma/html/MappingBase.html#method-MappingBase-to_list'><code>tiledbsoma::MappingBase$to_list()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="MappingBase" data-id="update"><a href='../../tiledbsoma/html/MappingBase.html#method-MappingBase-update'><code>tiledbsoma::MappingBase$update()</code></a></span></li>

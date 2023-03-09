@@ -100,6 +100,15 @@ MappingBase <- R6::R6Class(
       }
       return(invisible(x = self))
     },
+    #' @param key Key to remove
+    #'
+    #' @return \[chainable\] Invisibly returns \code{self} with \code{key}
+    #' removed from the map
+    #'
+    remove = function(key) {
+      self$set(key = key, value = NULL)
+      return(invisible(self))
+    },
     #' @param map A mapping type to update the current map with
     #'
     #' @return \[chainable\] Invisibly returns \code{self} with the value
