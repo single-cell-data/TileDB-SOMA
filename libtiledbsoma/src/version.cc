@@ -49,4 +49,10 @@ std::string as_string() {
         "libtiledbsoma={}\nlibtiledb={}.{}.{}", VERSION, major, minor, patch);
 }
 
+std::tuple<int, int, int> as_triple() {
+    int major, minor, patch;
+    tiledb_version(&major, &minor, &patch);
+    return std::make_tuple(major, minor, patch);
+}
+
 };  // namespace tiledbsoma::version

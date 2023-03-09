@@ -40,6 +40,7 @@
 namespace tiledbsoma::version {
 
 std::string as_string();
+std::tuple<int, int, int> as_triple();
 
 };  // namespace tiledbsoma::version
 
