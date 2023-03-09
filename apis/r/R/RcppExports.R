@@ -90,7 +90,7 @@ check_arrow_array_tag <- function(xp) {
 #' \dontrun{
 #' ctx <- tiledb::tiledb_ctx()
 #' uri <- "test/soco/pbmc3k_processed/obs"
-#' sr <- sr_setup(uri, config=as.character(config(ctx)), loglevel="warn")
+#' sr <- sr_setup(uri, config=as.character(tiledb::config(ctx)), loglevel="warn")
 #' rl <- data.frame()
 #' while (!sr_complete(sr)) {
 #'     sr |>
