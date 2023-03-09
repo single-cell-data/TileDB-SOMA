@@ -298,7 +298,7 @@ class SparseNDArrayRead(somacore.SparseRead):
 
         Args:
             shape:
-                Optionally, a NTuple that overrides the default capacity.
+                Optionally, a tuple that overrides the default capacity.
 
         Lifecycle:
             Experimental.
