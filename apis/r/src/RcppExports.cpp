@@ -161,7 +161,7 @@ BEGIN_RCPP
 END_RCPP
 }
 // tiledb_embedded_version
-std::string tiledb_embedded_version();
+Rcpp::IntegerVector tiledb_embedded_version();
 RcppExport SEXP _tiledbsoma_tiledb_embedded_version() {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
