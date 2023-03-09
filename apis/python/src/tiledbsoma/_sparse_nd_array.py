@@ -292,14 +292,18 @@ class SparseNDArrayRead(somacore.SparseRead):
         self.sr = sr
         self.shape = shape
 
-    def coos(self) -> SparseCOOTensorReadIter:
+    def coos(self, shape: Optional[NTuple] = None) -> SparseCOOTensorReadIter:
         """
         Returns an iterator of Arrow SparseCOOTensor.
+
+        Args:
+            shape:
+                Optionally, a NTuple that overrides the default capacity.
 
         Lifecycle:
             Experimental.
         """
-        return SparseCOOTensorReadIter(self.sr, self.shape)
+        return SparseCOOTensorReadIter(self.sr, shape or self.shape)
 
     def dense_tensors(self) -> somacore.ReadIter[pa.Tensor]:
         """

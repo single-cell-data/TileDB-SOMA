@@ -430,6 +430,17 @@ def test_empty_read_sparse_coo(tmp_path):
         assert sum(t.non_zero_length for t in a.read(coords).coos()) == 0
 
 
+def test_coo_custom_shape(tmp_path):
+    soma.SparseNDArray.create(
+        tmp_path.as_posix(), type=pa.uint16(), shape=(1000, 1000)
+    ).close()
+
+    with soma.SparseNDArray.open(tmp_path.as_posix()) as a:
+        coords = (slice(None),)
+        assert a.read(coords).coos().shape == (1000, 1000)
+        assert a.read(coords).coos(shape=(500, 500)).shape == (500, 500)
+
+
 @pytest.mark.parametrize("shape", [(), (0,), (10, 0), (0, 10), (1, 2, 0)])
 def test_zero_length_fail(tmp_path, shape):
     """Zero length dimensions are expected to fail"""
