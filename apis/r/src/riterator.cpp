@@ -64,7 +64,7 @@ namespace tdbs = tiledbsoma;
 //' @export
 // [[Rcpp::export]]
 Rcpp::XPtr<tdbs::SOMAReader> sr_setup(const std::string& uri,
-                                      Rcpp::CharacterVector config,
+                                      Rcpp::Nullable<Rcpp::CharacterVector> config,
                                       Rcpp::Nullable<Rcpp::CharacterVector> colnames = R_NilValue,
                                       Rcpp::Nullable<Rcpp::XPtr<tiledb::QueryCondition>> qc = R_NilValue,
                                       Rcpp::Nullable<Rcpp::List> dim_points = R_NilValue,
