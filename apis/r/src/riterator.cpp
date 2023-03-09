@@ -49,7 +49,7 @@ namespace tdbs = tiledbsoma;
 //' \dontrun{
 //' ctx <- tiledb::tiledb_ctx()
 //' uri <- "test/soco/pbmc3k_processed/obs"
-//' sr <- sr_setup(ctx@ptr, uri, loglevel="warn")
+//' sr <- sr_setup(uri, config=as.character(config(ctx)), loglevel="warn")
 //' rl <- data.frame()
 //' while (nrow(rl) == 0 || !sr_complete(sr)) {
 //'     sr |>
@@ -65,7 +65,7 @@ namespace tdbs = tiledbsoma;
 //' @export
 // [[Rcpp::export]]
 Rcpp::XPtr<tdbs::SOMAReader> sr_setup(const std::string& uri,
-                                      Rcpp::CharacterVector config,
+                                      Rcpp::Nullable<Rcpp::CharacterVector> config,
                                       Rcpp::Nullable<Rcpp::CharacterVector> colnames = R_NilValue,
                                       Rcpp::Nullable<Rcpp::XPtr<tiledb::QueryCondition>> qc = R_NilValue,
                                       Rcpp::Nullable<Rcpp::List> dim_points = R_NilValue,

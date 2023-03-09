@@ -91,7 +91,7 @@ check_arrow_array_tag <- function(xp) {
 #' \dontrun{
 #' ctx <- tiledb::tiledb_ctx()
 #' uri <- "test/soco/pbmc3k_processed/obs"
-#' sr <- sr_setup(ctx@ptr, uri, "warn")
+#' sr <- sr_setup(uri, config=as.character(config(ctx)), loglevel="warn")
 #' rl <- data.frame()
 #' while (nrow(rl) == 0 || !tiledbsoma:::sr_complete(sr)) {
 #'     dat <- tiledbsoma:::sr_next(sr)
