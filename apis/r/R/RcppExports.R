@@ -71,7 +71,7 @@ check_arrow_array_tag <- function(xp) {
 #'
 #' @param uri Character value with URI path to a SOMA data set
 #' @param config Named chracter vector with \sQuote{key} and \sQuote{value} pairs
-#' used as TileDB config parameters. If unset default configuration is used.
+#' used as TileDB config parameters.
 #' @param colnames Optional vector of character value with the name of the columns to retrieve
 #' @param qc Optional external Pointer object to TileDB Query Condition, defaults to \sQuote{NULL} i.e.
 #' no query condition
