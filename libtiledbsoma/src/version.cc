@@ -1,11 +1,11 @@
 /**
- * @file   tiledbsoma
+ * @file   version.cc
  *
  * @section LICENSE
  *
  * The MIT License
  *
- * @copyright Copyright (c) 2022 TileDB, Inc.
+ * @copyright Copyright (c) 2023 TileDB, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -27,20 +27,26 @@
  *
  * @section DESCRIPTION
  *
- * This is the main import header for the C++ API
+ * This exposes the version of the TileDB Embedded library in use.
  */
 
-#ifndef __TILEDBSOMA__
-#define __TILEDBSOMA__
+#include "tiledbsoma/version.h"
+#include <tiledb/tiledb>
+#include "tiledbsoma/logger_public.h"
 
-#include <tiledbsoma/array_buffers.h>
-#include <tiledbsoma/arrow_adapter.h>
-#include <tiledbsoma/column_buffer.h>
-#include <tiledbsoma/common.h>
-#include <tiledbsoma/logger_public.h>
-#include <tiledbsoma/managed_query.h>
-#include <tiledbsoma/soma_reader.h>
-#include <tiledbsoma/stats.h>
-#include <tiledbsoma/version.h>
-
+#ifdef BUILD_COMMIT_HASH
+#define VERSION BUILD_COMMIT_HASH
+#else
+#define VERSION "dev"
 #endif
+
+namespace tiledbsoma::version {
+
+std::string as_string() {
+    int major, minor, patch;
+    tiledb_version(&major, &minor, &patch);
+    return fmt::format(
+        "libtiledbsoma={}\nlibtiledb={}.{}.{}", VERSION, major, minor, patch);
+}
+
+};  // namespace tiledbsoma::version

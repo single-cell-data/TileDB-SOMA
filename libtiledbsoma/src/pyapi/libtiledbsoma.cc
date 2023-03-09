@@ -40,12 +40,6 @@
 
 #include "query_condition.cc"
 
-#ifdef BUILD_COMMIT_HASH
-#define VERSION BUILD_COMMIT_HASH
-#else
-#define VERSION "dev"
-#endif
-
 #define DENUM(x) .value(#x, TILEDB_##x)
 
 using namespace tiledbsoma;
@@ -91,13 +85,6 @@ py::object to_table(std::shared_ptr<ArrayBuffers> array_buffers) {
     return pa_table_from_arrays(arrays, names);
 }
 
-std::string version() {
-    int major, minor, patch;
-    tiledb_version(&major, &minor, &patch);
-    return fmt::format(
-        "libtiledbsoma={}\nlibtiledb={}.{}.{}", VERSION, major, minor, patch);
-}
-
 /**
  * @brief pybind11 bindings
  *
@@ -107,7 +94,7 @@ PYBIND11_MODULE(libtiledbsoma, m) {
 
     m.doc() = "SOMA acceleration library";
 
-    m.def("version", []() { return version(); });
+    m.def("version", []() { return tiledbsoma::version::as_string(); });
 
     m.def(
         "config_logging",
@@ -122,22 +109,21 @@ PYBIND11_MODULE(libtiledbsoma, m) {
 
     m.def(
         "tiledbsoma_stats_enable",
-        []() { tiledb::Stats::enable(); },
+        []() { tiledbsoma::stats::enable(); },
         "Enable TileDB internal statistics [lifecycle: experimental].");
     m.def(
         "tiledbsoma_stats_disable",
-        []() { tiledb::Stats::disable(); },
+        []() { tiledbsoma::stats::disable(); },
         "Disable TileDB internal statistics [lifecycle: experimental].");
     m.def(
         "tiledbsoma_stats_reset",
-        []() { tiledb::Stats::reset(); },
+        []() { tiledbsoma::stats::reset(); },
         "Reset all TileDB internal statistics to 0 [lifecycle: experimental].");
     m.def(
         "tiledbsoma_stats_dump",
         []() {
-            py::print(version());
-            std::string stats;
-            tiledb::Stats::dump(&stats);
+            py::print(tiledbsoma::version::as_string());
+            std::string stats = tiledbsoma::stats::dump();
             py::print(stats);
         },
         "Print TileDB internal statistics [lifecycle: experimental].");

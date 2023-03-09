@@ -69,8 +69,9 @@ check_arrow_array_tag <- function(xp) {
 #'   \item{\code{sr_next}}{returns the next chunk}
 #' }
 #'
-#' @param ctx An external pointer to a TileDB Context object
 #' @param uri Character value with URI path to a SOMA data set
+#' @param config Named chracter vector with \sQuote{key} and \sQuote{value} pairs
+#' used as TileDB config parameters.
 #' @param colnames Optional vector of character value with the name of the columns to retrieve
 #' @param qc Optional external Pointer object to TileDB Query Condition, defaults to \sQuote{NULL} i.e.
 #' no query condition
@@ -78,8 +79,6 @@ check_arrow_array_tag <- function(xp) {
 #' dimension(s). Each dimension can be one entry in the list.
 #' @param dim_ranges Optional named list with two-column matrix where each row select a range
 #' for the given dimension. Each dimension can be one entry in the list.
-#' @param config Optional named chracter vector with \sQuote{key} and \sQuote{value} pairs
-#' used as TileDB config parameters. If unset default configuration is used.
 #' @param loglevel Character value with the desired logging level, defaults to \sQuote{auto}
 #' which lets prior setting prevail, any other value is set as new logging level.
 #' @param sr An external pointer to a TileDB SOMAReader object
@@ -91,11 +90,11 @@ check_arrow_array_tag <- function(xp) {
 #' \dontrun{
 #' ctx <- tiledb::tiledb_ctx()
 #' uri <- "test/soco/pbmc3k_processed/obs"
-#' sr <- sr_setup(ctx@ptr, uri, "warn")
+#' sr <- sr_setup(uri, config=as.character(config(ctx)), loglevel="warn")
 #' rl <- data.frame()
-#' while (nrow(rl) == 0 || !tiledbsoma:::sr_complete(sr)) {
-#'     dat <- tiledbsoma:::sr_next(sr)
-#'     dat |>
+#' while (!sr_complete(sr)) {
+#'     sr |>
+#'         sr_next() |>
 #'         as_arrow_table() |>
 #'         collect() |>
 #'         as.data.frame() |>
@@ -105,8 +104,8 @@ check_arrow_array_tag <- function(xp) {
 #' summary(rl)
 #' }
 #' @export
-sr_setup <- function(ctx, uri, colnames = NULL, qc = NULL, dim_points = NULL, dim_ranges = NULL, config = NULL, loglevel = "auto") {
-    .Call(`_tiledbsoma_sr_setup`, ctx, uri, colnames, qc, dim_points, dim_ranges, config, loglevel)
+sr_setup <- function(uri, config, colnames = NULL, qc = NULL, dim_points = NULL, dim_ranges = NULL, loglevel = "auto") {
+    .Call(`_tiledbsoma_sr_setup`, uri, config, colnames, qc, dim_points, dim_ranges, loglevel)
 }
 
 #' @rdname sr_setup
@@ -126,7 +125,7 @@ sr_next <- function(sr) {
 #' The functions `tiledbsoma_stats_enable`, `tiledbsoma_stats_disable`, `tiledbsoma_stats_reset`
 #' and `tiledbsoma_stats_dump` expose the TileDB Core functionality for performance measurements
 #' and statistics.  The first three just turn on, off or reset, the fourth returns a JSON string.
-#' For convenience the function `tiledbsoma_stats_show` displays the information on the console
+#' For convenience the function `tiledbsoma_stats_show` displays the information on the console.
 #'
 #' @export
 tiledbsoma_stats_enable <- function() {

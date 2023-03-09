@@ -7,13 +7,12 @@
 \title{Iterator-Style Access to SOMA Array via SOMAReader}
 \usage{
 sr_setup(
-  ctx,
   uri,
+  config,
   colnames = NULL,
   qc = NULL,
   dim_points = NULL,
   dim_ranges = NULL,
-  config = NULL,
   loglevel = "auto"
 )
 
@@ -22,9 +21,10 @@ sr_complete(sr)
 sr_next(sr)
 }
 \arguments{
-\item{ctx}{An external pointer to a TileDB Context object}
-
 \item{uri}{Character value with URI path to a SOMA data set}
+
+\item{config}{Named chracter vector with \sQuote{key} and \sQuote{value} pairs
+used as TileDB config parameters.}
 
 \item{colnames}{Optional vector of character value with the name of the columns to retrieve}
 
@@ -36,9 +36,6 @@ dimension(s). Each dimension can be one entry in the list.}
 
 \item{dim_ranges}{Optional named list with two-column matrix where each row select a range
 for the given dimension. Each dimension can be one entry in the list.}
-
-\item{config}{Optional named chracter vector with \sQuote{key} and \sQuote{value} pairs
-used as TileDB config parameters. If unset default configuration is used.}
 
 \item{loglevel}{Character value with the desired logging level, defaults to \sQuote{auto}
 which lets prior setting prevail, any other value is set as new logging level.}
@@ -62,11 +59,11 @@ class so that iterative access over parts of a (large) array is possible.
 \dontrun{
 ctx <- tiledb::tiledb_ctx()
 uri <- "test/soco/pbmc3k_processed/obs"
-sr <- sr_setup(ctx@ptr, uri, "warn")
+sr <- sr_setup(uri, config=as.character(config(ctx)), loglevel="warn")
 rl <- data.frame()
-while (nrow(rl) == 0 || !tiledbsoma:::sr_complete(sr)) {
-    dat <- tiledbsoma:::sr_next(sr)
-    dat |>
+while (!sr_complete(sr)) {
+    sr |>
+        sr_next() |>
         as_arrow_table() |>
         collect() |>
         as.data.frame() |>
