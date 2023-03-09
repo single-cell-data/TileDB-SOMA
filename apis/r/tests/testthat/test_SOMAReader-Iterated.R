@@ -62,7 +62,7 @@ test_that("Iterated Interface from SOMAReader", {
     tgzfile <- system.file("raw-data", "soco-pbmc3k_processed-obs.tar.gz", package="tiledbsoma")
     untar(tarfile = tgzfile, exdir = tdir)
     uri <- file.path(tdir, "obs")
-    sr <- sr_setup(ctx@ptr, uri)
+    sr <- sr_setup(uri, config=as.character(config(ctx)))
 
     expect_false(tiledbsoma:::sr_complete(sr))
     dat <- dat <- sr_next(sr)
