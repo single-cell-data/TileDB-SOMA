@@ -23,7 +23,7 @@ sr_next(sr)
 \arguments{
 \item{uri}{Character value with URI path to a SOMA data set}
 
-\item{config}{Optional named chracter vector with \sQuote{key} and \sQuote{value} pairs
+\item{config}{Named chracter vector with \sQuote{key} and \sQuote{value} pairs
 used as TileDB config parameters. If unset default configuration is used.}
 
 \item{colnames}{Optional vector of character value with the name of the columns to retrieve}
@@ -41,8 +41,6 @@ for the given dimension. Each dimension can be one entry in the list.}
 which lets prior setting prevail, any other value is set as new logging level.}
 
 \item{sr}{An external pointer to a TileDB SOMAReader object}
-
-\item{ctx}{An external pointer to a TileDB Context object}
 }
 \value{
 \code{sr_setup} returns an external pointer to a SOMAReader. \code{sr_complete}

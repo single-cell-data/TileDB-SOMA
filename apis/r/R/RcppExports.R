@@ -69,8 +69,9 @@ check_arrow_array_tag <- function(xp) {
 #'   \item{\code{sr_next}}{returns the next chunk}
 #' }
 #'
-#' @param ctx An external pointer to a TileDB Context object
 #' @param uri Character value with URI path to a SOMA data set
+#' @param config Named chracter vector with \sQuote{key} and \sQuote{value} pairs
+#' used as TileDB config parameters. If unset default configuration is used.
 #' @param colnames Optional vector of character value with the name of the columns to retrieve
 #' @param qc Optional external Pointer object to TileDB Query Condition, defaults to \sQuote{NULL} i.e.
 #' no query condition
@@ -78,8 +79,6 @@ check_arrow_array_tag <- function(xp) {
 #' dimension(s). Each dimension can be one entry in the list.
 #' @param dim_ranges Optional named list with two-column matrix where each row select a range
 #' for the given dimension. Each dimension can be one entry in the list.
-#' @param config Optional named chracter vector with \sQuote{key} and \sQuote{value} pairs
-#' used as TileDB config parameters. If unset default configuration is used.
 #' @param loglevel Character value with the desired logging level, defaults to \sQuote{auto}
 #' which lets prior setting prevail, any other value is set as new logging level.
 #' @param sr An external pointer to a TileDB SOMAReader object
@@ -149,14 +148,5 @@ tiledbsoma_stats_reset <- function() {
 #' @export
 tiledbsoma_stats_dump <- function() {
     .Call(`_tiledbsoma_tiledbsoma_stats_dump`)
-}
-
-#' TileDB Embedded Version interface
-#'
-#' This gets the version of the TileDB Embedded library that is currently in use.
-#'
-#' @export
-tiledb_embedded_version <- function() {
-    .Call(`_tiledbsoma_tiledb_embedded_version`)
 }
 
