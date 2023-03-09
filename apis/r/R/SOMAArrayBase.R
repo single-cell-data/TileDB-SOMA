@@ -34,7 +34,11 @@ SOMAArrayBase <- R6::R6Class(
           NULL
       } else {
           rl <- sr_next(private$soma_reader_pointer)
-          private$soma_reader_transform(rl)
+          if (is.null(rl[[1]])) {
+            rl
+          } else {
+            private$soma_reader_transform(rl)
+          }
       }
     }
 
