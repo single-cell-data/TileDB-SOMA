@@ -7,21 +7,6 @@
     <loc>/LICENSE-text.html</loc>
   </url>
   <url>
-    <loc>/LICENSE.html</loc>
-  </url>
-  <url>
-    <loc>/articles/filtering.html</loc>
-  </url>
-  <url>
-    <loc>/articles/index.html</loc>
-  </url>
-  <url>
-    <loc>/articles/introduction.html</loc>
-  </url>
-  <url>
-    <loc>/articles/updates.html</loc>
-  </url>
-  <url>
     <loc>/authors.html</loc>
   </url>
   <url>
@@ -31,46 +16,40 @@
     <loc>/news/index.html</loc>
   </url>
   <url>
-    <loc>/reference/AnnotationArray.html</loc>
+    <loc>/reference/SOMAArrayBase.html</loc>
   </url>
   <url>
-    <loc>/reference/AnnotationDataframe.html</loc>
+    <loc>/reference/SOMAAxisIndexer.html</loc>
   </url>
   <url>
-    <loc>/reference/AnnotationGroup.html</loc>
+    <loc>/reference/SOMAAxisQuery.html</loc>
   </url>
   <url>
-    <loc>/reference/AnnotationMatrix.html</loc>
-  </url>
-  <url>
-    <loc>/reference/AnnotationMatrixGroup.html</loc>
-  </url>
-  <url>
-    <loc>/reference/AnnotationPairwiseMatrix.html</loc>
-  </url>
-  <url>
-    <loc>/reference/AnnotationPairwiseMatrixGroup.html</loc>
-  </url>
-  <url>
-    <loc>/reference/AssayMatrix.html</loc>
-  </url>
-  <url>
-    <loc>/reference/AssayMatrixGroup.html</loc>
-  </url>
-  <url>
-    <loc>/reference/CommandsArray.html</loc>
-  </url>
-  <url>
-    <loc>/reference/SCDataset.html</loc>
-  </url>
-  <url>
-    <loc>/reference/SCGroup.html</loc>
-  </url>
-  <url>
-    <loc>/reference/SOMA.html</loc>
+    <loc>/reference/SOMAAxisQueryResult.html</loc>
   </url>
   <url>
     <loc>/reference/SOMACollection.html</loc>
+  </url>
+  <url>
+    <loc>/reference/SOMACollectionBase.html</loc>
+  </url>
+  <url>
+    <loc>/reference/SOMADataFrame.html</loc>
+  </url>
+  <url>
+    <loc>/reference/SOMADenseNDArray.html</loc>
+  </url>
+  <url>
+    <loc>/reference/SOMAExperiment.html</loc>
+  </url>
+  <url>
+    <loc>/reference/SOMAExperimentAxisQuery.html</loc>
+  </url>
+  <url>
+    <loc>/reference/SOMAMeasurement.html</loc>
+  </url>
+  <url>
+    <loc>/reference/SOMASparseNDArray.html</loc>
   </url>
   <url>
     <loc>/reference/TileDBArray.html</loc>
@@ -82,12 +61,21 @@
     <loc>/reference/TileDBObject.html</loc>
   </url>
   <url>
-    <loc>/reference/dataset_seurat_pbmc3k.html</loc>
-  </url>
-  <url>
     <loc>/reference/index.html</loc>
   </url>
   <url>
-    <loc>/reference/tiledbsoma-package.html</loc>
+    <loc>/reference/show_package_versions.html</loc>
+  </url>
+  <url>
+    <loc>/reference/soma_reader.html</loc>
+  </url>
+  <url>
+    <loc>/reference/sr_setup.html</loc>
+  </url>
+  <url>
+    <loc>/reference/tiledb_embedded_version.html</loc>
+  </url>
+  <url>
+    <loc>/reference/tiledbsoma_stats_enable.html</loc>
   </url>
 </urlset>

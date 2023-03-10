@@ -17,7 +17,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">tiledbsoma</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.1.22.9001</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.0.0.9011</span>
       </span>
     </div>
 
@@ -25,22 +25,6 @@
       <ul class="nav navbar-nav"><li>
   <a href="../reference/index.html">Reference</a>
 </li>
-<li class="dropdown">
-  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-    Articles
-     
-    <span class="caret"></span>
-  </a>
-  <ul class="dropdown-menu" role="menu"><li>
-      <a href="../articles/filtering.html">Filtering</a>
-    </li>
-    <li>
-      <a href="../articles/introduction.html">Introduction</a>
-    </li>
-    <li>
-      <a href="../articles/updates.html">Selective Updates</a>
-    </li>
-  </ul></li>
 <li>
   <a href="../news/index.html">Changelog</a>
 </li>
@@ -63,117 +47,6 @@
       <small>Source: <a href="https://github.com/single-cell-data/TileDB-SOMA/blob/HEAD/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
-    <div class="section level2">
-<h2 class="page-header" data-toc-text="development version" id="tiledbsoma-development-version">tiledbsoma (development version)<a class="anchor" aria-label="anchor" href="#tiledbsoma-development-version"></a></h2>
-<div class="section level3">
-<h3 id="features-development-version">Features<a class="anchor" aria-label="anchor" href="#features-development-version"></a></h3>
-<ul><li>The <code>SOMACollection</code>’s <code>to_seurat()</code> method gains a <code>somas</code> argument that makes it possible to select a subset of <code>SOMA</code>s and <code>X</code> layers to be retrieved (<a href="https://github.com/single-cell-data/TileDB-SOMA/issues/571" class="external-link">#571</a>).</li>
-<li>New function <code><a href="../reference/dataset_seurat_pbmc3k.html">dataset_seurat_pbmc3k()</a></code> to download the pbmc3k dataset from 10X and import as a <code>Seurat</code> object without requiring any extra dependencies.</li>
-</ul></div>
-</div>
-    <div class="section level2">
-<h2 class="page-header" data-toc-text="0.1.19" id="tiledbsoma-0119">tiledbsoma 0.1.19<a class="anchor" aria-label="anchor" href="#tiledbsoma-0119"></a></h2>
-<div class="section level3">
-<h3 id="changes-0-1-19">Changes<a class="anchor" aria-label="anchor" href="#changes-0-1-19"></a></h3>
-<ul><li>Updated <code>setup-r</code> GitHub Action to v2 and <code>checkout</code> to v3</li></ul></div>
-</div>
-    <div class="section level2">
-<h2 class="page-header" data-toc-text="0.1.18" id="tiledbsoma-0118">tiledbsoma 0.1.18<a class="anchor" aria-label="anchor" href="#tiledbsoma-0118"></a></h2>
-<div class="section level3">
-<h3 id="features-0-1-18">Features<a class="anchor" aria-label="anchor" href="#features-0-1-18"></a></h3>
-<ul><li>The <code>AnnotationMatrix</code>’s <code>to_matrix()</code> method now supports batched reads via the <code>batch_mode</code> argument. This functionality can also be leveraged from <code>SOMA</code>’s <code>get_seurat_dimreductions_list()</code> and <code>get_seurat_dimreduction()</code> methods (<a href="https://github.com/single-cell-data/TileDB-SOMA/issues/548" class="external-link">#548</a>).</li></ul></div>
-<div class="section level3">
-<h3 id="changes-0-1-18">Changes<a class="anchor" aria-label="anchor" href="#changes-0-1-18"></a></h3>
-<ul><li>Decreased capacity of <code>AssayMatrix</code> arrays from 100,000 to 1,000 to improve remote-read performance (<a href="https://github.com/single-cell-data/TileDB-SOMA/issues/543" class="external-link">#543</a>)</li></ul></div>
-<div class="section level3">
-<h3 id="fixes-0-1-18">Fixes<a class="anchor" aria-label="anchor" href="#fixes-0-1-18"></a></h3>
-<ul><li>Don’t use default assay name when recreating a <code>Seurat</code> object (thanks <a href="https://github.com/dan11mcguire" class="external-link">@dan11mcguire</a>).</li></ul></div>
-</div>
-    <div class="section level2">
-<h2 class="page-header" data-toc-text="0.1.12" id="tiledbsoma-0112">tiledbsoma 0.1.12<a class="anchor" aria-label="anchor" href="#tiledbsoma-0112"></a></h2>
-<p>## Package name</p>
-<p>The package is now called <code>tiledbsoma</code>. This R code has been moved from <a href="https://github.com/TileDB-Inc/tiledbsc" class="external-link">tiledbsc</a>; now, the Python and R <code>tiledbsoma</code> packages share a repo.</p>
-<p>## Version</p>
-<p>The version bump to 0.1.12 reflects the fact that the previous (Python-only) version of this package was 0.1.11. Moving forward, GitHub tags will stamp updates to this combined Python-and-R package.</p>
-<div class="section level3">
-<h3 id="features-0-1-12">Features<a class="anchor" aria-label="anchor" href="#features-0-1-12"></a></h3>
-<div class="section level4">
-<h4 id="batched-reads-0-1-12">Batched Reads<a class="anchor" aria-label="anchor" href="#batched-reads-0-1-12"></a></h4>
-<ul><li>Added <code>batch_mode</code> option to methods that read <code>X</code> layers (i.e., <code>AssayMatrix</code> objects) into memory. When enabled, batch mode leverages the family of <code>Batched</code> classes added to tiledb-r in version <a href="https://github.com/TileDB-Inc/TileDB-R/releases/tag/0.14.0" class="external-link">0.14.0</a> to detect partial query results and resubmit until all results are retrieved. This feature is currently disabled by default and only applies to <code>X</code> layers (which are typically the largest arrays). You can enable batch mode from the following methods:<ul><li><code>SOMACollection$to_seurat()</code></li>
-<li><code>SOMA$to_seurat_assay()</code></li>
-<li><code>SOMA$to_summarized_experiment()</code></li>
-<li><code>SOMA$to_single_cell_experiment()</code></li>
-<li><code>AssayMatrix$to_dataframe()</code></li>
-<li><code>AssayMatrix$to_matrix()</code></li>
-</ul></li>
-<li>Members can now be removed from <code>TileDBGroup</code>s with <code>remove_member()</code>
-</li>
-</ul></div>
-<div class="section level4">
-<h4 id="assaymatrix-dimension-order-0-1-12">
-<code>AssayMatrix</code> Dimension Order<a class="anchor" aria-label="anchor" href="#assaymatrix-dimension-order-0-1-12"></a></h4>
-<p><code>obs_id</code> is now the first dimension in TileDB arrays created by the <code>AssayMatrix</code> class when converting a <code>Seurat</code> object or <em>Seurat</em> <code>Assay</code> object to a <code>SOMACollection</code> or <code>SOMA</code>, respectively.</p>
-<p>This change is <em>backwards compatible</em> with existing SOMAs, but it is recommended that you recreate arrays with the latest version of <em>tiledbsc</em>.</p>
-<p>This functionality is enabled by the new <code>transpose</code> argument added to the <code>AssayMatrix</code> class’ methods for reading/writing <code>matrix</code>-like objects. Concretely, this makes it possible to ingest a matrix into a TileDB array with the dimension order reversed relative to the original matrix shape. For example, consider matrix, <code>mat</code>, with dimensions i and j:</p>
-<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span></span>
-<span><span class="va">mat</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">6</span>, nrow <span class="op">=</span> <span class="fl">3</span>, dimnames <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="va">LETTERS</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">3</span><span class="op">]</span>, <span class="va">letters</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">2</span><span class="op">]</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="va">mat</span></span>
-<span><span class="co">#&gt;   a b</span></span>
-<span><span class="co">#&gt; A 1 4</span></span>
-<span><span class="co">#&gt; B 2 5</span></span>
-<span><span class="co">#&gt; C 3 6</span></span></code></pre></div>
-<p>By default AssayMatrix will create a TileDB array with dimensions i/j (i.e., the same order as the matrix):</p>
-<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span></span>
-<span><span class="va">amat1</span> <span class="op">&lt;-</span> <span class="va"><a href="../reference/AssayMatrix.html">AssayMatrix</a></span><span class="op">$</span><span class="fu">new</span><span class="op">(</span>uri <span class="op">=</span> <span class="st">"mem://assaymatrix1"</span>, verbose <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
-<span><span class="va">amat1</span><span class="op">$</span><span class="fu">from_matrix</span><span class="op">(</span><span class="va">mat</span>, index_cols <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"i"</span>, <span class="st">"j"</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="va">amat1</span><span class="op">$</span><span class="fu">to_dataframe</span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="co">#&gt;   i j value</span></span>
-<span><span class="co">#&gt; 1 A a     1</span></span>
-<span><span class="co">#&gt; 2 A b     4</span></span>
-<span><span class="co">#&gt; 3 B a     2</span></span>
-<span><span class="co">#&gt; 4 B b     5</span></span>
-<span><span class="co">#&gt; 5 C a     3</span></span>
-<span><span class="co">#&gt; 6 C b     6</span></span></code></pre></div>
-<p>However, if you set <code>transpose = TRUE</code>, the TileDB array will have dimensions j/i instead:</p>
-<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span></span>
-<span><span class="va">amat2</span> <span class="op">&lt;-</span> <span class="va"><a href="../reference/AssayMatrix.html">AssayMatrix</a></span><span class="op">$</span><span class="fu">new</span><span class="op">(</span>uri <span class="op">=</span> <span class="st">"mem://assaymatrix2"</span>, verbose <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
-<span><span class="va">amat2</span><span class="op">$</span><span class="fu">from_matrix</span><span class="op">(</span><span class="va">mat</span>, index_cols <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"i"</span>, <span class="st">"j"</span><span class="op">)</span>, transpose <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
-<span><span class="va">amat2</span><span class="op">$</span><span class="fu">to_dataframe</span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="co">#&gt;   j i value</span></span>
-<span><span class="co">#&gt; 1 a A     1</span></span>
-<span><span class="co">#&gt; 2 a B     2</span></span>
-<span><span class="co">#&gt; 3 a C     3</span></span>
-<span><span class="co">#&gt; 4 b A     4</span></span>
-<span><span class="co">#&gt; 5 b B     5</span></span>
-<span><span class="co">#&gt; 6 b C     6</span></span></code></pre></div>
-<p>Effectively, this stores the data on disk in column-major order. However, the <code>transpose</code> approach makes it possible to store <code>var</code> × <code>obs</code> matrices used by <em>Seurat</em> and <em>SummarizedExperiment</em> in <code>obs</code> &amp;times <code>var</code> arrays prescribed the SOMA specification and used by <em>tiledbsc-py</em>.</p>
-</div>
-</div>
-<div class="section level3">
-<h3 id="changes-0-1-12">Changes<a class="anchor" aria-label="anchor" href="#changes-0-1-12"></a></h3>
-<ul><li>
-<code>AssayMatrix$from_matrix()</code>, <code>AssayMatrix$to_matrix()</code>, and <code>AssayMatrixGroup$add_assay_matrix()</code> gained a <code>transpose</code> argument (<a href="https://github.com/single-cell-data/TileDB-SOMA/issues/80" class="external-link">#80</a>).</li>
-<li>Removed vestigial code for merging non-layerable COO data.frames, which was previously used to add ingest dense <code>scaled.data</code> from a Seurat <code>Assay</code> as an attribute of the <code>X</code> array, along with <code>counts</code>/<code>data</code>. This is no longer necessary as each layer is now ingested into a separate array within the <code>X</code> group (<a href="https://github.com/single-cell-data/TileDB-SOMA/issues/73" class="external-link">#73</a>).</li>
-<li>The internal utility <code>dgtmatrix_to_dataframe()</code> was replaced with <code>matrix_to_coo()</code>, which converts Matrix-like objects to COO data frames much more efficiently (<a href="https://github.com/single-cell-data/TileDB-SOMA/issues/75" class="external-link">#75</a>).</li>
-<li>The internal utility <code>pad_matrix()</code> can now pad a matrix by adding empty rows (<a href="https://github.com/single-cell-data/TileDB-SOMA/issues/79" class="external-link">#79</a>).</li>
-<li>The internal assertion <code>has_dimnames()</code> was replaced with <code>is_labeled_matrix()</code> for clarity (<a href="https://github.com/single-cell-data/TileDB-SOMA/issues/79" class="external-link">#79</a>).</li>
-</ul></div>
-<div class="section level3">
-<h3 id="fixes-0-1-12">Fixes<a class="anchor" aria-label="anchor" href="#fixes-0-1-12"></a></h3>
-<ul><li>Matrix conversion message from <code>AssayMatrix</code> now respects the <code>verbose</code> option</li>
-<li>Upon initialization <code>SOMA</code> now looks for a <code>raw</code> group and warns the user it will be ignored. Currently tiledbsc-py creates a <code>raw</code> group when converting anndata objects where <code>.raw</code> is populated. However, Seurat/BioC objects do not have an obvious place to store this data, so ignoring it improves compatibility.</li>
-<li>Fixed a non-user-facing issue with the internal <code>dgtmatrix_to_dataframe()</code> function used to convert unordered <code>dgTMatrix</code> objects to COO data frames (<a href="https://github.com/single-cell-data/TileDB-SOMA/issues/73" class="external-link">#73</a>).</li>
-<li>Pretty printing of classes that inherit from <code>TileDBObject</code> has been improved so that the class name is displayed first (<a href="https://github.com/single-cell-data/TileDB-SOMA/issues/79" class="external-link">#79</a>).</li>
-</ul></div>
-<div class="section level3">
-<h3 id="build-and-test-systems-0-1-12">Build and Test Systems<a class="anchor" aria-label="anchor" href="#build-and-test-systems-0-1-12"></a></h3>
-<ul><li>Added <code>with_allocation_size_preference()</code> helper to temporarily set the allocation size preference for testing.</li>
-<li>Tests were added to verify the internal <code>dgtmatrix_to_dataframe()</code> will error out if an input list contains non-layerable matrices.</li>
-</ul></div>
-</div>
   </div>
 
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
