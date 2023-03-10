@@ -81,7 +81,7 @@ Rcpp::List soma_reader(const std::string& uri,
 
     spdl::info("[soma_reader] Reading from {}", uri);
 
-    std::map<std::string, std::string> platform_config = {}; // to add, see riterator.cpp
+    std::map<std::string, std::string> platform_config = {};
 
     std::vector<std::string> column_names = {};
     if (!colnames.isNull()) {    // If we have column names, select them
