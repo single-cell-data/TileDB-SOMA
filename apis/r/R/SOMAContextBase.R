@@ -19,10 +19,9 @@ SOMAContextBase <- R6::R6Class(
     #' @return \Sexpr[results=rd]{tiledbsoma:::rd_return_virtual()}
     #'
     initialize = function(config = NULL) {
-      calls <- vapply(
+      calls <- vapply_char(
         X = lapply(X = sys.calls(), FUN = as.character),
         FUN = '[[',
-        FUN.VALUE = character(length = 1L),
         1L
       )
       if ('SOMAContextBase$new' %in% calls) {
@@ -32,15 +31,18 @@ SOMAContextBase <- R6::R6Class(
         )
       }
       super$initialize()
-      if (!is.null(x = config)) {
+      if (!is.null(config)) {
         msg <- "'config' must be a named vector"
-        if (!is.vector(x = config)) {
-          stop(msg)
+        if (!is.vector(config)) {
+          stop(msg, call. = FALSE)
         }
-        conf_opts <- names(x = config)
-        if (is.null(x = conf_opts) || !all(nzchar(x = conf_opts))) {
-          stop(msg)
+        if (!is_named(config, allow_empty = FALSE)) {
+          stop(msg, call. = FALSE)
         }
+        # conf_opts <- names(config)
+        # if (is.null(conf_opts) || !all(nzchar(conf_opts))) {
+        #   stop(msg)
+        # }
         self$setv(config)
       }
     },
@@ -54,17 +56,17 @@ SOMAContextBase <- R6::R6Class(
     set = function(key, value) {
       super$set(key = key, value = value)
       soma_contexts <- .SOMA_CONTEXTS()
-      if (key %in% names(x = soma_contexts)) {
+      if (key %in% names(soma_contexts)) {
         if (!inherits(x = private$.data[[key]], what = soma_contexts[key])) {
           stop(
-            sQuote(x = key),
+            sQuote(key),
             " must be a ",
-            sQuote(x = soma_contexts[key]),
+            sQuote(soma_contexts[key]),
             call. = FALSE
           )
         }
       }
-      return(invisible(x = self))
+      return(invisible(self))
     }
   )
 )

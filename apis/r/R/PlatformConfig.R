@@ -66,7 +66,7 @@ PlatformConfig <- R6::R6Class(
       key = NULL,
       default = quote(expr = )
     ) {
-      if (!length(x = self)) {
+      if (!length(self)) {
         warning("No platforms configured", call. = FALSE)
         return(NULL)
       }
@@ -76,13 +76,13 @@ PlatformConfig <- R6::R6Class(
       )
       platform <- platform %||% self$platforms()[1L]
       pmap <- super$get(key = platform, default = NULL)
-      if (is.null(x = pmap)) {
-        if (missing(x = default) || identical(x = default, y = quote(expr = ))) {
-          private$.key_error(key = platform)
+      if (is.null(pmap)) {
+        if (missing(default) || identical(x = default, y = quote(expr = ))) {
+          private$.key_error(platform)
         }
         return(default)
       }
-      if (is.null(x = param)) {
+      if (is.null(param)) {
         return(pmap)
       }
       return(pmap$get(param = param, key = key, default = default))
@@ -98,7 +98,7 @@ PlatformConfig <- R6::R6Class(
       )
       platform <- platform %||% self$platforms()[1L]
       platform <- match.arg(arg = platform, choices = self$platforms())
-      return(super$get(key = platform))
+      return(super$get(platform))
     },
     #' @param platform The name of the \dQuote{platform} (outer key) to set
     #' @param param Name of the \dQuote{parameter} (middle key) in
@@ -121,7 +121,7 @@ PlatformConfig <- R6::R6Class(
       pmap <- super$get(key = platform, default = ConfigList$new())
       pmap$set(param = param, key = key, value = value)
       super$set(key = platform, value = pmap)
-      return(invisible(x = self))
+      return(invisible(self))
     },
     #' @template param-dots-ignored
     #'

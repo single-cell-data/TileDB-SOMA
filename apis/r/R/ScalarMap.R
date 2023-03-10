@@ -32,7 +32,7 @@ ScalarMap <- R6::R6Class(
       stopifnot(
         "'value' must be a single atomic value or NULL" = is.null(x = value) || length(x = value) == 1L
       )
-      if (!is.null(x = value) && self$type != 'any') {
+      if (!is.null(value) && self$type != 'any') {
         if (!inherits(x = value, what = self$type)) {
           stop(
             "'value' must be a ",
@@ -42,21 +42,21 @@ ScalarMap <- R6::R6Class(
         }
       }
       super$set(key = key, value = value)
-      return(invisible(x = self))
+      return(invisible(self))
     }
   ),
   active = list(
     #' @field type The type that this \code{ScalarMap} is limited to
     #'
     type = function(value) {
-      if (!missing(x = value)) {
+      if (!missing(value)) {
         stop("The map type cannot be changed", call. = FALSE)
       }
       return(private$.type)
     }
   ),
   private = list(
-    .type = character(length = 1L)
+    .type = character(1L)
   )
 )
 

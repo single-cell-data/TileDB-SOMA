@@ -28,13 +28,13 @@ ConfigList <- R6::R6Class(
         "'param' must be a single character value" = is_scalar_character(param)
       )
       parammap <- super$get(key = param, default = NULL)
-      if (is.null(x = parammap)) {
-        if (missing(x = default) || identical(x = default, y = quote(expr = ))) {
-          private$.key_error(key = param)
+      if (is.null(parammap)) {
+        if (missing(default) || identical(x = default, y = quote(expr = ))) {
+          private$.key_error(param)
         }
         return(default)
       }
-      if (is.null(x = key)) {
+      if (is.null(key)) {
         return(parammap)
       }
       return(parammap$get(key = key, default = default))
@@ -54,14 +54,14 @@ ConfigList <- R6::R6Class(
         "'param' must be a single character" = is_scalar_character(param)
       )
       parammap <- super$get(key = param, default = ScalarMap$new())
-      if (missing(x = key) && inherits(x = value, what = 'ScalarMap')) {
+      if (missing(key) && inherits(x = value, what = 'ScalarMap')) {
         parammap$update(map = value)
         super$set(key = param, value = parammap)
         return(invisible(x = self))
       }
       parammap$set(key = key, value = value)
       super$set(key = param, value = parammap)
-      return(invisible(x = self))
+      return(invisible(self))
     },
     #' @template param-dots-ignored
     #'

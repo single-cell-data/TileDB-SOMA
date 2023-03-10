@@ -19,10 +19,9 @@ MappingBase <- R6::R6Class(
     #' @return \Sexpr[results=rd]{tiledbsoma:::rd_return_virtual()}
     #'
     initialize = function(...) {
-      calls <- vapply(
+      calls <- vapply_char(
         X = lapply(X = sys.calls(), FUN = as.character),
         FUN = '[[',
-        FUN.VALUE = character(length = 1L),
         1L
       )
       if ('MappingBase$new' %in% calls) {
@@ -36,12 +35,12 @@ MappingBase <- R6::R6Class(
     #' @return The keys of the map
     #'
     keys = function() {
-      return(names(x = private$.data))
+      return(names(private$.data))
     },
     #' @return A `list` containing the map values
     #'
     values = function() {
-      return(unname(obj = self$items()))
+      return(unname(self$items()))
     },
     #' @return Return the items of the map as a list
     #'
@@ -61,9 +60,9 @@ MappingBase <- R6::R6Class(
         "'key' must be a single character value" = is_scalar_character(key)
       )
       value <- private$.data[[key]]
-      if (is.null(x = value)) {
-        if (missing(x = default) || identical(x = default, y = quote(expr = ))) {
-          private$.key_error(key = key)
+      if (is.null(value)) {
+        if (missing(default) || identical(x = default, y = quote(expr = ))) {
+          private$.key_error(key)
         }
         return(default)
       }
@@ -85,7 +84,7 @@ MappingBase <- R6::R6Class(
       if (!self$length()) {
         private$.data <- unname(obj = private$.data)
       }
-      return(invisible(x = self))
+      return(invisible(self))
     },
     #' @param ... Named arguments to add to \code{self}
     #'
@@ -93,12 +92,12 @@ MappingBase <- R6::R6Class(
     #' of \code{...} added to the map
     #'
     setv = function(...) {
-      args <- as.list(x = c(...))
-      stopifnot(is_named_list(x = args))
-      for (i in seq_along(along.with = args)) {
-        self$set(key = names(x = args)[i], value = args[[i]])
+      args <- as.list(c(...))
+      stopifnot("all arguments must be named" = is_named_list(args))
+      for (i in seq_along(args)) {
+        self$set(key = names(args)[i], value = args[[i]])
       }
-      return(invisible(x = self))
+      return(invisible(self))
     },
     #' @param key Key to remove
     #'
@@ -119,12 +118,12 @@ MappingBase <- R6::R6Class(
         "'map' must be a mapping type" = inherits(x = map, what = 'MappingBase')
       )
       self$setv(map$items())
-      return(invisible(x = self))
+      return(invisible(self))
     },
     #' @return The number of items in the map
     #'
     length = function() {
-      return(length(x = private$.data))
+      return(length(private$.data))
     },
     #' @return The map as a list
     #'
@@ -150,7 +149,7 @@ MappingBase <- R6::R6Class(
   private = list(
     .data = list(),
     .key_error = function(key) {
-      stop("No key named ", sQuote(x = key), " found", call. = FALSE)
+      stop("No key named ", sQuote(key), " found", call. = FALSE)
     }
   )
 )
@@ -186,7 +185,7 @@ MappingBase <- R6::R6Class(
 #' @export
 #'
 '[[<-.MappingBase' <- function(x, i, ..., value) {
-  stopifnot(is.character(x = i), length(x = i) == 1L)
+  stopifnot("'i' must be a single character value" = is_scalar_character(i))
   x$set(key = i, value = value)
   return(x)
 }
