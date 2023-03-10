@@ -150,7 +150,7 @@ which lets prior setting prevail, any other value is set as new logging level.</
 <span class="r-in"><span><span class="kw">while</span> <span class="op">(</span><span class="op">!</span><span class="fu">sr_complete</span><span class="op">(</span><span class="va">sr</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span></span>
 <span class="r-in"><span>    <span class="va">sr</span> <span class="op">|&gt;</span></span></span>
 <span class="r-in"><span>        <span class="fu">sr_next</span><span class="op">(</span><span class="op">)</span> <span class="op">|&gt;</span></span></span>
-<span class="r-in"><span>        <span class="fu"><a href="soma_reader.html">as_arrow_table</a></span><span class="op">(</span><span class="op">)</span> <span class="op">|&gt;</span></span></span>
+<span class="r-in"><span>        <span class="fu">as_arrow_table</span><span class="op">(</span><span class="op">)</span> <span class="op">|&gt;</span></span></span>
 <span class="r-in"><span>        <span class="fu">collect</span><span class="op">(</span><span class="op">)</span> <span class="op">|&gt;</span></span></span>
 <span class="r-in"><span>        <span class="fu"><a href="https://rdrr.io/r/base/as.data.frame.html" class="external-link">as.data.frame</a></span><span class="op">(</span><span class="op">)</span> <span class="op">|&gt;</span></span></span>
 <span class="r-in"><span>        <span class="fu">data.table</span><span class="op">(</span><span class="op">)</span> <span class="op">-&gt;</span> <span class="va">D</span></span></span>
