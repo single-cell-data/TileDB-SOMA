@@ -63,8 +63,9 @@ TileDBObject <- R6::R6Class(
       }
       tiledb::tiledb_object_type(self$uri, ctx = self$tiledbsoma_ctx$get_tiledb_context()) %in% expected_type
     },
+    #' @param param Parameter name from \code{self$platform_config} to fetch
+    #' @return SOMATileDBContext
     get_tiledb_config = function(param = NULL) {
-      # browser()
       if (!is.null(x = param)) {
         cfg <- suppressWarnings(expr = self$platform_config$get(
           platform = 'tiledb',
