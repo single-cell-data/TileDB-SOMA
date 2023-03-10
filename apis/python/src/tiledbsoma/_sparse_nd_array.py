@@ -191,7 +191,7 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
                 raise ValueError(
                     f"Unable to write 2D Arrow sparse matrix to {self.ndim}D SparseNDArray"
                 )
-            # TODO: the `to_scipy` function is not zero copy. Need to explore zero-copy options.
+            # TODO: the ``to_scipy`` function is not zero copy. Need to explore zero-copy options.
             sp = values.to_scipy().tocoo()
             arr[sp.row, sp.col] = sp.data
             return self

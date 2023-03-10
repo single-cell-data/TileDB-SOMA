@@ -372,7 +372,7 @@ class DataFrame(TileDBArray, somacore.DataFrame):
         # the Arrow schema has two index columns in the order "burger" and "meister", and suppose
         # the user set index_column_names = ["meister", "burger"] when creating the TileDB schema.
         # Then the above for-loop over the Arrow schema will find the former ordering, but for the
-        # `writer[dims] = attrs` below we must have dims with the latter ordering.
+        # ``writer[dims] = attrs`` below we must have dims with the latter ordering.
         dim_cols_list = [dim_cols_map[name] for name in self.index_column_names]
         dim_cols_tuple = tuple(dim_cols_list)
         self._handle.writer[dim_cols_tuple] = attr_cols_map
@@ -418,7 +418,7 @@ class DataFrame(TileDBArray, somacore.DataFrame):
             _util.validate_slice(coord)
             # Figure out which one.
             dim_type: Union[Type[str], Type[bytes]] = type(dim.domain[0])
-            # A `None` or empty start is always equivalent to empty str/bytes.
+            # A ``None`` or empty start is always equivalent to empty str/bytes.
             start = coord.start or dim_type()
             if coord.stop is None:
                 # There's no way to specify "to infinity" for strings.
@@ -591,7 +591,7 @@ def _canonicalize_schema(
     for field_name in schema.names:
         if field_name.startswith("soma_") and field_name != SOMA_JOINID:
             raise ValueError(
-                f"DataFrame schema may not contain fields with name prefix `soma_`: got `{field_name}`"
+                f"DataFrame schema may not contain fields with name prefix ``soma_``: got ``{field_name}``"
             )
 
     # verify that all index_column_names are present in the schema

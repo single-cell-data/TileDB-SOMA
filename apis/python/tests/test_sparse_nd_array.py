@@ -976,7 +976,7 @@ def test_sparse_nd_array_error_corners(tmp_path):
 )
 def test_bad_coords(tmp_path, bad_coords):
     """
-    Most illegal coords raise ValueError - test for those.
+    Most illegal coords raise ValueError -- test for those.
     Oddly, some raise TypeError, which is covered in another
     test.
     """

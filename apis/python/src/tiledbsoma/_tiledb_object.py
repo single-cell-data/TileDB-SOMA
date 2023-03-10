@@ -146,25 +146,41 @@ class TileDBObject(somacore.SOMAObject, Generic[_WrapperType_co]):
     @property
     def uri(self) -> str:
         """
-        Accessor for the object's storage URI [lifecycle: experimental].
+        Accessor for the object's storage URI.
+
+        Lifecycle:
+            Experimental.
         """
         return self._handle.uri
 
     def close(self) -> None:
         """
-        Release any resources held while the object is open [lifecycle: experimental].
+        Release any resources held while the object is open.
         Closing an already-closed object is a no-op.
+
+        Lifecycle:
+            Experimental.
         """
         self._close_stack.close()
 
     @property
     def closed(self) -> bool:
-        """True if the object has been closed. False if it is still open [lifecycle: experimental]."""
+        """
+        True if the object has been closed. False if it is still open.
+
+        Lifecycle:
+            Experimental.
+        """
         return self._handle.closed
 
     @property
     def mode(self) -> options.OpenMode:
-        """The mode this object was opened in, either ``r`` or ``w`` [lifecycle: experimental]."""
+        """
+        The mode this object was opened in, either ``r`` or ``w``.
+
+        Lifecycle:
+            Experimental.
+        """
         return self._handle.mode
 
     @property
