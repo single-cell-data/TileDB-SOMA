@@ -93,11 +93,15 @@ def readGitVersion():
         )
         data, stderr = proc.communicate()
         if proc.returncode:
+            print("-- RGV NONE", proc.returncode, stderr)
             return None
         ver = data.decode().splitlines()[0].strip()
-    except Exception:
+    except Exception as e:
+        print("-- RGV EXC")
+        print(e)
         return None
 
+    print("-- RGV DATA", data)
     if not ver:
         return None
     m = re.search(_GIT_DESCRIPTION_RE, ver)
@@ -116,9 +120,13 @@ def readGitVersion():
 
 def readReleaseVersion():
     try:
+        print("-- RRV PWD", os.getcwd())
+        print("-- RRV DENTS", os.listdir())
+        print("-- RRV RVF", RELEASE_VERSION_FILE)
         fd = open(RELEASE_VERSION_FILE)
         try:
             ver = fd.readline().strip()
+            print("-- RRV VER", ver)
         finally:
             fd.close()
         if not re.search(_PEP386_VERSION_RE, ver):
@@ -126,8 +134,11 @@ def readReleaseVersion():
                 "version: release version (%s) is invalid, "
                 "will use it anyway\n" % ver
             )
+        print("-- RRV VER2", ver)
         return ver
-    except Exception:
+    except Exception as e:
+        print("-- RRV EXC")
+        print(e)
         return None
 
 
@@ -138,6 +149,13 @@ def writeReleaseVersion(version):
 
 
 def getVersion():
+    print()
+    print()
+    print("GET VERSION ENTER")
+    print("-- RELEASE VERSION", readReleaseVersion())
+    print("-- GIT     VERSION", readGitVersion())
+    print()
+    print()
     release_version = readReleaseVersion()
     version = readGitVersion() or release_version
     if not version:
