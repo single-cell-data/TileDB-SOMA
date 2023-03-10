@@ -42,8 +42,4 @@ build:
 
     - sphinx-build --version
 
-    # This works but custom CSS styling is going missing somehow:
-    #- sphinx-build -E -T -b html -d _readthedocs/doctrees -D language=en doc/source _readthedocs/html
-    # Experiment copied from tiledb-py:
-    #- python -m sphinx -T -E -b html -d _build/doctrees -D language=en . _build/html
-    - python -m sphinx -T -E -b html -d _readthedocs/doctrees -D language=en doc/source _readthedocs/html
+    - sphinx-build -T -E -b html -d _readthedocs/doctrees -D language=en doc/source _readthedocs/html
