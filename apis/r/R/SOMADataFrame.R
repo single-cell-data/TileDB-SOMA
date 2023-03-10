@@ -189,7 +189,8 @@ SOMADataFrame <- R6::R6Class(
                             colnames = column_names,   # NULL is dealt with by soma_reader()
                             qc = value_filter,         # idem
                             dim_points = coords,       # idem
-                            loglevel = log_level)      # idem
+                            loglevel = log_level,      # idem
+                            config=as.character(tiledb::config(self$ctx)))
           private$soma_reader_transform(rl)
       } else {
           ## should we error if this isn't null?

@@ -124,7 +124,8 @@ SOMADenseNDArray <- R6::R6Class(
           rl <- soma_reader(uri = uri,
                             dim_points = coords,        # NULL is dealt with by soma_reader()
                             result_order = result_order,
-                            loglevel = log_level)       # idem
+                            loglevel = log_level,       # idem
+                            config=as.character(tiledb::config(self$ctx)))
           private$soma_reader_transform(rl)
       } else {
           ## should we error if this isn't null?
