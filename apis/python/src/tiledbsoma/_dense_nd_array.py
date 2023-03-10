@@ -3,7 +3,8 @@
 #
 # Licensed under the MIT License.
 
-"""Implementation of SOMA DenseNDArray.
+"""
+Implementation of SOMA DenseNDArray.
 """
 
 from typing import Optional, Tuple

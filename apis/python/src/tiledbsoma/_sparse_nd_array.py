@@ -3,7 +3,8 @@
 #
 # Licensed under the MIT License.
 
-"""Implementation of SOMA SparseNDArray.
+"""
+Implementation of SOMA SparseNDArray.
 """
 from typing import Optional, Sequence, Tuple, Union, cast
 
