@@ -17,7 +17,8 @@ soma_reader(
   dim_ranges = NULL,
   batch_size = "auto",
   result_order = "auto",
-  loglevel = "auto"
+  loglevel = "auto",
+  config = NULL
 )
 
 nnz(uri)
@@ -51,9 +52,7 @@ for the given dimension. Each dimension can be one entry in the list.}
 \item{loglevel}{Character value with the desired logging level, defaults to \sQuote{auto}
 which lets prior setting prevail, any other value is set as new logging level.}
 
-\item{xp}{An external pointer to an ArrowSchema or ArrowData}
-
-\item{arrlst}{A list containing the pointers to an Arrow data structure}
+\item{config}{Optional character vector containing TileDB config.}
 }
 \value{
 A List object with two pointers to Arrow array data and schema is returned

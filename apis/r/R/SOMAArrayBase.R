@@ -65,7 +65,7 @@ SOMAArrayBase <- R6::R6Class(
 
     # Instantiate soma_reader_pointer with a soma_reader object
     soma_reader_setup = function() {
-      private$soma_reader_pointer <- sr_setup(self$uri, config=as.character(config(tiledb::tiledb_ctx())))
+      private$soma_reader_pointer <- sr_setup(self$uri, config=as.character(tiledb::config(self$ctx)))
     },
 
     ## to be refined in derived classes

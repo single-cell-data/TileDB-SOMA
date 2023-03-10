@@ -19,8 +19,7 @@
 #' @param result_order Character value with the desired result order, defaults to \sQuote{auto}
 #' @param loglevel Character value with the desired logging level, defaults to \sQuote{auto}
 #' which lets prior setting prevail, any other value is set as new logging level.
-#' @param arrlst A list containing the pointers to an Arrow data structure
-#' @param xp An external pointer to an ArrowSchema or ArrowData
+#' @param config Optional character vector containing TileDB config.
 #' @return A List object with two pointers to Arrow array data and schema is returned
 #' @examples
 #' \dontrun{
@@ -29,8 +28,8 @@
 #' tb <- as_arrow_table(z)
 #' }
 #' @export
-soma_reader <- function(uri, colnames = NULL, qc = NULL, dim_points = NULL, dim_ranges = NULL, batch_size = "auto", result_order = "auto", loglevel = "auto") {
-    .Call(`_tiledbsoma_soma_reader`, uri, colnames, qc, dim_points, dim_ranges, batch_size, result_order, loglevel)
+soma_reader <- function(uri, colnames = NULL, qc = NULL, dim_points = NULL, dim_ranges = NULL, batch_size = "auto", result_order = "auto", loglevel = "auto", config = NULL) {
+    .Call(`_tiledbsoma_soma_reader`, uri, colnames, qc, dim_points, dim_ranges, batch_size, result_order, loglevel, config)
 }
 
 #' @noRd
@@ -90,7 +89,7 @@ check_arrow_array_tag <- function(xp) {
 #' \dontrun{
 #' ctx <- tiledb::tiledb_ctx()
 #' uri <- "test/soco/pbmc3k_processed/obs"
-#' sr <- sr_setup(uri, config=as.character(config(ctx)), loglevel="warn")
+#' sr <- sr_setup(uri, config=as.character(tiledb::config(ctx)), loglevel="warn")
 #' rl <- data.frame()
 #' while (!sr_complete(sr)) {
 #'     sr |>
