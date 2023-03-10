@@ -3,14 +3,10 @@
 on:
   push:
     # To publish docs from your branch: list the branch name here instead of main.
-    # TEMP DO NOT COMMIT
-    # branches: [main]
-    branches: [kerl/pkgdown]
+    branches: [main]
   pull_request:
     # To publish docs from your branch: list the branch name here instead of main.
-    # TEMP DO NOT COMMIT
-    # branches: [main]
-    branches: [kerl/pkgdown]
+    branches: [main]
   release:
     types: [published]
   workflow_dispatch:
@@ -25,10 +21,6 @@ jobs:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - uses: actions/checkout@v3
-
-      - name: Install libgeos on Linux
-        if: runner.os == 'Linux'
-        run: sudo ./apis/r/tools/install-linux-dependencies.sh
 
       - uses: r-lib/actions/setup-pandoc@v1
         with:
