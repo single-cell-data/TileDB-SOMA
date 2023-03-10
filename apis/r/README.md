@@ -24,3 +24,9 @@ remotes::install_github("tiledb-inc/tiledbsoma")
 [bioc-sce]: https://www.bioconductor.org/packages/SingleCellExperiment/
 [anndata]: https://anndata.readthedocs.io
 [tiledbsoma-py]: https://github.com/single-cell-data/TileDB-SOMA
+
+## To view documentation
+
+The site [https://single-cell-data.github.io/TileDB-SOMA](https://single-cell-data.github.io/TileDB-SOMA) contains information for the `main` branch, no longer for this `main-old` branch.
+
+To view docs for this branch, please run `pkgdown::build_site()`, then open `./docs/index.html`.
