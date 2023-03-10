@@ -35,6 +35,7 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
     """``SparseNDArray`` is a sparse, N-dimensional array, with offset
     (zero-based) integer indexing on each dimension.
     ``SparseNDArray`` has a user-defined schema, which includes:
+
     * The element type, expressed as an Arrow type, indicating the type of data
       contained within the array.
     * The shape of the array, i.e., the number of dimensions and the length of
