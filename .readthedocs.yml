@@ -38,6 +38,8 @@ build:
 
     - python -m pip install -v apis/python
 
+    - python scripts/show-versions.py
+
     - sphinx-build --version
 
     # This works but custom CSS styling is going missing somehow:
