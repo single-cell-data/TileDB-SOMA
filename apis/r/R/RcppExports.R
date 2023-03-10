@@ -48,12 +48,12 @@ nnz <- function(uri) {
     .Call(`_tiledbsoma_nnz`, uri)
 }
 
-#' @rdname soma_reader
+#' @noRd
 check_arrow_schema_tag <- function(xp) {
     .Call(`_tiledbsoma_check_arrow_schema_tag`, xp)
 }
 
-#' @rdname soma_reader
+#' @noRd
 check_arrow_array_tag <- function(xp) {
     .Call(`_tiledbsoma_check_arrow_array_tag`, xp)
 }

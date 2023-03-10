@@ -54,14 +54,14 @@ check_arrow_pointers <- function(arrlst) {
               "Second argument must be an external pointer to ArrowSchema" = check_arrow_schema_tag(arrlst[[2]]))
 }
 
-##' @rdname soma_reader
+##' @noRd
 arrow_to_dt <- function(arrlst) {
     check_arrow_pointers(arrlst)
     rb <- dplyr::collect(arrow::RecordBatch$import_from_c(arrlst[[1]], arrlst[[2]]))
     data.table(as.data.frame(rb))
 }
 
-##' @rdname soma_reader
+##' @noRd
 as_arrow_table <- function(arrlst) {
     check_arrow_pointers(arrlst)
     arrow::as_arrow_table(arrow::RecordBatch$import_from_c(arrlst[[1]], arrlst[[2]]))

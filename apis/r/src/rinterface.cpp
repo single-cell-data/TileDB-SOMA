@@ -227,14 +227,14 @@ double nnz(const std::string& uri) {
     return static_cast<double>(sr->nnz());
 }
 
-//' @rdname soma_reader
+//' @noRd
 // [[Rcpp::export]]
 bool check_arrow_schema_tag(Rcpp::XPtr<ArrowSchema> xp) {
   check_xptr_tag<ArrowSchema>(xp);  // throws if mismatched
   return true;
 }
 
-//' @rdname soma_reader
+//' @noRd
 // [[Rcpp::export]]
 bool check_arrow_array_tag(Rcpp::XPtr<ArrowArray> xp) {
   check_xptr_tag<ArrowArray>(xp);  // throws if mismatched
