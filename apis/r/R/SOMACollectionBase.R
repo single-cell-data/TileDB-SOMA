@@ -42,6 +42,48 @@ SOMACollectionBase <- R6::R6Class(
     #' @returns SOMA object.
     get = function(name) {
       super$get(name)
+    },
+
+    #' @description Add a new SOMA collection to this collection. (lifecycle: experimental)
+    #' @param object SOMA collection object.
+    #' @param key The key to be added.
+    add_new_collection = function(object, key) {
+      # TODO: Check that object is a collection
+      super$set(object, key)
+    },
+
+    #' @description Add a new SOMA dataframe to this collection. (lifecycle: experimental)
+    #' @param key The key to be added.
+    #' @param schema Arrow schema argument passed on to DataFrame$create()
+    #' @param index_column_names Index column names passed on to DataFrame$create()
+    add_new_dataframe = function(key, schema, index_column_names) {
+      ## TODO: Check argument validity
+      ## TODO: platform_config ?
+      ndf <- SOMADataFrame$new( file.path(self$uri, key) )
+      ndf$create(schema, index_column_names)
+      super$set(ndf, key)
+    },
+
+    #' @description Add a new SOMA DenseNdArray to this collection. (lifecycle: experimental)
+    #' @param key The key to be added.
+    #' @param type an [Arrow type][arrow::data-type] defining the type of each
+    #' element in the array.
+    #' @param shape a vector of integers defining the shape of the array.
+    add_new_dense_ndarray = function(key, type, shape) {
+      ndarr <- SOMADenseNDArray$new( file.path(self$uri, key) )
+      ndarr$create(type, shape)
+      super$set(ndarr, key)
+    },
+
+    #' @description Add a new SOMA SparseNdArray to this collection. (lifecycle: experimental)
+    #' @param key The key to be added.
+    #' @param type an [Arrow type][arrow::data-type] defining the type of each
+    #' element in the array.
+    #' @param shape a vector of integers defining the shape of the array.
+    add_new_sparse_ndarray = function(key, type, shape) {
+      ndarr <- SOMASparseNDArray$new( file.path(self$uri, key) )
+      ndarr$create(type, shape)
+      super$set(ndarr, key)
     }
 
   ),
