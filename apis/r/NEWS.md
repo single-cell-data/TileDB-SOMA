@@ -12,3 +12,4 @@
 * Added internal helpers to centrally validate `coords` and `value_filter` arguments
 * All R6 classes' `create()` method now return `self` rather than nothing
 * Fixed calculating of relative paths when 1 of the URIs contains the `file://` prefix
+* Added `PlatformConfig` and `SOMATileDBContext` classes to handle SOMA and TileDB configuration
