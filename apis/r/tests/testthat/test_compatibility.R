@@ -13,6 +13,8 @@ teardown({
 })
 
 test_that("compatibility is maintained with v0.1.2 SCDataset", {
+  # Reset context b/c old SCDataset triggers legacy mode
+  on.exit(tiledb::tiledb_ctx(tiledb::tiledb_config()))
 
   expect_warning(
     scdataset <- SCDataset$new(scdataset_uri, verbose = FALSE)
@@ -47,6 +49,8 @@ test_that("compatibility is maintained with v0.1.2 SCDataset", {
 })
 
 test_that("compatibility is maintained with v0.1.2 SCGroup", {
+  # Reset context b/c old SCDataset triggers legacy mode
+  on.exit(tiledb::tiledb_ctx(tiledb::tiledb_config()))
   scgroup_uri <- file.path(scdataset_uri, "scgroup_RNA")
   expect_warning(
     scgroup <- SCGroup$new(scgroup_uri, verbose = FALSE)

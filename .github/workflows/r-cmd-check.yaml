@@ -48,5 +48,9 @@ jobs:
       - name: Install dependencies
         run: ./tools/ci/install-r-dependencies.sh
 
+      # need current GH version
+      - name: Update TileDB-R
+        run: Rscript -e 'install.packages("remotes"); remotes::install_github("TileDB-Inc/TileDB-R")'
+        
       - name: Build and check R package
         run: ./tools/ci/build-and-check-r-package.sh

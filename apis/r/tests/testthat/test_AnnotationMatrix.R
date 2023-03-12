@@ -27,4 +27,10 @@ test_that("annotation matrix can be stored and retrieved", {
   # test that result is identical with batch mode
   mat3 <- annotmat$to_matrix(batch_mode = TRUE)
   expect_identical(mat2, mat3)
+
+  # verify legacy metadata tag is present
+  expect_equal(
+    annotmat$get_metadata(SOMA_LEGACY_VALIDITY_KEY),
+    SOMA_LEGACY_VALIDITY
+  )
 })

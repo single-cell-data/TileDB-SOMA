@@ -15,4 +15,10 @@ test_that("annotation pairwise matrix can be stored and retrieved", {
 
   mat2 <- annotmat$to_matrix()
   expect_identical(mat[rlabs, clabs], mat2[rlabs, clabs])
+
+  # verify legacy metadata tag is present
+  expect_equal(
+    annotmat$get_metadata(SOMA_LEGACY_VALIDITY_KEY),
+    SOMA_LEGACY_VALIDITY
+  )
 })

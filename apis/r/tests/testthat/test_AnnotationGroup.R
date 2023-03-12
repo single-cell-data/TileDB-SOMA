@@ -19,6 +19,9 @@ test_that("an AnnotationGroup's dimension name can be manually defined", {
 })
 
 test_that("dimension slicing is applied to all members", {
+  # Reset context b/c create_test_group_with_members() triggers legacy mode
+  on.exit(tiledb::tiledb_ctx(tiledb::tiledb_config()))
+
   grp_uri <- withr::local_tempdir("nested-group")
   create_test_group_with_members(grp_uri, n_arrays = 2, n_groups = 0)
 

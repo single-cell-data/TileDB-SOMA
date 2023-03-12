@@ -51,6 +51,8 @@ AnnotationDataframe <- R6::R6Class(
           )
         }
       }
+      # Check for legacy validity mode metadata tag
+      toggle_tiledb_legacy_mode_if_needed(self$object, self$verbose)
       private$ingest_data(x)
     },
 
@@ -65,6 +67,10 @@ AnnotationDataframe <- R6::R6Class(
           sprintf("Reading %s into memory from '%s'", self$class(), self$uri)
         )
       }
+
+      # Check for legacy validity mode metadata tag
+      toggle_tiledb_legacy_mode_if_needed(self$object, self$verbose)
+
       arr <- self$object
       tiledb::attrs(arr) <- attrs %||% character()
       tiledb::return_as(arr) <- "data.frame"

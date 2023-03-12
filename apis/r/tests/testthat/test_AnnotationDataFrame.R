@@ -37,6 +37,12 @@ test_that("annotation dataframe can be stored and retrieved", {
   expect_setequal(rownames(df2), rownames(df))
   expect_setequal(colnames(df2), colnames(df))
   expect_identical(df2, df)
+
+  # verify legacy metadata tag is present
+  expect_equal(
+    annotdf$get_metadata(SOMA_LEGACY_VALIDITY_KEY),
+    SOMA_LEGACY_VALIDITY
+  )
 })
 
 test_that("an empty dataframe can be stored and retrieved", {

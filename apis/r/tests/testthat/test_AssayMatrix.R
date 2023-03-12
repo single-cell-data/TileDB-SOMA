@@ -26,6 +26,12 @@ test_that("AssayMatrix object can be created from a dgCMatrix", {
   rlabs <- rownames(mat2)
   clabs <- colnames(mat2)
   expect_equal(mat1[rlabs, clabs], mat2[rlabs, clabs])
+
+  # verify legacy metadata tag is present
+  expect_equal(
+    assaymat$get_metadata(SOMA_LEGACY_VALIDITY_KEY),
+    SOMA_LEGACY_VALIDITY
+  )
 })
 
 test_that("array dimensions can be transposed", {
@@ -49,6 +55,7 @@ test_that("array dimensions can be transposed", {
 
 test_that("Incomplete queries can be completed via batching", {
   uri <- withr::local_tempdir("assay-matrix-batched")
+  orig_local_value <<- tiledb::get_allocation_size_preference()
   with_allocation_size_preference(5e5)
 
   nr <- 1e3
@@ -72,5 +79,5 @@ test_that("Incomplete queries can be completed via batching", {
 })
 
 test_that("user allocation has returned to its default size", {
-  expect_equal(tiledb::get_allocation_size_preference(), 10485760)
+  expect_equal(tiledb::get_allocation_size_preference(), orig_local_value)
 })

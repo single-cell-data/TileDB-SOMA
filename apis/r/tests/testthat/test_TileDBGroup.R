@@ -114,7 +114,6 @@ test_that("a group is portable when members are added with relative uris", {
   grp <- TileDBGroup$new(grp_uri1)
   a1 <- TileDBArray$new(create_empty_test_array(file.path(grp_uri1, "a1")))
   grp$add_member(a1)
-
   tiledb::tiledb_vfs_move_dir(olduri = grp_uri1, newuri = grp_uri2)
 
   expect_message(
