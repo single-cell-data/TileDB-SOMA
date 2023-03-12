@@ -55,21 +55,17 @@ TileDBGroup classes. (lifecycle: experimental)</p>
     </div>
 
 
-    <div id="public-fields">
-    <h2>Public fields</h2>
-    <p></p><div class="r6-fields"><dl><dt><code>platform_config</code></dt>
-<dd><p>Optional platform configuration</p></dd>
-
-
-<dt><code>ctx</code></dt>
-<dd><p>Optional TileDB context</p></dd>
-
-
-</dl><p></p></div>
-    </div>
     <div id="active-bindings">
     <h2>Active bindings</h2>
-    <p></p><div class="r6-active-bindings"><dl><dt><code>uri</code></dt>
+    <p></p><div class="r6-active-bindings"><dl><dt><code>platform_config</code></dt>
+<dd><p>Platform configuration</p></dd>
+
+
+<dt><code>tiledbsoma_ctx</code></dt>
+<dd><p>SOMATileDBContext</p></dd>
+
+
+<dt><code>uri</code></dt>
 <dd><p>The URI of the TileDB object.</p></dd>
 
 
@@ -90,12 +86,13 @@ TileDBGroup classes. (lifecycle: experimental)</p>
 <li><p><a href="#method-TileDBObject-class"><code>TileDBObject$class()</code></a></p></li>
 <li><p><a href="#method-TileDBObject-print"><code>TileDBObject$print()</code></a></p></li>
 <li><p><a href="#method-TileDBObject-exists"><code>TileDBObject$exists()</code></a></p></li>
+<li><p><a href="#method-TileDBObject-get_tiledb_config"><code>TileDBObject$get_tiledb_config()</code></a></p></li>
 <li><p><a href="#method-TileDBObject-clone"><code>TileDBObject$clone()</code></a></p></li>
 </ul></div><p></p><hr><a id="method-TileDBObject-new"></a><div class="section">
 <h3 id="method-new-">Method <code>new()</code><a class="anchor" aria-label="anchor" href="#method-new-"></a></h3>
 <p>Create a new TileDB object. (lifecycle: experimental)</p><div class="section">
 <h4 id="usage">Usage<a class="anchor" aria-label="anchor" href="#usage"></a></h4>
-<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va"><a href="../reference/TileDBObject.html">TileDBObject</a></span><span class="op">$</span><span class="fu">new</span><span class="op">(</span><span class="va">uri</span>, platform_config <span class="op">=</span> <span class="cn">NULL</span>, ctx <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div><p></p></div>
+<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va"><a href="../reference/TileDBObject.html">TileDBObject</a></span><span class="op">$</span><span class="fu">new</span><span class="op">(</span><span class="va">uri</span>, platform_config <span class="op">=</span> <span class="cn">NULL</span>, tiledbsoma_ctx <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
 <div class="section">
@@ -108,8 +105,8 @@ TileDBGroup classes. (lifecycle: experimental)</p>
 <dd><p>Optional platform configuration</p></dd>
 
 
-<dt><code>ctx</code></dt>
-<dd><p>optional TileDB context</p></dd>
+<dt><code>tiledbsoma_ctx</code></dt>
+<dd><p>optional SOMATileDBContext</p></dd>
 
 
 <dt><code>verbose</code></dt>
@@ -147,15 +144,36 @@ TileDBGroup classes. (lifecycle: experimental)</p>
 <p><code>TRUE`` if the object exists, </code>FALSE` otherwise.</p>
 </div>
 
-</div><p></p><hr><a id="method-TileDBObject-clone"></a><div class="section">
-<h3 id="method-clone-">Method <code>clone()</code><a class="anchor" aria-label="anchor" href="#method-clone-"></a></h3>
-<p>The objects of this class are cloneable with this method.</p><div class="section">
+</div><p></p><hr><a id="method-TileDBObject-get_tiledb_config"></a><div class="section">
+<h3 id="method-get-tiledb-config-">Method <code>get_tiledb_config()</code><a class="anchor" aria-label="anchor" href="#method-get-tiledb-config-"></a></h3>
+
+<div class="section">
 <h4 id="usage-4">Usage<a class="anchor" aria-label="anchor" href="#usage-4"></a></h4>
-<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">TileDBObject</span><span class="op">$</span><span class="fu">clone</span><span class="op">(</span>deep <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div><p></p></div>
+<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">TileDBObject</span><span class="op">$</span><span class="fu">get_tiledb_config</span><span class="op">(</span>param <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
 <div class="section">
 <h4 id="arguments-1">Arguments<a class="anchor" aria-label="anchor" href="#arguments-1"></a></h4>
+<p></p><div class="arguments"><dl><dt><code>param</code></dt>
+<dd><p>Parameter name from <code>self$platform_config</code> to fetch</p></dd>
+
+
+</dl><p></p></div>
+</div>
+<div class="section">
+<h4 id="returns-1">Returns<a class="anchor" aria-label="anchor" href="#returns-1"></a></h4>
+<p>SOMATileDBContext</p>
+</div>
+
+</div><p></p><hr><a id="method-TileDBObject-clone"></a><div class="section">
+<h3 id="method-clone-">Method <code>clone()</code><a class="anchor" aria-label="anchor" href="#method-clone-"></a></h3>
+<p>The objects of this class are cloneable with this method.</p><div class="section">
+<h4 id="usage-5">Usage<a class="anchor" aria-label="anchor" href="#usage-5"></a></h4>
+<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">TileDBObject</span><span class="op">$</span><span class="fu">clone</span><span class="op">(</span>deep <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div><p></p></div>
+</div>
+
+<div class="section">
+<h4 id="arguments-2">Arguments<a class="anchor" aria-label="anchor" href="#arguments-2"></a></h4>
 <p></p><div class="arguments"><dl><dt><code>deep</code></dt>
 <dd><p>Whether to make a deep clone.</p></dd>
 

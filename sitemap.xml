@@ -16,6 +16,15 @@
     <loc>/news/index.html</loc>
   </url>
   <url>
+    <loc>/reference/ConfigList.html</loc>
+  </url>
+  <url>
+    <loc>/reference/MappingBase.html</loc>
+  </url>
+  <url>
+    <loc>/reference/PlatformConfig.html</loc>
+  </url>
+  <url>
     <loc>/reference/SOMAArrayBase.html</loc>
   </url>
   <url>
@@ -34,6 +43,9 @@
     <loc>/reference/SOMACollectionBase.html</loc>
   </url>
   <url>
+    <loc>/reference/SOMAContextBase.html</loc>
+  </url>
+  <url>
     <loc>/reference/SOMADataFrame.html</loc>
   </url>
   <url>
@@ -50,6 +62,12 @@
   </url>
   <url>
     <loc>/reference/SOMASparseNDArray.html</loc>
+  </url>
+  <url>
+    <loc>/reference/SOMATileDBContext.html</loc>
+  </url>
+  <url>
+    <loc>/reference/ScalarMap.html</loc>
   </url>
   <url>
     <loc>/reference/TileDBArray.html</loc>

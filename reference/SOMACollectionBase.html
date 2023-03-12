@@ -90,6 +90,7 @@ objects, mapping string keys to any SOMA object.  (lifecycle: experimental)</p>
 <li><p><a href="#method-SOMACollectionBase-clone"><code>SOMACollectionBase$clone()</code></a></p></li>
 </ul></div><p><details><summary>Inherited methods</summary><ul><li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBObject" data-id="class"><a href="TileDBObject.html#method-class"><code>tiledbsoma::TileDBObject$class()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBObject" data-id="exists"><a href="TileDBObject.html#method-exists"><code>tiledbsoma::TileDBObject$exists()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBObject" data-id="get_tiledb_config"><a href="TileDBObject.html#method-get_tiledb_config"><code>tiledbsoma::TileDBObject$get_tiledb_config()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBGroup" data-id="get_metadata"><a href="TileDBGroup.html#method-get_metadata"><code>tiledbsoma::TileDBGroup$get_metadata()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBGroup" data-id="length"><a href="TileDBGroup.html#method-length"><code>tiledbsoma::TileDBGroup$length()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBGroup" data-id="names"><a href="TileDBGroup.html#method-names"><code>tiledbsoma::TileDBGroup$names()</code></a></span></li>
@@ -102,7 +103,7 @@ objects, mapping string keys to any SOMA object.  (lifecycle: experimental)</p>
 <h3 id="method-new-">Method <code>new()</code><a class="anchor" aria-label="anchor" href="#method-new-"></a></h3>
 <p>Create a new <code>SOMACollection</code>. (lifecycle: experimental)</p><div class="section">
 <h4 id="usage">Usage<a class="anchor" aria-label="anchor" href="#usage"></a></h4>
-<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va"><a href="../reference/SOMACollectionBase.html">SOMACollectionBase</a></span><span class="op">$</span><span class="fu">new</span><span class="op">(</span><span class="va">uri</span>, platform_config <span class="op">=</span> <span class="cn">NULL</span>, ctx <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div><p></p></div>
+<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va"><a href="../reference/SOMACollectionBase.html">SOMACollectionBase</a></span><span class="op">$</span><span class="fu">new</span><span class="op">(</span><span class="va">uri</span>, platform_config <span class="op">=</span> <span class="cn">NULL</span>, tiledbsoma_ctx <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
 <div class="section">
@@ -115,8 +116,8 @@ objects, mapping string keys to any SOMA object.  (lifecycle: experimental)</p>
 <dd><p>Optional storage-engine specific configuration</p></dd>
 
 
-<dt><code>ctx</code></dt>
-<dd><p>Optional TileDB context</p></dd>
+<dt><code>tiledbsoma_ctx</code></dt>
+<dd><p>optional SOMATileDBContext</p></dd>
 
 
 </dl><p></p></div>
