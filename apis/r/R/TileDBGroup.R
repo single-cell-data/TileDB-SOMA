@@ -19,7 +19,10 @@ TileDBGroup <- R6::R6Class(
     #' @description Creates the data structure on disk/S3/cloud. (lifecycle: experimental)
     create = function() {
       spdl::info("Creating new {} at '{}'", self$class(), self$uri)
-      tiledb::tiledb_group_create(self$uri, ctx = self$ctx)
+      tiledb::tiledb_group_create(
+        uri = self$uri,
+        ctx = self$get_tiledb_config('create')$get_tiledb_context()
+      )
       self
     },
 
@@ -186,7 +189,10 @@ TileDBGroup <- R6::R6Class(
     },
 
     initialize_object = function() {
-      private$tiledb_object <- tiledb::tiledb_group(self$uri, ctx = self$ctx)
+      private$tiledb_object <- tiledb::tiledb_group(
+        self$uri,
+        ctx = self$tiledbsoma_ctx$get_tiledb_context()
+      )
       private$close()
     },
 
@@ -232,7 +238,7 @@ TileDBGroup <- R6::R6Class(
         GROUP = TileDBGroup$new,
         stop(sprintf("Unknown member type: %s", type), call. = FALSE)
       )
-      constructor(uri, ctx = self$ctx, platform_config = self$platform_config)
+      constructor(uri, tiledbsoma_ctx = self$tiledbsoma_ctx, platform_config = self$platform_config)
     },
 
     format_members = function() {

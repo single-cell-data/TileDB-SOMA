@@ -51,6 +51,7 @@ pairwise annotations on the variable axis and indexed with \verb{[varid_1, varid
 <ul>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBObject" data-id="class"><a href='../../tiledbsoma/html/TileDBObject.html#method-TileDBObject-class'><code>tiledbsoma::TileDBObject$class()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBObject" data-id="exists"><a href='../../tiledbsoma/html/TileDBObject.html#method-TileDBObject-exists'><code>tiledbsoma::TileDBObject$exists()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBObject" data-id="get_tiledb_config"><a href='../../tiledbsoma/html/TileDBObject.html#method-TileDBObject-get_tiledb_config'><code>tiledbsoma::TileDBObject$get_tiledb_config()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBGroup" data-id="get_metadata"><a href='../../tiledbsoma/html/TileDBGroup.html#method-TileDBGroup-get_metadata'><code>tiledbsoma::TileDBGroup$get_metadata()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBGroup" data-id="length"><a href='../../tiledbsoma/html/TileDBGroup.html#method-TileDBGroup-length'><code>tiledbsoma::TileDBGroup$length()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBGroup" data-id="names"><a href='../../tiledbsoma/html/TileDBGroup.html#method-TileDBGroup-names'><code>tiledbsoma::TileDBGroup$names()</code></a></span></li>
