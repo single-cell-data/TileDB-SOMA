@@ -10,6 +10,7 @@ import sys
 
 import tiledb
 from pkg_resources import DistributionNotFound, get_distribution
+
 from .libtiledbsoma import version as libtiledbsoma_version
 
 
