@@ -19,7 +19,7 @@ namespace tdbs = tiledbsoma;
 // Create a integer64 object
 //
 // Integer64 is an S3 class. Integers in R are 32-bits. To handle C++
-// signed 64-bit integers (uint64_t), the full bits may be stored using double '
+// signed 64-bit integers (int64_t), the full bits may be stored using double '
 // as an intermediary which then can be coereced to Integer64.
 // For more on this see e.g.
 // https://gallery.rcpp.org/articles/creating-integer64-and-nanotime-vectors/
