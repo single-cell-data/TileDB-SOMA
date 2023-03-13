@@ -58,7 +58,7 @@ Reference documentation can also be accessed directly from Python `help(tiledsom
 The capabilities of TileDB-SOMA lay on the different read, access, and query patterns that each of the main implementations of SOMA objects provide:
 
 * `DenseNDArray` is a dense, N-dimensional array, with offset (zero-based) integer indexing on each dimension.
-* `SparseNDArray` same as `DenseNDArray` but sparse, and it supports point indexing (disjoint index access)
+* `SparseNDArray` is the same as `DenseNDArray` but sparse, and supports point indexing (disjoint index access)
 * `DataFrame`  a multi-column table with a user-defined columns names and value types, with support for point indexing. 
 * `Collection` a persistent container of named SOMA objects.
 * `Experiment` is a class that represents a single-cell experiment. It always contains two objects:
