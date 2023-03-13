@@ -16,8 +16,8 @@ Embedded](https://github.com/TileDB-Inc/TileDB) to implement the
 Get started on using TileDB-SOMA:
 
 * [Quick start](#quick-start).
-* Python [documentation](https://tiledbsoma.readthedocs.io/en/latest/python-api.html) | [tutorials](#tiledb-soma). 
-* R [documentation](https://single-cell-data.github.io/TileDB-SOMA/) | [tutorials](#tiledb-soma).
+* Python [documentation](https://tiledbsoma.readthedocs.io/en/latest/python-api.html). 
+* R [documentation](https://single-cell-data.github.io/TileDB-SOMA/).
 
 ## What can TileDB-SOMA do?
 
