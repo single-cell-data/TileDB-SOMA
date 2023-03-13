@@ -85,7 +85,7 @@ std::tuple<std::string, uint64_t> create_array(
         ArraySchema schema(ctx, TILEDB_SPARSE);
 
         auto dim = Dimension::create<int64_t>(
-            ctx, "d0", {0, std::numeric_limits<int64_t>::max()-1});
+            ctx, "d0", {0, std::numeric_limits<int64_t>::max() - 1});
 
         Domain domain(ctx);
         domain.add_dimension(dim);
