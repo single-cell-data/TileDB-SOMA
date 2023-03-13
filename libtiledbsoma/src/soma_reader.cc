@@ -299,8 +299,8 @@ uint64_t SOMAReader::nnz_slow() {
     return total_cell_num;
 }
 
-std::vector<uint64_t> SOMAReader::shape() {
-    std::vector<uint64_t> result;
+std::vector<int64_t> SOMAReader::shape() {
+    std::vector<int64_t> result;
     auto dimensions = this->schema().get()->domain().dimensions();
 
     for (const auto& dim : dimensions) {

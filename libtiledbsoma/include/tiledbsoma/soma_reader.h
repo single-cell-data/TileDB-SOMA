@@ -329,7 +329,7 @@ class SOMAReader {
      * @return A vector with length equal to the number of dimensions; each
      * value in the vector is the capcity of each dimension.
      */
-    std::vector<uint64_t> shape();
+    std::vector<int64_t> shape();
 
    private:
     //===================================================================

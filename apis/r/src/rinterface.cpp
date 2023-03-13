@@ -240,3 +240,11 @@ bool check_arrow_array_tag(Rcpp::XPtr<ArrowArray> xp) {
   check_xptr_tag<ArrowArray>(xp);  // throws if mismatched
   return true;
 }
+
+//' @rdname soma_reader
+//' @export
+// [[Rcpp::export]]
+Rcpp::NumericVector shape(const std::string& uri) {
+    auto sr = tdbs::SOMAReader::open(uri);
+    return makeInteger64(sr->shape());
+}

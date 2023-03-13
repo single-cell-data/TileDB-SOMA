@@ -14,6 +14,17 @@ namespace tdbs = tiledbsoma;
 // current build is encoded in TILEDB_VERSION
 #define TILEDB_VERSION TileDB_Version(TILEDB_VERSION_MAJOR,TILEDB_VERSION_MINOR,TILEDB_VERSION_PATCH)
 
+// Create an integer64 object
+inline Rcpp::NumericVector makeInteger64(const std::vector<int64_t>& vec) {
+  size_t n = vec.size();
+
+  Rcpp::NumericVector num(n);
+  std::memcpy(&(num[0]), vec.data(), n*sizeof(double));
+
+  num.attr("class") = "integer64";
+  return(num);
+}
+
 // Convert to a scalar int64_t
 //
 inline int64_t makeScalarInteger64(const double val) {
