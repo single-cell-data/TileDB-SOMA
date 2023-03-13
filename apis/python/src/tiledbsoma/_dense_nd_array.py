@@ -3,7 +3,8 @@
 #
 # Licensed under the MIT License.
 
-"""Implementation of SOMA DenseNDArray.
+"""
+Implementation of SOMA DenseNDArray.
 """
 
 from typing import Optional, Tuple
@@ -24,6 +25,7 @@ class DenseNDArray(NDArray, somacore.DenseNDArray):
     """``DenseNDArray`` is a dense, N-dimensional array, with offset (zero-based)
     integer indexing on each dimension. ``DenseNDArray`` has a user-defined
     schema, which includes:
+
     * The element type, expressed as an Arrow type, indicating the type of data
       contained within the array.
     * The shape of the array, i.e., the number of dimensions and the length of

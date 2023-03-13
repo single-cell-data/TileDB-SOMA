@@ -32,16 +32,14 @@ build:
   commands:
     # Sandbox alert: `pip install -e .` will _not_ let python find the tiledbsoma package
     # within sphinx build
-    #- apt-get install python3-sphinx
     - python -m pip install --upgrade pip
+
     - python -m pip install -r doc/requirements_doc.txt
 
     - python -m pip install -v apis/python
 
+    - python scripts/show-versions.py
+
     - sphinx-build --version
 
-    # This works but custom CSS styling is going missing somehow:
-    #- sphinx-build -E -T -b html -d _readthedocs/doctrees -D language=en doc/source _readthedocs/html
-    # Experiment copied from tiledb-py:
-    #- python -m sphinx -T -E -b html -d _build/doctrees -D language=en . _build/html
-    - python -m sphinx -T -E -b html -d _readthedocs/doctrees -D language=en doc/source _readthedocs/html
+    - sphinx-build -T -E -b html -d _readthedocs/doctrees -D language=en doc/source _readthedocs/html

@@ -19,7 +19,7 @@ Features:
 * Enables distributed computation over datasets
 
 The tiledbsoma module
-------------------------
+---------------------
 .. automodule:: tiledbsoma
    :members:
 
@@ -29,6 +29,6 @@ The tiledbsoma.io module
    :members:
 
 The tiledbsoma.logging module
-------------------------
+-----------------------------
 .. automodule:: tiledbsoma.logging
    :members:
