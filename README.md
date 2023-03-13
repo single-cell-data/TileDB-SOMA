@@ -30,12 +30,12 @@ Intended to be used for single-cell data, TileDB-SOMA provides Python and R APIs
 TileDB-SOMA provides interoperability with existing single-cell toolkits:
 
 * Load and create [anndata](https://anndata.readthedocs.io/en/latest/) objects.
-* Load and create [Seurat](https://anndata.readthedocs.io/en/latest/) objects. *Coming soon*.
+* Load and create [Seurat](https://satijalab.org/seurat/) objects. *Coming soon*.
 
 TileDB-SOMA provides interoperability with existing Python or R data structures:
 
 * From Python create PyArrow objects, SciPy sparse matrices, NumPy arrays, and pandas data frames.
-* From R create RArrow objects, Matrix sparse matrices, and R-base dense matrices.
+* From R create R Arrow objects, sparse matrices (via the [Matrix](https://cran.r-project.org/package=Matrix) package), and standard data frames and (dense) matrices.
 
 
 ## Community
@@ -57,10 +57,10 @@ Reference documentation can also be accessed directly from Python `help(tiledsom
 
 The capabilities of TileDB-SOMA lay on the different read, access, and query patterns that each of the main implementations of SOMA objects provide:
 
-* `DenseNDArray` a dense, N-dimensional array, with offset (zero-based) integer indexing on each dimension.
-* `SparseNDArray` same as `DenseNDArray` but sparse, and it supports point indexing (disjoint index access)
-* `DataFrame`  a multi-column table with a user-defined columns names and value types, with support for point indexing. 
-* `Collection` a persistent container of named SOMA objects.
+* `DenseNDArray` is a dense, N-dimensional array, with offset (zero-based) integer indexing on each dimension.
+* `SparseNDArray` is the same as `DenseNDArray` but sparse, and supports point indexing (disjoint index access)
+* `DataFrame` is a multi-column table with a user-defined columns names and value types, with support for point indexing. 
+* `Collection` is a persistent container of named SOMA objects.
 * `Experiment` is a class that represents a single-cell experiment. It always contains two objects:
 	* `obs`: a  `DataFrame` with primary annotations on the observation axis.
 	* `ms`: a  `Collection` of measurements, each composed of `X` matrices and axis annotation matrices or data frames.
