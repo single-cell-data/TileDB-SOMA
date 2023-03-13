@@ -10,6 +10,7 @@ import sys
 
 import tiledb
 from pkg_resources import DistributionNotFound, get_distribution
+from .libtiledbsoma import version as libtiledbsoma_version
 
 
 def get_SOMA_version() -> str:
@@ -53,10 +54,11 @@ def show_package_versions() -> None:
 
     Lifecycle: Experimental.
     """
-    print("tiledbsoma.__version__   ", get_implementation_version())
-    print("tiledb.__version__       ", tiledb.__version__)
+    print("tiledbsoma.__version__       ", get_implementation_version())
+    print("TileDB-Py tiledb.__version__ ", tiledb.__version__)
     print(
-        "core version             ",
+        "TileDB core version          ",
         ".".join(str(ijk) for ijk in list(tiledb.libtiledb.version())),
     )
-    print("python version           ", ".".join(str(v) for v in sys.version_info))
+    print("libtiledbsoma version()      ", libtiledbsoma_version())
+    print("python version               ", ".".join(str(v) for v in sys.version_info))
