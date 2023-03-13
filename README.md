@@ -49,7 +49,7 @@ channel `#cell-census-users`.
 
 ### Documentation
 
-The TileDB-SOMA doc-site (under development), contains the reference documentation and tutorials.
+The TileDB-SOMA doc-site ([Python](https://tiledbsoma.readthedocs.io/en/latest/python-api.html)|[R](https://single-cell-data.github.io/TileDB-SOMA/)), contains the reference documentation and tutorials.
 
 Reference documentation can also be accessed directly from Python `help(tiledsoma)` or R `help(package = "tiledbsoma")`.
 
