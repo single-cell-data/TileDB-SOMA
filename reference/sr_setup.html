@@ -98,8 +98,8 @@ class so that iterative access over parts of a (large) array is possible.</p><dl
 
 
 <dt>config</dt>
-<dd><p>Named chracter vector with ‘key’ and ‘value’ pairs
-used as TileDB config parameters.</p></dd>
+<dd><p>Optional named chracter vector with ‘key’ and ‘value’ pairs
+used as TileDB config parameters. If unset default configuration is used.</p></dd>
 
 
 <dt>colnames</dt>
@@ -128,6 +128,10 @@ which lets prior setting prevail, any other value is set as new logging level.</
 
 <dt>sr</dt>
 <dd><p>An external pointer to a TileDB SOMAReader object</p></dd>
+
+
+<dt>ctx</dt>
+<dd><p>An external pointer to a TileDB Context object</p></dd>
 
 </dl></div>
     <div id="value">
