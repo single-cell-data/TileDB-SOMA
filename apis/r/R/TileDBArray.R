@@ -26,6 +26,8 @@ TileDBArray <- R6::R6Class(
       if (self$exists()) {
         msg <- sprintf("Found existing %s at '%s'", self$class(), self$uri)
         private$initialize_object()
+        # Check for legacy validity mode metadata tag
+        toggle_tiledb_legacy_mode_if_needed(self$object, self$verbose)
       } else {
         msg <- sprintf("No %s found at '%s'", self$class(), self$uri)
       }
@@ -93,6 +95,9 @@ TileDBArray <- R6::R6Class(
         "Metadata must be a named list" = is_named_list(metadata)
       )
       on.exit(private$close())
+      if (self$verbose) {
+        message(sprintf("Adding %i metadata keys to array", length(metadata)))
+      }
       private$open("WRITE")
       mapply(
         FUN = tiledb::tiledb_put_metadata,
@@ -241,6 +246,7 @@ TileDBArray <- R6::R6Class(
         ctx = self$ctx,
         query_layout = "UNORDERED"
       )
+
       private$close()
     },
 
@@ -248,6 +254,7 @@ TileDBArray <- R6::R6Class(
       meta <- list()
       meta[[SOMA_OBJECT_TYPE_METADATA_KEY]] <- class(self)[1]
       meta[[SOMA_ENCODING_VERSION_METADATA_KEY]] <- SOMA_ENCODING_VERSION
+      meta[[SOMA_LEGACY_VALIDITY_KEY]] <- SOMA_LEGACY_VALIDITY
       self$add_metadata(meta) # TileDBArray or TileDBGroup
     },
 

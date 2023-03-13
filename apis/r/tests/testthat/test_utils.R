@@ -99,3 +99,21 @@ test_that("padding a matrix works", {
   mat_pad <- pad_matrix(mat_sub, rownames(mat_full), colnames(mat_full))
   expect_equal(dim(mat_pad), dim(mat_full))
 })
+
+test_that("tiledb context helpers", {
+  old_cfg <- tiledb::tiledb_config()
+  on.exit(tiledb::tiledb_ctx(old_cfg))
+
+  key <- "r.test"
+  value <- "true"
+  expect_false(tiledb_ctx_has_key(key))
+
+  tiledb_ctx_set_key(key, value)
+  expect_true(tiledb::config(tiledb_get_context())[key] == value)
+  expect_true(tiledb_ctx_has_key(key))
+  expect_equal(tiledb_ctx_get_key(key), value)
+})
+
+test_that("tiledb context was reset", {
+  expect_false(tiledb_ctx_has_key("r.test"))
+})

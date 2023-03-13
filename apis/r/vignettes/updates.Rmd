@@ -155,5 +155,5 @@ sessionInfo()
 ```
 
 ```{r cleanup, include=FALSE}
-tiledb::tiledb_vfs_remove_dir(soma$uri)
+unlink(soma$uri, recursive = TRUE)
 ```

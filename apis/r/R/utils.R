@@ -128,3 +128,6 @@ assert_subset <- function(x, y, type = "value") {
 SOMA_OBJECT_TYPE_METADATA_KEY <- "soma_object_type"
 SOMA_ENCODING_VERSION_METADATA_KEY <- "soma_encoding_version"
 SOMA_ENCODING_VERSION <- "0"
+SOMA_LEGACY_VALIDITY_KEY <- "soma_legacy_validity"
+SOMA_LEGACY_VALIDITY <- "false"
+TILEDB_LEGACY_KEY <- "r.legacy_validity_mode"
