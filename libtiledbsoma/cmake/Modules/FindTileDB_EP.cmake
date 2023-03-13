@@ -49,7 +49,12 @@ else()
       message(STATUS "TileDB will be built WITHOUT S3 support")
     endif()
 
-    # Try to download prebuilt artifacts unless the user specifies to build from source
+    # Try to download prebuilt artifacts unless the user specifies to build from source.
+    # The TileDB Embedded version specified here will be linked to the libtiledbsoma native lib
+    # loaded by the Python and R tiledbsoma packages. Those packages -also- use TileDB-Py and
+    # TileDB-R, each of which links their own 'copy' of TileDB Embedded, whose version we don't
+    # control here. Ideally the TileDB Embedded versions should match! The show_package_versions()
+    # helper function in each package can help to diagnose any mismatch.
     # NB When updating the pinned URLs here, please also update in file apis/r/tools/get_tarball.R
     if(DOWNLOAD_TILEDB_PREBUILT)
         if (WIN32) # Windows

@@ -1,5 +1,5 @@
-test_that("libtiledbsoma version info is available", {
-    # Mainly testing this function exists, without introspecting
+test_that("version info for libtiledbsoma and its linked TileDB Embedded", {
+    # Mainly testing these functions exist, without introspecting
     # overmuch on the contents.
     triple <- tiledbsoma:::tiledb_embedded_version()
     expect_true(length(triple) == 3)
