@@ -16,8 +16,8 @@ Embedded](https://github.com/TileDB-Inc/TileDB) to implement the
 Get started on using TileDB-SOMA:
 
 * [Quick start](#quick-start).
-* Python [documentation](#tiledb-soma) | [tutorials](#tiledb-soma). *Under development*.
-* R [documentation](#tiledb-soma) | [tutorials](#tiledb-soma). *Under development*.
+* Python [documentation](https://tiledbsoma.readthedocs.io/en/latest/python-api.html) | [tutorials](#tiledb-soma). *Under development*.
+* R [documentation](https://single-cell-data.github.io/TileDB-SOMA/) | [tutorials](#tiledb-soma). *Under development*.
 
 ## What can TileDB-SOMA do?
 
@@ -58,12 +58,12 @@ Reference documentation can also be accessed directly from Python `help(tiledsom
 The capabilities of TileDB-SOMA lay on the different read, access, and query patterns that each of the main implementations of SOMA objects provide:
 
 * `DenseNDArray` is a dense, N-dimensional array, with offset (zero-based) integer indexing on each dimension.
-* `SparseNDArray` is the same as `DenseNDArray` but sparse, and supports point indexing (disjoint index access)
+* `SparseNDArray` is the same as `DenseNDArray` but sparse, and supports point indexing (disjoint index access).
 * `DataFrame` is a multi-column table with a user-defined columns names and value types, with support for point indexing. 
 * `Collection` is a persistent container of named SOMA objects.
 * `Experiment` is a class that represents a single-cell experiment. It always contains two objects:
 	* `obs`: a  `DataFrame` with primary annotations on the observation axis.
-	* `ms`: a  `Collection` of measurements, each composed of `X` matrices and axis annotation matrices or data frames.
+	* `ms`: a  `Collection` of measurements, each composed of `X` matrices and axis annotation matrices or data frames (e.g. `var`, `varm`, `obsm`, etc).
 
 ### APIs quick start
 
