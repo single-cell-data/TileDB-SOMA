@@ -35,7 +35,7 @@ TiledDB-SOMA provides interoperability with existing single-cell toolkits:
 TiledDB-SOMA provides interoperability with existing Python or R data structures:
 
 * From Python create PyArrow objects, SciPy sparse matrices, NumPy arrays, and pandas data frames.
-* From R create RArrow objects, Matrix sparse matrices, and R-base dense matrices.
+* From R create R Arrow objects, sparse matrices (via the [Matrix](https://cran.r-project.org/package=Matrix) package), and standard data frames and (dense) matrices.
 
 
 ## Community
