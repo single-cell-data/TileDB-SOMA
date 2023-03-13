@@ -1,3 +1,8 @@
+# Copyright (c) 2021-2023 The Chan Zuckerberg Initiative Foundation
+# Copyright (c) 2021-2023 TileDB, Inc.
+#
+# Licensed under the MIT License.
+
 import datetime
 import time
 from typing import Any, Dict, Optional, Union
@@ -11,9 +16,8 @@ from .._util import ms_to_datetime, to_timestamp_ms
 
 
 def _build_default_tiledb_ctx() -> tiledb.Ctx:
-    """
-    Build a TileDB context starting with reasonable defaults, and overriding and updating with user-provided config
-    options.
+    """Build a TileDB context starting with reasonable defaults,
+    and overriding and updating with user-provided config options.
     """
 
     # Note: Defaults must provide positive out-of-the-box UX!
@@ -33,11 +37,12 @@ def _maybe_timestamp_ms(input: Optional[OpenTimestamp]) -> Optional[int]:
 
 @attrs.define(frozen=True, kw_only=True)
 class SOMATileDBContext:
-    """
-    Maintains TileDB-specific context for TileDbObjects. This context can be shared across multiple SOMA objects,
+    """Maintains TileDB-specific context for TileDbObjects.
+    This context can be shared across multiple SOMA objects,
     including having a child object inherit it from its parent.
 
-    [lifecycle: experimental]
+    Lifecycle:
+        Experimental.
     """
 
     tiledb_ctx: tiledb.Ctx = _build_default_tiledb_ctx()
@@ -46,7 +51,7 @@ class SOMATileDBContext:
         default=None, converter=_maybe_timestamp_ms, alias="timestamp"
     )
     """
-    Default timestamp for operations on SOMA objects, in millis since the Unix epoch.
+    Default timestamp for operations on SOMA objects, in milliseconds since the Unix epoch.
 
     WARNING: This should not be set unless you are *absolutely* sure you want to
     use the same timestamp across multiple operations. If multiple writes to the
@@ -78,22 +83,21 @@ class SOMATileDBContext:
     def replace(
         self, *, tiledb_config: Optional[Dict[str, Any]] = None, **changes: Any
     ) -> Self:
-        """
-        Create a copy of the context, merging changes [lifecycle: experimental].
+        """Create a copy of the context, merging changes.
 
-        Parameters
-        ----------
-        tiledb_config - Dict[str, Any]
-            a dictionary of parameters for tiledb.Config()
+        Args:
+            tiledb_config:
+                A dictionary of parameters for tiledb.Config().
+            changes:
+                Any other parameters will be passed to the class __init__.
 
-        changes - Any
-            Any other parameters will be passed to the class __init__.
+        Lifecycle:
+            Experimental.
 
-        Examples
-        --------
-        >>> context.replace(timestamp=0)
+        Examples:
+            >>> context.replace(timestamp=0)
 
-        >>> context.replace(tiledb_config={"vfs.s3.region": "us-east-2"})
+            >>> context.replace(tiledb_config={"vfs.s3.region": "us-east-2"})
         """
         if tiledb_config:
             new_config = self.tiledb_ctx.config()

@@ -1,5 +1,9 @@
-"""
-Global package constants
+# Copyright (c) 2021-2023 The Chan Zuckerberg Initiative Foundation
+# Copyright (c) 2021-2023 TileDB, Inc.
+#
+# Licensed under the MIT License.
+
+"""Global package constants
 """
 
 SOMA_JOINID = "soma_joinid"

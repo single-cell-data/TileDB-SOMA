@@ -27,8 +27,9 @@ namespace tdbs = tiledbsoma;
 //'   \item{\code{sr_next}}{returns the next chunk}
 //' }
 //'
-//' @param ctx An external pointer to a TileDB Context object
 //' @param uri Character value with URI path to a SOMA data set
+//' @param config Named chracter vector with \sQuote{key} and \sQuote{value} pairs
+//' used as TileDB config parameters.
 //' @param colnames Optional vector of character value with the name of the columns to retrieve
 //' @param qc Optional external Pointer object to TileDB Query Condition, defaults to \sQuote{NULL} i.e.
 //' no query condition
@@ -36,8 +37,6 @@ namespace tdbs = tiledbsoma;
 //' dimension(s). Each dimension can be one entry in the list.
 //' @param dim_ranges Optional named list with two-column matrix where each row select a range
 //' for the given dimension. Each dimension can be one entry in the list.
-//' @param config Optional named chracter vector with \sQuote{key} and \sQuote{value} pairs
-//' used as TileDB config parameters. If unset default configuration is used.
 //' @param loglevel Character value with the desired logging level, defaults to \sQuote{auto}
 //' which lets prior setting prevail, any other value is set as new logging level.
 //' @param sr An external pointer to a TileDB SOMAReader object
@@ -49,11 +48,11 @@ namespace tdbs = tiledbsoma;
 //' \dontrun{
 //' ctx <- tiledb::tiledb_ctx()
 //' uri <- "test/soco/pbmc3k_processed/obs"
-//' sr <- sr_setup(ctx@ptr, uri, "warn")
+//' sr <- sr_setup(uri, config=as.character(tiledb::config(ctx)), loglevel="warn")
 //' rl <- data.frame()
-//' while (nrow(rl) == 0 || !tiledbsoma:::sr_complete(sr)) {
-//'     dat <- tiledbsoma:::sr_next(sr)
-//'     dat |>
+//' while (!sr_complete(sr)) {
+//'     sr |>
+//'         sr_next() |>
 //'         as_arrow_table() |>
 //'         collect() |>
 //'         as.data.frame() |>
@@ -64,15 +63,13 @@ namespace tdbs = tiledbsoma;
 //' }
 //' @export
 // [[Rcpp::export]]
-Rcpp::XPtr<tdbs::SOMAReader> sr_setup(Rcpp::XPtr<tiledb::Context> ctx,
-                                      const std::string& uri,
+Rcpp::XPtr<tdbs::SOMAReader> sr_setup(const std::string& uri,
+                                      Rcpp::CharacterVector config,
                                       Rcpp::Nullable<Rcpp::CharacterVector> colnames = R_NilValue,
                                       Rcpp::Nullable<Rcpp::XPtr<tiledb::QueryCondition>> qc = R_NilValue,
                                       Rcpp::Nullable<Rcpp::List> dim_points = R_NilValue,
                                       Rcpp::Nullable<Rcpp::List> dim_ranges = R_NilValue,
-                                      Rcpp::Nullable<Rcpp::CharacterVector> config = R_NilValue,
                                       const std::string& loglevel = "auto") {
-    check_xptr_tag<tiledb::Context>(ctx);
     if (loglevel != "auto") {
         spdl::set_level(loglevel);
         tdbs::LOG_SET_LEVEL(loglevel);
@@ -88,22 +85,17 @@ Rcpp::XPtr<tdbs::SOMAReader> sr_setup(Rcpp::XPtr<tiledb::Context> ctx,
     std::shared_ptr<tiledb::Context> ctxptr = nullptr;
 
     std::map<std::string, std::string> platform_config = {};
-    if (!config.isNull()) {
-        Rcpp::CharacterVector confvec(config);
-        Rcpp::CharacterVector namesvec = confvec.attr("names"); // extract names from named R vector
-        size_t n = confvec.length();
-        for (size_t i = 0; i<n; i++) {
-            platform_config.emplace(std::make_pair(std::string(namesvec[i]), std::string(confvec[i])));
-            spdl::debug("[sr_setup] config map adding '{}' = '{}'", std::string(namesvec[i]), std::string(confvec[i]));
-        }
-        tiledb::Config cfg(platform_config);
-        spdl::debug("[sr_setup] creating ctx object with supplied config");
-        ctxptr = std::make_shared<tiledb::Context>(cfg);
-    } else {
-        tiledb::Config cfg{ctx.get()->config()}; // get default config in order to make shared_ptr
-        spdl::debug("[sr_setup] creating ctx object with default config");
-        ctxptr = std::make_shared<tiledb::Context>(cfg);
+
+    Rcpp::CharacterVector confvec(config);
+    Rcpp::CharacterVector namesvec = confvec.attr("names"); // extract names from named R vector
+    size_t n = confvec.length();
+    for (size_t i = 0; i<n; i++) {
+        platform_config.emplace(std::make_pair(std::string(namesvec[i]), std::string(confvec[i])));
+        spdl::debug("[sr_setup] config map adding '{}' = '{}'", std::string(namesvec[i]), std::string(confvec[i]));
     }
+    tiledb::Config cfg(platform_config);
+    spdl::debug("[sr_setup] creating ctx object with supplied config");
+    ctxptr = std::make_shared<tiledb::Context>(cfg);
 
     if (!colnames.isNull()) {
         column_names = Rcpp::as<std::vector<std::string>>(colnames);
@@ -147,13 +139,17 @@ Rcpp::XPtr<tdbs::SOMAReader> sr_setup(Rcpp::XPtr<tiledb::Context> ctx,
     Rcpp::XPtr<tdbs::SOMAReader> xptr = make_xptr<tdbs::SOMAReader>(ptr);
     return xptr;
 }
+
 //' @rdname sr_setup
 //' @export
 // [[Rcpp::export]]
 bool sr_complete(Rcpp::XPtr<tdbs::SOMAReader> sr) {
    check_xptr_tag<tdbs::SOMAReader>(sr);
-   spdl::info("[sr_complete] Complete test is {}", sr->is_complete());
-   return sr->is_complete();
+   size_t nobs = sr->total_num_cells();
+   bool complt = sr->is_complete(true);
+   bool res = complt && nobs > 0; // completed transfer if query status complete and data shipped
+   spdl::info("[sr_complete] Complete query test {} (compl {} nobs {})", res, complt, nobs);
+   return res;
 }
 
 //' @rdname sr_setup
@@ -162,12 +158,15 @@ bool sr_complete(Rcpp::XPtr<tdbs::SOMAReader> sr) {
 Rcpp::List sr_next(Rcpp::XPtr<tdbs::SOMAReader> sr) {
    check_xptr_tag<tdbs::SOMAReader>(sr);
 
-   auto sr_data = sr->read_next();
-   if (!sr->results_complete()) {
-       spdl::trace("[sr_next] Read is incomplete");
+   if (sr_complete(sr)) {
+       spdl::trace("[sr_next] complete {} num_cells {}",
+                   sr->is_complete(true), sr->total_num_cells());
+       return Rcpp::List::create(R_NilValue, R_NilValue);
    }
+
+   auto sr_data = sr->read_next();
    spdl::info("[sr_next] Read {} rows and {} cols",
-              sr_data->get()->num_rows(), sr_data->get()->names().size()) ;
+              sr_data->get()->num_rows(), sr_data->get()->names().size());
 
    const std::vector<std::string> names = sr_data->get()->names();
    auto ncol = names.size();

@@ -23,6 +23,7 @@ Get started on using TileDB-SOMA:
 
 Intended to be used for single-cell data, TileDB-SOMA provides Python and R APIs to allow for storage and data access patterns at scale and for larger-than-memory operations:
 
+
 * Create and write large volumes of data.
 * Open and read data at low latency, locally and from the cloud.
 * Query and access interconnected arrays efficiently and at low latency.

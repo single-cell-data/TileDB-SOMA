@@ -26,6 +26,7 @@ Base class for representing an individual TileDB array.
 \item \href{#method-TileDBArray-dimnames}{\code{TileDBArray$dimnames()}}
 \item \href{#method-TileDBArray-attrnames}{\code{TileDBArray$attrnames()}}
 \item \href{#method-TileDBArray-colnames}{\code{TileDBArray$colnames()}}
+\item \href{#method-TileDBArray-index_column_names}{\code{TileDBArray$index_column_names()}}
 \item \href{#method-TileDBArray-fragment_count}{\code{TileDBArray$fragment_count()}}
 \item \href{#method-TileDBArray-set_query}{\code{TileDBArray$set_query()}}
 \item \href{#method-TileDBArray-reset_query}{\code{TileDBArray$reset_query()}}
@@ -37,6 +38,7 @@ Base class for representing an individual TileDB array.
 <ul>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBObject" data-id="class"><a href='../../tiledbsoma/html/TileDBObject.html#method-TileDBObject-class'><code>tiledbsoma::TileDBObject$class()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBObject" data-id="exists"><a href='../../tiledbsoma/html/TileDBObject.html#method-TileDBObject-exists'><code>tiledbsoma::TileDBObject$exists()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBObject" data-id="get_tiledb_config"><a href='../../tiledbsoma/html/TileDBObject.html#method-TileDBObject-get_tiledb_config'><code>tiledbsoma::TileDBObject$get_tiledb_config()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBObject" data-id="initialize"><a href='../../tiledbsoma/html/TileDBObject.html#method-TileDBObject-initialize'><code>tiledbsoma::TileDBObject$initialize()</code></a></span></li>
 </ul>
 </details>
@@ -230,6 +232,19 @@ attributes (lifecycle: experimental)
 
 \subsection{Returns}{
 A character vector with the array's column names
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-TileDBArray-index_column_names"></a>}}
+\if{latex}{\out{\hypertarget{method-TileDBArray-index_column_names}{}}}
+\subsection{Method \code{index_column_names()}}{
+Retrieve names of index (dimension) columns (lifecycle: experimental)
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{TileDBArray$index_column_names()}\if{html}{\out{</div>}}
+}
+
+\subsection{Returns}{
+A character vector with the array index (dimension) names
 }
 }
 \if{html}{\out{<hr>}}

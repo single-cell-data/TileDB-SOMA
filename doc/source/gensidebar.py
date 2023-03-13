@@ -73,7 +73,7 @@ def generate_sidebar(conf, conf_api):
 
     toctree("API Reference")
     write_api("tiledbsoma-py", "Python", "python-api")
-    write_api_url("R", "https://tiledb-inc.github.io/TileDB-SOMA/reference/index.html")
+    write_api_url("R", "https://single-cell-data.github.io/TileDB-SOMA")
     endl()
 
     write_if_changed("_sidebar.rst.inc", "\n".join(lines))

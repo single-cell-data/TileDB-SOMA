@@ -36,9 +36,15 @@ create_and_populate_var <- function(uri, nrows = 10L, seed = 1) {
 #  |---------- X GROUP
 #  |-------------- counts ARRAY
 #  |-------------- logcounts ARRAY
-create_and_populate_experiment <- function(uri, n_obs, n_var, X_layer_names) {
+create_and_populate_experiment <- function(
+  uri,
+  n_obs,
+  n_var,
+  X_layer_names,
+  config = NULL
+) {
 
-  experiment <- SOMAExperiment$new(uri)$create()
+  experiment <- SOMAExperiment$new(uri, platform_config = config)$create()
   experiment$obs <- create_and_populate_obs(
     uri = file.path(uri, "obs"),
     nrows = n_obs

@@ -54,8 +54,7 @@ namespace tdbs = tiledbsoma;
 //' @param result_order Character value with the desired result order, defaults to \sQuote{auto}
 //' @param loglevel Character value with the desired logging level, defaults to \sQuote{auto}
 //' which lets prior setting prevail, any other value is set as new logging level.
-//' @param arrlst A list containing the pointers to an Arrow data structure
-//' @param xp An external pointer to an ArrowSchema or ArrowData
+//' @param config Optional character vector containing TileDB config.
 //' @return A List object with two pointers to Arrow array data and schema is returned
 //' @examples
 //' \dontrun{
@@ -72,7 +71,8 @@ Rcpp::List soma_reader(const std::string& uri,
                        Rcpp::Nullable<Rcpp::List> dim_ranges = R_NilValue,
                        std::string batch_size = "auto",
                        std::string result_order = "auto",
-                       const std::string& loglevel = "auto") {
+                       const std::string& loglevel = "auto",
+                       Rcpp::Nullable<Rcpp::CharacterVector> config = R_NilValue) {
 
     if (loglevel != "auto") {
         spdl::set_level(loglevel);
@@ -82,6 +82,18 @@ Rcpp::List soma_reader(const std::string& uri,
     spdl::info("[soma_reader] Reading from {}", uri);
 
     std::map<std::string, std::string> platform_config = {}; // to add, see riterator.cpp
+
+    if (!config.isNull()) {
+        Rcpp::CharacterVector confvec(config.get());
+        Rcpp::CharacterVector namesvec = confvec.attr("names"); // extract names from named R vector
+        size_t n = confvec.length();
+        for (size_t i = 0; i<n; i++) {
+            platform_config.emplace(std::make_pair(std::string(namesvec[i]), std::string(confvec[i])));
+            spdl::debug("[sr_setup] config map adding '{}' = '{}'", std::string(namesvec[i]), std::string(confvec[i]));
+        }
+        tiledb::Config cfg(platform_config);
+        spdl::debug("[sr_setup] creating ctx object with supplied config");
+    }
 
     std::vector<std::string> column_names = {};
     if (!colnames.isNull()) {    // If we have column names, select them
@@ -215,14 +227,14 @@ double nnz(const std::string& uri) {
     return static_cast<double>(sr->nnz());
 }
 
-//' @rdname soma_reader
+//' @noRd
 // [[Rcpp::export]]
 bool check_arrow_schema_tag(Rcpp::XPtr<ArrowSchema> xp) {
   check_xptr_tag<ArrowSchema>(xp);  // throws if mismatched
   return true;
 }
 
-//' @rdname soma_reader
+//' @noRd
 // [[Rcpp::export]]
 bool check_arrow_array_tag(Rcpp::XPtr<ArrowArray> xp) {
   check_xptr_tag<ArrowArray>(xp);  // throws if mismatched

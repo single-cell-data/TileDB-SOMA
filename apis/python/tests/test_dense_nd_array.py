@@ -64,7 +64,7 @@ def test_dense_nd_array_read_write_tensor(tmp_path, shape: Tuple[int, ...]):
     a = soma.DenseNDArray.create(tmp_path.as_posix(), type=pa.float64(), shape=shape)
     ndim = len(shape)
 
-    # random sample - written to entire array
+    # random sample -- written to entire array
     data = np.random.default_rng().standard_normal(np.prod(shape)).reshape(shape)
     coords = tuple(slice(0, dim_len) for dim_len in shape)
     with pytest.raises(TypeError):

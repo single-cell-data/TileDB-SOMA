@@ -1,5 +1,9 @@
-"""
-Conversion to/from Arrow and TileDB type systems. Must be capable
+# Copyright (c) 2021-2023 The Chan Zuckerberg Initiative Foundation
+# Copyright (c) 2021-2023 TileDB, Inc.
+#
+# Licensed under the MIT License.
+
+"""Conversion to/from Arrow and TileDB type systems. Must be capable
 of representing full type semantics, and correctly performing a
 round trip conversion (e.g., T == to_arrow(to_tiledb(T)))
 
@@ -44,8 +48,7 @@ _ARROW_TO_TDB_ATTR: Dict[Any, Union[str, TypeError]] = {
     pa.date32(): TypeError("32-bit date - unsupported type (use TimestampType)"),
     pa.date64(): TypeError("64-bit date - unsupported type (use TimestampType)"),
 }
-"""
-Dict of types unsupported by to_pandas_dtype, which require overrides for
+"""Dict of types unsupported by to_pandas_dtype, which require overrides for
 use in TileDB Attributes (aka DataFrame non-indexe columns).
 
 If the value is an instance of Exception, it will be raised.
@@ -56,8 +59,7 @@ IMPORTANT: ALL non-primitive types supported by TileDB must be in this table.
 # Same as _ARROW_TO_TDB_ATTR, but used for DataFrame indexed columns, aka TileDB Dimensions.
 # Any type system differences from the base-case Attr should be added here.
 _ARROW_TO_TDB_DIM: Dict[Any, Union[str, TypeError]] = _ARROW_TO_TDB_ATTR.copy()
-"""
-Same as _ARROW_TO_TDB_ATTR, but used for DataFrame indexed columns, aka TileDB Dimensions.
+"""Same as _ARROW_TO_TDB_ATTR, but used for DataFrame indexed columns, aka TileDB Dimensions.
 Any type system differences from the base-case Attr should be added here.
 """
 _ARROW_TO_TDB_DIM.update(
@@ -71,8 +73,7 @@ _ARROW_TO_TDB_DIM.update(
 def tiledb_type_from_arrow_type(
     t: pa.DataType, is_indexed_column: bool = False
 ) -> npt.DTypeLike:
-    """
-    Given an Arrow type, return the corresponding TileDB type as a NumPy dtype.
+    """Given an Arrow type, return the corresponding TileDB type as a NumPy dtype.
     Building block for Arrow-to-TileDB schema translation.
 
     TileDB currently has different Unicode handling for dimensions and attributes.
@@ -81,18 +82,17 @@ def tiledb_type_from_arrow_type(
 
     If type is unsupported, with raise a TypeError exception.
 
-    Parameters
-    ----------
-    t : pyarrow.DataType
-        Arrow DataType instance, e.g., pyarrow.int8()
-    is_indexed_column : bool
-        Use TileDB dimension type conversion rules.
+    Args:
+        t:
+            Arrow DataType instance, e.g., pyarrow.int8().
+        is_indexed_column:
+            Use TileDB dimension type conversion rules.
 
-    Returns
-    -------
-    numpy.dtype
-        The numpy dtype corresponding to the ``t`` parameter. ``TypeError`` will
-        be raised for unsupported types.
+    Returns:
+        The numpy dtype corresponding to the ``t`` parameter.
+
+    Raises:
+        TypeError: if the type is unsupported.
     """
     arrow_to_tdb = _ARROW_TO_TDB_DIM if is_indexed_column else _ARROW_TO_TDB_ATTR
     if t in arrow_to_tdb:
@@ -126,8 +126,7 @@ def tiledb_type_from_arrow_type(
 def arrow_type_from_tiledb_dtype(
     tiledb_dtype: npt.DTypeLike, bytes_are_ascii: bool = True
 ) -> pa.DataType:
-    """
-    Maps a TileDB dtype (``'bytes'``, ``'ascii'``, or an ``np.dtype``) to an Arrow type.  Note that
+    """Maps a TileDB dtype (``'bytes'``, ``'ascii'``, or an ``np.dtype``) to an Arrow type.  Note that
     when we read tiledb schema off storage, ``ascii`` and ``bytes`` both have ``dtype`` of `"S"`
     which is equal to ``bytes`` -- so, the caller should disambgiuate.
     """

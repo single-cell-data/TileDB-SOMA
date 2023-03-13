@@ -26,7 +26,7 @@ TileDBArray <- R6::R6Class(
       args$uri <- self$uri
       args$query_type <- "READ"
       args$query_layout <- "UNORDERED"
-      args$ctx <- self$ctx
+      args$ctx <- self$tiledbsoma_ctx$get_tiledb_context()
       do.call(tiledb::tiledb_array, args)
     },
 
@@ -138,6 +138,12 @@ TileDBArray <- R6::R6Class(
       c(self$dimnames(), self$attrnames())
     },
 
+    #' @description Retrieve names of index (dimension) columns (lifecycle: experimental)
+    #' @return A character vector with the array index (dimension) names
+    index_column_names = function() {
+      self$dimnames()
+    },
+
     #' @description Get number of fragments in the array (lifecycle: experimental)
     fragment_count = function() {
       tiledb::tiledb_fragment_info_get_num(
@@ -234,7 +240,7 @@ TileDBArray <- R6::R6Class(
     initialize_object = function() {
       private$tiledb_object <- tiledb::tiledb_array(
         uri = self$uri,
-        ctx = self$ctx,
+        ctx = self$tiledbsoma_ctx$get_tiledb_context(),
         query_layout = "UNORDERED"
       )
       private$close()

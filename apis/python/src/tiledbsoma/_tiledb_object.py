@@ -1,3 +1,8 @@
+# Copyright (c) 2021-2023 The Chan Zuckerberg Initiative Foundation
+# Copyright (c) 2021-2023 TileDB, Inc.
+#
+# Licensed under the MIT License.
+
 import datetime
 from contextlib import ExitStack
 from typing import Any, Generic, MutableMapping, Optional, Type, TypeVar
@@ -23,13 +28,13 @@ Covariant because ``_handle`` is read-only.
 
 
 class TileDBObject(somacore.SOMAObject, Generic[_WrapperType_co]):
-    """
-    Base class for all TileDB SOMA objects.
+    """Base class for all TileDB SOMA objects.
 
     Accepts a SOMATileDBContext, to enable session state to be shared
     across SOMA objects.
 
-    [lifecycle: experimental]
+    Lifecycle:
+        Experimental.
     """
 
     __slots__ = ("_close_stack", "_handle")
@@ -44,20 +49,35 @@ class TileDBObject(somacore.SOMAObject, Generic[_WrapperType_co]):
         context: Optional[SOMATileDBContext] = None,
         platform_config: Optional[options.PlatformConfig] = None,
     ) -> Self:
-        """Opens this specific type of SOMA object [lifecycle: experimental].
+        """Opens this specific type of SOMA object.
 
-        :param uri: The URI to open.
-        :param mode: The mode to open the object in.
-            ``r``: Open for reading only (cannot write).
-            ``w``: Open for writing only (cannot read).
-        :param tiledb_timestamp: The TileDB timestamp to open this object at,
-            measured in milliseconds since the Unix epoch.
-            When unset (the default), the current time is used.
+        Args:
+            uri:
+                The URI to open.
+            mode:
+                The mode to open the object in.
+                - ``r``: Open for reading only (cannot write).
+                - ``w``: Open for writing only (cannot read).
+            tiledb_timestamp:
+                The TileDB timestamp to open this object at,
+                measured in milliseconds since the Unix epoch.
+                When unset (the default), the current time is used.
 
-        :raises DoesNotExistError: if the object named by URI can not be accessed.
-        :raises SOMAError: if the underlying TileDB object specified by ``uri`` is
+        Returns:
+            The opened SOMA object.
+
+        Raises:
+
+        DoesNotExistError:
+            If the object named by URI can not be accessed.
+        SOMAError:
+            If the underlying TileDB object specified by ``uri`` is
             not recognized as a SOMA object.
-        :raises ValueError: if the user-provided ``mode`` is invalid.
+        ValueError:
+            If the user-provided ``mode`` is invalid.
+
+        Lifecycle:
+            Experimental.
         """
         del platform_config  # unused
         context = context or SOMATileDBContext()
@@ -126,25 +146,41 @@ class TileDBObject(somacore.SOMAObject, Generic[_WrapperType_co]):
     @property
     def uri(self) -> str:
         """
-        Accessor for the object's storage URI [lifecycle: experimental].
+        Accessor for the object's storage URI.
+
+        Lifecycle:
+            Experimental.
         """
         return self._handle.uri
 
     def close(self) -> None:
         """
-        Release any resources held while the object is open [lifecycle: experimental].
+        Release any resources held while the object is open.
         Closing an already-closed object is a no-op.
+
+        Lifecycle:
+            Experimental.
         """
         self._close_stack.close()
 
     @property
     def closed(self) -> bool:
-        """True if the object has been closed. False if it is still open [lifecycle: experimental]."""
+        """
+        True if the object has been closed. False if it is still open.
+
+        Lifecycle:
+            Experimental.
+        """
         return self._handle.closed
 
     @property
     def mode(self) -> options.OpenMode:
-        """The mode this object was opened in, either ``r`` or ``w`` [lifecycle: experimental]."""
+        """
+        The mode this object was opened in, either ``r`` or ``w``.
+
+        Lifecycle:
+            Experimental.
+        """
         return self._handle.mode
 
     @property
@@ -166,18 +202,24 @@ class TileDBObject(somacore.SOMAObject, Generic[_WrapperType_co]):
     ) -> bool:
         """
         Finds whether an object of this type exists at the given URI.
-        [lifecycle: experimental].
 
-        :param uri: The URI to open.
+        Args:
+            uri:
+                The URI to open.
+            context:
+                If provided, the ``SOMATileDBContext`` to use when creating and
+                attempting to access this object.
+            tiledb_timestamp:
+                The TileDB timestamp to open this object at,
+                measured in milliseconds since the Unix epoch.
+                When unset (the default), the current time is used.
 
-        :param context: If provided, the ``SOMATileDBContext`` to use when creating and
-            attempting to access this object.
+        Raises:
+            TypeError:
+                If the ``uri`` is not a string.
 
-        :param tiledb_timestamp: The TileDB timestamp to open this object at,
-            measured in milliseconds since the Unix epoch.
-            When unset (the default), the current time is used.
-
-        :raises TypeError: if the ``uri`` is not a string.
+        Lifecycle:
+            Experimental.
         """
         check_type("uri", uri, (str,))
         context = context or SOMATileDBContext()

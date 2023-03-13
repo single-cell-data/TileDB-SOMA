@@ -198,12 +198,20 @@ setuptools.setup(
     install_requires=[
         "anndata",
         "attrs>=22.2",
-        "numpy",
+        # Pinning numba & its particular numpy constraints:
+        # The old pip solver (<=2020) doesn't deal with the transitive
+        # requirements (scanpy -> numba -> numpy) properly resulting in broken
+        # installation of incompatible numpy>=1.24. Issue #1051
+        # These pins can be removed either when there's a new numba release
+        # with less-particular numpy version constraints, or if we decide we no
+        # longer need to support the old pip solver (default on ubuntu 20.04).
+        "numba==0.56.4",
+        "numpy>=1.18,<1.24",
         "pandas",
         "pyarrow>=9.0.0",
         "scanpy>=1.9.2",
         "scipy",
-        "somacore==1.0.0rc4",
+        "somacore==1.0.0rc6",
         "tiledb==0.20.*",
         "typing-extensions",  # Note "-" even though `import typing_extensions`
     ],

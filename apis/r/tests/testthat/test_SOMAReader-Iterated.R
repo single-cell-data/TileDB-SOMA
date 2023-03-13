@@ -15,10 +15,10 @@ test_that("Iterated Interface from SOMAReader", {
     expect_true(dir.exists(uri))
 
     ctx <- tiledb_ctx()
-    sr <- sr_setup(ctx@ptr, uri)
+    sr <- sr_setup(uri, config=as.character(config(ctx)))
     expect_true(inherits(sr, "externalptr"))
     rl <- data.frame()
-    while (nrow(rl) == 0 || !tiledbsoma:::sr_complete(sr)) {
+    while (!tiledbsoma:::sr_complete(sr)) {
         dat <- sr_next(sr)
         D <- tiledbsoma:::arrow_to_dt(dat)
         expect_true(nrow(D) > 0)
@@ -29,10 +29,10 @@ test_that("Iterated Interface from SOMAReader", {
     expect_equal(nrow(rl), 4848644)
     expect_equal(ncol(rl), 3)
 
-    sr <- sr_setup(ctx@ptr, uri, dim_points=list(soma_dim_0=as.integer64(1)))
+    sr <- sr_setup(uri, config=as.character(config(ctx)), dim_points=list(soma_dim_0=as.integer64(1)))
     expect_true(inherits(sr, "externalptr"))
     rl <- data.frame()
-    while (nrow(rl) == 0 || !tiledbsoma:::sr_complete(sr)) {
+    while (!tiledbsoma:::sr_complete(sr)) {
         dat <- sr_next(sr)
         D <- tiledbsoma:::arrow_to_dt(dat)
         expect_true(nrow(D) > 0)
@@ -43,10 +43,10 @@ test_that("Iterated Interface from SOMAReader", {
     expect_equal(nrow(rl), 1838)
     expect_equal(ncol(rl), 3)
 
-    sr <- sr_setup(ctx@ptr, uri, dim_range=list(soma_dim_1=cbind(as.integer64(1),as.integer64(2))))
+    sr <- sr_setup(uri, config=as.character(config(ctx)), dim_range=list(soma_dim_1=cbind(as.integer64(1),as.integer64(2))))
     expect_true(inherits(sr, "externalptr"))
     rl <- data.frame()
-    while (nrow(rl) == 0 || !tiledbsoma:::sr_complete(sr)) {
+    while (!tiledbsoma:::sr_complete(sr)) {
         dat <- sr_next(sr)
         D <- tiledbsoma:::arrow_to_dt(dat)
         expect_true(nrow(D) > 0)
@@ -56,6 +56,17 @@ test_that("Iterated Interface from SOMAReader", {
     expect_true(inherits(rl, "data.table"))
     expect_equal(nrow(rl), 5276)
     expect_equal(ncol(rl), 3)
+
+    ## test completeness predicate on shorter data
+    tdir <- tempfile()
+    tgzfile <- system.file("raw-data", "soco-pbmc3k_processed-obs.tar.gz", package="tiledbsoma")
+    untar(tarfile = tgzfile, exdir = tdir)
+    uri <- file.path(tdir, "obs")
+    sr <- sr_setup(uri, config=as.character(config(ctx)))
+
+    expect_false(tiledbsoma:::sr_complete(sr))
+    dat <- dat <- sr_next(sr)
+    expect_true(tiledbsoma:::sr_complete(sr))
 })
 
 test_that("Iterated Interface from SOMA Classes", {

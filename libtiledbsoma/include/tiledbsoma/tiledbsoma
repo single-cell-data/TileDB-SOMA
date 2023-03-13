@@ -40,5 +40,7 @@
 #include <tiledbsoma/logger_public.h>
 #include <tiledbsoma/managed_query.h>
 #include <tiledbsoma/soma_reader.h>
+#include <tiledbsoma/stats.h>
+#include <tiledbsoma/version.h>
 
 #endif

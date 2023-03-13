@@ -1,3 +1,14 @@
+# Copyright (c) 2021-2023 The Chan Zuckerberg Initiative Foundation
+# Copyright (c) 2021-2023 TileDB, Inc.
+#
+# Licensed under the MIT License.
+
+"""Ingestion methods.
+
+This module contains methods to generate SOMA artifacts starting from
+other formats. Currently only h5ad (AnnData) is supported.
+"""
+
 import math
 import time
 from typing import (
@@ -48,7 +59,8 @@ from ..options._tiledb_create_options import TileDBCreateOptions
 from . import conversions
 
 SparseMatrix = Union[sp.csr_matrix, sp.csc_matrix, SparseDataset]
-Matrix = Union[NPNDArray, SparseMatrix]
+DenseMatrix = Union[NPNDArray, h5py.Dataset]
+Matrix = Union[DenseMatrix, SparseMatrix]
 _NDArr = TypeVar("_NDArr", bound=NDArray)
 _TDBO = TypeVar("_TDBO", bound=TileDBObject[RawHandle])
 
@@ -63,9 +75,9 @@ def from_h5ad(
     platform_config: Optional[PlatformConfig] = None,
     ingest_mode: IngestMode = "write",
     use_relative_uri: Optional[bool] = None,
+    X_kind: Union[Type[SparseNDArray], Type[DenseNDArray]] = SparseNDArray,
 ) -> str:
-    """
-    Reads an ``.h5ad`` file and writes to a TileDB group structure.
+    """Reads an ``.h5ad`` file and writes to a TileDB group structure.
 
     Returns a URI for the created experiment.
 
@@ -77,7 +89,11 @@ def from_h5ad(
     The "schema_only" ingest_mode creates groups and array schema, without writing array data.
     This is useful as a prep-step for parallel append-ingest of multiple H5ADs to a single soma.
 
-    [lifecycle: experimental]
+    The ``X_kind`` parameter allows you to specify how dense X matrices from the H5AD are stored
+    within the SOMA experiment -- whether as dense or as sparse.
+
+    Lifecycle:
+        Experimental.
     """
     if ingest_mode not in INGEST_MODES:
         raise SOMAError(
@@ -104,6 +120,7 @@ def from_h5ad(
         platform_config=platform_config,
         ingest_mode=ingest_mode,
         use_relative_uri=use_relative_uri,
+        X_kind=X_kind,
     )
 
     logging.log_io(
@@ -122,9 +139,9 @@ def from_anndata(
     platform_config: Optional[PlatformConfig] = None,
     ingest_mode: IngestMode = "write",
     use_relative_uri: Optional[bool] = None,
+    X_kind: Union[Type[SparseNDArray], Type[DenseNDArray]] = SparseNDArray,
 ) -> str:
-    """
-    Top-level writer method for creating a TileDB group for a ``Experiment`` object.
+    """Top-level writer method for creating a TileDB group for a ``Experiment`` object.
 
     Returns a URI for the created experiment.
 
@@ -136,7 +153,11 @@ def from_anndata(
     The "schema_only" ingest_mode creates groups and array schema, without writing array data.
     This is useful as a prep-step for parallel append-ingest of multiple H5ADs to a single soma.
 
-    [lifecycle: experimental]
+    The ``X_kind`` parameter allows you to specify how dense X matrices from the H5AD are stored
+    within the SOMA experiment -- whether as dense or as sparse.
+
+    Lifecycle:
+        Experimental.
     """
     if ingest_mode not in INGEST_MODES:
         raise SOMAError(
@@ -213,18 +234,14 @@ def from_anndata(
             ) as x:
                 _maybe_set(measurement, "X", x, use_relative_uri=use_relative_uri)
 
-                # Since we did `anndata = ad.read_h5ad(path_to_h5ad, "r")` with the "r":
-                # * If we do `anndata.X[:]` we're loading all of a CSR/CSC/etc into memory.
-                # * If we do `anndata.X` we're getting a pageable object which can be loaded
+                # Since we did ``anndata = ad.read_h5ad(path_to_h5ad, "r")`` with the "r":
+                # * If we do ``anndata.X[:]`` we're loading all of a CSR/CSC/etc into memory.
+                # * If we do ``anndata.X`` we're getting a pageable object which can be loaded
                 #   chunkwise into memory.
                 # Using the latter allows us to ingest larger .h5ad files without OOMing.
-                cls = (
-                    DenseNDArray
-                    if isinstance(anndata.X, (np.ndarray, h5py.Dataset))
-                    else SparseNDArray
-                )
+
                 with create_from_matrix(
-                    cls,
+                    X_kind,
                     _util.uri_joinpath(measurement.X.uri, "data"),
                     anndata.X,
                     platform_config,
@@ -516,9 +533,7 @@ def create_from_matrix(
     platform_config: Optional[PlatformConfig] = None,
     ingest_mode: IngestMode = "write",
 ) -> _NDArr:
-    """
-    Create and populate the ``soma_matrix`` from the contents of ``matrix``.
-    """
+    """Create and populate the ``soma_matrix`` from the contents of ``matrix``."""
     # SparseDataset has no ndim but it has a shape
     if len(matrix.shape) != 2:
         raise ValueError(f"expected matrix.shape == 2; got {matrix.shape}")
@@ -590,12 +605,12 @@ def add_X_layer(
     ingest_mode: IngestMode = "write",
     use_relative_uri: Optional[bool] = None,
 ) -> None:
-    """
-    This is useful for adding X data, for example from scanpy.pp.normalize_total, scanpy.pp.log1p, etc.
+    """This is useful for adding X data, for example from scanpy.pp.normalize_total, scanpy.pp.log1p, etc.
 
-    Use `ingest_mode="resume"` to not error out if the schema already exists.
+    Use ``ingest_mode="resume"`` to not error out if the schema already exists.
 
-    [lifecycle: experimental]
+    Lifecycle:
+        Experimental.
     """
     add_matrix_to_collection(
         exp,
@@ -617,11 +632,10 @@ def add_matrix_to_collection(
     ingest_mode: IngestMode = "write",
     use_relative_uri: Optional[bool] = None,
 ) -> None:
-    """
-    This is useful for adding X/obsp/varm/etc data, for example from scanpy.pp.normalize_total,
+    """This is useful for adding X/obsp/varm/etc data, for example from scanpy.pp.normalize_total,
     scanpy.pp.log1p, etc.
 
-    Use `ingest_mode="resume"` to not error out if the schema already exists.
+    Use ``ingest_mode="resume"`` to not error out if the schema already exists.
     """
     with exp.ms[measurement_name] as meas:
         if collection_name in meas:
@@ -758,14 +772,18 @@ def _read_nonempty_domain(arr: TileDBArray) -> Any:
 def _find_sparse_chunk_size(
     matrix: SparseMatrix, start_index: int, axis: int, goal_chunk_nnz: int
 ) -> int:
-    """
-    Given a sparse matrix and a start index, return a step size, on the stride axis, which will
-    achieve the cummulative nnz desired.
+    """Given a sparse matrix and a start index, return a step size, on the stride axis,
+    which will achieve the cumulative nnz desired.
 
-    :param matrix: The input scipy.sparse matrix.
-    :param start_index: the index at which to start a chunk.
-    :param axis: the stride axis, across which to find a chunk.
-    :param goal_chunk_nnz: Desired number of non-zero array entries for the chunk.
+    Args:
+        matrix:
+            The input scipy.sparse matrix.
+        start_index:
+            The index at which to start a chunk.
+        axis:
+            The stride axis, across which to find a chunk.
+        goal_chunk_nnz:
+            Desired number of non-zero array entries for the chunk.
     """
     chunk_size = 1
     sum_nnz = 0
@@ -874,10 +892,12 @@ def _write_matrix_to_sparseNDArray(
         t1 = time.time()
 
         # Chunk size on the stride axis
-        if isinstance(matrix, np.ndarray):
+        if isinstance(matrix, (np.ndarray, h5py.Dataset)):
             chunk_size = int(math.ceil(goal_chunk_nnz / matrix.shape[stride_axis]))
         else:
-            chunk_size = _find_sparse_chunk_size(matrix, i, stride_axis, goal_chunk_nnz)
+            chunk_size = _find_sparse_chunk_size(  # type: ignore [unreachable]
+                matrix, i, stride_axis, goal_chunk_nnz
+            )
 
         i2 = i + chunk_size
 
@@ -935,9 +955,9 @@ def _chunk_is_contained_in(
 
     We say "bounds" not "MBR" with the "M" for minimum: a sparse matrix might not _have_ any
     elements for some initial/final rows or columns. Suppose an input array has shape 100 x 200, so
-    bounds `((0, 99), (0, 199))` -- and also suppose there are no matrix elements for column 1.
+    bounds ``((0, 99), (0, 199))`` -- and also suppose there are no matrix elements for column 1.
     Also suppose the matrix has already been written to TileDB-SOMA storage. The TileDB non-empty
-    domain _is_ tight -- it'd say `((0, 99), (3, 197))` for example.  When we come back for a
+    domain _is_ tight -- it'd say ``((0, 99), (3, 197))`` for example.  When we come back for a
     resume-mode ingest, we'd see the input bounds aren't contained within the storage non-empty
     domain, and erroneously declare that the data need to be rewritten.
 
@@ -963,9 +983,7 @@ def _chunk_is_contained_in_axis(
     storage_nonempty_domain: Sequence[Tuple[Optional[int], Optional[int]]],
     stride_axis: int,
 ) -> bool:
-    """
-    Helper function for ``_chunk_is_contained_in``.
-    """
+    """Helper function for ``_chunk_is_contained_in``."""
     storage_lo, storage_hi = storage_nonempty_domain[stride_axis]
     if storage_lo is None or storage_hi is None:
         # E.g. an array has had its schema created but no data written yet
@@ -987,10 +1005,10 @@ def to_h5ad(
     measurement_name: str,
     X_layer_name: str = "data",
 ) -> None:
-    """
-    Converts the experiment group to anndata format and writes it to the specified .h5ad file.
+    """Converts the experiment group to anndata format and writes it to the specified .h5ad file.
 
-    [lifecycle: experimental]
+    Lifecycle:
+        Experimental.
     """
     s = _util.get_start_stamp()
     logging.log_io(None, f"START  Experiment.to_h5ad -> {h5ad_path}")
@@ -1015,15 +1033,16 @@ def to_h5ad(
 def to_anndata(
     experiment: Experiment, measurement_name: str, X_layer_name: str = "data"
 ) -> ad.AnnData:
-    """
-    Converts the experiment group to anndata. Choice of matrix formats is following what we often see in input .h5ad files:
+    """Converts the experiment group to anndata.
+    Choice of matrix formats is following what we often see in input .h5ad files:
 
     * X as ``scipy.sparse.csr_matrix``
     * obs,var as ``pandas.dataframe``
     * obsm,varm arrays as ``numpy.ndarray``
     * obsp,varp arrays as ``scipy.sparse.csr_matrix``
 
-    [lifecycle: experimental]
+    Lifecycle:
+        Experimental.
     """
 
     s = _util.get_start_stamp()
@@ -1066,7 +1085,7 @@ def to_anndata(
             if len(shape) != 2:
                 raise ValueError(f"expected shape == 2; got {shape}")
             matrix = measurement.obsm[key].read((slice(None),) * len(shape)).to_numpy()
-            # The spelling `sp.csr_array` is more idiomatic but doesn't exist until Python 3.8
+            # The spelling ``sp.csr_array`` is more idiomatic but doesn't exist until Python 3.8
             obsm[key] = sp.csr_matrix(matrix)
 
     varm = {}
@@ -1076,7 +1095,7 @@ def to_anndata(
             if len(shape) != 2:
                 raise ValueError(f"expected shape == 2; got {shape}")
             matrix = measurement.varm[key].read((slice(None),) * len(shape)).to_numpy()
-            # The spelling `sp.csr_array` is more idiomatic but doesn't exist until Python 3.8
+            # The spelling ``sp.csr_array`` is more idiomatic but doesn't exist until Python 3.8
             varm[key] = sp.csr_matrix(matrix)
 
     obsp = {}

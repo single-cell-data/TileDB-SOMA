@@ -1,3 +1,8 @@
+# Copyright (c) 2021-2023 The Chan Zuckerberg Initiative Foundation
+# Copyright (c) 2021-2023 TileDB, Inc.
+#
+# Licensed under the MIT License.
+
 """Abstractions to more easily manage read and write access to TileDB data.
 
 ``open``, ``ArrayWrapper.open``, ``GroupWrapper.open`` are the important parts.
