@@ -22,7 +22,9 @@ channel `#cell-census-users`
 
 # Documentation
 
-While the [main-old](https://github.com/single-cell-data/TileDB-SOMA/blob/main-old/apis/python/README.md) branch has documentation hosted at `readthedocs`, for this `main` branch please use on-line `help` at the Python and R CLIs. Stay tuned for `readthedocs` updates!
+* [Python API](https://tiledbsoma.readthedocs.io/en/latest/python-api.html)
+* [R API](https://single-cell-data.github.io/TileDB-SOMA)
+* [Example Python notebooks](https://github.com/single-cell-data/TileDB-SOMA/tree/main/apis/python/notebooks)
 
 # Installation
 
