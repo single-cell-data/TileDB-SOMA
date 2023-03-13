@@ -27,12 +27,12 @@ Intended to be used for single-cell data, TileDB-SOMA provides Python and R APIs
 * Open and read data at low latency, locally and from the cloud.
 * Query and access interconnected arrays efficiently and at low latency.
 
-TiledDB-SOMA provides interoperability with existing single-cell toolkits:
+TileDB-SOMA provides interoperability with existing single-cell toolkits:
 
 * Load and create [anndata](https://anndata.readthedocs.io/en/latest/) objects.
 * Load and create [Seurat](https://anndata.readthedocs.io/en/latest/) objects. *Coming soon*.
 
-TiledDB-SOMA provides interoperability with existing Python or R data structures:
+TileDB-SOMA provides interoperability with existing Python or R data structures:
 
 * From Python create PyArrow objects, SciPy sparse matrices, NumPy arrays, and pandas data frames.
 * From R create RArrow objects, Matrix sparse matrices, and R-base dense matrices.
@@ -40,8 +40,8 @@ TiledDB-SOMA provides interoperability with existing Python or R data structures
 
 ## Community
 
-* Please join the [TileDB Slack community](https://tiledb-community.slack.com/join/shared_invite/zt-ndq1ipwl-QcithaWG6j1BImtuQGSpag#/shared-invite/email) with dedicated channel `#genomics`
-* Please join the [CZI Slack community](https://cziscience.slack.com/), with dedicated
+* Please join the [TileDB Slack community](https://czi.co/science-slack) with dedicated channel `#genomics`
+* Please join the [CZI Slack community](https://cziscience.slack.com/join/shared_invite/zt-czl1kp2v-sgGpY4RxO3bPYmFg2XlbZA#/shared-invite/email), with dedicated
 channel `#cell-census-users`
 
 
@@ -69,6 +69,11 @@ The capabilities of TileDB-SOMA lay on the different read, access, and query pat
 
 * [Python quick start](https://github.com/single-cell-data/TileDB-SOMA/wiki/Python-quick-start)
 * [R quick start](https://github.com/single-cell-data/TileDB-SOMA/wiki/R-quick-start)
+
+## Who is using SOMA?
+
+* [CZ CELLxGENE Discover](https://cellxgene.cziscience.com/) to build the [Cell Census](https://github.com/chanzuckerberg/cell-census/) which provides efficient access and querying to a corpus containing nearly 50 million cells, compiled from 700+ datasets.
+
 
 ## Issues and contacts
 
