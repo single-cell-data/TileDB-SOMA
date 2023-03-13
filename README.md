@@ -40,9 +40,9 @@ TileDB-SOMA provides interoperability with existing Python or R data structures:
 
 ## Community
 
-* Please join the [TileDB Slack community](https://czi.co/science-slack) with dedicated channel `#genomics`
+* Please join the [TileDB Slack community](https://czi.co/science-slack) with dedicated channel `#genomics`.
 * Please join the [CZI Slack community](https://cziscience.slack.com/join/shared_invite/zt-czl1kp2v-sgGpY4RxO3bPYmFg2XlbZA#/shared-invite/email), with dedicated
-channel `#cell-census-users`
+channel `#cell-census-users`.
 
 
 ## Quick start
@@ -74,11 +74,13 @@ The capabilities of TileDB-SOMA lay on the different read, access, and query pat
 
 * [CZ CELLxGENE Discover](https://cellxgene.cziscience.com/) to build the [Cell Census](https://github.com/chanzuckerberg/cell-census/) which provides efficient access and querying to a corpus containing nearly 50 million cells, compiled from 700+ datasets.
 
+If you are interested in listing any projects here please contact us at [soma@chanzuckerberg.com](mailto:soma@chanzuckerberg.com).
+
 
 ## Issues and contacts
 
-* Any/all questions, comments, and concerns are welcome at the [GitHub new-issue page](https://github.com/single-cell-data/TileDB-SOMA/issues/new/choose) -- or, you can also browse [existing issues](https://github.com/single-cell-data/TileDB-SOMA/issues)
-* If you believe you have found a security issue, in lieu of filing an issue please responsibly disclose it by contacting [security@tiledb.com](mailto:security@tiledb.com)
+* Any/all questions, comments, and concerns are welcome at the [GitHub new-issue page](https://github.com/single-cell-data/TileDB-SOMA/issues/new/choose) -- or, you can also browse [existing issues](https://github.com/single-cell-data/TileDB-SOMA/issues).
+* If you believe you have found a security issue, in lieu of filing an issue please responsibly disclose it by contacting [security@tiledb.com](mailto:security@tiledb.com).
 
 ## Branches
 
@@ -86,8 +88,8 @@ This branch, `main`, implements the [updated specfication](https://github.com/si
 
 ## Developer information
 
-* [TileDB-SOMA wiki](https://github.com/single-cell-data/TileDB-SOMA/wiki)
-* [Build instructions for developers](libtiledbsoma/README.md)
+* [TileDB-SOMA wiki](https://github.com/single-cell-data/TileDB-SOMA/wiki).
+* [Build instructions for developers](libtiledbsoma/README.md).
 
 ## Code of Conduct
 
