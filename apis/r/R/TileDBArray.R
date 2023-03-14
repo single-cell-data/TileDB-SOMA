@@ -92,8 +92,7 @@ TileDBArray <- R6::R6Class(
     #' @description Retrieve the shape, i.e. the length of each dimension (lifecycle: experimental)
     #' @return A named vector of dimension length (and the same type as the dimension)
     shape = function() {
-      dims <- tiledb::dimensions(self$tiledb_schema())
-      do.call(c, lapply(dims, function(dim) { dom <- tiledb::domain(dim); dom[2] - dom[1] + 1 }))
+      as.integer64(shape(self$uri))
     },
 
     #' @description Retrieve number of dimensions (lifecycle: experimental)

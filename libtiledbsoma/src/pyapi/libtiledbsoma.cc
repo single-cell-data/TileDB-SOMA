@@ -641,6 +641,8 @@ PYBIND11_MODULE(libtiledbsoma, m) {
                 return std::nullopt;
             })
 
-        .def("nnz", &SOMAReader::nnz, py::call_guard<py::gil_scoped_release>());
+        .def("nnz", &SOMAReader::nnz, py::call_guard<py::gil_scoped_release>())
+
+        .def_property_readonly("shape", &SOMAReader::shape);
 }
 }  // namespace tiledbsoma

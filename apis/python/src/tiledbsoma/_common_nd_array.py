@@ -105,7 +105,7 @@ class NDArray(TileDBArray, somacore.NDArray):
         Lifecycle:
             Experimental.
         """
-        return cast(Tuple[int, ...], self._handle.schema.domain.shape)
+        return cast(Tuple[int, ...], tuple(self._soma_reader().shape))
 
     def reshape(self, shape: Tuple[int, ...]) -> None:
         """Unsupported operation for this object type.

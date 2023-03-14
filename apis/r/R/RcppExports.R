@@ -58,6 +58,12 @@ check_arrow_array_tag <- function(xp) {
     .Call(`_tiledbsoma_check_arrow_array_tag`, xp)
 }
 
+#' @rdname soma_reader
+#' @export
+shape <- function(uri) {
+    .Call(`_tiledbsoma_shape`, uri)
+}
+
 #' Iterator-Style Access to SOMA Array via SOMAReader
 #'
 #' The `sr_*` functions provide low-level access to an instance of the SOMAReader
