@@ -16,7 +16,7 @@ from somacore import options
 from typing_extensions import Self
 
 from . import _arrow_types, _util
-from . import libtiledbsoma as clib
+from . import pytiledbsoma as clib
 from ._constants import SOMA_JOINID
 from ._query_condition import QueryCondition
 from ._read_iters import TableReadIter
@@ -769,18 +769,35 @@ def _fill_out_slot_domain(
         finfo = np.finfo(cast(NPFloating, dtype))
         slot_domain = finfo.min, finfo.max
 
+    # The `iinfo.min+1` is necessary as of tiledb core 2.15 / tiledb-py 0.21.1 since
+    # `iinfo.min` maps to `NaT` (not a time), resulting in
+    #   TypeError: invalid domain extent, domain cannot be safely cast to dtype dtype('<M8[s]')
+    #
+    # The `iinfo.max-delta` is necessary since with iinfo.min being bumped by 1, without subtracting
+    # we would get
+    #   tiledb.cc.TileDBError: [TileDB::Dimension] Error: Tile extent check failed; domain max
+    #   expanded to multiple of tile extent exceeds max value representable by domain type. Reduce
+    #   domain max by 1 tile extent to allow for expansion.
     elif dtype == "datetime64[s]":
         iinfo = np.iinfo(cast(NPInteger, np.int64))
-        slot_domain = np.datetime64(iinfo.min, "s"), np.datetime64(iinfo.max - 1, "s")
+        slot_domain = np.datetime64(iinfo.min + 1, "s"), np.datetime64(
+            iinfo.max - 1000000, "s"
+        )
     elif dtype == "datetime64[ms]":
         iinfo = np.iinfo(cast(NPInteger, np.int64))
-        slot_domain = np.datetime64(iinfo.min, "ms"), np.datetime64(iinfo.max - 1, "ms")
+        slot_domain = np.datetime64(iinfo.min + 1, "ms"), np.datetime64(
+            iinfo.max - 1000000, "ms"
+        )
     elif dtype == "datetime64[us]":
         iinfo = np.iinfo(cast(NPInteger, np.int64))
-        slot_domain = np.datetime64(iinfo.min, "us"), np.datetime64(iinfo.max - 1, "us")
+        slot_domain = np.datetime64(iinfo.min + 1, "us"), np.datetime64(
+            iinfo.max - 1000000, "us"
+        )
     elif dtype == "datetime64[ns]":
         iinfo = np.iinfo(cast(NPInteger, np.int64))
-        slot_domain = np.datetime64(iinfo.min, "ns"), np.datetime64(iinfo.max - 1, "ns")
+        slot_domain = np.datetime64(iinfo.min + 1, "ns"), np.datetime64(
+            iinfo.max - 1000000, "ns"
+        )
 
     else:
         raise TypeError(f"Unsupported dtype {dtype}")

@@ -13,7 +13,7 @@ from typing import Any, Callable, List, Tuple, Union
 import numpy as np
 import tiledb
 
-from . import libtiledbsoma as clib
+from . import pytiledbsoma as clib
 from ._exception import SOMAError
 
 # In Python 3.7, a boolean literal like `True` is of type `ast.NameConstant`.

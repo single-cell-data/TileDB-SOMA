@@ -58,6 +58,12 @@ check_arrow_array_tag <- function(xp) {
     .Call(`_tiledbsoma_check_arrow_array_tag`, xp)
 }
 
+#' @rdname soma_reader
+#' @export
+shape <- function(uri) {
+    .Call(`_tiledbsoma_shape`, uri)
+}
+
 #' Iterator-Style Access to SOMA Array via SOMAReader
 #'
 #' The `sr_*` functions provide low-level access to an instance of the SOMAReader
@@ -147,6 +153,13 @@ tiledbsoma_stats_reset <- function() {
 #' @export
 tiledbsoma_stats_dump <- function() {
     .Call(`_tiledbsoma_tiledbsoma_stats_dump`)
+}
+
+#' libtiledbsoma version information
+#'
+#' Returns a string with version information for libtiledbsoma and the linked TileDB Embedded library.
+libtiledbsoma_version <- function() {
+    .Call(`_tiledbsoma_libtiledbsoma_version`)
 }
 
 #' TileDB Embedded Version interface

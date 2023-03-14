@@ -2,17 +2,17 @@ message(STATUS "Starting TileDB-SOMA build.")
 
 set(TILEDBSOMA_INSTALL_TARGETS "")
 
-############################################################
+# ###########################################################
 # Find required dependencies
+# See ../cmake/Modules/*.cmake for provenance/version info
 ############################################################
 
 find_package(TileDB_EP REQUIRED)
 find_package(Spdlog_EP REQUIRED)
 
-############################################################
+# ###########################################################
 # Get source commit hash
-############################################################
-
+# ###########################################################
 find_package(Git REQUIRED)
 
 execute_process(
@@ -24,7 +24,7 @@ execute_process(
   OUTPUT_STRIP_TRAILING_WHITESPACE)
 
 # If we didn't find a tag name let's grab the SHA
-if (res)
+if(res)
   execute_process(
     COMMAND "${GIT_EXECUTABLE}" describe --dirty=-modified --always
     WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
@@ -40,10 +40,9 @@ set_property(GLOBAL APPEND
 
 message(STATUS "Building with commit hash ${BUILD_COMMIT_HASH}")
 
-############################################################
+# ###########################################################
 # Common object library
-############################################################
-
+# ###########################################################
 add_library(TILEDB_SOMA_OBJECTS OBJECT
   ${CMAKE_CURRENT_SOURCE_DIR}/column_buffer.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/logger.cc
@@ -52,9 +51,10 @@ add_library(TILEDB_SOMA_OBJECTS OBJECT
   ${CMAKE_CURRENT_SOURCE_DIR}/stats.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/util.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/version.cc
-# TODO: uncomment when thread_pool is enabled
-#  ${CMAKE_CURRENT_SOURCE_DIR}/../external/src/thread_pool/thread_pool.cc
-#  ${CMAKE_CURRENT_SOURCE_DIR}/../external/src/thread_pool/status.cc
+
+  # TODO: uncomment when thread_pool is enabled
+  # ${CMAKE_CURRENT_SOURCE_DIR}/../external/src/thread_pool/thread_pool.cc
+  # ${CMAKE_CURRENT_SOURCE_DIR}/../external/src/thread_pool/status.cc
 )
 
 message(STATUS "Building TileDB without deprecation warnings")
@@ -71,55 +71,58 @@ set_property(TARGET TILEDB_SOMA_OBJECTS PROPERTY POSITION_INDEPENDENT_CODE ON)
 
 target_include_directories(TILEDB_SOMA_OBJECTS
   PRIVATE
-    ${CMAKE_CURRENT_SOURCE_DIR}
-    ${CMAKE_CURRENT_SOURCE_DIR}/../include
-    ${CMAKE_CURRENT_SOURCE_DIR}/../external/include
-    $<TARGET_PROPERTY:TileDB::tiledb_shared,INTERFACE_INCLUDE_DIRECTORIES>
-    $<TARGET_PROPERTY:spdlog::spdlog,INTERFACE_INCLUDE_DIRECTORIES>
-    ${pybind11_INCLUDE_DIRS}
+  ${CMAKE_CURRENT_SOURCE_DIR}
+  ${CMAKE_CURRENT_SOURCE_DIR}/../include
+  ${CMAKE_CURRENT_SOURCE_DIR}/../external/include
+  $<TARGET_PROPERTY:TileDB::tiledb_shared,INTERFACE_INCLUDE_DIRECTORIES>
+  $<TARGET_PROPERTY:spdlog::spdlog,INTERFACE_INCLUDE_DIRECTORIES>
+  ${pybind11_INCLUDE_DIRS}
 )
 
-############################################################
+# ###########################################################
 # Compile options/definitions
-############################################################
+# ###########################################################
+if(SANITIZER)
+  string(TOLOWER "${CMAKE_BUILD_TYPE}" CMAKE_BUILD_TYPE_LOWER)
 
-if (SANITIZER)
-  string( TOLOWER "${CMAKE_BUILD_TYPE}" CMAKE_BUILD_TYPE_LOWER )
-  if (NOT CMAKE_BUILD_TYPE_LOWER MATCHES "debug")
+  if(NOT CMAKE_BUILD_TYPE_LOWER MATCHES "debug")
     message(FATAL_ERROR "Sanitizers only enabled for Debug build")
   endif()
+
   string(TOLOWER ${SANITIZER} SANITIZER)
-  if (NOT SANITIZER MATCHES "^(address|memory|leak|thread|undefined)$")
+
+  if(NOT SANITIZER MATCHES "^(address|memory|leak|thread|undefined)$")
     message(FATAL_ERROR "Unknown clang sanitizer: ${SANITIZER})")
   else()
     message(STATUS "The TileDB-SOMA library is compiled with sanitizer ${SANITIZER} enabled")
   endif()
+
   target_compile_options(TILEDB_SOMA_OBJECTS
-          PRIVATE
-          -g -fno-omit-frame-pointer -fno-optimize-sibling-calls -fsanitize=${SANITIZER}
-          )
+    PRIVATE
+    -g -fno-omit-frame-pointer -fno-optimize-sibling-calls -fsanitize=${SANITIZER}
+  )
 endif()
 
-############################################################
+# ###########################################################
 # tiledbsoma library target
-############################################################
-
-if (TILEDBSOMA_BUILD_STATIC)
+# ###########################################################
+if(TILEDBSOMA_BUILD_STATIC)
   add_library(tiledbsoma_static STATIC
     $<TARGET_OBJECTS:TILEDB_SOMA_OBJECTS>
   )
   list(APPEND TILEDBSOMA_INSTALL_TARGETS tiledbsoma_static)
-  if (WIN32)
+
+  if(WIN32)
     # On Windows we must name the static library something else to avoid
     # name clash with the DLL's "import library" .lib file.
     set_target_properties(tiledbsoma_static
       PROPERTIES
-        OUTPUT_NAME "tiledbsomastatic"
+      OUTPUT_NAME "tiledbsomastatic"
     )
   else()
     set_target_properties(tiledbsoma_static
       PROPERTIES
-        OUTPUT_NAME "tiledbsoma"
+      OUTPUT_NAME "tiledbsoma"
     )
   endif()
 else()
@@ -128,17 +131,17 @@ else()
   )
 
   list(APPEND TILEDBSOMA_INSTALL_TARGETS tiledbsoma)
-  
+
   target_link_libraries(tiledbsoma
     PUBLIC
-      TileDB::tiledb_shared
-      spdlog::spdlog
+    TileDB::tiledb_shared
+    spdlog::spdlog
   )
 endif()
 
 # Sanitizer linker flags
-if (SANITIZER)
-  if (TILEDBSOMA_BUILD_STATIC)
+if(SANITIZER)
+  if(TILEDBSOMA_BUILD_STATIC)
     target_link_libraries(tiledbsoma_static
       INTERFACE
       -fsanitize=${SANITIZER}
@@ -153,17 +156,16 @@ endif()
 
 # Install header files and preserve directory structure
 # target_sources FILE_SET is preferred with cmake>=3.23
-install(DIRECTORY 
+install(DIRECTORY
   ${CMAKE_CURRENT_SOURCE_DIR}/../external/include/span
   ${CMAKE_CURRENT_SOURCE_DIR}/../external/include/thread_pool
-  ${CMAKE_CURRENT_SOURCE_DIR}/../include/tiledbsoma 
+  ${CMAKE_CURRENT_SOURCE_DIR}/../include/tiledbsoma
   TYPE INCLUDE
 )
 
-############################################################
+# ###########################################################
 # API symbol exports
-############################################################
-
+# ###########################################################
 include(GenerateExportHeader)
 
 # Generates the file 'tiledbsoma_export.h' suitable for the current compiler.
@@ -183,26 +185,17 @@ target_compile_definitions(TILEDB_SOMA_OBJECTS PRIVATE -DTILEDB_SOMA_OBJECTS_EXP
 target_include_directories(TILEDB_SOMA_OBJECTS PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
 
 # Add public headers, which are the ones that get installed.
-if (NOT TILEDBSOMA_BUILD_STATIC)
+if(NOT TILEDBSOMA_BUILD_STATIC)
   set_target_properties(tiledbsoma
     PROPERTIES
-      PUBLIC_HEADER "${TILEDB_SOMA_EXPORT_HEADER}"
+    PUBLIC_HEADER "${TILEDB_SOMA_EXPORT_HEADER}"
   )
 endif()
 
-############################################################
-# Python API bindings
-############################################################
-
-if (TILEDBSOMA_BUILD_PYTHON)
-  add_subdirectory(pyapi)
-endif()
-
-############################################################
+# ###########################################################
 # CLI executable target
-############################################################
-
-if (TILEDBSOMA_BUILD_CLI)
+# ###########################################################
+if(TILEDBSOMA_BUILD_CLI)
   add_executable(tiledbsoma-cli
     ${CMAKE_CURRENT_SOURCE_DIR}/cli.cc
     $<TARGET_OBJECTS:TILEDB_SOMA_OBJECTS>
@@ -214,45 +207,45 @@ if (TILEDBSOMA_BUILD_CLI)
 
   target_link_libraries(tiledbsoma-cli
     PUBLIC
-      #CLI11::CLI11
-      #spdlog::spdlog
-      tiledbsoma
-      TileDB::tiledb_shared
+
+    # CLI11::CLI11
+    # spdlog::spdlog
+    tiledbsoma
+    TileDB::tiledb_shared
   )
 
   # Sanitizer linker flags
-  if (SANITIZER)
+  if(SANITIZER)
     target_link_libraries(tiledbsoma-cli
-            INTERFACE
-            -fsanitize=${SANITIZER}
-            )
+      INTERFACE
+      -fsanitize=${SANITIZER}
+    )
   endif()
 
-  if (NOT APPLE AND NOT WIN32)
+  if(NOT APPLE AND NOT WIN32)
     target_link_libraries(tiledbsoma-cli PRIVATE pthread)
   endif()
 
   target_include_directories(tiledbsoma-cli
     PRIVATE
-      ${CMAKE_CURRENT_SOURCE_DIR}
-      ${CMAKE_CURRENT_SOURCE_DIR}/../include
-      ${CMAKE_CURRENT_SOURCE_DIR}/../external/include
-      ${TILEDB_SOMA_EXPORT_HEADER_DIR}
-      ${pybind11_INCLUDE_DIRS}
+    ${CMAKE_CURRENT_SOURCE_DIR}
+    ${CMAKE_CURRENT_SOURCE_DIR}/../include
+    ${CMAKE_CURRENT_SOURCE_DIR}/../external/include
+    ${TILEDB_SOMA_EXPORT_HEADER_DIR}
+    ${pybind11_INCLUDE_DIRS}
   )
 
   set_target_properties(tiledbsoma-cli PROPERTIES INSTALL_RPATH ${CMAKE_INSTALL_PREFIX}/lib)
-
 endif()
 
-############################################################
+# ###########################################################
 # Installation
-############################################################
-
+# ###########################################################
 include(GNUInstallDirs)
 
 # Set directory where TileDBConfig.cmake will be installed
 set(CONFIG_INSTALL_DIR "${CMAKE_INSTALL_LIBDIR}/cmake/tiledbsoma")
+
 # Set name for export target file (will be installed to CONFIG_INSTALL_DIR)
 set(TARGETS_EXPORT_NAME "TileDBSomaTargets")
 

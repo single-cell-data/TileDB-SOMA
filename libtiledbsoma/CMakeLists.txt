@@ -53,6 +53,7 @@ option(TILEDB_FORCE_ALL_DEPS "Forces a local build of TileDB instead of searchin
 option(DOWNLOAD_TILEDB_PREBUILT "If tiledb is being super built, this controls downloading prebuilt artifacts or building from source" ON)
 
 # TileDB BUILD Options
+# NOTE: TileDB Embedded version is controlled in cmake/Modules/FindTileDB_EP.cmake
 option(TILEDB_S3 "Enables S3/minio support using aws-cpp-sdk" ON)
 option(TILEDB_AZURE "Enables Azure Storage support using azure-storage-cpp" ON)
 option(TILEDB_GCS "Enables GCS Storage support using google-cloud-cpp" OFF)
@@ -105,8 +106,8 @@ if(APPLE)
 endif()
 
 # Set -fvisibility=hidden (or equivalent) flags by default.
-set(CMAKE_C_VISIBILITY_PRESET hidden)
-set(CMAKE_CXX_VISIBILITY_PRESET hidden)
+#set(CMAKE_C_VISIBILITY_PRESET hidden)
+#set(CMAKE_CXX_VISIBILITY_PRESET hidden)
 
 # Root directory default installation prefix
 if(OVERRIDE_INSTALL_PREFIX)

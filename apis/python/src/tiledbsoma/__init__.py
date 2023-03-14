@@ -117,13 +117,13 @@ from ._general_utilities import (
 )
 from ._measurement import Measurement
 from ._sparse_nd_array import SparseNDArray
-from .libtiledbsoma import (
+from .options import SOMATileDBContext
+from .pytiledbsoma import (
     tiledbsoma_stats_disable,
     tiledbsoma_stats_dump,
     tiledbsoma_stats_enable,
     tiledbsoma_stats_reset,
 )
-from .options import SOMATileDBContext
 
 __version__ = get_implementation_version()
 

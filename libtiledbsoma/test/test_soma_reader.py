@@ -4,7 +4,7 @@ import os
 
 import pyarrow as pa
 
-import tiledbsoma.libtiledbsoma as clib
+import tiledbsoma.pytiledbsoma as clib
 
 VERBOSE = False
 

@@ -85,7 +85,7 @@ std::tuple<std::string, uint64_t> create_array(
         ArraySchema schema(ctx, TILEDB_SPARSE);
 
         auto dim = Dimension::create<int64_t>(
-            ctx, "d0", {0, std::numeric_limits<int64_t>::max()});
+            ctx, "d0", {0, std::numeric_limits<int64_t>::max() - 1});
 
         Domain domain(ctx);
         domain.add_dimension(dim);
@@ -178,6 +178,10 @@ TEST_CASE("SOMAReader: nnz") {
 
         uint64_t nnz = sr->nnz();
         REQUIRE(nnz == expected_nnz);
+
+        std::vector<int64_t> shape = sr->shape();
+        REQUIRE(shape.size() == 1);
+        REQUIRE(shape[0] == std::numeric_limits<int64_t>::max());
     }
 }
 

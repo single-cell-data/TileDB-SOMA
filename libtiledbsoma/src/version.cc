@@ -46,7 +46,7 @@ std::string as_string() {
     int major, minor, patch;
     tiledb_version(&major, &minor, &patch);
     return fmt::format(
-        "libtiledbsoma={}\nlibtiledb={}.{}.{}", VERSION, major, minor, patch);
+        "libtiledbsoma={};libtiledb={}.{}.{}", VERSION, major, minor, patch);
 }
 
 std::tuple<int, int, int> embedded_version_triple() {
