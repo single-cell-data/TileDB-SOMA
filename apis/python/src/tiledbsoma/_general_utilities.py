@@ -11,7 +11,7 @@ import sys
 import tiledb
 from pkg_resources import DistributionNotFound, get_distribution
 
-from .libtiledbsoma import version as libtiledbsoma_version
+from .pytiledbsoma import version as libtiledbsoma_version
 
 
 def get_SOMA_version() -> str:

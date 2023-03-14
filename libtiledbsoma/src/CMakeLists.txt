@@ -50,6 +50,7 @@ add_library(TILEDB_SOMA_OBJECTS OBJECT
   ${CMAKE_CURRENT_SOURCE_DIR}/soma_reader.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/stats.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/util.cc
+  ${CMAKE_CURRENT_SOURCE_DIR}/version.cc
 
   # TODO: uncomment when thread_pool is enabled
   # ${CMAKE_CURRENT_SOURCE_DIR}/../external/src/thread_pool/thread_pool.cc
