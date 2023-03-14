@@ -3,8 +3,7 @@
 # The TileDB Embedded version specified here will be linked to the libtiledbsoma native lib loaded
 # by our tiledbsoma R package. The R package code -also- uses TileDB-R, which links its own 'copy'
 # of TileDB Embedded, whose version we don't control here. Ideally the TileDB Embedded versions
-# should match! The show_package_versions() helper function in each package can help to diagnose
-# any mismatch.
+# should match! The show_package_versions() helper function can help to diagnose any mismatch.
 
 ## todo: chipset for macOS to detect arm
 isX86 <- Sys.info()["machine"] == "x86_64"
