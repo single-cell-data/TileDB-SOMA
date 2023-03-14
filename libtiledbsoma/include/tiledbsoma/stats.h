@@ -39,10 +39,10 @@
 
 namespace tiledbsoma::stats {
 
-void enable();
-void disable();
-void reset();
-std::string dump();
+__attribute__((visibility("default"))) void enable();
+__attribute__((visibility("default"))) void disable();
+__attribute__((visibility("default"))) void reset();
+__attribute__((visibility("default"))) std::string dump();
 
 };  // namespace tiledbsoma::stats
 

@@ -16,7 +16,7 @@ from somacore import options
 from typing_extensions import Self
 
 from . import _arrow_types, _util
-from . import libtiledbsoma as clib
+from . import pytiledbsoma as clib
 from ._constants import SOMA_JOINID
 from ._query_condition import QueryCondition
 from ._read_iters import TableReadIter

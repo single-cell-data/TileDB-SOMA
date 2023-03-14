@@ -47,7 +47,8 @@
 namespace tiledbsoma {
 
 /** Set log level for global logger and optionally set a logfile. */
-void LOG_CONFIG(const std::string& level, const std::string& logfile = "");
+__attribute__((visibility("default"))) void LOG_CONFIG(
+    const std::string& level, const std::string& logfile = "");
 
 /** Set log level for global logger. */
 void LOG_SET_LEVEL(const std::string& level);
@@ -59,16 +60,16 @@ void LOG_SET_FILE(const std::string& logfile);
 bool LOG_DEBUG_ENABLED();
 
 /** Logs a trace message. */
-void LOG_TRACE(const std::string& msg);
+__attribute__((visibility("default"))) void LOG_TRACE(const std::string& msg);
 
 /** Logs a debug message. */
-void LOG_DEBUG(const std::string& msg);
+__attribute__((visibility("default"))) void LOG_DEBUG(const std::string& msg);
 
 /** Logs an info message. */
-void LOG_INFO(const std::string& msg);
+__attribute__((visibility("default"))) void LOG_INFO(const std::string& msg);
 
 /** Logs a warning. */
-void LOG_WARN(const std::string& msg);
+__attribute__((visibility("default"))) void LOG_WARN(const std::string& msg);
 
 /** Logs an error. */
 void LOG_ERROR(const std::string& msg);

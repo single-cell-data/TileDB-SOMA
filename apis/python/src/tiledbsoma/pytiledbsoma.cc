@@ -1,5 +1,5 @@
 /**
- * @file   libtiledbsoma.cc
+ * @file   pytiledbsoma.cc
  *
  * @section LICENSE
  *
@@ -89,7 +89,7 @@ py::object to_table(std::shared_ptr<ArrayBuffers> array_buffers) {
  * @brief pybind11 bindings
  *
  */
-PYBIND11_MODULE(libtiledbsoma, m) {
+PYBIND11_MODULE(pytiledbsoma, m) {
     tiledbpy::init_query_condition(m);
 
     m.doc() = "SOMA acceleration library";
@@ -422,7 +422,7 @@ PYBIND11_MODULE(libtiledbsoma, m) {
 
                     } else {
                         throw TileDBSOMAError(fmt::format(
-                            "[libtiledbsoma] set_dim_points: type={} not "
+                            "[pytiledbsoma] set_dim_points: type={} not "
                             "supported",
                             arrow_schema.format));
                     }

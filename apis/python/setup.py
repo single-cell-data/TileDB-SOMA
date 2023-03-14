@@ -22,12 +22,33 @@ import subprocess
 import sys
 
 import setuptools
-import setuptools.command.build_ext
+
+# import setuptools.command.build_ext
 import wheel.bdist_wheel
+from pybind11.setup_helpers import Pybind11Extension
 
 this_dir = pathlib.Path(__file__).parent.absolute()
 sys.path.insert(0, str(this_dir))
+
 import version  # noqa E402
+
+libtiledbsoma_dir = None
+
+args = sys.argv[:]
+for arg in args:
+    if arg.find("--libtiledbsoma") == 0:
+        libtiledbsoma_dir = arg.split("=")[1]
+        sys.argv.remove(arg)
+
+if libtiledbsoma_dir is None:
+    scripts_dir = this_dir / "dist_links" / "scripts"
+
+    if scripts_dir.is_symlink():
+        # in git source tree
+        libtiledbsoma_dir = this_dir.parent.parent / "dist"
+    else:
+        # in extracted sdist, with libtiledbsoma copied into dist_links/
+        libtiledbsoma_dir = this_dir / "dist_links" / "dist"
 
 
 def get_libtiledbsoma_library_name():
@@ -62,11 +83,25 @@ def find_libtiledbsoma_full_path_on_linux(lib_name):
     return ctypes.cast(lmptr, ctypes.POINTER(LINKMAP)).contents.l_name.decode()
 
 
-def libtiledbsoma_global_exists():
+def libtiledbsoma_exists():
     """
-    Returns the path to the globally installed TileDB-SOMA library, if it exists.
+    Returns the path to the TileDB-SOMA library, if it exists.
     :return: The path to the TileDB-SOMA library, or None.
     """
+    # Check if TileDB-SOMA is installed in user given path
+    dist_dirs = [libtiledbsoma_dir / "lib"]
+    if sys.platform.startswith("linux"):
+        dist_dirs.append(libtiledbsoma_dir / "lib64")
+        dist_dirs.append(libtiledbsoma_dir / "lib" / "x86_64-linux-gnu")
+    elif os.name == "nt":
+        dist_dirs.append(libtiledbsoma_dir / "bin")
+
+    for lib_dir in dist_dirs:
+        full_lib_path = lib_dir / get_libtiledbsoma_library_name()
+        print(f"Checking: {full_lib_path} exists: {full_lib_path.exists()}")
+        if full_lib_path.exists():
+            return lib_dir
+
     # Check to see if TileDB-SOMA is globally installed.
     lib_name = get_libtiledbsoma_library_name()
 
@@ -84,45 +119,9 @@ def libtiledbsoma_global_exists():
         return None
 
 
-def libtiledbsoma_dist_exists():
-    """
-    Returns the path to the TileDB-SOMA library installed in dist, if it exists.
-    :return: The path to the TileDB-SOMA library, or None.
-    """
-    dist_dirs = [libtiledbsoma_dir / "dist" / "lib"]
-    if sys.platform.startswith("linux"):
-        dist_dirs.append(libtiledbsoma_dir / "dist" / "lib64")
-        dist_dirs.append(libtiledbsoma_dir / "dist" / "lib" / "x86_64-linux-gnu")
-    elif os.name == "nt":
-        dist_dirs.append(libtiledbsoma_dir / "dist" / "bin")
-
-    for lib_dir in dist_dirs:
-        full_lib_path = lib_dir / get_libtiledbsoma_library_name()
-        print(f"Checking: {full_lib_path} exists: {full_lib_path.exists()}")
-        if full_lib_path.exists():
-            return lib_dir
-    return None
-
-
 def find_or_build_package_data(setuptools_cmd):
-    global libtiledbsoma_dir
-
-    # Set up paths
-    scripts_dir = this_dir / "dist_links" / "scripts"
-
-    if scripts_dir.is_symlink():
-        # in git source tree
-        libtiledbsoma_dir = this_dir.parent.parent
-    else:
-        # in extracted sdist, with libtiledbsoma copied into dist_links/
-        libtiledbsoma_dir = this_dir / "dist_links"
-
-    # check if libtiledbsoma is installed in dist
-    lib_dir = libtiledbsoma_dist_exists()
-
-    # check if libtilesoma is globally installed
-    if lib_dir is None:
-        lib_dir = libtiledbsoma_global_exists()
+    # check if libtiledbsoma is installed
+    lib_dir = libtiledbsoma_exists()
 
     # if not then build from source
     if lib_dir is None:
@@ -132,7 +131,8 @@ def find_or_build_package_data(setuptools_cmd):
         #
         # See `.github/workflows/python-ci-single.yml` for configuration.
         subprocess.run(["./bld"], cwd=scripts_dir)
-        lib_dir = libtiledbsoma_dist_exists()
+        lib_dir = libtiledbsoma_exists()
+        assert lib_dir, "error when building libtiledbsoma from source"
 
     # Copy native libs into the package dir so they can be found by package_data
     package_data = []
@@ -152,6 +152,7 @@ def find_or_build_package_data(setuptools_cmd):
 class build_ext(setuptools.command.build_ext.build_ext):
     def run(self):
         find_or_build_package_data(self)
+        super().run()
 
 
 class bdist_wheel(wheel.bdist_wheel.bdist_wheel):
@@ -160,10 +161,31 @@ class bdist_wheel(wheel.bdist_wheel.bdist_wheel):
         super().run()
 
 
+INC_DIRS = [
+    "../../libtiledbsoma/include",
+    "../../libtiledbsoma/external/include",
+    "../../build/externals/install/include",
+]
+LIB_DIRS = [
+    str(libtiledbsoma_dir / "lib"),
+]
+CXX_FLAGS = [
+    f'-Wl,-rpath,{str(libtiledbsoma_dir / "lib")}',
+]
+
+if os.name == "posix" and sys.platform != "darwin":
+    LIB_DIRS.append(str(libtiledbsoma_dir / "lib" / "x86_64-linux-gnu"))
+    LIB_DIRS.append(str(libtiledbsoma_dir / "lib64"))
+    CXX_FLAGS.append(
+        f'-Wl,-rpath,{str(libtiledbsoma_dir / "lib" / "x86_64-linux-gnu")}'
+    )
+    CXX_FLAGS.append(f'-Wl,-rpath,{str(libtiledbsoma_dir / "lib64")}')
+
 # ----------------------------------------------------------------
 # Don't use `if __name__ == "__main__":` as the `python_requires` must
 # be at top level, outside any if-block
 # https://github.com/pypa/cibuildwheel/blob/7c4bbf8cb31d856a0fe547faf8edf165cd48ce74/cibuildwheel/projectfiles.py#L41-L46
+
 setuptools.setup(
     name="tiledbsoma",
     description="Python API for efficient storage and retrieval of single-cell data using TileDB",
@@ -193,7 +215,18 @@ setuptools.setup(
     package_dir={"": "src"},
     packages=setuptools.find_packages("src"),
     # This next is necessary to avoid cibuildwheel thinking we want a python-only wheel:
-    ext_modules=[setuptools.Extension("tiledbsoma.libtiledbsoma", sources=[])],
+    ext_modules=[
+        Pybind11Extension(
+            "tiledbsoma.pytiledbsoma",
+            ["src/tiledbsoma/pytiledbsoma.cc"],
+            include_dirs=INC_DIRS,
+            library_dirs=LIB_DIRS,
+            libraries=["tiledbsoma"],
+            extra_link_args=CXX_FLAGS,
+            extra_compile_args=["-std=c++17"],
+            language="c++",
+        )
+    ],
     zip_safe=False,
     install_requires=[
         "anndata",
