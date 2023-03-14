@@ -667,11 +667,6 @@ def _build_tiledb_schema(
             index_column_name, tiledb_create_options, dtype, slot_domain
         )
 
-        print()
-        print("tsmp:index_column_name", index_column_name)
-        print("tsmp:extent", extent)
-        print("tsmp:dtype", dtype)
-        print()
         dim = tiledb.Dim(
             name=index_column_name,
             domain=slot_domain,
@@ -786,22 +781,22 @@ def _fill_out_slot_domain(
     elif dtype == "datetime64[s]":
         iinfo = np.iinfo(cast(NPInteger, np.int64))
         slot_domain = np.datetime64(iinfo.min + 1, "s"), np.datetime64(
-            iinfo.max - 10000000, "s"
+            iinfo.max - 1000000, "s"
         )
     elif dtype == "datetime64[ms]":
         iinfo = np.iinfo(cast(NPInteger, np.int64))
         slot_domain = np.datetime64(iinfo.min + 1, "ms"), np.datetime64(
-            iinfo.max - 10000000, "ms"
+            iinfo.max - 1000000, "ms"
         )
     elif dtype == "datetime64[us]":
         iinfo = np.iinfo(cast(NPInteger, np.int64))
         slot_domain = np.datetime64(iinfo.min + 1, "us"), np.datetime64(
-            iinfo.max - 10000000, "us"
+            iinfo.max - 1000000, "us"
         )
     elif dtype == "datetime64[ns]":
         iinfo = np.iinfo(cast(NPInteger, np.int64))
         slot_domain = np.datetime64(iinfo.min + 1, "ns"), np.datetime64(
-            iinfo.max - 10000000, "ns"
+            iinfo.max - 1000000, "ns"
         )
 
     else:
