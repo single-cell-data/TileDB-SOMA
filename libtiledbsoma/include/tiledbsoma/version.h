@@ -40,7 +40,8 @@
 namespace tiledbsoma::version {
 
 __attribute__((visibility("default"))) std::string as_string();
-__attribute__((visibility("default"))) std::tuple<int, int, int> embedded_version_triple();
+__attribute__((visibility("default"))) std::tuple<int, int, int>
+embedded_version_triple();
 
 };  // namespace tiledbsoma::version
 
