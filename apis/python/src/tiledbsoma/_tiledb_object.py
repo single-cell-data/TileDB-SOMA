@@ -148,6 +148,10 @@ class TileDBObject(somacore.SOMAObject, Generic[_WrapperType_co]):
         """
         Accessor for the object's storage URI.
 
+        Examples:
+            >>> soma_object.uri
+            file://tmp/an_object_uri
+
         Lifecycle:
             Experimental.
         """
@@ -157,6 +161,9 @@ class TileDBObject(somacore.SOMAObject, Generic[_WrapperType_co]):
         """
         Release any resources held while the object is open.
         Closing an already-closed object is a no-op.
+
+        Examples:
+            >>> soma_object.close()
 
         Lifecycle:
             Experimental.
@@ -168,6 +175,14 @@ class TileDBObject(somacore.SOMAObject, Generic[_WrapperType_co]):
         """
         True if the object has been closed. False if it is still open.
 
+        Examples:
+            >>> with tiledbsoma.open("an_object") as soma_object:
+            ...     print(soma_object.closed)
+            ...
+            False
+            >>> print(soma_object.closed)
+            True
+
         Lifecycle:
             Experimental.
         """
@@ -177,6 +192,12 @@ class TileDBObject(somacore.SOMAObject, Generic[_WrapperType_co]):
     def mode(self) -> options.OpenMode:
         """
         The mode this object was opened in, either ``r`` or ``w``.
+
+        Examples:
+            >>> with tiledbsoma.open("an_object") as soma_object:
+            ...     print(soma_object.mode)
+            ...
+            r
 
         Lifecycle:
             Experimental.
