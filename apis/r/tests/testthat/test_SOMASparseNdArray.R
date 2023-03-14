@@ -61,3 +61,37 @@ test_that("SOMASparseNDArray creation", {
   ## nnz
   expect_equal(ndarray$nnz(), 60L)
 })
+
+test_that("SOMASparseNDArray creation with duplicates", {
+  uri <- withr::local_tempdir("sparse-ndarray")
+
+  set.seed(42)
+  D <- data.frame(rows=sample(100, 10, replace=TRUE),
+                  cols=sample(100, 10, replace=TRUE),
+                  vals=rnorm(10))
+
+  create_write_check <- function(uri, D, allows_dups, do_dup, expected_nnz) {
+      ## write from tiledb "for now"
+      dom <- tiledb::tiledb_domain(dims = c(tiledb::tiledb_dim("rows", c(1L, 100L), 100L, "INT32"),
+                                            tiledb::tiledb_dim("cols", c(1L, 100L), 100L, "INT32")))
+      sch <- tiledb::tiledb_array_schema(dom,
+                                         attrs=c(tiledb::tiledb_attr("vals", type = "FLOAT64")),
+                                         sparse = TRUE,
+                                         allows_dups = allows_dups)
+      invisible(tiledb::tiledb_array_create(uri, sch))
+      arr <- tiledb::tiledb_array(uri)
+      if (do_dup)
+          arr[] <- rbind(D, D)
+      else
+          arr[] <- D
+
+      nda <- SOMASparseNDArray$new(uri)
+      expect_equal(nda$nnz(), expected_nnz)
+
+      unlink(uri, recursive=TRUE)
+  }
+
+  create_write_check(uri, D, FALSE, FALSE, 10)
+  create_write_check(uri, D, TRUE, FALSE, 10)
+  create_write_check(uri, D, TRUE, TRUE, 20)
+})
