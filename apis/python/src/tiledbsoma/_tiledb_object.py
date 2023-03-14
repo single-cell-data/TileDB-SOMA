@@ -67,14 +67,13 @@ class TileDBObject(somacore.SOMAObject, Generic[_WrapperType_co]):
             The opened SOMA object.
 
         Raises:
-
-        DoesNotExistError:
-            If the object named by URI can not be accessed.
-        SOMAError:
-            If the underlying TileDB object specified by ``uri`` is
-            not recognized as a SOMA object.
-        ValueError:
-            If the user-provided ``mode`` is invalid.
+            DoesNotExistError:
+                If the object named by URI can not be accessed.
+            SOMAError:
+                If the underlying TileDB object specified by ``uri`` is
+                not recognized as a SOMA object.
+            ValueError:
+                If the user-provided ``mode`` is invalid.
 
         Lifecycle:
             Experimental.
