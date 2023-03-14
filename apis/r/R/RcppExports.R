@@ -149,6 +149,13 @@ tiledbsoma_stats_dump <- function() {
     .Call(`_tiledbsoma_tiledbsoma_stats_dump`)
 }
 
+#' libtiledbsoma version information
+#'
+#' Returns a string with version information for libtiledbsoma and the linked TileDB Embedded library.
+libtiledbsoma_version <- function() {
+    .Call(`_tiledbsoma_libtiledbsoma_version`)
+}
+
 #' TileDB Embedded Version interface
 #'
 #' This gets the version of the TileDB Embedded library that is currently in use.

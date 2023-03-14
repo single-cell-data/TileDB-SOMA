@@ -4,6 +4,7 @@ set(TILEDBSOMA_INSTALL_TARGETS "")
 
 ############################################################
 # Find required dependencies
+# See ../cmake/Modules/*.cmake for provenance/version info
 ############################################################
 
 find_package(TileDB_EP REQUIRED)

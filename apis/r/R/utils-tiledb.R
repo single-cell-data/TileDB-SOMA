@@ -26,10 +26,11 @@ map_query_layout <- function(layout) {
 #' @export
 #' @importFrom utils packageVersion
 show_package_versions <- function() {
-    cat("tiledbsoma:   ", toString(utils::packageVersion("tiledbsoma")), "\n")
-    cat("tiledb-r:     ", toString(utils::packageVersion("tiledb")), "\n")
-    cat("tiledb core:  ", as.character(tiledb::tiledb_version(compact=TRUE)), "\n")
-    cat("R:            ", R.version.string, "\n")
+    cat("tiledbsoma:    ", toString(utils::packageVersion("tiledbsoma")), "\n")
+    cat("tiledb-r:      ", toString(utils::packageVersion("tiledb")), "\n")
+    cat("tiledb core:   ", as.character(tiledb::tiledb_version(compact=TRUE)), "\n")
+    cat("libtiledbsoma: ", libtiledbsoma_version(), "\n")
+    cat("R:             ", R.version.string, "\n")
 }
 
 #' @rdname tiledbsoma_stats_enable
