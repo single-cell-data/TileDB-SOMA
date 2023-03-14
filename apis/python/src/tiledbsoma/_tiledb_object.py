@@ -218,6 +218,16 @@ class TileDBObject(somacore.SOMAObject, Generic[_WrapperType_co]):
             TypeError:
                 If the ``uri`` is not a string.
 
+        Examples:
+            >>> with tiledbsoma.open("a_dataframe") as soma_df:
+            ...     print(soma_df.soma_type)
+            ...
+            SOMADataFrame
+            >>> tiledbsoma.DataFrame.exists("./a_dataframe")
+            True
+            >>> tiledbsoma.SparseNDArray.exists("./a_dataframe")
+            False
+
         Lifecycle:
             Experimental.
         """
