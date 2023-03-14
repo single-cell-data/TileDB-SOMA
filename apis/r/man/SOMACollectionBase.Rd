@@ -27,6 +27,10 @@ objects, mapping string keys to any SOMA object.  (lifecycle: experimental)
 \item \href{#method-SOMACollectionBase-create}{\code{SOMACollectionBase$create()}}
 \item \href{#method-SOMACollectionBase-set}{\code{SOMACollectionBase$set()}}
 \item \href{#method-SOMACollectionBase-get}{\code{SOMACollectionBase$get()}}
+\item \href{#method-SOMACollectionBase-add_new_collection}{\code{SOMACollectionBase$add_new_collection()}}
+\item \href{#method-SOMACollectionBase-add_new_dataframe}{\code{SOMACollectionBase$add_new_dataframe()}}
+\item \href{#method-SOMACollectionBase-add_new_dense_ndarray}{\code{SOMACollectionBase$add_new_dense_ndarray()}}
+\item \href{#method-SOMACollectionBase-add_new_sparse_ndarray}{\code{SOMACollectionBase$add_new_sparse_ndarray()}}
 \item \href{#method-SOMACollectionBase-clone}{\code{SOMACollectionBase$clone()}}
 }
 }
@@ -35,6 +39,7 @@ objects, mapping string keys to any SOMA object.  (lifecycle: experimental)
 <ul>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBObject" data-id="class"><a href='../../tiledbsoma/html/TileDBObject.html#method-TileDBObject-class'><code>tiledbsoma::TileDBObject$class()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBObject" data-id="exists"><a href='../../tiledbsoma/html/TileDBObject.html#method-TileDBObject-exists'><code>tiledbsoma::TileDBObject$exists()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBObject" data-id="get_tiledb_config"><a href='../../tiledbsoma/html/TileDBObject.html#method-TileDBObject-get_tiledb_config'><code>tiledbsoma::TileDBObject$get_tiledb_config()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBGroup" data-id="get_metadata"><a href='../../tiledbsoma/html/TileDBGroup.html#method-TileDBGroup-get_metadata'><code>tiledbsoma::TileDBGroup$get_metadata()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBGroup" data-id="length"><a href='../../tiledbsoma/html/TileDBGroup.html#method-TileDBGroup-length'><code>tiledbsoma::TileDBGroup$length()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBGroup" data-id="names"><a href='../../tiledbsoma/html/TileDBGroup.html#method-TileDBGroup-names'><code>tiledbsoma::TileDBGroup$names()</code></a></span></li>
@@ -52,7 +57,7 @@ objects, mapping string keys to any SOMA object.  (lifecycle: experimental)
 \subsection{Method \code{new()}}{
 Create a new \code{SOMACollection}. (lifecycle: experimental)
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{SOMACollectionBase$new(uri, platform_config = NULL, ctx = NULL)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{SOMACollectionBase$new(uri, platform_config = NULL, tiledbsoma_ctx = NULL)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
@@ -62,7 +67,7 @@ Create a new \code{SOMACollection}. (lifecycle: experimental)
 
 \item{\code{platform_config}}{Optional storage-engine specific configuration}
 
-\item{\code{ctx}}{optional tiledb context}
+\item{\code{tiledbsoma_ctx}}{optional SOMATileDBContext}
 }
 \if{html}{\out{</div>}}
 }
@@ -115,6 +120,90 @@ Retrieve a SOMA object by name. (lifecycle: experimental)
 \if{html}{\out{<div class="arguments">}}
 \describe{
 \item{\code{name}}{The name of the object to retrieve.}
+}
+\if{html}{\out{</div>}}
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-SOMACollectionBase-add_new_collection"></a>}}
+\if{latex}{\out{\hypertarget{method-SOMACollectionBase-add_new_collection}{}}}
+\subsection{Method \code{add_new_collection()}}{
+Add a new SOMA collection to this collection. (lifecycle: experimental)
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{SOMACollectionBase$add_new_collection(object, key)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{object}}{SOMA collection object.}
+
+\item{\code{key}}{The key to be added.}
+}
+\if{html}{\out{</div>}}
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-SOMACollectionBase-add_new_dataframe"></a>}}
+\if{latex}{\out{\hypertarget{method-SOMACollectionBase-add_new_dataframe}{}}}
+\subsection{Method \code{add_new_dataframe()}}{
+Add a new SOMA dataframe to this collection. (lifecycle: experimental)
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{SOMACollectionBase$add_new_dataframe(key, schema, index_column_names)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{key}}{The key to be added.}
+
+\item{\code{schema}}{Arrow schema argument passed on to DataFrame$create()}
+
+\item{\code{index_column_names}}{Index column names passed on to DataFrame$create()}
+}
+\if{html}{\out{</div>}}
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-SOMACollectionBase-add_new_dense_ndarray"></a>}}
+\if{latex}{\out{\hypertarget{method-SOMACollectionBase-add_new_dense_ndarray}{}}}
+\subsection{Method \code{add_new_dense_ndarray()}}{
+Add a new SOMA DenseNdArray to this collection. (lifecycle: experimental)
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{SOMACollectionBase$add_new_dense_ndarray(key, type, shape)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{key}}{The key to be added.}
+
+\item{\code{type}}{an \link[arrow:data-type]{Arrow type} defining the type of each
+element in the array.}
+
+\item{\code{shape}}{a vector of integers defining the shape of the array.}
+}
+\if{html}{\out{</div>}}
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-SOMACollectionBase-add_new_sparse_ndarray"></a>}}
+\if{latex}{\out{\hypertarget{method-SOMACollectionBase-add_new_sparse_ndarray}{}}}
+\subsection{Method \code{add_new_sparse_ndarray()}}{
+Add a new SOMA SparseNdArray to this collection. (lifecycle: experimental)
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{SOMACollectionBase$add_new_sparse_ndarray(key, type, shape)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{key}}{The key to be added.}
+
+\item{\code{type}}{an \link[arrow:data-type]{Arrow type} defining the type of each
+element in the array.}
+
+\item{\code{shape}}{a vector of integers defining the shape of the array.}
 }
 \if{html}{\out{</div>}}
 }

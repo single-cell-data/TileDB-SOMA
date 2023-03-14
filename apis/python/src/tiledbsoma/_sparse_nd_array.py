@@ -3,7 +3,8 @@
 #
 # Licensed under the MIT License.
 
-"""Implementation of SOMA SparseNDArray.
+"""
+Implementation of SOMA SparseNDArray.
 """
 from typing import Optional, Sequence, Tuple, Union, cast
 
@@ -34,6 +35,7 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
     """``SparseNDArray`` is a sparse, N-dimensional array, with offset
     (zero-based) integer indexing on each dimension.
     ``SparseNDArray`` has a user-defined schema, which includes:
+
     * The element type, expressed as an Arrow type, indicating the type of data
       contained within the array.
     * The shape of the array, i.e., the number of dimensions and the length of
@@ -191,7 +193,7 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
                 raise ValueError(
                     f"Unable to write 2D Arrow sparse matrix to {self.ndim}D SparseNDArray"
                 )
-            # TODO: the `to_scipy` function is not zero copy. Need to explore zero-copy options.
+            # TODO: the ``to_scipy`` function is not zero copy. Need to explore zero-copy options.
             sp = values.to_scipy().tocoo()
             arr[sp.row, sp.col] = sp.data
             return self
@@ -292,14 +294,20 @@ class SparseNDArrayRead(somacore.SparseRead):
         self.sr = sr
         self.shape = shape
 
-    def coos(self) -> SparseCOOTensorReadIter:
+    def coos(self, shape: Optional[NTuple] = None) -> SparseCOOTensorReadIter:
         """
         Returns an iterator of Arrow SparseCOOTensor.
+
+        Args:
+            shape:
+                Optionally, a tuple that overrides the default capacity.
 
         Lifecycle:
             Experimental.
         """
-        return SparseCOOTensorReadIter(self.sr, self.shape)
+        if shape is not None and (len(shape) != len(self.shape)):
+            raise ValueError(f"shape must be a tuple of size {len(self.shape)}")
+        return SparseCOOTensorReadIter(self.sr, shape or self.shape)
 
     def dense_tensors(self) -> somacore.ReadIter[pa.Tensor]:
         """

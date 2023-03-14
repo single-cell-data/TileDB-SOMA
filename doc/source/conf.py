@@ -26,9 +26,9 @@ copyright = "2022, TileDB, Inc."
 author = "TileDB, Inc."
 
 # The short X.Y version
-version = "0.1"
+version = "1.0.0"
 # The full version, including alpha/beta/rc tags
-release = "1.0rc0"
+release = "1.0.0rc5"
 
 
 # -- General configuration ---------------------------------------------------
@@ -111,7 +111,7 @@ html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
 # -- Options for HTMLHelp output ---------------------------------------------
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = "TileDB-SOMA-Py-doc"
+htmlhelp_basename = "TileDB-SOMA-Python-doc"
 
 
 # -- Options for LaTeX output ------------------------------------------------
@@ -137,8 +137,8 @@ latex_elements = {
 latex_documents = [
     (
         master_doc,
-        "TileDB-SOMA-Py.tex",
-        "TileDB-SOMA-Py Documentation",
+        "TileDB-SOMA-Python.tex",
+        "TileDB-SOMA Python Documentation",
         "TileDB, Inc.",
         "manual",
     )
@@ -149,7 +149,7 @@ latex_documents = [
 
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
-man_pages = [(master_doc, "tiledbsoma-py", "TileDB-SOMA-Py Documentation", [author], 1)]
+man_pages = [(master_doc, "tiledbsoma-py", "TileDB-SOMA Python Documentation", [author], 1)]
 
 
 # -- Options for Texinfo output ----------------------------------------------
@@ -160,10 +160,10 @@ man_pages = [(master_doc, "tiledbsoma-py", "TileDB-SOMA-Py Documentation", [auth
 texinfo_documents = [
     (
         master_doc,
-        "TileDB-SOMA-Py",
-        "TileDB-SOMA-Py Documentation",
+        "TileDB-SOMA Python",
+        "TileDB-SOMA Python Documentation",
         author,
-        "TileDB-SOMA-Py",
+        "TileDB-SOMA Python",
         "One-line description of project.",
         "Miscellaneous",
     )

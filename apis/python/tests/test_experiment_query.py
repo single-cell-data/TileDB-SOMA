@@ -59,7 +59,7 @@ def soma_experiment(
 
 @pytest.mark.parametrize("n_obs,n_vars,X_layer_names", [(101, 11, ("raw", "extra"))])
 def test_experiment_query_all(soma_experiment):
-    """Test a query with default obs_query / var_query - i.e., query all."""
+    """Test a query with default obs_query / var_query -- i.e., query all."""
     with soma.ExperimentAxisQuery(soma_experiment, "RNA") as query:
         assert query.n_obs == 101
         assert query.n_vars == 11

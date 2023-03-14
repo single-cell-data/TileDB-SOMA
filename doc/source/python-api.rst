@@ -18,86 +18,17 @@ Features:
 * Enables out-of-core access to data aggregations much larger than single-host main memory
 * Enables distributed computation over datasets
 
-Modules
--------
-
-Typical usage of the Python interface to TileDB-SOMA will use the top-level module ``tiledbsoma``, e.g.
-
-.. code-block:: python
-
-   import tiledbsoma
-
-There is also a submodule ``io`` which contains logic for importing data from ``AnnData`` to SOMA structure, and exporting back to ``AnnData``.
-
-.. code-block:: python
-
-   import tiledbsoma.io
-
-
-Composed Types
---------------
-
-Collection
-^^^^^^^^^^^^^^
-.. autoclass:: tiledbsoma.Collection
+The tiledbsoma module
+---------------------
+.. automodule:: tiledbsoma
    :members:
 
-Experiment
-^^^^^^^^^^^^^^
-.. autoclass:: tiledbsoma.Experiment
+The tiledbsoma.io module
+------------------------
+.. automodule:: tiledbsoma.io
    :members:
 
-Measurement
-^^^^^^^^^^^^^^^
-.. autoclass:: tiledbsoma.Measurement
-   :members:
-
-Foundational Types
-------------------
-
-DataFrame
-^^^^^^^^^^^^^
-.. autoclass:: tiledbsoma.DataFrame
-   :members:
-
-SparseNDArray
-^^^^^^^^^^^^^^^^^
-.. autoclass:: tiledbsoma.SparseNDArray
-   :members:
-
-DenseNDArray
-^^^^^^^^^^^^^^^^
-.. autoclass:: tiledbsoma.DenseNDArray
-   :members:
-
-I/O functions
--------------
-
-from_h5ad
-^^^^^^^^^
-.. autofunction:: tiledbsoma.io.from_h5ad
-
-from_anndata
-^^^^^^^^^^^^
-.. autofunction:: tiledbsoma.io.from_anndata
-
-to_h5ad
-^^^^^^^
-.. autofunction:: tiledbsoma.io.to_h5ad
-
-to_anndata
-^^^^^^^^^^
-.. autofunction:: tiledbsoma.io.to_anndata
-
-Options
--------
-
-PlatformConfig
-^^^^^^^^^^^^^^^^^^^^
-.. autoclass:: tiledbsoma.PlatformConfig
-   :members:
-
-logging
-^^^^^^^
+The tiledbsoma.logging module
+-----------------------------
 .. automodule:: tiledbsoma.logging
    :members:

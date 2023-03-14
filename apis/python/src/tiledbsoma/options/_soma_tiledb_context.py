@@ -51,7 +51,7 @@ class SOMATileDBContext:
         default=None, converter=_maybe_timestamp_ms, alias="timestamp"
     )
     """
-    Default timestamp for operations on SOMA objects, in millis since the Unix epoch.
+    Default timestamp for operations on SOMA objects, in milliseconds since the Unix epoch.
 
     WARNING: This should not be set unless you are *absolutely* sure you want to
     use the same timestamp across multiple operations. If multiple writes to the
