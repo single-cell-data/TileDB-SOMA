@@ -17,7 +17,7 @@ test_that("Arrow Interface from SOMAReader", {
     rb <- arrow::as_record_batch(tb)  #arch::from_arch_array(z, arrow::RecordBatch)
     expect_true(inherits(rb, "RecordBatch"))
 
-    
+
     soma_reader(uri, columns) |>
         as_arrow_table() |>
         dplyr::collect() -> D
@@ -52,7 +52,7 @@ test_that("Arrow Interface from SOMAReader", {
 
 
     uri <- tempfile()
-    ndarray <- SOMADenseNDArray$new(uri)
+    ndarray <- SOMADenseNDArray$new(uri, internal_use_only = "allowed_use")
     ndarray$create(arrow::int32(), shape = c(4, 4))
     M <- matrix(1:16, 4, 4)
     ndarray$write(M)

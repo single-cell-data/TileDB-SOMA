@@ -1,6 +1,6 @@
 test_that("SOMASparseNDArray creation", {
   uri <- withr::local_tempdir("sparse-ndarray")
-  ndarray <- SOMASparseNDArray$new(uri)
+  ndarray <- SOMASparseNDArray$new(uri, internal_use_only = "allowed_use")
   ndarray$create(arrow::int32(), shape = c(10, 10))
 
   expect_equal(tiledb::tiledb_object_type(uri), "ARRAY")
@@ -111,7 +111,7 @@ test_that("SOMASparseNDArray creation with duplicates", {
       else
           arr[] <- D
 
-      nda <- SOMASparseNDArray$new(uri)
+      nda <- SOMASparseNDArray$new(uri, internal_use_only = "allowed_use")
       expect_equal(nda$nnz(), expected_nnz)
 
       unlink(uri, recursive=TRUE)

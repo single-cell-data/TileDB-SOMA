@@ -13,8 +13,10 @@ SOMACollectionBase <- R6::R6Class(
     #' @param uri URI of the TileDB group
     #' @param platform_config Optional storage-engine specific configuration
     #' @param tiledbsoma_ctx optional SOMATileDBContext
-    initialize = function(uri, platform_config = NULL, tiledbsoma_ctx = NULL) {
-      super$initialize(uri, platform_config, tiledbsoma_ctx)
+    initialize = function(uri, platform_config = NULL, tiledbsoma_ctx = NULL,
+                          internal_use_only = NULL) {
+      super$initialize(uri=uri, platform_config=platform_config,
+                       tiledbsoma_ctx=tiledbsoma_ctx, internal_use_only=internal_use_only)
     },
 
     #' @description Add a new SOMA object to the collection. (lifecycle: experimental)
@@ -59,7 +61,7 @@ SOMACollectionBase <- R6::R6Class(
     add_new_dataframe = function(key, schema, index_column_names) {
       ## TODO: Check argument validity
       ## TODO: platform_config ?
-      ndf <- SOMADataFrame$new( file.path(self$uri, key) )
+      ndf <- SOMADataFrame$new( file.path(self$uri, key), internal_use_only = "allowed_use" )
       ndf$create(schema, index_column_names)
       super$set(ndf, key)
     },
@@ -70,7 +72,7 @@ SOMACollectionBase <- R6::R6Class(
     #' element in the array.
     #' @param shape a vector of integers defining the shape of the array.
     add_new_dense_ndarray = function(key, type, shape) {
-      ndarr <- SOMADenseNDArray$new( file.path(self$uri, key) )
+      ndarr <- SOMADenseNDArray$new( file.path(self$uri, key), internal_use_only = "allowed_use" )
       ndarr$create(type, shape)
       super$set(ndarr, key)
     },
@@ -81,7 +83,7 @@ SOMACollectionBase <- R6::R6Class(
     #' element in the array.
     #' @param shape a vector of integers defining the shape of the array.
     add_new_sparse_ndarray = function(key, type, shape) {
-      ndarr <- SOMASparseNDArray$new( file.path(self$uri, key) )
+      ndarr <- SOMASparseNDArray$new( file.path(self$uri, key), internal_use_only = "allowed_use" )
       ndarr$create(type, shape)
       super$set(ndarr, key)
     }
@@ -134,7 +136,8 @@ SOMACollectionBase <- R6::R6Class(
       tiledb_object <- tiledbsoma_constructor(
         uri,
         tiledbsoma_ctx = self$tiledbsoma_ctx,
-        platform_config = self$platform_config
+        platform_config = self$platform_config,
+        internal_use_only = "allowed_use"
       )
       soma_type <- tiledb_object$get_metadata(SOMA_OBJECT_TYPE_METADATA_KEY)
 
@@ -150,7 +153,8 @@ SOMACollectionBase <- R6::R6Class(
       soma_constructor(
         uri,
         tiledbsoma_ctx = self$tiledbsoma_ctx,
-        platform_config = self$platform_config
+        platform_config = self$platform_config,
+        internal_use_only = "allowed_use"
       )
     },
 

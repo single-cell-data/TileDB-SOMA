@@ -1,7 +1,7 @@
 test_that("Basic mechanics", {
   uri <- withr::local_tempdir("soma-experiment")
 
-  experiment <- SOMAExperiment$new(uri)
+  experiment <- SOMAExperiment$new(uri, internal_use_only = "allowed_use")
 
   expect_false(experiment$exists())
   expect_error(experiment$obs, "Group does not exist.")
@@ -22,11 +22,13 @@ test_that("Basic mechanics", {
   # Add ms
   expect_error(experiment$ms <- obs, "ms must be a 'SOMACollection'")
   expect_error(
-    experiment$ms <- SOMAMeasurement$new(file.path(uri, "_ms"))$create(),
+    experiment$ms <- SOMAMeasurement$new(file.path(uri, "_ms"),
+                                         internal_use_only = "allowed_use")$create(),
     "ms must be a 'SOMACollection'"
   )
 
-  experiment$ms <- SOMACollection$new(file.path(uri, "ms"))$create()
+  experiment$ms <- SOMACollection$new(file.path(uri, "ms"),
+                                      internal_use_only = "allowed_use")$create()
   expect_equal(experiment$length(), 2)
   expect_true(inherits(experiment$ms, "SOMACollection"))
 })
