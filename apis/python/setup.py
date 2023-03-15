@@ -169,8 +169,16 @@ class bdist_wheel(wheel.bdist_wheel.bdist_wheel):
         print("END TILEDBSOMA BDIST WHEEL")
         print("================================================================")
         print()
-        super().run()
+
+        print("/BIN/LS -L")
+        os.system("/bin/ls -l")
         print()
+
+        print("/BIN/LS -L LIBTILEDBSOMA_DIR")
+        os.system(f"/bin/ls -l {libtiledbsoma_dir}")
+        print()
+
+        super().run()
         print("================================================================")
         print("END SUPER BDIST WHEEL")
         print("================================================================")
