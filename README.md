@@ -102,3 +102,5 @@ https://github.com/TileDB-Inc/TileDB/blob/dev/CODE_OF_CONDUCT.md).
 
 <!-- links -->
 [tiledb]: https://github.com/TileDB-Inc/TileDB
+
+This is a branch labeled `release-1.0.0`.
