@@ -248,10 +248,10 @@ class CollectionBase(
             >>> import pyarrow as pa
             >>> df = pd.DataFrame(data={"soma_joinid": [0, 1], "col1": [1, 2], "col2": [3, 4]})
             ... with tiledbsoma.Collection.create("/tmp/collection") as soma_collection:
-            ...     with soma_collection.add_new_dataframe(
+            ...     soma_df = soma_collection.add_new_dataframe(
             ...         "a_dataframe", schema=pa.Schema.from_pandas(df)
-            ...     ) as soma_df:
-            ...         soma_df.write(pa.Table.from_pandas(df, preserve_index=False))
+            ...     )
+            ...     soma_df.write(pa.Table.from_pandas(df, preserve_index=False))
             ...
             >>> with tiledbsoma.open("/tmp/collection") as soma_collection:
             ...     data = soma_collection['a_dataframe'].read().concat().to_pandas()
@@ -305,11 +305,11 @@ class CollectionBase(
             >>> # create a collection and add a (4, 4) dense matrix to it
             >>> with tiledbsoma.Collection.create("./test_collection") as my_collection:
             ...     # collection created. You can now add SOMA objects, e.g., a DenseNDArray
-            ...     with my_collection.add_new_dense_ndarray(
+            ...     my_dense_ndarray = my_collection.add_new_dense_ndarray(
             ...         "my_dense_ndarray", type=pa.int32(), shape=(4, 4)
-            ...     ) as my_dense_ndarray:
-            ...         data = pa.Tensor.from_numpy(np.eye(4, 4, dtype=np.int32))
-            ...         my_dense_ndarray.write((slice(None), slice(None)), data)
+            ...     )
+            ...     data = pa.Tensor.from_numpy(np.eye(4, 4, dtype=np.int32))
+            ...     my_dense_ndarray.write((slice(None), slice(None)), data)
             ...
             ... # example of opening collection to read an object back
             ... with tiledbsoma.open("./test_collection") as my_collection:
@@ -341,13 +341,13 @@ class CollectionBase(
 
         Examples:
             >>> with tiledbsoma.Collection.create("./test_collection") as my_collection:
-            ...     with my_collection.add_new_sparse_ndarray(
+            ...     a_sparse_ndarray = my_collection.add_new_sparse_ndarray(
             ...         "a_sparse_ndarray", type=pa.float32(), shape=(100, 100)
-            ...     ) as a_sparse_ndarray:
-            ...         data = pa.SparseCOOTensor.from_scipy(
-            ...             scipy.sparse.random(100, 100, dtype=np.float32)
-            ...         )
-            ...         a_sparse_ndarray.write(data)
+            ...     )
+            ...     data = pa.SparseCOOTensor.from_scipy(
+            ...         scipy.sparse.random(100, 100, dtype=np.float32)
+            ...     )
+            ...     a_sparse_ndarray.write(data)
             ...
             >>> with tiledbsoma.open("./test_collection") as my_collection:
             ...     data = my_collection["a_sparse_ndarray"].read().coos().concat()
@@ -640,12 +640,13 @@ class Collection(
         >>> import numpy as np
         >>> # create a collection and add a (4, 4) dense matrix to it
         >>> with tiledbsoma.Collection.create("./test_collection") as my_collection:
-        ...     # collection created. You can now add SOMA objects, e.g., a DenseNDArray
-        ...     with my_collection.add_new_dense_ndarray(
+        ...     # collection created. You can now add SOMA objects, e.g., a DenseNDArray.
+        ...     # New objects are returned open for write.
+        ...     my_dense_ndarray = my_collection.add_new_dense_ndarray(
         ...         "my_dense_ndarray", type=pa.int32(), shape=(4, 4)
-        ...     ) as my_dense_ndarray:
-        ...         data = pa.Tensor.from_numpy(np.eye(4, 4, dtype=np.int32))
-        ...         my_dense_ndarray.write((slice(None), slice(None)), data)
+        ...     )
+        ...     data = pa.Tensor.from_numpy(np.eye(4, 4, dtype=np.int32))
+        ...     my_dense_ndarray.write((slice(None), slice(None)), data)
         ...
         ... # example of opening collection to read an object back
         ... with tiledbsoma.open("./test_collection") as my_collection:
