@@ -17,6 +17,7 @@
 import ctypes
 import os
 import pathlib
+import pkgconfig
 import shutil
 import subprocess
 import sys
@@ -182,6 +183,10 @@ INC_DIRS = [
     "../../build/externals/install/include",
     str(libtiledbsoma_dir / "include"),
 ]
+
+if pkgconfig.exists("tiledb"):
+    INC_DIRS.append(pkgconfig.cflags("tiledb")[2:])
+
 LIB_DIRS = [
     str(libtiledbsoma_dir / "lib"),
 ]
