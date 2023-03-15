@@ -157,8 +157,23 @@ class build_ext(setuptools.command.build_ext.build_ext):
 
 class bdist_wheel(wheel.bdist_wheel.bdist_wheel):
     def run(self):
+        print()
+        print("================================================================")
+        print("BEGIN TILEDBSOMA BDIST WHEEL")
+        print("================================================================")
+        print()
         find_or_build_package_data(self)
+        print()
+        print("================================================================")
+        print("END TILEDBSOMA BDIST WHEEL")
+        print("================================================================")
+        print()
         super().run()
+        print()
+        print("================================================================")
+        print("END SUPER BDIST WHEEL")
+        print("================================================================")
+        print()
 
 
 INC_DIRS = [
