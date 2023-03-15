@@ -17,11 +17,11 @@
 import ctypes
 import os
 import pathlib
-import pkgconfig
 import shutil
 import subprocess
 import sys
 
+import pkgconfig
 import setuptools
 
 # import setuptools.command.build_ext
