@@ -253,7 +253,7 @@ setuptools.setup(
             "black",
             "ruff",
             "pytest",
-            "typeguard",
+            "typeguard<3.0",
         ]
     },
     python_requires=">=3.7",
