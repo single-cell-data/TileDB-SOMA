@@ -190,6 +190,15 @@ print()
 print("================================================================")
 print("LIBTILEDBSOMA_DIR", libtiledbsoma_dir)
 print("OS.GETCWD", os.getcwd())
+print()
+
+print("/BIN/LS -L")
+os.system("/bin/ls -l")
+print()
+
+print("/BIN/LS -L LIBTILEDBSOMA_DIR")
+os.system(f"/bin/ls -l {libtiledbsoma_dir}")
+print()
 
 if pkgconfig.exists("tiledb"):
     print("PKGCONFIG EXISTS TILEDB YES", pkgconfig.cflags("tiledb"))
