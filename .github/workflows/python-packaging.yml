@@ -4,8 +4,8 @@ on:
   # I.e. on request
   workflow_dispatch:
   # Normally the smoke test only runs on merge to main.  To run it on a PR CI, uncomment `pull_request:`
-  # pull_request:
-  # branches: [main]
+  pull_request:
+    branches: [main]
   # paths-ignore:
   #   - 'apis/r/**'
   release:
