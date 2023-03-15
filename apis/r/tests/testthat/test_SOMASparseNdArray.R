@@ -77,6 +77,15 @@ test_that("SOMASparseNDArray read_sparse_matrix", {
   ## not sure why all.equal(mat, mat2) does not pass
   expect_true(all.equal(as.numeric(mat), as.numeric(mat2[1:9,1:9])))
   expect_equal(sum(mat), sum(mat2))
+
+  # repeat with iterated reader
+  ndarray$read_sparse_matrix(repr="T", iterated=TRUE)
+  mat2 <- ndarray$read_next()
+  expect_s4_class(mat2, "sparseMatrix")
+  expect_equal(nrow(mat2), 10)
+  expect_equal(ncol(mat2), 10)
+  expect_true(all.equal(as.numeric(mat), as.numeric(mat2[1:9,1:9])))
+  expect_equal(sum(mat), sum(mat2))
 })
 
 test_that("SOMASparseNDArray creation with duplicates", {

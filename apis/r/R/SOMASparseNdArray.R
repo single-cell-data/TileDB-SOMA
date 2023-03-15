@@ -235,7 +235,7 @@ SOMASparseNDArray <- R6::R6Class(
           Matrix::sparseMatrix(i = 1 + as.numeric(tbl$GetColumnByName("soma_dim_0")),
                                j = 1 + as.numeric(tbl$GetColumnByName("soma_dim_1")),
                                x = as.numeric(tbl$GetColumnByName("soma_data")),
-                               repr = private$sparse_repr)
+                               dims = as.integer(self$shape()), repr = private$sparse_repr)
       }
     },
 

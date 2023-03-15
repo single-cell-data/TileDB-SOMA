@@ -143,6 +143,8 @@ test_that("Iterated Interface from SOMA Sparse Matrix", {
         expect_gt(nnz, 0)
         nnzTotal <- nnzTotal + nnz
         rowsTotal <- rowsTotal + nnzRows(dat)
+        # the shard dims always match the shape of the whole sparse matrix
+        expect_equal(dim(dat), as.integer(sdf$shape()))
     }
     expect_true(sdf$read_complete())
 
