@@ -218,7 +218,7 @@ from the resulting Tables.
 \if{html}{\out{<a id="method-SOMAExperimentAxisQuery-to_seurat_assay"></a>}}
 \if{latex}{\out{\hypertarget{method-SOMAExperimentAxisQuery-to_seurat_assay}{}}}
 \subsection{Method \code{to_seurat_assay()}}{
-...
+Loads the query as a Seurat \code{\link[SeuratObject]{Assay}}
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{SOMAExperimentAxisQuery$to_seurat_assay(
   X_layers = c(counts = "counts", data = "logcounts"),
@@ -257,13 +257,32 @@ An \code{\link[SeuratObject]{Assay}} object
 \if{html}{\out{<a id="method-SOMAExperimentAxisQuery-to_seurat_reduction"></a>}}
 \if{latex}{\out{\hypertarget{method-SOMAExperimentAxisQuery-to_seurat_reduction}{}}}
 \subsection{Method \code{to_seurat_reduction()}}{
-...
+Loads the query as a Seurat
+\link[SeuratObject:DimReduc]{dimensional reduction}
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{SOMAExperimentAxisQuery$to_seurat_reduction()}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{SOMAExperimentAxisQuery$to_seurat_reduction(
+  embeddings,
+  loadings = NULL,
+  cells_index = NULL,
+  features_index = NULL
+)}\if{html}{\out{</div>}}
 }
 
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{embeddings}}{...}
+
+\item{\code{loadings}}{...}
+
+\item{\code{cells_index}}{Name of column in \code{obs} to add as cell names}
+
+\item{\code{features_index}}{Name of column in \code{var} to add as feature names}
+}
+\if{html}{\out{</div>}}
+}
 \subsection{Returns}{
-...
+A \code{\link[SeuratObject]{DimReduc}} object
 }
 }
 \if{html}{\out{<hr>}}

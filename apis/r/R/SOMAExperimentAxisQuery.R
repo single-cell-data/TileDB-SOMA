@@ -1,4 +1,5 @@
 #' @importFrom rlang is_na
+#' @importFrom methods new
 #'
 NULL
 
@@ -178,7 +179,7 @@ SOMAExperimentAxisQuery <- R6::R6Class(
       .check_seurat_installed()
       .NotYetImplemented()
     },
-    #' @description ...
+    #' @description Loads the query as a Seurat \code{\link[SeuratObject]{Assay}}
     #'
     #' @param X_layers A named character of X layers to add to the Seurat assay;
     #' names should be one of:
@@ -290,12 +291,169 @@ SOMAExperimentAxisQuery <- R6::R6Class(
       }
       return(obj)
     },
-    #' @description ...
+    #' @description Loads the query as a Seurat
+    #' \link[SeuratObject:DimReduc]{dimensional reduction}
     #'
-    #' @return ...
+    #' @param embeddings Name of array in \code{obsm} to load as the
+    #' cell embeddings
+    #' @param loadings Name of the array in \code{varm} to load as the  feature
+    #' loadings; will try to determine \code{loadings} from \code{embeddings}
+    #' @param cells_index Name of column in \code{obs} to add as cell names
+    #' @param features_index Name of column in \code{var} to add as feature names
     #'
-    to_seurat_reduction = function() {
-      .NotYetImplemented()
+    #' @return A \code{\link[SeuratObject]{DimReduc}} object
+    #'
+    to_seurat_reduction = function(
+      embeddings,
+      loadings = NULL,
+      cells_index = NULL,
+      features_index = NULL
+    ) {
+      .check_seurat_installed()
+      stopifnot(
+        "'embeddings' must be a single character value" = is_scalar_character(embeddings),
+        "'loadings' must be a single character value" = is.null(loadings) ||
+          is_scalar_character(loadings) ||
+          is_scalar_logical(loadings),
+        "one of 'embeddings' or 'loadings' must be provided" =
+          (is_scalar_character(embeddings) || is_scalar_logical(embeddings)) ||
+          (is_scalar_character(loadings) || is_scalar_logical(loadings)),
+        "'cells_index' must be a single character value" = is.null(cells_index) ||
+          (is_scalar_character(cells_index) && !is.na(cells_index)),
+        "'features_index' must be a single character value" = is.null(features_index) ||
+          (is_scalar_character(features_index) && !is.na(features_index))
+      )
+      # Check embeddings/loadings
+      ms_embed <- tryCatch(
+        expr = self$ms$obsm$names(),
+        error = \(...) NULL
+      )
+      ms_load <- tryCatch(
+        expr = self$ms$varm$names(),
+        error = \(...) NULL
+      )
+      if (is.null(ms_embed) && is.null(ms_load)) {
+        warning("No reductions present", call. = FALSE)
+        return(NULL)
+      }
+      if (is.null(ms_embed)) {
+        stop("No embeddings present", call. = FALSE)
+      }
+      names(ms_embed) <- .anndata_to_seurat_reduc(ms_embed)
+      if (is.null(ms_load) && !is.null(loadings)) {
+        msg <- "No loadings present"
+        if (is.null(embeddings)) {
+          stop(msg, call. = FALSE)
+        }
+        warning(msg, call. = FALSE, immediate. = TRUE)
+        loadings <- NULL
+      } else {
+        names(ms_load) <- .anndata_to_seurat_reduc(ms_load, 'loadings')
+      }
+      # Check provided names
+      if (!embeddings %in% c(ms_embed, names(ms_embed))) {
+        stop("Cannot find embeddings ", sQuote(embeddings), call. = FALSE)
+      }
+      if (is_scalar_character(loadings) && !loadings %in% c(ms_load, names(ms_load))) {
+        stop("Cannot find loadings ", sQuote(loadings), call. = FALSE)
+      }
+      # Find Seurat name
+      seurat <- c(
+        .anndata_to_seurat_reduc(embeddings),
+        tryCatch(
+          expr = .anndata_to_seurat_reduc(loadings, 'loadings'),
+          error = \(...) NULL
+        )
+      )
+      if (length(seurat) == 2L && !identical(x = seurat[1L], y = seurat[2L])) {
+        msg <- paste0(
+          "The embeddings requested (",
+          sQuote(embeddings),
+          ") do not match the loadings requested (",
+          sQuote(loadings),
+          "); using the embeddings to create a Seurat name (",
+          sQuote(seurat[1L]),
+          ")"
+        )
+        warning(
+          paste(strwrap(msg), collapse = '\n'),
+          call. = FALSE,
+          immediate. = TRUE
+        )
+      }
+      seurat <- seurat[1L]
+      # Create a Seurat key
+      key <- SeuratObject::Key(
+        object = switch(EXPR = seurat, pca = 'PC', tsne = 'tSNE', toupper(seurat)),
+        quiet = TRUE
+      )
+      # Read in cell embeddings
+      # Translate Seurat name to AnnData name
+      if (embeddings %in% names(ms_embed)) {
+        embeddings <- ms_embed[embeddings]
+      }
+      # Get cell names
+      cells <- if (is.null(cells_index)) {
+        paste0('cell', self$obs_joinids())
+      } else {
+        cells_index <- match.arg(
+          arg = cells_index,
+          choices = self$obs_df$attrnames()
+        )
+        self$obs(cells_index)$GetColumnByName(cells_index)$as_vector()
+      }
+      embed <- self$ms$obsm$get(embeddings)
+      embed_mat <- embed$read_dense_matrix(list(
+        self$obs_joinids()$as_vector(),
+        seq_len(as.integer(embed$shape()[2L])) - 1L
+      ))
+      # Set matrix names
+      rownames(embed_mat) <- cells
+      colnames(embed_mat) <- paste0(key, seq_len(ncol(embed_mat)))
+      # Autoset loadings if needed
+      if (is.null(loadings) || isTRUE(loadings)) {
+        if (seurat %in% c(names(ms_load), ms_load)) {
+          loadings <- seurat
+        }
+      }
+      # Read in feature loadings
+      if (is_scalar_character(loadings)) {
+        # Translate Seurat name to AnnData name
+        if (loadings %in% names(ms_load)) {
+          loadings <- ms_load[loadings]
+        }
+        # Get feature names
+        features <- if (is.null(features_index)) {
+          paste0('feature', self$var_joinids())
+        } else {
+          features_index <- match.arg(
+            arg = features_index,
+            choices = self$var_df$attrnames()
+          )
+          self$var(features_index)$GetColumnByName(features_index)$as_vector()
+        }
+        loads <- self$ms$varm$get(loadings)
+        load_mat <- loads$read_dense_matrix(list(
+          self$var_joinids()$as_vector(),
+          seq_len(as.integer(loads$shape()[2L])) - 1L
+        ))
+        # Set matrix names
+        rownames(load_mat) <- features
+        colnames(load_mat) <- paste0(key, seq_len(ncol(load_mat)))
+        if (!is.null(embed_mat) && ncol(load_mat) != ncol(embed_mat)) {
+          stop("The loadings do not match the embeddings", call. = FALSE)
+        }
+      } else {
+        load_mat <- NULL
+      }
+      # Create the DimReduc
+      return(SeuratObject::CreateDimReducObject(
+        embeddings = embed_mat,
+        loadings = load_mat %||% methods::new('matrix'),
+        assay = private$.measurement_name,
+        global = seurat != 'pca',
+        key = key
+      ))
     },
     #' @description ...
     #'
