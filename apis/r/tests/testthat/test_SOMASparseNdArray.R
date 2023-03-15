@@ -60,7 +60,7 @@ test_that("SOMASparseNDArray creation", {
 
 test_that("SOMASparseNDArray read_sparse_matrix", {
   uri <- withr::local_tempdir("sparse-ndarray")
-  ndarray <- SOMASparseNDArray$new(uri)
+  ndarray <- SOMASparseNDArray$new(uri, internal_use_only = "allowed_use")
   ndarray$create(arrow::int32(), shape = c(10, 10))
 
   # For this test, write 9x9 data into 10x10 array. Leaving the last row & column
