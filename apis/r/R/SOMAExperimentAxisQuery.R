@@ -1,3 +1,7 @@
+#' @importFrom rlang is_na
+#'
+NULL
+
 #' `SOMAExperiment` Axis Query
 #' @description Perform an axis-based query against a [`SOMAExperiment`].
 #'
@@ -279,7 +283,7 @@ SOMAExperimentAxisQuery <- R6::R6Class(
         x = self$var_df$attrnames(),
         y = features_index
       )
-      if (!(isFALSE(var_column_names) || rlang::is_na(var_column_names))) {
+      if (!(isFALSE(var_column_names) || is_na(var_column_names))) {
         var <- as.data.frame(self$var(var_column_names)$to_data_frame())
         row.names(var) <- features
         obj[[names(var)]] <- var
