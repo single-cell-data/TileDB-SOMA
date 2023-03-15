@@ -133,36 +133,26 @@ test_that("Iterated Interface from SOMA Sparse Matrix", {
 
     sdf$read_sparse_matrix(iterated = TRUE)
 
-    expect_false(sdf$read_complete())
-    dat <- sdf$read_next()
-    d <- dim(dat)
-    expect_equal(d[2], 1838)
-    n <- d[1]
-    expect_true(n > 0)
-
-    expect_false(sdf$read_complete())
-    dat <- sdf$read_next()
-    d <- dim(dat)
-    expect_equal(d[2], 1838)
-    n <- n + d[1]
-    expect_true(n > 0)
-
-    expect_false(sdf$read_complete())
-    dat <- sdf$read_next()
-    d <- dim(dat)
-    expect_equal(d[2], 1838)
-    n <- n + d[1]
-    expect_true(n > 0)
-
-    expect_false(sdf$read_complete())
-    dat <- sdf$read_next()
-    d <- dim(dat)
-    expect_equal(d[2], 1838)
-    n <- n + d[1]
-    expect_true(n > 0)
-
-    expect_equal(n, 6596)
+    nnzRows <- function(m) { sum(Matrix::rowSums(m != 0) > 0) }
+    nnzTotal <- 0
+    rowsTotal <- 0
+    for (i in 1:4) {
+        expect_false(sdf$read_complete())
+        dat <- sdf$read_next()
+        nnz <- Matrix::nnzero(dat)
+        expect_gt(nnz, 0)
+        nnzTotal <- nnzTotal + nnz
+        rowsTotal <- rowsTotal + nnzRows(dat)
+    }
     expect_true(sdf$read_complete())
+
+    # FIXME: TileDB-SOMA issue #1111
+    # expect_equal(rowsTotal, nnzRows(sdf$read_sparse_matrix()))
+    # expect_equal(nnzTotal, Matrix::nnzero(sdf$read_sparse_matrix()))
+    # in fact however, the test array is dense 2638x1838 with all nonzero entries.
+    expect_equal(rowsTotal, 2638)
+    expect_equal(nnzTotal, 4848644)
+    expect_equal(nnzTotal, prod(as.integer(sdf$shape())))
 
     rm(sdf)
 
