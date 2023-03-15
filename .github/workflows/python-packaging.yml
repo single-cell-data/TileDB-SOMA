@@ -57,7 +57,14 @@ jobs:
       with:
         name: sdist
     - name: rename sdist
-      run: cp tiledbsoma-*.tar.gz tiledbsoma.tar.gz && ls -lh
+      run: |
+        cp tiledbsoma-*.tar.gz tiledbsoma.tar.gz
+        ls -lh
+        echo
+        echo
+        tar ztf tiledbsoma.tar.gz
+        echo
+        echo
     - name: Build wheels
       uses: pypa/cibuildwheel@v2.11.3
       with:
