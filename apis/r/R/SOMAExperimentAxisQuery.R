@@ -163,6 +163,142 @@ SOMAExperimentAxisQuery <- R6::R6Class(
       SOMAAxisQueryResult$new(
         obs = obs_ft, var = var_ft, X_layers = x_matrices
       )
+    },
+    #' @description ...
+    #'
+    #' @param X_layers ...
+    #'
+    #' @return ...
+    #'
+    to_seurat = function(X_layers = c(counts = 'counts', data = 'logcounts')) {
+      .check_seurat_installed()
+      .NotYetImplemented()
+    },
+    #' @description ...
+    #'
+    #' @param X_layers A named character of X layers to add to the Seurat assay;
+    #' names should be one of:
+    #' \itemize{
+    #'  \item \dQuote{\code{counts}} to add the layer as \code{counts}
+    #'  \item \dQuote{\code{data}} to add the layer as \code{data}
+    #'  \item \dQuote{\code{scale.data}} to add the layer as \code{scale.data}
+    #' }
+    #' At least one of \dQuote{\code{counts}} or \dQuote{\code{data}} is required
+    #' @param cells_index Name of column in \code{obs} to add as cell names
+    #' @param features_index Name of column in \code{var} to add as feature names
+    #' @param var_column_names Names of columns in \code{var} to add as
+    #' feature-level meta data
+    #'
+    #' @return An \code{\link[SeuratObject]{Assay}} object
+    #'
+    to_seurat_assay = function(
+      X_layers = c(counts = 'counts', data = 'logcounts'),
+      cells_index = NULL,
+      features_index = NULL,
+      var_column_names = NULL
+    ) {
+      version <- 'v3'
+      .check_seurat_installed()
+      stopifnot(
+        "'X_layers' must be a named character vector" = is.character(X_layers) &&
+          is_named(X_layers, allow_empty = FALSE),
+        "'version' must be a single character value" = is_scalar_character(version),
+        "'cells_index' must be a single character value" = is.null(cells_index) ||
+          (is_scalar_character(cells_index) && !is.na(cells_index)),
+        "'features_index' must be a single character value" = is.null(features_index) ||
+          (is_scalar_character(features_index) && !is.na(features_index)),
+        "'var_column_names' must be a character vector" = is.null(var_column_names) ||
+          is.character(var_column_names) ||
+          (is.logical(var_column_names) && length(var_column_names) == 1L)
+      )
+      match.arg(version, choices = 'v3')
+      features <- if (is.null(features_index)) {
+        paste0('feature', self$var_joinids())
+      } else {
+        features_index <- match.arg(
+          arg = features_index,
+          choices = self$var_df$attrnames()
+        )
+        self$var(features_index)$GetColumnByName(features_index)$as_vector()
+      }
+      cells <- if (is.null(cells_index)) {
+        paste0('cell', self$obs_joinids())
+      } else {
+        cells_index <- match.arg(
+          arg = cells_index,
+          choices = self$obs_df$attrnames()
+        )
+        self$obs(cells_index)$GetColumnByName(cells_index)$as_vector()
+      }
+      # Check the layers
+      layers <- X_layers[X_layers %in% self$ms$X$names()]
+      if (!length(layers)) {
+        stop("None of the requested X_layers can be found", call. = FALSE)
+      } else if (length(layers) != length(X_layers)) {
+        warning(
+          paste(
+            strwrap(paste(
+              "The following layers cannot be found in this ExperimentQuery:",
+              paste(sQuote(setdiff(x = X_layers, y = layers)), collapse = ', ')
+            )),
+            collapse = '\n'
+          ),
+          call. = FALSE,
+          immediate. = TRUE
+        )
+      }
+      # Read in the assay
+      obj <- switch(
+        EXPR = version,
+        v3 = {
+          if (!all(names(x = X_layers) %in% c('counts', 'data', 'scale.data'))) {
+            stop(
+              "The names of 'X_layers' must one or more of 'counts', 'data', and 'scale.data'",
+              call. = FALSE
+            )
+          }
+          private$.to_seurat_assay_v3(
+            counts = tryCatch(expr = layers[['counts']], error = \(...) NULL),
+            data = tryCatch(expr = layers[['data']], error = \(...) NULL),
+            scale_data = tryCatch(expr = layers[['scale.data']], error = \(...) NULL),
+            cells = cells,
+            features = features
+          )
+        }
+      )
+      # Set the key
+      SeuratObject::Key(obj) <- SeuratObject::Key(
+        object = tolower(private$.measurement_name),
+        quiet = TRUE
+      )
+      # Add feature-level meta data
+      if (isTRUE(var_column_names)) {
+        var_column_names <- NULL
+      }
+      var_column_names <- var_column_names %||% setdiff(
+        x = self$var_df$attrnames(),
+        y = features_index
+      )
+      if (!(isFALSE(var_column_names) || rlang::is_na(var_column_names))) {
+        var <- as.data.frame(self$var(var_column_names)$to_data_frame())
+        row.names(var) <- features
+        obj[[names(var)]] <- var
+      }
+      return(obj)
+    },
+    #' @description ...
+    #'
+    #' @return ...
+    #'
+    to_seurat_reduction = function() {
+      .NotYetImplemented()
+    },
+    #' @description ...
+    #'
+    #' @return ...
+    #'
+    to_seurat_graph = function() {
+      .NotYetImplemented()
     }
   ),
 
@@ -231,7 +367,84 @@ SOMAExperimentAxisQuery <- R6::R6Class(
     .obs_query = NULL,
     .var_query = NULL,
     .joinids = NULL,
-    .indexer = NULL
+    .indexer = NULL,
+    .to_seurat_assay_v3 = function(
+      counts,
+      data,
+      scale_data = NULL,
+      cells = NULL,
+      features = NULL
+    ) {
+      .check_seurat_installed()
+      stopifnot(
+        "'data' must be a single character value" = is.null(data) ||
+          is_scalar_character(data),
+        "'counts' must be a single character value" = is.null(counts) ||
+          is_scalar_character(counts),
+        "one of 'counts' or 'data' must be provided" = is_scalar_character(counts) ||
+          is_scalar_character(data),
+        "'scale_data' must be a single character value" = is.null(scale_data) ||
+          is_scalar_character(scale_data),
+        "'cells' must be a character vector" = is.character(cells),
+        "'features' must be a character vector" = is.character(features)
+      )
+      as_matrix <- function(lyr, repr = 'C') {
+        repr <- match.arg(arg = repr, choices = c('C', 'R', 'T', 'D'))
+        obs <- self$X(lyr)$GetColumnByName('soma_dim_0')$as_vector()
+        var <- self$X(lyr)$GetColumnByName('soma_dim_1')$as_vector()
+        mat <- Matrix::sparseMatrix(
+          i = self$indexer$by_obs(obs)$as_vector() + 1L,
+          j = self$indexer$by_var(var)$as_vector() + 1L,
+          x = self$X(lyr)$GetColumnByName('soma_data')$as_vector(),
+          repr = switch(EXPR = repr, D = 'T', repr)
+        )
+        mat <- Matrix::t(mat)
+        if (repr == 'D') {
+          mat <- as.matrix(mat)
+        }
+        return(mat)
+      }
+      if (!length(x = cells) == self$n_obs) {
+        stop("'cells' must have a length of ", self$n_obs, call. = FALSE)
+      }
+      if (!length(x = features) == self$n_vars) {
+        stop("'features' must have a length of ", self$n_vars, call. = FALSE)
+      }
+      dnames <- list(features, cells)
+      # Read in `data` slot
+      if (is_scalar_character(data)) {
+        dmat <- as_matrix(lyr = data, repr = 'C')
+        dimnames(dmat) <- dnames
+        obj <- SeuratObject::CreateAssayObject(data = dmat)
+      }
+      # Add the `counts` slot
+      if (is_scalar_character(counts)) {
+        cmat <- as_matrix(lyr = counts, repr = 'C')
+        dimnames(cmat) <- dnames
+        obj <- if (is_scalar_character(data)) {
+          SeuratObject::SetAssayData(
+            object = obj,
+            slot = 'counts',
+            new.data = cmat
+          )
+        } else {
+          SeuratObject::CreateAssayObject(counts = cmat)
+        }
+      }
+      # Add the `scale.data` slot
+      if (is_scalar_character(scale_data)) {
+        smat <- as_matrix(lyr = scale_data, repr = 'D')
+        dimnames(smat) <- dnames
+        obj <- SeuratObject::SetAssayData(
+          object = obj,
+          slot = 'scale.data',
+          new.data = smat
+        )
+      }
+      # Return the assay
+      methods::validObject(obj)
+      return(obj)
+    }
   )
 )
 

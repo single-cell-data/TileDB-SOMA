@@ -47,7 +47,8 @@ Imports:
     Rcpp,
     dplyr,
     data.table,
-    spdl
+    spdl,
+    rlang
 LinkingTo:
     Rcpp,
     RcppSpdlog
@@ -59,7 +60,8 @@ Suggests:
     knitr,
     withr,
     testthat (>= 3.0.0),
-    pbmc3k.tiledb
+    pbmc3k.tiledb,
+    SeuratObject (>= 4.1.0)
 VignetteBuilder: knitr
 Config/testthat/edition: 2
 OS_type: unix

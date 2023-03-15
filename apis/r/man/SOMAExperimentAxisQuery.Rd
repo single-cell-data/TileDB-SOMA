@@ -60,6 +60,10 @@ this in the class.
 \item \href{#method-SOMAExperimentAxisQuery-var_joinids}{\code{SOMAExperimentAxisQuery$var_joinids()}}
 \item \href{#method-SOMAExperimentAxisQuery-X}{\code{SOMAExperimentAxisQuery$X()}}
 \item \href{#method-SOMAExperimentAxisQuery-read}{\code{SOMAExperimentAxisQuery$read()}}
+\item \href{#method-SOMAExperimentAxisQuery-to_seurat}{\code{SOMAExperimentAxisQuery$to_seurat()}}
+\item \href{#method-SOMAExperimentAxisQuery-to_seurat_assay}{\code{SOMAExperimentAxisQuery$to_seurat_assay()}}
+\item \href{#method-SOMAExperimentAxisQuery-to_seurat_reduction}{\code{SOMAExperimentAxisQuery$to_seurat_reduction()}}
+\item \href{#method-SOMAExperimentAxisQuery-to_seurat_graph}{\code{SOMAExperimentAxisQuery$to_seurat_graph()}}
 \item \href{#method-SOMAExperimentAxisQuery-clone}{\code{SOMAExperimentAxisQuery$clone()}}
 }
 }
@@ -186,6 +190,93 @@ from the resulting Tables.
 \code{var} and \code{obs} dataframes to read and return.}
 }
 \if{html}{\out{</div>}}
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-SOMAExperimentAxisQuery-to_seurat"></a>}}
+\if{latex}{\out{\hypertarget{method-SOMAExperimentAxisQuery-to_seurat}{}}}
+\subsection{Method \code{to_seurat()}}{
+...
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{SOMAExperimentAxisQuery$to_seurat(
+  X_layers = c(counts = "counts", data = "logcounts")
+)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{X_layers}}{...}
+}
+\if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+...
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-SOMAExperimentAxisQuery-to_seurat_assay"></a>}}
+\if{latex}{\out{\hypertarget{method-SOMAExperimentAxisQuery-to_seurat_assay}{}}}
+\subsection{Method \code{to_seurat_assay()}}{
+...
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{SOMAExperimentAxisQuery$to_seurat_assay(
+  X_layers = c(counts = "counts", data = "logcounts"),
+  cells_index = NULL,
+  features_index = NULL,
+  var_column_names = NULL
+)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{X_layers}}{A named character of X layers to add to the Seurat assay;
+names should be one of:
+\itemize{
+\item \dQuote{\code{counts}} to add the layer as \code{counts}
+\item \dQuote{\code{data}} to add the layer as \code{data}
+\item \dQuote{\code{scale.data}} to add the layer as \code{scale.data}
+}
+At least one of \dQuote{\code{counts}} or \dQuote{\code{data}} is required}
+
+\item{\code{cells_index}}{Name of column in \code{obs} to add as cell names}
+
+\item{\code{features_index}}{Name of column in \code{var} to add as feature names}
+
+\item{\code{var_column_names}}{Names of columns in \code{var} to add as
+feature-level meta data}
+}
+\if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+An \code{\link[SeuratObject]{Assay}} object
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-SOMAExperimentAxisQuery-to_seurat_reduction"></a>}}
+\if{latex}{\out{\hypertarget{method-SOMAExperimentAxisQuery-to_seurat_reduction}{}}}
+\subsection{Method \code{to_seurat_reduction()}}{
+...
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{SOMAExperimentAxisQuery$to_seurat_reduction()}\if{html}{\out{</div>}}
+}
+
+\subsection{Returns}{
+...
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-SOMAExperimentAxisQuery-to_seurat_graph"></a>}}
+\if{latex}{\out{\hypertarget{method-SOMAExperimentAxisQuery-to_seurat_graph}{}}}
+\subsection{Method \code{to_seurat_graph()}}{
+...
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{SOMAExperimentAxisQuery$to_seurat_graph()}\if{html}{\out{</div>}}
+}
+
+\subsection{Returns}{
+...
 }
 }
 \if{html}{\out{<hr>}}
