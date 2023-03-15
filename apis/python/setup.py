@@ -186,8 +186,16 @@ INC_DIRS = [
     str(libtiledbsoma_dir / "build/externals/install/include"),
 ]
 
+print()
+print("================================================================")
+print("LIBTILEDBSOMA_DIR", libtiledbsoma_dir)
+print("OS.GETCWD", os.getcwd())
+
 if pkgconfig.exists("tiledb"):
+    print("PKGCONFIG EXISTS TILEDB YES", pkgconfig.cflags("tiledb"))
     INC_DIRS.append(pkgconfig.cflags("tiledb")[2:])
+else:
+    print("PKGCONFIG EXISTS TILEDB NO")
 
 LIB_DIRS = [
     str(libtiledbsoma_dir / "lib"),
@@ -195,6 +203,9 @@ LIB_DIRS = [
 CXX_FLAGS = [
     f'-Wl,-rpath,{str(libtiledbsoma_dir / "lib")}',
 ]
+
+print("================================================================")
+print()
 
 if os.name == "posix" and sys.platform != "darwin":
     LIB_DIRS.append(str(libtiledbsoma_dir / "lib" / "x86_64-linux-gnu"))
