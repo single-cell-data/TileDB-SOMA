@@ -165,6 +165,7 @@ INC_DIRS = [
     "../../libtiledbsoma/include",
     "../../libtiledbsoma/external/include",
     "../../build/externals/install/include",
+    str(libtiledbsoma_dir / "include"),
 ]
 LIB_DIRS = [
     str(libtiledbsoma_dir / "lib"),
