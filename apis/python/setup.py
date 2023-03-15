@@ -182,6 +182,7 @@ INC_DIRS = [
     "../../libtiledbsoma/external/include",
     "../../build/externals/install/include",
     str(libtiledbsoma_dir / "include"),
+    str(libtiledbsoma_dir / "build/externals/install/include"),
 ]
 
 if pkgconfig.exists("tiledb"):
