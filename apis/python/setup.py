@@ -178,6 +178,11 @@ LIB_DIRS = [
 CXX_FLAGS = [
     f'-Wl,-rpath,{str(libtiledbsoma_dir / "lib")}',
 ]
+print()
+print()
+print("================================================================")
+print("SYS.PLATFORM", sys.platform)
+print("CXX_FLAGS BEFORE", CXX_FLAGS)
 if sys.platform == "darwin":
     # COMPILE_FLAGS.append("-mmacosx-version-min=10.14")
     CXX_FLAGS.append("-mmacosx-version-min=10.14")
@@ -189,6 +194,10 @@ if os.name == "posix" and sys.platform != "darwin":
         f'-Wl,-rpath,{str(libtiledbsoma_dir / "lib" / "x86_64-linux-gnu")}'
     )
     CXX_FLAGS.append(f'-Wl,-rpath,{str(libtiledbsoma_dir / "lib64")}')
+
+print("CXX_FLAGS AFTER", CXX_FLAGS)
+print()
+print()
 
 # ----------------------------------------------------------------
 # Don't use `if __name__ == "__main__":` as the `python_requires` must
