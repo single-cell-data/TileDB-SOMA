@@ -88,9 +88,13 @@ jobs:
         - os: ubuntu-20.04
           platform: manylinux2014
           arch: x86_64
+          cc: gcc-11
+          cxx: g++-11
         - os: macos-11
           platform: macosx
           arch: x86_64
+          cc: clang
+          cxx: clang++
     steps:
     - name: Set up Python 3.8
       uses: actions/setup-python@v4
