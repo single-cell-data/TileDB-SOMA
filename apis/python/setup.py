@@ -158,27 +158,47 @@ class build_ext(setuptools.command.build_ext.build_ext):
 
 class bdist_wheel(wheel.bdist_wheel.bdist_wheel):
     def run(self):
-        print()
-        print("================================================================")
-        print("BEGIN TILEDBSOMA BDIST WHEEL")
-        print("================================================================")
-        print()
+
+        os.system("echo")
+        os.system(
+            "echo ================================================================"
+        )
+        os.system("echo BEGIN TILEDBSOMA BDIST WHEEL")
+        os.system(
+            "echo ================================================================"
+        )
+        os.system("echo")
+
         find_or_build_package_data(self)
-        print()
-        print("================================================================")
-        print("END TILEDBSOMA BDIST WHEEL")
-        print("================================================================")
-        print()
 
-        print("/BIN/LS -L")
+        os.system("echo")
+        os.system(
+            "echo ================================================================"
+        )
+        os.system("echo END TILEDBSOMA BDIST WHEEL")
+        os.system(
+            "echo ================================================================"
+        )
+        os.system("echo")
+
+        os.system("echo /BIN/LS -L")
         os.system("/bin/ls -l")
-        print()
+        os.system("echo")
 
-        print("/BIN/LS -L LIBTILEDBSOMA_DIR")
+        os.system("echo /BIN/LS -L LIBTILEDBSOMA_DIR")
         os.system(f"/bin/ls -l {libtiledbsoma_dir}")
-        print()
+        os.system("echo")
+
+        os.system("echo FIND . -TYPE F")
+        os.system("find . -type f")
+        os.system("echo")
+
+        os.system(f"echo FIND {libtiledbsoma_dir} -TYPE F")
+        os.system(f"find {libtiledbsoma_dir} -type f")
+        os.system("echo")
 
         super().run()
+
         print("================================================================")
         print("END SUPER BDIST WHEEL")
         print("================================================================")
