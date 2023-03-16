@@ -12,14 +12,16 @@ jobs:
       fail-fast: false
       matrix:
         # TODO: restore Windows build once we have C++/libtiledbsoma integration supported there
-        os: [macos-12, ubuntu-22.04]
+        os: [ubuntu-22.04, macos-12]
         # os: [ubuntu-22.04, macos-12, windows-2019]
         python-version: ['3.7', '3.8', '3.9', '3.10']
         include:
-          - runs-on: macos-12
           - runs-on: ubuntu-22.04
             cc: gcc-11
             cxx: g++-11
+          - runs-on: macos-12
+            cc: clang
+            cxx: clang++
     uses: ./.github/workflows/python-ci-single.yml
     with:
       os: ${{ matrix.os }}

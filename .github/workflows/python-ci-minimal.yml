@@ -10,13 +10,15 @@ jobs:
     strategy:
       fail-fast: true
       matrix:
-        os: [macos-12, ubuntu-22.04]
+        os: [ubuntu-22.04, macos-12]
         python-version: ['3.10', '3.7']
         include:
-          - runs-on: macos-12
           - runs-on: ubuntu-22.04
             cc: gcc-11
             cxx: g++-11
+          - runs-on: macos-12
+            cc: clang
+            cxx: clang++
     # TODO: remove version before merge to main
     uses: ./.github/workflows/python-ci-single.yml
     with:
