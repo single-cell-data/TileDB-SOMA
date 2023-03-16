@@ -26,7 +26,8 @@ TileDBObject <- R6::R6Class(
       ##   .NotYetImplemented()
       ## }
       if (is.null(internal_use_only) || internal_use_only != "allowed_use") {
-        stop("Use of the new() method is discouraged, consider using a factor method", call. = FALSE)
+        stop(paste("Use of the new() method is discouraged, consider using a",
+                   "factory method as e.g. 'SOMADataFrameOpen()'."), call. = FALSE)
       }
       if (missing(uri)) stop("Must specify a `uri`", call. = FALSE)
       private$tiledb_uri <- TileDBURI$new(uri)
