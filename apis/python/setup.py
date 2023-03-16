@@ -193,6 +193,10 @@ class bdist_wheel(wheel.bdist_wheel.bdist_wheel):
         os.system("find . -type f")
         os.system("echo")
 
+        os.system("echo 'FIND . -TYPE F | GREP CC$'")
+        os.system("find . -type f | grep cc$")
+        os.system("echo")
+
         os.system(f"echo FIND {libtiledbsoma_dir} -TYPE F")
         os.system(f"find {libtiledbsoma_dir} -type f")
         os.system("echo")
