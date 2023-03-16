@@ -162,8 +162,8 @@ class bdist_wheel(wheel.bdist_wheel.bdist_wheel):
 
 
 INC_DIRS = [
-    "../../libtiledbsoma/include",
-    "../../libtiledbsoma/external/include",
+    "dist_links/libtiledbsoma/include",
+    "dist_links/libtiledbsoma/external/include",
     "../../build/externals/install/include",
     str(libtiledbsoma_dir / "include"),
     str(
@@ -247,6 +247,7 @@ setuptools.setup(
         )
     ],
     zip_safe=False,
+    setup_requires=["pybind11"],
     install_requires=[
         "anndata",
         "attrs>=22.2",
