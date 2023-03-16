@@ -196,22 +196,58 @@ from the resulting Tables.
 \if{html}{\out{<a id="method-SOMAExperimentAxisQuery-to_seurat"></a>}}
 \if{latex}{\out{\hypertarget{method-SOMAExperimentAxisQuery-to_seurat}{}}}
 \subsection{Method \code{to_seurat()}}{
-...
+Loads the query as a \code{\link[SeuratObject]{Seurat}} object
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{SOMAExperimentAxisQuery$to_seurat(
-  X_layers = c(counts = "counts", data = "logcounts")
+  X_layers = c(counts = "counts", data = "logcounts"),
+  cells_index = NULL,
+  features_index = NULL,
+  obs_column_names = NULL,
+  var_column_names = NULL,
+  embeddings = NULL,
+  loadings = NULL,
+  graphs = NULL
 )}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{X_layers}}{...}
+\item{\code{X_layers}}{A named character of X layers to add to the Seurat assay;
+names should be one of:
+\itemize{
+\item \dQuote{\code{counts}} to add the layer as \code{counts}
+\item \dQuote{\code{data}} to add the layer as \code{data}
+\item \dQuote{\code{scale.data}} to add the layer as \code{scale.data}
+}
+At least one of \dQuote{\code{counts}} or \dQuote{\code{data}} is required}
+
+\item{\code{cells_index}}{Name of column in \code{obs} to add as cell names}
+
+\item{\code{features_index}}{Name of column in \code{var} to add as feature names}
+
+\item{\code{obs_column_names}}{Names of columns in \code{obs} to add as
+cell-level meta data}
+
+\item{\code{var_column_names}}{Names of columns in \code{var} to add as
+feature-level meta data}
+
+\item{\code{embeddings}}{Names of arrays in \code{obsm} to load in as the
+cell embeddings; pass \code{FALSE} to suppress loading in any
+dimensional reductions}
+
+\item{\code{loadings}}{Named vector of arrays in \code{varm} to load in as the
+feature loadings; names must be names of array in \code{obsm} (eg.
+\code{loadings = c(X_pca = 'PCs')}); will try to determine
+\code{loadings} from \code{embeddings}}
+
+\item{\code{graphs}}{Names of arrays in \code{obsp} to load in as
+\code{\link[SeuratObject]{Graph}s}}
 }
 \if{html}{\out{</div>}}
 }
 \subsection{Returns}{
-...
+A \code{\link[SeuratObject]{Seurat}} object
 }
 }
 \if{html}{\out{<hr>}}
