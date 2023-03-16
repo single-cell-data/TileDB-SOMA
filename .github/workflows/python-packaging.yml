@@ -23,9 +23,7 @@ jobs:
       with:
         fetch-depth: 0  # ensure we get all tags to inform package version determination
     - name: Build sdist
-      run: |
-        python -m pip install pybind11
-        python setup.py sdist
+      run: python setup.py sdist
       working-directory: ./apis/python
     - name: Upload sdist artifact
       uses: actions/upload-artifact@v3
@@ -111,7 +109,7 @@ jobs:
         pip install $WHL
         echo "WHL=$WHL" >> $GITHUB_ENV
     - name: Smoke test ${{ matrix.os }}
-      run: python -c 'import tiledbsoma; print(tiledbsoma.libtiledbsoma.__file__); tiledbsoma.show_package_versions()'
+      run: python -c 'import tiledbsoma; print(tiledbsoma.pytiledbsoma.__file__); tiledbsoma.show_package_versions()'
       # TODO: more thorough local smoke test
     - name: Smoke test in docker
       # Repeat test in stock ubuntu 20.04 docker image. This uses an older pip
@@ -121,7 +119,7 @@ jobs:
         docker run -v $(pwd):/mnt ubuntu:20.04 bash -ec "
           apt-get -qq update && apt-get install -y python3-pip python3-wheel
           pip3 install /mnt/$WHL
-          python3 -c 'import tiledbsoma; print(tiledbsoma.libtiledbsoma.__file__); tiledbsoma.show_package_versions()'
+          python3 -c 'import tiledbsoma; print(tiledbsoma.pytiledbsoma.__file__); tiledbsoma.show_package_versions()'
         "
 
   # TODO: publlish to TestPyPI
