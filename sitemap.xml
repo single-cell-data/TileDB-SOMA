@@ -49,6 +49,12 @@
     <loc>/reference/SOMADataFrame.html</loc>
   </url>
   <url>
+    <loc>/reference/SOMADataFrameCreate.html</loc>
+  </url>
+  <url>
+    <loc>/reference/SOMADataFrameOpen.html</loc>
+  </url>
+  <url>
     <loc>/reference/SOMADenseNDArray.html</loc>
   </url>
   <url>
@@ -62,6 +68,12 @@
   </url>
   <url>
     <loc>/reference/SOMASparseNDArray.html</loc>
+  </url>
+  <url>
+    <loc>/reference/SOMASparseNDArrayCreate.html</loc>
+  </url>
+  <url>
+    <loc>/reference/SOMASparseNDArrayOpen.html</loc>
   </url>
   <url>
     <loc>/reference/SOMATileDBContext.html</loc>
