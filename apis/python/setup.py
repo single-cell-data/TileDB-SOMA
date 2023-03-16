@@ -241,7 +241,8 @@ setuptools.setup(
             library_dirs=LIB_DIRS,
             libraries=["tiledbsoma"],
             extra_link_args=CXX_FLAGS,
-            extra_compile_args=["-std=c++17"],
+            # extra_compile_args=["-std=c++17"],
+            extra_compile_args=["-std=c++17"] + CXX_FLAGS,
             language="c++",
         )
     ],
