@@ -34,6 +34,8 @@ import version  # noqa E402
 
 libtiledbsoma_dir = None
 
+os.putenv("CMAKE_OSX_DEPLOYMENT_TARGET", ">=10.13")  # XXX TEMP
+
 args = sys.argv[:]
 for arg in args:
     if arg.find("--libtiledbsoma") == 0:
