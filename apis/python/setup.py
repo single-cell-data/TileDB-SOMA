@@ -34,8 +34,6 @@ import version  # noqa E402
 
 libtiledbsoma_dir = None
 
-os.putenv("CMAKE_OSX_DEPLOYMENT_TARGET", ">=10.13")  # XXX TEMP
-
 args = sys.argv[:]
 for arg in args:
     if arg.find("--libtiledbsoma") == 0:
@@ -180,6 +178,9 @@ LIB_DIRS = [
 CXX_FLAGS = [
     f'-Wl,-rpath,{str(libtiledbsoma_dir / "lib")}',
 ]
+if sys.platform == "darwin":
+    # COMPILE_FLAGS.append("-mmacosx-version-min=10.14")
+    CXX_FLAGS.append("-mmacosx-version-min=10.14")
 
 if os.name == "posix" and sys.platform != "darwin":
     LIB_DIRS.append(str(libtiledbsoma_dir / "lib" / "x86_64-linux-gnu"))
