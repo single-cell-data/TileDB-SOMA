@@ -1,5 +1,12 @@
 name: TileDB-SOMA Python CI (Minimal)
 
+# This workflow calls ./python-ci-single.yml on a limited subset of the
+# {os} x {python version} matrix. It runs for all branches, in contrast to
+# ./python-ci-full.yml, which exhausts the matrix but only for main & releases,
+# since that's CI-resource-intensive.
+#
+# To test the full matrix on a working branch, invoke ./python-ci-full.yml from
+#   https://github.com/single-cell-data/TileDB-SOMA/actions/workflows/python-ci-full.yml
 on:
   push:
     paths-ignore:
@@ -10,16 +17,12 @@ jobs:
     strategy:
       fail-fast: true
       matrix:
-        os: [ubuntu-22.04, macos-12]
+        os: [ubuntu-22.04]
         python-version: ['3.10', '3.7']
         include:
           - runs-on: ubuntu-22.04
             cc: gcc-11
             cxx: g++-11
-          - runs-on: macos-12
-            cc: clang
-            cxx: clang++
-    # TODO: remove version before merge to main
     uses: ./.github/workflows/python-ci-single.yml
     with:
       os: ${{ matrix.os }}
