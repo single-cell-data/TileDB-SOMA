@@ -1056,7 +1056,10 @@ def to_anndata(
 
     var_df = measurement.var.read().concat().to_pandas()
     var_df.drop([SOMA_JOINID], axis=1, inplace=True)
-    var_df.set_index("var_id", inplace=True)
+    if "var_id" in var_df.keys():
+        var_df.set_index("var_id", inplace=True)
+    elif "feature_id" in var_df.keys():
+        var_df.set_index("feature_id", inplace=True)
 
     nobs = len(obs_df.index)
     nvar = len(var_df.index)
