@@ -4,9 +4,13 @@
 #' @param uri URI for the TileDB object
 #' @param schema schema Arrow schema argument passed on to DataFrame$create()
 #' @param index_column_names Index column names passed on to DataFrame$create()
+#' @param platform_config Optional platform configuration
+#' @param tiledbsoma_ctx Optional SOMATileDBContext
 #' @export
-SOMADataFrameCreate <- function(uri, schema, index_column_names) {
-    sdf <- SOMADataFrame$new(uri, mode="WRITE", internal_use_only = "allowed_use")
+SOMADataFrameCreate <- function(uri, schema, index_column_names,
+                                platform_config = NULL, tiledbsoma_ctx = NULL) {
+    sdf <- SOMADataFrame$new(uri, platform_config, tiledbsoma_ctx,
+                             mode="WRITE", internal_use_only = "allowed_use")
     sdf$create(schema, index_column_names)
     sdf
 }
@@ -30,9 +34,13 @@ SOMADataFrameOpen <- function(uri, platform_config = NULL, tiledbsoma_ctx = NULL
 #' @param uri URI for the TileDB objec
 #' @param type An [Arrow type][arrow::data-type] defining the type of each element in the array.
 #' @param shape A vector of integers defining the shape of the array.
+#' @param platform_config Optional platform configuration
+#' @param tiledbsoma_ctx Optional SOMATileDBContext
 #' @export
-SOMASparseNDArrayCreate <- function(uri, type, shape) {
-    spar <- SOMASparseNDArray$new(uri, mode="WRITE", internal_use_only = "allowed_use")
+SOMASparseNDArrayCreate <- function(uri, type, shape,
+                                    platform_config = NULL, tiledbsoma_ctx = NULL) {
+    spar <- SOMASparseNDArray$new(uri, platform_config, tiledbsoma_ctx,
+                                  mode="WRITE", internal_use_only = "allowed_use")
     spar$create(type, shape)
     spar
 }
@@ -56,9 +64,13 @@ SOMASparseNDArrayOpen <- function(uri, platform_config = NULL, tiledbsoma_ctx = 
 #' @param uri URI for the TileDB objec
 #' @param type An [Arrow type][arrow::data-type] defining the type of each element in the array.
 #' @param shape A vector of integers defining the shape of the array.
+#' @param platform_config Optional platform configuration
+#' @param tiledbsoma_ctx Optional SOMATileDBContext
 #' @export
-SOMADenseNDArrayCreate <- function(uri, type, shape) {
-    dnar <- SOMADenseNDArray$new(uri, mode="WRITE", internal_use_only = "allowed_use")
+SOMADenseNDArrayCreate <- function(uri, type, shape,
+                                   platform_config = NULL, tiledbsoma_ctx = NULL) {
+    dnar <- SOMADenseNDArray$new(uri, platform_config, tiledbsoma_ctx,
+                                 mode="WRITE", internal_use_only = "allowed_use")
     dnar$create(type, shape)
     dnar
 }

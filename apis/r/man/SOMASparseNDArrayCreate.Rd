@@ -4,7 +4,13 @@
 \alias{SOMASparseNDArrayCreate}
 \title{Create SOMA Sparse Nd Array}
 \usage{
-SOMASparseNDArrayCreate(uri, type, shape)
+SOMASparseNDArrayCreate(
+  uri,
+  type,
+  shape,
+  platform_config = NULL,
+  tiledbsoma_ctx = NULL
+)
 }
 \arguments{
 \item{uri}{URI for the TileDB objec}
@@ -12,6 +18,10 @@ SOMASparseNDArrayCreate(uri, type, shape)
 \item{type}{An \link[arrow:data-type]{Arrow type} defining the type of each element in the array.}
 
 \item{shape}{A vector of integers defining the shape of the array.}
+
+\item{platform_config}{Optional platform configuration}
+
+\item{tiledbsoma_ctx}{Optional SOMATileDBContext}
 }
 \description{
 Factory function to create a SOMASparseNDArray for writing, (lifecycle: experimental)

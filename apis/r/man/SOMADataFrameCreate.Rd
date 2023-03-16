@@ -4,7 +4,13 @@
 \alias{SOMADataFrameCreate}
 \title{Create SOMA DataFrame}
 \usage{
-SOMADataFrameCreate(uri, schema, index_column_names)
+SOMADataFrameCreate(
+  uri,
+  schema,
+  index_column_names,
+  platform_config = NULL,
+  tiledbsoma_ctx = NULL
+)
 }
 \arguments{
 \item{uri}{URI for the TileDB object}
@@ -12,6 +18,10 @@ SOMADataFrameCreate(uri, schema, index_column_names)
 \item{schema}{schema Arrow schema argument passed on to DataFrame$create()}
 
 \item{index_column_names}{Index column names passed on to DataFrame$create()}
+
+\item{platform_config}{Optional platform configuration}
+
+\item{tiledbsoma_ctx}{Optional SOMATileDBContext}
 }
 \description{
 Factory function to create a SOMADataFrame for writing, (lifecycle: experimental)

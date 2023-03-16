@@ -64,3 +64,17 @@ test_that("SparseNDArray Factory", {
     expect_silent(chk <- s3$read_dense_matrix())
     expect_equal(mat, chk)
 })
+
+test_that("Collection Factory", {
+    uri <- tempfile()
+
+    # check that straight use of new() errors, but 'with handshake' passes
+    expect_error(SOMACollection$new(uri))
+    expect_silent(s1 <- SOMACollection$new(uri, internal_use_only = "allowed_use"))
+
+    # check creation of a sparse array
+    expect_silent(s2 <- SOMACollectionCreate(uri))
+
+    # check opening to read
+    expect_silent(s3 <- SOMACollectionOpen(uri))
+})
