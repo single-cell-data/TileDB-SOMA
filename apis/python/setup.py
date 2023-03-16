@@ -21,7 +21,6 @@ import shutil
 import subprocess
 import sys
 
-import pkgconfig
 import setuptools
 
 # import setuptools.command.build_ext
@@ -158,47 +157,8 @@ class build_ext(setuptools.command.build_ext.build_ext):
 
 class bdist_wheel(wheel.bdist_wheel.bdist_wheel):
     def run(self):
-
-        os.system("echo")
-        os.system(
-            "echo ================================================================"
-        )
-        os.system("echo BEGIN TILEDBSOMA BDIST WHEEL")
-        os.system(
-            "echo ================================================================"
-        )
-        os.system("echo")
-
         find_or_build_package_data(self)
-
-        os.system("echo")
-        os.system(
-            "echo ================================================================"
-        )
-        os.system("echo END TILEDBSOMA BDIST WHEEL")
-        os.system(
-            "echo ================================================================"
-        )
-        os.system("echo")
-
-        os.system("echo /BIN/LS -L")
-        os.system("/bin/ls -l")
-        os.system("echo")
-
-        os.system("echo /BIN/LS -L LIBTILEDBSOMA_DIR")
-        os.system(f"/bin/ls -l {libtiledbsoma_dir}")
-        os.system("echo")
-
-        os.system("echo 'FIND . -TYPE F | GREP CC$'")
-        os.system("find . -type f | grep cc$")
-        os.system("echo")
-
         super().run()
-
-        print("================================================================")
-        print("END SUPER BDIST WHEEL")
-        print("================================================================")
-        print()
 
 
 INC_DIRS = [
@@ -212,35 +172,12 @@ INC_DIRS = [
     str(libtiledbsoma_dir.parent / "build/externals/install/include"),
 ]
 
-print()
-print("================================================================")
-print("LIBTILEDBSOMA_DIR", libtiledbsoma_dir)
-print("OS.GETCWD", os.getcwd())
-print()
-
-print("/BIN/LS -L")
-os.system("/bin/ls -l")
-print()
-
-print("/BIN/LS -L LIBTILEDBSOMA_DIR")
-os.system(f"/bin/ls -l {libtiledbsoma_dir}")
-print()
-
-if pkgconfig.exists("tiledb"):
-    print("PKGCONFIG EXISTS TILEDB YES", pkgconfig.cflags("tiledb"))
-    INC_DIRS.append(pkgconfig.cflags("tiledb")[2:])
-else:
-    print("PKGCONFIG EXISTS TILEDB NO")
-
 LIB_DIRS = [
     str(libtiledbsoma_dir / "lib"),
 ]
 CXX_FLAGS = [
     f'-Wl,-rpath,{str(libtiledbsoma_dir / "lib")}',
 ]
-
-print("================================================================")
-print()
 
 if os.name == "posix" and sys.platform != "darwin":
     LIB_DIRS.append(str(libtiledbsoma_dir / "lib" / "x86_64-linux-gnu"))
