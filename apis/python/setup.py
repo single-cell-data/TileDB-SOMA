@@ -165,13 +165,21 @@ INC_DIRS = [
     "../../libtiledbsoma/include",
     "../../libtiledbsoma/external/include",
     "../../build/externals/install/include",
+    str(libtiledbsoma_dir / "include"),
+    str(
+        "./src/tiledbsoma"
+    ),  # since pytiledbsoma.cc does #include of query_condition.cc
+    str(libtiledbsoma_dir.parent / "build/externals/install/include"),
 ]
+
 LIB_DIRS = [
     str(libtiledbsoma_dir / "lib"),
 ]
 CXX_FLAGS = [
     f'-Wl,-rpath,{str(libtiledbsoma_dir / "lib")}',
 ]
+if sys.platform == "darwin":
+    CXX_FLAGS.append("-mmacosx-version-min=10.14")
 
 if os.name == "posix" and sys.platform != "darwin":
     LIB_DIRS.append(str(libtiledbsoma_dir / "lib" / "x86_64-linux-gnu"))
@@ -223,7 +231,7 @@ setuptools.setup(
             library_dirs=LIB_DIRS,
             libraries=["tiledbsoma"],
             extra_link_args=CXX_FLAGS,
-            extra_compile_args=["-std=c++17"],
+            extra_compile_args=["-std=c++17"] + CXX_FLAGS,
             language="c++",
         )
     ],

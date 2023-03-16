@@ -5,7 +5,7 @@ on:
   workflow_dispatch:
   # Normally the smoke test only runs on merge to main.  To run it on a PR CI, uncomment `pull_request:`
   # pull_request:
-  # branches: [main]
+  #   branches: [main]
   # paths-ignore:
   #   - 'apis/r/**'
   release:
@@ -23,7 +23,9 @@ jobs:
       with:
         fetch-depth: 0  # ensure we get all tags to inform package version determination
     - name: Build sdist
-      run: python setup.py sdist
+      run: |
+        python -m pip install pybind11
+        python setup.py sdist
       working-directory: ./apis/python
     - name: Upload sdist artifact
       uses: actions/upload-artifact@v3
@@ -85,9 +87,13 @@ jobs:
         - os: ubuntu-20.04
           platform: manylinux2014
           arch: x86_64
+          cc: gcc-11
+          cxx: g++-11
         - os: macos-11
           platform: macosx
           arch: x86_64
+          cc: clang
+          cxx: clang++
     steps:
     - name: Set up Python 3.8
       uses: actions/setup-python@v4
