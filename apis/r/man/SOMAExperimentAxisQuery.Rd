@@ -271,9 +271,11 @@ Loads the query as a Seurat
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{embeddings}}{...}
+\item{\code{embeddings}}{Name of array in \code{obsm} to load as the
+cell embeddings}
 
-\item{\code{loadings}}{...}
+\item{\code{loadings}}{Name of the array in \code{varm} to load as the  feature
+loadings; will try to determine \code{loadings} from \code{embeddings}}
 
 \item{\code{cells_index}}{Name of column in \code{obs} to add as cell names}
 
@@ -289,13 +291,22 @@ A \code{\link[SeuratObject]{DimReduc}} object
 \if{html}{\out{<a id="method-SOMAExperimentAxisQuery-to_seurat_graph"></a>}}
 \if{latex}{\out{\hypertarget{method-SOMAExperimentAxisQuery-to_seurat_graph}{}}}
 \subsection{Method \code{to_seurat_graph()}}{
-...
+Loads the query as a Seurat \link[SeuratObject:Graph]{graph}
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{SOMAExperimentAxisQuery$to_seurat_graph()}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{SOMAExperimentAxisQuery$to_seurat_graph(graph, cells_index = NULL)}\if{html}{\out{</div>}}
 }
 
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{graph}}{Name of array in \code{obsp} to load as the graph}
+
+\item{\code{cells_index}}{Name of column in \code{obs} to add as cell names}
+}
+\if{html}{\out{</div>}}
+}
 \subsection{Returns}{
-...
+A \code{\link[SeuratObject]{Graph}} object
 }
 }
 \if{html}{\out{<hr>}}

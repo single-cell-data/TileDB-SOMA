@@ -1,5 +1,5 @@
 #' @importFrom rlang is_na
-#' @importFrom methods new
+#' @importFrom methods as new
 #'
 NULL
 
@@ -455,12 +455,47 @@ SOMAExperimentAxisQuery <- R6::R6Class(
         key = key
       ))
     },
-    #' @description ...
+    #' @description Loads the query as a Seurat \link[SeuratObject:Graph]{graph}
     #'
-    #' @return ...
+    #' @param graph Name of array in \code{obsp} to load as the graph
+    #' @param cells_index Name of column in \code{obs} to add as cell names
     #'
-    to_seurat_graph = function() {
-      .NotYetImplemented()
+    #' @return A \code{\link[SeuratObject]{Graph}} object
+    #'
+    to_seurat_graph = function(graph, cells_index = NULL) {
+      .check_seurat_installed()
+      stopifnot(
+        "'graph' must be a single character value" = is_scalar_character(graph),
+        "'cells_index' must be a single character value" = is.null(cells_index) ||
+          (is_scalar_character(cells_index) && !is.na(cells_index))
+      )
+      # Check embeddings/loadings
+      ms_graph <- tryCatch(
+        expr = self$ms$obsp$names(),
+        error = \(...) NULL
+      )
+      if (is.null(ms_graph)) {
+        warning("No graphs present")
+        return(NULL)
+      }
+      # Check provided graph name
+      graph <- match.arg(arg = graph, choices = ms_graph)
+      mat <- self$ms$obsp$get(graph)$read_sparse_matrix(repr = 'C')
+      idx <- self$obs_joinids()$as_vector() + 1L
+      mat <- mat[idx, idx]
+      mat <- as(mat, 'Graph')
+      cells <- if (is.null(cells_index)) {
+        paste0('cell', self$obs_joinids())
+      } else {
+        cells_index <- match.arg(
+          arg = cells_index,
+          choices = self$obs_df$attrnames()
+        )
+        self$obs(cells_index)$GetColumnByName(cells_index)$as_vector()
+      }
+      dimnames(mat) <- list(cells, cells)
+      SeuratObject::DefaultAssay(mat) <- private$.measurement_name
+      return(mat)
     }
   ),
 
@@ -530,6 +565,29 @@ SOMAExperimentAxisQuery <- R6::R6Class(
     .var_query = NULL,
     .joinids = NULL,
     .indexer = NULL,
+    .as_matrix = function(table, repr = 'C', transpose = TRUE) {
+      stopifnot(
+        inherits(table, 'Table'),
+        is_scalar_character(repr),
+        is_scalar_logical(transpose)
+      )
+      repr <- match.arg(arg = repr, choices = c('C', 'R', 'T', 'D'))
+      obs <- table$GetColumnByName('soma_dim_0')$as_vector()
+      var <- table$GetColumnByName('soma_dim_1')$as_vector()
+      mat <- Matrix::sparseMatrix(
+        i = self$indexer$by_obs(obs)$as_vector() + 1L,
+        j = self$indexer$by_var(var)$as_vector() + 1L,
+        x = table$GetColumnByName('soma_data')$as_vector(),
+        repr = switch(EXPR = repr, D = 'T', repr)
+      )
+      if (isTRUE(transpose)) {
+        mat <- Matrix::t(mat)
+      }
+      if (repr == 'D') {
+        mat <- as.matrix(mat)
+      }
+      return(mat)
+    },
     .to_seurat_assay_v3 = function(
       counts,
       data,
