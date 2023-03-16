@@ -70,7 +70,7 @@ class DataFrame(TileDBArray, somacore.DataFrame):
         A: float
         B: large_string
         ---
-        soma_joinid       A    B
+           soma_joinid       A    B
         0            0  1.0000  one
         1            1  2.7182    e
         2            2  3.1214   pi
@@ -180,6 +180,21 @@ class DataFrame(TileDBArray, somacore.DataFrame):
             TileDBError:
                 If unable to create the underlying object.
 
+        Examples:
+            >>> df = pd.DataFrame(data={"soma_joinid": [0, 1], "col1": ["a", "b"]})
+            ... with tiledbsoma.DataFrame.create(
+            ...    "a_dataframe", schema=pa.Schema.from_pandas(df)
+            ... ) as soma_df:
+            ...     soma_df.write(pa.Table.from_pandas(df, preserve_index=False))
+            ...
+            >>> with tiledbsoma.open("a_dataframe") as soma_df:
+            ...     a_df = soma_df.read().concat().to_pandas()
+            ...
+            >>> a_df
+               soma_joinid col1
+            0            0    a
+            1            1    b
+
         Lifecycle:
             Experimental.
         """
@@ -200,6 +215,13 @@ class DataFrame(TileDBArray, somacore.DataFrame):
 
     def keys(self) -> Tuple[str, ...]:
         """Returns the names of the columns when read back as a dataframe.
+
+        Examples:
+            >>> with tiledbsoma.open("a_dataframe") as soma_df:
+            ...     k = soma_df.keys()
+            ...
+            >>> k
+            ('soma_joinid', 'col1')
 
         Lifecycle:
             Experimental.

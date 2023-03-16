@@ -201,6 +201,20 @@ class CollectionBase(
                 creating this sub-collection. This is passed directly to
                 ``[CurrentCollectionType].create()``.
 
+        Examples:
+            >>> with tiledbsoma.Collection.create("/tmp/parent") as parent_collection:
+            ...     # Create a Collection, with the key ``child_collection``
+            ...     parent_collection.add_new_collection("child_collection")
+            ...     # And an Experiment, with the key ``child_experiment``
+            ...     parent_collection.add_new_collection("child_experiment", tiledbsoma.Experiment)
+            ...
+            >>> with tiledbsoma.open("/tmp/parent") as parent_collection:
+            ...     print(parent_collection['child_collection'].uri)
+            ...     print(parent_collection['child_experiment'].uri)
+            ...
+            file:///tmp/parent/child_collection
+            file:///tmp/parent/exp
+
         Lifecycle:
             Experimental.
         """
@@ -228,6 +242,24 @@ class CollectionBase(
         For details about the behavior of ``key`` and ``uri``, see
         :meth:`add_new_collection`. The remaining parameters are passed to
         :meth:`DataFrame.create` unchanged.
+
+        Examples:
+            >>> import pandas as pd
+            >>> import pyarrow as pa
+            >>> df = pd.DataFrame(data={"soma_joinid": [0, 1], "col1": [1, 2], "col2": [3, 4]})
+            ... with tiledbsoma.Collection.create("/tmp/collection") as soma_collection:
+            ...     soma_df = soma_collection.add_new_dataframe(
+            ...         "a_dataframe", schema=pa.Schema.from_pandas(df)
+            ...     )
+            ...     soma_df.write(pa.Table.from_pandas(df, preserve_index=False))
+            ...
+            >>> with tiledbsoma.open("/tmp/collection") as soma_collection:
+            ...     data = soma_collection['a_dataframe'].read().concat().to_pandas()
+            ...
+            >>> data
+               soma_joinid  col1  col2
+            0            0     1     3
+            1            1     2     4
 
         Lifecycle:
             Experimental.
@@ -269,6 +301,31 @@ class CollectionBase(
         :meth:`add_new_collection`. The remaining parameters are passed to
         the :meth:`DenseNDArray.create` method unchanged.
 
+        Examples:
+            >>> # create a collection and add a (4, 4) dense matrix to it
+            >>> with tiledbsoma.Collection.create("./test_collection") as my_collection:
+            ...     # collection created. You can now add SOMA objects, e.g., a DenseNDArray
+            ...     my_dense_ndarray = my_collection.add_new_dense_ndarray(
+            ...         "my_dense_ndarray", type=pa.int32(), shape=(4, 4)
+            ...     )
+            ...     data = pa.Tensor.from_numpy(np.eye(4, 4, dtype=np.int32))
+            ...     my_dense_ndarray.write((slice(None), slice(None)), data)
+            ...
+            ... # example of opening collection to read an object back
+            ... with tiledbsoma.open("./test_collection") as my_collection:
+            ...     data = my_collection["my_dense_ndarray"].read()
+            ...
+            >>> data
+            <pyarrow.Tensor>
+            type: int32
+            shape: (4, 4)
+            strides: (16, 4)
+            >>> data.to_numpy()
+            array([[1, 0, 0, 0],
+                [0, 1, 0, 0],
+                [0, 0, 1, 0],
+                [0, 0, 0, 1]], dtype=int32)
+
         Lifecycle:
             Experimental.
         """
@@ -281,6 +338,27 @@ class CollectionBase(
         For details about the behavior of ``key`` and ``uri``, see
         :meth:`add_new_collection`. The remaining parameters are passed to
         the :meth:`SparseNDArray.create` method unchanged.
+
+        Examples:
+            >>> with tiledbsoma.Collection.create("./test_collection") as my_collection:
+            ...     a_sparse_ndarray = my_collection.add_new_sparse_ndarray(
+            ...         "a_sparse_ndarray", type=pa.float32(), shape=(100, 100)
+            ...     )
+            ...     data = pa.SparseCOOTensor.from_scipy(
+            ...         scipy.sparse.random(100, 100, dtype=np.float32)
+            ...     )
+            ...     a_sparse_ndarray.write(data)
+            ...
+            >>> with tiledbsoma.open("./test_collection") as my_collection:
+            ...     data = my_collection["a_sparse_ndarray"].read().coos().concat()
+            ...
+            >>> data
+            <pyarrow.SparseCOOTensor>
+            type: float
+            shape: (100, 100)
+            >>> data.to_scipy()
+            <100x100 sparse matrix of type '<class 'numpy.float32'>'
+                    with 100 stored elements in COOrdinate format>
 
         Lifecycle:
             Experimental.
@@ -560,14 +638,15 @@ class Collection(
         >>> import tiledbsoma
         >>> import pyarrow as pa
         >>> import numpy as np
-        >>> # create a collection and add a (10,10) dense matrix to it
+        >>> # create a collection and add a (4, 4) dense matrix to it
         >>> with tiledbsoma.Collection.create("./test_collection") as my_collection:
-        ...     # collection created. You can now add SOMA objects, e.g., a DenseNDArray
-        ...     my_collection.add_new_dense_ndarray(
-        ...         "my_dense_ndarray", type=pa.int32(), shape=(10, 10)
-        ...     ) as my_dense_ndarray:
-        ...         data = pa.Tensor.from_numpy(np.eye(10, 10, dtype=np.int32))
-        ...         my_dense_ndarray.write((slice(None), slice(None)), data)
+        ...     # collection created. You can now add SOMA objects, e.g., a DenseNDArray.
+        ...     # New objects are returned open for write.
+        ...     my_dense_ndarray = my_collection.add_new_dense_ndarray(
+        ...         "my_dense_ndarray", type=pa.int32(), shape=(4, 4)
+        ...     )
+        ...     data = pa.Tensor.from_numpy(np.eye(4, 4, dtype=np.int32))
+        ...     my_dense_ndarray.write((slice(None), slice(None)), data)
         ...
         ... # example of opening collection to read an object back
         ... with tiledbsoma.open("./test_collection") as my_collection:
@@ -576,19 +655,13 @@ class Collection(
         >>> data
         <pyarrow.Tensor>
         type: int32
-        shape: (10, 10)
-        strides: (40, 4)
+        shape: (4, 4)
+        strides: (16, 4)
         >>> data.to_numpy()
-        array([[1, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 1, 0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 1, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 1, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 1, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 1, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 1, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 1, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0, 1]], dtype=int32)
+        array([[1, 0, 0, 0],
+               [0, 1, 0, 0],
+               [0, 0, 1, 0],
+               [0, 0, 0, 1]], dtype=int32)
     """
 
     __slots__ = ()

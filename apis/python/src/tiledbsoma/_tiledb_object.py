@@ -67,14 +67,13 @@ class TileDBObject(somacore.SOMAObject, Generic[_WrapperType_co]):
             The opened SOMA object.
 
         Raises:
-
-        DoesNotExistError:
-            If the object named by URI can not be accessed.
-        SOMAError:
-            If the underlying TileDB object specified by ``uri`` is
-            not recognized as a SOMA object.
-        ValueError:
-            If the user-provided ``mode`` is invalid.
+            DoesNotExistError:
+                If the object named by URI can not be accessed.
+            SOMAError:
+                If the underlying TileDB object specified by ``uri`` is
+                not recognized as a SOMA object.
+            ValueError:
+                If the user-provided ``mode`` is invalid.
 
         Lifecycle:
             Experimental.
@@ -148,6 +147,10 @@ class TileDBObject(somacore.SOMAObject, Generic[_WrapperType_co]):
         """
         Accessor for the object's storage URI.
 
+        Examples:
+            >>> soma_object.uri
+            file://tmp/an_object_uri
+
         Lifecycle:
             Experimental.
         """
@@ -157,6 +160,9 @@ class TileDBObject(somacore.SOMAObject, Generic[_WrapperType_co]):
         """
         Release any resources held while the object is open.
         Closing an already-closed object is a no-op.
+
+        Examples:
+            >>> soma_object.close()
 
         Lifecycle:
             Experimental.
@@ -168,6 +174,14 @@ class TileDBObject(somacore.SOMAObject, Generic[_WrapperType_co]):
         """
         True if the object has been closed. False if it is still open.
 
+        Examples:
+            >>> with tiledbsoma.open("an_object") as soma_object:
+            ...     print(soma_object.closed)
+            ...
+            False
+            >>> print(soma_object.closed)
+            True
+
         Lifecycle:
             Experimental.
         """
@@ -177,6 +191,12 @@ class TileDBObject(somacore.SOMAObject, Generic[_WrapperType_co]):
     def mode(self) -> options.OpenMode:
         """
         The mode this object was opened in, either ``r`` or ``w``.
+
+        Examples:
+            >>> with tiledbsoma.open("an_object") as soma_object:
+            ...     print(soma_object.mode)
+            ...
+            r
 
         Lifecycle:
             Experimental.
@@ -217,6 +237,16 @@ class TileDBObject(somacore.SOMAObject, Generic[_WrapperType_co]):
         Raises:
             TypeError:
                 If the ``uri`` is not a string.
+
+        Examples:
+            >>> with tiledbsoma.open("a_dataframe") as soma_df:
+            ...     print(soma_df.soma_type)
+            ...
+            SOMADataFrame
+            >>> tiledbsoma.DataFrame.exists("./a_dataframe")
+            True
+            >>> tiledbsoma.SparseNDArray.exists("./a_dataframe")
+            False
 
         Lifecycle:
             Experimental.
