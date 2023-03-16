@@ -44,3 +44,23 @@ test_that("SparseNDArray Factory", {
     )
 
 })
+
+test_that("SparseNDArray Factory", {
+    uri <- tempfile()
+
+    # check that straight use of new() errors, but 'with handshake' passes
+    expect_error(SOMADenseNDArray$new(uri))
+    expect_silent(s1 <- SOMADenseNDArray$new(uri, internal_use_only = "allowed_use"))
+
+    # check creation of a sparse array
+    expect_error(s2 <- SOMADenseNDArrayCreate(uri, arrow::int32())) # misses shape
+    expect_error(s2 <- SOMADenseNDArrayCreate(uri, shape = c(10,10))) # misses type
+    expect_silent(s2 <- SOMADenseNDArrayCreate(uri, arrow::int32(), shape = c(10,10)))
+    mat <- create_dense_matrix_with_int_dims(10, 10)
+    s2$write(mat)
+
+    # check opening to read
+    expect_silent(s3 <- SOMADenseNDArrayOpen(uri))
+    expect_silent(chk <- s3$read_dense_matrix())
+    expect_equal(mat, chk)
+})

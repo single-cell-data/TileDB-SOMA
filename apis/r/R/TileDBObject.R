@@ -12,6 +12,8 @@ TileDBObject <- R6::R6Class(
     #' @param platform_config Optional platform configuration
     #' @param tiledbsoma_ctx Optional SOMATileDBContext
     #' @param mode One of "READ" or "WRITE"
+    #' @param internal_use_only Character value to signal 'permitted' call as
+    #' `new()` is considered internal and should not be called directly
     initialize = function(uri, platform_config = NULL, tiledbsoma_ctx = NULL,
                           mode = "READ", internal_use_only = NULL) {
       ## calls <- vapply(

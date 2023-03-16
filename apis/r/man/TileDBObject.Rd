@@ -42,7 +42,8 @@ Create a new TileDB object. (lifecycle: experimental)
   uri,
   platform_config = NULL,
   tiledbsoma_ctx = NULL,
-  mode = "READ"
+  mode = "READ",
+  internal_use_only = NULL
 )}\if{html}{\out{</div>}}
 }
 
@@ -56,6 +57,9 @@ Create a new TileDB object. (lifecycle: experimental)
 \item{\code{tiledbsoma_ctx}}{Optional SOMATileDBContext}
 
 \item{\code{mode}}{One of "READ" or "WRITE"}
+
+\item{\code{internal_use_only}}{Character value to signal 'permitted' call as
+\code{new()} is considered internal and should not be called directly}
 }
 \if{html}{\out{</div>}}
 }
