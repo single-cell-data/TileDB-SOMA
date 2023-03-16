@@ -22,8 +22,7 @@ import subprocess
 import sys
 
 import setuptools
-
-# import setuptools.command.build_ext
+import setuptools.command.build_ext
 import wheel.bdist_wheel
 
 try:
