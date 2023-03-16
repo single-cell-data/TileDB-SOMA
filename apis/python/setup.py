@@ -25,7 +25,15 @@ import setuptools
 
 # import setuptools.command.build_ext
 import wheel.bdist_wheel
-from pybind11.setup_helpers import Pybind11Extension
+
+try:
+    from pybind11.setup_helpers import Pybind11Extension
+except ImportError:
+    # Explanation:
+    # https://pybind11.readthedocs.io/en/stable/compiling.html#classic-setup-requires
+    # This works around a catch-22 where pybind11 is a requirement to load setup.py, yet pip cannot
+    # read&install our requirements without loading setup.py.
+    from setuptools import Extension as Pybind11Extension
 
 this_dir = pathlib.Path(__file__).parent.absolute()
 sys.path.insert(0, str(this_dir))
