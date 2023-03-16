@@ -20,8 +20,6 @@ jobs:
             cc: gcc-11
             cxx: g++-11
           - runs-on: macos-12
-            cc: gcc-11
-            cxx: g++-11
     uses: ./.github/workflows/python-ci-single.yml
     with:
       os: ${{ matrix.os }}
