@@ -23,7 +23,7 @@ jobs:
       with:
         fetch-depth: 0  # ensure we get all tags to inform package version determination
     - name: Build sdist
-      run: pip install -r requirements_dev.txt && python setup.py sdist
+      run: pip install -r requirements_dev.txt pybind11 && python setup.py sdist
       working-directory: ./apis/python
     - name: Upload sdist artifact
       uses: actions/upload-artifact@v3
