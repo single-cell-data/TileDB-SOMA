@@ -23,8 +23,8 @@ import sys
 
 import setuptools
 import setuptools.command.build_ext  # FIXME: why was this commented out?
-
 import wheel.bdist_wheel
+
 try:
     from pybind11.setup_helpers import Pybind11Extension
 except ImportError:
