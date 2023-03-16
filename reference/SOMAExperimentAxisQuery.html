@@ -152,10 +152,6 @@ this in the class.</p>
 <li><p><a href="#method-SOMAExperimentAxisQuery-var_joinids"><code>SOMAExperimentAxisQuery$var_joinids()</code></a></p></li>
 <li><p><a href="#method-SOMAExperimentAxisQuery-X"><code>SOMAExperimentAxisQuery$X()</code></a></p></li>
 <li><p><a href="#method-SOMAExperimentAxisQuery-read"><code>SOMAExperimentAxisQuery$read()</code></a></p></li>
-<li><p><a href="#method-SOMAExperimentAxisQuery-to_seurat"><code>SOMAExperimentAxisQuery$to_seurat()</code></a></p></li>
-<li><p><a href="#method-SOMAExperimentAxisQuery-to_seurat_assay"><code>SOMAExperimentAxisQuery$to_seurat_assay()</code></a></p></li>
-<li><p><a href="#method-SOMAExperimentAxisQuery-to_seurat_reduction"><code>SOMAExperimentAxisQuery$to_seurat_reduction()</code></a></p></li>
-<li><p><a href="#method-SOMAExperimentAxisQuery-to_seurat_graph"><code>SOMAExperimentAxisQuery$to_seurat_graph()</code></a></p></li>
 <li><p><a href="#method-SOMAExperimentAxisQuery-clone"><code>SOMAExperimentAxisQuery$clone()</code></a></p></li>
 </ul></div><p></p><hr><a id="method-SOMAExperimentAxisQuery-new"></a><div class="section">
 <h3 id="method-new-">Method <code>new()</code><a class="anchor" aria-label="anchor" href="#method-new-"></a></h3>
@@ -279,143 +275,15 @@ from the resulting Tables.</p><div class="section">
 </dl><p></p></div>
 </div>
 
-</div><p></p><hr><a id="method-SOMAExperimentAxisQuery-to_seurat"></a><div class="section">
-<h3 id="method-to-seurat-">Method <code>to_seurat()</code><a class="anchor" aria-label="anchor" href="#method-to-seurat-"></a></h3>
-<p>...</p><div class="section">
-<h4 id="usage-7">Usage<a class="anchor" aria-label="anchor" href="#usage-7"></a></h4>
-<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">SOMAExperimentAxisQuery</span><span class="op">$</span><span class="fu">to_seurat</span><span class="op">(</span></span>
-<span>  X_layers <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>counts <span class="op">=</span> <span class="st">"counts"</span>, data <span class="op">=</span> <span class="st">"logcounts"</span><span class="op">)</span></span>
-<span><span class="op">)</span></span></code></pre></div><p></p></div>
-</div>
-
-<div class="section">
-<h4 id="arguments-5">Arguments<a class="anchor" aria-label="anchor" href="#arguments-5"></a></h4>
-<p></p><div class="arguments"><dl><dt><code>X_layers</code></dt>
-<dd><p>...</p></dd>
-
-
-</dl><p></p></div>
-</div>
-<div class="section">
-<h4 id="returns">Returns<a class="anchor" aria-label="anchor" href="#returns"></a></h4>
-<p>...</p>
-</div>
-
-</div><p></p><hr><a id="method-SOMAExperimentAxisQuery-to_seurat_assay"></a><div class="section">
-<h3 id="method-to-seurat-assay-">Method <code>to_seurat_assay()</code><a class="anchor" aria-label="anchor" href="#method-to-seurat-assay-"></a></h3>
-<p>Loads the query as a Seurat <code><a href="https://mojaveazure.github.io/seurat-object/reference/Assay-class.html" class="external-link">Assay</a></code></p><div class="section">
-<h4 id="usage-8">Usage<a class="anchor" aria-label="anchor" href="#usage-8"></a></h4>
-<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">SOMAExperimentAxisQuery</span><span class="op">$</span><span class="fu">to_seurat_assay</span><span class="op">(</span></span>
-<span>  X_layers <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>counts <span class="op">=</span> <span class="st">"counts"</span>, data <span class="op">=</span> <span class="st">"logcounts"</span><span class="op">)</span>,</span>
-<span>  cells_index <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  features_index <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  var_column_names <span class="op">=</span> <span class="cn">NULL</span></span>
-<span><span class="op">)</span></span></code></pre></div><p></p></div>
-</div>
-
-<div class="section">
-<h4 id="arguments-6">Arguments<a class="anchor" aria-label="anchor" href="#arguments-6"></a></h4>
-<p></p><div class="arguments"><dl><dt><code>X_layers</code></dt>
-<dd><p>A named character of X layers to add to the Seurat assay;
-names should be one of:</p><ul><li><p>“<code>counts</code>” to add the layer as <code>counts</code></p></li>
-<li><p>“<code>data</code>” to add the layer as <code>data</code></p></li>
-<li><p>“<code>scale.data</code>” to add the layer as <code>scale.data</code></p></li>
-</ul><p>At least one of “<code>counts</code>” or “<code>data</code>” is required</p></dd>
-
-
-<dt><code>cells_index</code></dt>
-<dd><p>Name of column in <code>obs</code> to add as cell names</p></dd>
-
-
-<dt><code>features_index</code></dt>
-<dd><p>Name of column in <code>var</code> to add as feature names</p></dd>
-
-
-<dt><code>var_column_names</code></dt>
-<dd><p>Names of columns in <code>var</code> to add as
-feature-level meta data</p></dd>
-
-
-</dl><p></p></div>
-</div>
-<div class="section">
-<h4 id="returns-1">Returns<a class="anchor" aria-label="anchor" href="#returns-1"></a></h4>
-<p>An <code><a href="https://mojaveazure.github.io/seurat-object/reference/Assay-class.html" class="external-link">Assay</a></code> object</p>
-</div>
-
-</div><p></p><hr><a id="method-SOMAExperimentAxisQuery-to_seurat_reduction"></a><div class="section">
-<h3 id="method-to-seurat-reduction-">Method <code>to_seurat_reduction()</code><a class="anchor" aria-label="anchor" href="#method-to-seurat-reduction-"></a></h3>
-<p>Loads the query as a Seurat
-<a href="https://mojaveazure.github.io/seurat-object/reference/DimReduc-class.html" class="external-link">dimensional reduction</a></p><div class="section">
-<h4 id="usage-9">Usage<a class="anchor" aria-label="anchor" href="#usage-9"></a></h4>
-<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">SOMAExperimentAxisQuery</span><span class="op">$</span><span class="fu">to_seurat_reduction</span><span class="op">(</span></span>
-<span>  <span class="va">embeddings</span>,</span>
-<span>  loadings <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  cells_index <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  features_index <span class="op">=</span> <span class="cn">NULL</span></span>
-<span><span class="op">)</span></span></code></pre></div><p></p></div>
-</div>
-
-<div class="section">
-<h4 id="arguments-7">Arguments<a class="anchor" aria-label="anchor" href="#arguments-7"></a></h4>
-<p></p><div class="arguments"><dl><dt><code>embeddings</code></dt>
-<dd><p>Name of array in <code>obsm</code> to load as the
-cell embeddings</p></dd>
-
-
-<dt><code>loadings</code></dt>
-<dd><p>Name of the array in <code>varm</code> to load as the  feature
-loadings; will try to determine <code>loadings</code> from <code>embeddings</code></p></dd>
-
-
-<dt><code>cells_index</code></dt>
-<dd><p>Name of column in <code>obs</code> to add as cell names</p></dd>
-
-
-<dt><code>features_index</code></dt>
-<dd><p>Name of column in <code>var</code> to add as feature names</p></dd>
-
-
-</dl><p></p></div>
-</div>
-<div class="section">
-<h4 id="returns-2">Returns<a class="anchor" aria-label="anchor" href="#returns-2"></a></h4>
-<p>A <code><a href="https://mojaveazure.github.io/seurat-object/reference/DimReduc-class.html" class="external-link">DimReduc</a></code> object</p>
-</div>
-
-</div><p></p><hr><a id="method-SOMAExperimentAxisQuery-to_seurat_graph"></a><div class="section">
-<h3 id="method-to-seurat-graph-">Method <code>to_seurat_graph()</code><a class="anchor" aria-label="anchor" href="#method-to-seurat-graph-"></a></h3>
-<p>Loads the query as a Seurat <a href="https://mojaveazure.github.io/seurat-object/reference/Graph-class.html" class="external-link">graph</a></p><div class="section">
-<h4 id="usage-10">Usage<a class="anchor" aria-label="anchor" href="#usage-10"></a></h4>
-<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">SOMAExperimentAxisQuery</span><span class="op">$</span><span class="fu">to_seurat_graph</span><span class="op">(</span><span class="va">graph</span>, cells_index <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div><p></p></div>
-</div>
-
-<div class="section">
-<h4 id="arguments-8">Arguments<a class="anchor" aria-label="anchor" href="#arguments-8"></a></h4>
-<p></p><div class="arguments"><dl><dt><code>graph</code></dt>
-<dd><p>Name of array in <code>obsp</code> to load as the graph</p></dd>
-
-
-<dt><code>cells_index</code></dt>
-<dd><p>Name of column in <code>obs</code> to add as cell names</p></dd>
-
-
-</dl><p></p></div>
-</div>
-<div class="section">
-<h4 id="returns-3">Returns<a class="anchor" aria-label="anchor" href="#returns-3"></a></h4>
-<p>A <code><a href="https://mojaveazure.github.io/seurat-object/reference/Graph-class.html" class="external-link">Graph</a></code> object</p>
-</div>
-
 </div><p></p><hr><a id="method-SOMAExperimentAxisQuery-clone"></a><div class="section">
 <h3 id="method-clone-">Method <code>clone()</code><a class="anchor" aria-label="anchor" href="#method-clone-"></a></h3>
 <p>The objects of this class are cloneable with this method.</p><div class="section">
-<h4 id="usage-11">Usage<a class="anchor" aria-label="anchor" href="#usage-11"></a></h4>
+<h4 id="usage-7">Usage<a class="anchor" aria-label="anchor" href="#usage-7"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">SOMAExperimentAxisQuery</span><span class="op">$</span><span class="fu">clone</span><span class="op">(</span>deep <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
 <div class="section">
-<h4 id="arguments-9">Arguments<a class="anchor" aria-label="anchor" href="#arguments-9"></a></h4>
+<h4 id="arguments-5">Arguments<a class="anchor" aria-label="anchor" href="#arguments-5"></a></h4>
 <p></p><div class="arguments"><dl><dt><code>deep</code></dt>
 <dd><p>Whether to make a deep clone.</p></dd>
 
