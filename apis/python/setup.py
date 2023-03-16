@@ -25,7 +25,12 @@ import setuptools
 
 # import setuptools.command.build_ext
 import wheel.bdist_wheel
-from pybind11.setup_helpers import Pybind11Extension
+try:
+    from pybind11.setup_helpers import Pybind11Extension
+except ImportError:
+    # explanation:
+    # https://pybind11.readthedocs.io/en/stable/compiling.html#classic-setup-requires
+    from setuptools import Extension as Pybind11Extension
 
 this_dir = pathlib.Path(__file__).parent.absolute()
 sys.path.insert(0, str(this_dir))
@@ -164,6 +169,7 @@ class bdist_wheel(wheel.bdist_wheel.bdist_wheel):
 INC_DIRS = [
     "dist_links/libtiledbsoma/include",
     "dist_links/libtiledbsoma/external/include",
+    "../../build/externals/install/include",  # FIXME
 ]
 LIB_DIRS = [
     str(libtiledbsoma_dir / "lib"),
@@ -227,6 +233,7 @@ setuptools.setup(
         )
     ],
     zip_safe=False,
+    setup_requires=["pybind11"],
     install_requires=[
         "anndata",
         "attrs>=22.2",
