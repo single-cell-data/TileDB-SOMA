@@ -9,9 +9,9 @@ SOMASparseNDArrayCreate(uri, type, shape)
 \arguments{
 \item{uri}{URI for the TileDB objec}
 
-\item{type}{an \link[arrow:data-type]{Arrow type} defining the type of each element in the array.}
+\item{type}{An \link[arrow:data-type]{Arrow type} defining the type of each element in the array.}
 
-\item{shape}{a vector of integers defining the shape of the array.}
+\item{shape}{A vector of integers defining the shape of the array.}
 }
 \description{
 Factory function to create a SOMASparseNDArray for writing, (lifecycle: experimental)

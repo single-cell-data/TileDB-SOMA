@@ -11,7 +11,7 @@ SOMADataFrameOpen(uri, platform_config = NULL, tiledbsoma_ctx = NULL)
 
 \item{platform_config}{Optional platform configuration}
 
-\item{tiledbsoma_ctx}{optional SOMATileDBContext}
+\item{tiledbsoma_ctx}{Optional SOMATileDBContext}
 }
 \description{
 Factory function to open a SOMADataFrame for reading, (lifecycle: experimental)
