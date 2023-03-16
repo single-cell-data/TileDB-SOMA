@@ -16,10 +16,10 @@ jobs:
         # os: [ubuntu-22.04, macos-12, windows-2019]
         python-version: ['3.7', '3.8', '3.9', '3.10']
         include:
+          - runs-on: macos-12
           - runs-on: ubuntu-22.04
             cc: gcc-11
             cxx: g++-11
-          - runs-on: macos-12
     uses: ./.github/workflows/python-ci-single.yml
     with:
       os: ${{ matrix.os }}
