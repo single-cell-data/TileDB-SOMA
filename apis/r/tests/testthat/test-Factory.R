@@ -19,3 +19,28 @@ test_that("DataFrame Factory", {
     expect_silent(chk <- d3$read())
     expect_equal(tbl, chk)
 })
+
+test_that("SparseNDArray Factory", {
+    uri <- tempfile()
+
+    # check that straight use of new() errors, but 'with handshake' passes
+    expect_error(SOMASparseNDArray$new(uri))
+    expect_silent(s1 <- SOMASparseNDArray$new(uri, internal_use_only = "allowed_use"))
+
+    # check creation of a sparse array
+    expect_error(s2 <- SOMASparseNDArrayCreate(uri, arrow::int32())) # misses shape
+    expect_error(s2 <- SOMASparseNDArrayCreate(uri, shape = c(10,10))) # misses type
+    expect_silent(s2 <- SOMASparseNDArrayCreate(uri, arrow::int32(), shape = c(10,10)))
+    mat <- create_sparse_matrix_with_int_dims(10, 10)
+    s2$write(mat)
+
+    # check opening to read
+    expect_silent(s3 <- SOMASparseNDArrayOpen(uri))
+    expect_silent(chk <- s3$read_arrow_table(result_order = "COL_MAJOR"))
+    expect_identical(
+        as.numeric(chk$GetColumnByName("soma_data")),
+        ## need to convert to Csparsematrix first to get x values sorted appropriately
+        as.numeric(as(mat, "CsparseMatrix")@x)
+    )
+
+})
