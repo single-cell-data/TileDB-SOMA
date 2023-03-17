@@ -53,13 +53,13 @@ BEGIN_RCPP
 END_RCPP
 }
 // nnz
-double nnz(const std::string& uri, Rcpp::CharacterVector config);
+double nnz(const std::string& uri, Rcpp::Nullable<Rcpp::CharacterVector> config);
 RcppExport SEXP _tiledbsoma_nnz(SEXP uriSEXP, SEXP configSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< const std::string& >::type uri(uriSEXP);
-    Rcpp::traits::input_parameter< Rcpp::CharacterVector >::type config(configSEXP);
+    Rcpp::traits::input_parameter< Rcpp::Nullable<Rcpp::CharacterVector> >::type config(configSEXP);
     rcpp_result_gen = Rcpp::wrap(nnz(uri, config));
     return rcpp_result_gen;
 END_RCPP
@@ -87,13 +87,13 @@ BEGIN_RCPP
 END_RCPP
 }
 // shape
-Rcpp::NumericVector shape(const std::string& uri, Rcpp::CharacterVector config);
+Rcpp::NumericVector shape(const std::string& uri, Rcpp::Nullable<Rcpp::CharacterVector> config);
 RcppExport SEXP _tiledbsoma_shape(SEXP uriSEXP, SEXP configSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< const std::string& >::type uri(uriSEXP);
-    Rcpp::traits::input_parameter< Rcpp::CharacterVector >::type config(configSEXP);
+    Rcpp::traits::input_parameter< Rcpp::Nullable<Rcpp::CharacterVector> >::type config(configSEXP);
     rcpp_result_gen = Rcpp::wrap(shape(uri, config));
     return rcpp_result_gen;
 END_RCPP

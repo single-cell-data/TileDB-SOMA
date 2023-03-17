@@ -44,7 +44,7 @@ get_column_types <- function(uri, colnames) {
 
 #' @rdname soma_reader
 #' @export
-nnz <- function(uri, config) {
+nnz <- function(uri, config = NULL) {
     .Call(`_tiledbsoma_nnz`, uri, config)
 }
 
@@ -60,7 +60,7 @@ check_arrow_array_tag <- function(xp) {
 
 #' @rdname soma_reader
 #' @export
-shape <- function(uri, config) {
+shape <- function(uri, config = NULL) {
     .Call(`_tiledbsoma_shape`, uri, config)
 }
 

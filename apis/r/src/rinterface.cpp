@@ -210,8 +210,8 @@ Rcpp::CharacterVector get_column_types(const std::string& uri,
 //' @rdname soma_reader
 //' @export
 // [[Rcpp::export]]
-double nnz(const std::string& uri, Rcpp::CharacterVector config) {
-    auto sr = tdbs::SOMAReader::open(uri, "unnamed", config_vector_to_map(Rcpp::wrap(config)));
+double nnz(const std::string& uri, Rcpp::Nullable<Rcpp::CharacterVector> config = R_NilValue) {
+    auto sr = tdbs::SOMAReader::open(uri, "unnamed", config_vector_to_map(config));
     return static_cast<double>(sr->nnz());
 }
 
@@ -232,7 +232,8 @@ bool check_arrow_array_tag(Rcpp::XPtr<ArrowArray> xp) {
 //' @rdname soma_reader
 //' @export
 // [[Rcpp::export]]
-Rcpp::NumericVector shape(const std::string& uri, Rcpp::CharacterVector config) {
+Rcpp::NumericVector shape(const std::string& uri,
+                          Rcpp::Nullable<Rcpp::CharacterVector> config = R_NilValue) {
     auto sr = tdbs::SOMAReader::open(uri, "unnamed", config_vector_to_map(Rcpp::wrap(config)));
     return makeInteger64(sr->shape());
 }
