@@ -142,3 +142,30 @@ SOMAMeasurementOpen <- function(uri, platform_config = NULL, tiledbsoma_ctx = NU
     ## TODO: explicitly open and hold handle ?
     sdf
 }
+
+#' @title Create SOMA Experiment
+#' @description Factory function to create a SOMADataFrame for writing, (lifecycle: experimental)
+#' @param uri URI for the TileDB object
+#' @param platform_config Optional platform configuration
+#' @param tiledbsoma_ctx Optional SOMATileDBContext
+#' @export
+SOMAExperimentCreate <- function(uri, platform_config = NULL, tiledbsoma_ctx = NULL) {
+    clct <- SOMAExperiment$new(uri, platform_config, tiledbsoma_ctx,
+                               internal_use_only = "allowed_use")
+    clct$create()
+    clct
+}
+
+#' @title Open SOMA Experiment
+#' @description Factory function to open a SOMAExperiment for reading, (lifecycle: experimental)
+#' @param uri URI for the TileDB object
+#' @param platform_config Optional platform configuration
+#' @param tiledbsoma_ctx optional SOMATileDBContext
+#' @export
+SOMAExperimentOpen <- function(uri, platform_config = NULL, tiledbsoma_ctx = NULL) {
+    sdf <- SOMAExperiment$new(uri, platform_config, tiledbsoma_ctx,
+                              internal_use_only = "allowed_use")
+    ## TODO: other things to cache ?
+    ## TODO: explicitly open and hold handle ?
+    sdf
+}
