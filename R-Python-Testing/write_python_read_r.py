@@ -5,7 +5,7 @@ import pyarrow as pa
 
 import tiledbsoma as soma
 
-# Remove artifacts from previous runs
+# Remove artifacts from previous runs, if they exist
 uri = "test-dataframe.auto.soma"
 shutil.rmtree(uri)
 
@@ -44,13 +44,15 @@ table = soma_df$read()
 df = as.data.frame(table)
 """
 
-# Assertions:
-R_script = R_script_base + f"expect_length(df, {len(df)})"
-with open("test-dataframe-read.R", "w") as f:
-    f.write(R_script)
+
+def r_assert(code: str):
+    R_script = R_script_base + code
+    with open("test-dataframe-read.R", "w") as f:
+        f.write(R_script)
+    subprocess.run(["Rscript", "test-dataframe-read.R"])
 
 
-subprocess.run(["RScript", "test-dataframe-read.R"])
+r_assert(f"expect_length(df, {len(df)})")
 
 
 def to_R(x):
@@ -70,8 +72,4 @@ for key in df.keys():
     col = df[key].tolist()
     R_list = create_R_list(col)
 
-    R_script = R_script_base + f"""expect_equal(as.list(df)$"{key}", c({R_list}))"""
-    with open("test-dataframe-read.R", "w") as f:
-        f.write(R_script)
-
-    subprocess.run(["RScript", "test-dataframe-read.R"])
+    r_assert(f"""expect_equal(as.list(df)$"{key}", c({R_list}))""")
