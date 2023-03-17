@@ -3,7 +3,7 @@ test_that("Basic mechanics", {
   uri <- withr::local_tempdir("soma-dataframe")
   asch <- create_arrow_schema()
 
-  sdf <- SOMADataFrame$new(uri)
+  sdf <- SOMADataFrame$new(uri, internal_use_only = "allowed_use")
   expect_error(
     sdf$create(asch),
     "argument \"index_column_names\" is missing, with no default"
@@ -125,7 +125,7 @@ test_that("creation with all supported dimension data types", {
 
   for (dtype in tbl0$ColumnNames()) {
     uri <- withr::local_tempdir(paste0("soma-dataframe-", dtype))
-    sdf <- SOMADataFrame$new(uri)
+    sdf <- SOMADataFrame$new(uri, internal_use_only = "allowed_use")
     expect_silent(
       sdf$create(tbl0$schema, index_column_names = dtype)
     )
@@ -140,7 +140,7 @@ test_that("int64 values are stored correctly", {
     arrow::field("soma_joinid", arrow::int64(), nullable = FALSE),
   )
 
-  sdf <- SOMADataFrame$new(uri)
+  sdf <- SOMADataFrame$new(uri, internal_use_only = "allowed_use")
   sdf$create(asch, index_column_names = "foo")
   tbl0 <- arrow::arrow_table(foo = 1L:10L, soma_joinid = 1L:10L, schema = asch)
 
@@ -161,23 +161,23 @@ test_that("SOMADataFrame read", {
 
     uri <- file.path(tdir, "obs")
 
-    sdf <- SOMADataFrame$new(uri)
+    sdf <- SOMADataFrame$new(uri, internal_use_only = "allowed_use")
     z <- sdf$read()
     expect_equal(z$num_rows, 2638L)
     expect_equal(z$num_columns, 6L)
 
     columns <- c("n_counts", "n_genes", "louvain")
-    sdf <- SOMADataFrame$new(uri)
+    sdf <- SOMADataFrame$new(uri, internal_use_only = "allowed_use")
     z <- sdf$read(column_names=columns)
     expect_equal(z$num_columns, 3L)
     expect_equal(z$ColumnNames(), columns)
 
     columns <- c("n_counts", "does_not_exist")
-    sdf <- SOMADataFrame$new(uri)
+    sdf <- SOMADataFrame$new(uri, internal_use_only = "allowed_use")
     expect_error(sdf$read(column_names=columns))
 
     coords <- bit64::as.integer64(seq(100, 109))
-    sdf <- SOMADataFrame$new(uri)
+    sdf <- SOMADataFrame$new(uri, internal_use_only = "allowed_use")
     z <- sdf$read(coords = list(soma_joinid=coords))
     expect_equal(z$num_rows, 10L)
 })
@@ -192,7 +192,7 @@ test_that("soma_ prefix is reserved", {
     field = arrow::field("soma_foo", arrow::int32(), nullable = FALSE)
   )
 
-  sdf <- SOMADataFrame$new(uri)
+  sdf <- SOMADataFrame$new(uri, internal_use_only = "allowed_use")
   expect_error(
     sdf$create(asch, index_column_names = "foo"),
     "Column names must not start with reserved prefix 'soma_'"
@@ -204,7 +204,7 @@ test_that("soma_joinid is added on creation", {
   asch <- create_arrow_schema()
   asch <- asch$RemoveField(match("soma_joinid", asch$names) - 1)
 
-  sdf <- SOMADataFrame$new(uri)
+  sdf <- SOMADataFrame$new(uri, internal_use_only = "allowed_use")
   sdf$create(asch, index_column_names = "foo")
 
   expect_true("soma_joinid" %in% sdf$attrnames())
@@ -222,7 +222,7 @@ test_that("soma_joinid validations", {
     field = arrow::field("soma_joinid", arrow::int32(), nullable = FALSE)
   )
 
-  sdf <- SOMADataFrame$new(uri)
+  sdf <- SOMADataFrame$new(uri, internal_use_only = "allowed_use")
   expect_error(
     sdf$create(asch, index_column_names = "foo"),
     "soma_joinid field must be of type Arrow int64"

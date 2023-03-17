@@ -54,7 +54,7 @@ create_and_populate_soma_dataframe <- function(
     schema = arrow_schema
   )
 
-  sdf <- SOMADataFrame$new(uri)
+  sdf <- SOMADataFrame$new(uri, internal_use_only = "allowed_use")
   sdf$create(arrow_schema, index_column_names = index_column_names)
   sdf$write(tbl)
   sdf
@@ -65,7 +65,7 @@ create_and_populate_sparse_nd_array <- function(uri, ...) {
 
   smat <- create_sparse_matrix_with_int_dims(...)
 
-  ndarray <- SOMASparseNDArray$new(uri)
+  ndarray <- SOMASparseNDArray$new(uri, internal_use_only = "allowed_use")
   ndarray$create(arrow::int32(), shape = dim(smat))
   ndarray$write(smat)
   ndarray

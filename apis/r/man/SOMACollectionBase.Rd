@@ -57,7 +57,12 @@ objects, mapping string keys to any SOMA object.  (lifecycle: experimental)
 \subsection{Method \code{new()}}{
 Create a new \code{SOMACollection}. (lifecycle: experimental)
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{SOMACollectionBase$new(uri, platform_config = NULL, tiledbsoma_ctx = NULL)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{SOMACollectionBase$new(
+  uri,
+  platform_config = NULL,
+  tiledbsoma_ctx = NULL,
+  internal_use_only = NULL
+)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
@@ -68,6 +73,9 @@ Create a new \code{SOMACollection}. (lifecycle: experimental)
 \item{\code{platform_config}}{Optional storage-engine specific configuration}
 
 \item{\code{tiledbsoma_ctx}}{optional SOMATileDBContext}
+
+\item{\code{internal_use_only}}{Character value to signal 'permitted' call as
+\code{new()} is considered internal and should not be called directly}
 }
 \if{html}{\out{</div>}}
 }

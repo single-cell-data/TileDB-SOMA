@@ -1,7 +1,7 @@
 
 test_that("Basic mechanics", {
   uri <- file.path(withr::local_tempdir(), "new-group")
-  group <- TileDBGroup$new(uri)
+  group <- TileDBGroup$new(uri, internal_use_only = "allowed_use")
 
   # Should not exist on disk until created
   expect_false(dir.exists(uri))
@@ -27,10 +27,12 @@ test_that("Basic mechanics", {
 
   # Add members to the group
   a1 <- TileDBArray$new(
-    uri = create_empty_test_array(file.path(uri, "a1"))
+    uri = create_empty_test_array(file.path(uri, "a1")),
+    internal_use_only = "allowed_use"
   )
   g1 <- TileDBGroup$new(
-    uri = tiledb::tiledb_group_create(file.path(uri, "g1"))
+    uri = tiledb::tiledb_group_create(file.path(uri, "g1")),
+    internal_use_only = "allowed_use"
   )
 
   # Objects are present but not yet members
@@ -48,7 +50,7 @@ test_that("Basic mechanics", {
   expect_setequal(group$to_data_frame()$type, c("ARRAY", "GROUP"))
 
   # Read back the members
-  group_readback <- TileDBGroup$new(group$uri)
+  group_readback <- TileDBGroup$new(group$uri, internal_use_only = "allowed_use")
   expect_equal(group_readback$length(), 2)
   expect_setequal(group$names(), c("a1", "g1"))
 
@@ -58,7 +60,8 @@ test_that("Basic mechanics", {
 
   # Error when attempting to add a relative member that's not a subpath
   g2 <- TileDBGroup$new(
-    uri = file.path(withr::local_tempdir(), "not-a-subpath")
+    uri = file.path(withr::local_tempdir(), "not-a-subpath"),
+    internal_use_only = "allowed_use"
   )$create()
   expect_error(
     group$set(g2, name = "g2", relative = TRUE),
@@ -74,7 +77,7 @@ test_that("Basic mechanics", {
 
 test_that("Metadata", {
   uri <- file.path(withr::local_tempdir(), "group-metadata")
-  group <- TileDBGroup$new(uri)
+  group <- TileDBGroup$new(uri, internal_use_only = "allowed_use")
   expect_error(group$set_metadata(list(foo = "bar")), "Group does not exist.")
 
   group$create()

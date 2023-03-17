@@ -238,7 +238,8 @@ TileDBGroup <- R6::R6Class(
         GROUP = TileDBGroup$new,
         stop(sprintf("Unknown member type: %s", type), call. = FALSE)
       )
-      constructor(uri, tiledbsoma_ctx = self$tiledbsoma_ctx, platform_config = self$platform_config)
+      constructor(uri, tiledbsoma_ctx = self$tiledbsoma_ctx,
+                  platform_config = self$platform_config, internal_use_only = "allowed_use")
     },
 
     format_members = function() {

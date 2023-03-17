@@ -82,9 +82,9 @@ test_that("Iterated Interface from SOMA Classes", {
 
     for (tc in test_cases) {
         sdf <- switch(tc,
-                      data.frame = SOMADataFrame$new(uri),
-                      sparse = SOMASparseNDArray$new(uri),
-                      dense = SOMADenseNDArray$new(uri))
+                      data.frame = SOMADataFrame$new(uri, internal_use_only = "allowed_use"),
+                      sparse = SOMASparseNDArray$new(uri, internal_use_only = "allowed_use"),
+                      dense = SOMADenseNDArray$new(uri, internal_use_only = "allowed_use"))
         expect_true(inherits(sdf, "SOMAArrayBase"))
 
         switch(tc,
@@ -128,7 +128,7 @@ test_that("Iterated Interface from SOMA Sparse Matrix", {
     untar(tarfile = tgzfile, exdir = tdir)
     uri <- file.path(tdir, "soco", "pbmc3k_processed", "ms", "RNA", "X", "data")
 
-    sdf <- SOMASparseNDArray$new(uri)
+    sdf <- SOMASparseNDArray$new(uri, internal_use_only = "allowed_use")
     expect_true(inherits(sdf, "SOMAArrayBase"))
 
     sdf$read_sparse_matrix(iterated = TRUE)
@@ -168,7 +168,7 @@ test_that("Iterated Interface from SOMA Dense Matrix", {
     untar(tarfile = tgzfile, exdir = tdir)
     uri <- file.path(tdir, "soco", "pbmc3k_processed", "ms", "RNA", "X", "data")
 
-    sdf <- SOMADenseNDArray$new(uri)
+    sdf <- SOMADenseNDArray$new(uri, internal_use_only = "allowed_use")
     expect_true(inherits(sdf, "SOMAArrayBase"))
 
     sdf$read_dense_matrix(iterated = TRUE)

@@ -1,7 +1,7 @@
 test_that("SOMADenseNDArray creation", {
   uri <- withr::local_tempdir("dense-ndarray")
 
-  ndarray <- SOMADenseNDArray$new(uri)
+  ndarray <- SOMADenseNDArray$new(uri, internal_use_only = "allowed_use")
   ndarray$create(arrow::int32(), shape = c(10, 5))
 
   expect_equal(tiledb::tiledb_object_type(uri), "ARRAY")
