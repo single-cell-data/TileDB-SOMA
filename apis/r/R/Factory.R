@@ -110,7 +110,34 @@ SOMACollectionCreate <- function(uri, platform_config = NULL, tiledbsoma_ctx = N
 #' @export
 SOMACollectionOpen <- function(uri, platform_config = NULL, tiledbsoma_ctx = NULL) {
     sdf <- SOMACollection$new(uri, platform_config, tiledbsoma_ctx,
-                             internal_use_only = "allowed_use")
+                              internal_use_only = "allowed_use")
+    ## TODO: other things to cache ?
+    ## TODO: explicitly open and hold handle ?
+    sdf
+}
+
+#' @title Create SOMA Measurement
+#' @description Factory function to create a SOMADataFrame for writing, (lifecycle: experimental)
+#' @param uri URI for the TileDB object
+#' @param platform_config Optional platform configuration
+#' @param tiledbsoma_ctx Optional SOMATileDBContext
+#' @export
+SOMAMeasurementCreate <- function(uri, platform_config = NULL, tiledbsoma_ctx = NULL) {
+    clct <- SOMAMeasurement$new(uri, platform_config, tiledbsoma_ctx,
+                                internal_use_only = "allowed_use")
+    clct$create()
+    clct
+}
+
+#' @title Open SOMA Measurement
+#' @description Factory function to open a SOMAMeasurement for reading, (lifecycle: experimental)
+#' @param uri URI for the TileDB object
+#' @param platform_config Optional platform configuration
+#' @param tiledbsoma_ctx optional SOMATileDBContext
+#' @export
+SOMAMeasurementOpen <- function(uri, platform_config = NULL, tiledbsoma_ctx = NULL) {
+    sdf <- SOMAMeasurement$new(uri, platform_config, tiledbsoma_ctx,
+                               internal_use_only = "allowed_use")
     ## TODO: other things to cache ?
     ## TODO: explicitly open and hold handle ?
     sdf

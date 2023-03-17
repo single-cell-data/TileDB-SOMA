@@ -78,3 +78,17 @@ test_that("Collection Factory", {
     # check opening to read
     expect_silent(s3 <- SOMACollectionOpen(uri))
 })
+
+test_that("Measurement Factory", {
+    uri <- tempfile()
+
+    # check that straight use of new() errors, but 'with handshake' passes
+    expect_error(SOMAMeasurement$new(uri))
+    expect_silent(s1 <- SOMAMeasurement$new(uri, internal_use_only = "allowed_use"))
+
+    # check creation of a sparse array
+    expect_silent(s2 <- SOMAMeasurementCreate(uri))
+
+    # check opening to read
+    expect_silent(s3 <- SOMAMeasurementOpen(uri))
+})
