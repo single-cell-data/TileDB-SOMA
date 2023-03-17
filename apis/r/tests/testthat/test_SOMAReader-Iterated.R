@@ -15,7 +15,7 @@ test_that("Iterated Interface from SOMAReader", {
     expect_true(dir.exists(uri))
 
     ctx <- tiledb_ctx()
-    sr <- sr_setup(uri, config=as.character(config(ctx)))
+    sr <- sr_setup(uri, config=as.character(config(ctx)), loglevel="warn")
     expect_true(inherits(sr, "externalptr"))
     rl <- data.frame()
     while (!tiledbsoma:::sr_complete(sr)) {
