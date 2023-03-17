@@ -81,19 +81,7 @@ Rcpp::List soma_reader(const std::string& uri,
 
     spdl::info("[soma_reader] Reading from {}", uri);
 
-    std::map<std::string, std::string> platform_config = {}; // to add, see riterator.cpp
-
-    if (!config.isNull()) {
-        Rcpp::CharacterVector confvec(config.get());
-        Rcpp::CharacterVector namesvec = confvec.attr("names"); // extract names from named R vector
-        size_t n = confvec.length();
-        for (size_t i = 0; i<n; i++) {
-            platform_config.emplace(std::make_pair(std::string(namesvec[i]), std::string(confvec[i])));
-            spdl::debug("[sr_setup] config map adding '{}' = '{}'", std::string(namesvec[i]), std::string(confvec[i]));
-        }
-        tiledb::Config cfg(platform_config);
-        spdl::debug("[sr_setup] creating ctx object with supplied config");
-    }
+    std::map<std::string, std::string> platform_config = config_vector_to_map(config);
 
     std::vector<std::string> column_names = {};
     if (!colnames.isNull()) {    // If we have column names, select them
@@ -222,8 +210,8 @@ Rcpp::CharacterVector get_column_types(const std::string& uri,
 //' @rdname soma_reader
 //' @export
 // [[Rcpp::export]]
-double nnz(const std::string& uri) {
-    auto sr = tdbs::SOMAReader::open(uri);
+double nnz(const std::string& uri, Rcpp::CharacterVector config) {
+    auto sr = tdbs::SOMAReader::open(uri, "unnamed", config_vector_to_map(Rcpp::wrap(config)));
     return static_cast<double>(sr->nnz());
 }
 
@@ -244,7 +232,7 @@ bool check_arrow_array_tag(Rcpp::XPtr<ArrowArray> xp) {
 //' @rdname soma_reader
 //' @export
 // [[Rcpp::export]]
-Rcpp::NumericVector shape(const std::string& uri) {
-    auto sr = tdbs::SOMAReader::open(uri);
+Rcpp::NumericVector shape(const std::string& uri, Rcpp::CharacterVector config) {
+    auto sr = tdbs::SOMAReader::open(uri, "unnamed", config_vector_to_map(Rcpp::wrap(config)));
     return makeInteger64(sr->shape());
 }

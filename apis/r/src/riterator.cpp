@@ -84,15 +84,7 @@ Rcpp::XPtr<tdbs::SOMAReader> sr_setup(const std::string& uri,
 
     std::shared_ptr<tiledb::Context> ctxptr = nullptr;
 
-    std::map<std::string, std::string> platform_config = {};
-
-    Rcpp::CharacterVector confvec(config);
-    Rcpp::CharacterVector namesvec = confvec.attr("names"); // extract names from named R vector
-    size_t n = confvec.length();
-    for (size_t i = 0; i<n; i++) {
-        platform_config.emplace(std::make_pair(std::string(namesvec[i]), std::string(confvec[i])));
-        spdl::debug("[sr_setup] config map adding '{}' = '{}'", std::string(namesvec[i]), std::string(confvec[i]));
-    }
+    std::map<std::string, std::string> platform_config = config_vector_to_map(Rcpp::wrap(config));
     tiledb::Config cfg(platform_config);
     spdl::debug("[sr_setup] creating ctx object with supplied config");
     ctxptr = std::make_shared<tiledb::Context>(cfg);

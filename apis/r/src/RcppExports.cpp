@@ -53,13 +53,14 @@ BEGIN_RCPP
 END_RCPP
 }
 // nnz
-double nnz(const std::string& uri);
-RcppExport SEXP _tiledbsoma_nnz(SEXP uriSEXP) {
+double nnz(const std::string& uri, Rcpp::CharacterVector config);
+RcppExport SEXP _tiledbsoma_nnz(SEXP uriSEXP, SEXP configSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< const std::string& >::type uri(uriSEXP);
-    rcpp_result_gen = Rcpp::wrap(nnz(uri));
+    Rcpp::traits::input_parameter< Rcpp::CharacterVector >::type config(configSEXP);
+    rcpp_result_gen = Rcpp::wrap(nnz(uri, config));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -86,13 +87,14 @@ BEGIN_RCPP
 END_RCPP
 }
 // shape
-Rcpp::NumericVector shape(const std::string& uri);
-RcppExport SEXP _tiledbsoma_shape(SEXP uriSEXP) {
+Rcpp::NumericVector shape(const std::string& uri, Rcpp::CharacterVector config);
+RcppExport SEXP _tiledbsoma_shape(SEXP uriSEXP, SEXP configSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< const std::string& >::type uri(uriSEXP);
-    rcpp_result_gen = Rcpp::wrap(shape(uri));
+    Rcpp::traits::input_parameter< Rcpp::CharacterVector >::type config(configSEXP);
+    rcpp_result_gen = Rcpp::wrap(shape(uri, config));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -197,10 +199,10 @@ static const R_CallMethodDef CallEntries[] = {
     {"_tiledbsoma_soma_reader", (DL_FUNC) &_tiledbsoma_soma_reader, 9},
     {"_tiledbsoma_set_log_level", (DL_FUNC) &_tiledbsoma_set_log_level, 1},
     {"_tiledbsoma_get_column_types", (DL_FUNC) &_tiledbsoma_get_column_types, 2},
-    {"_tiledbsoma_nnz", (DL_FUNC) &_tiledbsoma_nnz, 1},
+    {"_tiledbsoma_nnz", (DL_FUNC) &_tiledbsoma_nnz, 2},
     {"_tiledbsoma_check_arrow_schema_tag", (DL_FUNC) &_tiledbsoma_check_arrow_schema_tag, 1},
     {"_tiledbsoma_check_arrow_array_tag", (DL_FUNC) &_tiledbsoma_check_arrow_array_tag, 1},
-    {"_tiledbsoma_shape", (DL_FUNC) &_tiledbsoma_shape, 1},
+    {"_tiledbsoma_shape", (DL_FUNC) &_tiledbsoma_shape, 2},
     {"_tiledbsoma_sr_setup", (DL_FUNC) &_tiledbsoma_sr_setup, 7},
     {"_tiledbsoma_sr_complete", (DL_FUNC) &_tiledbsoma_sr_complete, 1},
     {"_tiledbsoma_sr_next", (DL_FUNC) &_tiledbsoma_sr_next, 1},
