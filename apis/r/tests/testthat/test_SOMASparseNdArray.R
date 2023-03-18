@@ -56,6 +56,16 @@ test_that("SOMASparseNDArray creation", {
 
   ## nnz
   expect_equal(ndarray$nnz(), 60L)
+
+  ## nnz as free function
+  expect_equal(nnz(uri), 60L)
+  ## nzz with config, expected breakge as 'bad key' used
+  expect_error(nnz(uri, c(sm.encryption_key="Nope", sm.encryption_type="AES_256_GCM")))
+  ## shape as free function
+  expect_equal(shape(uri), c(10,10))
+  ## shape with config, expected breakge as 'bad key' used
+  expect_error(shape(uri, c(sm.encryption_key="Nope", sm.encryption_type="AES_256_GCM")))
+  
 })
 
 test_that("SOMASparseNDArray read_sparse_matrix", {

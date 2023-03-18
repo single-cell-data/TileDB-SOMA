@@ -64,3 +64,20 @@ void apply_dim_ranges(
     std::unordered_map<std::string, std::shared_ptr<tiledb::Dimension>>&
         name2dim,
     Rcpp::List lst);
+
+// Convert R config vector to map<string,string> suitable for SOMAReader
+inline std::map<std::string, std::string> config_vector_to_map(Rcpp::Nullable<Rcpp::CharacterVector> config) {
+    std::map<std::string, std::string> platform_config;
+
+    if (!config.isNull()) {
+        Rcpp::CharacterVector confvec(config.get());
+        Rcpp::CharacterVector namesvec = confvec.attr("names"); // extract names from named R vector
+        size_t n = confvec.length();
+        for (size_t i = 0; i<n; i++) {
+            platform_config.emplace(std::make_pair(std::string(namesvec[i]), std::string(confvec[i])));
+            spdl::debug("[config_vector_to_map] adding '{}' = '{}'", std::string(namesvec[i]), std::string(confvec[i]));
+        }
+    }
+
+    return platform_config;
+}
