@@ -61,7 +61,9 @@ Suggests:
     withr,
     testthat (>= 3.0.0),
     pbmc3k.tiledb,
-    SeuratObject (>= 4.1.0)
+    SeuratObject (>= 4.1.0),
+    rappdirs,
+    tools
 VignetteBuilder: knitr
 Config/testthat/edition: 2
 OS_type: unix

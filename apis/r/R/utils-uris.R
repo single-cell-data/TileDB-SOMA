@@ -2,6 +2,75 @@ is_remote_uri <- function(x) {
   string_starts_with(x, "s3://") | string_starts_with(x, "tiledb://")
 }
 
+#' Find the Local User Data Directory
+#'
+#' @param type Mechanism for determining the user directory; choose from:
+#' \itemize{
+#'  \item \dQuote{\code{user}}: the user data directory as determined by
+#'   \code{\link[tools:R_user_dir]{tools::R_user_dir}()}
+#'  \item \dQuote{\code{working}}: the working directory
+#'   (\code{\link[base]{getwd}()})
+#'  \item \dQuote{\code{tempdir}}: a temporary directory
+#'  \item \dQuote{\code{rappdirs}}: the user data directory as determined by
+#'   \code{\link[rappdirs:user_data_dir]{rappdirs::user_data_dir}()}
+#' }
+#'
+#' @return ...
+#'
+#' @keywords internal
+#'
+#' @seealso \code{\link[tools:R_user_dir]{tools::R_user_dir}()}
+#' \code{\link[rappdirs:user_data_dir]{rappdirs::user_data_dir}()}
+#' \code{\link[base]{getwd}()}
+#' \code{\link[base]{tempdir}()}
+#'
+#' @noRd
+#'
+user_dir <- function(type = getOption('tiledbsoma.io.user_dir')) {
+  datas <- c(
+    'working',
+    'tempdir',
+    ifelse(
+      test = requireNamespace('tools', quietly = TRUE) && r_version() > '4.0.0',
+      yes = 'user',
+      no = ''
+    ),
+    ifelse(
+      test = requireNamespace('rappdirs', quietly = TRUE),
+      yes = 'rappdirs',
+      no = ''
+    )
+  )
+  datas <- Filter(f = nzchar, x = datas)
+  pkg <- 'tiledbsoma'
+  default <- intersect(x = c('user', 'rappdirs', 'working'), y = datas)[1L]
+  type <- type %||% default
+  type <- tryCatch(
+    expr = match.arg(arg = type, choices = datas),
+    error = function(...) {
+      return(default)
+    }
+  )
+  return(switch(
+    EXPR = type,
+    working = getwd(),
+    tempdir = {
+      tdir <- tempfile(getOption('tiledbsoma.io.user_dir.tempdir', 'file'))
+      while (file.exists(tdir)) {
+        tdir <- tempfile(getOption('tiledbsoma.io.user_dir.tempdir', 'file'))
+      }
+      tdir
+    },
+    user = tools::R_user_dir(package = pkg, which = 'data'),
+    rappdirs = rappdirs::user_data_dir(
+      appname = pkg,
+      appauthor = 'tiledb',
+      version = as.character(tiledb::tiledb_version(TRUE)),
+      roaming = getOption('tiledbsoma.io.user_dir.roaming', default = FALSE)
+    )
+  ))
+}
+
 # Drop-in replacement for file.paths() that ignores the platform separator when
 # constructing remote S3 or TileDB URIs
 file_path <- function(..., fsep = .Platform$file.sep) {

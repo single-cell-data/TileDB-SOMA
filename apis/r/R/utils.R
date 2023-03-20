@@ -37,6 +37,11 @@ rename <- function(x, names) {
   if (missing(x) || is.null(x) || length(x) == 0) y else x
 }
 
+err_to_warn <- function(err, immediate. = TRUE) {
+  warning(conditionMessage(err), call. = FALSE, immediate. = immediate.)
+  return(invisible(err))
+}
+
 null <- function(...) {
   return(NULL)
 }
@@ -69,6 +74,81 @@ arrow_to_dt <- function(arrlst) {
 as_arrow_table <- function(arrlst) {
     check_arrow_pointers(arrlst)
     arrow::as_arrow_table(arrow::RecordBatch$import_from_c(arrlst[[1]], arrlst[[2]]))
+}
+
+#' Pad a sparse Matrix with additional rows or columns
+#'
+#' @param x A dgTMatrix
+#' @param colnames,rownames A vector of column or row names
+#' to add to the matrix.
+#' @param returns A padded matrix containing all provided
+#' row/column names
+#'
+#' @importFrom Matrix sparseMatrix
+#'
+#' @noRd
+#'
+pad_matrix <- function(x, rownames = NULL, colnames = NULL) {
+  stopifnot(
+    inherits(x, "Matrix"),
+    is.character(colnames) || is.character(rownames)
+  )
+  # lookup table for Matrix representations
+  mat_rep <- switch(
+    EXPR = class(x),
+    dgTMatrix = "T",
+    dgCMatrix = "C",
+    dgRMatrix = "R",
+    stop("Untested Matrix object representation")
+
+  )
+  new_rownames <- setdiff(rownames, rownames(x))
+  new_colnames <- setdiff(colnames, colnames(x))
+  dtype <- typeof(methods::slot(object = x, name = 'x'))
+  if (!is_empty(new_rownames)) {
+    rpad <- Matrix::sparseMatrix(
+      i = integer(0L),
+      j = integer(0L),
+      x = vector(mode = dtype, length = 0L),
+      dims = c(length(new_rownames), ncol(x)),
+      dimnames = list(new_rownames, colnames(x)),
+      repr = mat_rep
+    )
+    x <- rbind(x, rpad)
+  }
+  if (!is_empty(new_colnames)) {
+    cpad <- Matrix::sparseMatrix(
+      i = integer(0L),
+      j = integer(0L),
+      x = vector(mode = dtype, length = 0L),
+      dims = c(nrow(x), length(new_colnames)),
+      dimnames = list(rownames(x), new_colnames),
+      repr = mat_rep
+    )
+    x <- cbind(x, cpad)
+  }
+  x
+}
+
+#' Get R Version
+#'
+#' @param repr Representation of R version; choose from:
+#' \itemize{
+#'  \item \dQuote{\code{v}}: a \code{\link[base]{package_version}}
+#'  \item \dQuote{\code{c}}: a character
+#' }
+#'
+#' @return The version of R currently being used
+#'
+#' @keywords internal
+#'
+#' @noRd
+#'
+r_version <- function(repr = c('v', 'c')) {
+  repr <- repr[1L]
+  repr <- match.arg(arg = repr)
+  version <- paste(R.Version()[c('major', 'minor')], collapse = '.')
+  return(switch(EXPR = repr, v = package_version(version), version))
 }
 
 #' @importFrom Matrix as.matrix
