@@ -208,8 +208,7 @@ test_that("Load reduction from ExperimentQuery mechanics", {
   # Add embeddings
   n_pcs <- 50L
   n_umaps <- 2L
-  obsm <- SOMACollection$new(file.path(experiment$ms$get('RNA')$uri, 'obsm'))
-  obsm$create()
+  obsm <- SOMACollectionCreate(file.path(experiment$ms$get('RNA')$uri, 'obsm'))
   obsm$add_new_dense_ndarray(
     key = 'X_pca',
     type = arrow::int32(),
@@ -231,8 +230,7 @@ test_that("Load reduction from ExperimentQuery mechanics", {
   ))
   experiment$ms$get("RNA")$add_new_collection(obsm, 'obsm')
   # Add loadings
-  varm <- SOMACollection$new(file.path(experiment$ms$get('RNA')$uri, 'varm'))
-  varm$create()
+  varm <- SOMACollectionCreate(file.path(experiment$ms$get('RNA')$uri, 'varm'))
   varm$add_new_dense_ndarray(
     key = 'PCs',
     type = arrow::int32(),
@@ -381,8 +379,7 @@ test_that("Load reduction from sliced ExperimentQuery", {
   # Add embeddings
   n_pcs <- 50L
   n_umaps <- 2L
-  obsm <- SOMACollection$new(file.path(experiment$ms$get('RNA')$uri, 'obsm'))
-  obsm$create()
+  obsm <- SOMACollectionCreate(file.path(experiment$ms$get('RNA')$uri, 'obsm'))
   obsm$add_new_dense_ndarray(
     key = 'X_pca',
     type = arrow::int32(),
@@ -404,8 +401,7 @@ test_that("Load reduction from sliced ExperimentQuery", {
   ))
   experiment$ms$get("RNA")$add_new_collection(obsm, 'obsm')
   # Add loadings
-  varm <- SOMACollection$new(file.path(experiment$ms$get('RNA')$uri, 'varm'))
-  varm$create()
+  varm <- SOMACollectionCreate(file.path(experiment$ms$get('RNA')$uri, 'varm'))
   varm$add_new_dense_ndarray(
     key = 'PCs',
     type = arrow::int32(),
@@ -505,8 +501,7 @@ test_that("Load reduction from indexed ExperimentQuery", {
   # Add embeddings
   n_pcs <- 50L
   n_umaps <- 2L
-  obsm <- SOMACollection$new(file.path(experiment$ms$get('RNA')$uri, 'obsm'))
-  obsm$create()
+  obsm <- SOMACollectionCreate(file.path(experiment$ms$get('RNA')$uri, 'obsm'))
   obsm$add_new_dense_ndarray(
     key = 'X_pca',
     type = arrow::int32(),
@@ -528,8 +523,7 @@ test_that("Load reduction from indexed ExperimentQuery", {
   ))
   experiment$ms$get("RNA")$add_new_collection(obsm, 'obsm')
   # Add loadings
-  varm <- SOMACollection$new(file.path(experiment$ms$get('RNA')$uri, 'varm'))
-  varm$create()
+  varm <- SOMACollectionCreate(file.path(experiment$ms$get('RNA')$uri, 'varm'))
   varm$add_new_dense_ndarray(
     key = 'PCs',
     type = arrow::int32(),
@@ -643,8 +637,7 @@ test_that("Load graph from ExperimentQuery mechanics", {
     X_layer_names = c("counts", "logcounts")
   )
   # Add graph
-  obsp <- SOMACollection$new(file.path(experiment$ms$get('RNA')$uri, 'obsp'))
-  obsp$create()
+  obsp <- SOMACollectionCreate(file.path(experiment$ms$get('RNA')$uri, 'obsp'))
   obsp$add_new_sparse_ndarray(
     key = 'connectivities',
     type = arrow::int32(),
@@ -712,8 +705,7 @@ test_that("Load graph from sliced ExperimentQuery", {
     X_layer_names = c("counts", "logcounts")
   )
   # Add graph
-  obsp <- SOMACollection$new(file.path(experiment$ms$get('RNA')$uri, 'obsp'))
-  obsp$create()
+  obsp <- SOMACollectionCreate(file.path(experiment$ms$get('RNA')$uri, 'obsp'))
   obsp$add_new_sparse_ndarray(
     key = 'connectivities',
     type = arrow::int32(),
@@ -769,8 +761,7 @@ test_that("Load graph from indexed ExperimentQuery", {
     X_layer_names = c("counts", "logcounts")
   )
   # Add graph
-  obsp <- SOMACollection$new(file.path(experiment$ms$get('RNA')$uri, 'obsp'))
-  obsp$create()
+  obsp <- SOMACollectionCreate(file.path(experiment$ms$get('RNA')$uri, 'obsp'))
   obsp$add_new_sparse_ndarray(
     key = 'connectivities',
     type = arrow::int32(),
@@ -834,8 +825,7 @@ test_that("Load Seurat object from ExperimentQuery mechanics", {
   # Add embeddings
   n_pcs <- 50L
   n_umaps <- 2L
-  obsm <- SOMACollection$new(file.path(experiment$ms$get('RNA')$uri, 'obsm'))
-  obsm$create()
+  obsm <- SOMACollectionCreate(file.path(experiment$ms$get('RNA')$uri, 'obsm'))
   obsm$add_new_dense_ndarray(
     key = 'X_pca',
     type = arrow::int32(),
@@ -857,8 +847,7 @@ test_that("Load Seurat object from ExperimentQuery mechanics", {
   ))
   experiment$ms$get("RNA")$add_new_collection(obsm, 'obsm')
   # Add loadings
-  varm <- SOMACollection$new(file.path(experiment$ms$get('RNA')$uri, 'varm'))
-  varm$create()
+  varm <- SOMACollectionCreate(file.path(experiment$ms$get('RNA')$uri, 'varm'))
   varm$add_new_dense_ndarray(
     key = 'PCs',
     type = arrow::int32(),
@@ -870,8 +859,7 @@ test_that("Load Seurat object from ExperimentQuery mechanics", {
   ))
   experiment$ms$get('RNA')$add_new_collection(varm, 'varm')
   # Add graph
-  obsp <- SOMACollection$new(file.path(experiment$ms$get('RNA')$uri, 'obsp'))
-  obsp$create()
+  obsp <- SOMACollectionCreate(file.path(experiment$ms$get('RNA')$uri, 'obsp'))
   obsp$add_new_sparse_ndarray(
     key = 'connectivities',
     type = arrow::int32(),
@@ -1035,8 +1023,7 @@ test_that("Load Seurat object from sliced ExperimentQuery", {
   # Add embeddings
   n_pcs <- 50L
   n_umaps <- 2L
-  obsm <- SOMACollection$new(file.path(experiment$ms$get('RNA')$uri, 'obsm'))
-  obsm$create()
+  obsm <- SOMACollectionCreate(file.path(experiment$ms$get('RNA')$uri, 'obsm'))
   obsm$add_new_dense_ndarray(
     key = 'X_pca',
     type = arrow::int32(),
@@ -1058,8 +1045,7 @@ test_that("Load Seurat object from sliced ExperimentQuery", {
   ))
   experiment$ms$get("RNA")$add_new_collection(obsm, 'obsm')
   # Add loadings
-  varm <- SOMACollection$new(file.path(experiment$ms$get('RNA')$uri, 'varm'))
-  varm$create()
+  varm <- SOMACollectionCreate(file.path(experiment$ms$get('RNA')$uri, 'varm'))
   varm$add_new_dense_ndarray(
     key = 'PCs',
     type = arrow::int32(),
@@ -1071,8 +1057,7 @@ test_that("Load Seurat object from sliced ExperimentQuery", {
   ))
   experiment$ms$get('RNA')$add_new_collection(varm, 'varm')
   # Add graph
-  obsp <- SOMACollection$new(file.path(experiment$ms$get('RNA')$uri, 'obsp'))
-  obsp$create()
+  obsp <- SOMACollectionCreate(file.path(experiment$ms$get('RNA')$uri, 'obsp'))
   obsp$add_new_sparse_ndarray(
     key = 'connectivities',
     type = arrow::int32(),
@@ -1134,8 +1119,7 @@ test_that("Load Seurat object from indexed ExperimentQuery", {
   # Add embeddings
   n_pcs <- 50L
   n_umaps <- 2L
-  obsm <- SOMACollection$new(file.path(experiment$ms$get('RNA')$uri, 'obsm'))
-  obsm$create()
+  obsm <- SOMACollectionCreate(file.path(experiment$ms$get('RNA')$uri, 'obsm'))
   obsm$add_new_dense_ndarray(
     key = 'X_pca',
     type = arrow::int32(),
@@ -1157,8 +1141,7 @@ test_that("Load Seurat object from indexed ExperimentQuery", {
   ))
   experiment$ms$get("RNA")$add_new_collection(obsm, 'obsm')
   # Add loadings
-  varm <- SOMACollection$new(file.path(experiment$ms$get('RNA')$uri, 'varm'))
-  varm$create()
+  varm <- SOMACollectionCreate(file.path(experiment$ms$get('RNA')$uri, 'varm'))
   varm$add_new_dense_ndarray(
     key = 'PCs',
     type = arrow::int32(),
@@ -1170,8 +1153,7 @@ test_that("Load Seurat object from indexed ExperimentQuery", {
   ))
   experiment$ms$get('RNA')$add_new_collection(varm, 'varm')
   # Add graph
-  obsp <- SOMACollection$new(file.path(experiment$ms$get('RNA')$uri, 'obsp'))
-  obsp$create()
+  obsp <- SOMACollectionCreate(file.path(experiment$ms$get('RNA')$uri, 'obsp'))
   obsp$add_new_sparse_ndarray(
     key = 'connectivities',
     type = arrow::int32(),
