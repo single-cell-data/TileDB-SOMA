@@ -6,8 +6,10 @@
 #' @param tiledbsoma_ctx Optional SOMATileDBContext
 #' @export
 SOMAOpen <- function(uri, platform_config = NULL, tiledbsoma_ctx = NULL) {
-    # There is no 'open a URI and tell us what it is' library function
-    # So first attempt to instantiate a TileDBArray to take advantage of
+    # As an alternative we could rely tiledb-r and its tiledb_object_type but
+    # this would require instantiating a ctx object first. It is a possible
+    # refinement if and when we decide to hold an array or group pointer.
+    # For now, first attempt to instantiate a TileDBArray to take advantage of
     # its handling of the config and ctx object as well as the caching
     obj <- tryCatch(expr = {
         arr <- TileDBArray$new(uri,
