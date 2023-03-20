@@ -26,6 +26,7 @@ Base class for interacting with TileDB groups (lifecycle: experimental)
 \item \href{#method-TileDBGroup-to_data_frame}{\code{TileDBGroup$to_data_frame()}}
 \item \href{#method-TileDBGroup-get_metadata}{\code{TileDBGroup$get_metadata()}}
 \item \href{#method-TileDBGroup-set_metadata}{\code{TileDBGroup$set_metadata()}}
+\item \href{#method-TileDBGroup-close}{\code{TileDBGroup$close()}}
 \item \href{#method-TileDBGroup-clone}{\code{TileDBGroup$clone()}}
 }
 }
@@ -203,6 +204,19 @@ Add list of metadata. (lifecycle: experimental)
 }
 \subsection{Returns}{
 NULL
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-TileDBGroup-close"></a>}}
+\if{latex}{\out{\hypertarget{method-TileDBGroup-close}{}}}
+\subsection{Method \code{close()}}{
+Close the SOME object.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{TileDBGroup$close()}\if{html}{\out{</div>}}
+}
+
+\subsection{Returns}{
+The object, invisibly
 }
 }
 \if{html}{\out{<hr>}}

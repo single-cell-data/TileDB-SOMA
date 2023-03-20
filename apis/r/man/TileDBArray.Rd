@@ -30,6 +30,7 @@ Base class for representing an individual TileDB array.
 \item \href{#method-TileDBArray-fragment_count}{\code{TileDBArray$fragment_count()}}
 \item \href{#method-TileDBArray-set_query}{\code{TileDBArray$set_query()}}
 \item \href{#method-TileDBArray-reset_query}{\code{TileDBArray$reset_query()}}
+\item \href{#method-TileDBArray-close}{\code{TileDBArray$close()}}
 \item \href{#method-TileDBArray-clone}{\code{TileDBArray$clone()}}
 }
 }
@@ -300,6 +301,19 @@ attribute filters are cleared. (lifecycle: experimental)
 }
 \subsection{Returns}{
 NULL
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-TileDBArray-close"></a>}}
+\if{latex}{\out{\hypertarget{method-TileDBArray-close}{}}}
+\subsection{Method \code{close()}}{
+Close the SOME object.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{TileDBArray$close()}\if{html}{\out{</div>}}
+}
+
+\subsection{Returns}{
+The object, invisibly
 }
 }
 \if{html}{\out{<hr>}}

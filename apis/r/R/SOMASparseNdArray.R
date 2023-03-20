@@ -220,7 +220,7 @@ SOMASparseNDArray <- R6::R6Class(
     write_coo_dataframe = function(values) {
       stopifnot(is.data.frame(values))
       # private$log_array_ingestion()
-      on.exit(private$close())
+      on.exit(self$close())
       private$open("WRITE")
       arr <- self$object
       arr[] <- values
