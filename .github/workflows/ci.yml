@@ -34,7 +34,7 @@ jobs:
         python-version: ${{ matrix.python-version }}
 
     - name: Install Python packages
-      run: python -m pip -v install pytest pybind11 typeguard apis/python
+      run: python -m pip -v install pytest pybind11 'typeguard<3.0' apis/python
       env:
         CC: ${{ matrix.cc }}
         CXX: ${{ matrix.cxx }}
