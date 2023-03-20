@@ -37,6 +37,10 @@ rename <- function(x, names) {
   if (missing(x) || is.null(x) || length(x) == 0) y else x
 }
 
+null <- function(...) {
+  return(NULL)
+}
+
 # For use in read-only R6 active bindings
 read_only_error <- function(field_name) {
   stop(

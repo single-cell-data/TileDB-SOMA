@@ -4,7 +4,9 @@
     installed = requireNamespace(pkg, quietly = TRUE),
     version = tryCatch(
       expr = utils::packageVersion(pkg) >= .MINIMUM_SEURAT_VERSION(),
-      error = \(...) FALSE
+      error = function(...) {
+        return(FALSE)
+      }
     )
   )
   if (isTRUE(quietly)) {

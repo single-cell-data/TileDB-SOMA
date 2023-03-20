@@ -224,7 +224,12 @@ SOMAExperimentAxisQuery <- R6::R6Class(
           is.character(graphs) ||
           is_scalar_logical(graphs)
       )
-      tryCatch(self$obs_df, error = \(...) stop("No 'obs' found", call. = FALSE))
+      tryCatch(
+        expr = self$obs_df,
+        error = function(...) {
+          stop("No 'obs' found", call. = FALSE)
+        }
+      )
       # Load in the cells
       cells <- if (is.null(cells_index)) {
         paste0('cell', self$obs_joinids())
@@ -262,7 +267,7 @@ SOMAExperimentAxisQuery <- R6::R6Class(
         object[[names(obs)]] <- obs
       }
       # Load in reductions
-      ms_embed <- tryCatch(expr = self$ms$obsm$names(), error = \(...) NULL)
+      ms_embed <- tryCatch(expr = self$ms$obsm$names(), error = null)
       skip_reducs <- isFALSE(embeddings) || rlang::is_na(embeddings)
       if (is.null(ms_embed)) {
         if (!skip_reducs) {
@@ -277,7 +282,7 @@ SOMAExperimentAxisQuery <- R6::R6Class(
         }
         embeddings <- embeddings %||% ms_embed
         # Match loadings to embeddings
-        ms_load <- tryCatch(expr = self$ms$varm$names(), error = \(...) NULL)
+        ms_load <- tryCatch(expr = self$ms$varm$names(), error = null)
         if (isTRUE(loadings)) {
           loadings <- NULL
         } else if (rlang::is_na(loadings)) {
@@ -343,7 +348,7 @@ SOMAExperimentAxisQuery <- R6::R6Class(
         }
       }
       # Load in graphs
-      ms_graphs <- tryCatch(expr = self$ms$obsp$names(), error = \(...) NULL)
+      ms_graphs <- tryCatch(expr = self$ms$obsp$names(), error = null)
       skip_graphs <- isFALSE(graphs) || rlang::is_na(graphs)
       if (is.null(ms_graphs)) {
         if (!skip_graphs) {
@@ -458,9 +463,9 @@ SOMAExperimentAxisQuery <- R6::R6Class(
             )
           }
           private$.to_seurat_assay_v3(
-            counts = tryCatch(expr = layers[['counts']], error = \(...) NULL),
-            data = tryCatch(expr = layers[['data']], error = \(...) NULL),
-            scale_data = tryCatch(expr = layers[['scale.data']], error = \(...) NULL),
+            counts = tryCatch(expr = layers[['counts']], error = null),
+            data = tryCatch(expr = layers[['data']], error = null),
+            scale_data = tryCatch(expr = layers[['scale.data']], error = null),
             cells = cells,
             features = features
           )
@@ -520,8 +525,8 @@ SOMAExperimentAxisQuery <- R6::R6Class(
           (is_scalar_character(features_index) && !is.na(features_index))
       )
       # Check embeddings/loadings
-      ms_embed <- tryCatch(expr = self$ms$obsm$names(), error = \(...) NULL)
-      ms_load <- tryCatch(expr = self$ms$varm$names(), error = \(...) NULL)
+      ms_embed <- tryCatch(expr = self$ms$obsm$names(), error = null)
+      ms_load <- tryCatch(expr = self$ms$varm$names(), error = null)
       if (is.null(ms_embed) && is.null(ms_load)) {
         warning("No reductions present", call. = FALSE)
         return(NULL)
@@ -552,7 +557,7 @@ SOMAExperimentAxisQuery <- R6::R6Class(
         .anndata_to_seurat_reduc(embeddings),
         tryCatch(
           expr = .anndata_to_seurat_reduc(loadings, 'loadings'),
-          error = \(...) NULL
+          error = null
         )
       )
       if (length(seurat) == 2L && !identical(x = seurat[1L], y = seurat[2L])) {
@@ -660,7 +665,7 @@ SOMAExperimentAxisQuery <- R6::R6Class(
           (is_scalar_character(cells_index) && !is.na(cells_index))
       )
       # Check embeddings/loadings
-      ms_graph <- tryCatch(expr = self$ms$obsp$names(), error = \(...) NULL)
+      ms_graph <- tryCatch(expr = self$ms$obsp$names(), error = null)
       if (is.null(ms_graph)) {
         warning("No graphs present")
         return(NULL)
