@@ -37,7 +37,7 @@ TileDBArray <- R6::R6Class(
     #' @return A list of metadata values.
     get_metadata = function(key = NULL, prefix = NULL) {
       private$open("READ")
-      on.exit(private$close())
+      on.exit(self$close())
 
       if (!is.null(key)) {
         metadata <- tiledb::tiledb_get_metadata(self$object, key)
@@ -59,7 +59,7 @@ TileDBArray <- R6::R6Class(
         "Metadata must be a named list" = is_named_list(metadata)
       )
       private$open("WRITE")
-      on.exit(private$close())
+      on.exit(self$close())
 
       dev_null <- mapply(
         FUN = tiledb::tiledb_put_metadata,
@@ -232,7 +232,15 @@ TileDBArray <- R6::R6Class(
           "tiledb_query_condition"
         )
       }
+    },
+
+    #' @description Close the SOMA object.
+    #' @return The object, invisibly
+    close = function() {
+      spdl::debug("Closing {} '{}'", self$class(), self$uri)
+      invisible(tiledb::tiledb_array_close(self$object))
     }
+
   ),
 
   private = list(
@@ -245,7 +253,7 @@ TileDBArray <- R6::R6Class(
         ctx = self$tiledbsoma_ctx$get_tiledb_context(),
         query_layout = "UNORDERED"
       )
-      private$close()
+      self$close()
     },
 
     open = function(mode) {
@@ -254,11 +262,6 @@ TileDBArray <- R6::R6Class(
         "Opening {} '{}' in {} mode", self$class(), self$uri, mode
       )
       invisible(tiledb::tiledb_array_open(self$object, type = mode))
-    },
-
-    close = function() {
-      spdl::debug("Closing {} '{}'", self$class(), self$uri)
-      invisible(tiledb::tiledb_array_close(self$object))
     }
   )
 )

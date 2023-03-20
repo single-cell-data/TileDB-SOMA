@@ -205,7 +205,7 @@ SOMADenseNDArray <- R6::R6Class(
           length(coords) == length(self$dimensions())
       )
 
-      on.exit(private$close())
+      on.exit(self$close())
       private$open("WRITE")
       arr <- self$object
       tiledb::query_layout(arr) <- "COL_MAJOR"

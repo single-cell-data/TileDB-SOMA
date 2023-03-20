@@ -18,9 +18,9 @@ soma_reader(
   config = NULL
 )
 
-nnz(uri, config)
+nnz(uri, config = NULL)
 
-shape(uri, config)
+shape(uri, config = NULL)
 }
 \arguments{
 \item{uri}{Character value with URI path to a SOMA data set}
