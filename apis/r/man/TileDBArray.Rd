@@ -307,7 +307,7 @@ NULL
 \if{html}{\out{<a id="method-TileDBArray-close"></a>}}
 \if{latex}{\out{\hypertarget{method-TileDBArray-close}{}}}
 \subsection{Method \code{close()}}{
-Close the SOME object.
+Close the SOMA object.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{TileDBArray$close()}\if{html}{\out{</div>}}
 }

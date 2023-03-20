@@ -234,7 +234,7 @@ TileDBArray <- R6::R6Class(
       }
     },
 
-    #' @description Close the SOME object.
+    #' @description Close the SOMA object.
     #' @return The object, invisibly
     close = function() {
       spdl::debug("Closing {} '{}'", self$class(), self$uri)

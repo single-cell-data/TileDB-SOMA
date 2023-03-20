@@ -210,7 +210,7 @@ NULL
 \if{html}{\out{<a id="method-TileDBGroup-close"></a>}}
 \if{latex}{\out{\hypertarget{method-TileDBGroup-close}{}}}
 \subsection{Method \code{close()}}{
-Close the SOME object.
+Close the SOMA object.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{TileDBGroup$close()}\if{html}{\out{</div>}}
 }
