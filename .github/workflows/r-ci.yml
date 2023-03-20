@@ -31,6 +31,9 @@ jobs:
       - name: Dependencies
         run: cd apis/r && tools/r-ci.sh install_all
 
+      - name: Pin tiledb-r 0.18.0
+        run: cd apis/r && Rscript -e 'remotes::install_version("tiledb", "0.18.0")'
+
       - name: CMake
         uses: lukka/get-cmake@latest
 
