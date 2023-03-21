@@ -137,7 +137,7 @@ def slice_to_numeric_range(
         # Strings don't have a real "domain" so we can't handle them
         # the same way that we handle numeric types.
         raise NonNumericDimensionError("only numeric dimensions supported")
-    # TODO: with future C++ improvements, move half-slice logic to SOMAReader
+    # TODO: with future C++ improvements, move half-slice logic to SOMAArrayReader
     start = domain_start if slc.start is None else max(slc.start, domain_start)
     stop = domain_stop if slc.stop is None else min(slc.stop, domain_stop)
 

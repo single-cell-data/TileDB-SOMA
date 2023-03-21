@@ -1,4 +1,4 @@
-test_that("Iterated Interface from SOMAReader", {
+test_that("Iterated Interface from SOMAArrayReader", {
     skip_if_not_installed("pbmc3k.tiledb")      # a Suggests: pre-package 3k PBMC data
 
     library(arrow)

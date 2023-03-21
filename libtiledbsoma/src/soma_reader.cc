@@ -27,7 +27,7 @@
  *
  * @section DESCRIPTION
  *
- *   This file defines the SOMAReader class.
+ *   This file defines the SOMAArrayReader class.
  */
 
 #include "tiledbsoma/soma_reader.h"
@@ -41,7 +41,7 @@ using namespace tiledb;
 //= public static
 //===================================================================
 
-std::unique_ptr<SOMAReader> SOMAReader::open(
+std::unique_ptr<SOMAArrayReader> SOMAArrayReader::open(
     std::string_view uri,
     std::string_view name,
     std::map<std::string, std::string> platform_config,
@@ -49,7 +49,7 @@ std::unique_ptr<SOMAReader> SOMAReader::open(
     std::string_view batch_size,
     std::string_view result_order,
     std::optional<std::pair<uint64_t, uint64_t>> timestamp) {
-    return std::make_unique<SOMAReader>(
+    return std::make_unique<SOMAArrayReader>(
         uri,
         name,
         std::make_shared<Context>(Config(platform_config)),
@@ -59,7 +59,7 @@ std::unique_ptr<SOMAReader> SOMAReader::open(
         timestamp);
 }
 
-std::unique_ptr<SOMAReader> SOMAReader::open(
+std::unique_ptr<SOMAArrayReader> SOMAArrayReader::open(
     std::shared_ptr<Context> ctx,
     std::string_view uri,
     std::string_view name,
@@ -67,7 +67,7 @@ std::unique_ptr<SOMAReader> SOMAReader::open(
     std::string_view batch_size,
     std::string_view result_order,
     std::optional<std::pair<uint64_t, uint64_t>> timestamp) {
-    return std::make_unique<SOMAReader>(
+    return std::make_unique<SOMAArrayReader>(
         uri, name, ctx, column_names, batch_size, result_order, timestamp);
 }
 
@@ -75,7 +75,7 @@ std::unique_ptr<SOMAReader> SOMAReader::open(
 //= public non-static
 //===================================================================
 
-SOMAReader::SOMAReader(
+SOMAArrayReader::SOMAArrayReader(
     std::string_view uri,
     std::string_view name,
     std::shared_ptr<Context> ctx,
@@ -88,7 +88,7 @@ SOMAReader::SOMAReader(
     , timestamp_(timestamp) {
     // Validate parameters
     try {
-        LOG_DEBUG(fmt::format("[SOMAReader] opening array '{}'", uri_));
+        LOG_DEBUG(fmt::format("[SOMAArrayReader] opening array '{}'", uri_));
         auto array = std::make_shared<Array>(*ctx_, uri_, TILEDB_READ);
         if (timestamp) {
             if (timestamp->first > timestamp->second) {
@@ -111,7 +111,7 @@ SOMAReader::SOMAReader(
     reset(column_names, batch_size, result_order);
 }
 
-void SOMAReader::reset(
+void SOMAArrayReader::reset(
     std::vector<std::string> column_names,
     std::string_view batch_size,
     std::string_view result_order) {
@@ -143,16 +143,16 @@ void SOMAReader::reset(
     submitted_ = false;
 }
 
-void SOMAReader::submit() {
+void SOMAArrayReader::submit() {
     // Submit the query
     mq_->submit();
     submitted_ = true;
 }
 
-std::optional<std::shared_ptr<ArrayBuffers>> SOMAReader::read_next() {
+std::optional<std::shared_ptr<ArrayBuffers>> SOMAArrayReader::read_next() {
     if (!submitted_) {
         throw TileDBSOMAError(
-            "[SOMAReader] submit must be called before read_next");
+            "[SOMAArrayReader] submit must be called before read_next");
     }
 
     // Always return results from the first call to read_next()
@@ -173,18 +173,19 @@ std::optional<std::shared_ptr<ArrayBuffers>> SOMAReader::read_next() {
     return mq_->results();
 }
 
-uint64_t SOMAReader::nnz() {
+uint64_t SOMAArrayReader::nnz() {
     // Verify array is sparse
     if (mq_->schema()->array_type() != TILEDB_SPARSE) {
         throw TileDBSOMAError(
-            "[SOMAReader] nnz is only supported for sparse arrays");
+            "[SOMAArrayReader] nnz is only supported for sparse arrays");
     }
 
     // Load fragment info
     FragmentInfo fragment_info(*ctx_, uri_);
     fragment_info.load();
 
-    LOG_DEBUG(fmt::format("[SOMAReader] Fragment info for array '{}'", uri_));
+    LOG_DEBUG(
+        fmt::format("[SOMAArrayReader] Fragment info for array '{}'", uri_));
     if (LOG_DEBUG_ENABLED()) {
         fragment_info.dump();
     }
@@ -245,7 +246,7 @@ uint64_t SOMAReader::nnz() {
         fragment_info.get_non_empty_domain(
             relevant_fragments[i], 0, &non_empty_domains[i]);
         LOG_DEBUG(fmt::format(
-            "[SOMAReader] fragment {} non-empty domain = [{}, {}]",
+            "[SOMAArrayReader] fragment {} non-empty domain = [{}, {}]",
             i,
             non_empty_domains[i][0],
             non_empty_domains[i][1]));
@@ -259,7 +260,7 @@ uint64_t SOMAReader::nnz() {
     bool overlap = false;
     for (uint32_t i = 0; i < fragment_count - 1; i++) {
         LOG_DEBUG(fmt::format(
-            "[SOMAReader] Checking {} < {}",
+            "[SOMAArrayReader] Checking {} < {}",
             non_empty_domains[i][1],
             non_empty_domains[i + 1][0]));
         if (non_empty_domains[i][1] >= non_empty_domains[i + 1][0]) {
@@ -276,12 +277,12 @@ uint64_t SOMAReader::nnz() {
     return nnz_slow();
 }
 
-uint64_t SOMAReader::nnz_slow() {
+uint64_t SOMAArrayReader::nnz_slow() {
     LOG_DEBUG(
-        "[SOMAReader] nnz() found consolidated or overlapping fragments, "
+        "[SOMAArrayReader] nnz() found consolidated or overlapping fragments, "
         "counting cells...");
 
-    auto sr = SOMAReader::open(
+    auto sr = SOMAArrayReader::open(
         ctx_,
         uri_,
         "count_cells",
@@ -299,7 +300,7 @@ uint64_t SOMAReader::nnz_slow() {
     return total_cell_num;
 }
 
-std::vector<int64_t> SOMAReader::shape() {
+std::vector<int64_t> SOMAArrayReader::shape() {
     std::vector<int64_t> result;
     auto dimensions = this->schema().get()->domain().dimensions();
 

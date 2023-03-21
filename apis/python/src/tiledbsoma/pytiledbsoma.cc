@@ -128,7 +128,7 @@ PYBIND11_MODULE(pytiledbsoma, m) {
         },
         "Print TileDB internal statistics [lifecycle: experimental].");
 
-    py::class_<SOMAReader>(m, "SOMAReader")
+    py::class_<SOMAArrayReader>(m, "SOMAArrayReader")
         .def(
             py::init(
                 [](std::string_view uri,
@@ -180,7 +180,7 @@ PYBIND11_MODULE(pytiledbsoma, m) {
                     // objects
                     py::gil_scoped_release release;
 
-                    auto reader = SOMAReader::open(
+                    auto reader = SOMAArrayReader::open(
                         uri,
                         name,
                         platform_config,
@@ -209,7 +209,7 @@ PYBIND11_MODULE(pytiledbsoma, m) {
 
         .def(
             "reset",
-            [](SOMAReader& reader,
+            [](SOMAArrayReader& reader,
                std::optional<std::vector<std::string>> column_names_in,
                py::object py_query_condition,
                py::object py_schema,
@@ -254,7 +254,7 @@ PYBIND11_MODULE(pytiledbsoma, m) {
                 // Release python GIL after we're done accessing python objects
                 py::gil_scoped_release release;
 
-                // Reset state of the existing SOMAReader object
+                // Reset state of the existing SOMAArrayReader object
                 reader.reset(column_names, batch_size, result_order);
 
                 // Set query condition if present
@@ -274,7 +274,7 @@ PYBIND11_MODULE(pytiledbsoma, m) {
         // long if-else-if function.
         .def(
             "set_dim_points_arrow",
-            [](SOMAReader& reader,
+            [](SOMAArrayReader& reader,
                const std::string& dim,
                py::object py_arrow_array,
                int partition_index,
@@ -459,69 +459,69 @@ PYBIND11_MODULE(pytiledbsoma, m) {
 
         .def(
             "set_dim_points_string_or_bytes",
-            static_cast<void (SOMAReader::*)(
+            static_cast<void (SOMAArrayReader::*)(
                 const std::string&, const std::vector<std::string>&)>(
-                &SOMAReader::set_dim_points))
+                &SOMAArrayReader::set_dim_points))
 
         .def(
             "set_dim_points_float64",
-            static_cast<void (SOMAReader::*)(
+            static_cast<void (SOMAArrayReader::*)(
                 const std::string&, const std::vector<double>&)>(
-                &SOMAReader::set_dim_points))
+                &SOMAArrayReader::set_dim_points))
 
         .def(
             "set_dim_points_float32",
-            static_cast<void (SOMAReader::*)(
+            static_cast<void (SOMAArrayReader::*)(
                 const std::string&, const std::vector<float>&)>(
-                &SOMAReader::set_dim_points))
+                &SOMAArrayReader::set_dim_points))
 
         .def(
             "set_dim_points_int64",
-            static_cast<void (SOMAReader::*)(
+            static_cast<void (SOMAArrayReader::*)(
                 const std::string&, const std::vector<int64_t>&)>(
-                &SOMAReader::set_dim_points))
+                &SOMAArrayReader::set_dim_points))
 
         .def(
             "set_dim_points_int32",
-            static_cast<void (SOMAReader::*)(
+            static_cast<void (SOMAArrayReader::*)(
                 const std::string&, const std::vector<int32_t>&)>(
-                &SOMAReader::set_dim_points))
+                &SOMAArrayReader::set_dim_points))
 
         .def(
             "set_dim_points_int16",
-            static_cast<void (SOMAReader::*)(
+            static_cast<void (SOMAArrayReader::*)(
                 const std::string&, const std::vector<int16_t>&)>(
-                &SOMAReader::set_dim_points))
+                &SOMAArrayReader::set_dim_points))
 
         .def(
             "set_dim_points_int8",
-            static_cast<void (SOMAReader::*)(
+            static_cast<void (SOMAArrayReader::*)(
                 const std::string&, const std::vector<int8_t>&)>(
-                &SOMAReader::set_dim_points))
+                &SOMAArrayReader::set_dim_points))
 
         .def(
             "set_dim_points_uint64",
-            static_cast<void (SOMAReader::*)(
+            static_cast<void (SOMAArrayReader::*)(
                 const std::string&, const std::vector<uint64_t>&)>(
-                &SOMAReader::set_dim_points))
+                &SOMAArrayReader::set_dim_points))
 
         .def(
             "set_dim_points_uint32",
-            static_cast<void (SOMAReader::*)(
+            static_cast<void (SOMAArrayReader::*)(
                 const std::string&, const std::vector<uint32_t>&)>(
-                &SOMAReader::set_dim_points))
+                &SOMAArrayReader::set_dim_points))
 
         .def(
             "set_dim_points_uint16",
-            static_cast<void (SOMAReader::*)(
+            static_cast<void (SOMAArrayReader::*)(
                 const std::string&, const std::vector<uint16_t>&)>(
-                &SOMAReader::set_dim_points))
+                &SOMAArrayReader::set_dim_points))
 
         .def(
             "set_dim_points_uint8",
-            static_cast<void (SOMAReader::*)(
+            static_cast<void (SOMAArrayReader::*)(
                 const std::string&, const std::vector<uint8_t>&)>(
-                &SOMAReader::set_dim_points))
+                &SOMAArrayReader::set_dim_points))
 
         // In an initial version of this file we had `set_dim_ranges` relying
         // solely on type-overloading. This worked since we supported only int
@@ -538,91 +538,91 @@ PYBIND11_MODULE(pytiledbsoma, m) {
 
         .def(
             "set_dim_ranges_string_or_bytes",
-            static_cast<void (SOMAReader::*)(
+            static_cast<void (SOMAArrayReader::*)(
                 const std::string&,
                 const std::vector<std::pair<std::string, std::string>>&)>(
-                &SOMAReader::set_dim_ranges))
+                &SOMAArrayReader::set_dim_ranges))
 
         .def(
             "set_dim_ranges_int64",
-            static_cast<void (SOMAReader::*)(
+            static_cast<void (SOMAArrayReader::*)(
                 const std::string&,
                 const std::vector<std::pair<int64_t, int64_t>>&)>(
-                &SOMAReader::set_dim_ranges))
+                &SOMAArrayReader::set_dim_ranges))
 
         .def(
             "set_dim_ranges_int32",
-            static_cast<void (SOMAReader::*)(
+            static_cast<void (SOMAArrayReader::*)(
                 const std::string&,
                 const std::vector<std::pair<int32_t, int32_t>>&)>(
-                &SOMAReader::set_dim_ranges))
+                &SOMAArrayReader::set_dim_ranges))
 
         .def(
             "set_dim_ranges_int16",
-            static_cast<void (SOMAReader::*)(
+            static_cast<void (SOMAArrayReader::*)(
                 const std::string&,
                 const std::vector<std::pair<int16_t, int16_t>>&)>(
-                &SOMAReader::set_dim_ranges))
+                &SOMAArrayReader::set_dim_ranges))
 
         .def(
             "set_dim_ranges_int8",
-            static_cast<void (SOMAReader::*)(
+            static_cast<void (SOMAArrayReader::*)(
                 const std::string&,
                 const std::vector<std::pair<int8_t, int8_t>>&)>(
-                &SOMAReader::set_dim_ranges))
+                &SOMAArrayReader::set_dim_ranges))
 
         .def(
             "set_dim_ranges_uint64",
-            static_cast<void (SOMAReader::*)(
+            static_cast<void (SOMAArrayReader::*)(
                 const std::string&,
                 const std::vector<std::pair<uint64_t, uint64_t>>&)>(
-                &SOMAReader::set_dim_ranges))
+                &SOMAArrayReader::set_dim_ranges))
 
         .def(
             "set_dim_ranges_uint32",
-            static_cast<void (SOMAReader::*)(
+            static_cast<void (SOMAArrayReader::*)(
                 const std::string&,
                 const std::vector<std::pair<uint32_t, uint32_t>>&)>(
-                &SOMAReader::set_dim_ranges))
+                &SOMAArrayReader::set_dim_ranges))
 
         .def(
             "set_dim_ranges_uint16",
-            static_cast<void (SOMAReader::*)(
+            static_cast<void (SOMAArrayReader::*)(
                 const std::string&,
                 const std::vector<std::pair<uint16_t, uint16_t>>&)>(
-                &SOMAReader::set_dim_ranges))
+                &SOMAArrayReader::set_dim_ranges))
 
         .def(
             "set_dim_ranges_uint8",
-            static_cast<void (SOMAReader::*)(
+            static_cast<void (SOMAArrayReader::*)(
                 const std::string&,
                 const std::vector<std::pair<uint8_t, uint8_t>>&)>(
-                &SOMAReader::set_dim_ranges))
+                &SOMAArrayReader::set_dim_ranges))
 
         .def(
             "set_dim_ranges_float64",
-            static_cast<void (SOMAReader::*)(
+            static_cast<void (SOMAArrayReader::*)(
                 const std::string&,
                 const std::vector<std::pair<double, double>>&)>(
-                &SOMAReader::set_dim_ranges))
+                &SOMAArrayReader::set_dim_ranges))
 
         .def(
             "set_dim_ranges_float32",
-            static_cast<void (SOMAReader::*)(
+            static_cast<void (SOMAArrayReader::*)(
                 const std::string&,
                 const std::vector<std::pair<float, float>>&)>(
-                &SOMAReader::set_dim_ranges))
+                &SOMAArrayReader::set_dim_ranges))
 
         .def(
             "submit",
-            &SOMAReader::submit,
+            &SOMAArrayReader::submit,
             py::call_guard<py::gil_scoped_release>())
 
-        .def("results_complete", &SOMAReader::results_complete)
+        .def("results_complete", &SOMAArrayReader::results_complete)
 
         .def(
             "read_next",
-            [](SOMAReader& reader) -> std::optional<py::object> {
+            [](SOMAArrayReader& reader) -> std::optional<py::object> {
                 // Release python GIL before reading data
                 py::gil_scoped_release release;
 
@@ -641,8 +641,8 @@ PYBIND11_MODULE(pytiledbsoma, m) {
                 return std::nullopt;
             })
 
-        .def("nnz", &SOMAReader::nnz, py::call_guard<py::gil_scoped_release>())
+        .def("nnz", &SOMAArrayReader::nnz, py::call_guard<py::gil_scoped_release>())
 
-        .def_property_readonly("shape", &SOMAReader::shape);
+        .def_property_readonly("shape", &SOMAArrayReader::shape);
 }
 }  // namespace tiledbsoma

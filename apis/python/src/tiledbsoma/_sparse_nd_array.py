@@ -213,7 +213,7 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
         )
 
     def _set_reader_coord(
-        self, sr: clib.SOMAReader, dim_idx: int, dim: tiledb.Dim, coord: object
+        self, sr: clib.SOMAArrayReader, dim_idx: int, dim: tiledb.Dim, coord: object
     ) -> bool:
         if super()._set_reader_coord(sr, dim_idx, dim, coord):
             return True
@@ -286,7 +286,7 @@ class SparseNDArrayRead(somacore.SparseRead):
         Experimental.
     """
 
-    def __init__(self, sr: clib.SOMAReader, shape: NTuple):
+    def __init__(self, sr: clib.SOMAArrayReader, shape: NTuple):
         """
         Lifecycle:
             Experimental.

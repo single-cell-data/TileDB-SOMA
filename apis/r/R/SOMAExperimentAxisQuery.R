@@ -103,7 +103,7 @@ SOMAExperimentAxisQuery <- R6::R6Class(
           inherits(x_layer, "SOMASparseNDArray")
       )
 
-      # TODO: Stop converting to vectors when SOMAReader supports arrow arrays
+      # TODO: Stop converting to vectors when SOMAArrayReader supports arrow arrays
       x_layer$read_arrow_table(coords = list(
         self$obs_joinids()$as_vector(),
         self$var_joinids()$as_vector()
