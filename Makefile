@@ -25,13 +25,13 @@ r-build: clean
 .PHONY: update
 update:
 	cd build && make -j && make install-libtiledbsoma
-	cp dist/lib/* apis/python/src/tiledbsoma/
+	cp dist/lib/lib* apis/python/src/tiledbsoma/
 
 # test
 # -------------------------------------------------------------------
 .PHONY: test
 test: data
-	ctest --test-dir build/libtiledbsoma -C Release --verbose
+	ctest --test-dir build/libtiledbsoma -C Release --verbose --rerun-failed --output-on-failure
 	pytest apis/python/tests libtiledbsoma/test
 
 .PHONY: data

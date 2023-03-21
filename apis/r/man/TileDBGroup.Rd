@@ -7,7 +7,7 @@
 A \code{TileDBArray} or \code{TileDBGroup}.
 }
 \description{
-Base class for interacting with TileDB groups
+Base class for interacting with TileDB groups (lifecycle: experimental)
 }
 \section{Super class}{
 \code{\link[tiledbsoma:TileDBObject]{tiledbsoma::TileDBObject}} -> \code{TileDBGroup}
@@ -26,6 +26,7 @@ Base class for interacting with TileDB groups
 \item \href{#method-TileDBGroup-to_data_frame}{\code{TileDBGroup$to_data_frame()}}
 \item \href{#method-TileDBGroup-get_metadata}{\code{TileDBGroup$get_metadata()}}
 \item \href{#method-TileDBGroup-set_metadata}{\code{TileDBGroup$set_metadata()}}
+\item \href{#method-TileDBGroup-close}{\code{TileDBGroup$close()}}
 \item \href{#method-TileDBGroup-clone}{\code{TileDBGroup$clone()}}
 }
 }
@@ -34,6 +35,7 @@ Base class for interacting with TileDB groups
 <ul>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBObject" data-id="class"><a href='../../tiledbsoma/html/TileDBObject.html#method-TileDBObject-class'><code>tiledbsoma::TileDBObject$class()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBObject" data-id="exists"><a href='../../tiledbsoma/html/TileDBObject.html#method-TileDBObject-exists'><code>tiledbsoma::TileDBObject$exists()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBObject" data-id="get_tiledb_config"><a href='../../tiledbsoma/html/TileDBObject.html#method-TileDBObject-get_tiledb_config'><code>tiledbsoma::TileDBObject$get_tiledb_config()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBObject" data-id="initialize"><a href='../../tiledbsoma/html/TileDBObject.html#method-TileDBObject-initialize'><code>tiledbsoma::TileDBObject$initialize()</code></a></span></li>
 </ul>
 </details>
@@ -42,7 +44,7 @@ Base class for interacting with TileDB groups
 \if{html}{\out{<a id="method-TileDBGroup-print"></a>}}
 \if{latex}{\out{\hypertarget{method-TileDBGroup-print}{}}}
 \subsection{Method \code{print()}}{
-Print summary of the group.
+Print summary of the group. (lifecycle: experimental)
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{TileDBGroup$print()}\if{html}{\out{</div>}}
 }
@@ -52,7 +54,7 @@ Print summary of the group.
 \if{html}{\out{<a id="method-TileDBGroup-create"></a>}}
 \if{latex}{\out{\hypertarget{method-TileDBGroup-create}{}}}
 \subsection{Method \code{create()}}{
-Creates the data structure on disk/S3/cloud.
+Creates the data structure on disk/S3/cloud. (lifecycle: experimental)
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{TileDBGroup$create()}\if{html}{\out{</div>}}
 }
@@ -62,7 +64,7 @@ Creates the data structure on disk/S3/cloud.
 \if{html}{\out{<a id="method-TileDBGroup-set"></a>}}
 \if{latex}{\out{\hypertarget{method-TileDBGroup-set}{}}}
 \subsection{Method \code{set()}}{
-Add new member to the group.
+Add new member to the group. (lifecycle: experimental)
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{TileDBGroup$set(object, name = NULL, relative = NULL)}\if{html}{\out{</div>}}
 }
@@ -87,7 +89,7 @@ default), the object's URI is assumed to be relative unless it is a
 \if{html}{\out{<a id="method-TileDBGroup-get"></a>}}
 \if{latex}{\out{\hypertarget{method-TileDBGroup-get}{}}}
 \subsection{Method \code{get()}}{
-Retrieve a group member by name.
+Retrieve a group member by name. (lifecycle: experimental)
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{TileDBGroup$get(name)}\if{html}{\out{</div>}}
 }
@@ -104,7 +106,7 @@ Retrieve a group member by name.
 \if{html}{\out{<a id="method-TileDBGroup-remove"></a>}}
 \if{latex}{\out{\hypertarget{method-TileDBGroup-remove}{}}}
 \subsection{Method \code{remove()}}{
-Remove member.
+Remove member. (lifecycle: experimental)
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{TileDBGroup$remove(name)}\if{html}{\out{</div>}}
 }
@@ -121,7 +123,7 @@ Remove member.
 \if{html}{\out{<a id="method-TileDBGroup-length"></a>}}
 \if{latex}{\out{\hypertarget{method-TileDBGroup-length}{}}}
 \subsection{Method \code{length()}}{
-Length in the number of members.
+Length in the number of members. (lifecycle: experimental)
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{TileDBGroup$length()}\if{html}{\out{</div>}}
 }
@@ -134,7 +136,7 @@ Scalar \code{integer}
 \if{html}{\out{<a id="method-TileDBGroup-names"></a>}}
 \if{latex}{\out{\hypertarget{method-TileDBGroup-names}{}}}
 \subsection{Method \code{names()}}{
-Retrieve the names of members.
+Retrieve the names of members. (lifecycle: experimental)
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{TileDBGroup$names()}\if{html}{\out{</div>}}
 }
@@ -147,7 +149,7 @@ A \code{character} vector of member names.
 \if{html}{\out{<a id="method-TileDBGroup-to_list"></a>}}
 \if{latex}{\out{\hypertarget{method-TileDBGroup-to_list}{}}}
 \subsection{Method \code{to_list()}}{
-Retrieve a \code{list} of members.
+Retrieve a \code{list} of members. (lifecycle: experimental)
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{TileDBGroup$to_list()}\if{html}{\out{</div>}}
 }
@@ -157,7 +159,7 @@ Retrieve a \code{list} of members.
 \if{html}{\out{<a id="method-TileDBGroup-to_data_frame"></a>}}
 \if{latex}{\out{\hypertarget{method-TileDBGroup-to_data_frame}{}}}
 \subsection{Method \code{to_data_frame()}}{
-Retrieve a \code{data.frame} of members.
+Retrieve a \code{data.frame} of members. (lifecycle: experimental)
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{TileDBGroup$to_data_frame()}\if{html}{\out{</div>}}
 }
@@ -167,7 +169,7 @@ Retrieve a \code{data.frame} of members.
 \if{html}{\out{<a id="method-TileDBGroup-get_metadata"></a>}}
 \if{latex}{\out{\hypertarget{method-TileDBGroup-get_metadata}{}}}
 \subsection{Method \code{get_metadata()}}{
-Retrieve metadata.
+Retrieve metadata. (lifecycle: experimental)
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{TileDBGroup$get_metadata(key = NULL)}\if{html}{\out{</div>}}
 }
@@ -188,7 +190,7 @@ A list of metadata values.
 \if{html}{\out{<a id="method-TileDBGroup-set_metadata"></a>}}
 \if{latex}{\out{\hypertarget{method-TileDBGroup-set_metadata}{}}}
 \subsection{Method \code{set_metadata()}}{
-Add list of metadata.
+Add list of metadata. (lifecycle: experimental)
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{TileDBGroup$set_metadata(metadata)}\if{html}{\out{</div>}}
 }
@@ -202,6 +204,19 @@ Add list of metadata.
 }
 \subsection{Returns}{
 NULL
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-TileDBGroup-close"></a>}}
+\if{latex}{\out{\hypertarget{method-TileDBGroup-close}{}}}
+\subsection{Method \code{close()}}{
+Close the SOMA object.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{TileDBGroup$close()}\if{html}{\out{</div>}}
+}
+
+\subsection{Returns}{
+The object, invisibly
 }
 }
 \if{html}{\out{<hr>}}

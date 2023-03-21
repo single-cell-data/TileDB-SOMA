@@ -4,12 +4,14 @@ on:
   # I.e. on request
   workflow_dispatch:
   # Normally the smoke test only runs on merge to main.  To run it on a PR CI, uncomment `pull_request:`
-  pull_request:
-  # branches: [main]
+  # pull_request:
+  #   branches: [main]
   # paths-ignore:
   #   - 'apis/r/**'
   release:
     types: [published]
+  schedule:
+    - cron: "42 9 * * *"
 
 jobs:
   sdist:
@@ -65,7 +67,7 @@ jobs:
       env:
         CIBW_BUILD: ${{ matrix.cibw_build }}
         CIBW_BUILD_VERBOSITY: 1
-        CIBW_BEFORE_BUILD: bash -x -c 'rm -rf tiledbsoma*/dist_links/dist/lib'
+        CIBW_BEFORE_BUILD: bash -x -c 'rm -rf tiledbsoma*/dist_links/dist/lib*'
         # ^ Delete lib folder that apis/python/setup.py:find_or_build() looks for in deciding to
         #   run CMake build or not. Otherwise it'll keep reusing the library file built in the
         #   first iteration of cibuildwheel's outer loop, resulting in wheels with the library
@@ -87,12 +89,18 @@ jobs:
         - os: ubuntu-20.04
           platform: manylinux2014
           arch: x86_64
+          cc: gcc-11
+          cxx: g++-11
         - os: macos-11
           platform: macosx
           arch: x86_64
+          cc: clang
+          cxx: clang++
         - os: macos-11
           platform: macosx
           arch: arm64
+          cc: clang
+          cxx: clang++
     steps:
     - name: Set up Python 3.10
       uses: actions/setup-python@v4
@@ -104,13 +112,24 @@ jobs:
       run: |
         set -x
         ls -lR
-        whl=$(find . -name 'tiledbsoma-*-cp38-cp38-*${{ matrix.platform }}*_${{ matrix.arch }}.whl')
-        unzip -l $whl
+        WHL=$(find . -name 'tiledbsoma-*-cp38-cp38-*${{ matrix.platform }}*_${{ matrix.arch }}.whl')
+        unzip -l $WHL
         pip install wheel
-        pip install $whl
+        pip install $WHL
+        echo "WHL=$WHL" >> $GITHUB_ENV
     - name: Smoke test ${{ matrix.os }}
-      run: python -c 'import tiledbsoma; print(tiledbsoma.libtiledbsoma.__file__)'
+      run: python -c 'import tiledbsoma; print(tiledbsoma.pytiledbsoma.__file__); tiledbsoma.show_package_versions()'
       # TODO: more thorough local smoke test
+    - name: Smoke test in docker
+      # Repeat test in stock ubuntu 20.04 docker image. This uses an older pip
+      # version with the old dependency solver. see issue #1051
+      if: ${{ matrix.platform == 'manylinux2014' }}
+      run: |
+        docker run -v $(pwd):/mnt ubuntu:20.04 bash -ec "
+          apt-get -qq update && apt-get install -y python3-pip python3-wheel
+          pip3 install /mnt/$WHL
+          python3 -c 'import tiledbsoma; print(tiledbsoma.pytiledbsoma.__file__); tiledbsoma.show_package_versions()'
+        "
 
   # TODO: publlish to TestPyPI
     #- name: Publish package to TestPyPI

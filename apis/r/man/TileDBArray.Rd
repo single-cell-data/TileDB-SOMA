@@ -5,15 +5,7 @@
 \title{TileDB Array Base Class}
 \description{
 Base class for representing an individual TileDB array.
-}
-\details{
-\subsection{Initialization}{
-
-Initializing a \code{TileDBArray} object does not automatically create a new array
-at the specified \code{uri} if one does not already exist because we don't know
-what the schema will be. Arrays are only created by child classes, which
-populate the private \code{create_empty_array()} and \code{ingest_data()} methods.
-}
+(lifecycle: experimental)
 }
 \section{Super class}{
 \code{\link[tiledbsoma:TileDBObject]{tiledbsoma::TileDBObject}} -> \code{TileDBArray}
@@ -26,13 +18,19 @@ populate the private \code{create_empty_array()} and \code{ingest_data()} method
 \item \href{#method-TileDBArray-get_metadata}{\code{TileDBArray$get_metadata()}}
 \item \href{#method-TileDBArray-set_metadata}{\code{TileDBArray$set_metadata()}}
 \item \href{#method-TileDBArray-schema}{\code{TileDBArray$schema()}}
+\item \href{#method-TileDBArray-tiledb_schema}{\code{TileDBArray$tiledb_schema()}}
 \item \href{#method-TileDBArray-dimensions}{\code{TileDBArray$dimensions()}}
+\item \href{#method-TileDBArray-shape}{\code{TileDBArray$shape()}}
+\item \href{#method-TileDBArray-ndim}{\code{TileDBArray$ndim()}}
 \item \href{#method-TileDBArray-attributes}{\code{TileDBArray$attributes()}}
 \item \href{#method-TileDBArray-dimnames}{\code{TileDBArray$dimnames()}}
-\item \href{#method-TileDBArray-fragment_count}{\code{TileDBArray$fragment_count()}}
 \item \href{#method-TileDBArray-attrnames}{\code{TileDBArray$attrnames()}}
+\item \href{#method-TileDBArray-colnames}{\code{TileDBArray$colnames()}}
+\item \href{#method-TileDBArray-index_column_names}{\code{TileDBArray$index_column_names()}}
+\item \href{#method-TileDBArray-fragment_count}{\code{TileDBArray$fragment_count()}}
 \item \href{#method-TileDBArray-set_query}{\code{TileDBArray$set_query()}}
 \item \href{#method-TileDBArray-reset_query}{\code{TileDBArray$reset_query()}}
+\item \href{#method-TileDBArray-close}{\code{TileDBArray$close()}}
 \item \href{#method-TileDBArray-clone}{\code{TileDBArray$clone()}}
 }
 }
@@ -41,6 +39,7 @@ populate the private \code{create_empty_array()} and \code{ingest_data()} method
 <ul>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBObject" data-id="class"><a href='../../tiledbsoma/html/TileDBObject.html#method-TileDBObject-class'><code>tiledbsoma::TileDBObject$class()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBObject" data-id="exists"><a href='../../tiledbsoma/html/TileDBObject.html#method-TileDBObject-exists'><code>tiledbsoma::TileDBObject$exists()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBObject" data-id="get_tiledb_config"><a href='../../tiledbsoma/html/TileDBObject.html#method-TileDBObject-get_tiledb_config'><code>tiledbsoma::TileDBObject$get_tiledb_config()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBObject" data-id="initialize"><a href='../../tiledbsoma/html/TileDBObject.html#method-TileDBObject-initialize'><code>tiledbsoma::TileDBObject$initialize()</code></a></span></li>
 </ul>
 </details>
@@ -49,7 +48,7 @@ populate the private \code{create_empty_array()} and \code{ingest_data()} method
 \if{html}{\out{<a id="method-TileDBArray-print"></a>}}
 \if{latex}{\out{\hypertarget{method-TileDBArray-print}{}}}
 \subsection{Method \code{print()}}{
-Print summary of the array.
+Print summary of the array. (lifecycle: experimental)
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{TileDBArray$print()}\if{html}{\out{</div>}}
 }
@@ -59,7 +58,7 @@ Print summary of the array.
 \if{html}{\out{<a id="method-TileDBArray-tiledb_array"></a>}}
 \if{latex}{\out{\hypertarget{method-TileDBArray-tiledb_array}{}}}
 \subsection{Method \code{tiledb_array()}}{
-Return a \code{\link{TileDBArray}} object
+Return a \code{\link{TileDBArray}} object (lifecycle: experimental)
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{TileDBArray$tiledb_array(...)}\if{html}{\out{</div>}}
 }
@@ -79,7 +78,7 @@ A \code{\link[tiledb:tiledb_array]{tiledb::tiledb_array}} object.
 \if{html}{\out{<a id="method-TileDBArray-get_metadata"></a>}}
 \if{latex}{\out{\hypertarget{method-TileDBArray-get_metadata}{}}}
 \subsection{Method \code{get_metadata()}}{
-Retrieve metadata from the TileDB array.
+Retrieve metadata from the TileDB array. (lifecycle: experimental)
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{TileDBArray$get_metadata(key = NULL, prefix = NULL)}\if{html}{\out{</div>}}
 }
@@ -102,7 +101,7 @@ A list of metadata values.
 \if{html}{\out{<a id="method-TileDBArray-set_metadata"></a>}}
 \if{latex}{\out{\hypertarget{method-TileDBArray-set_metadata}{}}}
 \subsection{Method \code{set_metadata()}}{
-Add list of metadata to the specified TileDB array.
+Add list of metadata to the specified TileDB array. (lifecycle: experimental)
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{TileDBArray$set_metadata(metadata)}\if{html}{\out{</div>}}
 }
@@ -122,9 +121,22 @@ NULL
 \if{html}{\out{<a id="method-TileDBArray-schema"></a>}}
 \if{latex}{\out{\hypertarget{method-TileDBArray-schema}{}}}
 \subsection{Method \code{schema()}}{
-Retrieve the array schema
+Retrieve the array schema as an Arrow schema (lifecycle: experimental)
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{TileDBArray$schema()}\if{html}{\out{</div>}}
+}
+
+\subsection{Returns}{
+A \code{\link[arrow:Schema]{arrow::schema}} object
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-TileDBArray-tiledb_schema"></a>}}
+\if{latex}{\out{\hypertarget{method-TileDBArray-tiledb_schema}{}}}
+\subsection{Method \code{tiledb_schema()}}{
+Retrieve the array schema as TileDB schema (lifecycle: experimental)
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{TileDBArray$tiledb_schema()}\if{html}{\out{</div>}}
 }
 
 \subsection{Returns}{
@@ -135,7 +147,7 @@ A \code{\link[tiledb:tiledb_array_schema]{tiledb::tiledb_array_schema}} object
 \if{html}{\out{<a id="method-TileDBArray-dimensions"></a>}}
 \if{latex}{\out{\hypertarget{method-TileDBArray-dimensions}{}}}
 \subsection{Method \code{dimensions()}}{
-Retrieve the array dimensions
+Retrieve the array dimensions (lifecycle: experimental)
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{TileDBArray$dimensions()}\if{html}{\out{</div>}}
 }
@@ -145,10 +157,36 @@ A named list of \code{\link[tiledb:tiledb_dim]{tiledb::tiledb_dim}} objects
 }
 }
 \if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-TileDBArray-shape"></a>}}
+\if{latex}{\out{\hypertarget{method-TileDBArray-shape}{}}}
+\subsection{Method \code{shape()}}{
+Retrieve the shape, i.e. the length of each dimension (lifecycle: experimental)
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{TileDBArray$shape()}\if{html}{\out{</div>}}
+}
+
+\subsection{Returns}{
+A named vector of dimension length (and the same type as the dimension)
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-TileDBArray-ndim"></a>}}
+\if{latex}{\out{\hypertarget{method-TileDBArray-ndim}{}}}
+\subsection{Method \code{ndim()}}{
+Retrieve number of dimensions (lifecycle: experimental)
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{TileDBArray$ndim()}\if{html}{\out{</div>}}
+}
+
+\subsection{Returns}{
+A scalar with the number of dimensions
+}
+}
+\if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-TileDBArray-attributes"></a>}}
 \if{latex}{\out{\hypertarget{method-TileDBArray-attributes}{}}}
 \subsection{Method \code{attributes()}}{
-Retrieve the array attributes
+Retrieve the array attributes (lifecycle: experimental)
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{TileDBArray$attributes()}\if{html}{\out{</div>}}
 }
@@ -161,7 +199,7 @@ A list of \code{\link[tiledb:tiledb_attr]{tiledb::tiledb_attr}} objects
 \if{html}{\out{<a id="method-TileDBArray-dimnames"></a>}}
 \if{latex}{\out{\hypertarget{method-TileDBArray-dimnames}{}}}
 \subsection{Method \code{dimnames()}}{
-Retrieve dimension names
+Retrieve dimension names (lifecycle: experimental)
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{TileDBArray$dimnames()}\if{html}{\out{</div>}}
 }
@@ -171,20 +209,10 @@ A character vector with the array's dimension names
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-TileDBArray-fragment_count"></a>}}
-\if{latex}{\out{\hypertarget{method-TileDBArray-fragment_count}{}}}
-\subsection{Method \code{fragment_count()}}{
-Get number of fragments in the array
-\subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{TileDBArray$fragment_count()}\if{html}{\out{</div>}}
-}
-
-}
-\if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-TileDBArray-attrnames"></a>}}
 \if{latex}{\out{\hypertarget{method-TileDBArray-attrnames}{}}}
 \subsection{Method \code{attrnames()}}{
-Retrieve attribute names
+Retrieve attribute names (lifecycle: experimental)
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{TileDBArray$attrnames()}\if{html}{\out{</div>}}
 }
@@ -194,10 +222,47 @@ A character vector with the array's attribute names
 }
 }
 \if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-TileDBArray-colnames"></a>}}
+\if{latex}{\out{\hypertarget{method-TileDBArray-colnames}{}}}
+\subsection{Method \code{colnames()}}{
+Retrieve the names of all columns, including dimensions and
+attributes (lifecycle: experimental)
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{TileDBArray$colnames()}\if{html}{\out{</div>}}
+}
+
+\subsection{Returns}{
+A character vector with the array's column names
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-TileDBArray-index_column_names"></a>}}
+\if{latex}{\out{\hypertarget{method-TileDBArray-index_column_names}{}}}
+\subsection{Method \code{index_column_names()}}{
+Retrieve names of index (dimension) columns (lifecycle: experimental)
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{TileDBArray$index_column_names()}\if{html}{\out{</div>}}
+}
+
+\subsection{Returns}{
+A character vector with the array index (dimension) names
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-TileDBArray-fragment_count"></a>}}
+\if{latex}{\out{\hypertarget{method-TileDBArray-fragment_count}{}}}
+\subsection{Method \code{fragment_count()}}{
+Get number of fragments in the array (lifecycle: experimental)
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{TileDBArray$fragment_count()}\if{html}{\out{</div>}}
+}
+
+}
+\if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-TileDBArray-set_query"></a>}}
 \if{latex}{\out{\hypertarget{method-TileDBArray-set_query}{}}}
 \subsection{Method \code{set_query()}}{
-Set dimension values to slice from the array.
+Set dimension values to slice from the array. (lifecycle: experimental)
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{TileDBArray$set_query(dims = NULL, attr_filter = NULL)}\if{html}{\out{</div>}}
 }
@@ -220,7 +285,7 @@ pushdown.}
 \if{latex}{\out{\hypertarget{method-TileDBArray-reset_query}{}}}
 \subsection{Method \code{reset_query()}}{
 Reset the query. By default both dimension ranges and
-attribute filters are cleared.
+attribute filters are cleared. (lifecycle: experimental)
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{TileDBArray$reset_query(dims = TRUE, attr_filter = TRUE)}\if{html}{\out{</div>}}
 }
@@ -236,6 +301,19 @@ attribute filters are cleared.
 }
 \subsection{Returns}{
 NULL
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-TileDBArray-close"></a>}}
+\if{latex}{\out{\hypertarget{method-TileDBArray-close}{}}}
+\subsection{Method \code{close()}}{
+Close the SOMA object.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{TileDBArray$close()}\if{html}{\out{</div>}}
+}
+
+\subsection{Returns}{
+The object, invisibly
 }
 }
 \if{html}{\out{<hr>}}

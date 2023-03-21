@@ -20,11 +20,13 @@ else
         echo "** cmake is required, but not in the path, exiting"
         exit 1
     fi
-    if test -d ../../libtiledbsoma; then
-        ## if in git repo, use build script
-        (cd ../../; make prefix=apis/r/src r-build > apis/r/src/cmake_log.txt; )
-        echo "** static library made; build log in 'src/cmake_log.txt'"
-    elif test -d src/libtiledbsoma; then
+    if ! test -d src/libtiledbsoma; then
+        cd src
+        tar -xzf ../libtiledbsoma.tar.gz
+        echo "** library sources unpacked"
+        cd ..
+    fi
+    if test -d src/libtiledbsoma; then
         ## else with sources build by hand
         cd src
         mkdir -p build
@@ -33,13 +35,8 @@ else
         cmake --build build --target install-libtiledbsoma >> cmake_log.txt
         rm -rf build
         cd ..
-        echo "** static library made; NO build log in 'src/cmake_log.txt'"
-    else
-        echo "** no sources, exiting"
-        exit 1
+        echo "** static library made"
     fi
-
-    ## TODO: Case when we do not build in the git repo
 fi
 
 ## look for tiledb core library and either use system library or download build
@@ -52,10 +49,9 @@ if [ $? -eq 0 ]; then
     if [ $? -eq 0 ]; then
         pkgcflags=`pkg-config --cflags tiledb`
         pkglibs=`pkg-config --libs tiledb`
-        archincl=`${R_HOME}/bin/Rscript -e 'cat("-I", system.file("include", package="arch"), sep="")'`
 
         ## substitute them in (leaving @tiledb_rpath@ and @cxx17_macos@ alone for now)
-        sed -e "s|@tiledb_include@|$pkgcflags $archincl|" \
+        sed -e "s|@tiledb_include@|$pkgcflags |" \
             -e "s|@tiledb_libs@|$pkglibs|" \
             -e "s|@tiledb_rpath@||" \
             -e "s|@cxx17_macos@||" \

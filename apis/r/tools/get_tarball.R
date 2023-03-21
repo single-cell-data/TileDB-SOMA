@@ -1,5 +1,10 @@
 #!/usr/bin/env Rscript
 
+# The TileDB Embedded version specified here will be linked to the libtiledbsoma native lib loaded
+# by our tiledbsoma R package. The R package code -also- uses TileDB-R, which links its own 'copy'
+# of TileDB Embedded, whose version we don't control here. Ideally the TileDB Embedded versions
+# should match! The show_package_versions() helper function can help to diagnose any mismatch.
+
 ## todo: chipset for macOS to detect arm
 isX86 <- Sys.info()["machine"] == "x86_64"
 isMac <- Sys.info()['sysname'] == "Darwin"
@@ -8,13 +13,13 @@ macosver <- ""
 
 if (isMac) {
     if (isX86) {
-        url <- "https://github.com/TileDB-Inc/TileDB/releases/download/2.14.0/tiledb-macos-x86_64-2.14.0-27eed08.tar.gz"
+        url <- "https://github.com/TileDB-Inc/TileDB/releases/download/2.15.0/tiledb-macos-x86_64-2.15.0-1fb59c4.tar.gz"
         macosver <- "-mmacosx-version-min=10.14"
     } else {
-        url <- "https://github.com/TileDB-Inc/TileDB/releases/download/2.14.0/tiledb-macos-arm64-2.14.0-27eed08.tar.gz"
+        url <- "https://github.com/TileDB-Inc/TileDB/releases/download/2.15.0/tiledb-macos-arm64-2.15.0-1fb59c4.tar.gz"
     }
 } else if (isLinux) {
-    url <- "https://github.com/TileDB-Inc/TileDB/releases/download/2.14.0/tiledb-linux-x86_64-2.14.0-27eed08.tar.gz"
+    url <- "https://github.com/TileDB-Inc/TileDB/releases/download/2.15.0/tiledb-linux-x86_64-2.15.0-1fb59c4.tar.gz"
 } else {
     stop("Unsupported platform for downloading artifacts. Please have TileDB Core installed locally.")
 }

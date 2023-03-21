@@ -3,7 +3,7 @@
 #' @description A `SOMAMeasurement` is a sub-element of a [`SOMAExperiment`],
 #' and is otherwise a specialized [`SOMACollection`] with pre-defined fields:
 #' `X`, `var`, `obsm`/`varm`, and `obsp`/`varp` (see _Active Bindings_ below for
-#' details).
+#' details). (lifecycle: experimental)
 #'
 #' @export
 SOMAMeasurement <- R6::R6Class(

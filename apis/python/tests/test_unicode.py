@@ -41,67 +41,68 @@ def sample_arrow_table():
 
 
 @pytest.fixture
-def sample_soma_dataframe(tmp_path, sample_arrow_table):
-    sdf = soma.DataFrame(tmp_path.as_posix())
-    sdf.create_legacy(sample_arrow_table.schema, index_column_names=["soma_joinid"])
-    sdf.write(sample_arrow_table)
-    assert sdf.exists()
-    return sdf
+def sample_dataframe_path(tmp_path, sample_arrow_table):
+    with soma.DataFrame.create(
+        tmp_path.as_posix(),
+        schema=sample_arrow_table.schema,
+        index_column_names=["soma_joinid"],
+    ) as sdf:
+        sdf.write(sample_arrow_table)
+    return sdf.uri
 
 
-def test_dataframe_unicode_columns(tmp_path, sample_arrow_table):
+def test_dataframe_unicode_columns(sample_dataframe_path, sample_arrow_table):
     """Verify round-trip of unicode in DataFrame value columns"""
-    sdf = soma.DataFrame(tmp_path.as_posix())
-    sdf.create_legacy(sample_arrow_table.schema, index_column_names=["soma_joinid"])
-    sdf.write(sample_arrow_table)
+    with soma.DataFrame.open(sample_dataframe_path, "w") as sdf:
+        sdf.write(sample_arrow_table)
 
-    assert sample_arrow_table.schema == sdf.schema
-    assert sdf.read().concat().equals(sample_arrow_table)
+    with soma.DataFrame.open(sample_dataframe_path) as sdf:
+        assert sample_arrow_table.schema == sdf.schema
+        assert sdf.read().concat().equals(sample_arrow_table)
 
 
-def test_dataframe_unicode_value_filter(sample_soma_dataframe):
+def test_dataframe_unicode_value_filter(sample_dataframe_path):
     """Verify that value_filter works correctly"""
 
     # filter on ascii
-    assert sample_soma_dataframe.read(
-        value_filter="ascii in ['aa', 'cccccc']"
-    ).concat().to_pydict() == {
-        "soma_joinid": [0, 2],
-        "unicode": [
-            "\N{LATIN CAPITAL LETTER E}\N{COMBINING CIRCUMFLEX ACCENT}",
-            "クン キン おし.える よ.む くん.ずる",
-        ],
-        "ascii": ["aa", "cccccc"],
-        "bytes": [b"aa", b"ccc"],
-        "float32": [0.0, 2.0],
-    }
+    with soma.DataFrame.open(sample_dataframe_path) as sdf:
+        assert sdf.read(
+            value_filter="ascii in ['aa', 'cccccc']"
+        ).concat().to_pydict() == {
+            "soma_joinid": [0, 2],
+            "unicode": [
+                "\N{LATIN CAPITAL LETTER E}\N{COMBINING CIRCUMFLEX ACCENT}",
+                "クン キン おし.える よ.む くん.ずる",
+            ],
+            "ascii": ["aa", "cccccc"],
+            "bytes": [b"aa", b"ccc"],
+            "float32": [0.0, 2.0],
+        }
 
-    # filter on unicode, equality
-    assert sample_soma_dataframe.read(
-        value_filter="unicode == '\N{LATIN CAPITAL LETTER E}\N{COMBINING CIRCUMFLEX ACCENT}'"
-    ).concat().to_pydict() == {
-        "soma_joinid": [0],
-        "unicode": [
-            "\N{LATIN CAPITAL LETTER E}\N{COMBINING CIRCUMFLEX ACCENT}",
-        ],
-        "ascii": ["aa"],
-        "bytes": [b"aa"],
-        "float32": [0.0],
-    }
+        # filter on unicode, equality
+        assert sdf.read(
+            value_filter="unicode == '\N{LATIN CAPITAL LETTER E}\N{COMBINING CIRCUMFLEX ACCENT}'"
+        ).concat().to_pydict() == {
+            "soma_joinid": [0],
+            "unicode": [
+                "\N{LATIN CAPITAL LETTER E}\N{COMBINING CIRCUMFLEX ACCENT}",
+            ],
+            "ascii": ["aa"],
+            "bytes": [b"aa"],
+            "float32": [0.0],
+        }
 
-    # filter on unicode, ordering
-    assert sample_soma_dataframe.read(
-        value_filter="unicode > 'a'"
-    ).concat().to_pydict() == {
-        "soma_joinid": [1, 2],
-        "unicode": [
-            "a \N{GREEK CAPITAL LETTER DELTA} test",
-            "クン キン おし.える よ.む くん.ずる",
-        ],
-        "ascii": ["bbb", "cccccc"],
-        "bytes": [b"bbb", b"ccc"],
-        "float32": [1.0, 2.0],
-    }
+        # filter on unicode, ordering
+        assert sdf.read(value_filter="unicode > 'a'").concat().to_pydict() == {
+            "soma_joinid": [1, 2],
+            "unicode": [
+                "a \N{GREEK CAPITAL LETTER DELTA} test",
+                "クン キン おし.える よ.む くん.ずる",
+            ],
+            "ascii": ["bbb", "cccccc"],
+            "bytes": [b"bbb", b"ccc"],
+            "float32": [1.0, 2.0],
+        }
 
 
 # TODO: Remove the `xfail` annotation when TileDB core supports Unicode
@@ -110,7 +111,11 @@ def test_dataframe_unicode_value_filter(sample_soma_dataframe):
 @pytest.mark.xfail
 def test_dataframe_unicode_index(tmp_path, sample_arrow_table):
     """Verify round-trip of unicode in DataFrame index columns"""
-    sdf = soma.DataFrame(tmp_path.as_posix())
-    sdf.create_legacy(sample_arrow_table.schema, index_column_names=["unicode"])
-    sdf.write(sample_arrow_table)
-    assert sdf.read().concat().equals(sample_arrow_table)
+    with soma.DataFrame.create(
+        tmp_path.as_posix(),
+        schema=sample_arrow_table.schema,
+        index_column_names=["unicode"],
+    ) as sdf:
+        sdf.write(sample_arrow_table)
+    with soma.DataFrame.open(tmp_path.as_posix()) as sdf:
+        assert sdf.read().concat().equals(sample_arrow_table)

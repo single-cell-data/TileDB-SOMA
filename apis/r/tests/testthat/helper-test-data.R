@@ -36,20 +36,26 @@ create_arrow_schema <- function() {
   )
 }
 
-create_and_populate_soma_dataframe <- function(uri) {
+create_and_populate_soma_dataframe <- function(
+  uri,
+  nrows = 10L,
+  seed = 1,
+  index_column_names = "foo"
+) {
+  set.seed(seed)
 
   arrow_schema <- create_arrow_schema()
 
   tbl <- arrow::arrow_table(
-    foo = 1L:10L,
-    soma_joinid = 11L:20L,
-    bar = 1.1:10.1,
-    baz = letters[1:10],
+    foo = seq.int(nrows) + 1000L,
+    soma_joinid = bit64::seq.integer64(from = 0L, to = nrows - 1L),
+    bar = seq(nrows) + 0.1,
+    baz = as.character(seq.int(nrows) + 1000L),
     schema = arrow_schema
   )
 
-  sdf <- SOMADataFrame$new(uri)
-  sdf$create(arrow_schema, index_column_names = "foo")
+  sdf <- SOMADataFrame$new(uri, internal_use_only = "allowed_use")
+  sdf$create(arrow_schema, index_column_names = index_column_names)
   sdf$write(tbl)
   sdf
 }
@@ -59,7 +65,7 @@ create_and_populate_sparse_nd_array <- function(uri, ...) {
 
   smat <- create_sparse_matrix_with_int_dims(...)
 
-  ndarray <- SOMASparseNDArray$new(uri)
+  ndarray <- SOMASparseNDArray$new(uri, internal_use_only = "allowed_use")
   ndarray$create(arrow::int32(), shape = dim(smat))
   ndarray$write(smat)
   ndarray

@@ -1,21 +1,15 @@
 #' TileDB Array Base Class
 #'
-#' @description
-#' Base class for representing an individual TileDB array.
+#' @description Base class for representing an individual TileDB array.
+#' (lifecycle: experimental)
 #'
-#' @details
-#' ## Initialization
-#' Initializing a `TileDBArray` object does not automatically create a new array
-#' at the specified `uri` if one does not already exist because we don't know
-#' what the schema will be. Arrays are only created by child classes, which
-#' populate the private `create_empty_array()` and `ingest_data()` methods.
 #' @export
 TileDBArray <- R6::R6Class(
   classname = "TileDBArray",
   inherit = TileDBObject,
   public = list(
 
-    #' @description Print summary of the array.
+    #' @description Print summary of the array. (lifecycle: experimental)
     print = function() {
       super$print()
       if (self$exists()) {
@@ -24,7 +18,7 @@ TileDBArray <- R6::R6Class(
       }
     },
 
-    #' @description Return a [`TileDBArray`] object
+    #' @description Return a [`TileDBArray`] object (lifecycle: experimental)
     #' @param ... Optional arguments to pass to `tiledb::tiledb_array()`
     #' @return A [`tiledb::tiledb_array`] object.
     tiledb_array = function(...) {
@@ -32,18 +26,18 @@ TileDBArray <- R6::R6Class(
       args$uri <- self$uri
       args$query_type <- "READ"
       args$query_layout <- "UNORDERED"
-      args$ctx <- self$ctx
+      args$ctx <- self$tiledbsoma_ctx$get_tiledb_context()
       do.call(tiledb::tiledb_array, args)
     },
 
-    #' @description Retrieve metadata from the TileDB array.
+    #' @description Retrieve metadata from the TileDB array. (lifecycle: experimental)
     #' @param key The name of the metadata attribute to retrieve.
     #' @param prefix Filter metadata using an optional prefix. Ignored if `key`
     #'   is not NULL.
     #' @return A list of metadata values.
     get_metadata = function(key = NULL, prefix = NULL) {
       private$open("READ")
-      on.exit(private$close())
+      on.exit(self$close())
 
       if (!is.null(key)) {
         metadata <- tiledb::tiledb_get_metadata(self$object, key)
@@ -57,7 +51,7 @@ TileDBArray <- R6::R6Class(
       return(metadata)
     },
 
-    #' @description Add list of metadata to the specified TileDB array.
+    #' @description Add list of metadata to the specified TileDB array. (lifecycle: experimental)
     #' @param metadata Named list of metadata to add.
     #' @return NULL
     set_metadata = function(metadata) {
@@ -65,7 +59,7 @@ TileDBArray <- R6::R6Class(
         "Metadata must be a named list" = is_named_list(metadata)
       )
       private$open("WRITE")
-      on.exit(private$close())
+      on.exit(self$close())
 
       dev_null <- mapply(
         FUN = tiledb::tiledb_put_metadata,
@@ -76,26 +70,48 @@ TileDBArray <- R6::R6Class(
       )
     },
 
-    #' @description Retrieve the array schema
-    #' @return A [`tiledb::tiledb_array_schema`] object
+    #' @description Retrieve the array schema as an Arrow schema (lifecycle: experimental)
+    #' @return A [`arrow::schema`] object
     schema = function() {
+      arrow_schema_from_tiledb_schema(tiledb::schema(self$object))
+    },
+
+    #' @description Retrieve the array schema as TileDB schema (lifecycle: experimental)
+    #' @return A [`tiledb::tiledb_array_schema`] object
+    tiledb_schema = function() {
       tiledb::schema(self$object)
     },
 
-    #' @description Retrieve the array dimensions
+    #' @description Retrieve the array dimensions (lifecycle: experimental)
     #' @return A named list of [`tiledb::tiledb_dim`] objects
     dimensions = function() {
-      dims <- tiledb::dimensions(self$schema())
+      dims <- tiledb::dimensions(self$tiledb_schema())
       setNames(dims, nm = vapply_char(dims, tiledb::name))
     },
 
-    #' @description Retrieve the array attributes
-    #' @return A list of [`tiledb::tiledb_attr`] objects
-    attributes = function() {
-      tiledb::attrs(self$schema())
+    #' @description Retrieve the shape, i.e. the length of each dimension (lifecycle: experimental)
+    #' @return A named vector of dimension length (and the same type as the dimension)
+    shape = function() {
+      as.integer64(shape(
+        self$uri,
+        config=as.character(tiledb::config(self$tiledbsoma_ctx$get_tiledb_context()))
+      ))
     },
 
-    #' @description Retrieve dimension names
+    #' @description Retrieve number of dimensions (lifecycle: experimental)
+    #' @return A scalar with the number of dimensions
+    ndim = function() {
+      dims <- tiledb::dimensions(self$tiledb_schema())
+      length(dims)
+    },
+
+    #' @description Retrieve the array attributes (lifecycle: experimental)
+    #' @return A list of [`tiledb::tiledb_attr`] objects
+    attributes = function() {
+      tiledb::attrs(self$tiledb_schema())
+    },
+
+    #' @description Retrieve dimension names (lifecycle: experimental)
     #' @return A character vector with the array's dimension names
     dimnames = function() {
       vapply(
@@ -106,14 +122,7 @@ TileDBArray <- R6::R6Class(
       )
     },
 
-    #' @description Get number of fragments in the array
-    fragment_count = function() {
-      tiledb::tiledb_fragment_info_get_num(
-        tiledb::tiledb_fragment_info(self$uri)
-      )
-    },
-
-    #' @description Retrieve attribute names
+    #' @description Retrieve attribute names (lifecycle: experimental)
     #' @return A character vector with the array's attribute names
     attrnames = function() {
       vapply(
@@ -124,7 +133,27 @@ TileDBArray <- R6::R6Class(
       )
     },
 
-    #' @description Set dimension values to slice from the array.
+    #' @description Retrieve the names of all columns, including dimensions and
+    #' attributes (lifecycle: experimental)
+    #' @return A character vector with the array's column names
+    colnames = function() {
+      c(self$dimnames(), self$attrnames())
+    },
+
+    #' @description Retrieve names of index (dimension) columns (lifecycle: experimental)
+    #' @return A character vector with the array index (dimension) names
+    index_column_names = function() {
+      self$dimnames()
+    },
+
+    #' @description Get number of fragments in the array (lifecycle: experimental)
+    fragment_count = function() {
+      tiledb::tiledb_fragment_info_get_num(
+        tiledb::tiledb_fragment_info(self$uri)
+      )
+    },
+
+    #' @description Set dimension values to slice from the array. (lifecycle: experimental)
     #' @param dims a named list of character vectors. Each name must correspond
     #' to an array dimension. The character vectors within each element are used
     #' to set the arrays selected ranges for each corresponding dimension.
@@ -184,7 +213,7 @@ TileDBArray <- R6::R6Class(
     },
 
     #' @description Reset the query. By default both dimension ranges and
-    #' attribute filters are cleared.
+    #' attribute filters are cleared. (lifecycle: experimental)
     #' @param dims Clear the defined dimension ranges?
     #' @param attr_filter Clear the defined attribute filters?
     #' @return NULL
@@ -203,7 +232,15 @@ TileDBArray <- R6::R6Class(
           "tiledb_query_condition"
         )
       }
+    },
+
+    #' @description Close the SOMA object.
+    #' @return The object, invisibly
+    close = function() {
+      spdl::debug("Closing {} '{}'", self$class(), self$uri)
+      invisible(tiledb::tiledb_array_close(self$object))
     }
+
   ),
 
   private = list(
@@ -213,25 +250,18 @@ TileDBArray <- R6::R6Class(
     initialize_object = function() {
       private$tiledb_object <- tiledb::tiledb_array(
         uri = self$uri,
-        ctx = self$ctx,
+        ctx = self$tiledbsoma_ctx$get_tiledb_context(),
         query_layout = "UNORDERED"
       )
-      private$close()
+      self$close()
     },
-
-    # @description Create empty TileDB array.
-    create_empty_array = function() return(NULL),
 
     open = function(mode) {
       mode <- match.arg(mode, c("READ", "WRITE"))
+      spdl::debug(
+        "Opening {} '{}' in {} mode", self$class(), self$uri, mode
+      )
       invisible(tiledb::tiledb_array_open(self$object, type = mode))
-    },
-
-    close = function() {
-      invisible(tiledb::tiledb_array_close(self$object))
-    },
-
-    # @description Ingest data into the TileDB array.
-    ingest_data = function() return(NULL)
+    }
   )
 )

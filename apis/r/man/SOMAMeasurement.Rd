@@ -7,7 +7,7 @@
 A \code{SOMAMeasurement} is a sub-element of a \code{\link{SOMAExperiment}},
 and is otherwise a specialized \code{\link{SOMACollection}} with pre-defined fields:
 \code{X}, \code{var}, \code{obsm}/\code{varm}, and \code{obsp}/\code{varp} (see \emph{Active Bindings} below for
-details).
+details). (lifecycle: experimental)
 }
 \section{Super classes}{
 \code{\link[tiledbsoma:TileDBObject]{tiledbsoma::TileDBObject}} -> \code{\link[tiledbsoma:TileDBGroup]{tiledbsoma::TileDBGroup}} -> \code{\link[tiledbsoma:SOMACollectionBase]{tiledbsoma::SOMACollectionBase}} -> \code{SOMAMeasurement}
@@ -51,6 +51,8 @@ pairwise annotations on the variable axis and indexed with \verb{[varid_1, varid
 <ul>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBObject" data-id="class"><a href='../../tiledbsoma/html/TileDBObject.html#method-TileDBObject-class'><code>tiledbsoma::TileDBObject$class()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBObject" data-id="exists"><a href='../../tiledbsoma/html/TileDBObject.html#method-TileDBObject-exists'><code>tiledbsoma::TileDBObject$exists()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBObject" data-id="get_tiledb_config"><a href='../../tiledbsoma/html/TileDBObject.html#method-TileDBObject-get_tiledb_config'><code>tiledbsoma::TileDBObject$get_tiledb_config()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBGroup" data-id="close"><a href='../../tiledbsoma/html/TileDBGroup.html#method-TileDBGroup-close'><code>tiledbsoma::TileDBGroup$close()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBGroup" data-id="get_metadata"><a href='../../tiledbsoma/html/TileDBGroup.html#method-TileDBGroup-get_metadata'><code>tiledbsoma::TileDBGroup$get_metadata()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBGroup" data-id="length"><a href='../../tiledbsoma/html/TileDBGroup.html#method-TileDBGroup-length'><code>tiledbsoma::TileDBGroup$length()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBGroup" data-id="names"><a href='../../tiledbsoma/html/TileDBGroup.html#method-TileDBGroup-names'><code>tiledbsoma::TileDBGroup$names()</code></a></span></li>
@@ -59,6 +61,10 @@ pairwise annotations on the variable axis and indexed with \verb{[varid_1, varid
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBGroup" data-id="set_metadata"><a href='../../tiledbsoma/html/TileDBGroup.html#method-TileDBGroup-set_metadata'><code>tiledbsoma::TileDBGroup$set_metadata()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBGroup" data-id="to_data_frame"><a href='../../tiledbsoma/html/TileDBGroup.html#method-TileDBGroup-to_data_frame'><code>tiledbsoma::TileDBGroup$to_data_frame()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBGroup" data-id="to_list"><a href='../../tiledbsoma/html/TileDBGroup.html#method-TileDBGroup-to_list'><code>tiledbsoma::TileDBGroup$to_list()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMACollectionBase" data-id="add_new_collection"><a href='../../tiledbsoma/html/SOMACollectionBase.html#method-SOMACollectionBase-add_new_collection'><code>tiledbsoma::SOMACollectionBase$add_new_collection()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMACollectionBase" data-id="add_new_dataframe"><a href='../../tiledbsoma/html/SOMACollectionBase.html#method-SOMACollectionBase-add_new_dataframe'><code>tiledbsoma::SOMACollectionBase$add_new_dataframe()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMACollectionBase" data-id="add_new_dense_ndarray"><a href='../../tiledbsoma/html/SOMACollectionBase.html#method-SOMACollectionBase-add_new_dense_ndarray'><code>tiledbsoma::SOMACollectionBase$add_new_dense_ndarray()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMACollectionBase" data-id="add_new_sparse_ndarray"><a href='../../tiledbsoma/html/SOMACollectionBase.html#method-SOMACollectionBase-add_new_sparse_ndarray'><code>tiledbsoma::SOMACollectionBase$add_new_sparse_ndarray()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMACollectionBase" data-id="create"><a href='../../tiledbsoma/html/SOMACollectionBase.html#method-SOMACollectionBase-create'><code>tiledbsoma::SOMACollectionBase$create()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMACollectionBase" data-id="get"><a href='../../tiledbsoma/html/SOMACollectionBase.html#method-SOMACollectionBase-get'><code>tiledbsoma::SOMACollectionBase$get()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMACollectionBase" data-id="initialize"><a href='../../tiledbsoma/html/SOMACollectionBase.html#method-SOMACollectionBase-initialize'><code>tiledbsoma::SOMACollectionBase$initialize()</code></a></span></li>

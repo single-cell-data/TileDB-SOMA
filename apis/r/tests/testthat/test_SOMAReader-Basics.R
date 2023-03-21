@@ -1,6 +1,4 @@
 test_that("Basic SOMAReader", {
-    library(arch)
-
     tdir <- tempfile()
     tgzfile <- system.file("raw-data", "soco-pbmc3k_processed-obs.tar.gz", package="tiledbsoma")
     untar(tarfile = tgzfile, exdir = tdir)
@@ -13,5 +11,5 @@ test_that("Basic SOMAReader", {
 
     columns <- c("n_counts", "n_genes", "louvain")
     z <- soma_reader(uri, columns)
-    expect_true(inherits(z, "arch_array"))
+    expect_true(inherits(z, "list"))
 })

@@ -15,7 +15,7 @@
 #' more dimensions.
 #'
 #' The default "fill" value for `SOMADenseNDArray` is the zero or null value of
-#' the array type (e.g., Arrow.float32 defaults to 0.0).
+#' the array type (e.g., Arrow.float32 defaults to 0.0).  (lifecycle: experimental)
 #' @export
 
 SOMADenseNDArray <- R6::R6Class(
@@ -24,7 +24,7 @@ SOMADenseNDArray <- R6::R6Class(
 
   public = list(
 
-    #' @description Create a SOMADenseNDArray named with the URI.
+    #' @description Create a SOMADenseNDArray named with the URI. (lifecycle: experimental)
     #' @param type an [Arrow type][arrow::data-type] defining the type of each
     #' element in the array.
     #' @param shape a vector of integers defining the shape of the array.
@@ -78,19 +78,23 @@ SOMADenseNDArray <- R6::R6Class(
       # create array
       tiledb::tiledb_array_create(uri = self$uri, schema = tdb_schema)
       private$write_object_type_metadata()
+      self
     },
 
-    #' @description Read as an 'arrow::Table'
+    #' @description Read as an 'arrow::Table' (lifecycle: experimental)
     #' @param coords Optional `list` of integer vectors, one for each dimension, with a
     #' length equal to the number of values to read. If `NULL`, all values are
     #' read. List elements can be named when specifying a subset of dimensions.
     #' @param result_order Optional order of read results. This can be one of either
     #' `"ROW_MAJOR, `"COL_MAJOR"`, `"GLOBAL_ORDER"`, or `"UNORDERED"`.
+    #' @param iterated Option boolean indicated whether data is read in call (when
+    #' `FALSE`, the default value) or in several iterated steps.
     #' @param log_level Optional logging level with default value of `"warn"`.
     #' @return An [`arrow::Table`].
     read_arrow_table = function(
       coords = NULL,
       result_order = "ROW_MAJOR",
+      iterated = FALSE,
       log_level = "warn"
     ) {
       uri <- self$uri
@@ -114,24 +118,42 @@ SOMADenseNDArray <- R6::R6Class(
           coords <- lapply(coords, function(x) if (inherits(x, "integer")) bit64::as.integer64(x) else x)
       }
 
-      rl <- soma_reader(uri = uri,
-                        dim_points = coords,        # NULL is dealt with by soma_reader()
-                        result_order = result_order,
-                        loglevel = log_level)       # idem
-      arrow::as_arrow_table(arch::from_arch_array(rl, arrow::RecordBatch))
+      private$dense_matrix <- FALSE
+
+      if (isFALSE(iterated)) {
+          rl <- soma_reader(uri = uri,
+                            dim_points = coords,        # NULL is dealt with by soma_reader()
+                            result_order = result_order,
+                            loglevel = log_level,       # idem
+                            config = as.character(tiledb::config(
+                              self$tiledbsoma_ctx$get_tiledb_context()
+                            )))
+          private$soma_reader_transform(rl)
+      } else {
+          ## should we error if this isn't null?
+          if (!is.null(self$soma_reader_pointer)) {
+              warning("pointer not null, skipping")
+          } else {
+              private$soma_reader_setup()
+          }
+          invisible(NULL)
+      }
     },
 
-    #' @description Read as a dense matrix
+    #' @description Read as a dense matrix (lifecycle: experimental)
     #' @param coords Optional `list` of integer vectors, one for each dimension, with a
     #' length equal to the number of values to read. If `NULL`, all values are
     #' read. List elements can be named when specifying a subset of dimensions.
     #' @param result_order Optional order of read results. This can be one of either
     #' `"ROW_MAJOR, `"COL_MAJOR"`, `"GLOBAL_ORDER"`, or `"UNORDERED"`.
+    #' @param iterated Option boolean indicated whether data is read in call (when
+    #' `FALSE`, the default value) or in several iterated steps.
     #' @param log_level Optional logging level with default value of `"warn"`.
     #' @return A `matrix` object
     read_dense_matrix = function(
       coords = NULL,
       result_order = "ROW_MAJOR",
+      iterated = FALSE,
       log_level = "warn"
     ) {
       dims <- self$dimensions()
@@ -141,14 +163,26 @@ SOMADenseNDArray <- R6::R6Class(
                     all.equal(c("soma_dim_0", "soma_dim_1"), names(dims)),
                 "Array must contain column 'soma_data'" = all.equal("soma_data", names(attr)))
 
-      tbl <- self$read_arrow_table(coords = coords, result_order = result_order, log_level = log_level)
-      m <- matrix(as.numeric(tbl$GetColumnByName("soma_data")),
-                  nrow = length(unique(as.numeric(tbl$GetColumnByName("soma_dim_0")))),
-                  ncol = length(unique(as.numeric(tbl$GetColumnByName("soma_dim_1")))),
-                  byrow = result_order == "ROW_MAJOR")
+      if (isFALSE(iterated)) {
+          tbl <- self$read_arrow_table(coords = coords, result_order = result_order, log_level = log_level)
+          m <- matrix(as.numeric(tbl$GetColumnByName("soma_data")),
+                      nrow = length(unique(as.numeric(tbl$GetColumnByName("soma_dim_0")))),
+                      ncol = length(unique(as.numeric(tbl$GetColumnByName("soma_dim_1")))),
+                      byrow = result_order == "ROW_MAJOR")
+      } else {
+          ## should we error if this isn't null?
+          if (!is.null(self$soma_reader_pointer)) {
+              warning("pointer not null, skipping")
+          } else {
+              private$soma_reader_setup()
+              private$dense_matrix <- TRUE
+              private$result_order <- result_order
+          }
+          invisible(NULL)
+      }
     },
 
-    #' @description Write matrix data to the array.
+    #' @description Write matrix data to the array. (lifecycle: experimental)
     #'
     #' @param values A `matrix`. Character dimension names are ignored because
     #' `SOMANDArray`'s use integer indexing.
@@ -171,11 +205,31 @@ SOMADenseNDArray <- R6::R6Class(
           length(coords) == length(self$dimensions())
       )
 
-      on.exit(private$close())
+      on.exit(self$close())
       private$open("WRITE")
       arr <- self$object
       tiledb::query_layout(arr) <- "COL_MAJOR"
       arr[] <- values
     }
+  ),
+
+  private = list(
+
+    ## refined from base class
+    soma_reader_transform = function(x) {
+      tbl <- arrow::as_arrow_table(arrow::RecordBatch$import_from_c(x[[1]], x[[2]]))
+      if (isTRUE(private$dense_matrix)) {
+          m <- matrix(as.numeric(tbl$GetColumnByName("soma_data")),
+                      nrow = length(unique(as.numeric(tbl$GetColumnByName("soma_dim_0")))),
+                      ncol = length(unique(as.numeric(tbl$GetColumnByName("soma_dim_1")))),
+                      byrow = private$result_order == "ROW_MAJOR")
+      } else {
+          tbl
+      }
+    },
+
+    ## internal state variable for dense matrix vs arrow table return
+    dense_matrix = TRUE,
+    result_order = "ROW_MAJOR"
   )
 )

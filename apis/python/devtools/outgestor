@@ -21,8 +21,8 @@ import sys
 import tiledb
 
 import tiledbsoma
+import tiledbsoma._util
 import tiledbsoma.io
-import tiledbsoma.util
 
 logger = logging.getLogger("tiledbsoma")
 
@@ -85,7 +85,7 @@ def main():
 
     # This is for local-disk use only -- for S3-backed tiledb://... URIs we should
     # use tiledb.vfs to remove any priors, and/or make use of a tiledb `overwrite` flag.
-    if tiledbsoma.util.is_local_path(outdir):
+    if tiledbsoma._util.is_local_path(outdir):
         if not os.path.exists(outdir):
             os.mkdir(outdir)
 
@@ -93,7 +93,7 @@ def main():
     if verbose:
         tiledbsoma.logging.info()
 
-    soma = tiledbsoma.Experiment(input_path)
+    soma = tiledbsoma.Experiment.open(input_path)
     tiledbsoma.io.to_h5ad(
         soma,
         output_path,

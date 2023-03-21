@@ -1,6 +1,6 @@
 test_that("TileDBArray helper functions", {
   uri <- withr::local_tempdir(pattern = "test-array")
-  tdb <- TileDBArray$new(uri = uri)
+  tdb <- TileDBArray$new(uri = uri, internal_use_only = "allowed_use")
 
   # Check errors on non-existent array
   expect_error(tdb$object, "Array does not exist.")
@@ -15,9 +15,13 @@ test_that("TileDBArray helper functions", {
   expect_is(tdb$tiledb_array(), "tiledb_array")
   expect_is(tdb$object, "tiledb_array")
   expect_identical(tdb$dimnames(), index_cols)
+  expect_identical(tdb$index_column_names(), index_cols)
 
   attr_cols <- setdiff(colnames(df), index_cols)
   expect_identical(tdb$attrnames(), attr_cols)
+
+  # both dimensions and attributes
+  expect_setequal(tdb$colnames(), colnames(df))
 
   # metadata
   md <- list(baz = "qux", foo = "bar")
@@ -27,7 +31,7 @@ test_that("TileDBArray helper functions", {
   expect_equal(tdb$get_metadata(), md)
 
   # dimension slicing
-  tdb <- TileDBArray$new(uri = uri)
+  tdb <- TileDBArray$new(uri = uri, internal_use_only = "allowed_use")
   expect_error(
     tdb$set_query(dims = "foo"),
     "'dims' must be a named list of character vectors"
@@ -62,7 +66,7 @@ test_that("TileDBArray helper functions", {
   )
 
   # set attribute filter
-  tdb <- TileDBArray$new(uri = uri)
+  tdb <- TileDBArray$new(uri = uri, internal_use_only = "allowed_use")
   tdb$set_query(attr_filter = Admit == "Admitted")
   expect_true(all(tdb$object[]$Admit == "Admitted"))
 
@@ -73,4 +77,8 @@ test_that("TileDBArray helper functions", {
   # reset attribute filter
   tdb$reset_query()
   expect_length(tdb$object[]$Admit, nrow(df))
+
+  ## shape
+  expect_equal(tdb$ndim(), 2)
+
 })

@@ -14,6 +14,10 @@ is_arrow_record_batch <- function(x) {
   is_arrow_object(x) && inherits(x, "RecordBatch")
 }
 
+is_arrow_array <- function(x) {
+  is_arrow_object(x) && inherits(x, "Array")
+}
+
 is_arrow_table <- function(x) {
   is_arrow_object(x) && inherits(x, "Table")
 }
@@ -73,7 +77,7 @@ tiledb_type_from_arrow_type <- function(x) {
     # fixed_size_list = "fixed_size_list",
     # map_of = "map",
     # duration = "duration",
-    stop("Unsupported data type", call. = FALSE)
+    stop("Unsupported data type: ", x$name, call. = FALSE)
   )
 }
 
@@ -92,7 +96,8 @@ arrow_type_from_tiledb_type <- function(x) {
     FLOAT64 = arrow::float64(),
     BOOL = arrow::boolean(),
     ASCII = arrow::utf8(),
-    stop("Unsupported data type", call. = FALSE)
+    UTF8 = arrow::utf8(),
+    stop("Unsupported data type: ", x, call. = FALSE)
   )
 }
 
@@ -120,7 +125,7 @@ arrow_type_range <- function(x) {
     bool = NULL,
     # string/utf8
     utf8 = NULL,
-    stop("Unsupported data type", call. = FALSE)
+    stop("Unsupported data type:", x$name, call. = FALSE)
   )
 }
 

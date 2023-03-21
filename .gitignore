@@ -48,7 +48,9 @@ examples/cmake_project/build
 *.egg-info
 apis/python/src/tiledbsoma/_version.py
 apis/python/src/tiledbsoma/libtiledb.*
-apis/python/src/tiledbsoma/libtiledbsoma.*
+apis/python/src/tiledbsoma/libtiledbsoma.so
+apis/python/src/tiledbsoma/libtiledbsoma.dylib
+apis/python/src/tiledbsoma/pytiledbsoma.*
 
 /.quarto/
 
@@ -57,7 +59,15 @@ apis/python/src/tiledbsoma/libtiledbsoma.*
 ## R package tarballs
 apis/r/tiledbsoma_*tar.gz
 apis/r/local/*
-
+apis/r/src/*.o
+apis/r/src/*.so
+apis/r/src/include/*
+apis/r/src/lib/*
+apis/r/src/libtiledbsoma/*
+apis/r/src/Makevars
+apis/r/src/cmake_log.txt
+apis/r/.editorconfig
+!apis/r/man/roxygen/*
 
 # Coverage/codecov
 .coverage

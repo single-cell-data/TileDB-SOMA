@@ -5,20 +5,15 @@
 \title{TileDB Object Base Class}
 \description{
 Base class to implement shared functionality across the TileDBArray and
-TileDBGroup classes.
-}
-\section{Public fields}{
-\if{html}{\out{<div class="r6-fields">}}
-\describe{
-\item{\code{platform_config}}{Optional platform configuration}
-
-\item{\code{ctx}}{Optional TileDB context}
-}
-\if{html}{\out{</div>}}
+TileDBGroup classes. (lifecycle: experimental)
 }
 \section{Active bindings}{
 \if{html}{\out{<div class="r6-active-bindings">}}
 \describe{
+\item{\code{platform_config}}{Platform configuration}
+
+\item{\code{tiledbsoma_ctx}}{SOMATileDBContext}
+
 \item{\code{uri}}{The URI of the TileDB object.}
 
 \item{\code{object}}{Access the underlying TileB object directly (either a
@@ -33,6 +28,7 @@ TileDBGroup classes.
 \item \href{#method-TileDBObject-class}{\code{TileDBObject$class()}}
 \item \href{#method-TileDBObject-print}{\code{TileDBObject$print()}}
 \item \href{#method-TileDBObject-exists}{\code{TileDBObject$exists()}}
+\item \href{#method-TileDBObject-get_tiledb_config}{\code{TileDBObject$get_tiledb_config()}}
 \item \href{#method-TileDBObject-clone}{\code{TileDBObject$clone()}}
 }
 }
@@ -40,9 +36,15 @@ TileDBGroup classes.
 \if{html}{\out{<a id="method-TileDBObject-new"></a>}}
 \if{latex}{\out{\hypertarget{method-TileDBObject-new}{}}}
 \subsection{Method \code{new()}}{
-Create a new TileDB object.
+Create a new TileDB object. (lifecycle: experimental)
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{TileDBObject$new(uri, platform_config = NULL, ctx = NULL)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{TileDBObject$new(
+  uri,
+  platform_config = NULL,
+  tiledbsoma_ctx = NULL,
+  mode = "READ",
+  internal_use_only = NULL
+)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
@@ -52,9 +54,12 @@ Create a new TileDB object.
 
 \item{\code{platform_config}}{Optional platform configuration}
 
-\item{\code{ctx}}{optional TileDB context}
+\item{\code{tiledbsoma_ctx}}{Optional SOMATileDBContext}
 
-\item{\code{verbose}}{Print status messages}
+\item{\code{mode}}{One of "READ" or "WRITE"}
+
+\item{\code{internal_use_only}}{Character value to signal 'permitted' call as
+\code{new()} is considered internal and should not be called directly}
 }
 \if{html}{\out{</div>}}
 }
@@ -83,13 +88,32 @@ Print-friendly representation of the object.
 \if{html}{\out{<a id="method-TileDBObject-exists"></a>}}
 \if{latex}{\out{\hypertarget{method-TileDBObject-exists}{}}}
 \subsection{Method \code{exists()}}{
-Check if the object exists.
+Check if the object exists. (lifecycle: experimental)
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{TileDBObject$exists()}\if{html}{\out{</div>}}
 }
 
 \subsection{Returns}{
 \verb{TRUE`` if the object exists, }FALSE` otherwise.
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-TileDBObject-get_tiledb_config"></a>}}
+\if{latex}{\out{\hypertarget{method-TileDBObject-get_tiledb_config}{}}}
+\subsection{Method \code{get_tiledb_config()}}{
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{TileDBObject$get_tiledb_config(param = NULL)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{param}}{Parameter name from \code{self$platform_config} to fetch}
+}
+\if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+SOMATileDBContext
 }
 }
 \if{html}{\out{<hr>}}

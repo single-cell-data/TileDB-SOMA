@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 import pyarrow as pa
 
-import tiledbsoma.libtiledbsoma as clib
+import tiledbsoma.pytiledbsoma as clib
 
 DATA_SIZE = 1 << 14
 VERBOSE = False

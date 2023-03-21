@@ -61,13 +61,15 @@ class SOMAReader {
      * @param result_order Read result order
      * @return std::unique_ptr<SOMAReader> SOMAReader
      */
-    static std::unique_ptr<SOMAReader> open(
+    __attribute__((visibility("default"))) static std::unique_ptr<SOMAReader>
+    open(
         std::string_view uri,
         std::string_view name = "unnamed",
         std::map<std::string, std::string> platform_config = {},
         std::vector<std::string> column_names = {},
         std::string_view batch_size = "auto",
-        std::string_view result_order = "auto");
+        std::string_view result_order = "auto",
+        std::optional<std::pair<uint64_t, uint64_t>> timestamp = std::nullopt);
 
     /**
      * @brief Open an array at the specified URI and return SOMAReader object.
@@ -86,7 +88,8 @@ class SOMAReader {
         std::string_view name = "unnamed",
         std::vector<std::string> column_names = {},
         std::string_view batch_size = "auto",
-        std::string_view result_order = "auto");
+        std::string_view result_order = "auto",
+        std::optional<std::pair<uint64_t, uint64_t>> timestamp = std::nullopt);
 
     //===================================================================
     //= public non-static
@@ -104,7 +107,8 @@ class SOMAReader {
         std::shared_ptr<Context> ctx,
         std::vector<std::string> column_names,
         std::string_view batch_size,
-        std::string_view result_order);
+        std::string_view result_order,
+        std::optional<std::pair<uint64_t, uint64_t>> timestamp = std::nullopt);
 
     SOMAReader() = delete;
     SOMAReader(const SOMAReader&) = delete;
@@ -119,7 +123,7 @@ class SOMAReader {
      * @param batch_size
      * @param result_order
      */
-    void reset(
+    __attribute__((visibility("default"))) void reset(
         std::vector<std::string> column_names = {},
         std::string_view batch_size = "auto",
         std::string_view result_order = "auto");
@@ -171,9 +175,11 @@ class SOMAReader {
             }
 
             LOG_DEBUG(fmt::format(
-                "[SOMAReader] set_dim_points partitioning: dim={} index={} "
+                "[SOMAReader] set_dim_points partitioning: sizeof(T)={} dim={} "
+                "index={} "
                 "count={} "
                 "range=[{}, {}] of {} points",
+                sizeof(T),
                 dim,
                 partition_index,
                 partition_count,
@@ -199,6 +205,8 @@ class SOMAReader {
      */
     template <typename T>
     void set_dim_points(const std::string& dim, const std::vector<T>& points) {
+        LOG_DEBUG(fmt::format(
+            "[SOMAReader] set_dim_points: sizeof(T)={}", sizeof(T)));
         mq_->select_points(dim, points);
     }
 
@@ -244,7 +252,7 @@ class SOMAReader {
      * @brief Submit the query
      *
      */
-    void submit();
+    __attribute__((visibility("default"))) void submit();
 
     /**
      * @brief Read the next chunk of results from the query. If all results have
@@ -260,15 +268,25 @@ class SOMAReader {
      *
      * @return std::optional<std::shared_ptr<ArrayBuffers>>
      */
-    std::optional<std::shared_ptr<ArrayBuffers>> read_next();
+    __attribute__((visibility("default")))
+    std::optional<std::shared_ptr<ArrayBuffers>>
+    read_next();
 
     /**
      * @brief Check if the query is complete.
      *
-     * @return true Query status is COMPLETE
+     * If `query_status_only` is true, return true if the query status is
+     * complete.
+     *
+     * If `query_status_only` is false, return true if the query status
+     * is complete or if the query is empty (no ranges have been added to the
+     * query).
+     *
+     * @param query_status_only Query complete mode.
+     * @return true if the query is complete, as described above
      */
-    bool is_complete() {
-        return mq_->is_complete();
+    bool is_complete(bool query_status_only = false) {
+        return mq_->is_complete(query_status_only);
     }
 
     /**
@@ -283,11 +301,21 @@ class SOMAReader {
     }
 
     /**
+     * @brief Returns the total number of cells read so far, including any
+     * previous incomplete queries.
+     *
+     * @return size_t Total number of cells read
+     */
+    size_t total_num_cells() {
+        return mq_->total_num_cells();
+    }
+
+    /**
      * @brief Get the total number of unique cells in the array.
      *
      * @return uint64_t Total number of unique cells
      */
-    uint64_t nnz();
+    __attribute__((visibility("default"))) uint64_t nnz();
 
     /**
      * @brief Get the schema of the array.
@@ -297,6 +325,14 @@ class SOMAReader {
     std::shared_ptr<ArraySchema> schema() {
         return mq_->schema();
     }
+
+    /**
+     * @brief Get the capacity of each dimension.
+     *
+     * @return A vector with length equal to the number of dimensions; each
+     * value in the vector is the capcity of each dimension.
+     */
+    __attribute__((visibility("default"))) std::vector<int64_t> shape();
 
    private:
     //===================================================================
@@ -312,6 +348,12 @@ class SOMAReader {
     // Batch size
     std::string batch_size_;
 
+    // Result order
+    std::string result_order_;
+
+    // Read timestamp range (start, end)
+    std::optional<std::pair<uint64_t, uint64_t>> timestamp_;
+
     // Managed query for the array
     std::unique_ptr<ManagedQuery> mq_;
 
@@ -320,6 +362,9 @@ class SOMAReader {
 
     // True if the query was submitted
     bool submitted_ = false;
+
+    // Unoptimized method for computing nnz() (issue `count_cells` query)
+    uint64_t nnz_slow();
 };
 
 }  // namespace tiledbsoma

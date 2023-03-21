@@ -1,7 +1,5 @@
-from .soma_tiledb_context import SOMATileDBContext
-from .tiledb_create_options import TileDBCreateOptions
+from ._soma_tiledb_context import SOMATileDBContext
 
 __all__ = [
-    "TileDBCreateOptions",
     "SOMATileDBContext",
 ]

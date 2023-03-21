@@ -7,7 +7,7 @@ import tiledb
 
 import tiledbsoma
 import tiledbsoma.io
-from tiledbsoma import util
+from tiledbsoma import _constants, _factory
 
 HERE = Path(__file__).parent
 
@@ -15,8 +15,15 @@ HERE = Path(__file__).parent
 @pytest.fixture
 def h5ad_file(request):
     # pbmc-small is faster for automated unit-test / CI runs.
-    # input_path = HERE.parent / "anndata/pbmc3k_processed.h5ad"
-    input_path = HERE.parent / "anndata/pbmc-small.h5ad"
+    # input_path = HERE.parent / "testdata/pbmc3k_processed.h5ad"
+    input_path = HERE.parent / "testdata/pbmc-small.h5ad"
+    return input_path
+
+
+@pytest.fixture
+def h5ad_file_extended(request):
+    # This has more component arrays in it
+    input_path = HERE.parent / "testdata/pbmc3k_processed.h5ad"
     return input_path
 
 
@@ -40,22 +47,33 @@ def adata(h5ad_file):
         ["resume"],
     ],
 )
-def test_import_anndata(adata, ingest_modes):
+@pytest.mark.parametrize(
+    "X_kind",
+    [tiledbsoma.SparseNDArray, tiledbsoma.DenseNDArray],
+)
+def test_import_anndata(adata, ingest_modes, X_kind):
 
     have_ingested = False
 
     tempdir = tempfile.TemporaryDirectory()
     output_path = tempdir.name
     orig = adata
-    metakey = util.SOMA_OBJECT_TYPE_METADATA_KEY  # keystroke-saver
+    metakey = _constants.SOMA_OBJECT_TYPE_METADATA_KEY  # keystroke-saver
     all2d = (slice(None), slice(None))  # keystroke-saver
 
     for ingest_mode in ingest_modes:
 
-        exp = tiledbsoma.Experiment(output_path)
-        tiledbsoma.io.from_anndata(exp, orig, "RNA", ingest_mode=ingest_mode)
+        uri = tiledbsoma.io.from_anndata(
+            output_path,
+            orig,
+            "RNA",
+            ingest_mode=ingest_mode,
+            X_kind=X_kind,
+        )
         if ingest_mode != "schema_only":
             have_ingested = True
+
+        exp = tiledbsoma.Experiment.open(uri)
 
         assert exp.metadata[metakey] == "SOMAExperiment"
 
@@ -103,20 +121,28 @@ def test_import_anndata(adata, ingest_modes):
         # Check Xs
         assert exp.ms["RNA"].X.metadata.get(metakey) == "SOMACollection"
 
-        # Check X/data (dense)
-        assert exp.ms["RNA"].X["data"].metadata.get(metakey) == "SOMADenseNDArray"
-        if have_ingested:
-            matrix = exp.ms["RNA"].X["data"].read(coords=all2d)
-            assert matrix.shape == orig.X.shape
+        # Check X/data (dense in the H5AD)
+        if X_kind == tiledbsoma.SparseNDArray:
+            assert exp.ms["RNA"].X["data"].metadata.get(metakey) == "SOMASparseNDArray"
+            table = exp.ms["RNA"].X["data"].read(coords=all2d).tables().concat()
+            if have_ingested:
+                assert table.shape[0] == orig.X.shape[0] * orig.X.shape[1]
+            else:
+                assert table.shape[0] == 0
         else:
-            with pytest.raises(ValueError):
-                exp.ms["RNA"].X["data"].read(coords=all2d)
+            assert exp.ms["RNA"].X["data"].metadata.get(metakey) == "SOMADenseNDArray"
+            if have_ingested:
+                matrix = exp.ms["RNA"].X["data"].read(coords=all2d)
+                assert matrix.size == orig.X.size
+            else:
+                with pytest.raises(ValueError):
+                    exp.ms["RNA"].X["data"].read(coords=all2d)
 
         # Check raw/X/data (sparse)
         assert exp.ms["raw"].X["data"].metadata.get(metakey) == "SOMASparseNDArray"
         if have_ingested:
-            matrix = exp.ms["raw"].X["data"].read(coords=all2d).coos().concat()
-            assert matrix.shape == orig.raw.X.shape
+            table = exp.ms["raw"].X["data"].read(coords=all2d).tables().concat()
+            assert table.shape[0] == orig.raw.X.nnz
 
         # Check some annotation matrices
 
@@ -147,8 +173,8 @@ def test_import_anndata(adata, ingest_modes):
         for key in list(orig.obsp.keys()):
             assert obsp[key].metadata.get(metakey) == "SOMASparseNDArray"
             if have_ingested:
-                matrix = obsp[key].read(coords=all2d).coos().concat()
-                assert matrix.shape == orig.obsp[key].shape
+                table = obsp[key].read(coords=all2d).tables().concat()
+                assert table.shape[0] == orig.obsp[key].nnz
 
         # pbmc-small has no varp
 
@@ -162,9 +188,9 @@ def _get_fragment_count(array_uri):
 @pytest.mark.parametrize(
     "resume_mode_h5ad_file",
     [
-        HERE.parent / "anndata/pbmc-small-x-dense.h5ad",
-        HERE.parent / "anndata/pbmc-small-x-csr.h5ad",
-        HERE.parent / "anndata/pbmc-small-x-csc.h5ad",
+        HERE.parent / "testdata/pbmc-small-x-dense.h5ad",
+        HERE.parent / "testdata/pbmc-small-x-csr.h5ad",
+        HERE.parent / "testdata/pbmc-small-x-csc.h5ad",
     ],
 )
 def test_resume_mode(adata, resume_mode_h5ad_file):
@@ -175,71 +201,153 @@ def test_resume_mode(adata, resume_mode_h5ad_file):
 
     tempdir1 = tempfile.TemporaryDirectory()
     output_path1 = tempdir1.name
-    exp1 = tiledbsoma.Experiment(output_path1)
-    tiledbsoma.io.from_h5ad(exp1, resume_mode_h5ad_file, "RNA", ingest_mode="write")
+    tiledbsoma.io.from_h5ad(
+        output_path1, resume_mode_h5ad_file, "RNA", ingest_mode="write"
+    )
 
     tempdir2 = tempfile.TemporaryDirectory()
     output_path2 = tempdir2.name
-    exp2 = tiledbsoma.Experiment(output_path2)
-    tiledbsoma.io.from_h5ad(exp2, resume_mode_h5ad_file, "RNA", ingest_mode="write")
-    tiledbsoma.io.from_h5ad(exp2, resume_mode_h5ad_file, "RNA", ingest_mode="resume")
-
-    assert _get_fragment_count(exp1.obs.uri) == _get_fragment_count(exp2.obs.uri)
-    assert _get_fragment_count(exp1.ms["RNA"].var.uri) == _get_fragment_count(
-        exp2.ms["RNA"].var.uri
+    tiledbsoma.io.from_h5ad(
+        output_path2, resume_mode_h5ad_file, "RNA", ingest_mode="write"
     )
-    assert _get_fragment_count(exp1.ms["RNA"].X["data"].uri) == _get_fragment_count(
-        exp2.ms["RNA"].X["data"].uri
+    tiledbsoma.io.from_h5ad(
+        output_path2, resume_mode_h5ad_file, "RNA", ingest_mode="resume"
     )
 
-    meas1 = exp1.ms["RNA"]
-    meas2 = exp2.ms["RNA"]
+    exp1 = _factory.open(output_path1)
+    exp2 = _factory.open(output_path2)
+    with exp1, exp2:
+        assert _get_fragment_count(exp1.obs.uri) == _get_fragment_count(exp2.obs.uri)
+        assert _get_fragment_count(exp1.ms["RNA"].var.uri) == _get_fragment_count(
+            exp2.ms["RNA"].var.uri
+        )
+        assert _get_fragment_count(exp1.ms["RNA"].X["data"].uri) == _get_fragment_count(
+            exp2.ms["RNA"].X["data"].uri
+        )
 
-    if "obsm" in meas1:
-        for key in meas1.obsm.keys():
-            assert _get_fragment_count(meas1.obsm[key].uri) == _get_fragment_count(
-                meas2.obsm[key].uri
-            )
-    if "varm" in meas1:
-        for key in meas1.varm.keys():
-            assert _get_fragment_count(meas1.obsm[key].uri) == _get_fragment_count(
-                meas2.obsm[key].uri
-            )
-    if "obsp" in meas1:
-        for key in meas1.obsp.keys():
-            assert _get_fragment_count(meas1.obsp[key].uri) == _get_fragment_count(
-                meas2.obsp[key].uri
-            )
-    if "varp" in meas1:
-        for key in meas1.varp.keys():
-            assert _get_fragment_count(meas1.varm[key].uri) == _get_fragment_count(
-                meas2.varm[key].uri
-            )
+        meas1 = exp1.ms["RNA"]
+        meas2 = exp2.ms["RNA"]
 
-    tempdir1.cleanup()
-    tempdir2.cleanup()
+        if "obsm" in meas1:
+            for key in meas1.obsm.keys():
+                assert _get_fragment_count(meas1.obsm[key].uri) == _get_fragment_count(
+                    meas2.obsm[key].uri
+                )
+        if "varm" in meas1:
+            for key in meas1.varm.keys():
+                assert _get_fragment_count(meas1.obsm[key].uri) == _get_fragment_count(
+                    meas2.obsm[key].uri
+                )
+        if "obsp" in meas1:
+            for key in meas1.obsp.keys():
+                assert _get_fragment_count(meas1.obsp[key].uri) == _get_fragment_count(
+                    meas2.obsp[key].uri
+                )
+        if "varp" in meas1:
+            for key in meas1.varp.keys():
+                assert _get_fragment_count(meas1.varm[key].uri) == _get_fragment_count(
+                    meas2.varm[key].uri
+                )
 
 
-def test_add_X_layer(adata):
+@pytest.mark.parametrize("use_relative_uri", [False, True, None])
+def test_ingest_relative(h5ad_file_extended, use_relative_uri):
+
     tempdir = tempfile.TemporaryDirectory()
     output_path = tempdir.name
 
-    exp = tiledbsoma.Experiment(output_path)
-    tiledbsoma.io.from_anndata(exp, adata, measurement_name="RNA")
-    assert list(exp.ms["RNA"].X.keys()) == ["data"]
+    tiledbsoma.io.from_h5ad(
+        output_path,
+        h5ad_file_extended,
+        measurement_name="RNA",
+        use_relative_uri=use_relative_uri,
+    )
 
-    tiledbsoma.io.add_X_layer(exp, "RNA", "data2", adata.X)
-    assert sorted(list(exp.ms["RNA"].X.keys())) == ["data", "data2"]
+    # * If they ask for relative=True, they should get that.
+    # * If they ask for relative=False, they should get that.
+    # * If they ask for relative=None, they should get the default which, for local disk (these
+    #   tests) is True.
+    expected_relative = use_relative_uri
+    if use_relative_uri is None:
+        expected_relative = True  # since local disk
+
+    exp = tiledbsoma.open(output_path)
+    with tiledb.Group(exp.uri) as G:
+        assert G.is_relative("obs") == expected_relative
+        assert G.is_relative("ms") == expected_relative
+
+    with tiledb.Group(exp.ms.uri) as G:
+        assert G.is_relative("RNA") == expected_relative
+    with tiledb.Group(exp.ms["RNA"].uri) as G:
+        assert G.is_relative("var") == expected_relative
+        assert G.is_relative("X") == expected_relative
+    with tiledb.Group(exp.ms["RNA"].X.uri) as G:
+        assert G.is_relative("data") == expected_relative
+
+    for collection_name in ["obsm", "obsp", "varm"]:  # h5ad_file_extended has no varp
+        with tiledb.Group(exp.ms["RNA"][collection_name].uri) as G:
+            for member in G:
+                assert G.is_relative(member.name) == expected_relative
+
+    with tiledb.Group(exp.ms.uri) as G:
+        assert G.is_relative("raw") == expected_relative
+    with tiledb.Group(exp.ms["raw"].uri) as G:
+        assert G.is_relative("var") == expected_relative
+        assert G.is_relative("X") == expected_relative
+    with tiledb.Group(exp.ms["raw"].X.uri) as G:
+        assert G.is_relative("data") == expected_relative
+
+    exp.close()
+
+
+def test_add_matrix_to_collection(adata):
+    tempdir = tempfile.TemporaryDirectory()
+    output_path = tempdir.name
+
+    uri = tiledbsoma.io.from_anndata(output_path, adata, measurement_name="RNA")
+    exp = tiledbsoma.Experiment.open(uri)
+    with _factory.open(output_path) as exp_r:
+        assert list(exp_r.ms["RNA"].X.keys()) == ["data"]
+
+    with _factory.open(output_path, "w") as exp:
+        tiledbsoma.io.add_X_layer(exp, "RNA", "data2", adata.X)
+    with _factory.open(output_path) as exp_r:
+        assert sorted(list(exp_r.ms["RNA"].X.keys())) == ["data", "data2"]
+
+    with _factory.open(output_path, "w") as exp:
+        with pytest.raises(KeyError):
+            tiledbsoma.io.add_X_layer(exp, "nonesuch", "data3", adata.X)
+
+    with _factory.open(output_path) as exp_r:
+        assert sorted(list(exp_r.ms["RNA"].obsm.keys())) == ["X_pca", "X_tsne"]
+    with _factory.open(output_path, "w") as exp:
+        tiledbsoma.io.add_matrix_to_collection(
+            exp, "RNA", "obsm", "X_pcb", adata.obsm["X_pca"]
+        )
+    with _factory.open(output_path) as exp_r:
+        assert sorted(list(exp_r.ms["RNA"].obsm.keys())) == ["X_pca", "X_pcb", "X_tsne"]
+
+    with _factory.open(output_path, "w") as exp:
+        with pytest.raises(KeyError):
+            tiledbsoma.io.add_matrix_to_collection(
+                exp, "nonesuch", "obsm", "X_pcc", adata.obsm["X_pca"]
+            )
+
+        tiledbsoma.io.add_matrix_to_collection(
+            exp, "RNA", "newthing", "X_pcd", adata.obsm["X_pca"]
+        )
+    with _factory.open(output_path) as exp_r:
+        assert sorted(list(exp_r.ms["RNA"]["newthing"].keys())) == ["X_pcd"]
 
 
 def test_export_anndata(adata):
     tempdir = tempfile.TemporaryDirectory()
     output_path = tempdir.name
 
-    exp = tiledbsoma.Experiment(output_path)
-    tiledbsoma.io.from_anndata(exp, adata, measurement_name="RNA")
+    tiledbsoma.io.from_anndata(output_path, adata, measurement_name="RNA")
 
-    readback = tiledbsoma.io.to_anndata(exp, measurement_name="RNA")
+    with _factory.open(output_path) as exp:
+        readback = tiledbsoma.io.to_anndata(exp, measurement_name="RNA")
 
     assert readback.obs.shape == adata.obs.shape
     assert readback.var.shape == adata.var.shape

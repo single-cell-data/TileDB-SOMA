@@ -4,7 +4,7 @@ Title: TileDB SOMA
 Description: Interface for working with 'TileDB'-based Stack of Matrices,
     Annotated ('SOMA'): an open data model for representing annotated matrices,
     like those commonly used for single cell data analysis.
-Version: 0.0.0.9009
+Version: 0.0.0.9012
 Authors@R: c(
     person(given = "Aaron",
            family = "Wolen",
@@ -16,6 +16,11 @@ Authors@R: c(
            email = "dirk@tiledb.com",
            role = "aut",
            comment = c(ORCID = "0000-0001-6419-907X")),
+    person(given = "Paul",
+           family = "Hoffman",
+           email = "paul.hoffman@tiledb.com",
+           role = "aut",
+           comment = c(ORCID = "0000-0002-7693-8957")),
     person(given = "John",
            family = "Kerl",
            email = "john.kerl@tiledb.com",
@@ -33,21 +38,19 @@ Imports:
     Matrix,
     stats,
     bit64,
-    tiledb (>= 0.18.0),
+    tiledb (>= 0.19.0),
     arrow,
     utils,
     fs,
     glue,
     urltools,
     Rcpp,
-    arch (>= 0.0.2),
     dplyr,
     data.table,
     spdl
 LinkingTo:
     Rcpp,
-    RcppSpdlog,
-    arch
+    RcppSpdlog
 Additional_repositories: https://ghrr.github.io/drat
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.2.3
@@ -59,3 +62,4 @@ Suggests:
     pbmc3k.tiledb
 VignetteBuilder: knitr
 Config/testthat/edition: 2
+OS_type: unix

@@ -5,8 +5,9 @@ import os
 import pytest
 import tiledb
 
-import tiledbsoma.libtiledbsoma as clib
-from tiledbsoma.query_condition import QueryCondition
+import tiledbsoma.pytiledbsoma as clib
+from tiledbsoma._exception import SOMAError
+from tiledbsoma._query_condition import QueryCondition
 
 VERBOSE = False
 
@@ -195,12 +196,7 @@ def test_query_condition_reset():
 def test_parsing_error_conditions(malformed_condition):
     """Conditions which should not parse."""
 
-    """
-    TODO: this is raising the wrong error - it should be a SOMAError. Change
-    the test when https://github.com/single-cell-data/TileDB-SOMA/issues/784
-    is resolved.
-    """
-    with pytest.raises(tiledb.TileDBError, match=r"Could not parse"):
+    with pytest.raises(SOMAError, match=r"Could not parse"):
         QueryCondition(malformed_condition)
 
 

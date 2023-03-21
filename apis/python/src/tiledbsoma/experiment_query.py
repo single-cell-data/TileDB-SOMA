@@ -1,38 +1,44 @@
+# Copyright (c) 2021-2023 The Chan Zuckerberg Initiative Foundation
+# Copyright (c) 2021-2023 TileDB, Inc.
+#
+# Licensed under the MIT License.
+
 from typing import cast
 
 import pandas as pd
 import pyarrow as pa
 
-from .types import NPNDArray, PDSeries
+from ._types import NPNDArray, PDSeries
 
 
 def X_as_series(tbl: pa.Table) -> PDSeries:
-    """
-    Convert the COO 2D matrix data returned from ``SparseNDArray.read_table()``
-    into a Pandas Series, with coordindates as a Pandas MultiIndex [lifecycle: experimental].
+    """Convert the COO 2D matrix data returned from ``SparseNDArray.read_table()``
+    into a Pandas Series, with coordindates as a Pandas MultiIndex.
 
-    NOTE: this operation is not zero-copy.
+    Note:
+        This operation is not zero-copy.
 
-    Parameters
-    ----------
-    tbl : pyarrow.Table
-        A Table containing COO-formated sparse matrix data.
+    Args:
+        tbl:
+            A Table containing COO-formated sparse matrix data.
 
-    Returns
-    -------
-    pandas.Series - COO data, with coordinates in a MultiIndex.
+    Returns:
+        pandas.Series:
+            COO data, with coordinates in a MultiIndex.
 
-    Examples
-    --------
-    >>> tbl = pa.Table.from_arrays(
-    ...     [ np.array([0, 2]), np.array([1, 3]), np.array([1.1, 4.2], dtype=np.float32) ],
-    ...     names=['soma_dim_0', 'soma_dim_1', 'soma_data']
-    ... )
-    >>> X_as_series(tbl)
-    soma_dim_0  soma_dim_1
-    0           1             1.1
-    2           3             4.2
-    Name: soma_data, dtype: Sparse[float32, 0]
+    Example:
+        >>> tbl = pa.Table.from_arrays(
+        ...     [ np.array([0, 2]), np.array([1, 3]), np.array([1.1, 4.2], dtype=np.float32) ],
+        ...     names=['soma_dim_0', 'soma_dim_1', 'soma_data']
+        ... )
+        >>> X_as_series(tbl)
+        soma_dim_0  soma_dim_1
+        0           1             1.1
+        2           3             4.2
+        Name: soma_data, dtype: Sparse[float32, 0]
+
+    Lifecycle:
+        Experimental.
     """
 
     data = tbl["soma_data"].to_numpy()
