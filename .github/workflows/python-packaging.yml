@@ -24,6 +24,8 @@ jobs:
         fetch-depth: 0  # ensure we get all tags to inform package version determination
     - name: Build sdist
       run: python setup.py sdist
+      env:
+        CMAKE_OSX_ARCHITECTURES: "arm64"
       working-directory: ./apis/python
     - name: Upload sdist artifact
       uses: actions/upload-artifact@v3
