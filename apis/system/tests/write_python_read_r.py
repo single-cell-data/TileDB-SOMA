@@ -37,11 +37,9 @@ class TestDataframeWritePythonReadR(TestWritePythonReadR):
     # Future assertions can be done by appending to this script
     def base_R_script(self):
         return f"""
-        require("tiledbsoma")
-        require("testthat")
-        platform_config <- NULL
-        tiledbsoma_ctx <- NULL
-        soma_df <- SOMADataFrameOpen("{self.uri}", platform_config, tiledbsoma_ctx)
+        library("tiledbsoma")
+        library("testthat")
+        soma_df <- SOMADataFrameOpen("{self.uri}")
         table = soma_df$read()
         df = as.data.frame(table)
         """

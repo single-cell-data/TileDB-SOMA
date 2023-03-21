@@ -11,8 +11,8 @@ class TestDataframeWriteRReadPython(TestReadPythonWriteR):
     @pytest.fixture(scope="class")
     def R_dataframe(self):
         base_script = f"""
-        require("tiledbsoma")
-        require("arrow")
+        library("tiledbsoma")
+        library("arrow")
 
         df_schema <- schema(
         field("foo", int32()),
@@ -21,9 +21,7 @@ class TestDataframeWriteRReadPython(TestReadPythonWriteR):
         field("quux", bool())
         )
 
-        platform_config <- NULL
-        tiledbsoma_ctx <- NULL
-        sdf <- SOMADataFrameCreate("{self.uri}", df_schema, c("foo"), platform_config, tiledbsoma_ctx)
+        sdf <- SOMADataFrameCreate("{self.uri}", df_schema, c("foo"))
 
         df <- data.frame(
             soma_joinid = bit64::as.integer64(c(1,2,3,4,5)),
