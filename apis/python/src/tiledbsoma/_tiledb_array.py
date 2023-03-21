@@ -117,7 +117,9 @@ class TileDBArray(TileDBObject[_tdb_handles.ArrayWrapper]):
             **kwargs,
         )
 
-    def _set_reader_coords(self, sr: clib.SOMAArrayReader, coords: Sequence[object]) -> None:
+    def _set_reader_coords(
+        self, sr: clib.SOMAArrayReader, coords: Sequence[object]
+    ) -> None:
         """Parses the given coords and sets them on the SOMA Reader."""
         if not is_nonstringy_sequence(coords):
             raise TypeError(
