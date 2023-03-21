@@ -53,8 +53,8 @@ test_that("Load assay from ExperimentQuery mechanics", {
   expect_equal(dim(nomf2[[]]), c(n_var, 0L))
   # Test using cell and feature names
   expect_no_condition(named <- query$to_seurat_assay(
-    cells_index = 'baz',
-    features_index = 'quux'
+    obs_index = 'baz',
+    var_index = 'quux'
   ))
   expect_identical(
     colnames(named),
@@ -81,18 +81,18 @@ test_that("Load assay from ExperimentQuery mechanics", {
   expect_error(query$to_seurat_assay(c(scale.data = 'counts')))
   expect_error(query$to_seurat_assay(c(data = 'tomato')))
   expect_warning(query$to_seurat_assay(c(counts = 'counts', data = 'tomato')))
-  # Test `cells_index` assertions
-  expect_error(query$to_seurat_assay(cells_index = FALSE))
-  expect_error(query$to_seurat_assay(cells_index = NA_character_))
-  expect_error(query$to_seurat_assay(cells_index = 1))
-  expect_error(query$to_seurat_assay(cells_index = c('baz', 'foo')))
-  expect_error(query$to_seurat_assay(cells_index = 'tomato'))
-  # Test `features_index` assertions
-  expect_error(query$to_seurat_assay(features_index = FALSE))
-  expect_error(query$to_seurat_assay(features_index = NA_character_))
-  expect_error(query$to_seurat_assay(features_index = 1))
-  expect_error(query$to_seurat_assay(features_index = c('baz', 'foo')))
-  expect_error(query$to_seurat_assay(features_index = 'tomato'))
+  # Test `obs_index` assertions
+  expect_error(query$to_seurat_assay(obs_index = FALSE))
+  expect_error(query$to_seurat_assay(obs_index = NA_character_))
+  expect_error(query$to_seurat_assay(obs_index = 1))
+  expect_error(query$to_seurat_assay(obs_index = c('baz', 'foo')))
+  expect_error(query$to_seurat_assay(obs_index = 'tomato'))
+  # Test `var_index` assertions
+  expect_error(query$to_seurat_assay(var_index = FALSE))
+  expect_error(query$to_seurat_assay(var_index = NA_character_))
+  expect_error(query$to_seurat_assay(var_index = 1))
+  expect_error(query$to_seurat_assay(var_index = c('baz', 'foo')))
+  expect_error(query$to_seurat_assay(var_index = 'tomato'))
   # Test `var_column_names` assertions
   expect_error(query$to_seurat_assay(var_column_names = 1L))
   expect_error(query$to_seurat_assay(var_column_names = c(
@@ -129,8 +129,8 @@ test_that("Load assay from sliced ExperimentQuery", {
   expect_identical(colnames(assay), paste0('cell', query$obs_joinids()))
   # Test named
   expect_no_condition(named <- query$to_seurat_assay(
-    cells_index = 'baz',
-    features_index = 'quux'
+    obs_index = 'baz',
+    var_index = 'quux'
   ))
   expect_identical(
     rownames(named),
@@ -179,8 +179,8 @@ test_that("Load assay from indexed ExperimentQuery", {
   expect_identical(colnames(assay), paste0('cell', query$obs_joinids()))
   # Test named
   expect_no_condition(named <- query$to_seurat_assay(
-    cells_index = 'baz',
-    features_index = 'quux'
+    obs_index = 'baz',
+    var_index = 'quux'
   ))
   expect_identical(
     rownames(named),
@@ -299,8 +299,8 @@ test_that("Load reduction from ExperimentQuery mechanics", {
   # Test adding names
   expect_no_condition(named_pca <- query$to_seurat_reduction(
     'pca',
-    cells_index = 'baz',
-    features_index = 'quux'
+    obs_index = 'baz',
+    var_index = 'quux'
   ))
   expect_identical(
     SeuratObject::Cells(named_pca),
@@ -316,7 +316,7 @@ test_that("Load reduction from ExperimentQuery mechanics", {
   )
   expect_no_condition(named_umap <- query$to_seurat_reduction(
     'umap',
-    cells_index = 'baz',
+    obs_index = 'baz',
   ))
   expect_identical(
     SeuratObject::Cells(named_umap),
@@ -328,8 +328,8 @@ test_that("Load reduction from ExperimentQuery mechanics", {
   )
   expect_no_condition(named_umap <- query$to_seurat_reduction(
     'umap',
-    cells_index = 'baz',
-    features_index = 'quux'
+    obs_index = 'baz',
+    var_index = 'quux'
   ))
   # Test suppressing feature loadings
   suppress <- list(NA, FALSE)
@@ -349,20 +349,20 @@ test_that("Load reduction from ExperimentQuery mechanics", {
   expect_error(query$to_seurat_reduction(c('pca', 'umap')))
   expect_error(query$to_seurat_reduction('tomato'))
   expect_error(query$to_seurat_reduction('pca', 1))
-  expect_error(query$to_seurat_reduction('pca', cells_index = FALSE))
-  expect_error(query$to_seurat_reduction('pca', cells_index = NA_character_))
-  expect_error(query$to_seurat_reduction('pca', cells_index = 1))
-  expect_error(query$to_seurat_reduction('pca', cells_index = c('baz', 'foo')))
-  expect_error(query$to_seurat_reduction('pca', cells_index = 'tomato'))
-  # Test `features_index` assertions
-  expect_error(query$to_seurat_reduction('pca', features_index = FALSE))
-  expect_error(query$to_seurat_reduction('pca', features_index = NA_character_))
-  expect_error(query$to_seurat_reduction('pca', features_index = 1))
+  expect_error(query$to_seurat_reduction('pca', obs_index = FALSE))
+  expect_error(query$to_seurat_reduction('pca', obs_index = NA_character_))
+  expect_error(query$to_seurat_reduction('pca', obs_index = 1))
+  expect_error(query$to_seurat_reduction('pca', obs_index = c('baz', 'foo')))
+  expect_error(query$to_seurat_reduction('pca', obs_index = 'tomato'))
+  # Test `var_index` assertions
+  expect_error(query$to_seurat_reduction('pca', var_index = FALSE))
+  expect_error(query$to_seurat_reduction('pca', var_index = NA_character_))
+  expect_error(query$to_seurat_reduction('pca', var_index = 1))
   expect_error(query$to_seurat_reduction(
     'pca',
-    features_index = c('baz', 'foo')
+    var_index = c('baz', 'foo')
   ))
-  expect_error(query$to_seurat_reduction('pca', features_index = 'tomato'))
+  expect_error(query$to_seurat_reduction('pca', var_index = 'tomato'))
 })
 
 test_that("Load reduction from sliced ExperimentQuery", {
@@ -459,8 +459,8 @@ test_that("Load reduction from sliced ExperimentQuery", {
   # Test named
   expect_no_condition(named_pca <- query$to_seurat_reduction(
     'pca',
-    cells_index = 'baz',
-    features_index = 'quux'
+    obs_index = 'baz',
+    var_index = 'quux'
   ))
   expect_identical(
     SeuratObject::Cells(named_pca),
@@ -472,7 +472,7 @@ test_that("Load reduction from sliced ExperimentQuery", {
   )
   expect_no_condition(named_umap <- query$to_seurat_reduction(
     'umap',
-    cells_index = 'baz'
+    obs_index = 'baz'
   ))
   expect_identical(
     SeuratObject::Cells(named_umap),
@@ -480,8 +480,8 @@ test_that("Load reduction from sliced ExperimentQuery", {
   )
   expect_no_condition(query$to_seurat_reduction(
     'umap',
-    cells_index = 'baz',
-    features_index = 'quux'
+    obs_index = 'baz',
+    var_index = 'quux'
   ))
 })
 
@@ -596,8 +596,8 @@ test_that("Load reduction from indexed ExperimentQuery", {
   # Test named
   expect_no_condition(named_pca <- query$to_seurat_reduction(
     'pca',
-    cells_index = 'baz',
-    features_index = 'quux'
+    obs_index = 'baz',
+    var_index = 'quux'
   ))
   expect_identical(
     SeuratObject::Cells(named_pca),
@@ -611,7 +611,7 @@ test_that("Load reduction from indexed ExperimentQuery", {
   expect_identical(rownames(SeuratObject::Loadings(named_pca)), var_label_values)
   expect_no_condition(named_umap <- query$to_seurat_reduction(
     'umap',
-    cells_index = 'baz'
+    obs_index = 'baz'
   ))
   expect_identical(
     SeuratObject::Cells(named_umap),
@@ -620,8 +620,8 @@ test_that("Load reduction from indexed ExperimentQuery", {
   expect_identical(SeuratObject::Cells(named_umap), obs_label_values)
   expect_no_condition(query$to_seurat_reduction(
     'umap',
-    cells_index = 'baz',
-    features_index = 'quux'
+    obs_index = 'baz',
+    var_index = 'quux'
   ))
 })
 
@@ -679,18 +679,18 @@ test_that("Load graph from ExperimentQuery mechanics", {
   expect_error(query$to_seurat_graph(1))
   expect_error(query$to_seurat_graph(c('connectivities',)))
   expect_error(query$to_seurat_graph('tomato'))
-  # Test `cells_index` assertions
-  expect_error(query$to_seurat_graph('connectivities', cells_index = FALSE))
+  # Test `obs_index` assertions
+  expect_error(query$to_seurat_graph('connectivities', obs_index = FALSE))
   expect_error(query$to_seurat_graph(
     'connectivities',
-    cells_index = NA_character_)
+    obs_index = NA_character_)
   )
-  expect_error(query$to_seurat_graph('connectivities', cells_index = 1))
+  expect_error(query$to_seurat_graph('connectivities', obs_index = 1))
   expect_error(query$to_seurat_graph(
     'connectivities',
-    cells_index = c('baz', 'foo'))
+    obs_index = c('baz', 'foo'))
   )
-  expect_error(query$to_seurat_graph('connectivities', cells_index = 'tomato'))
+  expect_error(query$to_seurat_graph('connectivities', obs_index = 'tomato'))
 })
 
 test_that("Load graph from sliced ExperimentQuery", {
@@ -901,8 +901,8 @@ test_that("Load Seurat object from ExperimentQuery mechanics", {
   expect_identical(colnames(graph), colnames(obj))
   # Test named
   expect_no_condition(obj <- query$to_seurat(
-    cells_index = 'baz',
-    features_index = 'quux'
+    obs_index = 'baz',
+    var_index = 'quux'
   ))
   expect_s4_class(obj, 'Seurat')
   expect_identical(dim(obj), c(n_var, n_obs))
@@ -955,19 +955,19 @@ test_that("Load Seurat object from ExperimentQuery mechanics", {
     'counts'
   )))
   # Test suppress reductions
-  expect_no_condition(obj <- query$to_seurat(embeddings = FALSE))
+  expect_no_condition(obj <- query$to_seurat(obsm_layers = FALSE))
   expect_length(SeuratObject::Reductions(obj), 0L)
-  expect_no_condition(obj <- query$to_seurat(embeddings = NA))
+  expect_no_condition(obj <- query$to_seurat(obsm_layers = NA))
   expect_length(SeuratObject::Reductions(obj), 0L)
-  expect_no_condition(obj <- query$to_seurat(embeddings = 'umap'))
+  expect_no_condition(obj <- query$to_seurat(obsm_layers = 'umap'))
   expect_identical(SeuratObject::Reductions(obj), 'umap')
   expect_error(obj[['pca']])
   # Test suppress loadings
-  expect_no_condition(obj <- query$to_seurat(loadings = FALSE))
+  expect_no_condition(obj <- query$to_seurat(varm_layers = FALSE))
   expect_identical(SeuratObject::Reductions(obj), c('pca', 'umap'))
   expect_true(SeuratObject::IsMatrixEmpty(SeuratObject::Loadings(obj[['pca']])))
   # Test suppress graphs
-  expect_no_condition(obj <- query$to_seurat(graphs = FALSE))
+  expect_no_condition(obj <- query$to_seurat(obsp_layers = FALSE))
   expect_length(SeuratObject::Graphs(obj), 0L)
   # Test suppress cell-level meta data
   expect_no_condition(obj <- query$to_seurat(obs_column_names = FALSE))
@@ -982,12 +982,12 @@ test_that("Load Seurat object from ExperimentQuery mechanics", {
   expect_error(query$to_seurat(c(a = 'counts')))
   expect_error(query$to_seurat(c(scale.data = 'counts')))
   expect_error(query$to_seurat(c(data = 'tomato')))
-  # Test `cells_index` assertions
-  expect_error(query$to_seurat(cells_index = FALSE))
-  expect_error(query$to_seurat(cells_index = NA_character_))
-  expect_error(query$to_seurat(cells_index = 1))
-  expect_error(query$to_seurat(cells_index = c('baz', 'foo')))
-  expect_error(query$to_seurat(cells_index = 'tomato'))
+  # Test `obs_index` assertions
+  expect_error(query$to_seurat(obs_index = FALSE))
+  expect_error(query$to_seurat(obs_index = NA_character_))
+  expect_error(query$to_seurat(obs_index = 1))
+  expect_error(query$to_seurat(obs_index = c('baz', 'foo')))
+  expect_error(query$to_seurat(obs_index = 'tomato'))
   # Test `obs_column_names` assertions
   expect_error(query$to_seurat(obs_column_names = 1L))
   expect_error(query$to_seurat(obs_column_names = c(
@@ -996,17 +996,17 @@ test_that("Load Seurat object from ExperimentQuery mechanics", {
   )))
   expect_error(query$to_seurat(obs_column_names = c(TRUE, FALSE)))
   expect_error(query$to_seurat(obs_column_names = 'tomato'))
-  # Test `embeddings` assertions
-  expect_error(query$to_seurat(embeddings = 1L))
-  expect_warning(query$to_seurat(embeddings = 'tomato'))
-  # Test `loadings` assertions
-  expect_error(query$to_seurat(loadings = 1L))
-  expect_error(query$to_seurat(loadings = 'PCs'))
-  expect_warning(query$to_seurat(loadings = c(tomato = 'PCs')))
-  expect_warning(query$to_seurat(loadings = c(X_pca = 'tomato')))
-  # Test `graphs` assertions
-  expect_error(query$to_seurat(graphs = 1L))
-  expect_warning(query$to_seurat(graphs = 'tomato'))
+  # Test `obsm_layers` assertions
+  expect_error(query$to_seurat(obsm_layers = 1L))
+  expect_warning(query$to_seurat(obsm_layers = 'tomato'))
+  # Test `varm_layers` assertions
+  expect_error(query$to_seurat(varm_layers = 1L))
+  expect_error(query$to_seurat(varm_layers = 'PCs'))
+  expect_warning(query$to_seurat(varm_layers = c(tomato = 'PCs')))
+  expect_warning(query$to_seurat(varm_layers = c(X_pca = 'tomato')))
+  # Test `obsp_layers` assertions
+  expect_error(query$to_seurat(obsp_layers = 1L))
+  expect_warning(query$to_seurat(obsp_layers = 'tomato'))
 })
 
 test_that("Load Seurat object from sliced ExperimentQuery", {
@@ -1087,8 +1087,8 @@ test_that("Load Seurat object from sliced ExperimentQuery", {
   expect_identical(names(obj), c('RNA', 'connectivities', 'pca', 'umap'))
   # Test named
   expect_no_condition(obj <- query$to_seurat(
-    cells_index = 'baz',
-    features_index = 'quux'
+    obs_index = 'baz',
+    var_index = 'quux'
   ))
   expect_s4_class(obj, 'Seurat')
   expect_identical(dim(obj), c(n_var_slice, n_obs_slice))
@@ -1189,8 +1189,8 @@ test_that("Load Seurat object from indexed ExperimentQuery", {
   expect_identical(names(obj), c('RNA', 'connectivities', 'pca', 'umap'))
   # Test named
   expect_no_condition(obj <- query$to_seurat(
-    cells_index = 'baz',
-    features_index = 'quux'
+    obs_index = 'baz',
+    var_index = 'quux'
   ))
   expect_s4_class(obj, 'Seurat')
   expect_identical(dim(obj), c(n_var_select, n_obs_select))

@@ -200,13 +200,13 @@ Loads the query as a \code{\link[SeuratObject]{Seurat}} object
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{SOMAExperimentAxisQuery$to_seurat(
   X_layers = c(counts = "counts", data = "logcounts"),
-  cells_index = NULL,
-  features_index = NULL,
+  obs_index = NULL,
+  var_index = NULL,
   obs_column_names = NULL,
   var_column_names = NULL,
-  embeddings = NULL,
-  loadings = NULL,
-  graphs = NULL
+  obsm_layers = NULL,
+  varm_layers = NULL,
+  obsp_layers = NULL
 )}\if{html}{\out{</div>}}
 }
 
@@ -222,9 +222,9 @@ names should be one of:
 }
 At least one of \dQuote{\code{counts}} or \dQuote{\code{data}} is required}
 
-\item{\code{cells_index}}{Name of column in \code{obs} to add as cell names}
+\item{\code{obs_index}}{Name of column in \code{obs} to add as cell names}
 
-\item{\code{features_index}}{Name of column in \code{var} to add as feature names}
+\item{\code{var_index}}{Name of column in \code{var} to add as feature names}
 
 \item{\code{obs_column_names}}{Names of columns in \code{obs} to add as
 cell-level meta data}
@@ -232,16 +232,16 @@ cell-level meta data}
 \item{\code{var_column_names}}{Names of columns in \code{var} to add as
 feature-level meta data}
 
-\item{\code{embeddings}}{Names of arrays in \code{obsm} to load in as the
+\item{\code{obsm_layers}}{Names of arrays in \code{obsm} to load in as the
 cell embeddings; pass \code{FALSE} to suppress loading in any
 dimensional reductions}
 
-\item{\code{loadings}}{Named vector of arrays in \code{varm} to load in as the
+\item{\code{varm_layers}}{Named vector of arrays in \code{varm} to load in as the
 feature loadings; names must be names of array in \code{obsm} (eg.
-\code{loadings = c(X_pca = 'PCs')}); will try to determine
-\code{loadings} from \code{embeddings}}
+\code{varm_layers = c(X_pca = 'PCs')}); will try to determine
+\code{varm_layers} from \code{obsm_layers}}
 
-\item{\code{graphs}}{Names of arrays in \code{obsp} to load in as
+\item{\code{obsp_layers}}{Names of arrays in \code{obsp} to load in as
 \code{\link[SeuratObject]{Graph}s}}
 }
 \if{html}{\out{</div>}}
@@ -258,8 +258,8 @@ Loads the query as a Seurat \code{\link[SeuratObject]{Assay}}
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{SOMAExperimentAxisQuery$to_seurat_assay(
   X_layers = c(counts = "counts", data = "logcounts"),
-  cells_index = NULL,
-  features_index = NULL,
+  obs_index = NULL,
+  var_index = NULL,
   var_column_names = NULL
 )}\if{html}{\out{</div>}}
 }
@@ -276,9 +276,9 @@ names should be one of:
 }
 At least one of \dQuote{\code{counts}} or \dQuote{\code{data}} is required}
 
-\item{\code{cells_index}}{Name of column in \code{obs} to add as cell names}
+\item{\code{obs_index}}{Name of column in \code{obs} to add as cell names}
 
-\item{\code{features_index}}{Name of column in \code{var} to add as feature names}
+\item{\code{var_index}}{Name of column in \code{var} to add as feature names}
 
 \item{\code{var_column_names}}{Names of columns in \code{var} to add as
 feature-level meta data}
@@ -297,25 +297,25 @@ Loads the query as a Seurat
 \link[SeuratObject:DimReduc]{dimensional reduction}
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{SOMAExperimentAxisQuery$to_seurat_reduction(
-  embeddings,
-  loadings = NULL,
-  cells_index = NULL,
-  features_index = NULL
+  obsm_layer,
+  varm_layer = NULL,
+  obs_index = NULL,
+  var_index = NULL
 )}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{embeddings}}{Name of array in \code{obsm} to load as the
+\item{\code{obsm_layer}}{Name of array in \code{obsm} to load as the
 cell embeddings}
 
-\item{\code{loadings}}{Name of the array in \code{varm} to load as the  feature
-loadings; will try to determine \code{loadings} from \code{embeddings}}
+\item{\code{varm_layer}}{Name of the array in \code{varm} to load as the  feature
+loadings; will try to determine \code{varm_layer} from \code{obsm_layer}}
 
-\item{\code{cells_index}}{Name of column in \code{obs} to add as cell names}
+\item{\code{obs_index}}{Name of column in \code{obs} to add as cell names}
 
-\item{\code{features_index}}{Name of column in \code{var} to add as feature names}
+\item{\code{var_index}}{Name of column in \code{var} to add as feature names}
 }
 \if{html}{\out{</div>}}
 }
@@ -329,15 +329,15 @@ A \code{\link[SeuratObject]{DimReduc}} object
 \subsection{Method \code{to_seurat_graph()}}{
 Loads the query as a Seurat \link[SeuratObject:Graph]{graph}
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{SOMAExperimentAxisQuery$to_seurat_graph(graph, cells_index = NULL)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{SOMAExperimentAxisQuery$to_seurat_graph(obsp_layer, obs_index = NULL)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{graph}}{Name of array in \code{obsp} to load as the graph}
+\item{\code{obsp_layer}}{Name of array in \code{obsp} to load as the graph}
 
-\item{\code{cells_index}}{Name of column in \code{obs} to add as cell names}
+\item{\code{obs_index}}{Name of column in \code{obs} to add as cell names}
 }
 \if{html}{\out{</div>}}
 }
