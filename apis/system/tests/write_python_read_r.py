@@ -3,7 +3,7 @@ import pytest
 
 import tiledbsoma as soma
 
-from .common import TestWritePythonReadR, create_R_list
+from .common import TestWritePythonReadR, embed_python_list_into_R_code
 
 
 class TestDataframeWritePythonReadR(TestWritePythonReadR):
@@ -35,7 +35,7 @@ class TestDataframeWritePythonReadR(TestWritePythonReadR):
 
     # Prepares an R script with the dependencies and loads the data.frame in `df`.
     # Future assertions can be done by appending to this script
-    def base_script(self):
+    def base_R_script(self):
         return f"""
         require("tiledbsoma")
         require("testthat")
@@ -53,6 +53,6 @@ class TestDataframeWritePythonReadR(TestWritePythonReadR):
     def test_dataframe_columns_match(self, dataframe):
         for key in dataframe.keys():
             col = dataframe[key].tolist()
-            R_list = create_R_list(col)
+            R_list = embed_python_list_into_R_code(col)
             self.r_assert(f"""expect_equal(as.list(df)$"{key}", c({R_list}))""")
             break

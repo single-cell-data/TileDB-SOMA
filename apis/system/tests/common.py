@@ -1,7 +1,7 @@
 import subprocess
 
 
-def to_R(x):
+def embed_into_R_code(x):
     if isinstance(x, bool):
         return str(x).upper()
     elif isinstance(x, str):
@@ -10,8 +10,8 @@ def to_R(x):
         return str(x)
 
 
-def create_R_list(xs):
-    return ",".join([to_R(x) for x in xs])
+def embed_python_list_into_R_code(xs):
+    return ",".join([embed_into_R_code(x) for x in xs])
 
 
 class BasePythonRInterop:
@@ -38,7 +38,7 @@ class BasePythonRInterop:
 
 class TestWritePythonReadR(BasePythonRInterop):
     def r_assert(self, code: str):
-        R_script = self.base_script() + code
+        R_script = self.base_R_script() + code
         try:
             self.execute_R_script(R_script)
         except subprocess.CalledProcessError:
