@@ -116,7 +116,7 @@ SOMADataFrame <- R6::R6Class(
     #' schema for `values` must match the schema for the `SOMADataFrame`.
     #'
     write = function(values) {
-      on.exit(private$close())
+      on.exit(self$close())
 
       # Prevent downcasting of int64 to int32 when materializing a column
       op <- options(arrow.int64_downcast = FALSE)

@@ -56,7 +56,7 @@ def show_package_versions() -> None:
     Lifecycle: Experimental.
     """
     print("tiledbsoma.__version__       ", get_implementation_version())
-    print("TileDB-Py tiledb.__version__ ", tiledb.__version__)
+    print("TileDB-Py tiledb.version()   ", tiledb.version())
     print(
         "TileDB core version          ",
         ".".join(str(ijk) for ijk in list(tiledb.libtiledb.version())),

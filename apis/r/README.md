@@ -31,9 +31,9 @@ $ install.packages('tiledbsoma', repos = c('https://tiledb-inc.r-universe.dev', 
 * Change into the R API package directory: `cd TileDB-SOMA/apis/r`
 * Optionally, clean the files in the repo: `./cleanup` (this is not needed the first time)
 * Optionally, update the `libtiledbsoma` sources: `./copy_source.sh` (which updates the includes tarball of `libtiledbsoma`).
-* If you have edited any `src/*.cpp` with `RcppExport` then run `Rcpp::compileAttributes()`
+* If you have edited any `src/*.cpp` with `RcppExport` then run `Rscript -e 'Rcpp::compileAttributes()'`
 * Build the R package source tarball from the repository sources: `R CMD build .` (which will also build `libtiledbsoma` from source; other dependencies are required as described in the previous section)
-* If you have changed any signatures, run `roxygen2::roxygenise()`
+* If you have changed any signatures, run `Rscript -e 'roxygen2::roxygenise()'`
 * Check and test the package from the tarball: `R CMD check --no-vignettes --no-manual tiledbsoma_*.tar.gz`
   * For quicker iteration, run `Rscript -e 'testthat::test_local("tests/testthat")'`
 * Install the package from the tarball: `R CMD INSTALL tiledbsoma_*.tar.gz`

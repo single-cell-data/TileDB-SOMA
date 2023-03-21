@@ -44,8 +44,8 @@ get_column_types <- function(uri, colnames) {
 
 #' @rdname soma_reader
 #' @export
-nnz <- function(uri) {
-    .Call(`_tiledbsoma_nnz`, uri)
+nnz <- function(uri, config = NULL) {
+    .Call(`_tiledbsoma_nnz`, uri, config)
 }
 
 #' @noRd
@@ -60,8 +60,8 @@ check_arrow_array_tag <- function(xp) {
 
 #' @rdname soma_reader
 #' @export
-shape <- function(uri) {
-    .Call(`_tiledbsoma_shape`, uri)
+shape <- function(uri, config = NULL) {
+    .Call(`_tiledbsoma_shape`, uri, config)
 }
 
 #' Iterator-Style Access to SOMA Array via SOMAReader

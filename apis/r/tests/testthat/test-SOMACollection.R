@@ -1,7 +1,7 @@
 
 test_that("SOMACollection basics", {
   uri <- file.path(withr::local_tempdir(), "new-collection")
-  collection <- SOMACollection$new(uri)
+  collection <- SOMACollection$new(uri, internal_use_only = "allowed_use")
   expect_equal(collection$uri, uri)
 
   # Should not exist on disk until created
@@ -22,7 +22,7 @@ test_that("SOMACollection basics", {
   collection$set(dataframe, name = "sdf")
 
   # Read back the collection
-  readback_collection <- SOMACollection$new(uri)
+  readback_collection <- SOMACollection$new(uri, internal_use_only = "allowed_use")
   expect_equal(readback_collection$length(), 1)
 
   readback_dataframe <- readback_collection$get("sdf")

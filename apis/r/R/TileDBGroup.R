@@ -63,7 +63,7 @@ TileDBGroup <- R6::R6Class(
         name = name
       )
       # TODO: Avoid closing/re-opening the group to update the cache
-      private$close()
+      self$close()
       private$update_member_cache()
     },
 
@@ -91,7 +91,7 @@ TileDBGroup <- R6::R6Class(
         grp = self$object,
         uri = name
       )
-      private$close()
+      self$close()
       # TODO: Avoid closing/re-opening the group to update the cache
       private$update_member_cache()
     },
@@ -138,7 +138,7 @@ TileDBGroup <- R6::R6Class(
     #'   is not NULL.
     #' @return A list of metadata values.
     get_metadata = function(key = NULL) {
-      on.exit(private$close())
+      on.exit(self$close())
       private$open("READ")
       spdl::debug("Retrieving metadata for {} '{}'", self$class(), self$uri)
       if (!is.null(key)) {
@@ -156,7 +156,7 @@ TileDBGroup <- R6::R6Class(
         "Metadata must be a named list" = is_named_list(metadata)
       )
       private$open("WRITE")
-      on.exit(private$close())
+      on.exit(self$close())
       spdl::debug("Writing metadata to {} '{}'", self$class(), self$uri)
       dev_null <- mapply(
         FUN = tiledb::tiledb_group_put_metadata,
@@ -165,7 +165,15 @@ TileDBGroup <- R6::R6Class(
         MoreArgs = list(grp = self$object),
         SIMPLIFY = FALSE
       )
+    },
+
+    #' @description Close the SOMA object.
+    #' @return The object, invisibly
+    close = function() {
+      spdl::debug("Closing {} '{}'", self$class(), self$uri)
+      invisible(tiledb::tiledb_group_close(self$object))
     }
+
   ),
 
   private = list(
@@ -183,17 +191,12 @@ TileDBGroup <- R6::R6Class(
       invisible(tiledb::tiledb_group_open(self$object, type = mode))
     },
 
-    close = function() {
-      spdl::debug("Closing {} '{}'", self$class(), self$uri)
-      invisible(tiledb::tiledb_group_close(self$object))
-    },
-
     initialize_object = function() {
       private$tiledb_object <- tiledb::tiledb_group(
         self$uri,
         ctx = self$tiledbsoma_ctx$get_tiledb_context()
       )
-      private$close()
+      self$close()
     },
 
     # @description Retrieve all group members. (lifecycle: experimental)
@@ -201,7 +204,7 @@ TileDBGroup <- R6::R6Class(
     # list with names: name, uri, and type.
     get_all_members = function() {
       private$open("READ")
-      on.exit(private$close())
+      on.exit(self$close())
 
       count <- tiledb::tiledb_group_member_count(self$object)
       if (count == 0) return(list())
@@ -238,7 +241,8 @@ TileDBGroup <- R6::R6Class(
         GROUP = TileDBGroup$new,
         stop(sprintf("Unknown member type: %s", type), call. = FALSE)
       )
-      constructor(uri, tiledbsoma_ctx = self$tiledbsoma_ctx, platform_config = self$platform_config)
+      constructor(uri, tiledbsoma_ctx = self$tiledbsoma_ctx,
+                  platform_config = self$platform_config, internal_use_only = "allowed_use")
     },
 
     format_members = function() {

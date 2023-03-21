@@ -3,6 +3,7 @@
 \name{soma_reader}
 \alias{soma_reader}
 \alias{nnz}
+\alias{shape}
 \title{Read SOMA Data From a Given URI}
 \usage{
 soma_reader(
@@ -17,7 +18,9 @@ soma_reader(
   config = NULL
 )
 
-nnz(uri)
+nnz(uri, config = NULL)
+
+shape(uri, config = NULL)
 }
 \arguments{
 \item{uri}{Character value with URI path to a SOMA data set}

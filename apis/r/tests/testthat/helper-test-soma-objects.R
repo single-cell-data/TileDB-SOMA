@@ -20,7 +20,7 @@ create_and_populate_var <- function(uri, nrows = 10L, seed = 1) {
     )
   )
 
-  sdf <- SOMADataFrame$new(uri)
+  sdf <- SOMADataFrame$new(uri, internal_use_only = "allowed_use")
   sdf$create(tbl$schema, index_column_names = "soma_joinid")
   sdf$write(tbl)
   sdf
@@ -44,19 +44,19 @@ create_and_populate_experiment <- function(
   config = NULL
 ) {
 
-  experiment <- SOMAExperiment$new(uri, platform_config = config)$create()
+  experiment <- SOMAExperiment$new(uri, platform_config = config, internal_use_only = "allowed_use")$create()
   experiment$obs <- create_and_populate_obs(
     uri = file.path(uri, "obs"),
     nrows = n_obs
   )
-  experiment$ms <- SOMACollection$new(file.path(uri, "ms"))$create()
+  experiment$ms <- SOMACollection$new(file.path(uri, "ms"), internal_use_only = "allowed_use")$create()
 
-  ms_rna <- SOMAMeasurement$new(file.path(uri, "ms", "RNA"))$create()
+  ms_rna <- SOMAMeasurement$new(file.path(uri, "ms", "RNA"), internal_use_only = "allowed_use")$create()
   ms_rna$var <- create_and_populate_var(
     uri = file.path(ms_rna$uri, "var"),
     nrows = n_var
   )
-  ms_rna$X <- SOMACollection$new(file.path(ms_rna$uri, "X"))$create()
+  ms_rna$X <- SOMACollection$new(file.path(ms_rna$uri, "X"), internal_use_only = "allowed_use")$create()
 
   for (layer_name in X_layer_names) {
     nda <- create_and_populate_sparse_nd_array(

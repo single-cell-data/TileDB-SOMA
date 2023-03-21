@@ -208,7 +208,7 @@ SOMASparseNDArray <- R6::R6Class(
     #' @description Retrieve number of non-zero elements (lifecycle: experimental)
     #' @return A scalar with the number of non-zero elements
     nnz = function() {
-      nnz(self$uri)
+      nnz(self$uri, config=as.character(tiledb::config(self$tiledbsoma_ctx$get_tiledb_context())))
     }
 
   ),
@@ -220,7 +220,7 @@ SOMASparseNDArray <- R6::R6Class(
     write_coo_dataframe = function(values) {
       stopifnot(is.data.frame(values))
       # private$log_array_ingestion()
-      on.exit(private$close())
+      on.exit(self$close())
       private$open("WRITE")
       arr <- self$object
       arr[] <- values

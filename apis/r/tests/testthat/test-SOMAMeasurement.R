@@ -1,7 +1,7 @@
 test_that("Basic mechanics", {
   uri <- withr::local_tempdir("soma-ms")
 
-  measurement <- SOMAMeasurement$new(uri)
+  measurement <- SOMAMeasurement$new(uri, internal_use_only = "allowed_use")
 
   expect_false(measurement$exists())
   expect_error(measurement$var, "Group does not exist.")
@@ -24,7 +24,7 @@ test_that("Basic mechanics", {
   expect_error(measurement$X, "No member named 'X' found")
   expect_error(measurement$X <- var, "X must be a 'SOMACollection'")
 
-  X <- SOMACollection$new(file.path(uri, "X"))
+  X <- SOMACollection$new(file.path(uri, "X"), internal_use_only = "allowed_use")
   X$create()
 
   measurement$X <- X
