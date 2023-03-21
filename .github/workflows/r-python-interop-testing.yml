@@ -38,7 +38,7 @@ jobs:
         run: cd apis/r && ./copy_source.sh
 
       - name: Install testing prereqs
-        run: python -m pip -v install -U pip pytest-cov 'typeguard<3.0' types-setuptools pyarrow
+        run: python -m pip -v install -U pip pytest-cov 'typeguard<3.0' types-setuptools pyarrow numpy
 
       - name: Set up Python 3.10
         uses: actions/setup-python@v4
