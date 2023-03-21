@@ -51,7 +51,8 @@ class SOMAArrayReader {
     //===================================================================
 
     /**
-     * @brief Open an array at the specified URI and return SOMAArrayReader object.
+     * @brief Open an array at the specified URI and return SOMAArrayReader
+     * object.
      *
      * @param uri URI of the array
      * @param name Name of the array
@@ -61,7 +62,8 @@ class SOMAArrayReader {
      * @param result_order Read result order
      * @return std::unique_ptr<SOMAArrayReader> SOMAArrayReader
      */
-    __attribute__((visibility("default"))) static std::unique_ptr<SOMAArrayReader>
+    __attribute__((
+        visibility("default"))) static std::unique_ptr<SOMAArrayReader>
     open(
         std::string_view uri,
         std::string_view name = "unnamed",
@@ -72,7 +74,8 @@ class SOMAArrayReader {
         std::optional<std::pair<uint64_t, uint64_t>> timestamp = std::nullopt);
 
     /**
-     * @brief Open an array at the specified URI and return SOMAArrayReader object.
+     * @brief Open an array at the specified URI and return SOMAArrayReader
+     * object.
      *
      * @param ctx TileDB context
      * @param uri URI of the array
@@ -116,8 +119,8 @@ class SOMAArrayReader {
     ~SOMAArrayReader() = default;
 
     /**
-     * @brief Reset the state of this SOMAArrayReader object to prepare for a new
-     * query, while holding the array open.
+     * @brief Reset the state of this SOMAArrayReader object to prepare for a
+     * new query, while holding the array open.
      *
      * @param column_names
      * @param batch_size
@@ -159,7 +162,8 @@ class SOMAArrayReader {
         // Validate partition inputs
         if (partition_index >= partition_count) {
             throw TileDBSOMAError(fmt::format(
-                "[SOMAArrayReader] partition_index ({}) must be < partition_count "
+                "[SOMAArrayReader] partition_index ({}) must be < "
+                "partition_count "
                 "({})",
                 partition_index,
                 partition_count));
@@ -175,7 +179,8 @@ class SOMAArrayReader {
             }
 
             LOG_DEBUG(fmt::format(
-                "[SOMAArrayReader] set_dim_points partitioning: sizeof(T)={} dim={} "
+                "[SOMAArrayReader] set_dim_points partitioning: sizeof(T)={} "
+                "dim={} "
                 "index={} "
                 "count={} "
                 "range=[{}, {}] of {} points",

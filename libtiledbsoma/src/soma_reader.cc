@@ -184,7 +184,8 @@ uint64_t SOMAArrayReader::nnz() {
     FragmentInfo fragment_info(*ctx_, uri_);
     fragment_info.load();
 
-    LOG_DEBUG(fmt::format("[SOMAArrayReader] Fragment info for array '{}'", uri_));
+    LOG_DEBUG(
+        fmt::format("[SOMAArrayReader] Fragment info for array '{}'", uri_));
     if (LOG_DEBUG_ENABLED()) {
         fragment_info.dump();
     }

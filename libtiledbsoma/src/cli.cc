@@ -59,7 +59,8 @@ void test_sdf(const std::string& uri) {
     }
 
     // Read all values from the X/data array
-    auto x_data = SOMAArrayReader::open(uri + "/ms/RNA/X/data", "X/data", config);
+    auto x_data = SOMAArrayReader::open(
+        uri + "/ms/RNA/X/data", "X/data", config);
     x_data->submit();
 
     int batches = 0;
