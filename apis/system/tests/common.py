@@ -14,26 +14,37 @@ def create_R_list(xs):
     return ",".join([to_R(x) for x in xs])
 
 
-class TestWritePythonReadR:
+class BasePythonRInterop:
     @classmethod
     def setup_class(cls):
         import tempfile
 
-        cls.td = tempfile.TemporaryDirectory()
-        path = cls.td.name
+        cls.tempdir = tempfile.TemporaryDirectory()
+        path = cls.tempdir.name
         cls.uri = f"{path}/test.soma"
 
     @classmethod
     def teardown_class(cls):
-        cls.td.cleanup()
+        cls.tempdir.cleanup()
 
+    def execute_R_script_file(self, script_name):
+        subprocess.run(["Rscript", script_name], check=True)
+
+    def execute_R_script(self, script):
+        with open("test-dataframe-read.R", "w") as f:
+            f.write(script)
+        self.execute_R_script_file("test-dataframe-read.R")
+
+
+class TestWritePythonReadR(BasePythonRInterop):
     def r_assert(self, code: str):
         R_script = self.base_script() + code
-        print(R_script)
-        with open("test-dataframe-read.R", "w") as f:
-            f.write(R_script)
         try:
-            subprocess.run(["Rscript", "test-dataframe-read.R"], check=True)
+            self.execute_R_script(R_script)
         except subprocess.CalledProcessError:
             raise AssertionError(f"R assertion failed: {code}")
             # raise e
+
+
+class TestReadPythonWriteR(BasePythonRInterop):
+    pass
