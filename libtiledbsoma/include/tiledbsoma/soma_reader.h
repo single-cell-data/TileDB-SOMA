@@ -339,6 +339,16 @@ class SOMAArrayReader {
      */
     __attribute__((visibility("default"))) std::vector<int64_t> shape();
 
+    /**
+     * @brief Get the value of a metadata key-value item given the key.
+     *
+     * @return A pair where the first item is the datatype of the value and the
+     * second item is vector containing the values.
+     */
+    template <typename T>
+    std::pair<tiledb_datatype_t, std::vector<T>> get_metadata(
+        const std::string&);
+
    private:
     //===================================================================
     //= private non-static
