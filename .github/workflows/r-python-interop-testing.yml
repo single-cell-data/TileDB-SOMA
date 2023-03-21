@@ -37,6 +37,12 @@ jobs:
         ## we build 'as in an R package' with all sources within apis/r/
         run: cd apis/r && ./copy_source.sh
 
+      - name: Install R-tiledbsoma
+        run: |
+          R CMD build --no-build-vignettes --no-manual .
+          FILE=$(ls -1t *.tar.gz | head -n 1)
+          R CMD INSTALL $FILE
+
       - name: Install testing prereqs
         run: python -m pip -v install -U pip pytest-cov 'typeguard<3.0' types-setuptools
 
