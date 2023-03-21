@@ -24,8 +24,6 @@ jobs:
         fetch-depth: 0  # ensure we get all tags to inform package version determination
     - name: Build sdist
       run: python setup.py sdist
-      env:
-        CMAKE_OSX_ARCHITECTURES: "arm64"
       working-directory: ./apis/python
     - name: Upload sdist artifact
       uses: actions/upload-artifact@v3
@@ -76,6 +74,7 @@ jobs:
         #   built for the wrong python version.
         CIBW_ARCHS_MACOS: ${{ matrix.cibw_archs_macos }}
         CIBW_TEST_SKIP: "*_arm64"
+        CMAKE_OSX_ARCHITECTURES: "arm64"
     - name: Upload wheels-${{ matrix.platform }}
       uses: actions/upload-artifact@v3
       with:
