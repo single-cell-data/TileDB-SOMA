@@ -16,7 +16,10 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout TileDB-SOMA
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0  # ensure we get all tags to inform package version determination
 
       - name: Bootstrap
         run: cd apis/r && tools/r-ci.sh bootstrap
