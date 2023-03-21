@@ -8,7 +8,7 @@ autonumber
 participant "user app (py)" as py
 participant "tiledbsoma (py)" as soma
 participant "libtiledbsoma (c++)" as clib
-participant "SOMAReader (c++)" as sr
+participant "SOMAArrayReader (c++)" as sr
 participant "ManagedQuery (c++)" as mq
 
 
@@ -18,8 +18,8 @@ note across: Open SOMADataFrame|SOMASparseNdArray in read mode
 note over py: **SPEC CHANGE**\n- platform_config passed once to create object\n- open in read mode
 py -> soma : a = SOMA*.open(uri, platform_config, mode="r")
 note over soma: Extract tiledb_config from platform_config
-soma -> clib : SOMAReader(uri, tiledb_config)
-clib -> sr ** : SOMAReader(uri, tiledb_config)
+soma -> clib : SOMAArrayReader(uri, tiledb_config)
+clib -> sr ** : SOMAArrayReader(uri, tiledb_config)
 sr++
 note over sr: Open array using timestamp in tiledb_config
 
@@ -71,7 +71,7 @@ note across: Delete SOMASparseNdArray instance
 
 py -> soma : a.close()
 soma -> clib : close()
-clib -> sr -- : ~SOMAReader()
+clib -> sr -- : ~SOMAArrayReader()
 sr -> mq -- : ~ManagedQuery()
 note over mq : Array closed
 

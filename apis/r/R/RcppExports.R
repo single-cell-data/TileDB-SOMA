@@ -64,9 +64,9 @@ shape <- function(uri, config = NULL) {
     .Call(`_tiledbsoma_shape`, uri, config)
 }
 
-#' Iterator-Style Access to SOMA Array via SOMAReader
+#' Iterator-Style Access to SOMA Array via SOMAArrayReader
 #'
-#' The `sr_*` functions provide low-level access to an instance of the SOMAReader
+#' The `sr_*` functions provide low-level access to an instance of the SOMAArrayReader
 #' class so that iterative access over parts of a (large) array is possible.
 #' \describe{
 #'   \item{\code{sr_setup}}{instantiates and by default also submits a query}
@@ -86,9 +86,9 @@ shape <- function(uri, config = NULL) {
 #' for the given dimension. Each dimension can be one entry in the list.
 #' @param loglevel Character value with the desired logging level, defaults to \sQuote{auto}
 #' which lets prior setting prevail, any other value is set as new logging level.
-#' @param sr An external pointer to a TileDB SOMAReader object
+#' @param sr An external pointer to a TileDB SOMAArrayReader object
 #'
-#' @return \code{sr_setup} returns an external pointer to a SOMAReader. \code{sr_complete}
+#' @return \code{sr_setup} returns an external pointer to a SOMAArrayReader. \code{sr_complete}
 #' returns a boolean, and \code{sr_next} returns an Arrow array helper object.
 #'
 #' @examples

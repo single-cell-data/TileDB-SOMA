@@ -1,4 +1,4 @@
-test_that("Arrow Interface from SOMAReader", {
+test_that("Arrow Interface from SOMAArrayReader", {
     library(arrow)
     library(tiledb)
 

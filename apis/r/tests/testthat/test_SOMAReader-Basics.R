@@ -1,4 +1,4 @@
-test_that("Basic SOMAReader", {
+test_that("Basic SOMAArrayReader", {
     tdir <- tempfile()
     tgzfile <- system.file("raw-data", "soco-pbmc3k_processed-obs.tar.gz", package="tiledbsoma")
     untar(tarfile = tgzfile, exdir = tdir)

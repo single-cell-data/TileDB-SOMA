@@ -27,7 +27,7 @@
  *
  * @section DESCRIPTION
  *
- *   This declares the SOMAReader
+ *   This declares the SOMAArrayReader
  */
 
 #ifndef SOMA_READER
@@ -44,14 +44,14 @@
 namespace tiledbsoma {
 using namespace tiledb;
 
-class SOMAReader {
+class SOMAArrayReader {
    public:
     //===================================================================
     //= public static
     //===================================================================
 
     /**
-     * @brief Open an array at the specified URI and return SOMAReader object.
+     * @brief Open an array at the specified URI and return SOMAArrayReader object.
      *
      * @param uri URI of the array
      * @param name Name of the array
@@ -59,9 +59,9 @@ class SOMAReader {
      * @param column_names Columns to read
      * @param batch_size Read batch size
      * @param result_order Read result order
-     * @return std::unique_ptr<SOMAReader> SOMAReader
+     * @return std::unique_ptr<SOMAArrayReader> SOMAArrayReader
      */
-    __attribute__((visibility("default"))) static std::unique_ptr<SOMAReader>
+    __attribute__((visibility("default"))) static std::unique_ptr<SOMAArrayReader>
     open(
         std::string_view uri,
         std::string_view name = "unnamed",
@@ -72,7 +72,7 @@ class SOMAReader {
         std::optional<std::pair<uint64_t, uint64_t>> timestamp = std::nullopt);
 
     /**
-     * @brief Open an array at the specified URI and return SOMAReader object.
+     * @brief Open an array at the specified URI and return SOMAArrayReader object.
      *
      * @param ctx TileDB context
      * @param uri URI of the array
@@ -80,9 +80,9 @@ class SOMAReader {
      * @param column_names Columns to read
      * @param batch_size Read batch size
      * @param result_order Read result order
-     * @return std::unique_ptr<SOMAReader> SOMAReader
+     * @return std::unique_ptr<SOMAArrayReader> SOMAArrayReader
      */
-    static std::unique_ptr<SOMAReader> open(
+    static std::unique_ptr<SOMAArrayReader> open(
         std::shared_ptr<Context> ctx,
         std::string_view uri,
         std::string_view name = "unnamed",
@@ -95,13 +95,13 @@ class SOMAReader {
     //= public non-static
     //===================================================================
     /**
-     * @brief Construct a new SOMAReader object
+     * @brief Construct a new SOMAArrayReader object
      *
      * @param uri URI of the array
      * @param name name of the array
      * @param ctx TileDB context
      */
-    SOMAReader(
+    SOMAArrayReader(
         std::string_view uri,
         std::string_view name,
         std::shared_ptr<Context> ctx,
@@ -110,13 +110,13 @@ class SOMAReader {
         std::string_view result_order,
         std::optional<std::pair<uint64_t, uint64_t>> timestamp = std::nullopt);
 
-    SOMAReader() = delete;
-    SOMAReader(const SOMAReader&) = delete;
-    SOMAReader(SOMAReader&&) = default;
-    ~SOMAReader() = default;
+    SOMAArrayReader() = delete;
+    SOMAArrayReader(const SOMAArrayReader&) = delete;
+    SOMAArrayReader(SOMAArrayReader&&) = default;
+    ~SOMAArrayReader() = default;
 
     /**
-     * @brief Reset the state of this SOMAReader object to prepare for a new
+     * @brief Reset the state of this SOMAArrayReader object to prepare for a new
      * query, while holding the array open.
      *
      * @param column_names
@@ -159,7 +159,7 @@ class SOMAReader {
         // Validate partition inputs
         if (partition_index >= partition_count) {
             throw TileDBSOMAError(fmt::format(
-                "[SOMAReader] partition_index ({}) must be < partition_count "
+                "[SOMAArrayReader] partition_index ({}) must be < partition_count "
                 "({})",
                 partition_index,
                 partition_count));
@@ -175,7 +175,7 @@ class SOMAReader {
             }
 
             LOG_DEBUG(fmt::format(
-                "[SOMAReader] set_dim_points partitioning: sizeof(T)={} dim={} "
+                "[SOMAArrayReader] set_dim_points partitioning: sizeof(T)={} dim={} "
                 "index={} "
                 "count={} "
                 "range=[{}, {}] of {} points",
@@ -206,7 +206,7 @@ class SOMAReader {
     template <typename T>
     void set_dim_points(const std::string& dim, const std::vector<T>& points) {
         LOG_DEBUG(fmt::format(
-            "[SOMAReader] set_dim_points: sizeof(T)={}", sizeof(T)));
+            "[SOMAArrayReader] set_dim_points: sizeof(T)={}", sizeof(T)));
         mq_->select_points(dim, points);
     }
 
@@ -260,7 +260,7 @@ class SOMAReader {
      *
      * An example use model:
      *
-     *   auto reader = SOMAReader::open(uri);
+     *   auto reader = SOMAArrayReader::open(uri);
      *   reader->submit();
      *   while (auto batch = x_data->read_next()) {
      *       ...process batch ...
@@ -342,7 +342,7 @@ class SOMAReader {
     // TileDB context
     std::shared_ptr<Context> ctx_;
 
-    // SOMAReader URI
+    // SOMAArrayReader URI
     std::string uri_;
 
     // Batch size
