@@ -92,11 +92,12 @@ def readGitVersion():
             stderr=subprocess.PIPE,
         )
         data, stderr = proc.communicate()
+        sys.stderr.write("git returned with code %s\n", proc.returncode)
         if proc.returncode:
             return None
         ver = data.decode().splitlines()[0].strip()
     except Exception:
-        raise
+        return None
 
     if not ver:
         return None
