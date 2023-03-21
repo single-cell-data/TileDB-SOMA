@@ -38,7 +38,7 @@ jobs:
         run: python -m pip -v install -U pip pytest-cov 'typeguard<3.0' types-setuptools
 
       - name: setup Python dependencies
-        run: python -m pip install -r apis/python/requirements-dev.txt
+        run: python -m pip install -r apis/python/requirements_dev.txt
 
       - name: Install tiledbsoma
         run: python -m pip -v install -e apis/python
