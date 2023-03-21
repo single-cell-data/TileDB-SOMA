@@ -51,8 +51,8 @@ jobs:
         #   platform: macosx
         - os: macos-12
           cibw_build: 'cp310-macosx_arm64'
+          cibw_archs_macos: arm64
           platform: macosx
-          arch: aarch64
     steps:
     - name: Download sdist artifact
       uses: actions/download-artifact@v3
@@ -72,6 +72,8 @@ jobs:
         #   run CMake build or not. Otherwise it'll keep reusing the library file built in the
         #   first iteration of cibuildwheel's outer loop, resulting in wheels with the library
         #   built for the wrong python version.
+        CIBW_ARCHS_MACOS: ${{ matrix.cibw_archs_macos }}
+        CIBW_TEST_SKIP: "*_arm64"
     - name: Upload wheels-${{ matrix.platform }}
       uses: actions/upload-artifact@v3
       with:
