@@ -96,7 +96,7 @@ def readGitVersion():
             return None
         ver = data.decode().splitlines()[0].strip()
     except Exception:
-        return None
+        raise
 
     if not ver:
         return None
