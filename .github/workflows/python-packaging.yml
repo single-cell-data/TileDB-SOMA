@@ -52,7 +52,7 @@ jobs:
         - os: macos-12
           cibw_build: 'cp310-macosx_arm64'
           platform: macosx
-          arch: arm64
+          arch: aarch64
     steps:
     - name: Download sdist artifact
       uses: actions/download-artifact@v3
