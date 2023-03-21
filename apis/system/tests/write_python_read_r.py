@@ -41,7 +41,7 @@ class TestDataframeWritePythonReadR(TestWritePythonReadR):
         require("testthat")
         platform_config <- NULL
         tiledbsoma_ctx <- NULL
-        soma_df <- SOMADataFrame$new("{self.uri}", platform_config, tiledbsoma_ctx)
+        soma_df <- SOMADataFrameOpen("{self.uri}", platform_config, tiledbsoma_ctx)
         table = soma_df$read()
         df = as.data.frame(table)
         """
