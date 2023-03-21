@@ -171,6 +171,10 @@ def _read_soma_type(hdl: _tdb_handles.AnyWrapper) -> str:
         raise SOMAError(
             f"stored TileDB object does not have {SOMA_OBJECT_TYPE_METADATA_KEY!r}"
         )
+
+    if isinstance(obj_type, bytes):
+        obj_type = str(obj_type, "utf-8")
+
     if not isinstance(obj_type, str):
         raise SOMAError(
             f"stored TileDB object {SOMA_OBJECT_TYPE_METADATA_KEY!r}"
@@ -180,6 +184,10 @@ def _read_soma_type(hdl: _tdb_handles.AnyWrapper) -> str:
         raise SOMAError(
             f"stored TileDB object does not have {SOMA_ENCODING_VERSION_METADATA_KEY}"
         )
+
+    if isinstance(encoding_version, bytes):
+        encoding_version = str(encoding_version, "utf-8")
+
     if encoding_version != SOMA_ENCODING_VERSION:
         raise ValueError(f"Unsupported SOMA object encoding version {encoding_version}")
 
