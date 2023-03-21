@@ -88,24 +88,21 @@ jobs:
     strategy:
       matrix:
         include:
-        # - os: ubuntu-20.04
-        #   platform: manylinux2014
-        #   arch: x86_64
-        #   cc: gcc-11
-        #   cxx: g++-11
-        # - os: macos-11
-        #   platform: macosx
-        #   arch: x86_64
-        #   cc: clang
-        #   cxx: clang++
-        - os: macos-12
+        - os: ubuntu-20.04
+          platform: manylinux2014
+          arch: x86_64
+          cc: gcc-11
+          cxx: g++-11
+        - os: macos-11
           platform: macosx
           arch: arm64
+          cc: clang
+          cxx: clang++
     steps:
-    - name: Set up Python 3.10
+    - name: Set up Python 3.8
       uses: actions/setup-python@v4
       with:
-        python-version: 3.10
+        python-version: 3.8
     - name: Download artifacts
       uses: actions/download-artifact@v3
     - name: Install wheel
