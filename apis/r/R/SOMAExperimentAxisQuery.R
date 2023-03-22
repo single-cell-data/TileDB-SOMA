@@ -438,7 +438,7 @@ SOMAExperimentAxisQuery <- R6::R6Class(
         v3 = {
           if (!all(names(x = X_layers) %in% c('counts', 'data', 'scale.data'))) {
             stop(
-              "The names of 'X_layers' must one or more of 'counts', 'data', and 'scale.data'",
+              "The names of 'X_layers' must be one or more of 'counts', 'data', and 'scale.data'",
               call. = FALSE
             )
           }
