@@ -1,0 +1,64 @@
+name: TileDB-SOMA R-Python interop testing
+
+on:
+  pull_request:
+    types: [opened]
+  push:
+    branches: [main, ebezzi/r-python-roundtrip-testing]
+
+jobs:
+  ci:
+    strategy:
+      matrix:
+        include:
+          - { os: ubuntu-latest }
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Checkout TileDB-SOMA
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0  # ensure we get all tags to inform package version determination
+
+      - name: Bootstrap
+        run: cd apis/r && tools/r-ci.sh bootstrap
+
+      - name: Dependencies
+        run: cd apis/r && tools/r-ci.sh install_all
+
+      - name: CMake
+        uses: lukka/get-cmake@latest
+
+      - name: MkVars
+        run: mkdir ~/.R && echo "CXX17FLAGS=-Wno-deprecated-declarations -Wno-deprecated" > ~/.R/Makevars
+
+      - name: Copy libtiledbsoma
+        ## we build 'as in an R package' with all sources within apis/r/
+        run: cd apis/r && ./copy_source.sh
+
+      - name: Install R-tiledbsoma
+        run: |
+          cd apis/r
+          R CMD build --no-build-vignettes --no-manual .
+          FILE=$(ls -1t *.tar.gz | head -n 1)
+          R CMD INSTALL $FILE
+
+      - name: Install testing prereqs
+        run: python -m pip -v install -U pip pytest-cov 'typeguard<3.0' types-setuptools
+
+      - name: Set up Python 3.10
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+          cache: pip
+          cache-dependency-path: ./apis/python/setup.py
+
+      - name: Install tiledbsoma
+        run: python -m pip -v install -e apis/python
+
+      - name: Show package versions
+        run: python scripts/show-versions.py
+
+      - name: Interop Tests
+        run: python -m pytest apis/system/tests/
