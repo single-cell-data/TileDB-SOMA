@@ -499,11 +499,11 @@ SOMAExperimentAxisQuery <- R6::R6Class(
       }
       names(ms_embed) <- .anndata_to_seurat_reduc(ms_embed)
       if (is.null(ms_load) && !is.null(varm_layer)) {
-        msg <- "No loadings present in 'varm'"
-        if (is.null(obsm_layer)) {
-          stop(msg, call. = FALSE)
-        }
-        warning(msg, call. = FALSE, immediate. = TRUE)
+        warning(
+          "No loadings present in 'varm'",
+          call. = FALSE,
+          immediate. = TRUE
+        )
         varm_layer <- NULL
       } else {
         names(ms_load) <- .anndata_to_seurat_reduc(ms_load, 'loadings')
@@ -523,29 +523,31 @@ SOMAExperimentAxisQuery <- R6::R6Class(
       }
       # Find Seurat name
       seurat <- c(
-        .anndata_to_seurat_reduc(obsm_layer),
-        tryCatch(
-          expr = .anndata_to_seurat_reduc(varm_layer, 'loadings'),
+        embeddings = unname(.anndata_to_seurat_reduc(obsm_layer)),
+        loadings = tryCatch(
+          expr = unname(.anndata_to_seurat_reduc(varm_layer, 'loadings')),
           error = null
         )
       )
-      if (length(seurat) == 2L && !identical(x = seurat[1L], y = seurat[2L])) {
-        msg <- paste0(
-          "The embeddings requested (",
-          sQuote(obsm_layer),
-          ") do not match the loadings requested (",
-          sQuote(varm_layer),
-          "); using the embeddings to create a Seurat name (",
-          sQuote(seurat[1L]),
-          ")"
-        )
-        warning(
-          paste(strwrap(msg), collapse = '\n'),
+      if (length(seurat) == 2L && !identical(seurat[['embeddings']], y = seurat[['loadings']])) {
+        stop(
+          paste(
+            strwrap(paste0(
+              "The embeddings requested (",
+              sQuote(obsm_layer),
+              ") do not match the loadings requested (",
+              sQuote(varm_layer),
+              "); using the embeddings to create a Seurat name (",
+              sQuote(seurat[['embeddings']]),
+              ")"
+            )),
+            collapse = '\n'
+          ),
           call. = FALSE,
           immediate. = TRUE
         )
       }
-      seurat <- seurat[1L]
+      seurat <- seurat[['embeddings']]
       # Create a Seurat key
       key <- SeuratObject::Key(
         object = switch(EXPR = seurat, pca = 'PC', tsne = 'tSNE', toupper(seurat)),
