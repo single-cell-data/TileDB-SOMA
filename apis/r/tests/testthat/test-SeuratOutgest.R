@@ -80,7 +80,7 @@ test_that("Load assay from ExperimentQuery mechanics", {
   expect_error(query$to_seurat_assay(c(a = 'counts')))
   expect_error(query$to_seurat_assay(c(scale.data = 'counts')))
   expect_error(query$to_seurat_assay(c(data = 'tomato')))
-  expect_warning(query$to_seurat_assay(c(counts = 'counts', data = 'tomato')))
+  expect_error(query$to_seurat_assay(c(counts = 'counts', data = 'tomato')))
   # Test `obs_index` assertions
   expect_error(query$to_seurat_assay(obs_index = FALSE))
   expect_error(query$to_seurat_assay(obs_index = NA_character_))

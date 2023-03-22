@@ -416,36 +416,20 @@ SOMAExperimentAxisQuery <- R6::R6Class(
         self$obs(obs_index)$GetColumnByName(obs_index)$as_vector()
       }
       # Check the layers
-      layers <- X_layers[X_layers %in% self$ms$X$names()]
-      if (!length(layers)) {
-        stop("None of the requested X_layers can be found", call. = FALSE)
-      } else if (length(layers) != length(X_layers)) {
-        warning(
-          paste(
-            strwrap(paste(
-              "The following layers cannot be found in this ExperimentQuery:",
-              paste(sQuote(setdiff(x = X_layers, y = layers)), collapse = ', ')
-            )),
-            collapse = '\n'
-          ),
-          call. = FALSE,
-          immediate. = TRUE
-        )
-      }
+      assert_subset(x = X_layers, y = self$ms$X$names(), type = 'X_layer')
       # Read in the assay
       obj <- switch(
         EXPR = version,
         v3 = {
-          if (!all(names(x = X_layers) %in% c('counts', 'data', 'scale.data'))) {
-            stop(
-              "The names of 'X_layers' must be one or more of 'counts', 'data', and 'scale.data'",
-              call. = FALSE
-            )
-          }
+          assert_subset(
+            x = names(X_layers),
+            y = c('counts', 'data', 'scale.data'),
+            type = 'Seurat slot'
+          )
           private$.to_seurat_assay_v3(
-            counts = tryCatch(expr = layers[['counts']], error = null),
-            data = tryCatch(expr = layers[['data']], error = null),
-            scale_data = tryCatch(expr = layers[['scale.data']], error = null),
+            counts = tryCatch(expr = X_layers[['counts']], error = null),
+            data = tryCatch(expr = X_layers[['data']], error = null),
+            scale_data = tryCatch(expr = X_layers[['scale.data']], error = null),
             cells = cells,
             features = features
           )
