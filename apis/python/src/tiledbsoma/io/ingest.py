@@ -1031,7 +1031,12 @@ def to_h5ad(
 
 # ----------------------------------------------------------------
 def to_anndata(
-    experiment: Experiment, measurement_name: str, X_layer_name: str = "data"
+    experiment: Experiment,
+    measurement_name: str,
+    *,
+    obs_id_name: str = "obs_id",
+    var_id_name: str = "var_id",
+    X_layer_name: str = "data",
 ) -> ad.AnnData:
     """Converts the experiment group to anndata.
     Choice of matrix formats is following what we often see in input .h5ad files:
@@ -1048,21 +1053,33 @@ def to_anndata(
     s = _util.get_start_stamp()
     logging.log_io(None, "START  Experiment.to_anndata")
 
+    if measurement_name not in experiment.ms.keys():
+        raise ValueError(
+            f"requested measurement name {measurement_name} not found in input: {experiment.ms.keys()}"
+        )
     measurement = experiment.ms[measurement_name]
 
     obs_df = experiment.obs.read().concat().to_pandas()
     obs_df.drop([SOMA_JOINID], axis=1, inplace=True)
-    obs_df.set_index("obs_id", inplace=True)
+    if obs_id_name not in obs_df.keys():
+        raise ValueError(
+            f"requested obs IDs column name {obs_id_name} not found in inputinput: {obs_df.keys()}"
+        )
+    obs_df.set_index(obs_id_name, inplace=True)
 
     var_df = measurement.var.read().concat().to_pandas()
     var_df.drop([SOMA_JOINID], axis=1, inplace=True)
-    var_df.set_index("var_id", inplace=True)
+    if var_id_name not in var_df.keys():
+        raise ValueError(
+            f"requested var IDs column name {var_id_name} not found in inputinput: {var_df.keys()}"
+        )
+    var_df.set_index(var_id_name, inplace=True)
 
     nobs = len(obs_df.index)
     nvar = len(var_df.index)
 
     if X_layer_name not in measurement.X:
-        raise SOMAError(
+        raise ValueError(
             f"X_layer_name {X_layer_name} not found in data: {measurement.X.keys()}"
         )
     X_data = measurement.X[X_layer_name]
