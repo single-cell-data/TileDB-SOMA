@@ -43,7 +43,7 @@ def to_tiledb_supported_array_type(x: _MT) -> _MT:
     """Converts datatypes unrepresentable by TileDB into datatypes it can represent.
     E.g., categorical strings -> string.
 
-    See also [https://docs.scipy.org/doc/numpy-1.10.1/reference/arrays.dtypes.html](https://docs.scipy.org/doc/numpy-1.10.1/reference/arrays.dtypes.html).
+    See also `https://docs.scipy.org/doc/numpy-1.10.1/reference/arrays.dtypes.html ,https://docs.scipy.org/doc/numpy-1.10.1/reference/arrays.dtypes.html>`_.
 
     Preferentially converts to the underlying primitive type, as TileDB does not support
     most complex types. NOTE: this does not support ``datetime64`` conversion.
