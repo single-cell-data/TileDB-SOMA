@@ -61,4 +61,4 @@ jobs:
         run: python scripts/show-versions.py
 
       - name: Interop Tests
-        run: python -m pytest apis/system/tests/write_python_read_r.py
+        run: python -m pytest apis/system/tests/
