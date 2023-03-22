@@ -60,6 +60,10 @@ this in the class.
 \item \href{#method-SOMAExperimentAxisQuery-var_joinids}{\code{SOMAExperimentAxisQuery$var_joinids()}}
 \item \href{#method-SOMAExperimentAxisQuery-X}{\code{SOMAExperimentAxisQuery$X()}}
 \item \href{#method-SOMAExperimentAxisQuery-read}{\code{SOMAExperimentAxisQuery$read()}}
+\item \href{#method-SOMAExperimentAxisQuery-to_seurat}{\code{SOMAExperimentAxisQuery$to_seurat()}}
+\item \href{#method-SOMAExperimentAxisQuery-to_seurat_assay}{\code{SOMAExperimentAxisQuery$to_seurat_assay()}}
+\item \href{#method-SOMAExperimentAxisQuery-to_seurat_reduction}{\code{SOMAExperimentAxisQuery$to_seurat_reduction()}}
+\item \href{#method-SOMAExperimentAxisQuery-to_seurat_graph}{\code{SOMAExperimentAxisQuery$to_seurat_graph()}}
 \item \href{#method-SOMAExperimentAxisQuery-clone}{\code{SOMAExperimentAxisQuery$clone()}}
 }
 }
@@ -186,6 +190,170 @@ from the resulting Tables.
 \code{var} and \code{obs} dataframes to read and return.}
 }
 \if{html}{\out{</div>}}
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-SOMAExperimentAxisQuery-to_seurat"></a>}}
+\if{latex}{\out{\hypertarget{method-SOMAExperimentAxisQuery-to_seurat}{}}}
+\subsection{Method \code{to_seurat()}}{
+Loads the query as a \code{\link[SeuratObject]{Seurat}} object
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{SOMAExperimentAxisQuery$to_seurat(
+  X_layers = c(counts = "counts", data = "logcounts"),
+  obs_index = NULL,
+  var_index = NULL,
+  obs_column_names = NULL,
+  var_column_names = NULL,
+  obsm_layers = NULL,
+  varm_layers = NULL,
+  obsp_layers = NULL
+)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{X_layers}}{A named character of X layers to add to the Seurat assay,
+where the names are the names of Seurat slots and the values are the names
+of layers within \code{X}; names should be one of:
+\itemize{
+\item \dQuote{\code{counts}} to add the layer as \code{counts}
+\item \dQuote{\code{data}} to add the layer as \code{data}
+\item \dQuote{\code{scale.data}} to add the layer as \code{scale.data}
+}
+At least one of \dQuote{\code{counts}} or \dQuote{\code{data}} is required}
+
+\item{\code{obs_index}}{Name of column in \code{obs} to add as cell names; uses
+\code{paste0("cell", obs_joinids())} by default}
+
+\item{\code{var_index}}{Name of column in \code{var} to add as feature names; uses
+\code{paste0("feature", var_joinids())} by default}
+
+\item{\code{obs_column_names}}{Names of columns in \code{obs} to add as
+cell-level meta data; by default, loads all columns}
+
+\item{\code{var_column_names}}{Names of columns in \code{var} to add as
+feature-level meta data; by default, loads all columns}
+
+\item{\code{obsm_layers}}{Names of arrays in \code{obsm} to load in as the
+cell embeddings; pass \code{FALSE} to suppress loading in any
+dimensional reductions; by default, loads all dimensional
+reduction information}
+
+\item{\code{varm_layers}}{Named vector of arrays in \code{varm} to load in as
+the feature loadings; names must be names of array in \code{obsm} (eg.
+\code{varm_layers = c(X_pca = 'PCs')}); will try to determine
+\code{varm_layers} from \code{obsm_layers}}
+
+\item{\code{obsp_layers}}{Names of arrays in \code{obsp} to load in as
+\code{\link[SeuratObject]{Graph}s}; by default, loads all graphs}
+}
+\if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+A \code{\link[SeuratObject]{Seurat}} object
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-SOMAExperimentAxisQuery-to_seurat_assay"></a>}}
+\if{latex}{\out{\hypertarget{method-SOMAExperimentAxisQuery-to_seurat_assay}{}}}
+\subsection{Method \code{to_seurat_assay()}}{
+Loads the query as a Seurat \code{\link[SeuratObject]{Assay}}
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{SOMAExperimentAxisQuery$to_seurat_assay(
+  X_layers = c(counts = "counts", data = "logcounts"),
+  obs_index = NULL,
+  var_index = NULL,
+  var_column_names = NULL
+)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{X_layers}}{A named character of X layers to add to the Seurat assay,
+where the names are the names of Seurat slots and the values are the names
+of layers within \code{X}; names should be one of:
+\itemize{
+\item \dQuote{\code{counts}} to add the layer as \code{counts}
+\item \dQuote{\code{data}} to add the layer as \code{data}
+\item \dQuote{\code{scale.data}} to add the layer as \code{scale.data}
+}
+At least one of \dQuote{\code{counts}} or \dQuote{\code{data}} is required}
+
+\item{\code{obs_index}}{Name of column in \code{obs} to add as cell names; uses
+\code{paste0("cell", obs_joinids())} by default}
+
+\item{\code{var_index}}{Name of column in \code{var} to add as feature names; uses
+\code{paste0("feature", var_joinids())} by default}
+
+\item{\code{var_column_names}}{Names of columns in \code{var} to add as
+feature-level meta data; by default, loads all columns}
+}
+\if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+An \code{\link[SeuratObject]{Assay}} object
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-SOMAExperimentAxisQuery-to_seurat_reduction"></a>}}
+\if{latex}{\out{\hypertarget{method-SOMAExperimentAxisQuery-to_seurat_reduction}{}}}
+\subsection{Method \code{to_seurat_reduction()}}{
+Loads the query as a Seurat
+\link[SeuratObject:DimReduc]{dimensional reduction}
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{SOMAExperimentAxisQuery$to_seurat_reduction(
+  obsm_layer,
+  varm_layer = NULL,
+  obs_index = NULL,
+  var_index = NULL
+)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{obsm_layer}}{Name of array in \code{obsm} to load as the
+cell embeddings}
+
+\item{\code{varm_layer}}{Name of the array in \code{varm} to load as the
+feature loadings; by default, will try to determine \code{varm_layer}
+from \code{obsm_layer}}
+
+\item{\code{obs_index}}{Name of column in \code{obs} to add as cell names; uses
+\code{paste0("cell", obs_joinids())} by default}
+
+\item{\code{var_index}}{Name of column in \code{var} to add as feature names; uses
+\code{paste0("feature", var_joinids())} by default}
+}
+\if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+A \code{\link[SeuratObject]{DimReduc}} object
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-SOMAExperimentAxisQuery-to_seurat_graph"></a>}}
+\if{latex}{\out{\hypertarget{method-SOMAExperimentAxisQuery-to_seurat_graph}{}}}
+\subsection{Method \code{to_seurat_graph()}}{
+Loads the query as a Seurat \link[SeuratObject:Graph]{graph}
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{SOMAExperimentAxisQuery$to_seurat_graph(obsp_layer, obs_index = NULL)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{obsp_layer}}{Name of array in \code{obsp} to load as the graph}
+
+\item{\code{obs_index}}{Name of column in \code{obs} to add as cell names; uses
+\code{paste0("cell", obs_joinids())} by default}
+}
+\if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+A \code{\link[SeuratObject]{Graph}} object
 }
 }
 \if{html}{\out{<hr>}}

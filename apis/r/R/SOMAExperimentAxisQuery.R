@@ -1,3 +1,8 @@
+#' @importFrom rlang is_na
+#' @importFrom methods as new validObject
+#'
+NULL
+
 #' `SOMAExperiment` Axis Query
 #' @description Perform an axis-based query against a [`SOMAExperiment`].
 #'
@@ -163,6 +168,497 @@ SOMAExperimentAxisQuery <- R6::R6Class(
       SOMAAxisQueryResult$new(
         obs = obs_ft, var = var_ft, X_layers = x_matrices
       )
+    },
+    #' @description Loads the query as a \code{\link[SeuratObject]{Seurat}} object
+    #'
+    #' @template param-x-layers-v3
+    #' @template param-obs-index
+    #' @template param-var-index
+    #' @param obs_column_names Names of columns in \code{obs} to add as
+    #' cell-level meta data; by default, loads all columns
+    #' @template param-var-column-names
+    #' @param obsm_layers Names of arrays in \code{obsm} to load in as the
+    #' cell embeddings; pass \code{FALSE} to suppress loading in any
+    #' dimensional reductions; by default, loads all dimensional
+    #' reduction information
+    #' @param varm_layers Named vector of arrays in \code{varm} to load in as
+    #' the feature loadings; names must be names of array in \code{obsm} (eg.
+    #' \code{varm_layers = c(X_pca = 'PCs')}); will try to determine
+    #' \code{varm_layers} from \code{obsm_layers}
+    #' @param obsp_layers Names of arrays in \code{obsp} to load in as
+    #' \code{\link[SeuratObject]{Graph}s}; by default, loads all graphs
+    #'
+    #' @return A \code{\link[SeuratObject]{Seurat}} object
+    #'
+    to_seurat = function(
+      X_layers = c(counts = 'counts', data = 'logcounts'),
+      obs_index = NULL,
+      var_index = NULL,
+      obs_column_names = NULL,
+      var_column_names = NULL,
+      obsm_layers = NULL,
+      varm_layers = NULL,
+      obsp_layers = NULL
+    ) {
+      .check_seurat_installed()
+      stopifnot(
+        "'obs_index' must be a single character value" = is.null(obs_index) ||
+          (is_scalar_character(obs_index) && !is.na(obs_index)),
+        "'obs_column_names' must be a character vector" = is.null(obs_column_names) ||
+          is.character(obs_column_names) ||
+          is_scalar_logical(obs_column_names),
+        "'obsm_layers' must be a character vector" = is.null(obsm_layers) ||
+          is.character(obsm_layers) ||
+          is_scalar_logical(obsm_layers),
+        "'varm_layers' must be a named character vector" = is.null(varm_layers) ||
+          (is.character(varm_layers) && is_named(varm_layers, allow_empty = FALSE)) ||
+          is_scalar_logical(varm_layers),
+        "'obsp_layers' must be a character vector" = is.null(obsp_layers) ||
+          is.character(obsp_layers) ||
+          is_scalar_logical(obsp_layers)
+      )
+      tryCatch(
+        expr = self$obs_df,
+        error = function(...) {
+          stop("No 'obs' found", call. = FALSE)
+        }
+      )
+      # Load in the cells
+      cells <- if (is.null(obs_index)) {
+        paste0('cell', self$obs_joinids())
+      } else {
+        obs_index <- match.arg(
+          arg = obs_index,
+          choices = self$obs_df$attrnames()
+        )
+        self$obs(obs_index)$GetColumnByName(obs_index)$as_vector()
+      }
+      # Load in the assay
+      assay <- self$to_seurat_assay(
+        X_layers = X_layers,
+        obs_index = obs_index,
+        var_index = var_index,
+        var_column_names = var_column_names
+      )
+      object <- SeuratObject::CreateSeuratObject(
+        counts = assay,
+        assay = private$.measurement_name
+      )
+      # Load in cell-level meta data
+      if (isTRUE(obs_column_names)) {
+        obs_column_names <- NULL
+      }
+      obs_column_names <- obs_column_names %||% setdiff(
+        x = self$obs_df$attrnames(),
+        y = obs_index
+      )
+      if (!(isFALSE(obs_column_names) || rlang::is_na(obs_column_names))) {
+        obs <- as.data.frame(
+          x = self$obs(obs_column_names)$to_data_frame(),
+          row.names = cells
+        )
+        object[[names(obs)]] <- obs
+      }
+      # Load in reductions
+      ms_embed <- tryCatch(expr = self$ms$obsm$names(), error = null)
+      skip_reducs <- isFALSE(obsm_layers) || rlang::is_na(obsm_layers)
+      if (is.null(ms_embed)) {
+        if (!skip_reducs) {
+          warning("No reductions found", call. = FALSE, immediate. = TRUE)
+        }
+        skip_reducs <- TRUE
+      }
+      if (!skip_reducs) {
+        names(ms_embed) <- .anndata_to_seurat_reduc(ms_embed)
+        if (isTRUE(obsm_layers)) {
+          obsm_layers <- NULL
+        }
+        obsm_layers <- obsm_layers %||% ms_embed
+        # Match loadings to embeddings
+        ms_load <- tryCatch(expr = self$ms$varm$names(), error = null)
+        if (isTRUE(varm_layers)) {
+          varm_layers <- NULL
+        } else if (rlang::is_na(varm_layers)) {
+          varm_layers <- FALSE
+        }
+        if (is.null(ms_load) && !isFALSE(varm_layers)) {
+          warning("No loadings found", call. = FALSE, immediate. = TRUE)
+          varm_layers <- FALSE
+        }
+        if (!isFALSE(varm_layers)) {
+          names(ms_load) <- ms_embed[.anndata_to_seurat_reduc(ms_load, 'loadings')]
+          varm_layers <- varm_layers %||% ms_load
+          reduc_misisng <- setdiff(x = names(varm_layers), y = names(ms_load))
+          if (length(reduc_misisng) == length(varm_layers)) {
+            warning(
+              "None of the reductions specified in 'varm_layers' can be found",
+              call. = FALSE,
+              immediate. = TRUE
+            )
+            varm_layers <- FALSE
+          } else if (length(reduc_misisng)) {
+            warning(
+              paste(
+                strwrap(paste(
+                  "The reductions for the following loadings cannot be found in 'varm':",
+                  sQuote(varm_layers[reduc_misisng]),
+                  collapse = ', '
+                )),
+                collapse = '\n'
+              ),
+              call. = FALSE,
+              immediate. = TRUE
+            )
+            varm_layers <- varm_layers[!names(varm_layers) %in% reduc_misisng]
+          }
+        }
+        # Read in reductions and add to `object`
+        for (embed in obsm_layers) {
+          if (embed %in% names(ms_embed)) {
+            embed <- ms_embed[embed]
+          }
+          rname <- .anndata_to_seurat_reduc(embed)
+          reduc <- tryCatch(
+            expr = self$to_seurat_reduction(
+              obsm_layer = embed,
+              varm_layer = ifelse(
+                embed %in% names(varm_layers),
+                yes = varm_layers[embed],
+                no = FALSE
+              ),
+              obs_index = obs_index,
+              var_index = var_index
+            ),
+            error = function(e) {
+              warning(conditionMessage(e), call. = FALSE, immediate. = TRUE)
+              return(NULL)
+            }
+          )
+          if (is.null(reduc)) {
+            next
+          }
+          object[[rname]] <- reduc
+        }
+      }
+      # Load in graphs
+      ms_graphs <- tryCatch(expr = self$ms$obsp$names(), error = null)
+      skip_graphs <- isFALSE(obsp_layers) || rlang::is_na(obsp_layers)
+      if (is.null(ms_graphs)) {
+        if (!skip_graphs) {
+          warning("No graphs found in 'obsp'", call. = FALSE, immediate. = TRUE)
+        }
+        skip_graphs <- TRUE
+      }
+      if (!skip_graphs) {
+        if (isTRUE(obsp_layers)) {
+          obsp_layers <- NULL
+        }
+        obsp_layers <- obsp_layers %||% ms_graphs
+        for (grph in obsp_layers) {
+          mat <- tryCatch(
+            expr = self$to_seurat_graph(obsp_layer = grph, obs_index = obs_index),
+            error = function(e) {
+              warning(conditionMessage(e), call. = FALSE, immediate. = TRUE)
+              return(NULL)
+            }
+          )
+          if (is.null(mat)) {
+            next
+          }
+          object[[grph]] <- mat
+        }
+      }
+      # Validate and return
+      validObject(object)
+      return(object)
+    },
+    #' @description Loads the query as a Seurat \code{\link[SeuratObject]{Assay}}
+    #'
+    #' @return An \code{\link[SeuratObject]{Assay}} object
+    #'
+    to_seurat_assay = function(
+      X_layers = c(counts = 'counts', data = 'logcounts'),
+      obs_index = NULL,
+      var_index = NULL,
+      var_column_names = NULL
+    ) {
+      version <- 'v3'
+      .check_seurat_installed()
+      stopifnot(
+        "'X_layers' must be a named character vector" = is.character(X_layers) &&
+          is_named(X_layers, allow_empty = FALSE),
+        "'version' must be a single character value" = is_scalar_character(version),
+        "'obs_index' must be a single character value" = is.null(obs_index) ||
+          (is_scalar_character(obs_index) && !is.na(obs_index)),
+        "'var_index' must be a single character value" = is.null(var_index) ||
+          (is_scalar_character(var_index) && !is.na(var_index)),
+        "'var_column_names' must be a character vector" = is.null(var_column_names) ||
+          is.character(var_column_names) ||
+          is_scalar_logical(var_column_names)
+      )
+      match.arg(version, choices = 'v3')
+      features <- if (is.null(var_index)) {
+        paste0('feature', self$var_joinids())
+      } else {
+        var_index <- match.arg(
+          arg = var_index,
+          choices = self$var_df$attrnames()
+        )
+        self$var(var_index)$GetColumnByName(var_index)$as_vector()
+      }
+      cells <- if (is.null(obs_index)) {
+        paste0('cell', self$obs_joinids())
+      } else {
+        obs_index <- match.arg(
+          arg = obs_index,
+          choices = self$obs_df$attrnames()
+        )
+        self$obs(obs_index)$GetColumnByName(obs_index)$as_vector()
+      }
+      # Check the layers
+      assert_subset(x = X_layers, y = self$ms$X$names(), type = 'X_layer')
+      # Read in the assay
+      obj <- switch(
+        EXPR = version,
+        v3 = {
+          assert_subset(
+            x = names(X_layers),
+            y = c('counts', 'data', 'scale.data'),
+            type = 'Seurat slot'
+          )
+          private$.to_seurat_assay_v3(
+            counts = tryCatch(expr = X_layers[['counts']], error = null),
+            data = tryCatch(expr = X_layers[['data']], error = null),
+            scale_data = tryCatch(expr = X_layers[['scale.data']], error = null),
+            cells = cells,
+            features = features
+          )
+        }
+      )
+      # Set the key
+      SeuratObject::Key(obj) <- SeuratObject::Key(
+        object = tolower(private$.measurement_name),
+        quiet = TRUE
+      )
+      # Add feature-level meta data
+      if (isTRUE(var_column_names)) {
+        var_column_names <- NULL
+      }
+      var_column_names <- var_column_names %||% setdiff(
+        x = self$var_df$attrnames(),
+        y = var_index
+      )
+      if (!(isFALSE(var_column_names) || rlang::is_na(var_column_names))) {
+        var <- as.data.frame(self$var(var_column_names)$to_data_frame())
+        row.names(var) <- features
+        obj[[names(var)]] <- var
+      }
+      validObject(obj)
+      return(obj)
+    },
+    #' @description Loads the query as a Seurat
+    #' \link[SeuratObject:DimReduc]{dimensional reduction}
+    #'
+    #' @param obsm_layer Name of array in \code{obsm} to load as the
+    #' cell embeddings
+    #' @param varm_layer Name of the array in \code{varm} to load as the
+    #' feature loadings; by default, will try to determine \code{varm_layer}
+    #' from \code{obsm_layer}
+    #'
+    #' @return A \code{\link[SeuratObject]{DimReduc}} object
+    #'
+    to_seurat_reduction = function(
+      obsm_layer,
+      varm_layer = NULL,
+      obs_index = NULL,
+      var_index = NULL
+    ) {
+      .check_seurat_installed()
+      stopifnot(
+        "'obsm_layer' must be a single character value" = is_scalar_character(obsm_layer),
+        "'varm_layer' must be a single character value" = is.null(varm_layer) ||
+          is_scalar_character(varm_layer) ||
+          is_scalar_logical(varm_layer),
+        "one of 'obsm_layer' or 'varm_layer' must be provided" =
+          (is_scalar_character(obsm_layer) || is_scalar_logical(obsm_layer)) ||
+          (is_scalar_character(varm_layer) || is_scalar_logical(varm_layer)),
+        "'obs_index' must be a single character value" = is.null(obs_index) ||
+          (is_scalar_character(obs_index) && !is.na(obs_index)),
+        "'var_index' must be a single character value" = is.null(var_index) ||
+          (is_scalar_character(var_index) && !is.na(var_index))
+      )
+      # Check embeddings/loadings
+      ms_embed <- tryCatch(expr = self$ms$obsm$names(), error = null)
+      ms_load <- tryCatch(expr = self$ms$varm$names(), error = null)
+      if (is.null(ms_embed) && is.null(ms_load)) {
+        warning("No reductions present", call. = FALSE)
+        return(NULL)
+      }
+      if (is.null(ms_embed)) {
+        stop("No embeddings in obsm present", call. = FALSE)
+      }
+      names(ms_embed) <- .anndata_to_seurat_reduc(ms_embed)
+      if (is.null(ms_load) && !is.null(varm_layer)) {
+        warning(
+          "No loadings present in 'varm'",
+          call. = FALSE,
+          immediate. = TRUE
+        )
+        varm_layer <- NULL
+      } else {
+        names(ms_load) <- .anndata_to_seurat_reduc(ms_load, 'loadings')
+      }
+      # Check provided names
+      assert_subset(
+        x = obsm_layer,
+        y = c(ms_embed, names(ms_embed)),
+        type = 'cell embedding'
+      )
+      if (is_scalar_character(varm_layer)) {
+        assert_subset(
+          x = varm_layer,
+          y = c(ms_load, names(ms_load)),
+          'feature loading'
+        )
+      }
+      # Find Seurat name
+      seurat <- c(
+        embeddings = unname(.anndata_to_seurat_reduc(obsm_layer)),
+        loadings = tryCatch(
+          expr = unname(.anndata_to_seurat_reduc(varm_layer, 'loadings')),
+          error = null
+        )
+      )
+      if (length(seurat) == 2L && !identical(seurat[['embeddings']], y = seurat[['loadings']])) {
+        stop(
+          paste(
+            strwrap(paste0(
+              "The embeddings requested (",
+              sQuote(obsm_layer),
+              ") do not match the loadings requested (",
+              sQuote(varm_layer),
+              "); using the embeddings to create a Seurat name (",
+              sQuote(seurat[['embeddings']]),
+              ")"
+            )),
+            collapse = '\n'
+          ),
+          call. = FALSE,
+          immediate. = TRUE
+        )
+      }
+      seurat <- seurat[['embeddings']]
+      # Create a Seurat key
+      key <- SeuratObject::Key(
+        object = switch(EXPR = seurat, pca = 'PC', tsne = 'tSNE', toupper(seurat)),
+        quiet = TRUE
+      )
+      # Read in cell embeddings
+      # Translate Seurat name to AnnData name
+      if (obsm_layer %in% names(ms_embed)) {
+        obsm_layer <- ms_embed[obsm_layer]
+      }
+      # Get cell names
+      cells <- if (is.null(obs_index)) {
+        paste0('cell', self$obs_joinids())
+      } else {
+        obs_index <- match.arg(
+          arg = obs_index,
+          choices = self$obs_df$attrnames()
+        )
+        self$obs(obs_index)$GetColumnByName(obs_index)$as_vector()
+      }
+      embed <- self$ms$obsm$get(obsm_layer)
+      embed_mat <- embed$read_dense_matrix(list(
+        self$obs_joinids()$as_vector(),
+        seq_len(as.integer(embed$shape()[2L])) - 1L
+      ))
+      # Set matrix names
+      rownames(embed_mat) <- cells
+      colnames(embed_mat) <- paste0(key, seq_len(ncol(embed_mat)))
+      # Autoset loadings if needed
+      if (is.null(varm_layer) || isTRUE(varm_layer)) {
+        if (seurat %in% c(names(ms_load), ms_load)) {
+          varm_layer <- seurat
+        }
+      }
+      # Read in feature loadings
+      if (is_scalar_character(varm_layer)) {
+        # Translate Seurat name to AnnData name
+        if (varm_layer %in% names(ms_load)) {
+          varm_layer <- ms_load[varm_layer]
+        }
+        # Get feature names
+        features <- if (is.null(var_index)) {
+          paste0('feature', self$var_joinids())
+        } else {
+          var_index <- match.arg(
+            arg = var_index,
+            choices = self$var_df$attrnames()
+          )
+          self$var(var_index)$GetColumnByName(var_index)$as_vector()
+        }
+        loads <- self$ms$varm$get(varm_layer)
+        load_mat <- loads$read_dense_matrix(list(
+          self$var_joinids()$as_vector(),
+          seq_len(as.integer(loads$shape()[2L])) - 1L
+        ))
+        # Set matrix names
+        rownames(load_mat) <- features
+        colnames(load_mat) <- paste0(key, seq_len(ncol(load_mat)))
+        if (!is.null(embed_mat) && ncol(load_mat) != ncol(embed_mat)) {
+          stop("The loadings do not match the embeddings", call. = FALSE)
+        }
+      } else {
+        load_mat <- NULL
+      }
+      # Create the DimReduc
+      return(SeuratObject::CreateDimReducObject(
+        embeddings = embed_mat,
+        loadings = load_mat %||% methods::new('matrix'),
+        assay = private$.measurement_name,
+        global = seurat != 'pca',
+        key = key
+      ))
+    },
+    #' @description Loads the query as a Seurat \link[SeuratObject:Graph]{graph}
+    #'
+    #' @param obsp_layer Name of array in \code{obsp} to load as the graph
+    #'
+    #' @return A \code{\link[SeuratObject]{Graph}} object
+    #'
+    to_seurat_graph = function(obsp_layer, obs_index = NULL) {
+      .check_seurat_installed()
+      stopifnot(
+        "'obsp_layer' must be a single character value" = is_scalar_character(obsp_layer),
+        "'obs_index' must be a single character value" = is.null(obs_index) ||
+          (is_scalar_character(obs_index) && !is.na(obs_index))
+      )
+      # Check graph name
+      ms_graph <- tryCatch(expr = self$ms$obsp$names(), error = null)
+      if (is.null(ms_graph)) {
+        warning("No graphs present")
+        return(NULL)
+      }
+      # Check provided graph name
+      obsp_layer <- match.arg(arg = obsp_layer, choices = ms_graph)
+      mat <- self$ms$obsp$get(obsp_layer)$read_sparse_matrix(repr = 'C')
+      idx <- self$obs_joinids()$as_vector() + 1L
+      mat <- mat[idx, idx]
+      mat <- as(mat, 'Graph')
+      cells <- if (is.null(obs_index)) {
+        paste0('cell', self$obs_joinids())
+      } else {
+        obs_index <- match.arg(
+          arg = obs_index,
+          choices = self$obs_df$attrnames()
+        )
+        self$obs(obs_index)$GetColumnByName(obs_index)$as_vector()
+      }
+      dimnames(mat) <- list(cells, cells)
+      SeuratObject::DefaultAssay(mat) <- private$.measurement_name
+      validObject(mat)
+      return(mat)
     }
   ),
 
@@ -231,7 +727,107 @@ SOMAExperimentAxisQuery <- R6::R6Class(
     .obs_query = NULL,
     .var_query = NULL,
     .joinids = NULL,
-    .indexer = NULL
+    .indexer = NULL,
+    .as_matrix = function(table, repr = 'C', transpose = TRUE) {
+      stopifnot(
+        inherits(table, 'Table'),
+        is_scalar_character(repr),
+        is_scalar_logical(transpose)
+      )
+      repr <- match.arg(arg = repr, choices = c('C', 'R', 'T', 'D'))
+      obs <- table$GetColumnByName('soma_dim_0')$as_vector()
+      var <- table$GetColumnByName('soma_dim_1')$as_vector()
+      mat <- Matrix::sparseMatrix(
+        i = self$indexer$by_obs(obs)$as_vector() + 1L,
+        j = self$indexer$by_var(var)$as_vector() + 1L,
+        x = table$GetColumnByName('soma_data')$as_vector(),
+        repr = switch(EXPR = repr, D = 'T', repr)
+      )
+      if (isTRUE(transpose)) {
+        mat <- Matrix::t(mat)
+      }
+      if (repr == 'D') {
+        mat <- as.matrix(mat)
+      }
+      return(mat)
+    },
+    .to_seurat_assay_v3 = function(
+      counts,
+      data,
+      scale_data = NULL,
+      cells = NULL,
+      features = NULL
+    ) {
+      .check_seurat_installed()
+      stopifnot(
+        "'data' must be a single character value" = is.null(data) ||
+          is_scalar_character(data),
+        "'counts' must be a single character value" = is.null(counts) ||
+          is_scalar_character(counts),
+        "one of 'counts' or 'data' must be provided" = is_scalar_character(counts) ||
+          is_scalar_character(data),
+        "'scale_data' must be a single character value" = is.null(scale_data) ||
+          is_scalar_character(scale_data),
+        "'cells' must be a character vector" = is.character(cells),
+        "'features' must be a character vector" = is.character(features)
+      )
+      as_matrix <- function(lyr, repr = 'C') {
+        repr <- match.arg(arg = repr, choices = c('C', 'R', 'T', 'D'))
+        obs <- self$X(lyr)$GetColumnByName('soma_dim_0')$as_vector()
+        var <- self$X(lyr)$GetColumnByName('soma_dim_1')$as_vector()
+        mat <- Matrix::sparseMatrix(
+          i = self$indexer$by_obs(obs)$as_vector() + 1L,
+          j = self$indexer$by_var(var)$as_vector() + 1L,
+          x = self$X(lyr)$GetColumnByName('soma_data')$as_vector(),
+          repr = switch(EXPR = repr, D = 'T', repr)
+        )
+        mat <- Matrix::t(mat)
+        if (repr == 'D') {
+          mat <- as.matrix(mat)
+        }
+        return(mat)
+      }
+      if (!length(x = cells) == self$n_obs) {
+        stop("'cells' must have a length of ", self$n_obs, call. = FALSE)
+      }
+      if (!length(x = features) == self$n_vars) {
+        stop("'features' must have a length of ", self$n_vars, call. = FALSE)
+      }
+      dnames <- list(features, cells)
+      # Read in `data` slot
+      if (is_scalar_character(data)) {
+        dmat <- as_matrix(lyr = data, repr = 'C')
+        dimnames(dmat) <- dnames
+        obj <- SeuratObject::CreateAssayObject(data = dmat)
+      }
+      # Add the `counts` slot
+      if (is_scalar_character(counts)) {
+        cmat <- as_matrix(lyr = counts, repr = 'C')
+        dimnames(cmat) <- dnames
+        obj <- if (is_scalar_character(data)) {
+          SeuratObject::SetAssayData(
+            object = obj,
+            slot = 'counts',
+            new.data = cmat
+          )
+        } else {
+          SeuratObject::CreateAssayObject(counts = cmat)
+        }
+      }
+      # Add the `scale.data` slot
+      if (is_scalar_character(scale_data)) {
+        smat <- as_matrix(lyr = scale_data, repr = 'D')
+        dimnames(smat) <- dnames
+        obj <- SeuratObject::SetAssayData(
+          object = obj,
+          slot = 'scale.data',
+          new.data = smat
+        )
+      }
+      # Return the assay
+      validObject(obj)
+      return(obj)
+    }
   )
 )
 
