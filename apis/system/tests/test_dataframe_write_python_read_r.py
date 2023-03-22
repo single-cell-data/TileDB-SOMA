@@ -38,7 +38,6 @@ class TestDataframeWritePythonReadR(TestWritePythonReadR):
     def base_R_script(self):
         return f"""
         library("tiledbsoma")
-        library("testthat")
         soma_df <- SOMADataFrameOpen("{self.uri}")
         table = soma_df$read()
         df = as.data.frame(table)
@@ -46,11 +45,11 @@ class TestDataframeWritePythonReadR(TestWritePythonReadR):
 
     # tests
     def test_dataframe_length_matches(self, dataframe):
-        self.r_assert(f"expect_length(df, {len(dataframe)})")
+        self.r_assert(f"stopifnot(length(df) == {len(dataframe)})")
 
     def test_dataframe_columns_match(self, dataframe):
         for key in dataframe.keys():
             col = dataframe[key].tolist()
             R_list = embed_python_list_into_R_code(col)
-            self.r_assert(f"""expect_equal(as.list(df)$"{key}", c({R_list}))""")
+            self.r_assert(f"""stopifnot(all.equal(as.list(df)$"{key}", c({R_list})))""")
             break

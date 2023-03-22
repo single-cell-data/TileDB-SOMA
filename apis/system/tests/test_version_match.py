@@ -15,9 +15,8 @@ class TestVersionMatch(BasePythonRInterop):
         self.execute_R_script(
             f"""
         library("tiledb")
-        library("testthat")
         version = tiledb_version()
-        expect_equal(as.integer(version["major"]), {major})
-        expect_equal(as.integer(version["minor"]), {minor})
+        stopifnot(as.integer(version["major"]) == {major})
+        stopifnot(as.integer(version["minor"]) == {minor})
         """
         )
