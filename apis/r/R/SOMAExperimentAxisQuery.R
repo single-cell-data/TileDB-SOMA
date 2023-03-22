@@ -171,29 +171,22 @@ SOMAExperimentAxisQuery <- R6::R6Class(
     },
     #' @description Loads the query as a \code{\link[SeuratObject]{Seurat}} object
     #'
-    #' @param X_layers A named character of X layers to add to the Seurat assay;
-    #' names should be one of:
-    #' \itemize{
-    #'  \item \dQuote{\code{counts}} to add the layer as \code{counts}
-    #'  \item \dQuote{\code{data}} to add the layer as \code{data}
-    #'  \item \dQuote{\code{scale.data}} to add the layer as \code{scale.data}
-    #' }
-    #' At least one of \dQuote{\code{counts}} or \dQuote{\code{data}} is required
-    #' @param obs_index Name of column in \code{obs} to add as cell names
-    #' @param var_index Name of column in \code{var} to add as feature names
+    #' @template param-x-layers-v3
+    #' @template param-obs-index
+    #' @template param-var-index
     #' @param obs_column_names Names of columns in \code{obs} to add as
-    #' cell-level meta data
-    #' @param var_column_names Names of columns in \code{var} to add as
-    #' feature-level meta data
+    #' cell-level meta data; by default, loads all columns
+    #' @template param-var-column-names
     #' @param obsm_layers Names of arrays in \code{obsm} to load in as the
     #' cell embeddings; pass \code{FALSE} to suppress loading in any
-    #' dimensional reductions
-    #' @param varm_layers Named vector of arrays in \code{varm} to load in as the
-    #' feature loadings; names must be names of array in \code{obsm} (eg.
+    #' dimensional reductions; by default, loads all dimensional
+    #' reduction information
+    #' @param varm_layers Named vector of arrays in \code{varm} to load in as
+    #' the feature loadings; names must be names of array in \code{obsm} (eg.
     #' \code{varm_layers = c(X_pca = 'PCs')}); will try to determine
     #' \code{varm_layers} from \code{obsm_layers}
     #' @param obsp_layers Names of arrays in \code{obsp} to load in as
-    #' \code{\link[SeuratObject]{Graph}s}
+    #' \code{\link[SeuratObject]{Graph}s}; by default, loads all graphs
     #'
     #' @return A \code{\link[SeuratObject]{Seurat}} object
     #'
@@ -381,19 +374,6 @@ SOMAExperimentAxisQuery <- R6::R6Class(
     },
     #' @description Loads the query as a Seurat \code{\link[SeuratObject]{Assay}}
     #'
-    #' @param X_layers A named character of X layers to add to the Seurat assay;
-    #' names should be one of:
-    #' \itemize{
-    #'  \item \dQuote{\code{counts}} to add the layer as \code{counts}
-    #'  \item \dQuote{\code{data}} to add the layer as \code{data}
-    #'  \item \dQuote{\code{scale.data}} to add the layer as \code{scale.data}
-    #' }
-    #' At least one of \dQuote{\code{counts}} or \dQuote{\code{data}} is required
-    #' @param obs_index Name of column in \code{obs} to add as cell names
-    #' @param var_index Name of column in \code{var} to add as feature names
-    #' @param var_column_names Names of columns in \code{var} to add as
-    #' feature-level meta data
-    #'
     #' @return An \code{\link[SeuratObject]{Assay}} object
     #'
     to_seurat_assay = function(
@@ -497,10 +477,9 @@ SOMAExperimentAxisQuery <- R6::R6Class(
     #'
     #' @param obsm_layer Name of array in \code{obsm} to load as the
     #' cell embeddings
-    #' @param varm_layer Name of the array in \code{varm} to load as the  feature
-    #' loadings; will try to determine \code{varm_layer} from \code{obsm_layer}
-    #' @param obs_index Name of column in \code{obs} to add as cell names
-    #' @param var_index Name of column in \code{var} to add as feature names
+    #' @param varm_layer Name of the array in \code{varm} to load as the
+    #' feature loadings; by default, will try to determine \code{varm_layer}
+    #' from \code{obsm_layer}
     #'
     #' @return A \code{\link[SeuratObject]{DimReduc}} object
     #'
@@ -653,7 +632,6 @@ SOMAExperimentAxisQuery <- R6::R6Class(
     #' @description Loads the query as a Seurat \link[SeuratObject:Graph]{graph}
     #'
     #' @param obsp_layer Name of array in \code{obsp} to load as the graph
-    #' @param obs_index Name of column in \code{obs} to add as cell names
     #'
     #' @return A \code{\link[SeuratObject]{Graph}} object
     #'

@@ -213,8 +213,9 @@ Loads the query as a \code{\link[SeuratObject]{Seurat}} object
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{X_layers}}{A named character of X layers to add to the Seurat assay;
-names should be one of:
+\item{\code{X_layers}}{A named character of X layers to add to the Seurat assay,
+where the names are the names of Seurat slots and the values are the names
+of layers within \code{X}; names should be one of:
 \itemize{
 \item \dQuote{\code{counts}} to add the layer as \code{counts}
 \item \dQuote{\code{data}} to add the layer as \code{data}
@@ -222,27 +223,30 @@ names should be one of:
 }
 At least one of \dQuote{\code{counts}} or \dQuote{\code{data}} is required}
 
-\item{\code{obs_index}}{Name of column in \code{obs} to add as cell names}
+\item{\code{obs_index}}{Name of column in \code{obs} to add as cell names; uses
+\code{paste0("cell", obs_joinids())} by default}
 
-\item{\code{var_index}}{Name of column in \code{var} to add as feature names}
+\item{\code{var_index}}{Name of column in \code{var} to add as feature names; uses
+\code{paste0("feature", var_joinids())} by default}
 
 \item{\code{obs_column_names}}{Names of columns in \code{obs} to add as
-cell-level meta data}
+cell-level meta data; by default, loads all columns}
 
 \item{\code{var_column_names}}{Names of columns in \code{var} to add as
-feature-level meta data}
+feature-level meta data; by default, loads all columns}
 
 \item{\code{obsm_layers}}{Names of arrays in \code{obsm} to load in as the
 cell embeddings; pass \code{FALSE} to suppress loading in any
-dimensional reductions}
+dimensional reductions; by default, loads all dimensional
+reduction information}
 
-\item{\code{varm_layers}}{Named vector of arrays in \code{varm} to load in as the
-feature loadings; names must be names of array in \code{obsm} (eg.
+\item{\code{varm_layers}}{Named vector of arrays in \code{varm} to load in as
+the feature loadings; names must be names of array in \code{obsm} (eg.
 \code{varm_layers = c(X_pca = 'PCs')}); will try to determine
 \code{varm_layers} from \code{obsm_layers}}
 
 \item{\code{obsp_layers}}{Names of arrays in \code{obsp} to load in as
-\code{\link[SeuratObject]{Graph}s}}
+\code{\link[SeuratObject]{Graph}s}; by default, loads all graphs}
 }
 \if{html}{\out{</div>}}
 }
@@ -267,8 +271,9 @@ Loads the query as a Seurat \code{\link[SeuratObject]{Assay}}
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{X_layers}}{A named character of X layers to add to the Seurat assay;
-names should be one of:
+\item{\code{X_layers}}{A named character of X layers to add to the Seurat assay,
+where the names are the names of Seurat slots and the values are the names
+of layers within \code{X}; names should be one of:
 \itemize{
 \item \dQuote{\code{counts}} to add the layer as \code{counts}
 \item \dQuote{\code{data}} to add the layer as \code{data}
@@ -276,12 +281,14 @@ names should be one of:
 }
 At least one of \dQuote{\code{counts}} or \dQuote{\code{data}} is required}
 
-\item{\code{obs_index}}{Name of column in \code{obs} to add as cell names}
+\item{\code{obs_index}}{Name of column in \code{obs} to add as cell names; uses
+\code{paste0("cell", obs_joinids())} by default}
 
-\item{\code{var_index}}{Name of column in \code{var} to add as feature names}
+\item{\code{var_index}}{Name of column in \code{var} to add as feature names; uses
+\code{paste0("feature", var_joinids())} by default}
 
 \item{\code{var_column_names}}{Names of columns in \code{var} to add as
-feature-level meta data}
+feature-level meta data; by default, loads all columns}
 }
 \if{html}{\out{</div>}}
 }
@@ -310,12 +317,15 @@ Loads the query as a Seurat
 \item{\code{obsm_layer}}{Name of array in \code{obsm} to load as the
 cell embeddings}
 
-\item{\code{varm_layer}}{Name of the array in \code{varm} to load as the  feature
-loadings; will try to determine \code{varm_layer} from \code{obsm_layer}}
+\item{\code{varm_layer}}{Name of the array in \code{varm} to load as the
+feature loadings; by default, will try to determine \code{varm_layer}
+from \code{obsm_layer}}
 
-\item{\code{obs_index}}{Name of column in \code{obs} to add as cell names}
+\item{\code{obs_index}}{Name of column in \code{obs} to add as cell names; uses
+\code{paste0("cell", obs_joinids())} by default}
 
-\item{\code{var_index}}{Name of column in \code{var} to add as feature names}
+\item{\code{var_index}}{Name of column in \code{var} to add as feature names; uses
+\code{paste0("feature", var_joinids())} by default}
 }
 \if{html}{\out{</div>}}
 }
@@ -337,7 +347,8 @@ Loads the query as a Seurat \link[SeuratObject:Graph]{graph}
 \describe{
 \item{\code{obsp_layer}}{Name of array in \code{obsp} to load as the graph}
 
-\item{\code{obs_index}}{Name of column in \code{obs} to add as cell names}
+\item{\code{obs_index}}{Name of column in \code{obs} to add as cell names; uses
+\code{paste0("cell", obs_joinids())} by default}
 }
 \if{html}{\out{</div>}}
 }
