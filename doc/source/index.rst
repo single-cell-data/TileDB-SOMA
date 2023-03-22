@@ -6,7 +6,7 @@ This project encompasses the Python language bindings for the TileDB-SOMA librar
 .. include:: _sidebar.rst.inc
 
 Tutorials
---------
+---------
 .. toctree::
    :maxdepth: 1
     
