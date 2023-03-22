@@ -533,7 +533,12 @@ def create_from_matrix(
     platform_config: Optional[PlatformConfig] = None,
     ingest_mode: IngestMode = "write",
 ) -> _NDArr:
-    """Create and populate the ``soma_matrix`` from the contents of ``matrix``."""
+    """
+    Create and populate the ``soma_matrix`` from the contents of ``matrix``.
+
+    Lifecycle:
+        Experimental.
+    """
     # SparseDataset has no ndim but it has a shape
     if len(matrix.shape) != 2:
         raise ValueError(f"expected matrix.shape == 2; got {matrix.shape}")
@@ -636,6 +641,9 @@ def add_matrix_to_collection(
     scanpy.pp.log1p, etc.
 
     Use ``ingest_mode="resume"`` to not error out if the schema already exists.
+
+    Lifecycle:
+        Experimental.
     """
     with exp.ms[measurement_name] as meas:
         if collection_name in meas:
