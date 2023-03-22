@@ -509,11 +509,17 @@ SOMAExperimentAxisQuery <- R6::R6Class(
         names(ms_load) <- .anndata_to_seurat_reduc(ms_load, 'loadings')
       }
       # Check provided names
-      if (!obsm_layer %in% c(ms_embed, names(ms_embed))) {
-        stop("Cannot find embeddings ", sQuote(obsm_layer), call. = FALSE)
-      }
-      if (is_scalar_character(varm_layer) && !varm_layer %in% c(ms_load, names(ms_load))) {
-        stop("Cannot find loadings in 'varm'", sQuote(varm_layer), call. = FALSE)
+      assert_subset(
+        x = obsm_layer,
+        y = c(ms_embed, names(ms_embed)),
+        type = 'cell embedding'
+      )
+      if (is_scalar_character(varm_layer)) {
+        assert_subset(
+          x = varm_layer,
+          y = c(ms_load, names(ms_load)),
+          'feature loading'
+        )
       }
       # Find Seurat name
       seurat <- c(

@@ -349,6 +349,7 @@ test_that("Load reduction from ExperimentQuery mechanics", {
   expect_error(query$to_seurat_reduction(c('pca', 'umap')))
   expect_error(query$to_seurat_reduction('tomato'))
   expect_error(query$to_seurat_reduction('pca', 1))
+  expect_error(query$to_seurat_reduction('pca', 'LOADINGS'))
   expect_error(query$to_seurat_reduction('pca', obs_index = FALSE))
   expect_error(query$to_seurat_reduction('pca', obs_index = NA_character_))
   expect_error(query$to_seurat_reduction('pca', obs_index = 1))
