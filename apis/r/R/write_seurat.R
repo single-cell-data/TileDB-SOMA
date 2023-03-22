@@ -1,0 +1,522 @@
+#' @importFrom rlang is_integerish
+#'
+NULL
+
+#' Write \pkg{Seurat} Sub-Objects to a SOMA
+#'
+#' Various helpers to write \pkg{Seurat} sub-objects to SOMA
+#'
+#' @inheritParams write_soma_objects
+#' @param x A \pkg{Seurat} sub-object (eg. an
+#' \code{\link[SeuratObject]{Assay}}, a \code{\link[SeuratObject]{DimReduc}},
+#' or a \code{\link[SeuratObject]{Graph}})
+#' @param soma The parent \link[tiledbsoma:SOMACollection]{collection}; for
+#' the \code{DimReduc} and \code{Graph} methods, this \strong{must} be a
+#' \link[tiledbsoma:SOMAMeasurement]{measurement} for the assay \code{x}
+#' was generated from
+#'
+#' @name write_soma_seurat_sub_objects
+#' @rdname write_soma_seurat_sub
+#'
+#' @keywords internal
+#'
+NULL
+
+#' @return \code{Assay} method: a \code{\link{SOMAMeasurement}} with the
+#' data from \code{x}
+#'
+#' @rdname write_soma_seurat_sub
+#'
+#' @section Writing \code{\link[SeuratObject]{Assay}s}:
+#' \pkg{Seurat} \code{\link[SeuratObject]{Assay}} objects are written out as
+#' individual \link[tiledbsoma:SOMAMeasurement]{measurements}:
+#' \itemize{
+#'  \item the \dQuote{\code{data}} matrix is written out a
+#'   \link[tiledbsoma:SOMASparseNDArray]{sparse matrix} called
+#'   \dQuote{\code{data}} within the \dQuote{\code{X}} group
+#'  \item the \dQuote{\code{counts}} matrix, if not
+#'   \link[SeuratObject:IsMatrixEmpty]{empty}, is written out a
+#'   \link[tiledbsoma:SOMASparseNDArray]{sparse matrix} called
+#'   \dQuote{\code{counts}} within the \dQuote{\code{X}} group
+#'  \item the \dQuote{\code{scale.data}} matrix, if not
+#'   \link[SeuratObject:IsMatrixEmpty]{empty}, is written out a
+#'   \link[tiledbsoma:SOMASparseNDArray]{sparse matrix} called
+#'   \dQuote{\code{scale_data}} within the \dQuote{\code{X}} group
+#'  \item feature-level meta data is written out as a
+#'   \link[tiledbsoma:SOMADataFrame]{data frame} called \dQuote{\code{var}}
+#' }
+#' Expression matrices are transposed (cells as rows) prior to writing. All
+#' other slots, including results from extended assays (eg. \code{SCTAssay},
+#' \code{ChromatinAssay}) are lost
+#'
+#' @method write_soma Assay
+#' @export
+#'
+write_soma.Assay <- function(
+  x,
+  uri = NULL,
+  soma,
+  ...,
+  platform_config = NULL,
+  tiledbsoma_ctx = NULL,
+  absolute = FALSE
+) {
+  .check_seurat_installed()
+  stopifnot(
+    "'uri' must be a single character value" = is.null(uri) ||
+      is_scalar_character(uri),
+    "'soma' must be a SOMACollection" = inherits(soma, what = 'SOMACollectionBase'),
+    "'absolute' must be a single logical value" = is_scalar_logical(absolute)
+  )
+  # Create a proper URI
+  uri <- uri %||% gsub(pattern = '_$', replacement = '', x = SeuratObject::Key(x))
+  uri <- .check_soma_uri(uri = uri, soma = soma, absolute = absolute)
+  # Create the measurement
+  ms <- SOMAMeasurementCreate(
+    uri = uri,
+    platform_config = platform_config,
+    tiledbsoma_ctx = tiledbsoma_ctx
+  )
+  ms$X <- SOMACollectionCreate(
+    uri = file_path(ms$uri, 'X'),
+    platform_config = platform_config,
+    tiledbsoma_ctx = tiledbsoma_ctx
+  )
+  # Write `X` matrices
+  for (slot in c('counts', 'data', 'scale.data')) {
+    mat <- SeuratObject::GetAssayData(object = x, slot = slot)
+    if (SeuratObject::IsMatrixEmpty(mat)) {
+      next
+    }
+    if (!identical(x = dim(mat), y = dim(x))) {
+      mat <- pad_matrix(
+        x = SeuratObject::as.sparse(x = mat),
+        rownames = rownames(x),
+        colnames = colnames(x)
+      )
+    }
+    lyr <- gsub(pattern = '\\.', replacement = '_', x = slot)
+    tryCatch(
+      expr = ms$X$set(
+        object = write_soma(
+          x = mat,
+          uri = lyr,
+          soma = ms$X,
+          sparse = TRUE,
+          transpose = TRUE,
+          platform_config = platform_config,
+          tiledbsoma_ctx = tiledbsoma_ctx
+        ),
+        name = lyr
+      ),
+      error = function(err) {
+        if (slot == 'data') {
+          stop(err)
+        }
+        err_to_warn(err)
+      }
+    )
+  }
+  # Write feature-level meta data
+  meta_data <- .df_index(x = x[[]], alt = 'features', prefix = 'seurat')
+  meta_data[[attr(x = meta_data, which = 'index')]] <- rownames(x)
+  ms$var <- write_soma(
+    x = meta_data,
+    uri = 'var',
+    soma = ms,
+    platform_config = platform_config,
+    tiledbsoma_ctx = tiledbsoma_ctx
+  )
+  # Return
+  if (class(x)[1L] != 'Assay') {
+    warning(
+      paste(
+        strwrap(paste0(
+          "Extended assays (eg. ",
+          class(x)[1L],
+          ") cannot be written to SOMAs at this time"
+        )),
+        collapse = '\n'
+      ),
+      call. = FALSE,
+      immediate. = TRUE
+    )
+  }
+  return(ms)
+}
+
+#' @param fidx An integer vector describing the location of features in
+#' \code{SeuratObject::Loadings(x)} with relation to \code{soma}
+#' (eg. \code{match(rownames(Loadings(x)), rownames(assay))})
+#' @param nfeatures The number of features present in \code{soma}
+#' (eg. \code{nrow(assay)})
+#'
+#' @return \code{DimReduc} and \code{Graph} methods: invisibly returns
+#' \code{soma} with the values of \code{x} added to it
+#'
+#' @rdname write_soma_seurat_sub
+#'
+#' @section Writing \code{\link[SeuratObject]{DimReduc}s}:
+#' \pkg{Seurat} \code{\link[SeuratObject]{DimReduc}} objects are written out
+#' to the \dQuote{\code{obsm}} and \dQuote{\code{varm}} groups of a
+#' \link[tiledbsoma:SOMAMeasurement]{measurement}:
+#' \itemize{
+#'  \item cell embeddings are written out as a
+#'   \link[tiledbsoma:SOMADenseNDArray]{dense matrix} in the
+#'   \dQuote{\code{obsm}} group
+#'  \item feature loadings, if not \link[SeuratObject:IsMatrixEmpty]{empty},
+#'   are written out as a \link[tiledbsoma:SOMADenseNDArray]{dense matrix} in
+#'   the \dQuote{\code{varm}} groups; loadings are padded include all features
+#'   with \code{NAs}
+#' }
+#' Dimensional reduction names are translated to AnnData-style names (eg.
+#' \dQuote{\code{pca}} becomes \code{X_pca} for embeddings and
+#' \dQuote{\code{PCs}} for loadings). All other slots, including projected
+#' feature loadings and jackstraw information, are lost
+#'
+#' @method write_soma DimReduc
+#' @export
+#'
+write_soma.DimReduc <- function(
+  x,
+  uri = NULL,
+  soma,
+  fidx = NULL,
+  nfeatures = NULL,
+  ...,
+  platform_config = NULL,
+  tiledbsoma_ctx = NULL,
+  absolute = FALSE
+) {
+  .check_seurat_installed()
+  stopifnot(
+    "'uri' must be NULL" = is.null(uri),
+    "'soma' must be a SOMAMeasurement" = inherits(soma, what = 'SOMAMeasurement'),
+    "'fidx' must be a positive integer vector" = is.null(fidx) ||
+      (rlang::is_integerish(fidx, finite = TRUE) && all(fidx > 0L)),
+    "'nfeatures' must be a single positive integer" = is.null(nfeatures) ||
+      (rlang::is_integerish(nfeatures, n = 1L, finite = TRUE) && nfeatures > 0L),
+    "'absolute' must be a single logical value" = is_scalar_logical(absolute)
+  )
+  key <- tolower(gsub(pattern = '_$', replacement = '', x = SeuratObject::Key(x)))
+  key <- switch(EXPR = key, pc = 'pca', ic = 'ica', key)
+  # Create a group for `obs,`
+  if (!'obsm' %in% soma$names()) {
+    soma$obsm <- SOMACollectionCreate(
+      uri = file_path(soma$uri, 'obsm'),
+      platform_config = platform_config,
+      tiledbsoma_ctx = tiledbsoma_ctx
+    )
+  }
+  embed <- paste0('X_', key)
+  soma$obsm$set(
+    object = write_soma(
+      x = SeuratObject::Embeddings(x),
+      uri = embed,
+      soma = soma$obsm,
+      sparse = FALSE,
+      transpose = FALSE,
+      platform_config = platform_config,
+      tiledbsoma_ctx = tiledbsoma_ctx
+    ),
+    name = embed
+  )
+  # Add feature loadings
+  loadings <- SeuratObject::Loadings(x)
+  # Check feature info
+  if (!SeuratObject::IsMatrixEmpty(loadings)) {
+    finfo <- vapply_lgl(X = list(fidx, nfeatures), FUN = is.null)
+    msg <- if (all(finfo)) {
+      "No feature information provided, not adding feature loadings"
+    } else if (any(finfo) && !all(finfo)) {
+      paste(
+        "Either both",
+        sQuote('fidx'),
+        "and",
+        sQuote('nfeatures'),
+        "must be supplied or both must be NULL"
+      )
+    } else if (max(fidx) > nfeatures) {
+      paste(sQuote('fidx'), 'exceeds', sQuote('nfeatures'))
+    } else if (all(is.na(fidx))) {
+      "No feature index match"
+    } else {
+      ''
+    }
+    if (nzchar(msg)) {
+      warning(
+        paste(
+          strwrap(paste0(msg, ', not adding feature loadings')),
+          collapse = '\n'
+        ),
+        call. = FALSE,
+        immediate. = TRUE
+      )
+      loadings <- methods::new('matrix')
+    }
+  }
+  # Write feature loadings
+  if (!SeuratObject::IsMatrixEmpty(loadings)) {
+    ldgs <- switch(EXPR = key, pca = 'PCs', ica = 'ICs', paste0(toupper(key), 's'))
+    # Create a group for `varm`
+    if (!'varm' %in% soma$names()) {
+      soma$varm <- SOMACollectionCreate(
+        uri = file_path(soma$uri, 'varm'),
+        platform_config = platform_config,
+        tiledbsoma_ctx = tiledbsoma_ctx
+      )
+    }
+    # Pad our feature loadings matrix
+    mat <- matrix(data = NA_real_, nrow = nfeatures, ncol = ncol(loadings))
+    mat[fidx, ] <- loadings
+    # Write the feature loadings
+    soma$varm$set(
+      object = write_soma(
+        x = mat,
+        uri = ldgs,
+        soma = soma$varm,
+        sparse = FALSE,
+        transpose = FALSE,
+        platform_config = platform_config,
+        tiledbsoma_ctx = tiledbsoma_ctx
+      ),
+      name = ldgs
+    )
+  }
+  return(invisible(soma))
+}
+
+#' @rdname write_soma_seurat_sub
+#'
+#' @section Writing \code{\link[SeuratObject]{Graph}s}:
+#' \pkg{Seurat} \code{\link[SeuratObject]{Graph}} objects are
+#' written out as \link[tiledbsoma:SOMASparseNDArray]{sparse matrices}
+#' to the \dQuote{\code{obsp}} group of a
+#' \link[tiledbsoma:SOMAMeasurement]{measurement}
+#'
+#' @method write_soma Graph
+#' @export
+#'
+write_soma.Graph <- function(
+  x,
+  uri = NULL,
+  soma,
+  ...,
+  platform_config = NULL,
+  tiledbsoma_ctx = NULL,
+  absolute = FALSE
+) {
+  .check_seurat_installed()
+  stopifnot(
+    "'uri' must be a single character value" = is.null(uri) ||
+      is_scalar_character(uri),
+    "'soma' must be a SOMAMeasurement" = inherits(soma, what = 'SOMAMeasurement'),
+    "'absolute' must be a single logical value" = is_scalar_logical(absolute)
+  )
+  if (!'obsp' %in% soma$names()) {
+    soma$obsp <- SOMACollectionCreate(
+      uri = file_path(soma$uri, 'obsp'),
+      platform_config = platform_config,
+      tiledbsoma_ctx = tiledbsoma_ctx
+    )
+  }
+  soma$obsp$set(
+    object = NextMethod(
+      generic = 'write_soma',
+      object = x,
+      uri = uri,
+      soma = soma$obsp,
+      sparse = TRUE,
+      transpose = FALSE,
+      platform_config = platform_config,
+      tiledbsoma_ctx = tiledbsoma_ctx
+    ),
+    name = uri
+  )
+  return(invisible(soma))
+}
+
+#' Write a \code{\link[SeuratObject]{Seurat}} object to a SOMA
+#'
+#' @inheritParams write_soma
+#' @param x A \code{\link[SeuratObject]{Seurat}} object
+#' @param overwrite Overwrite existing data located at \code{uri}
+#'
+#' @inherit write_soma return
+#'
+#' @section Writing Cell-Level Meta Data:
+#' Cell-level meta data is written out as a
+#' \link[tiledbsoma:SOMADataFrame]{data frame} called \dQuote{\code{obs}} at
+#' the \code{\link[tiledbsoma:SOMAExperiment]{experiment}} level
+#'
+#' @inherit write_soma_seurat_sub_objects sections
+#'
+#' @method write_soma Seurat
+#' @export
+#'
+write_soma.Seurat <- function(
+  x,
+  uri = NULL,
+  ...,
+  platform_config = NULL,
+  tiledbsoma_ctx = NULL,
+  overwrite = FALSE
+) {
+  .check_seurat_installed()
+  stopifnot(
+    "'uri' must be a single character value" = is.null(uri) ||
+      is_scalar_character(uri)
+  )
+  uri <- uri %||% file_path(user_dir(), SeuratObject::Project(x))
+  if (!is_remote_uri(uri)) {
+    if (isTRUE(overwrite)) {
+      unlink(x = uri, recursive = TRUE, force = TRUE)
+    }
+    dir.create(dirname(uri), recursive = TRUE)
+  }
+  experiment <- SOMAExperimentCreate(
+    uri = uri,
+    platform_config = platform_config,
+    tiledbsoma_ctx = tiledbsoma_ctx
+  )
+  # Write cell-level meta data
+  meta_data <- .df_index(x = x[[]], alt = 'cells', prefix = 'seurat')
+  meta_data[[attr(meta_data, 'index')]] <- colnames(x)
+  experiment$obs <- write_soma(
+    x = meta_data,
+    uri = 'obs',
+    soma = experiment,
+    platform_config = platform_config,
+    tiledbsoma_ctx = tiledbsoma_ctx
+  )
+  # Write assays
+  experiment$add_new_collection(
+    object = SOMACollectionCreate(
+      uri = file_path(experiment$uri, 'ms'),
+      platform_config = platform_config,
+      tiledbsoma_ctx = tiledbsoma_ctx
+    ),
+    key = 'ms'
+  )
+  for (assay in SeuratObject::Assays(x)) {
+    tryCatch(
+      expr = experiment$ms$set(
+        object = write_soma(
+          x = x[[assay]],
+          uri = assay,
+          soma = experiment$ms,
+          platform_config = platform_config,
+          tiledbsoma_ctx = tiledbsoma_ctx
+        ),
+        name = assay
+      ),
+      error = function(err) {
+        if (assay == SeuratObject::DefaultAssay(x)) {
+          stop(err)
+        }
+        err_to_warn(err)
+      }
+    )
+  }
+  # Write dimensional reductions
+  for (reduc in SeuratObject::Reductions(x)) {
+    assay <- SeuratObject::DefaultAssay(x[[reduc]])
+    ms <- if (assay %in% experiment$ms$names()) {
+      experiment$ms$get(assay)
+    } else if (SeuratObject::IsGlobal(x[[reduc]])) {
+      assay <- SeuratObject::DefaultAssay(x)
+      warning(
+        paste(
+          strwrap(paste0(
+            "Cannot find a measurement for global reduction ",
+            sQuote(reduc),
+            " (default assay: ",
+            sQuote(SeuratObject::DefaultAssay(x[[reduc]])),
+            "), adding to measurement for ",
+            sQuote(assay)
+          )),
+          collapse = '\n'
+        ),
+        call. = FALSE,
+        immediate. = TRUE
+      )
+      experiment$ms$get(assay)
+    } else {
+      # This should never happen
+      warning(
+        paste(
+          strwrap(paste0(
+            "Cannot find a measurement for non-global reduction ",
+            sQuote(reduc),
+            " (default assay: ",
+            sQuote(assay),
+            "), skipping"
+          )),
+          collapse = '\n'
+        ),
+        call. = FALSE,
+        immediate. = TRUE
+      )
+      next
+    }
+    loadings <- SeuratObject::Loadings(x[[reduc]])
+    if (!SeuratObject::IsMatrixEmpty(loadings)) {
+      fidx <- match(x = rownames(loadings), table = rownames(x[[assay]]))
+      nfeatures <- nrow(x[[assay]])
+    } else {
+      fidx <- nfeatures <- NULL
+    }
+    tryCatch(
+      expr = write_soma(
+        x = x[[reduc]],
+        uri = NULL,
+        soma = ms,
+        fidx = fidx,
+        nfeatures = nfeatures,
+        platform_config = platform_config,
+        tiledbsoma_ctx = tiledbsoma_ctx
+      ),
+      error = err_to_warn
+    )
+  }
+  # Write graphs
+  for (graph in SeuratObject::Graphs(x)) {
+    assay <- SeuratObject::DefaultAssay(x[[graph]])
+    if (!assay %in% experiment$ms$names()) {
+      warning(
+        paste(
+          strwrap(paste0(
+            "Cannot find a measurement for graph ",
+            sQuote(graph),
+            " (default assay: ",
+            sQuote(assay),
+            "), skipping"
+          )),
+          collapse = FALSE
+        ),
+        call. = FALSE,
+        immediate. = TRUE
+      )
+      next
+    }
+    tryCatch(
+      expr = write_soma(
+        x = x[[graph]],
+        uri = graph,
+        soma = experiment$ms$get(assay),
+        platform_config = platform_config,
+        tiledbsoma_ctx = tiledbsoma_ctx
+      ),
+      error = err_to_warn
+    )
+  }
+  # TODO: Write images
+  if (length(SeuratObject::Images(x))) {
+    warning(
+      "Spatially resolved data cannot be written to SOMAs at this time",
+      call. = FALSE,
+      immediate. = TRUE
+    )
+  }
+  return(experiment)
+}

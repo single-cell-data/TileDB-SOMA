@@ -1,119 +1,77 @@
-#' @importFrom rlang is_integerish
+#' Write a SOMA from an \R Object
 #'
-NULL
-
-#' Write a SOMA from an R Object
+#' Write \R objects to SOMA following the SOMA spec. This is a generic
+#' function and methods can be written for it to provide a high-level
+#' \R \eqn{\rightarrow} SOMA interface
 #'
 #' @param x An object
 #' @param uri URI for resulting SOMA
 #' @template param-dots-method
-#' @param platform_config ...
-#' @param tiledbsoma_ctx ...
+#' @param platform_config Optional \link[tiledbsoma:PlatformConfig]{platform
+#' configuration}
+#' @param tiledbsoma_ctx Optional \code{\link{SOMATileDBContext}}
 #'
 #' @return A \code{\link{SOMAExperiment}} with the data from \code{x}
 #'
+#' @section Known methods:
+#' \itemize{
+#'  \item \link[tiledbsoma:write_soma.Seurat]{Writing Seurat objects}
+#' }
+#'
 #' @export
+#'
+#' @noMd
 #'
 write_soma <- function(x, uri, ..., platform_config = NULL, tiledbsoma_ctx = NULL) {
   UseMethod(generic = 'write_soma', object = x)
 }
 
-#' @method write_soma Assay
-#' @export
+#' Write R Objects to SOMA
 #'
-write_soma.Assay <- function(
-  x,
-  uri = NULL,
-  soma,
-  ...,
-  platform_config = NULL,
-  tiledbsoma_ctx = NULL,
-  absolute = FALSE
-) {
-  .check_seurat_installed()
-  stopifnot(
-    "'uri' must be a single character value" = is.null(uri) ||
-      is_scalar_character(uri),
-    "'soma' must be a SOMACollection" = inherits(soma, what = 'SOMACollectionBase'),
-    "'absolute' must be a single logical value" = is_scalar_logical(absolute)
-  )
-  # Create a proper URI
-  uri <- uri %||% gsub(pattern = '_$', replacement = '', x = SeuratObject::Key(x))
-  uri <- .check_soma_uri(uri = uri, soma = soma, absolute = absolute)
-  # Create the measurement
-  ms <- SOMAMeasurementCreate(
-    uri = uri,
-    platform_config = platform_config,
-    tiledbsoma_ctx = tiledbsoma_ctx
-  )
-  ms$X <- SOMACollectionCreate(
-    uri = file_path(ms$uri, 'X'),
-    platform_config = platform_config,
-    tiledbsoma_ctx = tiledbsoma_ctx
-  )
-  # Write `X` matrices
-  for (slot in c('counts', 'data', 'scale.data')) {
-    mat <- SeuratObject::GetAssayData(object = x, slot = slot)
-    if (SeuratObject::IsMatrixEmpty(mat)) {
-      next
-    }
-    if (!identical(x = dim(mat), y = dim(x))) {
-      mat <- pad_matrix(
-        x = SeuratObject::as.sparse(x = mat),
-        rownames = rownames(x),
-        colnames = colnames(x)
-      )
-    }
-    lyr <- gsub(pattern = '\\.', replacement = '_', x = slot)
-    tryCatch(
-      expr = ms$X$set(
-        object = write_soma(
-          x = mat,
-          uri = lyr,
-          soma = ms$X,
-          sparse = TRUE,
-          transpose = TRUE,
-          platform_config = platform_config,
-          tiledbsoma_ctx = tiledbsoma_ctx
-        ),
-        name = lyr
-      ),
-      error = function(err) {
-        if (slot == 'data') {
-          stop(err)
-        }
-        err_to_warn(err)
-      }
-    )
-  }
-  # Write feature-level meta data
-  meta_data <- .df_index(x = x[[]], alt = 'features', prefix = 'seurat')
-  meta_data[[attr(x = meta_data, which = 'index')]] <- rownames(x)
-  ms$var <- write_soma(
-    x = meta_data,
-    uri = 'var',
-    soma = ms,
-    platform_config = platform_config,
-    tiledbsoma_ctx = tiledbsoma_ctx
-  )
-  # Return
-  if (class(x)[1L] != 'Assay') {
-    warning(
-      paste(
-        strwrap(paste0(
-          "Extended assays (eg. ",
-          class(x)[1L],
-          ") cannot be written to SOMAs at this time"
-        )),
-        collapse = '\n'
-      ),
-      call. = FALSE,
-      immediate. = TRUE
-    )
-  }
-  return(ms)
-}
+#' Various helpers to write R objects to SOMA
+#'
+#' @inheritParams write_soma
+#' @param soma The parent \link[tiledbsoma:SOMACollection]{collection} (eg. a
+#' \code{\link{SOMACollection}}, \code{\link{SOMAExperiment}}, or
+#' \code{\link{SOMAMeasurement}})
+#' @param absolute \strong{\[Internal use only\]} Is \code{uri} absolute
+#'
+#' @return The resulting SOMA \link[tiledbsoma:SOMASparseNDArray]{array} or
+#' \link[tiledbsoma:SOMADataFrame]{data frame}
+#'
+#' @name write_soma_objects
+#' @rdname write_soma_objects
+#'
+#' @keywords internal
+#'
+NULL
 
+#' @param index The name of the column in \code{x} with the index (row names);
+#' by default, will automatically add the row names of \code{x} to \code{x}
+#' before writing
+#'
+#' @rdname write_soma_objects
+#'
+#' @section Writing Data Frames:
+#' \link[base:data.frame]{Data frames} are written out as
+#' \link[tiledbsoma:SOMADataFrame]{SOMA-structured TileDB data frames}. The
+#' following transformations are applied to \code{x}:
+#' \itemize{
+#'  \item row names are added to a column in \code{x} entitled
+#'   \dQuote{\code{_index}}, \dQuote{\code{rownames}}, or a random name if
+#'   either option is already present in \code{x}
+#'  \item a column \dQuote{\code{soma_joinid}} will be automatically added
+#'   going from \code{[0, nrow(x) - 1]} encoded as
+#'   \link[bit64:integer64]{64-bit integers}; any columns called
+#'   \dQuote{\code{soma_joinid}} will be overwritten if present in \code{x}
+#'  \item all factor columns will be coerced to characters
+#'  \item all columns not containing \link[base:is.atomic]{atomic} types
+#'   (excluding \link[base:factor]{factors}, \code{\link[base]{complex}es},
+#'   and \code{\link[base]{raw}s}) will be removed
+#' }
+#' The array type for each column will be determined by
+#' \code{\link[arrow:infer_type]{arrow::infer_type}()}
+#'
 #' @method write_soma data.frame
 #' @export
 #'
@@ -182,160 +140,21 @@ write_soma.data.frame <- function(
   return(sdf)
 }
 
-#' @method write_soma DimReduc
-#' @export
+#' @param sparse Create a \link[tiledbsoma:SOMASparseNDArray]{sparse} or
+#' \link[tiledbsoma:SOMADenseNDArray]{dense} array from \code{x}
+#' @param type \link[arrow:data-type]{Arrow type} for encoding \code{x}
+#' (eg. \code{\link[arrow:data-type]{arrow::int32}()}); by default, attempts to
+#' determine arrow type with \code{\link[arrow:infer_type]{arrow::infer_type}()}
+#' @param transpose Transpose \code{x} before writing
 #'
-write_soma.DimReduc <- function(
-  x,
-  uri = NULL,
-  soma,
-  fidx = NULL,
-  nfeatures = NULL,
-  ...,
-  platform_config = NULL,
-  tiledbsoma_ctx = NULL,
-  absolute = FALSE
-) {
-  .check_seurat_installed()
-  stopifnot(
-    "'uri' must be NULL" = is.null(uri),
-    "'soma' must be a SOMAMeasurement" = inherits(soma, what = 'SOMAMeasurement'),
-    "'fidx' must be a positive integer vector" = is.null(fidx) ||
-      (rlang::is_integerish(fidx, finite = TRUE) && all(fidx > 0L)),
-    "'nfeatures' must be a single positive integer" = is.null(nfeatures) ||
-      (rlang::is_integerish(nfeatures, n = 1L, finite = TRUE) && nfeatures > 0L),
-    "'absolute' must be a single logical value" = is_scalar_logical(absolute)
-  )
-  key <- tolower(gsub(pattern = '_$', replacement = '', x = SeuratObject::Key(x)))
-  key <- switch(EXPR = key, pc = 'pca', ic = 'ica', key)
-  # Create a group for `obs,`
-  if (!'obsm' %in% soma$names()) {
-    soma$obsm <- SOMACollectionCreate(
-      uri = file_path(soma$uri, 'obsm'),
-      platform_config = platform_config,
-      tiledbsoma_ctx = tiledbsoma_ctx
-    )
-  }
-  embed <- paste0('X_', key)
-  soma$obsm$set(
-    object = write_soma(
-      x = SeuratObject::Embeddings(x),
-      uri = embed,
-      soma = soma$obsm,
-      sparse = FALSE,
-      transpose = FALSE,
-      platform_config = platform_config,
-      tiledbsoma_ctx = tiledbsoma_ctx
-    ),
-    name = embed
-  )
-  # Add feature loadings
-  loadings <- SeuratObject::Loadings(x)
-  # Check feature info
-  if (!SeuratObject::IsMatrixEmpty(loadings)) {
-    finfo <- vapply_lgl(X = list(fidx, nfeatures), FUN = is.null)
-    msg <- if (all(finfo)) {
-      "No feature information provided, not adding feature loadings"
-    } else if (any(finfo) && !all(finfo)) {
-      paste(
-        "Either both",
-        sQuote('fidx'),
-        "and",
-        sQuote('nfeatures'),
-        "must be supplied or both must be NULL"
-      )
-    } else if (max(fidx) > nfeatures) {
-      paste(sQuote('fidx'), 'exceeds', sQuote('nfeatures'))
-    } else if (all(is.na(fidx))) {
-      "No feature index match"
-    } else {
-      ''
-    }
-    if (nzchar(msg)) {
-      warning(
-        paste(
-          strwrap(paste0(msg, ', not adding feature loadings')),
-          collapse = '\n'
-        ),
-        call. = FALSE,
-        immediate. = TRUE
-      )
-      loadings <- methods::new('matrix')
-    }
-  }
-  # Write feature loadings
-  if (!SeuratObject::IsMatrixEmpty(loadings)) {
-    ldgs <- switch(EXPR = key, pca = 'PCs', ica = 'ICs', paste0(toupper(key), 's'))
-    # Create a group for `varm`
-    if (!'varm' %in% soma$names()) {
-      soma$varm <- SOMACollectionCreate(
-        uri = file_path(soma$uri, 'varm'),
-        platform_config = platform_config,
-        tiledbsoma_ctx = tiledbsoma_ctx
-      )
-    }
-    # Pad our feature loadings matrix
-    mat <- matrix(data = NA_real_, nrow = nfeatures, ncol = ncol(loadings))
-    mat[fidx, ] <- loadings
-    # Write the feature loadings
-    soma$varm$set(
-      object = write_soma(
-        x = mat,
-        uri = ldgs,
-        soma = soma$varm,
-        sparse = FALSE,
-        transpose = FALSE,
-        platform_config = platform_config,
-        tiledbsoma_ctx = tiledbsoma_ctx
-      ),
-      name = ldgs
-    )
-  }
-  return(invisible(soma))
-}
-
-#' @method write_soma Graph
-#' @export
+#' @rdname write_soma_objects
 #'
-write_soma.Graph <- function(
-  x,
-  uri = NULL,
-  soma,
-  ...,
-  platform_config = NULL,
-  tiledbsoma_ctx = NULL,
-  absolute = FALSE
-) {
-  .check_seurat_installed()
-  stopifnot(
-    "'uri' must be a single character value" = is.null(uri) ||
-      is_scalar_character(uri),
-    "'soma' must be a SOMAMeasurement" = inherits(soma, what = 'SOMAMeasurement'),
-    "'absolute' must be a single logical value" = is_scalar_logical(absolute)
-  )
-  if (!'obsp' %in% soma$names()) {
-    soma$obsp <- SOMACollectionCreate(
-      uri = file_path(soma$uri, 'obsp'),
-      platform_config = platform_config,
-      tiledbsoma_ctx = tiledbsoma_ctx
-    )
-  }
-  soma$obsp$set(
-    object = NextMethod(
-      generic = 'write_soma',
-      object = x,
-      uri = uri,
-      soma = soma$obsp,
-      sparse = TRUE,
-      transpose = FALSE,
-      platform_config = platform_config,
-      tiledbsoma_ctx = tiledbsoma_ctx
-    ),
-    name = uri
-  )
-  return(invisible(soma))
-}
-
+#' @section Writing Dense Matrices:
+#' Dense matrices are written as two-dimensional
+#' \link[tiledbsoma:SOMADenseNDArray]{dense arrays}. The overall shape of the
+#' array is determined by \code{dim(x)} and the type of the array is determined
+#' by \code{type} or \code{\link[arrow:infer_type]{arrow::infer_type}(x)}
+#'
 #' @method write_soma matrix
 #' @export
 #'
@@ -399,11 +218,27 @@ write_soma.matrix <- function(
   return(array)
 }
 
+#' @rdname write_soma_objects
+#'
 #' @method write_soma Matrix
 #' @export
 #'
 write_soma.Matrix <- write_soma.matrix
 
+#' @rdname write_soma_objects
+#'
+#' @section Writing Sparse Matrices:
+#' Sparse matrices are written out as two-dimensional
+#' \link[tiledbsoma:SOMASparseNDArray]{TileDB sparse arrays} in
+#' \href{https://en.wikipedia.org/wiki/Sparse_matrix#Coordinate_list_(COO)}{COO format}:
+#' \itemize{
+#'  \item the row indices (\dQuote{\code{i}}) are written out as \dQuote{\code{soma_dim_0}}
+#'  \item the column indices (\dQuote{\code{j}}) are written out as \dQuote{\code{soma_dim_1}}
+#'  \item the non-zero values (\dQuote{\code{x}}) are written out as \dQuote{\code{soma_data}}
+#' }
+#' The array type is determined by \code{type}, or
+#' \code{\link[arrow:infer_type]{arrow::infer_type}(slot(x, "x"))}
+#'
 #' @method write_soma TsparseMatrix
 #' @export
 #'
@@ -419,6 +254,8 @@ write_soma.TsparseMatrix <- function(
   absolute = FALSE
 ) {
   stopifnot(
+    "'x' must be a general sparse matrix" = inherits(x = x, what = 'generalMatrix'),
+    "'x' must not be a pattern matrix" = !inherits(x = x, what = 'nsparseMatrix'),
     "'type' must be an Arrow type" = is.null(type) ||
       (R6::is.R6(type) && inherits(x = type, what = 'DataType')),
     "'transpose' must be a single logical value" = is_scalar_logical(transpose)
@@ -440,183 +277,6 @@ write_soma.TsparseMatrix <- function(
   # Write and return
   array$write(x)
   return(array)
-}
-
-#' Write a \code{\link[SeuratObject]{Seurat}} object to a SOMA
-#'
-#' @inheritParams write_soma
-#' @param x A \code{\link[SeuratObject]{Seurat}} object
-#'
-#' @inherit write_soma return
-#'
-#' @method write_soma Seurat
-#' @export
-#'
-write_soma.Seurat <- function(
-  x,
-  uri = NULL,
-  ...,
-  platform_config = NULL,
-  tiledbsoma_ctx = NULL,
-  overwrite = FALSE
-) {
-  .check_seurat_installed()
-  stopifnot(
-    "'uri' must be a single character value" = is.null(uri) ||
-      is_scalar_character(uri)
-  )
-  uri <- uri %||% file_path(user_dir(), SeuratObject::Project(x))
-  if (!is_remote_uri(uri)) {
-    if (isTRUE(overwrite)) {
-      unlink(x = uri, recursive = TRUE, force = TRUE)
-    }
-    dir.create(dirname(uri), recursive = TRUE)
-  }
-  experiment <- SOMAExperimentCreate(
-    uri = uri,
-    platform_config = platform_config,
-    tiledbsoma_ctx = tiledbsoma_ctx
-  )
-  # Write cell-level meta data
-  meta_data <- .df_index(x = x[[]], alt = 'cells', prefix = 'seurat')
-  meta_data[[attr(meta_data, 'index')]] <- colnames(x)
-  experiment$obs <- write_soma(
-    x = meta_data,
-    uri = 'obs',
-    soma = experiment,
-    platform_config = platform_config,
-    tiledbsoma_ctx = tiledbsoma_ctx
-  )
-  # Write assays
-  experiment$add_new_collection(
-    object = SOMACollectionCreate(
-      uri = file_path(experiment$uri, 'ms'),
-      platform_config = platform_config,
-      tiledbsoma_ctx = tiledbsoma_ctx
-    ),
-    key = 'ms'
-  )
-  for (assay in SeuratObject::Assays(x)) {
-    tryCatch(
-      expr = experiment$ms$set(
-        object = write_soma(
-          x = x[[assay]],
-          uri = assay,
-          soma = experiment$ms,
-          platform_config = platform_config,
-          tiledbsoma_ctx = tiledbsoma_ctx
-        ),
-        name = assay
-      ),
-      error = function(err) {
-        if (assay == SeuratObject::DefaultAssay(x)) {
-          stop(err)
-        }
-        err_to_warn(err)
-      }
-    )
-  }
-  # Write dimensional reductions
-  for (reduc in SeuratObject::Reductions(x)) {
-    assay <- SeuratObject::DefaultAssay(x[[reduc]])
-    ms <- if (assay %in% experiment$ms$names()) {
-      experiment$ms$get(assay)
-    } else if (SeuratObject::IsGlobal(x[[reduc]])) {
-      assay <- SeuratObject::DefaultAssay(x)
-      warning(
-        paste(
-          strwrap(paste0(
-            "Cannot find a measurement for global reduction ",
-            sQuote(reduc),
-            " (default assay: ",
-            sQuote(SeuratObject::DefaultAssay(x[[reduc]])),
-            "), adding to measurement for ",
-            sQuote(assay)
-          )),
-          collapse = '\n'
-        ),
-        call. = FALSE,
-        immediate. = TRUE
-      )
-      experiment$ms$get(assay)
-    } else {
-      # This should never happen
-      warning(
-        paste(
-          strwrap(paste0(
-            "Cannot find a measurement for non-global reduction ",
-            sQuote(reduc),
-            " (default assay: ",
-            sQuote(assay),
-            "), skipping"
-          )),
-          collapse = '\n'
-        ),
-        call. = FALSE,
-        immediate. = TRUE
-      )
-      next
-    }
-    loadings <- SeuratObject::Loadings(x[[reduc]])
-    if (!SeuratObject::IsMatrixEmpty(loadings)) {
-      fidx <- match(x = rownames(loadings), table = rownames(x[[assay]]))
-      nfeatures <- nrow(x[[assay]])
-    } else {
-      fidx <- nfeatures <- NULL
-    }
-    tryCatch(
-      expr = write_soma(
-        x = x[[reduc]],
-        uri = NULL,
-        soma = ms,
-        fidx = fidx,
-        nfeatures = nfeatures,
-        platform_config = platform_config,
-        tiledbsoma_ctx = tiledbsoma_ctx
-      ),
-      error = err_to_warn
-    )
-  }
-  # Write graphs
-  for (graph in SeuratObject::Graphs(x)) {
-    assay <- SeuratObject::DefaultAssay(x[[graph]])
-    if (!assay %in% experiment$ms$names()) {
-      warning(
-        paste(
-          strwrap(paste0(
-            "Cannot find a measurement for graph ",
-            sQuote(graph),
-            " (default assay: ",
-            sQuote(assay),
-            "), skipping"
-          )),
-          collapse = FALSE
-        ),
-        call. = FALSE,
-        immediate. = TRUE
-      )
-      next
-    }
-    tryCatch(
-      expr = write_soma(
-        x = x[[graph]],
-        uri = graph,
-        soma = experiment$ms$get(assay),
-        platform_config = platform_config,
-        tiledbsoma_ctx = tiledbsoma_ctx
-      ),
-      error = err_to_warn
-    )
-  }
-  # TODO: Write images
-  if (length(SeuratObject::Images(x))) {
-    warning(
-      "Spatially resolved data cannot be written to SOMAs at this time",
-      call. = FALSE,
-      immediate. = TRUE
-    )
-  }
-  return(experiment)
 }
 
 #' Add an index to a data frame
@@ -642,7 +302,7 @@ write_soma.Seurat <- function(
 #'
 #' @noRd
 #'
-.df_index <- function(x, alt, prefix = 'tiledbsoma', ...) {
+.df_index <- function(x, alt = 'rownames', prefix = 'tiledbsoma', ...) {
   .check_seurat_installed()
   stopifnot(
     "'x' must be a data frame" = is.data.frame(x),
