@@ -6,7 +6,7 @@
 """Ingestion methods.
 
 This module contains methods to generate SOMA artifacts starting from
-other formats. Currently only h5ad (AnnData) is supported.
+other formats. Currently only ``.h5ad`` (`AnnData <https://anndata.readthedocs.io/>`_) is supported.
 """
 
 import math
@@ -610,7 +610,9 @@ def add_X_layer(
     ingest_mode: IngestMode = "write",
     use_relative_uri: Optional[bool] = None,
 ) -> None:
-    """This is useful for adding X data, for example from scanpy.pp.normalize_total, scanpy.pp.log1p, etc.
+    """This is useful for adding X data, for example from
+    `Scanpy <https://scanpy.readthedocs.io/>`_'s ``scanpy.pp.normalize_total``,
+    ``scanpy.pp.log1p``, etc.
 
     Use ``ingest_mode="resume"`` to not error out if the schema already exists.
 
@@ -637,8 +639,9 @@ def add_matrix_to_collection(
     ingest_mode: IngestMode = "write",
     use_relative_uri: Optional[bool] = None,
 ) -> None:
-    """This is useful for adding X/obsp/varm/etc data, for example from scanpy.pp.normalize_total,
-    scanpy.pp.log1p, etc.
+    """This is useful for adding X/obsp/varm/etc data, for example from
+    `Scanpy <https://scanpy.readthedocs.io/>`_'s ``scanpy.pp.normalize_total``,
+    ``scanpy.pp.log1p``, etc.
 
     Use ``ingest_mode="resume"`` to not error out if the schema already exists.
 
@@ -1013,7 +1016,7 @@ def to_h5ad(
     measurement_name: str,
     X_layer_name: str = "data",
 ) -> None:
-    """Converts the experiment group to anndata format and writes it to the specified .h5ad file.
+    """Converts the experiment group to anndata format and writes it to the specified ``.h5ad`` file.
 
     Lifecycle:
         Experimental.
@@ -1046,8 +1049,8 @@ def to_anndata(
     var_id_name: str = "var_id",
     X_layer_name: str = "data",
 ) -> ad.AnnData:
-    """Converts the experiment group to anndata.
-    Choice of matrix formats is following what we often see in input .h5ad files:
+    """Converts the experiment group to `AnnData <https://anndata.readthedocs.io/>`_.
+    Choice of matrix formats is following what we often see in input ``.h5ad`` files:
 
     * X as ``scipy.sparse.csr_matrix``
     * obs,var as ``pandas.dataframe``

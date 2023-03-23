@@ -19,7 +19,7 @@ from ._types import NTuple
 
 
 class TableReadIter(somacore.ReadIter[pa.Table]):
-    """Iterator over Arrow Table elements"""
+    """Iterator over `Arrow Table <https://arrow.apache.org/docs/python/generated/pyarrow.Table.html>`_ elements"""
 
     def __init__(self, sr: clib.SOMAArrayReader):
         self.sr = sr
@@ -32,7 +32,7 @@ class TableReadIter(somacore.ReadIter[pa.Table]):
         return arrow_table
 
     def concat(self) -> pa.Table:
-        """Concatenate remainder of iterator, and return as a single Arrow Table"""
+        """Concatenate remainder of iterator, and return as a single `Arrow Table <https://arrow.apache.org/docs/python/generated/pyarrow.Table.html>`_"""
         return pa.concat_tables(self)
 
 
@@ -68,7 +68,7 @@ class SparseTensorReadIterBase(somacore.ReadIter[RT], metaclass=abc.ABCMeta):
 
 
 class SparseCOOTensorReadIter(SparseTensorReadIterBase[pa.SparseCOOTensor]):
-    """Iterator over Arrow SparseCOOTensor elements"""
+    """Iterator over `Arrow SparseCOOTensor <https://arrow.apache.org/docs/cpp/api/tensor.html>`_ elements"""
 
     def _from_table(self, arrow_table: pa.Table) -> pa.SparseCOOTensor:
         coo_data = arrow_table.column("soma_data").to_numpy()

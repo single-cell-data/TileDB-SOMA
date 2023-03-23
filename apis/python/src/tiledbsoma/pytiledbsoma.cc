@@ -110,15 +110,15 @@ PYBIND11_MODULE(pytiledbsoma, m) {
     m.def(
         "tiledbsoma_stats_enable",
         []() { tiledbsoma::stats::enable(); },
-        "Enable TileDB internal statistics [lifecycle: experimental].");
+        "Enable TileDB internal statistics. Lifecycle: experimental.");
     m.def(
         "tiledbsoma_stats_disable",
         []() { tiledbsoma::stats::disable(); },
-        "Disable TileDB internal statistics [lifecycle: experimental].");
+        "Disable TileDB internal statistics. Lifecycle: experimental.");
     m.def(
         "tiledbsoma_stats_reset",
         []() { tiledbsoma::stats::reset(); },
-        "Reset all TileDB internal statistics to 0 [lifecycle: experimental].");
+        "Reset all TileDB internal statistics to 0. Lifecycle: experimental.");
     m.def(
         "tiledbsoma_stats_dump",
         []() {
@@ -126,7 +126,7 @@ PYBIND11_MODULE(pytiledbsoma, m) {
             std::string stats = tiledbsoma::stats::dump();
             py::print(stats);
         },
-        "Print TileDB internal statistics [lifecycle: experimental].");
+        "Print TileDB internal statistics. Lifecycle: experimental.");
 
     py::class_<SOMAArrayReader>(m, "SOMAArrayReader")
         .def(
