@@ -15,7 +15,10 @@
 #' more dimensions.
 #'
 #' The default "fill" value for `SOMADenseNDArray` is the zero or null value of
-#' the array type (e.g., Arrow.float32 defaults to 0.0).  (lifecycle: experimental)
+#' the array type (e.g., Arrow.float32 defaults to 0.0).
+#'
+#' The `write` method is currently limited to writing from 2-d matrices.
+#' (lifecycle: experimental)
 #' @export
 
 SOMADenseNDArray <- R6::R6Class(
@@ -183,6 +186,8 @@ SOMADenseNDArray <- R6::R6Class(
     },
 
     #' @description Write matrix data to the array. (lifecycle: experimental)
+    #'
+    #' More general write methods for higher-dimensional array could be added.
     #'
     #' @param values A `matrix`. Character dimension names are ignored because
     #' `SOMANDArray`'s use integer indexing.

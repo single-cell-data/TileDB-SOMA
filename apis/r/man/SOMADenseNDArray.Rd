@@ -19,7 +19,10 @@ All dimensions must have a positive, non-zero length, and there must be 1 or
 more dimensions.
 
 The default "fill" value for \code{SOMADenseNDArray} is the zero or null value of
-the array type (e.g., Arrow.float32 defaults to 0.0).  (lifecycle: experimental)
+the array type (e.g., Arrow.float32 defaults to 0.0).
+
+The \code{write} method is currently limited to writing from 2-d matrices.
+(lifecycle: experimental)
 }
 \section{Super classes}{
 \code{\link[tiledbsoma:TileDBObject]{tiledbsoma::TileDBObject}} -> \code{\link[tiledbsoma:TileDBArray]{tiledbsoma::TileDBArray}} -> \code{\link[tiledbsoma:SOMAArrayBase]{tiledbsoma::SOMAArrayBase}} -> \code{SOMADenseNDArray}
@@ -159,6 +162,8 @@ A \code{matrix} object
 \if{latex}{\out{\hypertarget{method-SOMADenseNDArray-write}{}}}
 \subsection{Method \code{write()}}{
 Write matrix data to the array. (lifecycle: experimental)
+
+More general write methods for higher-dimensional array could be added.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{SOMADenseNDArray$write(values, coords = NULL)}\if{html}{\out{</div>}}
 }
