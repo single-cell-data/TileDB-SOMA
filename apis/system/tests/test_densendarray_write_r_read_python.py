@@ -25,7 +25,7 @@ class TestDenseNDArrayWriteRReadPython(TestReadPythonWriteR):
         """
         with soma.open(self.uri) as sdf:
             ndarr = sdf.read()
-            assert ndarr.shape == (3, 2)
+            assert ndarr.shape == (2, 3)
 
     def test_ndarray_type_matches(self, R_ndarray):
         """
