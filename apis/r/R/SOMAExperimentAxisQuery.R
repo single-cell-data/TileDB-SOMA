@@ -779,6 +779,7 @@ SOMAExperimentAxisQuery <- R6::R6Class(
           i = self$indexer$by_obs(obs)$as_vector() + 1L,
           j = self$indexer$by_var(var)$as_vector() + 1L,
           x = self$X(lyr)$GetColumnByName('soma_data')$as_vector(),
+          dims = c(self$n_obs, self$n_vars),
           repr = switch(EXPR = repr, D = 'T', repr)
         )
         mat <- Matrix::t(mat)
