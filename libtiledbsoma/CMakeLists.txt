@@ -37,6 +37,8 @@ endif()
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmake/Modules/")
 
+set(TILEDBSOMA_CMAKE_INPUTS_DIR "${CMAKE_CURRENT_SOURCE_DIR}/cmake/inputs")
+
 # TileDB-SOMA Options
 option(TILEDBSOMA_BUILD_PYTHON "Build Python API bindings" ON)
 option(TILEDBSOMA_BUILD_CLI "Build tiledbsoma CLI tool" ON)
@@ -243,12 +245,3 @@ if(TILEDBSOMA_ENABLE_TESTING)
   enable_testing()
   add_subdirectory(test)
 endif()
-
-# PKG Config file
-configure_file(
-  ${CMAKE_CURRENT_SOURCE_DIR}/cmake/inputs/tiledbsoma.pc.in
-  ${CMAKE_CURRENT_BINARY_DIR}/tiledbsoma.pc
-  @ONLY
-)
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/tiledbsoma.pc
-  DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig)
