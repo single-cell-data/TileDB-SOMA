@@ -40,13 +40,13 @@ sys.path.insert(0, str(this_dir))
 
 import version  # noqa E402
 
-libtiledbsoma_dir: Optional[pathlib.PurePath] = None
+libtiledbsoma_dir: Optional[pathlib.Path] = None
 
 args = sys.argv[:]
 for arg in args:
     start, eq, last = arg.partition("=")
     if (start, eq) == ("--libtiledbsoma", "="):
-        libtiledbsoma_dir = pathlib.PurePath(last)
+        libtiledbsoma_dir = pathlib.Path(last)
         sys.argv.remove(arg)
 
 if libtiledbsoma_dir is None:
