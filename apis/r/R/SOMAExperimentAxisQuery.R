@@ -728,11 +728,13 @@ SOMAExperimentAxisQuery <- R6::R6Class(
     .var_query = NULL,
     .joinids = NULL,
     .indexer = NULL,
-    .as_matrix = function(table, repr = 'C', transpose = TRUE) {
+    .as_matrix = function(table, repr = 'C', transpose = FALSE) {
       stopifnot(
-        inherits(table, 'Table'),
-        is_scalar_character(repr),
-        is_scalar_logical(transpose)
+        "'table' must be an Arrow table" = inherits(table, 'Table'),
+        "'repr' must be a single character value" = is_scalar_character(repr),
+        "'transpose' must be a single logical value" = is_scalar_logical(transpose),
+        "'table' must have column names 'soma_dim_0', 'soma_dim_1', and 'soma_data'" =
+          all(c('soma_dim_0', 'soma_dim_1', 'soma_data') %in% table$ColumnNames())
       )
       repr <- match.arg(arg = repr, choices = c('C', 'R', 'T', 'D'))
       obs <- table$GetColumnByName('soma_dim_0')$as_vector()
@@ -741,6 +743,7 @@ SOMAExperimentAxisQuery <- R6::R6Class(
         i = self$indexer$by_obs(obs)$as_vector() + 1L,
         j = self$indexer$by_var(var)$as_vector() + 1L,
         x = table$GetColumnByName('soma_data')$as_vector(),
+        dims = c(self$n_obs, self$n_vars),
         repr = switch(EXPR = repr, D = 'T', repr)
       )
       if (isTRUE(transpose)) {
@@ -771,23 +774,6 @@ SOMAExperimentAxisQuery <- R6::R6Class(
         "'cells' must be a character vector" = is.character(cells),
         "'features' must be a character vector" = is.character(features)
       )
-      as_matrix <- function(lyr, repr = 'C') {
-        repr <- match.arg(arg = repr, choices = c('C', 'R', 'T', 'D'))
-        obs <- self$X(lyr)$GetColumnByName('soma_dim_0')$as_vector()
-        var <- self$X(lyr)$GetColumnByName('soma_dim_1')$as_vector()
-        mat <- Matrix::sparseMatrix(
-          i = self$indexer$by_obs(obs)$as_vector() + 1L,
-          j = self$indexer$by_var(var)$as_vector() + 1L,
-          x = self$X(lyr)$GetColumnByName('soma_data')$as_vector(),
-          dims = c(self$n_obs, self$n_vars),
-          repr = switch(EXPR = repr, D = 'T', repr)
-        )
-        mat <- Matrix::t(mat)
-        if (repr == 'D') {
-          mat <- as.matrix(mat)
-        }
-        return(mat)
-      }
       if (!length(x = cells) == self$n_obs) {
         stop("'cells' must have a length of ", self$n_obs, call. = FALSE)
       }
@@ -797,13 +783,21 @@ SOMAExperimentAxisQuery <- R6::R6Class(
       dnames <- list(features, cells)
       # Read in `data` slot
       if (is_scalar_character(data)) {
-        dmat <- as_matrix(lyr = data, repr = 'C')
+        dmat <- private$.as_matrix(
+          table = self$X(data),
+          repr = 'C',
+          transpose = TRUE
+        )
         dimnames(dmat) <- dnames
         obj <- SeuratObject::CreateAssayObject(data = dmat)
       }
       # Add the `counts` slot
       if (is_scalar_character(counts)) {
-        cmat <- as_matrix(lyr = counts, repr = 'C')
+        cmat <- private$.as_matrix(
+          table = self$X(counts),
+          repr = 'C',
+          transpose = TRUE
+        )
         dimnames(cmat) <- dnames
         obj <- if (is_scalar_character(data)) {
           SeuratObject::SetAssayData(
@@ -817,7 +811,11 @@ SOMAExperimentAxisQuery <- R6::R6Class(
       }
       # Add the `scale.data` slot
       if (is_scalar_character(scale_data)) {
-        smat <- as_matrix(lyr = scale_data, repr = 'D')
+        smat <- private$.as_matrix(
+          table = self$X(scale_data),
+          repr = 'D',
+          transpose = TRUE
+        )
         dimnames(smat) <- dnames
         obj <- SeuratObject::SetAssayData(
           object = obj,
