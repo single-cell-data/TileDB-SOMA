@@ -14,6 +14,7 @@ import time
 from typing import (
     Any,
     List,
+    Mapping,
     Optional,
     Sequence,
     Tuple,
@@ -213,6 +214,16 @@ def from_anndata(
         ) as measurement:
             _maybe_set(
                 ms, measurement_name, measurement, use_relative_uri=use_relative_uri
+            )
+
+            # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+            # ms/meas/uns
+            _maybe_ingest_uns(
+                measurement,
+                anndata.uns,
+                platform_config,
+                ingest_mode,
+                use_relative_uri=use_relative_uri,
             )
 
             # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -1007,6 +1018,116 @@ def _chunk_is_contained_in_axis(
         return False
 
     return True
+
+
+def _maybe_ingest_uns(
+    m: Measurement,
+    uns: Mapping[str, object],
+    platform_config: Optional[PlatformConfig],
+    ingest_mode: IngestMode,
+    *,
+    use_relative_uri: Optional[bool],
+) -> None:
+    # Don't try to ingest an empty uns.
+    if not uns:
+        return
+    _ingest_uns_dict(
+        m, "uns", uns, platform_config, ingest_mode, use_relative_uri=use_relative_uri
+    )
+
+
+def _ingest_uns_dict(
+    parent: AnyTileDBCollection,
+    parent_key: str,
+    dct: Mapping[str, object],
+    platform_config: Optional[PlatformConfig],
+    ingest_mode: IngestMode,
+    *,
+    use_relative_uri: Optional[bool],
+) -> None:
+    with _create_or_open_coll(
+        Collection, _util.uri_joinpath(parent.uri, parent_key), ingest_mode
+    ) as coll:
+        _maybe_set(parent, parent_key, coll, use_relative_uri=use_relative_uri)
+        coll.metadata["soma_tiledbsoma:type"] = "uns"
+        for key, value in dct.items():
+            if key == "rank_genes_groups":
+                # This is a structured array, which we do not support.
+                logging.log_io(None, f"skipping uns structured array {key!r}")
+            elif isinstance(value, (np.str_, int, float, str)):
+                # Primitives get set on the metadata.
+                coll.metadata[key] = value
+            elif isinstance(value, Mapping):
+                # Mappings are represented as sub-dictionaries.
+                _ingest_uns_dict(
+                    coll,
+                    key,
+                    value,
+                    platform_config,
+                    ingest_mode,
+                    use_relative_uri=use_relative_uri,
+                )
+            elif isinstance(value, pd.DataFrame):
+                with _write_dataframe(
+                    _util.uri_joinpath(coll.uri, key),
+                    value,
+                    None,
+                    platform_config,
+                    ingest_mode,
+                ) as df:
+                    _maybe_set(coll, key, df, use_relative_uri=use_relative_uri)
+            else:
+                if isinstance(value, list) or "numpy" in str(type(value)):
+                    value = np.asarray(value)
+
+                if isinstance(value, np.ndarray):
+                    _ingest_uns_ndarray(
+                        coll,
+                        key,
+                        value,
+                        platform_config,
+                        use_relative_uri=use_relative_uri,
+                    )
+                else:
+                    logging.log_io(
+                        None,
+                        f"skipping unrecognized uns element {key!r} type {type(value)}",
+                    )
+    msg = f"Wrote   {coll.uri} (uns collection)"
+    logging.log_io(msg, msg)
+
+
+def _ingest_uns_ndarray(
+    coll: AnyTileDBCollection,
+    key: str,
+    value: NPNDArray,
+    platform_config: Optional[PlatformConfig],
+    *,
+    use_relative_uri: Optional[bool],
+) -> None:
+    arr_uri = _util.uri_joinpath(coll.uri, key)
+    try:
+        pa_dtype = pa.from_numpy_dtype(value.dtype)
+    except pa.ArrowNotImplementedError:
+        msg = (
+            f"Error   {arr_uri} (uns ndarray):"
+            f" unsupported dtype {value.dtype!r} ({value.dtype})"
+        )
+        logging.log_io(msg, msg)
+        return
+    try:
+        soma_arr = _factory.open(arr_uri, "w", soma_type=DenseNDArray)
+    except DoesNotExistError:
+        soma_arr = DenseNDArray.create(
+            arr_uri,
+            type=pa_dtype,
+            shape=value.shape,
+            platform_config=platform_config,
+        )
+    with soma_arr:
+        _maybe_set(coll, key, soma_arr, use_relative_uri=use_relative_uri)
+        soma_arr.write((), pa.Tensor.from_numpy(value), platform_config=platform_config)
+    msg = f"Wrote   {soma_arr.uri} (uns ndarray)"
 
 
 # ----------------------------------------------------------------
