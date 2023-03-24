@@ -78,20 +78,36 @@ def from_h5ad(
     use_relative_uri: Optional[bool] = None,
     X_kind: Union[Type[SparseNDArray], Type[DenseNDArray]] = SparseNDArray,
 ) -> str:
-    """Reads an ``.h5ad`` file and writes to a TileDB group structure.
+    """Reads an ``.h5ad`` file and writes it to a tiledbsoma Experiment.
 
-    Returns a URI for the created experiment.
+    Measurement data is stored in a Measurement in the experiment's ``ms`` field,
+    with the key provided by ``measurement_name``. Data elements are available
+    at the standard fields (``var``, ``X``, etc.). ``uns`` unstructured data is
+    partially supported, and is available at the measurement's ``uns`` key
+    (i.e., at ``your_experiment.ms[measurement_name]["uns"]``).
 
-    The "write" ingest_mode (which is the default) writes all data, creating new layers if the soma already exists.
+    Args:
+        experiment_uri: The experiment to create or update.
 
-    The "resume" ingest_mode skips data writes if data are within dimension ranges of the existing soma.
-    This is useful for continuing after a partial/interrupted previous upload.
+        input_path: A path to an input H5AD file.
 
-    The "schema_only" ingest_mode creates groups and array schema, without writing array data.
-    This is useful as a prep-step for parallel append-ingest of multiple H5ADs to a single soma.
+        measurement_name: The name of the measurement to store data in.
 
-    The ``X_kind`` parameter allows you to specify how dense X matrices from the H5AD are stored
-    within the SOMA experiment -- whether as dense or as sparse.
+        ingest_mode: The ingestion type to perform:
+            - ``write``: Writes all data, creating new layers
+              if the SOMA already exists.
+            - ``resume``: Adds data to an existing SOMA, skipping writing data
+              that was previously written. Useful for continuing after a partial
+              or interrupted ingestion operation.
+            - ``schema_only``: Creates groups and the array schema, without
+              writing any data to the array. Useful to prepare for appending
+              multiple H5AD files to a single SOMA.
+
+        X_kind: Which type of matrix is used to store dense X data from the
+            H5AD file: ``DenseNDArray`` or ``SparseNDArray``.
+
+    Returns:
+        The URI of the newly created experiment.
 
     Lifecycle:
         Experimental.
@@ -142,20 +158,36 @@ def from_anndata(
     use_relative_uri: Optional[bool] = None,
     X_kind: Union[Type[SparseNDArray], Type[DenseNDArray]] = SparseNDArray,
 ) -> str:
-    """Top-level writer method for creating a TileDB group for an :class:`Experiment` object.
+    """Writes an anndata object to a tiledbsoma Experiment.
 
-    Returns a URI for the created experiment.
+    Measurement data is stored in a Measurement in the experiment's ``ms`` field,
+    with the key provided by ``measurement_name``. Data elements are available
+    at the standard fields (``var``, ``X``, etc.). ``uns`` unstructured data is
+    partially supported, and is available at the measurement's ``uns`` key
+    (i.e., at ``your_experiment.ms[measurement_name]["uns"]``).
 
-    The "write" ingest_mode (which is the default) writes all data, creating new layers if the soma already exists.
+    Args:
+        experiment_uri: The experiment to create or update.
 
-    The "resume" ingest_mode skips data writes if data are within dimension ranges of the existing soma.
-    This is useful for continuing after a partial/interrupted previous upload.
+        input_path: A path to an input H5AD file.
 
-    The "schema_only" ingest_mode creates groups and array schema, without writing array data.
-    This is useful as a prep-step for parallel append-ingest of multiple H5ADs to a single soma.
+        measurement_name: The name of the measurement to store data in.
 
-    The ``X_kind`` parameter allows you to specify how dense X matrices from the H5AD are stored
-    within the SOMA experiment -- whether as dense or as sparse.
+        ingest_mode: The ingestion type to perform:
+            - ``write``: Writes all data, creating new layers
+              if the SOMA already exists.
+            - ``resume``: Adds data to an existing SOMA, skipping writing data
+              that was previously written. Useful for continuing after a partial
+              or interrupted ingestion operation.
+            - ``schema_only``: Creates groups and the array schema, without
+              writing any data to the array. Useful to prepare for appending
+              multiple H5AD files to a single SOMA.
+
+        X_kind: Which type of matrix is used to store dense X data from the
+            H5AD file: ``DenseNDArray`` or ``SparseNDArray``.
+
+    Returns:
+        The URI of the newly created experiment.
 
     Lifecycle:
         Experimental.
