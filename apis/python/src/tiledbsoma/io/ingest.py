@@ -78,12 +78,13 @@ def from_h5ad(
     use_relative_uri: Optional[bool] = None,
     X_kind: Union[Type[SparseNDArray], Type[DenseNDArray]] = SparseNDArray,
 ) -> str:
-    """Reads an ``.h5ad`` file and writes it to a tiledbsoma Experiment.
+    """Reads an ``.h5ad`` file and writes it to an :class:`Experiment`.
 
-    Measurement data is stored in a Measurement in the experiment's ``ms`` field,
-    with the key provided by ``measurement_name``. Data elements are available
-    at the standard fields (``var``, ``X``, etc.). ``uns`` unstructured data is
-    partially supported, and is available at the measurement's ``uns`` key
+    Measurement data is stored in a :class:`Measurement` in the experiment's
+    ``ms`` field, with the key provided by ``measurement_name``. Data elements
+    are available at the standard fields (``var``, ``X``, etc.). Unstructured
+    data from ``uns`` is partially supported (structured arrays and non-numeric
+    NDArrays are skipped), and is available at the measurement's ``uns`` key
     (i.e., at ``your_experiment.ms[measurement_name]["uns"]``).
 
     Args:
@@ -158,12 +159,13 @@ def from_anndata(
     use_relative_uri: Optional[bool] = None,
     X_kind: Union[Type[SparseNDArray], Type[DenseNDArray]] = SparseNDArray,
 ) -> str:
-    """Writes an anndata object to a tiledbsoma Experiment.
+    """Writes an anndata object to a :class:`Experiment`.
 
-    Measurement data is stored in a Measurement in the experiment's ``ms`` field,
-    with the key provided by ``measurement_name``. Data elements are available
-    at the standard fields (``var``, ``X``, etc.). ``uns`` unstructured data is
-    partially supported, and is available at the measurement's ``uns`` key
+    Measurement data is stored in a :class:`Measurement` in the experiment's
+    ``ms`` field, with the key provided by ``measurement_name``. Data elements
+    are available at the standard fields (``var``, ``X``, etc.). Unstructured
+    data from ``uns`` is partially supported (structured arrays and non-numeric
+    NDArrays are skipped), and is available at the measurement's ``uns`` key
     (i.e., at ``your_experiment.ms[measurement_name]["uns"]``).
 
     Args:
