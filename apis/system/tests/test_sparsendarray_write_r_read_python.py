@@ -33,7 +33,7 @@ class TestSparseNDArrayWriteRReadPython(TestReadPythonWriteR):
         The source ndarray is a 5x5 matrix, so the resulting soma_ndarray should have 2 dimensions.
         """
         with soma.open(self.uri) as sdf:
-            ndarr = sdf.read()
+            ndarr = sdf.read().coos().concat()
             assert ndarr.shape == (5, 5)
 
     def test_ndarray_type_matches(self, R_ndarray):
@@ -41,7 +41,7 @@ class TestSparseNDArrayWriteRReadPython(TestReadPythonWriteR):
         The SparseNDArray should have a type of int32.
         """
         with soma.open(self.uri) as sdf:
-            ndarr = sdf.read()
+            ndarr = sdf.read().coos().concat()
             assert ndarr.type == "int32"
 
     def test_ndarray_content_matches(self, R_ndarray):
@@ -49,9 +49,9 @@ class TestSparseNDArrayWriteRReadPython(TestReadPythonWriteR):
         The SparseNDArray content should match.
         """
         with soma.open(self.uri) as sdf:
-            arr = sdf.read().to_numpy()
-            np.array_equal(arr[0], np.asarray([0, 1, 0, 0, 0]))
-            np.array_equal(arr[1], np.asarray([0, 0, 2, 0, 0]))
-            np.array_equal(arr[2], np.asarray([0, 0, 0, 0, 0]))
-            np.array_equal(arr[3], np.asarray([0, 0, 0, 0, 0]))
-            np.array_equal(arr[4], np.asarray([0, 0, 0, 0, 0]))
+            arr = sdf.read().coos().concat().to_scipy().todense()
+            np.array_equal(arr[0], np.matrix([0, 1, 0, 0, 0]))
+            np.array_equal(arr[1], np.matrix([0, 0, 2, 0, 0]))
+            np.array_equal(arr[2], np.matrix([0, 0, 0, 0, 0]))
+            np.array_equal(arr[3], np.matrix([0, 0, 0, 0, 0]))
+            np.array_equal(arr[4], np.matrix([0, 0, 0, 0, 0]))
