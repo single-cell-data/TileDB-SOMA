@@ -70,3 +70,14 @@ create_and_populate_sparse_nd_array <- function(uri, ...) {
   ndarray$write(smat)
   ndarray
 }
+
+get_data <- function(x, package = NULL) {
+  stopifnot(
+    is_scalar_character(x),
+    is.null(package) || is_scalar_character(package)
+  )
+  e <- new.env()
+  on.exit(rm(e), add = TRUE)
+  data(list = x, package = package, envir = e)
+  return(e[[x]])
+}

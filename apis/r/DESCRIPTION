@@ -63,7 +63,8 @@ Suggests:
     pbmc3k.tiledb,
     SeuratObject (>= 4.1.0),
     rappdirs,
-    tools
+    tools,
+    datasets
 VignetteBuilder: knitr
 Config/testthat/edition: 2
 OS_type: unix
