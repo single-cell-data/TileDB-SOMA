@@ -1,7 +1,9 @@
+import pathlib
 import tempfile
 from pathlib import Path
 
 import anndata
+import numpy as np
 import pytest
 import tiledb
 
@@ -52,7 +54,6 @@ def adata(h5ad_file):
     [tiledbsoma.SparseNDArray, tiledbsoma.DenseNDArray],
 )
 def test_import_anndata(adata, ingest_modes, X_kind):
-
     have_ingested = False
 
     tempdir = tempfile.TemporaryDirectory()
@@ -62,7 +63,6 @@ def test_import_anndata(adata, ingest_modes, X_kind):
     all2d = (slice(None), slice(None))  # keystroke-saver
 
     for ingest_mode in ingest_modes:
-
         uri = tiledbsoma.io.from_anndata(
             output_path,
             orig,
@@ -252,7 +252,6 @@ def test_resume_mode(adata, resume_mode_h5ad_file):
 
 @pytest.mark.parametrize("use_relative_uri", [False, True, None])
 def test_ingest_relative(h5ad_file_extended, use_relative_uri):
-
     tempdir = tempfile.TemporaryDirectory()
     output_path = tempdir.name
 
@@ -298,6 +297,39 @@ def test_ingest_relative(h5ad_file_extended, use_relative_uri):
         assert G.is_relative("data") == expected_relative
 
     exp.close()
+
+
+def test_ingest_uns(tmp_path: pathlib.Path, h5ad_file_extended):
+    tmp_uri = tmp_path.as_uri()
+    original = anndata.read(h5ad_file_extended)
+    uri = tiledbsoma.io.from_anndata(tmp_uri, original, measurement_name="hello")
+
+    with tiledbsoma.Experiment.open(uri) as exp:
+        uns = exp.ms["hello"]["uns"]
+        assert isinstance(uns, tiledbsoma.Collection)
+        assert uns.metadata["soma_tiledbsoma_type"] == "uns"
+        assert set(uns) == {
+            "draw_graph",
+            "louvain",
+            "neighbors",
+            "pca",
+            "rank_genes_groups",
+        }
+        rgg = uns["rank_genes_groups"]
+        assert set(rgg) == {"params"}, "structured arrays not imported"
+        assert rgg["params"].metadata.items() >= {
+            ("groupby", "louvain"),
+            ("method", "t-test_overestim_var"),
+            ("reference", "rest"),
+        }
+        dg_params = uns["draw_graph"]["params"]
+        assert isinstance(dg_params, tiledbsoma.Collection)
+        assert dg_params.metadata["layout"] == "fr"
+        random_state = dg_params["random_state"]
+        assert isinstance(random_state, tiledbsoma.DenseNDArray)
+        assert np.array_equal(random_state.read().to_numpy(), np.array([0]))
+        got_pca_variance = uns["pca"]["variance"].read().to_numpy()
+        assert np.array_equal(got_pca_variance, original.uns["pca"]["variance"])
 
 
 def test_add_matrix_to_collection(adata):

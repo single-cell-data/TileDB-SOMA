@@ -14,6 +14,7 @@ import time
 from typing import (
     Any,
     List,
+    Mapping,
     Optional,
     Sequence,
     Tuple,
@@ -77,20 +78,37 @@ def from_h5ad(
     use_relative_uri: Optional[bool] = None,
     X_kind: Union[Type[SparseNDArray], Type[DenseNDArray]] = SparseNDArray,
 ) -> str:
-    """Reads an ``.h5ad`` file and writes to a TileDB group structure.
+    """Reads an ``.h5ad`` file and writes it to an :class:`Experiment`.
 
-    Returns a URI for the created experiment.
+    Measurement data is stored in a :class:`Measurement` in the experiment's
+    ``ms`` field, with the key provided by ``measurement_name``. Data elements
+    are available at the standard fields (``var``, ``X``, etc.). Unstructured
+    data from ``uns`` is partially supported (structured arrays and non-numeric
+    NDArrays are skipped), and is available at the measurement's ``uns`` key
+    (i.e., at ``your_experiment.ms[measurement_name]["uns"]``).
 
-    The "write" ingest_mode (which is the default) writes all data, creating new layers if the soma already exists.
+    Args:
+        experiment_uri: The experiment to create or update.
 
-    The "resume" ingest_mode skips data writes if data are within dimension ranges of the existing soma.
-    This is useful for continuing after a partial/interrupted previous upload.
+        input_path: A path to an input H5AD file.
 
-    The "schema_only" ingest_mode creates groups and array schema, without writing array data.
-    This is useful as a prep-step for parallel append-ingest of multiple H5ADs to a single soma.
+        measurement_name: The name of the measurement to store data in.
 
-    The ``X_kind`` parameter allows you to specify how dense X matrices from the H5AD are stored
-    within the SOMA experiment -- whether as dense or as sparse.
+        ingest_mode: The ingestion type to perform:
+            - ``write``: Writes all data, creating new layers
+              if the SOMA already exists.
+            - ``resume``: Adds data to an existing SOMA, skipping writing data
+              that was previously written. Useful for continuing after a partial
+              or interrupted ingestion operation.
+            - ``schema_only``: Creates groups and the array schema, without
+              writing any data to the array. Useful to prepare for appending
+              multiple H5AD files to a single SOMA.
+
+        X_kind: Which type of matrix is used to store dense X data from the
+            H5AD file: ``DenseNDArray`` or ``SparseNDArray``.
+
+    Returns:
+        The URI of the newly created experiment.
 
     Lifecycle:
         Experimental.
@@ -141,20 +159,37 @@ def from_anndata(
     use_relative_uri: Optional[bool] = None,
     X_kind: Union[Type[SparseNDArray], Type[DenseNDArray]] = SparseNDArray,
 ) -> str:
-    """Top-level writer method for creating a TileDB group for an :class:`Experiment` object.
+    """Writes an anndata object to a :class:`Experiment`.
 
-    Returns a URI for the created experiment.
+    Measurement data is stored in a :class:`Measurement` in the experiment's
+    ``ms`` field, with the key provided by ``measurement_name``. Data elements
+    are available at the standard fields (``var``, ``X``, etc.). Unstructured
+    data from ``uns`` is partially supported (structured arrays and non-numeric
+    NDArrays are skipped), and is available at the measurement's ``uns`` key
+    (i.e., at ``your_experiment.ms[measurement_name]["uns"]``).
 
-    The "write" ingest_mode (which is the default) writes all data, creating new layers if the soma already exists.
+    Args:
+        experiment_uri: The experiment to create or update.
 
-    The "resume" ingest_mode skips data writes if data are within dimension ranges of the existing soma.
-    This is useful for continuing after a partial/interrupted previous upload.
+        input_path: A path to an input H5AD file.
 
-    The "schema_only" ingest_mode creates groups and array schema, without writing array data.
-    This is useful as a prep-step for parallel append-ingest of multiple H5ADs to a single soma.
+        measurement_name: The name of the measurement to store data in.
 
-    The ``X_kind`` parameter allows you to specify how dense X matrices from the H5AD are stored
-    within the SOMA experiment -- whether as dense or as sparse.
+        ingest_mode: The ingestion type to perform:
+            - ``write``: Writes all data, creating new layers
+              if the SOMA already exists.
+            - ``resume``: Adds data to an existing SOMA, skipping writing data
+              that was previously written. Useful for continuing after a partial
+              or interrupted ingestion operation.
+            - ``schema_only``: Creates groups and the array schema, without
+              writing any data to the array. Useful to prepare for appending
+              multiple H5AD files to a single SOMA.
+
+        X_kind: Which type of matrix is used to store dense X data from the
+            H5AD file: ``DenseNDArray`` or ``SparseNDArray``.
+
+    Returns:
+        The URI of the newly created experiment.
 
     Lifecycle:
         Experimental.
@@ -213,6 +248,16 @@ def from_anndata(
         ) as measurement:
             _maybe_set(
                 ms, measurement_name, measurement, use_relative_uri=use_relative_uri
+            )
+
+            # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+            # ms/meas/uns
+            _maybe_ingest_uns(
+                measurement,
+                anndata.uns,
+                platform_config,
+                ingest_mode,
+                use_relative_uri=use_relative_uri,
             )
 
             # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -1007,6 +1052,124 @@ def _chunk_is_contained_in_axis(
         return False
 
     return True
+
+
+def _maybe_ingest_uns(
+    m: Measurement,
+    uns: Mapping[str, object],
+    platform_config: Optional[PlatformConfig],
+    ingest_mode: IngestMode,
+    *,
+    use_relative_uri: Optional[bool],
+) -> None:
+    # Don't try to ingest an empty uns.
+    if not uns:
+        return
+    _ingest_uns_dict(
+        m, "uns", uns, platform_config, ingest_mode, use_relative_uri=use_relative_uri
+    )
+
+
+def _ingest_uns_dict(
+    parent: AnyTileDBCollection,
+    parent_key: str,
+    dct: Mapping[str, object],
+    platform_config: Optional[PlatformConfig],
+    ingest_mode: IngestMode,
+    *,
+    use_relative_uri: Optional[bool],
+) -> None:
+    with _create_or_open_coll(
+        Collection, _util.uri_joinpath(parent.uri, parent_key), ingest_mode
+    ) as coll:
+        _maybe_set(parent, parent_key, coll, use_relative_uri=use_relative_uri)
+        coll.metadata["soma_tiledbsoma_type"] = "uns"
+        for key, value in dct.items():
+            if isinstance(value, (np.str_, int, float, str)):
+                # Primitives get set on the metadata.
+                coll.metadata[key] = value
+                continue
+            if isinstance(value, Mapping):
+                # Mappings are represented as sub-dictionaries.
+                _ingest_uns_dict(
+                    coll,
+                    key,
+                    value,
+                    platform_config,
+                    ingest_mode,
+                    use_relative_uri=use_relative_uri,
+                )
+                continue
+            if isinstance(value, pd.DataFrame):
+                with _write_dataframe(
+                    _util.uri_joinpath(coll.uri, key),
+                    value,
+                    None,
+                    platform_config,
+                    ingest_mode,
+                ) as df:
+                    _maybe_set(coll, key, df, use_relative_uri=use_relative_uri)
+                continue
+            if isinstance(value, list) or "numpy" in str(type(value)):
+                value = np.asarray(value)
+            if isinstance(value, np.ndarray):
+                if value.dtype.names is not None:
+                    msg = (
+                        f"Skipped {coll.uri}[{key!r}]"
+                        " (uns): unsupported structured array"
+                    )
+                    # This is a structured array, which we do not support.
+                    logging.log_io(msg, msg)
+                    continue
+
+                _ingest_uns_ndarray(
+                    coll,
+                    key,
+                    value,
+                    platform_config,
+                    use_relative_uri=use_relative_uri,
+                )
+            else:
+                msg = (
+                    f"Skipped {coll.uri}[{key!r}]"
+                    f" (uns object): unrecognized type {type(value)}"
+                )
+                logging.log_io(msg, msg)
+    msg = f"Wrote   {coll.uri} (uns collection)"
+    logging.log_io(msg, msg)
+
+
+def _ingest_uns_ndarray(
+    coll: AnyTileDBCollection,
+    key: str,
+    value: NPNDArray,
+    platform_config: Optional[PlatformConfig],
+    *,
+    use_relative_uri: Optional[bool],
+) -> None:
+    arr_uri = _util.uri_joinpath(coll.uri, key)
+    try:
+        pa_dtype = pa.from_numpy_dtype(value.dtype)
+    except pa.ArrowNotImplementedError:
+        msg = (
+            f"Skipped {arr_uri} (uns ndarray):"
+            f" unsupported dtype {value.dtype!r} ({value.dtype})"
+        )
+        logging.log_io(msg, msg)
+        return
+    try:
+        soma_arr = _factory.open(arr_uri, "w", soma_type=DenseNDArray)
+    except DoesNotExistError:
+        soma_arr = DenseNDArray.create(
+            arr_uri,
+            type=pa_dtype,
+            shape=value.shape,
+            platform_config=platform_config,
+        )
+    with soma_arr:
+        _maybe_set(coll, key, soma_arr, use_relative_uri=use_relative_uri)
+        soma_arr.write((), pa.Tensor.from_numpy(value), platform_config=platform_config)
+    msg = f"Wrote   {soma_arr.uri} (uns ndarray)"
 
 
 # ----------------------------------------------------------------
