@@ -99,12 +99,31 @@ write_soma.data.frame <- function(
       x[[col]] <- as.character(x[[col]])
     }
     remove[i] <- !inherits(
-      x = x[[col]],
-      what = setdiff(x = .SCALAR_TYPES(), y = 'any')
+      x = try(expr = arrow::infer_type(x[[col]]), silent = TRUE),
+      what = 'DataType'
     )
+    # remove[i] <- !inherits(
+    #   x = x[[col]],
+    #   what = setdiff(x = .SCALAR_TYPES(), y = 'any')
+    # )
   }
-  if (any(remove)) {
-    warning("remove")
+  if (all(remove)) {
+    stop(
+      "None of the columns in the data frame can be written out",
+      call. = FALSE
+    )
+  } else if (any(remove)) {
+    warning(
+      paste(
+        strwrap(paste(
+          "Removing the following columns due to incompatible data type:",
+          paste(sQuote(names(x)[remove]), collapse = ', ')
+        )),
+        collapse = '\n'
+      ),
+      call. = FALSE,
+      immediate. = TRUE
+    )
     x <- x[, !remove, drop = FALSE]
   }
   # Check `index`
@@ -123,7 +142,11 @@ write_soma.data.frame <- function(
   }
   # Add `soma_joinid` to `x`
   if ('soma_joinid' %in% names(x)) {
-    warning('soma_joinid')
+    warning(
+      "Found column 'soma_joinid' in the data frame, overwriting with new 'soma_joinid'",
+      call. = FALSE,
+      immediate. = TRUE
+    )
   }
   x$soma_joinid <- bit64::seq.integer64(from = 0L, to = nrow(x) - 1L)
   # Create the SOMADataFrame
