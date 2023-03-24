@@ -31,7 +31,7 @@
 
 \method{write_soma}{Graph}(
   x,
-  uri = NULL,
+  uri,
   soma,
   ...,
   platform_config = NULL,

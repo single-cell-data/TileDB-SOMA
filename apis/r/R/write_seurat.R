@@ -299,7 +299,7 @@ write_soma.DimReduc <- function(
 #'
 write_soma.Graph <- function(
   x,
-  uri = NULL,
+  uri,
   soma,
   ...,
   platform_config = NULL,
@@ -308,8 +308,6 @@ write_soma.Graph <- function(
 ) {
   .check_seurat_installed()
   stopifnot(
-    "'uri' must be a single character value" = is.null(uri) ||
-      is_scalar_character(uri),
     "'soma' must be a SOMAMeasurement" = inherits(soma, what = 'SOMAMeasurement'),
     "'absolute' must be a single logical value" = is_scalar_logical(absolute)
   )
