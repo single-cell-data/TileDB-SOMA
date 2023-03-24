@@ -18,7 +18,7 @@ class TestDenseNDArrayWriteRReadPython(TestReadPythonWriteR):
         library("arrow")
 
         sndarray <- SOMADenseNDArrayCreate("{self.uri}", int32(), c(3, 2))
-        mat <- matrix(c(1,2,3,4,5,6), nrow=3, ncol=2)
+        mat <- matrix(c(1,2,3,4,5,6), nrow=3, ncol=2, byrow=TRUE)
         sndarray$write(mat)
         """
         self.execute_R_script(base_script)
@@ -45,6 +45,6 @@ class TestDenseNDArrayWriteRReadPython(TestReadPythonWriteR):
         """
         with soma.open(self.uri) as sdf:
             arr = sdf.read().to_numpy()
-            np.array_equal(arr[0], np.asarray([1, 2]))
-            np.array_equal(arr[1], np.asarray([3, 4]))
-            np.array_equal(arr[2], np.asarray([5, 6]))
+            assert np.array_equal(arr[0], np.asarray([1, 2]))
+            assert np.array_equal(arr[1], np.asarray([3, 4]))
+            assert np.array_equal(arr[2], np.asarray([5, 6]))

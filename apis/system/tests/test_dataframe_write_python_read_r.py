@@ -52,4 +52,3 @@ class TestDataframeWritePythonReadR(TestWritePythonReadR):
             col = dataframe[key].tolist()
             R_list = embed_python_list_into_R_code(col)
             self.r_assert(f"""stopifnot(all.equal(as.list(df)$"{key}", c({R_list})))""")
-            break
