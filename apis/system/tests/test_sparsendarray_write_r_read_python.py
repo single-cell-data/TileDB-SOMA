@@ -50,8 +50,8 @@ class TestSparseNDArrayWriteRReadPython(TestReadPythonWriteR):
         """
         with soma.open(self.uri) as sdf:
             arr = sdf.read().coos().concat().to_scipy().todense()
-            np.array_equal(arr[0], np.matrix([0, 1, 0, 0, 0]))
-            np.array_equal(arr[1], np.matrix([0, 0, 2, 0, 0]))
-            np.array_equal(arr[2], np.matrix([0, 0, 0, 0, 0]))
-            np.array_equal(arr[3], np.matrix([0, 0, 0, 0, 0]))
-            np.array_equal(arr[4], np.matrix([0, 0, 0, 0, 0]))
+            assert np.array_equal(arr[0], np.matrix([0, 1, 0, 0, 0]))
+            assert np.array_equal(arr[1], np.matrix([0, 0, 2, 0, 0]))
+            assert np.array_equal(arr[2], np.matrix([0, 0, 0, 0, 0]))
+            assert np.array_equal(arr[3], np.matrix([0, 0, 0, 0, 0]))
+            assert np.array_equal(arr[4], np.matrix([0, 0, 0, 0, 0]))
