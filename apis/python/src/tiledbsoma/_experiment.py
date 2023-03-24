@@ -22,7 +22,7 @@ class Experiment(
         AnyTileDBObject,
     ],
 ):
-    """An ``Experiment`` represents a single-cell experiment. It is
+    """An :class:`Experiment` represents a single-cell experiment. It is
     a container class that has observations and measurements.
 
     Attributes:

@@ -62,31 +62,31 @@ The principal persistent types provided by SOMA are:
   Arrow primitive data types, i.e., int, float, etc.
 - :class:`DenseNDArray` -- a dnese multi-dimensional array, storing
   Arrow primitive data types, i.e., int, float, etc.
-- ``Experiment`` -- a specialized :class:`Collection`, representing an
+- :class:`Experiment` -- a specialized :class:`Collection`, representing an
   annotated 2-D matrix of measurements.
 - :class:`Measurement` -- a specialized :class:`Collection`, for use within
-  the ``Experiment`` class, representing a set of measurements on
+  the :class:`Experiment` class, representing a set of measurements on
   a single set of variables (features, e.g., genes)
 
-SOMA ``Experiment`` and :class:`Measurement` are inspired by use cases from
+SOMA :class:`Experiment` and :class:`Measurement` are inspired by use cases from
 single-cell biology.
 
 SOMA uses the `Arrow <https://arrow.apache.org/docs/python/index.html>`_ type
 system and memory model for its in-memory type system and schema. For
-example, the schema of a ``tiledbsoma.DataFrame`` is expressed as an
+example, the schema of a :class:`DataFrame` is expressed as an
 `Arrow Schema <https://arrow.apache.org/docs/python/generated/pyarrow.Schema.html>`_.
 
 Error handling:
 ---------------
 Most errors will be signaled with a raised Exception. Of note:
 
-- ``NotImplementedError`` will be raised when the requested function or method
+- :class:`NotImplementedError` will be raised when the requested function or method
   is unsupported.
-- ``SOMAError`` is a base class for all SOMA-specific errors.
+- :class:`SOMAError` is a base class for all SOMA-specific errors.
 - ``TileDBError`` will be raised for many TileDB-specific errors.
 
-Most errors will raise an appropriate Python error, e.g., ``TypeError`` or
-``ValueError``.
+Most errors will raise an appropriate Python error, e.g., ::class:`TypeError` or
+:class:`ValueError`.
 
 Classes and functions:
 ----------------------

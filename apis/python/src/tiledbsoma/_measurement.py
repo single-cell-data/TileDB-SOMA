@@ -26,7 +26,7 @@ class Measurement(
         AnyTileDBObject,
     ],
 ):
-    """A :class:`Measurement` is a sub-element of a ``Experiment``, and is otherwise
+    """A :class:`Measurement` is a sub-element of a :class:`Experiment`, and is otherwise
     a specialized :class:`Collection` with pre-defined fields.
 
     Attributes:

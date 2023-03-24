@@ -37,8 +37,8 @@ def _maybe_timestamp_ms(input: Optional[OpenTimestamp]) -> Optional[int]:
 
 @attrs.define(frozen=True, kw_only=True)
 class SOMATileDBContext:
-    """Maintains TileDB-specific context for TileDbObjects.
-    This context can be shared across multiple SOMA objects,
+    """Maintains TileDB-specific context for TileDB-SOMA objects.
+    This context can be shared across multiple objects,
     including having a child object inherit it from its parent.
 
     Lifecycle:

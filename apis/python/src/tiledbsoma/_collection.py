@@ -65,7 +65,7 @@ class CollectionBase(
 ):
     """Contains a key-value mapping where the keys are string names and the values
     are any SOMA-defined foundational or composed type, including :class:`Collection`,
-    :class:`DataFrame`, :class:`DenseNDArray`, :class:`SparseNDArray` or ``Experiment``.
+    :class:`DataFrame`, :class:`DenseNDArray`, :class:`SparseNDArray` or :class:`Experiment`.
     """
 
     __slots__ = ("_contents", "_mutated_keys")
@@ -122,7 +122,7 @@ class CollectionBase(
     """A map limiting what types may be set to certain keys.
 
     Map keys are the key of the collection to constrain; values are the SOMA
-    type names of the types that may be set to the key.  See ``Experiment`` and
+    type names of the types that may be set to the key.  See :class:`Experiment` and
     :class:`Measurement` for details.
     """
 
@@ -626,7 +626,7 @@ class Collection(
     """:class:`Collection` is a persistent container of named SOMA objects, stored as
     a mapping of string keys and SOMA object values. Values may be any
     persistent ``tiledbsoma`` object, including :class:`DataFrame`,
-    :class:`SparseNDArray`, :class:`DenseNDArray`, ``Experiment``, :class:`Measurement`,
+    :class:`SparseNDArray`, :class:`DenseNDArray`, :class:`Experiment`, :class:`Measurement`,
     or another :class:`Collection`. A :class:`Collection` refers to elements by a
     per-element URI. A :class:`Collection` may store its reference to an
     element by absolute URI or relative URI.
