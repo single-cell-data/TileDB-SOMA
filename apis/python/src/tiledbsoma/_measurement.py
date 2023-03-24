@@ -26,8 +26,8 @@ class Measurement(
         AnyTileDBObject,
     ],
 ):
-    """A ``Measurement`` is a sub-element of a ``Experiment``, and is otherwise
-    a specialized ``Collection`` with pre-defined fields.
+    """A :class:`Measurement` is a sub-element of a :class:`Experiment`, and is otherwise
+    a specialized :class:`Collection` with pre-defined fields.
 
     Attributes:
         var (DataFrame):

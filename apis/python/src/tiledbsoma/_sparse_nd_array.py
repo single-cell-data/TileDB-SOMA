@@ -32,9 +32,9 @@ _UNBATCHED = options.BatchSize()
 
 
 class SparseNDArray(NDArray, somacore.SparseNDArray):
-    """``SparseNDArray`` is a sparse, N-dimensional array, with offset
+    """:class:`SparseNDArray` is a sparse, N-dimensional array, with offset
     (zero-based) integer indexing on each dimension.
-    ``SparseNDArray`` has a user-defined schema, which includes:
+    :class:`SparseNDArray` has a user-defined schema, which includes:
 
     * The element type, expressed as an
       `Arrow type <https://arrow.apache.org/docs/python/api/datatypes.html>`_,

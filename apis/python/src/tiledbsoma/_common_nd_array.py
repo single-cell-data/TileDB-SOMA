@@ -52,8 +52,8 @@ class NDArray(TileDBArray, somacore.NDArray):
                 None)``, as the sequence length determines the number of dimensions
                 N in the N-dimensional array.
 
-                For ``SOMASparseNDArray`` only, if a slot is None, then the maximum
-                possible int64 will be used.  This makes a ``SOMASparseNDArray``
+                For :class:`SparseNDArray` only, if a slot is None, then the maximum
+                possible int64 will be used.  This makes a :class:`SparseNDArray`
                 growable.
             platform_config:
                 Platform-specific options used to create this Array,

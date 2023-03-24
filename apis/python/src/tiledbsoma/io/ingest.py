@@ -141,7 +141,7 @@ def from_anndata(
     use_relative_uri: Optional[bool] = None,
     X_kind: Union[Type[SparseNDArray], Type[DenseNDArray]] = SparseNDArray,
 ) -> str:
-    """Top-level writer method for creating a TileDB group for a ``Experiment`` object.
+    """Top-level writer method for creating a TileDB group for an :class:`Experiment` object.
 
     Returns a URI for the created experiment.
 
@@ -1016,7 +1016,8 @@ def to_h5ad(
     measurement_name: str,
     X_layer_name: str = "data",
 ) -> None:
-    """Converts the experiment group to anndata format and writes it to the specified ``.h5ad`` file.
+    """Converts the experiment group to `AnnData <https://anndata.readthedocs.io/>`_
+    format and writes it to the specified ``.h5ad`` file.
 
     Lifecycle:
         Experimental.
@@ -1049,8 +1050,9 @@ def to_anndata(
     var_id_name: str = "var_id",
     X_layer_name: str = "data",
 ) -> ad.AnnData:
-    """Converts the experiment group to `AnnData <https://anndata.readthedocs.io/>`_.
-    Choice of matrix formats is following what we often see in input ``.h5ad`` files:
+    """Converts the experiment group to `AnnData <https://anndata.readthedocs.io/>`_
+    format. Choice of matrix formats is following what we often see in input
+    ``.h5ad`` files:
 
     * X as ``scipy.sparse.csr_matrix``
     * obs,var as ``pandas.dataframe``

@@ -22,8 +22,8 @@ from .options._tiledb_create_options import TileDBCreateOptions
 
 
 class DenseNDArray(NDArray, somacore.DenseNDArray):
-    """``DenseNDArray`` is a dense, N-dimensional array, with offset (zero-based)
-    integer indexing on each dimension. ``DenseNDArray`` has a user-defined
+    """:class:`DenseNDArray` is a dense, N-dimensional array, with offset (zero-based)
+    integer indexing on each dimension. :class:`DenseNDArray` has a user-defined
     schema, which includes:
 
     * The element type, expressed as an Arrow type, indicating the type of data
@@ -93,7 +93,7 @@ class DenseNDArray(NDArray, somacore.DenseNDArray):
                 Order of read results.
                 This can be one of 'row-major', 'col-major', or 'auto'.
             partitions:
-                An optional ``ReadPartitions`` hint to indicate
+                An optional :class:`ReadPartitions` hint to indicate
                 how results should be organized.
 
         Raises:
@@ -184,7 +184,7 @@ class DenseNDArray(NDArray, somacore.DenseNDArray):
     ) -> Tuple[int, int]:
         """Given a user-specified shape along a particular dimension, returns a tuple of
         the TileDB capacity and extent for that dimension, suitable for schema creation.
-        The user-specified shape cannot be ``None`` for ``DenseNDArray``.
+        The user-specified shape cannot be ``None`` for :class:`DenseNDArray`.
         """
         if dim_shape is None or dim_shape <= 0:
             raise ValueError(

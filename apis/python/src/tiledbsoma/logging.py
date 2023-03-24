@@ -10,8 +10,8 @@ logger = logging.getLogger("tiledbsoma")
 
 
 def warning() -> None:
-    """Sets ``tiledbsoma.logging`` to a WARNING level.
-    Use ``tiledbsoma.logging.info()`` in notebooks to suppress
+    """Sets :mod:`tiledbsoma.logging` to a WARNING level.
+    Use :func:`tiledbsoma.logging.info` in notebooks to suppress
     progress indicators for data ingestion.
 
     Lifecycle:
@@ -21,8 +21,8 @@ def warning() -> None:
 
 
 def info() -> None:
-    """Sets ``tiledbsoma.logging`` to an INFO level.
-    Use ``tiledbsoma.logging.info()`` in notebooks to see
+    """Sets :mod:`tiledbsoma.logging` to an INFO level.
+    Use :func:`tiledbsoma.logging.info` in notebooks to see
     progress indicators for data ingestion.
 
     Lifecycle:
@@ -32,8 +32,8 @@ def info() -> None:
 
 
 def debug() -> None:
-    """Sets ``tiledbsoma.logging`` to an DEBUG level.
-    Use ``tiledbsoma.logging.debug()`` in notebooks to see
+    """Sets :mod:`tiledbsoma.logging` to a DEBUG level.
+    Use :func:`tiledbsoma.logging.debug` in notebooks to see
     more detailed progress indicators for data ingestion.
 
     Lifecycle:
@@ -44,8 +44,8 @@ def debug() -> None:
 
 def _set_level(level: int) -> None:
     logger.setLevel(level)
-    # Without this check, if someone does ``tiledbsoma.logging.info()`` twice, or
-    # ``tiledbsoma.logging.info()`` then ``tiledbsoma.logging.debug()``, etc., then log messages will appear
+    # Without this check, if someone does tiledbsoma.logging.info twice, or
+    # tiledbsoma.logging.info then tiledbsoma.logging.debug, etc., then log messages will appear
     # twice.
     if not logger.hasHandlers():
         logger.addHandler(logging.StreamHandler())

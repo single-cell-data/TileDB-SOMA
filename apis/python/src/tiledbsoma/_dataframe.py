@@ -29,16 +29,16 @@ _UNBATCHED = options.BatchSize()
 
 
 class DataFrame(TileDBArray, somacore.DataFrame):
-    """``DataFrame`` is a multi-column table with a user-defined schema. The
+    """:class:`DataFrame` is a multi-column table with a user-defined schema. The
     schema is expressed as an
     `Arrow Schema <https://arrow.apache.org/docs/python/generated/pyarrow.Schema.html>`_,
     and defines the column names and value types.
 
-    Every ``DataFrame`` must contain a column called ``soma_joinid``, of type
+    Every :class:`DataFrame` must contain a column called ``soma_joinid``, of type
     ``int64``, with negative values explicitly disallowed. The ``soma_joinid``
     column contains a unique value for each row in the dataframe, and in some
-    cases (e.g., as part of an ``Experiment``), acts as a join key for other
-    objects, such as ``SparseNDArray``.
+    cases (e.g., as part of an :class:`Experiment`), acts as a join key for other
+    objects, such as :class:`SparseNDArray`.
 
     Lifecycle:
         Experimental.
@@ -157,7 +157,7 @@ class DataFrame(TileDBArray, somacore.DataFrame):
                 specified.  If omitted entirely, or if ``None`` in a given dimension,
                 the corresponding index-column domain will use the minimum and maximum
                 possible values for the column's datatype.  This makes a
-                ``SOMADataFrame`` growable.
+                :class:`DataFrame` growable.
             platform_config:
                 Platform-specific options used to create this
                 DataFrame, provided via ``{"tiledb": {"create": ...}}`` nested keys.
@@ -290,11 +290,11 @@ class DataFrame(TileDBArray, somacore.DataFrame):
                 An optional [value filter] to apply to the results.
                 Defaults to no filter.
             partitions:
-                An optional ``ReadPartitions`` hint to indicate
+                An optional :class:`ReadPartitions` hint to indicate
                 how results should be organized.
 
         Returns:
-            A ``TableReadIter`` that can be used to iterate through the result set.
+            A :class:`TableReadIter` that can be used to iterate through the result set.
 
         Raises:
             SOMAError:
@@ -361,7 +361,7 @@ class DataFrame(TileDBArray, somacore.DataFrame):
             values:
                 An Arrow table containing all columns, including
                 the index columns. The schema for the values must match
-                the schema for the ``DataFrame``.
+                the schema for the :class:`DataFrame`.
 
         Raises:
             TypeError:

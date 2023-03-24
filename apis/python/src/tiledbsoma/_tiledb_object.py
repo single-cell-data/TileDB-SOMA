@@ -227,7 +227,7 @@ class TileDBObject(somacore.SOMAObject, Generic[_WrapperType_co]):
             uri:
                 The URI to open.
             context:
-                If provided, the ``SOMATileDBContext`` to use when creating and
+                If provided, the :class:`SOMATileDBContext` to use when creating and
                 attempting to access this object.
             tiledb_timestamp:
                 The TileDB timestamp to open this object at,
