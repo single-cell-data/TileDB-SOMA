@@ -1049,15 +1049,13 @@ def _ingest_uns_dict(
         Collection, _util.uri_joinpath(parent.uri, parent_key), ingest_mode
     ) as coll:
         _maybe_set(parent, parent_key, coll, use_relative_uri=use_relative_uri)
-        coll.metadata["soma_tiledbsoma:type"] = "uns"
+        coll.metadata["soma_tiledbsoma_type"] = "uns"
         for key, value in dct.items():
-            if key == "rank_genes_groups":
-                # This is a structured array, which we do not support.
-                logging.log_io(None, f"skipping uns structured array {key!r}")
-            elif isinstance(value, (np.str_, int, float, str)):
+            if isinstance(value, (np.str_, int, float, str)):
                 # Primitives get set on the metadata.
                 coll.metadata[key] = value
-            elif isinstance(value, Mapping):
+                continue
+            if isinstance(value, Mapping):
                 # Mappings are represented as sub-dictionaries.
                 _ingest_uns_dict(
                     coll,
@@ -1067,7 +1065,8 @@ def _ingest_uns_dict(
                     ingest_mode,
                     use_relative_uri=use_relative_uri,
                 )
-            elif isinstance(value, pd.DataFrame):
+                continue
+            if isinstance(value, pd.DataFrame):
                 with _write_dataframe(
                     _util.uri_joinpath(coll.uri, key),
                     value,
@@ -1076,23 +1075,32 @@ def _ingest_uns_dict(
                     ingest_mode,
                 ) as df:
                     _maybe_set(coll, key, df, use_relative_uri=use_relative_uri)
-            else:
-                if isinstance(value, list) or "numpy" in str(type(value)):
-                    value = np.asarray(value)
+                continue
+            if isinstance(value, list) or "numpy" in str(type(value)):
+                value = np.asarray(value)
+            if isinstance(value, np.ndarray):
+                if value.dtype.names is not None:
+                    msg = (
+                        f"Skipped {coll.uri}[{key!r}]"
+                        " (uns): unsupported structured array"
+                    )
+                    # This is a structured array, which we do not support.
+                    logging.log_io(msg, msg)
+                    continue
 
-                if isinstance(value, np.ndarray):
-                    _ingest_uns_ndarray(
-                        coll,
-                        key,
-                        value,
-                        platform_config,
-                        use_relative_uri=use_relative_uri,
-                    )
-                else:
-                    logging.log_io(
-                        None,
-                        f"skipping unrecognized uns element {key!r} type {type(value)}",
-                    )
+                _ingest_uns_ndarray(
+                    coll,
+                    key,
+                    value,
+                    platform_config,
+                    use_relative_uri=use_relative_uri,
+                )
+            else:
+                msg = (
+                    f"Skipped {coll.uri}[{key!r}]"
+                    f" (uns object): unrecognized type {type(value)}"
+                )
+                logging.log_io(msg, msg)
     msg = f"Wrote   {coll.uri} (uns collection)"
     logging.log_io(msg, msg)
 
@@ -1110,7 +1118,7 @@ def _ingest_uns_ndarray(
         pa_dtype = pa.from_numpy_dtype(value.dtype)
     except pa.ArrowNotImplementedError:
         msg = (
-            f"Error   {arr_uri} (uns ndarray):"
+            f"Skipped {arr_uri} (uns ndarray):"
             f" unsupported dtype {value.dtype!r} ({value.dtype})"
         )
         logging.log_io(msg, msg)

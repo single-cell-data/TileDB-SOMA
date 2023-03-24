@@ -307,8 +307,21 @@ def test_ingest_uns(tmp_path: pathlib.Path, h5ad_file_extended):
     with tiledbsoma.Experiment.open(uri) as exp:
         uns = exp.ms["hello"]["uns"]
         assert isinstance(uns, tiledbsoma.Collection)
-        assert uns.metadata["soma_tiledbsoma:type"] == "uns"
-        assert set(uns) == {"draw_graph", "louvain", "neighbors", "pca"}
+        assert uns.metadata["soma_tiledbsoma_type"] == "uns"
+        assert set(uns) == {
+            "draw_graph",
+            "louvain",
+            "neighbors",
+            "pca",
+            "rank_genes_groups",
+        }
+        rgg = uns["rank_genes_groups"]
+        assert set(rgg) == {"params"}, "structured arrays not imported"
+        assert rgg["params"].metadata.items() >= {
+            ("groupby", "louvain"),
+            ("method", "t-test_overestim_var"),
+            ("reference", "rest"),
+        }
         dg_params = uns["draw_graph"]["params"]
         assert isinstance(dg_params, tiledbsoma.Collection)
         assert dg_params.metadata["layout"] == "fr"
