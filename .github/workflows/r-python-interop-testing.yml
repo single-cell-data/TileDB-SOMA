@@ -2,9 +2,12 @@ name: TileDB-SOMA R-Python interop testing
 
 on:
   pull_request:
-    types: [opened]
+    paths:
+      - "api/python/**"
+      - "api/r/**"
+      - "api/system/**"
   push:
-    branches: [main, ebezzi/r-python-roundtrip-testing]
+    branches: [main]
 
 jobs:
   ci:
