@@ -154,7 +154,7 @@ write_soma.data.frame <- function(
   sdf <- SOMADataFrameCreate(
     uri = uri,
     schema = tbl$schema,
-    index_column_names = index,
+    index_column_names = 'soma_joinid',
     platform_config = platform_config,
     tiledbsoma_ctx = tiledbsoma_ctx
   )
@@ -307,6 +307,7 @@ write_soma.TsparseMatrix <- function(
 #' @details The index column will be determined based on availability in
 #' \code{x}'s existing names. The potential names, in order of preference, are:
 #' \itemize{
+#'  \item \dQuote{\code{index}}
 #'  \item \dQuote{\code{_index}}
 #'  \item \code{alt}
 #'  \item \code{paste0(prefix, "_index")}
@@ -337,10 +338,11 @@ write_soma.TsparseMatrix <- function(
   while (!nzchar(index) || index %in% names(x)) {
     index <- switch(
       EXPR = i,
-      '1' = '_index',
-      '2' = alt,
-      '3' = paste0(prefix, '_index'),
-      '4' = paste(prefix, alt, sep = '_'),
+      '1' = 'index',
+      '2' = '_index',
+      '3' = alt,
+      '4' = paste0(prefix, '_index'),
+      '5' = paste(prefix, alt, sep = '_'),
       SeuratObject::RandomName(length = i, ...)
     )
     i <- i + 1L
