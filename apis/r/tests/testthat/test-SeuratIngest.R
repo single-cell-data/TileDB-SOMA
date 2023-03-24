@@ -166,3 +166,26 @@ test_that("Write Graph mechanics", {
   # Test assertions
   expect_error(write_soma(grph, collection = soma))
 })
+
+test_that("Write Seurat mechanics", {
+  skip_if_not_installed('SeuratObject', .MINIMUM_SEURAT_VERSION('c'))
+  withr::local_options(list(
+    tiledbsoma.io.user_dir = 'tempdir',
+    tiledbsoma.io.user_dir.tempdir = 'write-seurat'
+  ))
+  pbmc_small <- get_data('pbmc_small', package = 'SeuratObject')
+  expect_no_condition(experiment <- write_soma(pbmc_small))
+  expect_s3_class(experiment, 'SOMAExperiment')
+  expect_identical(basename(experiment$uri), SeuratObject::Project(pbmc_small))
+  expect_identical(experiment$ms$names(), 'RNA')
+  expect_s3_class(ms <- experiment$ms$get('RNA'), 'SOMAMeasurement')
+  expect_identical(ms$X$names(), c('counts', 'data', 'scale_data'))
+  expect_identical(ms$obsm$names(), c('X_pca', 'X_tsne'))
+  expect_identical(ms$varm$names(), 'PCs')
+  expect_identical(ms$obsp$names(), 'RNA_snn')
+  expect_error(ms$varp)
+  expect_identical(
+    setdiff(experiment$obs$attrnames(), 'index'),
+    names(pbmc_small[[]])
+  )
+})
