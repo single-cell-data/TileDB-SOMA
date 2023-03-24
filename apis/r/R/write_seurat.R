@@ -96,6 +96,7 @@ write_soma.Assay <- function(
       )
     }
     lyr <- gsub(pattern = '\\.', replacement = '_', x = slot)
+    spdl::info("Adding {} matrix as {}", slot, sQuote(lyr))
     tryCatch(
       expr = ms$X$set(
         object = write_soma(
@@ -120,6 +121,7 @@ write_soma.Assay <- function(
   # Write feature-level meta data
   meta_data <- .df_index(x = x[[]], alt = 'features', prefix = 'seurat')
   meta_data[[attr(x = meta_data, which = 'index')]] <- rownames(x)
+  spdl::info("Adding feature-level meta data")
   ms$var <- write_soma(
     x = meta_data,
     uri = 'var',
@@ -209,6 +211,7 @@ write_soma.DimReduc <- function(
     )
   }
   embed <- paste0('X_', key)
+  spdl::info("Adding embeddings as {}", sQuote(embed))
   soma$obsm$set(
     object = write_soma(
       x = SeuratObject::Embeddings(x),
@@ -270,6 +273,7 @@ write_soma.DimReduc <- function(
     mat <- matrix(data = NA_real_, nrow = nfeatures, ncol = ncol(loadings))
     mat[fidx, ] <- loadings
     # Write the feature loadings
+    spdl::info("Adding feature loadings as {}", sQuote(ldgs))
     soma$varm$set(
       object = write_soma(
         x = mat,
@@ -378,6 +382,7 @@ write_soma.Seurat <- function(
     tiledbsoma_ctx = tiledbsoma_ctx
   )
   # Write cell-level meta data
+  spdl::info("Adding cell-level meta data")
   meta_data <- .df_index(x = x[[]], alt = 'cells', prefix = 'seurat')
   meta_data[[attr(meta_data, 'index')]] <- colnames(x)
   experiment$obs <- write_soma(
@@ -397,6 +402,7 @@ write_soma.Seurat <- function(
     key = 'ms'
   )
   for (assay in SeuratObject::Assays(x)) {
+    spdl::info("Adding assay {}", sQuote(assay))
     tryCatch(
       expr = experiment$ms$set(
         object = write_soma(
@@ -464,6 +470,7 @@ write_soma.Seurat <- function(
     } else {
       fidx <- nfeatures <- NULL
     }
+    spdl::info("Adding dimensional reduction {}", sQuote(reduc))
     tryCatch(
       expr = write_soma(
         x = x[[reduc]],
@@ -497,6 +504,7 @@ write_soma.Seurat <- function(
       )
       next
     }
+    spdl::info("Adding graph {}", sQuote(graph))
     tryCatch(
       expr = write_soma(
         x = x[[graph]],
