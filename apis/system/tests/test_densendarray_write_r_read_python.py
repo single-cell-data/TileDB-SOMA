@@ -7,6 +7,10 @@ from .common import TestReadPythonWriteR
 
 
 class TestDenseNDArrayWriteRReadPython(TestReadPythonWriteR):
+    """
+    Tests that a SOMADenseNDArray can be written by R and read by Python.
+    """
+
     @pytest.fixture(scope="class")
     def R_ndarray(self):
         base_script = f"""
