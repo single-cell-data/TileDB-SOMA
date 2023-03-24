@@ -64,8 +64,8 @@ class CollectionBase(
     somacore.collection.BaseCollection[CollectionElementType],
 ):
     """Contains a key-value mapping where the keys are string names and the values
-    are any SOMA-defined foundational or composed type, including ``Collection``,
-    ``DataFrame``, ``DenseNDArray``, ``SparseNDArray`` or ``Experiment``.
+    are any SOMA-defined foundational or composed type, including :class:`Collection`,
+    :class:`DataFrame`, :class:`DenseNDArray`, :class:`SparseNDArray` or :class:`Experiment`.
     """
 
     __slots__ = ("_contents", "_mutated_keys")
@@ -93,7 +93,7 @@ class CollectionBase(
                 Optional call-specific options to use when
                 creating this collection. (Currently unused.)
             context:
-                If provided, the ``SOMATileDBContext`` to use when creating and
+                If provided, the :class:`SOMATileDBContext` to use when creating and
                 opening this collection.
             tiledb_timestamp:
                 If specified, overrides the default timestamp
@@ -122,8 +122,8 @@ class CollectionBase(
     """A map limiting what types may be set to certain keys.
 
     Map keys are the key of the collection to constrain; values are the SOMA
-    type names of the types that may be set to the key.  See ``Experiment`` and
-    ``Measurement`` for details.
+    type names of the types that may be set to the key.  See :class:`Experiment` and
+    :class:`Measurement` for details.
     """
 
     def __init__(
@@ -189,7 +189,7 @@ class CollectionBase(
                 Optionally, the specific type of sub-collection to create.
                 For instance, passing ``tiledbsoma.Experiment`` here will create a
                 ``SOMAExperiment`` as the sub-entry. By default, a basic
-                ``Collection`` will be created.
+                :class:`Collection` will be created.
             uri:
                 If provided, the sub-collection will be created at this URI.
                 This can be absolute, in which case the sub-collection will be
@@ -498,7 +498,7 @@ class CollectionBase(
         return iter(self._contents)
 
     def __repr__(self) -> str:
-        """Default display for ``Collection``."""
+        """Default display for :class:`Collection`."""
         lines = itertools.chain((self._my_repr(),), self._contents_lines(""))
         return "<" + "\n".join(lines) + ">"
 
@@ -623,12 +623,12 @@ AnyTileDBCollection = CollectionBase[Any]
 class Collection(
     CollectionBase[CollectionElementType], somacore.Collection[CollectionElementType]
 ):
-    """``Collection`` is a persistent container of named SOMA objects, stored as
+    """:class:`Collection` is a persistent container of named SOMA objects, stored as
     a mapping of string keys and SOMA object values. Values may be any
-    persistent ``tiledbsoma`` object, including ``DataFrame``,
-    ``SparseNDArray``, ``DenseNDArray``, ``Experiment``, ``Measurement``,
-    or another ``Collection``. A ``Collection`` refers to elements by a
-    per-element URI. A ``Collection`` may store its reference to an
+    persistent ``tiledbsoma`` object, including :class:`DataFrame`,
+    :class:`SparseNDArray`, :class:`DenseNDArray`, :class:`Experiment`, :class:`Measurement`,
+    or another :class:`Collection`. A :class:`Collection` refers to elements by a
+    per-element URI. A :class:`Collection` may store its reference to an
     element by absolute URI or relative URI.
 
     Lifecycle:

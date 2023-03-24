@@ -32,12 +32,13 @@ _UNBATCHED = options.BatchSize()
 
 
 class SparseNDArray(NDArray, somacore.SparseNDArray):
-    """``SparseNDArray`` is a sparse, N-dimensional array, with offset
+    """:class:`SparseNDArray` is a sparse, N-dimensional array, with offset
     (zero-based) integer indexing on each dimension.
-    ``SparseNDArray`` has a user-defined schema, which includes:
+    :class:`SparseNDArray` has a user-defined schema, which includes:
 
-    * The element type, expressed as an Arrow type, indicating the type of data
-      contained within the array.
+    * The element type, expressed as an
+      `Arrow type <https://arrow.apache.org/docs/python/api/datatypes.html>`_,
+      indicating the type of data contained within the array.
     * The shape of the array, i.e., the number of dimensions and the length of
       each dimension.
 
@@ -108,9 +109,9 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
 
         Args:
             coords:
-                A per-dimension tuple of scalar, slice, sequence of scalar
-                or Arrow IntegerArray defining the region to read.
-                (Arrow arrays currently unimplemented.)
+                A per-dimension tuple of scalar, slice, sequence of scalar or
+                `Arrow IntegerArray <https://arrow.apache.org/docs/python/generated/pyarrow.IntegerArray.html>`_
+                defining the region to read.  (Arrow arrays currently unimplemented.)
 
         Returns:
             A SparseNDArrayRead to access result iterators in various formats.
@@ -132,10 +133,10 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
               remaining dimensions.
             * Per-dimension, explicitly specified coordinates can be one of:
               None, a value, a list/ndarray/paarray/etc of values, a slice, etc.
-            * Slices are doubly inclusive: slice(2,4) means [2,3,4] not [2,3].
-              Slice steps can only be +1. Slices can be `slice(None)`, meaning
+            * Slices are doubly inclusive: ``slice(2,4)`` means [2,3,4] not [2,3].
+              Slice steps can only be +1. Slices can be ``slice(None)``, meaning
               select all in that dimension, but may not be half-specified:
-              `slice(2,None)` and `slice(None,4)` are both unsupported.
+              ``slice(2,None)`` and ``slice(None,4)`` are both unsupported.
             * Negative indexing is unsupported.
         """
         del batch_size, platform_config  # Currently unused.
@@ -162,12 +163,14 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
         """
         Writes an Arrow object to the SparseNDArray.
 
-        Arrow sparse tensor: the coordinates in the Arrow SparseTensor are interpreted
-        as the coordinates to write to. Supports the _experimental_ SparseCOOTensor,
-        SparseCSRMatrix and SparseCSCMatrix. There is currently no support for Arrow
-        SparseCSFTensor or dense Tensor.
+        `Arrow SparseTensor <https://arrow.apache.org/docs/cpp/api/tensor.html>`_:
+        the coordinates in the Arrow SparseTensor are interpreted as the
+        coordinates to write to. Supports the _experimental_ SparseCOOTensor,
+        SparseCSRMatrix and SparseCSCMatrix.  There is currently no support for
+        Arrow SparseCSFTensor or dense Tensor.
 
-        Arrow table: write a COO table, with columns named ``soma_dim_0``, ...,
+        `Arrow table <https://arrow.apache.org/docs/python/generated/pyarrow.Table.html>`_:
+        write a COO table, with columns named ``soma_dim_0``, ...,
         ``soma_dim_N`` and ``soma_data`` to the dense nD array.
 
         Raises:
@@ -296,7 +299,8 @@ class SparseNDArrayRead(somacore.SparseRead):
 
     def coos(self, shape: Optional[NTuple] = None) -> SparseCOOTensorReadIter:
         """
-        Returns an iterator of Arrow SparseCOOTensor.
+        Returns an iterator of
+        `Arrow SparseCOOTensor <https://arrow.apache.org/docs/cpp/api/tensor.html>`_.
 
         Args:
             shape:
@@ -311,7 +315,7 @@ class SparseNDArrayRead(somacore.SparseRead):
 
     def dense_tensors(self) -> somacore.ReadIter[pa.Tensor]:
         """
-        Returns an iterator of Arrow Tensor.
+        Returns an iterator of `Arrow Tensor <https://arrow.apache.org/docs/cpp/api/tensor.html>`_.
 
         Lifecycle:
             Experimental.
@@ -321,7 +325,8 @@ class SparseNDArrayRead(somacore.SparseRead):
 
     def tables(self) -> TableReadIter:
         """
-        Returns an iterator of Arrow Table.
+        Returns an iterator of
+        `Arrow Table <https://arrow.apache.org/docs/python/generated/pyarrow.Table.html>`_.
 
         Lifecycle:
             Experimental.

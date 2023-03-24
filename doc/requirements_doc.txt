@@ -7,3 +7,4 @@ setuptools_scm >= 1.5.4
 wheel >= 0.30
 cmake >= 3.21
 pybind11 >= 2.10.0
+nbsphinx

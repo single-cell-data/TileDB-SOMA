@@ -20,6 +20,7 @@ import pathlib
 import shutil
 import subprocess
 import sys
+from typing import Optional
 
 import setuptools
 import setuptools.command.build_ext
@@ -39,12 +40,13 @@ sys.path.insert(0, str(this_dir))
 
 import version  # noqa E402
 
-libtiledbsoma_dir = None
+libtiledbsoma_dir: Optional[pathlib.Path] = None
 
 args = sys.argv[:]
 for arg in args:
-    if arg.find("--libtiledbsoma") == 0:
-        libtiledbsoma_dir = arg.split("=")[1]
+    start, eq, last = arg.partition("=")
+    if (start, eq) == ("--libtiledbsoma", "="):
+        libtiledbsoma_dir = pathlib.Path(last)
         sys.argv.remove(arg)
 
 if libtiledbsoma_dir is None:

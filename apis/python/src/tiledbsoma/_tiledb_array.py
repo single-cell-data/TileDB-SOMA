@@ -57,7 +57,8 @@ class TileDBArray(TileDBObject[_tdb_handles.ArrayWrapper]):
 
     @property
     def schema(self) -> pa.Schema:
-        """Returns data schema, in the form of an Arrow Schema.
+        """Returns data schema, in the form of an
+        `Arrow Schema <https://arrow.apache.org/docs/python/generated/pyarrow.Schema.html>`_.
 
         Lifecycle:
             Experimental.
