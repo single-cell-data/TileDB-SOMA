@@ -234,20 +234,55 @@ if(TILEDBSOMA_BUILD_CLI)
     ${TILEDB_SOMA_EXPORT_HEADER_DIR}
     ${pybind11_INCLUDE_DIRS}
   )
-
-  set_target_properties(tiledbsoma-cli PROPERTIES INSTALL_RPATH ${CMAKE_INSTALL_PREFIX}/lib)
 endif()
 
 # ###########################################################
 # Installation
 # ###########################################################
+# Get library directory for multiarch linux distros
 include(GNUInstallDirs)
+
+# Include module with function 'configure_package_config_file'
+include(CMakePackageConfigHelpers)
 
 # Set directory where TileDBConfig.cmake will be installed
 set(CONFIG_INSTALL_DIR "${CMAKE_INSTALL_LIBDIR}/cmake/tiledbsoma")
 
 # Set name for export target file (will be installed to CONFIG_INSTALL_DIR)
 set(TARGETS_EXPORT_NAME "TileDBSomaTargets")
+
+# Path to generated cmake file
+set(PROJECT_CONFIG "${CMAKE_CURRENT_BINARY_DIR}/TileDBSomaConfig.cmake")
+
+# Generate 'TileDBConfig.cmake'
+# This process requires these variables to be defined at this point:
+#   * TARGETS_EXPORT_NAME
+#   * PROJECT_NAME
+#   * TILEDB_STATIC_DEP_STRING
+configure_package_config_file(
+  "${TILEDBSOMA_CMAKE_INPUTS_DIR}/Config.cmake.in"
+  "${PROJECT_CONFIG}"
+  INSTALL_DESTINATION "${CONFIG_INSTALL_DIR}"
+)
+
+# Install config file to <prefix>/lib/cmake/tiledbsoma/TileDBSomaConfig.cmake
+install(
+  FILES "${PROJECT_CONFIG}"
+  DESTINATION "${CONFIG_INSTALL_DIR}"
+)
+
+
+# Set rpath so the TileDB-SOMA dynamic dependencies can be located.
+if (NOT WIN32 AND NOT TILEDBSOMA_BUILD_STATIC)
+  set_target_properties(tiledbsoma
+    PROPERTIES
+      INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}"
+  )
+endif()
+
+if(TILEDBSOMA_BUILD_CLI)
+  set_target_properties(tiledbsoma-cli PROPERTIES INSTALL_RPATH ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR})
+endif()
 
 install(
   TARGETS ${TILEDBSOMA_INSTALL_TARGETS}
@@ -258,3 +293,19 @@ install(
   INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
   PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/tiledbsoma
 )
+
+# Install targets file to <prefix>/lib/cmake/tiledbsoma/TileDBSOMATargets.cmake
+install(
+  EXPORT "${TARGETS_EXPORT_NAME}"
+  NAMESPACE "${PROJECT_NAME}::"
+  DESTINATION "${CONFIG_INSTALL_DIR}"
+)
+
+# PKG Config file
+configure_file(
+  "${TILEDBSOMA_CMAKE_INPUTS_DIR}/tiledbsoma.pc.in"
+  ${CMAKE_CURRENT_BINARY_DIR}/tiledbsoma.pc
+  @ONLY
+)
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/tiledbsoma.pc
+  DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig)

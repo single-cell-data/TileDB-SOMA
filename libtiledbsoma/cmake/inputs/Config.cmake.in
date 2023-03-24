@@ -1,0 +1,27 @@
+#
+# This file attempts to locate the TileDBSoma library. If found, the following
+# imported targets are created:
+#   - TileDBSOMA::tiledbsoma
+#   - TileDBSOMA::tiledbsoma_static
+# And the following variables are defined:
+#   - TILEDBSOMA_FOUND
+#   - TileDBSOMA_FOUND
+#
+
+@PACKAGE_INIT@
+
+include("${CMAKE_CURRENT_LIST_DIR}/@TARGETS_EXPORT_NAME@.cmake")
+check_required_components("@PROJECT_NAME@")
+
+# Targets required for linking against tiledbsoma_static:
+@TILEDBSOMA_STATIC_DEP_STRING@
+# -- End required targets for static
+
+# Define a convenience all-caps variable
+if (NOT DEFINED TILEDBSOMA_FOUND)
+  if (TARGET TileDBSOMA::tiledbsoma)
+    set(TILEDBSOMA_FOUND TRUE)
+  else()
+    set(TILEDBSOMA_FOUND FALSE)
+  endif()
+endif()
