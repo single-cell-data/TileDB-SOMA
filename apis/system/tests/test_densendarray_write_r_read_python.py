@@ -13,7 +13,7 @@ class TestDenseNDArrayWriteRReadPython(TestReadPythonWriteR):
         library("tiledbsoma")
         library("arrow")
 
-        sndarray <- SOMADenseNDArrayCreate("{self.uri}", int32(), c(2,3))
+        sndarray <- SOMADenseNDArrayCreate("{self.uri}", int32(), c(3, 2))
         mat <- matrix(c(1,2,3,4,5,6), nrow=3, ncol=2)
         sndarray$write(mat)
         """
@@ -25,7 +25,7 @@ class TestDenseNDArrayWriteRReadPython(TestReadPythonWriteR):
         """
         with soma.open(self.uri) as sdf:
             ndarr = sdf.read()
-            assert ndarr.shape == (2, 3)
+            assert ndarr.shape == (3, 2)
 
     def test_ndarray_type_matches(self, R_ndarray):
         """
@@ -41,5 +41,6 @@ class TestDenseNDArrayWriteRReadPython(TestReadPythonWriteR):
         """
         with soma.open(self.uri) as sdf:
             arr = sdf.read().concat().to_numpy()
-            np.array_equal(arr[0], np.asarray([1, 2, 3]))
-            np.array_equal(arr[1], np.asarray([4, 5, 6]))
+            np.array_equal(arr[0], np.asarray([1, 2]))
+            np.array_equal(arr[1], np.asarray([3, 4]))
+            np.array_equal(arr[2], np.asarray([5, 6]))
