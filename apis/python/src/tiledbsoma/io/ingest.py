@@ -141,7 +141,7 @@ def from_anndata(
     use_relative_uri: Optional[bool] = None,
     X_kind: Union[Type[SparseNDArray], Type[DenseNDArray]] = SparseNDArray,
 ) -> str:
-    """Top-level writer method for creating a TileDB group for a ``Experiment`` object.
+    """Top-level writer method for creating a TileDB group for an :class:`Experiment` object.
 
     Returns a URI for the created experiment.
 

@@ -82,7 +82,7 @@ def open(
             If the stored SOMA object is not of the correct type, an error will be
             raised.
         context:
-            If set, the ``SOMATileDBContext`` data to use.
+            If set, the :class:`SOMATileDBContext` data to use.
         tiledb_timestamp:
             If specified, overrides the default timestamp
             used to open this object. If unset, uses the timestamp provided by
