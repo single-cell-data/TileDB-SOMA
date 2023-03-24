@@ -30,8 +30,9 @@ _UNBATCHED = options.BatchSize()
 
 class DataFrame(TileDBArray, somacore.DataFrame):
     """``DataFrame`` is a multi-column table with a user-defined schema. The
-    schema is expressed as an Arrow Schema, and defines the column names
-    and value types.
+    schema is expressed as an
+    `Arrow Schema <https://arrow.apache.org/docs/python/generated/pyarrow.Schema.html>`_,
+    and defines the column names and value types.
 
     Every ``DataFrame`` must contain a column called ``soma_joinid``, of type
     ``int64``, with negative values explicitly disallowed. The ``soma_joinid``
@@ -136,10 +137,10 @@ class DataFrame(TileDBArray, somacore.DataFrame):
 
         Args:
             schema:
-                Arrow schema defining the per-column schema. This schema
-                must define all columns, including columns to be named as index columns.
-                If the schema includes types unsupported by the SOMA implementation,
-                an error will be raised.
+                `Arrow schema <https://arrow.apache.org/docs/python/generated/pyarrow.Schema.html>`_
+                defining the per-column schema. This schema must define all columns, including
+                columns to be named as index columns.  If the schema includes types unsupported by
+                the SOMA implementation, an error will be raised.
             index_column_names:
                 A list of column names to use as user-defined
                 index columns (e.g., ``['cell_type', 'tissue_type']``).
@@ -273,7 +274,7 @@ class DataFrame(TileDBArray, somacore.DataFrame):
         platform_config: Optional[options.PlatformConfig] = None,
     ) -> TableReadIter:
         """Reads a user-defined subset of data, addressed by the dataframe indexing columns,
-        optionally filtered, and return results as one or more Arrow tables.
+        optionally filtered, and return results as one or more `Arrow tables <https://arrow.apache.org/docs/python/generated/pyarrow.Table.html>`_.
 
         Args:
             coords:
@@ -312,13 +313,13 @@ class DataFrame(TileDBArray, somacore.DataFrame):
             * A sequence of coordinates is accepted, one per dimension.
             * Sequence length must be <= number of dimensions.
             * If the sequence contains missing coordinates (length less than number of dimensions),
-              then `slice(None)` -- i.e. no constraint -- is assumed for the missing dimensions.
+              then ``slice(None)`` -- i.e. no constraint -- is assumed for the missing dimensions.
             * Per-dimension, explicitly specified coordinates can be one of: None, a value, a
               list/ndarray/paarray/etc of values, a slice, etc.
-            * Slices are doubly inclusive: slice(2,4) means [2,3,4] not [2,3].
+            * Slices are doubly inclusive: ``slice(2,4)`` means [2,3,4] not [2,3].
               Slice steps are not supported.
-              Slices can be `slice(None)`, meaning select all in that dimension, but may not be half-specified:
-              `slice(2,None)` and `slice(None,4)` are both unsupported.
+              Slices can be ``slice(None)``, meaning select all in that dimension, but may not be half-specified:
+              ``slice(2,None)`` and ``slice(None,4)`` are both unsupported.
             * Negative indexing is unsupported.
 
         Lifecycle:
@@ -351,8 +352,9 @@ class DataFrame(TileDBArray, somacore.DataFrame):
     def write(
         self, values: pa.Table, platform_config: Optional[Mapping[str, Any]] = None
     ) -> Self:
-        """Writes an Arrow table to the persistent object. As duplicate index values
-        are not allowed, index values already present in the object are overwritten
+        """Writes an `Arrow table <https://arrow.apache.org/docs/python/generated/pyarrow.Table.html>`_
+        to the persistent object. As duplicate index values are not allowed, index values already
+        present in the object are overwritten
         and new index values are added.
 
         Args:
@@ -593,7 +595,7 @@ class DataFrame(TileDBArray, somacore.DataFrame):
 def _canonicalize_schema(
     schema: pa.Schema, index_column_names: Sequence[str]
 ) -> pa.Schema:
-    """Turns a Arrow schema into the canonical version and check for errors.
+    """Turns an Arrow schema into the canonical version and checks for errors.
 
     Returns a schema, which may be modified by the addition of required columns
     (e.g. ``soma_joinid``).

@@ -99,7 +99,7 @@ def open(
             not recognized as a SOMA object.
         TypeError:
             If the opened SOMA object type does not match the user-
-            specified s``soma_type`` parameter.
+            specified ``soma_type`` parameter.
         TypeError:
             If the user-provided ``soma_type`` parameter is not a
             recognizable type name or value.

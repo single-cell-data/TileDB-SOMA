@@ -1,6 +1,6 @@
 """SOMA powered by TileDB
 
-SOMA -- stack of matrices, annotated -- is a flexible, extensible, and
+SOMA --- stack of matrices, annotated --- is a flexible, extensible, and
 open-source API enabling access to data in a variety of formats, and is
 motivated by use cases from single-cell biology. The ``tiledbsoma``
 Python package is an implementation of SOMA using the
@@ -19,8 +19,6 @@ information on the SOMA project.
 
 Using the documentation:
 -------------------------
-
-Coming soon: web-based documentation site.
 
 Documentation is also available via the Python builtin ``help`` function. We
 recommend exploring the package. For example:
@@ -76,9 +74,9 @@ single-cell biology.
 SOMA uses the `Arrow <https://arrow.apache.org/docs/python/index.html>`_ type
 system and memory model for its in-memory type system and schema. For
 example, the schema of a ``tiledbsoma.DataFrame`` is expressed as an
-`Arrow Schema <https://arrow.apache.org/docs/python/data.html#schemas>`_.
+`Arrow Schema <https://arrow.apache.org/docs/python/generated/pyarrow.Schema.html>`_.
 
-Error handling
+Error handling:
 ---------------
 Most errors will be signaled with a raised Exception. Of note:
 
@@ -90,8 +88,8 @@ Most errors will be signaled with a raised Exception. Of note:
 Most errors will raise an appropriate Python error, e.g., ``TypeError`` or
 ``ValueError``.
 
-Classes and functions
----------------------
+Classes and functions:
+----------------------
 """
 
 # ^^ the rest is autogen whether viewed from Python on-line help, Sphinx/readthedocs, etc.  It's
