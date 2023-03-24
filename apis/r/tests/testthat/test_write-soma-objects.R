@@ -1,3 +1,5 @@
+spdl::set_level('warn')
+
 test_that("write_soma.data.frame mechanics", {
   uri <- withr::local_tempdir("write-soma-data-frame")
   skip_if_not_installed('datasets')
