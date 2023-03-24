@@ -22,14 +22,8 @@ rtd_version = rtd_version if rtd_version in ["stable", "latest"] else "stable"
 # -- Project information -----------------------------------------------------
 
 project = "TileDB-SOMA-Py"
-copyright = "2022, TileDB, Inc."
+copyright = "2021-2023, TileDB, Inc."
 author = "TileDB, Inc."
-
-# The short X.Y version
-version = "1.0.0"
-# The full version, including alpha/beta/rc tags
-release = "1.0.0rc5"
-
 
 # -- General configuration ---------------------------------------------------
 
@@ -40,7 +34,13 @@ release = "1.0.0rc5"
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
-extensions = ["sphinx.ext.autodoc", "sphinx.ext.doctest", "sphinx.ext.intersphinx", 'sphinx.ext.napoleon', "nbsphinx"]
+extensions = [
+    "sphinx.ext.autodoc",
+    "sphinx.ext.doctest",
+    "sphinx.ext.intersphinx",
+    "sphinx.ext.napoleon",
+    "nbsphinx",
+]
 
 # Mapping for linking between RTD subprojects.
 if readthedocs:
@@ -149,7 +149,9 @@ latex_documents = [
 
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
-man_pages = [(master_doc, "tiledbsoma-py", "TileDB-SOMA Python Documentation", [author], 1)]
+man_pages = [
+    (master_doc, "tiledbsoma-py", "TileDB-SOMA Python Documentation", [author], 1)
+]
 
 
 # -- Options for Texinfo output ----------------------------------------------
