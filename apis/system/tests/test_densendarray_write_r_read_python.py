@@ -18,7 +18,7 @@ class TestDenseNDArrayWriteRReadPython(TestReadPythonWriteR):
         library("arrow")
 
         sndarray <- SOMADenseNDArrayCreate("{self.uri}", int32(), c(3, 2))
-        mat <- matrix(c(1,2,3,4,5,6), nrow=3, ncol=2)
+        mat <- matrix(c(1,2,3,4,5,6), nrow=3, ncol=2, byrow=TRUE)
         sndarray$write(mat)
         """
         self.execute_R_script(base_script)
