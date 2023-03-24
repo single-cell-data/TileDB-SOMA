@@ -44,7 +44,7 @@ class TestDenseNDArrayWriteRReadPython(TestReadPythonWriteR):
         The DenseNDArray content should match.
         """
         with soma.open(self.uri) as sdf:
-            arr = sdf.read().concat().to_numpy()
+            arr = sdf.read().to_numpy()
             np.array_equal(arr[0], np.asarray([1, 2]))
             np.array_equal(arr[1], np.asarray([3, 4]))
             np.array_equal(arr[2], np.asarray([5, 6]))
