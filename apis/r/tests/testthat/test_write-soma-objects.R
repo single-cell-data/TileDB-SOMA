@@ -54,7 +54,7 @@ test_that("write_soma dense matrix mechanics", {
   expect_warning(write_soma(knex, uri = 'knex', soma = collection, sparse = FALSE))
   # Work on dgeMatrices
   expect_no_condition(emat <- write_soma(
-    as(knex, 'dgeMatrix'),
+    as(knex, 'unpackedMatrix'),
     uri = 'knexd',
     soma = collection,
     sparse = FALSE
