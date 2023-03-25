@@ -159,7 +159,7 @@ BootstrapLinux() {
     #   https://stat.ethz.ch/pipermail/r-help//2012-September/335676.html
     # May 2020: we also need devscripts for checkbashism
     # Sep 2020: add bspm, remotes
-    Retry sudo apt-get install -y --no-install-recommends r-base-dev r-recommended qpdf devscripts r-cran-remotes
+    Retry sudo apt-get install -y --no-install-recommends r-base-dev r-recommended qpdf devscripts r-cran-bspm r-cran-remotes
 
     #sudo cp -ax /usr/lib/R/site-library/littler/examples/{build.r,check.r,install*.r,update.r} /usr/local/bin
     ## for now also from littler from GH
@@ -194,11 +194,8 @@ BootstrapLinuxOptions() {
     #    InstallPandoc 'linux/debian/x86_64'
     #fi
     if [[ "${USE_BSPM}" != "FALSE" ]]; then
-        #sudo Rscript --vanilla -e 'install.packages("bspm", repos="https://cran.r-project.org")'
-        sudo Rscript --vanilla -e 'remotes::install_url("https://cloud.r-project.org/src/contrib/Archive/bspm/bspm_0.3.10.tar.gz")'
         echo "suppressMessages(bspm::enable())" | sudo tee --append /etc/R/Rprofile.site >/dev/null
-        ##--not needed with 0.3.10 echo "options(bspm.version.check=FALSE)" | sudo tee --append /etc/R/Rprofile.site >/dev/null
-        ##--not needed here        echo "options(bspm.sudo=TRUE)" | sudo tee --append /etc/R/Rprofile.site >/dev/null
+        echo "options(bspm.version.check=FALSE)" | sudo tee --append /etc/R/Rprofile.site >/dev/null
     fi
 }
 
@@ -323,7 +320,6 @@ RBinaryInstall() {
 
 InstallGithub() {
     #EnsureDevtools
-    #echo "Installing GitHub packages: $@"
     sudo Rscript -e 'remotes::install_github(commandArgs(TRUE))' "$@"
 }
 
