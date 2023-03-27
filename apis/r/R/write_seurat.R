@@ -90,7 +90,11 @@ write_soma.Assay <- function(
     }
     if (!identical(x = dim(mat), y = dim(x))) {
       mat <- pad_matrix(
-        x = SeuratObject::as.sparse(x = mat),
+        x = mat,
+        rowidx = match(x = rownames(mat), table = rownames(x)),
+        colidx = match(x = colnames(mat), table = colnames(x)),
+        shape = dim(x),
+        sparse = TRUE,
         rownames = rownames(x),
         colnames = colnames(x)
       )
