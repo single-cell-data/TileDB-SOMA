@@ -6,6 +6,7 @@
 """General utility functions.
 """
 
+import os
 import sys
 
 import tiledb
@@ -63,3 +64,5 @@ def show_package_versions() -> None:
     )
     print("libtiledbsoma version()      ", libtiledbsoma_version())
     print("python version               ", ".".join(str(v) for v in sys.version_info))
+    u = os.uname()
+    print("OS version                   ", u.sysname, u.release)
