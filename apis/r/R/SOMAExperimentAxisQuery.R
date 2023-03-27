@@ -254,9 +254,9 @@ SOMAExperimentAxisQuery <- R6::R6Class(
       )
       if (!(isFALSE(obs_column_names) || rlang::is_na(obs_column_names))) {
         obs <- as.data.frame(
-          x = self$obs(obs_column_names)$to_data_frame(),
-          row.names = cells
+          x = self$obs(obs_column_names)$to_data_frame()
         )
+        row.names(obs) <- cells
         object[[names(obs)]] <- obs
       }
       # Load in reductions
