@@ -17,7 +17,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">tiledbsoma</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.0.0.9012</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.0.0.9014</span>
       </span>
     </div>
 
@@ -80,6 +80,7 @@
 <li><p><a href="#method-TileDBGroup-to_data_frame"><code>TileDBGroup$to_data_frame()</code></a></p></li>
 <li><p><a href="#method-TileDBGroup-get_metadata"><code>TileDBGroup$get_metadata()</code></a></p></li>
 <li><p><a href="#method-TileDBGroup-set_metadata"><code>TileDBGroup$set_metadata()</code></a></p></li>
+<li><p><a href="#method-TileDBGroup-close"><code>TileDBGroup$close()</code></a></p></li>
 <li><p><a href="#method-TileDBGroup-clone"><code>TileDBGroup$clone()</code></a></p></li>
 </ul></div><p><details open><summary>Inherited methods</summary><ul><li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBObject" data-id="class"><a href="TileDBObject.html#method-class"><code>tiledbsoma::TileDBObject$class()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBObject" data-id="exists"><a href="TileDBObject.html#method-exists"><code>tiledbsoma::TileDBObject$exists()</code></a></span></li>
@@ -242,10 +243,22 @@ is not NULL.</p></dd>
 <p>NULL</p>
 </div>
 
+</div><p></p><hr><a id="method-TileDBGroup-close"></a><div class="section">
+<h3 id="method-close-">Method <code><a href="https://rdrr.io/r/base/connections.html" class="external-link">close()</a></code><a class="anchor" aria-label="anchor" href="#method-close-"></a></h3>
+<p>Close the SOMA object.</p><div class="section">
+<h4 id="usage-11">Usage<a class="anchor" aria-label="anchor" href="#usage-11"></a></h4>
+<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">TileDBGroup</span><span class="op">$</span><span class="fu">close</span><span class="op">(</span><span class="op">)</span></span></code></pre></div><p></p></div>
+</div>
+
+<div class="section">
+<h4 id="returns-4">Returns<a class="anchor" aria-label="anchor" href="#returns-4"></a></h4>
+<p>The object, invisibly</p>
+</div>
+
 </div><p></p><hr><a id="method-TileDBGroup-clone"></a><div class="section">
 <h3 id="method-clone-">Method <code>clone()</code><a class="anchor" aria-label="anchor" href="#method-clone-"></a></h3>
 <p>The objects of this class are cloneable with this method.</p><div class="section">
-<h4 id="usage-11">Usage<a class="anchor" aria-label="anchor" href="#usage-11"></a></h4>
+<h4 id="usage-12">Usage<a class="anchor" aria-label="anchor" href="#usage-12"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">TileDBGroup</span><span class="op">$</span><span class="fu">clone</span><span class="op">(</span>deep <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 

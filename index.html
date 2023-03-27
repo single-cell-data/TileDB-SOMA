@@ -35,7 +35,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="index.html">tiledbsoma</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.0.0.9012</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.0.0.9014</span>
       </span>
     </div>
 
@@ -106,10 +106,10 @@
 </li>
 <li>Optionally, clean the files in the repo: <code>./cleanup</code> (this is not needed the first time)</li>
 <li>Optionally, update the <code>libtiledbsoma</code> sources: <code>./copy_source.sh</code> (which updates the includes tarball of <code>libtiledbsoma</code>).</li>
-<li>If you have edited any <code>src/*.cpp</code> with <code>RcppExport</code> then run <code><a href="https://rdrr.io/pkg/Rcpp/man/compileAttributes.html" class="external-link">Rcpp::compileAttributes()</a></code>
+<li>If you have edited any <code>src/*.cpp</code> with <code>RcppExport</code> then run <code>Rscript -e 'Rcpp::compileAttributes()'</code>
 </li>
 <li>Build the R package source tarball from the repository sources: <code>R CMD build .</code> (which will also build <code>libtiledbsoma</code> from source; other dependencies are required as described in the previous section)</li>
-<li>If you have changed any signatures, run <code>roxygen2::roxygenise()</code>
+<li>If you have changed any signatures, run <code>Rscript -e 'roxygen2::roxygenise()'</code>
 </li>
 <li>Check and test the package from the tarball: <code>R CMD check --no-vignettes --no-manual tiledbsoma_*.tar.gz</code><ul><li>For quicker iteration, run <code>Rscript -e 'testthat::test_local("tests/testthat")'</code>
 </li></ul>

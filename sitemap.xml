@@ -43,13 +43,31 @@
     <loc>/reference/SOMACollectionBase.html</loc>
   </url>
   <url>
+    <loc>/reference/SOMACollectionCreate.html</loc>
+  </url>
+  <url>
+    <loc>/reference/SOMACollectionOpen.html</loc>
+  </url>
+  <url>
     <loc>/reference/SOMAContextBase.html</loc>
   </url>
   <url>
     <loc>/reference/SOMADataFrame.html</loc>
   </url>
   <url>
+    <loc>/reference/SOMADataFrameCreate.html</loc>
+  </url>
+  <url>
+    <loc>/reference/SOMADataFrameOpen.html</loc>
+  </url>
+  <url>
     <loc>/reference/SOMADenseNDArray.html</loc>
+  </url>
+  <url>
+    <loc>/reference/SOMADenseNDArrayCreate.html</loc>
+  </url>
+  <url>
+    <loc>/reference/SOMADenseNDArrayOpen.html</loc>
   </url>
   <url>
     <loc>/reference/SOMAExperiment.html</loc>
@@ -58,10 +76,31 @@
     <loc>/reference/SOMAExperimentAxisQuery.html</loc>
   </url>
   <url>
+    <loc>/reference/SOMAExperimentCreate.html</loc>
+  </url>
+  <url>
+    <loc>/reference/SOMAExperimentOpen.html</loc>
+  </url>
+  <url>
     <loc>/reference/SOMAMeasurement.html</loc>
   </url>
   <url>
+    <loc>/reference/SOMAMeasurementCreate.html</loc>
+  </url>
+  <url>
+    <loc>/reference/SOMAMeasurementOpen.html</loc>
+  </url>
+  <url>
+    <loc>/reference/SOMAOpen.html</loc>
+  </url>
+  <url>
     <loc>/reference/SOMASparseNDArray.html</loc>
+  </url>
+  <url>
+    <loc>/reference/SOMASparseNDArrayCreate.html</loc>
+  </url>
+  <url>
+    <loc>/reference/SOMASparseNDArrayOpen.html</loc>
   </url>
   <url>
     <loc>/reference/SOMATileDBContext.html</loc>
@@ -82,10 +121,13 @@
     <loc>/reference/index.html</loc>
   </url>
   <url>
+    <loc>/reference/libtiledbsoma_version.html</loc>
+  </url>
+  <url>
     <loc>/reference/show_package_versions.html</loc>
   </url>
   <url>
-    <loc>/reference/soma_reader.html</loc>
+    <loc>/reference/soma_array_reader.html</loc>
   </url>
   <url>
     <loc>/reference/sr_setup.html</loc>

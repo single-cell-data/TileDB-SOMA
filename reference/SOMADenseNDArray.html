@@ -12,7 +12,9 @@ dimension
 All dimensions must have a positive, non-zero length, and there must be 1 or
 more dimensions.
 The default "fill" value for SOMADenseNDArray is the zero or null value of
-the array type (e.g., Arrow.float32 defaults to 0.0).  (lifecycle: experimental)'><!-- mathjax --><script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js" integrity="sha256-nvJJv9wWKEm88qvoQl9ekL2J+k/RWIsaSScxxlsrv8k=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/config/TeX-AMS-MML_HTMLorMML.js" integrity="sha256-84DKXVJXs0/F8OTMzX4UR909+jtl4G7SPypPavF+GfA=" crossorigin="anonymous"></script><!--[if lt IE 9]>
+the array type (e.g., Arrow.float32 defaults to 0.0).
+The write method is currently limited to writing from 2-d matrices.
+(lifecycle: experimental)'><!-- mathjax --><script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js" integrity="sha256-nvJJv9wWKEm88qvoQl9ekL2J+k/RWIsaSScxxlsrv8k=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/config/TeX-AMS-MML_HTMLorMML.js" integrity="sha256-84DKXVJXs0/F8OTMzX4UR909+jtl4G7SPypPavF+GfA=" crossorigin="anonymous"></script><!--[if lt IE 9]>
 <script src="https://oss.maxcdn.com/html5shiv/3.7.3/html5shiv.min.js"></script>
 <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
 <![endif]--></head><body data-spy="scroll" data-target="#toc">
@@ -30,7 +32,7 @@ the array type (e.g., Arrow.float32 defaults to 0.0).  (lifecycle: experimental)
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">tiledbsoma</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.0.0.9012</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.0.0.9014</span>
       </span>
     </div>
 
@@ -72,7 +74,9 @@ dimension</p></li>
 </ul><p>All dimensions must have a positive, non-zero length, and there must be 1 or
 more dimensions.</p>
 <p>The default "fill" value for <code>SOMADenseNDArray</code> is the zero or null value of
-the array type (e.g., Arrow.float32 defaults to 0.0).  (lifecycle: experimental)</p>
+the array type (e.g., Arrow.float32 defaults to 0.0).</p>
+<p>The <code>write</code> method is currently limited to writing from 2-d matrices.
+(lifecycle: experimental)</p>
     </div>
 
 
@@ -97,6 +101,7 @@ the array type (e.g., Arrow.float32 defaults to 0.0).  (lifecycle: experimental)
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBObject" data-id="initialize"><a href="TileDBObject.html#method-initialize"><code>tiledbsoma::TileDBObject$initialize()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="attributes"><a href="TileDBArray.html#method-attributes"><code>tiledbsoma::TileDBArray$attributes()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="attrnames"><a href="TileDBArray.html#method-attrnames"><code>tiledbsoma::TileDBArray$attrnames()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="close"><a href="TileDBArray.html#method-close"><code>tiledbsoma::TileDBArray$close()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="colnames"><a href="TileDBArray.html#method-colnames"><code>tiledbsoma::TileDBArray$colnames()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="dimensions"><a href="TileDBArray.html#method-dimensions"><code>tiledbsoma::TileDBArray$dimensions()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="dimnames"><a href="TileDBArray.html#method-dimnames"><code>tiledbsoma::TileDBArray$dimnames()</code></a></span></li>
@@ -219,7 +224,8 @@ read. List elements can be named when specifying a subset of dimensions.</p></dd
 
 </div><p></p><hr><a id="method-SOMADenseNDArray-write"></a><div class="section">
 <h3 id="method-write-">Method <code><a href="https://rdrr.io/r/base/write.html" class="external-link">write()</a></code><a class="anchor" aria-label="anchor" href="#method-write-"></a></h3>
-<p>Write matrix data to the array. (lifecycle: experimental)</p><div class="section">
+<p>Write matrix data to the array. (lifecycle: experimental)</p>
+<p>More general write methods for higher-dimensional array could be added.</p><div class="section">
 <h4 id="usage-3">Usage<a class="anchor" aria-label="anchor" href="#usage-3"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">SOMADenseNDArray</span><span class="op">$</span><span class="fu">write</span><span class="op">(</span><span class="va">values</span>, coords <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>

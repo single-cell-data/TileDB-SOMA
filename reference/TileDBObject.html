@@ -18,7 +18,7 @@ TileDBGroup classes. (lifecycle: experimental)"><!-- mathjax --><script src="htt
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">tiledbsoma</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.0.0.9012</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.0.0.9014</span>
       </span>
     </div>
 
@@ -92,7 +92,13 @@ TileDBGroup classes. (lifecycle: experimental)</p>
 <h3 id="method-new-">Method <code>new()</code><a class="anchor" aria-label="anchor" href="#method-new-"></a></h3>
 <p>Create a new TileDB object. (lifecycle: experimental)</p><div class="section">
 <h4 id="usage">Usage<a class="anchor" aria-label="anchor" href="#usage"></a></h4>
-<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va"><a href="../reference/TileDBObject.html">TileDBObject</a></span><span class="op">$</span><span class="fu">new</span><span class="op">(</span><span class="va">uri</span>, platform_config <span class="op">=</span> <span class="cn">NULL</span>, tiledbsoma_ctx <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div><p></p></div>
+<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va"><a href="../reference/TileDBObject.html">TileDBObject</a></span><span class="op">$</span><span class="fu">new</span><span class="op">(</span></span>
+<span>  <span class="va">uri</span>,</span>
+<span>  platform_config <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  tiledbsoma_ctx <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  mode <span class="op">=</span> <span class="st">"READ"</span>,</span>
+<span>  internal_use_only <span class="op">=</span> <span class="cn">NULL</span></span>
+<span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
 <div class="section">
@@ -106,11 +112,16 @@ TileDBGroup classes. (lifecycle: experimental)</p>
 
 
 <dt><code>tiledbsoma_ctx</code></dt>
-<dd><p>optional SOMATileDBContext</p></dd>
+<dd><p>Optional SOMATileDBContext</p></dd>
 
 
-<dt><code>verbose</code></dt>
-<dd><p>Print status messages</p></dd>
+<dt><code>mode</code></dt>
+<dd><p>One of "READ" or "WRITE"</p></dd>
+
+
+<dt><code>internal_use_only</code></dt>
+<dd><p>Character value to signal 'permitted' call as
+<code>new()</code> is considered internal and should not be called directly</p></dd>
 
 
 </dl><p></p></div>
