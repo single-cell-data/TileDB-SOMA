@@ -11,8 +11,8 @@ Rcpp::Rostream<true>&  Rcpp::Rcout = Rcpp::Rcpp_cout_get();
 Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 #endif
 
-// soma_reader
-Rcpp::List soma_reader(const std::string& uri, Rcpp::Nullable<Rcpp::CharacterVector> colnames, Rcpp::Nullable<Rcpp::XPtr<tiledb::QueryCondition>> qc, Rcpp::Nullable<Rcpp::List> dim_points, Rcpp::Nullable<Rcpp::List> dim_ranges, std::string batch_size, std::string result_order, const std::string& loglevel, Rcpp::Nullable<Rcpp::CharacterVector> config);
+// soma_array_reader
+Rcpp::List soma_array_reader(const std::string& uri, Rcpp::Nullable<Rcpp::CharacterVector> colnames, Rcpp::Nullable<Rcpp::XPtr<tiledb::QueryCondition>> qc, Rcpp::Nullable<Rcpp::List> dim_points, Rcpp::Nullable<Rcpp::List> dim_ranges, std::string batch_size, std::string result_order, const std::string& loglevel, Rcpp::Nullable<Rcpp::CharacterVector> config);
 RcppExport SEXP _tiledbsoma_soma_reader(SEXP uriSEXP, SEXP colnamesSEXP, SEXP qcSEXP, SEXP dim_pointsSEXP, SEXP dim_rangesSEXP, SEXP batch_sizeSEXP, SEXP result_orderSEXP, SEXP loglevelSEXP, SEXP configSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
@@ -26,7 +26,7 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< std::string >::type result_order(result_orderSEXP);
     Rcpp::traits::input_parameter< const std::string& >::type loglevel(loglevelSEXP);
     Rcpp::traits::input_parameter< Rcpp::Nullable<Rcpp::CharacterVector> >::type config(configSEXP);
-    rcpp_result_gen = Rcpp::wrap(soma_reader(uri, colnames, qc, dim_points, dim_ranges, batch_size, result_order, loglevel, config));
+    rcpp_result_gen = Rcpp::wrap(soma_array_reader(uri, colnames, qc, dim_points, dim_ranges, batch_size, result_order, loglevel, config));
     return rcpp_result_gen;
 END_RCPP
 }

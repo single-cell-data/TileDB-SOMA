@@ -185,8 +185,8 @@ SOMADataFrame <- R6::R6Class(
       }
 
       if (isFALSE(iterated)) {
-          rl <- soma_reader(uri = uri,
-                            colnames = column_names,   # NULL is dealt with by soma_reader()
+          rl <- soma_array_reader(uri = uri,
+                            colnames = column_names,   # NULL is dealt with by soma_array_reader()
                             qc = value_filter,         # idem
                             dim_points = coords,       # idem
                             loglevel = log_level,      # idem

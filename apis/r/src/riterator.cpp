@@ -100,7 +100,7 @@ Rcpp::XPtr<tdbs::SOMAArrayReader> sr_setup(const std::string& uri,
     tiledb::Domain domain = schema->domain();
     std::vector<tiledb::Dimension> dims = domain.dimensions();
     for (auto& dim: dims) {
-        spdl::info("[soma_reader] Dimension {} type {} domain {} extent {}",
+        spdl::info("[soma_array_reader] Dimension {} type {} domain {} extent {}",
                    dim.name(), tiledb::impl::to_str(dim.type()),
                    dim.domain_to_str(), dim.tile_extent_to_str());
         name2dim.emplace(std::make_pair(dim.name(), std::make_shared<tiledb::Dimension>(dim)));
@@ -108,7 +108,7 @@ Rcpp::XPtr<tdbs::SOMAArrayReader> sr_setup(const std::string& uri,
 
     // If we have a query condition, apply it
     if (!qc.isNull()) {
-        spdl::info("[soma_reader] Applying query condition") ;
+        spdl::info("[soma_array_reader] Applying query condition") ;
         Rcpp::XPtr<tiledb::QueryCondition> qcxp(qc);
         ptr->set_condition(*qcxp);
     }
@@ -191,7 +191,7 @@ Rcpp::List sr_next(Rcpp::XPtr<tdbs::SOMAArrayReader> sr) {
        arrayxp->children[i] = chldarrayxp;
 
        if (pp.first->length > arrayxp->length) {
-           spdl::debug("[soma_reader] Setting array length to {}", pp.first->length);
+           spdl::debug("[soma_array_reader] Setting array length to {}", pp.first->length);
            arrayxp->length = pp.first->length;
        }
 

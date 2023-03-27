@@ -11,21 +11,21 @@ test_that("Arrow Interface from SOMAArrayReader", {
     uri <- file.path(tdir, "obs")
     columns <- c("n_counts", "n_genes", "louvain")
 
-    z <- soma_reader(uri, columns)
+    z <- soma_array_reader(uri, columns)
     tb <- as_arrow_table(z)
     expect_true(inherits(tb, "Table"))
     rb <- arrow::as_record_batch(tb)  #arch::from_arch_array(z, arrow::RecordBatch)
     expect_true(inherits(rb, "RecordBatch"))
 
 
-    soma_reader(uri, columns) |>
+    soma_array_reader(uri, columns) |>
         as_arrow_table() |>
         dplyr::collect() -> D
     expect_equal(nrow(D), 2638)
 
     arr <- tiledb_array(uri)                # need array for schema access to qc parser
     qc <- parse_query_condition(n_counts < 1000 && n_genes >= 400, ta=arr)
-    soma_reader(uri, columns, qc@ptr) |>
+    soma_array_reader(uri, columns, qc@ptr) |>
         as_arrow_table() |>
         dplyr::collect() -> D
 
@@ -34,13 +34,13 @@ test_that("Arrow Interface from SOMAArrayReader", {
     expect_true(all(D$n_genes >= 400))
 
 
-    soma_reader(uri) |>              # read everything
+    soma_array_reader(uri) |>              # read everything
         as_arrow_table() |>
         dplyr::collect() -> D
     expect_equal(nrow(D), 2638)
     expect_equal(ncol(D), 6)
 
-    soma_reader(uri = uri,
+    soma_array_reader(uri = uri,
                 colnames = c("obs_id", "percent_mito", "n_counts", "louvain"),
                 dim_ranges=list(soma_joinid=rbind(bit64::as.integer64(c(1000, 1004)),
                                                   bit64::as.integer64(c(2000, 2004)))),
@@ -57,17 +57,17 @@ test_that("Arrow Interface from SOMAArrayReader", {
     M <- matrix(1:16, 4, 4)
     ndarray$write(M)
 
-    M1 <- soma_reader(uri = uri, result_order = "auto") |>
+    M1 <- soma_array_reader(uri = uri, result_order = "auto") |>
         as_arrow_table() |>
         dplyr::collect()
     expect_equal(M, matrix(M1$soma_data, 4, 4, byrow=TRUE))
 
-    M2 <- soma_reader(uri = uri, result_order = "row-major") |>
+    M2 <- soma_array_reader(uri = uri, result_order = "row-major") |>
         as_arrow_table() |>
         dplyr::collect()
     expect_equal(M, matrix(M2$soma_data, 4, 4, byrow=TRUE))
 
-    M3 <- soma_reader(uri = uri, result_order = "column-major") |>
+    M3 <- soma_array_reader(uri = uri, result_order = "column-major") |>
         as_arrow_table() |>
         dplyr::collect()
     expect_equal(M, matrix(M3$soma_data, 4, 4, byrow=FALSE))
