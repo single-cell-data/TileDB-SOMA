@@ -15,7 +15,7 @@ if VERBOSE:
     clib.config_logging("debug")
 
 
-def test_soma_reader_obs():
+def test_soma_array_reader_obs():
     """Read all values from obs array into an arrow table."""
 
     name = "obs"
@@ -29,7 +29,7 @@ def test_soma_reader_obs():
     assert arrow_table.num_rows == 2638
 
 
-def test_soma_reader_var():
+def test_soma_array_reader_var():
     """Read all values from var array into an arrow table."""
 
     name = "var"
@@ -43,7 +43,7 @@ def test_soma_reader_var():
     assert arrow_table.num_rows == 1838
 
 
-def test_soma_reader_var_x_data():
+def test_soma_array_reader_var_x_data():
     """Read all values from x/data array into an arrow table."""
 
     name = "X/data"
@@ -67,7 +67,7 @@ def test_soma_reader_var_x_data():
     assert total_num_rows == 4848644
 
 
-def test_soma_reader_dim_points():
+def test_soma_array_reader_dim_points():
     """Read scalar dimension slice from obs array into an arrow table."""
 
     name = "obs"
@@ -86,7 +86,7 @@ def test_soma_reader_dim_points():
     assert arrow_table.num_rows == len(obs_id_points)
 
 
-def test_soma_reader_empty_dim_points():
+def test_soma_array_reader_empty_dim_points():
     """Read scalar dimension slice from obs array into an arrow table."""
 
     name = "obs"
@@ -105,7 +105,7 @@ def test_soma_reader_empty_dim_points():
     assert arrow_table.num_rows == len(obs_id_points)
 
 
-def test_soma_reader_dim_points_arrow_array():
+def test_soma_array_reader_dim_points_arrow_array():
     """Read scalar dimension slice from obs array into an arrow table."""
 
     name = "obs"
@@ -124,7 +124,7 @@ def test_soma_reader_dim_points_arrow_array():
     assert arrow_table.num_rows == len(obs_id_points)
 
 
-def test_soma_reader_dim_ranges():
+def test_soma_array_reader_dim_ranges():
     """Read range dimension slice from obs array into an arrow table."""
 
     name = "obs"
@@ -146,7 +146,7 @@ def test_soma_reader_dim_ranges():
     assert arrow_table.num_rows == 10
 
 
-def test_soma_reader_dim_mixed():
+def test_soma_array_reader_dim_mixed():
     """Read scalar and range dimension slice from obs array into an arrow table."""
 
     name = "obs"
@@ -171,7 +171,7 @@ def test_soma_reader_dim_mixed():
     assert arrow_table.num_rows == 60
 
 
-def test_soma_reader_obs_slice_x():
+def test_soma_array_reader_obs_slice_x():
     """Read X/data sliced by obs."""
 
     # read obs
@@ -221,7 +221,7 @@ def test_soma_reader_obs_slice_x():
     assert total_num_rows == 110280
 
 
-def test_soma_reader_column_names():
+def test_soma_array_reader_column_names():
     """Read specified column names of obs array into an arrow table."""
 
     name = "obs"
@@ -246,7 +246,7 @@ def test_nnz():
     assert total_cell_count == 2638
 
 
-def test_soma_reader_reset():
+def test_soma_array_reader_reset():
     """Submit a query with a SOMAArrayReader object, reset the SOMAArrayReader, and submit another query."""
 
     name = "obs"
@@ -277,4 +277,4 @@ def test_soma_reader_reset():
 
 
 if __name__ == "__main__":
-    test_soma_reader_obs_slice_x()
+    test_soma_array_reader_obs_slice_x()

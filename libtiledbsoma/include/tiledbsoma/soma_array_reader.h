@@ -1,5 +1,5 @@
 /**
- * @file   soma_reader.h
+ * @file   soma_array_reader.h
  *
  * @section LICENSE
  *
