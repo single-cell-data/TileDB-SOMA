@@ -8,6 +8,7 @@
 
 import sys
 
+import distro
 import tiledb
 from pkg_resources import DistributionNotFound, get_distribution
 
@@ -63,3 +64,4 @@ def show_package_versions() -> None:
     )
     print("libtiledbsoma version()      ", libtiledbsoma_version())
     print("python version               ", ".".join(str(v) for v in sys.version_info))
+    print("OS version                   ", distro.name(), distro.version())
