@@ -76,27 +76,6 @@ as_arrow_table <- function(arrlst) {
     arrow::as_arrow_table(arrow::RecordBatch$import_from_c(arrlst[[1]], arrlst[[2]]))
 }
 
-#' Get R Version
-#'
-#' @param repr Representation of R version; choose from:
-#' \itemize{
-#'  \item \dQuote{\code{v}}: a \code{\link[base]{package_version}}
-#'  \item \dQuote{\code{c}}: a character
-#' }
-#'
-#' @return The version of R currently being used
-#'
-#' @keywords internal
-#'
-#' @noRd
-#'
-r_version <- function(repr = c('v', 'c')) {
-  repr <- repr[1L]
-  repr <- match.arg(arg = repr)
-  version <- paste(R.Version()[c('major', 'minor')], collapse = '.')
-  return(switch(EXPR = repr, v = package_version(version), version))
-}
-
 #' @importFrom Matrix as.matrix
 #' @importFrom arrow RecordBatch
 #' @import R6 methods utils

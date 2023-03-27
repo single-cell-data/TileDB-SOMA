@@ -31,7 +31,7 @@ user_dir <- function(type = getOption('tiledbsoma.io.user_dir')) {
     'working',
     'tempdir',
     ifelse(
-      test = requireNamespace('tools', quietly = TRUE) && r_version() > '4.0.0',
+      test = requireNamespace('tools', quietly = TRUE) && getRversion() > '4.0.0',
       yes = 'user',
       no = ''
     ),
