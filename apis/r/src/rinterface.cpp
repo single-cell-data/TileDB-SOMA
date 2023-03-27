@@ -59,12 +59,12 @@ namespace tdbs = tiledbsoma;
 //' @examples
 //' \dontrun{
 //' uri <- "test/soco/pbmc3k_processed/obs"
-//' z <- soma_reader(uri)
+//' z <- soma_array_reader(uri)
 //' tb <- as_arrow_table(z)
 //' }
 //' @export
 // [[Rcpp::export]]
-Rcpp::List soma_reader(const std::string& uri,
+Rcpp::List soma_array_reader(const std::string& uri,
                        Rcpp::Nullable<Rcpp::CharacterVector> colnames = R_NilValue,
                        Rcpp::Nullable<Rcpp::XPtr<tiledb::QueryCondition>> qc = R_NilValue,
                        Rcpp::Nullable<Rcpp::List> dim_points = R_NilValue,
@@ -79,14 +79,14 @@ Rcpp::List soma_reader(const std::string& uri,
         tdbs::LOG_SET_LEVEL(loglevel);
     }
 
-    spdl::info("[soma_reader] Reading from {}", uri);
+    spdl::info("[soma_array_reader] Reading from {}", uri);
 
     std::map<std::string, std::string> platform_config = config_vector_to_map(config);
 
     std::vector<std::string> column_names = {};
     if (!colnames.isNull()) {    // If we have column names, select them
         column_names = Rcpp::as<std::vector<std::string>>(colnames);
-        spdl::debug("[soma_reader] Selecting {} columns", column_names.size());
+        spdl::debug("[soma_array_reader] Selecting {} columns", column_names.size());
     }
 
     // Read selected columns from the uri (return is unique_ptr<SOMAArrayReader>)
@@ -102,7 +102,7 @@ Rcpp::List soma_reader(const std::string& uri,
     tiledb::Domain domain = schema->domain();
     std::vector<tiledb::Dimension> dims = domain.dimensions();
     for (auto& dim: dims) {
-        spdl::info("[soma_reader] Dimension {} type {} domain {} extent {}",
+        spdl::info("[soma_array_reader] Dimension {} type {} domain {} extent {}",
                    dim.name(), tiledb::impl::to_str(dim.type()),
                    dim.domain_to_str(), dim.tile_extent_to_str());
         name2dim.emplace(std::make_pair(dim.name(), std::make_shared<tiledb::Dimension>(dim)));
@@ -110,7 +110,7 @@ Rcpp::List soma_reader(const std::string& uri,
 
     // If we have a query condition, apply it
     if (!qc.isNull()) {
-        spdl::info("[soma_reader] Applying query condition");
+        spdl::info("[soma_array_reader] Applying query condition");
         Rcpp::XPtr<tiledb::QueryCondition> qcxp(qc);
         sr->set_condition(*qcxp);
     }
@@ -136,7 +136,7 @@ Rcpp::List soma_reader(const std::string& uri,
     if (!sr->results_complete()) {
         Rcpp::warning("Read of '%s' incomplete", uri);
     }
-    spdl::info("[soma_reader] Read complete with {} rows and {} cols",
+    spdl::info("[soma_array_reader] Read complete with {} rows and {} cols",
                sr_data->get()->num_rows(), sr_data->get()->names().size());
 
     const std::vector<std::string> names = sr_data->get()->names();
@@ -155,7 +155,7 @@ Rcpp::List soma_reader(const std::string& uri,
         Rcpp::XPtr<ArrowSchema> chldschemaxp = schema_owning_xptr();
         Rcpp::XPtr<ArrowArray> chldarrayxp = array_owning_xptr();
 
-        spdl::info("[soma_reader] Accessing {} at {}", names[i], i);
+        spdl::info("[soma_array_reader] Accessing {} at {}", names[i], i);
 
         // now buf is a shared_ptr to ColumnBuffer
         auto buf = sr_data->get()->at(names[i]);
@@ -166,13 +166,13 @@ Rcpp::List soma_reader(const std::string& uri,
         memcpy((void*) chldschemaxp, pp.second.get(), sizeof(ArrowSchema));
         memcpy((void*) chldarrayxp, pp.first.get(), sizeof(ArrowArray));
 
-        spdl::info("[soma_reader] Incoming name {} length {}", std::string(pp.second->name), pp.first->length);
+        spdl::info("[soma_array_reader] Incoming name {} length {}", std::string(pp.second->name), pp.first->length);
 
         schemaxp->children[i] = chldschemaxp;
         arrayxp->children[i] = chldarrayxp;
 
         if (pp.first->length > arrayxp->length) {
-            spdl::debug("[soma_reader] Setting array length to {}", pp.first->length);
+            spdl::debug("[soma_array_reader] Setting array length to {}", pp.first->length);
             arrayxp->length = pp.first->length;
         }
     }
@@ -207,7 +207,7 @@ Rcpp::CharacterVector get_column_types(const std::string& uri,
     return vs;
 }
 
-//' @rdname soma_reader
+//' @rdname soma_array_reader
 //' @export
 // [[Rcpp::export]]
 double nnz(const std::string& uri, Rcpp::Nullable<Rcpp::CharacterVector> config = R_NilValue) {
@@ -229,7 +229,7 @@ bool check_arrow_array_tag(Rcpp::XPtr<ArrowArray> xp) {
   return true;
 }
 
-//' @rdname soma_reader
+//' @rdname soma_array_reader
 //' @export
 // [[Rcpp::export]]
 Rcpp::NumericVector shape(const std::string& uri,

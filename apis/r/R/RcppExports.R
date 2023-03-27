@@ -24,11 +24,11 @@
 #' @examples
 #' \dontrun{
 #' uri <- "test/soco/pbmc3k_processed/obs"
-#' z <- soma_reader(uri)
+#' z <- soma_array_reader(uri)
 #' tb <- as_arrow_table(z)
 #' }
 #' @export
-soma_reader <- function(uri, colnames = NULL, qc = NULL, dim_points = NULL, dim_ranges = NULL, batch_size = "auto", result_order = "auto", loglevel = "auto", config = NULL) {
+soma_array_reader <- function(uri, colnames = NULL, qc = NULL, dim_points = NULL, dim_ranges = NULL, batch_size = "auto", result_order = "auto", loglevel = "auto", config = NULL) {
     .Call(`_tiledbsoma_soma_reader`, uri, colnames, qc, dim_points, dim_ranges, batch_size, result_order, loglevel, config)
 }
 
@@ -42,7 +42,7 @@ get_column_types <- function(uri, colnames) {
     .Call(`_tiledbsoma_get_column_types`, uri, colnames)
 }
 
-#' @rdname soma_reader
+#' @rdname soma_array_reader
 #' @export
 nnz <- function(uri, config = NULL) {
     .Call(`_tiledbsoma_nnz`, uri, config)
@@ -58,7 +58,7 @@ check_arrow_array_tag <- function(xp) {
     .Call(`_tiledbsoma_check_arrow_array_tag`, xp)
 }
 
-#' @rdname soma_reader
+#' @rdname soma_array_reader
 #' @export
 shape <- function(uri, config = NULL) {
     .Call(`_tiledbsoma_shape`, uri, config)

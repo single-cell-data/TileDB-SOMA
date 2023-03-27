@@ -120,8 +120,8 @@ SOMASparseNDArray <- R6::R6Class(
       }
 
       if (isFALSE(iterated)) {
-          rl <- soma_reader(uri = uri,
-                            dim_points = coords,        # NULL is dealt with by soma_reader()
+          rl <- soma_array_reader(uri = uri,
+                            dim_points = coords,        # NULL is dealt with by soma_array_reader()
                             result_order = result_order,
                             loglevel = log_level,       # idem
                             config = as.character(tiledb::config(

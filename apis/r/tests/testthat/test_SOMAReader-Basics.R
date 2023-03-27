@@ -5,11 +5,11 @@ test_that("Basic SOMAArrayReader", {
 
     uri <- file.path(tdir, "obs")
 
-    df <- arrow_to_dt(soma_reader(uri))
+    df <- arrow_to_dt(soma_array_reader(uri))
     expect_equal(nrow(df), 2638L)
     expect_equal(ncol(df), 6L)
 
     columns <- c("n_counts", "n_genes", "louvain")
-    z <- soma_reader(uri, columns)
+    z <- soma_array_reader(uri, columns)
     expect_true(inherits(z, "list"))
 })

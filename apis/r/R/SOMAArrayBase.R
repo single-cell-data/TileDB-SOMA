@@ -63,7 +63,7 @@ SOMAArrayBase <- R6::R6Class(
     # Internal 'external pointer' object used for iterated reads
     soma_reader_pointer = NULL,
 
-    # Instantiate soma_reader_pointer with a soma_reader object
+    # Instantiate soma_reader_pointer with a soma_array_reader object
     soma_reader_setup = function() {
       private$soma_reader_pointer <- sr_setup(
         self$uri,
