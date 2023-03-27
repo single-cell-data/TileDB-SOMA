@@ -376,21 +376,12 @@ std::vector<int64_t> SOMAArrayReader::shape() {
     return result;
 }
 
-template <typename T>
-std::pair<tiledb_datatype_t, std::vector<T>> SOMAArrayReader::get_metadata(
-    const std::string& key) {
-    std::vector<T> result;
-    tiledb_datatype_t value_type;
-    uint32_t value_num;
-    const void* value;
-
+void SOMAArrayReader::get_metadata(
+    const std::string& key,
+    tiledb_datatype_t* value_type,
+    uint32_t* value_num,
+    const void** value) {
     auto arr = this->mq_.get()->array().get();
-    arr->get_metadata(key, &value_type, &value_num, &value);
-
-    auto sz = value_num * tiledb_datatype_size(value_type);
-    result.insert(result.begin(), value, value + sz);
-
-    return std::pair<tiledb_datatype_t, std::vector<T>>(value_type, result);
+    arr->get_metadata(key, value_type, value_num, value);
 }
-
 }  // namespace tiledbsoma

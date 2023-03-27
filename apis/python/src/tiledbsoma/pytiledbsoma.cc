@@ -49,6 +49,53 @@ using namespace py::literals;
 
 namespace tiledbsoma {
 
+std::unordered_map<tiledb_datatype_t, std::string> _tdb_to_np_name_dtype = {
+    {TILEDB_INT32, "int32"},
+    {TILEDB_INT64, "int64"},
+    {TILEDB_FLOAT32, "float32"},
+    {TILEDB_FLOAT64, "float64"},
+    {TILEDB_INT8, "int8"},
+    {TILEDB_UINT8, "uint8"},
+    {TILEDB_INT16, "int16"},
+    {TILEDB_UINT16, "uint16"},
+    {TILEDB_UINT32, "uint32"},
+    {TILEDB_UINT64, "uint64"},
+    {TILEDB_STRING_ASCII, "S"},
+    {TILEDB_STRING_UTF8, "U1"},
+    {TILEDB_CHAR, "S1"},
+    {TILEDB_DATETIME_YEAR, "M8[Y]"},
+    {TILEDB_DATETIME_MONTH, "M8[M]"},
+    {TILEDB_DATETIME_WEEK, "M8[W]"},
+    {TILEDB_DATETIME_DAY, "M8[D]"},
+    {TILEDB_DATETIME_HR, "M8[h]"},
+    {TILEDB_DATETIME_MIN, "M8[m]"},
+    {TILEDB_DATETIME_SEC, "M8[s]"},
+    {TILEDB_DATETIME_MS, "M8[ms]"},
+    {TILEDB_DATETIME_US, "M8[us]"},
+    {TILEDB_DATETIME_NS, "M8[ns]"},
+    {TILEDB_DATETIME_PS, "M8[ps]"},
+    {TILEDB_DATETIME_FS, "M8[fs]"},
+    {TILEDB_DATETIME_AS, "M8[as]"},
+#if TILEDB_VERSION_MAJOR >= 2 && TILEDB_VERSION_MINOR >= 3
+    /* duration types map to timedelta */
+    {TILEDB_TIME_HR, "m8[h]"},
+    {TILEDB_TIME_MIN, "m8[m]"},
+    {TILEDB_TIME_SEC, "m8[s]"},
+    {TILEDB_TIME_MS, "m8[ms]"},
+    {TILEDB_TIME_US, "m8[us]"},
+    {TILEDB_TIME_NS, "m8[ns]"},
+    {TILEDB_TIME_PS, "m8[ps]"},
+    {TILEDB_TIME_FS, "m8[fs]"},
+    {TILEDB_TIME_AS, "m8[as]"},
+#endif
+#if TILEDB_VERSION_MAJOR >= 2 && TILEDB_VERSION_MINOR >= 9
+    {TILEDB_BLOB, "byte"},
+#endif
+#if TILEDB_VERSION_MAJOR >= 2 && TILEDB_VERSION_MINOR >= 10
+    {TILEDB_BOOL, "bool"},
+#endif
+};
+
 /**
  * @brief Convert ColumnBuffer to Arrow array.
  *
@@ -85,6 +132,49 @@ py::object to_table(std::shared_ptr<ArrayBuffers> array_buffers) {
     return pa_table_from_arrays(arrays, names);
 }
 
+py::dtype tdb_to_np_dtype(tiledb_datatype_t type, uint32_t cell_val_num) {
+    if (type == TILEDB_CHAR || type == TILEDB_STRING_UTF8 ||
+        type == TILEDB_STRING_ASCII) {
+        std::string base_str = (type == TILEDB_STRING_UTF8) ? "|U" : "|S";
+        if (cell_val_num < TILEDB_VAR_NUM)
+            base_str += std::to_string(cell_val_num);
+        return py::dtype(base_str);
+    }
+
+    if (cell_val_num == 1) {
+        if (type == TILEDB_STRING_UTF16 || type == TILEDB_STRING_UTF32)
+            TPY_ERROR_LOC("Unimplemented UTF16 or UTF32 string conversion!");
+        if (type == TILEDB_STRING_UCS2 || type == TILEDB_STRING_UCS4)
+            TPY_ERROR_LOC("Unimplemented UCS2 or UCS4 string conversion!");
+
+        if (_tdb_to_np_name_dtype.count(type) == 1)
+            return py::dtype(_tdb_to_np_name_dtype[type]);
+    }
+
+    if (cell_val_num == 2) {
+        if (type == TILEDB_FLOAT32)
+            return py::dtype("complex64");
+        if (type == TILEDB_FLOAT64)
+            return py::dtype("complex128");
+    }
+
+    if (cell_val_num == TILEDB_VAR_NUM)
+        return tdb_to_np_dtype(type, 1);
+
+    if (cell_val_num > 1) {
+        py::dtype base_dtype = tdb_to_np_dtype(type, 1);
+        py::tuple rec_elem = py::make_tuple("", base_dtype);
+        py::list rec_list;
+        for (size_t i = 0; i < cell_val_num; i++)
+            rec_list.append(rec_elem);
+        // note: we call the 'dtype' constructor b/c py::dtype does not accept
+        // list
+        auto np = py::module::import("numpy");
+        auto np_dtype = np.attr("dtype");
+        return np_dtype(rec_list);
+    }
+}
+
 /**
  * @brief pybind11 bindings
  *
@@ -118,7 +208,8 @@ PYBIND11_MODULE(pytiledbsoma, m) {
     m.def(
         "tiledbsoma_stats_reset",
         []() { tiledbsoma::stats::reset(); },
-        "Reset all TileDB internal statistics to 0 [lifecycle: experimental].");
+        "Reset all TileDB internal statistics to 0 [lifecycle: "
+        "experimental].");
     m.def(
         "tiledbsoma_stats_dump",
         []() {
@@ -154,15 +245,15 @@ PYBIND11_MODULE(pytiledbsoma, m) {
                             "init_query_condition");
 
                         try {
-                            // Column names will be updated with columns present
-                            // in the query condition
+                            // Column names will be updated with columns
+                            // present in the query condition
                             auto new_column_names =
                                 init_pyqc(py_schema, column_names)
                                     .cast<std::vector<std::string>>();
 
-                            // Update the column_names list if it was not empty,
-                            // otherwise continue selecting all columns with an
-                            // empty column_names list
+                            // Update the column_names list if it was not
+                            // empty, otherwise continue selecting all
+                            // columns with an empty column_names list
                             if (!column_names.empty()) {
                                 column_names = new_column_names;
                             }
@@ -229,8 +320,8 @@ PYBIND11_MODULE(pytiledbsoma, m) {
                         "init_query_condition");
 
                     try {
-                        // Column names will be updated with columns present in
-                        // the query condition
+                        // Column names will be updated with columns present
+                        // in the query condition
                         auto new_column_names =
                             init_pyqc(py_schema, column_names)
                                 .cast<std::vector<std::string>>();
@@ -251,7 +342,8 @@ PYBIND11_MODULE(pytiledbsoma, m) {
                              .get();
                 }
 
-                // Release python GIL after we're done accessing python objects
+                // Release python GIL after we're done accessing python
+                // objects
                 py::gil_scoped_release release;
 
                 // Reset state of the existing SOMAArrayReader object
@@ -269,9 +361,9 @@ PYBIND11_MODULE(pytiledbsoma, m) {
             "batch_size"_a = "auto",
             "result_order"_a = "auto")
 
-        // After this are short functions expected to be invoked when the coords
-        // are Python list/tuple, or NumPy arrays.  Arrow arrays are in this
-        // long if-else-if function.
+        // After this are short functions expected to be invoked when the
+        // coords are Python list/tuple, or NumPy arrays.  Arrow arrays are
+        // in this long if-else-if function.
         .def(
             "set_dim_points_arrow",
             [](SOMAArrayReader& reader,
@@ -297,8 +389,8 @@ PYBIND11_MODULE(pytiledbsoma, m) {
                     // Call array._export_to_c to get arrow array and schema
                     //
                     // If ever a NumPy array gets in here, there will be an
-                    // exception like "AttributeError: 'numpy.ndarray' object
-                    // has no attribute '_export_to_c'".
+                    // exception like "AttributeError: 'numpy.ndarray'
+                    // object has no attribute '_export_to_c'".
                     array.attr("_export_to_c")(
                         arrow_array_ptr, arrow_schema_ptr);
 
@@ -377,8 +469,8 @@ PYBIND11_MODULE(pytiledbsoma, m) {
                     } else if (
                         !strcmp(arrow_schema.format, "u") ||
                         !strcmp(arrow_schema.format, "z")) {
-                        // TODO: partitioning is not supported for string/bytes
-                        // dims
+                        // TODO: partitioning is not supported for
+                        // string/bytes dims
                         const char* data = (const char*)(arrow_array
                                                              .buffers[2]);
                         const uint32_t*
@@ -407,8 +499,8 @@ PYBIND11_MODULE(pytiledbsoma, m) {
                     } else if (
                         !strcmp(arrow_schema.format, "U") ||
                         !strcmp(arrow_schema.format, "Z")) {
-                        // TODO: partitioning is not supported for string/bytes
-                        // dims
+                        // TODO: partitioning is not supported for
+                        // string/bytes dims
                         const char* data = (const char*)(arrow_array
                                                              .buffers[2]);
                         const uint64_t*
@@ -437,25 +529,26 @@ PYBIND11_MODULE(pytiledbsoma, m) {
             "partition_count"_a = 1)
 
         // The following short functions are expected to be invoked when the
-        // coords are Python list/tuple, or NumPy arrays.  Arrow arrays are in
-        // the long if-else-if function above.
+        // coords are Python list/tuple, or NumPy arrays.  Arrow arrays are
+        // in the long if-else-if function above.
         //
         // Binding overloaded methods to templated member functions requires
         // more effort, see:
         // https://pybind11.readthedocs.io/en/stable/classes.html#overloaded-methods
 
-        // In an initial version of this file we had `set_dim_ranges` relying
-        // solely on type-overloading. This worked since we supported only int
-        // and string indices. In a subsequent version we are now supporting
-        // various NumPy/PyArrow types including float32, float64, int8, uint16,
-        // etc. It is an unfortunate fact that pybind11 does _not_ successfully
-        // disambiguate between float32 and float64, or between int8 and int64,
-        // etc. given that we ask it to disambiguate using not just types but
-        // std::vector of types or std::vector of std::pair of types.
-        // Experiments have shown that when both float32 and float64 are
-        // implemented with overloaded names to be differentiated solely by
-        // type, pybind11 uses the _first found_. Therefore it is necessary for
-        // us to no longer use common overloaded names.
+        // In an initial version of this file we had `set_dim_ranges`
+        // relying solely on type-overloading. This worked since we
+        // supported only int and string indices. In a subsequent version we
+        // are now supporting various NumPy/PyArrow types including float32,
+        // float64, int8, uint16, etc. It is an unfortunate fact that
+        // pybind11 does _not_ successfully disambiguate between float32 and
+        // float64, or between int8 and int64, etc. given that we ask it to
+        // disambiguate using not just types but std::vector of types or
+        // std::vector of std::pair of types. Experiments have shown that
+        // when both float32 and float64 are implemented with overloaded
+        // names to be differentiated solely by type, pybind11 uses the
+        // _first found_. Therefore it is necessary for us to no longer use
+        // common overloaded names.
 
         .def(
             "set_dim_points_string_or_bytes",
@@ -523,18 +616,19 @@ PYBIND11_MODULE(pytiledbsoma, m) {
                 const std::string&, const std::vector<uint8_t>&)>(
                 &SOMAArrayReader::set_dim_points))
 
-        // In an initial version of this file we had `set_dim_ranges` relying
-        // solely on type-overloading. This worked since we supported only int
-        // and string indices. In a subsequent version we are now supporting
-        // various NumPy/PyArrow types including float32, float64, int8, uint16,
-        // etc. It is an unfortunate fact that pybind11 does _not_ successfully
-        // disambiguate between float32 and float64, or between int8 and int64,
-        // etc. given that we ask it to disambiguate using not just types but
-        // std::vector of types or std::vector of std::pair of types.
-        // Experiments have shown that when both float32 and float64 are
-        // implemented with overloaded names to be differentiated solely by
-        // type, pybind11 uses the _first found_. Therefore it is necessary for
-        // us to no longer use common overloaded names.
+        // In an initial version of this file we had `set_dim_ranges`
+        // relying solely on type-overloading. This worked since we
+        // supported only int and string indices. In a subsequent version we
+        // are now supporting various NumPy/PyArrow types including float32,
+        // float64, int8, uint16, etc. It is an unfortunate fact that
+        // pybind11 does _not_ successfully disambiguate between float32 and
+        // float64, or between int8 and int64, etc. given that we ask it to
+        // disambiguate using not just types but std::vector of types or
+        // std::vector of std::pair of types. Experiments have shown that
+        // when both float32 and float64 are implemented with overloaded
+        // names to be differentiated solely by type, pybind11 uses the
+        // _first found_. Therefore it is necessary for us to no longer use
+        // common overloaded names.
 
         .def(
             "set_dim_ranges_string_or_bytes",
@@ -641,8 +735,37 @@ PYBIND11_MODULE(pytiledbsoma, m) {
                 return std::nullopt;
             })
 
-        .def("nnz", &SOMAArrayReader::nnz, py::call_guard<py::gil_scoped_release>())
+        .def(
+            "nnz",
+            &SOMAArrayReader::nnz,
+            py::call_guard<py::gil_scoped_release>())
 
-        .def_property_readonly("shape", &SOMAArrayReader::shape);
+        .def_property_readonly("shape", &SOMAArrayReader::shape)
+
+        .def(
+            "get_array_metadata",
+            [](SOMAArrayReader& reader, const std::string& key) -> py::tuple {
+                tiledb_datatype_t tdb_type;
+                uint32_t value_num;
+                const void* value;
+
+                reader.get_metadata(key, &tdb_type, &value_num, &value);
+
+                py::dtype value_type = tdb_to_np_dtype(tdb_type, 1);
+
+                py::array py_buf;
+                if (value == nullptr) {
+                    py_buf = py::array(value_type, 0);
+                    return py::make_tuple(py_buf, tdb_type);
+                }
+
+                if (tdb_type == TILEDB_STRING_UTF8) {
+                    value_type = py::dtype("|S1");
+                }
+
+                py_buf = py::array(value_type, value_num, value);
+
+                return py::make_tuple(py_buf, tdb_type);
+            });
 }
 }  // namespace tiledbsoma

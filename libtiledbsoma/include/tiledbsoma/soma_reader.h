@@ -342,12 +342,19 @@ class SOMAArrayReader {
     /**
      * @brief Get the value of a metadata key-value item given the key.
      *
-     * @return A pair where the first item is the datatype of the value and the
-     * second item is vector containing the values.
+     * @param key The key of the metadata item to be retrieved. UTF-8 encodings
+     *     are acceptable.
+     * @param value_type The datatype of the value.
+     * @param value_num The value may consist of more than one items of the
+     *     same datatype. This argument indicates the number of items in the
+     *     value component of the metadata. Keys with empty values are indicated
+     *     by value_num == 1 and value == NULL.
+     * @param value The metadata value in binary form.
+     *
+     * @note If the key does not exist, then `value` will be NULL.
      */
-    template <typename T>
-    std::pair<tiledb_datatype_t, std::vector<T>> get_metadata(
-        const std::string&);
+    void get_metadata(
+        const std::string&, tiledb_datatype_t*, uint32_t*, const void**);
 
    private:
     //===================================================================
