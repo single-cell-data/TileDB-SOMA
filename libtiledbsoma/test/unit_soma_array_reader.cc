@@ -1,5 +1,5 @@
 /**
- * @file   unit_soma_reader.cc
+ * @file   unit_soma_array_reader.cc
  *
  * @section LICENSE
  *

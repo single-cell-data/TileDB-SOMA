@@ -1,5 +1,5 @@
 /**
- * @file   soma_reader.cc
+ * @file   soma_array_reader.cc
  *
  * @section LICENSE
  *
@@ -30,7 +30,7 @@
  *   This file defines the SOMAArrayReader class.
  */
 
-#include "tiledbsoma/soma_reader.h"
+#include "tiledbsoma/soma_array_reader.h"
 #include "tiledbsoma/logger_public.h"
 #include "tiledbsoma/util.h"
 
@@ -125,7 +125,8 @@ void SOMAArrayReader::reset(
     batch_size_ = batch_size;
 
     result_order_ = "auto";
-    if (result_order != "auto") {  // default "auto" is set in soma_reader.h
+    if (result_order !=
+        "auto") {  // default "auto" is set in soma_array_reader.h
         tiledb_layout_t layout;
         if (result_order == "row-major") {
             layout = TILEDB_ROW_MAJOR;
