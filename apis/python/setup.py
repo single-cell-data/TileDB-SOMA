@@ -249,7 +249,6 @@ setuptools.setup(
     install_requires=[
         "anndata",
         "attrs>=22.2",
-        "distro",
         # Pinning numba & its particular numpy constraints:
         # The old pip solver (<=2020) doesn't deal with the transitive
         # requirements (scanpy -> numba -> numpy) properly resulting in broken
