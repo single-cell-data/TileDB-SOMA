@@ -48,6 +48,9 @@ for arg in args:
     if (start, eq) == ("--libtiledbsoma", "="):
         libtiledbsoma_dir = pathlib.Path(last)
         sys.argv.remove(arg)
+    if arg.find("--tiledb") == 0:
+        tiledb_dir = pathlib.Path(arg.split("=")[1])
+        sys.argv.remove(arg)
 
 if libtiledbsoma_dir is None:
     scripts_dir = this_dir / "dist_links" / "scripts"
@@ -179,13 +182,16 @@ INC_DIRS = [
         "./src/tiledbsoma"
     ),  # since pytiledbsoma.cc does #include of query_condition.cc
     str(libtiledbsoma_dir.parent / "build/externals/install/include"),
+    str(tiledb_dir / "include"),
 ]
 
 LIB_DIRS = [
     str(libtiledbsoma_dir / "lib"),
+    str(tiledb_dir / "lib"),
 ]
 CXX_FLAGS = [
     f'-Wl,-rpath,{str(libtiledbsoma_dir / "lib")}',
+    f'-Wl,-rpath,{str(tiledb_dir / "lib")}',
 ]
 if sys.platform == "darwin":
     CXX_FLAGS.append("-mmacosx-version-min=10.14")
@@ -193,10 +199,16 @@ if sys.platform == "darwin":
 if os.name == "posix" and sys.platform != "darwin":
     LIB_DIRS.append(str(libtiledbsoma_dir / "lib" / "x86_64-linux-gnu"))
     LIB_DIRS.append(str(libtiledbsoma_dir / "lib64"))
+    LIB_DIRS.append(str(tiledb_dir / "lib" / "x86_64-linux-gnu"))
+    LIB_DIRS.append(str(tiledb_dir / "lib64"))
     CXX_FLAGS.append(
         f'-Wl,-rpath,{str(libtiledbsoma_dir / "lib" / "x86_64-linux-gnu")}'
     )
     CXX_FLAGS.append(f'-Wl,-rpath,{str(libtiledbsoma_dir / "lib64")}')
+    CXX_FLAGS.append(
+        f'-Wl,-rpath,{str(tiledb_dir / "lib" / "x86_64-linux-gnu")}'
+    )
+    CXX_FLAGS.append(f'-Wl,-rpath,{str(tiledb_dir / "lib64")}')
 
 # ----------------------------------------------------------------
 # Don't use `if __name__ == "__main__":` as the `python_requires` must
