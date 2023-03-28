@@ -65,14 +65,14 @@ namespace tdbs = tiledbsoma;
 //' @export
 // [[Rcpp::export]]
 Rcpp::List soma_array_reader(const std::string& uri,
-                       Rcpp::Nullable<Rcpp::CharacterVector> colnames = R_NilValue,
-                       Rcpp::Nullable<Rcpp::XPtr<tiledb::QueryCondition>> qc = R_NilValue,
-                       Rcpp::Nullable<Rcpp::List> dim_points = R_NilValue,
-                       Rcpp::Nullable<Rcpp::List> dim_ranges = R_NilValue,
-                       std::string batch_size = "auto",
-                       std::string result_order = "auto",
-                       const std::string& loglevel = "auto",
-                       Rcpp::Nullable<Rcpp::CharacterVector> config = R_NilValue) {
+                             Rcpp::Nullable<Rcpp::CharacterVector> colnames = R_NilValue,
+                             Rcpp::Nullable<Rcpp::XPtr<tiledb::QueryCondition>> qc = R_NilValue,
+                             Rcpp::Nullable<Rcpp::List> dim_points = R_NilValue,
+                             Rcpp::Nullable<Rcpp::List> dim_ranges = R_NilValue,
+                             std::string batch_size = "auto",
+                             std::string result_order = "auto",
+                             const std::string& loglevel = "auto",
+                             Rcpp::Nullable<Rcpp::CharacterVector> config = R_NilValue) {
 
     if (loglevel != "auto") {
         spdl::set_level(loglevel);
@@ -134,7 +134,9 @@ Rcpp::List soma_array_reader(const std::string& uri,
     // Getting next batch:  std::optional<std::shared_ptr<ArrayBuffers>>
     auto sr_data = sr->read_next();
     if (!sr->results_complete()) {
-        Rcpp::warning("Read of '%s' incomplete", uri);
+        Rcpp::stop("Read of '%s' is incomplete.\nConsider increasing the memory "
+                   "allocation via the configuration\noption 'soma.init_buffer_bytes', "
+                   "or using iterated partial reads.", uri);
     }
     spdl::info("[soma_array_reader] Read complete with {} rows and {} cols",
                sr_data->get()->num_rows(), sr_data->get()->names().size());
