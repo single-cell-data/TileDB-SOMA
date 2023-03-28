@@ -277,7 +277,14 @@ setuptools.setup(
         # These pins can be removed either when there's a new numba release
         # with less-particular numpy version constraints, or if we decide we no
         # longer need to support the old pip solver (default on ubuntu 20.04).
-        "numba==0.56.4",
+        #
+        # "numba==0.56.4",
+        #
+        # WIP
+        # https://github.com/single-cell-data/TileDB-SOMA/pull/599
+        # https://github.com/numba/numba/issues/8304
+        "numba==0.57.0rc1",
+        #
         "numpy>=1.18,<1.24",
         "pandas",
         "pyarrow>=9.0.0",
