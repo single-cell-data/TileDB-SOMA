@@ -1,22 +1,16 @@
 # Overview
 
-This is a Python implementation of the [Unified Single-cell Data Model](https://github.com/single-cell-data/SOMA).
-
-This branch, `main`, implements the [updated specfication](https://github.com/single-cell-data/SOMA/blob/main/abstract_specification.md).  Please also see the `main-old` branch which implements the [original specification](https://github.com/single-cell-data/TileDB-SOMA/blob/main-old/spec/specification.md).
+This is a Python implementation of the [SOMA API specification](https://github.com/single-cell-data/SOMA/blob/main/abstract_specification.md) for interacting with the [Unified Single-cell Data Model](https://github.com/single-cell-data/SOMA).
 
 # Installation
 
 ## Using pip
 
-This code is hosted at [PyPI](https://pypi.org/project/tiledbsoma/), so you can do
+This code is hosted at [PyPI](https://pypi.org/project/tiledbsoma/), so you can install using Pip:
 
 ```shell
 $ python -m pip install tiledbsoma
-# or
-$ python -m pip install --pre tiledbsoma
 ```
-
-Without `--pre` you will get version 0.1.* (the `main-old` branch); with `--pre`, you will get 0.5.0a* (the `main` branch).
 
 To install a specific version:
 
@@ -54,7 +48,7 @@ Please see [https://github.com/single-cell-data/TileDB-SOMA/issues](https://gith
 
 # `platform_config` format
 
-When accessing SOMA APIs, TileDB-specific settings can be configured with the `platform_config` parameter.
+When accessing SOMA APIs, TileDB-specific settings can be configured with the [`platform_config`](https://github.com/single-cell-data/SOMA/blob/main/abstract_specification.md#platform-specific-configuration) parameter.
 The options accepted by TileDB SOMA are described here, using [TypeScript interface syntax](https://www.typescriptlang.org/docs/handbook/2/objects.html):
 
 ```typescript
