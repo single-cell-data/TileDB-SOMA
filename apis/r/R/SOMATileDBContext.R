@@ -122,7 +122,7 @@ SOMATileDBContext <- R6::R6Class(
       }
       return(tryCatch(
         expr = names(as.vector(tiledb::config(private$.tiledb_ctx))),
-        error = \(...) NULL
+        error = null
       ))
     }
   )
