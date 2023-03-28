@@ -25,13 +25,13 @@ jobs:
     - name: Build sdist
       run: python setup.py sdist
       working-directory: ./apis/python
-    - name: Upload sdist artifact
+    - name: Upload sdist artifact # upload to GitHub Actions storage
       uses: actions/upload-artifact@v3
       with:
         name: sdist
         path: apis/python/dist/
 
-  # This step builds wheels and uploads them to GitHub action storage.
+  # This step builds wheels and uploads them to GitHub Actions storage.
   # See also https://github.com/single-cell-data/TileDB-SOMA/issues/700.
   # See also https://github.com/single-cell-data/TileDB-SOMA/wiki/PyPI-packaging-WIP
   # for important transitional context.
@@ -68,7 +68,7 @@ jobs:
         #   run CMake build or not. Otherwise it'll keep reusing the library file built in the
         #   first iteration of cibuildwheel's outer loop, resulting in wheels with the library
         #   built for the wrong python version.
-    - name: Upload wheels-${{ matrix.platform }}
+    - name: Upload wheels-${{ matrix.platform }} # upload to GitHub Actions storage
       uses: actions/upload-artifact@v3
       with:
         name: wheels-${{ matrix.platform }}
@@ -122,42 +122,27 @@ jobs:
           python3 -c 'import tiledbsoma; print(tiledbsoma.pytiledbsoma.__file__); tiledbsoma.show_package_versions()'
         "
 
-  # TODO: publlish to TestPyPI
-    #- name: Publish package to TestPyPI
-    #  if: matrix.os == 'ubuntu-22.04' && github.event_name == 'release'
-    #  uses: pypa/gh-action-pypi-publish@master
-    #  continue-on-error: true
-    #  with:
-    #    repository_url: https://test.pypi.org/legacy/
-    #    user: __token__
-    #    password: ${{ secrets.TEST_PYPI_TOKEN }}
-    #    packages_dir: dist-wheel
-    #    verbose: true
-
-  # TODO: publlish to PyPI
-    # Until general release of the main branch of tiledbsoma we'll follow the convention of tagging releases
-    # 0.5.0a1, 0.5.0a2, etc -- always with the "a" in it -- that way PyPI will automagically make these
-    # "prereleases". Then:
-    # pip install tiledbsoma -> 0.1.12 (or whatever the main-old branch is at)
-    # pip install --pre tiledbsoma -> 0.5.0a1 (or whatever the main branch is at)
-
-    # For prime time, once we're in 1.x release:
+  publish-to-pypi:
+    name: Publish package to PyPI
+    needs: smoke-test
+    #
     # Not this:
     # if: github.event_name == 'release' && !github.event.release.prerelease
     # but this:
     # if: github.event_name == 'release'
-    # Reasoning: once we're at 1.x, say we have a 1.3 which is released and a 1.4 which is
-    # pre-release (at the GitHub tag level) then we do still want to upload that package to PyPI and
-    # let people install it using `pip install --pre tiledbsoma`.
-
-    # For now:
-    #if: github.event_name == 'release' && (contains(${{github.event.release.tag_name}}, "a") || contains(${github.event.release.tag_name}}, "b"))
     #
-    #steps:
-    #- name: Publish packages to PyPI
-    #  uses: pypa/gh-action-pypi-publish@master
-    #  with:
-    #    user: __token__
-    #    password: ${{ secrets.PYPI_TOKEN }}
-    #    packages_dir: sdist, dist-wheel
-    #    verbose: true
+    # Reasoning:
+    # * We can mark a GitHub release as pre-release and not-latest while wheels are building
+    # * Then let this CI complete
+    # * Then mark the GitHub release as release and latest, so anyone installing from PyPI will get
+    #   usable wheels.
+    #
+    if: matrix.os == 'ubuntu-20.04' && github.event_name == 'release'
+    steps:
+    - name: Publish packages to PyPI
+      uses: pypa/gh-action-pypi-publish@master
+      with:
+        user: __token__
+        password: ${{ secrets.PYPI_TOKEN }}
+        packages_dir: sdist, dist-wheel
+        verbose: true
