@@ -41,6 +41,7 @@ sys.path.insert(0, str(this_dir))
 import version  # noqa E402
 
 libtiledbsoma_dir: Optional[pathlib.Path] = None
+tiledb_dir: Optional[pathlib.Path] = None
 
 args = sys.argv[:]
 for arg in args:
@@ -62,6 +63,8 @@ if libtiledbsoma_dir is None:
         # in extracted sdist, with libtiledbsoma copied into dist_links/
         libtiledbsoma_dir = this_dir / "dist_links" / "dist"
 
+if tiledb_dir is None:
+    tiledb_dir = this_dir
 
 def get_libtiledbsoma_library_name():
     """
