@@ -66,6 +66,7 @@ if libtiledbsoma_dir is None:
 if tiledb_dir is None:
     tiledb_dir = this_dir
 
+
 def get_libtiledbsoma_library_name():
     """
     :return: List of TileDB shared library names.
@@ -208,9 +209,7 @@ if os.name == "posix" and sys.platform != "darwin":
         f'-Wl,-rpath,{str(libtiledbsoma_dir / "lib" / "x86_64-linux-gnu")}'
     )
     CXX_FLAGS.append(f'-Wl,-rpath,{str(libtiledbsoma_dir / "lib64")}')
-    CXX_FLAGS.append(
-        f'-Wl,-rpath,{str(tiledb_dir / "lib" / "x86_64-linux-gnu")}'
-    )
+    CXX_FLAGS.append(f'-Wl,-rpath,{str(tiledb_dir / "lib" / "x86_64-linux-gnu")}')
     CXX_FLAGS.append(f'-Wl,-rpath,{str(tiledb_dir / "lib64")}')
 
 # ----------------------------------------------------------------
