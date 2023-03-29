@@ -29,7 +29,7 @@
 #' }
 #' @export
 soma_array_reader <- function(uri, colnames = NULL, qc = NULL, dim_points = NULL, dim_ranges = NULL, batch_size = "auto", result_order = "auto", loglevel = "auto", config = NULL) {
-    .Call(`_tiledbsoma_soma_reader`, uri, colnames, qc, dim_points, dim_ranges, batch_size, result_order, loglevel, config)
+    .Call(`_tiledbsoma_soma_array_reader`, uri, colnames, qc, dim_points, dim_ranges, batch_size, result_order, loglevel, config)
 }
 
 #' @noRd
