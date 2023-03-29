@@ -7,7 +7,7 @@ tiledb_zstd_filter <- function(level = 3L) {
 }
 
 match_query_layout <- function(layout) {
-  layouts <- c("ROW_MAJOR", "COL_MAJOR", "GLOBAL_ORDER", "UNORDERED")
+  layouts <- c("ROW_MAJOR", "COL_MAJOR", "GLOBAL_ORDER", "UNORDERED", "auto") # "auto" is used by libtiledbsoma
   match.arg(layout, choices = layouts, several.ok = FALSE)
 }
 
