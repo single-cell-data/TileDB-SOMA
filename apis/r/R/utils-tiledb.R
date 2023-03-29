@@ -6,11 +6,8 @@ tiledb_zstd_filter <- function(level = 3L) {
   )
 }
 
-# Notes:
-# * "auto" is used by libtiledbsoma -- it's not a core-level tiledb parameter
-# * core-level "GLOBAL_ORDER" and "UNORDERED" are not currently supported by libtiledbsoma
 match_query_layout <- function(layout) {
-  layouts <- c("ROW_MAJOR", "COL_MAJOR", "auto")
+  layouts <- c("ROW_MAJOR", "COL_MAJOR", "GLOBAL_ORDER", "UNORDERED")
   match.arg(layout, choices = layouts, several.ok = FALSE)
 }
 
