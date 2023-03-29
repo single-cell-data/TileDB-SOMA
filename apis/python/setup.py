@@ -58,6 +58,7 @@ if libtiledbsoma_dir is None:
 else:
     libtiledbsoma_dir = pathlib.Path(libtiledbsoma_dir)
 
+
 def get_libtiledbsoma_library_name():
     """
     :return: List of TileDB shared library names.
