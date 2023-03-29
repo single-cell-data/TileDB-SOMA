@@ -43,15 +43,8 @@ import version  # noqa E402
 libtiledbsoma_dir: Optional[pathlib.Path] = None
 tiledb_dir: Optional[pathlib.Path] = None
 
-args = sys.argv[:]
-for arg in args:
-    start, eq, last = arg.partition("=")
-    if (start, eq) == ("--libtiledbsoma", "="):
-        libtiledbsoma_dir = pathlib.Path(last)
-        sys.argv.remove(arg)
-    if arg.find("--tiledb") == 0:
-        tiledb_dir = pathlib.Path(arg.split("=")[1])
-        sys.argv.remove(arg)
+tiledb_dir = pathlib.Path(os.environ.get("TILEDB_PATH", this_dir))
+libtiledbsoma_dir = os.environ.get("TILEDBSOMA_PATH", None)
 
 if libtiledbsoma_dir is None:
     scripts_dir = this_dir / "dist_links" / "scripts"
@@ -62,10 +55,8 @@ if libtiledbsoma_dir is None:
     else:
         # in extracted sdist, with libtiledbsoma copied into dist_links/
         libtiledbsoma_dir = this_dir / "dist_links" / "dist"
-
-if tiledb_dir is None:
-    tiledb_dir = this_dir
-
+else:
+    libtiledbsoma_dir = pathlib.Path(libtiledbsoma_dir)
 
 def get_libtiledbsoma_library_name():
     """

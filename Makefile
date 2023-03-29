@@ -14,7 +14,7 @@ build ?= Release
 .PHONY: install
 install: clean
 	@./scripts/bld --prefix=${prefix} --tiledb=${tiledb} --build=${build}
-	@cd apis/python && python setup.py install --tiledb=${tiledb}
+	@TILEDB_PATH=${tiledb} pip install -v -e apis/python
 
 .PHONY: r-build
 r-build: clean
