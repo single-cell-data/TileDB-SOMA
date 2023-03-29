@@ -95,7 +95,7 @@ SOMADenseNDArray <- R6::R6Class(
     #' @return An [`arrow::Table`].
     read_arrow_table = function(
       coords = NULL,
-      result_order = "ROW_MAJOR",
+      result_order = "auto",
       iterated = FALSE,
       log_level = "warn"
     ) {

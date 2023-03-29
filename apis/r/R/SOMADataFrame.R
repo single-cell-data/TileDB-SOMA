@@ -160,7 +160,7 @@ SOMADataFrame <- R6::R6Class(
     read = function(coords = NULL,
                     column_names = NULL,
                     value_filter = NULL,
-                    result_order = "UNORDERED",
+                    result_order = "auto",
                     iterated = FALSE,
                     log_level = "warn") {
 

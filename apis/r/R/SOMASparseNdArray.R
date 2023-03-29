@@ -151,7 +151,7 @@ SOMASparseNDArray <- R6::R6Class(
     #' @return A `matrix` object
     read_sparse_matrix = function(
       coords = NULL,
-      result_order = "ROW_MAJOR",
+      result_order = "auto",
       repr = c("C", "T", "R"),
       iterated = FALSE,
       log_level = "warn"
