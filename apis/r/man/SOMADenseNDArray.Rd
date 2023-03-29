@@ -25,7 +25,7 @@ The \code{write} method is currently limited to writing from 2-d matrices.
 (lifecycle: experimental)
 }
 \section{Super classes}{
-\code{\link[tiledbsoma:TileDBObject]{tiledbsoma::TileDBObject}} -> \code{\link[tiledbsoma:TileDBArray]{tiledbsoma::TileDBArray}} -> \code{\link[tiledbsoma:SOMAArrayBase]{tiledbsoma::SOMAArrayBase}} -> \code{SOMADenseNDArray}
+\code{tiledbsoma::TileDBObject} -> \code{tiledbsoma::TileDBArray} -> \code{tiledbsoma::SOMAArrayBase} -> \code{SOMADenseNDArray}
 }
 \section{Methods}{
 \subsection{Public methods}{
@@ -95,7 +95,7 @@ Read as an 'arrow::Table' (lifecycle: experimental)
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{SOMADenseNDArray$read_arrow_table(
   coords = NULL,
-  result_order = "ROW_MAJOR",
+  result_order = "auto",
   iterated = FALSE,
   log_level = "warn"
 )}\if{html}{\out{</div>}}
@@ -109,7 +109,10 @@ length equal to the number of values to read. If \code{NULL}, all values are
 read. List elements can be named when specifying a subset of dimensions.}
 
 \item{\code{result_order}}{Optional order of read results. This can be one of either
-\verb{"ROW_MAJOR, }"COL_MAJOR"\verb{, }"GLOBAL_ORDER"\verb{, or }"UNORDERED"`.}
+\verb{"ROW_MAJOR, }"COL_MAJOR"\verb{, or }"auto"` (default).}
+
+\item{\code{result_order}}{Optional order of read results. This can be one of either
+\verb{"ROW_MAJOR, }"COL_MAJOR"\verb{, or }"auto"` (default).}
 
 \item{\code{iterated}}{Option boolean indicated whether data is read in call (when
 \code{FALSE}, the default value) or in several iterated steps.}
@@ -144,7 +147,10 @@ length equal to the number of values to read. If \code{NULL}, all values are
 read. List elements can be named when specifying a subset of dimensions.}
 
 \item{\code{result_order}}{Optional order of read results. This can be one of either
-\verb{"ROW_MAJOR, }"COL_MAJOR"\verb{, }"GLOBAL_ORDER"\verb{, or }"UNORDERED"`.}
+\verb{"ROW_MAJOR, }"COL_MAJOR"\verb{, or }"auto"` (default).}
+
+\item{\code{result_order}}{Optional order of read results. This can be one of either
+\verb{"ROW_MAJOR, }"COL_MAJOR"\verb{, or }"auto"` (default).}
 
 \item{\code{iterated}}{Option boolean indicated whether data is read in call (when
 \code{FALSE}, the default value) or in several iterated steps.}

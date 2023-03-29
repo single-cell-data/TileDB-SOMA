@@ -8,7 +8,7 @@ Base class for representing an individual TileDB array.
 (lifecycle: experimental)
 }
 \section{Super class}{
-\code{\link[tiledbsoma:TileDBObject]{tiledbsoma::TileDBObject}} -> \code{TileDBArray}
+\code{tiledbsoma::TileDBObject} -> \code{TileDBArray}
 }
 \section{Methods}{
 \subsection{Public methods}{
