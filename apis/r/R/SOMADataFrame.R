@@ -152,8 +152,7 @@ SOMADataFrame <- R6::R6Class(
     #' @param value_filter Optional string containing a logical expression that is used
     #' to filter the returned values. See [`tiledb::parse_query_condition`] for
     #' more information.
-    #' @param result_order Optional order of read results. This can be one of either
-    #' `"ROW_MAJOR, `"COL_MAJOR"`, `"GLOBAL_ORDER"`, or `"UNORDERED"`.
+    #' @template param-result-order
     #' @param iterated Option boolean indicated whether data is read in call (when
     #' `FALSE`, the default value) or in several iterated steps.
     #' @param log_level Optional logging level with default value of `"warn"`.
@@ -161,7 +160,7 @@ SOMADataFrame <- R6::R6Class(
     read = function(coords = NULL,
                     column_names = NULL,
                     value_filter = NULL,
-                    result_order = "UNORDERED",
+                    result_order = "auto",
                     iterated = FALSE,
                     log_level = "warn") {
 

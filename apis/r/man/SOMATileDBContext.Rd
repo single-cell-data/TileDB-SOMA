@@ -7,7 +7,7 @@
 Context map for TileDB-backed SOMA objects
 }
 \section{Super classes}{
-\code{\link[tiledbsoma:MappingBase]{tiledbsoma::MappingBase}} -> \code{\link[tiledbsoma:ScalarMap]{tiledbsoma::ScalarMap}} -> \code{\link[tiledbsoma:SOMAContextBase]{tiledbsoma::SOMAContextBase}} -> \code{SOMATileDBContext}
+\code{tiledbsoma::MappingBase} -> \code{tiledbsoma::ScalarMap} -> \code{tiledbsoma::SOMAContextBase} -> \code{SOMATileDBContext}
 }
 \section{Methods}{
 \subsection{Public methods}{

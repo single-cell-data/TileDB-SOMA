@@ -10,7 +10,7 @@ row and is intended to act as a join key for other objects, such as
 \code{\link{SOMASparseNDArray}}.  (lifecycle: experimental)
 }
 \section{Super classes}{
-\code{\link[tiledbsoma:TileDBObject]{tiledbsoma::TileDBObject}} -> \code{\link[tiledbsoma:TileDBArray]{tiledbsoma::TileDBArray}} -> \code{\link[tiledbsoma:SOMAArrayBase]{tiledbsoma::SOMAArrayBase}} -> \code{SOMADataFrame}
+\code{tiledbsoma::TileDBObject} -> \code{tiledbsoma::TileDBArray} -> \code{tiledbsoma::SOMAArrayBase} -> \code{SOMADataFrame}
 }
 \section{Methods}{
 \subsection{Public methods}{
@@ -103,7 +103,7 @@ column, and optionally filtered.
   coords = NULL,
   column_names = NULL,
   value_filter = NULL,
-  result_order = "UNORDERED",
+  result_order = "auto",
   iterated = FALSE,
   log_level = "warn"
 )}\if{html}{\out{</div>}}
@@ -122,7 +122,7 @@ to filter the returned values. See \code{\link[tiledb:parse_query_condition]{til
 more information.}
 
 \item{\code{result_order}}{Optional order of read results. This can be one of either
-\verb{"ROW_MAJOR, }"COL_MAJOR"\verb{, }"GLOBAL_ORDER"\verb{, or }"UNORDERED"`.}
+\verb{"ROW_MAJOR, }"COL_MAJOR"\verb{, or }"auto"` (default).}
 
 \item{\code{iterated}}{Option boolean indicated whether data is read in call (when
 \code{FALSE}, the default value) or in several iterated steps.}
