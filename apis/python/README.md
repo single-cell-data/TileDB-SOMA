@@ -6,7 +6,7 @@ This is a Python implementation of the [SOMA API specification](https://github.c
 
 ## Using pip
 
-This code is hosted at [PyPI](https://pypi.org/project/tiledbsoma/), so you can install using Pip:
+This code is hosted at [PyPI](https://pypi.org/project/tiledbsoma/), so you can install using `pip`:
 
 ```shell
 $ python -m pip install tiledbsoma
