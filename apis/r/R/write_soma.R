@@ -1,6 +1,6 @@
 #' Write a SOMA Object from an \R Object
 #'
-#' Write \R objects to SOMA following the SOMA spec. This is a generic
+#' Convert \R objects to their appropriate SOMA counterpart
 #' function and methods can be written for it to provide a high-level
 #' \R \eqn{\rightarrow} SOMA interface
 #'
