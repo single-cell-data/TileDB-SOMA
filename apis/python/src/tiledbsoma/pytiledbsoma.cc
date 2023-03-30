@@ -644,5 +644,33 @@ PYBIND11_MODULE(pytiledbsoma, m) {
         .def("nnz", &SOMAArrayReader::nnz, py::call_guard<py::gil_scoped_release>())
 
         .def_property_readonly("shape", &SOMAArrayReader::shape);
+
+    py::class_<SOMAGroupWriter>(m, "SOMAGroupWriter")
+        .def(
+            py::init(
+                [](std::string_view uri,
+                   std::map<std::string, std::string> platform_config,
+                   std::optional<std::pair<uint64_t, uint64_t>> timestamp) {
+
+                    // Release python GIL after we're done accessing python
+                    // objects
+                    py::gil_scoped_release release;
+
+                    auto writer = SOMAGroupWriter::open(
+                        uri,
+                        platform_config,
+                        timestamp);
+
+                    return writer;
+                }),
+            "uri"_a,
+            py::kw_only(),
+            "platform_config"_a = py::dict(),
+            "timestamp"_a = py::none())
+
+        .def_static("create", &SOMAGroupWriter::create, py::call_guard<py::gil_scoped_release>())
+
+        .def_static("open", &SOMAGroupWriter::open, py::call_guard<py::gil_scoped_release>());
+
 }
 }  // namespace tiledbsoma
