@@ -30,8 +30,8 @@
  *   This declares the SOMAArrayReader
  */
 
-#ifndef SOMA_READER
-#define SOMA_READER
+#ifndef SOMA_ARRAY_READER
+#define SOMA_ARRAY_READER
 
 #include <stdexcept>  // for windows: error C2039: 'runtime_error': is not a member of 'std'
 
@@ -374,4 +374,4 @@ class SOMAArrayReader {
 
 }  // namespace tiledbsoma
 
-#endif
+#endif  // SOMA_ARRAY_READER
