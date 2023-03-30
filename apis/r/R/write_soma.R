@@ -5,7 +5,7 @@
 #' \R \eqn{\rightarrow} SOMA interface
 #'
 #' @param x An object
-#' @param uri URI for resulting SOMA
+#' @param uri URI for resulting SOMA object
 #' @template param-dots-method
 #' @param platform_config Optional \link[tiledbsoma:PlatformConfig]{platform
 #' configuration}
