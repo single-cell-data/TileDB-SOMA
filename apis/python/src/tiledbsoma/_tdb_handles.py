@@ -220,22 +220,30 @@ class GroupWrapper(Wrapper[tiledb.Group]):
         context: SOMATileDBContext,
         timestamp: int,
     ) -> tiledb.Group:
-        return tiledb.Group(
-            uri, mode, ctx=_group_timestamp_ctx(context.tiledb_ctx, timestamp)
-        )
+        # * We want to do open-group-at-timestamp.
+        # * Timestamps are read from tiledb config.
+        # * We can't set-config on an already opened group.
+        # * We could create a new ctx, with the current ctx's config plus the
+        #   new timestamp config, but that causes a thread-pool leak. See also
+        #   https://github.com/single-cell-data/TileDB-SOMA/issues/1169.
+        # * For now, we do this close, set-config, and re-open workaround.
+        # * An upcoming TileDB-Py release will remove this need for us.
+        # TODO: make that happen.
+        # Tracking issue: https://github.com/single-cell-data/TileDB-SOMA/issues/1198
+        G = tiledb.Group(uri, mode)
+        gmode = G.mode
+        G.close()
+        cfg = context.tiledb_ctx.config().dict()
+        cfg["sm.group.timestamp_end"] = timestamp
+        G._set_config(tiledb.Config(cfg))
+        G.open(gmode)
+        return G
 
     def _do_initial_reads(self, reader: tiledb.Group) -> None:
         super()._do_initial_reads(reader)
         self.initial_contents = {
             o.name: GroupEntry.from_object(o) for o in reader if o.name is not None
         }
-
-
-def _group_timestamp_ctx(ctx: tiledb.Ctx, timestamp: int) -> tiledb.Ctx:
-    """Builds a TileDB context to open groups at the given timestamp."""
-    group_cfg = ctx.config().dict()
-    group_cfg["sm.group.timestamp_end"] = timestamp
-    return tiledb.Ctx(group_cfg)
 
 
 class _DictMod(enum.Enum):
