@@ -64,18 +64,19 @@ namespace tdbs = tiledbsoma;
 //' @export
 // [[Rcpp::export]]
 Rcpp::XPtr<tdbs::SOMAArrayReader> sr_setup(const std::string& uri,
-                                      Rcpp::CharacterVector config,
-                                      Rcpp::Nullable<Rcpp::CharacterVector> colnames = R_NilValue,
-                                      Rcpp::Nullable<Rcpp::XPtr<tiledb::QueryCondition>> qc = R_NilValue,
-                                      Rcpp::Nullable<Rcpp::List> dim_points = R_NilValue,
-                                      Rcpp::Nullable<Rcpp::List> dim_ranges = R_NilValue,
-                                      const std::string& loglevel = "auto") {
+                                           Rcpp::CharacterVector config,
+                                           Rcpp::Nullable<Rcpp::CharacterVector> colnames = R_NilValue,
+                                           Rcpp::Nullable<Rcpp::XPtr<tiledb::QueryCondition>> qc = R_NilValue,
+                                           Rcpp::Nullable<Rcpp::List> dim_points = R_NilValue,
+                                           Rcpp::Nullable<Rcpp::List> dim_ranges = R_NilValue,
+                                           const std::string& loglevel = "auto") {
+
     if (loglevel != "auto") {
         spdl::set_level(loglevel);
         tdbs::LOG_SET_LEVEL(loglevel);
     }
 
-    spdl::info("[sr_setup] Setting up {}", uri);
+    spdl::debug("[sr_setup] Setting up {}", uri);
 
     std::string_view name = "unnamed";
     std::vector<std::string> column_names = {};
@@ -100,15 +101,15 @@ Rcpp::XPtr<tdbs::SOMAArrayReader> sr_setup(const std::string& uri,
     tiledb::Domain domain = schema->domain();
     std::vector<tiledb::Dimension> dims = domain.dimensions();
     for (auto& dim: dims) {
-        spdl::info("[soma_array_reader] Dimension {} type {} domain {} extent {}",
-                   dim.name(), tiledb::impl::to_str(dim.type()),
-                   dim.domain_to_str(), dim.tile_extent_to_str());
+        spdl::debug("[soma_array_reader] Dimension {} type {} domain {} extent {}",
+                    dim.name(), tiledb::impl::to_str(dim.type()),
+                    dim.domain_to_str(), dim.tile_extent_to_str());
         name2dim.emplace(std::make_pair(dim.name(), std::make_shared<tiledb::Dimension>(dim)));
     }
 
     // If we have a query condition, apply it
     if (!qc.isNull()) {
-        spdl::info("[soma_array_reader] Applying query condition") ;
+        spdl::debug("[soma_array_reader] Applying query condition") ;
         Rcpp::XPtr<tiledb::QueryCondition> qcxp(qc);
         ptr->set_condition(*qcxp);
     }
@@ -140,7 +141,7 @@ bool sr_complete(Rcpp::XPtr<tdbs::SOMAArrayReader> sr) {
    size_t nobs = sr->total_num_cells();
    bool complt = sr->is_complete(true);
    bool res = complt && nobs > 0; // completed transfer if query status complete and data shipped
-   spdl::info("[sr_complete] Complete query test {} (compl {} nobs {})", res, complt, nobs);
+   spdl::debug("[sr_complete] Complete query test {} (compl {} nobs {})", res, complt, nobs);
    return res;
 }
 
@@ -157,8 +158,8 @@ Rcpp::List sr_next(Rcpp::XPtr<tdbs::SOMAArrayReader> sr) {
    }
 
    auto sr_data = sr->read_next();
-   spdl::info("[sr_next] Read {} rows and {} cols",
-              sr_data->get()->num_rows(), sr_data->get()->names().size());
+   spdl::debug("[sr_next] Read {} rows and {} cols",
+               sr_data->get()->num_rows(), sr_data->get()->names().size());
 
    const std::vector<std::string> names = sr_data->get()->names();
    auto ncol = names.size();
@@ -197,7 +198,7 @@ Rcpp::List sr_next(Rcpp::XPtr<tdbs::SOMAArrayReader> sr) {
 
    }
 
-   spdl::info("[sr_next] Exporting chunk with {} rows", arrayxp->length);
+   spdl::debug("[sr_next] Exporting chunk with {} rows", arrayxp->length);
    Rcpp::List as = Rcpp::List::create(Rcpp::Named("array_data") = arrayxp,
                                       Rcpp::Named("schema") = schemaxp);
    return as;

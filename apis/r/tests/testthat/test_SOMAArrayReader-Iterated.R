@@ -1,6 +1,6 @@
 test_that("Iterated Interface from SOMAArrayReader", {
     skip_if_not_installed("pbmc3k.tiledb")      # a Suggests: pre-package 3k PBMC data
-
+                                                # see https://ghrr.github.io/drat/
     library(arrow)
     library(bit64)
     library(data.table)
