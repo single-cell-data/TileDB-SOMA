@@ -1,4 +1,4 @@
-#' Write a SOMA from an \R Object
+#' Write a SOMA Object from an \R Object
 #'
 #' Write \R objects to SOMA following the SOMA spec. This is a generic
 #' function and methods can be written for it to provide a high-level
