@@ -41,13 +41,10 @@ sys.path.insert(0, str(this_dir))
 import version  # noqa E402
 
 libtiledbsoma_dir: Optional[pathlib.Path] = None
+tiledb_dir: Optional[pathlib.Path] = None
 
-args = sys.argv[:]
-for arg in args:
-    start, eq, last = arg.partition("=")
-    if (start, eq) == ("--libtiledbsoma", "="):
-        libtiledbsoma_dir = pathlib.Path(last)
-        sys.argv.remove(arg)
+tiledb_dir = pathlib.Path(os.environ.get("TILEDB_PATH", this_dir))
+libtiledbsoma_dir = os.environ.get("TILEDBSOMA_PATH", None)
 
 if libtiledbsoma_dir is None:
     scripts_dir = this_dir / "dist_links" / "scripts"
@@ -58,6 +55,8 @@ if libtiledbsoma_dir is None:
     else:
         # in extracted sdist, with libtiledbsoma copied into dist_links/
         libtiledbsoma_dir = this_dir / "dist_links" / "dist"
+else:
+    libtiledbsoma_dir = pathlib.Path(libtiledbsoma_dir)
 
 
 def get_libtiledbsoma_library_name():
@@ -179,13 +178,16 @@ INC_DIRS = [
         "./src/tiledbsoma"
     ),  # since pytiledbsoma.cc does #include of query_condition.cc
     str(libtiledbsoma_dir.parent / "build/externals/install/include"),
+    str(tiledb_dir / "include"),
 ]
 
 LIB_DIRS = [
     str(libtiledbsoma_dir / "lib"),
+    str(tiledb_dir / "lib"),
 ]
 CXX_FLAGS = [
     f'-Wl,-rpath,{str(libtiledbsoma_dir / "lib")}',
+    f'-Wl,-rpath,{str(tiledb_dir / "lib")}',
 ]
 if sys.platform == "darwin":
     CXX_FLAGS.append("-mmacosx-version-min=10.14")
@@ -193,10 +195,14 @@ if sys.platform == "darwin":
 if os.name == "posix" and sys.platform != "darwin":
     LIB_DIRS.append(str(libtiledbsoma_dir / "lib" / "x86_64-linux-gnu"))
     LIB_DIRS.append(str(libtiledbsoma_dir / "lib64"))
+    LIB_DIRS.append(str(tiledb_dir / "lib" / "x86_64-linux-gnu"))
+    LIB_DIRS.append(str(tiledb_dir / "lib64"))
     CXX_FLAGS.append(
         f'-Wl,-rpath,{str(libtiledbsoma_dir / "lib" / "x86_64-linux-gnu")}'
     )
     CXX_FLAGS.append(f'-Wl,-rpath,{str(libtiledbsoma_dir / "lib64")}')
+    CXX_FLAGS.append(f'-Wl,-rpath,{str(tiledb_dir / "lib" / "x86_64-linux-gnu")}')
+    CXX_FLAGS.append(f'-Wl,-rpath,{str(tiledb_dir / "lib64")}')
 
 # ----------------------------------------------------------------
 # Don't use `if __name__ == "__main__":` as the `python_requires` must
