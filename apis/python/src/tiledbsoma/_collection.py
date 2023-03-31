@@ -32,6 +32,8 @@ import tiledb
 from somacore import options
 from typing_extensions import Self
 
+import tiledbsoma.pytiledbsoma as clib
+
 from . import _funcs, _tdb_handles
 from ._common_nd_array import NDArray
 from ._dataframe import DataFrame
@@ -108,7 +110,9 @@ class CollectionBase(
             Experimental.
         """
         context = context or SOMATileDBContext()
-        tiledb.group_create(uri=uri, ctx=context.tiledb_ctx)
+
+        clib.SOMAGroupWriter.create(uri, context.tiledb_ctx.config().dict())
+
         handle = cls._wrapper_type.open(uri, "w", context, tiledb_timestamp)
         cls._set_create_metadata(handle)
         return cls(
