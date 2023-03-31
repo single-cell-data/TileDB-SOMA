@@ -26,7 +26,7 @@ TileDBArray <- R6::R6Class(
       args$uri <- self$uri
       args$query_type <- "READ"
       args$query_layout <- "UNORDERED"
-      args$ctx <- self$tiledbsoma_ctx$get_tiledb_context()
+      args$ctx <- self$tiledbsoma_ctx$context()
       do.call(tiledb::tiledb_array, args)
     },
 
@@ -94,7 +94,7 @@ TileDBArray <- R6::R6Class(
     shape = function() {
       as.integer64(shape(
         self$uri,
-        config=as.character(tiledb::config(self$tiledbsoma_ctx$get_tiledb_context()))
+        config=as.character(tiledb::config(self$tiledbsoma_ctx$context()))
       ))
     },
 
@@ -250,7 +250,7 @@ TileDBArray <- R6::R6Class(
     initialize_object = function() {
       private$tiledb_object <- tiledb::tiledb_array(
         uri = self$uri,
-        ctx = self$tiledbsoma_ctx$get_tiledb_context(),
+        ctx = self$tiledbsoma_ctx$context(),
         query_layout = "UNORDERED"
       )
       self$close()

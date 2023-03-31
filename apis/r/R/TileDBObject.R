@@ -71,7 +71,7 @@ TileDBObject <- R6::R6Class(
       } else {
         stop("Unknown object type", call. = FALSE)
       }
-      tiledb::tiledb_object_type(self$uri, ctx = self$tiledbsoma_ctx$get_tiledb_context()) %in% expected_type
+      tiledb::tiledb_object_type(self$uri, ctx = self$tiledbsoma_ctx$context()) %in% expected_type
     },
     #' @param param Parameter name from \code{self$platform_config} to fetch
     #' @return SOMATileDBContext

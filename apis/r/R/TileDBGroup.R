@@ -21,7 +21,7 @@ TileDBGroup <- R6::R6Class(
       spdl::info("Creating new {} at '{}'", self$class(), self$uri)
       tiledb::tiledb_group_create(
         uri = self$uri,
-        ctx = self$get_tiledb_config('create')$get_tiledb_context()
+        ctx = self$get_tiledb_config('create')$context()
       )
       self
     },
@@ -194,7 +194,7 @@ TileDBGroup <- R6::R6Class(
     initialize_object = function() {
       private$tiledb_object <- tiledb::tiledb_group(
         self$uri,
-        ctx = self$tiledbsoma_ctx$get_tiledb_context()
+        ctx = self$tiledbsoma_ctx$context()
       )
       self$close()
     },
