@@ -11,7 +11,7 @@ map is a \code{\link{ScalarMap}} contained within a \code{\link{ConfigList}}
 \code{\{platform: \{param: \{key: value\}\}\}}
 }
 \section{Super class}{
-\code{tiledbsoma::MappingBase} -> \code{PlatformConfig}
+\code{\link[tiledbsoma:MappingBase]{tiledbsoma::MappingBase}} -> \code{PlatformConfig}
 }
 \section{Methods}{
 \subsection{Public methods}{
