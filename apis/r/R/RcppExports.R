@@ -64,6 +64,12 @@ shape <- function(uri, config = NULL) {
     .Call(`_tiledbsoma_shape`, uri, config)
 }
 
+#' @rdname soma_group_create
+#' @export
+soma_group_create <- function(uri, config) {
+    invisible(.Call(`_tiledbsoma_soma_group_create`, uri, config))
+}
+
 #' Iterator-Style Access to SOMA Array via SOMAArrayReader
 #'
 #' The `sr_*` functions provide low-level access to an instance of the SOMAArrayReader

@@ -239,3 +239,12 @@ Rcpp::NumericVector shape(const std::string& uri,
     auto sr = tdbs::SOMAArrayReader::open(uri, "unnamed", config_vector_to_map(Rcpp::wrap(config)));
     return makeInteger64(sr->shape());
 }
+
+//' @rdname soma_group_create
+//' @export
+// [[Rcpp::export]]
+void soma_group_create(const std::string& uri,
+                       Rcpp::CharacterVector config) {
+  std::map<std::string, std::string> platform_config = config_vector_to_map(config);
+  tdbs::SOMAGroupWriter::create(uri, platform_config);
+}
