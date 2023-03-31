@@ -34,19 +34,12 @@
 #include <tiledb/tiledb>
 #include "tiledbsoma/logger_public.h"
 
-#ifdef BUILD_COMMIT_HASH
-#define VERSION BUILD_COMMIT_HASH
-#else
-#define VERSION "dev"
-#endif
-
 namespace tiledbsoma::version {
 
 std::string as_string() {
     int major, minor, patch;
     tiledb_version(&major, &minor, &patch);
-    return fmt::format(
-        "libtiledbsoma={};libtiledb={}.{}.{}", VERSION, major, minor, patch);
+    return fmt::format("libtiledb={}.{}.{}", major, minor, patch);
 }
 
 std::tuple<int, int, int> embedded_version_triple() {
