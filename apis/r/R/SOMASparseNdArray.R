@@ -124,7 +124,7 @@ SOMASparseNDArray <- R6::R6Class(
                                   result_order = result_order,
                                   loglevel = log_level,       # idem
                                   config = as.character(tiledb::config(
-                                      self$tiledbsoma_ctx$get_tiledb_context()
+                                      self$tiledbsoma_ctx$context()
                                   )))
           private$soma_reader_transform(rl)
       } else {
