@@ -65,7 +65,6 @@ shape <- function(uri, config = NULL) {
 }
 
 #' @rdname soma_group_create
-#' @export
 soma_group_create <- function(uri, config) {
     invisible(.Call(`_tiledbsoma_soma_group_create`, uri, config))
 }

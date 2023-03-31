@@ -241,7 +241,6 @@ Rcpp::NumericVector shape(const std::string& uri,
 }
 
 //' @rdname soma_group_create
-//' @export
 // [[Rcpp::export]]
 void soma_group_create(const std::string& uri,
                        Rcpp::CharacterVector config) {
