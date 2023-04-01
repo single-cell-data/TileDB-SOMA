@@ -40,8 +40,6 @@
 #include <tiledb/tiledb>
 #include <tiledb/tiledb_experimental>  // for group support
 
-#include "tiledbsoma/managed_query.h"
-
 namespace tiledbsoma {
 using namespace tiledb;
 
