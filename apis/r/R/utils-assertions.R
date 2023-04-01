@@ -120,6 +120,9 @@ validate_read_coords <- function(coords, dimnames = NULL) {
         all(names(coords) %in% dimnames)
     )
   }
+
+  coords <- make_integer64_list(coords)
+
   coords
 }
 
@@ -131,4 +134,19 @@ validate_read_value_filter <- function(value_filter) {
       is.null(value_filter) || is_scalar_character(value_filter)
     )
   value_filter
+}
+
+#' Ensure vector is an integer64 vector
+#' @noRd
+make_integer64 <- function(x) {
+  if (!bit64::is.integer64(x))
+    bit64::as.integer64(x)
+  else
+    x
+}
+
+#' Ensure list is list of integer64 vectors
+#' @noRd
+make_integer64_list <- function(lst) {
+  lapply(lst, make_integer64)
 }
