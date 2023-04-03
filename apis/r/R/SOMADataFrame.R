@@ -174,7 +174,7 @@ SOMADataFrame <- R6::R6Class(
               is.null(column_names) || all(column_names %in% c(self$dimnames(), self$attrnames()))
       )
 
-      coords <- validate_read_coords(coords, dimnames = self$dimnames())
+      coords <- validate_read_coords(coords, dimnames = self$dimnames(), int64cast = FALSE)
 
       if (!is.null(value_filter)) {
           value_filter <- validate_read_value_filter(value_filter)

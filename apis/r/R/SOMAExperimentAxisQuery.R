@@ -66,7 +66,7 @@ SOMAExperimentAxisQuery <- R6::R6Class(
     obs = function(column_names = NULL) {
       obs_query <- self$obs_query
       self$obs_df$read(
-        coords = obs_query$coords,
+        coords = recursively_make_integer64(obs_query$coords),
         value_filter = obs_query$value_filter,
         column_names = column_names
       )

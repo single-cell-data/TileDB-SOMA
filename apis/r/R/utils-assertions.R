@@ -92,7 +92,7 @@ assert_subset <- function(x, y, type = "value") {
 #' @param coords A vector or list of coordinates
 #' @param dimnames character vector of array dimension names
 #' @noRd
-validate_read_coords <- function(coords, dimnames = NULL) {
+validate_read_coords <- function(coords, dimnames = NULL, int64cast = TRUE) {
   # NULL is a valid value
   if (is.null(coords)) return(coords)
 
@@ -119,9 +119,12 @@ validate_read_coords <- function(coords, dimnames = NULL) {
       "names of 'coords' must correspond to dimension names" =
         all(names(coords) %in% dimnames)
     )
+
   }
 
-  coords <- make_integer64_list(coords)
+  if (int64cast) {
+    coords <- recursively_make_integer64(coords)
+  }
 
   coords
 }
@@ -136,17 +139,21 @@ validate_read_value_filter <- function(value_filter) {
   value_filter
 }
 
-#' Ensure vector is an integer64 vector
+#' Recursively traverse data structure and upcast integer vectors to integer64
+#'
+#' This is needed as we may receive (named or unnamed) list and/or plain vectors
 #' @noRd
-make_integer64 <- function(x) {
-  if (!bit64::is.integer64(x))
-    bit64::as.integer64(x)
-  else
+recursively_make_integer64 <- function(x) {
+    if (is.null(x) || is.character(x) || is.double(x) || is.factor(x) || is.ordered(x)) {
+        x 	# do nothing
+    } else if (is.list(x)) {
+        for (i in seq_along(x)) {
+            x[[i]] <- recursively_make_integer64(x[[i]])
+        }
+    } else if (is.integer(x)) {
+        x <- bit64::as.integer64(x)
+    } else {
+        warning("encountered ", class(x))
+    }
     x
-}
-
-#' Ensure list is list of integer64 vectors
-#' @noRd
-make_integer64_list <- function(lst) {
-  lapply(lst, make_integer64)
 }
