@@ -77,7 +77,7 @@ SOMAExperimentAxisQuery <- R6::R6Class(
     var = function(column_names = NULL) {
       var_query <- self$var_query
       self$var_df$read(
-        coords = var_query$coords,
+        coords = recursively_make_integer64(var_query$coords),
         value_filter = var_query$value_filter,
         column_names = column_names
       )
