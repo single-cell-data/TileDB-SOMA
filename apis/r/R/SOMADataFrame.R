@@ -168,13 +168,21 @@ SOMADataFrame <- R6::R6Class(
       uri <- self$uri
       arr <- self$object                 # need array (schema) to properly parse query condition
 
+      ## if unnamed set names
+      if (!is.null(coords)) {
+          if (!is.list(coords))
+              coords <- list(coords)
+          if (is.null(names(coords)))
+              names(coords) <- self$dimnames()
+      }
+
       stopifnot(
           ## check columns
           "'column_names' must only contain valid dimension or attribute columns" =
               is.null(column_names) || all(column_names %in% c(self$dimnames(), self$attrnames()))
       )
 
-      coords <- validate_read_coords(coords, dimnames = self$dimnames())
+      coords <- validate_read_coords(coords, dimnames = self$dimnames(), int64cast = FALSE)
 
       if (!is.null(value_filter)) {
           value_filter <- validate_read_value_filter(value_filter)

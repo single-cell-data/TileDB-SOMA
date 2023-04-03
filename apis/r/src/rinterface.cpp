@@ -91,11 +91,11 @@ Rcpp::List soma_array_reader(const std::string& uri,
 
     // Read selected columns from the uri (return is unique_ptr<SOMAArrayReader>)
     auto sr = tdbs::SOMAArrayReader::open(uri,
-                                     "unnamed",                   // name parameter could be added
-                                     platform_config,             // to add, done in iterated reader
-                                     column_names,
-                                     batch_size,
-                                     result_order);
+                                          "unnamed",         // name parameter could be added
+                                          platform_config,   // to add, done in iterated reader
+                                          column_names,
+                                          batch_size,
+                                          result_order);
 
     std::unordered_map<std::string, std::shared_ptr<tiledb::Dimension>> name2dim;
     std::shared_ptr<tiledb::ArraySchema> schema = sr->schema();
