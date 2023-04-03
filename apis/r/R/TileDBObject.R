@@ -142,7 +142,11 @@ TileDBObject <- R6::R6Class(
     .tiledbsoma_ctx = NULL,
 
     # Internal mode: one of READ or WRITE
-    mode = NULL
+    mode = NULL,
+
+    .read_only_error = function(field) {
+      stop("Field ", sQuote(field), " is read-only", call. = FALSE)
+    }
 
   )
 )
