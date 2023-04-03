@@ -153,7 +153,7 @@ class DataFrame(TileDBArray, somacore.DataFrame):
                 single int64-valued index column, then ``domain`` might be ``[(100,
                 200)]`` to indicate that values between 100 and 200, inclusive, can be
                 stored in that column.  If provided, this sequence must have the same
-                length as `index_column_names`, and the index-column domain will be as
+                length as ``index_column_names``, and the index-column domain will be as
                 specified.  If omitted entirely, or if ``None`` in a given dimension,
                 the corresponding index-column domain will use the minimum and maximum
                 possible values for the column's datatype.  This makes a
@@ -250,7 +250,7 @@ class DataFrame(TileDBArray, somacore.DataFrame):
 
     @property
     def count(self) -> int:
-        """Returns the number of rows in the dataframe. Same as `len(df)`.
+        """Returns the number of rows in the dataframe. Same as ``len(df)``.
 
         Lifecycle:
             Experimental.
@@ -259,7 +259,7 @@ class DataFrame(TileDBArray, somacore.DataFrame):
         return cast(int, self._soma_reader().nnz())
 
     def __len__(self) -> int:
-        """Returns the number of rows in the dataframe. Same as `df.count`."""
+        """Returns the number of rows in the dataframe. Same as ``df.count``."""
         return self.count
 
     def read(
@@ -315,11 +315,11 @@ class DataFrame(TileDBArray, somacore.DataFrame):
             * If the sequence contains missing coordinates (length less than number of dimensions),
               then ``slice(None)`` -- i.e. no constraint -- is assumed for the missing dimensions.
             * Per-dimension, explicitly specified coordinates can be one of: None, a value, a
-              list/ndarray/paarray/etc of values, a slice, etc.
+              list/``numpy.ndarray``/``pyarrow.Array``/etc of values, a slice, etc.
             * Slices are doubly inclusive: ``slice(2,4)`` means [2,3,4] not [2,3].
               Slice steps are not supported.
-              Slices can be ``slice(None)``, meaning select all in that dimension, but may not be half-specified:
-              ``slice(2,None)`` and ``slice(None,4)`` are both unsupported.
+              Slices can be ``slice(None)``, meaning select all in that dimension, and may be half-specified,
+              e.g.  ``slice(2,None)`` or ``slice(None,4)``.
             * Negative indexing is unsupported.
 
         Lifecycle:
@@ -359,9 +359,9 @@ class DataFrame(TileDBArray, somacore.DataFrame):
 
         Args:
             values:
-                An Arrow table containing all columns, including
-                the index columns. The schema for the values must match
-                the schema for the :class:`DataFrame`.
+                An `Arrow table <https://arrow.apache.org/docs/python/generated/pyarrow.Table.html>`_
+                containing all columns, including the index columns. The schema for the values must
+                match the schema for the :class:`DataFrame`.
 
         Raises:
             TypeError:
