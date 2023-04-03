@@ -328,3 +328,65 @@ test_that("query result value indexer", {
     "'coords' must be a numeric vector or arrow Array"
   )
 })
+
+test_that("query result value indexer upcast", {
+  uri <- withr::local_tempdir("soma-experiment-query-results-indexer-upcast")
+  n_obs <- 1001L
+  n_var <- 99L
+
+  obs_slice <- seq(1, 10)
+  var_slice <- seq(1, 10)
+
+  experiment <- create_and_populate_experiment(
+    uri = uri,
+    n_obs = n_obs,
+    n_var = n_var,
+    X_layer_names = c("counts", "logcounts")
+  )
+
+  query <- SOMAExperimentAxisQuery$new(
+    experiment = experiment,
+    measurement_name = "RNA",
+    obs_query = SOMAAxisQuery$new(
+      coords = list(soma_joinid = obs_slice)
+    ),
+    var_query = SOMAAxisQuery$new(
+      coords = list(soma_joinid = var_slice)
+    )
+  )
+
+  indexer <- query$indexer
+
+  # coords inside query result are indexed
+  expect_equal(
+    indexer$by_obs(c(1, 4, 2)),
+    arrow::Array$create(c(0, 3, 1), type = arrow::int32())
+  )
+
+  expect_equal(
+    indexer$by_var(c(10, 1)),
+    arrow::Array$create(c(9, 0), type = arrow::int32())
+  )
+
+  # coords outside query result return null
+  expect_equal(
+    indexer$by_obs(c(1, 4, 2, 1000)),
+    arrow::Array$create(c(0, 3, 1, NA), type = arrow::int32())
+  )
+
+  expect_equal(
+    indexer$by_var(c(10, 1, 1000)),
+    arrow::Array$create(c(9, 0, NA), type = arrow::int32())
+  )
+
+  # coord validation
+  expect_error(
+    indexer$by_obs(),
+    "argument \"coords\" is missing, with no default"
+  )
+
+  expect_error(
+    indexer$by_obs(c(1, 4, 2, 1000, "foo")),
+    "'coords' must be a numeric vector or arrow Array"
+  )
+})

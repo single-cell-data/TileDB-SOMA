@@ -74,9 +74,12 @@ test_that("Basic mechanics", {
   rb1 <- arrow::as_record_batch(sdf$read())
   expect_equivalent(dplyr::collect(rb0), dplyr::collect(rb1))
 
-
   # Slicing by foo
   tbl1 <- sdf$read(coords = list(foo = 1L:2L))
+  expect_true(tbl1$Equals(tbl0$Slice(offset = 0, length = 2)))
+
+  # Slicing unnamed also work
+  tbl1 <- sdf$read(coords = 1L:2L)
   expect_true(tbl1$Equals(tbl0$Slice(offset = 0, length = 2)))
 
   # Subselecting columns
@@ -180,6 +183,7 @@ test_that("SOMADataFrame read", {
     sdf <- SOMADataFrame$new(uri, internal_use_only = "allowed_use")
     z <- sdf$read(coords = list(soma_joinid=coords))
     expect_equal(z$num_rows, 10L)
+
 })
 
 test_that("soma_ prefix is reserved", {
