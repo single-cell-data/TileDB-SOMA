@@ -73,7 +73,7 @@ The capabilities of TileDB-SOMA lay on the different read, access, and query pat
 
 ## Who is using SOMA?
 
-* [CZ CELLxGENE Discover](https://cellxgene.cziscience.com/) to build the [Cell Census](https://github.com/chanzuckerberg/cell-census/) which provides efficient access and querying to a corpus containing nearly 50 million cells, compiled from 700+ datasets.
+* [CZ CELLxGENE Discover](https://cellxgene.cziscience.com/) to build the [CELLxGENE Census](https://github.com/chanzuckerberg/cellxgene-census/) which provides efficient access and querying to a corpus containing nearly 50 million cells, compiled from 700+ datasets.
 
 If you are interested in listing any projects here please contact us at [soma@chanzuckerberg.com](mailto:soma@chanzuckerberg.com).
 
