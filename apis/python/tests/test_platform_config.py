@@ -42,28 +42,36 @@ def test_platform_config(adata):
                         "offsets_filters": ["RleFilter", "NoOpFilter"],
                         "dims": {
                             "soma_dim_0": {"tile": 6},
+                            # Empty filters for soma_dim_1 overrides the default
+                            # dimension zstd level defined below.
                             "soma_dim_1": {"filters": []},
                         },
                         "attrs": {"soma_data": {"filters": ["NoOpFilter"]}},
+                        "dataframe_dim_zstd_level": 1,
                         "cell_order": "row-major",
                         "tile_order": "col-major",
+                        "sparse_nd_array_dim_zstd_level": 2,
                     }
                 }
             },
         )
 
         with tiledbsoma.Experiment.open(output_path) as exp:
-            with exp.ms["RNA"].X["data"] as data:
-                arr = data._handle.reader
-                sch = arr.schema
-                assert sch.capacity == 8888
-                assert sch.cell_order == "row-major"
-                assert sch.tile_order == "col-major"
-                assert sch.offsets_filters == [tiledb.RleFilter(), tiledb.NoOpFilter()]
-                assert arr.attr("soma_data").filters == [tiledb.NoOpFilter()]
-                assert arr.dim("soma_dim_0").tile == 6
-                assert arr.dim("soma_dim_1").filters == []
-                print(sch)
+            x_data = exp.ms["RNA"].X["data"]
+            x_arr = x_data._handle.reader
+            x_sch = x_arr.schema
+            assert x_sch.capacity == 8888
+            assert x_sch.cell_order == "row-major"
+            assert x_sch.tile_order == "col-major"
+            assert x_sch.offsets_filters == [tiledb.RleFilter(), tiledb.NoOpFilter()]
+            assert x_arr.attr("soma_data").filters == [tiledb.NoOpFilter()]
+            assert x_arr.dim("soma_dim_0").tile == 6
+            assert x_arr.dim("soma_dim_0").filters == [tiledb.ZstdFilter(level=2)]
+            assert x_arr.dim("soma_dim_1").filters == []
+
+            var_df = exp.ms["RNA"].var
+            var_arr = var_df._handle.reader
+            assert var_arr.dim("soma_joinid").filters == [tiledb.ZstdFilter(level=1)]
 
 
 def test__from_platform_config__admits_ignored_config_structure():
