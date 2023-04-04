@@ -264,7 +264,7 @@ setuptools.setup(
         # longer need to support the old pip solver (default on ubuntu 20.04).
         "numba==0.56.4",
         "numpy>=1.18,<1.24",
-        "pandas",
+        "pandas==2.0.0",
         "pyarrow>=9.0.0",
         "scanpy>=1.9.2",
         "scipy",
