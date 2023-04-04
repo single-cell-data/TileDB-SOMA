@@ -366,7 +366,7 @@ Measurement <- R6::R6Class(
         name = 'obsp',
         expected_class = c('Collection', 'SOMACollection')
       )
-    }
+    },
     varm = function(value) {
       private$get_or_set_soma_field(
         value = value,
