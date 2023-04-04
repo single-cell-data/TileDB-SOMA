@@ -19,7 +19,7 @@ Context map for TileDB-backed SOMA objects
 \item \href{#method-SOMATileDBContext-get}{\code{SOMATileDBContext$get()}}
 \item \href{#method-SOMATileDBContext-set}{\code{SOMATileDBContext$set()}}
 \item \href{#method-SOMATileDBContext-to_tiledb_context}{\code{SOMATileDBContext$to_tiledb_context()}}
-\item \href{#method-SOMATileDBContext-get_tiledb_context}{\code{SOMATileDBContext$get_tiledb_context()}}
+\item \href{#method-SOMATileDBContext-context}{\code{SOMATileDBContext$context()}}
 \item \href{#method-SOMATileDBContext-clone}{\code{SOMATileDBContext$clone()}}
 }
 }
@@ -152,11 +152,11 @@ constructed. Most useful for the constructor of this class.
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-SOMATileDBContext-get_tiledb_context"></a>}}
-\if{latex}{\out{\hypertarget{method-SOMATileDBContext-get_tiledb_context}{}}}
-\subsection{Method \code{get_tiledb_context()}}{
+\if{html}{\out{<a id="method-SOMATileDBContext-context"></a>}}
+\if{latex}{\out{\hypertarget{method-SOMATileDBContext-context}{}}}
+\subsection{Method \code{context()}}{
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{SOMATileDBContext$get_tiledb_context()}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{SOMATileDBContext$context()}\if{html}{\out{</div>}}
 }
 
 \subsection{Returns}{
