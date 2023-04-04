@@ -318,12 +318,89 @@ EphemeralCollectionBase <- R6::R6Class(
 
 #' Ephemeral Collections
 #'
-#' @description Ephemeral version of \code{\link{SOMACollection}} for in-memory
-#' SOMA collections
+#' @description Ephemeral version of \code{\link{SOMACollection}} for
+#' in-memory SOMA collections
 #'
 #' @export
 #'
 Collection <- R6::R6Class(
   classname = 'Collection',
   inherit = EphemeralCollectionBase
+)
+
+#' Ephemeral SOMA Measurement
+#'
+#' @description Ephemeral version of \code{\link{SOMAMeasurement}} for
+#' in-memory SOMA measurements
+#'
+#' @export
+#'
+Measurement <- R6::R6Class(
+  classname = 'Measurement',
+  inherit = EphemeralCollectionBase,
+  active = list(
+    var = function(value) {
+      private$get_or_set_soma_field(
+        value = value,
+        name = 'var',
+        expected_class = 'SOMADataFrame'
+      )
+    },
+    X = function(value) {
+      private$get_or_set_soma_field(
+        value = value,
+        name = 'X',
+        expected_class = c('Collection', 'SOMACollection')
+      )
+    },
+    obsm = function(value) {
+      private$get_or_set_soma_field(
+        value = value,
+        name = 'obsm',
+        expected_class = c('Collection', 'SOMACollection')
+      )
+    },
+    obsp = function(value) {
+      private$get_or_set_soma_field(
+        value = value,
+        name = 'obsp',
+        expected_class = c('Collection', 'SOMACollection')
+      )
+    }
+    varm = function(value) {
+      private$get_or_set_soma_field(
+        value = value,
+        name = 'varm',
+        expected_class = c('Collection', 'SOMACollection')
+      )
+    },
+    varp = function(value) {
+      private$get_or_set_soma_field(
+        value = value,
+        name = 'varp',
+        expected_class = c('Collection', 'SOMACollection')
+      )
+    }
+  )
+)
+
+Experiment <- R6::R6Class(
+  classname = 'Experiment',
+  inherit = SOMACollectionBase,
+  active = list(
+    obs = function(value) {
+      private$get_or_set_soma_field(
+        value = value,
+        name = 'obs',
+        expected_class = 'SOMADataFrame'
+      )
+    },
+    ms = function(value) {
+      private$get_or_set_soma_field(
+        value = value,
+        name = 'ms',
+        expected_class = c('Collection', 'SOMACollection')
+      )
+    }
+  )
 )
