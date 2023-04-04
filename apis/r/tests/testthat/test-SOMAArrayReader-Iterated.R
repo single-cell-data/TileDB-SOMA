@@ -87,33 +87,19 @@ test_that("Iterated Interface from SOMA Classes", {
                       dense = SOMADenseNDArray$new(uri, internal_use_only = "allowed_use"))
         expect_true(inherits(sdf, "SOMAArrayBase"))
 
-        switch(tc,
-               data.frame = sdf$read(iterated = TRUE),
-               sparse = sdf$read_arrow_table(iterated = TRUE),
-               dense = sdf$read_arrow_table(iterated = TRUE))
-
-        expect_false(sdf$read_complete())
-        dat <- sdf$read_next()
-        n <- dat$num_rows
-        expect_true(n > 0)
-
-        expect_false(sdf$read_complete())
-        dat <- sdf$read_next()
-        n <- n + dat$num_rows
-        expect_true(n > 0)
-
-        expect_false(sdf$read_complete())
-        dat <- sdf$read_next()
-        n <- n + dat$num_rows
-        expect_true(n > 0)
-
-        expect_false(sdf$read_complete())
-        dat <- sdf$read_next()
-        n <- n + dat$num_rows
-        expect_true(n > 0)
-
-        expect_equal(n, 4848644)
+        rl <- switch(tc,
+                     data.frame = sdf$read(iterated = TRUE),
+                     sparse = sdf$read_arrow_table(iterated = TRUE),
+                     dense = sdf$read_arrow_table(iterated = TRUE))
+        expect_true(is.list(rl))
         expect_true(sdf$read_complete())
+        n <- length(rl)
+        expect_true(n > 0)
+
+        dat <- do.call(rbind, rl)
+        expect_true(inherits(dat, "Table"))
+        expect_equal(dat$num_columns, 3)
+        expect_equal(dat$num_rows, 4848644)
 
         rm(sdf)
     }

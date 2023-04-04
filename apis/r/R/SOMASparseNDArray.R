@@ -119,23 +119,28 @@ SOMASparseNDArray <- R6::R6Class(
       }
 
       if (isFALSE(iterated)) {
+          cfg <- as.character(tiledb::config(self$tiledbsoma_ctx$get_tiledb_context()))
           rl <- soma_array_reader(uri = uri,
-                                  dim_points = coords,        # NULL is dealt with by soma_array_reader()
+                                  dim_points = coords,        # NULL dealt with by soma_array_reader()
                                   result_order = result_order,
                                   loglevel = log_level,       # idem
-                                  config = as.character(tiledb::config(
-                                      self$tiledbsoma_ctx$context()
-                                  )))
+                                  config = cfg)
           private$soma_reader_transform(rl)
       } else {
           ## should we error if this isn't null?
           if (!is.null(self$soma_reader_pointer)) {
-              warning("pointer not null, skipping")
+              warning("Reader pointer not null, skipping")
+              rl <- NULL
           } else {
               private$soma_reader_setup()
               private$sparse_repr <- "" # no sparse matrix transformation
+              rl <- list()
+              while (!self$read_complete()) {
+                  ## soma_reader_transform() applied inside read_next()
+                  rl <- c(rl, self$read_next())
+              }
           }
-          invisible(NULL)
+          invisible(rl)
       }
     },
 
