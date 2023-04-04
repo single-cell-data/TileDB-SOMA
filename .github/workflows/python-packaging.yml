@@ -25,7 +25,7 @@ jobs:
     - name: Build sdist
       run: python setup.py sdist
       working-directory: ./apis/python
-    - name: Upload sdist artifact # upload to GitHub Actions storage
+    - name: Upload sdist artifact to GitHub Actions storage
       uses: actions/upload-artifact@v3
       with:
         name: sdist
@@ -125,18 +125,6 @@ jobs:
   publish-to-pypi:
     name: Publish package to PyPI
     needs: smoke-test
-    #
-    # Not this:
-    # if: github.event_name == 'release' && !github.event.release.prerelease
-    # but this:
-    # if: github.event_name == 'release'
-    #
-    # Reasoning:
-    # * We can mark a GitHub release as pre-release and not-latest while wheels are building
-    # * Then let this CI complete
-    # * Then mark the GitHub release as release and latest, so anyone installing from PyPI will get
-    #   usable wheels.
-    #
     if: matrix.os == 'ubuntu-20.04' && github.event_name == 'release'
     steps:
     - name: Publish packages to PyPI
