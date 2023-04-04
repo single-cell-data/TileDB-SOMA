@@ -68,7 +68,7 @@ jobs:
         #   run CMake build or not. Otherwise it'll keep reusing the library file built in the
         #   first iteration of cibuildwheel's outer loop, resulting in wheels with the library
         #   built for the wrong python version.
-    - name: Upload wheels-${{ matrix.platform }} # upload to GitHub Actions storage
+    - name: Upload wheels-${{ matrix.platform }} to GitHub Actions storage
       uses: actions/upload-artifact@v3
       with:
         name: wheels-${{ matrix.platform }}
