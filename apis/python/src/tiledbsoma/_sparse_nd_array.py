@@ -105,16 +105,16 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
         partitions: Optional[options.ReadPartitions] = None,
         platform_config: Optional[PlatformConfig] = None,
     ) -> "SparseNDArrayRead":
-        """Reads a user-defined slice of the SparseNDArray.
+        """Reads a user-defined slice of the :class:`SparseNDArray`.
 
         Args:
             coords:
                 A per-dimension tuple of scalar, slice, sequence of scalar or
                 `Arrow IntegerArray <https://arrow.apache.org/docs/python/generated/pyarrow.IntegerArray.html>`_
-                defining the region to read.  (Arrow arrays currently unimplemented.)
+                defining the region to read.
 
         Returns:
-            A SparseNDArrayRead to access result iterators in various formats.
+            A :class:`SparseNDArrayRead` to access result iterators in various formats.
 
         Raises:
             SOMAError:
@@ -132,11 +132,11 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
               then ``slice(None)`` -- i.e. no constraint -- is assumed for the
               remaining dimensions.
             * Per-dimension, explicitly specified coordinates can be one of:
-              None, a value, a list/ndarray/paarray/etc of values, a slice, etc.
+              None, a value, a list/``numpy.ndarray``/``pyarrow.Array``/etc of values, a slice, etc.
             * Slices are doubly inclusive: ``slice(2,4)`` means [2,3,4] not [2,3].
               Slice steps can only be +1. Slices can be ``slice(None)``, meaning
-              select all in that dimension, but may not be half-specified:
-              ``slice(2,None)`` and ``slice(None,4)`` are both unsupported.
+              select all in that dimension, and may be half-specified, e.g.
+              ``slice(2,None)`` or ``slice(None,4)``.
             * Negative indexing is unsupported.
         """
         del batch_size, platform_config  # Currently unused.

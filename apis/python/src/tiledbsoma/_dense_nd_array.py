@@ -26,8 +26,9 @@ class DenseNDArray(NDArray, somacore.DenseNDArray):
     integer indexing on each dimension. :class:`DenseNDArray` has a user-defined
     schema, which includes:
 
-    * The element type, expressed as an Arrow type, indicating the type of data
-      contained within the array.
+    * The element type, expressed as an
+      `Arrow type <https://arrow.apache.org/docs/python/api/datatypes.html>`_
+      indicating the type of data contained within the array.
     * The shape of the array, i.e., the number of dimensions and the length of
       each dimension.
 

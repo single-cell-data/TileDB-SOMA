@@ -87,9 +87,9 @@ class SOMATileDBContext:
 
         Args:
             tiledb_config:
-                A dictionary of parameters for tiledb.Config().
+                A dictionary of parameters for `tiledb.Config() <https://tiledb-inc-tiledb.readthedocs-hosted.com/projects/tiledb-py/en/stable/python-api.html#config>`_.
             changes:
-                Any other parameters will be passed to the class __init__.
+                Any other parameters will be passed to the class ``__init__``.
 
         Lifecycle:
             Experimental.

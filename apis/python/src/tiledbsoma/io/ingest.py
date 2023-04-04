@@ -95,8 +95,7 @@ def from_h5ad(
         measurement_name: The name of the measurement to store data in.
 
         ingest_mode: The ingestion type to perform:
-            - ``write``: Writes all data, creating new layers
-              if the SOMA already exists.
+            - ``write``: Writes all data, creating new layers if the SOMA already exists.
             - ``resume``: Adds data to an existing SOMA, skipping writing data
               that was previously written. Useful for continuing after a partial
               or interrupted ingestion operation.
@@ -159,7 +158,7 @@ def from_anndata(
     use_relative_uri: Optional[bool] = None,
     X_kind: Union[Type[SparseNDArray], Type[DenseNDArray]] = SparseNDArray,
 ) -> str:
-    """Writes an anndata object to a :class:`Experiment`.
+    """Writes an `AnnData <https://anndata.readthedocs.io/>`_ object to an :class:`Experiment`.
 
     Measurement data is stored in a :class:`Measurement` in the experiment's
     ``ms`` field, with the key provided by ``measurement_name``. Data elements
@@ -176,8 +175,7 @@ def from_anndata(
         measurement_name: The name of the measurement to store data in.
 
         ingest_mode: The ingestion type to perform:
-            - ``write``: Writes all data, creating new layers
-              if the SOMA already exists.
+            - ``write``: Writes all data, creating new layers if the SOMA already exists.
             - ``resume``: Adds data to an existing SOMA, skipping writing data
               that was previously written. Useful for continuing after a partial
               or interrupted ingestion operation.
@@ -1217,10 +1215,10 @@ def to_anndata(
     format. Choice of matrix formats is following what we often see in input
     ``.h5ad`` files:
 
-    * X as ``scipy.sparse.csr_matrix``
-    * obs,var as ``pandas.dataframe``
-    * obsm,varm arrays as ``numpy.ndarray``
-    * obsp,varp arrays as ``scipy.sparse.csr_matrix``
+    * ``X`` as ``scipy.sparse.csr_matrix``
+    * ``obs``,``var`` as ``pandas.dataframe``
+    * ``obsm``,``varm`` arrays as ``numpy.ndarray``
+    * ``obsp``,``varp`` arrays as ``scipy.sparse.csr_matrix``
 
     Lifecycle:
         Experimental.
