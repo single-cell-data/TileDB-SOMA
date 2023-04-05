@@ -13,18 +13,19 @@ test_that("ScalarMap mechanics", {
   # Check set
   expect_no_condition(map$set('a', 1L))
   expect_no_condition(map$get('a'))
-  expect_error(map$set('b', c(2L, 3L)))
+  expect_no_condition(map$set('b', c(2L, 3L)))
   # Check properties
-  expect_equal(map$keys(), 'a')
+  expect_equal(map$keys(), c('a', 'b'))
   expect_identical(names(map), map$keys())
   expect_equal(map$get('a'), 1L)
-  expect_length(map$items(), 1L)
-  expect_equal(map$length(), 1L)
+  expect_equal(map$get('b'), c(2L, 3L))
+  expect_length(map$items(), 2L)
+  expect_equal(map$length(), 2L)
   expect_identical(length(map), map$length())
   # Check removing a value
   expect_no_condition(map$set('a', NULL))
-  expect_length(map$items(), 0L)
-  expect_identical(map$items(), list())
+  expect_length(map$items(), 1L)
+  expect_identical(map$items(), list(b=c(2L, 3L)))
   # Check [[ and [[<-
   expect_no_condition(map[['a']] <- 1L)
   expect_equal(map[['a']], 1L)
@@ -32,7 +33,7 @@ test_that("ScalarMap mechanics", {
   expect_no_condition(map$setv(b = 2L, c = 3L))
   expect_length(map$items(), 3L)
   expect_mapequal(map$items(), list(a = 1L, b = 2L, c = 3L))
-  expect_equal(map$keys(), c('a', 'b', 'c'))
+  expect_equal(sort(map$keys()), c('a', 'b', 'c'))
   # Check update
   nm <- ScalarMap$new()
   nm$setv(x = TRUE, y = FALSE)
@@ -72,9 +73,5 @@ test_that("Scalar Map types", {
   non_atomics <- c('list', 'data.frame', 'factor', 'matrix', 'array')
   for (i in non_atomics) {
     expect_error(map <- ScalarMap$new(type = i))
-  }
-  map <- ScalarMap$new()
-  for (i in non_atomics) {
-    expect_error(map$set(i, new(i)))
   }
 })

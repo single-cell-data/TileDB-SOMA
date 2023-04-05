@@ -132,7 +132,7 @@ test_that("TileDBCreateOptions dim_tile", {
 #   cfg <- PlatformConfig$new()
 #   tdco <- TileDBCreateOptions$new(cfg)
 #   expect_equal(tdco$offsets_filters(), DEFAULT_OFFSETS_FILTERS())
-# 
+#
 #   cfg <- PlatformConfig$new()
 #   cfg$set('tiledb', 'create', 'offsets_filters',
 #     list(
