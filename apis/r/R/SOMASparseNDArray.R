@@ -30,7 +30,7 @@ SOMASparseNDArray <- R6::R6Class(
     #' @description Create a SOMASparseNDArray named with the URI. (lifecycle: experimental)
     #' @param type an [Arrow type][arrow::data-type] defining the type of each element in the array.
     #' @param shape a vector of integers defining the shape of the array.
-    create = function(type, shape) {
+    create = function(type, shape, platform_config=NULL) {
       stopifnot(
         "'type' must be a valid Arrow type" =
           is_arrow_data_type(type),
@@ -38,17 +38,25 @@ SOMASparseNDArray <- R6::R6Class(
           is.vector(shape) && all(shape > 0)
       )
 
-      zstd_filter_list <- tiledb::tiledb_filter_list(c(
+      # Parse the tiledb/create/ subkeys of the platform_config into a handy,
+      # typed, queryable data structure.
+      tiledb_create_options = TileDBCreateOptions$new(platform_config)
+
+      zstd_filter_list <- tiledb::tiledb_filter_list(c( # XXX TO DO FROM TILEDB CREATE OPTIONS
           tiledb_zstd_filter(level = 3L)
       ))
 
       # create array dimensions
       tdb_dims <- vector(mode = "list", length = length(shape))
       for (i in seq_along(shape)) {
+        dim_name <- paste0("soma_dim_", i - 1L)
+        tile_extent <- tiledb_create_options$dim_tile(dim_name)
+        tile_extent <- bit64::as.integer64(min(c(shape[i], tile_extent)))
+
         tdb_dims[[i]] <- tiledb::tiledb_dim(
-          name = paste0("soma_dim_", i - 1L),
+          name = dim_name,
           domain = bit64::as.integer64(c(0L, shape[i] - 1L)),
-          tile = bit64::as.integer64(min(c(shape[i], 2048L))),
+          tile = tile_extent,
           type = "INT64"
         )
         tiledb::filter_list(tdb_dims[[i]]) <- zstd_filter_list
@@ -58,18 +66,19 @@ SOMASparseNDArray <- R6::R6Class(
       tdb_attr <- tiledb::tiledb_attr(
         name = "soma_data",
         type = tiledb_type_from_arrow_type(type),
-        filter_list = zstd_filter_list
+        filter_list = zstd_filter_list # XXX TO DO FROM TILEDB CREATE OPTIONS
       )
 
       # array schema
+      cell_tile_orders <- tiledb_create_options$cell_tile_orders()
       tdb_schema <- tiledb::tiledb_array_schema(
         domain = tiledb::tiledb_domain(tdb_dims),
         attrs = tdb_attr,
         sparse = TRUE,
-        cell_order = "ROW_MAJOR",
-        tile_order = "ROW_MAJOR",
+        cell_order = cell_tile_orders["cell_order"],
+        tile_order = cell_tile_orders["tile_order"],
         capacity=100000,
-        offsets_filter_list = tiledb::tiledb_filter_list(c(
+        offsets_filter_list = tiledb::tiledb_filter_list(c( # XXX TO DO FROM TILEDB CREATE OPTIONS
           tiledb::tiledb_filter("DOUBLE_DELTA"),
           tiledb::tiledb_filter("BIT_WIDTH_REDUCTION"),
           tiledb::tiledb_filter("ZSTD")

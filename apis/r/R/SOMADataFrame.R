@@ -20,7 +20,7 @@ SOMADataFrame <- R6::R6Class(
     #' @param index_column_names A vector of column names to use as user-defined
     #' index columns.  All named columns must exist in the schema, and at least
     #' one index column name is required.
-    create = function(schema, index_column_names) {
+    create = function(schema, index_column_names, platform_config=NULL) {
       schema <- private$validate_schema(schema, index_column_names)
 
       attr_column_names <- setdiff(schema$names, index_column_names)
@@ -28,6 +28,10 @@ SOMADataFrame <- R6::R6Class(
         "At least one non-index column must be defined in the schema" =
           length(attr_column_names) > 0
       )
+
+      # Parse the tiledb/create/ subkeys of the platform_config into a handy,
+      # typed, queryable data structure.
+      tiledb_create_options = TileDBCreateOptions$new(platform_config)
 
       # array dimensions
       tdb_dims <- stats::setNames(
@@ -38,10 +42,12 @@ SOMADataFrame <- R6::R6Class(
       for (field_name in index_column_names) {
         field <- schema$GetFieldByName(field_name)
 
-        # TODO: Parameterize
-        tile_extent <- 2048L
+        tile_extent <- tiledb_create_options$dim_tile(field_name)
 
         tile_extent <- switch(field$type$ToString(),
+          "int8" = as.integer(tile_extent),
+          "int16" = as.integer(tile_extent),
+          "int32" = as.integer(tile_extent),
           "int64" = bit64::as.integer64(tile_extent),
           "double" = as.double(tile_extent),
           "string" = NULL,
@@ -59,7 +65,7 @@ SOMADataFrame <- R6::R6Class(
           domain = arrow_type_unsigned_range(field$type),
           tile = tile_extent,
           type = tiledb_type_from_arrow_type(field$type),
-          filter_list = tiledb::tiledb_filter_list(c(
+          filter_list = tiledb::tiledb_filter_list(c( # XXX TO DO FROM TILEDB CREATE OPTIONS
             tiledb_zstd_filter()
           ))
         )
@@ -87,16 +93,17 @@ SOMADataFrame <- R6::R6Class(
       }
 
       # array schema
+      cell_tile_orders <- tiledb_create_options$cell_tile_orders()
       tdb_schema <- tiledb::tiledb_array_schema(
         domain = tiledb::tiledb_domain(tdb_dims),
         attrs = tdb_attrs,
         sparse = TRUE,
-        cell_order = "ROW_MAJOR",
-        tile_order = "ROW_MAJOR",
+        cell_order = cell_tile_orders["cell_order"],
+        tile_order = cell_tile_orders["tile_order"],
         capacity = 100000,
         # TODO: should be configurable via a global option
         allows_dups = FALSE,
-        offsets_filter_list = tiledb::tiledb_filter_list(c(
+        offsets_filter_list = tiledb::tiledb_filter_list(c( # XXX TO DO FROM TILEDB CREATE OPTIONS
           tiledb::tiledb_filter("DOUBLE_DELTA"),
           tiledb::tiledb_filter("BIT_WIDTH_REDUCTION"),
           tiledb_zstd_filter()
