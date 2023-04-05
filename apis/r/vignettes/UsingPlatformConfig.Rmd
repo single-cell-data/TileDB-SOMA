@@ -1,0 +1,12 @@
+---
+title: "Using PlatformConfig"
+output: github_document
+vignette: |
+  %\VignetteIndexEntry{Using PlatformConfig}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+## Lorem
+
+ipsum
