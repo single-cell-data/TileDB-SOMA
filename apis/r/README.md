@@ -30,6 +30,8 @@ $ install.packages('tiledbsoma', repos = c('https://tiledb-inc.r-universe.dev', 
 * Clone this repository: `git clone https://github.com/single-cell-data/TileDB-SOMA.git`
 * Change into the R API package directory: `cd TileDB-SOMA/apis/r`
 * Optionally, clean the files in the repo: `./cleanup` (this is not needed the first time)
+* Access to more test data: `install.packages("pbmc3k.tiledb",  repos="https://ghrr.github.io/drat")`
+`
 * Optionally, update the `libtiledbsoma` sources: `./copy_source.sh` (which updates the includes tarball of `libtiledbsoma`).
 * If you have edited any `src/*.cpp` with `RcppExport` then run `Rscript -e 'Rcpp::compileAttributes()'`
 * Build the R package source tarball from the repository sources: `R CMD build .` (which will also build `libtiledbsoma` from source; other dependencies are required as described in the previous section)
