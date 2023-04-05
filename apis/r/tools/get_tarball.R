@@ -13,13 +13,13 @@ macosver <- ""
 
 if (isMac) {
     if (isX86) {
-        url <- "https://github.com/TileDB-Inc/TileDB/releases/download/2.15.0/tiledb-macos-x86_64-2.15.0-1fb59c4.tar.gz"
+        url <- "https://github.com/TileDB-Inc/TileDB/releases/download/2.15.1/tiledb-macos-x86_64-2.15.1-432d4c2.tar.gz"
         macosver <- "-mmacosx-version-min=10.14"
     } else {
-        url <- "https://github.com/TileDB-Inc/TileDB/releases/download/2.15.0/tiledb-macos-arm64-2.15.0-1fb59c4.tar.gz"
+        url <- "https://github.com/TileDB-Inc/TileDB/releases/download/2.15.1/tiledb-macos-arm64-2.15.1-432d4c2.tar.gz"
     }
 } else if (isLinux) {
-    url <- "https://github.com/TileDB-Inc/TileDB/releases/download/2.15.0/tiledb-linux-x86_64-2.15.0-1fb59c4.tar.gz"
+    url <- "https://github.com/TileDB-Inc/TileDB/releases/download/2.15.1/tiledb-linux-x86_64-2.15.1-432d4c2.tar.gz"
 } else {
     stop("Unsupported platform for downloading artifacts. Please have TileDB Core installed locally.")
 }
