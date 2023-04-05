@@ -65,9 +65,9 @@ SOMADataFrame <- R6::R6Class(
           domain = arrow_type_unsigned_range(field$type),
           tile = tile_extent,
           type = tiledb_type_from_arrow_type(field$type),
-          filter_list = tiledb::tiledb_filter_list(c( # XXX TO DO FROM TILEDB CREATE OPTIONS
-            tiledb_zstd_filter()
-          ))
+          filter_list = tiledb::tiledb_filter_list(
+            tiledb_create_options$dim_filters(field_name)
+          )
         )
       }
 
@@ -86,9 +86,9 @@ SOMADataFrame <- R6::R6Class(
           type = field_type,
           nullable = field$nullable,
           ncells = if (field_type == "ASCII") NA_integer_ else 1L,
-          filter_list = tiledb::tiledb_filter_list(c(
-            tiledb_zstd_filter()
-          ))
+          filter_list = tiledb::tiledb_filter_list(
+            tiledb_create_options$attr_filters(field_name)
+          )
         )
       }
 
@@ -100,14 +100,12 @@ SOMADataFrame <- R6::R6Class(
         sparse = TRUE,
         cell_order = cell_tile_orders["cell_order"],
         tile_order = cell_tile_orders["tile_order"],
-        capacity = 100000,
-        # TODO: should be configurable via a global option
+        capacity = tiledb_create_options$capacity(),
+        # TODO: should be configurable via PlatformConfig
         allows_dups = FALSE,
-        offsets_filter_list = tiledb::tiledb_filter_list(c( # XXX TO DO FROM TILEDB CREATE OPTIONS
-          tiledb::tiledb_filter("DOUBLE_DELTA"),
-          tiledb::tiledb_filter("BIT_WIDTH_REDUCTION"),
-          tiledb_zstd_filter()
-        ))
+        offsets_filter_list = tiledb::tiledb_filter_list(
+          tiledb_create_options$offsets_filters()
+        )
       )
 
       # create array

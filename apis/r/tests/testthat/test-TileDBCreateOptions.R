@@ -122,6 +122,43 @@ test_that("TileDBCreateOptions dim_tile", {
   cfg$set('tiledb', 'create', 'dims', list(soma_dim_0 = list(tile = 999)))
   tdco <- TileDBCreateOptions$new(cfg)
   expect_equal(tdco$dim_tile("soma_dim_0"), 999)
+
+  expect_error(tdco$dim_tile())
+})
+
+test_that("TileDBCreateOptions dim_filters", {
+  cfg <- PlatformConfig$new()
+  tdco <- TileDBCreateOptions$new(cfg)
+  expect_error(tdco$dim_filters())
+  expect_no_condition(length(tdco$dim_filters("soma_dim_0", default=list("ZSTD"))))
+
+  cfg <- PlatformConfig$new()
+  cfg$set('tiledb', 'create', 'dims', list(
+    soma_dim_0 = list(filters = list("RLE")),
+    soma_dim_1 = list(filters = list("RLE", list(name="ZSTD", COMPRESSION_LEVEL=9)))
+  ))
+  tdco <- TileDBCreateOptions$new(cfg)
+  expect_equal(length(tdco$dim_filters("soma_dim_0", default=list("ZSTD"))), 1)
+  expect_equal(length(tdco$dim_filters("soma_dim_1", default=list("ZSTD"))), 2)
+})
+
+test_that("TileDBCreateOptions attr_filters", {
+  cfg <- PlatformConfig$new()
+  tdco <- TileDBCreateOptions$new(cfg)
+  expect_error(tdco$attr_filters())
+  expect_no_condition(length(tdco$attr_filters("soma_data")))
+
+  cfg <- PlatformConfig$new()
+  cfg$set('tiledb', 'create', 'attrs', list(
+    soma_data_a = list(filters = list("RLE")),
+    soma_data_b = list(filters = list("RLE", list(name="ZSTD", COMPRESSION_LEVEL=9)))
+  ))
+  tdco <- TileDBCreateOptions$new(cfg)
+  expect_error(tdco$attr_filters())
+  expect_equal(length(tdco$attr_filters("soma_data_a")), 1)
+  expect_equal(length(tdco$attr_filters("soma_data_b")), 2)
+  expect_equal(length(tdco$attr_filters("soma_data_c")), 0)
+  expect_equal(length(tdco$attr_filters("soma_data_c", list())), 0)
 })
 
 test_that("TileDBCreateOptions offsets_filters", {
@@ -170,48 +207,38 @@ test_that("TileDBCreateOptions validity_filters", {
   expect_equal(length(tdco$validity_filters()), 2)
 })
 
-test_that("TileDBCreateOptions dim_filters", {
+test_that("TileDBCreateOptions overrides", {
   cfg <- PlatformConfig$new()
+  cfg$set('tiledb', 'create', 'dataframe_dim_zstd_level', 8)
+  cfg$set('tiledb', 'create', 'sparse_nd_array_dim_zstd_level', 9)
+  cfg$set('tiledb', 'create', 'dims', list(
+    soma_dim_0 = list(tile = 6),
+    soma_dim_1 = list(filters = list()),
+    soma_dim_2 = list(filters = list("RLE", "ZSTD"))
+  ))
+  cfg$set('tiledb', 'create', 'attrs', list(
+    soma_data_a = list(filters = list("RLE", list(name="ZSTD", COMPRESSION_LEVEL=9)))
+  ))
   tdco <- TileDBCreateOptions$new(cfg)
-  expect_equal(length(tdco$dim_filters()), length(DEFAULT_DIM_FILTERS()))
 
-  cfg <- PlatformConfig$new()
-  cfg$set('tiledb', 'create', 'dim_filters',
-    list("RLE")
-  )
-  tdco <- TileDBCreateOptions$new(cfg)
-  expect_equal(length(tdco$dim_filters()), 1)
+  expect_equal(tdco$dataframe_dim_zstd_level(), 8)
+  expect_equal(tdco$sparse_nd_array_dim_zstd_level(), 9)
 
-  cfg <- PlatformConfig$new()
-  cfg$set('tiledb', 'create', 'dim_filters',
-    list(
-      "RLE",
-      list(name = "ZSTD", COMPRESSION_LEVEL = 9)
-    )
-  )
-  tdco <- TileDBCreateOptions$new(cfg)
-  expect_equal(length(tdco$dim_filters()), 2)
+  expect_error(tdco$dim_tile())
+  expect_equal(tdco$dim_tile('soma_dim_0'), 6)
+  expect_equal(tdco$dim_tile('soma_dim_1'), DEFAULT_TILE_EXTENT())
+
+  expect_error(tdco$dim_filters())
+  expect_equal(length(tdco$dim_filters("soma_dim_0")), 0)
+  expect_equal(length(tdco$dim_filters("soma_dim_1")), 0)
+  expect_equal(length(tdco$dim_filters("soma_dim_2")), 2)
+
+  expect_error(tdco$attr_filters())
+  expect_equal(length(tdco$attr_filters("soma_data_a")), 2)
+  expect_equal(length(tdco$attr_filters("soma_data_b")), 0)
 })
 
-test_that("TileDBCreateOptions attr_filters", {
-  cfg <- PlatformConfig$new()
-  tdco <- TileDBCreateOptions$new(cfg)
-  expect_equal(length(tdco$attr_filters()), length(DEFAULT_ATTR_FILTERS()))
-
-  cfg <- PlatformConfig$new()
-  cfg$set('tiledb', 'create', 'attr_filters',
-    list("RLE")
-  )
-  tdco <- TileDBCreateOptions$new(cfg)
-  expect_equal(length(tdco$attr_filters()), 1)
-
-  cfg <- PlatformConfig$new()
-  cfg$set('tiledb', 'create', 'attr_filters',
-    list(
-      "RLE",
-      list(name = "ZSTD", COMPRESSION_LEVEL = 9)
-    )
-  )
-  tdco <- TileDBCreateOptions$new(cfg)
-  expect_equal(length(tdco$attr_filters()), 2)
-})
+# TODO:
+# * dim/attr filt defaults via args as in python
+# * tests to verify specified capacity/extent/etc was actually used in the schema
+# * vignette

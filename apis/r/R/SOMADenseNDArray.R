@@ -43,9 +43,6 @@ SOMADenseNDArray <- R6::R6Class(
       # typed, queryable data structure.
       tiledb_create_options = TileDBCreateOptions$new(platform_config)
 
-      zstd_filter_list <- tiledb::tiledb_filter_list(c( # XXX TO DO FROM TILEDB CREATE OPTIONS
-          tiledb_zstd_filter(level = 3L)
-      ))
 
       # create array dimensions
       # use tiledb default names like `__dim_0`
@@ -61,14 +58,16 @@ SOMADenseNDArray <- R6::R6Class(
           tile = tile_extent,
           type = "INT64"
         )
-        tiledb::filter_list(tdb_dims[[i]]) <- zstd_filter_list # XXX TO DO FROM TILEDB CREATE OPTIONS
+        tiledb::filter_list(tdb_dims[[i]]) <- tiledb::tiledb_filter_list(
+          tiledb_create_options$dim_filters(dim_name)
+        )
       }
 
       # create array attribute
       tdb_attr <- tiledb::tiledb_attr(
         name = "soma_data",
         type = tiledb_type_from_arrow_type(type),
-        filter_list = zstd_filter_list
+        filter_list=tiledb::tiledb_filter_list(tiledb_create_options$attr_filters("soma_data"))
       )
 
       # array schema
@@ -79,12 +78,10 @@ SOMADenseNDArray <- R6::R6Class(
         sparse = FALSE,
         cell_order = cell_tile_orders["cell_order"],
         tile_order = cell_tile_orders["tile_order"],
-        capacity=100000,
-        offsets_filter_list = tiledb::tiledb_filter_list(c( # XXX TO DO FROM TILEDB CREATE OPTIONS
-          tiledb::tiledb_filter("DOUBLE_DELTA"),
-          tiledb::tiledb_filter("BIT_WIDTH_REDUCTION"),
-          tiledb::tiledb_filter("ZSTD")
-        ))
+        capacity=tiledb_create_options$capacity(),
+        offsets_filter_list = tiledb::tiledb_filter_list(
+          tiledb_create_options$offsets_filters()
+        )
       )
 
       # create array
