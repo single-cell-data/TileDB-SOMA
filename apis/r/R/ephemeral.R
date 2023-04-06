@@ -217,14 +217,14 @@ EphemeralCollectionBase <- R6::R6Class(
       if (!missing(value)) {
         private$.read_only_error('platform_config')
       }
-      .NotYetImplemented()
+      private$.ephemeral_error('custom', 'and have no configuration')
     },
     #' @field tiledbsoma_ctx \Sexpr[results=rd]{tiledbsoma:::rd_ephemeral_field()}
     tiledbsoma_ctx = function(value) {
       if (!missing(value)) {
         private$.read_only_error('tiledbsoma_ctx')
       }
-      .NotYetImplemented()
+      private$.ephemeral_error('custom', 'and have no context')
     },
     #' @field uri \dQuote{\code{ephemeral-collection:<MEMORY_ADDRESS>}}
     uri = function(value) {
@@ -238,7 +238,7 @@ EphemeralCollectionBase <- R6::R6Class(
       if (!missing(value)) {
         private$.read_only_error('object')
       }
-      .NotYetImplemented()
+      private$.ephemeral_error('custom', 'and have no underlying object')
     },
     # Overwrite SOMACollectionBase fields
     #' @field soma_type \Sexpr[results=rd]{tiledbsoma:::rd_ephemeral_field()}
@@ -246,7 +246,7 @@ EphemeralCollectionBase <- R6::R6Class(
       if (!missing(value)) {
         private$.read_only_error('soma_type')
       }
-      .NotYetImplemented()
+      private$.ephemeral_error('custom', 'and have no SOMA type')
     }
   ),
   private = list(
@@ -327,7 +327,16 @@ EphemeralCollectionBase <- R6::R6Class(
 #'
 VirtualCollection <- R6::R6Class(
   classname = 'VirtualCollection',
-  inherit = EphemeralCollectionBase
+  inherit = EphemeralCollectionBase,
+  active = list(
+    #' @field soma_type The SOMA object type
+    soma_type = function(value) {
+      if (!missing(value)) {
+        private$.read_only_error('soma_type')
+      }
+      return('SOMACollection')
+    }
+  )
 )
 
 #' Virtual SOMA Measurement
@@ -390,6 +399,13 @@ VirtualMeasurement <- R6::R6Class(
         name = 'varp',
         expected_class = c('VirtualCollection', 'SOMACollection')
       )
+    },
+    #' @field soma_type The SOMA object type
+    soma_type = function(value) {
+      if (!missing(value)) {
+        private$.read_only_error('soma_type')
+      }
+      return('SOMAMeasurement')
     }
   )
 )
@@ -405,7 +421,7 @@ VirtualMeasurement <- R6::R6Class(
 #'
 VirtualExperiment <- R6::R6Class(
   classname = 'VirtualExperiment',
-  inherit = SOMACollectionBase,
+  inherit = EphemeralCollectionBase,
   active = list(
     #' @field obs \Sexpr[results=rd]{tiledbsoma:::rd_soma_field("obs")}
     obs = function(value) {
@@ -422,6 +438,13 @@ VirtualExperiment <- R6::R6Class(
         name = 'ms',
         expected_class = c('VirtualCollection', 'SOMACollection')
       )
+    },
+    #' @field soma_type The SOMA object type
+    soma_type = function(value) {
+      if (!missing(value)) {
+        private$.read_only_error('soma_type')
+      }
+      return('SOMAExperiment')
     }
   )
 )
