@@ -26,3 +26,103 @@ rd_ephemeral_field <- function() {
 rd_ephemeral_param <- function() {
   return("Ignored for ephemeral objects")
 }
+
+rd_soma_field <- function(field) {
+  stopifnot(is_scalar_character(field))
+  field <- match.arg(
+    arg = field,
+    choices = c(
+      'X',
+      'ms',
+      'obs',
+      'obsm',
+      'obsp',
+      'var',
+      'varm',
+      'varp'
+    )
+  )
+  cd <- function(x) {
+    return(paste0('\\code{', x, '}'))
+  }
+  cl <- function(x) {
+    return(cd(paste0('\\link{', x, '}')))
+  }
+  return(switch(
+    EXPR = field,
+    X = paste(
+      'A',
+      cl('SOMACollection'),
+      'of',
+      paste0(cl('SOMASparseNDArray'), 's;'),
+      'each contain measured feature values indexed by',
+      cd('[obsid, varid]')
+    ),
+    ms = paste(
+      'A',
+      cl('SOMACollection'),
+      'of named',
+      paste0(cl('SOMAMeasurement'), 's')
+    ),
+    obs = paste(
+      'A',
+      cl('SOMADataFrame'),
+      'containing the annotations on the observation axis.',
+      'The contents of the',
+      cd('soma_joinid'),
+      'column define the observation index domain',
+      paste0(cd('obs_id'), '.'),
+      'All observations for the',
+      cd('SOMAExperiment'),
+      'must be defined in this data frame'
+    ),
+    obsm = paste(
+      'A',
+      cl('SOMACollection'),
+      'of',
+      paste0(cl('SOMADenseNDArray'), 's'),
+      'containing annotations on the observation axis. Each array is indexed by',
+      cd('obsid'),
+      'and has the same shape as',
+      cd('obs')
+    ),
+    obsp = paste(
+      'A',
+      cl('SOMACollection'),
+      'of',
+      paste0(cl('SOMASparseNDArray'), 's'),
+      'containing pairwise annotations on the observation axis and indexed with',
+      cd('[obsid_1, obsid_2]')
+    ),
+    var = paste(
+      'A',
+      cl('SOMADataFrame'),
+      'containing primary annotations on the variable axis,',
+      'for variables in this measurement (i.e., annotates columns of',
+      paste0(cd('X'), ').'),
+      'The contents of the',
+      cd('soma_joinid'),
+      'column define the variable index domain,',
+      paste0(cd('var_id'), '.'),
+      'All variables for this measurement must be defined in this data frame'
+    ),
+    varm = paste(
+      'A',
+      cl('SOMACollection'),
+      'of',
+      paste0(cl('SOMADenseNDArray'), 's'),
+      'containing annotations on the variable axis. Each array is indexed by',
+      cd('varid'),
+      'and has the same shape as',
+      cd('var')
+    ),
+    varp = paste(
+      'A',
+      cl('SOMACollection'),
+      'of',
+      paste0(cl('SOMASparseNDArray'), 's'),
+      'containing pairwise annotations on the variable axis and indexed with',
+      cd('[varid_1, varid_2]')
+    )
+  ))
+}
