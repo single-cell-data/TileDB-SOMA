@@ -5,7 +5,7 @@ test_that("Write Assay mechanics", {
   uri <- withr::local_tempdir("write-assay")
   collection <- SOMACollectionCreate(uri)
   rna <- get_data('pbmc_small', package = 'SeuratObject')[['RNA']]
-  expect_no_condition(ms <- write_soma(rna, soma = collection))
+  expect_no_condition(ms <- write_soma(rna, soma_parent = collection))
   expect_s3_class(ms, 'SOMAMeasurement')
   expect_true(ms$exists())
   expect_identical(ms$uri, file.path(collection$uri, 'rna'))
@@ -27,7 +27,11 @@ test_that("Write Assay mechanics", {
   for (i in names(rna2[[]])) {
     rna2[[i]] <- NULL
   }
-  expect_no_condition(ms2 <- write_soma(rna2, uri = 'rna-no-md', soma = collection))
+  expect_no_condition(ms2 <- write_soma(
+    rna2,
+    uri = 'rna-no-md',
+    soma_parent = collection
+  ))
   expect_s3_class(ms2, 'SOMAMeasurement')
   expect_true(ms2$exists())
   expect_identical(ms2$uri, file.path(collection$uri, 'rna-no-md'))
@@ -39,8 +43,8 @@ test_that("Write Assay mechanics", {
   expect_no_condition(ms3 <- write_soma(
     rna3,
     uri = 'rna-no-counts',
-    soma = collection)
-  )
+    soma_parent = collection
+  ))
   expect_s3_class(ms3, 'SOMAMeasurement')
   expect_true(ms3$exists())
   expect_identical(ms3$uri, file.path(collection$uri, 'rna-no-counts'))
@@ -60,8 +64,8 @@ test_that("Write Assay mechanics", {
   expect_no_condition(ms4 <- write_soma(
     rna4,
     uri = 'rna-no-scale',
-    soma = collection)
-  )
+    soma_parent = collection
+  ))
   expect_s3_class(ms4, 'SOMAMeasurement')
   expect_true(ms4$exists())
   expect_identical(ms4$uri, file.path(collection$uri, 'rna-no-scale'))
@@ -81,7 +85,7 @@ test_that("Write Assay mechanics", {
   expect_no_condition(ms5 <- write_soma(
     rna5,
     uri = 'rna-no-counts-scale',
-    soma = collection)
+    soma_parent = collection)
   )
   expect_s3_class(ms5, 'SOMAMeasurement')
   expect_true(ms5$exists())
@@ -92,11 +96,11 @@ test_that("Write Assay mechanics", {
   expect_identical(ms5$X$names(), 'data')
   expect_equal(ms5$X$get('data')$shape(), rev(dim(rna5)))
   # Test assertions
-  expect_error(write_soma(rna, uri = TRUE, soma = collection))
-  expect_error(write_soma(rna, uri = c('dir', 'rna'), soma = collection))
+  expect_error(write_soma(rna, uri = TRUE, soma_parent = collection))
+  expect_error(write_soma(rna, uri = c('dir', 'rna'), soma_parent = collection))
   expect_error(write_soma(
     rna,
-    soma = SOMADataFrameCreate(uri = file.path(uri, 'data-frame'))
+    soma_parent = SOMADataFrameCreate(uri = file.path(uri, 'data-frame'))
   ))
 })
 
@@ -109,11 +113,11 @@ test_that("Write DimReduc mechanics", {
   pca <- pbmc_small[['pca']]
   tsne <- pbmc_small[['tsne']]
   # Test writing PCA
-  mspca <- write_soma(rna, uri = 'rna-pca', soma = collection)
+  mspca <- write_soma(rna, uri = 'rna-pca', soma_parent = collection)
   fidx <- match(rownames(SeuratObject::Loadings(pca)), rownames(rna))
   expect_no_condition(write_soma(
     pca,
-    soma = mspca,
+    soma_parent = mspca,
     fidx = fidx,
     nfeatures = nrow(rna)
   ))
@@ -125,28 +129,28 @@ test_that("Write DimReduc mechanics", {
   expect_s3_class(sldgs <- mspca$varm$get('PCs'), 'SOMADenseNDArray')
   expect_equal(sldgs$shape(), c(nrow(rna), ncol(pca)))
   # Test writing tSNE
-  mstsne <- write_soma(rna, uri = 'rna-tsne', soma = collection)
-  expect_no_condition(write_soma(tsne, soma = mstsne))
+  mstsne <- write_soma(rna, uri = 'rna-tsne', soma_parent = collection)
+  expect_no_condition(write_soma(tsne, soma_parent = mstsne))
   expect_true(all(mstsne$names() %in% c('X', 'var', 'obsm', 'varm')))
   expect_identical(mstsne$obsm$names(), 'X_tsne')
   expect_s3_class(stsne <- mstsne$obsm$get('X_tsne'), 'SOMADenseNDArray')
   expect_equal(stsne$shape(), dim(tsne))
   # Test writing both PCA and tSNE
-  ms <- write_soma(rna, soma = collection)
+  ms <- write_soma(rna, soma_parent = collection)
   expect_no_condition(write_soma(
     pca,
-    soma = ms,
+    soma_parent = ms,
     fidx = fidx,
     nfeatures = nrow(rna)
   ))
-  expect_no_condition(write_soma(rna, soma = ms))
+  expect_no_condition(write_soma(rna, soma_parent = ms))
   expect_true(all(ms$names() %in% c('X', 'var', 'obsm', 'varm')))
   expect_true(all(ms$obsm$names() %in% paste0('X_', c('pca', 'tsne'))))
   expect_identical(ms$varm$names(), 'PCs')
   # Test assertions
-  expect_error(write_soma(pca, uri = 'X_pca', soma = mstsne))
-  expect_error(write_soma(pca, soma = collection))
-  expect_warning(write_soma(pca, soma = mstsne))
+  expect_error(write_soma(pca, uri = 'X_pca', soma_parent = mstsne))
+  expect_error(write_soma(pca, soma_parent = collection))
+  expect_warning(write_soma(pca, soma_parent = mstsne))
   expect_error(mstsne$varm)
 })
 
@@ -157,14 +161,14 @@ test_that("Write Graph mechanics", {
   pbmc_small <- get_data('pbmc_small', package = 'SeuratObject')
   rna <- pbmc_small[['RNA']]
   graph <- pbmc_small[['RNA_snn']]
-  ms <- write_soma(rna, soma = collection)
-  expect_no_condition(write_soma(graph, uri = 'rna-snn', soma = ms))
+  ms <- write_soma(rna, soma_parent = collection)
+  expect_no_condition(write_soma(graph, uri = 'rna-snn', soma_parent = ms))
   expect_true(all(ms$names() %in% c('X', 'var', 'obsp')))
   expect_identical(ms$obsp$names(), 'rna-snn')
   expect_s3_class(sgrph <- ms$obsp$get('rna-snn'), 'SOMASparseNDArray')
   expect_equal(sgrph$shape(), dim(graph))
   # Test assertions
-  expect_error(write_soma(grph, collection = soma))
+  expect_error(write_soma(grph, collection = soma_parent))
 })
 
 test_that("Write Seurat mechanics", {
