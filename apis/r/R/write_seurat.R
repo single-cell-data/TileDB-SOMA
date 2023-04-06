@@ -226,12 +226,13 @@ write_soma.DimReduc <- function(
   }
   embed <- paste0('X_', key)
   spdl::info("Adding embeddings as {}", sQuote(embed))
+  # Always write reductions as sparse arrays
   soma_parent$obsm$set(
     object = write_soma(
       x = SeuratObject::Embeddings(x),
       uri = embed,
       soma_parent = soma_parent$obsm,
-      sparse = FALSE,
+      sparse = TRUE,
       transpose = FALSE,
       platform_config = platform_config,
       tiledbsoma_ctx = tiledbsoma_ctx
@@ -288,12 +289,13 @@ write_soma.DimReduc <- function(
     mat[fidx, ] <- loadings
     # Write the feature loadings
     spdl::info("Adding feature loadings as {}", sQuote(ldgs))
+    # Always write reductions as sparse arrays
     soma_parent$varm$set(
       object = write_soma(
         x = mat,
         uri = ldgs,
         soma_parent = soma_parent$varm,
-        sparse = FALSE,
+        sparse = TRUE,
         transpose = FALSE,
         platform_config = platform_config,
         tiledbsoma_ctx = tiledbsoma_ctx
