@@ -11,6 +11,49 @@ rd_atomic <- function() {
   ))
 }
 
+rd_ephemeral_cls <- function(cls, base = FALSE) {
+  stopifnot(is_scalar_character(cls), is_scalar_logical(base))
+  cls <- match.arg(
+    arg = cls,
+    choices = c('collection', 'experiment', 'measurement')
+  )
+  switch(
+    EXPR = cls,
+    collection = {
+      first <- ifelse(
+        test = isTRUE(base),
+        yes = 'Base class for ephemeral collections',
+        no = 'Ephemeral version of \\code{\\link{SOMACollection}s}'
+      )
+      link <- '\\link[SOMACollection]{SOMA collections}'
+    },
+    experiment = {
+      first <- ifelse(
+        test = isTRUE(base),
+        yes = 'Base class for ephemeral experiments',
+        no = 'Ephemeral version of \\code{\\link{SOMAExperiment}s}'
+      )
+      link <- '\\link[SOMAExperiment]{SOMA experiments}'
+    },
+    measurement = {
+      first <- ifelse(
+        test = isTRUE(base),
+        yes = 'Base class for ephemeral measurements',
+        no = 'Ephemeral version of \\code{\\link{SOMAMeasurements}s}'
+      )
+      link <- '\\link[SOMAMeasurements]{SOMA measurements}'
+    },
+  )
+  return(paste0(
+    first,
+    '; ephemeral ',
+    cls,
+    's are equivalent to ',
+    link,
+    ' but are stored in-memory instead of on-disk'
+  ))
+}
+
 rd_ephemeral_desc <- function() {
   return("Dummy method for ephemeral cobjects for compatibility with SOMA collections")
 }

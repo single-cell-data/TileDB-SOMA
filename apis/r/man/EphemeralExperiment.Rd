@@ -4,8 +4,7 @@
 \alias{EphemeralExperiment}
 \title{Ephemeral SOMA Experiment}
 \description{
-Ephemeral (in-memory) version of \code{\link{SOMAExperiemnt}}
-for in-memory SOMA experiments
+\Sexpr[results=rd]{tiledbsoma:::rd_ephemeral_cls("experiment")}
 }
 \keyword{internal}
 \section{Super classes}{

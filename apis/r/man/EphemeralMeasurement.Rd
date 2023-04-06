@@ -4,8 +4,7 @@
 \alias{EphemeralMeasurement}
 \title{Ephemeral SOMA Measurement}
 \description{
-Ephemeral (in-memory) version of \code{\link{SOMAMeasurement}}
-for in-memory SOMA measurements
+\Sexpr[results=rd]{tiledbsoma:::rd_ephemeral_cls("measurement")}
 }
 \keyword{internal}
 \section{Super classes}{

@@ -4,8 +4,7 @@
 \alias{EphemeralCollection}
 \title{Ephemeral Collections}
 \description{
-Ephemeral (in-memory version of \code{\link{SOMACollection}}
-for in-memory SOMA collections
+\Sexpr[results=rd]{tiledbsoma:::rd_ephemeral_cls("collection")}
 }
 \keyword{internal}
 \section{Super classes}{

@@ -1,6 +1,6 @@
 #' Ephemeral Collection Base
 #'
-#' @description Base class for ephemeral collections
+#' @description \Sexpr[results=rd]{tiledbsoma:::rd_ephemeral_cls("collection", TRUE)}
 #'
 #' @keywords internal
 #'
@@ -13,8 +13,15 @@ EphemeralCollectionBase <- R6::R6Class(
     #'
     #' @template param-dots-ignored
     #'
-    #'
     initialize = function(...) {
+      # Check if any arguments were passed
+      # If so, warn about unused arguments for ephemeral objects
+      # Python equivalent:
+      # def f(*args, **kwargs):
+      #   if args or kwargs:
+      #     warnings.warn("argumnets passed but unused")
+      #   pass
+      #
       if (rlang::dots_n(...)) {
         tryCatch(
           expr = private$.ephemeral_error('custom', 'and cannot be customized'),
@@ -316,8 +323,7 @@ EphemeralCollectionBase <- R6::R6Class(
 
 #' Ephemeral Collections
 #'
-#' @description Ephemeral (in-memory version of \code{\link{SOMACollection}}
-#' for in-memory SOMA collections
+#' @description \Sexpr[results=rd]{tiledbsoma:::rd_ephemeral_cls("collection")}
 #'
 #' @keywords internal
 #'
@@ -339,8 +345,7 @@ EphemeralCollection <- R6::R6Class(
 
 #' Ephemeral SOMA Measurement
 #'
-#' @description Ephemeral (in-memory) version of \code{\link{SOMAMeasurement}}
-#' for in-memory SOMA measurements
+#' @description \Sexpr[results=rd]{tiledbsoma:::rd_ephemeral_cls("measurement")}
 #'
 #' @keywords internal
 #'
@@ -410,8 +415,7 @@ EphemeralMeasurement <- R6::R6Class(
 
 #' Ephemeral SOMA Experiment
 #'
-#' @description Ephemeral (in-memory) version of \code{\link{SOMAExperiemnt}}
-#' for in-memory SOMA experiments
+#' @description \Sexpr[results=rd]{tiledbsoma:::rd_ephemeral_cls("experiment")}
 #'
 #' @keywords internal
 #'

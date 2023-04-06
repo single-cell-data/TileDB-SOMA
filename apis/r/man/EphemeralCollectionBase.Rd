@@ -4,7 +4,7 @@
 \alias{EphemeralCollectionBase}
 \title{Ephemeral Collection Base}
 \description{
-Base class for ephemeral collections
+\Sexpr[results=rd]{tiledbsoma:::rd_ephemeral_cls("collection", TRUE)}
 }
 \keyword{internal}
 \section{Super classes}{
