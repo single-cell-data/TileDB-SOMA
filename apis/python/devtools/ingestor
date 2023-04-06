@@ -90,6 +90,12 @@ select `relative=True`. (This is the default.)
         nargs=1,
     )
     parser.add_argument(
+        "--tiledb-config",
+        help="TileDB config data from `config.save()`",
+        type=str,
+        default=None,
+    )
+    parser.add_argument(
         "paths",
         type=str,
         help="One for specified input with default output path, or two to specify input and output paths, or multiple input paths if -n is specified",
@@ -119,6 +125,11 @@ select `relative=True`. (This is the default.)
             )
 
     context = SOMATileDBContext()
+    if args.tiledb_config is not None:
+        cfg = tiledb.Config().load(args.tiledb_config)
+        ctx = tiledb.Ctx(cfg)
+        context = SOMATileDBContext(tiledb_ctx=ctx)
+
     soco_dir = args.o.rstrip("/")
 
     if args.n:
@@ -233,6 +244,7 @@ def ingest_one(
         input_path,
         measurement_name,
         ingest_mode=ingest_mode,
+        context=context,
         use_relative_uri=use_relative_uri,
     )
 

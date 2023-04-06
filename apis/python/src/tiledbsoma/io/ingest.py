@@ -218,7 +218,9 @@ def from_anndata(
     logging.log_io(None, f"START  WRITING {experiment_uri}")
 
     # Must be done first, to create the parent directory.
-    experiment = _create_or_open_coll(Experiment, experiment_uri, ingest_mode)
+    experiment = _create_or_open_coll(
+        Experiment, experiment_uri, ingest_mode, context=context
+    )
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     # OBS
@@ -228,6 +230,7 @@ def from_anndata(
         conversions.decategoricalize_obs_or_var(anndata.obs),
         id_column_name="obs_id",
         platform_config=platform_config,
+        context=context,
         ingest_mode=ingest_mode,
     ) as obs:
         _maybe_set(experiment, "obs", obs, use_relative_uri=use_relative_uri)
@@ -235,14 +238,20 @@ def from_anndata(
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     # MS
     with _create_or_open_coll(
-        Collection[Measurement], _util.uri_joinpath(experiment.uri, "ms"), ingest_mode
+        Collection[Measurement],
+        _util.uri_joinpath(experiment.uri, "ms"),
+        ingest_mode,
+        context=context,
     ) as ms:
         _maybe_set(experiment, "ms", ms, use_relative_uri=use_relative_uri)
 
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         # MS/meas
         with _create_or_open_coll(
-            Measurement, f"{experiment.ms.uri}/{measurement_name}", ingest_mode
+            Measurement,
+            f"{experiment.ms.uri}/{measurement_name}",
+            ingest_mode,
+            context=context,
         ) as measurement:
             _maybe_set(
                 ms, measurement_name, measurement, use_relative_uri=use_relative_uri
@@ -254,6 +263,7 @@ def from_anndata(
                 measurement,
                 anndata.uns,
                 platform_config,
+                context,
                 ingest_mode,
                 use_relative_uri=use_relative_uri,
             )
@@ -265,6 +275,7 @@ def from_anndata(
                 conversions.decategoricalize_obs_or_var(anndata.var),
                 id_column_name="var_id",
                 platform_config=platform_config,
+                context=context,
                 ingest_mode=ingest_mode,
             ) as var:
                 _maybe_set(measurement, "var", var, use_relative_uri=use_relative_uri)
@@ -273,7 +284,10 @@ def from_anndata(
             # MS/meas/X/DATA
 
             with _create_or_open_coll(
-                Collection, _util.uri_joinpath(measurement.uri, "X"), ingest_mode
+                Collection,
+                _util.uri_joinpath(measurement.uri, "X"),
+                ingest_mode,
+                context=context,
             ) as x:
                 _maybe_set(measurement, "X", x, use_relative_uri=use_relative_uri)
 
@@ -289,6 +303,7 @@ def from_anndata(
                     anndata.X,
                     platform_config,
                     ingest_mode,
+                    context,
                 ) as data:
                     _maybe_set(x, "data", data, use_relative_uri=use_relative_uri)
 
@@ -299,6 +314,7 @@ def from_anndata(
                         Collection,
                         _util.uri_joinpath(measurement.uri, "obsm"),
                         ingest_mode,
+                        context=context,
                     ) as obsm:
                         _maybe_set(
                             measurement, "obsm", obsm, use_relative_uri=use_relative_uri
@@ -312,6 +328,7 @@ def from_anndata(
                                 ),
                                 platform_config,
                                 ingest_mode,
+                                context=context,
                             ) as arr:
                                 _maybe_set(
                                     obsm, key, arr, use_relative_uri=use_relative_uri
@@ -324,6 +341,7 @@ def from_anndata(
                         Collection,
                         _util.uri_joinpath(measurement.uri, "varm"),
                         ingest_mode,
+                        context=context,
                     ) as varm:
                         _maybe_set(
                             measurement, "varm", varm, use_relative_uri=use_relative_uri
@@ -337,6 +355,7 @@ def from_anndata(
                                 ),
                                 platform_config,
                                 ingest_mode,
+                                context=context,
                             ) as darr:
                                 _maybe_set(
                                     varm,
@@ -350,6 +369,7 @@ def from_anndata(
                         Collection,
                         _util.uri_joinpath(measurement.uri, "obsp"),
                         ingest_mode,
+                        context=context,
                     ) as obsp:
                         _maybe_set(
                             measurement, "obsp", obsp, use_relative_uri=use_relative_uri
@@ -363,6 +383,7 @@ def from_anndata(
                                 ),
                                 platform_config,
                                 ingest_mode,
+                                context=context,
                             ) as sarr:
                                 _maybe_set(
                                     obsp,
@@ -376,6 +397,7 @@ def from_anndata(
                         Collection,
                         _util.uri_joinpath(measurement.uri, "varp"),
                         ingest_mode,
+                        context=context,
                     ) as varp:
                         _maybe_set(
                             measurement, "varp", varp, use_relative_uri=use_relative_uri
@@ -389,6 +411,7 @@ def from_anndata(
                                 ),
                                 platform_config,
                                 ingest_mode,
+                                context=context,
                             ) as sarr:
                                 _maybe_set(
                                     varp,
@@ -404,6 +427,7 @@ def from_anndata(
                         Measurement,
                         _util.uri_joinpath(experiment.ms.uri, "raw"),
                         ingest_mode,
+                        context=context,
                     ) as raw_measurement:
                         _maybe_set(
                             ms,
@@ -417,6 +441,7 @@ def from_anndata(
                             conversions.decategoricalize_obs_or_var(anndata.raw.var),
                             id_column_name="var_id",
                             platform_config=platform_config,
+                            context=context,
                             ingest_mode=ingest_mode,
                         ) as var:
                             _maybe_set(
@@ -430,6 +455,7 @@ def from_anndata(
                             Collection,
                             _util.uri_joinpath(raw_measurement.uri, "X"),
                             ingest_mode,
+                            context=context,
                         ) as rm_x:
                             _maybe_set(
                                 raw_measurement,
@@ -444,6 +470,7 @@ def from_anndata(
                                 anndata.raw.X,
                                 platform_config,
                                 ingest_mode,
+                                context=context,
                             ) as rm_x_data:
                                 _maybe_set(
                                     rm_x,
@@ -477,32 +504,34 @@ def _maybe_set(
 
 @overload
 def _create_or_open_coll(
-    cls: Type[Experiment], uri: str, ingest_mode: str
+    cls: Type[Experiment], uri: str, ingest_mode: str, context: SOMATileDBContext
 ) -> Experiment:
     ...
 
 
 @overload
 def _create_or_open_coll(
-    cls: Type[Measurement], uri: str, ingest_mode: str
+    cls: Type[Measurement], uri: str, ingest_mode: str, context: SOMATileDBContext
 ) -> Measurement:
     ...
 
 
 @overload
 def _create_or_open_coll(
-    cls: Type[Collection[_TDBO]], uri: str, ingest_mode: str
+    cls: Type[Collection[_TDBO]], uri: str, ingest_mode: str, context: SOMATileDBContext
 ) -> Collection[_TDBO]:
     ...
 
 
 @typeguard_ignore
-def _create_or_open_coll(cls: Type[Any], uri: str, ingest_mode: str) -> Any:
+def _create_or_open_coll(
+    cls: Type[Any], uri: str, ingest_mode: str, context: SOMATileDBContext
+) -> Any:
     try:
-        thing = cls.open(uri, "w")
+        thing = cls.open(uri, "w", context=context)
     except DoesNotExistError:
         # This is always OK. Make a new one.
-        return cls.create(uri)
+        return cls.create(uri, context=context)
     # It already exists. Are we resuming?
     if ingest_mode == "resume":
         return thing
@@ -514,6 +543,7 @@ def _write_dataframe(
     df: pd.DataFrame,
     id_column_name: Optional[str],
     platform_config: Optional[PlatformConfig] = None,
+    context: Optional[SOMATileDBContext] = None,
     ingest_mode: IngestMode = "write",
 ) -> DataFrame:
     s = _util.get_start_stamp()
@@ -533,12 +563,13 @@ def _write_dataframe(
     arrow_table = pa.Table.from_pandas(df)
 
     try:
-        soma_df = _factory.open(df_uri, "w", soma_type=DataFrame)
+        soma_df = _factory.open(df_uri, "w", soma_type=DataFrame, context=context)
     except DoesNotExistError:
         soma_df = DataFrame.create(
             df_uri,
             schema=arrow_table.schema,
             platform_config=platform_config,
+            context=context,
         )
     else:
         if ingest_mode == "resume":
@@ -575,6 +606,7 @@ def create_from_matrix(
     matrix: Union[Matrix, h5py.Dataset],
     platform_config: Optional[PlatformConfig] = None,
     ingest_mode: IngestMode = "write",
+    context: Optional[SOMATileDBContext] = None,
 ) -> _NDArr:
     """
     Create and populate the ``soma_matrix`` from the contents of ``matrix``.
@@ -590,7 +622,9 @@ def create_from_matrix(
     logging.log_io(None, f"START  WRITING {uri}")
 
     try:
-        soma_ndarray = cls.open(uri, "w", platform_config=platform_config)
+        soma_ndarray = cls.open(
+            uri, "w", platform_config=platform_config, context=context
+        )
     except DoesNotExistError:
         # A SparseNDArray must be appendable in soma.io.
         shape = [None for _ in matrix.shape] if cls.is_sparse else matrix.shape
@@ -599,6 +633,7 @@ def create_from_matrix(
             type=pa.from_numpy_dtype(matrix.dtype),
             shape=shape,
             platform_config=platform_config,
+            context=context,
         )
     else:
         if ingest_mode != "resume":
@@ -623,6 +658,7 @@ def create_from_matrix(
             tiledb_create_options=TileDBCreateOptions.from_platform_config(
                 platform_config
             ),
+            context=context,
             ingest_mode=ingest_mode,
         )
     elif isinstance(soma_ndarray, SparseNDArray):  # SOMASparseNDArray
@@ -632,6 +668,7 @@ def create_from_matrix(
             tiledb_create_options=TileDBCreateOptions.from_platform_config(
                 platform_config
             ),
+            context=context,
             ingest_mode=ingest_mode,
         )
     else:
@@ -681,6 +718,7 @@ def add_matrix_to_collection(
     matrix_data: Union[Matrix, h5py.Dataset],
     ingest_mode: IngestMode = "write",
     use_relative_uri: Optional[bool] = None,
+    context: Optional[SOMATileDBContext] = None,
 ) -> None:
     """This is useful for adding X/obsp/varm/etc data, for example from
     `Scanpy <https://scanpy.readthedocs.io/>`_'s ``scanpy.pp.normalize_total``,
@@ -696,13 +734,20 @@ def add_matrix_to_collection(
             coll = cast(Collection[RawHandle], meas[collection_name])
         else:
             coll = _create_or_open_coll(
-                Collection, f"{meas.uri}/{collection_name}", ingest_mode
+                Collection,
+                f"{meas.uri}/{collection_name}",
+                ingest_mode,
+                context=context,
             )
             _maybe_set(meas, collection_name, coll, use_relative_uri=use_relative_uri)
         with coll:
             uri = f"{coll.uri}/{matrix_name}"
             with create_from_matrix(
-                SparseNDArray, uri, matrix_data, ingest_mode=ingest_mode
+                SparseNDArray,
+                uri,
+                matrix_data,
+                ingest_mode=ingest_mode,
+                context=context,
             ) as sparse_nd_array:
                 _maybe_set(
                     coll,
@@ -716,6 +761,7 @@ def _write_matrix_to_denseNDArray(
     soma_ndarray: DenseNDArray,
     matrix: Union[Matrix, h5py.Dataset],
     tiledb_create_options: TileDBCreateOptions,
+    context: Optional[SOMATileDBContext],
     ingest_mode: IngestMode,
 ) -> None:
     """Write a matrix to an empty DenseNDArray"""
@@ -882,6 +928,7 @@ def _write_matrix_to_sparseNDArray(
     soma_ndarray: SparseNDArray,
     matrix: Matrix,
     tiledb_create_options: TileDBCreateOptions,
+    context: Optional[SOMATileDBContext],
     ingest_mode: IngestMode,
 ) -> None:
     """Write a matrix to an empty DenseNDArray"""
@@ -1056,6 +1103,7 @@ def _maybe_ingest_uns(
     m: Measurement,
     uns: Mapping[str, object],
     platform_config: Optional[PlatformConfig],
+    context: Optional[SOMATileDBContext],
     ingest_mode: IngestMode,
     *,
     use_relative_uri: Optional[bool],
@@ -1064,7 +1112,13 @@ def _maybe_ingest_uns(
     if not uns:
         return
     _ingest_uns_dict(
-        m, "uns", uns, platform_config, ingest_mode, use_relative_uri=use_relative_uri
+        m,
+        "uns",
+        uns,
+        platform_config,
+        context,
+        ingest_mode,
+        use_relative_uri=use_relative_uri,
     )
 
 
@@ -1073,12 +1127,16 @@ def _ingest_uns_dict(
     parent_key: str,
     dct: Mapping[str, object],
     platform_config: Optional[PlatformConfig],
+    context: Optional[SOMATileDBContext],
     ingest_mode: IngestMode,
     *,
     use_relative_uri: Optional[bool],
 ) -> None:
     with _create_or_open_coll(
-        Collection, _util.uri_joinpath(parent.uri, parent_key), ingest_mode
+        Collection,
+        _util.uri_joinpath(parent.uri, parent_key),
+        ingest_mode,
+        context=context,
     ) as coll:
         _maybe_set(parent, parent_key, coll, use_relative_uri=use_relative_uri)
         coll.metadata["soma_tiledbsoma_type"] = "uns"
@@ -1094,6 +1152,7 @@ def _ingest_uns_dict(
                     key,
                     value,
                     platform_config,
+                    context,
                     ingest_mode,
                     use_relative_uri=use_relative_uri,
                 )
@@ -1104,7 +1163,8 @@ def _ingest_uns_dict(
                     value,
                     None,
                     platform_config,
-                    ingest_mode,
+                    context=context,
+                    ingest_mode=ingest_mode,
                 ) as df:
                     _maybe_set(coll, key, df, use_relative_uri=use_relative_uri)
                 continue
@@ -1125,6 +1185,7 @@ def _ingest_uns_dict(
                     key,
                     value,
                     platform_config,
+                    context=context,
                     use_relative_uri=use_relative_uri,
                 )
             else:
@@ -1142,6 +1203,7 @@ def _ingest_uns_ndarray(
     key: str,
     value: NPNDArray,
     platform_config: Optional[PlatformConfig],
+    context: Optional[SOMATileDBContext],
     *,
     use_relative_uri: Optional[bool],
 ) -> None:
@@ -1163,10 +1225,15 @@ def _ingest_uns_ndarray(
             type=pa_dtype,
             shape=value.shape,
             platform_config=platform_config,
+            context=context,
         )
     with soma_arr:
         _maybe_set(coll, key, soma_arr, use_relative_uri=use_relative_uri)
-        soma_arr.write((), pa.Tensor.from_numpy(value), platform_config=platform_config)
+        soma_arr.write(
+            (),
+            pa.Tensor.from_numpy(value),
+            platform_config=platform_config,
+        )
     msg = f"Wrote   {soma_arr.uri} (uns ndarray)"
 
 
