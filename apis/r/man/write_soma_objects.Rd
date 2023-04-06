@@ -60,15 +60,15 @@
 \arguments{
 \item{x}{An object}
 
-\item{uri}{URI for resulting SOMA}
+\item{uri}{URI for resulting SOMA object}
 
 \item{soma}{The parent \link[tiledbsoma:SOMACollection]{collection} (eg. a
 \code{\link{SOMACollection}}, \code{\link{SOMAExperiment}}, or
 \code{\link{SOMAMeasurement}})}
 
 \item{index}{The name of the column in \code{x} with the index (row names);
-by default, will automatically add the row names of \code{x} to \code{x}
-before writing}
+by default, will automatically add the row names of \code{x} to an attribute
+named \dQuote{\code{index}} to the resulting \code{\link{SOMADataFrame}}}
 
 \item{...}{Arguments passed to other methods}
 
@@ -98,11 +98,11 @@ Various helpers to write R objects to SOMA
 \section{Writing Data Frames}{
 
 \link[base:data.frame]{Data frames} are written out as
-\link[tiledbsoma:SOMADataFrame]{SOMA-structured TileDB data frames}. The
-following transformations are applied to \code{x}:
+\code{\link{SOMADataFrame}s}. The following transformations
+are applied to \code{x}:
 \itemize{
 \item row names are added to a column in \code{x} entitled
-\dQuote{\code{_index}}, \dQuote{\code{rownames}}, or a random name if
+\dQuote{\code{index}}, \dQuote{\code{_index}}, or a random name if
 either option is already present in \code{x}
 \item a column \dQuote{\code{soma_joinid}} will be automatically added
 going from \code{[0, nrow(x) - 1]} encoded as
