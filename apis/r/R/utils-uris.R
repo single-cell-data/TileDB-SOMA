@@ -11,8 +11,6 @@ is_remote_uri <- function(x) {
 #'  \item \dQuote{\code{working}}: the working directory
 #'   (\code{\link[base]{getwd}()})
 #'  \item \dQuote{\code{tempdir}}: a temporary directory
-#'  \item \dQuote{\code{rappdirs}}: the user data directory as determined by
-#'   \code{\link[rappdirs:user_data_dir]{rappdirs::user_data_dir}()}
 #' }
 #'
 #' @return ...
@@ -20,33 +18,16 @@ is_remote_uri <- function(x) {
 #' @keywords internal
 #'
 #' @seealso \code{\link[tools:R_user_dir]{tools::R_user_dir}()}
-#' \code{\link[rappdirs:user_data_dir]{rappdirs::user_data_dir}()}
 #' \code{\link[base]{getwd}()}
 #' \code{\link[base]{tempdir}()}
 #'
 #' @noRd
 #'
 user_dir <- function(type = getOption('tiledbsoma.io.user_dir')) {
-  datas <- c(
-    'working',
-    'tempdir',
-    ifelse(
-      test = requireNamespace('tools', quietly = TRUE) && getRversion() > '4.0.0',
-      yes = 'user',
-      no = ''
-    ),
-    ifelse(
-      test = requireNamespace('rappdirs', quietly = TRUE),
-      yes = 'rappdirs',
-      no = ''
-    )
-  )
-  datas <- Filter(f = nzchar, x = datas)
-  pkg <- 'tiledbsoma'
-  default <- intersect(x = c('user', 'rappdirs', 'working'), y = datas)[1L]
-  type <- type %||% default
+  type <- type %||% 'user'
+  stopifnot(is_scalar_character(type))
   type <- tryCatch(
-    expr = match.arg(arg = type, choices = datas),
+    expr = match.arg(arg = type, choices = c('working', 'tempdir', 'user')),
     error = function(...) {
       return(default)
     }
@@ -61,13 +42,7 @@ user_dir <- function(type = getOption('tiledbsoma.io.user_dir')) {
       }
       tdir
     },
-    user = tools::R_user_dir(package = pkg, which = 'data'),
-    rappdirs = rappdirs::user_data_dir(
-      appname = pkg,
-      appauthor = 'tiledb',
-      version = as.character(tiledb::tiledb_version(TRUE)),
-      roaming = getOption('tiledbsoma.io.user_dir.roaming', default = FALSE)
-    )
+    user = tools::R_user_dir(package = 'tiledbsoma', which = 'data')
   ))
 }
 

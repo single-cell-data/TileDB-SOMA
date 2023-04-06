@@ -48,7 +48,8 @@ Imports:
     dplyr,
     data.table,
     spdl,
-    rlang
+    rlang,
+    tools
 LinkingTo:
     Rcpp,
     RcppSpdlog
@@ -62,8 +63,6 @@ Suggests:
     testthat (>= 3.0.0),
     pbmc3k.tiledb,
     SeuratObject (>= 4.1.0),
-    rappdirs,
-    tools,
     datasets
 VignetteBuilder: knitr
 Config/testthat/edition: 2
