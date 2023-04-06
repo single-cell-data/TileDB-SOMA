@@ -16,7 +16,7 @@
 \arguments{
 \item{x}{A \code{\link[SeuratObject]{Seurat}} object}
 
-\item{uri}{URI for resulting SOMA}
+\item{uri}{URI for resulting SOMA object}
 
 \item{...}{Arguments passed to other methods}
 

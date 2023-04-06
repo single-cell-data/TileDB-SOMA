@@ -2,14 +2,14 @@
 % Please edit documentation in R/write_soma.R
 \name{write_soma}
 \alias{write_soma}
-\title{Write a SOMA from an \R Object}
+\title{Write a SOMA Object from an \R Object}
 \usage{
 write_soma(x, uri, ..., platform_config = NULL, tiledbsoma_ctx = NULL)
 }
 \arguments{
 \item{x}{An object}
 
-\item{uri}{URI for resulting SOMA}
+\item{uri}{URI for resulting SOMA object}
 
 \item{...}{Arguments passed to other methods}
 
@@ -22,7 +22,7 @@ configuration}}
 A \code{\link{SOMAExperiment}} with the data from \code{x}
 }
 \description{
-Write \R objects to SOMA following the SOMA spec. This is a generic
+Convert \R objects to their appropriate SOMA counterpart
 function and methods can be written for it to provide a high-level
 \R \eqn{\rightarrow} SOMA interface
 }

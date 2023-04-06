@@ -44,7 +44,7 @@
 \code{\link[SeuratObject]{Assay}}, a \code{\link[SeuratObject]{DimReduc}},
 or a \code{\link[SeuratObject]{Graph}})}
 
-\item{uri}{URI for resulting SOMA}
+\item{uri}{URI for resulting SOMA object}
 
 \item{soma}{The parent \link[tiledbsoma:SOMACollection]{collection}; for
 the \code{DimReduc} and \code{Graph} methods, this \strong{must} be a
