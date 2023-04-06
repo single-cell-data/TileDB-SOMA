@@ -10,7 +10,7 @@ EphemeralCollectionBase <- R6::R6Class(
   classname = 'EphemeralCollectionBase',
   inherit = SOMACollectionBase,
   public = list(
-    # Overwrite TileDBObject methods
+    # Override TileDBObject methods
     #' @description Create an ephemeral collection
     #'
     #' @template param-dots-ignored
@@ -53,7 +53,7 @@ EphemeralCollectionBase <- R6::R6Class(
       }
       return(NULL)
     },
-    # Overwrite TileDBGroup methods
+    # Override TileDBGroup methods
     #' @description Special method for printing object representation to console
     #'
     #' @return Prints details about the ephemeral collection and invisibly
@@ -172,7 +172,7 @@ EphemeralCollectionBase <- R6::R6Class(
       )
       return(invisible(NULL))
     },
-    # Overwrite SOMACollectionBase methods
+    # Override SOMACollectionBase methods
     #' @description \Sexpr[results=rd]{tiledbsoma:::rd_ephemeral_desc()}
     #'
     #' @param object,key \Sexpr[results=rd]{tiledbsoma:::rd_ephemeral_param()}
@@ -211,7 +211,7 @@ EphemeralCollectionBase <- R6::R6Class(
     }
   ),
   active = list(
-    # Overwrite TileDBObject fields
+    # Override TileDBObject fields
     #' @field platform_config \Sexpr[results=rd]{tiledbsoma:::rd_ephemeral_field()}
     platform_config = function(value) {
       if (!missing(value)) {
@@ -240,7 +240,7 @@ EphemeralCollectionBase <- R6::R6Class(
       }
       private$.ephemeral_error('custom', 'and have no underlying object')
     },
-    # Overwrite SOMACollectionBase fields
+    # Override SOMACollectionBase fields
     #' @field soma_type \Sexpr[results=rd]{tiledbsoma:::rd_ephemeral_field()}
     soma_type = function(value) {
       if (!missing(value)) {
@@ -250,17 +250,17 @@ EphemeralCollectionBase <- R6::R6Class(
     }
   ),
   private = list(
-    # Overwrite SOMACollectionBase private fields
+    # Override SOMACollectionBase private fields
     tiledb_object = NULL,
     tiledb_uri = NULL,
     tiledb_platform_config = NULL,
     .tiledbsoma_ctx = NULL,
     mode = NULL,
-    # Overwrite TileDBGroup private fields
+    # Override TileDBGroup private fields
     member_cache = NULL,
-    # Overwrite SOMACollectionBase private fields
+    # Override SOMACollectionBase private fields
     soma_type_cache = NULL,
-    # Overwrite TileDBGroup private methods
+    # Override TileDBGroup private methods
     open = function(mode) {
       private$.ephemeral_error('opened')
     },
@@ -316,17 +316,17 @@ EphemeralCollectionBase <- R6::R6Class(
   )
 )
 
-#' Virtual Collections
+#' Ephemeral Collections
 #'
-#' @description Virtual (in-memory version of \code{\link{SOMACollection}}
+#' @description Ephemeral (in-memory version of \code{\link{SOMACollection}}
 #' for in-memory SOMA collections
 #'
 #' @keywords internal
 #'
 #' @export
 #'
-VirtualCollection <- R6::R6Class(
-  classname = 'VirtualCollection',
+EphemeralCollection <- R6::R6Class(
+  classname = 'EphemeralCollection',
   inherit = EphemeralCollectionBase,
   active = list(
     #' @field soma_type The SOMA object type
@@ -339,17 +339,17 @@ VirtualCollection <- R6::R6Class(
   )
 )
 
-#' Virtual SOMA Measurement
+#' Ephemeral SOMA Measurement
 #'
-#' @description Virtual (in-memory) version of \code{\link{SOMAMeasurement}}
+#' @description Ephemeral (in-memory) version of \code{\link{SOMAMeasurement}}
 #' for in-memory SOMA measurements
 #'
 #' @keywords internal
 #'
 #' @export
 #'
-VirtualMeasurement <- R6::R6Class(
-  classname = 'VirtualMeasurement',
+EphemeralMeasurement <- R6::R6Class(
+  classname = 'EphemeralMeasurement',
   inherit = EphemeralCollectionBase,
   active = list(
     #' @field var \Sexpr[results=rd]{tiledbsoma:::rd_soma_field("var")}
@@ -365,7 +365,7 @@ VirtualMeasurement <- R6::R6Class(
       private$get_or_set_soma_field(
         value = value,
         name = 'X',
-        expected_class = c('VirtualCollection', 'SOMACollection')
+        expected_class = c('EphemeralCollection', 'SOMACollection')
       )
     },
     #' @field obsm \Sexpr[results=rd]{tiledbsoma:::rd_soma_field("obsm")}
@@ -373,7 +373,7 @@ VirtualMeasurement <- R6::R6Class(
       private$get_or_set_soma_field(
         value = value,
         name = 'obsm',
-        expected_class = c('VirtualCollection', 'SOMACollection')
+        expected_class = c('EphemeralCollection', 'SOMACollection')
       )
     },
     #' @field obsp \Sexpr[results=rd]{tiledbsoma:::rd_soma_field("obsp")}
@@ -381,7 +381,7 @@ VirtualMeasurement <- R6::R6Class(
       private$get_or_set_soma_field(
         value = value,
         name = 'obsp',
-        expected_class = c('VirtualCollection', 'SOMACollection')
+        expected_class = c('EphemeralCollection', 'SOMACollection')
       )
     },
     #' @field varm \Sexpr[results=rd]{tiledbsoma:::rd_soma_field("varm")}
@@ -389,7 +389,7 @@ VirtualMeasurement <- R6::R6Class(
       private$get_or_set_soma_field(
         value = value,
         name = 'varm',
-        expected_class = c('VirtualCollection', 'SOMACollection')
+        expected_class = c('EphemeralCollection', 'SOMACollection')
       )
     },
     #' @field varp \Sexpr[results=rd]{tiledbsoma:::rd_soma_field("varp")}
@@ -397,7 +397,7 @@ VirtualMeasurement <- R6::R6Class(
       private$get_or_set_soma_field(
         value = value,
         name = 'varp',
-        expected_class = c('VirtualCollection', 'SOMACollection')
+        expected_class = c('EphemeralCollection', 'SOMACollection')
       )
     },
     #' @field soma_type The SOMA object type
@@ -410,17 +410,17 @@ VirtualMeasurement <- R6::R6Class(
   )
 )
 
-#' Virtual SOMA Experiment
+#' Ephemeral SOMA Experiment
 #'
-#' @description Virtual (in-memory) version of \code{\link{SOMAExperiemnt}}
+#' @description Ephemeral (in-memory) version of \code{\link{SOMAExperiemnt}}
 #' for in-memory SOMA experiments
 #'
 #' @keywords internal
 #'
 #' @export
 #'
-VirtualExperiment <- R6::R6Class(
-  classname = 'VirtualExperiment',
+EphemeralExperiment <- R6::R6Class(
+  classname = 'EphemeralExperiment',
   inherit = EphemeralCollectionBase,
   active = list(
     #' @field obs \Sexpr[results=rd]{tiledbsoma:::rd_soma_field("obs")}
@@ -436,7 +436,7 @@ VirtualExperiment <- R6::R6Class(
       private$get_or_set_soma_field(
         value = value,
         name = 'ms',
-        expected_class = c('VirtualCollection', 'SOMACollection')
+        expected_class = c('EphemeralCollection', 'SOMACollection')
       )
     },
     #' @field soma_type The SOMA object type

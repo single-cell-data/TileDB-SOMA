@@ -1,8 +1,8 @@
-test_that("Basic mechanics", {
+test_that("Ephemeral Measurement mechanics", {
   uri <- withr::local_tempdir("ephemeral-ms")
   # dir.create(uri)
-  expect_warning(VirtualMeasurement$new(uri))
-  expect_no_condition(measurement <- VirtualMeasurement$new())
+  expect_warning(EphemeralMeasurement$new(uri))
+  expect_no_condition(measurement <- EphemeralMeasurement$new())
   expect_true(grepl('^ephemeral-collection:0x[[:digit:]a-f]{12}$', measurement$uri))
   expect_false(measurement$exists())
   expect_error(measurement$var)
