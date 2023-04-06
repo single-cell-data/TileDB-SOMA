@@ -220,22 +220,17 @@ class GroupWrapper(Wrapper[tiledb.Group]):
         context: SOMATileDBContext,
         timestamp: int,
     ) -> tiledb.Group:
-        return tiledb.Group(
-            uri, mode, ctx=_group_timestamp_ctx(context.tiledb_ctx, timestamp)
-        )
+        # We want to do open-group-at-timestamp.
+        ctx = context.tiledb_ctx
+        cfgdict = context.tiledb_ctx.config().dict()
+        cfgdict["sm.group.timestamp_end"] = timestamp
+        return tiledb.Group(uri, mode, ctx=ctx, config=tiledb.Config(cfgdict))
 
     def _do_initial_reads(self, reader: tiledb.Group) -> None:
         super()._do_initial_reads(reader)
         self.initial_contents = {
             o.name: GroupEntry.from_object(o) for o in reader if o.name is not None
         }
-
-
-def _group_timestamp_ctx(ctx: tiledb.Ctx, timestamp: int) -> tiledb.Ctx:
-    """Builds a TileDB context to open groups at the given timestamp."""
-    group_cfg = ctx.config().dict()
-    group_cfg["sm.group.timestamp_end"] = timestamp
-    return tiledb.Ctx(group_cfg)
 
 
 class _DictMod(enum.Enum):
