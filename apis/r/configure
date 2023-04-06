@@ -36,6 +36,13 @@ else
         rm -rf build
         cd ..
         echo "** static library made"
+
+        ## handle different distro library install paths
+        if test -d src/lib64; then
+            mv src/lib64 src/lib
+        elif test -d src/lib/x86_64-linux-gnu; then
+            mv src/libx86_64-linux-gnu src/lib
+        fi
     fi
 fi
 
