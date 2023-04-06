@@ -316,29 +316,34 @@ EphemeralCollectionBase <- R6::R6Class(
   )
 )
 
-#' Ephemeral Collections
+#' Virtual Collections
 #'
-#' @description Ephemeral version of \code{\link{SOMACollection}} for
-#' in-memory SOMA collections
+#' @description Virtual (in-memory version of \code{\link{SOMACollection}}
+#' for in-memory SOMA collections
+#'
+#' @keywords internal
 #'
 #' @export
 #'
-Collection <- R6::R6Class(
-  classname = 'Collection',
+VirtualCollection <- R6::R6Class(
+  classname = 'VirtualCollection',
   inherit = EphemeralCollectionBase
 )
 
-#' Ephemeral SOMA Measurement
+#' Virtual SOMA Measurement
 #'
-#' @description Ephemeral version of \code{\link{SOMAMeasurement}} for
-#' in-memory SOMA measurements
+#' @description Virtual (in-memory) version of \code{\link{SOMAMeasurement}}
+#' for in-memory SOMA measurements
+#'
+#' @keywords internal
 #'
 #' @export
 #'
-Measurement <- R6::R6Class(
-  classname = 'Measurement',
+VirtualMeasurement <- R6::R6Class(
+  classname = 'VirtualMeasurement',
   inherit = EphemeralCollectionBase,
   active = list(
+    #' @field var \Sexpr[results=rd]{tiledbsoma:::rd_soma_field("var")}
     var = function(value) {
       private$get_or_set_soma_field(
         value = value,
@@ -346,48 +351,63 @@ Measurement <- R6::R6Class(
         expected_class = 'SOMADataFrame'
       )
     },
+    #' @field X \Sexpr[results=rd]{tiledbsoma:::rd_soma_field("X")}
     X = function(value) {
       private$get_or_set_soma_field(
         value = value,
         name = 'X',
-        expected_class = c('Collection', 'SOMACollection')
+        expected_class = c('VirtualCollection', 'SOMACollection')
       )
     },
+    #' @field obsm \Sexpr[results=rd]{tiledbsoma:::rd_soma_field("obsm")}
     obsm = function(value) {
       private$get_or_set_soma_field(
         value = value,
         name = 'obsm',
-        expected_class = c('Collection', 'SOMACollection')
+        expected_class = c('VirtualCollection', 'SOMACollection')
       )
     },
+    #' @field obsp \Sexpr[results=rd]{tiledbsoma:::rd_soma_field("obsp")}
     obsp = function(value) {
       private$get_or_set_soma_field(
         value = value,
         name = 'obsp',
-        expected_class = c('Collection', 'SOMACollection')
+        expected_class = c('VirtualCollection', 'SOMACollection')
       )
     },
+    #' @field varm \Sexpr[results=rd]{tiledbsoma:::rd_soma_field("varm")}
     varm = function(value) {
       private$get_or_set_soma_field(
         value = value,
         name = 'varm',
-        expected_class = c('Collection', 'SOMACollection')
+        expected_class = c('VirtualCollection', 'SOMACollection')
       )
     },
+    #' @field varp \Sexpr[results=rd]{tiledbsoma:::rd_soma_field("varp")}
     varp = function(value) {
       private$get_or_set_soma_field(
         value = value,
         name = 'varp',
-        expected_class = c('Collection', 'SOMACollection')
+        expected_class = c('VirtualCollection', 'SOMACollection')
       )
     }
   )
 )
 
-Experiment <- R6::R6Class(
-  classname = 'Experiment',
+#' Virtual SOMA Experiment
+#'
+#' @description Virtual (in-memory) version of \code{\link{SOMAExperiemnt}}
+#' for in-memory SOMA experiments
+#'
+#' @keywords internal
+#'
+#' @export
+#'
+VirtualExperiment <- R6::R6Class(
+  classname = 'VirtualExperiment',
   inherit = SOMACollectionBase,
   active = list(
+    #' @field obs \Sexpr[results=rd]{tiledbsoma:::rd_soma_field("obs")}
     obs = function(value) {
       private$get_or_set_soma_field(
         value = value,
@@ -395,11 +415,12 @@ Experiment <- R6::R6Class(
         expected_class = 'SOMADataFrame'
       )
     },
+    #' @field ms \Sexpr[results=rd]{tiledbsoma:::rd_soma_field("ms")}
     ms = function(value) {
       private$get_or_set_soma_field(
         value = value,
         name = 'ms',
-        expected_class = c('Collection', 'SOMACollection')
+        expected_class = c('VirtualCollection', 'SOMACollection')
       )
     }
   )
