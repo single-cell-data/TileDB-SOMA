@@ -64,12 +64,15 @@ NULL
 #'   added going from \code{[0, nrow(x) - 1]} encoded as
 #'   \link[bit64:integer64]{64-bit integers}
 #'  \item all factor columns will be coerced to characters
-#'  \item all columns not containing \link[base:is.atomic]{atomic} types
-#'   (excluding \link[base:factor]{factors}, \code{\link[base]{complex}es},
-#'   and \code{\link[base]{raw}s}) will be removed
+#  \item all columns not containing \link[base:is.atomic]{atomic} types
+#   (excluding \link[base:factor]{factors}, \code{\link[base]{complex}es},
+#   and \code{\link[base]{raw}s}) will be removed
 #' }
 #' The array type for each column will be determined by
-#' \code{\link[arrow:infer_type]{arrow::infer_type}()}
+#' \code{\link[arrow:infer_type]{arrow::infer_type}()}; if any column contains
+#' a \link[base:is.atomic]{non-atomic} type (excluding
+#' \link[base:factor]{factors}, \code{\link[base]{complex}es},and
+#' \code{\link[base]{raw}s}), the code will error out
 #'
 #' @method write_soma data.frame
 #' @export
@@ -105,10 +108,18 @@ write_soma.data.frame <- function(
       x = try(expr = arrow::infer_type(x[[col]]), silent = TRUE),
       what = 'DataType'
     )
-    # remove[i] <- !inherits(
-    #   x = x[[col]],
-    #   what = setdiff(x = .SCALAR_TYPES(), y = 'any')
-    # )
+  }
+  if (any(remove)) {
+    stop(
+      paste(
+        strwrap(paste(
+          "The following columns contain unsupported data types:",
+          paste(sQuote(names(x)[remove]), collapse = ', ')
+        )),
+        collapse = '\n'
+      ),
+      call. = FALSE
+    )
   }
   if (all(remove)) {
     stop(
