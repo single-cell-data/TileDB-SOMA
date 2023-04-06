@@ -46,7 +46,7 @@ write_soma <- function(x, uri, ..., platform_config = NULL, tiledbsoma_ctx = NUL
 #'
 NULL
 
-#' @param index The name of the column in \code{x} with the index (row names);
+#' @param index_name The name of the column in \code{x} with the index (row names);
 #' by default, will automatically add the row names of \code{x} to an attribute
 #' named \dQuote{\code{index}} to the resulting \code{\link{SOMADataFrame}}
 #'
@@ -79,15 +79,15 @@ write_soma.data.frame <- function(
   x,
   uri,
   soma,
-  index = NULL,
+  index_name = NULL,
   ...,
   platform_config = NULL,
   tiledbsoma_ctx = NULL,
   absolute = FALSE
 ) {
   stopifnot(
-    "'index' must be a single character value" = is.null(index) ||
-      is_scalar_character(index)
+    "'index_name' must be a single character value" = is.null(index_name) ||
+      is_scalar_character(index_name)
   )
   # Create a proper URI
   uri <- .check_soma_uri(uri = uri, soma = soma, absolute = absolute)
@@ -126,16 +126,16 @@ write_soma.data.frame <- function(
     )
     x <- x[, !remove, drop = FALSE]
   }
-  # Check `index`
-  index <- index %||% attr(x = x, which = 'index')
-  if (is.null(index)) {
+  # Check `index_name`
+  index_name <- index_name %||% attr(x = x, which = 'index')
+  if (is.null(index_name)) {
     x <- .df_index(x = x, ...)
-    index <- attr(x = x, which = 'index')
+    index_name <- attr(x = x, which = 'index')
   }
-  if (!index %in% names(x)) {
+  if (!index_name %in% names(x)) {
     stop(
       "Unable to find ",
-      sQuote(index),
+      sQuote(index_name),
       " in the provided data frame",
       call. = FALSE
     )

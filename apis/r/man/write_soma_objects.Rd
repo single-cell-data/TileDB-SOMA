@@ -12,7 +12,7 @@
   x,
   uri,
   soma,
-  index = NULL,
+  index_name = NULL,
   ...,
   platform_config = NULL,
   tiledbsoma_ctx = NULL,
@@ -66,7 +66,7 @@
 \code{\link{SOMACollection}}, \code{\link{SOMAExperiment}}, or
 \code{\link{SOMAMeasurement}})}
 
-\item{index}{The name of the column in \code{x} with the index (row names);
+\item{index_name}{The name of the column in \code{x} with the index (row names);
 by default, will automatically add the row names of \code{x} to an attribute
 named \dQuote{\code{index}} to the resulting \code{\link{SOMADataFrame}}}
 
