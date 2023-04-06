@@ -11,7 +11,7 @@
 \method{write_soma}{data.frame}(
   x,
   uri,
-  soma,
+  soma_parent,
   index_name = NULL,
   ...,
   platform_config = NULL,
@@ -22,7 +22,7 @@
 \method{write_soma}{matrix}(
   x,
   uri,
-  soma,
+  soma_parent,
   sparse = TRUE,
   type = NULL,
   transpose = FALSE,
@@ -35,7 +35,7 @@
 \method{write_soma}{Matrix}(
   x,
   uri,
-  soma,
+  soma_parent,
   sparse = TRUE,
   type = NULL,
   transpose = FALSE,
@@ -48,7 +48,7 @@
 \method{write_soma}{TsparseMatrix}(
   x,
   uri,
-  soma,
+  soma_parent,
   type = NULL,
   transpose = FALSE,
   ...,
@@ -62,7 +62,7 @@
 
 \item{uri}{URI for resulting SOMA object}
 
-\item{soma}{The parent \link[tiledbsoma:SOMACollection]{collection} (eg. a
+\item{soma_parent}{The parent \link[tiledbsoma:SOMACollection]{collection} (eg. a
 \code{\link{SOMACollection}}, \code{\link{SOMAExperiment}}, or
 \code{\link{SOMAMeasurement}})}
 
@@ -131,9 +131,12 @@ Sparse matrices are written out as two-dimensional
 \link[tiledbsoma:SOMASparseNDArray]{TileDB sparse arrays} in
 \href{https://en.wikipedia.org/wiki/Sparse_matrix#Coordinate_list_(COO)}{COO format}:
 \itemize{
-\item the row indices (\dQuote{\code{i}}) are written out as \dQuote{\code{soma_dim_0}}
-\item the column indices (\dQuote{\code{j}}) are written out as \dQuote{\code{soma_dim_1}}
-\item the non-zero values (\dQuote{\code{x}}) are written out as \dQuote{\code{soma_data}}
+\item the row indices (\dQuote{\code{i}}) are written out as
+\dQuote{\code{soma_dim_0}}
+\item the column indices (\dQuote{\code{j}}) are written out as
+\dQuote{\code{soma_dim_1}}
+\item the non-zero values (\dQuote{\code{x}}) are written out as
+\dQuote{\code{soma_data}}
 }
 The array type is determined by \code{type}, or
 \code{\link[arrow:infer_type]{arrow::infer_type}(slot(x, "x"))}

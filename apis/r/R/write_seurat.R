@@ -10,8 +10,8 @@ NULL
 #' @param x A \pkg{Seurat} sub-object (eg. an
 #' \code{\link[SeuratObject]{Assay}}, a \code{\link[SeuratObject]{DimReduc}},
 #' or a \code{\link[SeuratObject]{Graph}})
-#' @param soma The parent \link[tiledbsoma:SOMACollection]{collection}; for
-#' the \code{DimReduc} and \code{Graph} methods, this \strong{must} be a
+#' @param soma_parent The parent \link[tiledbsoma:SOMACollection]{collection};
+#' for the \code{DimReduc} and \code{Graph} methods, this \strong{must} be a
 #' \link[tiledbsoma:SOMAMeasurement]{measurement} for the assay \code{x}
 #' was generated from
 #'
@@ -55,7 +55,7 @@ NULL
 write_soma.Assay <- function(
   x,
   uri = NULL,
-  soma,
+  soma_parent,
   ...,
   platform_config = NULL,
   tiledbsoma_ctx = NULL,
@@ -65,12 +65,19 @@ write_soma.Assay <- function(
   stopifnot(
     "'uri' must be a single character value" = is.null(uri) ||
       is_scalar_character(uri),
-    "'soma' must be a SOMACollection" = inherits(soma, what = 'SOMACollectionBase'),
+    "'soma_parent' must be a SOMACollection" = inherits(
+      x = soma_parent,
+      what = 'SOMACollectionBase'
+    ),
     "'absolute' must be a single logical value" = is_scalar_logical(absolute)
   )
   # Create a proper URI
   uri <- uri %||% gsub(pattern = '_$', replacement = '', x = SeuratObject::Key(x))
-  uri <- .check_soma_uri(uri = uri, soma = soma, absolute = absolute)
+  uri <- .check_soma_uri(
+    uri = uri,
+    soma_parent = soma_parent,
+    absolute = absolute
+  )
   # Create the measurement
   ms <- SOMAMeasurementCreate(
     uri = uri,
@@ -106,7 +113,7 @@ write_soma.Assay <- function(
         object = write_soma(
           x = mat,
           uri = lyr,
-          soma = ms$X,
+          soma_parent = ms$X,
           sparse = TRUE,
           transpose = TRUE,
           platform_config = platform_config,
@@ -129,7 +136,7 @@ write_soma.Assay <- function(
   ms$var <- write_soma(
     x = meta_data,
     uri = 'var',
-    soma = ms,
+    soma_parent = ms,
     platform_config = platform_config,
     tiledbsoma_ctx = tiledbsoma_ctx
   )
@@ -152,13 +159,13 @@ write_soma.Assay <- function(
 }
 
 #' @param fidx An integer vector describing the location of features in
-#' \code{SeuratObject::Loadings(x)} with relation to \code{soma}
+#' \code{SeuratObject::Loadings(x)} with relation to \code{soma_parent}
 #' (eg. \code{match(rownames(Loadings(x)), rownames(assay))})
-#' @param nfeatures The number of features present in \code{soma}
+#' @param nfeatures The number of features present in \code{soma_parent}
 #' (eg. \code{nrow(assay)})
 #'
 #' @return \code{DimReduc} and \code{Graph} methods: invisibly returns
-#' \code{soma} with the values of \code{x} added to it
+#' \code{soma_parent} with the values of \code{x} added to it
 #'
 #' @rdname write_soma_seurat_sub
 #'
@@ -186,7 +193,7 @@ write_soma.Assay <- function(
 write_soma.DimReduc <- function(
   x,
   uri = NULL,
-  soma,
+  soma_parent,
   fidx = NULL,
   nfeatures = NULL,
   ...,
@@ -197,7 +204,10 @@ write_soma.DimReduc <- function(
   .check_seurat_installed()
   stopifnot(
     "'uri' must be NULL" = is.null(uri),
-    "'soma' must be a SOMAMeasurement" = inherits(soma, what = 'SOMAMeasurement'),
+    "'soma_parent' must be a SOMAMeasurement" = inherits(
+      x = soma_parent,
+      what = 'SOMAMeasurement'
+    ),
     "'fidx' must be a positive integer vector" = is.null(fidx) ||
       (rlang::is_integerish(fidx, finite = TRUE) && all(fidx > 0L)),
     "'nfeatures' must be a single positive integer" = is.null(nfeatures) ||
@@ -207,20 +217,20 @@ write_soma.DimReduc <- function(
   key <- tolower(gsub(pattern = '_$', replacement = '', x = SeuratObject::Key(x)))
   key <- switch(EXPR = key, pc = 'pca', ic = 'ica', key)
   # Create a group for `obs,`
-  if (!'obsm' %in% soma$names()) {
-    soma$obsm <- SOMACollectionCreate(
-      uri = file_path(soma$uri, 'obsm'),
+  if (!'obsm' %in% soma_parent$names()) {
+    soma_parent$obsm <- SOMACollectionCreate(
+      uri = file_path(soma_parent$uri, 'obsm'),
       platform_config = platform_config,
       tiledbsoma_ctx = tiledbsoma_ctx
     )
   }
   embed <- paste0('X_', key)
   spdl::info("Adding embeddings as {}", sQuote(embed))
-  soma$obsm$set(
+  soma_parent$obsm$set(
     object = write_soma(
       x = SeuratObject::Embeddings(x),
       uri = embed,
-      soma = soma$obsm,
+      soma_parent = soma_parent$obsm,
       sparse = FALSE,
       transpose = FALSE,
       platform_config = platform_config,
@@ -266,9 +276,9 @@ write_soma.DimReduc <- function(
   if (!SeuratObject::IsMatrixEmpty(loadings)) {
     ldgs <- switch(EXPR = key, pca = 'PCs', ica = 'ICs', paste0(toupper(key), 's'))
     # Create a group for `varm`
-    if (!'varm' %in% soma$names()) {
-      soma$varm <- SOMACollectionCreate(
-        uri = file_path(soma$uri, 'varm'),
+    if (!'varm' %in% soma_parent$names()) {
+      soma_parent$varm <- SOMACollectionCreate(
+        uri = file_path(soma_parent$uri, 'varm'),
         platform_config = platform_config,
         tiledbsoma_ctx = tiledbsoma_ctx
       )
@@ -278,11 +288,11 @@ write_soma.DimReduc <- function(
     mat[fidx, ] <- loadings
     # Write the feature loadings
     spdl::info("Adding feature loadings as {}", sQuote(ldgs))
-    soma$varm$set(
+    soma_parent$varm$set(
       object = write_soma(
         x = mat,
         uri = ldgs,
-        soma = soma$varm,
+        soma_parent = soma_parent$varm,
         sparse = FALSE,
         transpose = FALSE,
         platform_config = platform_config,
@@ -291,7 +301,7 @@ write_soma.DimReduc <- function(
       name = ldgs
     )
   }
-  return(invisible(soma))
+  return(invisible(soma_parent))
 }
 
 #' @rdname write_soma_seurat_sub
@@ -308,7 +318,7 @@ write_soma.DimReduc <- function(
 write_soma.Graph <- function(
   x,
   uri,
-  soma,
+  soma_parent,
   ...,
   platform_config = NULL,
   tiledbsoma_ctx = NULL,
@@ -316,22 +326,25 @@ write_soma.Graph <- function(
 ) {
   .check_seurat_installed()
   stopifnot(
-    "'soma' must be a SOMAMeasurement" = inherits(soma, what = 'SOMAMeasurement'),
+    "'soma_parent' must be a SOMAMeasurement" = inherits(
+      x = soma_parent,
+      what = 'SOMAMeasurement'
+    ),
     "'absolute' must be a single logical value" = is_scalar_logical(absolute)
   )
-  if (!'obsp' %in% soma$names()) {
-    soma$obsp <- SOMACollectionCreate(
-      uri = file_path(soma$uri, 'obsp'),
+  if (!'obsp' %in% soma_parent$names()) {
+    soma_parent$obsp <- SOMACollectionCreate(
+      uri = file_path(soma_parent$uri, 'obsp'),
       platform_config = platform_config,
       tiledbsoma_ctx = tiledbsoma_ctx
     )
   }
-  soma$obsp$set(
+  soma_parent$obsp$set(
     object = NextMethod(
       generic = 'write_soma',
       object = x,
       uri = uri,
-      soma = soma$obsp,
+      soma_parent = soma_parent$obsp,
       sparse = TRUE,
       transpose = FALSE,
       platform_config = platform_config,
@@ -339,7 +352,7 @@ write_soma.Graph <- function(
     ),
     name = uri
   )
-  return(invisible(soma))
+  return(invisible(soma_parent))
 }
 
 #' Write a \code{\link[SeuratObject]{Seurat}} object to a SOMA
@@ -392,7 +405,7 @@ write_soma.Seurat <- function(
   experiment$obs <- write_soma(
     x = meta_data,
     uri = 'obs',
-    soma = experiment,
+    soma_parent = experiment,
     platform_config = platform_config,
     tiledbsoma_ctx = tiledbsoma_ctx
   )
@@ -412,7 +425,7 @@ write_soma.Seurat <- function(
         object = write_soma(
           x = x[[assay]],
           uri = assay,
-          soma = experiment$ms,
+          soma_parent = experiment$ms,
           platform_config = platform_config,
           tiledbsoma_ctx = tiledbsoma_ctx
         ),
@@ -479,7 +492,7 @@ write_soma.Seurat <- function(
       expr = write_soma(
         x = x[[reduc]],
         uri = NULL,
-        soma = ms,
+        soma_parent = ms,
         fidx = fidx,
         nfeatures = nfeatures,
         platform_config = platform_config,
@@ -513,7 +526,7 @@ write_soma.Seurat <- function(
       expr = write_soma(
         x = x[[graph]],
         uri = graph,
-        soma = experiment$ms$get(assay),
+        soma_parent = experiment$ms$get(assay),
         platform_config = platform_config,
         tiledbsoma_ctx = tiledbsoma_ctx
       ),

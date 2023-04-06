@@ -31,7 +31,7 @@ write_soma <- function(x, uri, ..., platform_config = NULL, tiledbsoma_ctx = NUL
 #' Various helpers to write R objects to SOMA
 #'
 #' @inheritParams write_soma
-#' @param soma The parent \link[tiledbsoma:SOMACollection]{collection} (eg. a
+#' @param soma_parent The parent \link[tiledbsoma:SOMACollection]{collection} (eg. a
 #' \code{\link{SOMACollection}}, \code{\link{SOMAExperiment}}, or
 #' \code{\link{SOMAMeasurement}})
 #' @param absolute \strong{\[Internal use only\]} Is \code{uri} absolute
@@ -78,7 +78,7 @@ NULL
 write_soma.data.frame <- function(
   x,
   uri,
-  soma,
+  soma_parent,
   index_name = NULL,
   ...,
   platform_config = NULL,
@@ -90,7 +90,11 @@ write_soma.data.frame <- function(
       is_scalar_character(index_name)
   )
   # Create a proper URI
-  uri <- .check_soma_uri(uri = uri, soma = soma, absolute = absolute)
+  uri <- .check_soma_uri(
+    uri = uri,
+    soma_parent = soma_parent,
+    absolute = absolute
+  )
   # Clean up data types in `x`
   remove <- vector(mode = 'logical', length = ncol(x))
   for (i in seq_len(ncol(x))) {
@@ -184,7 +188,7 @@ write_soma.data.frame <- function(
 write_soma.matrix <- function(
   x,
   uri,
-  soma,
+  soma_parent,
   sparse = TRUE,
   type = NULL,
   transpose = FALSE,
@@ -209,7 +213,7 @@ write_soma.matrix <- function(
     return(write_soma(
       x = methods::as(object = x, Class = 'TsparseMatrix'),
       uri = uri,
-      soma = soma,
+      soma_parent = soma_parent,
       type = type,
       transpose = transpose,
       ...,
@@ -223,7 +227,11 @@ write_soma.matrix <- function(
     x <- as.matrix(x)
   }
   # Create a proper URI
-  uri <- .check_soma_uri(uri = uri, soma = soma, absolute = absolute)
+  uri <- .check_soma_uri(
+    uri = uri,
+    soma_parent = soma_parent,
+    absolute = absolute
+  )
   # Transpose the matrix
   if (isTRUE(transpose)) {
     x <- t(x)
@@ -255,9 +263,12 @@ write_soma.Matrix <- write_soma.matrix
 #' \link[tiledbsoma:SOMASparseNDArray]{TileDB sparse arrays} in
 #' \href{https://en.wikipedia.org/wiki/Sparse_matrix#Coordinate_list_(COO)}{COO format}:
 #' \itemize{
-#'  \item the row indices (\dQuote{\code{i}}) are written out as \dQuote{\code{soma_dim_0}}
-#'  \item the column indices (\dQuote{\code{j}}) are written out as \dQuote{\code{soma_dim_1}}
-#'  \item the non-zero values (\dQuote{\code{x}}) are written out as \dQuote{\code{soma_data}}
+#'  \item the row indices (\dQuote{\code{i}}) are written out as
+#'   \dQuote{\code{soma_dim_0}}
+#'  \item the column indices (\dQuote{\code{j}}) are written out as
+#'   \dQuote{\code{soma_dim_1}}
+#'  \item the non-zero values (\dQuote{\code{x}}) are written out as
+#'   \dQuote{\code{soma_data}}
 #' }
 #' The array type is determined by \code{type}, or
 #' \code{\link[arrow:infer_type]{arrow::infer_type}(slot(x, "x"))}
@@ -268,7 +279,7 @@ write_soma.Matrix <- write_soma.matrix
 write_soma.TsparseMatrix <- function(
   x,
   uri,
-  soma,
+  soma_parent,
   type = NULL,
   transpose = FALSE,
   ...,
@@ -284,7 +295,11 @@ write_soma.TsparseMatrix <- function(
     "'transpose' must be a single logical value" = is_scalar_logical(transpose)
   )
   # Create a proper URI
-  uri <- .check_soma_uri(uri = uri, soma = soma, absolute = absolute)
+  uri <- .check_soma_uri(
+    uri = uri,
+    soma_parent = soma_parent,
+    absolute = absolute
+  )
   # Transpose the matrix
   if (isTRUE(transpose)) {
     x <- Matrix::t(x)
@@ -352,11 +367,16 @@ write_soma.TsparseMatrix <- function(
   return(x)
 }
 
-.check_soma_uri <- function(uri, soma = NULL, absolute = FALSE, overwrite = FALSE) {
+.check_soma_uri <- function(
+  uri,
+  soma_parent = NULL,
+  absolute = FALSE,
+  overwrite = FALSE
+) {
   stopifnot(
     "'uri' must be a single character value" = is_scalar_character(uri),
-    "'soma' must be a SOMACollection" = is.null(soma) ||
-      inherits(x = soma, what = 'SOMACollectionBase'),
+    "'soma_parent' must be a SOMACollection" = is.null(soma_parent) ||
+      inherits(x = soma_parent, what = 'SOMACollectionBase'),
     "'absolute' must be a single logical value" = is_scalar_logical(absolute)
   )
   if (!isTRUE(absolute)) {
@@ -364,7 +384,7 @@ write_soma.TsparseMatrix <- function(
       warning("uri", call. = FALSE, immediate. = TRUE)
       uri <- basename(uri)
     }
-    uri <- file_path(soma$uri %||% user_dir(), uri)
+    uri <- file_path(soma_parent$uri %||% user_dir(), uri)
   } else if (!is_remote_uri(uri)) {
     if (isTRUE(overwrite)) {
       unlink(x = uri, recursive = TRUE, force = TRUE)

@@ -10,7 +10,7 @@
 \method{write_soma}{Assay}(
   x,
   uri = NULL,
-  soma,
+  soma_parent,
   ...,
   platform_config = NULL,
   tiledbsoma_ctx = NULL,
@@ -20,7 +20,7 @@
 \method{write_soma}{DimReduc}(
   x,
   uri = NULL,
-  soma,
+  soma_parent,
   fidx = NULL,
   nfeatures = NULL,
   ...,
@@ -32,7 +32,7 @@
 \method{write_soma}{Graph}(
   x,
   uri,
-  soma,
+  soma_parent,
   ...,
   platform_config = NULL,
   tiledbsoma_ctx = NULL,
@@ -46,8 +46,8 @@ or a \code{\link[SeuratObject]{Graph}})}
 
 \item{uri}{URI for resulting SOMA object}
 
-\item{soma}{The parent \link[tiledbsoma:SOMACollection]{collection}; for
-the \code{DimReduc} and \code{Graph} methods, this \strong{must} be a
+\item{soma_parent}{The parent \link[tiledbsoma:SOMACollection]{collection};
+for the \code{DimReduc} and \code{Graph} methods, this \strong{must} be a
 \link[tiledbsoma:SOMAMeasurement]{measurement} for the assay \code{x}
 was generated from}
 
@@ -61,10 +61,10 @@ configuration}}
 \item{absolute}{\strong{[Internal use only]} Is \code{uri} absolute}
 
 \item{fidx}{An integer vector describing the location of features in
-\code{SeuratObject::Loadings(x)} with relation to \code{soma}
+\code{SeuratObject::Loadings(x)} with relation to \code{soma_parent}
 (eg. \code{match(rownames(Loadings(x)), rownames(assay))})}
 
-\item{nfeatures}{The number of features present in \code{soma}
+\item{nfeatures}{The number of features present in \code{soma_parent}
 (eg. \code{nrow(assay)})}
 }
 \value{
@@ -72,7 +72,7 @@ configuration}}
 data from \code{x}
 
 \code{DimReduc} and \code{Graph} methods: invisibly returns
-\code{soma} with the values of \code{x} added to it
+\code{soma_parent} with the values of \code{x} added to it
 }
 \description{
 Various helpers to write \pkg{Seurat} sub-objects to SOMA
