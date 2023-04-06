@@ -104,10 +104,9 @@ are applied to \code{x}:
 \item row names are added to a column in \code{x} entitled
 \dQuote{\code{index}}, \dQuote{\code{_index}}, or a random name if
 either option is already present in \code{x}
-\item a column \dQuote{\code{soma_joinid}} will be automatically added
-going from \code{[0, nrow(x) - 1]} encoded as
-\link[bit64:integer64]{64-bit integers}; any columns called
-\dQuote{\code{soma_joinid}} will be overwritten if present in \code{x}
+\item a column \dQuote{\code{soma_joinid}} will be automatically
+added going from \code{[0, nrow(x) - 1]} encoded as
+\link[bit64:integer64]{64-bit integers}
 \item all factor columns will be coerced to characters
 \item all columns not containing \link[base:is.atomic]{atomic} types
 (excluding \link[base:factor]{factors}, \code{\link[base]{complex}es},

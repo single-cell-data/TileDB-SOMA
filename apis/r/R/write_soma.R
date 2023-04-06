@@ -60,10 +60,9 @@ NULL
 #'  \item row names are added to a column in \code{x} entitled
 #'   \dQuote{\code{index}}, \dQuote{\code{_index}}, or a random name if
 #'   either option is already present in \code{x}
-#'  \item a column \dQuote{\code{soma_joinid}} will be automatically added
-#'   going from \code{[0, nrow(x) - 1]} encoded as
-#'   \link[bit64:integer64]{64-bit integers}; any columns called
-#'   \dQuote{\code{soma_joinid}} will be overwritten if present in \code{x}
+#'  \item a column \dQuote{\code{soma_joinid}} will be automatically
+#'   added going from \code{[0, nrow(x) - 1]} encoded as
+#'   \link[bit64:integer64]{64-bit integers}
 #'  \item all factor columns will be coerced to characters
 #'  \item all columns not containing \link[base:is.atomic]{atomic} types
 #'   (excluding \link[base:factor]{factors}, \code{\link[base]{complex}es},
@@ -146,13 +145,18 @@ write_soma.data.frame <- function(
   }
   # Add `soma_joinid` to `x`
   if ('soma_joinid' %in% names(x)) {
-    warning(
-      "Found column 'soma_joinid' in the data frame, overwriting with new 'soma_joinid'",
-      call. = FALSE,
-      immediate. = TRUE
-    )
+    if (!bit64::is.integer64(x[['soma_joinid']])) {
+      if (!rlang::is_integerish(x[['soma_joinid']], finite = TRUE) || !all(x[['soma_joinid']] >= 0L)) {
+        stop(
+          "Found column 'soma_joinid' in the data frame without positive integers",
+          call. = FALSE
+        )
+      }
+      x[['soma_joind']] <- bit64::as.integer64(x[['soma_joinid']])
+    }
+  } else {
+    x$soma_joinid <- bit64::seq.integer64(from = 0L, to = nrow(x) - 1L)
   }
-  x$soma_joinid <- bit64::seq.integer64(from = 0L, to = nrow(x) - 1L)
   # Create the SOMADataFrame
   tbl <- arrow::arrow_table(x)
   sdf <- SOMADataFrameCreate(
