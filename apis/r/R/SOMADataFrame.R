@@ -192,7 +192,7 @@ SOMADataFrame <- R6::R6Class(
       }
 
       if (isFALSE(iterated)) {
-          cfg <- as.character(tiledb::config(self$tiledbsoma_ctx$get_tiledb_context()))
+          cfg <- as.character(tiledb::config(self$tiledbsoma_ctx$context()))
           rl <- soma_array_reader(uri = uri,
                                   colnames = column_names,   # NULL dealt with by soma_array_reader()
                                   qc = value_filter,         # idem

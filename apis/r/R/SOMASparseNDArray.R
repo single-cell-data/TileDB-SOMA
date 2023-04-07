@@ -119,7 +119,7 @@ SOMASparseNDArray <- R6::R6Class(
       }
 
       if (isFALSE(iterated)) {
-          cfg <- as.character(tiledb::config(self$tiledbsoma_ctx$get_tiledb_context()))
+          cfg <- as.character(tiledb::config(self$tiledbsoma_ctx$context()))
           rl <- soma_array_reader(uri = uri,
                                   dim_points = coords,        # NULL dealt with by soma_array_reader()
                                   result_order = result_order,
