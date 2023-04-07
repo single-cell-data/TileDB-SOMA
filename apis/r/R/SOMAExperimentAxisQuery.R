@@ -550,7 +550,13 @@ SOMAExperimentAxisQuery <- R6::R6Class(
       seurat <- seurat[['embeddings']]
       # Create a Seurat key
       key <- SeuratObject::Key(
-        object = switch(EXPR = seurat, pca = 'PC', tsne = 'tSNE', toupper(seurat)),
+        object = switch(
+          EXPR = seurat,
+          pca = 'PC',
+          ica = 'IC',
+          tsne = 'tSNE',
+          toupper(seurat)
+        ),
         quiet = TRUE
       )
       # Read in cell embeddings
@@ -569,10 +575,30 @@ SOMAExperimentAxisQuery <- R6::R6Class(
         self$obs(obs_index)$GetColumnByName(obs_index)$as_vector()
       }
       embed <- self$ms$obsm$get(obsm_layer)
-      embed_mat <- embed$read_dense_matrix(list(
-        self$obs_joinids()$as_vector(),
-        seq_len(as.integer(embed$shape()[2L])) - 1L
-      ))
+      coords <- list(
+        cells = self$obs_joinids()$as_vector(),
+        dims = seq_len(as.integer(embed$shape()[2L])) - 1L
+      )
+      embed_mat <- if (inherits(embed, 'SOMASparseNDArray')) {
+        as.matrix(embed$read_sparse_matrix()[coords$cells + 1L, coords$dims + 1L])
+      } else if (inherits(embed, 'SOMADenseNDArray')) {
+        warning(
+          paste(
+            strwrap(paste(
+              "Embeddings for",
+              sQuote(obsm_layer),
+              "are encoded as dense instead of sparse; all arrays should be saved as",
+              sQuote('SOMASparseNDArrays')
+            )),
+            collapse = '\n'
+          ),
+          call. = FALSE,
+          immediate. = TRUE
+        )
+        embed$read_dense_matrix(unname(coords))
+      } else {
+        stop("Unknown SOMA Array type: ", class(embed)[1L], call. = FALSE)
+      }
       # Set matrix names
       rownames(embed_mat) <- cells
       colnames(embed_mat) <- paste0(key, seq_len(ncol(embed_mat)))
@@ -599,10 +625,30 @@ SOMAExperimentAxisQuery <- R6::R6Class(
           self$var(var_index)$GetColumnByName(var_index)$as_vector()
         }
         loads <- self$ms$varm$get(varm_layer)
-        load_mat <- loads$read_dense_matrix(list(
-          self$var_joinids()$as_vector(),
-          seq_len(as.integer(loads$shape()[2L])) - 1L
-        ))
+        coords <- list(
+          features = self$var_joinids()$as_vector(),
+          dims = seq_len(as.integer(loads$shape()[2L])) - 1L
+        )
+        load_mat <- if (inherits(loads, 'SOMASparseNDArray')) {
+          as.matrix(loads$read_sparse_matrix()[coords$features + 1L, coords$dims + 1L])
+        } else if (inherits(loads, 'SOMADenseNDArray')) {
+          warning(
+            paste(
+              strwrap(paste(
+                "Loadings for",
+                sQuote(varm_layer),
+                "are encoded as dense instead of sparse; all arrays should be saved as",
+                sQuote('SOMASparseNDArrays')
+              )),
+              collapse = '\n'
+            ),
+            call. = FALSE,
+            immediate. = TRUE
+          )
+          loads$read_dense_matrix(unname(coords))
+        } else {
+          stop("Unknown SOMA Array type: ", class(loads)[1L], call. = FALSE)
+        }
         # Set matrix names
         rownames(load_mat) <- features
         colnames(load_mat) <- paste0(key, seq_len(ncol(load_mat)))
@@ -617,7 +663,7 @@ SOMAExperimentAxisQuery <- R6::R6Class(
         embeddings = embed_mat,
         loadings = load_mat %||% methods::new('matrix'),
         assay = private$.measurement_name,
-        global = seurat != 'pca',
+        global = !seurat %in% c('pca', 'ica'),
         key = key
       ))
     },

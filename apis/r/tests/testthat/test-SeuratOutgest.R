@@ -207,38 +207,63 @@ test_that("Load reduction from ExperimentQuery mechanics", {
   )
   # Add embeddings
   n_pcs <- 50L
+  n_ics <- 30L
   n_umaps <- 2L
   obsm <- SOMACollectionCreate(file.path(experiment$ms$get('RNA')$uri, 'obsm'))
-  obsm$add_new_dense_ndarray(
+  obsm$add_new_sparse_ndarray(
     key = 'X_pca',
     type = arrow::int32(),
     shape = c(n_obs, n_pcs)
   )
-  obsm$get('X_pca')$write(create_dense_matrix_with_int_dims(
+  obsm$get('X_pca')$write(create_sparse_matrix_with_int_dims(
     nrows = n_obs,
-    ncols = n_pcs
+    ncols = n_pcs,
+    seed = 3L
   ))
-  obsm$add_new_dense_ndarray(
+  obsm$add_new_sparse_ndarray(
     key = 'X_umap',
     type = arrow::int32(),
     shape = c(n_obs, n_umaps)
   )
-  obsm$get('X_umap')$write(create_dense_matrix_with_int_dims(
+  obsm$get('X_umap')$write(create_sparse_matrix_with_int_dims(
     nrows = n_obs,
     ncols = n_umaps,
-    seed = 2L
+    seed = 4L
+  ))
+  # Add at least one set of dense arrays
+  obsm$add_new_dense_ndarray(
+    key = 'X_ica',
+    type = arrow::int32(),
+    shape = c(n_obs, n_ics)
+  )
+  obsm$get('X_ica')$write(create_dense_matrix_with_int_dims(
+    nrows = n_obs,
+    ncols = n_ics,
+    seed = 5L
   ))
   experiment$ms$get("RNA")$add_new_collection(obsm, 'obsm')
   # Add loadings
   varm <- SOMACollectionCreate(file.path(experiment$ms$get('RNA')$uri, 'varm'))
-  varm$add_new_dense_ndarray(
+  varm$add_new_sparse_ndarray(
     key = 'PCs',
     type = arrow::int32(),
     shape = c(n_var, n_pcs)
   )
-  varm$get('PCs')$write(create_dense_matrix_with_int_dims(
+  varm$get('PCs')$write(create_sparse_matrix_with_int_dims(
     nrows = n_var,
-    ncols = n_pcs
+    ncols = n_pcs,
+    seed = 6L
+  ))
+  # Add at least one set of dense arrays
+  varm$add_new_dense_ndarray(
+    key = 'ICs',
+    type = arrow::int32(),
+    shape = c(n_var, n_ics)
+  )
+  varm$get('ICs')$write(create_dense_matrix_with_int_dims(
+    nrows = n_var,
+    ncols = n_ics,
+    seed = 7L
   ))
   experiment$ms$get('RNA')$add_new_collection(varm, 'varm')
   # Create the query
@@ -253,6 +278,11 @@ test_that("Load reduction from ExperimentQuery mechanics", {
   expect_equal(dim(SeuratObject::Loadings(X_pca)), c(n_var, n_pcs))
   expect_false(SeuratObject::IsGlobal(X_pca))
   expect_equal(SeuratObject::Key(X_pca), 'PC_')
+  expect_warning(X_ica <- query$to_seurat_reduction('X_ica'))
+  expect_s4_class(X_ica, 'DimReduc')
+  expect_equal(dim(X_ica), c(n_obs, n_ics))
+  expect_false(SeuratObject::IsGlobal(X_ica))
+  expect_equal(SeuratObject::Key(X_ica), 'IC_')
   expect_no_condition(X_umap <- query$to_seurat_reduction('X_umap'))
   expect_s4_class(X_umap, 'DimReduc')
   expect_equal(dim(X_umap), c(n_obs, n_umaps))
@@ -279,6 +309,26 @@ test_that("Load reduction from ExperimentQuery mechanics", {
   expect_identical(
     colnames(SeuratObject::Loadings(pca)),
     paste0('PC_', seq_len(n_pcs))
+  )
+  expect_warning(ica <- query$to_seurat_reduction('ica'))
+  expect_s4_class(ica, 'DimReduc')
+  expect_true(is.matrix(SeuratObject::Embeddings(ica)))
+  expect_true(is.matrix(SeuratObject::Loadings(ica)))
+  expect_true(SeuratObject::IsMatrixEmpty(SeuratObject::Loadings(ica, TRUE)))
+  expect_false(SeuratObject::IsMatrixEmpty(SeuratObject::Loadings(ica, FALSE)))
+  expect_equal(dim(ica), c(n_obs, n_ics))
+  expect_equal(dim(SeuratObject::Embeddings(ica)), dim(ica))
+  expect_equal(dim(SeuratObject::Loadings(ica)), c(n_var, n_ics))
+  expect_equal(dim(SeuratObject::Loadings(ica, TRUE)), c(0L, 0L))
+  expect_false(SeuratObject::IsGlobal(ica))
+  expect_equal(SeuratObject::Key(ica), 'IC_')
+  expect_identical(
+    colnames(SeuratObject::Embeddings(ica)),
+    paste0('IC_', seq_len(n_ics))
+  )
+  expect_identical(
+    colnames(SeuratObject::Loadings(ica)),
+    paste0('IC_', seq_len(n_ics))
   )
   expect_no_condition(umap <- query$to_seurat_reduction('umap'))
   expect_s4_class(umap, 'DimReduc')
@@ -312,6 +362,23 @@ test_that("Load reduction from ExperimentQuery mechanics", {
   )
   expect_identical(
     rownames(SeuratObject::Loadings(named_pca)),
+    query$var('quux')$GetColumnByName('quux')$as_vector()
+  )
+  expect_warning(named_ica <- query$to_seurat_reduction(
+    'ica',
+    obs_index = 'baz',
+    var_index = 'quux'
+  ))
+  expect_identical(
+    SeuratObject::Cells(named_ica),
+    query$obs('baz')$GetColumnByName('baz')$as_vector()
+  )
+  expect_identical(
+    rownames(SeuratObject::Embeddings(named_ica)),
+    query$obs('baz')$GetColumnByName('baz')$as_vector()
+  )
+  expect_identical(
+    rownames(SeuratObject::Loadings(named_ica)),
     query$var('quux')$GetColumnByName('quux')$as_vector()
   )
   expect_no_condition(named_umap <- query$to_seurat_reduction(
@@ -379,38 +446,63 @@ test_that("Load reduction from sliced ExperimentQuery", {
   )
   # Add embeddings
   n_pcs <- 50L
+  n_ics <- 30L
   n_umaps <- 2L
   obsm <- SOMACollectionCreate(file.path(experiment$ms$get('RNA')$uri, 'obsm'))
-  obsm$add_new_dense_ndarray(
+  obsm$add_new_sparse_ndarray(
     key = 'X_pca',
     type = arrow::int32(),
     shape = c(n_obs, n_pcs)
   )
-  obsm$get('X_pca')$write(create_dense_matrix_with_int_dims(
+  obsm$get('X_pca')$write(create_sparse_matrix_with_int_dims(
     nrows = n_obs,
-    ncols = n_pcs
+    ncols = n_pcs,
+    seed = 3L
   ))
-  obsm$add_new_dense_ndarray(
+  obsm$add_new_sparse_ndarray(
     key = 'X_umap',
     type = arrow::int32(),
     shape = c(n_obs, n_umaps)
   )
-  obsm$get('X_umap')$write(create_dense_matrix_with_int_dims(
+  obsm$get('X_umap')$write(create_sparse_matrix_with_int_dims(
     nrows = n_obs,
     ncols = n_umaps,
-    seed = 2L
+    seed = 4L
+  ))
+  # Add at least one set of dense arrays
+  obsm$add_new_dense_ndarray(
+    key = 'X_ica',
+    type = arrow::int32(),
+    shape = c(n_obs, n_ics)
+  )
+  obsm$get('X_ica')$write(create_dense_matrix_with_int_dims(
+    nrows = n_obs,
+    ncols = n_ics,
+    seed = 5L
   ))
   experiment$ms$get("RNA")$add_new_collection(obsm, 'obsm')
   # Add loadings
   varm <- SOMACollectionCreate(file.path(experiment$ms$get('RNA')$uri, 'varm'))
-  varm$add_new_dense_ndarray(
+  varm$add_new_sparse_ndarray(
     key = 'PCs',
     type = arrow::int32(),
     shape = c(n_var, n_pcs)
   )
-  varm$get('PCs')$write(create_dense_matrix_with_int_dims(
+  varm$get('PCs')$write(create_sparse_matrix_with_int_dims(
     nrows = n_var,
-    ncols = n_pcs
+    ncols = n_pcs,
+    seed = 6L
+  ))
+  # Add at least one set of dense arrays
+  varm$add_new_dense_ndarray(
+    key = 'ICs',
+    type = arrow::int32(),
+    shape = c(n_var, n_ics)
+  )
+  varm$get('ICs')$write(create_dense_matrix_with_int_dims(
+    nrows = n_var,
+    ncols = n_ics,
+    seed = 7L
   ))
   experiment$ms$get('RNA')$add_new_collection(varm, 'varm')
   # Create the query
@@ -442,6 +534,26 @@ test_that("Load reduction from sliced ExperimentQuery", {
     colnames(SeuratObject::Loadings(pca)),
     paste0('PC_', seq_len(n_pcs))
   )
+  expect_warning(ica <- query$to_seurat_reduction('ica'))
+  expect_s4_class(ica, 'DimReduc')
+  expect_identical(dim(ica), c(length(obs_slice), n_ics))
+  expect_identical(dim(SeuratObject::Embeddings(ica)), dim(ica))
+  expect_identical(dim(SeuratObject::Loadings(ica)), c(length(var_slice), n_ics))
+  expect_identical(SeuratObject::Cells(ica), paste0('cell', query$obs_joinids()))
+  expect_identical(
+    rownames(SeuratObject::Loadings(ica)),
+    paste0('feature', query$var_joinids())
+  )
+  expect_false(SeuratObject::IsGlobal(ica))
+  expect_equal(SeuratObject::Key(ica), 'IC_')
+  expect_identical(
+    colnames(SeuratObject::Embeddings(ica)),
+    paste0('IC_', seq_len(n_ics))
+  )
+  expect_identical(
+    colnames(SeuratObject::Loadings(ica)),
+    paste0('IC_', seq_len(n_ics))
+  )
   expect_no_condition(umap <- query$to_seurat_reduction('umap'))
   expect_s4_class(umap, 'DimReduc')
   expect_identical(dim(umap), c(length(obs_slice), n_umaps))
@@ -469,6 +581,19 @@ test_that("Load reduction from sliced ExperimentQuery", {
   )
   expect_identical(
     rownames(SeuratObject::Loadings(named_pca)),
+    query$var('quux')$GetColumnByName('quux')$as_vector()
+  )
+  expect_warning(named_ica <- query$to_seurat_reduction(
+    'ica',
+    obs_index = 'baz',
+    var_index = 'quux'
+  ))
+  expect_identical(
+    SeuratObject::Cells(named_ica),
+    query$obs('baz')$GetColumnByName('baz')$as_vector()
+  )
+  expect_identical(
+    rownames(SeuratObject::Loadings(named_ica)),
     query$var('quux')$GetColumnByName('quux')$as_vector()
   )
   expect_no_condition(named_umap <- query$to_seurat_reduction(
@@ -501,38 +626,63 @@ test_that("Load reduction from indexed ExperimentQuery", {
   )
   # Add embeddings
   n_pcs <- 50L
+  n_ics <- 30L
   n_umaps <- 2L
   obsm <- SOMACollectionCreate(file.path(experiment$ms$get('RNA')$uri, 'obsm'))
-  obsm$add_new_dense_ndarray(
+  obsm$add_new_sparse_ndarray(
     key = 'X_pca',
     type = arrow::int32(),
     shape = c(n_obs, n_pcs)
   )
-  obsm$get('X_pca')$write(create_dense_matrix_with_int_dims(
+  obsm$get('X_pca')$write(create_sparse_matrix_with_int_dims(
     nrows = n_obs,
-    ncols = n_pcs
+    ncols = n_pcs,
+    seed = 3L
   ))
-  obsm$add_new_dense_ndarray(
+  obsm$add_new_sparse_ndarray(
     key = 'X_umap',
     type = arrow::int32(),
     shape = c(n_obs, n_umaps)
   )
-  obsm$get('X_umap')$write(create_dense_matrix_with_int_dims(
+  obsm$get('X_umap')$write(create_sparse_matrix_with_int_dims(
     nrows = n_obs,
     ncols = n_umaps,
-    seed = 2L
+    seed = 4L
+  ))
+  # Add at least one set of dense arrays
+  obsm$add_new_dense_ndarray(
+    key = 'X_ica',
+    type = arrow::int32(),
+    shape = c(n_obs, n_ics)
+  )
+  obsm$get('X_ica')$write(create_dense_matrix_with_int_dims(
+    nrows = n_obs,
+    ncols = n_ics,
+    seed = 5L
   ))
   experiment$ms$get("RNA")$add_new_collection(obsm, 'obsm')
   # Add loadings
   varm <- SOMACollectionCreate(file.path(experiment$ms$get('RNA')$uri, 'varm'))
-  varm$add_new_dense_ndarray(
+  varm$add_new_sparse_ndarray(
     key = 'PCs',
     type = arrow::int32(),
     shape = c(n_var, n_pcs)
   )
-  varm$get('PCs')$write(create_dense_matrix_with_int_dims(
+  varm$get('PCs')$write(create_sparse_matrix_with_int_dims(
     nrows = n_var,
-    ncols = n_pcs
+    ncols = n_pcs,
+    seed = 6L
+  ))
+  # Add at least one set of dense arrays
+  varm$add_new_dense_ndarray(
+    key = 'ICs',
+    type = arrow::int32(),
+    shape = c(n_var, n_ics)
+  )
+  varm$get('ICs')$write(create_dense_matrix_with_int_dims(
+    nrows = n_var,
+    ncols = n_ics,
+    seed = 7L
   ))
   experiment$ms$get('RNA')$add_new_collection(varm, 'varm')
   # Create the query
@@ -576,6 +726,32 @@ test_that("Load reduction from indexed ExperimentQuery", {
     colnames(SeuratObject::Loadings(pca)),
     paste0('PC_', seq_len(n_pcs))
   )
+  expect_warning(ica <- query$to_seurat_reduction('ica'))
+  expect_s4_class(ica, 'DimReduc')
+  expect_identical(
+    dim(ica),
+    c(length(obs_label_values), n_ics)
+  )
+  expect_identical(dim(SeuratObject::Embeddings(ica)), dim(ica))
+  expect_identical(
+    dim(SeuratObject::Loadings(ica)),
+    c(length(var_label_values), n_ics)
+  )
+  expect_identical(SeuratObject::Cells(ica), paste0('cell', query$obs_joinids()))
+  expect_identical(
+    rownames(SeuratObject::Loadings(ica)),
+    paste0('feature', query$var_joinids())
+  )
+  expect_false(SeuratObject::IsGlobal(ica))
+  expect_equal(SeuratObject::Key(ica), 'IC_')
+  expect_identical(
+    colnames(SeuratObject::Embeddings(ica)),
+    paste0('IC_', seq_len(n_ics))
+  )
+  expect_identical(
+    colnames(SeuratObject::Loadings(ica)),
+    paste0('IC_', seq_len(n_ics))
+  )
   expect_no_condition(umap <- query$to_seurat_reduction('umap'))
   expect_s4_class(umap, 'DimReduc')
   expect_identical(
@@ -610,6 +786,21 @@ test_that("Load reduction from indexed ExperimentQuery", {
     query$var('quux')$GetColumnByName('quux')$as_vector()
   )
   expect_identical(rownames(SeuratObject::Loadings(named_pca)), var_label_values)
+  expect_warning(named_ica <- query$to_seurat_reduction(
+    'ica',
+    obs_index = 'baz',
+    var_index = 'quux'
+  ))
+  expect_identical(
+    SeuratObject::Cells(named_ica),
+    query$obs('baz')$GetColumnByName('baz')$as_vector()
+  )
+  expect_identical(SeuratObject::Cells(named_ica), obs_label_values)
+  expect_identical(
+    rownames(SeuratObject::Loadings(named_ica)),
+    query$var('quux')$GetColumnByName('quux')$as_vector()
+  )
+  expect_identical(rownames(SeuratObject::Loadings(named_ica)), var_label_values)
   expect_no_condition(named_umap <- query$to_seurat_reduction(
     'umap',
     obs_index = 'baz'
@@ -827,21 +1018,21 @@ test_that("Load Seurat object from ExperimentQuery mechanics", {
   n_pcs <- 50L
   n_umaps <- 2L
   obsm <- SOMACollectionCreate(file.path(experiment$ms$get('RNA')$uri, 'obsm'))
-  obsm$add_new_dense_ndarray(
+  obsm$add_new_sparse_ndarray(
     key = 'X_pca',
     type = arrow::int32(),
     shape = c(n_obs, n_pcs)
   )
-  obsm$get('X_pca')$write(create_dense_matrix_with_int_dims(
+  obsm$get('X_pca')$write(create_sparse_matrix_with_int_dims(
     nrows = n_obs,
     ncols = n_pcs
   ))
-  obsm$add_new_dense_ndarray(
+  obsm$add_new_sparse_ndarray(
     key = 'X_umap',
     type = arrow::int32(),
     shape = c(n_obs, n_umaps)
   )
-  obsm$get('X_umap')$write(create_dense_matrix_with_int_dims(
+  obsm$get('X_umap')$write(create_sparse_matrix_with_int_dims(
     nrows = n_obs,
     ncols = n_umaps,
     seed = 2L
@@ -849,12 +1040,12 @@ test_that("Load Seurat object from ExperimentQuery mechanics", {
   experiment$ms$get("RNA")$add_new_collection(obsm, 'obsm')
   # Add loadings
   varm <- SOMACollectionCreate(file.path(experiment$ms$get('RNA')$uri, 'varm'))
-  varm$add_new_dense_ndarray(
+  varm$add_new_sparse_ndarray(
     key = 'PCs',
     type = arrow::int32(),
     shape = c(n_var, n_pcs)
   )
-  varm$get('PCs')$write(create_dense_matrix_with_int_dims(
+  varm$get('PCs')$write(create_sparse_matrix_with_int_dims(
     nrows = n_var,
     ncols = n_pcs
   ))
@@ -1025,21 +1216,21 @@ test_that("Load Seurat object from sliced ExperimentQuery", {
   n_pcs <- 50L
   n_umaps <- 2L
   obsm <- SOMACollectionCreate(file.path(experiment$ms$get('RNA')$uri, 'obsm'))
-  obsm$add_new_dense_ndarray(
+  obsm$add_new_sparse_ndarray(
     key = 'X_pca',
     type = arrow::int32(),
     shape = c(n_obs, n_pcs)
   )
-  obsm$get('X_pca')$write(create_dense_matrix_with_int_dims(
+  obsm$get('X_pca')$write(create_sparse_matrix_with_int_dims(
     nrows = n_obs,
     ncols = n_pcs
   ))
-  obsm$add_new_dense_ndarray(
+  obsm$add_new_sparse_ndarray(
     key = 'X_umap',
     type = arrow::int32(),
     shape = c(n_obs, n_umaps)
   )
-  obsm$get('X_umap')$write(create_dense_matrix_with_int_dims(
+  obsm$get('X_umap')$write(create_sparse_matrix_with_int_dims(
     nrows = n_obs,
     ncols = n_umaps,
     seed = 2L
@@ -1047,12 +1238,12 @@ test_that("Load Seurat object from sliced ExperimentQuery", {
   experiment$ms$get("RNA")$add_new_collection(obsm, 'obsm')
   # Add loadings
   varm <- SOMACollectionCreate(file.path(experiment$ms$get('RNA')$uri, 'varm'))
-  varm$add_new_dense_ndarray(
+  varm$add_new_sparse_ndarray(
     key = 'PCs',
     type = arrow::int32(),
     shape = c(n_var, n_pcs)
   )
-  varm$get('PCs')$write(create_dense_matrix_with_int_dims(
+  varm$get('PCs')$write(create_sparse_matrix_with_int_dims(
     nrows = n_var,
     ncols = n_pcs
   ))
@@ -1121,21 +1312,21 @@ test_that("Load Seurat object from indexed ExperimentQuery", {
   n_pcs <- 50L
   n_umaps <- 2L
   obsm <- SOMACollectionCreate(file.path(experiment$ms$get('RNA')$uri, 'obsm'))
-  obsm$add_new_dense_ndarray(
+  obsm$add_new_sparse_ndarray(
     key = 'X_pca',
     type = arrow::int32(),
     shape = c(n_obs, n_pcs)
   )
-  obsm$get('X_pca')$write(create_dense_matrix_with_int_dims(
+  obsm$get('X_pca')$write(create_sparse_matrix_with_int_dims(
     nrows = n_obs,
     ncols = n_pcs
   ))
-  obsm$add_new_dense_ndarray(
+  obsm$add_new_sparse_ndarray(
     key = 'X_umap',
     type = arrow::int32(),
     shape = c(n_obs, n_umaps)
   )
-  obsm$get('X_umap')$write(create_dense_matrix_with_int_dims(
+  obsm$get('X_umap')$write(create_sparse_matrix_with_int_dims(
     nrows = n_obs,
     ncols = n_umaps,
     seed = 2L
@@ -1143,12 +1334,12 @@ test_that("Load Seurat object from indexed ExperimentQuery", {
   experiment$ms$get("RNA")$add_new_collection(obsm, 'obsm')
   # Add loadings
   varm <- SOMACollectionCreate(file.path(experiment$ms$get('RNA')$uri, 'varm'))
-  varm$add_new_dense_ndarray(
+  varm$add_new_sparse_ndarray(
     key = 'PCs',
     type = arrow::int32(),
     shape = c(n_var, n_pcs)
   )
-  varm$get('PCs')$write(create_dense_matrix_with_int_dims(
+  varm$get('PCs')$write(create_sparse_matrix_with_int_dims(
     nrows = n_var,
     ncols = n_pcs
   ))

@@ -41,6 +41,7 @@
       m <- regexpr(pattern = '[[:upper:]]+', text = x)
       x <- tolower(unlist(regmatches(x = x, m = m)))
       x[x == 'pc'] <- 'pca'
+      x[x == 'ic'] <- 'ica'
       x
     }
   ))
