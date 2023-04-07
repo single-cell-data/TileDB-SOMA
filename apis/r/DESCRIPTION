@@ -48,7 +48,8 @@ Imports:
     dplyr,
     data.table,
     spdl,
-    rlang
+    rlang,
+    parallel
 LinkingTo:
     Rcpp,
     RcppSpdlog

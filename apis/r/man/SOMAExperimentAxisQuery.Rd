@@ -177,7 +177,8 @@ from the resulting Tables.
 \if{html}{\out{<div class="r">}}\preformatted{SOMAExperimentAxisQuery$read(
   X_layers = NULL,
   obs_column_names = NULL,
-  var_column_names = NULL
+  var_column_names = NULL,
+  n_cores = 1L
 )}\if{html}{\out{</div>}}
 }
 
@@ -188,6 +189,9 @@ from the resulting Tables.
 
 \item{\code{obs_column_names, var_column_names}}{Specify which column names in
 \code{var} and \code{obs} dataframes to read and return.}
+
+\item{\code{n_cores}}{Number of cores to use for parallelized reads; disabled
+on Windows}
 }
 \if{html}{\out{</div>}}
 }

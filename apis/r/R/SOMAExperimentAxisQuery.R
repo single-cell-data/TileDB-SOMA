@@ -123,8 +123,10 @@ SOMAExperimentAxisQuery <- R6::R6Class(
     #' @param X_layers The name(s) of the `X` layer(s) to read and return.
     #' @param obs_column_names,var_column_names Specify which column names in
     #' `var` and `obs` dataframes to read and return.
+    #' @param n_cores Number of cores to use for parallelized reads; disabled
+    #' on Windows
     read = function(
-      X_layers = NULL, obs_column_names = NULL, var_column_names = NULL) {
+      X_layers = NULL, obs_column_names = NULL, var_column_names = NULL, n_cores = 1L) {
       stopifnot(
         "'X_layers' must be a character vector" =
           is.null(X_layers) || is.character(X_layers),
@@ -134,14 +136,33 @@ SOMAExperimentAxisQuery <- R6::R6Class(
         assert_subset(obs_column_names, self$obs_df$colnames(), "column"),
         "'var_column_names' must be a character vector" =
           is.null(var_column_names) || is.character(var_column_names),
-        assert_subset(var_column_names, self$var_df$colnames(), "column")
+        assert_subset(var_column_names, self$var_df$colnames(), "column"),
+        "'n_cores' must be a single positive integer value" = rlang::is_integerish(n_cores, 1L) &&
+          n_cores > 0L
       )
+
+      if (Sys.info()['sysname'] == 'Windows') {
+        if (n_cores != 1L) {
+          warning(
+            "Parallelization is not supported on Windows",
+            call. = FALSE,
+            immediate. = TRUE
+          )
+          n_cores <- 1L
+        }
+      } else if (n_cores > max(parallel::detectCores() - 1L, 1L, na.rm = TRUE)) {
+        stop(
+          "'n_cores' must be less than the avaible number of cores: ",
+          parallel::detectCores(),
+          call. = FALSE
+        )
+      }
 
       x_collection <- self$ms$X
       X_layers <- X_layers %||% x_collection$names()
 
       # Named list of SOMASparseNDArrays
-      x_arrays <- Map(
+      x_arrays <- parallel::mcMap(
         f = function(layer_name) {
           x_layer <- x_collection$get(layer_name)
           stopifnot(
@@ -150,19 +171,23 @@ SOMAExperimentAxisQuery <- R6::R6Class(
           )
           x_layer
         },
-        layer_name = X_layers
+        layer_name = X_layers,
+        mc.cores = n_cores
       )
 
       # TODO: parallelize with futures
       obs_ft <- self$obs(obs_column_names)
       var_ft <- self$var(var_column_names)
 
-      x_matrices <- lapply(x_arrays, function(x_array) {
+      x_matrices <- mclapply(
+        x_arrays,
+        function(x_array) {
           x_array$read_arrow_table(coords = list(
             self$obs_joinids()$as_vector(),
             self$var_joinids()$as_vector()
           ))
-        }
+        },
+        mc.cores = n_cores
       )
 
       SOMAAxisQueryResult$new(
