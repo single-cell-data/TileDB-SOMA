@@ -19,5 +19,4 @@ test_that("ConfigList mechanics", {
   # Check `set` errors
   expect_error(cfg$set(c('op1', 'op2'), 'a', 1L))
   expect_error(cfg$set('op1', c('a', 'b'), c(1L, 2L)))
-  ### expect_error(cfg$set('op1', 'a', c(1L, 2L)))
 })

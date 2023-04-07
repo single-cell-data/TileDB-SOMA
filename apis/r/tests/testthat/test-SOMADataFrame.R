@@ -232,3 +232,76 @@ test_that("soma_joinid validations", {
     "soma_joinid field must be of type Arrow int64"
   )
 })
+
+test_that("platform_config is respected", {
+  uri <- withr::local_tempdir("soma-dataframe")
+
+  # Set Arrow schema
+  asch <- arrow::schema(
+    arrow::field("soma_joinid", arrow::int64(), nullable = FALSE),
+    arrow::field("i32", arrow::int32(), nullable = FALSE),
+    arrow::field("f64", arrow::float64(), nullable = FALSE),
+    arrow::field("utf8", arrow::large_utf8(), nullable = FALSE)
+  )
+
+  # Set tiledb create options
+  cfg <- PlatformConfig$new()
+  cfg$set('tiledb', 'create', 'dataframe_dim_zstd_level', 8)
+  cfg$set('tiledb', 'create', 'sparse_nd_array_dim_zstd_level', 9)
+  cfg$set('tiledb', 'create', 'capacity', 8000)
+  cfg$set('tiledb', 'create', 'tile_order', 'COL_MAJOR')
+  cfg$set('tiledb', 'create', 'cell_order', 'UNORDERED')
+  cfg$set('tiledb', 'create', 'offsets_filters', list("RLE"))
+  cfg$set('tiledb', 'create', 'validity_filters', list("RLE", "NONE"))
+  cfg$set('tiledb', 'create', 'dims', list(
+    soma_joinid = list(
+      filters = list("RLE", list(name="ZSTD", COMPRESSION_LEVEL=9), "NONE")
+      # TODO: test setting/checking tile extent, once shapes/domain-maxes are made programmable.
+      # At present we get:
+      #
+      #   Error: Tile extent check failed; domain max expanded to multiple of tile extent exceeds
+      #   max value representable by domain type
+      #
+      # tile = 999
+    )
+  ))
+  cfg$set('tiledb', 'create', 'attrs', list(
+    i32 = list(
+      filters = list("RLE", list(name="ZSTD", COMPRESSION_LEVEL=9))
+    ),
+    f64 = list(
+      filters = list()
+    )
+  ))
+
+  # Create the SOMADataFrame
+  sdf <- SOMADataFrameCreate(uri=uri, schema=asch, index_column_names=c("soma_joinid"), platform_config = cfg)
+
+  # Read back and check the array schema against the tiledb create options
+  arr <- tiledb::tiledb_array(uri)
+  tsch <- tiledb::schema(arr)
+
+  # TODO: zstd levels x 2
+
+  expect_equal(tiledb::capacity(tsch), 8000)
+  expect_equal(tiledb::tile_order(tsch), "COL_MAJOR")
+  expect_equal(tiledb::cell_order(tsch), "UNORDERED")
+
+  expect_equal(tiledb::nfilters(tiledb::filter_list(tsch)$offsets), 1)
+
+  expect_equal(tiledb::nfilters(tiledb::filter_list(tsch)$validity), 2)
+
+  dom <- tiledb::domain(tsch)
+  expect_equal(tiledb::tiledb_ndim(dom), 1)
+  dim <- tiledb::dimensions(dom)[[1]]
+  expect_equal(tiledb::name(dim), "soma_joinid")
+  expect_equal(tiledb::nfilters(tiledb::filter_list(dim)), 3)
+  # TODO: As noted above, check this when we are able to.
+  # expect_equal(tiledb::tile(dim), 999)
+
+  expect_equal(length(tiledb::attrs(tsch)), 3)
+  i32_filters <- tiledb::filter_list(tiledb::attrs(tsch)$i32)
+  f64_filters <- tiledb::filter_list(tiledb::attrs(tsch)$f64)
+  expect_equal(tiledb::nfilters(i32_filters), 2)
+  expect_equal(tiledb::nfilters(f64_filters), 0)
+})

@@ -67,17 +67,6 @@ TileDBCreateOptions <- R6::R6Class(
       }
     },
 
-
-    #' @return int
-    dataframe_dim_zstd_level = function() {
-      super$get("dataframe_dim_zstd_level", default=DEFAULT_DATAFRAME_DIM_ZSTD_LEVEL())
-    },
-
-    #' @return int
-    sparse_nd_array_dim_zstd_level = function() {
-        super$get("sparse_nd_array_dim_zstd_level", default=DEFAULT_SPARSE_ND_ARRAY_DIM_ZSTD_LEVEL())
-    },
-
     #' Returns the cell and tile orders that should be used.
     #' If neither ``cell_order`` nor ``tile_order`` is present, only in this
     #' case will we use the default values provided.
@@ -118,6 +107,26 @@ TileDBCreateOptions <- R6::R6Class(
     #' @return int
     capacity = function() {
       super$get("capacity", default=DEFAULT_CAPACITY())
+    },
+
+    #' @return int
+    dataframe_dim_zstd_level = function() {
+      super$get("dataframe_dim_zstd_level", default=DEFAULT_DATAFRAME_DIM_ZSTD_LEVEL())
+    },
+
+    #' @return int
+    sparse_nd_array_dim_zstd_level = function() {
+        super$get("sparse_nd_array_dim_zstd_level", default=DEFAULT_SPARSE_ND_ARRAY_DIM_ZSTD_LEVEL())
+    },
+
+    #' @return list of tiledb.Filter
+    offsets_filters = function(default=DEFAULT_OFFSETS_FILTERS()) {
+      self$.build_filters(super$get("offsets_filters", default))
+    },
+
+    #' @return list of tiledb.Filter
+    validity_filters = function(default=DEFAULT_VALIDITY_FILTERS()) {
+      self$.build_filters(super$get("validity_filters", default))
     },
 
     # Example input:
@@ -166,16 +175,6 @@ TileDBCreateOptions <- R6::R6Class(
         return(self$.build_filters(default))
       }
       return(self$.build_filters(o))
-    },
-
-    #' @return list of tiledb.Filter
-    offsets_filters = function(default=DEFAULT_OFFSETS_FILTERS()) {
-      self$.build_filters(super$get("offsets_filters", default))
-    },
-
-    #' @return list of tiledb.Filter
-    validity_filters = function(default=DEFAULT_VALIDITY_FILTERS()) {
-      self$.build_filters(super$get("validity_filters", default))
     },
 
     #' @return bool
