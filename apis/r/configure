@@ -34,15 +34,16 @@ else
         cmake --build build -j 2 >> cmake_log.txt
         cmake --build build --target install-libtiledbsoma >> cmake_log.txt
         rm -rf build
+        ## handle different distro library install paths
+        ## TODO: figure out how to tell cmake to use lib/ in all cases
+        if test -d lib64; then
+            mv lib64 lib
+        elif test -d lib/x86_64-linux-gnu; then
+            mv lib/x86_64-linux-gnu lib
+        fi
         cd ..
         echo "** static library made"
 
-        ## handle different distro library install paths
-        if test -d src/lib64; then
-            mv src/lib64 src/lib
-        elif test -d src/lib/x86_64-linux-gnu; then
-            mv src/libx86_64-linux-gnu src/lib
-        fi
     fi
 fi
 
