@@ -504,28 +504,37 @@ def _maybe_set(
 
 @overload
 def _create_or_open_coll(
-    cls: Type[Experiment], uri: str, ingest_mode: str, context: SOMATileDBContext
+    cls: Type[Experiment],
+    uri: str,
+    ingest_mode: str,
+    context: Optional[SOMATileDBContext],
 ) -> Experiment:
     ...
 
 
 @overload
 def _create_or_open_coll(
-    cls: Type[Measurement], uri: str, ingest_mode: str, context: SOMATileDBContext
+    cls: Type[Measurement],
+    uri: str,
+    ingest_mode: str,
+    context: Optional[SOMATileDBContext],
 ) -> Measurement:
     ...
 
 
 @overload
 def _create_or_open_coll(
-    cls: Type[Collection[_TDBO]], uri: str, ingest_mode: str, context: SOMATileDBContext
+    cls: Type[Collection[_TDBO]],
+    uri: str,
+    ingest_mode: str,
+    context: Optional[SOMATileDBContext],
 ) -> Collection[_TDBO]:
     ...
 
 
 @typeguard_ignore
 def _create_or_open_coll(
-    cls: Type[Any], uri: str, ingest_mode: str, context: SOMATileDBContext
+    cls: Type[Any], uri: str, ingest_mode: str, context: Optional[SOMATileDBContext]
 ) -> Any:
     try:
         thing = cls.open(uri, "w", context=context)
