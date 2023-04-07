@@ -179,7 +179,7 @@ SOMAExperimentAxisQuery <- R6::R6Class(
       obs_ft <- self$obs(obs_column_names)
       var_ft <- self$var(var_column_names)
 
-      x_matrices <- mclapply(
+      x_matrices <- parallel::mclapply(
         x_arrays,
         function(x_array) {
           x_array$read_arrow_table(coords = list(
