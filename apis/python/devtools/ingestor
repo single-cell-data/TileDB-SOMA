@@ -11,11 +11,13 @@ A simple driver for ingestion of anndata to a TileDB Experiment.
 """
 
 import argparse
+import json
 import os
 import sys
 from typing import Optional
 
 import tiledb
+from somacore import options
 
 import tiledbsoma
 import tiledbsoma._exception
@@ -90,8 +92,33 @@ select `relative=True`. (This is the default.)
         nargs=1,
     )
     parser.add_argument(
+        # Given a tiledb.Config object `cfg`, you can do `cfg.save("mycfg.txt")`.
+        # It'll look like this:
+        #
+        # ...
+        # config.logging_level 0
+        # filestore.buffer_size 104857600
+        # rest.curl.buffer_size 524288
+        # ...
+        #
+        # Then you can edit it if you like. Then you can have this script read it
+        # using `--tiledb-config mycfg.txt`.
         "--tiledb-config",
         help="TileDB config data from `config.save()`",
+        type=str,
+        default=None,
+    )
+    parser.add_argument(
+        # Given a PlatformConfig object -- just a nested dict -- named `platform_config` you can do
+        #
+        #   import json
+        #   with open("pc.json", "w") as F:
+        #     json.dump(platform_config, F)
+        #
+        # Then you can edit it if you like. Then you can have this script read it
+        # using `--platform-config pc.json`.
+        "--platform-config",
+        help="Platform-config data as JSON",
         type=str,
         default=None,
     )
@@ -130,6 +157,11 @@ select `relative=True`. (This is the default.)
         ctx = tiledb.Ctx(cfg)
         context = SOMATileDBContext(tiledb_ctx=ctx)
 
+    platform_config = None
+    if args.platform_config is not None:
+        with open(args.platform_config) as F:
+            platform_config = json.load(F)
+
     soco_dir = args.o.rstrip("/")
 
     if args.n:
@@ -146,6 +178,7 @@ select `relative=True`. (This is the default.)
                 output_path=output_path,
                 ingest_mode=args.ingest_mode[0],
                 context=context,
+                platform_config=platform_config,
                 use_relative_uri=use_relative_uri,
                 write_soco=write_soco,
                 soco_dir=soco_dir,
@@ -160,6 +193,7 @@ select `relative=True`. (This is the default.)
                 output_path=output_path,
                 ingest_mode=args.ingest_mode[0],
                 context=context,
+                platform_config=platform_config,
                 use_relative_uri=use_relative_uri,
                 write_soco=write_soco,
                 soco_dir=soco_dir,
@@ -176,6 +210,7 @@ select `relative=True`. (This is the default.)
                 output_path=output_path,
                 ingest_mode=args.ingest_mode[0],
                 context=context,
+                platform_config=platform_config,
                 use_relative_uri=use_relative_uri,
                 write_soco=write_soco,
                 soco_dir=soco_dir,
@@ -189,6 +224,7 @@ select `relative=True`. (This is the default.)
                 output_path=output_path,
                 ingest_mode=args.ingest_mode[0],
                 context=context,
+                platform_config=platform_config,
                 use_relative_uri=use_relative_uri,
                 write_soco=write_soco,
                 soco_dir=soco_dir,
@@ -206,6 +242,7 @@ def ingest_one(
     output_path: str,
     ingest_mode: str,
     context: SOMATileDBContext,
+    platform_config: Optional[options.PlatformConfig],
     use_relative_uri: Optional[bool],
     write_soco: bool,
     soco_dir: str,
@@ -245,6 +282,7 @@ def ingest_one(
         measurement_name,
         ingest_mode=ingest_mode,
         context=context,
+        platform_config=platform_config,
         use_relative_uri=use_relative_uri,
     )
 
