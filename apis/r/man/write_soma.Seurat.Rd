@@ -71,12 +71,12 @@ to the \dQuote{\code{obsm}} and \dQuote{\code{varm}} groups of a
 \link[tiledbsoma:SOMAMeasurement]{measurement}:
 \itemize{
 \item cell embeddings are written out as a
-\link[tiledbsoma:SOMADenseNDArray]{dense matrix} in the
+\link[tiledbsoma:SOMASparseNDArray]{sparse matrix} in the
 \dQuote{\code{obsm}} group
 \item feature loadings, if not \link[SeuratObject:IsMatrixEmpty]{empty},
-are written out as a \link[tiledbsoma:SOMADenseNDArray]{dense matrix} in
-the \dQuote{\code{varm}} groups; loadings are padded include all features
-with \code{NAs}
+are written out as a \link[tiledbsoma:SOMASparseNDArray]{sparse matrix} in
+the \dQuote{\code{varm}} groups; loadings are padded with \code{NAs}
+to include all features
 }
 Dimensional reduction names are translated to AnnData-style names (eg.
 \dQuote{\code{pca}} becomes \code{X_pca} for embeddings and
