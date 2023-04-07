@@ -126,7 +126,11 @@ SOMAExperimentAxisQuery <- R6::R6Class(
     #' @param n_cores Number of cores to use for parallelized reads; disabled
     #' on Windows
     read = function(
-      X_layers = NULL, obs_column_names = NULL, var_column_names = NULL, n_cores = 1L) {
+      X_layers = NULL,
+      obs_column_names = NULL,
+      var_column_names = NULL,
+      n_cores = getOption('Ncpus', 1L)
+      ) {
       stopifnot(
         "'X_layers' must be a character vector" =
           is.null(X_layers) || is.character(X_layers),
