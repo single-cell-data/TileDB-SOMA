@@ -92,33 +92,37 @@ select `relative=True`. (This is the default.)
         nargs=1,
     )
     parser.add_argument(
-        # Given a tiledb.Config object `cfg`, you can do `cfg.save("mycfg.txt")`.
-        # It'll look like this:
-        #
-        # ...
-        # config.logging_level 0
-        # filestore.buffer_size 104857600
-        # rest.curl.buffer_size 524288
-        # ...
-        #
-        # Then you can edit it if you like. Then you can have this script read it
-        # using `--tiledb-config mycfg.txt`.
-        "--tiledb-config",
-        help="TileDB config data from `config.save()`",
+        "--tiledb-config-file",
+        help="""TileDB config data from `config.save()`, in a file.
+
+Given a tiledb.Config object `cfg`, you can do `cfg.save("mycfg.txt")`.
+It'll look like this:
+
+    ...
+    config.logging_level 0
+    filestore.buffer_size 104857600
+    rest.curl.buffer_size 524288
+    ...
+
+Then you can edit it if you like. Then you can have this script read it
+using `--tiledb-config-file mycfg.txt`.
+""",
         type=str,
         default=None,
     )
     parser.add_argument(
-        # Given a PlatformConfig object -- just a nested dict -- named `platform_config` you can do
-        #
-        #   import json
-        #   with open("pc.json", "w") as F:
-        #     json.dump(platform_config, F)
-        #
-        # Then you can edit it if you like. Then you can have this script read it
-        # using `--platform-config pc.json`.
-        "--platform-config",
-        help="Platform-config data as JSON",
+        "--platform-config-file",
+        help="""Platform-config data as JSON, in a file.
+
+Given a PlatformConfig object -- just a nested dict -- named `platform_config` you can do
+
+    import json
+    with open("pc.json", "w") as F:
+        json.dump(platform_config, F)
+
+Then you can edit it if you like. Then you can have this script read it
+using `--platform-config-file pc.json`.
+""",
         type=str,
         default=None,
     )
@@ -152,14 +156,14 @@ select `relative=True`. (This is the default.)
             )
 
     context = SOMATileDBContext()
-    if args.tiledb_config is not None:
-        cfg = tiledb.Config().load(args.tiledb_config)
+    if args.tiledb_config_file is not None:
+        cfg = tiledb.Config().load(args.tiledb_config_file)
         ctx = tiledb.Ctx(cfg)
         context = SOMATileDBContext(tiledb_ctx=ctx)
 
     platform_config = None
-    if args.platform_config is not None:
-        with open(args.platform_config) as F:
+    if args.platform_config_file is not None:
+        with open(args.platform_config_file) as F:
             platform_config = json.load(F)
 
     soco_dir = args.o.rstrip("/")
