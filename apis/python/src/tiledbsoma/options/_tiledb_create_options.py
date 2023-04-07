@@ -29,6 +29,7 @@ DEFAULT_OFFSET_FILTERS = (
 )
 DEFAULT_VALIDITY_FILTERS = None
 DEFAULT_TILE_EXTENT = 2048
+DEFAULT_CAPACITY = 100000
 # TODO: pending further work on
 #  https://github.com/single-cell-data/TileDB-SOMA/issues/27
 # DEFAULT_OBS_EXTENT = 256
@@ -71,6 +72,9 @@ class TileDBCreateOptions(Mapping[str, Any]):
 
     def goal_chunk_nnz(self) -> int:
         return self.get("goal_chunk_nnz", DEFAULT_GOAL_CHUNK_NNZ)
+
+    def capacity(self) -> int:
+        return self.get("capacity", DEFAULT_CAPACITY)
 
     def offsets_filters(
         self,

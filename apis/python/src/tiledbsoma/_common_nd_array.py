@@ -180,7 +180,7 @@ class NDArray(TileDBArray, somacore.NDArray):
             allows_duplicates=create_options.get("allows_duplicates", False),
             offsets_filters=create_options.offsets_filters(),
             validity_filters=create_options.validity_filters(),
-            capacity=create_options.get("capacity", 100000),
+            capacity=create_options.capacity(),
             tile_order=tile_order,
             cell_order=cell_order,
             ctx=context.tiledb_ctx,
