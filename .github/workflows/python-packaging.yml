@@ -125,7 +125,8 @@ jobs:
   publish-to-pypi:
     name: Publish package to PyPI
     needs: smoke-test
-    if: matrix.os == 'ubuntu-20.04' && github.event_name == 'release'
+    runs-on: ubuntu-20.04
+    if: github.event_name == 'release'
     steps:
     - name: Publish packages to PyPI
       uses: pypa/gh-action-pypi-publish@master
