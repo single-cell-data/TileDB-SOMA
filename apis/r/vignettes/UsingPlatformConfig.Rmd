@@ -1,0 +1,35 @@
+---
+title: "Using PlatformConfig"
+output: github_document
+vignette: |
+  %\VignetteIndexEntry{Using PlatformConfig}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+## Advanced schema configuration
+
+Default schema-level TileDB parameters are set to be useful for most users.
+
+If you have particular needs or use-cases, though, you can use the `PlatformConfig` options to override
+default schema parameters.
+
+```
+platform_config <- PlatformConfig$new()
+platform_config$set('tiledb', 'create', 'dataframe_dim_zstd_level', 8)
+platform_config$set('tiledb', 'create', 'sparse_nd_array_dim_zstd_level', 9)
+platform_config$set('tiledb', 'create', 'tile_order', 'ROW_MAJOR')
+platform_config$set('tiledb', 'create', 'cell_order', 'ROW_MAJOR')
+platform_config$set('tiledb', 'create', 'dims', list(
+  soma_dim_0 = list(filters = list(list(name="ZSTD", COMPRESSION_LEVEL=9)), tile=100000),
+  soma_dim_1 = list(filters = list(list(name="ZSTD", COMPRESSION_LEVEL=9)), tile=100000),
+))
+platform_config$set('tiledb', 'create', 'attrs', list(
+  soma_data_a = list(filters = list("RLE"))
+))
+tdco <- TileDBCreateOptions$new(platform_config)
+```
+
+This can then be passed to `SOMADataFrameCreate`, `SOMASparseNDArrayCreate`, et al.
+
+Coming soon: advice on how to connect these with `from_seurat`.

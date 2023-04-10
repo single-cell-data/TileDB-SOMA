@@ -11,7 +11,7 @@ SOMADataFrameCreate <- function(uri, schema, index_column_names,
                                 platform_config = NULL, tiledbsoma_ctx = NULL) {
     sdf <- SOMADataFrame$new(uri, platform_config, tiledbsoma_ctx,
                              mode="WRITE", internal_use_only = "allowed_use")
-    sdf$create(schema, index_column_names)
+    sdf$create(schema, index_column_names, platform_config=platform_config)
     sdf
 }
 
@@ -41,7 +41,7 @@ SOMASparseNDArrayCreate <- function(uri, type, shape,
                                     platform_config = NULL, tiledbsoma_ctx = NULL) {
     spar <- SOMASparseNDArray$new(uri, platform_config, tiledbsoma_ctx,
                                   mode="WRITE", internal_use_only = "allowed_use")
-    spar$create(type, shape)
+    spar$create(type, shape, platform_config=platform_config)
     spar
 }
 
@@ -71,7 +71,7 @@ SOMADenseNDArrayCreate <- function(uri, type, shape,
                                    platform_config = NULL, tiledbsoma_ctx = NULL) {
     dnar <- SOMADenseNDArray$new(uri, platform_config, tiledbsoma_ctx,
                                  mode="WRITE", internal_use_only = "allowed_use")
-    dnar$create(type, shape)
+    dnar$create(type, shape, platform_config=platform_config)
     dnar
 }
 

@@ -34,8 +34,6 @@ DEFAULT_ALLOWS_DUPLICATES = False
 
 # TODO: pending further work on
 #  https://github.com/single-cell-data/TileDB-SOMA/issues/27
-# DEFAULT_OBS_EXTENT = 256
-# DEFAULT_VAR_EXTENT = 2048
 # DEFAULT_X_CAPACITY = 100000
 # DEFAULT_MAX_THREAD_POOL_WORKERS = 8
 
