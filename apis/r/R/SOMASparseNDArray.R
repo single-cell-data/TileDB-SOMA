@@ -60,9 +60,7 @@ SOMASparseNDArray <- R6::R6Class(
             dim_name,
             # Default to use if there is nothing specified in tiledb-create options
             # in the platform config:
-            list(
-              list(name="ZSTD", COMPRESSION_LEVEL=tiledb_create_options$dataframe_dim_zstd_level())
-            )
+            list(list(name="ZSTD", COMPRESSION_LEVEL=tiledb_create_options$dataframe_dim_zstd_level()))
           )
         )
       }
@@ -71,7 +69,12 @@ SOMASparseNDArray <- R6::R6Class(
       tdb_attr <- tiledb::tiledb_attr(
         name = "soma_data",
         type = tiledb_type_from_arrow_type(type),
-        filter_list = tiledb::tiledb_filter_list(tiledb_create_options$dim_filters("soma_data"))
+        filter_list = tiledb::tiledb_filter_list(tiledb_create_options$attr_filters(
+          "soma_data",
+          # Default to use if there is nothing specified in tiledb-create options
+          # in the platform config:
+          list(list(name="ZSTD", COMPRESSION_LEVEL=tiledb_create_options$dataframe_dim_zstd_level()))
+        ))
       )
 
       # array schema
@@ -84,7 +87,8 @@ SOMASparseNDArray <- R6::R6Class(
         tile_order = cell_tile_orders["tile_order"],
         capacity=tiledb_create_options$capacity(),
         allows_dups=tiledb_create_options$allows_duplicates(),
-        offsets_filter_list = tiledb::tiledb_filter_list(tiledb_create_options$offsets_filters())
+        offsets_filter_list = tiledb::tiledb_filter_list(tiledb_create_options$offsets_filters()),
+        validity_filter_list = tiledb::tiledb_filter_list(tiledb_create_options$validity_filters())
       )
 
       # create array
