@@ -30,6 +30,8 @@ DEFAULT_OFFSET_FILTERS = (
 DEFAULT_VALIDITY_FILTERS = None
 DEFAULT_TILE_EXTENT = 2048
 DEFAULT_CAPACITY = 100000
+DEFAULT_ALLOWS_DUPLICATES = False
+
 # TODO: pending further work on
 #  https://github.com/single-cell-data/TileDB-SOMA/issues/27
 # DEFAULT_OBS_EXTENT = 256
@@ -75,6 +77,9 @@ class TileDBCreateOptions(Mapping[str, Any]):
 
     def capacity(self) -> int:
         return self.get("capacity", DEFAULT_CAPACITY)
+
+    def allows_duplicates(self) -> bool:
+        return self.get("allows_duplicates", DEFAULT_ALLOWS_DUPLICATES)
 
     def offsets_filters(
         self,
