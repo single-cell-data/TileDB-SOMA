@@ -12,23 +12,27 @@ FetchContent_Declare(
   GIT_TAG        v3.0.1
 )
 
-get_property(
+cmake_host_system_information(RESULT OS_RELEASE QUERY OS_RELEASE)
+
+if(APPLE AND OS_RELEASE VERSION_GREATER_EQUAL "13.0.0")
+  get_property(
     compile_options
     DIRECTORY
     PROPERTY COMPILE_OPTIONS
-)
-
-set_property(
+  )
+  set_property(
     DIRECTORY
     APPEND
     PROPERTY COMPILE_OPTIONS -Wno-error=unused-but-set-variable
-)
+  )
+endif()
 
 FetchContent_MakeAvailable(Catch2)
 
-set_property(
+if(APPLE AND OS_RELEASE VERSION_GREATER_EQUAL "13.0.0")
+  set_property(
     DIRECTORY
     PROPERTY COMPILE_OPTIONS ${compile_options}
-)
-
-unset(compile_options)
+  )
+  unset(compile_options)
+endif()
