@@ -177,7 +177,7 @@ class NDArray(TileDBArray, somacore.NDArray):
             domain=dom,
             attrs=attrs,
             sparse=is_sparse,
-            allows_duplicates=create_options.get("allows_duplicates", False),
+            allows_duplicates=create_options.allows_duplicates(),
             offsets_filters=create_options.offsets_filters(),
             validity_filters=create_options.validity_filters(),
             capacity=create_options.capacity(),
