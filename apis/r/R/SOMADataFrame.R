@@ -31,7 +31,7 @@ SOMADataFrame <- R6::R6Class(
 
       # Parse the tiledb/create/ subkeys of the platform_config into a handy,
       # typed, queryable data structure.
-      tiledb_create_options = TileDBCreateOptions$new(platform_config)
+      tiledb_create_options <- TileDBCreateOptions$new(platform_config)
 
       # array dimensions
       tdb_dims <- stats::setNames(
