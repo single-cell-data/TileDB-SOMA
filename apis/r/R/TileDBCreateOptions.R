@@ -22,21 +22,21 @@
 # }
 
 # Non-filter-related schema parameters
-DEFAULT_TILE_ORDER        <- function() { "ROW_MAJOR" }
-DEFAULT_CELL_ORDER        <- function() { "ROW_MAJOR" }
-DEFAULT_TILE_EXTENT       <- function() { 2048        }
-DEFAULT_CAPACITY          <- function() { 100000      }
-DEFAULT_ALLOWS_DUPLICATES <- function() { FALSE      }
+.default_tile_order        <- function() { "ROW_MAJOR" }
+.default_cell_order        <- function() { "ROW_MAJOR" }
+.default_tile_extent       <- function() { 2048        }
+.default_capacity          <- function() { 100000      }
+.default_allows_duplicates <- function() { FALSE      }
 
 # Filter-related schema parameters
-DEFAULT_DATAFRAME_DIM_ZSTD_LEVEL       <- function() { 3 }
-DEFAULT_SPARSE_ND_ARRAY_DIM_ZSTD_LEVEL <- function() { 3 }
-DEFAULT_OFFSETS_FILTERS  <- function() { list("DOUBLE_DELTA", "BIT_WIDTH_REDUCTION", "ZSTD")}
-DEFAULT_VALIDITY_FILTERS <- function() { list() }
+.default_dataframe_dim_zstd_level       <- function() { 3 }
+.default_sparse_nd_array_dim_zstd_level <- function() { 3 }
+.default_offsets_filters  <- function() { list("DOUBLE_DELTA", "BIT_WIDTH_REDUCTION", "ZSTD")}
+.default_validity_filters <- function() { list() }
 
 # Used for chunked data ingestion
-DEFAULT_WRITE_X_CHUNKED  <- function() { TRUE }
-DEFAULT_GOAL_CHUNK_NNZ   <- function() { 200000000 }
+.default_write_x_chunked  <- function() { TRUE }
+.default_goal_chunk_nnz   <- function() { 200000000 }
 
 #' TileDBCreateOptions
 #'
@@ -78,7 +78,7 @@ TileDBCreateOptions <- R6::R6Class(
         if ("cell_order" %in% super$keys() || "tile_order" %in% super$keys()) {
             c(cell_order = super$get("cell_order", default=NULL), tile_order = super$get("tile_order", default=NULL))
         } else {
-          c(cell_order = DEFAULT_CELL_ORDER(), tile_order = DEFAULT_TILE_ORDER())
+          c(cell_order = .default_cell_order(), tile_order = .default_tile_order())
         }
     },
 
@@ -92,7 +92,7 @@ TileDBCreateOptions <- R6::R6Class(
     # Then tdco$dim_tile("soma_dim_0") will be 999
     #
     #' @return int
-    dim_tile = function(dim_name, default=DEFAULT_TILE_EXTENT()) {
+    dim_tile = function(dim_name, default=.default_tile_extent()) {
       stopifnot(!is.null(dim_name))
       o <- self$.dim(dim_name)
       if (is.null(o)) {
@@ -107,31 +107,31 @@ TileDBCreateOptions <- R6::R6Class(
 
     #' @return int
     capacity = function() {
-      super$get("capacity", default=DEFAULT_CAPACITY())
+      super$get("capacity", default=.default_capacity())
     },
 
     #' @return bool
     allows_duplicates = function() {
-      super$get("allows_duplicates", default=DEFAULT_ALLOWS_DUPLICATES())
+      super$get("allows_duplicates", default=.default_allows_duplicates())
     },
 
     #' @return int
     dataframe_dim_zstd_level = function() {
-      super$get("dataframe_dim_zstd_level", default=DEFAULT_DATAFRAME_DIM_ZSTD_LEVEL())
+      super$get("dataframe_dim_zstd_level", default=.default_dataframe_dim_zstd_level())
     },
 
     #' @return int
     sparse_nd_array_dim_zstd_level = function() {
-        super$get("sparse_nd_array_dim_zstd_level", default=DEFAULT_SPARSE_ND_ARRAY_DIM_ZSTD_LEVEL())
+        super$get("sparse_nd_array_dim_zstd_level", default=.default_sparse_nd_array_dim_zstd_level())
     },
 
     #' @return list of tiledb.Filter
-    offsets_filters = function(default=DEFAULT_OFFSETS_FILTERS()) {
+    offsets_filters = function(default=.default_offsets_filters()) {
       self$.build_filters(super$get("offsets_filters", default))
     },
 
     #' @return list of tiledb.Filter
-    validity_filters = function(default=DEFAULT_VALIDITY_FILTERS()) {
+    validity_filters = function(default=.default_validity_filters()) {
       self$.build_filters(super$get("validity_filters", default))
     },
 
@@ -185,12 +185,12 @@ TileDBCreateOptions <- R6::R6Class(
 
     #' @return bool
     write_X_chunked = function() {
-        super$get("write_X_chunked", default=DEFAULT_WRITE_X_CHUNKED())
+        super$get("write_X_chunked", default=.default_write_x_chunked())
     },
 
     #' @return int
     goal_chunk_nnz = function() {
-        super$get("goal_chunk_nnz", default=DEFAULT_GOAL_CHUNK_NNZ())
+        super$get("goal_chunk_nnz", default=.default_goal_chunk_nnz())
     },
 
     # This is an accessor for nested things like

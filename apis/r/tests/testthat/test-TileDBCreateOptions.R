@@ -12,27 +12,27 @@ test_that("TileDBCreateOptions construction", {
 test_that("TileDBCreateOptions access from PlatformConfig", {
   cfg <- PlatformConfig$new()
   tdco <- TileDBCreateOptions$new(cfg)
-  expect_equal(tdco$dataframe_dim_zstd_level(), DEFAULT_DATAFRAME_DIM_ZSTD_LEVEL())
+  expect_equal(tdco$dataframe_dim_zstd_level(), .default_dataframe_dim_zstd_level())
 
   cfg <- PlatformConfig$new()
   cfg$set('not_tiledb', 'not_create', 'not_dataframe_dim_zstd_level', 999)
   tdco <- TileDBCreateOptions$new(cfg)
-  expect_equal(tdco$dataframe_dim_zstd_level(), DEFAULT_DATAFRAME_DIM_ZSTD_LEVEL())
+  expect_equal(tdco$dataframe_dim_zstd_level(), .default_dataframe_dim_zstd_level())
 
   cfg <- PlatformConfig$new()
   cfg$set('tiledb', 'not_create', 'not_dataframe_dim_zstd_level', 999)
   tdco <- TileDBCreateOptions$new(cfg)
-  expect_equal(tdco$dataframe_dim_zstd_level(), DEFAULT_DATAFRAME_DIM_ZSTD_LEVEL())
+  expect_equal(tdco$dataframe_dim_zstd_level(), .default_dataframe_dim_zstd_level())
 
   cfg <- PlatformConfig$new()
   cfg$set('not_tiledb', 'create', 'not_dataframe_dim_zstd_level', 999)
   tdco <- TileDBCreateOptions$new(cfg)
-  expect_equal(tdco$dataframe_dim_zstd_level(), DEFAULT_DATAFRAME_DIM_ZSTD_LEVEL())
+  expect_equal(tdco$dataframe_dim_zstd_level(), .default_dataframe_dim_zstd_level())
 
   cfg <- PlatformConfig$new()
   cfg$set('tiledb', 'create', 'not_dataframe_dim_zstd_level', 999)
   tdco <- TileDBCreateOptions$new(cfg)
-  expect_equal(tdco$dataframe_dim_zstd_level(), DEFAULT_DATAFRAME_DIM_ZSTD_LEVEL())
+  expect_equal(tdco$dataframe_dim_zstd_level(), .default_dataframe_dim_zstd_level())
 
   cfg <- PlatformConfig$new()
   cfg$set('tiledb', 'create', 'dataframe_dim_zstd_level', 999)
@@ -45,7 +45,7 @@ test_that("TileDBCreateOptions access from PlatformConfig", {
 test_that("TileDBCreateOptions dataframe_dim_zstd_level", {
   cfg <- PlatformConfig$new()
   tdco <- TileDBCreateOptions$new(cfg)
-  expect_equal(tdco$dataframe_dim_zstd_level(), DEFAULT_DATAFRAME_DIM_ZSTD_LEVEL())
+  expect_equal(tdco$dataframe_dim_zstd_level(), .default_dataframe_dim_zstd_level())
 
   cfg <- PlatformConfig$new()
   cfg$set('tiledb', 'create', 'dataframe_dim_zstd_level', 999)
@@ -56,7 +56,7 @@ test_that("TileDBCreateOptions dataframe_dim_zstd_level", {
 test_that("TileDBCreateOptions sparse_nd_array_dim_zstd_level", {
   cfg <- PlatformConfig$new()
   tdco <- TileDBCreateOptions$new(cfg)
-  expect_equal(tdco$sparse_nd_array_dim_zstd_level(), DEFAULT_SPARSE_ND_ARRAY_DIM_ZSTD_LEVEL())
+  expect_equal(tdco$sparse_nd_array_dim_zstd_level(), .default_sparse_nd_array_dim_zstd_level())
 
   cfg <- PlatformConfig$new()
   cfg$set('tiledb', 'create', 'sparse_nd_array_dim_zstd_level', 999)
@@ -67,7 +67,7 @@ test_that("TileDBCreateOptions sparse_nd_array_dim_zstd_level", {
 test_that("TileDBCreateOptions write_X_chunked", {
   cfg <- PlatformConfig$new()
   tdco <- TileDBCreateOptions$new(cfg)
-  expect_equal(tdco$write_X_chunked(), DEFAULT_WRITE_X_CHUNKED())
+  expect_equal(tdco$write_X_chunked(), .default_write_x_chunked())
 
   cfg <- PlatformConfig$new()
   cfg$set('tiledb', 'create', 'write_X_chunked', FALSE)
@@ -83,7 +83,7 @@ test_that("TileDBCreateOptions write_X_chunked", {
 test_that("TileDBCreateOptions goal_chunk_nnz", {
   cfg <- PlatformConfig$new()
   tdco <- TileDBCreateOptions$new(cfg)
-  expect_equal(tdco$goal_chunk_nnz(), DEFAULT_GOAL_CHUNK_NNZ())
+  expect_equal(tdco$goal_chunk_nnz(), .default_goal_chunk_nnz())
 
   cfg <- PlatformConfig$new()
   cfg$set('tiledb', 'create', 'goal_chunk_nnz', 999)
@@ -94,7 +94,7 @@ test_that("TileDBCreateOptions goal_chunk_nnz", {
 test_that("TileDBCreateOptions cell_tile_orders", {
   cfg <- PlatformConfig$new()
   tdco <- TileDBCreateOptions$new(cfg)
-  expect_equal(tdco$cell_tile_orders(), c(cell_order = DEFAULT_CELL_ORDER(), tile_order = DEFAULT_TILE_ORDER()))
+  expect_equal(tdco$cell_tile_orders(), c(cell_order = .default_cell_order(), tile_order = .default_tile_order()))
 
   cfg <- PlatformConfig$new()
   cfg$set('tiledb', 'create', 'cell_order', 'foo')
@@ -116,7 +116,7 @@ test_that("TileDBCreateOptions cell_tile_orders", {
 test_that("TileDBCreateOptions dim_tile", {
   cfg <- PlatformConfig$new()
   tdco <- TileDBCreateOptions$new(cfg)
-  expect_equal(tdco$dim_tile("soma_dim_0"), DEFAULT_TILE_EXTENT())
+  expect_equal(tdco$dim_tile("soma_dim_0"), .default_tile_extent())
 
   cfg <- PlatformConfig$new()
   cfg$set('tiledb', 'create', 'dims', list(soma_dim_0 = list(tile = 999)))
@@ -164,7 +164,7 @@ test_that("TileDBCreateOptions attr_filters", {
 test_that("TileDBCreateOptions offsets_filters", {
   cfg <- PlatformConfig$new()
   tdco <- TileDBCreateOptions$new(cfg)
-  expect_equal(length(tdco$offsets_filters()), length(DEFAULT_OFFSETS_FILTERS()))
+  expect_equal(length(tdco$offsets_filters()), length(.default_offsets_filters()))
 
   cfg <- PlatformConfig$new()
   cfg$set('tiledb', 'create', 'offsets_filters',
@@ -187,7 +187,7 @@ test_that("TileDBCreateOptions offsets_filters", {
 test_that("TileDBCreateOptions validity_filters", {
   cfg <- PlatformConfig$new()
   tdco <- TileDBCreateOptions$new(cfg)
-  expect_equal(length(tdco$validity_filters()), length(DEFAULT_VALIDITY_FILTERS()))
+  expect_equal(length(tdco$validity_filters()), length(.default_validity_filters()))
 
   cfg <- PlatformConfig$new()
   cfg$set('tiledb', 'create', 'validity_filters',
@@ -226,7 +226,7 @@ test_that("TileDBCreateOptions overrides", {
 
   expect_error(tdco$dim_tile())
   expect_equal(tdco$dim_tile('soma_dim_0'), 6)
-  expect_equal(tdco$dim_tile('soma_dim_1'), DEFAULT_TILE_EXTENT())
+  expect_equal(tdco$dim_tile('soma_dim_1'), .default_tile_extent())
 
   expect_error(tdco$dim_filters())
   expect_equal(length(tdco$dim_filters("soma_dim_0")), 0)
