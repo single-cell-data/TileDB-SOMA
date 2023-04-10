@@ -56,7 +56,14 @@ SOMASparseNDArray <- R6::R6Class(
           type = "INT64"
         )
         tiledb::filter_list(tdb_dims[[i]]) <- tiledb::tiledb_filter_list(
-          tiledb_create_options$dim_filters(dim_name)
+          tiledb_create_options$dim_filters(
+            dim_name,
+            # Default to use if there is nothing specified in tiledb-create options
+            # in the platform config:
+            list(
+              list(name="ZSTD", COMPRESSION_LEVEL=tiledb_create_options$dataframe_dim_zstd_level())
+            )
+          )
         )
       }
 

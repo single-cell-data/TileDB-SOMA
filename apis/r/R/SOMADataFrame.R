@@ -66,7 +66,14 @@ SOMADataFrame <- R6::R6Class(
           tile = tile_extent,
           type = tiledb_type_from_arrow_type(field$type),
           filter_list = tiledb::tiledb_filter_list(
-            tiledb_create_options$dim_filters(field_name)
+            tiledb_create_options$dim_filters(
+              field_name,
+              # Default to use if there is nothing specified in tiledb-create options
+              # in the platform config:
+              list(
+                list(name="ZSTD", COMPRESSION_LEVEL=tiledb_create_options$dataframe_dim_zstd_level())
+              )
+            )
           )
         )
       }
