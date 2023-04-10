@@ -22,10 +22,11 @@
 # }
 
 # Non-filter-related schema parameters
-DEFAULT_TILE_ORDER  <- function() { "ROW_MAJOR" }
-DEFAULT_CELL_ORDER  <- function() { "ROW_MAJOR" }
-DEFAULT_TILE_EXTENT <- function() { 2048 }
-DEFAULT_CAPACITY    <- function() { 100000 }
+DEFAULT_TILE_ORDER        <- function() { "ROW_MAJOR" }
+DEFAULT_CELL_ORDER        <- function() { "ROW_MAJOR" }
+DEFAULT_TILE_EXTENT       <- function() { 2048        }
+DEFAULT_CAPACITY          <- function() { 100000      }
+DEFAULT_ALLOWS_DUPLICATES <- function() { FALSE      }
 
 # Filter-related schema parameters
 DEFAULT_DATAFRAME_DIM_ZSTD_LEVEL       <- function() { 3 }
@@ -107,6 +108,11 @@ TileDBCreateOptions <- R6::R6Class(
     #' @return int
     capacity = function() {
       super$get("capacity", default=DEFAULT_CAPACITY())
+    },
+
+    #' @return bool
+    allows_duplicates = function() {
+      super$get("allows_duplicates", default=DEFAULT_ALLOWS_DUPLICATES())
     },
 
     #' @return int

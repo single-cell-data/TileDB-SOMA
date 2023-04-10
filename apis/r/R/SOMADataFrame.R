@@ -101,8 +101,7 @@ SOMADataFrame <- R6::R6Class(
         cell_order = cell_tile_orders["cell_order"],
         tile_order = cell_tile_orders["tile_order"],
         capacity = tiledb_create_options$capacity(),
-        # TODO: should be configurable via PlatformConfig
-        allows_dups = FALSE,
+        allows_dups = tiledb_create_options$allows_duplicates(),
         offsets_filter_list = tiledb::tiledb_filter_list(
           tiledb_create_options$offsets_filters()
         ),
