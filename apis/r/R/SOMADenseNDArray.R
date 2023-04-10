@@ -89,6 +89,9 @@ SOMADenseNDArray <- R6::R6Class(
         allows_dups=tiledb_create_options$allows_duplicates(),
         offsets_filter_list = tiledb::tiledb_filter_list(
           tiledb_create_options$offsets_filters()
+        ),
+        validity_filter_list = tiledb::tiledb_filter_list(
+          tiledb_create_options$validity_filters()
         )
       )
 
