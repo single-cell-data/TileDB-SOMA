@@ -67,7 +67,7 @@ SOMADenseNDArray <- R6::R6Class(
       tdb_attr <- tiledb::tiledb_attr(
         name = "soma_data",
         type = tiledb_type_from_arrow_type(type),
-        filter_list=tiledb::tiledb_filter_list(tiledb_create_options$attr_filters("soma_data"))
+        filter_list = tiledb::tiledb_filter_list(tiledb_create_options$attr_filters("soma_data"))
       )
 
       # array schema
