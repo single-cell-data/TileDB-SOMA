@@ -149,24 +149,34 @@ def test_import_anndata(adata, ingest_modes, X_kind):
         obsm = exp.ms["RNA"].obsm
         assert sorted(obsm.keys()) == sorted(orig.obsm.keys())
         for key in list(orig.obsm.keys()):
-            assert obsm[key].metadata.get(metakey) == "SOMADenseNDArray"
+            assert (
+                obsm[key].metadata.get(metakey) == "SOMASparseNDArray"
+                or obsm[key].metadata.get(metakey) == "SOMADenseNDArray"
+            )
             if have_ingested:
                 matrix = obsm[key].read(coords=all2d)
-                assert matrix.shape == orig.obsm[key].shape
+                if obsm[key].metadata.get(metakey) == "SOMADenseNDArray":
+                    assert matrix.shape == orig.obsm[key].shape
             else:
-                with pytest.raises(ValueError):
-                    matrix = obsm[key].read(coords=all2d)
+                if obsm[key].metadata.get(metakey) == "SOMADenseNDArray":
+                    with pytest.raises(ValueError):
+                        matrix = obsm[key].read(coords=all2d)
 
         varm = exp.ms["RNA"].varm
         assert sorted(varm.keys()) == sorted(orig.varm.keys())
         for key in list(orig.varm.keys()):
-            assert varm[key].metadata.get(metakey) == "SOMADenseNDArray"
+            assert (
+                varm[key].metadata.get(metakey) == "SOMASparseNDArray"
+                or varm[key].metadata.get(metakey) == "SOMADenseNDArray"
+            )
             if have_ingested:
                 matrix = varm[key].read(coords=all2d)
-                assert matrix.shape == orig.varm[key].shape
+                if varm[key].metadata.get(metakey) == "SOMADenseNDArray":
+                    assert matrix.shape == orig.varm[key].shape
             else:
-                with pytest.raises(ValueError):
-                    matrix = varm[key].read(coords=all2d)
+                if varm[key].metadata.get(metakey) == "SOMADenseNDArray":
+                    with pytest.raises(ValueError):
+                        matrix = varm[key].read(coords=all2d)
 
         obsp = exp.ms["RNA"].obsp
         assert sorted(obsp.keys()) == sorted(orig.obsp.keys())
@@ -394,7 +404,7 @@ def test_export_anndata(adata):
                 exp, measurement_name="RNA", X_layer_name="nonesuch"
             )
 
-        readback = tiledbsoma.io.to_anndata(exp, measurement_name="RNA")
+        readback = tiledbsoma.io.to_anndata(exp, measurement_name="RNA")  # XXX
 
     assert readback.obs.shape == adata.obs.shape
     assert readback.var.shape == adata.var.shape

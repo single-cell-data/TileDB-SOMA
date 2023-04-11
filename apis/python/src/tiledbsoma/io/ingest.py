@@ -321,7 +321,9 @@ def from_anndata(
                         )
                         for key in anndata.obsm.keys():
                             with create_from_matrix(
-                                DenseNDArray,
+                                # TODO (https://github.com/single-cell-data/TileDB-SOMA/issues/1245):
+                                # consider a use-dense flag at the tiledbsoma.io API
+                                SparseNDArray,
                                 _util.uri_joinpath(measurement.obsm.uri, key),
                                 conversions.to_tiledb_supported_array_type(
                                     anndata.obsm[key]
@@ -348,7 +350,9 @@ def from_anndata(
                         )
                         for key in anndata.varm.keys():
                             with create_from_matrix(
-                                DenseNDArray,
+                                # TODO (https://github.com/single-cell-data/TileDB-SOMA/issues/1245):
+                                # consider a use-dense flag at the tiledbsoma.io API
+                                SparseNDArray,
                                 _util.uri_joinpath(measurement.varm.uri, key),
                                 conversions.to_tiledb_supported_array_type(
                                     anndata.varm[key]
@@ -1351,9 +1355,28 @@ def to_anndata(
             shape = measurement.obsm[key].shape
             if len(shape) != 2:
                 raise ValueError(f"expected shape == 2; got {shape}")
-            matrix = measurement.obsm[key].read((slice(None),) * len(shape)).to_numpy()
-            # The spelling ``sp.csr_array`` is more idiomatic but doesn't exist until Python 3.8
-            obsm[key] = sp.csr_matrix(matrix)
+            if isinstance(measurement.obsm[key], DenseNDArray):
+                matrix = (
+                    measurement.obsm[key].read((slice(None),) * len(shape)).to_numpy()
+                )
+                # The spelling ``sp.csr_array`` is more idiomatic but doesn't exist until Python 3.8
+                obsm[key] = sp.csr_matrix(matrix)
+            else:
+                # obsp is nobs x nobs.
+                # obsm is nobs x some number -- number of PCA components, etc.
+                matrix = measurement.obsm[key].read().tables().concat().to_pandas()
+                nobs_times_width, should_be_three = matrix.shape
+                if should_be_three != 3:
+                    raise SOMAError(
+                        f"internal error: expect COO width of 3; got {should_be_three}"
+                    )
+                if nobs_times_width % nobs != 0:
+                    raise SOMAError(
+                        f"internal error: encountered non-rectangular obsm[{key}]: {nobs} does not divide {nobs_times_width}"
+                    )
+                obsm[key] = conversions.csr_from_tiledb_df(
+                    matrix, nobs, nobs_times_width // nobs
+                )
 
     varm = {}
     if "varm" in measurement:
@@ -1361,9 +1384,28 @@ def to_anndata(
             shape = measurement.varm[key].shape
             if len(shape) != 2:
                 raise ValueError(f"expected shape == 2; got {shape}")
-            matrix = measurement.varm[key].read((slice(None),) * len(shape)).to_numpy()
-            # The spelling ``sp.csr_array`` is more idiomatic but doesn't exist until Python 3.8
-            varm[key] = sp.csr_matrix(matrix)
+            if isinstance(measurement.varm[key], DenseNDArray):
+                matrix = (
+                    measurement.varm[key].read((slice(None),) * len(shape)).to_numpy()
+                )
+                # The spelling ``sp.csr_array`` is more idiomatic but doesn't exist until Python 3.8
+                varm[key] = sp.csr_matrix(matrix)
+            else:
+                # varp is nvar x nvar.
+                # varm is nvar x some number -- number of PCs, etc.
+                matrix = measurement.varm[key].read().tables().concat().to_pandas()
+                nvar_times_width, should_be_three = matrix.shape
+                if should_be_three != 3:
+                    raise SOMAError(
+                        f"internal error: expect COO width of 3; got {should_be_three}"
+                    )
+                if nvar_times_width % nvar != 0:
+                    raise SOMAError(
+                        f"internal error: encountered non-rectangular varm[{key}]: {nvar} does not divide {nvar_times_width}"
+                    )
+                varm[key] = conversions.csr_from_tiledb_df(
+                    matrix, nvar, nvar_times_width // nvar
+                )
 
     obsp = {}
     if "obsp" in measurement:
