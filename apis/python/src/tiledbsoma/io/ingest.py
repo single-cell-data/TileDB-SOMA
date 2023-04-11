@@ -1365,10 +1365,10 @@ def to_anndata(
                 # obsp is nobs x nobs.
                 # obsm is nobs x some number -- number of PCA components, etc.
                 matrix = measurement.obsm[key].read().tables().concat().to_pandas()
-                nobs_times_width, should_be_three = matrix.shape
-                if should_be_three != 3:
+                nobs_times_width, coo_column_count = matrix.shape
+                if coo_column_count != 3:
                     raise SOMAError(
-                        f"internal error: expect COO width of 3; got {should_be_three}"
+                        f"internal error: expect COO width of 3; got {coo_column_count}"
                     )
                 if nobs_times_width % nobs != 0:
                     raise SOMAError(
@@ -1394,10 +1394,10 @@ def to_anndata(
                 # varp is nvar x nvar.
                 # varm is nvar x some number -- number of PCs, etc.
                 matrix = measurement.varm[key].read().tables().concat().to_pandas()
-                nvar_times_width, should_be_three = matrix.shape
-                if should_be_three != 3:
+                nvar_times_width, coo_column_count = matrix.shape
+                if coo_column_count != 3:
                     raise SOMAError(
-                        f"internal error: expect COO width of 3; got {should_be_three}"
+                        f"internal error: expect COO width of 3; got {coo_column_count}"
                     )
                 if nvar_times_width % nvar != 0:
                     raise SOMAError(
