@@ -1356,9 +1356,7 @@ def to_anndata(
             if len(shape) != 2:
                 raise ValueError(f"expected shape == 2; got {shape}")
             if isinstance(measurement.obsm[key], DenseNDArray):
-                matrix = (
-                    measurement.obsm[key].read().to_numpy()
-                )
+                matrix = measurement.obsm[key].read().to_numpy()
                 # The spelling ``sp.csr_array`` is more idiomatic but doesn't exist until Python 3.8
                 obsm[key] = sp.csr_matrix(matrix)
             else:
@@ -1385,9 +1383,7 @@ def to_anndata(
             if len(shape) != 2:
                 raise ValueError(f"expected shape == 2; got {shape}")
             if isinstance(measurement.varm[key], DenseNDArray):
-                matrix = (
-                    measurement.varm[key].read().to_numpy()
-                )
+                matrix = measurement.varm[key].read().to_numpy()
                 # The spelling ``sp.csr_array`` is more idiomatic but doesn't exist until Python 3.8
                 varm[key] = sp.csr_matrix(matrix)
             else:

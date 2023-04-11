@@ -5,6 +5,7 @@ from pathlib import Path
 import anndata
 import numpy as np
 import pytest
+import somacore
 import tiledb
 
 import tiledbsoma
@@ -148,27 +149,25 @@ def test_import_anndata(adata, ingest_modes, X_kind):
 
         obsm = exp.ms["RNA"].obsm
         assert sorted(obsm.keys()) == sorted(orig.obsm.keys())
-        for key in list(orig.obsm.keys()):
-            metaval = obsm[key].metadata.get(metakey)
-            assert metaval in ("SOMASparseNDArray", "SOMADenseNDArray")
+        for key, orig_value in orig.obsm.items():
+            assert isinstance(obsm[key], somacore.NDArray)
             if have_ingested:
                 matrix = obsm[key].read(coords=all2d)
-                if metaval == "SOMADenseNDArray":
-                    assert matrix.shape == orig.obsm[key].shape
+                if not obsm[key].is_sparse:
+                    assert matrix.shape == orig_value.shape
             else:
-                if metaval == "SOMADenseNDArray":
+                if isinstance(obsm[key], tiledbsoma.DenseNDArray):
                     with pytest.raises(ValueError):
                         matrix = obsm[key].read(coords=all2d)
 
         varm = exp.ms["RNA"].varm
         assert sorted(varm.keys()) == sorted(orig.varm.keys())
-        for key in list(orig.varm.keys()):
-            metaval = varm[key].metadata.get(metakey)
-            assert metaval in ("SOMASparseNDArray", "SOMADenseNDArray")
+        for key, orig_value in orig.varm.items():
+            assert isinstance(varm[key], somacore.NDArray)
             if have_ingested:
                 matrix = varm[key].read(coords=all2d)
-                if metaval == "SOMADenseNDArray":
-                    assert matrix.shape == orig.varm[key].shape
+                if not varm[key].is_sparse:
+                    assert matrix.shape == orig_value.shape
             else:
                 if varm[key].metadata.get(metakey) == "SOMADenseNDArray":
                     with pytest.raises(ValueError):
@@ -176,12 +175,11 @@ def test_import_anndata(adata, ingest_modes, X_kind):
 
         obsp = exp.ms["RNA"].obsp
         assert sorted(obsp.keys()) == sorted(orig.obsp.keys())
-        for key in list(orig.obsp.keys()):
-            metaval = obsp[key].metadata.get(metakey)
-            assert metaval == "SOMASparseNDArray"
+        for key, orig_value in orig.obsp.items():
+            assert isinstance(obsp[key], somacore.NDArray)
             if have_ingested:
                 table = obsp[key].read(coords=all2d).tables().concat()
-                assert table.shape[0] == orig.obsp[key].nnz
+                assert table.shape[0] == orig_value.nnz
 
         # pbmc-small has no varp
 
