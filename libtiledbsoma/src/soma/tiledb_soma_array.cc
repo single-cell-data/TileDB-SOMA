@@ -1,5 +1,5 @@
 /**
- * @file   soma_array_reader.cc
+ * @file   tiledb_soma_array.cc
  *
  * @section LICENSE
  *
@@ -27,12 +27,12 @@
  *
  * @section DESCRIPTION
  *
- *   This file defines the SOMAArrayReader class.
+ *   This file defines the TileDBSOMAArray class.
  */
 
-#include "tiledbsoma/soma_array_reader.h"
-#include "tiledbsoma/logger_public.h"
-#include "tiledbsoma/util.h"
+#include "tiledb_soma_array.h"
+#include "../utils/logger_public.h"
+#include "../utils/util.h"
 
 namespace tiledbsoma {
 using namespace tiledb;
@@ -41,7 +41,7 @@ using namespace tiledb;
 //= public static
 //===================================================================
 
-std::unique_ptr<SOMAArrayReader> SOMAArrayReader::open(
+std::unique_ptr<TileDBSOMAArray> TileDBSOMAArray::open(
     std::string_view uri,
     std::string_view name,
     std::map<std::string, std::string> platform_config,
@@ -49,7 +49,7 @@ std::unique_ptr<SOMAArrayReader> SOMAArrayReader::open(
     std::string_view batch_size,
     std::string_view result_order,
     std::optional<std::pair<uint64_t, uint64_t>> timestamp) {
-    return std::make_unique<SOMAArrayReader>(
+    return std::make_unique<TileDBSOMAArray>(
         uri,
         name,
         std::make_shared<Context>(Config(platform_config)),
@@ -59,7 +59,7 @@ std::unique_ptr<SOMAArrayReader> SOMAArrayReader::open(
         timestamp);
 }
 
-std::unique_ptr<SOMAArrayReader> SOMAArrayReader::open(
+std::unique_ptr<TileDBSOMAArray> TileDBSOMAArray::open(
     std::shared_ptr<Context> ctx,
     std::string_view uri,
     std::string_view name,
@@ -67,7 +67,7 @@ std::unique_ptr<SOMAArrayReader> SOMAArrayReader::open(
     std::string_view batch_size,
     std::string_view result_order,
     std::optional<std::pair<uint64_t, uint64_t>> timestamp) {
-    return std::make_unique<SOMAArrayReader>(
+    return std::make_unique<TileDBSOMAArray>(
         uri, name, ctx, column_names, batch_size, result_order, timestamp);
 }
 
@@ -75,7 +75,7 @@ std::unique_ptr<SOMAArrayReader> SOMAArrayReader::open(
 //= public non-static
 //===================================================================
 
-SOMAArrayReader::SOMAArrayReader(
+TileDBSOMAArray::TileDBSOMAArray(
     std::string_view uri,
     std::string_view name,
     std::shared_ptr<Context> ctx,
@@ -88,7 +88,7 @@ SOMAArrayReader::SOMAArrayReader(
     , timestamp_(timestamp) {
     // Validate parameters
     try {
-        LOG_DEBUG(fmt::format("[SOMAArrayReader] opening array '{}'", uri_));
+        LOG_DEBUG(fmt::format("[TileDBSOMAArray] opening array '{}'", uri_));
         auto array = std::make_shared<Array>(*ctx_, uri_, TILEDB_READ);
         if (timestamp) {
             if (timestamp->first > timestamp->second) {
@@ -111,7 +111,7 @@ SOMAArrayReader::SOMAArrayReader(
     reset(column_names, batch_size, result_order);
 }
 
-void SOMAArrayReader::reset(
+void TileDBSOMAArray::reset(
     std::vector<std::string> column_names,
     std::string_view batch_size,
     std::string_view result_order) {
@@ -144,16 +144,16 @@ void SOMAArrayReader::reset(
     submitted_ = false;
 }
 
-void SOMAArrayReader::submit() {
+void TileDBSOMAArray::submit() {
     // Submit the query
     mq_->submit();
     submitted_ = true;
 }
 
-std::optional<std::shared_ptr<ArrayBuffers>> SOMAArrayReader::read_next() {
+std::optional<std::shared_ptr<ArrayBuffers>> TileDBSOMAArray::read_next() {
     if (!submitted_) {
         throw TileDBSOMAError(
-            "[SOMAArrayReader] submit must be called before read_next");
+            "[TileDBSOMAArray] submit must be called before read_next");
     }
 
     // Always return results from the first call to read_next()
@@ -174,11 +174,11 @@ std::optional<std::shared_ptr<ArrayBuffers>> SOMAArrayReader::read_next() {
     return mq_->results();
 }
 
-uint64_t SOMAArrayReader::nnz() {
+uint64_t TileDBSOMAArray::nnz() {
     // Verify array is sparse
     if (mq_->schema()->array_type() != TILEDB_SPARSE) {
         throw TileDBSOMAError(
-            "[SOMAArrayReader] nnz is only supported for sparse arrays");
+            "[TileDBSOMAArray] nnz is only supported for sparse arrays");
     }
 
     // Load fragment info
@@ -186,7 +186,7 @@ uint64_t SOMAArrayReader::nnz() {
     fragment_info.load();
 
     LOG_DEBUG(
-        fmt::format("[SOMAArrayReader] Fragment info for array '{}'", uri_));
+        fmt::format("[TileDBSOMAArray] Fragment info for array '{}'", uri_));
     if (LOG_DEBUG_ENABLED()) {
         fragment_info.dump();
     }
@@ -247,7 +247,7 @@ uint64_t SOMAArrayReader::nnz() {
         fragment_info.get_non_empty_domain(
             relevant_fragments[i], 0, &non_empty_domains[i]);
         LOG_DEBUG(fmt::format(
-            "[SOMAArrayReader] fragment {} non-empty domain = [{}, {}]",
+            "[TileDBSOMAArray] fragment {} non-empty domain = [{}, {}]",
             i,
             non_empty_domains[i][0],
             non_empty_domains[i][1]));
@@ -261,7 +261,7 @@ uint64_t SOMAArrayReader::nnz() {
     bool overlap = false;
     for (uint32_t i = 0; i < fragment_count - 1; i++) {
         LOG_DEBUG(fmt::format(
-            "[SOMAArrayReader] Checking {} < {}",
+            "[TileDBSOMAArray] Checking {} < {}",
             non_empty_domains[i][1],
             non_empty_domains[i + 1][0]));
         if (non_empty_domains[i][1] >= non_empty_domains[i + 1][0]) {
@@ -278,12 +278,12 @@ uint64_t SOMAArrayReader::nnz() {
     return nnz_slow();
 }
 
-uint64_t SOMAArrayReader::nnz_slow() {
+uint64_t TileDBSOMAArray::nnz_slow() {
     LOG_DEBUG(
-        "[SOMAArrayReader] nnz() found consolidated or overlapping fragments, "
+        "[TileDBSOMAArray] nnz() found consolidated or overlapping fragments, "
         "counting cells...");
 
-    auto sr = SOMAArrayReader::open(
+    auto sr = TileDBSOMAArray::open(
         ctx_,
         uri_,
         "count_cells",
@@ -301,7 +301,7 @@ uint64_t SOMAArrayReader::nnz_slow() {
     return total_cell_num;
 }
 
-std::vector<int64_t> SOMAArrayReader::shape() {
+std::vector<int64_t> TileDBSOMAArray::shape() {
     std::vector<int64_t> result;
     auto dimensions = this->schema().get()->domain().dimensions();
 

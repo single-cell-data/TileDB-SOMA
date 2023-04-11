@@ -54,7 +54,7 @@
 #if !defined(R_BUILD)
 #include <spdlog/spdlog.h>
 #else
-#include "tiledbsoma/spdlog_with_R.h"
+#include "spdlog_with_R.h"
 #endif
 
 namespace tiledbsoma {
@@ -248,6 +248,6 @@ Logger& global_logger();
 std::string asc_timestamp(uint64_t timestamp_ms);
 
 // Also include the public logger functions here.
-#include "tiledbsoma/logger_public.h"
+#include "logger_public.h"
 
 #endif  // TILEDB_LOGGER_H

@@ -1,7 +1,9 @@
 #ifndef ARROW_ADAPTER_H
 #define ARROW_ADAPTER_H
 
-#include <tiledbsoma/tiledbsoma>
+#include <tiledb/tiledb>
+#include "utils/column_buffer.h"
+#include "utils/logger_public.h"
 #ifndef ARROW_SCHEMA_AND_ARRAY_DEFINED
 #include "carrow.h"
 #endif

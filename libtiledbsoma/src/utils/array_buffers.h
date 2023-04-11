@@ -38,9 +38,9 @@
 #include <span/span.hpp>
 #include <tiledb/tiledb>
 
-#include "tiledbsoma/column_buffer.h"
-#include "tiledbsoma/common.h"
-#include "tiledbsoma/logger_public.h"
+#include "column_buffer.h"
+#include "common.h"
+#include "logger_public.h"
 
 namespace tiledbsoma {
 

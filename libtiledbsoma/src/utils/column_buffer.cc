@@ -30,10 +30,10 @@
  * This file defines the a ColumBuffer class.
  */
 
-#include "tiledbsoma/column_buffer.h"
-#include "tiledbsoma/array_buffers.h"
-#include "tiledbsoma/common.h"
-#include "tiledbsoma/logger_public.h"
+#include "utils/column_buffer.h"
+#include "utils/array_buffers.h"
+#include "utils/common.h"
+#include "utils/logger_public.h"
 
 namespace tiledbsoma {
 

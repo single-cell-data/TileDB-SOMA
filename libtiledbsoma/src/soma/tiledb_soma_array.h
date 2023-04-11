@@ -1,5 +1,5 @@
 /**
- * @file   soma_array_reader.h
+ * @file   tiledb_soma_array.h
  *
  * @section LICENSE
  *
@@ -27,11 +27,11 @@
  *
  * @section DESCRIPTION
  *
- *   This declares the SOMAArrayReader
+ *   This declares the TileDBSOMAArray
  */
 
-#ifndef SOMA_ARRAY_READER
-#define SOMA_ARRAY_READER
+#ifndef TILEDB_SOMA_ARRAY
+#define TILEDB_SOMA_ARRAY
 
 #include <stdexcept>  // for windows: error C2039: 'runtime_error': is not a member of 'std'
 
@@ -39,19 +39,19 @@
 
 #include <tiledb/tiledb>
 
-#include "tiledbsoma/managed_query.h"
+#include "../read/managed_query.h"
 
 namespace tiledbsoma {
 using namespace tiledb;
 
-class SOMAArrayReader {
+class TileDBSOMAArray {
    public:
     //===================================================================
     //= public static
     //===================================================================
 
     /**
-     * @brief Open an array at the specified URI and return SOMAArrayReader
+     * @brief Open an array at the specified URI and return TileDBSOMAArray
      * object.
      *
      * @param uri URI of the array
@@ -60,10 +60,10 @@ class SOMAArrayReader {
      * @param column_names Columns to read
      * @param batch_size Read batch size
      * @param result_order Read result order
-     * @return std::unique_ptr<SOMAArrayReader> SOMAArrayReader
+     * @return std::unique_ptr<TileDBSOMAArray> TileDBSOMAArray
      */
     __attribute__((
-        visibility("default"))) static std::unique_ptr<SOMAArrayReader>
+        visibility("default"))) static std::unique_ptr<TileDBSOMAArray>
     open(
         std::string_view uri,
         std::string_view name = "unnamed",
@@ -74,7 +74,7 @@ class SOMAArrayReader {
         std::optional<std::pair<uint64_t, uint64_t>> timestamp = std::nullopt);
 
     /**
-     * @brief Open an array at the specified URI and return SOMAArrayReader
+     * @brief Open an array at the specified URI and return TileDBSOMAArray
      * object.
      *
      * @param ctx TileDB context
@@ -83,9 +83,9 @@ class SOMAArrayReader {
      * @param column_names Columns to read
      * @param batch_size Read batch size
      * @param result_order Read result order
-     * @return std::unique_ptr<SOMAArrayReader> SOMAArrayReader
+     * @return std::unique_ptr<TileDBSOMAArray> TileDBSOMAArray
      */
-    static std::unique_ptr<SOMAArrayReader> open(
+    static std::unique_ptr<TileDBSOMAArray> open(
         std::shared_ptr<Context> ctx,
         std::string_view uri,
         std::string_view name = "unnamed",
@@ -98,13 +98,13 @@ class SOMAArrayReader {
     //= public non-static
     //===================================================================
     /**
-     * @brief Construct a new SOMAArrayReader object
+     * @brief Construct a new TileDBSOMAArray object
      *
      * @param uri URI of the array
      * @param name name of the array
      * @param ctx TileDB context
      */
-    SOMAArrayReader(
+    TileDBSOMAArray(
         std::string_view uri,
         std::string_view name,
         std::shared_ptr<Context> ctx,
@@ -113,13 +113,13 @@ class SOMAArrayReader {
         std::string_view result_order,
         std::optional<std::pair<uint64_t, uint64_t>> timestamp = std::nullopt);
 
-    SOMAArrayReader() = delete;
-    SOMAArrayReader(const SOMAArrayReader&) = delete;
-    SOMAArrayReader(SOMAArrayReader&&) = default;
-    ~SOMAArrayReader() = default;
+    TileDBSOMAArray() = delete;
+    TileDBSOMAArray(const TileDBSOMAArray&) = delete;
+    TileDBSOMAArray(TileDBSOMAArray&&) = default;
+    ~TileDBSOMAArray() = default;
 
     /**
-     * @brief Reset the state of this SOMAArrayReader object to prepare for a
+     * @brief Reset the state of this TileDBSOMAArray object to prepare for a
      * new query, while holding the array open.
      *
      * @param column_names
@@ -162,7 +162,7 @@ class SOMAArrayReader {
         // Validate partition inputs
         if (partition_index >= partition_count) {
             throw TileDBSOMAError(fmt::format(
-                "[SOMAArrayReader] partition_index ({}) must be < "
+                "[TileDBSOMAArray] partition_index ({}) must be < "
                 "partition_count "
                 "({})",
                 partition_index,
@@ -179,7 +179,7 @@ class SOMAArrayReader {
             }
 
             LOG_DEBUG(fmt::format(
-                "[SOMAArrayReader] set_dim_points partitioning: sizeof(T)={} "
+                "[TileDBSOMAArray] set_dim_points partitioning: sizeof(T)={} "
                 "dim={} "
                 "index={} "
                 "count={} "
@@ -211,7 +211,7 @@ class SOMAArrayReader {
     template <typename T>
     void set_dim_points(const std::string& dim, const std::vector<T>& points) {
         LOG_DEBUG(fmt::format(
-            "[SOMAArrayReader] set_dim_points: sizeof(T)={}", sizeof(T)));
+            "[TileDBSOMAArray] set_dim_points: sizeof(T)={}", sizeof(T)));
         mq_->select_points(dim, points);
     }
 
@@ -265,7 +265,7 @@ class SOMAArrayReader {
      *
      * An example use model:
      *
-     *   auto reader = SOMAArrayReader::open(uri);
+     *   auto reader = TileDBSOMAArray::open(uri);
      *   reader->submit();
      *   while (auto batch = x_data->read_next()) {
      *       ...process batch ...
@@ -347,7 +347,7 @@ class SOMAArrayReader {
     // TileDB context
     std::shared_ptr<Context> ctx_;
 
-    // SOMAArrayReader URI
+    // TileDBSOMAArray URI
     std::string uri_;
 
     // Batch size
@@ -374,4 +374,4 @@ class SOMAArrayReader {
 
 }  // namespace tiledbsoma
 
-#endif  // SOMA_ARRAY_READER
+#endif  // TILEDB_SOMA_ARRAY

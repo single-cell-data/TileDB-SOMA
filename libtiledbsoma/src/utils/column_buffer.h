@@ -38,8 +38,8 @@
 #include <span/span.hpp>
 #include <tiledb/tiledb>
 
-#include "tiledbsoma/common.h"
-#include "tiledbsoma/logger_public.h"
+#include "common.h"
+#include "logger_public.h"
 
 namespace tiledbsoma {
 

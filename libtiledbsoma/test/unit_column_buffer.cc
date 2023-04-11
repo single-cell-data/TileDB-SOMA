@@ -32,7 +32,7 @@
 
 #include <catch2/catch_test_macros.hpp>
 #include <tiledb/tiledb>
-#include <tiledbsoma/tiledbsoma>
+#include "utils/column_buffer.h"
 
 using namespace tiledb;
 using namespace tiledbsoma;

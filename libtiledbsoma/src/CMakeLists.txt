@@ -5,8 +5,7 @@ set(TILEDBSOMA_INSTALL_TARGETS "")
 # ###########################################################
 # Find required dependencies
 # See ../cmake/Modules/*.cmake for provenance/version info
-############################################################
-
+# ###########################################################
 find_package(TileDB_EP REQUIRED)
 find_package(Spdlog_EP REQUIRED)
 
@@ -44,13 +43,13 @@ message(STATUS "Building with commit hash ${BUILD_COMMIT_HASH}")
 # Common object library
 # ###########################################################
 add_library(TILEDB_SOMA_OBJECTS OBJECT
-  ${CMAKE_CURRENT_SOURCE_DIR}/column_buffer.cc
-  ${CMAKE_CURRENT_SOURCE_DIR}/logger.cc
-  ${CMAKE_CURRENT_SOURCE_DIR}/managed_query.cc
-  ${CMAKE_CURRENT_SOURCE_DIR}/soma_array_reader.cc
-  ${CMAKE_CURRENT_SOURCE_DIR}/stats.cc
-  ${CMAKE_CURRENT_SOURCE_DIR}/util.cc
-  ${CMAKE_CURRENT_SOURCE_DIR}/version.cc
+  ${CMAKE_CURRENT_SOURCE_DIR}/read/managed_query.cc
+  ${CMAKE_CURRENT_SOURCE_DIR}/soma/tiledb_soma_array.cc
+  ${CMAKE_CURRENT_SOURCE_DIR}/utils/column_buffer.cc
+  ${CMAKE_CURRENT_SOURCE_DIR}/utils/logger.cc
+  ${CMAKE_CURRENT_SOURCE_DIR}/utils/stats.cc
+  ${CMAKE_CURRENT_SOURCE_DIR}/utils/util.cc
+  ${CMAKE_CURRENT_SOURCE_DIR}/utils/version.cc
 
   # TODO: uncomment when thread_pool is enabled
   # ${CMAKE_CURRENT_SOURCE_DIR}/../external/src/thread_pool/thread_pool.cc
@@ -156,10 +155,8 @@ endif()
 
 # Install header files and preserve directory structure
 # target_sources FILE_SET is preferred with cmake>=3.23
-install(DIRECTORY
-  ${CMAKE_CURRENT_SOURCE_DIR}/../external/include/span
-  ${CMAKE_CURRENT_SOURCE_DIR}/../external/include/thread_pool
-  ${CMAKE_CURRENT_SOURCE_DIR}/../include/tiledbsoma
+set(DIRECTORY
+  ${CMAKE_CURRENT_SOURCE_DIR}/cpp_api
   TYPE INCLUDE
 )
 
@@ -184,6 +181,11 @@ set(TILEDB_SOMA_EXPORT_HEADER "${TILEDB_SOMA_EXPORT_HEADER}" PARENT_SCOPE)
 target_compile_definitions(TILEDB_SOMA_OBJECTS PRIVATE -DTILEDB_SOMA_OBJECTS_EXPORTS)
 target_include_directories(TILEDB_SOMA_OBJECTS PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
 
+# Add the generated header to the public headers list
+list(APPEND TILEDB_SOMA_PUBLIC_HEADERS
+  "${TILEDB_SOMA_EXPORT_HEADER}"
+)
+
 # Add public headers, which are the ones that get installed.
 if(NOT TILEDBSOMA_BUILD_STATIC)
   set_target_properties(tiledbsoma
@@ -197,7 +199,7 @@ endif()
 # ###########################################################
 if(TILEDBSOMA_BUILD_CLI)
   add_executable(tiledbsoma-cli
-    ${CMAKE_CURRENT_SOURCE_DIR}/cli.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/cli/cli.cc
     $<TARGET_OBJECTS:TILEDB_SOMA_OBJECTS>
   )
 
@@ -256,9 +258,9 @@ set(PROJECT_CONFIG "${CMAKE_CURRENT_BINARY_DIR}/TileDBSomaConfig.cmake")
 
 # Generate 'TileDBConfig.cmake'
 # This process requires these variables to be defined at this point:
-#   * TARGETS_EXPORT_NAME
-#   * PROJECT_NAME
-#   * TILEDB_STATIC_DEP_STRING
+# * TARGETS_EXPORT_NAME
+# * PROJECT_NAME
+# * TILEDB_STATIC_DEP_STRING
 configure_package_config_file(
   "${TILEDBSOMA_CMAKE_INPUTS_DIR}/Config.cmake.in"
   "${PROJECT_CONFIG}"
@@ -271,12 +273,11 @@ install(
   DESTINATION "${CONFIG_INSTALL_DIR}"
 )
 
-
 # Set rpath so the TileDB-SOMA dynamic dependencies can be located.
-if (NOT WIN32 AND NOT TILEDBSOMA_BUILD_STATIC)
+if(NOT WIN32 AND NOT TILEDBSOMA_BUILD_STATIC)
   set_target_properties(tiledbsoma
     PROPERTIES
-      INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}"
+    INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}"
   )
 endif()
 

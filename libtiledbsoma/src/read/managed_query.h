@@ -38,9 +38,9 @@
 
 #include <tiledb/tiledb>
 
-#include "tiledbsoma/array_buffers.h"
-#include "tiledbsoma/column_buffer.h"
-#include "tiledbsoma/common.h"
+#include "../utils/array_buffers.h"
+#include "../utils/column_buffer.h"
+#include "../utils/common.h"
 
 namespace tiledbsoma {
 

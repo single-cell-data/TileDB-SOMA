@@ -1,5 +1,5 @@
 /**
- * @file   version.cc
+ * @file   stats.cc
  *
  * @section LICENSE
  *
@@ -27,25 +27,31 @@
  *
  * @section DESCRIPTION
  *
- * This exposes the version of the TileDB Embedded library in use.
+ * This file provides access to stats from libtiledbsoma's dependency on
+ * TileDB Embedded.
  */
 
-#include "tiledbsoma/version.h"
+#include "utils/stats.h"
 #include <tiledb/tiledb>
-#include "tiledbsoma/logger_public.h"
 
-namespace tiledbsoma::version {
+namespace tiledbsoma::stats {
 
-std::string as_string() {
-    int major, minor, patch;
-    tiledb_version(&major, &minor, &patch);
-    return fmt::format("libtiledb={}.{}.{}", major, minor, patch);
+void enable() {
+    tiledb::Stats::enable();
 }
 
-std::tuple<int, int, int> embedded_version_triple() {
-    int major, minor, patch;
-    tiledb_version(&major, &minor, &patch);
-    return std::make_tuple(major, minor, patch);
+void disable() {
+    tiledb::Stats::disable();
 }
 
-};  // namespace tiledbsoma::version
+void reset() {
+    tiledb::Stats::reset();
+}
+
+std::string dump() {
+    std::string stats;
+    tiledb::Stats::raw_dump(&stats);
+    return stats;
+}
+
+};  // namespace tiledbsoma::stats

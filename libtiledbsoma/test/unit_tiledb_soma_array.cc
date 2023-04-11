@@ -27,7 +27,7 @@
  *
  * @section DESCRIPTION
  *
- * This file manages unit tests for the SOMAArrayReader class
+ * This file manages unit tests for the TileDBSOMAArray class
  */
 
 #include <catch2/catch_template_test_macros.hpp>
@@ -42,9 +42,9 @@
 #include <numeric>
 #include <random>
 
-#include <tiledbsoma/util.h>
 #include <tiledb/tiledb>
-#include <tiledbsoma/tiledbsoma>
+#include "soma/tiledb_soma_array.h"
+#include "utils/util.h"
 
 using namespace tiledb;
 using namespace tiledbsoma;
@@ -149,7 +149,7 @@ std::tuple<std::string, uint64_t> create_array(
 
 };  // namespace
 
-TEST_CASE("SOMAArrayReader: nnz") {
+TEST_CASE("TileDBSOMAArray: nnz") {
     auto num_fragments = GENERATE(1, 10);
     auto overlap = GENERATE(false, true);
     auto allow_duplicates = GENERATE(false, true);
@@ -174,7 +174,7 @@ TEST_CASE("SOMAArrayReader: nnz") {
             10);
 
         // Get total cell num
-        auto sr = SOMAArrayReader::open(ctx, uri);
+        auto sr = TileDBSOMAArray::open(ctx, uri);
 
         uint64_t nnz = sr->nnz();
         REQUIRE(nnz == expected_nnz);
@@ -185,7 +185,7 @@ TEST_CASE("SOMAArrayReader: nnz") {
     }
 }
 
-TEST_CASE("SOMAArrayReader: nnz with timestamp") {
+TEST_CASE("TileDBSOMAArray: nnz with timestamp") {
     auto num_fragments = GENERATE(1, 10);
     auto overlap = GENERATE(false, true);
     auto allow_duplicates = GENERATE(false, true);
@@ -223,7 +223,7 @@ TEST_CASE("SOMAArrayReader: nnz with timestamp") {
 
         // Get total cell num at timestamp (0, 15)
         std::pair<uint64_t, uint64_t> timestamp{0, 15};
-        auto sr = SOMAArrayReader::open(
+        auto sr = TileDBSOMAArray::open(
             ctx, uri, "nnz", {}, "auto", "auto", timestamp);
 
         uint64_t nnz = sr->nnz();
@@ -231,7 +231,7 @@ TEST_CASE("SOMAArrayReader: nnz with timestamp") {
     }
 }
 
-TEST_CASE("SOMAArrayReader: nnz with consolidation") {
+TEST_CASE("TileDBSOMAArray: nnz with consolidation") {
     auto num_fragments = GENERATE(1, 10);
     auto overlap = GENERATE(false, true);
     auto allow_duplicates = GENERATE(false, true);
@@ -277,7 +277,7 @@ TEST_CASE("SOMAArrayReader: nnz with consolidation") {
         }
 
         // Get total cell num
-        auto sr = SOMAArrayReader::open(ctx, uri, "nnz", {}, "auto", "auto");
+        auto sr = TileDBSOMAArray::open(ctx, uri, "nnz", {}, "auto", "auto");
 
         uint64_t nnz = sr->nnz();
         if (allow_duplicates) {

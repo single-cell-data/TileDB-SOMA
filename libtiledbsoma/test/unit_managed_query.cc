@@ -40,9 +40,9 @@
 #include <catch2/matchers/catch_matchers_vector.hpp>
 #include <random>
 
-#include <tiledbsoma/util.h>
 #include <tiledb/tiledb>
-#include <tiledbsoma/tiledbsoma>
+#include "read/managed_query.h"
+#include "utils/util.h"
 
 using namespace tiledb;
 using namespace tiledbsoma;
