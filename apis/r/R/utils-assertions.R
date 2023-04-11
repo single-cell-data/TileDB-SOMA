@@ -91,8 +91,9 @@ assert_subset <- function(x, y, type = "value") {
 #'
 #' @param coords A vector or list of coordinates
 #' @param dimnames character vector of array dimension names
+#' @param schema arrow schema object
 #' @noRd
-validate_read_coords <- function(coords, dimnames = NULL, int64cast = TRUE) {
+validate_read_coords <- function(coords, dimnames = NULL, schema = NULL) {
   # NULL is a valid value
   if (is.null(coords)) return(coords)
 
@@ -113,17 +114,44 @@ validate_read_coords <- function(coords, dimnames = NULL, int64cast = TRUE) {
       all(vapply_lgl(coords, is.numeric))
   )
 
-  if (!is.null(dimnames)) {
+  if (is.null(dimnames)) {
+    # Schema isn't useful without dimnames because we don't know which fields
+    # are attributes and which are dimensions.
+    if (!is.null(schema)) {
+      stop(
+      "'dimnames' must be provided with a 'schema'", call. = FALSE)
+    }
+  } else {
+    #
     stopifnot(
       "'dimnames' must be a character vector" = is.character(dimnames),
       "names of 'coords' must correspond to dimension names" =
         all(names(coords) %in% dimnames)
     )
 
-  }
+    # Apply dimension name to unnamed list containing single coordinate vector
+    if (!is_named_list(coords) && length(coords) == 1) {
+      coords <- stats::setNames(coords, dimnames)
+    }
 
-  if (int64cast) {
-    coords <- recursively_make_integer64(coords)
+    # With a schema, we can check if any dimensions are int64 and cast them
+    if (!is.null(schema)) {
+      stopifnot(
+        is_arrow_schema(schema),
+        all(dimnames %in% schema$names)
+      )
+
+      # identify int64 dimensions
+      int64_dims <- vapply_lgl(dimnames, function(x) {
+        schema$GetFieldByName(x)$type$ToString() == "int64"
+      })
+
+      if (any(int64_dims)) {
+        int64_dims <- names(Filter(isTRUE, int64_dims))
+        coords[int64_dims] <- recursively_make_integer64(coords[int64_dims])
+      }
+    }
+
   }
 
   coords
