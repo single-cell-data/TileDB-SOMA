@@ -1,6 +1,6 @@
 # Verify that the TileDBCreateOptions takes a NULL or a PlatformConfig
 test_that("TileDBCreateOptions construction", {
-  expect_error(TileDBCreateOptions$new(c("foo": "bar")))
+  expect_error(TileDBCreateOptions$new(c(foo = "bar")))
 
   tdco <- TileDBCreateOptions$new(NULL)
 
