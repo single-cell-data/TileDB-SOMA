@@ -149,29 +149,25 @@ def test_import_anndata(adata, ingest_modes, X_kind):
         obsm = exp.ms["RNA"].obsm
         assert sorted(obsm.keys()) == sorted(orig.obsm.keys())
         for key in list(orig.obsm.keys()):
-            assert (
-                obsm[key].metadata.get(metakey) == "SOMASparseNDArray"
-                or obsm[key].metadata.get(metakey) == "SOMADenseNDArray"
-            )
+            metaval = obsm[key].metadata.get(metakey)
+            assert metaval in ("SOMASparseNDArray", "SOMADenseNDArray")
             if have_ingested:
                 matrix = obsm[key].read(coords=all2d)
-                if obsm[key].metadata.get(metakey) == "SOMADenseNDArray":
+                if metaval == "SOMADenseNDArray":
                     assert matrix.shape == orig.obsm[key].shape
             else:
-                if obsm[key].metadata.get(metakey) == "SOMADenseNDArray":
+                if metaval == "SOMADenseNDArray":
                     with pytest.raises(ValueError):
                         matrix = obsm[key].read(coords=all2d)
 
         varm = exp.ms["RNA"].varm
         assert sorted(varm.keys()) == sorted(orig.varm.keys())
         for key in list(orig.varm.keys()):
-            assert (
-                varm[key].metadata.get(metakey) == "SOMASparseNDArray"
-                or varm[key].metadata.get(metakey) == "SOMADenseNDArray"
-            )
+            metaval = varm[key].metadata.get(metakey)
+            assert metaval in ("SOMASparseNDArray", "SOMADenseNDArray")
             if have_ingested:
                 matrix = varm[key].read(coords=all2d)
-                if varm[key].metadata.get(metakey) == "SOMADenseNDArray":
+                if metaval == "SOMADenseNDArray":
                     assert matrix.shape == orig.varm[key].shape
             else:
                 if varm[key].metadata.get(metakey) == "SOMADenseNDArray":
@@ -181,7 +177,8 @@ def test_import_anndata(adata, ingest_modes, X_kind):
         obsp = exp.ms["RNA"].obsp
         assert sorted(obsp.keys()) == sorted(orig.obsp.keys())
         for key in list(orig.obsp.keys()):
-            assert obsp[key].metadata.get(metakey) == "SOMASparseNDArray"
+            metaval = obsp[key].metadata.get(metakey)
+            assert metaval == "SOMASparseNDArray"
             if have_ingested:
                 table = obsp[key].read(coords=all2d).tables().concat()
                 assert table.shape[0] == orig.obsp[key].nnz
@@ -404,7 +401,7 @@ def test_export_anndata(adata):
                 exp, measurement_name="RNA", X_layer_name="nonesuch"
             )
 
-        readback = tiledbsoma.io.to_anndata(exp, measurement_name="RNA")  # XXX
+        readback = tiledbsoma.io.to_anndata(exp, measurement_name="RNA")
 
     assert readback.obs.shape == adata.obs.shape
     assert readback.var.shape == adata.var.shape
