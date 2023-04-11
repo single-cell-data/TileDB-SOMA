@@ -1,4 +1,5 @@
 #' @importFrom rlang is_na
+#' @importFrom parallel mclapply mcMap
 #' @importFrom methods as new validObject
 #'
 NULL

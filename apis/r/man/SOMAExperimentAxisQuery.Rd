@@ -178,7 +178,7 @@ from the resulting Tables.
   X_layers = NULL,
   obs_column_names = NULL,
   var_column_names = NULL,
-  n_cores = 1L
+  n_cores = getOption("Ncpus", 1L)
 )}\if{html}{\out{</div>}}
 }
 
