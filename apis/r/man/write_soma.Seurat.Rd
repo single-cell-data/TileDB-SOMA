@@ -4,14 +4,7 @@
 \alias{write_soma.Seurat}
 \title{Write a \code{\link[SeuratObject]{Seurat}} object to a SOMA}
 \usage{
-\method{write_soma}{Seurat}(
-  x,
-  uri = NULL,
-  ...,
-  platform_config = NULL,
-  tiledbsoma_ctx = NULL,
-  overwrite = FALSE
-)
+\method{write_soma}{Seurat}(x, uri, ..., platform_config = NULL, tiledbsoma_ctx = NULL)
 }
 \arguments{
 \item{x}{A \code{\link[SeuratObject]{Seurat}} object}
@@ -24,8 +17,6 @@
 configuration}}
 
 \item{tiledbsoma_ctx}{Optional \code{\link{SOMATileDBContext}}}
-
-\item{overwrite}{Overwrite existing data located at \code{uri}}
 }
 \value{
 A \code{\link{SOMAExperiment}} with the data from \code{x}

@@ -361,7 +361,6 @@ write_soma.Graph <- function(
 #'
 #' @inheritParams write_soma
 #' @param x A \code{\link[SeuratObject]{Seurat}} object
-#' @param overwrite Overwrite existing data located at \code{uri}
 #'
 #' @inherit write_soma return
 #'
@@ -377,24 +376,17 @@ write_soma.Graph <- function(
 #'
 write_soma.Seurat <- function(
   x,
-  uri = NULL,
+  uri,
   ...,
   platform_config = NULL,
-  tiledbsoma_ctx = NULL,
-  overwrite = FALSE
+  tiledbsoma_ctx = NULL
 ) {
   .check_seurat_installed()
   stopifnot(
     "'uri' must be a single character value" = is.null(uri) ||
       is_scalar_character(uri)
   )
-  uri <- uri %||% file_path(user_dir(), SeuratObject::Project(x))
-  if (!is_remote_uri(uri)) {
-    if (isTRUE(overwrite)) {
-      unlink(x = uri, recursive = TRUE, force = TRUE)
-    }
-    dir.create(dirname(uri), recursive = TRUE)
-  }
+  # uri <- uri %||% file_path(user_dir(), SeuratObject::Project(x))
   experiment <- SOMAExperimentCreate(
     uri = uri,
     platform_config = platform_config,
