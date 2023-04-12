@@ -18,8 +18,8 @@ HERE = Path(__file__).parent
 @pytest.fixture
 def h5ad_file(request):
     # pbmc-small is faster for automated unit-test / CI runs.
-    # input_path = HERE.parent / "testdata/pbmc3k_processed.h5ad"
     input_path = HERE.parent / "testdata/pbmc-small.h5ad"
+    # input_path = HERE.parent / "testdata/pbmc3k_processed.h5ad"
     return input_path
 
 
@@ -356,13 +356,17 @@ def test_add_matrix_to_collection(adata):
             tiledbsoma.io.add_X_layer(exp, "nonesuch", "data3", adata.X)
 
     with _factory.open(output_path) as exp_r:
-        assert sorted(list(exp_r.ms["RNA"].obsm.keys())) == ["X_pca", "X_tsne"]
+        assert sorted(list(exp_r.ms["RNA"].obsm.keys())) == sorted(
+            list(adata.obsm.keys())
+        )
     with _factory.open(output_path, "w") as exp:
         tiledbsoma.io.add_matrix_to_collection(
             exp, "RNA", "obsm", "X_pcb", adata.obsm["X_pca"]
         )
     with _factory.open(output_path) as exp_r:
-        assert sorted(list(exp_r.ms["RNA"].obsm.keys())) == ["X_pca", "X_pcb", "X_tsne"]
+        assert sorted(list(exp_r.ms["RNA"].obsm.keys())) == sorted(
+            list(adata.obsm.keys()) + ["X_pcb"]
+        )
 
     with _factory.open(output_path, "w") as exp:
         with pytest.raises(KeyError):

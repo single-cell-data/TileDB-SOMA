@@ -323,6 +323,7 @@ def from_anndata(
                             with create_from_matrix(
                                 # TODO (https://github.com/single-cell-data/TileDB-SOMA/issues/1245):
                                 # consider a use-dense flag at the tiledbsoma.io API
+                                # DenseNDArray,
                                 SparseNDArray,
                                 _util.uri_joinpath(measurement.obsm.uri, key),
                                 conversions.to_tiledb_supported_array_type(
@@ -352,6 +353,7 @@ def from_anndata(
                             with create_from_matrix(
                                 # TODO (https://github.com/single-cell-data/TileDB-SOMA/issues/1245):
                                 # consider a use-dense flag at the tiledbsoma.io API
+                                # DenseNDArray,
                                 SparseNDArray,
                                 _util.uri_joinpath(measurement.varm.uri, key),
                                 conversions.to_tiledb_supported_array_type(
@@ -1358,7 +1360,7 @@ def to_anndata(
             if isinstance(measurement.obsm[key], DenseNDArray):
                 matrix = measurement.obsm[key].read().to_numpy()
                 # The spelling ``sp.csr_array`` is more idiomatic but doesn't exist until Python 3.8
-                obsm[key] = sp.csr_matrix(matrix)
+                obsm[key] = matrix
             else:
                 # obsp is nobs x nobs.
                 # obsm is nobs x some number -- number of PCA components, etc.
@@ -1385,7 +1387,7 @@ def to_anndata(
             if isinstance(measurement.varm[key], DenseNDArray):
                 matrix = measurement.varm[key].read().to_numpy()
                 # The spelling ``sp.csr_array`` is more idiomatic but doesn't exist until Python 3.8
-                varm[key] = sp.csr_matrix(matrix)
+                varm[key] = matrix
             else:
                 # varp is nvar x nvar.
                 # varm is nvar x some number -- number of PCs, etc.
