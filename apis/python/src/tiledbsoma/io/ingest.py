@@ -1376,7 +1376,7 @@ def to_anndata(
                     )
                 obsm[key] = conversions.csr_from_tiledb_df(
                     matrix, nobs, nobs_times_width // nobs
-                ).todense()
+                ).toarray()
 
     varm = {}
     if "varm" in measurement:
@@ -1403,7 +1403,7 @@ def to_anndata(
                     )
                 varm[key] = conversions.csr_from_tiledb_df(
                     matrix, nvar, nvar_times_width // nvar
-                ).todense()
+                ).toarray()
 
     obsp = {}
     if "obsp" in measurement:
