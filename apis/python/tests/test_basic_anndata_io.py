@@ -5,6 +5,7 @@ from pathlib import Path
 import anndata
 import numpy as np
 import pytest
+import somacore
 import tiledb
 
 import tiledbsoma
@@ -17,8 +18,8 @@ HERE = Path(__file__).parent
 @pytest.fixture
 def h5ad_file(request):
     # pbmc-small is faster for automated unit-test / CI runs.
-    # input_path = HERE.parent / "testdata/pbmc3k_processed.h5ad"
     input_path = HERE.parent / "testdata/pbmc-small.h5ad"
+    # input_path = HERE.parent / "testdata/pbmc3k_processed.h5ad"
     return input_path
 
 
@@ -148,33 +149,37 @@ def test_import_anndata(adata, ingest_modes, X_kind):
 
         obsm = exp.ms["RNA"].obsm
         assert sorted(obsm.keys()) == sorted(orig.obsm.keys())
-        for key in list(orig.obsm.keys()):
-            assert obsm[key].metadata.get(metakey) == "SOMADenseNDArray"
+        for key, orig_value in orig.obsm.items():
+            assert isinstance(obsm[key], somacore.NDArray)
             if have_ingested:
                 matrix = obsm[key].read(coords=all2d)
-                assert matrix.shape == orig.obsm[key].shape
+                if not obsm[key].is_sparse:
+                    assert matrix.shape == orig_value.shape
             else:
-                with pytest.raises(ValueError):
-                    matrix = obsm[key].read(coords=all2d)
+                if isinstance(obsm[key], tiledbsoma.DenseNDArray):
+                    with pytest.raises(ValueError):
+                        matrix = obsm[key].read(coords=all2d)
 
         varm = exp.ms["RNA"].varm
         assert sorted(varm.keys()) == sorted(orig.varm.keys())
-        for key in list(orig.varm.keys()):
-            assert varm[key].metadata.get(metakey) == "SOMADenseNDArray"
+        for key, orig_value in orig.varm.items():
+            assert isinstance(varm[key], somacore.NDArray)
             if have_ingested:
                 matrix = varm[key].read(coords=all2d)
-                assert matrix.shape == orig.varm[key].shape
+                if not varm[key].is_sparse:
+                    assert matrix.shape == orig_value.shape
             else:
-                with pytest.raises(ValueError):
-                    matrix = varm[key].read(coords=all2d)
+                if not varm[key].is_sparse:
+                    with pytest.raises(ValueError):
+                        matrix = varm[key].read(coords=all2d)
 
         obsp = exp.ms["RNA"].obsp
         assert sorted(obsp.keys()) == sorted(orig.obsp.keys())
-        for key in list(orig.obsp.keys()):
-            assert obsp[key].metadata.get(metakey) == "SOMASparseNDArray"
+        for key, orig_value in orig.obsp.items():
+            assert isinstance(obsp[key], somacore.NDArray)
             if have_ingested:
                 table = obsp[key].read(coords=all2d).tables().concat()
-                assert table.shape[0] == orig.obsp[key].nnz
+                assert table.shape[0] == orig_value.nnz
 
         # pbmc-small has no varp
 
@@ -351,13 +356,17 @@ def test_add_matrix_to_collection(adata):
             tiledbsoma.io.add_X_layer(exp, "nonesuch", "data3", adata.X)
 
     with _factory.open(output_path) as exp_r:
-        assert sorted(list(exp_r.ms["RNA"].obsm.keys())) == ["X_pca", "X_tsne"]
+        assert sorted(list(exp_r.ms["RNA"].obsm.keys())) == sorted(
+            list(adata.obsm.keys())
+        )
     with _factory.open(output_path, "w") as exp:
         tiledbsoma.io.add_matrix_to_collection(
             exp, "RNA", "obsm", "X_pcb", adata.obsm["X_pca"]
         )
     with _factory.open(output_path) as exp_r:
-        assert sorted(list(exp_r.ms["RNA"].obsm.keys())) == ["X_pca", "X_pcb", "X_tsne"]
+        assert sorted(list(exp_r.ms["RNA"].obsm.keys())) == sorted(
+            list(adata.obsm.keys()) + ["X_pcb"]
+        )
 
     with _factory.open(output_path, "w") as exp:
         with pytest.raises(KeyError):
