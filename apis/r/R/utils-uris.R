@@ -2,50 +2,6 @@ is_remote_uri <- function(x) {
   string_starts_with(x, "s3://") | string_starts_with(x, "tiledb://")
 }
 
-#' Find the Local User Data Directory
-#'
-#' @param type Mechanism for determining the user directory; choose from:
-#' \itemize{
-#'  \item \dQuote{\code{user}}: the user data directory as determined by
-#'   \code{\link[tools:R_user_dir]{tools::R_user_dir}()}
-#'  \item \dQuote{\code{working}}: the working directory
-#'   (\code{\link[base]{getwd}()})
-#'  \item \dQuote{\code{tempdir}}: a temporary directory
-#' }
-#'
-#' @return ...
-#'
-#' @keywords internal
-#'
-#' @seealso \code{\link[tools:R_user_dir]{tools::R_user_dir}()}
-#' \code{\link[base]{getwd}()}
-#' \code{\link[base]{tempdir}()}
-#'
-#' @noRd
-#'
-user_dir <- function(type = getOption('tiledbsoma.io.user_dir')) {
-  type <- type %||% 'user'
-  stopifnot(is_scalar_character(type))
-  type <- tryCatch(
-    expr = match.arg(arg = type, choices = c('working', 'tempdir', 'user')),
-    error = function(...) {
-      return(default)
-    }
-  )
-  return(switch(
-    EXPR = type,
-    working = getwd(),
-    tempdir = {
-      tdir <- tempfile(getOption('tiledbsoma.io.user_dir.tempdir', 'file'))
-      while (file.exists(tdir)) {
-        tdir <- tempfile(getOption('tiledbsoma.io.user_dir.tempdir', 'file'))
-      }
-      tdir
-    },
-    user = tools::R_user_dir(package = 'tiledbsoma', which = 'data')
-  ))
-}
-
 # Drop-in replacement for file.paths() that ignores the platform separator when
 # constructing remote S3 or TileDB URIs
 file_path <- function(..., fsep = .Platform$file.sep) {
