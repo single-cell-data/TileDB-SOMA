@@ -169,7 +169,7 @@ def test_import_anndata(adata, ingest_modes, X_kind):
                 if not varm[key].is_sparse:
                     assert matrix.shape == orig_value.shape
             else:
-                if varm[key].metadata.get(metakey) == "SOMADenseNDArray":
+                if not varm[key].is_sparse:
                     with pytest.raises(ValueError):
                         matrix = varm[key].read(coords=all2d)
 
