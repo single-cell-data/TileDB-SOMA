@@ -337,16 +337,18 @@ write_soma.TsparseMatrix <- function(
 #' @details The index column will be determined based on availability in
 #' \code{x}'s existing names. The potential names, in order of preference, are:
 #' \itemize{
-#'  \item \dQuote{\code{index}}
-#'  \item \dQuote{\code{_index}}
+#'  \item \dQuote{\code{obs_id}} or \dQuote{\code{var_id}},
+#'    depending on \code{axis}
 #'  \item \code{alt}
-#'  \item \code{paste0(prefix, "_index")}
+#'  \item \code{paste0(prefix, "obs_id")} or \code{paste0(prefix, "var_id")}
 #'  \item \code{paste(prefix, alt, sep = "_")}
 #' }
 #'
 #' @inheritParams SeuratObject::RandomName
 #' @param x A \code{data.frame}
 #' @param alt An alternate index name
+#' @param axis Either \dQuote{\code{obs}} or \dQuote{\code{var}} for
+#' default index name
 #' @param prefix Prefix for alternate indexes
 #'
 #' @return \code{x} with the row names added as an index and an attribute named
@@ -356,23 +358,31 @@ write_soma.TsparseMatrix <- function(
 #'
 #' @noRd
 #'
-.df_index <- function(x, alt = 'rownames', prefix = 'tiledbsoma', ...) {
+.df_index <- function(
+    x,
+    alt = 'rownames',
+    axis = 'obs',
+    prefix = 'tiledbsoma',
+    ...
+) {
   .check_seurat_installed()
   stopifnot(
     "'x' must be a data frame" = is.data.frame(x),
     "'alt' must be a single character value" = is_scalar_character(alt),
+    "'axis' must be a single character value" = is_scalar_character(axis),
     "'prefix' must be a single character value" = is_scalar_character(prefix)
   )
+  axis <- match.arg(axis, choices = c('obs', 'var', 'index'))
+  default <- switch(EXPR = axis, index = 'index', paste0(axis, '_id'))
   index <- ''
   i <- 1L
   while (!nzchar(index) || index %in% names(x)) {
     index <- switch(
       EXPR = i,
-      '1' = 'index',
-      '2' = '_index',
-      '3' = alt,
-      '4' = paste0(prefix, '_index'),
-      '5' = paste(prefix, alt, sep = '_'),
+      '1' = default,
+      '2' = alt,
+      '3' = paste(prefix, default, sep = '_'),
+      '4' = paste(prefix, alt, sep = '_'),
       SeuratObject::RandomName(length = i, ...)
     )
     i <- i + 1L

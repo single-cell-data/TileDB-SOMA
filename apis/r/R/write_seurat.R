@@ -130,7 +130,12 @@ write_soma.Assay <- function(
     )
   }
   # Write feature-level meta data
-  meta_data <- .df_index(x = x[[]], alt = 'features', prefix = 'seurat')
+  meta_data <- .df_index(
+    x = x[[]],
+    alt = 'features',
+    axis = 'var',
+    prefix = 'seurat'
+  )
   meta_data[[attr(x = meta_data, which = 'index')]] <- rownames(x)
   spdl::info("Adding feature-level meta data")
   ms$var <- write_soma(
@@ -394,7 +399,12 @@ write_soma.Seurat <- function(
   )
   # Write cell-level meta data
   spdl::info("Adding cell-level meta data")
-  meta_data <- .df_index(x = x[[]], alt = 'cells', prefix = 'seurat')
+  meta_data <- .df_index(
+    x = x[[]],
+    alt = 'cells',
+    axis = 'obs',
+    prefix = 'seurat'
+  )
   meta_data[[attr(meta_data, 'index')]] <- colnames(x)
   experiment$obs <- write_soma(
     x = meta_data,

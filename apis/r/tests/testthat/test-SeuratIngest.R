@@ -11,7 +11,7 @@ test_that("Write Assay mechanics", {
   expect_identical(ms$uri, file.path(collection$uri, 'rna'))
   expect_identical(ms$names(), c('X', 'var'))
   expect_s3_class(ms$var, 'SOMADataFrame')
-  expect_identical(setdiff(ms$var$attrnames(), 'index'), names(rna[[]]))
+  expect_identical(setdiff(ms$var$attrnames(), 'var_id'), names(rna[[]]))
   expect_s3_class(ms$X, 'SOMACollection')
   layers <- c(counts = 'counts', data = 'data', scale.data = 'scale_data')
   expect_identical(ms$X$names(), unname(layers))
@@ -37,7 +37,7 @@ test_that("Write Assay mechanics", {
   expect_identical(ms2$uri, file.path(collection$uri, 'rna-no-md'))
   expect_identical(ms2$names(), c('X', 'var'))
   expect_s3_class(ms2$var, 'SOMADataFrame')
-  expect_identical(ms2$var$attrnames(), 'index')
+  expect_identical(ms2$var$attrnames(), 'var_id')
   # Test no counts
   rna3 <- SeuratObject::SetAssayData(rna, 'counts', new('matrix'))
   expect_no_condition(ms3 <- write_soma(
@@ -189,7 +189,7 @@ test_that("Write Seurat mechanics", {
   expect_identical(ms$obsp$names(), 'RNA_snn')
   expect_error(ms$varp)
   expect_identical(
-    setdiff(experiment$obs$attrnames(), 'index'),
+    setdiff(experiment$obs$attrnames(), 'obs_id'),
     names(pbmc_small[[]])
   )
 })
