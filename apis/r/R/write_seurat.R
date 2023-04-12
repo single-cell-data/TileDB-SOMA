@@ -106,20 +106,20 @@ write_soma.Assay <- function(
         colnames = colnames(x)
       )
     }
-    lyr <- gsub(pattern = '\\.', replacement = '_', x = slot)
-    spdl::info("Adding {} matrix as {}", slot, sQuote(lyr))
+    layer <- gsub(pattern = '\\.', replacement = '_', x = slot)
+    spdl::info("Adding {} matrix as {}", slot, sQuote(layer))
     tryCatch(
       expr = ms$X$set(
         object = write_soma(
           x = mat,
-          uri = lyr,
+          uri = layer,
           soma_parent = ms$X,
           sparse = TRUE,
           transpose = TRUE,
           platform_config = platform_config,
           tiledbsoma_ctx = tiledbsoma_ctx
         ),
-        name = lyr
+        name = layer
       ),
       error = function(err) {
         if (slot == 'data') {
