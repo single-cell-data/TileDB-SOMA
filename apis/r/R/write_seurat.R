@@ -391,23 +391,22 @@ write_soma.Seurat <- function(
     "'uri' must be a single character value" = is.null(uri) ||
       is_scalar_character(uri)
   )
-  # uri <- uri %||% file_path(user_dir(), SeuratObject::Project(x))
   experiment <- SOMAExperimentCreate(
     uri = uri,
     platform_config = platform_config,
     tiledbsoma_ctx = tiledbsoma_ctx
   )
-  # Write cell-level meta data
+  # Write cell-level meta data (obs)
   spdl::info("Adding cell-level meta data")
-  meta_data <- .df_index(
+  obs_df <- .df_index(
     x = x[[]],
     alt = 'cells',
     axis = 'obs',
     prefix = 'seurat'
   )
-  meta_data[[attr(meta_data, 'index')]] <- colnames(x)
+  obs_df[[attr(obs_df, 'index')]] <- colnames(x)
   experiment$obs <- write_soma(
-    x = meta_data,
+    x = obs_df,
     uri = 'obs',
     soma_parent = experiment,
     platform_config = platform_config,
@@ -422,18 +421,18 @@ write_soma.Seurat <- function(
     ),
     key = 'ms'
   )
-  for (assay in SeuratObject::Assays(x)) {
-    spdl::info("Adding assay {}", sQuote(assay))
+  for (measurement in SeuratObject::Assays(x)) {
+    spdl::info("Adding assay {}", sQuote(measurement))
     tryCatch(
       expr = experiment$ms$set(
         object = write_soma(
-          x = x[[assay]],
-          uri = assay,
+          x = x[[measurement]],
+          uri = measurement,
           soma_parent = experiment$ms,
           platform_config = platform_config,
           tiledbsoma_ctx = tiledbsoma_ctx
         ),
-        name = assay
+        name = measurement
       ),
       error = function(err) {
         if (assay == SeuratObject::DefaultAssay(x)) {
@@ -443,13 +442,13 @@ write_soma.Seurat <- function(
       }
     )
   }
-  # Write dimensional reductions
+  # Write dimensional reductions (obsm/varm)
   for (reduc in SeuratObject::Reductions(x)) {
-    assay <- SeuratObject::DefaultAssay(x[[reduc]])
-    ms <- if (assay %in% experiment$ms$names()) {
-      experiment$ms$get(assay)
+    measurement <- SeuratObject::DefaultAssay(x[[reduc]])
+    ms <- if (measurement %in% experiment$ms$names()) {
+      experiment$ms$get(measurement)
     } else if (SeuratObject::IsGlobal(x[[reduc]])) {
-      assay <- SeuratObject::DefaultAssay(x)
+      measurement <- SeuratObject::DefaultAssay(x)
       warning(
         paste(
           strwrap(paste0(
@@ -458,14 +457,14 @@ write_soma.Seurat <- function(
             " (default assay: ",
             sQuote(SeuratObject::DefaultAssay(x[[reduc]])),
             "), adding to measurement for ",
-            sQuote(assay)
+            sQuote(measurement)
           )),
           collapse = '\n'
         ),
         call. = FALSE,
         immediate. = TRUE
       )
-      experiment$ms$get(assay)
+      experiment$ms$get(measurement)
     } else {
       # This should never happen
       warning(
@@ -474,7 +473,7 @@ write_soma.Seurat <- function(
             "Cannot find a measurement for non-global reduction ",
             sQuote(reduc),
             " (default assay: ",
-            sQuote(assay),
+            sQuote(measurement),
             "), skipping"
           )),
           collapse = '\n'
@@ -486,8 +485,11 @@ write_soma.Seurat <- function(
     }
     loadings <- SeuratObject::Loadings(x[[reduc]])
     if (!SeuratObject::IsMatrixEmpty(loadings)) {
-      fidx <- match(x = rownames(loadings), table = rownames(x[[assay]]))
-      nfeatures <- nrow(x[[assay]])
+      fidx <- match(
+        x = rownames(loadings),
+        table = rownames(x[[measurement]])
+      )
+      nfeatures <- nrow(x[[measurement]])
     } else {
       fidx <- nfeatures <- NULL
     }
@@ -505,17 +507,17 @@ write_soma.Seurat <- function(
       error = err_to_warn
     )
   }
-  # Write graphs
-  for (graph in SeuratObject::Graphs(x)) {
-    assay <- SeuratObject::DefaultAssay(x[[graph]])
-    if (!assay %in% experiment$ms$names()) {
+  # Write graphs (obsp)
+  for (obsp in SeuratObject::Graphs(x)) {
+    measurement <- SeuratObject::DefaultAssay(x[[obsp]])
+    if (!measurement %in% experiment$ms$names()) {
       warning(
         paste(
           strwrap(paste0(
             "Cannot find a measurement for graph ",
-            sQuote(graph),
+            sQuote(obsp),
             " (default assay: ",
-            sQuote(assay),
+            sQuote(measurement),
             "), skipping"
           )),
           collapse = FALSE
@@ -525,12 +527,12 @@ write_soma.Seurat <- function(
       )
       next
     }
-    spdl::info("Adding graph {}", sQuote(graph))
+    spdl::info("Adding graph {}", sQuote(obsp))
     tryCatch(
       expr = write_soma(
-        x = x[[graph]],
-        uri = graph,
-        soma_parent = experiment$ms$get(assay),
+        x = x[[obsp]],
+        uri = obsp,
+        soma_parent = experiment$ms$get(measurement),
         platform_config = platform_config,
         tiledbsoma_ctx = tiledbsoma_ctx
       ),
