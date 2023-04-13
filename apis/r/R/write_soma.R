@@ -138,17 +138,7 @@ write_soma.data.frame <- function(
     )
   }
   # Add `soma_joinid` to `x`
-  if ('soma_joinid' %in% names(x)) {
-    if (!bit64::is.integer64(x[['soma_joinid']])) {
-      if (!rlang::is_integerish(x[['soma_joinid']], finite = TRUE) || !all(x[['soma_joinid']] >= 0L)) {
-        stop(
-          "Found column 'soma_joinid' in the data frame without positive integers",
-          call. = FALSE
-        )
-      }
-      x[['soma_joind']] <- bit64::as.integer64(x[['soma_joinid']])
-    }
-  } else {
+  if (!'soma_joinid' %in% names(x)) {
     x$soma_joinid <- bit64::seq.integer64(from = 0L, to = nrow(x) - 1L)
   }
   # Create the SOMADataFrame
