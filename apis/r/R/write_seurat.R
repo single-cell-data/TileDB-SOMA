@@ -131,16 +131,16 @@ write_soma.Assay <- function(
     )
   }
   # Write feature-level meta data
-  meta_data <- .df_index(
+  var_df <- .df_index(
     x = x[[]],
     alt = 'features',
     axis = 'var',
     prefix = 'seurat'
   )
-  meta_data[[attr(x = meta_data, which = 'index')]] <- rownames(x)
+  var_df[[attr(x = var_df, which = 'index')]] <- rownames(x)
   spdl::info("Adding feature-level meta data")
   ms$var <- write_soma(
-    x = meta_data,
+    x = var_df,
     uri = 'var',
     soma_parent = ms,
     platform_config = platform_config,
