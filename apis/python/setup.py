@@ -253,7 +253,9 @@ setuptools.setup(
     zip_safe=False,
     setup_requires=["pybind11"],
     install_requires=[
-        "anndata",
+        # Needed for Python 3.7 which anndata 0.9 doesn't support but we do
+        "anndata < 0.9; python_version<'3.8'",
+        "anndata; python_version>='3.8'",
         "attrs>=22.2",
         # Pinning numba & its particular numpy constraints:
         # The old pip solver (<=2020) doesn't deal with the transitive
