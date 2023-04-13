@@ -209,9 +209,6 @@ if os.name == "posix" and sys.platform != "darwin":
 # be at top level, outside any if-block
 # https://github.com/pypa/cibuildwheel/blob/7c4bbf8cb31d856a0fe547faf8edf165cd48ce74/cibuildwheel/projectfiles.py#L41-L46
 
-# Needed for Python 3.7 which anndata 0.9 doesn't support but we do
-anndata_version = "anndata < 0.9" if sys.version_info < (3, 8, 0) else "anndata"
-
 setuptools.setup(
     name="tiledbsoma",
     description="Python API for efficient storage and retrieval of single-cell data using TileDB",
@@ -256,7 +253,9 @@ setuptools.setup(
     zip_safe=False,
     setup_requires=["pybind11"],
     install_requires=[
-        anndata_version,
+        # Needed for Python 3.7 which anndata 0.9 doesn't support but we do
+        "anndata < 0.9; python_version<'3.8'",
+        "anndata; python_version>='3.8'",
         "attrs>=22.2",
         # Pinning numba & its particular numpy constraints:
         # The old pip solver (<=2020) doesn't deal with the transitive
