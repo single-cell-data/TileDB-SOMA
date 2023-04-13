@@ -221,7 +221,7 @@ write_soma.DimReduc <- function(
   )
   key <- tolower(gsub(pattern = '_$', replacement = '', x = SeuratObject::Key(x)))
   key <- switch(EXPR = key, pc = 'pca', ic = 'ica', key)
-  # Create a group for `obs,`
+  # Create a group for `obsm,`
   if (!'obsm' %in% soma_parent$names()) {
     soma_parent$obsm <- SOMACollectionCreate(
       uri = file_path(soma_parent$uri, 'obsm'),
