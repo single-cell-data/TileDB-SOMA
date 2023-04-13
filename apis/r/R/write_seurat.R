@@ -96,11 +96,7 @@ write_soma.Assay <- function(
       next
     }
     if (!identical(x = dim(mat), y = dim(x))) {
-      spdl::info(paste(
-        "Padding layer",
-        sQuote(slot),
-        "to match dimensions of assay"
-      ))
+      spdl::info("Padding layer {} to match dimensions of assay", sQuote(slot))
       mat <- pad_matrix(
         x = mat,
         rowidx = match(x = rownames(mat), table = rownames(x)),
