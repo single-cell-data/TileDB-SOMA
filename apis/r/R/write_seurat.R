@@ -2,7 +2,7 @@
 #'
 NULL
 
-#' Write \pkg{Seurat} Sub-Objects to a SOMA
+#' Convert a \pkg{Seurat} Sub-Object to a SOMA Object
 #'
 #' Various helpers to write \pkg{Seurat} sub-objects to SOMA objects.
 #'
