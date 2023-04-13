@@ -394,8 +394,7 @@ write_soma.TsparseMatrix <- function(
 .check_soma_uri <- function(
   uri,
   soma_parent = NULL,
-  absolute = FALSE,
-  overwrite = FALSE
+  absolute = FALSE
 ) {
   stopifnot(
     "'uri' must be a single character value" = is_scalar_character(uri),
@@ -410,9 +409,6 @@ write_soma.TsparseMatrix <- function(
     }
     uri <- file_path(soma_parent$uri %||% user_dir(), uri)
   } else if (!is_remote_uri(uri)) {
-    if (isTRUE(overwrite)) {
-      unlink(x = uri, recursive = TRUE, force = TRUE)
-    }
     dir.create(dirname(uri), recursive = TRUE)
   }
   return(uri)
