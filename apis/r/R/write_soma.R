@@ -114,7 +114,7 @@ write_soma.data.frame <- function(
       paste(
         strwrap(paste(
           "The following columns contain unsupported data types:",
-          paste(sQuote(names(x)[remove]), collapse = ', ')
+          string_collapse(sQuote(names(x)[remove]))
         )),
         collapse = '\n'
       ),
