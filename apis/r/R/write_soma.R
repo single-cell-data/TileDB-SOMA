@@ -214,8 +214,7 @@ write_soma.matrix <- function(
 ) {
   stopifnot(
     "'sparse' must be a single logical value" = is_scalar_logical(sparse),
-    "'type' must be an Arrow type" = is.null(type) ||
-      (R6::is.R6(type) && inherits(x = type, what = 'DataType')),
+    "'type' must be an Arrow type" = is.null(type) || is_arrow_data_type(type),
     "'transpose' must be a single logical value" = is_scalar_logical(transpose)
   )
   if (!isTRUE(sparse) && inherits(x = x, what = 'sparseMatrix')) {
