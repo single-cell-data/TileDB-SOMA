@@ -54,9 +54,9 @@ test_that("write_soma dense matrix mechanics", {
   expect_identical(tmat$dimnames(), paste0('soma_dim_', c(0L, 1L)))
   expect_identical(tmat$attrnames(), 'soma_data')
   expect_equal(tmat$shape(), rev(dim(state77)))
-  # Warn if given sparse matrix
+  # Error if given sparse matrix and ask for dense
   knex <- get_data('KNex', package = 'Matrix')$mm
-  expect_warning(write_soma(knex, uri = 'knex', soma = collection, sparse = FALSE))
+  expect_error(write_soma(knex, uri = 'knex', soma = collection, sparse = FALSE))
   # Work on dgeMatrices
   expect_no_condition(emat <- write_soma(
     as(knex, 'unpackedMatrix'),

@@ -220,9 +220,10 @@ write_soma.matrix <- function(
     "'transpose' must be a single logical value" = is_scalar_logical(transpose)
   )
   if (!isTRUE(sparse) && inherits(x = x, what = 'sparseMatrix')) {
-    msg <- "A sparse matrix was provided and a dense array was asked for, creating a sparse array"
-    warning(paste(strwrap(msg), collapse = '\n'), call. = FALSE, immediate. = TRUE)
-    sparse <- TRUE
+    stop(
+      "A sparse matrix was provided and a dense array was asked for",
+      call. = FALSE
+    )
   }
   # Create a sparse array
   if (isTRUE(sparse)) {
