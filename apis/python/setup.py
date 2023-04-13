@@ -40,17 +40,21 @@ sys.path.insert(0, str(this_dir))
 
 import version  # noqa E402
 
-libtiledbsoma_dir: Optional[pathlib.Path] = None
+# tiledb_dir and libtiledbsoma_dir may be specified by either environment variable
+# or command-line argument. If both are provided, the latter wins.
+
 tiledb_dir: Optional[pathlib.Path] = None
+libtiledbsoma_dir: Optional[pathlib.Path] = None
 
 tiledb_dir = pathlib.Path(os.environ.get("TILEDB_PATH", this_dir))
-
-# libtiledbsoma_dir may be specified by either environment variable
-# or command-line argument. If both are provided, the latter wins.
 libtiledbsoma_dir = os.environ.get("TILEDBSOMA_PATH", None)
+
 args = sys.argv[:]
 for arg in args:
     start, eq, last = arg.partition("=")
+    if (start, eq) == ("--tiledb", "="):
+        tiledb_dir = pathlib.Path(last)
+        sys.argv.remove(arg)
     if (start, eq) == ("--libtiledbsoma", "="):
         libtiledbsoma_dir = pathlib.Path(last)
         sys.argv.remove(arg)
