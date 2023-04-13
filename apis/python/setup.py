@@ -44,7 +44,16 @@ libtiledbsoma_dir: Optional[pathlib.Path] = None
 tiledb_dir: Optional[pathlib.Path] = None
 
 tiledb_dir = pathlib.Path(os.environ.get("TILEDB_PATH", this_dir))
+
+# libtiledbsoma_dir may be specified by either environment variable
+# or command-line argument. If both are provided, the latter wins.
 libtiledbsoma_dir = os.environ.get("TILEDBSOMA_PATH", None)
+args = sys.argv[:]
+for arg in args:
+    start, eq, last = arg.partition("=")
+    if (start, eq) == ("--libtiledbsoma", "="):
+        libtiledbsoma_dir = pathlib.Path(last)
+        sys.argv.remove(arg)
 
 if libtiledbsoma_dir is None:
     scripts_dir = this_dir / "dist_links" / "scripts"
