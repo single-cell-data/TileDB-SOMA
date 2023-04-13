@@ -59,7 +59,7 @@ write_soma.Assay <- function(
   ...,
   platform_config = NULL,
   tiledbsoma_ctx = NULL,
-  absolute = FALSE
+  relative = TRUE
 ) {
   .check_seurat_installed()
   stopifnot(
@@ -69,14 +69,14 @@ write_soma.Assay <- function(
       x = soma_parent,
       what = 'SOMACollectionBase'
     ),
-    "'absolute' must be a single logical value" = is_scalar_logical(absolute)
+    "'relative' must be a single logical value" = is_scalar_logical(relative)
   )
   # Create a proper URI
   uri <- uri %||% gsub(pattern = '_$', replacement = '', x = SeuratObject::Key(x))
   uri <- .check_soma_uri(
     uri = uri,
     soma_parent = soma_parent,
-    absolute = absolute
+    relative = relative
   )
   # Create the measurement
   ms <- SOMAMeasurementCreate(
@@ -204,7 +204,7 @@ write_soma.DimReduc <- function(
   ...,
   platform_config = NULL,
   tiledbsoma_ctx = NULL,
-  absolute = FALSE
+  relative = TRUE
 ) {
   .check_seurat_installed()
   stopifnot(
@@ -217,7 +217,7 @@ write_soma.DimReduc <- function(
       (rlang::is_integerish(fidx, finite = TRUE) && all(fidx > 0L)),
     "'nfeatures' must be a single positive integer" = is.null(nfeatures) ||
       (rlang::is_integerish(nfeatures, n = 1L, finite = TRUE) && nfeatures > 0L),
-    "'absolute' must be a single logical value" = is_scalar_logical(absolute)
+    "'relative' must be a single logical value" = is_scalar_logical(relative)
   )
   key <- tolower(gsub(pattern = '_$', replacement = '', x = SeuratObject::Key(x)))
   key <- switch(EXPR = key, pc = 'pca', ic = 'ica', key)
@@ -329,7 +329,7 @@ write_soma.Graph <- function(
   ...,
   platform_config = NULL,
   tiledbsoma_ctx = NULL,
-  absolute = FALSE
+  relative = TRUE
 ) {
   .check_seurat_installed()
   stopifnot(
@@ -337,7 +337,7 @@ write_soma.Graph <- function(
       x = soma_parent,
       what = 'SOMAMeasurement'
     ),
-    "'absolute' must be a single logical value" = is_scalar_logical(absolute)
+    "'relative' must be a single logical value" = is_scalar_logical(relative)
   )
   if (!'obsp' %in% soma_parent$names()) {
     soma_parent$obsp <- SOMACollectionCreate(

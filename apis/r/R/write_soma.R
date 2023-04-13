@@ -31,10 +31,11 @@ write_soma <- function(x, uri, ..., platform_config = NULL, tiledbsoma_ctx = NUL
 #' Various helpers to write R objects to SOMA
 #'
 #' @inheritParams write_soma
-#' @param soma_parent The parent \link[tiledbsoma:SOMACollection]{collection} (eg. a
-#' \code{\link{SOMACollection}}, \code{\link{SOMAExperiment}}, or
+#' @param soma_parent The parent \link[tiledbsoma:SOMACollection]{collection}
+#' (eg. a \code{\link{SOMACollection}}, \code{\link{SOMAExperiment}}, or
 #' \code{\link{SOMAMeasurement}})
-#' @param absolute \strong{\[Internal use only\]} Is \code{uri} absolute
+#' @param relative \strong{\[Internal use only\]} Is \code{uri}
+#' relative or aboslute
 #'
 #' @return The resulting SOMA \link[tiledbsoma:SOMASparseNDArray]{array} or
 #' \link[tiledbsoma:SOMADataFrame]{data frame}
@@ -46,9 +47,10 @@ write_soma <- function(x, uri, ..., platform_config = NULL, tiledbsoma_ctx = NUL
 #'
 NULL
 
-#' @param index_name The name of the column in \code{x} with the index (row names);
-#' by default, will automatically add the row names of \code{x} to an attribute
-#' named \dQuote{\code{index}} to the resulting \code{\link{SOMADataFrame}}
+#' @param index_name The name of the column in \code{x} with the index
+#' (row names); by default, will automatically add the row names of \code{x}
+#' to an attribute named \dQuote{\code{index}} to the resulting
+#' \code{\link{SOMADataFrame}}
 #'
 #' @rdname write_soma_objects
 #'
@@ -85,7 +87,7 @@ write_soma.data.frame <- function(
   ...,
   platform_config = NULL,
   tiledbsoma_ctx = NULL,
-  absolute = FALSE
+  relative = TRUE
 ) {
   stopifnot(
     "'index_name' must be a single character value" = is.null(index_name) ||
@@ -95,7 +97,7 @@ write_soma.data.frame <- function(
   uri <- .check_soma_uri(
     uri = uri,
     soma_parent = soma_parent,
-    absolute = absolute
+    relative = relative
   )
   # Clean up data types in `x`
   remove <- vector(mode = 'logical', length = ncol(x))
@@ -210,7 +212,7 @@ write_soma.matrix <- function(
   ...,
   platform_config = NULL,
   tiledbsoma_ctx = NULL,
-  absolute = FALSE
+  relative = TRUE
 ) {
   stopifnot(
     "'sparse' must be a single logical value" = is_scalar_logical(sparse),
@@ -233,7 +235,7 @@ write_soma.matrix <- function(
       ...,
       platform_config = platform_config,
       tiledbsoma_ctx = tiledbsoma_ctx,
-      absolute = absolute
+      relative = relative
     ))
   }
   # Create a dense array
@@ -244,7 +246,7 @@ write_soma.matrix <- function(
   uri <- .check_soma_uri(
     uri = uri,
     soma_parent = soma_parent,
-    absolute = absolute
+    relative = relative
   )
   # Transpose the matrix
   if (isTRUE(transpose)) {
@@ -299,7 +301,7 @@ write_soma.TsparseMatrix <- function(
   ...,
   platform_config = NULL,
   tiledbsoma_ctx = NULL,
-  absolute = FALSE
+  relative = TRUE
 ) {
   stopifnot(
     "'x' must be a general sparse matrix" = inherits(x = x, what = 'generalMatrix'),
@@ -312,7 +314,7 @@ write_soma.TsparseMatrix <- function(
   uri <- .check_soma_uri(
     uri = uri,
     soma_parent = soma_parent,
-    absolute = absolute
+    relative = relative
   )
   # Transpose the matrix
   if (isTRUE(transpose)) {
@@ -394,15 +396,15 @@ write_soma.TsparseMatrix <- function(
 .check_soma_uri <- function(
   uri,
   soma_parent = NULL,
-  absolute = FALSE
+  relative = TRUE
 ) {
   stopifnot(
     "'uri' must be a single character value" = is_scalar_character(uri),
     "'soma_parent' must be a SOMACollection" = is.null(soma_parent) ||
       inherits(x = soma_parent, what = 'SOMACollectionBase'),
-    "'absolute' must be a single logical value" = is_scalar_logical(absolute)
+    "'relative' must be a single logical value" = is_scalar_logical(relative)
   )
-  if (!isTRUE(absolute)) {
+  if (!isFALSE(relative)) {
     if (basename(uri) != uri) {
       warning("uri", call. = FALSE, immediate. = TRUE)
       uri <- basename(uri)

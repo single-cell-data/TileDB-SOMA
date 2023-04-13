@@ -16,7 +16,7 @@
   ...,
   platform_config = NULL,
   tiledbsoma_ctx = NULL,
-  absolute = FALSE
+  relative = TRUE
 )
 
 \method{write_soma}{matrix}(
@@ -29,7 +29,7 @@
   ...,
   platform_config = NULL,
   tiledbsoma_ctx = NULL,
-  absolute = FALSE
+  relative = TRUE
 )
 
 \method{write_soma}{Matrix}(
@@ -42,7 +42,7 @@
   ...,
   platform_config = NULL,
   tiledbsoma_ctx = NULL,
-  absolute = FALSE
+  relative = TRUE
 )
 
 \method{write_soma}{TsparseMatrix}(
@@ -54,7 +54,7 @@
   ...,
   platform_config = NULL,
   tiledbsoma_ctx = NULL,
-  absolute = FALSE
+  relative = TRUE
 )
 }
 \arguments{
@@ -62,13 +62,14 @@
 
 \item{uri}{URI for resulting SOMA object}
 
-\item{soma_parent}{The parent \link[tiledbsoma:SOMACollection]{collection} (eg. a
-\code{\link{SOMACollection}}, \code{\link{SOMAExperiment}}, or
+\item{soma_parent}{The parent \link[tiledbsoma:SOMACollection]{collection}
+(eg. a \code{\link{SOMACollection}}, \code{\link{SOMAExperiment}}, or
 \code{\link{SOMAMeasurement}})}
 
-\item{index_name}{The name of the column in \code{x} with the index (row names);
-by default, will automatically add the row names of \code{x} to an attribute
-named \dQuote{\code{index}} to the resulting \code{\link{SOMADataFrame}}}
+\item{index_name}{The name of the column in \code{x} with the index
+(row names); by default, will automatically add the row names of \code{x}
+to an attribute named \dQuote{\code{index}} to the resulting
+\code{\link{SOMADataFrame}}}
 
 \item{...}{Arguments passed to other methods}
 
@@ -77,7 +78,8 @@ configuration}}
 
 \item{tiledbsoma_ctx}{Optional \code{\link{SOMATileDBContext}}}
 
-\item{absolute}{\strong{[Internal use only]} Is \code{uri} absolute}
+\item{relative}{\strong{[Internal use only]} Is \code{uri}
+relative or aboslute}
 
 \item{sparse}{Create a \link[tiledbsoma:SOMASparseNDArray]{sparse} or
 \link[tiledbsoma:SOMADenseNDArray]{dense} array from \code{x}}

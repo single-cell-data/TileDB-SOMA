@@ -5,7 +5,7 @@
 \alias{write_soma.Assay}
 \alias{write_soma.DimReduc}
 \alias{write_soma.Graph}
-\title{Write \pkg{Seurat} Sub-Objects to a SOMA}
+\title{Convert a \pkg{Seurat} Sub-Object to a SOMA Object}
 \usage{
 \method{write_soma}{Assay}(
   x,
@@ -14,7 +14,7 @@
   ...,
   platform_config = NULL,
   tiledbsoma_ctx = NULL,
-  absolute = FALSE
+  relative = TRUE
 )
 
 \method{write_soma}{DimReduc}(
@@ -26,7 +26,7 @@
   ...,
   platform_config = NULL,
   tiledbsoma_ctx = NULL,
-  absolute = FALSE
+  relative = TRUE
 )
 
 \method{write_soma}{Graph}(
@@ -36,7 +36,7 @@
   ...,
   platform_config = NULL,
   tiledbsoma_ctx = NULL,
-  absolute = FALSE
+  relative = TRUE
 )
 }
 \arguments{
@@ -58,7 +58,8 @@ configuration}}
 
 \item{tiledbsoma_ctx}{Optional \code{\link{SOMATileDBContext}}}
 
-\item{absolute}{\strong{[Internal use only]} Is \code{uri} absolute}
+\item{relative}{\strong{[Internal use only]} Is \code{uri}
+relative or aboslute}
 
 \item{fidx}{An integer vector describing the location of features in
 \code{SeuratObject::Loadings(x)} with relation to \code{soma_parent}
@@ -75,7 +76,7 @@ data from \code{x}
 \code{soma_parent} with the values of \code{x} added to it
 }
 \description{
-Various helpers to write \pkg{Seurat} sub-objects to SOMA
+Various helpers to write \pkg{Seurat} sub-objects to SOMA objects.
 }
 \section{Writing \code{\link[SeuratObject]{Assay}s}}{
 
