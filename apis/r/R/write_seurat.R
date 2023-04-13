@@ -4,7 +4,7 @@ NULL
 
 #' Write \pkg{Seurat} Sub-Objects to a SOMA
 #'
-#' Various helpers to write \pkg{Seurat} sub-objects to SOMA
+#' Various helpers to write \pkg{Seurat} sub-objects to SOMA objects.
 #'
 #' @inheritParams write_soma_objects
 #' @param x A \pkg{Seurat} sub-object (eg. an
