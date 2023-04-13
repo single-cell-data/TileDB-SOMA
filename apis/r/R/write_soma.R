@@ -123,25 +123,6 @@ write_soma.data.frame <- function(
       call. = FALSE
     )
   }
-  if (all(remove)) {
-    stop(
-      "None of the columns in the data frame can be written out",
-      call. = FALSE
-    )
-  } else if (any(remove)) {
-    warning(
-      paste(
-        strwrap(paste(
-          "Removing the following columns due to incompatible data type:",
-          paste(sQuote(names(x)[remove]), collapse = ', ')
-        )),
-        collapse = '\n'
-      ),
-      call. = FALSE,
-      immediate. = TRUE
-    )
-    x <- x[, !remove, drop = FALSE]
-  }
   # Check `index_name`
   index_name <- index_name %||% attr(x = x, which = 'index')
   if (is.null(index_name)) {
