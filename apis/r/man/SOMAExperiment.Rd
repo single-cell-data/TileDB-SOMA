@@ -10,7 +10,7 @@ cells (aka a "multimodal dataset") with pre-defined fields: \code{obs} and \code
 (see \emph{Active Bindings} below for details). (lifecycle: experimental)
 }
 \section{Super classes}{
-\code{\link[tiledbsoma:TileDBObject]{tiledbsoma::TileDBObject}} -> \code{\link[tiledbsoma:TileDBGroup]{tiledbsoma::TileDBGroup}} -> \code{\link[tiledbsoma:SOMACollectionBase]{tiledbsoma::SOMACollectionBase}} -> \code{SOMAExperiment}
+\code{tiledbsoma::TileDBObject} -> \code{tiledbsoma::TileDBGroup} -> \code{tiledbsoma::SOMACollectionBase} -> \code{SOMAExperiment}
 }
 \section{Active bindings}{
 \if{html}{\out{<div class="r6-active-bindings">}}
