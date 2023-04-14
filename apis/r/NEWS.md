@@ -14,3 +14,4 @@
 * Fixed calculating of relative paths when 1 of the URIs contains the `file://` prefix
 * Added `PlatformConfig` and `SOMATileDBContext` classes to handle SOMA and TileDB configuration
 * Add Seurat outgestors for `SOMAExperimentAxisQuery` objects
+* Numeric coordinates passed to SOMADataFrame$read() are now automatically upcast to int64 when necessary
