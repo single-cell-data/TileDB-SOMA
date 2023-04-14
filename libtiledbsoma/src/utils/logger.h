@@ -248,6 +248,6 @@ Logger& global_logger();
 std::string asc_timestamp(uint64_t timestamp_ms);
 
 // Also include the public logger functions here.
-#include "logger_public.h"
+#include "../cpp_api/logger_public.h"
 
 #endif  // TILEDB_LOGGER_H

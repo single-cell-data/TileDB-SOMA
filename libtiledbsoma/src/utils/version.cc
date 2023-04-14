@@ -30,10 +30,9 @@
  * This exposes the version of the TileDB Embedded library in use.
  */
 
-#include "utils/version.h"
+#include "version.h"
 #include <tiledb/tiledb>
-#include "utils/logger_public.h"
-
+#include "logger.h"
 namespace tiledbsoma::version {
 
 std::string as_string() {

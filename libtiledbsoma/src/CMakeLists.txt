@@ -43,8 +43,9 @@ message(STATUS "Building with commit hash ${BUILD_COMMIT_HASH}")
 # Common object library
 # ###########################################################
 add_library(TILEDB_SOMA_OBJECTS OBJECT
-  ${CMAKE_CURRENT_SOURCE_DIR}/read/managed_query.cc
-  ${CMAKE_CURRENT_SOURCE_DIR}/soma/tiledb_soma_array.cc
+  ${CMAKE_CURRENT_SOURCE_DIR}/soma/managed_query.cc
+  ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_array.cc
+  ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_group.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/utils/column_buffer.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/utils/logger.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/utils/stats.cc
@@ -155,9 +156,16 @@ endif()
 
 # Install header files and preserve directory structure
 # target_sources FILE_SET is preferred with cmake>=3.23
-set(DIRECTORY
-  ${CMAKE_CURRENT_SOURCE_DIR}/cpp_api
-  TYPE INCLUDE
+set(TILEDB_SOMA_PUBLIC_HEADERS
+  ${CMAKE_CURRENT_SOURCE_DIR}/cpp_api/tiledbsoma
+  ${CMAKE_CURRENT_SOURCE_DIR}/cpp_api/soma_collection.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/cpp_api/soma_dataframe.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/cpp_api/soma_dense_ndarray.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/cpp_api/soma_experiment.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/cpp_api/soma_measurement.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/cpp_api/soma_object.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/cpp_api/soma_sparse_ndarray.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/cpp_api/logger_public.h
 )
 
 # ###########################################################
@@ -190,7 +198,7 @@ list(APPEND TILEDB_SOMA_PUBLIC_HEADERS
 if(NOT TILEDBSOMA_BUILD_STATIC)
   set_target_properties(tiledbsoma
     PROPERTIES
-    PUBLIC_HEADER "${TILEDB_SOMA_EXPORT_HEADER}"
+    PUBLIC_HEADER "${TILEDB_SOMA_PUBLIC_HEADERS}"
   )
 endif()
 

@@ -41,7 +41,7 @@
 #include <random>
 
 #include <tiledb/tiledb>
-#include "read/managed_query.h"
+#include "soma/managed_query.h"
 #include "utils/util.h"
 
 using namespace tiledb;

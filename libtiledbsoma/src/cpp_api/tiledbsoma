@@ -33,14 +33,12 @@
 #ifndef __TILEDBSOMA__
 #define __TILEDBSOMA__
 
-#include <tiledbsoma/array_buffers.h>
-#include <tiledbsoma/arrow_adapter.h>
-#include <tiledbsoma/column_buffer.h>
-#include <tiledbsoma/common.h>
-#include <tiledbsoma/logger_public.h>
-#include <tiledbsoma/managed_query.h>
-#include <tiledbsoma/soma_array_reader.h>
-#include <tiledbsoma/stats.h>
-#include <tiledbsoma/version.h>
+#include <tiledbsoma/soma_collection.h>
+#include <tiledbsoma/soma_dataframe.h>
+#include <tiledbsoma/soma_dense_ndarray.h>
+#include <tiledbsoma/soma_experiment.h>
+#include <tiledbsoma/soma_measurement.h>
+#include <tiledbsoma/soma_object.h>
+#include <tiledbsoma/soma_sparse_ndarray.h>
 
 #endif

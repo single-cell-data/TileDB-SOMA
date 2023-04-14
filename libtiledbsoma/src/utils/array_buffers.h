@@ -40,7 +40,7 @@
 
 #include "column_buffer.h"
 #include "common.h"
-#include "logger_public.h"
+#include "logger.h"
 
 namespace tiledbsoma {
 
