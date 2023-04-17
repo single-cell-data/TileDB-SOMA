@@ -37,6 +37,7 @@
 #include <memory>
 #include <string>
 #include <tiledb/tiledb>
+#include "soma_dataframe.h"
 #include "soma_object.h"
 
 namespace tiledbsoma {
@@ -47,12 +48,27 @@ using namespace tiledb;
 
 class SOMACollection : SOMAObject {
    public:
+    /**
+     * @brief Open and return a SOMACollection object at the given URI.
+     *
+     * @param ctx TileDB context
+     * @param name name of the array
+     */
     static std::unique_ptr<SOMACollection> open(
-        std::shared_ptr<Context>, const std::string&);
+        std::shared_ptr<Context> ctx, const std::string& uri);
 
-    SOMACollection(std::shared_ptr<Context>, const std::string&);
+    /**
+     * @brief Construct a new SOMACollection object.
+     *
+     * @param ctx TileDB context
+     * @param name name of the array
+     */
+    SOMACollection(std::shared_ptr<Context> ctx, const std::string& uri);
     // std::map<std::string, std::string> platform_config);
 
+    /**
+     * Returns the constant "SOMACollection".
+     */
     std::string type() const {
         return "SOMACollection";
     }
@@ -72,21 +88,27 @@ class SOMACollection : SOMAObject {
 
     /**
      * Get the SOMAObject associated with the name.
+     *
+     * @param name of member
      */
     SOMACollection get(const std::string& name);
 
     /**
      * Check if the SOMACollection contains the given name.
+     *
+     * @param name of member
      */
     bool has(const std::string& name);
 
     /**
      * Get the number of SOMAObjects in the SOMACollection.
      */
-    uint64_t length() const;
+    uint64_t count() const;
 
     /**
      * Delete the SOMAObject associated with the name.
+     *
+     * @param name of member
      */
     void del(const std::string& name);
 
@@ -95,15 +117,33 @@ class SOMACollection : SOMAObject {
      */
     std::map<std::string, std::string> member_to_uri_mapping() const;
 
-    void add_new_collection(const std::string&, const SOMACollection&);
-    // void add_new_dataframe(const std::string&, SOMADataFrame);
-    // void add_new_dense_ndarray(const std::string&, SOMADenseNDArray);
-    // void add_new_sparse_ndarray(const std::string&, SOMASparseNDArray);
+    /**
+     * Add a SOMACollection to the SOMACollection.
+     *
+     * @param name of member
+     * @param collection SOMACollection to add
+     */
+    void add_new_collection(
+        const std::string& name, SOMACollection& collection);
+
+    /**
+     * Add a SOMADataFrame to the SOMACollection.
+     *
+     * @param name of member
+     * @param dataframe SOMADataFrame to add
+     */
+    void add_new_dataframe(const std::string& name, SOMADataFrame& dataframe);
+
+    // void add_new_dense_ndarray(const std::string&, const SOMADenseNDArray&);
+    // void add_new_sparse_ndarray(const std::string&, const
+    // SOMASparseNDArray&);
 
    private:
+    // TileDB context
     std::shared_ptr<Context> ctx_;
+
+    // SOMAGroup
     std::unique_ptr<SOMAGroup> group_;
-    std::string name_;
 };
 }  // namespace tiledbsoma
 

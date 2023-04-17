@@ -39,6 +39,7 @@
 namespace tiledbsoma {
 class SOMAObject {
     virtual std::string type() const = 0;
+    virtual std::string uri() const = 0;
 };
 }  // namespace tiledbsoma
 
