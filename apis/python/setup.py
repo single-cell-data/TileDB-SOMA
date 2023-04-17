@@ -222,6 +222,16 @@ if os.name == "posix" and sys.platform != "darwin":
 # be at top level, outside any if-block
 # https://github.com/pypa/cibuildwheel/blob/7c4bbf8cb31d856a0fe547faf8edf165cd48ce74/cibuildwheel/projectfiles.py#L41-L46
 
+print()
+print()
+print("================================================================")
+print("SETUP.PY ENTER")
+print(sys.argv)
+print(os.environ)
+print("================================================================")
+print()
+print()
+
 setuptools.setup(
     name="tiledbsoma",
     description="Python API for efficient storage and retrieval of single-cell data using TileDB",
@@ -299,3 +309,11 @@ setuptools.setup(
     cmdclass={"build_ext": build_ext, "bdist_wheel": bdist_wheel},
     version=version.getVersion(),
 )
+
+print()
+print()
+print("================================================================")
+print("SETUP.PY EXIT")
+print("================================================================")
+print()
+print()
