@@ -38,7 +38,9 @@
 #include <string>
 #include <tiledb/tiledb>
 #include "soma_dataframe.h"
+#include "soma_dense_ndarray.h"
 #include "soma_object.h"
+#include "soma_sparse_ndarray.h"
 
 namespace tiledbsoma {
 
@@ -48,6 +50,10 @@ using namespace tiledb;
 
 class SOMACollection : SOMAObject {
    public:
+    //===================================================================
+    //= public static
+    //===================================================================
+
     /**
      * @brief Open and return a SOMACollection object at the given URI.
      *
@@ -56,6 +62,10 @@ class SOMACollection : SOMAObject {
      */
     static std::unique_ptr<SOMACollection> open(
         std::shared_ptr<Context> ctx, const std::string& uri);
+
+    //===================================================================
+    //= public non-static
+    //===================================================================
 
     /**
      * @brief Construct a new SOMACollection object.
@@ -120,7 +130,7 @@ class SOMACollection : SOMAObject {
     /**
      * Add a SOMACollection to the SOMACollection.
      *
-     * @param name of member
+     * @param name of collection
      * @param collection SOMACollection to add
      */
     void add_new_collection(
@@ -129,16 +139,34 @@ class SOMACollection : SOMAObject {
     /**
      * Add a SOMADataFrame to the SOMACollection.
      *
-     * @param name of member
+     * @param name of dataframe
      * @param dataframe SOMADataFrame to add
      */
     void add_new_dataframe(const std::string& name, SOMADataFrame& dataframe);
 
-    // void add_new_dense_ndarray(const std::string&, const SOMADenseNDArray&);
-    // void add_new_sparse_ndarray(const std::string&, const
-    // SOMASparseNDArray&);
+    /**
+     * Add a SOMADenseNDArray to the SOMACollection.
+     *
+     * @param name of dense array
+     * @param dataframe SOMADenseNDArray to add
+     */
+    void add_new_dense_ndarray(
+        const std::string& name, const SOMADenseNDArray& array);
+
+    /**
+     * Add a SOMASparseNDArray to the SOMACollection.
+     *
+     * @param name of sparse array
+     * @param dataframe SOMASparseNDArray to add
+     */
+    void add_new_sparse_ndarray(
+        const std::string& name, const SOMASparseNDArray& array);
 
    private:
+    //===================================================================
+    //= private non-static
+    //===================================================================
+
     // TileDB context
     std::shared_ptr<Context> ctx_;
 

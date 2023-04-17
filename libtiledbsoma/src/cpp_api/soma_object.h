@@ -38,7 +38,22 @@
 
 namespace tiledbsoma {
 class SOMAObject {
+    //===================================================================
+    //= public non-static
+    //===================================================================
+
+    /**
+     * @brief Get SOMA type of the SOMAObject.
+     *
+     * @return std::string SOMA type
+     */
     virtual std::string type() const = 0;
+
+    /**
+     * @brief Get URI of the SOMAObject.
+     *
+     * @return std::string URI
+     */
     virtual std::string uri() const = 0;
 };
 }  // namespace tiledbsoma

@@ -48,6 +48,10 @@ using namespace tiledb;
 
 class SOMADataFrame : SOMAObject {
    public:
+    //===================================================================
+    //= public static
+    //===================================================================
+
     /**
      * @brief Open and return a SOMADataFrame object at the given URI.
      *
@@ -94,6 +98,10 @@ class SOMADataFrame : SOMAObject {
         std::string_view result_order = "auto",
         std::optional<std::pair<uint64_t, uint64_t>> timestamp = std::nullopt);
 
+    //===================================================================
+    //= public non-static
+    //===================================================================
+
     /**
      * @brief Construct a new SOMADataFrame object.
      *
@@ -116,6 +124,11 @@ class SOMADataFrame : SOMAObject {
         std::string_view result_order,
         std::optional<std::pair<uint64_t, uint64_t>> timestamp = std::nullopt);
     // std::map<std::string, std::string> platform_config);
+
+    /**
+     * Closes the SOMADataFrame object.
+     */
+    void close();
 
     /**
      * Returns the constant "SOMADataFrame".
@@ -166,6 +179,10 @@ class SOMADataFrame : SOMAObject {
     void write(std::shared_ptr<ArrayBuffers>);
 
    private:
+    //===================================================================
+    //= private non-static
+    //===================================================================
+
     // SOMAArray
     std::unique_ptr<SOMAArray> array_;
 };
