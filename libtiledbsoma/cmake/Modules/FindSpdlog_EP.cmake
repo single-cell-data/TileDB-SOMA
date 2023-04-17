@@ -60,12 +60,12 @@ endif()
 
 if (NOT SPDLOG_FOUND)
   if(SUPERBUILD)
-    if (WIN32)
-      find_package(Git REQUIRED)
-      set(CONDITIONAL_PATCH cd ${CMAKE_SOURCE_DIR} && ${GIT_EXECUTABLE} apply --ignore-whitespace -p1 --unsafe-paths --verbose --directory=${EP_SOURCE_DIR}/ep_spdlog < ${CMAKE_CURRENT_SOURCE_DIR}/cmake/patches/spdlog.patch)
-    else()
-      set(CONDITIONAL_PATCH patch -N -p1 < ${CMAKE_CURRENT_SOURCE_DIR}/cmake/patches/spdlog.patch)
-    endif()
+    #if (WIN32)
+    #  find_package(Git REQUIRED)
+    #  set(CONDITIONAL_PATCH cd ${CMAKE_SOURCE_DIR} && ${GIT_EXECUTABLE} apply --ignore-whitespace -p1 --unsafe-paths --verbose --directory=${EP_SOURCE_DIR}/ep_spdlog < ${CMAKE_CURRENT_SOURCE_DIR}/cmake/patches/spdlog.patch)
+    #else()
+    #  set(CONDITIONAL_PATCH patch -N -p1 < ${CMAKE_CURRENT_SOURCE_DIR}/cmake/patches/spdlog.patch)
+    #endif()
 
     # if building ep_tiledb, make spdlog depend on ep_tiledb, so tiledb finds its required version of spdlog
     if (TARGET ep_tiledb)
@@ -81,8 +81,8 @@ if (NOT SPDLOG_FOUND)
       DOWNLOAD_NAME ep_spdlog.zip
       URL "https://github.com/gabime/spdlog/archive/v1.10.0.zip"
       URL_HASH SHA1=aa2d4ff13b5393dea83d46caf545c6a303c889cd
-      PATCH_COMMAND
-        ${CONDITIONAL_PATCH}
+      #PATCH_COMMAND
+      #  ${CONDITIONAL_PATCH}
       CMAKE_ARGS
         -DCMAKE_PREFIX_PATH=${EP_INSTALL_PREFIX}
         -DCMAKE_INSTALL_PREFIX=${EP_INSTALL_PREFIX}
