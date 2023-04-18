@@ -13,8 +13,8 @@ is_named <- function(x, allow_empty = TRUE) {
   !is.null(names(x)) && ifelse(allow_empty, TRUE, all(nzchar(x = names(x = x))))
 }
 
-is_named_list <- function(x) {
-  is.list(x) && is_named(x)
+is_named_list <- function(x, allow_empty = TRUE) {
+  is.list(x) && is_named(x, allow_empty = allow_empty)
 }
 
 is_scalar_logical <- function(x) {

@@ -27,6 +27,7 @@ observation index domain, \code{obs_id}. All observations for the
 \section{Methods}{
 \subsection{Public methods}{
 \itemize{
+\item \href{#method-SOMAExperiment-to_seurat}{\code{SOMAExperiment$to_seurat()}}
 \item \href{#method-SOMAExperiment-clone}{\code{SOMAExperiment$clone()}}
 }
 }
@@ -58,6 +59,100 @@ observation index domain, \code{obs_id}. All observations for the
 </ul>
 </details>
 }}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-SOMAExperiment-to_seurat"></a>}}
+\if{latex}{\out{\hypertarget{method-SOMAExperiment-to_seurat}{}}}
+\subsection{Method \code{to_seurat()}}{
+Loads the experiment as a \code{\link[SeuratObject]{Seurat}}
+object
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{SOMAExperiment$to_seurat(
+  X_layers,
+  obs_index = NULL,
+  var_index = NULL,
+  obs_column_names = NULL,
+  var_column_names = NULL,
+  obsm_layers = NULL,
+  varm_layers = NULL,
+  obsp_layers = NULL
+)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{X_layers}}{A named list of named character vectors describing the
+measurements to load and the layers within those measurements to read in;
+for example: \preformatted{
+list(
+  RNA = c(counts = "counts", data = "logcounts"),
+  ADT = c(counts = "counts")
+)
+}}
+
+\item{\code{obs_index}}{Name of column in \code{obs} to add as cell names; uses
+\code{paste0("cell", obs_joinids())} by default}
+
+\item{\code{var_index}}{A named character of column names in \code{var} for
+each measurement to use as feature names; for example: \preformatted{
+c(RNA = "gene_name", ADT = "protein_name")
+}
+Uses \code{paste0("feature", var_joinids())} by default}
+
+\item{\code{obs_column_names}}{Names of columns in \code{obs} to add as
+cell-level meta data; by default, loads all columns}
+
+\item{\code{var_column_names}}{A named list of character vectors describing the
+columns in \code{var} for each measurement to load in as feature-level
+meta data; for example: \preformatted{
+list(
+  RNA = c("vst.mean", "vst.variable"),
+  ADT = c("ensembl_id")
+)
+}
+By default, loads in entire feature-level meta data for all measurements
+described in \code{X_layers}}
+
+\item{\code{obsm_layers}}{A named list of character vectors describing the
+arrays in \code{obsm} for each measurement to load in as
+dimensional reductions; for example: \preformatted{
+list(
+  RNA = c("pca", "umap"),
+  ADT = c("adtpca", "adtumap")
+)
+}
+By default, loads in all dimensional reductions for all measurements
+described in \code{X_layers}}
+
+\item{\code{varm_layers}}{A named list of named character vectors describing the
+arrays in \code{varm} to load in as feature loadings and which array in
+\code{obsm} they correspond to; for example: \preformatted{
+list(
+  RNA = c(pca = "PCs"),
+  ADT = c(adtpca = "ADTPCs")
+)
+}
+By default, will try to determine \code{varm_layers} from
+\code{obsm_layers} and load in all loadings for all dimensional
+reductions for all measurements described in \code{X_layers}}
+
+\item{\code{obsp_layers}}{A named list of character vectors describing the
+arrays in \code{obsp} for each measurement to load in as
+nearest neighbor graphs; for example: \preformatted{
+list(
+  RNA = c("RNA_nn", "RNA_snn"),
+  ADT = c("ADT_nn")
+)
+}
+By default, loads in all nearest-neighbor graphs for all measurements for
+all measurements described in \code{X_layers}}
+}
+\if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+A \code{\link[SeuratObject]{Seurat}} object
+}
+}
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-SOMAExperiment-clone"></a>}}
 \if{latex}{\out{\hypertarget{method-SOMAExperiment-clone}{}}}
