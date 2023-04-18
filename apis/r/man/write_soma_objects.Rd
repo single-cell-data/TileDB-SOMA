@@ -12,7 +12,8 @@
   x,
   uri,
   soma_parent,
-  index_name = NULL,
+  df_index = NULL,
+  index_column_names = "soma_joinid",
   ...,
   platform_config = NULL,
   tiledbsoma_ctx = NULL,
@@ -66,10 +67,13 @@
 (eg. a \code{\link{SOMACollection}}, \code{\link{SOMAExperiment}}, or
 \code{\link{SOMAMeasurement}})}
 
-\item{index_name}{The name of the column in \code{x} with the index
+\item{df_index}{The name of the column in \code{x} with the index
 (row names); by default, will automatically add the row names of \code{x}
 to an attribute named \dQuote{\code{index}} to the resulting
 \code{\link{SOMADataFrame}}}
+
+\item{index_column_names}{Names of columns in \code{x} to index in the
+resulting SOMA object}
 
 \item{...}{Arguments passed to other methods}
 

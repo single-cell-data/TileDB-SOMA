@@ -47,10 +47,12 @@ write_soma <- function(x, uri, ..., platform_config = NULL, tiledbsoma_ctx = NUL
 #'
 NULL
 
-#' @param index_name The name of the column in \code{x} with the index
+#' @param df_index The name of the column in \code{x} with the index
 #' (row names); by default, will automatically add the row names of \code{x}
 #' to an attribute named \dQuote{\code{index}} to the resulting
 #' \code{\link{SOMADataFrame}}
+#' @param index_column_names Names of columns in \code{x} to index in the
+#' resulting SOMA object
 #'
 #' @rdname write_soma_objects
 #'
@@ -83,15 +85,17 @@ write_soma.data.frame <- function(
   x,
   uri,
   soma_parent,
-  index_name = NULL,
+  df_index = NULL,
+  index_column_names = 'soma_joinid',
   ...,
   platform_config = NULL,
   tiledbsoma_ctx = NULL,
   relative = TRUE
 ) {
   stopifnot(
-    "'index_name' must be a single character value" = is.null(index_name) ||
-      is_scalar_character(index_name)
+    "'df_index' must be a single character value" = is.null(df_index) ||
+      is_scalar_character(df_index),
+    "'index_column_names' must be a character vector" = is.character(index_column_names)
   )
   # Create a proper URI
   uri <- .check_soma_uri(
@@ -123,16 +127,16 @@ write_soma.data.frame <- function(
       call. = FALSE
     )
   }
-  # Check `index_name`
-  index_name <- index_name %||% attr(x = x, which = 'index')
-  if (is.null(index_name)) {
+  # Check `df_index`
+  df_index <- df_index %||% attr(x = x, which = 'index')
+  if (is.null(df_index)) {
     x <- .df_index(x = x, ...)
-    index_name <- attr(x = x, which = 'index')
+    df_index <- attr(x = x, which = 'index')
   }
-  if (!index_name %in% names(x)) {
+  if (!df_index %in% names(x)) {
     stop(
       "Unable to find ",
-      sQuote(index_name),
+      sQuote(df_index),
       " in the provided data frame",
       call. = FALSE
     )
@@ -141,12 +145,18 @@ write_soma.data.frame <- function(
   if (!'soma_joinid' %in% names(x)) {
     x$soma_joinid <- bit64::seq.integer64(from = 0L, to = nrow(x) - 1L)
   }
+  # Check `index_column_names`
+  index_column_names <- match.arg(
+    arg = index_column_names,
+    choices = names(x),
+    several.ok = TRUE
+  )
   # Create the SOMADataFrame
   tbl <- arrow::arrow_table(x)
   sdf <- SOMADataFrameCreate(
     uri = uri,
     schema = tbl$schema,
-    index_column_names = 'soma_joinid',
+    index_column_names = index_column_names,
     platform_config = platform_config,
     tiledbsoma_ctx = tiledbsoma_ctx
   )
