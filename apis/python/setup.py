@@ -270,6 +270,7 @@ setuptools.setup(
         "anndata < 0.9; python_version<'3.8'",
         "anndata; python_version>='3.8'",
         "attrs>=22.2",
+        "line_profiler",
         # Pinning numba & its particular numpy constraints:
         # The old pip solver (<=2020) doesn't deal with the transitive
         # requirements (scanpy -> numba -> numpy) properly resulting in broken
