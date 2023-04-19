@@ -1,7 +1,7 @@
 import anndata as ad
 import pytest
 
-import tiledbsoma as soma
+from tiledbsoma import io
 
 from .common import TestWritePythonReadR, embed_python_list_into_R_code
 
@@ -18,7 +18,7 @@ class TestAnndataSOMASeurat(TestWritePythonReadR):
         Fixture that will load an h5ad, convert it to SOMA, deploy it to `self.uri` and return a parsed version of it.
         """
         h5ad_path = "apis/python/testdata/pbmc-small.h5ad"
-        soma.io.from_h5ad(self.uri, input_path=h5ad_path, measurement_name="RNA")
+        io.from_h5ad(self.uri, input_path=h5ad_path, measurement_name="RNA")
         return ad.read_h5ad(h5ad_path)
 
     # Prepares an R script with the dependencies and loads the object in seuratObject
