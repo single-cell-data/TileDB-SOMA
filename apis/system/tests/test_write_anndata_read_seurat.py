@@ -26,7 +26,7 @@ class TestAnndataSOMASeurat(TestWritePythonReadR):
     def base_R_script(self):
         return f"""
         library("tiledbsoma")
-        library("Seurat")
+        library("SeuratObject")
         soma <- SOMAOpen("{self.uri}")
         ms <- soma$ms$get("RNA")
         query <- SOMAExperimentAxisQuery$new(
