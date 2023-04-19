@@ -575,6 +575,8 @@ def _write_dataframe(
     for k in df:
         if df[k].dtype == "category":
             df[k] = df[k].astype(df[k].cat.categories.dtype)
+        elif df[k].isnull().all():
+            df[k] = pa.nulls(df.shape[0], pa.infer_type(df[k]))
     arrow_table = pa.Table.from_pandas(df)
 
     try:
