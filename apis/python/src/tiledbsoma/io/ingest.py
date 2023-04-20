@@ -925,6 +925,9 @@ def _find_sparse_chunk_size(
             break
         chunk_size += 1
 
+    if sum_nnz == 0:  # completely empty sparse array (corner case)
+        return 1
+
     if sum_nnz > goal_chunk_nnz:
         return chunk_size
 

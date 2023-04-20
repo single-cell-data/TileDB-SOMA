@@ -87,6 +87,8 @@ def test_io_create_from_matrix_Dense_nd_array(tmp_path, tdb_create_options, src_
         ("csr", (10, 89), 0.01),
         ("csc", (1001, 899), 0.3),
         ("csr", (1001, 899), 0.3),
+        ("csc", (10, 89), 0.00),  # yes, completely empty as corner case
+        ("csr", (10, 89), 0.00),  # yes, completely empty as corner case
     ],
     indirect=True,
 )
