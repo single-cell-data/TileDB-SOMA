@@ -436,7 +436,7 @@ write_soma.Seurat <- function(
         name = measurement
       ),
       error = function(err) {
-        if (assay == SeuratObject::DefaultAssay(x)) {
+        if (measurement == SeuratObject::DefaultAssay(x)) {
           stop(err)
         }
         err_to_warn(err)
