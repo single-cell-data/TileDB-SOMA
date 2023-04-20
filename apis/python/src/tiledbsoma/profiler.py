@@ -1,47 +1,53 @@
-from functools import wraps
-from timeit import timeit
+import builtins
+import cProfile
+import pstats
 import sys
 import tracemalloc
-import cProfile, pstats
-from line_profiler import LineProfiler
+from functools import wraps
 from io import StringIO
-import builtins
+from timeit import timeit
+from typing import Any, Callable, Dict, Optional
+
 import psutil
+from line_profiler import LineProfiler
+from typing_extensions import TypeVarTuple
 
-"""A class representing measurements and their labels"""
+
 class Measurement:
-    _data = {}
+    """A class representing measurements and their labels"""
 
-    def __init__(self):
+    _data: Dict[str, Any] = {}
+
+    def __init__(self) -> None:
         self._data = {}
 
     @classmethod
-    def readSingleStats(self, name):
+    def read_single_stats(self, name: str) -> Optional[Any]:
         return self._data.get(name)
 
     @classmethod
-    def updateSingleStats(self, name, value):
+    def update_single_stats(self, name: str, value: Any) -> None:
         self._data[name] = value
 
     @classmethod
-    def updateStatsSingleName(self, name, values):
+    def update_stats_single_name(self, name: str, values) -> None:  # type: ignore
         for idx, stat in enumerate(values):
-            self.updateSingleStats(f"{name}{idx}", stat)
+            self.update_single_stats(f"{name}{idx}", stat)
 
     @classmethod
-    def __str__(self):
+    def __str__(self) -> str:
         result = ""
         for name, value in self._data.items():
             result += f"{name} {value}\n"
         return result
 
 
-measurements = Measurement()
+measurements: Measurement = Measurement()
+Ts = TypeVarTuple("Xs")  # type: ignore
 
-"""Function to convert and std output to string"""
 
-
-def stdout_string_wrapper(func):
+def stdout_string_wrapper(func) -> str:  # type: ignore
+    """Function to convert and std output to string"""
     tmp = sys.stdout
     my_result = StringIO()
     sys.stdout = my_result
@@ -50,67 +56,80 @@ def stdout_string_wrapper(func):
     return my_result.getvalue()
 
 
-"""The parameterized decorator for memory and performance profiling"""
+def profiler(
+    param: Optional[str] = None,
+) -> Callable[[Callable[[], Callable[[*Ts], None]]], Callable[[], None]]:  # type: ignore
+    """The parameterized decorator for memory and performance profiling"""
 
-
-def profiler(param=None):
-    def measure(func):
+    def measure(func: Callable[[], Callable[[*Ts], None]]) -> Callable[[], None]:  # type: ignore
         @wraps(func)
-        def wrapper(*args, **kwargs):
+        def wrapper(*args, **kwargs) -> None:  # type: ignore
             if param == "timeit":
                 print("timeit")
-                time = timeit(
-                    lambda: func(*args, **kwargs)
-                )
-                measurements.updateSingleStats("timeit", time)
+                time = timeit(lambda: func(*args, **kwargs))
+                measurements.update_single_stats("timeit", time)
 
-            """Collecting tracemalloc stats
-            each stat is stored with tracemalloc prefix as key"""
+            # Collecting tracemalloc stats
+            # each stat is stored with tracemalloc prefix as key"""
 
-            if param == "tacemalloc":
-                print("tacemalloc")
+            if param == "tracemalloc":
+                print("tracemalloc")
                 tracemalloc.start()
                 snapshot1 = tracemalloc.take_snapshot()
                 func(*args, **kwargs)
                 snapshot2 = tracemalloc.take_snapshot()
-                top_stats = snapshot2.compare_to(snapshot1, 'lineno')
-                measurements.updateStatsSingleName("tracemalloc", top_stats[:100])
+                top_stats = snapshot2.compare_to(snapshot1, "lineno")
+                assert top_stats
+                measurements.update_stats_single_name("tracemalloc", top_stats[:100])
 
-            """Collecting cprofile stats
-            each stat is stored with cprofile prefix as key"""
+            # Collecting cprofile stats
+            # each stat is stored with cprofile prefix as key"""
 
             if param == "cprofile":
                 cprofiler = cProfile.Profile()
                 cprofiler.enable()
                 func(*args, **kwargs)
                 cprofiler.disable()
-                stats = pstats.Stats(cprofiler).sort_stats('ncalls')
+                stats = pstats.Stats(cprofiler).sort_stats("ncalls")
                 print("cprofile output")
                 stats_strings = stdout_string_wrapper(stats.print_stats)
                 lines = stats_strings.splitlines()
-                measurements.updateStatsSingleName("cprofile", lines)
+                measurements.update_stats_single_name("cprofile", lines)
                 print(stats_strings)
 
-            """Collecting line_profiler stats
-            each stat is stored with line_profiler prefix as key"""
+            # Collecting line_profiler stats
+            # each stat is stored with line_profiler prefix as key"""
 
             if param == "line_profiler":
                 prof = LineProfiler()
-                builtins.__dict__['profile'] = prof
+                builtins.__dict__["profile"] = prof
                 func(*args, **kwargs)
                 print("line_profiler:")
+                prof.print_stats
                 stats_strings = stdout_string_wrapper(prof.print_stats)
                 lines = stats_strings.splitlines()
-                measurements.updateStatsSingleName("line_profiler", lines)
+                assert lines
+                measurements.update_stats_single_name("line_profiler", lines)
 
-            """Collecting psutil stats
-            each stat is stored with cpu_times, virtual_memory, swap_memory prefix as key"""
+            # Collecting psutil stats
+            # each stat is stored with cpu_times, virtual_memory, swap_memory prefix as key"""
 
             if param == "mem":
                 func(*args, **kwargs)
-                measurements.updateStatsSingleName("cpu_times", [str(x) for x in psutil.cpu_times()])
-                measurements.updateStatsSingleName("virtual_memory", [str(x) for x in psutil.virtual_memory()])
-                measurements.updateStatsSingleName("swap_memory", [str(x) for x in psutil.swap_memory()])
+                assert (
+                    psutil.cpu_times()
+                    and psutil.virtual_memory()
+                    and psutil.swap_memory()
+                )
+                measurements.update_stats_single_name(
+                    "cpu_times", [str(x) for x in psutil.cpu_times()]
+                )
+                measurements.update_stats_single_name(
+                    "virtual_memory", [str(x) for x in psutil.virtual_memory()]
+                )
+                measurements.update_stats_single_name(
+                    "swap_memory", [str(x) for x in psutil.swap_memory()]
+                )
 
         return wrapper
 

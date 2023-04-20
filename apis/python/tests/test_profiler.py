@@ -1,9 +1,9 @@
-from tiledbsoma.profiler import profiler, measurements
+from tiledbsoma.profiler import measurements, profiler
 
 """A group of basic tests for the memory and performance profiler decorator"""
 
 
-@profiler(param="tacemalloc")
+@profiler(param="tracemalloc")
 def test_tracemalloc():
     my_list = []
     for i in range(100000):
@@ -27,6 +27,11 @@ def test_timeit():
 
 def inner():
     [x for x in range(10000)]
+    inner2()
+
+
+def inner2():
+    [x for x in range(100)]
 
 
 @profiler(param="cprofile")
@@ -47,5 +52,6 @@ def test_profiles():
     test_tracemalloc()
     test_timeit()
     test_cprofile()
+    test_line_profile()
     test_mem()
     print(str(measurements))
