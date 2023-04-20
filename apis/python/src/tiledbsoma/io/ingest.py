@@ -1159,7 +1159,11 @@ def _ingest_uns_dict(
         _maybe_set(parent, parent_key, coll, use_relative_uri=use_relative_uri)
         coll.metadata["soma_tiledbsoma_type"] = "uns"
         for key, value in dct.items():
-            if isinstance(value, (np.str_, int, float, str)):
+            if isinstance(value, np.generic):
+                # This is some kind of numpy scalar value. Metadata entries
+                # only accept native Python types, so unwrap it.
+                value = value.item()
+            if isinstance(value, (int, float, str)):
                 # Primitives get set on the metadata.
                 coll.metadata[key] = value
                 continue
