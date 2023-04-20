@@ -15,3 +15,4 @@
 * Added `PlatformConfig` and `SOMATileDBContext` classes to handle SOMA and TileDB configuration
 * Add Seurat outgestors for `SOMAExperimentAxisQuery` objects
 * Numeric coordinates passed to SOMADataFrame$read() are now automatically upcast to int64 when necessary
+* Add ingestors to read data from `Seurat` objects
