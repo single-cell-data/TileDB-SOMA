@@ -37,7 +37,9 @@ PlatformConfig <- R6::R6Class(
           f = union,
           x = lapply(
             X = self$platforms(),
-            FUN = \(p) private$.data[[p]]$keys()
+            FUN = function(p) {
+              private$.data[[p]]$keys()
+            }
           )
         )
         return(params)

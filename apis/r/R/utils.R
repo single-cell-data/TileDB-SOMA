@@ -37,6 +37,11 @@ rename <- function(x, names) {
   if (missing(x) || is.null(x) || length(x) == 0) y else x
 }
 
+err_to_warn <- function(err, immediate. = TRUE) {
+  warning(conditionMessage(err), call. = FALSE, immediate. = immediate.)
+  return(invisible(err))
+}
+
 null <- function(...) {
   return(NULL)
 }
