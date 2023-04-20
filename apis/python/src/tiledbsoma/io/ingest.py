@@ -583,7 +583,7 @@ def _write_dataframe(
     if null_fields:
         md = arrow_table.schema.metadata
         md.update(dict.fromkeys(null_fields, 'nullable'))
-        arrow_table = pa.Table.from_pandas(df, schema=arrow_table.replace_schema_metadata(md).schema)
+        arrow_table = arrow_table.replace_schema_metadata(md)
 
     try:
         soma_df = _factory.open(df_uri, "w", soma_type=DataFrame, context=context)
