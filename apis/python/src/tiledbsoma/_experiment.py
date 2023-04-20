@@ -6,11 +6,14 @@
 """Implementation of a SOMA Experiment.
 """
 
+from typing import Any
+
 from somacore import experiment
 
 from ._collection import Collection, CollectionBase
 from ._dataframe import DataFrame
 from ._measurement import Measurement
+from ._tdb_handles import Wrapper
 from ._tiledb_object import AnyTileDBObject
 
 
@@ -44,3 +47,11 @@ class Experiment(
         "obs": ("SOMADataFrame",),
         "ms": ("SOMACollection",),
     }
+
+    @classmethod
+    def _set_create_metadata(cls, handle: Wrapper[Any]) -> None:
+        # Root SOMA objects include a `dataset_type` entry to allow the
+        # TileDB Cloud UI to detect that they are SOMA datasets.
+        if handle.uri.startswith("tiledb://"):
+            handle.metadata["dataset_type"] = "soma"
+        return super()._set_create_metadata(handle)
