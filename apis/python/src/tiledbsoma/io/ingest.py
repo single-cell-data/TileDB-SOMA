@@ -572,12 +572,18 @@ def _write_dataframe(
     df.set_index(SOMA_JOINID, inplace=True)
 
     # Categoricals are not yet well supported, so we must flatten
+    null_fields = set()
     for k in df:
         if df[k].dtype == "category":
             df[k] = df[k].astype(df[k].cat.categories.dtype)
         elif df[k].isnull().all():
             df[k] = pa.nulls(df.shape[0], pa.infer_type(df[k]))
+            null_fields.add(k)
     arrow_table = pa.Table.from_pandas(df)
+    if null_fields:
+        md = arrow_table.schema.metadata
+        md.update(dict.fromkeys(null_fields, 'nullable'))
+        arrow_table = pa.Table.from_pandas(df, schema=arrow_table.replace_schema_metadata(md).schema)
 
     try:
         soma_df = _factory.open(df_uri, "w", soma_type=DataFrame, context=context)
