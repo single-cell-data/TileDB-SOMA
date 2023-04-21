@@ -63,23 +63,39 @@ SOMAExperimentAxisQuery <- R6::R6Class(
 
     #' @description Retrieve obs [`arrow::Table`]
     #' @param column_names A character vector of column names to retrieve
-    obs = function(column_names = NULL) {
+    obs = function(
+      column_names = NULL,
+      result_order = "auto",
+      iterated = FALSE,
+      log_level = "warn"
+   ) {
       obs_query <- self$obs_query
       self$obs_df$read(
         coords = recursively_make_integer64(obs_query$coords),
         value_filter = obs_query$value_filter,
-        column_names = column_names
+        column_names = column_names,
+        result_order = result_order,
+        iterated = iterated,
+        log_level = log_level
       )
     },
 
     #' @description Retrieve var [`arrow::Table`]
     #' @param column_names A character vector of column names to retrieve
-    var = function(column_names = NULL) {
+    var = function(
+      column_names = NULL,
+      result_order = "auto",
+      iterated = FALSE,
+      log_level = "warn"
+   ) {
       var_query <- self$var_query
       self$var_df$read(
         coords = recursively_make_integer64(var_query$coords),
         value_filter = var_query$value_filter,
-        column_names = column_names
+        column_names = column_names,
+        result_order = result_order,
+        iterated = iterated,
+        log_level = log_level
       )
     },
 
@@ -95,7 +111,12 @@ SOMAExperimentAxisQuery <- R6::R6Class(
 
     #' @description Retrieves an `X` layer as an [`arrow::Table`].
     #' @param layer_name The name of the layer to retrieve.
-    X = function(layer_name) {
+    X = function(
+      layer_name,
+      result_order = "auto",
+      iterated = FALSE,
+      log_level = "warn"
+   ) {
       stopifnot(
         "Must specify an X layer name" = !missing(layer_name),
         "Must specify a single X layer name" = is_scalar_character(layer_name),
@@ -109,10 +130,15 @@ SOMAExperimentAxisQuery <- R6::R6Class(
       )
 
       # TODO: Stop converting to vectors when SOMAArrayReader supports arrow arrays
-      x_layer$read_arrow_table(coords = list(
-        self$obs_joinids()$as_vector(),
-        self$var_joinids()$as_vector()
-      ))
+      x_layer$read_arrow_table(
+         coords = list(
+            self$obs_joinids()$as_vector(),
+            self$var_joinids()$as_vector()
+         ),
+         result_order = result_order,
+         iterated = iterated,
+         log_level = log_level
+      )
     },
 
     #' @description Reads the entire query result as a list of
