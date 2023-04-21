@@ -64,6 +64,23 @@ TileDBGroup <- R6::R6Class(
       )
       # TODO: Avoid closing/re-opening the group to update the cache
       self$close()
+
+      # We manually add the new member to member_cache in order to preserve the
+      # original URI. Otherwise TileDB Cloud creation URIs are retrieved from
+      # using tiledb_group_member() in the form tiledb://namespace/uuid. In this
+      # form it's not possible to append new children, which is necessary during
+      # ingestion.
+      if (is.null(private$member_cache)) private$member_cache <- list()
+      private$member_cache[[name]] <- list(
+        type = tiledb::tiledb_object_type(object$uri),
+        uri = object$uri,
+        name = name
+      )
+
+      # We still need to update member_cache to pick-up existing members.
+      # Otherwise if you open a group with existing members and add a new
+      # member, the initially empty member_cache will only contain the new
+      # member.
       private$update_member_cache()
     },
 
@@ -87,13 +104,16 @@ TileDBGroup <- R6::R6Class(
       stopifnot(is_scalar_character(name))
 
       private$open("WRITE")
+      on.exit(self$close())
       tiledb::tiledb_group_remove_member(
         grp = self$object,
         uri = name
       )
-      self$close()
-      # TODO: Avoid closing/re-opening the group to update the cache
-      private$update_member_cache()
+
+      # Drop member if cache has been initialized
+      if (is.list(private$member_cache)) {
+        private$member_cache[[name]] <- NULL
+      }
     },
 
     #' @description Length in the number of members. (lifecycle: experimental)
@@ -226,7 +246,14 @@ TileDBGroup <- R6::R6Class(
 
     update_member_cache = function() {
       spdl::debug("Updating member cache for {} '{}'", self$class(), self$uri)
-      private$member_cache <- private$get_all_members()
+      members <- private$get_all_members()
+      if (is.null(private$member_cache)) {
+        private$member_cache <- members
+      } else {
+        # Don't clobber existing cache members in order to retain original URIs
+        members <- members[setdiff(names(members), names(private$member_cache))]
+        private$member_cache <- utils::modifyList(private$member_cache, members)
+      }
     },
 
     # Instantiate a group member object.
