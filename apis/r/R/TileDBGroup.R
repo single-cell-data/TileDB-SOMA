@@ -104,13 +104,16 @@ TileDBGroup <- R6::R6Class(
       stopifnot(is_scalar_character(name))
 
       private$open("WRITE")
+      on.exit(self$close())
       tiledb::tiledb_group_remove_member(
         grp = self$object,
         uri = name
       )
-      self$close()
-      # TODO: Avoid closing/re-opening the group to update the cache
-      private$update_member_cache()
+
+      # Drop member if cache has been initialized
+      if (is.list(private$member_cache)) {
+        private$member_cache[[name]] <- NULL
+      }
     },
 
     #' @description Length in the number of members. (lifecycle: experimental)
