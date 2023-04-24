@@ -422,14 +422,28 @@ def test_export_anndata(adata):
 
 def test_null_obs(adata, tmp_path: Path):
     output_path = tmp_path.as_uri()
-    adata.obs["empty"] = pd.Categorical(
+    seed = 42
+    #   Create column of all null values
+    adata.obs["empty_all"] = pd.Categorical(
         [np.NaN] * adata.n_obs, dtype=pd.CategoricalDtype(categories=[], ordered=False)
+    )
+    #   Create column of partially-null values
+    rng = np.random.RandomState(seed)
+    adata.obs["empty_partial"] = rng.choice(
+        (np.NaN, 1.0),
+        adata.n_obs,
+        True
     )
     uri = tiledbsoma.io.from_anndata(
         output_path, adata, "RNA", ingest_mode="write", X_kind=tiledbsoma.SparseNDArray
     )
     exp = tiledbsoma.Experiment.open(uri)
     with tiledb.open(exp.obs.uri, "r") as obs:
-        assert obs.attr("empty").isnullable
+        #   Explicitly check columns created above
+        assert obs.attr("empty_all").isnullable
+        assert obs.attr("empty_partial").isnullable
+        #   For every column in the data frame
+        #   ensure that `isnullable` reflects the null-ness
+        #   of the Pandas data frame
         for k in adata.obs:
-            assert obs.attr(k).isnullable == adata.obs[k].isnull().all()
+            assert obs.attr(k).isnullable == adata.obs[k].isnull().any()
