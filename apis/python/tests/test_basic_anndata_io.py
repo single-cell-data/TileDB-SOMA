@@ -12,6 +12,9 @@ import tiledbsoma
 import tiledbsoma.io
 from tiledbsoma import _constants, _factory
 
+import numpy as np
+import pandas as pd
+
 HERE = Path(__file__).parent
 
 
@@ -417,3 +420,26 @@ def test_export_anndata(adata):
         assert readback.obsp[key].shape == adata.obsp[key].shape
     for key in adata.varp.keys():
         assert readback.varp[key].shape == adata.varp[key].shape
+
+
+def test_null_obs(adata):
+    tempdir = tempfile.TemporaryDirectory()
+    output_path = tempdir.name
+    adata.obs["empty"] = pd.Categorical(
+        [np.NaN] * adata.n_obs,
+        dtype=pd.CategoricalDtype(categories=[], ordered=False)
+    )
+    uri = tiledbsoma.io.from_anndata(
+        output_path,
+        adata,
+        "RNA",
+        ingest_mode="write",
+        X_kind=tiledbsoma.SparseNDArray
+    )
+    exp = tiledbsoma.Experiment.open(uri)
+    with tiledb.open(exp.obs.uri, "r") as obs:
+        assert obs.attr("empty").isnullable
+        for k in adata.obs:
+            assert obs.attr(k).isnullable == adata.obs[k].isnull().all()
+
+    tempdir.cleanup()
