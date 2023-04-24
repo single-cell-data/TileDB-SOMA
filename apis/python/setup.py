@@ -280,11 +280,11 @@ setuptools.setup(
         #
         # "numba==0.56.4",
         #
-        # WIP
-        # https://github.com/single-cell-data/TileDB-SOMA/pull/599
-        # https://github.com/numba/numba/issues/8304
-        "numba==0.57.0rc1",
-        #
+        # Also: numba doesn't support Python 3.11 until 0.57.0rc1.
+        # It' not preferable to pin to an RC dependency, so we only do this
+        # when we must, which is for 3.11.
+        "numba==0.56.4; python_version<'3.11'",
+        "numba==0.57.0rc1; python_version=='3.11'",
         "numpy>=1.18,<1.24",
         "pandas",
         "pyarrow>=9.0.0",
