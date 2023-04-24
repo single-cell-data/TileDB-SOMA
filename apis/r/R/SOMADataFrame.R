@@ -215,19 +215,7 @@ SOMADataFrame <- R6::R6Class(
                                   config = cfg)
           private$soma_reader_transform(rl)
       } else {
-          ## should we error if this isn't null?
-          if (!is.null(private$soma_reader_pointer)) {
-              warning("Reader pointer not null, skipping")
-              rl <- NULL
-          } else {
-              private$soma_reader_setup()
-              rl <- list()
-              while (!self$read_complete()) {
-                  ## soma_reader_transform() applied inside read_next()
-                  rl <- c(rl, self$read_next())
-              }
-          }
-          invisible(rl)
+         TableReadIter$new(self$uri, self$tiledbsoma_ctx) 
       }
     }
 
@@ -265,12 +253,7 @@ SOMADataFrame <- R6::R6Class(
       }
 
       schema
-    },
-
-    ## refined from base class
-    soma_reader_transform = function(x) {
-      arrow::as_arrow_table(arrow::RecordBatch$import_from_c(x[[1]], x[[2]]))
     }
-
+    
   )
 )

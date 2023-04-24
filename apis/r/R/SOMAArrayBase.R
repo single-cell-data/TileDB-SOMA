@@ -20,6 +20,8 @@ SOMAArrayBase <- R6::R6Class(
   public = list(
 
     #' @description Check if iterated read is complete or not. (lifecycle: experimental)
+    # SHOULD REMOVE IF iterator functionality moves to ReatIter class for 
+    #    all read functions, currently only implemented for SOMADataFrame
     read_complete = function() {
       if (is.null(private$soma_reader_pointer)) {
           TRUE
@@ -29,6 +31,8 @@ SOMAArrayBase <- R6::R6Class(
     },
 
     #' @description Read the next chunk of an iterated read. (lifecycle: experimental)
+    # SHOULD REMOVE IF iterator functionality moves to ReatIter class for 
+    #    all read functions, currently only implemented for SOMADataFrame
     read_next = function() {
       if (is.null(private$soma_reader_pointer)) {
           NULL
@@ -61,9 +65,13 @@ SOMAArrayBase <- R6::R6Class(
     },
 
     # Internal 'external pointer' object used for iterated reads
+    # SHOULD REMOVE IF iterator functionality moves to ReatIter class for 
+    #    all read functions, currently only implemented for SOMADataFrame
     soma_reader_pointer = NULL,
 
     # Instantiate soma_reader_pointer with a soma_array_reader object
+    # SHOULD REMOVE IF iterator functionality moves to ReatIter class for 
+    #    all read functions, currently only implemented for SOMADataFrame
     soma_reader_setup = function() {
       private$soma_reader_pointer <- sr_setup(
         self$uri,
@@ -72,6 +80,8 @@ SOMAArrayBase <- R6::R6Class(
     },
 
     ## to be refined in derived classes
+    # SHOULD REMOVE IF iterator functionality moves to ReatIter class for 
+    #    all read functions, currently only implemented for SOMADataFrame
     soma_reader_transform = function(x) {
       x
     }
