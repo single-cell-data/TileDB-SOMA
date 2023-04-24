@@ -720,7 +720,7 @@ def _build_tiledb_schema(
             dtype=_arrow_types.tiledb_type_from_arrow_type(
                 schema.field(attr_name).type
             ),
-            nullable=metadata.get(bytes(attr_name, "utf-8")) == b"nullable",
+            nullable=metadata.get(attr_name.encode("utf-8")) == b"nullable",
             filters=tiledb_create_options.attr_filters(attr_name, ["ZstdFilter"]),
             ctx=context.tiledb_ctx,
         )
