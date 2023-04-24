@@ -584,7 +584,7 @@ def _write_dataframe(
                 df[k].where(
                     df[k].notnull(),
                     pd.Series(pa.nulls(df[k].isnull().sum(), pa.infer_type(df[k]))),
-                    inplace=True
+                    inplace=True,
                 )
             null_fields.add(k)
     arrow_table = pa.Table.from_pandas(df)

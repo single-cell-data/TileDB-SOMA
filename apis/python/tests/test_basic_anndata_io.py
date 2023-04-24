@@ -429,11 +429,7 @@ def test_null_obs(adata, tmp_path: Path):
     )
     #   Create column of partially-null values
     rng = np.random.RandomState(seed)
-    adata.obs["empty_partial"] = rng.choice(
-        (np.NaN, 1.0),
-        adata.n_obs,
-        True
-    )
+    adata.obs["empty_partial"] = rng.choice((np.NaN, 1.0), adata.n_obs, True)
     uri = tiledbsoma.io.from_anndata(
         output_path, adata, "RNA", ingest_mode="write", X_kind=tiledbsoma.SparseNDArray
     )
