@@ -24,7 +24,16 @@ SOMACollectionBase <- R6::R6Class(
     #' @description Add a new SOMA object to the collection. (lifecycle: experimental)
     create = function() {
       super$create()
-      private$write_object_type_metadata()
+
+      # Root SOMA objects include a `dataset_type` entry to allow the
+      # TileDB Cloud UI to detect that they are SOMA datasets.
+      if (self$class() == "SOMAExperiment" && startsWith(self$uri, "tiledb://")) {
+        metadata <- list(dataset_type = "soma")
+      } else {
+        metadata <- list()
+      }
+
+      private$write_object_type_metadata(metadata)
       self
     },
 
@@ -112,11 +121,13 @@ SOMACollectionBase <- R6::R6Class(
       private$soma_type_cache <- self$get_metadata(SOMA_OBJECT_TYPE_METADATA_KEY)
     },
 
-    write_object_type_metadata = function() {
-      meta <- list()
-      meta[[SOMA_OBJECT_TYPE_METADATA_KEY]] <- self$class()
-      meta[[SOMA_ENCODING_VERSION_METADATA_KEY]] <- SOMA_ENCODING_VERSION
-      self$set_metadata(meta)
+    # Add standard SOMA metadata values to the object with the option to include
+    # additional metadata.
+    write_object_type_metadata = function(metadata = list()) {
+      stopifnot(is.list(metadata))
+      metadata[[SOMA_OBJECT_TYPE_METADATA_KEY]] <- self$class()
+      metadata[[SOMA_ENCODING_VERSION_METADATA_KEY]] <- SOMA_ENCODING_VERSION
+      self$set_metadata(metadata)
     },
 
     # Instantiate a soma member object.
@@ -142,6 +153,11 @@ SOMACollectionBase <- R6::R6Class(
         internal_use_only = "allowed_use"
       )
       soma_type <- tiledb_object$get_metadata(SOMA_OBJECT_TYPE_METADATA_KEY)
+      spdl::debug(
+        "[SOMACollectionBase] Instantiating {} object at: '{}'",
+        soma_type %||% "Unknown",
+        uri
+      )
 
       soma_constructor <- switch(soma_type,
         SOMADataFrame = SOMADataFrame$new,
