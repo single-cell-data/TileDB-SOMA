@@ -711,7 +711,7 @@ def _build_tiledb_schema(
     dom = tiledb.Domain(dims, ctx=context.tiledb_ctx)
 
     attrs = []
-    metadata = schema.metadata or dict()
+    metadata = schema.metadata or {}
     for attr_name in schema.names:
         if attr_name in index_column_names:
             continue
