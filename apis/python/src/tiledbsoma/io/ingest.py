@@ -582,7 +582,7 @@ def _write_dataframe(
     arrow_table = pa.Table.from_pandas(df)
     if null_fields:
         md = arrow_table.schema.metadata
-        md.update(dict.fromkeys(null_fields, 'nullable'))
+        md.update(dict.fromkeys(null_fields, "nullable"))
         arrow_table = arrow_table.replace_schema_metadata(md)
 
     try:

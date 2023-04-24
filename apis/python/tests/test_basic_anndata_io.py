@@ -4,6 +4,7 @@ from pathlib import Path
 
 import anndata
 import numpy as np
+import pandas as pd
 import pytest
 import somacore
 import tiledb
@@ -11,9 +12,6 @@ import tiledb
 import tiledbsoma
 import tiledbsoma.io
 from tiledbsoma import _constants, _factory
-
-import numpy as np
-import pandas as pd
 
 HERE = Path(__file__).parent
 
@@ -426,15 +424,10 @@ def test_null_obs(adata):
     tempdir = tempfile.TemporaryDirectory()
     output_path = tempdir.name
     adata.obs["empty"] = pd.Categorical(
-        [np.NaN] * adata.n_obs,
-        dtype=pd.CategoricalDtype(categories=[], ordered=False)
+        [np.NaN] * adata.n_obs, dtype=pd.CategoricalDtype(categories=[], ordered=False)
     )
     uri = tiledbsoma.io.from_anndata(
-        output_path,
-        adata,
-        "RNA",
-        ingest_mode="write",
-        X_kind=tiledbsoma.SparseNDArray
+        output_path, adata, "RNA", ingest_mode="write", X_kind=tiledbsoma.SparseNDArray
     )
     exp = tiledbsoma.Experiment.open(uri)
     with tiledb.open(exp.obs.uri, "r") as obs:
