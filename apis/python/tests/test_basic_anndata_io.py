@@ -420,9 +420,8 @@ def test_export_anndata(adata):
         assert readback.varp[key].shape == adata.varp[key].shape
 
 
-def test_null_obs(adata):
-    tempdir = tempfile.TemporaryDirectory()
-    output_path = tempdir.name
+def test_null_obs(adata, tmp_path: Path):
+    output_path = tmp_path.as_uri()
     adata.obs["empty"] = pd.Categorical(
         [np.NaN] * adata.n_obs, dtype=pd.CategoricalDtype(categories=[], ordered=False)
     )
@@ -434,5 +433,3 @@ def test_null_obs(adata):
         assert obs.attr("empty").isnullable
         for k in adata.obs:
             assert obs.attr(k).isnullable == adata.obs[k].isnull().all()
-
-    tempdir.cleanup()
