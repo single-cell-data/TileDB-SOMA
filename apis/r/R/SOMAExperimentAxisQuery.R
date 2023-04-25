@@ -225,7 +225,7 @@ SOMAExperimentAxisQuery <- R6::R6Class(
       )
       # Load in the cells
       cells <- if (is.null(obs_index)) {
-        paste0('cell', self$obs_joinids())
+        paste0('cell', self$obs_joinids()$as_vector())
       } else {
         obs_index <- match.arg(
           arg = obs_index,
@@ -398,7 +398,7 @@ SOMAExperimentAxisQuery <- R6::R6Class(
       )
       match.arg(version, choices = 'v3')
       features <- if (is.null(var_index)) {
-        paste0('feature', self$var_joinids())
+        paste0('feature', self$var_joinids()$as_vector())
       } else {
         var_index <- match.arg(
           arg = var_index,
@@ -407,7 +407,7 @@ SOMAExperimentAxisQuery <- R6::R6Class(
         self$var(var_index)$GetColumnByName(var_index)$as_vector()
       }
       cells <- if (is.null(obs_index)) {
-        paste0('cell', self$obs_joinids())
+        paste0('cell', self$obs_joinids()$as_vector())
       } else {
         obs_index <- match.arg(
           arg = obs_index,
@@ -566,7 +566,7 @@ SOMAExperimentAxisQuery <- R6::R6Class(
       }
       # Get cell names
       cells <- if (is.null(obs_index)) {
-        paste0('cell', self$obs_joinids())
+        paste0('cell', self$obs_joinids()$as_vector())
       } else {
         obs_index <- match.arg(
           arg = obs_index,
@@ -616,7 +616,7 @@ SOMAExperimentAxisQuery <- R6::R6Class(
         }
         # Get feature names
         features <- if (is.null(var_index)) {
-          paste0('feature', self$var_joinids())
+          paste0('feature', self$var_joinids()$as_vector())
         } else {
           var_index <- match.arg(
             arg = var_index,
@@ -693,7 +693,7 @@ SOMAExperimentAxisQuery <- R6::R6Class(
       mat <- mat[idx, idx]
       mat <- as(mat, 'Graph')
       cells <- if (is.null(obs_index)) {
-        paste0('cell', self$obs_joinids())
+        paste0('cell', self$obs_joinids()$as_vector())
       } else {
         obs_index <- match.arg(
           arg = obs_index,

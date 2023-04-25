@@ -24,9 +24,9 @@ test_that("Load assay from ExperimentQuery mechanics", {
   expect_equal(SeuratObject::Key(assay), 'rna_')
   expect_equal(names(assay[[]]), query$var_df$attrnames())
   expect_equal(rownames(assay), paste0('feature', seq_len(n_var) - 1L))
-  expect_equal(rownames(assay), paste0('feature', query$var_joinids()))
+  expect_equal(rownames(assay), paste0('feature', query$var_joinids()$as_vector()))
   expect_equal(colnames(assay), paste0('cell', seq_len(n_obs) - 1L))
-  expect_equal(colnames(assay), paste0('cell', query$obs_joinids()))
+  expect_equal(colnames(assay), paste0('cell', query$obs_joinids()$as_vector()))
   # Test no counts
   expect_no_condition(nocounts <- query$to_seurat_assay(c(data = 'logcounts')))
   expect_true(SeuratObject::IsMatrixEmpty(SeuratObject::GetAssayData(
@@ -125,8 +125,8 @@ test_that("Load assay from sliced ExperimentQuery", {
   expect_no_condition(assay <- query$to_seurat_assay())
   expect_s4_class(assay, 'Assay')
   expect_identical(dim(assay), c(length(var_slice), length(obs_slice)))
-  expect_identical(rownames(assay), paste0('feature', query$var_joinids()))
-  expect_identical(colnames(assay), paste0('cell', query$obs_joinids()))
+  expect_identical(rownames(assay), paste0('feature', query$var_joinids()$as_vector()))
+  expect_identical(colnames(assay), paste0('cell', query$obs_joinids()$as_vector()))
   # Test named
   expect_no_condition(named <- query$to_seurat_assay(
     obs_index = 'baz',
@@ -175,8 +175,8 @@ test_that("Load assay from indexed ExperimentQuery", {
     dim(assay),
     c(length(var_label_values), length(obs_label_values))
   )
-  expect_identical(rownames(assay), paste0('feature', query$var_joinids()))
-  expect_identical(colnames(assay), paste0('cell', query$obs_joinids()))
+  expect_identical(rownames(assay), paste0('feature', query$var_joinids()$as_vector()))
+  expect_identical(colnames(assay), paste0('cell', query$obs_joinids()$as_vector()))
   # Test named
   expect_no_condition(named <- query$to_seurat_assay(
     obs_index = 'baz',
@@ -519,10 +519,10 @@ test_that("Load reduction from sliced ExperimentQuery", {
   expect_identical(dim(pca), c(length(obs_slice), n_pcs))
   expect_identical(dim(SeuratObject::Embeddings(pca)), dim(pca))
   expect_identical(dim(SeuratObject::Loadings(pca)), c(length(var_slice), n_pcs))
-  expect_identical(SeuratObject::Cells(pca), paste0('cell', query$obs_joinids()))
+  expect_identical(SeuratObject::Cells(pca), paste0('cell', query$obs_joinids()$as_vector()))
   expect_identical(
     rownames(SeuratObject::Loadings(pca)),
-    paste0('feature', query$var_joinids())
+    paste0('feature', query$var_joinids()$as_vector())
   )
   expect_false(SeuratObject::IsGlobal(pca))
   expect_equal(SeuratObject::Key(pca), 'PC_')
@@ -539,10 +539,10 @@ test_that("Load reduction from sliced ExperimentQuery", {
   expect_identical(dim(ica), c(length(obs_slice), n_ics))
   expect_identical(dim(SeuratObject::Embeddings(ica)), dim(ica))
   expect_identical(dim(SeuratObject::Loadings(ica)), c(length(var_slice), n_ics))
-  expect_identical(SeuratObject::Cells(ica), paste0('cell', query$obs_joinids()))
+  expect_identical(SeuratObject::Cells(ica), paste0('cell', query$obs_joinids()$as_vector()))
   expect_identical(
     rownames(SeuratObject::Loadings(ica)),
-    paste0('feature', query$var_joinids())
+    paste0('feature', query$var_joinids()$as_vector())
   )
   expect_false(SeuratObject::IsGlobal(ica))
   expect_equal(SeuratObject::Key(ica), 'IC_')
@@ -561,7 +561,7 @@ test_that("Load reduction from sliced ExperimentQuery", {
   expect_identical(dim(SeuratObject::Loadings(umap)), c(0L, 0L))
   expect_identical(
     SeuratObject::Cells(umap),
-    paste0('cell', query$obs_joinids())
+    paste0('cell', query$obs_joinids()$as_vector())
   )
   expect_true(SeuratObject::IsGlobal(umap))
   expect_equal(SeuratObject::Key(umap), 'UMAP_')
@@ -711,10 +711,10 @@ test_that("Load reduction from indexed ExperimentQuery", {
     dim(SeuratObject::Loadings(pca)),
     c(length(var_label_values), n_pcs)
   )
-  expect_identical(SeuratObject::Cells(pca), paste0('cell', query$obs_joinids()))
+  expect_identical(SeuratObject::Cells(pca), paste0('cell', query$obs_joinids()$as_vector()))
   expect_identical(
     rownames(SeuratObject::Loadings(pca)),
-    paste0('feature', query$var_joinids())
+    paste0('feature', query$var_joinids()$as_vector())
   )
   expect_false(SeuratObject::IsGlobal(pca))
   expect_equal(SeuratObject::Key(pca), 'PC_')
@@ -737,10 +737,10 @@ test_that("Load reduction from indexed ExperimentQuery", {
     dim(SeuratObject::Loadings(ica)),
     c(length(var_label_values), n_ics)
   )
-  expect_identical(SeuratObject::Cells(ica), paste0('cell', query$obs_joinids()))
+  expect_identical(SeuratObject::Cells(ica), paste0('cell', query$obs_joinids()$as_vector()))
   expect_identical(
     rownames(SeuratObject::Loadings(ica)),
-    paste0('feature', query$var_joinids())
+    paste0('feature', query$var_joinids()$as_vector())
   )
   expect_false(SeuratObject::IsGlobal(ica))
   expect_equal(SeuratObject::Key(ica), 'IC_')
@@ -762,7 +762,7 @@ test_that("Load reduction from indexed ExperimentQuery", {
   expect_identical(dim(SeuratObject::Loadings(umap)), c(0L, 0L))
   expect_identical(
     SeuratObject::Cells(umap),
-    paste0('cell', query$obs_joinids())
+    paste0('cell', query$obs_joinids()$as_vector())
   )
   expect_true(SeuratObject::IsGlobal(umap))
   expect_equal(SeuratObject::Key(umap), 'UMAP_')
@@ -848,8 +848,8 @@ test_that("Load graph from ExperimentQuery mechanics", {
   expect_no_condition(graph <- query$to_seurat_graph('connectivities'))
   expect_s4_class(graph, 'Graph')
   expect_identical(dim(graph), c(n_obs, n_obs))
-  expect_identical(rownames(graph), paste0('cell', query$obs_joinids()))
-  expect_identical(colnames(graph), paste0('cell', query$obs_joinids()))
+  expect_identical(rownames(graph), paste0('cell', query$obs_joinids()$as_vector()))
+  expect_identical(colnames(graph), paste0('cell', query$obs_joinids()$as_vector()))
   expect_identical(SeuratObject::DefaultAssay(graph), 'RNA')
   # Test named
   expect_no_condition(named <- query$to_seurat_graph('connectivities', 'baz'))
@@ -921,8 +921,8 @@ test_that("Load graph from sliced ExperimentQuery", {
   expect_no_condition(graph <- query$to_seurat_graph('connectivities'))
   expect_s4_class(graph, 'Graph')
   expect_identical(dim(graph), c(n_obs_slice, n_obs_slice))
-  expect_identical(rownames(graph), paste0('cell', query$obs_joinids()))
-  expect_identical(colnames(graph), paste0('cell', query$obs_joinids()))
+  expect_identical(rownames(graph), paste0('cell', query$obs_joinids()$as_vector()))
+  expect_identical(colnames(graph), paste0('cell', query$obs_joinids()$as_vector()))
   expect_identical(SeuratObject::DefaultAssay(graph), 'RNA')
   # Test named
   expect_no_condition(named <- query$to_seurat_graph('connectivities', 'baz'))
@@ -983,8 +983,8 @@ test_that("Load graph from indexed ExperimentQuery", {
   expect_no_condition(graph <- query$to_seurat_graph('connectivities'))
   expect_s4_class(graph, 'Graph')
   expect_identical(dim(graph), c(n_obs_select, n_obs_select))
-  expect_identical(rownames(graph), paste0('cell', query$obs_joinids()))
-  expect_identical(colnames(graph), paste0('cell', query$obs_joinids()))
+  expect_identical(rownames(graph), paste0('cell', query$obs_joinids()$as_vector()))
+  expect_identical(colnames(graph), paste0('cell', query$obs_joinids()$as_vector()))
   expect_identical(SeuratObject::DefaultAssay(graph), 'RNA')
   # Test named
   expect_no_condition(named <- query$to_seurat_graph('connectivities', 'baz'))
@@ -1070,8 +1070,8 @@ test_that("Load Seurat object from ExperimentQuery mechanics", {
   expect_no_condition(obj <- query$to_seurat())
   expect_s4_class(obj, 'Seurat')
   expect_identical(dim(obj), c(n_var, n_obs))
-  expect_identical(rownames(obj), paste0('feature', query$var_joinids()))
-  expect_identical(colnames(obj), paste0('cell', query$obs_joinids()))
+  expect_identical(rownames(obj), paste0('feature', query$var_joinids()$as_vector()))
+  expect_identical(colnames(obj), paste0('cell', query$obs_joinids()$as_vector()))
   expect_true(all(query$obs_df$attrnames() %in% names(obj[[]])))
   expect_identical(SeuratObject::Assays(obj), 'RNA')
   expect_s4_class(rna <- obj[['RNA']], 'Assay')
@@ -1274,8 +1274,8 @@ test_that("Load Seurat object from sliced ExperimentQuery", {
   expect_no_condition(obj <- query$to_seurat())
   expect_s4_class(obj, 'Seurat')
   expect_identical(dim(obj), c(n_var_slice, n_obs_slice))
-  expect_identical(rownames(obj), paste0('feature', query$var_joinids()))
-  expect_identical(colnames(obj), paste0('cell', query$obs_joinids()))
+  expect_identical(rownames(obj), paste0('feature', query$var_joinids()$as_vector()))
+  expect_identical(colnames(obj), paste0('cell', query$obs_joinids()$as_vector()))
   expect_identical(names(obj), c('RNA', 'connectivities', 'pca', 'umap'))
   # Test named
   expect_no_condition(obj <- query$to_seurat(
@@ -1376,8 +1376,8 @@ test_that("Load Seurat object from indexed ExperimentQuery", {
   expect_no_condition(obj <- query$to_seurat())
   expect_s4_class(obj, 'Seurat')
   expect_identical(dim(obj), c(n_var_select, n_obs_select))
-  expect_identical(rownames(obj), paste0('feature', query$var_joinids()))
-  expect_identical(colnames(obj), paste0('cell', query$obs_joinids()))
+  expect_identical(rownames(obj), paste0('feature', query$var_joinids()$as_vector()))
+  expect_identical(colnames(obj), paste0('cell', query$obs_joinids()$as_vector()))
   expect_identical(names(obj), c('RNA', 'connectivities', 'pca', 'umap'))
   # Test named
   expect_no_condition(obj <- query$to_seurat(
