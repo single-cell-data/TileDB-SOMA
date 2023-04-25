@@ -40,7 +40,7 @@ using namespace tiledb;
 //= public static
 //===================================================================
 
-std::unique_ptr<SOMASparseNDArray> SOMASparseNDArray::open(
+std::shared_ptr<SOMASparseNDArray> SOMASparseNDArray::open(
     tiledb_query_type_t mode,
     std::string_view uri,
     std::string_view name,
@@ -49,11 +49,31 @@ std::unique_ptr<SOMASparseNDArray> SOMASparseNDArray::open(
     std::string_view batch_size,
     std::string_view result_order,
     std::optional<std::pair<uint64_t, uint64_t>> timestamp) {
-    return std::make_unique<SOMASparseNDArray>(
+    return std::make_shared<SOMASparseNDArray>(
         mode,
         uri,
         name,
         std::make_shared<Context>(Config(platform_config)),
+        column_names,
+        batch_size,
+        result_order,
+        timestamp);
+}
+
+std::shared_ptr<SOMASparseNDArray> SOMASparseNDArray::open(
+    tiledb_query_type_t mode,
+    std::shared_ptr<Context> ctx,
+    std::string_view uri,
+    std::string_view name,
+    std::vector<std::string> column_names,
+    std::string_view batch_size,
+    std::string_view result_order,
+    std::optional<std::pair<uint64_t, uint64_t>> timestamp) {
+    return std::make_shared<SOMASparseNDArray>(
+        mode,
+        uri,
+        name,
+        ctx,
         column_names,
         batch_size,
         result_order,
@@ -73,7 +93,7 @@ SOMASparseNDArray::SOMASparseNDArray(
     std::string_view batch_size,
     std::string_view result_order,
     std::optional<std::pair<uint64_t, uint64_t>> timestamp) {
-    array_ = std::make_unique<SOMAArray>(
+    array_ = std::make_shared<SOMAArray>(
         mode,
         uri,
         name,
@@ -82,6 +102,8 @@ SOMASparseNDArray::SOMASparseNDArray(
         batch_size,
         result_order,
         timestamp);
+    array_.get()->set_metadata(
+        "soma_object_type", TILEDB_STRING_UTF8, 1, "SOMASparseNDArray");
 };
 
 void SOMASparseNDArray::close() {
@@ -90,6 +112,10 @@ void SOMASparseNDArray::close() {
 
 std::string SOMASparseNDArray::uri() const {
     return array_.get()->uri();
+}
+
+std::shared_ptr<Context> SOMASparseNDArray::ctx() {
+    return array_.get()->ctx();
 }
 
 std::shared_ptr<ArraySchema> SOMASparseNDArray::schema() const {

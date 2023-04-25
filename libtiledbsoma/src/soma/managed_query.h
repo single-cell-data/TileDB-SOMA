@@ -36,8 +36,6 @@
 #include <stdexcept>  // for windows: error C2039: 'runtime_error': is not a member of 'std'
 #include <unordered_set>
 
-#include <tiledb/tiledb>
-
 #include "../utils/array_buffers.h"
 #include "../utils/column_buffer.h"
 #include "../utils/common.h"

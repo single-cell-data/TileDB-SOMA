@@ -31,6 +31,12 @@
  */
 
 #include "../cpp_api/soma_collection.h"
+#include "../cpp_api/soma_dataframe.h"
+#include "../cpp_api/soma_dense_ndarray.h"
+#include "../cpp_api/soma_experiment.h"
+#include "../cpp_api/soma_measurement.h"
+#include "../cpp_api/soma_sparse_ndarray.h"
+#include "soma_array.h"
 #include "soma_group.h"
 
 namespace tiledbsoma {
@@ -40,9 +46,19 @@ using namespace tiledb;
 //= public static
 //===================================================================
 
-std::unique_ptr<SOMACollection> SOMACollection::open(
-    std::shared_ptr<Context> ctx, const std::string& uri) {
-    return std::make_unique<SOMACollection>(ctx, uri);
+std::shared_ptr<SOMACollection> SOMACollection::open(
+    tiledb_query_type_t mode,
+    std::string_view uri,
+    std::map<std::string, std::string> platform_config) {
+    return std::make_shared<SOMACollection>(
+        mode, uri, std::make_shared<Context>(Config(platform_config)));
+}
+
+std::shared_ptr<SOMACollection> SOMACollection::open(
+    tiledb_query_type_t mode,
+    std::shared_ptr<Context> ctx,
+    std::string_view uri) {
+    return std::make_shared<SOMACollection>(mode, uri, ctx);
 }
 
 //===================================================================
@@ -50,35 +66,73 @@ std::unique_ptr<SOMACollection> SOMACollection::open(
 //===================================================================
 
 SOMACollection::SOMACollection(
-    std::shared_ptr<Context> ctx, const std::string& uri)
+    tiledb_query_type_t mode,
+    std::string_view uri,
+    std::shared_ptr<Context> ctx)
     : ctx_(ctx) {
-    // std::map<std::string, std::string> platform_config) {
-    group_ = std::make_unique<SOMAGroup>(ctx, uri, TILEDB_READ);
+    group_ = std::make_shared<SOMAGroup>(mode, uri, ctx_);
+    group_.get()->set_metadata(
+        "soma_object_type", TILEDB_STRING_UTF8, 1, "SOMACollection");
 }
 
 void SOMACollection::close() {
     group_.get()->close();
 }
 
+std::string SOMACollection::type() const {
+    tiledb_datatype_t value_type;
+    uint32_t value_num;
+    const void* value;
+
+    group_.get()->get_metadata(
+        "soma_object_type", &value_type, &value_num, &value);
+
+    return std::string(static_cast<const char*>(value), value_num);
+}
+
 std::string SOMACollection::uri() const {
     return group_.get()->uri();
 }
 
-// void SOMACollection::set(
-//     const std::string& name, SOMAObject& object, bool use_relative_uri) {
-//     group_.add_member(name, object, use_relative_uri);
-// }
+std::shared_ptr<Context> SOMACollection::ctx() {
+    return group_.get()->ctx();
+}
 
-bool SOMACollection::has(const std::string& name) {
-    return group_.get()->has_member(name);
+void SOMACollection::set(const std::string& key, SOMAObject& object) {
+    // TODO need to check if URI of object is relative
+    group_.get()->add_member(object.uri(), false, key);
+}
+
+std::shared_ptr<SOMAObject> SOMACollection::get(const std::string& key) {
+    auto member = group_.get()->get_member(key);
+    std::string soma_object_type = this->type();
+
+    if (soma_object_type.compare("SOMACollection") == 0)
+        return SOMACollection::open(TILEDB_READ, member.uri());
+    else if (soma_object_type.compare("SOMAExperiment") == 0)
+        return SOMAExperiment::open(TILEDB_READ, member.uri());
+    else if (soma_object_type.compare("SOMAMeasurement") == 0)
+        return SOMAMeasurement::open(TILEDB_READ, member.uri());
+    else if (soma_object_type.compare("SOMADataFrame") == 0)
+        return SOMADataFrame::open(TILEDB_READ, member.uri());
+    else if (soma_object_type.compare("SOMASparseNDArray") == 0)
+        return SOMASparseNDArray::open(TILEDB_READ, member.uri());
+    else if (soma_object_type.compare("SOMADenseNDArray") == 0)
+        return SOMADenseNDArray::open(TILEDB_READ, member.uri());
+
+    throw TileDBSOMAError("Saw invalid SOMA object.");
+}
+
+bool SOMACollection::has(const std::string& key) {
+    return group_.get()->has_member(key);
 }
 
 uint64_t SOMACollection::count() const {
     return group_.get()->get_length();
 }
 
-void SOMACollection::del(const std::string& name) {
-    group_.get()->remove_member(name);
+void SOMACollection::del(const std::string& key) {
+    group_.get()->remove_member(key);
 }
 
 std::map<std::string, std::string> SOMACollection::member_to_uri_mapping()
@@ -86,24 +140,109 @@ std::map<std::string, std::string> SOMACollection::member_to_uri_mapping()
     return group_.get()->member_to_uri_mapping();
 };
 
-void SOMACollection::add_new_collection(
-    const std::string& name, SOMACollection& collection) {
-    group_.get()->add_member(collection.uri(), false, name);
+SOMACollection SOMACollection::add_new_collection(
+    std::string_view key,
+    std::string_view uri,
+    bool relative,
+    std::shared_ptr<Context> ctx) {
+    auto member = SOMACollection(TILEDB_READ, uri, ctx);
+    group_.get()->add_member(std::string(uri), relative, std::string(key));
+    return member;
 }
 
-void SOMACollection::add_new_dataframe(
-    const std::string& name, SOMADataFrame& dataframe) {
-    group_.get()->add_member(dataframe.uri(), false, name);
+// SOMAExperiment SOMACollection::add_new_experiment(
+//     std::string_view key,
+//     std::string_view uri,
+//     bool relative,
+//     std::shared_ptr<Context> ctx,
+//     SOMADataFrame& obs,
+//     SOMACollection& ms) {
+//     auto member = SOMAExperiment(TILEDB_READ, uri, ctx, obs, ms);
+//     group_.get()->add_member(std::string(uri), relative, std::string(key));
+//     return member;
+// }
+
+// SOMAMeasurement SOMACollection::add_new_measurement(
+//     std::string_view key,
+//     std::string_view uri,
+//     bool relative,
+//     std::shared_ptr<Context> ctx,
+//     SOMADataFrame& var,
+//     SOMACollection& X,
+//     SOMACollection& obsm,
+//     SOMACollection& obsp,
+//     SOMACollection& varm,
+//     SOMACollection& varp) {
+//     auto member = SOMAMeasurement(
+//         TILEDB_READ, uri, ctx, var, X, obsm, obsp, varm, varp);
+//     group_.get()->add_member(std::string(uri), relative, std::string(key));
+//     return member;
+// }
+
+SOMADataFrame SOMACollection::add_new_dataframe(
+    std::string_view key,
+    std::string_view uri,
+    bool relative,
+    std::shared_ptr<Context> ctx,
+    std::vector<std::string> column_names,
+    std::string_view batch_size,
+    std::string_view result_order,
+    std::optional<std::pair<uint64_t, uint64_t>> timestamp) {
+    auto member = SOMADataFrame(
+        TILEDB_READ,
+        uri,
+        key,
+        ctx,
+        column_names,
+        batch_size,
+        result_order,
+        timestamp);
+    group_.get()->add_member(std::string(uri), relative, std::string(key));
+    return member;
 }
 
-void SOMACollection::add_new_dense_ndarray(
-    const std::string& name, const SOMADenseNDArray& array) {
-    group_.get()->add_member(array.uri(), false, name);
+SOMADenseNDArray SOMACollection::add_new_dense_ndarray(
+    std::string_view key,
+    std::string_view uri,
+    bool relative,
+    std::shared_ptr<Context> ctx,
+    std::vector<std::string> column_names,
+    std::string_view batch_size,
+    std::string_view result_order,
+    std::optional<std::pair<uint64_t, uint64_t>> timestamp) {
+    auto member = SOMADenseNDArray(
+        TILEDB_READ,
+        uri,
+        key,
+        ctx,
+        column_names,
+        batch_size,
+        result_order,
+        timestamp);
+    group_.get()->add_member(std::string(uri), relative, std::string(key));
+    return member;
 }
 
-void SOMACollection::add_new_sparse_ndarray(
-    const std::string& name, const SOMASparseNDArray& array) {
-    group_.get()->add_member(array.uri(), false, name);
+SOMASparseNDArray SOMACollection::add_new_sparse_ndarray(
+    std::string_view key,
+    std::string_view uri,
+    bool relative,
+    std::shared_ptr<Context> ctx,
+    std::vector<std::string> column_names,
+    std::string_view batch_size,
+    std::string_view result_order,
+    std::optional<std::pair<uint64_t, uint64_t>> timestamp) {
+    auto member = SOMASparseNDArray(
+        TILEDB_READ,
+        uri,
+        key,
+        ctx,
+        column_names,
+        batch_size,
+        result_order,
+        timestamp);
+    group_.get()->add_member(std::string(uri), relative, std::string(key));
+    return member;
 }
 
 }  // namespace tiledbsoma

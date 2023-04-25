@@ -158,18 +158,26 @@ if(SANITIZER)
   endif()
 endif()
 
-# Install header files and preserve directory structure
+# Install header files 
 # target_sources FILE_SET is preferred with cmake>=3.23
-set(TILEDB_SOMA_PUBLIC_HEADERS
-  ${CMAKE_CURRENT_SOURCE_DIR}/cpp_api/tiledbsoma
-  ${CMAKE_CURRENT_SOURCE_DIR}/cpp_api/soma_collection.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/cpp_api/soma_dataframe.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/cpp_api/soma_dense_ndarray.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/cpp_api/soma_experiment.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/cpp_api/soma_measurement.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/cpp_api/soma_object.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/cpp_api/soma_sparse_ndarray.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/cpp_api/logger_public.h
+# set(TILEDB_SOMA_PUBLIC_HEADERS
+#   ${CMAKE_CURRENT_SOURCE_DIR}/cpp_api/tiledbsoma
+#   ${CMAKE_CURRENT_SOURCE_DIR}/cpp_api/soma_collection.h
+#   ${CMAKE_CURRENT_SOURCE_DIR}/cpp_api/soma_dataframe.h
+#   ${CMAKE_CURRENT_SOURCE_DIR}/cpp_api/soma_dense_ndarray.h
+#   ${CMAKE_CURRENT_SOURCE_DIR}/cpp_api/soma_experiment.h
+#   ${CMAKE_CURRENT_SOURCE_DIR}/cpp_api/soma_measurement.h
+#   ${CMAKE_CURRENT_SOURCE_DIR}/cpp_api/soma_object.h
+#   ${CMAKE_CURRENT_SOURCE_DIR}/cpp_api/soma_sparse_ndarray.h
+#   ${CMAKE_CURRENT_SOURCE_DIR}/cpp_api/logger_public.h
+# )
+
+install(DIRECTORY
+  ${CMAKE_CURRENT_SOURCE_DIR}/cli
+  ${CMAKE_CURRENT_SOURCE_DIR}/cpp_api
+  ${CMAKE_CURRENT_SOURCE_DIR}/soma
+  ${CMAKE_CURRENT_SOURCE_DIR}/utils
+  TYPE INCLUDE
 )
 
 # ###########################################################

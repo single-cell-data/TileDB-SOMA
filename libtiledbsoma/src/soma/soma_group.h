@@ -44,16 +44,73 @@ using namespace tiledb;
 class SOMAGroup {
    public:
     //===================================================================
+    //= public static
+    //===================================================================
+
+    /**
+     * @brief Create a SOMAGroup
+     *
+     * * **Example:**
+     * @code{.cpp}
+     * tiledb::Group::create(ctx, "s3://bucket-name/group-name");
+     * @endcode
+     *
+     * @param ctx tiledb context
+     * @param uri URI where group will be created.
+     */
+    static void create(std::shared_ptr<Context> ctx, const std::string& uri);
+
+    /**
+     * @brief Open a group at the specified URI and return SOMAGroup
+     * object.
+     *
+     * @param mode TILEDB_READ or TILEDB_WRITE
+     * @param uri URI of the array
+     * @param platform_config Config parameter dictionary
+     * @return std::unique_ptr<SOMAGroup> SOMAGroup
+     */
+    static std::unique_ptr<SOMAGroup> open(
+        tiledb_query_type_t mode,
+        std::string_view uri,
+        std::map<std::string, std::string> platform_config = {});
+
+    /**
+     * @brief Open a group at the specified URI and return SOMAGroup
+     * object.
+     *
+
+     * @return std::unique_ptr<SOMAGroup> SOMAGroup
+     */
+    static std::unique_ptr<SOMAGroup> open(
+        tiledb_query_type_t mode,
+        std::shared_ptr<Context> ctx,
+        std::string_view uri);
+
+    //===================================================================
     //= public non-static
     //===================================================================
 
+    /**
+     * @brief Construct a new SOMACollection object.
+     *
+     * @param mode TILEDB_READ or TILEDB_WRITE
+     * @param uri URI of the array
+     * @param ctx TileDB context
+     */
     SOMAGroup(
-        std::shared_ptr<Context>, const std::string&, tiledb_query_type_t);
+        tiledb_query_type_t mode,
+        std::string_view uri,
+        std::shared_ptr<Context> ctx);
 
     SOMAGroup(const SOMAGroup&) = default;
     SOMAGroup(SOMAGroup&&) = default;
     SOMAGroup& operator=(const SOMAGroup&) = default;
     SOMAGroup& operator=(SOMAGroup&&) = default;
+
+    /**
+     * Opens the SOMAGroup object.
+     */
+    void open(tiledb_query_type_t);
 
     /**
      * Closes the SOMAGroup object.
@@ -64,6 +121,13 @@ class SOMAGroup {
      * Get the SOMAGroup URI.
      */
     std::string uri() const;
+
+    /**
+     * Get the Context associated with the SOMAGroup.
+     *
+     * @return std::shared_ptr<Context>
+     */
+    std::shared_ptr<Context> ctx();
 
     /**
      * Get a member from the SOMAGroup given the index.
@@ -93,7 +157,7 @@ class SOMAGroup {
      * @param relative is the URI relative to the SOMAGroup location
      * @param name of member
      */
-    void add_member(const std::string&, const bool&, const std::string&);
+    void add_member(const std::string&, bool, const std::string&);
 
     /**
      * Get the number of members in the SOMAGroup.
@@ -113,6 +177,89 @@ class SOMAGroup {
      * @return std::map<std::string, std::string
      */
     std::map<std::string, std::string> member_to_uri_mapping() const;
+
+    /**
+     * Set a metadata key-value item to an open group. The array must
+     * be opened in WRITE mode, otherwise the function will error out.
+     *
+     * @param key The key of the metadata item to be added. UTF-8 encodings
+     *     are acceptable.
+     * @param value_type The datatype of the value.
+     * @param value_num The value may consist of more than one items of the
+     *     same datatype. This argument indicates the number of items in the
+     *     value component of the metadata.
+     * @param value The metadata value in binary form.
+     *
+     * @note The writes will take effect only upon closing the array.
+     */
+    void set_metadata(
+        const std::string&, tiledb_datatype_t, uint32_t, const void*);
+
+    /**
+     * It deletes a metadata key-value item from an open group. The array must
+     * be opened in WRITE mode, otherwise the function will error out.
+     *
+     * @param key The key of the metadata item to be deleted.
+     *
+     * @note The writes will take effect only upon closing the array.
+     *
+     * @note If the key does not exist, this will take no effect
+     *     (i.e., the function will not error out).
+     */
+    void delete_metadata(const std::string&);
+
+    /**
+     * @brief Get the value of a metadata key-value item given the key.
+     *
+     * @param key The key of the metadata item to be retrieved. UTF-8 encodings
+     *     are acceptable.
+     * @param value_type The datatype of the value.
+     * @param value_num The value may consist of more than one items of the
+     *     same datatype. This argument indicates the number of items in the
+     *     value component of the metadata. Keys with empty values are indicated
+     *     by value_num == 1 and value == NULL.
+     * @param value The metadata value in binary form.
+     *
+     * @note If the key does not exist, then `value` will be NULL.
+     */
+    void get_metadata(
+        const std::string&, tiledb_datatype_t*, uint32_t*, const void**);
+
+    /**
+     * It gets a metadata item from an open group using an index.
+     * The array must be opened in READ mode, otherwise the function will
+     * error out.
+     *
+     * @param index The index used to get the metadata.
+     * @param key The metadata key.
+     * @param value_type The datatype of the value.
+     * @param value_num The value may consist of more than one items of the
+     *     same datatype. This argument indicates the number of items in the
+     *     value component of the metadata. Keys with empty values are indicated
+     *     by value_num == 1 and value == NULL.
+     * @param value The metadata value in binary form.
+     */
+    void get_metadata_from_index(
+        uint64_t, std::string*, tiledb_datatype_t*, uint32_t*, const void**);
+
+    /**
+     * Checks if key exists in metadata from an open group. The array must
+     * be opened in READ mode, otherwise the function will error out.
+     *
+     * @param key The key of the metadata item to be retrieved. UTF-8 encodings
+     *     are acceptable.
+     * @param value_type The datatype of the value associated with the key (if
+     * any).
+     * @return true if the key exists, else false.
+     * @note If the key does not exist, then `value_type` will not be modified.
+     */
+    bool has_metadata(const std::string&, tiledb_datatype_t*);
+
+    /**
+     * Returns then number of metadata items in an open group. The array must
+     * be opened in READ mode, otherwise the function will error out.
+     */
+    uint64_t metadata_num() const;
 
    private:
     //===================================================================

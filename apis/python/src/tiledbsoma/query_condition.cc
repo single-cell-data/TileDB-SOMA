@@ -42,7 +42,7 @@
 // #include "util.h"
 #include <tiledb/tiledb> // C++
 
-#include "tiledbsoma/logger_public.h"
+#include "cpp_api/logger_public.h"
 #define TPY_ERROR_LOC(m) throw tiledbsoma::TileDBSOMAError(m);
 
 #if TILEDB_VERSION_MAJOR == 2 && TILEDB_VERSION_MINOR >= 2

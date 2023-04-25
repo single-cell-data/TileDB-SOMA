@@ -41,6 +41,10 @@ using namespace tiledb;
 //= public static
 //===================================================================
 
+void SOMAArray::create(const std::string& uri, const ArraySchema& schema) {
+    Array::create(uri, schema);
+}
+
 std::unique_ptr<SOMAArray> SOMAArray::open(
     tiledb_query_type_t mode,
     std::string_view uri,
@@ -175,7 +179,7 @@ void SOMAArray::submit() {
 }
 
 std::optional<std::shared_ptr<ArrayBuffers>> SOMAArray::read_next() {
-    if (mq_->query_type() != TILEDB_WRITE) {
+    if (mq_->query_type() != TILEDB_READ) {
         throw TileDBSOMAError("[SOMAArray] array must be opened in read mode");
     }
 
@@ -217,6 +221,10 @@ void SOMAArray::write(std::shared_ptr<ArrayBuffers> buffers) {
 
 std::string SOMAArray::uri() const {
     return uri_;
+};
+
+std::shared_ptr<Context> SOMAArray::ctx() {
+    return ctx_;
 };
 
 bool SOMAArray::is_complete(bool query_status_only) {

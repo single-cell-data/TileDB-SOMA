@@ -48,6 +48,19 @@ class SOMAArray {
     //===================================================================
 
     /**
+     * @brief Create a SOMAArray
+     *
+     * * **Example:**
+     * @code{.cpp}
+     * tiledb::Group::create(ctx, "s3://bucket-name/group-name");
+     * @endcode
+     *
+     * @param ctx tiledb context
+     * @param uri URI where group will be created.
+     */
+    static void create(const std::string& uri, const ArraySchema& schema);
+
+    /**
      * @brief Open an array at the specified URI and return SOMAArray
      * object.
      *
@@ -293,6 +306,13 @@ class SOMAArray {
      * @return std::string URI
      */
     std::string uri() const;
+
+    /**
+     * @brief Get URI of the SOMAArray.
+     *
+     * @return std::string URI
+     */
+    std::shared_ptr<Context> ctx();
 
     /**
      * @brief Check if the query is complete.

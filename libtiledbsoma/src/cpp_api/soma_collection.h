@@ -33,35 +33,58 @@
 #ifndef SOMA_COLLECTION
 #define SOMA_COLLECTION
 
-#include <map>
-#include <memory>
-#include <string>
 #include <tiledb/tiledb>
-#include "soma_dataframe.h"
-#include "soma_dense_ndarray.h"
+
 #include "soma_object.h"
-#include "soma_sparse_ndarray.h"
 
+// #include "soma_dataframe.h"
+// #include "soma_dense_ndarray.h"
+// #include "soma_experiment.h"
+// #include "soma_measurement.h"
+// #include "soma_sparse_ndarray.h"
 namespace tiledbsoma {
-
 class SOMAGroup;
+class SOMADataFrame;
+class SOMAExperiment;
+class SOMAMeasurement;
+class SOMASparseNDArray;
+class SOMADenseNDArray;
 
 using namespace tiledb;
 
-class SOMACollection : SOMAObject {
+class SOMACollection : public SOMAObject {
    public:
     //===================================================================
     //= public static
     //===================================================================
 
     /**
-     * @brief Open and return a SOMACollection object at the given URI.
+     * @brief Open a group at the specified URI and return SOMACollection
+     * object.
      *
-     * @param ctx TileDB context
-     * @param name name of the array
+     * @param mode TILEDB_READ or TILEDB_WRITE
+     * @param uri URI of the array
+     * @param platform_config Config parameter dictionary
+     * @return std::shared_ptr<SOMACollection> SOMACollection
      */
-    static std::unique_ptr<SOMACollection> open(
-        std::shared_ptr<Context> ctx, const std::string& uri);
+    static std::shared_ptr<SOMACollection> open(
+        tiledb_query_type_t mode,
+        std::string_view uri,
+        std::map<std::string, std::string> platform_config = {});
+
+    /**
+     * @brief Open a group at the specified URI and return SOMACollection
+     * object.
+     *
+     * @param mode TILEDB_READ or TILEDB_WRITE
+     * @param ctx TileDB context
+     * @param uri URI of the array
+     * @return std::shared_ptr<SOMACollection> SOMACollection
+     */
+    static std::shared_ptr<SOMACollection> open(
+        tiledb_query_type_t mode,
+        std::shared_ptr<Context> ctx,
+        std::string_view uri);
 
     //===================================================================
     //= public non-static
@@ -71,17 +94,17 @@ class SOMACollection : SOMAObject {
      * @brief Construct a new SOMACollection object.
      *
      * @param ctx TileDB context
-     * @param name name of the array
+     * @param key key of the array
      */
-    SOMACollection(std::shared_ptr<Context> ctx, const std::string& uri);
-    // std::map<std::string, std::string> platform_config);
+    SOMACollection(
+        tiledb_query_type_t mode,
+        std::string_view uri,
+        std::shared_ptr<Context> ctx);
 
     /**
      * Returns the constant "SOMACollection".
      */
-    std::string type() const {
-        return "SOMACollection";
-    }
+    std::string type() const;
 
     /**
      * Closes the SOMACollection object.
@@ -89,26 +112,38 @@ class SOMACollection : SOMAObject {
     void close();
 
     /**
-     * Get the SOMAGroup URI.
+     * Get the SOMACollection URI.
      */
     std::string uri() const;
 
-    // void set(const std::string& name, SOMAObject& object, bool
-    // use_relative_uri);
+    /**
+     * Get the Context associated with the SOMACollection.
+     *
+     * @return std::shared_ptr<Context>
+     */
+    std::shared_ptr<Context> ctx();
 
     /**
-     * Get the SOMAObject associated with the name.
+     * Set an already existing SOMAObject with the given key.
      *
-     * @param name of member
+     * @param key of member
+     * @param object SOMA object to add
      */
-    SOMACollection get(const std::string& name);
+    void set(const std::string& key, SOMAObject& object);
 
     /**
-     * Check if the SOMACollection contains the given name.
+     * Get the SOMAObject associated with the key.
      *
-     * @param name of member
+     * @param key of member
      */
-    bool has(const std::string& name);
+    std::shared_ptr<SOMAObject> get(const std::string& key);
+
+    /**
+     * Check if the SOMACollection contains the given key.
+     *
+     * @param key of member
+     */
+    bool has(const std::string& key);
 
     /**
      * Get the number of SOMAObjects in the SOMACollection.
@@ -116,51 +151,114 @@ class SOMACollection : SOMAObject {
     uint64_t count() const;
 
     /**
-     * Delete the SOMAObject associated with the name.
+     * Delete the SOMAObject associated with the key.
      *
-     * @param name of member
+     * @param key of member
      */
-    void del(const std::string& name);
+    void del(const std::string& key);
 
     /**
-     * Get the member name to URI mapping of the SOMACollection.
+     * Get the member key to URI mapping of the SOMACollection.
      */
     std::map<std::string, std::string> member_to_uri_mapping() const;
 
     /**
-     * Add a SOMACollection to the SOMACollection.
+     * Create and add a SOMACollection to the SOMACollection.
      *
-     * @param name of collection
-     * @param collection SOMACollection to add
+     * @param key of collection
+     * @param uri of SOMACollection to add
+     * @param relative whether the given URI is relative
      */
-    void add_new_collection(
-        const std::string& name, SOMACollection& collection);
+    SOMACollection add_new_collection(
+        std::string_view key,
+        std::string_view uri,
+        bool relative,
+        std::shared_ptr<Context> ctx);
+
+    // /**
+    //  * Create and add a SOMAExperiment to the SOMACollection.
+    //  *
+    //  * @param key of collection
+    //  * @param uri of SOMAExperiment to add
+    //  * @param relative whether the given URI is relative
+    //  */
+    // SOMAExperiment add_new_experiment(
+    //     std::string_view key,
+    //     std::string_view uri,
+    //     bool relative,
+    //     std::shared_ptr<Context> ctx,
+    //     SOMADataFrame& obs,
+    //     SOMACollection& ms);
+
+    // /**
+    //  * Create and add a SOMAMeasurement to the SOMACollection.
+    //  *
+    //  * @param key of collection
+    //  * @param uri of SOMAMeasurement to add
+    //  * @param relative whether the given URI is relative
+    //  */
+    // SOMAMeasurement add_new_measurement(
+    //     std::string_view key,
+    //     std::string_view uri,
+    //     bool relative,
+    //     std::shared_ptr<Context> ctx,
+    //     SOMADataFrame& var,
+    //     SOMACollection& X,
+    //     SOMACollection& obsm,
+    //     SOMACollection& obsp,
+    //     SOMACollection& varm,
+    //     SOMACollection& varp);
 
     /**
-     * Add a SOMADataFrame to the SOMACollection.
+     * Create and add a SOMADataFrame to the SOMACollection.
      *
-     * @param name of dataframe
-     * @param dataframe SOMADataFrame to add
+     * @param key of dataframe
+     * @param uri of SOMADataFrame to add
+     * @param relative whether the given URI is relative
      */
-    void add_new_dataframe(const std::string& name, SOMADataFrame& dataframe);
+    SOMADataFrame add_new_dataframe(
+        std::string_view key,
+        std::string_view uri,
+        bool relative,
+        std::shared_ptr<Context> ctx,
+        std::vector<std::string> column_names,
+        std::string_view batch_size,
+        std::string_view result_order,
+        std::optional<std::pair<uint64_t, uint64_t>> timestamp);
 
     /**
-     * Add a SOMADenseNDArray to the SOMACollection.
+     * Create and add a SOMADenseNDArray to the SOMACollection.
      *
-     * @param name of dense array
-     * @param dataframe SOMADenseNDArray to add
+     * @param key of dense array
+     * @param uri of SOMADenseNDArray to add
+     * @param relative whether the given URI is relative
      */
-    void add_new_dense_ndarray(
-        const std::string& name, const SOMADenseNDArray& array);
+    SOMADenseNDArray add_new_dense_ndarray(
+        std::string_view key,
+        std::string_view uri,
+        bool relative,
+        std::shared_ptr<Context> ctx,
+        std::vector<std::string> column_names,
+        std::string_view batch_size,
+        std::string_view result_order,
+        std::optional<std::pair<uint64_t, uint64_t>> timestamp);
 
     /**
-     * Add a SOMASparseNDArray to the SOMACollection.
+     * Create and add a SOMASparseNDArray to the SOMACollection.
      *
-     * @param name of sparse array
-     * @param dataframe SOMASparseNDArray to add
+     * @param key of sparse array
+     * @param uri of SOMASparseNDArray to add
+     * @param relative whether the given URI is relative
      */
-    void add_new_sparse_ndarray(
-        const std::string& name, const SOMASparseNDArray& array);
+    SOMASparseNDArray add_new_sparse_ndarray(
+        std::string_view key,
+        std::string_view uri,
+        bool relative,
+        std::shared_ptr<Context> ctx,
+        std::vector<std::string> column_names,
+        std::string_view batch_size,
+        std::string_view result_order,
+        std::optional<std::pair<uint64_t, uint64_t>> timestamp);
 
    private:
     //===================================================================
@@ -171,7 +269,7 @@ class SOMACollection : SOMAObject {
     std::shared_ptr<Context> ctx_;
 
     // SOMAGroup
-    std::unique_ptr<SOMAGroup> group_;
+    std::shared_ptr<SOMAGroup> group_;
 };
 }  // namespace tiledbsoma
 

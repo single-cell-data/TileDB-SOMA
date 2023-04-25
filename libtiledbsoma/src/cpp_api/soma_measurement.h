@@ -33,23 +33,30 @@
 #ifndef SOMA_MEASUREMENT
 #define SOMA_MEASUREMENT
 
-#include <map>
-#include <memory>
-#include <string>
 #include <tiledb/tiledb>
 #include "soma_collection.h"
 #include "soma_dataframe.h"
-#include "soma_dense_ndarray.h"
-#include "soma_object.h"
-#include "soma_sparse_ndarray.h"
 
 namespace tiledbsoma {
 
-class SOMAGroup;
-
 using namespace tiledb;
 
-class SOMAMeasurement : SOMACollection {
+class SOMAMeasurement : public SOMACollection {
+   public:
+    //===================================================================
+    //= public non-static
+    //===================================================================
+    SOMAMeasurement(
+        tiledb_query_type_t mode,
+        std::string_view uri,
+        std::shared_ptr<Context> ctx,
+        SOMADataFrame& var,
+        SOMACollection& X,
+        SOMACollection& obsm,
+        SOMACollection& obsp,
+        SOMACollection& varm,
+        SOMACollection& varp);
+
    private:
     //===================================================================
     //= private non-static

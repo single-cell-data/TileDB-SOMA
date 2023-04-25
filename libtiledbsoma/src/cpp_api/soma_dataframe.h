@@ -33,9 +33,6 @@
 #ifndef SOMA_DATAFRAME
 #define SOMA_DATAFRAME
 
-#include <map>
-#include <memory>
-#include <string>
 #include <tiledb/tiledb>
 #include "soma_object.h"
 
@@ -46,7 +43,7 @@ class ArrayBuffers;
 
 using namespace tiledb;
 
-class SOMADataFrame : SOMAObject {
+class SOMADataFrame : public SOMAObject {
    public:
     //===================================================================
     //= public static
@@ -63,9 +60,9 @@ class SOMADataFrame : SOMAObject {
      * @param batch_size Batch size
      * @param result_order Result order
      * @param timestamp Timestamp
-     * @return std::unique_ptr<SOMADataFrame> SOMADataFrame
+     * @return std::shared_ptr<SOMADataFrame> SOMADataFrame
      */
-    static std::unique_ptr<SOMADataFrame> open(
+    static std::shared_ptr<SOMADataFrame> open(
         tiledb_query_type_t mode,
         std::string_view uri,
         std::string_view name = "unnamed",
@@ -86,9 +83,9 @@ class SOMADataFrame : SOMAObject {
      * @param batch_size Batch size
      * @param result_order Result order
      * @param timestamp Timestamp
-     * @return std::unique_ptr<SOMADataFrame> SOMADataFrame
+     * @return std::shared_ptr<SOMADataFrame> SOMADataFrame
      */
-    static std::unique_ptr<SOMAArray> open(
+    static std::shared_ptr<SOMADataFrame> open(
         tiledb_query_type_t mode,
         std::shared_ptr<Context> ctx,
         std::string_view uri,
@@ -123,7 +120,6 @@ class SOMADataFrame : SOMAObject {
         std::string_view batch_size,
         std::string_view result_order,
         std::optional<std::pair<uint64_t, uint64_t>> timestamp = std::nullopt);
-    // std::map<std::string, std::string> platform_config);
 
     /**
      * Closes the SOMADataFrame object.
@@ -145,6 +141,13 @@ class SOMADataFrame : SOMAObject {
      * @return std::string URI
      */
     std::string uri() const;
+
+    /**
+     * Get the Context associated with the SOMADataFrame.
+     *
+     * @return std::shared_ptr<Context>
+     */
+    std::shared_ptr<Context> ctx();
 
     /**
      * Return data schema, in the form of a TileDB ArraySchema.
@@ -184,7 +187,7 @@ class SOMADataFrame : SOMAObject {
     //===================================================================
 
     // SOMAArray
-    std::unique_ptr<SOMAArray> array_;
+    std::shared_ptr<SOMAArray> array_;
 };
 }  // namespace tiledbsoma
 

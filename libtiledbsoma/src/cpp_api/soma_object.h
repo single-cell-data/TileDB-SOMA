@@ -35,15 +35,19 @@
 
 #include <map>
 #include <string>
+#include <tiledb/tiledb>
 
 namespace tiledbsoma {
+
+using namespace tiledb;
 class SOMAObject {
+   public:
     //===================================================================
     //= public non-static
     //===================================================================
 
     /**
-     * @brief Get SOMA type of the SOMAObject.
+     * @brief Returns a constant string describing the type of the object.
      *
      * @return std::string SOMA type
      */
@@ -55,6 +59,13 @@ class SOMAObject {
      * @return std::string URI
      */
     virtual std::string uri() const = 0;
+
+    /**
+     * Get the context associated with the SOMAObject.
+     *
+     * @return std::shared_ptr<Context>
+     */
+    virtual std::shared_ptr<Context> ctx() = 0;
 };
 }  // namespace tiledbsoma
 

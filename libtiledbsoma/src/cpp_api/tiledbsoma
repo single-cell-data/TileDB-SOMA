@@ -33,12 +33,22 @@
 #ifndef __TILEDBSOMA__
 #define __TILEDBSOMA__
 
-#include "soma_collection.h"
-#include "soma_dataframe.h"
-#include "soma_dense_ndarray.h"
-#include "soma_experiment.h"
-#include "soma_measurement.h"
-#include "soma_object.h"
-#include "soma_sparse_ndarray.h"
+// #include "soma_collection.h"
+// #include "soma_dataframe.h"
+// #include "soma_dense_ndarray.h"
+// #include "soma_experiment.h"
+// #include "soma_measurement.h"
+// #include "soma_object.h"
+// #include "soma_sparse_ndarray.h"
+
+#include <cli/arrow_adapter.h>
+#include <cpp_api/logger_public.h>
+#include <utils/array_buffers.h>
+#include <utils/column_buffer.h>
+#include <utils/common.h>
+#include <utils/stats.h>
+#include <utils/version.h>
+#include <soma/managed_query.h>
+#include <soma/soma_array.h>
 
 #endif

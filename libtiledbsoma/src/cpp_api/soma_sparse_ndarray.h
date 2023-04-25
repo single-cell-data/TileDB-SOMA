@@ -33,9 +33,6 @@
 #ifndef SOMA_SPARSE_NDARRAY
 #define SOMA_SPARSE_NDARRAY
 
-#include <map>
-#include <memory>
-#include <string>
 #include <tiledb/tiledb>
 #include "soma_object.h"
 
@@ -46,7 +43,7 @@ class ArrayBuffers;
 
 using namespace tiledb;
 
-class SOMASparseNDArray : SOMAObject {
+class SOMASparseNDArray : public SOMAObject {
    public:
     //===================================================================
     //= public static
@@ -63,9 +60,9 @@ class SOMASparseNDArray : SOMAObject {
      * @param batch_size Batch size
      * @param result_order Result order
      * @param timestamp Timestamp
-     * @return std::unique_ptr<SOMASparseNDArray> SOMASparseNDArray
+     * @return std::shared_ptr<SOMASparseNDArray> SOMASparseNDArray
      */
-    static std::unique_ptr<SOMASparseNDArray> open(
+    static std::shared_ptr<SOMASparseNDArray> open(
         tiledb_query_type_t mode,
         std::string_view uri,
         std::string_view name = "unnamed",
@@ -86,9 +83,9 @@ class SOMASparseNDArray : SOMAObject {
      * @param batch_size Batch size
      * @param result_order Result order
      * @param timestamp Timestamp
-     * @return std::unique_ptr<SOMASparseNDArray> SOMASparseNDArray
+     * @return std::shared_ptr<SOMASparseNDArray> SOMASparseNDArray
      */
-    static std::unique_ptr<SOMAArray> open(
+    static std::shared_ptr<SOMASparseNDArray> open(
         tiledb_query_type_t mode,
         std::shared_ptr<Context> ctx,
         std::string_view uri,
@@ -123,7 +120,6 @@ class SOMASparseNDArray : SOMAObject {
         std::string_view batch_size,
         std::string_view result_order,
         std::optional<std::pair<uint64_t, uint64_t>> timestamp = std::nullopt);
-    // std::map<std::string, std::string> platform_config);
 
     /**
      * Closes the SOMASparseNDArray object.
@@ -138,6 +134,13 @@ class SOMASparseNDArray : SOMAObject {
     std::string type() const {
         return "SOMASparseNDArray";
     }
+
+    /**
+     * Get the Context associated with the SOMASparseNDArray.
+     *
+     * @return std::shared_ptr<Context>
+     */
+    std::shared_ptr<Context> ctx();
 
     /**
      * Return whether the NDArray is sparse.
@@ -178,9 +181,9 @@ class SOMASparseNDArray : SOMAObject {
     int64_t ndim() const;
 
     /**
-     * @brief Get the total number of unique cells in the array.
+     * @brief Get the total number of shared cells in the array.
      *
-     * @return uint64_t Total number of unique cells
+     * @return uint64_t Total number of shared cells
      */
     uint64_t nnz() const;
 
@@ -201,7 +204,7 @@ class SOMASparseNDArray : SOMAObject {
     //===================================================================
 
     // SOMAArray
-    std::unique_ptr<SOMAArray> array_;
+    std::shared_ptr<SOMAArray> array_;
 };
 }  // namespace tiledbsoma
 

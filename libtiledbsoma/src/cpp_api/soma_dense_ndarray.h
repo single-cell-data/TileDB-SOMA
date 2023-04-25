@@ -33,9 +33,6 @@
 #ifndef SOMA_DENSE_NDARRAY
 #define SOMA_DENSE_NDARRAY
 
-#include <map>
-#include <memory>
-#include <string>
 #include <tiledb/tiledb>
 #include "soma_object.h"
 
@@ -46,7 +43,7 @@ class ArrayBuffers;
 
 using namespace tiledb;
 
-class SOMADenseNDArray : SOMAObject {
+class SOMADenseNDArray : public SOMAObject {
    public:
     //===================================================================
     //= public static
@@ -63,9 +60,9 @@ class SOMADenseNDArray : SOMAObject {
      * @param batch_size Batch size
      * @param result_order Result order
      * @param timestamp Timestamp
-     * @return std::unique_ptr<SOMADenseNDArray> SOMADenseNDArray
+     * @return std::shared_ptr<SOMADenseNDArray> SOMADenseNDArray
      */
-    static std::unique_ptr<SOMADenseNDArray> open(
+    static std::shared_ptr<SOMADenseNDArray> open(
         tiledb_query_type_t mode,
         std::string_view uri,
         std::string_view name = "unnamed",
@@ -86,9 +83,9 @@ class SOMADenseNDArray : SOMAObject {
      * @param batch_size Batch size
      * @param result_order Result order
      * @param timestamp Timestamp
-     * @return std::unique_ptr<SOMADenseNDArray> SOMADenseNDArray
+     * @return std::shared_ptr<SOMADenseNDArray> SOMADenseNDArray
      */
-    static std::unique_ptr<SOMAArray> open(
+    static std::shared_ptr<SOMADenseNDArray> open(
         tiledb_query_type_t mode,
         std::shared_ptr<Context> ctx,
         std::string_view uri,
@@ -123,7 +120,6 @@ class SOMADenseNDArray : SOMAObject {
         std::string_view batch_size,
         std::string_view result_order,
         std::optional<std::pair<uint64_t, uint64_t>> timestamp = std::nullopt);
-    // std::map<std::string, std::string> platform_config);
 
     /**
      * Closes the SOMADenseNDArray object.
@@ -140,7 +136,14 @@ class SOMADenseNDArray : SOMAObject {
     }
 
     /**
-     * Return whether the NDArray is sparse.
+     * Get the Context associated with the SOMADenseNDArray.
+     *
+     * @return std::shared_ptr<Context>
+     */
+    std::shared_ptr<Context> ctx();
+
+    /**
+     * Return whether the SOMADenseNDArray is sparse.
      *
      * @return false
      */
@@ -194,7 +197,7 @@ class SOMADenseNDArray : SOMAObject {
     //===================================================================
 
     // SOMAArray
-    std::unique_ptr<SOMAArray> array_;
+    std::shared_ptr<SOMAArray> array_;
 };
 }  // namespace tiledbsoma
 
