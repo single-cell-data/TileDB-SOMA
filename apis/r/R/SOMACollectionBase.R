@@ -27,7 +27,7 @@ SOMACollectionBase <- R6::R6Class(
 
       # Root SOMA objects include a `dataset_type` entry to allow the
       # TileDB Cloud UI to detect that they are SOMA datasets.
-      if (self$class() == "SOMAExperiment" && startsWith(self$uri, "tiledb://")) {
+      if (self$class() == "SOMAExperiment")) {
         metadata <- list(dataset_type = "soma")
       } else {
         metadata <- list()
