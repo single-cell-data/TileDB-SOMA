@@ -1044,7 +1044,7 @@ SOMAExperimentAxisQuery <- R6::R6Class(
         row_pairs <- lapply(
           X = varp_layers,
           FUN = function(layer, var_ids = row.names(var)) {
-            mat <- private$.load_p_axis(layer)
+            mat <- private$.load_p_axis(layer, p_axis = 'varp')
             dimnames(mat) <- list(var_ids, var_ids)
             return(mat_to_hits(mat))
           }
@@ -1065,12 +1065,6 @@ SOMAExperimentAxisQuery <- R6::R6Class(
       if (ncol(obs)) {
         SummarizedExperiment::colData(sce) <- as(obs, 'DataFrame')
       }
-      # for (i in seq_along(row_pairs)) {
-      #   SingleCellExperiment::rowPair(sce, names(row_pairs)[i]) <- row_pairs[[i]]
-      # }
-      # for (i in seq_along(col_pairs)) {
-      #   SingleCellExperiment::colPair(sce, names(col_pairs)[i]) <- col_pairs[[i]]
-      # }
       # Validate and return
       methods::validObject(sce)
       return(sce)
