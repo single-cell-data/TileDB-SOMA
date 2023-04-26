@@ -404,7 +404,7 @@ class DataFrame(TileDBArray, somacore.DataFrame):
         return self
 
     def _set_reader_coord(
-        self, sr: clib.SOMAArrayReader, dim_idx: int, dim: tiledb.Dim, coord: object
+        self, sr: clib.SOMAArray, dim_idx: int, dim: tiledb.Dim, coord: object
     ) -> bool:
 
         if coord is None:
@@ -476,7 +476,7 @@ class DataFrame(TileDBArray, somacore.DataFrame):
 
     def _set_reader_coord_by_py_seq_or_np_array(
         self,
-        sr: clib.SOMAArrayReader,
+        sr: clib.SOMAArray,
         dim_idx: int,
         dim: tiledb.Dim,
         coord: object,
@@ -542,7 +542,7 @@ class DataFrame(TileDBArray, somacore.DataFrame):
         return True
 
     def _set_reader_coord_by_numeric_slice(
-        self, sr: clib.SOMAArrayReader, dim_idx: int, dim: tiledb.Dim, coord: Slice[Any]
+        self, sr: clib.SOMAArray, dim_idx: int, dim: tiledb.Dim, coord: Slice[Any]
     ) -> bool:
 
         try:

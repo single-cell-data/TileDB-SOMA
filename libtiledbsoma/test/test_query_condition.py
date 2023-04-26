@@ -19,7 +19,7 @@ if VERBOSE:
 
 
 def pandas_query(uri, condition):
-    sr = clib.SOMAArrayReader(uri)
+    sr = clib.SOMAArray(uri)
     sr.submit()
     arrow_table = sr.read_next()
     assert sr.results_complete()
@@ -31,7 +31,7 @@ def soma_query(uri, condition):
     qc = QueryCondition(condition)
     schema = tiledb.open(uri).schema
 
-    sr = clib.SOMAArrayReader(uri, query_condition=qc, schema=schema)
+    sr = clib.SOMAArray(uri, query_condition=qc, schema=schema)
     sr.submit()
     arrow_table = sr.read_next()
     assert sr.results_complete()
@@ -112,7 +112,7 @@ def test_query_condition_select_columns():
     qc = QueryCondition(condition)
     schema = tiledb.open(uri).schema
 
-    sr = clib.SOMAArrayReader(
+    sr = clib.SOMAArray(
         uri, query_condition=qc, schema=schema, column_names=["n_genes"]
     )
     sr.submit()
@@ -130,7 +130,7 @@ def test_query_condition_all_columns():
     qc = QueryCondition(condition)
     schema = tiledb.open(uri).schema
 
-    sr = clib.SOMAArrayReader(uri, query_condition=qc, schema=schema)
+    sr = clib.SOMAArray(uri, query_condition=qc, schema=schema)
     sr.submit()
     arrow_table = sr.read_next()
 
@@ -146,7 +146,7 @@ def test_query_condition_reset():
     qc = QueryCondition(condition)
     schema = tiledb.open(uri).schema
 
-    sr = clib.SOMAArrayReader(uri, query_condition=qc, schema=schema)
+    sr = clib.SOMAArray(uri, query_condition=qc, schema=schema)
     sr.submit()
     arrow_table = sr.read_next()
 
@@ -228,7 +228,7 @@ def test_eval_error_conditions(malformed_condition):
     #
     with pytest.raises(RuntimeError):
         qc = QueryCondition(malformed_condition)
-        sr = clib.SOMAArrayReader(uri, query_condition=qc, schema=schema)
+        sr = clib.SOMAArray(uri, query_condition=qc, schema=schema)
         sr.submit()
         sr.read_next()
 

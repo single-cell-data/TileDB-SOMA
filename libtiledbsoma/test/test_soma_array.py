@@ -15,12 +15,12 @@ if VERBOSE:
     clib.config_logging("debug")
 
 
-def test_soma_array_reader_obs():
+def test_soma_array_obs():
     """Read all values from obs array into an arrow table."""
 
     name = "obs"
     uri = os.path.join(SOMA_URI, name)
-    sr = clib.SOMAArrayReader(uri)
+    sr = clib.SOMAArray(uri)
     sr.submit()
     arrow_table = sr.read_next()
 
@@ -29,12 +29,12 @@ def test_soma_array_reader_obs():
     assert arrow_table.num_rows == 2638
 
 
-def test_soma_array_reader_var():
+def test_soma_array_var():
     """Read all values from var array into an arrow table."""
 
     name = "var"
     uri = os.path.join(SOMA_URI, "ms/RNA", name)
-    sr = clib.SOMAArrayReader(uri)
+    sr = clib.SOMAArray(uri)
     sr.submit()
     arrow_table = sr.read_next()
 
@@ -43,12 +43,12 @@ def test_soma_array_reader_var():
     assert arrow_table.num_rows == 1838
 
 
-def test_soma_array_reader_var_x_data():
+def test_soma_array_var_x_data():
     """Read all values from x/data array into an arrow table."""
 
     name = "X/data"
     uri = os.path.join(SOMA_URI, "ms/RNA", name)
-    sr = clib.SOMAArrayReader(uri)
+    sr = clib.SOMAArray(uri)
     sr.submit()
 
     # iterate read batches until all results have been processed
@@ -67,12 +67,12 @@ def test_soma_array_reader_var_x_data():
     assert total_num_rows == 4848644
 
 
-def test_soma_array_reader_dim_points():
+def test_soma_array_dim_points():
     """Read scalar dimension slice from obs array into an arrow table."""
 
     name = "obs"
     uri = os.path.join(SOMA_URI, name)
-    sr = clib.SOMAArrayReader(uri)
+    sr = clib.SOMAArray(uri)
 
     obs_id_points = list(range(0, 100, 2))
 
@@ -86,12 +86,12 @@ def test_soma_array_reader_dim_points():
     assert arrow_table.num_rows == len(obs_id_points)
 
 
-def test_soma_array_reader_empty_dim_points():
+def test_soma_array_empty_dim_points():
     """Read scalar dimension slice from obs array into an arrow table."""
 
     name = "obs"
     uri = os.path.join(SOMA_URI, name)
-    sr = clib.SOMAArrayReader(uri)
+    sr = clib.SOMAArray(uri)
 
     obs_id_points = []
 
@@ -105,12 +105,12 @@ def test_soma_array_reader_empty_dim_points():
     assert arrow_table.num_rows == len(obs_id_points)
 
 
-def test_soma_array_reader_dim_points_arrow_array():
+def test_soma_array_dim_points_arrow_array():
     """Read scalar dimension slice from obs array into an arrow table."""
 
     name = "obs"
     uri = os.path.join(SOMA_URI, name)
-    sr = clib.SOMAArrayReader(uri)
+    sr = clib.SOMAArray(uri)
 
     obs_id_points = pa.array([0, 2, 4, 6, 8])
 
@@ -124,12 +124,12 @@ def test_soma_array_reader_dim_points_arrow_array():
     assert arrow_table.num_rows == len(obs_id_points)
 
 
-def test_soma_array_reader_dim_ranges():
+def test_soma_array_dim_ranges():
     """Read range dimension slice from obs array into an arrow table."""
 
     name = "obs"
     uri = os.path.join(SOMA_URI, name)
-    sr = clib.SOMAArrayReader(uri)
+    sr = clib.SOMAArray(uri)
 
     obs_id_ranges = [
         [1000, 1004],
@@ -146,12 +146,12 @@ def test_soma_array_reader_dim_ranges():
     assert arrow_table.num_rows == 10
 
 
-def test_soma_array_reader_dim_mixed():
+def test_soma_array_dim_mixed():
     """Read scalar and range dimension slice from obs array into an arrow table."""
 
     name = "obs"
     uri = os.path.join(SOMA_URI, name)
-    sr = clib.SOMAArrayReader(uri)
+    sr = clib.SOMAArray(uri)
 
     obs_id_points = list(range(0, 100, 2))
 
@@ -171,14 +171,14 @@ def test_soma_array_reader_dim_mixed():
     assert arrow_table.num_rows == 60
 
 
-def test_soma_array_reader_obs_slice_x():
+def test_soma_array_obs_slice_x():
     """Read X/data sliced by obs."""
 
     # read obs
     # ---------------------------------------------------------------1
     name = "obs"
     uri = os.path.join(SOMA_URI, name)
-    sr = clib.SOMAArrayReader(uri)
+    sr = clib.SOMAArray(uri)
 
     obs_id_points = list(range(0, 100, 2))
 
@@ -201,7 +201,7 @@ def test_soma_array_reader_obs_slice_x():
     # ---------------------------------------------------------------1
     name = "X/data"
     uri = os.path.join(SOMA_URI, "ms/RNA", name)
-    sr = clib.SOMAArrayReader(uri)
+    sr = clib.SOMAArray(uri)
 
     # slice X/data read with obs.soma_joinid column
     sr.set_dim_points_arrow("soma_dim_0", obs.column("soma_joinid"))
@@ -221,12 +221,12 @@ def test_soma_array_reader_obs_slice_x():
     assert total_num_rows == 110280
 
 
-def test_soma_array_reader_column_names():
+def test_soma_array_column_names():
     """Read specified column names of obs array into an arrow table."""
 
     name = "obs"
     uri = os.path.join(SOMA_URI, name)
-    sr = clib.SOMAArrayReader(uri, column_names=["soma_joinid", "louvain"])
+    sr = clib.SOMAArray(uri, column_names=["soma_joinid", "louvain"])
 
     sr.submit()
     arrow_table = sr.read_next()
@@ -239,19 +239,19 @@ def test_soma_array_reader_column_names():
 def test_nnz():
     name = "obs"
     uri = os.path.join(SOMA_URI, name)
-    sr = clib.SOMAArrayReader(uri)
+    sr = clib.SOMAArray(uri)
 
     total_cell_count = sr.nnz()
 
     assert total_cell_count == 2638
 
 
-def test_soma_array_reader_reset():
-    """Submit a query with a SOMAArrayReader object, reset the SOMAArrayReader, and submit another query."""
+def test_soma_array_reset():
+    """Submit a query with a SOMAArray object, reset the SOMAArray, and submit another query."""
 
     name = "obs"
     uri = os.path.join(SOMA_URI, name)
-    sr = clib.SOMAArrayReader(uri, column_names=["soma_joinid", "louvain"])
+    sr = clib.SOMAArray(uri, column_names=["soma_joinid", "louvain"])
 
     sr.submit()
     arrow_table = sr.read_next()
@@ -277,4 +277,4 @@ def test_soma_array_reader_reset():
 
 
 if __name__ == "__main__":
-    test_soma_array_reader_obs_slice_x()
+    test_soma_array_obs_slice_x()

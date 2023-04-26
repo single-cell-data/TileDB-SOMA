@@ -39,7 +39,7 @@
 #include <tiledbsoma/common.h>
 #include <tiledbsoma/logger_public.h>
 #include <tiledbsoma/managed_query.h>
-#include <tiledbsoma/soma_array_reader.h>
+#include <tiledbsoma/soma_array.h>
 #include <tiledbsoma/stats.h>
 #include <tiledbsoma/version.h>
 

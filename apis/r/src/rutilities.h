@@ -53,19 +53,19 @@ inline std::vector<int64_t> getInt64Vector(Rcpp::NumericVector vec) {
 
 // Applies (named list of) vectors of points to the named dimensions
 void apply_dim_points(
-    tdbs::SOMAArrayReader* sr,
+    tdbs::SOMAArray* sr,
     std::unordered_map<std::string, std::shared_ptr<tiledb::Dimension>>&
         name2dim,
     Rcpp::List lst);
 
 // Applies (named list of) matrices of points to the named dimensions
 void apply_dim_ranges(
-    tdbs::SOMAArrayReader* sr,
+    tdbs::SOMAArray* sr,
     std::unordered_map<std::string, std::shared_ptr<tiledb::Dimension>>&
         name2dim,
     Rcpp::List lst);
 
-// Convert R config vector to map<string,string> suitable for SOMAArrayReader
+// Convert R config vector to map<string,string> suitable for SOMAArray
 inline std::map<std::string, std::string> config_vector_to_map(Rcpp::Nullable<Rcpp::CharacterVector> config) {
     std::map<std::string, std::string> platform_config;
 

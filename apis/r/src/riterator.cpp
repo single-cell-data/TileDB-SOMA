@@ -17,9 +17,9 @@
 
 namespace tdbs = tiledbsoma;
 
-//' Iterator-Style Access to SOMA Array via SOMAArrayReader
+//' Iterator-Style Access to SOMA Array via SOMAArray
 //'
-//' The `sr_*` functions provide low-level access to an instance of the SOMAArrayReader
+//' The `sr_*` functions provide low-level access to an instance of the SOMAArray
 //' class so that iterative access over parts of a (large) array is possible.
 //' \describe{
 //'   \item{\code{sr_setup}}{instantiates and by default also submits a query}
@@ -39,9 +39,9 @@ namespace tdbs = tiledbsoma;
 //' for the given dimension. Each dimension can be one entry in the list.
 //' @param loglevel Character value with the desired logging level, defaults to \sQuote{auto}
 //' which lets prior setting prevail, any other value is set as new logging level.
-//' @param sr An external pointer to a TileDB SOMAArrayReader object
+//' @param sr An external pointer to a TileDB SOMAArray object
 //'
-//' @return \code{sr_setup} returns an external pointer to a SOMAArrayReader. \code{sr_complete}
+//' @return \code{sr_setup} returns an external pointer to a SOMAArray. \code{sr_complete}
 //' returns a boolean, and \code{sr_next} returns an Arrow array helper object.
 //'
 //' @examples
@@ -63,7 +63,7 @@ namespace tdbs = tiledbsoma;
 //' }
 //' @export
 // [[Rcpp::export]]
-Rcpp::XPtr<tdbs::SOMAArrayReader> sr_setup(const std::string& uri,
+Rcpp::XPtr<tdbs::SOMAArray> sr_setup(const std::string& uri,
                                            Rcpp::CharacterVector config,
                                            Rcpp::Nullable<Rcpp::CharacterVector> colnames = R_NilValue,
                                            Rcpp::Nullable<Rcpp::XPtr<tiledb::QueryCondition>> qc = R_NilValue,
@@ -94,7 +94,7 @@ Rcpp::XPtr<tdbs::SOMAArrayReader> sr_setup(const std::string& uri,
         column_names = Rcpp::as<std::vector<std::string>>(colnames);
     }
 
-    auto ptr = new tdbs::SOMAArrayReader(uri, name, ctxptr, column_names, batch_size, result_order);
+    auto ptr = new tdbs::SOMAArray(uri, name, ctxptr, column_names, batch_size, result_order);
 
     std::unordered_map<std::string, std::shared_ptr<tiledb::Dimension>> name2dim;
     std::shared_ptr<tiledb::ArraySchema> schema = ptr->schema();
@@ -129,15 +129,15 @@ Rcpp::XPtr<tdbs::SOMAArrayReader> sr_setup(const std::string& uri,
     }
 
     ptr->submit();
-    Rcpp::XPtr<tdbs::SOMAArrayReader> xptr = make_xptr<tdbs::SOMAArrayReader>(ptr);
+    Rcpp::XPtr<tdbs::SOMAArray> xptr = make_xptr<tdbs::SOMAArray>(ptr);
     return xptr;
 }
 
 //' @rdname sr_setup
 //' @export
 // [[Rcpp::export]]
-bool sr_complete(Rcpp::XPtr<tdbs::SOMAArrayReader> sr) {
-   check_xptr_tag<tdbs::SOMAArrayReader>(sr);
+bool sr_complete(Rcpp::XPtr<tdbs::SOMAArray> sr) {
+   check_xptr_tag<tdbs::SOMAArray>(sr);
    size_t nobs = sr->total_num_cells();
    bool complt = sr->is_complete(true);
    bool res = complt && nobs > 0; // completed transfer if query status complete and data shipped
@@ -148,8 +148,8 @@ bool sr_complete(Rcpp::XPtr<tdbs::SOMAArrayReader> sr) {
 //' @rdname sr_setup
 //' @export
 // [[Rcpp::export]]
-Rcpp::List sr_next(Rcpp::XPtr<tdbs::SOMAArrayReader> sr) {
-   check_xptr_tag<tdbs::SOMAArrayReader>(sr);
+Rcpp::List sr_next(Rcpp::XPtr<tdbs::SOMAArray> sr) {
+   check_xptr_tag<tdbs::SOMAArray>(sr);
 
    if (sr_complete(sr)) {
        spdl::trace("[sr_next] complete {} num_cells {}",

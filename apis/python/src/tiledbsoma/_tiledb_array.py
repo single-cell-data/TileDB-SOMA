@@ -96,8 +96,8 @@ class TileDBArray(TileDBObject[_tdb_handles.ArrayWrapper]):
         column_names: Optional[Sequence[str]] = None,
         query_condition: Optional[tiledb.QueryCondition] = None,
         result_order: Optional[ResultOrderStr] = None,
-    ) -> clib.SOMAArrayReader:
-        """Constructs a C++ SOMAArrayReader using appropriate context/config/etc."""
+    ) -> clib.SOMAArray:
+        """Constructs a C++ SOMAArray using appropriate context/config/etc."""
         # Leave empty arguments out of kwargs to allow C++ constructor defaults to apply, as
         # they're not all wrapped in std::optional<>.
         kwargs: Dict[str, object] = {}
@@ -110,7 +110,7 @@ class TileDBArray(TileDBObject[_tdb_handles.ArrayWrapper]):
         if result_order:
             result_order_str = ResultOrder(result_order).value
             kwargs["result_order"] = result_order_str
-        return clib.SOMAArrayReader(
+        return clib.SOMAArray(
             self.uri,
             name=f"{self} reader",
             platform_config=self._ctx.config().dict(),
@@ -118,9 +118,7 @@ class TileDBArray(TileDBObject[_tdb_handles.ArrayWrapper]):
             **kwargs,
         )
 
-    def _set_reader_coords(
-        self, sr: clib.SOMAArrayReader, coords: Sequence[object]
-    ) -> None:
+    def _set_reader_coords(self, sr: clib.SOMAArray, coords: Sequence[object]) -> None:
         """Parses the given coords and sets them on the SOMA Reader."""
         if not is_nonstringy_sequence(coords):
             raise TypeError(
@@ -142,7 +140,7 @@ class TileDBArray(TileDBObject[_tdb_handles.ArrayWrapper]):
                 )
 
     def _set_reader_coord(
-        self, sr: clib.SOMAArrayReader, dim_idx: int, dim: tiledb.Dim, coord: object
+        self, sr: clib.SOMAArray, dim_idx: int, dim: tiledb.Dim, coord: object
     ) -> bool:
         """Parses a single coordinate entry.
 
