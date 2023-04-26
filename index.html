@@ -35,7 +35,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="index.html">tiledbsoma</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.0.0.9015</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.0.0.9021</span>
       </span>
     </div>
 
@@ -43,6 +43,18 @@
       <ul class="nav navbar-nav">
 <li>
   <a href="reference/index.html">Reference</a>
+</li>
+<li class="dropdown">
+  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+    Articles
+     
+    <span class="caret"></span>
+  </a>
+  <ul class="dropdown-menu" role="menu">
+<li>
+      <a href="articles/UsingPlatformConfig.html">Using PlatformConfig</a>
+    </li>
+  </ul>
 </li>
 <li>
   <a href="news/index.html">Changelog</a>
@@ -105,6 +117,7 @@
 <li>Change into the R API package directory: <code>cd TileDB-SOMA/apis/r</code>
 </li>
 <li>Optionally, clean the files in the repo: <code>./cleanup</code> (this is not needed the first time)</li>
+<li>Access to more test data: <code>install.packages("pbmc3k.tiledb",  repos="https://ghrr.github.io/drat")</code> `</li>
 <li>Optionally, update the <code>libtiledbsoma</code> sources: <code>./copy_source.sh</code> (which updates the includes tarball of <code>libtiledbsoma</code>).</li>
 <li>If you have edited any <code>src/*.cpp</code> with <code>RcppExport</code> then run <code>Rscript -e 'Rcpp::compileAttributes()'</code>
 </li>

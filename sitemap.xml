@@ -7,6 +7,12 @@
     <loc>/LICENSE-text.html</loc>
   </url>
   <url>
+    <loc>/articles/UsingPlatformConfig.html</loc>
+  </url>
+  <url>
+    <loc>/articles/index.html</loc>
+  </url>
+  <url>
     <loc>/authors.html</loc>
   </url>
   <url>
@@ -17,6 +23,18 @@
   </url>
   <url>
     <loc>/reference/ConfigList.html</loc>
+  </url>
+  <url>
+    <loc>/reference/EphemeralCollection.html</loc>
+  </url>
+  <url>
+    <loc>/reference/EphemeralCollectionBase.html</loc>
+  </url>
+  <url>
+    <loc>/reference/EphemeralExperiment.html</loc>
+  </url>
+  <url>
+    <loc>/reference/EphemeralMeasurement.html</loc>
   </url>
   <url>
     <loc>/reference/MappingBase.html</loc>
@@ -112,6 +130,9 @@
     <loc>/reference/TileDBArray.html</loc>
   </url>
   <url>
+    <loc>/reference/TileDBCreateOptions.html</loc>
+  </url>
+  <url>
     <loc>/reference/TileDBGroup.html</loc>
   </url>
   <url>
@@ -122,6 +143,9 @@
   </url>
   <url>
     <loc>/reference/libtiledbsoma_version.html</loc>
+  </url>
+  <url>
+    <loc>/reference/pad_matrix.html</loc>
   </url>
   <url>
     <loc>/reference/show_package_versions.html</loc>
@@ -137,5 +161,17 @@
   </url>
   <url>
     <loc>/reference/tiledbsoma_stats_enable.html</loc>
+  </url>
+  <url>
+    <loc>/reference/write_soma.Seurat.html</loc>
+  </url>
+  <url>
+    <loc>/reference/write_soma.html</loc>
+  </url>
+  <url>
+    <loc>/reference/write_soma_objects.html</loc>
+  </url>
+  <url>
+    <loc>/reference/write_soma_seurat_sub.html</loc>
   </url>
 </urlset>
