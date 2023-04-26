@@ -66,7 +66,9 @@ Suggests:
     pbmc3k.tiledb,
     SeuratObject (>= 4.1.0),
     datasets,
-    SingleCellExperiment (>= 1.20.0)
+    SingleCellExperiment (>= 1.20.0),
+    SummarizedExperiment,
+    S4Vectors
 VignetteBuilder: knitr
 Config/testthat/edition: 2
 OS_type: unix
