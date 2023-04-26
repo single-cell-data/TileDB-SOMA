@@ -1,8 +1,10 @@
 #' SOMA Example Datasets
 #'
-#' Access example SOMA objects bundled with the tiledbsoma package. Use
-#' `list_datasets()` to list the available datasets and `load_dataset()` to load
-#'  a dataset into memory using the appropriate SOMA class. The
+#' @description
+#' Access example SOMA objects bundled with the tiledbsoma package.
+#'
+#' Use `list_datasets()` to list the available datasets and `load_dataset()` to
+#' load a dataset into memory using the appropriate SOMA class. The
 #'  `extract_dataset()` method returns the path to the extracted dataset without
 #'  loading it into memory.
 #'
@@ -19,7 +21,8 @@
 NULL
 
 #' @rdname example-datasets
-#' @return A character vector of the available datasets.
+#' @return
+#'  - `list_datasets()` returns a character vector of the available datasets.
 #' @importFrom tools file_path_sans_ext
 #' @export
 list_datasets <- function() {
@@ -33,7 +36,8 @@ list_datasets <- function() {
 #' @param name The name of the dataset.
 #' @param dir The directory where the dataset will be extracted to (default:
 #' `tempdir()`).
-#' @return The path to the extracted dataset.
+#' @return
+#'  - `extract_dataset()` returns the path to the extracted dataset.
 #' @export
 extract_dataset <- function(name, dir = tempdir()) {
   data_dir <- example_data_dir()
@@ -55,8 +59,8 @@ extract_dataset <- function(name, dir = tempdir()) {
 }
 
 #' @rdname example-datasets
-#' @inheritParams extract_dataset
-#' @return An SOMA object.
+#' @return
+#'  - `load_dataset()` returns an SOMA object.
 #' @export
 load_dataset <- function(name, dir = tempdir()) {
   dataset_uri <- extract_dataset(name, dir)
