@@ -31,6 +31,7 @@ import numpy as np
 import pandas as pd
 import pyarrow as pa
 import scipy.sparse as sp
+import tiledb
 from anndata._core.sparse_dataset import SparseDataset
 from somacore.options import PlatformConfig
 
@@ -118,7 +119,15 @@ def from_h5ad(
         )
 
     if isinstance(input_path, ad.AnnData):
-        raise TypeError("Input path is an AnnData object -- did you want from_anndata?")
+        raise TypeError("input path is an AnnData object -- did you want from_anndata?")
+
+    if context is not None:
+        if isinstance(context, tiledb.Ctx):
+            raise TypeError(
+                "context is a tiledb.Ctx, not a SOMATileDBContext -- please wrap it in tiledbsoma.SOMATileDBContext(...)"
+            )
+        elif not isinstance(context, SOMATileDBContext):
+            raise TypeError("context is not a SOMATileDBContext")
 
     s = _util.get_start_stamp()
     logging.log_io(None, f"START  Experiment.from_h5ad {input_path}")
@@ -201,6 +210,14 @@ def from_anndata(
         raise TypeError(
             "Second argument is not an AnnData object -- did you want from_h5ad?"
         )
+
+    if context is not None:
+        if isinstance(context, tiledb.Ctx):
+            raise TypeError(
+                "context is a tiledb.Ctx, not a SOMATileDBContext -- please wrap it in tiledbsoma.SOMATileDBContext(...)"
+            )
+        elif not isinstance(context, SOMATileDBContext):
+            raise TypeError("context is not a SOMATileDBContext")
 
     # Without _at least_ an index, there is nothing to indicate the dimension indices.
     if anndata.obs.index.empty or anndata.var.index.empty:
