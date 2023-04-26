@@ -6,10 +6,11 @@
 """Implementation of a SOMA Measurement.
 """
 
+from typing import Union
+
 from somacore import measurement
 
 from ._collection import Collection, CollectionBase
-from ._common_nd_array import NDArray
 from ._dataframe import DataFrame
 from ._dense_nd_array import DenseNDArray
 from ._sparse_nd_array import SparseNDArray
@@ -20,7 +21,9 @@ class Measurement(
     CollectionBase[AnyTileDBObject],
     measurement.Measurement[  # type: ignore[type-var]
         DataFrame,
-        Collection[NDArray],
+        Collection[
+            Union[SparseNDArray, DenseNDArray]
+        ],  # not just `NDArray` since that has no common `read`
         Collection[DenseNDArray],
         Collection[SparseNDArray],
         AnyTileDBObject,
