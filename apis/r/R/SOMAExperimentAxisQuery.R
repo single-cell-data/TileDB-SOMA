@@ -344,22 +344,14 @@ SOMAExperimentAxisQuery <- R6::R6Class(
 
     #' @description Loads the query as a \code{\link[SeuratObject]{Seurat}} object
     #'
-    #' @template param-x-layers-v3
-    #' @template param-obs-index
-    #' @template param-var-index
-    #' @param obs_column_names Names of columns in \code{obs} to add as
-    #' cell-level meta data; by default, loads all columns
-    #' @template param-var-column-names
-    #' @param obsm_layers Names of arrays in \code{obsm} to load in as the
-    #' cell embeddings; pass \code{FALSE} to suppress loading in any
-    #' dimensional reductions; by default, loads all dimensional
-    #' reduction information
-    #' @param varm_layers Named vector of arrays in \code{varm} to load in as
-    #' the feature loadings; names must be names of array in \code{obsm} (eg.
-    #' \code{varm_layers = c(X_pca = 'PCs')}); will try to determine
-    #' \code{varm_layers} from \code{obsm_layers}
-    #' @param obsp_layers Names of arrays in \code{obsp} to load in as
-    #' \code{\link[SeuratObject]{Graph}s}; by default, loads all graphs
+    #' @param X_layers \Sexpr[results=rd]{tiledbsoma:::rd_outgest_xlayers()}
+    #' @param obs_index \Sexpr[results=rd]{tiledbsoma:::rd_outgest_index()}
+    #' @param var_index \Sexpr[results=rd]{tiledbsoma:::rd_outgest_index(axis = 'var')}
+    #' @param obs_column_names \Sexpr[results=rd]{tiledbsoma:::rd_outgest_mdnames()}
+    #' @param var_column_names \Sexpr[results=rd]{tiledbsoma:::rd_outgest_mdnames(axis = 'var')}
+    #' @param obsm_layers \Sexpr[results=rd]{tiledbsoma:::rd_outgest_mlayers()}
+    #' @param varm_layers \Sexpr[results=rd]{tiledbsoma:::rd_outgest_mlayers(axis = 'varm')}
+    #' @param obsp_layers \Sexpr[results=rd]{tiledbsoma:::rd_outgest_players()}
     #'
     #' @return A \code{\link[SeuratObject]{Seurat}} object
     #'
@@ -553,6 +545,11 @@ SOMAExperimentAxisQuery <- R6::R6Class(
     },
     #' @description Loads the query as a Seurat \code{\link[SeuratObject]{Assay}}
     #'
+    #' @param X_layers \Sexpr[results=rd]{tiledbsoma:::rd_outgest_xlayers()}
+    #' @param obs_index \Sexpr[results=rd]{tiledbsoma:::rd_outgest_index()}
+    #' @param var_index \Sexpr[results=rd]{tiledbsoma:::rd_outgest_index(axis = 'var')}
+    #' @param var_column_names \Sexpr[results=rd]{tiledbsoma:::rd_outgest_mdnames(axis = 'var')}
+    #'
     #' @return An \code{\link[SeuratObject]{Assay}} object
     #'
     to_seurat_assay = function(
@@ -643,6 +640,8 @@ SOMAExperimentAxisQuery <- R6::R6Class(
     #' @param varm_layer Name of the array in \code{varm} to load as the
     #' feature loadings; by default, will try to determine \code{varm_layer}
     #' from \code{obsm_layer}
+    #' @param obs_index \Sexpr[results=rd]{tiledbsoma:::rd_outgest_index()}
+    #' @param var_index \Sexpr[results=rd]{tiledbsoma:::rd_outgest_index(axis = 'var')}
     #'
     #' @return A \code{\link[SeuratObject]{DimReduc}} object
     #'
@@ -814,6 +813,7 @@ SOMAExperimentAxisQuery <- R6::R6Class(
     #' @description Loads the query as a Seurat \link[SeuratObject:Graph]{graph}
     #'
     #' @param obsp_layer Name of array in \code{obsp} to load as the graph
+    #' @param obs_index \Sexpr[results=rd]{tiledbsoma:::rd_outgest_index()}
     #'
     #' @return A \code{\link[SeuratObject]{Graph}} object
     #'
@@ -861,6 +861,15 @@ SOMAExperimentAxisQuery <- R6::R6Class(
     },
     #' @description Loads the query as a
     #' \code{\link[SingleCellExperiment]{SingleCellExperiment}} object
+    #'
+    #' @param X_layers \Sexpr[results=rd]{tiledbsoma:::rd_outgest_xlayers('sce')}
+    #' @param obs_index \Sexpr[results=rd]{tiledbsoma:::rd_outgest_index('sce')}
+    #' @param var_index \Sexpr[results=rd]{tiledbsoma:::rd_outgest_index('sce', 'var')}
+    #' @param obsm_layers \Sexpr[results=rd]{tiledbsoma:::rd_outgest_mlayers('sce')}
+    #' @param obs_column_names \Sexpr[results=rd]{tiledbsoma:::rd_outgest_mdnames('sce')}
+    #' @param var_column_names \Sexpr[results=rd]{tiledbsoma:::rd_outgest_mdnames('sce', 'var')}
+    #' @param obsp_layers \Sexpr[results=rd]{tiledbsoma:::rd_outgest_players('sce')}
+    #' @param varp_layers \Sexpr[results=rd]{tiledbsoma:::rd_outgest_players('sce', 'varp')}
     #'
     #' @return A \code{\link[SingleCellExperiment]{SingleCellExperiment}} object
     #'
@@ -1069,6 +1078,19 @@ SOMAExperimentAxisQuery <- R6::R6Class(
       methods::validObject(sce)
       return(sce)
     },
+    #' @description Convenience method for \code{$to_single_cell_experiment()}
+    #'
+    #' @param X_layers \Sexpr[results=rd]{tiledbsoma:::rd_outgest_xlayers('sce')}
+    #' @param obs_index \Sexpr[results=rd]{tiledbsoma:::rd_outgest_index('sce')}
+    #' @param var_index \Sexpr[results=rd]{tiledbsoma:::rd_outgest_index('sce', 'var')}
+    #' @param obsm_layers \Sexpr[results=rd]{tiledbsoma:::rd_outgest_mlayers('sce')}
+    #' @param obs_column_names \Sexpr[results=rd]{tiledbsoma:::rd_outgest_mdnames('sce')}
+    #' @param var_column_names \Sexpr[results=rd]{tiledbsoma:::rd_outgest_mdnames('sce', 'var')}
+    #' @param obsp_layers \Sexpr[results=rd]{tiledbsoma:::rd_outgest_players('sce')}
+    #' @param varp_layers \Sexpr[results=rd]{tiledbsoma:::rd_outgest_players('sce', 'varp')}
+    #'
+    #' @return A \code{\link[SingleCellExperiment]{SingleCellExperiment}} object
+    #'
     to_sce = function(
       X_layers = NULL,
       obs_index = NULL,

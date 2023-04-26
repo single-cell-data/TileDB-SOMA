@@ -169,3 +169,133 @@ rd_soma_field <- function(field) {
     )
   ))
 }
+
+rd_outgest_index <- function(type = 'v3', axis = 'obs') {
+  type <- type[1L]
+  type <- match.arg(arg = type, choices = c('v3', 'sce'))
+  axis <- axis[1L]
+  axis <- match.arg(arg = axis, choices = c('obs', 'var'))
+  label <- switch(EXPR = axis, obs = 'cell', var = 'feature')
+  return(paste0(
+    'Name of column in \\code{',
+    axis,
+    '} to add as ',
+    label,
+    ' names; uses \\code{paste0("',
+    label,
+    '", ',
+    axis,
+    '_joinids())} by default'
+  ))
+}
+
+rd_outgest_mdnames <- function(type = 'v3', axis = 'obs') {
+  type <- type[1L]
+  type <- match.arg(arg = type, choices = c('v3', 'sce'))
+  axis <- axis[1L]
+  axis <- match.arg(arg = axis, choices = c('obs', 'var'))
+  return(paste0(
+    'Names of columns in \\code{',
+    axis,
+    '} to add as ',
+    switch(
+      EXPR = type,
+      v3 = paste0(
+        switch(EXPR = axis, obs = 'cell', var = 'feature'),
+        '-level meta data'
+      ),
+      sce = switch(EXPR = axis, obs = '\\code{colData}', var = '\\code{rowData}')
+    ),
+    '; by default, loads all columns'
+  ))
+}
+
+rd_outgest_mlayers <- function(type = 'v3', axis = 'obsm') {
+  type <- type[1L]
+  type <- match.arg(arg = type, choices = c('v3', 'sce'))
+  axis <- axis[1L]
+  axis <- match.arg(arg = axis, choices = c('obsm', 'varm'))
+  dr <- switch(EXPR = type, v3 = 'dimensional reduction', sce = 'reduced dimension')
+  label <- switch(
+    EXPR = type,
+    v3 = switch(EXPR = axis, obsm = 'cell embeddings', varm = 'feature loadings'),
+    sce = paste0(dr, 's')
+  )
+  unnamed <- paste0(
+    'Names of arrays in \\code{',
+    axis,
+    '} to add as the ',
+    label
+  )
+  intro <- switch(
+    EXPR = axis,
+    obsm = unnamed,
+    varm = switch(
+      EXPR = type,
+      v3 = paste0(
+        'Named vector of arrays in \\code{',
+        axis,
+        '} to load in as the feature loadings; names must be names of arrays in',
+        ' \\code{obsm} (eg. \\code{varm_layers = c(X_pca = "PCs")})'
+      ),
+      unnamed
+    )
+  )
+  suppress <- paste(
+    'pass \\code{FALSE} to suppress loading in any',
+    switch(EXPR = axis, obsm = paste0(dr, 's'), varm = label)
+  )
+  default <- switch(
+    EXPR = axis,
+    obsm = paste0(
+      'by default, loads all ',
+      dr,
+      switch(EXPR = type, v3 = ' information', sce = 's')
+    ),
+    varm = 'will try to determine \\code{varm_layers} from \\code{obsm_layers}'
+  )
+  return(paste(intro, suppress, default, sep = '; '))
+}
+
+rd_outgest_players <- function(type = 'v3', axis = 'obsp') {
+  type <- type[1L]
+  type <- match.arg(arg = type, choices = c('v3', 'sce'))
+  axis <- axis[1L]
+  axis <- match.arg(arg = axis, choices = c('obsp', 'varp'))
+  return(paste0(
+    'Names of arrays in \\code{',
+    axis,
+    '} to load in as \\code{\\link[',
+    switch(EXPR = type, v3 = 'SeuratObject', sce = 'S4Vectors'),
+    ']{',
+    switch(EXPR = type, v3 = 'Graph}s', sce = 'SelfHits}'),
+    '}; by default, loads all ',
+    switch(EXPR = axis, obsp = 'graphs', varp = 'networks')
+  ))
+}
+
+rd_outgest_xlayers <- function(type = 'v3') {
+  type <- type[1L]
+  type <- match.arg(arg = type, choices = c('v3', 'sce'))
+  return(switch(
+    EXPR = type,
+    v3 = paste(
+      "A named character of X layers to add to the Seurat assay",
+      "where the names are the names of Seurat slots and the values are the names",
+      "of layers within \\code{X}; names should be one of:",
+      "\\itemize{",
+      "\\item \\dQuote{\\code{counts}} to add the layer as \\code{counts}",
+      "\\item \\dQuote{\\code{data}} to add the layer as \\code{data}",
+      "\\item \\dQuote{\\code{scale.data}} to add the layer as \\code{scale.data}",
+      "}",
+      "At least one of \\dQuote{\\code{counts}} or \\dQuote{\\code{data}} is required"
+    ),
+    sce = paste(
+      'A character vector of X layers to add as assays in the main experiment;',
+      'may optionally be named to set the name of the resulting assay',
+      '(eg. \\code{X_layers = c(counts = "raw")} will load in X layer',
+      '\\dQuote{\\code{raw}} as assay \\dQuote{\\code{counts}});',
+      'by default, loads in all X layers'
+    )
+  ))
+}

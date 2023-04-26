@@ -65,6 +65,8 @@ this in the class.
 \item \href{#method-SOMAExperimentAxisQuery-to_seurat_assay}{\code{SOMAExperimentAxisQuery$to_seurat_assay()}}
 \item \href{#method-SOMAExperimentAxisQuery-to_seurat_reduction}{\code{SOMAExperimentAxisQuery$to_seurat_reduction()}}
 \item \href{#method-SOMAExperimentAxisQuery-to_seurat_graph}{\code{SOMAExperimentAxisQuery$to_seurat_graph()}}
+\item \href{#method-SOMAExperimentAxisQuery-to_single_cell_experiment}{\code{SOMAExperimentAxisQuery$to_single_cell_experiment()}}
+\item \href{#method-SOMAExperimentAxisQuery-to_sce}{\code{SOMAExperimentAxisQuery$to_sce()}}
 \item \href{#method-SOMAExperimentAxisQuery-clone}{\code{SOMAExperimentAxisQuery$clone()}}
 }
 }
@@ -271,40 +273,21 @@ Loads the query as a \code{\link[SeuratObject]{Seurat}} object
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{X_layers}}{A named character of X layers to add to the Seurat assay,
-where the names are the names of Seurat slots and the values are the names
-of layers within \code{X}; names should be one of:
-\itemize{
-\item \dQuote{\code{counts}} to add the layer as \code{counts}
-\item \dQuote{\code{data}} to add the layer as \code{data}
-\item \dQuote{\code{scale.data}} to add the layer as \code{scale.data}
-}
-At least one of \dQuote{\code{counts}} or \dQuote{\code{data}} is required}
+\item{\code{X_layers}}{\Sexpr[results=rd]{tiledbsoma:::rd_outgest_xlayers()}}
 
-\item{\code{obs_index}}{Name of column in \code{obs} to add as cell names; uses
-\code{paste0("cell", obs_joinids())} by default}
+\item{\code{obs_index}}{\Sexpr[results=rd]{tiledbsoma:::rd_outgest_index()}}
 
-\item{\code{var_index}}{Name of column in \code{var} to add as feature names; uses
-\code{paste0("feature", var_joinids())} by default}
+\item{\code{var_index}}{\Sexpr[results=rd]{tiledbsoma:::rd_outgest_index(axis = 'var')}}
 
-\item{\code{obs_column_names}}{Names of columns in \code{obs} to add as
-cell-level meta data; by default, loads all columns}
+\item{\code{obs_column_names}}{\Sexpr[results=rd]{tiledbsoma:::rd_outgest_mdnames()}}
 
-\item{\code{var_column_names}}{Names of columns in \code{var} to add as
-feature-level meta data; by default, loads all columns}
+\item{\code{var_column_names}}{\Sexpr[results=rd]{tiledbsoma:::rd_outgest_mdnames(axis = 'var')}}
 
-\item{\code{obsm_layers}}{Names of arrays in \code{obsm} to load in as the
-cell embeddings; pass \code{FALSE} to suppress loading in any
-dimensional reductions; by default, loads all dimensional
-reduction information}
+\item{\code{obsm_layers}}{\Sexpr[results=rd]{tiledbsoma:::rd_outgest_mlayers()}}
 
-\item{\code{varm_layers}}{Named vector of arrays in \code{varm} to load in as
-the feature loadings; names must be names of array in \code{obsm} (eg.
-\code{varm_layers = c(X_pca = 'PCs')}); will try to determine
-\code{varm_layers} from \code{obsm_layers}}
+\item{\code{varm_layers}}{\Sexpr[results=rd]{tiledbsoma:::rd_outgest_mlayers(axis = 'varm')}}
 
-\item{\code{obsp_layers}}{Names of arrays in \code{obsp} to load in as
-\code{\link[SeuratObject]{Graph}s}; by default, loads all graphs}
+\item{\code{obsp_layers}}{\Sexpr[results=rd]{tiledbsoma:::rd_outgest_players()}}
 }
 \if{html}{\out{</div>}}
 }
@@ -329,24 +312,13 @@ Loads the query as a Seurat \code{\link[SeuratObject]{Assay}}
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{X_layers}}{A named character of X layers to add to the Seurat assay,
-where the names are the names of Seurat slots and the values are the names
-of layers within \code{X}; names should be one of:
-\itemize{
-\item \dQuote{\code{counts}} to add the layer as \code{counts}
-\item \dQuote{\code{data}} to add the layer as \code{data}
-\item \dQuote{\code{scale.data}} to add the layer as \code{scale.data}
-}
-At least one of \dQuote{\code{counts}} or \dQuote{\code{data}} is required}
+\item{\code{X_layers}}{\Sexpr[results=rd]{tiledbsoma:::rd_outgest_xlayers()}}
 
-\item{\code{obs_index}}{Name of column in \code{obs} to add as cell names; uses
-\code{paste0("cell", obs_joinids())} by default}
+\item{\code{obs_index}}{\Sexpr[results=rd]{tiledbsoma:::rd_outgest_index()}}
 
-\item{\code{var_index}}{Name of column in \code{var} to add as feature names; uses
-\code{paste0("feature", var_joinids())} by default}
+\item{\code{var_index}}{\Sexpr[results=rd]{tiledbsoma:::rd_outgest_index(axis = 'var')}}
 
-\item{\code{var_column_names}}{Names of columns in \code{var} to add as
-feature-level meta data; by default, loads all columns}
+\item{\code{var_column_names}}{\Sexpr[results=rd]{tiledbsoma:::rd_outgest_mdnames(axis = 'var')}}
 }
 \if{html}{\out{</div>}}
 }
@@ -379,11 +351,9 @@ cell embeddings}
 feature loadings; by default, will try to determine \code{varm_layer}
 from \code{obsm_layer}}
 
-\item{\code{obs_index}}{Name of column in \code{obs} to add as cell names; uses
-\code{paste0("cell", obs_joinids())} by default}
+\item{\code{obs_index}}{\Sexpr[results=rd]{tiledbsoma:::rd_outgest_index()}}
 
-\item{\code{var_index}}{Name of column in \code{var} to add as feature names; uses
-\code{paste0("feature", var_joinids())} by default}
+\item{\code{var_index}}{\Sexpr[results=rd]{tiledbsoma:::rd_outgest_index(axis = 'var')}}
 }
 \if{html}{\out{</div>}}
 }
@@ -405,13 +375,99 @@ Loads the query as a Seurat \link[SeuratObject:Graph]{graph}
 \describe{
 \item{\code{obsp_layer}}{Name of array in \code{obsp} to load as the graph}
 
-\item{\code{obs_index}}{Name of column in \code{obs} to add as cell names; uses
-\code{paste0("cell", obs_joinids())} by default}
+\item{\code{obs_index}}{\Sexpr[results=rd]{tiledbsoma:::rd_outgest_index()}}
 }
 \if{html}{\out{</div>}}
 }
 \subsection{Returns}{
 A \code{\link[SeuratObject]{Graph}} object
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-SOMAExperimentAxisQuery-to_single_cell_experiment"></a>}}
+\if{latex}{\out{\hypertarget{method-SOMAExperimentAxisQuery-to_single_cell_experiment}{}}}
+\subsection{Method \code{to_single_cell_experiment()}}{
+Loads the query as a
+\code{\link[SingleCellExperiment]{SingleCellExperiment}} object
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{SOMAExperimentAxisQuery$to_single_cell_experiment(
+  X_layers = NULL,
+  obs_index = NULL,
+  var_index = NULL,
+  obs_column_names = NULL,
+  var_column_names = NULL,
+  obsm_layers = NULL,
+  obsp_layers = NULL,
+  varp_layers = NULL
+)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{X_layers}}{\Sexpr[results=rd]{tiledbsoma:::rd_outgest_xlayers('sce')}}
+
+\item{\code{obs_index}}{\Sexpr[results=rd]{tiledbsoma:::rd_outgest_index('sce')}}
+
+\item{\code{var_index}}{\Sexpr[results=rd]{tiledbsoma:::rd_outgest_index('sce', 'var')}}
+
+\item{\code{obs_column_names}}{\Sexpr[results=rd]{tiledbsoma:::rd_outgest_mdnames('sce')}}
+
+\item{\code{var_column_names}}{\Sexpr[results=rd]{tiledbsoma:::rd_outgest_mdnames('sce', 'var')}}
+
+\item{\code{obsm_layers}}{\Sexpr[results=rd]{tiledbsoma:::rd_outgest_mlayers('sce')}}
+
+\item{\code{obsp_layers}}{\Sexpr[results=rd]{tiledbsoma:::rd_outgest_players('sce')}}
+
+\item{\code{varp_layers}}{\Sexpr[results=rd]{tiledbsoma:::rd_outgest_players('sce', 'varp')}}
+}
+\if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+A \code{\link[SingleCellExperiment]{SingleCellExperiment}} object
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-SOMAExperimentAxisQuery-to_sce"></a>}}
+\if{latex}{\out{\hypertarget{method-SOMAExperimentAxisQuery-to_sce}{}}}
+\subsection{Method \code{to_sce()}}{
+Convenience method for \code{$to_single_cell_experiment()}
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{SOMAExperimentAxisQuery$to_sce(
+  X_layers = NULL,
+  obs_index = NULL,
+  var_index = NULL,
+  obs_column_names = NULL,
+  var_column_names = NULL,
+  obsm_layers = NULL,
+  obsp_layers = NULL,
+  varp_layers = NULL
+)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{X_layers}}{\Sexpr[results=rd]{tiledbsoma:::rd_outgest_xlayers('sce')}}
+
+\item{\code{obs_index}}{\Sexpr[results=rd]{tiledbsoma:::rd_outgest_index('sce')}}
+
+\item{\code{var_index}}{\Sexpr[results=rd]{tiledbsoma:::rd_outgest_index('sce', 'var')}}
+
+\item{\code{obs_column_names}}{\Sexpr[results=rd]{tiledbsoma:::rd_outgest_mdnames('sce')}}
+
+\item{\code{var_column_names}}{\Sexpr[results=rd]{tiledbsoma:::rd_outgest_mdnames('sce', 'var')}}
+
+\item{\code{obsm_layers}}{\Sexpr[results=rd]{tiledbsoma:::rd_outgest_mlayers('sce')}}
+
+\item{\code{obsp_layers}}{\Sexpr[results=rd]{tiledbsoma:::rd_outgest_players('sce')}}
+
+\item{\code{varp_layers}}{\Sexpr[results=rd]{tiledbsoma:::rd_outgest_players('sce', 'varp')}}
+}
+\if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+A \code{\link[SingleCellExperiment]{SingleCellExperiment}} object
 }
 }
 \if{html}{\out{<hr>}}
