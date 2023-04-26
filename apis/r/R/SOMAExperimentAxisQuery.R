@@ -917,7 +917,12 @@ SOMAExperimentAxisQuery <- R6::R6Class(
         names(x)[unnamed] <- x[unnamed]
         return(x)
       }
-      # Because SingleCellExperiment is broken
+      # Re-implement SingleCellExperiment's internal `.mat2hits` function as
+      # theirs doesn't recognize the difference between `Matrix` and `matrix`
+      # without {Matrix} being attached
+      # Also correct cases where `S4Vectors::SelfHits(from =` and
+      # `S4Vectors::SelfHits(to =` are not integers by explicitly casting to
+      # integer
       mat_to_hits <- function(mat) {
         f <- if (inherits(mat, 'Matrix')) {
           Matrix::which
