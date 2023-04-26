@@ -23,7 +23,7 @@ NULL
 #' @importFrom tools file_path_sans_ext
 #' @export
 list_datasets <- function() {
-  data_dir <- system.file("raw-data", package = "tiledbsoma", mustWork = TRUE)
+  data_dir <- example_data_dir()
   stopifnot("The dataset directory does not exist" = dir.exists(data_dir))
   files <- dir(data_dir, pattern = "tar.gz")
   tools::file_path_sans_ext(basename(files), compression = TRUE)
@@ -36,7 +36,7 @@ list_datasets <- function() {
 #' @return The path to the extracted dataset.
 #' @export
 extract_dataset <- function(name, dir = tempdir()) {
-  data_dir <- system.file("raw-data", package = "tiledbsoma")
+  data_dir <- example_data_dir()
   tarfiles <- list_datasets()
 
   stopifnot(
@@ -76,4 +76,8 @@ load_dataset <- function(name, dir = tempdir()) {
     "SOMADataFrame" = SOMADataFrameOpen(dataset_uri),
     stop("The dataset is an unsupported SOMA object", call. = FALSE)
   )
+}
+
+example_data_dir <- function() {
+  system.file("raw-data", package = "tiledbsoma", mustWork = TRUE)
 }
