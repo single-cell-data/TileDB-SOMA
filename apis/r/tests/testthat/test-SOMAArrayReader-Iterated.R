@@ -58,10 +58,7 @@ test_that("Iterated Interface from SOMAArrayReader", {
     expect_equal(ncol(rl), 3)
 
     ## test completeness predicate on shorter data
-    tdir <- tempfile()
-    tgzfile <- system.file("raw-data", "soco-pbmc3k_processed-obs.tar.gz", package="tiledbsoma")
-    untar(tarfile = tgzfile, exdir = tdir)
-    uri <- file.path(tdir, "obs")
+    uri <- extract_dataset("soma-dataframe-pbmc3k-processed-obs")
     sr <- sr_setup(uri, config=as.character(config(ctx)))
 
     expect_false(tiledbsoma:::sr_complete(sr))

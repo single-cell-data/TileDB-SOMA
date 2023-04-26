@@ -158,11 +158,7 @@ test_that("int64 values are stored correctly", {
 })
 
 test_that("SOMADataFrame read", {
-    tdir <- tempfile()
-    tgzfile <- system.file("raw-data", "soco-pbmc3k_processed-obs.tar.gz", package="tiledbsoma")
-    untar(tarfile = tgzfile, exdir = tdir)
-
-    uri <- file.path(tdir, "obs")
+    uri <- extract_dataset("soma-dataframe-pbmc3k-processed-obs")
 
     sdf <- SOMADataFrame$new(uri, internal_use_only = "allowed_use")
     z <- sdf$read()

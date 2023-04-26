@@ -1,9 +1,5 @@
 test_that("Basic SOMAArrayReader", {
-    tdir <- tempfile()
-    tgzfile <- system.file("raw-data", "soco-pbmc3k_processed-obs.tar.gz", package="tiledbsoma")
-    untar(tarfile = tgzfile, exdir = tdir)
-
-    uri <- file.path(tdir, "obs")
+    uri <- extract_dataset("soma-dataframe-pbmc3k-processed-obs")
 
     df <- arrow_to_dt(soma_array_reader(uri))
     expect_equal(nrow(df), 2638L)
