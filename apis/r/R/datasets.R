@@ -7,7 +7,7 @@
 #'  loading it into memory.
 #'
 #' @details
-#' The SOMA objects are stored as `tar.gz` files in the package's `raw-data`
+#' The SOMA objects are stored as `tar.gz` files in the package's `extdata`
 #' directory. Calling `load_dataset()` extracts the `tar.gz` file to the
 #' specified `dir`, inspects its metadata to determine the appropriate SOMA
 #' class to instantiate, and returns the SOMA object.
@@ -79,5 +79,5 @@ load_dataset <- function(name, dir = tempdir()) {
 }
 
 example_data_dir <- function() {
-  system.file("raw-data", package = "tiledbsoma", mustWork = TRUE)
+  system.file("extdata", package = "tiledbsoma", mustWork = TRUE)
 }

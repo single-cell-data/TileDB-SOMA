@@ -9,7 +9,7 @@ data(pbmc_small, package = "SeuratObject")
 pbmc_small
 
 # variables
-data_dir <- normalizePath(file.path("inst", "raw-data"))
+data_dir <- normalizePath(file.path("inst", "extdata"))
 soma_exp_name <- "soma-exp-pbmc-small"
 soma_exp_uri <- file.path(tempdir(), soma_exp_name)
 tar_file <- file.path(data_dir, paste0(soma_exp_name, ".tar.gz"))
