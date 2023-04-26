@@ -2,7 +2,9 @@
 #'
 #' Access example SOMA objects bundled with the tiledbsoma package. Use
 #' `list_datasets()` to list the available datasets and `load_dataset()` to load
-#'  a dataset into memory using the appropriate SOMA class.
+#'  a dataset into memory using the appropriate SOMA class. The
+#'  `extract_dataset()` method returns the path to the extracted dataset without
+#'  loading it into memory.
 #'
 #' @details
 #' The SOMA objects are stored as `tar.gz` files in the package's `raw-data`
@@ -17,21 +19,23 @@
 NULL
 
 #' @rdname example-datasets
+#' @return A character vector of the available datasets.
 #' @importFrom tools file_path_sans_ext
 #' @export
 list_datasets <- function() {
-  data_dir <- system.file("raw-data", package = "tiledbsoma")
+  data_dir <- system.file("raw-data", package = "tiledbsoma", mustWork = TRUE)
   stopifnot("The dataset directory does not exist" = dir.exists(data_dir))
   files <- dir(data_dir, pattern = "tar.gz")
   tools::file_path_sans_ext(basename(files), compression = TRUE)
 }
 
 #' @rdname example-datasets
-#' @param name The name of the dataset to load.
-#' @param dir The directory where the dataset will be copied to (default:
+#' @param name The name of the dataset.
+#' @param dir The directory where the dataset will be extracted to (default:
 #' `tempdir()`).
+#' @return The path to the extracted dataset.
 #' @export
-load_dataset <- function(name, dir = tempdir()) {
+extract_dataset <- function(name, dir = tempdir()) {
   data_dir <- system.file("raw-data", package = "tiledbsoma")
   tarfiles <- list_datasets()
 
@@ -47,6 +51,15 @@ load_dataset <- function(name, dir = tempdir()) {
 
   dataset_uri <- file.path(dir, name)
   untar(tarfile, exdir = dataset_uri)
+  dataset_uri
+}
+
+#' @rdname example-datasets
+#' @inheritParams extract_dataset
+#' @return An SOMA object.
+#' @export
+load_dataset <- function(name, dir = tempdir()) {
+  dataset_uri <- extract_dataset(name, dir)
 
   # Inspect the object's metadata
   object <- switch(
