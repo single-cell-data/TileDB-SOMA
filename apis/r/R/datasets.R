@@ -27,8 +27,7 @@ NULL
 #' @export
 list_datasets <- function() {
   data_dir <- example_data_dir()
-  stopifnot("The dataset directory does not exist" = dir.exists(data_dir))
-  files <- dir(data_dir, pattern = "tar.gz")
+  files <- dir(data_dir, pattern = "tar\\.gz$")
   tools::file_path_sans_ext(basename(files), compression = TRUE)
 }
 
@@ -60,7 +59,7 @@ extract_dataset <- function(name, dir = tempdir()) {
 
 #' @rdname example-datasets
 #' @return
-#'  - `load_dataset()` returns an SOMA object.
+#'  - `load_dataset()` returns a SOMA object.
 #' @export
 load_dataset <- function(name, dir = tempdir()) {
   dataset_uri <- extract_dataset(name, dir)
