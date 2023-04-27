@@ -38,11 +38,7 @@
 
 #include <stdexcept>  // for windows: error C2039: 'runtime_error': is not a member of 'std'
 
-#if !defined(R_BUILD)
 #include <spdlog/spdlog.h>
-#else
-#include "tiledbsoma/spdlog_with_R.h"
-#endif
 
 namespace tiledbsoma {
 
