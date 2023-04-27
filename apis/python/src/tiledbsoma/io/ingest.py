@@ -31,7 +31,6 @@ import numpy as np
 import pandas as pd
 import pyarrow as pa
 import scipy.sparse as sp
-import tiledb
 from anndata._core.sparse_dataset import SparseDataset
 from somacore.options import PlatformConfig
 
@@ -56,7 +55,7 @@ from .._tdb_handles import RawHandle
 from .._tiledb_array import TileDBArray
 from .._tiledb_object import AnyTileDBObject, TileDBObject
 from .._types import INGEST_MODES, IngestMode, NPNDArray, Path
-from ..options import SOMATileDBContext
+from ..options import SOMATileDBContext, _validate_soma_tiledb_context
 from ..options._tiledb_create_options import TileDBCreateOptions
 from . import conversions
 
@@ -121,13 +120,7 @@ def from_h5ad(
     if isinstance(input_path, ad.AnnData):
         raise TypeError("input path is an AnnData object -- did you want from_anndata?")
 
-    if context is not None:
-        if isinstance(context, tiledb.Ctx):
-            raise TypeError(
-                "context is a tiledb.Ctx, not a SOMATileDBContext -- please wrap it in tiledbsoma.SOMATileDBContext(...)"
-            )
-        elif not isinstance(context, SOMATileDBContext):
-            raise TypeError("context is not a SOMATileDBContext")
+    context = _validate_soma_tiledb_context(context)
 
     s = _util.get_start_stamp()
     logging.log_io(None, f"START  Experiment.from_h5ad {input_path}")
@@ -211,13 +204,7 @@ def from_anndata(
             "Second argument is not an AnnData object -- did you want from_h5ad?"
         )
 
-    if context is not None:
-        if isinstance(context, tiledb.Ctx):
-            raise TypeError(
-                "context is a tiledb.Ctx, not a SOMATileDBContext -- please wrap it in tiledbsoma.SOMATileDBContext(...)"
-            )
-        elif not isinstance(context, SOMATileDBContext):
-            raise TypeError("context is not a SOMATileDBContext")
+    context = _validate_soma_tiledb_context(context)
 
     # Without _at least_ an index, there is nothing to indicate the dimension indices.
     if anndata.obs.index.empty or anndata.var.index.empty:

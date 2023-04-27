@@ -112,3 +112,24 @@ class SOMATileDBContext:
         if self.timestamp_ms is not None:
             return self.timestamp_ms
         return int(time.time() * 1000)
+
+
+def _validate_soma_tiledb_context(context: Any) -> Union[None, SOMATileDBContext]:
+    """Returns the argument, as long as it's a ``SOMATileDBContext``. While we already have
+    static type-checking, a few things are extra-important to have runtime validation on.
+    Since it's easy for users to pass a ``tiledb.Ctx`` when a ``SOMATileDBContext`` is
+    expected, we should offer a helpful redirect when they do.
+    """
+
+    if context is None:
+        return context
+
+    if isinstance(context, tiledb.Ctx):
+        raise TypeError(
+            "context is a tiledb.Ctx, not a SOMATileDBContext -- please wrap it in tiledbsoma.SOMATileDBContext(...)"
+        )
+
+    if not isinstance(context, SOMATileDBContext):
+        raise TypeError("context is not a SOMATileDBContext")
+
+    return context
