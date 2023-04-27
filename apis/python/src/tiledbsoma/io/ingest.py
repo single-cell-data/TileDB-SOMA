@@ -56,6 +56,7 @@ from .._tiledb_array import TileDBArray
 from .._tiledb_object import AnyTileDBObject, TileDBObject
 from .._types import INGEST_MODES, IngestMode, NPNDArray, Path
 from ..options import SOMATileDBContext
+from ..options._soma_tiledb_context import _validate_soma_tiledb_context
 from ..options._tiledb_create_options import TileDBCreateOptions
 from . import conversions
 
@@ -118,7 +119,9 @@ def from_h5ad(
         )
 
     if isinstance(input_path, ad.AnnData):
-        raise TypeError("Input path is an AnnData object -- did you want from_anndata?")
+        raise TypeError("input path is an AnnData object -- did you want from_anndata?")
+
+    context = _validate_soma_tiledb_context(context)
 
     s = _util.get_start_stamp()
     logging.log_io(None, f"START  Experiment.from_h5ad {input_path}")
@@ -201,6 +204,8 @@ def from_anndata(
         raise TypeError(
             "Second argument is not an AnnData object -- did you want from_h5ad?"
         )
+
+    context = _validate_soma_tiledb_context(context)
 
     # Without _at least_ an index, there is nothing to indicate the dimension indices.
     if anndata.obs.index.empty or anndata.var.index.empty:

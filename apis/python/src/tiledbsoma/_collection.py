@@ -42,6 +42,7 @@ from ._tiledb_object import AnyTileDBObject, TileDBObject
 from ._types import OpenTimestamp
 from ._util import is_relative_uri, make_relative_path, uri_joinpath
 from .options import SOMATileDBContext
+from .options._soma_tiledb_context import _validate_soma_tiledb_context
 
 # A collection can hold any sub-type of TileDBObject
 CollectionElementType = TypeVar("CollectionElementType", bound=AnyTileDBObject)
@@ -107,7 +108,7 @@ class CollectionBase(
         Lifecycle:
             Experimental.
         """
-        context = context or SOMATileDBContext()
+        context = _validate_soma_tiledb_context(context)
         tiledb.group_create(uri=uri, ctx=context.tiledb_ctx)
         handle = cls._wrapper_type.open(uri, "w", context, tiledb_timestamp)
         cls._set_create_metadata(handle)
