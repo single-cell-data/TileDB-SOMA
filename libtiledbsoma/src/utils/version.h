@@ -1,5 +1,5 @@
 /**
- * @file   stats.cc
+ * @file   version.h
  *
  * @section LICENSE
  *
@@ -27,31 +27,21 @@
  *
  * @section DESCRIPTION
  *
- * This file provides access to stats from libtiledbsoma's dependency on
- * TileDB Embedded.
+ * This exposes the version of the TileDB Embedded library in use.
  */
 
-#include "tiledbsoma/stats.h"
-#include <tiledb/tiledb>
+#ifndef TILEDBSOMA_VERSION_H
+#define TILEDBSOMA_VERSION_H
 
-namespace tiledbsoma::stats {
+#include <stdexcept>  // for windows: error C2039: 'runtime_error': is not a member of 'std'
 
-void enable() {
-    tiledb::Stats::enable();
-}
+#include <string>
 
-void disable() {
-    tiledb::Stats::disable();
-}
+namespace tiledbsoma::version {
 
-void reset() {
-    tiledb::Stats::reset();
-}
+std::string as_string();
+std::tuple<int, int, int> embedded_version_triple();
 
-std::string dump() {
-    std::string stats;
-    tiledb::Stats::raw_dump(&stats);
-    return stats;
-}
+};  // namespace tiledbsoma::version
 
-};  // namespace tiledbsoma::stats
+#endif  // TILEDBSOMA_VERSION_H

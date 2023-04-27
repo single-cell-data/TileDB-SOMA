@@ -1,11 +1,11 @@
 /**
- * @file   util.cc
+ * @file   stats.h
  *
  * @section LICENSE
  *
  * The MIT License
  *
- * @copyright Copyright (c) 2022 TileDB, Inc.
+ * @copyright Copyright (c) 2023 TileDB, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -27,50 +27,23 @@
  *
  * @section DESCRIPTION
  *
- * This file defines utilities.
+ *   This declares the common functions in the API
  */
 
-#include "tiledbsoma/util.h"
+#ifndef TILEDBSOMA_STATS_H
+#define TILEDBSOMA_STATS_H
 
-namespace tiledbsoma::util {
+#include <stdexcept>  // for windows: error C2039: 'runtime_error': is not a member of 'std'
 
-template <typename T>
-VarlenBufferPair to_varlen_buffers(std::vector<T> data, bool arrow) {
-    size_t nbytes = 0;
-    for (auto& elem : data) {
-        nbytes += elem.size();
-    }
+#include <string>
 
-    std::vector<std::byte> result(nbytes);
-    std::vector<uint64_t> offsets(data.size() + 1);
-    size_t offset = 0;
-    size_t idx = 0;
+namespace tiledbsoma::stats {
 
-    for (auto& elem : data) {
-        std::memcpy(result.data() + offset, elem.data(), elem.size());
-        offsets[idx++] = offset;
+void enable();
+void disable();
+void reset();
+std::string dump();
 
-        offset += elem.size();
-    }
-    offsets[idx] = offset;
+};  // namespace tiledbsoma::stats
 
-    // Remove extra arrow offset when creating buffers for TileDB write
-    if (!arrow) {
-        offsets.pop_back();
-    }
-
-    return {result, offsets};
-}
-
-template VarlenBufferPair to_varlen_buffers(
-    std::vector<std::string>, bool arrow);
-
-bool is_tiledb_uri(std::string_view uri) {
-    return uri.find("tiledb://") == 0;
-}
-
-std::string rstrip_uri(std::string_view uri) {
-    return std::regex_replace(std::string(uri), std::regex("/+$"), "");
-}
-
-};  // namespace tiledbsoma::util
+#endif  // TILEDBSOMA_STATS_H

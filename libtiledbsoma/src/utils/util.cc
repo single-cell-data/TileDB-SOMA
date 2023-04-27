@@ -1,5 +1,5 @@
 /**
- * @file   util.h
+ * @file   util.cc
  *
  * @section LICENSE
  *
@@ -27,47 +27,50 @@
  *
  * @section DESCRIPTION
  *
- * This file defines the utility functions
+ * This file defines utilities.
  */
 
-#ifndef UTIL_H
-#define UTIL_H
-
-#include <stdexcept>  // for windows: error C2039: 'runtime_error': is not a member of 'std'
-
-#include <regex>
-#include <tiledbsoma/tiledbsoma>
+#include "utils/util.h"
 
 namespace tiledbsoma::util {
 
-using VarlenBufferPair =
-    std::pair<std::vector<std::byte>, std::vector<uint64_t>>;
-
 template <typename T>
-VarlenBufferPair to_varlen_buffers(std::vector<T> data, bool arrow = true);
+VarlenBufferPair to_varlen_buffers(std::vector<T> data, bool arrow) {
+    size_t nbytes = 0;
+    for (auto& elem : data) {
+        nbytes += elem.size();
+    }
 
-template <class T>
-std::vector<T> to_vector(const tcb::span<T>& s) {
-    return std::vector<T>(s.begin(), s.end());
+    std::vector<std::byte> result(nbytes);
+    std::vector<uint64_t> offsets(data.size() + 1);
+    size_t offset = 0;
+    size_t idx = 0;
+
+    for (auto& elem : data) {
+        std::memcpy(result.data() + offset, elem.data(), elem.size());
+        offsets[idx++] = offset;
+
+        offset += elem.size();
+    }
+    offsets[idx] = offset;
+
+    // Remove extra arrow offset when creating buffers for TileDB write
+    if (!arrow) {
+        offsets.pop_back();
+    }
+
+    return {result, offsets};
 }
 
-/**
- * @brief Check if the provided URI is a TileDB Cloud URI.
- *
- * @param uri URI to check
- * @return true URI is a TileBD Cloud URI
- * @return false URI is not a TileBD Cloud URI
- */
-bool is_tiledb_uri(std::string_view uri);
+template VarlenBufferPair to_varlen_buffers(
+    std::vector<std::string>, bool arrow);
 
-/**
- * @brief Remove all trailing '/' from URI.
- *
- * @param uri URI
- * @return std::string URI without trailing '/'
- */
-std::string rstrip_uri(std::string_view uri);
+bool is_tiledb_uri(std::string_view uri) {
+    return uri.find("tiledb://") == 0;
+}
 
-}  // namespace tiledbsoma::util
+std::string rstrip_uri(std::string_view uri) {
+    return std::regex_replace(std::string(uri), std::regex("/+$"), "");
+}
 
-#endif
+};  // namespace tiledbsoma::util

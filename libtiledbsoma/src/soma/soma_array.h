@@ -39,7 +39,7 @@
 
 #include <tiledb/tiledb>
 
-#include "tiledbsoma/managed_query.h"
+#include "managed_query.h"
 
 namespace tiledbsoma {
 using namespace tiledb;
