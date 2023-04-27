@@ -6,7 +6,7 @@ PKG_CPPFLAGS = -I. -I../inst/include/ @tiledb_include@ @cxx17_macos@ -Iinclude
 
 ## We also need the TileDB library
 #PKG_LIBS = @cxx17_macos@ @tiledb_libs@ @tiledb_rpath@ lib/libtiledbsoma.a
-PKG_LIBS = @cxx17_macos@ @tiledb_libs@ @tiledb_rpath@
+PKG_LIBS = @cxx17_macos@ -ltiledbsoma @tiledb_libs@ @tiledb_rpath@
 
 all: $(SHLIB)
         # if we are

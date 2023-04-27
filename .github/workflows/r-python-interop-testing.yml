@@ -37,7 +37,7 @@ jobs:
         run: mkdir ~/.R && echo "CXX17FLAGS=-Wno-deprecated-declarations -Wno-deprecated" > ~/.R/Makevars
 
       - name: Build and install libtiledbsoma
-        run: scripts/bld --prefix=/usr/local && ldconfig
+        run: sudo scripts/bld --prefix=/usr/local && sudo ldconfig
 
       - name: Install R-tiledbsoma
         run: |
