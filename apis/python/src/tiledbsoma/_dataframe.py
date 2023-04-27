@@ -23,6 +23,7 @@ from ._read_iters import TableReadIter
 from ._tiledb_array import TileDBArray
 from ._types import NPFloating, NPInteger, OpenTimestamp, Slice, is_slice_of
 from .options import SOMATileDBContext
+from .options._soma_tiledb_context import _validate_soma_tiledb_context
 from .options._tiledb_create_options import TileDBCreateOptions
 
 _UNBATCHED = options.BatchSize()
@@ -199,7 +200,7 @@ class DataFrame(TileDBArray, somacore.DataFrame):
         Lifecycle:
             Experimental.
         """
-        context = context or SOMATileDBContext()
+        context = _validate_soma_tiledb_context(context)
         schema = _canonicalize_schema(schema, index_column_names)
         tdb_schema = _build_tiledb_schema(
             schema,

@@ -17,7 +17,10 @@ from typing_extensions import Self
 from . import _arrow_types, _util
 from ._tiledb_array import TileDBArray
 from ._types import OpenTimestamp
-from .options._soma_tiledb_context import SOMATileDBContext
+from .options._soma_tiledb_context import (
+    SOMATileDBContext,
+    _validate_soma_tiledb_context,
+)
 from .options._tiledb_create_options import TileDBCreateOptions
 
 
@@ -84,7 +87,7 @@ class NDArray(TileDBArray, somacore.NDArray):
         # else) sets extent to a not-power-of-two number like 999 or 1000 then the create fails if
         # the upper limit is exactly 2**63-1.
 
-        context = context or SOMATileDBContext()
+        context = _validate_soma_tiledb_context(context)
         schema = cls._build_tiledb_schema(
             type,
             shape,

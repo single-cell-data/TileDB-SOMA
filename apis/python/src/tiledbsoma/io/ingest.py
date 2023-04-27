@@ -55,7 +55,8 @@ from .._tdb_handles import RawHandle
 from .._tiledb_array import TileDBArray
 from .._tiledb_object import AnyTileDBObject, TileDBObject
 from .._types import INGEST_MODES, IngestMode, NPNDArray, Path
-from ..options import SOMATileDBContext, _validate_soma_tiledb_context
+from ..options import SOMATileDBContext
+from ..options._soma_tiledb_context import _validate_soma_tiledb_context
 from ..options._tiledb_create_options import TileDBCreateOptions
 from . import conversions
 
