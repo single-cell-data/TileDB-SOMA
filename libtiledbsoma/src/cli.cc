@@ -84,9 +84,7 @@ void test_arrow(const std::string& uri) {
     auto obs_data = obs->read_next();
     if (!obs->results_complete()) {
         tdbs::LOG_WARN(fmt::format("Read of '{}' incomplete", uri));
-#if !defined(R_BUILD)
         exit(-1);
-#endif
     }
     tdbs::LOG_INFO(fmt::format(
         "Read complete with {} obs and {} cols",
@@ -105,7 +103,6 @@ void test_arrow(const std::string& uri) {
     }
 }
 
-#if !defined(R_BUILD)
 int main(int argc, char** argv) {
     LOG_CONFIG("debug");
 
@@ -125,4 +122,3 @@ int main(int argc, char** argv) {
 
     return 0;
 };
-#endif

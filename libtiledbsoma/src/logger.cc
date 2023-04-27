@@ -61,13 +61,8 @@ const std::string FILE_LOGGER = "tiledbsoma-file";
 Logger::Logger() {
     logger_ = spdlog::get(CONSOLE_LOGGER);
     if (logger_ == nullptr) {
-#if !defined(R_BUILD)
         logger_ = spdlog::stdout_color_mt(CONSOLE_LOGGER);
-#else
-        logger_ = spdlog::r_sink_mt(CONSOLE_LOGGER);
-        spdlog::set_default_logger(logger_);
-#endif
-#if !defined(R_BUILD) && !defined(_WIN32)
+#if !defined(_WIN32)
         // change color of critical messages
         auto console_sink = static_cast<spdlog::sinks::stdout_color_sink_mt*>(
             logger_->sinks().back().get());
@@ -227,9 +222,7 @@ void LOG_ERROR(const std::string& msg) {
 /** Logs a critical error and exits with a non-zero status. */
 void LOG_FATAL(const std::string& msg) {
     global_logger().critical(msg.c_str());
-#if !defined(R_BUILD)
     exit(1);
-#endif
 }
 
 /** Convert TileDB timestamp (in ms) to human readable timestamp. */
