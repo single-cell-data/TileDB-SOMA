@@ -36,9 +36,8 @@ jobs:
       - name: MkVars
         run: mkdir ~/.R && echo "CXX17FLAGS=-Wno-deprecated-declarations -Wno-deprecated" > ~/.R/Makevars
 
-      - name: Copy libtiledbsoma
-        ## we build 'as in an R package' with all sources within apis/r/
-        run: cd apis/r && ./copy_source.sh
+      - name: Build and install libtiledbsoma
+        run: scripts/bld --prefix=/usr/local && ldconfig
 
       - name: Install R-tiledbsoma
         run: |
