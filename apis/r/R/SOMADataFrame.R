@@ -269,7 +269,11 @@ SOMADataFrame <- R6::R6Class(
 
     ## refined from base class
     soma_reader_transform = function(x) {
-      arrow::as_arrow_table(arrow::RecordBatch$import_from_c(x[[1]], x[[2]]))
+      tbl <- arrow::as_arrow_table(arrow::RecordBatch$import_from_c(x[[1]], x[[2]]))
+      # increment soma_joinid to make the values consistent with the one-based
+      # dimensions of the matrices returned by SOMASparseNDArray::read_sparse_matrix
+      tbl$soma_joinid <- tbl$soma_joinid + 1
+      tbl
     }
 
   )
