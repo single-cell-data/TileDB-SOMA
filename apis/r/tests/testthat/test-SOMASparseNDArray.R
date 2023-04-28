@@ -80,12 +80,12 @@ test_that("SOMASparseNDArray read_sparse_matrix", {
   expect_equal(as.numeric(ndarray$shape()), c(10, 10))
 
   # read_sparse_matrix
-  mat2 <- ndarray$read_sparse_matrix(repr="T")
+  mat2 <- ndarray$read_sparse_matrix(repr="T") # NOTE: mat2 is zero-based!
   expect_s4_class(mat2, "sparseMatrix")
   expect_equal(nrow(mat2), 10)
   expect_equal(ncol(mat2), 10)
   ## not sure why all.equal(mat, mat2) does not pass
-  expect_true(all.equal(as.numeric(mat), as.numeric(mat2[1:9,1:9])))
+  expect_true(all.equal(as.numeric(mat), as.numeric(mat2[0:8,0:8])))
   expect_equal(sum(mat), sum(mat2))
 
   # repeat with iterated reader
@@ -94,7 +94,7 @@ test_that("SOMASparseNDArray read_sparse_matrix", {
   expect_s4_class(mat2, "sparseMatrix")
   expect_equal(nrow(mat2), 10)
   expect_equal(ncol(mat2), 10)
-  expect_true(all.equal(as.numeric(mat), as.numeric(mat2[1:9,1:9])))
+  expect_true(all.equal(as.numeric(mat), as.numeric(mat2[0:8,0:8])))
   expect_equal(sum(mat), sum(mat2))
 })
 
