@@ -186,10 +186,10 @@ SOMASparseNDArray <- R6::R6Class(
 
       if (isFALSE(iterated)) {
           tbl <- self$read_arrow_table(coords = coords, result_order = result_order, log_level = log_level)
-          Matrix::sparseMatrix(i = 1 + as.numeric(tbl$GetColumnByName("soma_dim_0")),
-                               j = 1 + as.numeric(tbl$GetColumnByName("soma_dim_1")),
-                               x = as.numeric(tbl$GetColumnByName("soma_data")),
-                               dims = as.integer(self$shape()), repr = repr)
+          sparseMatrixZeroBased(i = as.numeric(tbl$GetColumnByName("soma_dim_0")),
+                                j = as.numeric(tbl$GetColumnByName("soma_dim_1")),
+                                x = as.numeric(tbl$GetColumnByName("soma_data")),
+                                dims = as.integer(self$shape()), repr = repr)
       } else {
           ## should we error if this isn't null?
           if (!is.null(self$soma_reader_pointer)) {
@@ -250,10 +250,10 @@ SOMASparseNDArray <- R6::R6Class(
       if (private$sparse_repr == "") {
           tbl
       } else {
-          Matrix::sparseMatrix(i = 1 + as.numeric(tbl$GetColumnByName("soma_dim_0")),
-                               j = 1 + as.numeric(tbl$GetColumnByName("soma_dim_1")),
-                               x = as.numeric(tbl$GetColumnByName("soma_data")),
-                               dims = as.integer(self$shape()), repr = private$sparse_repr)
+          sparseMatrixZeroBased(i = as.numeric(tbl$GetColumnByName("soma_dim_0")),
+                                j = as.numeric(tbl$GetColumnByName("soma_dim_1")),
+                                x = as.numeric(tbl$GetColumnByName("soma_data")),
+                                dims = as.integer(self$shape()), repr = private$sparse_repr)
       }
     },
 
