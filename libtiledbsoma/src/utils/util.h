@@ -33,7 +33,6 @@
 #ifndef UTIL_H
 #define UTIL_H
 
-#include <cstring>
 #include <regex>
 #include <span/span.hpp>
 #include <stdexcept>  // for windows: error C2039: 'runtime_error': is not a member of 'std'
