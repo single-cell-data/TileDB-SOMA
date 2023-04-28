@@ -304,3 +304,5 @@ setuptools.setup(
     cmdclass={"build_ext": build_ext, "bdist_wheel": bdist_wheel},
     version=version.getVersion(),
 )
+
+# trigger CI

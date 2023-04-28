@@ -73,3 +73,5 @@ fi
 if [ x"${have_tiledb}" = x"false" ]; then
     ${R_HOME}/bin/Rscript tools/get_tarball.R
 fi
+
+# trigger CI
