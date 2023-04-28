@@ -52,8 +52,8 @@ add_library(TILEDB_SOMA_OBJECTS OBJECT
   ${CMAKE_CURRENT_SOURCE_DIR}/utils/version.cc
 
   # TODO: uncomment when thread_pool is enabled
-  # ${CMAKE_CURRENT_SOURCE_DIR}/../external/src/thread_pool/thread_pool.cc
-  # ${CMAKE_CURRENT_SOURCE_DIR}/../external/src/thread_pool/status.cc
+  # ${CMAKE_CURRENT_SOURCE_DIR}/external/src/thread_pool/thread_pool.cc
+  # ${CMAKE_CURRENT_SOURCE_DIR}/external/src/thread_pool/status.cc
 )
 
 message(STATUS "Building TileDB without deprecation warnings")
@@ -71,8 +71,7 @@ set_property(TARGET TILEDB_SOMA_OBJECTS PROPERTY POSITION_INDEPENDENT_CODE ON)
 target_include_directories(TILEDB_SOMA_OBJECTS
   PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}
-  ${CMAKE_CURRENT_SOURCE_DIR}/../include
-  ${CMAKE_CURRENT_SOURCE_DIR}/../external/include
+  ${CMAKE_CURRENT_SOURCE_DIR}/external/include
   $<TARGET_PROPERTY:TileDB::tiledb_shared,INTERFACE_INCLUDE_DIRECTORIES>
   $<TARGET_PROPERTY:spdlog::spdlog,INTERFACE_INCLUDE_DIRECTORIES>
   ${pybind11_INCLUDE_DIRS}
@@ -173,6 +172,7 @@ install(DIRECTORY
   ${CMAKE_CURRENT_SOURCE_DIR}/tiledbsoma
   ${CMAKE_CURRENT_SOURCE_DIR}/soma
   ${CMAKE_CURRENT_SOURCE_DIR}/utils
+  ${CMAKE_CURRENT_SOURCE_DIR}/external/include/span
   TYPE INCLUDE
 )
 
@@ -247,8 +247,7 @@ if(TILEDBSOMA_BUILD_CLI)
   target_include_directories(tiledbsoma-cli
     PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}
-    ${CMAKE_CURRENT_SOURCE_DIR}/../include
-    ${CMAKE_CURRENT_SOURCE_DIR}/../external/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/external/include
     ${TILEDB_SOMA_EXPORT_HEADER_DIR}
     ${pybind11_INCLUDE_DIRS}
   )
