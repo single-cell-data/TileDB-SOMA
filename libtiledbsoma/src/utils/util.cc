@@ -31,6 +31,7 @@
  */
 
 #include "utils/util.h"
+#include <cstring>
 
 namespace tiledbsoma::util {
 
