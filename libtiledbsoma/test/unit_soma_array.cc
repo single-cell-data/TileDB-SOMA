@@ -42,9 +42,9 @@
 #include <numeric>
 #include <random>
 
-#include <tiledbsoma/util.h>
 #include <tiledb/tiledb>
 #include <tiledbsoma/tiledbsoma>
+#include "utils/util.h"
 
 using namespace tiledb;
 using namespace tiledbsoma;

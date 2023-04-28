@@ -1,11 +1,11 @@
 /**
- * @file   tiledbsoma
+ * @file   stats.cc
  *
  * @section LICENSE
  *
  * The MIT License
  *
- * @copyright Copyright (c) 2022 TileDB, Inc.
+ * @copyright Copyright (c) 2023 TileDB, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -27,20 +27,31 @@
  *
  * @section DESCRIPTION
  *
- * This is the main import header for the C++ API
+ * This file provides access to stats from libtiledbsoma's dependency on
+ * TileDB Embedded.
  */
 
-#ifndef __TILEDBSOMA__
-#define __TILEDBSOMA__
+#include "utils/stats.h"
+#include <tiledb/tiledb>
 
-#include <tiledbsoma/array_buffers.h>
-#include <tiledbsoma/arrow_adapter.h>
-#include <tiledbsoma/column_buffer.h>
-#include <tiledbsoma/common.h>
-#include <tiledbsoma/logger_public.h>
-#include <tiledbsoma/managed_query.h>
-#include <tiledbsoma/soma_array.h>
-#include <tiledbsoma/stats.h>
-#include <tiledbsoma/version.h>
+namespace tiledbsoma::stats {
 
-#endif
+void enable() {
+    tiledb::Stats::enable();
+}
+
+void disable() {
+    tiledb::Stats::disable();
+}
+
+void reset() {
+    tiledb::Stats::reset();
+}
+
+std::string dump() {
+    std::string stats;
+    tiledb::Stats::raw_dump(&stats);
+    return stats;
+}
+
+};  // namespace tiledbsoma::stats

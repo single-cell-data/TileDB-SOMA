@@ -1,11 +1,11 @@
 /**
- * @file   version.h
+ * @file   util.h
  *
  * @section LICENSE
  *
  * The MIT License
  *
- * @copyright Copyright (c) 2023 TileDB, Inc.
+ * @copyright Copyright (c) 2022 TileDB, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -27,22 +27,46 @@
  *
  * @section DESCRIPTION
  *
- * This exposes the version of the TileDB Embedded library in use.
+ * This file defines the utility functions
  */
 
-#ifndef TILEDBSOMA_VERSION_H
-#define TILEDBSOMA_VERSION_H
+#ifndef UTIL_H
+#define UTIL_H
 
+#include <regex>
+#include <span/span.hpp>
 #include <stdexcept>  // for windows: error C2039: 'runtime_error': is not a member of 'std'
 
-#include <string>
+namespace tiledbsoma::util {
 
-namespace tiledbsoma::version {
+using VarlenBufferPair =
+    std::pair<std::vector<std::byte>, std::vector<uint64_t>>;
 
-__attribute__((visibility("default"))) std::string as_string();
-__attribute__((visibility("default"))) std::tuple<int, int, int>
-embedded_version_triple();
+template <typename T>
+VarlenBufferPair to_varlen_buffers(std::vector<T> data, bool arrow = true);
 
-};  // namespace tiledbsoma::version
+template <class T>
+std::vector<T> to_vector(const tcb::span<T>& s) {
+    return std::vector<T>(s.begin(), s.end());
+}
 
-#endif  // TILEDBSOMA_VERSION_H
+/**
+ * @brief Check if the provided URI is a TileDB Cloud URI.
+ *
+ * @param uri URI to check
+ * @return true URI is a TileBD Cloud URI
+ * @return false URI is not a TileBD Cloud URI
+ */
+bool is_tiledb_uri(std::string_view uri);
+
+/**
+ * @brief Remove all trailing '/' from URI.
+ *
+ * @param uri URI
+ * @return std::string URI without trailing '/'
+ */
+std::string rstrip_uri(std::string_view uri);
+
+}  // namespace tiledbsoma::util
+
+#endif
