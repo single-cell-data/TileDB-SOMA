@@ -43,6 +43,9 @@ jobs:
       - name: Call ldconfig
         if: ${{ matrix.os == 'ubuntu-latest' }}
         run: sudo ldconfig
+
+      #- name: Simple test of library
+      #  run: cd apis/r/inst/cpptest && make && ./min
         
       - name: Test
         run: cd apis/r && tools/r-ci.sh run_tests
@@ -51,6 +54,6 @@ jobs:
         run: cat $HOME/work/TileDB-SOMA/TileDB-SOMA/apis/r/tiledbsoma.Rcheck/00install.out
         if: failure()
 
-      - name: Coverage
-        if: ${{ matrix.os == 'ubuntu-latest' }}
-        run: cd apis/r && tools/r-ci.sh coverage
+      #- name: Coverage
+      #  if: ${{ matrix.os == 'ubuntu-latest' }}
+      #  run: cd apis/r && tools/r-ci.sh coverage
