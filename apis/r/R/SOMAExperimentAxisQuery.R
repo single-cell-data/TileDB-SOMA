@@ -278,7 +278,7 @@ SOMAExperimentAxisQuery <- R6::R6Class(
       ms_embed <- tryCatch(expr = self$ms$obsm$names(), error = null)
       skip_reducs <- isFALSE(obsm_layers) || rlang::is_na(obsm_layers)
       if (is.null(ms_embed)) {
-        if (!skip_reducs) {
+        if (!(skip_reducs || is.null(obsm_layers))) {
           warning("No reductions found", call. = FALSE, immediate. = TRUE)
         }
         skip_reducs <- TRUE
