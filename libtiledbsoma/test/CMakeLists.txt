@@ -37,8 +37,7 @@ target_link_libraries(unit_soma
 target_include_directories(unit_soma
   PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/../src
-    ${CMAKE_CURRENT_SOURCE_DIR}/../include
-    ${CMAKE_CURRENT_SOURCE_DIR}/../external/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/../src/external/include
     ${pybind11_INCLUDE_DIRS}
     $<TARGET_PROPERTY:spdlog::spdlog,INTERFACE_INCLUDE_DIRECTORIES>
 )
