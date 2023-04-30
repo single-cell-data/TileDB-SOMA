@@ -83,6 +83,7 @@ test_that("SOMASparseNDArray read_sparse_matrix_zero_based", {
   mat2 <- ndarray$read_sparse_matrix_zero_based(repr="T")
   expect_true(inherits(mat2, "matrixZeroBasedView"))
   expect_s4_class(as.one.based(mat2), "sparseMatrix")
+  expect_equal(dim(mat2), c(10, 10))
   expect_equal(nrow(mat2), 10)
   expect_equal(ncol(mat2), 10)
   ## not sure why all.equal(mat, mat2) does not pass
@@ -94,6 +95,7 @@ test_that("SOMASparseNDArray read_sparse_matrix_zero_based", {
   mat2 <- ndarray$read_next()
   expect_true(inherits(mat2, "matrixZeroBasedView"))
   expect_s4_class(as.one.based(mat2), "sparseMatrix")
+  expect_equal(dim(mat2), c(10, 10))
   expect_equal(nrow(mat2), 10)
   expect_equal(ncol(mat2), 10)
   expect_true(all.equal(as.numeric(mat), as.numeric(mat2[0:8,0:8])))

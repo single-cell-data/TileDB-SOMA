@@ -40,7 +40,12 @@ test_that("matrixZeroBasedView", {
     expect_equal(dim(slice), c(3, 3))
     expect_equal(slice[1, 1], 41)
 
-    # reject mutation attempts
+    # Test misc properties
+    expect_equal(dim(mat), c(3, 3))
+    expect_equal(nrow(mat), 3)
+    expect_equal(ncol(mat), 3)
+
+    # reject mutation
     expect_error(mat[1, 1] <- 99)
     expect_error(mat[1, 1] <- NA)
     expect_error(mat[1, ] <- c(0, 99, 0))
