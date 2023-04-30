@@ -787,11 +787,12 @@ SOMAExperimentAxisQuery <- R6::R6Class(
       var <- table$GetColumnByName('soma_dim_1')$as_vector()
       stopifnot("expected strictly positive soma_dim_0 and soma_dim_1" = (all(obs > 0) && all(var > 0)))
       mat <- Matrix::sparseMatrix(
-        i = self$indexer$by_obs(obs)$as_vector(),
-        j = self$indexer$by_var(var)$as_vector(),
+        i = self$indexer$by_obs(obs)$as_vector() - 1,
+        j = self$indexer$by_var(var)$as_vector() - 1,
         x = table$GetColumnByName('soma_data')$as_vector(),
         dims = c(self$n_obs, self$n_vars),
-        repr = switch(EXPR = repr, D = 'T', repr)
+        repr = switch(EXPR = repr, D = 'T', repr),
+        index1 = FALSE
       )
       if (isTRUE(transpose)) {
         mat <- Matrix::t(mat)

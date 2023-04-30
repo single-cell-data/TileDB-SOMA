@@ -189,9 +189,9 @@ SOMASparseNDArray <- R6::R6Class(
           i <- as.numeric(tbl$GetColumnByName("soma_dim_0"))
           j <- as.numeric(tbl$GetColumnByName("soma_dim_1"))
           stopifnot("expected strictly positive soma_dim_0 and soma_dim_1" = (all(i > 0) && all(j > 0)))
-          Matrix::sparseMatrix(i = i, j = j,
+          Matrix::sparseMatrix(i = i - 1, j = j - 1,
                                x = as.numeric(tbl$GetColumnByName("soma_data")),
-                               dims = as.integer(self$shape()), repr = repr)
+                               dims = as.integer(self$shape()), repr = repr, index1 = FALSE)
       } else {
           ## should we error if this isn't null?
           if (!is.null(self$soma_reader_pointer)) {
@@ -255,8 +255,8 @@ SOMASparseNDArray <- R6::R6Class(
           i <- as.numeric(tbl$GetColumnByName("soma_dim_0"))
           j <- as.numeric(tbl$GetColumnByName("soma_dim_1"))
           stopifnot("expected strictly positive soma_dim_0 and soma_dim_1" = (all(i > 0) && all(j > 0)))
-          Matrix::sparseMatrix(i = i, j = j,
-                               x = as.numeric(tbl$GetColumnByName("soma_data")),
+          Matrix::sparseMatrix(i = i - 1, j = j - 1,
+                               x = as.numeric(tbl$GetColumnByName("soma_data")), index1 = FALSE,
                                dims = as.integer(self$shape()), repr = private$sparse_repr)
       }
     },
