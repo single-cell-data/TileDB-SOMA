@@ -785,7 +785,7 @@ SOMAExperimentAxisQuery <- R6::R6Class(
       repr <- match.arg(arg = repr, choices = c('C', 'R', 'T', 'D'))
       obs <- table$GetColumnByName('soma_dim_0')$as_vector()
       var <- table$GetColumnByName('soma_dim_1')$as_vector()
-      stopifnot("expected strictly positive soma_dim_0 and soma_dim_1" = (all(i > 0) && all(j > 0)))
+      stopifnot("expected strictly positive soma_dim_0 and soma_dim_1" = (all(obs > 0) && all(var > 0)))
       mat <- Matrix::sparseMatrix(
         i = self$indexer$by_obs(obs)$as_vector(),
         j = self$indexer$by_var(var)$as_vector(),
