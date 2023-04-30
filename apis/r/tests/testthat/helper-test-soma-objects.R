@@ -62,7 +62,8 @@ create_and_populate_experiment <- function(
     nda <- create_and_populate_sparse_nd_array(
       uri = file.path(ms_rna$X$uri, layer_name),
       nrows = n_obs,
-      ncols = n_var
+      ncols = n_var,
+      index1 = TRUE
     )
     ms_rna$X$set(nda, name = layer_name)
   }

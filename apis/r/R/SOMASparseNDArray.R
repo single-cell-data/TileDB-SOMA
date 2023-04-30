@@ -210,15 +210,18 @@ SOMASparseNDArray <- R6::R6Class(
     #' [`TsparseMatrix`][`Matrix::TsparseMatrix-class`]. Character dimension
     #' names are ignored because `SOMANDArray`'s use integer indexing.
     #'
-    write = function(values) {
+    #' @param index1 Write matrix with one-based indexes, even if the backend storage
+    #  engine conventionally uses zero-based indexes.
+    write = function(values, index1=FALSE) {
       stopifnot(
         "'values' must be a matrix" = is_matrix(values)
       )
       # coerce to a TsparseMatrix, which uses 0-based COO indexing
       values <- as(values, Class = "TsparseMatrix")
+      ofs <- if (index1) 1L else 0L
       coo <- data.frame(
-        i = bit64::as.integer64(values@i),
-        j = bit64::as.integer64(values@j),
+        i = bit64::as.integer64(values@i + ofs),
+        j = bit64::as.integer64(values@j + ofs),
         x = values@x
       )
       colnames(coo) <- c(self$dimnames(), self$attrnames())

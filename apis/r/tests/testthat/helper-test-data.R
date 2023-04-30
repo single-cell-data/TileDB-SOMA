@@ -61,13 +61,13 @@ create_and_populate_soma_dataframe <- function(
 }
 
 #' @param ... Arguments passed to create_sparse_matrix_with_int_dims
-create_and_populate_sparse_nd_array <- function(uri, ...) {
+create_and_populate_sparse_nd_array <- function(uri, index1=FALSE, ...) {
 
   smat <- create_sparse_matrix_with_int_dims(...)
 
   ndarray <- SOMASparseNDArray$new(uri, internal_use_only = "allowed_use")
   ndarray$create(arrow::int32(), shape = dim(smat))
-  ndarray$write(smat)
+  ndarray$write(smat, index1=index1)
   ndarray
 }
 
