@@ -577,10 +577,10 @@ SOMAExperimentAxisQuery <- R6::R6Class(
       embed <- self$ms$obsm$get(obsm_layer)
       coords <- list(
         cells = self$obs_joinids()$as_vector(),
-        dims = seq_len(as.integer(embed$shape()[2L])) - 1L
+        dims = seq_len(as.integer(embed$shape()[2L]))
       )
       embed_mat <- if (inherits(embed, 'SOMASparseNDArray')) {
-        as.matrix(embed$read_sparse_matrix()[coords$cells + 1L, coords$dims + 1L])
+        as.matrix(embed$read_sparse_matrix()[coords$cells, coords$dims])
       } else if (inherits(embed, 'SOMADenseNDArray')) {
         warning(
           paste(
@@ -627,10 +627,10 @@ SOMAExperimentAxisQuery <- R6::R6Class(
         loads <- self$ms$varm$get(varm_layer)
         coords <- list(
           features = self$var_joinids()$as_vector(),
-          dims = seq_len(as.integer(loads$shape()[2L])) - 1L
+          dims = seq_len(as.integer(loads$shape()[2L]))
         )
         load_mat <- if (inherits(loads, 'SOMASparseNDArray')) {
-          as.matrix(loads$read_sparse_matrix()[coords$features + 1L, coords$dims + 1L])
+          as.matrix(loads$read_sparse_matrix()[coords$features, coords$dims])
         } else if (inherits(loads, 'SOMADenseNDArray')) {
           warning(
             paste(
@@ -689,7 +689,7 @@ SOMAExperimentAxisQuery <- R6::R6Class(
       # Check provided graph name
       obsp_layer <- match.arg(arg = obsp_layer, choices = ms_graph)
       mat <- self$ms$obsp$get(obsp_layer)$read_sparse_matrix(repr = 'C')
-      idx <- self$obs_joinids()$as_vector() + 1L
+      idx <- self$obs_joinids()$as_vector()
       mat <- mat[idx, idx]
       mat <- as(mat, 'Graph')
       cells <- if (is.null(obs_index)) {
@@ -785,9 +785,10 @@ SOMAExperimentAxisQuery <- R6::R6Class(
       repr <- match.arg(arg = repr, choices = c('C', 'R', 'T', 'D'))
       obs <- table$GetColumnByName('soma_dim_0')$as_vector()
       var <- table$GetColumnByName('soma_dim_1')$as_vector()
+      stopifnot("expected strictly positive soma_dim_0 and soma_dim_1" = (all(i > 0) && all(j > 0)))
       mat <- Matrix::sparseMatrix(
-        i = self$indexer$by_obs(obs)$as_vector() + 1L,
-        j = self$indexer$by_var(var)$as_vector() + 1L,
+        i = self$indexer$by_obs(obs)$as_vector(),
+        j = self$indexer$by_var(var)$as_vector(),
         x = table$GetColumnByName('soma_data')$as_vector(),
         dims = c(self$n_obs, self$n_vars),
         repr = switch(EXPR = repr, D = 'T', repr)
