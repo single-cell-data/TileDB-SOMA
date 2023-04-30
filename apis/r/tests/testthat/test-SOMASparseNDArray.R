@@ -81,7 +81,7 @@ test_that("SOMASparseNDArray read_sparse_matrix_zero_based", {
 
   # read_sparse_matrix
   mat2 <- ndarray$read_sparse_matrix_zero_based(repr="T")
-  expect_true(inherits(mat2), "matrixZeroBasedView")
+  expect_true(inherits(mat2, "matrixZeroBasedView"))
   expect_s4_class(as.one.based(mat2), "sparseMatrix")
   expect_equal(nrow(mat2), 10)
   expect_equal(ncol(mat2), 10)
@@ -92,7 +92,7 @@ test_that("SOMASparseNDArray read_sparse_matrix_zero_based", {
   # repeat with iterated reader
   ndarray$read_sparse_matrix_zero_based(repr="T", iterated=TRUE)
   mat2 <- ndarray$read_next()
-  expect_true(inherits(mat2), "matrixZeroBasedView")
+  expect_true(inherits(mat2, "matrixZeroBasedView"))
   expect_s4_class(as.one.based(mat2), "sparseMatrix")
   expect_equal(nrow(mat2), 10)
   expect_equal(ncol(mat2), 10)
