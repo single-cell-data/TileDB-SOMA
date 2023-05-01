@@ -21,8 +21,8 @@ class TestSeuratSOMAAnndata(TestWritePythonReadR):
         library("tiledbsoma")
         library("SeuratObject")
 
-        seuratObject <- readRDS("apis/system/tests/data/pbmc-small.rds")
-        write_soma(seuratObject, "{self.uri}")
+        data("pbmc_small")
+        write_soma(pbmc_small, "{self.uri}")
         """
         self.execute_R_script(base_script)
         pbmc = soma.open(self.uri)
@@ -33,7 +33,8 @@ class TestSeuratSOMAAnndata(TestWritePythonReadR):
         # Since we can't read Seurat in python, we need to do assertions in R, hence this script
         return """
         library("SeuratObject")
-        seuratObject <- readRDS("apis/system/tests/data/pbmc-small.rds")
+        data("pbmc_small")
+        seuratObject <- pbmc_small
         """
 
     # tests
