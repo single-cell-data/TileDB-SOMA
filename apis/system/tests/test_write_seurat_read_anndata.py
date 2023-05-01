@@ -19,7 +19,7 @@ class TestSeuratSOMAAnndata(TestWritePythonReadR):
     def anndata_from_seurat(self):
         base_script = f"""
         library("tiledbsoma")
-        library("Seurat")
+        library("SeuratObject")
 
         seuratObject <- readRDS("apis/system/tests/data/pbmc-small.rds")
         write_soma(seuratObject, "{self.uri}")
