@@ -9,28 +9,21 @@ PKG_CPPFLAGS = -I. -I../inst/include/ @tiledb_include@ @cxx17_macos@ -Iinclude
 PKG_LIBS = @cxx17_macos@ -ltiledbsoma @tiledb_libs@ @tiledb_rpath@
 
 all: $(SHLIB)
-        # if we are
+        # If we are:
         #  - not on Window NT (a tip from data.table)
         #  - on macOS aka Darwin which needs this
         #  - the library is present (implying non-system library use)
         # then let us call install_name_tool
-	echo
-	echo
-	echo ================================================================
-	echo BEFORE:
-	pwd
-	otool -L tiledbsoma.so
-	echo ================================================================
-	echo
-	echo
-	if [ "$(OS)" != "Windows_NT" ] && [ `uname -s` = 'Darwin' ] && [ -f ../inst/tiledb/lib/libtiledb.dylib ] && [ -f tiledbsoma.so ]; then install_name_tool -change libz.1.dylib @rpath/libz.1.dylib ../inst/tiledb/lib/libtiledb.dylib; install_name_tool -add_rpath /usr/local/lib tiledbsoma.so; fi
-	echo
-	echo
-	echo ================================================================
-	echo AFTER:
-	pwd
-	otool -L tiledbsoma.so
-	echo ================================================================
-	echo
-	echo
-	cp tiledbsoma.so /tmp
+	#
+	# Pro-tip: here you can run things like `otool -L tiledbsoma.so`, `ls ../inst`, etc. but
+	# the output will only be visible if the R build fails.
+	#
+	# Note: we hard-code /usr/local/lib location for libtiledbsoma.so/dylib since this
+	# is likewise hard-coded in our CI build.
+	#
+	if [ "$(OS)" != "Windows_NT" ] && [ `uname -s` = 'Darwin' ] && [ -f tiledbsoma.so ]; then \
+	    if [ -f ../inst/tiledb/lib/libtiledb.dylib ] ; then \
+	        install_name_tool -change libz.1.dylib @rpath/libz.1.dylib ../inst/tiledb/lib/libtiledb.dylib; \
+	    fi; \
+	    install_name_tool -add_rpath /usr/local/lib tiledbsoma.so; \
+	fi
