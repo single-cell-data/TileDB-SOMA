@@ -18,8 +18,8 @@ jobs:
       matrix:
         include:
           # TEMP: get Ubuntu working first
-          # - { os: macOS-latest }
           - { os: ubuntu-latest }
+          - { os: macOS-latest }
 
     runs-on: ${{ matrix.os }}
 
