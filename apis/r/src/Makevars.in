@@ -16,7 +16,7 @@ all: $(SHLIB)
         # then let us call install_name_tool
 	#
 	# Pro-tip: here you can run things like `otool -L tiledbsoma.so`, `ls ../inst`, etc. but
-	# the output will only be visible if the R build fails.
+	# any attempted debug output will only be visible at the terminal if the R build fails.
 	#
 	# Note: we hard-code /usr/local/lib location for libtiledbsoma.so/dylib since this
 	# is likewise hard-coded in our CI build.
