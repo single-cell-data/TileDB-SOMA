@@ -1,0 +1,2 @@
+# Marker file to indicate that this package contains Python typing information,
+# and that mypy can use it to typecheck client code.
