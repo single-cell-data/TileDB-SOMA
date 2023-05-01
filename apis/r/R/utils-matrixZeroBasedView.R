@@ -14,8 +14,6 @@
 #'
 #' @return Shim providing elemental access to the matrix using zero-based indexes.
 #' @export
-#'
-#' @examples
 matrixZeroBasedView <- function(one_based_matrix) {
   if (!inherits(one_based_matrix, "matrix") && !inherits(one_based_matrix, "sparseMatrix")) {
     stop("Matrix object must inherit class matrix or Matrix::sparseMatrix.")
@@ -25,15 +23,14 @@ matrixZeroBasedView <- function(one_based_matrix) {
 
 #' Zero-based matrix element access
 #'
-#' @param x
-#' @param i
-#' @param j
-#' @param drop
+#' @param x The zero-based matrix view.
+#' @param i Row index (zero-based).
+#' @param j Column index (zero-based).
+#' @param drop Coerce result to lowest possible dimension.
 #'
-#' @return
+#' @return The specified matrix elements. Vector- or matrix-valued results are returned
+#'         as conventional one-based R objects.
 #' @export
-#'
-#' @examples
 `[.matrixZeroBasedView` <- function(x, i, j, drop = TRUE) {
   if (missing(i) && missing(j)) {
     x$one_based_matrix[, , drop = drop]
@@ -48,60 +45,50 @@ matrixZeroBasedView <- function(one_based_matrix) {
 
 #' dim
 #'
-#' @param x
+#' @param x The zero-based matrix view.
 #'
-#' @return
+#' @return The dimensions of the matrix.
 #' @export
-#'
-#' @examples
 dim.matrixZeroBasedView <- function(x) {
   dim(x$one_based_matrix)
 }
 
 #' nrow
 #'
-#' @param x
+#' @param x The zero-based matrix view.
 #'
-#' @return
+#' @return Matrix row count.
 #' @export
-#'
-#' @examples
 nrow.matrixZeroBasedView <- function(x) {
   nrow(x$one_based_matrix)
 }
 
 #' ncol
 #'
-#' @param x
+#' @param x The zero-based matrix view.
 #'
-#' @return
+#' @return Matrix column count.
 #' @export
-#'
-#' @examples
 ncol.matrixZeroBasedView <- function(x) {
   ncol(x$one_based_matrix)
 }
 
 #' Get one-based object
 #'
-#' @param x
+#' @param x The object.
 #'
-#' @return
+#' @return A one-based version/view of the object.
 #' @export
-#'
-#' @examples
 as.one.based <- function(x) {
   UseMethod("as.one.based")
 }
 
 #' Get one-based matrix object underlying zero-based view
 #'
-#' @param x
+#' @param x The zero-based matrix view.
 #'
-#' @return
+#' @return The one-based `matrix` or `Matrix::sparseMatrix` underlying the view.
 #' @export
-#'
-#' @examples
 as.one.based.matrixZeroBasedView <- function(x) {
   x$one_based_matrix
 }
@@ -110,10 +97,10 @@ as.one.based.matrixZeroBasedView <- function(x) {
 #'
 #' This method errors as a read-only view is implemented.
 #'
-#' @param x The matrix viewed in zero-based mode.
-#' @param i Row index, zero-based
-#' @param j Column index, zero-based
-#' @param val The to-be assigned value
+#' @param x The zero-based matrix view.
+#' @param i Row index (zero-based).
+#' @param j Column index (zero-based).
+#' @param val The to-be assigned value.
 #'
 #' @return Nothing as the method errors.
 #' @export
