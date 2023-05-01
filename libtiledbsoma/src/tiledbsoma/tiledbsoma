@@ -42,7 +42,7 @@
 // #include "soma_object.h"
 // #include "soma_sparse_ndarray.h"
 
-#include <cli/arrow_adapter.h>
+#include <utils/arrow_adapter.h>
 #include <tiledbsoma/logger_public.h>
 #include <utils/array_buffers.h>
 #include <utils/column_buffer.h>
