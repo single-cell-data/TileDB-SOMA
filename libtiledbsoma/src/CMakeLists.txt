@@ -174,6 +174,10 @@ install(DIRECTORY
   ${CMAKE_CURRENT_SOURCE_DIR}/utils
   ${CMAKE_CURRENT_SOURCE_DIR}/external/include/span
   TYPE INCLUDE
+  FILES_MATCHING 
+  PATTERN "*.h"
+  PATTERN "*.hpp"
+  PATTERN "tiledbsoma"
 )
 
 # ###########################################################
