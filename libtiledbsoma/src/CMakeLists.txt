@@ -167,14 +167,36 @@ endif()
 #   ${CMAKE_CURRENT_SOURCE_DIR}/cpp_api/logger_public.h
 # )
 
-install(DIRECTORY
-  ${CMAKE_CURRENT_SOURCE_DIR}/cli
-  ${CMAKE_CURRENT_SOURCE_DIR}/tiledbsoma
-  ${CMAKE_CURRENT_SOURCE_DIR}/soma
-  ${CMAKE_CURRENT_SOURCE_DIR}/utils
-  ${CMAKE_CURRENT_SOURCE_DIR}/external/include/span
-  TYPE INCLUDE
+install(FILES 
+  ${CMAKE_CURRENT_SOURCE_DIR}/soma/managed_query.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_array.h 
+  DESTINATION "include/soma"
 )
+
+install(FILES 
+  ${CMAKE_CURRENT_SOURCE_DIR}/tiledbsoma/logger_public.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/tiledbsoma/tiledbsoma
+  DESTINATION "include/tiledbsoma"
+)
+
+install(FILES
+  ${CMAKE_CURRENT_SOURCE_DIR}/utils/array_buffers.h  
+  ${CMAKE_CURRENT_SOURCE_DIR}/utils/arrow_adapter.h  
+  ${CMAKE_CURRENT_SOURCE_DIR}/utils/carrow.h  
+  ${CMAKE_CURRENT_SOURCE_DIR}/utils/column_buffer.h  
+  ${CMAKE_CURRENT_SOURCE_DIR}/utils/common.h  
+  ${CMAKE_CURRENT_SOURCE_DIR}/utils/logger.h  
+  ${CMAKE_CURRENT_SOURCE_DIR}/utils/stats.h  
+  ${CMAKE_CURRENT_SOURCE_DIR}/utils/util.h  
+  ${CMAKE_CURRENT_SOURCE_DIR}/utils/version.h
+  DESTINATION "include/utils"
+)
+
+install(FILES 
+  ${CMAKE_CURRENT_SOURCE_DIR}/external/include/span/span.hpp
+  DESTINATION "include/span"
+)
+
 
 # ###########################################################
 # API symbol exports
