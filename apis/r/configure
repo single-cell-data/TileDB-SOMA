@@ -17,8 +17,8 @@ pkg-config --version >/dev/null 2>&1
 if [ $? -eq 0 ]; then
     pkg-config --exists tiledb
     if [ $? -eq 0 ]; then
-        pkgcflags=`pkg-config --cflags tiledb`
-        pkglibs=`pkg-config --libs tiledb`
+        pkgcflags=`pkg-config --cflags tiledb tiledbsoma`
+        pkglibs=`pkg-config --libs tiledb tiledbsoma`
 
         ## substitute them in (leaving @tiledb_rpath@ and @cxx17_macos@ alone for now)
         sed -e "s|@tiledb_include@|$pkgcflags |" \
