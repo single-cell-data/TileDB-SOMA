@@ -46,10 +46,11 @@ test_that("matrixZeroBasedView", {
     expect_equal(ncol(mat), 3)
 
     # reject mutation
-    expect_error(mat[1, 1] <- 99)
-    expect_error(mat[1, 1] <- NA)
-    expect_error(mat[1, ] <- c(0, 99, 0))
-    expect_error(mat[, 1] <- c(0, 99, 0))
+    rdo <- "matrixZeroBasedView is read-only"
+    expect_error(mat[1, 1] <- 99, rdo)
+    expect_error(mat[1, 1] <- NA, rdo)
+    expect_error(mat[1, ] <- c(0, 99, 0), rdo)
+    expect_error(mat[, 1] <- c(0, 99, 0), rdo)
 
     # reject arithmetic
     expect_error(mat + 1)

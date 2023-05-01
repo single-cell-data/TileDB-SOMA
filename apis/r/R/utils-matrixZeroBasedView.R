@@ -105,3 +105,18 @@ as.one.based <- function(x) {
 as.one.based.matrixZeroBasedView <- function(x) {
   x$one_based_matrix
 }
+
+#' Zero-based matrix element assigment
+#'
+#' This method errors as a read-only view is implemented.
+#'
+#' @param x The matrix viewed in zero-based mode.
+#' @param i Row index, zero-based
+#' @param j Column index, zero-based
+#' @param val The to-be assigned value
+#'
+#' @return Nothing as the method errors.
+#' @export
+`[<-.matrixZeroBasedView` <- function(x, i, j, value) {
+  stop("matrixZeroBasedView is read-only; use as.one.based() to get full-featured matrix object", call. = FALSE)
+}
