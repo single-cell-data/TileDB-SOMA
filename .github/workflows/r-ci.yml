@@ -17,7 +17,6 @@ jobs:
     strategy:
       matrix:
         include:
-          # TEMP: get Ubuntu working first
           - { os: ubuntu-latest }
           - { os: macOS-latest }
 

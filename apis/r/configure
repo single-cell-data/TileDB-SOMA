@@ -13,12 +13,6 @@ fi
 have_tiledb="false"
 
 ## check for pkg-config and use it to inquire about tiledb build options
-echo
-echo 1>&2
-echo "STDOUT: HELLO HERE I AM IN CONFIGURE"
-echo "STDERR: HELLO HERE I AM IN CONFIGURE" 1>&2
-echo
-echo 1>&2
 pkg-config --version >/dev/null 2>&1
 if [ $? -eq 0 ]; then
     pkg-config --exists tiledb
