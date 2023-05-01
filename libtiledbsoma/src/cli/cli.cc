@@ -30,7 +30,7 @@
  * This file is currently a sandbox for C++ API experiments
  */
 
-#include "arrow_adapter.h"
+#include "utils/arrow_adapter.h"
 #include "soma/soma_array.h"
 
 using namespace tiledbsoma;
