@@ -17,8 +17,8 @@ jobs:
     strategy:
       matrix:
         include:
-          - { os: macOS-latest }
           - { os: ubuntu-latest }
+          - { os: macOS-latest }
 
     runs-on: ${{ matrix.os }}
 
@@ -37,10 +37,13 @@ jobs:
       - name: MkVars
         run: mkdir ~/.R && echo "CXX17FLAGS=-Wno-deprecated-declarations -Wno-deprecated" > ~/.R/Makevars
 
-      - name: Copy libtiledbsoma
-        ## we build 'as in an R package' with all sources within apis/r/
-        run: cd apis/r && ./copy_source.sh
+      - name: Build and install libtiledbsoma
+        run: sudo scripts/bld --prefix=/usr/local 
 
+      - name: Call ldconfig
+        if: ${{ matrix.os == 'ubuntu-latest' }}
+        run: sudo ldconfig
+        
       - name: Test
         run: cd apis/r && tools/r-ci.sh run_tests
 

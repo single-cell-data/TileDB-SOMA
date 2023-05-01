@@ -121,7 +121,8 @@ if (spdlog_FOUND AND NOT TARGET spdlog::spdlog)
 elseif(TARGET spdlog::spdlog)
   if (SPDLOG_FMT_EXTERNAL)
     # Since we are using header only we need to define this
-    add_definitions("-DSPDLOG_FMT_EXTERNAL=1")
+    # cf https://github.com/gabime/spdlog/wiki/0.-FAQ#how-to-use-external-fmt-library-instead-of-the-bundled
+    add_definitions("-DSPDLOG_FMT_EXTERNAL_HO=1")
     find_package(fmt REQUIRED)
     if (${fmt_FOUND})
       target_link_libraries(spdlog::spdlog INTERFACE fmt::fmt)
