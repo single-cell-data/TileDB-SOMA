@@ -302,25 +302,20 @@ TEST_CASE("SOMAArray: metadata") {
     sr->close();
 
     sr->open(TILEDB_READ);
-    std::string key;
-    tiledb_datatype_t v_type;
-    uint32_t v_num;
-    const void* v;
-
-    REQUIRE(sr->has_metadata("md", &v_type));
+    REQUIRE(sr->has_metadata("md") == true);
     REQUIRE(sr->metadata_num() == 1);
-    REQUIRE(v_type == TILEDB_INT32);
 
-    sr->get_metadata_from_index(0, &key, &v_type, &v_num, &v);
-    REQUIRE(key == "md");
-    REQUIRE(v_type == TILEDB_INT32);
-    REQUIRE(v_num == 1);
-    REQUIRE(*((const int32_t*)v) == 100);
+    auto mdval = sr->get_metadata(0);
+    REQUIRE(std::get<MetadataInfo::key>(mdval) == "md");
+    REQUIRE(std::get<MetadataInfo::dtype>(mdval) == TILEDB_INT32);
+    REQUIRE(std::get<MetadataInfo::num>(mdval) == 1);
+    REQUIRE(*((const int32_t*)std::get<MetadataInfo::value>(mdval)) == 100);
 
-    sr->get_metadata("md", &v_type, &v_num, &v);
-    REQUIRE(v_type == TILEDB_INT32);
-    REQUIRE(v_num == 1);
-    REQUIRE(*((const int32_t*)v) == 100);
+    mdval = sr->get_metadata("md");
+    REQUIRE(std::get<MetadataInfo::key>(mdval) == "md");
+    REQUIRE(std::get<MetadataInfo::dtype>(mdval) == TILEDB_INT32);
+    REQUIRE(std::get<MetadataInfo::num>(mdval) == 1);
+    REQUIRE(*((const int32_t*)std::get<MetadataInfo::value>(mdval)) == 100);
     sr->close();
 
     sr->open(TILEDB_WRITE);
@@ -328,7 +323,7 @@ TEST_CASE("SOMAArray: metadata") {
     sr->close();
 
     sr->open(TILEDB_READ);
-    REQUIRE(sr->has_metadata("md", &v_type) == false);
+    REQUIRE(sr->has_metadata("md") == false);
     REQUIRE(sr->metadata_num() == 0);
     sr->close();
 }

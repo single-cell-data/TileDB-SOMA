@@ -44,6 +44,10 @@
 namespace tiledbsoma {
 using namespace tiledb;
 
+using MetadataValue =
+    std::tuple<std::string, tiledb_datatype_t, uint32_t, const void*>;
+enum MetadataInfo { key = 0, dtype, num, value };
+
 class SOMAArray {
    public:
     //===================================================================
@@ -389,59 +393,40 @@ class SOMAArray {
     void delete_metadata(const std::string& key);
 
     /**
-     * @brief Given the key, get the metadata value, value's type, and number
-     * of values.
+     * @brief Given a key, retrieve the associated value datatype, number of
+     * values, and value in binary form. The array must be opened in READ mode,
+     * otherwise the function will error out.
+     *
+     * The value may consist of more than one items of the same datatype. Keys
+     * that do not exist in the metadata will be return NULL for the value.
      *
      * @param key The key of the metadata item to be retrieved. UTF-8 encodings
      *     are acceptable.
-     * @param value_type The datatype of the value.
-     * @param value_num The value may consist of more than one items of the
-     *     same datatype. This argument indicates the number of items in the
-     *     value component of the metadata. Keys with empty values are indicated
-     *     by value_num == 1 and value == NULL.
-     * @param value The metadata value in binary form.
-     *
-     * @note If the key does not exist, then `value` will be NULL.
+     * @return MetadataValue (std::tuple<std::string, tiledb_datatype_t,
+     * uint32_t, const void*>)
      */
-    void get_metadata(
-        const std::string& key,
-        tiledb_datatype_t* value_type,
-        uint32_t* value_num,
-        const void** value);
+    MetadataValue get_metadata(const std::string& key) const;
 
     /**
-     * Given an index, get the metadata key, value, value's type, and number of
-     * values. The array must be opened in READ mode, otherwise the function
-     * will error out.
+     * @brief Given an index, retrieve the associated value datatype, number of
+     * values, and value in binary form. The array must be opened in READ mode,
+     * otherwise the function will error out.
      *
      * @param index The index used to get the metadata.
-     * @param key The metadata key.
-     * @param value_type The datatype of the value.
-     * @param value_num The value may consist of more than one items of the
-     *     same datatype. This argument indicates the number of items in the
-     *     value component of the metadata. Keys with empty values are indicated
-     *     by value_num == 1 and value == NULL.
-     * @param value The metadata value in binary form.
+     * @return MetadataValue (std::tuple<std::string, tiledb_datatype_t,
+     * uint32_t, const void*>)
      */
-    void get_metadata_from_index(
-        uint64_t index,
-        std::string* key,
-        tiledb_datatype_t* value_type,
-        uint32_t* value_num,
-        const void** value);
+    MetadataValue get_metadata(uint64_t index) const;
 
     /**
      * Checks if key exists in metadata from an open array. The array must
      * be opened in READ mode, otherwise the function will error out.
      *
-     * @param key The key of the metadata item to be retrieved. UTF-8 encodings
+     * @param key The key of the metadata item to be checked. UTF-8 encodings
      *     are acceptable.
-     * @param value_type The datatype of the value associated with the key (if
-     * any).
      * @return true if the key exists, else false.
-     * @note If the key does not exist, then `value_type` will not be modified.
      */
-    bool has_metadata(const std::string& key, tiledb_datatype_t* value_type);
+    bool has_metadata(const std::string& key);
 
     /**
      * Returns then number of metadata items in an open array. The array must
@@ -471,6 +456,9 @@ class SOMAArray {
 
     // Managed query for the array
     std::unique_ptr<ManagedQuery> mq_;
+
+    // Array associated with mq_
+    std::shared_ptr<Array> arr_;
 
     // True if this is the first call to read_next()
     bool first_read_next_ = true;
