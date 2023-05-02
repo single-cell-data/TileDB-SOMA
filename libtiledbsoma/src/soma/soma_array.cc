@@ -107,7 +107,8 @@ SOMAArray::SOMAArray(
             }
             arr_->set_open_timestamp_start(timestamp->first);
             arr_->set_open_timestamp_end(timestamp->second);
-            arr_->reopen();
+            arr_->close();
+            arr_->open(mode);
         }
         mq_ = std::make_unique<ManagedQuery>(arr_, name);
         LOG_DEBUG(
@@ -122,8 +123,19 @@ SOMAArray::SOMAArray(
     reset(column_names, batch_size, result_order);
 }
 
-void SOMAArray::open(tiledb_query_type_t query_type) {
-    arr_->open(query_type);
+void SOMAArray::open(
+    tiledb_query_type_t mode,
+    std::optional<std::pair<uint64_t, uint64_t>> timestamp) {
+    arr_->open(mode);
+    if (timestamp) {
+        if (timestamp->first > timestamp->second) {
+            throw std::invalid_argument("timestamp start > end");
+        }
+        arr_->set_open_timestamp_start(timestamp->first);
+        arr_->set_open_timestamp_end(timestamp->second);
+        arr_->close();
+        arr_->open(mode);
+    }
 }
 
 void SOMAArray::close() {

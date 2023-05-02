@@ -296,12 +296,20 @@ TEST_CASE("SOMAArray: metadata") {
     std::string base_uri = "mem://unit-test-array";
     const auto& [uri, expected_nnz] = create_array(base_uri, *ctx);
 
-    auto sr = SOMAArray::open(TILEDB_WRITE, ctx, uri);
+    auto sr = SOMAArray::open(
+        TILEDB_WRITE,
+        ctx,
+        uri,
+        "metadata_test",
+        {},
+        "auto",
+        "auto",
+        std::pair<uint64_t, uint64_t>(1, 1));
     int32_t val = 100;
     sr->set_metadata("md", TILEDB_INT32, 1, &val);
     sr->close();
 
-    sr->open(TILEDB_READ);
+    sr->open(TILEDB_READ, std::pair<uint64_t, uint64_t>(1, 1));
     REQUIRE(sr->has_metadata("md") == true);
     REQUIRE(sr->metadata_num() == 1);
 
@@ -318,11 +326,11 @@ TEST_CASE("SOMAArray: metadata") {
     REQUIRE(*((const int32_t*)std::get<MetadataInfo::value>(mdval)) == 100);
     sr->close();
 
-    sr->open(TILEDB_WRITE);
+    sr->open(TILEDB_WRITE, std::pair<uint64_t, uint64_t>(2, 2));
     sr->delete_metadata("md");
     sr->close();
 
-    sr->open(TILEDB_READ);
+    sr->open(TILEDB_READ, std::pair<uint64_t, uint64_t>(3, 3));
     REQUIRE(sr->has_metadata("md") == false);
     REQUIRE(sr->metadata_num() == 0);
     sr->close();

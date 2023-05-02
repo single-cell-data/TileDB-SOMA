@@ -133,7 +133,9 @@ class SOMAArray {
     /**
      * Open the SOMAArray object.
      */
-    void open(tiledb_query_type_t query_type);
+    void open(
+        tiledb_query_type_t mode,
+        std::optional<std::pair<uint64_t, uint64_t>> timestamp = std::nullopt);
 
     /**
      * Closes the SOMAArray object.
