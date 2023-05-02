@@ -175,7 +175,13 @@ test_that("Write Seurat mechanics", {
   skip_if_not_installed('SeuratObject', .MINIMUM_SEURAT_VERSION('c'))
   pbmc_small <- get_data('pbmc_small', package = 'SeuratObject')
   uri <- withr::local_tempdir(SeuratObject::Project(pbmc_small))
-  expect_no_condition(experiment <- write_soma(pbmc_small, uri))
+  expect_no_condition(uri <- write_soma(pbmc_small, uri))
+  expect_type(uri, 'character')
+  expect_true(grepl(
+    paste0('^', SeuratObject::Project(pbmc_small)),
+    basename(uri)
+  ))
+  expect_no_condition(experiment <- SOMAExperimentOpen(uri))
   expect_s3_class(experiment, 'SOMAExperiment')
   expect_true(grepl(
     paste0('^', SeuratObject::Project(pbmc_small)),

@@ -11,7 +11,8 @@
 #' configuration}
 #' @param tiledbsoma_ctx Optional \code{\link{SOMATileDBContext}}
 #'
-#' @return A \code{\link{SOMAExperiment}} with the data from \code{x}
+#' @return The URI to the resulting \code{\link{SOMAExperiment}} generated from
+#' the data contained in \code{x}
 #'
 #' @section Known methods:
 #' \itemize{
