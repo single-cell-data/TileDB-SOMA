@@ -3,21 +3,6 @@
 #'
 NULL
 
-# cstop <- function(..., class = NULL, call. = TRUE) {
-#   call. <- call. && as.logical(x = sys.parent())
-#   ecall <- if (isTRUE(x = call.)) {
-#     sys.call(which = sys.parent())
-#   } else {
-#     NULL
-#   }
-#   msg <- paste0(...)
-#   if (!length(x = msg)) {
-#     msg <- ""
-#   }
-#   cond <- errorCondition(message = msg, class = class, call = ecall)
-#   stop(cond)
-# }
-
 #' `SOMAExperiment` Axis Query
 #' @description Perform an axis-based query against a [`SOMAExperiment`].
 #'
