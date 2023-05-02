@@ -42,6 +42,7 @@ using namespace tiledb;
 //===================================================================
 
 std::unique_ptr<SOMAArray> SOMAArray::open(
+    tiledb_query_type_t mode,
     std::string_view uri,
     std::string_view name,
     std::map<std::string, std::string> platform_config,
@@ -50,6 +51,7 @@ std::unique_ptr<SOMAArray> SOMAArray::open(
     std::string_view result_order,
     std::optional<std::pair<uint64_t, uint64_t>> timestamp) {
     return std::make_unique<SOMAArray>(
+        mode,
         uri,
         name,
         std::make_shared<Context>(Config(platform_config)),
@@ -60,6 +62,7 @@ std::unique_ptr<SOMAArray> SOMAArray::open(
 }
 
 std::unique_ptr<SOMAArray> SOMAArray::open(
+    tiledb_query_type_t mode,
     std::shared_ptr<Context> ctx,
     std::string_view uri,
     std::string_view name,
@@ -68,7 +71,14 @@ std::unique_ptr<SOMAArray> SOMAArray::open(
     std::string_view result_order,
     std::optional<std::pair<uint64_t, uint64_t>> timestamp) {
     return std::make_unique<SOMAArray>(
-        uri, name, ctx, column_names, batch_size, result_order, timestamp);
+        mode,
+        uri,
+        name,
+        ctx,
+        column_names,
+        batch_size,
+        result_order,
+        timestamp);
 }
 
 //===================================================================
@@ -76,6 +86,7 @@ std::unique_ptr<SOMAArray> SOMAArray::open(
 //===================================================================
 
 SOMAArray::SOMAArray(
+    tiledb_query_type_t mode,
     std::string_view uri,
     std::string_view name,
     std::shared_ptr<Context> ctx,
@@ -89,7 +100,7 @@ SOMAArray::SOMAArray(
     // Validate parameters
     try {
         LOG_DEBUG(fmt::format("[SOMAArray] opening array '{}'", uri_));
-        auto array = std::make_shared<Array>(*ctx_, uri_, TILEDB_READ);
+        auto array = std::make_shared<Array>(*ctx_, uri_, mode);
         if (timestamp) {
             if (timestamp->first > timestamp->second) {
                 throw std::invalid_argument("timestamp start > end");
@@ -109,6 +120,14 @@ SOMAArray::SOMAArray(
     }
 
     reset(column_names, batch_size, result_order);
+}
+
+void SOMAArray::open(tiledb_query_type_t query_type) {
+    mq_->array().get()->open(query_type);
+}
+
+void SOMAArray::close() {
+    mq_->array().get()->close();
 }
 
 void SOMAArray::reset(
@@ -282,6 +301,7 @@ uint64_t SOMAArray::nnz_slow() {
         "counting cells...");
 
     auto sr = SOMAArray::open(
+        TILEDB_READ,
         ctx_,
         uri_,
         "count_cells",
@@ -374,4 +394,49 @@ std::vector<int64_t> SOMAArray::shape() {
 
     return result;
 }
+
+void SOMAArray::set_metadata(
+    const std::string& key,
+    tiledb_datatype_t value_type,
+    uint32_t value_num,
+    const void* value) {
+    auto arr = mq_.get()->array().get();
+    arr->put_metadata(key, value_type, value_num, value);
+}
+
+void SOMAArray::delete_metadata(const std::string& key) {
+    auto arr = mq_.get()->array().get();
+    arr->delete_metadata(key);
+}
+
+void SOMAArray::get_metadata(
+    const std::string& key,
+    tiledb_datatype_t* value_type,
+    uint32_t* value_num,
+    const void** value) {
+    auto arr = mq_.get()->array().get();
+    arr->get_metadata(key, value_type, value_num, value);
+}
+
+void SOMAArray::get_metadata_from_index(
+    uint64_t index,
+    std::string* key,
+    tiledb_datatype_t* value_type,
+    uint32_t* value_num,
+    const void** value) {
+    auto arr = mq_.get()->array().get();
+    arr->get_metadata_from_index(index, key, value_type, value_num, value);
+}
+
+bool SOMAArray::has_metadata(
+    const std::string& key, tiledb_datatype_t* value_type) {
+    auto arr = mq_.get()->array().get();
+    return arr->has_metadata(key, value_type);
+}
+
+uint64_t SOMAArray::metadata_num() const {
+    auto arr = mq_.get()->array().get();
+    return arr->metadata_num();
+}
+
 }  // namespace tiledbsoma

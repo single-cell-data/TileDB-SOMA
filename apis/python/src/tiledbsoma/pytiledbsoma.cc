@@ -181,6 +181,7 @@ PYBIND11_MODULE(pytiledbsoma, m) {
                     py::gil_scoped_release release;
 
                     auto reader = SOMAArray::open(
+                        TILEDB_READ,
                         uri,
                         name,
                         platform_config,

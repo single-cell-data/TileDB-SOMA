@@ -266,6 +266,15 @@ class ManagedQuery {
     std::shared_ptr<ArrayBuffers> results();
 
     /**
+     * @brief Get the array.
+     *
+     * @return std::shared_ptr<Array> Array
+     */
+    std::shared_ptr<Array> array() {
+        return array_;
+    }
+
+    /**
      * @brief Get the schema of the array.
      *
      * @return std::shared_ptr<ArraySchema> Schema
