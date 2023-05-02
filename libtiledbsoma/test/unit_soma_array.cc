@@ -174,7 +174,7 @@ TEST_CASE("SOMAArray: nnz") {
             10);
 
         // Get total cell num
-        auto sr = SOMAArray::open(ctx, uri);
+        auto sr = SOMAArray::open(TILEDB_READ, ctx, uri);
 
         uint64_t nnz = sr->nnz();
         REQUIRE(nnz == expected_nnz);
@@ -224,7 +224,7 @@ TEST_CASE("SOMAArray: nnz with timestamp") {
         // Get total cell num at timestamp (0, 15)
         std::pair<uint64_t, uint64_t> timestamp{0, 15};
         auto sr = SOMAArray::open(
-            ctx, uri, "nnz", {}, "auto", "auto", timestamp);
+            TILEDB_READ, ctx, uri, "nnz", {}, "auto", "auto", timestamp);
 
         uint64_t nnz = sr->nnz();
         REQUIRE(nnz == expected_nnz);
@@ -277,7 +277,8 @@ TEST_CASE("SOMAArray: nnz with consolidation") {
         }
 
         // Get total cell num
-        auto sr = SOMAArray::open(ctx, uri, "nnz", {}, "auto", "auto");
+        auto sr = SOMAArray::open(
+            TILEDB_READ, ctx, uri, "nnz", {}, "auto", "auto");
 
         uint64_t nnz = sr->nnz();
         if (allow_duplicates) {
@@ -287,4 +288,50 @@ TEST_CASE("SOMAArray: nnz with consolidation") {
             REQUIRE(nnz == expected_nnz);
         }
     }
+}
+
+TEST_CASE("SOMAArray: metadata") {
+    auto ctx = std::make_shared<Context>();
+
+    std::string base_uri = "mem://unit-test-array";
+    const auto& [uri, expected_nnz] = create_array(base_uri, *ctx);
+
+    auto sr = SOMAArray::open(
+        TILEDB_WRITE,
+        ctx,
+        uri,
+        "metadata_test",
+        {},
+        "auto",
+        "auto",
+        std::pair<uint64_t, uint64_t>(1, 1));
+    int32_t val = 100;
+    sr->set_metadata("md", TILEDB_INT32, 1, &val);
+    sr->close();
+
+    sr->open(TILEDB_READ, std::pair<uint64_t, uint64_t>(1, 1));
+    REQUIRE(sr->has_metadata("md") == true);
+    REQUIRE(sr->metadata_num() == 1);
+
+    auto mdval = sr->get_metadata(0);
+    REQUIRE(std::get<MetadataInfo::key>(mdval) == "md");
+    REQUIRE(std::get<MetadataInfo::dtype>(mdval) == TILEDB_INT32);
+    REQUIRE(std::get<MetadataInfo::num>(mdval) == 1);
+    REQUIRE(*((const int32_t*)std::get<MetadataInfo::value>(mdval)) == 100);
+
+    mdval = sr->get_metadata("md");
+    REQUIRE(std::get<MetadataInfo::key>(mdval) == "md");
+    REQUIRE(std::get<MetadataInfo::dtype>(mdval) == TILEDB_INT32);
+    REQUIRE(std::get<MetadataInfo::num>(mdval) == 1);
+    REQUIRE(*((const int32_t*)std::get<MetadataInfo::value>(mdval)) == 100);
+    sr->close();
+
+    sr->open(TILEDB_WRITE, std::pair<uint64_t, uint64_t>(2, 2));
+    sr->delete_metadata("md");
+    sr->close();
+
+    sr->open(TILEDB_READ, std::pair<uint64_t, uint64_t>(3, 3));
+    REQUIRE(sr->has_metadata("md") == false);
+    REQUIRE(sr->metadata_num() == 0);
+    sr->close();
 }

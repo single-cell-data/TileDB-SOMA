@@ -45,12 +45,12 @@ void test_sdf(const std::string& uri) {
     // config["sm.mem.total_budget"] = "1118388608";
 
     // Read all values from the obs array
-    auto obs = SOMAArray::open(uri + "/obs", "obs");
+    auto obs = SOMAArray::open(TILEDB_READ, uri + "/obs", "obs");
     obs->submit();
     auto obs_data = obs->read_next();
 
     // Read all values from the var array
-    auto var = SOMAArray::open(uri + "/ms/RNA/var", "var");
+    auto var = SOMAArray::open(TILEDB_READ, uri + "/ms/RNA/var", "var");
     var->submit();
     auto var_data = var->read_next();
 
@@ -60,7 +60,8 @@ void test_sdf(const std::string& uri) {
     }
 
     // Read all values from the X/data array
-    auto x_data = SOMAArray::open(uri + "/ms/RNA/X/data", "X/data", config);
+    auto x_data = SOMAArray::open(
+        TILEDB_READ, uri + "/ms/RNA/X/data", "X/data", config);
     x_data->submit();
 
     int batches = 0;
@@ -79,7 +80,7 @@ void test_sdf(const std::string& uri) {
 namespace tdbs = tiledbsoma;
 void test_arrow(const std::string& uri) {
     const std::vector<std::string>& colnames{"n_counts", "n_genes", "louvain"};
-    auto obs = tdbs::SOMAArray::open(uri, "", {}, colnames);
+    auto obs = tdbs::SOMAArray::open(TILEDB_READ, uri, "", {}, colnames);
     obs->submit();
     // Getting next batch:  std::optional<std::shared_ptr<ArrayBuffers>>
     auto obs_data = obs->read_next();

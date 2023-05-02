@@ -94,7 +94,7 @@ Rcpp::XPtr<tdbs::SOMAArray> sr_setup(const std::string& uri,
         column_names = Rcpp::as<std::vector<std::string>>(colnames);
     }
 
-    auto ptr = new tdbs::SOMAArray(uri, name, ctxptr, column_names, batch_size, result_order);
+    auto ptr = new tdbs::SOMAArray(TILEDB_READ, uri, name, ctxptr, column_names, batch_size, result_order);
 
     std::unordered_map<std::string, std::shared_ptr<tiledb::Dimension>> name2dim;
     std::shared_ptr<tiledb::ArraySchema> schema = ptr->schema();

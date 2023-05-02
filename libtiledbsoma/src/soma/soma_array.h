@@ -44,6 +44,10 @@
 namespace tiledbsoma {
 using namespace tiledb;
 
+using MetadataValue =
+    std::tuple<std::string, tiledb_datatype_t, uint32_t, const void*>;
+enum MetadataInfo { key = 0, dtype, num, value };
+
 class SOMAArray {
    public:
     //===================================================================
@@ -54,6 +58,7 @@ class SOMAArray {
      * @brief Open an array at the specified URI and return SOMAArray
      * object.
      *
+     * @param mode TILEDB_READ or TILEDB_WRITE
      * @param uri URI of the array
      * @param name Name of the array
      * @param platform_config Config parameter dictionary
@@ -62,8 +67,8 @@ class SOMAArray {
      * @param result_order Read result order
      * @return std::unique_ptr<SOMAArray> SOMAArray
      */
-    __attribute__((visibility("default"))) static std::unique_ptr<SOMAArray>
-    open(
+    static std::unique_ptr<SOMAArray> open(
+        tiledb_query_type_t mode,
         std::string_view uri,
         std::string_view name = "unnamed",
         std::map<std::string, std::string> platform_config = {},
@@ -76,6 +81,7 @@ class SOMAArray {
      * @brief Open an array at the specified URI and return SOMAArray
      * object.
      *
+     * @param mode TILEDB_READ or TILEDB_WRITE
      * @param ctx TileDB context
      * @param uri URI of the array
      * @param name Name of the array
@@ -85,6 +91,7 @@ class SOMAArray {
      * @return std::unique_ptr<SOMAArray> SOMAArray
      */
     static std::unique_ptr<SOMAArray> open(
+        tiledb_query_type_t mode,
         std::shared_ptr<Context> ctx,
         std::string_view uri,
         std::string_view name = "unnamed",
@@ -99,11 +106,17 @@ class SOMAArray {
     /**
      * @brief Construct a new SOMAArray object
      *
+     * @param mode TILEDB_READ or TILEDB_WRITE
      * @param uri URI of the array
      * @param name name of the array
      * @param ctx TileDB context
+     * @param column_names Columns to read
+     * @param batch_size Batch size
+     * @param result_order Result order
+     * @param timestamp Timestamp
      */
     SOMAArray(
+        tiledb_query_type_t mode,
         std::string_view uri,
         std::string_view name,
         std::shared_ptr<Context> ctx,
@@ -118,6 +131,18 @@ class SOMAArray {
     ~SOMAArray() = default;
 
     /**
+     * Open the SOMAArray object.
+     */
+    void open(
+        tiledb_query_type_t mode,
+        std::optional<std::pair<uint64_t, uint64_t>> timestamp = std::nullopt);
+
+    /**
+     * Closes the SOMAArray object.
+     */
+    void close();
+
+    /**
      * @brief Reset the state of this SOMAArray object to prepare for a
      * new query, while holding the array open.
      *
@@ -125,7 +150,7 @@ class SOMAArray {
      * @param batch_size
      * @param result_order
      */
-    __attribute__((visibility("default"))) void reset(
+    void reset(
         std::vector<std::string> column_names = {},
         std::string_view batch_size = "auto",
         std::string_view result_order = "auto");
@@ -256,7 +281,7 @@ class SOMAArray {
      * @brief Submit the query
      *
      */
-    __attribute__((visibility("default"))) void submit();
+    void submit();
 
     /**
      * @brief Read the next chunk of results from the query. If all results have
@@ -272,9 +297,7 @@ class SOMAArray {
      *
      * @return std::optional<std::shared_ptr<ArrayBuffers>>
      */
-    __attribute__((visibility("default")))
-    std::optional<std::shared_ptr<ArrayBuffers>>
-    read_next();
+    std::optional<std::shared_ptr<ArrayBuffers>> read_next();
 
     /**
      * @brief Check if the query is complete.
@@ -319,7 +342,7 @@ class SOMAArray {
      *
      * @return uint64_t Total number of unique cells
      */
-    __attribute__((visibility("default"))) uint64_t nnz();
+    uint64_t nnz();
 
     /**
      * @brief Get the schema of the array.
@@ -336,7 +359,82 @@ class SOMAArray {
      * @return A vector with length equal to the number of dimensions; each
      * value in the vector is the capcity of each dimension.
      */
-    __attribute__((visibility("default"))) std::vector<int64_t> shape();
+    std::vector<int64_t> shape();
+
+    /**
+     * Set metadata key-value items to an open array. The array must
+     * opened in WRITE mode, otherwise the function will error out.
+     *
+     * @param key The key of the metadata item to be added. UTF-8 encodings
+     *     are acceptable.
+     * @param value_type The datatype of the value.
+     * @param value_num The value may consist of more than one items of the
+     *     same datatype. This argument indicates the number of items in the
+     *     value component of the metadata.
+     * @param value The metadata value in binary form.
+     *
+     * @note The writes will take effect only upon closing the array.
+     */
+    void set_metadata(
+        const std::string& key,
+        tiledb_datatype_t value_type,
+        uint32_t value_num,
+        const void* value);
+
+    /**
+     * Deletes a metadata key-value item from an open array. The array must
+     * be opened in WRITE mode, otherwise the function will error out.
+     *
+     * @param key The key of the metadata item to be deleted.
+     *
+     * @note The writes will take effect only upon closing the array.
+     *
+     * @note If the key does not exist, this will take no effect
+     *     (i.e., the function will not error out).
+     */
+    void delete_metadata(const std::string& key);
+
+    /**
+     * @brief Given a key, retrieve the associated value datatype, number of
+     * values, and value in binary form. The array must be opened in READ mode,
+     * otherwise the function will error out.
+     *
+     * The value may consist of more than one items of the same datatype. Keys
+     * that do not exist in the metadata will be return NULL for the value.
+     *
+     * @param key The key of the metadata item to be retrieved. UTF-8 encodings
+     *     are acceptable.
+     * @return MetadataValue (std::tuple<std::string, tiledb_datatype_t,
+     * uint32_t, const void*>)
+     */
+    MetadataValue get_metadata(const std::string& key) const;
+
+    /**
+     * @brief Given an index, retrieve the associated value datatype, number of
+     * values, and value in binary form. The array must be opened in READ mode,
+     * otherwise the function will error out.
+     *
+     * @param index The index used to get the metadata.
+     * @return MetadataValue (std::tuple<std::string, tiledb_datatype_t,
+     * uint32_t, const void*>)
+     */
+    MetadataValue get_metadata(uint64_t index) const;
+
+    /**
+     * Checks if key exists in metadata from an open array. The array must
+     * be opened in READ mode, otherwise the function will error out.
+     *
+     * @param key The key of the metadata item to be checked. UTF-8 encodings
+     *     are acceptable.
+     * @return true if the key exists, else false.
+     */
+    bool has_metadata(const std::string& key);
+
+    /**
+     * Returns then number of metadata items in an open array. The array must
+     * be opened in READ mode, otherwise the function will error out.
+     */
+    uint64_t metadata_num() const;
 
    private:
     //===================================================================
@@ -360,6 +458,9 @@ class SOMAArray {
 
     // Managed query for the array
     std::unique_ptr<ManagedQuery> mq_;
+
+    // Array associated with mq_
+    std::shared_ptr<Array> arr_;
 
     // True if this is the first call to read_next()
     bool first_read_next_ = true;
