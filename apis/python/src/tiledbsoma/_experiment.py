@@ -25,8 +25,13 @@ class Experiment(
         AnyTileDBObject,
     ],
 ):
-    """An :class:`Experiment` represents a single-cell experiment. It is
-    a container class that has observations and measurements.
+    """A collection subtype that combines observations and measurements
+    from an individual experiment.
+
+    In single cell biology, this can represent multiple modes of measurement
+    across a single collection of cells (i.e., a "multimodal dataset").
+    Within an experiment, a set of measurements on a single set of variables
+    (i.e., features) is represented as a :class:`Measurement`.
 
     Attributes:
         obs (DataFrame):
@@ -36,6 +41,21 @@ class Experiment(
             defined in this dataframe.
         ms (Collection):
             A collection of named measurements.
+
+    Example:
+        >>> import tiledbsoma
+        >>> with tiledbsoma.open("/path/to/experiment") as exp:
+        ...     # While users can interact directly with an Experiment's fields:
+        ...     obs_df = exp.obs
+        ...
+        ...     # the primary use case is to run queries on the experiment data.
+        ...     q = exp.query(
+        ...         "mtdna",
+        ...         obs_query=tiledbsoma.AxisQuery(value_filter="tissue == 'lung'"),
+        ...         var_query=tiledbsoma.AxisQuery(coords=(slice(50, 100),)),
+        ...     )
+        ...     query_obs = q.obs().concat().to_pandas()
+        ...     query_var = q.var().concat().to_pandas()
 
     Lifecycle:
         Experimental.
