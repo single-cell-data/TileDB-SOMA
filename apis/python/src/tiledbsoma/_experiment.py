@@ -25,7 +25,8 @@ class Experiment(
         AnyTileDBObject,
     ],
 ):
-    """A collection subtype representing an annotated 2D matrix of measurements.
+    """A collection subtype that combines observations and measurements
+    from an individual experiment.
 
     In single cell biology, this can represent multiple modes of measurement
     across a single collection of cells (i.e., a "multimodal dataset").
