@@ -1,8 +1,8 @@
 ---
-title: "SOMA Objects"
+title: "SOMA objects overview"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{SOMA Objects}
+  %\VignetteIndexEntry{SOMA objects overview}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---

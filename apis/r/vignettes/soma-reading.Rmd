@@ -1,8 +1,8 @@
 ---
-title: "SOMA Reading"
+title: "Reading from SOMA objects"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{SOMA Reading}
+  %\VignetteIndexEntry{Reading from SOMA objects}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---

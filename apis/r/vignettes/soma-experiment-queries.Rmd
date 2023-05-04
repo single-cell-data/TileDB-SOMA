@@ -1,8 +1,8 @@
 ---
-title: "Querying a SOMA Experiment"
+title: "Querying a SOMA experiment"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Querying a SOMA Experiment}
+  %\VignetteIndexEntry{Querying a SOMA experiment}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
