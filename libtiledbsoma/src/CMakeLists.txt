@@ -194,7 +194,7 @@ install(FILES
 
 install(FILES 
   ${CMAKE_CURRENT_SOURCE_DIR}/external/include/span/span.hpp
-  DESTINATION "include/tiledbsoma/span"
+  DESTINATION "include/tiledbsoma/utils/span"
 )
 
 
