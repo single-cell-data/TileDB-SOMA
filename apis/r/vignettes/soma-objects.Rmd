@@ -14,7 +14,7 @@ knitr::opts_chunk$set(
 )
 ```
 
-In this notebook, we'll go through the various SOMA classes provided by the `tiledbsoma` package.
+In this notebook, we'll go through the various SOMA classes provided by the tiledbsoma package.
 
 ```{r}
 library(tiledbsoma)
