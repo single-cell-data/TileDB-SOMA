@@ -7,6 +7,8 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
+## Overview
+
 In this tutorial we'll learn how to read data from various SOMA objects. We will assume familiarity with SOMA objects already, so it is recommended to go through the `vignette("soma-objects")` first.
 
 A core feature of SOMA is the ability to read _subsets_ of data from disk into memory as slices. SOMA uses [Apache Arrow](https://arrow.apache.org/) as an intermediate in-memory storage. From here, the slices can be further converted into native R objects, like data frames and matrices.
@@ -23,7 +25,7 @@ Load the bundled `SOMAExperiment` containing a subsetted version of the 10X geno
 experiment <- load_dataset("soma-exp-pbmc-small")
 ```
 
-## Reading a data frame
+## SOMA DataFrame
 
 We'll start with the `obs` dataframe. Simply calling the `read()` method will load all of the data in memory as an [Arrow Table](https://arrow.apache.org/docs/r/reference/Table.html).
 
@@ -39,7 +41,7 @@ This is easily converted into a `data.frame` using arrow's methods:
 obs$read()$to_data_frame()
 ```
 
-## Slicing
+### Slicing
 
 Slices of data can be read by passing coordinates to the `read()` method. Before we do that, let's take a look at the schema of `obs`:
 
@@ -75,7 +77,7 @@ Select multiple, contiguous rows:
 obs$read(coords = 0:4)
 ```
 
-## Selecting columns
+### Selecting columns
 
 As TileDB is a columnar format, it is possible to select a subset of columns to read by using the `column_names`argument:
 
@@ -83,7 +85,7 @@ As TileDB is a columnar format, it is possible to select a subset of columns to 
 obs$read(coords = 0:4, column_names = c("obs_id", "groups"))
 ```
 
-## Filtering
+### Filtering
 
 In addition to slicing by coordinates you can also apply filters to the data using the `value_filter` argument. These logical expressions are pushed down to the TileDB engine and efficiently applied to the data on disk. Here are a few examples.
 
@@ -109,4 +111,43 @@ Identify all cells in the `"g1"` group with more than more than 60 features:
 
 ```{r}
 obs$read(value_filter = "groups == 'g1' & nFeature_RNA > 60")$to_data_frame()
+```
+
+## SOMA SparseNDArray
+
+For `SOMASparseNDArray`, let's consider the `X` layer containing the `"counts"` data:
+
+```{r}
+counts <- experiment$ms$get("RNA")$X$get("counts")
+counts
+```
+
+Similar to `SOMADataFrame`, we can load the data into memory as an Arrow Table:
+
+```{r}
+counts$read_arrow_table()
+```
+
+Or as a [`Matrix::sparseMatrix()`]:
+
+```{r}
+counts$read_sparse_matrix(repr = "C")
+```
+
+### Slicing
+
+Just as with a `SOMADataFrame`, we can also retrieve subsets of the data from a `SOMASparseNDArray` that can fit in memory.
+
+Unlike `SOMADataFrame`s, `SOMASparseNDArray`s are always indexed using a zero-based offset integer on each dimension, named `soma_dim_N`. Therefore, if the array is `N`-dimensional, the `read()` method can accept a list of length `N` that specifies how to slice the array.
+
+`SOMASparseNDArray` dimensions are always named `soma_dim_N` where `N` is the dimension number. As before you could use `schema()` or `dimnames()` to retrieve the dimension names.
+
+```{r}
+counts$schema()
+```
+
+For example, here's how to fetch the first 5 rows of the matrix:
+
+```{r}
+counts$read_arrow_table(coords = list(soma_dim_0 = 0:4))
 ```
