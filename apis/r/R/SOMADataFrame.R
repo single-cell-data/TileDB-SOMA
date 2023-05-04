@@ -185,6 +185,8 @@ SOMADataFrame <- R6::R6Class(
                     iterated = FALSE,
                     log_level = "warn") {
 
+      private$check_open_for_read()
+
       result_order <- match_query_layout(result_order)
       uri <- self$uri
       arr <- self$object                 # need array (schema) to properly parse query condition

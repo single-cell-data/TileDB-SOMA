@@ -66,7 +66,7 @@ TileDBGroup <- R6::R6Class(
       private$check_open_for_write()
 
       tiledb::tiledb_group_add_member(
-        grp = self$object,
+        grp = private$.object,
         uri = uri,
         relative = relative,
         name = name
@@ -113,7 +113,7 @@ TileDBGroup <- R6::R6Class(
       private$check_open_for_write()
 
       tiledb::tiledb_group_remove_member(
-        grp = self$object,
+        grp = private$.object,
         uri = name
       )
 
@@ -169,9 +169,9 @@ TileDBGroup <- R6::R6Class(
 
       spdl::debug("Retrieving metadata for {} '{}'", self$class(), self$uri)
       if (!is.null(key)) {
-        return(tiledb::tiledb_group_get_metadata(self$object, key))
+        return(tiledb::tiledb_group_get_metadata(private$.object, key))
       } else {
-        return(tiledb::tiledb_group_get_all_metadata(self$object))
+        return(tiledb::tiledb_group_get_all_metadata(private$.object))
       }
     },
 
@@ -190,7 +190,7 @@ TileDBGroup <- R6::R6Class(
         FUN = tiledb::tiledb_group_put_metadata,
         key = names(metadata),
         val = metadata,
-        MoreArgs = list(grp = self$object),
+        MoreArgs = list(grp = private$.object),
         SIMPLIFY = FALSE
       )
     },
@@ -214,28 +214,33 @@ TileDBGroup <- R6::R6Class(
       )
       private$.mode = mode
 
-      #invisible(tiledb::tiledb_group_open(self$object, type = mode))
+      #invisible(tiledb::tiledb_group_open(private$.object, type = mode))
 
-      self$object <- tiledb::tiledb_group(
+      private$.object <- tiledb::tiledb_group(
         self$uri,
         type = mode,
         ctx = self$tiledbsoma_ctx$context()
       )
-      invisible(self$object)
+      invisible(private$.object)
     },
 
     #' @description Close the SOMA object.
     #' @return The object, invisibly
     close = function() {
       spdl::debug("Closing {} '{}'", self$class(), self$uri)
-      private$.mode = "CLOSED"
-      invisible(tiledb::tiledb_group_close(self$object))
+      invisible(tiledb::tiledb_group_close(private$.object))
+      private$.mode <- "CLOSED"
+      private$.object <- NULL
     }
   ),
 
   private = list(
 
+    # Pro tip: in R6 we can't set these to anything other than NULL here, even if we want to.  If
+    # you want them defaulted to anything other than NULL, leave them NULL here and set the defaults
+    # in the constructor.
     .mode = NULL,
+    .object = NULL,
 
     # Per the spec, invoking user-level read requires open for read mode.
     check_open_for_read = function() {
@@ -281,7 +286,7 @@ TileDBGroup <- R6::R6Class(
     get_all_members = function() {
       private$check_open_for_read_or_write()
 
-      count <- tiledb::tiledb_group_member_count(self$object)
+      count <- tiledb::tiledb_group_member_count(private$.object)
       if (count == 0) return(list())
 
       members <- vector(mode = "list", length = count)
@@ -289,7 +294,7 @@ TileDBGroup <- R6::R6Class(
 
       for (i in seq_len(count)) {
         members[[i]] <- setNames(
-          object = as.list(tiledb::tiledb_group_member(self$object, i - 1L)),
+          object = as.list(tiledb::tiledb_group_member(private$.object, i - 1L)),
           nm = c("type", "uri", "name")
         )
       }

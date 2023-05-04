@@ -266,6 +266,22 @@ TileDBArray <- R6::R6Class(
     }
 
   ),
+  
+  active = list(
+    #' @field object Access the underlying TileB object directly (either a
+    #' [`tiledb::tiledb_array`] or [`tiledb::tiledb_group`]).
+    object = function(value) {
+      if (!missing(value)) {
+        stop(sprintf("'%s' is a read-only field.", "object"), call. = FALSE)
+      }
+      # If the array was created after the object was instantiated, we need to
+      # initialize private$tiledb_object
+      if (is.null(private$tiledb_object)) {
+        private$initialize_object()
+      }
+      private$tiledb_object
+    }
+  ),
 
   private = list(
 

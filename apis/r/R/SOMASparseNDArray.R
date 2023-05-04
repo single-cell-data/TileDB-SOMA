@@ -120,6 +120,8 @@ SOMASparseNDArray <- R6::R6Class(
       iterated = FALSE,
       log_level = "warn"
     ) {
+      private$check_open_for_read()
+
       uri <- self$uri
 
       result_order <- map_query_layout(match_query_layout(result_order))
@@ -188,6 +190,8 @@ SOMASparseNDArray <- R6::R6Class(
       iterated = FALSE,
       log_level = "warn"
     ) {
+      private$check_open_for_read()
+
       repr <- match.arg(repr)
       dims <- self$dimensions()
       attr <- self$attributes()

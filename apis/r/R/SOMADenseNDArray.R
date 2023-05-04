@@ -123,6 +123,8 @@ SOMADenseNDArray <- R6::R6Class(
       iterated = FALSE,
       log_level = "warn"
     ) {
+      private$check_open_for_read()
+
       uri <- self$uri
 
       result_order <- map_query_layout(match_query_layout(result_order))
@@ -186,6 +188,8 @@ SOMADenseNDArray <- R6::R6Class(
       iterated = FALSE,
       log_level = "warn"
     ) {
+      private$check_open_for_read()
+
       dims <- self$dimensions()
       attr <- self$attributes()
       stopifnot("Array must have two dimensions" = length(dims) == 2,
