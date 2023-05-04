@@ -168,8 +168,12 @@ SOMASparseNDArray <- R6::R6Class(
     #' @param iterated Option boolean indicated whether data is read in call (when
     #' `FALSE`, the default value) or in several iterated steps.
     #' @param log_level Optional logging level with default value of `"warn"`.
-    #' @return A `matrix` object
-    read_sparse_matrix = function(
+    #' @return A `matrix`-like object accessed using zero-based indexes. It supports
+    #'         only basic access operations with zero-based indexes as well as `dim()`,
+    #'         `nrow()`, and `ncol()`. Use `as.one.based()` to get a fully-featured
+    #'         sparse matrix object supporting more advanced operations (with one-based
+    #'         indexing).
+    read_sparse_matrix_zero_based = function(
       coords = NULL,
       result_order = "auto",
       repr = c("C", "T", "R"),
@@ -186,10 +190,18 @@ SOMASparseNDArray <- R6::R6Class(
 
       if (isFALSE(iterated)) {
           tbl <- self$read_arrow_table(coords = coords, result_order = result_order, log_level = log_level)
-          Matrix::sparseMatrix(i = 1 + as.numeric(tbl$GetColumnByName("soma_dim_0")),
-                               j = 1 + as.numeric(tbl$GetColumnByName("soma_dim_1")),
-                               x = as.numeric(tbl$GetColumnByName("soma_data")),
-                               dims = as.integer(self$shape()), repr = repr)
+          # To instantiate the one-based Matrix::sparseMatrix, we need to add 1 to the
+          # zero-based soma_dim_0 and soma_dim_1. But, because these dimensions are
+          # usually populated with soma_joinid, users will need to access the matrix
+          # using the original, possibly-zero IDs. Therefore, we'll wrap the one-based
+          # sparseMatrix with a shim providing basic access with zero-based indexes.
+          # If needed, user can then explicitly ask the shim for the underlying
+          # sparseMatrix using `as.one.based()`.
+          mat <- Matrix::sparseMatrix(i = 1 + as.numeric(tbl$GetColumnByName("soma_dim_0")),
+                                      j = 1 + as.numeric(tbl$GetColumnByName("soma_dim_1")),
+                                      x = as.numeric(tbl$GetColumnByName("soma_data")),
+                                      dims = as.integer(self$shape()), repr = repr)
+          matrixZeroBasedView(mat)
       } else {
           ## should we error if this isn't null?
           if (!is.null(self$soma_reader_pointer)) {
@@ -250,10 +262,12 @@ SOMASparseNDArray <- R6::R6Class(
       if (private$sparse_repr == "") {
           tbl
       } else {
-          Matrix::sparseMatrix(i = 1 + as.numeric(tbl$GetColumnByName("soma_dim_0")),
-                               j = 1 + as.numeric(tbl$GetColumnByName("soma_dim_1")),
-                               x = as.numeric(tbl$GetColumnByName("soma_data")),
-                               dims = as.integer(self$shape()), repr = private$sparse_repr)
+          mat <- Matrix::sparseMatrix(i = 1 + as.numeric(tbl$GetColumnByName("soma_dim_0")),
+                                      j = 1 + as.numeric(tbl$GetColumnByName("soma_dim_1")),
+                                      x = as.numeric(tbl$GetColumnByName("soma_data")),
+                                      dims = as.integer(self$shape()), repr = private$sparse_repr)
+          # see read_sparse_matrix_zero_based() abave
+          matrixZeroBasedView(mat)
       }
     },
 
