@@ -11,11 +11,10 @@ TileDBObject <- R6::R6Class(
     #' @param uri URI for the TileDB object
     #' @param platform_config Optional platform configuration
     #' @param tiledbsoma_ctx Optional SOMATileDBContext
-    #' @param mode One of "READ" or "WRITE"
     #' @param internal_use_only Character value to signal 'permitted' call as
     #' `new()` is considered internal and should not be called directly
     initialize = function(uri, platform_config = NULL, tiledbsoma_ctx = NULL,
-                          mode = "READ", internal_use_only = NULL) {
+                          internal_use_only = NULL) {
       ## calls <- vapply(
       ##   X = lapply(X = sys.calls(), FUN = as.character),
       ##   FUN = '[[',
@@ -26,7 +25,7 @@ TileDBObject <- R6::R6Class(
       ##   .NotYetImplemented()
       ## }
       if (is.null(internal_use_only) || internal_use_only != "allowed_use") {
-        stop(paste("Use of the new() method is discouraged, consider using a",
+        stop(paste("Use of the new() method is discouraged. Consider using a",
                    "factory method as e.g. 'SOMADataFrameOpen()'."), call. = FALSE)
       }
       if (missing(uri)) stop("Must specify a `uri`", call. = FALSE)
@@ -44,8 +43,7 @@ TileDBObject <- R6::R6Class(
       }
       private$.tiledbsoma_ctx <- tiledbsoma_ctx
 
-      private$mode <- match.arg(mode, c("READ", "WRITE"))
-      spdl::debug("[TileDBObject] initialize {} with '{}' in {}", self$class(), self$uri, private$mode)
+      spdl::debug("[TileDBObject] initialize {} with '{}'", self$class(), self$uri)
     },
 
     #' @description Print the name of the R6 class.
@@ -140,9 +138,6 @@ TileDBObject <- R6::R6Class(
 
     # Internal context
     .tiledbsoma_ctx = NULL,
-
-    # Internal mode: one of READ or WRITE
-    mode = NULL,
 
     .read_only_error = function(field) {
       stop("Field ", sQuote(field), " is read-only", call. = FALSE)

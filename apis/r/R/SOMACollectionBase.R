@@ -22,8 +22,14 @@ SOMACollectionBase <- R6::R6Class(
     },
 
     #' @description Add a new SOMA object to the collection. (lifecycle: experimental)
-    create = function() {
-      super$create()
+    #' @param internal_use_only Character value to signal 'permitted' call as
+    #' `new()` is considered internal and should not be called directly
+    create = function(internal_use_only = NULL) {
+      if (is.null(internal_use_only) || internal_use_only != "allowed_use") {
+        stop(paste("Use of the create() method is discouraged. Consider using a",
+                   "factory method as e.g. 'SOMACollectionCreate()'."), call. = FALSE)
+      }
+      super$create(internal_use_only=internal_use_only)
 
       # Root SOMA objects include a `dataset_type` entry to allow the
       # TileDB Cloud UI to detect that they are SOMA datasets.
@@ -33,6 +39,7 @@ SOMACollectionBase <- R6::R6Class(
         metadata <- list()
       }
 
+      self$open("WRITE", internal_use_only = "allowed_use")
       private$write_object_type_metadata(metadata)
       self
     },

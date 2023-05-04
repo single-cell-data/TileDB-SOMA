@@ -192,6 +192,7 @@ test_that("Write Seurat mechanics", {
     basename(uri)
   ))
   expect_no_condition(experiment <- SOMAExperimentOpen(uri))
+  expect_equal(experiment$mode(), "READ")
   expect_s3_class(experiment, 'SOMAExperiment')
   expect_true(grepl(
     paste0('^', SeuratObject::Project(pbmc_small)),
@@ -208,4 +209,6 @@ test_that("Write Seurat mechanics", {
     setdiff(experiment$obs$attrnames(), 'obs_id'),
     names(pbmc_small[[]])
   )
+  experiment$close()
+  expect_equal(experiment$mode(), "CLOSED")
 })

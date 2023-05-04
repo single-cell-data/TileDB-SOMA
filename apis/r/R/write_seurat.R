@@ -564,6 +564,5 @@ write_soma.Seurat <- function(
       immediate. = TRUE
     )
   }
-  try(experiment$close(), silent = TRUE)
   return(experiment$uri)
 }

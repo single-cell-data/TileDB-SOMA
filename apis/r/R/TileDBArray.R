@@ -36,8 +36,7 @@ TileDBArray <- R6::R6Class(
     #'   is not NULL.
     #' @return A list of metadata values.
     get_metadata = function(key = NULL, prefix = NULL) {
-      private$open("READ")
-      on.exit(self$close())
+      private$check_open_for_read_or_write()
 
       if (!is.null(key)) {
         metadata <- tiledb::tiledb_get_metadata(self$object, key)
@@ -51,6 +50,12 @@ TileDBArray <- R6::R6Class(
       return(metadata)
     },
 
+    #' @description Returns READ if the array is open for read, WRITE if it is
+    #' open for write, else CLOSED.
+    mode = function() {
+      private$.mode
+    },
+
     #' @description Add list of metadata to the specified TileDB array. (lifecycle: experimental)
     #' @param metadata Named list of metadata to add.
     #' @return NULL
@@ -58,8 +63,8 @@ TileDBArray <- R6::R6Class(
       stopifnot(
         "Metadata must be a named list" = is_named_list(metadata)
       )
-      private$open("WRITE")
-      on.exit(self$close())
+
+      private$check_open_for_write()
 
       dev_null <- mapply(
         FUN = tiledb::tiledb_put_metadata,
@@ -182,8 +187,8 @@ TileDBArray <- R6::R6Class(
       }
 
       # We have to add special handling for attr_filter to cover the case where
-      # 1) TileDBArray$set_query() was called directly and attr_filter is an
-      # unevaluated expression, and 2) when TileDBArray$set_query() was called
+      # (1) TileDBArray$set_query() was called directly and attr_filter is an
+      # unevaluated expression, and (2) when TileDBArray$set_query() was called
       # indirectly (via AnnotationGroup$set_query()) and attr_filter has been
       # captured and converted to a a character vector.
 
@@ -234,16 +239,37 @@ TileDBArray <- R6::R6Class(
       }
     },
 
+    #' @description Open the SOMA object for read or write.
+    #' @param internal_use_only Character value to signal 'permitted' call as
+    #' `new()` is considered internal and should not be called directly
+    #' @return The object, invisibly
+    open = function(mode="READ", internal_use_only = NULL) {
+      mode <- match.arg(mode, c("READ", "WRITE"))
+      if (is.null(internal_use_only) || internal_use_only != "allowed_use") {
+        stop(paste("Use of the open() method is discouraged. Consider using a",
+                   "factory method as e.g. 'SOMADataFrameOpen()'."), call. = FALSE)
+      }
+
+      spdl::debug(
+        "Opening {} '{}' in {} mode", self$class(), self$uri, mode
+      )
+      private$.mode = mode
+      invisible(tiledb::tiledb_array_open(self$object, type = mode))
+    },
+
     #' @description Close the SOMA object.
     #' @return The object, invisibly
     close = function() {
       spdl::debug("Closing {} '{}'", self$class(), self$uri)
+      private$.mode = "CLOSED"
       invisible(tiledb::tiledb_array_close(self$object))
     }
 
   ),
 
   private = list(
+
+    .mode = NULL,
 
     # Once the array has been created this initializes the TileDB array object
     # and stores the reference in private$tiledb_object.
@@ -253,15 +279,28 @@ TileDBArray <- R6::R6Class(
         ctx = self$tiledbsoma_ctx$context(),
         query_layout = "UNORDERED"
       )
-      self$close()
     },
 
-    open = function(mode) {
-      mode <- match.arg(mode, c("READ", "WRITE"))
-      spdl::debug(
-        "Opening {} '{}' in {} mode", self$class(), self$uri, mode
+    # Per the spec, invoking user-level read requires open for read mode.
+    check_open_for_read = function() {
+      stopifnot(
+        "Array must be open for read" = private$.mode == "READ"
       )
-      invisible(tiledb::tiledb_array_open(self$object, type = mode))
+    },
+
+    # Per the spec, invoking user-level write requires open for read mode.
+    check_open_for_write = function() {
+      stopifnot(
+        "Array must be open for write" = private$.mode == "WRITE"
+      )
+    },
+
+    # Per the spec, invoking user-level get-metadata requires open for read mode or write mode.
+    check_open_for_read_or_write = function() {
+      stopifnot(
+        "Array must be open for write" = (private$.mode == "READ" || private$.mode == "WRITE")
+      )
     }
+
   )
 )

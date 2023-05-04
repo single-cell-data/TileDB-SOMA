@@ -31,7 +31,13 @@ SOMADenseNDArray <- R6::R6Class(
     #' @param type an [Arrow type][arrow::data-type] defining the type of each
     #' element in the array.
     #' @param shape a vector of integers defining the shape of the array.
-    create = function(type, shape, platform_config=NULL) {
+    #' @param internal_use_only Character value to signal 'permitted' call as
+    #' `new()` is considered internal and should not be called directly
+    create = function(type, shape, platform_config=NULL, internal_use_only = NULL) {
+      if (is.null(internal_use_only) || internal_use_only != "allowed_use") {
+        stop(paste("Use of the create() method is discouraged. Consider using a",
+                   "factory method as e.g. 'SOMADenseNDArrayCreate()'."), call. = FALSE)
+      }
       stopifnot(
         "'type' must be a valid Arrow type" =
           is_arrow_data_type(type),
@@ -97,6 +103,7 @@ SOMADenseNDArray <- R6::R6Class(
 
       # create array
       tiledb::tiledb_array_create(uri = self$uri, schema = tdb_schema)
+      self$open("WRITE", internal_use_only = "allowed_use")
       private$write_object_type_metadata()
       self
     },
@@ -215,6 +222,8 @@ SOMADenseNDArray <- R6::R6Class(
     #' length equal to the number of values to write. If `NULL`, the default,
     #' the values are taken from the row and column names of `values`.
     write = function(values, coords = NULL) {
+      private$check_open_for_write()
+
       stopifnot(
         "'values' must be a matrix" = is.matrix(values)
       )
@@ -230,8 +239,6 @@ SOMADenseNDArray <- R6::R6Class(
           length(coords) == length(self$dimensions())
       )
 
-      on.exit(self$close())
-      private$open("WRITE")
       arr <- self$object
       tiledb::query_layout(arr) <- "COL_MAJOR"
       arr[] <- values
