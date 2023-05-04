@@ -213,7 +213,15 @@ TileDBGroup <- R6::R6Class(
         "Opening {} '{}' in {} mode", self$class(), self$uri, mode
       )
       private$.mode = mode
-      invisible(tiledb::tiledb_group_open(self$object, type = mode))
+
+      #invisible(tiledb::tiledb_group_open(self$object, type = mode))
+
+      self$object <- tiledb::tiledb_group(
+        self$uri,
+        type = mode,
+        ctx = self$tiledbsoma_ctx$context()
+      )
+      invisible(self$object)
     },
 
     #' @description Close the SOMA object.
@@ -223,7 +231,6 @@ TileDBGroup <- R6::R6Class(
       private$.mode = "CLOSED"
       invisible(tiledb::tiledb_group_close(self$object))
     }
-
   ),
 
   private = list(
@@ -257,12 +264,15 @@ TileDBGroup <- R6::R6Class(
     member_cache = NULL,
 
     initialize_object = function() {
-      private$tiledb_object <- tiledb::tiledb_group(
-        self$uri,
-        ctx = self$tiledbsoma_ctx$context()
-      )
-      # XXX SAY WHY
-      self$close()
+      #private$tiledb_object <- tiledb::tiledb_group(
+      #  self$uri,
+      #  ctx = self$tiledbsoma_ctx$context()
+      #)
+      #self$close()
+
+      # XXX TEMP: needs a comment why, regarding asymmetry between
+      # tiledb-r level arrays and groups
+      private$tiledb_object <- "not null"
     },
 
     # @description Retrieve all group members. (lifecycle: experimental)
