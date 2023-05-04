@@ -24,7 +24,7 @@ library(tiledbsoma)
 
 ## Example data
 
-Load the bundled `SOMAExperiment` containing a subsetted version of the 10X genomics [PBMC dataset](https://mojaveazure.github.io/seurat-object/reference/pbmc_small.html) provided by SeuratObject. This will return a `SOMAExperiment` object.
+Load the bundled `SOMAExperiment` containing a subsetted version of the 10X genomics [PBMC dataset](https://mojaveazure.github.io/seurat-object/reference/pbmc_small.html) provided by `SeuratObject`. This will return a `SOMAExperiment` object.
 
 ```{r}
 experiment <- load_dataset("soma-exp-pbmc-small")
@@ -35,7 +35,7 @@ experiment
 
 To perform a query we'll need to initialize a new `SOMAExperimentAxisQuery` object, specifying the `SOMAExperiment` and the `SOMAMeasurement` within the experiment we want to query.
 
-We can see our current experiment contains only a single measurement: `"RNA"`.
+We can see that our current experiment contains only a single measurement: `"RNA"`.
 
 ```{r}
 experiment$ms
@@ -50,7 +50,7 @@ query <- SOMAExperimentAxisQuery$new(
 )
 ```
 
-Once created, we can use the `query` object to inspect, select, and extract filtered data from the experiment.
+Once it's created, we can use the `query` object to inspect, select, and extract filtered data from the experiment.
 
 For example, we can use `n_obs` and `n_vars` to determine the number of observations and variables that passed our filtering criteria. Since we didn't specify any filtering criteria, these numbers will match the full size of the experiment.
 
@@ -74,9 +74,9 @@ query$obs()
 
 ## Adding filters
 
-Adding filters requires creating a `SOMAAxisQuery` object that allows you to define both coordinates and value filters for an axis.
+Adding filters requires creating a `SOMAAxisQuery` object that allows you to define coordinates, value filters, or both for an axis.
 
-Here we'll create a query for `obs` that slices the first 40 rows and then filters that subset based on the `nCount_RNA` column.
+Here we'll create a query for `obs` that slices the first 40 rows, and then filters that subset based on the `nCount_RNA` column.
 
 ```{r}
 obs_query <- SOMAAxisQuery$new(

@@ -9,7 +9,7 @@ vignette: >
 
 ## Overview
 
-In this tutorial we'll learn how to read data from various SOMA objects. We will assume familiarity with SOMA objects already, so it is recommended to go through the `vignette("soma-objects")` first.
+In this tutorial we'll learn how to read data from various SOMA objects. We will assume familiarity with SOMA objects, so it is recommended to go through the `vignette("soma-objects")` first.
 
 A core feature of SOMA is the ability to read _subsets_ of data from disk into memory as slices. SOMA uses [Apache Arrow](https://arrow.apache.org/) as an intermediate in-memory storage. From here, the slices can be further converted into native R objects, like data frames and matrices.
 
@@ -19,7 +19,7 @@ library(tiledbsoma)
 
 ## Example data
 
-Load the bundled `SOMAExperiment` containing a subsetted version of the 10X genomics [PBMC dataset](https://mojaveazure.github.io/seurat-object/reference/pbmc_small.html) provided by SeuratObject. This will return a `SOMAExperiment` object. This is a small dataset that easily fits into memory but we'll focus on operations that can easily scale to larger datasets as well.
+Load the bundled `SOMAExperiment` containing a subsetted version of the 10X genomics [PBMC dataset](https://mojaveazure.github.io/seurat-object/reference/pbmc_small.html) provided by SeuratObject. This will return a `SOMAExperiment` object. This is a small dataset that easily fits into memory, but we'll focus on operations that can easily scale to larger datasets as well.
 
 ```{r}
 experiment <- load_dataset("soma-exp-pbmc-small")
@@ -35,7 +35,7 @@ obs <- experiment$obs
 obs$read()
 ```
 
-This is easily converted into a `data.frame` using arrow's methods:
+This is easily converted into a `data.frame` using Arrow's methods:
 
 ```{r}
 obs$read()$to_data_frame()
@@ -49,7 +49,7 @@ Slices of data can be read by passing coordinates to the `read()` method. Before
 obs$schema()
 ```
 
-With any SOMA object, you can only slice across an indexed column (a dimension in TileDB parlance). You can use `dimnames()` to retrieve the names of any SOMA object's indexed dimensions:
+With any SOMA object, you can only slice across an indexed column (a "dimension" in TileDB parlance). You can use `dimnames()` to retrieve the names of any SOMA object's indexed dimensions:
 
 ```{r}
 obs$dimnames()
@@ -79,7 +79,7 @@ obs$read(coords = 0:4)
 
 ### Selecting columns
 
-As TileDB is a columnar format, it is possible to select a subset of columns to read by using the `column_names`argument:
+As TileDB is a columnar format, it is possible to select a subset of columns to read by using the `column_names` argument:
 
 ```{r}
 obs$read(coords = 0:4, column_names = c("obs_id", "groups"))
@@ -87,7 +87,7 @@ obs$read(coords = 0:4, column_names = c("obs_id", "groups"))
 
 ### Filtering
 
-In addition to slicing by coordinates you can also apply filters to the data using the `value_filter` argument. These logical expressions are pushed down to the TileDB engine and efficiently applied to the data on disk. Here are a few examples.
+In addition to slicing by coordinates you can also apply filters to the data using the `value_filter` argument. These expressions are pushed down to the TileDB engine and efficiently applied to the data on disk. Here are a few examples.
 
 Identify all cells in the `"g1"` group:
 
