@@ -65,7 +65,7 @@ class SOMAGroup {
         std::string_view uri,
         std::string_view name = "unnamed",
         std::map<std::string, std::string> platform_config = {},
-        std::optional<std::pair<uint64_t, uint64_t>> timestamp = std::nullopt);
+        std::optional<uint64_t> timestamp = std::nullopt);
 
     /**
      * @brief Open a group at the specified URI and return SOMAGroup
@@ -83,7 +83,7 @@ class SOMAGroup {
         std::shared_ptr<Context> ctx,
         std::string_view uri,
         std::string_view name = "unnamed",
-        std::optional<std::pair<uint64_t, uint64_t>> timestamp = std::nullopt);
+        std::optional<uint64_t> timestamp = std::nullopt);
 
     //===================================================================
     //= public non-static
@@ -103,12 +103,12 @@ class SOMAGroup {
         std::string_view uri,
         std::string_view name,
         std::shared_ptr<Context> ctx,
-        std::optional<std::pair<uint64_t, uint64_t>> timestamp = std::nullopt);
+        std::optional<uint64_t> timestamp = std::nullopt);
 
-    SOMAGroup(const SOMAGroup&) = default;
+    SOMAGroup() = delete;
+    SOMAGroup(const SOMAGroup&) = delete;
     SOMAGroup(SOMAGroup&&) = default;
-    SOMAGroup& operator=(const SOMAGroup&) = default;
-    SOMAGroup& operator=(SOMAGroup&&) = default;
+    ~SOMAGroup() = default;
 
     /**
      * Opens the SOMAGroup object.
@@ -118,7 +118,7 @@ class SOMAGroup {
      */
     void open(
         tiledb_query_type_t mode,
-        std::optional<std::pair<uint64_t, uint64_t>> timestamp = std::nullopt);
+        std::optional<uint64_t> timestamp = std::nullopt);
 
     /**
      * Closes the SOMAGroup object.

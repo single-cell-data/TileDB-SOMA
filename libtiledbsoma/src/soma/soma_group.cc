@@ -46,7 +46,7 @@ std::unique_ptr<SOMAGroup> SOMAGroup::open(
     std::string_view uri,
     std::string_view name,
     std::map<std::string, std::string> platform_config,
-    std::optional<std::pair<uint64_t, uint64_t>> timestamp) {
+    std::optional<uint64_t> timestamp) {
     return std::make_unique<SOMAGroup>(
         mode,
         uri,
@@ -60,7 +60,7 @@ std::unique_ptr<SOMAGroup> SOMAGroup::open(
     std::shared_ptr<Context> ctx,
     std::string_view uri,
     std::string_view name,
-    std::optional<std::pair<uint64_t, uint64_t>> timestamp) {
+    std::optional<uint64_t> timestamp) {
     return std::make_unique<SOMAGroup>(mode, uri, name, ctx, timestamp);
 }
 
@@ -73,33 +73,22 @@ SOMAGroup::SOMAGroup(
     std::string_view uri,
     std::string_view name,
     std::shared_ptr<Context> ctx,
-    std::optional<std::pair<uint64_t, uint64_t>> timestamp)
+    std::optional<uint64_t> timestamp)
     : ctx_(ctx)
     , uri_(util::rstrip_uri(uri))
     , name_(name) {
     auto cfg = ctx_->config();
     if (timestamp) {
-        if (timestamp->first > timestamp->second) {
-            throw std::invalid_argument(
-                fmt::format("timestamp start > end for SOMAGroup {}", name_));
-        }
-        cfg["sm.group.timestamp_start"] = timestamp->first;
-        cfg["sm.group.timestamp_end"] = timestamp->second;
+        cfg["sm.group.timestamp_end"] = timestamp.value();
     }
     group_ = std::make_unique<Group>(*ctx_, std::string(uri), mode, cfg);
 }
 
 void SOMAGroup::open(
-    tiledb_query_type_t query_type,
-    std::optional<std::pair<uint64_t, uint64_t>> timestamp) {
+    tiledb_query_type_t query_type, std::optional<uint64_t> timestamp) {
     if (timestamp) {
         auto cfg = ctx_->config();
-        if (timestamp->first > timestamp->second) {
-            throw std::invalid_argument(
-                fmt::format("timestamp start > end for SOMAGroup {}", name_));
-        }
-        cfg["sm.group.timestamp_start"] = timestamp->first;
-        cfg["sm.group.timestamp_end"] = timestamp->second;
+        cfg["sm.group.timestamp_end"] = timestamp.value();
         group_->set_config(cfg);
     }
     group_->open(query_type);

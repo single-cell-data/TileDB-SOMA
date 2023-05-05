@@ -161,12 +161,12 @@ TEST_CASE("SOMAGroup: basic") {
 
     auto [uri_sub_array, expected_nnz] = create_array("mem://sub-array", *ctx);
 
-    auto sg = SOMAGroup::open(TILEDB_WRITE, ctx, uri_main_group, "metadata");
+    auto sg = SOMAGroup::open(TILEDB_WRITE, ctx, uri_main_group, "metadata", 1);
     sg->add_member(uri_sub_group, false, "subgroup");
     sg->add_member(uri_sub_array, false, "subarray");
     sg->close();
 
-    sg->open(TILEDB_READ);
+    sg->open(TILEDB_READ, 1);
     REQUIRE(sg->ctx() == ctx);
     REQUIRE(sg->uri() == uri_main_group);
     REQUIRE(sg->get_length() == 2);
@@ -177,11 +177,11 @@ TEST_CASE("SOMAGroup: basic") {
     REQUIRE(sg->get_member("subarray").type() == Object::Type::Array);
     sg->close();
 
-    sg->open(TILEDB_WRITE);
+    sg->open(TILEDB_WRITE, 3);
     sg->remove_member("subgroup");
     sg->close();
 
-    sg->open(TILEDB_READ);
+    sg->open(TILEDB_READ, 4);
     REQUIRE(sg->get_length() == 1);
     REQUIRE(sg->has_member("subgroup") == false);
     REQUIRE(sg->has_member("subarray") == true);
@@ -193,17 +193,12 @@ TEST_CASE("SOMAGroup: metadata") {
 
     std::string uri = "mem://unit-test-group";
     Group::create(*ctx, uri);
-    auto sr = SOMAGroup::open(
-        TILEDB_WRITE,
-        ctx,
-        uri,
-        "metadata",
-        std::pair<uint64_t, uint64_t>(1, 1));
+    auto sr = SOMAGroup::open(TILEDB_WRITE, ctx, uri, "metadata", 1);
     int32_t val = 100;
     sr->set_metadata("md", TILEDB_INT32, 1, &val);
     sr->close();
 
-    sr->open(TILEDB_READ, std::pair<uint64_t, uint64_t>(1, 1));
+    sr->open(TILEDB_READ, 1);
     REQUIRE(sr->has_metadata("md") == true);
     REQUIRE(sr->metadata_num() == 1);
 
@@ -220,11 +215,11 @@ TEST_CASE("SOMAGroup: metadata") {
     REQUIRE(*((const int32_t*)std::get<MetadataInfo::value>(mdval)) == 100);
     sr->close();
 
-    sr->open(TILEDB_WRITE, std::pair<uint64_t, uint64_t>(2, 2));
+    sr->open(TILEDB_WRITE, 2);
     sr->delete_metadata("md");
     sr->close();
 
-    sr->open(TILEDB_READ, std::pair<uint64_t, uint64_t>(3, 3));
+    sr->open(TILEDB_READ, 3);
     REQUIRE(sr->has_metadata("md") == false);
     REQUIRE(sr->metadata_num() == 0);
     sr->close();
