@@ -24,3 +24,5 @@ tiledbsoma/libtiledbsoma.tar.gz.current
 ^\.vscode$
 ^\.devcontainer$
 ^data-raw$
+^doc$
+^Meta$

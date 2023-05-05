@@ -17,3 +17,4 @@
 * Numeric coordinates passed to SOMADataFrame$read() are now automatically upcast to int64 when necessary
 * Add ingestors to read data from `Seurat` objects
 * Add methods for listing and accessing bundled datasets, which now includes a `SOMAExperiment` containing the pbmc_small dataset from the SeuratObject package
+* New vignettes describing SOMA objects, reading data from them, and querying SOMA experiments
