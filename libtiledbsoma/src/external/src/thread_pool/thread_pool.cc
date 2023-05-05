@@ -37,7 +37,7 @@
 #include <queue>
 #include <thread>
 
-#include "tiledbsoma/logger_public.h"
+#include "soma/logger_public.h"
 
 namespace tiledbsoma {
 
