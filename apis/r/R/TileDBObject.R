@@ -15,15 +15,6 @@ TileDBObject <- R6::R6Class(
     #' `new()` is considered internal and should not be called directly
     initialize = function(uri, platform_config = NULL, tiledbsoma_ctx = NULL,
                           internal_use_only = NULL) {
-      ## calls <- vapply(
-      ##   X = lapply(X = sys.calls(), FUN = as.character),
-      ##   FUN = '[[',
-      ##   FUN.VALUE = character(length = 1L),
-      ##   1L
-      ## )
-      ## if ('TileDBObject$new' %in% calls) {
-      ##   .NotYetImplemented()
-      ## }
       if (is.null(internal_use_only) || internal_use_only != "allowed_use") {
         stop(paste("Use of the new() method is discouraged. Consider using a",
                    "factory method as e.g. 'SOMADataFrameOpen()'."), call. = FALSE)
@@ -42,6 +33,7 @@ TileDBObject <- R6::R6Class(
         stop("'tiledbsoma_ctx' must be a SOMATileDBContext object", call. = FALSE)
       }
       private$.tiledbsoma_ctx <- tiledbsoma_ctx
+      private$.tiledb_ctx <- self$tiledbsoma_ctx$context()
 
       spdl::debug("[TileDBObject] initialize {} with '{}'", self$class(), self$uri)
     },
@@ -70,21 +62,6 @@ TileDBObject <- R6::R6Class(
         stop("Unknown object type", call. = FALSE)
       }
       tiledb::tiledb_object_type(self$uri, ctx = self$tiledbsoma_ctx$context()) %in% expected_type
-    },
-    #' @param param Parameter name from \code{self$platform_config} to fetch
-    #' @return SOMATileDBContext
-    get_tiledb_config = function(param = NULL) {
-      if (!is.null(x = param)) {
-        cfg <- suppressWarnings(expr = self$platform_config$get(
-          platform = 'tiledb',
-          param = param,
-          default = NULL
-        ))
-        if (inherits(x = cfg, what = 'MappingBase')) {
-          private$.tiledbsoma_ctx$update(cfg)
-        }
-      }
-      return(self$tiledbsoma_ctx)
     }
   ),
 
@@ -124,6 +101,8 @@ TileDBObject <- R6::R6Class(
 
     # Internal context
     .tiledbsoma_ctx = NULL,
+
+    .tiledb_ctx = NULL,
 
     .read_only_error = function(field) {
       stop("Field ", sQuote(field), " is read-only", call. = FALSE)

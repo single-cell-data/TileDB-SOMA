@@ -1,12 +1,7 @@
 test_that("Basic mechanics", {
   uri <- withr::local_tempdir("soma-experiment")
 
-  experiment <- SOMAExperiment$new(uri, internal_use_only = "allowed_use")
-
-  expect_false(experiment$exists())
-  expect_error(experiment$obs, "Group does not exist.")
-
-  experiment$create()
+  experiment <- SOMAExperimentCreate(uri)
   # TODO: Determine behavior for retrieving empty obs/ms
   # expect_null(experiment$obs)
   # expect_null(experiment$ms)
@@ -16,21 +11,27 @@ test_that("Basic mechanics", {
 
   obs <- create_and_populate_obs(file.path(uri, "obs"))
   experiment$obs <- obs
+  experiment$close()
+
+  experiment <- SOMAExperimentOpen(uri)
   expect_equal(experiment$length(), 1)
   expect_true(inherits(experiment$obs, "SOMADataFrame"))
+  experiment$close()
 
   # Add ms
   expect_error(experiment$ms <- obs, "ms must be a 'SOMACollection'")
   expect_error(
-    experiment$ms <- SOMAMeasurement$new(file.path(uri, "_ms"),
-                                         internal_use_only = "allowed_use")$create(),
+    experiment$ms <- SOMAMeasurementCreate(file.path(uri, "_ms")),
     "ms must be a 'SOMACollection'"
   )
 
-  experiment$ms <- SOMACollection$new(file.path(uri, "ms"),
-                                      internal_use_only = "allowed_use")$create()
+  experiment$ms <- SOMACollectionCreate(file.path(uri, "ms"))
+  experiment$close()
+
+  experiment <- SOMAExperimentOpen(uri)
   expect_equal(experiment$length(), 2)
   expect_true(inherits(experiment$ms, "SOMACollection"))
+  experiment$close()
 })
 
 test_that("Configured SOMAExperiment", {

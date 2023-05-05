@@ -16,6 +16,41 @@ TileDBGroup <- R6::R6Class(
       if (self$exists()) private$format_members()
     },
 
+    #' @description Open the SOMA object for read or write.
+    #' @param internal_use_only Character value to signal 'permitted' call as
+    #' `new()` is considered internal and should not be called directly
+    #' @return The object, invisibly
+    open = function(mode="READ", internal_use_only = NULL) {
+      mode <- match.arg(mode, c("READ", "WRITE"))
+      if (is.null(internal_use_only) || internal_use_only != "allowed_use") {
+        stop(paste("Use of the open() method is discouraged. Consider using a",
+                   "factory method as e.g. 'SOMADataFrameOpen()'."), call. = FALSE)
+      }
+      spdl::debug(
+        "Opening {} '{}' in {} mode", self$class(), self$uri, mode
+      )
+      private$.mode = mode
+
+      #invisible(tiledb::tiledb_group_open(private$.tiledb_group, type = mode))
+
+      private$.tiledb_group <- tiledb::tiledb_group(
+        self$uri,
+        type = mode,
+        #ctx = self$tiledbsoma_ctx$context()
+        ctx = private$.tiledb_ctx
+      )
+      invisible(private$.tiledb_group)
+    },
+
+    #' @description Close the SOMA object.
+    #' @return The object, invisibly
+    close = function() {
+      spdl::debug("Closing {} '{}'", self$class(), self$uri)
+      invisible(tiledb::tiledb_group_close(private$.tiledb_group))
+      private$.mode <- "CLOSED"
+      private$.tiledb_group <- NULL
+    },
+
     #' @description Creates the data structure on disk/S3/cloud. (lifecycle: experimental)
     #' @param internal_use_only Character value to signal 'permitted' call as
     #' `new()` is considered internal and should not be called directly
@@ -26,12 +61,13 @@ TileDBGroup <- R6::R6Class(
       }
 
       spdl::info("Creating new {} at '{}'", self$class(), self$uri)
+      ctx <- private$.tiledb_ctx
       tiledb::tiledb_group_create(
         uri = self$uri,
-        ctx = self$get_tiledb_config('create')$context()
+        ctx = ctx
       )
       self$open("WRITE", internal_use_only = "allowed_use")
-      self
+      invisible(private$.tiledb_group)
     },
 
     #' @description Add new member to the group. (lifecycle: experimental)
@@ -66,7 +102,7 @@ TileDBGroup <- R6::R6Class(
       private$check_open_for_write()
 
       tiledb::tiledb_group_add_member(
-        grp = private$.object,
+        grp = private$.tiledb_group,
         uri = uri,
         relative = relative,
         name = name
@@ -89,7 +125,7 @@ TileDBGroup <- R6::R6Class(
       # member, the initially empty member_cache will only contain the new
       # member.
       private$update_member_cache()
-    },
+   },
 
     #' @description Retrieve a group member by name. (lifecycle: experimental)
     #' @param name The name of the member.
@@ -113,7 +149,7 @@ TileDBGroup <- R6::R6Class(
       private$check_open_for_write()
 
       tiledb::tiledb_group_remove_member(
-        grp = private$.object,
+        grp = private$.tiledb_group,
         uri = name
       )
 
@@ -169,9 +205,9 @@ TileDBGroup <- R6::R6Class(
 
       spdl::debug("Retrieving metadata for {} '{}'", self$class(), self$uri)
       if (!is.null(key)) {
-        return(tiledb::tiledb_group_get_metadata(private$.object, key))
+        return(tiledb::tiledb_group_get_metadata(private$.tiledb_group, key))
       } else {
-        return(tiledb::tiledb_group_get_all_metadata(private$.object))
+        return(tiledb::tiledb_group_get_all_metadata(private$.tiledb_group))
       }
     },
 
@@ -190,48 +226,15 @@ TileDBGroup <- R6::R6Class(
         FUN = tiledb::tiledb_group_put_metadata,
         key = names(metadata),
         val = metadata,
-        MoreArgs = list(grp = private$.object),
+        MoreArgs = list(grp = private$.tiledb_group),
         SIMPLIFY = FALSE
       )
     },
 
     mode = function() {
       private$.mode
-    },
-
-    #' @description Open the SOMA object for read or write.
-    #' @param internal_use_only Character value to signal 'permitted' call as
-    #' `new()` is considered internal and should not be called directly
-    #' @return The object, invisibly
-    open = function(mode="READ", internal_use_only = NULL) {
-      mode <- match.arg(mode, c("READ", "WRITE"))
-      if (is.null(internal_use_only) || internal_use_only != "allowed_use") {
-        stop(paste("Use of the open() method is discouraged. Consider using a",
-                   "factory method as e.g. 'SOMADataFrameOpen()'."), call. = FALSE)
-      }
-      spdl::debug(
-        "Opening {} '{}' in {} mode", self$class(), self$uri, mode
-      )
-      private$.mode = mode
-
-      #invisible(tiledb::tiledb_group_open(private$.object, type = mode))
-
-      private$.object <- tiledb::tiledb_group(
-        self$uri,
-        type = mode,
-        ctx = self$tiledbsoma_ctx$context()
-      )
-      invisible(private$.object)
-    },
-
-    #' @description Close the SOMA object.
-    #' @return The object, invisibly
-    close = function() {
-      spdl::debug("Closing {} '{}'", self$class(), self$uri)
-      invisible(tiledb::tiledb_group_close(private$.object))
-      private$.mode <- "CLOSED"
-      private$.object <- NULL
     }
+
   ),
 
   private = list(
@@ -240,26 +243,26 @@ TileDBGroup <- R6::R6Class(
     # you want them defaulted to anything other than NULL, leave them NULL here and set the defaults
     # in the constructor.
     .mode = NULL,
-    .object = NULL,
+    .tiledb_group = NULL,
 
     # Per the spec, invoking user-level read requires open for read mode.
     check_open_for_read = function() {
       stopifnot(
-        "Array must be open for read" = private$.mode == "READ"
+        "Array must be open for read." = private$.mode == "READ"
       )
     },
 
     # Per the spec, invoking user-level write requires open for read mode.
     check_open_for_write = function() {
       stopifnot(
-        "Array must be open for write" = private$.mode == "WRITE"
+        "Array must be open for write." = private$.mode == "WRITE"
       )
     },
 
     # Per the spec, invoking user-level get-metadata requires open for read mode or write mode.
     check_open_for_read_or_write = function() {
       stopifnot(
-        "Array must be open for write" = (private$.mode == "READ" || private$.mode == "WRITE")
+        "Array must be open for read or write." = (private$.mode == "READ" || private$.mode == "WRITE")
       )
     },
 
@@ -268,25 +271,13 @@ TileDBGroup <- R6::R6Class(
     # with a list that's empty or contains the group members.
     member_cache = NULL,
 
-    initialize_object = function() {
-      #private$tiledb_object <- tiledb::tiledb_group(
-      #  self$uri,
-      #  ctx = self$tiledbsoma_ctx$context()
-      #)
-      #self$close()
-
-      # XXX TEMP: needs a comment why, regarding asymmetry between
-      # tiledb-r level arrays and groups
-      private$tiledb_object <- "not null"
-    },
-
     # @description Retrieve all group members. (lifecycle: experimental)
     # @return A list indexed by group member names where each element is a
     # list with names: name, uri, and type.
     get_all_members = function() {
       private$check_open_for_read_or_write()
 
-      count <- tiledb::tiledb_group_member_count(private$.object)
+      count <- tiledb::tiledb_group_member_count(private$.tiledb_group)
       if (count == 0) return(list())
 
       members <- vector(mode = "list", length = count)
@@ -294,7 +285,7 @@ TileDBGroup <- R6::R6Class(
 
       for (i in seq_len(count)) {
         members[[i]] <- setNames(
-          object = as.list(tiledb::tiledb_group_member(private$.object, i - 1L)),
+          object = as.list(tiledb::tiledb_group_member(private$.tiledb_group, i - 1L)),
           nm = c("type", "uri", "name")
         )
       }

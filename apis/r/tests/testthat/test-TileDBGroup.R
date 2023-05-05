@@ -1,4 +1,3 @@
-
 test_that("Basic mechanics", {
   uri <- file.path(withr::local_tempdir(), "new-group")
   group <- TileDBGroup$new(uri, internal_use_only = "allowed_use")
@@ -8,15 +7,22 @@ test_that("Basic mechanics", {
   expect_false(group$exists())
 
   # Check errors on non-existent group
-  expect_error(group$get("foo"), "Group does not exist.")
-  expect_error(group$length(), "Group does not exist.")
+  expect_error(group$get("foo"), "Array must be open for read or write.")
+  expect_error(group$length(), "Array must be open for read or write.")
+  expect_error(group$open(internal_use_only = "allowed_use"), "Group does not exist.")
 
   # Create the collection on disk
-  group$create()
-  expect_error(group$create(), "already exists")
+  group$create(internal_use_only = "allowed_use")
+  expect_error(group$create(internal_use_only = "allowed_use"), "already exists")
   expect_true(dir.exists(uri))
+  expect_true(file.exists(file.path(uri, "__group")))
   expect_true(group$exists())
+  fp = file.path(uri, "__group")
   expect_match(tiledb::tiledb_object_type(uri), "GROUP")
+  group$close()
+
+  group$open(mode = "READ", internal_use_only = "allowed_use")
+
   expect_equal(group$length(), 0)
 
   # Check exporters
@@ -24,6 +30,7 @@ test_that("Basic mechanics", {
   expect_length(group$to_list(), 0)
   expect_is(group$to_data_frame(), "data.frame")
   expect_equal(nrow(group$to_data_frame()), 0)
+  group$close()
 
   # Add members to the group
   a1 <- TileDBArray$new(
@@ -41,9 +48,11 @@ test_that("Basic mechanics", {
   expect_equal(group$length(), 0)
 
   # Add sub-array/group as members
+  group$open(mode = "WRITE", internal_use_only = "allowed_use")
   group$set(a1, name = "a1")
   expect_equal(group$length(), 1)
   expect_equal(group$to_data_frame()$type, "ARRAY")
+  group$close()
 
   group$set(g1, name = "g1")
   expect_equal(group$length(), 2)
@@ -90,4 +99,6 @@ test_that("Metadata", {
   readmd <- group$get_metadata()
   expect_equivalent(readmd[["baz"]], "qux")
   expect_equivalent(readmd[["foo"]], "bar")
+
+  group$close()
 })

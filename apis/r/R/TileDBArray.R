@@ -300,21 +300,21 @@ TileDBArray <- R6::R6Class(
     # Per the spec, invoking user-level read requires open for read mode.
     check_open_for_read = function() {
       stopifnot(
-        "Array must be open for read" = private$.mode == "READ"
+        "Array must be open for read." = private$.mode == "READ"
       )
     },
 
     # Per the spec, invoking user-level write requires open for read mode.
     check_open_for_write = function() {
       stopifnot(
-        "Array must be open for write" = private$.mode == "WRITE"
+        "Array must be open for write." = private$.mode == "WRITE"
       )
     },
 
     # Per the spec, invoking user-level get-metadata requires open for read mode or write mode.
     check_open_for_read_or_write = function() {
       stopifnot(
-        "Array must be open for write" = (private$.mode == "READ" || private$.mode == "WRITE")
+        "Array must be open for read or write." = (private$.mode == "READ" || private$.mode == "WRITE")
       )
     }
 
