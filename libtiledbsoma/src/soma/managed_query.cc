@@ -30,8 +30,8 @@
  * This file defines the performing TileDB queries.
  */
 
-#include "soma/managed_query.h"
-#include "tiledbsoma/logger_public.h"
+#include "managed_query.h"
+#include "logger_public.h"
 #include "utils/common.h"
 
 namespace tiledbsoma {

@@ -168,13 +168,13 @@ endif()
 # )
 
 install(FILES 
+  ${CMAKE_CURRENT_SOURCE_DIR}/soma/logger_public.h
   ${CMAKE_CURRENT_SOURCE_DIR}/soma/managed_query.h
   ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_array.h 
-  DESTINATION "include/soma"
+  DESTINATION "include/tiledbsoma/soma"
 )
 
 install(FILES 
-  ${CMAKE_CURRENT_SOURCE_DIR}/tiledbsoma/logger_public.h
   ${CMAKE_CURRENT_SOURCE_DIR}/tiledbsoma/tiledbsoma
   DESTINATION "include/tiledbsoma"
 )
@@ -189,12 +189,12 @@ install(FILES
   ${CMAKE_CURRENT_SOURCE_DIR}/utils/stats.h  
   ${CMAKE_CURRENT_SOURCE_DIR}/utils/util.h  
   ${CMAKE_CURRENT_SOURCE_DIR}/utils/version.h
-  DESTINATION "include/utils"
+  DESTINATION "include/tiledbsoma/utils"
 )
 
 install(FILES 
   ${CMAKE_CURRENT_SOURCE_DIR}/external/include/span/span.hpp
-  DESTINATION "include/span"
+  DESTINATION "include/tiledbsoma/utils/span"
 )
 
 

@@ -31,8 +31,8 @@
  */
 
 #include "soma_array.h"
-#include "../tiledbsoma/logger_public.h"
 #include "../utils/util.h"
+#include "logger_public.h"
 
 namespace tiledbsoma {
 using namespace tiledb;

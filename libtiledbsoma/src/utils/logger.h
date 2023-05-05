@@ -244,6 +244,6 @@ Logger& global_logger();
 std::string asc_timestamp(uint64_t timestamp_ms);
 
 // Also include the public logger functions here.
-#include "../tiledbsoma/logger_public.h"
+#include "../soma/logger_public.h"
 
 #endif  // TILEDB_LOGGER_H
