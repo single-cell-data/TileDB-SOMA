@@ -184,13 +184,13 @@ Let's load the data as a sparse matrix into memory:
 *Note: We are reading the full matrix into memory and then subsetting it to the first 5 rows and 10 columns to truncate the output.*
 
 ```{r}
-X_data$read_sparse_matrix()[1:5, 1:10]
+X_data$read_sparse_matrix_zero_based()[0:4, 0:9]
 ```
 
 Similarly to `SOMADataFrame`s, `read()` method we can define coordinates to slice obtain a subset of the matrix from disk:
 
 ```{r}
-X_data$read_sparse_matrix(
+X_data$read_sparse_matrix_zero_based(
   coords = list(soma_dim_0 = 0:4, soma_dim_1 = 0:9)
 )
 ```

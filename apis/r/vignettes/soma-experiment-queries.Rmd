@@ -117,7 +117,7 @@ query$X(layer_name = "counts")
 
 The `query` object also contains methods for loading in the results as a Seurat object (or any of Seurat's component classes).
 
-```{r}
+```{r eval=requireNamespace("SeuratObject", quietly = TRUE)}
 query$to_seurat(
   X_layers = c(counts = "counts", data = "data"),
   obs_index = "obs_id",

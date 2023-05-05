@@ -131,7 +131,7 @@ counts$read_arrow_table()
 Or as a [`Matrix::sparseMatrix()`]:
 
 ```{r}
-counts$read_sparse_matrix(repr = "C")
+counts$read_sparse_matrix_zero_based(repr = "C")
 ```
 
 ### Slicing
