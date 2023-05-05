@@ -1,6 +1,7 @@
 test_that("TileDBArray helper functions", {
   uri <- withr::local_tempdir(pattern = "test-array")
-  tdb <- TileDBArray$new(uri = uri, internal_use_only = "allowed_use")
+
+  tdb <- TileDBArrayOpen(uri = uri, mode = "WRITE")
 
   # Check errors on non-existent array
   expect_error(tdb$object, "Array does not exist.")
@@ -29,9 +30,10 @@ test_that("TileDBArray helper functions", {
   expect_equal(tdb$get_metadata(key = "foo"), "bar")
   expect_equal(tdb$get_metadata(prefix = "foo"), md["foo"])
   expect_equal(tdb$get_metadata(), md)
+  tdb$close()
 
   # dimension slicing
-  tdb <- TileDBArray$new(uri = uri, internal_use_only = "allowed_use")
+  tdb <- TileDBArrayOpen(uri = uri, mode = "READ")
   expect_error(
     tdb$set_query(dims = "foo"),
     "'dims' must be a named list of character vectors"
@@ -64,9 +66,10 @@ test_that("TileDBArray helper functions", {
     unique(tdb$object[]$Dept),
     c("A", "B")
   )
+  tdb$close()
 
   # set attribute filter
-  tdb <- TileDBArray$new(uri = uri, internal_use_only = "allowed_use")
+  tdb <- TileDBArrayOpen(uri = uri, mode = "READ")
   tdb$set_query(attr_filter = Admit == "Admitted")
   expect_true(all(tdb$object[]$Admit == "Admitted"))
 
@@ -80,5 +83,7 @@ test_that("TileDBArray helper functions", {
 
   ## shape
   expect_equal(tdb$ndim(), 2)
+
+  tdb$close()
 
 })

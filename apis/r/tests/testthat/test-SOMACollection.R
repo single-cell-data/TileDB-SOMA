@@ -1,15 +1,9 @@
 
 test_that("SOMACollection basics", {
   uri <- file.path(withr::local_tempdir(), "new-collection")
-  collection <- SOMACollection$new(uri, internal_use_only = "allowed_use")
+
+  collection <- SOMACollectionCreate(uri)
   expect_equal(collection$uri, uri)
-
-  # Should not exist on disk until created
-  expect_false(dir.exists(uri))
-  expect_false(collection$exists())
-
-  # Create the collection on disk
-  collection$create()
 
   expect_true(dir.exists(uri))
   expect_match(tiledb::tiledb_object_type(uri), "GROUP")
@@ -20,9 +14,10 @@ test_that("SOMACollection basics", {
   # Add an element to the collection
   dataframe <- create_and_populate_soma_dataframe(file.path(uri, "sdf"))
   collection$set(dataframe, name = "sdf")
+  collection$close()
 
   # Read back the collection
-  readback_collection <- SOMACollection$new(uri, internal_use_only = "allowed_use")
+  readback_collection <- SOMACollectionOpen(uri)
   expect_equal(readback_collection$length(), 1)
 
   readback_dataframe <- readback_collection$get("sdf")
