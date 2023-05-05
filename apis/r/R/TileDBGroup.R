@@ -16,6 +16,10 @@ TileDBGroup <- R6::R6Class(
       if (self$exists()) private$format_members()
     },
 
+    mode = function() {
+      private$.mode
+    },
+
     #' @description Open the SOMA object for read or write.
     #' @param internal_use_only Character value to signal 'permitted' call as
     #' `new()` is considered internal and should not be called directly
@@ -31,20 +35,24 @@ TileDBGroup <- R6::R6Class(
       )
       private$.mode = mode
 
-      #invisible(tiledb::tiledb_group_open(private$.tiledb_group, type = mode))
-
       private$.tiledb_group <- tiledb::tiledb_group(
         self$uri,
         type = mode,
-        #ctx = self$tiledbsoma_ctx$context()
         ctx = private$.tiledb_ctx
       )
+
+      private$update_member_cache()
+      # XXX TODO
+      #private$update_metadata_cache()
+
       invisible(private$.tiledb_group)
     },
 
     #' @description Close the SOMA object.
     #' @return The object, invisibly
     close = function() {
+      private$check_open_for_read_or_write()
+
       spdl::debug("Closing {} '{}'", self$class(), self$uri)
       invisible(tiledb::tiledb_group_close(private$.tiledb_group))
       private$.mode <- "CLOSED"
@@ -61,12 +69,10 @@ TileDBGroup <- R6::R6Class(
       }
 
       spdl::info("Creating new {} at '{}'", self$class(), self$uri)
-      ctx <- private$.tiledb_ctx
-      tiledb::tiledb_group_create(
-        uri = self$uri,
-        ctx = ctx
-      )
+      tiledb::tiledb_group_create(uri = self$uri, ctx = private$.tiledb_ctx)
+
       self$open("WRITE", internal_use_only = "allowed_use")
+
       invisible(private$.tiledb_group)
     },
 
@@ -108,19 +114,21 @@ TileDBGroup <- R6::R6Class(
         name = name
       )
 
-      # We manually add the new member to member_cache in order to preserve the
+      # XXX EXTRACT METHOD
+
+      # We explicitly add the new member to member_cache in order to preserve the
       # original URI. Otherwise TileDB Cloud creation URIs are retrieved from
       # using tiledb_group_member() in the form tiledb://namespace/uuid. In this
       # form it's not possible to append new children, which is necessary during
       # ingestion.
-      if (is.null(private$member_cache)) private$member_cache <- list()
-      private$member_cache[[name]] <- list(
+      if (is.null(private$.member_cache)) private$.member_cache <- list()
+      private$.member_cache[[name]] <- list(
         type = tiledb::tiledb_object_type(object$uri),
         uri = object$uri,
         name = name
       )
 
-      # We still need to update member_cache to pick-up existing members.
+      # We still need to update member_cache to pick up existing members.
       # Otherwise if you open a group with existing members and add a new
       # member, the initially empty member_cache will only contain the new
       # member.
@@ -132,8 +140,10 @@ TileDBGroup <- R6::R6Class(
     #' @returns A `TileDBArray` or `TileDBGroup`.
     get = function(name) {
       stopifnot(is_scalar_character(name))
-      if (is.null(private$member_cache)) private$update_member_cache()
-      member <- private$member_cache[[name]]
+      private$check_open_for_read_or_write()
+
+      private$fill_member_cache_if_null()
+      member <- private$.member_cache[[name]]
       if (is.null(member)) {
         stop(sprintf("No member named '%s' found", name), call. = FALSE)
       }
@@ -145,7 +155,6 @@ TileDBGroup <- R6::R6Class(
     #' @export
     remove = function(name) {
       stopifnot(is_scalar_character(name))
-
       private$check_open_for_write()
 
       tiledb::tiledb_group_remove_member(
@@ -154,37 +163,41 @@ TileDBGroup <- R6::R6Class(
       )
 
       # Drop member if cache has been initialized
-      if (is.list(private$member_cache)) {
-        private$member_cache[[name]] <- NULL
+      if (is.list(private$.member_cache)) {
+        private$.member_cache[[name]] <- NULL
       }
     },
 
     #' @description Length in the number of members. (lifecycle: experimental)
     #' @return Scalar `integer`
     length = function() {
-      if (is.null(private$member_cache)) private$update_member_cache()
-      length(private$member_cache)
+      private$check_open_for_read_or_write()
+      private$fill_member_cache_if_null()
+      length(private$.member_cache)
     },
 
     #' @description Retrieve the names of members. (lifecycle: experimental)
     #' @return A `character` vector of member names.
     names = function() {
-      if (is.null(private$member_cache)) private$update_member_cache()
-      names(private$member_cache) %||% character(length = 0L)
+      private$check_open_for_read_or_write()
+      private$fill_member_cache_if_null()
+      names(private$.member_cache) %||% character(length = 0L)
     },
 
     #' @description Retrieve a `list` of members. (lifecycle: experimental)
     to_list = function() {
-      if (is.null(private$member_cache)) private$update_member_cache()
-      private$member_cache
+      private$check_open_for_read_or_write()
+      private$fill_member_cache_if_null()
+      private$.member_cache
     },
 
     #' @description Retrieve a `data.frame` of members. (lifecycle: experimental)
     to_data_frame = function() {
+      private$check_open_for_read_or_write()
       count <- self$length()
       df <- data.frame(
         name = character(count),
-        uri = character(count),
+        uri  = character(count),
         type = character(count)
       )
       if (count == 0) return(df)
@@ -195,6 +208,8 @@ TileDBGroup <- R6::R6Class(
       df$type <- vapply_char(member_list, FUN = getElement, name = "type")
       df
     },
+
+    # XXX MAKE A CACHING LAYER FOR METADATA TOO
 
     #' @description Retrieve metadata. (lifecycle: experimental)
     #' @param key The name of the metadata attribute to retrieve.
@@ -229,10 +244,6 @@ TileDBGroup <- R6::R6Class(
         MoreArgs = list(grp = private$.tiledb_group),
         SIMPLIFY = FALSE
       )
-    },
-
-    mode = function() {
-      private$.mode
     }
 
   ),
@@ -243,68 +254,43 @@ TileDBGroup <- R6::R6Class(
     # you want them defaulted to anything other than NULL, leave them NULL here and set the defaults
     # in the constructor.
     .mode = NULL,
+
+    # @description This is a handle at the TileDB-R level
     .tiledb_group = NULL,
+
+    # @description List of cached group members
+    # Initially NULL, once the group is created or opened, this is populated
+    # with a list that's empty or contains the group members.
+    .member_cache = NULL,
+
+    # XXX TODO
+    #.metadta_cache = NULL,
+
+    check_ever_opened = function() {
+      stopifnot(
+        "Group has not been opened." = is.null(private$.mode)
+      )
+    },
 
     # Per the spec, invoking user-level read requires open for read mode.
     check_open_for_read = function() {
       stopifnot(
-        "Array must be open for read." = private$.mode == "READ"
+        "Group must be open for read." = private$.mode == "READ"
       )
     },
 
     # Per the spec, invoking user-level write requires open for read mode.
     check_open_for_write = function() {
       stopifnot(
-        "Array must be open for write." = private$.mode == "WRITE"
+        "Group must be open for write." = private$.mode == "WRITE"
       )
     },
 
     # Per the spec, invoking user-level get-metadata requires open for read mode or write mode.
     check_open_for_read_or_write = function() {
       stopifnot(
-        "Array must be open for read or write." = (private$.mode == "READ" || private$.mode == "WRITE")
+        "Group must be open for read or write." = (private$.mode == "READ" || private$.mode == "WRITE")
       )
-    },
-
-    # @description List of cached group members
-    # Initially NULL, once the group is created or opened, this is populated
-    # with a list that's empty or contains the group members.
-    member_cache = NULL,
-
-    # @description Retrieve all group members. (lifecycle: experimental)
-    # @return A list indexed by group member names where each element is a
-    # list with names: name, uri, and type.
-    get_all_members = function() {
-      private$check_open_for_read_or_write()
-
-      count <- tiledb::tiledb_group_member_count(private$.tiledb_group)
-      if (count == 0) return(list())
-
-      members <- vector(mode = "list", length = count)
-      if (count == 0) return(members)
-
-      for (i in seq_len(count)) {
-        members[[i]] <- setNames(
-          object = as.list(tiledb::tiledb_group_member(private$.tiledb_group, i - 1L)),
-          nm = c("type", "uri", "name")
-        )
-      }
-
-      # Key the list by group member name
-      names(members) <- vapply_char(members, FUN = getElement, name = "name")
-      members
-    },
-
-    update_member_cache = function() {
-      spdl::debug("Updating member cache for {} '{}'", self$class(), self$uri)
-      members <- private$get_all_members()
-      if (is.null(private$member_cache)) {
-        private$member_cache <- members
-      } else {
-        # Don't clobber existing cache members in order to retain original URIs
-        members <- members[setdiff(names(members), names(private$member_cache))]
-        private$member_cache <- utils::modifyList(private$member_cache, members)
-      }
     },
 
     # Instantiate a group member object.
@@ -321,6 +307,58 @@ TileDBGroup <- R6::R6Class(
       )
       constructor(uri, tiledbsoma_ctx = self$tiledbsoma_ctx,
                   platform_config = self$platform_config, internal_use_only = "allowed_use")
+    },
+
+    # @description Retrieve all group members. (lifecycle: experimental)
+    # @return A list indexed by group member names where each element is a
+    # list with names: name, uri, and type.
+    get_all_members_uncached_read = function(group_handle) {
+
+      count <- tiledb::tiledb_group_member_count(group_handle)
+      if (count == 0) return(list())
+
+      members <- vector(mode = "list", length = count)
+      if (count == 0) return(members)
+
+      for (i in seq_len(count)) {
+        members[[i]] <- setNames(
+          object = as.list(tiledb::tiledb_group_member(group_handle, i - 1L)),
+          nm = c("type", "uri", "name")
+        )
+      }
+
+      # Key the list by group member name
+      names(members) <- vapply_char(members, FUN = getElement, name = "name")
+      members
+    },
+
+    fill_member_cache_if_null = function() {
+      if (is.null(private$.member_cache)) {
+        private$update_member_cache()
+      }
+    },
+
+    update_member_cache = function() {
+      spdl::debug("Updating member cache for {} '{}'", self$class(), self$uri)
+
+      # XXX COMMENT WHY -- PASTE IN NOTES
+      group_handle <- private$.tiledb_group
+      if (private$.mode == "WRITE") {
+        group_handle <- tiledb::tiledb_group(self$uri, type = "READ", ctx = private$.tiledb_ctx)
+      }
+
+      members <- private$get_all_members_uncached_read(group_handle)
+      if (is.null(private$.member_cache)) {
+        private$.member_cache <- members
+      } else {
+        # Don't clobber existing cache members, in order to retain original URIs
+        members <- members[setdiff(names(members), names(private$.member_cache))]
+        private$.member_cache <- utils::modifyList(private$.member_cache, members)
+      }
+
+      if (private$.mode == "WRITE") {
+        tiledb::tiledb_group_close(group_handle)
+      }
     },
 
     format_members = function() {

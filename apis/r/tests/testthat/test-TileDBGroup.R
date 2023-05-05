@@ -7,8 +7,8 @@ test_that("Basic mechanics", {
   expect_false(group$exists())
 
   # Check errors on non-existent group
-  expect_error(group$get("foo"), "Array must be open for read or write.")
-  expect_error(group$length(), "Array must be open for read or write.")
+  expect_error(group$get("foo"), "Group must be open for read or write.")
+  expect_error(group$length(), "Group must be open for read or write.")
   expect_error(group$open(internal_use_only = "allowed_use"), "Group does not exist.")
 
   # Create the collection on disk
@@ -43,45 +43,49 @@ test_that("Basic mechanics", {
   )
 
   # Objects are present but not yet members
+  group$open(mode = "READ", internal_use_only = "allowed_use")
   expect_true(a1$exists())
   expect_true(g1$exists())
   expect_equal(group$length(), 0)
+  group$close()
 
   # Add sub-array/group as members
   group$open(mode = "WRITE", internal_use_only = "allowed_use")
   group$set(a1, name = "a1")
   expect_equal(group$length(), 1)
   expect_equal(group$to_data_frame()$type, "ARRAY")
-  group$close()
 
   group$set(g1, name = "g1")
   expect_equal(group$length(), 2)
   expect_setequal(group$to_data_frame()$type, c("ARRAY", "GROUP"))
+  group$close()
 
   # Read back the members
-  group_readback <- TileDBGroup$new(group$uri, internal_use_only = "allowed_use")
-  expect_equal(group_readback$length(), 2)
+  group$open(mode = "WRITE", internal_use_only = "allowed_use")
+  expect_equal(group$length(), 2)
   expect_setequal(group$names(), c("a1", "g1"))
 
   # Retrieve
-  expect_is(group_readback$get("a1"), "TileDBArray")
-  expect_is(group_readback$get("g1"), "TileDBGroup")
+  expect_is(group$get("a1"), "TileDBArray")
+  expect_is(group$get("g1"), "TileDBGroup")
 
   # Error when attempting to add a relative member that's not a subpath
   g2 <- TileDBGroup$new(
     uri = file.path(withr::local_tempdir(), "not-a-subpath"),
     internal_use_only = "allowed_use"
-  )$create()
+  )$create(internal_use_only = "allowed_use")
   expect_error(
     group$set(g2, name = "g2", relative = TRUE),
     "Unable to make relative path between URIs with no common parent"
   )
 
   # Remove
-  group_readback$remove("a1")
-  expect_equal(group_readback$length(), 1)
-  group_readback$remove("g1")
-  expect_equal(group_readback$length(), 0)
+  group$remove("a1")
+  expect_equal(group$length(), 1)
+  group$remove("g1")
+  expect_equal(group$length(), 0)
+
+  group$close()
 })
 
 test_that("Metadata", {
