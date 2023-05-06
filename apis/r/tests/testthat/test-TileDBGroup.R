@@ -1,4 +1,4 @@
-test_that("Basic mechanics", {
+test_that("Non-exist", {
   uri <- file.path(withr::local_tempdir(), "new-group")
   group <- TileDBGroup$new(uri, internal_use_only = "allowed_use")
 
@@ -7,9 +7,14 @@ test_that("Basic mechanics", {
   expect_false(group$exists())
 
   # Check errors on non-existent group
-  expect_error(group$get("foo"), "Group must be open for read or write.")
-  expect_error(group$length(), "Group must be open for read or write.")
+  expect_error(group$get("foo"), "Group has not been opened.")
+  expect_error(group$length(), "Group has not been opened.")
   expect_error(group$open(internal_use_only = "allowed_use"), "Group does not exist.")
+})
+
+test_that("Create empty", {
+  uri <- file.path(withr::local_tempdir(), "new-group")
+  group <- TileDBGroup$new(uri, internal_use_only = "allowed_use")
 
   # Create the collection on disk
   group$create(internal_use_only = "allowed_use")
@@ -20,6 +25,12 @@ test_that("Basic mechanics", {
   fp = file.path(uri, "__group")
   expect_match(tiledb::tiledb_object_type(uri), "GROUP")
   group$close()
+})
+
+test_that("Accessors for empty", {
+  uri <- file.path(withr::local_tempdir(), "new-group")
+  group <- TileDBGroup$new(uri, internal_use_only = "allowed_use")
+  group$create(internal_use_only = "allowed_use")
 
   group$open(mode = "READ", internal_use_only = "allowed_use")
 
@@ -31,8 +42,15 @@ test_that("Basic mechanics", {
   expect_is(group$to_data_frame(), "data.frame")
   expect_equal(nrow(group$to_data_frame()), 0)
   group$close()
+})
 
-  # Add members to the group
+test_that("Add and remove members", {
+  uri <- file.path(withr::local_tempdir(), "new-group")
+  group <- TileDBGroup$new(uri, internal_use_only = "allowed_use")
+  group$create(internal_use_only = "allowed_use")
+  group$close()
+
+  # Create array and subgroup in isolation but do not yet add them to the group
   a1 <- TileDBArray$new(
     uri = create_empty_test_array(file.path(uri, "a1")),
     internal_use_only = "allowed_use"
@@ -49,7 +67,7 @@ test_that("Basic mechanics", {
   expect_equal(group$length(), 0)
   group$close()
 
-  # Add sub-array/group as members
+  # Add array and subgroup as members
   group$open(mode = "WRITE", internal_use_only = "allowed_use")
   group$set(a1, name = "a1")
   expect_equal(group$length(), 1)
@@ -61,29 +79,44 @@ test_that("Basic mechanics", {
   group$close()
 
   # Read back the members
-  group$open(mode = "WRITE", internal_use_only = "allowed_use")
+  group$open(mode = "READ", internal_use_only = "allowed_use")
   expect_equal(group$length(), 2)
   expect_setequal(group$names(), c("a1", "g1"))
 
   # Retrieve
   expect_is(group$get("a1"), "TileDBArray")
   expect_is(group$get("g1"), "TileDBGroup")
+  group$close()
+
+  # Remove
+  group$open(mode = "WRITE", internal_use_only = "allowed_use")
+  group$remove("a1")
+  expect_equal(group$length(), 1)
+  group$remove("g1")
+  expect_equal(group$length(), 0)
+  group$close()
+
+  # Remove
+  group$open(mode = "READ", internal_use_only = "allowed_use")
+  expect_equal(group$length(), 0)
+  group$close()
+})
+
+test_that("Non-relative paths", {
+  uri <- file.path(withr::local_tempdir(), "new-group")
+  group <- TileDBGroup$new(uri, internal_use_only = "allowed_use")
+  group$create(internal_use_only = "allowed_use")
 
   # Error when attempting to add a relative member that's not a subpath
   g2 <- TileDBGroup$new(
     uri = file.path(withr::local_tempdir(), "not-a-subpath"),
     internal_use_only = "allowed_use"
-  )$create(internal_use_only = "allowed_use")
+  )
+  g2$create(internal_use_only = "allowed_use")
   expect_error(
     group$set(g2, name = "g2", relative = TRUE),
     "Unable to make relative path between URIs with no common parent"
   )
-
-  # Remove
-  group$remove("a1")
-  expect_equal(group$length(), 1)
-  group$remove("g1")
-  expect_equal(group$length(), 0)
 
   group$close()
 })
@@ -91,18 +124,24 @@ test_that("Basic mechanics", {
 test_that("Metadata", {
   uri <- file.path(withr::local_tempdir(), "group-metadata")
   group <- TileDBGroup$new(uri, internal_use_only = "allowed_use")
-  expect_error(group$set_metadata(list(foo = "bar")), "Group does not exist.")
+  expect_error(group$set_metadata(list(foo = "bar")), "Group has not been opened.")
 
-  group$create()
+  group$create(internal_use_only = "allowed_use")
   md <- list(baz = "qux", foo = "bar")
   group$set_metadata(md)
   expect_equivalent(group$get_metadata("foo"), "bar")
   expect_equivalent(group$get_metadata("baz"), "qux")
 
-  # Read all metadata
+  # Read all metadata while the group is still open for write
   readmd <- group$get_metadata()
   expect_equivalent(readmd[["baz"]], "qux")
   expect_equivalent(readmd[["foo"]], "bar")
+  group$close()
 
+  # Read all metadata while the group is open for read
+  group$open(mode = "READ", internal_use_only = "allowed_use")
+  readmd <- group$get_metadata()
+  expect_equivalent(readmd[["baz"]], "qux")
+  expect_equivalent(readmd[["foo"]], "bar")
   group$close()
 })

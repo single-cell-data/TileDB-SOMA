@@ -179,6 +179,7 @@ test_that("Write Graph mechanics", {
 
   # Test assertions
   expect_error(write_soma(grph, collection = soma_parent))
+  collection$close()
 })
 
 test_that("Write Seurat mechanics", {

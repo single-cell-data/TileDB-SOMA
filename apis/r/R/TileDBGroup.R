@@ -268,12 +268,13 @@ TileDBGroup <- R6::R6Class(
 
     check_ever_opened = function() {
       stopifnot(
-        "Group has not been opened." = is.null(private$.mode)
+        "Group has not been opened." = !is.null(private$.tiledb_group)
       )
     },
 
     # Per the spec, invoking user-level read requires open for read mode.
     check_open_for_read = function() {
+      private$check_ever_opened()
       stopifnot(
         "Group must be open for read." = private$.mode == "READ"
       )
@@ -281,6 +282,7 @@ TileDBGroup <- R6::R6Class(
 
     # Per the spec, invoking user-level write requires open for read mode.
     check_open_for_write = function() {
+      private$check_ever_opened()
       stopifnot(
         "Group must be open for write." = private$.mode == "WRITE"
       )
@@ -288,6 +290,7 @@ TileDBGroup <- R6::R6Class(
 
     # Per the spec, invoking user-level get-metadata requires open for read mode or write mode.
     check_open_for_read_or_write = function() {
+      private$check_ever_opened()
       stopifnot(
         "Group must be open for read or write." = (private$.mode == "READ" || private$.mode == "WRITE")
       )

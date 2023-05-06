@@ -175,12 +175,14 @@ SOMACollectionBase <- R6::R6Class(
         SOMAExperiment = SOMAExperiment$new,
         stop(sprintf("Unknown member SOMA type: %s", soma_type), call. = FALSE)
       )
-      soma_constructor(
+      obj <- soma_constructor(
         uri,
         tiledbsoma_ctx = self$tiledbsoma_ctx,
         platform_config = self$platform_config,
         internal_use_only = "allowed_use"
       )
+      obj$open(mode = "READ", internal_use_only = "allowed_use")
+      obj
     },
 
     # Internal method called by SOMA Measurement/Experiment's active bindings
