@@ -10,14 +10,12 @@ arg() { echo "$1" | sed "s/^${2-[^=]*=}//" | sed "s/:/;/g"; }
 
 build="Release"
 prefix=""
-r_build="OFF"
 tiledb=""
 
 while test $# != 0; do
   case "$1" in
   --build=*) build=$(arg "$1");;
   --prefix=*) prefix=$(arg "$1");;
-  --r-build) r_build="ON";;
   --tiledb=*) tiledb=$(arg "$1");;
   esac
   shift
@@ -66,11 +64,6 @@ if [ -n "${prefix}"  ]; then
   extra_opts+=" -DCMAKE_INSTALL_PREFIX=${prefix} -DOVERRIDE_INSTALL_PREFIX=OFF"
 fi
 
-# build for R only
-if [ "${r_build}" == "ON" ]; then 
-  extra_opts+=" -DTILEDBSOMA_BUILD_R=${r_build}"
-fi
-
 # build with custom tiledb
 if [ -n "${tiledb}"  ]; then
   printf "Build with TileDB: ${tiledb}\n"
@@ -85,17 +78,11 @@ fi
 printf "Building ${build} build\n"
 
 # cd to the top level directory of the repo
-if [ "${r_build}" == "OFF" ]; then 
-  cd "$(dirname "$0")/.."
-fi
+cd "$(dirname "$0")/.."
 
 rm -rf build
 mkdir -p build
 cmake -B build -S libtiledbsoma -DCMAKE_BUILD_TYPE=${build} ${extra_opts}
 cmake --build build -j ${nproc}
 cmake --build build --target install-libtiledbsoma
-
-# Skip unit test build when building for R
-if [ "${r_build}" == "OFF" ]; then
-  cmake --build build/libtiledbsoma --target build_tests -j ${nproc}
-fi
+cmake --build build/libtiledbsoma --target build_tests -j ${nproc}
