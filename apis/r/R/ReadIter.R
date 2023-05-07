@@ -7,14 +7,17 @@ ReadIter <- R6::R6Class(
 
   public = list(
                 
-    uri = NULL,
-    tiledbsoma_ctx = NULL,
-    
     #' @description Create (lifecycle: experimental)
-    initialize = function(uri, tiledbsoma_ctx) {
-      self$uri <- uri
-      self$tiledbsoma_ctx <- tiledbsoma_ctx
-      private$soma_reader_setup()
+    initialize = function(uri, config, colnames = NULL, qc = NULL, dim_points = NULL, loglevel = "auto") {
+        # Instantiate soma_reader_pointer with a soma_array_reader object
+          private$soma_reader_pointer <- sr_setup(
+            uri = uri,
+            config = config,
+            colnames = colnames,
+            qc = qc,
+            dim_points = dim_points,
+            loglevel = loglevel
+          )
     },
 
     #' @description Check if iterated read is complete or not. (lifecycle: experimental)
@@ -31,12 +34,12 @@ ReadIter <- R6::R6Class(
       if (is.null(private$soma_reader_pointer)) {
           NULL
       } else {
-          if (sr_complete(private$soma_reader_pointer)) {
+          if (self$read_complete()) {
               warning("Iteration complete, returning NULL")
               NULL
           } else {
               rl <- sr_next(private$soma_reader_pointer)
-              private$soma_reader_transform(rl)
+              return(private$soma_reader_transform(rl))
           }
       }
     },
@@ -44,7 +47,7 @@ ReadIter <- R6::R6Class(
     #' @description TODO
     # to be refined in derived classes
     concat = function() {
-      NULL
+      .NotYetImplemented()
     }
 
   ),
@@ -54,17 +57,9 @@ ReadIter <- R6::R6Class(
     # Internal 'external pointer' object used for iterated reads
     soma_reader_pointer = NULL,
 
-    # Instantiate soma_reader_pointer with a soma_array_reader object
-    soma_reader_setup = function() {
-      private$soma_reader_pointer <- sr_setup(
-        self$uri,
-        config=as.character(tiledb::config(self$tiledbsoma_ctx$context()))
-      )
-    },
-
     ## to be refined in derived classes
     soma_reader_transform = function(x) {
-      x
+      .NotYetImplemented()
     }
 
   )

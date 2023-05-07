@@ -205,17 +205,27 @@ SOMADataFrame <- R6::R6Class(
           value_filter <- parsed@ptr
       }
 
+      cfg <- as.character(tiledb::config(self$tiledbsoma_ctx$context()))
       if (isFALSE(iterated)) {
-          cfg <- as.character(tiledb::config(self$tiledbsoma_ctx$context()))
-          rl <- soma_array_reader(uri = uri,
-                                  colnames = column_names,   # NULL dealt with by soma_array_reader()
-                                  qc = value_filter,         # idem
-                                  dim_points = coords,       # idem
-                                  loglevel = log_level,      # idem
-                                  config = cfg)
-          private$soma_reader_transform(rl)
+         read_full <- TableReadFull$new(uri = self$uri,
+                           config = cfg,
+                           colnames = column_names,   # NULL dealt with by sr_setup()
+                           qc = value_filter,         # idem
+                           dim_points = coords,       # idem
+                           loglevel = log_level      # idem
+                           )
+      
+        return(read_full$read())
+        
       } else {
-         TableReadIter$new(self$uri, self$tiledbsoma_ctx) 
+         read_iter <- TableReadIter$new(uri = self$uri,
+                           config = cfg,
+                           colnames = column_names,   # NULL dealt with by sr_setup()
+                           qc = value_filter,         # idem
+                           dim_points = coords,       # idem
+                           loglevel = log_level      # idem
+                           )
+        return(read_iter)
       }
     }
 
