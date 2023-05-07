@@ -133,29 +133,23 @@ SOMASparseNDArray <- R6::R6Class(
           coords <- lapply(coords, function(x) if (inherits(x, "integer")) bit64::as.integer64(x) else x)
       }
 
+      cfg <- as.character(tiledb::config(self$tiledbsoma_ctx$context()))
       if (isFALSE(iterated)) {
-          cfg <- as.character(tiledb::config(self$tiledbsoma_ctx$context()))
-          rl <- soma_array_reader(uri = uri,
-                                  dim_points = coords,        # NULL dealt with by soma_array_reader()
-                                  result_order = result_order,
-                                  loglevel = log_level,       # idem
-                                  config = cfg)
-          private$soma_reader_transform(rl)
+         read_full <- TableReadFull$new(uri = self$uri,
+                                        config = cfg,
+                                        qc = value_filter,         # idem
+                                        dim_points = coords,       # idem
+                                        loglevel = log_level      # idem
+                                       )
+         return(read_full$read())
       } else {
-          ## should we error if this isn't null?
-          if (!is.null(self$soma_reader_pointer)) {
-              warning("Reader pointer not null, skipping")
-              rl <- NULL
-          } else {
-              private$soma_reader_setup()
-              private$sparse_repr <- "" # no sparse matrix transformation
-              rl <- list()
-              while (!self$read_complete()) {
-                  ## soma_reader_transform() applied inside read_next()
-                  rl <- c(rl, self$read_next())
-              }
-          }
-          invisible(rl)
+         read_iter <- TableReadIter$new(uri = self$uri,
+                                        config = cfg,
+                                        qc = value_filter,         # idem
+                                        dim_points = coords,       # idem
+                                        loglevel = log_level      # idem
+                                       )
+         return(read_iter)
       }
     },
 

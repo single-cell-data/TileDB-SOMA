@@ -216,7 +216,6 @@ SOMADataFrame <- R6::R6Class(
                            )
       
         return(read_full$read())
-        
       } else {
          read_iter <- TableReadIter$new(uri = self$uri,
                            config = cfg,

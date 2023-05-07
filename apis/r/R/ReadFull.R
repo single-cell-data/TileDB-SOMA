@@ -23,7 +23,7 @@ ReadFull <- R6::R6Class(
     #' @description Check if iterated read is complete or not. (lifecycle: experimental)
     read = function() {
       return(private$soma_reader_transform(private$rl))
-    },
+    }
 
   ),
 
