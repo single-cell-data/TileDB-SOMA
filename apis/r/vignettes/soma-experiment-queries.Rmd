@@ -1,0 +1,126 @@
+---
+title: "Querying a SOMA experiment"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Querying a SOMA experiment}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+## Overview
+
+In this notebook, we'll take a quick look at how to query a `SOMAExperiment` using the `SOMAExperimentAxisQuery` class. This allows for easy selection of data from a `SOMAMeasurement` by filtering on annotations stored in each axis data frame (i.e., `obs` and `var`).
+
+```{r}
+library(tiledbsoma)
+```
+
+## Example data
+
+Load the bundled `SOMAExperiment` containing a subsetted version of the 10X genomics [PBMC dataset](https://mojaveazure.github.io/seurat-object/reference/pbmc_small.html) provided by SeuratObject. This will return a `SOMAExperiment` object.
+
+```{r}
+experiment <- load_dataset("soma-exp-pbmc-small")
+experiment
+```
+
+## Querying basics
+
+To perform a query we'll need to initialize a new `SOMAExperimentAxisQuery` object, specifying the `SOMAExperiment` and the `SOMAMeasurement` within the experiment we want to query.
+
+We can see that our current experiment contains only a single measurement: `"RNA"`.
+
+```{r}
+experiment$ms
+```
+
+Now we can construct our query object.
+
+```{r}
+query <- SOMAExperimentAxisQuery$new(
+  experiment = experiment,
+  measurement_name = "RNA"
+)
+```
+
+Once it's created, we can use the `query` object to inspect, select, and extract filtered data from the experiment.
+
+For example, we can use `n_obs` and `n_vars` to determine the number of observations and variables that passed our filtering criteria. Since we didn't specify any filtering criteria, these numbers will match the full size of the experiment.
+
+Number of observations:
+
+```{r}
+query$n_obs
+```
+
+Number of variables:
+
+```{r}
+query$n_vars
+```
+
+We can also extract any data component from the experiment. Here we'll read in the `obs` data frame from the query.
+
+```{r}
+query$obs()
+```
+
+## Adding filters
+
+Adding filters requires creating a `SOMAAxisQuery` object that allows you to define coordinates, value filters, or both for an axis.
+
+Here we'll create a query for `obs` that slices the first 40 rows, and then filters that subset based on the `nCount_RNA` column.
+
+```{r}
+obs_query <- SOMAAxisQuery$new(
+  coords = list(soma_joinid = 0:39),
+  value_filter = "nCount_RNA > 100"
+)
+```
+
+To apply this filter we'll pass it to a new `SOMAExperimentAxisQuery` object.
+
+```{r}
+query <- SOMAExperimentAxisQuery$new(
+  experiment = experiment,
+  measurement_name = "RNA",
+  obs_query = obs_query
+)
+```
+
+Let's see how many observations this query identified.
+
+```{r}
+query$n_obs
+```
+
+As before, we can load the `obs` data frame into memory but now it only includes the filtered observations.
+
+```{r}
+query$obs(column_names = c("obs_id", "nCount_RNA"))$to_data_frame()
+```
+
+We can also access the expression data for these filtered cells via `X()`:
+
+```{r}
+query$X(layer_name = "counts")
+```
+
+## Seurat support
+
+The `query` object also contains methods for loading in the results as a Seurat object (or any of Seurat's component classes).
+
+```{r eval=requireNamespace("SeuratObject", quietly = TRUE)}
+query$to_seurat(
+  X_layers = c(counts = "counts", data = "data"),
+  obs_index = "obs_id",
+  var_index = "var_id"
+)
+```

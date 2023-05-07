@@ -17,6 +17,7 @@ set -e
 
 CRAN=${CRAN:-"https://cloud.r-project.org"}
 OS=$(uname -s)
+RVER=${RVER:-"4.3.0"}
 
 ## Optional drat repos, unset by default
 DRAT_REPOS=${DRAT_REPOS:-""}
@@ -36,7 +37,7 @@ COVERAGE_FLAGS=${COVERAGE_FLAGS:-"r"}
 COVERAGE_TOKEN=${COVERAGE_TOKEN:-""}
 
 R_BUILD_ARGS=${R_BUILD_ARGS-"--no-build-vignettes --no-manual"}
-R_CHECK_ARGS=${R_CHECK_ARGS-"--no-vignettes --no-manual --as-cran"}
+R_CHECK_ARGS=${R_CHECK_ARGS-"--no-manual --as-cran"}
 R_CHECK_INSTALL_ARGS=${R_CHECK_INSTALL_ARGS-"--install-args=--install-tests"}
 _R_CHECK_TESTS_NLINES_=0
 
@@ -201,7 +202,7 @@ BootstrapLinuxOptions() {
 
 BootstrapMac() {
     # Install from latest CRAN binary build for OS X
-    wget ${CRAN}/bin/macosx/R-latest.pkg  -O /tmp/R-latest.pkg
+    wget ${CRAN}/bin/macosx/big-sur-x86_64/base/R-${RVER}-x86_64.pkg -O /tmp/R-latest.pkg
 
     echo "Installing OS X binary package for R"
     sudo installer -pkg "/tmp/R-latest.pkg" -target /

@@ -225,7 +225,7 @@ SOMAExperimentAxisQuery <- R6::R6Class(
       )
       # Load in the cells
       cells <- if (is.null(obs_index)) {
-        paste0('cell', self$obs_joinids())
+        paste0('cell', self$obs_joinids()$as_vector())
       } else {
         obs_index <- match.arg(
           arg = obs_index,
@@ -263,7 +263,7 @@ SOMAExperimentAxisQuery <- R6::R6Class(
       ms_embed <- tryCatch(expr = self$ms$obsm$names(), error = null)
       skip_reducs <- isFALSE(obsm_layers) || rlang::is_na(obsm_layers)
       if (is.null(ms_embed)) {
-        if (!skip_reducs) {
+        if (!(skip_reducs || is.null(obsm_layers))) {
           warning("No reductions found", call. = FALSE, immediate. = TRUE)
         }
         skip_reducs <- TRUE
@@ -281,8 +281,10 @@ SOMAExperimentAxisQuery <- R6::R6Class(
         } else if (rlang::is_na(varm_layers)) {
           varm_layers <- FALSE
         }
-        if (is.null(ms_load) && !isFALSE(varm_layers)) {
-          warning("No loadings found", call. = FALSE, immediate. = TRUE)
+        if (is.null(ms_load)) {
+          if (!(isFALSE(varm_layers) || is.null(varm_layers))) {
+            warning("No loadings found", call. = FALSE, immediate. = TRUE)
+          }
           varm_layers <- FALSE
         }
         if (!isFALSE(varm_layers)) {
@@ -318,23 +320,25 @@ SOMAExperimentAxisQuery <- R6::R6Class(
             embed <- ms_embed[embed]
           }
           rname <- .anndata_to_seurat_reduc(embed)
-          reduc <- tryCatch(
-            expr = self$to_seurat_reduction(
-              obsm_layer = embed,
-              varm_layer = ifelse(
-                embed %in% names(varm_layers),
-                yes = varm_layers[embed],
-                no = FALSE
+          reduc <- withCallingHandlers(
+            expr = tryCatch(
+              expr = self$to_seurat_reduction(
+                obsm_layer = embed,
+                varm_layer = ifelse(
+                  embed %in% names(varm_layers),
+                  yes = varm_layers[embed],
+                  no = FALSE
+                ),
+                obs_index = obs_index,
+                var_index = var_index
               ),
-              obs_index = obs_index,
-              var_index = var_index
+              error = err_to_warn
             ),
-            error = function(e) {
-              warning(conditionMessage(e), call. = FALSE, immediate. = TRUE)
-              return(NULL)
+            noArrayWarning = function(w) {
+              invokeRestart("muffleWarning")
             }
           )
-          if (is.null(reduc)) {
+          if (!inherits(reduc, 'DimReduc')) {
             next
           }
           object[[rname]] <- reduc
@@ -344,7 +348,7 @@ SOMAExperimentAxisQuery <- R6::R6Class(
       ms_graphs <- tryCatch(expr = self$ms$obsp$names(), error = null)
       skip_graphs <- isFALSE(obsp_layers) || rlang::is_na(obsp_layers)
       if (is.null(ms_graphs)) {
-        if (!skip_graphs) {
+        if (!(skip_graphs || is.null(obsp_layers))) {
           warning("No graphs found in 'obsp'", call. = FALSE, immediate. = TRUE)
         }
         skip_graphs <- TRUE
@@ -355,14 +359,16 @@ SOMAExperimentAxisQuery <- R6::R6Class(
         }
         obsp_layers <- obsp_layers %||% ms_graphs
         for (grph in obsp_layers) {
-          mat <- tryCatch(
-            expr = self$to_seurat_graph(obsp_layer = grph, obs_index = obs_index),
-            error = function(e) {
-              warning(conditionMessage(e), call. = FALSE, immediate. = TRUE)
-              return(NULL)
+          mat <- withCallingHandlers(
+            expr = tryCatch(
+              expr = self$to_seurat_graph(obsp_layer = grph, obs_index = obs_index),
+              error = err_to_warn
+            ),
+            noArrayWarning = function(w) {
+              invokeRestart("muffleWarning")
             }
           )
-          if (is.null(mat)) {
+          if (!inherits(mat, 'Graph')) {
             next
           }
           object[[grph]] <- mat
@@ -398,7 +404,7 @@ SOMAExperimentAxisQuery <- R6::R6Class(
       )
       match.arg(version, choices = 'v3')
       features <- if (is.null(var_index)) {
-        paste0('feature', self$var_joinids())
+        paste0('feature', self$var_joinids()$as_vector())
       } else {
         var_index <- match.arg(
           arg = var_index,
@@ -407,7 +413,7 @@ SOMAExperimentAxisQuery <- R6::R6Class(
         self$var(var_index)$GetColumnByName(var_index)$as_vector()
       }
       cells <- if (is.null(obs_index)) {
-        paste0('cell', self$obs_joinids())
+        paste0('cell', self$obs_joinids()$as_vector())
       } else {
         obs_index <- match.arg(
           arg = obs_index,
@@ -491,7 +497,11 @@ SOMAExperimentAxisQuery <- R6::R6Class(
       ms_embed <- tryCatch(expr = self$ms$obsm$names(), error = null)
       ms_load <- tryCatch(expr = self$ms$varm$names(), error = null)
       if (is.null(ms_embed) && is.null(ms_load)) {
-        warning("No reductions present", call. = FALSE)
+        warning(warningCondition(
+          "No reductions present",
+          class = c("noObsmWarning", "noArrayWarning"),
+          call = NULL
+        ))
         return(NULL)
       }
       if (is.null(ms_embed)) {
@@ -499,11 +509,11 @@ SOMAExperimentAxisQuery <- R6::R6Class(
       }
       names(ms_embed) <- .anndata_to_seurat_reduc(ms_embed)
       if (is.null(ms_load) && !is.null(varm_layer)) {
-        warning(
+        warning(warningCondition(
           "No loadings present in 'varm'",
-          call. = FALSE,
-          immediate. = TRUE
-        )
+          class = c("noVarmWarning", "noArrayWarning"),
+          call = NULL
+        ))
         varm_layer <- NULL
       } else {
         names(ms_load) <- .anndata_to_seurat_reduc(ms_load, 'loadings')
@@ -566,7 +576,7 @@ SOMAExperimentAxisQuery <- R6::R6Class(
       }
       # Get cell names
       cells <- if (is.null(obs_index)) {
-        paste0('cell', self$obs_joinids())
+        paste0('cell', self$obs_joinids()$as_vector())
       } else {
         obs_index <- match.arg(
           arg = obs_index,
@@ -580,7 +590,7 @@ SOMAExperimentAxisQuery <- R6::R6Class(
         dims = seq_len(as.integer(embed$shape()[2L])) - 1L
       )
       embed_mat <- if (inherits(embed, 'SOMASparseNDArray')) {
-        as.matrix(embed$read_sparse_matrix()[coords$cells + 1L, coords$dims + 1L])
+        as.matrix(embed$read_sparse_matrix_zero_based()[coords$cells, coords$dims])
       } else if (inherits(embed, 'SOMADenseNDArray')) {
         warning(
           paste(
@@ -592,8 +602,7 @@ SOMAExperimentAxisQuery <- R6::R6Class(
             )),
             collapse = '\n'
           ),
-          call. = FALSE,
-          immediate. = TRUE
+          call. = FALSE
         )
         embed$read_dense_matrix(unname(coords))
       } else {
@@ -616,7 +625,7 @@ SOMAExperimentAxisQuery <- R6::R6Class(
         }
         # Get feature names
         features <- if (is.null(var_index)) {
-          paste0('feature', self$var_joinids())
+          paste0('feature', self$var_joinids()$as_vector())
         } else {
           var_index <- match.arg(
             arg = var_index,
@@ -630,7 +639,7 @@ SOMAExperimentAxisQuery <- R6::R6Class(
           dims = seq_len(as.integer(loads$shape()[2L])) - 1L
         )
         load_mat <- if (inherits(loads, 'SOMASparseNDArray')) {
-          as.matrix(loads$read_sparse_matrix()[coords$features + 1L, coords$dims + 1L])
+          as.matrix(loads$read_sparse_matrix_zero_based()[coords$features, coords$dims])
         } else if (inherits(loads, 'SOMADenseNDArray')) {
           warning(
             paste(
@@ -683,17 +692,24 @@ SOMAExperimentAxisQuery <- R6::R6Class(
       # Check graph name
       ms_graph <- tryCatch(expr = self$ms$obsp$names(), error = null)
       if (is.null(ms_graph)) {
-        warning("No graphs present")
+        warning(
+          warningCondition(
+            "No graphs present",
+            class = c("noObspWarning", "noArrayWarning")
+          ),
+          call. = FALSE,
+          immediate. = TRUE
+        )
         return(NULL)
       }
       # Check provided graph name
       obsp_layer <- match.arg(arg = obsp_layer, choices = ms_graph)
-      mat <- self$ms$obsp$get(obsp_layer)$read_sparse_matrix(repr = 'C')
+      mat <- as.one.based(self$ms$obsp$get(obsp_layer)$read_sparse_matrix_zero_based(repr = 'C'))
       idx <- self$obs_joinids()$as_vector() + 1L
       mat <- mat[idx, idx]
       mat <- as(mat, 'Graph')
       cells <- if (is.null(obs_index)) {
-        paste0('cell', self$obs_joinids())
+        paste0('cell', self$obs_joinids()$as_vector())
       } else {
         obs_index <- match.arg(
           arg = obs_index,

@@ -56,6 +56,7 @@ from .._tiledb_array import TileDBArray
 from .._tiledb_object import AnyTileDBObject, TileDBObject
 from .._types import INGEST_MODES, IngestMode, NPNDArray, Path
 from ..options import SOMATileDBContext
+from ..options._soma_tiledb_context import _validate_soma_tiledb_context
 from ..options._tiledb_create_options import TileDBCreateOptions
 from . import conversions
 
@@ -118,7 +119,9 @@ def from_h5ad(
         )
 
     if isinstance(input_path, ad.AnnData):
-        raise TypeError("Input path is an AnnData object -- did you want from_anndata?")
+        raise TypeError("input path is an AnnData object -- did you want from_anndata?")
+
+    context = _validate_soma_tiledb_context(context)
 
     s = _util.get_start_stamp()
     logging.log_io(None, f"START  Experiment.from_h5ad {input_path}")
@@ -201,6 +204,8 @@ def from_anndata(
         raise TypeError(
             "Second argument is not an AnnData object -- did you want from_h5ad?"
         )
+
+    context = _validate_soma_tiledb_context(context)
 
     # Without _at least_ an index, there is nothing to indicate the dimension indices.
     if anndata.obs.index.empty or anndata.var.index.empty:
@@ -572,10 +577,26 @@ def _write_dataframe(
     df.set_index(SOMA_JOINID, inplace=True)
 
     # Categoricals are not yet well supported, so we must flatten
+    # Also replace Numpy/Pandas-style nulls with Arrow-style nulls
+    null_fields = set()
     for k in df:
         if df[k].dtype == "category":
             df[k] = df[k].astype(df[k].cat.categories.dtype)
+        if df[k].isnull().any():
+            if df[k].isnull().all():
+                df[k] = pa.nulls(df.shape[0], pa.infer_type(df[k]))
+            else:
+                df[k].where(
+                    df[k].notnull(),
+                    pd.Series(pa.nulls(df[k].isnull().sum(), pa.infer_type(df[k]))),
+                    inplace=True,
+                )
+            null_fields.add(k)
     arrow_table = pa.Table.from_pandas(df)
+    if null_fields:
+        md = arrow_table.schema.metadata
+        md.update(dict.fromkeys(null_fields, "nullable"))
+        arrow_table = arrow_table.replace_schema_metadata(md)
 
     try:
         soma_df = _factory.open(df_uri, "w", soma_type=DataFrame, context=context)
@@ -1365,7 +1386,8 @@ def to_anndata(
             if len(shape) != 2:
                 raise ValueError(f"expected shape == 2; got {shape}")
             if isinstance(measurement.obsm[key], DenseNDArray):
-                matrix = measurement.obsm[key].read().to_numpy()
+                obj = cast(DenseNDArray, measurement.obsm[key])
+                matrix = obj.read().to_numpy()
                 # The spelling ``sp.csr_array`` is more idiomatic but doesn't exist until Python 3.8
                 obsm[key] = matrix
             else:
@@ -1392,7 +1414,8 @@ def to_anndata(
             if len(shape) != 2:
                 raise ValueError(f"expected shape == 2; got {shape}")
             if isinstance(measurement.varm[key], DenseNDArray):
-                matrix = measurement.varm[key].read().to_numpy()
+                obj = cast(DenseNDArray, measurement.varm[key])
+                matrix = obj.read().to_numpy()
                 # The spelling ``sp.csr_array`` is more idiomatic but doesn't exist until Python 3.8
                 varm[key] = matrix
             else:

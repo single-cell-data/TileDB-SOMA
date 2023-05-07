@@ -122,6 +122,21 @@ jobs:
           python3 -c 'import tiledbsoma; print(tiledbsoma.pytiledbsoma.__file__); tiledbsoma.show_package_versions()'
         "
 
+  publish-to-test-pypi:
+    name: Publish package to TestPyPI
+    needs: smoke-test
+    runs-on: ubuntu-20.04
+    if: github.event_name == 'workflow_dispatch' || github.event_name == 'schedule'
+    steps:
+    - name: Publish packages to TestPyPI
+      uses: pypa/gh-action-pypi-publish@master
+      continue-on-error: true
+      with:
+        user: __token__
+        password: ${{ secrets.TEST_PYPI_TOKEN }}
+        packages_dir: dist-wheel
+        verbose: true
+
   publish-to-pypi:
     name: Publish package to PyPI
     needs: smoke-test

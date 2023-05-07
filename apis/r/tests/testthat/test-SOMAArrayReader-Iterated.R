@@ -58,10 +58,7 @@ test_that("Iterated Interface from SOMAArrayReader", {
     expect_equal(ncol(rl), 3)
 
     ## test completeness predicate on shorter data
-    tdir <- tempfile()
-    tgzfile <- system.file("raw-data", "soco-pbmc3k_processed-obs.tar.gz", package="tiledbsoma")
-    untar(tarfile = tgzfile, exdir = tdir)
-    uri <- file.path(tdir, "obs")
+    uri <- extract_dataset("soma-dataframe-pbmc3k-processed-obs")
     sr <- sr_setup(uri, config=as.character(config(ctx)))
 
     expect_false(tiledbsoma:::sr_complete(sr))
@@ -117,14 +114,14 @@ test_that("Iterated Interface from SOMA Sparse Matrix", {
     sdf <- SOMASparseNDArray$new(uri, internal_use_only = "allowed_use")
     expect_true(inherits(sdf, "SOMAArrayBase"))
 
-    sdf$read_sparse_matrix(iterated = TRUE)
+    sdf$read_sparse_matrix_zero_based(iterated = TRUE)
 
     nnzRows <- function(m) { sum(Matrix::rowSums(m != 0) > 0) }
     nnzTotal <- 0
     rowsTotal <- 0
     for (i in 1:4) {
         expect_false(sdf$read_complete())
-        dat <- sdf$read_next()
+        dat <- as.one.based(sdf$read_next())
         nnz <- Matrix::nnzero(dat)
         expect_gt(nnz, 0)
         nnzTotal <- nnzTotal + nnz

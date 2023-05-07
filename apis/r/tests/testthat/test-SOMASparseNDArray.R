@@ -68,7 +68,7 @@ test_that("SOMASparseNDArray creation", {
   
 })
 
-test_that("SOMASparseNDArray read_sparse_matrix", {
+test_that("SOMASparseNDArray read_sparse_matrix_zero_based", {
   uri <- withr::local_tempdir("sparse-ndarray")
   ndarray <- SOMASparseNDArray$new(uri, internal_use_only = "allowed_use")
   ndarray$create(arrow::int32(), shape = c(10, 10))
@@ -80,22 +80,26 @@ test_that("SOMASparseNDArray read_sparse_matrix", {
   expect_equal(as.numeric(ndarray$shape()), c(10, 10))
 
   # read_sparse_matrix
-  mat2 <- ndarray$read_sparse_matrix(repr="T")
-  expect_s4_class(mat2, "sparseMatrix")
+  mat2 <- ndarray$read_sparse_matrix_zero_based(repr="T")
+  expect_true(inherits(mat2, "matrixZeroBasedView"))
+  expect_s4_class(as.one.based(mat2), "sparseMatrix")
+  expect_equal(dim(mat2), c(10, 10))
   expect_equal(nrow(mat2), 10)
   expect_equal(ncol(mat2), 10)
   ## not sure why all.equal(mat, mat2) does not pass
-  expect_true(all.equal(as.numeric(mat), as.numeric(mat2[1:9,1:9])))
-  expect_equal(sum(mat), sum(mat2))
+  expect_true(all.equal(as.numeric(mat), as.numeric(mat2[0:8,0:8])))
+  expect_equal(sum(mat), sum(as.one.based(mat2)))
 
   # repeat with iterated reader
-  ndarray$read_sparse_matrix(repr="T", iterated=TRUE)
+  ndarray$read_sparse_matrix_zero_based(repr="T", iterated=TRUE)
   mat2 <- ndarray$read_next()
-  expect_s4_class(mat2, "sparseMatrix")
+  expect_true(inherits(mat2, "matrixZeroBasedView"))
+  expect_s4_class(as.one.based(mat2), "sparseMatrix")
+  expect_equal(dim(mat2), c(10, 10))
   expect_equal(nrow(mat2), 10)
   expect_equal(ncol(mat2), 10)
-  expect_true(all.equal(as.numeric(mat), as.numeric(mat2[1:9,1:9])))
-  expect_equal(sum(mat), sum(mat2))
+  expect_true(all.equal(as.numeric(mat), as.numeric(mat2[0:8,0:8])))
+  expect_equal(sum(mat), sum(as.one.based(mat2)))
 })
 
 test_that("SOMASparseNDArray creation with duplicates", {

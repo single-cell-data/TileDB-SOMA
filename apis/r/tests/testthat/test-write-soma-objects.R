@@ -1,6 +1,7 @@
 spdl::set_level('warn')
 
 test_that("write_soma.data.frame mechanics", {
+  skip_if_not_installed('SeuratObject', .MINIMUM_SEURAT_VERSION('c'))
   uri <- withr::local_tempdir("write-soma-data-frame")
   skip_if_not_installed('datasets')
   collection <- SOMACollectionCreate(uri)

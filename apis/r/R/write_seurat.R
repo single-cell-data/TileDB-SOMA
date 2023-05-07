@@ -153,7 +153,8 @@ write_soma.Assay <- function(
         strwrap(paste0(
           "Extended assays (eg. ",
           class(x)[1L],
-          ") cannot be written to SOMAs at this time"
+          ") are not fully supported; core Assay data has been written but ",
+          "additional slots have been skipped"
         )),
         collapse = '\n'
       ),
@@ -548,5 +549,6 @@ write_soma.Seurat <- function(
       immediate. = TRUE
     )
   }
-  return(experiment)
+  try(experiment$close(), silent = TRUE)
+  return(experiment$uri)
 }

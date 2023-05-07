@@ -56,7 +56,7 @@ template <> inline const int32_t XPtrTagType<tiledb::VFS>                  = til
 template <> inline const int32_t XPtrTagType<ArrowArray>             	   = tiledb_arrow_array_t;
 template <> inline const int32_t XPtrTagType<ArrowSchema>             	   = tiledb_arrow_schema_t;
 
-template <> inline const int32_t XPtrTagType<tdbs::SOMAArrayReader>             = tiledb_soma_reader_t;
+template <> inline const int32_t XPtrTagType<tdbs::SOMAArray>             = tiledb_soma_reader_t;
 
 template <typename T> Rcpp::XPtr<T> make_xptr(T* p, bool finalize=true) {
     return Rcpp::XPtr<T>(p, finalize, Rcpp::wrap(XPtrTagType<T>), R_NilValue);

@@ -75,8 +75,6 @@ if(TILEDBSOMA_BUILD_R)
   set(TILEDBSOMA_BUILD_CLI OFF)
   set(TILEDBSOMA_ENABLE_TESTING OFF)
   set(TILEDBSOMA_BUILD_STATIC ON)
-
-  add_compile_options(-DR_BUILD)
 endif()
 
 # Enable compiler cache to speed up recompilation

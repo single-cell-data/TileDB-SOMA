@@ -3,12 +3,8 @@ test_that("Arrow Interface from SOMAArrayReader", {
     library(tiledb)
 
     skip_if_not_installed("dplyr")      # a Suggests
+    uri <- extract_dataset("soma-dataframe-pbmc3k-processed-obs")
 
-    tdir <- tempfile()
-    tgzfile <- system.file("raw-data", "soco-pbmc3k_processed-obs.tar.gz", package="tiledbsoma")
-    untar(tarfile = tgzfile, exdir = tdir)
-
-    uri <- file.path(tdir, "obs")
     columns <- c("n_counts", "n_genes", "louvain")
 
     z <- soma_array_reader(uri, columns)

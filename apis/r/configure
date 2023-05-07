@@ -9,44 +9,6 @@ if test -z "${R_HOME}"; then
     exit 1
 fi
 
-### for single-cell-data/apis/r repo, consider completing sources
-if test -f src/lib/libtiledbsoma.a; then
-    echo "** static library present"
-else
-    echo "** no static library present"
-    ## check for cmake, needed to build from source
-    have_cmake=`which cmake`
-    if [ "x${have_cmake}" = "x" ]; then
-        echo "** cmake is required, but not in the path, exiting"
-        exit 1
-    fi
-    if ! test -d src/libtiledbsoma; then
-        cd src
-        tar -xzf ../libtiledbsoma.tar.gz
-        echo "** library sources unpacked"
-        cd ..
-    fi
-    if test -d src/libtiledbsoma; then
-        ## else with sources build by hand
-        cd src
-        mkdir -p build
-        cmake -B build -S libtiledbsoma -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=. -DOVERRIDE_INSTALL_PREFIX=OFF -DTILEDBSOMA_BUILD_R=ON > cmake_log.txt
-        cmake --build build -j 2 >> cmake_log.txt
-        cmake --build build --target install-libtiledbsoma >> cmake_log.txt
-        rm -rf build
-        ## handle different distro library install paths
-        ## TODO: figure out how to tell cmake to use lib/ in all cases
-        if test -d lib64; then
-            mv lib64 lib
-        elif test -d lib/x86_64-linux-gnu; then
-            mv lib/x86_64-linux-gnu lib
-        fi
-        cd ..
-        echo "** static library made"
-
-    fi
-fi
-
 ## look for tiledb core library and either use system library or download build
 have_tiledb="false"
 
@@ -55,8 +17,8 @@ pkg-config --version >/dev/null 2>&1
 if [ $? -eq 0 ]; then
     pkg-config --exists tiledb
     if [ $? -eq 0 ]; then
-        pkgcflags=`pkg-config --cflags tiledb`
-        pkglibs=`pkg-config --libs tiledb`
+        pkgcflags=`pkg-config --cflags tiledb tiledbsoma`
+        pkglibs=`pkg-config --libs tiledb tiledbsoma`
 
         ## substitute them in (leaving @tiledb_rpath@ and @cxx17_macos@ alone for now)
         sed -e "s|@tiledb_include@|$pkgcflags |" \

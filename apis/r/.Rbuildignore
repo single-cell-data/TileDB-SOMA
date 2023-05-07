@@ -23,3 +23,6 @@ tiledbsoma/libtiledbsoma.tar.gz.current
 # vscode
 ^\.vscode$
 ^\.devcontainer$
+^data-raw$
+^doc$
+^Meta$

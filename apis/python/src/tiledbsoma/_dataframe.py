@@ -23,6 +23,7 @@ from ._read_iters import TableReadIter
 from ._tiledb_array import TileDBArray
 from ._types import NPFloating, NPInteger, OpenTimestamp, Slice, is_slice_of
 from .options import SOMATileDBContext
+from .options._soma_tiledb_context import _validate_soma_tiledb_context
 from .options._tiledb_create_options import TileDBCreateOptions
 
 _UNBATCHED = options.BatchSize()
@@ -199,7 +200,7 @@ class DataFrame(TileDBArray, somacore.DataFrame):
         Lifecycle:
             Experimental.
         """
-        context = context or SOMATileDBContext()
+        context = _validate_soma_tiledb_context(context)
         schema = _canonicalize_schema(schema, index_column_names)
         tdb_schema = _build_tiledb_schema(
             schema,
@@ -404,7 +405,7 @@ class DataFrame(TileDBArray, somacore.DataFrame):
         return self
 
     def _set_reader_coord(
-        self, sr: clib.SOMAArrayReader, dim_idx: int, dim: tiledb.Dim, coord: object
+        self, sr: clib.SOMAArray, dim_idx: int, dim: tiledb.Dim, coord: object
     ) -> bool:
 
         if coord is None:
@@ -476,7 +477,7 @@ class DataFrame(TileDBArray, somacore.DataFrame):
 
     def _set_reader_coord_by_py_seq_or_np_array(
         self,
-        sr: clib.SOMAArrayReader,
+        sr: clib.SOMAArray,
         dim_idx: int,
         dim: tiledb.Dim,
         coord: object,
@@ -542,7 +543,7 @@ class DataFrame(TileDBArray, somacore.DataFrame):
         return True
 
     def _set_reader_coord_by_numeric_slice(
-        self, sr: clib.SOMAArrayReader, dim_idx: int, dim: tiledb.Dim, coord: Slice[Any]
+        self, sr: clib.SOMAArray, dim_idx: int, dim: tiledb.Dim, coord: Slice[Any]
     ) -> bool:
 
         try:
@@ -711,6 +712,7 @@ def _build_tiledb_schema(
     dom = tiledb.Domain(dims, ctx=context.tiledb_ctx)
 
     attrs = []
+    metadata = schema.metadata or {}
     for attr_name in schema.names:
         if attr_name in index_column_names:
             continue
@@ -719,6 +721,7 @@ def _build_tiledb_schema(
             dtype=_arrow_types.tiledb_type_from_arrow_type(
                 schema.field(attr_name).type
             ),
+            nullable=metadata.get(attr_name.encode("utf-8")) == b"nullable",
             filters=tiledb_create_options.attr_filters(attr_name, ["ZstdFilter"]),
             ctx=context.tiledb_ctx,
         )
