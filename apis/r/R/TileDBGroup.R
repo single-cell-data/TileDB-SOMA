@@ -114,25 +114,7 @@ TileDBGroup <- R6::R6Class(
         name = name
       )
 
-      # XXX EXTRACT METHOD
-
-      # We explicitly add the new member to member_cache in order to preserve the
-      # original URI. Otherwise TileDB Cloud creation URIs are retrieved from
-      # using tiledb_group_member() in the form tiledb://namespace/uuid. In this
-      # form it's not possible to append new children, which is necessary during
-      # ingestion.
-      if (is.null(private$.member_cache)) private$.member_cache <- list()
-      private$.member_cache[[name]] <- list(
-        type = tiledb::tiledb_object_type(object$uri),
-        uri = object$uri,
-        name = name
-      )
-
-      # We still need to update member_cache to pick up existing members.
-      # Otherwise if you open a group with existing members and add a new
-      # member, the initially empty member_cache will only contain the new
-      # member.
-      private$update_member_cache()
+      private$add_cached_member(name, object$uri)
    },
 
     #' @description Retrieve a group member by name. (lifecycle: experimental)
@@ -362,6 +344,29 @@ TileDBGroup <- R6::R6Class(
       if (private$.mode == "WRITE") {
         tiledb::tiledb_group_close(group_handle)
       }
+    },
+
+    add_cached_member = function(name, uri) {
+      # We explicitly add the new member to member_cache in order to preserve the
+      # original URI. Otherwise TileDB Cloud creation URIs are retrieved from
+      # using tiledb_group_member() in the form tiledb://namespace/uuid. In this
+      # form it's not possible to append new children, which is necessary during
+      # ingestion.
+      if (is.null(private$.member_cache)) {
+        private$.member_cache <- list()
+      }
+
+      private$.member_cache[[name]] <- list(
+        type = tiledb::tiledb_object_type(uri),
+        uri = uri,
+        name = name
+      )
+
+      # We still need to update member_cache to pick up existing members.
+      # Otherwise if you open a group with existing members and add a new
+      # member, the initially empty member_cache will only contain the new
+      # member.
+      private$update_member_cache()
     },
 
     format_members = function() {
