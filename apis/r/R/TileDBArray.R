@@ -179,7 +179,7 @@ TileDBArray <- R6::R6Class(
         if (!is_empty(dims)) {
           # Convert each dim vector to a two-column matrix where each row
           # describes one pair of minimum and maximum values.
-          tiledb::selected_ranges(private$tiledb_object) <- lapply(
+          tiledb::selected_ranges(private$.tiledb_array) <- lapply(
             X = dims,
             FUN = function(x) unname(cbind(x, x))
           )
@@ -211,7 +211,7 @@ TileDBArray <- R6::R6Class(
           stop("'attr_filter' is not a valid expression", call. = FALSE)
       }
 
-      tiledb::query_condition(private$tiledb_object) <- do.call(
+      tiledb::query_condition(private$.tiledb_array) <- do.call(
         what = tiledb::parse_query_condition,
         args = list(expr = captured_filter, ta = self$object)
       )
@@ -230,10 +230,10 @@ TileDBArray <- R6::R6Class(
           = isTRUE(dims) || isTRUE(attr_filter)
       )
       if (isTRUE(dims)) {
-        tiledb::selected_ranges(private$tiledb_object) <- list()
+        tiledb::selected_ranges(private$.tiledb_array) <- list()
       }
       if (isTRUE(attr_filter)) {
-        tiledb::query_condition(private$tiledb_object) <- new(
+        tiledb::query_condition(private$.tiledb_array) <- new(
           "tiledb_query_condition"
         )
       }
@@ -275,11 +275,11 @@ TileDBArray <- R6::R6Class(
         stop(sprintf("'%s' is a read-only field.", "object"), call. = FALSE)
       }
       # If the array was created after the object was instantiated, we need to
-      # initialize private$tiledb_object
-      if (is.null(private$tiledb_object)) {
+      # initialize private$.tiledb_array
+      if (is.null(private$.tiledb_array)) {
         private$initialize_object()
       }
-      private$tiledb_object
+      private$.tiledb_array
     }
   ),
 
@@ -287,10 +287,26 @@ TileDBArray <- R6::R6Class(
 
     .mode = NULL,
 
+    # Internal pointer to the TileDB array.
+    #
+    # Important implementation note:
+    # * In TileDB-R there is an unopened handle obtained by tiledb::tiledb_array, which takes
+    #   a URI as its argument.
+    # * One may then open and close this using tiledb::tiledb_array_open (for read or write)
+    #   and tiledb::tiledb_array_close, which take a tiledb_array handle as their first argument.
+    #
+    # However, for groups:
+    # * tiledb::tiledb_group and tiledb::group_open both return an object opened for read or write.
+    # * Therefore for groups we cannot imitate the behavior for arrays.
+    #
+    # For this reason there is a limit to how much handle-abstraction we can do in the TileDBObject
+    # parent class.
+    .tiledb_array = NULL,
+
     # Once the array has been created this initializes the TileDB array object
-    # and stores the reference in private$tiledb_object.
+    # and stores the reference in private$.tiledb_array.
     initialize_object = function() {
-      private$tiledb_object <- tiledb::tiledb_array(
+      private$.tiledb_array <- tiledb::tiledb_array(
         uri = self$uri,
         ctx = self$tiledbsoma_ctx$context(),
         query_layout = "UNORDERED"

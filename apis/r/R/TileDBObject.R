@@ -90,9 +90,6 @@ TileDBObject <- R6::R6Class(
 
   private = list(
 
-    # Internal pointer to the TileDB object
-    tiledb_object = NULL,
-
     # @description Contains TileDBURI object
     tiledb_uri = NULL,
 

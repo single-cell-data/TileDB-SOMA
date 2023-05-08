@@ -279,7 +279,6 @@ EphemeralCollectionBase <- R6::R6Class(
 
   private = list(
     # Override SOMACollectionBase private fields
-    tiledb_object = NULL,
     tiledb_uri = NULL,
     tiledb_platform_config = NULL,
     .tiledbsoma_ctx = NULL,
